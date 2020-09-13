@@ -7,10 +7,9 @@
 
 // Minimal block size to hold heap header
 // plus enough space in body to be useful
-// (one paragraph for now but to be tuned
-// to size of smallest allocation)
+// (= size of the smallest allocation)
 
-#define HEAP_MIN_SIZE (sizeof (heap_s) + 16)
+#define HEAP_MIN_SIZE (sizeof (heap_s) + 12)
 
 // Heap root
 

@@ -5,7 +5,7 @@
 #include <linuxmt/list.h>
 
 struct segment {
-	list_s    node;
+	list_s    all;
 	seg_t     base;
 	segext_t  size;
 	word_t    flags;
@@ -32,8 +32,6 @@ typedef struct segment segment_s;
 
 #define VERIFY_READ 0
 #define VERIFY_WRITE 1
-
-#define MM_MEM	0
 
 #include <linuxmt/memory.h>
 
@@ -72,7 +70,7 @@ void seg_put (segment_s *);
 segment_s * seg_dup (segment_s *);
 
 void mm_stat (seg_t, seg_t);
-unsigned int mm_get_usage (int, int);
+void mm_get_usage (int * free, int * used);
 
 #endif
 #endif
