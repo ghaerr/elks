@@ -39,7 +39,7 @@ $(BUILDDIR)/.binutils.src: $(DISTDIR)/$(BINUTILS_DIST).zip
 $(BUILDDIR)/.binutils.build: $(BUILDDIR)/.binutils.src
 	cd $(BUILDDIR) && rm -rf binutils-build
 	mkdir -p $(BUILDDIR)/binutils-build
-	cd $(BUILDDIR)/binutils-build && ../binutils-src/configure --target=ia16-elf --prefix="$(CROSSDIR)" --disable-gdb --disable-libdecnumber --disable-readline --disable-sim --disable-nls
+	cd $(BUILDDIR)/binutils-build && ../binutils-src/configure --target=ia16-elf --prefix="$(CROSSDIR)" --enable-ld=default --enable-gold=yes --enable-targets=ia16-elf --enable-hpa-segelf=yes --disable-gdb --disable-libdecnumber --disable-readline --disable-sim --disable-nls
 	$(MAKE) -C $(BUILDDIR)/binutils-build
 	touch $(BUILDDIR)/.binutils.build
 
