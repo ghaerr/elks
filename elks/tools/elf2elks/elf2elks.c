@@ -18,11 +18,9 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include <endian.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
-#include <libelf.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -33,6 +31,7 @@
 #ifndef __DJGPP__
 # include <libgen.h>
 #endif
+#include "libelf.h"
 
 struct minix_exec_hdr
 {
@@ -304,7 +303,7 @@ input_for_header (void)
   if (ifd == -1)
     error_with_errno ("cannot open input file `%s'", file_name);
 
-  elf = elf_begin (ifd, ELF_C_READ_MMAP, NULL);
+  elf = elf_begin (ifd, ELF_C_READ, NULL);
   if (! elf)
     error_with_elf_msg ("cannot open input file `%s' as ELF", file_name);
 
