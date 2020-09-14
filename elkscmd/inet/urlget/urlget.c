@@ -496,11 +496,15 @@ int main(int argc, char **argv) {
    }
    if (strcmp(prog, "httpget") == 0) {
    	if (argc != 2) {
-   		fprintf(stderr, "Usage: %s [-h] [-d] [-p] host path\n", prog);
+   		fprintf(stderr, "Usage: %s [-h] [-d] [-p] host[:port] path\n", prog);
    		return(-1);
    	}
    	strncpy(host, *argv++, sizeof(host));
-   	port = 80;
+	if ((p = strchr(host, ':'))) {
+		*p++ = '\0';
+		port = atoi(p);
+	} else
+   		port = 80;
    	path = *argv++;
 	s = httpget(host, port, user, pass, path, opt_h, opt_d, opt_p);
 	return(s);
