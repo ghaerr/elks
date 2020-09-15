@@ -3,6 +3,16 @@
  * 04/05/2000 Michael Temari <Michael@TemWare.Com>
  * 09/29/2001 Ported to ELKS(and linux) (Harry Kalogiroy <harkal@rainbow.cs.unipi.gr>)
  *
+ * Implements HTTP POST & GET, FTP GET and directory listings, TCP GET (typical via 
+ * netcat at the other end.
+ * 
+ * Assumes hard links to the approproate names - ftpget, urlget, tcpget.
+ * Optons (http only):
+ * 	-h -- include header in output stream
+ * 	-d -- discard data
+ * 	-p -- post instead of get, data to post (ascii/UTF) is appended to the URL (after a '?').
+ *	-v -- for ftp, verbose file listing
+ *
  */
 
 
@@ -21,13 +31,14 @@
 
 _PROTOTYPE(char *unesc, (char *s));
 _PROTOTYPE(void encode64, (char **pp, char *s));
+_PROTOTYPE(int net_connect, (char *host, int port));
 _PROTOTYPE(char *auth, (char *user, char *pass));
 _PROTOTYPE(int skipit, (char *buf, int len, int *skip));
 _PROTOTYPE(int httpget, (char *host, int port, char *user, char *pass, char *path, int headers, int discard, int post));
 _PROTOTYPE(void ftppasv, (char *reply));
 _PROTOTYPE(int ftpreply, (FILE *fpr));
 _PROTOTYPE(int ftpcmd, (FILE *fpw, FILE *fpr, char *cmd, char *arg));
-_PROTOTYPE(int ftpget, (char *host, int port, char *user, char *pass, char *path, int type));
+_PROTOTYPE(int ftpget, (char *host, int port, char *user, char *pass, char *path, int type, int verbose));
 _PROTOTYPE(int tcpget, (char *host, int port, char *user, char *pass, char *path));
 _PROTOTYPE(int main, (int argc, char *argv[]));
 
@@ -38,6 +49,8 @@ unsigned int ftppport;
 #define	SCHEME_FTP	2
 #define	SCHEME_TCP	3
 #define	SCHEME_NNTP	4
+
+#define TRANS_DEBUG	1	/* for debug dumps */
 
 char buffer[16000];
 
@@ -61,12 +74,9 @@ size_t len;
 }
 #endif
 
-char *unesc(s)
-char *s;
-{
-char *p;
-char *p2;
-unsigned char c;
+char *unesc(char *s) {
+   char *p, *p2;
+   unsigned char c;
 
    p = s;
    p2 = s;
@@ -85,8 +95,8 @@ unsigned char c;
    	if (*p >= 'A' && *p <= 'F') c = *p++ - 'A' + 10; else
    		break;
    	if (*p >= '0' && *p <= '9') c = c << 4 | (*p++ - '0'); else
-   	if (*p >= 'a' && *p <= 'f') c = c << 4 | (*p++ - 'a') + 10; else
-   	if (*p >= 'A' && *p <= 'F') c = c << 4 | (*p++ - 'A') + 10; else
+   	if (*p >= 'a' && *p <= 'f') c = c << 4 | ((*p++ - 'a') + 10); else
+   	if (*p >= 'A' && *p <= 'F') c = c << 4 | ((*p++ - 'A') + 10); else
    		break;
    	*p2++ = c;
    }
@@ -148,16 +158,15 @@ char *p;
    return(a);
 }
 
-int skipit(buf, len, skip)
-char *buf;
-int len;
-int *skip;
-{
-static int lf = 0;
-static int crlf = 0;
-char *p;
+/*
+ * Find the occurence of 2 CR-LF pairs in a row, which indicates the end
+ * of the header, start of content.
+ */
+int skipit(char *buf, int len, int *skip) {
 
-   p = buf;
+   static int lf = 0;
+   static int crlf = 0;
+   char *p = buf;
 
    while (--len >= 0) {
    	if ((crlf == 0 || crlf == 2) && *p == '\r')
@@ -181,23 +190,12 @@ char *p;
    return(0);
 }
 
-int httpget(host, port, user, pass, path, headers, discard, post)
-char *host;
-int port;
-char *user;
-char *pass;
-char *path;
-int headers;
-int discard;
-int post;
-{
-int fd;
-int skip;
-int s;
-int s2;
-char *a;
-char *qs;
-int len;
+int httpget(char *host, int port, char *user, char *pass, char *path, 
+	int headers, int discard, int post) {
+
+   int fd, skip, s, s2;
+   int len = 0;
+   char *a, *qs;
 
    if (port == 0)
    	port = 80;
@@ -213,8 +211,7 @@ int len;
    	if (qs != (char *)NULL) {
    		*qs++ = '\0';
    		len = strlen(qs);
-   	} else
-   		len = 0;
+	}
    }
 
    if (post && len > 0)
@@ -262,8 +259,7 @@ int len;
    return(0);
 }
 
-void ftppasv(char *reply)
-{
+void ftppasv(char *reply) {
 char *p;
 unsigned char n[6];
 int i;
@@ -287,8 +283,7 @@ int i;
    return;
 }
 
-int ftpreply(FILE *fpr)
-{
+int ftpreply(FILE *fpr) {
 static char reply[256];
 int s;
 char code[4];
@@ -324,17 +319,16 @@ int ftpcmd( FILE *fpw, FILE *fpr, char *cmd, char *arg)
    return s;
 }
 
-int ftpget(char *host, int port, char *user, char *pass, char *path, int type)
-{
-int fd;
-int fd2;
-FILE *fpr;
-FILE *fpw;
-int s;
-int s2;
-char *p;
-char *p2;
-char typec[2];
+int ftpget(char *host, int port, char *user, char *pass, char *path, int type, int verbose) {
+   int fd;
+   int fd2;
+   FILE *fpr;
+   FILE *fpw;
+   int s;
+   int s2;
+   char *p;
+   char *p2;
+   char typec[2], *list;
 
    if (port == 0)
    	port = 21;
@@ -354,7 +348,7 @@ char typec[2];
    if (s / 100 != 2) goto error;
    s = ftpcmd(fpw, fpr, "USER", *user ? user : "ftp");
    if (s / 100 == 3)
-   	s = ftpcmd(fpw, fpr, "PASS", *pass ? pass : "urlget@");
+   	s = ftpcmd(fpw, fpr, "PASS", *pass ? pass : "urlget@x.com");
 
    if (s / 100 != 2) goto error;
 
@@ -370,16 +364,20 @@ char typec[2];
    s = ftpcmd(fpw, fpr, "TYPE", typec);
    if (s / 100 != 2) goto error;
 
-   if (strlen(p) == 0) type = 'd'; //last char is '/', its a directory, list files
-   ftppport=0; //to check if retrieved below
+   if (strlen(p) == 0) type = 'd'; 	/* last char is '/', its a directory, list files */
+   ftppport=0; 				/* to check if retrieved below */
    s = ftpcmd(fpw, fpr, "PASV", "");
    //printf("ftpget: s=%d,port=%u\n",s,ftppport);
    //ftpreply() continues after s==227 found!
    if (ftppport==0) goto error; //if (s != 227) goto error;
    fd2 = net_connect(ftpphost, ftppport);
    if (fd2 < 0) goto error;
-   s = ftpcmd(fpw, fpr, type == 'd' ? "NLST" : "RETR", unesc(p));
-   //s = ftpcmd(fpw, fpr, type == 'd' ? "LIST" : "RETR", unesc(p)); //full file specs
+
+   if (verbose) 
+	list = "LIST"; 
+   else 
+	list = "NLST";
+   s = ftpcmd(fpw, fpr, type == 'd' ? list : "RETR", unesc(p));
    if (s / 100 != 1) goto error;
    while ((s = read(fd2, buffer, sizeof(buffer))) > 0) {
    	s2 = write(1, buffer, s);
@@ -401,16 +399,11 @@ error:
    return(s == 0 ? 0 : -1);
 }
 
-int tcpget(host, port, user, pass, path)
-char *host;
-int port;
-char *user;
-char *pass;
-char *path;
-{
-int fd;
-int s;
-int s2;
+int tcpget(char *host, int port, char *user, char *pass, char *path) {
+
+   int fd;
+   int s;
+   int s2;
 
    if (port == 0) {
    	fprintf(stderr, "tcpget: No port specified\n");
@@ -419,7 +412,7 @@ int s2;
 
    fd = net_connect(host, port);
    if (fd < 0) {
-   	fprintf(stderr, "httpget: Could not connect to %s:%d\n", host, port);
+   	fprintf(stderr, "tcpget: Could not connect to %s:%d\n", host, port);
    	return(-1);
    }
    if (*path == '/')
@@ -435,26 +428,14 @@ int s2;
    return(0);
 }
 
-int main(argc, argv)
-int argc;
-char *argv[];
-{
-char *prog;
-char *url;
-char scheme;
-char user[64];
-char pass[64];
-char host[64];
-int port;
-char *path;
-int type;
-char *ps;
-char *p;
-char *at;
-int s;
-int opt_h = 0;
-int opt_d = 0;
-int opt_p = 0;
+int main(int argc, char **argv) {
+
+   char *prog, *url, scheme;
+   char user[64], pass[64], host[64];
+   int port, s;
+   int type = 'i';	/* default ftp type */
+   char *path, *ps, *p, *at;
+   int opt_h = 0, opt_d = 0, opt_p = 0, opt_v = 0;
 
    prog = strrchr(*argv, '/');
    if (prog == (char *)NULL)
@@ -462,6 +443,7 @@ int opt_p = 0;
    argv++;
    argc--;
 
+   // FIXME: Add getopt ..
    if (argc){
    	if (strcmp(*argv, "-h") == 0) {
    		opt_h = -1;
@@ -478,17 +460,26 @@ int opt_p = 0;
    		argv++;
    		argc--;
    	}
+   	if (strcmp(*argv, "-v") == 0) {
+   		opt_v = -1;
+   		argv++;
+   		argc--;
+   	}
    }
 
    if (strcmp(prog, "ftpget") == 0) {
    	if (argc < 2 || argc > 4) {
-   		fprintf(stderr, "Usage: %s host path [user [pass]]\n", prog);
-		fprintf(stderr, "Add / to path for directory listing\n");
+   		fprintf(stderr, "Usage: %s [-v] host[:port] path [user [pass]]\n", prog);
+		fprintf(stderr, "Add / to path for directory listing, -v for long listing\n");
 		fprintf(stderr, "e.g. ftpget 90.147.160.69 /mirrors/\n");
    		return(-1);
    	}
    	strncpy(host, *argv++, sizeof(host));
-   	port = 21;
+	if ((p = strchr(host, ':'))) {
+		*p++ = '\0';
+		port = atoi(p);
+	} else
+   		port = 21;
    	path = *argv++;
    	if (argc) {
    		strncpy(user, *argv++, sizeof(user));
@@ -500,18 +491,22 @@ int opt_p = 0;
    		argc++;
    	} else
    		*pass = '\0';
-	s = ftpget(host, port, user, path, path, 'i');
+	s = ftpget(host, port, user, pass, path, type, opt_v);
 	return(s);
    }
    if (strcmp(prog, "httpget") == 0) {
    	if (argc != 2) {
-   		fprintf(stderr, "Usage: %s [-h] [-d] [-p] host path\n", prog);
+   		fprintf(stderr, "Usage: %s [-h] [-d] [-p] host[:port] path\n", prog);
    		return(-1);
    	}
    	strncpy(host, *argv++, sizeof(host));
-   	port = 80;
+	if ((p = strchr(host, ':'))) {
+		*p++ = '\0';
+		port = atoi(p);
+	} else
+   		port = 80;
    	path = *argv++;
-	s = httpget(host, port, user, path, path, opt_h, opt_d, opt_p);
+	s = httpget(host, port, user, pass, path, opt_h, opt_d, opt_p);
 	return(s);
    }
 
@@ -591,7 +586,7 @@ int opt_p = 0;
    	}
    }
 
-#if 0
+#if TRANS_DEBUG
    fprintf(stderr, "Host: %s\n", host);
    fprintf(stderr, "Port: %d\n", port);
    fprintf(stderr, "User: %s\n", user);
@@ -605,7 +600,7 @@ int opt_p = 0;
 		s = httpget(host, port, user, pass, path, opt_h, opt_d, opt_p);
 		break;
 	case SCHEME_FTP:
-		s = ftpget(host, port, user, pass, path, type);
+		s = ftpget(host, port, user, pass, path, type, opt_v);
 		break;
 	case SCHEME_TCP:
 		s = tcpget(host, port, user, pass, path);
