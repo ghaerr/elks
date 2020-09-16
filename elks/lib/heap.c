@@ -9,7 +9,7 @@
 // plus enough space in body to be useful
 // (= size of the smallest allocation)
 
-#define HEAP_MIN_SIZE (sizeof (heap_s) + 12)
+#define HEAP_MIN_SIZE (sizeof (heap_s) + 16)
 
 // Heap root
 
@@ -52,7 +52,6 @@ static heap_s * free_get (word_t size0, byte_t tag)
 	list_s * n = _heap_free.next;
 
 	while (n != &_heap_free) {
-
 		heap_s * h = structof (n, heap_s, free);
 		word_t size1  = h->size;
 
@@ -112,16 +111,17 @@ void heap_free (void * data)
 	//   - head if still alone to increase 'exact hit'
 	//     chance on next allocation of same size
 
-	list_s * p = &_heap_free;
+	list_s * i = &_heap_free;
 
 	// Try to merge with previous block if free
 
-	if (_heap_all.next != &(h->all)) {
-		heap_s * prev = structof (h->all.prev, heap_s, all);
+	list_s * p = h->all.prev;
+	if (&_heap_all != p) {
+		heap_s * prev = structof (p, heap_s, all);
 		if (prev->tag == HEAP_TAG_FREE) {
-			heap_merge (prev, h);
 			list_remove (&(prev->free));
-			p = _heap_free.prev;
+			heap_merge (prev, h);
+			i = _heap_free.prev;
 			h = prev;
 		} else {
 			h->tag = HEAP_TAG_FREE;
@@ -134,15 +134,15 @@ void heap_free (void * data)
 	if (n->next != &_heap_all) {
 		heap_s * next = structof (n, heap_s, all);
 		if (next->tag == HEAP_TAG_FREE) {
-			heap_merge (h, next);
 			list_remove (&(next->free));
-			p = _heap_free.prev;
+			heap_merge (h, next);
+			i = _heap_free.prev;
 		}
 	}
 
 	// Insert to free list head or tail
 
-	list_insert_after (p, &(h->free));
+	list_insert_after (i, &(h->free));
 
 	EVENT_UNLOCK (&_heap_lock);
 }

@@ -6,6 +6,7 @@
 
 struct segment {
 	list_s    all;
+	list_s    free;
 	seg_t     base;
 	segext_t  size;
 	word_t    flags;
@@ -70,7 +71,7 @@ void seg_put (segment_s *);
 segment_s * seg_dup (segment_s *);
 
 void mm_stat (seg_t, seg_t);
-void mm_get_usage (int * free, int * used);
+void mm_get_usage (unsigned int * free, unsigned int * used);
 
-#endif
-#endif
+#endif // __KERNEL__
+#endif // !__LINUXMT_MM_H
