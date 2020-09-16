@@ -75,9 +75,9 @@ int do_chmem(char *filename, int changeheap, int changestack,
 		return msg("%s: unsupported a.out version %u\n", filename,
 			   (unsigned)header.version);
 
-	dsegsize = header.dseg + header.bseg;
+	dsegsize = (size_t)header.dseg + (size_t)header.bseg;
 	if ((header.type & SEPBIT) == 0)	/* not seperate I&D*/
-		dsegsize += header.tseg;
+		dsegsize += (size_t)header.tseg;
 
 	if (header.chmem == 0) {				/* default heap*/
 		oldheap = INIT_HEAP;
@@ -93,13 +93,13 @@ int do_chmem(char *filename, int changeheap, int changestack,
 
 	if (header.chmem >= 0xFFF0) {
 		totdata = 0xFFF0;
-		total = totdata + header.tseg;
+		total = totdata + (size_t)header.tseg;
 	} else {
 		totdata = (unsigned long)oldheap+oldstack+dsegsize;
-		total = (unsigned long)header.tseg+header.dseg+header.bseg+oldheap+oldstack;
+		total = (unsigned long)(size_t)header.tseg+(size_t)header.dseg+(size_t)header.bseg+oldheap+oldstack;
 	}
 	printf("%5u  %5u  %5u  %5u  %5u   %6lu %6lu %s%s\n",
-		header.tseg, header.dseg, header.bseg, displayheap, header.minstack, totdata, total,
+		(size_t)header.tseg, (size_t)header.dseg, (size_t)header.bseg, displayheap, header.minstack, totdata, total,
 		filename, header.version == 0? " (v0 header)": "");
 
 	if (!changeheap && !changestack) {
@@ -129,13 +129,13 @@ int do_chmem(char *filename, int changeheap, int changestack,
 
 	if (newheap >= 0xFFF0) {
 		totdata = 0xFFF0;
-		total = totdata + header.tseg;
+		total = totdata + (size_t)header.tseg;
 	} else {
 		totdata = (unsigned long)newheap+newstack+dsegsize;
-		total = (unsigned long)header.tseg+header.dseg+header.bseg+newheap+newstack;
+		total = (unsigned long)(size_t)header.tseg+(size_t)header.dseg+(size_t)header.bseg+newheap+newstack;
 	}
 	printf("%5u  %5u  %5u  %5lu  %5lu   %6lu %6lu %s\n",
-	       header.tseg, header.dseg, header.bseg, heap, stack, totdata, total, filename);
+	       (size_t)header.tseg, (size_t)header.dseg, (size_t)header.bseg, heap, stack, totdata, total, filename);
 
 	header.chmem = (unsigned)heap;
 	header.minstack = (unsigned)stack;
