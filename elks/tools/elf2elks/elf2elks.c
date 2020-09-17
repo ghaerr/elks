@@ -540,35 +540,35 @@ output_header (void)
     mh.bseg = bss_sh->sh_size;
   mh.entry = entry;
 
-  if (stack || heap)
-    {
-      mh.version = 1;
-      mh.chmem = heap;
-      mh.minstack = stack;
-    }
-  else if (total_data)
+  if (total_data)
     {
       mh.version = 0;
       mh.chmem = total_data;
       mh.minstack = 0;
     }
-  else
+  else if (chmem)
     {
       uint32_t accum = 0;
       mh.version = 0;
-      if (chmem)
-	{
-	  if (tiny)
-	    accum = mh.tseg + mh.dseg + mh.bseg;
-	  else
-	    accum = mh.dseg + mh.bseg;
-	  if (accum + chmem > 0xfff0)
-	    error ("data segment too big with --chmem!");
-	  mh.chmem = accum + chmem;
-	}
+      if (tiny)
+	accum = mh.tseg + mh.dseg + mh.bseg;
       else
-	mh.chmem = 0;
+	accum = mh.dseg + mh.bseg;
+      if (accum + chmem > 0xfff0)
+	error ("data segment too big with --chmem!");
+      mh.chmem = accum + chmem;
       mh.minstack = 0;
+    }
+  else if (! heap && ! stack)
+    {
+      mh.version = tiny ? 0 : 1;
+      mh.chmem = mh.minstack = 0;
+    }
+  else
+    {
+      mh.version = 1;
+      mh.chmem = heap;
+      mh.minstack = stack;
     }
 
   start_output ();
