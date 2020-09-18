@@ -157,6 +157,8 @@ inet/telnet/telnet				:net
 inet/telnetd/telnetd			:net
 inet/tinyirc/tinyirc			:net
 inet/urlget/urlget				:net
+inet/urlget/urlget :::ftpget	:net
+inet/urlget/urlget :::httpget	:net
 #mtools/mcopy					:mtools					:1400k
 #mtools/mdel					:mtools					:1440k
 #mtools/mdir					:mtools					:1400k
