@@ -45,6 +45,7 @@ void retval_to_sock(void *sock,short int r)
 {
     struct tdb_return_data *ret_data = (struct tdb_return_data *)sbuf;
 
+    debug_tcpdev("tcpdev_retval_to_sock\n");
     ret_data->type = 0;
     ret_data->ret_value = r;
     ret_data->sock = sock;
@@ -140,12 +141,17 @@ void tcpdev_checkaccept(struct tcpcb_s *cb)
 {
     struct tdb_accept_ret *ret_data;
     struct tcpcb_s *listencb;
+    struct tcpcb_list_s *lp;
+    unsigned char abuf[sizeof(struct tdb_accept_ret)];
 
+    debug_tcpdev("tcpdev_checkaccept\n");
     if (!cb->unaccepted)
 	return;
-    listencb = &tcpcb_find_by_sock(cb->newsock)->tcpcb;
+    if (!(lp = tcpcb_find_by_sock(cb->newsock)))
+	return;
+    listencb = &lp->tcpcb;
 
-    ret_data = (struct tdb_accept_ret *)sbuf;
+    ret_data = (struct tdb_accept_ret *)abuf;
     ret_data->type = 123;		//FIXME
     ret_data->ret_value = 0;
     ret_data->sock = cb->sock;
@@ -155,7 +161,7 @@ void tcpdev_checkaccept(struct tcpcb_s *cb)
     cb->sock = listencb->newsock;
     cb->unaccepted = 0;
     listencb->newsock = 0;
-    write(tcpdevfd, sbuf, sizeof(struct tdb_accept_ret));
+    write(tcpdevfd, abuf, sizeof(struct tdb_accept_ret));
 }
 
 static void tcpdev_connect(void)
@@ -257,6 +263,7 @@ void tcpdev_checkread(struct tcpcb_s *cb)
     //int data_avail = CB_BUF_USED(cb);
     void * sock;
 
+    debug_tcpdev("tcpdev_checkread\n");
     if (cb->bytes_to_push <= 0)
 	return;
 
@@ -268,7 +275,6 @@ void tcpdev_checkread(struct tcpcb_s *cb)
 	ret_data->type = TDT_AVAIL_DATA;
 	ret_data->ret_value = cb->bytes_to_push;
 	ret_data->sock = sock;
-
 	write(tcpdevfd, sbuf, sizeof(struct tdb_return_data));
 	return;
     }
@@ -297,9 +303,14 @@ static void tcpdev_write(void)
     struct tcpcb_list_s *n;
     struct tcpcb_s *cb;
     void *  sock = db->sock;
+    int size;
 
-    db = (struct tdb_write *)sbuf;
     sock = db->sock;
+    /*
+     * Must save db->size as sbuf invalid after call to tcp_output,
+     * as when localhost tcpdev_checkread call uses same sbuf.
+     */
+    size = db->size;
 
     /* This is a bit ugly but I'm to lazy right now */
     if (tcp_retrans_memory > TCP_RETRANS_MAXMEM) {
@@ -327,19 +338,18 @@ printf("tcp: RETRANS limit exceeded\n");
 	    netconf_send(cb);		/* queue response*/
 	    tcpdev_checkread(cb);	/* set sock->data_avail to allow inet_read()*/
 	}
-	retval_to_sock(sock, db->size);
+	retval_to_sock(sock, size);
 	return;
     }
 
 //printf("ktcpdev WRITE sock %x window %ld timer %d\n", sock, cb->send_nxt - cb->send_una, tcp_timeruse);
 
     cb->flags = TF_PSH|TF_ACK;
-    cb->datalen = db->size;
+    cb->datalen = size;
     cb->data = db->data;
-
     tcp_output(cb);
 
-    retval_to_sock(sock, db->size);
+    retval_to_sock(sock, size);
 }
 
 static void tcpdev_release(void)
@@ -388,6 +398,7 @@ void tcpdev_sock_state(struct tcpcb_s *cb, int state)
     struct tdb_return_data *ret_data = (struct tdb_return_data *)sbuf;
     void * sock = cb->sock;
 
+	debug_tcpdev("tcpdev_sock_state\n");
     ret_data->type = TDT_CHG_STATE;
     ret_data->ret_value = state;
     ret_data->sock = sock;
@@ -404,35 +415,35 @@ void tcpdev_process(void)
 	if (len <= 0)
 		return;
 
-	//printf("tcpdev_process : read %d bytes\n",len);
+	debug_tcpdev("tcpdev_process read %d bytes\n",len);
 
 	switch (sbuf[0]){
 	case TDC_BIND:
-	    //printf("tcpdev_bind\n");
+	    debug_tcpdev("tcpdev_bind\n");
 	    tcpdev_bind();
 	    break;
 	case TDC_ACCEPT:
-	    //printf("tcpdev_accept\n");
+	    debug_tcpdev("tcpdev_accept\n");
 	    tcpdev_accept();
 	    break;
 	case TDC_CONNECT:
-	    //printf("tcpdev_connect\n");
+	    debug_tcpdev("tcpdev_connect\n");
 	    tcpdev_connect();
 	    break;
 	case TDC_LISTEN:
-	    //printf("tcpdev_listen\n");
+	    debug_tcpdev("tcpdev_listen\n");
 	    tcpdev_listen();
 	    break;
 	case TDC_RELEASE:
-	    //printf("tcpdev_release\n");
+	    debug_tcpdev("tcpdev_release\n");
 	    tcpdev_release();
 	    break;
 	case TDC_READ:
-	    //printf("tcpdev_read\n");
+	    debug_tcpdev("tcpdev_read\n");
 	    tcpdev_read();
 	    break;
 	case TDC_WRITE:
-	    //printf("tcpdev_write\n");
+	    debug_tcpdev("tcpdev_write\n");
 	    tcpdev_write();
 	    break;
 	}

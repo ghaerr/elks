@@ -12,6 +12,7 @@
 #define DEBUG_CSLIP	0
 
 /* leave these off for now - too much info*/
+#define DEBUG_TCPDEV	0		/* tcpdev_ routines*/
 #define DEBUG_MEM	0		/* debug memory allocations*/
 #define DEBUG_CB	0		/* dump control blocks*/
 
@@ -37,6 +38,12 @@
 #define debug_cslip	printf
 #else
 #define debug_cslip(...)
+#endif
+
+#if DEBUG_TCPDEV
+#define debug_tcpdev	printf
+#else
+#define debug_tcpdev(...)
 #endif
 
 #if DEBUG_MEM

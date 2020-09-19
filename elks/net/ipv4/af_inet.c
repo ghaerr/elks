@@ -245,8 +245,8 @@ static int inet_read(register struct socket *sock, char *ubuf, int size,
     register struct tdb_read *cmd;
     int ret;
 
-    debug_net("inet_READ(socket: 0x%x size:%d nonblock: %d bufin %d)\n", sock, size,
-	   nonblock, bufin_sem);
+    debug_net("inet_READ(%d)(socket: 0x%x size:%d nonblock: %d bufin %d)\n",
+	   current->pid, sock, size, nonblock, bufin_sem);
 
     if (size > TCPDEV_MAXREAD)
 	size = TCPDEV_MAXREAD;
