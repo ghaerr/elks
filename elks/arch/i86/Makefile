@@ -64,14 +64,17 @@ XINCLUDE = $(BASEDIR)/include/arch/asm-offsets.h
 
 boot/bootsect:   boot/bootsect.o
 	$(LD) $(LDFLAGS) $(SIBOFLAGS) -M -T $(TOPDIR)/elks/elks-tiny.ld -o boot/bootsect boot/bootsect.o > boot/bootsect.map
+	$(POSTLINK) --tiny boot/bootsect
 
 boot/netbootsect:	boot/netbootsect.o
 	$(LD) $(LDFLAGS) $(SIBOFLAGS) -M $(ARCH_LD) -s -o boot/netbootsect boot/netbootsect.o > boot/netbootsect.map
+	$(POSTLINK) boot/netbootsect
 
 boot/netbootsect.o:	boot/netbootsect.s
 
 boot/setup:   boot/setup.o
 	$(LD) $(LDFLAGS) $(SIBOFLAGS) -M -T $(TOPDIR)/elks/elks-tiny.ld -o boot/setup boot/setup.o > boot/setup.map
+	$(POSTLINK) --tiny boot/setup
 
 toolkit:
 	${MAKE} -C tools all
@@ -93,6 +96,7 @@ boot/system: $(XINCLUDE) $(AARCHIVES) $(ADRIVERS) sibo/crt1.o sibo/crt0.o
 		$(ARCH_DIR)/sibo/crt0.o $(ARCH_DIR)/sibo/crt1.o \
 		init/main.o $(ARCHIVES) $(DRIVERS) \
 		-o $(ARCH_DIR)/boot/system > $(ARCH_DIR)/boot/system.tmp ; \
+		$(POSTLINK) $(ARCH_DIR)/boot/system ; \
 		sort -k3,4 $(ARCH_DIR)/boot/system.tmp > $(ARCH_DIR)/boot/system.map ; \
 		rm -f $(ARCH_DIR)/boot/system.tmp )
 
@@ -109,7 +113,8 @@ boot/system:	$(XINCLUDE) $(AARCHIVES) $(ADRIVERS) boot/crt0.o
 	(cd $(BASEDIR) ; $(LD) $(LDFLAGS) -M $(ARCH_LD) -T $(TOPDIR)/elks/elks-small.ld \
 		$(ARCH_DIR)/boot/crt0.o \
 		init/main.o '-(' $(ARCHIVES) $(DRIVERS) '-)' \
-		-o $(ARCH_DIR)/boot/system > $(ARCH_DIR)/boot/system.map)
+		-o $(ARCH_DIR)/boot/system > $(ARCH_DIR)/boot/system.map ; \
+		$(POSTLINK) $(ARCH_DIR)/boot/system)
 #		sort -k3,4 $(ARCH_DIR)/boot/system.tmp > $(ARCH_DIR)/boot/system.map ; \
 #		rm -f $(ARCH_DIR)/boot/system.tmp )
 

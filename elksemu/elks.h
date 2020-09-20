@@ -99,9 +99,8 @@ struct __attribute__((packed)) elks_supl_hdr
 	uint32_t msh_tbase;
 	uint32_t msh_dbase;
 	/* even more optional fields */
-	uint16_t esh_ftseg;
+	uint16_t esh_ftseg, esh_reserved1;
 	uint32_t esh_ftrsize;
-	uint16_t esh_reserved1;
 	uint32_t esh_reserved2, esh_reserved3;
 };
 

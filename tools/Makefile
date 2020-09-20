@@ -17,21 +17,32 @@ SRCDIR=$(TOPDIR)/tools
 DISTDIR=$(CROSSDIR)/dist
 BUILDDIR=$(CROSSDIR)/build
 
+# Building BINUTILS and GCC in parallel
+
+# PARALLEL = -j3
+
 # BINUTILS for IA16
 
-BINUTILS_VER=16d43d2ccde42385b55d2f714a77fa34a7d0d3b7
+BINUTILS_VER=f19a905d1434da03940951913514a9ef12f0d7dd
 BINUTILS_DIST=binutils-ia16-$(BINUTILS_VER)
 
-$(DISTDIR)/$(BINUTILS_DIST).zip:
+$(DISTDIR)/$(BINUTILS_DIST).tar.gz:
 	mkdir -p $(DISTDIR)
-	rm -rf $(DISTDIR)/binutils-ia16-*.zip $(DISTDIR)/binutils-ia16-*.zip.tmp
-	cd $(DISTDIR) && wget https://github.com/tkchia/binutils-ia16/archive/$(BINUTILS_VER).zip -O $(BINUTILS_DIST).zip.tmp
-	cd $(DISTDIR) && mv $(BINUTILS_DIST).zip.tmp $(BINUTILS_DIST).zip
+	rm -rf $(DISTDIR)/binutils-ia16-*.tar.gz \
+	       $(DISTDIR)/binutils-ia16-*.tmp \
+	       $(DISTDIR)/binutils-ia16-*.zip
+	set -e; \
+	cd $(DISTDIR); \
+	until gunzip -t $(BINUTILS_DIST).tar.gz.tmp 2>/dev/null; do \
+		wget -c https://github.com/tkchia/binutils-ia16/archive/$(BINUTILS_VER).tar.gz \
+		     -O $(BINUTILS_DIST).tar.gz.tmp; \
+	done
+	cd $(DISTDIR) && mv $(BINUTILS_DIST).tar.gz.tmp $(BINUTILS_DIST).tar.gz
 
-$(BUILDDIR)/.binutils.src: $(DISTDIR)/$(BINUTILS_DIST).zip
+$(BUILDDIR)/.binutils.src: $(DISTDIR)/$(BINUTILS_DIST).tar.gz
 	mkdir -p $(BUILDDIR)
 	rm -rf $(BUILDDIR)/$(BINUTILS_DIST)
-	cd $(BUILDDIR) && unzip -q $(DISTDIR)/$(BINUTILS_DIST).zip
+	cd $(BUILDDIR) && tar -xzf $(DISTDIR)/$(BINUTILS_DIST).tar.gz
 	rm -rf $(BUILDDIR)/binutils-src
 	cd $(BUILDDIR) && mv $(BINUTILS_DIST) binutils-src
 	touch $(BUILDDIR)/.binutils.src
@@ -39,8 +50,8 @@ $(BUILDDIR)/.binutils.src: $(DISTDIR)/$(BINUTILS_DIST).zip
 $(BUILDDIR)/.binutils.build: $(BUILDDIR)/.binutils.src
 	cd $(BUILDDIR) && rm -rf binutils-build
 	mkdir -p $(BUILDDIR)/binutils-build
-	cd $(BUILDDIR)/binutils-build && ../binutils-src/configure --target=ia16-elf --prefix="$(CROSSDIR)" --disable-gdb --disable-libdecnumber --disable-readline --disable-sim --disable-nls
-	$(MAKE) -C $(BUILDDIR)/binutils-build
+	cd $(BUILDDIR)/binutils-build && ../binutils-src/configure --target=ia16-elf --prefix="$(CROSSDIR)" --enable-ld=default --enable-gold=yes --enable-targets=ia16-elf --enable-hpa-segelf=yes --disable-gdb --disable-libdecnumber --disable-readline --disable-sim --disable-nls
+	$(MAKE) -C $(BUILDDIR)/binutils-build $(PARALLEL)
 	touch $(BUILDDIR)/.binutils.build
 
 $(CROSSDIR)/.binutils.install: $(BUILDDIR)/.binutils.build
@@ -51,19 +62,26 @@ all:: $(CROSSDIR)/.binutils.install
 
 # GCC for IA16
 
-GCC_VER=d3440aa96f9768b7268174278f9b80c1a85410bd
+GCC_VER=45605f97ac4d313f8783e1ba9924d0aec0b1d6e8
 GCC_DIST=gcc-ia16-$(GCC_VER)
 
-$(DISTDIR)/$(GCC_DIST).zip:
+$(DISTDIR)/$(GCC_DIST).tar.gz:
 	mkdir -p $(DISTDIR)
-	rm -rf $(DISTDIR)/gcc-ia16-*.zip $(DISTDIR)/gcc-ia16-*.zip.tmp
-	cd $(DISTDIR) && wget https://github.com/tkchia/gcc-ia16/archive/$(GCC_VER).zip -O $(GCC_DIST).zip.tmp
-	cd $(DISTDIR) && mv $(GCC_DIST).zip.tmp $(GCC_DIST).zip
+	rm -rf $(DISTDIR)/gcc-ia16-*.tar.gz \
+	       $(DISTDIR)/gcc-ia16-*.tmp \
+	       $(DISTDIR)/gcc-ia16-*.zip
+	set -e; \
+	cd $(DISTDIR); \
+	until gunzip -t $(GCC_DIST).tar.gz.tmp 2>/dev/null; do \
+		wget -c https://github.com/tkchia/gcc-ia16/archive/$(GCC_VER).tar.gz \
+		     -O $(GCC_DIST).tar.gz.tmp; \
+	done
+	cd $(DISTDIR) && mv $(GCC_DIST).tar.gz.tmp $(GCC_DIST).tar.gz
 
-$(BUILDDIR)/.gcc.src: $(DISTDIR)/$(GCC_DIST).zip
+$(BUILDDIR)/.gcc.src: $(DISTDIR)/$(GCC_DIST).tar.gz
 	mkdir -p $(BUILDDIR)
 	rm -rf $(BUILDDIR)/$(GCC_DIST)
-	cd $(BUILDDIR) && unzip -q $(DISTDIR)/$(GCC_DIST).zip
+	cd $(BUILDDIR) && tar -xzf $(DISTDIR)/$(GCC_DIST).tar.gz
 	rm -rf $(BUILDDIR)/gcc-src
 	cd $(BUILDDIR) && mv $(GCC_DIST) gcc-src
 	cd $(BUILDDIR)/gcc-src && contrib/download_prerequisites
@@ -73,7 +91,7 @@ $(BUILDDIR)/.gcc.build: $(BUILDDIR)/.gcc.src $(BUILDDIR)/.binutils.build
 	cd $(BUILDDIR) && rm -rf gcc-build
 	mkdir $(BUILDDIR)/gcc-build
 	cd $(BUILDDIR)/gcc-build && ../gcc-src/configure --target=ia16-elf --prefix="$(CROSSDIR)" --without-headers --enable-languages=c --disable-libssp --without-isl
-	$(MAKE) -C $(BUILDDIR)/gcc-build
+	$(MAKE) -C $(BUILDDIR)/gcc-build $(PARALLEL)
 	touch $(BUILDDIR)/.gcc.build
 
 $(CROSSDIR)/.gcc.install: $(BUILDDIR)/.gcc.build
@@ -87,16 +105,23 @@ all:: $(CROSSDIR)/.gcc.install
 EMU86_VER=280167b8722ceb647ffd0405602a6fb5becd05ed
 EMU86_DIST=emu86-$(EMU86_VER)
 
-$(DISTDIR)/$(EMU86_DIST).zip:
+$(DISTDIR)/$(EMU86_DIST).tar.gz:
 	mkdir -p $(DISTDIR)
-	rm -rf $(DISTDIR)/emu86-*.zip $(DISTDIR)/emu86-*.zip.tmp
-	cd $(DISTDIR) && wget https://github.com/mfld-fr/emu86/archive/$(EMU86_VER).zip -O $(EMU86_DIST).zip.tmp
-	cd $(DISTDIR) && mv $(EMU86_DIST).zip.tmp $(EMU86_DIST).zip
+	rm -rf $(DISTDIR)/emu86-*.tar.gz \
+	       $(DISTDIR)/emu86-*.tmp \
+	       $(DISTDIR)/emu86-*.zip
+	set -e; \
+	cd $(DISTDIR); \
+	until gunzip -t $(EMU86_DIST).tar.gz.tmp 2>/dev/null; do \
+		wget -c https://github.com/mfld-fr/emu86/archive/$(EMU86_VER).tar.gz \
+		     -O $(EMU86_DIST).tar.gz.tmp; \
+	done
+	cd $(DISTDIR) && mv $(EMU86_DIST).tar.gz.tmp $(EMU86_DIST).tar.gz
 
-$(BUILDDIR)/.emu86.src: $(DISTDIR)/$(EMU86_DIST).zip
+$(BUILDDIR)/.emu86.src: $(DISTDIR)/$(EMU86_DIST).tar.gz
 	mkdir -p $(BUILDDIR)
 	rm -rf $(BUILDDIR)/$(EMU86_DIST)
-	cd $(BUILDDIR) && unzip -q $(DISTDIR)/$(EMU86_DIST).zip
+	cd $(BUILDDIR) && tar -xzf $(DISTDIR)/$(EMU86_DIST).tar.gz
 	rm -rf $(BUILDDIR)/emu86
 	cd $(BUILDDIR) && mv $(EMU86_DIST) emu86
 	touch $(BUILDDIR)/.emu86.src

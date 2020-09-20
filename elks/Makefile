@@ -69,12 +69,12 @@ endif
 #########################################################################
 # Define commands.
 
-Image: $(TOPDIR)/include/autoconf.h
+Image: $(TOPDIR)/include/autoconf.h tools
 	$(MAKE) $(ARCHIVES)
 	$(MAKE) init/main.o
 	cd $(ARCH_DIR) && $(MAKE) Image
 
-nbImage: $(TOPDIR)/include/autoconf.h $(ARCHIVES) init/main.o
+nbImage: $(TOPDIR)/include/autoconf.h $(ARCHIVES) init/main.o tools
 	${MAKE} -C $(ARCH_DIR) nbImage
 
 nb_install: nbImage
