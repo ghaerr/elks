@@ -72,13 +72,14 @@ struct tdb_write {
 #define	TDT_RETURN	1
 #define	TDT_CHG_STATE	2
 #define	TDT_AVAIL_DATA	3
+#define TDT_ACCEPT	4
 
 struct tdb_return_data {
     char type;
     int ret_value;
     struct socket *sock;
     int size;
-    unsigned char data;
+    unsigned char data[];
 };
 
 struct tdb_accept_ret {

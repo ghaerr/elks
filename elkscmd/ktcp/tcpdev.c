@@ -41,20 +41,21 @@ int tcpdev_init(char *fdev)
     return fd;
 }
 
-void retval_to_sock(void *sock,short int r)
+void retval_to_sock(void *sock, int r)
 {
-    struct tdb_return_data *ret_data = (struct tdb_return_data *)sbuf;
+    struct tdb_return_data return_data;
 
     debug_tcpdev("tcpdev_retval_to_sock\n");
-    ret_data->type = 0;
-    ret_data->ret_value = r;
-    ret_data->sock = sock;
-    write(tcpdevfd, sbuf, sizeof(struct tdb_return_data));
+    return_data.type = TDT_RETURN;
+    return_data.ret_value = r;
+    return_data.sock = sock;
+    return_data.size = 0;
+    write(tcpdevfd, &return_data, sizeof(return_data));
 }
 
 static void tcpdev_bind(void)
 {
-    struct tdb_bind *db = (struct tdb_bind *)sbuf;
+    struct tdb_bind *db = (struct tdb_bind *)sbuf; /* read from sbuf*/
     struct tcpcb_list_s *n;
     __u16 port;
 
@@ -101,10 +102,10 @@ static void tcpdev_bind(void)
 static void tcpdev_accept(void)
 {
     struct tcpcb_list_s *n,*newn;
-    struct tdb_accept *db = (struct tdb_accept *)sbuf;
-    struct tdb_accept_ret *ret_data;
+    struct tdb_accept *db = (struct tdb_accept *)sbuf; /* read from sbuf*/
     struct tcpcb_s *cb;
     void *  sock = db->sock;
+    struct tdb_accept_ret accept_ret;
 
     n = tcpcb_find_by_sock(sock);
     if (!n || n->tcpcb.state != TS_LISTEN) {
@@ -127,22 +128,19 @@ static void tcpdev_accept(void)
     cb->sock = db->newsock;
     cb->newsock = 0;
 
-    ret_data = (struct tdb_accept_ret *)sbuf;
-    ret_data->type = 0;
-    ret_data->ret_value = 0;
-    ret_data->sock = sock;
-    ret_data->addr_ip = cb->remaddr;
-    ret_data->addr_port = cb->remport;
-
-    write(tcpdevfd, sbuf, sizeof(struct tdb_accept_ret));
+    accept_ret.type = TDT_ACCEPT;
+    accept_ret.ret_value = 0;
+    accept_ret.sock = sock;
+    accept_ret.addr_ip = cb->remaddr;
+    accept_ret.addr_port = cb->remport;
+    write(tcpdevfd, &accept_ret, sizeof(accept_ret));
 }
 
 void tcpdev_checkaccept(struct tcpcb_s *cb)
 {
-    struct tdb_accept_ret *ret_data;
     struct tcpcb_s *listencb;
     struct tcpcb_list_s *lp;
-    unsigned char abuf[sizeof(struct tdb_accept_ret)];
+    struct tdb_accept_ret accept_ret;
 
     debug_tcpdev("tcpdev_checkaccept\n");
     if (!cb->unaccepted)
@@ -151,22 +149,21 @@ void tcpdev_checkaccept(struct tcpcb_s *cb)
 	return;
     listencb = &lp->tcpcb;
 
-    ret_data = (struct tdb_accept_ret *)abuf;
-    ret_data->type = 123;		//FIXME
-    ret_data->ret_value = 0;
-    ret_data->sock = cb->sock;
-    ret_data->addr_ip = cb->remaddr;
-    ret_data->addr_port = cb->remport;
+    accept_ret.type = TDT_ACCEPT;
+    accept_ret.ret_value = 0;
+    accept_ret.sock = cb->sock;
+    accept_ret.addr_ip = cb->remaddr;
+    accept_ret.addr_port = cb->remport;
 
     cb->sock = listencb->newsock;
     cb->unaccepted = 0;
     listencb->newsock = 0;
-    write(tcpdevfd, abuf, sizeof(struct tdb_accept_ret));
+    write(tcpdevfd, &accept_ret, sizeof(accept_ret));
 }
 
 static void tcpdev_connect(void)
 {
-    struct tdb_connect *db = (struct tdb_connect *)sbuf;
+    struct tdb_connect *db = (struct tdb_connect *)sbuf; /* read from sbuf*/
     struct tcpcb_list_s *n;
     ipaddr_t addr;
 
@@ -193,7 +190,7 @@ static void tcpdev_connect(void)
 
 static void tcpdev_listen(void)
 {
-    struct tdb_listen *db = (struct tdb_listen *)sbuf;
+    struct tdb_listen *db = (struct tdb_listen *)sbuf; /* read from sbuf*/
     struct tcpcb_list_s *n;
 
     n = tcpcb_find_by_sock(db->sock);
@@ -208,10 +205,10 @@ static void tcpdev_listen(void)
 
 static void tcpdev_read(void)
 {
-    struct tdb_read *db = (struct tdb_read *)sbuf;
+    struct tdb_read *db = (struct tdb_read *)sbuf; /* read/write from sbuf*/
+    struct tdb_return_data *ret_data;
     struct tcpcb_list_s *n;
     struct tcpcb_s *cb;
-    struct tdb_return_data *ret_data;
     int data_avail;
     void * sock = db->sock;
 
@@ -249,19 +246,18 @@ debug_tcp("tcpdev_read: returning -EPIPE to socket read\n");
 
 //printf("ktcpdev READ: sock %x %d bytes\n", sock, data_avail);
     ret_data = (struct tdb_return_data *)sbuf;
-    ret_data->type = 0;
+    ret_data->type = TDT_RETURN;
     ret_data->ret_value = data_avail;
+    ret_data->size = data_avail;
     ret_data->sock = sock;
-    tcpcb_buf_read(cb, &ret_data->data, data_avail);
-
-    write(tcpdevfd, sbuf, sizeof(struct tdb_return_data) + data_avail - 1);
+    tcpcb_buf_read(cb, ret_data->data, data_avail);
+    write(tcpdevfd, sbuf, sizeof(struct tdb_return_data) + data_avail);
 }
 
 void tcpdev_checkread(struct tcpcb_s *cb)
 {
-    struct tdb_return_data *ret_data = (struct tdb_return_data *)sbuf;
-    //int data_avail = CB_BUF_USED(cb);
     void * sock;
+    struct tdb_return_data return_data;
 
     debug_tcpdev("tcpdev_checkread\n");
     if (cb->bytes_to_push <= 0)
@@ -272,26 +268,29 @@ void tcpdev_checkread(struct tcpcb_s *cb)
 
 	/* Update the avail_data in the kernel socket (for select) */
 	sock = cb->sock;
-	ret_data->type = TDT_AVAIL_DATA;
-	ret_data->ret_value = cb->bytes_to_push;
-	ret_data->sock = sock;
-	write(tcpdevfd, sbuf, sizeof(struct tdb_return_data));
+	return_data.type = TDT_AVAIL_DATA;
+	return_data.ret_value = cb->bytes_to_push;
+	return_data.sock = sock;
+	return_data.size = 0;
+	write(tcpdevfd, &return_data, sizeof(return_data));
 	return;
     }
 
 #if 0 /* removed - wait_data mechanism no longer used in inet_read*/
+    struct tdb_return_data *ret_data = (struct tdb_return_data *)sbuf;
+    //int data_avail = CB_BUF_USED(cb);
     data_avail = cb->wait_data < cb->bytes_to_push ? cb->wait_data : cb->bytes_to_push;
     cb->bytes_to_push -= data_avail;
     if (cb->bytes_to_push <= 0)
 	tcpcb_need_push--;
 
 //printf("ktcpdev checkREAD: sock %x %d bytes\n", sock, data_avail);
-    ret_data->type = 0;
+    ret_data->type = TDT_RETURN;
     ret_data->ret_value = data_avail;
+    ret_data->size = data_avail;
     ret_data->sock = cb->sock;
-    tcpcb_buf_read(cb, &ret_data->data, data_avail);
-
-    write(tcpdevfd, sbuf, sizeof(struct tdb_return_data) + data_avail - 1);
+    tcpcb_buf_read(cb, ret_data->data, data_avail);
+    write(tcpdevfd, sbuf, sizeof(struct tdb_return_data) + data_avail);
 
     cb->wait_data = 0;
 #endif
@@ -299,7 +298,7 @@ void tcpdev_checkread(struct tcpcb_s *cb)
 
 static void tcpdev_write(void)
 {
-    struct tdb_write *db = (struct tdb_write *)sbuf;
+    struct tdb_write *db = (struct tdb_write *)sbuf; /* read from sbuf*/
     struct tcpcb_list_s *n;
     struct tcpcb_s *cb;
     void *  sock = db->sock;
@@ -354,7 +353,7 @@ printf("tcp: RETRANS limit exceeded\n");
 
 static void tcpdev_release(void)
 {
-    struct tdb_release *db = (struct tdb_release *)sbuf;
+    struct tdb_release *db = (struct tdb_release *)sbuf; /* read from sbuf*/
     struct tcpcb_list_s *n;
     struct tcpcb_s *cb;
     void * sock = db->sock;
@@ -395,15 +394,15 @@ debug_tcp("tcpdev: got close from ELKS process\n");
 
 void tcpdev_sock_state(struct tcpcb_s *cb, int state)
 {
-    struct tdb_return_data *ret_data = (struct tdb_return_data *)sbuf;
     void * sock = cb->sock;
+    struct tdb_return_data return_data;
 
-	debug_tcpdev("tcpdev_sock_state\n");
-    ret_data->type = TDT_CHG_STATE;
-    ret_data->ret_value = state;
-    ret_data->sock = sock;
-
-    write(tcpdevfd, sbuf, sizeof(struct tdb_return_data));
+    debug_tcpdev("tcpdev_sock_state\n");
+    return_data.type = TDT_CHG_STATE;
+    return_data.ret_value = state;
+    return_data.sock = sock;
+    return_data.size = 0;
+    write(tcpdevfd, &return_data, sizeof(return_data));
 }
 
 /* called every ktcp cycle when tcpdevfd data is ready*/

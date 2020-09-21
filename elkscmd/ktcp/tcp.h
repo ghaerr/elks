@@ -14,7 +14,7 @@
  * Must be at least as big as CB_IN_BUF_SIZE
  * And at least as big as TCPDEV_INBUFFERSIZE in <linuxmt/tcpdev.h> (currently 1024)
  */
-#define TCPDEV_BUFSIZ	(2048 + sizeof(struct tdb_return_data) - 1)
+#define TCPDEV_BUFSIZ	(CB_IN_BUF_SIZE + sizeof(struct tdb_return_data))
 
 /* max tcp buffer size (no ip header)*/
 #define TCP_BUFSIZ	(TCPDEV_BUFSIZ + sizeof(tcphdr_t) + TCP_OPT_MSS_LEN)
