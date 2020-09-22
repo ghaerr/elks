@@ -36,7 +36,6 @@ SRCS1 = \
 	fmemcmpb.S fmemcmpw.S \
 	setupb.S setupw.S \
 	string.S \
-	ia16-far-call-thunks.S \
 #	farlist.S \
 	# end of list
 
@@ -48,8 +47,6 @@ SRCS2 = \
 	peekb.s peekw.s pokeb.s pokew.s \
 	fmemsetb.s fmemsetw.s \
 	border.s \
-	ldivmod.s \
-	divmodsi3.s \
 	# end of list
 
 OBJS2 = $(SRCS2:.s=.o)
