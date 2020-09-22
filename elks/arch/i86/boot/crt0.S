@@ -45,16 +45,11 @@ _start:
 	mov	%cs,kernel_cs
 	mov	%ds,kernel_ds
 
-	mov	%ds,%ax       // in ROMCODE stack is ready placed
-	mov	%ax,%ss
-	mov	$task + TASK_USER_AX,%sp
+// Set SS:SP to task[0] kernel stack area
 
-/*
-! Space for temporary stack space _bootstack removed!!
-! Saved 768 byte boot stack.
-! Print sp in wake_up and you'll see that more than 512 bytes of stack are used!
-! Must be in data as its in use when we wipe the BSS
-*/
+	mov	%ds,%ax       // in ROMCODE stack is ready placed
+	mov	%ax,%ss       // SS=ES=DS
+	mov	$task + TASK_USER_AX,%sp
 
 	call	start_kernel	// Break point if it returns
 	int	$3

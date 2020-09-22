@@ -496,8 +496,8 @@ save_regs:
 //
 
 //
-// Called through arch_build_stack after kfork_proc(NULL) for the idle task
-// and run_init_process (after sys_execve) for /bin/init.
+// Called by run_init_process after sys_execve for the init task (/bin/init).
+// Stack setup by kfork_proc(init_task) and arch_build_stack.
 // Switch to kernel stack specified by 'current' and return ax=0 into user mode.
 //
 ret_from_syscall:
