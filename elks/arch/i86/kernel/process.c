@@ -92,7 +92,8 @@ void kfork_proc(char *addr)
 
     t->t_xregs.cs = kernel_cs;			/* Run in kernel space */
     t->t_regs.ds = t->t_regs.es = t->t_regs.ss = kernel_ds;
-    arch_build_stack(t, addr);
+    if (addr)
+	arch_build_stack(t, addr);
 }
 
 /*
