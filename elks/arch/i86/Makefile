@@ -58,6 +58,13 @@ DRIVERS := $(DRIVERS) \
 XINCLUDE = $(BASEDIR)/include/arch/asm-offsets.h
 
 #########################################################################
+# Path to GCC's compiler support routines (libgcc.a).
+
+# Ask GCC for the correct path to the library given our compiler options
+
+LIBGCC = "`$(CC) $(CFLAGS) -print-libgcc-file-name`"
+
+#########################################################################
 # Things to make.
 
 .PHONY: toolkit
@@ -94,7 +101,7 @@ ifeq ($(CONFIG_ARCH_SIBO), y)
 boot/system: $(XINCLUDE) $(AARCHIVES) $(ADRIVERS) sibo/crt1.o sibo/crt0.o
 	(cd $(BASEDIR) ; $(LD) $(LDFLAGS) $(SIBOFLAGS) -M $(ARCH_LD) \
 		$(ARCH_DIR)/sibo/crt0.o $(ARCH_DIR)/sibo/crt1.o \
-		init/main.o $(ARCHIVES) $(DRIVERS) \
+		init/main.o $(ARCHIVES) $(DRIVERS) $(LIBGCC) \
 		-o $(ARCH_DIR)/boot/system > $(ARCH_DIR)/boot/system.tmp ; \
 		$(POSTLINK) $(ARCH_DIR)/boot/system ; \
 		sort -k3,4 $(ARCH_DIR)/boot/system.tmp > $(ARCH_DIR)/boot/system.map ; \
@@ -112,7 +119,7 @@ else
 boot/system:	$(XINCLUDE) $(AARCHIVES) $(ADRIVERS) boot/crt0.o
 	(cd $(BASEDIR) ; $(LD) $(LDFLAGS) -M $(ARCH_LD) -T $(TOPDIR)/elks/elks-small.ld \
 		$(ARCH_DIR)/boot/crt0.o \
-		init/main.o '-(' $(ARCHIVES) $(DRIVERS) '-)' \
+		init/main.o '-(' $(ARCHIVES) $(DRIVERS) '-)' $(LIBGCC) \
 		-o $(ARCH_DIR)/boot/system > $(ARCH_DIR)/boot/system.map ; \
 		$(POSTLINK) $(ARCH_DIR)/boot/system)
 #		sort -k3,4 $(ARCH_DIR)/boot/system.tmp > $(ARCH_DIR)/boot/system.map ; \
