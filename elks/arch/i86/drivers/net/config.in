@@ -7,7 +7,9 @@ mainmenu_option next_comment
 	if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
 		bool 'Ethernet device support' CONFIG_ETH n
 		if [ "$CONFIG_ETH" = "y" ]; then
-			bool 'NE2K device driver' CONFIG_ETH_NE2K n
+			choice 'Select Ethernet device' \
+				"ne2k   CONFIG_ETH_NE2K \
+				 WD/SMC CONFIG_ETH_WD" ne2k
 		fi
 	fi
 endmenu

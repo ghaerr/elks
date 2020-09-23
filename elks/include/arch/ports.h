@@ -6,7 +6,7 @@
  *  IRQ	ELKS Device         Config Option           Status
  *  0   Timer                                       Required
  *  1   Keyboard            CONFIG_CONSOLE_DIRECT   Optional
- *  2*  Cascade -> 9 AT, Unused on XT               Optional on XT, not available on AT
+ *  2*  Cascade -> 9 on AT  CONFIG_ETH_WD           Optional on XT, not available on AT
  *  3   Com2 (/dev/ttyS1)   CONFIG_CHAR_DEV_RS      Optional
  *  4   Com1 (/dev/ttyS0)   CONFIG_CHAR_DEV_RS      Optional
  *  5*  Unused
@@ -57,6 +57,10 @@
 #define CONFIG_NEED_IRQ12
 #endif
 
+#ifdef CONFIG_ETH_WD
+#define CONFIG_NEED_IRQ2
+#endif
+
 /* unused*/
 //#define CONFIG_NEED_IRQ10
 //#define CONFIG_NEED_IRQ11
@@ -101,6 +105,10 @@
 /* ne2k, ne2k.c */
 #define NE2K_IRQ	12
 #define NE2K_PORT	0x300
+
+/* wd, wd.c*/
+#define WD_IRQ		2
+#define WD_PORT		0x240
 
 /* obsolete - experimental IDE hard drive, directhd.c (broken)*/
 #define HD1_PORT	0x1f0
