@@ -464,7 +464,7 @@ static struct file_operations tty_fops = {
 #endif
 };
 
-void tty_init(void)
+void INITPROC tty_init(void)
 {
     register struct tty *ttyp;
     int i;

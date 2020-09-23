@@ -456,7 +456,7 @@ void rs_conout(dev_t dev, char Ch)
     outb(Ch, sp->io + UART_TX);
 }
 
-void serial_console_init(void)
+void INITPROC serial_console_init(void)
 {
     register struct serial_info *sp = ports;
     int ttyno = 0;

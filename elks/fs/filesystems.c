@@ -8,6 +8,7 @@
 
 #include <linuxmt/config.h>
 #include <linuxmt/types.h>
+#include <linuxmt/init.h>
 #include <linuxmt/fs.h>
 
 #include <linuxmt/minix_fs.h>
@@ -15,7 +16,7 @@
 #include <linuxmt/msdos_fs.h>
 #include <linuxmt/major.h>
 
-void fs_init(void)
+void INITPROC fs_init(void)
 {
 #ifdef CONFIG_MINIX_FS
 	init_minix_fs();

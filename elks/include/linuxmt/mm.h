@@ -60,8 +60,6 @@ extern int verified_memcpy_fromfs(void *,void *,size_t);
 
 /* Memory allocation */
 
-void mm_init (seg_t, seg_t);
-
 segment_s * seg_alloc (segext_t, word_t);
 void seg_free (segment_s *);
 
@@ -70,7 +68,6 @@ void seg_put (segment_s *);
 
 segment_s * seg_dup (segment_s *);
 
-void mm_stat (seg_t, seg_t);
 void mm_get_usage (unsigned int * free, unsigned int * used);
 
 #endif // __KERNEL__

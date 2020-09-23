@@ -272,7 +272,7 @@ int sys_sbrk (int increment, __u16 * pbrk)
 
 // Initialize the memory manager.
 
-void mm_init(seg_t start, seg_t end)
+void INITPROC mm_init(seg_t start, seg_t end)
 {
 	list_init (&_seg_all);
 	list_init (&_seg_free);

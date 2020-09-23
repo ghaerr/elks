@@ -146,7 +146,7 @@ static struct gendisk bioshd_gendisk = {
 
 #ifdef CONFIG_BLK_DEV_BHD
 
-static unsigned short int bioshd_gethdinfo(void) {
+static unsigned short int INITPROC bioshd_gethdinfo(void) {
     unsigned short int ndrives = 0;
     int drive;
     register struct drive_infot *drivep = &drive_info[0];
@@ -189,7 +189,7 @@ static unsigned short int bioshd_gethdinfo(void) {
 
 #ifdef CONFIG_BLK_DEV_BFD
 
-static unsigned short int bioshd_getfdinfo(void)
+static unsigned short int INITPROC bioshd_getfdinfo(void)
 {
     unsigned short int ndrives;
 
@@ -520,7 +520,7 @@ static struct file_operations bioshd_fops = {
 #undef TEMP_PRINT_DRIVES_MAX
 #endif
 
-int init_bioshd(void)
+int INITPROC bioshd_init(void)
 {
     register struct gendisk *ptr;
     int count;
@@ -876,7 +876,7 @@ static void bioshd_geninit(void)
 }
 
 /* convert a bios drive number to a bioshd kdev_t*/
-kdev_t bioshd_conv_bios_drive(unsigned int biosdrive)
+kdev_t INITPROC bioshd_conv_bios_drive(unsigned int biosdrive)
 {
     int minor;
     int partition = 0;

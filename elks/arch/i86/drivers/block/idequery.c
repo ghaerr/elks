@@ -1,4 +1,3 @@
-
 /*
  * Query the IDE/ATA drive for physical data
  * Added by HS - sep-2020
@@ -6,10 +5,11 @@
  * ELKS: ported from directhd.c 
  */
 
+#include <linuxmt/init.h>
 #include <linuxmt/kernel.h>
-#include <arch/io.h>
 #include <linuxmt/heap.h>
 #include <arch/ports.h>
+#include <arch/io.h>
 #include "blk.h"
 
 #define IDE_DRIVE_ID	0xec	/* IDE command to get access to drive data */
@@ -31,14 +31,14 @@
 
 static int io_ports[2] = { HD1_PORT, HD2_PORT };	/* physical port addresses */
 
-void insw(word_t port, word_t *buffer, int count) {
+static void INITPROC insw(word_t port, word_t *buffer, int count) {
 
     do {
    	*buffer++ = inw(port);
     } while (--count);
 }
 
-void out_hd(int drive, word_t cmd)
+static void INITPROC out_hd(int drive, word_t cmd)
 {
     word_t port = io_ports[drive >> 1];
 
@@ -52,7 +52,7 @@ void out_hd(int drive, word_t cmd)
 }
 
 #if IDE_DEBUG
-static void dump_ide(word_t *buffer, int size) {
+static void INITPROC dump_ide(word_t *buffer, int size) {
 	int counter = 0;
 
 	do {
@@ -71,7 +71,7 @@ static void dump_ide(word_t *buffer, int size) {
  * Could detect ATAPI drives here (extreme head count).
  */
 
-int get_ide_data(int drive, struct drive_infot *drive_info) {
+int INITPROC get_ide_data(int drive, struct drive_infot *drive_info) {
 
 	word_t port = io_ports[drive >> 1];
 	int retval = 0;

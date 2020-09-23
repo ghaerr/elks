@@ -98,6 +98,9 @@
 #include <linuxmt/config.h>
 #include <linuxmt/boot.h>
 
+// Relocating loader debug option
+#define DEBUG_LOADER	0
+
 // Signature words to ensure LILO loaded us right
 #define SIG1	0xAA55
 #define SIG2	0x5A5A
@@ -554,7 +557,7 @@ sys_hdr_good:
 
 // Relocate kernel code
 
-	mov $'T',%ax     // display kernel .text segment
+	mov $'t',%ax     // display kernel .text segment
 	call putc
 
 	mov $SYSSEG,%ax  // start of a.out
@@ -592,7 +595,7 @@ sys_hdr_good:
 	and %cx,%cx
 	jz sys_no_far_text
 
-	mov $'F',%ax      // display kernel .fartext segment
+	mov $'f',%ax      // display kernel .fartext segment
 	call putc
 
 	mov $SYSSEG,%ax
@@ -621,7 +624,7 @@ sys_no_far_text:
 	shr %cl,%ax
 	mov %ax,%cx
 
-	mov $'D',%ax
+	mov $'d',%ax
 	call putc
 
 	mov $SYSSEG,%ax
@@ -692,6 +695,7 @@ data_reloc:
 	add $8,%si
 	jmp data_reloc
 3:
+
 	mov $'\r',%ax
 	call putc
 	mov $'\n',%ax
@@ -739,6 +743,7 @@ relocat:
 
 	mov -22(%bp),%ax   // kernel .data segment
 3:
+#if DEBUG_LOADER
 	push %ax           // display [seg:off=val]
 	mov $'[',%ax
 	call putc
@@ -756,7 +761,7 @@ relocat:
 	mov $']',%ax
 	call putc
 	pop %ax
-
+#endif
 	mov %ax,%es:(%di)
 	ret
 
