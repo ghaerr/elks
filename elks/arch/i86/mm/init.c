@@ -30,7 +30,7 @@
 char proc_name[16];
 __u16 kernel_cs, kernel_ds;
 
-void mm_stat(seg_t start, seg_t end)
+void INITPROC mm_stat(seg_t start, seg_t end)
 {
     register int i;
     register char *cp;
@@ -69,15 +69,17 @@ void mm_stat(seg_t start, seg_t end)
 
 #endif
 
-    printk(".\nELKS kernel %s (%u text, %u ftext, %u data, %u bss, %u heap)\n"
-	   "Kernel text at %x:0000, data at %x:0000, "
-	   "%uK for user processes.\n",
+    printk(".\nELKS kernel %s (%u text, %u ftext, %u data, %u bss, %u heap)\n",
 	   system_utsname.release,
 	   (unsigned)_endtext, (unsigned)_endftext, (unsigned)_enddata,
 	   (unsigned)_endbss - (unsigned)_enddata,
-	   1 + ~ (unsigned) _endbss,
-	   kernel_cs, kernel_ds,
-	   (int) ((end - start) >> 6));
+	   1 + ~ (unsigned) _endbss);
+	printk("Kernel text at %x:0000, ", kernel_cs);
+#ifdef CONFIG_FARTEXT_KERNEL
+	printk("ftext %x:0000, ", (unsigned)((long)kernel_init >> 16));
+#endif
+	printk("data %x:0000, %uK for user processes\n",
+	   kernel_ds, (int) ((end - start) >> 6));
 
     if (setupb(0x1ff) == 0xAA && arch_cpu > 5)
 	printk("ps2: PS/2 pointing device detected\n");

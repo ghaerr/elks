@@ -28,12 +28,9 @@
 #include <arch/system.h>
 #include <arch/segment.h>
 
-extern void rd_load();
-extern void chr_dev_init();
-extern int blk_dev_init();
 int boot_rootdev;	/* set by /bootopts options if configured*/
 
-void device_setup(void)
+void INITPROC device_init(void)
 {
     register struct gendisk *p;
 
@@ -56,7 +53,7 @@ void device_setup(void)
      * device number.  -- tkchia 20200308
      */
     if (!boot_rootdev && (setupw(0x1f6) & EF_BIOS_DEV_NUM) != 0) {
-	extern kdev_t bioshd_conv_bios_drive(unsigned int biosdrive);
+	extern kdev_t INITPROC bioshd_conv_bios_drive(unsigned int biosdrive);
 
 	kdev_t rootdev = bioshd_conv_bios_drive((unsigned)ROOT_DEV);
 

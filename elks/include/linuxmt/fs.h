@@ -117,9 +117,6 @@
 #define IS_APPEND(inode) ((inode)->i_flags & S_APPEND)
 #define IS_IMMUTABLE(inode) ((inode)->i_flags & S_IMMUTABLE)
 
-extern void buffer_init(void);
-extern void inode_init(void);
-
 #ifndef CONFIG_FS_EXTERNAL_BUFFER
 
 #define map_buffer(_a)
@@ -518,7 +515,6 @@ extern size_t block_write(struct inode *,struct file *,char *,size_t);
 #endif
 
 extern int fd_check(unsigned int,char *,size_t,int,struct file **);
-extern void fs_init(void);
 
 /*@-namechecks@*/
 

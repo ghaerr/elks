@@ -84,7 +84,7 @@ void stack_check(void)
  *	so we fork onto our kernel stack.
  */
 
-void kfork_proc(char *addr)
+void kfork_proc(void (*addr))
 {
     register struct task_struct *t;
 

@@ -45,27 +45,50 @@ static char *envp_init[MAX_INIT_ENVS+1];
 static unsigned char options[256];
 
 extern int boot_rootdev;
-static int parse_options(void);
-static void finalize_options(void);
-static char *option(char *s);
+static char * INITPROC root_dev_name(int dev);
+static int INITPROC parse_options(void);
+static void INITPROC finalize_options(void);
+static char * INITPROC option(char *s);
 #endif
 
 static void init_task(void);
 extern int run_init_process(char *cmd);
 extern int run_init_process_sptr(char *cmd, char *sptr, int slen);
 
+
 void start_kernel(void)
+{
+    kernel_init();
+
+    /* fork and run procedure init_task() as task #1*/
+    kfork_proc(init_task);
+    wake_up_process(&task[1]);
+
+    /*
+     * We are now the idle task. We won't run unless no other process can run.
+     */
+    while (1) {
+        schedule();
+
+#ifdef CONFIG_IDLE_HALT
+        idle_halt ();
+#endif
+    }
+}
+
+void INITPROC kernel_init(void)
 {
     seg_t base, end;
 
-/* We set the idle task as #0, and init_task() will be task #1 */
+    /* this block of functions don't have console support, use early_printk*/
 
-    sched_init();	/* This block of functions don't need console */
+    /* sched_init sets us (the current stack) to be idle task #0*/
+    sched_init();
     setup_arch(&base, &end);
     mm_init(base, end);
     buffer_init();
     inode_init();
-    init_IRQ();
+    irq_init();
     tty_init();
 
 #if defined(CONFIG_CONSOLE_DIRECT) || defined(CONFIG_CONSOLE_BIOS)
@@ -84,7 +107,7 @@ void start_kernel(void)
     serial_console_init();
 #endif
 
-    device_setup();
+    device_init();
 
 #ifdef CONFIG_SOCKET
     sock_init();
@@ -97,22 +120,9 @@ void start_kernel(void)
 #endif
 
     mm_stat(base, end);
-
-    kfork_proc(init_task);
-    wake_up_process(&task[1]);
-
-    /*
-     * We are now the idle task. We won't run unless no other process can run.
-     */
-    while (1) {
-        schedule();
-
-#ifdef CONFIG_IDLE_HALT
-        idle_halt ();
-#endif
-    }
 }
 
+/* this procedure runs in user mode as task 1*/
 static void init_task(void)
 {
     int num;
@@ -172,7 +182,7 @@ static struct dev_name_struct {
  * Convert a root device number to name.
  * Device number could be bios device, not kdev_t.
  */
-static char *root_dev_name(int dev)
+static char * INITPROC root_dev_name(int dev)
 {
 	int i;
 #define NAMEOFF	13
@@ -196,7 +206,7 @@ static char *root_dev_name(int dev)
 /*
  * Convert a /dev/ name to device number.
  */
-static int parse_dev(char * line)
+static int INITPROC parse_dev(char * line)
 {
 	int base = 0;
 	struct dev_name_struct *dev = devices;
@@ -224,7 +234,7 @@ static int parse_dev(char * line)
  * This routine also checks for options meant for the kernel.
  * These options are not given to init - they are for internal kernel use only.
  */
-static int parse_options(void)
+static int INITPROC parse_options(void)
 {
 	char *line = (char *)options;
 	char *next;
@@ -309,7 +319,7 @@ static int parse_options(void)
 	return 1;	/* success*/
 }
 
-static void finalize_options(void)
+static void INITPROC finalize_options(void)
 {
 	int i;
 
@@ -360,7 +370,7 @@ static void finalize_options(void)
 }
 
 /* return whitespace-delimited string*/
-static char *option(char *s)
+static char * INITPROC option(char *s)
 {
 	for(; *s != ' ' && *s != '\t' && *s != '\n'; ++s) {
 		if (*s == '\0')

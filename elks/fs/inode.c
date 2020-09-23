@@ -6,6 +6,7 @@
 
 #include <linuxmt/config.h>
 #include <linuxmt/types.h>
+#include <linuxmt/init.h>
 #include <linuxmt/stat.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/kernel.h>
@@ -82,7 +83,7 @@ void clear_inode(register struct inode *inode) /* and put_first_lru() */
     inode_lru = inode;
 }
 
-void inode_init(void)
+void INITPROC inode_init(void)
 {
     register struct inode *inode = inode_block + 1;
 

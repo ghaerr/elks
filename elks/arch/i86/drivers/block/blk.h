@@ -310,6 +310,3 @@ struct drive_infot {            /* CHS per drive*/
     int heads;
     int fdtype;                 /* floppy fd_types[] index  or -1 if hd */
 };
-
-extern int get_ide_data(int, struct drive_infot *);
-

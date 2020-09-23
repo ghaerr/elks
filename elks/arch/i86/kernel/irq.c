@@ -213,7 +213,7 @@ void free_irq(unsigned int irq)
  *	IRQ setup.
  */
 
-void init_IRQ(void)
+void INITPROC irq_init(void)
 {
     flag_t flags;
 
