@@ -382,9 +382,10 @@ static void tcp_last_ack(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 /* called every ktcp run cycle*/
 void tcp_update(void)
 {
+    if (cbs_in_time_wait > 0 || cbs_in_user_timeout > 0) {
 debug_tcp("ktcp: update %x,%x\n", cbs_in_time_wait, cbs_in_user_timeout);
-    if (cbs_in_time_wait > 0 || cbs_in_user_timeout > 0)
 	tcpcb_expire_timeouts();
+    }
 
     //if (tcpcb_need_push > 0)
 	tcpcb_push_data();

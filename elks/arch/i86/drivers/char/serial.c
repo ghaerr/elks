@@ -291,7 +291,8 @@ void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
 	    chq_addch_nowakeup(q, c);
     } while (INB(io + UART_LSR) & UART_LSR_DR); /* while data available (for FIFOs)*/
 
-    wake_up(&q->wait);
+    if (q->len)		/* don't wakeup unless chars else EINTR result*/
+	wake_up(&q->wait);
 }
 #endif
 

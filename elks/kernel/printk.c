@@ -31,6 +31,8 @@
 #include <linuxmt/kdev_t.h>
 #include <linuxmt/major.h>
 #include <linuxmt/ntty.h>
+#include <linuxmt/debug.h>
+#include <linuxmt/signal.h>
 #include <stdarg.h>
 
 dev_t dev_console;
@@ -44,6 +46,7 @@ static void (*kputc)(dev_t, char) = rs_conout;
 extern void Console_conout(dev_t, char);
 static void (*kputc)(dev_t, char) = Console_conout;
 #endif
+
 
 void set_console(dev_t dev)
 {
@@ -264,3 +267,32 @@ void panic(char *error, ...)
 
     halt();
 }
+
+#if DEBUG_EVENT
+static int dprintk_on = DEBUG_STARTDEF;	/* toggled by debug events*/
+static void (*dprintk_cb)();		/* debug event callback function*/
+
+void debug_setcallback(void (*cbfunc))
+{
+    dprintk_cb = cbfunc;
+}
+
+void debug_event(void)
+{
+    dprintk_on = !dprintk_on;
+    if (dprintk_cb)
+	dprintk_cb();
+    kill_all(SIGURG);
+}
+
+void dprintk(char *fmt, ...)
+{
+    va_list p;
+
+    if (!dprintk_on)
+	return;
+    va_start(p, fmt);
+    vprintk(fmt, p);
+    va_end(p);
+}
+#endif

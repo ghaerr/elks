@@ -271,8 +271,10 @@ static void will_option (int optsrt)
 			struct termios termios;
 			tcgetattr(0, &termios);
 			termios.c_iflag &= ~(ICRNL|IGNCR|INLCR|IXON|IXOFF);
-			termios.c_oflag &= ~(OPOST);
-			termios.c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG);
+			/*termios.c_oflag &= ~(OPOST);*/	/* leave OPOST|ONLCR on*/
+			termios.c_lflag &= ~(ECHO|ECHONL|ICANON);	/* leave ISIG on for ^P*/
+			termios.c_cc[VINTR] = 0;	/* turn ^C off*/
+			termios.c_cc[VSUSP] = 0;	/* turn ^Z off*/
 			tcsetattr(0, TCSANOW, &termios);
 			DO_echo= TRUE;
 			reply[0]= IAC;
@@ -448,7 +450,7 @@ assert (iac == IAC);
 	case IAC_NOP:
 		break;
 	case IAC_DataMark:
-fprintf(stderr, "got a DataMark\r\n");
+//fprintf(stderr, "got a DataMark\r\n");
 		break;
 	case IAC_BRK:
 fprintf(stderr, "got a BRK\r\n");
