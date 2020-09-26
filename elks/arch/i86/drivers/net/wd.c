@@ -18,14 +18,7 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/limits.h>
 #include <linuxmt/mm.h>
-
-#define DEBUG_ETH	0	/* set =1 for debugging */
-
-#if DEBUG_ETH
-#define debug_eth	printk
-#else
-#define debug_eth(...)
-#endif
+#include <linuxmt/debug.h>
 
 /* I/O delay settings */
 #define INB	inb	/* use inb_p for 1us delay */
