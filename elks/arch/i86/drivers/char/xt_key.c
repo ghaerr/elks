@@ -31,7 +31,6 @@
 #include <linuxmt/chqueue.h>
 #include <linuxmt/signal.h>
 #include <linuxmt/ntty.h>
-#include <linuxmt/debug.h>
 
 #include <arch/io.h>
 #include <arch/ports.h>
@@ -229,6 +228,7 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	    ModeState &= ~mode;		/* key up: clear these and other modes*/
         } else
 	    ModeState |= mode;		/* key down: set mode bit */
+
         /* ModeState updated - now return */
         return;
     }
