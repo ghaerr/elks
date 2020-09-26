@@ -47,7 +47,6 @@ extern void Console_conout(dev_t, char);
 static void (*kputc)(dev_t, char) = Console_conout;
 #endif
 
-static int dprintk_on = DEBUG_STARTDEF;	/* toggled by debug events*/
 
 void set_console(dev_t dev)
 {
@@ -270,6 +269,7 @@ void panic(char *error, ...)
 }
 
 #if DEBUG_EVENT
+static int dprintk_on = DEBUG_STARTDEF;	/* toggled by debug events*/
 static void (*dprintk_cb)();		/* debug event callback function*/
 
 void debug_setcallback(void (*cbfunc))

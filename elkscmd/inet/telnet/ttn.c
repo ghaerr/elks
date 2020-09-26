@@ -450,7 +450,7 @@ assert (iac == IAC);
 	case IAC_NOP:
 		break;
 	case IAC_DataMark:
-fprintf(stderr, "got a DataMark\r\n");
+//fprintf(stderr, "got a DataMark\r\n");
 		break;
 	case IAC_BRK:
 fprintf(stderr, "got a BRK\r\n");
