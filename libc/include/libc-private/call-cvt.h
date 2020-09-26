@@ -18,7 +18,15 @@
    segment */
 # define CALL_N_(s)	pushw %cs; call s
 /* How to call a subroutine which may be in a different text segment */
-# define CALL_(s)	.reloc .+3, R_386_OZSEG16, (s); lcall $0, $(s)
+# ifdef __IA16_ABI_SEGELF
+/* FIXME: make this neater... */
+#   define CALL__(s, a)	.set __tmp, .+3; \
+			.reloc __tmp, R_386_SEG16, #a; \
+			lcall $0, $(s)
+#   define CALL_(s)	CALL__(s, s##!)
+# else
+#   define CALL_(s)	.reloc .+3, R_386_OZSEG16, (s); lcall $0, $(s)
+# endif
 #else
 # define FAR_ADJ_	0
 # ifdef __IA16_CALLCVT_STDCALL

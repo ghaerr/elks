@@ -5,7 +5,7 @@ SECTIONS {
 		/* IA-16 segment start markers. */
 		*(".text!*" ".text.*!"
 		  ".fartext.f.*0!" ".fartext.f.*2!"
-		  ".fartext.f.*4!" ".fartext.f.*6!"
+		  ".fartext.f.*4!" ".fartext.f.*6!")
 
 		/* Actual segment contents. */
 		*(.text .text$* ".text.*[^&]"

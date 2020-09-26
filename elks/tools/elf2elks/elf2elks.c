@@ -391,10 +391,6 @@ input_for_header (void)
   check_scn_overlap (ftext_sh, "far text", bss_sh, "BSS");
   check_scn_overlap (data_sh, "data", bss_sh, "BSS");
 
-  if (data && bss
-      && data_sh->sh_addr + data_sh->sh_size != bss_sh->sh_addr)
-    error ("BSS must come right after data segment!");
-
   if (tiny)
     {
       if (ftext)
@@ -534,10 +530,13 @@ output_header (void)
 
   if (text_sh)
     mh.tseg = text_sh->sh_size;
-  if (data_sh)
-    mh.dseg = data_sh->sh_size;
   if (bss_sh)
     mh.bseg = bss_sh->sh_size;
+  if (data_sh)
+    {
+      mh.dseg = data_sh->sh_size;
+      mh.bseg += bss_sh->sh_addr - data_sh->sh_addr - data_sh->sh_size;
+    }
   mh.entry = entry;
 
   if (total_data)
@@ -653,8 +652,18 @@ convert_reloc (struct minix_reloc *porel, const Elf32_Rel *prel,
   else if (addend * 0x10 == data_sh->sh_addr)
     porel->symndx = S_DATA;
   else
-    error ("R_386_SEGRELATIVE relocation has bad in-place addend %#" PRIx16,
-	   addend);
+    {
+      const char *place_scn_name = "<unknown>";
+      if (place_scn == text)
+	place_scn_name = ".text";
+      else if (place_scn == ftext)
+	place_scn_name = ".fartext";
+      else if (place_scn == data)
+	place_scn_name = ".data";
+      error ("R_386_SEGRELATIVE relocation at place %s:%#" PRIx16 " has bad "
+	     "in-place addend %#" PRIx16,
+	     place_scn_name, offset_in_scn, addend);
+    }
 
   porel->vaddr = offset_in_scn;
   porel->type = R_SEGWORD;
