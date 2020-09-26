@@ -49,8 +49,6 @@
 
 #define RX_PAGES	(WD_STOP_PG - WD_FIRST_RX_PG)
 
-#define ETH_PAGE_SIZE	256U
-
 #define WD_RESET	0x80U	/* Board reset */
 #define WD_MEMENB	0x40U	/* Enable the shared memory */
 #define WD_IO_EXTENT	32U
@@ -142,7 +140,6 @@ static struct wait_queue txwait;
 static byte_t wd_inuse = 0U;
 static byte_t mac_addr[6U];
 
-static byte_t recv_buf[MAX_PACKET_ETH + sizeof(e8390_pkt_hdr)];
 static byte_t send_buf[MAX_PACKET_ETH];
 
 static unsigned char current_rx_page = WD_FIRST_RX_PG;
@@ -252,12 +249,12 @@ static void wd_term(void)
  * Get packet
  */
 
-static int wd_pack_get(byte_t * pack)
+static int wd_pack_get(char *data, size_t len)
 {
-	const e8390_pkt_hdr *rxhdr = (e8390_pkt_hdr *)pack;
-	byte_t *hdr_start;
+	const e8390_pkt_hdr __far *rxhdr;
+	word_t hdr_start;
 	unsigned char this_frame;
-	int res = 0;
+	int res = -EIO;
 
 	clr_irq();
 	do {
@@ -267,17 +264,15 @@ static int wd_pack_get(byte_t * pack)
 		if (this_frame >= WD_STOP_PG)
 			this_frame = WD_FIRST_RX_PG;
 		if (this_frame != current_rx_page)
-			debug_eth("Mismatched read page pointers %2x vs %2x.\n",
+			debug_eth("eth: mismatched read page pointers %2x vs %2x.\n",
 				this_frame, current_rx_page);
-		hdr_start = (byte_t *)((this_frame - WD_START_PG) << 8U);
-		fmemcpyb(pack, kernel_ds, hdr_start, WD_SHMEMSEG,
-			ETH_PAGE_SIZE);
+		hdr_start = (this_frame - WD_START_PG) << 8U;
+		rxhdr = _MK_FP(WD_SHMEMSEG, hdr_start);
 		if ((rxhdr->count < 64U) ||
 		    (rxhdr->count > (MAX_PACKET_ETH + sizeof(e8390_pkt_hdr)))) {
 			debug_eth("eth: bogus packet size: %d, "
 				"status = %#2x nxpg = %#2x.\n",
 				rxhdr->count, rxhdr->status, rxhdr->next);
-			res = -EIO;
 			break;
 		}
 		current_rx_page = rxhdr->next;
@@ -285,11 +280,12 @@ static int wd_pack_get(byte_t * pack)
 			debug_eth("eth: bogus packet: "
 				"status = %#2x nxpg = %#2x size = %d\n",
 				rxhdr->status, rxhdr->next, rxhdr->count);
-			res = -EIO;
-		} else if (rxhdr->count > ETH_PAGE_SIZE) {
-			fmemcpyb(pack + ETH_PAGE_SIZE, kernel_ds,
-				hdr_start + ETH_PAGE_SIZE, WD_SHMEMSEG,
-				rxhdr->count - ETH_PAGE_SIZE);
+		} else {
+			res = rxhdr->count - sizeof(e8390_pkt_hdr);
+			if (res > len) res = len;
+			fmemcpyb((byte_t *)data, current->t_regs.ds,
+				(byte_t *)hdr_start + sizeof(e8390_pkt_hdr),
+				WD_SHMEMSEG, res);
 		}
 		OUTB(current_rx_page - 1U, WD_8390_PORT + EN0_BOUNDARY);
 	} while (0);
@@ -300,8 +296,7 @@ static int wd_pack_get(byte_t * pack)
 static size_t wd_read(struct inode * inode, struct file * filp,
 	char * data, size_t len)
 {
-	size_t size;
-	size_t res = 0U;
+	int res = 0;
 
 	do {
 		prepare_to_wait_interruptible(&rxwait);
@@ -316,14 +311,7 @@ static size_t wd_read(struct inode * inode, struct file * filp,
 				break;
 			}
 		}
-		if (wd_pack_get(recv_buf)) {
-			res = -EIO;
-			break;
-		}
-		size = ((e8390_pkt_hdr *)(recv_buf))->count;
-		if (len > size) len = size;
-		memcpy_tofs(data, recv_buf + sizeof(e8390_pkt_hdr), len);
-		res = len;
+		res = wd_pack_get(data, len);	/* returns packet data size read*/
 	} while (0);
 	finish_wait(&rxwait);
 	return res;
@@ -596,7 +584,7 @@ static void wd_int(int irq, struct pt_regs * regs, void * dev_id)
  * Ethernet main initialization (during boot)
  */
 
-void eth_drv_init()
+void wd_drv_init(void)
 {
 	int err;
 	unsigned u;

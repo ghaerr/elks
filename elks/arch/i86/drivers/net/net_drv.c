@@ -9,6 +9,6 @@ void eth_init(void)
 	eth_drv_init();
 #endif
 #ifdef CONFIG_ETH_WD
-	eth_drv_init();
+	wd_drv_init();
 #endif
 }
