@@ -439,6 +439,7 @@ static int wd_ioctl(struct inode * inode, struct file * file,
 	case IOCTL_ETH_ADDR_GET:
 		memcpy_tofs((char *)arg, mac_addr, 6U);
 		break;
+#if 0 /* unused*/
 	case IOCTL_ETH_ADDR_SET:
 		err = -ENOSYS;
 		break;
@@ -446,7 +447,7 @@ static int wd_ioctl(struct inode * inode, struct file * file,
 		/* Get the hardware address of the NIC,	which may be different
 		 * from the currently programmed address. Be careful with this,
 		 * it may interrupt ongoing send/receives.
-		 * arg must be a 32 bytes array.
+		 * arg must be a 6 word array.
 		 */
 		wd_get_hw_addr((word_t *)arg);
 		break;
@@ -464,6 +465,7 @@ static int wd_ioctl(struct inode * inode, struct file * file,
 		/* Get the current overflow skip counter. */
 		err = -ENOSYS;
 		break;
+#endif
 	default:
 		err = -EINVAL;
 	}
@@ -572,7 +574,7 @@ void wd_drv_init(void)
 {
 	int err;
 	unsigned u;
-	word_t hw_addr[16U];
+	word_t hw_addr[6U];
 
 	do {
 		err = request_irq(WD_IRQ, wd_int, NULL);
