@@ -14,19 +14,12 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/limits.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/debug.h>
 
 
 // Shared declarations between low and high parts
 
 #include "ne2k.h"
-
-#define DEBUG_ETH	0 /* set =1 for debugging*/
-
-#if DEBUG_ETH
-#define debug_eth   printk
-#else
-#define debug_eth(...)
-#endif
 
 // Static data
 struct wait_queue rxwait;
@@ -317,6 +310,14 @@ static struct file_operations eth_fops =
 #endif
 };
 
+#if DEBUG_ETH
+void eth_display_status(void)
+{
+	printk("\n---- Ethernet Stats ----\n");
+	printk("Skip Count %d\n", _ne2k_skip_cnt);
+}
+#endif
+
 /*
  * Ethernet main initialization (during boot)
  */
@@ -371,6 +372,9 @@ void eth_drv_init() {
 		memcpy(mac_addr, addr, 6);
 		ne2k_addr_set(addr);   /* Set NIC mac addr now so IOCTL works */
 
+#if DEBUG_ETH
+		debug_setcallback(eth_display_status);
+#endif
 		break;
 
 	}

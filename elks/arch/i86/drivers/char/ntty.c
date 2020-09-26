@@ -81,6 +81,12 @@ int tty_intcheck(register struct tty *ttyp, unsigned char key)
 	    sig = SIGINT;
 	if (key == ttyp->termios.c_cc[VSUSP])
 	    sig = SIGTSTP;
+#if DEBUG_EVENT
+	if (key == ('P' & 0x1f)) {	/* ctrl-P*/
+	    debug_event();
+	    return 1;
+	}
+#endif
 	if (sig) {
 	    debug_tty("TTY signal %d to pgrp %d pid %d\n", sig, ttyp->pgrp, current->pid);
 	    kill_pg(ttyp->pgrp, sig, 1);
@@ -394,7 +400,6 @@ int tty_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
     case TCSETSW:
     case TCSETSF:
 	ret = verified_memcpy_fromfs(&tty->termios, arg, sizeof(struct termios));
-
 	/* Inform subdriver of new settings*/
 	if (ret == 0 && tty->ops->ioctl != NULL)
 	    ret = tty->ops->ioctl(tty, cmd, arg);

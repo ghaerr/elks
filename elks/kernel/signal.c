@@ -21,9 +21,11 @@ static void generate(sig_t sig, sigset_t msksig, register struct task_struct *p)
     register __sigdisposition_t sd;
 
     sd = p->sig.action[sig - 1].sa_dispose;
-    if ((sd == SIGDISP_IGN) || ((sd == SIGDISP_DFL) && (msksig &
-	    (SM_SIGCONT | SM_SIGCHLD | SM_SIGWINCH | SM_SIGURG)))) {
-	if (!(msksig & SM_SIGCHLD)) debug_sig("SIGNAL ignoring %d pid %d\n", sig, p->pid);
+    if ((sd == SIGDISP_IGN) ||
+       ((sd == SIGDISP_DFL) &&
+        (msksig & (SM_SIGCONT | SM_SIGCHLD | SM_SIGWINCH | SM_SIGURG)))) {
+	if (!(msksig & SM_SIGCHLD))
+	    debug_sig("SIGNAL ignoring %d pid %d\n", sig, p->pid);
 	return;
     }
     debug_sig("SIGNAL gen_sig %d mask %x action %x:%x pid %d\n", sig, msksig,
@@ -67,7 +69,7 @@ int kill_pg(pid_t pgrp, sig_t sig, int priv)
 	debug_sig("SIGNAL kill_pg 0 ignored\n");
 	return 0;
     }
-    debug_sig("SIGNAL kill_pg %d\n", pgrp);
+    debug_sig("SIGNAL kill_pg sig %d pgrp %d\n", sig, pgrp);
     for_each_task(p) {
 	if (p->pgrp == pgrp) {
 		if (p->state < TASK_ZOMBIE)
@@ -89,6 +91,16 @@ int kill_process(pid_t pid, sig_t sig, int priv)
 	if (p->pid == pid)
 	    return send_sig(sig, p, 0);
     return -ESRCH;
+}
+
+void kill_all(sig_t sig)
+{
+    register struct task_struct *p;
+
+    debug_sig("SIGNAL kill_all %d\n", sig);
+    for_each_task(p)
+	if (p->state < TASK_ZOMBIE)
+	    send_sig(sig, p, 0);
 }
 
 int sys_kill(pid_t pid, sig_t sig)
