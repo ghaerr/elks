@@ -118,6 +118,7 @@
   SETUPSEG = CONFIG_ROM_SETUP_CODE
 #endif
 
+.arch i8086, nojumps
 .code16
 
 .text
@@ -724,7 +725,7 @@ relocat:
 	mov (%si),%di      // get r_vaddr
 	mov 6(%si),%ax     // get r_type
 	cmp $80,%ax        // R_SEGWORD
-	jnz sys_hdr_bad
+	jnz 9f
 	mov 4(%si),%ax     // get r_symndx
 	cmp $-2,%ax        // S_TEXT
 	jnz 1f
@@ -739,7 +740,7 @@ relocat:
 	jmp 3f
 2:
 	cmp $-3,%ax        // S_DATA
-	jnz sys_hdr_bad
+	jnz 9f
 
 	mov -22(%bp),%ax   // kernel .data segment
 3:
@@ -764,6 +765,8 @@ relocat:
 #endif
 	mov %ax,%es:(%di)
 	ret
+9:
+	jmp sys_hdr_bad
 
 // Add AX to DS:SI and normalize segment
 add_ptr:
