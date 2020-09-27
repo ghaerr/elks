@@ -535,7 +535,8 @@ output_header (void)
   if (data_sh)
     {
       mh.dseg = data_sh->sh_size;
-      mh.bseg += bss_sh->sh_addr - data_sh->sh_addr - data_sh->sh_size;
+      if (bss_sh)
+	mh.bseg += bss_sh->sh_addr - data_sh->sh_addr - data_sh->sh_size;
     }
   mh.entry = entry;
 
