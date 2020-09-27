@@ -247,7 +247,6 @@ static int wd_pack_get(char *data, size_t len)
 	unsigned char this_frame;
 	int res = -EIO;
 
-	clr_irq();
 	do {
 		/* Remove one frame from the ring. */
 		/* Boundary is always a page behind. */
@@ -280,7 +279,6 @@ static int wd_pack_get(char *data, size_t len)
 		}
 		OUTB(current_rx_page - 1U, WD_8390_PORT + EN0_BOUNDARY);
 	} while (0);
-	set_irq();
 	return res;
 }
 
@@ -314,7 +312,6 @@ static size_t wd_read(struct inode * inode, struct file * filp,
 
 static size_t wd_pack_put(char *data, size_t len)
 {
-	clr_irq();
 	do {
 		if (len > MAX_PACKET_ETH)
 			len = MAX_PACKET_ETH;
@@ -333,7 +330,6 @@ static size_t wd_pack_put(char *data, size_t len)
 		OUTB(E8390_NODMA | E8390_TRANS | E8390_START,
 			WD_8390_PORT + E8390_CMD);
 	} while (0);
-	set_irq();
 	return len;
 }
 
