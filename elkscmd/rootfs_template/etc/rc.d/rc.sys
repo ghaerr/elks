@@ -1,6 +1,8 @@
 # This file performs system initialization
 
 echo Running $0 script
+# uncomment to display script execution
+#set -x
 
 umask 022
 export PATH=/bin
@@ -24,6 +26,11 @@ then
 #	uncomment next line to check minix HD filesystem, will fail on msdos fat
 #	check_filesystem
 fi
+
+#
+# mount 2nd filesystem
+#
+#mount -t msdos /dev/fd1 /mnt || true
 
 #
 # start networking

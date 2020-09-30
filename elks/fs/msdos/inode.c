@@ -38,7 +38,9 @@ struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
 };
 #endif
 
-void msdos_put_inode(register struct inode *inode)
+static struct super_operations msdos_sops;
+
+static void msdos_put_inode(register struct inode *inode)
 {
 	if (inode->i_dirt) debug_fat("put_inode %ld count %d dirty %d\n",
 		(unsigned long)inode->i_ino, inode->i_count, inode->i_dirt);
@@ -50,7 +52,7 @@ void msdos_put_inode(register struct inode *inode)
 }
 
 
-void msdos_put_super(register struct super_block *sb)
+static void msdos_put_super(register struct super_block *sb)
 {
 	debug_fat("put_super\n");
 	cache_inval_dev(sb->s_dev);
@@ -61,24 +63,9 @@ void msdos_put_super(register struct super_block *sb)
 }
 
 
-static struct super_operations msdos_sops = { 
-	msdos_read_inode,
-#ifdef BLOAT_FS
-	NULL,
-#endif
-	msdos_write_inode,
-	msdos_put_inode,
-	msdos_put_super,
-	NULL, /* write_super*/
-#ifdef BLOAT_FS
-	msdos_statfs,
-#endif
-	NULL
-};
-
 /* Read the super block of an MS-DOS FS. */
 
-struct super_block *msdos_read_super(register struct super_block *s, char *data,
+static struct super_block *msdos_read_super(register struct super_block *s, char *data,
 	int silent)
 {
 	struct buffer_head *bh;
@@ -187,7 +174,7 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%
 
 
 #ifdef BLOAT_FS
-void msdos_statfs(struct super_block *sb,struct statfs *buf)
+static void msdos_statfs(struct super_block *sb,struct statfs *buf)
 {
 	long cluster_size,free,this;
 	struct statfs tmp;
@@ -299,7 +286,7 @@ void msdos_read_inode(register struct inode *inode)
 }
 
 
-void msdos_write_inode(register struct inode *inode)
+static void msdos_write_inode(register struct inode *inode)
 {
 	struct buffer_head *bh;
 	register struct msdos_dir_entry *raw_entry;
@@ -333,6 +320,21 @@ void msdos_write_inode(register struct inode *inode)
 	bh->b_dirty = 1;
 	unmap_brelse(bh);
 }
+
+static struct super_operations msdos_sops = {
+	msdos_read_inode,
+#ifdef BLOAT_FS
+	NULL,
+#endif
+	msdos_write_inode,
+	msdos_put_inode,
+	msdos_put_super,
+	NULL, /* write_super*/
+#ifdef BLOAT_FS
+	msdos_statfs,
+#endif
+	NULL
+};
 
 struct file_system_type msdos_fs_type = {
 	msdos_read_super,

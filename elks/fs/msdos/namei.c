@@ -16,7 +16,7 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/debug.h>
 
-unsigned char get_fs_byte(const void *dv)
+unsigned char FATPROC get_fs_byte(const void *dv)
 {
     unsigned char retv;
 
@@ -26,7 +26,7 @@ unsigned char get_fs_byte(const void *dv)
 
 /* Formats an MS-DOS file name. Rejects invalid names. */
 /* Converted to 11 bytes of msdos 8.3 file name */
-static int msdos_format_name(register const char *name,int len,char *res)
+static int FATPROC msdos_format_name(register const char *name,int len,char *res)
 {
 	register char *walk;
 	unsigned char c;
@@ -64,7 +64,7 @@ static int msdos_format_name(register const char *name,int len,char *res)
 
 
 /* Locates a shortname directory entry. */
-static int msdos_find(struct inode *dir,const char *name,int len,
+static int FATPROC msdos_find(struct inode *dir,const char *name,int len,
     struct buffer_head **bh,struct msdos_dir_entry **de,ino_t *ino)
 {
 	int res;
@@ -77,7 +77,7 @@ static int msdos_find(struct inode *dir,const char *name,int len,
 	return res;
 }
 
-static int compare(char *s1, char *s2, int len)
+static int FATPROC compare(char *s1, char *s2, int len)
 {
 	while (len--)
 		if (*s1++ != *s2++)
@@ -86,7 +86,7 @@ static int compare(char *s1, char *s2, int len)
 }
 
 /* Locate a long or shortname directory entry*/
-static int msdos_find_long(struct inode *dir, const char *name, int len,
+static int FATPROC msdos_find_long(struct inode *dir, const char *name, int len,
     struct buffer_head **bh, ino_t *ino)
 {
 	int i, entry_len, res;
@@ -156,7 +156,7 @@ int msdos_lookup(register struct inode *dir,char *name,size_t len,
 
 /* Create a new directory entry (name is already formatted). */
 
-static int msdos_create_entry(register struct inode *dir,char *name,int is_dir,
+static int FATPROC msdos_create_entry(register struct inode *dir,char *name,int is_dir,
     register struct inode **result)
 {
 	struct buffer_head *bh;

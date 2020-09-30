@@ -68,7 +68,7 @@ struct inode_operations msdos_dir_inode_operations = {
 
 /*@+type@*/
 
-static int
+static int FATPROC
 unicode_to_ascii(char *ascii, unsigned char *uni)
 {
 	char *op = ascii;
@@ -86,7 +86,7 @@ unicode_to_ascii(char *ascii, unsigned char *uni)
  *	returns 1 on short filename
  *	returns 2 on long filename
  */
-int msdos_get_entry_long(
+int FATPROC msdos_get_entry_long(
 	struct inode *dir,		/* scan this directory*/
 	off_t *pos,				/* starting at this offset*/
 	struct buffer_head **bh,/* using this buffer*/

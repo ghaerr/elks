@@ -8,11 +8,10 @@
 #include <linuxmt/fs.h>
 #include <linuxmt/ctype.h>
 
-#ifndef toupper
-extern char toupper(char c);
-#endif
-#ifndef tolower
-extern char tolower(char c);
+#ifdef CONFIG_FARTEXT_KERNEL
+#define FATPROC __far __attribute__ ((far_section, noinline, section (".fartext.fatfs")))
+#else
+#define FATPROC
 #endif
 
 #define MSDOS_ROOT_INO  1 /* == MINIX_ROOT_INO */
@@ -123,33 +122,31 @@ struct fat_cache {
 
 #define MSDOS_MKATTR(m) (!(m & 0200) ? ATTR_RO : ATTR_NONE)
 
-extern struct buffer_head *msdos_sread(int dev,long sector,void **start);
-
 /* misc.c */
 
-extern void lock_creation(void);
-extern void unlock_creation(void);
-extern int msdos_add_cluster(struct inode *inode);
-extern long date_dos2unix(unsigned short time,unsigned short date);
-extern void date_unix2dos(long unix_date,unsigned short *time,
-    unsigned short *date);
-extern ino_t msdos_get_entry(struct inode *dir,loff_t *pos,struct buffer_head **bh,
+struct buffer_head * FATPROC msdos_sread(int dev,long sector,void **start);
+void FATPROC lock_creation(void);
+void FATPROC unlock_creation(void);
+int  FATPROC msdos_add_cluster(struct inode *inode);
+long FATPROC date_dos2unix(unsigned short time,unsigned short date);
+void FATPROC date_unix2dos(long unix_date,unsigned short *time, unsigned short *date);
+ino_t FATPROC msdos_get_entry(struct inode *dir,loff_t *pos,struct buffer_head **bh,
     struct msdos_dir_entry **de);
-extern int msdos_scan(struct inode *dir,char *name,struct buffer_head **res_bh,
+int  FATPROC msdos_scan(struct inode *dir,char *name,struct buffer_head **res_bh,
     struct msdos_dir_entry **res_de,ino_t *ino);
-extern ino_t msdos_parent_ino(struct inode *dir,int locked);
+ino_t FATPROC msdos_parent_ino(struct inode *dir,int locked);
 
 /* fat.c */
 
-extern long fat_access(struct super_block *sb,long this,long new_value);
-extern long msdos_smap(struct inode *inode,long sector);
-extern int fat_free(struct inode *inode,long skip);
-extern void cache_init(void);
-void cache_lookup(struct inode *inode,long cluster,long *f_clu,long *d_clu);
-void cache_add(struct inode *inode,long f_clu,long d_clu);
-void cache_inval_inode(struct inode *inode);
-void cache_inval_dev(int device);
-long get_cluster(struct inode *inode,long cluster);
+long FATPROC fat_access(struct super_block *sb,long this,long new_value);
+long FATPROC msdos_smap(struct inode *inode,long sector);
+int  FATPROC fat_free(struct inode *inode,long skip);
+void FATPROC cache_init(void);
+void FATPROC cache_lookup(struct inode *inode,long cluster,long *f_clu,long *d_clu);
+void FATPROC cache_add(struct inode *inode,long f_clu,long d_clu);
+void FATPROC cache_inval_inode(struct inode *inode);
+void FATPROC cache_inval_dev(int device);
+long FATPROC get_cluster(struct inode *inode,long cluster);
 
 /* namei.c */
 
@@ -165,28 +162,19 @@ extern int msdos_rename(struct inode *old_dir,const char *old_name,int old_len,
 
 /* inode.c */
 
-extern void msdos_put_inode(struct inode *inode);
-extern void msdos_put_super(struct super_block *sb);
-extern struct super_block *msdos_read_super(register struct super_block *s,char *data, int silent);
-extern void msdos_statfs(struct super_block *sb,struct statfs *buf);
-extern long msdos_bmap(struct inode *inode,long block);
 extern void msdos_read_inode(struct inode *inode);
-extern void msdos_write_inode(struct inode *inode);
 extern int init_msdos_fs(void);
 
 /* dir.c */
 
-//extern struct file_operations msdos_dir_operations;
 extern struct inode_operations msdos_dir_inode_operations;
-extern int msdos_get_entry_long(struct inode *dir, off_t *pos, struct buffer_head **bh,
+int FATPROC msdos_get_entry_long(struct inode *dir, off_t *pos, struct buffer_head **bh,
     char *name, int *namelen, off_t *dirpos, ino_t *ino);
 
 /* file.c */
 
-//extern struct file_operations msdos_file_operations;
 extern struct inode_operations msdos_file_inode_operations;
 extern struct inode_operations msdos_file_inode_operations_no_bmap;
-
 extern void msdos_truncate(struct inode *inode);
 
 #endif

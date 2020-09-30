@@ -16,7 +16,7 @@ static struct fat_cache *fat_cache,cache[FAT_CACHE];
 /* Returns the this'th FAT entry, -1 if it is an end-of-file entry.
    If new_value is != -1, that FAT entry is replaced by it. */
 
-long fat_access(register struct super_block *sb,long this,long new_value)
+long FATPROC fat_access(register struct super_block *sb,long this,long new_value)
 {
 	struct buffer_head *bh,*bh2;
 	unsigned char *p_first,*p_last;
@@ -133,7 +133,7 @@ long fat_access(register struct super_block *sb,long this,long new_value)
 }
 
 
-void cache_init(void)
+void FATPROC cache_init(void)
 {
 	static int initialized = 0;
 	int count;
@@ -148,7 +148,7 @@ void cache_init(void)
 }
 
 
-void cache_lookup(struct inode *inode,long cluster,long *f_clu,long *d_clu)
+void FATPROC cache_lookup(struct inode *inode,long cluster,long *f_clu,long *d_clu)
 {
 	register struct fat_cache *walk;
 
@@ -168,7 +168,7 @@ printk("cache hit: %ld (%ld)\r\n",walk->file_cluster,*d_clu);
 
 
 #ifdef DEBUG
-static void list_cache(void)
+static void FATPROC list_cache(void)
 {
 	struct fat_cache *walk;
 
@@ -182,7 +182,7 @@ static void list_cache(void)
 #endif
 
 
-void cache_add(struct inode *inode,long f_clu,long d_clu)
+void FATPROC cache_add(struct inode *inode,long f_clu,long d_clu)
 {
 	register struct fat_cache *walk,*last;
 
@@ -223,7 +223,7 @@ list_cache();
 /* Cache invalidation occurs rarely, thus the LRU chain is not updated. It
    fixes itself after a while. */
 
-void cache_inval_inode(struct inode *inode)
+void FATPROC cache_inval_inode(struct inode *inode)
 {
 	register struct fat_cache *walk;
 
@@ -233,7 +233,7 @@ void cache_inval_inode(struct inode *inode)
 }
 
 
-void cache_inval_dev(int device)
+void FATPROC cache_inval_dev(int device)
 {
 	register struct fat_cache *walk;
 
@@ -242,7 +242,7 @@ void cache_inval_dev(int device)
 }
 
 
-long get_cluster(register struct inode *inode,long cluster)
+long FATPROC get_cluster(register struct inode *inode,long cluster)
 {
 	long this,count;
 
@@ -258,7 +258,7 @@ long get_cluster(register struct inode *inode,long cluster)
 }
 
 
-long msdos_smap(struct inode *inode,long sector)
+long FATPROC msdos_smap(struct inode *inode,long sector)
 {
 	register struct msdos_sb_info *sb;
 	long cluster;
@@ -283,7 +283,7 @@ long msdos_smap(struct inode *inode,long sector)
 /* Free all clusters after the skip'th cluster. Doesn't use the cache,
    because this way we get an additional sanity check. */
 
-int fat_free(register struct inode *inode,long skip)
+int FATPROC fat_free(register struct inode *inode,long skip)
 {
 	long this,last;
 
