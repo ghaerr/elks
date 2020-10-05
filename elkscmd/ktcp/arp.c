@@ -114,15 +114,15 @@ char *mac_ntoa(eth_addr_t eth_addr)
 static void arp_print(register struct arp *arp)
 {
 #if DEBUG_ARP
-    printf("ARP: ");
-    printf("op:%d ", ntohs(arp->op));
-    printf("ll:%s->", mac_ntoa(arp->ll_eth_src));
-    printf("%s ", mac_ntoa(arp->ll_eth_dest));
-    printf("%s->", in_ntoa(arp->ip_src));
-    printf("%s ", in_ntoa(arp->ip_dest));
-    printf("eth:%s->", mac_ntoa(arp->eth_src));
-    printf("%s", mac_ntoa(arp->eth_dest));
-    printf("\n");
+    DPRINTF("ARP: ");
+    DPRINTF("op:%d ", ntohs(arp->op));
+    DPRINTF("ll:%s->", mac_ntoa(arp->ll_eth_src));
+    DPRINTF("%s ", mac_ntoa(arp->ll_eth_dest));
+    DPRINTF("%s->", in_ntoa(arp->ip_src));
+    DPRINTF("%s ", in_ntoa(arp->ip_dest));
+    DPRINTF("eth:%s->", mac_ntoa(arp->eth_src));
+    DPRINTF("%s", mac_ntoa(arp->eth_dest));
+    DPRINTF("\n");
 #endif
 }
 

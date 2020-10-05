@@ -313,27 +313,28 @@ static void tcpdev_write(void)
 
     /* This is a bit ugly but I'm to lazy right now */
     if (tcp_retrans_memory > TCP_RETRANS_MAXMEM) {
-printf("tcp: RETRANS limit exceeded\n");
-	retval_to_sock(sock, -ERESTARTSYS);
+	printf("ktcp: RETRANS limit exceeded\n");
+	retval_to_sock(sock, -ENOMEM);
 	return;
     }
 
     n = tcpcb_find_by_sock(sock);
     if (!n || n->tcpcb.state == TS_CLOSED) {
-	printf("ktcp: panic in write\n");
+	printf("ktcp: write to unknown socket\n");
+	retval_to_sock(sock, -EPIPE);
 	return;
     }
 
     cb = &n->tcpcb;
 
     if (cb->state != TS_ESTABLISHED && cb->state != TS_CLOSE_WAIT) {
-	retval_to_sock(sock, -EPIPE);/* FIXME : is this the right error? */
+	retval_to_sock(sock, -EPIPE);
 	return;
     }
 
     if (cb->remport == NETCONF_PORT && cb->remaddr == 0) {
 	if (db->size == sizeof(struct stat_request_s)) {
-	    netconf_request(db->data);
+	    netconf_request((struct stat_request_s *)db->data);
 	    netconf_send(cb);		/* queue response*/
 	    tcpdev_checkread(cb);	/* set sock->data_avail to allow inet_read()*/
 	}
@@ -341,7 +342,15 @@ printf("tcp: RETRANS limit exceeded\n");
 	return;
     }
 
-//printf("ktcpdev WRITE sock %x window %ld timer %d\n", sock, cb->send_nxt - cb->send_una, tcp_timeruse);
+debug_tcp("tcpdev write: window %ld retrans cnt %d\n", cb->send_nxt - cb->send_una, tcp_timeruse);
+#if 1
+#define SEND_WINDOW_MAX	1024	/* should be less than TCP_RETRANS_MAXMEM*/
+    if (cb->send_nxt - cb->send_una > SEND_WINDOW_MAX) {
+	debug_tcp("tcp write: limiting write %d at max send window %ld\n", size, cb->send_nxt - cb->send_una);
+	retval_to_sock(sock, -ERESTARTSYS);
+	return;
+    }
+#endif
 
     cb->flags = TF_PSH|TF_ACK;
     cb->datalen = size;

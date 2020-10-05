@@ -158,14 +158,14 @@ void eth_write(unsigned char *packet, int len)
 #if DEBUG_ETH
 void eth_printhex(unsigned char *packet, int len)
 {
-  unsigned char *p = packet;
-  int i = 0;
-  printf("eth: write %d bytes: ", len);
-  if (len > 128) len = 128;
-  while (len--) {
-	printf("%02X ", *p++);
-	if ((i++ & 15) == 15) printf("\n");
-  }
-  printf("\n");
+	unsigned char *p = packet;
+	int i = 0;
+	DPRINTF("eth: write %d bytes: ", len);
+	if (len > 128) len = 128;
+	while (len--) {
+		DPRINTF("%02X ", *p++);
+		if ((i++ & 15) == 15) DPRINTF("\n");
+	}
+	DPRINTF("\n");
 }
 #endif

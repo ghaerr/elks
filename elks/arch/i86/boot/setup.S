@@ -658,8 +658,8 @@ sys_no_far_text:
 	mov -12(%bp),%cx // text reloc size
 text_reloc:
 	jcxz 1f
-	mov $'t',%ax
-	call putc
+//	mov $'t',%ax
+//	call putc
 	mov -18(%bp),%ax // kernel .text segment
 	mov %ax,%es
 
@@ -672,8 +672,8 @@ text_reloc:
 	mov -14(%bp),%cx // far text reloc size
 ftext_reloc:
 	jcxz 2f
-	mov $'f',%ax
-	call putc
+//	mov $'f',%ax
+//	call putc
 	mov -20(%bp),%ax // kernel .fartext segment
 	mov %ax,%es
 
@@ -686,8 +686,8 @@ ftext_reloc:
 	mov -16(%bp),%cx // data reloc size
 data_reloc:
 	jcxz 3f
-	mov $'d',%ax
-	call putc
+//	mov $'d',%ax
+//	call putc
 	mov -22(%bp),%ax   // kernel .data segment
 	mov %ax,%es
 

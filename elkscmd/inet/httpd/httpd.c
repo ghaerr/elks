@@ -42,7 +42,7 @@ extern pid_t waitpid(pid_t, int *, int);
 #define WS(c)	( ((c) == ' ') || ((c) == '\t') || ((c) == '\r') || ((c) == '\n') )
 
 int listen_sock;
-#define BUF_SIZE	2048
+#define BUF_SIZE	1024
 char buf[BUF_SIZE];
 
 char* get_mime_type(char *name)
@@ -86,8 +86,8 @@ void send_error(int fd, int errnum, char *str)
 
 void process_request(int fd)
 {
-	int fin, size;
-	int ret;
+	int fin, ret;
+	off_t size;
 	char *c, *file, fullpath[128];
 	struct stat st;
 	
@@ -129,13 +129,13 @@ void process_request(int fd)
 	size = lseek(fin, (off_t)0, SEEK_END);
 	lseek(fin, (off_t)0, SEEK_SET);
 	send_header(fd, get_mime_type(fullpath));
-	sprintf(buf,"Content-Length: %d\r\n\r\n",size);
+	sprintf(buf,"Content-Length: %ld\r\n\r\n", size);
 	write(fd, buf, strlen(buf));
 	
 	do {
 		ret = read(fin, buf, BUF_SIZE);
 		if (ret > 0)
-			write(fd, buf, ret);
+			ret = write(fd, buf, ret);
 	} while (ret == BUF_SIZE);
 	
 	close(fin);

@@ -15,49 +15,49 @@
 
 /* leave these off for now - too much info*/
 #define DEBUG_TCPDEV	0		/* tcpdev_ routines*/
-#define DEBUG_MEM	0		/* debug memory allocations*/
+#define DEBUG_MEM0		/* debug memory allocations*/
 #define DEBUG_CB	0		/* dump control blocks*/
 
 #if USE_DEBUG_EVENT
 void dprintf(const char *, ...);
-#define PRINTF		dprintf
+#define DPRINTF		dprintf
 #else
-#define PRINTF		printf
+#define DPRINTF		printf
 #define dprintf(...)
 #endif
 
 #if DEBUG_TCP
-#define debug_tcp	PRINTF
+#define debug_tcp	DPRINTF
 #else
 #define debug_tcp(...)
 #endif
 
 #if DEBUG_IP
-#define debug_ip	PRINTF
+#define debug_ip	DPRINTF
 #else
 #define debug_ip(...)
 #endif
 
 #if DEBUG_ARP
-#define debug_arp	PRINTF
+#define debug_arp	DPRINTF
 #else
 #define debug_arp(...)
 #endif
 
 #if DEBUG_CSLIP
-#define debug_cslip	PRINTF
+#define debug_cslip	DPRINTF
 #else
 #define debug_cslip(...)
 #endif
 
 #if DEBUG_TCPDEV
-#define debug_tcpdev	PRINTF
+#define debug_tcpdev	DPRINTF
 #else
 #define debug_tcpdev(...)
 #endif
 
 #if DEBUG_MEM
-#define debug_mem	PRINTF
+#define debug_mem	DPRINTF
 #else
 #define debug_mem(...)
 #endif

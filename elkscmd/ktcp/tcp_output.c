@@ -181,7 +181,7 @@ rmv_from_retrans(struct tcp_retrans_list_s *n)
 	/* Head update */
 	n = next;
 	n->prev = NULL;
-debug_mem("retrans free buffers %d mem %d\n", tcp_timeruse, tcp_retrans_memory);
+debug_mem("retrans free: (cnt %d mem %u)\n", tcp_timeruse, tcp_retrans_memory);
 	free(retrans_list);
 	retrans_list = n;
 
@@ -191,7 +191,7 @@ debug_mem("retrans free buffers %d mem %d\n", tcp_timeruse, tcp_retrans_memory);
     if (next)
 	next->prev = n->prev;
 
-debug_mem("retrans free buffers %d mem %d\n", tcp_timeruse, tcp_retrans_memory);
+debug_mem("retrans free: (cnt %d mem %u)\n", tcp_timeruse, tcp_retrans_memory);
     free(n);
 
     return next;
@@ -260,7 +260,7 @@ void add_for_retrans(struct tcpcb_s *cb, struct tcphdr_s *th, __u16 len,
     tcp_timeruse++;
 
     tcp_retrans_memory += len;
-debug_mem("retrans alloc buffers %d, mem %d\n", tcp_timeruse, tcp_retrans_memory);
+debug_mem("retrans alloc: (cnt %d, mem %u)\n", tcp_timeruse, tcp_retrans_memory);
     n->len = len;
     memcpy(n->tcphdr, th, len);
     memcpy(&n->apair, apair, sizeof(struct addr_pair));
@@ -268,17 +268,24 @@ debug_mem("retrans alloc buffers %d, mem %d\n", tcp_timeruse, tcp_retrans_memory
     n->first_trans = Now;
 
     n->rto = cb->rtt << 1;
-    if (linkprotocol != LINK_ETHER && n->rto < TIMEOUT_MIN_SLIP)
-	n->rto = TIMEOUT_MIN_SLIP;		/* 1/2 sec min retrans timeout for slip/cslip*/
+    if (linkprotocol == LINK_ETHER) {
+	if (n->rto < TCP_RETRANS_MINWAIT_ETH)
+	    n->rto = TCP_RETRANS_MINWAIT_ETH;		/* 1/8 sec min retrans timeout on ethernet*/
+    } else {
+	if (n->rto < TCP_RETRANS_MINWAIT_SLIP)
+	    n->rto = TCP_RETRANS_MINWAIT_SLIP;		/* 1/2 sec min retrans timeout on slip/cslip*/
+    }
     n->next_retrans = Now + n->rto;
 }
 
 void tcp_reoutput(struct tcp_retrans_list_s *n)
 {
-    n->retrans_num ++;
+    n->retrans_num++;
     n->rto *= 2;
+    if (n->rto > TCP_RETRANS_MAXWAIT)		/* limit retransmit timeouts to 4 seconds*/
+	n->rto = TCP_RETRANS_MAXWAIT;
     n->next_retrans = Now + n->rto;
-printf("retrans retry #%d rto %ld mem %u\n", n->retrans_num, n->rto, tcp_retrans_memory);
+printf("retrans retry: #%d rto %ld (cnt %d, mem %u)\n", n->retrans_num, n->rto, tcp_timeruse, tcp_retrans_memory);
     ip_sendpacket((unsigned char *)n->tcphdr, n->len, &n->apair);
     netstats.tcpretranscnt++;
 }
@@ -290,26 +297,24 @@ void tcp_retrans(void)
     int datalen, rtt;
 
 /* FIXME avoid running out of memory - bug in retrans recovery*/
-if (tcp_retrans_memory > TCP_RETRANS_MAXMEM /*|| tcp_timeruse > 5*/) {
+if (tcp_retrans_memory > TCP_RETRANS_MAXMEM) {
 	struct tcpcb_s *cb = NULL;
-	printf("tcp: RETRANS limit, timeruse %d\n", tcp_timeruse);
+	printf("ktcp: retransmit memory over limit (cnt %d, mem %u)\n", tcp_timeruse, tcp_retrans_memory);
 	n = retrans_list;
 	while (n != NULL) {
 		if (!cb)
 			cb = n->cb;
 		n = rmv_from_retrans(n);
 	}
-	tcp_send_reset(cb);
+	//tcp_send_reset(cb);
 	return;
 }
-
-    debug_mem("retrans check buffers %d, mem %d\n", tcp_timeruse, tcp_retrans_memory);
 
     n = retrans_list;
     while (n != NULL) {
 	datalen = n->len - TCP_DATAOFF(&n->tcphdr[0]);
 
-	//debug_tcp("retrans: %lx %lx", ntohl(n->tcphdr[0].seqnum) + datalen,n->cb->send_una);
+	//debug_mem("retrans seqno: %lx %lx", ntohl(n->tcphdr[0].seqnum) + datalen,n->cb->send_una);
 	if (SEQ_LEQ(ntohl(n->tcphdr[0].seqnum) + datalen, n->cb->send_una)) {
 	    if (n->retrans_num == 0) {
 		rtt = Now - n->first_trans;
@@ -317,14 +322,19 @@ if (tcp_retrans_memory > TCP_RETRANS_MAXMEM /*|| tcp_timeruse > 5*/) {
 		    n->cb->rtt = (TCP_RTT_ALPHA * n->cb->rtt + (100 - TCP_RTT_ALPHA) * rtt) / 100;
 		debug_tcp("rtt %d RTT %ld RTO %ld\n", rtt, n->cb->rtt, n->rto);
 	    }
+	    debug_mem("retrans removed: %d seqno >= unacked\n", n->retrans_num);
 	    n = rmv_from_retrans(n);
 	    continue;
 	}
 
-//debug_tcp("retrans %d mem %d\n", tcp_timeruse, tcp_retrans_memory);
+//debug_mem(" time check %lx %lx\n", Now, n->next_retrans);
 	if (TIME_GEQ(Now, n->next_retrans)) {
 	    tcp_reoutput(n);
-	    return;
+	    if (n->retrans_num >= TCP_RETRANS_MAXTRIES) {
+		 debug_mem("retrans removed: %d max tries exceeded\n", n->retrans_num);
+		 n = rmv_from_retrans(n);
+		 continue;
+	    }
 	}
 	n = n->next;
     }

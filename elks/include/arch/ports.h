@@ -35,9 +35,6 @@
 #define CONFIG_NEED_IRQ1
 #endif
 
-/* unused*/
-//#define CONFIG_NEED_IRQ2		/* only available on XT, slave PIC on AT*/
-
 #ifdef CONFIG_CHAR_DEV_RS
 //#define CONFIG_FAST_IRQ4		/* COM1 very fast serial driver, no ISIG handling*/
 //#define CONFIG_FAST_IRQ3		/* COM2 very fast serial driver, no ISIG handling*/
@@ -47,24 +44,21 @@
 //#define CONFIG_NEED_IRQ2		/* COM4, XT only*/
 #endif
 
-/* unused*/
-//#define CONFIG_NEED_IRQ6
-//#define CONFIG_NEED_IRQ7
-//#define CONFIG_NEED_IRQ8
-
 #ifdef CONFIG_ETH_NE2K
-//#define CONFIG_NEED_IRQ9
+//#define CONFIG_NEED_IRQ9		/* ensure NE2K_IRQ set properly below also*/
 #define CONFIG_NEED_IRQ12
 #endif
 
 #ifdef CONFIG_ETH_WD
-#define CONFIG_NEED_IRQ2
+#define CONFIG_NEED_IRQ2		/* only available on XT, slave PIC on AT*/
 #endif
 
 /* unused*/
+//#define CONFIG_NEED_IRQ6
+//#define CONFIG_NEED_IRQ7
+//#define CONFIG_NEED_IRQ8
 //#define CONFIG_NEED_IRQ10
 //#define CONFIG_NEED_IRQ11
-//#define CONFIG_NEED_IRQ12
 //#define CONFIG_NEED_IRQ13
 
 /* obsolete - driver won't compile*/
@@ -103,6 +97,7 @@
 #define COM4_IRQ	2		/* unregistered unless COM4_PORT found*/
 
 /* ne2k, ne2k.c */
+//#define NE2K_IRQ	9		/* ensure CONFIG_NEED_IRQxx set properly above*/
 #define NE2K_IRQ	12
 #define NE2K_PORT	0x300
 

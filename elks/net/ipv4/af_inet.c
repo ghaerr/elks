@@ -348,7 +348,7 @@ static int inet_write(register struct socket *sock, char *ubuf, int size,
 
 	if (ret < 0) {
             if (ret == -ERESTARTSYS) {
-printk("inet_write: RESTARTSYS\n");
+//printk("inet_write: retry\n");
                 schedule();
             } else
                 return ret;
