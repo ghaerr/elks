@@ -14,19 +14,11 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/limits.h>
 #include <linuxmt/mm.h>
-
+#include <linuxmt/debug.h>
 
 // Shared declarations between low and high parts
 
 #include "ne2k.h"
-
-#define DEBUG_ETH	0 /* set =1 for debugging*/
-
-#if DEBUG_ETH
-#define debug_eth   printk
-#else
-#define debug_eth(...)
-#endif
 
 // Static data
 struct wait_queue rxwait;
@@ -34,13 +26,12 @@ struct wait_queue txwait;
 
 static byte_t eth_inuse = 0;
 
-static byte_t def_mac_addr [6] = {0x52, 0x54, 0x00, 0x12, 0x34, 0x56};  /* QEMU default */
 static byte_t mac_addr [6]; /* Current MAC address, from HW or default */
 
-static byte_t recv_buf [MAX_PACKET_ETH+4];
-static byte_t send_buf [MAX_PACKET_ETH];
-extern word_t _ne2k_skip_cnt;	/* In case the NIC ring buffer overflows, skip this # of packets,
-				 * zero means 'all'. */
+extern word_t _ne2k_has_data;
+extern word_t _ne2k_skip_cnt;	/* In case the NIC ring buffer overflows, 
+				 * skip this # of packets,
+				 * zero means 'keep the oldest'.  */
 
 /*
  * Get packet
@@ -50,6 +41,7 @@ static size_t eth_read(struct inode * inode, struct file * filp,
 	char * data, size_t len)
 {
 	size_t res;
+	word_t nhdr[2];	/* packet header from the NIC, for debugging */
 
 	while (1) {
 		size_t size;  // actual packet size
@@ -67,17 +59,16 @@ static size_t eth_read(struct inode * inode, struct file * filp,
 				break;
 			}
 		}
-
-		if (ne2k_pack_get(recv_buf)) {
+		if ((size = ne2k_pack_get(data, len, nhdr)) < 0) {
 			res = -EIO;
 			break;
 		}
 
-		size = *((word_t *) (recv_buf + 2));
-		if (len > size) len = size;
-		memcpy_tofs(data, recv_buf + 4, len);	/* +4: Discard NIC header. */
+		debug_eth("eth read: req %d, got %d real %d\n", len, size, nhdr[1]);
+		if (nhdr[1] > size)
+			printk("eth: truncated read - %d %d\n", nhdr[1], size);
 
-		res = len;
+		res = size;
 		break;
 	}
 
@@ -110,10 +101,9 @@ static size_t eth_write (struct inode * inode, struct file * file,
 		}
 
 		if (len > MAX_PACKET_ETH) len = MAX_PACKET_ETH;
-		memcpy_fromfs(send_buf, data, len);
 
 		if (len < 64) len = 64;  /* issue #133 */
-		if (ne2k_pack_put(send_buf, len)) {
+		if (ne2k_pack_put(data, len)) {
 			res = -EIO;
 			break;
 		}
@@ -136,7 +126,7 @@ int eth_select(struct inode * inode, struct file * filp, int sel_type)
 
 	switch (sel_type) {
 		case SEL_OUT:
-			if (ne2k_tx_stat () != NE2K_STAT_TX) {
+			if (ne2k_tx_stat() != NE2K_STAT_TX) {
 				select_wait(&txwait);
 				break;
 			}
@@ -144,7 +134,7 @@ int eth_select(struct inode * inode, struct file * filp, int sel_type)
 			break;
 
 		case SEL_IN:
-			if (ne2k_rx_stat () != NE2K_STAT_RX) {
+			if (ne2k_rx_stat() != NE2K_STAT_RX) {
 				select_wait(&rxwait);
 				break;
 			}
@@ -167,24 +157,28 @@ static void ne2k_int(int irq, struct pt_regs * regs, void * dev_id)
 {
 	word_t stat, page;
 
-	stat = ne2k_int_stat ();
+	stat = ne2k_int_stat();
 #if 0
         page = ne2k_getpage();
-        printk("$%02x$B%02x$", (page>>8)&0xff, page&0xff);
+        printk("|%04x|", page);
 #endif
-	debug_eth("/%02X",stat&0xff);
 
         if (stat & NE2K_STAT_OF) {
-		printk("eth: NIC ring buffer overflow, skipping ");
+		printk("eth: NIC receive oflow (0x%x), ", stat);
 		if (_ne2k_skip_cnt) 
-			printk("%d packets.\n", _ne2k_skip_cnt);
+			printk("skipping %d packets.\n", _ne2k_skip_cnt);
 		else
-			printk("all packets.\n");
+			printk("clearing buffer.\n");
 		page = ne2k_clr_oflow(); 
-		debug_eth("/C%02x|B%02x/ ", (page>>8)&0xff, page&0xff);
+		debug_eth("/CB%04x/ ", page);
+		/* The clr_oflow routine effectively resets the NIC, clears
+		 * the ISR, so more processing of interrupt status bits is
+		 * meaningless. */
+		return;
 	}
 
 	if (stat & NE2K_STAT_RX) {
+		_ne2k_has_data = 1; 
 		wake_up(&rxwait);
 	}
 
@@ -192,7 +186,7 @@ static void ne2k_int(int irq, struct pt_regs * regs, void * dev_id)
 		wake_up(&txwait);
 	}
 	if (stat & NE2K_STAT_RDC) {
-		printk("eth: Warning - RDC intr.\n");
+		printk("eth: Warning - RDC intr. (0x%x)\n", stat);
 		/* The RDC interrupt should be disabled in the low level driver.
 		 * When real DMA transfer from NIC til system RAM is enabled, this is where
 		 * we handle transfer completion.
@@ -201,6 +195,12 @@ static void ne2k_int(int irq, struct pt_regs * regs, void * dev_id)
 		 */
 		ne2k_rdc();
 	}
+	if (stat & NE2K_STAT_TXE) { 	
+		/* transmit error detected, this should not happen. */
+		printk("eth: TX-error, status 0x%x\n", ne2k_get_tx_stat());
+		/* ne2k_get_tx_stat resets this int in the ISR */
+	}
+	debug_eth("%02X/%d/",stat,_ne2k_has_data);
 	stat = page; /* to keep compiler happy */
 }
 
@@ -265,6 +265,7 @@ static int eth_open(struct inode * inode, struct file * file)
 {
 	int err;
 
+	printk("eth open\n");
 	while (1) {
 		if (eth_inuse) {
 			err = -EBUSY;
@@ -317,8 +318,17 @@ static struct file_operations eth_fops =
 #endif
 };
 
+#if DEBUG_ETH
+void eth_display_status(void)
+{
+	printk("\n---- Ethernet Stats ----\n");
+	printk("Skip Count %d\n", _ne2k_skip_cnt);
+}
+#endif
+
 /*
  * Ethernet main initialization (during boot)
+ * FIXME: Needs return value to signal that initalization failed.
  */
 
 void eth_drv_init() {
@@ -358,30 +368,38 @@ void eth_drv_init() {
 		//i=0;while (i < 16) printk("%02X ", prom[i++]);
 
 		/* If there is no prom (i.e. emulator), use default */
-		if ((hw_addr[0] == 0xff) && (hw_addr[1] == 0xff))
-		        addr = def_mac_addr;
-		else
+		if ((hw_addr[0] == 0xff) && (hw_addr[1] == 0xff)) {
+		        //addr = def_mac_addr;
+			err = -1;
+		} else {
 		        addr = hw_addr; 
+			err = 0;
+		}
 
-		printk ("eth: NE2K at 0x%x, irq %d, MAC %02X", NE2K_PORT, NE2K_IRQ, addr[0]);
-		i = 1;
-		while (i < 6) printk(":%02X", addr[i++]);
-		printk("\n");
+		if (!err) {
+			printk ("eth: NE2K at 0x%x, irq %d, MAC %02X", NE2K_PORT, NE2K_IRQ, addr[0]);
+			i = 1;
+			while (i < 6) printk(":%02X", addr[i++]);
+			printk("\n");
 
-		memcpy(mac_addr, addr, 6);
-		ne2k_addr_set(addr);   /* Set NIC mac addr now so IOCTL works */
+			memcpy(mac_addr, addr, 6);
+			ne2k_addr_set(addr);   /* Set NIC mac addr now so IOCTL works */
+#if DEBUG_ETH
+			debug_setcallback(eth_display_status);
+#endif
+		} else
+			printk("eth: Cannot access NE2K interface.\n");
 
 		break;
 
 	}
+	_ne2k_has_data = 0;
 	_ne2k_skip_cnt = 0;	/* # of packets to discard if the NIC buffer overflows. 
-				 * Zero is the default, discard entire buffer.
+				 * Zero is the default, discard entire buffer less one pkt.
 				 * May be changed via ioctl.
-				 * A big # will have the same effect.
+				 * A big # will clear the entire bnuffer.
 				 * On a floppy based system, anything else is useless.
 				 */
 	return;
 }
 
-
-//-----------------------------------------------------------------------------
