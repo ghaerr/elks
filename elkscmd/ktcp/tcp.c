@@ -16,6 +16,7 @@
 #include <arpa/inet.h>
 #include "slip.h"
 #include "ip.h"
+#include "icmp.h"
 #include "tcp.h"
 #include "tcp_cb.h"
 #include "tcpdev.h"
@@ -30,12 +31,20 @@ extern int cbs_in_user_timeout;
 
 void tcp_print(struct iptcp_s *head, int recv)
 {
-    debug_tcp("TCP: %s ", recv? "recv": "send");
+#if DEBUG_TCP
+    char *prot;
+    switch (head->iph->protocol) {
+    case PROTO_TCP: prot = "TCP"; break;
+    case PROTO_ICMP: prot = "ICMP"; break;
+    default: prot = "???";
+    }
+    debug_tcp("%s: %s ", prot, recv? "recv": "send");
     debug_tcp("src:%u dst:%u ", ntohs(head->tcph->sport), ntohs(head->tcph->dport));
     debug_tcp("flags:%x ",head->tcph->flags);
     debug_tcp("seq:%lx ack:%lx ", ntohl(head->tcph->seqnum), ntohl(head->tcph->acknum));
     debug_tcp("win:%u urg:%d ", ntohs(head->tcph->window), head->tcph->urgpnt);
     debug_tcp("chk:%x len:%u\n", tcp_chksum(head), head->tcplen);
+#endif
 }
 
 int tcp_init(void)

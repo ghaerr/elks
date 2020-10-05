@@ -342,7 +342,7 @@ static void tcpdev_write(void)
 	return;
     }
 
-debug_tcp("tcpdev write: window %ld retrans cnt %d\n", cb->send_nxt - cb->send_una, tcp_timeruse);
+debug_tcpdev("tcpdev write: window %ld retrans cnt %d\n", cb->send_nxt - cb->send_una, tcp_timeruse);
 #if 1
 #define SEND_WINDOW_MAX	1024	/* should be less than TCP_RETRANS_MAXMEM*/
     if (cb->send_nxt - cb->send_una > SEND_WINDOW_MAX) {

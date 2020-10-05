@@ -18,6 +18,7 @@
 #include <linuxmt/stat.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/fcntl.h>
+#include <linuxmt/sched.h>
 #include <linuxmt/net.h>
 #include <linuxmt/tcpdev.h>
 #include <linuxmt/debug.h>
@@ -349,6 +350,9 @@ static int inet_write(register struct socket *sock, char *ubuf, int size,
 	if (ret < 0) {
             if (ret == -ERESTARTSYS) {
 //printk("inet_write: retry\n");
+		/* delay process 10ms*/
+		current->state = TASK_INTERRUPTIBLE;
+		current->timeout = jiffies + 10;
                 schedule();
             } else
                 return ret;
