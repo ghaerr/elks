@@ -16,7 +16,7 @@ extern __attribute__((stdcall))
 #endif
     __far void _syscall_signal (int);
 
-Sig _sigtable[_NSIG-1];
+Sig _sigtable[_NSIG];
 
 /*
  * Signal handler.
@@ -42,7 +42,7 @@ Sig signal(int number, Sig pointer)
 {
    Sig old_sig;
    int rv;
-   if( number < 1 || number >= _NSIG ) { errno=EINVAL; return SIG_ERR; }
+   if( number < 1 || number > _NSIG ) { errno=EINVAL; return SIG_ERR; }
 
    if( pointer == SIG_DFL || pointer == SIG_IGN )
       rv = _signal(number, (__kern_sighandler_t) (long) (int) pointer);

@@ -385,12 +385,13 @@ int main(int argc, char **argv)
 
     for (;;) {
 	state("login: ");
+	errno = 0;
 	n=read(STDIN_FILENO,Buffer,sizeof(Buffer)-1);
 	if (n < 1) {
 	    debug("read fail on stdin, errno %d\n", errno);
-	    if (errno != -EINTR)
-		exit(1);
-	    continue;
+	    if (errno == EINTR)
+		continue;
+	    exit(1);
 	}
 	Buffer[n] = '\0';
 	while (n > 0)

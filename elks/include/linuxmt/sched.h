@@ -167,6 +167,7 @@ extern void up(short *);
 extern void wake_up_process(struct task_struct *);
 
 extern int kill_process(pid_t,sig_t,int);
+extern void kill_all(sig_t);
 
 extern void add_to_runqueue(struct task_struct *);
 

@@ -1,4 +1,5 @@
 #include <linuxmt/types.h>
+#include <linuxmt/init.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/major.h>
@@ -93,7 +94,7 @@ static void put_last_lru(register struct buffer_head *bh)
     }
 }
 
-void buffer_init(void)
+void INITPROC buffer_init(void)
 {
     struct buffer_head *bh = buffer_heads;
 #ifdef CONFIG_FS_EXTERNAL_BUFFER

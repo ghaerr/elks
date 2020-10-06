@@ -291,7 +291,8 @@ void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
 	    chq_addch_nowakeup(q, c);
     } while (INB(io + UART_LSR) & UART_LSR_DR); /* while data available (for FIFOs)*/
 
-    wake_up(&q->wait);
+    if (q->len)		/* don't wakeup unless chars else EINTR result*/
+	wake_up(&q->wait);
 }
 #endif
 
@@ -456,7 +457,7 @@ void rs_conout(dev_t dev, char Ch)
     outb(Ch, sp->io + UART_TX);
 }
 
-void serial_console_init(void)
+void INITPROC serial_console_init(void)
 {
     register struct serial_info *sp = ports;
     int ttyno = 0;

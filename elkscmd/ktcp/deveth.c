@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
+#include <errno.h>
 #include <arch/limits.h>
 #include "config.h"
 #include "tcp.h"
@@ -63,7 +64,7 @@ void eth_process(void)
   eth_head_t * eth_head;
   int len = read (devfd, sbuf, MAX_PACKET_ETH);
   if (len < (int)sizeof(eth_head_t)) {
-	if (len < 0) printf("ktcp: eth_process error %d, discarding packet\n", len); //FIXME
+	if (len < 0) printf("ktcp: eth_process error %d (errno %d), discarding packet\n", len, errno); //FIXME
 	return;
   }
   if (len > (int)sizeof(sbuf)) { printf("ktcp: eth_process OVERFLOW\n"); exit(1); }
@@ -157,14 +158,14 @@ void eth_write(unsigned char *packet, int len)
 #if DEBUG_ETH
 void eth_printhex(unsigned char *packet, int len)
 {
-  unsigned char *p = packet;
-  int i = 0;
-  printf("eth: write %d bytes: ", len);
-  if (len > 128) len = 128;
-  while (len--) {
-	printf("%02X ", *p++);
-	if ((i++ & 15) == 15) printf("\n");
-  }
-  printf("\n");
+	unsigned char *p = packet;
+	int i = 0;
+	DPRINTF("eth: write %d bytes: ", len);
+	if (len > 128) len = 128;
+	while (len--) {
+		DPRINTF("%02X ", *p++);
+		if ((i++ & 15) == 15) DPRINTF("\n");
+	}
+	DPRINTF("\n");
 }
 #endif

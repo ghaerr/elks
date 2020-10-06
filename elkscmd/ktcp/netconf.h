@@ -56,8 +56,8 @@ extern struct packet_stats_s netstats;
 #define NS_NETSTATS	3
 #define NS_ARP		4
 
-void netconf_init();
-void netconf_send();
-void netconf_request();
+void netconf_init(void);
+void netconf_send(struct tcpcb_s *cb);
+void netconf_request(struct stat_request_s *sr);
 
 #endif

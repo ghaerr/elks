@@ -34,6 +34,7 @@ typedef unsigned short sigset_t;	/* at least 16 bits */
 #define SIGPIPE		13
 #define SIGALRM		14
 #define SIGTERM		15
+#define SIGURG		16
 #define SIGTTIN		0		/* FIXME not implemented*/
 #define SIGUSR2		0		/* FIXME not implemented*/
 
@@ -129,10 +130,10 @@ typedef unsigned long sigset_t;	/* at least 32 bits */
 #define SM_SIGPIPE	(1 << (SIGPIPE - 1))
 #define SM_SIGALRM	(1 << (SIGALRM - 1))
 #define SM_SIGTERM	(1 << (SIGTERM - 1))
+#define SM_SIGURG	(1 << (SIGURG - 1))
 
 #define SM_SIGILL	0
 #define SM_SIGFPE	0
-#define SM_SIGURG	0
 #define SM_SIGTTIN	0
 #define SM_SIGTTOU	0
 #define SM_SIGTRAP	0

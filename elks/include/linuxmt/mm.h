@@ -6,6 +6,7 @@
 
 struct segment {
 	list_s    all;
+	list_s    free;
 	seg_t     base;
 	segext_t  size;
 	word_t    flags;
@@ -59,8 +60,6 @@ extern int verified_memcpy_fromfs(void *,void *,size_t);
 
 /* Memory allocation */
 
-void mm_init (seg_t, seg_t);
-
 segment_s * seg_alloc (segext_t, word_t);
 void seg_free (segment_s *);
 
@@ -69,8 +68,7 @@ void seg_put (segment_s *);
 
 segment_s * seg_dup (segment_s *);
 
-void mm_stat (seg_t, seg_t);
-void mm_get_usage (int * free, int * used);
+void mm_get_usage (unsigned int * free, unsigned int * used);
 
-#endif
-#endif
+#endif // __KERNEL__
+#endif // !__LINUXMT_MM_H

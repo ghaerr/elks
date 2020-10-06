@@ -27,7 +27,10 @@
 /*
  * Kernel debug options, set =1 to turn on. Works across multiple files.
  */
+#define DEBUG_EVENT	1		/* generate debug events on CTRLP*/
+#define DEBUG_STARTDEF	0		/* default startup debug display*/
 #define DEBUG_BLK	0		/* block i/o*/
+#define DEBUG_ETH	0		/* ethernet*/
 #define DEBUG_FAT	0		/* FAT filesystem*/
 #define DEBUG_FILE	0		/* sys open and file i/o*/
 #define DEBUG_NET	0		/* networking*/
@@ -37,26 +40,44 @@
 #define DEBUG_TTY	0		/* tty driver*/
 #define DEBUG_WAIT	0		/* wait, exit*/
 
+#if DEBUG_EVENT
+void dprintk(char *, ...);		/* printk when debugging on*/
+void debug_event(void);			/* generate debug event*/
+void debug_setcallback(void (*cbfunc));	/* callback on debug event*/
+#define PRINTK		dprintk
+#else
+#define PRINTK		printk
+#define dprintk(...)
+#define debug_callback(...)
+#define debug_event(...)
+#endif
+
 #if DEBUG_BLK
-#define debug_blk	printk
+#define debug_blk	PRINTK
 #else
 #define debug_blk(...)
 #endif
 
+#if DEBUG_ETH
+#define debug_eth   PRINTK
+#else
+#define debug_eth(...)
+#endif
+
 #if DEBUG_FAT
-#define debug_fat	printk
+#define debug_fat	PRINTK
 #else
 #define debug_fat(...)
 #endif
 
 #if DEBUG_FILE
-#define debug_file	printk
+#define debug_file	PRINTK
 #else
 #define debug_file(...)
 #endif
 
 #if DEBUG_NET
-#define debug_net	printk
+#define debug_net	PRINTK
 #else
 #define debug_net(...)
 #endif
@@ -68,25 +89,25 @@
 #endif
 
 #if DEBUG_SIG
-#define debug_sig	printk
+#define debug_sig	PRINTK
 #else
 #define debug_sig(...)
 #endif
 
 #if DEBUG_SUP
-#define debug_sup	printk
+#define debug_sup	PRINTK
 #else
 #define debug_sup(...)
 #endif
 
 #if DEBUG_TTY
-#define debug_tty	printk
+#define debug_tty	PRINTK
 #else
 #define debug_tty(...)
 #endif
 
 #if DEBUG_WAIT
-#define debug_wait	printk
+#define debug_wait	PRINTK
 #else
 #define debug_wait(...)
 #endif
@@ -104,7 +125,7 @@
  */
 
 #ifdef DEBUG
-#	define	debug(...)	printk(__VA_ARGS__)
+#	define	debug(...)	PRINTK(__VA_ARGS__)
 #else
 #	define	debug(...)
 #endif

@@ -15,7 +15,7 @@ byte_t arch_cpu;  // processor number (from setup data)
 extern long int basmem;
 #endif
 
-void setup_arch(seg_t *start, seg_t *end)
+void INITPROC setup_arch(seg_t *start, seg_t *end)
 {
 #ifdef CONFIG_COMPAQ_FAST
 

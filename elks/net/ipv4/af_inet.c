@@ -18,6 +18,7 @@
 #include <linuxmt/stat.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/fcntl.h>
+#include <linuxmt/sched.h>
 #include <linuxmt/net.h>
 #include <linuxmt/tcpdev.h>
 #include <linuxmt/debug.h>
@@ -51,6 +52,7 @@ int inet_process_tcpdev(register char *buf, int len)
 	    wake_up(sock->wait);
 	}
         break;
+
     case TDT_AVAIL_DATA:
         down(&sock->sem);
         sock->avail_data = ((struct tdb_return_data *)buf)->ret_value;
@@ -59,9 +61,12 @@ int inet_process_tcpdev(register char *buf, int len)
         tcpdev_clear_data_avail();
         wake_up(sock->wait);
 	break;
-    default:
+
+    case TDT_RETURN:
+    case TDT_ACCEPT:
 	debug_net("retval %d, bufin %d\n", ((struct tdb_return_data *)buf)->ret_value, bufin_sem);
         wake_up(sock->wait);
+	break;
     }
 
     return 1;
@@ -245,8 +250,8 @@ static int inet_read(register struct socket *sock, char *ubuf, int size,
     register struct tdb_read *cmd;
     int ret;
 
-    debug_net("inet_READ(socket: 0x%x size:%d nonblock: %d bufin %d)\n", sock, size,
-	   nonblock, bufin_sem);
+    debug_net("inet_READ(%d)(socket: 0x%x size:%d nonblock: %d bufin %d)\n",
+	   current->pid, sock, size, nonblock, bufin_sem);
 
     if (size > TCPDEV_MAXREAD)
 	size = TCPDEV_MAXREAD;
@@ -285,7 +290,8 @@ static int inet_read(register struct socket *sock, char *ubuf, int size,
 
     if (ret > 0) {
 	debug_net("INET_READ(%d) %u, %u\n", current->pid, ret, sock->avail_data);
-        memcpy_tofs(ubuf, &((struct tdb_return_data *)tdin_buf)->data, (size_t) ret);
+        memcpy_tofs(ubuf, &((struct tdb_return_data *)tdin_buf)->data,
+		(size_t) ((struct tdb_return_data *)tdin_buf)->size);
         sock->avail_data = 0;
     } else debug_net("INET_READ %d, %u\n", ret, sock->avail_data);
 
@@ -343,7 +349,10 @@ static int inet_write(register struct socket *sock, char *ubuf, int size,
 
 	if (ret < 0) {
             if (ret == -ERESTARTSYS) {
-printk("inet_write: RESTARTSYS\n");
+//printk("inet_write: retry\n");
+		/* delay process 10ms*/
+		current->state = TASK_INTERRUPTIBLE;
+		current->timeout = jiffies + 10;
                 schedule();
             } else
                 return ret;

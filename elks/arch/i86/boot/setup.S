@@ -98,6 +98,9 @@
 #include <linuxmt/config.h>
 #include <linuxmt/boot.h>
 
+// Relocating loader debug option
+#define DEBUG_LOADER	0
+
 // Signature words to ensure LILO loaded us right
 #define SIG1	0xAA55
 #define SIG2	0x5A5A
@@ -115,12 +118,13 @@
   SETUPSEG = CONFIG_ROM_SETUP_CODE
 #endif
 
+.arch i8086, nojumps
 .code16
 
 .text
 
-.global entry
-entry:
+.global _start
+_start:
 #ifdef CONFIG_ROMCODE
     .byte 0x55, 0xaa      //;sign for ROM-Extention
     .byte 0x04            //;space for lengthcode (promsize/512)
@@ -554,7 +558,7 @@ sys_hdr_good:
 
 // Relocate kernel code
 
-	mov $'T',%ax     // display kernel .text segment
+	mov $'t',%ax     // display kernel .text segment
 	call putc
 
 	mov $SYSSEG,%ax  // start of a.out
@@ -583,7 +587,7 @@ sys_hdr_good:
 	mov %ax,%ds
 	mov 0x20,%ax     // text reloc size
 	mov %ax,-12(%bp)
-	mov 0x32,%ax     // far text reloc size FIXME changing to 0x34
+	mov 0x34,%ax     // far text reloc size
 	mov %ax,-14(%bp)
 	mov 0x24,%ax     // data reloc size
 	mov %ax,-16(%bp)
@@ -592,7 +596,7 @@ sys_hdr_good:
 	and %cx,%cx
 	jz sys_no_far_text
 
-	mov $'F',%ax      // display kernel .fartext segment
+	mov $'f',%ax      // display kernel .fartext segment
 	call putc
 
 	mov $SYSSEG,%ax
@@ -621,7 +625,7 @@ sys_no_far_text:
 	shr %cl,%ax
 	mov %ax,%cx
 
-	mov $'D',%ax
+	mov $'d',%ax
 	call putc
 
 	mov $SYSSEG,%ax
@@ -654,8 +658,8 @@ sys_no_far_text:
 	mov -12(%bp),%cx // text reloc size
 text_reloc:
 	jcxz 1f
-	mov $'t',%ax
-	call putc
+//	mov $'t',%ax
+//	call putc
 	mov -18(%bp),%ax // kernel .text segment
 	mov %ax,%es
 
@@ -668,8 +672,8 @@ text_reloc:
 	mov -14(%bp),%cx // far text reloc size
 ftext_reloc:
 	jcxz 2f
-	mov $'f',%ax
-	call putc
+//	mov $'f',%ax
+//	call putc
 	mov -20(%bp),%ax // kernel .fartext segment
 	mov %ax,%es
 
@@ -682,8 +686,8 @@ ftext_reloc:
 	mov -16(%bp),%cx // data reloc size
 data_reloc:
 	jcxz 3f
-	mov $'d',%ax
-	call putc
+//	mov $'d',%ax
+//	call putc
 	mov -22(%bp),%ax   // kernel .data segment
 	mov %ax,%es
 
@@ -692,6 +696,7 @@ data_reloc:
 	add $8,%si
 	jmp data_reloc
 3:
+
 	mov $'\r',%ax
 	call putc
 	mov $'\n',%ax
@@ -720,7 +725,7 @@ relocat:
 	mov (%si),%di      // get r_vaddr
 	mov 6(%si),%ax     // get r_type
 	cmp $80,%ax        // R_SEGWORD
-	jnz sys_hdr_bad
+	jnz 9f
 	mov 4(%si),%ax     // get r_symndx
 	cmp $-2,%ax        // S_TEXT
 	jnz 1f
@@ -735,10 +740,11 @@ relocat:
 	jmp 3f
 2:
 	cmp $-3,%ax        // S_DATA
-	jnz sys_hdr_bad
+	jnz 9f
 
 	mov -22(%bp),%ax   // kernel .data segment
 3:
+#if DEBUG_LOADER
 	push %ax           // display [seg:off=val]
 	mov $'[',%ax
 	call putc
@@ -756,9 +762,11 @@ relocat:
 	mov $']',%ax
 	call putc
 	pop %ax
-
+#endif
 	mov %ax,%es:(%di)
 	ret
+9:
+	jmp sys_hdr_bad
 
 // Add AX to DS:SI and normalize segment
 add_ptr:

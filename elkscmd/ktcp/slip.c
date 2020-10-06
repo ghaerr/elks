@@ -19,6 +19,7 @@
 #include <termios.h>
 
 #include "ip.h"
+#include "tcp.h"
 #include "slip.h"
 #include "vjhc.h"
 #include "netconf.h"

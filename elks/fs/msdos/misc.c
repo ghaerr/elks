@@ -12,7 +12,7 @@
 #include <linuxmt/stat.h>
 #include <linuxmt/debug.h>
 
-struct buffer_head *msdos_sread(int dev,long sector,void **start)
+struct buffer_head * FATPROC msdos_sread(int dev,long sector,void **start)
 {
 	register struct buffer_head *bh;
 
@@ -30,21 +30,21 @@ static struct wait_queue creation_wait;
 static int creation_lock = 0;
 
 
-void lock_creation(void)
+void FATPROC lock_creation(void)
 {
 	while (creation_lock) sleep_on(&creation_wait);
 	creation_lock = 1;
 }
 
 
-void unlock_creation(void)
+void FATPROC unlock_creation(void)
 {
 	creation_lock = 0;
 	wake_up(&creation_wait);
 }
 
 
-int msdos_add_cluster(register struct inode *inode)
+int FATPROC msdos_add_cluster(register struct inode *inode)
 {
 	static struct wait_queue wait;
 	static int lock = 0;
@@ -163,7 +163,7 @@ static int day_n[] = { 0,31,59,90,120,151,181,212,243,273,304,334,0,0,0,0 };
 
 /* Convert a MS-DOS time/date pair to a UNIX date (seconds since 1 1 70). */
 
-long date_dos2unix(unsigned short time,unsigned short date)
+long FATPROC date_dos2unix(unsigned short time,unsigned short date)
 {
 	int month,year;
 
@@ -178,7 +178,7 @@ long date_dos2unix(unsigned short time,unsigned short date)
 
 /* Convert linear UNIX date to a MS-DOS time/date pair. */
 
-void date_unix2dos(long unix_date,unsigned short *time, unsigned short *date)
+void FATPROC date_unix2dos(long unix_date,unsigned short *time, unsigned short *date)
 {
 	int day,year,nl_day,month;
 
@@ -213,7 +213,7 @@ void date_unix2dos(long unix_date,unsigned short *time, unsigned short *date)
    non-NULL, it is brelse'd before. Pos is incremented. The buffer header is
    returned in bh. */
 
-ino_t msdos_get_entry(struct inode *dir,loff_t *pos,struct buffer_head **bh,
+ino_t FATPROC msdos_get_entry(struct inode *dir,loff_t *pos,struct buffer_head **bh,
     struct msdos_dir_entry **de)
 {
 	long sector;
@@ -268,7 +268,7 @@ ino_t msdos_get_entry(struct inode *dir,loff_t *pos,struct buffer_head **bh,
 /* Scans a directory for a given file (name points to its formatted name) or
    for an empty directory slot (name is NULL). Returns the inode number. */
 
-int msdos_scan(struct inode *dir,char *name,struct buffer_head **res_bh,
+int FATPROC msdos_scan(struct inode *dir,char *name,struct buffer_head **res_bh,
     struct msdos_dir_entry **res_de,ino_t *ino)
 {
 	off_t pos;
@@ -310,7 +310,7 @@ int msdos_scan(struct inode *dir,char *name,struct buffer_head **res_bh,
    directory "inode". */
 
 /* Retrieve sectors sector */
-static long raw_found(struct super_block *sb,long sector,char *name,long number,
+static long FATPROC raw_found(struct super_block *sb,long sector,char *name,long number,
     ino_t *ino)
 {
 	struct buffer_head *bh;
@@ -347,7 +347,7 @@ static long raw_found(struct super_block *sb,long sector,char *name,long number,
 }
 
 /* Retrieve the root directory file */
-static long raw_scan_root(register struct super_block *sb,char *name,long number,ino_t *ino)
+static long FATPROC raw_scan_root(register struct super_block *sb,char *name,long number,ino_t *ino)
 {
 	int count;
 	long cluster = 0;
@@ -360,7 +360,7 @@ static long raw_scan_root(register struct super_block *sb,char *name,long number
 }
 
 /* Retrieve the normal directory file */
-static long raw_scan_nonroot(register struct super_block *sb,long start,char *name,
+static long FATPROC raw_scan_nonroot(register struct super_block *sb,long start,char *name,
     long number,ino_t *ino)
 {
 	int count;
@@ -383,14 +383,14 @@ static long raw_scan_nonroot(register struct super_block *sb,long start,char *na
 /* In the directory file (cluster start) within the name or cluster number number
  * to retrieve the file, return to its ino and cluster number
  */
-static long raw_scan(struct super_block *sb,long start,char *name,long number, ino_t *ino)
+static long FATPROC raw_scan(struct super_block *sb,long start,char *name,long number, ino_t *ino)
 {
     if (start)
 		return raw_scan_nonroot(sb,start,name,number,ino);
     return raw_scan_root(sb,name,number,ino);
 }
 
-ino_t msdos_parent_ino(register struct inode *dir,int locked)
+ino_t FATPROC msdos_parent_ino(register struct inode *dir,int locked)
 {
 	long current,prev;
 	ino_t this = (ino_t)-1L;

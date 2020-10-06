@@ -14,7 +14,7 @@
  * Must be at least as big as CB_IN_BUF_SIZE
  * And at least as big as TCPDEV_INBUFFERSIZE in <linuxmt/tcpdev.h> (currently 1024)
  */
-#define TCPDEV_BUFSIZ	(2048 + sizeof(struct tdb_return_data) - 1)
+#define TCPDEV_BUFSIZ	(CB_IN_BUF_SIZE + sizeof(struct tdb_return_data))
 
 /* max tcp buffer size (no ip header)*/
 #define TCP_BUFSIZ	(TCPDEV_BUFSIZ + sizeof(tcphdr_t) + TCP_OPT_MSS_LEN)
@@ -37,15 +37,21 @@
 //#define TIMEOUT_INITIAL_RTT	4	/* initial RTT before retransmit*/
 #define TIMEOUT_INITIAL_RTT	1	/* initial RTT before retransmit*/
 
-/* following timeout is in 1/16 ticks, not seconds*/
-#define TIMEOUT_MIN_SLIP	8	/* minimum retrans timeout for slip/cslip (1/2 sec)*/
-
-#define PROTO_TCP	0x06
+/* retransmit settings*/
+#define TCP_RTT_ALPHA			90
+#define TCP_RETRANS_MAXMEM		2048	/* max retransmit total memory (was 16384)*/
+#define TCP_RETRANS_MAXTRIES		3	/* max # retransmits*/
+/* timeout values in 1/16 seconds*/
+#define TCP_RETRANS_MAXWAIT		64	/* max retransmit wait (4 secs)*/
+#define TCP_RETRANS_MINWAIT_SLIP	8	/* minimum retrans timeout for slip/cslip (1/2 sec)*/
+#define TCP_RETRANS_MINWAIT_ETH		4	/* minimum retrans timeout for ethernet (1/4 sec)*/
 
 #define SEQ_LT(a,b)	((long)((a)-(b)) < 0)
 #define SEQ_LEQ(a,b)	((long)((a)-(b)) <= 0)
 #define SEQ_GT(a,b)	((long)((a)-(b)) > 0)
 #define SEQ_GEQ(a,b)	((long)((a)-(b)) >= 0)
+
+#define PROTO_TCP	0x06
 
 #define	TF_FIN	0x01
 #define TF_SYN	0x02
@@ -173,23 +179,18 @@ struct	tcp_retrans_list_s {
 
 };
 
-int tcp_timeruse;
 int tcpcb_need_push;
+int tcp_timeruse;		/* # retransmits alloced*/
+int tcp_retrans_memory;		/* total retransmit memory*/
 
-#define TCP_RTT_ALPHA		90
-//#define TCP_RETRANS_MAXMEM	8192*2
-#define TCP_RETRANS_MAXMEM	2048
-int tcp_retrans_memory;
-
-struct tcpcb_list_s *tcpcb_new();
+struct tcpcb_list_s *tcpcb_new(void);
 struct tcpcb_list_s *tcpcb_find(__u32 addr, __u16 lport, __u16 rport);
 struct tcpcb_list_s *tcpcb_find_by_sock(void *sock);
-void tcpcb_remove();
 
 __u16 tcp_chksum(struct iptcp_s *h);
 __u16 tcp_chksumraw(struct tcphdr_s *h, __u32 saddr, __u32 daddr, __u16 len);
 void tcp_print(struct iptcp_s *head, int recv);
-void tcp_output();
+void tcp_output(struct tcpcb_s *cb);
 void tcp_update(void);
 int tcp_init(void);
 void tcp_process(struct iphdr_s *iph);

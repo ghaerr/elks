@@ -20,6 +20,7 @@
 #include <string.h>
 #include <getopt.h>
 #include <signal.h>
+#include <errno.h>
 #include <arpa/inet.h>
 #include "slip.h"
 #include "tcp.h"
@@ -59,7 +60,7 @@ void setp(unsigned char **p)
 }
 
 char *zero;
-void printp()
+void printp(void)
 {
 unsigned char *p;
 //int i;
@@ -94,8 +95,12 @@ printp();
 	FD_SET(intfd, &fdset);
 	FD_SET(tcpdevfd, &fdset);
 	count = select(intfd > tcpdevfd ? intfd + 1 : tcpdevfd + 1, &fdset, NULL, NULL, tv);
-	if (count < 0)
-		return;	//FIXME
+	if (count < 0) {
+		if (errno == EINTR)
+			continue;
+		printf("ktcp: select failed errno %d\n", errno);
+		return;
+	}
 
 	Now = timer_get_time();
 
@@ -121,9 +126,32 @@ printp();
     }
 }
 
+#if USE_DEBUG_EVENT
+static int dprintf_on = DEBUG_STARTDEF;
+
+void debug_toggle(int sig)
+{
+	dprintf_on = !dprintf_on;
+	printf("\nktcp: debug %s\n", dprintf_on? "on": "off");
+	signal(SIGURG, debug_toggle);
+}
+
+void dprintf(const char *fmt, ...)
+{
+	va_list ptr;
+
+	if (!dprintf_on)
+		return;
+	va_start(ptr, fmt);
+	vfprintf(stdout, fmt, ptr);
+	va_end(ptr);
+}
+#endif
+
 void catch(int sig)
 {
-    printf("ktcp: exit signal %d\n", sig);
+    printf("ktcp: exiting on signal %d\n", sig);
+	exit(1);
 }
 
 static void usage(void)
@@ -198,6 +226,9 @@ printp();
 
     signal(SIGHUP, catch);
     signal(SIGINT, catch);
+#if USE_DEBUG_EVENT
+    signal(SIGURG, debug_toggle);
+#endif
 
     /* become daemon now that tcpdev_inuse race condition over*/
     if (bflag) {

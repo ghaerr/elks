@@ -84,7 +84,7 @@ void stack_check(void)
  *	so we fork onto our kernel stack.
  */
 
-void kfork_proc(char *addr)
+void kfork_proc(void (*addr))
 {
     register struct task_struct *t;
 
@@ -92,7 +92,8 @@ void kfork_proc(char *addr)
 
     t->t_xregs.cs = kernel_cs;			/* Run in kernel space */
     t->t_regs.ds = t->t_regs.es = t->t_regs.ss = kernel_ds;
-    arch_build_stack(t, addr);
+    if (addr)
+	arch_build_stack(t, addr);
 }
 
 /*

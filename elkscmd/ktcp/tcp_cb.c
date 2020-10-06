@@ -15,6 +15,7 @@
 
 #include "config.h"
 #include "tcp.h"
+#include "tcp_cb.h"
 #include "tcpdev.h"
 #include "tcp_output.h"
 
@@ -98,6 +99,17 @@ struct tcpcb_list_s *tcpcb_clone(struct tcpcb_s *cb)
 	memcpy(&n->tcpcb, cb, sizeof(struct tcpcb_s));
 
     return n;
+}
+
+void tcpcb_remove_cb(struct tcpcb_s *cb)
+{
+    struct tcpcb_list_s *n;
+
+    for (n=tcpcbs; n; n=n->next)
+	if (&n->tcpcb == cb) {
+	    tcpcb_remove(n);
+	    return;
+	}
 }
 
 void tcpcb_remove(struct tcpcb_list_s *n)

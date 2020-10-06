@@ -37,8 +37,7 @@ extern word_t _ne2k_skip_cnt;	/* In case the NIC ring buffer overflows,
  * Get packet
  */
 
-static size_t eth_read(struct inode * inode, struct file * filp,
-	char * data, size_t len)
+static size_t eth_read(struct inode * inode, struct file * filp, char * data, size_t len)
 {
 	size_t res;
 	word_t nhdr[2];	/* packet header from the NIC, for debugging */
@@ -80,8 +79,7 @@ static size_t eth_read(struct inode * inode, struct file * filp,
  * Pass packet to driver for send
  */
 
-static size_t eth_write (struct inode * inode, struct file * file,
-	char * data, size_t len)
+static size_t eth_write (struct inode * inode, struct file * file, char * data, size_t len)
 {
 	size_t res;
 
@@ -217,6 +215,7 @@ static int eth_ioctl(struct inode * inode, struct file * file, unsigned int cmd,
 			memcpy_tofs((char *) arg, mac_addr, 6);
 			break;
 
+#if 0 /* unused*/
 		case IOCTL_ETH_ADDR_SET:
 			memcpy_fromfs(mac_addr, (char *) arg, 6);
 			ne2k_addr_set(mac_addr);
@@ -248,7 +247,7 @@ static int eth_ioctl(struct inode * inode, struct file * file, unsigned int cmd,
 			/* Get the current overflow skip counter. */
 			arg = _ne2k_skip_cnt;
 			break;
-
+#endif
 		default:
 			err = -EINVAL;
 
@@ -331,7 +330,8 @@ void eth_display_status(void)
  * FIXME: Needs return value to signal that initalization failed.
  */
 
-void eth_drv_init() {
+void eth_drv_init(void)
+{
 	int err;
 	word_t prom[16];	/* PROM containing HW MAC address and more 
 				 * (aka SAPROM, Station Address PROM).
@@ -395,11 +395,9 @@ void eth_drv_init() {
 	}
 	_ne2k_has_data = 0;
 	_ne2k_skip_cnt = 0;	/* # of packets to discard if the NIC buffer overflows. 
-				 * Zero is the default, discard entire buffer less one pkt.
+                 		 * Zero is the default, discard entire buffer less one pkt.
 				 * May be changed via ioctl.
-				 * A big # will clear the entire bnuffer.
+				 * A big # will clar the entire buffer.
 				 * On a floppy based system, anything else is useless.
 				 */
-	return;
 }
-

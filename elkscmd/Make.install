@@ -156,11 +156,18 @@ install:
 	do \
 		file=`echo $$line | cut -d" " -f 1`; \
 		dir=`echo $$line | cut -d" " -f 2`; \
-		if [ "$${dir:0:2}" == "::" ]; \
+		link=no; \
+		if [ "$${dir:0:3}" == ":::" ]; \
 		then \
-			instdir=$${dir:2}; \
+			instdir=$${dir:3}; \
+			link=yes; \
 		else \
-			instdir=bin; \
+			if [ "$${dir:0:2}" == "::" ]; \
+			then \
+				instdir=$${dir:2}; \
+			else \
+				instdir=bin; \
+			fi; \
 		fi; \
 		echo install $$file to $$instdir; \
 		if [ ! -e $$file ]; \
@@ -168,8 +175,14 @@ install:
 			echo "File specified in $(PACKAGE) not found: $$file"; \
 			exit 1; \
 		else \
-			[ ! -d $$file ] && mkdir -p $$(dirname $(DESTDIR)/$$instdir); \
-			[ -f $$file ] && $(INSTALL) $$file $(DESTDIR)/$$instdir; \
+			if [ "$$link" == "yes" ]; \
+			then \
+				echo ln -s $$(basename $$file) $$instdir; \
+				ln -s $$(basename $$file) $(DESTDIR)/bin/$$instdir; \
+			else \
+				[ ! -d $$file ] && mkdir -p $$(dirname $(DESTDIR)/$$instdir); \
+				[ -f $$file ] && $(INSTALL) $$file $(DESTDIR)/$$instdir; \
+			fi; \
 		fi \
 	done < Filelist
 	rm Filelist

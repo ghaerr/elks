@@ -104,7 +104,10 @@ int main(int argc, char ** argv)
 	for (;;) {
 		if (argc == 1) {
 			write(STDOUT_FILENO,"login: ",7);
+			errno = 0;
 			if (read(STDIN_FILENO, lbuf, sizeof(lbuf)) < 1) {
+				if (errno == EINTR)
+					continue;
 				exit(1);
 			}
 			p=strchr(lbuf,'\n');

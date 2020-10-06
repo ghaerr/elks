@@ -632,6 +632,12 @@ tx_rdy_wait:
 	//mov	$2,%al		// Test, should not make any difference
 	//out	%al,%dx
 				// Not waiting for completion
+
+1:	mov     $io_ne2k_command,%dx
+	in      %dx,%al
+	test    $4,%al		// Wait for completion
+	jnz	1b
+
 	xor     %ax, %ax	// Always zero return
 
 	pop     %si

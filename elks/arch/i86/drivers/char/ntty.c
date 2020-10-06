@@ -81,6 +81,12 @@ int tty_intcheck(register struct tty *ttyp, unsigned char key)
 	    sig = SIGINT;
 	if (key == ttyp->termios.c_cc[VSUSP])
 	    sig = SIGTSTP;
+#if DEBUG_EVENT
+	if (key == ('P' & 0x1f)) {	/* ctrl-P*/
+	    debug_event();
+	    return 1;
+	}
+#endif
 	if (sig) {
 	    debug_tty("TTY signal %d to pgrp %d pid %d\n", sig, ttyp->pgrp, current->pid);
 	    kill_pg(ttyp->pgrp, sig, 1);
@@ -464,7 +470,7 @@ static struct file_operations tty_fops = {
 #endif
 };
 
-void tty_init(void)
+void INITPROC tty_init(void)
 {
     register struct tty *ttyp;
     int i;

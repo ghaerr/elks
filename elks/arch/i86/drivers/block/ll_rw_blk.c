@@ -381,7 +381,6 @@ void ll_rw_block(int rw, int nr, register struct buffer_head **bh)
 	    bh[i]->b_dirty = 0;
 	    bh[i]->b_uptodate = 0;
 	}
-    return;
 }
 
 #endif
@@ -406,7 +405,7 @@ void ll_rw_blk(int rw, register struct buffer_head *bh)
 	make_request(major, rw, bh);
 }
 
-int blk_dev_init(void)
+void INITPROC blk_dev_init(void)
 {
     register struct request *req;
     register struct blk_dev_struct *dev;
@@ -434,11 +433,11 @@ int blk_dev_init(void)
 #ifdef CONFIG_BLK_DEV_FD
     floppy_init();
 #else
-    outb_p(0xc, (void *) 0x3f2);
+    outb_p(0xc, (void *) 0x3f2);	//FIXME move somewhere
 #endif
 
 #ifdef CONFIG_BLK_DEV_BIOS
-    init_bioshd();
+    bioshd_init();
 #endif
 
 #ifdef CONFIG_BLK_DEV_SSD
@@ -448,6 +447,4 @@ int blk_dev_init(void)
 #ifdef CONFIG_ROMFS_FS
     romflash_init ();
 #endif
-
-    return 0;
 }

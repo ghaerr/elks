@@ -23,11 +23,10 @@ struct exec {			/* a.out header */
     uint32_t a_tbase;		/* text relocation base */
     uint32_t a_dbase;		/* data relocation base */
     /* even more optional fields --- for ELKS medium memory model support */
-    uint16_t esh_ftseg;		/* far text size */		//FIXME changing to long
-    uint16_t esh_ftrsize;	/* far text relocation size */	//FIXME changing to long
+    uint32_t esh_ftseg;		/* far text size */
+    uint32_t esh_ftrsize;	/* far text relocation size */
     uint32_t esh_reserved1;
     uint32_t esh_reserved2;
-    uint32_t esh_reserved3;
 };
 
 #define A_MAGIC0      (unsigned char) 0x01

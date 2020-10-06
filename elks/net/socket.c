@@ -587,7 +587,7 @@ int sock_register(int family, register struct proto_ops *ops)
     return -ENOMEM;
 }
 
-void proto_init(void)
+static void INITPROC proto_init(void)
 {
     register struct net_proto *pro;
 
@@ -600,7 +600,7 @@ void proto_init(void)
     /* We're all done... */
 }
 
-void sock_init(void)
+void INITPROC sock_init(void)
 {
 #ifndef CONFIG_SMALL_KERNEL
     printk("ELKS network sockets\n");

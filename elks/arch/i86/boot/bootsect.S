@@ -62,10 +62,8 @@ ROOT_DEV = 0
 
 #include <linuxmt/boot.h>
 
-// ld86 requires an entry symbol. This may as well be the usual one.
-
-.global     entry
-entry:
+.global     _start
+_start:
 #if 0   /* hook for debugger, harmless unless BIOS is fussy (old HP) */
         int     3
 #endif

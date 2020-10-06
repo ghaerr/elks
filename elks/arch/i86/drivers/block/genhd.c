@@ -17,6 +17,7 @@
  */
 
 #include <linuxmt/config.h>
+#include <linuxmt/init.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/genhd.h>
 #include <linuxmt/kernel.h>
@@ -28,8 +29,6 @@
 
 #define NR_SECTS(p)	p->nr_sects
 #define START_SECT(p)	p->start_sect
-
-extern int blk_dev_init();
 
 struct gendisk *gendisk_head = NULL;
 int boot_partition = 0;		/* MBR boot partition, if any*/
@@ -44,7 +43,7 @@ extern void rd_load();
 
 static unsigned short current_minor;
 
-static void print_minor_name(register struct gendisk *hd,
+static void INITPROC print_minor_name(register struct gendisk *hd,
 			     unsigned short int minor)
 {
     unsigned int part;
@@ -56,7 +55,7 @@ static void print_minor_name(register struct gendisk *hd,
     printk(":(%lu,%lu) ", hdp->start_sect, hdp->nr_sects);
 }
 
-static void add_partition(struct gendisk *hd, unsigned short int minor,
+static void INITPROC add_partition(struct gendisk *hd, unsigned short int minor,
 			  sector_t start, sector_t size)
 {
     struct hd_struct *hdp = &hd->part[minor];
@@ -96,7 +95,7 @@ static void add_partition(struct gendisk *hd, unsigned short int minor,
     }
 }
 
-static int is_extended_partition(register struct partition *p)
+static int INITPROC is_extended_partition(register struct partition *p)
 {
     return (p->sys_ind == DOS_EXTENDED_PARTITION ||
 	    p->sys_ind == LINUX_EXTENDED_PARTITION);
@@ -113,7 +112,7 @@ static int is_extended_partition(register struct partition *p)
  * only for the actual data partitions.
  */
 
-static void extended_partition(register struct gendisk *hd, kdev_t dev)
+static void INITPROC extended_partition(register struct gendisk *hd, kdev_t dev)
 {
     struct buffer_head *bh;
     register struct partition *p;
@@ -201,7 +200,7 @@ static void extended_partition(register struct gendisk *hd, kdev_t dev)
     unmap_brelse(bh);
 }
 
-static int msdos_partition(struct gendisk *hd,
+static int INITPROC msdos_partition(struct gendisk *hd,
 			   kdev_t dev, sector_t first_sector)
 {
     struct buffer_head *bh;
@@ -258,7 +257,7 @@ out:
     return 1;
 }
 
-void check_partition(register struct gendisk *hd, kdev_t dev)
+static void INITPROC check_partition(register struct gendisk *hd, kdev_t dev)
 {
     static int first_time = 1;
     sector_t first_sector;
@@ -312,7 +311,7 @@ void resetup_one_dev(struct gendisk *dev, int drive)
 }
 #endif
 
-void setup_dev(register struct gendisk *dev)
+void INITPROC setup_dev(register struct gendisk *dev)
 {
 #ifdef BDEV_SIZE_CHK
 	blk_size[dev->major] = NULL;

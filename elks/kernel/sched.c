@@ -241,7 +241,7 @@ void do_timer(struct pt_regs *regs)
 
 }
 
-void sched_init(void)
+void INITPROC sched_init(void)
 {
     register struct task_struct *t = &task[MAX_TASKS];
 

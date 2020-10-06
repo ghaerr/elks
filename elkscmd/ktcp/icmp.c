@@ -16,6 +16,7 @@
 #include <arpa/inet.h>
 #include "config.h"
 #include "ip.h"
+#include "tcp.h"
 #include "icmp.h"
 #include "netconf.h"
 
