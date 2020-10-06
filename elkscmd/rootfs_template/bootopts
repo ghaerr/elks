@@ -6,4 +6,4 @@
 #console=tty2		# alt2 console
 #root=bda1			# hd partition 1
 #ro					# read-only root
-#net=slip
+#net=eth

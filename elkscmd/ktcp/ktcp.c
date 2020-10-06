@@ -60,7 +60,7 @@ void setp(unsigned char **p)
 }
 
 char *zero;
-void printp()
+void printp(void)
 {
 unsigned char *p;
 //int i;

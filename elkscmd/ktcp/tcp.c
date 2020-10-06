@@ -16,6 +16,7 @@
 #include <arpa/inet.h>
 #include "slip.h"
 #include "ip.h"
+#include "icmp.h"
 #include "tcp.h"
 #include "tcp_cb.h"
 #include "tcpdev.h"
@@ -30,12 +31,20 @@ extern int cbs_in_user_timeout;
 
 void tcp_print(struct iptcp_s *head, int recv)
 {
-    debug_tcp("TCP: %s ", recv? "recv": "send");
+#if DEBUG_TCP
+    char *prot;
+    switch (head->iph->protocol) {
+    case PROTO_TCP: prot = "TCP"; break;
+    case PROTO_ICMP: prot = "ICMP"; break;
+    default: prot = "???";
+    }
+    debug_tcp("%s: %s ", prot, recv? "recv": "send");
     debug_tcp("src:%u dst:%u ", ntohs(head->tcph->sport), ntohs(head->tcph->dport));
     debug_tcp("flags:%x ",head->tcph->flags);
     debug_tcp("seq:%lx ack:%lx ", ntohl(head->tcph->seqnum), ntohl(head->tcph->acknum));
     debug_tcp("win:%u urg:%d ", ntohs(head->tcph->window), head->tcph->urgpnt);
     debug_tcp("chk:%x len:%u\n", tcp_chksum(head), head->tcplen);
+#endif
 }
 
 int tcp_init(void)
@@ -56,7 +65,7 @@ static __u32 choose_seq(void)
 static void tcp_reset_connection(struct tcpcb_s *cb)
 {
 	tcp_send_reset(cb);
-	tcpcb_remove(cb);	/* deallocate*/
+	tcpcb_remove_cb(cb);	/* deallocate*/
 }
 
 void tcp_send_fin(struct tcpcb_s *cb)
@@ -106,7 +115,7 @@ static void tcp_syn_sent(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     if (h->flags & TF_RST) {
 	retval_to_sock(cb->sock, -ECONNREFUSED);
 	//cb->state = TS_CLOSED;
-	tcpcb_remove(cb); 	/* deallocate*/
+	tcpcb_remove_cb(cb); 	/* deallocate*/
 	return;
     }
 
@@ -118,7 +127,7 @@ printf("SYN sent, wrong ACK (listen port not expired)\n");
 	    cb->state = TS_CLOSED;	//FIXME not needed
 	    //tcp_reset_connection(cb);	/* deallocate*/
 	    //tcp_send_reset(cb);
-	    tcpcb_remove(cb);
+	    tcpcb_remove_cb(cb);
 	    return;
 	}
 
@@ -212,8 +221,7 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	data = (__u8 *)h + TCP_DATAOFF(h);
 
 //printf("space free %d\n", CB_BUF_SPACE(cb));
-	/* FIXME : check if it fits */
-//tcpdev_checkread(cb);
+	/* check if buffer space for received packet*/
 	if (datasize > CB_BUF_SPACE(cb)) {
 	    printf("tcp: dropping packet, data too large: %u > %d\n", datasize, CB_BUF_SPACE(cb));
 	    //tcp_reset_connection(cb);	//FIXME this causes RST received then panic in read/write
@@ -230,7 +238,7 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	    cb->bytes_to_push = CB_BUF_USED(cb);
 	}
 	tcpdev_checkread(cb);
-    } /* datasize != 0 */
+    }
 
     if (h->flags & TF_ACK) { 	/*update unacked*/
 	acknum = ntohl(h->acknum);
@@ -247,7 +255,7 @@ printf("tcp: RST received, removing retrans packets\n");
 	} else {
 	    //cb->state = TS_CLOSED;
 	    tcpdev_sock_state(cb, SS_UNCONNECTED);
-	    tcpcb_remove(cb); 	/* deallocate*/
+	    tcpcb_remove_cb(cb); 	/* deallocate*/
 	}
 	tcpdev_sock_state(cb, SS_UNCONNECTED);
 	return;
@@ -375,7 +383,7 @@ static void tcp_last_ack(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	/* our FIN was acked */
 	cbs_in_user_timeout--;
 	cb->state = TS_CLOSED;
-	tcpcb_remove(cb); 	/* deallocate*/
+	tcpcb_remove_cb(cb); 	/* deallocate*/
     }
 }
 
