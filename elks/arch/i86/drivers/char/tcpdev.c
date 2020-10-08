@@ -24,8 +24,8 @@
 
 #ifdef CONFIG_INET
 
-unsigned char tdin_buf[TCPDEV_INBUFFERSIZE];
-unsigned char tdout_buf[TCPDEV_OUTBUFFERSIZE];
+unsigned char tdin_buf[TCPDEV_INBUFFERSIZE];	/* for reading tcpdev*/
+unsigned char tdout_buf[TCPDEV_OUTBUFFERSIZE];	/* for writing tcpdev*/
 
 short bufin_sem, bufout_sem;	/* Buffer semaphores */
 

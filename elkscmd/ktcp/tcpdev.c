@@ -177,7 +177,6 @@ static void tcpdev_connect(void)
     addr = db->addr.sin_addr.s_addr;
     if (addr == ntohl(INADDR_LOOPBACK))
 	addr = local_ip;
-//printf("connect rem %s\n", in_ntoa(addr));
     n->tcpcb.remaddr = addr;
     n->tcpcb.remport = ntohs(db->addr.sin_port);
 
@@ -219,8 +218,7 @@ static void tcpdev_read(void)
     }
 
     cb = &n->tcpcb;
-    if (cb->state == TS_CLOSING || cb->state == TS_LAST_ACK ||
-        cb->state == TS_TIME_WAIT) {
+    if (cb->state == TS_CLOSING || cb->state == TS_LAST_ACK || cb->state == TS_TIME_WAIT) {
 debug_tcp("tcpdev_read: returning -EPIPE to socket read\n");
 	retval_to_sock(sock, -EPIPE);
 	return;
@@ -342,15 +340,14 @@ static void tcpdev_write(void)
 	return;
     }
 
-debug_tcpdev("tcpdev write: window %ld retrans cnt %d\n", cb->send_nxt - cb->send_una, tcp_timeruse);
-#if 1
-#define SEND_WINDOW_MAX	1024	/* should be less than TCP_RETRANS_MAXMEM*/
-    if (cb->send_nxt - cb->send_una > SEND_WINDOW_MAX) {
+    debug_tcpdev("tcpdev write: window %ld retrans cnt %d\n", cb->send_nxt - cb->send_una, tcp_timeruse);
+
+    /* delay sending if outstanding send window too large*/
+    if (cb->send_nxt - cb->send_una > TCP_SEND_WINDOW_MAX) {
 	debug_tcp("tcp write: limiting write %d at max send window %ld\n", size, cb->send_nxt - cb->send_una);
-	retval_to_sock(sock, -ERESTARTSYS);
+	retval_to_sock(sock, -ERESTARTSYS);	/* kernel will retry 10ms later*/
 	return;
     }
-#endif
 
     cb->flags = TF_PSH|TF_ACK;
     cb->datalen = size;
