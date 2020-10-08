@@ -15,7 +15,7 @@
 
 /* leave these off for now - too much info*/
 #define DEBUG_TCPDEV	0		/* tcpdev_ routines*/
-#define DEBUG_MEM0		/* debug memory allocations*/
+#define DEBUG_MEM	0		/* debug memory allocations*/
 #define DEBUG_CB	0		/* dump control blocks*/
 
 #if USE_DEBUG_EVENT
