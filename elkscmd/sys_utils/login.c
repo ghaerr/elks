@@ -96,7 +96,7 @@ int main(int argc, char ** argv)
 {
 	struct passwd *pwd;
 	struct utmp *entryp = NULL;
-	char lbuf[UT_NAMESIZE], *pbuf, salt[3];
+	char lbuf[64], *pbuf, salt[3];
 	char *p;
 
 
