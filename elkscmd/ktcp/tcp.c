@@ -101,7 +101,6 @@ void tcp_connect(struct tcpcb_s *cb)
     cb->flags = TF_SYN;
 
     cb->datalen = 0;
-
     tcp_output(cb);
 }
 
@@ -142,7 +141,6 @@ printf("SYN sent, wrong ACK (listen port not expired)\n");
 
 	cb->datalen = 0;
 	tcp_output(cb);
-//printf("CONNECT complete\n");
 	retval_to_sock(cb->sock, 0);
 
 	return;
@@ -166,33 +164,33 @@ static void tcp_listen(struct iptcp_s *iptcp, struct tcpcb_s *lcb)
     if (h->flags & TF_ACK)
 	debug_tcp("tcp: ACK in listen not implemented\n");
 
-    n = tcpcb_clone(lcb);    /*copy (struct tcpcb_s)*lcb into linked list tcpcb_list_s*/
+    n = tcpcb_clone(lcb);    /* copy lcb into linked list*/
     if (!n)
 	return;		     /* no memory for new connection*/
     cb = &n->tcpcb;
     cb->unaccepted = 1;      /* Mark as unaccepted */
     cb->newsock = lcb->sock; /* lcb-> is the socket in kernel space */
 
-    cb->seg_seq = ntohl(h->seqnum); /*read sequence number got*/
-    cb->seg_ack = ntohl(h->acknum); /*read ack number got*/
+    cb->seg_seq = ntohl(h->seqnum);
+    cb->seg_ack = ntohl(h->acknum);
 
-    cb->remaddr = iptcp->iph->saddr; /*sender's ip address*/
-    cb->remport = ntohs(h->sport);   /*sender's port*/
-    cb->irs = cb->seg_seq;           /*sender's sequence number*/
-    cb->rcv_nxt = cb->irs + 1;       /*ktcp's acknum */
+    cb->remaddr = iptcp->iph->saddr; /* sender's ip address*/
+    cb->remport = ntohs(h->sport);   /* sender's port*/
+    cb->irs = cb->seg_seq;           /* sender's sequence number*/
+    cb->rcv_nxt = cb->irs + 1;       /* ktcp's acknum */
     cb->rcv_wnd = ntohs(h->window);
 
-    cb->iss = choose_seq(); /*our arbitrary sequence number*/
-    cb->send_nxt = cb->iss; /*put that into send_nxt*/
+    cb->iss = choose_seq();	/* our arbitrary sequence number*/
+    cb->send_nxt = cb->iss;
 
-    cb->state = TS_SYN_RECEIVED; /*update state*/
-    cb->flags = TF_SYN|TF_ACK;   /*send SYN + ACK flag*/
+    cb->state = TS_SYN_RECEIVED;
+    cb->flags = TF_SYN|TF_ACK;
 
-    cb->datalen = 0;  /* no data yet */
-    tcp_output(cb);   /*send the tcp part of the packet*/
+    cb->datalen = 0;
+    tcp_output(cb);
 
-    cb->send_nxt = cb->iss + 1; /* save these numbers*/
-    cb->send_una = cb->iss;	/* ack number */
+    cb->send_nxt = cb->iss + 1;
+    cb->send_una = cb->iss;	/* unack'd seqno*/
 }
 
 /*
@@ -240,7 +238,7 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	tcpdev_checkread(cb);
     }
 
-    if (h->flags & TF_ACK) { 	/*update unacked*/
+    if (h->flags & TF_ACK) {		/* update unacked*/
 	acknum = ntohl(h->acknum);
 	if (SEQ_LT(cb->send_una, acknum))
 	    cb->send_una = acknum;
@@ -420,11 +418,10 @@ void tcp_process(struct iphdr_s *iph)
 	return;
     }
 
-//debug_tcp("tcbcb_find %lx, %u, %u\n", iph->saddr, ntohs(tcph->dport), ntohs(tcph->sport));
     cbnode = tcpcb_find(iph->saddr, ntohs(tcph->dport), ntohs(tcph->sport));
-
     if (!cbnode) {
-	printf("tcp: Refusing packet %s:%d->%d\n", in_ntoa(iph->saddr), ntohs(tcph->sport), ntohs(tcph->dport));
+	printf("tcp: Refusing packet %s:%d->%d\n", in_ntoa(iph->saddr),
+		ntohs(tcph->sport), ntohs(tcph->dport));
 
 	/* TODO : send RST and stuff */
 	netstats.tcpdropcnt++;
@@ -441,7 +438,7 @@ void tcp_process(struct iphdr_s *iph)
 	    return;
 	}
 
-	/* for now
+	/*
 	 * TODO queue up datagramms not in
 	 * order and process them in order
 	 */

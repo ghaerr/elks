@@ -78,7 +78,7 @@ static void tcpdev_bind(void)
 	    next_port++;
 	port = next_port;
 
-/* TODO : Handle the case then no port is available
+/* TODO : Handle the case when no port is available
  * Just to be right, I don't think it is posible to run out
  * of ports in 8086!!!
  */
@@ -202,6 +202,7 @@ static void tcpdev_listen(void)
     retval_to_sock(db->sock, 0);
 }
 
+/* kernel read data from ktcp (network)*/
 static void tcpdev_read(void)
 {
     struct tdb_read *db = (struct tdb_read *)sbuf; /* read/write from sbuf*/
@@ -242,7 +243,7 @@ debug_tcp("tcpdev_read: returning -EPIPE to socket read\n");
     if (cb->bytes_to_push <= 0)
 	tcpcb_need_push--;
 
-//printf("ktcpdev READ: sock %x %d bytes\n", sock, data_avail);
+    /*printf("ktcpdev READ: sock %x %d bytes\n", sock, data_avail);*/
     ret_data = (struct tdb_return_data *)sbuf;
     ret_data->type = TDT_RETURN;
     ret_data->ret_value = data_avail;
@@ -252,6 +253,7 @@ debug_tcp("tcpdev_read: returning -EPIPE to socket read\n");
     write(tcpdevfd, sbuf, sizeof(struct tdb_return_data) + data_avail);
 }
 
+/* inform kernel of socket data bytes available*/
 void tcpdev_checkread(struct tcpcb_s *cb)
 {
     void * sock;
@@ -262,7 +264,7 @@ void tcpdev_checkread(struct tcpcb_s *cb)
 	return;
 
     if (cb->wait_data == 0) {
-//printf("ktcpdev checkSELECT: sock %x %d bytes\n", sock, cb->bytes_to_push);
+	/*printf("ktcpdev checkSELECT: sock %x %d bytes\n", sock, cb->bytes_to_push);*/
 
 	/* Update the avail_data in the kernel socket (for select) */
 	sock = cb->sock;
@@ -282,7 +284,7 @@ void tcpdev_checkread(struct tcpcb_s *cb)
     if (cb->bytes_to_push <= 0)
 	tcpcb_need_push--;
 
-//printf("ktcpdev checkREAD: sock %x %d bytes\n", sock, data_avail);
+    /*printf("ktcpdev checkREAD: sock %x %d bytes\n", sock, data_avail);*/
     ret_data->type = TDT_RETURN;
     ret_data->ret_value = data_avail;
     ret_data->size = data_avail;
@@ -294,6 +296,7 @@ void tcpdev_checkread(struct tcpcb_s *cb)
 #endif
 }
 
+/* kernel write data to ktcp (network)*/
 static void tcpdev_write(void)
 {
     struct tdb_write *db = (struct tdb_write *)sbuf; /* read from sbuf*/
@@ -340,11 +343,13 @@ static void tcpdev_write(void)
 	return;
     }
 
-    debug_tcpdev("tcpdev write: window %ld retrans cnt %d\n", cb->send_nxt - cb->send_una, tcp_timeruse);
+    debug_tcpdev("tcpdev write: window %ld retrans cnt %d\n",
+	cb->send_nxt - cb->send_una, tcp_timeruse);
 
     /* delay sending if outstanding send window too large*/
     if (cb->send_nxt - cb->send_una > TCP_SEND_WINDOW_MAX) {
-	debug_tcp("tcp write: limiting write %d at max send window %ld\n", size, cb->send_nxt - cb->send_una);
+	debug_tcp("tcp write: limiting write %d at max send window %ld\n",
+	    size, cb->send_nxt - cb->send_una);
 	retval_to_sock(sock, -ERESTARTSYS);	/* kernel will retry 10ms later*/
 	return;
     }
@@ -415,8 +420,6 @@ void tcpdev_sock_state(struct tcpcb_s *cb, int state)
 void tcpdev_process(void)
 {
 	int len = read(tcpdevfd, sbuf, TCPDEV_BUFSIZ);
-	if (len > (int)sizeof(sbuf)) printf("ktcp: tcpdev_process OVERFLOW\n"); //FIXME
-
 	if (len <= 0)
 		return;
 

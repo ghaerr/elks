@@ -48,6 +48,7 @@ __u16 tcp_chksum(struct iptcp_s *h)
 	sum = (sum & 0xffff) + (sum >> 16);
     return ~(__u16)sum;
 }
+
 /*** __u16 tcp_chksum(struct iptcp_s *h)
 	.text
 	.globl _tcp_chksum
@@ -120,6 +121,7 @@ __u16 tcp_chksumraw(struct tcphdr_s *h, __u32 saddr, __u32 daddr, __u16 len)
 	sum = (sum & 0xffff) + (sum >> 16);
     return ~(__u16)sum;
 }
+
 /*** __u16 tcp_chksumraw(struct tcphdr_s *h, __u32 saddr, __u32 daddr, __u16 len)
 	.text
 	.globl _tcp_chksumraw
@@ -270,10 +272,10 @@ void add_for_retrans(struct tcpcb_s *cb, struct tcphdr_s *th, __u16 len,
     n->rto = cb->rtt << 1;
     if (linkprotocol == LINK_ETHER) {
 	if (n->rto < TCP_RETRANS_MINWAIT_ETH)
-	    n->rto = TCP_RETRANS_MINWAIT_ETH;		/* 1/4 sec min retrans timeout on ethernet*/
+	    n->rto = TCP_RETRANS_MINWAIT_ETH;	/* 1/4 sec min retrans timeout on ethernet*/
     } else {
 	if (n->rto < TCP_RETRANS_MINWAIT_SLIP)
-	    n->rto = TCP_RETRANS_MINWAIT_SLIP;		/* 1/2 sec min retrans timeout on slip/cslip*/
+	    n->rto = TCP_RETRANS_MINWAIT_SLIP;	/* 1/2 sec min retrans timeout on slip/cslip*/
     }
     n->next_retrans = Now + n->rto;
 }
