@@ -17,7 +17,7 @@
 
 static int cp_stat(register struct inode *inode, struct stat *statbuf)
 {
-    struct stat tmp;
+    static struct stat tmp;		/* static not reentrant: conserve stack usage*/
 
     memset(&tmp, 0, sizeof(tmp));
 
