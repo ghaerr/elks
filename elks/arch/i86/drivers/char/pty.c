@@ -93,9 +93,10 @@ size_t pty_read (struct inode *inode, struct file *file, char *data, size_t len)
 
 		put_user_char (tty_outproc (tty), (void *)(data++));
 		count++;
-		wake_up (&tty->outq.wait);  /* because tty_outproc does not */
 	}
 
+	if (count > 0)
+		 wake_up(&tty->outq.wait);  /* because ttyoutproc does not*/
 	return count;
 }
 

@@ -1178,7 +1178,7 @@ no_sig_mess:	.ascii	"No ELKS setup signature found ..."
 		.byte	0x00
 
 hello_mess:
-	.ascii "\r\nELKS Setup\r\n"
+	.ascii "\r\nELKS Setup "
 	.byte 0
 
 // variables in ROM are not very usefull

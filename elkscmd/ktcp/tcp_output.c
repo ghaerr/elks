@@ -181,7 +181,7 @@ rmv_from_retrans(struct tcp_retrans_list_s *n)
 	/* Head update */
 	n = next;
 	n->prev = NULL;
-debug_mem("retrans free: (cnt %d mem %u)\n", tcp_timeruse, tcp_retrans_memory);
+	debug_mem("retrans free: (cnt %d mem %u)\n", tcp_timeruse, tcp_retrans_memory);
 	free(retrans_list);
 	retrans_list = n;
 
@@ -191,7 +191,7 @@ debug_mem("retrans free: (cnt %d mem %u)\n", tcp_timeruse, tcp_retrans_memory);
     if (next)
 	next->prev = n->prev;
 
-debug_mem("retrans free: (cnt %d mem %u)\n", tcp_timeruse, tcp_retrans_memory);
+    debug_mem("retrans free: (cnt %d mem %u)\n", tcp_timeruse, tcp_retrans_memory);
     free(n);
 
     return next;
@@ -260,7 +260,7 @@ void add_for_retrans(struct tcpcb_s *cb, struct tcphdr_s *th, __u16 len,
     tcp_timeruse++;
 
     tcp_retrans_memory += len;
-debug_mem("retrans alloc: (cnt %d, mem %u)\n", tcp_timeruse, tcp_retrans_memory);
+    debug_mem("retrans alloc: (cnt %d, mem %u)\n", tcp_timeruse, tcp_retrans_memory);
     n->len = len;
     memcpy(n->tcphdr, th, len);
     memcpy(&n->apair, apair, sizeof(struct addr_pair));
@@ -270,7 +270,7 @@ debug_mem("retrans alloc: (cnt %d, mem %u)\n", tcp_timeruse, tcp_retrans_memory)
     n->rto = cb->rtt << 1;
     if (linkprotocol == LINK_ETHER) {
 	if (n->rto < TCP_RETRANS_MINWAIT_ETH)
-	    n->rto = TCP_RETRANS_MINWAIT_ETH;		/* 1/8 sec min retrans timeout on ethernet*/
+	    n->rto = TCP_RETRANS_MINWAIT_ETH;		/* 1/4 sec min retrans timeout on ethernet*/
     } else {
 	if (n->rto < TCP_RETRANS_MINWAIT_SLIP)
 	    n->rto = TCP_RETRANS_MINWAIT_SLIP;		/* 1/2 sec min retrans timeout on slip/cslip*/
@@ -296,19 +296,14 @@ void tcp_retrans(void)
     struct tcp_retrans_list_s *n;
     int datalen, rtt;
 
-/* FIXME avoid running out of memory - bug in retrans recovery*/
-if (tcp_retrans_memory > TCP_RETRANS_MAXMEM) {
-	struct tcpcb_s *cb = NULL;
+    /* avoid running out of memory with excessive retransmits*/
+    if (tcp_retrans_memory > TCP_RETRANS_MAXMEM) {
 	printf("ktcp: retransmit memory over limit (cnt %d, mem %u)\n", tcp_timeruse, tcp_retrans_memory);
 	n = retrans_list;
-	while (n != NULL) {
-		if (!cb)
-			cb = n->cb;
+	while (n != NULL)
 		n = rmv_from_retrans(n);
-	}
-	//tcp_send_reset(cb);
 	return;
-}
+    }
 
     n = retrans_list;
     while (n != NULL) {
@@ -327,7 +322,7 @@ if (tcp_retrans_memory > TCP_RETRANS_MAXMEM) {
 	    continue;
 	}
 
-//debug_mem(" time check %lx %lx\n", Now, n->next_retrans);
+	//debug_mem(" time check %lx %lx\n", Now, n->next_retrans);
 	if (TIME_GEQ(Now, n->next_retrans)) {
 	    tcp_reoutput(n);
 	    if (n->retrans_num >= TCP_RETRANS_MAXTRIES) {
@@ -356,7 +351,7 @@ void tcp_output(struct tcpcb_s *cb)
     len = CB_BUF_SPACE(cb) - PUSH_THRESHOLD;
     if (len <= 0)
 	len = 1;		/* Never advertise zero window size */
-len = 255;	//FIXME testing only
+    else len = 255;	//FIXME testing only
     th->window = htons(len);
     th->urgpnt = 0;
     th->flags = cb->flags;

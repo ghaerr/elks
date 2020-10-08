@@ -20,7 +20,7 @@
 
 //#define RAWTELNET	/* set in telnet and telnetd for raw telnet without IAC*/
 
-#define MAX_BUFFER 100
+#define MAX_BUFFER 512		/* should be equal to TDB_WRITE_MAX and PTYOUTQ_SIZE*/
 static char buf_in  [MAX_BUFFER];
 static char buf_out [MAX_BUFFER];
 

@@ -10,8 +10,11 @@
 
 #define TCP_DEVICE_NAME	"tcpdev"
 
+/* should be equal to PTYOUTQ_SIZE and telnetd buffer size*/
+#define	TDB_WRITE_MAX		512	/* max data in tdb_write packet to ktcp*/
+
 #define TCPDEV_INBUFFERSIZE	1024
-#define TCPDEV_OUTBUFFERSIZE	128
+#define TCPDEV_OUTBUFFERSIZE	(TDB_WRITE_MAX + sizeof(struct tdb_write))
 
 #define TCPDEV_MAXREAD TCPDEV_INBUFFERSIZE - sizeof(struct tdb_return_data)
 
@@ -65,7 +68,6 @@ struct tdb_write {
     struct socket *sock;
     int size;
     int nonblock;
-#define	TDB_WRITE_MAX	100
     unsigned char data[TDB_WRITE_MAX];
 };
 

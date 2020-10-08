@@ -23,8 +23,10 @@
 #define IP_BUFSIZ	(TCP_BUFSIZ + sizeof(iphdr_t) + sizeof(struct ip_ll))
 
 /* control block input buffer size - max window size*/
-//#define CB_IN_BUF_SIZE	1024	/* must be power of 2*/
 #define CB_IN_BUF_SIZE	4096	/* must be power of 2*/
+
+/* max outstanding send window size*/
+#define TCP_SEND_WINDOW_MAX	1024	/* should be less than TCP_RETRANS_MAXMEM*/
 
 /* bytes to subtract from window size and when to force app write*/
 #define PUSH_THRESHOLD	512
@@ -39,7 +41,7 @@
 
 /* retransmit settings*/
 #define TCP_RTT_ALPHA			90
-#define TCP_RETRANS_MAXMEM		2048	/* max retransmit total memory (was 16384)*/
+#define TCP_RETRANS_MAXMEM		4096	/* max retransmit total memory*/
 #define TCP_RETRANS_MAXTRIES		3	/* max # retransmits*/
 /* timeout values in 1/16 seconds*/
 #define TCP_RETRANS_MAXWAIT		64	/* max retransmit wait (4 secs)*/
