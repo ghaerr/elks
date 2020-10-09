@@ -99,7 +99,8 @@ int FATPROC msdos_get_entry_long(
 	off_t oldpos = *pos;	/* location of next directory entry start*/
 	int is_long;
 	unsigned char alias_checksum = 0;
-	unsigned char unicodename[52+2];		/* Limited to two long entries */
+	/* static not reentrant: conserve stack usage*/
+	static unsigned char unicodename[52+2];		/* Limited to two long entries */
 
 	if ((int)*pos & (sizeof(struct msdos_dir_entry) - 1)) return -ENOENT;
 	is_long = 0;
@@ -156,7 +157,7 @@ int FATPROC msdos_get_entry_long(
 			int i,i2,last;
 			int long_len = 0;
 			unsigned char c;
-			char longname[14];
+			static char longname[14]; /* static not reentrant: conserve stack usage*/
 
 			if (is_long) {
 				unsigned char sum;

@@ -91,8 +91,9 @@ static int FATPROC msdos_find_long(struct inode *dir, const char *name, int len,
 {
 	int i, entry_len, res;
 	off_t dirpos, pos = 0;
-	char entry_name[14];
-	char msdos_name[14];
+	/* static not reentrant: conserve stack usage*/
+	static char entry_name[14];
+	static char msdos_name[14];
 
 	for (i=0; i<len; i++)
 		msdos_name[i] = get_fs_byte(name++);
