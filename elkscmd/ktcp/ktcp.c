@@ -38,8 +38,6 @@ ipaddr_t local_ip;
 ipaddr_t gateway_ip;
 ipaddr_t netmask_ip;
 
-char foo[] = "/dev/eth";	// FIXME remove after memory errors
-
 #define DEFAULT_IP		"10.0.2.15"
 #define DEFAULT_GATEWAY		"10.0.2.2"
 #define DEFAULT_NETMASK		"255.255.255.0"
@@ -53,23 +51,6 @@ speed_t baudrate = 	57600;
 
 int dflag;
 static int intfd;	/* interface fd*/
-
-void setp(unsigned char **p)
-{
-	*p = 0;
-}
-
-char *zero;
-void printp(void)
-{
-unsigned char *p;
-//int i;
-setp(&p);
-
-//printf(zero="ZERO\n");
-//for (i=0; i<16; i++) printf("%d (%c) ", p[i], p[i]);
-//printf("\n");
-}
 
 void ktcp_run(void)
 {
@@ -88,8 +69,6 @@ extern int cbs_in_user_timeout;
 	    timeint.tv_usec = 0;
 	    tv = &timeint;
 	} else tv = NULL;
-
-printp();
 
 	FD_ZERO(&fdset);
 	FD_SET(intfd, &fdset);
@@ -165,8 +144,6 @@ int main(int argc,char **argv)
     int ch;
     int bflag = 0;
     static char *linknames[3] = { "ethernet", "slip", "cslip" };
-printp();
-//printf("ZERO is at %x\n", zero);
 
     while ((ch = getopt(argc, argv, "bdm:p:s:l:")) != -1) {
 	switch (ch) {
@@ -246,7 +223,7 @@ printp();
 	setsid();
     }
 
-    arp_init ();
+    arp_init();
     ip_init();
     icmp_init();
     tcp_init();
@@ -254,5 +231,5 @@ printp();
 
     ktcp_run();
 
-    exit(0);
+    return 0;
 }

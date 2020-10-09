@@ -24,8 +24,6 @@
 #include "vjhc.h"
 #include "netconf.h"
 
-/*#define DEBUG*/
-
 #define SERIAL_BUFFER_SIZE	256
 
 /*
@@ -81,7 +79,7 @@ static speed_t convert_baudrate(speed_t baudrate)
 	case 1000000: return B1000000;
 #endif
 	default:
-		printf("Unknown baud rate %lu\n", (unsigned long)baudrate);
+		printf("ktcp: unknown baud rate %lu\n", (unsigned long)baudrate);
 		return -1;
 	}
 }
@@ -144,24 +142,18 @@ void cslip_decompress(__u8 **packet, size_t *len){
         if (c & 0x80){
             c = TYPE_COMPRESSED_TCP;
             ip_vjhc_arr_compr(&p);
-#ifdef DEBUG
-            printf("CSLIP : Compressed TCP packet offset %d size %d (%d)\n", p.p_offset, p.p_size, *len);
-#endif
+            debug_cslip("cslip: Compressed TCP packet offset %d size %d (%d)\n", p.p_offset, p.p_size, *len);
         }
         else if (c == TYPE_UNCOMPRESSED_TCP){
             *(*packet + 128) &= 0x4f;
             ip_vjhc_arr_uncompr(&p);
-#ifdef DEBUG
-            printf("CSLIP : Uncompressed TCP packet offset %d size %d (%d)\n", p.p_offset, p.p_size, *len);
-#endif
+            debug_cslip("cslip: Uncompressed TCP packet offset %d size %d (%d)\n", p.p_offset, p.p_size, *len);
         }
         if ((p.p_size > 0)){
             *packet += p.p_offset;
         }
     } else {
-#ifdef DEBUG
-        printf("CSLIP : IP packet\n");
-#endif
+        debug_cslip("cslip: IP packet\n");
     	*packet += 128;
     }
 
@@ -182,14 +174,12 @@ void slip_process(void)
     len = read(devfd, sbuf, SERIAL_BUFFER_SIZE);
     if (len <= 0)
 	return;
-#ifdef DEBUG
-{
-printf("[%d]", len);
-printf("{");
-for (i=0; i<len; i++)
-    printf("%2x,", sbuf[i]);
-printf("}");
-}
+#if DEBUG_CSLIP
+    DPRINTF("[%d]", len);
+    DPRINTF("{");
+    for (i=0; i<len; i++)
+	DPRINTF("%2x,", sbuf[i]);
+    DPRINTF("}");
 #endif
 	for (i=0; i < len ; i++) {
 	    if (lastchar == ESC) {
@@ -266,7 +256,7 @@ void cslip_compress(__u8 **packet, int *len)
         *packet[0] |= type;
     }
 
-    //printf("cslip : from %d to %d\n", orig_len, p.p_size);
+    //printf("cslip: from %d to %d\n", orig_len, p.p_size);
 }
 #endif
 
@@ -280,9 +270,7 @@ void slip_send(unsigned char *packet, int len)
     if (linkprotocol == LINK_CSLIP)
 	cslip_compress(&p, &len);
 #endif
-#ifdef DEBUG
-    printf("slip: send %d\n", len);
-#endif
+    debug_cslip("slip: send %d\n", len);
 
     *q++ = END;
     while (len--) {
