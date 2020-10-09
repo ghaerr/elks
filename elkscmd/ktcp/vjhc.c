@@ -155,7 +155,7 @@ int ip_vjhc_init(void)
 			free(xmit_state);
 		xmit_state= calloc(ip_snd_vjhc_state_nr, sizeof(snd_state_ut));
 		if (!xmit_state) {
-			printf("ktcp: Out of memory 4\n");
+			printf("ktcp: Out of memory 3\n");
 			return -1;
 		}
 
@@ -174,7 +174,7 @@ int ip_vjhc_init(void)
 			free(rcv_state);
 		rcv_state= calloc(ip_rcv_vjhc_state_nr, sizeof(snd_state_ut));
 		if (!rcv_state) {
-			printf("ktcp: Out of memory 5\n");
+			printf("ktcp: Out of memory 4\n");
 			return -1;
 		}
 	}
@@ -214,18 +214,18 @@ int ip_vjhc_compress(pkt_ut *pkt)
 	tcp_hdr_len= TCP_DATAOFF(tcp_hdr);	/* !!! */
 	tot_len= ip_hdr_len + tcp_hdr_len;
 #if DEBUG_CSLIP
-	printf("cslip compress: packet with size %d\n\t", pkt->p_size);
+	DPRINTF("cslip compress: packet with size %d\n\t", pkt->p_size);
 	for (cp= (__u8 *)pkt->p_data+pkt->p_offset;
 		 cp < (__u8 *)pkt->p_data + pkt->p_offset + ip_hdr_len; cp++) {
-		printf("%x ", *cp);
+		DPRINTF("%x ", *cp);
 	}
-	printf("\n\t");
+	DPRINTF("\n\t");
 	for (; cp < (__u8 *)pkt->p_data + pkt->p_offset + tot_len; cp++)
-		printf("%x ", *cp);
-	printf("\n\t");
+		DPRINTF("%x ", *cp);
+	DPRINTF("\n\t");
 	for (; cp < (__u8 *)pkt->p_data + pkt->p_offset + pkt->p_size; cp++)
-		printf("%x ", *cp);
-	printf("\n");
+		DPRINTF("%x ", *cp);
+	DPRINTF("\n");
 #endif
 	for (prev = NULL, state = xmit_head;;) {
 		if (ip_hdr->saddr == state->s_src_ip &&
@@ -513,18 +513,18 @@ void ip_vjhc_arr_compr(pkt_ut *pkt)
 	ip_hdr->check= 0;
 	ip_hdr->check= ip_calc_chksum((char *)ip_hdr, state->s_ip_hdr_len);
 #if DEBUG_CSLIP
-	printf("cslip arr_compr: packet with size %d\n\t", pkt->p_size);
+	DPRINTF("cslip arr_compr: packet with size %d\n\t", pkt->p_size);
 	for (cp= (__u8 *)pkt->p_data+pkt->p_offset;
 		 cp < (__u8 *)pkt->p_data + pkt->p_offset + state->s_ip_hdr_len; cp++) {
-		printf("%x ", *cp);
+		DPRINTF("%x ", *cp);
 	}
-	printf("\n\t");
+	DPRINTF("\n\t");
 	for (; cp < (__u8 *)pkt->p_data + pkt->p_offset + tot_len; cp++)
-		printf("%x ", *cp);
-	printf("\n\t");
+		DPRINTF("%x ", *cp);
+	DPRINTF("\n\t");
 	for (; cp < (__u8 *)pkt->p_data + pkt->p_offset + pkt->p_size; cp++)
-		printf("%x ", *cp);
-	printf("\n");
+		DPRINTF("%x ", *cp);
+	DPRINTF("\n");
 #endif
 }
 

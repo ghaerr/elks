@@ -44,7 +44,7 @@ slip)
 	net start slip
 	;;
 cslip)
-	net start clsip
+	net start cslip
 	;;
 *)
 	# normal network start

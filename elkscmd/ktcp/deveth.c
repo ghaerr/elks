@@ -67,7 +67,6 @@ void eth_process(void)
 	if (len < 0) printf("ktcp: eth_process error %d (errno %d), discarding packet\n", len, errno); //FIXME
 	return;
   }
-  if (len > (int)sizeof(sbuf)) { printf("ktcp: eth_process OVERFLOW\n"); exit(1); }
 
   eth_head = (eth_head_t *) sbuf;
 

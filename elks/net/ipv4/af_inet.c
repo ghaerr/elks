@@ -349,7 +349,6 @@ static int inet_write(register struct socket *sock, char *ubuf, int size,
 
 	if (ret < 0) {
             if (ret == -ERESTARTSYS) {
-//printk("inet_write: retry\n");
 		/* delay process 10ms*/
 		current->state = TASK_INTERRUPTIBLE;
 		current->timeout = jiffies + 10;

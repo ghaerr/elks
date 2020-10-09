@@ -37,9 +37,9 @@
 
 dev_t dev_console;
 
+extern void rs_conout(dev_t, char);
 #ifdef CONFIG_CONSOLE_SERIAL
 #define DEVCONSOLE  MKDEV(TTY_MAJOR,RS_MINOR_OFFSET)	/* /dev/ttyS0*/
-extern void rs_conout(dev_t, char);
 static void (*kputc)(dev_t, char) = rs_conout;
 #else
 #define DEVCONSOLE  MKDEV(TTY_MAJOR,TTY_MINOR_OFFSET)	/* /dev/tty1*/
@@ -62,8 +62,13 @@ void set_console(dev_t dev)
 
 void kputchar(int ch)
 {
-	if (kputc)
+	if (kputc) {
+#ifdef CONFIG_CHAR_DEV_RS
+		if (ch == '\n' && kputc == rs_conout)
+			(*kputc)(dev_console, '\r');
+#endif
 		(*kputc)(dev_console, ch);
+	}
 }
 
 static void kputs(register char *buf)

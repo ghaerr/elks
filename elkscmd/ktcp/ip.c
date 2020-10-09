@@ -10,7 +10,7 @@
  */
 
 /*
- * TODO : IP fragmentation and reassemply of fragmented IP packets
+ * TODO : IP fragmentation and reassembly of fragmented IP packets
  */
 
 #include <sys/types.h>
@@ -40,8 +40,6 @@ __u16 ip_calc_chksum(char *data, int len)
     __u32 sum = 0;
     __u16 *p = (__u16 *) data;
 
-//if (len & 1) printf("ip: chksum on bad length %d\n", len); //FIXME
-
     for (; len > 1 ; len -= 2)
 	sum += *p++;
 
@@ -52,6 +50,7 @@ __u16 ip_calc_chksum(char *data, int len)
 	sum = (sum & 0xffff) + (sum >> 16);
     return ~(__u16)sum;
 }
+
 /*** __u16 ip_calc_chksum(char *data, int len)
 	.text
 	.globl _ip_calc_chksum
@@ -155,7 +154,10 @@ void ip_recvpacket(unsigned char *packet,int size)
 
 void ip_sendpacket(unsigned char *packet, int len, struct addr_pair *apair)
 {
-    /* save space for possible ethernet header before ip packet in eth_route()/eth_sendpacket()*/
+    /*
+     * save space for possible ethernet header before ip packet
+     * in eth_route()/eth_sendpacket()
+     */
     register struct iphdr_s *iph = (struct iphdr_s *)(ipbuf + sizeof(struct ip_ll));
     int iphdrlen;
     static __u16 nextID = 1;
@@ -173,7 +175,7 @@ void ip_sendpacket(unsigned char *packet, int len, struct addr_pair *apair)
     iph->protocol	= apair->protocol;
     iph->check		= 0;
     iph->check		= ip_calc_chksum((char *)iph, iphdrlen);
-    memcpy((char *)iph + iphdrlen, packet, len);	//FIXME don't copy, fixup in upper layer
+    memcpy((char *)iph + iphdrlen, packet, len); //FIXME don't copy, fixup in upper layer
 
     ip_print(iph, 0);
 #if DEBUG_TCP
@@ -184,7 +186,8 @@ void ip_sendpacket(unsigned char *packet, int len, struct addr_pair *apair)
     tcp_print(&iptcp, 0);
 #endif
 
-    ip_route((unsigned char *)iph, iphdrlen + len, apair);	/* route packet using src and dst address*/
+    /* route packet using src and dst address*/
+    ip_route((unsigned char *)iph, iphdrlen + len, apair);
     netstats.ipsndcnt++;
 }
 
@@ -213,20 +216,4 @@ void ip_route(unsigned char *packet, int len, struct addr_pair *apair)
 	eth_route(packet, len, ip_addr);
     else
 	slip_send(packet, len);
-}
-
-#undef memcpy
-void *xxmemcpy(void * d, const void * s, int l)
-{
-	register char *s1=d, *s2=(char *)s;
-
-//printf("MEMCPY %04x,%04x,%d->", d, s, l);
-if (s == NULL || s < 6) printf("SRC NULL\n");
-if (d == NULL || d < 6) printf("DST NULL\n");
-	for( ; l>0; l--) {
-		//printf("%x ", *(unsigned char *)s2);
-		*((unsigned char*)s1++) = *((unsigned char*)s2++);
-	}
-	//printf("\n");
-	return d;
 }

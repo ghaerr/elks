@@ -70,10 +70,10 @@ struct tcpcb_list_s *tcpcb_new(void)
 
     n = (struct tcpcb_list_s *) malloc(sizeof(struct tcpcb_list_s));
     if (n == NULL) {
-	debug_tcp("ktcp: Out of memory 3\n");
+	debug_tcp("ktcp: Out of memory 2\n");
 	return NULL;
     }
-debug_mem("Alloc CB %d bytes\n", sizeof(struct tcpcb_list_s));
+    debug_mem("Alloc CB %d bytes\n", sizeof(struct tcpcb_list_s));
 
     memset(&n->tcpcb, 0, sizeof(struct tcpcb_s));
     n->tcpcb.rtt = TIMEOUT_INITIAL_RTT << 4;
@@ -116,7 +116,7 @@ void tcpcb_remove(struct tcpcb_list_s *n)
 {
     struct tcpcb_list_s *next = n->next;
 
-debug_tcp("tcp: REMOVING control block\n");
+    debug_tcp("tcp: REMOVING control block\n");
     tcpcb_num--;	/* for netstat*/
 
     if (n->prev)
@@ -128,7 +128,7 @@ debug_tcp("tcp: REMOVING control block\n");
 	n->prev = NULL;
 
 	rmv_all_retrans(tcpcbs);
-debug_mem("Free CB\n");
+	debug_mem("Free CB\n");
 	free(tcpcbs);
 	tcpcbs = n;
 
@@ -140,7 +140,7 @@ debug_mem("Free CB\n");
 
     rmv_all_retrans(n);
     free(n);
-debug_mem("Free CB\n");
+    debug_mem("Free CB\n");
 }
 
 struct tcpcb_list_s *tcpcb_check_port(__u16 lport)
@@ -260,7 +260,6 @@ void tcpcb_buf_read(struct tcpcb_s *cb, __u8 *data, __u16 len)
 {
     register int head = cb->buf_head, i;
 
-if (len > cb->buf_len) printf("tcpcb_buf_read: BAD READ\n"); //FIXME
     for (i=0; i<len; i++)
 	*(data + i) = cb->in_buf[head++ & (CB_IN_BUF_SIZE - 1)];
     cb->buf_head = head & (CB_IN_BUF_SIZE - 1);
