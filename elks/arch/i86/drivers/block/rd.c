@@ -329,13 +329,13 @@ static void do_rd_request(void)
 	     buff);
 	if (CURRENT->rq_cmd == WRITE) {
 	    debug("RD: request writing to %ld\n", (long) start);
-	    fmemcpyb((byte_t *) (offset * SECTOR_SIZE), rd_segment[segnum].segment,
-			buff, CURRENT->rq_seg, 1024);
+	    fmemcpyw((byte_t *) (offset * SECTOR_SIZE), rd_segment[segnum].segment,
+			buff, CURRENT->rq_seg, 1024/2);
 	}
 	if (CURRENT->rq_cmd == READ) {
 	    debug("RD_REQUEST reading from %ld\n", start);
-	    fmemcpyb(buff, CURRENT->rq_seg,
-			(byte_t *) (offset * SECTOR_SIZE), rd_segment[segnum].segment, 1024);
+	    fmemcpyw(buff, CURRENT->rq_seg,
+			(byte_t *) (offset * SECTOR_SIZE), rd_segment[segnum].segment, 1024/2);
 	}
 	end_request(1);
     }

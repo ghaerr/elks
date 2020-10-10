@@ -1,4 +1,4 @@
-// void fmemcpyw (word_t dst_off, seg_t dst_seg, word_t src_off, seg_t src_seg, word_t count)
+// void fmemcpyw (byte * dst_off, seg_t dst_seg, byte * src_off, seg_t src_seg, word_t count)
 // segment after offset to allow LDS & LES from the stack
 // assume DS=ES=SS (not ES for GCC-IA16)
 
@@ -15,9 +15,9 @@ fmemcpyw:
 	mov    %si,%ax
 	mov    %di,%dx
 	mov    %sp,%si
-	mov    10(%si),%cx  //; arg4:   word count
-	les    2(%si),%di   //; arg0+1: far destination pointer
-	lds    6(%si),%si   //; arg2+3: far source pointer
+	mov    10(%si),%cx  // arg4:   word count
+	les    2(%si),%di   // arg0+1: far destination pointer
+	lds    6(%si),%si   // arg2+3: far source pointer
 	cld
 	rep
 	movsw

@@ -15,7 +15,7 @@ fmemcpyb:
 	mov    %si,%ax
 	mov    %di,%dx
 	mov    %sp,%si
-	mov    10(%si),%cx  // arg4:   word count
+	mov    10(%si),%cx  // arg4:   byte count
 	les    2(%si),%di   // arg0+1: far destination pointer
 	lds    6(%si),%si   // arg2+3: far source pointer
 	cld
