@@ -6,6 +6,7 @@
 
 #include "boot_err.h"
 
+	.arch	i8086, nojumps
 	.code16
 
 	.text

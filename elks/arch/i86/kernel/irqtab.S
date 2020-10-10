@@ -4,8 +4,8 @@
 
 #define CHECK_SS	// integrity check interrupt from user mode
 
+	.arch	i8086, nojumps
 	.code16
-
 	.text
 
 /*
@@ -624,9 +624,7 @@ restore_regs:
 
 tswitch:
 	push	%bp		// schedule()'s bp
-#ifdef USE_IA16
-	push	%es
-#endif
+	push	%es		// required for gcc-ia16
 	push	%di
 	push	%si
 	mov	previous,%bx
@@ -635,15 +633,13 @@ tswitch:
 	mov	TASK_KRNL_SP(%bx),%sp
 	pop	%si
 	pop	%di
-#ifdef USE_IA16
 	pop	%es
-#endif
 	pop	%bp		// BP of schedule()
 	ret
 
 
-//; Halt on idle helper
-//; Wait for next interrupt to save CPU power
+// Halt on idle helper
+// Wait for next interrupt to save CPU power
 
 #ifdef CONFIG_IDLE_HALT
 

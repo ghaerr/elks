@@ -109,7 +109,7 @@ DISTDIR 	= $(shell $(BASEDIR)/scripts/setdir $(TOPDIR)/elks-$(DIST)/$(MYDIR))
 # Specify the standard definitions to be given to system programs.
 
 CCDEFS = -DUTS_RELEASE=\"$(DIST)\"			\
-		  -D__KERNEL__ -DUSE_IA16
+		  -D__KERNEL__
 
 #########################################################################
 # Set the target environment and the compiler to use.

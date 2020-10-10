@@ -23,9 +23,9 @@ typedef signed short int		__sint,		*__psint;
 
 /* 8086 types */
 
-typedef __u16 __seg_t;
 typedef __u8 byte_t;
 typedef __u16 word_t;
+typedef __u32 long_t;
 typedef __u16 seg_t;
 typedef __u32 addr_t;
 

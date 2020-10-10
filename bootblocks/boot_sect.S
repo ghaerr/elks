@@ -44,6 +44,7 @@
 #endif
 .endm
 
+	.arch	i8086, nojumps
 	.code16
 
 	.text
