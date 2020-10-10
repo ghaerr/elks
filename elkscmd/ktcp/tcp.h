@@ -23,7 +23,7 @@
 #define IP_BUFSIZ	(TCP_BUFSIZ + sizeof(iphdr_t) + sizeof(struct ip_ll))
 
 /* control block input buffer size - max window size*/
-#define CB_IN_BUF_SIZE	4096	/* must be power of 2*/
+#define CB_IN_BUF_SIZE	4096	/* doesn't need to be power of two*/
 
 /* max outstanding send window size*/
 #define TCP_SEND_WINDOW_MAX	1024	/* should be less than TCP_RETRANS_MAXMEM*/
@@ -111,7 +111,6 @@ struct iptcp_s {
 
 #define CB_BUF_USED(x)	((x)->buf_len)
 #define CB_BUF_SPACE(x)	(CB_IN_BUF_SIZE - CB_BUF_USED((x)))
-#define CB_BUF_TAIL(x)	((((x)->buf_head + (x)->buf_len)) & (CB_IN_BUF_SIZE - 1))
 
 struct tcpcb_s {
 	void *	newsock;
@@ -124,20 +123,21 @@ struct tcpcb_s {
 	__u16	remport;
 
 	__u8	state;
+	__u8	unaccepted;			/* boolean */
 	timeq_t	rtt;				/* in 1/16 secs*/
 
 	__u32	time_wait_exp;
-	__u8	unaccepted;			/* boolean */
 	__u16	wait_data;
-	__u8	in_buf[CB_IN_BUF_SIZE];
+	__u8	buf_base[CB_IN_BUF_SIZE];
 	__u16	buf_head;
+	__u16	buf_tail;
 	__u16	buf_len;
 
 	short	bytes_to_push;
 
 	__u32	send_una;
 	__u32	send_nxt;
-	__u16	send_wnd;
+	//__u16	send_wnd;
 	__u32	iss;
 
 	__u32	rcv_nxt;

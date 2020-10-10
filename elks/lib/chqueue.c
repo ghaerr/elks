@@ -15,6 +15,8 @@
  * 16 July 2001 : A divide is quite expensive on an 8086 so I changed the
  * code to use logical addition and not modulo. The only drawback is we
  * have to use only power of two buffer sizes. (Harry Kalogirou)
+ *
+ * Oct 2020: No longer require power of two buffer sizes. (Greg Haerr)
  */
 
 #include <linuxmt/config.h>
@@ -30,7 +32,7 @@ void chq_init(register struct ch_queue *q, unsigned char *buf, int size)
     debug("CHQ: chq_init(%d, %d, %d)\n", q, buf, size);
     q->base = buf;
     q->size = size;
-    q->len = q->start = 0;
+    q->len = q->head = q->tail = 0;
 }
 
 int chq_wait_wr(register struct ch_queue *q, int nonblock)
@@ -50,12 +52,14 @@ int chq_wait_wr(register struct ch_queue *q, int nonblock)
 /* Adds character c if there is room (or otherwise throws out new char) */
 void chq_addch(register struct ch_queue *q, unsigned char c)
 {
-    debug("CHQ: chq_addch(%d, %c, %d) q->len=%d q->start=%d\n", q, c, 0,
-	   q->len, q->start);
+    debug("CHQ: chq_addch(%d, %c) q->len=%d q->head=%d\n", q, c,
+	   q->len, q->head);
 
     clr_irq();
     if (q->len < q->size) {
-	q->base[(unsigned int)((q->start + q->len) & (q->size - 1))] = c;
+	q->base[q->head] = c;
+	if (++q->head >= q->size)
+	    q->head = 0;
 	q->len++;
 	set_irq();
 	wake_up(&q->wait);
@@ -66,7 +70,9 @@ void chq_addch_nowakeup(register struct ch_queue *q, unsigned char c)
 {
     clr_irq();
     if (q->len < q->size) {
-	q->base[(unsigned int)((q->start + q->len) & (q->size - 1))] = c;
+	q->base[q->head] = c;
+	if (++q->head >= q->size)
+	    q->head = 0;
 	q->len++;
     }
     set_irq();
@@ -95,16 +101,16 @@ int chq_getch(register struct ch_queue *q)
 {
     int retval;
 
-    debug("CHQ: chq_getch(%d) q->len=%d q->start=%d q->size=%d\n",
-	   q, q->len, q->start, q->size);
+    debug("CHQ: chq_getch(%d) q->len=%d q->head=%d q->size=%d\n",
+	   q, q->len, q->head, q->size);
 
     if (!q->len)
 	return -EAGAIN;
     else {
 	clr_irq();
-	retval = q->base[q->start];
-	q->start++;
-	q->start &= q->size - 1;
+	retval = q->base[q->tail];
+	if (++q->tail >= q->size)
+	    q->tail = 0;
 	q->len--;
 	set_irq();
     }
@@ -117,21 +123,6 @@ int chq_peekch(struct ch_queue *q)
 }
 
 #if 0
-/* Deletes last character in list */
-int chq_delch(register struct ch_queue *q)
-{
-    if (q->len == q->size) {
-	q->len--;
-	return 1;
-    }
-    return 0;
-}
-
-void chq_erase(register struct ch_queue *q)
-{
-    q->len = q->start = 0;
-}
-
 int chq_full(register struct ch_queue *q)
 {
     return (q->len == q->size);

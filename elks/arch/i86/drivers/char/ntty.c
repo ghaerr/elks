@@ -232,7 +232,7 @@ int tty_outproc(register struct tty *tty)
     int t_oflag;	/* WARNING: highly arch dependent, termios.c_oflag truncated to 16 bits*/
     int ch;
 
-    ch = tty->outq.base[tty->outq.start];
+    ch = tty->outq.base[tty->outq.tail];
     if ((t_oflag = (int)tty->termios.c_oflag) & OPOST) {
 	switch((int)(tty->ostate & ~0x0F)) {
 	case 0x20:		/* Expand tabs to spaces */
@@ -265,8 +265,8 @@ int tty_outproc(register struct tty *tty)
 	}
     }
     if (!tty->ostate) {
-	tty->outq.start++;
-	tty->outq.start &= (tty->outq.size - 1);
+	if (++tty->outq.tail >= tty->outq.size)
+	    tty->outq.tail = 0;
 	tty->outq.len--;
     }
     return ch;
