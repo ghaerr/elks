@@ -145,8 +145,6 @@ static void ttyp_release(struct tty *tty)
 
 static int ttyp_write(register struct tty *tty)
 {
-    if (tty->outq.len == tty->outq.size)
-	interruptible_sleep_on(&tty->outq.wait);
     return 0;
 }
 
