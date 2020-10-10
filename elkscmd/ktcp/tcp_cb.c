@@ -244,24 +244,29 @@ void tcpcb_push_data(void)
 }
 
 /* There must be free space greater-equal than len */
-void tcpcb_buf_write(struct tcpcb_s *cb, __u8 *data, __u16 len)
+void tcpcb_buf_write(struct tcpcb_s *cb, unsigned char *data, int len)
 {
-    int tail;
-    register int i;
+    int tail = cb->buf_tail;
 
-    tail = cb->buf_head + cb->buf_len;
-    for (i=0; i<len; i++)
-	cb->in_buf[tail++ & (CB_IN_BUF_SIZE - 1)] = *(data + i);
     cb->buf_len += len;
+    while (--len >= 0) {
+	cb->buf_base[tail] = *data++;
+	if (++tail >= CB_IN_BUF_SIZE)
+	    tail = 0;
+    }
+    cb->buf_tail = tail;
 }
 
 /* same here */
-void tcpcb_buf_read(struct tcpcb_s *cb, __u8 *data, __u16 len)
+void tcpcb_buf_read(struct tcpcb_s *cb, unsigned char *data, int len)
 {
-    register int head = cb->buf_head, i;
+    int head = cb->buf_head;
 
-    for (i=0; i<len; i++)
-	*(data + i) = cb->in_buf[head++ & (CB_IN_BUF_SIZE - 1)];
-    cb->buf_head = head & (CB_IN_BUF_SIZE - 1);
     cb->buf_len -= len;
+    while (--len >= 0) {
+	*data++= cb->buf_base[head];
+	if (++head >= CB_IN_BUF_SIZE)
+	    head = 0;
+    }
+    cb->buf_head = head;
 }

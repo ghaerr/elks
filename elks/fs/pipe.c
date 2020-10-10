@@ -25,9 +25,11 @@
 #include <arch/segment.h>
 #include <arch/bitops.h>
 
-#define MAX_PIPES 8
+/* tunable parameters*/
+#define MAX_PIPES	8
+#define PIPE_BUFSIZ	512	/* doesn't have to be power of two*/
 
-int get_unused_fd(struct file *f)
+static int get_unused_fd(struct file *f)
 {
     register char *pfd = 0;
     register struct file **cfs = current->files.fd;
@@ -77,18 +79,17 @@ int pipe_lseek(struct inode *inode, struct file *file, loff_t offset,
  *	V7, and they should be buffers
  */
 
-static unsigned char pipe_base[MAX_PIPES][PAGE_SIZE];
-
+static unsigned char pipe_base[MAX_PIPES][PIPE_BUFSIZ];
 static int pipe_in_use[(MAX_PIPES + 15)/16];
 
 static unsigned char *get_pipe_mem(void)
 {
-    register char *i = 0;
+    int i = 0;
 
-    i = (char *)find_first_zero_bit(pipe_in_use, MAX_PIPES);
-    if ((int)i < MAX_PIPES) {
-	set_bit((int)i, pipe_in_use);
-	return pipe_base[(int)i];
+    i = find_first_zero_bit(pipe_in_use, MAX_PIPES);
+    if (i < MAX_PIPES) {
+	set_bit(i, pipe_in_use);
+	return pipe_base[i];
     }
 
     debug("PIPE: No more buffers.\n");		/* FIXME */
@@ -97,79 +98,79 @@ static unsigned char *get_pipe_mem(void)
 
 static void free_pipe_mem(unsigned char *buf)
 {
-    register char *i;
+    int i;
 
-    i = (char *)(((unsigned int)pipe_base - (unsigned int)buf)/PAGE_SIZE);
-    if ((int)i < MAX_PIPES) clear_bit((int)i, pipe_in_use);
+    i = ((unsigned int)pipe_base - (unsigned int)buf) / PIPE_BUFSIZ;
+    if (i < MAX_PIPES) clear_bit(i, pipe_in_use);
 }
 
 static size_t pipe_read(register struct inode *inode, struct file *filp,
 		     char *buf, size_t count)
 {
-    register char *chars;
+    size_t chars;
 
     debug("PIPE: read called.\n");
-    while (!(inode->u.pipe_i.q.len) || (inode->u.pipe_i.lock)) {
-	if (!(inode->u.pipe_i.lock) && !(inode->u.pipe_i.writers)) return 0;
+    while (PIPE_EMPTY(inode) || PIPE_LOCK(inode)) {
+	if (!PIPE_LOCK(inode) && !PIPE_WRITERS(inode)) return 0;
 	if (filp->f_flags & O_NONBLOCK) return -EAGAIN;
-	if (current->signal) return -ERESTARTSYS;
-	interruptible_sleep_on(&(inode->u.pipe_i.q.wait));
+	if (current->signal) return -ERESTARTSYS;	// FIXME
+	interruptible_sleep_on(&PIPE_WAIT(inode));
     }
-    (inode->u.pipe_i.lock)++;
-    if (count > inode->u.pipe_i.q.len) count = inode->u.pipe_i.q.len;
-    chars = (char *)(PIPE_BUF - inode->u.pipe_i.q.start);
-    if ((size_t)chars > count) chars = (char *)count;
-    memcpy_tofs(buf, (inode->u.pipe_i.q.base+inode->u.pipe_i.q.start), (size_t)chars);
-    if ((size_t)chars < count)
-	memcpy_tofs(buf + (size_t)chars, inode->u.pipe_i.q.base, count - (size_t)chars);
-    inode->u.pipe_i.q.start = (inode->u.pipe_i.q.start + count) & (PIPE_BUF - 1);
-    inode->u.pipe_i.q.len -= count;
-    (inode->u.pipe_i.lock)--;
-    wake_up_interruptible(&(inode->u.pipe_i.q.wait));
+    PIPE_LOCK(inode)++;
+    if (count > PIPE_LEN(inode)) count = PIPE_LEN(inode);
+    chars = PIPE_SIZE(inode) - PIPE_TAIL(inode);
+    if (chars > count) chars = count;
+    memcpy_tofs(buf, PIPE_BASE(inode) + PIPE_TAIL(inode), chars);
+    if (chars < count)
+	memcpy_tofs(buf + chars, PIPE_BASE(inode), count - chars);
+    if ((PIPE_TAIL(inode) += count) >= PIPE_SIZE(inode))
+	PIPE_TAIL(inode) -= PIPE_SIZE(inode);
+    PIPE_LEN(inode) -= count;
+    PIPE_LOCK(inode)--;
+    wake_up_interruptible(&PIPE_WAIT(inode));
     if (count) inode->i_atime = CURRENT_TIME;
-    else if ((inode->u.pipe_i.writers)) count = (size_t)(-EAGAIN);
+    else if (PIPE_WRITERS(inode)) count = -EAGAIN;
     return count;
 }
 
 static size_t pipe_write(register struct inode *inode, struct file *filp,
 		      char *buf, size_t count)
 {
-    size_t free, end, written = 0;
-    register char *chars;
+    size_t free, head, chars, written = 0;
 
     debug("PIPE: write called.\n");
-    if (!(inode->u.pipe_i.readers)) goto snd_signal;
+    if (!PIPE_READERS(inode)) goto snd_signal;
 
-    free = (count <= PIPE_BUF) ? count : 1;
+    free = (count <= PIPE_SIZE(inode)) ? count : 1;
     while (count > 0) {
-	while (((PIPE_BUF - (inode->u.pipe_i.q.len)) < free)
-	       || (inode->u.pipe_i.lock)) {
-	    if (!(inode->u.pipe_i.readers)) {
+	while (((PIPE_SIZE(inode) - PIPE_LEN(inode)) < free) || PIPE_LOCK(inode)) {
+	    if (!PIPE_READERS(inode)) {
 	      snd_signal:
 		send_sig(SIGPIPE, current, 0);
-		return written ? (int) written : -EPIPE;
+		return written ? written : -EPIPE;
 	    }
-	    if (current->signal) return written ? (int) written : -ERESTARTSYS;
+	    if (current->signal) return written ? written : -ERESTARTSYS; // FIXME
 	    if (filp->f_flags & O_NONBLOCK)
-		return written ? (int) written : -EAGAIN;
-	    interruptible_sleep_on(&(inode->u.pipe_i.q.wait));
+		return written ? written : -EAGAIN;
+	    interruptible_sleep_on(&PIPE_WAIT(inode));
 	}
-	(inode->u.pipe_i.lock)++;
-	while (count > 0 && (free = (PIPE_BUF - inode->u.pipe_i.q.len))) {
+	PIPE_LOCK(inode)++;
+	while (count > 0 && (free = (PIPE_SIZE(inode) - PIPE_LEN(inode)))) {
+	    head = PIPE_HEAD(inode);
+	    chars = PIPE_SIZE(inode) - head;
+	    if (chars > count) chars = count;
+	    if (chars > free) chars = free;
 
-	    end = (inode->u.pipe_i.q.start + inode->u.pipe_i.q.len)&(PIPE_BUF-1);
-	    chars = (char *)(PIPE_BUF - end);
-	    if ((size_t)chars > count) chars = (char *) count;
-	    if ((size_t)chars > free) chars = (char *)free;
-
-	    memcpy_fromfs((inode->u.pipe_i.q.base + end), buf, (size_t)chars);
-	    buf += (size_t)chars;
-	    (inode->u.pipe_i.q.len) += (size_t)chars;
-	    written += (size_t)chars;
-	    count -= (size_t)chars;
+	    memcpy_fromfs(PIPE_BASE(inode) + head, buf, chars);
+	    buf += chars;
+	    if ((PIPE_HEAD(inode) += chars) >= PIPE_SIZE(inode))
+		PIPE_HEAD(inode) -= PIPE_SIZE(inode);
+	    PIPE_LEN(inode) += chars;
+	    written += chars;
+	    count -= chars;
 	}
-	(inode->u.pipe_i.lock)--;
-	wake_up_interruptible(&(inode->u.pipe_i.q.wait));
+	PIPE_LOCK(inode)--;
+	wake_up_interruptible(&PIPE_WAIT(inode));
 	free = 1;
     }
     inode->i_ctime = inode->i_mtime = CURRENT_TIME;
@@ -181,15 +182,15 @@ static size_t pipe_write(register struct inode *inode, struct file *filp,
 static void pipe_read_release(register struct inode *inode, struct file *filp)
 {
     debug("PIPE: read_release called.\n");
-    (inode->u.pipe_i.readers)--;
-    wake_up_interruptible(&(inode->u.pipe_i.q.wait));
+    PIPE_READERS(inode)--;
+    wake_up_interruptible(&PIPE_WAIT(inode));
 }
 
 static void pipe_write_release(register struct inode *inode, struct file *filp)
 {
     debug("PIPE: write_release called.\n");
-    (inode->u.pipe_i.writers)--;
-    wake_up_interruptible(&(inode->u.pipe_i.q.wait));
+    PIPE_WRITERS(inode)--;
+    wake_up_interruptible(&PIPE_WAIT(inode));
 }
 #endif
 
@@ -198,23 +199,23 @@ static void pipe_rdwr_release(register struct inode *inode,
 {
     debug("PIPE: rdwr_release called.\n");
 
-    if (filp->f_mode & FMODE_READ) (inode->u.pipe_i.readers)--;
-    if (filp->f_mode & FMODE_WRITE) (inode->u.pipe_i.writers)--;
+    if (filp->f_mode & FMODE_READ) PIPE_READERS(inode)--;
+    if (filp->f_mode & FMODE_WRITE) PIPE_WRITERS(inode)--;
 
-    if (!(inode->u.pipe_i.readers + inode->u.pipe_i.writers)) {
-	if (inode->u.pipe_i.q.base) {
-	/* Free up any memory allocated to the pipe */
-	    free_pipe_mem(inode->u.pipe_i.q.base);
-	    inode->u.pipe_i.q.base = NULL;
+    if (!(PIPE_READERS(inode) + PIPE_WRITERS(inode))) {
+	if (PIPE_BASE(inode)) {
+	    /* Free up any memory allocated to the pipe */
+	    free_pipe_mem(PIPE_BASE(inode));
+	    PIPE_BASE(inode) = NULL;
 	}
-    } else wake_up_interruptible(&(inode->u.pipe_i.q.wait));
+    } else wake_up_interruptible(&PIPE_WAIT(inode));
 }
 
 #ifdef STRICT_PIPES
 static int pipe_read_open(struct inode *inode, struct file *filp)
 {
     debug("PIPE: read_open called.\n");
-    (inode->u.pipe_i.readers)++;
+    PIPE_READERS(inode)++;
 
     return 0;
 }
@@ -222,7 +223,7 @@ static int pipe_read_open(struct inode *inode, struct file *filp)
 static int pipe_write_open(struct inode *inode, struct file *filp)
 {
     debug("PIPE: write_open called.\n");
-    (inode->u.pipe_i.writers)++;
+    PIPE_WRITERS(inode)++;
 
     return 0;
 }
@@ -233,39 +234,37 @@ static int pipe_rdwr_open(register struct inode *inode,
 {
     debug("PIPE: rdwr called.\n");
 
-    if (!PIPE_BASE(*inode)) {
-	if (!(PIPE_BASE(*inode) = get_pipe_mem())) return -ENOMEM;
-#if 0
-	inode->u.pipe_i.q.size = PAGE_SIZE;
-	/* next fields already set to zero by get_empty_inode() */
-	PIPE_START(*inode) = PIPE_LEN(*inode) = 0;
-	PIPE_RD_OPENERS(*inode) = PIPE_WR_OPENERS(*inode) = 0;
-	PIPE_READERS(*inode) = PIPE_WRITERS(*inode) = 0;
-	PIPE_LOCK(*inode) = 0;
+    if (!PIPE_BASE(inode)) {
+	if (!(PIPE_BASE(inode) = get_pipe_mem())) return -ENOMEM;
+	PIPE_SIZE(inode) = PIPE_BUFSIZ;
+#if 0 /* next fields already set to zero by get_empty_inode() */
+	PIPE_HEAD(inode) = PIPE_TAIL(inode) = PIPE_LEN(inode) = 0;
+	PIPE_RD_OPENERS(inode) = PIPE_WR_OPENERS(inode) = 0;
+	PIPE_READERS(inode) = PIPE_WRITERS(inode) = 0;
 #endif
     }
     if (filp->f_mode & FMODE_READ) {
-	(inode->u.pipe_i.readers)++;
-	if (inode->u.pipe_i.writers > 0) {
-	    if (inode->u.pipe_i.readers < 2)
-		wake_up_interruptible(&(inode->u.pipe_i.q.wait));
+	PIPE_READERS(inode)++;
+	if (PIPE_WRITERS(inode) > 0) {
+	    if (PIPE_READERS(inode) < 2)
+		wake_up_interruptible(&PIPE_WAIT(inode));
 	}
 	else {
 	    if (!(filp->f_flags & O_NONBLOCK) && (inode->i_sb))
-		while (!(inode->u.pipe_i.writers))
-		    interruptible_sleep_on(&(inode->u.pipe_i.q.wait));
+		while (!PIPE_WRITERS(inode))
+		    interruptible_sleep_on(&PIPE_WAIT(inode));
 	}
     }
 
     if (filp->f_mode & FMODE_WRITE) {
-	(inode->u.pipe_i.writers)++;
-	if (inode->u.pipe_i.readers > 0) {
-	    if (inode->u.pipe_i.writers < 2)
-		wake_up_interruptible(&(inode->u.pipe_i.q.wait));
+	PIPE_WRITERS(inode)++;
+	if (PIPE_READERS(inode) > 0) {
+	    if (PIPE_WRITERS(inode) < 2)
+		wake_up_interruptible(&PIPE_WAIT(inode));
 	} else {
 	    if (filp->f_flags & O_NONBLOCK) return -ENXIO;
-	    while (!(inode->u.pipe_i.readers))
-		interruptible_sleep_on(&(inode->u.pipe_i.q.wait));
+	    while (!PIPE_READERS(inode))
+		interruptible_sleep_on(&PIPE_WAIT(inode));
 	}
     }
     return 0;
