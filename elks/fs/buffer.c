@@ -477,8 +477,8 @@ void map_buffer(register struct buffer_head *bh)
 	    debug("UNMAP: %d <- %d\n", bmap->b_num, i);
 
 	    /* Unmap/copy L1 to L2 */
-	    fmemcpyb((byte_t *) (bmap->b_offset << BLOCK_SIZE_BITS), bmap->b_ds,
-		     (byte_t *) bmap->b_data, kernel_ds, BLOCK_SIZE);
+	    fmemcpyw((byte_t *) (bmap->b_offset << BLOCK_SIZE_BITS), bmap->b_ds,
+		     (byte_t *) bmap->b_data, kernel_ds, BLOCK_SIZE/2);
 	    bmap->b_data = 0;
 	    break;		/* success */
 	}
@@ -494,8 +494,8 @@ void map_buffer(register struct buffer_head *bh)
     L1map[i] = bh;
     bh->b_data = (char *)L1buf + (i << BLOCK_SIZE_BITS);
     if (bh->b_uptodate) {
-	fmemcpyb((byte_t *) bh->b_data, kernel_ds,
-		 (byte_t *) (bh->b_offset << BLOCK_SIZE_BITS), bh->b_ds, BLOCK_SIZE);
+	fmemcpyw((byte_t *) bh->b_data, kernel_ds,
+		 (byte_t *) (bh->b_offset << BLOCK_SIZE_BITS), bh->b_ds, BLOCK_SIZE/2);
     }
     debug("MAP:   %d -> %d\n", bh->b_num, i);
   end_map_buffer:
