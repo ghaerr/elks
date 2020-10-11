@@ -7,6 +7,7 @@
 
 //	Assembler boot strap hooks. This is called by setup
 
+	.arch i8086, nojumps
 	.code16
 	.text
 

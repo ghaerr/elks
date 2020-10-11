@@ -505,8 +505,7 @@ int minix_symlink(struct inode *dir, char *name, size_t len, char *symname)
 /*----------------------------------------------------------------------*/
     bh = minix_bread(inode, 0, 1);
     if (!bh) goto symlink1;
-    error = strnlen_fromfs(symname, 1023);
-/*    if ((error = strlen_fromfs(symname)) > 1023) error = 1023;*/
+    if ((error = strlen_fromfs(symname, 1023)) > 1023) error = 1023;
     inode->i_size = (__u32) error;
     map_buffer(bh);
     memcpy_fromfs(bh->b_data, symname, error);

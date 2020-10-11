@@ -40,23 +40,22 @@ typedef struct segment segment_s;
 
 /*@-namechecks@*/
 
-extern void memcpy_fromfs(void *,void *,size_t);
-extern void memcpy_tofs(void *,void *,size_t);
-
-extern int strnlen_fromfs(void *,size_t);
+void memcpy_fromfs(void *,void *,size_t);
+void memcpy_tofs(void *,void *,size_t);
+int strlen_fromfs(void *,size_t);
 
 /*@+namechecks@*/
 
-extern int verfy_area(void *,size_t);
-extern void put_user_long(unsigned long int,void *);
-extern void put_user_char(unsigned char,void *);
-extern void put_user(unsigned short int,void *);
-extern unsigned long int get_user_long(void *);
-extern unsigned char get_user_char(void *);
-extern unsigned short int get_user(void *);
-extern int fs_memcmp(void *,void *,size_t);
-extern int verified_memcpy_tofs(void *,void *,size_t);
-extern int verified_memcpy_fromfs(void *,void *,size_t);
+int verfy_area(void *,size_t);
+void put_user_char(unsigned char,void *);
+void put_user(unsigned short,void *);
+void put_user_long(unsigned long,void *);
+unsigned char get_user_char(void *);
+unsigned short get_user(void *);
+unsigned long get_user_long(void *);
+int verified_memcpy_tofs(void *,void *,size_t);
+int verified_memcpy_fromfs(void *,void *,size_t);
+int fs_memcmp(void *,void *,size_t);
 
 /* Memory allocation */
 

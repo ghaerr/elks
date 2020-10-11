@@ -40,40 +40,34 @@ int verified_memcpy_tofs(void *daddr, void *saddr, size_t len)
     return err;
 }
 
-unsigned long int get_user_long(void *dv)
-{
-    unsigned long retv;
-
-    memcpy_fromfs(&retv,dv,4);
-
-    return retv;
-}
-
-void put_user_long(unsigned long int dv, void *dp)
-{
-    memcpy_tofs(dp,&dv,4);
-}
-
 unsigned char get_user_char(void *dv)
 {
-    return peekb((word_t) dv, current->t_regs.ds);
+    return peekb((word_t)dv, current->t_regs.ds);
 }
 
-/* TODO: revisit this one - use faster pokeb() */
-
-void put_user_char(unsigned char dv, void *dp)
-{
-    memcpy_tofs(dp,&dv,1);
-}
-
-unsigned short int get_user(void *dv)
+unsigned short get_user(void *dv)
 {
     return peekw((word_t)dv, current->t_regs.ds);
 }
 
-void put_user(unsigned short int dv, void *dp)
+unsigned long get_user_long(void *dv)
 {
-    memcpy_tofs(dp,&dv,2);
+    return peekl((word_t)dv, current->t_regs.ds);
+}
+
+void put_user_char(unsigned char dv, void *dp)
+{
+    pokeb((word_t)dp, current->t_regs.ds, dv);
+}
+
+void put_user(unsigned short dv, void *dp)
+{
+    pokew((word_t)dp, current->t_regs.ds, dv);
+}
+
+void put_user_long(unsigned long dv, void *dp)
+{
+    pokel((word_t)dp, current->t_regs.ds, dv);
 }
 
 int fs_memcmp(void *s, void *d, size_t len)
