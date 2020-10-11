@@ -52,6 +52,7 @@ word_t getword(int fd, word_t off, word_t seg)
 void dump_heap(int fd)
 {
 	word_t total_size = 0;
+	word_t total_free = 0;
 	long total_segsize = 0;
 	static char *heaptype[] = { "free", "SEG ", "STR ", "TTY " };
 	static char *segtype[] = { "free", "CSEG", "DSEG", "BUF ", "RDSK" };
@@ -81,6 +82,8 @@ void dump_heap(int fd)
 		   (fflag && free) || (aflag && used) || (tflag && tty) || (bflag && buffer)) {
 			printf("  %4x   %s %5d", mem, heaptype[tag], size);
 			total_size += size + sizeof(heap_s);
+			if (tag == HEAP_TAG_FREE)
+				total_free += size;
 
 			switch (tag) {
 			case HEAP_TAG_SEG:
@@ -98,7 +101,7 @@ void dump_heap(int fd)
 		n = getword(fd, n + offsetof(list_s, next), ds);
 	}
 
-	printf("  Total heap  %5d     Total mem %7ld\n", total_size, total_segsize);
+	printf("  Heap/free   %5d/%5d Total mem %7ld\n", total_size, total_free, total_segsize);
 }
 
 void usage(void)
