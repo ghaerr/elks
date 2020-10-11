@@ -36,8 +36,9 @@ include $(BASEDIR)/Makefile-rules
 # Objects to be compiled.
 
 ifeq ($(CONFIG_ARCH_SIBO), y)
-OBJS  = init.o sibo_con.o sibo_conasm.o sibo_font.o sibo_key.o sibo_keyasm.o mem.o \
-	meta.o ntty.o sibo_serasm.o pty.o
+OBJS  = init.o sibo/sibo_con.o sibo/sibo_conasm.o sibo/sibo_font.o \
+	sibo/sibo_key.o sibo/sibo_keyasm.o mem.o \
+	meta.o ntty.o sibo/sibo_serasm.o pty.o
 else
 OBJS  = serial.o lp.o xt_key.o init.o dircon.o mem.o \
 	ntty.o meta.o tcpdev.o pty.o bell.o
