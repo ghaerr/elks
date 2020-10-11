@@ -123,7 +123,7 @@ typedef struct task_struct __task, *__ptask;
 extern __task task[MAX_TASKS];
 
 extern volatile jiff_t jiffies;	/* ticks updated by the timer interrupt*/
-extern __ptask current;		/* next; */
+extern __ptask current;
 extern int need_resched;
 
 extern struct timeval xtime;

@@ -51,6 +51,7 @@ unsigned char test_bit(unsigned int bit,void *addr)
  * - Chad
  */
 
+#ifdef BLOAT_FS
 /* Use the old faithful version */
 unsigned int find_first_non_zero_bit(register int *addr, unsigned int len)
 {
@@ -72,6 +73,7 @@ unsigned int find_first_non_zero_bit(register int *addr, unsigned int len)
 	bit = (char *)len;
     return (unsigned int)bit;
 }
+#endif
 
 /* Use the old faithful version */
 unsigned int find_first_zero_bit(register int *addr, unsigned int len)

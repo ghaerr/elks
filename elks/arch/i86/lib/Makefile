@@ -35,6 +35,9 @@ SRCS1 = \
 	fmemory.S \
 	peekpoke.S \
 	string.S \
+	bios16.S \
+	printreg.S \
+	atomic.S \
 	# end of list
 
 OBJS1 = $(SRCS1:.S=.o)
@@ -57,23 +60,14 @@ OBJS3 = $(SRCS3:.c=.o)
 
 OBJS		= $(OBJS1) $(OBJS2) $(OBJS3)
 
-OBJS_MEM = \
-	fmemory.o \
-	peekpoke.o \
-
-# miscellaneous
-# TODO: move them to the C library
 
 #########################################################################
 # Commands.
 
-all:	lib86.a libmem.a
+all:	lib86.a
 
 lib86.a: $(OBJS)
 	$(AR) rcs lib86.a $(OBJS)
-
-libmem.a: $(OBJS_MEM)
-	$(AR) rcs $@ $^
 
 $(TMPS1): $(SRCS1)
 $(OBJS1): $(TMPS1)
