@@ -15,18 +15,17 @@ BASEDIR 	= ../../..
 # Define the variables required by the standard rules - see the standard
 # rules file (below) for details of these variables.
 
-USEBCC 		= Y
+USEBCC 		=
 
 CLEANDEP	= 
 
-CLEANME 	= entry.c entry.S entry.s
+CLEANME 	= 
 
 DEPEND  	= 
 
 DISTFILES	= syscall.dat
 
-NOINDENT	= bios16.S irq.c irqtab.S printreg.S process.c strace.h \
-		  system.c timer.c
+NOINDENT	= irq.c irqtab.S process.c strace.h system.c timer.c
 
 #########################################################################
 # Include standard commands.
@@ -37,11 +36,11 @@ include $(BASEDIR)/Makefile-rules
 # Objects to be compiled.
 
 ifeq ($(CONFIG_ARCH_SIBO), y)
-OBJS  = strace.o printreg.o system.o irq.o ../sibo/irqtab.o process.o \
+OBJS  = strace.o system.o irq.o ../sibo/irqtab.o process.o \
 		entry.o signal.o timer.o
 else
-OBJS  = strace.o printreg.o system.o irq.o irqtab.o process.o bios16.o \
-		entry.o signal.o timer.o atomic.o serial.o
+OBJS  = strace.o system.o irq.o irqtab.o process.o \
+		entry.o signal.o timer.o
 endif
 
 #########################################################################
