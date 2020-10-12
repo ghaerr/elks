@@ -6,6 +6,7 @@
 //
 // Lowest available is $0500, MSDOS appears to use $0600 ... I wonder why?
 
+	.arch	i8086, nojumps
 	.code16
 	.text
 

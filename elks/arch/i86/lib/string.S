@@ -1,8 +1,14 @@
-// string.s
+// strlen, strcpy, strcmp, memset routines
+//
 // Contributed by Christoph Niemann <niemann@swt.ruhr-uni-bochum.de>
+// assume DS=SS, save ES, for GCC-IA16
 
-    .code16
+#define ARG0	2
+#define ARG1	4
+#define ARG2	6
 
+	.arch	i8086, nojumps
+	.code16
 	.text
 
 	.global strlen
@@ -10,85 +16,64 @@
 	.global strcmp
 	.global memset
 
-/*
-! int strlen(char *str)
-!
-! returns the length of a string in ax
-!
-*/
+// int strlen(char *str)
+// returns the length of string
 
 strlen:			// needs more testing!
-#ifdef USE_IA16
 	mov	%es,%dx
-	mov	kernel_ds,%es
-#endif
+	mov	%ss,%ax
+	mov	%ax,%es
 	mov	%sp,%bx
 	push	%di
-	mov	2(%bx),%di
+	mov	ARG0(%bx),%di   // str
 	xor	%al,%al
-	cld			// so di increments not decrements
+	cld
 	mov	$-1,%cx		// maximum loop count
 	repne			// while (cx) {
-	scasb			//     cx--; if (al - [es:di++] == 0) break;}
+	scasb			//     { cx--; if (al - [es:di++] == 0) break; }
 	mov	%di,%ax
-	sub	2(%bx),%ax
+	sub	ARG0(%bx),%ax
 	dec	%ax
 	pop	%di
-#ifdef USE_IA16
 	mov	%dx,%es
-#endif
 	ret
 
-/*
-!
-! char *strcpy(char *dest, char *source)
-!
-! copies the zero terminated string source to dest.
-!
-*/
+// char *strcpy(char *dest, char *source)
+// copies the zero terminated string source to dest
 
 strcpy:
-#ifdef USE_IA16
 	mov	%es,%dx
-	mov	kernel_ds,%es
-#endif
+	mov	%ss,%ax
+	mov	%ax,%es
 	mov	%sp,%bx
 	push	%di
 	push	%si
-	mov	2(%bx),%di	// address of the destination string
-	mov	4(%bx),%si	// address of the source string
+	mov	ARG0(%bx),%di	// dest
+	mov	ARG1(%bx),%si	// source
 	cld
 
-copyon:	lodsb			// al = [ds:si++]
+cpyon:	lodsb			// al = [ds:si++]
 	stosb			// [es:di++] = al
 	test	%al,%al
-	jnz	copyon
-	mov	2(%bx),%ax	// _strcpy returns a pointer to the destination string
+	jnz	cpyon
+	mov	ARG0(%bx),%ax	// return a pointer to the destination string
 	pop	%si
 	pop	%di
-#ifdef USE_IA16
 	mov	%dx,%es
-#endif
 	ret
 
-/*
-!
-! int strcmp(char *str1, char *str2)
-!
-! compares to zero terminated strings
-!
-*/
+// int strcmp(char *str1, char *str2)
+// compares to zero terminated strings
 
 strcmp:
-#ifdef USE_IA16
 	mov	%es,%dx
-	mov	kernel_ds,%es
-#endif
+	mov	%ss,%ax
+	mov	%ax,%es
 	mov	%sp,%bx
 	push	%di
 	push	%si
-	mov	2(%bx),%si	// address of the string 1
-	mov	4(%bx),%di	// address of the string 2
+	mov	ARG0(%bx),%si	// str1
+	mov	ARG1(%bx),%di	// str2
 	cld
 
 cmpon:	lodsb			// al = [ds:si++]
@@ -104,38 +89,24 @@ cmpend:	sbb	%ax,%ax		// strings differ
 
 cmpret:	pop	%si
 	pop	%di
-#ifdef USE_IA16
 	mov	%dx,%es
-#endif
 	ret
 
-/*
-!
-! char *memset(char *p, int value, size_t count)
-!
-*/
+// char *memset(char *p, int value, size_t count)
 
 memset:
-#ifdef USE_IA16
 	mov	%es,%dx
-	mov	kernel_ds,%es
-#endif
+	mov	%ss,%ax
+	mov	%ax,%es
 	mov	%sp,%bx
 	push	%di
-	mov	2(%bx),%di	// address of the memory block
-	mov	4(%bx),%ax	// byte to write
-	mov	6(%bx),%cx	// loop count
+	mov	ARG0(%bx),%di	// address of the memory block
+	mov	ARG1(%bx),%ax	// byte to write
+	mov	ARG2(%bx),%cx	// loop count
 	cld
 	rep			// while (cx)
 	stosb			// 	cx--, [es:di++] = al
-	mov	2(%bx),%ax	// return value = start addr of block
+	mov	ARG0(%bx),%ax	// return value = start addr of block
 	pop	%di
-#ifdef USE_IA16
 	mov	%dx,%es
-#endif
 	ret
-
-#ifdef USE_IA16
-	.data
-	.extern kernel_ds
-#endif

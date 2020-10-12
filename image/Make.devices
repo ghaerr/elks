@@ -24,7 +24,7 @@ devices:
 #	$(MKDEV) /dev/port	c 1 4
 	$(MKDEV) /dev/zero	c 1 5
 #	$(MKDEV) /dev/core	c 1 6
-	$(MKDEV) /dev/full	c 1 7
+#	$(MKDEV) /dev/full	c 1 7
 #	$(MKDEV) /dev/random	c 1 8
 #	$(MKDEV) /dev/urandom	c 1 9
 #	$(MKDEV) /dev/aio	c 1 10
@@ -34,8 +34,9 @@ devices:
 ##############################################################################
 # RAM disks.
 
-	$(MKDEV) /dev/ram b 1 0 8
-	$(MKDEV) /dev/ramdisk b 1 1
+	$(MKDEV) /dev/ram0	b 1 0
+	$(MKDEV) /dev/ramdisk	b 1 1
+#	$(MKDEV) /dev/ram	b 1 0 8
 #	$MKSET   0 7  $(MKDEV) /dev/ram b 1
 
 ##############################################################################
@@ -109,14 +110,14 @@ devices:
 #	$MKSET 240 15 $(MKDEV) /dev/ttye x 3
 
 ##############################################################################
-# Direct PATA / IDE disks.
+# Direct PATA / IDE disks. (Not working)
 # Limit to 4 primary partitions per disk (MBR).
 
-	$(MKDEV) /dev/hda b 5  0    # Currently.
-	$(MKDEV) /dev/hda b 5  0 4  # Currently.
+#	$(MKDEV) /dev/hda b 5  0    # Currently.
+#	$(MKDEV) /dev/hda b 5  0 4  # Currently.
 #	$MKSET   0 15 $(MKDEV) /dev/hda b 5	# Currently.
-	$(MKDEV) /dev/hdb b 5 64    # Currently.
-	$(MKDEV) /dev/hdb b 5 64 4  # Currently.
+#	$(MKDEV) /dev/hdb b 5 64    # Currently.
+#	$(MKDEV) /dev/hdb b 5 64 4  # Currently.
 #	$MKSET  64 15 $(MKDEV) /dev/hdb b 5	# Currently.
 
 #	$MKSET   0 63 $(MKDEV) /dev/hda b 3	# Ought to be.
@@ -154,7 +155,8 @@ devices:
 ##############################################################################
 # Parallel devices, as detected by the ROM BIOS.
 
-	$(MKDEV) /dev/lp c 6 0 4
+	$(MKDEV) /dev/lp	c 6 0
+#	$(MKDEV) /dev/lp	c 6 0 4
 #	$MKSET  0 3  $(MKDEV) /dev/lp c 6
 
 ##############################################################################
@@ -174,7 +176,9 @@ devices:
 
 ##############################################################################
 # CGATEXT
+ifdef CONFIG_CHAR_DEV_CGATEXT
 	$(MKDEV) /dev/cgatext	c 10 0
+endif
 
 ##############################################################################
 # SATA / SCSI disks. These are not yet supported.
@@ -251,7 +255,7 @@ devices:
 ##############################################################################
 # ROM / Flash memory card
 
-	$(MKDEV) /dev/rom0 b 0 31
+#	$(MKDEV) /dev/rom0 b 0 31
 
 ##############################################################################
 # Direct IDE disks, Tertiary channel. These are not yet supported.

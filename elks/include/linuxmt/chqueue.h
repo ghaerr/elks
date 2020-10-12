@@ -1,11 +1,12 @@
-/* chqueue.h (C) 1997 Chad Page */
+/* chqueue.h (C) 1997 Chad Page, rewritten Greg Haerr Oct 2020 */
 
 #ifndef __LINUXMT_CHQ_H
 #define __LINUXMT_CHQ_H
 
 struct ch_queue {
     unsigned char	*base;
-    int 		size, start, len;
+    int 		size;		/* doesn't have to be power of two*/
+    int			len, head, tail;
     struct wait_queue	wait;
 };
 

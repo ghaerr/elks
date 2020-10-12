@@ -170,14 +170,6 @@ int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
     struct mem_usage mu;
 
     switch (cmd) {
-#ifdef CONFIG_MODULES
-    case MEM_GETMODTEXT:
-	retword = module_init;
-	break;
-    case MEM_GETMODDATA:
-	retword = module_data;
-	break;
-#endif
     case MEM_GETTASK:
 	retword = (unsigned short)task;
 	break;

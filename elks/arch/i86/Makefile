@@ -176,7 +176,7 @@ kernel/akernel.a:
 	${MAKE} -C kernel akernel.a
 
 lib/lib86.a:
-	${MAKE} -C lib lib86.a libmem.a
+	${MAKE} -C lib lib86.a
 
 mm/mm.a:
 	${MAKE} -C mm mm.a

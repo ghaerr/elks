@@ -76,17 +76,26 @@ static void elks_init()
 			  = ds = ds_idx * 8 + 7;
 	dbprintf(("LDT descriptor for text is %#x\n", cs));
 	dbprintf(("LDT descriptor for data is %#x\n", ds));
-	/* Try to place dummy descriptors in the LDT */
+	/* Try to place dummy descriptors in the LDT.  For each dummy
+	 * descriptor, make sure that either the base or the limit is
+	 * non-zero, so that Linux does not think that we are trying to clear
+	 * the descriptor entry. */
 	memset(&cs_desc, 0, sizeof cs_desc);
 	cs_desc.entry_number = cs_idx;
+	cs_desc.base_addr = 0x1000;
+	cs_desc.limit = 0xfff;
 	cs_desc.contents = MODIFY_LDT_CONTENTS_CODE;
 	cs_desc.useable = 1;
 	memset(&fcs_desc, 0, sizeof fcs_desc);
 	fcs_desc.entry_number = fcs_idx;
+	fcs_desc.base_addr = 0x1000;
+	fcs_desc.limit = 0xfff;
 	fcs_desc.contents = MODIFY_LDT_CONTENTS_CODE;
 	fcs_desc.useable = 1;
 	memset(&ds_desc, 0, sizeof ds_desc);
 	ds_desc.entry_number = ds_idx;
+	ds_desc.base_addr = 0x1000;
+	ds_desc.limit = 0xfff;
 	ds_desc.contents = MODIFY_LDT_CONTENTS_DATA;
 	ds_desc.useable = 1;
 	if (modify_ldt(1, &cs_desc, sizeof cs_desc) != 0
@@ -557,9 +566,18 @@ main(int argc, char *argv[], char *envp[])
 
 	if(argc<=1)
 	{
-		fprintf(stderr,"elksemu cmd args.....\n");
+		fprintf(stderr,"elksemu {cmd args..... | -t}\n");
 		exit(1);
 	}
+	/* If -t is given, do a quick test to see if our Linux host supports
+	 * running 16-bit protected mode code. */
+	else if (argc==2 && strcmp(argv[1], "-t")==0)
+	{
+		elks_init();
+		fprintf(stderr, "Yes, this Linux host supports elksemu\n");
+		exit(0);
+	}
+
 	/* This uses the _real_ user ID If the file is exec only that's */
 	/* ok cause the suid root will override.  */
 	/* BTW, be careful here, security problems are possible because of 

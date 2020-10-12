@@ -9,7 +9,7 @@ BASEDIR 	= ../../..
 # Define the variables required by the standard rules - see the standard
 # rules file (below) for details of these variables.
 
-USEBCC 		= Y
+USEBCC 		=
 
 CLEANDEP	= 
 
@@ -32,11 +32,12 @@ include $(BASEDIR)/Makefile-rules
 # Precompiled assembly
 
 SRCS1 = \
-	fmemcpyb.S fmemcpyw.S \
-	fmemcmpb.S fmemcmpw.S \
-	setupb.S setupw.S \
+	fmemory.S \
+	peekpoke.S \
 	string.S \
-#	farlist.S \
+	bios16.S \
+	printreg.S \
+	atomic.S \
 	# end of list
 
 OBJS1 = $(SRCS1:.S=.o)
@@ -44,8 +45,6 @@ OBJS1 = $(SRCS1:.S=.o)
 # Non-precompiled assembly
 
 SRCS2 = \
-	peekb.s peekw.s pokeb.s pokew.s \
-	fmemsetb.s fmemsetw.s \
 	border.s \
 	# end of list
 
@@ -60,36 +59,15 @@ SRCS3 = \
 OBJS3 = $(SRCS3:.c=.o)
 
 OBJS		= $(OBJS1) $(OBJS2) $(OBJS3)
-#OBJS		= $(OBJS1) $(OBJS2) $(OBJS3) $(JOBJS)
 
-OBJS_MEM = \
-	peekb.o \
-	peekw.o \
-	pokeb.o \
-	pokew.o \
-	fmemsetb.o \
-	fmemsetw.o \
-	fmemcpyb.o \
-	fmemcpyw.o \
-	fmemcmpb.o \
-	fmemcmpw.o \
-
-# miscellaneous
-# TODO: move them to the C library
-
-JOBJS       = inport.o inportb.o outport.o outportb.o irqflag.o \
-              memcmp.o
 
 #########################################################################
 # Commands.
 
-all:	lib86.a libmem.a
+all:	lib86.a
 
 lib86.a: $(OBJS)
 	$(AR) rcs lib86.a $(OBJS)
-
-libmem.a: $(OBJS_MEM)
-	$(AR) rcs $@ $^
 
 $(TMPS1): $(SRCS1)
 $(OBJS1): $(TMPS1)

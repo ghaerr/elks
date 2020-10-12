@@ -239,7 +239,9 @@ void fast_com1_irq(void)
 
     c = INB(io + UART_RX);		/* Read received data */
     if (q->len < q->size) {
-	q->base[(unsigned int)((q->start + q->len) & (q->size - 1))] = c;
+	q->base[q->head] = c;
+	if (++q->head >= q->size)
+	    q->head = 0;
 	q->len++;
     }
 }
@@ -255,7 +257,9 @@ void fast_com2_irq(void)
 
     c = INB(io + UART_RX);		/* Read received data */
     if (q->len < q->size) {
-	q->base[(unsigned int)((q->start + q->len) & (q->size - 1))] = c;
+	q->base[q->head] = c;
+	if (++q->head >= q->size)
+	    q->head = 0;
 	q->len++;
     }
 }

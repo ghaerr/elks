@@ -7,8 +7,8 @@
 #define MOD_INIT	0
 #define MOD_TERM	1
 
-#define MEM_GETMODTEXT	0
-#define MEM_GETMODDATA	1
+/*#define MEM_GETMODTEXT	0*/
+/*#define MEM_GETMODDATA	1*/
 #define MEM_GETTEXTSIZ	2
 #define MEM_GETUSAGE	3
 #define MEM_GETTASK	4
@@ -20,12 +20,5 @@ struct mem_usage {
 	unsigned int free_memory;
 	unsigned int used_memory;
 };
-
-#ifdef CONFIG_MODULES
-
-extern char module_data[];
-extern int module_init(void);
-
-#endif
 
 #endif

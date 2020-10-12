@@ -188,7 +188,7 @@ segment_s * seg_dup (segment_s * src)
 {
 	segment_s * dst = seg_free_get (src->size, src->flags);
 	if (dst)
-		fmemcpyb (NULL, dst->base, 0, src->base, src->size << 4);
+		fmemcpyw(NULL, dst->base, 0, src->base, src->size << 3);
 
 	return dst;
 }
