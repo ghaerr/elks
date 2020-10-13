@@ -24,21 +24,28 @@
 //		word_t count)
 
 fmemcpyb:
-	mov    %es,%bx
 	mov    %si,%ax
 	mov    %di,%dx
 	mov    %sp,%si
+	push   %es
 	mov    ARG4(%si),%cx  // byte count
 	les    ARG0(%si),%di  // far destination pointer
 	lds    ARG2(%si),%si  // far source pointer
+	mov    %cx,%bx
 	cld
+	shr    $1,%cx         // copy words
+	jz     1f
 	rep
+	movsw
+1:	mov    %bx,%cx        // then possibly final byte
+	and    $1,%cx
+	jz     2f
 	movsb
+2:	pop    %es
 	mov    %ax,%si
 	mov    %dx,%di
 	mov    %ss,%ax
 	mov    %ax,%ds
-	mov    %bx,%es
 	ret
 
 // void fmemcpyw (byte * dst_off, seg_t dst_seg, byte * src_off, seg_t src_seg,
@@ -66,17 +73,25 @@ fmemcpyw:
 // compiler pushes byte_t as word_t
 
 fmemsetb:
-	mov    %es,%bx
 	mov    %di,%dx
 	mov    %sp,%di
+	push   %es
 	mov    ARG2(%di),%ax  // value
 	mov    ARG3(%di),%cx  // byte count
 	les    ARG0(%di),%di  // far pointer
+	mov    %cx,%bx
 	cld
+	shr    $1,%cx         // store words
+	jz     1f
+	mov    %al,%ah
 	rep
+	stosw
+1:	mov    %bx,%cx        // then possibly final byte
+        and    $1,%cx
+	jz     2f
 	stosb
+2:	pop    %es
 	mov    %dx,%di
-	mov    %bx,%es
 	ret
 
 // void fmemsetw (word_t off, seg_t seg, word_t val, word_t count)
