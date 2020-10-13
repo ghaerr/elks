@@ -25,19 +25,27 @@ memcpy_fromfs:
 	mov	%si,%ax
 	mov	%di,%dx
 	mov	%sp,%bx
+	push    %ds
+	push	%es
 	mov	ARG0(%bx),%di		// daddr
 	mov	ARG1(%bx),%si		// saddr
 	mov	ARG2(%bx),%cx		// len
 	mov	current,%bx
 	mov	TASK_USER_DS(%bx),%ds
 	mov	%ss,%bx
-	push	%es
 	mov	%bx,%es
+	mov	%cx,%bx
 	cld
+	shr	$1,%cx			// copy words
+	jz	1f
 	rep
+	movsw
+1:	mov	%bx,%cx			// then possibly final byte
+	and	$1,%cx
+	jz	2f
 	movsb
-	pop	%es
-	mov	%bx,%ds
+2:	pop	%es
+	pop     %ds
 	mov	%dx,%di
 	mov	%ax,%si
 	ret
@@ -47,17 +55,24 @@ memcpy_fromfs:
 memcpy_tofs:
 	mov	%si,%ax
 	mov	%di,%dx
-	mov	%es,%bx
+	mov	%sp,%bx
+	push	%es
 	mov	current,%si
 	mov	TASK_USER_DS(%si),%es
-	mov	%sp,%si
-	mov	ARG0(%si),%di		// daddr
-	mov	ARG2(%si),%cx		// len
-	mov	ARG1(%si),%si		// saddr
+	mov	ARG0(%bx),%di		// daddr
+	mov	ARG2(%bx),%cx		// len
+	mov	ARG1(%bx),%si		// saddr
+	mov	%cx,%bx
 	cld
+	shr	$1,%cx			// copy words
+	jz	1f
 	rep
+	movsw
+1:	mov	%bx,%cx			// then possibly final byte
+	and	$1,%cx
+	jz	2f
 	movsb
-	mov	%bx,%es
+2:	pop	%es
 	mov	%dx,%di
 	mov	%ax,%si
 	ret
