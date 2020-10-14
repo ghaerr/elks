@@ -128,7 +128,7 @@ static void bioshd_geninit(void);
 
 static struct gendisk bioshd_gendisk = {
     MAJOR_NR,			/* Major number */
-    "bd",			/* Major name */
+    "hd",			/* Major name */
     MINOR_SHIFT,		/* Bits to shift to get real from partition */
     1 << MINOR_SHIFT,		/* Number of partitions per real */
     NUM_DRIVES,			/* maximum number of real */
@@ -168,14 +168,14 @@ static unsigned short int INITPROC bioshd_gethdinfo(void) {
 	    /* NOTE: some BIOS may underreport cylinders by 1*/
 	    drivep->cylinders = (((BD_CX & 0xc0) << 2) | (BD_CX >> 8)) + 1;
 	    drivep->fdtype = -1;
-	    printk("bioshd: bd%c BIOS CHS %d,%d,%d\n", 'a'+drive, drivep->cylinders,
+	    printk("bioshd: hd%c BIOS CHS %d,%d,%d\n", 'a'+drive, drivep->cylinders,
 		drivep->heads, drivep->sectors);
 	}
 #ifdef IDE_PROBE_ENABLE
 	if (arch_cpu > 5) {	/* Do this only if AT or higher */
 	    if (!get_ide_data(drive, drivep)) {	/* get CHS from the drive itself */
 		/* sanity checks already done, accepting data */
-		printk("bioshd: bd%c IDE CHS %d,%d,%d\n", 'a'+drive, drivep->cylinders,
+		printk("bioshd: hd%c  IDE CHS %d,%d,%d\n", 'a'+drive, drivep->cylinders,
 		drivep->heads, drivep->sectors);
 	    }
 	}

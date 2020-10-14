@@ -17,8 +17,8 @@
 #ifdef CONFIG_FS_DEV
 /* max 16 entries in FAT device table*/
 struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
-    { "bda",	S_IFBLK | 0644, MKDEV(3, 0) },
-    { "bda1",	S_IFBLK | 0644, MKDEV(3, 1) },
+    { "hda",	S_IFBLK | 0644, MKDEV(3, 0) },
+    { "hda1",	S_IFBLK | 0644, MKDEV(3, 1) },
     { "fd0",	S_IFBLK | 0644, MKDEV(3, 128)},
     { "fd1",	S_IFBLK | 0644, MKDEV(3, 160)},
     { "kmem",	S_IFCHR | 0644, MKDEV(1, 2) },

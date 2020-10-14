@@ -44,23 +44,23 @@ devices:
 # BIOS hard and floppy disks.
 # Limit to 4 primary partitions per disk (MBR).
 
-	$(MKDEV) /dev/bda  b 3 0
-	$(MKDEV) /dev/bda1 b 3 1
-	$(MKDEV) /dev/bda2 b 3 2
-	$(MKDEV) /dev/bda3 b 3 3
-	$(MKDEV) /dev/bda4 b 3 4
-	$(MKDEV) /dev/bda5 b 3 5
-	$(MKDEV) /dev/bda6 b 3 6
-	$(MKDEV) /dev/bda7 b 3 7
-	$(MKDEV) /dev/bda8 b 3 8
-	$(MKDEV) /dev/bdb  b 3 32
-	$(MKDEV) /dev/bdb1 b 3 33
-	$(MKDEV) /dev/bdb2 b 3 34
-	$(MKDEV) /dev/bdb3 b 3 35
-	$(MKDEV) /dev/bdb4 b 3 36
-	$(MKDEV) /dev/bdc  b 3 64
-	$(MKDEV) /dev/bdc1 b 3 65
-	$(MKDEV) /dev/bdd  b 3 96
+	$(MKDEV) /dev/hda  b 3 0
+	$(MKDEV) /dev/hda1 b 3 1
+	$(MKDEV) /dev/hda2 b 3 2
+	$(MKDEV) /dev/hda3 b 3 3
+	$(MKDEV) /dev/hda4 b 3 4
+	$(MKDEV) /dev/hda5 b 3 5
+	$(MKDEV) /dev/hda6 b 3 6
+	$(MKDEV) /dev/hda7 b 3 7
+	$(MKDEV) /dev/hda8 b 3 8
+	$(MKDEV) /dev/hdb  b 3 32
+	$(MKDEV) /dev/hdb1 b 3 33
+	$(MKDEV) /dev/hdb2 b 3 34
+	$(MKDEV) /dev/hdb3 b 3 35
+	$(MKDEV) /dev/hdb4 b 3 36
+	$(MKDEV) /dev/hdc  b 3 64
+	$(MKDEV) /dev/hdc1 b 3 65
+	$(MKDEV) /dev/hdd  b 3 96
 	$(MKDEV) /dev/fd0  b 3 128
 	$(MKDEV) /dev/fd1  b 3 160
 
@@ -113,15 +113,15 @@ devices:
 # Direct PATA / IDE disks. (Not working)
 # Limit to 4 primary partitions per disk (MBR).
 
-#	$(MKDEV) /dev/hda b 5  0    # Currently.
-#	$(MKDEV) /dev/hda b 5  0 4  # Currently.
-#	$MKSET   0 15 $(MKDEV) /dev/hda b 5	# Currently.
-#	$(MKDEV) /dev/hdb b 5 64    # Currently.
-#	$(MKDEV) /dev/hdb b 5 64 4  # Currently.
-#	$MKSET  64 15 $(MKDEV) /dev/hdb b 5	# Currently.
+#	$(MKDEV) /dev/dhda b 5  0    # Currently.
+#	$(MKDEV) /dev/dhda b 5  0 4  # Currently.
+#	$MKSET   0 15 $(MKDEV) /dev/dhda b 5	# Currently.
+#	$(MKDEV) /dev/dhdb b 5 64    # Currently.
+#	$(MKDEV) /dev/dhdb b 5 64 4  # Currently.
+#	$MKSET  64 15 $(MKDEV) /dev/dhdb b 5	# Currently.
 
-#	$MKSET   0 63 $(MKDEV) /dev/hda b 3	# Ought to be.
-#	$MKSET  64 63 $(MKDEV) /dev/hdb b 3	# Ought to be.
+#	$MKSET   0 63 $(MKDEV) /dev/dhda b 3	# Ought to be.
+#	$MKSET  64 63 $(MKDEV) /dev/dhdb b 3	# Ought to be.
 
 ##############################################################################
 # Virtual consoles, pseudo-tty slaves and serial ports.

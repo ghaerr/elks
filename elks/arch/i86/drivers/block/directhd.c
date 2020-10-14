@@ -74,7 +74,7 @@ static void directhd_geninit();
 
 static struct gendisk directhd_gendisk = {
     MAJOR_NR,			/* major number */
-    "hd",			/* device name */
+    "dhd",			/* device name */
     6,
     1 << 6,
     4,
@@ -367,7 +367,7 @@ int directhd_init(void)
     for (i = 0; i < 4; i++)
 	/* sanity check */
 	if (drive_info[i].heads != 0) {
-	    printk("athd: /dev/hd%c: %d heads, %d cylinders, %d sectors\n",
+	    printk("athd: /dev/dhd%c: %d heads, %d cylinders, %d sectors\n",
 		   (i + 'a'),
 		   drive_info[i].heads,
 		   drive_info[i].cylinders, drive_info[i].sectors);

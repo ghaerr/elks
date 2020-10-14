@@ -91,7 +91,7 @@ int INITPROC get_ide_data(int drive, struct drive_infot *drive_info) {
 		    drive++;
 		    continue;
 		}
-		debug("bd%c: drive at port 0x%x not found\n", 'a'+drive, port);
+		debug("hd%c: drive at port 0x%x not found\n", 'a'+drive, port);
 
 		retval = -1;
 		break;
@@ -126,13 +126,13 @@ int INITPROC get_ide_data(int drive, struct drive_infot *drive_info) {
 	    	drive_info->sectors = ide_buffer[56];
 
 		/* Note: If the 3rd drive is slave, not master, it will be reported as
-		 * bdd, not bdc here. */
-		debug("bd%c: %d heads, %d cylinders, %d sectors\n", 'a'+drive,
+		 * hdd, not hdc here. */
+		debug("hd%c: %d heads, %d cylinders, %d sectors\n", 'a'+drive,
 			drive_info->heads, drive_info->cylinders, drive_info->sectors);
 	    } else {
 		retval = -2;
 #if IDE_DEBUG
-		printk("bd%c: Error in IDE device data.\n", 'a'+drive);
+		printk("hd%c: Error in IDE device data.\n", 'a'+drive);
 		dump_ide(ide_buffer, 256);
 #endif
 	    }

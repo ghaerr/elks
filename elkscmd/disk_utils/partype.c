@@ -13,15 +13,15 @@
  *
  *	  0	No partition with the specified type was found.
  *
- *	  1	Partition /dev/bda1 has the specified type.
- *	  2	Partition /dev/bda2 has the specified type.
- *	  3	Partition /dev/bda3 has the specified type.
- *	  4	Partition /dev/bda4 has the specified type.
+ *	  1	Partition /dev/hda1 has the specified type.
+ *	  2	Partition /dev/hda2 has the specified type.
+ *	  3	Partition /dev/hda3 has the specified type.
+ *	  4	Partition /dev/hda4 has the specified type.
  *
- *	 65	Partition /dev/hda1 has the specified type.
- *	 66	Partition /dev/hda2 has the specified type.
- *	 67	Partition /dev/hda3 has the specified type.
- *	 68	Partition /dev/hda4 has the specified type.
+ *	 65	Partition /dev/dhda1 has the specified type.
+ *	 66	Partition /dev/dhda2 has the specified type.
+ *	 67	Partition /dev/dhda3 has the specified type.
+ *	 68	Partition /dev/dhda4 has the specified type.
  *
  *	129	Partition /dev/sda1 has the specified type.
  *	130	Partition /dev/sda2 has the specified type.
@@ -29,7 +29,7 @@
  *	132	Partition /dev/sda4 has the specified type.
  *
  *	251	The raw drive is not seekable.
- *	252	Neither /dev/hda nor /dev/bda is available.
+ *	252	Neither /dev/dhda nor /dev/hda is available.
  *	253	The minimum size specified was larger than the
  *		maximum size specified.
  *	254	An invalid partition type was specified.
@@ -135,20 +135,20 @@ int main(int argc,char **argv)
 	    exit(253);
 	}
     }
-    strcpy(drive, "/dev/bda");
+    strcpy(drive, "/dev/hda");
     if ((fp = fopen(drive,"rb")) == NULL) {
-	drive[5] = 'h';
+	strcpy(drive, "/dev/dhda");
 	if ((fp = fopen(drive,"rb")) == NULL) {
-	    drive[5] = 's';
+	    strcpy(drive, "/dev/shda");
 	    if ((fp = fopen(drive,"rb")) == NULL) {
 		fprintf(stderr, "ERROR 3: Can't open raw drive.\n");
-		fprintf(stderr, "         Searched /dev/bda - /dev/hda - /dev/sda only.\n");
+		fprintf(stderr, "         Searched /dev/hda - /dev/dhda - /dev/sda only.\n");
 		exit(252);
 	    }
 	}
     }
     if (fseek(fp,0x1be,SEEK_SET)) {
-	fprintf(stderr, "ERROR 4: Can't seek to partition table in /dev/bda\n"
+	fprintf(stderr, "ERROR 4: Can't seek to partition table in /dev/hda\n"
 			"         ");
 	perror("Reason");
 	exit(251);
