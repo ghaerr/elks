@@ -1,6 +1,7 @@
+// Experimental lock functions - unused
 
 #include <linuxmt/sched.h>
-#include <linuxmt/wait.h>
+#include <linuxmt/cond.h>
 #include <linuxmt/lock.h>
 
 // Lock condition test

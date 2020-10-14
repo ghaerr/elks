@@ -21,25 +21,10 @@
  */
 static void sound(void)
 {
-#ifdef __BCC__
-    asm(\
-	"\tin	al,0x61\n" \
-	"\tor	al,#3\n" \
-	"\tout	0x61,al\n" \
-	"\tmov	al,#0xB6\n" \
-	"\tout	0x43,al\n" \
-	"\tmov	al,#0xD3\n" \
-	"\tout	0x42,al\n" \
-	"\tmov	al,#0x05\n" \
-	"\tout	0x42,al\n" \
-	);
-#endif
-#ifdef __ia16__
     outb(inb(SPEAKER_PORT) | 0x03, SPEAKER_PORT);
     outb(0xB6, TIMER_CONTROL_PORT);
     outb(BELL_PERIOD_L, TIMER2_PORT);
     outb(BELL_PERIOD_H, TIMER2_PORT);
-#endif
 }
 
 /*
@@ -47,16 +32,7 @@ static void sound(void)
  */
 static void nosound(void)
 {
-#ifdef __BCC__
-    asm(\
-	"\tin	al,0x61\n" \
-	"\tand	al,#0xFC\n" \
-	"\tout	0x61,al\n" \
-	);
-#endif
-#ifdef __ia16__
     outb(inb(SPEAKER_PORT) & ~0x03, SPEAKER_PORT);
-#endif
 }
 
 /*
@@ -64,10 +40,10 @@ static void nosound(void)
  */
 void bell(void)
 {
-    register char *pi = (char *) 60000U;
+    register unsigned int i = 60000U;
 
     sound();
-    while (--pi)
-	/* Do nothing */ ;
+    while (--i)
+	continue;
     nosound();
 }

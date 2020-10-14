@@ -56,16 +56,6 @@ static struct irqaction irq_action[] = {
 unsigned char cache_21 = 0xff, cache_A1 = 0xff;
 
 #ifdef CONFIG_ARCH_SIBO
-
-/*
- *	Low level interrupt handling for the SIBO platform
- */
-
-void disable_irq(unsigned int irq)
-{
-    /* Not supported on SIBO */
-}
-
 void enable_irq(unsigned int irq)
 {
     /* Not supported on SIBO */
@@ -82,27 +72,6 @@ static int remap_irq(unsigned int irq)
  *	Low level interrupt handling for the X86 PC/XT and PC/AT
  *	platform
  */
-
-#if 0
-
-void disable_irq(unsigned int irq)
-{
-    flag_t flags;
-    unsigned char mask = 1 << (irq & 7);
-
-    save_flags(flags);
-    clr_irq();
-    if (irq < 8) {
-	cache_21 |= mask;
-	outb(cache_21,((void *) 0x21));
-    } else {
-	cache_A1 |= mask;
-	outb(cache_A1,((void *) 0xA1));
-    }
-    restore_flags(flags);
-}
-
-#endif
 
 void enable_irq(unsigned int irq)
 {
@@ -126,6 +95,25 @@ static int remap_irq(int irq)
 	irq = 9;			/* Map IRQ 9/2 over */
     return irq;
 }
+
+#if 0
+void disable_irq(unsigned int irq)
+{
+    flag_t flags;
+    unsigned char mask = 1 << (irq & 7);
+
+    save_flags(flags);
+    clr_irq();
+    if (irq < 8) {
+	cache_21 |= mask;
+	outb(cache_21,((void *) 0x21));
+    } else {
+	cache_A1 |= mask;
+	outb(cache_A1,((void *) 0xA1));
+    }
+    restore_flags(flags);
+}
+#endif
 
 #endif
 
@@ -235,13 +223,11 @@ void INITPROC irq_init(void)
     enable_timer_tick();
 
 #ifndef CONFIG_ARCH_SIBO
-
     if (arch_cpu > 5) {		/* PC-AT or greater */
 	save_flags(flags);
 	clr_irq();
 	enable_irq(2);		/* Cascade slave PIC */
 	restore_flags(flags);
     }
-
 #endif
 }

@@ -1,10 +1,10 @@
 #include <linuxmt/config.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/timer.h>
-#include <linuxmt/timex.h>
 
 #include <arch/io.h>
 #include <arch/irq.h>
+#include <arch/param.h>
 #include <arch/ports.h>
 
 /*
@@ -22,11 +22,10 @@ volatile jiff_t jiffies = 0;
 
 extern void do_timer(struct pt_regs *);
 extern void keyboard_irq(int, struct pt_regs *, void *);
-
-#ifndef CONFIG_ARCH_SIBO
+extern void rs_pump(void);
 
 /*  These 8253/8254 macros generate proper timer constants based on the
- *  timer tick macro HZ which is defined in timex.h (usually 100 Hz).
+ *  timer tick macro HZ which is defined in param.h (usually 100 Hz).
  *
  *  The PC timer chip can be programmed to divide its reference frequency
  *  by a 16 bit unsigned number. The reference frequency of 1193181.8 Hz
@@ -41,10 +40,6 @@ extern void keyboard_irq(int, struct pt_regs *, void *);
 #define TIMER_LO_BYTE (__u8)(((5+(11931818L/(HZ)))/10)%256)
 #define TIMER_HI_BYTE (__u8)(((5+(11931818L/(HZ)))/10)/256)
 
-#endif
-
-extern void rs_pump(void);
-
 void timer_tick(int irq, struct pt_regs *regs, void *data)
 {
     do_timer(regs);
@@ -53,46 +48,35 @@ void timer_tick(int irq, struct pt_regs *regs, void *data)
     rs_pump();		/* check if received serial chars and call wake_up*/
 #endif
 
-#ifndef CONFIG_ARCH_SIBO
+#ifdef CONFIG_ARCH_SIBO
+    /* As we are now responsible for clearing interrupt */
+    clr_irq();
+    outb(0x0, 0x0A);
+    outb(0x0, 0x0C);
+    outb(0x0, 0x10);
+    set_irq();
+    keyboard_irq(1, regs, NULL);
+#else
 
-#if 0
-    pokew(40, 0xb80a, peekw(40, 0xb80a)+1);
-#endif
+    /*pokew(40, 0xb80a, peekw(40, 0xb80a)+1);*/
 
 #ifdef CONFIG_DEBUG_TIMER
     outb (jiffies, 0x80);
 #endif
-
-#else
-
-    /* As we are now responsible for clearing interrupt */
-    clr_irq();
-
-    outb(0x0, 0x0A);
-    outb(0x0, 0x0C);
-    outb(0x0, 0x10);
-
-    set_irq();
-
-    keyboard_irq(1, regs, NULL);
 
 #endif
 }
 
 void enable_timer_tick(void)
 {
-#ifndef CONFIG_ARCH_SIBO
+#ifdef CONFIG_ARCH_SIBO
+    outb (0x00, 0x15);
+    outb (0x02, 0x08);
+#else
     /* set the clock frequency */
     outb (TIMER_MODE2, (void*)TIMER_CMDS_PORT);
     outb (TIMER_LO_BYTE, (void*)TIMER_DATA_PORT);	/* LSB */
     outb (TIMER_HI_BYTE, (void*)TIMER_DATA_PORT);	/* MSB */
-
-#else
-
-    outb (0x00, 0x15);
-    outb (0x02, 0x08);
-    printk("Timer enabled...\n");
-
 #endif
 }
 

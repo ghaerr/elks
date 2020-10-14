@@ -14,7 +14,6 @@
 #include <linuxmt/signal.h>
 #include <linuxmt/wait.h>
 #include <linuxmt/ntty.h>
-#include <linuxmt/timex.h>
 
 #ifdef CONFIG_STRACE
 #include <linuxmt/strace.h>

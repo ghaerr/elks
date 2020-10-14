@@ -8,14 +8,12 @@
 /*void print_regs(void);*/
 /*void printsp(void);*/
 
-#ifndef S_SPLINT_S
+	.code16
+	.text
 
-.code16
-
-.text
-
-	.extern	_printk
 	.global _print_regs
+	.global _printsp
+	.extern	_printk
 
 _print_regs:
 	push %bp
@@ -46,8 +44,6 @@ _print_regs:
 	pop %bp
 	ret
 
-	.global _printsp
-
 _printsp:
 	mov %sp,%ax
 	add $2,%ax
@@ -66,5 +62,3 @@ msg:	.ascii	"SP=%x:%x\n"
 	.byte	0
 fmtprg:	.ascii	"AX=%x BX=%x CX=%x DX=%x DI=%x SI=%x\nCS=%x DS=%x ES=%x SS=%x BP=%x\n"
 	.byte	0
-
-#endif

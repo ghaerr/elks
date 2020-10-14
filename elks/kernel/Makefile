@@ -25,7 +25,7 @@ DEPEND  	=
 
 DISTFILES	= 
 
-NOINDENT	= memdumpk.c
+NOINDENT	= 
 
 #########################################################################
 # Include standard commands.
