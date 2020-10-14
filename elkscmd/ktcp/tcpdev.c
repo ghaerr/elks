@@ -72,17 +72,11 @@ static void tcpdev_bind(void)
 
     port = ntohs(db->addr.sin_port);
     if (port == 0) {
-	if (next_port < 1024)
+	if (++next_port < 1024)
 	    next_port = 1024;
 	while (tcpcb_check_port(next_port) != NULL)
 	    next_port++;
 	port = next_port;
-
-/* TODO : Handle the case when no port is available
- * Just to be right, I don't think it is posible to run out
- * of ports in 8086!!!
- */
-
     } else {
 	if (tcpcb_check_port(port) != NULL) {	/* Port already bound */
 	    tcpcb_remove(n);
@@ -369,8 +363,8 @@ static void tcpdev_release(void)
     struct tcpcb_s *cb;
     void * sock = db->sock;
 
-debug_tcp("tcpdev: got close from ELKS process\n");
     n = tcpcb_find_by_sock(sock);
+    debug_tcp("tcpdev: got close from ELKS process, %x\n", n);
     if (n) {
 	cb = &n->tcpcb;
 	switch(cb->state){

@@ -62,7 +62,7 @@ static __u32 choose_seq(void)
 }
 
 /* abruptly terminate connection*/
-static void tcp_reset_connection(struct tcpcb_s *cb)
+static void tcp_reset_connection(struct tcpcb_s *cb)	//FIXME remove
 {
 	tcp_send_reset(cb);
 	tcpcb_remove_cb(cb);	/* deallocate*/
@@ -123,10 +123,9 @@ static void tcp_syn_sent(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 printf("SYN sent, wrong ACK (listen port not expired)\n");
 	    /* Send RST */
 	    cb->send_nxt = h->acknum;
-	    cb->state = TS_CLOSED;	//FIXME not needed
-	    //tcp_reset_connection(cb);	/* deallocate*/
 	    //tcp_send_reset(cb);
-	    tcpcb_remove_cb(cb);
+	    retval_to_sock(cb->sock, -ECONNREFUSED);
+	    tcpcb_remove_cb(cb);	/* deallocate*/
 	    return;
 	}
 
