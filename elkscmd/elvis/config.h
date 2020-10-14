@@ -193,8 +193,8 @@ extern char *strchr();
 #   define TMPDIR	"/tmp"		/* directory where temp files live */
 #  endif
 # endif
-# define TMPNAME	"%s/elv%x%04x%03x" /* temp file */
-# define CUTNAME	"%s/elv_%04x%03x" /* cut buffer's temp file */
+# define TMPNAME	"%s/elv%x%04x.%03x" /* temp file */
+# define CUTNAME	"%s/elv_%04x%.03x" /* cut buffer's temp file */
 # ifndef EXRC
 #  define EXRC		".exrc"		/* init file in current directory */
 # endif
