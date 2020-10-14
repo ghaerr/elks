@@ -166,9 +166,9 @@ static struct dev_name_struct {
 	int num;
 } devices[] = {
 	/* root_dev_name needs first 5 in order*/
-	{ "bda",     0x0300 },
-	{ "bdb",     0x0320 },
-	{ "bdc",     0x0340 },
+	{ "hda",     0x0300 },
+	{ "hdb",     0x0320 },
+	{ "hdc",     0x0340 },
 	{ "fd0",     0x0380 },
 	{ "fd1",     0x03a0 },
 	{ "ttyS",    0x0440 },

@@ -44,7 +44,7 @@ struct geometry {
     unsigned long start;
 };
 
-#define DEFAULT_DEV			"/dev/bda"
+#define DEFAULT_DEV			"/dev/hda"
 #define PARTITION_TYPE		0x80	/* ELKS, Old Minix*/
 
 #define PARTITION_START		0x01be	/* offset of partition table in MBR*/

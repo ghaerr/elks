@@ -27,7 +27,7 @@
 #define MAX_DRIVES 4		/* 2 per i/o channel and 2 i/o channels */
 
 #if 0
-#define DIRECTHD_DEVICE_NAME	"hd"
+#define DIRECTHD_DEVICE_NAME	"dhd"
 #endif
 
 #endif
