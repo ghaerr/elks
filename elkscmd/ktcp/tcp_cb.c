@@ -116,7 +116,7 @@ void tcpcb_remove(struct tcpcb_list_s *n)
 {
     struct tcpcb_list_s *next = n->next;
 
-    debug_tcp("tcp: REMOVING control block\n");
+    debug_tcp("tcp: REMOVING control block %x\n", n);
     tcpcb_num--;	/* for netstat*/
 
     if (n->prev)
