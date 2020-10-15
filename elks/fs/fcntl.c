@@ -29,13 +29,13 @@ static int dupfd(unsigned int fd, unsigned int arg)
     clear_bit(arg, &fils->close_on_exec);
     (fils->fd[arg] = fils->fd[fd])->f_count++;
 
-    return (int) arg;
+    return arg;
 }
 
 int sys_dup2(unsigned int oldfd, unsigned int newfd)
 {
     if (oldfd < NR_OPEN && current->files.fd[oldfd]) {
-	if (newfd == oldfd) return (int) newfd;
+	if (newfd == oldfd) return newfd;
 	/* following POSIX.1 6.2.1, if newfd >= NR_OPEN, return -EBADF */
 	if (newfd < NR_OPEN) {
 	    sys_close(newfd);

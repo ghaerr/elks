@@ -307,20 +307,21 @@ int sys_setsid(void)
 int sys_getgroups(int gidsetsize, gid_t * grouplist)
 {
     register gid_t *pg = current->groups;
-    register char *pi = 0;
+    int i = 0;
 
-    while ((pg[(int)pi] != NOGROUP) && (((int)(++pi)) < NGROUPS));
+    while ((pg[i] != NOGROUP) && (++i < NGROUPS))
+	continue;
 
-    if (pi && gidsetsize) {
-	if (((int)pi) > gidsetsize) {
+    if (i && gidsetsize) {
+	if (i > gidsetsize) {
 	    return -EINVAL;
 	}
-	if (verified_memcpy_tofs(grouplist, pg, ((int)pi) * sizeof(gid_t)) != 0)
+	if (verified_memcpy_tofs(grouplist, pg, i * sizeof(gid_t)) != 0)
 	    return -EFAULT;
 
     }
 
-    return (int)pi;
+    return i;
 }
 
 int sys_setgroups(int gidsetsize, gid_t * grouplist)

@@ -166,11 +166,11 @@ void sync_inodes(kdev_t dev)
 
 static void list_inode_status(void)
 {
-    register char *pi = 0;
+    int i = 0;
     register struct inode *inode = inode_llru;
 
     do {
-        printk("[#%u: c=%u d=%x nr=%lu]", ((int)(pi++)),
+        printk("[#%u: c=%u d=%x nr=%lu]", i++,
 			inode->i_count, inode->i_dev, (unsigned long)inode->i_ino);
     } while ((inode = inode->i_prev) != NULL);
 }

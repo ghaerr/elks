@@ -115,15 +115,15 @@ static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
 {
     fd_set set;
     int count = -1;
-    register char *pi;
-    register struct file **filp;
+    int i;
+    struct file **filp;
 
     set = *in | *out | *ex;
     filp = current->files.fd;
-    for (pi = 0; set && ((int)pi < n); pi++, set >>= 1) {
+    for (i = 0; set && (i < n); i++, set >>= 1) {
 	if ((int)set & 1) {
 	    if ((*filp == NULL) || ((*filp)->f_inode == NULL)) return -EBADF;
-	    count = (int)pi;
+	    count = i;
 	}
 	filp++;
     }
@@ -138,18 +138,18 @@ static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
     current->state = TASK_INTERRUPTIBLE;
     memset (current->poll, 0, sizeof (struct wait_queue *) * POLL_MAX);
     filp = current->files.fd;
-    for (pi = 0; ((int)pi) < n; pi++, filp++) {
+    for (i = 0; i < n; i++, filp++) {
 	if (*filp) {
-	    if (FD_ISSET(((int)pi), in) && check(SEL_IN, *filp)) {
-		FD_SET(((int)pi), res_in);
+	    if (FD_ISSET(i, in) && check(SEL_IN, *filp)) {
+		FD_SET(i, res_in);
 		count++;
 	    }
-	    if (FD_ISSET(((int)pi), out) && check(SEL_OUT, *filp)) {
-		FD_SET(((int)pi), res_out);
+	    if (FD_ISSET(i, out) && check(SEL_OUT, *filp)) {
+		FD_SET(i, res_out);
 		count++;
 	    }
-	    if (FD_ISSET(((int)pi), ex) && check(SEL_EX, *filp)) {
-		FD_SET(((int)pi), res_ex);
+	    if (FD_ISSET(i, ex) && check(SEL_EX, *filp)) {
+		FD_SET(i, res_ex);
 		count++;
 	    }
 	}
