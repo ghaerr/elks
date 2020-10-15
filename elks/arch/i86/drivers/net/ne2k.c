@@ -24,7 +24,7 @@
 struct wait_queue rxwait;
 struct wait_queue txwait;
 
-static byte_t eth_inuse = 0;
+static byte_t ne2k_inuse = 0;
 
 //static byte_t def_mac_addr [6] = {0x52, 0x54, 0x00, 0x12, 0x34, 0x56};  /* QEMU default */
 static byte_t mac_addr [6]; /* Current MAC address, from HW or default */
@@ -37,7 +37,7 @@ extern word_t _ne2k_skip_cnt;	/* In case the NIC ring buffer overflows, skip thi
  * Get packet
  */
 
-static size_t eth_read(struct inode * inode, struct file * filp, char * data, size_t len)
+static size_t ne2k_read(struct inode * inode, struct file * filp, char * data, size_t len)
 {
 	size_t res;
 	word_t nhdr[2];	/* packet header from the NIC, for debugging */
@@ -79,7 +79,7 @@ static size_t eth_read(struct inode * inode, struct file * filp, char * data, si
  * Pass packet to driver for send
  */
 
-static size_t eth_write (struct inode * inode, struct file * file, char * data, size_t len)
+static size_t ne2k_write (struct inode * inode, struct file * file, char * data, size_t len)
 {
 	size_t res;
 
@@ -118,7 +118,7 @@ static size_t eth_write (struct inode * inode, struct file * file, char * data, 
  * Test for readiness
  */
 
-int eth_select(struct inode * inode, struct file * filp, int sel_type)
+int ne2k_select(struct inode * inode, struct file * filp, int sel_type)
 {
 	int res = 0;
 
@@ -206,7 +206,7 @@ static void ne2k_int(int irq, struct pt_regs * regs, void * dev_id)
  * I/O control
  */
 
-static int eth_ioctl(struct inode * inode, struct file * file, unsigned int cmd, unsigned int arg)
+static int ne2k_ioctl(struct inode * inode, struct file * file, unsigned int cmd, unsigned int arg)
 {
 	int err = 0;
 
@@ -260,12 +260,12 @@ static int eth_ioctl(struct inode * inode, struct file * file, unsigned int cmd,
  * Device open
  */
 
-static int eth_open(struct inode * inode, struct file * file)
+static int ne2k_open(struct inode * inode, struct file * file)
 {
 	int err;
 
 	while (1) {
-		if (eth_inuse) {
+		if (ne2k_inuse) {
 			err = -EBUSY;
 			break;
 		}
@@ -275,7 +275,7 @@ static int eth_open(struct inode * inode, struct file * file)
 		ne2k_addr_set(mac_addr);
 		ne2k_start();
 
-		eth_inuse = 1;
+		ne2k_inuse = 1;
 		err = 0;
 		break;
 	}
@@ -286,28 +286,28 @@ static int eth_open(struct inode * inode, struct file * file)
  * Release (close) device
  */
 
-static void eth_release(struct inode * inode, struct file * file)
+static void ne2k_release(struct inode * inode, struct file * file)
 {
 	ne2k_stop();
 	ne2k_term();
 
-	eth_inuse = 0;
+	ne2k_inuse = 0;
 }
 
 /*
  * Ethernet operations
  */
 
-static struct file_operations eth_fops =
+static struct file_operations ne2k_fops =
 {
     NULL,         /* lseek */
-    eth_read,
-    eth_write,
+    ne2k_read,
+    ne2k_write,
     NULL,         /* readdir */
-    eth_select,
-    eth_ioctl,
-    eth_open,
-    eth_release
+    ne2k_select,
+    ne2k_ioctl,
+    ne2k_open,
+    ne2k_release
 
 #ifdef BLOAT_FS
     NULL,         /* fsync */
@@ -317,7 +317,7 @@ static struct file_operations eth_fops =
 };
 
 #if DEBUG_ETH
-void eth_display_status(void)
+void ne2k_display_status(void)
 {
 	printk("\n---- Ethernet Stats ----\n");
 	printk("Skip Count %d\n", _ne2k_skip_cnt);
@@ -329,7 +329,7 @@ void eth_display_status(void)
  * FIXME: Needs return value to signal that initalization failed.
  */
 
-void eth_drv_init(void)
+void ne2k_drv_init(void)
 {
 	int err;
 	word_t prom[16];	/* PROM containing HW MAC address and more 
@@ -353,7 +353,7 @@ void eth_drv_init(void)
 			break;
 		}
 
-		err = register_chrdev (ETH_MAJOR, "eth", &eth_fops);
+		err = register_chrdev (ETH_MAJOR, "eth", &ne2k_fops);
 		if (err) {
 			printk ("eth: register error: %i\n", err);
 			break;
@@ -384,7 +384,7 @@ void eth_drv_init(void)
            memcpy(mac_addr, addr, 6);
            ne2k_addr_set(addr);   /* Set NIC mac addr now so IOCTL works */
 #if DEBUG_ETH
-		debug_setcallback(eth_display_status);
+		debug_setcallback(ne2k_display_status);
 #endif
        } else
            printk("eth: Cannot access NE2K interface.\n");
