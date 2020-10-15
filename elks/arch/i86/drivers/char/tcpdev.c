@@ -65,7 +65,7 @@ static size_t tcpdev_read(struct inode *inode, struct file *filp, char *data,
     debug("TCPDEV: read() returning with bufout_sem = %d\n",bufout_sem);
     if (bufout_sem > 0)
 	panic("bufout_sem tragedy");
-    return (int) len;
+    return len;
 }
 
 int tcpdev_inetwrite(char *data, unsigned int len)

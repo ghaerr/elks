@@ -24,7 +24,7 @@ int do_signal(void)
     register __ptask currentp = current;
     register __sigdisposition_t *sd;
     register __kern_sighandler_t sah;
-    unsigned signr;
+    unsigned int signr;
     sigset_t mask;
 
     signr = 1;
@@ -59,7 +59,7 @@ int do_signal(void)
 		    dump_core();
 #endif
 		debug_sig("SIGNAL terminating pid %d\n", currentp->pid);
-		do_exit((int) signr);			/* Default Terminate */
+		do_exit(signr);				/* Default Terminate */
 	    }
 	}
 	else if (*sd != SIGDISP_IGN) {			/* Set handler */

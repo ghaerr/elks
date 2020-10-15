@@ -31,17 +31,17 @@
 
 static int get_unused_fd(struct file *f)
 {
-    register char *pfd = 0;
+    int fd = 0;
     register struct file **cfs = current->files.fd;
 
     do {
 	if (!*cfs) {
 	    *cfs = f;
-	    clear_bit((unsigned int)pfd, &(current->files.close_on_exec));
-	    return (int)pfd;
+	    clear_bit(fd, &(current->files.close_on_exec));
+	    return fd;
 	}
 	cfs++;
-    } while (((int)(++pfd)) < NR_OPEN);
+    } while (++fd < NR_OPEN);
     return -EMFILE;
 }
 

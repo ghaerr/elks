@@ -399,7 +399,7 @@ static void close_fp(register struct file *filp)
 void _close_allfiles(void)
 {
     register struct file **filp;
-    register char *pi = 0;
+    int i = 0;
 
     filp = current->files.fd;
     do {
@@ -408,7 +408,7 @@ void _close_allfiles(void)
 	    *filp = NULL;
 	}
 	filp++;
-    } while (((int)(++pi)) < NR_OPEN);
+    } while (++i < NR_OPEN);
 }
 
 int sys_close(unsigned int fd)

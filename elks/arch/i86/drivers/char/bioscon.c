@@ -256,7 +256,7 @@ static void Console_set_vc(unsigned int N)
 
     SetDisplayPage(N);
     PositionCursor(Visible);
-    Current_VCminor = (int) N;
+    Current_VCminor = N;
 }
 
 struct tty_ops bioscon_ops = {
