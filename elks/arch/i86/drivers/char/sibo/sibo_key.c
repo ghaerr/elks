@@ -8,7 +8,6 @@
 #include <linuxmt/ntty.h>
 
 #include <arch/io.h>
-#include <arch/keyboard.h>
 
 #ifdef CONFIG_SIBO_CONSOLE_DIRECT
 

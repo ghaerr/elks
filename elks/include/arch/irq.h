@@ -3,8 +3,6 @@
 
 #include <linuxmt/types.h>
 
-#include <arch/asm.h>
-
 extern void disable_irq(unsigned int);
 extern void enable_irq(unsigned int);
 extern void do_IRQ(int,void *);

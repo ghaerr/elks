@@ -1,8 +1,8 @@
+// Experimental wait functions - unused
 
 #include <linuxmt/kernel.h>
 #include <linuxmt/sched.h>
-#include <linuxmt/wait.h>
-
+#include <linuxmt/cond.h>
 
 // Wait for event (actually a condition change)
 // Returns 0 if true condition or 1 if interrupted

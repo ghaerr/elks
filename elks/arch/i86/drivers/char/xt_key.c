@@ -34,13 +34,14 @@
 
 #include <arch/io.h>
 #include <arch/ports.h>
-#include <arch/keyboard.h>
 #include <arch/system.h>
 
 #ifdef CONFIG_CONSOLE_DIRECT
 
 extern struct tty ttys[];
+void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id);
 extern void AddQueue(unsigned char Key);
+extern void Console_set_vc(unsigned int N);
 static void set_leds(void);
 static int kb_read(void);
 

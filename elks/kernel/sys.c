@@ -8,14 +8,6 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/utsname.h>
-
-#ifdef NOT_YET
-
-#include <linuxmt/times.h>
-#include <linuxmt/param.h>
-
-#endif
-
 #include <linuxmt/signal.h>
 #include <linuxmt/string.h>
 #include <linuxmt/stat.h>
@@ -112,7 +104,6 @@ int sys_knlvsn(char *vsn)
 int sys_setgid(gid_t gid)
 {
     register __ptask currentp = current;
-    //gid_t old_egid = currentp->egid;
 
     if (suser())
 	currentp->gid = currentp->egid = currentp->sgid = gid;
@@ -120,8 +111,6 @@ int sys_setgid(gid_t gid)
 	currentp->egid = gid;
     else
 	return -EPERM;
-    //if (currentp->egid != old_egid)
-	//currentp->dumpable = 0;
     return 0;
 }
 
@@ -172,7 +161,6 @@ unsigned short int sys_umask(unsigned short int mask)
 int sys_setuid(uid_t uid)
 {
     register __ptask currentp = current;
-    //uid_t old_euid = currentp->euid;
 
     if (suser())
 	currentp->uid = currentp->euid = currentp->suid = uid;
@@ -180,8 +168,6 @@ int sys_setuid(uid_t uid)
 	currentp->euid = uid;
     else
 	return -EPERM;
-    //if (currentp->euid != old_euid)
-	//currentp->dumpable = 0;
     return 0;
 }
 
@@ -202,8 +188,6 @@ int sys_times(struct tms *tbuf)
     return jiffies;
 }
 
-#endif
-
 /*
  * This needs some heavy checking ...
  * I just haven't the stomach for it. I also don't fully
@@ -216,8 +200,6 @@ int sys_times(struct tms *tbuf)
  * Auch. Had to add the 'did_exec' flag to conform completely to POSIX.
  * LBT 04.03.94
  */
-
-#ifdef NOT_YET
 
 int sys_setpgid(pid_t pid, pid_t pgid)
 {
@@ -270,10 +252,6 @@ int sys_setpgid(pid_t pid, pid_t pgid)
     return -ESRCH;
 }
 
-#endif
-
-#if 0
-
 int sys_getpgid(pid_t pid)
 {
     register struct task_struct *p;
@@ -304,7 +282,7 @@ int sys_getsid(pid_t pid)
 
 }
 
-#endif
+#endif /* NOT_YET */
 
 int sys_setsid(void)
 {
@@ -319,11 +297,12 @@ int sys_setsid(void)
     return currentp->pgrp;
 }
 
+#ifdef CONFIG_SUPPLEMENTARY_GROUPS
 /*
  * Supplementary group ID's
  */
 
-#ifdef CONFIG_SUPPLEMENTARY_GROUPS
+#define NGROUP	0xFFFF
 
 int sys_getgroups(int gidsetsize, gid_t * grouplist)
 {

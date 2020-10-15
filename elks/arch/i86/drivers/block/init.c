@@ -24,6 +24,7 @@
 #include <linuxmt/major.h>
 #include <linuxmt/init.h>
 #include <linuxmt/string.h>
+#include <linuxmt/memory.h>
 
 #include <arch/system.h>
 #include <arch/segment.h>

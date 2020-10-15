@@ -6,7 +6,7 @@
 void eth_init(void)
 {
 #ifdef CONFIG_ETH_NE2K
-	eth_drv_init();
+	ne2k_drv_init();
 #endif
 #ifdef CONFIG_ETH_WD
 	wd_drv_init();

@@ -3,10 +3,11 @@
  *	memory!
  */
 
+#include <linuxmt/config.h>
 #include <linuxmt/types.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/utsname.h>
-#include <linuxmt/config.h>
+#include <linuxmt/memory.h>
 
 #include <arch/system.h>
 #include <arch/segment.h>
@@ -35,35 +36,28 @@ void INITPROC mm_stat(seg_t start, seg_t end)
     register int i;
     register char *cp;
 
+#ifdef CONFIG_ARCH_SIBO
     i = 0x30;
     cp = proc_name;
     do {
 	*cp++ = setupb(i++);
 
-#ifndef CONFIG_ARCH_SIBO
+    } while (i < 0x40);
+    printk("Psion Series 3a machine, %s CPU\n%uK base"
+	    ", CPUID `NEC V30'", proc_name, basemem);
+
+#else
+    i = 0x30;
+    cp = proc_name;
+    do {
+	*cp++ = setupb(i++);
 	if (i == 0x40) {
 	    printk("PC/%cT class machine, %s CPU, %uK base RAM",
 		    arch_cpu > 5 ? 'A' : 'X', proc_name, setupw(0x2a));
 	    cp = proc_name;
 	    i = 0x50;
 	}
-
-#endif
-
-    } while (i <
-#ifndef CONFIG_ARCH_SIBO
-			0x5D);
-#else
-			0x40);
-#endif
-
-#ifdef CONFIG_ARCH_SIBO
-
-    printk("Psion Series 3a machine, %s CPU\n%uK base"
-	    ", CPUID `NEC V30'", proc_name, basemem);
-
-#else
-
+    } while (i < 0x5D);
     if (*proc_name)
 	printk(", CPUID `%s'", proc_name);
 
@@ -74,11 +68,11 @@ void INITPROC mm_stat(seg_t start, seg_t end)
 	   (unsigned)_endtext, (unsigned)_endftext, (unsigned)_enddata,
 	   (unsigned)_endbss - (unsigned)_enddata,
 	   1 + ~ (unsigned) _endbss);
-	printk("Kernel text at %x:0000, ", kernel_cs);
+    printk("Kernel text at %x:0000, ", kernel_cs);
 #ifdef CONFIG_FARTEXT_KERNEL
-	printk("ftext %x:0000, ", (unsigned)((long)kernel_init >> 16));
+    printk("ftext %x:0000, ", (unsigned)((long)kernel_init >> 16));
 #endif
-	printk("data %x:0000, %uK for user processes\n",
+    printk("data %x:0000, %uK for user processes\n",
 	   kernel_ds, (int) ((end - start) >> 6));
 
     if (setupb(0x1ff) == 0xAA && arch_cpu > 5)

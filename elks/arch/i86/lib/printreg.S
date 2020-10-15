@@ -3,21 +3,18 @@
 /* This file contains print_regs, which will dump out all of the registers
  * and print them out.  This is probably one of the sickest routines ever
  * written :) - Chad
+ *
+ * void print_regs(void);
+ * void print_sp(void);
  */
+	.code16
+	.text
 
-/*void print_regs(void);*/
-/*void printsp(void);*/
+	.global print_regs
+	.global print_sp
+	.extern	printk
 
-#ifndef S_SPLINT_S
-
-.code16
-
-.text
-
-	.extern	_printk
-	.global _print_regs
-
-_print_regs:
+print_regs:
 	push %bp
 	push %ss
 	push %es
@@ -31,7 +28,7 @@ _print_regs:
 	push %ax
 	mov  $fmtprg,%ax
 	push %ax
-	call _printk
+	call printk
 	pop %ax
 	pop %ax
 	pop %bx
@@ -46,16 +43,14 @@ _print_regs:
 	pop %bp
 	ret
 
-	.global _printsp
-
-_printsp:
+print_sp:
 	mov %sp,%ax
 	add $2,%ax
 	push %ax
 	push %ss
 	mov $msg,%ax
 	push %ax
-	call _printk
+	call printk
 	pop %ax
 	pop %ax
 	pop %ax
@@ -66,5 +61,3 @@ msg:	.ascii	"SP=%x:%x\n"
 	.byte	0
 fmtprg:	.ascii	"AX=%x BX=%x CX=%x DX=%x DI=%x SI=%x\nCS=%x DS=%x ES=%x SS=%x BP=%x\n"
 	.byte	0
-
-#endif

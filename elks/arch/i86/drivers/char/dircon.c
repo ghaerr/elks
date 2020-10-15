@@ -23,7 +23,6 @@
 #include <linuxmt/kdev_t.h>
 
 #include <arch/io.h>
-#include <arch/keyboard.h>
 
 #ifdef CONFIG_CONSOLE_DIRECT
 
