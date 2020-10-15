@@ -3,19 +3,18 @@
 /* This file contains print_regs, which will dump out all of the registers
  * and print them out.  This is probably one of the sickest routines ever
  * written :) - Chad
+ *
+ * void print_regs(void);
+ * void print_sp(void);
  */
-
-/*void print_regs(void);*/
-/*void printsp(void);*/
-
 	.code16
 	.text
 
-	.global _print_regs
-	.global _printsp
-	.extern	_printk
+	.global print_regs
+	.global print_sp
+	.extern	printk
 
-_print_regs:
+print_regs:
 	push %bp
 	push %ss
 	push %es
@@ -29,7 +28,7 @@ _print_regs:
 	push %ax
 	mov  $fmtprg,%ax
 	push %ax
-	call _printk
+	call printk
 	pop %ax
 	pop %ax
 	pop %bx
@@ -44,14 +43,14 @@ _print_regs:
 	pop %bp
 	ret
 
-_printsp:
+print_sp:
 	mov %sp,%ax
 	add $2,%ax
 	push %ax
 	push %ss
 	mov $msg,%ax
 	push %ax
-	call _printk
+	call printk
 	pop %ax
 	pop %ax
 	pop %ax
