@@ -15,11 +15,10 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <string.h>
 /*#include <minix/minlib.h>*/
 #include <stdio.h>
 
-#define BUFFER_SIZE 512
+#define BUFFER_SIZE (512)
 
 int rc = 0;
 
@@ -28,7 +27,7 @@ char *defargv[] = {"-", 0};
 int main();
 void error();
 void sum();
-//void putd();
+void putd();
 
 void error(char *s, char *f)
 {
@@ -54,8 +53,8 @@ void sum(int fd, char *fname)
 		tmp = buf[i] & 0377;
 		crc += tmp;
 		crc &= 0xffff;
+		size++;
 	}
-	size++;
   }
 
   if (n < 0) {
@@ -66,14 +65,13 @@ void sum(int fd, char *fname)
 	rc = 1;
 	return;
   }
-  printf("%05u %6ld", crc, size);
-  //putd(crc, 5, 1);
-  //blks = (size + (long) BUFFER_SIZE - 1L) / (long) BUFFER_SIZE;
-  //putd(blks, 6, 0);
+  putd(crc, 5, 1);
+  blks = (size + (long) BUFFER_SIZE - 1L) / (long) BUFFER_SIZE;
+  putd(blks, 6, 0);
   if (fname) printf(" %s", fname);
   printf("\n");
 }
-#if 0
+
 void putd(int number, int fw, int zeros)
 {
 /* Put a decimal number, in a field width, to stdout. */
@@ -93,7 +91,6 @@ void putd(int number, int fw, int zeros)
   buf[fw] = 0;
   printf("%s", buf);
 }
-#endif
 
 
 int main(int argc, char **argv)
