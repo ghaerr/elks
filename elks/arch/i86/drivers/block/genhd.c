@@ -23,9 +23,9 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/major.h>
 #include <linuxmt/string.h>
+#include <linuxmt/memory.h>
 
 #include <arch/system.h>
-#include <arch/segment.h>
 
 #define NR_SECTS(p)	p->nr_sects
 #define START_SECT(p)	p->start_sect

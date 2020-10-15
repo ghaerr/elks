@@ -3,10 +3,11 @@
  *	memory!
  */
 
+#include <linuxmt/config.h>
 #include <linuxmt/types.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/utsname.h>
-#include <linuxmt/config.h>
+#include <linuxmt/memory.h>
 
 #include <arch/system.h>
 #include <arch/segment.h>

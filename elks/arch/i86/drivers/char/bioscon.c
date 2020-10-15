@@ -10,9 +10,6 @@
  * added enough ansi escape sequences for visual editing
  */
 /*
- * FIXME: Don't use inline assembly to permit the use of ia16-GCC
- */
-/*
  * FIXME: Keyboard driver extremely barebones. Only recognizes ASCII codes.
  */
 #include <linuxmt/types.h>

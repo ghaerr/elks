@@ -9,6 +9,4 @@ extern byte_t arch_cpu;  // processor number (from setup data)
 extern void arch_setuptasks(void);
 extern void INITPROC setup_arch(seg_t *,seg_t *);
 
-extern int in_group_p(gid_t);
-
 #endif

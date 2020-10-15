@@ -29,6 +29,7 @@ extern void printk(char *, ...);
 extern void early_printk (char *);
 
 extern int wait_for_keypress(void);
+extern int in_group_p(gid_t);
 
 /*
  * This is defined as a macro, but at some point this might become a

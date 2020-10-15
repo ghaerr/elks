@@ -19,7 +19,7 @@
 #include <string.h>
 #include <limits.h>
 #include <errno.h>
-#include <arch/limits.h>
+#include <linuxmt/limits.h>
 #include "config.h"
 #include "tcp.h"
 #include "ip.h"

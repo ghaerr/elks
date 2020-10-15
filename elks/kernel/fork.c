@@ -9,7 +9,7 @@
 int task_slots_unused = MAX_TASKS;
 struct task_struct *next_task_slot = task;
 
-pid_t get_pid(void)
+static pid_t get_pid(void)
 {
     register struct task_struct *p;
     static pid_t last_pid = -1;

@@ -9,6 +9,9 @@ byte_t peekb (word_t off, seg_t seg);
 word_t peekw (word_t off, seg_t seg);
 long_t peekl (word_t off, seg_t seg);
 
+byte_t setupb (word_t);		/* Get data from setup segment */
+word_t setupw (word_t);
+
 void pokeb (word_t off, seg_t seg, byte_t val);
 void pokew (word_t off, seg_t seg, word_t val);
 void pokel (word_t off, seg_t seg, long_t val);

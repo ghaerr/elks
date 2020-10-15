@@ -7,7 +7,6 @@
 
 #include <arch/io.h>
 #include <arch/ports.h>
-#include <arch/limits.h>
 #include <arch/segment.h>
 #include <linuxmt/memory.h>
 #include <linuxmt/errno.h>

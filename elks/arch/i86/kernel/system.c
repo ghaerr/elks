@@ -5,6 +5,7 @@
 #include <linuxmt/config.h>
 #include <linuxmt/fs.h> /* for ROOT_DEV */
 #include <linuxmt/heap.h>
+#include <linuxmt/memory.h>
 
 #include <arch/segment.h>
 

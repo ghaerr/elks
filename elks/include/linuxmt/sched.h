@@ -1,11 +1,6 @@
 #ifndef __LINUXMT_SCHED_H
 #define __LINUXMT_SCHED_H
 
-#define MAX_TASKS 16
-#define NGROUPS	13		/* Supplementary groups */
-#define NOGROUP 0xFFFF
-#define KSTACK_BYTES 512	/* Size of kernel stacks */
-
 #include <linuxmt/config.h>
 #include <linuxmt/types.h>
 #include <linuxmt/limits.h>
@@ -14,12 +9,11 @@
 #include <linuxmt/signal.h>
 #include <linuxmt/wait.h>
 #include <linuxmt/ntty.h>
+#include <arch/param.h>
 
 #ifdef CONFIG_STRACE
 #include <linuxmt/strace.h>
 #endif
-
-#include <arch/param.h>
 
 struct file_struct {
     fd_mask_t			close_on_exec;
@@ -33,8 +27,8 @@ struct fs_struct {
 };
 
 struct mm_struct {
-	struct segment * seg_code;
-	struct segment * seg_data;
+    struct segment		*seg_code;
+    struct segment		*seg_data;
     char			flags;
 };
 
