@@ -156,10 +156,9 @@ static void numout(__u32 v, int width, int base, int useSign,
 
 static void vprintk(register char *fmt, va_list p)
 {
+    int c, n, width, zero;
     unsigned long v;
-    int width, zero;
-    int c;
-    register char *tmp;
+    char *str;
 
     while ((c = *fmt++)) {
 	if (c != '%')
@@ -174,23 +173,23 @@ static void vprintk(register char *fmt, va_list p)
 
 	    width = 0;
 	    zero = (c == '0');
-	    while ((int)(tmp = (char *)(c - '0')) <= 9) {
-		width = width*10 + (int)tmp;
+	    while ((n = (c - '0')) <= 9) {
+		width = width*10 + n;
 		c = *fmt++;
 	    }
 
 	    if ((c == 'h') || (c == 'l'))
 		c = *fmt++;
-	    tmp = (char *)16;
+	    n = 16;
 	    switch (c) {
 	    case 'i':
 	    case 'd':
 		c = 'd'-('X' - 'P');
-		tmp = (char *)18;
+		n = 18;
 	    case 'o':
-		tmp -= 2;
+		n -= 2;
 	    case 'u':
-		tmp -= 6;
+		n -= 6;
 	    case 'P':
 	    case 'p':
 		c += 'X' - 'P';
@@ -204,14 +203,20 @@ static void vprintk(register char *fmt, va_list p)
 		    else
 			v = (unsigned long)(va_arg(p, unsigned int));
 		}
-		numout(v, width, (int)tmp, (c == 'd'), (c != 'X'), zero);
+		numout(v, width, n, (c == 'd'), (c != 'X'), zero);
 		break;
-	    case 's':
+	    case 'T':
+		n = va_arg(p, unsigned int);
+		goto str;
 	    case 't':
-		tmp = va_arg(p, char*);
-		while ((zero = (c == 's' ? *tmp : get_user_char(tmp)))) {
+		n = current->t_regs.ds;
+		goto str;
+	    case 's':
+		n = kernel_ds;
+	    str:
+		str = va_arg(p, char *);
+		while ((zero = peekb((word_t)str++, n))) {
 		    kputchar(zero);
-		    tmp++;
 		    width--;
 		}
 	    case 'c':

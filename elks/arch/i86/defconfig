@@ -101,7 +101,6 @@ CONFIG_PIPE=y
 #
 # Executable file formats
 #
-CONFIG_EXEC_ELKS=y
 
 #
 # Drivers

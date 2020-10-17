@@ -4,6 +4,7 @@
 
 .project
 *~
+.DS_Store
 
 #
 # Build ignores

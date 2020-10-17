@@ -34,7 +34,7 @@ _start:
 // Start cleaning BSS. Still using setup.S stack
 
 	mov	_enddata,%di	// start of BSS
-	mov	%dx,%cx       // CX = BSS size
+	mov	%dx,%cx		// CX = BSS size
 	xor	%ax,%ax
 	shr	$1,%cx
 	cld
@@ -48,12 +48,15 @@ _start:
 
 // Set SS:SP to task[0] kernel stack area
 
-	mov	%ds,%ax       // in ROMCODE stack is ready placed
-	mov	%ax,%ss       // SS=ES=DS
+	mov	%ds,%ax
+	mov	%ax,%ss		// SS=ES=DS
 	mov	$task + TASK_USER_AX,%sp
 
-	call	start_kernel	// Break point if it returns
-	int	$3
+	call	start_kernel	// fall through into breakpoint if returns
+
+	.global int3
+int3:	int	$3		// C breakpoint for emu86
+	ret
 
 early_printk:
 	push  %bp

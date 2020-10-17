@@ -56,22 +56,25 @@ CONFIG_CPU_8086=y
 CONFIG_HW_VIDEO_LINES_PER_CHARACTER=8
 CONFIG_HW_VIDEO_LINES_PER_SCREEN=25
 # CONFIG_HW_259_USE_ORIGINAL_MASK is not set
-CONFIG_APM=y
+# CONFIG_HW_SERIAL_FIFO is not set
+CONFIG_APM=Y
 
 #
 # Kernel settings
 #
-
-#
-# Memory manager
-#
 CONFIG_SMALL_KERNEL=y
+# CONFIG_BOOTOPTS is not set
 CONFIG_SYS_VERSION=y
 # CONFIG_STRACE is not set
 CONFIG_IDLE_HALT=y
 CONFIG_ROMCODE=y
 CONFIG_EXPERIMENTAL=y
 # CONFIG_MODULES is not set
+# CONFIG_FARTEXT_KERNEL is not set
+
+#
+# Memory manager
+#
 
 #
 # ROM-CODE kernel-loader
@@ -118,7 +121,6 @@ CONFIG_ROM_CHECKSUM_SIZE=64
 CONFIG_SOCKET=y
 # CONFIG_NANO is not set
 CONFIG_INET=y
-CONFIG_CSLIP=y
 # CONFIG_UNIX is not set
 
 #
@@ -144,13 +146,14 @@ CONFIG_ROMFS_BASE=8000
 # CONFIG_ROOT_READONLY is not set
 # CONFIG_FS_RO is not set
 # CONFIG_FULL_VFS is not set
+CONFIG_32BIT_INODES=y
 CONFIG_FS_EXTERNAL_BUFFER=y
 CONFIG_PIPE=y
 
 #
 # Executable file formats
 #
-CONFIG_EXEC_ELKS=y
+# CONFIG_EXEC_MMODEL is not set
 
 #
 # Drivers
@@ -212,7 +215,7 @@ CONFIG_PSEUDO_TTY=y
 # Shell
 #
 # CONFIG_APP_ASH is not set
-# CONFIG_APP_SH_UTILS is not set
+CONFIG_APP_SH_UTILS=y
 
 #
 # sash as default shell
@@ -226,7 +229,7 @@ CONFIG_APP_SASH=y
 # CONFIG_APP_DBG_UTILS is not set
 # CONFIG_APP_DISK_UTILS is not set
 # CONFIG_APP_ELVIS is not set
-# CONFIG_APP_FILE_UTILS is not set
+CONFIG_APP_FILE_UTILS=y
 # CONFIG_APP_LEVEE is not set
 # CONFIG_APP_M4 is not set
 # CONFIG_APP_MINIX1 is not set
@@ -239,6 +242,7 @@ CONFIG_APP_SASH=y
 # CONFIG_APP_PRN_UTILS is not set
 # CONFIG_APP_SYS_UTILS is not set
 # CONFIG_APP_SCREEN is not set
+# CONFIG_APP_CRON is not set
 # CONFIG_APP_TEST is not set
 # CONFIG_APP_XVI is not set
 
@@ -258,4 +262,3 @@ CONFIG_APP_SASH=y
 # CONFIG_IMG_FAT is not set
 # CONFIG_IMG_RAW is not set
 CONFIG_IMG_ROM=y
-CONFIG_IMG_LINK=y
