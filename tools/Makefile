@@ -60,6 +60,42 @@ $(CROSSDIR)/.binutils.install: $(BUILDDIR)/.binutils.build
 
 all:: $(CROSSDIR)/.binutils.install
 
+# GCC prerequisites: GNU MP, MPFR, and MPC libraries
+
+GMP_VER=6.1.2
+GMP_DIST=gmp-$(GMP_VER)
+MPFR_VER=3.1.5
+MPFR_DIST=mpfr-$(MPFR_VER)
+MPC_VER=1.0.3
+MPC_DIST=mpc-$(MPC_VER)
+
+$(DISTDIR)/$(GMP_DIST).tar.bz2:
+	mkdir -p $(DISTDIR)
+	rm -rf $@ $@.tmp
+	# This hack forces GCC to be rebuilt whenever gmp needs to be
+	# re-downloaded.  (I also use the same hack for mpfr and mpc,
+	# below.)  TODO: maybe find a neater way to do this.
+	#	-- tkchia 20201017
+	rm -rf $(BUILDDIR)/.gcc.src
+	wget -c https://gmplib.org/download/gmp/$(GMP_DIST).tar.bz2 \
+		-O $@.tmp
+	mv $@.tmp $@
+
+$(DISTDIR)/$(MPFR_DIST).tar.bz2:
+	mkdir -p $(DISTDIR)
+	rm -rf $@ $@.tmp
+	rm -rf $(BUILDDIR)/.gcc.src
+	wget -c https://www.mpfr.org/$(MPFR_DIST)/$(MPFR_DIST).tar.bz2 \
+		-O $@.tmp
+	mv $@.tmp $@
+
+$(DISTDIR)/$(MPC_DIST).tar.gz:
+	mkdir -p $(DISTDIR)
+	rm -rf $@ $@.tmp
+	rm -rf $(BUILDDIR)/.gcc.src
+	wget -c https://ftp.gnu.org/gnu/mpc/$(MPC_DIST).tar.gz -O $@.tmp
+	mv $@.tmp $@
+
 # GCC for IA16
 
 GCC_VER=45605f97ac4d313f8783e1ba9924d0aec0b1d6e8
@@ -78,13 +114,21 @@ $(DISTDIR)/$(GCC_DIST).tar.gz:
 	done
 	cd $(DISTDIR) && mv $(GCC_DIST).tar.gz.tmp $(GCC_DIST).tar.gz
 
-$(BUILDDIR)/.gcc.src: $(DISTDIR)/$(GCC_DIST).tar.gz
+$(BUILDDIR)/.gcc.src: $(DISTDIR)/$(GCC_DIST).tar.gz \
+		      $(DISTDIR)/$(GMP_DIST).tar.bz2 \
+		      $(DISTDIR)/$(MPFR_DIST).tar.bz2 \
+		      $(DISTDIR)/$(MPC_DIST).tar.gz
 	mkdir -p $(BUILDDIR)
 	rm -rf $(BUILDDIR)/$(GCC_DIST)
 	cd $(BUILDDIR) && tar -xzf $(DISTDIR)/$(GCC_DIST).tar.gz
 	rm -rf $(BUILDDIR)/gcc-src
 	cd $(BUILDDIR) && mv $(GCC_DIST) gcc-src
-	cd $(BUILDDIR)/gcc-src && contrib/download_prerequisites
+	cd $(BUILDDIR)/gcc-src && tar -xjf $(DISTDIR)/$(GMP_DIST).tar.bz2
+	cd $(BUILDDIR)/gcc-src && ln -s $(GMP_DIST) gmp
+	cd $(BUILDDIR)/gcc-src && tar -xjf $(DISTDIR)/$(MPFR_DIST).tar.bz2
+	cd $(BUILDDIR)/gcc-src && ln -s $(MPFR_DIST) mpfr
+	cd $(BUILDDIR)/gcc-src && tar -xzf $(DISTDIR)/$(MPC_DIST).tar.gz
+	cd $(BUILDDIR)/gcc-src && ln -s $(MPC_DIST) mpc
 	touch $(BUILDDIR)/.gcc.src
 
 $(BUILDDIR)/.gcc.build: $(BUILDDIR)/.gcc.src $(BUILDDIR)/.binutils.build
