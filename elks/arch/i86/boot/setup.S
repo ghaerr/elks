@@ -414,6 +414,9 @@ size_ok:
         mov 14,%cx	   //; Check data section size
         or %cx,%cx
         jnz size_error     //; .data section too big
+	mov 4,%cx	// check for no fartext header
+	cmp $0x20,%cx
+	jnz size_error
 
 //;and now copy the kerneldata
 // WARNING: Next code fails if code_size+data_size+32 > 64K
@@ -431,8 +434,7 @@ size_ok:
 	mov 0x10,%dx  // bss size
 	mov 0x0c,%si  // data size
 	mov 0x08,%bx  // text size
-	xor %di,%di   // far text size
-	mov 0x18,%ax  // entry point
+	mov 0x14,%ax  // entry point
 	mov %es,%cx   // data segment
 	mov %cx,%ds
 
@@ -443,6 +445,7 @@ size_ok:
 	mov $SYSSEG+2,%di
 	push %di
 	push %ax
+	xor %di,%di   // far text size
 	lret
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

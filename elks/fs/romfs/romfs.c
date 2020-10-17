@@ -4,33 +4,12 @@
 #include <linuxmt/types.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/fs.h>
-#include <linuxmt/locks.h>
 #include <linuxmt/stat.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/string.h>
+#include <linuxmt/debug.h>
 #include <arch/segment.h>
-
-
-#ifdef BLOAT_FS
-#ifndef CONFIG_FS_RO
-
-static void romfs_statfs(struct super_block *sb, struct statfs *buf,
-			 size_t bufsize)
-{
-    struct statfs tmp;
-
-    printk ("romfs_statfs\n");
-
-    memset(&tmp, 0, sizeof(tmp));
-    tmp.f_type = ROMFS_MAGIC;
-    tmp.f_bsize = ROMBSIZE;
-    tmp.f_blocks = (sb->u.romfs_sb.s_maxsize + ROMBSIZE - 1) >> ROMBSBITS;
-    memcpy(buf, &tmp, bufsize);
-}
-
-#endif
-#endif
 
 
 /* File operations */
@@ -54,7 +33,7 @@ static size_t romfs_read (struct inode * i, struct file * f,
 		}
 
 		/* ELKS trick: the destination buffer is in the current task data segment */
-		fmemcpyb ((word_t) buf, current->t_regs.ds, (word_t) f->f_pos, i->u.romfs.seg, (word_t) len);
+		fmemcpyb ((byte_t *)buf, current->t_regs.ds, (byte_t *)(int) f->f_pos, i->u.romfs.seg, (word_t) len);
 
 		f->f_pos += len;
 		count = len;
@@ -95,7 +74,7 @@ static int romfs_readdir (struct inode * i, struct file * f,
 			break;
 		}
 
-		fmemcpyb ((word_t) name, kernel_ds, pos + 3, iseg, len);
+		fmemcpyb ((byte_t *) name, kernel_ds, (byte_t *)pos + 3, iseg, len);
 		name [len] = 0;
 
 		res = filldir (dirent, name, len, pos, i->i_ino);
@@ -128,6 +107,7 @@ static int romfs_lookup (struct inode * dir, char * name, size_t len1,
 		offset = 0;
 
 		while (offset < dir->i_size) {
+			debug("romfs lookup %t, %T\n", name, seg_i, offset+3);
 			len2 = (word_t) peekb (offset + 2, seg_i);
 			/* ELKS trick: the name is in the current task data segment */
 			/* TODO: remove that trick with explicit segment in call */
@@ -170,7 +150,7 @@ static int romfs_readlink (struct inode * inode, char * buf, size_t len)
 	count = inode->i_size;
 	if (count > len) count = len;
 	/* ELKS trick: the destination buffer is in the current task data segment */
-	fmemcpyb ((word_t) buf, current->t_regs.ds, 0, inode->u.romfs.seg, (word_t) count);
+	fmemcpyb ((byte_t *)buf, current->t_regs.ds, 0, inode->u.romfs.seg, (word_t) count);
 	iput (inode);
 	return count;
 }
@@ -284,7 +264,7 @@ static void romfs_read_inode (struct inode * i)
 		if (ino >= isb->icount) break;
 
 		off_i = isb->ssize + ino * isb->isize;
-		fmemcpyw ((word_t) &rim, kernel_ds, off_i, CONFIG_ROMFS_BASE, (word_t) sizeof (struct romfs_inode_mem) >> 1);
+		fmemcpyw ((byte_t *)&rim, kernel_ds, (byte_t *)off_i, CONFIG_ROMFS_BASE, (word_t) sizeof (struct romfs_inode_mem) >> 1);
 
 		i->i_size = rim.size;
 
@@ -308,8 +288,8 @@ static void romfs_read_inode (struct inode * i)
 
 		i->i_mode = m;
 		break;
-		}
 	}
+}
 
 
 /* Nothing to do */
@@ -320,6 +300,20 @@ static void romfs_put_super (struct super_block * sb)
 	sb->s_dev = 0;
 	unlock_super (sb);
 	}
+
+
+#ifdef BLOAT_FS
+static void romfs_statfs(struct super_block *sb, struct statfs *buf, size_t bufsize)
+{
+    struct statfs tmp;
+
+    memset(&tmp, 0, sizeof(tmp));
+    tmp.f_type = ROMFS_MAGIC;
+    tmp.f_bsize = ROMBSIZE;
+    tmp.f_blocks = (sb->u.romfs_sb.s_maxsize + ROMBSIZE - 1) >> ROMBSBITS;
+    memcpy(buf, &tmp, bufsize);
+}
+#endif
 
 
 static struct super_operations romfs_super_ops =
@@ -356,7 +350,7 @@ static struct super_block * romfs_read_super (struct super_block * s, void * dat
 			break;
 		}
 
-		fmemcpyw ((word_t) &rsm, kernel_ds, 0, CONFIG_ROMFS_BASE, sizeof (struct romfs_super_mem) >> 1);
+		fmemcpyw ((byte_t *)&rsm, kernel_ds, 0, CONFIG_ROMFS_BASE, sizeof (struct romfs_super_mem) >> 1);
 		if (rsm.ssize != sizeof (struct romfs_super_mem)) {
 			printk ("romfs: superblock size mismatch\n");
 			res = NULL;

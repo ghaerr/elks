@@ -307,7 +307,6 @@ void console_init(void)
 
 	C++;
     }
-
     printk("BIOS console %ux%u"TERM_TYPE"(%u virtual consoles)\n",
 	   Width, Height, NumConsoles);
 }
