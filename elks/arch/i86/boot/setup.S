@@ -118,34 +118,46 @@
   SETUPSEG = CONFIG_ROM_SETUP_CODE
 #endif
 
-.arch i8086, nojumps
-.code16
+	.arch i8086, nojumps
+	.code16
+	.text
 
-.text
-
-.global _start
+	.global _start
 _start:
-#ifdef CONFIG_ROMCODE
-    .byte 0x55, 0xaa      //;sign for ROM-Extention
-    .byte 0x04            //;space for lengthcode (promsize/512)
 
-    push %ds
+#ifdef CONFIG_ROMCODE
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Entry point for non-EMU86 ROM systems
+
+	.byte 0x55,0xaa		// sign for ROM-Extension
+	.byte 0x04		// space for lengthcode (promsize/512)
+
+	push	%ds
+	xor	%ax,%ax		// DS = 0
+	mov	%ax,%ds
+	movw	$start_os,4*0x19 // set INT 19 os/loader vector
+	mov	%cs,4*0x19+2
+	pop	%ds 
+	lret			// back to BIOS
 
 #else
+
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Entry point for kernels loaded from DISK
+
 // Bootlin depends on this being done early
-	mov	$0x01500,%ax	//;Read disk type/DASD
+	mov	$0x01500,%ax	// Read disk type/DASD
 	mov	$0x81,%dl
 	int	$0x13
-#endif
-
 
 // Check signature at end of setup
-	mov	$SETUPSEG,%ax      //;setup codesegment
+	mov	$SETUPSEG,%ax	// DS = setup CS
 	mov	%ax,%ds
 	cmpw	$SIG1,setup_sig1
 	jne	no_sig
 	cmpw	$SIG2,setup_sig2
-	je	move_kernel
+	je	chk_blob
 
 no_sig:	lea	no_sig_mess,%si
 	call	puts
@@ -156,8 +168,7 @@ no_sig:	lea	no_sig_mess,%si
 // If setup and kernel were loaded as a blob, we need to separate them out,
 // then move to our own stack
 
-move_kernel:
-#ifndef CONFIG_ROMCODE
+chk_blob:
 	mov	$INITSEG,%ax
 	mov	%ax,%ds
 .if (EF_AS_BLOB & 0xff) == 0
@@ -165,7 +176,7 @@ move_kernel:
 .else
 	testw	$EF_AS_BLOB,elks_flags
 .endif
-	jz	good_sig
+	jz	no_blob
 	std			// move backwards --- we are moving from a
 				// lower address to a higher one
 	mov	setup_sects,%al	// find start of a.out kernel
@@ -213,57 +224,31 @@ done_move_kernel:
 	mov	$INITSEG,%ax
 	mov	%ax,%ss
 	mov	$0x4000-12,%sp
+
+no_blob:
 #endif
 
-good_sig:
-#ifdef CONFIG_ROMCODE
-	xor %ax,%ax
-	mov %ax,%ds                      //;Interrupttable
-
-	movw $start_os,4*0x19
-	mov %cs,4*0x19+2      //;set os/loader int
-
-	pop %ds 
-	lret                           //;back to BIOS
-#endif
-
-
-//;-------------------------------------------------------
-//;-- from here the real loader starts
-//;-------------------------------------------------------
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Shared setup starts here for DISK and ROM cases
+// Entry point for EMU86 ROM emulation
 
 start_os:
-
 	push	%cs
 	pop	%ds
-	mov $hello_mess,%si
-	call puts
+	mov	$hello_mess,%si
+	call	puts
 
-	mov $INITSEG,%ax
+	mov	$INITSEG,%ax	// DS = setup data segment
 	mov	%ax,%ds
 
-//; The root device is obviously /dev/rom0
-//; when setup starts in ROM / Flash memory
-
-#ifdef CONFIG_ROMCODE
-#ifdef CONFIG_ROMFS_FS
-	movw $0x0600,root_dev  /* rom-flash */
-#else
-	movw $0x0380,root_dev  /* bioshd */
-#endif
-#endif
-
-// set the keyboard repeat rate to the max
-
 #ifdef CONFIG_HW_KEYBOARD_BIOS
-	mov	$0x0305,%ax
-	xor	%bx,%bx		// clear bx
+	mov	$0x0305,%ax	// set the keyboard repeat rate to the max
+	xor	%bx,%bx
 	int	$0x16
 #endif
 
-// check for EGA/VGA and some config parameters
-
 #ifdef CONFIG_HW_VGA
+// check for EGA/VGA and some config parameters
  	mov	$0x12,%ah	// Get video data
 	mov	$0x10,%bl
 	int	$0x10
@@ -281,13 +266,12 @@ start_os:
 	cmp	$0x1a,%bl	// 1a means VGA, anything else EGA or lower
 	jne	novga
 	movb	$1,15		// we've detected a VGA
-//	call	chsvga
 #else
-        movb  $0,15           // no VGA in system
+        movb  $0,15		// no VGA in system
 #ifdef CONFIG_HW_VIDEO_LINES_PER_SCREEN
         mov   $CONFIG_HW_VIDEO_LINES_PER_SCREEN,%al
 #else
-        mov   $0x19,%al          // height of display (0x19 == 25 rows)
+        mov   $25,%al		// height of display in rows
 #endif
 #endif
 
@@ -297,7 +281,8 @@ novga:	mov	%al,14		// CGA 25 rows
 	int	$0x10		// save it in known place, con_init fetches
 	mov	%dx,0	        // it from INITSEG.
 
-// Get video-card data:
+// Get video-card data
+
 	mov	$0x0f,%ah
 	int	$0x10
 	mov	%bx,4		// bh = display page
@@ -314,10 +299,7 @@ novga:	mov	%al,14		// CGA 25 rows
 
 // check for PS/2 pointing device
 
-//	mov	ax,#INITSEG     //ds was not changed sinse good_gig
-//	mov	ds,ax
 	movb	$0,boot_flag+1	// default is no pointing device
-	nop
 #ifdef CONFIG_HW_PS2_MOUSE
 	int	$0x11		// int 0x11: equipment determination
 	test	$0x04,%al	// check if pointing device installed
@@ -346,110 +328,104 @@ no_psmouse:
 	int	$0x12		// determine the size of the basememory
 	mov	%ax,0x2a
 
+// End of shared setup code
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// Case for ROM code
-//
+
 
 #ifdef CONFIG_ROMCODE
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Case for kernel in ROM
-// We must now copy the kernel to RAM (SYSSEG)
+// Check for correct a.out header
 
-	mov %cs,%ax          //;string is in this codeseg
-	mov %ax,%ds
-	lea load_kernel,%si
-	call puts
-
-   	mov $CONFIG_ROM_KERNEL_CODE,%ax   //;the ROM image
+#ifdef CONFIG_ROMFS_FS
+	movw $0x0600,root_dev	// ROMFS is device 6,0
+#else
+	movw $0x0380,root_dev	// floppy is device 3,128
+#endif
+	mov $CONFIG_ROM_KERNEL_CODE,%ax	// DS = ROM a.out image
    	mov %ax,%ds
 
-// test, if correct a.out header
+	cmpw $KERNEL_MAGICNUMBER,0 // 0 = hdr.magic
+	jne aout_err
 
-   	cmpw $KERNEL_MAGICNUMBER,0
-   	jne aouterr
-
-	cmpb $0x04,3   // processor type = 8086
-	jne test1
+	cmpb $0x04,3		// 3 = hdr.a_cpu = 8086
+	jne 1f
 	jmp aout_ok
 
-test1:
-	cmpb $0x10,3   // processor type = 80386
-	jne aouterr
+1:	cmpb $0x10,3		// 3 = hdr.a_cpu = 80386
+	jne aout_err
 	jmp aout_ok
 
-aouterr:
-   	mov %cs,%ax
-   	mov %ax,%ds
-   	lea kernel_aouterr,%si
+aout_err:
+   	push %cs	
+   	pop %ds
+   	lea msg_aout_err,%si
 	call puts
 err_loop:
 	jmp err_loop
 
 
-load_kernel:    .ascii "Loading kernel image..."
-                .byte 13,10
-                .byte 0
-kernel_aouterr: .byte 13,10
-                .ascii "--> ERROR: wrong kernel a.out Format!"
-                .byte 0
-kernel_to_big:  .byte 13,10
-                .ascii "--> ERROR: kernel size > 64k"
-                .byte 0
-
+msg_aout_err:
+	.byte 13,10
+	.ascii "ERROR: Wrong kernel a.out format"
+	.byte 0
+msg_too_big:
+	.byte 13,10
+	.ascii "ERROR: kernel size > 64k"
+	.byte 0
 
 aout_ok:
-   	mov $CONFIG_ROM_KERNEL_DATA,%ax
-   	mov %ax,%es
-
-   	mov 10,%cx    //;hi of text size
-   	or %cx,%cx       //;max 64k
-   	jz size_ok
+	mov 10,%cx		// 10 = hiword hdr.a_text size
+	or %cx,%cx		// max 64k
+	jz 2f
 size_error:
    	mov %cs,%ax
    	mov %ax,%ds
-   	lea kernel_to_big,%si
+	lea msg_too_big,%si
 	call puts
-   	jmp err_loop  //;and halt
+	jmp err_loop		// and halt
 
-size_ok:
-        mov 14,%cx	   //; Check data section size
-        or %cx,%cx
-        jnz size_error     //; .data section too big
-	mov 4,%cx	// check for no fartext header
-	cmp $0x20,%cx
+2:	mov 14,%cx		// 14 = hiword of hdr.a_data size
+	or %cx,%cx		// max 64jk
 	jnz size_error
+	mov 4,%cx		// 4 = hdr.a_hdrlen
+	cmp $0x20,%cx		// check for small 32 byte hdr
+	jnz size_error		// error, fartext present
 
-//;and now copy the kerneldata
+// Now copy kernel data segment to RAM
 // WARNING: Next code fails if code_size+data_size+32 > 64K
-   	mov 0x08,%si  //;code size
-   	add 0x04,%si  //;+header size
+	mov 4,%si		// 4 = hdr.a_hdrlen
+	add 8,%si		// 8 = add hdr.a_text size
+	mov $CONFIG_ROM_KERNEL_DATA,%ax	// ES = RAM kernel data segment
+	mov %ax,%es
         xor %di,%di
-        mov 0x0c,%cx  //;data size
-        shr $1,%cx      //;copy words
+        mov 0x0c,%cx		// 12 = hdr.a_data size
+        shr $1,%cx		// copy words
         cld
         rep
         movsw
 
 // BX,CX,DX,SI,DI,DS,ES are expected in kernel crt0.S
 
-	mov 0x10,%dx  // bss size
-	mov 0x0c,%si  // data size
-	mov 0x08,%bx  // text size
-	mov 0x14,%ax  // entry point
-	mov %es,%cx   // data segment
+	mov 16,%dx		// 16 = hdr.a_bss size
+	mov 12,%si		// 12 = hdr.a_data size
+	mov 8,%bx		//  8 = hdr.a_text size
+	mov 20,%ax		// 20 = hdr.a_entry point
+	mov %es,%cx		// ES = DS = kernel data segment
 	mov %cx,%ds
 
 #ifdef CONFIG_ROM_DEBUG
 	int     $3               // break for debugger just before kernel
 #endif
 
-	mov $SYSSEG+2,%di
+	mov $CONFIG_ROM_KERNEL_CODE+2,%di // a.out + 32 = kernel CS
 	push %di
-	push %ax
-	xor %di,%di   // far text size
-	lret
+	push %ax		// IP
+	xor %di,%di		// far text size always 0
+	lret			// jump to _start in crt0.S
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// Case for kernel in disk to be relocated
+// Case for normal kernel loaded from DISK and relocated
 //
 #elif defined(REL_SYS)
 
@@ -786,27 +762,27 @@ add_ptr:
 	ret
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// Case for kernel in disk, no kernel relocation
+// Case for kernel on DISK, no relocation
 //
-#else
+#else /* !REL_SYS*/
 
-	mov $SYSSEG,%ax	// in ROM ds ist always set
-	mov %ax,%ds	// Get the header into DS
-	mov 8,%bx	// TSeg
+	mov $SYSSEG,%ax	// DS = segment of a.out header
+	mov %ax,%ds
+	mov 8,%bx	// text size
 	xor %di,%di     // .fartext size
-	mov 12,%si	// DSeg
-	mov 16,%dx	// BSeg
+	mov 12,%si	// data size
+	mov 16,%dx	// bss size
 	mov 20,%bp	// entry point
-	mov %bx,%ax	// Get Text size
+	mov %bx,%ax	// Calc text size in paragraphs
 	mov $4,%cl
-	shr %cl,%ax	// Data in paragraphs
+	shr %cl,%ax
 
-	mov $SYSSEG+2,%cx // Code starts here
-	push %cx		// Build far return address to SYSSEG+2:start
-	add %ax,%cx	// Segment base for data/bss/stack
+	mov $SYSSEG+2,%cx // kernel CS
+	push %cx
+	push %bp	// CS:IP entry point
+	add %ax,%cx	// kernel DS
 	mov %cx,%ds
 	mov %cx,%es
-	push %bp
 	retf
 
 #endif /* REL_SYS */
@@ -1184,7 +1160,7 @@ hello_mess:
 	.ascii "\r\nELKS Setup "
 	.byte 0
 
-// variables in ROM are not very usefull
+// variables in ROM are not very useful
 start_sys_seg:	.word	SYSSEG
 
 
