@@ -10,6 +10,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/mount.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -452,15 +453,15 @@ do_cp(argc, argv)
 
 #ifdef CMD_MOUNT
 void
-do_mount(argc, argv)
-	char	**argv;
+do_mount(int argc, char **argv)
 {
 	char	*str;
-	char	*type;
+	int		type = 0;		/* default fs*/
+	int		flags = 0;
+	char	*option;
 
 	argc--;
 	argv++;
-	type = "minix";
 
 	while ((argc > 0) && (**argv == '-')) {
 		argc--;
@@ -469,27 +470,55 @@ do_mount(argc, argv)
 		while (*++str) switch (*str) {
 			case 't':
 				if ((argc <= 0) || (**argv == '-')) {
-					fprintf(stderr, "Missing file system type\n");
+					fprintf(stderr, "mount: missing file system type\n");
 					return;
 				}
 
-				type = *argv++;
+				option = *argv++;
+				if (!strcmp(option, "minix"))
+					type = FST_MINIX;
+				else if (!strcmp(option, "msdos") || !strcmp(option, "fat"))
+					type = FST_MSDOS;
+				else if (!strcmp(option, "romfs"))
+					type = FST_ROMFS;
+				argc--;
+				break;
+
+			case 'o':
+				if ((argc <= 0) || (**argv == '-')) {
+					fprintf(stderr, "mount: missing option string\n");
+					return;
+				}
+
+				option = *argv++;
+				if (!strcmp(option, "ro"))
+					flags = MS_RDONLY;
+				else if (!strcmp(option, "remount,rw"))
+					flags = MS_REMOUNT;
+				else if (!strcmp(option, "remount,ro"))
+					flags = MS_REMOUNT|MS_RDONLY;
+				else {
+					fprintf(stderr, "mount: bad option string\n");
+					return;
+				}
 				argc--;
 				break;
 
 			default:
-				fprintf(stderr, "Unknown option\n");
+				fprintf(stderr, "mount: unknown option\n");
 				return;
 		}
 	}
 
 	if (argc != 2) {
-		fprintf(stderr, "Usage: mount [-t type] <device> <directory\n");
+		fprintf(stderr, "Usage: mount [-t type] [-o ro|remount,rw] <device> <directory>\n");
 		return;
 	}
 
-	if (mount(argv[0], argv[1], type, 0) < 0)
+	if (mount(argv[0], argv[1], type, flags) < 0) {
 		perror("mount failed");
+		return;
+	}
 }
 #endif /* CMD_MOUNT */
 
