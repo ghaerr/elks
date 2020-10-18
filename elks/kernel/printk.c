@@ -108,17 +108,16 @@ static void numout(__u32 v, int width, int base, int useSign,
 		   int Lower, int Zero)
 {
     __u32 dvr;
-    int c, vch;
-    register char *i;
+    int c, vch, i;
 
-    i = (char *)10;
-    dvr = 0x3B9ACA00L;
+    i = 10;
+    dvr = 1000000000L;
     if (base > 10) {
-	i = (char *)8;
+	i = 8;
 	dvr = 0x10000000L;
     }
     if (base < 10) {
-	i = (char *)11;
+	i = 11;
 	dvr = 0x40000000L;
     }
 
@@ -134,10 +133,10 @@ static void numout(__u32 v, int width, int base, int useSign,
 	c = (int)(v / dvr);
 	v %= dvr;
 	dvr /= (unsigned int)base;
-	if (c || ((int)i <= width) || ((int)i < 2)) {
-	    if ((int)i > width)
+	if (c || (i <= width) || (i < 2)) {
+	    if (i > width)
 		width = (int)i;
-	    if (!Zero && !c && ((int)i > 1))
+	    if (!Zero && !c && (i > 1))
 		c = 16;
 	    else {
 		Zero = 1;

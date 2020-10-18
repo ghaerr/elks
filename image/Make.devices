@@ -255,7 +255,7 @@ endif
 ##############################################################################
 # ROM / Flash memory card
 
-#	$(MKDEV) /dev/rom0 b 0 31
+#	$(MKDEV) /dev/rom b 6 0
 
 ##############################################################################
 # Direct IDE disks, Tertiary channel. These are not yet supported.
