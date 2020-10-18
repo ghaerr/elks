@@ -1,13 +1,15 @@
 #include <unistd.h>
 #include <string.h>
 
-void main ()
+int main(int ac, char **av)
 {
 	char wd[255];
-	int i;
 	
-	getcwd(wd,255);
-	i = strlen(wd);
-	write(STDOUT_FILENO,wd,i);
-	write(STDOUT_FILENO,"\n",1);
+	if (getcwd(wd,255) == NULL) {
+		write(STDOUT_FILENO, "Cannot get current directory\n", 28);
+		return 1;
+	}
+	strcat(wd, "\n");
+	write(STDOUT_FILENO, wd, strlen(wd));
+	return 0;
 }
