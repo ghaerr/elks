@@ -71,29 +71,28 @@ MPC_DIST=mpc-$(MPC_VER)
 
 $(DISTDIR)/$(GMP_DIST).tar.bz2:
 	mkdir -p $(DISTDIR)
-	rm -rf $@ $@.tmp
-	# This hack forces GCC to be rebuilt whenever gmp needs to be
-	# re-downloaded.  (I also use the same hack for mpfr and mpc,
-	# below.)  TODO: maybe find a neater way to do this.
-	#	-- tkchia 20201017
-	rm -rf $(BUILDDIR)/.gcc.src
+	rm -rf $(DISTDIR)/gmp-*.tar.bz2 $(DISTDIR)/gmp-*.tar.bz2.tmp
 	wget -c https://gmplib.org/download/gmp/$(GMP_DIST).tar.bz2 \
 		-O $@.tmp
+	# Try to force GCC to be rebuilt whenever GNU MP needs to be
+	# re-downloaded.  (I also use the same hack for mpfr and mpc, below.)
+	#	-- tkchia 20201018
+	touch $@.tmp
 	mv $@.tmp $@
 
 $(DISTDIR)/$(MPFR_DIST).tar.bz2:
 	mkdir -p $(DISTDIR)
-	rm -rf $@ $@.tmp
-	rm -rf $(BUILDDIR)/.gcc.src
+	rm -rf $(DISTDIR)/mpfr-*.tar.bz2 $(DISTDIR)/mpfr-*.tar.bz2.tmp
 	wget -c https://www.mpfr.org/$(MPFR_DIST)/$(MPFR_DIST).tar.bz2 \
 		-O $@.tmp
+	touch $@.tmp
 	mv $@.tmp $@
 
 $(DISTDIR)/$(MPC_DIST).tar.gz:
 	mkdir -p $(DISTDIR)
-	rm -rf $@ $@.tmp
-	rm -rf $(BUILDDIR)/.gcc.src
+	rm -rf $(DISTDIR)/mpc-*.tar.gz $(DISTDIR)/mpc-*.tar.gz.tmp
 	wget -c https://ftp.gnu.org/gnu/mpc/$(MPC_DIST).tar.gz -O $@.tmp
+	touch $@.tmp
 	mv $@.tmp $@
 
 # GCC for IA16
