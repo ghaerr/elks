@@ -91,9 +91,8 @@ void INITPROC kernel_init(void)
     irq_init();
     tty_init();
 
-#if defined(CONFIG_CONSOLE_DIRECT) || defined(CONFIG_CONSOLE_BIOS)
+    /* init direct, bios or headless console, printk then callable*/
     console_init();
-#endif
 
 #ifdef CONFIG_BOOTOPTS
     /* parse options found in /bootops */
@@ -104,7 +103,7 @@ void INITPROC kernel_init(void)
     set_console(boot_console);
 
 #ifdef CONFIG_CHAR_DEV_RS
-    serial_console_init();
+    serial_init();
 #endif
 
     device_init();

@@ -59,18 +59,6 @@ struct termios def_vals = {
 #define TAB_SPACES 8
 
 struct tty ttys[MAX_TTYS];
-#if defined(CONFIG_CONSOLE_DIRECT) || defined(CONFIG_SIBO_CONSOLE_DIRECT)
-extern struct tty_ops dircon_ops;
-#endif
-#ifdef CONFIG_CONSOLE_BIOS
-extern struct tty_ops bioscon_ops;
-#endif
-#ifdef CONFIG_CHAR_DEV_RS
-extern struct tty_ops rs_ops;
-#endif
-#ifdef CONFIG_PSEUDO_TTY
-extern struct tty_ops ttyp_ops;
-#endif
 
 int tty_intcheck(register struct tty *ttyp, unsigned char key)
 {
@@ -470,6 +458,13 @@ static struct file_operations tty_fops = {
 #endif
 };
 
+/* TTY subdrivers, linked in via configuration*/
+extern struct tty_ops dircon_ops;	/* CONFIG_CONSOLE_DIRECT*/
+extern struct tty_ops bioscon_ops;	/* CONFIG_CONSOLE_BIOS*/
+extern struct tty_ops headlesscon_ops;	/* CONFIG_CONSOLE_HEADLESS*/
+extern struct tty_ops rs_ops;		/* CONFIG_CHAR_DEV_RS*/
+extern struct tty_ops ttyp_ops;		/* CONFIG_PSEUDO_TTY*/
+
 void INITPROC tty_init(void)
 {
     register struct tty *ttyp;
@@ -482,17 +477,16 @@ void INITPROC tty_init(void)
 	memcpy(&ttyp->termios, &def_vals, sizeof(struct termios));
     } while (ttyp > ttys);
 
-#if defined(CONFIG_CONSOLE_DIRECT) || defined(CONFIG_SIBO_CONSOLE_DIRECT) || defined(CONFIG_CONSOLE_BIOS)
-
     for (i = TTY_MINOR_OFFSET ; i < NR_CONSOLES + TTY_MINOR_OFFSET ; i++) {
-#ifdef CONFIG_CONSOLE_BIOS
+#if defined(CONFIG_CONSOLE_DIRECT)
+	ttyp->ops = &dircon_ops;
+#elif defined(CONFIG_CONSOLE_BIOS)
 	ttyp->ops = &bioscon_ops;
 #else
-	ttyp->ops = &dircon_ops;
+	ttyp->ops = &headlesscon_ops;
 #endif
 	(ttyp++)->minor = i;
     }
-#endif
 
 #ifdef CONFIG_CHAR_DEV_RS
     /* put serial entries after console entries */

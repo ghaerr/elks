@@ -31,10 +31,10 @@
 #define PTY_MINOR_OFFSET 8
 #define RS_MINOR_OFFSET 64
 
-#if defined(CONFIG_CONSOLE_DIRECT) || defined(CONFIG_SIBO_CONSOLE_DIRECT) || defined(CONFIG_CONSOLE_BIOS)
+#if defined(CONFIG_CONSOLE_DIRECT) || defined(CONFIG_CONSOLE_BIOS)
 #define NR_CONSOLES	MAX_CONSOLES
 #else
-#define NR_CONSOLES	0
+#define NR_CONSOLES	1	/* headless*/
 #endif
 
 #ifdef CONFIG_PSEUDO_TTY

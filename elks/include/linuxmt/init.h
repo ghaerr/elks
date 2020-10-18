@@ -26,7 +26,7 @@ extern void irqtab_init(void);
 extern void INITPROC mm_init(seg_t,seg_t);
 extern void INITPROC mm_stat(seg_t, seg_t);
 extern void INITPROC sched_init(void);
-extern void INITPROC serial_console_init(void);
+extern void INITPROC serial_init(void);
 extern void INITPROC sock_init(void);
 extern void INITPROC tty_init(void);
 
@@ -55,7 +55,6 @@ extern void mem_dev_init(void);
 extern void meta_init(void);
 extern void pty_init(void);
 extern void tcpdev_init(void);
-extern void xtk_init(void);
 
 extern void kfork_proc(void (*addr));
 extern void arch_setup_user_stack(struct task_struct *, word_t entry);

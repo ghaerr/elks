@@ -9,9 +9,7 @@
  * added reverse video, cleaned up code, reduced size
  * added enough ansi escape sequences for visual editing
  */
-/*
- * FIXME: Keyboard driver extremely barebones. Only recognizes ASCII codes.
- */
+
 #include <linuxmt/types.h>
 #include <linuxmt/config.h>
 #include <linuxmt/errno.h>
@@ -24,25 +22,13 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/chqueue.h>
 #include <linuxmt/ntty.h>
-
 #include <arch/io.h>
 #include <arch/segment.h>
-
-#ifdef CONFIG_CONSOLE_BIOS
+#include "console.h"
+#include "bioscon-asm.h"
 
 /* Assumes ASCII values. */
 #define isalpha(c) (((unsigned char)(((c) | 0x20) - 'a')) < 26)
-
-/* Function from bioscon-low */
-/* TODO: move these functions to a BIOS library */
-
-extern int poll_kbd ();
-extern void SetDisplayPage (byte_t page);
-extern void PosCursSetLow (byte_t x, byte_t y, byte_t page);
-extern void PosCursGetLow (byte_t * x, byte_t * y);
-extern void VideoWriteLow (byte_t c, byte_t attr, byte_t page);
-extern void ScrollLow (byte_t attr, byte_t n, byte_t x, byte_t y, byte_t xx, byte_t yy);
-
 
 #define A_DEFAULT 	0x07
 #define A_BOLD 		0x08
@@ -86,10 +72,8 @@ static Console *glock;		/* Which console owns the graphics hardware */
 static int Width, MaxCol, Height, MaxRow;
 static unsigned short int NumConsoles = MAX_CONSOLES;
 static struct timer_list timer;
-
-/* for keyboard.c */
-int Current_VCminor = 0;
-int kraw = 0;
+static int kraw;
+static int Current_VCminor = 0;
 
 #ifdef CONFIG_EMUL_ANSI
 #define TERM_TYPE " emulating ANSI "
@@ -99,11 +83,9 @@ int kraw = 0;
 #define TERM_TYPE " dumb "
 #endif
 
-extern void AddQueue(unsigned char Key);
 static void std_char(register Console *, char);
-static void Console_set_vc(unsigned int);
 
-static void kbd_timer(int __data);
+static void kbd_timer(int data);
 /*
  * Restart timer
  */
@@ -116,18 +98,9 @@ static void restart_timer(void)
 }
 
 /*
- * Start Bios Keyboard.
- */
-void xtk_init(void)
-{
-    enable_irq(1);		/* enable BIOS Keyboard interrupts */
-    restart_timer();
-}
-
-/*
  * Bios Keyboard Decoder
  */
-static void kbd_timer(int __data)
+static void kbd_timer(int data)
 {
     int dav, extra = 0;
 #if 0
@@ -136,9 +109,9 @@ static void kbd_timer(int __data)
 
     pokew((79+0*80)*2, 0xB800, clk[(c++)&0x03]);
 #endif
-    if ((dav = poll_kbd())) {
+    if ((dav = bios_kbd_poll())) {
 	if (dav & 0xFF)
-	    AddQueue(dav & 0x7F);
+	    Console_conin(dav & 0x7F);
 	else {
 	    dav = (dav >> 8) & 0xFF;
 	    if (dav >= 0x3B && dav <= 0x3D) {	/* temp console switch on F1-F3*/
@@ -165,14 +138,14 @@ static void kbd_timer(int __data)
 		}
 	    }
 	    if (dav) {
-		AddQueue(ESC);
+		Console_conin(ESC);
 #ifdef CONFIG_EMUL_ANSI
-		AddQueue('[');
+		Console_conin('[');
 #endif
-		AddQueue(dav);
+		Console_conin(dav);
 #ifdef CONFIG_EMUL_ANSI
 		if (extra)
-		    AddQueue(extra);
+		    Console_conin(extra);
 #endif
 	    }
 	}
@@ -188,13 +161,13 @@ static void PositionCursor(register Console * C)
     y = C->cy;
     p = C->pageno;
 
-    PosCursSetLow (x, y, p);
+    bios_setcursor (x, y, p);
 }
 
 static void PositionCursorGet (int * x, int * y)
 {
 	byte_t col, row;
-	PosCursGetLow (&col, &row);
+	bios_getcursor (&col, &row);
 	*x = col;
 	*y = row;
 }
@@ -205,7 +178,7 @@ static void VideoWrite(register Console * C, char c)
 
     a = C->attr;
     p = C->pageno;
-    VideoWriteLow (c, a, p);
+    bios_writecharattr (c, a, p);
 }
 
 static void scroll(register Console * C, int n, int x, int y, int xx, int yy)
@@ -214,13 +187,13 @@ static void scroll(register Console * C, int n, int x, int y, int xx, int yy)
 
     a = C->attr;
     if (C != Visible) {
-	SetDisplayPage(C->pageno);
+	bios_setpage(C->pageno);
     }
 
-    ScrollLow (a, n, x, y, xx, yy);
+    bios_scroll (a, n, x, y, xx, yy);
 
     if (C != Visible) {
-	SetDisplayPage(Visible->pageno);
+	bios_setpage(Visible->pageno);
     }
 }
 
@@ -248,13 +221,13 @@ static void ScrollDown(register Console * C, int y)
  * CAUTION: It *WILL* break if the console driver doesn't get tty0-X.
  */
 
-static void Console_set_vc(unsigned int N)
+void Console_set_vc(unsigned int N)
 {
     if ((N >= NumConsoles) || (Visible == &Con[N]) || glock)
 	return;
     Visible = &Con[N];
 
-    SetDisplayPage(N);
+    bios_setpage(N);
     PositionCursor(Visible);
     Current_VCminor = N;
 }
@@ -307,8 +280,10 @@ void console_init(void)
 
 	C++;
     }
+
+    enable_irq(1);		/* enable BIOS Keyboard interrupts */
+    restart_timer();
+
     printk("BIOS console %ux%u"TERM_TYPE"(%u virtual consoles)\n",
 	   Width, Height, NumConsoles);
 }
-
-#endif

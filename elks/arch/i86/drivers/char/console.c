@@ -1,4 +1,4 @@
-/* shared console routines - #include in console drivers*/
+/* shared console routines for Direct and BIOS consoles - #include in console drivers*/
 
 static void WriteChar(register Console * C, char c)
 {
@@ -21,9 +21,8 @@ void Console_conout(dev_t dev, char Ch)
     PositionCursor(C);
 }
 
-void AddQueue(unsigned char Key)
+void Console_conin(unsigned char Key)
 {
-	extern struct tty ttys[];
     register struct tty *ttyp = &ttys[Current_VCminor];
 
     if (!tty_intcheck(ttyp, Key))
@@ -72,7 +71,7 @@ static void itoaQueue(int i)
       i /= 10;
    } while (i);
    while (*b)
-	AddQueue(*b++);
+	Console_conin(*b++);
 }
 
 static void AnsiCmd(register Console * C, char c)
@@ -172,12 +171,12 @@ static void AnsiCmd(register Console * C, char c)
     case 'n':
 	if (parm1(C->params) == 6) {		/* device status report*/
 	    //FIXME sequence can be interrupted by kbd input
-	    AddQueue(ESC);
-	    AddQueue('[');
+	    Console_conin(ESC);
+	    Console_conin('[');
 	    itoaQueue(C->cy+1);
-	    AddQueue(';');
+	    Console_conin(';');
 	    itoaQueue(C->cx+1);
-	    AddQueue('R');
+	    Console_conin('R');
 	}
 	break;
     }
@@ -262,9 +261,9 @@ static void esc_char(register Console * C, char c)
 	C->fsm = esc_YS;
 	break;
     case 'Z':			/* identify as VT52 */
-	AddQueue(ESC);
-	AddQueue('/');
-	AddQueue('K');
+	Console_conin(ESC);
+	Console_conin('/');
+	Console_conin('K');
     }
 }
 #endif
