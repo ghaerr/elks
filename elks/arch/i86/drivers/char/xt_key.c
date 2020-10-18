@@ -31,17 +31,12 @@
 #include <linuxmt/chqueue.h>
 #include <linuxmt/signal.h>
 #include <linuxmt/ntty.h>
-
 #include <arch/io.h>
 #include <arch/ports.h>
 #include <arch/system.h>
+#include "console.h"
 
-#ifdef CONFIG_CONSOLE_DIRECT
-
-extern struct tty ttys[];
-void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id);
-extern void AddQueue(unsigned char Key);
-extern void Console_set_vc(unsigned int N);
+static void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id);
 static void set_leds(void);
 static int kb_read(void);
 
@@ -128,7 +123,7 @@ static unsigned char *scan_tabs[] = {
     xtkb_scan_ctrl_alt,	/*mode = 3*/
 };
 
-void xtk_init(void)
+void kbd_init(void)
 {
     /* Set off the initial keyboard interrupt handler */
 
@@ -144,7 +139,7 @@ void xtk_init(void)
  *	with the monstrosity AT keyboards became.
  */
 
-void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
+static void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 {
     static int E0Prefix = 0;
     int code, mode;
@@ -156,7 +151,7 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
     code = kb_read();
 
     if (kraw) {
-	AddQueue((unsigned char) code);
+	Console_conin((unsigned char) code);
 	return;
     }
 
@@ -250,8 +245,8 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	    return;
 	}
 
-	AddQueue(ESC);		/* F1 = ESC a, F2 = ESC b, etc*/
-	AddQueue(mode);
+	Console_conin(ESC);		/* F1 = ESC a, F2 = ESC b, etc*/
+	Console_conin(mode);
 	return;
 
     /* --------------Handle extended scancodes-------------- */
@@ -259,13 +254,13 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	if (E0key) {		/* Is extended scancode? */
 	    mode &= 0x3F;
 	    if (mode) {
-		AddQueue(ESC);
+		Console_conin(ESC);
 #ifdef CONFIG_EMUL_ANSI
-		AddQueue('[');
+		Console_conin('[');
 #endif
 	    }
 	    /* Up=0x37 -> ESC [ A, Down=0x38 -> ESC [ B, etc*/
-	    AddQueue(mode + 10);
+	    Console_conin(mode + 10);
 	    return;
 	}
 	/* fall through*/
@@ -353,15 +348,15 @@ void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
 	//default: if (key > 127) printk("Unknown key (0%o 0x%x)\n", key, key);
 	}
 	if (code) {
-	    AddQueue(ESC);
-	    AddQueue('[');
-	    AddQueue(code);
+	    Console_conin(ESC);
+	    Console_conin('[');
+	    Console_conin(code);
 	    if (mode)
-		AddQueue(mode);
+		Console_conin(mode);
 	    return;
 	}
 #endif
-	AddQueue(key);
+	Console_conin(key);
     }
 }
 
@@ -436,5 +431,3 @@ static void set_leds(void)
     outb_p(leds, KEYBD);	/* give keyboard LED values */
     kb_ack();			/* wait for ack response  */
 }
-
-#endif /* CONFIG_CONSOLE_DIRECT*/

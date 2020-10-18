@@ -9,6 +9,7 @@
  * added reverse video, cleaned up code, reduced size
  * added enough ansi escape sequences for visual editing
  */
+
 #include <linuxmt/types.h>
 #include <linuxmt/config.h>
 #include <linuxmt/errno.h>
@@ -21,10 +22,7 @@
 #include <linuxmt/chqueue.h>
 #include <linuxmt/ntty.h>
 #include <linuxmt/kdev_t.h>
-
 #include <arch/io.h>
-
-#ifdef CONFIG_CONSOLE_DIRECT
 
 /* Assumes ASCII values. */
 #define isalpha(c) (((unsigned char)(((c) | 0x20) - 'a')) < 26)
@@ -73,7 +71,7 @@ static void *CCBase;
 static int Width, MaxCol, Height, MaxRow;
 static unsigned short int NumConsoles = MAX_CONSOLES;
 
-/* from keyboard.c */
+/* from xt_kbd.c */
 extern int Current_VCminor;
 extern int kraw;
 
@@ -229,7 +227,8 @@ void console_init(void)
 	C++;
     }
 
+    kbd_init();
+
     printk("Direct console %ux%u"TERM_TYPE"(%u virtual consoles)\n",
 	   Width, Height, NumConsoles);
 }
-#endif

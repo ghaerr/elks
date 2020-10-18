@@ -15,7 +15,7 @@ BASEDIR 	= ../../../..
 # Define the variables required by the standard rules - see the standard
 # rules file (below) for details of these variables.
 
-USEBCC 		= Y
+USEBCC 		= 
 
 CLEANDEP	= 
 
@@ -25,7 +25,7 @@ DEPEND  	=
 
 DISTFILES	=
 
-NOINDENT	= bell.c bioscon.c
+NOINDENT	= 
 
 #########################################################################
 # Include standard commands.
@@ -40,15 +40,23 @@ OBJS  = init.o sibo/sibo_con.o sibo/sibo_conasm.o sibo/sibo_font.o \
 	sibo/sibo_key.o sibo/sibo_keyasm.o mem.o \
 	meta.o ntty.o sibo/sibo_serasm.o pty.o
 else
-OBJS  = serial.o serfast.o lp.o xt_key.o init.o dircon.o mem.o \
+OBJS  = serial.o serfast.o lp.o init.o mem.o \
 	ntty.o meta.o tcpdev.o pty.o bell.o
 
 ifdef CONFIG_CHAR_DEV_CGATEXT
 	OBJS += cgatext.o
 endif
 
+ifdef CONFIG_CONSOLE_DIRECT
+OBJS += dircon.o xt_key.o
+endif
+
 ifdef CONFIG_CONSOLE_BIOS
-OBJS += bioscon.o bioscon-low.o
+OBJS += bioscon.o bioscon-asm.o
+endif
+
+ifdef CONFIG_CONSOLE_HEADLESS
+OBJS += headless-bios.o bios-asm.o
 endif
 
 endif # CONFIG_ARCH_SIBO
