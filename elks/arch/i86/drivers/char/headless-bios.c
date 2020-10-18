@@ -21,10 +21,7 @@
 #include <arch/io.h>
 #include <arch/segment.h>
 #include "console.h"
-
-/* headlesscon-asm.s interface to BIOS*/
-int bios_kbd_poll(void);
-void bios_textout(byte_t ch);
+#include "bios-asm.h"
 
 static void restart_timer(void);
 
