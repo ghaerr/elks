@@ -51,10 +51,10 @@ static int romfs_readdir (struct inode * i, struct file * f,
 {
 	int res;
 
-	char name [ROMFS_NAME_MAX];
 	word_t len;
 	word_t pos;
 	seg_t iseg;
+	char name [ROMFS_NAME_MAX]; /* FIXME 255 is too large for stack buffer*/
 
 	while (1) {
 		iseg = i->u.romfs.seg;
@@ -69,15 +69,15 @@ static int romfs_readdir (struct inode * i, struct file * f,
 		}
 
 		len = (word_t) peekb (pos + 2, iseg);
-		if (!len || len >= ROMFS_NAME_MAX) {
+		if (!len || len > ROMFS_NAME_MAX) {
 			res = 0;
 			break;
 		}
 
 		fmemcpyb ((byte_t *) name, kernel_ds, (byte_t *)pos + 3, iseg, len);
-		name [len] = 0;
 
-		res = filldir (dirent, name, len, pos, i->i_ino);
+		res = filldir (dirent, name, len, pos, (ino_t)peekw(pos, iseg));
+		debug("readdir %T, %ld\n", iseg, pos + 3, (ino_t)peekw(pos, iseg));
 		if (res < 0) break;
 
 		/* inode index + name length + name string */
