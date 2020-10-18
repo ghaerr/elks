@@ -7,7 +7,7 @@
 #define ROMFS_MAGIC_STR "ROMFS"
 #define ROMFS_MAGIC_LEN 6  /* even length for word compare */
 
-#define ROMFS_NAME_MAX 256
+#define ROMFS_NAME_MAX 14  /* was 255, made compatible with MINIX*/
 
 
 /* In-memory superblock */
