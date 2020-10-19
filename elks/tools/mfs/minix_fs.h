@@ -111,8 +111,8 @@ struct minix_dir_entry {
 #define MINIX_LINK_MAX	250
 #define MINIX2_LINK_MAX	65530
 
-#define MINIX_I_MAP_SLOTS	8
-#define MINIX_Z_MAP_SLOTS	64
+#define MINIX_I_MAP_SLOTS	4
+#define MINIX_Z_MAP_SLOTS	8
 
 #define MINIX2_ZONESZ	(BLOCK_SIZE/sizeof(u32))
 #define MINIX_ZONESZ	(BLOCK_SIZE/sizeof(u16))

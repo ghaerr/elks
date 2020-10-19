@@ -149,6 +149,7 @@ struct super_block *minix_read_super(register struct super_block *s, char *data,
     static char *err1 = "minix: unable to read sb\n";
     static char *err2 = "minix: bad superblock or bitmaps\n";
     static char *err3 = "minix: get root inode failed\n";
+    static char *err4 = "minix: inode table too large\n";
 
     lock_super(s);
 	if (!(bh = bread(dev, (block_t) 1))) {
@@ -164,6 +165,11 @@ struct super_block *minix_read_super(register struct super_block *s, char *data,
 	    msgerr = err0;
 	    goto err_read_super_1;
 	}
+	if (ms->s_imap_blocks > MINIX_I_MAP_SLOTS) {
+	    msgerr = err4;
+	    goto err_read_super_1;
+	}
+
 	s->u.minix_sb.s_sbh = bh;
 	s->u.minix_sb.s_dirsize = 16;
 	s->u.minix_sb.s_namelen = 14;
