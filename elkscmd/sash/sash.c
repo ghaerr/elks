@@ -605,6 +605,8 @@ runcmd(char *cmd, int argc, char **argv)
 			status = system(cmd);
 			if (status & 0xff)
 				fprintf(stderr, "killed (signal %d)\n", status & 0x7f);
+			if (status == 0x7f00)
+				fprintf(stderr, "No /bin/sh found to execute complex command\n");
 		}
 		return;
 	}

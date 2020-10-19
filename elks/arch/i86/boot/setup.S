@@ -466,7 +466,7 @@ size_error:
 	push %ax
 	mov $_next1,%ax
 	push %ax
-	retf
+	lret
 
 _next1:
 
@@ -783,7 +783,7 @@ add_ptr:
 	add %ax,%cx	// kernel DS
 	mov %cx,%ds
 	mov %cx,%es
-	retf
+	lret
 
 #endif /* REL_SYS */
 
