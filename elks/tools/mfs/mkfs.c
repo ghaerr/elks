@@ -49,8 +49,8 @@ void parse_mkfs(int argc,char **argv,int *magic_p,int *nblks_p,int *inodes_p) {
   int c;
   int namelen = 14;
   int version = 1;
-  *nblks_p = 1440;
-  *inodes_p = 360;
+  *nblks_p = 0;
+  *inodes_p = 0;
     
   optind = 1;
   while (1) {
@@ -82,7 +82,7 @@ void parse_mkfs(int argc,char **argv,int *magic_p,int *nblks_p,int *inodes_p) {
       usage(argv[0]);
     }
   }
-  if (*nblks_p == -1)
+  if (*nblks_p == 0)
     fatalmsg("no filesystem size specified");
 
   //printf("MKFS v%d namelen %d inodes %d size %d\n", version, namelen, *inodes_p, *nblks_p);

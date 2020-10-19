@@ -98,8 +98,11 @@ struct minix_fs_dat *new_fs(const char *fn,int magic,unsigned long fsize,int ino
    * Initialise bitmaps
    */
   IMAPS(fs) =UPPER(inodes + 1,BITS_PER_BLOCK);
-  ZMAPS(fs)=UPPER(fsize-(1+fs->msb.s_imap_blocks+INODE_BLOCKS(fs)), BITS_PER_BLOCK+1);
+  ZMAPS(fs)=UPPER(fsize-(1+IMAPS(fs)), BITS_PER_BLOCK);
   FIRSTZONE(fs) = NORM_FIRSTZONE(fs);
+//printf("IMAPS %u, ZMAPS %u, FIRST %u\n", IMAPS(fs), ZMAPS(fs), FIRSTZONE(fs));
+  if (IMAPS(fs) > MINIX_I_MAP_SLOTS)
+    fatalmsg("Too many inodes requested: max is 32736\n");
 
   fs->inode_bmap = domalloc(IMAPS(fs) * BLOCK_SIZE,0xff);
   fs->zone_bmap = domalloc(ZMAPS(fs) * BLOCK_SIZE,0xff);

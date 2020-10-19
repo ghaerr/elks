@@ -241,12 +241,16 @@ void setup_tables(void)
 	MAXSIZE = BLOCKS*1024L;
 	ZONES = BLOCKS;
 	INODES = BLOCKS/3;
+#if 0 /* FIXME: add ability to specify inode count rather than guess*/
 	if ( BLOCKS > 32768L ) INODES += (BLOCKS-32768)*4/3;
 	if ( INODES > 63424L ) INODES = 63424L;
 	if ((INODES & 8191) > 8188)
 		INODES -= 5;
 	if ((INODES & 8191) < 10)
 		INODES -= 20;
+#endif
+	if (INODES > 32736)		/* max inodes to fit in 4 imap blocks*/
+		INODES = 32736;
 	IMAPS = UPPER(INODES,BITS_PER_BLOCK);
 	ZMAPS = 0;
 	while (ZMAPS != UPPER(BLOCKS - NORM_FIRSTZONE,BITS_PER_BLOCK))
@@ -306,8 +310,8 @@ int main(int argc, char ** argv)
 		die("unable to open %s");
 	if (fstat(DEV,&statbuf)<0)
 		die("unable to stat %s");
-	else if (statbuf.st_rdev == 0x0300 || statbuf.st_rdev == 0x0340)
-		die("Will not try to make filesystem on '%s'");
+	//else if (statbuf.st_rdev == 0x0300 || statbuf.st_rdev == 0x0340)
+		//die("Will not try to make filesystem on '%s'");
 
 	setup_tables();
 	make_root_inode();
