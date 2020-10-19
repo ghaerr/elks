@@ -336,7 +336,7 @@ void eth_drv_init(void)
 	word_t prom[16];	/* PROM containing HW MAC address and more 
 				 * (aka SAPROM, Station Address PROM).
 				 * If byte 14 & 15 == 0x57, this is a ne2k clone.
-				 * May be used to avoid attempts to use an unsupported NIC
+				 * May be used to avoid attempts to use an unsupported NIC.
 				 * PROM size is 32 bytes.
 				 */
 	byte_t hw_addr[6];
@@ -397,7 +397,7 @@ void eth_drv_init(void)
 	_ne2k_skip_cnt = 0;	/* # of packets to discard if the NIC buffer overflows. 
                  		 * Zero is the default, discard entire buffer less one pkt.
 				 * May be changed via ioctl.
-				 * A big # will clar the entire buffer.
+				 * A big # will clear the entire buffer.
 				 * On a floppy based system, anything else is useless.
 				 */
 }

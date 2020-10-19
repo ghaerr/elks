@@ -905,8 +905,7 @@ np_exit:
 
 ne2k_reset:
 
-	// reset device
-	// with pulse on reset port
+	// reset device with pulse on reset port
 
 	mov     $io_ne2k_reset,%dx
 	in      %dx,%al
@@ -915,8 +914,7 @@ ne2k_reset:
 	mov     $io_ne2k_int_stat,%dx
 
 nr_loop:
-	// wait for reset
-	// without too much CPU
+	// wait for reset without too much CPU
 
 	hlt
 
@@ -934,7 +932,7 @@ nr_loop:
 
 //-----------------------------------------------------------------------------
 // Get  MAC address from NIC's prom
-// WARNING: This function will reset the controller. Use before the init()!
+// WARNING: This function will reset the controller. Use before ne2k_init()!
 //-----------------------------------------------------------------------------
 
 // arg1 : pointer to 32 bytes buffer
@@ -950,7 +948,7 @@ ne2k_get_hw_addr:
 	mov     4(%bp),%di
 
 	// Effectively a soft reset of the NIC, required in order to get access to the
-	// Address PROM - 32 bytes of which only the first 6 bytes are of interest.
+	// address PROM - 32 bytes of which only the first 6 bytes are of interest.
 	// NOTE: Since we're reading the entire PROM, we also have the opportunity to
 	// detect the type of card. The caller can do this since the entire dataset 
 	// is being returned.
@@ -1032,10 +1030,12 @@ of_reset:
 	call	ne2k_getpage    // get BOUNDARY (AL) and CURRENT (AH) pointers
 
 of_drop_packets:
-	// loop through the number of packets given by %bx
-	// terminate if we reach the head of the buffer before the # of packets
-	// if cnt = 0, just keep the oldest packet in the ring.
-	mov	%ax,%cx		// save BOUNDARY & CURRENT
+	//
+	// Loop through the number of packets given by %bx,
+	// terminate if we reach the head of the buffer before the # of packets.
+	// If cnt == 0, just keep the oldest packet in the ring.
+	//
+	mov	%ax,%cx			// save BOUNDARY & CURRENT
 	mov	_ne2k_next_pk,%ah
 	mov	_ne2k_skip_cnt,%bx	// get # of packets to discard
 of_drop_loop1:
