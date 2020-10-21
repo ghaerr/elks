@@ -148,7 +148,7 @@ int main(int argc, char **argv)
 	struct sockaddr_in localadr;
 
 	if ((listen_sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		fprintf(stderr, "httpd: Can't open socket (check if ktcp running)\n");
+		fprintf(stderr, "httpd: Can't open socket (check if ktcp is running)\n");
 		exit(-1);
 	}
 

@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
 
 	tcp_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (tcp_fd < 0) {
-		fprintf(stderr, "Can't open socket (check if ktcp running)\n");
+		fprintf(stderr, "Can't open socket (check if ktcp is running)\n");
 		exit(1);
 	}
 	
