@@ -142,6 +142,10 @@ int main(int argc, char *argv[])
 	signal(SIGINT, finish);
 
 	tcp_fd = socket(AF_INET, SOCK_STREAM, 0);
+	if (tcp_fd < 0) {
+		fprintf(stderr, "Can't open socket (check if ktcp running)\n");
+		exit(1);
+	}
 	
 	locadr.sin_family = AF_INET;
 	locadr.sin_port = PORT_ANY;

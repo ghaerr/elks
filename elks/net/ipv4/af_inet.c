@@ -117,6 +117,7 @@ static int inet_bind(register struct socket *sock, struct sockaddr *addr,
 
     /* TODO : Check if the user has permision to bind the port */
 
+	down(&rwlock);
     cmd = (struct tdb_bind *)get_tdout_buf();
     cmd->cmd = TDC_BIND;
     cmd->sock = sock;
@@ -130,6 +131,8 @@ static int inet_bind(register struct socket *sock, struct sockaddr *addr,
 
     ret = ((struct tdb_return_data *)tdin_buf)->ret_value;
     tcpdev_clear_data_avail();
+	up(&rwlock);
+
     return (ret >= 0 ? 0 : ret);
 }
 
