@@ -189,7 +189,7 @@ int main(int argc, char **argv)
 	pid_t pid;
 
 	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-		fprintf(stderr, "telnetd: Can't open socket (check if ktcp running)\n");
+		fprintf(stderr, "telnetd: Can't open socket (check if ktcp is running)\n");
 		exit(-1);
 	}
 	memset(&addr_in, 0, sizeof(addr_in));
