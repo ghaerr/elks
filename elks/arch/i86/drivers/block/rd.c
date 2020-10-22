@@ -1,4 +1,6 @@
 /*
+ * ELKS Ramdisk driver
+ *
  * rd.c, written by Al Riddoch
  * modified: July 4th, 5th 1999, Blaz Antonic
  * - allow variable ramdisk size (in 4096 blocks)
@@ -9,87 +11,250 @@
  * - further bugfixes, redesigned to work with 1024 byte allocation units
  * modified: October 4th 1999, Blaz Antonic
  * - final changes before i put this out to public :)
+ * Debugged and rewritten Oct 2020 by Greg Haerr
  */
 
 #include <linuxmt/config.h>
 #include <linuxmt/rd.h>
 #include <linuxmt/major.h>
 #include <linuxmt/kernel.h>
-#include <linuxmt/debug.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/mm.h>
-
-#ifdef CONFIG_BLK_DEV_RAM
+#include <linuxmt/debug.h>
 
 #define MAJOR_NR RAM_MAJOR
-
 #define RAMDISK
 #include "blk.h"
 
-#define SECTOR_SIZE 512
-#define SEG_SIZE 4096		/* # of 16 B pages */
-#define P_SIZE 16		/* 16 B pages */
-#define DIVISOR 32		/* SECTOR_SIZE / P_SIZE */
-#define MAX_ENTRIES 8
+#define MAX_DRIVES	2	/* # ram drives*/
+#define MAX_SEGMENTS	8	/* max # seperate allocation segments*/
+#define ALLOC_SIZE	4096	/* allocation size in paragaphs*/
+#define PARA		16	/* size of paragraph*/
+#define SECTOR_SIZE	512
 
-typedef __u16 rd_sector_t;
+typedef __u16 rd_sector_t;	/* sector number*/
+
+static struct {			/* ramdrive information*/
+    int start;			/* starting memory segment*/
+    int valid;			/* ramdisk data valid flag*/
+    rd_sector_t size;		/* ramdisk size in 512 byte sectors*/
+} drive_info[MAX_DRIVES] = {
+#ifdef CONFIG_PRELOAD_RAMDISK
+    {0, BUSY, 256},
+#endif
+};
+
+static struct {			/* memory segments, max size ALLOC_SIZE paras (64k)*/
+    seg_t seg;			/* actual segment address*/
+    segment_s *seg_desc;	/* segment descriptor for heap mgr*/
+    int next;			/* next segment*/
+    rd_sector_t sectors;	/* segment size in sectors*/
+} rd_segment[MAX_SEGMENTS] = {
+#ifdef CONFIG_PRELOAD_RAMDISK
+    {0x6000, 0,  1, 128,},	/* preloaded ramdisk is 128k at seg 6000:0000*/
+    {0x7000, 0, -1, 128,},
+#else
+    {0,      0, -1, 0,},
+    {0,      0, -1, 0,},
+#endif
+    {0,      0, -1, 0,},
+    {0,      0, -1, 0,},
+    {0,      0, -1, 0,},
+    {0,      0, -1, 0,},
+    {0,      0, -1, 0,},
+    {0,      0, -1, 0,}
+};
 
 static int rd_initialised = 0;
 
-static struct rd_infot {
-    unsigned int index;
-    unsigned int flags;
-    rd_sector_t size;		/* ramdisk size in 512 B blocks */
-} rd_info[MAX_ENTRIES] = {
-#ifdef CONFIG_PRELOAD_RAMDISK
-    {0, RD_BUSY, 256},
-#endif
-    {0, 0, 0},
-};
+static int rd_open(struct inode *inode, struct file *filp)
+{
+    int target = DEVICE_NR(inode->i_rdev);
 
-static struct rd_segmentt {
-	segment_s * seg_desc;
-    seg_t segment;
-    unsigned int next;
-    rd_sector_t seg_size;	/* segment size in 512 byte blocks */
-} rd_segment[MAX_ENTRIES] = /* max 640 KB will be used for RAM disk(s) */  {
-#ifdef CONFIG_PRELOAD_RAMDISK
-    {0x6000, 1, 128,},
-    {0x7000, MAX_ENTRIES + 1, 128,},
-#else
-    {0, MAX_ENTRIES + 1, 0,},
-    {0, MAX_ENTRIES + 1, 0,},
-#endif
-    {0, MAX_ENTRIES + 1, 0,},
-    {0, MAX_ENTRIES + 1, 0,},
-    {0, MAX_ENTRIES + 1, 0,},
-    {0, MAX_ENTRIES + 1, 0,},
-    {0, MAX_ENTRIES + 1, 0,},
-    {0, MAX_ENTRIES + 1, 0,},
-};
+    debug("RD: open ram%d\n", target);
+    if (!rd_initialised || target >= MAX_DRIVES)
+	return -ENXIO;
 
-static int rd_open(struct inode *inode, struct file *filp);
+    inode->i_size = (long)drive_info[target].size << 9;
+    return 0;
+}
+
+static void rd_release(struct inode * inode, struct file * filp)
+{
+    debug("RD: release ram%d\n", DEVICE_NR(inode->i_rdev));
+}
+
+static int find_free_seg(void)
+{
+    int i;
+
+    for (i = 0; i < MAX_SEGMENTS; i++) {
+	debug("RD: rd_segment[%d].sectors = %d\n", i, rd_segment[i].sectors);
+	if (rd_segment[i].sectors == 0)
+	    return i;
+    }
+    return -1;
+}
+
+static int dealloc(int target)
+{
+    int i, j;
+
+    i = drive_info[target].start;
+    debug("RD: dealloc target %d, index %d, size %d sectors\n",
+	   target, i, drive_info[target].size);
+    while (i != -1 && rd_segment[i].sectors != 0) {
+	j = i;
+	debug("RD: dealloc purging rd_segment[%d].seg = 0x%x, next index %d, size = %d\n",
+	     j, rd_segment[j].seg, rd_segment[j].next, rd_segment[j].sectors);
+	if (rd_segment[j].seg_desc)
+		seg_put(rd_segment[j].seg_desc);
+	rd_segment[j].seg_desc = 0;
+	rd_segment[j].seg = 0;
+	rd_segment[j].sectors = 0;
+	i = rd_segment[j].next;
+	rd_segment[j].next = -1;
+	debug("RD: dealloc status rd_segment[%d].seg = 0x%x, next index %d, size = %d\n",
+	     j, rd_segment[j].seg, rd_segment[j].next, rd_segment[j].sectors);
+    }
+    drive_info[target].valid = 0;
+    drive_info[target].size = 0;
+    return 0;
+}
+
 static int rd_ioctl(register struct inode *inode, struct file *file,
-		    unsigned int cmd, unsigned int arg);
-
-void rd_load(void)
+		    unsigned int cmd, unsigned int arg)
 {
-    /* Do nothing */
+    unsigned int i;
+    int j, k, target = DEVICE_NR(inode->i_rdev);
+    unsigned long size;
+
+    if (!suser())
+	return -EPERM;
+
+    debug("RD: ioctl %d %s\n", target, (cmd ? "kill" : "make"));
+    switch (cmd) {
+    case RDCREATE:
+	if (drive_info[target].valid)
+	    return -EBUSY;
+
+	drive_info[target].size = 0;
+	k = -1;
+	for (i = 0; i <= (arg - 1) / ((ALLOC_SIZE / 1024) * PARA); i++) {
+		j = find_free_seg();	/* find free place in queue */
+		debug("RD: find_free_seg = %d\n", j);
+		if (j == -1) {
+		    dealloc(target);
+		    return -ENOMEM;
+		}
+		if (i == 0)
+		    drive_info[target].start = j;
+
+		if (i == (arg / ((ALLOC_SIZE / 1024) * PARA)))
+		    /* size in 16 byte pages = (arg % 64) * 64 */
+		    size = (arg % ((ALLOC_SIZE / 1024) * PARA)) *
+				  ((ALLOC_SIZE / 1024) * PARA);
+		else
+		    size = ALLOC_SIZE;
+
+		/* allocate memory */
+		rd_segment[j].seg_desc = seg_alloc ((segext_t)size, SEG_FLAG_RAMDSK);
+		if (rd_segment[j].seg_desc == 0) {
+		    dealloc(target);
+		    return -ENOMEM;
+		}
+		rd_segment[j].seg = rd_segment[j].seg_desc->base;
+		debug("RD: pass: %d, allocated %d pages, rd_segment[%d].seg = 0x%x\n",
+		       i, (int) size, j, rd_segment[j].seg);
+
+		/* recalculate size to reflect size in sectors, not pages */
+		size = size / (SECTOR_SIZE / PARA);
+		rd_segment[j].sectors = size;
+		drive_info[target].size += rd_segment[j].sectors;
+		size = (long) rd_segment[j].sectors * SECTOR_SIZE;
+		debug("RD: index %d set to %d sectors, %ld bytes\n",
+		       j, rd_segment[j].sectors, size);
+
+		debug("RD: fmemsetw(0, 0x%x, 0, 0x%x)\n",
+			rd_segment[j].seg, (word_t) (size >> 1));
+		fmemsetw(0, rd_segment[j].seg, 0, (word_t) (size >> 1));
+
+		if (k != -1)
+		    rd_segment[k].next = j;	/* set link to next index */
+		k = j;
+	}
+	drive_info[target].valid = 1;
+	debug("RD: ramdisk %d created sectors %d index %d bytes %ld\n",
+		target, drive_info[target].size, drive_info[target].start,
+		(long)drive_info[target].size * SECTOR_SIZE);
+	return 0;
+
+    case RDDESTROY:
+	if (drive_info[target].valid) {
+	    invalidate_inodes(inode->i_rdev);
+	    invalidate_buffers(inode->i_rdev);
+	    dealloc(target);
+	    return 0;
+	}
+    }
+    return -EINVAL;
 }
 
-
-static void rd_release (struct inode * inode, struct file * filp)
+/* low level block request entry point*/
+static void do_rd_request(void)
 {
-    //int target = DEVICE_NR(inode->i_rdev);
+    rd_sector_t start;		/* requested start sector*/
+    rd_sector_t offset;		/* sector offset in memory segment*/
+    int index;
+    int target;
+    byte_t *buff;
 
-    debug("RD: release ram%d\n", target);
+    while (1) {
+	if (!CURRENT || CURRENT->rq_dev < 0)
+	    return;
 
-#if 0
-    rd_info[target].flags = 0;		/* ioctl() takes care of it */
-#endif
+	INIT_REQUEST;
 
+	if (!CURRENT || CURRENT->rq_sector == (sector_t) -1)
+	    return;
+
+	if (!rd_initialised) {
+	    end_request(0);
+	    return;
+	}
+
+	start = (rd_sector_t) CURRENT->rq_sector;
+	buff = (byte_t *) CURRENT->rq_buffer;
+	target = DEVICE_NR(CURRENT->rq_dev);
+	debug("RD: %s dev %d sector %d, ", CURRENT->rq_cmd == READ? "read": "write",
+		target, start);
+	if (drive_info[target].valid == 0 || start >= drive_info[target].size) {
+	    debug("RD: bad request on ram%d, size %d, sector %d\n",
+		 target, drive_info[target].size, start);
+	    end_request(0);
+	    continue;
+	}
+
+	/* find appropriate memory segment and sector offset*/
+	offset = start;
+	index = drive_info[target].start;
+	debug("index %d, ", index);
+	while (offset > rd_segment[index].sectors) {
+	    offset -= rd_segment[index].sectors;
+	    index = rd_segment[index].next;
+	}
+	debug("entry %d, seg %x, offset %d\n", index, rd_segment[index].seg, offset);
+
+	if (CURRENT->rq_cmd == WRITE) {
+	    fmemcpyw((byte_t *) (offset * SECTOR_SIZE), rd_segment[index].seg,
+		buff, CURRENT->rq_seg, 1024/2);
+	} else {
+	    fmemcpyw(buff, CURRENT->rq_seg,
+		(byte_t *) (offset * SECTOR_SIZE), rd_segment[index].seg, 1024/2);
+	}
+	end_request(1);
+    }
 }
-
 
 static struct file_operations rd_fops = {
     NULL,			/* lseek */
@@ -101,8 +266,7 @@ static struct file_operations rd_fops = {
     rd_open,			/* open */
     rd_release			/* release */
 #ifdef BLOAT_FS
-	,
-    NULL,			/* fsync */
+    ,NULL,			/* fsync */
     NULL,			/* check_media_change */
     NULL			/* revalidate */
 #endif
@@ -110,235 +274,13 @@ static struct file_operations rd_fops = {
 
 void rd_init(void)
 {
-    int i;
-
+#ifndef CONFIG_SMALL_KERNEL
     /* Al's very own ego boost :) */
-    printk("rd driver Copyright (C) 1997 Alistair Riddoch\n");
-    if ((i = register_blkdev(MAJOR_NR, DEVICE_NAME, &rd_fops)) == 0) {
+    printk("rd: ramdisk driver Copyright (C) 1997 Alistair Riddoch\n");
+#endif
+    if (register_blkdev(MAJOR_NR, DEVICE_NAME, &rd_fops) == 0) {
 	blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
-
 	rd_initialised = 1;
-    } else {
-	printk("rd: unable to register\n");
-    }
+    } else
+	printk("rd: unable to register %d\n", MAJOR_NR);
 }
-
-static int rd_open(struct inode *inode, struct file *filp)
-{
-    int target = DEVICE_NR(inode->i_rdev);
-
-    debug("RD: open ram%d\n", target);
-    if ((rd_initialised == 0) || (target >= MAX_ENTRIES))
-	return -ENXIO;
-
-#if 0
-    if (rd_info[target].flags && RD_BUSY)
-	return -EBUSY;
-#endif
-
-    inode->i_size = (rd_info[target].size) << 9;
-    return 0;
-}
-
-int find_free_seg(void)
-{
-    unsigned int i;
-
-    for (i = 0; i < MAX_ENTRIES; i++) {
-	debug("RD: rd_segment[%d].seg_size = %d\n",
-	       i, rd_segment[i].seg_size);
-	if (rd_segment[i].seg_size == 0)
-	    return i;
-    }
-    return -1;
-}
-
-int rd_dealloc(int target)
-{
-    unsigned int i, j;
-
-#ifdef DEBUG
-    int a = 0;
-#endif
-
-    i = rd_info[target].index;
-    debug("RD: dealloc target = %d, first index = %d, size = %d blocks\n",
-	   target, i, rd_info[target].size);
-    while ((rd_segment[i].seg_size != 0) && (i != MAX_ENTRIES + 1)) {
-	j = i;
-	debug("RD: dealloc pass: %d, purging rd_segment[%d].segment = 0x%x, next index %d, size = %d\n",
-	     a, j, rd_segment[j].segment, rd_segment[j].next,
-	     rd_segment[j].seg_size);
-	if (rd_segment[j].seg_desc) {
-		seg_put (rd_segment[j].seg_desc);
-		rd_segment[j].seg_desc = 0;
-	rd_segment[j].segment = 0;
-	}
-	rd_segment[j].seg_size = 0;
-	i = rd_segment[j].next;
-	rd_segment[j].next = MAX_ENTRIES + 1;
-	debug("RD: dealloc pass: %d, status rd_segment[%d].segment = 0x%x, next index %d, size = %d\n",
-	     a++, j, rd_segment[j].segment, rd_segment[j].next,
-	     rd_segment[j].seg_size);
-    }
-    rd_info[target].flags = 0;
-
-    return 0;
-}
-
-static int rd_ioctl(register struct inode *inode, struct file *file,
-		    unsigned int cmd, unsigned int arg)
-{
-    unsigned long size;
-    unsigned int i;
-    int j, k, target = DEVICE_NR(inode->i_rdev);
-
-    if (!suser())
-	return -EPERM;
-    debug("RD: ioctl %d %s\n", target, (cmd ? "kill" : "make"));
-    switch (cmd) {
-    case RDCREATE:
-	if (rd_info[target].flags && RD_BUSY) {
-	    return -EBUSY;
-	} else {
-	    /* allocate memory */
-
-#if 0
-	    rd_info[target].size = 0;
-#endif
-
-	    k = -1;
-	    for (i = 0; i <= (arg - 1) / ((SEG_SIZE / 1024) * P_SIZE); i++) {
-		j = find_free_seg();	/* find free place in queue */
-		debug("RD: ioctl find_free_seg() = %d\n", j);
-		if (j == -1) {
-		    rd_dealloc(target);
-		    return -ENOMEM;
-		}
-		if (i == 0)
-		    rd_info[target].index = j;
-
-		if (i == (arg / ((SEG_SIZE / 1024) * P_SIZE)))
-		    /* size in 16 byte pagez = (arg % 64) * 64 */
-		    size =
-			(arg % ((SEG_SIZE / 1024) * P_SIZE)) *
-			((SEG_SIZE / 1024) * P_SIZE);
-		else
-		    size = SEG_SIZE;
-
-		rd_segment[j].seg_desc = seg_alloc (size, SEG_FLAG_RAMDSK);
-		if (rd_segment[j].seg_desc == 0) {
-		    rd_dealloc(target);
-		    return -ENOMEM;
-		}
-		rd_segment[j].segment = rd_segment[j].seg_desc->base;
-		debug("RD: ioctl pass: %d, allocated %d pages, rd_segment[%d].segment = 0x%x\n",
-		       i, (int) size, j, rd_segment[j].segment);
-
-		/* recalculate int size to reflect size in sectors, not pages */
-		size = size / DIVISOR;
-
-		rd_segment[j].seg_size = size;	/* size in sectors */
-		debug("RD: ioctl rd_segment[%d].seg_size = %d sectors\n",
-		       j, rd_segment[j].seg_size);
-		rd_info[target].size += rd_segment[j].seg_size;	/* size in 512 B blocks */
-		size = (long) rd_segment[j].seg_size * SECTOR_SIZE;
-		debug("RD: ioctl size = %ld\n", size);
-
-		/* this terrible hack makes sure fmemset clears whole segment even if size == 64 KB :) */
-		if (size != ((long) SEG_SIZE * (long) P_SIZE)) {
-		    debug("RD: ioctl calling fmemsetb(0, 0x%x, 0, %d) ..\n",
-			   rd_segment[j].segment, (int) size);
-		    fmemsetb(0, rd_segment[j].segment, 0, (word_t) size);	/* clear seg_size * SECTOR_SIZE bytes */
-		} else {
-		    debug("RD: ioctl calling fmemsetb(0, 0x%x, 0, %d) ..\n",
-			   rd_segment[j].segment, (int) (size / 2));
-		    fmemsetb(0, rd_segment[j].segment, 0, (word_t) (size / 2));	/* we could hardcode 32768 instead of size / 2 here */
-		    debug("rd_ioctl(): calling fmemsetb(%d, 0x%x, 0, %d) ..\n",
-			   (int) (size / 2), rd_segment[j].segment,
-			   (int) (size / 2));
-		    fmemsetb((word_t) (size / 2), rd_segment[j].segment, 0,
-			    (word_t) (size / 2));
-		}
-
-		if (k != -1)
-		    rd_segment[k].next = j;	/* set link to next index */
-		k = j;
-	    }
-	    rd_info[target].flags = RD_BUSY;
-	    debug("RD: ioctl ramdisk %d created, size = %d blocks, index = %d\n",
-		 target, rd_info[target].size, rd_info[target].index);
-	}
-	debug("RD: ioctl about to return 0\n");
-	return 0;
-    case RDDESTROY:
-	if (rd_info[target].flags && RD_BUSY) {
-	    invalidate_inodes(inode->i_rdev);
-	    invalidate_buffers(inode->i_rdev);
-	    rd_dealloc(target);
-	    rd_info[target].flags = 0;
-	    return 0;
-	} else
-	    return -EINVAL;
-    }
-    return -EINVAL;
-}
-
-static void do_rd_request(void)
-{
-    byte_t *buff;
-    rd_sector_t start;		/* absolute offset from start of device */
-    seg_t segnum;		/* segment index; segment = rd_segment[segnum].segment */
-    segext_t offset;		/* relative offset (from start of segment) */
-    int target;
-
-    while (1) {
-	if (!CURRENT || CURRENT->rq_dev < 0)
-	    return;
-
-	INIT_REQUEST;
-
-	if (CURRENT == NULL || CURRENT->rq_sector == (sector_t) - 1)
-	    return;
-
-	if (rd_initialised != 1) {
-	    end_request(0);
-	    continue;
-	}
-
-	start = (rd_sector_t) CURRENT->rq_sector;
-	buff = CURRENT->rq_buffer;
-	target = DEVICE_NR(CURRENT->rq_dev);
-	debug("RD: request target: %d, start: %ld\n", target, (long) start);
-	if ((rd_info[target].flags != RD_BUSY)
-	    || (start >= rd_info[target].size)) {
-	    debug("RD: bad request on ram%d, flags: %d, size: %d, start: %d\n",
-		 target, rd_info[target].flags, rd_info[target].size, start);
-	    end_request(0);
-	    continue;
-	}
-	offset = start;		/* offset from segment start */
-	segnum = rd_info[target].index;	/* we want to know our starting index nr. */
-	debug("RD: request index = %d\n", segnum);
-	while (offset > rd_segment[segnum].seg_size) {
-	    offset -= rd_segment[segnum].seg_size;	/* recalculate offset */
-	    segnum = rd_segment[segnum].next;	/* point to next segment in linked list */
-	}
-	debug("RD: request entry = %d, segment = 0x%x, offset = %d (%x %x)\n",
-	     segnum, rd_segment[segnum].segment, offset, CURRENT->rq_seg,
-	     buff);
-	if (CURRENT->rq_cmd == WRITE) {
-	    debug("RD: request writing to %ld\n", (long) start);
-	    fmemcpyw((byte_t *) (offset * SECTOR_SIZE), rd_segment[segnum].segment,
-			buff, CURRENT->rq_seg, 1024/2);
-	}
-	if (CURRENT->rq_cmd == READ) {
-	    debug("RD_REQUEST reading from %ld\n", start);
-	    fmemcpyw(buff, CURRENT->rq_seg,
-			(byte_t *) (offset * SECTOR_SIZE), rd_segment[segnum].segment, 1024/2);
-	}
-	end_request(1);
-    }
-}
-
-#endif

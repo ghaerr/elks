@@ -391,12 +391,15 @@ void read_block(unsigned int nr, char * addr)
 		printf("'\n");
 		memset(addr,0,BLOCK_SIZE);
 		errors_uncorrected = 1;
-	} else if (BLOCK_SIZE != read(IN, addr, BLOCK_SIZE)) {
-		printf("Read error: bad block in file '");
-		print_current_name();
-		printf("'\n");
-		memset(addr,0,BLOCK_SIZE);
-		errors_uncorrected = 1;
+	} else {
+		int n = read(IN, addr, BLOCK_SIZE);
+		if (n != BLOCK_SIZE) {
+			printf("Read error: bad block %d error %d in file '", nr, n);
+			print_current_name();
+			printf("'\n");
+			memset(addr,0,BLOCK_SIZE);
+			errors_uncorrected = 1;
+		}
 	}
 	for (i = 0; i < 16; i++) {
 		printd("%x ", addr[i]);

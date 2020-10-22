@@ -87,7 +87,7 @@ fmemsetb:
 	rep
 	stosw
 1:	mov    %bx,%cx        // then possibly final byte
-        and    $1,%cx
+	and    $1,%cx
 	jz     2f
 	stosb
 2:	pop    %es

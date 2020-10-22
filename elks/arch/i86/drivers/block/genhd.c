@@ -37,8 +37,6 @@ int boot_partition = 0;		/* MBR boot partition, if any*/
 extern int blk_size[];
 #endif
 
-extern void rd_load();
-
 #ifdef CONFIG_BLK_DEV_BHD
 
 static unsigned short current_minor;

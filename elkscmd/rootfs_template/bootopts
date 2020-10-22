@@ -1,5 +1,5 @@
 ##
-#console=ttyS0 net=eth 3 # condensed
+#console=ttyS0 3 # condensed
 #init=/bin/init 3	# multiuser serial
 #init=/bin/sh		# singleuser shell
 #console=ttyS0		# serial console

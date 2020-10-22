@@ -34,9 +34,8 @@ devices:
 ##############################################################################
 # RAM disks.
 
-	$(MKDEV) /dev/ram0	b 1 0
-	$(MKDEV) /dev/ramdisk	b 1 1
-#	$(MKDEV) /dev/ram	b 1 0 8
+	$(MKDEV) /dev/ramdisk	b 1 0
+#	$(MKDEV) /dev/ram	b 1 0 2
 #	$MKSET   0 7  $(MKDEV) /dev/ram b 1
 
 ##############################################################################

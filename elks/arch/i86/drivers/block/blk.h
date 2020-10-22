@@ -73,9 +73,6 @@ extern struct wait_queue *wait_for_request;
 
 extern void resetup_one_dev();
 
-extern void rd_load();
-extern void rd_init();
-
 #ifdef MAJOR_NR
 
 /*
