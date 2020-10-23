@@ -307,7 +307,7 @@ int main(int argc, char ** argv)
 	strcpy(tmp+2,".badblocks");
 	DEV = open(device_name,O_RDWR );
 	if (DEV<0)
-		die("unable to open %s");
+		die("unable to open device");
 	if (fstat(DEV,&statbuf)<0)
 		die("unable to stat %s");
 	//else if (statbuf.st_rdev == 0x0300 || statbuf.st_rdev == 0x0340)

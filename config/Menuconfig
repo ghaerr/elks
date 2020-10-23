@@ -575,8 +575,50 @@ function l_int () {
 #
 function l_hex () {
     while true ; do
-	if $DIALOG --title "$1" --inputbox "$inputbox_instructions_hex" \
-		   --backtitle "$backtitle" 10 75 "$4" 2>MCdialog.out
+	if $DIALOG --title "$1" --backtitle "$backtitle" \
+		--inputbox "$inputbox_instructions_hex" \
+		10 75 "$4" 2>MCdialog.out
+	then
+	    answer="`cat MCdialog.out`"
+	    answer="${answer:-$3}"
+	    # Semantics of + and ? in GNU expr changed, so we avoid them:
+	   if expr "$answer" : '0$' '|' "$answer" : '[0-9a-fA-f[0-9a-fA-FxX]*$' '|' "$answer" : '-[1-9][0-9]*$' >/dev/null
+	    then
+		# Ugly but effective
+		if [ ! -z "$5" ]
+		  then if [ "$answer" -lt $5 ]
+		    then ${DIALOG} --backtitle "$backtitle" \
+			--infobox "Entry out of range." 3 43
+		    sleep 2; break
+		    else if [ ! -z "$6" ]
+		      then if [ "$answer" -gt $6 ]
+		        then ${DIALOG} --backtitle "$backtitle" \
+			    --infobox "Entry out of range." 3 43
+			sleep 2; break
+		      fi
+		    fi
+		  fi
+		fi
+		# End the ugly stuff
+		eval $2="$answer"
+	    else
+		eval $2="$3"
+		echo -en "\007"
+		${DIALOG} --backtitle "$backtitle" \
+			--infobox "You have made an invalid entry." 3 43
+		sleep 2
+	    fi
+	    break
+	fi
+	help "$2" "$1"
+    done
+}
+
+function l_hex_broken () {
+    while true ; do
+	if $DIALOG --title "$1" --backtitle "$backtitle" \
+		--inputbox "$inputbox_instructions_hex" \
+		10 75 "$4" 2>MCdialog.out
 	then
 	    answer="`cat MCdialog.out`"
 	    answer="${answer:-$3}"

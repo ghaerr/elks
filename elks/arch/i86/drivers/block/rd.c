@@ -71,7 +71,7 @@ static int rd_open(struct inode *inode, struct file *filp)
     int target = DEVICE_NR(inode->i_rdev);
 
     debug("RD: open ram%d\n", target);
-    if (!rd_initialised || target >= MAX_DRIVES)
+    if (!rd_initialised || target >= MAX_DRIVES || !drive_info[target].valid)
 	return -ENXIO;
 
     inode->i_size = (long)drive_info[target].size << 9;
