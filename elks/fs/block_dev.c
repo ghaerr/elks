@@ -52,7 +52,7 @@ size_t block_read(struct inode *inode, register struct file *filp,
     /* Amount we can do I/O over */
     pos = ((loff_t)inode->i_size) - filp->f_pos;
     if (pos <= 0) {
-	debug("GENREAD: EOF reached.\n");
+	debug("GENREAD: EOF reached size %ld pos %ld.\n", inode->i_size, filp->f_pos);
 	goto mfread;		/* EOF */
     }
     if ((loff_t)count > pos) count = (size_t)pos;

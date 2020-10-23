@@ -167,6 +167,9 @@ CONFIG_PIPE=y
 # CONFIG_BLK_DEV_FD is not set
 # CONFIG_BLK_DEV_HD is not set
 # CONFIG_DMA is not set
+CONFIG_BLK_DEV_RAM=y
+CONFIG_RAMDISK_SEGMENT=0
+CONFIG_RAMDISK_SECTORS=128
 
 #
 # Additional block devices

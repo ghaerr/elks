@@ -25,11 +25,6 @@ static int ssd_ioctl(inode, file, cmd, arg);
 /* test variable */
 int test_var = 0;
 
-void rd_load(void)
-{
-/* Do nothing */
-}
-
 static struct file_operations ssd_fops = {
     NULL,			/* lseek */
     block_read,			/* read */

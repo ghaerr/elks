@@ -2,6 +2,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
 #include <linuxmt/rd.h>
 
 #define MAX_SIZE 640 /* 1 KB blocks */
@@ -10,12 +12,11 @@ int main(argc, argv)
 int argc;
 char **argv;
 {
-	int i;
 	int fd;
 	int size = 0;
 
 	if ((argc != 4) && (argc != 3)) {
-		fprintf(stderr, "usage: ramdisk /dev/ram? {make | kill} [size in 1 KB blocks]\n");
+		fprintf(stderr, "usage: ramdisk /dev/rd? {make | kill} [size in 1 KB blocks]\n");
 		exit(1);
 	}
 

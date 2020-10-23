@@ -526,7 +526,7 @@ int INITPROC bioshd_init(void)
     int count;
 
 #ifndef CONFIG_SMALL_KERNEL
-    printk("hd Driver Copyright (C) 1994 Yggdrasil Computing, Inc.\n"
+    printk("bioshd: Driver Copyright (C) 1994 Yggdrasil Computing, Inc.\n"
 	   "Extended and modified for Linux 8086 by Alan Cox.\n");
 #endif
 
@@ -609,7 +609,7 @@ int INITPROC bioshd_init(void)
 	}
 	bioshd_initialized = 1;
     } else {
-	printk("bioshd: unable to register\n");
+	printk("bioshd: unable to register %d\n", MAJOR_NR);
     }
     return count;
 }

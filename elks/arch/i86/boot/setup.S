@@ -64,7 +64,7 @@
 !	0x24:	mask model, 1 byte
 !	0x25:	mask revision, 1 byte
 !	0x26:	capability flag, 4 bytes
-!	0x2a:	size of the base memory, in kytes, 2 bytes
+!	0x2a:	size of the base memory, in kbytes, 2 bytes
 !	0x30:	zero terminated string containing the processor's name, 16 bytes
 !	0x40:	unused (was FPU name), 16 bytes
 !	0x50:	zero terminated string containing the cpuid, 13 bytes

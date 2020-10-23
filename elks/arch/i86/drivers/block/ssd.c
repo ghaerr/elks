@@ -22,11 +22,6 @@ static int ssd_open(inode, filp);
 static int ssd_release(inode, filp);
 static int ssd_ioctl(inode, file, cmd, arg);
 
-void rd_load(void)
-{
-/* Do nothing */
-}
-
 static struct file_operations ssd_fops = {
     NULL,			/* lseek */
     block_read,			/* read */

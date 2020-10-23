@@ -43,10 +43,6 @@ void INITPROC device_init(void)
     for (p = gendisk_head; p; p = p->next)
 	setup_dev(p);
 
-#ifdef CONFIG_BLK_DEV_RAM
-    rd_load();
-#endif
-
 #ifdef CONFIG_BLK_DEV_BIOS
     /*
      * The bootloader may have passed us a ROOT_DEV which is actually a BIOS
