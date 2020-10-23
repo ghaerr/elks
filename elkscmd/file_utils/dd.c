@@ -3,7 +3,7 @@
  * Permission is granted to use, distribute, or modify this source,
  * provided that this copyright notice remains intact.
  *
- * The "dd" built-in command.
+ * The "dd" command - adapted from busybox/busyelks.
  */
 
 #include "futils.h"
@@ -183,13 +183,15 @@ int main(int argc, char **argv)
 	}
 
 	if (infile == NULL) {
-		write(STDERR_FILENO, "No input file specified\n", 24);
-		goto usage;
+		//write(STDERR_FILENO, "No input file specified\n", 24);
+		//goto usage;
+		infile = "-";
 	}
 
 	if (outfile == NULL) {
-		write(STDERR_FILENO, "No output file specified\n", 25);
-		goto usage;
+		//write(STDERR_FILENO, "No output file specified\n", 25);
+		//goto usage;
+		outfile = "-";
 	}
 
 	buf = localbuf;
@@ -201,19 +203,27 @@ int main(int argc, char **argv)
 		}
 	}
 
-	infd = open(infile, 0);
-	if (infd < 0) {
-		perror(infile);
-		if (buf != localbuf) free(buf);
-		goto usage;
+	if (!strcmp(infile, "-")) 
+		infd = 0;
+	else {
+		infd = open(infile, 0);
+		if (infd < 0) {
+			perror(infile);
+			if (buf != localbuf) free(buf);
+			goto usage;
+		}
 	}
 
-	outfd = creat(outfile, 0666);
-	if (outfd < 0) {
-		perror(outfile);
-		close(infd);
-		if (buf != localbuf) free(buf);
-		goto cleanup2;
+	if (!strcmp(outfile, "-"))
+		outfd = 1;
+	else {
+		outfd = creat(outfile, 0666);
+		if (outfd < 0) {
+			perror(outfile);
+			close(infd);
+			if (buf != localbuf) free(buf);
+			goto cleanup2;
+		}
 	}
 
 	if (skipval) {
