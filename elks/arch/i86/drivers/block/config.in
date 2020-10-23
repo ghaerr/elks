@@ -51,7 +51,7 @@ mainmenu_option next_comment
     bool 'RAM disk support'			CONFIG_BLK_DEV_RAM	y
     if [ "$CONFIG_BLK_DEV_RAM" == "y" ]; then
 	hex 'Preload RAM disk segment address' CONFIG_RAMDISK_SEGMENT 0
-	int 'Preload RAM disk sectors (128 max)' CONFIG_RAMDISK_SECTORS 128
+	int 'Preload RAM disk sectors' CONFIG_RAMDISK_SECTORS 128
     fi
 
     comment 'Block device options'
