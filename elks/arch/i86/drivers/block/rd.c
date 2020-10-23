@@ -39,8 +39,8 @@ static struct {			/* ramdrive information*/
     int valid;			/* ramdisk data valid flag*/
     rd_sector_t size;		/* ramdisk size in 512 byte sectors*/
 } drive_info[MAX_DRIVES] = {
-#ifdef CONFIG_PRELOAD_RAMDISK
-    {0, BUSY, 256},
+#if CONFIG_RAMDISK_SEGMENT
+    {0, 1, CONFIG_RAMDISK_SECTORS},
 #endif
 };
 
@@ -50,9 +50,8 @@ static struct {			/* memory segments, max size ALLOC_SIZE paras (64k)*/
     int next;			/* next segment*/
     rd_sector_t sectors;	/* segment size in sectors*/
 } rd_segment[MAX_SEGMENTS] = {
-#ifdef CONFIG_PRELOAD_RAMDISK
-    {0x6000, 0,  1, 128,},	/* preloaded ramdisk is 128k at seg 6000:0000*/
-    {0x7000, 0, -1, 128,},
+#if CONFIG_RAMDISK_SEGMENT	/* preloaded ramdisk*/
+    {CONFIG_RAMDISK_SEGMENT, 0,  -1, CONFIG_RAMDISK_SECTORS},
 #else
     {0,      0, -1, 0,},
     {0,      0, -1, 0,},
@@ -281,6 +280,10 @@ void rd_init(void)
     if (register_blkdev(MAJOR_NR, DEVICE_NAME, &rd_fops) == 0) {
 	blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
 	rd_initialised = 1;
+#if CONFIG_RAMDISK_SEGMENT
+	printk("rd: %dK ramdisk at %x:0000\n",
+	    drive_info[0].size >> 1, rd_segment[0].seg);
+#endif
     } else
 	printk("rd: unable to register %d\n", MAJOR_NR);
 }

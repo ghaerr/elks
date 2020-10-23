@@ -1,8 +1,8 @@
+#include <linuxmt/config.h>
 #include <linuxmt/types.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/wait.h>
 #include <linuxmt/sched.h>
-#include <linuxmt/config.h>
 #include <linuxmt/fs.h> /* for ROOT_DEV */
 #include <linuxmt/heap.h>
 #include <linuxmt/memory.h>
@@ -38,10 +38,17 @@ void INITPROC setup_arch(seg_t *start, seg_t *end)
 	/* *start = kernel_ds + (((unsigned int) (_endbss+15)) >> 4); */
 	*start = kernel_ds + 0x1000;
 
-#ifndef CONFIG_ARCH_SIBO
-    *end = (seg_t)((setupw(0x2a) << 6) - RAM_REDUCE);
+#ifdef CONFIG_ARCH_SIBO
+	*end = basmem << 6;
 #else
-    *end = (basmem)<<6;
+	*end = (seg_t)setupw(0x2a) << 6;
+#endif
+
+#if defined(CONFIG_RAMDISK_SEGMENT) && (CONFIG_RAMDISK_SEGMENT > 0)
+	if (CONFIG_RAMDISK_SEGMENT <= *end) {
+		/* reduce top of memory by size of ram disk*/
+		*end -= CONFIG_RAMDISK_SECTORS << 5;
+	}
 #endif
 
 	/* Heap allocations at even addresses, helps debugging*/
@@ -52,9 +59,9 @@ void INITPROC setup_arch(seg_t *start, seg_t *end)
 	heap_add ((void *)endbss, 1 + ~endbss);
 
 	/* Misc */
-    ROOT_DEV = setupw(0x1fc);
+	ROOT_DEV = setupw(0x1fc);
 
-    arch_cpu = setupb(0x20);
+	arch_cpu = setupb(0x20);
 
 }
 

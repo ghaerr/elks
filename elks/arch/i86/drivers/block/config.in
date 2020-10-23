@@ -48,7 +48,11 @@ mainmenu_option next_comment
     fi
 
     comment 'Additional block devices'
-    bool 'RAM disk support'			CONFIG_BLK_DEV_RAM	n
+    bool 'RAM disk support'			CONFIG_BLK_DEV_RAM	y
+    if [ "$CONFIG_BLK_DEV_RAM" == "y" ]; then
+	hex 'Preload RAM disk segment address' CONFIG_RAMDISK_SEGMENT 0
+	int 'Preload RAM disk sectors (128 max)' CONFIG_RAMDISK_SECTORS 128
+    fi
 
     comment 'Block device options'
     bool 'Character access to block devices'	CONFIG_BLK_DEV_CHAR	y

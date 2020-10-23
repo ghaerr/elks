@@ -72,10 +72,9 @@ void INITPROC mm_stat(seg_t start, seg_t end)
 #ifdef CONFIG_FARTEXT_KERNEL
     printk("ftext %x:0000, ", (unsigned)((long)kernel_init >> 16));
 #endif
-    printk("data %x:0000, %uK for user processes\n",
-	   kernel_ds, (int) ((end - start) >> 6));
+    printk("data %x:0000, top %x, %uK free\n",
+	   kernel_ds, end, (int) ((end - start) >> 6));
 
     if (setupb(0x1ff) == 0xAA && arch_cpu > 5)
 	printk("ps2: PS/2 pointing device detected\n");
-
 }

@@ -16,7 +16,7 @@ char **argv;
 	int size = 0;
 
 	if ((argc != 4) && (argc != 3)) {
-		fprintf(stderr, "usage: ramdisk /dev/ram? {make | kill} [size in 1 KB blocks]\n");
+		fprintf(stderr, "usage: ramdisk /dev/rd? {make | kill} [size in 1 KB blocks]\n");
 		exit(1);
 	}
 
