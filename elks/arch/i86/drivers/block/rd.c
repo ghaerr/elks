@@ -40,7 +40,7 @@ static struct {			/* ramdrive information*/
     rd_sector_t size;		/* ramdisk size in 512 byte sectors*/
 } drive_info[MAX_DRIVES] = {
 #if CONFIG_RAMDISK_SEGMENT
-    {0, 1, CONFIG_RAMDISK_SECTORS},
+    {0, 1, CONFIG_RAMDISK_SECTORS}
 #endif
 };
 
@@ -54,8 +54,8 @@ static struct {			/* memory segments, max size ALLOC_SIZE paras (64k)*/
     {CONFIG_RAMDISK_SEGMENT, 0,  -1, CONFIG_RAMDISK_SECTORS},
 #else
     {0,      0, -1, 0,},
-    {0,      0, -1, 0,},
 #endif
+    {0,      0, -1, 0,},
     {0,      0, -1, 0,},
     {0,      0, -1, 0,},
     {0,      0, -1, 0,},
@@ -283,7 +283,27 @@ void rd_init(void)
 #if CONFIG_RAMDISK_SEGMENT
 	printk("rd: %dK ramdisk at %x:0000\n",
 	    drive_info[0].size >> 1, rd_segment[0].seg);
+
+#if (CONFIG_RAMDISK_SECTORS > 128)
+	/* build segment array for preloaded ramdisks > 64k*/
+	int i = 0;
+	seg_t seg = rd_segment[0].seg;
+	rd_sector_t sectors = rd_segment[0].sectors;
+	while (sectors > 128 && i < MAX_SEGMENTS-1) {
+	    rd_segment[i].sectors = 128;	/* 64k*/
+	    rd_segment[i].next = i + 1;
+	    i++;
+	    rd_segment[i].seg = (seg += 0x1000);/* 64k in paragraphs*/
+	    rd_segment[i].sectors = (sectors -= 128);
+	    rd_segment[i].next = -1;
+	}
 #endif
+#if DEBUG
+	for (i=0; i < MAX_SEGMENTS; i++)
+		printk("%d: seg %x next %d sectors %d\n",
+			i, rd_segment[i].seg, rd_segment[i].next, rd_segment[i].sectors);
+#endif
+#endif /* CONFIG_RAMDISK_SEGMENT*/
     } else
 	printk("rd: unable to register %d\n", MAJOR_NR);
 }
