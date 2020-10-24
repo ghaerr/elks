@@ -217,21 +217,31 @@ static int INITPROC msdos_partition(struct gendisk *hd,
      */
     if (*(unsigned short *) (bh->b_data + 0x1fe) != 0xAA55) {
 out:
-	printk(" no mbr");
+	printk(" no mbr,");
 	unmap_brelse(bh);
 	return 0;
     }
+
+    /* verify MBR by checking for four valid partition entries*/
+    i = 0;
     p = (struct partition *) (bh->b_data + 0x1be);
+    for ( ; p < (struct partition *) (bh->b_data + 0x1fe); p++) {
+	/* if invalid partition entry, assume no MBR*/
+	if (p->boot_ind != 0x00 && p->boot_ind != 0x80)
+	    goto out;
+	i += p->boot_ind;
+    }
+    /* if all partitions set inactive, check possible ELKS EPB signature 'eL'*/
+    if (i == 0 && (*(unsigned short *) (bh->b_data + 0x1fc)) == 0x4c65)
+	goto out;
 
     /* first "extra" minor (for extended partitions) */
+    p = (struct partition *) (bh->b_data + 0x1be);
     current_minor += 4;
     for (i = 1; i <= 4; minor++, i++, p++) {
 	hdp = &hd->part[minor];
 	if (!NR_SECTS(p))
 	    continue;
-	/* if invalid partition entry, assume no MBR*/
-	if (p->boot_ind != 0x00 && p->boot_ind != 0x80)
-	    goto out;
 	add_partition(hd, minor, first_sector + START_SECT(p), NR_SECTS(p));
 	if (is_extended_partition(p)) {
 	    printk(" <");
