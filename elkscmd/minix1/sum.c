@@ -15,10 +15,11 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 /*#include <minix/minlib.h>*/
 #include <stdio.h>
 
-#define BUFFER_SIZE (512)
+#define BUFFER_SIZE 512
 
 int rc = 0;
 
@@ -27,16 +28,17 @@ char *defargv[] = {"-", 0};
 int main();
 void error();
 void sum();
-void putd();
+//void putd();
 
 void error(char *s, char *f)
 {
 
-  write(STDERR_FILENO,"sum: ", 5);
-  write(STDERR_FILENO,s, strlen(s));
+  fprintf(stderr, "sum: ");
+  fprintf(stderr, s);
 
-  if (f) write(STDERR_FILENO, f, strlen(f));
-  write(STDERR_FILENO, "\n", 1);
+  if (f) 
+	fprintf(stderr, f);
+  fprintf(stderr, "\n");
 }
 
 void sum(int fd, char *fname)
@@ -53,8 +55,8 @@ void sum(int fd, char *fname)
 		tmp = buf[i] & 0377;
 		crc += tmp;
 		crc &= 0xffff;
-		size++;
 	}
+	size++;
   }
 
   if (n < 0) {
@@ -65,33 +67,10 @@ void sum(int fd, char *fname)
 	rc = 1;
 	return;
   }
-  putd(crc, 5, 1);
-  blks = (size + (long) BUFFER_SIZE - 1L) / (long) BUFFER_SIZE;
-  putd(blks, 6, 0);
+  printf("%05u %6ld", crc, size);
   if (fname) printf(" %s", fname);
   printf("\n");
 }
-
-void putd(int number, int fw, int zeros)
-{
-/* Put a decimal number, in a field width, to stdout. */
-
-  char buf[10];
-  int n;
-  unsigned num;
-
-  num = (unsigned) number;
-  for (n = 0; n < fw; n++) {
-	if (num || n == 0) {
-		buf[fw - n - 1] = '0' + num % 10;
-		num /= 10;
-	} else
-		buf[fw - n - 1] = zeros ? '0' : ' ';
-  }
-  buf[fw] = 0;
-  printf("%s", buf);
-}
-
 
 int main(int argc, char **argv)
 {
