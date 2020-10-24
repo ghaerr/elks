@@ -22,7 +22,6 @@
 #define	PAR_COUNT	4
 #define	PAR_SEEK	5
 #define	PAR_SKIP	6
-#define DEFBUF		10 * BUFSIZ
 
 
 struct param {
@@ -42,7 +41,7 @@ static struct param params[] = {
 
 
 /* Fixed buffer */
-static char localbuf[DEFBUF];		/* use disk block size for efficiency*/
+static char localbuf[BUFSIZ];		/* use disk block size for efficiency*/
 
 
 /*
@@ -248,9 +247,12 @@ int main(int argc, char **argv)
 	}
 
 	/* If count is specified, only copy that many blocks */
-	if (count > 0) count *= blocksize;
-	else if (count < 0) count = 0x7fffffff;
-	else goto cleanup;	/* exit immediately if count == 0 */
+	if (count > 0) 
+		count *= blocksize;
+	else 
+		if (count < 0) count = 0x7fffffff;
+	else 
+		goto cleanup;	/* exit immediately if count == 0 */
 
 	while ((count > intotal) && (incc = read(infd, buf, blocksize)) > 0) {
 		intotal += incc;

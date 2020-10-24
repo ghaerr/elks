@@ -33,11 +33,12 @@ void sum();
 void error(char *s, char *f)
 {
 
-  write(STDERR_FILENO,"sum: ", 5);
-  write(STDERR_FILENO,s, strlen(s));
+  fprintf(stderr, "sum: ");
+  fprintf(stderr, s);
 
-  if (f) write(STDERR_FILENO, f, strlen(f));
-  write(STDERR_FILENO, "\n", 1);
+  if (f) 
+	fprintf(stderr, f);
+  fprintf(stderr, "\n");
 }
 
 void sum(int fd, char *fname)
@@ -67,34 +68,9 @@ void sum(int fd, char *fname)
 	return;
   }
   printf("%05u %6ld", crc, size);
-  //putd(crc, 5, 1);
-  //blks = (size + (long) BUFFER_SIZE - 1L) / (long) BUFFER_SIZE;
-  //putd(blks, 6, 0);
   if (fname) printf(" %s", fname);
   printf("\n");
 }
-#if 0
-void putd(int number, int fw, int zeros)
-{
-/* Put a decimal number, in a field width, to stdout. */
-
-  char buf[10];
-  int n;
-  unsigned num;
-
-  num = (unsigned) number;
-  for (n = 0; n < fw; n++) {
-	if (num || n == 0) {
-		buf[fw - n - 1] = '0' + num % 10;
-		num /= 10;
-	} else
-		buf[fw - n - 1] = zeros ? '0' : ' ';
-  }
-  buf[fw] = 0;
-  printf("%s", buf);
-}
-#endif
-
 
 int main(int argc, char **argv)
 {

@@ -38,7 +38,7 @@ df: df.o
 	$(LD) $(LDFLAGS) -o df df.o $(LDLIBS)
 
 dd: dd.o
-	$(LD) $(LDFLAGS) -o dd dd.o $(LDLIBS)
+	$(LD) $(LDFLAGS) -maout-heap=12288 -o dd dd.o $(LDLIBS)
 
 grep: grep.o
 	$(LD) $(LDFLAGS) -o grep grep.o $(LDLIBS)
