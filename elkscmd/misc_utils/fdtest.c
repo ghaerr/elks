@@ -60,7 +60,7 @@ int main(int ac, char **av)
 	head = 0;		/* 0-1*/
 	sector = 1;		/* 1-18 on 1.44M floppies*/
 
-	/* dma start/end pages must be equal to ensure on 64k DMA boundary for INT 13h*/
+	/* dma start/end pages must be equal to ensure I/O within 64k DMA boundary for INT 13h*/
 	start_dma_page = (_FP_SEG(kernel_buf) + ((__u16) kernel_buf >> 4)) >> 12;
 	end_dma_page = (_FP_SEG(kernel_buf) + ((__u16) (kernel_buf + MAX * 512 - 1) >> 4)) >> 12;
 	normalized_seg = (((__u32)_FP_SEG(kernel_buf) + (_FP_OFF(kernel_buf) >> 4)) << 16) +
