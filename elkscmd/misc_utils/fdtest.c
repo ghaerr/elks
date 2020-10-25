@@ -49,6 +49,8 @@ void read_disk(unsigned short drive, unsigned short cylinder, unsigned short hea
 int main(int ac, char **av)
 {
 	unsigned short drive, cylinder, head, sector;
+	unsigned short start_dma_page, end_dma_page;
+	unsigned long normalized_seg;
 	int i;
 	time_t t;
 
@@ -57,6 +59,15 @@ int main(int ac, char **av)
 	cylinder = 3;		/* 1-79*/
 	head = 0;		/* 0-1*/
 	sector = 1;		/* 1-18 on 1.44M floppies*/
+
+	/* dma start/end pages must be equal to ensure on 64k DMA boundary for INT 13h*/
+	start_dma_page = (_FP_SEG(kernel_buf) + ((__u16) kernel_buf >> 4)) >> 12;
+	end_dma_page = (_FP_SEG(kernel_buf) + ((__u16) (kernel_buf + MAX * 512 - 1) >> 4)) >> 12;
+	normalized_seg = (((__u32)_FP_SEG(kernel_buf) + (_FP_OFF(kernel_buf) >> 4)) << 16) +
+		(_FP_OFF(kernel_buf) & 15);
+	printf("dma start page %x, dma end page %x, buffer at %x:%x - ",
+		start_dma_page, end_dma_page, _FP_SEG(normalized_seg), _FP_OFF(normalized_seg));
+	printf(start_dma_page == end_dma_page? "OK\n": "ERROR\n");
 
 	printf("Reading %d sectors individually\n", MAX);
 	t = time(NULL);
