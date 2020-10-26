@@ -175,8 +175,8 @@ static int rd_ioctl(register struct inode *inode, struct file *file,
 		       j, rd_segment[j].sectors, size);
 
 		debug("RD: fmemsetw(0, 0x%x, 0, 0x%x)\n",
-			rd_segment[j].seg, (word_t) (size >> 1));
-		fmemsetw(0, rd_segment[j].seg, 0, (word_t) (size >> 1));
+			rd_segment[j].seg, (size_t) (size >> 1));
+		fmemsetw(0, rd_segment[j].seg, 0, (size_t) (size >> 1));
 
 		if (k != -1)
 		    rd_segment[k].next = j;	/* set link to next index */
@@ -245,7 +245,7 @@ static void do_rd_request(void)
 	debug("entry %d, seg %x, offset %d\n", index, rd_segment[index].seg, offset);
 
 	if (CURRENT->rq_cmd == WRITE) {
-	    fmemcpyw((byte_t *) (offset * SECTOR_SIZE), rd_segment[index].seg,
+	    fmemcpyw((char *) (offset * SECTOR_SIZE), rd_segment[index].seg,
 		buff, CURRENT->rq_seg, 1024/2);
 	} else {
 	    fmemcpyw(buff, CURRENT->rq_seg,

@@ -412,7 +412,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	: currentp->t_endseg) - slen;
     currentp->t_begstack &= ~1;		/* force even stack pointer and argv/envp*/
     currentp->t_regs.sp = (__u16)currentp->t_begstack;
-    fmemcpyb((byte_t *)currentp->t_begstack, seg_data->base, (byte_t *)sptr, ds, (word_t) slen);
+    fmemcpyb((char *)currentp->t_begstack, seg_data->base, sptr, ds, slen);
     currentp->t_minstack = stack;
 
     /* From this point, the old code and data segments are not needed anymore */
@@ -429,7 +429,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     currentp->t_regs.es = currentp->t_regs.ss = seg_data->base;
 
     /* Wipe the BSS */
-    fmemsetb((seg_t)(size_t)mh.dseg + base_data, seg_data->base, 0, (word_t)(size_t)mh.bseg);
+    fmemsetb((char *)(size_t)mh.dseg + base_data, seg_data->base, 0, (size_t)mh.bseg);
     {
 	register int i = 0;
 

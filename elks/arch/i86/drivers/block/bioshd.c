@@ -767,7 +767,7 @@ static void do_bioshd_request(void)
 		    out_ax = BD_AX;
 		    reset_bioshd(drive); /* controller should be reset upon error detection */
 		} else if (need_dma_seg && req->rq_cmd == READ)
-		    fmemcpyw(buff, seg, NULL, DMASEG, (word_t)(this_pass << 8));
+		    fmemcpyw(buff, seg, NULL, DMASEG, this_pass << 8);
 
 		dma_avail = 1;
 		wake_up(&dma_wait);

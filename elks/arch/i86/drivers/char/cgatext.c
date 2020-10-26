@@ -55,10 +55,7 @@ cgatext_read(struct inode *inode, struct file *f, char *data, size_t len)
 
   if(len)
   {
-    fmemcpyb
-      ((byte_t *)data, current->t_regs.ds,
-      (byte_t *)f->f_pos, (seg_t)cgatext_mem_SEG,
-      (word_t)len);
+    fmemcpyb(data, current->t_regs.ds, (char *)f->f_pos, cgatext_mem_SEG, len);
 
     f->f_pos += len;
   }
@@ -73,10 +70,7 @@ cgatext_write(struct inode *inode, register struct file *f, char *data, size_t l
 
   if(len)
   {
-    fmemcpyb(
-      (byte_t *)f->f_pos, (seg_t)cgatext_mem_SEG,
-      (byte_t *)data, current->t_regs.ds,
-      (word_t)len);
+    fmemcpyb((char *)f->f_pos, cgatext_mem_SEG, data, current->t_regs.ds, len);
 
     f->f_pos += len;
   }

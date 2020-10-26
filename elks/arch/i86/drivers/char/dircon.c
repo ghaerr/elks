@@ -133,8 +133,7 @@ static void ScrollUp(register Console * C, int y)
 
     vp = (__u16 *)((__u16)(y * Width) << 1);
     if ((unsigned int)y < MaxRow)
-	fmemcpyb((byte_t *)vp, (seg_t) C->vseg,
-		(byte_t *)(vp + Width), (seg_t) C->vseg, (MaxRow - y)*(Width << 1));
+	fmemcpyb(vp, C->vseg, vp + Width, C->vseg, (MaxRow - y) * (Width << 1));
     ClearRange(C, 0, MaxRow, MaxCol, MaxRow);
 }
 
@@ -146,8 +145,7 @@ static void ScrollDown(register Console * C, int y)
 
     vp = (__u16 *)((__u16)(yy * Width) << 1);
     while (--yy >= y) {
-	fmemcpyb((byte_t *)vp, (seg_t) C->vseg,
-		(byte_t *)(vp - Width), (seg_t) C->vseg, (Width << 1));
+	fmemcpyb(vp, C->vseg, vp - Width, C->vseg, Width << 1);
 	vp -= Width;
     }
     ClearRange(C, 0, y, MaxCol, y);
