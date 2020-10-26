@@ -81,8 +81,8 @@ size_t block_read(struct inode *inode, register struct file *filp,
 	    //memcpy_tofs(buf, bh->b_data + (((size_t)(filp->f_pos)) & (BLOCK_SIZE - 1)),
                        //chars);
 	    char *data = bh->b_data? bh->b_data: (char *)(bh->b_offset << BLOCK_SIZE_BITS);
-	    fmemcpyb((byte_t *)buf, current->t_regs.ds,
-		(byte_t *)data + (((size_t)(filp->f_pos)) & (BLOCK_SIZE - 1)), bh->b_seg, chars);
+	    fmemcpyb(buf, current->t_regs.ds,
+		data + (((size_t)(filp->f_pos)) & (BLOCK_SIZE - 1)), bh->b_seg, chars);
 	    //unmap_brelse(bh);
 	    brelse(bh);
 	} else fmemsetb((word_t) buf, current->t_regs.ds, 0, (word_t) chars);
@@ -159,8 +159,7 @@ size_t block_write(struct inode *inode, register struct file *filp,
 	//map_buffer(bh);
 	//memcpy_fromfs((bh->b_data + offset), buf, chars);
 	char *data = bh->b_data? bh->b_data: (char *)(bh->b_offset << BLOCK_SIZE_BITS);
-	fmemcpyb((byte_t *)data + offset, bh->b_seg,
-	    (byte_t *)buf, current->t_regs.ds, chars);
+	fmemcpyb(data + offset, bh->b_seg, buf, current->t_regs.ds, chars);
 	mark_buffer_uptodate(bh, 1);
 	mark_buffer_dirty(bh, 1);
 	//unmap_brelse(bh);
@@ -217,8 +216,7 @@ static int blk_rw(struct inode *inode, register struct file *filp,
 	     */
 	    //memcpy_fromfs(bh->b_data + offset, buf, chars);
 	    char *data = bh->b_data? bh->b_data: (char *)(bh->b_offset << BLOCK_SIZE_BITS);
-	    fmemcpyb((byte_t *)data + offset, bh->b_seg,
-		(byte_t *)buf, current->t_regs.ds, chars);
+	    fmemcpyb(data + offset, bh->b_seg, buf, current->t_regs.ds, chars);
 	    bh->b_uptodate = bh->b_dirty = 1;
 	    /*
 	     *      Writing: queue physical I/O
@@ -237,9 +235,7 @@ static int blk_rw(struct inode *inode, register struct file *filp,
 	     */
 	    //memcpy_tofs(buf, bh->b_data + offset, chars);
 	    char *data = bh->b_data? bh->b_data: (char *)(bh->b_offset << BLOCK_SIZE_BITS);
-	    fmemcpyb((byte_t *)buf, current->t_regs.ds,
-		(byte_t *)data + offset,
-		bh->b_seg, chars);
+	    fmemcpyb(buf, current->t_regs.ds, data + offset, bh->b_seg, chars);
 	}
 	/*
 	 *      Move on and release buffer
