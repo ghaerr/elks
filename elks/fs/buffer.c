@@ -126,9 +126,9 @@ void INITPROC buffer_init(void)
 	    //if (!seg) panic("No extbuf mem");
 	}
 	bh->b_seg = bh->b_ds = seg->base;
-	bh->b_data = (char *)0;		/* L1 buffer cache is reserved! */
 	bh->b_mapcount = 0;
-	bh->b_offset = i & 63;		/* used to compute L2 location*/
+	bh->b_data = (char *)0;		/* not in L1 cache*/
+	bh->b_L2data = (char *)((i & 63) << BLOCK_SIZE_BITS);	/* L2 location*/
 	bh->b_num = i++;
 #else
 	bh->b_data = p;
@@ -478,8 +478,7 @@ void map_buffer(register struct buffer_head *bh)
 	    debug("UNMAP: %d <- %d\n", bmap->b_num, i);
 
 	    /* Unmap/copy L1 to L2 */
-	    fmemcpyw((char *) (bmap->b_offset << BLOCK_SIZE_BITS), bmap->b_ds,
-		     bmap->b_data, kernel_ds, BLOCK_SIZE/2);
+	    fmemcpyw(bmap->b_L2data, bmap->b_ds, bmap->b_data, kernel_ds, BLOCK_SIZE/2);
 	    bmap->b_data = (char *)0;
 	    bmap->b_seg = bmap->b_ds;
 	    break;		/* success */
@@ -496,8 +495,7 @@ void map_buffer(register struct buffer_head *bh)
     L1map[i] = bh;
     bh->b_data = (char *)L1buf + (i << BLOCK_SIZE_BITS);
     if (bh->b_uptodate) {
-	fmemcpyw(bh->b_data, kernel_ds,
-		 (char *) (bh->b_offset << BLOCK_SIZE_BITS), bh->b_ds, BLOCK_SIZE/2);
+	fmemcpyw(bh->b_data, kernel_ds, bh->b_L2data, bh->b_ds, BLOCK_SIZE/2);
     }
     debug("MAP:   %d -> %d\n", bh->b_num, i);
   end_map_buffer:
@@ -531,18 +529,9 @@ void unmap_brelse(register struct buffer_head *bh)
 	__brelse(bh);
     }
 }
+
+char *buffer_data(struct buffer_head *bh)
+{
+	return (bh->b_data? bh->b_data: bh->b_L2data);
+}
 #endif /* CONFIG_FS_EXTERNAL_BUFFER*/
-
-void memcpy_buf_touser(char *buf, size_t offset, size_t len, struct buffer_head *bh)
-{
-	char *data = bh->b_data? bh->b_data: (char *)(bh->b_offset << BLOCK_SIZE_BITS);
-
-	fmemcpyb(buf, current->t_regs.ds, data + offset, bh->b_seg, len);
-}
-
-void memcpy_buf_fromuser(size_t offset, char *buf, size_t len, struct buffer_head *bh)
-{
-	char *data = bh->b_data? bh->b_data: (char *)(bh->b_offset << BLOCK_SIZE_BITS);
-
-	fmemcpyb(data + offset, bh->b_seg, buf, current->t_regs.ds, len);
-}

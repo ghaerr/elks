@@ -117,14 +117,6 @@
 #define IS_APPEND(inode) ((inode)->i_flags & S_APPEND)
 #define IS_IMMUTABLE(inode) ((inode)->i_flags & S_IMMUTABLE)
 
-#ifndef CONFIG_FS_EXTERNAL_BUFFER
-
-#define map_buffer(_a)
-#define unmap_buffer(_a)
-#define unmap_brelse(_a) brelse(_a)
-
-#endif
-
 struct buffer_head {
     char			*b_data;	/* Address if in L1 buffer area, else 0 */
     block_t			b_blocknr;
@@ -133,18 +125,17 @@ struct buffer_head {
     struct buffer_head		*b_prev_lru;
     struct wait_queue		b_wait;
     block_t			b_count;
-    seg_t			b_seg;		/* Current (L1 or L2) buffer segment*/
+    seg_t			b_seg;		/* Current (L1 or L2) buffer segment */
     char			b_lock;
     char			b_dirty;
     char			b_uptodate;
-
+    char			b_reserved;
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
-    unsigned char		b_offset;	/* Offset into L2 allocation block */
-    int				b_mapcount;	/* count of L2 buffer mapped into L1 */
-    unsigned int		b_ds;		/* L2 buffer data segment */
+    seg_t			b_ds;		/* L2 buffer data segment */
+    char			*b_L2data;	/* Offset into L2 allocation block */
+    char			b_mapcount;	/* count of L2 buffer mapped into L1 */
     unsigned char		b_num;		/* Buffer number, for debugging */
 #endif
-
 };
 
 #define BLOCK_READ	0
@@ -193,7 +184,6 @@ struct inode {
     unsigned char		i_lock;
     unsigned char		i_dirt;
     short			i_sem;
-
 #ifdef BLOAT_FS
     unsigned long int		i_blksize;
     unsigned long int		i_blocks;
@@ -230,7 +220,6 @@ struct file {
     unsigned short		f_count;
     struct inode		*f_inode;
     struct file_operations	*f_op;
-
 #ifdef BLOAT_FS
     off_t			f_reada;
     unsigned long		f_version;
@@ -249,13 +238,11 @@ struct super_block {
     struct inode		*s_covered;
     struct inode		*s_mounted;
     struct wait_queue		s_wait;
-
 #ifdef BLOAT_FS
     unsigned char		s_rd_only;
     __u32			s_magic;
     time_t			s_time;
 #endif
-
     union {
 #ifdef CONFIG_MINIX_FS
 		struct minix_sb_info minix_sb;
@@ -292,13 +279,11 @@ struct file_operations {
     int 			(*ioctl) ();
     int 			(*open) ();
     void			(*release) (struct inode *, struct file *);
-
 #ifdef BLOAT_FS
     int 			(*fsync) ();
     int 			(*check_media_change) ();
     int 			(*revalidate) ();
 #endif
-
 };
 
 struct inode_operations {
@@ -313,36 +298,27 @@ struct inode_operations {
     int 			(*mknod) ();
     int 			(*readlink) (struct inode * i, char * buf, size_t len);
     int 			(*follow_link) ();
-
 #ifdef USE_GETBLK
     struct buffer_head *	(*getblk) (struct inode *, block_t, int);
 #endif
-
     void			(*truncate) ();
-
 #ifdef BLOAT_FS
     int 			(*permission) ();
 #endif
-
 };
 
 struct super_operations {
     void			(*read_inode) ();
-
 #ifdef BLOAT_FS
     int 			(*notify_change) ();
 #endif
-
     void			(*write_inode) ();
     void			(*put_inode) ();
     void			(*put_super) ();
     void			(*write_super) ();
-
-#ifdef BLOAT_FS
+#ifdef BLOAT_FS	/* i8086 statfs goes to kernel, then user */
     void			(*statfs_kern) ();
-				/* i8086 statfs goes to kernel, then user */
 #endif
-
     int 			(*remount_fs) ();
 };
 
@@ -453,20 +429,6 @@ extern int namei(char *,struct inode **,int,int);
 
 extern int permission(struct inode *,int);
 
-#ifdef BLOAT_FS
-
-extern int get_write_access(struct inode *);
-extern void put_write_access(struct inode *);
-
-#else
-
-#define get_write_access(_a)
-#define put_write_access(_a)
-
-#endif
-
-extern __s16 link_count;
-
 extern int open_namei(char *,int,int,struct inode **,struct inode *);
 extern int do_mknod(char *,int,int,dev_t);
 extern void iput(struct inode *);
@@ -485,12 +447,6 @@ extern struct buffer_head *readbuf(struct buffer_head *);
 extern void ll_rw_blk(int,struct buffer_head *);
 extern void ll_rw_page(void);
 
-// FIXME: duplicates
-#ifdef CONFIG_FS_EXTERNAL_BUFFER
-extern void map_buffer(struct buffer_head *);
-extern void unmap_buffer(struct buffer_head *);
-extern void unmap_brelse(struct buffer_head *);
-#endif
 extern void print_bufmap_status(void);
 
 extern void put_super(kdev_t);
@@ -501,19 +457,35 @@ extern void mount_root(void);
 
 extern int char_read(struct inode *,struct file *,char *,int);
 
-#ifdef CONFIG_BLK_DEV_CHAR
+extern int fd_check(unsigned int,char *,size_t,int,struct file **);
 
-extern size_t block_read(struct inode *,struct file *,char *,size_t);
-extern size_t block_write(struct inode *,struct file *,char *,size_t);
-
+#ifdef CONFIG_FS_EXTERNAL_BUFFER
+extern void map_buffer(struct buffer_head *);
+extern void unmap_buffer(struct buffer_head *);
+extern void unmap_brelse(struct buffer_head *);
+extern char *buffer_data(struct buffer_head *);
 #else
-
-#define block_read NULL
-#define block_write NULL
-
+#define map_buffer(bh)
+#define unmap_buffer(bh)
+#define unmap_brelse(bh) brelse(bh)
+#define buffer_data(bh)  ((bh)->b_data)	/* for accessing unmapped buffer data*/
 #endif
 
-extern int fd_check(unsigned int,char *,size_t,int,struct file **);
+#ifdef CONFIG_BLK_DEV_CHAR
+extern size_t block_read(struct inode *,struct file *,char *,size_t);
+extern size_t block_write(struct inode *,struct file *,char *,size_t);
+#else
+#define block_read NULL
+#define block_write NULL
+#endif
+
+#ifdef BLOAT_FS
+extern int get_write_access(struct inode *);
+extern void put_write_access(struct inode *);
+#else
+#define get_write_access(_a)
+#define put_write_access(_a)
+#endif
 
 /*@-namechecks@*/
 
