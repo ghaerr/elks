@@ -10,11 +10,12 @@ include $(BASEDIR)/Make.rules
 
 HOSTCC = gcc
 HOST_CFLAGS = -O2
+KERNEL_LIBS = $(TOPDIR)/elks/arch/i86/lib/lib86.a
 
 ###############################################################################
 
 #TODO: fix compress uncompress zcat lpfilter disabled
-PRGS = tar miniterm ed od hd time kilo tty uuencode uudecode
+PRGS = tar miniterm ed fdtest od hd time kilo tty uuencode uudecode
 
 #PRGS_HOST=compress.host
 
@@ -22,6 +23,9 @@ all: $(PRGS) $(PRGS_HOST)
 
 ed: ed.o
 	$(LD) $(LDFLAGS) -o ed ed.o $(LDLIBS)
+
+fdtest: fdtest.o
+	$(LD) $(LDFLAGS) -o fdtest fdtest.o $(KERNEL_LIBS) $(LDLIBS)
 
 tar: tar.o
 	$(LD) $(LDFLAGS) -o tar tar.o $(LDLIBS)
