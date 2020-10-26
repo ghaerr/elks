@@ -453,7 +453,6 @@ void map_buffer(register struct buffer_head *bh)
 {
     struct buffer_head *bmap;
     int i;
-static int in = 1, out = 1;
 
     /* If buffer is already mapped, just increase the refcount and return */
     if (bh->b_data /*|| bh->b_seg != kernel_ds*/) {
@@ -478,7 +477,6 @@ static int in = 1, out = 1;
 	if (!bmap->b_mapcount) {
 	    debug("UNMAP: %d <- %d\n", bmap->b_num, i);
 
-printk("copy L1 to L2 %d\n", out++);
 	    /* Unmap/copy L1 to L2 */
 	    fmemcpyw((byte_t *) (bmap->b_offset << BLOCK_SIZE_BITS), bmap->b_ds,
 		     bmap->b_data, kernel_ds, BLOCK_SIZE/2);
@@ -498,7 +496,6 @@ printk("copy L1 to L2 %d\n", out++);
     L1map[i] = bh;
     bh->b_data = (char *)L1buf + (i << BLOCK_SIZE_BITS);
     if (bh->b_uptodate) {
-printk("copy L2 to L1 %d\n", in++);
 	fmemcpyw(bh->b_data, kernel_ds,
 		 (byte_t *) (bh->b_offset << BLOCK_SIZE_BITS), bh->b_ds, BLOCK_SIZE/2);
     }
