@@ -319,7 +319,7 @@ static void make_request(unsigned short int major, int rw,
     req->rq_cmd = (__u8) rw;
     req->rq_sector = sector;
     req->rq_seg = bh->b_seg;
-    req->rq_buffer = bh->b_data? bh->b_data: (char *)(bh->b_offset << BLOCK_SIZE_BITS);
+    req->rq_buffer = buffer_data(bh);
     req->rq_bh = bh;
 
 #ifdef BLOAT_FS

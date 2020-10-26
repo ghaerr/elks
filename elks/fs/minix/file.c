@@ -75,9 +75,9 @@ static size_t minix_file_read(struct inode *inode, register struct file *filp,
 		if (!read) read = -EIO;
 		break;
 	    }
-	    char *data = bh->b_data? bh->b_data: (char *)(bh->b_offset << BLOCK_SIZE_BITS);
 	    fmemcpyb(buf, current->t_regs.ds,
-		data + (((size_t)(filp->f_pos)) & (BLOCK_SIZE - 1)), bh->b_seg, chars);
+		buffer_data(bh) + (((size_t)(filp->f_pos)) & (BLOCK_SIZE - 1)), bh->b_seg,
+		chars);
 	    brelse(bh);
 	} else fmemsetb(buf, current->t_regs.ds, 0, chars);
 	buf += chars;
@@ -146,8 +146,7 @@ static size_t minix_file_write(struct inode *inode, register struct file *filp,
 	/*
 	 *      Alter buffer, mark dirty
 	 */
-	char *data = bh->b_data? bh->b_data: (char *)(bh->b_offset << BLOCK_SIZE_BITS);
-	fmemcpyb(data + offset, bh->b_seg, buf, current->t_regs.ds, chars);
+	fmemcpyb(buffer_data(bh) + offset, bh->b_seg, buf, current->t_regs.ds, chars);
 	mark_buffer_uptodate(bh, 1);
 	mark_buffer_dirty(bh, 1);
 	brelse(bh);
