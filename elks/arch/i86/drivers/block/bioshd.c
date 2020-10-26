@@ -712,9 +712,11 @@ static void do_bioshd_request(void)
 	    head = (unsigned int) (tmp % (sector_t)drivep->heads);
 	    cylinder = (unsigned int) (tmp / (sector_t)drivep->heads);
 	    this_pass = drivep->sectors - sector + 1;
-	/* Fix for weird BIOS behavior with 720K floppy (issue #39) */
-	    if (this_pass < 3) this_pass = 1;
-	/* End of fix */
+
+	    /* Fix for weird BIOS behavior with 720K floppy (issue #39/44) */
+	    if (this_pass == 2 && drivep->sectors == 9) this_pass = 1;
+
+	    /* limit I/O to requested size*/
 	    if ((sector_t)this_pass > count) this_pass = (unsigned int) count;
 
 	    errs = MAX_ERRS;	/* BIOS disk reads should be retried at least three times */
