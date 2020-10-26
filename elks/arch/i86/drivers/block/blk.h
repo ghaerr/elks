@@ -243,7 +243,6 @@ static void end_request(int uptodate)
     clr_irq();
     bh->b_uptodate = uptodate;
     set_irq();
-	unmap_buffer(bh);
     unlock_buffer(bh);
 
 #ifdef BLOAT_FS
