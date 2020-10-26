@@ -19,6 +19,8 @@ NANOXDEMOS += bin/nxdemo
 #NANOXDEMOS += bin/nxvgatest		# low-level vga routines test
 
 # mouse and kbd drivers
+# SLOW_CPU discards unprocessed mouse input for slow systems
+LOCALFLAGS += -DSLOW_CPU=1
 DRIVERS += drivers/mou_ser.o
 DRIVERS += drivers/kbd_tty.o
 
