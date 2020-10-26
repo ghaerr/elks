@@ -272,7 +272,7 @@ static void make_request(unsigned short int major, int rw,
 	return;
     /* Maybe the above fixes it, and maybe it doesn't boot. Life is interesting */
     lock_buffer(bh);
-    map_buffer(bh);
+    //map_buffer(bh);
 
     switch (rw) {
 
@@ -291,7 +291,7 @@ static void make_request(unsigned short int major, int rw,
 
     default:
 	debug("make_request: bad block dev cmd, must be R/W/RA/WA\n");
-	unmap_buffer(bh);
+	//unmap_buffer(bh);
 	unlock_buffer(bh);
 	return;
     }
@@ -320,8 +320,8 @@ static void make_request(unsigned short int major, int rw,
     /* fill up the request-info, and add it to the queue */
     req->rq_cmd = (__u8) rw;
     req->rq_sector = sector;
-    req->rq_buffer = bh->b_data;
     req->rq_seg = bh->b_seg;
+    req->rq_buffer = bh->b_data? bh->b_data: (char *)(bh->b_offset << BLOCK_SIZE_BITS);
     req->rq_bh = bh;
 
 #ifdef BLOAT_FS

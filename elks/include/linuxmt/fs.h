@@ -126,15 +126,14 @@
 #endif
 
 struct buffer_head {
-    char			*b_data;	/* Address in L1 buffer area */
+    char			*b_data;	/* Address if in L1 buffer area, else 0 */
     block_t			b_blocknr;
     kdev_t			b_dev;
-/*     struct buffer_head		*b_next; */
     struct buffer_head		*b_next_lru;
     struct buffer_head		*b_prev_lru;
     struct wait_queue		b_wait;
     block_t			b_count;
-    seg_t			b_seg;
+    seg_t			b_seg;		/* Current (L1 or L2) buffer segment*/
     char			b_lock;
     char			b_dirty;
     char			b_uptodate;

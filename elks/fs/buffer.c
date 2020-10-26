@@ -125,13 +125,14 @@ void INITPROC buffer_init(void)
 	    seg = seg_alloc (nbufs << (BLOCK_SIZE_BITS - 4), SEG_FLAG_EXTBUF);
 	    //if (!seg) panic("No extbuf mem");
 	}
-	bh->b_ds = seg->base;
+	bh->b_seg = bh->b_ds = seg->base;
 	bh->b_data = (char *)0;		/* L1 buffer cache is reserved! */
 	bh->b_mapcount = 0;
 	bh->b_offset = i & 63;		/* used to compute L2 location*/
 	bh->b_num = i++;
 #else
 	bh->b_data = p;
+	bh->b_seg = kernel_ds;
 	p += BLOCK_SIZE;
 #endif
 
@@ -343,7 +344,7 @@ struct buffer_head *getblk(kdev_t dev, block_t block)
  */
     bh->b_dev = dev;
     bh->b_blocknr = block;
-    bh->b_seg = kernel_ds;
+    bh->b_seg = bh->b_data? kernel_ds: bh->b_ds;
     goto return_it;
 
   found_it:
@@ -452,6 +453,7 @@ void map_buffer(register struct buffer_head *bh)
 {
     struct buffer_head *bmap;
     int i;
+static int in = 1, out = 1;
 
     /* If buffer is already mapped, just increase the refcount and return */
     if (bh->b_data /*|| bh->b_seg != kernel_ds*/) {
@@ -476,10 +478,12 @@ void map_buffer(register struct buffer_head *bh)
 	if (!bmap->b_mapcount) {
 	    debug("UNMAP: %d <- %d\n", bmap->b_num, i);
 
+printk("copy L1 to L2 %d\n", out++);
 	    /* Unmap/copy L1 to L2 */
 	    fmemcpyw((byte_t *) (bmap->b_offset << BLOCK_SIZE_BITS), bmap->b_ds,
 		     (byte_t *) bmap->b_data, kernel_ds, BLOCK_SIZE/2);
-	    bmap->b_data = 0;
+	    bmap->b_data = (char *)0;
+	    bmap->b_seg = bmap->b_ds;
 	    break;		/* success */
 	}
 	if (i == lastL1map) {
@@ -494,11 +498,13 @@ void map_buffer(register struct buffer_head *bh)
     L1map[i] = bh;
     bh->b_data = (char *)L1buf + (i << BLOCK_SIZE_BITS);
     if (bh->b_uptodate) {
+printk("copy L2 to L1 %d\n", in++);
 	fmemcpyw((byte_t *) bh->b_data, kernel_ds,
 		 (byte_t *) (bh->b_offset << BLOCK_SIZE_BITS), bh->b_ds, BLOCK_SIZE/2);
     }
     debug("MAP:   %d -> %d\n", bh->b_num, i);
   end_map_buffer:
+    bh->b_seg = kernel_ds;
     bh->b_mapcount++;
 }
 
