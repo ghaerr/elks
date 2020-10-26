@@ -267,6 +267,16 @@ MOU_Read(COORD *dx, COORD *dy, COORD *dz, BUTTON *bptr)
 			if(buttons & middle)
 				b |= MBUTTON;
 			*bptr = b;
+#if SLOW_CPU
+{
+			/* discard already-read mouse input on slow systems*/
+			int drop_bytes = (parse == ParseMS)? 3: 5;
+			while (nbytes >= drop_bytes) {
+				nbytes -= drop_bytes;
+				bp += drop_bytes;
+			}
+}
+#endif
 			return 1;
 		}
 	}
