@@ -33,7 +33,7 @@ static size_t romfs_read (struct inode * i, struct file * f,
 		}
 
 		/* ELKS trick: the destination buffer is in the current task data segment */
-		fmemcpyb ((byte_t *)buf, current->t_regs.ds, (byte_t *)(int) f->f_pos, i->u.romfs.seg, (word_t) len);
+		fmemcpyb (buf, current->t_regs.ds, (char *)(int) f->f_pos, i->u.romfs.seg, len);
 
 		f->f_pos += len;
 		count = len;
@@ -51,7 +51,7 @@ static int romfs_readdir (struct inode * i, struct file * f,
 {
 	int res;
 
-	word_t len;
+	size_t len;
 	word_t pos;
 	seg_t iseg;
 	char name [ROMFS_NAME_MAX]; /* FIXME 255 is too large for stack buffer*/
@@ -68,13 +68,13 @@ static int romfs_readdir (struct inode * i, struct file * f,
 			break;
 		}
 
-		len = (word_t) peekb (pos + 2, iseg);
+		len = peekb (pos + 2, iseg);
 		if (!len || len > ROMFS_NAME_MAX) {
 			res = 0;
 			break;
 		}
 
-		fmemcpyb ((byte_t *) name, kernel_ds, (byte_t *)pos + 3, iseg, len);
+		fmemcpyb (name, kernel_ds, (char *)pos + 3, iseg, len);
 
 		res = filldir (dirent, name, len, pos, (ino_t)peekw(pos, iseg));
 		debug("readdir %T, %ld\n", iseg, pos + 3, (ino_t)peekw(pos, iseg));
@@ -97,7 +97,7 @@ static int romfs_lookup (struct inode * dir, char * name, size_t len1,
 
 	word_t ino;
 	word_t offset;
-	word_t len2;
+	size_t len2;
 	seg_t seg_i;
 
 	while (1) {
@@ -108,18 +108,18 @@ static int romfs_lookup (struct inode * dir, char * name, size_t len1,
 
 		while (offset < dir->i_size) {
 			debug("romfs lookup %t, %T\n", name, seg_i, offset+3);
-			len2 = (word_t) peekb (offset + 2, seg_i);
+			len2 = peekb (offset + 2, seg_i);
 			/* ELKS trick: the name is in the current task data segment */
 			/* TODO: remove that trick with explicit segment in call */
-			if (len2 == (word_t) len1) {
-				if (!fmemcmpb (offset + 3, seg_i, (word_t) name, current->t_regs.ds, len2)) {
+			if (len2 == len1) {
+				if (!fmemcmpb ((char *)offset + 3, seg_i, name, current->t_regs.ds, len2)) {
 					ino = peekw (offset, seg_i);
 					break;
 				}
 			}
 
 			/* inode index + name length + name string */
-			offset += 3 + (word_t) len2;
+			offset += 3 + len2;
 		}
 
 		if (!ino) {
@@ -150,7 +150,7 @@ static int romfs_readlink (struct inode * inode, char * buf, size_t len)
 	count = inode->i_size;
 	if (count > len) count = len;
 	/* ELKS trick: the destination buffer is in the current task data segment */
-	fmemcpyb ((byte_t *)buf, current->t_regs.ds, 0, inode->u.romfs.seg, (word_t) count);
+	fmemcpyb (buf, current->t_regs.ds, 0, inode->u.romfs.seg, count);
 	iput (inode);
 	return count;
 }
@@ -264,7 +264,7 @@ static void romfs_read_inode (struct inode * i)
 		if (ino >= isb->icount) break;
 
 		off_i = isb->ssize + ino * isb->isize;
-		fmemcpyw ((byte_t *)&rim, kernel_ds, (byte_t *)off_i, CONFIG_ROMFS_BASE, (word_t) sizeof (struct romfs_inode_mem) >> 1);
+		fmemcpyw (&rim, kernel_ds, (char *)off_i, CONFIG_ROMFS_BASE, sizeof (struct romfs_inode_mem) >> 1);
 
 		i->i_size = rim.size;
 
@@ -344,13 +344,13 @@ static struct super_block * romfs_read_super (struct super_block * s, void * dat
 	while (1) {
 		lock_super (s);
 
-		if (fmemcmpw ((word_t) ROMFS_MAGIC_STR, kernel_ds, 0, CONFIG_ROMFS_BASE, ROMFS_MAGIC_LEN >> 1)) {
+		if (fmemcmpw (ROMFS_MAGIC_STR, kernel_ds, 0, CONFIG_ROMFS_BASE, ROMFS_MAGIC_LEN >> 1)) {
 			printk ("romfs: no superblock at %x:0h\n", CONFIG_ROMFS_BASE);
 			res = NULL;
 			break;
 		}
 
-		fmemcpyw ((byte_t *)&rsm, kernel_ds, 0, CONFIG_ROMFS_BASE, sizeof (struct romfs_super_mem) >> 1);
+		fmemcpyw (&rsm, kernel_ds, 0, CONFIG_ROMFS_BASE, sizeof (struct romfs_super_mem) >> 1);
 		if (rsm.ssize != sizeof (struct romfs_super_mem)) {
 			printk ("romfs: superblock size mismatch\n");
 			res = NULL;

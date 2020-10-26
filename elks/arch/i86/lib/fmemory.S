@@ -20,8 +20,8 @@
 	.global fmemcmpb
 	.global fmemcmpw
 
-// void fmemcpyb (byte_t * dst_off, seg_t dst_seg, byte_t * src_off, seg_t src_seg,
-//		word_t count)
+// void fmemcpyb (void * dst_off, seg_t dst_seg, void * src_off, seg_t src_seg,
+//		size_t count)
 
 fmemcpyb:
 	mov    %si,%ax
@@ -48,8 +48,8 @@ fmemcpyb:
 	mov    %ax,%ds
 	ret
 
-// void fmemcpyw (byte * dst_off, seg_t dst_seg, byte * src_off, seg_t src_seg,
-//		word_t count)
+// void fmemcpyw (void * dst_off, seg_t dst_seg, void * src_off, seg_t src_seg,
+//		size_t count)
 
 fmemcpyw:
 	mov    %es,%bx
@@ -69,7 +69,7 @@ fmemcpyw:
 	mov    %bx,%es
 	ret
 
-// void fmemsetb (word_t off, seg_t seg, byte_t val, word_t count)
+// void fmemsetb (void * off, seg_t seg, byte_t val, size_t count)
 // compiler pushes byte_t as word_t
 
 fmemsetb:
@@ -94,7 +94,7 @@ fmemsetb:
 	mov    %dx,%di
 	ret
 
-// void fmemsetw (word_t off, seg_t seg, word_t val, word_t count)
+// void fmemsetw (void * off, seg_t seg, word_t val, size_t count)
 
 fmemsetw:
 	mov    %es,%bx
@@ -110,8 +110,8 @@ fmemsetw:
 	mov    %bx,%es
 	ret
 
-// int fmemcmpb (word_t dst_off, seg_t dst_seg, word_t src_off, seg_t src_seg,
-//		word_t count)
+// int fmemcmpb (void * dst_off, seg_t dst_seg, void * src_off, seg_t src_seg,
+//		size_t count)
 
 fmemcmpb:
 	mov    %es,%bx
@@ -138,8 +138,8 @@ fmemcmpb_exit:
 	mov    %bx,%es
 	ret
 
-// int fmemcmpw (word_t dst_off, seg_t dst_seg, word_t src_off, seg_t src_seg,
-//		word_t count)
+// int fmemcmpw (void * dst_off, seg_t dst_seg, void * src_off, seg_t src_seg,
+//		size_t count)
 
 fmemcmpw:
 	mov    %es,%bx

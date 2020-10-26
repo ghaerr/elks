@@ -110,7 +110,7 @@ size_t full_write(struct inode *inode, struct file *filp, char *data, size_t len
 size_t zero_read(struct inode *inode, struct file *filp, char *data, size_t len)
 {
     debugmem("zero_read()\n");
-    fmemsetb((word_t)data, current->t_regs.ds, 0, (word_t) len);
+    fmemsetb(data, current->t_regs.ds, 0, len);
     filp->f_pos += len;
     return (size_t)len;
 }

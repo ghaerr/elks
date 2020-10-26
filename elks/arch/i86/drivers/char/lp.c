@@ -287,7 +287,7 @@ void lp_init(void)
     /* only ports 0, 1, 2 and 3 may exist according to RB's intlist */
     for (i = 0; i < LP_PORTS; i++) {
 	/* 8 is offset for LPT info, 2 bytes for each entry */
-	lp->io = (char *)peekw((word_t) (2 * i + 8), 0x40);
+	lp->io = (char *)peekw(2 * i + 8, 0x40);
 	/* returns 0 if port wasn't detected by BIOS at bootup */
 	if (!lp->io)
 	    break;		/* there can be no more ports */

@@ -272,8 +272,8 @@ static int wd_pack_get(char *data, size_t len)
 		} else {
 			res = rxhdr->count - sizeof(e8390_pkt_hdr);
 			if (res > len) res = len;
-			fmemcpyb((byte_t *)data, current->t_regs.ds,
-				(byte_t *)hdr_start + sizeof(e8390_pkt_hdr),
+			fmemcpyb(data, current->t_regs.ds,
+				(char *)hdr_start + sizeof(e8390_pkt_hdr),
 				WD_SHMEMSEG, res);
 		}
 		OUTB(current_rx_page - 1U, WD_8390_PORT + EN0_BOUNDARY);
@@ -316,7 +316,7 @@ static size_t wd_pack_put(char *data, size_t len)
 			len = MAX_PACKET_ETH;
 		if (len < 64U) len = 64U;  /* issue #133 */
 		fmemcpyb((byte_t *)((WD_FIRST_TX_PG - WD_START_PG) << 8U),
-			WD_SHMEMSEG, (byte_t *)data, current->t_regs.ds, len);
+			WD_SHMEMSEG, data, current->t_regs.ds, len);
 		OUTB(E8390_NODMA | E8390_PAGE0, WD_8390_PORT + E8390_CMD);
 		if (INB(WD_8390_PORT + E8390_CMD) & E8390_TRANS) {
 			printk("eth: attempted send with the tr busy.\n");

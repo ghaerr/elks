@@ -478,7 +478,7 @@ void map_buffer(register struct buffer_head *bh)
 	    debug("UNMAP: %d <- %d\n", bmap->b_num, i);
 
 	    /* Unmap/copy L1 to L2 */
-	    fmemcpyw((byte_t *) (bmap->b_offset << BLOCK_SIZE_BITS), bmap->b_ds,
+	    fmemcpyw((char *) (bmap->b_offset << BLOCK_SIZE_BITS), bmap->b_ds,
 		     bmap->b_data, kernel_ds, BLOCK_SIZE/2);
 	    bmap->b_data = (char *)0;
 	    bmap->b_seg = bmap->b_ds;
@@ -497,7 +497,7 @@ void map_buffer(register struct buffer_head *bh)
     bh->b_data = (char *)L1buf + (i << BLOCK_SIZE_BITS);
     if (bh->b_uptodate) {
 	fmemcpyw(bh->b_data, kernel_ds,
-		 (byte_t *) (bh->b_offset << BLOCK_SIZE_BITS), bh->b_ds, BLOCK_SIZE/2);
+		 (char *) (bh->b_offset << BLOCK_SIZE_BITS), bh->b_ds, BLOCK_SIZE/2);
     }
     debug("MAP:   %d -> %d\n", bh->b_num, i);
   end_map_buffer:
@@ -532,3 +532,17 @@ void unmap_brelse(register struct buffer_head *bh)
     }
 }
 #endif /* CONFIG_FS_EXTERNAL_BUFFER*/
+
+void memcpy_buf_touser(char *buf, size_t offset, size_t len, struct buffer_head *bh)
+{
+	char *data = bh->b_data? bh->b_data: (char *)(bh->b_offset << BLOCK_SIZE_BITS);
+
+	fmemcpyb(buf, current->t_regs.ds, data + offset, bh->b_seg, len);
+}
+
+void memcpy_buf_fromuser(size_t offset, char *buf, size_t len, struct buffer_head *bh)
+{
+	char *data = bh->b_data? bh->b_data: (char *)(bh->b_offset << BLOCK_SIZE_BITS);
+
+	fmemcpyb(data + offset, bh->b_seg, buf, current->t_regs.ds, len);
+}
