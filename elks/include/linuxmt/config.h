@@ -4,31 +4,37 @@
 #include <autoconf.h>
 #include <linuxmt/major.h>
 
+#define CONFIG_TRACK_CACHE
+
 /* Don't touch these, unless you really know what you are doing. */
-#define DEF_INITSEG	0x0100	/* original 0x0100
-				 * for netboot use for example 0x5000, as
-				 * 0x0100 cannot be used in connection
-				 * with the netboot loader
-				 */
+#define DEF_INITSEG	0x0100	/* setup data, for netboot use 0x5000 */
 #define DEF_SYSSEG	0x1000
 #define DEF_SETUPSEG	DEF_INITSEG + 0x20
 #define DEF_SYSSIZE	0x2F00
-#define DEF_OPTSEG	0x50  /* /bootopts loaded at this segment*/
 
 #if !defined(CONFIG_ROMCODE) && !defined(CONFIG_ARCH_SIBO)
 #define REL_SYS
-#define REL_INITSEG	0x60  /* future CONFIG_MEM_LOW */
-#define REL_SYSSEG	0xC0  /* after DMASEG */
+/* Define segment locations of low memory, must not overlap */
+#define DEF_OPTSEG	0x50  /* 0x100 bytes boot options*/
+#define REL_INITSEG	0x60  /* 0x200 bytes setup data */
+#define DMASEG		0x80  /* 0x400 bytes floppy sector buffer */
+
+#ifdef CONFIG_TRACK_CACHE     /* floppy track buffer in low mem */
+#define DMASEGSZ 0x2400	      /* SECTOR_SIZE * 18 (9216) */
+#define REL_SYSSEG	0x2C0 /* kernel code segment */
+#else
+#define DMASEGSZ 0x0400	      /* BLOCK_SIZE (1024) */
+#define REL_SYSSEG	0x0C0 /* kernel code segment */
+#endif
+
 #endif
 
 // DMASEG is a bouncing buffer of 1K (= BLOCKSIZE)
 // below the first 64K boundary (= 0x1000:0)
 // for use with the old 8237 DMA controller
+// OR a floppy track buffer of 9K (18 512-byte sectors)
 
-#if !defined(CONFIG_ARCH_SIBO)
-#define DMASEG 0x80    /* after REL_INITSEG */
-#define DMASEGSZ 1024  /* BLOCK_SIZE */
-#else
+#ifdef CONFIG_ARCH_SIBO
 #define DMASEG 0x800
 #endif
 
