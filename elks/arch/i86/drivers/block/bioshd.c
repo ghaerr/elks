@@ -316,6 +316,7 @@ static void copy_ddpt(void)
 
 	fmemcpyw(DDPT, _FP_SEG(DDPT), (void *)(unsigned)oldvec, _FP_SEG(oldvec),
 		sizeof(DDPT)/2);
+	printk("bioshd: DDPT vector %x:%x SPT %d\n", _FP_SEG(oldvec), (unsigned)oldvec, DDPT[SPT]);
 	set_ddpt(DDPT[SPT]);
 }
 
@@ -696,13 +697,14 @@ static int do_bios_readwrite(struct drive_infot *drivep, int cmd,
 
 	/* Fix for weird BIOS behavior with 720K floppy (issue #39/44) */
 	if (this_pass == 2 && drivep->sectors == 9) {
-		dprintk("bioshd: TRUNCATE read to 1 sector\n");
+		dprintk("bioshd(%d): TRUNCATE read to 1 sector\n", drivep-drive_info);
 		this_pass = 1;
 	}
 
 	/* limit I/O to requested size*/
 	if (this_pass > count) this_pass = count;
-	if (cmd == READ) dprintk("bioshd: NO-CACHE read sector %ld len %d\n", start, this_pass);
+	if (cmd == READ) dprintk("bioshd(%d): NO-CACHE read sector %ld len %d\n",
+				drivep-drive_info, start, this_pass);
 
 	errs = MAX_ERRS;	/* BIOS disk reads should be retried at least three times */
 	do {
@@ -797,7 +799,8 @@ static void bios_readtrack(struct drive_infot *drivep, sector_t start)
 	cache_drive = drivep;
 	cache_startsector = start;
 	cache_endsector = start + num_sectors - 1;
-	dprintk("bioshd: buffer sectors %ld to %ld\n", cache_startsector, cache_endsector);
+	dprintk("bioshd(%d): buffer sectors %ld to %ld\n",
+		drivep-drive_info, cache_startsector, cache_endsector);
 }
 
 /* check whether cache is valid for two sectors*/
@@ -809,7 +812,7 @@ int cache_valid(struct drive_infot *drivep, struct request *req, sector_t start)
 	    return 0;
 
 	offset = (int)(start - cache_startsector) << 9;
-	dprintk("bioshd: cache hit sector %ld\n", start);
+	dprintk("bioshd(%d): cache hit sector %ld\n", drivep-drive_info, start);
 	fmemcpyw(req->rq_buffer, req->rq_seg, (void *)offset, DMASEG, BLOCK_SIZE/2);
 	return 1;
 }
