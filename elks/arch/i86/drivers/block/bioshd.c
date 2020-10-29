@@ -80,7 +80,6 @@ static struct biosparms bdt;
 
 /* Useful defines for accessing the above structure. */
 #define CARRY_SET (bdt.fl & 0x1)
-#define BD_IRQ bdt.irq
 #define BD_AX bdt.ax
 #define BD_BX bdt.bx
 #define BD_CX bdt.cx
@@ -153,7 +152,6 @@ static void set_cache_invalid(void)
  */
 
 #ifdef CONFIG_BLK_DEV_BHD
-
 static unsigned short int INITPROC bioshd_gethdinfo(void) {
     unsigned short int ndrives = 0;
     int drive;
@@ -192,11 +190,9 @@ static unsigned short int INITPROC bioshd_gethdinfo(void) {
     }
     return ndrives;
 }
-
 #endif
 
 #ifdef CONFIG_BLK_DEV_BFD
-
 static unsigned short int INITPROC bioshd_getfdinfo(void)
 {
     unsigned short int ndrives;
@@ -249,7 +245,6 @@ static unsigned short int INITPROC bioshd_getfdinfo(void)
 
 #ifdef CONFIG_HW_USE_INT13_FOR_FLOPPY
 
-/*    BD_IRQ = BIOSHD_INT;*/
     BD_AX = BIOSHD_DRIVE_PARMS;
     BD_DX = 0;			/* only the number of floppies */
     ndrives = (call_bios(&bdt) ? 0 : BD_DX & 0xff);
@@ -271,7 +266,6 @@ static unsigned short int INITPROC bioshd_getfdinfo(void)
  * The arch_cpu is a safety check
  */
 	if (arch_cpu > 5) {
-/*	    BD_IRQ = BIOSHD_INT;*/
 	    BD_AX = BIOSHD_DRIVE_PARMS;
 	    BD_DX = drive;
 	    if (!call_bios(&bdt))
@@ -287,7 +281,6 @@ static unsigned short int INITPROC bioshd_getfdinfo(void)
 #endif
     return ndrives;
 }
-
 #endif
 
 static void bioshd_release(struct inode *inode, struct file *filp)
@@ -304,13 +297,34 @@ static void bioshd_release(struct inode *inode, struct file *filp)
     }
 }
 
+#define SPT		4	/* DDPT offset of sectors per track*/
+static unsigned char DDPT[14];	/* our copy of diskette drive parameter table*/
+static unsigned long __far *vec1E = _MK_FP(0, 0x1E << 2);
+
+/* set our DDPT sectors per track value*/
+static void set_ddpt(int max_sectors)
+{
+	DDPT[SPT] = (unsigned char) max_sectors;
+	*vec1E = (unsigned long)(void __far *)DDPT;
+}
+
+/* get the diskette drive parameter table from INT 1E and point to our RAM copy of it*/
+static void copy_ddpt(void)
+{
+	unsigned long oldvec = *vec1E;
+	//unsigned char __far *org_ddpt = (void __far *)oldvec;
+
+	fmemcpyw(DDPT, _FP_SEG(DDPT), (void *)(unsigned)oldvec, _FP_SEG(oldvec),
+		sizeof(DDPT)/2);
+	set_ddpt(DDPT[SPT]);
+}
+
 /* As far as I can tell this doesn't actually work, but we might
  * as well try it -- Some XT controllers are happy with it.. [AC]
  */
 
 static void reset_bioshd(int drive)
 {
-/*    BD_IRQ = BIOSHD_INT;*/
     BD_AX = BIOSHD_RESET;
     BD_DX = drive;
     call_bios(&bdt);
@@ -323,7 +337,7 @@ static void reset_bioshd(int drive)
 #endif
 }
 
-int read_sector(int drive, int track, int sector)
+static int read_sector(int drive, int track, int sector)
 {
 
 /* i took this code from bioshd_open() where it replicates code used
@@ -343,6 +357,7 @@ int read_sector(int drive, int track, int sector)
 	BD_DX = drive;					/* Head 0 | drive */
 
 	set_irq();
+	set_ddpt(36);		/* set to large value to avoid BIOS issues*/
 	if (!call_bios(&bdt)) return 0;			/* everything is OK */
 	reset_bioshd(drive);
     } while (--count > 0);
@@ -572,6 +587,8 @@ int INITPROC bioshd_init(void)
 
     if (!(_fd_count + _hd_count)) return 0;
 
+    copy_ddpt();	/* make a RAM copy of the disk drive parameter table*/
+
 #ifdef TEMP_PRINT_DRIVES_MAX
     {
 	register struct drive_infot *drivep;
@@ -652,7 +669,7 @@ static int bioshd_ioctl(struct inode *inode,
     return err;
 }
 
-/* calculate CHS and track sectors remaining from sector # */
+/* calculate CHS and sectors remaining for track read */
 static void get_chst(struct drive_infot *drivep, sector_t start, unsigned int *c,
 	unsigned int *h, unsigned int *s, unsigned int *t)
 {
@@ -678,7 +695,10 @@ static int do_bios_readwrite(struct drive_infot *drivep, int cmd,
 	get_chst(drivep, start, &cylinder, &head, &sector, &this_pass);
 
 	/* Fix for weird BIOS behavior with 720K floppy (issue #39/44) */
-	if (this_pass == 2 && drivep->sectors == 9) this_pass = 1;
+	if (this_pass == 2 && drivep->sectors == 9) {
+		dprintk("bioshd: TRUNCATE read to 1 sector\n");
+		this_pass = 1;
+	}
 
 	/* limit I/O to requested size*/
 	if (this_pass > count) this_pass = count;
@@ -727,6 +747,7 @@ static int do_bios_readwrite(struct drive_infot *drivep, int cmd,
 		in_ax = BD_AX;
 		out_ax = 0;
 
+		set_ddpt(drivep->sectors);
 		if (call_bios(&bdt)) {
 		    out_ax = BD_AX;
 		    reset_bioshd(drive); /* controller should be reset upon error detection */
@@ -760,12 +781,14 @@ static void bios_readtrack(struct drive_infot *drivep, sector_t start)
 
 	if (num_sectors == 1) return;
 	if (num_sectors > (DMASEGSZ >> 9)) num_sectors = DMASEGSZ >> 9;
+
 	BD_AX = BIOSHD_READ | num_sectors;
 	BD_CX = (unsigned int) ((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
 	BD_DX = (head << 8) | drive;
 	BD_ES = DMASEG;
 	BD_BX = 0;
-	//FIXME add DDPT
+
+	set_ddpt(drivep->sectors);
 	if (call_bios(&bdt)) {
 		printk("bioshd: track read error sector %d num %d\n", sector, num_sectors);
 		set_cache_invalid();
@@ -850,12 +873,12 @@ static void do_bioshd_request(void)
 	if (req->rq_cmd == READ) {
 	    if (cache_valid(drivep, req, start)) {	/* try cache first*/
 		end_request(1);
-		return;
+		continue;
 	    }
 	    bios_readtrack(drivep, start);		/* read whole track*/
 	    if (cache_valid(drivep, req, start)) {	/* try cache again*/
 		end_request(1);
-		return;
+		continue;
 	    }
 	}
 	set_cache_invalid();
