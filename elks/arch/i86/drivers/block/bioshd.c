@@ -332,13 +332,7 @@ static void reset_bioshd(int drive)
     BD_AX = BIOSHD_RESET;
     BD_DX = drive;
     call_bios(&bdt);
-
-/* Dont log this fail - its fine
- */
-#if 0
-    if (CARRY_SET)
-	printk("bioshd: unable to reset.\n");
-#endif
+    /* ignore errors with carry set*/
 }
 
 static int read_sector(int drive, int track, int sector)
@@ -677,13 +671,13 @@ static void get_chst(struct drive_infot *drivep, sector_t start, unsigned int *c
 	*h = (unsigned int) (tmp % (sector_t)drivep->heads);
 	*c = (unsigned int) (tmp / (sector_t)drivep->heads);
 	*t = drivep->sectors - *s + 1;
-	dprintk("bioshd: lba %ld is CHS %d/%d/%d remaining sectors %d\n",
+	debug_bios("bioshd: lba %ld is CHS %d/%d/%d remaining sectors %d\n",
 		start, *c, *h, *s, *t);
 }
 
 /* do bios I/O, return # sectors read/written */
-static int do_bios_readwrite(struct drive_infot *drivep, int cmd,
-	sector_t start, char *buf, seg_t seg, unsigned int count)
+static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *buf, seg_t seg,
+	int cmd, unsigned int count)
 {
 	int drive, errs;
 	unsigned int cylinder, head, sector, this_pass;
@@ -693,15 +687,17 @@ static int do_bios_readwrite(struct drive_infot *drivep, int cmd,
 	drive = hd_drive_map[drive];
 	get_chst(drivep, start, &cylinder, &head, &sector, &this_pass);
 
+#if 0
 	/* Fix for weird BIOS behavior with 720K floppy (issue #39/44) */
 	if (this_pass == 2 && drivep->sectors == 9) {
-		dprintk("bioshd(%d): TRUNCATE read to 1 sector\n", drivep-drive_info);
+		debug_bios("bioshd(%d): TRUNCATE read to 1 sector\n", drivep-drive_info);
 		this_pass = 1;
 	}
+#endif
 
 	/* limit I/O to requested size*/
 	if (this_pass > count) this_pass = count;
-	if (cmd == READ) dprintk("bioshd(%d): NO-CACHE read lba %ld len %d\n",
+	if (cmd == READ) debug_bios("bioshd(%d): NO-CACHE read lba %ld len %d\n",
 				drivep-drive_info, start, this_pass);
 
 	errs = MAX_ERRS;	/* BIOS disk reads should be retried at least three times */
@@ -765,7 +761,7 @@ static int do_bios_readwrite(struct drive_infot *drivep, int cmd,
 static sector_t cache_startsector;
 static sector_t cache_endsector;
 
-/* read from start sector to end of track into DMASEG track buffer*/
+/* read from start sector to end of track into DMASEG track buffer, no retries*/
 static void bios_readtrack(struct drive_infot *drivep, sector_t start)
 {
 	unsigned int cylinder, head, sector, num_sectors;
@@ -774,7 +770,6 @@ static void bios_readtrack(struct drive_infot *drivep, sector_t start)
 	drive = hd_drive_map[drive];
 	get_chst(drivep, start, &cylinder, &head, &sector, &num_sectors);
 
-	if (num_sectors == 1) return;
 	if (num_sectors > (DMASEGSZ >> 9)) num_sectors = DMASEGSZ >> 9;
 
 	BD_AX = BIOSHD_READ | num_sectors;
@@ -792,22 +787,37 @@ static void bios_readtrack(struct drive_infot *drivep, sector_t start)
 	cache_drive = drivep;
 	cache_startsector = start;
 	cache_endsector = start + num_sectors - 1;
-	dprintk("bioshd(%d): track read lba %ld to %ld count %d\n",
+	debug_bios("bioshd(%d): track read lba %ld to %ld count %d\n",
 		drivep-drive_info, cache_startsector, cache_endsector, num_sectors);
 }
 
-/* check whether cache is valid for two sectors*/
-int cache_valid(struct drive_infot *drivep, struct request *req, sector_t start)
+/* check whether cache is valid for one sector*/
+static int cache_valid(struct drive_infot *drivep, sector_t start, char *buf, seg_t seg)
 {
 	unsigned int offset;
 
-	if (drivep != cache_drive || start < cache_startsector || (start+1) > cache_endsector)
+	if (drivep != cache_drive || start < cache_startsector || start > cache_endsector)
 	    return 0;
 
 	offset = (int)(start - cache_startsector) << 9;
-	dprintk("bioshd(%d): cache hit lba %ld & %ld\n", drivep-drive_info, start, start+1);
-	fmemcpyw(req->rq_buffer, req->rq_seg, (void *)offset, DMASEG, BLOCK_SIZE/2);
+	debug_bios("bioshd(%d): cache hit lba %ld\n", drivep-drive_info, start);
+	fmemcpyw(buf, seg, (void *)offset, DMASEG, 512/2);
 	return 1;
+}
+
+/* read from cache, return # sectors read*/
+static int do_cache_read(struct drive_infot *drivep, sector_t start, char *buf, seg_t seg,
+	int cmd)
+{
+	if (cmd == READ) {
+	    if (cache_valid(drivep, start, buf, seg))	/* try cache first*/
+		return 1;
+	    bios_readtrack(drivep, start);		/* read whole track*/
+	    if (cache_valid(drivep, start, buf, seg)) 	/* try cache again*/
+		return 1;
+	}
+	set_cache_invalid();
+	return 0;
 }
 #endif
 
@@ -817,7 +827,7 @@ static void do_bioshd_request(void)
 	struct request *req;
 	unsigned short minor;
 	sector_t start;
-	int drive, count, num_sectors;
+	int drive, count;
 	char *buf;
 
 	while (1) {
@@ -865,25 +875,17 @@ static void do_bioshd_request(void)
 	/* all ELKS requests are 1K blocks*/
 	count = 2;
 
-#ifdef CONFIG_TRACK_CACHE
-	if (req->rq_cmd == READ) {
-	    if (cache_valid(drivep, req, start)) {	/* try cache first*/
-		end_request(1);
-		continue;
-	    }
-	    bios_readtrack(drivep, start);		/* read whole track*/
-	    if (cache_valid(drivep, req, start)) {	/* try cache again*/
-		end_request(1);
-		continue;
-	    }
-	}
-	set_cache_invalid();
-#endif
-
 	buf = req->rq_buffer;
 	while (count > 0) {
-	    num_sectors = do_bios_readwrite(drivep, req->rq_cmd, start,
-		buf, req->rq_seg, count);
+	    int num_sectors;
+#ifdef CONFIG_TRACK_CACHE
+	    /* first try reading track cache*/
+	    num_sectors = do_cache_read(drivep, start, buf, req->rq_seg, req->rq_cmd);
+	    if (!num_sectors)
+#endif
+		/* then fallback with retries if required*/
+		num_sectors = do_bios_readwrite(drivep, start, buf, req->rq_seg, req->rq_cmd,
+			count);
 
 	    if (num_sectors == 0) {
 		end_request(0);

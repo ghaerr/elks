@@ -29,6 +29,7 @@
  */
 #define DEBUG_EVENT	1		/* generate debug events on CTRLP*/
 #define DEBUG_STARTDEF	0		/* default startup debug display*/
+#define DEBUG_BIOS	1		/* BIOS driver*/
 #define DEBUG_BLK	0		/* block i/o*/
 #define DEBUG_ETH	0		/* ethernet*/
 #define DEBUG_FAT	0		/* FAT filesystem*/
@@ -50,6 +51,12 @@ void debug_setcallback(void (*cbfunc));	/* callback on debug event*/
 #define dprintk(...)
 #define debug_callback(...)
 #define debug_event(...)
+#endif
+
+#if DEBUG_BIOS
+#define debug_bios	PRINTK
+#else
+#define debug_bios(...)
 #endif
 
 #if DEBUG_BLK
