@@ -4,7 +4,7 @@
 #include <autoconf.h>
 #include <linuxmt/major.h>
 
-#define CONFIG_TRACK_CACHE
+#define CONFIG_TRACK_CACHE	/* use track-sized sector cache*/
 
 /* Don't touch these, unless you really know what you are doing. */
 #define DEF_INITSEG	0x0100	/* setup data, for netboot use 0x5000 */

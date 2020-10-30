@@ -47,6 +47,8 @@
 #include <arch/system.h>
 #include <arch/irq.h>
 
+#define USE_DDPT	0	/* =1 to setup custom disk drive parameter table*/
+
 /* the following must match with /dev minor numbering scheme*/
 #define NUM_MINOR	32	/* max minor devices per drive*/
 #define MINOR_SHIFT	5	/* =log2(NUM_MINOR) shift to get drive num*/
@@ -116,9 +118,6 @@ static unsigned char hd_drive_map[NUM_DRIVES] = {/* BIOS drive mappings*/
 
 static int _fd_count = 0;  		/* number of floppy disks */
 static int _hd_count = 0;  		/* number of hard disks */
-
-//static int dma_avail = 1;
-//static struct wait_queue dma_wait;
 
 static int bioshd_ioctl(struct inode *, struct file *, unsigned int, unsigned int);
 static int bioshd_open(struct inode *, struct file *);
@@ -297,28 +296,32 @@ static void bioshd_release(struct inode *inode, struct file *filp)
     }
 }
 
+#if USE_DDPT
 #define SPT		4	/* DDPT offset of sectors per track*/
 static unsigned char DDPT[14];	/* our copy of diskette drive parameter table*/
-static unsigned long __far *vec1E = _MK_FP(0, 0x1E << 2);
+unsigned long __far *vec1E = _MK_FP(0, 0x1E << 2);
 
 /* set our DDPT sectors per track value*/
 static void set_ddpt(int max_sectors)
 {
 	DDPT[SPT] = (unsigned char) max_sectors;
-	*vec1E = (unsigned long)(void __far *)DDPT;
 }
 
 /* get the diskette drive parameter table from INT 1E and point to our RAM copy of it*/
 static void copy_ddpt(void)
 {
 	unsigned long oldvec = *vec1E;
-	//unsigned char __far *org_ddpt = (void __far *)oldvec;
 
 	fmemcpyw(DDPT, _FP_SEG(DDPT), (void *)(unsigned)oldvec, _FP_SEG(oldvec),
 		sizeof(DDPT)/2);
 	printk("bioshd: DDPT vector %x:%x SPT %d\n", _FP_SEG(oldvec), (unsigned)oldvec, DDPT[SPT]);
 	set_ddpt(DDPT[SPT]);
+	*vec1E = (unsigned long)(void __far *)DDPT;
 }
+#else
+#define	set_ddpt(_a)
+#define copy_ddpt()
+#endif
 
 /* As far as I can tell this doesn't actually work, but we might
  * as well try it -- Some XT controllers are happy with it.. [AC]
@@ -387,11 +390,6 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 	int count;
 
 	target &= 1;
-/* The area between 32-64K is a 'scratch' area - we need a semaphore for it
- */
-
-	//while (!dma_avail) sleep_on(&dma_wait);
-	//dma_avail = 0;
 
 /* Try to look for an ELKS disk parameter block in the first sector.  If
  * it exists, we can obtain the disk geometry from it.
@@ -449,8 +447,6 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 /* DMA code belongs out of the loop. */
 
       got_geom:
-	//dma_avail = 1;
-	//wake_up(&dma_wait);
 
 /* I moved this out of for loop to prevent trashing the screen
  * with seducing (repeating) probe messages about disk types
@@ -681,6 +677,8 @@ static void get_chst(struct drive_infot *drivep, sector_t start, unsigned int *c
 	*h = (unsigned int) (tmp % (sector_t)drivep->heads);
 	*c = (unsigned int) (tmp / (sector_t)drivep->heads);
 	*t = drivep->sectors - *s + 1;
+	dprintk("bioshd: lba %ld is CHS %d/%d/%d remaining sectors %d\n",
+		start, *c, *h, *s, *t);
 }
 
 /* do bios I/O, return # sectors read/written */
@@ -703,16 +701,13 @@ static int do_bios_readwrite(struct drive_infot *drivep, int cmd,
 
 	/* limit I/O to requested size*/
 	if (this_pass > count) this_pass = count;
-	if (cmd == READ) dprintk("bioshd(%d): NO-CACHE read sector %ld len %d\n",
+	if (cmd == READ) dprintk("bioshd(%d): NO-CACHE read lba %ld len %d\n",
 				drivep-drive_info, start, this_pass);
 
 	errs = MAX_ERRS;	/* BIOS disk reads should be retried at least three times */
 	do {
 		unsigned rq_start_dma_page, rq_end_dma_page;
 		int need_dma_seg;
-
-		//while (!dma_avail) sleep_on(&dma_wait);
-		//dma_avail = 0;
 
 		/* Try to gauge if we can do the read/write directly on the actual source/
 		 * target buffer without crossing a 64 KiB DMA boundary
@@ -756,8 +751,6 @@ static int do_bios_readwrite(struct drive_infot *drivep, int cmd,
 		} else if (need_dma_seg && cmd == READ)
 		    fmemcpyw(buf, seg, NULL, DMASEG, this_pass << 8);
 
-		//dma_avail = 1;
-		//wake_up(&dma_wait);
 	} while (out_ax && --errs);	/* On error, retry up to MAX_ERRS times */
 
 	if (out_ax) {
@@ -792,15 +785,15 @@ static void bios_readtrack(struct drive_infot *drivep, sector_t start)
 
 	set_ddpt(drivep->sectors);
 	if (call_bios(&bdt)) {
-		printk("bioshd: track read error sector %d num %d\n", sector, num_sectors);
+		printk("bioshd: track read error sector %d count %d\n", sector, num_sectors);
 		set_cache_invalid();
 		return;
 	}
 	cache_drive = drivep;
 	cache_startsector = start;
 	cache_endsector = start + num_sectors - 1;
-	dprintk("bioshd(%d): buffer sectors %ld to %ld\n",
-		drivep-drive_info, cache_startsector, cache_endsector);
+	dprintk("bioshd(%d): track read lba %ld to %ld count %d\n",
+		drivep-drive_info, cache_startsector, cache_endsector, num_sectors);
 }
 
 /* check whether cache is valid for two sectors*/
@@ -808,11 +801,11 @@ int cache_valid(struct drive_infot *drivep, struct request *req, sector_t start)
 {
 	unsigned int offset;
 
-	if (drivep != cache_drive || start < cache_startsector || ((start+1) > cache_endsector))
+	if (drivep != cache_drive || start < cache_startsector || (start+1) > cache_endsector)
 	    return 0;
 
 	offset = (int)(start - cache_startsector) << 9;
-	dprintk("bioshd(%d): cache hit sector %ld\n", drivep-drive_info, start);
+	dprintk("bioshd(%d): cache hit lba %ld & %ld\n", drivep-drive_info, start, start+1);
 	fmemcpyw(req->rq_buffer, req->rq_seg, (void *)offset, DMASEG, BLOCK_SIZE/2);
 	return 1;
 }
