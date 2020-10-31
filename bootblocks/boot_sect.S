@@ -127,7 +127,10 @@ _next0:
 	mov $floppy_table,%di
 .endif
 	push %di
-	mov $6,%cl     // 12 bytes (actually 11 in the table) and CH = 0
+	mov $7,%cl     // Usually the table is 11 bytes, but Ralf Brown's
+		       // Interrupt List says that the IBM SurePath BIOS
+		       // uses a 14-byte table
+		       // CH = 0 at this point
 	//cld
 	rep
 	movsw
