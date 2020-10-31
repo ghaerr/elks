@@ -47,8 +47,6 @@
 #include <arch/system.h>
 #include <arch/irq.h>
 
-#define USE_DDPT	0	/* =1 to setup custom disk drive parameter table*/
-
 /* the following must match with /dev minor numbering scheme*/
 #define NUM_MINOR	32	/* max minor devices per drive*/
 #define MINOR_SHIFT	5	/* =log2(NUM_MINOR) shift to get drive num*/
@@ -296,7 +294,6 @@ static void bioshd_release(struct inode *inode, struct file *filp)
     }
 }
 
-#if USE_DDPT
 #define SPT		4	/* DDPT offset of sectors per track*/
 static unsigned char DDPT[14];	/* our copy of diskette drive parameter table*/
 unsigned long __far *vec1E = _MK_FP(0, 0x1E << 2);
@@ -312,16 +309,18 @@ static void copy_ddpt(void)
 {
 	unsigned long oldvec = *vec1E;
 
+	/*
+	 * Rather than issue INT 13h function 8 (Get Drive Parameters, not implemented
+	 * on IBM XT BIOS v1 and earlier), to get an accurate DDPT, just copy the original
+	 * DDPT to RAM, where the sectors per track value will be modified before each
+	 * INT 13h function 2/3 (Read/Write Disk Sectors).
+	 */
 	fmemcpyw(DDPT, _FP_SEG(DDPT), (void *)(unsigned)oldvec, _FP_SEG(oldvec),
 		sizeof(DDPT)/2);
 	printk("bioshd: DDPT vector %x:%x SPT %d\n", _FP_SEG(oldvec), (unsigned)oldvec, DDPT[SPT]);
 	set_ddpt(DDPT[SPT]);
 	*vec1E = (unsigned long)(void __far *)DDPT;
 }
-#else
-#define	set_ddpt(_a)
-#define copy_ddpt()
-#endif
 
 /* As far as I can tell this doesn't actually work, but we might
  * as well try it -- Some XT controllers are happy with it.. [AC]
