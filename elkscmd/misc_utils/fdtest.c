@@ -27,7 +27,6 @@ struct biosparms bdt;
 #define MAX		30		/* max # of sectors per read */
 #define SECSIZE		512		/* sector size*/
 
-unsigned char user_buf[MAX * SECSIZE];
 unsigned char kernel_buf[MAX * SECSIZE];
 int verbose = 0;
 int out = 0;
@@ -50,12 +49,8 @@ int read_disk(unsigned short drive, unsigned short cylinder, unsigned short head
 		return(1);
 	}
 
-	/* then memcpy to "user" buffer*/
-	//fmemcpyw(user_buf, _FP_SEG(user_buf), kernel_buf, _FP_SEG(kernel_buf),
-	//	(count * SECSIZE) >> 1);
 	if (out)
 		write(1, kernel_buf, count*512);
-	fprintf(stderr, ".");
 	return(0);
 }
 
@@ -67,7 +62,6 @@ int main(int ac, char **av)
 	int i, max, direct = 0;
 	unsigned short bs = 1;
 	time_t t, tt;
-	//time_t ttt;
 
 	/* setup starting CHS*/
 	drive = 0;		/* 0-1*/
@@ -140,7 +134,7 @@ int main(int ac, char **av)
 		fprintf(stderr, "Testing entire drive %d, max %d incr %d\n", drive, max, bs);
 		cylinder = 0;
 		t = time(NULL);
-		/* we're not concerned with track boundaries, the BIOS handles it just fine */
+
 		while (read_disk(drive, cylinder, head, sector, bs) == 0) {
 			blocks++; 
 			if (sector + bs <= max) sector += bs;
@@ -172,6 +166,7 @@ int main(int ac, char **av)
 					}
 				}
 			}
+			if (!verbose) fprintf(stderr, ".");
 		}
 		fprintf(stderr, "\nRead %d blocks in %ld seconds\n", blocks, time(NULL) - t);
 		return(0);
@@ -193,9 +188,6 @@ int main(int ac, char **av)
 	t = time(NULL);
 	(void)read_disk(drive, cylinder, head, sector, max);
 	tt = time(NULL);
-	//if (!head) (void)read_disk(drive, cylinder, head+1, sector, max);
-	//ttt = time(NULL);
 	fprintf(stderr, "%ld secs\n", tt-t);
-	//if (!head) fprintf(stderr, "%ld secs (both heads)\n", ttt-t);
 	
 }
