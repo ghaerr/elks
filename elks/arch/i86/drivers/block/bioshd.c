@@ -311,13 +311,14 @@ static void copy_ddpt(void)
 
 	/*
 	 * Rather than issue INT 13h function 8 (Get Drive Parameters, not implemented
-	 * on IBM XT BIOS v1 and earlier), to get an accurate DDPT, just copy the original
+	 * on IBM XT BIOS v1 and earlier) to get an accurate DDPT, just copy the original
 	 * DDPT to RAM, where the sectors per track value will be modified before each
 	 * INT 13h function 2/3 (Read/Write Disk Sectors).
+	 * Using a patched DDPT also eliminates the need for a seperate fix for #39/#44.
 	 */
 	fmemcpyw(DDPT, _FP_SEG(DDPT), (void *)(unsigned)oldvec, _FP_SEG(oldvec),
 		sizeof(DDPT)/2);
-	printk("bioshd: DDPT vector %x:%x SPT %d\n", _FP_SEG(oldvec), (unsigned)oldvec, DDPT[SPT]);
+	debug_bios("bioshd: DDPT vector %x:%x SPT %d\n", _FP_SEG(oldvec), (unsigned)oldvec, DDPT[SPT]);
 	set_ddpt(DDPT[SPT]);
 	*vec1E = (unsigned long)(void __far *)DDPT;
 }
@@ -686,15 +687,7 @@ static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *b
 	drive = hd_drive_map[drive];
 	get_chst(drivep, start, &cylinder, &head, &sector, &this_pass);
 
-#if 0
-	/* Fix for weird BIOS behavior with 720K floppy (issue #39/44) */
-	if (this_pass == 2 && drivep->sectors == 9) {
-		debug_bios("bioshd(%d): TRUNCATE read to 1 sector\n", drivep-drive_info);
-		this_pass = 1;
-	}
-#endif
-
-	/* limit I/O to requested size*/
+	/* limit I/O to requested sector count*/
 	if (this_pass > count) this_pass = count;
 	if (cmd == READ) debug_bios("bioshd(%d): NO-CACHE read lba %ld len %d\n",
 				drivep-drive_info, start, this_pass);
@@ -756,7 +749,7 @@ static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *b
 	return this_pass;
 }
 
-#ifdef CONFIG_TRACK_CACHE
+#ifdef CONFIG_TRACK_CACHE		/* use track-sized sector cache*/
 static sector_t cache_startsector;
 static sector_t cache_endsector;
 

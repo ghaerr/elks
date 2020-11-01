@@ -28,6 +28,7 @@ mainmenu_option next_comment
 			    2880k	CONFIG_BLK_DEV_BFD1_2880"	None
 		fi
 	    fi
+	    bool '  BIOS drive track caching'	CONFIG_TRACK_CACHE	y
 	    bool '  BIOS hard drive support'	CONFIG_BLK_DEV_BHD	y
 	fi
 	if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
