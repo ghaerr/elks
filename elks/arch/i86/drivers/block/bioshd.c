@@ -25,6 +25,8 @@
  * You should have received a copy of the GNU General Public License
  * along with Linux; see the file COPYING.  If not, write to
  * the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ * Enhanced by Greg Haerr Oct 2020: add track cache, XT fixes, custom DDPT
  */
 
 #include <linuxmt/types.h>
@@ -117,6 +119,10 @@ static unsigned char hd_drive_map[NUM_DRIVES] = {/* BIOS drive mappings*/
 static int _fd_count = 0;  		/* number of floppy disks */
 static int _hd_count = 0;  		/* number of hard disks */
 
+#define SPT		4	/* DDPT offset of sectors per track*/
+static unsigned char DDPT[14];	/* our copy of diskette drive parameter table*/
+unsigned long __far *vec1E = _MK_FP(0, 0x1E << 2);
+
 static int bioshd_ioctl(struct inode *, struct file *, unsigned int, unsigned int);
 static int bioshd_open(struct inode *, struct file *);
 static void bioshd_release(struct inode *, struct file *);
@@ -144,27 +150,28 @@ static void set_cache_invalid(void)
 	cache_drive = NULL;
 }
 
+#ifdef CONFIG_BLK_DEV_BHD
 /* This function checks to see which hard drives are active and sets up the
  * drive_info[] table for them.  Ack this is darned confusing...
  */
-
-#ifdef CONFIG_BLK_DEV_BHD
 static unsigned short int INITPROC bioshd_gethdinfo(void) {
-    unsigned short int ndrives = 0;
-    int drive;
+    int drive, ndrives = 0;
     register struct drive_infot *drivep = &drive_info[0];
 
     BD_AX = BIOSHD_DRIVE_PARMS;
-    BD_DX = 0x80;
-    BD_ES = BD_SI = 0;	/* some buggy BIOS's need this acoording to INT13 on Wiki*/
-    ndrives = (call_bios(&bdt) ? 0 : BD_DX & 0xff);
-
+    BD_DX = 0x80;		/* query hard drives only*/
+    BD_ES = BD_DI = BD_SI = 0;	/* guard against BIOS bugs*/
+    if (!call_bios(&bdt))
+	ndrives = BD_DX & 0xff;
+    else
+	debug_bios("bioshd: get_drive_parms fail on hd\n");
     if (ndrives > NUM_DRIVES/2)
 	ndrives = NUM_DRIVES/2;
+
     for (drive = 0; drive < ndrives; drive++) {
 	BD_AX = BIOSHD_DRIVE_PARMS;
 	BD_DX = drive + 0x80;
-	BD_ES = BD_SI = 0;
+	BD_ES = BD_DI = BD_SI = 0;	/* guard against BIOS bugs*/
 	if (call_bios(&bdt) == 0) {
 	    drivep->heads = (BD_DX >> 8) + 1;
 	    drivep->sectors = BD_CX & 0x3f;
@@ -189,22 +196,19 @@ static unsigned short int INITPROC bioshd_gethdinfo(void) {
 }
 #endif
 
-#ifdef CONFIG_BLK_DEV_BFD
+#ifdef CONFIG_BLK_DEV_BFD_HARD
+/* hard-coded floppy configuration*/
 static unsigned short int INITPROC bioshd_getfdinfo(void)
 {
-    unsigned short int ndrives;
-
-#ifdef CONFIG_BLK_DEV_BFD_HARD
-
 /* Set this to match your system. Currently it's set to a two drive system:
  *
- *		1.44MB as /dev/fd0
- *	and	1.2 MB as /dev/fd1
+ *		720KB as /dev/fd0
+ *	and	720KB as /dev/fd1
  *
  * ndrives is number of drives in your system (either 0, 1 or 2)
  */
 
-    ndrives = 2;
+    int ndrives = 2;
 
 /* drive_info[] should be set *only* for existing drives;
  * comment out drive_info lines if you don't need them
@@ -220,62 +224,64 @@ static unsigned short int INITPROC bioshd_getfdinfo(void)
  *	  2	720 KB
  *	  3	1.44 MB
  *	  4	2.88 MB or Unknown
- */
-
-    drive_info[DRIVE_FD0] = fd_types[2];	/*  /dev/fd0    */
-    drive_info[DRIVE_FD1] = fd_types[2];	/*  /dev/fd1    */
-
-/* That's it .. you're done :-)
  *
  * Warning: drive will be reported as 2880 KB at bootup if you've set it
  * as unknown (4). Floppy probe will detect correct floppy format at each
  * change so don't bother with that
  */
 
-#else
+    drive_info[DRIVE_FD0] = fd_types[2];	/*  /dev/fd0    */
+    drive_info[DRIVE_FD1] = fd_types[2];	/*  /dev/fd1    */
+    return ndrives;
+}
 
+#elif defined(CONFIG_BLK_DEV_BFD)
+
+/* use BIOS to query floppy configuration*/
+static unsigned short int INITPROC bioshd_getfdinfo(void)
+{
     register struct drive_infot *drivep = &drive_info[DRIVE_FD0];
-    unsigned short int drive;
+    int drive, ndrives;
 
-/* We get the # of drives from the BPB, which is PC-friendly
- */
+    /*
+     * The INT 13h floppy query will fail on IBM XT v1 BIOS and earlier,
+     * so default to # drives from the BIOS data area at 0x040:0x0010.
+     */
+    ndrives = (peekb(0x10, 0x40) >> 6) + 1;
 
 #ifdef CONFIG_HW_USE_INT13_FOR_FLOPPY
-
+    /* get floppy drive count*/
     BD_AX = BIOSHD_DRIVE_PARMS;
-    BD_DX = 0;			/* only the number of floppies */
-    ndrives = (call_bios(&bdt) ? 0 : BD_DX & 0xff);
-
-#else
-
-    ndrives = (peekb(0x10, 0x40) >> 6) + 1;  /* BIOS data segment */
-
+    BD_DX = 0;			/* query floppies only*/
+    BD_ES = BD_DI = BD_SI = 0;	/* guard against BIOS bugs*/
+    if (!call_bios(&bdt))
+	ndrives = BD_DX & 0xff;
+    else
+	debug_bios("bioshd: get_drive_parms fail on fd\n");
 #endif
 
+    /* set floppy drive type*/
     for (drive = 0; drive < ndrives; drive++) {
-/* If type cannot be determined correctly,
- * Type 4 should work on all AT systems
- */
+	/*
+	 * If type cannot be determined using BIOSHD_DRIVE_PARMS,
+	 * set drive type to 1.4MM on AT systems, and 360K for XT.
+	 */
 	*drivep = fd_types[arch_cpu > 5 ? 3 : 0];
-#ifdef CONFIG_HW_USE_INT13_FOR_FLOPPY
 
-/* Some XT's return strange results - Al
- * The arch_cpu is a safety check
- */
+#ifdef CONFIG_HW_USE_INT13_FOR_FLOPPY
+	/* Do this only if AT and higher, some XT's return strange results - Al*/
 	if (arch_cpu > 5) {
 	    BD_AX = BIOSHD_DRIVE_PARMS;
 	    BD_DX = drive;
-	    if (!call_bios(&bdt))
-/*
- * AT archecture, drive type in BX
- */
+	    BD_ES = BD_DI = BD_SI = 0;	/* guard against BIOS bugs*/
+	    if (!call_bios(&bdt)) {
+		/* Drive type in BL */
 		*drivep = fd_types[(BD_BX & 0xFF) - 1];
+	    }
 	}
 #endif
 	drivep++;
     }
-
-#endif
     return ndrives;
 }
 #endif
@@ -293,10 +299,6 @@ static void bioshd_release(struct inode *inode, struct file *filp)
 	invalidate_buffers(dev);
     }
 }
-
-#define SPT		4	/* DDPT offset of sectors per track*/
-static unsigned char DDPT[14];	/* our copy of diskette drive parameter table*/
-unsigned long __far *vec1E = _MK_FP(0, 0x1E << 2);
 
 /* set our DDPT sectors per track value*/
 static void set_ddpt(int max_sectors)
