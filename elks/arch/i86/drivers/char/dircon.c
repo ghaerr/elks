@@ -206,7 +206,7 @@ void console_init(void)
 	C->cx = C->cy = 0;
 	if (!i) {
 	    C->cx = peekb(0x50, 0x40);
-	    C->cy = peekb(0x51, 0x40);
+	    C->cy = peekb(0x51, 0x40) + 1;
 	}
 	C->fsm = std_char;
 	C->basepage = i * PageSizeW;

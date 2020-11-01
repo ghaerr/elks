@@ -122,7 +122,8 @@ void INITPROC buffer_init(void)
 	    if ((nbufs = bufs_to_alloc) > 64)
 		nbufs = 64;
 	    bufs_to_alloc -= nbufs;
-	    seg = seg_alloc (nbufs << (BLOCK_SIZE_BITS - 4), SEG_FLAG_EXTBUF);
+	    seg = seg_alloc (nbufs << (BLOCK_SIZE_BITS - 4),
+		SEG_FLAG_EXTBUF|SEG_FLAG_ALIGN1K);
 	    //if (!seg) panic("No extbuf mem");
 	}
 	bh->b_seg = bh->b_ds = seg->base;

@@ -26,7 +26,7 @@ extern int kill_sl(void);
 extern void halt(void);
 extern void panic(char *, ...);
 extern void printk(char *, ...);
-extern void early_printk (char *);
+extern void early_putchar (int);
 
 extern int wait_for_keypress(void);
 extern int in_group_p(gid_t);

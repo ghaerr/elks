@@ -694,51 +694,21 @@ static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *b
 
 	errs = MAX_ERRS;	/* BIOS disk reads should be retried at least three times */
 	do {
-		unsigned rq_start_dma_page, rq_end_dma_page;
-		int need_dma_seg;
-
-		/* Try to gauge if we can do the read/write directly on the actual source/
-		 * target buffer without crossing a 64 KiB DMA boundary
-		 * If not, then do the read/write by way of DMASEG:0
-		 */
-		rq_start_dma_page = (seg + ((unsigned) buf >> 4)) >> 12;
-		rq_end_dma_page = (seg + ((unsigned) (buf + this_pass * 512 - 1) >> 4)) >> 12;
-		need_dma_seg = (rq_start_dma_page != rq_end_dma_page);
-
-		if (need_dma_seg) {
-		    if (this_pass > 1) {
-			/* Then again, if we limit our read/write request to 512 bytes,
-			   it may turn out that we no longer need DMASEG:0... (!) */
-			this_pass = 1;
-			rq_end_dma_page = (seg + ((unsigned) (buf + 511) >> 4)) >> 12;
-			need_dma_seg = (rq_start_dma_page != rq_end_dma_page);
-		    }
-		}
-
-		if (need_dma_seg) {
-		    if (cmd == WRITE)
-			fmemcpyw(NULL, DMASEG, buf, seg, this_pass << 8);
-		    BD_BX = 0;
-		    BD_ES = DMASEG;
-		} else {
-		    BD_BX = (unsigned) buf;
-		    BD_ES = seg;
-		}
 		BD_AX = (cmd == WRITE ? BIOSHD_WRITE : BIOSHD_READ) | this_pass;
 		BD_CX = ((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
 		BD_DX = (head << 8) | drive;
-		debug("cylinder=%d head=%d sector=%d blocks=%d drive=0x%x CMD=%d\n",
-		    cylinder, head, sector, this_pass, drive, cmd);
+		BD_ES = seg;
+		BD_BX = (unsigned) buf;
+		debug_bios("bioshd: drive %d cmd %d CHS %d/%d/%d count %d\n",
+		    drive, cmd, cylinder, head, sector, this_pass);
 		in_ax = BD_AX;
 		out_ax = 0;
 
 		set_ddpt(drivep->sectors);
 		if (call_bios(&bdt)) {
 		    out_ax = BD_AX;
-		    reset_bioshd(drive); /* controller should be reset upon error detection */
-		} else if (need_dma_seg && cmd == READ)
-		    fmemcpyw(buf, seg, NULL, DMASEG, this_pass << 8);
-
+		    reset_bioshd(drive);
+		}
 	} while (out_ax && --errs);	/* On error, retry up to MAX_ERRS times */
 
 	if (out_ax) {

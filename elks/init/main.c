@@ -81,8 +81,6 @@ void INITPROC kernel_init(void)
 {
     seg_t base, end;
 
-    /* this block of functions don't have console support, use early_printk*/
-
     /* sched_init sets us (the current stack) to be idle task #0*/
     sched_init();
     setup_arch(&base, &end);
@@ -92,7 +90,7 @@ void INITPROC kernel_init(void)
     irq_init();
     tty_init();
 
-    /* init direct, bios or headless console, printk then callable*/
+    /* init direct, bios or headless console*/
     console_init();
 
 #ifdef CONFIG_BOOTOPTS
