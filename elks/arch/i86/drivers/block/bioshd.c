@@ -80,7 +80,6 @@ static struct biosparms bdt;
 
 /* Useful defines for accessing the above structure. */
 #define CARRY_SET (bdt.fl & 0x1)
-#define BD_IRQ bdt.irq
 #define BD_AX bdt.ax
 #define BD_BX bdt.bx
 #define BD_CX bdt.cx
@@ -118,13 +117,11 @@ static unsigned char hd_drive_map[NUM_DRIVES] = {/* BIOS drive mappings*/
 static int _fd_count = 0;  		/* number of floppy disks */
 static int _hd_count = 0;  		/* number of hard disks */
 
-static int dma_avail = 1;
-static struct wait_queue dma_wait;
-
 static int bioshd_ioctl(struct inode *, struct file *, unsigned int, unsigned int);
 static int bioshd_open(struct inode *, struct file *);
 static void bioshd_release(struct inode *, struct file *);
 static void bioshd_geninit(void);
+static void set_cache_invalid(void);
 
 static struct gendisk bioshd_gendisk = {
     MAJOR_NR,			/* Major number */
@@ -140,12 +137,18 @@ static struct gendisk bioshd_gendisk = {
     NULL			/* next */
 };
 
+static struct drive_infot *cache_drive;
+
+static void set_cache_invalid(void)
+{
+	cache_drive = NULL;
+}
+
 /* This function checks to see which hard drives are active and sets up the
  * drive_info[] table for them.  Ack this is darned confusing...
  */
 
 #ifdef CONFIG_BLK_DEV_BHD
-
 static unsigned short int INITPROC bioshd_gethdinfo(void) {
     unsigned short int ndrives = 0;
     int drive;
@@ -184,11 +187,9 @@ static unsigned short int INITPROC bioshd_gethdinfo(void) {
     }
     return ndrives;
 }
-
 #endif
 
 #ifdef CONFIG_BLK_DEV_BFD
-
 static unsigned short int INITPROC bioshd_getfdinfo(void)
 {
     unsigned short int ndrives;
@@ -241,7 +242,6 @@ static unsigned short int INITPROC bioshd_getfdinfo(void)
 
 #ifdef CONFIG_HW_USE_INT13_FOR_FLOPPY
 
-/*    BD_IRQ = BIOSHD_INT;*/
     BD_AX = BIOSHD_DRIVE_PARMS;
     BD_DX = 0;			/* only the number of floppies */
     ndrives = (call_bios(&bdt) ? 0 : BD_DX & 0xff);
@@ -263,7 +263,6 @@ static unsigned short int INITPROC bioshd_getfdinfo(void)
  * The arch_cpu is a safety check
  */
 	if (arch_cpu > 5) {
-/*	    BD_IRQ = BIOSHD_INT;*/
 	    BD_AX = BIOSHD_DRIVE_PARMS;
 	    BD_DX = drive;
 	    if (!call_bios(&bdt))
@@ -279,7 +278,6 @@ static unsigned short int INITPROC bioshd_getfdinfo(void)
 #endif
     return ndrives;
 }
-
 #endif
 
 static void bioshd_release(struct inode *inode, struct file *filp)
@@ -296,26 +294,48 @@ static void bioshd_release(struct inode *inode, struct file *filp)
     }
 }
 
+#define SPT		4	/* DDPT offset of sectors per track*/
+static unsigned char DDPT[14];	/* our copy of diskette drive parameter table*/
+unsigned long __far *vec1E = _MK_FP(0, 0x1E << 2);
+
+/* set our DDPT sectors per track value*/
+static void set_ddpt(int max_sectors)
+{
+	DDPT[SPT] = (unsigned char) max_sectors;
+}
+
+/* get the diskette drive parameter table from INT 1E and point to our RAM copy of it*/
+static void copy_ddpt(void)
+{
+	unsigned long oldvec = *vec1E;
+
+	/*
+	 * Rather than issue INT 13h function 8 (Get Drive Parameters, not implemented
+	 * on IBM XT BIOS v1 and earlier) to get an accurate DDPT, just copy the original
+	 * DDPT to RAM, where the sectors per track value will be modified before each
+	 * INT 13h function 2/3 (Read/Write Disk Sectors).
+	 * Using a patched DDPT also eliminates the need for a seperate fix for #39/#44.
+	 */
+	fmemcpyw(DDPT, _FP_SEG(DDPT), (void *)(unsigned)oldvec, _FP_SEG(oldvec),
+		sizeof(DDPT)/2);
+	debug_bios("bioshd: DDPT vector %x:%x SPT %d\n", _FP_SEG(oldvec), (unsigned)oldvec, DDPT[SPT]);
+	set_ddpt(DDPT[SPT]);
+	*vec1E = (unsigned long)(void __far *)DDPT;
+}
+
 /* As far as I can tell this doesn't actually work, but we might
  * as well try it -- Some XT controllers are happy with it.. [AC]
  */
 
 static void reset_bioshd(int drive)
 {
-/*    BD_IRQ = BIOSHD_INT;*/
     BD_AX = BIOSHD_RESET;
     BD_DX = drive;
     call_bios(&bdt);
-
-/* Dont log this fail - its fine
- */
-#if 0
-    if (CARRY_SET)
-	printk("bioshd: unable to reset.\n");
-#endif
+    /* ignore errors with carry set*/
 }
 
-int read_sector(int drive, int track, int sector)
+static int read_sector(int drive, int track, int sector)
 {
 
 /* i took this code from bioshd_open() where it replicates code used
@@ -324,6 +344,7 @@ int read_sector(int drive, int track, int sector)
 
     register int count = MAX_ERRS;
 
+    set_cache_invalid();
     do {
 	/* BIOS read sector */
 
@@ -334,6 +355,7 @@ int read_sector(int drive, int track, int sector)
 	BD_DX = drive;					/* Head 0 | drive */
 
 	set_irq();
+	set_ddpt(36);		/* set to large value to avoid BIOS issues*/
 	if (!call_bios(&bdt)) return 0;			/* everything is OK */
 	reset_bioshd(drive);
     } while (--count > 0);
@@ -362,12 +384,6 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 	int count;
 
 	target &= 1;
-/* The area between 32-64K is a 'scratch' area - we need a semaphore for it
- */
-
-	while (!dma_avail)
-	    sleep_on(&dma_wait);
-	dma_avail = 0;
 
 /* Try to look for an ELKS disk parameter block in the first sector.  If
  * it exists, we can obtain the disk geometry from it.
@@ -425,8 +441,6 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 /* DMA code belongs out of the loop. */
 
       got_geom:
-	dma_avail = 1;
-	wake_up(&dma_wait);
 
 /* I moved this out of for loop to prevent trashing the screen
  * with seducing (repeating) probe messages about disk types
@@ -564,6 +578,8 @@ int INITPROC bioshd_init(void)
 
     if (!(_fd_count + _hd_count)) return 0;
 
+    copy_ddpt();	/* make a RAM copy of the disk drive parameter table*/
+
 #ifdef TEMP_PRINT_DRIVES_MAX
     {
 	register struct drive_infot *drivep;
@@ -644,19 +660,169 @@ static int bioshd_ioctl(struct inode *inode,
     return err;
 }
 
+/* calculate CHS and sectors remaining for track read */
+static void get_chst(struct drive_infot *drivep, sector_t start, unsigned int *c,
+	unsigned int *h, unsigned int *s, unsigned int *t)
+{
+	sector_t tmp;
+
+	*s = (unsigned int) ((start % (sector_t)drivep->sectors) + 1);
+	tmp = start / (sector_t)drivep->sectors;
+	*h = (unsigned int) (tmp % (sector_t)drivep->heads);
+	*c = (unsigned int) (tmp / (sector_t)drivep->heads);
+	*t = drivep->sectors - *s + 1;
+	debug_bios("bioshd: lba %ld is CHS %d/%d/%d remaining sectors %d\n",
+		start, *c, *h, *s, *t);
+}
+
+/* do bios I/O, return # sectors read/written */
+static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *buf, seg_t seg,
+	int cmd, unsigned int count)
+{
+	int drive, errs;
+	unsigned int cylinder, head, sector, this_pass;
+	unsigned short in_ax, out_ax;
+
+	drive = drivep - drive_info;
+	drive = hd_drive_map[drive];
+	get_chst(drivep, start, &cylinder, &head, &sector, &this_pass);
+
+	/* limit I/O to requested sector count*/
+	if (this_pass > count) this_pass = count;
+	if (cmd == READ) debug_bios("bioshd(%d): NO-CACHE read lba %ld len %d\n",
+				drivep-drive_info, start, this_pass);
+
+	errs = MAX_ERRS;	/* BIOS disk reads should be retried at least three times */
+	do {
+		unsigned rq_start_dma_page, rq_end_dma_page;
+		int need_dma_seg;
+
+		/* Try to gauge if we can do the read/write directly on the actual source/
+		 * target buffer without crossing a 64 KiB DMA boundary
+		 * If not, then do the read/write by way of DMASEG:0
+		 */
+		rq_start_dma_page = (seg + ((unsigned) buf >> 4)) >> 12;
+		rq_end_dma_page = (seg + ((unsigned) (buf + this_pass * 512 - 1) >> 4)) >> 12;
+		need_dma_seg = (rq_start_dma_page != rq_end_dma_page);
+
+		if (need_dma_seg) {
+		    if (this_pass > 1) {
+			/* Then again, if we limit our read/write request to 512 bytes,
+			   it may turn out that we no longer need DMASEG:0... (!) */
+			this_pass = 1;
+			rq_end_dma_page = (seg + ((unsigned) (buf + 511) >> 4)) >> 12;
+			need_dma_seg = (rq_start_dma_page != rq_end_dma_page);
+		    }
+		}
+
+		if (need_dma_seg) {
+		    if (cmd == WRITE)
+			fmemcpyw(NULL, DMASEG, buf, seg, this_pass << 8);
+		    BD_BX = 0;
+		    BD_ES = DMASEG;
+		} else {
+		    BD_BX = (unsigned) buf;
+		    BD_ES = seg;
+		}
+		BD_AX = (cmd == WRITE ? BIOSHD_WRITE : BIOSHD_READ) | this_pass;
+		BD_CX = ((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
+		BD_DX = (head << 8) | drive;
+		debug("cylinder=%d head=%d sector=%d blocks=%d drive=0x%x CMD=%d\n",
+		    cylinder, head, sector, this_pass, drive, cmd);
+		in_ax = BD_AX;
+		out_ax = 0;
+
+		set_ddpt(drivep->sectors);
+		if (call_bios(&bdt)) {
+		    out_ax = BD_AX;
+		    reset_bioshd(drive); /* controller should be reset upon error detection */
+		} else if (need_dma_seg && cmd == READ)
+		    fmemcpyw(buf, seg, NULL, DMASEG, this_pass << 8);
+
+	} while (out_ax && --errs);	/* On error, retry up to MAX_ERRS times */
+
+	if (out_ax) {
+		printk("bioshd: error: out AX=0x%04X in AX=0x%04X "
+		       "ES:BX=0x%04X:0x%04X\n", out_ax, in_ax, BD_ES, BD_BX);
+		return 0;
+	}
+	return this_pass;
+}
+
+#ifdef CONFIG_TRACK_CACHE		/* use track-sized sector cache*/
+static sector_t cache_startsector;
+static sector_t cache_endsector;
+
+/* read from start sector to end of track into DMASEG track buffer, no retries*/
+static void bios_readtrack(struct drive_infot *drivep, sector_t start)
+{
+	unsigned int cylinder, head, sector, num_sectors;
+	int drive = drivep - drive_info;
+
+	drive = hd_drive_map[drive];
+	get_chst(drivep, start, &cylinder, &head, &sector, &num_sectors);
+
+	if (num_sectors > (DMASEGSZ >> 9)) num_sectors = DMASEGSZ >> 9;
+
+	BD_AX = BIOSHD_READ | num_sectors;
+	BD_CX = (unsigned int) ((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
+	BD_DX = (head << 8) | drive;
+	BD_ES = DMASEG;
+	BD_BX = 0;
+
+	set_ddpt(drivep->sectors);
+	if (call_bios(&bdt)) {
+		printk("bioshd: track read error sector %d count %d\n", sector, num_sectors);
+		set_cache_invalid();
+		return;
+	}
+	cache_drive = drivep;
+	cache_startsector = start;
+	cache_endsector = start + num_sectors - 1;
+	debug_bios("bioshd(%d): track read lba %ld to %ld count %d\n",
+		drivep-drive_info, cache_startsector, cache_endsector, num_sectors);
+}
+
+/* check whether cache is valid for one sector*/
+static int cache_valid(struct drive_infot *drivep, sector_t start, char *buf, seg_t seg)
+{
+	unsigned int offset;
+
+	if (drivep != cache_drive || start < cache_startsector || start > cache_endsector)
+	    return 0;
+
+	offset = (int)(start - cache_startsector) << 9;
+	debug_bios("bioshd(%d): cache hit lba %ld\n", drivep-drive_info, start);
+	fmemcpyw(buf, seg, (void *)offset, DMASEG, 512/2);
+	return 1;
+}
+
+/* read from cache, return # sectors read*/
+static int do_cache_read(struct drive_infot *drivep, sector_t start, char *buf, seg_t seg,
+	int cmd)
+{
+	if (cmd == READ) {
+	    if (cache_valid(drivep, start, buf, seg))	/* try cache first*/
+		return 1;
+	    bios_readtrack(drivep, start);		/* read whole track*/
+	    if (cache_valid(drivep, start, buf, seg)) 	/* try cache again*/
+		return 1;
+	}
+	set_cache_invalid();
+	return 0;
+}
+#endif
+
 static void do_bioshd_request(void)
 {
-    register struct drive_infot *drivep;
-    register struct request *req;
-    seg_t seg;
-    unsigned char *buff;
-    sector_t start, count, tmp;
-    int drive, errs;
-    unsigned int cylinder, head, sector, this_pass;
-    unsigned short int minor, in_ax, out_ax;
+	struct drive_infot *drivep;
+	struct request *req;
+	unsigned short minor;
+	sector_t start;
+	int drive, count;
+	char *buf;
 
-    while (1) {
-
+	while (1) {
       next_block:
 
 	/* make sure we have a valid request - Done by INIT_REQUEST */
@@ -678,26 +844,15 @@ static void do_bioshd_request(void)
 	minor = MINOR(req->rq_dev);
 	drive = minor >> MINOR_SHIFT;
 	drivep = &drive_info[drive];
-	//int part = minor & ((1 << MINOR_SHIFT) - 1);
 
-/* make sure it's a disk that we are dealing with. */
-
+	/* make sure it's a disk that we are dealing with. */
 	if (drive > DRIVE_FD1 || drivep->heads == 0) {
 	    printk("bioshd: non-existent drive\n");
 	    end_request(0);
 	    continue;
 	}
 
-	drive = hd_drive_map[drive];
-#ifdef BLOAT_FS
-	count = req->rq_nr_sectors;
-#else
-	count = 2;
-#endif
-
 	start = req->rq_sector;
-	buff = (unsigned char *)req->rq_buffer;
-	seg = req->rq_seg;
 	if (hd[minor].start_sect == -1 || start >= hd[minor].nr_sects) {
 	    printk("bioshd: bad partition start=%ld sect=%ld nr_sects=%ld.\n",
 		   start, hd[minor].start_sect, hd[minor].nr_sects);
@@ -706,87 +861,35 @@ static void do_bioshd_request(void)
 	}
 	start += hd[minor].start_sect;
 
+#ifdef BLOAT_FS
+	count = req->rq_nr_sectors;
+#endif
+	/* all ELKS requests are 1K blocks*/
+	count = 2;
+
+	buf = req->rq_buffer;
 	while (count > 0) {
-	    sector = (unsigned int) ((start % (sector_t)drivep->sectors) + 1);
-	    tmp = start / (sector_t)drivep->sectors;
-	    head = (unsigned int) (tmp % (sector_t)drivep->heads);
-	    cylinder = (unsigned int) (tmp / (sector_t)drivep->heads);
-	    this_pass = drivep->sectors - sector + 1;
+	    int num_sectors;
+#ifdef CONFIG_TRACK_CACHE
+	    /* first try reading track cache*/
+	    num_sectors = do_cache_read(drivep, start, buf, req->rq_seg, req->rq_cmd);
+	    if (!num_sectors)
+#endif
+		/* then fallback with retries if required*/
+		num_sectors = do_bios_readwrite(drivep, start, buf, req->rq_seg, req->rq_cmd,
+			count);
 
-	    /* Fix for weird BIOS behavior with 720K floppy (issue #39/44) */
-	    if (this_pass == 2 && drivep->sectors == 9) this_pass = 1;
-
-	    /* limit I/O to requested size*/
-	    if ((sector_t)this_pass > count) this_pass = (unsigned int) count;
-
-	    errs = MAX_ERRS;	/* BIOS disk reads should be retried at least three times */
-	    do {
-		unsigned rq_start_dma_page, rq_end_dma_page;
-		int need_dma_seg;
-
-		while (!dma_avail) sleep_on(&dma_wait);
-		dma_avail = 0;
-
-		/* Try to gauge if we can do the read/write directly on the actual source/
-		   target buffer without crossing a 64 KiB DMA boundary
-
-		   If not, then do the read/write by way of DMASEG:0 */
-		rq_start_dma_page = (seg + ((__u16) buff >> 4)) >> 12;
-		rq_end_dma_page = (seg + ((__u16) (buff + this_pass * 512 - 1) >> 4)) >> 12;
-		need_dma_seg = (rq_start_dma_page != rq_end_dma_page);
-
-		if (need_dma_seg) {
-		    if (this_pass > (DMASEGSZ >> 9)) {
-			/* Then again, if we limit our read/write request to DMASEGSZ bytes,
-			   it may turn out that we no longer need DMASEG:0... (!) */
-			this_pass = (DMASEGSZ >> 9);
-			rq_end_dma_page = (seg + ((__u16) (buff + DMASEGSZ - 1) >> 4)) >> 12;
-			need_dma_seg = (rq_start_dma_page != rq_end_dma_page);
-		    }
-		}
-
-		if (need_dma_seg) {
-		    if (req->rq_cmd == WRITE)
-			fmemcpyw(NULL, DMASEG, buff, seg, (this_pass << 8));
-		    BD_BX = 0;
-		    BD_ES = DMASEG;
-		} else {
-		    BD_BX = (__u16) buff;
-		    BD_ES = seg;
-		}
-		BD_AX = (req->rq_cmd == WRITE ? BIOSHD_WRITE : BIOSHD_READ) | this_pass;
-		BD_CX = (unsigned short int)
-			    ((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
-		BD_DX = (head << 8) | drive;
-		debug("cylinder=%d head=%d sector=%d blocks=%d drive=0x%x CMD=%d\n",
-		    cylinder, head, sector, this_pass, drive, req->rq_cmd);
-		in_ax = BD_AX;
-		out_ax = 0;
-
-		if (call_bios(&bdt)) {
-		    out_ax = BD_AX;
-		    reset_bioshd(drive); /* controller should be reset upon error detection */
-		} else if (need_dma_seg && req->rq_cmd == READ)
-		    fmemcpyw(buff, seg, NULL, DMASEG, this_pass << 8);
-
-		dma_avail = 1;
-		wake_up(&dma_wait);
-	    } while (out_ax && --errs);	/* On error, retry up to MAX_ERRS times */
-
-	    if (out_ax) {
-		printk("bioshd: error: out AX=0x%04X in AX=0x%04X "
-		       "ES:BX=0x%04X:0x%04X\n", out_ax, in_ax, BD_ES, BD_BX);
+	    if (num_sectors == 0) {
 		end_request(0);
 		goto next_block;
 	    }
 
-	    count -= this_pass;
-	    start += this_pass;
-	    buff += this_pass * 512;
+	    count -= num_sectors;
+	    start += num_sectors;
+	    buf += num_sectors << 9;
 	}
 
-/* satisfied that request */
-
+	/* satisfied that request */
 	end_request(1);
     }
 }

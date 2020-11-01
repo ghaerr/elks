@@ -30,8 +30,8 @@ struct request {
  * but for now it is just not used
  */
     struct task_struct *rq_waiting;
-    sector_t rq_nr_sectors;	/* always 2 */
-    sector_t rq_current_nr_sectors;
+    unsigned int rq_nr_sectors;	/* always 2 */
+    unsigned int rq_current_nr_sectors;
     __u8 rq_errors;
 
 #endif

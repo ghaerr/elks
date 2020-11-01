@@ -1,9 +1,8 @@
 ##
-#console=ttyS0 net=eth 3 # condensed
+#console=ttyS0 debug net=eth 3 # condensed
 #init=/bin/init 3	# multiuser serial
 #init=/bin/sh		# singleuser shell
 #console=ttyS0		# serial console
-#console=tty2		# alt2 console
-#root=bda1			# hd partition 1
+#root=hda1			# hd partition 1
 #ro					# read-only root
 #net=eth

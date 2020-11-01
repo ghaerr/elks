@@ -277,8 +277,8 @@ void panic(char *error, ...)
     halt();
 }
 
+int dprintk_on = DEBUG_STARTDEF;	/* toggled by debug events*/
 #if DEBUG_EVENT
-static int dprintk_on = DEBUG_STARTDEF;	/* toggled by debug events*/
 static void (*dprintk_cb)();		/* debug event callback function*/
 
 void debug_setcallback(void (*cbfunc))

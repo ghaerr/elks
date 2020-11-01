@@ -45,6 +45,7 @@ static char *envp_init[MAX_INIT_ENVS+1];
 static unsigned char options[256];
 
 extern int boot_rootdev;
+extern int dprintk_on;
 static char * INITPROC root_dev_name(int dev);
 static int INITPROC parse_options(void);
 static void INITPROC finalize_options(void);
@@ -291,7 +292,7 @@ static int INITPROC parse_options(void)
 			continue;
 		}
 		if (!strcmp(line,"debug")) {
-			//console_loglevel = 10;
+			dprintk_on = 1;
 			continue;
 		}
 		if (!strncmp(line,"init=",5)) {
