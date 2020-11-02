@@ -119,7 +119,8 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%
 	if (!MSDOS_SB(s)->fats || (MSDOS_SB(s)->dir_entries & (MSDOS_DPS-1))
 	    || !b->cluster_size || 
 #ifndef FAT_BITS_32
-		MSDOS_SB(s)->clusters+2 > MSDOS_SB(s)->fat_length*(SECTOR_SIZE*8/MSDOS_SB(s)->fat_bits)
+		MSDOS_SB(s)->clusters+2 > (unsigned long)
+			MSDOS_SB(s)->fat_length * (SECTOR_SIZE * 8 / MSDOS_SB(s)->fat_bits)
 #else
 		!fat32
 #endif
