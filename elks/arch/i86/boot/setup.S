@@ -69,15 +69,6 @@
 !	0x40:	unused (was FPU name), 16 bytes
 !	0x50:	zero terminated string containing the cpuid, 13 bytes
 !	...
-!	0x8c:	data for floppy disk 0, 6 bytes
-!			0x8C, no. of heads, 2 bytes (0, no disk)
-!			0x8E, no. of sectors/track, 2 bytes
-!			0x90, no. of cylinders, 2 bytes
-!	0x92:	data for floppy disk 1, 6 bytes
-!			0x92, no. of heads, 2 bytes (0, no disk)
-!			0x94, no. of sectors/track, 2 bytes
-!			0x96, no. of cylinders, 2 bytes
-!	...
 !	0x1e2:	part_offset, 4 bytes. Sector offset of booted MBR partition
 !	0x1e6:	elks_magic, 2 bytes
 !	0x1ef:	SETUPSEG
@@ -320,9 +311,6 @@ no_psmouse:
 	rep
 	stosw
 	pop	%es
-#ifdef CONFIG_HW_FLOPPY_DRIVE
-	call	getfloppy	// Get geometry for floppy disk 0/1.
-#endif
 	mov	$INITSEG,%ax
 	mov	%ax,%ds
 	int	$0x12		// determine the size of the basememory
@@ -960,103 +948,6 @@ queue_end:
 	or	%dx,%dx
 	ret
 #endif
-
-/*
-!
-! Determine the number and type of floppy disks
-! attached to our system.
-!
-*/
-#ifdef CONFIG_HW_FLOPPY_DRIVE
-getfloppy:
-	mov	$INITSEG,%ax
-	mov	%ax,%es
-	mov	%ax,%ds
-	mov	0x20,%bl	// Get processor type
-	mov	$SETUPSEG,%ax
-	mov	%ax,%ds
-	int	$0x11		// only ax is changed by int 0x11
-	test	$1,%al		// bit 0 set -> floppy present
-	jz	no_floppy
-	cmp	$5,%bl
-	jle	is_xt
-/*
-!
-! AT architecture. The BIOS tells us the number and capacity of the
-! available floppy disks.
-!
-*/
-	xor	%dl,%dl
-	mov	$0x08,%ah
-	push	%es
-	int	$0x13		// changes es
-	pop	%es
-	jc	no_floppy	// c-flag is set if operation fails
-	or	%bl,%bl		// the drive code is returned in bl
-	jz	no_floppy	// it has to be in the range 1..6
-	cmp	$6,%bl
-	ja	no_floppy
-	xor	%bh,%bh
-	dec	%bl
-	add	%bl,%bl
-	mov	floppies(%bx),%si
-	mov	$0x8c,%di
-	mov	$3,%cx
-	rep
-	movsw
-	int	$0x11		// check for second floppy
-	test	$0xc0,%al	// Bit 6,7
-	jz	no_floppy
-	mov	$0x08,%ah
-	mov	$0x01,%dl
-	push	%es
-	int	$0x13		// changes es
-	pop	%es
-	jc	no_floppy	// c-flag is set if operation fails
-	or	%bl,%bl		// the drive code is returned in bl
-	jz	no_floppy	// it has to be in the range 1..6
-	cmp	$6,%bl
-	ja	no_floppy
-	xor	%bh,%bh
-	dec	%bl
-	add	%bl,%bl
-	mov	floppies(%bx),%si
-	mov	$0x8c+6,%di
-	mov	$3,%cx
-	rep
-	movsw
-	ret
-is_xt:
-/*
-!
-! XT architecture. Ask the BIOS about the number of available floppy
-! disks and assume that they have a capacity of 360 KB.
-!
-! ax contains the result of int 0x11 when jumped here!
-!
-*/
-	int	$0x11
-	mov	$3,%cx
-	mov	$0x8c,%di
-	lea	f360,%si
-	rep
-	movsw
-	test	$0xc0,%al	// Bit 6,7
-	jz	no_floppy	// second floppy detected
-	mov	$3,%cx
-	lea	f360,%si
-	rep
-	movsw
-no_floppy: ret
-
-f360:	.word 2,9,40
-f720:	.word 2,9,80
-f1200:	.word 2,15,80
-f1440:	.word 2,18,80
-f2880:	.word 2,36,80
-floppies: .word f360, f1200, f720, f1440, f2880, f2880
-#endif
-
 
 // Utility/debugging routines
 
