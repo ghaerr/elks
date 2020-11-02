@@ -52,11 +52,6 @@ mainmenu_option next_comment
 
 		bool 'PS/2 mouse'       CONFIG_HW_PS2_MOUSE y
 		bool 'VGA adapter'      CONFIG_HW_VGA       y
-
-		bool 'Floppy drive(s)' CONFIG_HW_FLOPPY_DRIVE y
-		if [ "$CONFIG_HW_FLOPPY_DRIVE" == "y" ]; then
-			bool '  Use INT 13h for floppy count' CONFIG_HW_USE_INT13_FOR_FLOPPY y
-		fi
 		bool 'Serial port FIFO' CONFIG_HW_SERIAL_FIFO y
 
 		comment 'BIOS support'

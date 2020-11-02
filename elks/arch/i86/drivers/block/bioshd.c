@@ -241,26 +241,29 @@ static unsigned short int INITPROC bioshd_getfdinfo(void)
 static unsigned short int INITPROC bioshd_getfdinfo(void)
 {
     register struct drive_infot *drivep = &drive_info[DRIVE_FD0];
-    int drive, ndrives;
+    int drive, ndrives = 0;
+    unsigned char equip_flags;
 
     /*
      * The INT 13h floppy query will fail on IBM XT v1 BIOS and earlier,
-     * so default to # drives from the BIOS data area at 0x040:0x0010.
+     * so default to # drives from the BIOS data area at 0x040:0x0010 (INT 11h).
      */
-    ndrives = (peekb(0x10, 0x40) >> 6) + 1;
+    equip_flags = peekb(0x10, 0x40);
+    if (equip_flags & 0x01)
+	ndrives = (equip_flags >> 6) + 1;
 
-#ifdef CONFIG_HW_USE_INT13_FOR_FLOPPY
-    /* get floppy drive count*/
-    BD_AX = BIOSHD_DRIVE_PARMS;
-    BD_DX = 0;			/* query floppies only*/
-    BD_ES = BD_DI = BD_SI = 0;	/* guard against BIOS bugs*/
-    if (!call_bios(&bdt))
-	ndrives = BD_DX & 0xff;
-    else
-	debug_bios("bioshd: get_drive_parms fail on fd\n");
-#endif
+    /* Use INT 13h function 08h only if AT or higher*/
+    if (arch_cpu > 5) {
+	BD_AX = BIOSHD_DRIVE_PARMS;
+	BD_DX = 0;			/* query floppies only*/
+	BD_ES = BD_DI = BD_SI = 0;	/* guard against BIOS bugs*/
+	if (!call_bios(&bdt))
+	    ndrives = BD_DX & 0xff;	/* floppy drive count*/
+	else
+	    debug_bios("bioshd: get_drive_parms fail on fd\n");
+    }
 
-    /* set floppy drive type*/
+    /* set drive type for floppies*/
     for (drive = 0; drive < ndrives; drive++) {
 	/*
 	 * If type cannot be determined using BIOSHD_DRIVE_PARMS,
@@ -268,8 +271,6 @@ static unsigned short int INITPROC bioshd_getfdinfo(void)
 	 */
 	*drivep = fd_types[arch_cpu > 5 ? 3 : 0];
 
-#ifdef CONFIG_HW_USE_INT13_FOR_FLOPPY
-	/* Do this only if AT and higher, some XT's return strange results - Al*/
 	if (arch_cpu > 5) {
 	    BD_AX = BIOSHD_DRIVE_PARMS;
 	    BD_DX = drive;
@@ -279,7 +280,7 @@ static unsigned short int INITPROC bioshd_getfdinfo(void)
 		*drivep = fd_types[(BD_BX & 0xFF) - 1];
 	    }
 	}
-#endif
+
 	drivep++;
     }
     return ndrives;
