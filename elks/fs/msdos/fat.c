@@ -152,16 +152,14 @@ void FATPROC cache_lookup(struct inode *inode,long cluster,long *f_clu,long *d_c
 {
 	register struct fat_cache *walk;
 
-#ifdef DEBUG
-printk("cache lookup: %d\r\n",*f_clu);
-#endif
+	debug("cache lookup: %d\r\n",*f_clu);
+
 	for (walk = fat_cache; walk; walk = walk->next)
 		if (inode->i_dev == walk->device && walk->ino == inode->i_ino
 			&& walk->file_cluster <= cluster && walk->file_cluster > *f_clu) {
 			*d_clu = walk->disk_cluster;
-#ifdef DEBUG
-printk("cache hit: %ld (%ld)\r\n",walk->file_cluster,*d_clu);
-#endif
+			debug("cache hit: %ld (%ld)\r\n",walk->file_cluster,*d_clu);
+
 			if ((*f_clu = walk->file_cluster) == cluster) return;
 		}
 }
@@ -173,11 +171,11 @@ static void FATPROC list_cache(void)
 	struct fat_cache *walk;
 
 	for (walk = fat_cache; walk; walk = walk->next) {
-		if (walk->device) printk("(%d,%d) ",walk->file_cluster,
+		if (walk->device) dprintk("(%d,%d) ",walk->file_cluster,
 			walk->disk_cluster);
-		else printk("-- ");
+		else dprintk("-- ");
 	}
-	printk("\r\n");
+	dprintk("\r\n");
 }
 #endif
 
@@ -186,9 +184,8 @@ void FATPROC cache_add(struct inode *inode,long f_clu,long d_clu)
 {
 	register struct fat_cache *walk,*last;
 
-#ifdef DEBUG
-printk("cache add: %d (%d)\r\n",f_clu,d_clu);
-#endif
+	debug("cache add: %d (%d)\r\n",f_clu,d_clu);
+
 	last = NULL;
 	for (walk = fat_cache; walk->next; walk = (last = walk)->next)
 		if (inode->i_dev == walk->device && walk->ino == inode->i_ino
@@ -203,7 +200,7 @@ printk("cache add: %d (%d)\r\n",f_clu,d_clu);
 			walk->next = fat_cache;
 			fat_cache = walk;
 #ifdef DEBUG
-list_cache();
+			list_cache();
 #endif
 			return;
 		}
@@ -215,7 +212,7 @@ list_cache();
 	walk->next = fat_cache;
 	fat_cache = walk;
 #ifdef DEBUG
-list_cache();
+	list_cache();
 #endif
 }
 

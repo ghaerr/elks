@@ -35,6 +35,7 @@
 #define DEBUG_FAT	0		/* FAT filesystem*/
 #define DEBUG_FILE	0		/* sys open and file i/o*/
 #define DEBUG_NET	0		/* networking*/
+#define DEBUG_MM	0		/* mem char device*/
 #define DEBUG_SCHED	0		/* scheduler/wait*/
 #define DEBUG_SIG	0		/* signals*/
 #define DEBUG_SUP	0		/* superblock, mount, umount*/
@@ -83,6 +84,12 @@ void debug_setcallback(void (*cbfunc));	/* callback on debug event*/
 #define debug_file(...)
 #endif
 
+#if DEBUG_MM
+#define debugmem	PRINTK
+#else
+#define debugmem(...)
+#endif
+
 #if DEBUG_NET
 #define debug_net	PRINTK
 #else
@@ -121,12 +128,10 @@ void debug_setcallback(void (*cbfunc));	/* callback on debug event*/
 
 /* Old debug mechanism - deprecated.
  * This sets up a standard set of macros that can be used with any of the
- * files that make up the ELKS kernel. They can handle calls with up to 9
- * parameters after the format string.
+ * files that make up the ELKS kernel.
  *
  * To enable debugging for any particular module, just include -DDEBUG
- * on the command line for that module. Note however that for the memory
- * management module, you will additionally need -DDEBUGMM included.
+ * on the command line for that module.
  *
  * Riley Williams <Riley@Williams.Name> 25 Apr 2002
  */
@@ -135,21 +140,6 @@ void debug_setcallback(void (*cbfunc));	/* callback on debug event*/
 #	define	debug(...)	PRINTK(__VA_ARGS__)
 #else
 #	define	debug(...)
-#endif
-
-/* This is really chatty, and not recommended for use on a 5150 :)
- * As a result, it requires DEBUGMM to be defined as well as DEBUG.
- * This definition uses the above definitions for simplicity.
- */
-
-#ifdef DEBUGMM
-
-#define debugmem(...)				debug(__VA_ARGS__)
-
-#else
-
-#define debugmem(...)
-
 #endif
 
 #endif
