@@ -19,9 +19,8 @@
  */
 
 volatile jiff_t jiffies = 0;
+static int spin_on;
 
-extern void do_timer(struct pt_regs *);
-extern void keyboard_irq(int, struct pt_regs *, void *);
 extern void rs_pump(void);
 
 /*  These 8253/8254 macros generate proper timer constants based on the
@@ -44,12 +43,13 @@ void timer_tick(int irq, struct pt_regs *regs, void *data)
 {
     do_timer(regs);
 
-#if CONFIG_CHAR_DEV_RS
+#ifdef CONFIG_CHAR_DEV_RS
     rs_pump();		/* check if received serial chars and call wake_up*/
 #endif
 
 #ifdef CONFIG_ARCH_SIBO
     /* As we are now responsible for clearing interrupt */
+	extern void keyboard_irq(int, struct pt_regs *, void *);
     clr_irq();
     outb(0x0, 0x0A);
     outb(0x0, 0x0C);
@@ -58,12 +58,13 @@ void timer_tick(int irq, struct pt_regs *regs, void *data)
     keyboard_irq(1, regs, NULL);
 #else
 
-    /*pokew(40, 0xb80a, peekw(40, 0xb80a)+1);*/
+    /* spin timer wheel in upper right of screen*/
+    if (spin_on && !(jiffies & 7)) {
+	static unsigned char wheel[4] = {'-', '\\', '|', '/'};
+	static int c = 0;
 
-#ifdef CONFIG_DEBUG_TIMER
-    outb (jiffies, 0x80);
-#endif
-
+	pokeb((79 + 0*80) * 2, 0xB800, wheel[c++ & 0x03]);
+    }
 #endif
 }
 
@@ -87,4 +88,10 @@ void stop_timer(void)
     outb (0, (void*)TIMER_DATA_PORT);
     outb (0, (void*)TIMER_DATA_PORT);
 #endif
+}
+
+void spin_timer(int onflag)
+{
+    if ((spin_on = onflag) == 0)
+	pokeb((79 + 0*80) * 2, 0xB800, ' ');
 }

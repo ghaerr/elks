@@ -103,12 +103,7 @@ static void restart_timer(void)
 static void kbd_timer(int data)
 {
     int dav, extra = 0;
-#if 0
-    static int clk[4] = {0x072D, 0x075C, 0x077C, 0x072F,};
-    static int c = 0;
 
-    pokew((79+0*80)*2, 0xB800, clk[(c++)&0x03]);
-#endif
     if ((dav = bios_kbd_poll())) {
 	if (dav & 0xFF)
 	    Console_conin(dav & 0x7F);
