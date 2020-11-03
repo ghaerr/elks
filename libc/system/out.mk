@@ -34,6 +34,7 @@ OBJS = \
 	mkfifo.o \
 	opendir.o \
 	readdir.o \
+	rewinddir.o \
 	setjmp.o \
 	setpgrp.o \
 	signal.o \

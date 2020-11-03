@@ -64,34 +64,59 @@ char *buildname(char *dirname, char *filename)
 	return buf;
 }
 
-/* link all files in srcname directory to destname directory*/
-int linkfiles(char *srcname, char *destname)
+/*
+ * Link all files in source directory to same name in destination directory.
+ * Returns 1 if successful, or 0 on a failure with an * error message output.
+ */
+int linkfiles(char *srcdir, char *destdir)
 {
 	DIR *dirp;
 	struct dirent *dp;
 	char *newsrc;
-	char newdst[PATHLEN];
+	char newdest[PATHLEN];
 
-	dirp = opendir(srcname);
-	if (!dirp)
-		return 1;
+	dirp = opendir(srcdir);
+	if (!dirp) {
+		perror(srcdir);
+		return 0;
+	}
+
+	/* pre-search directory looking for subdirectories or symlinks */
+	while ((dp = readdir(dirp)) != NULL) {
+		struct stat sbuf;
+
+		if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
+			continue;
+
+		newsrc = buildname(srcdir, dp->d_name);
+		if (lstat(newsrc, &sbuf) >= 0 && (S_ISDIR(sbuf.st_mode) || S_ISLNK(sbuf.st_mode))) {
+			fprintf(stderr, "Can't move directory or symlink: %s\n", newsrc);
+			closedir(dirp);
+			return 0;
+		}
+	}
+	rewinddir(dirp);
+
+	/* now link each file to new directory*/
 	while ((dp = readdir(dirp)) != NULL) {
 		if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
 			continue;
-		strcpy(newdst, buildname(destname, dp->d_name));
-		newsrc = buildname(srcname, dp->d_name);
+
+		strcpy(newdest, buildname(destdir, dp->d_name));
+		newsrc = buildname(srcdir, dp->d_name);
+
 		/* link will fail if directory or symlink*/
-		if (link(newsrc, newdst) < 0) {
+		if (link(newsrc, newdest) < 0) {
 			perror(newsrc);
-			return 1;
+			return 0;
 		}
 		if (unlink(newsrc) < 0) {
 			perror(newsrc);
-			return 1;
+			return 0;
 		}
 	}
 	closedir(dirp);
-	return 0;
+	return 1;
 }
 
 /*
@@ -238,9 +263,11 @@ int main(int argc, char **argv)
 				perror(destname);
 				return 1;
 			}
+
 			/* only works if source directory has no subdirectories or symlinks!*/
-			if (linkfiles(srcname, destname))
+			if (!linkfiles(srcname, destname))
 				return 1;
+
 			if (rmdir(srcname) < 0) {
 				perror(srcname);
 				return 1;
