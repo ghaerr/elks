@@ -63,14 +63,12 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 	while (lock) sleep_on(&wait);
 	lock = 1;
 	limit = MSDOS_SB(inode->i_sb)->clusters;
-	//this = limit; /* to keep GCC happy */
 	for (count = 0; count < limit; count++) {
 		this = ((count+previous) % limit)+2;
 		if (fat_access(inode->i_sb,this,-1L) == 0) break;
 	}
-#ifdef DEBUG
-printk("free cluster: %d\r\n",this);
-#endif
+	debug("free cluster: %d\r\n",this);
+
 	previous = (count+previous+1) % limit;
 	if (count >= limit) {
 		lock = 0;
@@ -84,9 +82,8 @@ printk("free cluster: %d\r\n",this);
 	    0xffffff8UL);
 	lock = 0;
 	wake_up(&wait);
-#ifdef DEBUG
-printk("set to %x\r\n",fat_access(inode->i_sb,this,-1L));
-#endif
+	debug("set to %x\r\n",fat_access(inode->i_sb,this,-1L));
+
 	if (!S_ISDIR(inode->i_mode)) {
 		last = inode->i_size?
 			get_cluster(inode,(inode->i_size-1) / SECTOR_SIZE /
@@ -102,24 +99,21 @@ printk("set to %x\r\n",fat_access(inode->i_sb,this,-1L));
 				}
 			}
 	}
-#ifdef DEBUG
-printk("last = %d\r\n",last);
-#endif
+	debug("last = %d\r\n",last);
+
 	if (last)
 		fat_access(inode->i_sb,last,this);
 	else {
 		inode->u.msdos_i.i_start = this;
 		inode->i_dirt = 1;
 	}
-#ifdef DEBUG
-if (last) printk("next set to %d\r\n",fat_access(inode->i_sb,last,-1L));
-#endif
+	if (last) debug("next set to %d\r\n",fat_access(inode->i_sb,last,-1L));
+
 	for (current = 0; current < MSDOS_SB(inode->i_sb)->cluster_size; current++) {
 		sector = MSDOS_SB(inode->i_sb)->data_start+(this-2) *
 			MSDOS_SB(inode->i_sb)->cluster_size+current;
-#ifdef DEBUG
-printk("zeroing sector %d\r\n",sector);
-#endif
+		debug("zeroing sector %d\r\n",sector);
+
 		if (current < MSDOS_SB(inode->i_sb)->cluster_size-1 && !(sector & 1)) {
 			if (!(bh = getblk(inode->i_dev,(block_t)(sector >> 1))))
 				printk("FAT: getblk fail\n");
@@ -146,10 +140,8 @@ printk("zeroing sector %d\r\n",sector);
 			return -ENOSPC;
 		}
 		inode->i_size += SECTOR_SIZE*MSDOS_SB(inode->i_sb)->cluster_size;
-#ifdef DEBUG
-printk("size is %d now (%x)\r\n",inode->i_size,inode);
-#endif
 		inode->i_dirt = 1;
+		debug("size is %d now (%x)\r\n",inode->i_size,inode);
 	}
 	return 0;
 }
