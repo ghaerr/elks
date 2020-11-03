@@ -20,6 +20,7 @@
 #include <grp.h>
 #include <utime.h>
 #include <errno.h>
+#include <dirent.h>
 
 #define BUF_SIZE 1024 
 
@@ -37,6 +38,60 @@ int isadir(name)
 		return 0;
 
 	return S_ISDIR(statbuf.st_mode);
+}
+
+/*
+ * Build a path name from the specified directory name and file name.
+ * If the directory name is NULL, then the original filename is returned.
+ * The built path is in a static area, and is overwritten for each call.
+ */
+char *buildname(char *dirname, char *filename)
+{
+	char		*cp;
+	static	char	buf[PATHLEN];
+
+	if ((dirname == NULL) || (*dirname == '\0'))
+		return filename;
+
+	cp = strrchr(filename, '/');
+	if (cp)
+		filename = cp + 1;
+
+	strcpy(buf, dirname);
+	strcat(buf, "/");
+	strcat(buf, filename);
+
+	return buf;
+}
+
+/* link all files in srcname directory to destname directory*/
+int linkfiles(char *srcname, char *destname)
+{
+	DIR *dirp;
+	struct dirent *dp;
+	char *newsrc;
+	char newdst[PATHLEN];
+
+	dirp = opendir(srcname);
+	if (!dirp)
+		return 1;
+	while ((dp = readdir(dirp)) != NULL) {
+		if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
+			continue;
+		strcpy(newdst, buildname(destname, dp->d_name));
+		newsrc = buildname(srcname, dp->d_name);
+		/* link will fail if directory or symlink*/
+		if (link(newsrc, newdst) < 0) {
+			perror(newsrc);
+			return 1;
+		}
+		if (unlink(newsrc) < 0) {
+			perror(newsrc);
+			return 1;
+		}
+	}
+	closedir(dirp);
+	return 0;
 }
 
 /*
@@ -137,30 +192,6 @@ error_exit:
 	return 0;
 }
 
-/*
- * Build a path name from the specified directory name and file name.
- * If the directory name is NULL, then the original filename is returned.
- * The built path is in a static area, and is overwritten for each call.
- */
-char *buildname(char *dirname, char *filename)
-{
-	char		*cp;
-	static	char	buf[PATHLEN];
-
-	if ((dirname == NULL) || (*dirname == '\0'))
-		return filename;
-
-	cp = strrchr(filename, '/');
-	if (cp)
-		filename = cp + 1;
-
-	strcpy(buf, dirname);
-	strcat(buf, "/");
-	strcat(buf, filename);
-
-	return buf;
-}
-
 
 int main(int argc, char **argv)
 {
@@ -191,8 +222,31 @@ int main(int argc, char **argv)
 		if (dirflag)
 			destname = buildname(destname, srcname);
 
+		if (!dirflag) {
+			/* remove destname if exists and not a directory*/
+			if (access(destname, 0) == 0 && !isadir(destname))
+				if (unlink(destname) < 0)
+					perror(destname);
+		}
+
 		if (rename(srcname, destname) >= 0)
 			continue;
+
+		/* handle broken kernel directory rename (issue #583)*/
+		if (errno == EPERM && access(destname, 0) < 0 && isadir(srcname)) {
+			if (mkdir(destname, 0777 & ~umask(0))) {
+				perror(destname);
+				return 1;
+			}
+			/* only works if source directory has no subdirectories or symlinks!*/
+			if (linkfiles(srcname, destname))
+				return 1;
+			if (rmdir(srcname) < 0) {
+				perror(srcname);
+				return 1;
+			}
+			return 0;
+		}
 
 		if (errno != EXDEV) {
 			perror(destname);
