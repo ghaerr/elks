@@ -88,5 +88,7 @@ extern int del_timer(struct timer_list *);
 extern void timer_tick(int, struct pt_regs *, void *);
 extern void enable_timer_tick(void);
 extern void stop_timer(void);
+extern void do_timer(struct pt_regs *);
+extern void spin_timer(int);
 
 #endif

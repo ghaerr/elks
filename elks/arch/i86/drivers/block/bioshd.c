@@ -43,6 +43,7 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/config.h>
 #include <linuxmt/debug.h>
+#include <linuxmt/timer.h>
 
 #include <arch/io.h>
 #include <arch/segment.h>
@@ -825,6 +826,7 @@ static void do_bioshd_request(void)
 	int drive, count;
 	char *buf;
 
+	spin_timer(1);
 	while (1) {
       next_block:
 
@@ -895,6 +897,7 @@ static void do_bioshd_request(void)
 	/* satisfied that request */
 	end_request(1);
     }
+    spin_timer(0);
 }
 
 #if 0			/* Currently not used, removing for size. */
