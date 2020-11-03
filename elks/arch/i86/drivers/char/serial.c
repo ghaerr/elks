@@ -452,6 +452,7 @@ static void rs_init(void)
     } while (++sp < &ports[NR_SERIAL]);
 }
 
+/* note: this function will be called prior to serial_init if serial console set*/
 void rs_conout(dev_t dev, char Ch)
 {
     register struct serial_info *sp = &ports[MINOR(dev) - RS_MINOR_OFFSET];

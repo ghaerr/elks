@@ -263,7 +263,6 @@ void console_init(void)
 		// Get current cursor position
 		// to write after boot messages
 		PositionCursorGet (&C->cx, &C->cy);
-		C->cy++;
 	}
 	C->fsm = std_char;
 	C->pageno = i;

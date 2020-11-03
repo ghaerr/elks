@@ -90,9 +90,6 @@ void INITPROC kernel_init(void)
     irq_init();
     tty_init();
 
-    /* init direct, bios or headless console*/
-    console_init();
-
 #ifdef CONFIG_BOOTOPTS
     /* parse options found in /bootops */
     int opts = parse_options();
@@ -100,6 +97,9 @@ void INITPROC kernel_init(void)
 
     /* set console from /bootopts console= or 0=default*/
     set_console(boot_console);
+
+    /* init direct, bios or headless console*/
+    console_init();
 
 #ifdef CONFIG_CHAR_DEV_RS
     serial_init();
