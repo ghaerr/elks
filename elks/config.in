@@ -50,7 +50,6 @@ mainmenu_option next_comment
 
 		comment 'Devices'
 
-		bool 'PS/2 mouse'       CONFIG_HW_PS2_MOUSE y
 		bool 'VGA adapter'      CONFIG_HW_VGA       y
 		bool 'Serial port FIFO' CONFIG_HW_SERIAL_FIFO y
 
@@ -60,7 +59,6 @@ mainmenu_option next_comment
 		bool 'Get fontinfo via CRT-BIOS (40h:85h)' CONFIG_HW_VIDEO_HOC     y
 
 		if [ "$CONFIG_HW_VIDEO_HOC" != "y" ]; then
-			int 'Height of characters in lines' CONFIG_HW_VIDEO_LINES_PER_CHARACTER 8
 			int 'Lines per page'                CONFIG_HW_VIDEO_LINES_PER_SCREEN    25
 		fi
 
@@ -74,7 +72,7 @@ endmenu
 mainmenu_option next_comment
 	comment 'Kernel settings'
 
-	bool 'Minimize kernel size'               CONFIG_SMALL_KERNEL n
+	bool 'Minimize kernel size'               CONFIG_SMALL_KERNEL y
 	bool 'Include kernel version system call' CONFIG_SYS_VERSION  n
 	bool 'Boot Options in /bootopts'          CONFIG_BOOTOPTS     y
 	bool 'System Trace'                       CONFIG_STRACE       n
