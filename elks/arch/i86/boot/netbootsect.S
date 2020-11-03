@@ -44,6 +44,7 @@ SYSSEGB   = DEF_SYSSEG + 2
 ! ROOT_DEV is now written by "build".
 ROOT_DEV = 0
 #ifndef SVGA_MODE
+#define VGA_ASK   0xfffd	/* ask for it at bootup */
 #define SVGA_MODE VGA_ASK
 #endif
 #ifndef RAMDISK

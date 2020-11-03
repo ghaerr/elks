@@ -32,8 +32,7 @@
 ! The following data is passed to the main kernel (relative to INITSEG)
 !
 ! index
-!	0:	cursor position, 2 bytes
-!	2:	unused (was extended memory size), 2 bytes
+!	...
 !	4:	display page
 !	6:	video mode, 1 byte
 !	7:	window width, 1 byte
@@ -44,7 +43,6 @@
 !	15:	VGA present, 1 byte
 !			0 = not present
 !			1 = present
-!	16	Point height of character matrix (taken from BDA), 2 bytes
 !	0x20:	Processor type, 1 byte
 !			0  = 8088
 !			1  = 8086
@@ -58,15 +56,10 @@
 !			9  = Pentium
 !			10 = Pentium PRO
 !			255 = VM86 mode
-!	0x21:	unused (was FPU type), 1 byte
-!	0x22:	cpuid available -> 1, otherwise 0, 1 byte
-!	0x23:	processor family, 1 byte
-!	0x24:	mask model, 1 byte
-!	0x25:	mask revision, 1 byte
-!	0x26:	capability flag, 4 bytes
+!	...
 !	0x2a:	size of the base memory, in kbytes, 2 bytes
 !	0x30:	zero terminated string containing the processor's name, 16 bytes
-!	0x40:	unused (was FPU name), 16 bytes
+!	...
 !	0x50:	zero terminated string containing the cpuid, 13 bytes
 !	...
 !	0x1e2:	part_offset, 4 bytes. Sector offset of booted MBR partition
@@ -80,7 +73,7 @@
 !	0x1fa:	SVGA_MODE
 !	0x1fc:	ROOT_DEV, 2 bytes. Either BIOS boot device or actual kdev_t ROOT_DEV
 !	0x1fe:	0x55 = boot_flag, Low part
-!	0x1ff:	0xAA = boot_flag, High part/PS2 mouse device present (0, not present)
+!	0x1ff:	0xAA = boot_flag, High part
 !
 ! NOTE! These had better be the same as in bootsect.s!
 */
@@ -267,10 +260,6 @@ start_os:
 #endif
 
 novga:	mov	%al,14		// CGA 25 rows
-	mov	$0x03,%ah	// read cursor pos
-	xor	%bh,%bh		// clear bh
-	int	$0x10		// save it in known place, con_init fetches
-	mov	%dx,0	        // it from INITSEG.
 
 // Get video-card data
 
@@ -279,28 +268,8 @@ novga:	mov	%al,14		// CGA 25 rows
 	mov	%bx,4		// bh = display page
 	mov	%ax,6		// al = video mode, ah = window width
 
-#ifdef CONFIG_HW_VIDEO_LINES_PER_CHARACTER
-	movw	$CONFIG_HW_VIDEO_LINES_PER_CHARACTER,16
-#else
-	xor	%ax,%ax
-	mov	%ax,%es		// Access BIOS DATA AREA
-	mov	%es:0x485,%ax	// POINTS - Height of character matrix
-	mov	%ax,16
-#endif
-
-// check for PS/2 pointing device
-
-	movb	$0,boot_flag+1	// default is no pointing device
-#ifdef CONFIG_HW_PS2_MOUSE
-	int	$0x11		// int 0x11: equipment determination
-	test	$0x04,%al	// check if pointing device installed
-	jz	no_psmouse
-	movb	$0xaa,boot_flag+1 // device present
-	nop
-no_psmouse:
-#endif
-
 	call	getcpu
+
 	push	%es		// clear BIOS data for harddisk 0/1, 12 bytes
 	mov	$INITSEG,%ax	// and BIOS data for floppy disk 0/1, 12 bytes
 	mov	%ax,%es
@@ -311,6 +280,7 @@ no_psmouse:
 	rep
 	stosw
 	pop	%es
+
 	mov	$INITSEG,%ax
 	mov	%ax,%ds
 	int	$0x12		// determine the size of the basememory
@@ -415,7 +385,7 @@ size_error:
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Case for normal kernel loaded from DISK and relocated
 //
-#elif defined(REL_SYS)
+#else /* REL_SYS*/
 
 	mov $INITSEG,%ax
 	mov %ax,%ds
@@ -748,32 +718,9 @@ add_ptr:
 	mov %ax,%ds
 	pop %cx
 	ret
+#endif /* REL_SYS*/
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// Case for kernel on DISK, no relocation
-//
-#else /* !REL_SYS*/
-
-	mov $SYSSEG,%ax	// DS = segment of a.out header
-	mov %ax,%ds
-	mov 8,%bx	// text size
-	xor %di,%di     // .fartext size
-	mov 12,%si	// data size
-	mov 16,%dx	// bss size
-	mov 20,%bp	// entry point
-	mov %bx,%ax	// Calc text size in paragraphs
-	mov $4,%cl
-	shr %cl,%ax
-
-	mov $SYSSEG+2,%cx // kernel CS
-	push %cx
-	push %bp	// CS:IP entry point
-	add %ax,%cx	// kernel DS
-	mov %cx,%ds
-	mov %cx,%es
-	lret
-
-#endif /* REL_SYS */
 
 /*
 ! TODO: move probing to boot tools

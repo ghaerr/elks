@@ -10,8 +10,12 @@
 #define DEF_SETUPSEG	DEF_INITSEG + 0x20
 #define DEF_SYSSIZE	0x2F00
 
-#if !defined(CONFIG_ROMCODE) && !defined(CONFIG_ARCH_SIBO)
-#define REL_SYS
+#ifdef CONFIG_ROMCODE
+#define SETUP_DATA	CONFIG_ROM_SETUP_DATA
+
+#else
+#define SETUP_DATA	REL_INITSEG
+
 /* Define segment locations of low memory, must not overlap */
 #define DEF_OPTSEG	0x50  /* 0x100 bytes boot options*/
 #define REL_INITSEG	0x60  /* 0x200 bytes setup data */
@@ -25,7 +29,7 @@
 #define REL_SYSSEG	0x0C0 /* kernel code segment */
 #endif
 
-#endif
+#endif /* !CONFIG_ROMCODE */
 
 // DMASEG is a bouncing buffer of 1K (= BLOCKSIZE)
 // below the first 64K boundary (= 0x1000:0)
@@ -36,34 +40,13 @@
 #define DMASEG 0x800
 #endif
 
-#if defined(REL_SYS)
-#define SETUP_DATA REL_INITSEG
-#elif defined(CONFIG_ROMCODE)
-#define SETUP_DATA CONFIG_ROM_SETUP_DATA
-#else
-#define SETUP_DATA DEF_INITSEG
-#endif
-
 /*
  * Defines for what uname() should return.
  * The definitions for UTS_RELEASE and UTS_VERSION are now passed as
  * kernel compilation parameters, and should only be used by linux/version.c
  */
-#ifndef UTS_SYSNAME
 #define UTS_SYSNAME "ELKS"
-#endif
-
-#ifndef UTS_MACHINE
 #define UTS_MACHINE "i8086"
-#endif
-
-#ifndef UTS_NODENAME
 #define UTS_NODENAME "(none)"		/* set by sethostname() */
-#endif
-
-/* internal svga startup constants */
-#define VGA_NORMAL	0xffff	/* 80x25 mode */
-#define VGA_EXTENDED	0xfffe	/* 80x50 mode */
-#define VGA_ASK 	0xfffd	/* ask for it at bootup */
 
 #endif

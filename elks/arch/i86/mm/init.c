@@ -74,7 +74,4 @@ void INITPROC mm_stat(seg_t start, seg_t end)
 #endif
     printk("data %x:0000, top %x, %uK free\n",
 	   kernel_ds, end, (int) ((end - start) >> 6));
-
-    if (setupb(0x1ff) == 0xAA && arch_cpu > 5)
-	printk("ps2: PS/2 pointing device detected\n");
 }
