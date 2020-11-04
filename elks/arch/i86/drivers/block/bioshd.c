@@ -302,10 +302,39 @@ static void bioshd_release(struct inode *inode, struct file *filp)
     }
 }
 
-/* set our DDPT sectors per track value*/
+static void reset_bioshd(int drive);
+
+/* set our DDPT sectors per track value and reset the floppy drives if
+ * necessary */
 static void set_ddpt(int max_sectors)
 {
+    /* We want to prevent the BIOS from accidentally doing a "multitrack"
+     * floppy read --- and wrapping around from one side to the next ---
+     * when ELKS only wants to read from a single track.
+     *
+     * (E.g. if DDPT SPT = 9, and a disk has 18 sectors per track, and we
+     * want to read sectors 9--10 from track 0, side 0, then the BIOS may
+     * read sector 9 from track 0, side 0, followed by sector 1 from track
+     * 0, side 1, which will be wrong.)
+     *
+     * To prevent this, we set the DDPT SPT field to at least the actual
+     * sector count per track in the detected disk geometry.  The DDPT SPT
+     * should never be smaller than the actual SPT, but it can be larger.
+     *
+     * Also, Ralf Brown's Interrupt List recommends that, if the DDPT is
+     * changed, "INT 13/AH=00h should be called to ensure that the floppy
+     * disk controller is appropriately reprogrammed".  So do a reset if the
+     * DDPT is changed.  (I am not sure how necessary this is in practice,
+     * but I think a reset at this point should not degrade floppy I/O
+     * performance too much.) -- tkchia 20201104
+     */
+    if (DDPT[SPT] < (unsigned char) max_sectors) {
+	int drive;
 	DDPT[SPT] = (unsigned char) max_sectors;
+	for (drive = 0; drive < _fd_count; ++drive)
+	    reset_bioshd(drive);
+	debug_bios("bioshd: DDPT SPT changed to %d\n", max_sectors);
+    }
 }
 
 /* get the diskette drive parameter table from INT 1E and point to our RAM copy of it*/
@@ -323,7 +352,6 @@ static void copy_ddpt(void)
 	fmemcpyw(DDPT, _FP_SEG(DDPT), (void *)(unsigned)oldvec, _FP_SEG(oldvec),
 		sizeof(DDPT)/2);
 	debug_bios("bioshd: DDPT vector %x:%x SPT %d\n", _FP_SEG(oldvec), (unsigned)oldvec, DDPT[SPT]);
-	set_ddpt(DDPT[SPT]);
 	*vec1E = (unsigned long)(void __far *)DDPT;
 }
 
@@ -359,7 +387,6 @@ static int read_sector(int drive, int track, int sector)
 	BD_DX = drive;					/* Head 0 | drive */
 
 	set_irq();
-	set_ddpt(36);		/* set to large value to avoid BIOS issues*/
 	if (!call_bios(&bdt)) return 0;			/* everything is OK */
 	reset_bioshd(drive);
     } while (--count > 0);
