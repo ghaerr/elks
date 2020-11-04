@@ -265,8 +265,10 @@ int main(int argc, char **argv)
 			}
 
 			/* only works if source directory has no subdirectories or symlinks!*/
-			if (!linkfiles(srcname, destname))
+			if (!linkfiles(srcname, destname)) {
+				rmdir(destname);	/* remove directory just created*/
 				return 1;
+			}
 
 			if (rmdir(srcname) < 0) {
 				perror(srcname);
