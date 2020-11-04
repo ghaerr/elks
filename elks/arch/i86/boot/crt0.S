@@ -13,7 +13,7 @@
 
 	.global _start
 	.extern	start_kernel
-	.global early_printk
+	.global early_putchar
 
 _start:
 
@@ -58,25 +58,12 @@ _start:
 int3:	int	$3		// C breakpoint for emu86
 	ret
 
-early_printk:
-	push  %bp
-	mov   %sp,%bp
-	push  %si
-	mov   4(%bp),%si
-	cld
-
-ep_loop:
-	lodsb
-	or    %al,%al
-	jz    ep_end
+early_putchar:
+	mov   %sp,%bx
+	mov   2(%bx),%al
 	mov   $0x0E,%ah
 	mov   $0x0007,%bx
 	int   $0x10
-	jmp   ep_loop
-
-ep_end:
-	pop   %si
-	pop   %bp
 	ret
 
 //	Segment beginnings

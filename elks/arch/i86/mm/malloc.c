@@ -28,7 +28,7 @@ static list_s _seg_free;
 
 // Split segment if enough large
 
-static int seg_split (segment_s * s1, segext_t size0)
+static segment_s * seg_split (segment_s * s1, segext_t size0)
 {
 	segext_t size2 = s1->size - size0;
 
@@ -36,7 +36,10 @@ static int seg_split (segment_s * s1, segext_t size0)
 
 		// TODO: use pool_alloc
 		segment_s * s2 = (segment_s *) heap_alloc (sizeof (segment_s), HEAP_TAG_SEG);
-		if (!s2) return -ENOMEM;
+		if (!s2) {
+			printk ("seg:cannot split:heap full\n");
+			return 0;
+		}
 
 		s2->base = s1->base + size0;
 		s2->size = size2;
@@ -47,9 +50,11 @@ static int seg_split (segment_s * s1, segext_t size0)
 		list_insert_after (&s1->free, &s2->free);
 
 		s1->size = size0;
+
+		return s2;	// return upper segment if split
 	}
 
-	return 0;  // success
+	return s1;		// no split
 }
 
 
@@ -62,15 +67,19 @@ static segment_s * seg_free_get (segext_t size0, word_t type)
 	segment_s * best_seg  = 0;
 	segext_t best_size = 0xFFFF;
 	list_s * n = _seg_free.next;
+	segext_t size00 = size0, incr = 0;
 
 	while (n != &_seg_free) {
 		segment_s * seg = structof (n, segment_s, free);
 		segext_t size1 = seg->size;
 
-		if ((seg->flags == SEG_FLAG_FREE) && (size1 >= size0) && (size1 < best_size)) {
+		if (type & SEG_FLAG_ALIGN1K)
+			size00 = size0 + ((~seg->base + 1) & ((1024 >> 4) - 1));
+		if ((seg->flags == SEG_FLAG_FREE) && (size1 >= size00) && (size1 < best_size)) {
 			best_seg  = seg;
 			best_size = size1;
-			if (size1 == size0) break;
+			incr = size00 - size0;
+			if (size1 == size00) break;
 		}
 
 		n = seg->free.next;
@@ -79,9 +88,9 @@ static segment_s * seg_free_get (segext_t size0, word_t type)
 	// Then allocate that free segment
 
 	if (best_seg) {
-		int err = seg_split (best_seg, size0);
-		if (err)
-			printk ("seg:cannot split:heap full");
+		seg_split (best_seg, size00);				// split off upper segment
+		if (incr)
+			best_seg = seg_split (best_seg, incr);	// split off lower segment
 
 		best_seg->flags = SEG_FLAG_USED | type;
 		best_seg->ref_count = 1;
@@ -109,6 +118,8 @@ segment_s * seg_alloc (segext_t size, word_t type)
 	segment_s * seg = 0;
 	//lock_wait (&_seg_lock);
 	seg = seg_free_get (size, type);
+	if (seg && (type & SEG_FLAG_ALIGN1K))
+		seg->base += ((~seg->base + 1) & ((1024 >> 4) - 1));
 	//unlock_event (&_seg_lock);
 	return seg;
 }

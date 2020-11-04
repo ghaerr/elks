@@ -16,13 +16,14 @@ struct segment {
 typedef struct segment segment_s;
 
 // TODO: convert to tag
-#define SEG_FLAG_FREE   0x0000
-#define SEG_FLAG_USED	0x0080
-#define SEG_FLAG_TYPE	0x000F
-#define SEG_FLAG_CSEG	0x0001
-#define SEG_FLAG_DSEG	0x0002
-#define SEG_FLAG_EXTBUF	0x0003
-#define SEG_FLAG_RAMDSK	0x0004
+#define SEG_FLAG_FREE    0x0000
+#define SEG_FLAG_USED	 0x0080
+#define SEG_FLAG_ALIGN1K 0x0040
+#define SEG_FLAG_TYPE	 0x000F
+#define SEG_FLAG_CSEG	 0x0001
+#define SEG_FLAG_DSEG	 0x0002
+#define SEG_FLAG_EXTBUF	 0x0003
+#define SEG_FLAG_RAMDSK	 0x0004
 
 #ifdef __KERNEL__
 
