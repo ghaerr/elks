@@ -9,7 +9,7 @@ struct msdos_sb_info { /* space in struct super_block is 28 bytes */
 	unsigned short data_start;   /* first data sector */
 	unsigned long clusters;      /* number of clusters */
 	unsigned long root_cluster;
-
+	long previous_cluster;       /* used in add_cluster */
 # ifdef CONFIG_FS_DEV
 	ino_t dev_ino;               /* "/dev" ino */
 # endif
