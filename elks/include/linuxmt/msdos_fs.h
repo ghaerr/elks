@@ -50,6 +50,8 @@
 
 #define MSDOS_FAT12 4078 /* maximum number of clusters in a 12 bit FAT */
 
+typedef sector_t cluster_t;
+
 struct msdos_boot_sector {
 	char ignored[13];		/*0*/
 	unsigned char cluster_size; /* sectors/cluster 13*/
@@ -109,8 +111,8 @@ struct slot_info {
 struct fat_cache {
 	int device; /* device number. 0 means unused. */
 	ino_t ino; /* inode number. */
-	long file_cluster; /* cluster number in the file. */
-	long disk_cluster; /* cluster number on disk. */
+	cluster_t file_cluster; /* cluster number in the file. */
+	cluster_t disk_cluster; /* cluster number on disk. */
 	struct fat_cache *next; /* next cache entry */
 };
 
@@ -124,7 +126,7 @@ struct fat_cache {
 
 /* misc.c */
 
-struct buffer_head * FATPROC msdos_sread(int dev,long sector,void **start);
+struct buffer_head * FATPROC msdos_sread(int dev, sector_t sector, void **start);
 void FATPROC lock_creation(void);
 void FATPROC unlock_creation(void);
 int  FATPROC msdos_add_cluster(struct inode *inode);
@@ -139,7 +141,7 @@ ino_t FATPROC msdos_parent_ino(struct inode *dir,int locked);
 /* fat.c */
 
 long FATPROC fat_access(struct super_block *sb,long this,long new_value);
-long FATPROC msdos_smap(struct inode *inode,long sector);
+sector_t FATPROC msdos_smap(struct inode *inode, sector_t sector);
 int  FATPROC fat_free(struct inode *inode,long skip);
 void FATPROC cache_init(void);
 void FATPROC cache_lookup(struct inode *inode,long cluster,long *f_clu,long *d_clu);

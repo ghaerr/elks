@@ -40,7 +40,7 @@ long FATPROC fat_access(register struct super_block *sb,long this,long new_value
 	}
 #endif
 	if (!(bh = msdos_sread(sb->s_dev,
-			(long)(MSDOS_SB(sb)->fat_start+(first >> SECTOR_BITS)),&data))) {
+			(sector_t)(MSDOS_SB(sb)->fat_start+(first >> SECTOR_BITS)),&data))) {
 		printk("FAT: bread fat failed\n");
 		return 0;
 	}
@@ -49,7 +49,7 @@ long FATPROC fat_access(register struct super_block *sb,long this,long new_value
 		data2 = data;
 	} else {	/* FAT entry crosses sector boundary, only possible with fat12*/
 		if (!(bh2 = msdos_sread(sb->s_dev,
-				(long)(MSDOS_SB(sb)->fat_start+(last >> SECTOR_BITS)),&data2))) {
+				(sector_t)(MSDOS_SB(sb)->fat_start+(last >> SECTOR_BITS)),&data2))) {
 			unmap_brelse(bh);
 			printk("FAT: bread fat failed\n");
 			return 0;
@@ -91,11 +91,11 @@ long FATPROC fat_access(register struct super_block *sb,long this,long new_value
 				*p_first = new_value & 0xff;
 				*p_last = (*p_last & 0xf0) | (new_value >> 8);
 			}
-			if (bh != bh2) debug_fat("fat_access block bh2 dirty %d\n", bh2->b_blocknr);
+			if (bh != bh2) debug_fat("fat_access block bh2 dirty %lu\n", bh2->b_blocknr);
 			bh2->b_dirty = 1;
 		}
 #endif
-		debug_fat("fat_access block bh dirty %d\n", bh->b_blocknr);
+		debug_fat("fat_access block bh dirty %lu\n", bh->b_blocknr);
 		bh->b_dirty = 1;
 #if 0000 //FIXME
 		/* update extra FAT table copies*/
@@ -106,21 +106,21 @@ long FATPROC fat_access(register struct super_block *sb,long this,long new_value
 		//FIXME or perhaps just make a complete FAT table copy on unmount!
 		for (copy = 1; copy < MSDOS_SB(sb)->fats; copy++) {
 			if (!(c_bh = msdos_sread(sb->s_dev,
-						(long)(MSDOS_SB(sb)->fat_start+(first >> SECTOR_BITS) +
+						(sector_t)(MSDOS_SB(sb)->fat_start+(first >> SECTOR_BITS) +
 						MSDOS_SB(sb)->fat_length*copy),&c_data))) break;
 			memcpy(c_data,data,SECTOR_SIZE);
-		debug_fat("fat_access block cbh write %d\n", bh->b_blocknr);
+		debug_fat("fat_access block cbh write %lu\n", bh->b_blocknr);
 			c_bh->b_dirty = 1;
 			if (data != data2 || bh != bh2) {
 				if (!(c_bh2 = msdos_sread(sb->s_dev,
-						(long)(MSDOS_SB(sb)->fat_start+(first >> SECTOR_BITS) +
+						(sector_t)(MSDOS_SB(sb)->fat_start+(first >> SECTOR_BITS) +
 						MSDOS_SB(sb)->fat_length*copy + 1),&c_data2))) {
 					unmap_brelse(c_bh);
 					break;
 				}
 				memcpy(c_data2,data2,SECTOR_SIZE);
 				c_bh2->b_dirty = 1;		//FIXME looks like bug without this
-		debug_fat("fat_access block cbh2 write %d\n", c_bh2->b_blocknr);
+		debug_fat("fat_access block cbh2 write %lu\n", c_bh2->b_blocknr);
 				unmap_brelse(c_bh2);
 			}
 			unmap_brelse(c_bh);
@@ -255,7 +255,7 @@ long FATPROC get_cluster(register struct inode *inode,long cluster)
 }
 
 
-long FATPROC msdos_smap(struct inode *inode,long sector)
+sector_t FATPROC msdos_smap(struct inode *inode, sector_t sector)
 {
 	register struct msdos_sb_info *sb;
 	long cluster;

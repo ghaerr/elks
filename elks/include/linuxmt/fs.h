@@ -119,7 +119,7 @@
 
 struct buffer_head {
     char			*b_data;	/* Address if in L1 buffer area, else 0 */
-    block_t			b_blocknr;
+    block32_t			b_blocknr;	/* 32-bit block numbers required for FAT */
     kdev_t			b_dev;
     struct buffer_head		*b_next_lru;
     struct buffer_head		*b_prev_lru;
@@ -442,6 +442,7 @@ extern void close_filp(struct inode *, struct file *);
 
 extern struct buffer_head *get_hash_table(kdev_t,block_t);
 extern struct buffer_head *getblk(kdev_t,block_t);
+extern struct buffer_head *getblk32(kdev_t,block32_t);
 extern struct buffer_head *readbuf(struct buffer_head *);
 
 extern void ll_rw_blk(int,struct buffer_head *);
@@ -496,6 +497,7 @@ extern int _namei(char *,struct inode *,int,struct inode **);
 extern int sys_dup(unsigned int);
 
 extern struct buffer_head *bread(dev_t,block_t);
+extern struct buffer_head *bread32(dev_t,block32_t);
 
 extern int open_fd(int flags, struct inode *inode);
 

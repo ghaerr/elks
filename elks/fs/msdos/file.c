@@ -66,7 +66,7 @@ static size_t msdos_file_read(register struct inode *inode,register struct file 
 {
 	char *start;
 	size_t left,offset,size;
-	long sector;
+	sector_t sector;
 	struct buffer_head *bh;
 	void *data;
 
@@ -99,7 +99,7 @@ static size_t msdos_file_read(register struct inode *inode,register struct file 
 static size_t msdos_file_write(register struct inode *inode,register struct file *filp,char *buf,
     size_t count)
 {
-	long sector;
+	sector_t sector;
 	int offset,size,written;
 	int error;
 	char *start;
@@ -125,7 +125,7 @@ static size_t msdos_file_write(register struct inode *inode,register struct file
 	for (start = buf; count; count -= size) {
 		while (!(sector = msdos_smap(inode,filp->f_pos >> SECTOR_BITS)))
 			if ((error = msdos_add_cluster(inode)) < 0) break;
-		if (error) break;
+		if (error) break;	//FIXME check error return
 		offset = (int)filp->f_pos & (SECTOR_SIZE-1);
 		size = MIN(SECTOR_SIZE-offset,count);
 		if (!(bh = msdos_sread(inode->i_dev,sector,&data))) {
@@ -140,7 +140,7 @@ static size_t msdos_file_write(register struct inode *inode,register struct file
 			inode->i_size = filp->f_pos;
 			inode->i_dirt = 1;
 		}
-		debug_fat("file block write %d\n", bh->b_blocknr);
+		debug_fat("file block write %lu\n", bh->b_blocknr);
 		bh->b_dirty = 1;
 		unmap_brelse(bh);
 	}
