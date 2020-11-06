@@ -34,17 +34,14 @@ memcpy_fromfs:
 	mov	TASK_USER_DS(%bx),%ds
 	mov	%ss,%bx
 	mov	%bx,%es
-	mov	%cx,%bx
 	cld
 	shr	$1,%cx			// copy words
-	jz	1f
 	rep
 	movsw
-1:	mov	%bx,%cx			// then possibly final byte
-	and	$1,%cx
-	jz	2f
+	rcl	$1,%cx			// then possibly final byte
+	rep
 	movsb
-2:	pop	%es
+	pop	%es
 	pop     %ds
 	mov	%dx,%di
 	mov	%ax,%si
@@ -62,17 +59,14 @@ memcpy_tofs:
 	mov	ARG0(%bx),%di		// daddr
 	mov	ARG2(%bx),%cx		// len
 	mov	ARG1(%bx),%si		// saddr
-	mov	%cx,%bx
 	cld
 	shr	$1,%cx			// copy words
-	jz	1f
 	rep
 	movsw
-1:	mov	%bx,%cx			// then possibly final byte
-	and	$1,%cx
-	jz	2f
+	rcl	$1,%cx			// then possibly final byte
+	rep
 	movsb
-2:	pop	%es
+	pop	%es
 	mov	%dx,%di
 	mov	%ax,%si
 	ret
