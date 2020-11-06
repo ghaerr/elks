@@ -16,12 +16,12 @@ static struct fat_cache *fat_cache,cache[FAT_CACHE];
 /* Returns the this'th FAT entry, -1 if it is an end-of-file entry.
    If new_value is != -1, that FAT entry is replaced by it. */
 
-long FATPROC fat_access(register struct super_block *sb,long this,long new_value)
+cluster_t FATPROC fat_access(struct super_block *sb,cluster_t this,cluster_t new_value)
 {
 	struct buffer_head *bh,*bh2;
 	unsigned char *p_first,*p_last;
 	void *data,*data2;
-	long first,last,next;
+	cluster_t first,last,next;
 	int fatsz = MSDOS_SB(sb)->fat_bits;
 	//long copy;
 	//void *c_data, *c_data2;
@@ -148,7 +148,8 @@ void FATPROC cache_init(void)
 }
 
 
-void FATPROC cache_lookup(struct inode *inode,long cluster,long *f_clu,long *d_clu)
+void FATPROC cache_lookup(struct inode *inode,cluster_t cluster,
+	cluster_t *f_clu, cluster_t *d_clu)
 {
 	register struct fat_cache *walk;
 
@@ -180,7 +181,7 @@ static void FATPROC list_cache(void)
 #endif
 
 
-void FATPROC cache_add(struct inode *inode,long f_clu,long d_clu)
+void FATPROC cache_add(struct inode *inode, cluster_t f_clu, cluster_t d_clu)
 {
 	register struct fat_cache *walk,*last;
 
@@ -230,7 +231,7 @@ void FATPROC cache_inval_inode(struct inode *inode)
 }
 
 
-void FATPROC cache_inval_dev(int device)
+void FATPROC cache_inval_dev(kdev_t device)
 {
 	register struct fat_cache *walk;
 
@@ -239,9 +240,9 @@ void FATPROC cache_inval_dev(int device)
 }
 
 
-long FATPROC get_cluster(register struct inode *inode,long cluster)
+cluster_t FATPROC get_cluster(register struct inode *inode, cluster_t cluster)
 {
-	long this,count;
+	cluster_t this, count;
 
 	if (!(this = inode->u.msdos_i.i_start)) return 0;
 	if (!cluster) return this;
@@ -258,7 +259,7 @@ long FATPROC get_cluster(register struct inode *inode,long cluster)
 sector_t FATPROC msdos_smap(struct inode *inode, sector_t sector)
 {
 	register struct msdos_sb_info *sb;
-	long cluster;
+	cluster_t cluster;
 	int offset;
 
 	sb = MSDOS_SB(inode->i_sb);
@@ -280,9 +281,9 @@ sector_t FATPROC msdos_smap(struct inode *inode, sector_t sector)
 /* Free all clusters after the skip'th cluster. Doesn't use the cache,
    because this way we get an additional sanity check. */
 
-int FATPROC fat_free(register struct inode *inode,long skip)
+int FATPROC fat_free(register struct inode *inode, cluster_t skip)
 {
-	long this,last;
+	cluster_t this, last;
 
 	debug_fat("fat_free\n");
 	if (!(this = inode->u.msdos_i.i_start)) return 0;

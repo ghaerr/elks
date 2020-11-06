@@ -153,10 +153,10 @@ static size_t msdos_file_write(register struct inode *inode,register struct file
 
 void msdos_truncate(register struct inode *inode)
 {
-	int cluster;
+	cluster_t cluster;
 
 	debug_fat("truncate\n");
-	cluster = SECTOR_SIZE*MSDOS_SB(inode->i_sb)->cluster_size;
+	cluster = (cluster_t)SECTOR_SIZE*MSDOS_SB(inode->i_sb)->cluster_size;
 	(void)fat_free(inode,(inode->i_size + (cluster-1)) / cluster);
 	inode->u.msdos_i.i_attrs |= ATTR_ARCH;
 	inode->i_dirt = 1;

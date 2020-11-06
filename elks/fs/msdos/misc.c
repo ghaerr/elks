@@ -12,7 +12,7 @@
 #include <linuxmt/stat.h>
 #include <linuxmt/debug.h>
 
-struct buffer_head * FATPROC msdos_sread(int dev, sector_t sector, void **start)
+struct buffer_head * FATPROC msdos_sread(kdev_t dev, sector_t sector, void **start)
 {
 	register struct buffer_head *bh;
 
@@ -49,8 +49,8 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 	static struct wait_queue wait;
 	static int lock = 0;
 	//FIXME: using previous on booted FAT volume with mounted FAT floppy won't work well
-	static long previous = 0; /* works best if one FS is being used */
-	long count,this,limit,last,current;
+	static cluster_t previous = 0; /* works best if one FS is being used */
+	cluster_t count, this, limit, current, last;
 	sector_t sector;
 	void *data;
 	struct buffer_head *bh;
@@ -140,7 +140,7 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 			printk("FAT: bad dir size\n");
 			return -ENOSPC;
 		}
-		inode->i_size += SECTOR_SIZE*MSDOS_SB(inode->i_sb)->cluster_size;
+		inode->i_size += (cluster_t)SECTOR_SIZE*MSDOS_SB(inode->i_sb)->cluster_size;
 		inode->i_dirt = 1;
 		debug("size is %d now (%x)\r\n",inode->i_size,inode);
 	}
@@ -303,13 +303,13 @@ int FATPROC msdos_scan(struct inode *dir,char *name,struct buffer_head **res_bh,
    directory "inode". */
 
 /* Retrieve sectors sector */
-static cluster_t FATPROC raw_found(struct super_block *sb,sector_t sector,
-	char *name,cluster_t number, ino_t *ino)
+static cluster_t FATPROC raw_found(struct super_block *sb, sector_t sector,
+	char *name, cluster_t number, ino_t *ino)
 {
 	struct buffer_head *bh;
 	struct msdos_dir_entry *data;
 	int entry;
-	long start = -1;
+	cluster_t start = -1;
 
 	if ((bh = msdos_sread(sb->s_dev,sector,(void **) &data))) {
 	  for (entry = 0; entry < MSDOS_DPS; entry++) {
@@ -355,7 +355,7 @@ static cluster_t FATPROC raw_scan_root(register struct super_block *sb,
 
 /* Retrieve the normal directory file */
 static cluster_t FATPROC raw_scan_nonroot(register struct super_block *sb,
-	cluster_t start, char *name, cluster_t number,ino_t *ino)
+	cluster_t start, char *name, cluster_t number, ino_t *ino)
 {
 	int count;
 	cluster_t cluster;
@@ -377,7 +377,7 @@ static cluster_t FATPROC raw_scan_nonroot(register struct super_block *sb,
 /* In the directory file (cluster start) within the name or cluster number number
  * to retrieve the file, return to its ino and cluster number
  */
-static cluster_t FATPROC raw_scan(struct super_block *sb,cluster_t start,
+static cluster_t FATPROC raw_scan(struct super_block *sb, cluster_t start,
 	char *name, cluster_t number, ino_t *ino)
 {
     if (start)
@@ -387,7 +387,7 @@ static cluster_t FATPROC raw_scan(struct super_block *sb,cluster_t start,
 
 ino_t FATPROC msdos_parent_ino(register struct inode *dir,int locked)
 {
-	long current,prev;
+	cluster_t current,prev;
 	ino_t this = (ino_t)-1L;
 
 	if (!S_ISDIR(dir->i_mode))	/* actually coding error if occurs*/
