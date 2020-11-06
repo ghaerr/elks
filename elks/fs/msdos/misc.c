@@ -48,13 +48,12 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 {
 	static struct wait_queue wait;
 	static int lock = 0;
-	//FIXME: using previous on booted FAT volume with mounted FAT floppy won't work well
-	static cluster_t previous = 0; /* works best if one FS is being used */
 	cluster_t count, this, limit, current, last;
 	sector_t sector;
 	void *data;
 	struct buffer_head *bh;
 	int fatsz = MSDOS_SB(inode->i_sb)->fat_bits;
+	cluster_t previous = MSDOS_SB(inode->i_sb)->previous_cluster;
 
 	debug_fat("add_cluster\n");
 #ifndef FAT_BITS_32
@@ -71,6 +70,7 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 	debug("free cluster: %d\r\n",this);
 
 	previous = (count+previous+1) % limit;
+	MSDOS_SB(inode->i_sb)->previous_cluster = previous;;
 	if (count >= limit) {
 		lock = 0;
 		wake_up(&wait);

@@ -109,6 +109,7 @@ static struct super_block *msdos_read_super(register struct super_block *s, char
 	MSDOS_SB(s)->clusters = MSDOS_SB(s)->cluster_size?
 		data_sectors/MSDOS_SB(s)->cluster_size : 0;
 	MSDOS_SB(s)->fat_bits = fat32 ? 32 : MSDOS_SB(s)->clusters > MSDOS_FAT12 ? 16 : 12;
+	MSDOS_SB(s)->previous_cluster = 0;
 	unmap_brelse(bh);
 
 printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%ld\n",
