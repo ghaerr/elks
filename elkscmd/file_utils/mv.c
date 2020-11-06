@@ -110,6 +110,7 @@ int linkfiles(char *srcdir, char *destdir)
 			perror(newsrc);
 			return 0;
 		}
+
 		if (unlink(newsrc) < 0) {
 			perror(newsrc);
 			return 0;
@@ -259,14 +260,17 @@ int main(int argc, char **argv)
 
 		/* handle broken kernel directory rename (issue #583)*/
 		if (errno == EPERM && access(destname, 0) < 0 && isadir(srcname)) {
+			char destdir[PATHLEN];
+
 			if (mkdir(destname, 0777 & ~umask(0))) {
 				perror(destname);
 				return 1;
 			}
+			strcpy(destdir, destname);
 
 			/* only works if source directory has no subdirectories or symlinks!*/
-			if (!linkfiles(srcname, destname)) {
-				rmdir(destname);	/* remove directory just created*/
+			if (!linkfiles(srcname, destdir)) {
+				rmdir(destdir);	/* remove directory just created*/
 				return 1;
 			}
 
@@ -274,7 +278,7 @@ int main(int argc, char **argv)
 				perror(srcname);
 				return 1;
 			}
-			return 0;
+			continue;
 		}
 
 		if (errno != EXDEV) {
