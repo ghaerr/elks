@@ -17,6 +17,7 @@ typedef __u32			tcflag_t;
 
 typedef __u16			block_t;
 typedef __u32			block32_t;
+typedef __u32			sector_t;
 typedef __u16			dev_t;
 typedef __u16			flag_t;
 typedef __u16			gid_t;

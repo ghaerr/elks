@@ -288,7 +288,7 @@ struct buffer_head *readbuf(register struct buffer_head *bh)
     return bh;
 }
 
-static struct buffer_head *find_buffer(kdev_t dev, block_t block)
+static struct buffer_head *find_buffer(kdev_t dev, block32_t block)
 {
     register struct buffer_head *bh = bh_llru;
 
@@ -302,7 +302,7 @@ struct buffer_head *get_hash_table(kdev_t dev, block_t block)
 {
     register struct buffer_head *bh;
 
-    if ((bh = find_buffer(dev, block)) != NULL) {
+    if ((bh = find_buffer(dev, (block32_t)block)) != NULL) {
 	INR_COUNT(bh);
 	wait_on_buffer(bh);
     }
@@ -320,7 +320,14 @@ struct buffer_head *get_hash_table(kdev_t dev, block_t block)
  * when the filesystem starts to get full of dirty blocks (I hope).
  */
 
+/* 16 bit block numbers for super blocks and MINIX filesystem driver*/
 struct buffer_head *getblk(kdev_t dev, block_t block)
+{
+	return getblk32(dev, (block32_t)block);
+}
+
+/* 32 bit block numbers for FAT filesystem driver*/
+struct buffer_head *getblk32(kdev_t dev, block32_t block)
 {
     register struct buffer_head *bh;
     register struct buffer_head *n_bh;
@@ -367,9 +374,16 @@ struct buffer_head *getblk(kdev_t dev, block_t block)
  * it. It returns NULL if the block was unreadable.
  */
 
+/* 16 bit block numbers for super blocks and MINIX filesystem driver*/
 struct buffer_head *bread(kdev_t dev, block_t block)
 {
     return readbuf(getblk(dev, block));
+}
+
+/* 32 bit block numbers for FAT filesystem driver*/
+struct buffer_head *bread32(kdev_t dev, block32_t block)
+{
+    return readbuf(getblk32(dev, block));
 }
 
 #if 0

@@ -12,15 +12,15 @@
 #include <linuxmt/stat.h>
 #include <linuxmt/debug.h>
 
-struct buffer_head * FATPROC msdos_sread(int dev,long sector,void **start)
+struct buffer_head * FATPROC msdos_sread(kdev_t dev, sector_t sector, void **start)
 {
 	register struct buffer_head *bh;
 
-	if (!(bh = bread(dev, (block_t)(sector >> 1) )))
+	if (!(bh = bread32(dev, sector >> 1)))
 		return NULL;
 
 	map_buffer(bh);
-	//debug_fat("msread sector %ld block %d\n", sector, bh->b_blocknr);
+	//debug_fat("msread sector %ld block %lu\n", sector, bh->b_blocknr);
 	*start = bh->b_data + (((int)sector & 1) << SECTOR_BITS);
 	return bh;
 }
@@ -49,8 +49,9 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 	static struct wait_queue wait;
 	static int lock = 0;
 	//FIXME: using previous on booted FAT volume with mounted FAT floppy won't work well
-	static long previous = 0; /* works best if one FS is being used */
-	long count,this,limit,last,current,sector;
+	static cluster_t previous = 0; /* works best if one FS is being used */
+	cluster_t count, this, limit, current, last;
+	sector_t sector;
 	void *data;
 	struct buffer_head *bh;
 	int fatsz = MSDOS_SB(inode->i_sb)->fat_bits;
@@ -112,10 +113,10 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 	for (current = 0; current < MSDOS_SB(inode->i_sb)->cluster_size; current++) {
 		sector = MSDOS_SB(inode->i_sb)->data_start+(this-2) *
 			MSDOS_SB(inode->i_sb)->cluster_size+current;
-		debug("zeroing sector %d\r\n",sector);
+		debug("zeroing sector %lu\r\n", sector);
 
 		if (current < MSDOS_SB(inode->i_sb)->cluster_size-1 && !(sector & 1)) {
-			if (!(bh = getblk(inode->i_dev,(block_t)(sector >> 1))))
+			if (!(bh = getblk32(inode->i_dev, sector >> 1)))
 				printk("FAT: getblk fail\n");
 			else {
 				map_buffer(bh);
@@ -129,7 +130,7 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 			else memset(data,0,SECTOR_SIZE);
 		}
 		if (bh) {
-			debug_fat("add_cluster block write %d\n", bh->b_blocknr);
+			debug_fat("add_cluster block write %lu\n", bh->b_blocknr);
 			bh->b_dirty = 1;
 			unmap_brelse(bh);
 		}
@@ -139,7 +140,7 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 			printk("FAT: bad dir size\n");
 			return -ENOSPC;
 		}
-		inode->i_size += SECTOR_SIZE*MSDOS_SB(inode->i_sb)->cluster_size;
+		inode->i_size += (cluster_t)SECTOR_SIZE*MSDOS_SB(inode->i_sb)->cluster_size;
 		inode->i_dirt = 1;
 		debug("size is %d now (%x)\r\n",inode->i_size,inode);
 	}
@@ -208,7 +209,7 @@ void FATPROC date_unix2dos(long unix_date,unsigned short *time, unsigned short *
 ino_t FATPROC msdos_get_entry(struct inode *dir,loff_t *pos,struct buffer_head **bh,
     struct msdos_dir_entry **de)
 {
-	long sector;
+	sector_t sector;
 	int offset;
 	void *data;
 
@@ -234,7 +235,7 @@ ino_t FATPROC msdos_get_entry(struct inode *dir,loff_t *pos,struct buffer_head *
 
 	while (1) {
 		offset = *pos;
-		if ((sector = msdos_smap(dir,(long)(*pos >> SECTOR_BITS))) == -1)
+		if ((sector = msdos_smap(dir,(sector_t)(*pos >> SECTOR_BITS))) == -1)
 			return -1;
 		if (!sector)
 			return -1; /* FAT error ... */
@@ -252,7 +253,7 @@ ino_t FATPROC msdos_get_entry(struct inode *dir,loff_t *pos,struct buffer_head *
 			return -1;
 		}
 #endif
-		//debug_fat("get entry %ld\n", sector);
+		//debug_fat("get entry %lu\n", sector);
 		return (sector << MSDOS_DPS_BITS)+((offset & (SECTOR_SIZE-1)) >> MSDOS_DIR_BITS);
 	}
 }
@@ -302,13 +303,13 @@ int FATPROC msdos_scan(struct inode *dir,char *name,struct buffer_head **res_bh,
    directory "inode". */
 
 /* Retrieve sectors sector */
-static long FATPROC raw_found(struct super_block *sb,long sector,char *name,long number,
-    ino_t *ino)
+static cluster_t FATPROC raw_found(struct super_block *sb, sector_t sector,
+	char *name, cluster_t number, ino_t *ino)
 {
 	struct buffer_head *bh;
 	struct msdos_dir_entry *data;
 	int entry;
-	long start = -1;
+	cluster_t start = -1;
 
 	if ((bh = msdos_sread(sb->s_dev,sector,(void **) &data))) {
 	  for (entry = 0; entry < MSDOS_DPS; entry++) {
@@ -339,24 +340,25 @@ static long FATPROC raw_found(struct super_block *sb,long sector,char *name,long
 }
 
 /* Retrieve the root directory file */
-static long FATPROC raw_scan_root(register struct super_block *sb,char *name,long number,ino_t *ino)
+static cluster_t FATPROC raw_scan_root(register struct super_block *sb,
+	char *name, cluster_t number,ino_t *ino)
 {
 	int count;
-	long cluster = 0;
+	cluster_t cluster = 0;
 
 	for (count = 0; count < MSDOS_SB(sb)->dir_entries/MSDOS_DPS; count++) {
-		if ((cluster = raw_found(sb,(long)(MSDOS_SB(sb)->dir_start+count),name, number,
+		if ((cluster = raw_found(sb,(sector_t)(MSDOS_SB(sb)->dir_start+count),name, number,
 				ino)) >= 0) break;
 	}
 	return cluster;
 }
 
 /* Retrieve the normal directory file */
-static long FATPROC raw_scan_nonroot(register struct super_block *sb,long start,char *name,
-    long number,ino_t *ino)
+static cluster_t FATPROC raw_scan_nonroot(register struct super_block *sb,
+	cluster_t start, char *name, cluster_t number, ino_t *ino)
 {
 	int count;
-	long cluster;
+	cluster_t cluster;
 
 	do {
 		for (count = 0; count < MSDOS_SB(sb)->cluster_size; count++) {
@@ -375,7 +377,8 @@ static long FATPROC raw_scan_nonroot(register struct super_block *sb,long start,
 /* In the directory file (cluster start) within the name or cluster number number
  * to retrieve the file, return to its ino and cluster number
  */
-static long FATPROC raw_scan(struct super_block *sb,long start,char *name,long number, ino_t *ino)
+static cluster_t FATPROC raw_scan(struct super_block *sb, cluster_t start,
+	char *name, cluster_t number, ino_t *ino)
 {
     if (start)
 		return raw_scan_nonroot(sb,start,name,number,ino);
@@ -384,7 +387,7 @@ static long FATPROC raw_scan(struct super_block *sb,long start,char *name,long n
 
 ino_t FATPROC msdos_parent_ino(register struct inode *dir,int locked)
 {
-	long current,prev;
+	cluster_t current,prev;
 	ino_t this = (ino_t)-1L;
 
 	if (!S_ISDIR(dir->i_mode))	/* actually coding error if occurs*/

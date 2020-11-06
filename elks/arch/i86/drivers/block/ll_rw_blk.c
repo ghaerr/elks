@@ -248,14 +248,13 @@ static void add_request(struct blk_dev_struct *dev,
     set_irq();
 }
 
-static void make_request(unsigned short int major, int rw,
-			 register struct buffer_head *bh)
+static void make_request(unsigned short major, int rw, struct buffer_head *bh)
 {
-    register struct request *req;
+    struct request *req;
     sector_t sector, count;
     int max_req;
 
-    debug_blk("BLK %d %s\n", bh->b_blocknr, rw==READ? "read": "write");
+    debug_blk("BLK(%x) %lu %s\n", bh->b_dev, bh->b_blocknr, rw==READ? "read": "write");
     count = (sector_t) (BLOCK_SIZE >> 9);
     sector = bh->b_blocknr * count;
 

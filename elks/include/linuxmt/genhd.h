@@ -19,8 +19,6 @@
 #define DOS_EXTENDED_PARTITION 5
 #define LINUX_EXTENDED_PARTITION 0x85
 
-typedef __u32 sector_t;
-
 struct partition
 {
     unsigned char boot_ind;	/* 0x80 - active */

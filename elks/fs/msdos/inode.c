@@ -177,7 +177,7 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%
 #ifdef BLOAT_FS
 static void msdos_statfs(struct super_block *sb,struct statfs *buf)
 {
-	long cluster_size,free,this;
+	cluster_t cluster_size,free,this;
 	struct statfs tmp;
 
 	cluster_size = MSDOS_SB(sb)->cluster_size;
@@ -202,7 +202,7 @@ void msdos_read_inode(register struct inode *inode)
 {
 	struct buffer_head *bh;
 	register struct msdos_dir_entry *raw_entry;
-	long this,nr;
+	cluster_t this, nr;
 	int fatsz = MSDOS_SB(inode->i_sb)->fat_bits;
 
 	//debug_fat("read_inode %ld\n", (unsigned long)inode->i_ino);
@@ -219,7 +219,7 @@ void msdos_read_inode(register struct inode *inode)
 			nr = inode->u.msdos_i.i_start = MSDOS_SB(inode->i_sb)->root_cluster;
 			if (nr) {
 				while (nr != -1) {
-					inode->i_size += (unsigned long)SECTOR_SIZE*MSDOS_SB(inode->i_sb)->cluster_size;
+					inode->i_size += (cluster_t)SECTOR_SIZE*MSDOS_SB(inode->i_sb)->cluster_size;
 					if (!(nr = fat_access(inode->i_sb,nr,-1L))) {
 						printk("FAT: can't read dir %ld\n", (unsigned long)inode->i_ino);
 						break;
@@ -273,7 +273,7 @@ void msdos_read_inode(register struct inode *inode)
 		inode->i_size = 0;
 		/* read FAT chain to set directory size */
 		for (this = inode->u.msdos_i.i_start; this && this != -1; this = fat_access(inode->i_sb,this,-1L))
-			inode->i_size += SECTOR_SIZE*MSDOS_SB(inode->i_sb)->cluster_size;
+			inode->i_size += (cluster_t)SECTOR_SIZE*MSDOS_SB(inode->i_sb)->cluster_size;
 	}
 	else {
 		inode->i_mode = MSDOS_MKMODE(raw_entry->attr,0755 & ~current->fs.umask) | S_IFREG;
@@ -317,7 +317,7 @@ static void msdos_write_inode(register struct inode *inode)
 	raw_entry->start = (unsigned short)inode->u.msdos_i.i_start;
 	raw_entry->starthi = ((unsigned short *)&inode->u.msdos_i.i_start)[1];
 	date_unix2dos(inode->i_mtime,&raw_entry->time,&raw_entry->date);
-	debug_fat("write_inode block write %d\n", bh->b_blocknr);
+	debug_fat("write_inode block write %lu\n", bh->b_blocknr);
 	bh->b_dirty = 1;
 	unmap_brelse(bh);
 }

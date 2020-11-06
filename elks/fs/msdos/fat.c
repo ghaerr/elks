@@ -16,12 +16,12 @@ static struct fat_cache *fat_cache,cache[FAT_CACHE];
 /* Returns the this'th FAT entry, -1 if it is an end-of-file entry.
    If new_value is != -1, that FAT entry is replaced by it. */
 
-long FATPROC fat_access(register struct super_block *sb,long this,long new_value)
+cluster_t FATPROC fat_access(struct super_block *sb,cluster_t this,cluster_t new_value)
 {
 	struct buffer_head *bh,*bh2;
 	unsigned char *p_first,*p_last;
 	void *data,*data2;
-	long first,last,next;
+	cluster_t first,last,next;
 	int fatsz = MSDOS_SB(sb)->fat_bits;
 	//long copy;
 	//void *c_data, *c_data2;
@@ -40,7 +40,7 @@ long FATPROC fat_access(register struct super_block *sb,long this,long new_value
 	}
 #endif
 	if (!(bh = msdos_sread(sb->s_dev,
-			(long)(MSDOS_SB(sb)->fat_start+(first >> SECTOR_BITS)),&data))) {
+			(sector_t)(MSDOS_SB(sb)->fat_start+(first >> SECTOR_BITS)),&data))) {
 		printk("FAT: bread fat failed\n");
 		return 0;
 	}
@@ -49,7 +49,7 @@ long FATPROC fat_access(register struct super_block *sb,long this,long new_value
 		data2 = data;
 	} else {	/* FAT entry crosses sector boundary, only possible with fat12*/
 		if (!(bh2 = msdos_sread(sb->s_dev,
-				(long)(MSDOS_SB(sb)->fat_start+(last >> SECTOR_BITS)),&data2))) {
+				(sector_t)(MSDOS_SB(sb)->fat_start+(last >> SECTOR_BITS)),&data2))) {
 			unmap_brelse(bh);
 			printk("FAT: bread fat failed\n");
 			return 0;
@@ -91,11 +91,11 @@ long FATPROC fat_access(register struct super_block *sb,long this,long new_value
 				*p_first = new_value & 0xff;
 				*p_last = (*p_last & 0xf0) | (new_value >> 8);
 			}
-			if (bh != bh2) debug_fat("fat_access block bh2 dirty %d\n", bh2->b_blocknr);
+			if (bh != bh2) debug_fat("fat_access block bh2 dirty %lu\n", bh2->b_blocknr);
 			bh2->b_dirty = 1;
 		}
 #endif
-		debug_fat("fat_access block bh dirty %d\n", bh->b_blocknr);
+		debug_fat("fat_access block bh dirty %lu\n", bh->b_blocknr);
 		bh->b_dirty = 1;
 #if 0000 //FIXME
 		/* update extra FAT table copies*/
@@ -106,21 +106,21 @@ long FATPROC fat_access(register struct super_block *sb,long this,long new_value
 		//FIXME or perhaps just make a complete FAT table copy on unmount!
 		for (copy = 1; copy < MSDOS_SB(sb)->fats; copy++) {
 			if (!(c_bh = msdos_sread(sb->s_dev,
-						(long)(MSDOS_SB(sb)->fat_start+(first >> SECTOR_BITS) +
+						(sector_t)(MSDOS_SB(sb)->fat_start+(first >> SECTOR_BITS) +
 						MSDOS_SB(sb)->fat_length*copy),&c_data))) break;
 			memcpy(c_data,data,SECTOR_SIZE);
-		debug_fat("fat_access block cbh write %d\n", bh->b_blocknr);
+		debug_fat("fat_access block cbh write %lu\n", bh->b_blocknr);
 			c_bh->b_dirty = 1;
 			if (data != data2 || bh != bh2) {
 				if (!(c_bh2 = msdos_sread(sb->s_dev,
-						(long)(MSDOS_SB(sb)->fat_start+(first >> SECTOR_BITS) +
+						(sector_t)(MSDOS_SB(sb)->fat_start+(first >> SECTOR_BITS) +
 						MSDOS_SB(sb)->fat_length*copy + 1),&c_data2))) {
 					unmap_brelse(c_bh);
 					break;
 				}
 				memcpy(c_data2,data2,SECTOR_SIZE);
 				c_bh2->b_dirty = 1;		//FIXME looks like bug without this
-		debug_fat("fat_access block cbh2 write %d\n", c_bh2->b_blocknr);
+		debug_fat("fat_access block cbh2 write %lu\n", c_bh2->b_blocknr);
 				unmap_brelse(c_bh2);
 			}
 			unmap_brelse(c_bh);
@@ -148,7 +148,8 @@ void FATPROC cache_init(void)
 }
 
 
-void FATPROC cache_lookup(struct inode *inode,long cluster,long *f_clu,long *d_clu)
+void FATPROC cache_lookup(struct inode *inode,cluster_t cluster,
+	cluster_t *f_clu, cluster_t *d_clu)
 {
 	register struct fat_cache *walk;
 
@@ -180,7 +181,7 @@ static void FATPROC list_cache(void)
 #endif
 
 
-void FATPROC cache_add(struct inode *inode,long f_clu,long d_clu)
+void FATPROC cache_add(struct inode *inode, cluster_t f_clu, cluster_t d_clu)
 {
 	register struct fat_cache *walk,*last;
 
@@ -230,7 +231,7 @@ void FATPROC cache_inval_inode(struct inode *inode)
 }
 
 
-void FATPROC cache_inval_dev(int device)
+void FATPROC cache_inval_dev(kdev_t device)
 {
 	register struct fat_cache *walk;
 
@@ -239,9 +240,9 @@ void FATPROC cache_inval_dev(int device)
 }
 
 
-long FATPROC get_cluster(register struct inode *inode,long cluster)
+cluster_t FATPROC get_cluster(register struct inode *inode, cluster_t cluster)
 {
-	long this,count;
+	cluster_t this, count;
 
 	if (!(this = inode->u.msdos_i.i_start)) return 0;
 	if (!cluster) return this;
@@ -255,10 +256,10 @@ long FATPROC get_cluster(register struct inode *inode,long cluster)
 }
 
 
-long FATPROC msdos_smap(struct inode *inode,long sector)
+sector_t FATPROC msdos_smap(struct inode *inode, sector_t sector)
 {
 	register struct msdos_sb_info *sb;
-	long cluster;
+	cluster_t cluster;
 	int offset;
 
 	sb = MSDOS_SB(inode->i_sb);
@@ -280,9 +281,9 @@ long FATPROC msdos_smap(struct inode *inode,long sector)
 /* Free all clusters after the skip'th cluster. Doesn't use the cache,
    because this way we get an additional sanity check. */
 
-int FATPROC fat_free(register struct inode *inode,long skip)
+int FATPROC fat_free(register struct inode *inode, cluster_t skip)
 {
-	long this,last;
+	cluster_t this, last;
 
 	debug_fat("fat_free\n");
 	if (!(this = inode->u.msdos_i.i_start)) return 0;
