@@ -125,7 +125,7 @@ static size_t msdos_file_write(register struct inode *inode,register struct file
 	for (start = buf; count; count -= size) {
 		while (!(sector = msdos_smap(inode,filp->f_pos >> SECTOR_BITS)))
 			if ((error = msdos_add_cluster(inode)) < 0) break;
-		if (error) break;	//FIXME check error return
+		if (error) break;
 		offset = (int)filp->f_pos & (SECTOR_SIZE-1);
 		size = MIN(SECTOR_SIZE-offset,count);
 		if (!(bh = msdos_sread(inode->i_dev,sector,&data))) {
