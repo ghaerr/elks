@@ -16,8 +16,8 @@
 
 struct request {
     kdev_t rq_dev;		/* -1 if no request */
-    __u8 rq_cmd;		/* READ or WRITE */
-    __u8 rq_status;
+    unsigned char rq_cmd;	/* READ or WRITE */
+    unsigned char rq_status;
     sector_t rq_sector;
     char *rq_buffer;
     seg_t rq_seg;
@@ -25,17 +25,12 @@ struct request {
     struct request *rq_next;
 
 #ifdef BLOAT_FS
-
-/* This may get used for dealing with waiting for requests later
- * but for now it is just not used
- */
+/* This may get used for dealing with waiting for requests later*/
     struct task_struct *rq_waiting;
     unsigned int rq_nr_sectors;	/* always 2 */
     unsigned int rq_current_nr_sectors;
-    __u8 rq_errors;
-
+    unsigned char rq_errors;
 #endif
-
 };
 
 #define RQ_INACTIVE	0
@@ -61,17 +56,16 @@ struct blk_dev_struct {
 
 #define SECTOR_MASK 2		/* 1024 logical 512 physical */
 
-#define SUBSECTOR(block) (CURRENT->rq_current_nr_sectors > 0)
+/* For bioshd.c, idequery.c */
+struct drive_infot {            /* CHS per drive*/
+    int cylinders;
+    int sectors;
+    int heads;
+    int fdtype;                 /* floppy fd_types[] index  or -1 if hd */
+};
 
 extern struct blk_dev_struct blk_dev[MAX_BLKDEV];
-
-#ifdef MULTI_BH
-
-extern struct wait_queue *wait_for_request;
-
-#endif
-
-extern void resetup_one_dev();
+extern void resetup_one_dev(struct gendisk *dev, int drive);
 
 #ifdef MAJOR_NR
 
@@ -164,37 +158,27 @@ static void floppy_off();	/*(unsigned int nr); */
 
 #endif
 
-#ifndef CURRENT
-#define CURRENT (blk_dev[MAJOR_NR].current_request)
-#endif
-
-#define CURRENT_DEV DEVICE_NR(CURRENT->rq_dev)
+#define CURRENT		(blk_dev[MAJOR_NR].current_request)
+#define CURRENT_DEV	DEVICE_NR(CURRENT->rq_dev)
 
 #ifdef DEVICE_INTR
-
 void (*DEVICE_INTR) () = NULL;
-
 #endif
 
 #ifdef DEVICE_TIMEOUT
 
 #define SET_TIMER \
-((timer_table[DEVICE_TIMEOUT].expires = jiffies + TIMEOUT_VALUE), \
-(timer_active |= 1<<DEVICE_TIMEOUT))
+		((timer_table[DEVICE_TIMEOUT].expires = jiffies + TIMEOUT_VALUE), \
+		(timer_active |= 1<<DEVICE_TIMEOUT))
 
-#define CLEAR_TIMER \
-timer_active &= ~(1<<DEVICE_TIMEOUT)
+#define CLEAR_TIMER	timer_active &= ~(1<<DEVICE_TIMEOUT)
 
-#define SET_INTR(x) \
-if ((DEVICE_INTR = (x)) != NULL) \
-	SET_TIMER; \
-else \
-	CLEAR_TIMER;
-
+#define SET_INTR(x)	if ((DEVICE_INTR = (x)) != NULL) \
+			SET_TIMER; \
+			else \
+			CLEAR_TIMER;
 #else
-
 #define SET_INTR(x) (DEVICE_INTR = (x))
-
 #endif
 
 static void (DEVICE_REQUEST) ();
@@ -204,16 +188,10 @@ static void end_request(int uptodate)
     register struct request *req;
     register struct buffer_head *bh;
 
-#ifdef BLOAT_FS
-    struct task_struct *p;
-#endif
-
     req = CURRENT;
 
 #ifdef BLOAT_FS
-
     req->rq_errors = 0;
-
 #endif
 
     if (!uptodate) {
@@ -221,23 +199,19 @@ static void end_request(int uptodate)
 	printk("dev %x, sector %lu\n", req->rq_dev, req->rq_sector);
 
 #ifdef MULTI_BH
-
 	req->rq_nr_sectors--;
 	req->rq_nr_sectors &= ~SECTOR_MASK;
 	req->rq_sector += (BLOCK_SIZE / 512);
 	req->rq_sector &= ~SECTOR_MASK;
 
 #endif
-
     }
 
     bh = req->rq_bh;
 
 #ifdef BLOAT_FS
-
     req->rq_bh = bh->b_reqnext;
     bh->b_reqnext = NULL;
-
 #endif
 
     clr_irq();
@@ -246,12 +220,8 @@ static void end_request(int uptodate)
     unlock_buffer(bh);
 
 #ifdef BLOAT_FS
-
     if ((bh = req->rq_bh) != NULL) {
 	req->rq_current_nr_sectors = bh->b_size >> 9;
-#if 0
-	req->rq_current_nr_sectors = 1024 >> 9;
-#endif
 	if (req->rq_nr_sectors < req->rq_current_nr_sectors) {
 	    req->rq_nr_sectors = req->rq_current_nr_sectors;
 	    printk("end_request: buffer-list destroyed\n");
@@ -260,25 +230,26 @@ static void end_request(int uptodate)
 	return;
     }
 #endif
+
     DEVICE_OFF(req->dev);
     CURRENT = req->rq_next;
 #ifdef BLOAT_FS
+    struct task_struct *p;
     if ((p = req->rq_waiting) != NULL) {
 	req->rq_waiting = NULL;
 	p->state = TASK_RUNNING;
-#if 0
-	if (p->counter > current->counter)
-	    need_resched = 1;
-#endif
+	/*if (p->counter > current->counter)
+	    need_resched = 1;*/
     }
 #endif
+
     req->rq_dev = -1;
     req->rq_status = RQ_INACTIVE;
 #ifdef MULTI_BH
     wake_up(&wait_for_request);
 #endif
 }
-#endif
+#endif /* MAJOR_NR */
 
 #ifdef DEVICE_INTR
 #define CLEAR_INTR SET_INTR(NULL)
@@ -298,11 +269,3 @@ static void end_request(int uptodate)
 	}
 
 #endif
-
-/* For bioshd.c, idequery.c */
-struct drive_infot {            /* CHS per drive*/
-    int cylinders;
-    int sectors;
-    int heads;
-    int fdtype;                 /* floppy fd_types[] index  or -1 if hd */
-};

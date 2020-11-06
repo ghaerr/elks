@@ -313,7 +313,19 @@ static void copy_ddpt(void)
 {
 	unsigned long oldvec = *vec1E;
 
-	/*
+	/* We want to prevent the BIOS from accidentally doing a "multitrack"
+	 * floppy read --- and wrapping around from one head to the next ---
+	 * when ELKS only wants to read from a single track.
+	 *
+	 * (E.g. if DDPT SPT = 9, and a disk has 18 sectors per track, and we
+	 * want to read sectors 9--10 from track 0, side 0, then the BIOS may
+	 * read sector 9 from track 0, side 0, followed by sector 1 from track
+	 * 0, side 1, which will be wrong.)
+	 *
+	 * To prevent this, we set the DDPT SPT field to the actual sector
+	 * count per track in the detected disk geometry.  The DDPT SPT
+	 * should never be smaller than the actual SPT, but it can be larger.
+	 *
 	 * Rather than issue INT 13h function 8 (Get Drive Parameters, not implemented
 	 * on IBM XT BIOS v1 and earlier) to get an accurate DDPT, just copy the original
 	 * DDPT to RAM, where the sectors per track value will be modified before each
@@ -323,7 +335,6 @@ static void copy_ddpt(void)
 	fmemcpyw(DDPT, _FP_SEG(DDPT), (void *)(unsigned)oldvec, _FP_SEG(oldvec),
 		sizeof(DDPT)/2);
 	debug_bios("bioshd: DDPT vector %x:%x SPT %d\n", _FP_SEG(oldvec), (unsigned)oldvec, DDPT[SPT]);
-	set_ddpt(DDPT[SPT]);
 	*vec1E = (unsigned long)(void __far *)DDPT;
 }
 
@@ -442,7 +453,6 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 	} while (++count < 5);
 
 	drivep->heads = 2;
-/* DMA code belongs out of the loop. */
 
       got_geom:
 
@@ -459,25 +469,6 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 		   "%d cylinders\n",
 		   target, drivep->sectors, drivep->heads, drivep->cylinders);
 
-
-/*	This is not a bugfix, hence no code, but coders should be aware that
- *	multi-sector reads from this point on depend on bootsect modifying
- *	the default Disk Parameter Block in BIOS.
- *
- *	dpb[4]	should be set to a high value such as 36 so that reads can
- *		go past what is hardwired in the BIOS. 36 is the number of
- *		sectors in a 2.88 floppy track.
- *
- *		If you are booting ELKS with anything other than bootsect,
- *		you have to make equivalent arrangements.
- *
- *	0:0x78	contains the address of dpb (char dpb[12]).
- *
- *	dpb[4]	is the End of Track parameter for the 765 Floppy Disk
- *		Controller.
- *
- *	You may have to copy dpb to RAM as the original is in ROM.
- */
 	hdp->start_sect = 0;
 	hdp->nr_sects = ((sector_t)(drivep->sectors * drivep->heads))
 				* ((sector_t)drivep->cylinders);
@@ -693,7 +684,7 @@ static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *b
 
 	/* limit I/O to requested sector count*/
 	if (this_pass > count) this_pass = count;
-	if (cmd == READ) debug_bios("bioshd(%d): NO-CACHE read lba %ld len %d\n",
+	if (cmd == READ) debug_bios("bioshd(%d): read lba %ld count %d\n",
 				drivep-drive_info, start, this_pass);
 
 	errs = MAX_ERRS;	/* BIOS disk reads should be retried at least three times */

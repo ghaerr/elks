@@ -19,11 +19,6 @@
 #include <linuxmt/init.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/debug.h>
-
-#if 0
-#include <linux/locks.h>
-#endif
-
 #include <arch/system.h>
 #include <arch/io.h>
 #include <arch/irq.h>
@@ -46,10 +41,6 @@
 #define NR_REQUEST	20
 
 static struct request all_requests[NR_REQUEST];
-
-#ifdef MULTI_BH
-struct wait_queue wait_for_request = NULL;
-#endif
 
 /*
  * blk_dev_struct is:
@@ -97,48 +88,6 @@ int *blk_size[MAX_BLKDEV] = { NULL, NULL, };
 
 /* int * hardsect_size[MAX_BLKDEV] = { NULL, NULL, }; */
 
-#ifdef MULTI_BH
-/*
- * "plug" the device if there are no outstanding requests: this will
- * force the transfer to start only after we have put all the requests
- * on the list.
- */
-
-static void plug_device(register struct blk_dev_struct *dev,
-			struct request *plug)
-{
-    flag_t flags;
-
-    plug->rq_status = RQ_INACTIVE;
-    plug->cmd = -1;
-    plug->next = NULL;
-    save_flags(flags);
-    clr_irq();
-    if (!dev->current_request)
-	dev->current_request = plug;
-    restore_flags(flags);
-}
-
-/*
- * remove the plug and let it rip..
- */
-
-static void unplug_device(struct blk_dev_struct *dev)
-{
-    register struct request *req;
-    unsigned int flags;
-
-    save_flags(flags);
-    clr_irq();
-    req = dev->current_request;
-    if (req && req->rq_status == RQ_INACTIVE && req->cmd == -1) {
-	dev->current_request = req->next;
-	(dev->request_fn) ();
-    }
-    restore_flags(flags);
-}
-#endif
-
 /*
  * look for a free request in the first N entries.
  * NOTE: interrupts must be disabled on the way in, and will still
@@ -175,36 +124,6 @@ static struct request *get_request(int n, kdev_t dev)
     return NULL;
 }
 
-/*
- * wait until a free request in the first N entries is available.
- */
-
-#ifdef MULTI_BH
-static struct request *__get_request_wait(int n, kdev_t dev)
-{
-    register struct request *req;
-    printk("Waiting for request...\n");
-
-    wait_set(&wait_for_request);
-    current->state = TASK_UNINTERRUPTIBLE;
-    goto startgrw;
-    do {
-	schedule();
-      startgrw:
-#if 0
-	unplug_device(MAJOR(dev) + blk_dev);	/* Device can't be plugged */
-#endif
-	clr_irq();
-	req = get_request(n, dev);
-	set_irq();
-    } while (req == NULL);
-    current->state = TASK_RUNNING;
-    wait_clear(&wait_for_request);
-
-    return req;
-}
-#endif
-
 #if 0
 static struct request *get_request_wait(int n, kdev_t dev)
 {
@@ -225,8 +144,7 @@ static struct request *get_request_wait(int n, kdev_t dev)
  * request-lists in peace.
  */
 
-static void add_request(struct blk_dev_struct *dev,
-			register struct request *req)
+static void add_request(struct blk_dev_struct *dev, struct request *req)
 {
     register struct request *tmp;
 
@@ -332,12 +250,80 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
 }
 
 
+#ifdef MULTI_BH
+struct wait_queue wait_for_request = NULL;
+
+/*
+ * wait until a free request in the first N entries is available.
+ */
+static struct request *__get_request_wait(int n, kdev_t dev)
+{
+    register struct request *req;
+    printk("Waiting for request...\n");
+
+    wait_set(&wait_for_request);
+    current->state = TASK_UNINTERRUPTIBLE;
+    goto startgrw;
+    do {
+	schedule();
+      startgrw:
+#if 0
+	unplug_device(MAJOR(dev) + blk_dev);	/* Device can't be plugged */
+#endif
+	clr_irq();
+	req = get_request(n, dev);
+	set_irq();
+    } while (req == NULL);
+    current->state = TASK_RUNNING;
+    wait_clear(&wait_for_request);
+
+    return req;
+}
+
+/*
+ * "plug" the device if there are no outstanding requests: this will
+ * force the transfer to start only after we have put all the requests
+ * on the list.
+ */
+
+static void plug_device(register struct blk_dev_struct *dev,
+			struct request *plug)
+{
+    flag_t flags;
+
+    plug->rq_status = RQ_INACTIVE;
+    plug->cmd = -1;
+    plug->next = NULL;
+    save_flags(flags);
+    clr_irq();
+    if (!dev->current_request)
+	dev->current_request = plug;
+    restore_flags(flags);
+}
+
+/*
+ * remove the plug and let it rip..
+ */
+
+static void unplug_device(struct blk_dev_struct *dev)
+{
+    register struct request *req;
+    unsigned int flags;
+
+    save_flags(flags);
+    clr_irq();
+    req = dev->current_request;
+    if (req && req->rq_status == RQ_INACTIVE && req->cmd == -1) {
+	dev->current_request = req->next;
+	(dev->request_fn) ();
+    }
+    restore_flags(flags);
+}
+
 /* This function can be used to request a number of buffers from a block
  * device. Currently the only restriction is that all buffers must belong
  * to the same device.
  */
-#ifdef MULTI_BH
-
 void ll_rw_block(int rw, int nr, register struct buffer_head **bh)
 {
     struct blk_dev_struct *dev;
@@ -379,8 +365,7 @@ void ll_rw_block(int rw, int nr, register struct buffer_head **bh)
 	    bh[i]->b_uptodate = 0;
 	}
 }
-
-#endif
+#endif /* MULTI_BH */
 
 /* This function can be used to request a single buffer from a block device.
  */
