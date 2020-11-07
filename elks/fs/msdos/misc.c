@@ -303,7 +303,7 @@ int FATPROC msdos_scan(struct inode *dir,char *name,struct buffer_head **res_bh,
    directory "inode". */
 
 /* Retrieve sectors sector */
-static cluster_t FATPROC raw_found(struct super_block *sb, sector_t sector,
+static cluster_t FATPROC raw_found(struct super_block *sb, cluster_t sector,
 	char *name, cluster_t number, ino_t *ino)
 {
 	struct buffer_head *bh;
@@ -347,7 +347,7 @@ static cluster_t FATPROC raw_scan_root(register struct super_block *sb,
 	cluster_t cluster = 0;
 
 	for (count = 0; count < MSDOS_SB(sb)->dir_entries/MSDOS_DPS; count++) {
-		if ((cluster = raw_found(sb,(sector_t)(MSDOS_SB(sb)->dir_start+count),name, number,
+		if ((cluster = raw_found(sb,(cluster_t)(MSDOS_SB(sb)->dir_start+count),name, number,
 				ino)) >= 0) break;
 	}
 	return cluster;
