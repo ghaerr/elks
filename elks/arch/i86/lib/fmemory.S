@@ -27,21 +27,18 @@ fmemcpyb:
 	mov    %si,%ax
 	mov    %di,%dx
 	mov    %sp,%si
-	push   %es
+	mov    %es,%bx
 	mov    ARG4(%si),%cx  // byte count
 	les    ARG0(%si),%di  // far destination pointer
 	lds    ARG2(%si),%si  // far source pointer
-	mov    %cx,%bx
 	cld
 	shr    $1,%cx         // copy words
-	jz     1f
 	rep
 	movsw
-1:	mov    %bx,%cx        // then possibly final byte
-	and    $1,%cx
-	jz     2f
+	rcl    $1,%cx         // then possibly final byte
+	rep
 	movsb
-2:	pop    %es
+	mov    %bx,%es
 	mov    %ax,%si
 	mov    %dx,%di
 	mov    %ss,%ax
@@ -75,22 +72,19 @@ fmemcpyw:
 fmemsetb:
 	mov    %di,%dx
 	mov    %sp,%di
-	push   %es
+	mov    %es,%bx
 	mov    ARG2(%di),%ax  // value
 	mov    ARG3(%di),%cx  // byte count
 	les    ARG0(%di),%di  // far pointer
-	mov    %cx,%bx
 	cld
 	shr    $1,%cx         // store words
-	jz     1f
 	mov    %al,%ah
 	rep
 	stosw
-1:	mov    %bx,%cx        // then possibly final byte
-	and    $1,%cx
-	jz     2f
+	rcl    $1,%cx         // then possibly final byte
+	rep
 	stosb
-2:	pop    %es
+	mov    %bx,%es
 	mov    %dx,%di
 	ret
 
