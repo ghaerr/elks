@@ -560,6 +560,7 @@ msg_reboot:
 	.asciz "Press key\r\n"
 
 #ifndef BOOT_FAT
+	.global sect_offset
 sect_offset:
 	.long 0
 #endif
