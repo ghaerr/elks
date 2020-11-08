@@ -684,7 +684,7 @@ static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *b
 	/* limit I/O to requested sector count*/
 	if (this_pass > count) this_pass = count;
 	if (cmd == READ) debug_bios("bioshd(%d): read lba %ld count %d\n",
-				drivep-drive_info, start, this_pass);
+				drive, start, this_pass);
 
 	errs = MAX_ERRS;	/* BIOS disk reads should be retried at least three times */
 	do {
@@ -700,8 +700,8 @@ static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *b
 
 		set_ddpt(drivep->sectors);
 		if (call_bios(&bdt)) {
-			printk("bioshd(%d): cmd %d retry #%d sector %d count %d\n",
-				drive, cmd, MAX_ERRS - errs + 1, sector, this_pass);
+			printk("bioshd(%d): cmd %d retry #%d CHS %d/%d/%d count %d\n",
+			    drive, cmd, MAX_ERRS - errs + 1, cylinder, head, sector, this_pass);
 		    out_ax = BD_AX;
 		    reset_bioshd(drive);
 		}
@@ -744,8 +744,8 @@ static void bios_readtrack(struct drive_infot *drivep, sector_t start)
 
 		set_ddpt(drivep->sectors);
 		if (call_bios(&bdt)) {
-			printk("bioshd(%d): track read retry #%d sector %d count %d\n",
-				drive, errs + 1, sector, num_sectors);
+			printk("bioshd(%d): track read retry #%d CHS %d/%d/%d count %d\n",
+			    drive, errs + 1, cylinder, head, sector, num_sectors);
 		    out_ax = BD_AX;
 		    reset_bioshd(drive);
 		}
@@ -772,7 +772,7 @@ static int cache_valid(struct drive_infot *drivep, sector_t start, char *buf, se
 	    return 0;
 
 	offset = (int)(start - cache_startsector) << 9;
-	debug_bios("bioshd(%d): cache hit lba %ld\n", drivep-drive_info, start);
+	debug_bios("bioshd(%d): cache hit lba %ld\n", hd_drive_map[drivep-drive_info], start);
 	fmemcpyw(buf, seg, (void *)offset, DMASEG, 512/2);
 	return 1;
 }

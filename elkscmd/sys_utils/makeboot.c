@@ -158,7 +158,9 @@ int setFATparms(int fd, char *buf)
 	for (n = FATBPB_START; n <= FATBPB_END; n++)
 		buf[n] = BPB[n];
 
-#if 0
+	printf("BPB sect_offset %ld setting to %ld\n",
+		*(unsigned long *)&buf[FAT_BPB_SectOffset], Start_sector);
+#if 1
 	*(unsigned short *)&buf[FAT_BPB_SecPerTrk] = SecPerTrk;
 	*(unsigned short *)&buf[FAT_BPB_NumHeads] = NumHeads;
 	*(unsigned long *)&buf[FAT_BPB_SectOffset] = Start_sector;
@@ -316,19 +318,22 @@ int main(int ac, char **av)
 	}
 	printf("target type %d\n", fstype);
 
+	if (rootfstype != fstype) {
+		fprintf(stderr, "Root and new system device must be same filesystem format\n");
+		close(fd);
+		return -1;
+	}
+
 	lseek(fd, 0L, SEEK_SET);
-	n = write(fd, bootblock, n);
+	n = write(fd, bootblock, bootsecsize);
 	if (n != bootsecsize) {
 		fprintf(stderr, "Can't write target boot sector\n");
 		close(fd);
 		return -1;
 	}
 	close(fd);
-
-	if (rootfstype != fstype) {
-		fprintf(stderr, "Root and new system device must be same filesystem format\n");
-		return -1;
-	}
+//sync();
+//return 0;
 
 	if (mkdir(MOUNTDIR, 0777) < 0) {
 		fprintf(stderr, "Can't create temp mount point %s\n", MOUNTDIR);
