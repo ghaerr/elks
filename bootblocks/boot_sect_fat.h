@@ -117,6 +117,7 @@ bpb_num_heads:				// Number of heads
 head_max:
 	.word FAT_NUM_HEADS
 bpb_hidd_sec:				// Hidden sectors
+	.global sect_offset
 sect_offset:
 	.long 0
 bpb_tot_sec_32:				// Total number of sectors, 32-bit

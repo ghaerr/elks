@@ -34,6 +34,7 @@ PRGS = \
 	mouse \
 	sercat \
 	console \
+	makeboot \
 	# EOL
 
 init: init.o
@@ -98,6 +99,9 @@ sercat: sercat.o
 
 console: console.o
 	$(LD) $(LDFLAGS) -o console console.o $(LDLIBS)
+
+makeboot: makeboot.o
+	$(LD) $(LDFLAGS) -o makeboot makeboot.o $(LDLIBS)
 
 unreal16: unreal16.o
 	$(LD) -melks-libc -mcmodel=small -c unreal16.S -o unreal16.o

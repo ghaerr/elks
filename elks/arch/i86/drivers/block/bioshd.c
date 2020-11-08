@@ -645,11 +645,10 @@ static int bioshd_ioctl(struct inode *inode,
     case HDIO_GETGEO:
 	err = verify_area(VERIFY_WRITE, (void *) arg, sizeof(struct hd_geometry));
 	if (!err) {
-	    put_user((__u16) drivep->heads, (__u16 *) &loc->heads);
-	    put_user((__u16) drivep->sectors, (__u16 *) &loc->sectors);
-	    put_user((__u16) drivep->cylinders, (__u16 *) &loc->cylinders);
-	    put_user((__u16) hd[MINOR(inode->i_rdev)].start_sect,
-		    (__u16 *) &loc->start);
+	    put_user_char(drivep->heads, &loc->heads);
+	    put_user_char(drivep->sectors, &loc->sectors);
+	    put_user(drivep->cylinders, &loc->cylinders);
+	    put_user_long(hd[MINOR(inode->i_rdev)].start_sect, &loc->start);
 	}
     }
     return err;
@@ -694,13 +693,15 @@ static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *b
 		BD_DX = (head << 8) | drive;
 		BD_ES = seg;
 		BD_BX = (unsigned) buf;
-		debug_bios("bioshd: drive %d cmd %d CHS %d/%d/%d count %d\n",
+		debug_bios("bioshd(%d): cmd %d CHS %d/%d/%d count %d\n",
 		    drive, cmd, cylinder, head, sector, this_pass);
 		in_ax = BD_AX;
 		out_ax = 0;
 
 		set_ddpt(drivep->sectors);
 		if (call_bios(&bdt)) {
+			printk("bioshd(%d): cmd %d retry #%d sector %d count %d\n",
+				drive, cmd, MAX_ERRS - errs + 1, sector, this_pass);
 		    out_ax = BD_AX;
 		    reset_bioshd(drive);
 		}
@@ -723,29 +724,43 @@ static void bios_readtrack(struct drive_infot *drivep, sector_t start)
 {
 	unsigned int cylinder, head, sector, num_sectors;
 	int drive = drivep - drive_info;
+	int errs = 0;
+	unsigned short out_ax;
 
 	drive = hd_drive_map[drive];
 	get_chst(drivep, start, &cylinder, &head, &sector, &num_sectors);
 
 	if (num_sectors > (DMASEGSZ >> 9)) num_sectors = DMASEGSZ >> 9;
 
-	BD_AX = BIOSHD_READ | num_sectors;
-	BD_CX = (unsigned int) ((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
-	BD_DX = (head << 8) | drive;
-	BD_ES = DMASEG;
-	BD_BX = 0;
+	do {
+		BD_AX = BIOSHD_READ | num_sectors;
+		BD_CX = (unsigned int) ((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
+		BD_DX = (head << 8) | drive;
+		BD_ES = DMASEG;
+		BD_BX = 0;
+		out_ax = 0;
+		debug_bios("bioshd(%d): track read CHS %d/%d/%d count %d\n",
+			drive, cylinder, head, sector, num_sectors);
 
-	set_ddpt(drivep->sectors);
-	if (call_bios(&bdt)) {
-		printk("bioshd: track read error sector %d count %d\n", sector, num_sectors);
+		set_ddpt(drivep->sectors);
+		if (call_bios(&bdt)) {
+			printk("bioshd(%d): track read retry #%d sector %d count %d\n",
+				drive, errs + 1, sector, num_sectors);
+		    out_ax = BD_AX;
+		    reset_bioshd(drive);
+		}
+	} while (out_ax && ++errs < 1);	/* no track retries, for testing only*/
+
+	if (out_ax) {
 		set_cache_invalid();
 		return;
 	}
+
 	cache_drive = drivep;
 	cache_startsector = start;
 	cache_endsector = start + num_sectors - 1;
 	debug_bios("bioshd(%d): track read lba %ld to %ld count %d\n",
-		drivep-drive_info, cache_startsector, cache_endsector, num_sectors);
+		drive, cache_startsector, cache_endsector, num_sectors);
 }
 
 /* check whether cache is valid for one sector*/

@@ -54,7 +54,7 @@ sh_utils/test			:boot	:shutil
 sh_utils/true			:boot	:be-shutil
 sh_utils/echo			:boot	:be-shutil
 file_utils/cat			:boot	:be-fileutil
-file_utils/chgrp				:be-fileutil		:720k
+file_utils/chgrp				:be-fileutil			:1440k
 file_utils/chmod				:be-fileutil	:360k
 file_utils/chown				:be-fileutil		:720k
 file_utils/cmp					:be-fileutil			:1440k
@@ -62,7 +62,7 @@ file_utils/cp					:be-fileutil	:360k
 file_utils/df					:be-fileutil			:1440k
 file_utils/dd					:be-fileutil			:1440k
 file_utils/mkdir				:fileutil		:360k
-file_utils/mknod				:fileutil				:1440k
+file_utils/mknod				:fileutil		:360k
 file_utils/mkfifo				:fileutil				:1440k
 file_utils/more					:fileutil			:720k
 file_utils/mv					:fileutil		:360k
@@ -76,6 +76,7 @@ sys_utils/chmem					:sysutil			:720k
 sys_utils/kill					:sysutil			:720k
 sys_utils/ps					:sysutil		:360k
 sys_utils/reboot				:sysutil		:360k
+sys_utils/makeboot				:sysutil		:360k
 sys_utils/man					:sysutil				:1440k
 sys_utils/meminfo				:sysutil				:1440k
 sys_utils/mouse					:sysutil				:1440k
