@@ -29,21 +29,23 @@ timeq_t Now;
 extern int cbs_in_time_wait;		// FIXME remove extern
 extern int cbs_in_user_timeout;
 
-void tcp_print(struct iptcp_s *head, int recv)
+void tcp_print(struct iptcp_s *head, int recv, struct tcpcb_s *cb)
 {
 #if DEBUG_TCP
-    char *prot;
-    switch (head->iph->protocol) {
-    case PROTO_TCP: prot = "TCP"; break;
-    case PROTO_ICMP: prot = "ICMP"; break;
-    default: prot = "???";
-    }
-    debug_tcp("%s: %s ", prot, recv? "recv": "send");
+    debug_tcp("TCP: %s ", recv? "recv": "send");
     debug_tcp("src:%u dst:%u ", ntohs(head->tcph->sport), ntohs(head->tcph->dport));
-    debug_tcp("flags:%x ",head->tcph->flags);
-    debug_tcp("seq:%lx ack:%lx ", ntohl(head->tcph->seqnum), ntohl(head->tcph->acknum));
+    debug_tcp("flags:0x%x ",head->tcph->flags);
+    if (recv) {
+    	if (head->tcplen > 20) debug_tcp("seq:%ld-%ld ", ntohl(head->tcph->seqnum) - cb->irs, 
+				ntohl(head->tcph->seqnum) - cb->irs+head->tcplen-20);
+	debug_tcp("ack:%ld ", ntohl(head->tcph->acknum) - cb->iss);
+    } else {
+    	if (head->tcplen > 20) debug_tcp("seq:%ld-%ld ", ntohl(head->tcph->seqnum) - cb->iss, 
+	ntohl(head->tcph->seqnum) - cb->iss+head->tcplen-20);
+ 	debug_tcp("ack:%ld ", ntohl(head->tcph->acknum) - cb->irs);
+    }
     debug_tcp("win:%u urg:%d ", ntohs(head->tcph->window), head->tcph->urgpnt);
-    debug_tcp("chk:%x len:%u\n", tcp_chksum(head), head->tcplen);
+    debug_tcp("chk:0x%x len:%u\n", head->tcph->chksum, head->tcplen);
 #endif
 }
 
@@ -213,7 +215,7 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     datasize = iptcp->tcplen - TCP_DATAOFF(h);
 
     if (datasize != 0) {
-	debug_tcp("tcp: recv data len %u\n", datasize);
+	//debug_tcp("tcp: recv data len %u\n", datasize);
 	/* Process the data */
 	data = (__u8 *)h + TCP_DATAOFF(h);
 
@@ -409,8 +411,6 @@ void tcp_process(struct iphdr_s *iph)
     iptcp.tcph = tcph;
     iptcp.tcplen = ntohs(iph->tot_len) - 4 * IP_HLEN(iph);
 
-    tcp_print(&iptcp, 1);
-
     if (tcp_chksum(&iptcp) != 0) {
 	printf("tcp: BAD CHECKSUM (%x) len %d\n", tcp_chksum(&iptcp), iptcp.tcplen);
 	netstats.tcpbadchksum++;
@@ -428,6 +428,7 @@ void tcp_process(struct iphdr_s *iph)
     }
 
     cb = &cbnode->tcpcb;
+    tcp_print(&iptcp, 1, cb);
 
     if (cb->state != TS_LISTEN && cb->state != TS_SYN_SENT
 			       && cb->state != TS_SYN_RECEIVED) {

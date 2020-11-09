@@ -46,7 +46,7 @@ void icmp_process(struct iphdr_s *iph,unsigned char *packet)
 	apair.daddr = iph->saddr;
 	apair.saddr = iph->daddr;
 	apair.protocol = PROTO_ICMP;
-	ip_sendpacket(packet, len, &apair);
+	ip_sendpacket(packet, len, &apair, NULL);
 	netstats.icmpsndcnt++;
 	break;
    case ICMP_TYPE_DST_UNRCH:
