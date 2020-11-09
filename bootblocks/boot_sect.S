@@ -548,19 +548,19 @@ msg_reboot:
 end_of_code:
 //------------------------------------------------------------------------------
 
-#ifndef BOOT_FAT
-	.org 0x1F3              // Fixed address of sect_offset for MINIX boot sector
-	.global sect_offset
-sect_offset:
-	.long 0
-#endif
-
 // ELKS disk parameter structure
 // For future expansion, fields should be added at the _front_ of structure
 
-	.org 0x1F7
-
 elks_parms_start:
+
+#ifdef BOOT_FAT
+	.org 0x1F7              // FAT boot sectors use older EPB for now
+#else
+	.org 0x1F3
+	.global sect_offset
+sect_offset:
+	.long 0                 // Partition start sector of MINIX boot block
+#endif
 
 // Disk geometry (CHS)
 
