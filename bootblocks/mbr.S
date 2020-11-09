@@ -110,7 +110,6 @@ sector_loaded:
 
 	mov	drive_num,%dh	// Restore DH drive number for VBR
 	mov	%si,%bp		// LILO says some BBs use bp rather than si
-	mov	$0x4c65,%ax	// 'eL' ELKS magic number
 
 	ljmp	$0,$BOOTADDR	// Jump to VBR boot sector
 

@@ -68,21 +68,6 @@ floppy_table:
 
 entry1:
 #endif
-
-	// instructions through _next0 not needed for floppy, only MBR boot
-	cld
-	cmp $0x4c65,%ax			// coming from ELKS MBR?
-	jnz _next0
-	mov 8(%si),%ax			// get MBR start sector from partion table at DS:SI
-	mov 10(%si),%si
-	push %cs
-	pop %es
-	mov $BOOTADDR+sect_offset,%di
-	stosw
-	xchg %ax,%si
-	stosw
-_next0:
-
 	// Get the memory size
 	// TODO: optional BIOS INT 12h
 
@@ -559,15 +544,16 @@ msg_error:
 msg_reboot:
 	.asciz "Press key\r\n"
 
+	.global end_of_code
+end_of_code:
+//------------------------------------------------------------------------------
+
 #ifndef BOOT_FAT
+	.org 0x1F3              // Fixed address of sect_offset for MINIX boot sector
 	.global sect_offset
 sect_offset:
 	.long 0
 #endif
-
-	.global last_code
-last_code:
-//------------------------------------------------------------------------------
 
 // ELKS disk parameter structure
 // For future expansion, fields should be added at the _front_ of structure

@@ -3,7 +3,7 @@
  *
  * 7 Feb 2020 Greg Haerr <greg@censoft.com>
  *
- * Usage: setboot <image> [-F] [-{B,P}<sectors>,<heads>[,<tracks>]] [<input_boot_sector>]
+ * Usage: setboot <image> [-F] [-S{m,f}] [-{B,P}<sectors>,<heads>[,<tracks>]] [<input_boot_sector>]
  *
  *	setboot writes image after optionally reading an input boot sector and
  *		optionally modifying boot sector disk parameters passed as parameters.
@@ -33,11 +33,18 @@
 #define ELKS_BPB_SecPerTrk	0x1F9		/* offset of sectors per track (byte)*/
 #define ELKS_BPB_NumHeads	0x1FA		/* offset of number of heads (byte)*/
 
+/* MINIX-only offsets*/
+#define MINIX_SectOffset	0x1F3		/* offset of partition start sector (long)*/
+
 /* FAT BPB start and end offsets*/
 #define FATBPB_START	11				/* start at bytes per sector*/
 #define FATBPB_END		61				/* through end of file system type*/
 
+/* FAT-only offsets*/
+#define FAT_BPB_SectOffset	0x1C		/* offset of partition start sector (long) */
+
 static unsigned int SecPerTrk, NumHeads, NumTracks;
+static unsigned long StartSector;
 
 struct partition
 {
@@ -75,6 +82,7 @@ static void writePartition(unsigned char *buf)
 	p->cyl = 0;
 	p->start_sect = 1;			/* zero-relative start sector here*/
 #endif
+	StartSector = p->start_sect;
 	p->sys_ind = 0x80;			/* ELKS, Old Minix*/
 	p->end_head = NumHeads;
 	p->end_sector = SecPerTrk | ((NumTracks >> 2) & 0xc0);
@@ -141,12 +149,14 @@ int main(int argc,char **argv)
 	int opt_new_bootsect = 0, opt_updatebpb = 0;
 	int opt_skipfatbpb = 0;
 	int opt_writepartitiontable = 0;
+	int opt_update_start_sector_minix = 0;
+	int opt_update_start_sector_fat = 0;
 	char *outfile, *infile = NULL;
 	unsigned char blk[SECT_SIZE*2];
 	unsigned char inblk[SECT_SIZE];
 
 	if (argc != 3 && argc != 4 && argc != 5)
-		fatalmsg("Usage: %s <image> [-F] [-{B,P}<sectors>,<heads>[,<tracks>]] [<input_boot_image>]\n", argv[0]);
+		fatalmsg("Usage: %s <image> [-F] [-S{m,f}] [-{B,P}<sectors>,<heads>[,<tracks>]] [<input_boot_image>]\n", argv[0]);
 
 	outfile = *++argv; argc--;
 
@@ -178,6 +188,13 @@ int main(int argc,char **argv)
 		else if (argv[1][1] == 'F') {
 			opt_skipfatbpb = 1;			/* skip FAT BPB specified*/
 			printf("Skipping FAT BPB\n");
+			argv++;
+			argc--;
+		}
+		else if (argv[1][1] == 'S') {	/* update start sector in ELKS boot sector*/
+			if (argv[1][2] == 'm') opt_update_start_sector_minix = 1;
+			if (argv[1][2] == 'f') opt_update_start_sector_fat = 1;
+			printf("Updating start sector in ELKS boot sector\n");
 			argv++;
 			argc--;
 		}
@@ -241,6 +258,34 @@ int main(int argc,char **argv)
 			fprintf(stderr, "Warning: '%s' may not be valid bootable sector\n", infile);
 
 		if (fwrite(blk,1,count,ofp) != count) die("fwrite(%s)", infile);
+
+		if (opt_update_start_sector_minix || opt_update_start_sector_fat) {
+			if (fseek(ofp, StartSector * SECT_SIZE, SEEK_SET) != 0)
+				die("fseek(%s)", outfile);
+
+			count = fread(blk,1,SECT_SIZE,ofp);
+			if (count != SECT_SIZE)
+				die("fread(%s)", outfile);
+
+			if (opt_update_start_sector_minix) {
+				blk[MINIX_SectOffset] = (unsigned char)StartSector;
+				blk[MINIX_SectOffset+1] = (unsigned char)(StartSector >> 8);
+				blk[MINIX_SectOffset+2] = (unsigned char)(StartSector >> 16);
+				blk[MINIX_SectOffset+3] = (unsigned char)(StartSector >> 24);
+			}
+			if (opt_update_start_sector_fat) {
+				blk[FAT_BPB_SectOffset] = (unsigned char)StartSector;
+				blk[FAT_BPB_SectOffset+1] = (unsigned char)(StartSector >> 8);
+				blk[FAT_BPB_SectOffset+2] = (unsigned char)(StartSector >> 16);
+				blk[FAT_BPB_SectOffset+3] = (unsigned char)(StartSector >> 24);
+			}
+
+			if (fseek(ofp, StartSector * SECT_SIZE, SEEK_SET) != 0)
+				die("fseek(%s)", outfile);
+			if (fwrite(blk,1,SECT_SIZE,ofp) != SECT_SIZE)
+				die("fwrite(%s)", outfile);
+		}
+
 		fclose(ofp);
 		fclose(ifp);
 	} else {			/* perform BPB update only on existing boot block*/
