@@ -37,8 +37,8 @@
 #define ELKS_BPB_SecPerTrk	0x1F9		/* offset of sectors per track (byte)*/
 #define ELKS_BPB_NumHeads	0x1FA		/* offset of number of heads (byte)*/
 
-/* MINIX-only offsets, FIXME - SectOffset not yet standard*/
-#define MINIX_SectOffset	0x1B5		/* offset of partition start sector FIXME */
+/* MINIX-only offsets*/
+#define MINIX_SectOffset	0x1F3		/* offset of partition start sector (long)*/
 
 /* FAT BPB start and end offsets*/
 #define FATBPB_START	11				/* start at bytes per sector*/
@@ -332,17 +332,13 @@ int main(int ac, char **av)
 		return -1;
 	}
 	close(fd);
-//sync();
-//return 0;
 
-	if (mkdir(MOUNTDIR, 0777) < 0) {
-		fprintf(stderr, "Can't create temp mount point %s\n", MOUNTDIR);
-		return -1;
-	}
+	if (mkdir(MOUNTDIR, 0777) < 0)
+		fprintf(stderr, "Can't create temp mount point %s, may already exist\n", MOUNTDIR);
+
 	if (mount(targetdevice, MOUNTDIR, fstype, 0) < 0) {
 		fprintf(stderr, "Can't mount %s on %s\n", targetdevice, MOUNTDIR);
-		rmdir(MOUNTDIR);
-		return -1;
+		goto errout2;
 	}
 	if (!copyfile(SYSFILE1, MOUNTDIR SYSFILE1, 1)) {
 		fprintf(stderr, "Error copying %s\n", SYSFILE1);
@@ -360,11 +356,14 @@ int main(int ac, char **av)
 	if (umount(targetdevice) < 0)
 		fprintf(stderr, "Unmount error\n");
 	rmdir(MOUNTDIR);
+	sync();
 
 	return fstype;		/* return filesystem type (1=MINIX, 2=FAT */
 
 errout:
 	umount(targetdevice);
+errout2:
 	rmdir(MOUNTDIR);
-	return 0;
+	sync();
+	return -1;
 }

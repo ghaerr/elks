@@ -138,11 +138,11 @@ hd32-fat:
 # MBR images
 hd32mbr-minix:
 	dd if=/dev/zero bs=512 count=63 | cat - hd32-minix.bin > hd32mbr-minix.bin
-	setboot hd32mbr-minix.bin -P63,16,63 $(HD_MBR_BOOT)
+	setboot hd32mbr-minix.bin -P63,16,63 -Sm $(HD_MBR_BOOT)
 
 hd32mbr-fat:
 	dd if=/dev/zero bs=512 count=63 | cat - hd32-fat.bin > hd32mbr-fat.bin
-	setboot hd32mbr-fat.bin -P63,16,63 $(HD_MBR_BOOT)
+	setboot hd32mbr-fat.bin -P63,16,63 -Sf $(HD_MBR_BOOT)
 
 # Clean target
 
