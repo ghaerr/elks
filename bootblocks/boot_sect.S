@@ -551,12 +551,14 @@ end_of_code:
 // ELKS disk parameter structure
 // For future expansion, fields should be added at the _front_ of structure
 
-elks_parms_start:
-
 #ifdef BOOT_FAT
 	.org 0x1F7              // FAT boot sectors use older EPB for now
+elks_parms_start:
+
 #else
 	.org 0x1F3
+elks_parms_start:
+
 	.global sect_offset
 sect_offset:
 	.long 0                 // Partition start sector of MINIX boot block
