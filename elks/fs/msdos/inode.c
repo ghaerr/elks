@@ -15,14 +15,18 @@
 #include <linuxmt/debug.h>
 
 #ifdef CONFIG_FS_DEV
-/* FAT device table*/
+/* FAT device table, increase DEVDIR_SIZE to add entries*/
 struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
     { "hda",	S_IFBLK | 0644, MKDEV(3, 0) },
     { "hda1",	S_IFBLK | 0644, MKDEV(3, 1) },
     { "hda2",	S_IFBLK | 0644, MKDEV(3, 2) },
+    { "hda3",	S_IFBLK | 0644, MKDEV(3, 3) },
+    { "hda4",	S_IFBLK | 0644, MKDEV(3, 4) },
     { "hdb",	S_IFBLK | 0644, MKDEV(3, 32) },
     { "hdb1",	S_IFBLK | 0644, MKDEV(3, 33) },
     { "hdb2",	S_IFBLK | 0644, MKDEV(3, 34) },
+    { "hdb3",	S_IFBLK | 0644, MKDEV(3, 35) },
+    { "hdb4",	S_IFBLK | 0644, MKDEV(3, 36) },
     { "fd0",	S_IFBLK | 0644, MKDEV(3, 128)},
     { "fd1",	S_IFBLK | 0644, MKDEV(3, 160)},
     { "rd0",	S_IFBLK | 0644, MKDEV(1, 0) },
