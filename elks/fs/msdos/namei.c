@@ -77,11 +77,14 @@ static int FATPROC msdos_find(struct inode *dir,const char *name,int len,
 	return res;
 }
 
-static int FATPROC compare(char *s1, char *s2, int len)
+static int FATPROC compare(char *s1, char *s2, int len, int nocase)
 {
-	while (len--)
-		if (*s1++ != *s2++)
+	while (len--) {
+		char c = nocase? tolower(*s2): *s2;
+		if (*s1++ != c)
 			return 0;
+		s2++;
+	}
 	return 1;
 }
 
@@ -91,6 +94,7 @@ static int FATPROC msdos_find_long(struct inode *dir, const char *name, int len,
 {
 	int i, entry_len, res;
 	off_t dirpos, pos = 0;
+	int nocase = 0;
 	/* static not reentrant: conserve stack usage*/
 	static char entry_name[14];
 	static char msdos_name[14];
@@ -102,8 +106,14 @@ static int FATPROC msdos_find_long(struct inode *dir, const char *name, int len,
 	do {
 		res = msdos_get_entry_long(dir, &pos, bh, entry_name, &entry_len, &dirpos, ino);
 		if (res) {
-			if ((len == entry_len) && compare(entry_name, msdos_name, len))
-				return 0;
+			if (len == entry_len) {
+#ifdef CONFIG_FS_DEV
+				/* compare /dev entries case-insensitive for ttyS0 etc*/
+				nocase = (dir->i_ino == MSDOS_SB(dir->i_sb)->dev_ino);
+#endif
+				if (compare(entry_name, msdos_name, len, nocase))
+					return 0;
+			}
 		}
 	} while(res != 0);
 	if (*bh)
