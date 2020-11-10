@@ -316,5 +316,6 @@ int main(int argc, char ** argv)
 	setup_tables();
 	make_root_inode();
 	write_tables();
+	sync();
 	return 0;
 }
