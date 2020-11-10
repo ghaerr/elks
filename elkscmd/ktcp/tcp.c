@@ -45,7 +45,7 @@ void tcp_print(struct iptcp_s *head, int recv, struct tcpcb_s *cb)
  	debug_tcp("ack:%ld ", ntohl(head->tcph->acknum) - cb->irs);
     }
     debug_tcp("win:%u urg:%d ", ntohs(head->tcph->window), head->tcph->urgpnt);
-    debug_tcp("chk:0x%x len:%u\n", head->tcph->chksum, head->tcplen);
+    debug_tcp("chk:0x%x len:%u\n", tcp_chksum(head), head->tcplen);
 #endif
 }
 
