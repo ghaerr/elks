@@ -15,26 +15,32 @@
 #include <linuxmt/debug.h>
 
 #ifdef CONFIG_FS_DEV
-/* max 16 entries in FAT device table*/
+/* FAT device table*/
 struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
     { "hda",	S_IFBLK | 0644, MKDEV(3, 0) },
     { "hda1",	S_IFBLK | 0644, MKDEV(3, 1) },
+    { "hda2",	S_IFBLK | 0644, MKDEV(3, 2) },
+    { "hdb",	S_IFBLK | 0644, MKDEV(3, 32) },
+    { "hdb1",	S_IFBLK | 0644, MKDEV(3, 33) },
+    { "hdb2",	S_IFBLK | 0644, MKDEV(3, 34) },
     { "fd0",	S_IFBLK | 0644, MKDEV(3, 128)},
     { "fd1",	S_IFBLK | 0644, MKDEV(3, 160)},
+    { "rd0",	S_IFBLK | 0644, MKDEV(1, 0) },
     { "kmem",	S_IFCHR | 0644, MKDEV(1, 2) },
     { "null",	S_IFCHR | 0644, MKDEV(1, 3) },
     { "zero",	S_IFCHR | 0644, MKDEV(1, 5) },
     { "tcpdev",	S_IFCHR | 0644, MKDEV(8, 0) },
     { "eth",	S_IFCHR | 0644, MKDEV(9, 0) },
-    { "ptyp0",	S_IFCHR | 0644, MKDEV(2,  8)},
-    { "ttyp0",	S_IFCHR | 0644, MKDEV(4,  8)},
     { "tty1",	S_IFCHR | 0644, MKDEV(4, 0) },
+    { "tty2",	S_IFCHR | 0644, MKDEV(4, 1) },
+    { "ttyp0",	S_IFCHR | 0644, MKDEV(4, 8) },
+    { "ttyp1",	S_IFCHR | 0644, MKDEV(4, 9) },
+    { "ptyp0",	S_IFCHR | 0644, MKDEV(2, 8) },
+    { "ptyp1",	S_IFCHR | 0644, MKDEV(2, 9) },
     { "ttyS0",	S_IFCHR | 0644, MKDEV(4, 64)},
     { "ttyS1",	S_IFCHR | 0644, MKDEV(4, 65)},
-    //{ "tty2",	S_IFCHR | 0644, MKDEV(4, 1) },
-    //{ "ttyS2",S_IFCHR | 0644, MKDEV(4, 66)},
     { "console",S_IFCHR | 0600, MKDEV(4, 254)},
-    { "tty",	S_IFCHR | 0666, MKDEV(4, 255) },
+    { "tty",	S_IFCHR | 0666, MKDEV(4, 255)}
 };
 #endif
 
@@ -158,10 +164,10 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%
 	int i;
 	bh = NULL;
 
-	/* if /dev is first or second directory entry, turn on devfs filesystem */
-	for (i=0; i<2; i++) {
+	/* if /dev is found in first four directory entries, turn on devfs filesystem */
+	for (i=0; i<4; i++) {
 		ino = msdos_get_entry(s->s_mounted, &pos, &bh, &de); 
-		if (ino < 0) break;
+		if (ino == -1) break;
 		if (de->attr == ATTR_DIR && !strncmp(de->name, "DEV        ", 11)) {
 				MSDOS_SB(s)->dev_ino = ino;
 				break;

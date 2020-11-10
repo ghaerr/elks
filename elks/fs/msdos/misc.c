@@ -225,7 +225,7 @@ ino_t FATPROC msdos_get_entry(struct inode *dir,loff_t *pos,struct buffer_head *
 			*de = &deventry;
 			memset(deventry.name, ' ', MSDOS_NAME);
 			for (j = strlen(devnods[i].name); --j >= 0; )
-			    deventry.name[j] = toupper(devnods[i].name[j]);
+			    deventry.name[j] = devnods[i].name[j];
 
 			i += DEVINO_BASE;
 			return i;
