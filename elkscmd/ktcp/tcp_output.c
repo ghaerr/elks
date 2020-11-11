@@ -288,7 +288,7 @@ void tcp_reoutput(struct tcp_retrans_list_s *n)
 	n->rto = TCP_RETRANS_MAXWAIT;
     n->next_retrans = Now + n->rto;
 printf("retrans retry: #%d rto %ld (cnt %d, mem %u)\n", n->retrans_num, n->rto, tcp_timeruse, tcp_retrans_memory);
-    ip_sendpacket((unsigned char *)n->tcphdr, n->len, &n->apair);
+    ip_sendpacket((unsigned char *)n->tcphdr, n->len, &n->apair, n->cb);
     netstats.tcpretranscnt++;
 }
 
@@ -383,6 +383,6 @@ void tcp_output(struct tcpcb_s *cb)
     apair.protocol = PROTO_TCP;
 
     add_for_retrans(cb, th, len, &apair);
-    ip_sendpacket((unsigned char *)th, len, &apair);
+    ip_sendpacket((unsigned char *)th, len, &apair, cb);
     netstats.tcpsndcnt++;
 }

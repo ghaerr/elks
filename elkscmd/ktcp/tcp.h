@@ -191,7 +191,7 @@ struct tcpcb_list_s *tcpcb_find_by_sock(void *sock);
 
 __u16 tcp_chksum(struct iptcp_s *h);
 __u16 tcp_chksumraw(struct tcphdr_s *h, __u32 saddr, __u32 daddr, __u16 len);
-void tcp_print(struct iptcp_s *head, int recv);
+void tcp_print(struct iptcp_s *head, int recv, struct tcpcb_s *cb);
 void tcp_output(struct tcpcb_s *cb);
 void tcp_update(void);
 int tcp_init(void);

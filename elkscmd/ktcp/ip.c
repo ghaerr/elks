@@ -93,8 +93,9 @@ static void ip_print(struct iphdr_s *head, int size)
     debug_ip("v%d hl:%d ", IP_VERSION(head), IP_HLEN(head));
     debug_ip("tos:%d len:%u ", head->tos, ntohs(head->tot_len));
     debug_ip("id:%u ", ntohs(head->id));
-    debug_ip("fo:%x ", ntohs(head->frag_off));	//FIXME add FM_ flags
-    debug_ip("chk:%x ", ip_calc_chksum((char *)head, 4 * IP_HLEN(head)));
+    debug_ip("fl:0x%x ", ntohs(head->id)>>13);
+    debug_ip("fo:%d ", ntohs(head->frag_off)&0x1fff);
+    debug_ip("chk:0x%x ", ip_calc_chksum((char *)head, 4 * IP_HLEN(head)));
     debug_ip("ttl:%d ", head->ttl);
     debug_ip("prot:%d\n", head->protocol);
 #if DEBUG_IP > 1
@@ -108,7 +109,7 @@ static void ip_print(struct iphdr_s *head, int size)
 #endif
 }
 
-void ip_recvpacket(unsigned char *packet,int size)
+void ip_recvpacket(unsigned char *packet, int size)
 {
     register struct iphdr_s *iphdr = (struct iphdr_s *)packet;
     int len;
@@ -116,7 +117,7 @@ void ip_recvpacket(unsigned char *packet,int size)
 
     ip_print(iphdr, size);
 
-    if (IP_VERSION(iphdr) != 4){
+    if (IP_VERSION(iphdr) != 4) {
         debug_ip("IP: Bad IP version\n");
 	netstats.ipbadhdr++;
 	return;
@@ -137,14 +138,14 @@ void ip_recvpacket(unsigned char *packet,int size)
 
     switch (iphdr->protocol) {
     case PROTO_ICMP:
-        debug_ip("IP: recv icmp packet\n");
+        //debug_ip("IP: recv icmp packet\n");
 	data = packet + 4 * IP_HLEN(iphdr);
 	icmp_process(iphdr, data);
 	netstats.icmprcvcnt++;
 	break;
 
     case PROTO_TCP:
-        debug_ip("IP: recv tcp packet\n");
+        //debug_ip("IP: recv tcp packet\n");
 	tcp_process(iphdr);
 	netstats.tcprcvcnt++;
 	break;
@@ -152,7 +153,7 @@ void ip_recvpacket(unsigned char *packet,int size)
     netstats.iprcvcnt++;
 }
 
-void ip_sendpacket(unsigned char *packet, int len, struct addr_pair *apair)
+void ip_sendpacket(unsigned char *packet, int len, struct addr_pair *apair, struct tcpcb_s *cb)
 {
     /*
      * save space for possible ethernet header before ip packet
@@ -179,11 +180,13 @@ void ip_sendpacket(unsigned char *packet, int len, struct addr_pair *apair)
 
     ip_print(iph, 0);
 #if DEBUG_TCP
-    struct iptcp_s iptcp;
-    iptcp.iph = iph;
-    iptcp.tcph = (struct tcphdr_s *)(((char *)iph) + 4 * IP_HLEN(iph));
-    iptcp.tcplen = ntohs(iph->tot_len) - 4 * IP_HLEN(iph);
-    tcp_print(&iptcp, 0);
+    if (iph->protocol == PROTO_TCP && cb) {	/* really - one of them is enough */
+	struct iptcp_s iptcp;
+	iptcp.iph = iph;
+	iptcp.tcph = (struct tcphdr_s *)(((char *)iph) + 4 * IP_HLEN(iph));
+	iptcp.tcplen = ntohs(iph->tot_len) - 4 * IP_HLEN(iph);
+	tcp_print(&iptcp, 0, cb);
+    }
 #endif
 
     /* route packet using src and dst address*/
