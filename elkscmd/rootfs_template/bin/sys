@@ -48,6 +48,8 @@ copy_bin_files()
 	cp /bin/sash	$MNT/bin
 	cp /bin/cp	$MNT/bin
 	cp /bin/init	$MNT/bin
+	cp /bin/getty	$MNT/bin
+	cp /bin/login	$MNT/bin
 	cp /bin/ls	$MNT/bin
 	cp /bin/mkdir	$MNT/bin
 	cp /bin/mount	$MNT/bin
