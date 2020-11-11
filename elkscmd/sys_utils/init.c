@@ -476,10 +476,6 @@ int main(int argc, char **argv)
 	while (*env)
 		printf("'%s'", *env++);
 	printf("\n");
-#else
-	close(0);
-	close(1);
-	close(2);
 #endif
 
 #if USE_UTMP
@@ -511,6 +507,11 @@ int main(int argc, char **argv)
 		scanFile(enterRunlevel);
 #if USE_UTMP
 		endutent();
+#endif
+#if !DEBUG
+		close(0);
+		close(1);
+		close(2);
 #endif
 		/* endless loop waiting for signals or child exit*/
 		while (1) {
