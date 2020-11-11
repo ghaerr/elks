@@ -55,8 +55,8 @@ sh_utils/true			:boot	:be-shutil
 sh_utils/echo			:boot	:be-shutil
 file_utils/cat			:boot	:be-fileutil
 file_utils/chgrp				:be-fileutil			:1440k
-file_utils/chmod				:be-fileutil	:360k
-file_utils/chown				:be-fileutil		:720k
+file_utils/chmod				:be-fileutil			:1440k
+file_utils/chown				:be-fileutil			:1440k
 file_utils/cmp					:be-fileutil			:1440k
 file_utils/cp					:be-fileutil	:360k
 file_utils/df					:be-fileutil			:1440k

@@ -279,4 +279,6 @@ end_of_code:
 
 	.org	0x1BE	// MBR partition table (left out)
 
+	.org	0x1FE	// Boot signature
+	.word	0xAA55
 //THE END

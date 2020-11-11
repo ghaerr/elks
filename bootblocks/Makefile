@@ -42,6 +42,7 @@ mbr.bin: mbr.S
 	$(CC) $(INCLUDES) -E -o mbr.tmp mbr.S
 	$(AS) $(ASFLAGS) -o mbr.o mbr.tmp
 	$(LD) $(LDFLAGS) -M -o mbr.bin mbr.o > mbr.map
+	xxd -i mbr.bin > mbr_autogen.c
 	rm -f mbr.tmp
 
 boot_sect_fat.o: boot_sect.S boot_sect_fat.h $(TOPDIR)/include/autoconf.h
@@ -50,7 +51,7 @@ boot_sect_fat.o: boot_sect.S boot_sect_fat.h $(TOPDIR)/include/autoconf.h
 	rm -f boot_sect_fat.tmp
 
 clean:
-	rm -f *.o *.bin *.map
+	rm -f *.o *.bin *.map mbr_autogen.c
 
 # Boot blocks are not part of the target filesystem
 # but embedded in the target disk image

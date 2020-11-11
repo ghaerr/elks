@@ -60,8 +60,10 @@ MNT=/mnt
 if test "$#" -lt 1; then usage; fi
 
 # makeboot returns filesystem type, 1=MINIX, 2=FAT
-makeboot $1
+makeboot $1 $2 $3
+
 FSTYPE=$?
+if test "$1" = "-M"; then shift; fi
 case "$FSTYPE" in
 1) mount $1 $MNT ;;
 2) mount -t msdos $1 $MNT ;;
