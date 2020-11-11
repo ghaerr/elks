@@ -143,45 +143,65 @@ bpb_fil_sys_type:			// Filesystem type (8 bytes)
 .macro FAT_LOAD_AND_RUN_KERNEL
 	.set buf, entry + 0x200
 
-	// Load the first sector of the root directory
+	// Load the root directory
 	movb bpb_num_fats,%al
 	cbtw
 	mulw bpb_fat_sz_16
 	addw bpb_rsvd_sec_cnt,%ax
-	push %ax
-	inc %dx				// Assume DX was 0 (from mulw); if
-					// DX != 0 then we are in trouble
-					// anyway
+	mov bpb_root_ent_cnt,%bp	// Check that the root directory is
+	dec %bp				// not too large for us to process
+					// (this is unlikely to happen: MS
+					// says, "For maximum compatibility,
+					// FAT16 volumes should use the [count]
+					// value 512"); while at it also check
+					// that this is not actually a FAT32
+					// filesystem (root entries = 0)
+	cmp $(0xf000-(buf-entry))/0x20-1,%bp
+	ja fs_oddity
+	inc %bp
+	mov %bp,%dx
+	add $0xf,%dx
+	mov $4,%cl
+	shr %cl,%dx
+	push %dx			// Remember the number of root
+					// directory sectors...
+	push %ax			// ...& the root directory start
 	mov $buf,%cx
-	mov %cx,%si
 	push %ss
 	call disk_read
 
-	// See if the first directory entry is /linux; bail out if not
-	mov $kernel_name,%di		// SI = buf
+	// See if /linux appears in the root directory; bail out if not
+	mov $buf-0x20,%si
+find_system:
+	add $0x20,%si
+	decw %bp
+	js no_system
+	mov $kernel_name,%di
 	mov $0xb,%cx
+	push %si
 	repz
 	cmpsb
-	jnz no_system
+	pop %si
+	jnz find_system
+	testb $0x08,0xb(%si)		// If we do find a "LINUX", make sure
+					// it is not a volume label or part of
+					// a long file name
+	jnz find_system
 
 	// Load consecutive sectors starting from the first file cluster
 	// Calculate starting sector
-	mov (0x1a-0xb)(%si),%ax		// First cluster number
+	mov 0x1a(%si),%ax		// First cluster number
 	dec %ax				// Compute no. of sectors from the
 	dec %ax				// disk data area start
 	mov bpb_sec_per_clus,%cl	// CH = 0
 	mul %cx
 	pop %bx				// BX = root directory logical sector
-					// we calculated before
-	add %ax,%bx
-	mov bpb_root_ent_cnt,%ax	// Then account for the sectors
-	add $0xf,%ax			// holding the root directory
-	mov $4,%cl
-	shr %cl,%ax
+	add %bx,%ax			// we calculated before
+	pop %bx				// BX = root directory sector count
 	add %bx,%ax
 
 	// Load the file as one single blob at ELKS_INITSEG:0
-	mov (0x1d-0xb)(%si),%dx		// File size divided by 0x100
+	mov 0x1d(%si),%dx		// File size divided by 0x100
 	shr %dx				// Now by 0x200 --- a sector count
 	inc %dx				// Account for any incomplete sector
 					// (this may overestimate a bit)
@@ -219,6 +239,10 @@ bpb_fil_sys_type:			// Filesystem type (8 bytes)
 
 not_elks:
 	mov $ERR_BAD_SYSTEM,%al
+	jmp _except
+
+fs_oddity:
+	mov $ERR_FS_ODDITY,%al
 	jmp _except
 
 boot_it:
