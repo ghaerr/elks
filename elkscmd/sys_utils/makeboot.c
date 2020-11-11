@@ -2,12 +2,13 @@
  * makeboot - make a bootable image
  * Part of /bin/sys script for creating ELKS images from ELKS
  *
- * Usage: makeboot /dev/{fd0,fd1,hda1,hda2,etc}
+ * Usage: makeboot [-M] /dev/{fd0,fd1,hda1,hda2,etc}
  *
  * Copies boot sector from root device to target device
  * Sets EPB and BPB parameters in boot sector
  * Copies /linux and /bootopts for MINIX
  * Copies /linux and creates /dev for FAT
+ * If -M: write MBR using compiled-in mbr.bin
  *
  * Nov 2020 Greg Haerr
  */
@@ -16,6 +17,7 @@
 #include <dirent.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <utime.h>
 #include <sys/stat.h>
@@ -23,6 +25,8 @@
 #include <sys/mount.h>
 #include <linuxmt/hdreg.h>
 #include <linuxmt/minix_fs.h>
+#include <linuxmt/kdev_t.h>
+#include "../../bootblocks/mbr_autogen.c"
 
 #define BUF_SIZE	1024 
 
@@ -31,6 +35,11 @@
 #define SYSFILE1	"/linux"		/* copied for MINIX and FAT*/
 #define SYSFILE2	"/bootopts"		/* copied for MINIX only */
 #define DEVDIR		"/dev"			/* created for FAT only */
+
+/* BIOS driver numbers must match bioshd.c*/
+#define BIOS_NUM_MINOR	32		/* max minor devices per drive*/
+#define BIOS_MINOR_MASK	(BIOS_NUM_MINOR - 1)
+#define BIOS_FD0_MINOR	128		/* minor # of first floppy, must match bioshd.c*/
 
 /* See bootblocks/minix.map for the offsets, these used for MINIX and FAT */
 #define ELKS_BPB_NumTracks	0x1F7		/* offset of number of tracks (word)*/
@@ -49,13 +58,17 @@
 #define FAT_BPB_NumHeads	0x1A		/* offset of number of heads (word) */
 #define FAT_BPB_SectOffset	0x1C		/* offset of partition start sector (long) */
 
+#define PARTITION_START		0x01be		/* offset of partition table in MBR*/
+#define PARTITION_END		0x01fd		/* end of partition 4 in MBR*/
+
 unsigned int SecPerTrk, NumHeads, NumTracks;
 unsigned long Start_sector;
 
 int bootsecsize;
 char bootblock[1024];				/* 1024 for MINIX, 512 for FAT */
+char *fsname[3] = { "Unknown", "Minix", "FAT" };
 
-/* return name of root device*/
+/* return /dev name of device*/
 char *devname(dev_t dev)
 {
 	DIR *dp;
@@ -84,7 +97,7 @@ char *devname(dev_t dev)
 		}
 	}
 	closedir(dp);
-	fprintf(stderr, "Can't find root device\n");
+	fprintf(stderr, "Can't find device: 0x%x\n", dev);
 	return NULL;
 }
 
@@ -100,7 +113,6 @@ int get_fstype(int fd)
 		return 0;
 	}
 	sb = (struct minix_super_block *)superblock;
-	printf("magic %x\n", sb->s_magic);
 	if (sb->s_magic == MINIX_SUPER_MAGIC)
 		return FST_MINIX;
 	return FST_MSDOS;		/* guess FAT if not MINIX*/
@@ -120,8 +132,6 @@ int get_geometry(int fd)
 	NumHeads = geom.heads;
 	SecPerTrk = geom.sectors;
 	Start_sector = geom.start;
-	printf("Boot drive geometry CHS %d/%d/%d offset %ld\n",
-		NumTracks, NumHeads, SecPerTrk, Start_sector);
 
 	return 1;	// success
 }
@@ -165,6 +175,33 @@ int setFATparms(int fd, char *buf)
 	*(unsigned short *)&buf[FAT_BPB_NumHeads] = NumHeads;
 	*(unsigned long *)&buf[FAT_BPB_SectOffset] = Start_sector;
 #endif
+	return 1;
+}
+
+/* write MBR code outside of partition table*/
+int setMBRparms(int fd)
+{
+	int n;
+	char MBR[512];
+
+	lseek(fd, 0L, SEEK_SET);
+	n = read(fd, MBR, 512);
+	if (n != 512) {
+		fprintf(stderr, "Can't read target MBR\n");
+		return 0;
+	}
+
+	/* copy MBR code*/
+	for (n = 0; n < 512; n++)
+		if (n < PARTITION_START || n > PARTITION_END)
+			MBR[n] = mbr_bin[n];
+
+	lseek(fd, 0L, SEEK_SET);
+	n = write(fd, MBR, 512);
+	if (n != 512) {
+		fprintf(stderr, "Can't write target MBR\n");
+		return 0;
+	}
 	return 1;
 }
 
@@ -245,70 +282,94 @@ error_exit:
 	return 0;	// fail
 }
 
+void fatalmsg(const char *s, ...)
+{
+	va_list p;
+
+	va_start(p, s);
+	fprintf(stderr, "Error: ");
+	vfprintf(stderr, s, p);
+	va_end(p);
+	exit(-1);
+}
+
 int main(int ac, char **av)
 {
 	char *rootdevice, *targetdevice;
 	int rootfstype, fstype, fd, n;
+	int opt_writembr = 0;
+	dev_t rootdev, targetdev;
 	struct stat sbuf;
 
-	if (ac != 2) {
-		fprintf(stderr, "Usage: makeboot /dev/{fd0,fd1,hda1,hda2,etc}\n");
-		return -1;
+	if (ac < 2 || ac > 3) {
+usage:
+		fatalmsg("Usage: makeboot [-M] /dev/{fd0,fd1,hda1,hda2,etc}\n");
 	}
+	if (av[1] && av[1][0] == '-') {
+		if (av[1][1] == 'M') {
+			opt_writembr = 1;
+			av++;
+			ac--;
+		}
+	}
+	if (ac != 2)
+		goto usage;
 	targetdevice = av[1];
 
 	if (stat("/", &sbuf) < 0) {
 		perror("/");
 		return -1;
 	}
-	rootdevice = devname(sbuf.st_dev);
-	printf("root device %s\n", rootdevice);
+
+	rootdev = sbuf.st_dev;
+	rootdevice = devname(rootdev);
 
 	fd = open(rootdevice, O_RDONLY);
-	if (fd < 0) {
-		fprintf(stderr, "Can't open root device %s\n", rootdevice);
-		return -1;
-	}
-	if (!get_geometry(fd)) {
-		fprintf(stderr, "Can't get geometry for root device %s\n", rootdevice);
-		close(fd);
-		return -1;
-	}
+	if (fd < 0)
+		fatalmsg("Can't open boot device %s\n", rootdevice);
+
+	if (!get_geometry(fd))
+		fatalmsg("Can't get geometry for boot device %s\n", rootdevice);
 	rootfstype = get_fstype(fd);
-	if (rootfstype == 0) {
-		fprintf(stderr, "Unknown root device filesystem format\n");
-		close(fd);
-		return -1;
-	}
-	printf("root type %d\n", rootfstype);
+	printf("System on %s: %s (CHS %d/%d/%d at offset %ld)\n",
+		rootdevice, fsname[rootfstype], NumTracks, NumHeads, SecPerTrk, Start_sector);
+	if (rootfstype == 0)
+		fatalmsg("Unknown boot device filesystem\n");
 
 	bootsecsize = (rootfstype == FST_MINIX)? 1024: 512;
 	lseek(fd, 0L, SEEK_SET);
 	n = read(fd, bootblock, bootsecsize);
-	if (n != bootsecsize) {
-		fprintf(stderr, "Can't read root boot sector\n");
-		close(fd);
-		return -1;
-	}
+	if (n != bootsecsize)
+		fatalmsg("Can't read boot device %s boot sector\n", rootdevice);
 	close(fd);
 
 	fd = open(targetdevice, O_RDWR);
-	if (fd < 0) {
-		fprintf(stderr, "Can't open target device %s\n", targetdevice);
-		return -1;
+	if (fd < 0)
+		fatalmsg("Can't open target device %s\n", targetdevice);
+
+	/* check target is not boot device, raw device, or -M used with floppy*/
+	if (fstat(fd, &sbuf) < 0)
+		fatalmsg("Can't stat %s\n", targetdevice);
+	targetdev = sbuf.st_rdev;
+
+	if (rootdev == targetdev)
+		fatalmsg("Can't specify current boot device as target\n");
+
+	if (MINOR(targetdev) < BIOS_FD0_MINOR) {	/* hard drive*/
+		if ((targetdev & BIOS_MINOR_MASK) == 0)	/* non-partitioned device*/
+			fatalmsg("Must specify partitioned device (example /dev/hda1)\n");
+	} else {									/* floppy*/
+		if (opt_writembr)
+			fatalmsg("Can't use -M on floppy devices\n");
 	}
-	if (!get_geometry(fd)) {	/* gets ELKS CHS parameters for bootblock write*/
-		fprintf(stderr, "Can't get geometry for target device %s\n", targetdevice);
-		close(fd);
-		return -1;
-	}
+
+	if (!get_geometry(fd))		/* gets ELKS CHS parameters for bootblock write*/
+		fatalmsg("Can't get geometry for target device %s\n", targetdevice);
 	setEPBparms(bootblock);		/* sets ELKS CHS parameters in bootblock*/
 	fstype = get_fstype(fd);
-	if (fstype == 0) {
-		fprintf(stderr, "Unknown target device filesystem format\n");
-		close(fd);
-		return -1;
-	}
+	printf("Target on %s: %s (CHS %d/%d/%d at offset %ld)\n",
+		targetdevice, fsname[fstype], NumTracks, NumHeads, SecPerTrk, Start_sector);
+
 	if (fstype == FST_MINIX) setMINIXparms(bootblock);
 	if (fstype == FST_MSDOS) {
 		if (!setFATparms(fd, bootblock)) {
@@ -316,28 +377,33 @@ int main(int ac, char **av)
 			return -1;
 		}
 	}
-	printf("target type %d\n", fstype);
 
-	if (rootfstype != fstype) {
-		fprintf(stderr, "Root and new system device must be same filesystem format\n");
-		close(fd);
-		return -1;
-	}
+	if (rootfstype != fstype)
+		fatalmsg("Target and System filesystem must be same type\n");
 
 	lseek(fd, 0L, SEEK_SET);
 	n = write(fd, bootblock, bootsecsize);
-	if (n != bootsecsize) {
-		fprintf(stderr, "Can't write target boot sector\n");
-		close(fd);
-		return -1;
-	}
+	if (n != bootsecsize)
+		fatalmsg("Can't write target boot sector\n");
 	close(fd);
+
+	if (opt_writembr) {
+		char *rawtargetdevice = devname(targetdev & ~BIOS_MINOR_MASK);
+		if (!rawtargetdevice)
+			fatalmsg("Can't find raw target device\n");
+		printf("Opening MBR %s\n", rawtargetdevice);
+		fd = open(rawtargetdevice, O_RDWR);
+		if (fd < 0)
+			fatalmsg("Can't open raw target device %s\n", targetdevice);
+		setMBRparms(fd);
+		close(fd);
+	}
 
 	if (mkdir(MOUNTDIR, 0777) < 0)
 		fprintf(stderr, "Can't create temp mount point %s, may already exist\n", MOUNTDIR);
 
 	if (mount(targetdevice, MOUNTDIR, fstype, 0) < 0) {
-		fprintf(stderr, "Can't mount %s on %s\n", targetdevice, MOUNTDIR);
+		fprintf(stderr, "Error: Can't mount %s on %s\n", targetdevice, MOUNTDIR);
 		goto errout2;
 	}
 	if (!copyfile(SYSFILE1, MOUNTDIR SYSFILE1, 1)) {
@@ -356,6 +422,10 @@ int main(int ac, char **av)
 	if (umount(targetdevice) < 0)
 		fprintf(stderr, "Unmount error\n");
 	rmdir(MOUNTDIR);
+	printf("System");
+	if (opt_writembr)
+		printf(", MBR");
+	printf(" and boot block transferred\n");
 	sync();
 
 	return fstype;		/* return filesystem type (1=MINIX, 2=FAT */
