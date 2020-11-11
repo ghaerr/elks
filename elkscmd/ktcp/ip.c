@@ -93,7 +93,8 @@ static void ip_print(struct iphdr_s *head, int size)
     debug_ip("v%d hl:%d ", IP_VERSION(head), IP_HLEN(head));
     debug_ip("tos:%d len:%u ", head->tos, ntohs(head->tot_len));
     debug_ip("id:%u ", ntohs(head->id));
-    debug_ip("offs:%d ", ntohs(head->frag_off));	//FIXME add FM_ flags
+    debug_ip("fl:0x%x ", ntohs(head->id)>>13);
+    debug_ip("fo:%d ", ntohs(head->frag_off)&0x1fff);
     debug_ip("chk:0x%x ", ip_calc_chksum((char *)head, 4 * IP_HLEN(head)));
     debug_ip("ttl:%d ", head->ttl);
     debug_ip("prot:%d\n", head->protocol);

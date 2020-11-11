@@ -35,14 +35,16 @@ void tcp_print(struct iptcp_s *head, int recv, struct tcpcb_s *cb)
     debug_tcp("TCP: %s ", recv? "recv": "send");
     debug_tcp("src:%u dst:%u ", ntohs(head->tcph->sport), ntohs(head->tcph->dport));
     debug_tcp("flags:0x%x ",head->tcph->flags);
-    if (recv) {
+    if (cb) {
+      if (recv) {
     	if (head->tcplen > 20) debug_tcp("seq:%ld-%ld ", ntohl(head->tcph->seqnum) - cb->irs, 
 				ntohl(head->tcph->seqnum) - cb->irs+head->tcplen-20);
 	debug_tcp("ack:%ld ", ntohl(head->tcph->acknum) - cb->iss);
-    } else {
+      } else {
     	if (head->tcplen > 20) debug_tcp("seq:%ld-%ld ", ntohl(head->tcph->seqnum) - cb->iss, 
 	ntohl(head->tcph->seqnum) - cb->iss+head->tcplen-20);
  	debug_tcp("ack:%ld ", ntohl(head->tcph->acknum) - cb->irs);
+      }
     }
     debug_tcp("win:%u urg:%d ", ntohs(head->tcph->window), head->tcph->urgpnt);
     debug_tcp("chk:0x%x len:%u\n", tcp_chksum(head), head->tcplen);
@@ -404,22 +406,25 @@ void tcp_process(struct iphdr_s *iph)
     struct iptcp_s iptcp;
     struct tcphdr_s *tcph;
     struct tcpcb_list_s *cbnode;
-    struct tcpcb_s *cb;
+    struct tcpcb_s *cb = NULL;
 
     tcph = (struct tcphdr_s *)(((char *)iph) + 4 * IP_HLEN(iph));
     iptcp.iph = iph;
     iptcp.tcph = tcph;
     iptcp.tcplen = ntohs(iph->tot_len) - 4 * IP_HLEN(iph);
 
+    cbnode = tcpcb_find(iph->saddr, ntohs(tcph->dport), ntohs(tcph->sport));
+    if (cbnode) cb = &cbnode->tcpcb;
+    tcp_print(&iptcp, 1, cb);
+
     if (tcp_chksum(&iptcp) != 0) {
-	printf("tcp: BAD CHECKSUM (%x) len %d\n", tcp_chksum(&iptcp), iptcp.tcplen);
+	printf("tcp: BAD CHECKSUM (0x%x) len %d\n", tcp_chksum(&iptcp), iptcp.tcplen);
 	netstats.tcpbadchksum++;
 	return;
     }
 
-    cbnode = tcpcb_find(iph->saddr, ntohs(tcph->dport), ntohs(tcph->sport));
     if (!cbnode) {
-	printf("tcp: Refusing packet %s:%d->%d\n", in_ntoa(iph->saddr),
+	printf("tcp: Refusing packet %s:%u->%d\n", in_ntoa(iph->saddr),
 		ntohs(tcph->sport), ntohs(tcph->dport));
 
 	/* TODO : send RST and stuff */
@@ -427,8 +432,6 @@ void tcp_process(struct iphdr_s *iph)
 	return;
     }
 
-    cb = &cbnode->tcpcb;
-    tcp_print(&iptcp, 1, cb);
 
     if (cb->state != TS_LISTEN && cb->state != TS_SYN_SENT
 			       && cb->state != TS_SYN_RECEIVED) {
