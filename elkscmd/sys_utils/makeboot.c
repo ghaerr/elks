@@ -66,6 +66,7 @@ unsigned long Start_sector;
 
 int bootsecsize;
 char bootblock[1024];				/* 1024 for MINIX, 512 for FAT */
+char *fsname[3] = { "Unknown", "Minix", "FAT" };
 
 /* return /dev name of device*/
 char *devname(dev_t dev)
@@ -286,6 +287,7 @@ void fatalmsg(const char *s, ...)
 	va_list p;
 
 	va_start(p, s);
+	fprintf(stderr, "Error: ");
 	vfprintf(stderr, s, p);
 	va_end(p);
 	exit(-1);
@@ -321,7 +323,6 @@ usage:
 
 	rootdev = sbuf.st_dev;
 	rootdevice = devname(rootdev);
-	printf("Boot device %s\n", rootdevice);
 
 	fd = open(rootdevice, O_RDONLY);
 	if (fd < 0)
@@ -329,12 +330,11 @@ usage:
 
 	if (!get_geometry(fd))
 		fatalmsg("Can't get geometry for boot device %s\n", rootdevice);
-
-	printf("Boot drive geometry CHS %d/%d/%d offset %ld\n",
-		NumTracks, NumHeads, SecPerTrk, Start_sector);
 	rootfstype = get_fstype(fd);
+	printf("System on %s: %s (CHS %d/%d/%d at offset %ld)\n",
+		rootdevice, fsname[rootfstype], NumTracks, NumHeads, SecPerTrk, Start_sector);
 	if (rootfstype == 0)
-		fatalmsg("Unknown boot device filesystem format\n");
+		fatalmsg("Unknown boot device filesystem\n");
 
 	bootsecsize = (rootfstype == FST_MINIX)? 1024: 512;
 	lseek(fd, 0L, SEEK_SET);
@@ -353,27 +353,23 @@ usage:
 	targetdev = sbuf.st_rdev;
 
 	if (rootdev == targetdev)
-		fatalmsg("Error: Can't specify current boot device as target\n");
+		fatalmsg("Can't specify current boot device as target\n");
 
 	if (MINOR(targetdev) < BIOS_FD0_MINOR) {	/* hard drive*/
 		if ((targetdev & BIOS_MINOR_MASK) == 0)	/* non-partitioned device*/
 			fatalmsg("Must specify partitioned device (example /dev/hda1)\n");
 	} else {									/* floppy*/
 		if (opt_writembr)
-			fatalmsg("Error: no MBR on floppy device\n");
+			fatalmsg("Can't use -M on floppy devices\n");
 	}
 
 	if (!get_geometry(fd))		/* gets ELKS CHS parameters for bootblock write*/
 		fatalmsg("Can't get geometry for target device %s\n", targetdevice);
-
-	printf("Target drive geometry CHS %d/%d/%d offset %ld\n",
-		NumTracks, NumHeads, SecPerTrk, Start_sector);
 	setEPBparms(bootblock);		/* sets ELKS CHS parameters in bootblock*/
 	fstype = get_fstype(fd);
-	if (fstype == 0)
-		fatalmsg("Unknown target device filesystem format\n");
+	printf("Target on %s: %s (CHS %d/%d/%d at offset %ld)\n",
+		targetdevice, fsname[fstype], NumTracks, NumHeads, SecPerTrk, Start_sector);
 
-	printf("Target filesystem is %s\n", fstype == FST_MINIX? "MINIX": "FAT");
 	if (fstype == FST_MINIX) setMINIXparms(bootblock);
 	if (fstype == FST_MSDOS) {
 		if (!setFATparms(fd, bootblock)) {
@@ -383,7 +379,7 @@ usage:
 	}
 
 	if (rootfstype != fstype)
-		fatalmsg("Boot and target device must be same filesystem format\n");
+		fatalmsg("Target and System filesystem must be same type\n");
 
 	lseek(fd, 0L, SEEK_SET);
 	n = write(fd, bootblock, bootsecsize);
@@ -407,7 +403,7 @@ usage:
 		fprintf(stderr, "Can't create temp mount point %s, may already exist\n", MOUNTDIR);
 
 	if (mount(targetdevice, MOUNTDIR, fstype, 0) < 0) {
-		fprintf(stderr, "Can't mount %s on %s\n", targetdevice, MOUNTDIR);
+		fprintf(stderr, "Error: Can't mount %s on %s\n", targetdevice, MOUNTDIR);
 		goto errout2;
 	}
 	if (!copyfile(SYSFILE1, MOUNTDIR SYSFILE1, 1)) {

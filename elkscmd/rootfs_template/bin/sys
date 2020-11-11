@@ -1,12 +1,13 @@
 # sys - System Transfer Script
 #
-# Usage: sys /dev/{fd0,fd1,hda1,hda2,etc}
+# Usage: sys [-M] /dev/{fd0,fd1,hda1,hda2,etc}
+# -M will also transfer an MBR
 #
 #set -x
 
 usage()
 {
-	echo "Usage: sys /dev/{fd0,fd1,hda1,hda2,etc}"
+	echo "Usage: sys [-M] /dev/{fd0,fd1,hda1,hda2,etc}"
 	exit 1
 }
 
