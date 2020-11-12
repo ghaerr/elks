@@ -585,7 +585,7 @@ int fatfs_format(int force_fat32, uint32 volume_sectors, const char *name)
 
 int main(int ac, char **av)
 {
-	int opt_fat32;
+	int opt_fat32 = 0;
 	char *image;
 	uint32 blocks;
 
