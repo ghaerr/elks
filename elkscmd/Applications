@@ -62,7 +62,7 @@ file_utils/cp					:be-fileutil	:360k
 file_utils/df					:be-fileutil			:1440k
 file_utils/dd					:be-fileutil			:1440k
 file_utils/mkdir				:fileutil		:360k
-file_utils/mknod				:fileutil		:360k
+file_utils/mknod				:fileutil				:1440k
 file_utils/mkfifo				:fileutil				:1440k
 file_utils/more					:fileutil			:720k
 file_utils/mv					:fileutil		:360k
@@ -85,7 +85,7 @@ sys_utils/poweroff				:sysutil			:720k
 sys_utils/sercat				:sysutil				:1440k
 sys_utils/console				:sysutil				:1440k
 sys_utils/who					:sysutil				:1440k
-sys_utils/unreal16				:sysutil				:1440k
+sys_utils/unreal16				:sysutil
 screen/screen					:screen				:1440k
 cron/cron   					:cron				:1440k
 cron/crontab   					:cron				:1440k
@@ -96,7 +96,7 @@ sh_utils/dirname				:be-shutil			:720k
 sh_utils/false					:be-shutil				:1440k
 sh_utils/logname				:shutil					:1440k
 sh_utils/mesg					:shutil					:1440k
-sh_utils/stty					:shutil			:360k
+sh_utils/stty					:shutil					:1440k
 sh_utils/printenv				:shutil					:1440k
 sh_utils/pwd					:shutil			:360k
 sh_utils/tr						:shutil				:720k
@@ -144,6 +144,7 @@ minix3/diff						:be-minix3			:720k
 minix3/find						:be-minix3			:720k
 disk_utils/fsck					:diskutil				:1440k
 disk_utils/mkfs					:diskutil		:360k
+disk_utils/mkfat				:diskutil		:360k
 disk_utils/partype				:diskutil				:1440k
 disk_utils/ramdisk				:diskutil				:1440k
 disk_utils/fdisk				:be-diskutil	:360k
