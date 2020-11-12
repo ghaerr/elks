@@ -38,7 +38,6 @@ uint32 fat_begin_lba;
 uint16 fs_info_sector;
 uint32 lba_begin;
 uint32 fat_sectors;
-uint32 next_free_cluster;
 uint16 root_entry_count;
 uint16 reserved_sectors;
 uint8  num_of_fats;
@@ -210,9 +209,9 @@ static int fatfs_create_boot_sector(uint32 boot_sector_lba, uint32 vol_sectors, 
     // Sectors per cluster
     sector[13] = sectors_per_cluster;
 
-    // Reserved Sectors
+    // Reserved Sectors (0x0E)
     if (!is_fat32)
-        reserved_sectors = 1;	//FIXME was 8
+        reserved_sectors = 1;
     else
         reserved_sectors = 32;
     sector[14] = (reserved_sectors >> 0) & 0xFF;
@@ -261,8 +260,8 @@ static int fatfs_create_boot_sector(uint32 boot_sector_lba, uint32 vol_sectors, 
         sector[26] = 0x00;
         sector[27] = 0x00;
 
-        // Hidden sectors
-        sector[28] = 0x00;		//0x1C FIXME was 32
+        // Hidden sectors (0x1C)
+        sector[28] = 0x00;
         sector[29] = 0x00;
         sector[30] = 0x00;
         sector[31] = 0x00;
@@ -283,7 +282,7 @@ static int fatfs_create_boot_sector(uint32 boot_sector_lba, uint32 vol_sectors, 
         sector[38] = 0x29;
 
         // Volume ID
-        sector[39] = 0x00;		//FIXME was 0x78563412
+        sector[39] = 0x00;
         sector[40] = 0x00;
         sector[41] = 0x00;
         sector[42] = 0x00;
@@ -326,7 +325,7 @@ static int fatfs_create_boot_sector(uint32 boot_sector_lba, uint32 vol_sectors, 
         sector[26] = 0xFF;
         sector[27] = 0x00;
 
-        // Hidden sectors
+        // Hidden sectors (0x1C)
         sector[28] = 0x00;
         sector[29] = 0x00;
         sector[30] = 0x00;
@@ -376,7 +375,7 @@ static int fatfs_create_boot_sector(uint32 boot_sector_lba, uint32 vol_sectors, 
         sector[66] = 0x29;
 
         // Volume ID
-        sector[67] = 0x00;		//FIXME was 0x78563412
+        sector[67] = 0x00;
         sector[68] = 0x00;
         sector[69] = 0x00;
         sector[70] = 0x00;
@@ -501,9 +500,7 @@ static int fatfs_erase_fat(int is_fat32)
 //-----------------------------------------------------------------------------
 int fatfs_format_fat16(uint32 volume_sectors, const char *name)
 {
-    next_free_cluster = 0; // Invalid
-
-    // Volume is FAT12/FAT16
+    // Volume is FAT12 or FAT16
     fat_type = volume_sectors <= 4084? FAT_TYPE_12: FAT_TYPE_16;
 
     // Not valid for FAT12/FAT16
@@ -541,8 +538,6 @@ int fatfs_format_fat16(uint32 volume_sectors, const char *name)
 //-----------------------------------------------------------------------------
 int fatfs_format_fat32(uint32 volume_sectors, const char *name)
 {
-    next_free_cluster = 0; // Invalid
-
     // Volume is FAT32
     fat_type = FAT_TYPE_32;
 
@@ -581,7 +576,7 @@ int fatfs_format_fat32(uint32 volume_sectors, const char *name)
 //-----------------------------------------------------------------------------
 int fatfs_format(int force_fat32, uint32 volume_sectors, const char *name)
 {
-    // 2GB - 32K limit for safe behaviour for FAT16
+    // 2GB/32K size/clustersize limit for safe behaviour for FAT16
     if (force_fat32 || volume_sectors > 4194304)
         return fatfs_format_fat32(volume_sectors, name);
     else
