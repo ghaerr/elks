@@ -153,20 +153,35 @@ bpb_fil_sys_type:			// Filesystem type (8 bytes)
 					// DX != 0 then we are in trouble
 					// anyway
 	mov $buf,%cx
-	mov %cx,%si
 	push %ss
 	call disk_read
 
-	// See if the first directory entry is /linux; bail out if not
-	mov $kernel_name,%di		// SI = buf
+	// See if /linux is in the first few root directory entries; bail out
+	// if not
+	// ROOT_ENTS_TO_CHECK says how many directory entries to check; it
+	// should be in the range 1 to 16, & must also factor in entry slots
+	// used for volume labels & long file names
+	.set ROOT_ENTS_TO_CHECK, 8
+	mov $buf-0x20,%si
+find_system:
+	addw $0x20,%si
+	cmp $buf+ROOT_ENTS_TO_CHECK*0x20, %si
+	jz no_system
+	mov $kernel_name,%di
 	mov $0xb,%cx
+	push %si
 	repz
 	cmpsb
-	jnz no_system
+	lodsb
+	pop %si
+	jnz find_system
+	test $0b11011000,%al		// check that any /linux entry we find
+	jnz find_system			// is a normal file (not e.g. a volume
+					// label or LFN portion)
 
 	// Load consecutive sectors starting from the first file cluster
 	// Calculate starting sector
-	mov (0x1a-0xb)(%si),%ax		// First cluster number
+	mov 0x1a(%si),%ax		// First cluster number
 	dec %ax				// Compute no. of sectors from the
 	dec %ax				// disk data area start
 	mov bpb_sec_per_clus,%cl	// CH = 0
@@ -181,7 +196,7 @@ bpb_fil_sys_type:			// Filesystem type (8 bytes)
 	add %bx,%ax
 
 	// Load the file as one single blob at ELKS_INITSEG:0
-	mov (0x1d-0xb)(%si),%dx		// File size divided by 0x100
+	mov 0x1d(%si),%dx		// File size divided by 0x100
 	shr %dx				// Now by 0x200 --- a sector count
 	inc %dx				// Account for any incomplete sector
 					// (this may overestimate a bit)
