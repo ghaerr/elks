@@ -37,6 +37,7 @@ create_directories()
 {
 	echo "Creating directories..."
 	mkdir $MNT/bin
+	mkdir $MNT/etc
 	mkdir $MNT/mnt
 }
 
@@ -44,7 +45,11 @@ copy_bin_files()
 {
 	echo "Copying files from /bin..."
 	cp /bin/sh	$MNT/bin
+	cp /bin/sash	$MNT/bin
 	cp /bin/cp	$MNT/bin
+	cp /bin/init	$MNT/bin
+	cp /bin/getty	$MNT/bin
+	cp /bin/login	$MNT/bin
 	cp /bin/ls	$MNT/bin
 	cp /bin/mkdir	$MNT/bin
 	cp /bin/mount	$MNT/bin
@@ -52,6 +57,16 @@ copy_bin_files()
 	cp /bin/pwd	$MNT/bin
 	cp /bin/sync	$MNT/bin
 	cp /bin/umount	$MNT/bin
+}
+
+copy_etc_files()
+{
+	echo "Copy files from /etc..."
+	cp /etc/inittab	$MNT/etc
+	cp /etc/passwd	$MNT/etc
+	cp /etc/profile	$MNT/etc
+	cp /etc/sashrc	$MNT/etc
+	cp /etc/issue	$MNT/etc
 }
 
 # sys script starts here
@@ -79,6 +94,9 @@ create_directories
 
 # copy some files from /bin
 copy_bin_files
+
+# copu some files from /etc
+copy_etc_files
 
 # done
 umount $1
