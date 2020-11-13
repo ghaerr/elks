@@ -168,8 +168,8 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%
 	int i;
 	bh = NULL;
 
-	/* if /dev is found in first four directory entries, turn on devfs filesystem */
-	for (i=0; i<4; i++) {
+	/* if /dev is found in first eight directory entries, turn on devfs filesystem */
+	for (i=0; i<8; i++) {
 		ino = msdos_get_entry(s->s_mounted, &pos, &bh, &de); 
 		if (ino == -1) break;
 		if (de->attr == ATTR_DIR && !strncmp(de->name, "DEV        ", 11)) {
