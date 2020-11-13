@@ -40,6 +40,7 @@ create_directories()
 	mkdir $MNT/bin
 	mkdir $MNT/etc
 	mkdir $MNT/mnt
+	mkdir $MNT/root
 }
 
 copy_bin_files()
@@ -48,15 +49,20 @@ copy_bin_files()
 	cp /bin/sh	$MNT/bin
 	cp /bin/sash	$MNT/bin
 	cp /bin/cp	$MNT/bin
+	cp /bin/echo	$MNT/bin
 	cp /bin/init	$MNT/bin
 	cp /bin/getty	$MNT/bin
 	cp /bin/login	$MNT/bin
 	cp /bin/ls	$MNT/bin
+	cp /bin/makeboot $MNT/bin
 	cp /bin/mkdir	$MNT/bin
+	cp /bin/mknod	$MNT/bin
 	cp /bin/mount	$MNT/bin
 	cp /bin/ps	$MNT/bin
 	cp /bin/pwd	$MNT/bin
 	cp /bin/sync	$MNT/bin
+	cp /bin/sys	$MNT/bin
+	cp /bin/test	$MNT/bin
 	cp /bin/umount	$MNT/bin
 }
 
