@@ -2,13 +2,14 @@
  * makeboot - make a bootable image
  * Part of /bin/sys script for creating ELKS images from ELKS
  *
- * Usage: makeboot [-M] /dev/{fd0,fd1,hda1,hda2,etc}
+ * Usage: makeboot [-M][-F] /dev/{fd0,fd1,hda1,hda2,etc}
  *
  * Copies boot sector from root device to target device
  * Sets EPB and BPB parameters in boot sector
  * Copies /linux and /bootopts for MINIX
  * Copies /linux and creates /dev for FAT
  * If -M: write MBR using compiled-in mbr.bin
+ * If -F: allow writing to flat (non-MBR) hard drive
  *
  * Nov 2020 Greg Haerr
  */
@@ -298,19 +299,25 @@ int main(int ac, char **av)
 	char *rootdevice, *targetdevice;
 	int rootfstype, fstype, fd, n;
 	int opt_writembr = 0;
+	int opt_writeflat = 0;
 	dev_t rootdev, targetdev;
 	struct stat sbuf;
 
 	if (ac < 2 || ac > 3) {
 usage:
-		fatalmsg("Usage: makeboot [-M] /dev/{fd0,fd1,hda1,hda2,etc}\n");
+		fatalmsg("Usage: makeboot [-M][-F] /dev/{fd0,fd1,hda1,hda2,etc}\n");
 	}
-	if (av[1] && av[1][0] == '-') {
+	while (av[1] && av[1][0] == '-') {
 		if (av[1][1] == 'M') {
 			opt_writembr = 1;
 			av++;
 			ac--;
 		}
+		else if (av[1][1] == 'F') {
+			opt_writeflat = 1;
+			av++;
+			ac--;
+		} else goto usage;
 	}
 	if (ac != 2)
 		goto usage;
@@ -356,8 +363,10 @@ usage:
 		fatalmsg("Can't specify current boot device as target\n");
 
 	if (MINOR(targetdev) < BIOS_FD0_MINOR) {	/* hard drive*/
-		if ((targetdev & BIOS_MINOR_MASK) == 0)	/* non-partitioned device*/
-			fatalmsg("Must specify partitioned device (example /dev/hda1)\n");
+		if (!opt_writeflat || opt_writembr) {
+			if ((targetdev & BIOS_MINOR_MASK) == 0)	/* non-partitioned device*/
+				fatalmsg("Must specify partitioned device (example /dev/hda1)\n");
+		}
 	} else {									/* floppy*/
 		if (opt_writembr)
 			fatalmsg("Can't use -M on floppy devices\n");
@@ -391,11 +400,11 @@ usage:
 		char *rawtargetdevice = devname(targetdev & ~BIOS_MINOR_MASK);
 		if (!rawtargetdevice)
 			fatalmsg("Can't find raw target device\n");
-		printf("Opening MBR %s\n", rawtargetdevice);
 		fd = open(rawtargetdevice, O_RDWR);
 		if (fd < 0)
 			fatalmsg("Can't open raw target device %s\n", targetdevice);
-		setMBRparms(fd);
+		if (setMBRparms(fd))
+			printf("Writing MBR on %s\n", rawtargetdevice);
 		close(fd);
 	}
 

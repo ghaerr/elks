@@ -2,12 +2,13 @@
 #
 # Usage: sys [-M] /dev/{fd0,fd1,hda1,hda2,etc}
 # -M will also transfer an MBR
+# -F will allow writing flat (non-MBR) hard drive
 #
 #set -x
 
 usage()
 {
-	echo "Usage: sys [-M] /dev/{fd0,fd1,hda1,hda2,etc}"
+	echo "Usage: sys [-M][-F] /dev/{fd0,fd1,hda1,hda2,etc}"
 	exit 1
 }
 
@@ -80,6 +81,7 @@ makeboot $1 $2 $3
 
 FSTYPE=$?
 if test "$1" = "-M"; then shift; fi
+if test "$1" = "-F"; then shift; fi
 case "$FSTYPE" in
 1) mount $1 $MNT ;;
 2) mount -t msdos $1 $MNT ;;
