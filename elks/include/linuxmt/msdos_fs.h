@@ -63,16 +63,16 @@ struct msdos_boot_sector {
 	unsigned short fat_length;  /* sectors/FAT 22*/
 	unsigned short secs_track;  /* sectors per track (unused) 24*/
 	unsigned short heads;	    /* number of heads (unused) 26*/
-	unsigned long hidden;	    /* hidden sectors (unused) 28*/
+	unsigned long hidden;	    /* hidden sectors 28*/
 	unsigned long total_sect;   /* number of sectors (if sectors == 0) 32*/
 
 	/* The following fields are only used by FAT32 */
-	__u32	fat32_length;	/* sectors/FAT */
-	__u16	flags;		/* bit 8: fat mirroring, low 4: active fat */
-	__u8	version[2];	/* major, minor filesystem version */
-	__u32	root_cluster;	/* first cluster in root directory */
-	__u16	info_sector;	/* filesystem info sector */
-	__u16	backup_boot;	/* backup boot sector */
+	__u32	fat32_length;	/* sectors/FAT 36 */
+	__u16	flags;		/* bit 8: fat mirroring, low 4: active fat (unused) */
+	__u8	version[2];	/* major, minor filesystem version (unused) */
+	__u32	root_cluster;	/* first cluster of root directory 44 */
+	__u16	info_sector;	/* filesystem info sector (unused) */
+	__u16	backup_boot;	/* backup boot sector (unused) */
 	__u16	reserved2[6];	/* Unused */
 };
 

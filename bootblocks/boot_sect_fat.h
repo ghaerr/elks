@@ -139,6 +139,7 @@ bpb_vol_label:				// Volume label (11 bytes)
 bpb_fil_sys_type:			// Filesystem type (8 bytes)
 	.ascii "FAT12   "
 .endm
+	.set bpb_fat_sz_32,0x24		// FAT32 fat size, 32-bit
 
 .macro FAT_LOAD_AND_RUN_KERNEL
 	.set buf, entry + 0x200
@@ -146,7 +147,11 @@ bpb_fil_sys_type:			// Filesystem type (8 bytes)
 	// Load the first sector of the root directory
 	movb bpb_num_fats,%al
 	cbtw
-	mulw bpb_fat_sz_16
+	mov bpb_fat_sz_16,%bx		// check FAT16 fat size
+	and %bx,%bx
+	jnz 1f				// nonzero means FAT16 filesystem
+	mov bpb_fat_sz_32,%bx		// get loword FAT32 fat size instead
+1:	mulw %bx
 	addw bpb_rsvd_sec_cnt,%ax
 	push %ax
 	inc %dx				// Assume DX was 0 (from mulw); if
