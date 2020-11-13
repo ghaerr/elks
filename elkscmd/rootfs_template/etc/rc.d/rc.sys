@@ -32,7 +32,7 @@ fi
 #
 #mount -t msdos /dev/fd1 /mnt || true
 #mount -t msdos /dev/hda1 /mnt
-#mount /dev/hda /mnt
+#mount -t msdos /dev/hda /mnt
 
 #
 # start networking

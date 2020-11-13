@@ -398,6 +398,9 @@ ino_t FATPROC msdos_parent_ino(register struct inode *dir,int locked)
 	} else if (!current) this = MSDOS_ROOT_INO;
 	else {
 		if ((prev = raw_scan(dir->i_sb,current,MSDOS_DOTDOT,0L,NULL)) < 0) {
+			if (MSDOS_SB(dir->i_sb)->fat_bits == 32 &&
+			    current == MSDOS_SB(dir->i_sb)->root_cluster)
+					this = MSDOS_ROOT_INO;
 		} else {
 			if (prev == 0 
 #ifndef FAT_BITS_32

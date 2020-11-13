@@ -6,7 +6,7 @@ int main(int ac, char **av)
 	char wd[255];
 	
 	if (getcwd(wd,255) == NULL) {
-		write(STDOUT_FILENO, "Cannot get current directory\n", 28);
+		write(STDOUT_FILENO, "Cannot get current directory\n", 29);
 		return 1;
 	}
 	strcat(wd, "\n");
