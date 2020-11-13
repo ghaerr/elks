@@ -55,9 +55,12 @@
 #define FATBPB_END		61				/* through end of file system type*/
 
 /* FAT-only offsets */
+#define FAT_BPB_RootEntCnt	0x11		/* offset of FAT12/16 root directory entry count (word) */
+#define FAT_BPB_FATSz16		0x16		/* offset of FAT12/16 allocation table sector count (word) */
 #define FAT_BPB_SecPerTrk	0x18		/* offset of sectors per track (word) */
 #define FAT_BPB_NumHeads	0x1A		/* offset of number of heads (word) */
 #define FAT_BPB_SectOffset	0x1C		/* offset of partition start sector (long) */
+#define FAT_BPB_RootClus	0x2C		/* offset of FAT32 root directory start cluster (long) */
 
 #define PARTITION_START		0x01be		/* offset of partition table in MBR*/
 #define PARTITION_END		0x01fd		/* end of partition 4 in MBR*/
@@ -300,6 +303,7 @@ int main(int ac, char **av)
 	int rootfstype, fstype, fd, n;
 	int opt_writembr = 0;
 	int opt_writeflat = 0;
+	int fat32 = 0;
 	dev_t rootdev, targetdev;
 	struct stat sbuf;
 
@@ -389,6 +393,17 @@ usage:
 
 	if (rootfstype != fstype)
 		fatalmsg("Target and System filesystem must be same type\n");
+
+	if (fstype == FST_MSDOS) {
+		fat32 = (*(unsigned short *)&bootblock[FAT_BPB_FATSz16] == 0);
+		if (fat32) {		/* if FAT32, check if root directory starts on cluster 2 */
+			unsigned long rootclus;
+			rootclus = *(unsigned long *)&bootblock[FAT_BPB_RootClus];
+			if (rootclus != 2)
+				fatalmsg("Unsupported: weird root directory start cluster (%lu)\n",
+						rootclus);
+		}
+	}
 
 	lseek(fd, 0L, SEEK_SET);
 	n = write(fd, bootblock, bootsecsize);
