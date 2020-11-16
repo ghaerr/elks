@@ -177,6 +177,6 @@ prems/pres/pres					:other
 nano-X/bin/nxclock				:nanox					:1440k
 nano-X/bin/nxdemo				:nanox					:1440k
 nano-X/bin/nxlandmine			:nanox				:720k
-nano-X/bin/nxterm				:nanox					:1440k
+nano-X/bin/nxterm				:nanox
 nano-X/bin/nxworld				:nanox					:1440k
 nano-X/bin/nxworld.map	::lib/nxworld.map	:nanox		:1440k
