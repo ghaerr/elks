@@ -43,9 +43,6 @@ int copyfile(char *srcname, char *destname, int setmodes);
 #define MAJOR_SHIFT	8
 #endif
 
-typedef unsigned short u16_t;
-typedef unsigned long u32_t;
-
 static char buf[BUF_SIZE];
 
 struct list_node_s {
@@ -56,7 +53,7 @@ typedef struct list_node_s list_node_t;
 
 struct list_root_s {
 	list_node_t	node;
-	u16_t		count;
+	unsigned short count;
 };
 typedef struct list_root_s list_root_t;
 
@@ -66,9 +63,8 @@ struct inode_build_s {
 	list_node_t	node;
 	list_root_t	entries;/* list of entries for directory */
 	char       *path;
-	u16_t		index;	/* inode #*/
-	int			dev;	/* major & minor for device */
-	u16_t		flags;
+	dev_t		dev;	/* major & minor for device */
+	unsigned short flags;
 	unsigned long blocks;	/* disk blocks required*/
 };
 typedef struct inode_build_s inode_build_t;
@@ -149,7 +145,7 @@ static inode_build_t * inode_alloc(inode_build_t * parent, char *path)
 	list_init(&inode->entries);
 	inode->path = strdup(path);
 	list_add_tail(&inodes, &inode->node);
-	inode->index = inodes.count;	/* 0 = no inode */
+	//inode->index = inodes.count;	/* 0 = no inode */
 	return inode;
 }
 
@@ -279,12 +275,12 @@ static int parse_dir(inode_build_t * grand_parent_inode, inode_build_t * parent_
 				} else if (S_ISCHR(mode)) {
 					//printf("Char:   %s\n", child_path);
 					child_inode->flags = S_IFCHR;
-					child_inode->dev = (int)child_stat.st_rdev;
+					child_inode->dev = child_stat.st_rdev;
 					child_inode->blocks = 0;
 				} else if (S_ISBLK(mode)) {
 					//printf("Block:  %s\n", child_path);
 					child_inode->flags = S_IFBLK;
-					child_inode->dev = (int)child_stat.st_rdev;
+					child_inode->dev = child_stat.st_rdev;
 					child_inode->blocks = 0;
 				} else if (S_ISLNK(mode)) {
 					//printf("Symlnk: %s\n", child_path);
@@ -324,7 +320,7 @@ static int do_copies(void)
 
 	for ( ;inode_build != (inode_build_t *) &inodes.node;
 				inode_build = (inode_build_t *) inode_build->node.next) {
-		u16_t flags = inode_build->flags;
+		unsigned short flags = inode_build->flags;
 
 		if (flags == S_IFDIR) {
 			if (*(prefix+inode_build->path) == 0) continue; /* skip start dir*/
@@ -663,6 +659,6 @@ error_copy:
 	fprintf(stderr, "Failed to copy %s -> %s\n", srcname, destname);
 	return 1;
 usage:
-	fprintf(stderr, "usage: cp [-R] [source_file ...] target_file_or_directory\n");
+	fprintf(stderr, "Usage: cp [-R][-v] source [...] target_file_or_directory\n");
 	return 1;
 }
