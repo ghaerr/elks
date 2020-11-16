@@ -151,9 +151,13 @@ main(argc, argv)
 {
 	GR_SCREEN_INFO	si;
 
+	if (access(MAPFILE, 0) < 0) {
+		fprintf(stderr, "Missing map file: %s\n", MAPFILE);
+		return 1;
+	}
 	if (GrOpen() < 0) {
 		fprintf(stderr, "Cannot open graphics\n");
-		exit(1);
+		return 1;
 	}
 	GrGetScreenInfo(&si);
 
@@ -367,6 +371,7 @@ dokeydown(kp)
 			exit(0);
 
 		case 'r':		/* redraw total map */
+		case 't':
 		case ' ':
 		case '\n':
 			Longitude = ITOF(0);
