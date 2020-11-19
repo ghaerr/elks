@@ -23,7 +23,7 @@ from that popular platform.
 
 ## Screenshots
 
-(Screenshots coming)
+![boot]((https://github.com/jbruchon/elks/Screenshots/ELKS\ 0.4.0.png)
 
 ## Downloads
 
