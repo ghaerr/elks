@@ -23,7 +23,11 @@ from that popular platform.
 
 ## Screenshots
 
-![boot]((https://github.com/jbruchon/elks/Screenshots/ELKS\ 0.4.0.png)
+ELKS running on QEMU
+![ss1]((https://github.com/jbruchon/elks/Screenshots/ELKS\ 0.4.0.png)
+
+Olivetti M24 8086 CPU
+![ss2]((https://github.com/jbruchon/elks/Screenshots/Olivetti\ M24\ 8086\ CPU.png)
 
 ## Downloads
 
@@ -40,7 +44,6 @@ Help on how to use ELKS, as well as technical tutorials, are available on our [W
 ## Documentation
 
 More information is in the Documentation folder: [Index of ELKS Documentation](https://htmlpreview.github.io/?https://github.com/jbruchon/elks/blob/master/Documentation/index.html).
-
 
 ## More information
 
