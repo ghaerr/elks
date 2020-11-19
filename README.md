@@ -17,17 +17,17 @@ from that popular platform.
 
 ## Watch ELKS in action
 
-- [Embeddable Linux Kernel Subset, a 16-bit no-MMU Linux on customized Amstrad PC 2086](https://www.youtube.com/watch?v=eooviN1SdQ8) (thanks @pawoswm-arm)
+- [ELKS, a 16-bit no-MMU Linux on Amstrad PC 2086](https://www.youtube.com/watch?v=eooviN1SdQ8) (thanks @pawoswm-arm)
 - [Booting ELKS on an old 286 MB from 1,44MB floppy](https://www.youtube.com/watch?v=6rwlqmdebxk) (thanks @xrayer)
 - [Epson PC Portable Q150A / Equity LT (Nec V30 8086 - 1989)](https://youtu.be/ZDffBj6zY-w?t=687) (thanks Alejandro)
 
 ## Screenshots
 
 ELKS running on QEMU
-![ss1]((https://github.com/jbruchon/elks/Screenshots/ELKS\ 0.4.0.png)
+![ss1]((https://github.com/jbruchon/elks/Screenshots/ELKS_0.4.0.png)
 
 Olivetti M24 8086 CPU
-![ss2]((https://github.com/jbruchon/elks/Screenshots/Olivetti\ M24\ 8086\ CPU.png)
+![ss2]((https://github.com/jbruchon/elks/Screenshots/Olivetti_M24_8086_CPU.png)
 
 ## Downloads
 
@@ -35,7 +35,7 @@ A full set of disk images are available for download, for you to try out ELKS: [
 
 ## How to build ?
 
-Full build instructions are [here](https://github.com/jbruchon/BUILD.md).
+Full build instructions are [here](https://github.com/jbruchon/elks/BUILD.md).
 
 ## Wiki
 
