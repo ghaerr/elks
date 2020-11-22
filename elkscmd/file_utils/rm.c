@@ -53,7 +53,6 @@ main(int argc, char **argv) {
                 }
                 rm(*argv, force, recurse, interact, 0);
         }
-
         return(errcode);
 }
 
@@ -67,7 +66,7 @@ rm(char *arg, int fflg, int rflg, int iflg, int level) {
         struct stat buf;
         struct dirent *dp;
         DIR *dirp;
-        char name[BUFSIZ];
+        char name[128];
 
         if(lstat(arg, &buf)) {
                 if (fflg==0) {

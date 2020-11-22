@@ -7,92 +7,46 @@
 
 # What is this ?
 
-This is a project to write a Linux-like OS for systems based on the Intel
-IA16 architecture (16 bits processors: 8088, 8086, 80188, 80186, 80286,
+This is a project providing a Linux-like OS for systems based on the Intel
+IA16 architecture (16-bit processors: 8086, 8088, 80188, 80186, 80286,
 NEC V20, V30 and compatibles).
 
 Such systems are ancient computers (IBM-PC XT / AT and clones), or more
 recent SBC / SoC / FPGA that reuse the huge hardware & software legacy
 from that popular platform.
 
-Watch ELKS in action:
-- https://www.youtube.com/watch?v=6rwlqmdebxk (thanks @xrayer)
-- https://youtu.be/ZDffBj6zY-w?t=687 (thanks Alejandro)
+## Watch ELKS in action
 
-# How to build ?
+- [ELKS, a 16-bit no-MMU Linux on Amstrad PC 2086](https://www.youtube.com/watch?v=eooviN1SdQ8) (thanks @pawoswm-arm)
+- [Booting ELKS on an old 286 MB from 1,44MB floppy](https://www.youtube.com/watch?v=6rwlqmdebxk) (thanks @xrayer)
+- [Epson PC Portable Q150A / Equity LT (Nec V30 8086 - 1989)](https://youtu.be/ZDffBj6zY-w?t=687) (thanks Alejandro)
 
-## Prerequisites
+## Screenshots
 
-To build ELKS, you need a GNU development environment, including:
-- flex
-- bison
-- texinfo
-- libncurses5-dev
+ELKS running on QEMU
+![ss1](https://github.com/jbruchon/elks/blob/master/Screenshots/ELKS_0.4.0.png)
 
-## Quickstart
+Olivetti M24 8086 CPU
+![ss2](https://github.com/jbruchon/elks/blob/master/Screenshots/Olivetti_M24_8086_CPU.png)
 
-A script is provided to automate the whole build process
-(cross toool chain, configuration, kernel, user land and target image),
-and make it easier for ELKS newbies:
+## Downloads
 
-`./build.sh`
+A full set of disk images are available for download, for you to try out ELKS: [Downloads](https://github.com/jbruchon/elks/releases).
 
-Note: all the scripts must be executed within the top folder of
-the ELKS repository as the current one (= TOPDIR).
+## How to build ?
 
-If you want to clean everything up afterwards (except the cross tool chain):
+Full build instructions are [here](https://github.com/jbruchon/elks/blob/master/BUILD.md).
 
-`./clean.sh`
+## Wiki
 
-## Build steps
+Help on how to use ELKS, as well as technical tutorials, are available on our [Wiki](https://github.com/jbruchon/elks/wiki).
 
-1- Create a `cross` subfolder:
+## Documentation
 
-`mkdir cross`
+More information is in the Documentation folder: [Index of ELKS Documentation](https://htmlpreview.github.io/?https://github.com/jbruchon/elks/blob/master/Documentation/index.html).
 
-2- Build the cross tool chain, mainly based on a recent GCC-IA16
-(DEV86 including BCC was used for previous versions, but has been
-dropped because it was obsolete and no more maintained):
-
-`tools/build.sh`
-
-Ubuntu 18.04 LTS users: as this step is quite long,
-you can download an already built cross folder from here:
-https://github.com/elks-org/elks/actions?query=workflow%3Across
-
-3- Set up your environment (PATH, TOPDIR and CROSSDIR):
-
-`. ./env.sh` (note the '.' before the script)
-
-4- Configure the kernel, the user land and the target image format:
-
-`make menuconfig`
-
-5- Build the kernel, the user land and the target image:
-
-`make all`
-
-The target root folder is built in `target`', and depending on your
-configuration, that folder is packed as either a floppy disk image
-(fd360, fd720, fd1440), a hard disk image (hd, without MBR),
-or a file image (ROM, TAR), into the `image` folder.
-
-6- Before writting that image on the real medium,
-you can test it first on QEMU:
-
-`./qemu.sh`
-
-7- You can then modify the configuration or the sources and repeat from the
-step 4 after cleaning only the kernel, the user land and the image:
-
-`make clean`
-
-
-# More information
+## More information
 
 Questions? Problems? Patches? Open an issue in this project!
 
 You can also join and email the 'Linux-8086' list at linux-8086@vger.kernel.org.
-
-More information in the Documentation folder: [Index of ELKS Documentation](https://htmlpreview.github.io/?https://github.com/jbruchon/elks/blob/master/Documentation/index.html)
-

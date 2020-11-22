@@ -32,7 +32,7 @@ cmp: cmp.o
 	$(LD) $(LDFLAGS) -o cmp cmp.o $(LDLIBS)
 
 cp: cp.o
-	$(LD) $(LDFLAGS) -o cp cp.o $(LDLIBS)
+	$(LD) $(LDFLAGS) -maout-heap=0xffff -o cp cp.o $(LDLIBS)
 
 df: df.o
 	$(LD) $(LDFLAGS) -o df df.o $(LDLIBS)
@@ -68,7 +68,7 @@ mv: mv.o
 	$(LD) $(LDFLAGS) -o mv mv.o $(LDLIBS)
 
 rm: rm.o
-	$(LD) $(LDFLAGS) -o rm rm.o $(LDLIBS)
+	$(LD) $(LDFLAGS) -maout-stack=12228 -o rm rm.o $(LDLIBS)
 
 rmdir: rmdir.o
 	$(LD) $(LDFLAGS) -o rmdir rmdir.o $(LDLIBS)

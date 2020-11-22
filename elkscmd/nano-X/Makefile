@@ -71,7 +71,7 @@ bin/nxlandmine: demos/landmine.o
 
 bin/nxworld: demos/world.o
 	$(LD) $(LDFLAGS) $(NANOXFILES) demos/world.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nxworld $(MATHLIB) $(LDLIBS)
-	cp demos/world.map bin/nxworld.map
+	cp demos/nxworld.map bin/nxworld.map
 
 bin/nxclock: demos/nclock.o
 	$(LD) $(LDFLAGS) $(NANOXFILES) demos/nclock.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nxclock $(MATHLIB) $(LDLIBS)
@@ -107,7 +107,7 @@ nxdemos: libnano-X.a
 
 install: $(NANOXDEMOS)
 	$(INSTALL) $(NANOXDEMOS) $(DESTDIR)/bin
-	$(INSTALL) demos/world.map $(DESTDIR)/lib/nxworld.map
+	$(INSTALL) demos/nxworld.map $(DESTDIR)/lib/nxworld.map
 
 clean:
 	rm -f *.o *.a nano-X core

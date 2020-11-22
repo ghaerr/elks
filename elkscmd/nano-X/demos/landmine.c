@@ -801,11 +801,18 @@ delay()
 {
 	GR_COUNT	i;
 
+#if 1
+	i = 32000;
+	do {
+		GrFlush();
+	} while (--i);
+#else
 	for (i = 0; i < 1; i++) {
 		GrFillRect(boardwid, delaygc, 0, 0, xp * size - 1,
 			yp * size - 1);
 		GrFlush();
 	}
+#endif
 }
 
 
