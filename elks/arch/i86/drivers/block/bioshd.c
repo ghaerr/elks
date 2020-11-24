@@ -59,7 +59,6 @@
 
 #define MAJOR_NR BIOSHD_MAJOR
 #define BIOSDISK
-#define IDE_PROBE_ENABLE	/* enable CHS priobing via the disk IDE interface */
 
 #include "blk.h"
 
@@ -182,7 +181,7 @@ static unsigned short int INITPROC bioshd_gethdinfo(void) {
 	    printk("bioshd: hd%c BIOS CHS %d,%d,%d\n", 'a'+drive, drivep->cylinders,
 		drivep->heads, drivep->sectors);
 	}
-#ifdef IDE_PROBE_ENABLE
+#ifdef CONFIG_IDE_PROBE
 	if (arch_cpu > 5) {	/* Do this only if AT or higher */
 	    if (!get_ide_data(drive, drivep)) {	/* get CHS from the drive itself */
 		/* sanity checks already done, accepting data */

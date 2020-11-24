@@ -58,6 +58,7 @@ void timer_tick(int irq, struct pt_regs *regs, void *data)
     keyboard_irq(1, regs, NULL);
 #else
 
+#ifdef CONFIG_CONSOLE_DIRECT
     /* spin timer wheel in upper right of screen*/
     if (spin_on && !(jiffies & 7)) {
 	static unsigned char wheel[4] = {'-', '\\', '|', '/'};
@@ -65,6 +66,7 @@ void timer_tick(int irq, struct pt_regs *regs, void *data)
 
 	pokeb((79 + 0*80) * 2, 0xB800, wheel[c++ & 0x03]);
     }
+#endif
 #endif
 }
 
@@ -92,6 +94,8 @@ void stop_timer(void)
 
 void spin_timer(int onflag)
 {
+#ifdef CONFIG_CONSOLE_DIRECT
     if ((spin_on = onflag) == 0)
 	pokeb((79 + 0*80) * 2, 0xB800, ' ');
+#endif
 }
