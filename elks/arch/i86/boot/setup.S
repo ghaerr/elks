@@ -130,11 +130,6 @@ _start:
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Entry point for kernels loaded from DISK
 
-// Bootlin depends on this being done early
-	mov	$0x01500,%ax	// Read disk type/DASD
-	mov	$0x81,%dl
-	int	$0x13
-
 // Check signature at end of setup
 	mov	$SETUPSEG,%ax	// DS = setup CS
 	mov	%ax,%ds

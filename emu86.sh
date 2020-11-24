@@ -3,8 +3,9 @@
 # Run ELKS in EMU86 (basic 8086 emulator)
 # EMU86 is part of the cross tools
 
-# ELKS must be configured minimaly with 'cp config-emu86 .config'
-# using the headless console and a ROM filesystem.
+# For ELKS ROM Configuration:
+# ELKS must be configured minimaly with 'cp emu86-rom.config .config'
+# This uses headless console, HLT on idle, ROM filesystem.
 
 # First build ELKS with kernel and root FS in ROM
 # Kernel image @ segment 0xE000 (top of 1024K address space)
@@ -12,3 +13,9 @@
 # Skip the INT 19h bootstrap in the kernel image (+0x14)
 
 exec emu86 -w 0xe0000 -f elks/arch/i86/boot/Image -w 0x80000 -f image/romfs.bin -x 0xe000:0x14 ${1+"$@"}
+
+# For ELKS disk image Configuration:
+# ELKS must be configured with 'cp emu86-disk.config .config'
+# This uses headless console, HLT on idle, no CONFIG_IDE_PROBE
+
+exec emu86 -I ../elks-gh/image/fd1440.bin ${1+"$@"}
