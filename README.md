@@ -29,6 +29,9 @@ ELKS running on QEMU
 Olivetti M24 8086 CPU
 ![ss2](https://github.com/jbruchon/elks/blob/master/Screenshots/Olivetti_M24_8086_CPU.png)
 
+ELKS Networking showing netstat and process list
+![ss3](https://github.com/jbruchon/elks/blob/master/Screenshots/ELKS_Networking.png)
+
 ## Downloads
 
 A full set of disk images are available for download, for you to try out ELKS: [Downloads](https://github.com/jbruchon/elks/releases).
