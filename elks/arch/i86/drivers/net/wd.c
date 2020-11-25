@@ -5,6 +5,7 @@
  *
  */
 
+#include <stddef.h>
 #include <arch/io.h>
 #include <arch/ports.h>
 #include <arch/segment.h>
@@ -269,15 +270,24 @@ static int wd_pack_get(char *data, size_t len)
 			debug_eth("eth: bogus packet: "
 				"status = %#2x nxpg = %#2x size = %d\n",
 				rxhdr->status, rxhdr->next, rxhdr->count);
-		} else {
-			res = rxhdr->count - sizeof(e8390_pkt_hdr);
-			if (res > len) res = len;
+			break;
+		} 
+		res = rxhdr->count - sizeof(e8390_pkt_hdr);
+		if (res > len) res = len;
+		if (current_rx_page > this_frame || current_rx_page == WD_FIRST_RX_PG) {
+			/* no wrap around */
 			fmemcpyb(data, current->t_regs.ds,
-				(char *)hdr_start + sizeof(e8390_pkt_hdr),
-				WD_SHMEMSEG, res);
-		}
-		OUTB(current_rx_page - 1U, WD_8390_PORT + EN0_BOUNDARY);
+				(char *)hdr_start + sizeof(e8390_pkt_hdr), WD_SHMEMSEG, res);
+		} else {	/* handle wrap-around */
+			size_t len1 = ((WD_STOP_PG - this_frame) << 8) - sizeof(e8390_pkt_hdr);
+                        fmemcpyb(data, current->t_regs.ds,
+                                (char *)hdr_start + sizeof(e8390_pkt_hdr), WD_SHMEMSEG, len1);
+                        fmemcpyb(data+len1, current->t_regs.ds,
+                                (char *)(WD_FIRST_RX_PG << 8), WD_SHMEMSEG, res-len1);
+ 		}
 	} while (0);
+	/* this is not always strictly correct but apparently works */
+	OUTB(current_rx_page - 1U, WD_8390_PORT + EN0_BOUNDARY);
 	return res;
 }
 
@@ -362,7 +372,7 @@ static size_t wd_write(struct inode * inode, struct file * file,
 
 static void wd_clr_oflow(void)
 {
-	printk("eth: overflow.\n");
+	printk("eth: Buffer overflow, resetting.\n");
 	wd_stop();
 	wd_term();
 	current_rx_page = WD_FIRST_RX_PG;
