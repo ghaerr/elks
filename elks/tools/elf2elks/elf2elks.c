@@ -81,17 +81,20 @@ struct minix_reloc
 #define S_FTEXT		((uint16_t) -5u)
 
 static const char *me;
-static bool verbose = false, tiny = false;
+static bool verbose = false, tiny = false, romable = false;
 static const char *file_name = NULL;
 static char *tmp_file_name = NULL;
-static uint16_t total_data = 0, chmem = 0, stack = 0, heap = 0, entry = 0;
+static uint16_t total_data = 0, chmem = 0, stack = 0, heap = 0, entry = 0,
+		aout_seg = 0, text_seg = 0, ftext_seg = 0, data_seg = 0;
 static int ifd = -1, ofd = -1;
 static Elf *elf = NULL;
 static Elf_Scn *text = NULL, *ftext = NULL, *data = NULL, *bss = NULL,
 	       *rel_dyn = NULL;
 static const Elf32_Shdr *text_sh = NULL, *ftext_sh = NULL, *data_sh = NULL,
 			*bss_sh = NULL, *rel_dyn_sh = NULL;
-static uint32_t text_n_rels = 0, ftext_n_rels = 0, data_n_rels = 0;
+static uint32_t text_n_rels = 0, ftext_n_rels = 0, data_n_rels = 0,
+		tot_n_rels = 0;
+static struct minix_reloc *mrels = NULL;
 
 static void
 error_exit (void)
@@ -150,6 +153,34 @@ error_with_elf_msg (const char *fmt, ...)
 }
 
 static void
+error_with_help (const char *fmt, ...)
+{
+  va_list ap;
+  va_start (ap, fmt);
+  error_1 (fmt, ap);
+  va_end (ap);
+  fprintf (stderr,
+	   "\n"
+	   "\n"
+	   "%s -- convert ELF file into ELKS executable\n"
+	   "usage: %s [-v] [--tiny] [--aout-seg A --data-seg D] \\\n"
+	   "  [--total-data T | --chmem C | [--stack S] [--heap H]]\n"
+	   "options:\n"
+	   "  -v              print verbose debug information\n"
+	   "  --tiny          output tiny model ELKS a.out\n"
+	   "  --aout-seg A    output ROMable ELKS a.out, place a.out header\n"
+	   "                  in ROM at A:0\n"
+	   "  --data-seg D    output ROMable ELKS a.out, place data segment\n"
+	   "                  at D:0\n"
+	   "  --total-data T  (deprecated) set total data segment size to T\n"
+	   "  --chmem C       (deprecated) set maximum non-static data size\n"
+	   "                  to C\n"
+	   "  --stack S       set maximum stack size to S\n"
+	   "  --heap H        set maximum heap size to H\n", me, me);
+  error_exit ();
+}
+
+static void
 info (const char *fmt, ...)
 {
   fprintf (stderr, "%s: ", me);
@@ -174,11 +205,11 @@ parm_uint16 (int argc, char **argv, uint16_t *pvalue, int *pi)
   int i = *pi + 1;
   *pi = i;
   if (i >= argc)
-    error ("expected integer argument after `%s'", argv[i - 1]);
+    error_with_help ("expected integer argument after `%s'", argv[i - 1]);
 
   uintmax_t x = strtoumax(argv[i], &ep, 0);
   if (x > 0xffffu || *ep != 0)
-    error ("invalid integer argument `%s'", argv[i]);
+    error_with_help ("invalid integer argument `%s'", argv[i]);
 
   *pvalue = x;
 }
@@ -187,6 +218,12 @@ static void
 parse_args (int argc, char **argv)
 {
   int i = 1;
+  bool aout_seg_given = false, data_seg_given = false;
+  const char *slash;
+
+  me = argv[0];
+  if ((slash = strrchr (me, '/')) != NULL)
+    me = slash + 1;
 
   while (i < argc)
     {
@@ -200,22 +237,32 @@ parse_args (int argc, char **argv)
 	    {
 	      if (strcmp (arg + 2, "tiny") == 0)
 		tiny = true;
-	      else if (strcmp(arg + 2, "total-data") == 0)
+	      else if (strcmp (arg + 2, "total-data") == 0)
 		parm_uint16 (argc, argv, &total_data, &i);
-	      else if (strcmp(arg + 2, "chmem") == 0)
-		parm_uint16(argc, argv, &chmem, &i);
-	      else if (strcmp(arg + 2, "stack") == 0)
-		parm_uint16(argc, argv, &stack, &i);
-	      else if (strcmp(arg + 2, "heap") == 0)
-		parm_uint16(argc, argv, &heap, &i);
+	      else if (strcmp (arg + 2, "chmem") == 0)
+		parm_uint16 (argc, argv, &chmem, &i);
+	      else if (strcmp (arg + 2, "stack") == 0)
+		parm_uint16 (argc, argv, &stack, &i);
+	      else if (strcmp (arg + 2, "heap") == 0)
+		parm_uint16 (argc, argv, &heap, &i);
+	      else if (strcmp (arg + 2, "aout-seg") == 0)
+		{
+		  romable = aout_seg_given = true;
+		  parm_uint16 (argc, argv, &aout_seg, &i);
+		}
+	      else if (strcmp (arg + 2, "data-seg") == 0)
+		{
+		  romable = data_seg_given = true;
+		  parm_uint16 (argc, argv, &data_seg, &i);
+		}
 	      else
-		error ("unknown option `%s'", arg);
+		error_with_help ("unknown option `%s'", arg);
 	    }
 	  else
-	    error ("unknown option `%s'", arg);
+	    error_with_help ("unknown option `%s'", arg);
 	}
       else if (file_name)
-	error ("multiple file names!");
+	error_with_help ("multiple file names!");
       else
 	file_name = arg;
 
@@ -223,24 +270,27 @@ parse_args (int argc, char **argv)
     }
 
   if (!file_name)
-    error ("no file specified!");
+    error_with_help ("no file specified!");
+
+  if (aout_seg_given ^ data_seg_given)
+    error_with_help ("cannot specify only --aout-seg or only --data-seg");
 
   if (total_data)
     {
       if (chmem)
-	error ("cannot specify both --total-data and --chmem");
+	error_with_help ("cannot specify both --total-data and --chmem");
       if (stack)
-	error ("cannot specify both --total-data and --stack");
+	error_with_help ("cannot specify both --total-data and --stack");
       if (heap)
-	error ("cannot specify both --total-data and --heap");
+	error_with_help ("cannot specify both --total-data and --heap");
     }
 
   if (chmem)
     {
       if (stack)
-	error ("cannot specify both --chmem and --stack");
+	error_with_help ("cannot specify both --chmem and --stack");
       if (heap)
-	error ("cannot specify both --chmem and --heap");
+	error_with_help ("cannot specify both --chmem and --heap");
     }
 }
 
@@ -455,6 +505,18 @@ input_for_header (void)
 	}
     }
 
+  tot_n_rels = text_n_rels + ftext_n_rels + data_n_rels;
+
+  if (romable)
+    {
+      text_seg = aout_seg + 2;
+
+      if (text && text_sh->sh_size % 0x10u != 0)
+	error ("text section end not paragraph-aligned for ROMable output");
+
+      ftext_seg = text_seg + text_sh->sh_size / 0x10u;
+    }
+
   INFO ("%" PRIu32 " text reloc(s)., %" PRIu32 " far text reloc(s)., "
 	"%" PRIu32 " data reloc(s).", text_n_rels, ftext_n_rels, data_n_rels);
 }
@@ -530,6 +592,12 @@ output_header (void)
 
   if (text_sh)
     mh.tseg = text_sh->sh_size;
+  /*
+   * For ROMable output, combine the near text & far text sizes into a single
+   * figure.
+   */
+  if (romable && ftext_sh)
+    mh.tseg += ftext_sh->sh_size;
   if (bss_sh)
     mh.bseg = bss_sh->sh_size;
   if (data_sh)
@@ -573,7 +641,7 @@ output_header (void)
 
   start_output ();
 
-  if ((ftext_sh && ftext_sh->sh_size) || ftext_n_rels)
+  if (! romable && ((ftext_sh && ftext_sh->sh_size) || ftext_n_rels))
     {
       mh.hlen = sizeof mh + sizeof esuph1 + sizeof esuph2;
       esuph1.trsize = (uint32_t) text_n_rels * sizeof (struct minix_reloc);
@@ -583,7 +651,7 @@ output_header (void)
       output (&esuph1, sizeof esuph1);
       output (&esuph2, sizeof esuph2);
     }
-  else if (text_n_rels || data_n_rels)
+  else if (! romable && (text_n_rels || data_n_rels))
     {
       mh.hlen = sizeof mh + sizeof esuph1;
       esuph1.trsize = (uint32_t) text_n_rels * sizeof (struct minix_reloc);
@@ -597,38 +665,10 @@ output_header (void)
     }
 }
 
-static void
-output_scn_stuff (Elf_Scn *scn, const Elf32_Shdr *shdr, const char *nature)
-{
-  Elf_Data *stuff;
-  size_t stuff_size;
-
-  if (! scn)
-    return;
-
-  stuff = elf_getdata (scn, NULL);
-  if (! stuff)
-    error_with_elf_msg ("cannot read %s segment contents", nature);
-
-  stuff_size = stuff->d_size;
-  if (stuff_size != shdr->sh_size)
-    error ("short ELF read of %s segment", nature);
-
-  output (stuff->d_buf, stuff_size);
-}
-
-static void
-output_scns_stuff (void)
-{
-  output_scn_stuff (text, text_sh, "text");
-  output_scn_stuff (ftext, ftext_sh, "far text");
-  output_scn_stuff (data, data_sh, "data");
-}
-
 #define R_386_SEGRELATIVE 48
 
 static void
-convert_reloc (struct minix_reloc *porel, const Elf32_Rel *prel,
+convert_reloc (struct minix_reloc *pmrel, const Elf32_Rel *prel,
 	       Elf_Scn *place_scn, uint16_t offset_in_scn)
 {
   Elf_Data *stuff;
@@ -643,15 +683,19 @@ convert_reloc (struct minix_reloc *porel, const Elf32_Rel *prel,
   if (! stuff)
     error ("gut reaction %d", (int) __LINE__);
 
+  if (offset_in_scn == (uint16_t) 0xffffu
+      || offset_in_scn + 1 >= stuff->d_size)
+    error ("gut reaction %d", (int) __LINE__);
+
   buf = (const uint8_t *) stuff->d_buf;
   addend = (uint16_t) buf[offset_in_scn + 1] << 8 | buf[offset_in_scn];
 
   if (addend * 0x10 == text_sh->sh_addr)
-    porel->symndx = S_TEXT;
+    pmrel->symndx = S_TEXT;
   else if (addend * 0x10 == ftext_sh->sh_addr)
-    porel->symndx = S_FTEXT;
+    pmrel->symndx = S_FTEXT;
   else if (addend * 0x10 == data_sh->sh_addr)
-    porel->symndx = S_DATA;
+    pmrel->symndx = S_DATA;
   else
     {
       const char *place_scn_name = "<unknown>";
@@ -666,15 +710,13 @@ convert_reloc (struct minix_reloc *porel, const Elf32_Rel *prel,
 	     place_scn_name, offset_in_scn, addend);
     }
 
-  porel->vaddr = offset_in_scn;
-  porel->type = R_SEGWORD;
+  pmrel->vaddr = offset_in_scn;
+  pmrel->type = R_SEGWORD;
 }
 
 static void
-output_relocs (void)
+convert_relocs (void)
 {
-  uint32_t tot_n_rels = text_n_rels + ftext_n_rels + data_n_rels;
-  struct minix_reloc *orels;
   uint32_t tridx = 0, ftridx = text_n_rels, dridx = text_n_rels + ftext_n_rels;
   Elf_Data *stuff;
   size_t stuff_size;
@@ -683,8 +725,15 @@ output_relocs (void)
   if (! tot_n_rels)
     return;
 
-  orels = malloc (tot_n_rels * sizeof (struct minix_reloc));
-  if (! orels)
+  /*
+   * Convert ELF-format relocations to Minix-format relocations, & arrange
+   * them in the correct order.  For ROMable output, we do not actually write
+   * out the Minix relocations, but we do use them internally to fix up the
+   * various sections' contents.
+   */
+
+  mrels = malloc (tot_n_rels * sizeof (struct minix_reloc));
+  if (! mrels)
     error_with_errno ("cannot create output relocations");
 
   stuff = elf_getdata (rel_dyn, NULL);
@@ -706,14 +755,15 @@ output_relocs (void)
 	{
 	  if (tridx >= tot_n_rels)
 	    error ("gut reaction %d", (int) __LINE__);
-	  convert_reloc (&orels[tridx], prel, text, vaddr - text_sh->sh_addr);
+	  convert_reloc (&mrels[tridx], prel, text,
+			 vaddr - text_sh->sh_addr);
 	  ++tridx;
 	}
       else if (in_scn_p (vaddr, ftext_sh))
 	{
 	  if (ftridx >= tot_n_rels)
 	    error ("gut reaction %d", (int) __LINE__);
-	  convert_reloc (&orels[ftridx], prel, ftext,
+	  convert_reloc (&mrels[ftridx], prel, ftext,
 			 vaddr - ftext_sh->sh_addr);
 	  ++ftridx;
 	}
@@ -721,7 +771,8 @@ output_relocs (void)
 	{
 	  if (dridx >= tot_n_rels)
 	    error ("gut reaction %d", (int) __LINE__);
-	  convert_reloc (&orels[dridx], prel, data, vaddr - data_sh->sh_addr);
+	  convert_reloc (&mrels[dridx], prel, data,
+			 vaddr - data_sh->sh_addr);
 	  ++dridx;
 	}
       else
@@ -730,9 +781,78 @@ output_relocs (void)
       ++prel;
       stuff_size -= sizeof (Elf32_Rel);
     }
+}
 
-  output (orels, tot_n_rels * sizeof (struct minix_reloc));
-  free (orels);
+static void
+output_scn_stuff (Elf_Scn *scn, const Elf32_Shdr *shdr, uint32_t rels_start,
+		  uint32_t n_rels, const char *nature)
+{
+  Elf_Data *stuff;
+  size_t stuff_size;
+
+  if (! scn)
+    return;
+
+  stuff = elf_getdata (scn, NULL);
+  if (! stuff)
+    error_with_elf_msg ("cannot read %s segment contents", nature);
+
+  stuff_size = stuff->d_size;
+  if (stuff_size != shdr->sh_size)
+    error ("short ELF read of %s segment", nature);
+
+  if (! romable || ! n_rels)
+    output (stuff->d_buf, stuff_size);
+  else
+    {
+      uint32_t ri;
+
+      uint8_t buf[stuff_size];  /* C99 */
+      memcpy (buf, stuff->d_buf, stuff_size);
+
+      for (ri = rels_start; ri != rels_start + n_rels; ++ri)
+	{
+	  struct minix_reloc *pmrel = &mrels[ri];
+	  uint16_t value, offset_in_scn;
+
+	  switch (pmrel->symndx)
+	    {
+	    case S_TEXT:
+	      value = text_seg;
+	      break;
+	    case S_FTEXT:
+	      value = ftext_seg;
+	      break;
+	    case S_DATA:
+	      value = data_seg;
+	      break;
+	    default:
+	      error ("gut reaction %d", (int) __LINE__);
+	    }
+
+	  offset_in_scn = (uint16_t) pmrel->vaddr;
+	  buf[offset_in_scn] = (uint8_t) value;
+	  buf[offset_in_scn + 1] = (uint8_t) (value >> 8);
+	}
+
+      output (buf, stuff_size);
+    }
+}
+
+static void
+output_scns_stuff (void)
+{
+  output_scn_stuff (text, text_sh, 0, text_n_rels, "text");
+  output_scn_stuff (ftext, ftext_sh, text_n_rels, ftext_n_rels, "far text");
+  output_scn_stuff (data, data_sh, text_n_rels + ftext_n_rels, data_n_rels,
+		    "data");
+}
+
+static void
+output_relocs (void)
+{
+  if (! romable && tot_n_rels)
+    output (mrels, tot_n_rels * sizeof (struct minix_reloc));
 }
 
 static void
@@ -762,11 +882,11 @@ end_output (void)
 int
 main(int argc, char **argv)
 {
-  me = argv[0];
   parse_args (argc, argv);
   elf_version (1);
   input_for_header ();
   output_header ();
+  convert_relocs ();
   output_scns_stuff ();
   output_relocs ();
   end_output ();
