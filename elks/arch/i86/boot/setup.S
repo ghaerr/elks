@@ -114,7 +114,7 @@ _start:
 // Entry point for non-EMU86 ROM systems
 
 	.byte 0x55,0xaa		// sign for ROM-Extension
-	.byte 0x04		// space for lengthcode (promsize/512)
+	.byte 2*CONFIG_ROM_CHECKSUM_SIZE // space for lengthcode (promsize/512)
 
 	push	%ds
 	xor	%ax,%ax		// DS = 0
