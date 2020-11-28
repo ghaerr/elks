@@ -23,7 +23,7 @@ BUILDDIR=$(CROSSDIR)/build
 
 # BINUTILS for IA16
 
-BINUTILS_VER=f19a905d1434da03940951913514a9ef12f0d7dd
+BINUTILS_VER=164dc55d3d9488a487d39c2e7f3f8cadf6dc12f5
 BINUTILS_DIST=binutils-ia16-$(BINUTILS_VER)
 
 $(DISTDIR)/$(BINUTILS_DIST).tar.gz:
@@ -50,7 +50,7 @@ $(BUILDDIR)/.binutils.src: $(DISTDIR)/$(BINUTILS_DIST).tar.gz
 $(BUILDDIR)/.binutils.build: $(BUILDDIR)/.binutils.src
 	cd $(BUILDDIR) && rm -rf binutils-build
 	mkdir -p $(BUILDDIR)/binutils-build
-	cd $(BUILDDIR)/binutils-build && ../binutils-src/configure --target=ia16-elf --prefix="$(CROSSDIR)" --enable-ld=default --enable-gold=yes --enable-targets=ia16-elf --enable-x86-hpa-segelf=yes --enable-hpa-segelf=yes --disable-gdb --disable-libdecnumber --disable-readline --disable-sim --disable-nls
+	cd $(BUILDDIR)/binutils-build && ../binutils-src/configure --target=ia16-elf --prefix="$(CROSSDIR)" --enable-ld=default --enable-gold=yes --enable-targets=ia16-elf --enable-x86-hpa-segelf=yes --disable-gdb --disable-libdecnumber --disable-readline --disable-sim --disable-nls
 	$(MAKE) -C $(BUILDDIR)/binutils-build $(PARALLEL)
 	touch $(BUILDDIR)/.binutils.build
 
@@ -97,7 +97,7 @@ $(DISTDIR)/$(MPC_DIST).tar.gz:
 
 # GCC for IA16
 
-GCC_VER=45605f97ac4d313f8783e1ba9924d0aec0b1d6e8
+GCC_VER=1b50b0dda4247d4fc5519d10a56d67af353dc438
 GCC_DIST=gcc-ia16-$(GCC_VER)
 
 $(DISTDIR)/$(GCC_DIST).tar.gz:
@@ -134,6 +134,15 @@ $(BUILDDIR)/.gcc.build: $(BUILDDIR)/.gcc.src $(BUILDDIR)/.binutils.build
 	cd $(BUILDDIR) && rm -rf gcc-build
 	mkdir $(BUILDDIR)/gcc-build
 	cd $(BUILDDIR)/gcc-build && ../gcc-src/configure --target=ia16-elf --prefix="$(CROSSDIR)" --without-headers --enable-languages=c --disable-libssp --without-isl
+	# If there are any obsolete multilib directories (which are no longer
+	# used) in the installation directory, remove them, so that they do
+	# not clutter up the installation directory.  This is a bit of a hack.
+	#	-- tkchia 20201128
+	rm -rf $(CROSSDIR)/lib/gcc/ia16-elf/6.3.0/size \
+	       $(CROSSDIR)/lib/gcc/ia16-elf/6.3.0/rtd/size \
+	       $(CROSSDIR)/lib/gcc/ia16-elf/6.3.0/regparmcall/size \
+	       $(CROSSDIR)/lib/gcc/ia16-elf/6.3.0/regparmcall/any_186/size
+	# Now build.
 	$(MAKE) -C $(BUILDDIR)/gcc-build $(PARALLEL)
 	touch $(BUILDDIR)/.gcc.build
 
