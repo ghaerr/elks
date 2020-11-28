@@ -813,7 +813,7 @@ output_scn_stuff (Elf_Scn *scn, const Elf32_Shdr *shdr, uint32_t rels_start,
       for (ri = rels_start; ri != rels_start + n_rels; ++ri)
 	{
 	  struct minix_reloc *pmrel = &mrels[ri];
-	  uint16_t value, offset_in_scn;
+	  uint16_t value = 0, offset_in_scn;
 
 	  switch (pmrel->symndx)
 	    {
