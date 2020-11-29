@@ -24,7 +24,7 @@
 #define INB	inb	/* use inb_p for 1us delay */
 #define OUTB	outb	/* use outb_p for 1us delay */
 
-#define WD_SHMEMSEG	0xce00U
+#define WD_SHMEMSEG	0xd000U /* RAM base address */
 
 #define WD_STAT_RX	0x0001U	/* packet received */
 #define WD_STAT_TX	0x0002U	/* packet sent */
