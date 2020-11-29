@@ -40,6 +40,21 @@ SIBOFLAGS	=
 endif
 
 #########################################################################
+# ROM specific options.
+
+ifeq ($(CONFIG_ROMCODE), y)
+
+# Make sure that the a.out header & data segment values are prefixed with `0x'
+ROMPOSTLINKFLAGS = --aout-seg 0x$(CONFIG_ROM_KERNEL_CODE:0x%=%) \
+		   --data-seg 0x$(CONFIG_ROM_KERNEL_DATA:0x%=%)
+
+else
+
+ROMPOSTLINKFLAGS =
+
+endif
+
+#########################################################################
 # Objects to be compiled.
 
 AARCHIVES = kernel/akernel.a lib/lib86.a mm/mm.a
@@ -103,7 +118,7 @@ boot/system: $(XINCLUDE) $(AARCHIVES) $(ADRIVERS) sibo/crt1.o sibo/crt0.o
 		$(ARCH_DIR)/sibo/crt0.o $(ARCH_DIR)/sibo/crt1.o \
 		init/main.o $(ARCHIVES) $(DRIVERS) $(LIBGCC) \
 		-o $(ARCH_DIR)/boot/system > $(ARCH_DIR)/boot/system.tmp ; \
-		$(POSTLINK) $(ARCH_DIR)/boot/system ; \
+		$(POSTLINK) $(ROMPOSTLINKFLAGS) $(ARCH_DIR)/boot/system ; \
 		sort -k3,4 $(ARCH_DIR)/boot/system.tmp > $(ARCH_DIR)/boot/system.map ; \
 		rm -f $(ARCH_DIR)/boot/system.tmp )
 
@@ -121,7 +136,7 @@ boot/system:	$(XINCLUDE) $(AARCHIVES) $(ADRIVERS) boot/crt0.o
 		$(ARCH_DIR)/boot/crt0.o \
 		init/main.o '-(' $(ARCHIVES) $(DRIVERS) '-)' $(LIBGCC) \
 		-o $(ARCH_DIR)/boot/system > $(ARCH_DIR)/boot/system.map ; \
-		$(POSTLINK) $(ARCH_DIR)/boot/system)
+		$(POSTLINK) $(ROMPOSTLINKFLAGS) $(ARCH_DIR)/boot/system)
 #		sort -k3,4 $(ARCH_DIR)/boot/system.tmp > $(ARCH_DIR)/boot/system.map ; \
 #		rm -f $(ARCH_DIR)/boot/system.tmp )
 
@@ -139,12 +154,8 @@ ifeq ($(CONFIG_ROM_BOOTABLE_BY_RESET), y)
     RVECT = -r $(CONFIG_ROM_RESET_ADDRESS)   
 endif
 
-# Disable temporary the checksum to not overwrite the image
-# as it is actually not needed for execution in EMU86
-
 Image:	toolkit boot/setup boot/system  
-#	tools/mkbootloader $(RVECT) -c $(CONFIG_ROM_SETUP_CODE) $(CONFIG_ROM_CHECKSUM_SIZE) boot/Image $(CONFIG_ROM_BASE) -a boot/setup $(CONFIG_ROM_SETUP_CODE) -s boot/system $(CONFIG_ROM_KERNEL_CODE) $(CONFIG_ROM_BIOS_MODULE) $(CONFIG_ROM_BIOS_MODULE_ADDR)
-	tools/mkbootloader $(RVECT) boot/Image $(CONFIG_ROM_BASE) -a boot/setup $(CONFIG_ROM_SETUP_CODE) -s boot/system $(CONFIG_ROM_KERNEL_CODE) $(CONFIG_ROM_BIOS_MODULE) $(CONFIG_ROM_BIOS_MODULE_ADDR)
+	tools/mkbootloader $(RVECT) -c $(CONFIG_ROM_SETUP_CODE) $(CONFIG_ROM_CHECKSUM_SIZE) boot/Image $(CONFIG_ROM_BASE) -a boot/setup $(CONFIG_ROM_SETUP_CODE) -s boot/system $(CONFIG_ROM_KERNEL_CODE) $(CONFIG_ROM_BIOS_MODULE) $(CONFIG_ROM_BIOS_MODULE_ADDR)
 	$(CONFIG_ROM_SIMULATOR_PROGRAM)
 
 # End PC image build

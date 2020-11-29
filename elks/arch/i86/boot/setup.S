@@ -114,7 +114,7 @@ _start:
 // Entry point for non-EMU86 ROM systems
 
 	.byte 0x55,0xaa		// sign for ROM-Extension
-	.byte 0x04		// space for lengthcode (promsize/512)
+	.byte 2*CONFIG_ROM_CHECKSUM_SIZE // space for lengthcode (promsize/512)
 
 	push	%ds
 	xor	%ax,%ax		// DS = 0
@@ -329,8 +329,7 @@ msg_too_big:
 
 aout_ok:
 	mov 10,%cx		// 10 = hiword hdr.a_text size
-	or %cx,%cx		// max 64k
-	jz 2f
+	jcxz 2f			// max 64k
 size_error:
    	mov %cs,%ax
    	mov %ax,%ds
@@ -338,25 +337,34 @@ size_error:
 	call puts
 	jmp err_loop		// and halt
 
-2:	mov 14,%cx		// 14 = hiword of hdr.a_data size
-	or %cx,%cx		// max 64jk
+2:	cmp %cx,14		// 14 = hiword of hdr.a_data size
+				// max 64k
+				// CX = 0
 	jnz size_error
-	mov 4,%cx		// 4 = hdr.a_hdrlen
-	cmp $0x20,%cx		// check for small 32 byte hdr
-	jnz size_error		// error, fartext present
+	cmpb $0x20,4		// 4 = hdr.a_hdrlen
+				// check for small 32 byte hdr
+	jnz size_error		// error, stray fartext or relocations present
 
 // Now copy kernel data segment to RAM
-// WARNING: Next code fails if code_size+data_size+32 > 64K
-	mov 4,%si		// 4 = hdr.a_hdrlen
-	add 8,%si		// 8 = add hdr.a_text size
+	mov 8,%ax		// 8 = hdr.a_text size
+	mov %ax,%si		// Build up normalized pointer to point to
+	and $0x000f,%si		// data contents to copy to RAM
+				// SI = offset
+	mov $4,%cl		// Compute segment
+	ror %cl,%ax
+	add $CONFIG_ROM_KERNEL_CODE+2,%ax
+	mov 0x0c,%cx		// 12 = hdr.a_data size
+	push %ds
+	mov %ax,%ds		// DS:SI -> contents to copy
 	mov $CONFIG_ROM_KERNEL_DATA,%ax	// ES = RAM kernel data segment
 	mov %ax,%es
-        xor %di,%di
-        mov 0x0c,%cx		// 12 = hdr.a_data size
-        shr $1,%cx		// copy words
-        cld
-        rep
-        movsw
+	xor %di,%di
+	inc %cx
+	shr $1,%cx		// copy words
+	cld
+	rep
+	movsw
+	pop %ds
 
 // BX,CX,DX,SI,DI,DS,ES are expected in kernel crt0.S
 
@@ -368,7 +376,7 @@ size_error:
 	mov %cx,%ds
 
 #ifdef CONFIG_ROM_DEBUG
-	int     $3               // break for debugger just before kernel
+	int $3			// break for debugger just before kernel
 #endif
 
 	mov $CONFIG_ROM_KERNEL_CODE+2,%di // a.out + 32 = kernel CS
