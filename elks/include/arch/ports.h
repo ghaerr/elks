@@ -102,8 +102,8 @@
 #define NE2K_PORT	0x300
 
 /* wd, wd.c*/
-#define WD_IRQ		2
-#define WD_PORT		0x240
+#define WD_IRQ		3
+#define WD_PORT		0x280
 
 /* obsolete - experimental IDE hard drive, directhd.c (broken)*/
 #define HD1_PORT	0x1f0
