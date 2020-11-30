@@ -589,10 +589,7 @@ int copyfile(char *srcname, char *destname, int setmodes)
 	}
 
 	close(rfd);
-	if (close(wfd) < 0) {
-		perror(destname);
-		return 1;
-	}
+	close(wfd);
 
 	if (setmodes) {
 		(void) chmod(destname, statbuf1.st_mode);
@@ -604,7 +601,7 @@ int copyfile(char *srcname, char *destname, int setmodes)
 		(void) utime(destname, &times);
 	}
 
-	return 1;
+	return 0;
 
 error_exit:
 	close(rfd);
