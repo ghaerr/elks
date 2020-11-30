@@ -197,7 +197,7 @@ ifneq ($(USEBCC), N)
 # Definitions using ia16-unknown-elks-gcc compiler
 
 AS      = ia16-elf-as
-ASFLAGS = $(CPU_AS) $(ARCH_AS)
+ASFLAGS = $(CPU_AS) $(ARCH_AS) --32-segelf
 CC      = $(CROSS_CC)
 CFLAGS  = $(CROSS_CFLAGS) $(CPU_CC) $(ARCH_CC) $(CFLBASE) -Wall -Os -Wno-strict-aliasing
 LD      = ia16-elf-ld.gold
