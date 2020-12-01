@@ -251,6 +251,9 @@ int main(int argc, char **argv)
 				continue;
 			}
 			buf[len] = '\0';
+			if (!dirflag && access(destname, F_OK) == 0)
+				if (unlink(destname) < 0)
+					perror(destname);
 			if (symlink(buf, destname) < 0) {
 				perror(destname);
 				continue;
