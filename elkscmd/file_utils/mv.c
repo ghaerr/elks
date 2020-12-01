@@ -122,7 +122,7 @@ int linkfiles(char *srcdir, char *destdir)
 
 /*
  * Copy one file to another, while possibly preserving its modes, times,
- * and modes.  Returns 1 if successful, or 0 on a failure with an
+ * and modes.  Returns 0 if successful, or 1 on a failure with an
  * error message output.  (Failure is not indicted if the attributes cannot
  * be set.)
  */
@@ -143,7 +143,7 @@ int copyfile(srcname, destname, setmodes)
 
 	if (stat(srcname, &statbuf1) < 0) {
 		perror(srcname);
-		return 0;
+		return 1;
 	}
 
 	if (stat(destname, &statbuf2) < 0) {
@@ -157,20 +157,20 @@ int copyfile(srcname, destname, setmodes)
 		write(STDERR_FILENO, "Copying file \"", 14);
 		write(STDERR_FILENO, srcname, strlen(srcname));
 		write(STDERR_FILENO, "\" to itself\n", 12);
-		return 0;
+		return 1;
 	}
 
 	rfd = open(srcname, 0);
 	if (rfd < 0) {
 		perror(srcname);
-		return 0;
+		return 1;
 	}
 
 	wfd = creat(destname, statbuf1.st_mode);
 	if (wfd < 0) {
 		perror(destname);
 		close(rfd);
-		return 0;
+		return 1;
 	}
 
 	while ((rcc = read(rfd, buf, BUF_SIZE)) > 0) {
@@ -205,14 +205,14 @@ int copyfile(srcname, destname, setmodes)
 		(void) utime(destname, &times);
 	}
 
-	return 1;
+	return 0;
 
 
 error_exit:
 	close(rfd);
 	close(wfd);
 
-	return 0;
+	return 1;
 }
 
 
@@ -303,7 +303,7 @@ int main(int argc, char **argv)
 			continue;
 		}
 
-		if (!copyfile(srcname, destname, 1))
+		if (copyfile(srcname, destname, 1))
 			continue;
 
 		if (unlink(srcname) < 0)
