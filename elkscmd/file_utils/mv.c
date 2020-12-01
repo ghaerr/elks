@@ -192,10 +192,7 @@ int copyfile(srcname, destname, setmodes)
 	}
 
 	close(rfd);
-	if (close(wfd) < 0) {
-		perror(destname);
-		return 0;
-	}
+	close(wfd);
 
 	if (setmodes) {
 		(void) chmod(destname, statbuf1.st_mode);
@@ -245,13 +242,6 @@ int main(int argc, char **argv)
 		if (dirflag)
 			destname = buildname(destname, srcname);
 
-		if (!dirflag) {
-			/* remove destname if exists and not a directory*/
-			if (access(destname, F_OK) == 0 && !isadir(destname))
-				if (unlink(destname) < 0)
-					perror(destname);
-		}
-
 		/* handle renaming symlinks*/
 		if (lstat(srcname, &sbuf) >= 0 && S_ISLNK(sbuf.st_mode)) {
 			char buf[PATHLEN];
@@ -273,6 +263,13 @@ int main(int argc, char **argv)
 		if (access(srcname, F_OK) < 0) {
 			perror(srcname);
 			continue;
+		}
+
+		if (!dirflag) {
+			/* remove destname if exists and not a directory*/
+			if (access(destname, F_OK) == 0 && !isadir(destname))
+				if (unlink(destname) < 0)
+					perror(destname);
 		}
 
 		if (rename(srcname, destname) >= 0)
