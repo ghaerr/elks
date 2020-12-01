@@ -225,6 +225,7 @@ int main(int argc, char **argv)
 	char	*srcname;
 	char	*destname;
 	char	*lastarg;
+	struct stat sbuf;
 
 	if (argc < 3) goto usage;
 
@@ -239,10 +240,6 @@ int main(int argc, char **argv)
 
 	while (argc-- > 2) {
 		srcname = *(++argv);
-		if (access(srcname, 0) < 0) {
-			perror(srcname);
-			continue;
-		}
 
 		destname = lastarg;
 		if (dirflag)
@@ -250,16 +247,39 @@ int main(int argc, char **argv)
 
 		if (!dirflag) {
 			/* remove destname if exists and not a directory*/
-			if (access(destname, 0) == 0 && !isadir(destname))
+			if (access(destname, F_OK) == 0 && !isadir(destname))
 				if (unlink(destname) < 0)
 					perror(destname);
+		}
+
+		/* handle renaming symlinks*/
+		if (lstat(srcname, &sbuf) >= 0 && S_ISLNK(sbuf.st_mode)) {
+			char buf[PATHLEN];
+			int len = readlink(srcname, buf, PATHLEN - 1);
+			if (len < 0) {
+				perror(srcname);
+				continue;
+			}
+			buf[len] = '\0';
+			if (symlink(buf, destname) < 0) {
+				perror(destname);
+				continue;
+			}
+			if (unlink(srcname) < 0)
+				perror(srcname);
+			continue;
+		}
+
+		if (access(srcname, F_OK) < 0) {
+			perror(srcname);
+			continue;
 		}
 
 		if (rename(srcname, destname) >= 0)
 			continue;
 
 		/* handle broken kernel directory rename (issue #583)*/
-		if (errno == EPERM && access(destname, 0) < 0 && isadir(srcname)) {
+		if (errno == EPERM && access(destname, F_OK) < 0 && isadir(srcname)) {
 			char destdir[PATHLEN];
 
 			if (mkdir(destname, 0777 & ~umask(0))) {

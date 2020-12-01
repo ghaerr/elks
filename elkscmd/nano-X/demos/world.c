@@ -6,6 +6,7 @@
  * ported to 16 bit systems by Greg Haerr
  */
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
 #include "nano-X.h"
 
@@ -151,7 +152,7 @@ main(argc, argv)
 {
 	GR_SCREEN_INFO	si;
 
-	if (access(MAPFILE, 0) < 0) {
+	if (access(MAPFILE, F_OK) < 0) {
 		fprintf(stderr, "Missing map file: %s\n", MAPFILE);
 		return 1;
 	}
