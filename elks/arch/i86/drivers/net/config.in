@@ -8,8 +8,8 @@ mainmenu_option next_comment
 		bool 'Ethernet device support' CONFIG_ETH n
 		if [ "$CONFIG_ETH" = "y" ]; then
 			choice 'Select Ethernet device' \
-				"ne2k   CONFIG_ETH_NE2K \
-				 WD/SMC CONFIG_ETH_WD" ne2k
+				"ne2k	CONFIG_ETH_NE2K \
+				 WD/SMC8003	CONFIG_ETH_WD" ne2k
 		fi
 	fi
 endmenu
