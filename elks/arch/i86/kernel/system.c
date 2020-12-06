@@ -10,7 +10,7 @@
 #include <arch/segment.h>
 
 
-byte_t arch_cpu;  // processor number (from setup data)
+byte_t sys_caps;		/* system capabilities bits */
 
 #ifdef CONFIG_ARCH_SIBO
 extern long int basmem;
@@ -19,13 +19,10 @@ extern long int basmem;
 void INITPROC setup_arch(seg_t *start, seg_t *end)
 {
 #ifdef CONFIG_COMPAQ_FAST
-
 /*
  *	Switch COMPAQ Deskpro to high speed
  */
-
     outb_p(1,0xcf);
-
 #endif
 
 /*
@@ -61,8 +58,13 @@ void INITPROC setup_arch(seg_t *start, seg_t *end)
 	/* Misc */
 	ROOT_DEV = setupw(0x1fc);
 
-	arch_cpu = setupb(0x20);
-
+#ifdef SYS_CAPS
+	sys_caps = SYS_CAPS;	/* custom system capabilities */
+#else
+	byte_t arch_cpu = setupb(0x20);
+	if (arch_cpu > 5)		/* IBM PC/AT capabilities */
+		sys_caps = CAP_ALL;
+#endif
 }
 
 /* Stubs for functions needed elsewhere */

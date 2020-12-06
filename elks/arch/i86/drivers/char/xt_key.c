@@ -420,7 +420,7 @@ static void set_leds(void)
 {
     unsigned char leds;
 
-    if (arch_cpu <= 5) return;	/* PC/XT doesn't have LEDs */
+    if (!(sys_caps & CAP_KBD_LEDS)) return;	/* PC/XT doesn't have LEDs */
 
     kb_wait();			/* wait for buffer empty  */
     outb_p(LED_CODE, KEYBD);	/* prepare keyboard to accept LED values */
