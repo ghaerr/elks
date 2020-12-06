@@ -220,6 +220,16 @@ start_os:
 	mov	$INITSEG,%ax	// DS = setup data segment
 	mov	%ax,%ds
 
+#ifdef CONFIG_ROMCODE
+	mov	%ax,%es		// clear setup data segment
+	xor	%di,%di
+	xor	%ax,%ax
+	mov	$256,%cx
+	cld
+	rep
+	stosw
+#endif
+
 #ifdef CONFIG_HW_KEYBOARD_BIOS
 	mov	$0x0305,%ax	// set the keyboard repeat rate to the max
 	xor	%bx,%bx

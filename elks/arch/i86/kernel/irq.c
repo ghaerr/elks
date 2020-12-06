@@ -89,9 +89,9 @@ void enable_irq(unsigned int irq)
 
 static int remap_irq(int irq)
 {
-    if (((unsigned int)irq > 15) || ((irq > 7) && (arch_cpu < 6)))
+    if ((unsigned int)irq > 15 || (irq > 7 && !(sys_caps & CAP_IRQ8TO15)))
 	return -EINVAL;
-    if (irq == 2 && arch_cpu > 5)
+    if (irq == 2 && (sys_caps & CAP_IRQ2MAP9))
 	irq = 9;			/* Map IRQ 9/2 over */
     return irq;
 }
@@ -219,15 +219,12 @@ void INITPROC irq_init(void)
 	panic("Unable to get timer");
 
     /* Re-start the timer only after irq is set */
-
     enable_timer_tick();
 
-#ifndef CONFIG_ARCH_SIBO
-    if (arch_cpu > 5) {		/* PC-AT or greater */
+    if (sys_caps & CAP_IRQ2MAP9) {	/* PC/AT or greater */
 	save_flags(flags);
 	clr_irq();
 	enable_irq(2);		/* Cascade slave PIC */
 	restore_flags(flags);
     }
-#endif
 }

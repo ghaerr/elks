@@ -182,7 +182,7 @@ static unsigned short int INITPROC bioshd_gethdinfo(void) {
 		drivep->heads, drivep->sectors);
 	}
 #ifdef CONFIG_IDE_PROBE
-	if (arch_cpu > 5) {	/* Do this only if AT or higher */
+	if (sys_caps & CAP_HD_IDE) {		/* Normally PC/AT or higher */
 	    if (!get_ide_data(drive, drivep)) {	/* get CHS from the drive itself */
 		/* sanity checks already done, accepting data */
 		printk("bioshd: hd%c  IDE CHS %d,%d,%d\n", 'a'+drive, drivep->cylinders,
@@ -242,18 +242,19 @@ static unsigned short int INITPROC bioshd_getfdinfo(void)
 {
     register struct drive_infot *drivep = &drive_info[DRIVE_FD0];
     int drive, ndrives = 0;
-    unsigned char equip_flags;
 
+#ifndef CONFIG_ROMCODE
     /*
      * The INT 13h floppy query will fail on IBM XT v1 BIOS and earlier,
      * so default to # drives from the BIOS data area at 0x040:0x0010 (INT 11h).
      */
-    equip_flags = peekb(0x10, 0x40);
+    unsigned char equip_flags = peekb(0x10, 0x40);
     if (equip_flags & 0x01)
 	ndrives = (equip_flags >> 6) + 1;
+#endif
 
-    /* Use INT 13h function 08h only if AT or higher*/
-    if (arch_cpu > 5) {
+    /* Use INT 13h function 08h normally if PC/AT or higher*/
+    if (sys_caps & CAP_DRIVE_PARMS) {
 	BD_AX = BIOSHD_DRIVE_PARMS;
 	BD_DX = 0;			/* query floppies only*/
 	BD_ES = BD_DI = BD_SI = 0;	/* guard against BIOS bugs*/
@@ -269,9 +270,9 @@ static unsigned short int INITPROC bioshd_getfdinfo(void)
 	 * If type cannot be determined using BIOSHD_DRIVE_PARMS,
 	 * set drive type to 1.4MM on AT systems, and 360K for XT.
 	 */
-	*drivep = fd_types[arch_cpu > 5 ? 3 : 0];
+	*drivep = fd_types[(sys_caps & CAP_PC_AT) ? 3 : 0];
 
-	if (arch_cpu > 5) {
+	if (sys_caps & CAP_DRIVE_PARMS) {
 	    BD_AX = BIOSHD_DRIVE_PARMS;
 	    BD_DX = drive;
 	    BD_ES = BD_DI = BD_SI = 0;	/* guard against BIOS bugs*/
@@ -547,7 +548,7 @@ int INITPROC bioshd_init(void)
 #endif
 #ifdef CONFIG_BLK_DEV_BHD
     _hd_count = bioshd_gethdinfo();
-    if (arch_cpu > 5) {		/* PC-AT or greater */
+    if (sys_caps & CAP_PC_AT) {	/* PC/AT or greater */
 	enable_irq(HD_IRQ);	/* AT ST506 */
 	enable_irq(15);		/* AHA1542 */
     }
