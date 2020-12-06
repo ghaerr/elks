@@ -269,25 +269,20 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	debug("EXEC: stack %u heap %u env %u total %u\n", stack, heap, slen, len);
 	break;
     case 0:
-	stack = INIT_STACK;
 	len = mh.chmem;
 	if (len) {
 	    if (len <= min_len) {			/* check bad chmem*/
 		retval = -EINVAL;
 		goto error_exec3;
 	    }
+	    stack = 0;					/* no protected stack space*/
 	    heap = len - min_len;
-	    if (heap < INIT_STACK) {			/* check space for stack*/
-		stack = heap - slen;			/* allow minimal non-std stack*/
-		debug("EXEC v0: len %d min_len %d heap %d stack %d\n",
-			len, min_len, heap, stack);
-	    }
-	    heap -= stack;
 	    if (heap < slen) {				/* check space for environment*/
 		retval = -E2BIG;
 		goto error_exec3;
 	    }
 	} else {
+	    stack = INIT_STACK;
 	    len = min_len;
 #ifdef CONFIG_EXEC_LOW_STACK
 	    if (base_data) {
