@@ -71,9 +71,11 @@ struct task_struct {
     pid_t			pgrp;
     struct tty			*tty;
     struct task_struct		*p_parent;
+#if BLOAT
     struct task_struct		*p_prevsib;
     struct task_struct		*p_nextsib;
     struct task_struct		*p_child;
+#endif
     struct wait_queue		child_wait;
     int				exit_status;	/* process exit status*/
     struct inode		*t_inode;

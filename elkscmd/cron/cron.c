@@ -37,7 +37,8 @@ eat(int sig)
 {
     int status;
 
-    waitpid(-1, &status, 0);
+    while (waitpid(-1, &status, 0) != -1)
+		continue;
     signal(SIGCHLD,eat);
 }
 
@@ -354,6 +355,14 @@ main(int argc, char **argv)
 	struct tm *tm;
 	int adjust;
 
+#if TEST
+	int n = 2;
+	do {
+		printf("cron: sleep start %d\n", n);
+		n = sleep(n);
+		printf("cron: sleep return %d\n", n);
+	} while (n > 0);
+#else
 	time(&ticks);
 	tm = localtime(&ticks);
 	adjust = (30 - tm->tm_sec) % 60;
@@ -380,6 +389,7 @@ main(int argc, char **argv)
 	    else
 		delay = left;
 	}
+#endif
 
 	checkcrondir();
 
@@ -389,7 +399,10 @@ main(int argc, char **argv)
 
 	for (i=0; i < nrtabs; i++)
 	    for (j=0; j < tabs[i].nrl; j++) {
-		    if ( (tabs[i].flags & ACTIVE) && triggered(&Now, &(tabs[i].list[j].trigger)) ) {
+#if !TEST
+		    if ( (tabs[i].flags & ACTIVE) && triggered(&Now, &(tabs[i].list[j].trigger)))
+#endif
+			{
 		      runjob(&tabs[i], &tabs[i].list[j]); 
             }
         }

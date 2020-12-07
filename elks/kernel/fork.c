@@ -38,7 +38,7 @@ struct task_struct *find_empty_process(void)
     register struct task_struct *currentp = current;
 
     if (task_slots_unused <= 1) {
-        printk("Only %d slots\n", task_slots_unused);
+        printk("Only %d task slots\n", task_slots_unused);
         if (!task_slots_unused || currentp->uid)
             return NULL;
     }
@@ -109,14 +109,16 @@ pid_t do_fork(int virtual)
 
     t->exit_status = 0;
 
-    /* Set up our family tree */
     t->ppid = currentp->pid;
     t->p_parent = currentp;
+#if BLOAT
+    /* Set up our family tree */
     t->p_nextsib = t->p_child = NULL;
     if ((t->p_prevsib = currentp->p_child) != NULL) {
 	currentp->p_child->p_nextsib = t;
     }
     currentp->p_child = t;
+#endif
 
     /*
      *      Build a return stack for t.

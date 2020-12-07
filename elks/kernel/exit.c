@@ -12,34 +12,43 @@
 extern int task_slots_unused;
 extern struct task_struct *next_task_slot;
 
-int sys_wait4(pid_t pid, int *status, int options)
+static void reparent_children(void)
 {
 	register struct task_struct *p;
-	struct task_struct *q;
-	int waitagain, orphans;
-
-	debug_wait("WAIT(%d) for %d %s\n", current->pid, pid, (options & WNOHANG)? "nohang": "");
-
- do {
-	waitagain = 0;
-
-	/* reparent orphan zombies to init*/
-	orphans = 0;
-	for_each_task(p) {
-		if (p->state == TASK_ZOMBIE && p->p_parent) {
-			debug_wait("Zombie pid %d ppid %d\n", p->pid, p->p_parent->pid);
-			if (p->p_parent->state == TASK_UNUSED) {
-				debug_wait("WAIT(%d) reparenting %d to 1\n", current->pid, p->pid);
-				p->p_parent = &task[1];
-				orphans++;
-			}
-		}
-	}
-	if (orphans)
-		wake_up(&task[1].child_wait);
 
 	for_each_task(p) {
 		if (p->p_parent == current) {
+			/* remove orphaned zombies, no need to reparent them to init*/
+			if (p->state == TASK_ZOMBIE) {
+				debug_wait("Zombie orphan pid %d ppid %d removed\n", p->pid, p->ppid);
+				p->state = TASK_UNUSED;		/* unassign task entry*/
+				next_task_slot = p;
+				task_slots_unused++;
+			}
+
+			/* reparent orphans to init*/
+			if (p->state != TASK_UNUSED) {
+				debug_wait("Reparenting orphan pid %d ppid %d to init\n",
+					p->pid, p->p_parent->pid);
+				p->p_parent = &task[1];
+				p->ppid = task[1].pid;
+			}
+		}
+	}
+}
+
+int sys_wait4(pid_t pid, int *status, int options)
+{
+	register struct task_struct *p;
+	int waitagain;
+
+	debug_wait("WAIT(%d) for %d %s\n", current->pid, pid, (options & WNOHANG)? "nohang": "");
+
+ for (;;) {
+	waitagain = 0;
+
+	for_each_task(p) {
+		if (p->p_parent == current && p->state != TASK_UNUSED) {
 		  if (p->state == TASK_ZOMBIE || p->state == TASK_STOPPED) {
 			if (pid == -1 || p->pid == pid || (!pid && p->pgrp == current->pgrp)) {
 				if (status) {
@@ -51,44 +60,34 @@ int sys_wait4(pid_t pid, int *status, int options)
 				if (p->state == TASK_STOPPED)
 					return p->pid;
 
-				/* must reparent orphans before unassigning task slot*/
-				orphans = 0;
-				for_each_task(q) {
-					if (q->p_parent == p) {
-						debug_wait("Orphan child %d\n", q->pid);
-						q->p_parent = &task[1];
-						orphans++;
-					}
-				}
-
-				/* unassign now that no orphans pointing to it*/
-				p->state = TASK_UNUSED;
+				p->state = TASK_UNUSED;		/* unassign task entry*/
 				next_task_slot = p;
 				task_slots_unused++;
-
-				if (orphans)
-					wake_up(&task[1].child_wait);
 
 				debug_wait("WAIT(%d) got %d\n", current->pid, p->pid);
 				return p->pid;
 			}
 		} else {
-		  /* keep waiting while process has non-zombie/stopped children*/
-		  if (current->pid != 1 || current->ppid != 0)	/* except for init reparented zombies*/
+			/* keep waiting while process has non-zombie/stopped children*/
+			debug_wait("WAIT(%d) again for pid %d state %d\n", current->pid, p->pid, p->state);
 			waitagain = 1;
-
 		}
 	  }
 	}
 
 	if (options & WNOHANG)
 		return 0;
+	if (!waitagain)
+		break;
 
 	debug_wait("WAIT(%d) sleep\n", current->pid);
 	interruptible_sleep_on(&current->child_wait);
+	if (current->signal) {
+		debug_wait("WAIT(%d) return -EINTR\n", current->pid);
+		return -EINTR;
+	}
 	debug_wait("WAIT(%d) wakeup\n", current->pid);
-
-  } while(waitagain);
+  }
 
     debug_wait("WAIT(%d) return -ECHILD\n", current->pid);
 	return -ECHILD;
@@ -96,7 +95,7 @@ int sys_wait4(pid_t pid, int *status, int options)
 
 void do_exit(int status)
 {
-    struct task_struct *parent, *task;
+    struct task_struct *parent;
 
     debug_wait("EXIT(%d) status %d\n", current->pid, status);
     _close_allfiles();
@@ -114,7 +113,9 @@ void do_exit(int status)
 
     current->mm.seg_code = current->mm.seg_data = 0;
 
+#if BLOAT
     /* Keep all of the family stuff straight */
+    struct task_struct *task;
     if ((task = current->p_prevsib)) {
 	task->p_nextsib = current->p_nextsib;
     }
@@ -127,6 +128,9 @@ void do_exit(int status)
 	if ((task = current->p_prevsib) || (task = current->p_nextsib))
 	    parent->p_child = task;
     }
+#else
+    parent = current->p_parent;
+#endif
 
     /* UN*X process take their children out with them...
      * I'm not going to implement that for 0.0.51 because we don't
@@ -141,6 +145,9 @@ void do_exit(int status)
     iput(current->t_inode);
     iput(current->fs.root);
     iput(current->fs.pwd);
+
+    /* remove orphan zombies and reparent children to init*/
+    reparent_children();
 
     /* Now the task should never run again... - I hope this can still
      * be used outside of an int... :) */

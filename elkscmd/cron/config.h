@@ -5,6 +5,7 @@
 #ifndef __AC_CRON_D
 #define __AC_CRON_D 1
 
+#define TEST		0	/* =1 to debug/test sleep timer*/
 
 #define OS_LINUX 1
 #define while(x) while( (x) != 0 )
