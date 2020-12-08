@@ -169,7 +169,9 @@ securepath(char *path)
 	if ( sb.st_uid != 0 ) fatal("%s: not user 0", part);
 	if ( sb.st_gid != 0 ) fatal("%s: not group 0", part);
 	if ( !S_ISDIR(sb.st_mode) ) fatal("%s: not a directory", part);
+#if 0
 	if ( sb.st_mode & (S_IWGRP|S_IWOTH) ) fatal("%s: group or world writable", part);
+#endif
     }
     if ( stat(path, &sb) != 0 ) fatal("%s: can't stat", path);
     if ( stat(".", &sb1) != 0 ) fatal(".: can't stat");
