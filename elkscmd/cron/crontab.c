@@ -26,7 +26,7 @@
 
 char *pgm = "crontab";
 FILE *in_tmp;
-#define CRONTMP "crontmp.tmp"
+#define CRONTMP "/tmp/crontab.tmp"
 extern int interactive;
 
 void
@@ -180,9 +180,9 @@ visual(struct passwd *pwd)
     int save_euid = geteuid();
 
     xchdir(pwd->pw_dir ? pwd->pw_dir : "/tmp");
-    strcpy(vitemp, "/tmp/.crontab.XXXXXX");
+    strcpy(vitemp, "/tmp/cronedit.tmp");
     seteuid(getuid());
-    mktemp(vitemp);
+    //mktemp(vitemp);
 
     atexit(nomorevitemp);
 
