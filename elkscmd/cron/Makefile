@@ -7,7 +7,6 @@ BASEDIR=..
 include $(BASEDIR)/Make.defs
 
 LOCALFLAGS = -Wno-implicit-int -Wno-return-type $(OPTIONS)
-CRONFLAGS = -maout-heap=0x3800
 
 ###############################################################################
 #
@@ -26,10 +25,10 @@ all: $(progs)
 install: $(progs)
 
 cron: cron.o runjob.o $(common)
-	$(CC) $(CFLAGS) $(CRONFLAGS) -o $@ cron.o runjob.o $(common)
+	$(CC) $(CFLAGS) -maout-heap=14336 -o $@ cron.o runjob.o $(common)
 
 crontab: crontab.o $(common)
-	$(CC) $(CFLAGS) -o $@ crontab.o $(common)
+	$(CC) $(CFLAGS) -maout-heap=14336 -o $@ crontab.o $(common)
 
 clean:
 	rm -f $(progs) *.o
