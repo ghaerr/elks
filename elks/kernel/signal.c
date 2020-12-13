@@ -88,7 +88,7 @@ int kill_process(pid_t pid, sig_t sig, int priv)
 
     debug_sig("SIGNAL kill_proc sig %d pid %d\n", sig, pid);
     for_each_task(p)
-	if (p->pid == pid)
+	if (p->pid == pid && p->state < TASK_ZOMBIE)
 	    return send_sig(sig, p, 0);
     return -ESRCH;
 }
@@ -116,7 +116,7 @@ int sys_kill(pid_t pid, sig_t sig)
     count = retval = 0;
     if (pid == -1) {
 	for_each_task(p)
-	    if (p->pid > 1 && p != pcurrent) {
+	    if (p->pid > 1 && p != pcurrent && p->state < TASK_ZOMBIE) {
 		count++;
 		if ((err = send_sig(sig, p, 0)) != -EPERM)
 		    retval = err;

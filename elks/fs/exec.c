@@ -482,7 +482,9 @@ int sys_execve(char *filename, char *sptr, size_t slen)
      */
     arch_setup_user_stack(currentp, (word_t) mh.entry);
 
+#if 0	/* used only for vfork()*/
     wake_up(&currentp->p_parent->child_wait);
+#endif
 
     /* Done */
 
