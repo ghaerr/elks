@@ -197,6 +197,7 @@ int tmpstart(filename)
 	sprintf(tmpname, TMPNAME, o_directory, sum, statb.st_ino, statb.st_dev);
 #endif
 
+#if 0	/* remove tmpfile busy check for ELKS*/
 	/* make sure nobody else is editing the same file */
 	if (access(tmpname, 0) == 0)
 	{
@@ -207,6 +208,9 @@ int tmpstart(filename)
 		}
 		FAIL("\"%s\" is busy", filename);
 	}
+#else
+	unlink(tmpname);					/* remove temp file before create*/
+#endif
 
 	/* create the temp file */
 #if ANY_UNIX
