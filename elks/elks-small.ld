@@ -70,6 +70,10 @@ SECTIONS {
 		    "Error: total data segment size too small.");
 	}
 
+	.rel.dyn : {
+		*(.rel.*)
+	}
+
 	/* `entry' was the old entry point symbol.  (Unfortunately this
 	   PROVIDE does not seem to work with the ld.gold linker --- it did
 	   work with ld.bfd.  FIXME?)  */

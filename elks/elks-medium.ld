@@ -73,4 +73,8 @@ SECTIONS {
 			&& _chmem >= 0,
 		    "Error: total data segment size too small.");
 	}
+
+	.rel.dyn : {
+		*(.rel.*)
+	}
 }
