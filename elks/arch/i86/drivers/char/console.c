@@ -105,8 +105,18 @@ static void AnsiCmd(register Console * C, char c)
 	if (C->cy > MaxRow)
 	    C->cy = MaxRow;
 	break;
+    case 'd':			/* Vertical position absolute */
+	C->cy = parm1(C->params) - 1;
+	if (C->cy > MaxRow)
+	    C->cy = MaxRow;
+	break;
     case 'C':			/* Move right n characters */
 	C->cx += parm1(C->params);
+	if (C->cx > MaxCol)
+	    C->cx = MaxCol;
+	break;
+    case 'G':			/* Horizontal position absolute */
+	C->cx = parm1(C->params) - 1;
 	if (C->cx > MaxCol)
 	    C->cx = MaxCol;
 	break;
@@ -118,12 +128,23 @@ static void AnsiCmd(register Console * C, char c)
     case 'H':			/* cursor move */
 	Console_gotoxy(C, parm2(C->params) - 1, parm1(C->params) - 1);
 	break;
-    case 'J':			/* erase */
-	if (parm1(C->params) == 2)
+    case 'J':			/* clear screen */
+	n = atoi((char *)C->params);
+	if (n == 0) { 		/* to bottom */
+	    ClearRange(C, C->cx, C->cy, MaxCol, C->cy);
+	    if (C->cy < MaxRow)
+		ClearRange(C, 0, C->cy, MaxCol, MaxRow);
+	} else if (n == 2)	/* all*/
 	    ClearRange(C, 0, 0, MaxCol, MaxRow);
 	break;
-    case 'K':			/* Clear to EOL */
-	ClearRange(C, C->cx, C->cy, MaxCol, C->cy);
+    case 'K':			/* clear line */
+	n = atoi((char *)C->params);
+	if (n == 0)		/* to EOL */
+	    ClearRange(C, C->cx, C->cy, MaxCol, C->cy);
+	else if (n == 1)	/* to BOL */
+	    ClearRange(C, 0, C->cy, C->cx, C->cy);
+	else if (n == 2)	/* all */
+	    ClearRange(C, 0, C->cy, MaxCol, C->cy);
 	break;
     case 'L':			/* insert line */
 	ScrollDown(C, C->cy);
@@ -132,18 +153,21 @@ static void AnsiCmd(register Console * C, char c)
 	ScrollUp(C, C->cy);
 	break;
     case 'm':			/* ansi color */
-	n = atoi((char *)C->params);
-	if (n >= 30 && n <= 37) {
+      {
+	char *p = (char *)C->params;
+	do {
+	  n = atoi(p);
+	  if (n >= 30 && n <= 37) {
 	    C->attr &= 0xf8;
 	    C->attr |= (n-30) & 0x07;
 	    C->color = C->attr;
-	}
-	else if (n >= 40 && n <= 47) {
+	  }
+	  else if (n >= 40 && n <= 47) {
 	    C->attr &= 0x8f;
 	    C->attr |= ((n-40) << 4) & 0x70;
 	    C->color = C->attr;
-	}
-	else switch (n) {
+	  }
+	  else switch (n) {
 	    case 0:
 		C->attr = C->color;
 		break;
@@ -166,8 +190,12 @@ static void AnsiCmd(register Console * C, char c)
 	    default:
 		C->attr = C->color = A_DEFAULT;
 		break;
-	}
-	break;
+	  }
+	  while (*p >= '0' && *p <= '9')
+	    p++;
+	} while (*p++ == ';');
+      }
+      break;
     case 'n':
 	if (parm1(C->params) == 6) {		/* device status report*/
 	    //FIXME sequence can be interrupted by kbd input
