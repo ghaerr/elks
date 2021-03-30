@@ -469,6 +469,7 @@ int main(int argc, char **argv)
 		tcgetattr(0, &stdin_termio);
 		tcgetattr(0, &new);
 		new.c_lflag &= ~(ICANON | ECHO);
+		new.c_iflag &= ~(ICRNL);
 		tcsetattr(0, TCSANOW, &new);
 	}
 

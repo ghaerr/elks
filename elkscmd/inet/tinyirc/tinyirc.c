@@ -87,7 +87,8 @@ struct passwd *userinfo;
 #ifdef	POSIX
 struct termios _tty;
 tcflag_t _res_oflg, _res_lflg;
-#define raw() (_tty.c_lflag &= ~(ICANON | ECHO | ICRNL | ISIG), \
+#define raw() (_tty.c_lflag &= ~(ICANON | ECHO | ISIG), \
+	_tty.c_iflag &= ~ICRNL, \
 	_tty.c_oflag &= ~ONLCR, tcsetattr(my_tty, TCSANOW, &_tty))
 #define savetty() ((void) tcgetattr(my_tty, &_tty), \
 	_res_oflg = _tty.c_oflag, _res_lflg = _tty.c_lflag)
