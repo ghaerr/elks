@@ -345,32 +345,32 @@ again:
 	    ch = chq_getch(&tty->inq);
 	}
 
-	    if (icanon) {
-		if (ch == tty->termios.c_cc[VERASE]) {
-		    if (i > 0) {
-			i--;
-			k = ((get_user_char((void *)(--data))
-			    == '\t') ? TAB_SPACES : 1);
-			do {
-			    tty_echo(tty, ch);
-			} while (--k);
-		    }
-		    continue;
-		}
-		if ((tty->termios.c_iflag & ICRNL) && (ch == '\r'))
-		    ch = '\n';
+	if ((tty->termios.c_iflag & ICRNL) && (ch == '\r'))
+	    ch = '\n';
 
-		if (ch == tty->termios.c_cc[VEOF])
-		    break;
-	    } else {
-		if (vtime && vmin)	/* start timeout after first character*/
-		    nonblock = 1;
+	if (icanon) {
+	    if (ch == tty->termios.c_cc[VERASE]) {
+		if (i > 0) {
+		    i--;
+		    k = ((get_user_char((void *)(--data)) == '\t') ? TAB_SPACES : 1);
+		    do {
+			tty_echo(tty, ch);
+		    } while (--k);
+		}
+		continue;
 	    }
-	    put_user_char(ch, (void *)(data++));
-	    tty_echo(tty, ch);
-	    i++;
-	    if (icanon && ((ch == '\n') || (ch == tty->termios.c_cc[VEOL])))
+
+	    if (ch == tty->termios.c_cc[VEOF])
 		break;
+	} else {
+	    if (vtime && vmin)	/* start timeout after first character*/
+		nonblock = 1;
+	}
+	put_user_char(ch, (void *)(data++));
+	tty_echo(tty, ch);
+	i++;
+	if (icanon && ((ch == '\n') || (ch == tty->termios.c_cc[VEOL])))
+	    break;
     }
     return i;
 }

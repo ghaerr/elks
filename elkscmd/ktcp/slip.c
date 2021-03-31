@@ -109,6 +109,7 @@ int slip_init(char *fdev, speed_t baudrate)
      */
     ioctl(devfd, TCGETS, &tios);
     tios.c_lflag &= ~(ISIG | ICANON | ECHO | ECHOE);
+	tios.c_iflag &= ~(ICRNL);
     tios.c_oflag &= ~ONLCR;
     if (baud)
 	tios.c_cflag = baud;
