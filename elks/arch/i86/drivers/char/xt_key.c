@@ -89,6 +89,8 @@ static unsigned char tb_state[] = {
     SSC, SSC, SSC, SSC, SSC, SSC, SSC, 'k', 'l' /*50->58, F11-F12*/
 };
 
+#define TB_STATE_MAX	(sizeof(tb_state) / sizeof(tb_state[0]) - 1)
+
 /*
  * Map CAPS|ALT|CTL|SHIFT into NORMAL,SHIFT,CAPS,CTL-ALT,
  * which are used to index into scan_tabs[].
@@ -192,7 +194,7 @@ static void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
      *         10xx xxxxB, 0x80 Extended scan code
      *         11xx xxxxB, 0xC0 Simple Scan Code
      */
-    if (code >= 0x1C)
+    if (code >= 0x1C && code - 0x1C <= TB_STATE_MAX)
 	mode = tb_state[code - 0x1C]; /*is key a modifier key?*/
     else
         mode = SSC;
