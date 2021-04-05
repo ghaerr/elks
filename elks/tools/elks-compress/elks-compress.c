@@ -76,6 +76,7 @@ int main(int ac, char **av)
 	elks_size_t compr_sztext, compr_szdata, compr_szftext;
 	char *text, *data, *ftext;
 	char *compr_text, *compr_data, *compr_ftext;
+	elks_size_t szhdr;
 	struct stat sbuf;
 	char *exomizer_outfile = "ex.out";
 	int do_text = 1;
@@ -125,6 +126,7 @@ int main(int ac, char **av)
 		exit(1);
 	}
 	else memset(&eh, 0, sizeof(eh));
+	szhdr = mh.hlen;
 
 	if (eh.esh_compr_tseg || eh.esh_compr_dseg || eh.esh_compr_ftseg)
 	{
@@ -149,7 +151,7 @@ int main(int ac, char **av)
 		 * compress text section -> ex.out
 		 */
 		sprintf(cmd, "%s raw -q -C -b %s,%d,%d -o %s",
-			exomizer_binary, infile, (int)sizeof(mh), sztext, exomizer_outfile);
+			exomizer_binary, infile, szhdr, sztext, exomizer_outfile);
 		printf("%s\n", cmd);
 		unlink(exomizer_outfile);
 		if (system(cmd) != 0)
@@ -194,7 +196,7 @@ int main(int ac, char **av)
 		 * compress fartext section -> ex.out
 		 */
 		sprintf(cmd, "%s raw -q -C -b %s,%d,%d -o %s",
-			exomizer_binary, infile, (int)sizeof(mh)+sztext, szftext, exomizer_outfile);
+			exomizer_binary, infile, szhdr+sztext, szftext, exomizer_outfile);
 		printf("%s\n", cmd);
 		unlink(exomizer_outfile);
 		if (system(cmd) != 0)
@@ -239,7 +241,7 @@ int main(int ac, char **av)
 		 * compress data section -> ex.out
 		 */
 		sprintf(cmd, "%s raw -q -C -b %s,%d,%d -o %s",
-			exomizer_binary, infile, (int)sizeof(mh)+sztext+szftext, szdata, exomizer_outfile);
+			exomizer_binary, infile, szhdr+sztext+szftext, szdata, exomizer_outfile);
 		printf("%s\n", cmd);
 		unlink(exomizer_outfile);
 		if (system(cmd) != 0)
