@@ -45,7 +45,11 @@ struct elks_supl_hdr {
     /* even more optional fields --- for ELKS medium memory model support */
     unsigned long	esh_ftseg;	/* far text size */		// 0x30
     unsigned long	esh_ftrsize;	/* far text relocation size */	// 0x34
-    unsigned long	esh_reserved1, esh_reserved2;
+    /* optional fields for compressed binaries */
+    unsigned short	esh_compr_tseg;	/* compressed tseg size */
+    unsigned short	esh_compr_dseg;	/* compressed dseg size* */
+    unsigned short	esh_compr_ftseg;/* compressed ftseg size*/
+    unsigned short	esh_reserved;
 };
 
 struct minix_reloc {
