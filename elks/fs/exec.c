@@ -47,9 +47,6 @@
 
 #include <arch/segment.h>
 
-#define CONFIG_EXEC_COMPRESS
-int decompress(char *buf, seg_t seg, size_t orig_size, size_t compr_size, int safety);
-
 static struct minix_exec_hdr mh;
 #ifdef CONFIG_EXEC_MMODEL
 static struct elks_supl_hdr esuph;

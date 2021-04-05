@@ -1,4 +1,3 @@
-#define DEBUG 1
 #include <linuxmt/types.h>
 #include <linuxmt/memory.h>
 #include <linuxmt/kernel.h>
@@ -197,7 +196,7 @@ exo_decrunch(const char *in, char *out)
     return out;
 }
 
-int decompress(char *buf, seg_t seg, size_t orig_size, size_t compr_size, int safety)
+size_t decompress(char *buf, seg_t seg, size_t orig_size, size_t compr_size, int safety)
 {
 	char *in = buf + compr_size;
 	char *out = buf + orig_size + safety;

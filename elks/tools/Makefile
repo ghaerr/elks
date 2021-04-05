@@ -7,8 +7,6 @@ BASEDIR 	= ..
 # Define the variables required by the standard rules - see the standard
 # rules file (below) for details of these variables.
 
-USEBCC 		= N
-
 CLEANDEP	= 
 
 CLEANME 	= 
@@ -33,6 +31,7 @@ all:
 	$(MAKE) -C setboot all
 	$(MAKE) -C objdump86 all
 	$(MAKE) -C elf2elks all
+	$(MAKE) -C elks-compress all
 
 
 #########################################################################

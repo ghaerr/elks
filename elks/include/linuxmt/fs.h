@@ -480,6 +480,10 @@ extern size_t block_write(struct inode *,struct file *,char *,size_t);
 #define block_write NULL
 #endif
 
+#ifdef CONFIG_EXEC_COMPRESS
+extern size_t decompress(char *buf, seg_t seg, size_t orig_size, size_t compr_size, int safety);
+#endif
+
 #ifdef BLOAT_FS
 extern int get_write_access(struct inode *);
 extern void put_write_access(struct inode *);

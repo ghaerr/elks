@@ -72,11 +72,11 @@ int main(int ac, char **av)
 {
 	int ifd, ofd, efd, n;
 	long orig_size, compr_size;
+	elks_size_t szhdr;
 	elks_size_t sztext, szdata, szftext;
 	elks_size_t compr_sztext, compr_szdata, compr_szftext;
-	char *text, *data, *ftext;
+	char *text, *data = NULL, *ftext = NULL;
 	char *compr_text, *compr_data, *compr_ftext;
-	elks_size_t szhdr;
 	struct stat sbuf;
 	char *exomizer_outfile = "ex.out";
 	int do_text = 1;
@@ -307,5 +307,5 @@ int main(int ac, char **av)
 	compr_size = sbuf.st_size;
 	printf("%s: compressed from %ld to %ld (%ld%% reduction)\n",
 		outfile, orig_size, compr_size, 100 - (compr_size*100/orig_size));
-	exit(0);
+	return 0;
 }

@@ -4,4 +4,5 @@ bin/mfs
 bin/setboot
 bin/objdump86
 bin/elf2elks
+bin/elks-compress
 elftoolchain-0.7.1
