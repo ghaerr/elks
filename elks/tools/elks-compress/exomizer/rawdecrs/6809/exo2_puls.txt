@@ -1,0 +1,98 @@
+Exomizer2 on 6809 by Puls, implementation details
+
+The code starts by preserving the whole context on the
+stack. Interrupts are left in their current state.  The page where the
+code runs is loaded into DP from PC. U was loaded with the address of
+the last byte of compressed data before the call, so this byte is
+copied to bitbuf, which is where the bit stream flows during the
+decompression. bitbuf is in fact part of a load immediate to save
+space and to increase speed (a load immediate is the quickest load
+instruction) (self modifying code).
+
+Y is then loaded with the address of the bits and base table which is
+going to be built by the following loop. In order to optimize space
+and speed, we use auto-incremental addressing in the loop, (one of the
+nice features of the 6809) and since we have to alternatively store
+the bits and the bases, they are interleaved in the table (in the 6502
+code, the tables are separate), which let us go through just by
+incrementing Y with the auto-increments.
+
+The loop is basically the C code with a few twists, again for
+optimisation. The << operator is implemented in the loop labeled
+"roll". Instead of decrementing the number of iteration to 0, which is
+the usual way to make loops, we complement the iteration number and
+increment it to 0. Why ? Because we need a 1 for "1 << b1" and using
+COM sets CC:Carry to 1 in just one instruction of one byte (forcing
+the carry value is otherwise quite complicated to do and using an
+extra variable takes a lot of space) ! This 1 in CC:Carry is our 1 of
+"1 << b1".
+
+The main decrunching loop is labeled "mloop". Y is first loaded with
+the adress of the last byte of the output data. Then again, we
+essentially implemented the C code, but with some optimisations. The
+loop starts with fetching one bit. if the bit is not 1, D contains 0
+at that point. We can therefore use it to initialise the calculation
+of the index without explicitely loading a 0.
+
+In order to save some more bytes, the calculation loop is reversed and
+the first step is skipped with the "fcb $8c" which is interpreted as a
+CMPX instruction with no effect. This is equivalent to a branch to the
+next instruction, because the first instruction of the loop (labeld
+"rbl") is stored in the parameter of the CMPX. The index is stored
+directly in the load immediate labeled "idx" so that it is immediately
+available when exiting the loop without a costly store on the stack or
+similar operation.
+
+the index is easily compared to 16 with a series of conditional
+branches. If the tests are made in the good order, only two branches
+are needed since when index is 17, decrementing it once (one byte, 2
+cycles) sets it to 16 which is cosily reused as the number of bits to
+fetch in that case.
+
+The index calculation is immediately followed by the litteral copy
+loop (case index=17 or very first bit=1).  The copy loop for
+non-litterals is somewhere else (label "cpy2"). We decided to
+implement 2 loops instead of using a flag to determine the "copy mode"
+like in C, because this is faster and takes less space than
+manipulating an extra variable.
+
+For non-litterals, the length and offsets are computed starting at
+"coffs". By reordering the values of the switch case (compare
+tab1/tab2 with the 6502 code), we spare a conditional branch.
+
+base[index] + readbits(&in, bits[index]) is computed by the "cook"
+subroutine. Since the bits and bases are interleaved, the progression
+in the array is by 3. Using 3 ABX to add 3 times B to X is a nice way
+to do it, but ASLB is equivalent to *2 and is faster than ABX. 2*B+B
+is therefore better than B+B+B. Since the bits and bases are
+interleaved, we can use a convenient 1,X to read the base.
+
+The non-litteral copy loop is similar to the litteral one, except that
+we use an offset which is hardcoded in the LDA. This offset was
+written just before entering the loop, as a result of the "cook"
+subroutine.
+
+The decruncher ends by saving Y (address to first byte of decompressed
+data) and restoring the context.
+
+The getbits subroutine fetches up to 16 bits from the U stream and
+returns them in D. Using a local variable on the stack turned out to
+be more compact than anything else as we need several accumulators
+here and we only have 2 (A and B). By reordering the loop and making a
+wise use of the ROL instruction, the carry flag in CC can be used
+instead of masking the value with a 16th bit (C code) when the end of
+a sequence is reached. The carry is automatically rolled in and no
+extra variable is needed : when bit_buffer is 1, it is rolled right
+(CC:Carry becomes 1) then tested to 0, if yes, we load the next byte
+from the stream and roll, the highest bit becomes CC:Carry which was
+1. So in fact, we reuse the lowest bit of the previous bit_buffer
+instead of masking.
+
+While the code is still quite performant, we essentially worked on its
+size. Note that there is no extra variable space apart from the
+bits/base array.
+
+Possible improvements/modifications :
+
+- The use of DP could be suppressed completely. Pros: -1 byte in size,
+  no need to place the code inside a page. Cons: runs slower.
