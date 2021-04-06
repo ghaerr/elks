@@ -1,0 +1,132 @@
+.INTERMEDIARY: a.out vec.h.exo 6502emu.c.exo buf.h.exo test_enc
+.PHONY: test%
+
+test: test_raw test_rawbr test_rawr test_rawbr test_mem test_memf test_level test_levelf test_rawE test_rawbE test_rawrE test_rawbrE test_memE test_memfE test_levelE test_levelfE
+
+test_raw: exomizer vec.h
+	./exomizer raw -q -C vec.h -o vec.h.exo
+	./exomizer raw -q -d vec.h.exo
+	cmp vec.h a.out
+
+test_rawb: exomizer vec.h
+	./exomizer raw -q -b -C vec.h -o vec.h.exo
+	./exomizer raw -q -b -d vec.h.exo
+	cmp vec.h a.out
+
+test_rawr: exomizer vec.h
+	./exomizer raw -q -r -C vec.h -o vec.h.exo
+	./exomizer raw -q -r -d vec.h.exo
+	cmp vec.h a.out
+
+test_rawbr: exomizer vec.h
+	./exomizer raw -q -b -r -C vec.h -o vec.h.exo
+	./exomizer raw -q -b -r -d vec.h.exo
+	cmp vec.h a.out
+
+test_mem: exomizer vec.h
+	./exomizer mem -q -C vec.h@0x1234 -o vec.h.exo
+	./exomizer raw -q -b -d vec.h.exo,2,-2
+	cmp vec.h a.out
+
+test_memf: exomizer vec.h
+	./exomizer mem -f -q -C vec.h@0x1234 -o vec.h.exo
+	./exomizer raw -q -d vec.h.exo,4
+	cmp vec.h a.out
+
+test_level: exomizer vec.h
+	./exomizer level -q -C vec.h@0x1234 -o vec.h.exo
+	./exomizer raw -q -b -r -d vec.h.exo,2
+	cmp vec.h a.out
+
+test_levelf: exomizer vec.h
+	./exomizer level -f -q -C vec.h@0x1234 -o vec.h.exo
+	./exomizer raw -q -d vec.h.exo,2
+	cmp vec.h a.out
+
+test_rawE:  exomizer vec.h 6502emu.c buf.h
+	./exomizer raw -q -C -E vec.h 6502emu.c -o test_enc
+	./exomizer raw -q -C -E -e @test_enc -p1 buf.h -o test_enc2
+	cmp test_enc test_enc2
+	./exomizer raw -q -d vec.h.exo -e @test_enc
+	cmp vec.h a.out
+	./exomizer raw -q -d 6502emu.c.exo -e @test_enc
+	cmp 6502emu.c a.out
+	./exomizer raw -q -d buf.h.exo -e @test_enc
+	cmp buf.h a.out
+
+test_rawbE:  exomizer vec.h 6502emu.c buf.h
+	./exomizer raw -q -b -C -E vec.h 6502emu.c -o test_enc
+	./exomizer raw -q -b -C -E -e @test_enc -p1 buf.h -o test_enc2
+	cmp test_enc test_enc2
+	./exomizer raw -q -b -d vec.h.exo -e @test_enc
+	cmp vec.h a.out
+	./exomizer raw -q -b -d 6502emu.c.exo -e @test_enc
+	cmp 6502emu.c a.out
+	./exomizer raw -q -b -d buf.h.exo -e @test_enc
+	cmp buf.h a.out
+
+test_rawrE:  exomizer vec.h 6502emu.c buf.h
+	./exomizer raw -q -r -C -E vec.h 6502emu.c -o test_enc
+	./exomizer raw -q -r -C -E -e @test_enc -p1 buf.h -o test_enc2
+	cmp test_enc test_enc2
+	./exomizer raw -q -r -d vec.h.exo -e @test_enc
+	cmp vec.h a.out
+	./exomizer raw -q -r -d 6502emu.c.exo -e @test_enc
+	cmp 6502emu.c a.out
+	./exomizer raw -q -r -d buf.h.exo -e @test_enc
+	cmp buf.h a.out
+
+test_rawbrE:  exomizer vec.h 6502emu.c buf.h
+	./exomizer raw -q -b -r -C -E vec.h 6502emu.c -o test_enc
+	./exomizer raw -q -b -r -C -E -e @test_enc -p1 buf.h -o test_enc2
+	cmp test_enc test_enc2
+	./exomizer raw -q -b -r -d vec.h.exo -e @test_enc
+	cmp vec.h a.out
+	./exomizer raw -q -b -r -d 6502emu.c.exo -e @test_enc
+	cmp 6502emu.c a.out
+	./exomizer raw -q -b -r -d buf.h.exo -e @test_enc
+	cmp buf.h a.out
+
+test_memE:  exomizer vec.h 6502emu.c buf.h
+	./exomizer mem -q -C -E vec.h@0x1234 6502emu.c@0x4321 -o test_enc
+	./exomizer mem -q -C -E -e @test_enc -p1 buf.h@0x3412 -o test_enc2
+	cmp test_enc test_enc2
+	./exomizer raw -q -b -d vec.h.exo,0,-2 -e @test_enc
+	cmp vec.h a.out
+	./exomizer raw -q -b -d 6502emu.c.exo,0,-2 -e @test_enc
+	cmp 6502emu.c a.out
+	./exomizer raw -q -b -d buf.h.exo,0,-2 -e @test_enc
+	cmp buf.h a.out
+
+test_memfE:  exomizer vec.h 6502emu.c buf.h
+	./exomizer mem -q -f -C -E vec.h@0x1234 6502emu.c@0x4321 -o test_enc
+	./exomizer mem -q -f -C -E -e @test_enc -p1 buf.h@0x3412 -o test_enc2
+	cmp test_enc test_enc2
+	./exomizer raw -q -d vec.h.exo,2 -e @test_enc
+	cmp vec.h a.out
+	./exomizer raw -q -d 6502emu.c.exo,2 -e @test_enc
+	cmp 6502emu.c a.out
+	./exomizer raw -q -d buf.h.exo,2 -e @test_enc
+	cmp buf.h a.out
+
+test_levelE:  exomizer vec.h 6502emu.c buf.h
+	./exomizer level -q -C -E vec.h@0x1234 6502emu.c@0x4321 -o test_enc
+	./exomizer level -q -C -E -e @test_enc -p1 buf.h@0x3412 -o test_enc2
+	cmp test_enc test_enc2
+	./exomizer raw -q -b -r -d vec.h.exo,2 -e @test_enc
+	cmp vec.h a.out
+	./exomizer raw -q -b -r -d 6502emu.c.exo,2 -e @test_enc
+	cmp 6502emu.c a.out
+	./exomizer raw -q -b -r -d buf.h.exo,2 -e @test_enc
+	cmp buf.h a.out
+
+test_levelfE:  exomizer vec.h 6502emu.c buf.h
+	./exomizer level -q -f -C -E vec.h@0x1234 6502emu.c@0x4321 -o test_enc
+	./exomizer level -q -f -C -E -e @test_enc -p1 buf.h@0x3412 -o test_enc2
+	cmp test_enc test_enc2
+	./exomizer raw -q -d vec.h.exo,2 -e @test_enc
+	cmp vec.h a.out
+	./exomizer raw -q -d 6502emu.c.exo,2 -e @test_enc
+	cmp 6502emu.c a.out
+	./exomizer raw -q -d buf.h.exo,2 -e @test_enc
+	cmp buf.h a.out
