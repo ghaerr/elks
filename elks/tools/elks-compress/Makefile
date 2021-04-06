@@ -1,4 +1,4 @@
-# Makefile for the Linux/MT-kernel.
+# Minix filesystem manipulation tool
 #
 #########################################################################
 #
@@ -9,52 +9,46 @@
 #########################################################################
 # Relative path to base directory.
 
-BASEDIR 	= ..
+BASEDIR 	= ../..
 
 #########################################################################
 # Define the variables required by the standard rules - see the standard
 # rules file (below) for details of these variables.
 
-USEBCC  	= Y
+USEBCC 		= N
 
-CLEANDEP	= 
+CLEANDEP	=
 
-CLEANME 	= 
+CLEANME 	= ../bin/elks-compress ../bin/exomizer
 
-DEPEND  	= 
+DEPEND  	=
 
-DISTFILES	= 
+DISTFILES	=
 
-NOINDENT	= 
+NOINDENT	=
 
 #########################################################################
-# Include the standard commands.
+# Include standard commands.
 
 include $(BASEDIR)/Makefile-rules
 
 #########################################################################
 # Objects to be compiled.
 
-OBJS  = buffer.o super.o bufops.o devices.o fcntl.o stat.o inode.o file_table.o \
-	block_dev.o namei.o ioctl.o filesystems.o open.o read_write.o \
-	readdir.o exec.o select.o pipe.o
-ifdef CONFIG_EXEC_COMPRESS
-	OBJS += exodecr.o
-endif
+SRCS=elks-compress.c
+OBJS=$(SRCS:.c=.o)
 
 #########################################################################
 # Commands.
 
-all:	fs.a
+all:	../bin/elks-compress ../bin/exomizer
 
-fs.a:	$(OBJS)
-	$(AR) rcs fs.a $(OBJS)
+../bin/elks-compress: minix.h $(OBJS)
+	$(CC) -o ../bin/elks-compress $(CFLAGS) $(OBJS)
 
-#########################################################################
-# Standard commands.
-
-distdir:
-	cp -pf config.in Makefile *.c $(DISTDIR)/fs
+../bin/exomizer:
+	make -C exomizer/src
+	cp -p exomizer/src/exomizer ../bin/exomizer
 
 #########################################################################
 ### Dependencies:

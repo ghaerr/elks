@@ -137,6 +137,8 @@ int sys_execve(char *filename, char *sptr, size_t slen)
     segment_s * seg_code;
     segment_s * seg_data;
     size_t len, min_len, heap, stack = 0;
+    size_t bytes;
+    segext_t paras;
 #ifdef CONFIG_EXEC_MMODEL
     int need_reloc_code = 1;
 #endif
@@ -211,6 +213,10 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	       "far text reloc size 0x%x, text base 0x%lx\n",
 	       esuph.msh_trsize, esuph.msh_drsize, esuph.esh_ftrsize,
 	       esuph.msh_tbase);
+#ifndef CONFIG_EXEC_COMPRESS
+	if (esuph.esh_compr_tseg || esup.esh_compr_ftseg || esup.esh_compr_dseg)
+	    goto error_exec3;
+#endif
 	retval = -EINVAL;
 	if (esuph.msh_tbase != 0)
 	    goto error_exec3;
@@ -320,58 +326,91 @@ int sys_execve(char *filename, char *sptr, size_t slen)
      *      Looks good. Get the memory we need
      */
     if (!seg_code) {
-	segext_t paras;
+	bytes = (size_t)mh.tseg;
+	paras = bytes_to_paras(bytes);
 	retval = -ENOMEM;
-	paras = bytes_to_paras((size_t)mh.tseg);
+#ifdef CONFIG_EXEC_COMPRESS
+	if (esuph.esh_compr_tseg || esuph.esh_compr_ftseg) {
+	    if (esuph.esh_compr_tseg)
+		bytes = esuph.esh_compr_tseg;
+	    paras += 1;		/* add 16 bytes for safety offset */
+	}
+#endif
 #ifdef CONFIG_EXEC_MMODEL
 	paras += bytes_to_paras((size_t)esuph.esh_ftseg);
 #endif
-	debug("EXEC: Allocating 0x%x paragraphs for text segment(s)\n",
-	       paras);
+	debug("EXEC: Allocating 0x%x paragraphs for text segment(s)\n", paras);
 	seg_code = seg_alloc(paras, SEG_FLAG_CSEG);
 	if (!seg_code) goto error_exec3;
 	currentp->t_regs.ds = seg_code->base;  // segment used by read()
-	retval = filp->f_op->read(inode, filp, 0, (size_t)mh.tseg);
-	if (retval != (size_t)mh.tseg) {
-	    debug("EXEC(tseg read): bad result %u, expected %u\n",
-		   retval, (size_t)mh.tseg);
+	retval = filp->f_op->read(inode, filp, 0, bytes);
+	if (retval != bytes) {
+	    debug("EXEC(tseg read): bad result %u, expected %u\n", retval, bytes);
 	    goto error_exec4;
 	}
+#ifdef CONFIG_EXEC_COMPRESS
+	retval = -ENOEXEC;
+	if (esuph.esh_compr_tseg &&
+	    decompress(0, seg_code->base, (size_t)mh.tseg, bytes, 16) != (size_t)mh.tseg)
+		goto error_exec4;
+#endif
 #ifdef CONFIG_EXEC_MMODEL
-	if ((size_t)esuph.esh_ftseg) {
+	bytes = esuph.esh_ftseg;
+	if (bytes) {
+#ifdef CONFIG_EXEC_COMPRESS
+	    if (esuph.esh_compr_ftseg)
+		bytes = esuph.esh_compr_ftseg;
+#endif
 	    currentp->t_regs.ds = seg_code->base + bytes_to_paras((size_t)mh.tseg);
-	    retval = filp->f_op->read(inode, filp, 0, (size_t)esuph.esh_ftseg);
-	    if (retval != (size_t)esuph.esh_ftseg) {
-		debug("EXEC(ftseg read): bad result %u, expected %u\n",
-		       retval, (size_t)esuph.esh_ftseg);
+	    retval = filp->f_op->read(inode, filp, 0, bytes);
+	    if (retval != bytes) {
+		debug("EXEC(ftseg read): bad result %u, expected %u\n", retval, bytes);
 		goto error_exec4;
 	    }
+#ifdef CONFIG_EXEC_COMPRESS
+	    retval = -ENOEXEC;
+	    if (esuph.esh_compr_ftseg &&
+		decompress(0, seg_code->base + bytes_to_paras((size_t)mh.tseg),
+		    (size_t)esuph.esh_ftseg, bytes, 16) != (size_t)esuph.esh_ftseg)
+			goto error_exec4;
+#endif
 	}
 #endif
     } else {
 	seg_get (seg_code);
-	filp->f_pos += (size_t)mh.tseg;
+	filp->f_pos += esuph.esh_compr_tseg? esuph.esh_compr_tseg: (size_t)mh.tseg;
 #ifdef CONFIG_EXEC_MMODEL
-	filp->f_pos += (size_t)esuph.esh_ftseg;
+	filp->f_pos += esuph.esh_compr_ftseg? esuph.esh_compr_ftseg: (size_t)esuph.esh_ftseg;
 	need_reloc_code = 0;
 #endif
     }
-    debug("EXEC: Allocating 0x%x paragraphs for data segment\n",
-	   (segext_t) (len >> 4));
 
+    paras = len >> 4;
     retval = -ENOMEM;
-    seg_data = seg_alloc ((segext_t) (len >> 4), SEG_FLAG_DSEG);
+    debug("EXEC: Allocating 0x%x paragraphs for data segment\n", paras);
+    seg_data = seg_alloc (paras, SEG_FLAG_DSEG);
     if (!seg_data) goto error_exec4;
-
     debug("EXEC: Malloc succeeded - cs=%x ds=%x\n", seg_code->base, seg_data->base);
 
+    bytes = (size_t)mh.dseg;
+#ifdef CONFIG_EXEC_COMPRESS
+    if (esuph.esh_compr_dseg) {
+	    bytes = esuph.esh_compr_dseg;
+	    //if (mh.bss < 16 && !stack && !heap)
+		//paras += 1;		/* add 16 bytes for safety offset */
+    }
+#endif
     currentp->t_regs.ds = seg_data->base;  // segment used by read()
-    retval = filp->f_op->read(inode, filp, (char *)base_data, (size_t)mh.dseg);
-
-    if (retval != (size_t)mh.dseg) {
-	debug("EXEC(dseg read): bad result %d, expected %u\n", retval, (size_t)mh.dseg);
+    retval = filp->f_op->read(inode, filp, (char *)base_data, bytes);
+    if (retval != bytes) {
+	debug("EXEC(dseg read): bad result %d, expected %u\n", retval, bytes);
 	goto error_exec5;
     }
+#ifdef CONFIG_EXEC_COMPRESS
+	if (esuph.esh_compr_dseg &&
+	    decompress(0, seg_data->base, (size_t)mh.dseg, bytes, 16) != (size_t)mh.dseg)
+		goto error_exec5;
+#endif
 
 #ifdef CONFIG_EXEC_MMODEL
     if (need_reloc_code) {

@@ -34,6 +34,12 @@ endif
 
 image: $(TARGETS)
 
+copyminix: minixfs
+
+copyfat: fatfs
+
+copyrom: romfs
+
 # Populate template for filesystem genfs
 
 template:
@@ -59,7 +65,7 @@ endif
 #	Check image integrity
 #	Print filesystem used inode and block count
 
-minixfs: template
+minixfs:
 	rm -f $(TARGET_FILE)
 	mfs $(VERBOSE) $(TARGET_FILE) genfs $(MINIX_MKFSOPTS) $(DESTDIR)
 ifdef CONFIG_IMG_DEV
@@ -85,7 +91,7 @@ endif
 # all mtools commands require image file
 # -i image	image filename
 
-fatfs: template
+fatfs:
 	rm -f $(TARGET_FILE)
 	dd if=/dev/zero of=$(TARGET_FILE) bs=1024 count=$(TARGET_BLKS)
 	mformat -i $(TARGET_FILE) $(FAT_MKFSOPTS)
@@ -110,7 +116,7 @@ endif
 
 # Create ROM filesystem from template
 
-romfs: template
+romfs:
 	-rm -f romfs.devices
 	$(MAKE) -f Make.devices "MKDEV=echo >> romfs.devices"
 	mkromfs -d romfs.devices $(DESTDIR)

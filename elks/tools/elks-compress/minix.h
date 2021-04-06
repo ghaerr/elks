@@ -22,40 +22,44 @@
 #define INIT_HEAP  4096		/* Default heap*/
 #define INIT_STACK 4096		/* Default stack*/
 
+typedef unsigned int	uint32;
+typedef unsigned short	uint16;
+typedef unsigned char	uint8;
+
 struct minix_exec_hdr {
-    unsigned long	type;
-    unsigned char	hlen;		// 0x04
-    unsigned char	reserved1;
-    unsigned short	version;
-    unsigned long	tseg;		// 0x08
-    unsigned long	dseg;		// 0x0c
-    unsigned long	bseg;		// 0x10
-    unsigned long	entry;
-    unsigned short	chmem;
-    unsigned short	minstack;
-    unsigned long	syms;
+    uint32	type;
+    uint8	hlen;		// 0x04
+    uint8	reserved1;
+    uint8	version;
+    uint32	tseg;		// 0x08
+    uint32	dseg;		// 0x0c
+    uint32	bseg;		// 0x10
+    uint32	entry;
+    uint16	chmem;
+    uint16	minstack;
+    uint32	syms;
 };
 
 struct elks_supl_hdr {
     /* optional fields */
-    unsigned long	msh_trsize;	/* text relocation size */	// 0x20
-    unsigned long	msh_drsize;	/* data relocation size */	// 0x24
-    unsigned long	msh_tbase;	/* text relocation base */
-    unsigned long	msh_dbase;	/* data relocation base */
+    uint32	msh_trsize;	/* text relocation size */	// 0x20
+    uint32	msh_drsize;	/* data relocation size */	// 0x24
+    uint32	msh_tbase;	/* text relocation base */
+    uint32	msh_dbase;	/* data relocation base */
     /* even more optional fields --- for ELKS medium memory model support */
-    unsigned long	esh_ftseg;	/* far text size */		// 0x30
-    unsigned long	esh_ftrsize;	/* far text relocation size */	// 0x34
+    uint32	esh_ftseg;	/* far text size */		// 0x30
+    uint32	esh_ftrsize;	/* far text relocation size */	// 0x34
     /* optional fields for compressed binaries */
-    unsigned short	esh_compr_tseg;	/* compressed tseg size */
-    unsigned short	esh_compr_dseg;	/* compressed dseg size* */
-    unsigned short	esh_compr_ftseg;/* compressed ftseg size*/
-    unsigned short	esh_reserved;
+    uint16	esh_compr_tseg;	/* compressed tseg size */
+    uint16	esh_compr_dseg;	/* compressed dseg size* */
+    uint16	esh_compr_ftseg;/* compressed ftseg size*/
+    uint16	esh_reserved;
 };
 
 struct minix_reloc {
-    unsigned long	r_vaddr;	/* address of place within section */
-    unsigned short	r_symndx;	/* index into symbol table */	// 0x04
-    unsigned short	r_type;		/* relocation type */		// 0x06
+    uint32	r_vaddr;	/* address of place within section */
+    uint16	r_symndx;	/* index into symbol table */	// 0x04
+    uint16	r_type;		/* relocation type */		// 0x06
 };
 
 /* r_type values */
