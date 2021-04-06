@@ -47,8 +47,8 @@ all:	../bin/elks-compress ../bin/exomizer
 	$(CC) -o ../bin/elks-compress $(CFLAGS) $(OBJS)
 
 ../bin/exomizer:
-#	make -C exomizer/src
-#	cp -p exomizer/src/exomizer ../bin/exomizer
+	make -C exomizer/src
+	cp -p exomizer/src/exomizer ../bin/exomizer
 
 #########################################################################
 ### Dependencies:
