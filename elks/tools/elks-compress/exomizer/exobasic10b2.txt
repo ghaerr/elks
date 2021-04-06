@@ -1,0 +1,52 @@
+-------------------------------------------------------------------------------
+Features of the Exobasic 1.0b2 tool:
+-------------------------------------------------------------------------------
+
+1) Renumber the basic lines (standard), -n<n>,<m> (Beta quality)
+
+   The lines are renumbered starting with <n> and increasing with <m> for each
+   line.
+
+2) Renumber the basic lines (extreme), -N (Beta quality)
+
+  This will increase the file crunchability. This renumbering will renumber
+  many basic lines to 0. Yes, they will run correctly. :)
+
+2) Clobber the line links, -p (Release quality)
+
+  Normally a basic program file consists of a linked list of zero terminated
+  basic line strings. The links between the lines are redundant and can be
+  recreated. In fact the basic interpreter always recreate the links when
+  a basic program is loaded from the READY prompt. This is done to be able to
+  easily move basic programs between compatible platforms where the start
+  address of basic differs. The links contained in the file are only correct if
+  the file is loaded to the address it was saved from.
+
+  This means that we can write any values as the links as long as we recreate
+  them before running the program. The routine that recreates the links is at
+  $A533 (c64) or $8818 (c16/plus4).
+
+  The values this option actually writes to the links are optimized to increase
+  the file crunchability.
+
+3) Add a trampoline -t, (Release quality)
+
+  This feature adds a small machine language routine at the beginning of the
+  program. This routine does all the startup preparation work necessary and
+  then starts the program. If the "clobber line links" option is selected, the
+  added trampoline will recreate them. When a trampoline is added it is very
+  easy to crunch the file and then just jmp the trampoline to start it. For a
+  c16/plus4 trampoline add a -4 option to the commandline as well.
+
+4) Remove rem statements and unnecessary spaces, -r (Release quality)
+
+  This feature removes rem statements unless they are first on a line and the
+  line is a goto/gosub target. If so then only the rem statement is left.
+  It also removes unneccessary spaces between basic statements.
+
+5) Regenerate c16/plus4 stack color table, -c (Release quality)
+  This feature only works if a c16/plus4 trampoline is created with the -t and
+  -4 flags. It will regenerate a system color table located at the hardware
+  stack that the Exomisers built-in decruncher overwrites.
+
+-------------------------------------------------------------------------------
