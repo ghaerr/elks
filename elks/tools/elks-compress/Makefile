@@ -19,7 +19,7 @@ USEBCC 		= N
 
 CLEANDEP	=
 
-CLEANME 	= ../bin/elks-compress
+CLEANME 	= ../bin/elks-compress ../bin/exomizer
 
 DEPEND  	=
 
@@ -41,10 +41,14 @@ OBJS=$(SRCS:.c=.o)
 #########################################################################
 # Commands.
 
-all:	../bin/elks-compress
+all:	../bin/elks-compress ../bin/exomizer
 
 ../bin/elks-compress: minix.h $(OBJS)
 	$(CC) -o ../bin/elks-compress $(CFLAGS) $(OBJS)
+
+../bin/exomizer:
+	make -C exomizer/src
+	cp -p exomizer/src/exomizer ../bin/exomizer
 
 #########################################################################
 ### Dependencies:

@@ -5,4 +5,5 @@ bin/setboot
 bin/objdump86
 bin/elf2elks
 bin/elks-compress
+bin/exomizer
 elftoolchain-0.7.1
