@@ -6,8 +6,12 @@
 #
 CC = ia16-elf-gcc
 CPP = ia16-elf-gcc -E
-CFLAGS = -melks-libc -mcmodel=medium -msegment-relocation-stuff -ffunction-sections -mtune=i8086 -Wall -Os
+RANLIB = ia16-elf-ranlib
+CFLAGS = -melks-libc -mcmodel=medium -msegment-relocation-stuff -mtune=i8086 -Wall -Os
 CFLAGS += $(INCLUDES)
+
+# nano adds CFLAGS += -ffunction-sections after including this file
+# ncurses adds CFLAGS += -fno-inline after including this file
 
 CFLAGS += -DELKS=1 -DGAWK -DNO_MBSUPPORT
 CFLAGS += -I../../ncurses-5.2

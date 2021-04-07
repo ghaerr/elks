@@ -87,7 +87,9 @@ CCDEPMODE = depmode=gcc3
 #CC = gcc
 #CFLAGS = -g -O2
 #CPP = gcc -E
+
 include ../../Make.defs
+CFLAGS += -ffunction-sections
 
 CPPFLAGS = 
 CURSES_LIB = -lncurses

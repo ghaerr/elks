@@ -79,12 +79,9 @@ LN_S		= ln -s
 #CPP		= gcc -E
 #CFLAGS		= -O3 
 #RANLIB		= ranlib
-CC		= ia16-elf-gcc
-CPP		= ia16-elf-gcc -E
-TOPDIR=/Users/greg/net/elks-gh
-ELKSINC=-I$(TOPDIR)/include -I$(TOPDIR)/libc/include -I$(TOPDIR)/elks/include
-CFLAGS=-fno-inline -melks-libc -mcmodel=medium -msegment-relocation-stuff -mtune=i8086 -Wall -Os $(ELKSINC)
-RANLIB		= $(TOPDIR)/cross/bin/ia16-elf-ranlib
+
+include ../../Make.defs
+CFLAGS += -fno-inline
 
 INCDIR		= $(srcdir)/../include
 CPPFLAGS	= -I../ncurses -I$(srcdir)  -DNDEBUG -I. -I../include -I$(includedir) \
