@@ -1,0 +1,83 @@
+regex.o: regex.c \
+ /Users/greg/net/elks-gh/cross/lib/gcc/ia16-elf/6.3.0/include-fixed/limits.h \
+ /Users/greg/net/elks-gh/cross/lib/gcc/ia16-elf/6.3.0/include/stdint.h \
+ /Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/stdint.h \
+ /Users/greg/net/elks-gh/cross/lib/gcc/ia16-elf/6.3.0/include/stdint-gcc.h \
+ ../../regex/regex.h \
+ /Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/stdio.h \
+ /Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/features.h \
+ /Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/sys/cdefs.h \
+ /Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/sys/types.h \
+ /Users/greg/net/elks-gh/cross/lib/gcc/ia16-elf/6.3.0/include/stddef.h \
+ /Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/linuxmt/types.h \
+ /Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/arch/types.h \
+ /Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/linuxmt/config.h \
+ /Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/autoconf.h \
+ /Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/linuxmt/major.h \
+ /Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/linuxmt/posix_types.h \
+ /Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/arch/posix_types.h \
+ /Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/linuxmt/time.h \
+ /Users/greg/net/elks-gh/cross/lib/gcc/ia16-elf/6.3.0/include/stdarg.h \
+ ../../regex/regex_internal.h \
+ /Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/assert.h \
+ /Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/ctype.h \
+ /Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/stdlib.h \
+ /Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/malloc.h \
+ /Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/string.h \
+ ../../regex/regex_internal.c ../../regex/regcomp.c ../../regex/regexec.c
+
+/Users/greg/net/elks-gh/cross/lib/gcc/ia16-elf/6.3.0/include-fixed/limits.h:
+
+/Users/greg/net/elks-gh/cross/lib/gcc/ia16-elf/6.3.0/include/stdint.h:
+
+/Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/stdint.h:
+
+/Users/greg/net/elks-gh/cross/lib/gcc/ia16-elf/6.3.0/include/stdint-gcc.h:
+
+../../regex/regex.h:
+
+/Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/stdio.h:
+
+/Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/features.h:
+
+/Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/sys/cdefs.h:
+
+/Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/sys/types.h:
+
+/Users/greg/net/elks-gh/cross/lib/gcc/ia16-elf/6.3.0/include/stddef.h:
+
+/Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/linuxmt/types.h:
+
+/Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/arch/types.h:
+
+/Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/linuxmt/config.h:
+
+/Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/autoconf.h:
+
+/Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/linuxmt/major.h:
+
+/Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/linuxmt/posix_types.h:
+
+/Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/arch/posix_types.h:
+
+/Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/linuxmt/time.h:
+
+/Users/greg/net/elks-gh/cross/lib/gcc/ia16-elf/6.3.0/include/stdarg.h:
+
+../../regex/regex_internal.h:
+
+/Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/assert.h:
+
+/Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/ctype.h:
+
+/Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/stdlib.h:
+
+/Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/malloc.h:
+
+/Users/greg/net/elks-gh/cross/ia16-elf/lib/elkslibc/medium/include/string.h:
+
+../../regex/regex_internal.c:
+
+../../regex/regcomp.c:
+
+../../regex/regexec.c:

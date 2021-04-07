@@ -1,0 +1,856 @@
+This is nano.info, produced by makeinfo version 4.8 from nano.texi.
+
+INFO-DIR-SECTION Editors
+START-INFO-DIR-ENTRY
+* nano: (nano).                 Small and friendly text editor.
+END-INFO-DIR-ENTRY
+
+
+File: nano.info,  Node: Top,  Next: Introduction,  Prev: (dir),  Up: (dir)
+
+   This manual documents GNU `nano', a small and friendly text editor.
+
+* Menu:
+
+* Introduction::
+* Editor Basics::
+* Online Help::
+* Feature Toggles::
+* Nanorc Files::
+* The File Browser::
+* Pico Compatibility::
+* Building and Configure Options::
+
+
+File: nano.info,  Node: Introduction,  Next: Editor Basics,  Prev: Top,  Up: Top
+
+1 Introduction
+**************
+
+GNU `nano' is a small and friendly text editor.  Besides basic text
+editing, `nano' offers many extra features like an interactive search
+and replace, go to line and column number, auto-indentation, feature
+toggles, internationalization support, and filename tab completion.
+
+* Menu:
+
+* Overview::
+* Command Line Options::
+
+
+File: nano.info,  Node: Overview,  Next: Command Line Options,  Prev: Introduction,  Up: Introduction
+
+1.1 Overview
+============
+
+The original goal for `nano' was a complete bug-for-bug compatible
+emulation of Pico, but `nano''s current goal is to be as compatible as
+possible while offering a superset of Pico's functionality.  See *Note
+Pico Compatibility::, for more info.
+
+   The usual way to invoke `nano' is:
+
+     `nano [OPTION]... [FILE]'
+
+   But it is also possible to edit several files in a row.
+Additionally, the cursor can be put on a desired line number by adding
+this number with a plus sign before any filename, and even in a desired
+column by adding it with a comma.  So the complete synopsis is:
+
+     `nano [OPTION]... [[+LINE] FILE]...'
+
+     `nano [OPTION]... [[+,COLUMN] FILE]...'
+
+     `nano [OPTION]... [[+LINE,COLUMN] FILE]...'
+
+   Email bug reports to <nano@nano-editor.org>.
+
+
+File: nano.info,  Node: Command Line Options,  Prev: Overview,  Up: Introduction
+
+1.2 Command Line Options
+========================
+
+`nano' takes the following options from the command line:
+
+`+LINE,COLUMN'
+     Start at line number LINE and column number COLUMN (at least one of
+     which must be specified) instead of the default of line 1, column
+     1.
+
+`-?'
+     Same as `-h, --help'.
+
+`-A, --smarthome'
+     Make the Home key smarter.  When Home is pressed anywhere but at
+     the very beginning of non-whitespace characters on a line, the
+     cursor will jump to that beginning (either forwards or backwards).
+     If the cursor is already at that position, it will jump to the
+     true beginning of the line.
+
+`-B, --backup'
+     When saving a file, back up the previous version of it to the
+     current filename suffixed with a ~.
+
+`-C <dir>, --backupdir=<dir>'
+     Set the directory where `nano' puts unique backup files if file
+     backups are enabled.
+
+`-D, --boldtext'
+     Use bold text instead of reverse video text.
+
+`-E, --tabstospaces'
+     Convert typed tabs to spaces.
+
+`-F, --multibuffer'
+     Enable multiple file buffers, if available.
+
+`-H, --historylog'
+     Log search and replace strings to ~/.nano_history, so they can be
+     retrieved in later sessions, if nanorc support is available.
+
+`-I, --ignorercfiles'
+     Don't look at SYSCONFDIR/nanorc or ~/.nanorc, if nanorc support is
+     available.
+
+`-K, --rebindkeypad'
+     Interpret the numeric keypad keys so that they all work properly.
+     You should only need to use this option if they don't, as mouse
+     support won't work properly with this option enabled.
+
+`-L, --nonewlines'
+     Don't add newlines to the ends of files.
+
+`-N, --noconvert'
+     Don't convert files from DOS/Mac format.
+
+`-O, --morespace'
+     Use the blank line below the titlebar as extra editing space.
+
+`-Q <str>, --quotestr=<str>'
+     Set the quoting string for justifying.  The default value is
+
+          `^([ \t]*[|>:}#])+'
+
+     if extended regular expression support is available, or "> "
+     otherwise.  Note that `\t' above stands for a literal Tab
+     character.
+
+`-R, --restricted'
+     Restricted mode: don't read or write to any file not specified on
+     the command line; read any nanorc files; allow suspending; allow a
+     file to be appended to, prepended to, or saved under a different
+     name if it already has one; or use backup files or spell checking.
+     Also accessible by invoking `nano' with any name beginning with
+     'r' (e.g. "rnano").
+
+`-S, --smooth'
+     Enable smooth scrolling.  Text will scroll line-by-line, instead
+     of the usual chunk-by-chunk behavior.
+
+`-T <#cols>, --tabsize=<#cols>'
+     Set the displayed tab length to #cols columns.  The value of #cols
+     must be greater than 0.  The default value is 8.
+
+`-U, --quickblank'
+     Do quick statusbar blanking.  Statusbar messages will disappear
+     after 1 keystroke instead of 25.  Note that -c overrides this.
+
+`-V, --version'
+     Show the current version number and exit.
+
+`-W, --wordbounds'
+     Detect word boundaries more accurately by treating punctuation
+     characters as parts of words.
+
+`-Y <str>, --syntax=<str>'
+     Specify a specific syntax highlighting from the nanorc to use, if
+     available.  See *Note Nanorc Files::, for more info.
+
+`-c, --const'
+     Constantly display the cursor position and line number on the
+     statusbar.  Note that this overrides -U.
+
+`-d, --rebinddelete'
+     Interpret the Delete key differently so that both Backspace and
+     Delete work properly.  You should only need to use this option if
+     Backspace acts like Delete on your system.
+
+`-h, --help'
+     Show a summary of command line options and exit.
+
+`-i, --autoindent'
+     Automatically indent new lines to the same number of spaces and
+     tabs as the previous line.
+
+`-k, --cut'
+     Cut from the current cursor position to the end of the current
+     line.
+
+`-l, --nofollow'
+     When writing files, if the given file is a symbolic link, it is
+     removed and a new file is created.
+
+`-m, --mouse'
+     Enable mouse support, if available for your system.  When enabled,
+     mouse clicks can be used to place the cursor, set the mark (with a
+     double click), and execute shortcuts.  The mouse will work in the
+     X Window System, and on the console when gpm is running.
+
+`-o <dir>, --operatingdir=<dir>'
+     Set operating directory.  Makes `nano' set up something similar to
+     a chroot.
+
+`-p, --preserve'
+     Preserve the ^Q (XON) and ^S (XOFF) sequences so data being sent
+     to the editor can be can be stopped and started.
+
+`-r <#cols>, --fill=<#cols>'
+     Wrap lines at column #cols.  If this value is 0 or less, wrapping
+     will occur at the width of the screen less #cols, allowing it to
+     vary along with the width of the screen if the screen is resized.
+     The default value is -8.
+
+`-s <prog>, --speller=<prog>'
+     Invoke the given program as the spell checker.  By default, `nano'
+     uses the command specified in the SPELL environment variable, or,
+     if SPELL is not set, its own interactive spell checker that
+     requires the `spell' program to be installed on your system.
+
+`-t, --tempfile'
+     Don't ask whether or not to save the current contents of the file
+     when exiting, assume yes.  This is most useful when using `nano'
+     as the composer of a mailer program.
+
+`-v, --view'
+     Don't allow the contents of the file to be altered.  Note that this
+     option should NOT be used in place of correct file permissions to
+     implement a read-only file.
+
+`-w, --nowrap'
+     Don't wrap long lines at any length.  This option overrides any
+     value for -r.
+
+`-x, --nohelp'
+     Expert Mode: don't show the Shortcut Lists at the bottom of the
+     screen.  This affects the location of the statusbar as well, as in
+     Expert Mode it is located at the very bottom of the editor.
+
+     Note: When accessing the help system, Expert Mode is temporarily
+     disabled to display the help system navigation keys.
+
+`-z, --suspend'
+     Enable `nano''s suspend ability using the system's suspend
+     keystroke (usually ^Z).
+
+`-a, -b, -e, -f, -g, -j'
+     Ignored, for compatibility with Pico.
+
+
+File: nano.info,  Node: Editor Basics,  Next: Online Help,  Prev: Introduction,  Up: Top
+
+2 Editor Basics
+***************
+
+* Menu:
+
+* Entering Text::
+* Special Functions::
+* The Titlebar::
+* The Statusbar::
+* Shortcut Lists::
+* Using the Mouse::
+
+
+File: nano.info,  Node: Entering Text,  Next: Special Functions,  Prev: Editor Basics,  Up: Editor Basics
+
+2.1 Entering Text
+=================
+
+All key sequences in `nano' are entered using the keyboard.  `nano' is
+a "modeless" editor.  All keys, with the exception of Control and Meta
+key sequences, will enter text into the file being edited.
+
+
+File: nano.info,  Node: Special Functions,  Next: The Titlebar,  Prev: Entering Text,  Up: Editor Basics
+
+2.2 Special Functions
+=====================
+
+Special functions use the Control (Ctrl) key, displayed in the help and
+shortcut lists as ^; the Meta key, displayed as M; or the Escape (Esc)
+key.
+
+   * Control key sequences are entered by holding down the Ctrl key and
+     pressing the desired key, or by pressing the Esc key twice and
+     pressing the desired key.
+
+   * Pressing Esc twice and then typing a three-digit number from 000
+     to 255 will enter the character with the corresponding value.
+
+   * Meta key sequences are entered by holding down the Meta key
+     (normally the Alt key) and pressing the desired key, or by
+     pressing the Esc key once and pressing the desired key.  Certain
+     operating systems "swallow" the Alt key so that it never reaches
+     the application; if your operating system does this, you should
+     use the Esc key to generate Meta key sequences.
+
+
+File: nano.info,  Node: The Titlebar,  Next: The Statusbar,  Prev: Special Functions,  Up: Editor Basics
+
+2.3 The Titlebar
+================
+
+The titlebar is the line displayed at the top of the editor.  There are
+three sections: left, center and right.  The section on the left
+displays the version of `nano' being used.  The center section displays
+the current filename, or "New Buffer" if the file has not yet been
+named.  The section on the right will display "Modified" if the file
+has been modified since it was last saved or opened.
+
+   Special modes: When `nano' is in "File browser" mode, the center
+section will display the current directory instead of the filename.  See
+*Note The File Browser::, for more info.
+
+
+File: nano.info,  Node: The Statusbar,  Next: Shortcut Lists,  Prev: The Titlebar,  Up: Editor Basics
+
+2.4 The Statusbar
+=================
+
+The statusbar is the third line from the bottom of the screen, or the
+bottom line in Expert Mode.  See *Note Expert Mode::, for more info.  It
+shows important and informational messages.  Any error messages that
+occur from using the editor will appear on the statusbar.  Any questions
+that are asked of the user will be asked on the statusbar, and any user
+input (search strings, filenames, etc.) will be input on the statusbar.
+
+
+File: nano.info,  Node: Shortcut Lists,  Next: Using the Mouse,  Prev: The Statusbar,  Up: Editor Basics
+
+2.5 Shortcut Lists
+==================
+
+The Shortcut Lists are the two lines at the bottom of the screen which
+show some of the more commonly used functions in the editor.
+
+
+File: nano.info,  Node: Using the Mouse,  Prev: Shortcut Lists,  Up: Editor Basics
+
+2.6 Using the Mouse
+===================
+
+When mouse support has been configured and enabled, a single mouse click
+places the cursor at the indicated position.  Clicking a second time in
+the same position toggles the mark.  Clicking in the shortcut list
+executes the selected shortcut.
+
+   The mouse will work in the X Window System, and on the console when
+gpm is running.
+
+
+File: nano.info,  Node: Online Help,  Next: Feature Toggles,  Prev: Editor Basics,  Up: Top
+
+3 Online Help
+*************
+
+The online help system in `nano' is available by pressing ^G.  It is
+fairly self explanatory, documenting the various parts of the editor
+and available keystrokes.  Navigation is via the ^Y (Page Up) and ^V
+(Page Down) keys.  ^X exits the help system.
+
+
+File: nano.info,  Node: Feature Toggles,  Next: Nanorc Files,  Prev: Online Help,  Up: Top
+
+4 Feature Toggles
+*****************
+
+Toggles allow you to change certain aspects of the editor that would
+normally be done via command line options.  They are invoked via Meta
+key sequences.  See *Note Special Functions::, for more info.  The
+following global toggles are available:
+
+`Backup Files Toggle (Meta-B)'
+     toggles the -B (`--backup') command line option.
+
+`Constant Cursor Position Display Toggle (Meta-C)'
+     toggles the -c (`--const') command line option.
+
+`Multiple File Buffers Toggle (Meta-F)'
+     toggles the -F (`--multibuffer') command line option.
+
+`Smart Home Key Toggle (Meta-H)'
+     toggles the -A (`--smarthome') command line option.
+
+`Auto Indent Toggle (Meta-I)'
+     toggles the -i (`--autoindent') command line option.
+
+`Cut To End Toggle (Meta-K)'
+     toggles the -k (`--cut') command line option.
+
+`Long Line Wrapping Toggle (Meta-L)'
+     toggles the -w (`--nowrap') command line option.
+
+`Mouse Support Toggle (Meta-M)'
+     toggles the -m (`--mouse') command line option.
+
+`No Conversion From DOS/Mac Format Toggle (Meta-N)'
+     toggles the -N (`--noconvert') command line option.
+
+`More Space For Editing Toggle (Meta-O)'
+     toggles the -O (`--morespace') command line option.
+
+`Whitespace Display Toggle (Meta-P)'
+     toggles whitespace display mode if you have a "whitespace" option
+     in your nanorc.  See *Note Nanorc Files::, for more info.
+
+`Tabs to Spaces Toggle (Meta-Q)'
+     toggles the -E (`--tabstospaces') command line option.
+
+`Smooth Scrolling Toggle (Meta-S)'
+     toggles the -S (`--smooth') command line option.
+
+`Expert/No Help Toggle (Meta-X)'
+     toggles the -x (`--nohelp') command line option.
+
+`Color Syntax Highlighting Toggle (Meta-Y)'
+     toggles color syntax highlighting if you have color syntaxes in
+     your nanorc.  See *Note Nanorc Files::, for more info.
+
+`Suspend Toggle (Meta-Z)'
+     toggles the -z (`--suspend') command line option.
+
+
+
+File: nano.info,  Node: Nanorc Files,  Next: The File Browser,  Prev: Feature Toggles,  Up: Top
+
+5 Nanorc Files
+**************
+
+The nanorc files contain the default settings for `nano'.  They should
+not be in DOS or Mac format.  During startup, `nano' will first read
+its system-wide settings from SYSCONFDIR/nanorc, and then user-specific
+settings from ~/.nanorc.
+
+   A nanorc file accepts a series of "set" and "unset" commands, which
+can be used to configure `nano' on startup without using the command
+line options.  Additionally, the "syntax", "color", and "icolor"
+keywords are used to define syntax highlighting rules for different text
+patterns.  `nano' will read one command per line.
+
+   Options in nanorc files take precedence over `nano''s defaults, and
+command line options override nanorc settings.  Options are also unset
+by default, except for those that take arguments.
+
+   Quotes inside string parameters don't have to be escaped with
+backslashes.  The last double quote in the string will be treated as its
+end.  For example, for the "brackets" option,
+
+     `""')>]}"'
+
+   will match `"', `'', `)', `>', `]', and `}'.
+
+   The supported commands and arguments are:
+
+`set/unset autoindent'
+     Use auto-indentation.
+
+`set/unset backup'
+     Create backup files in "filename~".
+
+`set backupdir "directory"'
+     Set the directory where `nano' puts unique backup files if file
+     backups are enabled.
+
+`set/unset backwards'
+     Do backwards searches by default.
+
+`set/unset boldtext'
+     Use bold text instead of reverse video text.
+
+`set brackets "string"'
+     Set the characters treated as closing brackets when justifying
+     paragraphs.  They cannot contain blank characters.  Only closing
+     punctuation, optionally followed by closing brackets, can end
+     sentences.  The default value is
+
+          `""')>]}"'
+
+`set/unset casesensitive'
+     Do case sensitive searches by default.
+
+`set/unset const'
+     Constantly display the cursor position in the status bar.
+
+`set/unset cut'
+     Use cut to end of line by default, instead of cutting the whole
+     line.
+
+`set fill "n"'
+     Wrap lines at column number "n".  If "n" is 0 or less, the maximum
+     line length will be the screen width less "n" columns.  The
+     default value is -8.
+
+`set/unset historylog'
+     Enable ~/.nano_history for saving and reading search/replace
+     strings.
+
+`set matchbrackets "string"'
+     Set the opening and closing brackets that can be found by bracket
+     searches.  They cannot contain blank characters.  The former set
+     must come before the latter set, and both must be in the same
+     order.  The default value is
+
+          `"(<[{)>]}"'
+
+`set/unset morespace'
+     Use the blank line below the titlebar as extra editing space.
+
+`set/unset mouse'
+     Enable mouse support, so that mouse clicks can be used to place the
+     cursor, set the mark (with a double click), or execute shortcuts.
+
+`set/unset multibuffer'
+     Allow inserting files into their own buffers.
+
+`set/unset noconvert'
+     Don't convert files from DOS/Mac format.
+
+`set/unset nofollow'
+     Don't follow symlinks when writing files.
+
+`set/unset nohelp'
+     Don't display the help lists at the bottom of the screen.
+
+`set/unset nonewlines'
+     Don't add newlines to the ends of files.
+
+`set/unset nowrap'
+     Don't wrap text at all.
+
+`set operatingdir "directory"'
+     `nano' will only read and write files inside "directory" and its
+     subdirectories.  Also, the current directory is changed to here, so
+     files are inserted from this directory.  By default, the operating
+     directory feature is turned off.
+
+`set/unset preserve'
+     Preserve the XON and XOFF keys (^Q and ^S).
+
+`set punct "string"'
+     Set the characters treated as closing punctuation when justifying
+     paragraphs.  They cannot contain blank characters.  Only closing
+     punctuation, optionally followed by closing brackets, can end
+     sentences.  The default value is `"!.?"'.
+
+`set/unset quickblank'
+     Do quick statusbar blanking.  Statusbar messages will disappear
+     after 1 keystroke instead of 25.
+
+`set quotestr "string"'
+     The email-quote string, used to justify email-quoted paragraphs.
+     This is an extended regular expression if your system supports
+     them, otherwise a literal string.  The default value is
+
+          `"^([ \\t]*[#:>\\|}])+"'
+
+     if you have extended regular expression support, or "> " otherwise.
+     Note that '\\t' stands for a literal Tab character.
+
+`set/unset rebinddelete'
+     Interpret the Delete key differently so that both Backspace and
+     Delete work properly.  You should only need to use this option if
+     Backspace acts like Delete on your system.
+
+`set/unset rebindkeypad'
+     Interpret the numeric keypad keys so that they all work properly.
+     You should only need to use this option if they don't, as mouse
+     support won't work properly with this option enabled.
+
+`set/unset regexp'
+     Do extended regular expression searches by default.
+
+`set/unset smarthome'
+     Make the Home key smarter.  When Home is pressed anywhere but at
+     the very beginning of non-whitespace characters on a line, the
+     cursor will jump to that beginning (either forwards or backwards).
+     If the cursor is already at that position, it will jump to the
+     true beginning of the line.
+
+`set/unset smooth'
+     Use smooth scrolling by default.
+
+`set speller "spellprog"'
+     Use spelling checker "spellprog" instead of the built-in one, which
+     calls "spell".
+
+`set/unset suspend'
+     Allow `nano' to be suspended.
+
+`set tabsize "n"'
+     Use a tab size of "n" columns.  The value of "n" must be greater
+     than 0.  The default value is 8.
+
+`set/unset tabstospaces'
+     Convert typed tabs to spaces.
+
+`set/unset tempfile'
+     Save automatically on exit, don't prompt.
+
+`set/unset view'
+     Disallow file modification.
+
+`set whitespace "string"'
+     Set the two characters used to display the first characters of
+     tabs and spaces.  They must be single-column characters.
+
+`set/unset wordbounds'
+     Detect word boundaries more accurately by treating punctuation
+     characters as part of a word.
+
+`syntax "str" ["fileregex" ... ]'
+     Defines a syntax named "str" which can be activated via the
+     -Y/-syntax command line option, or will be automatically activated
+     if the current filename matches the extended regular expression
+     "fileregex".  All following "color" and "icolor" statements will
+     apply to "syntax" until a new syntax is defined.
+
+     The "none" syntax is reserved; specifying it on the command line
+     is the same as not having a syntax at all.  The "default" syntax
+     is special: it takes no "fileregex", and applies to files that
+     don't match any other syntax's "fileregex".
+
+`color fgcolor,bgcolor "regex" ...'
+     For the currently defined syntax, display all expressions matching
+     the extended regular expression "regex" with foreground color
+     "fgcolor" and background color "bgcolor", at least one of which
+     must be specified.  Legal colors for foreground and background
+     color are: white, black, red, blue, green, yellow, magenta, and
+     cyan.  You may use the prefix "bright" to force a stronger color
+     highlight for the foreground.  If your terminal supports
+     transparency, not specifying a "bgcolor" tells "nano" to attempt
+     to use a transparent background.
+
+`icolor fgcolor,bgcolor "regex" ...'
+     Same as above, except that the expression matching is case
+     insensitive.
+
+`color fgcolor,bgcolor start="sr" end="er"'
+     Display expressions which start with the extended regular
+     expression "sr" and end with the extended regular expression "er"
+     with foreground color "fgcolor" and background color "bgcolor", at
+     least one of which must be specified.  This allows syntax
+     highlighting to span multiple lines.  Note that all subsequent
+     instances of "sr" after an initial "sr" is found will be
+     highlighted until the first instance of "er".
+
+`icolor fgcolor,bgcolor start="sr" end="er"'
+     Same as above, except that the expression matching is case
+     insensitive.
+
+`include "syntaxfile"'
+     Read in self-contained color syntaxes from "syntaxfile".  Note that
+     "syntaxfile" can only contain "syntax", "color", and "icolor"
+     commands.
+
+
+
+File: nano.info,  Node: The File Browser,  Next: Pico Compatibility,  Prev: Nanorc Files,  Up: Top
+
+6 The File Browser
+******************
+
+When reading or writing files, pressing ^T will invoke the file browser.
+Here, one can navigate directories in a graphical manner in order to
+find the desired file.
+
+   Basic movement in the file browser is accomplished with the arrow
+keys, page up, and page down.  More advanced movement is accomplished by
+searching via ^W (or 'w') and changing directories via ^_ (or 'g').  The
+behavior of the Enter (or 's') key varies by what is currently selected.
+If the currently selected object is a directory, the file browser will
+enter and display the contents of the directory.  If the object is a
+file, this filename and path are copied to the statusbar, and the file
+browser exits.
+
+
+File: nano.info,  Node: Pico Compatibility,  Next: Building and Configure Options,  Prev: The File Browser,  Up: Top
+
+7 Pico Compatibility
+********************
+
+`nano' attempts to emulate Pico as closely as possible, but there are
+certain differences between the editors:
+
+`Search and Replace History'
+     As of version 1.1.99pre1 of `nano', text entered as search or
+     replace strings will be stored and can be accessed with the up/down
+     arrow keys.  Previously, `nano' offered a more consistent, but
+     incompatible with Pico, method for entering search and replace
+     strings.  In the old method, previous entries would be displayed
+     by default as editable text in front of the cursor, as opposed to
+     being bracketed and uneditable as it is in Pico.  The old behavior
+     could be made compatible with Pico via the `-p' option, but recent
+     versions of Pico use the `-p' option to preserve the XON and XOFF
+     sequences within the editor.  Since, with the new method, search
+     and replace strings can still be edited by simply hitting the up
+     arrow key once, the old method was removed completely.
+
+`Writing, Appending, or Prepending Selected Text to Files'
+     Text selected using the marking key (^^) can be written out,
+     appended, or prepended to a new or existing file using the
+     WriteOut key (^O).
+
+`Toggles'
+     Many options which alter the functionality of the program can be
+     "toggled" on or off using Meta key sequences, meaning the program
+     does not have to be restarted to turn a particular feature of the
+     editor on or off.  Please see the internal help function (^G) for
+     a list of what functions can be toggled for a particular version
+     of `nano'.  See *Note Feature Toggles::, for more info.
+
+`Cursor Position Display'
+     The output of the "Display Cursor Position" in `nano' displays the
+     given column position, as well as the row and total character
+     position of the cursor.
+
+`Interactive Replace and Spell Checker'
+     It is worth noting that `nano''s replace function is interactive,
+     i.e. it does not stop after one search string is found and
+     automatically replace it.  The `nano' implementation will pause at
+     each search string found and query whether to replace this
+     instance or not.  The internal spell checker operates similarly.
+     Note that there is no way to force these functions to behave in
+     the Pico fashion.  As of version 1.1.99pre1, misspelled words are
+     sorted and trimmed for uniqueness in the internal spell checker
+     such that the words 'apple' and 'Apple' will be prompted for
+     correction separately.
+
+
+File: nano.info,  Node: Building and Configure Options,  Prev: Pico Compatibility,  Up: Top
+
+8 Building and Configure Options
+********************************
+
+Building `nano' from source is fairly straightforward if you are
+familiar with compiling programs with autoconf support:
+
+   * tar xvfz nano-x.y.z.tar.gz (where x.y.z is the version of `nano')
+
+   * cd nano-x.y.z/
+
+   * ./configure
+
+   * make
+
+   * make install
+
+   The possible options to `./configure' are:
+
+`--disable-browser'
+     Disable the mini file browser when reading or writing files.
+
+`--disable-help'
+     Disable the help function.  Doing this makes the binary much
+     smaller, but makes it difficult for new users to learn more than
+     very basic things about using the editor.
+
+`--disable-justify'
+     Disable the justify and unjustify functions.
+
+`--disable-mouse'
+     Disable all mouse functionality.  This also disables the -m
+     command line option, which enables the mouse functionality.
+
+`--disable-operatingdir'
+     Disable setting the operating directory.  This also disables the -o
+     command line option, which sets the operating directory.
+
+`--disable-speller'
+     Disable use of the spell checker.  This also disables the -s
+     command line option, which allows specifying an alternate spell
+     checker.
+
+`--disable-tabcomp'
+     Disable the tab completion code when reading or writing files.
+
+`--disable-wrapping'
+     Disable all long line wrapping.  This also eliminates the -w
+     command line option, which enables long line wrapping.
+
+`--enable-tiny'
+     This option disables all the above.  It also disables some of the
+     larger internals of the editor, like the marking code and the cut
+     to end of line code.  It also disables the function toggles.
+
+`--enable-debug'
+     Enable support for runtime debug output.  This can get pretty
+     messy, so chances are you only want this feature to work on the
+     nano source.
+
+`--enable-extra'
+     Enable extra features.  At the moment, this is just easter egg-type
+     stuff.
+
+`--enable-color'
+     Enable support for syntax coloring of files using the nanorc file.
+     This enables nanorc support as well.
+
+`--enable-multibuffer'
+     Enable support for opening multiple files at a time and switching
+     between them on the fly.
+
+`--enable-nanorc'
+     Enable support for reading the nanorc file at startup.  You can
+     store custom settings in the nanorc file rather than having to
+     pass command line options to get desired behavior.  See *Note
+     Nanorc Files::, for more info.
+
+`--enable-all'
+     Shortcut for enabling the above four features (extra, color,
+     multibuffer, and nanorc).
+
+`--disable-nls'
+     Disables Native Language support.  This will disable use of the
+     available GNU `nano' translations.
+
+`--disable-wrapping-as-root'
+     Disable long line wrapping by default when nano is run as root.
+
+`--enable-utf8'
+     Enable support for reading and writing Unicode files.  This will
+     require either the wide version of ncurses, or a UTF-8-enabled
+     version of Slang.
+
+`--disable-utf8'
+     Disable support for reading and writing Unicode files.
+
+`--with-slang'
+     Compiling `nano' with Slang is supported, and will make the binary
+     notably smaller than if compiled with ncurses or other curses
+     libraries.
+
+
+
+
+Tag Table:
+Node: Top199
+Node: Introduction526
+Node: Overview965
+Node: Command Line Options1870
+Ref: Expert Mode7581
+Node: Editor Basics8111
+Node: Entering Text8360
+Node: Special Functions8708
+Node: The Titlebar9712
+Node: The Statusbar10437
+Node: Shortcut Lists11009
+Node: Using the Mouse11289
+Node: Online Help11749
+Node: Feature Toggles12126
+Node: Nanorc Files14144
+Node: The File Browser22488
+Node: Pico Compatibility23310
+Node: Building and Configure Options25966
+
+End Tag Table

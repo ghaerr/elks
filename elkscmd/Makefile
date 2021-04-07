@@ -31,6 +31,7 @@ SUBDIRS =       \
 	minix3      \
 	misc_utils  \
 	mtools      \
+	nano		\
 	nano-X      \
 	prems       \
 	sash        \
