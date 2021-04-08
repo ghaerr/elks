@@ -283,21 +283,21 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-include ./$(DEPDIR)/browser.Po
-include ./$(DEPDIR)/chars.Po
-include ./$(DEPDIR)/color.Po
-include ./$(DEPDIR)/cut.Po
-include ./$(DEPDIR)/files.Po
-include ./$(DEPDIR)/global.Po
-include ./$(DEPDIR)/help.Po
-include ./$(DEPDIR)/move.Po
-include ./$(DEPDIR)/nano.Po
-include ./$(DEPDIR)/prompt.Po
-include ./$(DEPDIR)/rcfile.Po
-include ./$(DEPDIR)/search.Po
-include ./$(DEPDIR)/text.Po
-include ./$(DEPDIR)/utils.Po
-include ./$(DEPDIR)/winio.Po
+#include ./$(DEPDIR)/browser.Po
+#include ./$(DEPDIR)/chars.Po
+#include ./$(DEPDIR)/color.Po
+#include ./$(DEPDIR)/cut.Po
+#include ./$(DEPDIR)/files.Po
+#include ./$(DEPDIR)/global.Po
+#include ./$(DEPDIR)/help.Po
+#include ./$(DEPDIR)/move.Po
+#include ./$(DEPDIR)/nano.Po
+#include ./$(DEPDIR)/prompt.Po
+#include ./$(DEPDIR)/rcfile.Po
+#include ./$(DEPDIR)/search.Po
+#include ./$(DEPDIR)/text.Po
+#include ./$(DEPDIR)/utils.Po
+#include ./$(DEPDIR)/winio.Po
 
 .c.o:
 	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
