@@ -28,7 +28,7 @@
 
 #ifdef ENABLE_UTF8
 #ifdef HAVE_WCHAR_H
-//#include <wchar.h>
+#include <wchar.h>
 #endif
 #ifdef HAVE_WCTYPE_H
 #include <wctype.h>
