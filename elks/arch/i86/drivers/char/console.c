@@ -168,9 +168,6 @@ static void AnsiCmd(register Console * C, char c)
 	    C->color = C->attr;
 	  }
 	  else switch (n) {
-	    case 0:
-		C->attr = C->color;
-		break;
 	    case 1:
 		C->attr |= A_BOLD;
 		break;
@@ -187,6 +184,7 @@ static void AnsiCmd(register Console * C, char c)
 		break;
 	    case 39:
 	    case 49:
+	    case 0:
 	    default:
 		C->attr = C->color = A_DEFAULT;
 		break;
