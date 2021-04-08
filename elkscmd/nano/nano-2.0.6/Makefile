@@ -211,30 +211,30 @@ all: config.h
 
 .SUFFIXES:
 am--refresh:
-	@:
+#	@:
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
-	@for dep in $?; do \
-	  case '$(am__configure_deps)' in \
-	    *$$dep*) \
-	      echo ' cd $(srcdir) && $(AUTOMAKE) --gnu '; \
-	      cd $(srcdir) && $(AUTOMAKE) --gnu  \
-		&& exit 0; \
-	      exit 1;; \
-	  esac; \
-	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu  Makefile'; \
-	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu  Makefile
+#	@for dep in $?; do \
+#	  case '$(am__configure_deps)' in \
+#	    *$$dep*) \
+#	      echo ' cd $(srcdir) && $(AUTOMAKE) --gnu '; \
+#	      cd $(srcdir) && $(AUTOMAKE) --gnu  \
+#		&& exit 0; \
+#	      exit 1;; \
+#	  esac; \
+#	done; \
+#	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu  Makefile'; \
+#	cd $(top_srcdir) && \
+#	  $(AUTOMAKE) --gnu  Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
-	@case '$?' in \
-	  *config.status*) \
-	    echo ' $(SHELL) ./config.status'; \
-	    $(SHELL) ./config.status;; \
-	  *) \
-	    echo ' cd $(top_builddir) && $(SHELL) ./config.status $@ $(am__depfiles_maybe)'; \
-	    cd $(top_builddir) && $(SHELL) ./config.status $@ $(am__depfiles_maybe);; \
-	esac;
+#	@case '$?' in \
+#	  *config.status*) \
+#	    echo ' $(SHELL) ./config.status'; \
+#	    $(SHELL) ./config.status;; \
+#	  *) \
+#	    echo ' cd $(top_builddir) && $(SHELL) ./config.status $@ $(am__depfiles_maybe)'; \
+#	    cd $(top_builddir) && $(SHELL) ./config.status $@ $(am__depfiles_maybe);; \
+#	esac;
 
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 #	$(SHELL) ./config.status --recheck
@@ -244,19 +244,19 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 #	cd $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
 
-config.h: stamp-h1
-	@if test ! -f $@; then \
-	  rm -f stamp-h1; \
-	  $(MAKE) stamp-h1; \
-	else :; fi
+#config.h: stamp-h1
+#	@if test ! -f $@; then \
+#	  rm -f stamp-h1; \
+#	  $(MAKE) stamp-h1; \
+#	else :; fi
 
-stamp-h1: $(srcdir)/config.h.in $(top_builddir)/config.status
-	@rm -f stamp-h1
-	cd $(top_builddir) && $(SHELL) ./config.status config.h
-$(srcdir)/config.h.in:  $(am__configure_deps) 
-	cd $(top_srcdir) && $(AUTOHEADER)
-	rm -f stamp-h1
-	touch $@
+#stamp-h1: $(srcdir)/config.h.in $(top_builddir)/config.status
+#	@rm -f stamp-h1
+#	cd $(top_builddir) && $(SHELL) ./config.status config.h
+#$(srcdir)/config.h.in:  $(am__configure_deps) 
+#	cd $(top_srcdir) && $(AUTOHEADER)
+#	rm -f stamp-h1
+#	touch $@
 
 distclean-hdr:
 	-rm -f config.h stamp-h1

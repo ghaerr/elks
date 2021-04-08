@@ -50,7 +50,7 @@
 /* Define this if your system has sufficient UTF-8 support (a wide curses
    library, iswalnum(), iswpunct(), iswblank() or iswspace(), mblen(),
    mbstowcs(), mbtowc(), wctomb(), and wcwidth()). */
-#undef ENABLE_UTF8
+/* #undef ENABLE_UTF8 */
 
 /* Define to 1 if you have the <curses.h> header file. */
 /* #undef HAVE_CURSES_H */
