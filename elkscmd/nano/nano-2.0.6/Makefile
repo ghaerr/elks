@@ -199,7 +199,8 @@ target_cpu = i686
 target_os = darwin18.7.0
 target_vendor = apple
 AUTOMAKE_OPTIONS = gnu no-dependencies
-SUBDIRS = doc m4 po src
+#SUBDIRS = doc m4 po src
+SUBDIRS = m4 po src
 EXTRA_DIST = ABOUT-NLS AUTHORS BUGS COPYING ChangeLog INSTALL NEWS \
 		README README.CVS THANKS TODO UPGRADE config.rpath \
 		install-sh missing mkinstalldirs nano.spec
