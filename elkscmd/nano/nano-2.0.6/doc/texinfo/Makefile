@@ -483,7 +483,7 @@ uninstall-am: uninstall-info-am
 
 
 nano.html: nano.texi
-	makeinfo --no-split --html < $< > $@
+	-makeinfo --no-split --html < $< > $@
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
