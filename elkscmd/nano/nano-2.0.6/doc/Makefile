@@ -61,7 +61,8 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	uninstall-recursive
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = man texinfo syntax
+#DIST_SUBDIRS = man texinfo syntax
+DIST_SUBDIRS = man syntax
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = ${SHELL} /Users/greg/net/nano-2.0.6/missing --run aclocal-1.9
 AMDEP_FALSE = #
@@ -181,7 +182,8 @@ target_cpu = i686
 target_os = darwin18.7.0
 target_vendor = apple
 #SUBDIRS = man texinfo
-SUBDIRS = man syntax texinfo
+#SUBDIRS = man syntax texinfo
+SUBDIRS = man syntax
 EXTRA_DIST = faq.html
 all: all-recursive
 
