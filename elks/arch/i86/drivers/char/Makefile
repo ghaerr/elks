@@ -72,6 +72,10 @@ chr_drv.a: $(OBJS)
 KeyMaps/keymaps.h:
 	$(MAKE) -C KeyMaps keymaps.h
 
+dircon.o: console.c
+
+bioscon.o: console.c
+
 #########################################################################
 # Standard commands.
 
