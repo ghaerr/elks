@@ -470,26 +470,18 @@ void INITPROC rs_setbaud(dev_t dev, unsigned long baud)
     register struct tty *tty = ttys + NR_CONSOLES + MINOR(dev) - RS_MINOR_OFFSET;
     unsigned int b;	/* use smaller 16-bit width to reduce code*/
 
-    switch (baud) {
-        case 50: b = B50; break;
-        case 75: b = B75; break;
-        case 110: b = B110; break;
-        case 134: b = B134; break;
-        case 150: b = B150; break;
-        case 200: b = B200; break;
-        case 300: b = B300; break;
-        case 600: b = B600; break;
-        case 1200: b = B1200; break;
-        case 1800: b = B1800; break;
-        case 2400: b = B2400; break;
-        case 4800: b = B4800; break;
-        case 9600: b = B9600; break;
-        case 19200: b = B19200; break;
-        case 38400: b = B38400; break;
-        case 57600: b = B57600; break;
-        case 115200: b = B115200; break;
-        default: return;
-    }
+	if (baud == 115200) b = B115200;
+	else if ((unsigned)baud == 57600) b = B57600;
+	else if ((unsigned)baud == 38400) b = B38400;
+	else if ((unsigned)baud == 19200) b = B19200;
+	else if ((unsigned)baud == 9600) b = B9600;
+	else if ((unsigned)baud == 4800) b = B4800;
+	else if ((unsigned)baud == 2400) b = B2400;
+	else if ((unsigned)baud == 1200) b = B1200;
+	else if ((unsigned)baud == 300) b = B300;
+	else if ((unsigned)baud == 110) b = 110;
+	else return;
+
     sp->tty = tty;	/* force tty association with serial port*/
     tty->termios.c_cflag = b | CS8;
     update_port(sp);
