@@ -388,6 +388,7 @@ static char * INITPROC option(char *s)
 	return s;
 }
 
+#ifdef CONFIG_CHAR_DEV_RS
 static long INITPROC atol(char *number)
 {
     long n = 0;
@@ -396,6 +397,7 @@ static long INITPROC atol(char *number)
 	n = (n * 10) + *number++ - '0';
     return n;
 }
+#endif
 
 char *strchr(char *s, int c)
 {
