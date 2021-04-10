@@ -50,6 +50,7 @@ static char * INITPROC root_dev_name(int dev);
 static int INITPROC parse_options(void);
 static void INITPROC finalize_options(void);
 static char * INITPROC option(char *s);
+static long INITPROC atol(char *number);
 #endif
 
 static void init_task(void);
@@ -275,6 +276,16 @@ static int INITPROC parse_options(void)
 		}
 		if (!strncmp(line,"console=",8)) {
 			int dev = parse_dev(line+8);
+			char *p = strchr(line+8, ',');
+			if (p) {
+				*p++ = 0;
+#ifdef CONFIG_CHAR_DEV_RS
+				/* set serial console baud rate*/
+				rs_setbaud(dev, atol(p));
+#endif
+			}
+
+
 #if DEBUG
 			printk("console %s=0x%04x\n", line+8, dev);
 #endif
@@ -377,6 +388,17 @@ static char * INITPROC option(char *s)
 	return s;
 }
 
+#ifdef CONFIG_CHAR_DEV_RS
+static long INITPROC atol(char *number)
+{
+    long n = 0;
+
+    while (*number >= '0' && *number <= '9')
+	n = (n * 10) + *number++ - '0';
+    return n;
+}
+#endif
+
 char *strchr(char *s, int c)
 {
 	for(; *s != (char)c; ++s) {
@@ -385,4 +407,5 @@ char *strchr(char *s, int c)
 	}
 	return s;
 }
+
 #endif /* CONFIG_BOOTOPTS*/

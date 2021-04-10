@@ -150,7 +150,7 @@ static int rs_probe(register struct serial_info *sp)
 
 static void update_port(register struct serial_info *port)
 {
-    tcflag_t cflags;
+    unsigned int cflags;	/* use smaller 16-bit width to save code*/
     unsigned divisor;
 
     /* set baud rate divisor, first lower, then higher byte */
@@ -461,6 +461,32 @@ void rs_conout(dev_t dev, char Ch)
 	continue;
     outb(Ch, sp->io + UART_TX);
 }
+
+#ifdef CONFIG_BOOTOPTS
+/* note: this function may be called prior to serial_init if serial console set*/
+void INITPROC rs_setbaud(dev_t dev, unsigned long baud)
+{
+    register struct serial_info *sp = &ports[MINOR(dev) - RS_MINOR_OFFSET];
+    register struct tty *tty = ttys + NR_CONSOLES + MINOR(dev) - RS_MINOR_OFFSET;
+    unsigned int b;	/* use smaller 16-bit width to reduce code*/
+
+	if (baud == 115200) b = B115200;
+	else if ((unsigned)baud == 57600) b = B57600;
+	else if ((unsigned)baud == 38400) b = B38400;
+	else if ((unsigned)baud == 19200) b = B19200;
+	else if ((unsigned)baud == 9600) b = B9600;
+	else if ((unsigned)baud == 4800) b = B4800;
+	else if ((unsigned)baud == 2400) b = B2400;
+	else if ((unsigned)baud == 1200) b = B1200;
+	else if ((unsigned)baud == 300) b = B300;
+	else if ((unsigned)baud == 110) b = 110;
+	else return;
+
+    sp->tty = tty;	/* force tty association with serial port*/
+    tty->termios.c_cflag = b | CS8;
+    update_port(sp);
+}
+#endif
 
 void INITPROC serial_init(void)
 {
