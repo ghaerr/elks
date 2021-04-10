@@ -1,0 +1,92 @@
+TODO file (? means the feature may be implemented, but not definitely)
+------------------------------------------------------------------------
+
+For the next version:
+- Undo/Redo keys (M-U and M-E)?
+- Rebindable keys?
+- FriBidi support?
+- Port to DJGPP?
+- Make matching bracket searches sophisticated enough to skip over
+  brackets inside comments?
+- Allow indentation of marked text by spaces as well as tabs?
+- Allow indentation to add just enough columns to reach the nearest
+  multiple of tabsize, rather than always adding tabsize columns?
+- Allow piping marked text to an external command and replacing it with
+  the command's output (as the internal spell checker already does with
+  the "spell" command)?
+- Rewrite the nano FAQ in SGML.
+- Allow conversion between different character sets.  Maybe use glib's
+  iconv() if the system's iconv() is inadequate, since we already use
+  glib's vsnprintf() if the system lacks vsnprintf()?
+- Handle window resizes better.  After we resize, we should stay
+  wherever we were before we resized, as Pico does.
+- Fix problems with color syntaxes' highlighting lines too aggressively.
+- Allow color syntaxes to apply to more than just color, so that we can
+  e.g. specify a different alternate spell checker depending on which
+  file type we have open.
+- Allow color syntaxes to be selected based on more than just filename
+  extension, e.g. through libmagic?
+- Allow text searches in the help browser.
+- Allow setting marks (saved positions, not to be confused with the mark
+  set via Ctrl-^) at various lines and/or columns in the buffer, and
+  allow movement between them with a single keystroke.
+- Add the ability to move to different lines of the screen with a single
+  keystroke, e.g. M-` (M-~) to go to the top line, M-& (M-7) to go to
+  the center line, and M-' (M-") to go to the last line.
+- Allow searching for and replacing newlines.
+- Allow soft wrapping as well as hard wrapping?
+- Detect when we're pasting text, so that we can handle it differently
+  from normal typing?
+- Make pasting text work as fast as it does in Pico.
+- Fix handling of bad/incomplete UTF-8 sequences to display one Unicode
+  FFFD (Replacement Character) per sequence instead of one per byte.
+
+Old requests:
+
+For version 2.0:
+- UTF-8 support. [DONE]
+- Support for paragraph searches. [DONE]
+- Support for justifying the entire file at once. [DONE]
+- Support for filename searches in the file browser. [DONE]
+- Keystroke to implement "Add next sequence as raw" like vi's ^V. [DONE]
+- Spell check selected text only. [DONE]
+- Make "To Line" (^W^T) and "Read from Command" (^R^X) reenter their
+  parent menu when their keystroke is entered a second time (^W^T^T and
+  (^R^X^X) (requires figuring out when to keep cursor position and when
+  not to). [DONE]
+- Fix resetstatuspos global which we shouldn't have. [DONE]
+
+For version 1.2:
+- Single line scroll up/down? [DONE]
+- Color syntax highlighting? (certainly seems like there's a demand for
+  it.) [DONE]
+- .nanorc [DONE]
+- Backup making (filename~)? [DONE]
+- Search (etc.) string history [DONE]
+- Implement Pico's -j and -g flags, as they are pretty easy to do.
+  [DONE]
+- Make mouse support work with clicking on the shortcuts (-m).  Must
+  make global variable pointing to current shortcut list to determine
+  what keystroke to ungetch(). [DONE].
+- Implement -o (chroot of sorts) [DONE]
+- Allow -r to take a negative argument, meaning right margin instead of
+  left (allows resizing that way), formerly -W arg. [DONE]
+
+For version 1.0:
+- Implement Spelling [DONE]
+- Implement Help [DONE]
+- Internationalization [In progress, translators welcome!]
+- Allow nano to be resized in X. [DONE]
+- On page up/down, put the cursor on the first line (like Pico), not the
+  center line [DONE]
+- Rewrite edit_refresh, if at all possible [DONE]
+- Implement justify function [DONE]
+- Cut to end of line [DONE]
+- Built-in speller command [needed for version 1.0] [DONE]
+- Better statusbar interaction (scrolling, tab completion for filename)
+  [needed for version 1.0] [DONE]
+- Now do username completion [DONE].
+- Unjustify command (^U after ^J) [DONE =-].
+- Username completion (~user) [DONE =-].
+
+$Id: TODO,v 1.64.2.1 2007/04/23 15:39:01 dolorous Exp $

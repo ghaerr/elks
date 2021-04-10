@@ -1,0 +1,70 @@
+
+	GNU nano - an enhanced clone of the Pico text editor.
+
+Overview
+
+     The nano project was started because of a few "problems" with the
+     wonderfully easy-to-use and friendly Pico text editor.
+
+     First and foremost is its license: the Pine suite does not use the
+     GPL or a GPL-friendly license, and has unclear restrictions on
+     redistribution.  Because of this, Pine and Pico are not included
+     with many GNU/Linux distributions.  Also, other features (like go
+     to line number or search and replace) were unavailable until
+     recently or require a command line flag.  Yuck.
+
+     nano aims to solve these problems by emulating the functionality of
+     Pico as closely as possible while addressing the problems above and
+     perhaps providing other extra functionality.
+
+     The nano editor is now an official GNU package.  For more
+     information on GNU and the Free Software Foundation, please see
+     http://www.gnu.org/.
+
+How to compile and install nano
+
+     Download the nano source code, then:
+     tar zxvf nano-x.y.z.tar.gz
+     cd nano-x.y.z
+     ./configure
+     make
+     make install
+
+     It's that simple.  Use --prefix with configure to override the
+     default installation directory of /usr/local.
+     
+     If you configured with the "--enable-nanorc" option, after
+     installation you might copy the doc/nanorc.sample to your home
+     directory, rename it to ".nanorc", and then edit it according to
+     your taste.
+
+Web Page
+
+	http://www.nano-editor.org/
+
+Mailing List and Bug Reports
+
+	Savannah hosts all the nano-related mailing-lists.
+
+	+ info-nano@gnu.org is a very low traffic list
+	  used to announce new nano versions or other important
+	  information about the project.
+	+ help-nano@gnu.org is for those seeking to get help without
+	  wanting to hear about the technical details of its
+	  development.
+	+ nano-devel@gnu.org is the list used by the people
+	  that make nano and a general development discussion list, with
+	  moderate traffic.
+
+	To subscribe, send email to nano-<name>-request@gnu.org with a
+	subject of "subscribe", where <name> is the list you want to
+	subscribe to.
+
+	For general bug reports, send a description of the problem to
+	nano@nano-editor.org or directly to the development list.
+
+Current Status
+
+	GNU nano has reached its third stable milestone, 2.0.x.
+
+$Id: README,v 1.24 2006/12/30 23:24:50 dolorous Exp $

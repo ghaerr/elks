@@ -1,0 +1,62 @@
+The following people have helped GNU nano in some way or another.
+If we missed you here, let us know!
+
+
+Sharuzzaman Ahmat Raslan <sharuzzaman@excite.com>
+						Malay translator
+Laurentiu Buzdugan <buzdugan@voyager.net>	Romanian translator
+CHAO Wei-Lun <chaoweilun@pcmail.com.tw>		Traditional Chinese translator
+Ricardo Cárdenes Medina <ricardo@conisys.com>	Spanish translator
+Marco Colombo <magicdice@inwind.it>		Italian translator
+Yavor Doganov <yavor@doganov.org>		Bulgarian translator
+Karl Eichwalder <keichwa@gmx.net>		German translator
+Doruk Fisek <dfisek@fisek.com.tr>		Turkish translator
+Jean-Philippe Guérard <jean-philippe.guerard@laposte.net>
+						French translator
+Geir Helland					Norwegian bokmål translator
+Tedi Heriyanto <tedi_h@gmx.net>			Indonesian translator
+Václav Haisman <V.Haisman@sh.cvut.cz>		Czech translator
+Szabolcs Horvath <horvaths@janus.gimsz.sulinet.hu>
+						Hungarian translator
+Kalle Kivimaa <kalle.kivimaa@iki.fi>		Finnish Translator
+Eivind Kjørstad <ekj@vestdata.no>		Norwegian nynorsk translator
+Florian König <floki@bigfoot.com>		German translator
+Wojciech Kotwica <wkotwica@post.pl>		Polish translator
+Clement Laforet <clem_laf@wanadoo.fr>		French translator
+Gergely Nagy <algernon@debian.org>		Hungarian translator
+Kalle Olavi Niemitalo <kon@iki.fi>		Finnish Translator
+Claudio Neves <cneves@nextis.com>		Brazilian Portuguese translator
+Daniel Nylander <po@danielnylander.se>		Swedish Translator
+Michael Piefel <piefel@informatik.hu-berlin.de> German translator
+Sergey A. Ribalchenko <fisher@obu.ck.ua>	Russian, Ukrainian translator
+Michel Robitaille <robitail@IRO.UMontreal.CA>	French translator
+Christian Rose <menthos@menthos.com>		Swedish translator
+Stig E Sandoe <stig@ii.uib.no>			Norwegian bokmål translator
+Benno Schulenberg <benno@nietvergeten.nl>	Dutch translator
+Danilo Segan <dsegan@gmx.net>			Serbian translator
+Keld Simonsen <keld@dkuug.dk>			Danish translator
+Guus Sliepen <guus@nl.linux.org>		Dutch translator
+Cezary Sliwa <sliwa@cft.edu.pl>			Polish translator
+Pierre Tane <tanep@bigfoot.com>			French translator
+Jacobo Tarrío <jtarrio@trasno.net>		Galician translator
+Kjetil Torgrim Homme <kjetilho@linpro.no>	Norwegian nynorsk translator
+Miquel Vidal <miquel@sindominio.net>		Catalan translator
+Phan Vinh Thinh <teppi82@gmail.com>		Vietnamese translator
+Pauli Virtanen <pauli.virtanen@saunalahti.fi>	Finnish translator
+Peio Ziarsolo <peio@sindominio.net>		Basque translator
+
+Ben Armstrong <synrg@sanctuary.nslug.ns.ca>	Negative -r value idea, code
+Thomas Dickey <dickey@herndon4.his.com>		Curses help and advice
+Sven Guckes <guckes@math.fu-berlin.de>		Advice and Advocacy
+Thijs Kinkhorst <thijs@kinkhorst.com>		rnano.1 manpage
+Jim Knoble <jmknoble@pobox.com>			Pico compat for browser
+Ryan Krebs <fluffy@highwire.stanford.edu>	Many bug fixes and testing
+Roy Lanek <lanek@ranahminang.net>		Advice and advocacy
+Chuck Mead <csm@MoonGroup.com>			Feedback and RPM stuff
+Mike Melanson <melanson@pcisys.net>		Bugs
+Neil Parks <nparks@acsmail.com>			Bug reports and fixes
+Jeremy Robichaud <robicj@yahoo.com>		Beta tester
+Bill Soudan <wes0472@rit.edu>			Regex code, etc
+Ken Tyler <kent@werple.net.au>			Search fixes and more
+
+$Id: THANKS,v 1.31 2006/03/15 22:44:43 jordi Exp $

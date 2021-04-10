@@ -1,0 +1,434 @@
+<!-- Creator     : groff version 1.19.2 -->
+<!-- CreationDate: Thu Apr 26 08:03:34 2007 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p     { margin-top: 0; margin-bottom: 0; }
+       pre   { margin-top: 0; margin-bottom: 0; }
+       table { margin-top: 0; margin-bottom: 0; }
+</style>
+<title>NANORC</title>
+
+</head>
+<body>
+
+<h1 align=center>NANORC</h1>
+
+<a href="#NAME">NAME</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#OPTIONS">OPTIONS</a><br>
+<a href="#FILES">FILES</a><br>
+<a href="#SEE ALSO">SEE ALSO</a><br>
+<a href="#AUTHOR">AUTHOR</a><br>
+
+<hr>
+
+
+<a name="NAME"></a>
+<h2>NAME</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">nanorc &minus;
+GNU nano&rsquo;s rcfile</p>
+
+<a name="DESCRIPTION"></a>
+<h2>DESCRIPTION</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">This manual
+page briefly documents GNU <b>nano</b>&rsquo;s rcfile.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>nano</b> is
+a small, free and friendly editor which aims to replace
+Pico, the default editor included in the non-free Pine
+package. Rather than just copying Pico&rsquo;s look and
+feel, <b>nano</b> also implements some missing (or disabled
+by default) features in Pico, such as &quot;search and
+replace&quot; and &quot;go to line and column
+number&quot;.</p>
+
+<p style="margin-left:11%; margin-top: 1em">The
+<i>nanorc</i> file contains the default settings for
+<b>nano</b>. It should not be in DOS or Mac format. During
+startup, <b>nano</b> will first read its system-wide
+settings from <i>SYSCONFDIR/nanorc</i>, and then
+user-specific settings from <i>~/.nanorc</i>.</p>
+
+<a name="OPTIONS"></a>
+<h2>OPTIONS</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">The
+configuration file accepts a series of <b>set</b> and
+<b>unset</b> commands, which can be used to configure nano
+on startup without using the command line options.
+Additionally, the <b>syntax</b>, <b>color</b>, and
+<b>icolor</b> keywords are used to define syntax
+highlighting rules for different text patterns. <b>nano</b>
+will read one command per line.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Options in
+nanorc files take precedence over nano&rsquo;s defaults, and
+command line options override nanorc settings. Also, options
+are unset by default, except for those that take
+arguments.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Quotes inside
+string parameters don&rsquo;t have to be escaped with
+backslashes. The last double quote in the string will be
+treated as its end. For example, for the <b>brackets</b>
+option, &quot;<i>&quot;&rsquo;)&gt;]}</i>&quot; will match
+<i>&quot;</i>, <i>&rsquo;</i>, <i>)</i>, <i>&gt;</i>,
+<i>]</i>, and <i>}</i>.</p>
+
+<p style="margin-left:11%; margin-top: 1em">The supported
+commands and arguments are: <b><br>
+set/unset autoindent</b></p>
+
+<p style="margin-left:15%;">Use auto-indentation.</p>
+
+<p style="margin-left:11%;"><b>set/unset backup</b></p>
+
+<p style="margin-left:15%;">Create backup files in
+<i>filename~</i>.</p>
+
+<p style="margin-left:11%;"><b>set backupdir</b>
+<i>directory</i></p>
+
+<p style="margin-left:15%;">Set the directory where
+<b>nano</b> puts unique backup files if file backups are
+enabled.</p>
+
+<p style="margin-left:11%;"><b>set/unset backwards</b></p>
+
+<p style="margin-left:15%;">Do backwards searches by
+default.</p>
+
+<p style="margin-left:11%;"><b>set/unset boldtext</b></p>
+
+<p style="margin-left:15%;">Use bold text instead of
+reverse video text.</p>
+
+<p style="margin-left:11%;"><b>set brackets</b>
+<i>string</i></p>
+
+<p style="margin-left:15%;">Set the characters treated as
+closing brackets when justifying paragraphs. They cannot
+contain blank characters. Only closing punctuation,
+optionally followed by closing brackets, can end sentences.
+The default value is
+&quot;<i>&quot;&rsquo;)&gt;]}</i>&quot;.</p>
+
+<p style="margin-left:11%;"><b>set/unset
+casesensitive</b></p>
+
+<p style="margin-left:15%;">Do case sensitive searches by
+default.</p>
+
+<p style="margin-left:11%;"><b>set/unset const</b></p>
+
+<p style="margin-left:15%;">Constantly display the cursor
+position in the status bar.</p>
+
+<p style="margin-left:11%;"><b>set/unset cut</b></p>
+
+<p style="margin-left:15%;">Use cut to end of line by
+default.</p>
+
+<p style="margin-left:11%;"><b>set fill</b> <i>n</i></p>
+
+<p style="margin-left:15%;">Wrap lines at column number
+<i>n</i>. If <i>n</i> is 0 or less, the maximum line length
+will be the screen width less <i>n</i> columns. The default
+value is -8.</p>
+
+<p style="margin-left:11%;"><b>set/unset historylog</b></p>
+
+<p style="margin-left:15%;">Enable <i>~/.nano_history</i>
+for saving and reading search/replace strings.</p>
+
+<p style="margin-left:11%;"><b>set matchbrackets</b>
+<i>string</i></p>
+
+<p style="margin-left:15%;">Set the opening and closing
+brackets that can be found by bracket searches. They cannot
+contain blank characters. The former set must come before
+the latter set, and both must be in the same order. The
+default value is &quot;<i>(&lt;[{)&gt;]}</i>&quot;.</p>
+
+<p style="margin-left:11%;"><b>set/unset morespace</b></p>
+
+<p style="margin-left:15%;">Use the blank line below the
+titlebar as extra editing space.</p>
+
+<p style="margin-left:11%;"><b>set/unset mouse</b></p>
+
+<p style="margin-left:15%;">Enable mouse support, if
+available for your system. When enabled, mouse clicks can be
+used to place the cursor, set the mark (with a double
+click), and execute shortcuts. The mouse will work in the X
+Window System, and on the console when gpm is running.</p>
+
+<p style="margin-left:11%;"><b>set/unset
+multibuffer</b></p>
+
+<p style="margin-left:15%;">Allow inserting files into
+their own buffers.</p>
+
+<p style="margin-left:11%;"><b>set/unset noconvert</b></p>
+
+<p style="margin-left:15%;">Don&rsquo;t convert files from
+DOS/Mac format.</p>
+
+<p style="margin-left:11%;"><b>set/unset nofollow</b></p>
+
+<p style="margin-left:15%;">Don&rsquo;t follow symlinks
+when writing files.</p>
+
+<p style="margin-left:11%;"><b>set/unset nohelp</b></p>
+
+<p style="margin-left:15%;">Don&rsquo;t display the help
+lists at the bottom of the screen.</p>
+
+<p style="margin-left:11%;"><b>set/unset nonewlines</b></p>
+
+<p style="margin-left:15%;">Don&rsquo;t add newlines to the
+ends of files.</p>
+
+<p style="margin-left:11%;"><b>set/unset nowrap</b></p>
+
+<p style="margin-left:15%;">Don&rsquo;t wrap text at
+all.</p>
+
+<p style="margin-left:11%;"><b>set operatingdir</b>
+<i>directory</i></p>
+
+<p style="margin-left:15%;"><b>nano</b> will only read and
+write files inside <i>directory</i> and its subdirectories.
+Also, the current directory is changed to here, so files are
+inserted from this diractory. By default, the operating
+directory feature is turned off.</p>
+
+<p style="margin-left:11%;"><b>set/unset preserve</b></p>
+
+<p style="margin-left:15%;">Preserve the XON and XOFF keys
+(^Q and ^S).</p>
+
+<p style="margin-left:11%;"><b>set punct</b>
+<i>string</i></p>
+
+<p style="margin-left:15%;">Set the characters treated as
+closing punctuation when justifying paragraphs. They cannot
+contain blank characters. Only closing punctuation,
+optionally followed by closing brackets, can end sentences.
+The default value is &quot;<i>!.?</i>&quot;.</p>
+
+<p style="margin-left:11%;"><b>set/unset quickblank</b></p>
+
+<p style="margin-left:15%;">Do quick statusbar blanking.
+Statusbar messages will disappear after 1 keystroke instead
+of 25.</p>
+
+<p style="margin-left:11%;"><b>set quotestr</b>
+<i>string</i></p>
+
+<p style="margin-left:15%;">The email-quote string, used to
+justify email-quoted paragraphs. This is an extended regular
+expression if your system supports them, otherwise a literal
+string. The default value is
+&quot;<i>^([&nbsp;\t]*[#:&gt;\|}])+</i>&quot; if you have
+extended regular expression support, or
+&quot;<i>&gt;&nbsp;</i>&quot; otherwise. Note that
+&rsquo;\t&rsquo; stands for a literal Tab character.</p>
+
+<p style="margin-left:11%;"><b>set/unset
+rebinddelete</b></p>
+
+<p style="margin-left:15%;">Interpret the Delete key
+differently so that both Backspace and Delete work properly.
+You should only need to use this option if Backspace acts
+like Delete on your system.</p>
+
+<p style="margin-left:11%;"><b>set/unset
+rebindkeypad</b></p>
+
+<p style="margin-left:15%;">Interpret the numeric keypad
+keys so that they all work properly. You should only need to
+use this option if they don&rsquo;t, as mouse support
+won&rsquo;t work properly with this option enabled.</p>
+
+<p style="margin-left:11%;"><b>set/unset regexp</b></p>
+
+<p style="margin-left:15%;">Do extended regular expression
+searches by default.</p>
+
+<p style="margin-left:11%;"><b>set/unset smarthome</b></p>
+
+<p style="margin-left:15%;">Make the Home key smarter. When
+Home is pressed anywhere but at the very beginning of
+non-whitespace characters on a line, the cursor will jump to
+that beginning (either forwards or backwards). If the cursor
+is already at that position, it will jump to the true
+beginning of the line.</p>
+
+<p style="margin-left:11%;"><b>set/unset smooth</b></p>
+
+<p style="margin-left:15%;">Use smooth scrolling by
+default.</p>
+
+<p style="margin-left:11%;"><b>set speller</b>
+<i>spellprog</i></p>
+
+<p style="margin-left:15%;">Use spelling checker
+<i>spellprog</i> instead of the built-in one, which calls
+<i>spell</i>.</p>
+
+<p style="margin-left:11%;"><b>set/unset suspend</b></p>
+
+<p style="margin-left:15%;">Allow <b>nano</b> to be
+suspended.</p>
+
+<p style="margin-left:11%;"><b>set tabsize</b> <i>n</i></p>
+
+<p style="margin-left:15%;">Use a tab size of <i>n</i>
+columns. The value of <i>n</i> must be greater than 0. The
+default value is 8.</p>
+
+<p style="margin-left:11%;"><b>set/unset
+tabstospaces</b></p>
+
+<p style="margin-left:15%;">Convert typed tabs to
+spaces.</p>
+
+<p style="margin-left:11%;"><b>set/unset tempfile</b></p>
+
+<p style="margin-left:15%;">Save automatically on exit,
+don&rsquo;t prompt.</p>
+
+<p style="margin-left:11%;"><b>set/unset view</b></p>
+
+<p style="margin-left:15%;">Disallow file modification.</p>
+
+<p style="margin-left:11%;"><b>set whitespace</b>
+<i>string</i></p>
+
+<p style="margin-left:15%;">Set the two characters used to
+display the first characters of tabs and spaces. They must
+be single-column characters.</p>
+
+<p style="margin-left:11%;"><b>set/unset wordbounds</b></p>
+
+<p style="margin-left:15%;">Detect word boundaries more
+accurately by treating punctuation characters as parts of
+words.</p>
+
+<p style="margin-left:11%;"><b>syntax</b> <i>str</i>
+<b>[&quot;</b><i>fileregex</i><b>&quot; ... ]</b></p>
+
+<p style="margin-left:15%;">Defines a syntax named
+<i>str</i> which can be activated via the -Y/--syntax
+command line option, or will be automatically activated if
+the current filename matches the extended regular expression
+<i>fileregex</i>. All following <b>color</b> and
+<b>icolor</b> statements will apply to <i>syntax</i> until a
+new syntax is defined.</p>
+
+<p style="margin-left:15%; margin-top: 1em">The <i>none</i>
+syntax is reserved; specifying it on the command line is the
+same as not having a syntax at all. The <i>default</i>
+syntax is special: it takes no <i>fileregex</i>, and applies
+to files that don&rsquo;t match any other syntax&rsquo;s
+<i>fileregex</i>.</p>
+
+<p style="margin-left:11%;"><b>color</b>
+<i>fgcolor</i><b>,</b><i>bgcolor regex</i> <b>...</b></p>
+
+<p style="margin-left:15%;">For the currently defined
+syntax, display all expressions matching the extended
+regular expression <i>regex</i> with foreground color
+<i>fgcolor</i> and background color <i>bgcolor</i>, at least
+one of which must be specified. Legal colors for foreground
+and background color are: white, black, red, blue, green,
+yellow, magenta, and cyan. You may use the prefix
+&quot;bright&quot; to force a stronger color highlight for
+the foreground. If your terminal supports transparency, not
+specifying a <i>bgcolor</i> tells <b>nano</b> to attempt to
+use a transparent background.</p>
+
+<p style="margin-left:11%;"><b>icolor</b>
+<i>fgcolor</i><b>,</b><i>bgcolor regex</i> <b>...</b></p>
+
+<p style="margin-left:15%;">Same as above, except that the
+expression matching is case insensitive.</p>
+
+<p style="margin-left:11%;"><b>color</b>
+<i>fgcolor</i><b>,</b><i>bgcolor</i>
+<b>start=&quot;</b><i>sr</i><b>&quot;
+end=&quot;</b><i>er</i><b>&quot;</b></p>
+
+<p style="margin-left:15%;">Display expressions which start
+with the extended regular expression <i>sr</i> and end with
+the extended regular expression <i>er</i> with foreground
+color <i>fgcolor</i> and background color <i>bgcolor</i>, at
+least one of which must be specified. This allows syntax
+highlighting to span multiple lines. Note that all
+subsequent instances of <i>sr</i> after an initial <i>sr</i>
+is found will be highlighted until the first instance of
+<i>er</i>.</p>
+
+<p style="margin-left:11%;"><b>icolor</b>
+<i>fgcolor</i><b>,</b><i>bgcolor</i>
+<b>start=&quot;</b><i>sr</i><b>&quot;
+end=&quot;</b><i>er</i><b>&quot;</b></p>
+
+<p style="margin-left:15%;">Same as above, except that the
+expression matching is case insensitive.</p>
+
+<p style="margin-left:11%;"><b>include</b>
+<i>syntaxfile</i></p>
+
+<p style="margin-left:15%;">Read in self-contained color
+syntaxes from <i>syntaxfile</i>. Note that <i>syntaxfile</i>
+can only contain <b>syntax</b>, <b>color</b>, and
+<b>icolor</b> commands.</p>
+
+<a name="FILES"></a>
+<h2>FILES</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><i>SYSCONFDIR/nanorc</i></p>
+
+<p style="margin-left:22%;">System-wide configuration
+file</p>
+
+<p style="margin-left:11%;"><i>~/.nanorc</i></p>
+
+<p style="margin-left:22%;">Per-user configuration file</p>
+
+<a name="SEE ALSO"></a>
+<h2>SEE ALSO</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>nano</b>(1)
+<i><br>
+/usr/share/doc/nano/examples/nanorc.sample</i> (or
+equivalent on your system)</p>
+
+<a name="AUTHOR"></a>
+<h2>AUTHOR</h2>
+
+
+<p style="margin-left:11%;">Chris Allegretta
+&lt;chrisa@asty.org&gt;, et al (see <i>AUTHORS</i> and
+<i>THANKS</i> for details). This manual page was originally
+written by Jordi Mallach &lt;jordi@gnu.org&gt;, for the
+Debian system (but may be used by others).</p>
+<hr>
+</body>
+</html>

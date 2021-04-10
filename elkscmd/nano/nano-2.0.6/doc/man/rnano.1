@@ -1,0 +1,86 @@
+.\" Hey, EMACS: -*- nroff -*-
+.\" rnano.1 is Copyright (C) 2005, 2006 by Thijs Kinkhorst
+.\" <thijs@kinkhorst.com>; skeleton based on nano-tiny.1 by Jordi
+.\" Mallach <jordi@gnu.org>.
+.\"
+.\" This is free documentation, see the latest version of the GNU
+.\" General Public License for copying conditions.  There is NO
+.\" warranty.
+.\"
+.\" $Id: rnano.1,v 1.15 2006/11/10 02:47:11 dolorous Exp $
+.TH RNANO 1 "version 2.0.0" "October 28, 2006"
+.\" Please adjust this date whenever revising the manpage.
+.\"
+.SH NAME
+rnano \- Restricted mode for Nano's ANOther editor, an enhanced free
+Pico clone
+
+.SH SYNOPSIS
+.B rnano
+.I [OPTIONS]\ [[\+LINE,COLUMN]\ FILE]...
+.br
+
+.SH DESCRIPTION
+This manual page briefly documents the \fBrnano\fP command.
+.PP
+.\" TeX users may be more comfortable with the \fB<whatever>\fP and
+.\" \fI<whatever>\fP escape sequences to invoke bold face and italics, 
+.\" respectively.
+\fBnano\fP is a small, free and friendly editor which aims to replace
+Pico, the default editor included in the non-free Pine package. Rather
+than just copying Pico's look and feel, \fBnano\fP also implements some
+missing (or disabled by default) features in Pico, such as "search and
+replace" and "go to line and column number".
+.PP
+\fBrnano\fP is a restricted version of \fBnano\fP, which only edits
+specific files and doesn't allow the user access to the filesystem or a
+command shell.
+.PP
+In restricted mode, \fBnano\fP will \fInot\fP:
+.IP \[bu] 2
+read or write to any file not specified on the command line;
+.IP \[bu]
+read any nanorc files;
+.IP \[bu]
+allow suspending;
+.IP \[bu]
+allow a file to be appended to, prepended to, or saved under a different
+name;
+.IP \[bu]
+use backup files or spell checking.
+
+.SH OPTIONS
+.TP
+.B \+\fILINE\fP,\fICOLUMN\fP
+Places cursor at line number \fILINE\fP and column number \fICOLUMN\fP
+(at least one of which must be specified) on startup, instead of the
+default of line 1, column 1.
+.TP
+.B \-?
+Same as \fB-h (\-\-help)\fP.
+.TP
+.B \-h (\-\-help)
+Show a summary of command line options and exit.
+.TP
+.B \-V (\-\-version)
+Show the current version number and exit.
+.PP
+See the \fBnano\fP(1) manpage for the complete documentation of
+\fBnano\fP.
+
+.SH BUGS
+Please send any comments or bug reports to \fBnano@nano-editor.org\fP.
+
+The \fBnano\fP mailing list is available from \fBnano-devel@gnu.org\fP.
+
+To subscribe, email to \fBnano-devel-request@gnu.org\fP with a subject
+of "subscribe".
+
+.SH HOMEPAGE
+http://www.nano-editor.org/
+
+.SH AUTHOR
+Chris Allegretta <chrisa@asty.org>, et al (see AUTHORS for details).
+This manual page was originally written by Thijs Kinkhorst
+<thijs@kinkhorst.com>, for the Debian system (but may be used by
+others).
