@@ -17,7 +17,7 @@ all: $(PRGS)
 
 $(PRGS): $(LIBS)
 	$(MAKE) -C nano-2.0.6
-	elks-compress $(PRGS)
+#	elks-compress $(PRGS)
 
 $(LIBS):
 	$(MAKE) -C ncurses-5.2
