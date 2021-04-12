@@ -112,6 +112,7 @@ misc_utils/hd					:miscutil		:360k
 misc_utils/time					:miscutil			:720k
 misc_utils/kilo					:miscutil				:1440k
 misc_utils/mined				:miscutil				:1440k
+misc_utils/sleep				:miscutil				:1440k
 misc_utils/tty					:miscutil				:1440k
 misc_utils/uuencode				:miscutil				:1440k
 misc_utils/uudecode				:miscutil				:1440k
