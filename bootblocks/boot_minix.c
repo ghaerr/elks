@@ -101,8 +101,10 @@ void load_prog ()
 		if (!strcmp ((char *)(d_dir + 2 + d), "bootopts")) {
 			//puts("opts ");
 			i_now = (*(int *)(d_dir + d)) - 1;
-			loadaddr = OPTSEG << 4;
-			load_file ();
+			if (i_now != -1) {
+				loadaddr = OPTSEG << 4;
+				load_file ();
+			}
 			continue;
 		}
 	}
