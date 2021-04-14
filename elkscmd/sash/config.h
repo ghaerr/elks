@@ -3,7 +3,9 @@
  */
 
 #define WILDCARDS
+#define BUILTINS      /* unset to build a very small shell for 256K systems */
 
+#ifdef BUILTINS
 #define CMD_ALIAS     /* 1048 bytes. Includes unalias */
 #define CMD_CHGRP     /* 2164 bytes */
 #define CMD_CHMOD     /*  260 bytes */
@@ -35,6 +37,7 @@
 #define CMD_TOUCH     /*  236 bytes */
 #define CMD_UMASK     /*  272  bytes */
 #define CMD_HISTORY
+#endif
 
 #ifdef CMD_CP
 #define FUNC_COPYFILE

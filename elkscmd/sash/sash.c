@@ -349,7 +349,10 @@ readfile(name)
 
 	while (TRUE) {
 		fflush(stdout);
-		if (ttyflag) showprompt();
+#ifdef CMD_SOURCE
+		if (ttyflag)
+#endif
+			showprompt();
 
 #ifdef CMD_SOURCE
 		if (intflag && !ttyflag && (fp != stdin)) {

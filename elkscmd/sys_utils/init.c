@@ -270,7 +270,7 @@ pid_t respawn(const char **a)
 	    execv(argv[0], argv);
 	}
 
-	fatalmsg("exec failed: %s\r\n", argv[0]);
+	fatalmsg("exec failed: %s (%d)\r\n", argv[0], errno);
     }
 
 /* here I must do something about utmp */
