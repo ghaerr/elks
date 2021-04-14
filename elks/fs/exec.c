@@ -214,7 +214,7 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 	       esuph.msh_trsize, esuph.msh_drsize, esuph.esh_ftrsize,
 	       esuph.msh_tbase);
 #ifndef CONFIG_EXEC_COMPRESS
-	if (esuph.esh_compr_tseg || esup.esh_compr_ftseg || esup.esh_compr_dseg)
+	if (esuph.esh_compr_tseg || esuph.esh_compr_ftseg || esuph.esh_compr_dseg)
 	    goto error_exec3;
 #endif
 	retval = -EINVAL;
