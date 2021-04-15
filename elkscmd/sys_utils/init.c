@@ -46,9 +46,6 @@
 #define debug2(...)
 #endif
 
-#define FLAG_RESPAWN   1
-#define FLAG_WAIT      2
-#define RUNLEVELS     12
 #define BUFSIZE      256
 #define INITTAB      "/etc/inittab"
 #define INITLVL      "/etc/initlvl"
@@ -96,6 +93,7 @@ static char *initname;			/* full path to this program*/
 static struct tabentry children[MAXCHILD], *nextchild=children, *thisOne;
 static char runlevel;
 static char prevRunlevel;
+static char nosysinit;
 #if USE_UTMP
 static struct utmp utentry;
 #endif
@@ -126,6 +124,50 @@ static void debug2(const char *str)
 	fprintf(stderr, "%s", str);
 }
 #endif
+
+
+/* special handling to decrease stdio buffer sizes for ELKS*/
+static unsigned char bufin[1];
+FILE  stdin[1] =
+{
+   {
+    bufin,
+    bufin,
+    bufin,
+    bufin,
+    bufin + sizeof(bufin),
+    0,
+    _IOFBF | __MODE_READ | __MODE_IOTRAN
+   }
+};
+
+static unsigned char bufout[64];
+FILE  stdout[1] =
+{
+   {
+    bufout,
+    bufout,
+    bufout,
+    bufout,
+    bufout + sizeof(bufout),
+    1,
+    _IOFBF | __MODE_WRITE | __MODE_IOTRAN
+   }
+};
+
+static unsigned char buferr[64];
+FILE  stderr[1] =
+{
+   {
+    buferr,
+    buferr,
+    buferr,
+    buferr,
+    buferr + sizeof(buferr),
+    2,
+    _IONBF | __MODE_WRITE | __MODE_IOTRAN
+   }
+};
 
 void parseLine(const char* line, void func())
 {
@@ -270,7 +312,7 @@ pid_t respawn(const char **a)
 	    execv(argv[0], argv);
 	}
 
-	fatalmsg("exec failed: %s (%d)\r\n", argv[0], errno);
+	fatalmsg("Exec failed: %s (errno %d)\r\n", argv[0], errno);
     }
 
 /* here I must do something about utmp */
@@ -299,8 +341,10 @@ void passOne(const char **a)
 		break;
 
 	case SYSINIT:
-		pid = respawn(a);
-		while (pid != wait(NULL));
+		if (!nosysinit) {
+			pid = respawn(a);
+			while (pid != wait(NULL));
+		}
 		break;
 
 	default:
@@ -495,12 +539,18 @@ int main(int argc, char **argv)
 #if USE_UTMP
 		setutent();
 #endif
+		while (argc > 1) {
+			if (argv[1][0] >= '0' && argv[1][0] <= '9')
+				runlevel = argv[1][0];
+			if (argv[1][0] == 'n')
+				nosysinit = 1;
+			argc--;
+			argv++;
+		}
+
 		/* get runlevel & spawn sysinit */
 		debug("SCAN sysinit\r\n");
 		scanFile(passOne);
-
-		if (argc > 1 && argv[1][0] >= '0' && argv[1][0] <= '9')
-			runlevel = argv[1][0];
 
 		/* spawn needed children */
 		debug("SCAN start runlevel %c\r\n", runlevel);
@@ -526,7 +576,7 @@ int main(int argc, char **argv)
 			scanFile(spawnThisOne);
 		}
 	} else {
-		if (argc < 2)
+		if (argc != 2)
 			fatalmsg("Usage: init <runlevel>\n");
 
 		/* try to store new run-level into /etc/initrunlvl*/

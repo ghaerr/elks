@@ -88,7 +88,9 @@ void login(register struct passwd * pwd, struct utmp * ut_ent)
 
 	execl(pwd->pw_shell,sh_name,(char*)0);
 
-	write(STDOUT_FILENO, "No shell!\n", 10);
+	write(STDOUT_FILENO, "No shell (errno ", 16);
+	write(STDOUT_FILENO, itoa(errno), 2);
+	write(STDOUT_FILENO, ")\n", 2);
 	exit(1);
 }
 
