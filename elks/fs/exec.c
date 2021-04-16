@@ -378,10 +378,12 @@ int sys_execve(char *filename, char *sptr, size_t slen)
 #endif
     } else {
 	seg_get (seg_code);
-	filp->f_pos += esuph.esh_compr_tseg? esuph.esh_compr_tseg: (size_t)mh.tseg;
 #ifdef CONFIG_EXEC_MMODEL
+	filp->f_pos += esuph.esh_compr_tseg? esuph.esh_compr_tseg: (size_t)mh.tseg;
 	filp->f_pos += esuph.esh_compr_ftseg? esuph.esh_compr_ftseg: (size_t)esuph.esh_ftseg;
 	need_reloc_code = 0;
+#else
+	filp->f_pos += (size_t)mh.tseg;
 #endif
     }
 

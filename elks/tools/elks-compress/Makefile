@@ -50,5 +50,10 @@ all:	../bin/elks-compress ../bin/exomizer
 	make -C exomizer/src
 	cp -p exomizer/src/exomizer ../bin/exomizer
 
+doclean: elks-compress-doclean
+
+elks-compress-doclean:
+	make -C exomizer/src clean
+
 #########################################################################
 ### Dependencies:
