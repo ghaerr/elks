@@ -44,7 +44,7 @@ getty: getty.o
 	$(LD) $(LDFLAGS) -maout-heap=1024 -maout-stack=1024 -o getty getty.o $(LDLIBS)
 
 login: getpass.o login.o
-	$(LD) $(LDFLAGS) -o login getpass.o login.o $(LDLIBS)
+	$(LD) $(LDFLAGS) -maout-stack=2048 -o login getpass.o login.o $(LDLIBS)
 
 kill: kill.o
 	$(LD) $(LDFLAGS) -o kill kill.o $(LDLIBS)
@@ -68,7 +68,7 @@ ps: ps.o
 	$(LD) $(LDFLAGS) -o ps ps.o $(LDLIBS)
 
 meminfo: meminfo.o
-	$(LD) $(LDFLAGS) -o meminfo meminfo.o $(LDLIBS)
+	$(LD) $(LDFLAGS) -maout-heap=1 -maout-stack=512 -o meminfo meminfo.o $(LDLIBS)
 
 who: who.o
 	$(LD) $(LDFLAGS) -o who who.o $(LDLIBS)

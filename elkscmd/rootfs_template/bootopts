@@ -1,6 +1,6 @@
 ##
 #console=ttyS0 debug net=eth 3 # condensed
-#init=/bin/init 3	# multiuser serial
+#init=/bin/init 3 n	# multiuser serial no sysinit
 #init=/bin/sh		# singleuser shell
 #console=ttyS0,19200 # serial console
 #root=hda1			# hd partition 1
