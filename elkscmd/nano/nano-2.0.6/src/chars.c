@@ -569,7 +569,7 @@ int mbstrncasecmp(const char *s1, const char *s2, size_t n)
 	return strncasecmp(s1, s2, n);
 }
 
-#ifndef HAVE_STRCASESTR
+//#ifndef HAVE_STRCASESTR
 /* This function, nstrcasestr() (originally mutt_stristr()), was adapted
  * from mutt 1.2.4i (lib.c).  Here is the notice from that file, with
  * the Free Software Foundation's address updated:
@@ -612,7 +612,7 @@ const char *nstrcasestr(const char *haystack, const char *needle)
 
     return NULL;
 }
-#endif
+//#endif
 
 /* This function is equivalent to strcasestr() for multibyte strings. */
 const char *mbstrcasestr(const char *haystack, const char *needle)
@@ -673,7 +673,7 @@ const char *mbstrcasestr(const char *haystack, const char *needle)
 	return found_needle ? haystack : NULL;
     } else
 #endif
-	return strcasestr(haystack, needle);
+	return nstrcasestr(haystack, needle);
 }
 
 #if !defined(NANO_TINY) || !defined(DISABLE_TABCOMP)
