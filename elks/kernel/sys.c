@@ -215,7 +215,7 @@ int sys_setpgid(pid_t pid, pid_t pgid)
 	return -EINVAL;
 
     for_each_task(p) {
-	if (p->pid == pid) {
+	if (p->pid == pid && p->state != TASK_UNUSED) {
 
 	    if (p->p_pptr == current || p->p_opptr == current) {
 
@@ -235,7 +235,7 @@ int sys_setpgid(pid_t pid, pid_t pgid)
 		struct task_struct *tmp;
 
 		for_each_task(tmp) {
-		    if ((tmp->pgrp == pgid)
+		    if ((tmp->pgrp == pgid && tmp->state != TASK_UNUSED)
 			&& (tmp->session == current->session)) {
 			goto ok_pgid:
 		    }
@@ -259,7 +259,7 @@ int sys_getpgid(pid_t pid)
     if (!pid)
 	return current->pgrp;
     for_each_task(p)
-	if (p->pid == pid)
+	if (p->pid == pid && p->state != TASK_UNUSED)
 	    return p->pgrp;
     return -ESRCH;
 }
@@ -276,7 +276,7 @@ int sys_getsid(pid_t pid)
     if (!pid)
 	return current->session;
     for_each_task(p)
-	if (p->pid == pid)
+	if (p->pid == pid && p->state != TASK_UNUSED)
 	    return p->session;
     return -ESRCH;
 

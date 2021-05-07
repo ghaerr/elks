@@ -1,0 +1,292 @@
+diff --git a/config.h b/config.h
+index 7419267..8b23c31 100644
+--- a/config.h
++++ b/config.h
+@@ -21,7 +21,7 @@
+ #define DISABLE_OPERATINGDIR 1
+ 
+ /* Define this to disable text wrapping as root by default. */
+-/* #undef DISABLE_ROOTWRAPPING */
++#define DISABLE_ROOTWRAPPING 1
+ 
+ /* Define this to disable the spell checker functions. */
+ #define DISABLE_SPELLER 1
+@@ -35,7 +35,7 @@
+ 
+ /* Define this to have syntax highlighting, requires regex.h and ENABLE_NANORC
+    too! */
+-#define ENABLE_COLOR 1
++//#define ENABLE_COLOR 1
+ 
+ /* Define this to enable multiple file buffers. */
+ /* #undef ENABLE_MULTIBUFFER */
+@@ -72,7 +72,7 @@
+ #define HAVE_GETOPT_H 1
+ 
+ /* Define to 1 if you have the `getopt_long' function. */
+-#define HAVE_GETOPT_LONG 1
++//#define HAVE_GETOPT_LONG 1
+ 
+ /* Define if the GNU gettext() function is already present or preinstalled. */
+ /* #undef HAVE_GETTEXT */
+@@ -84,7 +84,7 @@
+ #define HAVE_INTTYPES_H 1
+ 
+ /* Define to 1 if you have the `isblank' function. */
+-#define HAVE_ISBLANK 1
++//#define HAVE_ISBLANK 1
+ 
+ /* Define to 1 if you have the `iswalnum' function. */
+ #define HAVE_ISWALNUM 1
+@@ -132,7 +132,7 @@
+ #define HAVE_STRCASECMP 1
+ 
+ /* Define to 1 if you have the `strcasestr' function. */
+-#define HAVE_STRCASESTR 1
++//#define HAVE_STRCASESTR 1
+ 
+ /* Define to 1 if you have the <strings.h> header file. */
+ #define HAVE_STRINGS_H 1
+@@ -144,10 +144,10 @@
+ #define HAVE_STRNCASECMP 1
+ 
+ /* Define to 1 if you have the `strnlen' function. */
+-#define HAVE_STRNLEN 1
++//#define HAVE_STRNLEN 1
+ 
+ /* Define to 1 if you have the <sys/param.h> header file. */
+-#define HAVE_SYS_PARAM_H 1
++//#define HAVE_SYS_PARAM_H 1
+ 
+ /* Define to 1 if you have the <sys/stat.h> header file. */
+ #define HAVE_SYS_STAT_H 1
+@@ -159,7 +159,7 @@
+ #define HAVE_UNISTD_H 1
+ 
+ /* Define this if your curses library has the use_default_colors() command. */
+-#define HAVE_USE_DEFAULT_COLORS 1
++//#define HAVE_USE_DEFAULT_COLORS 1
+ 
+ /* Define to 1 if you have the `vprintf' function. */
+ #define HAVE_VPRINTF 1
+diff --git a/src/Makefile b/src/Makefile
+index 65aa42c..bfbeefa 100644
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -59,7 +59,7 @@ am_nano_OBJECTS = browser.$(OBJEXT) chars.$(OBJEXT) color.$(OBJEXT) \
+ 	cut.$(OBJEXT) files.$(OBJEXT) global.$(OBJEXT) help.$(OBJEXT) \
+ 	move.$(OBJEXT) nano.$(OBJEXT) prompt.$(OBJEXT) \
+ 	rcfile.$(OBJEXT) search.$(OBJEXT) text.$(OBJEXT) \
+-	utils.$(OBJEXT) winio.$(OBJEXT)
++	utils.$(OBJEXT) winio.$(OBJEXT) regex.$(OBJEXT)
+ nano_OBJECTS = $(am_nano_OBJECTS)
+ nano_DEPENDENCIES =
+ DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
+@@ -82,10 +82,19 @@ AUTOCONF = ${SHELL} /Users/greg/net/nano-2.0.6/missing --run autoconf
+ AUTOHEADER = ${SHELL} /Users/greg/net/nano-2.0.6/missing --run autoheader
+ AUTOMAKE = ${SHELL} /Users/greg/net/nano-2.0.6/missing --run automake-1.9
+ AWK = awk
+-CC = gcc
+ CCDEPMODE = depmode=gcc3
+-CFLAGS = -g -O2
+-CPP = gcc -E
++
++#CC = gcc
++#CFLAGS = -g -O2
++#CPP = gcc -E
++CC = ia16-elf-gcc
++CPP = ia16-elf-gcc -E
++TOPDIR=/Users/greg/net/elks-gh
++ELKSINC=-I$(TOPDIR)/include -I$(TOPDIR)/libc/include -I$(TOPDIR)/elks/include -Iregex
++CFLAGS=-melks-libc -mcmodel=medium -msegment-relocation-stuff -mtune=i8086 -Wall -Os $(ELKSINC) -Incurses-5.2 -DELKS=1 -DGAWK -DNO_MBSUPPORT -ffunction-sections
++LDFLAGS=-maout-heap=0xffff
++LIBS =  -L../ncurses-5.2/lib -lncurses
++
+ CPPFLAGS = 
+ CURSES_LIB = -lncurses
+ CYGPATH_W = echo
+@@ -108,11 +117,11 @@ INSTALL_PROGRAM = ${INSTALL}
+ INSTALL_SCRIPT = ${INSTALL}
+ INSTALL_STRIP_PROGRAM = ${SHELL} $(install_sh) -c -s
+ INTLLIBS = 
+-LDFLAGS = 
++#LDFLAGS = 
+ LIBICONV = -liconv
+ LIBINTL = 
+ LIBOBJS = 
+-LIBS =  -lncurses
++#LIBS =  -lncurses
+ LN_S = ln -s
+ LTLIBICONV = -liconv
+ LTLIBINTL = 
+diff --git a/src/files.c b/src/files.c
+index 3b1f9c8..d59b2a0 100644
+--- a/src/files.c
++++ b/src/files.c
+@@ -1084,6 +1084,18 @@ char *check_writable_directory(const char *path)
+     return full_path;
+ }
+ 
++#ifdef ELKS
++#define P_tmpdir	"/tmp/tmp.XXXXXX"
++
++int mkstemp(char *template)
++{
++    char *p = mktemp(template);
++    if (p)
++        return creat(p, 0666);
++    return -1;
++}
++#endif
++
+ /* This function calls mkstemp(($TMPDIR|P_tmpdir|/tmp/)"nano.XXXXXX").
+  * On success, it returns the malloc()ed filename and corresponding FILE
+  * stream, opened in "r+b" mode.  On error, it returns NULL for the
+diff --git a/src/global.c b/src/global.c
+index 9c3ebd7..ae08c20 100644
+--- a/src/global.c
++++ b/src/global.c
+@@ -206,7 +206,7 @@ regmatch_t regmatches[10];
+ 	 * maximum, used in regular expression searches. */
+ #endif
+ 
+-int reverse_attr = A_REVERSE;
++long reverse_attr = A_REVERSE;
+ 	/* The curses attribute we use for reverse video. */
+ 
+ char *homedir = NULL;
+diff --git a/src/nano.c b/src/nano.c
+index e45d422..e1ba00e 100644
+--- a/src/nano.c
++++ b/src/nano.c
+@@ -31,7 +31,7 @@
+ #include <fcntl.h>
+ #include <errno.h>
+ #include <ctype.h>
+-#include <locale.h>
++//#include <locale.h>
+ #include <termios.h>
+ #ifdef HAVE_GETOPT_H
+ #include <getopt.h>
+@@ -46,8 +46,10 @@ static bool no_rcfiles = FALSE;
+ #endif
+ static struct termios oldterm;
+ 	/* The user's original terminal settings. */
++#ifndef ELKS
+ static struct sigaction act;
+ 	/* Used to set up all our fun signal handlers. */
++#endif
+ 
+ /* Create a new filestruct node.  Note that we do not set prevnode->next
+  * to the new line. */
+@@ -967,6 +969,7 @@ void do_exit(void)
+ /* Initialize the signal handlers. */
+ void signal_init(void)
+ {
++#ifndef ELKS
+     /* Trap SIGINT and SIGQUIT because we want them to do useful
+      * things. */
+     memset(&act, 0, sizeof(struct sigaction));
+@@ -1001,6 +1004,7 @@ void signal_init(void)
+ 	act.sa_handler = do_continue;
+ 	sigaction(SIGCONT, &act, NULL);
+     }
++#endif
+ }
+ 
+ /* Handler for SIGHUP (hangup) and SIGTERM (terminate). */
+@@ -1030,11 +1034,13 @@ RETSIGTYPE do_suspend(int signal)
+     /* Restore the old terminal settings. */
+     tcsetattr(0, TCSANOW, &oldterm);
+ 
++#ifndef ELKS
+     /* Trap SIGHUP and SIGTERM so we can properly deal with them while
+      * suspended. */
+     act.sa_handler = handle_hupterm;
+     sigaction(SIGHUP, &act, NULL);
+     sigaction(SIGTERM, &act, NULL);
++#endif
+ 
+     /* Do what mutt does: send ourselves a SIGSTOP. */
+     kill(0, SIGSTOP);
+@@ -1740,7 +1746,7 @@ int main(int argc, char **argv)
+ 	}
+     }
+ #else
+-    setlocale(LC_ALL, "");
++    //setlocale(LC_ALL, "");
+ #endif
+ 
+ #ifdef ENABLE_NLS
+diff --git a/src/nano.h b/src/nano.h
+index e7fde1b..ef8e0f9 100644
+--- a/src/nano.h
++++ b/src/nano.h
+@@ -70,7 +70,7 @@
+ #define KEY_IC SL_KEY_IC
+ /* Ncurses support. */
+ #elif defined(HAVE_NCURSES_H)
+-#include <ncurses.h>
++#include "../ncurses-5.2/ncurses.h"
+ #else
+ /* Curses support. */
+ #include <curses.h>
+@@ -97,7 +97,7 @@
+ #include <sys/stat.h>
+ #include <dirent.h>
+ #ifdef HAVE_REGEX_H
+-#include <regex.h>
++#include "../regex/regex.h"
+ #endif
+ #ifndef NANO_TINY
+ #include <setjmp.h>
+@@ -360,21 +360,21 @@ typedef struct rcoption {
+ #define MULTIBUFFER			(1<<13)
+ #define SMOOTH_SCROLL			(1<<14)
+ #define REBIND_DELETE			(1<<15)
+-#define REBIND_KEYPAD			(1<<16)
+-#define NO_CONVERT			(1<<17)
+-#define BACKUP_FILE			(1<<18)
+-#define NO_COLOR_SYNTAX			(1<<19)
+-#define PRESERVE			(1<<20)
+-#define HISTORYLOG			(1<<21)
+-#define RESTRICTED			(1<<22)
+-#define SMART_HOME			(1<<23)
+-#define WHITESPACE_DISPLAY		(1<<24)
+-#define MORE_SPACE			(1<<25)
+-#define TABS_TO_SPACES			(1<<26)
+-#define QUICK_BLANK			(1<<27)
+-#define WORD_BOUNDS			(1<<28)
+-#define NO_NEWLINES			(1<<29)
+-#define BOLD_TEXT			(1<<30)
++#define REBIND_KEYPAD			(1L<<16)
++#define NO_CONVERT			(1L<<17)
++#define BACKUP_FILE			(1L<<18)
++#define NO_COLOR_SYNTAX			(1L<<19)
++#define PRESERVE			(1L<<20)
++#define HISTORYLOG			(1L<<21)
++#define RESTRICTED			(1L<<22)
++#define SMART_HOME			(1L<<23)
++#define WHITESPACE_DISPLAY		(1L<<24)
++#define MORE_SPACE			(1L<<25)
++#define TABS_TO_SPACES			(1L<<26)
++#define QUICK_BLANK			(1L<<27)
++#define WORD_BOUNDS			(1L<<28)
++#define NO_NEWLINES			(1L<<29)
++#define BOLD_TEXT			(1L<<30)
+ 
+ /* Control key sequences.  Changing these would be very, very bad. */
+ #define NANO_CONTROL_SPACE 0
+diff --git a/src/proto.h b/src/proto.h
+index 42e094a..d7542fd 100644
+--- a/src/proto.h
++++ b/src/proto.h
+@@ -137,7 +137,7 @@ extern regex_t search_regexp;
+ extern regmatch_t regmatches[10];
+ #endif
+ 
+-extern int reverse_attr;
++extern long reverse_attr;
+ 
+ extern char *homedir;
+ 

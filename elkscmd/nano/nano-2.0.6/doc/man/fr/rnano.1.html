@@ -1,0 +1,276 @@
+<!-- Creator     : groff version 1.19.2 -->
+<!-- CreationDate: Thu Apr 26 08:03:36 2007 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p     { margin-top: 0; margin-bottom: 0; }
+       pre   { margin-top: 0; margin-bottom: 0; }
+       table { margin-top: 0; margin-bottom: 0; }
+</style>
+<title>RNANO</title>
+
+</head>
+<body>
+
+<h1 align=center>RNANO</h1>
+
+<a href="#NOM">NOM</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#OPTIONS">OPTIONS</a><br>
+<a href="#BOGUES">BOGUES</a><br>
+<a href="#SITE INTERNET">SITE INTERNET</a><br>
+<a href="#AUTEUR">AUTEUR</a><br>
+<a href="#TRADUCTION">TRADUCTION</a><br>
+
+<hr>
+
+
+<a name="NOM"></a>
+<h2>NOM</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">rnano &minus;
+Le mode restreint de NAno un NOuvel &eacute;diteur, un clone
+libre et am&eacute;lior&eacute; de Pico</p>
+
+<a name="SYNOPSIS"></a>
+<h2>SYNOPSIS</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>rnano</b>
+<i>[OPTIONS]&nbsp;[[+LIGNE,COLONNE]&nbsp;FICHIER]...</i></p>
+
+<a name="DESCRIPTION"></a>
+<h2>DESCRIPTION</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Cette page de
+manuel d&eacute;crit bri&egrave;vement la commande
+<b>rnano</b>.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>nano</b> est
+un &eacute;diteur petit, sympathique et libre, qui vise
+&agrave; remplacer Pico, l&rsquo;&eacute;diteur par
+d&eacute;faut du logiciel non libre Pine. <b>nano</b> ne se
+contentant pas de copier l&rsquo;interface et
+l&rsquo;ergonomie de Pico, il offre &eacute;galement
+certaines fonctions manquantes (ou d&eacute;sactiv&eacute;es
+par d&eacute;faut) dans Pico. Ces fonctionnalit&eacute;s
+sont, par exemple, les fonctions de recherche et de
+remplacement, et la possibilit&eacute; de sauter directement
+&agrave; une ligne et &agrave; une colonne
+pr&eacute;cise..</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>rnano</b>
+est une version de <b>nano</b> fonctionnant en mode
+restreint, qui ne permet d&rsquo;&eacute;diter que les
+fichiers indiqu&eacute;s et qui n&rsquo;autorise pas
+l&rsquo;utilisateur &agrave; acc&eacute;der au
+syst&egrave;me de fichier ou &agrave; un interpr&eacute;teur
+de commandes.</p>
+
+<p style="margin-left:11%; margin-top: 1em">En mode
+restreint, <b>nano</b> refusera&nbsp;:</p>
+
+<table width="100%" border=0 rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p style="margin-top: 1em" valign="top">&bull;</p></td>
+<td width="2%"></td>
+<td width="86%">
+
+
+<p style="margin-top: 1em" valign="top">de lire ou
+d&rsquo;&eacute;crire dans un fichier n&rsquo;ayant pas
+&eacute;t&eacute; indiqu&eacute; dans la ligne de
+commande&nbsp;;</p> </td>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p style="margin-top: 1em" valign="top">&bull;</p></td>
+<td width="2%"></td>
+<td width="86%">
+
+
+<p style="margin-top: 1em" valign="top">de lire un fichier
+nanorc&nbsp;;</p> </td>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p style="margin-top: 1em" valign="top">&bull;</p></td>
+<td width="2%"></td>
+<td width="86%">
+
+
+<p style="margin-top: 1em" valign="top">de permettre de
+suspendre l&rsquo;&eacute;dition&nbsp;;</p></td>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p style="margin-top: 1em" valign="top">&bull;</p></td>
+<td width="2%"></td>
+<td width="86%">
+
+
+<p style="margin-top: 1em" valign="top">de permettre
+d&rsquo;ajouter en d&eacute;but ou en fin d&rsquo;un
+fichier, ou de l&rsquo;enregistrer sous un nom
+diff&eacute;rent&nbsp;;</p> </td>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="1%">
+
+
+<p style="margin-top: 1em" valign="top">&bull;</p></td>
+<td width="2%"></td>
+<td width="86%">
+
+
+
+<p style="margin-top: 1em" valign="top">l&rsquo;utilisation
+de copies de s&eacute;curit&eacute; ou de la correction
+orthographique.</p> </td>
+</table>
+
+<a name="OPTIONS"></a>
+<h2>OPTIONS</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>+</b><i>LIGNE</i><b>,</b><i>COLONNE</i></p>
+
+<p style="margin-left:22%;">D&eacute;marre avec le curseur
+positionn&eacute; &agrave; la colonne <i>COLONNE</i> de la
+ligne <i>LIGNE</i> (l&rsquo;un des deux, au moins, devant
+&ecirc;tre sp&eacute;cifi&eacute;) au lieu de
+d&eacute;marrer &agrave; la colonne&nbsp;1,
+ligne&nbsp;1.</p>
+
+<table width="100%" border=0 rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+
+<p style="margin-top: 1em" valign="top"><b>&minus;?</b></p> </td>
+<td width="8%"></td>
+<td width="36%">
+
+
+<p style="margin-top: 1em" valign="top">Identique &agrave;
+<b>-h (&minus;&minus;help)</b>.</p></td>
+<td width="42%">
+</td>
+</table>
+
+<p style="margin-left:11%;"><b>&minus;h
+(&minus;&minus;help)</b></p>
+
+<p style="margin-left:22%;">Affiche un r&eacute;sum&eacute;
+des options de lancement de nano, puis
+s&rsquo;arr&ecirc;te.</p>
+
+<p style="margin-left:11%;"><b>&minus;V
+(&minus;&minus;version)</b></p>
+
+<p style="margin-left:22%;">Affiche la version, puis
+s&rsquo;arr&ecirc;te.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Reportez-vous
+&agrave; la page de manuel <b>nano</b>(1) si vous souhaitez
+consulter la documentation compl&egrave;te de
+<b>nano</b>.</p>
+
+<a name="BOGUES"></a>
+<h2>BOGUES</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Merci de nous
+faire parvenir vos commentaires et de nous signaler les
+bogues, en &eacute;crivant, en anglais, &agrave;
+<b>nano@nano-editor.org</b>.</p>
+
+<p style="margin-left:11%; margin-top: 1em">La liste de
+discussion anglophone <b>nano</b> est disponible &agrave;
+l&rsquo;adresse <b>nano-devel@gnu.org</b>.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Pour vous
+abonner, envoyez un courrier &eacute;lectronique &agrave;
+<b>nano-devel-request@gnu.org</b>, ayant pour objet
+&laquo;&nbsp;subscribe&nbsp;&raquo;.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em">N&rsquo;h&eacute;sitez
+pas &eacute;galement &agrave; envoyez vos commentaires,
+suggestions et corrections relatives &agrave;
+l&rsquo;adaptation fran&ccedil;aise de cette page de manuel
+ou du logiciel &agrave;
+<b>jean-philippe.guerard@tigreraye.org</b>.</p>
+
+<a name="SITE INTERNET"></a>
+<h2>SITE INTERNET</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em">http://www.nano-editor.org/</p>
+
+<a name="AUTEUR"></a>
+<h2>AUTEUR</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Chris
+Allegretta &lt;chrisa@asty.org&gt; et d&rsquo;autres (voir
+le fichier <i>AUTHORS</i>). Cette page de manuel a
+&eacute;t&eacute; initialement r&eacute;dig&eacute;e par
+Thijs Kinkhorst &lt;thijs@kinkhorst.com&gt;, pour le
+syst&egrave;me GNU Debian (mais elle peut &ecirc;tre
+utilis&eacute;e par d&rsquo;autres).</p>
+
+<a name="TRADUCTION"></a>
+<h2>TRADUCTION</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Cette
+adaptation fran&ccedil;aise a &eacute;t&eacute;
+r&eacute;alis&eacute;e par Jean-Philippe&nbsp;Gu&eacute;rard
+&lt;jean-philippe.guerard@tigreraye.org&gt; le
+28&nbsp;octobre&nbsp;2006 &agrave; partir de la version du
+28&nbsp;octobre&nbsp;2006 de la page de manuel de rnano
+(pour la version 2.0.0 de nano).</p>
+
+<p style="margin-left:11%; margin-top: 1em">Un maximum de
+soin a &eacute;t&eacute; apport&eacute; lors de
+l&rsquo;&eacute;laboration de cette traduction&nbsp;;
+n&eacute;anmoins, quelques imperfections peuvent subsister.
+Si vous en rencontrez, que ce soit dans la version
+fran&ccedil;aise ou dans la version originale,
+n&rsquo;h&eacute;sitez pas &agrave; les signaler &agrave;
+l&rsquo;auteur ou au traducteur.</p>
+
+<p style="margin-left:11%; margin-top: 1em">La version
+originale la plus &agrave; jour de ce document est toujours
+consultable via la commande&nbsp;:</p>
+
+<p style="margin-left:11%; margin-top: 1em">LANGUAGE=en man
+nano</p>
+<hr>
+</body>
+</html>

@@ -155,6 +155,7 @@ execvp(char *fname, char **argv)
 
 	    tryrun(pname, argv);
 	    if( errno == EACCES ) besterr = EACCES;
+	    if( errno == ENOMEM ) goto out;
 
 	    brk(pname);
 	    pname = fname;

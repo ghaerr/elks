@@ -4,23 +4,24 @@ SECTIONS {
 	.text 0x10000 : {
 		/* IA-16 segment start markers. */
 		*(".text!*" ".text.*!"
-		  ".fartext.f.*0!" ".fartext.f.*2!"
-		  ".fartext.f.*4!" ".fartext.f.*6!")
+		  ".fartext.*0!" ".fartext.*2!"
+		  ".fartext.*4!" ".fartext.*6!")
 
 		/* Actual segment contents. */
 		*(.text .text$* ".text.*[^&]"
 		  /*
 		   * Place the text segments from about half the input
-		   * modules into the near text segment.  Let the rest go
-		   * into .fartext .
+		   * modules --- and -ffunction-sections functions, and
+		   * functions meant to go into "unique" sections --- into
+		   * the near text segment.  Let the rest go into .fartext .
 		   */
-		  .fartext.f.*0$ .fartext.f.*2$
-		  .fartext.f.*4$ .fartext.f.*6$)
+		  .fartext.*0$ .fartext.*2$
+		  .fartext.*4$ .fartext.*6$)
 
 		/* IA-16 segment end markers. */
 		*(".text&*" ".text.*&"
-		  ".fartext.f.*0&" ".fartext.f.*2&"
-		  ".fartext.f.*4&" ".fartext.f.*6&")
+		  ".fartext.*0&" ".fartext.*2&"
+		  ".fartext.*4&" ".fartext.*6&")
 		. = ALIGN(0x10);
 	}
 
@@ -72,5 +73,9 @@ SECTIONS {
 		ASSERT ((_total == 0 || _total > . - ADDR (.data))
 			&& _chmem >= 0,
 		    "Error: total data segment size too small.");
+	}
+
+	.rel.dyn : {
+		*(.rel.*)
 	}
 }

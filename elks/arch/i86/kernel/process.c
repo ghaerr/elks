@@ -66,6 +66,7 @@ void stack_check(void)
     {
 	/* optional: check stack over min stack*/
 	if (currentp->t_regs.sp < currentp->t_begstack - currentp->t_minstack) {
+	  if (currentp->t_minstack)	/* display if protected stack*/
 	    printk("(%d)STACK OVER MINSTACK by %u BYTES\n", currentp->pid,
 		currentp->t_begstack - currentp->t_minstack - currentp->t_regs.sp);
 	}

@@ -1,0 +1,191 @@
+This file contains any messages produced by compilers while
+running configure, to aid debugging if configure makes a mistake.
+
+configure:675: checking host system type
+configure:696: checking target system type
+configure:714: checking build system type
+configure:807: checking for prefix
+configure:852: checking for gcc
+configure:965: checking whether the C compiler (gcc  ) works
+configure:981: gcc -o conftest    conftest.c  1>&5
+configure:978:1: warning: type specifier missing, defaults to 'int' [-Wimplicit-int]
+main(){return(0);}
+^
+1 warning generated.
+configure:1007: checking whether the C compiler (gcc  ) is a cross-compiler
+configure:1012: checking whether we are using GNU C
+configure:1040: checking whether gcc accepts -g
+configure:1073: checking version of gcc
+configure:1116: checking how to run the C preprocessor
+configure:1197: checking whether gcc needs -traditional
+configure:1243: checking for POSIXized ISC
+configure:1265: checking for gcc option to accept ANSI C
+configure:1366: checking for ldconfig
+configure:1403: checking if you want to ensure bool is consistent with C++
+configure:1423: checking for c++
+configure:1455: checking whether the C++ compiler (c++  ) works
+configure:1471: c++ -o conftest    conftest.C  1>&5
+configure:1497: checking whether the C++ compiler (c++  ) is a cross-compiler
+configure:1502: checking whether we are using GNU C++
+configure:1530: checking whether c++ accepts -g
+configure:1574: checking if you want to build C++ binding and demo
+configure:1587: checking if you want to build with Ada95
+configure:1600: checking if you want to build programs such as tic
+configure:1613: checking if you wish to install curses.h
+configure:1655: checking for mawk
+configure:1685: checking whether make sets ${MAKE}
+configure:1723: checking for a BSD compatible install
+configure:1786: checking for long file names
+configure:1831: checking if filesystem supports mixed-case filenames
+configure:1854: checking whether ln -s works
+configure:1877: checking for ranlib
+configure:1909: checking for ctags
+configure:1991: checking for tdlint
+configure:1991: checking for lint
+configure:1991: checking for alint
+configure:2025: checking for man
+configure:2101: checking for makeflags variable
+configure:2137: checking if you have specified an install-prefix
+configure:2162: checking if you want to build libraries with libtool
+configure:2182: checking if you want to build shared libraries
+configure:2196: checking if you want to build static libraries
+configure:2210: checking if you want to build debug libraries
+configure:2224: checking if you want to build profiling libraries
+configure:2240: checking for specified models
+configure:2248: checking for default model
+configure:2280: checking if you want to build a separate terminfo library
+configure:2294: checking if you want to link with dbmalloc for testing
+configure:2356: checking if you want to link with dmalloc for testing
+configure:2419: checking if you want to link with the gpm mouse library
+configure:2535: checking for default loader flags
+configure:2546: checking if rpath option should be used
+configure:2568: checking if release/abi version should be used for shared libs
+configure:2599: checking which gcc option to use
+configure:2612: gcc -c -g -O2 -fPIC  conftest.c 1>&5
+configure:2830: checking if you wish to install ncurses overwriting curses
+configure:2843: checking if external terminfo-database is used
+configure:2883: checking for list of fallback descriptions
+configure:3002: checking if big-core option selected
+configure:3048: checking if you want termcap-fallback support
+configure:3112: checking for remove
+configure:3112: checking for unlink
+configure:3225: checking if link/symlink functions work
+configure:3321: checking if tic should use symbolic links
+configure:3345: checking if you want broken-linker support code
+configure:3363: checking if tputs should process BSD-style prefix padding
+configure:3381: checking if RCS identifiers should be compiled-in
+configure:3401: checking format of man-pages
+configure:3453: checking for manpage renaming
+configure:3496: checking for manpage symlinks
+configure:3512: checking for manpage tbl
+configure:3751: checking if you want to build with function extensions
+configure:3791: checking for extended use of const keyword
+configure:3809: checking if you want $NCURSES_NO_PADDING code
+configure:3827: checking if you want SIGWINCH handler
+configure:3845: checking if you want user-definable terminal capabilities like termcap
+configure:3864: checking if you want all development code
+configure:3878: checking if you want colorfgbg code
+configure:3896: checking if you want hard-tabs code
+configure:3913: checking if you want to use restrict environment when running as root
+configure:3931: checking if you want limited support for xmc
+configure:3952: checking if you do not want to assume colors are white-on-black
+configure:3970: checking if you want hashmap scrolling-optimization code
+configure:3987: checking if you want experimental safe-sprintf code
+configure:4026: checking if you want experimental wide-character code
+configure:4050: checking if you want to display full commands during build
+configure:4071: checking if you want to see compiler warnings
+configure:4141: checking for gcc __attribute__ directives
+checking for gcc __attribute__((scanf))
+configure:4181: gcc -c -g -O2  conftest.c 1>&5
+checking for gcc __attribute__((printf))
+configure:4181: gcc -c -g -O2  conftest.c 1>&5
+checking for gcc __attribute__((unused))
+configure:4181: gcc -c -g -O2  conftest.c 1>&5
+checking for gcc __attribute__((noreturn))
+configure:4181: gcc -c -g -O2  conftest.c 1>&5
+configure:4197: checking if you want to enable runtime assertions
+configure:4264: checking for gettimeofday
+configure:4362: checking if -lm needed for math functions
+configure:4400: checking for ANSI C header files
+configure:4508: checking for dirent.h that defines DIR
+configure:4546: checking for opendir in -ldir
+configure:4630: checking for regular-expression headers
+configure:4743: checking for fcntl.h
+configure:4743: checking for getopt.h
+configure:4743: checking for libc.h
+configure:4743: checking for limits.h
+configure:4743: checking for locale.h
+configure:4743: checking for poll.h
+configure:4743: checking for sys/bsdtypes.h
+configure:4743: checking for sys/ioctl.h
+configure:4743: checking for sys/param.h
+configure:4743: checking for sys/poll.h
+configure:4743: checking for sys/select.h
+configure:4743: checking for sys/time.h
+configure:4743: checking for sys/times.h
+configure:4743: checking for ttyent.h
+configure:4743: checking for unistd.h
+configure:4869: checking if sys/time.h works with sys/select.h
+configure:4919: checking for working const
+configure:4994: checking for inline
+configure:5040: checking if unsigned literals are legal
+configure:5071: checking for type of chtype
+configure:5159: checking for number of bits in chtype
+configure:5211: checking for width of character-index
+configure:5238: checking if external errno is declared
+configure:5288: checking if external errno exists
+configure:5336: checking if data-only library module links
+configure:5438: checking for getcwd
+configure:5438: checking for getegid
+configure:5438: checking for geteuid
+configure:5438: checking for getttynam
+configure:5438: checking for issetugid
+configure:5438: checking for memccpy
+configure:5438: checking for mkstemp
+configure:5438: checking for nanosleep
+configure:5438: checking for poll
+configure:5438: checking for remove
+configure:5438: checking for select
+configure:5438: checking for setbuf
+configure:5438: checking for setbuffer
+configure:5438: checking for setvbuf
+configure:5438: checking for sigaction
+configure:5438: checking for sigvec
+configure:5438: checking for strdup
+configure:5438: checking for strstr
+configure:5438: checking for tcgetpgrp
+configure:5438: checking for times
+configure:5438: checking for vfscanf
+configure:5438: checking for vsnprintf
+configure:5438: checking for vsscanf
+configure:5537: checking for isascii
+configure:5571: checking whether sigaction needs _POSIX_SOURCE
+configure:5582: gcc -c -g -O2  -DNDEBUG conftest.c 1>&5
+configure:5629: checking for termio.h
+configure:5629: checking for termios.h
+configure:5629: checking for unistd.h
+configure:5715: checking whether termios.h needs _POSIX_SOURCE
+configure:5724: gcc -c -g -O2  -DNDEBUG conftest.c 1>&5
+configure:5765: checking for tcgetattr
+configure:5817: checking whether setvbuf arguments are reversed
+configure:5864: checking return type of signal handlers
+configure:5906: checking for type sigaction_t
+configure:5941: checking declaration of size-change
+configure:6033: checking for memmove
+configure:6184: checking if poll really works
+configure:6241: checking for builtin bool type
+configure:6294: checking for library stdc++
+configure:6421: checking how to run the C++ preprocessor
+configure:6467: checking for typeinfo
+configure:6505: checking for builtin bool type
+configure:6541: checking for size of bool
+configure:6607: checking for special defines needed for etip.h
+configure:6627: c++ -c -O2 -I./c++ -I./menu  -DNDEBUG conftest.C 1>&5
+configure:6627: c++ -c -O2 -I./c++ -I./menu -DETIP_NEEDS_MATH_H  -DNDEBUG conftest.C 1>&5
+configure:6980: checking for library subsets
+configure:7037: checking default library suffix
+configure:7050: checking default library-dependency suffix
+configure:7068: checking default object directory
+configure:7081: checking c++ library-dependency suffux
+configure:7107: checking where we will install curses.h
+configure:7135: checking for src modules

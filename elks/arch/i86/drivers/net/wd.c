@@ -5,7 +5,6 @@
  *
  */
 
-#include <stddef.h>
 #include <arch/io.h>
 #include <arch/ports.h>
 #include <arch/segment.h>

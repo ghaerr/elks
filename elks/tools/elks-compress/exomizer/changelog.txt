@@ -1,0 +1,293 @@
+2020-12-22
+Release of 3.1.0 source code and Win32 binaries.
++ Fixed bug in the sfxdecr.s affecting c128 reported by Fredrik Ramsberg.
++ Implemented split encoding support  (-E) in the 6502 decruncher.
++ Updated raw decrunchers for Zilog Z80 contributed by Antonio Villena.
++ Added raw decrunchers for Intel 8080 contributed by Ivan Gorodetsky.
++ Added raw decrunchers for ARM 32bit thumb2 contributed by ALeX Kazik.
++ Implement optional forward decrunching properly in exodecrunch.s and as a
+  consequence of this also remove krilldecr.s
++ Implement sequence read pointer blacklist to be able to avoid reading from
+  specified memory areas like hardware registers (Experimental feature),
+  Requested by Oziphantom.
++ update dasm and add acme exodecrunch sources
++ Improve compression by previous offset reuse, -P-32 to disable
++ Extended -e and -E to be able to reuse/calculate shared header/table info
+  for multiple crunched files. (Experimental feature, no direct support in
+  exodecrunch.s yet), Requested by Lazycow
+
+2019-01-05
+Release of 3.0.2 source code and Win32 binaries.
++ Add documentation about level, mem and raw outfile structure.
++ Fix raw -d -r combination to reverse the inbuffer before decrunch.
++ Fix -P0 literal sequences bug in exodec.c, Bug reported by Nino Porcino.
++ improved cruncher tuning for slightly improved compression on average.
++ Added sfx support for a new target, BBC Micro B (-t 0xbbcb).
++ Added -P+16 awareness to exodecrunch.s
++ Fix bucket optimization to be -T+4 aware in search.c, Bug reported by
+  Ciccioriccio.
++ Fix absolute offset overflow bug in sfxdecr.s. Bug reported by Comos.
+
+2018-08-10
+Release of 3.0.1 source code and Win32 binaries.
++ Add missing clc to the new 6502 decrunchers. Bug reported by Soci.
+
+2018-05-16
+Release of 3.0.0 source code and Win32 binaries.
++ Up to almost 50% faster 6502 decruncher (sfx and stand-alone). However the
+  bitstream format has changed in an incompatible way. See exo30info.txt for
+  more info.
+
+2018-03-08
+Release of 2.0.11 source code and Win32 binaries.
++ No change from preview 3
+2018-03-06
+Release of 2.0.11 preview 3
++ Improved desfx c64 IO banking handling and automatic decrunched area
+  detection.
++ sfx: Detected in-file type exported making target auto detection possible for
+  some sfx bin and sfx <addr> (not sfx basic or sfx sys).
++ sfx: Applesingle file write now writes the header descriptors in in ascending
+  order, suggested by Oliver Schmidt.
+
+2018-02-20
+Release of 2.0.11 preview 2
++ Fix compression improvement loop crashing bug exposed by the thread safety
+  changes for library compilation, reported by Lasse Öörni.
++ Support the AppleSingle format instead of the 4 byte cc65 header, suggested
+  by Oliver Schmidt.
+
+2018-02-11
+Release of 2.0.11 preview 1
++ Add i_raw assembler directive for sfx to generate header less output.
++ Make sfx 0xa2 fall back to 4 byte Apple II cc65 headers for in-files instead
+  of prg-headers.
++ Add sfx bin directive as a shortcut for creating sfx files with as little
+  impact on memory outside of the decrunched area as possible. Perfect for
+  crunching Apple II binary files.
+
+2017-12-25
+Release of 2.0.10 source code and Win32 binaries.
++ Fix broken things in rawdecrs folder since 2.0.9
++ Add PET 4032 as sfx target from the nanoflite github fork.
+
+2017-12-16
+Release of 2.0.10 preview 3
++ Fix core dump when using max_passes=1 caused by static var removal.
++ Change zp-usage of the sfx-decr for plus4/c16 to avoid overwriting current
+  device number address.
+
+2017-12-09
+Release of 2.0.10 preview 2
++ Add used encoding to the crunch_info struct returned by core crunch func.
++ Rework core compression core to not use local static vars to simplify use
+  when compiled into a library.
++ rework -C into a generic favor speed flag and make it disable the crunch
+  result changes too.
++ Improve crunch result slightly by also consider same length sequences at
+  larger offsets too (but by doing this also slowing it down).
+
+20170708
+Release of 2.0.10 preview 1
++ Add a brief output mode enabled with -B, suggested by both Daniel Hotorp and
+  Bacchus independently.
++ Display progress indication only on ttys and not when output is redirected,
+  inspired by input from  Daniel Hotorp.
++ Make it possible to add offset and length to plain and prg file loading.
++ Improve sfx memory layout dump, suggested by Steffen Görzig.
++ sfx -Di_decr_table=2 should disable i_irq_during, reported by Steffen Görzig.
++ Updated z80 decrunchers, now with License information.
++ More portable by not using negative exit codes.
++ Add new keyword systrim to the sfx command. It behaves like the sys keyword
+  but will also remove the sysline from the loaded infile.
++ Exit with an error if the parsing of the sfxdecr.s fails. This might happen
+  with user provided assembly given by the options -x -X -s -f, reported by
+  Stefan A. Haubenthal.
++ Change -mtune flag to make exomizer build on more platforms "out of the box".
+
+2015-09-21
+Release of 2.0.9 source code, Win32 and DOS binaries.
++ Fix gcc-compiler warnings.
++ sfx decr src comments echoed to stdout, reported by iAN CooG, fix by soci.
++ NULL pointer dereference crash, reported by Flavio, fix by soci.
+
+2015-09-20
+Release of 2.0.8 source code, Win32 and DOS binaries.
++ Fix bug reported and analyzed by Adrien Destugues. The ECHO token in asm.y
+  collides with the flex ECHO macro. The cause is that Bison 2.3a and newer
+  stopped to generate defines for the declared tokens. To resolve this the ECHO
+  token has been renamed to ECHO1.
++ Add -E flag to not write the encoding to the outfile.
++ Remove max nr of chunks limit from the chunkpool allocator.
++ Enforce match max_len everwhere, bug reported by Zik / Futurs.
+
+2013-04-14
+Release of 2.0.7 source code, Win32 and DOS binaries.
++ Bugfixed commodore sfx targets to automatically disable irq when decrunching
+  over system areas. This together with moving the table to zero-page,
+  -Di_table_addr=0x2, allows decrunching $0200-<end of mem> without corruption
+  for all commodore targets except for the vic20-configs without a 3kB memory
+  expansion since they have a memory hole at $0400-$1000.
++ Bugfixed z80 decrunchers from Metalbrain.
++ Bugfixed sfx c16/plus4 target where the default irq could corrupt memory
+  while decrunching data that covers $07f6-$0800, reported by Luca/FIRE.
++ Bugfixed sfx c16/plus4 target where the default decrunch effect could corrupt
+  memory while decrunching data that covers $0be7, reported by Luca/FIRE.
++ Added feature to sfx-mode that complains if the data it too big to fit in the
+  available memory of the selected target, suggested by Luca/FIRE.
++ Added c16 target, -t 4, like -t4 but with smaller memory, suggested by
+  Luca/FIRE.
+
+2013-01-27
+Release of 2.0.6 source code, Win32 and DOS binaries.
++ New improvements to the z80 decrunchers, again smaller and faster.
+
+2013-01-12
+Release of 2.0.5 source code, Win32 and DOS binaries.
++ Add -C and -M <length> flags that trades crunch result for speed. It is now
+  possible to really speed up crunching, even for "worst case"-type files.
++ Now skips the DAG traversing of the final pass if the encoding hasn't changed
+  since the previous pass.
+
+2012-08-16
+Release of 2.0.4 source code, Win32 and DOS binaries.
++ Bug in z80 decrunchers fixed by Metalbrain. Thanks goes to Hervé Monchatre
+  and Tim Riemann (Octoate) for reporting.
++ Implement sfx basic for the Apple II target.
++ Improve documentation slightly for the sfx and level commands.
+
+2012-03-25
+Release of 2.0.3 source code, Win32 and DOS binaries.
++ z80 decrunchers improved by Antonio Villena, now smaller and faster.
+
+2011-08-19
+Release of 2.0.2 source code, Win32 and DOS binaries.
++ Added 6809-decruncher contributed by Edouard Forler.
++ Fix language errors in the documentation. Thanks to Csabo/LOD.
++ Remove bogus printout about the default decrunch effect when using a custom
+  decrunch effect. Bug reported by Csabo/LOD.
++ Fix bug that prevented the correct error message from showing when trying to
+  combine a basic start and a non rom config for the sfx command.  Bug reported
+  by iAN CooG.
+
+2011-02-06
+Release of 2.0.1 source code, Win32 and DOS binaries.
++ Fix bug in log.c that caused the desfx command to loop if the log level was
+  lower than debug. Bug report by iAN CooG.
+2011-01-22
+Release of 2.0 source code, Win32 and DOS binaries.
++ Fix bug in sfx decruncher setup where data was copied unnecessary. Triggered
+  by using -Di_load_addr, reported by nbla000
++ Add i_line_number symbol to be able to change the default line number of the
+  basic line of the sfx decruncher. Feature suggested by Chicken
++ 6502 emulator core now features memory read/write callbacks
++ Add desfx -e flag to override the automatic entry point detection, feature
+  suggestion with patch by iAN CooG/HokutoForce. (Patch reworked somewhat,
+  error handling added)
++ Fix desfx handling of files that decrunch to and including 0xffff, Bug report
+  with patch by iAN CooG/HokutoForce. (Patch reworked somewhat, end addresses
+  are exclusive everywhere else)
++ Fix argument handling of desfx, Bug report + patch by iAN CooG/HokutoForce.
+
+2008-09-08
+Release of 2.0beta7 source code, Win32 and DOS binaries.
++ Refactored some functions from exo_main.c and exo_helper.c into a new file,
+  exo_util.c so the testprogram could use them too.
++ Fixed a bug in exo_main where the sys/call basic token was mixed up with
+  the basic_txt_start. This confused thes sfx sys sub-command.
++ Fixed a bug in krilldecr.s. The handling of literal sequences longer than
+  256 bytes was broken.
++ Added a testprogram to test that the decrunchers in the exodecrs folder
+  works. This feature uses the 6502 emulation core to run test programs. It
+  tests literal sequences longer than 256 bytes and run lengths longer than 256
+  bytes for all four decruncher variants, backward, forward, streaming and
+  chunk streaming.
++ Added a z80 decruncher contributed by Metalbrain.
++ Added an experimental desfx command that should be able to decrunch sfx
+  crunched files. Uses the 6502 emulation core to run the sfx-decrunchers.
++ Added a 6502 emulator core.
++ Fix rare situation when sfxdecr.s failed to assemble.
++ Improve the help text when no sub-command is given.
++ Improve the handling of ROM/RAM-banking and NMIs for the atari target in the
+  sfx decruncher.
++ Fix broken op definition ldy abs,x in the sfx assembler, bug reported by
+   Stefano Tognon.
+
+2007-05-13
+Prerelease of 2.0beta7 source code, Win32 and DOS binaries.
++ Add loading of Oric tap files to the sfx command.
++ Add support for microcontroller RAM to Oric sfx target.
++ Add flags to customize enter and exit code for the sfx sub-command.
++ The level and mem sub-commands now output more info about the generated file.
+
+2007-01-28
+Release of 2.0beta6 source code, Win32 and DOS binaries.
++ Fix c128 target bugs in the sfx command
++ Add an experimental Oric 1 target to the sfx command.
+
+2006-10-08
+Release of 2.0beta5 source code, Win32 and DOS binaries.
++ Add a decruncher able to decrunch forwards, exodepack.s, contributed by
+  Krill/Plush.
++ Add support for forward crunching to the mem and level sub commands.
++ Remove broken usage of membuf_append that breaks on big-endian targets. Bug
+  reported by MagerValp.
++ Add a dasm version of the exodecruncher source.
+
+2006-07-08
+Release of 2.0beta4 source code, Win32 and DOS binaries.
++ Change my email address (again).
++ Added option to the Apple target to disconnect the loaded DOS.
++ Fix length field error in generated Apple II file header.
++ Don't use setjmp/longjmp due to obscure bug when building for mingw with -O3
+  -fomit-frame-pointer. Bug reported by iAN CooG/HokutoForce.
++ Add multipass functionality to the assembler in order to be able to do more
+  complex things in the decruncher source.
++ fix the sfx decruncher to work for a wider range of i_load_addr values.
+  Bug reported by iAN CooG/HokutoForce.
++ Add optional offset,len for raw command file reading.
+
+2005-11-14
+Release of 2.0beta3 source code, win32 and dos binaries.
++ i_ram_exit bug for the C64 target found by iAN CooG/HokutoForce fixed.
++ Effect shorthands -n for no effect, -x1 for Accumulator based border flash,
+  -x2 for X-register based border flash and -x3 for Y-register based border
+  flash. -x<fast effect assembler fragment> -X<slow effect assembler fragment>
++ removed the i_fast_effect symbol. Now border effects are fast and blinking
+  char is slow.
++ Added flag -x<effect assembler fragment> to the sfx command.
++ Improved docs about the mem command and assembler symbols.
++ fixed spelling bug in i_effect=2 mode. Bug found by iAN CooG/HokutoForce.
+
+2005-11-02
+Release of 2.0beta2 win32 and dos binaries.
++ added results for canterbury and calgary corpae.
++ beginning a documentation section in exo20info.txt
++ changed the exoraw binary into a sub command of exomizer.
++ renamed symbols i_(ram|irq)_on_(entering|exit) to i_(ram|irq)_(enter|exit)
++ renamed symboli_config_effect to i_effect
++ added symbols i_(ram|irq)_during.
++ added new sfx target -t 168 ($a8), The Atari 400/800 XL/XE computer family.
+  The sfx file is written as a xex-file.
++ added ability to autodetect and read Atari Xex-files.
++ cmpression results should be exact as 1.1.5 now (if the -c flag is used).
+
+2005-04-10
+replaced 2.0beta1
++ tuned the cruncher for better compression, should be on pair with 1.1.5 now.
++ modified the usage of the symbol i_ram_on_exit
++ documented symbol i_table_addr
++ added symbol i_irq_on_exit
+
+2005-04-06
+replaced 2.0beta1
++ fixed +4 bank optmization in sfx decruncher
++ fixed bug in non-literal-sequence sfx decruncher that caused
+  the decrunched data to be offset in memory.
+
+2005-04-03
+replaced 2.0beta1
++ fixed -Di_config_effect
+
+2005-04-02
+initial release of 2.0beta1 no source.

@@ -37,7 +37,8 @@ eat(int sig)
 {
     int status;
 
-    waitpid(-1, &status, 0);
+    while (waitpid(-1, &status, 0) != -1)
+		continue;
     signal(SIGCHLD,eat);
 }
 
@@ -168,7 +169,9 @@ securepath(char *path)
 	if ( sb.st_uid != 0 ) fatal("%s: not user 0", part);
 	if ( sb.st_gid != 0 ) fatal("%s: not group 0", part);
 	if ( !S_ISDIR(sb.st_mode) ) fatal("%s: not a directory", part);
+#if 0
 	if ( sb.st_mode & (S_IWGRP|S_IWOTH) ) fatal("%s: group or world writable", part);
+#endif
     }
     if ( stat(path, &sb) != 0 ) fatal("%s: can't stat", path);
     if ( stat(".", &sb1) != 0 ) fatal(".: can't stat");
@@ -354,6 +357,14 @@ main(int argc, char **argv)
 	struct tm *tm;
 	int adjust;
 
+#if TEST
+	int n = 2;
+	do {
+		printf("cron: sleep start %d\n", n);
+		n = sleep(n);
+		printf("cron: sleep return %d\n", n);
+	} while (n > 0);
+#else
 	time(&ticks);
 	tm = localtime(&ticks);
 	adjust = (30 - tm->tm_sec) % 60;
@@ -380,6 +391,7 @@ main(int argc, char **argv)
 	    else
 		delay = left;
 	}
+#endif
 
 	checkcrondir();
 
@@ -389,7 +401,10 @@ main(int argc, char **argv)
 
 	for (i=0; i < nrtabs; i++)
 	    for (j=0; j < tabs[i].nrl; j++) {
-		    if ( (tabs[i].flags & ACTIVE) && triggered(&Now, &(tabs[i].list[j].trigger)) ) {
+#if !TEST
+		    if ( (tabs[i].flags & ACTIVE) && triggered(&Now, &(tabs[i].list[j].trigger)))
+#endif
+			{
 		      runjob(&tabs[i], &tabs[i].list[j]); 
             }
         }

@@ -27,6 +27,20 @@ all: $(TARGETS)
 image:
 	$(MAKE) -f Make.image "CONFIG=$(TOPDIR)/.config"
 
+copy: copyminix
+
+copyminix:
+	$(MAKE) -f Make.image copyminix "CONFIG=$(TOPDIR)/.config"
+
+copyfat:
+	$(MAKE) -f Make.image copyfat "CONFIG=$(TOPDIR)/.config"
+
+copyrom:
+	$(MAKE) -f Make.image copyrom "CONFIG=$(TOPDIR)/.config"
+
+compress:
+	cd $(TOPDIR)/target/bin; elks-compress *
+
 images: images-minix images-mbr images-fat
 
 images-minix: fd360-minix fd720-minix fd1440-minix fd2880-minix hd32-minix

@@ -26,6 +26,10 @@ SECTIONS {
 		    "Error: too large for a tiny-model ELKS a.out file.");
 	}
 
+	.rel.dyn : {
+		*(.rel.*)
+	}
+
 	/DISCARD/ : { *(.comment) }
 
 	/* `entry' was the old entry point symbol.  (Unfortunately this

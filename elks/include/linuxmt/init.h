@@ -27,6 +27,7 @@ extern void INITPROC mm_init(seg_t,seg_t);
 extern void INITPROC mm_stat(seg_t, seg_t);
 extern void INITPROC sched_init(void);
 extern void INITPROC serial_init(void);
+extern void INITPROC rs_setbaud(dev_t dev, unsigned long baud);
 extern void INITPROC sock_init(void);
 extern void INITPROC tty_init(void);
 

@@ -19,6 +19,7 @@
  *
  * 14 Jul 20 Helge Skrivervik Added LED and NUMLOCK/CAPSLOCK processing.
  * 17 Jul 20 Greg Haerr Added SCRLOCK processing, documentation, rewrite for clarity.
+ * 15 Apr 21 TK Chia Using interrupt-driven I/O to update keyboard LEDs.
  */
 
 #include <linuxmt/config.h>
@@ -28,6 +29,7 @@
 #include <linuxmt/errno.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/fcntl.h>
+#include <linuxmt/timer.h>
 #include <linuxmt/chqueue.h>
 #include <linuxmt/signal.h>
 #include <linuxmt/ntty.h>
@@ -71,6 +73,17 @@ static unsigned int ModeState = 0;
 static int capslock;
 static int numlock;
 static int scrlock;
+/*
+ * Whether we are currently trying to send a command to the keyboard
+ * controller to update the LEDs, and at what stage are we in sending the
+ * command.
+ */
+static enum {
+    KS_FREE,
+    KS_SETTING_LED_1,
+    KS_SETTING_LED_2
+} kb_cmd_state;
+static struct timer_list kb_cmd_timer;
 
 /*
  * Table for mapping scancodes >= 0x1C into scan code class.
@@ -88,6 +101,8 @@ static unsigned char tb_state[] = {
     SSC, SSC, SSC, SSC, SSC, SSC, SSC, SSC,	/*48->4F*/
     SSC, SSC, SSC, SSC, SSC, SSC, SSC, 'k', 'l' /*50->58, F11-F12*/
 };
+
+#define TB_STATE_MAX	(sizeof(tb_state) / sizeof(tb_state[0]) - 1)
 
 /*
  * Map CAPS|ALT|CTL|SHIFT into NORMAL,SHIFT,CAPS,CTL-ALT,
@@ -130,9 +145,28 @@ void kbd_init(void)
     if (request_irq(KBD_IRQ, keyboard_irq, NULL))
 	panic("Unable to get keyboard");
 
-    set_leds();
+    clr_irq();
     kb_read();      /* discard any unread keyboard input*/
+    set_irq();
+
+    set_leds();
 }
+
+/* Definitions from MINIX 2*/
+
+/* Standard and AT keyboard.  (PS/2 MCA implies AT throughout.) */
+#define KEYBD		0x60	/* I/O port for keyboard data */
+
+/* AT keyboard. */
+#define KB_COMMAND	0x64	/* I/O port for commands on AT */
+#define KB_STATUS	0x64	/* I/O port for status on AT */
+#define KB_ACK		0xFA	/* keyboard ack response */
+#define KB_OUT_FULL	0x01	/* status bit set when keypress char pending */
+#define KB_IN_FULL	0x02	/* status bit set when not ready to receive */
+#define LED_CODE	0xED	/* command to keyboard to set LEDs */
+#define KBIT		0x80	/* bit used to ack characters to keyboard */
+
+static void kbd_send_cmd(int);
 
 /*
  *	XT style keyboard I/O is almost civilised compared
@@ -192,14 +226,14 @@ static void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
      *         10xx xxxxB, 0x80 Extended scan code
      *         11xx xxxxB, 0xC0 Simple Scan Code
      */
-    if (code >= 0x1C)
+    if (code >= 0x1C && code - 0x1C <= TB_STATE_MAX)
 	mode = tb_state[code - 0x1C]; /*is key a modifier key?*/
     else
         mode = SSC;
 
     /* --------------Process status keys-------------- */
     if (!(mode & 0xC0)) {  		/* Not a simple scancode or fnkey*/
-#if defined(CONFIG_KEYMAP_DE) || defined(CONFIG_KEYMAP_SE) /* || defined(CONFIG_KEYMAP_ES) */
+#if defined(CONFIG_KEYMAP_DE) || defined(CONFIG_KEYMAP_SE) || defined(CONFIG_KEYMAP_FR) /* || defined(CONFIG_KEYMAP_ES) */
 	if ((mode == ALT) && E0key)	/* ALT_GR has a E0 prefix*/
 	    mode = ALT_GR;
 #endif
@@ -360,22 +394,6 @@ static void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
     }
 }
 
-/* LED routines from MINIX 2*/
-
-/* Standard and AT keyboard.  (PS/2 MCA implies AT throughout.) */
-#define KEYBD		0x60	/* I/O port for keyboard data */
-
-/* AT keyboard. */
-#define KB_COMMAND	0x64	/* I/O port for commands on AT */
-#define KB_STATUS	0x64	/* I/O port for status on AT */
-#define KB_ACK		0xFA	/* keyboard ack response */
-#define KB_OUT_FULL	0x01	/* status bit set when keypress char pending */
-#define KB_IN_FULL	0x02	/* status bit set when not ready to receive */
-#define LED_CODE	0xED	/* command to keyboard to set LEDs */
-#define MAX_KB_ACK_RETRIES 0x1000	/* max #times to wait for kb ack */
-#define MAX_KB_BUSY_RETRIES 0x1000	/* max #times to loop while kb busy */
-#define KBIT		0x80	/* bit used to ack characters to keyboard */
-
 /* Read keyboard and acknowledge controller */
 static int kb_read(void)
 {
@@ -390,44 +408,62 @@ static int kb_read(void)
     return(code);
 }
 
-/* Wait until the controller is ready; return zero if this times out. */
-static int kb_wait(void)
-{
-    int retries;
-    unsigned char status;
+static void restart_timer(void);
 
-    retries = MAX_KB_BUSY_RETRIES + 1;	/* wait until not busy */
-    while (--retries != 0 && (status = inb_p(KB_STATUS)) & (KB_IN_FULL|KB_OUT_FULL)) {
-	if (status & KB_OUT_FULL)
-	    inb_p(KEYBD);		/* discard */
-    }
-    return(retries);		/* nonzero if ready */
-}
-
-/* Wait until kbd acknowledges last command; return zero if this times out. */
-static int kb_ack(void)
-{
-    int retries;
-
-    retries = MAX_KB_ACK_RETRIES + 1;
-    while (--retries != 0 && inb_p(KEYBD) != KB_ACK)
-	;			/* wait for ack */
-    return(retries);		/* nonzero if ack received */
-}
-
-/* Set the LEDs on the caps, num, and scroll lock keys */
-static void set_leds(void)
+/* Called by the scheduler or keyboard_irq() to send a command to the
+   keyboard controller.  IRQs are assumed to be enabled. */
+static void kbd_send_cmd(int data)
 {
     unsigned char leds;
 
-    if (arch_cpu <= 5) return;	/* PC/XT doesn't have LEDs */
+    for (;;) {
+	switch (kb_cmd_state) {
+	case KS_SETTING_LED_1:
+					/* poll for buffer empty */
+	    if (inb_p(KB_STATUS) & KB_IN_FULL) {
+		restart_timer();	/* if not, schedule a later poll */
+		return;
+	    }
+	    outb_p(LED_CODE, KEYBD);	/* prepare keyboard to accept LED
+					   values */
+	    kb_cmd_state = KS_SETTING_LED_2;
+	    break;
+	case KS_SETTING_LED_2:
+	    if (inb_p(KB_STATUS) & KB_IN_FULL) {
+		restart_timer();
+		return;
+	    }
+					/* encode LED bits */
+	    leds = scrlock | (numlock << 1) | (capslock << 2);
+	    outb_p(leds, KEYBD);	/* give keyboard LED values */
+	    kb_cmd_state = KS_FREE;
+	default:
+	    return;
+	}
+    }
+}
 
-    kb_wait();			/* wait for buffer empty  */
-    outb_p(LED_CODE, KEYBD);	/* prepare keyboard to accept LED values */
-    kb_ack();			/* wait for ack response  */
+/* Arrange to call kbd_send_cmd() after a short period of time. */
+static void restart_timer(void)
+{
+    init_timer(&kb_cmd_timer);
+    kb_cmd_timer.tl_expires = jiffies + 2;	/* every 2/100 second*/
+    kb_cmd_timer.tl_function = kbd_send_cmd;
+    add_timer(&kb_cmd_timer);
+}
 
-    kb_wait();			/* wait for buffer empty  */
-    leds = scrlock | (numlock << 1) | (capslock << 2);	/* encode led bits*/
-    outb_p(leds, KEYBD);	/* give keyboard LED values */
-    kb_ack();			/* wait for ack response  */
+/* Set the LEDs on the caps, num, and scroll lock keys.  IRQs are assumed to
+   be enabled. */
+static void set_leds(void)
+{
+    if (!(sys_caps & CAP_KBD_LEDS)) return;	/* PC/XT doesn't have LEDs */
+
+    clr_irq();
+    if (kb_cmd_state == KS_FREE) {
+	/* if already in the middle of setting LEDs, then nothing to do;
+	   otherwise, schedule a timer event to to set LEDs */
+	kb_cmd_state = KS_SETTING_LED_1;
+	restart_timer();
+    }
+    set_irq();
 }

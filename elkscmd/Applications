@@ -78,7 +78,7 @@ sys_utils/ps					:sysutil		:360k
 sys_utils/reboot				:sysutil		:360k
 sys_utils/makeboot				:sysutil		:360k
 sys_utils/man					:sysutil				:1440k
-sys_utils/meminfo				:sysutil				:1440k
+sys_utils/meminfo				:sysutil		:360k
 sys_utils/mouse					:sysutil				:1440k
 sys_utils/passwd				:sysutil				:1440k
 sys_utils/poweroff				:sysutil			:720k
@@ -108,9 +108,11 @@ misc_utils/miniterm				:miscutil			:720k
 misc_utils/fdtest				:miscutil				:1440k
 misc_utils/tar					:miscutil				:1440k
 misc_utils/od					:miscutil				:1440k
-misc_utils/hd					:miscutil		:360k
+misc_utils/hd					:miscutil				:1440k
 misc_utils/time					:miscutil			:720k
 misc_utils/kilo					:miscutil				:1440k
+misc_utils/mined				:miscutil				:1440k
+misc_utils/sleep				:miscutil				:1440k
 misc_utils/tty					:miscutil				:1440k
 misc_utils/uuencode				:miscutil				:1440k
 misc_utils/uudecode				:miscutil				:1440k
@@ -173,8 +175,9 @@ inet/urlget/urlget :::httpget	:net
 #mtools/mtype					:mtools					:1440k
 #mtools/mwrite					:mtools					:1440k
 bc/bc							:other					:1440k
-prems/pres/pres					:other
-nano-X/bin/nxclock				:nanox					:1440k
+#prems/pres/pres				:other
+#nano/nano-2.0.6/src/nano		:other					:1440k
+#nano-X/bin/nxclock				:nanox					:1440k
 nano-X/bin/nxdemo				:nanox					:1440k
 nano-X/bin/nxlandmine			:nanox				:720k
 nano-X/bin/nxterm				:nanox

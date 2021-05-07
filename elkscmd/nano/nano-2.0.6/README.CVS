@@ -1,0 +1,90 @@
+INSTRUCTIONS TO COMPILE AND INSTALL NANO CVS VERSIONS
+=====================================================
+
+GNU nano is available from CVS, but building this needs a bit more care
+than the official stable and unstable tarballs.
+
+
+Prerequisites
+-------------
+
+To successfully compile GNU nano from CVS, you'll need the following
+packages:
+
+- autoconf (version >= 2.54)
+- automake (version >= 1.7)
+- gettext  (version >= 0.11.5)
+- groff    (version >= 1.12)
+- texinfo  (version >= 4.0)
+- cvs
+- ssh (with support for the SSH version 2 protocol)
+- glib 2.x (if your system doesn't have vsnprintf(), which the configure
+  script will check for)
+- make, gcc and the normal development libraries (curses or slang, etc.)
+
+These should be available on your GNU mirror.  Note that you'll need a
+version of curses or slang with wide character support if you want nano
+to use UTF-8.
+
+
+Download the source
+-------------------
+
+First, you need to set up cvs to download the CVS tree using ssh.  If
+you're using a Bourne shell (e.g. bash or sh), do
+
+    $ export CVS_RSH=ssh
+
+If you're using a C shell (e.g. tcsh or csh), do
+
+    $ setenv CVS_RSH ssh
+
+After that's set up, cd to your src directory and use the following
+command to download the CVS tree:
+
+    $ cvs -z3 -d:pserver:anonymous@cvs.savannah.gnu.org:/sources/nano checkout -r nano_2_0_branch nano
+
+
+Generate the configure script
+-----------------------------
+
+Once you have the sources in the "nano" directory,
+
+    $ cd nano
+    $ ./autogen.sh
+
+This will set up a configure script and a Makefile.in file.
+
+
+Configure your build
+--------------------
+
+To configure your build, run the configure script from the nano source
+directory:
+
+    $ ./configure [--add-options-here]
+
+
+Build and install
+-----------------
+
+From the nano source directory, build the code with:
+
+    $ make
+
+Then, once it's done compiling, run
+
+    $ make install
+
+which should copy various files (i.e. the nano executable, the info and
+man pages, and syntax highlighting pattern files) to their appropriate
+directories.
+
+If you're installing into the default install directory (/usr/local),
+you'll need to run that "make install" command with root privileges.
+
+
+Problems?
+---------
+
+Please submit any bugs in the CVS branch to nano-devel@gnu.org.
