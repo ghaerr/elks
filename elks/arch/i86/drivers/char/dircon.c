@@ -12,16 +12,9 @@
 
 #include <linuxmt/types.h>
 #include <linuxmt/config.h>
-#include <linuxmt/errno.h>
-#include <linuxmt/fcntl.h>
-#include <linuxmt/fs.h>
-#include <linuxmt/kernel.h>
-#include <linuxmt/major.h>
 #include <linuxmt/mm.h>
-#include <linuxmt/sched.h>
 #include <linuxmt/chqueue.h>
 #include <linuxmt/ntty.h>
-#include <linuxmt/kdev_t.h>
 #include <arch/io.h>
 #include "console.h"
 
@@ -72,9 +65,8 @@ static void *CCBase;
 static int Width, MaxCol, Height, MaxRow;
 static unsigned short int NumConsoles = MAX_CONSOLES;
 
-/* from xt_kbd.c */
-extern int Current_VCminor;
-extern int kraw;
+int Current_VCminor = 0;
+int kraw = 0;
 
 #ifdef CONFIG_EMUL_ANSI
 #define TERM_TYPE " emulating ANSI "
@@ -228,6 +220,6 @@ void console_init(void)
 
     kbd_init();
 
-    printk("Direct console %ux%u"TERM_TYPE"(%u virtual consoles)\n",
-	   Width, Height, NumConsoles);
+    printk("Direct console, %s kbd %ux%u"TERM_TYPE"(%u virtual consoles)\n",
+	   kbd_name, Width, Height, NumConsoles);
 }

@@ -10,6 +10,7 @@ mainmenu_option next_comment
 		"Direct         CONFIG_CONSOLE_DIRECT	\
 		 BIOS           CONFIG_CONSOLE_BIOS	\
 		 Headless       CONFIG_CONSOLE_HEADLESS"	Direct
+	bool '  Scancode keyboard driver'	CONFIG_KEYBOARD_SCANCODE y
 	bool 'Serial Console'	CONFIG_CONSOLE_SERIAL		n
 	if [[ "$CONFIG_CONSOLE_DIRECT" = "y" || "$CONFIG_CONSOLE_BIOS" = "y" ]]; then
 	    choice 'Console terminal emulation'		\

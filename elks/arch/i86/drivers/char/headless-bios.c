@@ -23,60 +23,10 @@
 #include "console.h"
 #include "bios-asm.h"
 
-static void restart_timer(void);
-
-/* called by scheduler to poll BIOS keyboard*/
-static void kbd_timer(int data)
-{
-    int dav, extra;
-
-    if ((dav = bios_kbd_poll())) {
-	if (dav & 0xFF)
-	    Console_conin(dav & 0x7F);
-	else {
-	    dav = (dav >> 8) & 0xFF;
-	    if (dav >= 0x3B && dav < 0x45)	/* Function keys */
-		dav = dav - 0x3B + 'a';
-	    else {
-		switch(dav) {
-		case 0x48: dav = 'A'; break;	/* up*/
-		case 0x50: dav = 'B'; break;	/* down*/
-		case 0x4d: dav = 'C'; break;	/* right*/
-		case 0x4b: dav = 'D'; break;	/* left*/
-		case 0x47: dav = 'H'; break;	/* home*/
-		case 0x4f: dav = 'F'; break;	/* end*/
-		case 0x49: dav = '5'; extra = '~'; break; /* pgup*/
-		case 0x51: dav = '6'; extra = '~'; break; /* pgdn*/
-		default:   dav = 0;
-		}
-	    }
-	    if (dav) {
-		Console_conin(033);
-		Console_conin('[');
-		Console_conin(dav);
-		if (extra)
-		    Console_conin(extra);
-	    }
-	}
-    }
-    restart_timer();
-}
-
-/* initialize timer for scheduler*/
-static void restart_timer(void)
-{
-    static struct timer_list timer;
-
-    init_timer(&timer);
-    timer.tl_expires = jiffies + 8;	/* every 8/100 second*/
-    timer.tl_function = kbd_timer;
-    add_timer(&timer);
-}
 
 void console_init(void)
 {
-    enable_irq(1);		/* enable BIOS Keyboard interrupts */
-    restart_timer();
+    kbd_init();
     printk("Headless console\n");
 }
 

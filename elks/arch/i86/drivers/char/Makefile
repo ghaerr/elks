@@ -48,7 +48,7 @@ ifdef CONFIG_CHAR_DEV_CGATEXT
 endif
 
 ifdef CONFIG_CONSOLE_DIRECT
-OBJS += dircon.o xt_key.o
+OBJS += dircon.o
 endif
 
 ifdef CONFIG_CONSOLE_BIOS
@@ -56,7 +56,13 @@ OBJS += bioscon.o bioscon-asm.o
 endif
 
 ifdef CONFIG_CONSOLE_HEADLESS
-OBJS += headless-bios.o bios-asm.o
+OBJS += headless-bios.o
+endif
+
+ifdef CONFIG_KEYBOARD_SCANCODE
+OBJS += kbd-scancode.o
+else
+OBJS += kbd-bios.o bios-asm.o
 endif
 
 endif # CONFIG_ARCH_SIBO

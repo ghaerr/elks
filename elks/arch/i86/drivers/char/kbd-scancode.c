@@ -47,13 +47,14 @@ static int kb_read(void);
 #define SCAN_F1		0x3B	/* scan code for F1 key*/
 #define SCAN_KP7	0x47	/* scan code for Keypad 7 key*/
 
+char kbd_name[] = "scan";
+
 /*
  * Include the relevant keymap.
  */
 #include "KeyMaps/keymaps.h"
 
-int Current_VCminor = 0;
-int kraw = 0;
+extern int kraw;
 /*
  *	Keyboard state - the poor little keyboard controller hasnt
  *	got the brains to remember itself.
