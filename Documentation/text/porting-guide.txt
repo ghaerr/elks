@@ -1,0 +1,106 @@
+ELKS Porting Guide
+==================
+8 May 2021 - Rev 1 ghaerr
+
+Platforms
+---------
+IBM PC/XT/AT Personal Computer (pc)
+	64K PC ROM BIOS
+	256K RAM minimum
+	Keyboard
+		BIOS IRQ 1 interrupt keyboard
+		BIOS INT 16h polled keyboard
+		keyboard LEDs via 8042 keyboard controller
+	EGA/MDA color/mono screen
+		Direct RAM write for fast text
+		BIOS INT 10h
+	Disk Filesystem
+		BIOS FD and HD
+	Serial
+		8250/16450/16550 UART
+	Ethernet
+		NE2K
+		WD8003
+
+Advantech SNMP-1000B (advtech)
+	ROM BIOS
+	ROM Filesystem
+	NE2K Ethernet
+	Serial
+
+SIBO (discontinued)
+
+
+Devices											Source file
+-------------------------------------------		-----------
+Device port and IRQ addresses					elks/include/arch/ports.h
+Kernel text, data, rom segments					elks/include/config.h
+System capabilities byte (SYS_CAPS)				elks/include/config.h
+
+8259 Programmable Interrupt Controller (PIC)	elks/arch/i86/kernel/irq.c
+	Cascade IRQ 0-7 and IRQ 8-15 seperately		elks/include/config.h
+
+8253/8254 Programmable Interval Timer (PIT)		elks/arch/i86/kernel/
+	100 HZ timer 0 on IRQ 0						timer.c
+	PC speaker timer 2 (bell chime)				elks/arch/i86/drivers/char/bell.c
+
+Screen											elks/arch/i86/drivers/char/
+	BIOS INT 10h Headless Console				headless-bios.c
+	BIOS INT 10h BIOS Console					bioscon.c
+	Direct Console using 6845 CRT Controller	dircon.c
+		hw cursor, display page					dircon.c
+
+Keyboard										elks/arch/i86/drivers/char/
+	BIOS IRQ 1 interrupt keyboard				kbd-scancode.c
+		8042 keyboard controller, LEDs			kbd-scancode.c
+	BIOS INT 16h polling driver					kbd-bios.c, bios-asm.S
+
+8250 Serial (UART)								elks/arch/i86/drivers/char/serial.c
+
+Disk											elks/arch/i86/drivers/block/
+	BIOS INT 13h FD/HD disk driver				bioshd.c
+	IDE/ATA drive query							idequery.c
+
+8237 DMA controller (unused)					elks/kernel/dma.c
+
+Non-device I/O Ports Used
+-------------------------------------------
+OUTB 80h - I/O delay							elks/include/arch/io.h
+OUTB CFh - Compaq Deskpro high speed			elks/arch/i86/system.c
+
+BIOS Services Required for PC target config
+-------------------------------------------
+INT 10h AH=02h Set Cursor						CONFIG_CONSOLE_BIOS
+INT 10h AH=03h Get Cursor						CONFIG_CONSOLE_BIOS
+INT 10h AH=05h Select active page				CONFIG_CONSOLE_BIOS
+INT 10h AH=06h Scroll up						CONFIG_CONSOLE_BIOS
+INT 10h AH=07h Scroll up						CONFIG_CONSOLE_BIOS
+INT 10h AH=09h Write character at cursor		CONFIG_CONSOLE_BIOS
+INT 10h AH=0Ah Write character at cursor (EMU86 only)
+INT 10h AH=0Eh Write teletype current page		CONFIG_CONSOLE_HEADLESS,boot_sect.S,setup.S
+INT 10h AH=0Fh Get video mode					setup.S
+INT 10h AH=12h Get EGA video configuration		CONFIG_HW_VGA
+INT 10h AH=1Ah Get VGA video configuration		CONFIG_HW_VGA
+INT 10h AH=13h Write string (EMU86 only)
+INT 10h AH=1Dh Write byte as hexidecimal (EMU86 only)
+
+INT 11h        BIOS device list (EMU86 only)
+
+INT 12h        Get memory in kilobytes			boot_sect.S, setup.S
+
+INT 13h AH=00h Reset disk system				CONFIG_BLK_DEV_BIOS, boot_sect.S
+INT 13h AH=02h Read disk sector					CONFIG_BLK_DEV_BIOS, boot_sect.S
+INT 13h AH=03h Write disk sector				CONFIG_BLK_DEV_BIOS
+INT 13h AH=08h Get drive parms					CONFIG_BLK_DEV_BIOS
+
+INT 15h        BIOS misc services (EMU86 only)
+
+INT 16h AH=00h Wait and read keyboard char		CONFIG_CONSOLE_HEADLESS, boot_sect.S
+INT 16h AH=01h Peek keyboard char				CONFIG_CONSOLE_HEADLESS
+INT 16h AH=03h Set typematic rate				CONFIG_HW_KEYBOARD_BIOS
+INT 16h AH=11h Wait and read keyboard char (EMU86 only)
+INT 16h AH=10h Extended wait and read char (EMU86 only)
+
+INT 17h        BIOS Printer services (EMU86 only)
+
+INT 1Ah        BIOS Time services (EMU86 only)
