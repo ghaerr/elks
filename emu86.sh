@@ -17,7 +17,7 @@ exec emu86 -w 0xe0000 -f elks/arch/i86/boot/Image -w 0x80000 -f image/romfs.bin 
 # ELKS must be configured minimaly with 'cp emu86-rom-full.config .config'
 # This adds MINIX/FAT filesytems with BIOS driver
 
-exec /emu86 -w 0xe0000 -f elks/arch/i86/boot/Image -w 0x80000 -f image/romfs.bin -I image/fd1440.bin ${1+"$@"}
+exec emu86 -w 0xe0000 -f elks/arch/i86/boot/Image -w 0x80000 -f image/romfs.bin -I image/fd1440.bin ${1+"$@"}
 
 # For ELKS disk image Configuration:
 # ELKS must be configured with 'cp emu86-disk.config .config'
