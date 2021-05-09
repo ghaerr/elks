@@ -2,20 +2,23 @@ ELKS Porting Guide
 ==================
 8 May 2021 - Rev 1 ghaerr
 
-Platforms
----------
+Platforms (target)
+-------------------------------------------
 IBM PC/XT/AT Personal Computer (pc)
-	64K PC ROM BIOS
-	256K RAM minimum
-	Keyboard
-		BIOS IRQ 1 interrupt keyboard
-		BIOS INT 16h polled keyboard
-		keyboard LEDs via 8042 keyboard controller
+	System
+		256K RAM minimum
+		64K PC ROM BIOS
+		8259 PIC
+		8253/8254 PIT, speaker
 	EGA/MDA color/mono screen
-		Direct RAM write for fast text
-		BIOS INT 10h
+		6845 CRTC RAM fast video text
+		BIOS INT 10h text display
+	Keyboard
+		8042 keyboard controller, LEDs
+		BIOS IRQ 1 interrupt scancode keyboard
+		BIOS INT 16h polled keyboard
 	Disk Filesystem
-		BIOS FD and HD
+		BIOS INT 13h Floppy/Hard Disk
 	Serial
 		8250/16450/16550 UART
 	Ethernet
@@ -23,15 +26,18 @@ IBM PC/XT/AT Personal Computer (pc)
 		WD8003
 
 Advantech SNMP-1000B (advtech)
-	ROM BIOS
-	ROM Filesystem
-	NE2K Ethernet
+	System
+		RAM
+		ROM BIOS
+		ROM Filesystem
+		PIC, PIT
 	Serial
+	NE2K Ethernet
 
 SIBO (discontinued)
 
 
-Devices											Source file
+ELKS PC Devices									Source file
 -------------------------------------------		-----------
 Device port and IRQ addresses					elks/include/arch/ports.h
 Kernel text, data, rom segments					elks/include/config.h
@@ -61,15 +67,22 @@ Disk											elks/arch/i86/drivers/block/
 	BIOS INT 13h FD/HD disk driver				bioshd.c
 	IDE/ATA drive query							idequery.c
 
-8237 DMA controller (unused)					elks/kernel/dma.c
+Ethernet										elks/arch/i86/drivers/net/
+	NE2K										ne2k.c, ne2k-asm.S
+	WD8003										wd.c
 
-Non-device I/O Ports Used
+Other
+	8237 DMA controller (unused)				elks/kernel/dma.c
+
+
+ELKS Non-device I/O Ports Used
 -------------------------------------------
 OUTB 80h - I/O delay							elks/include/arch/io.h
 OUTB CFh - Compaq Deskpro high speed			elks/arch/i86/system.c
 
-BIOS Services Required for PC target config
--------------------------------------------
+
+BIOS Services Required for PC target			Config setting/Where used
+-------------------------------------------		---------------------------------
 INT 10h AH=02h Set Cursor						CONFIG_CONSOLE_BIOS
 INT 10h AH=03h Get Cursor						CONFIG_CONSOLE_BIOS
 INT 10h AH=05h Select active page				CONFIG_CONSOLE_BIOS
