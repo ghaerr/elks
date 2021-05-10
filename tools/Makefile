@@ -179,6 +179,7 @@ $(BUILDDIR)/.emu86.src: $(DISTDIR)/$(EMU86_DIST).tar.gz
 	touch $(BUILDDIR)/.emu86.src
 
 $(BUILDDIR)/.emu86.build: $(BUILDDIR)/.emu86.src
+#	cp $(BUILDDIR)/emu86/config-elks.mk $(BUILDDIR)/emu86/config.mk
 	$(MAKE) -C $(BUILDDIR)/emu86 all
 	touch $(BUILDDIR)/.emu86.build
 
