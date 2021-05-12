@@ -3,11 +3,15 @@
 
 #include <linuxmt/types.h>
 
-extern void disable_irq(unsigned int);
-extern void enable_irq(unsigned int);
-extern void do_IRQ(int,void *);
-extern int request_irq(int,void (*)(int,struct pt_regs *,void *),void *);
-extern void free_irq(unsigned int);
+/* irq.c*/
+void do_IRQ(int,void *);
+int request_irq(int,void (*)(int,struct pt_regs *,void *),void *);
+
+/* irq-8259.c*/
+void init_irq(void);
+void enable_irq(unsigned int);
+int remap_irq(int);
+
 void idle_halt(void);
 
 #ifdef __KERNEL__

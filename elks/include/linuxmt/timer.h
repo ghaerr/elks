@@ -82,13 +82,19 @@ struct timer_list {
 };
 
 struct pt_regs;
+
+/* sched.c*/
 extern void init_timer(struct timer_list *);
 extern void add_timer(struct timer_list *);
 extern int del_timer(struct timer_list *);
-extern void timer_tick(int, struct pt_regs *, void *);
-extern void enable_timer_tick(void);
-extern void stop_timer(void);
 extern void do_timer(struct pt_regs *);
-extern void spin_timer(int);
+
+/* timer.c*/
+void timer_tick(int, struct pt_regs *, void *);
+void spin_timer(int);
+
+/* timer-8254.c*/
+void enable_timer_tick(void);
+void disable_timer_tick(void);
 
 #endif

@@ -1,6 +1,6 @@
 ELKS Porting Guide
 ==================
-8 May 2021 - Rev 1 ghaerr
+11 May 2021 - Rev 2 ghaerr
 
 Platforms (target)
 -------------------------------------------
@@ -89,15 +89,10 @@ INT 10h AH=05h Select active page				CONFIG_CONSOLE_BIOS
 INT 10h AH=06h Scroll up						CONFIG_CONSOLE_BIOS
 INT 10h AH=07h Scroll up						CONFIG_CONSOLE_BIOS
 INT 10h AH=09h Write character at cursor		CONFIG_CONSOLE_BIOS
-INT 10h AH=0Ah Write character at cursor (EMU86 only)
 INT 10h AH=0Eh Write teletype current page		CONFIG_CONSOLE_HEADLESS,boot_sect.S,setup.S
 INT 10h AH=0Fh Get video mode					setup.S
 INT 10h AH=12h Get EGA video configuration		CONFIG_HW_VGA
 INT 10h AH=1Ah Get VGA video configuration		CONFIG_HW_VGA
-INT 10h AH=13h Write string (EMU86 only)
-INT 10h AH=1Dh Write byte as hexidecimal (EMU86 only)
-
-INT 11h        BIOS device list (EMU86 only)
 
 INT 12h        Get memory in kilobytes			boot_sect.S, setup.S
 
@@ -106,14 +101,6 @@ INT 13h AH=02h Read disk sector					CONFIG_BLK_DEV_BIOS, boot_sect.S
 INT 13h AH=03h Write disk sector				CONFIG_BLK_DEV_BIOS
 INT 13h AH=08h Get drive parms					CONFIG_BLK_DEV_BIOS
 
-INT 15h        BIOS misc services (EMU86 only)
-
 INT 16h AH=00h Wait and read keyboard char		CONFIG_CONSOLE_HEADLESS, boot_sect.S
 INT 16h AH=01h Peek keyboard char				CONFIG_CONSOLE_HEADLESS
 INT 16h AH=03h Set typematic rate				CONFIG_HW_KEYBOARD_BIOS
-INT 16h AH=11h Wait and read keyboard char (EMU86 only)
-INT 16h AH=10h Extended wait and read char (EMU86 only)
-
-INT 17h        BIOS Printer services (EMU86 only)
-
-INT 1Ah        BIOS Time services (EMU86 only)
