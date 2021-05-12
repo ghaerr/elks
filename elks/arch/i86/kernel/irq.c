@@ -22,8 +22,6 @@
 #include <linuxmt/timer.h>
 #include <linuxmt/types.h>
 
-#include <arch/io.h>
-#include <arch/irq.h>
 #include <arch/ports.h>
 
 /* Enable 80386 Traps */
@@ -52,70 +50,6 @@ static struct irqaction irq_action[] = {
     {default_handler, NULL},
 #endif
 };
-
-unsigned char cache_21 = 0xff, cache_A1 = 0xff;
-
-#ifdef CONFIG_ARCH_SIBO
-void enable_irq(unsigned int irq)
-{
-    /* Not supported on SIBO */
-}
-
-static int remap_irq(unsigned int irq)
-{
-    return irq;
-}
-
-#else
-
-/*
- *	Low level interrupt handling for the X86 PC/XT and PC/AT
- *	platform
- */
-
-void enable_irq(unsigned int irq)
-{
-    unsigned char mask;
-
-    mask = ~(1 << (irq & 7));
-    if (irq < 8) {
-	cache_21 &= mask;
-	outb(cache_21,((void *) 0x21));
-    } else {
-	cache_A1 &= mask;
-	outb(cache_A1,((void *) 0xA1));
-    }
-}
-
-static int remap_irq(int irq)
-{
-    if ((unsigned int)irq > 15 || (irq > 7 && !(sys_caps & CAP_IRQ8TO15)))
-	return -EINVAL;
-    if (irq == 2 && (sys_caps & CAP_IRQ2MAP9))
-	irq = 9;			/* Map IRQ 9/2 over */
-    return irq;
-}
-
-#if 0
-void disable_irq(unsigned int irq)
-{
-    flag_t flags;
-    unsigned char mask = 1 << (irq & 7);
-
-    save_flags(flags);
-    clr_irq();
-    if (irq < 8) {
-	cache_21 |= mask;
-	outb(cache_21,((void *) 0x21));
-    } else {
-	cache_A1 |= mask;
-	outb(cache_A1,((void *) 0xA1));
-    }
-    restore_flags(flags);
-}
-#endif
-
-#endif
 
 /*
  *	Called by the assembler hooks
@@ -168,7 +102,6 @@ int request_irq(int irq, void (*handler)(int,struct pt_regs *,void *), void *dev
 }
 
 #if 0
-
 void free_irq(unsigned int irq)
 {
     register struct irqaction * action = irq_action + irq;
@@ -194,7 +127,6 @@ void free_irq(unsigned int irq)
 
     restore_flags(flags);
 }
-
 #endif
 
 /*
@@ -205,11 +137,9 @@ void INITPROC irq_init(void)
 {
     flag_t flags;
 
-#ifdef CONFIG_HW_259_USE_ORIGINAL_MASK	/* for example Debugger :-) */
-    cache_21 = inb_p(0x21);
-#endif
+    init_irq();
 
-    stop_timer();
+    disable_timer_tick();
 
     /* Old IRQ 8 handler is nuked in this routine */
     irqtab_init();			/* Store DS */
