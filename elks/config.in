@@ -9,7 +9,8 @@ mainmenu_option next_comment
 
 	choice 'Select system' \
 		"IBM-PC CONFIG_ARCH_IBMPC \
-		 SIBO   CONFIG_ARCH_SIBO" IBM-PC
+		 SIBO   CONFIG_ARCH_SIBO  \
+		 8018X	CONFIG_ARCH_8018X" IBM-PC
 
 	if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
 
@@ -65,6 +66,12 @@ mainmenu_option next_comment
 		bool 'Use bootup IRQ-Mask of 8259 as default'    CONFIG_HW_259_USE_ORIGINAL_MASK n
 		bool 'Advanced Power Management support'         CONFIG_APM y
 
+	elif [ "$CONFIG_ARCH_8018X" = "y" ]; then
+
+		comment 'Platform'
+
+		comment 'Devices'
+
 	fi
 
 endmenu
@@ -78,7 +85,7 @@ mainmenu_option next_comment
 	bool 'System Trace'                       CONFIG_STRACE       n
 	bool 'Halt on Idle'                       CONFIG_IDLE_HALT    n
 
-	if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
+	if [ "$CONFIG_ARCH_IBMPC" = "y" ] || [ "$CONFIG_ARCH_8018X" = "y" ]; then
 		bool 'Build kernel as ROM-bootable'   CONFIG_ROMCODE      n
     fi
 
