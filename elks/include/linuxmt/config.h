@@ -5,6 +5,20 @@
 #include <linuxmt/major.h>
 
 /*
+ * Setup data - normally queried by startup setup.S code, but can
+ * be overridden for embedded systems with less overhead.
+ * See setup.S for more details.
+ */
+#define SETUP_VID_COLS		setupb(7)		/* BIOS video # columns */
+#define SETUP_VID_LINES		setupb(14)		/* BIOS video # lines */
+#define SETUP_CPU_TYPE		setupb(0x20)	/* processor type */
+#define SETUP_MEM_KBYTES	setupw(0x2a)	/* base memory in 1K bytes */
+#define SETUP_ROOT_DEV		setupw(0x1fc)	/* root device, kdev_t or BIOS dev */
+#define SETUP_ELKS_FLAGS	setupw(0x1f6)	/* flags for root device type */
+#define SETUP_PART_OFFSETLO	setupw(0x1e2)	/* partition offset low word */
+#define SETUP_PART_OFFSETHI	setupw(0x1e4)	/* partition offset high word */
+
+/*
  * System capabilities - configurable for ROM or custom installations.
  * Normally, all capabilities will be set if arch_cpu > 5 (PC/AT),
  * except when SYS_CAPS is defined for custom installations or emulations.

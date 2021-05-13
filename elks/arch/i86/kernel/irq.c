@@ -78,15 +78,12 @@ int request_irq(int irq, void (*handler)(int,struct pt_regs *,void *), void *dev
     flag_t flags;
 
     irq = remap_irq(irq);
-    if (irq < 0)
+    if (irq < 0 || !handler)
 	return -EINVAL;
 
     action = irq_action + irq;
     if (action->handler != default_handler)
 	return -EBUSY;
-
-    if (!handler)
-	return -EINVAL;
 
     save_flags(flags);
     clr_irq();
@@ -94,7 +91,7 @@ int request_irq(int irq, void (*handler)(int,struct pt_regs *,void *), void *dev
     action->handler = handler;
     action->dev_id = dev_id;
 
-    enable_irq((unsigned int) irq);
+    enable_irq(irq);
 
     restore_flags(flags);
 
@@ -122,8 +119,6 @@ void free_irq(unsigned int irq)
 
     action->handler = default_handler;
     action->dev_id = NULL;
-/*    action->flags = 0;
-    action->name = NULL;*/
 
     restore_flags(flags);
 }

@@ -168,10 +168,10 @@ void console_init(void)
     register Console *C;
     register int i;
 
-    MaxCol = (Width = setupb(7)) - 1;
+    MaxCol = (Width = SETUP_VID_COLS) - 1;
 
     /* Trust this. Cga does not support peeking at 0x40:0x84. */
-    MaxRow = (Height = setupb(14)) - 1;
+    MaxRow = (Height = SETUP_VID_LINES) - 1;
 
     if (peekb(0x49, 0x40) == 7)  /* BIOS data segment */
 	NumConsoles = 1;

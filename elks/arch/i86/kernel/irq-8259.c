@@ -12,6 +12,12 @@
 #include <arch/io.h>
 #include <arch/irq.h>
 
+/* 8259 Command/Data ports */
+#define PIC1_CMD   0x20   /* master */
+#define PIC1_DATA  0x21
+#define PIC2_CMD   0xA0   /* slave */
+#define PIC2_DATA  0xA1
+
 static unsigned char cache_21 = 0xff, cache_A1 = 0xff;
 
 /*
@@ -21,7 +27,7 @@ static unsigned char cache_21 = 0xff, cache_A1 = 0xff;
 void init_irq(void)
 {
 #ifdef CONFIG_HW_259_USE_ORIGINAL_MASK	/* for example Debugger :-) */
-    cache_21 = inb_p(0x21);
+    cache_21 = inb_p(PIC1_DATA);
 #endif
 }
 
@@ -32,10 +38,10 @@ void enable_irq(unsigned int irq)
     mask = ~(1 << (irq & 7));
     if (irq < 8) {
 	cache_21 &= mask;
-	outb(cache_21,((void *) 0x21)); //FIXME
+	outb(cache_21, PIC1_DATA);
     } else {
 	cache_A1 &= mask;
-	outb(cache_A1,((void *) 0xA1));
+	outb(cache_A1, PIC2_DATA);
     }
 }
 
@@ -58,10 +64,10 @@ void disable_irq(unsigned int irq)
     clr_irq();
     if (irq < 8) {
 	cache_21 |= mask;
-	outb(cache_21,((void *) 0x21));
+	outb(cache_21, PIC1_DATA);
     } else {
 	cache_A1 |= mask;
-	outb(cache_A1,((void *) 0xA1));
+	outb(cache_A1, PIC2_DATA);
     }
     restore_flags(flags);
 }

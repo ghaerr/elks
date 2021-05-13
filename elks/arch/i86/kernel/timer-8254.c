@@ -38,14 +38,14 @@
 void enable_timer_tick(void)
 {
     /* set the clock frequency */
-    outb (TIMER_MODE2, (void*)TIMER_CMDS_PORT);
-    outb (TIMER_LO_BYTE, (void*)TIMER_DATA_PORT);	/* LSB */
-    outb (TIMER_HI_BYTE, (void*)TIMER_DATA_PORT);	/* MSB */
+    outb (TIMER_MODE2, TIMER_CMDS_PORT);
+    outb (TIMER_LO_BYTE, TIMER_DATA_PORT);	/* LSB */
+    outb (TIMER_HI_BYTE, TIMER_DATA_PORT);	/* MSB */
 }
 
 void disable_timer_tick(void)
 {
-    outb (TIMER_MODE0, (void*)TIMER_CMDS_PORT);
-    outb (0, (void*)TIMER_DATA_PORT);
-    outb (0, (void*)TIMER_DATA_PORT);
+    outb (TIMER_MODE0, TIMER_CMDS_PORT);
+    outb (0, TIMER_DATA_PORT);
+    outb (0, TIMER_DATA_PORT);
 }
