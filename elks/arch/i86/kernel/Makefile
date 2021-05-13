@@ -43,7 +43,7 @@ OBJS += irq-8259.o timer-8254.o
 endif
 
 ifeq ($(CONFIG_ARCH_8018X), y)
-OBJS += irq-8018x.o timer-8254.o
+OBJS += irq-8018x.o timer-8018x.o
 endif
 
 #########################################################################
