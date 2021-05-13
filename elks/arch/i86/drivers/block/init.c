@@ -49,7 +49,7 @@ void INITPROC device_init(void)
      * drive number.  If so, convert it into a proper <major, minor> block
      * device number.  -- tkchia 20200308
      */
-    if (!boot_rootdev && (setupw(0x1f6) & EF_BIOS_DEV_NUM) != 0) {
+    if (!boot_rootdev && (SETUP_ELKS_FLAGS & EF_BIOS_DEV_NUM) != 0) {
 	extern kdev_t INITPROC bioshd_conv_bios_drive(unsigned int biosdrive);
 
 	kdev_t rootdev = bioshd_conv_bios_drive((unsigned)ROOT_DEV);

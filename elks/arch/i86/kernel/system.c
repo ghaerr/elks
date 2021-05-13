@@ -12,34 +12,28 @@
 
 byte_t sys_caps;		/* system capabilities bits */
 
-#ifdef CONFIG_ARCH_SIBO
-extern long int basmem;
-#endif
-
 void INITPROC setup_arch(seg_t *start, seg_t *end)
 {
 #ifdef CONFIG_COMPAQ_FAST
-/*
- *	Switch COMPAQ Deskpro to high speed
- */
-    outb_p(1,0xcf);
+	outb_p(1,0xcf);	/* Switch COMPAQ Deskpro to high speed */
 #endif
 
-/*
- *	Fill in the MM numbers - really ought to be in mm not kernel ?
- */
-
-	/* Extend kernel data segment to maximum of 64K */
-	/* to make room for local heap */
+	/*
+	 * Set start to beginning of available main memory, which
+	 * is directly after end of the kernel data segment.
+	 *
+	 * Extend kernel data segment to maximum of 64K to make room
+	 * for local heap.
+	 *
+	 * Set end to end of available main memory.
+	 *
+	 * If ramdisk configured, subtract space for it from end of memory.
+	 */
 
 	/* *start = kernel_ds + (((unsigned int) (_endbss+15)) >> 4); */
 	*start = kernel_ds + 0x1000;
 
-#ifdef CONFIG_ARCH_SIBO
-	*end = basmem << 6;
-#else
-	*end = (seg_t)setupw(0x2a) << 6;
-#endif
+	*end = (seg_t)SETUP_MEM_KBYTES << 6;
 
 #if defined(CONFIG_RAMDISK_SEGMENT) && (CONFIG_RAMDISK_SEGMENT > 0)
 	if (CONFIG_RAMDISK_SEGMENT <= *end) {
@@ -56,12 +50,12 @@ void INITPROC setup_arch(seg_t *start, seg_t *end)
 	heap_add ((void *)endbss, 1 + ~endbss);
 
 	/* Misc */
-	ROOT_DEV = setupw(0x1fc);
+	ROOT_DEV = SETUP_ROOT_DEV;
 
 #ifdef SYS_CAPS
 	sys_caps = SYS_CAPS;	/* custom system capabilities */
 #else
-	byte_t arch_cpu = setupb(0x20);
+	byte_t arch_cpu = SETUP_CPU_TYPE;
 	if (arch_cpu > 5)		/* IBM PC/AT capabilities */
 		sys_caps = CAP_ALL;
 #endif

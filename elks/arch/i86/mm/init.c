@@ -53,7 +53,7 @@ void INITPROC mm_stat(seg_t start, seg_t end)
 	*cp++ = setupb(i++);
 	if (i == 0x40) {
 	    printk("PC/%cT class machine, %s CPU, %uK base RAM",
-		    (sys_caps & CAP_PC_AT) ? 'A' : 'X', proc_name, setupw(0x2a));
+		    (sys_caps & CAP_PC_AT) ? 'A' : 'X', proc_name, SETUP_MEM_KBYTES);
 	    cp = proc_name;
 	    i = 0x50;
 	}

@@ -87,7 +87,7 @@ static void INITPROC add_partition(struct gendisk *hd, unsigned short int minor,
      * a device number, then we do not really need boot_partition.
      */
     if (ROOT_DEV == (0x80 | minor >> hd->minor_shift)) {
-	sector_t boot_start = setupw(0x1e2) | (sector_t) setupw(0x1e4) << 16;
+	sector_t boot_start = SETUP_PART_OFFSETLO | (sector_t) SETUP_PART_OFFSETHI << 16;
 	if (start == boot_start)
 	    boot_partition = minor;
     }
