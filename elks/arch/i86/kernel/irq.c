@@ -21,6 +21,7 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/timer.h>
 #include <linuxmt/types.h>
+#include <linuxmt/heap.h>
 
 #include <arch/ports.h>
 
@@ -72,6 +73,42 @@ static void default_handler(int i, void *regs, void *dev)
 	printk("Unexpected interrupt: %u\n", i);
 }
 
+
+typedef void (* int_proc) (void);
+
+struct int_handler {
+	byte_t call;  // CALLF opcode (9Ah)
+	int_proc proc;
+	word_t seg;
+	byte_t irq;
+} __attribute__ ((packed));
+
+typedef struct int_handler int_handler_s;
+
+// TODO: move to irq.h
+int int_vector_set (int vect, int_proc proc, int seg);
+void _irqit (void);
+
+// TODO: move to segment.h
+int seg_data (void);
+
+// Add a dynamically allocated handler
+// that redirects to the generic handler
+
+static int int_handler_add (int irq, int vect)
+	{
+	int_handler_s * h = (int_handler_s *) heap_alloc (sizeof (int_handler_s), HEAP_TAG_INTHAND);
+	if (!h) return -ENOMEM;
+
+	h->call = 0x9A;    // CALLF opcode
+	h->proc = _irqit;  // generic interrupt handler
+	h->irq  = irq;
+
+	h->seg = int_vector_set (vect, (int_proc) h, seg_data ());
+	return 0;
+	}
+
+
 int request_irq(int irq, void (*handler)(int,struct pt_regs *,void *), void *dev_id)
 {
     register struct irqaction *action;
@@ -90,6 +127,9 @@ int request_irq(int irq, void (*handler)(int,struct pt_regs *,void *), void *dev
 
     action->handler = handler;
     action->dev_id = dev_id;
+
+	if (int_handler_add (irq, irq + ((irq > 8) ? 0x68 : 0x08)))
+		return -ENOMEM;
 
     enable_irq(irq);
 
@@ -138,6 +178,7 @@ void INITPROC irq_init(void)
 
     /* Old IRQ 8 handler is nuked in this routine */
     irqtab_init();			/* Store DS */
+    int_handler_add (0x80, 0x80);  // system call
 
     /* Set off the initial timer interrupt handler */
     if (request_irq(TIMER_IRQ, timer_tick, NULL))

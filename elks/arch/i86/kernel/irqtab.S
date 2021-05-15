@@ -26,6 +26,17 @@ ds_kernel:
 	.word	0
 #endif
 
+
+// Helper to get kernel data segment
+
+	.global seg_data
+
+seg_data:
+
+	mov %cs:ds_kernel,%ax
+	ret
+
+
 /* build MINT mask based on required interrupts in arch/ports.h*/
 #ifdef CONFIG_NEED_IRQ0
 #define M0	0x01
@@ -126,9 +137,6 @@ irqtab_init:
 // DS points to page 0  (interrupt table)
 // ES points to the kernel data segment
 
-	movw	$_syscall_int,512 // syscall
-	mov	%cs,514
-
 	mov	$32,%bx
 	mov	(%bx),%ax		// get the old timer intr
 //	seg	es
@@ -160,6 +168,47 @@ init_tab3:
 	pop	%ds
 	sti
 	ret
+
+//------------------------------------------------------------------------------
+// Set interrupt vector
+//------------------------------------------------------------------------------
+
+	.global int_vector_set
+
+// arg1: vector number (byte)
+// arg2: function offset (word)
+// arg3: function segment (word)
+
+int_vector_set:
+
+	mov %sp,%bx
+	mov 6(%bx),%dx  // arg3
+	mov 4(%bx),%cx  // arg2
+	mov 2(%bx),%bx  // arg1
+
+	shl $1,%bx
+	shl $1,%bx
+
+	push %ds
+	xor %ax,%ax
+	mov %ax,%ds
+
+	pushf
+	cli
+	mov %cx,0(%bx)
+	mov %dx,2(%bx)
+	popf
+
+	pop %ds
+
+	// As ELKS kernel is now in medium memory model,
+	// return the code segment of the current module
+	// that contains the generic interrupt handler
+
+	mov %cs,%ax
+	ret
+
+//------------------------------------------------------------------------------
 
 //	IRQ and IRQ return paths for Linux 8086
 //
@@ -370,6 +419,8 @@ _syscall_int:		// Syscall
 	.extern	ret_strace
 #endif
 
+	.global _irqit
+
 _irqit:
 //
 //	Make room
@@ -434,6 +485,7 @@ save_regs:
 	pop	2(%si)		// SI
 	pop	8(%si)		// DS
 	pop	%di		// Pointer to interrupt number
+	pop	%ds		// DS of dynamic handler = kernel DS
 	push	%bp		// BP
 	mov	%sp,10(%si)	// SP
 	mov	%ss,12(%si)	// SS
@@ -454,10 +506,11 @@ save_regs:
 	push	%bx		// BX
 	push	%ax		// AX
 //
-//	cs:[di] has interrupt number
+//	cs:[di] has interrupt number -> not more
+//	ds:[di] has interrupt number, because of dynamic handler in DS
 //
-//	seg	cs
-	movb	%cs:(%di),%al
+	//movb	%cs:(%di),%al
+	movb	(%di),%al
 	cmpb	$0x80,%al
 	jne	updct
 //
