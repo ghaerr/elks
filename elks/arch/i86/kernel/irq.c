@@ -128,8 +128,7 @@ int request_irq(int irq, void (*handler)(int,struct pt_regs *,void *), void *dev
     action->handler = handler;
     action->dev_id = dev_id;
 
-	// IRQ 8-15 are mapped to vectors INT 70h-77h
-	if (int_handler_add (irq, irq + ((irq > 8) ? 0x68 : 0x08)))
+	if (int_handler_add (irq, irq_vector (irq))
 		return -ENOMEM;
 
     enable_irq(irq);
