@@ -265,7 +265,9 @@ void fast_com2_irq(void)
 }
 #endif
 
-#if defined(CONFIG_NEED_IRQ4) || defined(CONFIG_NEED_IRQ3)
+
+#if !defined(CONFIG_FAST_IRQ3) && !defined(CONFIG_FAST_IRQ43)
+
 static int irq_port[NR_SERIAL] = { 3, 1, 0, 2 }; //FIXME must change with ports.h
 
 /*
@@ -298,7 +300,9 @@ void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
     if (q->len)		/* don't wakeup unless chars else EINTR result*/
 	wake_up(&q->wait);
 }
-#endif
+
+#endif  // !defined(CONFIG_FAST_IRQ3) && !defined(CONFIG_FAST_IRQ43)
+
 
 static void rs_release(struct tty *tty)
 {
@@ -432,15 +436,19 @@ static void rs_init(void)
 	if (!rs_probe(sp)) {
 	    switch(sp->irq) {
 	    default:
-#if defined(CONFIG_NEED_IRQ4) || defined(CONFIG_NEED_IRQ3)
+#if !defined(CONFIG_FAST_IRQ3) && !defined(CONFIG_FAST_IRQ43)
 		request_irq(sp->irq, rs_irq, NULL);
 #endif
 		break;
 #ifdef CONFIG_FAST_IRQ4
 	    case 4:
+		// FIXME: how to find code segment of the fast handler ?
+		int_vector_set (0x0C, _irq_com1, /*seg_code()*/);
 #endif
 #ifdef CONFIG_FAST_IRQ3
 	    case 3:
+		// FIXME: how to find code segment of the fast handler ?
+		int_vector_set (0x0B, _irq_com2, /*seg_code()*/);
 #endif
 		enable_irq(sp->irq);
 		break;

@@ -37,94 +37,8 @@ seg_data:
 	ret
 
 
-/* build MINT mask based on required interrupts in arch/ports.h*/
-#ifdef CONFIG_NEED_IRQ0
-#define M0	0x01
-#else
-#define M0	0
-#endif
-#ifdef CONFIG_NEED_IRQ1
-#define M1	0x02
-#else
-#define M1	0
-#endif
-#ifdef CONFIG_NEED_IRQ2
-#define M2	0x04
-#else
-#define M2	0
-#endif
-#if defined(CONFIG_NEED_IRQ3) || defined (CONFIG_FAST_IRQ3)
-#define M3	0x08
-#else
-#define M3	0
-#endif
-#if defined(CONFIG_NEED_IRQ4) || defined (CONFIG_FAST_IRQ4)
-#define M4	0x10
-#else
-#define M4	0
-#endif
-#ifdef CONFIG_NEED_IRQ5
-#define M5	0x20
-#else
-#define M5	0
-#endif
-#ifdef CONFIG_NEED_IRQ6
-#define M6	0x40
-#else
-#define M6	0
-#endif
-#ifdef CONFIG_NEED_IRQ7
-#define M7	0x80
-#else
-#define M7	0
-#endif
-#ifdef CONFIG_NEED_IRQ8
-#define M8	0x100
-#else
-#define M8	0
-#endif
-#ifdef CONFIG_NEED_IRQ9
-#define M9	0x200
-#else
-#define M9	0
-#endif
-#ifdef CONFIG_NEED_IRQ10
-#define M10	0x400
-#else
-#define M10	0
-#endif
-#ifdef CONFIG_NEED_IRQ11
-#define M11	0x800
-#else
-#define M11	0
-#endif
-#ifdef CONFIG_NEED_IRQ12
-#define M12	0x1000
-#else
-#define M12	0
-#endif
-#ifdef CONFIG_NEED_IRQ13
-#define M13	0x2000
-#else
-#define M13	0
-#endif
-#ifdef CONFIG_NEED_IRQ14
-#define M14	0x4000
-#else
-#define M14	0
-#endif
-#ifdef CONFIG_NEED_IRQ15
-#define M15	0x8000
-#else
-#define M15	0
-#endif
-
-/* took awhile to generate this...*/
-#define MINT (M0|M1|M2|M3|M4|M5|M6|M7|M8|M9|M10|M11|M12|M13|M14|M15)
-
 	.global	irqtab_init
 irqtab_init:
-	cli
 
 #if !defined(CONFIG_ROMCODE)
 	mov	%ss,%cs:ds_kernel
@@ -145,28 +59,11 @@ irqtab_init:
 //	seg	es
 	mov	%ax,%es:_stashed_irq0_l+2
 
-	mov	$MINT,%cx
-	mov	$_irqtable,%ax
-init_tab1:
-	shr	$1,%cx
-	jnc	init_tab2
-	mov	%ax,(%bx)
-	mov	%cs,2(%bx)
-	add	$4,%ax
-init_tab2:
-	add	$4,%bx
-	cmp	$64,%bx
-	jne	init_tab3
-	add	$384,%bx		// IRQ 8-15 are mapped to vectors INT 70h-77h
-init_tab3:
-	or	%cx,%cx
-	jnz	init_tab1
 //
 // Tidy up
 //
 	push	%ss		// restore DS
 	pop	%ds
-	sti
 	ret
 
 //------------------------------------------------------------------------------
@@ -215,170 +112,6 @@ int_vector_set:
 // The execution thread will not return from the function call.
 // Instead, the address pushed in the stack will be used to get
 // the interrupt number.
-
-_irqtable:
-#ifdef CONFIG_NEED_IRQ0
-_irq0:			// Timer
-	call	_irqit
-	.byte	0
-#endif
-#ifdef CONFIG_NEED_IRQ1
-_irq1:			// Keyboard
-	call	_irqit
-	.byte	1
-#endif
-#ifdef CONFIG_NEED_IRQ2
-_irq2:			// Cascade
-	call	_irqit
-	.byte	2
-#endif
-#if defined(CONFIG_NEED_IRQ3) || defined(CONFIG_FAST_IRQ3)
-_irq3:			// COM2
-#ifdef CONFIG_FAST_IRQ3
-	.global _irq_com2	// fastest possible interrupt routine, fixed com2 port
-	jmp	_irq_com2
-	.byte	3		// ignored
-#endif
-#ifdef CONFIG_NEED_IRQ3
-	call	_irqit		// original ELKS overhead interrupt routine
-	.byte	3
-#endif
-#endif
-#if defined(CONFIG_NEED_IRQ4) || defined(CONFIG_FAST_IRQ4)
-_irq4:			// COM1
-#ifdef CONFIG_FAST_IRQ4
-	.global _irq_com1	// fastest possible interrupt routine, fixed com1 port
-	jmp	_irq_com1
-	.byte	4		// ignored
-#endif
-#ifdef CONFIG_NEED_IRQ4
-	call	_irqit		// original ELKS overhead interrupt routine
-	.byte	4
-#endif
-#endif
-#ifdef CONFIG_NEED_IRQ5
-_irq5:			// XT HD
-	call	_irqit
-	.byte	5
-#endif
-#ifdef CONFIG_NEED_IRQ6
-_irq6:			// Floppy
-	call	_irqit
-	.byte	6
-#endif
-#ifdef CONFIG_NEED_IRQ7
-_irq7:			// Lp1
-	call	_irqit
-	.byte	7
-#endif
-
-//
-//	AT interrupts
-//
-
-#ifdef CONFIG_NEED_IRQ8
-_irq8:			// RTC
-	call	_irqit
-	.byte	8
-#endif
-#ifdef CONFIG_NEED_IRQ9
-_irq9:			// Ethernet device
-	call	_irqit
-	.byte	9
-#endif
-#ifdef CONFIG_NEED_IRQ10
-_irq10:			// USB
-	call	_irqit
-	.byte	10
-#endif
-#ifdef CONFIG_NEED_IRQ11
-_irq11:			// Sound
-	call	_irqit
-	.byte	11
-#endif
-#ifdef CONFIG_NEED_IRQ12
-_irq12:			// Mouse
-	call	_irqit
-	.byte	12
-#endif
-#ifdef CONFIG_NEED_IRQ13
-_irq13:			// Math coproc.
-	call	_irqit
-	.byte	13
-#endif
-#ifdef CONFIG_NEED_IRQ14
-_irq14:			// AT HD ide primary
-	call	_irqit
-	.byte	14
-#endif
-#ifdef CONFIG_NEED_IRQ15
-_irq15:			// AT HD ide secondary
-	call	_irqit
-	.byte	15
-#endif
-//
-//	Traps (we use IRQ 16->31 for these)
-//
-//	Currently not used so removed for space.
-#ifdef ENABLE_TRAPS
-_div0:
-	call	_irqit
-	.byte	16
-_dbugtrap:
-	call	_irqit
-	.byte	17
-_nmi:
-	call	_irqit
-	.byte	18
-_brkpt:
-	call	_irqit
-	.byte	19
-_oflow:
-	call	_irqit
-	.byte	20
-_bounds:
-	call	_irqit
-	.byte	21
-_invop:
-	call	_irqit
-	.byte	22
-_devnp:
-	call	_irqit
-	.byte	23
-_dfault:
-	call	_irqit
-	.byte	24
-;
-;	trap 9 is reserved
-;
-_itss:
-	call	_irqit
-	.byte	26
-_nseg:
-	call	_irqit
-	.byte	27
-_stkfault:
-	call	_irqit
-	.byte	28
-_segovr:
-	call	_irqit
-	.byte	29
-_pfault:
-	call	_irqit
-	.byte	30
-;
-;	trap 15 is reserved
-;
-_fpetrap:
-	call	_irqit
-	.byte	32
-_algn:
-	call	_irqit
-	.byte	33
-#endif
-_syscall_int:		// Syscall
-	call	_irqit
-	.byte	128
 
 /*
 !
@@ -484,8 +217,8 @@ save_regs:
 	pop	(%si)		// DI
 	pop	2(%si)		// SI
 	pop	8(%si)		// DS
-	pop	%di		// Pointer to interrupt number
-	pop	%ds		// DS of dynamic handler = kernel DS
+	pop	%di		// Return offset is actually a pointer to the IRQ
+	pop	%ds		// Return segment of the dynamic handler = kernel DS
 	push	%bp		// BP
 	mov	%sp,10(%si)	// SP
 	mov	%ss,12(%si)	// SS
@@ -506,10 +239,8 @@ save_regs:
 	push	%bx		// BX
 	push	%ax		// AX
 //
-//	cs:[di] has interrupt number -> not more
-//	ds:[di] has interrupt number, because of dynamic handler in DS
+//	ds:[di] has interrupt number
 //
-	//movb	%cs:(%di),%al
 	movb	(%di),%al
 	cmpb	$0x80,%al
 	jne	updct

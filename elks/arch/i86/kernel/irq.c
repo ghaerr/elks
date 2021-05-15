@@ -116,11 +116,11 @@ int request_irq(int irq, void (*handler)(int,struct pt_regs *,void *), void *dev
 
     irq = remap_irq(irq);
     if (irq < 0 || !handler)
-	return -EINVAL;
+       return -EINVAL;
 
     action = irq_action + irq;
     if (action->handler != default_handler)
-	return -EBUSY;
+       return -EBUSY;
 
     save_flags(flags);
     clr_irq();
@@ -128,6 +128,7 @@ int request_irq(int irq, void (*handler)(int,struct pt_regs *,void *), void *dev
     action->handler = handler;
     action->dev_id = dev_id;
 
+	// IRQ 8-15 are mapped to vectors INT 70h-77h
 	if (int_handler_add (irq, irq + ((irq > 8) ? 0x68 : 0x08)))
 		return -ENOMEM;
 
@@ -172,19 +173,18 @@ void INITPROC irq_init(void)
 {
     flag_t flags;
 
-    init_irq();
+    init_irq();  // PIC initialization
 
     disable_timer_tick();
 
-    /* Old IRQ 8 handler is nuked in this routine */
-    irqtab_init();			/* Store DS */
-    int_handler_add (0x80, 0x80);  // system call
+    irqtab_init();  // now only stores DS and saves previous vector 08h (timer)
+	int_handler_add (0x80, 0x80);  // system call
 
     /* Set off the initial timer interrupt handler */
     if (request_irq(TIMER_IRQ, timer_tick, NULL))
-	panic("Unable to get timer");
+       panic("Unable to get timer");
 
-    /* Re-start the timer only after irq is set */
+    /* Re-start the timer */
     enable_timer_tick();
 
     if (sys_caps & CAP_IRQ2MAP9) {	/* PC/AT or greater */
