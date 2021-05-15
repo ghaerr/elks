@@ -24,6 +24,7 @@
 #include <linuxmt/heap.h>
 
 #include <arch/ports.h>
+#include <arch/segment.h>
 
 /* Enable 80386 Traps */
 /*#define ENABLE_TRAPS */
@@ -104,7 +105,7 @@ static int int_handler_add (int irq, int vect)
 	h->proc = _irqit;  // generic interrupt handler
 	h->irq  = irq;
 
-	h->seg = int_vector_set (vect, (int_proc) h, seg_data ());
+	h->seg = int_vector_set (vect, (int_proc) h, kernel_ds);
 	return 0;
 	}
 
@@ -128,7 +129,7 @@ int request_irq(int irq, void (*handler)(int,struct pt_regs *,void *), void *dev
     action->handler = handler;
     action->dev_id = dev_id;
 
-	if (int_handler_add (irq, irq_vector (irq))
+	if (int_handler_add (irq, irq_vector (irq)))
 		return -ENOMEM;
 
     enable_irq(irq);

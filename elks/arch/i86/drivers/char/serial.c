@@ -442,13 +442,13 @@ static void rs_init(void)
 		break;
 #ifdef CONFIG_FAST_IRQ4
 	    case 4:
-		// FIXME: how to find code segment of the fast handler ?
-		int_vector_set (0x0C, _irq_com1, /*seg_code()*/);
+		// FIXME: how to find correct code segment of the fast handler ?
+		int_vector_set (0x0C, _irq_com1, kernel_cs);
 #endif
 #ifdef CONFIG_FAST_IRQ3
 	    case 3:
-		// FIXME: how to find code segment of the fast handler ?
-		int_vector_set (0x0B, _irq_com2, /*seg_code()*/);
+		// FIXME: how to find correct code segment of the fast handler ?
+		int_vector_set (0x0B, _irq_com2, kernel_cs);
 #endif
 		enable_irq(sp->irq);
 		break;

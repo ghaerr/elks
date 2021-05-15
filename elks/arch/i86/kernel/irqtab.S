@@ -27,16 +27,6 @@ ds_kernel:
 #endif
 
 
-// Helper to get kernel data segment
-
-	.global seg_data
-
-seg_data:
-
-	mov %cs:ds_kernel,%ax
-	ret
-
-
 	.global	irqtab_init
 irqtab_init:
 
