@@ -4,6 +4,7 @@
 #include <autoconf.h>
 #include <linuxmt/major.h>
 
+#ifdef CONFIG_ARCH_IBMPC
 /*
  * Setup data - normally queried by startup setup.S code, but can
  * be overridden for embedded systems with less overhead.
@@ -17,6 +18,25 @@
 #define SETUP_ELKS_FLAGS	setupw(0x1f6)	/* flags for root device type */
 #define SETUP_PART_OFFSETLO	setupw(0x1e2)	/* partition offset low word */
 #define SETUP_PART_OFFSETHI	setupw(0x1e4)	/* partition offset high word */
+#ifdef CONFIG_ROMCODE
+#define SYS_CAPS	(CAP_PC_AT|CAP_DRIVE_PARMS)
+#endif
+#endif
+
+#ifdef CONFIG_ARCH_8018X
+#define SETUP_VID_COLS		80	/* BIOS video # columns */
+#define SETUP_VID_LINES		25	/* BIOS video # lines */
+#define SETUP_CPU_TYPE		5	/* processor type 80186 */
+#define SETUP_MEM_KBYTES	256	/* base memory in 1K bytes */
+#define SETUP_ROOT_DEV		0x0600	/* root device ROMFS */
+#define SETUP_ELKS_FLAGS	0	/* flags for root device type */
+#define SETUP_PART_OFFSETLO	0	/* partition offset low word */
+#define SETUP_PART_OFFSETHI	0	/* partition offset high word */
+#define SYS_CAPS		0	/* no XT/AT capabilities */
+
+#define CONFIG_8018X_FCPU	20
+#define CONFIG_8018X_EB
+#endif
 
 /*
  * System capabilities - configurable for ROM or custom installations.
@@ -38,7 +58,6 @@
 #define DEF_SYSSIZE	0x2F00
 
 #ifdef CONFIG_ROMCODE
-#define SYS_CAPS	(CAP_PC_AT|CAP_DRIVE_PARMS)
 #define SETUP_DATA	CONFIG_ROM_SETUP_DATA
 
 #ifdef CONFIG_BLK_DEV_BIOS    /* BIOS disk driver*/
