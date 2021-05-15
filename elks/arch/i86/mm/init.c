@@ -28,42 +28,36 @@
  *	INITSEG:0x01ff	- AA if psmouse present
  */
 
-char proc_name[16];
 __u16 kernel_cs, kernel_ds;
 
 void INITPROC mm_stat(seg_t start, seg_t end)
 {
+#ifdef CONFIG_ARCH_IBMPC
     register int i;
     register char *cp;
+    static char proc_name[16];
 
-#ifdef CONFIG_ARCH_SIBO
-    i = 0x30;
-    cp = proc_name;
-    do {
-	*cp++ = setupb(i++);
-
-    } while (i < 0x40);
-    printk("Psion Series 3a machine, %s CPU\n%uK base"
-	    ", CPUID `NEC V30'", proc_name, basemem);
-
-#else
     i = 0x30;
     cp = proc_name;
     do {
 	*cp++ = setupb(i++);
 	if (i == 0x40) {
-	    printk("PC/%cT class machine, %s CPU, %uK base RAM",
-		    (sys_caps & CAP_PC_AT) ? 'A' : 'X', proc_name, SETUP_MEM_KBYTES);
+	    printk("PC/%cT class machine, %s CPU, ",
+		    (sys_caps & CAP_PC_AT) ? 'A' : 'X', proc_name);
 	    cp = proc_name;
 	    i = 0x50;
 	}
     } while (i < 0x5D);
     if (*proc_name)
 	printk(", CPUID `%s'", proc_name);
-
 #endif
 
-    printk(".\nELKS kernel %s (%u text, %u ftext, %u data, %u bss, %u heap)\n",
+#ifdef CONFIG_ARCH_8018X
+    printk("8018X machine, ");
+#endif
+
+    printk("%uK base RAM.\n", SETUP_MEM_KBYTES);
+    printk("ELKS kernel %s (%u text, %u ftext, %u data, %u bss, %u heap)\n",
 	   system_utsname.release,
 	   (unsigned)_endtext, (unsigned)_endftext, (unsigned)_enddata,
 	   (unsigned)_endbss - (unsigned)_enddata,

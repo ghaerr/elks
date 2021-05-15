@@ -230,6 +230,16 @@ start_os:
 	stosw
 #endif
 
+#ifdef CONFIG_ARCH_IBMPC
+//
+// Set keyboard repeat rate using INT 16h
+// Determine display type using INT 10h AH=12 and INT 10h AH=1A
+// Get display page and mode using INT 10h AH=0F
+// Determine CPU type using somewhat outdated methods
+// Clear BIOS data area for fd/hd (24 bytes)
+// Determine size of main memory using INT 12h
+// FIXME move to separate setup-bios.S file or individual drivers
+
 #ifdef CONFIG_HW_KEYBOARD_BIOS
 	mov	$0x0305,%ax	// set the keyboard repeat rate to the max
 	xor	%bx,%bx
@@ -262,7 +272,7 @@ start_os:
 #else
         mov   $25,%al		// height of display in rows
 #endif
-#endif
+#endif /* CONFIG_HW_VGA*/
 
 novga:	mov	%al,14		// CGA 25 rows
 
@@ -290,6 +300,7 @@ novga:	mov	%al,14		// CGA 25 rows
 	mov	%ax,%ds
 	int	$0x12		// determine the size of the basememory
 	mov	%ax,0x2a
+#endif /* CONFIG_ARCH_IBMPC*/
 
 // End of shared setup code
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -735,8 +746,9 @@ add_ptr:
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+#ifdef CONFIG_ARCH_IBMPC
 /*
-! TODO: move probing to boot tools
+! TODO move to setup-cpuid.S or remove entirely (inaccurate/outdated)
 ! Probe for the CPU
 ! These information is taken from "PC intern 3.0", Data Becker Verlag, 1992
 ! and from the Linux-Kernel, arch/i386/kernel/head.S
@@ -907,7 +919,41 @@ queue_end:
 
 	or	%dx,%dx
 	ret
+//
+// The processor name must not be longer than 15 characters!
+//
+#if !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_8086)
+p8088:	.ascii "Intel 8088"
+	.byte 0
+p8086:	.ascii "Intel 8086"
+	.byte 0
+pv20:	.ascii "NEC V20"
+	.byte 0
+pv30:	.ascii "NEC V30"
+	.byte 0
+p80188:	.ascii "Intel 80188"
+	.byte 0
+p80186:	.ascii "Intel 80186"
+	.byte 0
 #endif
+#if !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_80286)
+p80286:	.ascii "Intel 80286"
+	.byte 0
+#endif
+#if !defined(CONFIG_ROMCODE)
+px86:   .ascii "Unknown x86"
+	.byte 0
+#endif
+//
+// Here is the CPU id stored
+//
+v_id:	.byte 0,0,0,0
+v_id2:	.byte 0,0,0,0
+v_id3:	.byte 0,0,0,0
+	.byte 0
+
+#endif /* !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_8086)*/
+#endif /* CONFIG_ARCH_IBMPC*/
 
 // Utility/debugging routines
 
@@ -970,39 +1016,6 @@ hex4sp: call hex4
 	call putc
 	pop %ax
 	ret
-
-//
-// The processor name must not be longer than 15 characters!
-//
-#if !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_8086)
-p8088:	.ascii "Intel 8088"
-	.byte 0
-p8086:	.ascii "Intel 8086"
-	.byte 0
-pv20:	.ascii "NEC V20"
-	.byte 0
-pv30:	.ascii "NEC V30"
-	.byte 0
-p80188:	.ascii "Intel 80188"
-	.byte 0
-p80186:	.ascii "Intel 80186"
-	.byte 0
-#endif
-#if !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_80286)
-p80286:	.ascii "Intel 80286"
-	.byte 0
-#endif
-#if !defined(CONFIG_ROMCODE)
-px86:   .ascii "Unknown x86"
-	.byte 0
-#endif
-//
-// Here is the CPU id stored
-//
-v_id:	.byte 0,0,0,0
-v_id2:	.byte 0,0,0,0
-v_id3:	.byte 0,0,0,0
-	.byte 0
 
 no_sig_mess:	.ascii	"No ELKS setup signature found ..."
 		.byte	0x00
