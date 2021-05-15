@@ -531,24 +531,31 @@ updct:
 	pop	%bx
 
 	pop	%ax		// Saved IRQ
-//
-//	Send EOI to interrupt controller
-//
 	cli			// Disable interrupts to avoid reentering ISR
+
+#ifdef CONFIG_ARCH_IBMPC
+//
+//	Determine if trap or interrupt
+//
 	cmp	$16,%ax
 	jge	was_trap	// Traps need no reset
 	or	%ax,%ax		// Is int #0?
-	jnz	a4
+	jnz	do_eoi
+
 //
 //	IRQ 0 (timer) has to go on to the bios for some systems
 //
 	decw	_bios_call_cnt_l // Will call bios int?
-	jne	a4
+	jne	do_eoi
 	movw	$5,_bios_call_cnt_l
 	pushf
 	lcall	*_stashed_irq0_l
 	jmp	was_trap	// EOI already sent by bios int
-a4:
+
+//
+//	Send EOI to interrupt controller
+//
+do_eoi:
 	cmp	$8,%ax
 	mov	$0x20,%al	// EOI
 	jb	a6		// IRQ on low chip
@@ -563,6 +570,8 @@ a4:
 	jmp	a5
 a5:	jmp	a6
 a6:	out	%al,$0x20		// Ack on primary controller
+#endif
+
 //
 //	And a trap does no hardware work
 //
