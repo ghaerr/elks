@@ -32,7 +32,10 @@
 #define SETUP_ELKS_FLAGS	0	/* flags for root device type */
 #define SETUP_PART_OFFSETLO	0	/* partition offset low word */
 #define SETUP_PART_OFFSETHI	0	/* partition offset high word */
-#define SYS_CAPS	0
+#define SYS_CAPS		0	/* no XT/AT capabilities */
+
+#define CONFIG_80C18X_FCPU	20
+#define CONFIG_80C18_EB
 #endif
 
 /*
