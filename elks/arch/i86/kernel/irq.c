@@ -34,24 +34,7 @@ struct irqaction {
 	void *dev_id;
 };
 
-static void default_handler(int i, void *regs, void *dev);
-
-static struct irqaction irq_action[] = {
-    {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
-    {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
-    {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
-    {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
-    {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
-    {default_handler, NULL},
-#ifdef ENABLE_TRAPS
-    {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
-    {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
-    {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
-    {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
-    {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
-    {default_handler, NULL},
-#endif
-};
+static struct irqaction irq_action [16];
 
 /*
  *	Called by the assembler hooks
@@ -60,20 +43,8 @@ static struct irqaction irq_action[] = {
 void do_IRQ(int i,void *regs)
 {
     register struct irqaction *irq = irq_action + i;
-
-    irq->handler(i, regs, irq->dev_id);
+    if (irq) irq->handler(i, regs, irq->dev_id);
 }
-
-static void default_handler(int i, void *regs, void *dev)
-{
-#ifdef ENABLE_TRAPS
-    if (i > 15)
-	printk("Unexpected trap: %u\n", i-16);
-    else
-#endif
-	printk("Unexpected interrupt: %u\n", i);
-}
-
 
 typedef void (* int_proc) (void);
 
@@ -117,11 +88,11 @@ int request_irq(int irq, void (*handler)(int,struct pt_regs *,void *), void *dev
 
     irq = remap_irq(irq);
     if (irq < 0 || !handler)
-       return -EINVAL;
+    	return -EINVAL;
 
     action = irq_action + irq;
-    if (action->handler != default_handler)
-       return -EBUSY;
+    if (action->handler)
+    	return -EBUSY;
 
     save_flags(flags);
     clr_irq();
@@ -182,7 +153,7 @@ void INITPROC irq_init(void)
 
     /* Set off the initial timer interrupt handler */
     if (request_irq(TIMER_IRQ, timer_tick, NULL))
-       panic("Unable to get timer");
+    	panic("Unable to get timer");
 
     /* Re-start the timer */
     enable_timer_tick();

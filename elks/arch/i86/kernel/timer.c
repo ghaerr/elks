@@ -15,7 +15,7 @@
  */
 
 volatile jiff_t jiffies = 0;
-static int spin_on = 0;
+static int spin_on;
 
 extern void rs_pump(void);
 
