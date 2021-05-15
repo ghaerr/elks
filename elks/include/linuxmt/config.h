@@ -23,7 +23,7 @@
 #endif
 #endif
 
-#ifdef CONFIG_ARCH_801C8X
+#ifdef CONFIG_ARCH_8018X
 #define SETUP_VID_COLS		80	/* BIOS video # columns */
 #define SETUP_VID_LINES		25	/* BIOS video # lines */
 #define SETUP_CPU_TYPE		5	/* processor type 80186 */
@@ -34,8 +34,8 @@
 #define SETUP_PART_OFFSETHI	0	/* partition offset high word */
 #define SYS_CAPS		0	/* no XT/AT capabilities */
 
-#define CONFIG_80C18X_FCPU	20
-#define CONFIG_80C18_EB
+#define CONFIG_8018X_FCPU	20
+#define CONFIG_8018X_EB
 #endif
 
 /*
