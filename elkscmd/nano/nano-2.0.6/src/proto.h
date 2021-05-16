@@ -166,7 +166,7 @@ void utf8_init(void);
 bool using_utf8(void);
 #endif
 #ifndef HAVE_ISBLANK
-bool nisblank(int c);
+int nisblank(int c);
 #endif
 #if !defined(HAVE_ISWBLANK) && defined(ENABLE_UTF8)
 bool niswblank(wchar_t wc);
