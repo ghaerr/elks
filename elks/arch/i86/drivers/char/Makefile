@@ -40,7 +40,7 @@ OBJS  = init.o sibo/sibo_con.o sibo/sibo_conasm.o sibo/sibo_font.o \
 	sibo/sibo_key.o sibo/sibo_keyasm.o mem.o \
 	meta.o ntty.o sibo/sibo_serasm.o pty.o
 else
-OBJS  = serial.o lp.o init.o mem.o \
+OBJS  = serial.o serfast.o lp.o init.o mem.o \
 	ntty.o meta.o tcpdev.o pty.o bell.o
 
 ifdef CONFIG_CHAR_DEV_CGATEXT

@@ -60,7 +60,7 @@ typedef struct int_handler int_handler_s;
 
 
 // Add a dynamically allocated handler
-// that redirects to the generic handler
+// that redirects to the static handler
 
 static int int_handler_add (int irq, int vect, int_proc proc)
 	{
@@ -69,8 +69,10 @@ static int int_handler_add (int irq, int vect, int_proc proc)
 
 	h->call = 0x9A;  // CALLF opcode
 	h->proc = proc;
-	h->seg  = int_vector_set (vect, (int_proc) h, kernel_ds);
+	h->seg  = kernel_cs;  // resident kernel code segment
 	h->irq  = irq;
+
+	int_vector_set (vect, (int_proc) h, kernel_ds);
 
 	return 0;
 	}
@@ -159,4 +161,12 @@ void INITPROC irq_init(void)
 
     /* Re-start the timer */
     enable_timer_tick();
-}
+
+#if 0
+    if (sys_caps & CAP_IRQ2MAP9) {	/* PC/AT or greater */
+	save_flags(flags);
+	clr_irq();
+	enable_irq(2);		/* Cascade slave PIC */
+	restore_flags(flags);
+#endif
+    }

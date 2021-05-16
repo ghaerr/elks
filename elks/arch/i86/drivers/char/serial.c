@@ -266,7 +266,7 @@ void fast_com2_irq(void)
 #endif
 
 
-#if !defined(CONFIG_FAST_IRQ3) || !defined(CONFIG_FAST_IRQ43)
+#if !defined(CONFIG_FAST_IRQ4) || !defined(CONFIG_FAST_IRQ3)
 
 static int irq_port[NR_SERIAL] = { 3, 1, 0, 2 }; //FIXME must change with ports.h
 
@@ -301,7 +301,7 @@ void rs_irq(int irq, struct pt_regs *regs)
 	wake_up(&q->wait);
 }
 
-#endif  // !defined(CONFIG_FAST_IRQ3) && !defined(CONFIG_FAST_IRQ43)
+#endif  // !defined(CONFIG_FAST_IRQ4) || !defined(CONFIG_FAST_IRQ3)
 
 
 static void rs_release(struct tty *tty)
