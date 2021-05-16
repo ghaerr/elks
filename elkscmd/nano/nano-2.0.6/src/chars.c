@@ -58,7 +58,7 @@ bool using_utf8(void)
 
 #ifndef HAVE_ISBLANK
 /* This function is equivalent to isblank(). */
-bool nisblank(int c)
+int nisblank(int c)
 {
     return isspace(c) && (c == '\t' || !is_cntrl_char(c));
 }
