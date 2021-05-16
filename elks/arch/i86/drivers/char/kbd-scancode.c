@@ -143,8 +143,7 @@ void kbd_init(void)
 {
     /* Set off the initial keyboard interrupt handler */
 
-	// TODO: replace NULL by dynamic handler flag
-    if (request_irq(KBD_IRQ, keyboard_irq, NULL))
+    if (request_irq(KBD_IRQ, keyboard_irq, INT_GENERIC))
 	panic("Unable to get keyboard");
 
     clr_irq();

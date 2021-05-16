@@ -266,7 +266,7 @@ void fast_com2_irq(void)
 #endif
 
 
-#if !defined(CONFIG_FAST_IRQ3) && !defined(CONFIG_FAST_IRQ43)
+#if !defined(CONFIG_FAST_IRQ3) || !defined(CONFIG_FAST_IRQ43)
 
 static int irq_port[NR_SERIAL] = { 3, 1, 0, 2 }; //FIXME must change with ports.h
 
@@ -435,23 +435,18 @@ static void rs_init(void)
     do {
 	if (!rs_probe(sp)) {
 	    switch(sp->irq) {
-	    default:
-#if !defined(CONFIG_FAST_IRQ3) && !defined(CONFIG_FAST_IRQ43)
-	    // TODO: replace NULL by dynamic handler flag
-		request_irq(sp->irq, rs_irq, NULL);
-#endif
-		break;
 #ifdef CONFIG_FAST_IRQ4
 	    case 4:
-		// FIXME: how to find correct code segment of the fast handler ?
-		int_vector_set (0x0C, _irq_com1, kernel_cs);
+		request_irq(sp->irq, (irq_handler) _irq_com1, INT_SPECIFIC);
+		break;
 #endif
 #ifdef CONFIG_FAST_IRQ3
 	    case 3:
-		// FIXME: how to find correct code segment of the fast handler ?
-		int_vector_set (0x0B, _irq_com2, kernel_cs);
+		request_irq(sp->irq, (irq_handler) _irq_com2, INT_SPECIFIC);
+		break;
 #endif
-		enable_irq(sp->irq);
+	    default:
+		request_irq(sp->irq, rs_irq, INT_GENERIC);
 		break;
 	    }
 	    sp->tty = tty;

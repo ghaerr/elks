@@ -581,8 +581,7 @@ void wd_drv_init(void)
 	word_t hw_addr[6U];
 
 	do {
-		// TODO: replace NULL by dynamic handler flag
-		err = request_irq(WD_IRQ, wd_int, NULL);
+		err = request_irq(WD_IRQ, wd_int, INT_GENERIC);
 		if (err) {
 			printk("eth: WD IRQ %d request error: %i\n",
 				WD_IRQ, err);

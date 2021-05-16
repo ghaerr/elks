@@ -5,12 +5,14 @@
 
 /* irq.c*/
 
+#define INT_GENERIC  0  // use the generic interrupt handler (aka '_irqit')
+#define INT_SPECIFIC 1  // use a specific interrupt handler
+
 typedef void (* int_proc) (void);  // any INT handler
 typedef void (* irq_handler) (int,struct pt_regs *);   // IRQ handler
 
 void do_IRQ(int,void *);
-// TODO: replace (void *) by dynamic / static handler flag
-int request_irq(int,irq_handler, void *);
+int request_irq(int,irq_handler,int hflag);
 int int_vector_set (int vect, int_proc proc, int seg);
 void _irqit (void);
 

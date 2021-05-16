@@ -45,6 +45,10 @@ void do_IRQ(int i,void *regs)
 }
 
 
+// TODO: simplify the whole by replacing IRQ by INT number
+// Would also allow to handle any of the 0..255 interrupts
+// including the 0..7 processor exceptions & traps
+
 struct int_handler {
 	byte_t call;  // CALLF opcode (9Ah)
 	int_proc proc;
@@ -58,22 +62,21 @@ typedef struct int_handler int_handler_s;
 // Add a dynamically allocated handler
 // that redirects to the generic handler
 
-static int int_handler_add (int irq, int vect)
+static int int_handler_add (int irq, int vect, int_proc proc)
 	{
 	int_handler_s * h = (int_handler_s *) heap_alloc (sizeof (int_handler_s), HEAP_TAG_INTHAND);
 	if (!h) return -ENOMEM;
 
-	h->call = 0x9A;    // CALLF opcode
-	h->proc = _irqit;  // generic interrupt handler
+	h->call = 0x9A;  // CALLF opcode
+	h->proc = proc;
+	h->seg  = int_vector_set (vect, (int_proc) h, kernel_ds);
 	h->irq  = irq;
 
-	h->seg = int_vector_set (vect, (int_proc) h, kernel_ds);
 	return 0;
 	}
 
 
-// TODO: replace (void *) by dynamic / static handler flag
-int request_irq(int irq, irq_handler handler, void * flag)
+int request_irq(int irq, irq_handler handler, int hflag)
 {
     flag_t flags;
 
@@ -87,7 +90,15 @@ int request_irq(int irq, irq_handler handler, void * flag)
 
 	irq_action [irq] = handler;
 
-	if (int_handler_add (irq, irq_vector (irq)))
+	int_proc proc;
+	if (hflag == INT_SPECIFIC)
+		proc = (int_proc) handler;
+	else
+		proc = _irqit;
+
+	// TODO: IRQ number has no meaning for an INT handler
+	// see above simplification TODO
+	if (int_handler_add (irq, irq_vector (irq), proc))
 		return -ENOMEM;
 
     enable_irq(irq);
@@ -100,14 +111,13 @@ int request_irq(int irq, irq_handler handler, void * flag)
 #if 0
 void free_irq(unsigned int irq)
 {
-    register struct irqaction * action = irq_action + irq;
     flag_t flags;
 
     if (irq > 15) {
 	printk("Trying to free IRQ%u\n",irq);
 	return;
     }
-    if (action->handler == default_handler) {
+    if (!irq_action [irq]) {
 	printk("Trying to free free IRQ%u\n",irq);
 	return;
     }
@@ -116,8 +126,7 @@ void free_irq(unsigned int irq)
 
     disable_irq(irq);
 
-    action->handler = default_handler;
-    action->dev_id = NULL;
+    irq_action [irq] = NULL;
 
     restore_flags(flags);
 }
@@ -133,13 +142,19 @@ void INITPROC irq_init(void)
 
     init_irq();  // PIC initialization
 
+	// TODO: no more need to disable the timer
+	// BEFORE the interrupt initialization
+	// as timer vector is kept as is
+
+	// TODO: move that timer stuff in `timer.c`
+	// to clearly separate the PIC and PIT driving
     disable_timer_tick();
 
-    irqtab_init();  // now only stores DS and saves previous vector 08h (timer)
-	int_handler_add (0x80, 0x80);  // system call
+    irqtab_init();  // now only saves previous vector 08h (timer)
+	int_handler_add (0x80, 0x80, _irqit);  // system call
 
     /* Set off the initial timer interrupt handler */
-    if (request_irq(TIMER_IRQ, timer_tick, NULL))
+    if (request_irq(TIMER_IRQ, timer_tick, INT_GENERIC))
     	panic("Unable to get timer");
 
     /* Re-start the timer */
