@@ -1,6 +1,6 @@
 /*
  * ELKS implmentation of memory devices
- * /dev/null, /dev/zero, /dev/mem, /dev/kmem, etc...
+ * /dev/null, /dev/ports, /dev/zero, /dev/mem, /dev/kmem, etc...
  *
  * Heavily inspired by linux/drivers/char/mem.c
  */
@@ -8,6 +8,7 @@
 /* for reference
  * /dev/mem refers to physical memory
  * /dev/kmem refers to _virtual_ address space
+ * /dev/port	refers to hardware ports <Marcin.Laszewski@gmail.com>
  * Currently these will be the same, but eventually, once ELKS has
  * EMS, etc, we'll want to change these.
  */
@@ -25,6 +26,10 @@
 #include <linuxmt/mem.h>
 #include <linuxmt/heap.h>
 
+#if defined(CONFIG_CHAR_DEV_MEM_PORT_READ) \
+ || defined(CONFIG_CHAR_DEV_MEM_PORT_WRITE)
+#	include <arch/io.h>
+#endif
 #include <arch/segment.h>
 
 #define DEV_MEM_MINOR		1
@@ -87,6 +92,89 @@ size_t null_write(struct inode *inode, struct file *filp, char *data, size_t len
     debugmem("null write: ignoring %d bytes!\n", len);
     return (size_t)len;
 }
+
+/*
+ * /dev/port code
+ */
+#if defined(CONFIG_CHAR_DEV_MEM_PORT_READ) \
+ || defined(CONFIG_CHAR_DEV_MEM_PORT_WRITE)
+int port_lseek(struct inode *inode, struct file *filp,
+		  off_t offset, int origin)
+{
+    debugmem("port_lseek()\n");
+
+    switch (origin)
+    {
+        case 0: /* SEEK_SET */
+            break;
+
+        case 1: /* SEEK_CUR */
+            offset += filp->f_pos;
+            break;
+
+        case 2: /* SEEK_END */
+            offset = port_MAX + offset;
+            break;
+
+        default:
+            return -EINVAL;
+    }
+
+    if(offset < 0)
+        offset = 0;
+    else if(offset > port_MAX)
+        offset = port_MAX;
+
+    filp->f_pos = offset;
+    debugmem("port_lseek: 0x%02X\n", (unsigned)filp->f_pos);
+
+    return 0;
+}
+#else
+#	define	port_lseek	NULL
+#endif
+
+#if defined(CONFIG_CHAR_DEV_MEM_PORT_READ)
+size_t port_read(struct inode *inode, struct file *filp, char *data, size_t len)
+{
+    size_t i;
+
+    debugmem("port_read()\n");
+
+    for (i = 0; i < len && filp->f_pos < port_MAX; i++)
+    {
+        put_user_char(inb((unsigned)filp->f_pos++), (void *)(data++));
+        debugmem("port_read(0x%02X) = %02X\n",
+            (unsigned)filp->f_pos - 1,
+            (unsigned)(((unsigned char *)data)[-1]));
+    }
+
+    return i;
+}
+#else
+#	define	port_read	NULL
+#endif
+
+#if defined(CONFIG_CHAR_DEV_MEM_PORT_WRITE)
+size_t port_write(struct inode *inode, struct file *filp, char *data, size_t len)
+{
+    size_t i;
+
+    debugmem("port_write\n");
+
+    for (i = 0; i < len && filp->f_pos < port_MAX; i++)
+    {
+        debugmem("port: write(0x%02X) = %02X\n",
+            (unsigned)filp->f_pos,
+            (unsigned)get_user_char((void *)data));
+        outb(get_user_char((void *)data++), (unsigned)filp->f_pos++);
+    }
+
+    return i;
+}
+#else
+#	define	port_write	NULL
+#endif
 
 /*
  * /dev/full code
@@ -215,6 +303,26 @@ static struct file_operations null_fops = {
 #endif
 };
 
+#if defined(CONFIG_CHAR_DEV_MEM_PORT_READ) \
+|| defined(CONFIG_CHAR_DEV_MEM_PORT_WRITE)
+static struct file_operations port_fops = {
+    port_lseek,			/* lseek */
+    port_read,			/* read */
+    port_write,			/* write */
+    NULL,			/* readdir */
+    NULL,			/* select */
+    NULL,			/* ioctl */
+    NULL,			/* open */
+    NULL			/* release */
+#ifdef BLOAT_FS
+	,
+    NULL,			/* fsync */
+    NULL,			/* check_media_change */
+    NULL			/* revalidate */
+#endif
+};
+#endif
+
 static struct file_operations full_fops = {
     memory_lseek,		/* lseek */
     full_read,			/* read */
@@ -282,7 +390,7 @@ int memory_open(register struct inode *inode, struct file *filp)
 	"mem",
 	"kmem",
 	"null",
-	"port", /* not implemented */
+	"port",
 	"zero",
 	"???",  /* OBSOLETE core */
 	"full"
@@ -298,7 +406,12 @@ int memory_open(register struct inode *inode, struct file *filp)
 	&kmem_fops,	/* DEV_MEM_MINOR */
 	&kmem_fops,	/* DEV_KMEM_MINOR */
 	&null_fops,	/* DEV_NULL_MINOR */
-	NULL,		/* DEV_PORT_MINOR */
+#if defined(CONFIG_CHAR_DEV_MEM_PORT_READ) \
+ || defined(CONFIG_CHAR_DEV_MEM_PORT_WRITE)
+	&port_fops,	/* DEV_PORT_MINOR */
+#else
+        NULL,
+#endif
 	&zero_fops,	/* DEV_ZERO_MINOR */
 	NULL,		/* OBSOLETE core */
 	&full_fops	/* DEV_FULL_MINOR */
