@@ -203,6 +203,7 @@ CFLAGS  = $(CROSS_CFLAGS) $(CPU_CC) $(ARCH_CC) $(CFLBASE) -Wall -Os -Wno-strict-
 LD      = ia16-elf-ld.gold
 LDFLAGS = $(CPU_LD) -s
 POSTLINK = elf2elks
+NM      = ia16-elf-nm
 AR      = ia16-elf-ar
 
 INCLUDES += -I$(TOPDIR)/libc/include
