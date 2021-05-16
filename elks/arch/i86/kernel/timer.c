@@ -19,7 +19,7 @@ static int spin_on;
 
 extern void rs_pump(void);
 
-void timer_tick(int irq, struct pt_regs *regs, void *data)
+void timer_tick(int irq, struct pt_regs *regs)
 {
     do_timer(regs);
 

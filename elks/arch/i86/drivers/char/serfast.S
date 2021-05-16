@@ -12,8 +12,6 @@
 	.code16
 	.text
 
-	.extern	ds_kernel
-
 #ifdef CONFIG_FAST_IRQ4
 //
 // fast com1 interrupt routine, uses "jmp _irq_com1" from interrupt vector
@@ -27,6 +25,7 @@ _irq_com1:
 	push	%dx
 	push	%ds
 
+	// FIXME: no more 'ds_kernel' - use DS as pushed by the dynamic handler
 	mov	%cs:ds_kernel,%ds	// recover kernel data segment
 	call	fast_com1_irq		// call special C interrupt routine
 					// which doesn't use any SS/SP/BP addressing
@@ -55,6 +54,7 @@ _irq_com2:
 	push	%dx
 	push	%ds
 
+	// FIXME: no more 'ds_kernel' - use DS as pushed by the dynamic handler
 	mov	%cs:ds_kernel,%ds	// recover kernel data segment
 	call	fast_com2_irq		// call special C interrupt routine
 					// which doesn't use any SS/SP/BP addressing

@@ -4,8 +4,16 @@
 #include <linuxmt/types.h>
 
 /* irq.c*/
+
+typedef void (* int_proc) (void);  // any INT handler
+typedef void (* irq_handler) (int,struct pt_regs *);   // IRQ handler
+
 void do_IRQ(int,void *);
-int request_irq(int,void (*)(int,struct pt_regs *,void *),void *);
+// TODO: replace (void *) by dynamic / static handler flag
+int request_irq(int,irq_handler, void *);
+int int_vector_set (int vect, int_proc proc, int seg);
+void _irqit (void);
+
 
 /* irq-8259.c*/
 void init_irq(void);

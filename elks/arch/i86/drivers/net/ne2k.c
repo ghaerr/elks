@@ -151,7 +151,7 @@ int ne2k_select(struct inode * inode, struct file * filp, int sel_type)
  * Interrupt handler
  */
 
-static void ne2k_int(int irq, struct pt_regs * regs, void * dev_id)
+static void ne2k_int(int irq, struct pt_regs * regs)
 {
 	word_t stat, page;
 
@@ -347,6 +347,7 @@ void ne2k_drv_init(void)
 			printk ("eth: NE2K not detected\n");
 			break;
 		}
+		// TODO: replace NULL by dynamic handler flag
 		err = request_irq (NE2K_IRQ, ne2k_int, NULL);
 		if (err) {
 			printk ("eth: NE2K IRQ %d request error: %i\n", NE2K_IRQ, err);

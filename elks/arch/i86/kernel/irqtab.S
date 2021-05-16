@@ -17,22 +17,8 @@
 
 	.align 1
 
-// FIXME: data in code segment - move to INITSEG
-	.global	ds_kernel
-ds_kernel:
-#if defined(CONFIG_ROMCODE)
-	.word	CONFIG_ROM_KERNEL_DATA
-#else
-	.word	0
-#endif
-
-
 	.global	irqtab_init
 irqtab_init:
-
-#if !defined(CONFIG_ROMCODE)
-	mov	%ss,%cs:ds_kernel
-#endif
 
 	xor	%ax,%ax
 	mov	%ax,%ds
@@ -152,10 +138,12 @@ _irqit:
 	push	%si
 	push	%di
 //
-//	Recover data segment
+//	Recover kernel data segment
+//	Was pushed by the CALLF of the dynamic handler
+//	TODO: BP is better for stack work
 //
-//	seg	cs
-	mov	%cs:ds_kernel,%ds
+	mov	%sp,%si
+	mov	%ss:8(%si),%ds
 //
 //	Determine which stack to use
 //
@@ -166,7 +154,7 @@ ktask:				// Already using interrupt stack
 //
 //	Already using interrupt stack, keep using it
 //
-	mov	%sp,%si
+	//mov	%sp,%si
 	sub	$8,%si		// 14 offsets less 6 already on stack
 	jmp	save_regs
 //

@@ -61,7 +61,7 @@ int irq_vector (int irq)
 	// IRQ 0-7  are mapped to vectors INT 08h-0Fh
 	// IRQ 8-15 are mapped to vectors INT 70h-77h
 
-	return irq + ((irq > 8) ? 0x68 : 0x08);
+	return irq + ((irq >= 8) ? 0x68 : 0x08);
 	}
 
 #if 0

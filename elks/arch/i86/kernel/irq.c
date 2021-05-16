@@ -25,16 +25,10 @@
 
 #include <arch/ports.h>
 #include <arch/segment.h>
+#include <arch/irq.h>
 
-/* Enable 80386 Traps */
-/*#define ENABLE_TRAPS */
 
-struct irqaction {
-	void (*handler)();
-	void *dev_id;
-};
-
-static struct irqaction irq_action [16];
+static irq_handler irq_action [16];
 
 /*
  *	Called by the assembler hooks
@@ -42,11 +36,14 @@ static struct irqaction irq_action [16];
 
 void do_IRQ(int i,void *regs)
 {
-    register struct irqaction *irq = irq_action + i;
-    if (irq) irq->handler(i, regs, irq->dev_id);
+    register irq_handler ih = irq_action [i];
+    if (!ih) {
+        printk("Unexpected interrupt: %u\n", i);
+        return;
+    }
+	(*ih)(i, regs);
 }
 
-typedef void (* int_proc) (void);
 
 struct int_handler {
 	byte_t call;  // CALLF opcode (9Ah)
@@ -57,12 +54,6 @@ struct int_handler {
 
 typedef struct int_handler int_handler_s;
 
-// TODO: move to irq.h
-int int_vector_set (int vect, int_proc proc, int seg);
-void _irqit (void);
-
-// TODO: move to segment.h
-int seg_data (void);
 
 // Add a dynamically allocated handler
 // that redirects to the generic handler
@@ -81,24 +72,20 @@ static int int_handler_add (int irq, int vect)
 	}
 
 
-int request_irq(int irq, void (*handler)(int,struct pt_regs *,void *), void *dev_id)
+// TODO: replace (void *) by dynamic / static handler flag
+int request_irq(int irq, irq_handler handler, void * flag)
 {
-    register struct irqaction *action;
     flag_t flags;
 
     irq = remap_irq(irq);
-    if (irq < 0 || !handler)
-    	return -EINVAL;
+    if (irq < 0 || !handler) return -EINVAL;
 
-    action = irq_action + irq;
-    if (action->handler)
-    	return -EBUSY;
+	if (irq_action [irq]) return -EBUSY;
 
     save_flags(flags);
     clr_irq();
 
-    action->handler = handler;
-    action->dev_id = dev_id;
+	irq_action [irq] = handler;
 
 	if (int_handler_add (irq, irq_vector (irq)))
 		return -ENOMEM;

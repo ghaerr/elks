@@ -274,7 +274,7 @@ static int irq_port[NR_SERIAL] = { 3, 1, 0, 2 }; //FIXME must change with ports.
  * Slower serial interrupt routine, called from _irq_com with passed irq #
  * Reads all FIFO data available per interrupt and can provide serial stats
  */
-void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
+void rs_irq(int irq, struct pt_regs *regs)
 {
     struct serial_info *sp = &ports[irq_port[irq - 2]];
     char *io = sp->io;
@@ -437,6 +437,7 @@ static void rs_init(void)
 	    switch(sp->irq) {
 	    default:
 #if !defined(CONFIG_FAST_IRQ3) && !defined(CONFIG_FAST_IRQ43)
+	    // TODO: replace NULL by dynamic handler flag
 		request_irq(sp->irq, rs_irq, NULL);
 #endif
 		break;
