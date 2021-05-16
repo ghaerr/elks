@@ -498,6 +498,8 @@ void handle_signal(int sig)
 int main(int argc, char **argv)
 {
 	pid_t pid;
+	int ac = argc;
+	char **av = argv;
 
 //	argv[0] = "init";
 	initname = argv[0];
@@ -539,18 +541,19 @@ int main(int argc, char **argv)
 #if USE_UTMP
 		setutent();
 #endif
-		while (argc > 1) {
-			if (argv[1][0] >= '0' && argv[1][0] <= '9')
-				runlevel = argv[1][0];
-			if (argv[1][0] == 'n')
+		while (ac > 1) {
+			if (av[1][0] == 'n')
 				nosysinit = 1;
-			argc--;
-			argv++;
+			ac--;
+			av++;
 		}
 
 		/* get runlevel & spawn sysinit */
 		debug("SCAN sysinit\r\n");
 		scanFile(passOne);
+
+		if (argc > 1 && argv[1][0] >= '0' && argv[1][0] <= '9')
+			runlevel = argv[1][0];
 
 		/* spawn needed children */
 		debug("SCAN start runlevel %c\r\n", runlevel);
