@@ -159,11 +159,4 @@ void INITPROC irq_init(void)
 
     /* Re-start the timer */
     enable_timer_tick();
-
-    if (sys_caps & CAP_IRQ2MAP9) {	/* PC/AT or greater */
-	save_flags(flags);
-	clr_irq();
-	enable_irq(2);		/* Cascade slave PIC */
-	restore_flags(flags);
-    }
 }

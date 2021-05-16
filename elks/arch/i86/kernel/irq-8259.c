@@ -18,7 +18,6 @@
 #define PIC2_CMD   0xA0   /* slave */
 #define PIC2_DATA  0xA1
 
-static unsigned char cache_21 = 0xff, cache_A1 = 0xff;
 
 /*
  *	Low level interrupt handling for the X86 PC/XT and PC/AT platform
@@ -26,9 +25,6 @@ static unsigned char cache_21 = 0xff, cache_A1 = 0xff;
 
 void init_irq(void)
 {
-#ifdef CONFIG_HW_259_USE_ORIGINAL_MASK	/* for example Debugger :-) */
-    cache_21 = inb_p(PIC1_DATA);
-#endif
 }
 
 void enable_irq(unsigned int irq)
@@ -37,9 +33,11 @@ void enable_irq(unsigned int irq)
 
     mask = ~(1 << (irq & 7));
     if (irq < 8) {
+	unsigned char cache_21 = inb_p(PIC1_DATA);
 	cache_21 &= mask;
 	outb(cache_21, PIC1_DATA);
     } else {
+	unsigned char cache_A1 = inb_p(PIC2_DATA);
 	cache_A1 &= mask;
 	outb(cache_A1, PIC2_DATA);
     }
@@ -73,9 +71,11 @@ void disable_irq(unsigned int irq)
     save_flags(flags);
     clr_irq();
     if (irq < 8) {
+	unsigned char cache_21 = inb_p(PIC1_DATA);
 	cache_21 |= mask;
 	outb(cache_21, PIC1_DATA);
     } else {
+	unsigned char cache_A1 = inb_p(PIC2_DATA);
 	cache_A1 |= mask;
 	outb(cache_A1, PIC2_DATA);
     }
