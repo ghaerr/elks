@@ -25,6 +25,13 @@
 
 void init_irq(void)
 {
+#if 0
+    if (sys_caps & CAP_IRQ2MAP9) {	/* PC/AT or greater */
+	save_flags(flags);
+	clr_irq();
+	enable_irq(2);		/* Cascade slave PIC */
+	restore_flags(flags);
+#endif
 }
 
 void enable_irq(unsigned int irq)

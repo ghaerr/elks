@@ -230,6 +230,7 @@ void rs_pump(void)
  * emits code using SP or BP addressing, as SS is not set and not guaranteed to equal DS.
  * Use 'ia16-elfk-objdump -D -r -Mi8086 serial.o' to look at code generated.
  */
+extern void _irq_com1(int irq, struct pt_regs *regs);
 void fast_com1_irq(void)
 {
     struct serial_info *sp = &ports[0];
@@ -248,6 +249,7 @@ void fast_com1_irq(void)
 #endif
 
 #ifdef CONFIG_FAST_IRQ3
+extern void _irq_com2(int irq, struct pt_regs *regs);
 void fast_com2_irq(void)
 {
     struct serial_info *sp = &ports[1];

@@ -41,6 +41,7 @@ _irq_com1:
 	pop	%cx
 	pop	%bx
 	pop	%ax
+	add	$4,%sp		// skip the trampoline DS:*irq
 	iret
 #endif
 
@@ -73,5 +74,6 @@ _irq_com2:
 	pop	%cx
 	pop	%bx
 	pop	%ax
+	add	$4,%sp		// skip the trampoline DS:*irq
 	iret
 #endif
