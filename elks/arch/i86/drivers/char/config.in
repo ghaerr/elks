@@ -46,6 +46,11 @@ mainmenu_option next_comment
 	bool 'CGA text mode videobuffer'	CONFIG_CHAR_DEV_CGATEXT	  n
     fi
     bool 'Memory character devices'		CONFIG_CHAR_DEV_MEM	  y
+    if [ "$CONFIG_CHAR_DEV_MEM" = "y" ]; then
+	bool '  Port read'	CONFIG_CHAR_DEV_MEM_PORT_READ	y
+	bool '  Port write'	CONFIG_CHAR_DEV_MEM_PORT_WRITE	y
+    fi
+
     bool 'Pseudo tty device driver'		CONFIG_PSEUDO_TTY	  y
 
     if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then

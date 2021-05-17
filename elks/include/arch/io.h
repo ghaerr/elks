@@ -1,6 +1,8 @@
 #ifndef __ARCH_8086_IO_H
 #define __ARCH_8086_IO_H
 
+#define	port_MAX	0xFFFF
+
 extern void bell(void);
 
 #ifdef __ia16__
