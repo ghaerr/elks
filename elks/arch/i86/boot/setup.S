@@ -968,9 +968,12 @@ puts:	lodsb
 putc:	push %bx
 	push %cx
 	push %dx
+#ifdef CONFIG_ARCH_IBMPC
+	// TODO: add non-BIOS output char for other targets
 	mov $0x0E,%ah
 	mov $7,%bx      // page 0
 	int $0x10
+#endif
 	pop %dx
 	pop %cx
 	pop %bx
