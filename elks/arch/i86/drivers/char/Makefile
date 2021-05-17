@@ -39,6 +39,11 @@ ifeq ($(CONFIG_ARCH_SIBO), y)
 OBJS  = init.o sibo/sibo_con.o sibo/sibo_conasm.o sibo/sibo_font.o \
 	sibo/sibo_key.o sibo/sibo_keyasm.o mem.o \
 	meta.o ntty.o sibo/sibo_serasm.o pty.o
+else ifeq ($(CONFIG_ARCH_8018X), y)
+	OBJS  = init.o mem.o \
+		ntty.o meta.o tcpdev.o pty.o bell.o
+
+	OBJS += headless-8018x.o
 else
 OBJS  = serial.o serfast.o lp.o init.o mem.o \
 	ntty.o meta.o tcpdev.o pty.o bell.o
