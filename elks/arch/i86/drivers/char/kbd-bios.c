@@ -81,6 +81,8 @@ static void restart_timer(void)
 
 void kbd_init(void)
 {
+#if 0
     enable_irq(1);		/* enable BIOS Keyboard interrupts */
+#endif
     restart_timer();
 }

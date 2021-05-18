@@ -38,7 +38,7 @@
 #include <arch/system.h>
 #include "console.h"
 
-static void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id);
+static void keyboard_irq(int irq, struct pt_regs *regs);
 static void set_leds(void);
 static int kb_read(void);
 
@@ -143,7 +143,7 @@ void kbd_init(void)
 {
     /* Set off the initial keyboard interrupt handler */
 
-    if (request_irq(KBD_IRQ, keyboard_irq, NULL))
+    if (request_irq(KBD_IRQ, keyboard_irq, INT_GENERIC))
 	panic("Unable to get keyboard");
 
     clr_irq();
@@ -174,7 +174,7 @@ static void kbd_send_cmd(int);
  *	with the monstrosity AT keyboards became.
  */
 
-static void keyboard_irq(int irq, struct pt_regs *regs, void *dev_id)
+static void keyboard_irq(int irq, struct pt_regs *regs)
 {
     static int E0Prefix = 0;
     int code, mode;

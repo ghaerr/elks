@@ -63,7 +63,6 @@ mainmenu_option next_comment
 			int 'Lines per page'                CONFIG_HW_VIDEO_LINES_PER_SCREEN    25
 		fi
 
-		bool 'Use bootup IRQ-Mask of 8259 as default'    CONFIG_HW_259_USE_ORIGINAL_MASK n
 		bool 'Advanced Power Management support'         CONFIG_APM y
 
 	elif [ "$CONFIG_ARCH_8018X" = "y" ]; then

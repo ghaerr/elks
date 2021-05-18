@@ -18,6 +18,8 @@
 #define HEAP_TAG_SEG     0x01
 #define HEAP_TAG_STRING  0x02
 #define HEAP_TAG_TTY     0x03
+#define HEAP_TAG_INTHAND 0x04
+
 
 // TODO: move free list node from header to body
 // to reduce overhead for allocated block

@@ -230,6 +230,7 @@ void rs_pump(void)
  * emits code using SP or BP addressing, as SS is not set and not guaranteed to equal DS.
  * Use 'ia16-elfk-objdump -D -r -Mi8086 serial.o' to look at code generated.
  */
+extern void _irq_com1(int irq, struct pt_regs *regs);
 void fast_com1_irq(void)
 {
     struct serial_info *sp = &ports[0];
@@ -248,6 +249,7 @@ void fast_com1_irq(void)
 #endif
 
 #ifdef CONFIG_FAST_IRQ3
+extern void _irq_com2(int irq, struct pt_regs *regs);
 void fast_com2_irq(void)
 {
     struct serial_info *sp = &ports[1];
@@ -265,14 +267,16 @@ void fast_com2_irq(void)
 }
 #endif
 
-#if defined(CONFIG_NEED_IRQ4) || defined(CONFIG_NEED_IRQ3)
+
+#if !defined(CONFIG_FAST_IRQ4) || !defined(CONFIG_FAST_IRQ3)
+
 static int irq_port[NR_SERIAL] = { 3, 1, 0, 2 }; //FIXME must change with ports.h
 
 /*
  * Slower serial interrupt routine, called from _irq_com with passed irq #
  * Reads all FIFO data available per interrupt and can provide serial stats
  */
-void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
+void rs_irq(int irq, struct pt_regs *regs)
 {
     struct serial_info *sp = &ports[irq_port[irq - 2]];
     char *io = sp->io;
@@ -298,7 +302,9 @@ void rs_irq(int irq, struct pt_regs *regs, void *dev_id)
     if (q->len)		/* don't wakeup unless chars else EINTR result*/
 	wake_up(&q->wait);
 }
-#endif
+
+#endif  // !defined(CONFIG_FAST_IRQ4) || !defined(CONFIG_FAST_IRQ3)
+
 
 static void rs_release(struct tty *tty)
 {
@@ -431,18 +437,18 @@ static void rs_init(void)
     do {
 	if (!rs_probe(sp)) {
 	    switch(sp->irq) {
-	    default:
-#if defined(CONFIG_NEED_IRQ4) || defined(CONFIG_NEED_IRQ3)
-		request_irq(sp->irq, rs_irq, NULL);
-#endif
-		break;
 #ifdef CONFIG_FAST_IRQ4
 	    case 4:
+		request_irq(sp->irq, (irq_handler) _irq_com1, INT_SPECIFIC);
+		break;
 #endif
 #ifdef CONFIG_FAST_IRQ3
 	    case 3:
+		request_irq(sp->irq, (irq_handler) _irq_com2, INT_SPECIFIC);
+		break;
 #endif
-		enable_irq(sp->irq);
+	    default:
+		request_irq(sp->irq, rs_irq, INT_GENERIC);
 		break;
 	    }
 	    sp->tty = tty;

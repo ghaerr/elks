@@ -25,52 +25,12 @@
  * 15*  AT HD IDE (/dev/hdb) CONFIG_BLK_DEV_HD      Driver doesn't work
  *
  * Edit settings below to change port address or IRQ:
- *   #define CONFIG_NEED_IRQx to map interrupt vector to ELKS
  *   Change I/O port and driver IRQ number to match your hardware
  */
 
-#define CONFIG_NEED_IRQ0		/* Timer, required*/
-
-#ifdef CONFIG_CONSOLE_DIRECT
-#define CONFIG_NEED_IRQ1
-#endif
-
 #ifdef CONFIG_CHAR_DEV_RS
-//#define CONFIG_FAST_IRQ4		/* COM1 very fast serial driver, no ISIG handling*/
-//#define CONFIG_FAST_IRQ3		/* COM2 very fast serial driver, no ISIG handling*/
-#define CONFIG_NEED_IRQ4		/* COM1 normal serial driver*/
-#define CONFIG_NEED_IRQ3		/* COM2 normal serial driver*/
-//#define CONFIG_NEED_IRQ5		/* COM3*/
-//#define CONFIG_NEED_IRQ2		/* COM4, XT only*/
-#endif
-
-#ifdef CONFIG_ETH_NE2K
-//#define CONFIG_NEED_IRQ9		/* ensure NE2K_IRQ set properly below also*/
-#define CONFIG_NEED_IRQ12
-#endif
-
-#ifdef CONFIG_ETH_WD
-#define CONFIG_NEED_IRQ2		/* only available on XT, slave PIC on AT*/
-#endif
-
-/* unused*/
-//#define CONFIG_NEED_IRQ6
-//#define CONFIG_NEED_IRQ7
-//#define CONFIG_NEED_IRQ8
-//#define CONFIG_NEED_IRQ10
-//#define CONFIG_NEED_IRQ11
-//#define CONFIG_NEED_IRQ13
-
-/* obsolete - driver won't compile*/
-#ifdef CONFIG_BLK_DEV_FD
-#define CONFIG_NEED_IRQ6
-#endif
-
-/* obsolete - driver doesn't work*/
-#ifdef CONFIG_BLK_DEV_HD
-#define CONFIG_NEED_IRQ5
-#define CONFIG_NEED_IRQ14
-#define CONFIG_NEED_IRQ15
+//#define CONFIG_FAST_IRQ4             /* COM1 very fast serial driver, no ISIG handling*/
+//#define CONFIG_FAST_IRQ3             /* COM2 very fast serial driver, no ISIG handling*/
 #endif
 
 /* timer, timer.c*/
@@ -97,7 +57,7 @@
 #define COM4_IRQ	2		/* unregistered unless COM4_PORT found*/
 
 /* ne2k, ne2k.c */
-//#define NE2K_IRQ	9		/* ensure CONFIG_NEED_IRQxx set properly above*/
+//#define NE2K_IRQ	9
 #define NE2K_IRQ	12
 #define NE2K_PORT	0x300
 
@@ -112,5 +72,5 @@
 #define HD1_AT_IRQ	14		/* missing request_irq call*/
 #define HD2_AT_IRQ	15		/* missing request_irq call*/
 
-/* obsoleete - experimental floppy drive, floppy.c (won't compile)*/
+/* obsolete - experimental floppy drive, floppy.c (won't compile)*/
 #define FLOPPY_IRQ	6		/* missing request_irq call*/

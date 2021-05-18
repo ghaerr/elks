@@ -90,7 +90,7 @@ extern int del_timer(struct timer_list *);
 extern void do_timer(struct pt_regs *);
 
 /* timer.c*/
-void timer_tick(int, struct pt_regs *, void *);
+void timer_tick(int, struct pt_regs *);
 void spin_timer(int);
 
 /* timer-8254.c*/

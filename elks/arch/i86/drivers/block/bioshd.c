@@ -544,10 +544,13 @@ int INITPROC bioshd_init(void)
 
 #ifdef CONFIG_BLK_DEV_BFD
     _fd_count = bioshd_getfdinfo();
+#if 0
     enable_irq(6);		/* Floppy */
+#endif
 #endif
 #ifdef CONFIG_BLK_DEV_BHD
     _hd_count = bioshd_gethdinfo();
+#if 0
     if (sys_caps & CAP_PC_AT) {	/* PC/AT or greater */
 	enable_irq(HD_IRQ);	/* AT ST506 */
 	enable_irq(15);		/* AHA1542 */
@@ -555,6 +558,7 @@ int INITPROC bioshd_init(void)
     else {
 	enable_irq(5);		/* XT ST506 */
     }
+#endif
     bioshd_gendisk.nr_real = _hd_count;
 #endif /* CONFIG_BLK_DEV_BHD */
 

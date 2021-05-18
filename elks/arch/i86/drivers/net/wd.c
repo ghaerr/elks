@@ -556,7 +556,7 @@ static word_t wd_int_stat(void)
 	return retval;
 }
 
-static void wd_int(int irq, struct pt_regs * regs, void * dev_id)
+static void wd_int(int irq, struct pt_regs * regs)
 {
 	word_t stat;
 
@@ -581,7 +581,7 @@ void wd_drv_init(void)
 	word_t hw_addr[6U];
 
 	do {
-		err = request_irq(WD_IRQ, wd_int, NULL);
+		err = request_irq(WD_IRQ, wd_int, INT_GENERIC);
 		if (err) {
 			printk("eth: WD IRQ %d request error: %i\n",
 				WD_IRQ, err);
