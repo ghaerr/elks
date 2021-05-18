@@ -45,6 +45,7 @@ static char *envp_init[MAX_INIT_ENVS+1];
 static unsigned char options[256];
 
 extern int boot_rootdev;
+extern int net_irq;
 extern int dprintk_on;
 static char * INITPROC root_dev_name(int dev);
 static int INITPROC parse_options(void);
@@ -307,6 +308,10 @@ static int INITPROC parse_options(void)
 		if (!strncmp(line,"init=",5)) {
 			line += 5;
 			init_command = argv_init[1] = line;
+			continue;
+		}
+		if (!strncmp(line,"netirq=",7)) {
+			net_irq = atoi(line+7);
 			continue;
 		}
 		/*

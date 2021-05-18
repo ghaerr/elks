@@ -5,4 +5,4 @@
 #console=ttyS0,19200 # serial console
 #root=hda1			# hd partition 1
 #ro					# read-only root
-#net=eth
+#netirq=9			# set NIC IRQ
