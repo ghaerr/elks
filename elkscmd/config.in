@@ -17,6 +17,7 @@ mainmenu_option next_comment
 
 		bool 'busyelks'			CONFIG_APP_BUSYELKS		n
 		bool 'cgatext'			CONFIG_APP_CGATEXT	    n
+		bool 'port'			CONFIG_APP_PORT		    n
         bool 'screen'     		CONFIG_APP_SCREEN       y
 		bool 'cron'           	CONFIG_APP_CRON        	y
         busyelks 'diskutils'	CONFIG_APP_DISK_UTILS	y

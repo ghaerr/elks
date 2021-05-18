@@ -193,5 +193,8 @@ endif
 ifdef CONFIG_APP_CGATEXT
 	make -C cgatext install
 endif
+ifdef CONFIG_APP_PORT
+	make -C port install
+endif
 
 ###############################################################################

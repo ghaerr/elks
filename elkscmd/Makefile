@@ -55,6 +55,9 @@ all:
 ifdef CONFIG_APP_CGATEXT)
 	make -C cgatext
 endif
+ifdef CONFIG_APP_PORT
+	make -C port
+endif
 
 install:
 	$(MAKE) -f Make.install "CONFIG=$(TOPDIR)/.config"
