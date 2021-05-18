@@ -27,6 +27,7 @@ int root_mountflags = MS_RDONLY;
 #else
 int root_mountflags = 0;
 #endif
+int net_irq;
 static int boot_console;
 static char bininit[] = "/bin/init";
 static char *init_command = bininit;
@@ -45,7 +46,6 @@ static char *envp_init[MAX_INIT_ENVS+1];
 static unsigned char options[256];
 
 extern int boot_rootdev;
-extern int net_irq;
 extern int dprintk_on;
 static char * INITPROC root_dev_name(int dev);
 static int INITPROC parse_options(void);
