@@ -126,6 +126,8 @@ typedef struct {
 	unsigned short count;	/* header + packet length in bytes */
 } __attribute__((packed)) e8390_pkt_hdr;
 
+int net_irq = WD_IRQ;		/* default IRQ, changed by netirq= in /bootopts */
+
 static struct wait_queue rxwait;
 static struct wait_queue txwait;
 
@@ -581,10 +583,10 @@ void wd_drv_init(void)
 	word_t hw_addr[6U];
 
 	do {
-		err = request_irq(WD_IRQ, wd_int, INT_GENERIC);
+		err = request_irq(net_irq, wd_int, INT_GENERIC);
 		if (err) {
 			printk("eth: WD IRQ %d request error: %i\n",
-				WD_IRQ, err);
+				net_irq, err);
 			break;
 		}
 		err = register_chrdev(ETH_MAJOR, "eth", &wd_fops);
@@ -596,7 +598,7 @@ void wd_drv_init(void)
 		for (u = 0U; u < 6U; u++)
 			mac_addr[u] = (hw_addr[u] & 0xffU);
 		printk ("eth: SMC/WD8003 at 0x%x, irq %d, MAC %02X",
-			WD_PORT, WD_IRQ, mac_addr[0]);
+			WD_PORT, net_irq, mac_addr[0]);
 		for (u = 1U; u < 6U; u++)
 			printk(":%02X", mac_addr[u]);
 		printk("\n");

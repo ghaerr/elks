@@ -27,6 +27,7 @@ int root_mountflags = MS_RDONLY;
 #else
 int root_mountflags = 0;
 #endif
+int net_irq;
 static int boot_console;
 static char bininit[] = "/bin/init";
 static char *init_command = bininit;
@@ -307,6 +308,10 @@ static int INITPROC parse_options(void)
 		if (!strncmp(line,"init=",5)) {
 			line += 5;
 			init_command = argv_init[1] = line;
+			continue;
+		}
+		if (!strncmp(line,"netirq=",7)) {
+			net_irq = atoi(line+7);
 			continue;
 		}
 		/*

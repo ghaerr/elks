@@ -20,6 +20,8 @@
 
 #include "ne2k.h"
 
+int net_irq = NE2K_IRQ;		/* default IRQ, changed by netirq= in /bootopts */
+
 // Static data
 struct wait_queue rxwait;
 struct wait_queue txwait;
@@ -347,9 +349,9 @@ void ne2k_drv_init(void)
 			printk ("eth: NE2K not detected\n");
 			break;
 		}
-		err = request_irq (NE2K_IRQ, ne2k_int, INT_GENERIC);
+		err = request_irq (net_irq, ne2k_int, INT_GENERIC);
 		if (err) {
-			printk ("eth: NE2K IRQ %d request error: %i\n", NE2K_IRQ, err);
+			printk ("eth: NE2K IRQ %d request error: %i\n", net_irq, err);
 			break;
 		}
 
@@ -376,7 +378,7 @@ void ne2k_drv_init(void)
        }
 
        if (!err) {
-           printk ("eth: NE2K at 0x%x, irq %d, MAC %02x", NE2K_PORT, NE2K_IRQ, addr[0]);
+           printk ("eth: NE2K at 0x%x, irq %d, MAC %02x", NE2K_PORT, net_irq, addr[0]);
            i = 1;
            while (i < 6) printk(":%02x", addr[i++]);
            printk("\n");
