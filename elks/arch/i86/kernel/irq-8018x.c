@@ -43,3 +43,11 @@ int remap_irq(int irq)
     return irq;
 }
 
+// Get interrupt vector from IRQ
+
+int irq_vector (int irq)
+	{
+	// IRQ 0-7  are mapped to vectors INT 08h-0Fh
+
+	return irq + 0x08;
+	}
