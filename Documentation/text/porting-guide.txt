@@ -28,9 +28,10 @@ IBM PC/XT/AT Personal Computer (CONFIG_ARCH_IBMPC)
 8018X Architecture (CONFIG_ARCH_8018X)
 Advantech SNMP-1000B (advtech)
 	System
-		CPU R8810
-		RAM
-		PIC, PIT
+		MCU R8810 (8018XEB)
+		RAM 512K
+		PIC
+		PIT
 		Serial
 	ROM Filesystem
 	ROM Init
@@ -38,9 +39,10 @@ Advantech SNMP-1000B (advtech)
 
 OR-556 (or556)
 	System
-		CPU
+		MCU
 		RAM 128K
-		PIC, PIT
+		PIC
+		PIT
 		Serial
 	ROM Filesystem
 	ROM Init

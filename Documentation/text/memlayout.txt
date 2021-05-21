@@ -53,5 +53,6 @@ ELKS typical ROM memory layout
  | start of ROM disk    8000:0000 80000 30000 (~180K, CONFIG_ROMFS_BASE=0x8000)
  | end of ROM disk      B000:0000 B0000
  | ...
+ | kernel code segment  E000:0000 E0000 10000 (65536) (entry CALLF E000:0003,INT 19h)
  | INIT ROM             F000:0000 F0000 10000 (65536)
  +--------------------------------------------------------------------------------+
