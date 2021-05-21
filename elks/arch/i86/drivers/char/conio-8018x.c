@@ -24,7 +24,10 @@ void conio_init(void)
  */
 int conio_poll(void)
 {
-	// add code to poll UART here and return character if available
+    /* S0STS bit 0x40 RI (receive interrupt) */
+    if (inw(0xff00 + 0x66) & 0x40) {
+        return inw(0xff00 + 0x68); /* R0BUF */
+    }
     return 0;
 }
 
