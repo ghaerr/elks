@@ -35,42 +35,38 @@ include $(BASEDIR)/Makefile-rules
 #########################################################################
 # Objects to be compiled.
 
-ifeq ($(CONFIG_ARCH_SIBO), y)
-OBJS  = init.o sibo/sibo_con.o sibo/sibo_conasm.o sibo/sibo_font.o \
-	sibo/sibo_key.o sibo/sibo_keyasm.o mem.o \
-	meta.o ntty.o sibo/sibo_serasm.o pty.o
-else ifeq ($(CONFIG_ARCH_8018X), y)
-	OBJS  = init.o mem.o \
-		ntty.o meta.o tcpdev.o pty.o bell.o
+ifeq ($(CONFIG_ARCH_8018X), y)
+	OBJS  = init.o mem.o ntty.o meta.o tcpdev.o pty.o
+	OBJS += console-headless.o kbd-poll.o conio-8018x.o
+endif
 
-	OBJS += headless-8018x.o
-else
-OBJS  = serial.o serfast.o lp.o init.o mem.o \
-	ntty.o meta.o tcpdev.o pty.o bell.o
+ifeq ($(CONFIG_ARCH_IBMPC), y)
+	OBJS  = init.o mem.o ntty.o meta.o tcpdev.o pty.o
+	OBJS += serial.o serfast.o lp.o
 
 ifdef CONFIG_CHAR_DEV_CGATEXT
 	OBJS += cgatext.o
 endif
 
 ifdef CONFIG_CONSOLE_DIRECT
-OBJS += dircon.o
+OBJS += console-direct.o bell-8254.o
 endif
 
 ifdef CONFIG_CONSOLE_BIOS
-OBJS += bioscon.o bioscon-asm.o
+OBJS += console-bios.o console-bios-asm.o bell-8254.o
 endif
 
 ifdef CONFIG_CONSOLE_HEADLESS
-OBJS += headless-bios.o
+OBJS += console-headless.o
 endif
 
 ifdef CONFIG_KEYBOARD_SCANCODE
 OBJS += kbd-scancode.o
 else
-OBJS += kbd-bios.o bios-asm.o
+OBJS += kbd-poll.o conio-bios.o
 endif
 
-endif # CONFIG_ARCH_SIBO
+endif # CONFIG_ARCH_IBMPC
 
 #########################################################################
 # Commands.

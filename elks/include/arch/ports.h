@@ -33,12 +33,16 @@
 //#define CONFIG_FAST_IRQ3             /* COM2 very fast serial driver, no ISIG handling*/
 #endif
 
-/* timer, timer.c*/
+/* timer, timer-8254.c*/
 #define TIMER_CMDS_PORT 0x43		/* command port */
 #define TIMER_DATA_PORT 0x40		/* data port    */
 #define TIMER_IRQ	0		/* can't change*/
 
-/* keyboard, xt_kbd.c*/
+/* bell, bell-8254.c*/
+#define TIMER2_PORT	0x42		/* timer 2 data port for speaker frequency*/
+#define SPEAKER_PORT	0x61
+
+/* keyboard, kbd-scancode.c*/
 #define KBD_IO		0x60
 #define KBD_CTL		0x61
 #define KBD_IRQ		1

@@ -1,6 +1,5 @@
-/* bioscon-asm.S function definitions */
+/* API to BIOS for BIOS Console*/
 
-int  bios_kbd_poll (void);
 void bios_setpage (byte_t page);
 void bios_setcursor (byte_t x, byte_t y, byte_t page);
 void bios_getcursor (byte_t * x, byte_t * y);

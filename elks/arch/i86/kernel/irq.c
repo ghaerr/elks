@@ -140,8 +140,6 @@ void free_irq(unsigned int irq)
 
 void INITPROC irq_init(void)
 {
-    flag_t flags;
-
     init_irq();  // PIC initialization
 
 	// TODO: no more need to disable the timer

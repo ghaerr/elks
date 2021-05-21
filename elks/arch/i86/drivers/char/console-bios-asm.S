@@ -1,29 +1,14 @@
-// BIOS routines for BIOS Console
+// API to BIOS for BIOS Console
 //
 	.arch	i8086, nojumps
 	.code16
 	.text
 
-	.global bios_kbd_poll
 	.global bios_setpage
 	.global bios_setcursor
 	.global bios_getcursor
 	.global bios_writecharattr
 	.global bios_scroll
-
-// int bios_kbd_poll (void)
-
-bios_kbd_poll:
-	mov    $1,%ah		// get keystroke status
-	int    $0x16
-	jnz    1f
-	xor    %ax,%ax
-1:	or     %ax,%ax
-	jz     9f
-	xor    %ah,%ah		// read keystroke
-	int    $0x16
-9:	ret
-
 
 // void bios_setpage (byte_t page)
 // compiler pushes byte as word
