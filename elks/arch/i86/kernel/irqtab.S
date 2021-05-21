@@ -327,6 +327,17 @@ do_eoi:
 	jmp	a5
 a5:	jmp	a6
 a6:	out	%al,$0x20		// Ack on primary controller
+
+#elif defined(CONFIG_ARCH_8018X)
+//
+//	Determine if trap or interrupt
+//
+	cmp	$16,%ax
+	jge	was_trap	// Traps need no reset
+
+	mov $0x8000, %ax // set the NSPEC bit on the
+	mov $0xff02, %dx // EOI register so the ICU
+	out %ax, %dx // acks the highest priority interrupt
 #endif
 
 //
