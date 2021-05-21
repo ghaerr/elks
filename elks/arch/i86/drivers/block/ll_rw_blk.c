@@ -414,10 +414,6 @@ void INITPROC blk_dev_init(void)
 
 #ifdef CONFIG_BLK_DEV_FD
     floppy_init();
-#else
-#ifdef CONFIG_ARCH_IBMPC
-    outb_p(0xc, (void *) 0x3f2);	//FIXME move somewhere
-#endif
 #endif
 
 #ifdef CONFIG_BLK_DEV_BIOS
