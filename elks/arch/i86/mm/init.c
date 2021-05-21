@@ -66,6 +66,6 @@ void INITPROC mm_stat(seg_t start, seg_t end)
 #ifdef CONFIG_FARTEXT_KERNEL
     printk("ftext %x:0000, ", (unsigned)((long)kernel_init >> 16));
 #endif
-    printk("data %x:0000, top %x, %uK free\n",
+    printk("data %x:0000, top %x:0, %uK free\n",
 	   kernel_ds, end, (int) ((end - start) >> 6));
 }

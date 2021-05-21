@@ -62,6 +62,8 @@
 
 #include "blk.h"
 
+#define FDC_DOR     0x3F2       /* floppy digital output register*/
+
 struct elks_disk_parms {
     __u16 track_max;		/* number of tracks, little-endian */
     __u8 sect_max;		/* number of sectors per track */
@@ -541,6 +543,9 @@ int INITPROC bioshd_init(void)
     printk("bioshd: Driver Copyright (C) 1994 Yggdrasil Computing, Inc.\n"
 	   "Extended and modified for Linux 8086 by Alan Cox.\n");
 #endif
+
+    /* FIXME perhaps remove for speed on floppy boot*/
+    outb_p(0x0C, FDC_DOR);	/* FD motors off, enable IRQ and DMA*/
 
 #ifdef CONFIG_BLK_DEV_BFD
     _fd_count = bioshd_getfdinfo();

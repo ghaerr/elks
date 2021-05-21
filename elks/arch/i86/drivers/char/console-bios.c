@@ -16,7 +16,7 @@
 #include <linuxmt/chqueue.h>
 #include <linuxmt/ntty.h>
 #include "console.h"
-#include "bioscon-asm.h"
+#include "console-bios.h"
 
 /* Assumes ASCII values. */
 #define isalpha(c) (((unsigned char)(((c) | 0x20) - 'a')) < 26)

@@ -1,27 +1,28 @@
 /*
- * BIOS polling keyboard
+ * Polling keyboard driver
  *
- * INT 16h functions 0,1 (keyboard)
+ * Calls conio_poll to get kbd input
  */
 #include <linuxmt/types.h>
 #include <linuxmt/config.h>
 #include <linuxmt/timer.h>
 #include <linuxmt/sched.h>
 #include "console.h"
-#include "bios-asm.h"
+#include "conio.h"
 
-char kbd_name[] = "bios";
+char kbd_name[] = "polling";
 
 static void restart_timer(void);
 
 /*
- * BIOS Keyboard Decoder
+ * Poll for keyboard character
+ * Decodes non-zero high byte into arrow/fn keys
  */
 static void kbd_timer(int data)
 {
     int dav, extra = 0;
 
-    if ((dav = bios_kbd_poll())) {
+    if ((dav = conio_poll())) {
 	if (dav & 0xFF)
 	    Console_conin(dav & 0x7F);
 	else {
@@ -81,6 +82,7 @@ static void restart_timer(void)
 
 void kbd_init(void)
 {
+    conio_init();
 #if 0
     enable_irq(1);		/* enable BIOS Keyboard interrupts */
 #endif

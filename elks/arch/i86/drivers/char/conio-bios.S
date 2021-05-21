@@ -1,20 +1,27 @@
-// BIOS routines for Headless Console
+// conio API to BIOS for BIOS or Headless Console
 //
-// INT 16h functions 0,1 (keyboard)
-// INT 10h function 0x0E (write teletype)
+// INT 16h AH=00h, INT 16H AH=01h (keyboard)
+// INT 10h AH=0Eh (write teletype)
 //
 	.arch	i8086, nojumps
 	.code16
 	.text
 
-	.global bios_kbd_poll
-	.global	bios_textout
+	.global conio_init
+	.global conio_poll
+	.global	conio_putc
 
-// int bios_kbd_poll
-// uses INT 16h BIOS functions 0 and 1
+// void conio_init(void)
+
+conio_init:
+	ret
+
+// int conio_poll
+// INT 16h AH=00h (read kbd)
+// INT 16h AH=01h (get kbd status)
 // returns scan code in AH, ASCII char in AL
 
-bios_kbd_poll:
+conio_poll:
 	mov    $1,%ah		// get kbd status
 	int    $0x16
 	jnz    1f		// key pressed
@@ -25,10 +32,10 @@ bios_kbd_poll:
 	int    $0x16
 9:	ret
 
-// void bios_textout (byte_t ch)
-// uses INT 10h BIOS function 0x0E
+// void conio_putc (byte_t ch)
+// INT 10h BIOS AH=0Eh (write teletype)
 
-bios_textout:
+conio_putc:
 	push	%bp		// some BIOS destroy BP
 	mov	%sp,%bp
 	mov	4(%bp),%al
