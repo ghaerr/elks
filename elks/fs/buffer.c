@@ -352,7 +352,9 @@ struct buffer_head *getblk32(kdev_t dev, block32_t block)
  */
     bh->b_dev = dev;
     bh->b_blocknr = block;
+#ifdef CONFIG_FS_EXTERNAL_BUFFER
     bh->b_seg = bh->b_data? kernel_ds: bh->b_ds;
+#endif
     goto return_it;
 
   found_it:
