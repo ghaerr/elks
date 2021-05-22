@@ -252,6 +252,14 @@ elks:
 #########################################################################
 # Standard commands.
 
+dokclean: $(CLEANDEP)
+	rm -fv *~ *.a *.bak *.lint *.map *.o *.tmp core $(CLEANME)
+	@for DIR in */ ; do \
+		if [ -f "$$DIR/Makefile" -a "$$DIR" != "tools" ]; then \
+			${MAKE} -C "$$DIR" dokclean ; \
+		fi ; \
+	done
+
 doclean: $(CLEANDEP)
 	rm -fv *~ *.a *.bak *.lint *.map *.o *.tmp core $(CLEANME)
 #	@for FILE in *.s ; do \

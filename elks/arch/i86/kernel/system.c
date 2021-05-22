@@ -11,6 +11,7 @@
 
 
 byte_t sys_caps;		/* system capabilities bits */
+unsigned int heapsize;	/* max size of kernel near heap */
 
 void INITPROC setup_arch(seg_t *start, seg_t *end)
 {
@@ -19,19 +20,36 @@ void INITPROC setup_arch(seg_t *start, seg_t *end)
 #endif
 
 	/*
-	 * Set start to beginning of available main memory, which
-	 * is directly after end of the kernel data segment.
-	 *
 	 * Extend kernel data segment to maximum of 64K to make room
 	 * for local heap.
+	 *
+	 * Set start to beginning of available main memory, which
+	 * is directly after end of the kernel data segment.
 	 *
 	 * Set end to end of available main memory.
 	 *
 	 * If ramdisk configured, subtract space for it from end of memory.
 	 */
 
-	/* *start = kernel_ds + (((unsigned int) (_endbss+15)) >> 4); */
+#define SETUP_HEAPSIZE	704
+
+	/* Heap allocations at even addresses, helps debugging*/
+	unsigned int endbss = (unsigned int)(_endbss + 1) & ~1;
+
+	/*
+	 * Calculate size of heap, which extends end of kernel data segment
+	 */
+
+#ifdef SETUP_HEAPSIZE
+	unsigned int heapsegs = (1 + ~endbss) >> 4;	/* max possible heap in segments*/
+	if ((SETUP_HEAPSIZE >> 4) < heapsegs)		/* allow if less than max*/
+		heapsegs = SETUP_HEAPSIZE >> 4;
+	*start = kernel_ds + heapsegs + (((unsigned int) (_endbss+15)) >> 4);
+	heapsize = heapsegs << 4;
+#else
 	*start = kernel_ds + 0x1000;
+	heapsize = 1 + ~endbss;
+#endif
 
 	*end = (seg_t)SETUP_MEM_KBYTES << 6;
 
@@ -42,12 +60,9 @@ void INITPROC setup_arch(seg_t *start, seg_t *end)
 	}
 #endif
 
-	/* Heap allocations at even addresses, helps debugging*/
-	unsigned int endbss = (unsigned int)(_endbss + 1) & ~1;
-
 	/* Now insert local heap at end of kernel data segment */
 	heap_init ();
-	heap_add ((void *)endbss, 1 + ~endbss);
+	heap_add ((void *)endbss, heapsize);
 
 	/* Misc */
 	ROOT_DEV = SETUP_ROOT_DEV;

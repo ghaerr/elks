@@ -16,6 +16,9 @@ all: .config include/autoconf.h
 	$(MAKE) -C image all
 	$(MAKE) -C elksemu PREFIX='$(TOPDIR)/cross' elksemu
 
+kclean:
+	$(MAKE) -C elks kclean
+
 clean:
 	$(MAKE) -C libc clean
 	$(MAKE) -C libc DESTDIR='$(TOPDIR)/cross' uninstall
