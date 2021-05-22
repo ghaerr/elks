@@ -27,12 +27,14 @@
 #define SETUP_VID_COLS		80	/* BIOS video # columns */
 #define SETUP_VID_LINES		25	/* BIOS video # lines */
 #define SETUP_CPU_TYPE		5	/* processor type 80186 */
-#define SETUP_MEM_KBYTES	256	/* base memory in 1K bytes */
+#define SETUP_MEM_KBYTES	128	/* base memory in 1K bytes */
 #define SETUP_ROOT_DEV		0x0600	/* root device ROMFS */
 #define SETUP_ELKS_FLAGS	0	/* flags for root device type */
 #define SETUP_PART_OFFSETLO	0	/* partition offset low word */
 #define SETUP_PART_OFFSETHI	0	/* partition offset high word */
 #define SYS_CAPS		0	/* no XT/AT capabilities */
+
+#define SETUP_HEAPSIZE		1024	/* minimum kernel heap for now*/
 
 #define CONFIG_8018X_FCPU	20
 #define CONFIG_8018X_EB

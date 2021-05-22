@@ -31,8 +31,6 @@ void INITPROC setup_arch(seg_t *start, seg_t *end)
 	 * If ramdisk configured, subtract space for it from end of memory.
 	 */
 
-#define SETUP_HEAPSIZE	704
-
 	/* Heap allocations at even addresses, helps debugging*/
 	unsigned int endbss = (unsigned int)(_endbss + 1) & ~1;
 

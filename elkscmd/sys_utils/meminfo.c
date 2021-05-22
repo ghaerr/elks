@@ -60,6 +60,7 @@ void dump_heap(int fd)
 	printf("  HEAP   TYPE  SIZE    SEG   TYPE    SIZE  CNT\n");
 
 	word_t n = getword (fd, heap_all + offsetof(list_s, next), ds);
+	// FIXME additional n!=first check for tracking kernel heap bug
 	word_t first = n;
 	goto start;
 	while (n != heap_all && n != first) {
