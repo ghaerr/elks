@@ -28,24 +28,22 @@ IBM PC/XT/AT Personal Computer (CONFIG_ARCH_IBMPC)
 8018X Architecture (CONFIG_ARCH_8018X)
 Advantech SNMP-1000B (advtech)
 	System
-		MCU R8810 (8018XEB)
-		RAM 512K
+		MCU RDC R8810-G (8018XEB)
+		512K RAM
+		FLASH
 		PIC
 		PIT
 		Serial
-	ROM Filesystem
-	ROM Init
 	NE2K Ethernet
 
-OR-556 (or556)
+Orckit OR556 (or556)
 	System
-		MCU
-		RAM 128K
+		CPU Intel 80188EB-20 @ 16Mhz
+		128K RAM on LCS pin
+		512K FLASH on UCS pin
 		PIC
 		PIT
 		Serial
-	ROM Filesystem
-	ROM Init
 
 SIBO (discontinued)
 
