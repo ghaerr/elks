@@ -1,10 +1,10 @@
 ELKS Porting Guide
 ==================
-11 May 2021 - Rev 2 ghaerr
+21 May 2021 - Rev 3 ghaerr
 
 Platforms (target)
--------------------------------------------
-IBM PC/XT/AT Personal Computer (pc)
+-------------------------------------------------
+IBM PC/XT/AT Personal Computer (CONFIG_ARCH_IBMPC)
 	System
 		256K RAM minimum
 		64K PC ROM BIOS
@@ -25,14 +25,25 @@ IBM PC/XT/AT Personal Computer (pc)
 		NE2K
 		WD8003
 
+8018X Architecture (CONFIG_ARCH_8018X)
 Advantech SNMP-1000B (advtech)
 	System
-		RAM
-		ROM BIOS
-		ROM Filesystem
-		PIC, PIT
-	Serial
+		MCU RDC R8810-G (8018XEB)
+		512K RAM
+		FLASH
+		PIC
+		PIT
+		Serial
 	NE2K Ethernet
+
+Orckit OR556 (or556)
+	System
+		CPU Intel 80188EB-20 @ 16Mhz
+		128K RAM on LCS pin
+		512K FLASH on UCS pin
+		PIC
+		PIT
+		Serial
 
 SIBO (discontinued)
 
@@ -43,28 +54,77 @@ Device port and IRQ addresses					elks/include/arch/ports.h
 Kernel text, data, rom segments					elks/include/config.h
 System capabilities byte (SYS_CAPS)				elks/include/config.h
 
-8259 Programmable Interrupt Controller (PIC)	elks/arch/i86/kernel/irq.c
+8259 Programmable Interrupt Controller (PIC)	elks/arch/i86/kernel/irq-8259.c
 	Cascade IRQ 0-7 and IRQ 8-15 seperately		elks/include/config.h
 
 8253/8254 Programmable Interval Timer (PIT)		elks/arch/i86/kernel/
-	100 HZ timer 0 on IRQ 0						timer.c
-	PC speaker timer 2 (bell chime)				elks/arch/i86/drivers/char/bell.c
+	100 HZ timer 0 on IRQ 0						timer-8254.c
+		TIMER_CMDS_PORT		0x43
+		TIMER_DATA_PORT		0x40
 
-Screen											elks/arch/i86/drivers/char/
-	BIOS INT 10h Headless Console				headless-bios.c
-	BIOS INT 10h BIOS Console					bioscon.c
-	Direct Console using 6845 CRT Controller	dircon.c
-		hw cursor, display page					dircon.c
+Screen and Keyboard								elks/arch/i86/drivers/char/
 
-Keyboard										elks/arch/i86/drivers/char/
+Direct Console
+--------------
+	Direct Console using 6845 CRT Controller	console-direct.c
+		hw cursor, display page					console-direct.c
+		BDA:0x4A    VID_COLS
+		25          VID_LINES
+		BDA:0x63    CRTC_PORT (6845 CRTC)
+		BDA:0x4C    VID_PAGE_SIZE
+		BDA:0x49    VID_MODE (7=MDA for video seg, force 1 console)
+		BDA:0x50    VID_CURSOR_X
+		BDA:0x51    VID_CURSOR_Y
 	BIOS IRQ 1 interrupt keyboard				kbd-scancode.c
 		8042 keyboard controller, LEDs			kbd-scancode.c
-	BIOS INT 16h polling driver					kbd-bios.c, bios-asm.S
+	PC speaker timer 2 (bell chime)				elks/arch/i86/drivers/char/bell-8254.c
+		SPEAKER_PORT        0x61
+		TIMER_CMDS_PORT     0x43
+		TIMER2_DATA_PORT    0x42
+
+BIOS Console
+------------
+	BIOS Console using BIOS only				console-bios.c
+		SETUP_VID_COLS      setupb(7)
+		SETUP_VID_LINES     setupb(14)
+		BDA:0x49    VID_MODE (7=MDA, force 1 console)
+	All INT 10h and INT 16h BIOS Console routines  console-bios-asm.S
+		INT 16h AH=01h  Poll kbd
+		INT 16h AH=00h  Read kbd
+		INT 10h AH=02h  Set cursor position
+		INT 10h AH=03h  Get cursor position
+		INT 10h AH=05h  Set active page
+		INT 10h AH=06h  Scroll active page up
+		INT 10h AH=07h  Scroll acrive page down
+		INT 10h AH=09h  Write character and attribute
+	Polling keyboard using kernel timer callback	kbd-poll.c
+	Conio API using BIOS INT 16h				conio-bios.S
+		INT 16h AH=01h  Poll kbd
+		INT 16h AH=00h  Read kbd
+	PC speaker timer 2 (bell chime)				elks/arch/i86/drivers/char/bell-8254.c
+		SPEAKER_PORT        0x61
+		TIMER_CMDS_PORT     0x43
+		TIMER2_DATA_PORT    0x42
+
+Headless Console (BIOS or serial port I/O using conio API)
+----------------
+	Headless Console using arch-neutral conio API   console-headless.c
+	Polling keyboard using kernel timer callback	kbd-poll.c
+	Conio API using BIOS INT 16h				conio-bios.S
+		INT 16h AH=01h  Poll kbd
+		INT 16h AH=00h  Read kbd
+		INT 10h AH=0Eh  Write text teletype mode
+	Conio API using hw serial UART				conio-8081x.c
+		coninit()   initialize serial port
+		conpoll()   return nonzero character if received
+		conout(c)   output character to serial
+
 
 8250 Serial (UART)								elks/arch/i86/drivers/char/serial.c
 
 Disk											elks/arch/i86/drivers/block/
 	BIOS INT 13h FD/HD disk driver				bioshd.c
+		OUTB 03F2h - Floppy disk controller
 	IDE/ATA drive query							idequery.c
 
 Ethernet										elks/arch/i86/drivers/net/
@@ -89,8 +149,10 @@ INT 10h AH=05h Select active page				CONFIG_CONSOLE_BIOS
 INT 10h AH=06h Scroll up						CONFIG_CONSOLE_BIOS
 INT 10h AH=07h Scroll up						CONFIG_CONSOLE_BIOS
 INT 10h AH=09h Write character at cursor		CONFIG_CONSOLE_BIOS
-INT 10h AH=0Eh Write teletype current page		CONFIG_CONSOLE_HEADLESS,boot_sect.S,setup.S
-INT 10h AH=0Fh Get video mode					setup.S
+INT 10h AH=0Eh Write teletype current page		CONFIG_CONSOLE_HEADLESS
+		boot_sect.S, setup.S, conio-bios.S
+INT 10h AH=0Fh Get video mode					CONFIG_ARCH_IBMPC, setup.S
+
 INT 10h AH=12h Get EGA video configuration		CONFIG_HW_VGA
 INT 10h AH=1Ah Get VGA video configuration		CONFIG_HW_VGA
 
@@ -101,6 +163,7 @@ INT 13h AH=02h Read disk sector					CONFIG_BLK_DEV_BIOS, boot_sect.S
 INT 13h AH=03h Write disk sector				CONFIG_BLK_DEV_BIOS
 INT 13h AH=08h Get drive parms					CONFIG_BLK_DEV_BIOS
 
-INT 16h AH=00h Wait and read keyboard char		CONFIG_CONSOLE_HEADLESS, boot_sect.S
-INT 16h AH=01h Peek keyboard char				CONFIG_CONSOLE_HEADLESS
+INT 16h AH=00h Wait and read keyboard char		CONFIG_CONSOLE_HEADLESS
+		boot_sect.S, conio-bios.S
+INT 16h AH=01h Peek keyboard char				CONFIG_CONSOLE_HEADLESS, conio-bios.S
 INT 16h AH=03h Set typematic rate				CONFIG_HW_KEYBOARD_BIOS
