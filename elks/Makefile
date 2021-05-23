@@ -209,6 +209,8 @@ tar:	dist
 #########################################################################
 # Configuration stuff
 
+kclean: dokclean
+
 clean:	nodep doclean
 
 dep:	$(TOPDIR)/include/autoconf.h

@@ -60,8 +60,7 @@ void INITPROC mm_stat(seg_t start, seg_t end)
     printk("ELKS kernel %s (%u text, %u ftext, %u data, %u bss, %u heap)\n",
 	   system_utsname.release,
 	   (unsigned)_endtext, (unsigned)_endftext, (unsigned)_enddata,
-	   (unsigned)_endbss - (unsigned)_enddata,
-	   1 + ~ (unsigned) _endbss);
+	   (unsigned)_endbss - (unsigned)_enddata, heapsize);
     printk("Kernel text at %x:0000, ", kernel_cs);
 #ifdef CONFIG_FARTEXT_KERNEL
     printk("ftext %x:0000, ", (unsigned)((long)kernel_init >> 16));

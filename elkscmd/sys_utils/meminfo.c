@@ -60,7 +60,11 @@ void dump_heap(int fd)
 	printf("  HEAP   TYPE  SIZE    SEG   TYPE    SIZE  CNT\n");
 
 	word_t n = getword (fd, heap_all + offsetof(list_s, next), ds);
-	while (n != heap_all) {
+	// FIXME additional n!=first check for tracking kernel heap bug
+	word_t first = n;
+	goto start;
+	while (n != heap_all && n != first) {
+start: ;
 		word_t h = n - offsetof(heap_s, all);
 		word_t size = getword(fd, h + offsetof(heap_s, size), ds);
 		byte_t tag = getword(fd, h + offsetof(heap_s, tag), ds) & HEAP_TAG_TYPE;
