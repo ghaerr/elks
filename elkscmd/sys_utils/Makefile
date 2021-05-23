@@ -65,7 +65,7 @@ shutdown: shutdown.o
 	$(LD) $(LDFLAGS) -o shutdown shutdown.o $(LDLIBS)
 
 ps: ps.o
-	$(LD) $(LDFLAGS) -o ps ps.o $(LDLIBS)
+	$(LD) $(LDFLAGS) -maout-heap=1 -maout-stack=2048 -o ps ps.o $(LDLIBS)
 
 meminfo: meminfo.o
 	$(LD) $(LDFLAGS) -maout-heap=1 -maout-stack=512 -o meminfo meminfo.o $(LDLIBS)
