@@ -6,6 +6,11 @@
 
 #ifdef CONFIG_ARCH_IBMPC
 /*
+ * Compile-time configuration
+ */
+#define MAX_SERIAL		4		/* max number of serial tty devices*/
+
+/*
  * Setup data - normally queried by startup setup.S code, but can
  * be overridden for embedded systems with less overhead.
  * See setup.S for more details.
@@ -24,6 +29,8 @@
 #endif
 
 #ifdef CONFIG_ARCH_8018X
+#define MAX_SERIAL		2	/* max number of serial tty devices*/
+
 #define SETUP_VID_COLS		80	/* BIOS video # columns */
 #define SETUP_VID_LINES		25	/* BIOS video # lines */
 #define SETUP_CPU_TYPE		5	/* processor type 80186 */
