@@ -12,8 +12,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: setup
-        run: 'sudo apt install bison flex texinfo'
+      - name: setup-1
+        run: 'sudo apt-get update'
+
+      - name: setup-2
+        run: 'sudo apt-get install libsdl2-dev'
 
       - name: checkout
         uses: actions/checkout@v2
