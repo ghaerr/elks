@@ -1,3 +1,9 @@
+/*
+ * IBM PC Compatible Serial Driver for ELKS
+ *
+ * Probes for specific UART at boot.
+ * Supports 8250, 16450, 16550, 16550A and 16750 variants.
+ */
 #include <linuxmt/types.h>
 #include <linuxmt/wait.h>
 #include <linuxmt/chqueue.h>
@@ -5,15 +11,13 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/mm.h>
-#include <linuxmt/serial_reg.h>
 #include <linuxmt/ntty.h>
 #include <linuxmt/kdev_t.h>
 #include <linuxmt/termios.h>
 #include <linuxmt/debug.h>
 #include <arch/io.h>
+#include <arch/serial-8250.h>
 #include <arch/ports.h>
-
-#ifdef CONFIG_CHAR_DEV_RS
 
 struct serial_info {
              char *io;
@@ -197,6 +201,7 @@ static int rs_write(struct tty *tty)
     return i;
 }
 
+#if defined(CONFIG_FAST_IRQ4) || defined(CONFIG_FAST_IRQ3)
 /* called from timer interrupt - check ring buffer and wakeup waiting processes*/
 void rs_pump(void)
 {
@@ -218,10 +223,11 @@ void rs_pump(void)
 	wake_up(&q->wait);
 #endif
 }
+#endif
 
 #ifdef CONFIG_FAST_IRQ4
 /*
- * Fast serial driver for slower machines. Should work up to 58400 baud.
+ * Fast serial driver for slower machines. Should work up to 38400 baud.
  * No ISIG (tty signal interrupt) handling for shells, used for fast SLIP transfer.
  *
  * Specially-coded fast C interrupt handler, called from asm irq_com[12] after saving
@@ -526,5 +532,3 @@ struct tty_ops rs_ops = {
     rs_ioctl,
     rs_conout
 };
-
-#endif

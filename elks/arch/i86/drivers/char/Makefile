@@ -35,17 +35,17 @@ include $(BASEDIR)/Makefile-rules
 #########################################################################
 # Objects to be compiled.
 
+OBJS  = init.o mem.o ntty.o meta.o tcpdev.o pty.o
+
 ifeq ($(CONFIG_ARCH_8018X), y)
-	OBJS  = init.o mem.o ntty.o meta.o tcpdev.o pty.o
-	OBJS += console-headless.o kbd-poll.o conio-8018x.o
+	CONIO = 8018x
+	SERIAL = template
 endif
 
 ifeq ($(CONFIG_ARCH_IBMPC), y)
-	OBJS  = init.o mem.o ntty.o meta.o tcpdev.o pty.o
-	OBJS += serial.o serfast.o lp.o
-
-ifdef CONFIG_CHAR_DEV_CGATEXT
-	OBJS += cgatext.o
+	CONIO = BIOS
+	SERIAL = 8250
+	OBJS += lp.o
 endif
 
 ifdef CONFIG_CONSOLE_DIRECT
@@ -63,10 +63,19 @@ endif
 ifdef CONFIG_KEYBOARD_SCANCODE
 OBJS += kbd-scancode.o
 else
-OBJS += kbd-poll.o conio-bios.o
+OBJS += kbd-poll.o conio-$(CONIO).o
 endif
 
-endif # CONFIG_ARCH_IBMPC
+ifdef CONFIG_CHAR_DEV_RS
+	OBJS += serial-$(SERIAL).o
+	ifdef CONFIG_ARCH_IBMPC
+		OBJS += serfast.o
+	endif
+endif
+
+ifdef CONFIG_CHAR_DEV_CGATEXT
+	OBJS += cgatext.o
+endif
 
 #########################################################################
 # Commands.

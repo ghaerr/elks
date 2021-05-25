@@ -23,7 +23,7 @@ void timer_tick(int irq, struct pt_regs *regs)
 {
     do_timer(regs);
 
-#ifdef CONFIG_CHAR_DEV_RS
+#if defined(CONFIG_CHAR_DEV_RS) && (defined(CONFIG_FAST_IRQ4) || defined(CONFIG_FAST_IRQ3))
     rs_pump();		/* check if received serial chars and call wake_up*/
 #endif
 
