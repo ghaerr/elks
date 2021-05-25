@@ -28,11 +28,6 @@ mainmenu_option next_comment
 	choice 'Select console driver'			\
 		"Direct     CONFIG_SIBO_CONSOLE_DIRECT	\
 		 Serial     CONFIG_CONSOLE_SERIAL"	Direct
-	if [ "$CONFIG_SIBO_CONSOLE_DIRECT" = "y" ]; then
-	    bool '  Support virtual consoles'	CONFIG_SIBO_VIRTUAL_CONSOLE  n
-	    bool '  Direct console serial echo'	CONFIG_SIBO_CONSOLE_ECHO     n
-	    define_bool CONFIG_SIBO_DEFAULT_KEYMAP y
-	fi
     fi
 
     comment 'Other character devices'

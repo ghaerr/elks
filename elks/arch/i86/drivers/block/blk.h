@@ -29,7 +29,6 @@ struct request {
     struct task_struct *rq_waiting;
     unsigned int rq_nr_sectors;	/* always 2 */
     unsigned int rq_current_nr_sectors;
-    unsigned char rq_errors;
 #endif
 };
 
@@ -112,27 +111,9 @@ static void floppy_off();	/*(unsigned int nr); */
 
 #ifdef ATDISK
 
-/* harddisk: timeout is 6 seconds.. */
 #define DEVICE_NAME "harddisk"
-
-#if 0
-#define DEVICE_INTR do_hd
-#define DEVICE_TIMEOUT HD_TIMER
-#define TIMEOUT_VALUE 600
-#endif
-
 #define DEVICE_REQUEST do_directhd_request
 #define DEVICE_NR(device) (MINOR(device)>>6)
-#define DEVICE_ON(device)
-#define DEVICE_OFF(device)
-
-#endif
-
-#ifdef XTDISK
-
-#define DEVICE_NAME "xt disk"
-#define DEVICE_REQUEST do_xd_request
-#define DEVICE_NR(device) (MINOR(device) >> 6)
 #define DEVICE_ON(device)
 #define DEVICE_OFF(device)
 
@@ -161,26 +142,6 @@ static void floppy_off();	/*(unsigned int nr); */
 #define CURRENT		(blk_dev[MAJOR_NR].current_request)
 #define CURRENT_DEV	DEVICE_NR(CURRENT->rq_dev)
 
-#ifdef DEVICE_INTR
-void (*DEVICE_INTR) () = NULL;
-#endif
-
-#ifdef DEVICE_TIMEOUT
-
-#define SET_TIMER \
-		((timer_table[DEVICE_TIMEOUT].expires = jiffies + TIMEOUT_VALUE), \
-		(timer_active |= 1<<DEVICE_TIMEOUT))
-
-#define CLEAR_TIMER	timer_active &= ~(1<<DEVICE_TIMEOUT)
-
-#define SET_INTR(x)	if ((DEVICE_INTR = (x)) != NULL) \
-			SET_TIMER; \
-			else \
-			CLEAR_TIMER;
-#else
-#define SET_INTR(x) (DEVICE_INTR = (x))
-#endif
-
 static void (DEVICE_REQUEST) ();
 
 static void end_request(int uptodate)
@@ -189,10 +150,6 @@ static void end_request(int uptodate)
     register struct buffer_head *bh;
 
     req = CURRENT;
-
-#ifdef BLOAT_FS
-    req->rq_errors = 0;
-#endif
 
     if (!uptodate) {
 	printk("%s:I/O error\n", DEVICE_NAME);
@@ -251,15 +208,8 @@ static void end_request(int uptodate)
 }
 #endif /* MAJOR_NR */
 
-#ifdef DEVICE_INTR
-#define CLEAR_INTR SET_INTR(NULL)
-#else
-#define CLEAR_INTR
-#endif
-
 #define INIT_REQUEST \
 	if (!CURRENT) {\
-		CLEAR_INTR; \
 		return; \
 	} \
 	if (MAJOR(CURRENT->rq_dev) != MAJOR_NR) \

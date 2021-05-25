@@ -83,6 +83,32 @@
 #define MAJOR_NR FLOPPY_MAJOR
 #include "blk.h"
 
+#ifdef DEVICE_INTR
+void (*DEVICE_INTR) () = NULL;
+#endif
+
+#ifdef DEVICE_TIMEOUT
+
+#define SET_TIMER \
+		((timer_table[DEVICE_TIMEOUT].expires = jiffies + TIMEOUT_VALUE), \
+		(timer_active |= 1<<DEVICE_TIMEOUT))
+
+#define CLEAR_TIMER	timer_active &= ~(1<<DEVICE_TIMEOUT)
+
+#define SET_INTR(x)	if ((DEVICE_INTR = (x)) != NULL) \
+			SET_TIMER; \
+			else \
+			CLEAR_TIMER;
+#else
+#define SET_INTR(x) (DEVICE_INTR = (x))
+#endif
+
+#ifdef DEVICE_INTR
+#define CLEAR_INTR SET_INTR(NULL)
+#else
+#define CLEAR_INTR
+#endif
+
 static unsigned int changed_floppies = 0, fake_change = 0;
 
 static int initial_reset_flag = 0;
