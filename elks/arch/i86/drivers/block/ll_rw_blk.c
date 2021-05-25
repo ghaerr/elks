@@ -242,7 +242,6 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
 #ifdef BLOAT_FS
     req->rq_nr_sectors = count;
     req->rq_current_nr_sectors = count;
-    req->rq_errors = 0;
 #endif
 
     req->rq_next = NULL;

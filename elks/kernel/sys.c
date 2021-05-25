@@ -82,8 +82,6 @@ void ctrl_alt_del(void)
     kill_process(1, (sig_t) SIGINT, 1);
 }
 
-#ifdef CONFIG_SYS_VERSION
-
 /*
  * This function returns the version number associated with this kernel.
  */
@@ -94,8 +92,6 @@ int sys_knlvsn(char *vsn)
 
     return verified_memcpy_tofs(vsn, p, strlen(p) + 1);
 }
-
-#endif
 
 /*
  * setgid() is implemented like SysV w/ SAVED_IDS
