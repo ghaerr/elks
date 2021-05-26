@@ -43,7 +43,7 @@ ifeq ($(CONFIG_ARCH_8018X), y)
 endif
 
 ifeq ($(CONFIG_ARCH_IBMPC), y)
-	CONIO = BIOS
+	CONIO = bios
 	SERIAL = 8250
 	OBJS += lp.o
 endif

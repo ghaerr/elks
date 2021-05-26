@@ -131,7 +131,7 @@ void heap_free (void * data)
 	// Try to merge with next block if free
 
 	list_s * n = h->all.next;
-	if (n->next != &_heap_all) {
+	if (n != &_heap_all) {
 		heap_s * next = structof (n, heap_s, all);
 		if (next->tag == HEAP_TAG_FREE) {
 			list_remove (&(next->free));
