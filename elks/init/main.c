@@ -116,7 +116,9 @@ void INITPROC kernel_init(void)
     fs_init();
 
 #ifdef CONFIG_BOOTOPTS
-    if (opts) finalize_options();
+    if (opts)
+	finalize_options();
+    else printk("/bootopts IGNORED: header not ## or size > 255\n");
 #endif
 
     mm_stat(base, end);
@@ -243,10 +245,8 @@ static int INITPROC parse_options(void)
 	fmemcpyb(options, kernel_ds, 0, DEF_OPTSEG, sizeof(options));
 
 	/* check file starts with ## and max len 255 bytes*/
-	if (*(unsigned short *)options != 0x2323 || options[255]) {
-		printk("Ignoring /bootopts: header not ## or size > 255\n");
+	if (*(unsigned short *)options != 0x2323 || options[255])
 		return 0;
-	}
 #if DEBUG
 	printk("/bootopts: %s", &options[3]);
 #endif
