@@ -8,10 +8,6 @@
  *
  * set to 100 HZ by Shani <kerr@wizard.net>, since that's what we're using!
  */
-#ifdef CONFIG_ARCH_SIBO
-#define HZ			30
-#else
 #define HZ			100
-#endif
 
 #endif

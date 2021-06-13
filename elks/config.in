@@ -9,7 +9,6 @@ mainmenu_option next_comment
 
 	choice 'Select system' \
 		"IBM-PC CONFIG_ARCH_IBMPC \
-		 SIBO   CONFIG_ARCH_SIBO  \
 		 8018X	CONFIG_ARCH_8018X" IBM-PC
 
 	if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then

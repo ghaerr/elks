@@ -4,7 +4,6 @@
 mainmenu_option next_comment
     comment 'Block device drivers'
 
-    if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
 	bool 'BIOS block device support'	CONFIG_BLK_DEV_BIOS	y
 	if [ "$CONFIG_BLK_DEV_BIOS" = "y" ]; then
 	    bool '  BIOS floppy drive support'	CONFIG_BLK_DEV_BFD	y
@@ -44,10 +43,6 @@ mainmenu_option next_comment
 	else
 	    define_bool CONFIG_DMA n
 	fi
-    else
-	bool 'SSD disk support'			CONFIG_BLK_DEV_SSD	n
-	define_bool CONFIG_BLK_DEV_BIOS n
-    fi
 
     comment 'Additional block devices'
     bool 'RAM disk support'			CONFIG_BLK_DEV_RAM	y
@@ -55,6 +50,7 @@ mainmenu_option next_comment
 	hex 'Preload RAM disk segment address' CONFIG_RAMDISK_SEGMENT 0
 	int 'Preload RAM disk sectors' CONFIG_RAMDISK_SECTORS 128
     fi
+    #bool 'SSD disk support'			CONFIG_BLK_DEV_SSD	n
 
     comment 'Block device options'
     bool 'Character access to block devices'	CONFIG_BLK_DEV_CHAR	y
