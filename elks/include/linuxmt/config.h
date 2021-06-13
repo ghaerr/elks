@@ -105,10 +105,6 @@
 // for use with the old 8237 DMA controller
 // OR a floppy track buffer of 9K (18 512-byte sectors)
 
-#ifdef CONFIG_ARCH_SIBO
-#define DMASEG 0x800
-#endif
-
 /*
  * Defines for what uname() should return.
  * The definitions for UTS_RELEASE and UTS_VERSION are now passed as

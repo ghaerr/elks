@@ -5,7 +5,6 @@
 mainmenu_option next_comment
     comment 'Character device drivers'
 
-    if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
 	choice 'Select console driver'			\
 		"Direct         CONFIG_CONSOLE_DIRECT	\
 		 BIOS           CONFIG_CONSOLE_BIOS	\
@@ -24,14 +23,8 @@ mainmenu_option next_comment
 	if [ "$CONFIG_CONSOLE_DIRECT" = "y" ]; then
 	    source elks/arch/i86/drivers/char/KeyMaps/config.in
 	fi
-    else
-	choice 'Select console driver'			\
-		"Direct     CONFIG_SIBO_CONSOLE_DIRECT	\
-		 Serial     CONFIG_CONSOLE_SERIAL"	Direct
-    fi
 
     comment 'Other character devices'
-    if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
 	if [ "$CONFIG_CONSOLE_SERIAL" = "n" ]; then
 	    bool 'Serial device driver'		CONFIG_CHAR_DEV_RS	  y
 	else
@@ -39,7 +32,6 @@ mainmenu_option next_comment
 	fi
 	bool 'Parallel device driver'		CONFIG_CHAR_DEV_LP	  y
 	bool 'CGA text mode videobuffer'	CONFIG_CHAR_DEV_CGATEXT	  n
-    fi
     bool 'Memory character devices'		CONFIG_CHAR_DEV_MEM	  y
     if [ "$CONFIG_CHAR_DEV_MEM" = "y" ]; then
 	bool '  Port read'	CONFIG_CHAR_DEV_MEM_PORT_READ	y
