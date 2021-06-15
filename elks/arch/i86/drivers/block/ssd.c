@@ -1,26 +1,28 @@
+/*
+ * ELKS Solid State Disk block device driver
+ *	Use subdriver for particular SSD device
+ *	ssd_test.c - test driver using allocated main memory
+ *
+ * Rewritten June 2020 Greg Haerr
+ */
+//#define DEBUG 1
 #include <linuxmt/config.h>
-/*#include <linuxmt/rd.h>*/
+#include <linuxmt/rd.h>
 #include <linuxmt/major.h>
 #include <linuxmt/kernel.h>
-#include <linuxmt/debug.h>
+#include <linuxmt/mm.h>
 #include <linuxmt/errno.h>
+#include <linuxmt/debug.h>
 
-#ifdef CONFIG_BLK_DEV_SSD
-
-#define MAJOR_NR 3	/* FLOPPY_MAJOR as the're fairly similar in practice */
-
+#define MAJOR_NR SSD_MAJOR
 #define SSDDISK
 #include "blk.h"
+#include "ssd.h"
 
-#define NUM_SECTS 256		/* 128K disk */
-#define MEM_SIZE NUM_SECTS*32
-#define SEG_SIZE 16
+static sector_t NUM_SECTS = 0;		/* max # sectors on SSD device */
 
-static int ssd_initialised = 0;
-
-static int ssd_open(inode, filp);
-static int ssd_release(inode, filp);
-static int ssd_ioctl(inode, file, cmd, arg);
+static int ssd_open(struct inode *, struct file *);
+static void ssd_release(struct inode *, struct file *);
 
 static struct file_operations ssd_fops = {
     NULL,			/* lseek */
@@ -28,154 +30,74 @@ static struct file_operations ssd_fops = {
     block_write,		/* write */
     NULL,			/* readdir */
     NULL,			/* select */
-    ssd_ioctl,			/* ioctl */
+    ssddev_ioctl,		/* ioctl */
     ssd_open,			/* open */
-    ssd_release,		/* release */
-#ifdef BLOAT_FS
-    NULL,			/* fsync */
-    NULL,			/* check_media_change */
-    NULL,			/* revalidate */
-#endif
+    ssd_release			/* release */
 };
 
 void ssd_init(void)
 {
-    int i;
-
-    printk("SSD driver (Major = %u)\n", MAJOR_NR);
-    if ((i = register_blkdev(MAJOR_NR, DEVICE_NAME, &ssd_fops)) == 0) {
+    if (register_blkdev(MAJOR_NR, DEVICE_NAME, &ssd_fops) == 0) {
 	blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
-	ssd_initialised = 1;
-    } else {
-	printk("SSD failed to register.\n");
+	NUM_SECTS = ssddev_init();
     }
+    if (NUM_SECTS)
+	printk("ssd: %ldK disk\n", NUM_SECTS/2);
+    else printk("ssd: initialization error\n");
 }
 
 static int ssd_open(struct inode *inode, struct file *filp)
 {
-    int target;
-
-    target = DEVICE_NR(inode->i_rdev);
-    printk("SSD_OPEN %u\n", target);
-    if (ssd_initialised == 0)
-	return (-ENXIO);
-#if 0
-    if (rd_busy[target])
-	return (-EBUSY);
-#endif
+    debug("SSD: open\n");
+    if (!NUM_SECTS)
+	return -ENXIO;
     inode->i_size = NUM_SECTS << 9;
     return 0;
 }
 
-static int ssd_release(struct inode *inode, struct file *filp)
+static void ssd_release(struct inode *inode, struct file *filp)
 {
-    printk("SSD_RELEASE \n");
-    return 0;
-}
-
-static int ssd_ioctl(register struct inode *inode,
-		     struct file *file, unsigned int cmd, unsigned int arg)
-{
-#if 0
-    int target = DEVICE_NR(inode->i_rdev);
-
-    if (!suser())
-	return -EPERM;
-    debug("SSD_IOCTL %d %s\n", target, (cmd ? "kill" : "make"));
-    switch (cmd) {
-    case SSDCREATE:
-	if (rd_segment[target])
-	    return -EBUSY;
-	else if ((rd_segment[target] = mm_alloc(MEM_SIZE, 0)) == -1)
-	    return -ENOMEM;
-	fmemsetb(0, rd_segment[target], 0, MEM_SIZE * SEG_SIZE);
-	return 0;
-	break;
-    case SSDDESTROY:
-	if (rd_segment[target]) {
-	    mm_put(rd_segment[target]);
-	    rd_segment[target] = NULL;
-	    invalidate_inodes(inode->i_rdev);
-	    invalidate_buffers(inode->i_rdev);
-	    return 0;
-	} else
-	    return -EINVAL;
-	break;
-    }
-#endif
-    return -EINVAL;
+    debug("SSD: release\n");
 }
 
 static void do_ssd_request(void)
 {
-    register char *buff;
-    unsigned long count, start;
-    int target;
+    char *buf;
+    seg_t seg;
+    sector_t start;
+    int ret;
 
     while (1) {
-	if (!CURRENT || CURRENT->rq_dev < 0)
+	if (!CURRENT)
 	    return;
 
 	INIT_REQUEST;
 
-	if (CURRENT == NULL || CURRENT->rq_sector == -1)
+	if (!CURRENT || CURRENT->rq_sector == (sector_t) -1)
 	    return;
 
-	if (ssd_initialised != 1) {
-	    printk("SSD not initialised\n");
+	if (!NUM_SECTS) {
 	    end_request(0);
 	    continue;
 	}
 
-	/* Remember 1 sector = 512 bytes */
-	count = 2 /*CURRENT->rq_nr_sectors */ ;
+	buf = CURRENT->rq_buffer;
+	seg = CURRENT->rq_seg;
 	start = CURRENT->rq_sector;
-	buff = CURRENT->rq_buffer;
-
-	/* Device minor */
-	target = DEVICE_NR(CURRENT->rq_dev);
-
-	if ((start >= NUM_SECTS) || (start + count >= NUM_SECTS)) {
-	    /* too big for disk or disk not active */
-	    printk("Illegal Request\n");
+	if (start >= NUM_SECTS) {
+	    debug("SSD: bad request sector %lu\n", start);
 	    end_request(0);
 	    continue;
 	}
 	if (CURRENT->rq_cmd == WRITE) {
-	    printk("SSD_REQUEST writing to %lu size %lu\n", start, count);
-	    ssd_write_blk(target, start, buff, count);
+	    debug("SSD: writing sector %lu\n", start);
+	    ret = ssddev_write_blk(start, buf, seg);
+	} else {
+	    debug("SSD: reading sector %lu\n", start);
+	    ret = ssddev_read_blk(start, buf, seg);
 	}
-	if (CURRENT->rq_cmd == READ) {
-	    ssd_read_blk(target, start, buff, count);
-	}
-	end_request(1);
+	if (ret == 2)
+	    end_request(1); /* success */
+	else end_request(0);
     }
 }
-
-ssd_write_blk(int target,
-	      unsigned long start, register char *buff, unsigned long count)
-{
-    /* write a number of sectors onto ssd */
-}
-
-ssd_read_blk(int target,
-	     unsigned long start, register char *buff, unsigned long count)
-{
-    /* read a number of sectors from ssd */
-    unsigned int address_high, address_low, loop;
-
-    char *destination = buff;
-
-    address_high = (unsigned int) (start >> 7);	/* Start * 512/65536 */
-    address_low = (unsigned int) ((start & 0x7F) << 9);
-
-#if 0
-    printk("SSD high = %x, low %x\n", address_high, address_low);
-#endif
-
-    for (loop = 0; loop < (count << 9); loop++)
-	*destination++ = ssd_read4(address_high, (address_low + loop));
-
-}
-
-#endif

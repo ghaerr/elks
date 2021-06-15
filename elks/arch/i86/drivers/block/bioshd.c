@@ -827,7 +827,7 @@ static void do_bioshd_request(void)
 
 	/* make sure it's still valid */
 	req = CURRENT;
-	if (req == NULL || (int) req->rq_sector == -1)
+	if (req == NULL || req->rq_sector == (sector_t) -1)
 	    break;
 
 	if (bioshd_initialized != 1) {

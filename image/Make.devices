@@ -38,6 +38,13 @@ devices:
 	$(MKDEV) /dev/rd1	b 1 1
 
 ##############################################################################
+# Solid state disk
+
+#ifdef CONFIG_BLK_DEV_SSD
+	$(MKDEV) /dev/ssd	b 2 0
+#endif
+
+##############################################################################
 # BIOS devices.
 # BIOS hard and floppy disks.
 # Limit to 4 primary partitions per disk (MBR).
