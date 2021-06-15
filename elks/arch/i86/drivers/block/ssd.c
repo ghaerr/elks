@@ -42,8 +42,8 @@ void ssd_init(void)
 	NUM_SECTS = ssddev_init();
     }
     if (NUM_SECTS)
-	printk("SSD: %ld blocks\n", NUM_SECTS);
-    else printk("SSD: initialization error\n");
+	printk("ssd: %ldK disk\n", NUM_SECTS/2);
+    else printk("ssd: initialization error\n");
 }
 
 static int ssd_open(struct inode *inode, struct file *filp)
