@@ -1,3 +1,23 @@
+# ELKS/pc98  
+  
+This is the fork repository for porting ELKS to PC-9801/PC-9821 architecture.  
+(just started)  
+  
+PC-9801/PC-9821 are Japanese computers in 80's and 90's.  
+
+Currently it is needed to adding definition of CONFIG_ARCH_PC98 manually.
+
+Progress  
+Boot : in progress  
+Kernel : not yet  
+init : not yet  
+command : not yet  
+
+
+The following text is the original README of ELKS.  
+
+--------------------------------------------------
+
 ![logo](https://github.com/jbruchon/elks/blob/master/Documentation/img/ELKS-Logo.png)
 
 
