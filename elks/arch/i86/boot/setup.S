@@ -219,6 +219,12 @@ start_os:
 	mov	$hello_mess,%si
 	call	puts
 
+// Temporary
+#ifdef CONFIG_ARCH_PC98
+tmp98:
+	jmp tmp98
+#endif
+
 	mov	$INITSEG,%ax	// DS = setup data segment
 	mov	%ax,%ds
 
@@ -729,7 +735,11 @@ hex4sp: call hex4
 	ret
 
 hello_mess:
+#ifdef CONFIG_ARCH_PC98
+	.ascii "ELKS Setup "
+#else
 	.ascii "\r\nELKS Setup "
+#endif
 	.byte 0
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -813,6 +823,29 @@ novga:	mov	%al,14		// CGA 25 rows
 	ret
 
 // Write AL to console, save all other registers
+#ifdef CONFIG_ARCH_PC98
+putc:
+	push %bx
+	push %di
+	push %es
+	push %dx
+	xor %ah,%ah
+	mov $tvram_x,%bx
+	mov (%bx),%di
+	mov $0xa000,%dx
+	mov %dx,%es
+	mov %ax,%es:(%di)
+	inc %di
+	inc %di
+	mov %di,(%bx)
+	pop %dx
+	pop %es
+	pop %di
+	pop %bx
+	ret
+tvram_x:
+    .word 480
+#else
 putc:	push %bx
 	push %cx
 	push %dx
@@ -823,6 +856,7 @@ putc:	push %bx
 	pop %cx
 	pop %bx
 	ret
+#endif
 
 /*
 ! TODO move to setup-cpuid.S or remove entirely (inaccurate/outdated)

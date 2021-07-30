@@ -13,6 +13,12 @@
 
 #include "boot_err.h"
 
+#if defined(CONFIG_IMG_FD1440)
+#define BOOTSEG98 0x1FE0
+#else
+#define BOOTSEG98 0x1FC0
+#endif
+
 #define BOOTADDR  0x7C00
 #define LOADSEG   ELKS_INITSEG
 
@@ -68,12 +74,17 @@ floppy_table:
 
 entry1:
 #endif
+
+#ifdef CONFIG_ARCH_PC98
+	mov $0xA000,%ax  // For 640KB memory
+#else
 	// Get the memory size
 	// TODO: optional BIOS INT 12h
 
 	int $0x12   // in KB
 	mov $6,%cl  // to paragraphs
 	shl %cl,%ax
+#endif
 
 	// Move to the highest & aligned 64K
 
@@ -87,8 +98,14 @@ entry1:
 	xor %sp,%sp
 
 	xor %di,%di
+#ifdef CONFIG_ARCH_PC98
+	mov $BOOTSEG98,%ax
+	mov %ax,%ds
+	xor %si,%si
+#else
 	mov %di,%ds
 	mov $BOOTADDR,%si
+#endif
 	mov $256,%cx  // 256 words = 512 B
 	rep
 	movsw
@@ -213,9 +230,23 @@ _reboot1:
 
 _putc:
 
+#ifdef CONFIG_ARCH_PC98
+	mov $tvram_x,%si
+	mov (%si),%di
+	xor %ah,%ah
+	push %es
+	mov $0xa000,%dx
+	mov %dx,%es
+	mov %ax,%es:(%di)
+	pop %es
+	inc %di
+	inc %di
+	mov %di,(%si)
+#else
 	mov $7,%bx    // page 0 - color 7
 	mov $0xE,%ah  // teletype write
 	int $0x10     // BIOS video services
+#endif
 	ret
 
 	.global puts
@@ -229,12 +260,19 @@ puts:
 _puts:
 
 	mov (%bx),%al
+#ifdef CONFIG_ARCH_PC98
+	or %al,%al
+	jz 1f
+	call _putc
+	inc %bx
+#else
 	or %al,%al
 	jz 1f
 	push %bx
 	call _putc
 	pop %bx
 	inc %bx
+#endif
 	jmp _puts
 1:  ret
 
@@ -296,10 +334,14 @@ dr_loop:
 	add sect_offset,%ax
 	adc sect_offset+2,%dx
 	div %bx
+#ifdef CONFIG_ARCH_PC98
+	mov %al,%cl      // cylinder number for PC_98
+#else
 	mov %al,%ch      // CH = low 8 bits of physical cylinder number
 	ror %ah
 	ror %ah
 	mov %ah,%cl      // stash higher 2 bits of cylinder number in CL
+#endif
 
 	xchg %ax,%dx
 	xor %dx,%dx
@@ -310,8 +352,12 @@ dr_loop:
 	mov sect_max,%bx // BX = sectors per track
 #endif
 	div %bx          // DL = physical sector number - 1
+#ifdef CONFIG_ARCH_PC98
+	inc %dl          // sector number for PC_98
+#else
 	or %dl,%cl       // stash {physical sector number - 1} in CL
 	inc %cx          // base 1 for sector number
+#endif
 	mov %al,%dh      // DH = physical head number
 
 #ifdef FAST_READ
@@ -343,7 +389,9 @@ dr_over2:
 
 dr_over3:
 #endif
+#ifndef CONFIG_ARCH_PC98
 	mov drive_num,%dl
+#endif
 
 dr_try:
 #ifdef FAST_READ
@@ -352,14 +400,33 @@ dr_try:
 	push %cx
 	push %dx
 	push %es
+#ifndef CONFIG_ARCH_PC98
 	mov -6(%bp),%bx
+#endif
 	mov 4(%bp),%es
+#ifdef CONFIG_ARCH_PC98
+	push %bp
+	mov -6(%bp),%ax
+	mov %ax,%bp
+	mov $0xD6,%ah    // Read Data
+	mov $0x200,%bx   // 512Bytes
+#if defined(CONFIG_IMG_FD1440)
+	mov $0x02,%ch    // 512Bytes per sector
+	mov $0xB0,%al    // Physical Device Address
+#else
+	mov $0x03,%ch    // 1024Bytes per sector
+	mov $0x90,%al    // Physical Device Address
+#endif
+	int $0x1B
+	pop %bp
+#else
 #ifdef FAST_READ
 	mov $0x02,%ah    // BIOS read disk
 #else
 	mov $0x0201,%ax
 #endif
 	int $0x13
+#endif
 	pop %es
 
 	jnc dr_cont
@@ -534,8 +601,15 @@ boot_it:
 
 //------------------------------------------------------------------------------
 
+#ifdef CONFIG_ARCH_PC98
+msg_boot:
+	.asciz "ELKS/pc98"
+tvram_x:
+	.word 0
+#else
 msg_boot:
 	.asciz "ELKS"
+#endif
 
 msg_error:
 	.ascii "!\r\n"
