@@ -29,6 +29,14 @@
 	.set FAT_TABLE_SIZE, 7
 	.set FAT_SEC_PER_TRK, 15
 	.set FAT_NUM_HEADS, 2
+#elif defined(CONFIG_IMG_FD1232)
+	.set FAT_SEC_PER_CLUS, 1
+	.set FAT_ROOT_ENT_CNT, 192
+	.set FAT_TOT_SEC, 1232
+	.set FAT_MEDIA_BYTE, 0xfe
+	.set FAT_TABLE_SIZE, 2
+	.set FAT_SEC_PER_TRK, 8
+	.set FAT_NUM_HEADS, 2
 #elif defined(CONFIG_IMG_FD1440)
 	.set FAT_SEC_PER_CLUS, 1
 	.set FAT_ROOT_ENT_CNT, 224
@@ -91,7 +99,11 @@
 bs_oem_name:				// OEM name
 	.ascii "ELKSFAT1"
 bpb_byts_per_sec:			// Bytes per sector
+#if defined(CONFIG_IMG_FD1232)
+	.word 0x400
+#else
 	.word 0x200
+#endif
 bpb_sec_per_clus:			// Sectors per cluster
 	.byte FAT_SEC_PER_CLUS
 bpb_rsvd_sec_cnt:			// Reserved sectors, including this one
@@ -142,7 +154,11 @@ bpb_fil_sys_type:			// Filesystem type (8 bytes)
 	.set bpb_fat_sz_32,0x24		// FAT32 fat size, 32-bit
 
 .macro FAT_LOAD_AND_RUN_KERNEL
+#if defined(CONFIG_IMG_FD1232)
+	.set buf, entry + 0x400
+#else
 	.set buf, entry + 0x200
+#endif
 
 	// Load the first sector of the root directory
 	movb bpb_num_fats,%al

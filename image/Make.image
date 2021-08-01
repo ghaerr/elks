@@ -111,7 +111,11 @@ endif
 	mattrib -i $(TARGET_FILE) +r +s +h ::/linux
 	# Read boot sector, skip FAT BPB, set ELKS PB sectors/heads and write boot
 ifdef CONFIG_IMG_BOOT
+ifdef CONFIG_IMG_FD1232
+	setboot1024 $(TARGET_FILE) -F $(BPB) $(FD_FAT_BOOT)
+else
 	setboot $(TARGET_FILE) -F $(BPB) $(FD_FAT_BOOT)
+endif
 endif
 
 # Create ROM filesystem from template

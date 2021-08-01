@@ -409,11 +409,12 @@ dr_try:
 	mov -6(%bp),%ax
 	mov %ax,%bp
 	mov $0xD6,%ah    // Read Data
-	mov $0x200,%bx   // 512Bytes
 #if defined(CONFIG_IMG_FD1440)
+	mov $0x200,%bx   // 512Bytes
 	mov $0x02,%ch    // 512Bytes per sector
 	mov $0xB0,%al    // Physical Device Address
 #else
+	mov $0x400,%bx   // 1024Bytes
 	mov $0x03,%ch    // 1024Bytes per sector
 	mov $0x90,%al    // Physical Device Address
 #endif
@@ -653,6 +654,8 @@ track_max:
       || defined(CONFIG_IMG_FD1440) || defined(CONFIG_IMG_FD1680) \
 	  || defined(CONFIG_IMG_FD2880)
 	.word 80
+#elif defined(CONFIG_IMG_FD1232)
+	.word 77
 #elif defined(CONFIG_IMG_HD)
 	.word CONFIG_IMG_CYL
 #else
@@ -667,6 +670,8 @@ sect_max:
 	.byte 9
 #elif defined(CONFIG_IMG_FD1200)
 	.byte 15
+#elif defined(CONFIG_IMG_FD1232)
+	.byte 8
 #elif defined(CONFIG_IMG_FD1440)
 	.byte 18
 #elif defined(CONFIG_IMG_FD1680)
@@ -687,6 +692,8 @@ head_max:
     || defined(CONFIG_IMG_FD1200) || defined(CONFIG_IMG_FD1440) \
     || defined(CONFIG_IMG_FD1680) || defined(CONFIG_IMG_FD2880)
 	.byte 2
+#elif defined(CONFIG_IMG_FD1232)
+	.byte 2
 #elif defined(CONFIG_IMG_HD)
 	.byte CONFIG_IMG_HEAD
 #else
@@ -698,7 +705,11 @@ head_max:
 
 	.byte . - elks_parms_start
 	.ascii "eL"
+#if defined(CONFIG_IMG_FD1232)
+	.org 0x3FE
+#else
 	.org 0x1FE
+#endif
 
 //------------------------------------------------------------------------------
 
@@ -718,7 +729,11 @@ head_max:
 // Here comes the first sector of the payload
 // that is specific to the filesystem
 
+#if defined(CONFIG_IMG_FD1232)
+	.org 0x400
+#else
 	.org 0x200
+#endif
 
 payload:
 #endif
