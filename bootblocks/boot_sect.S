@@ -106,7 +106,11 @@ entry1:
 	mov %di,%ds
 	mov $BOOTADDR,%si
 #endif
+#if defined(CONFIG_IMG_FD1232)
+	mov $512,%cx  // 512 words = 1024 B
+#else
 	mov $256,%cx  // 256 words = 512 B
+#endif
 	rep
 	movsw
 
@@ -627,7 +631,11 @@ end_of_code:
 // For future expansion, fields should be added at the _front_ of structure
 
 #ifdef BOOT_FAT
+#if defined(CONFIG_IMG_FD1232)
+	.org 0x3F7
+#else
 	.org 0x1F7              // FAT boot sectors use older EPB for now
+#endif
 elks_parms_start:
 
 #else
