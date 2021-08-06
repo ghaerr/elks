@@ -211,13 +211,21 @@ find_system:
 					// we calculated before
 	add %ax,%bx
 	mov bpb_root_ent_cnt,%ax	// Then account for the sectors
+#if defined(CONFIG_IMG_FD1232)
+	add $0x1f,%ax
+	mov $5,%cl
+#else
 	add $0xf,%ax			// holding the root directory
 	mov $4,%cl
+#endif
 	shr %cl,%ax
 	add %bx,%ax
 
 	// Load the file as one single blob at ELKS_INITSEG:0
 	mov 0x1d(%si),%dx		// File size divided by 0x100
+#if defined(CONFIG_IMG_FD1232)
+	shr %dx
+#endif
 	shr %dx				// Now by 0x200 --- a sector count
 	inc %dx				// Account for any incomplete sector
 					// (this may overestimate a bit)

@@ -489,7 +489,11 @@ dr_cont:
 	jz dr_exit
 	incw -2(%bp)
 
+#if defined(CONFIG_IMG_FD1232)
+	addb $4,-6+1(%bp)
+#else
 	addb $2,-6+1(%bp)
+#endif
 #endif
 	jnc dr_next
 	addb $0x10,4+1(%bp)
