@@ -219,12 +219,6 @@ start_os:
 	mov	$hello_mess,%si
 	call	puts
 
-// Temporary
-#ifdef CONFIG_ARCH_PC98
-tmp98:
-	jmp tmp98
-#endif
-
 	mov	$INITSEG,%ax	// DS = setup data segment
 	mov	%ax,%ds
 
@@ -241,6 +235,12 @@ tmp98:
 // Set various INITSEG values used by kernel SETUP_xxx defines (see config.h)
 
 	call	arch_set_initseg
+
+// Temporary
+#ifdef CONFIG_ARCH_PC98
+tmp98:
+	jmp tmp98
+#endif
 
 // End of shared setup code
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -747,7 +747,8 @@ hello_mess:
 //	Entry point arch_set_initseg is specific for various platform setup
 //	of SETUP_xxx variables (see config.h)
 
-#ifdef CONFIG_ARCH_IBMPC
+//#ifdef CONFIG_ARCH_IBMPC
+#if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_PC98)
 
 // Set INITSEG values for IBM PC
 // Set keyboard repeat rate using INT 16h
@@ -760,6 +761,37 @@ hello_mess:
 
 arch_set_initseg:
 
+#ifdef CONFIG_ARCH_PC98
+	movb $0,15		// no VGA in system
+	mov $25,%al		// height of display in rows
+novga:
+	mov %al,14
+
+	movb $0,4		// display page
+	movw $0x5003,6	// video mode 03h, window width 80
+
+	call getcpu
+
+	mov $0x30,%si
+	call puts
+
+	push %es
+	mov $INITSEG,%ax
+	mov %ax,%es
+	mov $24,%cx
+	mov $0x80,%di
+	xor %ax,%ax
+	cld
+	rep
+	stosw
+	pop %es
+
+	mov $INITSEG,%ax
+	mov %ax,%ds
+
+	movw $0x280,0x2a  // For 640KB memory
+	ret
+#else
 #ifdef CONFIG_HW_KEYBOARD_BIOS
 	mov	$0x0305,%ax	// set the keyboard repeat rate to the max
 	xor	%bx,%bx
@@ -821,15 +853,19 @@ novga:	mov	%al,14		// CGA 25 rows
 	int	$0x12		// determine the size of the basememory
 	mov	%ax,0x2a
 	ret
+#endif
 
 // Write AL to console, save all other registers
 #ifdef CONFIG_ARCH_PC98
 putc:
+	push %ds
 	push %bx
 	push %di
 	push %es
 	push %dx
 	xor %ah,%ah
+	push %cs
+	pop %ds
 	mov $tvram_x,%bx
 	mov (%bx),%di
 	mov $0xa000,%dx
@@ -842,6 +878,7 @@ putc:
 	pop %es
 	pop %di
 	pop %bx
+	pop %ds
 	ret
 tvram_x:
     .word 480
