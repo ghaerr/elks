@@ -236,12 +236,6 @@ start_os:
 
 	call	arch_set_initseg
 
-// Temporary
-#ifdef CONFIG_ARCH_PC98
-tmp98:
-	jmp tmp98
-#endif
-
 // End of shared setup code
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
