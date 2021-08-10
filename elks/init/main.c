@@ -61,6 +61,8 @@ extern int run_init_process_sptr(char *cmd, char *sptr, int slen);
 
 void start_kernel(void)
 {
+    printk("start kernel\n");
+
     kernel_init();
 
     /* fork and run procedure init_task() as task #1*/
