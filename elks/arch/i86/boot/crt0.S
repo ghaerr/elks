@@ -58,6 +58,35 @@ _start:
 int3:	int	$3		// C breakpoint for emu86
 	ret
 
+#ifdef CONFIG_ARCH_PC98
+early_putchar:
+	mov %sp,%bx
+	mov 2(%bx),%al
+	push %ds
+	push %bx
+	push %di
+	push %es
+	push %dx
+	xor %ah,%ah
+	push %cs
+	pop %ds
+	mov $tvram_x,%bx
+	mov (%bx),%di
+	mov $0xa000,%dx
+	mov %dx,%es
+	mov %ax,%es:(%di)
+	inc %di
+	inc %di
+	mov %di,(%bx)
+	pop %dx
+	pop %es
+	pop %di
+	pop %bx
+	pop %ds
+	ret
+tvram_x:
+    .word 800
+#else
 early_putchar:
 	mov   %sp,%bx
 	mov   2(%bx),%al
@@ -65,6 +94,7 @@ early_putchar:
 	mov   $0x0007,%bx
 	int   $0x10
 	ret
+#endif
 
 //	Segment beginnings
 
