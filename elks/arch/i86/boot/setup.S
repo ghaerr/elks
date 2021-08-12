@@ -768,6 +768,8 @@ novga:
 
 	mov $0x30,%si
 	call puts
+	mov $'\n',%ax
+	call putc
 
 	push %es
 	mov $INITSEG,%ax
@@ -857,9 +859,13 @@ putc:
 	push %di
 	push %es
 	push %dx
-	xor %ah,%ah
 	push %cs
 	pop %ds
+	cmp $'\r',%ax
+	jz putesc_r
+	cmp $'\n',%ax
+	jz putesc_n
+	xor %ah,%ah
 	mov $tvram_x,%bx
 	mov (%bx),%di
 	mov $0xa000,%dx
@@ -868,14 +874,32 @@ putc:
 	inc %di
 	inc %di
 	mov %di,(%bx)
+put_end:
 	pop %dx
 	pop %es
 	pop %di
 	pop %bx
 	pop %ds
 	ret
+putesc_r:
+	mov $tvram_x,%bx
+	mov (%bx),%ax
+	mov $160,%dl
+	div %dl
+	mul %dl
+	mov %ax,(%bx)
+	jmp put_end
+putesc_n:
+	mov $tvram_x,%bx
+	mov (%bx),%ax
+	mov $160,%dl
+	div %dl
+	inc %al
+	mul %dl
+	mov %ax,(%bx)
+	jmp put_end
 tvram_x:
-    .word 480
+	.word 480
 #else
 putc:	push %bx
 	push %cx

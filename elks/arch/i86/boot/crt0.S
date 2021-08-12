@@ -62,14 +62,19 @@ int3:	int	$3		// C breakpoint for emu86
 early_putchar:
 	mov %sp,%bx
 	mov 2(%bx),%al
+	push %si
 	push %ds
 	push %bx
 	push %di
 	push %es
 	push %dx
-	xor %ah,%ah
 	push %cs
 	pop %ds
+	cmp $'\r',%ax
+	jz putesc_r
+	cmp $'\n',%ax
+	jz putesc_n
+	xor %ah,%ah
 	mov $tvram_x,%bx
 	mov (%bx),%di
 	mov $0xa000,%dx
@@ -78,14 +83,55 @@ early_putchar:
 	inc %di
 	inc %di
 	mov %di,(%bx)
+put_end:
 	pop %dx
 	pop %es
 	pop %di
 	pop %bx
 	pop %ds
+	pop %si
 	ret
+putesc_r:
+	mov $tvram_x,%bx
+	mov (%bx),%ax
+	mov $160,%dl
+	div %dl
+	mul %dl
+	mov %ax,(%bx)
+	jmp put_end
+putesc_n:
+	mov $tvram_x,%bx
+	mov (%bx),%ax
+	mov $160,%dl
+	div %dl
+	inc %al
+	mul %dl
+	mov %ax,%dx
+	sub $4000,%ax
+	jnc put_scroll
+	mov %dx,(%bx)
+	jmp put_end
+put_scroll:
+	xor %ax,%ax
+	mov $24,%bx
+	mov $0xa000,%dx
+	mov %dx,%es
+	mov %dx,%ds
+	mov %ax,%di
+	add $160,%ax
+	mov %ax,%si
+scroll_lp:
+	mov $80,%cx
+	cld
+	rep
+	movsw
+	dec %bx
+	jnz scroll_lp
+	mov $3840,%dx
+	mov %dx,tvram_x
+	jmp put_end
 tvram_x:
-    .word 800
+	.word 960
 #else
 early_putchar:
 	mov   %sp,%bx
