@@ -8,7 +8,7 @@ PC-9801/PC-9821 are Japanese computers in 80's and 90's.
 Currently it is needed to adding definition of CONFIG_ARCH_PC98 manually.  
 CONFIG_IMG_FD1232 is also needed to be defined to use 1232KiB, 1024Bytes per sector.  
   
-Only CONFIG_IMG_FD1232 and CONFIG_IMG_FD1440 are planned to support.  
+Only CONFIG_IMG_FD1232 and CONFIG_IMG_FD1440 with FAT Filesystem are planned to support.  
   
 Progress  
 Boot : in progress  
