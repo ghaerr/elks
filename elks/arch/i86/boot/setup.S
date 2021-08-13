@@ -766,16 +766,16 @@ novga:
 
 	call getcpu
 
-	mov $0x30,%si
-	call puts
-	mov $'\n',%ax
-	call putc
+//	mov $0x30,%si
+//	call puts
+//	mov $'\n',%ax
+//	call putc
 
 	push %es
 	mov $INITSEG,%ax
 	mov %ax,%es
 	mov $24,%cx
-	mov $0x80,%di
+	mov $0x90,%di
 	xor %ax,%ax
 	cld
 	rep

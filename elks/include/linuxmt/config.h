@@ -4,7 +4,8 @@
 #include <autoconf.h>
 #include <linuxmt/major.h>
 
-#ifdef CONFIG_ARCH_IBMPC
+//#ifdef CONFIG_ARCH_IBMPC
+#if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_PC98)
 /*
  * Compile-time configuration
  */
@@ -19,7 +20,12 @@
 #define SETUP_VID_LINES		setupb(14)		/* BIOS video # lines */
 #define SETUP_CPU_TYPE		setupb(0x20)	/* processor type */
 #define SETUP_MEM_KBYTES	setupw(0x2a)	/* base memory in 1K bytes */
+#ifdef CONFIG_ARCH_PC98
+//#define SETUP_ROOT_DEV		0x0380	/* root device */
+#define SETUP_ROOT_DEV		0x0300	/* root device */
+#else
 #define SETUP_ROOT_DEV		setupw(0x1fc)	/* root device, kdev_t or BIOS dev */
+#endif
 #define SETUP_ELKS_FLAGS	setupw(0x1f6)	/* flags for root device type */
 #define SETUP_PART_OFFSETLO	setupw(0x1e2)	/* partition offset low word */
 #define SETUP_PART_OFFSETHI	setupw(0x1e4)	/* partition offset high word */
@@ -86,16 +92,32 @@
 #define SETUP_DATA	REL_INITSEG
 
 /* Define segment locations of low memory, must not overlap */
+#ifdef CONFIG_ARCH_PC98
+#define DEF_OPTSEG	0x60  /* 0x100 bytes boot options*/
+#define REL_INITSEG	0x70  /* 0x200 bytes setup data */
+#define DMASEG		0x90  /* 0x400 bytes floppy sector buffer */
+#else
 #define DEF_OPTSEG	0x50  /* 0x100 bytes boot options*/
 #define REL_INITSEG	0x60  /* 0x200 bytes setup data */
 #define DMASEG		0x80  /* 0x400 bytes floppy sector buffer */
+#endif
 
 #ifdef CONFIG_TRACK_CACHE     /* floppy track buffer in low mem */
+#ifdef CONFIG_ARCH_PC98
+#define DMASEGSZ 0x2000	      /* SECTOR_SIZE * 8 (8192) */
+#define REL_SYSSEG	0x290 /* kernel code segment */
+#else
 #define DMASEGSZ 0x2400	      /* SECTOR_SIZE * 18 (9216) */
 #define REL_SYSSEG	0x2C0 /* kernel code segment */
+#endif
+#else
+#ifdef CONFIG_ARCH_PC98
+#define DMASEGSZ 0x0400	      /* BLOCK_SIZE (1024) */
+#define REL_SYSSEG	0x0D0 /* kernel code segment */
 #else
 #define DMASEGSZ 0x0400	      /* BLOCK_SIZE (1024) */
 #define REL_SYSSEG	0x0C0 /* kernel code segment */
+#endif
 #endif
 
 #endif /* !CONFIG_ROMCODE */
