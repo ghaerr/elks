@@ -111,6 +111,9 @@ struct drive_infot fd_types[] = {	/* AT/PS2 BIOS reported floppy formats*/
     {80,  9, 2, 2},
     {80, 18, 2, 3},
     {80, 36, 2, 4},
+#ifdef CONFIG_ARCH_PC98
+    {77,  8, 2, 5},
+#endif
 };
 
 static unsigned char hd_drive_map[NUM_DRIVES] = {/* BIOS drive mappings*/
@@ -198,7 +201,23 @@ static unsigned short int INITPROC bioshd_gethdinfo(void) {
 }
 #endif
 
-#ifdef CONFIG_BLK_DEV_BFD_HARD
+#ifdef CONFIG_ARCH_PC98
+static unsigned short int INITPROC bioshd_getfdinfo(void)
+{
+    int ndrives = 2;
+
+#if defined(CONFIG_IMG_FD1232)
+    drive_info[DRIVE_FD0] = fd_types[5];	/*  /dev/fd0    */
+    drive_info[DRIVE_FD1] = fd_types[5];	/*  /dev/fd1    */
+#elif defined(CONFIG_IMG_FD1440)
+    drive_info[DRIVE_FD0] = fd_types[3];	/*  /dev/fd0    */
+    drive_info[DRIVE_FD1] = fd_types[3];	/*  /dev/fd1    */
+#endif
+
+    return ndrives;
+}
+//#ifdef CONFIG_BLK_DEV_BFD_HARD
+#elif defined(CONFIG_BLK_DEV_BFD_HARD)
 /* hard-coded floppy configuration*/
 static unsigned short int INITPROC bioshd_getfdinfo(void)
 {
@@ -396,8 +415,13 @@ static void probe_floppy(int target, struct hd_struct *hdp)
  * somewhere near)
  */
 
+#ifdef CONFIG_ARCH_PC98
+	static char sector_probe[2] = { 8, 18 };
+	static char track_probe[2] = { 77, 80 };
+#else
 	static char sector_probe[5] = { 8, 9, 15, 18, 36 };
 	static char track_probe[2] = { 40, 80 };
+#endif
 	int count;
 
 	target &= 1;
@@ -452,7 +476,11 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 	    if (read_sector(target, 0, (int)sector_probe[count]))
 		break;
 	    drivep->sectors = (int)sector_probe[count];
+#ifdef CONFIG_ARCH_PC98
+	} while (++count < 2);
+#else
 	} while (++count < 5);
+#endif
 
 	drivep->heads = 2;
 

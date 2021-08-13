@@ -53,7 +53,36 @@ call_bios:
 
 //	Do a disk interrupt.
 
+#ifdef CONFIG_ARCH_PC98
+	push %ax
+	push %bx
+	push %cx
+	push %dx
+	push %bp
+
+	xchg %ch,%cl     // cylinder number for PC_98
+	xchg %ch,%dl     // sector number for PC_98
+	xchg %bx,%bp
+
+#if defined(CONFIG_IMG_FD1440)
+	mov $0x200,%bx   // 512Bytes
+	mov $0x02,%ch    // 512Bytes per sector
+	mov $0xB0,%al    // Physical Device Address
+#else
+	mov $0x400,%bx   // 1024Bytes
+	mov $0x03,%ch    // 1024Bytes per sector
+	mov $0x90,%al    // Physical Device Address
+#endif
+	int $0x1B
+
+	pop %bp
+	pop %dx
+	pop %cx
+	pop %bx
+	pop %ax
+#else
 	int $0x13
+#endif
 
 //	Now recover the results
 //	Make some breathing room
