@@ -10,7 +10,7 @@ CONFIG_IMG_FD1232 is also needed to be defined to use 1232KiB, 1024Bytes per sec
   
 Only CONFIG_IMG_FD1232 and CONFIG_IMG_FD1440 with FAT Filesystem are planned to support.  
   
-Progress  
+Progress (with emulator)  
 Boot : can call start_kernel  
 Kernel : not yet  
 driver : modifying bios FD read  
