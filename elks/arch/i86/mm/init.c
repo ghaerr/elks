@@ -32,7 +32,8 @@ __u16 kernel_cs, kernel_ds;
 
 void INITPROC mm_stat(seg_t start, seg_t end)
 {
-#ifdef CONFIG_ARCH_IBMPC
+//#ifdef CONFIG_ARCH_IBMPC
+#if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_PC98)
     register int i;
     register char *cp;
     static char proc_name[16];
@@ -42,8 +43,12 @@ void INITPROC mm_stat(seg_t start, seg_t end)
     do {
 	*cp++ = setupb(i++);
 	if (i == 0x40) {
+#ifdef CONFIG_ARCH_PC98
+	    printk("PC-9801 class machine, %s CPU, ", proc_name);
+#else
 	    printk("PC/%cT class machine, %s CPU, ",
 		    (sys_caps & CAP_PC_AT) ? 'A' : 'X', proc_name);
+#endif
 	    cp = proc_name;
 	    i = 0x50;
 	}
