@@ -13,7 +13,7 @@ Only CONFIG_IMG_FD1232 and CONFIG_IMG_FD1440 with FAT Filesystem are planned to 
 Progress  
 Boot : can call start_kernel  
 Kernel : not yet  
-driver : modifying bios FD read
+driver : modifying bios FD read  
 init : in progress  
 command : not yet  
 
