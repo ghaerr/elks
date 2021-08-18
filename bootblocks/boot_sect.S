@@ -448,9 +448,10 @@ dr_try:
 
 	jnc dr_cont
 
+#ifndef CONFIG_ARCH_PC98
 	xor %ah,%ah
 	int $0x13
-
+#endif
 	// PATCH: failure trace
 
 	mov $'*',%al
