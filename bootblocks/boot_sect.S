@@ -162,7 +162,9 @@ _next1:
 
 	// Save boot drive as provided by BIOS
 
+#ifndef CONFIG_ARCH_PC98
 	mov %dl,drive_num  // DX preserved above
+#endif
 
 	// Print header
 
@@ -218,14 +220,16 @@ _except:
 	.global _reboot
 
 _reboot:
+#ifndef CONFIG_ARCH_PC98
 	mov $msg_reboot,%bx
-
+#endif
 _reboot1:
+#ifndef CONFIG_ARCH_PC98
 	call _puts
 
 	xor %ax,%ax  // wait for key
 	int $0x16
-
+#endif
 	ljmpw $0xffff,$0  // do a cold(er) boot
 
 //------------------------------------------------------------------------------
@@ -412,15 +416,23 @@ dr_try:
 	push %bp
 	mov -6(%bp),%ax
 	mov %ax,%bp
+	push %es
+	xor %ax,%ax
+	mov %ax,%es
+	mov $0x584,%bx
+	mov %es:(%bx),%al    // Physical Device Address
+	push %ax
+	and $0x0F,%al
+	mov %al,drive_num
+	pop %ax
+	pop %es
 	mov $0xD6,%ah    // Read Data
 #if defined(CONFIG_IMG_FD1440)
 	mov $0x200,%bx   // 512Bytes
 	mov $0x02,%ch    // 512Bytes per sector
-	mov $0xB0,%al    // Physical Device Address
 #else
 	mov $0x400,%bx   // 1024Bytes
 	mov $0x03,%ch    // 1024Bytes per sector
-	mov $0x90,%al    // Physical Device Address
 #endif
 	int $0x1B
 	pop %bp
@@ -624,8 +636,10 @@ msg_error:
 	.ascii "!\r\n"
 	// fall through
 
+#ifndef CONFIG_ARCH_PC98
 msg_reboot:
 	.asciz "Press key\r\n"
+#endif
 
 	.global end_of_code
 end_of_code:
