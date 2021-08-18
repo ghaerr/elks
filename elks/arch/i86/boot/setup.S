@@ -351,7 +351,11 @@ size_error:
 // Get the memory size
 // FIXME move BIOS INT 12h to arch-specific section
 
+#ifdef CONFIG_ARCH_PC98
+	movw $0x280,%ax  // For 640KB memory
+#else
 	int $0x12   // AX in KB
+#endif
 	mov $6,%cl  // to paragraphs
 	shl %cl,%ax
 
