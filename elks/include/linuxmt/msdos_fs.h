@@ -15,7 +15,11 @@
 #endif
 
 #define MSDOS_ROOT_INO  1 /* == MINIX_ROOT_INO */
+#if defined(CONFIG_IMG_FD1232)
+#define SECTOR_SIZE     1024 /* sector size (bytes) */
+#else
 #define SECTOR_SIZE     512 /* sector size (bytes) */
+#endif
 #define SECTOR_BITS	9 /* log2(SECTOR_SIZE) */
 #define MSDOS_DPB	(MSDOS_DPS*2) /* dir entries per block */
 #define MSDOS_DPB_BITS	5 /* log2(MSDOS_DPB) */
