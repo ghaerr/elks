@@ -18,7 +18,15 @@ driver : modifying bios FD read
 init : in progress  
 command : not yet  
 
-
+## How to build (for now)  
+./build.sh to make the environment.  
+Overwrite the .config with the content of sample_pc98/config_pc98.  
+Overwrite the include/autoconf.h with the content of sample_pc98/autoconf_pc98.h.  
+(The time stamp of the autoconf.h should be newer than .config)  
+./make clean  
+./make  
+FD image will be created under image/  
+  
 The following text is the original README of ELKS.  
 
 --------------------------------------------------
