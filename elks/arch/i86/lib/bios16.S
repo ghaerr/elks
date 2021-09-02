@@ -66,6 +66,10 @@ call_bios:
 
 #if defined(CONFIG_IMG_FD1440)
 	mov $0x200,%bx   // 512Bytes
+	cmp $2,%al
+	jnz ch_1440
+	shl %bx          // 1024Bytes 
+ch_1440:
 	mov $0x02,%ch    // 512Bytes per sector
 	mov $0xB0,%al    // Physical Device Address
 #else
