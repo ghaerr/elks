@@ -127,7 +127,12 @@ scroll_lp:
 	movsw
 	dec %bx
 	jnz scroll_lp
+	mov $80,%cx
+	xor %ax,%ax
 	mov $3840,%dx
+	mov %dx,%di
+	rep
+	stosw
 	mov %dx,tvram_x
 	jmp put_end
 tvram_x:
