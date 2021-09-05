@@ -886,7 +886,11 @@ static void do_bioshd_request(void)
 	count = req->rq_nr_sectors;
 #endif
 	/* all ELKS requests are 1K blocks*/
+#if defined(CONFIG_IMG_FD1232)
+	count = 1;
+#else
 	count = 2;
+#endif
 
 	buf = req->rq_buffer;
 	while (count > 0) {
@@ -907,7 +911,11 @@ static void do_bioshd_request(void)
 
 	    count -= num_sectors;
 	    start += num_sectors;
+#if defined(CONFIG_IMG_FD1232)
+	    buf += num_sectors << 10;
+#else
 	    buf += num_sectors << 9;
+#endif
 	}
 
 	/* satisfied that request */
