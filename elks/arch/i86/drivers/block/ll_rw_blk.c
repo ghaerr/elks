@@ -173,7 +173,11 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
     int max_req;
 
     debug_blk("BLK(%x) %lu %s\n", bh->b_dev, bh->b_blocknr, rw==READ? "read": "write");
+#if defined(CONFIG_IMG_FD1232)
+    count = (sector_t) (BLOCK_SIZE >> 10);
+#else
     count = (sector_t) (BLOCK_SIZE >> 9);
+#endif
     sector = bh->b_blocknr * count;
 
 #ifdef BDEV_SIZE_CHK
