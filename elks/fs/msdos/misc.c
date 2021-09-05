@@ -16,12 +16,22 @@ struct buffer_head * FATPROC msdos_sread(kdev_t dev, sector_t sector, void **sta
 {
 	register struct buffer_head *bh;
 
+#if defined(CONFIG_IMG_FD1232)
+	if (!(bh = bread32(dev, sector)))
+		return NULL;
+#else
 	if (!(bh = bread32(dev, sector >> 1)))
 		return NULL;
+#endif
 
 	map_buffer(bh);
 	//debug_fat("msread sector %ld block %lu\n", sector, bh->b_blocknr);
+#if defined(CONFIG_IMG_FD1232)
+	*start = bh->b_data;
+#else
 	*start = bh->b_data + (((int)sector & 1) << SECTOR_BITS);
+#endif
+
 	return bh;
 }
 
