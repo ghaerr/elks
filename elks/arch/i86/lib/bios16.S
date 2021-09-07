@@ -68,14 +68,18 @@ call_bios:
 	mov $0x200,%bx   // 512Bytes
 	cmp $2,%al
 	jnz ch_1440
-	shl %bx          // 1024Bytes 
+	shl %bx          // 1024Bytes
 ch_1440:
+	mov %ch,%al
+	and $0x0F,%al
+	or  $0x30,%al    // Physical Device Address
 	mov $0x02,%ch    // 512Bytes per sector
-	mov $0xB0,%al    // Physical Device Address
 #else
 	mov $0x400,%bx   // 1024Bytes
+	mov %ch,%al
+	and $0x0F,%al
+	or  $0x90,%al    // Physical Device Address
 	mov $0x03,%ch    // 1024Bytes per sector
-	mov $0x90,%al    // Physical Device Address
 #endif
 	int $0x1B
 
