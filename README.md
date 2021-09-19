@@ -27,6 +27,13 @@ Overwrite the include/autoconf.h with the content of sample_pc98/autoconf_pc98.h
 ./make  
 FD image will be created under image/  
   
+## Reference  
+INT 1Bh (DISK BIOS)  
+http://radioc.web.fc2.com/column/pc98bas/bios/disk.htm  
+ 
+PIT 8254 (8253 for PC-9801)  
+http://oswiki.osask.jp/?%28PIT%298254  
+
 The following text is the original README of ELKS.  
 
 --------------------------------------------------
