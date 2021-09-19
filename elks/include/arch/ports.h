@@ -34,12 +34,21 @@
 #endif
 
 /* timer, timer-8254.c*/
+#ifdef CONFIG_ARCH_PC98
+#define TIMER_CMDS_PORT 0x77		/* command port */
+#define TIMER_DATA_PORT 0x71		/* data port    */
+#else
 #define TIMER_CMDS_PORT 0x43		/* command port */
 #define TIMER_DATA_PORT 0x40		/* data port    */
+#endif
 #define TIMER_IRQ	0		/* can't change*/
 
 /* bell, bell-8254.c*/
+#ifdef CONFIG_ARCH_PC98
+#define TIMER2_PORT	0x75		/* timer 2 data port for speaker frequency*/
+#else
 #define TIMER2_PORT	0x42		/* timer 2 data port for speaker frequency*/
+#endif
 #define SPEAKER_PORT	0x61
 
 /* keyboard, kbd-scancode.c*/

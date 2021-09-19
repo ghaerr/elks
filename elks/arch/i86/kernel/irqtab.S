@@ -323,10 +323,18 @@ do_eoi:
 !	controller EOI..
 !
 */
+#ifdef CONFIG_ARCH_PC98
+	out	%al,$0x08
+#else
 	out	%al,$0xA0
+#endif
 	jmp	a5
 a5:	jmp	a6
+#ifdef CONFIG_ARCH_PC98
+a6:	out	%al,$0x00		// Ack on primary controller
+#else
 a6:	out	%al,$0x20		// Ack on primary controller
+#endif
 
 #elif defined(CONFIG_ARCH_8018X)
 //

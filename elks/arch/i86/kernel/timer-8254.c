@@ -32,8 +32,13 @@
 #define TIMER_MODE0 0x30   /* timer 0, binary count, mode 0, lsb/msb */
 #define TIMER_MODE2 0x34   /* timer 0, binary count, mode 2, lsb/msb */
 
+#ifdef CONFIG_ARCH_PC98
+#define TIMER_LO_BYTE (__u8)(((5+(24576000L/(HZ)))/10)%256)
+#define TIMER_HI_BYTE (__u8)(((5+(24576000L/(HZ)))/10)/256)
+#else
 #define TIMER_LO_BYTE (__u8)(((5+(11931818L/(HZ)))/10)%256)
 #define TIMER_HI_BYTE (__u8)(((5+(11931818L/(HZ)))/10)/256)
+#endif
 
 void enable_timer_tick(void)
 {
