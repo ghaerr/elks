@@ -99,7 +99,6 @@ void INITPROC kernel_init(void)
     int opts = parse_options();
 #endif
 
-#ifndef CONFIG_ARCH_PC98
     /* set console from /bootopts console= or 0=default*/
     set_console(boot_console);
 
@@ -108,7 +107,6 @@ void INITPROC kernel_init(void)
 
 #ifdef CONFIG_CHAR_DEV_RS
     serial_init();
-#endif
 #endif
 
     device_init();
