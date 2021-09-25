@@ -82,6 +82,9 @@ early_putchar:
 	mov %ax,%es:(%di)
 	inc %di
 	inc %di
+	mov %di,%ax
+	sub $4000,%ax
+	jnc put_end
 	mov %di,(%bx)
 put_end:
 	pop %dx
