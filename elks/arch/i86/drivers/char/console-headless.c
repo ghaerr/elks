@@ -32,14 +32,20 @@ void Console_conin(unsigned char Key)
 
 void Console_conout(dev_t dev, char Ch)
 {
+#ifdef CONFIG_ARCH_PC98
+    early_putchar((int) Ch);
+#else
     if (Ch == '\n')
 	conio_putc('\r');
     conio_putc(Ch);
+#endif
 }
 
 void bell(void)
 {
+#ifndef CONFIG_ARCH_PC98
     conio_putc(7);	/* send ^G */
+#endif
 }
 
 static int Console_ioctl(struct tty *tty, int cmd, char *arg)
@@ -59,7 +65,11 @@ static int Console_write(register struct tty *tty)
     int cnt = 0;
 
     while (tty->outq.len > 0) {
+#ifdef CONFIG_ARCH_PC98
+	early_putchar((int)tty_outproc(tty));
+#else
 	conio_putc((byte_t)tty_outproc(tty));
+#endif
 	cnt++;
     }
     return cnt;
