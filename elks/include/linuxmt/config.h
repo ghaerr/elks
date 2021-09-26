@@ -43,7 +43,7 @@
 
 #define SETUP_HEAPSIZE		1024	/* minimum kernel heap for now*/
 
-#define CONFIG_8018X_FCPU	20
+#define CONFIG_8018X_FCPU	16
 #define CONFIG_8018X_EB
 #endif
 
