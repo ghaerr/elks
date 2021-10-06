@@ -40,9 +40,9 @@ devices:
 ##############################################################################
 # Solid state disk
 
-#ifdef CONFIG_BLK_DEV_SSD
+ifneq ($(CONFIG_DEV_BLK_NONE), y)
 	$(MKDEV) /dev/ssd	b 2 0
-#endif
+endif
 
 ##############################################################################
 # BIOS devices.
