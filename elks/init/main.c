@@ -27,7 +27,7 @@ int root_mountflags = MS_RDONLY;
 #else
 int root_mountflags = 0;
 #endif
-extern int net_irq, net_port;
+int net_irq, net_port;
 static int boot_console;
 static char bininit[] = "/bin/init";
 static char *init_command = bininit;
