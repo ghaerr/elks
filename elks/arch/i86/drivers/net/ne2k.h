@@ -11,16 +11,8 @@
 #define NE2K_STAT_RDC   0x0040  // Remote DMA complete
 #define NE2K_STAT_TXE	0x0080	// TX error
 
-
-// From low level NE2K PHY
-
-extern word_t ne2k_phy_get (word_t, word_t *);
-extern word_t ne2k_phy_set (word_t, word_t);
-
-
 // From low level NE2K MAC
 
-extern word_t ne2k_link_stat ();
 extern word_t ne2k_int_stat ();
 
 extern word_t ne2k_probe ();
@@ -43,11 +35,12 @@ extern word_t ne2k_pack_put (char *, word_t);
 extern word_t ne2k_test ();
 
 extern word_t ne2k_getpage(void);
+extern word_t ne2k_clr_oflow(void);
+extern word_t ne2k_get_tx_stat(void);
+
 extern void ne2k_get_addr(byte_t *);
 extern void ne2k_get_hw_addr(word_t *);
-extern word_t ne2k_clr_oflow(void);
 extern void ne2k_rdc(void);
 extern void ne2k_get_errstat(byte_t *);
-extern word_t ne2k_get_tx_stat(void);
 
 #endif /* !NE2K_H */
