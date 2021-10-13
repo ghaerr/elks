@@ -52,7 +52,7 @@ static int INITPROC parse_options(void);
 static void INITPROC finalize_options(void);
 static char * INITPROC option(char *s);
 static long INITPROC atol(char *number);
-static int hex2i(char *s);
+static int INITPROC hex2i(char *s);
 #endif
 
 static void init_task(void);
@@ -422,27 +422,23 @@ char *strchr(char *s, int c)
 /* Simple hex (ascii) to int conversion, accept '0x' in front,
    no argument checking except address range  */
 
-static int hex2i(char *s)
+static int INITPROC hex2i(char *s)
 {
 	char * p = s;
 	unsigned int r = 0;
 
-	if ((s[1]&0xdf) == 'X' ) p += 2;
+	if (*p && (s[1]&0xdf) == 'X' ) p += 2;	/* Not null string, has 0x prefix */
 	while (*p) {
 		/* NOTE: No sanity check, no length check! */
 		if (*p > '9')
 			r = (r<<4)+((*p&0xdf)-'@' + 9);
 		else
 			r = (r<<4)+(*p-'0');
-#ifdef DEBUG
+#if 0
 		printk("%c 0x%x ", *p, r);
 #endif
 		p++;
 	}
-	/* ISA Ethernet cards typically use IOports from 0x240-0x360 */
-	/* To include most ISA interfaces, change to 0x0f0 - 0x640 */
-	if (r < 0x240 || r > 0x37F) 
-		return 0;
 	return r;
 }
 

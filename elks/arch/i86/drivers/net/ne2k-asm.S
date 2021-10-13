@@ -15,7 +15,7 @@
 
 // register array - offset from base I/O address
 
-io_ne2k_command    = 0x00  // command
+io_ne2k_command    = 0x00  // command register at base address
 io_ne2k_rx_first   = 0x01  // page 0
 io_ne2k_rx_last    = 0x02  // page 0
 io_ne2k_rx_get     = 0x03  // page 0
@@ -92,9 +92,7 @@ ne2k_addr_set:
 
 	mov     4(%bp),%si
 
-	mov	net_port,%dx
-	// Since $io_ne2k_command is ZERO, the 'add' is a 'noop'
-	//add	$io_ne2k_command,%dx
+	mov	net_port,%dx	// command-register
 	mov	$0x42,%al	// page 1
 	out	%al,%dx
 
@@ -112,8 +110,7 @@ ems_loop:
 	inc     %dx
 	loop    ems_loop
 
-	mov	net_port,%dx
-	//add	$io_ne2k_command,%dx
+	mov	net_port,%dx	// command register
 	mov	$0x02,%al	// back to pg 0
 	out	%al,%dx
 
@@ -178,15 +175,14 @@ dma_write:
 
 	// start DMA write
 
-	mov	net_port,%dx
-	//add	$io_ne2k_command,%dx
+	mov	net_port,%dx	// command register
 	mov	$0x12,%al	
 	out     %al,%dx
 
 	// I/O write loop
 
 	mov	net_port,%dx	// Do this before changing the data segment
-	push	%dx
+	push	%dx		// Command register
 	add	$io_ne2k_data_io,%dx
 	mov	current,%bx		// setup for far memory xfer
 	mov	TASK_USER_DS(%bx),%ds
@@ -241,8 +237,7 @@ dma_r:	// Use the send data command to read exactly one backet,
 	mov	$0x0f,%al	// prep for using the 'send packet' cmd
 	out	%al,%dx
 
-	mov	net_port,%dx
-	//add	$io_ne2k_command,%dx
+	mov	net_port,%dx	// command register
 	mov	$0x18,%al	// send packet
 	out	%al,%dx
 	// now the dma does the rest, and an RDC interrupt is fielded when complete
@@ -301,8 +296,7 @@ buf_local:
 
 	// start DMA read
 
-	mov	net_port,%dx
-	//add	$io_ne2k_command,%dx
+	mov	net_port,%dx	// command register
 	mov	$0x0a,%al	// RD0 & STA
 	out     %al,%dx
 
@@ -351,8 +345,7 @@ check_dma_r:
 
 ne2k_getpage:
 	mov	$0x42,%al		// page 1
-	mov	net_port,%dx
-	//add	$io_ne2k_command,%dx
+	mov	net_port,%dx	// command register
 	out	%al,%dx
 
 	mov	net_port,%dx
@@ -361,8 +354,7 @@ ne2k_getpage:
 	mov     %al,%ah
 
 	mov	$0x02,%al		// page 0
-	mov	net_port,%dx
-	//add	$io_ne2k_command,%dx
+	mov	net_port,%dx	// command register
 	out	%al,%dx
 
 	mov	net_port,%dx
@@ -386,8 +378,7 @@ ne2k_rx_stat:
 	// get RX put pointer
 #if 0
 	mov	$0x42,%al	// page 1
-	mov	net_port,%dx
-	//add	$io_ne2k_command,%dx
+	mov	net_port,%dx	// command register
 	out	%al,%dx
 
 	mov	net_port,%dx
@@ -396,8 +387,7 @@ ne2k_rx_stat:
 	mov     %al,%ah
 
 	mov	$0x02,%al	// back to page 0
-	mov	net_port,%dx
-	//add	$io_ne2k_command,%dx
+	mov	net_port,%dx	// command register
 	out	%al,%dx
 
 	// get RX get pointer
@@ -576,8 +566,7 @@ npg_more_data:
 
 ne2k_tx_stat:
 
-	mov	net_port,%dx
-	//or     $io_ne2k_command,%dx
+	mov	net_port,%dx	// command register
 	in      %dx,%al
 	and     $0x04,%al
 	jz      nts_ready
@@ -639,8 +628,7 @@ ne2k_pack_put:
 	// start TX
 
 tx_rdy_wait:
-	mov	net_port,%dx
-	//add	$io_ne2k_command,%dx
+	mov	net_port,%dx	// command register
 	in	%dx,%al
 	test	$0x4,%al	// Check that previous transmit competed.
 	jnz	tx_rdy_wait
@@ -652,8 +640,7 @@ tx_rdy_wait:
 	//mov	$2,%al		// Test, should not make any difference
 	//out	%al,%dx
 
-1:	mov	net_port,%dx
-	//add	$io_ne2k_command,%dx
+1:	mov	net_port,%dx	// command register
 	in      %dx,%al
 	test    $4,%al		// Wait for completion
 	jnz	1b
@@ -706,8 +693,7 @@ nis_next:
 //--------------------------------------------------------------
 ne2k_base_init:
 
-	mov	net_port,%dx
-	//add	$io_ne2k_command,%dx
+	mov	net_port,%dx	// command register
 
 	mov	$0x21,%al	// page 0 + Abort DMA; STOP
 	out     %al,%dx
@@ -796,8 +782,7 @@ ne2k_init:
 	out     %al,%dx
 
 	mov	$0x42,%al	// page 1
-	mov	net_port,%dx
-	//add	$io_ne2k_command,%dx
+	mov	net_port,%dx	// command register
 	out	%al,%dx
 
 	// set RX put pointer  = RX get
@@ -810,8 +795,7 @@ ne2k_init:
 	mov	%al,_ne2k_next_pk
 
 	mov	$0x02,%al	// page 0
-	mov	net_port,%dx
-	//add	$io_ne2k_command,%dx
+	mov	net_port,%dx	// command register
 	out	%al,%dx
 
 	// now enable transmitter
@@ -832,8 +816,7 @@ ne2k_start:
 
 	// start the transceiver
 
-	mov	net_port,%dx
-	//add	$io_ne2k_command,%dx
+	mov	net_port,%dx	// command register
 	mov	$0x02,%al
 	out	%al,%dx
 
@@ -856,8 +839,7 @@ ne2k_stop:
 
 	// Stop the DMA and the MAC
 
-	mov	net_port,%dx
-	//add	$io_ne2k_command,%dx
+	mov	net_port,%dx	// command register
 	mov	$0x21,%al	// page 0 + stop
 	out     %al,%dx
 
@@ -919,8 +901,7 @@ ne2k_probe:
 	// If something is there, return 0.
 	// No attempt is made to get details about the i/f.
 
-	mov	net_port,%dx
-	//add	$io_ne2k_command,%dx
+	mov	net_port,%dx	// command register
 	mov	$0x20,%al	// set page 0
 	out	%al,%dx
 	in	%dx,%al
@@ -971,8 +952,7 @@ nr_loop:
 
 	// Leave the NIC in a known (stopped) state
 
-	mov	net_port,%dx
-	//add	$io_ne2k_command,%dx
+	mov	net_port,%dx	// command register
 	mov     $0x21,%al
 	out     %al,%dx
 
@@ -1055,8 +1035,7 @@ ne2k_clr_oflow:
 	sub	$4,%sp		// get temp space on the stack
 	mov	%sp,%di
 
-	mov	net_port,%dx
-	//add	$io_ne2k_command,%dx
+	mov	net_port,%dx	// command register
 of_chk_tx:	// Ensure no transmit is in progress
 	in	%dx,%al
 	test	4,%al
@@ -1076,9 +1055,8 @@ of_reset:
 	add	$io_ne2k_tx_conf,%dx	// must set tx to loopback
 	mov	$2,%al
 	out	%al,%dx
-	mov	net_port,%dx	// restart NIC
-	//add	$io_ne2k_command,%dx
-	mov	$0x22,%al
+	mov	net_port,%dx	// Command register
+	mov	$0x22,%al	// Restart NIC
 	out	%al,%dx
 	
 	// NIC has stopped, now clear out the ring buffer
@@ -1112,8 +1090,7 @@ of_drop_loop1:
 	mov	%cl,%al		// save BOUNDARY for return
 	push	%ax
 	mov	$0x42,%al	// page 1
-	mov	net_port,%dx
-	//add	$io_ne2k_command,%dx
+	mov	net_port,%dx	// Command register
 	out	%al,%dx
 
 	mov	net_port,%dx
@@ -1121,8 +1098,7 @@ of_drop_loop1:
 	mov	%ah,%al		// set CURRENT to the beginning of the next pkt,
 	out	%al,%dx		// effectively clearing everything but the 
 				// first pkt in the buffer.
-	mov	net_port,%dx
-	//add	$io_ne2k_command,%dx
+	mov	net_port,%dx	// Command register
 	mov	$2,%al
 	out	%al,%dx		// page 0
 	pop	%ax
