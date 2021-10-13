@@ -16,8 +16,8 @@
 /*
  *	System variable setups
  */
-#define ENV             1		/* allow environ variables as bootopts*/
-#define DEBUG           0		/* display parsing at boot*/
+#define ENV		1		/* allow environ variables as bootopts*/
+#define DEBUG		0		/* display parsing at boot*/
 
 #define MAX_INIT_ARGS	8
 #define MAX_INIT_ENVS	8
@@ -27,7 +27,7 @@ int root_mountflags = MS_RDONLY;
 #else
 int root_mountflags = 0;
 #endif
-int net_irq;
+int net_irq, net_port;
 static int boot_console;
 static char bininit[] = "/bin/init";
 static char *init_command = bininit;
@@ -52,6 +52,7 @@ static int INITPROC parse_options(void);
 static void INITPROC finalize_options(void);
 static char * INITPROC option(char *s);
 static long INITPROC atol(char *number);
+static int INITPROC hex2i(char *s);
 #endif
 
 static void init_task(void);
@@ -314,6 +315,11 @@ static int INITPROC parse_options(void)
 			net_irq = atoi(line+7);
 			continue;
 		}
+		if (!strncmp(line,"netport=",8)) {
+			net_port = hex2i(line+8);
+			continue;
+		}
+		
 		/*
 		 * Then check if it's an environment variable or an init argument.
 		 */
@@ -411,6 +417,29 @@ char *strchr(char *s, int c)
 			return NULL;
 	}
 	return s;
+}
+
+/* Simple hex (ascii) to int conversion, accept '0x' in front,
+   no argument checking except address range  */
+
+static int INITPROC hex2i(char *s)
+{
+	char * p = s;
+	unsigned int r = 0;
+
+	if (*p && (s[1]&0xdf) == 'X' ) p += 2;	/* Not null string, has 0x prefix */
+	while (*p) {
+		/* NOTE: No sanity check, no length check! */
+		if (*p > '9')
+			r = (r<<4)+((*p&0xdf)-'@' + 9);
+		else
+			r = (r<<4)+(*p-'0');
+#if 0
+		printk("%c 0x%x ", *p, r);
+#endif
+		p++;
+	}
+	return r;
 }
 
 #endif /* CONFIG_BOOTOPTS*/

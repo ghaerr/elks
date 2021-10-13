@@ -2,7 +2,6 @@
 #console=ttyS0 debug net=eth 3 # condensed
 #init=/bin/init 3 n	# multiuser serial no sysinit
 #init=/bin/sh		# singleuser shell
-#console=ttyS0,19200 # serial console
-#root=hda1			# hd partition 1
-#ro					# read-only root
-#netirq=9			# set NIC IRQ
+#console=ttyS0,19200	# serial console
+#root=hda1 ro	# hd partition 1, read-only root
+#netirq=9 netport=0x300	# set NIC parms

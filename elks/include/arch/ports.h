@@ -60,8 +60,8 @@
 #define COM4_PORT	0x2e8
 #define COM4_IRQ	2		/* unregistered unless COM4_PORT found*/
 
-/* ne2k, ne2k.c */
-//#define NE2K_IRQ	9
+/* ne2k, ne2k.c, may be overridden in /bootopts
+ * using netirq= and netport= 		*/
 #define NE2K_IRQ	12
 #define NE2K_PORT	0x300
 
