@@ -346,7 +346,7 @@ void ne2k_drv_init(void)
 	while (1) {
 		err = ne2k_probe();
 		if (err) {
-			printk ("eth: NE2K not found @ IRQ %d, IO 0x%x\n", net_irq, net_port);
+			printk ("eth: NE2K not found at 0x%x, irq %d\n", net_port, net_irq);
 			break;
 		}
 		err = request_irq (net_irq, ne2k_int, INT_GENERIC);
