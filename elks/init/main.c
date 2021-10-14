@@ -314,7 +314,7 @@ static int INITPROC parse_options(void)
 			continue;
 		}
 		if (!strncmp(line,"netport=",8)) {
-			net_port = simple_strtol(line+8, 0);
+			net_port = (int)simple_strtol(line+8, 0);
 			continue;
 		}
 		

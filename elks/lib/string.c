@@ -49,7 +49,7 @@ long simple_strtol(char *s, int base)
 		if (isdigit(c))
 			c -= '0';
 		else if (isalpha(c))
-			c = (c & 0xdf) - '@' + 9;
+			c = (c & 0xdf) - 'A' + 10;
 		else break;
 		if (c >= base)
 			break;
