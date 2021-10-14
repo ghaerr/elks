@@ -36,6 +36,7 @@ extern char *strstr(char *,char *);
  */
 
 extern void *memscan(void *,int,size_t);
+extern long simple_strtol(char *,int);
 extern int atoi(char *);
 
 /*@+namechecks@*/

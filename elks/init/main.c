@@ -51,8 +51,6 @@ static char * INITPROC root_dev_name(int dev);
 static int INITPROC parse_options(void);
 static void INITPROC finalize_options(void);
 static char * INITPROC option(char *s);
-static long INITPROC atol(char *number);
-static int INITPROC hex2i(char *s);
 #endif
 
 static void init_task(void);
@@ -283,7 +281,7 @@ static int INITPROC parse_options(void)
 				*p++ = 0;
 #ifdef CONFIG_CHAR_DEV_RS
 				/* set serial console baud rate*/
-				rs_setbaud(dev, atol(p));
+				rs_setbaud(dev, simple_strtol(p, 10));
 #endif
 			}
 
@@ -316,7 +314,7 @@ static int INITPROC parse_options(void)
 			continue;
 		}
 		if (!strncmp(line,"netport=",8)) {
-			net_port = hex2i(line+8);
+			net_port = simple_strtol(line+8, 0);
 			continue;
 		}
 		
@@ -399,17 +397,6 @@ static char * INITPROC option(char *s)
 	return s;
 }
 
-#ifdef CONFIG_CHAR_DEV_RS
-static long INITPROC atol(char *number)
-{
-    long n = 0;
-
-    while (*number >= '0' && *number <= '9')
-	n = (n * 10) + *number++ - '0';
-    return n;
-}
-#endif
-
 char *strchr(char *s, int c)
 {
 	for(; *s != (char)c; ++s) {
@@ -418,28 +405,4 @@ char *strchr(char *s, int c)
 	}
 	return s;
 }
-
-/* Simple hex (ascii) to int conversion, accept '0x' in front,
-   no argument checking except address range  */
-
-static int INITPROC hex2i(char *s)
-{
-	char * p = s;
-	unsigned int r = 0;
-
-	if (*p && (s[1]&0xdf) == 'X' ) p += 2;	/* Not null string, has 0x prefix */
-	while (*p) {
-		/* NOTE: No sanity check, no length check! */
-		if (*p > '9')
-			r = (r<<4)+((*p&0xdf)-'@' + 9);
-		else
-			r = (r<<4)+(*p-'0');
-#if 0
-		printk("%c 0x%x ", *p, r);
-#endif
-		p++;
-	}
-	return r;
-}
-
 #endif /* CONFIG_BOOTOPTS*/

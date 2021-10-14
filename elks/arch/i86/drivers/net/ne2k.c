@@ -366,16 +366,17 @@ void ne2k_drv_init(void)
 		ne2k_get_hw_addr(prom);
 
 		/* If there is no prom (i.e. emulator), use default */
-		if ((prom[0]&0xff == 0xff) && (prom[1]&0xff == 0xff)) {
+		if (((prom[0]&0xff) == 0xff) && ((prom[1]&0xff) == 0xff)) {
 			err = -1;
 		} else {
 			while (i < 6) hw_addr[i] = prom[i]&0xff,i++;
 			err = 0;
 		}
 
+		printk ("eth: NE2K at 0x%x, irq %d, ", net_port, net_irq);
 		if (!err) {	/* address found, interface is present */
 
-			printk ("eth: NE2K at 0x%x, irq %d, MAC %02x", net_port, net_irq, hw_addr[0]);
+			printk ("MAC %02x", hw_addr[0]);
 			i = 1;
 			while (i < 6) printk(":%02x", hw_addr[i++]);
 			printk("\n");
@@ -386,7 +387,7 @@ void ne2k_drv_init(void)
 			debug_setcallback(ne2k_display_status);
 #endif
 		} else
-			printk("eth: NE2K interface not responding.\n");
+			printk("not responding.\n");
 
 		break;
 
