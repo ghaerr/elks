@@ -34,6 +34,9 @@ http://radioc.web.fc2.com/column/pc98bas/bios/disk.htm
 PIT 8254 (8253 for PC-9801)  
 http://oswiki.osask.jp/?%28PIT%298254  
 
+INT 18h (Keyboard BIOS)  
+https://web.archive.org/web/20051120083002/http://www2.muroran-it.ac.jp/circle/mpc/program/pc98dos/keyboard.html  
+
 The following text is the original README of ELKS.  
 
 --------------------------------------------------
