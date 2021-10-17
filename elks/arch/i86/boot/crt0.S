@@ -14,6 +14,10 @@
 	.global _start
 	.extern	start_kernel
 	.global early_putchar
+#ifdef CONFIG_ARCH_PC98
+	.global early_getchar
+	.global early_getinit
+#endif
 
 _start:
 
@@ -147,6 +151,22 @@ early_putchar:
 	mov   $0x0E,%ah
 	mov   $0x0007,%bx
 	int   $0x10
+	ret
+#endif
+#ifdef CONFIG_ARCH_PC98
+early_getchar:
+	push %bx
+	mov $5,%ah
+	int $0x18
+	cmp $0x01,%bh
+	jz get_end
+	xor %ax,%ax
+get_end:
+	pop %bx
+	ret
+early_getinit:
+	mov $3,%ah
+	int $0x18
 	ret
 #endif
 
