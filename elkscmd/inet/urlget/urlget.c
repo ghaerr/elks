@@ -2,16 +2,17 @@
  *
  * 04/05/2000 Michael Temari <Michael@TemWare.Com>
  * 09/29/2001 Ported to ELKS(and linux) (Harry Kalogiroy <harkal@rainbow.cs.unipi.gr>)
+ * 10/16/2021 Added ftpput, verbose option and improved error handling <helge@skrivervik.com>
  *
- * Implements HTTP POST & GET, FTP GET and directory listings, TCP GET (typical via 
+ * Implements HTTP POST & GET, FTP GET,PUT and directory listings, TCP GET (typical via 
  * netcat at the other end.
  * 
- * Assumes hard links to the approproate names - ftpget, urlget, tcpget.
+ * Assumes hard links to the approproate names - ftpget, urlget, tcpget, tcpput.
  * Optons (http only):
  * 	-h -- include header in output stream
- * 	-d -- discard data
+ * 	-d -- discard data (httpget), disable data draining on write errors (ftpget)
  * 	-p -- post instead of get, data to post (ascii/UTF) is appended to the URL (after a '?').
- *	-v -- for ftp, verbose file listing
+ *	-v -- for ftp, verbose file listing & error reporting, progress meter
  *
  */
 
@@ -38,21 +39,22 @@ _PROTOTYPE(int httpget, (char *host, int port, char *user, char *pass, char *pat
 _PROTOTYPE(void ftppasv, (char *reply));
 _PROTOTYPE(int ftpreply, (FILE *fpr));
 _PROTOTYPE(int ftpcmd, (FILE *fpw, FILE *fpr, char *cmd, char *arg));
-_PROTOTYPE(int ftpget, (char *host, int port, char *user, char *pass, char *path, int type, int verbose));
+_PROTOTYPE(int ftpio, (char *host, int port, char *user, char *pass, char *path, int type, int verbose));
 _PROTOTYPE(int tcpget, (char *host, int port, char *user, char *pass, char *path));
 _PROTOTYPE(int main, (int argc, char *argv[]));
 
 char ftpphost[15+1];
 unsigned int ftppport;
+int opt_d = 0;
 
 #define	SCHEME_HTTP	1
 #define	SCHEME_FTP	2
 #define	SCHEME_TCP	3
 #define	SCHEME_NNTP	4
 
-#define TRANS_DEBUG	1	/* for debug dumps */
+#define TRANS_DEBUG	0	/* for debug dumps */
 
-char buffer[16000];
+char buffer[8000];
 
 #if 0
 _PROTOTYPE(int strncasecmp, (const char *s1, const char *s2, size_t len));
@@ -302,7 +304,6 @@ int ft;
    	} while (strncmp(reply, code, 3) || reply[3] == '-');
    	s = atoi(code);
    } while (s < 200 && s != 125 && s != 150);
-   //printf("ftpreply: s=%d\n",s);
    if (s == 227) {
      ftppasv(reply);
      return 227;
@@ -312,23 +313,26 @@ int ft;
 
 int ftpcmd( FILE *fpw, FILE *fpr, char *cmd, char *arg)
 {
-   int s;
+   int s = 0;
    fprintf(fpw, "%s%s%s\r\n", cmd, *arg ? " " : "", arg);
    fflush(fpw);
-   s=ftpreply(fpr);
+   if (strcmp(cmd, "ABOR") != 0) s=ftpreply(fpr); /* Don't wait for reply to ABORT, need to 
+						   * purge the connection first
+						   * (kludge)	*/
    return s;
 }
 
-int ftpget(char *host, int port, char *user, char *pass, char *path, int type, int verbose) {
+int ftpio(char *host, int port, char *user, char *pass, char *path, int type, int verbose) {
    int fd;
    int fd2;
    FILE *fpr;
    FILE *fpw;
    int s;
-   int s2;
+   int s2 = 0;
    char *p;
    char *p2;
    char typec[2], *list;
+   int infile = 0;
 
    if (port == 0)
    	port = 21;
@@ -336,58 +340,146 @@ int ftpget(char *host, int port, char *user, char *pass, char *path, int type, i
    if (type == '\0')
    	type = 'i';
 
+   if (type == 'S') {	/* ftpput */
+	/* FIXME: 
+	 * Need to be able to specify destination file/path.
+	 */
+	if ((infile = open(path, O_RDONLY)) < 0) {
+		perror(path);
+		return(-1);
+	}
+	type = 'i';
+   }
    fd = net_connect(host, port);
    if (fd < 0) {
-   	fprintf(stderr, "ftpget: Could not connect to %s:%d\n", host, port);
+   	fprintf(stderr, "ftp: Could not connect to %s:%d\n", host, port);
    	return(-1);
    }
    fpr = fdopen(fd, "r");
    fpw = fdopen(fd, "w");
 
    s = ftpreply(fpr);
-   if (s / 100 != 2) goto error;
+   if (s / 100 != 2) {
+	fprintf(stderr, "ftp: Connect error: %d\n", s);
+	goto error;
+   }
    s = ftpcmd(fpw, fpr, "USER", *user ? user : "ftp");
    if (s / 100 == 3)
    	s = ftpcmd(fpw, fpr, "PASS", *pass ? pass : "urlget@x.com");
 
-   if (s / 100 != 2) goto error;
+   if (s / 100 != 2) {
+	fprintf(stderr, "ftp: Authentication failed: %d\n", s);
+	goto error;
+   }
 
    p = path;
    if (*p == '/') p++;
    while ((p2 = strchr(p, '/')) != (char *)NULL) {
    	*p2++ = '\0';
    	s = ftpcmd(fpw, fpr, "CWD", unesc(p));
+	if ((s/100) != 2) {		/* 250 = success */
+		if (infile) {		/* ftpput: Try to create the directory */
+   			s = ftpcmd(fpw, fpr, "MKD", unesc(p));
+			if ((s/100) != 2) {	/* 257 = success */
+				fprintf(stderr, "ftp: Create directory %s failed, error %d\n", p, s);
+				goto error;
+			} 
+			if (verbose) fprintf(stderr, "ftp: Destination directory created: %s\n", p);
+   			s = ftpcmd(fpw, fpr, "CWD", unesc(p)); /* assume success */
+
+		} else {
+			fprintf(stderr, "ftp: Remote change directory failed: %s -- status %d\n", p, s);
+			if (infile) 	/* fatal if we're sending files */
+				goto error;
+		}
+	}
    	p = p2;
    }
 
    sprintf(typec, "%c", type == 'd' ? 'A' : type);
    s = ftpcmd(fpw, fpr, "TYPE", typec);
-   if (s / 100 != 2) goto error;
-
-   if (strlen(p) == 0) type = 'd'; 	/* last char is '/', its a directory, list files */
+   if (s / 100 != 2) {
+	fprintf(stderr, "ftp: Type error: %d\n", s);
+	goto error;
+   }
+   if (strlen(p) == 0) type = 'd'; 	/* last char is '/', it's a directory, list files */
    ftppport=0; 				/* to check if retrieved below */
-   s = ftpcmd(fpw, fpr, "PASV", "");
-   //printf("ftpget: s=%d,port=%u\n",s,ftppport);
-   //ftpreply() continues after s==227 found!
-   if (ftppport==0) goto error; //if (s != 227) goto error;
-   fd2 = net_connect(ftpphost, ftppport);
-   if (fd2 < 0) goto error;
 
+   s = ftpcmd(fpw, fpr, "PASV", "");
+ 
+   if (ftppport==0) {			/* set in ftpcmd */
+	fprintf(stderr, "ftp: Error listing directory: %d\n", s);
+	goto error; 
+   }
+   fd2 = net_connect(ftpphost, ftppport);
+   if (fd2 < 0) {	
+	fprintf(stderr, "ftp: Network connect error.\n");
+	goto error;
+   }
    if (verbose) 
 	list = "LIST"; 
    else 
 	list = "NLST";
-   s = ftpcmd(fpw, fpr, type == 'd' ? list : "RETR", unesc(p));
-   if (s / 100 != 1) goto error;
-   while ((s = read(fd2, buffer, sizeof(buffer))) > 0) {
-   	s2 = write(1, buffer, s);
-   	if (s2 != s) break;
-   }
-   if (s2 != s && s != 0) s = -1;
-   close(fd2);
+   if (!infile) { 		/* ftpget */
+	s = ftpcmd(fpw, fpr, type == 'd' ? list : "RETR", unesc(p));
+   	if ((s/100) != 1) {
+		fprintf(stderr, "ftp: Cannot open remote file: %d\n", s);
+		goto error;
+   	}
+	while ((s = read(fd2, buffer, sizeof(buffer))) > 0) {
+		if (verbose) fprintf(stderr, ".");
+   		s2 = write(1, buffer, s);
+		//fprintf(stderr, "wr: %d - %d:", s, s2);
+   		if (s2 != s) { s = -1; break; }	/* ERROR */
+	}
+	if (verbose) fprintf(stderr, ".\n");
+	if (s < 0) {
+		s = ftpcmd(fpw, fpr, "ABOR", "");
+		fprintf(stderr, "ftpget: File write error");
+		if (s2 == -1)
+			perror("");
+		else
+			fprintf(stderr,".\n");
+		if (!opt_d)
+			 while (read(fd2, buffer, sizeof(buffer)) > 0); /* purge */
+		s2 = ftpreply(fpr);	/* get the ABORT reply */
+		close(fd2);
+		/* should delete destination file: stdout */
+		s = -1;
+		goto error;
+	}
+	s = ftpreply(fpr);
+	if (verbose)
+		fprintf(stderr,"ftpget/put exit status: %d\n", s);
+	s = 0;
 
-   s = ftpreply(fpr);
-   if (s / 100 == 2) s = 0;
+   } else { 		/* ftpput */
+	// TODO: Add input from stdin
+	s = ftpcmd(fpw, fpr, "STOR", unesc(p));
+   	if (s / 100 != 1) {
+		fprintf(stderr, "ftp: Cannot open destination file: %d\n", s);
+		/* 553 is the most common error */
+		if (s == 553) fprintf(stderr, "Permission denied.\n");
+		goto error;
+   	}
+
+	while ((s2 = read(infile, buffer, sizeof(buffer))) > 0) {
+		if (verbose) fprintf(stderr, ".");
+		s = write(fd2, buffer, s2);
+   		if (s2 != s) { s = -1; break; }
+	}
+	if (verbose) fprintf(stderr, ".\n");
+	if (s < 0) {
+		s2 = ftpcmd(fpw, fpr, "ABOR", "");
+		fprintf(stderr, "ftpput: Network write error.\n");
+		s2 = ftpcmd(fpw, fpr, "DELE", unesc(p)); /* delete remote file */
+		//DEBUG
+		fprintf(stderr, "ftp: Cleaning up - removing %s, status %d\n", p, s);
+	} else
+		s = 0;
+	close(infile);
+   }
+   close(fd2);
 
 error:
    (void) ftpcmd(fpw, fpr, "QUIT", "");
@@ -398,6 +490,7 @@ error:
 
    return(s == 0 ? 0 : -1);
 }
+
 
 int tcpget(char *host, int port, char *user, char *pass, char *path) {
 
@@ -435,7 +528,7 @@ int main(int argc, char **argv) {
    int port, s;
    int type = 'i';	/* default ftp type */
    char *path, *ps, *p, *at;
-   int opt_h = 0, opt_d = 0, opt_p = 0, opt_v = 0;
+   int opt_h = 0, opt_p = 0, opt_v = 0;
 
    prog = strrchr(*argv, '/');
    if (prog == (char *)NULL)
@@ -467,13 +560,15 @@ int main(int argc, char **argv) {
    	}
    }
 
-   if (strcmp(prog, "ftpget") == 0) {
-   	if (argc < 2 || argc > 4) {
+   if ((strcmp(prog, "ftpget") == 0) || (strcmp(prog, "ftpput") == 0)) {
+   	if (argc < 2 || argc > 4) { 
    		fprintf(stderr, "Usage: %s [-v] host[:port] path [user [pass]]\n", prog);
-		fprintf(stderr, "Add / to path for directory listing, -v for long listing\n");
+		fprintf(stderr, "Add / to path for directory listing (ftpget), -v for long listing\n");
 		fprintf(stderr, "e.g. ftpget 90.147.160.69 /mirrors/\n");
    		return(-1);
    	}
+	/* FIXME: Add the ability to specify input file separately for ftpput */
+
    	strncpy(host, *argv++, sizeof(host));
 	if ((p = strchr(host, ':'))) {
 		*p++ = '\0';
@@ -491,7 +586,10 @@ int main(int argc, char **argv) {
    		argc++;
    	} else
    		*pass = '\0';
-	s = ftpget(host, port, user, pass, path, type, opt_v);
+	if (strcmp(prog, "ftpput") == 0) {
+		type = 'S';	/* Always send files as binary, 'S' is the put vs. get flag */
+	}
+	s = ftpio(host, port, user, pass, path, type, opt_v);
 	return(s);
    }
    if (strcmp(prog, "httpget") == 0) {
@@ -600,7 +698,8 @@ int main(int argc, char **argv) {
 		s = httpget(host, port, user, pass, path, opt_h, opt_d, opt_p);
 		break;
 	case SCHEME_FTP:
-		s = ftpget(host, port, user, pass, path, type, opt_v);
+		/* no support for ftpput yet */
+		s = ftpio(host, port, user, pass, path, type, opt_v);
 		break;
 	case SCHEME_TCP:
 		s = tcpget(host, port, user, pass, path);
