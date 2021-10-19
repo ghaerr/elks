@@ -10,7 +10,7 @@
  * Assumes hard links to the approproate names - ftpget, urlget, tcpget, tcpput.
  * Optons (http only):
  * 	-h -- include header in output stream
- * 	-d -- discard data
+ * 	-d -- discard data (httpget), disable data draining on write errors (ftpget)
  * 	-p -- post instead of get, data to post (ascii/UTF) is appended to the URL (after a '?').
  *	-v -- for ftp, verbose file listing & error reporting, progress meter
  *
@@ -45,6 +45,7 @@ _PROTOTYPE(int main, (int argc, char *argv[]));
 
 char ftpphost[15+1];
 unsigned int ftppport;
+int opt_d = 0;
 
 #define	SCHEME_HTTP	1
 #define	SCHEME_FTP	2
@@ -439,7 +440,8 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
 			perror("");
 		else
 			fprintf(stderr,".\n");
-		while (read(fd2, buffer, sizeof(buffer)) > 0); /* purge */
+		if (!opt_d)
+			 while (read(fd2, buffer, sizeof(buffer)) > 0); /* purge */
 		s2 = ftpreply(fpr);	/* get the ABORT reply */
 		close(fd2);
 		/* should delete destination file: stdout */
@@ -526,7 +528,7 @@ int main(int argc, char **argv) {
    int port, s;
    int type = 'i';	/* default ftp type */
    char *path, *ps, *p, *at;
-   int opt_h = 0, opt_d = 0, opt_p = 0, opt_v = 0;
+   int opt_h = 0, opt_p = 0, opt_v = 0;
 
    prog = strrchr(*argv, '/');
    if (prog == (char *)NULL)
@@ -559,9 +561,9 @@ int main(int argc, char **argv) {
    }
 
    if ((strcmp(prog, "ftpget") == 0) || (strcmp(prog, "ftpput") == 0)) {
-   	if ((strcmp(prog, "ftpget") == 0) && (argc < 2 || argc > 4)) { 
+   	if (argc < 2 || argc > 4) { 
    		fprintf(stderr, "Usage: %s [-v] host[:port] path [user [pass]]\n", prog);
-		fprintf(stderr, "Add / to path for directory listing, -v for long listing\n");
+		fprintf(stderr, "Add / to path for directory listing (ftpget), -v for long listing\n");
 		fprintf(stderr, "e.g. ftpget 90.147.160.69 /mirrors/\n");
    		return(-1);
    	}
