@@ -432,9 +432,9 @@ void tcp_process(struct iphdr_s *iph)
 	/* Dummy up a new control block and send RST to shutdown sender */
 	cbnode = tcpcb_new();
 	if (cbnode) {
-	    cbnode->tcpcb.localaddr = ntohl(iph->daddr);
+	    cbnode->tcpcb.localaddr = iph->daddr;
 	    cbnode->tcpcb.localport = ntohs(tcph->dport);
-	    cbnode->tcpcb.remaddr = ntohl(iph->saddr);
+	    cbnode->tcpcb.remaddr = iph->saddr;
 	    cbnode->tcpcb.remport = ntohs(tcph->sport);
 	    cbnode->tcpcb.state = TS_CLOSED;
 	    tcp_reset_connection(&cbnode->tcpcb); /* send RST and deallocate*/
