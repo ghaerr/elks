@@ -390,7 +390,7 @@ static int inet_send(struct socket *sock, void *buff, int len, int nonblock,
     if (flags != 0)
 	return -EINVAL;
 
-    return inet_write(sock, (char *) buff, len, nonblock);
+    return inet_write(sock, buff, len, nonblock);
 }
 
 static int inet_recv(struct socket *sock, void *buff, int len, int nonblock,
@@ -399,7 +399,7 @@ static int inet_recv(struct socket *sock, void *buff, int len, int nonblock,
     if (flags != 0)
         return -EINVAL;
 
-    return inet_read(sock, (char *) buff, len, nonblock);
+    return inet_read(sock, buff, len, nonblock);
 }
 
 int not_implemented(void)
