@@ -66,7 +66,7 @@ static __u32 choose_seq(void)
 }
 
 /* abruptly terminate connection*/
-static void tcp_reset_connection(struct tcpcb_s *cb)	//FIXME remove
+static void tcp_reset_connection(struct tcpcb_s *cb)
 {
 	tcp_send_reset(cb);
 	tcpcb_remove_cb(cb);	/* deallocate*/
@@ -265,6 +265,7 @@ printf("tcp: RST received, removing retrans packets\n");
     if (h->flags & TF_FIN) {
 	cb->rcv_nxt++;
 	cb->state = TS_CLOSE_WAIT;
+	cb->time_wait_exp = Now;	/* used for debug output only*/
 	tcpdev_sock_state(cb, SS_DISCONNECTING);
     }
 
@@ -427,7 +428,19 @@ void tcp_process(struct iphdr_s *iph)
 	printf("tcp: Refusing packet %s:%u->%d\n", in_ntoa(iph->saddr),
 		ntohs(tcph->sport), ntohs(tcph->dport));
 
-	/* TODO : send RST and stuff */
+#if 0
+	/* Dummy up a new control block and send RST to shutdown sender */
+	cbnode = tcpcb_new();
+	if (cbnode) {
+	    cbnode->tcpcb.localaddr = ntohl(iph->daddr);
+	    cbnode->tcpcb.localport = ntohs(tcph->dport);
+	    cbnode->tcpcb.remaddr = ntohl(iph->saddr);
+	    cbnode->tcpcb.remport = ntohs(tcph->sport);
+	    cbnode->tcpcb.state = TS_CLOSED;
+	    tcp_reset_connection(&cbnode->tcpcb); /* send RST and deallocate*/
+	}
+#endif
+
 	netstats.tcpdropcnt++;
 	return;
     }

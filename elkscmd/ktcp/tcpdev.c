@@ -364,7 +364,7 @@ static void tcpdev_release(void)
     void * sock = db->sock;
 
     n = tcpcb_find_by_sock(sock);
-    debug_tcp("tcpdev: got close from ELKS process, %x\n", n);
+    debug_close("tcpdev release: close socket %x from application, found %x\n", sock, n);
     if (n) {
 	cb = &n->tcpcb;
 	switch(cb->state){

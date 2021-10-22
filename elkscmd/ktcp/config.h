@@ -8,6 +8,7 @@
 #define USE_DEBUG_EVENT 1	/* use CTRLP to toggle debug output*/
 #define DEBUG_STARTDEF	0	/* default startup debug display*/
 #define DEBUG_TCP	1
+#define DEBUG_CLOSE	1
 #define DEBUG_IP	0
 #define DEBUG_ARP	0
 #define DEBUG_ETH	0
@@ -30,6 +31,12 @@ void dprintf(const char *, ...);
 #define debug_tcp	DPRINTF
 #else
 #define debug_tcp(...)
+#endif
+
+#if DEBUG_CLOSE
+#define debug_close	DPRINTF
+#else
+#define debug_close(...)
 #endif
 
 #if DEBUG_IP
