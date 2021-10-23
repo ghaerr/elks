@@ -65,11 +65,18 @@ static __u32 choose_seq(void)
     return timer_get_time();
 }
 
-/* abruptly terminate connection*/
-static void tcp_reset_connection(struct tcpcb_s *cb)
+void tcp_send_reset(struct tcpcb_s *cb)
 {
-	tcp_send_reset(cb);
-	tcpcb_remove_cb(cb);	/* deallocate*/
+    cb->flags = TF_RST;
+    cb->datalen = 0;
+    tcp_output(cb);
+}
+
+/* abruptly terminate connection*/
+void tcp_reset_connection(struct tcpcb_s *cb)
+{
+    tcp_send_reset(cb);
+    tcpcb_remove_cb(cb);	/* deallocate*/
 }
 
 void tcp_send_fin(struct tcpcb_s *cb)
@@ -78,13 +85,6 @@ void tcp_send_fin(struct tcpcb_s *cb)
     cb->datalen = 0;
     tcp_output(cb);
     cb->send_nxt++;
-}
-
-void tcp_send_reset(struct tcpcb_s *cb)
-{
-    cb->flags = TF_RST;
-    cb->datalen = 0;
-    tcp_output(cb);
 }
 
 static void tcp_send_ack(struct tcpcb_s *cb)
@@ -249,16 +249,16 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
     if (h->flags & TF_RST) {
 	/* TODO: Check seqnum for security */
-printf("tcp: RST received, removing retrans packets\n");
+	printf("tcp: RST received %s:%u->%d\n",
+	    in_ntoa(cb->remaddr), ntohs(h->sport), ntohs(h->dport));
 	rmv_all_retrans_cb(cb);
 	if (cb->state == TS_CLOSE_WAIT) {
 	    ENTER_TIME_WAIT(cb);
-	} else {
-	    //cb->state = TS_CLOSED;
 	    tcpdev_sock_state(cb, SS_UNCONNECTED);
+	} else {
+	    tcpdev_sock_state(cb, SS_DISCONNECTING);
 	    tcpcb_remove_cb(cb); 	/* deallocate*/
 	}
-	tcpdev_sock_state(cb, SS_UNCONNECTED);
 	return;
     }
 

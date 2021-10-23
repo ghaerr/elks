@@ -383,15 +383,18 @@ static void tcpdev_release(void)
 			return;
 		}
 		cb->state = TS_FIN_WAIT_1;
-		cbs_in_user_timeout++;
-		cb->time_wait_exp = Now;
-		tcp_send_fin(cb);
-		break;
+		goto common_close;
 	    case TS_CLOSE_WAIT:
 		cb->state = TS_LAST_ACK;
-		cbs_in_user_timeout++;
-		cb->time_wait_exp = Now;
-		tcp_send_fin(cb);
+common_close:
+#define SEND_RST_ON_CLOSE	0	/* future SO_LINGER w/zero timer */
+		if (SEND_RST_ON_CLOSE) {
+		   tcp_reset_connection(cb);	/* send RST and deallocate */
+		} else {
+		    cbs_in_user_timeout++;
+		    cb->time_wait_exp = Now;
+		    tcp_send_fin(cb);
+		}
 		break;
 	}
     }
