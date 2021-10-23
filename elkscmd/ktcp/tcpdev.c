@@ -80,7 +80,7 @@ static void tcpdev_bind(void)
     } else {
 	if (tcpcb_check_port(port) != NULL) {	/* Port already bound */
 	    tcpcb_remove(n);
-	    retval_to_sock(db->sock,-EINVAL);
+	    retval_to_sock(db->sock, -EADDRINUSE);
 	    return;
 	}
     }
@@ -364,7 +364,7 @@ static void tcpdev_release(void)
     void * sock = db->sock;
 
     n = tcpcb_find_by_sock(sock);
-    debug_tcp("tcpdev: got close from ELKS process, %x\n", n);
+    debug_close("tcpdev release: close socket %x from application, found %x\n", sock, n);
     if (n) {
 	cb = &n->tcpcb;
 	switch(cb->state){
@@ -383,15 +383,17 @@ static void tcpdev_release(void)
 			return;
 		}
 		cb->state = TS_FIN_WAIT_1;
-		cbs_in_user_timeout++;
-		cb->time_wait_exp = Now;
-		tcp_send_fin(cb);
-		break;
+		goto common_close;
 	    case TS_CLOSE_WAIT:
 		cb->state = TS_LAST_ACK;
-		cbs_in_user_timeout++;
-		cb->time_wait_exp = Now;
-		tcp_send_fin(cb);
+common_close:
+		if (SEND_RST_ON_CLOSE) {	/* future SO_LINGER w/zero timer */
+		   tcp_reset_connection(cb);	/* send RST and deallocate */
+		} else {
+		    cbs_in_user_timeout++;
+		    cb->time_wait_exp = Now;
+		    tcp_send_fin(cb);
+		}
 		break;
 	}
     }

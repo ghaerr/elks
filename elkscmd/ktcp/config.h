@@ -2,12 +2,15 @@
 #define CONFIG_H
 
 /* compile time options*/
-#define CSLIP		1	/* compile in CSLIP support*/
+#define CSLIP			1	/* compile in CSLIP support*/
+#define SEND_RST_ON_CLOSE	0	/* send RST instead of FIN on close*/
+#define SEND_RST_ON_REFUSED_PKT	0	/* send RST on unknown TCP packets*/
 
 /* turn these on for ELKS debugging*/
 #define USE_DEBUG_EVENT 1	/* use CTRLP to toggle debug output*/
 #define DEBUG_STARTDEF	0	/* default startup debug display*/
 #define DEBUG_TCP	1
+#define DEBUG_CLOSE	1
 #define DEBUG_IP	0
 #define DEBUG_ARP	0
 #define DEBUG_ETH	0
@@ -30,6 +33,12 @@ void dprintf(const char *, ...);
 #define debug_tcp	DPRINTF
 #else
 #define debug_tcp(...)
+#endif
+
+#if DEBUG_CLOSE
+#define debug_close	DPRINTF
+#else
+#define debug_close(...)
 #endif
 
 #if DEBUG_IP

@@ -204,13 +204,38 @@ void tcpcb_rmv_all_unaccepted(struct tcpcb_s *cb)
     }
 }
 
+#if DEBUG_CLOSE
+char *tcp_states[11] = {
+	"CLOSED",
+	"LISTEN",
+	"SYN_SENT",
+	"SYN_RECEIVED",
+	"ESTABLISHED",
+	"FIN_WAIT_1",
+	"FIN_WAIT_2",
+	"CLOSE_WAIT",
+	"CLOSING",
+	"LAST_ACK",
+	"TIME_WAIT"
+};
+
+#endif
+
 void tcpcb_expire_timeouts(void)
 {
     struct tcpcb_list_s *n = tcpcbs, *next;
 
     while (n) {
 	next = n->next;
-debug_tcp("expire state %d\n", n->tcpcb.state);
+#if DEBUG_CLOSE
+	if (n->tcpcb.state > TS_ESTABLISHED) {
+	    int secs = (unsigned)(n->tcpcb.time_wait_exp - Now);
+	    unsigned int tenthsecs = ((secs + 8) & 15) >> 1;
+	    secs >>= 4;
+	    debug_close("ktcp: check expire %s (%d.%d)\n",
+		tcp_states[n->tcpcb.state], secs, tenthsecs);
+	}
+#endif
 	switch (n->tcpcb.state) {
 	    case TS_TIME_WAIT:
 		if (TIME_GT(Now, n->tcpcb.time_wait_exp)) {
@@ -218,8 +243,6 @@ debug_tcp("expire state %d\n", n->tcpcb.state);
 		    tcpcb_remove(n);
 		}
 		break;
-	    case TS_CLOSE_WAIT:		//FIXME added
-		debug_tcp("expire close\n");
 	    case TS_FIN_WAIT_1:
 	    case TS_FIN_WAIT_2:
 	    case TS_LAST_ACK:

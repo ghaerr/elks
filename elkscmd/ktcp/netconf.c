@@ -54,6 +54,7 @@ void netconf_send(struct tcpcb_s *cb)
 	    cbstats.remaddr = ncb->remaddr;
 	    cbstats.remport = ncb->remport;
 	    cbstats.localport = ncb->localport;
+		cbstats.time_wait_exp = ncb->time_wait_exp;
 	} else
 	    cbstats.valid = 0;
 	tcpcb_buf_write(cb, (unsigned char *)&cbstats, sizeof(cbstats));

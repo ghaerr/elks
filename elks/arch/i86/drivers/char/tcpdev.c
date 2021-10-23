@@ -44,7 +44,7 @@ char *get_tdout_buf(void)
 static size_t tcpdev_read(struct inode *inode, struct file *filp, char *data,
 		       unsigned int len)
 {
-    debug("TCPDEV: read( %p, %p, %p, %u )\n",inode,filp,data,len);
+    debug("TCPDEV(%d) read %u\n", current->pid, len);
     while (tdout_tail == 0) {
 	if (filp->f_flags & O_NONBLOCK)
 	    return -EAGAIN;
@@ -57,47 +57,46 @@ static size_t tcpdev_read(struct inode *inode, struct file *filp, char *data,
      *  If the userspace tcpip stack requests less data than what is in the
      *  buffer it will lose data, so the tcpip stack should read BIG.
      */
-    len = len < tdout_tail ? len : tdout_tail;
-    debug("TCPDEV: read() mark 1 - len = %u\n",len);
+    if (len < tdout_tail)
+	debug_net("TCPDEV(%d) read len too small %u\n", len);
+    else len = tdout_tail;
     memcpy_tofs(data, tdout_buf, len);
     tdout_tail = 0;
     up(&bufout_sem);
-    debug("TCPDEV: read() returning with bufout_sem = %d\n",bufout_sem);
-    if (bufout_sem > 0)
-	panic("bufout_sem tragedy");
+    debug("TCPDEV(%d) read retval %u bufout_sem %d\n", current->pid, len, bufout_sem);
+    //if (bufout_sem > 0)
+	//panic("bufout_sem tragedy");
     return len;
 }
 
-int tcpdev_inetwrite(char *data, unsigned int len)
+int tcpdev_inetwrite(void *data, unsigned int len)
 {
-    debug("TCPDEV: inetwrite( %p, %u )\n",data,len);
+    debug("TCPDEV(%d) inetwrite %u\n", current->pid, len);
     if (len > TCPDEV_OUTBUFFERSIZE) {
-	debug_net("tcpdev_inetwrite: len too large\n");
+	debug_net("TCPDEV(%d) inetwrite len too large %u\n", current->pid, len);
 	return -EINVAL;
     }
-    debug("TCPDEV: inetwrite() mark 1.\n");
 
     /* Data already in tdout_buf buffer */
     tdout_tail = len;
     wake_up(&tcpdevq);
-    debug("TCPDEV: inetwrite() returning\n");
     return 0;
 }
 
 void tcpdev_clear_data_avail(void)
 {
     up(&bufin_sem);
-    debug("TCPDEV: clear_data_avail()\n");
-    if (bufin_sem > 0)
-	panic("bufin_sem tragedy");
+    debug("TCPDEV(%d) clear data_avail\n", current->pid);
+    //if (bufin_sem > 0)
+	//panic("bufin_sem tragedy");
 }
 
 static size_t tcpdev_write(struct inode *inode, struct file *filp,
 			char *data, size_t len)
 {
-    debug("TCPDEV: write( %p, %p, %p, %u )\n",inode,filp,data,len);
+    debug("TCPDEV(%d) write %u\n", current->pid, len);
     if (len > TCPDEV_INBUFFERSIZE) {
-	debug_net("tcpdev_write len too large\n");
+	debug_net("TCPDEV(%d) write len too large %u\n", len);
 	return -EINVAL;
     }
     if (len > 0) {
@@ -109,7 +108,7 @@ static size_t tcpdev_write(struct inode *inode, struct file *filp,
 	/* Call the af_inet code to handle the data */
 	inet_process_tcpdev((char *)tdin_buf, len);
     }
-    debug("TCPDEV: write() returning %u\n", len);
+    debug("TCPDEV(%d) write retval %u\n", current->pid, len);
     return len;
 }
 
@@ -117,41 +116,39 @@ static int tcpdev_select(struct inode *inode, struct file *filp, int sel_type)
 {
     int ret = 0;
 
-    debug("TCPDEV: select( %p, %p, %d )\n",inode,filp,sel_type);
     switch (sel_type) {
     case SEL_OUT:
-	debug("TCPDEV: select() chose SEL_OUT\n");
+	debug("TCPDEV(%d) select SEL_OUT\n", current->pid);
 	if (bufin_sem == 0)
 	    ret = 1;
 	else
 	    select_wait(&tcpdevq);
 	break;
     case SEL_IN:
-	debug("TCPDEV: select() chose SEL_IN\n");
+	debug("TCPDEV(%d) select SEL_IN\n", current->pid);
 	if (tdout_tail != 0)
 	    ret = 1;
 	else
 	    select_wait(&tcpdevq);
 	break;
     default:
-	debug("TCPDEV: select() chose unknown option %d.\n",sel_type);
+	debug("TCPDEV(%d) select bad type %d\n", current->pid, sel_type);
     }
-    debug("TCPDEV: select() returning %d\n",ret);
+    debug("TCPDEV(%d) select retval %d\n", current->pid, ret);
     return ret;
 }
 
 static int tcpdev_open(struct inode *inode, struct file *file)
 {
-    debug_net("TCPDEV: open(%p, %p) tcpdev_inuse %d\n",inode,file, tcpdev_inuse);
+    debug_net("TCPDEV(%d) open inuse %d\n", current->pid, tcpdev_inuse);
     if (!suser()) {
-	debug_net("TCPDEV: open() returning -EPERM\n");
+	debug_net("TCPDEV open retval -EPERM\n");
     	return -EPERM;
     }
     if (tcpdev_inuse) {
-	debug_net("TCPDEV: open() returning -EBUSY\n");
+	debug_net("TCPDEV open retval -EBUSY\n");
 	return -EBUSY;
     }
-    debug_net("TCP open OK\n");
     tdin_tail = tdout_tail = 0;
     tcpdev_inuse = 1;
     return 0;
@@ -159,7 +156,7 @@ static int tcpdev_open(struct inode *inode, struct file *file)
 
 static void tcpdev_release(struct inode *inode, struct file *file)
 {
-    debug_net("TCPDEV: release(%p, %p) tcpdev_inuse %d\n",inode,file,tcpdev_inuse);
+    debug_net("TCPDEV(%d) release inuse %d\n", current->pid, tcpdev_inuse);
     tcpdev_inuse = 0;
 }
 
@@ -187,8 +184,6 @@ static struct file_operations tcpdev_fops = {
 void tcpdev_init(void)
 {
     register_chrdev(TCPDEV_MAJOR, "tcpdev", &tcpdev_fops);
-
-    debug_net("TCPDEV: init()\n");
     bufin_sem = bufout_sem = 0;
     tcpdev_inuse = 0;
 }
