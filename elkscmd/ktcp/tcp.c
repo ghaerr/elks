@@ -217,15 +217,13 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     datasize = iptcp->tcplen - TCP_DATAOFF(h);
 
     if (datasize != 0) {
-	//debug_tcp("tcp: recv data len %u\n", datasize);
+	//debug_tcp("tcp: recv data len %u avail %u\n", datasize, CB_BUF_SPACE(cb));
 	/* Process the data */
 	data = (__u8 *)h + TCP_DATAOFF(h);
 
-//printf("space free %d\n", CB_BUF_SPACE(cb));
 	/* check if buffer space for received packet*/
 	if (datasize > CB_BUF_SPACE(cb)) {
-	    printf("tcp: dropping packet, data too large: %u > %d\n", datasize, CB_BUF_SPACE(cb));
-	    //tcp_reset_connection(cb);	//FIXME this causes RST received then panic in read/write
+	    printf("tcp: dropping packet, no buffer space: %u > %d\n", datasize, CB_BUF_SPACE(cb));
 	    netstats.tcpdropcnt++;
 	    return;
 	}
@@ -249,14 +247,13 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
     if (h->flags & TF_RST) {
 	/* TODO: Check seqnum for security */
-	printf("tcp: RST received %s:%u->%d\n",
-	    in_ntoa(cb->remaddr), ntohs(h->sport), ntohs(h->dport));
+	printf("tcp: RST from %s:%u->%d\n", in_ntoa(cb->remaddr), ntohs(h->sport), ntohs(h->dport));
 	rmv_all_retrans_cb(cb);
 	if (cb->state == TS_CLOSE_WAIT) {
 	    ENTER_TIME_WAIT(cb);
-	    tcpdev_sock_state(cb, SS_UNCONNECTED);
+	    tcpdev_sock_state(cb, SS_UNCONNECTED);	/* no wakeup?*/
 	} else {
-	    tcpdev_sock_state(cb, SS_DISCONNECTING);
+	    tcpdev_sock_state(cb, SS_DISCONNECTING);	/* wakes up process*/
 	    tcpcb_remove_cb(cb); 	/* deallocate*/
 	}
 	return;
@@ -425,10 +422,10 @@ void tcp_process(struct iphdr_s *iph)
     }
 
     if (!cbnode) {
-	printf("tcp: Refusing packet %s:%u->%d\n", in_ntoa(iph->saddr),
+	printf("tcp: refusing packet %s:%u->%d\n", in_ntoa(iph->saddr),
 		ntohs(tcph->sport), ntohs(tcph->dport));
 
-#if 0
+#if SEND_RST_ON_REFUSED_PKT
 	/* Dummy up a new control block and send RST to shutdown sender */
 	cbnode = tcpcb_new();
 	if (cbnode) {
@@ -440,7 +437,6 @@ void tcp_process(struct iphdr_s *iph)
 	    tcp_reset_connection(&cbnode->tcpcb); /* send RST and deallocate*/
 	}
 #endif
-
 	netstats.tcpdropcnt++;
 	return;
     }

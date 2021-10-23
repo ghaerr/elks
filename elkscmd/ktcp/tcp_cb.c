@@ -243,8 +243,6 @@ void tcpcb_expire_timeouts(void)
 		    tcpcb_remove(n);
 		}
 		break;
-	    //case TS_CLOSE_WAIT:		//FIXME added
-		//debug_close("ktcp: expire close_wait\n");
 	    case TS_FIN_WAIT_1:
 	    case TS_FIN_WAIT_2:
 	    case TS_LAST_ACK:

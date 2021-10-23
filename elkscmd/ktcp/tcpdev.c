@@ -80,7 +80,7 @@ static void tcpdev_bind(void)
     } else {
 	if (tcpcb_check_port(port) != NULL) {	/* Port already bound */
 	    tcpcb_remove(n);
-	    retval_to_sock(db->sock,-EINVAL);
+	    retval_to_sock(db->sock, -EADDRINUSE);
 	    return;
 	}
     }
@@ -387,8 +387,7 @@ static void tcpdev_release(void)
 	    case TS_CLOSE_WAIT:
 		cb->state = TS_LAST_ACK;
 common_close:
-#define SEND_RST_ON_CLOSE	0	/* future SO_LINGER w/zero timer */
-		if (SEND_RST_ON_CLOSE) {
+		if (SEND_RST_ON_CLOSE) {	/* future SO_LINGER w/zero timer */
 		   tcp_reset_connection(cb);	/* send RST and deallocate */
 		} else {
 		    cbs_in_user_timeout++;
