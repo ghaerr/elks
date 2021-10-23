@@ -12,6 +12,17 @@ struct sockaddr {
     char sa_data [MAX_SOCK_ADDR];
 };
 
+/* for setsockopt(2) */
+#define SOL_SOCKET	1
+
+/* careful: option name scheme interferes with internal SO_ options in net.h*/
+#define SO_LINGER	13		/* only implemented for l_linger = 0*/
+
+struct linger {
+        int             l_onoff;        /* Linger active                */
+        int             l_linger;       /* How long to linger for       */
+};
+
 struct msghdr {
     void *		msg_name;
     int 		msg_namelen;

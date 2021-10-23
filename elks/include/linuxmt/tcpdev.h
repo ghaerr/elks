@@ -29,6 +29,7 @@
 struct tdb_release {
     unsigned char cmd;
     struct socket *sock;
+	int reset;
 };
 
 struct tdb_accept {

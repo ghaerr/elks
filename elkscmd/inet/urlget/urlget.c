@@ -28,11 +28,13 @@
 #include <time.h>
 
 
-#define _PROTOTYPE(a,b)
+#define _PROTOTYPE(a,b) a b
 
 _PROTOTYPE(char *unesc, (char *s));
 _PROTOTYPE(void encode64, (char **pp, char *s));
 _PROTOTYPE(int net_connect, (char *host, int port));
+_PROTOTYPE(void net_close_error, (int fd));
+_PROTOTYPE(void net_close_noerror, (int fd));
 _PROTOTYPE(char *auth, (char *user, char *pass));
 _PROTOTYPE(int skipit, (char *buf, int len, int *skip));
 _PROTOTYPE(int httpget, (char *host, int port, char *user, char *pass, char *path, int headers, int discard, int post));
@@ -256,7 +258,7 @@ int httpget(char *host, int port, char *user, char *pass, char *path,
 		}
    }
 
-   close(fd);
+   net_close_noerror(fd);	/* send FIN on close */
 
    return(0);
 }
@@ -443,7 +445,7 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
 		if (!opt_d)
 			 while (read(fd2, buffer, sizeof(buffer)) > 0); /* purge */
 		s2 = ftpreply(fpr);	/* get the ABORT reply */
-		close(fd2);
+		net_close_error(fd2);	/* send RST on close */
 		/* should delete destination file: stdout */
 		s = -1;
 		goto error;
@@ -479,14 +481,18 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
 		s = 0;
 	close(infile);
    }
-   close(fd2);
+   if (s == 0)
+	net_close_noerror(fd2);	/* send FIN */
+   else net_close_error(fd2);	/* send RST */
 
 error:
    (void) ftpcmd(fpw, fpr, "QUIT", "");
 
    fclose(fpr);
    fclose(fpw);
-   close(fd);
+   if (s == 0)
+	net_close_noerror(fd);	/* send FIN */
+   else net_close_error(fd);	/* send RST */
 
    return(s == 0 ? 0 : -1);
 }
@@ -515,9 +521,12 @@ int tcpget(char *host, int port, char *user, char *pass, char *path) {
    write(fd, "\n", 1);
    while ((s = read(fd, buffer, sizeof(buffer))) > 0) {
    	s2 = write(1, buffer, s);
-   	if (s2 != s) break;
+	if (s2 != s) {
+	    net_close_error(fd); /* send RST*/
+	    return -1;
+	}
    }
-   close(fd);
+   net_close_noerror(fd);	/* send FIN*/
    return(0);
 }
 

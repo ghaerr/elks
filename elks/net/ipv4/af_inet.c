@@ -95,11 +95,12 @@ static int inet_release(struct socket *sock, struct socket *peer)
     int ret;
 
     debug_net("INET(%d) release sock %x\n", current->pid, sock);
-	if (!tcpdev_inuse)
-		return -EINVAL;
+    if (!tcpdev_inuse)
+	return -EINVAL;
     cmd = (struct tdb_release *)get_tdout_buf();
     cmd->cmd = TDC_RELEASE;
     cmd->sock = sock;
+    cmd->reset = sock->flags & SO_RST_ON_CLOSE;
     ret = tcpdev_inetwrite(cmd, sizeof(struct tdb_release));
     return (ret >= 0 ? 0 : ret);
 }
