@@ -567,4 +567,28 @@ int sys_socket(int family, int type, int protocol)
     return fd;
 }
 
+int sys_setsockopt(int fd, int level, int option_name, void *option_value,
+	unsigned int option_len)
+{
+    register struct socket *sock;
+    int err;
+    struct linger l;
+
+    if (!(sock = sockfd_lookup(fd, NULL)))
+	return -ENOTSOCK;
+
+    if (option_name != SO_LINGER || option_len != sizeof(struct linger))
+	return -EINVAL;
+
+    err = check_addr_to_kernel(option_value, sizeof(struct linger));
+    if (err < 0)
+	return err;
+    memcpy_fromfs(&l, option_value, sizeof(struct linger));
+
+    if (l.l_onoff != 0 && l.l_linger == 0)
+	sock->flags |= SO_RST_ON_CLOSE;
+    else sock->flags &= ~SO_RST_ON_CLOSE;
+
+    return 0;
+}
 #endif /* CONFIG_SOCKET */

@@ -28,11 +28,12 @@
 #include <time.h>
 
 
-#define _PROTOTYPE(a,b)
+#define _PROTOTYPE(a,b) a b
 
 _PROTOTYPE(char *unesc, (char *s));
 _PROTOTYPE(void encode64, (char **pp, char *s));
 _PROTOTYPE(int net_connect, (char *host, int port));
+_PROTOTYPE(void net_close, (int fd, int errflag));
 _PROTOTYPE(char *auth, (char *user, char *pass));
 _PROTOTYPE(int skipit, (char *buf, int len, int *skip));
 _PROTOTYPE(int httpget, (char *host, int port, char *user, char *pass, char *path, int headers, int discard, int post));
@@ -256,7 +257,7 @@ int httpget(char *host, int port, char *user, char *pass, char *path,
 		}
    }
 
-   close(fd);
+   net_close(fd, 0);	/* send FIN on close */
 
    return(0);
 }
@@ -443,7 +444,7 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
 		if (!opt_d)
 			 while (read(fd2, buffer, sizeof(buffer)) > 0); /* purge */
 		s2 = ftpreply(fpr);	/* get the ABORT reply */
-		close(fd2);
+		net_close(fd2, 1);	/* send RST on close */
 		/* should delete destination file: stdout */
 		s = -1;
 		goto error;
@@ -479,14 +480,17 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
 		s = 0;
 	close(infile);
    }
-   close(fd2);
+   net_close(fd2, s);	/* s == 0? FIN: RST */
 
 error:
    (void) ftpcmd(fpw, fpr, "QUIT", "");
 
-   fclose(fpr);
+   /* flush buffered output, then close descriptor first so that FIN/RST works*/
+   fflush(fpw);
+   net_close(fd, s);	/* s == 0? FIN: RST */
+
+   fclose(fpr);		/* associated fd already closed above*/
    fclose(fpw);
-   close(fd);
 
    return(s == 0 ? 0 : -1);
 }
@@ -515,9 +519,12 @@ int tcpget(char *host, int port, char *user, char *pass, char *path) {
    write(fd, "\n", 1);
    while ((s = read(fd, buffer, sizeof(buffer))) > 0) {
    	s2 = write(1, buffer, s);
-   	if (s2 != s) break;
+	if (s2 != s) {
+	    net_close(fd, 1); /* send RST*/
+	    return -1;
+	}
    }
-   close(fd);
+   net_close(fd, 0);	/* send FIN*/
    return(0);
 }
 

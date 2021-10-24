@@ -364,7 +364,7 @@ static void tcpdev_release(void)
     void * sock = db->sock;
 
     n = tcpcb_find_by_sock(sock);
-    debug_close("tcpdev release: close socket %x from application, found %x\n", sock, n);
+    debug_close("tcpdev release: close socket %x, tcb %x\n", sock, n);
     if (n) {
 	cb = &n->tcpcb;
 	switch(cb->state){
@@ -387,7 +387,7 @@ static void tcpdev_release(void)
 	    case TS_CLOSE_WAIT:
 		cb->state = TS_LAST_ACK;
 common_close:
-		if (SEND_RST_ON_CLOSE) {	/* future SO_LINGER w/zero timer */
+		if (db->reset) {		/* SO_LINGER w/zero timer */
 		   tcp_reset_connection(cb);	/* send RST and deallocate */
 		} else {
 		    cbs_in_user_timeout++;

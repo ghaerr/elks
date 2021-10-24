@@ -248,6 +248,7 @@ struct syscall_info elks_table[] = {
     { "listen",		packinfo(2, P_SSHORT, P_SSHORT,  P_NONE   ) },
     { "accept",		packinfo(3, P_SSHORT, P_DATA,    P_PSSHORT) },
     { "connect",	packinfo(3, P_SSHORT, P_PDATA,   P_SSHORT ) },
+    { "setsockopt",	packinfo(5, P_SSHORT, P_SSHORT,  P_SSHORT, P_PDATA,   P_SSHORT ) },
 };
 
 #endif

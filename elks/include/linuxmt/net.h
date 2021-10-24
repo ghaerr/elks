@@ -71,6 +71,7 @@ struct proto_ops {
 #define SO_ACCEPTCON	(1 << 1)
 #define SO_WAITDATA	(1 << 2)
 #define SO_NOSPACE	(1 << 3)
+#define SO_RST_ON_CLOSE	(1 << 4)
 
 struct net_proto {
     char *name;			/* Protocol name */

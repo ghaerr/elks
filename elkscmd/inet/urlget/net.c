@@ -24,6 +24,7 @@ int port;
 {
 	int netfd;
 	struct sockaddr_in in_adr;
+	struct linger l;
 	int ret;
 	
 	netfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -38,6 +39,12 @@ int port;
 		exit(1);
 	}
 	
+	l.l_onoff = 1;	/* turn on linger option: will send RST on close*/
+	l.l_linger = 0;	/* must be 0 to turn on option*/
+	ret = setsockopt(netfd, SOL_SOCKET, SO_LINGER, &l, sizeof(l));
+	if (ret < 0)
+		perror("setsockopt RST");
+
 	in_adr.sin_family = AF_INET;
 	in_adr.sin_port = htons(port);
 	in_adr.sin_addr.s_addr = in_gethostbyname(host);
@@ -49,4 +56,23 @@ int port;
 	}
 
 	return(netfd);
+}
+
+/* if errflag set, send TCP RST on close, else send FIN */
+void net_close(fd, errflag)
+int fd;
+int errflag;
+{
+	int ret;
+	struct linger l;
+
+	/* Send RST on close was previously turned on by net_connect*/
+	if (!errflag) {
+		l.l_onoff = 0;	/* turn off linger option: will send FIN on close*/
+		l.l_linger = 0;
+		ret = setsockopt(fd, SOL_SOCKET, SO_LINGER, &l, sizeof(l));
+		if (ret < 0)
+			perror("setsockopt FIN");
+	}
+	close(fd);
 }
