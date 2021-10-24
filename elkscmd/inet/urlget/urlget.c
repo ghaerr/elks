@@ -33,8 +33,7 @@
 _PROTOTYPE(char *unesc, (char *s));
 _PROTOTYPE(void encode64, (char **pp, char *s));
 _PROTOTYPE(int net_connect, (char *host, int port));
-_PROTOTYPE(void net_close_error, (int fd));
-_PROTOTYPE(void net_close_noerror, (int fd));
+_PROTOTYPE(void net_close, (int fd, int errflag));
 _PROTOTYPE(char *auth, (char *user, char *pass));
 _PROTOTYPE(int skipit, (char *buf, int len, int *skip));
 _PROTOTYPE(int httpget, (char *host, int port, char *user, char *pass, char *path, int headers, int discard, int post));
@@ -258,7 +257,7 @@ int httpget(char *host, int port, char *user, char *pass, char *path,
 		}
    }
 
-   net_close_noerror(fd);	/* send FIN on close */
+   net_close(fd, 0);	/* send FIN on close */
 
    return(0);
 }
@@ -445,7 +444,7 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
 		if (!opt_d)
 			 while (read(fd2, buffer, sizeof(buffer)) > 0); /* purge */
 		s2 = ftpreply(fpr);	/* get the ABORT reply */
-		net_close_error(fd2);	/* send RST on close */
+		net_close(fd2, 1);	/* send RST on close */
 		/* should delete destination file: stdout */
 		s = -1;
 		goto error;
@@ -481,18 +480,14 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
 		s = 0;
 	close(infile);
    }
-   if (s == 0)
-	net_close_noerror(fd2);	/* send FIN */
-   else net_close_error(fd2);	/* send RST */
+   net_close(fd2, s);	/* s == 0? FIN: RST */
 
 error:
    (void) ftpcmd(fpw, fpr, "QUIT", "");
 
    fclose(fpr);
    fclose(fpw);
-   if (s == 0)
-	net_close_noerror(fd);	/* send FIN */
-   else net_close_error(fd);	/* send RST */
+   net_close(fd, s);	/* s == 0? FIN: RST */
 
    return(s == 0 ? 0 : -1);
 }
@@ -522,11 +517,11 @@ int tcpget(char *host, int port, char *user, char *pass, char *path) {
    while ((s = read(fd, buffer, sizeof(buffer))) > 0) {
    	s2 = write(1, buffer, s);
 	if (s2 != s) {
-	    net_close_error(fd); /* send RST*/
+	    net_close(fd, 1); /* send RST*/
 	    return -1;
 	}
    }
-   net_close_noerror(fd);	/* send FIN*/
+   net_close(fd, 0);	/* send FIN*/
    return(0);
 }
 

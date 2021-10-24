@@ -387,7 +387,7 @@ static void tcpdev_release(void)
 	    case TS_CLOSE_WAIT:
 		cb->state = TS_LAST_ACK;
 common_close:
-		if (SEND_RST_ON_CLOSE || db->reset) { /* SO_LINGER w/zero timer */
+		if (db->reset) {		/* SO_LINGER w/zero timer */
 		   tcp_reset_connection(cb);	/* send RST and deallocate */
 		} else {
 		    cbs_in_user_timeout++;

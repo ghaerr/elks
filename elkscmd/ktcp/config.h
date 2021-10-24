@@ -3,7 +3,6 @@
 
 /* compile time options*/
 #define CSLIP			1	/* compile in CSLIP support*/
-#define SEND_RST_ON_CLOSE	0	/* send RST instead of FIN on close*/
 #define SEND_RST_ON_REFUSED_PKT	0	/* send RST on unknown TCP packets*/
 
 /* turn these on for ELKS debugging*/

@@ -156,9 +156,8 @@ int main(int argc, char *argv[])
 	struct linger l;
 
 	l.l_onoff = 1;
-	l.l_linger = 0;
-	ret = setsockopt(tcp_fd, SOL_SOCKET, SO_LINGER, &l, sizeof(l));
-	printf("setsockopt returns %d\n", ret);
+	l.l_linger = 0;		/* send RST on close */
+	setsockopt(tcp_fd, SOL_SOCKET, SO_LINGER, &l, sizeof(l));
 }
 #endif
 	ret = bind(tcp_fd, (struct sockaddr *)&locadr, sizeof(struct sockaddr_in));

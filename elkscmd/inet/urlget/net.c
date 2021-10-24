@@ -43,7 +43,7 @@ int port;
 	l.l_linger = 0;	/* must be 0 to turn on option*/
 	ret = setsockopt(netfd, SOL_SOCKET, SO_LINGER, &l, sizeof(l));
 	if (ret < 0)
-		perror("Setsockopt send RST on close failed");
+		perror("setsockopt RST");
 
 	in_adr.sin_family = AF_INET;
 	in_adr.sin_port = htons(port);
@@ -58,22 +58,21 @@ int port;
 	return(netfd);
 }
 
-void net_close_error(fd)
+/* if errflag set, send TCP RST on close, else send FIN */
+void net_close(fd, errflag)
 int fd;
-{
-	close(fd);	/* keep linger option active: will send RST on close*/
-}
-
-void net_close_noerror(fd)
-int fd;
+int errflag;
 {
 	int ret;
 	struct linger l;
 
-	l.l_onoff = 0;	/* turn off linger option: will send FIN on close*/
-	l.l_linger = 0;
-	ret = setsockopt(fd, SOL_SOCKET, SO_LINGER, &l, sizeof(l));
-	if (ret < 0)
-		perror("Setsockopt send FIN on close failed");
+	/* Send RST on close was previously turned on by net_connect*/
+	if (!errflag) {
+		l.l_onoff = 0;	/* turn off linger option: will send FIN on close*/
+		l.l_linger = 0;
+		ret = setsockopt(fd, SOL_SOCKET, SO_LINGER, &l, sizeof(l));
+		if (ret < 0)
+			perror("setsockopt FIN");
+	}
 	close(fd);
 }

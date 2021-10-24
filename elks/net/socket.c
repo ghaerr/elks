@@ -588,7 +588,6 @@ int sys_setsockopt(int fd, int level, int option_name, void *option_value,
     if (l.l_onoff != 0 && l.l_linger == 0)
 	sock->flags |= SO_RST_ON_CLOSE;
     else sock->flags &= ~SO_RST_ON_CLOSE;
-    printk("setsockopt reset %x\n", sock->flags);
 
     return 0;
 }
