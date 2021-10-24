@@ -433,6 +433,8 @@ void tcp_process(struct iphdr_s *iph)
 	    cbnode->tcpcb.localport = ntohs(tcph->dport);
 	    cbnode->tcpcb.remaddr = iph->saddr;
 	    cbnode->tcpcb.remport = ntohs(tcph->sport);
+	    cbnode->tcpcb.send_nxt = ntohl(tcph->seqnum);
+	    cbnode->tcpcb.rcv_nxt = ntohl(tcph->acknum);
 	    cbnode->tcpcb.state = TS_CLOSED;
 	    tcp_reset_connection(&cbnode->tcpcb); /* send RST and deallocate*/
 	}
