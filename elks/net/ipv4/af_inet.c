@@ -28,12 +28,12 @@
 #ifdef CONFIG_INET
 
 extern unsigned char tdin_buf[];
-extern short bufin_sem, bufout_sem;
+extern sem_t bufin_sem, bufout_sem;
 extern char tcpdev_inuse;
 extern int tcpdev_inetwrite(void *data, unsigned int len);
 extern char *get_tdout_buf(void);
 
-static short rwlock;	/* global inet_read/write semaphore*/
+static sem_t rwlock;	/* global inet_read/write semaphore*/
 
 int inet_process_tcpdev(register char *buf, int len)
 {

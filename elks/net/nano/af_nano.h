@@ -31,7 +31,7 @@ struct nano_proto_data {
     struct nano_proto_data *npd_peerupd;
     struct wait_queue npd_wait;
     int npd_lock_flag;
-    short npd_sem;
+    sem_t npd_sem;
 };
 
 #endif

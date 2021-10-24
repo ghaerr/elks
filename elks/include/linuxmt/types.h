@@ -45,6 +45,8 @@ typedef __u16			umode_t;
 typedef __u8			cc_t;
 typedef __u16			sig_t;
 
+typedef __s16			sem_t;
+
 /*@ignore@*/
 
 /* The next three lines cause splint to complain needlessly */
