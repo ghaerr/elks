@@ -485,9 +485,12 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
 error:
    (void) ftpcmd(fpw, fpr, "QUIT", "");
 
-   fclose(fpr);
-   fclose(fpw);
+   /* flush buffered output, then close descriptor first so that FIN/RST works*/
+   fflush(fpw);
    net_close(fd, s);	/* s == 0? FIN: RST */
+
+   fclose(fpr);		/* associated fd already closed above*/
+   fclose(fpw);
 
    return(s == 0 ? 0 : -1);
 }
