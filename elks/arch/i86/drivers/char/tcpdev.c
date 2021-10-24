@@ -27,7 +27,7 @@
 unsigned char tdin_buf[TCPDEV_INBUFFERSIZE];	/* for reading tcpdev*/
 unsigned char tdout_buf[TCPDEV_OUTBUFFERSIZE];	/* for writing tcpdev*/
 
-short bufin_sem, bufout_sem;	/* Buffer semaphores */
+sem_t bufin_sem, bufout_sem;	/* Buffer semaphores */
 
 static unsigned int tdin_tail, tdout_tail;
 

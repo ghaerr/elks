@@ -549,7 +549,7 @@ int sys_socket(int family, int type, int protocol)
     if (!(sock = sock_alloc()))
 	return -ENOSR;
 
-    sock->type = (short int) type;
+    sock->type = type;
     sock->ops = ops;
     if ((fd = sock->ops->create(sock, protocol)) < 0) {
 	sock_release(sock);
