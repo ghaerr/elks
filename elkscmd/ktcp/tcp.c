@@ -425,18 +425,28 @@ void tcp_process(struct iphdr_s *iph)
 	printf("tcp: refusing packet %s:%u->%d\n", in_ntoa(iph->saddr),
 		ntohs(tcph->sport), ntohs(tcph->dport));
 
-#if SEND_RST_ON_REFUSED_PKT
+	if (tcph->flags & TF_RST)
+		return;
+
 	/* Dummy up a new control block and send RST to shutdown sender */
 	cbnode = tcpcb_new();
 	if (cbnode) {
+	    __u32 seqno = ntohl(tcph->seqnum);
+	    cbnode->tcpcb.state = TS_CLOSED;
 	    cbnode->tcpcb.localaddr = iph->daddr;
 	    cbnode->tcpcb.localport = ntohs(tcph->dport);
 	    cbnode->tcpcb.remaddr = iph->saddr;
 	    cbnode->tcpcb.remport = ntohs(tcph->sport);
-	    cbnode->tcpcb.state = TS_CLOSED;
-	    tcp_reset_connection(&cbnode->tcpcb); /* send RST and deallocate*/
+	    if (tcph->flags & TF_ACK) {
+		cbnode->tcpcb.flags = TF_RST;
+		cbnode->tcpcb.send_nxt = ntohl(tcph->acknum);
+	    } else
+		cbnode->tcpcb.flags = TF_RST|TF_ACK;
+	    cbnode->tcpcb.rcv_nxt = (tcph->flags & TF_SYN)? seqno+1: seqno;
+	    tcp_output(&cbnode->tcpcb);		/* send RST*/
+	    tcpcb_remove_cb(&cbnode->tcpcb);	/* deallocate*/
 	}
-#endif
+
 	netstats.tcpdropcnt++;
 	return;
     }

@@ -3,7 +3,6 @@
 
 /* compile time options*/
 #define CSLIP			1	/* compile in CSLIP support*/
-#define SEND_RST_ON_REFUSED_PKT	0	/* send RST on unknown TCP packets*/
 
 /* turn these on for ELKS debugging*/
 #define USE_DEBUG_EVENT 1	/* use CTRLP to toggle debug output*/
