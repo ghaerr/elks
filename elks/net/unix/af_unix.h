@@ -29,7 +29,7 @@ struct unix_proto_data {
     struct unix_proto_data *peerupd;
     struct wait_queue wait;
     int lock_flag;
-    short sem;
+    sem_t sem;
 };
 
 #endif

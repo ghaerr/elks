@@ -21,16 +21,15 @@ typedef enum {
 struct socket {
     short type;
     unsigned char state;
-    long flags;
+    unsigned char flags;
     struct proto_ops *ops;
     void *data;
 
 #if defined(CONFIG_INET)
     /* I added this here for smaller code and memory use - HarKal */
     int avail_data;
-    short sem;
+    sem_t sem;
 #endif
-
 #if defined(CONFIG_UNIX) || defined(CONFIG_NANO) || defined(CONFIG_INET)
     struct socket *conn;
     struct socket *iconn;
@@ -68,10 +67,11 @@ struct proto_ops {
     int (*fcntl) ();
 };
 
-#define SO_CLOSING	(1 << 12)
-#define SO_ACCEPTCON	(1 << 13)
-#define SO_WAITDATA	(1 << 14)
-#define SO_NOSPACE	(1 << 15)
+#define SO_CLOSING	(1 << 0)
+#define SO_ACCEPTCON	(1 << 1)
+#define SO_WAITDATA	(1 << 2)
+#define SO_NOSPACE	(1 << 3)
+#define SO_RST_ON_CLOSE	(1 << 4)
 
 struct net_proto {
     char *name;			/* Protocol name */

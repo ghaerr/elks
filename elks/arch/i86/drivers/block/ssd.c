@@ -42,7 +42,7 @@ void ssd_init(void)
 	NUM_SECTS = ssddev_init();
     }
     if (NUM_SECTS)
-	printk("ssd: %ldK disk\n", NUM_SECTS/2);
+		printk("ssd: %ldK disk\n", NUM_SECTS/2UL);
     else printk("ssd: initialization error\n");
 }
 

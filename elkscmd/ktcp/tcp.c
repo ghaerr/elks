@@ -65,11 +65,18 @@ static __u32 choose_seq(void)
     return timer_get_time();
 }
 
-/* abruptly terminate connection*/
-static void tcp_reset_connection(struct tcpcb_s *cb)	//FIXME remove
+void tcp_send_reset(struct tcpcb_s *cb)
 {
-	tcp_send_reset(cb);
-	tcpcb_remove_cb(cb);	/* deallocate*/
+    cb->flags = TF_RST;
+    cb->datalen = 0;
+    tcp_output(cb);
+}
+
+/* abruptly terminate connection*/
+void tcp_reset_connection(struct tcpcb_s *cb)
+{
+    tcp_send_reset(cb);
+    tcpcb_remove_cb(cb);	/* deallocate*/
 }
 
 void tcp_send_fin(struct tcpcb_s *cb)
@@ -78,13 +85,6 @@ void tcp_send_fin(struct tcpcb_s *cb)
     cb->datalen = 0;
     tcp_output(cb);
     cb->send_nxt++;
-}
-
-void tcp_send_reset(struct tcpcb_s *cb)
-{
-    cb->flags = TF_RST;
-    cb->datalen = 0;
-    tcp_output(cb);
 }
 
 static void tcp_send_ack(struct tcpcb_s *cb)
@@ -217,15 +217,13 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     datasize = iptcp->tcplen - TCP_DATAOFF(h);
 
     if (datasize != 0) {
-	//debug_tcp("tcp: recv data len %u\n", datasize);
+	//debug_tcp("tcp: recv data len %u avail %u\n", datasize, CB_BUF_SPACE(cb));
 	/* Process the data */
 	data = (__u8 *)h + TCP_DATAOFF(h);
 
-//printf("space free %d\n", CB_BUF_SPACE(cb));
 	/* check if buffer space for received packet*/
 	if (datasize > CB_BUF_SPACE(cb)) {
-	    printf("tcp: dropping packet, data too large: %u > %d\n", datasize, CB_BUF_SPACE(cb));
-	    //tcp_reset_connection(cb);	//FIXME this causes RST received then panic in read/write
+	    printf("tcp: dropping packet, no buffer space: %u > %d\n", datasize, CB_BUF_SPACE(cb));
 	    netstats.tcpdropcnt++;
 	    return;
 	}
@@ -249,22 +247,22 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
     if (h->flags & TF_RST) {
 	/* TODO: Check seqnum for security */
-printf("tcp: RST received, removing retrans packets\n");
+	printf("tcp: RST from %s:%u->%d\n", in_ntoa(cb->remaddr), ntohs(h->sport), ntohs(h->dport));
 	rmv_all_retrans_cb(cb);
 	if (cb->state == TS_CLOSE_WAIT) {
 	    ENTER_TIME_WAIT(cb);
+	    tcpdev_sock_state(cb, SS_UNCONNECTED);	/* no wakeup?*/
 	} else {
-	    //cb->state = TS_CLOSED;
-	    tcpdev_sock_state(cb, SS_UNCONNECTED);
+	    tcpdev_sock_state(cb, SS_DISCONNECTING);	/* wakes up process*/
 	    tcpcb_remove_cb(cb); 	/* deallocate*/
 	}
-	tcpdev_sock_state(cb, SS_UNCONNECTED);
 	return;
     }
 
     if (h->flags & TF_FIN) {
 	cb->rcv_nxt++;
 	cb->state = TS_CLOSE_WAIT;
+	cb->time_wait_exp = Now;	/* used for debug output only*/
 	tcpdev_sock_state(cb, SS_DISCONNECTING);
     }
 
@@ -424,10 +422,21 @@ void tcp_process(struct iphdr_s *iph)
     }
 
     if (!cbnode) {
-	printf("tcp: Refusing packet %s:%u->%d\n", in_ntoa(iph->saddr),
+	printf("tcp: refusing packet %s:%u->%d\n", in_ntoa(iph->saddr),
 		ntohs(tcph->sport), ntohs(tcph->dport));
 
-	/* TODO : send RST and stuff */
+#if SEND_RST_ON_REFUSED_PKT
+	/* Dummy up a new control block and send RST to shutdown sender */
+	cbnode = tcpcb_new();
+	if (cbnode) {
+	    cbnode->tcpcb.localaddr = iph->daddr;
+	    cbnode->tcpcb.localport = ntohs(tcph->dport);
+	    cbnode->tcpcb.remaddr = iph->saddr;
+	    cbnode->tcpcb.remport = ntohs(tcph->sport);
+	    cbnode->tcpcb.state = TS_CLOSED;
+	    tcp_reset_connection(&cbnode->tcpcb); /* send RST and deallocate*/
+	}
+#endif
 	netstats.tcpdropcnt++;
 	return;
     }

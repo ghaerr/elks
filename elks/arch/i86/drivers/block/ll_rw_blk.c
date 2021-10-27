@@ -419,7 +419,8 @@ void INITPROC blk_dev_init(void)
     bioshd_init();
 #endif
 
-#ifdef CONFIG_BLK_DEV_SSD
+/* if *some* SSD block device is set, then init it */
+#if defined(CONFIG_BLK_DEV_TEST) || defined(CONFIG_BLK_DEV_SSD_SD8018X)
     ssd_init();
 #endif
 

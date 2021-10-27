@@ -135,7 +135,7 @@ void wake_up_process(register struct task_struct *p)
  * a process. The process itself must remove the queue once it has woken.
  */
 
-void _wake_up(register struct wait_queue *q, unsigned short int it)
+void _wake_up(register struct wait_queue *q, int it)
 {
     register struct task_struct *p;
 
@@ -154,13 +154,13 @@ void _wake_up(register struct wait_queue *q, unsigned short int it)
  *	Semaphores. These are not IRQ safe nor needed to be so for ELKS
  */
 
-void up(register short *s)
+void up(register sem_t *s)
 {
     if (++(*s) == 0)		/* Gone non-negative */
 	wake_up((void *) s);
 }
 
-void down(register short *s)
+void down(register sem_t *s)
 {
     /* Wait for the semaphore */
     while (*s < 0)

@@ -199,5 +199,6 @@ void tcp_process(struct iphdr_s *iph);
 void tcp_connect(struct tcpcb_s *cb);
 void tcp_send_fin(struct tcpcb_s *cb);
 void tcp_send_reset(struct tcpcb_s *cb);
+void tcp_reset_connection(struct tcpcb_s *cb);
 
 #endif

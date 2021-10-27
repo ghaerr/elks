@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <arpa/inet.h>
 #include <ktcp/tcp.h>
 #include <ktcp/netconf.h>
@@ -45,6 +46,17 @@ int s;
 int ret,size;
 struct sockaddr_in localadr,remaddr;
 char buf[100];
+
+timeq_t timer_get_time(void)
+{
+    struct timezone	tz;
+    struct timeval 	tv;
+
+    gettimeofday(&tv, &tz);
+
+	/* return 1/16 second ticks, 1,000,000/16 = 62500*/
+    return (tv.tv_sec << 4) | ((unsigned long)tv.tv_usec / 62500U);
+}
 
 int main(void)
 {
@@ -116,6 +128,14 @@ int main(void)
 		addrbytes = (__u8 *)&cbstats->remaddr;
 		sprintf(addr,"%d.%d.%d.%d",addrbytes[0],addrbytes[1],addrbytes[2],addrbytes[3]);
 		printf("%3d %12s %4dms", i+1, tcp_states[cbstats->state], cbstats->rtt);
-		printf(" %5u %15s  %5u\n", cbstats->localport, addr, cbstats->remport);
+		printf(" %5u %15s  %5u", cbstats->localport, addr, cbstats->remport);
+		if (cbstats->state > TS_ESTABLISHED) {
+			/* time is in 1/16 second clicks*/
+			int secs = (unsigned)(cbstats->time_wait_exp - (long)timer_get_time());
+			unsigned int tenthsecs = ((secs + 8) & 15) >> 1;
+			secs >>= 4;
+			printf(" (%d.%d secs)", secs, tenthsecs);
+		}
+		printf("\n");
     }
 }

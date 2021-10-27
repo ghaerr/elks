@@ -183,7 +183,7 @@ struct inode {
     unsigned short		i_flags;
     unsigned char		i_lock;
     unsigned char		i_dirt;
-    short			i_sem;
+    sem_t			i_sem;
 #ifdef BLOAT_FS
     unsigned long int		i_blksize;
     unsigned long int		i_blocks;
