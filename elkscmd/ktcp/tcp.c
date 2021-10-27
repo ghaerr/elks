@@ -425,7 +425,6 @@ void tcp_process(struct iphdr_s *iph)
 	printf("tcp: refusing packet %s:%u->%d\n", in_ntoa(iph->saddr),
 		ntohs(tcph->sport), ntohs(tcph->dport));
 
-#if SEND_RST_ON_REFUSED_PKT
 	if (tcph->flags & TF_RST)
 		return;
 
@@ -447,7 +446,7 @@ void tcp_process(struct iphdr_s *iph)
 	    tcp_output(&cbnode->tcpcb);		/* send RST*/
 	    tcpcb_remove_cb(&cbnode->tcpcb);	/* deallocate*/
 	}
-#endif
+
 	netstats.tcpdropcnt++;
 	return;
     }
