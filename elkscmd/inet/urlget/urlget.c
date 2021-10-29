@@ -532,9 +532,8 @@ int main(int argc, char **argv) {
    char *path, *ps, *p, *at;
    int opt_d = 0, opt_h = 0, opt_p = 0, opt_v = 0;
 
-   if ((prog = strrchr(*argv, '/')))
-		prog++;
-   else
+   prog = strrchr(*argv, '/') + 1;
+   if (prog == (char *)1)
    	prog = *argv;
    argv++;
    argc--;
