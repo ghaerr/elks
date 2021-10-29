@@ -352,8 +352,9 @@ void tcp_output(struct tcpcb_s *cb)
 
     len = CB_BUF_SPACE(cb) - PUSH_THRESHOLD;
     if (len <= 0)
-	len = 1;		/* Never advertise zero window size */
-    else len = 255;	//FIXME testing only
+	len = 1;			/* Never advertise zero window size */
+    if (len > THROTTLE_MAX_WINDOW)	/* throttle down to allow ELKS apps to keep up */
+	len = THROTTLE_MAX_WINDOW;
     th->window = htons(len);
     th->urgpnt = 0;
     th->flags = cb->flags;

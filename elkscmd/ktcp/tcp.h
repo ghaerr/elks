@@ -28,6 +28,9 @@
 /* max outstanding send window size*/
 #define TCP_SEND_WINDOW_MAX	1024	/* should be less than TCP_RETRANS_MAXMEM*/
 
+/* max advertised receive window size*/
+#define THROTTLE_MAX_WINDOW	512	/* FIXME CB_IN_BUF_SIZE when PTY fixed*/
+
 /* bytes to subtract from window size and when to force app write*/
 #define PUSH_THRESHOLD	512
 
