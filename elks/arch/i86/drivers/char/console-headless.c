@@ -63,10 +63,41 @@ static int Console_ioctl(struct tty *tty, int cmd, char *arg)
 static int Console_write(register struct tty *tty)
 {
     int cnt = 0;
+#ifdef CONFIG_ARCH_PC98
+    int tty_out;
+    int tvram_x;
+    static int esc_seq = 0;
+    static int esc_num = 0;
+#endif
 
     while (tty->outq.len > 0) {
 #ifdef CONFIG_ARCH_PC98
-	early_putchar((int)tty_outproc(tty));
+	tty_out = tty_outproc(tty);
+	if (tty_out == 0x1B)
+	    esc_seq = 1;
+	else if ((tty_out == '[') && (esc_seq == 1)) {
+	    esc_seq = 2;
+	}
+	else if ((tty_out >= 0x30) && (tty_out <= 0x39) && (esc_seq == 2)) {
+	    esc_num = tty_out-0x30;
+	}
+	else if ((tty_out > 0x40) && (esc_seq == 2)) {
+	    esc_seq = 3;
+	    if (tty_out == 'C') {
+	        tvram_x = read_tvram_x();
+	        tvram_x += esc_num * 2;
+	        write_tvram_x(tvram_x);
+	    }
+	    else if (tty_out == 'K') {
+	        clear_tvram();
+	    }
+	}
+	else
+	    esc_seq = 0;
+
+	if (!esc_seq) {
+	    early_putchar(tty_out);
+	}
 #else
 	conio_putc((byte_t)tty_outproc(tty));
 #endif

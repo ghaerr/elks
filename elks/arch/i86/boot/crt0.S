@@ -17,6 +17,9 @@
 #ifdef CONFIG_ARCH_PC98
 	.global early_getchar
 	.global early_getinit
+	.global read_tvram_x
+	.global write_tvram_x
+	.global clear_tvram
 #endif
 
 _start:
@@ -74,9 +77,9 @@ early_putchar:
 	push %dx
 	push %cs
 	pop %ds
-	cmp $'\r',%ax
+	cmp $'\r',%al
 	jz putesc_r
-	cmp $'\n',%ax
+	cmp $'\n',%al
 	jz putesc_n
 	xor %ah,%ah
 	mov $tvram_x,%bx
@@ -142,6 +145,38 @@ scroll_lp:
 	stosw
 	mov %dx,tvram_x
 	jmp put_end
+read_tvram_x:
+	push %ds
+	push %cs
+	pop %ds
+	mov tvram_x,%ax
+	pop %ds
+	ret
+write_tvram_x:
+	mov %sp,%bx
+	mov 2(%bx),%ax
+	push %ds
+	push %cs
+	pop %ds
+	mov %ax,tvram_x
+	pop %ds
+	ret
+clear_tvram:
+	push %bx
+	push %dx
+	push %ds
+	push %es
+	push %cs
+	pop %ds
+	mov tvram_x,%bx
+	mov $0xa000,%dx
+	mov %dx,%es
+	movw $0x0000,%es:(%bx)
+	pop %es
+	pop %ds
+	pop %dx
+	pop %bx
+	ret
 tvram_x:
 	.word 960
 #else
