@@ -318,9 +318,9 @@ int ftpcmd( FILE *fpw, FILE *fpr, char *cmd, char *arg)
    int s = 0;
    fprintf(fpw, "%s%s%s\r\n", cmd, *arg ? " " : "", arg);
    fflush(fpw);
-   if (strcmp(cmd, "ABOR") != 0) s=ftpreply(fpr); /* Don't wait for reply to ABORT, need to 
-						   * purge the connection first
-						   * (kludge)	*/
+   if (strcmp(cmd, "ABOR") != 0) s=ftpreply(fpr); /* Don't wait for reply to ABORT, 
+						   * it may never arrive (congestion).
+						   */
    return s;
 }
 
@@ -532,8 +532,9 @@ int main(int argc, char **argv) {
    char *path, *ps, *p, *at;
    int opt_d = 0, opt_h = 0, opt_p = 0, opt_v = 0;
 
-   prog = strrchr(*argv, '/') + 1;
-   if (prog == (char *)NULL)
+   if ((prog = strrchr(*argv, '/')))
+		prog++;
+   else
    	prog = *argv;
    argv++;
    argc--;
@@ -711,7 +712,7 @@ int main(int argc, char **argv) {
    return(s);
 }
 
-void usage(char * prg) {
+void usage(char * prg) {	/* FIXME: this is confusing, add usage() per protocol */
 	fprintf(stderr, "%s: Error in options.\n\t-h include header in output (http only)\n", prg);
 	fprintf(stderr, "\t-d ignore content, show header only (http)\n");
 	fprintf(stderr, "\t-v verbose output\n\t-p use POST instead of GET (http)\n");
