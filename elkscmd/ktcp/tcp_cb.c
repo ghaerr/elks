@@ -70,7 +70,7 @@ struct tcpcb_list_s *tcpcb_new(void)
 
     n = (struct tcpcb_list_s *) malloc(sizeof(struct tcpcb_list_s));
     if (n == NULL) {
-	debug_tcp("ktcp: Out of memory 2\n");
+	debug_tcp("ktcp: Out of memory for CB\n");
 	return NULL;
     }
     debug_mem("Alloc CB %d bytes\n", sizeof(struct tcpcb_list_s));
@@ -117,21 +117,19 @@ void tcpcb_remove(struct tcpcb_list_s *n)
     struct tcpcb_list_s *next = n->next;
 
     debug_tcp("tcp: REMOVING control block %x\n", n);
+    debug_mem("Free CB\n");
     tcpcb_num--;	/* for netstat*/
 
     if (n->prev)
 	n->prev->next = next;
     else {
-
 	/* Head update */
 	n = next;
 	n->prev = NULL;
 
 	rmv_all_retrans(tcpcbs);
-	debug_mem("Free CB\n");
 	free(tcpcbs);
 	tcpcbs = n;
-
 	return;
     }
 
@@ -140,7 +138,6 @@ void tcpcb_remove(struct tcpcb_list_s *n)
 
     rmv_all_retrans(n);
     free(n);
-    debug_mem("Free CB\n");
 }
 
 struct tcpcb_list_s *tcpcb_check_port(__u16 lport)

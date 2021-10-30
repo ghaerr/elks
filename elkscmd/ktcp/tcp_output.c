@@ -176,14 +176,14 @@ rmv_from_retrans(struct tcp_retrans_list_s *n)
 
     tcp_timeruse--;
     tcp_retrans_memory -= n->len;
+    debug_mem("retrans free: (cnt %d mem %u)\n", tcp_timeruse, tcp_retrans_memory);
+
     if (n->prev)
 	n->prev->next = next;
     else {
-
 	/* Head update */
 	n = next;
 	n->prev = NULL;
-	debug_mem("retrans free: (cnt %d mem %u)\n", tcp_timeruse, tcp_retrans_memory);
 	free(retrans_list);
 	retrans_list = n;
 
@@ -192,8 +192,6 @@ rmv_from_retrans(struct tcp_retrans_list_s *n)
 
     if (next)
 	next->prev = n->prev;
-
-    debug_mem("retrans free: (cnt %d mem %u)\n", tcp_timeruse, tcp_retrans_memory);
     free(n);
 
     return next;
@@ -241,7 +239,7 @@ void add_for_retrans(struct tcpcb_s *cb, struct tcphdr_s *th, __u16 len,
 
     n = (struct tcp_retrans_list_s *)malloc(sizeof(struct tcp_retrans_list_s) + len);
     if (n == NULL) {
-	printf("ktcp: Out of memory\n");
+	printf("ktcp: Out of memory for retrans\n");
 	return;
     }
 
@@ -269,7 +267,7 @@ void add_for_retrans(struct tcpcb_s *cb, struct tcphdr_s *th, __u16 len,
     n->retrans_num = 0;
     n->first_trans = Now;
 
-    n->rto = cb->rtt << 1;
+    n->rto = cb->rtt << 1;			/* set retrans timeout to twice RTT*/
     if (linkprotocol == LINK_ETHER) {
 	if (n->rto < TCP_RETRANS_MINWAIT_ETH)
 	    n->rto = TCP_RETRANS_MINWAIT_ETH;	/* 1/4 sec min retrans timeout on ethernet*/
@@ -282,15 +280,20 @@ void add_for_retrans(struct tcpcb_s *cb, struct tcphdr_s *th, __u16 len,
 
 void tcp_reoutput(struct tcp_retrans_list_s *n)
 {
-    n->retrans_num++;
-    n->rto *= 2;
+    unsigned int datalen = n->len - TCP_DATAOFF(&n->tcphdr[0]);
+
+    if (datalen < n->cb->rcv_wnd)		/* don't record retry if not in recv window*/
+	n->retrans_num++;
+    n->rto <<= 1;				/* double retrans timeout*/
     if (n->rto > TCP_RETRANS_MAXWAIT)		/* limit retransmit timeouts to 4 seconds*/
 	n->rto = TCP_RETRANS_MAXWAIT;
     n->next_retrans = Now + n->rto;
-printf("tcp retrans: seq %lu size %d rcvwnd %u unack %lu rto %ld (retry %d cnt %d mem %u)\n",
-ntohl(n->tcphdr[0].seqnum), n->len - TCP_DATAOFF(&n->tcphdr[0]),
-n->cb->rcv_wnd, n->cb->send_nxt - n->cb->send_una,
-n->rto, n->retrans_num, tcp_timeruse, tcp_retrans_memory);
+
+    printf("tcp retrans: seq %lu size %d rcvwnd %u unack %lu rto %ld rtt %ld (retry %d cnt %d mem %u)\n",
+	ntohl(n->tcphdr[0].seqnum), n->len - TCP_DATAOFF(&n->tcphdr[0]),
+	n->cb->rcv_wnd, n->cb->send_nxt - n->cb->send_una,
+	n->rto, n->cb->rtt, n->retrans_num, tcp_timeruse, tcp_retrans_memory);
+
     ip_sendpacket((unsigned char *)n->tcphdr, n->len, &n->apair, n->cb);
     netstats.tcpretranscnt++;
 }
@@ -315,27 +318,31 @@ void tcp_retrans(void)
     while (n != NULL) {
 	datalen = n->len - TCP_DATAOFF(&n->tcphdr[0]);
 
-	//debug_mem("retrans seqno: %lx %lx", ntohl(n->tcphdr[0].seqnum) + datalen,n->cb->send_una);
+	/* calc RTT and remove if seqno was acked*/
 	if (SEQ_LEQ(ntohl(n->tcphdr[0].seqnum) + datalen, n->cb->send_una)) {
 	    if (n->retrans_num == 0) {
 		rtt = Now - n->first_trans;
 		if (rtt > 0)
 		    n->cb->rtt = (TCP_RTT_ALPHA * n->cb->rtt + (100 - TCP_RTT_ALPHA) * rtt) / 100;
-		debug_tcp("rtt %d RTT %ld RTO %ld\n", rtt, n->cb->rtt, n->rto);
+		debug_tcp("tcp: rtt %d RTT %ld RTO %ld\n", rtt, n->cb->rtt, n->rto);
 	    }
-	    debug_mem("retrans removed: %d seqno >= unacked\n", n->retrans_num);
+	    debug_retrans("retrans remove: seq %ld unack %ld\n",
+		ntohl(n->tcphdr[0].seqnum), n->cb->send_una);
 	    n = rmv_from_retrans(n);
 	    continue;
-	}
+	} else
+	    debug_retrans("retrans check: seq %ld unack %ld time %ld\n",
+		ntohl(n->tcphdr[0].seqnum) + datalen, n->cb->send_una, n->next_retrans - Now);
 
-	//debug_mem(" time check %lx %lx\n", Now, n->next_retrans);
-	/* check for retrans time up and receive window big enough*/
-	if (TIME_GEQ(Now, n->next_retrans) && datalen < n->cb->rcv_wnd) {
+	/* check for retrans time up*/
+	if (TIME_GEQ(Now, n->next_retrans)) {
 	    tcp_reoutput(n);
 	    if (n->retrans_num >= TCP_RETRANS_MAXTRIES) {
-		 debug_mem("retrans removed: %d max tries exceeded\n", n->retrans_num);
-		 n = rmv_from_retrans(n);
-		 continue;
+		printf("retrans max retries: seq %ld unack %ld time %ld\n",
+		    ntohl(n->tcphdr[0].seqnum), n->cb->send_una, n->next_retrans - Now);
+		tcp_send_reset(n->cb);		/* CB deallocated on received RST*/
+		n = rmv_from_retrans(n);
+		continue;
 	    }
 	}
 	n = n->next;

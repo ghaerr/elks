@@ -45,7 +45,7 @@
 /* retransmit settings*/
 #define TCP_RTT_ALPHA			90
 #define TCP_RETRANS_MAXMEM		4096	/* max retransmit total memory*/
-#define TCP_RETRANS_MAXTRIES		3	/* max # retransmits*/
+#define TCP_RETRANS_MAXTRIES		6	/* max # retransmits (~12 secs total)*/
 /* timeout values in 1/16 seconds*/
 #define TCP_RETRANS_MAXWAIT		64	/* max retransmit wait (4 secs)*/
 #define TCP_RETRANS_MINWAIT_SLIP	8	/* minimum retrans timeout for slip/cslip (1/2 sec)*/

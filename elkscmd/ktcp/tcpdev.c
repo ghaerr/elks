@@ -337,7 +337,7 @@ static void tcpdev_write(void)
 	return;
     }
 
-    /* delay sending if outstanding send window too large*/
+    /* Delay sending if outstanding send window too large. FIXME could hang if no ACKs rcvd*/
     maxwindow = cb->rcv_wnd;
     if (maxwindow > TCP_SEND_WINDOW_MAX)	/* limit retrans memory usage*/
 	maxwindow = TCP_SEND_WINDOW_MAX;
@@ -348,7 +348,7 @@ static void tcpdev_write(void)
 	return;
     }
 
-    printf("tcp write: seq %lu size %d rcvwnd %u unack %lu retrans cnt %d\n",
+    debug_tcp("tcp write: seq %lu size %d rcvwnd %u unack %lu retrans cnt %d\n",
 	cb->send_nxt, size, cb->rcv_wnd, cb->send_nxt - cb->send_una, tcp_timeruse);
 
     cb->flags = TF_PSH|TF_ACK;
