@@ -287,7 +287,10 @@ void tcp_reoutput(struct tcp_retrans_list_s *n)
     if (n->rto > TCP_RETRANS_MAXWAIT)		/* limit retransmit timeouts to 4 seconds*/
 	n->rto = TCP_RETRANS_MAXWAIT;
     n->next_retrans = Now + n->rto;
-printf("retrans retry: #%d rto %ld (cnt %d, mem %u)\n", n->retrans_num, n->rto, tcp_timeruse, tcp_retrans_memory);
+printf("tcp retrans: seq %lu size %d rcvwnd %u unack %lu rto %ld (retry %d cnt %d mem %u)\n",
+ntohl(n->tcphdr[0].seqnum), n->len - TCP_DATAOFF(&n->tcphdr[0]),
+n->cb->rcv_wnd, n->cb->send_nxt - n->cb->send_una,
+n->rto, n->retrans_num, tcp_timeruse, tcp_retrans_memory);
     ip_sendpacket((unsigned char *)n->tcphdr, n->len, &n->apair, n->cb);
     netstats.tcpretranscnt++;
 }
@@ -296,7 +299,8 @@ printf("retrans retry: #%d rto %ld (cnt %d, mem %u)\n", n->retrans_num, n->rto, 
 void tcp_retrans(void)
 {
     struct tcp_retrans_list_s *n;
-    int datalen, rtt;
+    int rtt;
+    unsigned int datalen;
 
     /* avoid running out of memory with excessive retransmits*/
     if (tcp_retrans_memory > TCP_RETRANS_MAXMEM) {
@@ -325,7 +329,8 @@ void tcp_retrans(void)
 	}
 
 	//debug_mem(" time check %lx %lx\n", Now, n->next_retrans);
-	if (TIME_GEQ(Now, n->next_retrans)) {
+	/* check for retrans time up and receive window big enough*/
+	if (TIME_GEQ(Now, n->next_retrans) && datalen < n->cb->rcv_wnd) {
 	    tcp_reoutput(n);
 	    if (n->retrans_num >= TCP_RETRANS_MAXTRIES) {
 		 debug_mem("retrans removed: %d max tries exceeded\n", n->retrans_num);
