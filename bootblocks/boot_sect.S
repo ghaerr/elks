@@ -168,6 +168,10 @@ _next1:
 
 	// Print header
 
+#ifdef CONFIG_ARCH_PC98
+	mov $0x0C,%ah
+	int $0x18
+#endif
 	mov $msg_boot,%bx
 	call _puts
 
