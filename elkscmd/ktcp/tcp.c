@@ -29,25 +29,43 @@ timeq_t Now;
 extern int cbs_in_time_wait;		// FIXME remove extern
 extern int cbs_in_user_timeout;
 
+#if DEBUG_TCPDATA
+static char *tcp_flags(int flags)
+{
+    static char buf[7];
+    char *p = buf;
+
+    if (flags & TF_FIN) *p++ = 'F';
+    if (flags & TF_SYN) *p++ = 'S';
+    if (flags & TF_RST) *p++ = 'R';
+    if (flags & TF_PSH) *p++ = 'P';
+    if (flags & TF_URG) *p++ = 'U';
+    if (flags & TF_ACK) *p++ = 'A';
+    *p = 0;
+    return buf;
+}
+#endif
+
 void tcp_print(struct iptcp_s *head, int recv, struct tcpcb_s *cb)
 {
-#if DEBUG_TCP
-    debug_tcp("TCP: %s ", recv? "recv": "send");
-    debug_tcp("src:%u dst:%u ", ntohs(head->tcph->sport), ntohs(head->tcph->dport));
-    debug_tcp("flags:0x%x ",head->tcph->flags);
+#if DEBUG_TCPDATA
+    debug_tcpdata("tcp: %s ", recv? "recv": "send");
+    debug_tcpdata("%u->%u ", ntohs(head->tcph->sport), ntohs(head->tcph->dport));
+    debug_tcpdata("[%s] ", tcp_flags(head->tcph->flags));
     if (cb) {
       if (recv) {
-    	if (head->tcplen > 20) debug_tcp("seq:%ld-%ld ", ntohl(head->tcph->seqnum) - cb->irs, 
+	if (head->tcplen > 20) debug_tcp("seq %lu-%lu ", ntohl(head->tcph->seqnum) - cb->irs,
 				ntohl(head->tcph->seqnum) - cb->irs+head->tcplen-20);
-	debug_tcp("ack:%ld ", ntohl(head->tcph->acknum) - cb->iss);
+	debug_tcpdata("ack %lu ", ntohl(head->tcph->acknum) - cb->iss);
       } else {
-    	if (head->tcplen > 20) debug_tcp("seq:%ld-%ld ", ntohl(head->tcph->seqnum) - cb->iss, 
+	if (head->tcplen > 20) debug_tcpdata("seq %lu-%lu ",
+	ntohl(head->tcph->seqnum) - cb->iss,
 	ntohl(head->tcph->seqnum) - cb->iss+head->tcplen-20);
- 	debug_tcp("ack:%ld ", ntohl(head->tcph->acknum) - cb->irs);
+	debug_tcpdata("ack %lu ", ntohl(head->tcph->acknum) - cb->irs);
       }
     }
-    debug_tcp("win:%u urg:%d ", ntohs(head->tcph->window), head->tcph->urgpnt);
-    debug_tcp("chk:0x%x len:%u\n", tcp_chksum(head), head->tcplen);
+    debug_tcpdata("win %u urg %d ", ntohs(head->tcph->window), head->tcph->urgpnt);
+    debug_tcpdata("chk %x len %u\n", tcp_chksum(head), head->tcplen);
 #endif
 }
 
@@ -141,6 +159,7 @@ printf("SYN sent, wrong ACK (listen port not expired)\n");
 	cb->send_una++;
 	cb->state = TS_ESTABLISHED;
 	cb->flags = TF_ACK;
+	debug_tcp("TS_ESTABLISHED\n");
 
 	cb->datalen = 0;
 	tcp_output(cb);
@@ -247,7 +266,7 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
     if (h->flags & TF_RST) {
 	/* TODO: Check seqnum for security */
-	printf("tcp: RST from %s:%u->%d\n", in_ntoa(cb->remaddr), ntohs(h->sport), ntohs(h->dport));
+	printf("tcp: RST from %s:%u->%u\n", in_ntoa(cb->remaddr), ntohs(h->sport), ntohs(h->dport));
 	rmv_all_retrans_cb(cb);
 	if (cb->state == TS_CLOSE_WAIT) {
 	    ENTER_TIME_WAIT(cb);
@@ -285,6 +304,7 @@ static void tcp_synrecv(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	debug_tcp("tcp: NO ACK IN SYNRECV\n");
     else {
 	cb->state = TS_ESTABLISHED;
+	debug_tcp("TS_ESTABLISHED\n");
 	tcpdev_checkaccept(cb);
 	tcp_established(iptcp, cb);
     }
@@ -390,7 +410,7 @@ static void tcp_last_ack(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 void tcp_update(void)
 {
     if (cbs_in_time_wait > 0 || cbs_in_user_timeout > 0) {
-debug_tcp("ktcp: update %x,%x\n", cbs_in_time_wait, cbs_in_user_timeout);
+	debug_tcp("tcp: time_wait %d user_timeout %d\n", cbs_in_time_wait, cbs_in_user_timeout);
 	tcpcb_expire_timeouts();
     }
 
@@ -484,7 +504,6 @@ void tcp_process(struct iphdr_s *iph)
 	    break;
 
 	case TS_ESTABLISHED:
-	    debug_tcp("TS_ESTABLISHED\n");
 	    tcp_established(&iptcp, cb);
 	    break;
 

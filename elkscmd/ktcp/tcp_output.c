@@ -289,8 +289,8 @@ void tcp_reoutput(struct tcp_retrans_list_s *n)
 	n->rto = TCP_RETRANS_MAXWAIT;
     n->next_retrans = Now + n->rto;
 
-    printf("tcp retrans: seq %lu size %d rcvwnd %u unack %lu rto %ld rtt %ld (retry %d cnt %d mem %u)\n",
-	ntohl(n->tcphdr[0].seqnum), n->len - TCP_DATAOFF(&n->tcphdr[0]),
+    printf("tcp retrans: seq %lu size %d rcvwnd %u unack %lu rto %ld rtt %ld (RETRY %d cnt %d mem %u)\n",
+	ntohl(n->tcphdr[0].seqnum) - n->cb->iss, n->len - TCP_DATAOFF(&n->tcphdr[0]),
 	n->cb->rcv_wnd, n->cb->send_nxt - n->cb->send_una,
 	n->rto, n->cb->rtt, n->retrans_num, tcp_timeruse, tcp_retrans_memory);
 
@@ -326,20 +326,22 @@ void tcp_retrans(void)
 		    n->cb->rtt = (TCP_RTT_ALPHA * n->cb->rtt + (100 - TCP_RTT_ALPHA) * rtt) / 100;
 		debug_tcp("tcp: rtt %d RTT %ld RTO %ld\n", rtt, n->cb->rtt, n->rto);
 	    }
-	    debug_retrans("retrans remove: seq %ld unack %ld\n",
-		ntohl(n->tcphdr[0].seqnum), n->cb->send_una);
+	    debug_retrans("tcp retrans: remove seq %lu unack %lu\n",
+		ntohl(n->tcphdr[0].seqnum) - n->cb->iss, n->cb->send_nxt - n->cb->send_una);
 	    n = rmv_from_retrans(n);
 	    continue;
 	} else
-	    debug_retrans("retrans check: seq %ld unack %ld time %ld\n",
-		ntohl(n->tcphdr[0].seqnum) + datalen, n->cb->send_una, n->next_retrans - Now);
+	    debug_retrans("tcp retrans: check seq %lu unack %lu time %ld\n",
+		ntohl(n->tcphdr[0].seqnum) - n->cb->iss + datalen,
+		n->cb->send_nxt - n->cb->send_una, n->next_retrans - Now);
 
 	/* check for retrans time up*/
 	if (TIME_GEQ(Now, n->next_retrans)) {
 	    tcp_reoutput(n);
 	    if (n->retrans_num >= TCP_RETRANS_MAXTRIES) {
-		printf("retrans max retries: seq %ld unack %ld time %ld\n",
-		    ntohl(n->tcphdr[0].seqnum), n->cb->send_una, n->next_retrans - Now);
+		printf("tcp retrans: max retries exceeded seq %lu unack %lu time %ld\n",
+		    ntohl(n->tcphdr[0].seqnum) - n->cb->iss, n->cb->send_nxt - n->cb->send_una,
+		    n->next_retrans - Now);
 		tcp_send_reset(n->cb);		/* CB deallocated on received RST*/
 		n = rmv_from_retrans(n);
 		continue;

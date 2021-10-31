@@ -343,13 +343,14 @@ static void tcpdev_write(void)
 	maxwindow = TCP_SEND_WINDOW_MAX;
     if (cb->send_nxt - cb->send_una + size > maxwindow) {
 	printf("tcp limit: seq %lu size %d maxwnd %u unack %lu rcvwnd %u\n",
-	    cb->send_nxt, size, maxwindow, cb->send_nxt - cb->send_una, cb->rcv_wnd);
+	    cb->send_nxt - cb->iss, size, maxwindow, cb->send_nxt - cb->send_una, cb->rcv_wnd);
 	retval_to_sock(sock, -ERESTARTSYS);	/* kernel will retry 100ms later*/
 	return;
     }
 
-    debug_tcp("tcp write: seq %lu size %d rcvwnd %u unack %lu retrans cnt %d\n",
-	cb->send_nxt, size, cb->rcv_wnd, cb->send_nxt - cb->send_una, tcp_timeruse);
+    debug_tcp("tcp write: seq %lu size %d rcvwnd %u unack %lu (cnt %d, mem %u)\n",
+	cb->send_nxt - cb->iss, size, cb->rcv_wnd, cb->send_nxt - cb->send_una,
+	tcp_timeruse, tcp_retrans_memory);
 
     cb->flags = TF_PSH|TF_ACK;
     cb->datalen = size;

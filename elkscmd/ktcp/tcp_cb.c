@@ -229,7 +229,7 @@ void tcpcb_expire_timeouts(void)
 	    int secs = (unsigned)(n->tcpcb.time_wait_exp - Now);
 	    unsigned int tenthsecs = ((secs + 8) & 15) >> 1;
 	    secs >>= 4;
-	    debug_close("ktcp: check expire %s (%d.%d)\n",
+	    debug_close("tcp: expire check %s (%d.%d)\n",
 		tcp_states[n->tcpcb.state], secs, tenthsecs);
 	}
 #endif
