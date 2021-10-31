@@ -308,14 +308,14 @@ static void tcpdev_write(void)
 
     /* This is a bit ugly but I'm to lazy right now */
     if (tcp_retrans_memory > TCP_RETRANS_MAXMEM) {
-	printf("ktcp: RETRANS limit exceeded\n");
+	printf("ktcp: RETRANS memory limit exceeded\n");
 	retval_to_sock(sock, -ENOMEM);
 	return;
     }
 
     n = tcpcb_find_by_sock(sock);
     if (!n || n->tcpcb.state == TS_CLOSED) {
-	printf("ktcp: write to unknown socket\n");
+	debug_tcp("tcp: write to unknown socket\n");
 	retval_to_sock(sock, -EPIPE);
 	return;
     }
@@ -342,7 +342,7 @@ static void tcpdev_write(void)
     if (maxwindow > TCP_SEND_WINDOW_MAX)	/* limit retrans memory usage*/
 	maxwindow = TCP_SEND_WINDOW_MAX;
     if (cb->send_nxt - cb->send_una + size > maxwindow) {
-	printf("tcp limit: seq %lu size %d maxwnd %u unack %lu rcvwnd %u\n",
+	debug_tcp("tcp limit: seq %lu size %d maxwnd %u unack %lu rcvwnd %u\n",
 	    cb->send_nxt - cb->iss, size, maxwindow, cb->send_nxt - cb->send_una, cb->rcv_wnd);
 	retval_to_sock(sock, -ERESTARTSYS);	/* kernel will retry 100ms later*/
 	return;
