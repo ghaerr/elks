@@ -297,7 +297,7 @@ static void tcpdev_write(void)
     struct tcpcb_list_s *n;
     struct tcpcb_s *cb;
     void *  sock = db->sock;
-    int size;
+    unsigned int size, maxwindow;
 
     sock = db->sock;
     /*
@@ -308,14 +308,14 @@ static void tcpdev_write(void)
 
     /* This is a bit ugly but I'm to lazy right now */
     if (tcp_retrans_memory > TCP_RETRANS_MAXMEM) {
-	printf("ktcp: RETRANS limit exceeded\n");
+	printf("ktcp: RETRANS memory limit exceeded\n");
 	retval_to_sock(sock, -ENOMEM);
 	return;
     }
 
     n = tcpcb_find_by_sock(sock);
     if (!n || n->tcpcb.state == TS_CLOSED) {
-	printf("ktcp: write to unknown socket\n");
+	debug_tcp("tcp: write to unknown socket\n");
 	retval_to_sock(sock, -EPIPE);
 	return;
     }
@@ -337,16 +337,20 @@ static void tcpdev_write(void)
 	return;
     }
 
-    debug_tcpdev("tcpdev write: window %ld retrans cnt %d\n",
-	cb->send_nxt - cb->send_una, tcp_timeruse);
-
-    /* delay sending if outstanding send window too large*/
-    if (cb->send_nxt - cb->send_una > TCP_SEND_WINDOW_MAX) {
-	debug_tcp("tcp write: limiting write %d at max send window %ld\n",
-	    size, cb->send_nxt - cb->send_una);
-	retval_to_sock(sock, -ERESTARTSYS);	/* kernel will retry 10ms later*/
+    /* Delay sending if outstanding send window too large. FIXME could hang if no ACKs rcvd*/
+    maxwindow = cb->rcv_wnd;
+    if (maxwindow > TCP_SEND_WINDOW_MAX)	/* limit retrans memory usage*/
+	maxwindow = TCP_SEND_WINDOW_MAX;
+    if (cb->send_nxt - cb->send_una + size > maxwindow) {
+	debug_tcp("tcp limit: seq %lu size %d maxwnd %u unack %lu rcvwnd %u\n",
+	    cb->send_nxt - cb->iss, size, maxwindow, cb->send_nxt - cb->send_una, cb->rcv_wnd);
+	retval_to_sock(sock, -ERESTARTSYS);	/* kernel will retry 100ms later*/
 	return;
     }
+
+    debug_tcp("tcp write: seq %lu size %d rcvwnd %u unack %lu (cnt %d, mem %u)\n",
+	cb->send_nxt - cb->iss, size, cb->rcv_wnd, cb->send_nxt - cb->send_una,
+	tcp_timeruse, tcp_retrans_memory);
 
     cb->flags = TF_PSH|TF_ACK;
     cb->datalen = size;

@@ -28,6 +28,9 @@
 /* max outstanding send window size*/
 #define TCP_SEND_WINDOW_MAX	1024	/* should be less than TCP_RETRANS_MAXMEM*/
 
+/* max advertised receive window size*/
+#define THROTTLE_MAX_WINDOW	512	/* FIXME CB_IN_BUF_SIZE when PTY fixed*/
+
 /* bytes to subtract from window size and when to force app write*/
 #define PUSH_THRESHOLD	512
 
@@ -42,7 +45,7 @@
 /* retransmit settings*/
 #define TCP_RTT_ALPHA			90
 #define TCP_RETRANS_MAXMEM		4096	/* max retransmit total memory*/
-#define TCP_RETRANS_MAXTRIES		3	/* max # retransmits*/
+#define TCP_RETRANS_MAXTRIES		6	/* max # retransmits (~12 secs total)*/
 /* timeout values in 1/16 seconds*/
 #define TCP_RETRANS_MAXWAIT		64	/* max retransmit wait (4 secs)*/
 #define TCP_RETRANS_MINWAIT_SLIP	8	/* minimum retrans timeout for slip/cslip (1/2 sec)*/

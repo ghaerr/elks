@@ -2,13 +2,15 @@
 #define CONFIG_H
 
 /* compile time options*/
-#define CSLIP			1	/* compile in CSLIP support*/
+#define CSLIP		0	/* compile in CSLIP support*/
 
 /* turn these on for ELKS debugging*/
 #define USE_DEBUG_EVENT 1	/* use CTRLP to toggle debug output*/
 #define DEBUG_STARTDEF	0	/* default startup debug display*/
-#define DEBUG_TCP	1
-#define DEBUG_CLOSE	1
+#define DEBUG_TCP	1	/* TCP ops*/
+#define DEBUG_TCPDATA	0	/* TCP data packets*/
+#define DEBUG_RETRANS	1	/* TCP retransmissions*/
+#define DEBUG_CLOSE	1	/* TCP close ops*/
 #define DEBUG_IP	0
 #define DEBUG_ARP	0
 #define DEBUG_ETH	0
@@ -31,6 +33,18 @@ void dprintf(const char *, ...);
 #define debug_tcp	DPRINTF
 #else
 #define debug_tcp(...)
+#endif
+
+#if DEBUG_TCPDATA
+#define debug_tcpdata	DPRINTF
+#else
+#define debug_tcpdata(...)
+#endif
+
+#if DEBUG_RETRANS
+#define debug_retrans	DPRINTF
+#else
+#define debug_retrans(...)
 #endif
 
 #if DEBUG_CLOSE

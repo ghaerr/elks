@@ -78,6 +78,7 @@ start_network()
 stop_network()
 {
 	echo "Stopping network"
+	kill $(ps | grep "ktcp|telnet|httpd" | cut -c 1-5) > /dev/null 2>&1
 }
 
 if test "$#" -lt 1; then
