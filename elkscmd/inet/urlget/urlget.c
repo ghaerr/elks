@@ -9,10 +9,10 @@
  * 
  * Assumes hard links to the approproate names - ftpget, urlget, tcpget, tcpput.
  * Optons (http only):
- * 	-h -- include header in output stream
- * 	-d -- discard data (httpget), disable data draining on write errors (ftpget)
- * 	-p -- post instead of get, data to post (ascii/UTF) is appended to the URL (after a '?').
- *	-v -- for ftp, verbose file listing & error reporting, progress meter
+ * 	-h -- include header in output stream (httpget)
+ * 	-d -- discard data (httpget)
+ * 	-p -- post instead of get (httpget), data to post (ascii/UTF) is appended to the URL (after a '?').
+ *	-v -- verbose file listing & error reporting, progress meter (ftpput/ftpget)
  *
  */
 
@@ -318,9 +318,7 @@ int ftpcmd( FILE *fpw, FILE *fpr, char *cmd, char *arg)
    int s = 0;
    fprintf(fpw, "%s%s%s\r\n", cmd, *arg ? " " : "", arg);
    fflush(fpw);
-   if (strcmp(cmd, "ABOR") != 0) s=ftpreply(fpr); /* Don't wait for reply to ABORT, 
-						   * it may never arrive (congestion).
-						   */
+   s=ftpreply(fpr); 
    return s;
 }
 
@@ -432,9 +430,6 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
 	}
 	if (verbose) fprintf(stderr, ".\n");
 	if (s < 0) {
-		/* FTP ABORt would be appropriate but ELKS is too slow,
-		 * and the net_close() below resets the connection anyway.
-		 */
 		fprintf(stderr, "ftpget: File write error");
 		if (s2 == -1)
 			perror("");
@@ -466,8 +461,9 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
 	}
 	if (verbose) fprintf(stderr, ".\n");
 	if (s < 0) {
-		s2 = ftpcmd(fpw, fpr, "ABOR", "");
-		fprintf(stderr, "ftpput: Network write error.\n");
+		/* The server will RST the data channel on write errors,
+		 * no need to do any housekeeping at this end. */
+		fprintf(stderr, "ftpput: Network write error, transfer aborted.\n");
 		s2 = ftpcmd(fpw, fpr, "DELE", unesc(p)); /* delete remote file */
 		if (verbose)
 			fprintf(stderr, "ftp: Cleaning up - removing %s, status %d\n", p, s);
@@ -532,8 +528,9 @@ int main(int argc, char **argv) {
    char *path, *ps, *p, *at;
    int opt_d = 0, opt_h = 0, opt_p = 0, opt_v = 0;
 
-   prog = strrchr(*argv, '/') + 1;
-   if (prog == (char *)1)
+   if ((prog = strrchr(*argv, '/')))
+	prog++;
+   else
    	prog = *argv;
    argv++;
    argc--;
