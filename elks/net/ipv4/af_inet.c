@@ -196,13 +196,8 @@ static int inet_listen(register struct socket *sock, int backlog)
     tcpdev_inetwrite(cmd, sizeof(struct tdb_listen));
 
     /* Sleep until tcpdev has news */
-    while (bufin_sem == 0) {
+    while (bufin_sem == 0)
         interruptible_sleep_on(sock->wait);
-        if (current->signal) {
-printk("inet_listen: RESTARTSYS\n");
-            return -ERESTARTSYS;
-        }
-    }
 
     ret = ((struct tdb_return_data *)tdin_buf)->ret_value;
     tcpdev_clear_data_avail();
@@ -231,7 +226,7 @@ static int inet_accept(register struct socket *sock,
         interruptible_sleep_on(sock->wait);
         //sock->flags &= ~SO_WAITDATA;
         if (current->signal) {
-printk("INET(%d) accept RESTARTSYS\n", current->pid);
+	    debug_net("INET(%d) accept RESTARTSYS\n", current->pid);
             return -ERESTARTSYS;
 	}
     }
