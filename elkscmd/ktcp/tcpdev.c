@@ -203,7 +203,7 @@ static void tcpdev_read(void)
     struct tdb_return_data *ret_data;
     struct tcpcb_list_s *n;
     struct tcpcb_s *cb;
-    int data_avail;
+    unsigned int data_avail;
     void * sock = db->sock;
 
     n = tcpcb_find_by_sock(sock);
@@ -272,7 +272,7 @@ void tcpdev_checkread(struct tcpcb_s *cb)
 
 #if 0 /* removed - wait_data mechanism no longer used in inet_read*/
     struct tdb_return_data *ret_data = (struct tdb_return_data *)sbuf;
-    //int data_avail = CB_BUF_USED(cb);
+    //unsigned int data_avail = CB_BUF_USED(cb);
     data_avail = cb->wait_data < cb->bytes_to_push ? cb->wait_data : cb->bytes_to_push;
     cb->bytes_to_push -= data_avail;
     if (cb->bytes_to_push <= 0)
