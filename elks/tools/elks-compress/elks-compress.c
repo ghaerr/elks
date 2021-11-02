@@ -12,9 +12,6 @@
 #include <sys/stat.h>
 #include "minix.h"
 
-int do_text = 0;
-int do_ftext = 0;
-int do_data = 0;
 int keep_infile = 0;
 int verbose = 0;
 char exomizer_binary[] = "exomizer";
@@ -58,7 +55,7 @@ static void copyrest(int ifd, int ofd, char *filename)
 	int size;
 	char buf[1024];
 
-	while ((size = read(ifd, buf, 1024)) > 0)
+	while ((size = read(ifd, buf, sizeof(buf))) > 0)
 	{
 		if (write(ofd, buf, size) != size)
 		{
@@ -72,7 +69,7 @@ error:
 	if (size != 0) goto error;
 }
 
-static int compress(char *infile, char *outfile)
+static int compress(char *infile, char *outfile, int do_text, int do_ftext, int do_data)
 {
 	int ifd, ofd, efd, n;
 	long orig_size, compr_size;
@@ -103,7 +100,7 @@ static int compress(char *infile, char *outfile)
 			(elks_size_t)mh.tseg == 0)
 	{
 		printf("Exec header not supported: %s\n", infile);
-		return 1;
+		return 2;
 	}
 
 	if (mh.hlen == EXEC_FARTEXT_HDR_SIZE)
@@ -255,9 +252,10 @@ static int compress(char *infile, char *outfile)
 		}
 		if (sbuf.st_size > szdata)
 		{
-			printf("Rejecting conversion of %s: compressed data larger than data\n", infile);
+			printf("Rejecting data conversion of %s: compressed data larger than data\n", infile);
 			unlink(exomizer_outfile);
-			return 2;
+			do_data = 0;
+			goto next;
 		}
 		if (sbuf.st_size >= 65520)
 		{
@@ -281,6 +279,7 @@ static int compress(char *infile, char *outfile)
 		if (verbose) printf("compressed data from %d to %d\n", szdata, compr_szdata);
 	}
 
+next:
 	if ((ofd = creat(outfile, 0755)) < 0) {
 		printf("Can't create %s\n", outfile);
 		close(ifd);
@@ -320,6 +319,71 @@ static int compress(char *infile, char *outfile)
 	return 0;
 }
 
+static int issymlink(char *filename)
+{
+	struct stat sbuf;
+
+	if (lstat(filename, &sbuf) < 0)
+		return 0;
+	return ((sbuf.st_mode & S_IFMT) == S_IFLNK);
+}
+
+#if DOHARDLINKS
+static int hardlinks(char *filename)
+{
+	struct stat sbuf;
+
+	if (stat(filename, &sbuf) < 0)
+		return 0;
+	return (sbuf.st_nlink > 1);
+}
+
+int copyfile(char *srcname, char *destname)
+{
+	int rfd, wfd, rcc;
+	char buf[1024];
+
+	rfd = open(srcname, O_RDONLY);
+	if (rfd < 0)
+	{
+		perror(srcname);
+		return 1;
+	}
+
+	wfd = open(destname, O_WRONLY | O_TRUNC);
+	if (wfd < 0)
+	{
+		perror(destname);
+		close(rfd);
+		return 1;
+	}
+
+	while ((rcc = read(rfd, buf, sizeof(buf))) > 0)
+	{
+		if (write(wfd, buf, rcc) != rcc)
+		{
+			perror(destname);
+			goto error_exit;
+		}
+	}
+
+	if (rcc < 0)
+	{
+		perror(srcname);
+		goto error_exit;
+	}
+
+	close(rfd);
+	close(wfd);
+	return 0;
+
+error_exit:
+	close(rfd);
+	close(wfd);
+	return 1;
+}
+#endif
+
 static void usage(void)
 {
 	printf("Usage: elks-compress [-vztfd] [-o outfile] file [...]\n");
@@ -335,6 +399,9 @@ int main(int ac, char **av)
 {
 	int ret, exitval;
 	char *outfile = NULL;
+	int do_text = 0;
+	int do_ftext = 0;
+	int do_data = 0;
 	char outname[256];
 
 	while ((ret = getopt(ac, av, "ztfdo:")) != -1)
@@ -379,6 +446,14 @@ int main(int ac, char **av)
 	exitval = 0;
 	while (optind < ac)
 	{
+		if (issymlink(av[optind]))
+		{
+			fprintf(stderr, "Ignoring symlink %s\n", av[optind]);
+			ac--;
+			av++;
+			continue;
+		}
+
 		if (outfile == NULL)
 		{
 			if (keep_infile)
@@ -390,20 +465,30 @@ int main(int ac, char **av)
 				sprintf(outname, "ec.out");
 			}
 		}
-		ret = compress(av[optind], outfile? outfile: outname);
+		ret = compress(av[optind], outfile? outfile: outname, do_text, do_ftext, do_data);
 		if (ret == 0)
 		{
 			if (!keep_infile)
 			{
-				if (unlink(av[optind]))
+#if DOHARDLINKS
+				if (!outfile && hardlinks(av[optind]))
 				{
-					perror("unlink");
-					exitval = 1;
+					if (copyfile(outname, av[optind]))
+						exitval = 1;
 				}
-				else if (rename(outname, av[optind]))
+				else
+#endif
 				{
-					perror("rename");
-					exitval = 1;
+					if (unlink(av[optind]))
+					{
+						perror("unlink");
+						exitval = 1;
+					}
+					else if (rename(outname, av[optind]))
+					{
+						perror("rename");
+						exitval = 1;
+					}
 				}
 			}
 		} else {
