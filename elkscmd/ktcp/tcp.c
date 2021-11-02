@@ -158,11 +158,9 @@ printf("SYN sent, wrong ACK (listen port not expired)\n");
 	cb->send_nxt++;
 	cb->send_una++;
 	cb->state = TS_ESTABLISHED;
-	cb->flags = TF_ACK;
 	debug_tcp("TS_ESTABLISHED\n");
 
-	cb->datalen = 0;
-	tcp_output(cb);
+	tcp_send_ack(cb);
 	retval_to_sock(cb->sock, 0);
 
 	return;
@@ -289,9 +287,7 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	return; /* ACK with no data received - so don't answer*/
 
     cb->rcv_nxt += datasize;
-    cb->flags = TF_ACK;
-    cb->datalen = 0;
-    tcp_output(cb);
+    tcp_send_ack(cb);
 }
 
 static void tcp_synrecv(struct iptcp_s *iptcp, struct tcpcb_s *cb)
@@ -338,11 +334,8 @@ static void tcp_fin_wait_1(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	cb->time_wait_exp = Now;
     }
 
-    if (needack) {
-	cb->flags = TF_ACK;		/* TODO : Unify this somewhere */
-	cb->datalen = 0;
-	tcp_output(cb);
-    }
+    if (needack)
+	tcp_send_ack(cb);
 }
 
 static void tcp_fin_wait_2(struct iptcp_s *iptcp, struct tcpcb_s *cb)
@@ -363,11 +356,8 @@ static void tcp_fin_wait_2(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     /* Process like there was no FIN */
     tcp_established(iptcp, cb);
 
-    if (needack) {
-	cb->flags = TF_ACK;		/* TODO: Unify this somewhere */
-	cb->datalen = 0;
-	tcp_output(cb);
-    }
+    if (needack)
+	tcp_send_ack(cb);
 }
 
 static void tcp_closing(struct iptcp_s *iptcp, struct tcpcb_s *cb)
