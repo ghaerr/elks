@@ -31,6 +31,7 @@
 #include <stdarg.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <string.h>
 #include <linuxmt/minix.h>
 
 #define SEPBIT   0x00200000	/* this bit is set for separate I/D */
@@ -108,10 +109,16 @@ int do_chmem(char *filename, int changeheap, int changestack,
 		total = (unsigned long)(size_t)header.tseg+(size_t)suplhdr.esh_ftseg
 			+(size_t)header.dseg+(size_t)header.bseg+oldheap+oldstack;
 	}
-	printf("%5u  %5u  %5u  %5u  %5u  %5u   %6lu %6lu %s%s\n",
+	printf("%5u  %5u  %5u  %5u  %5u  %5u   %6lu %6lu %s",
 		(size_t)header.tseg, (size_t)suplhdr.esh_ftseg, (size_t)header.dseg, (size_t)header.bseg,
-		displayheap, header.minstack, totdata, total,
-		filename, header.version == 0? " (v0 header)": "");
+		displayheap, header.minstack, totdata, total, filename);
+
+	if (header.version == 0)
+		printf(" (v0 header)");
+	if (suplhdr.esh_compr_tseg || suplhdr.esh_compr_dseg || suplhdr.esh_compr_ftseg)
+		printf(" (%u %u %u)",
+			suplhdr.esh_compr_tseg, suplhdr.esh_compr_ftseg, suplhdr.esh_compr_dseg);
+	printf("\n");
 
 	if (!changeheap && !changestack) {
 		close(fd);
