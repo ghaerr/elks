@@ -81,6 +81,8 @@ early_putchar:
 	jz putesc_r
 	cmp $'\n',%al
 	jz putesc_n
+	cmp $'\b',%al
+	jz putesc_b
 	xor %ah,%ah
 	mov $tvram_x,%bx
 	mov (%bx),%di
@@ -120,6 +122,15 @@ putesc_n:
 	sub $4000,%ax
 	jnc put_scroll
 	mov %dx,(%bx)
+	jmp put_end
+putesc_b:
+	mov $tvram_x,%bx
+	mov (%bx),%ax
+	cmp $0,%ax
+	jz put_end
+	dec %ax
+	dec %ax
+	mov %ax,(%bx)
 	jmp put_end
 put_scroll:
 	xor %ax,%ax
