@@ -243,6 +243,7 @@ CONFIG_IMG_FD1440=y
 # CONFIG_IMG_HD is not set
 CONFIG_IMG_DEV=y
 CONFIG_IMG_BOOT=y
+# CONFIG_APPS_COMPRESS is not set
 
 #
 # Binary Images
