@@ -29,7 +29,9 @@
 # 12 Sep 2020:
 # Use `_start' rather than `entry' as program entry point. TK Chia
 #
-# 4 Nov 2021: bug fixes and cleanup ghaerr
+# 4 Nov 2021: ghaerr
+# bug fixes and cleanup
+# add A20 enable and verify (uses A20.ASM code by Chris Giese)
 ##############################################################################
 
 sys_exit = 1
@@ -44,8 +46,7 @@ videoline = 0xb8000+80*2*22
 _start:
 
 # check for 32-bit CPU
-        mov     $needs_386_msg,%dx
-        mov     $needs_386_len,%cx
+        mov     $needs_386_msg,%si
 
         pushf
                 pushf
@@ -63,8 +64,7 @@ _start:
         je msg_and_exit
 
 # check if (32-bit) CPU is in V86 mode
-        mov     $v86_msg_len,%dx
-        mov     $v86_msg,%cx
+        mov     $v86_msg,%si
 
         smsww %bx               # 'SMSW' is a '286+ instruction
         andb $1,%bl
@@ -117,8 +117,8 @@ _start:
 # Action of "rep movsb" in (un)real mode:
 # With a32 prefix byte (0x67):  byte [ES:EDI++] <- [DS:ESI++], ECX times
 # Without prefix byte:          byte [ES:DI++] <- [DS:SI++], CX times
-		cld
-        .byte 0x67 #a32
+        cld
+        .byte 0x67		# addr32
         rep movsb
 
 # or poke byte
@@ -126,17 +126,128 @@ _start:
         addr32 movb $0x2C,%es:videoline+23
         pop     %es
 
-        mov     $success_msg_len,%dx
-        mov     $success_msg,%cx
+# output unreal enabled message
+        mov     $unreal_enabled_msg,%si
+	call	puts
 
-msg_and_exit: 
-        mov     $1,%bx
-        mov     $sys_write,%ax
-        int     $syscall
+# test for A20 enabled, enable if not
+#	mov	$1,%ah		# test disable A20
+#	call	set_a20
 
-        mov     $0,%bx
+	mov	$a20_enabled_msg,%si
+	call	verify_a20
+	jnz	1f		# NZ=enabled
+	mov	$a20_disabled_msg,%si
+	call	puts
+
+	mov	$0,%ah		# enable A20
+	call	set_a20
+
+	mov	$a20_enabled_msg,%si
+	call	verify_a20
+	jnz	1f		# NZ=enabled
+	mov	$a20_disabled_msg,%si
+
+1:	call	puts
+
+# exit - unreal mode and A20 gate should both be enabled
+	call	exit
+
+# verify if A20 gate is enabled, return Z=disabled, NZ=enabled
+verify_a20:
+	push	%ax
+	push	%ds
+	push	%es
+
+	xor	%ax,%ax
+	mov	%ax,%ds
+	dec	%ax
+	mov	%ax,%es
+
+	mov	%es:0x10,%ax	# read word at FFFF:0010 (1 meg)
+	not	%ax		# 1's complement
+	pushw	0		# save word at 0000:0000 (0)
+
+	mov	%ax,0		# word at 0 = ~(word at 1 meg)
+	mov	0,%ax		# read it back
+	cmp	%es:0x10,%ax	# fail if word at 0 == word at 1 meg
+
+	popw	0
+
+	pop	%es
+	pop	%ds
+	pop	%ax
+	ret			# if ZF=1, the A20 gate is NOT enabled
+
+# enable/disable A20 gate using keyboard port/controller, entry AH=0 disable
+set_a20:
+	cli
+	call	empty_8042
+	mov	$0xD0,%al	# 8042 command byte to read output port
+	out	%al,$0x64
+1:	in	$0x64,%al
+	test	$1,%al		# output buffer (data _from_ keyboard) full?
+	jz	1b		# no, loop
+
+	in	$0x60,%al	# read output port
+	or	%ah,%ah
+	jne	2f
+	and	$0xFD,%al	# AND ~2 to disable
+	jmp	3f
+2:	or	$2,%al		# OR 2 to enable
+3:	mov	%al,%ah
+
+	call	empty_8042
+	mov	$0xD1,%al	# 8042 command byte to write output port
+	out	%al,$0x64
+
+	call	empty_8042
+	mov	%ah,%al		# the value to write
+	out	%al,$0x60
+
+	call	empty_8042
+	sti
+	ret
+
+0:
+	jmp	1f		# a delay (probably not effective nor necessary)
+1:	in	$0x60,%al	# read and discard data/status from 8042
+empty_8042:
+	jmp	2f		# delay
+2:	in	$0x64,%al
+	test	$1,%al		# output buffer (data _from_ keyboard) full?
+	jnz	0b		# yes, read and discard
+	test	$2,%al		# input buffer (data _to_ keyboard) empty?
+	jnz	empty_8042	# no, loop
+	ret
+
+# write string at SI and exit
+msg_and_exit:
+	call	puts
+exit:   mov     $0,%bx
         mov     $sys_exit,%ax
         int     $syscall
+
+# write string at SI
+puts:	call	strlen
+	mov	$1,%bx
+	mov	%si,%cx
+	mov	%ax,%dx
+	mov     $sys_write,%ax
+	int     $syscall
+	ret
+
+# return length of string at SI
+strlen:	push	%si
+	xor	%bx,%bx
+	dec	%bx
+1:	inc	%bx
+	lodsb
+	test	%al,%al
+	jnz	1b
+	mov	%bx,%ax
+	pop	%si
+        ret
 
         .data
         
@@ -227,15 +338,23 @@ gdt_ptr:.word gdt_len - 1
 
 needs_386_msg:
         .ascii "Sorry, 80386+ CPU required\n"
-        needs_386_len = . - needs_386_msg
+        .byte  0
 v86_msg:
         .ascii "Sorry, CPU in Virtual-8086 mode\n"
-        v86_msg_len = . - v86_msg
+        .byte  0
 
-success_msg:
+unreal_enabled_msg:
         .ascii "Unreal mode enabled if line above written with black on green text.\n"
-        success_msg_len = . - success_msg
+        .byte  0
         
+a20_enabled_msg:
+	.ascii	"A20 gate enabled\n"
+	.byte	0
+
+a20_disabled_msg:
+	.ascii	"A20 gate disabled\n"
+	.byte	0
+
 # This string is written directly to text-mode video memory.
 # The alternating spaces are treated as character attribute bytes.
 # 0x20 = black text (color 0) on green background (color 2)
