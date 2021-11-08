@@ -5,6 +5,7 @@
 #include <linuxmt/major.h>
 #include <linuxmt/string.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/heap.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/debug.h>
 
@@ -13,7 +14,7 @@
 #include <arch/io.h>
 #include <arch/irq.h>
 
-// Number of external buffers specified in config by CONFIG_FS_NR_EXT_BUFFERS
+// Number of external (L2) buffers specified in config by CONFIG_FS_NR_EXT_BUFFERS
 
 // Number of internal L1 buffers
 // used to map/copy external L2 buffers to/from kernel data segment
@@ -24,26 +25,18 @@
 #define NR_MAPBUFS  8
 #endif
 
-// Number of internal L1 buffers
+// Number of buffers: if CONFIG_FS_EXT_BUFFER set L2, otherwise number of L1 buffers
+static int NR_BUFFERS;
 
-#ifdef CONFIG_FS_EXTERNAL_BUFFER
-#define NR_BUFFERS CONFIG_FS_NR_EXT_BUFFERS
-#else
-#define NR_BUFFERS NR_MAPBUFS
-#endif
+// Buffer heads: local heap allocated, NR_BUFFERS total
+static struct buffer_head *buffer_heads;
 
-// Buffer heads (internal or external)
-
-static struct buffer_head buffer_heads[NR_BUFFERS];
-
-// Internal L1 buffers
-
+// Internal L1 buffers, must be kernel DS addressable
 static char L1buf[NR_MAPBUFS][BLOCK_SIZE];
 
 // Buffer cache
-
-static struct buffer_head *bh_lru = buffer_heads;
-static struct buffer_head *bh_llru = buffer_heads;
+static struct buffer_head *bh_lru;
+static struct buffer_head *bh_llru;
 
 // External L2 buffers are allocated within global memory segments
 // each segment being up to 64K in size for segment register addressing
@@ -94,21 +87,28 @@ static void put_last_lru(register struct buffer_head *bh)
     }
 }
 
-void INITPROC buffer_init(void)
+int INITPROC buffer_init(void)
 {
-    struct buffer_head *bh = buffer_heads;
+    register struct buffer_head *bh;
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
     segment_s *seg = 0;		/* init stops compiler warning*/
     int bufs_to_alloc = CONFIG_FS_NR_EXT_BUFFERS;
     int nbufs = 0;
     int i = NR_MAPBUFS;
 
+    NR_BUFFERS = CONFIG_FS_NR_EXT_BUFFERS;
     do {
 	L1map[--i] = NULL;
     } while (i > 0);
 #else
     char *p = (char *)L1buf;
+    NR_BUFFERS = NR_MAPBUFS;
 #endif
+
+    buffer_heads = heap_alloc(NR_BUFFERS * sizeof(struct buffer_head),
+	HEAP_TAG_BUFHEAD|HEAP_TAG_CLEAR);
+    if (!buffer_heads) return 1;
+    bh_lru = bh_llru = bh = buffer_heads;
 
     goto buf_init;
     do {
@@ -124,7 +124,7 @@ void INITPROC buffer_init(void)
 	    bufs_to_alloc -= nbufs;
 	    seg = seg_alloc (nbufs << (BLOCK_SIZE_BITS - 4),
 		SEG_FLAG_EXTBUF|SEG_FLAG_ALIGN1K);
-	    //if (!seg) panic("No extbuf mem");
+	    if (!seg) return 2;
 	}
 	bh->b_seg = bh->b_ds = seg->base;
 	bh->b_mapcount = 0;
@@ -137,7 +137,8 @@ void INITPROC buffer_init(void)
 	p += BLOCK_SIZE;
 #endif
 
-    } while (++bh < &buffer_heads[NR_BUFFERS]);
+    } while (++bh < buffer_heads + NR_BUFFERS);
+	return 0;
 }
 
 /*
@@ -223,11 +224,11 @@ static struct buffer_head *get_free_buffer(void)
     register struct buffer_head *bh;
 
     bh = bh_lru;
+    while (bh->b_count || buffer_dirty (bh) || buffer_locked (bh)
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
-    while (bh->b_count || bh->b_dirty || buffer_locked (bh) || bh->b_data) {
-#else
-    while (bh->b_count || bh->b_dirty || buffer_locked (bh)) {
+		|| bh->b_data
 #endif
+								) {
 	if ((bh = bh->b_next_lru) == NULL) {
 	    sync_buffers(0, 0);
 	    bh = bh_lru;
@@ -248,7 +249,7 @@ void __brelse(register struct buffer_head *buf)
 {
     wait_on_buffer(buf);
 
-    if (buf->b_count <= 0) panic("brelse");
+    if (buf->b_count == 0) panic("brelse");
 #if 0
     if (!--buf->b_count)
 	wake_up(&bufwait);
@@ -511,9 +512,8 @@ void map_buffer(register struct buffer_head *bh)
     lastL1map = i;
     L1map[i] = bh;
     bh->b_data = (char *)L1buf + (i << BLOCK_SIZE_BITS);
-    if (bh->b_uptodate) {
+    if (buffer_uptodate(bh))
 	fmemcpyw(bh->b_data, kernel_ds, bh->b_L2data, bh->b_ds, BLOCK_SIZE/2);
-    }
     debug("MAP:   %d -> %d\n", bh->b_num, i);
   end_map_buffer:
     bh->b_seg = kernel_ds;

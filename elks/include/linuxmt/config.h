@@ -41,7 +41,7 @@
 #define SETUP_PART_OFFSETHI	0	/* partition offset high word */
 #define SYS_CAPS		0	/* no XT/AT capabilities */
 
-#define SETUP_HEAPSIZE		1024	/* minimum kernel heap for now*/
+#define SETUP_HEAPSIZE		1232	/* minimum kernel heap for now*/
 
 #define CONFIG_8018X_FCPU	16
 #define CONFIG_8018X_EB
