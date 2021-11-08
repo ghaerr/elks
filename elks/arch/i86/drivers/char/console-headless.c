@@ -79,7 +79,8 @@ static int Console_write(register struct tty *tty)
 	    esc_seq = 2;
 	}
 	else if ((tty_out >= 0x30) && (tty_out <= 0x39) && (esc_seq == 2)) {
-	    esc_num = tty_out-0x30;
+	    esc_num *= 10;
+	    esc_num += (tty_out-0x30);
 	}
 	else if ((tty_out > 0x40) && (esc_seq == 2)) {
 	    esc_seq = 3;
@@ -92,8 +93,10 @@ static int Console_write(register struct tty *tty)
 	        clear_tvram();
 	    }
 	}
-	else
+	else {
 	    esc_seq = 0;
+	    esc_num = 0;
+    }
 
 	if (!esc_seq) {
 	    early_putchar(tty_out);
