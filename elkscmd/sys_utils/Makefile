@@ -103,9 +103,10 @@ console: console.o
 makeboot: makeboot.o
 	$(LD) $(LDFLAGS) -o makeboot makeboot.o $(LDLIBS)
 
-unreal16: unreal16.o
+unreal16: unreal16.o unreal.o
 	$(LD) -melks-libc -mcmodel=small -c unreal16.S -o unreal16.o
-	$(LD) -melks-libc -mcmodel=small -nostdlib -o unreal16 unreal16.o
+	$(LD) -melks-libc -mcmodel=small -c $(ELKS_DIR)/arch/i86/lib/unreal.S -o unreal.o
+	$(LD) -melks-libc -mcmodel=small -nostdlib -o unreal16 unreal16.o unreal.o
 
 all: $(PRGS)
 
