@@ -172,7 +172,8 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
     sector_t sector, count;
     int max_req;
 
-    debug_blk("BLK(%x) %lu %s\n", bh->b_dev, bh->b_blocknr, rw==READ? "read": "write");
+    debug_blk("BLK(%x) %lu %s addr %x:%x\n", bh->b_dev, bh->b_blocknr,
+		rw==READ? "read": "write", bh->b_seg, buffer_data(bh));
     count = (sector_t) (BLOCK_SIZE >> 9);
     sector = bh->b_blocknr * count;
 

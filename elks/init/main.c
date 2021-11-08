@@ -86,7 +86,8 @@ void INITPROC kernel_init(void)
     sched_init();
     setup_arch(&base, &end);
     mm_init(base, end);
-    buffer_init();
+    if (buffer_init())
+		panic("No buf mem");
     inode_init();
     irq_init();
     tty_init();

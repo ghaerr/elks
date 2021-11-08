@@ -212,7 +212,7 @@ static int blk_rw(struct inode *inode, register struct file *filp,
 	     */
 	    ll_rw_blk(WRITE, bh);
 	    wait_on_buffer(bh);
-	    if (!bh->b_uptodate) { /* Write error. */
+	    if (!buffer_uptodate(bh)) { /* Write error. */
 		brelse(bh);
 		if (!written) written = -EIO;
 		break;
