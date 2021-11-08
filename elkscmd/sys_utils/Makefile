@@ -10,6 +10,8 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
+ELKS_LIB=$(ELKS_DIR)/arch/i86/lib
+
 # clock enabled and has direct I/O port access
 # knl, insmod removed as useless
 # exitemu disabled because it calls INT directly to DOSEMU
@@ -103,9 +105,11 @@ console: console.o
 makeboot: makeboot.o
 	$(LD) $(LDFLAGS) -o makeboot makeboot.o $(LDLIBS)
 
+unreal.o: $(ELKS_LIB)/unreal.S
+	$(LD) -melks-libc -mcmodel=small -c $(ELKS_LIB)/unreal.S -o unreal.o
+
 unreal16: unreal16.o unreal.o
 	$(LD) -melks-libc -mcmodel=small -c unreal16.S -o unreal16.o
-	$(LD) -melks-libc -mcmodel=small -c $(ELKS_DIR)/arch/i86/lib/unreal.S -o unreal.o
 	$(LD) -melks-libc -mcmodel=small -nostdlib -o unreal16 unreal16.o unreal.o
 
 all: $(PRGS)
