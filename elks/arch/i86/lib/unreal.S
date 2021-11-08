@@ -4,9 +4,9 @@
 # 8 Nov 2021 Greg Haerr
 #
 # int enable_unreal_mode(void)	- Attempt to turn on 80386 unreal mode,
-#				  returns 0 on success else error code
-# int enable_a20_gate(void)	- Enable A20 gate, return 0 on success
-# verify_a20		- ASM routine: verify A20 gate status, return NZ if enabled
+#				  returns > 0 on success else error code
+# int enable_a20_gate(void)	- Enable A20 gate, return 0 on fail
+# int verify_a20		- Verify A20 gate status, return 0 if disabled
 # set_a20		- ASM routine: enable (AH=1) or disable (AH=0) A20 gate
 #
 	.code16
@@ -74,33 +74,27 @@ enable_unreal_mode:
 	popl %fs
 	popl %es
 	popl %ds
-	sti
+	//sti
 
-	xor	%ax,%ax		# system is in unreal mode - return 0
+	mov	$1,%ax		# system is in unreal mode, return 1
 	ret
 
 not_32bit:
-	mov	$1,%ax		# requires 32 bit CPU
+	mov	$-1,%ax		# requires 32 bit CPU
 	ret
 in_vm86mode:
-	mov	$2,%ax		# CPU in V86 mode
+	mov	$-2,%ax		# CPU in V86 mode
 	ret
 
-# Attempt to enable A20 address gate
-# Return 0 if enabled.
+# Attempt to enable A20 address gate, return 0 on fail
 enable_a20_gate:
-	mov	$0,%ah		# enable A20
+	mov	$1,%ah		# enable A20
 	call	set_a20
-	call	verify_a20
-	jnz	1f		# NZ=enabled
-	mov	$1,%ax		# return 1 on fail
-	ret
-1:	xor	%ax,%ax		# return 0 if enabled
+	call	verify_a20	# returns 1 if enabled, 0 if disabled
 	ret
 
-# verify if A20 gate is enabled, return Z=disabled, NZ=enabled
+# verify if A20 gate is enabled, return 0 if disabled
 verify_a20:
-	push	%ax
 	push	%ds
 	push	%es
 
@@ -121,8 +115,11 @@ verify_a20:
 
 	pop	%es
 	pop	%ds
-	pop	%ax
-	ret			# if ZF=1, the A20 gate is NOT enabled
+	jz	1f		# if ZF=1, the A20 gate is NOT enabled
+	mov	$1,%ax		# return 1 if enabled
+	ret
+1:	mov	$0,%ax		# return 0 if disabled
+	ret
 
 # enable/disable A20 gate using keyboard port/controller, entry AH=0 disable
 set_a20:
@@ -151,7 +148,7 @@ set_a20:
 	out	%al,$0x60
 
 	call	empty_8042
-	sti
+	//sti
 	ret
 
 0:

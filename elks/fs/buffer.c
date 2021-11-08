@@ -14,35 +14,42 @@
 #include <arch/io.h>
 #include <arch/irq.h>
 
-// Number of external (L2) buffers specified in config by CONFIG_FS_NR_EXT_BUFFERS
+/*
+ * Number of external/main (L2) buffers specified in config by CONFIG_FS_NR_EXT_BUFFERS
+ * Number of extended/xms  (L2) buffers specified in config by CONFIG_FS_NR_XMS_BUFFERS
+ */
 
-// Number of internal L1 buffers
-// used to map/copy external L2 buffers to/from kernel data segment
-
+/* Number of internal L1 buffers,
+   used to map/copy external L2 buffers to/from kernel data segment */
 #ifdef CONFIG_FS_FAT
 #define NR_MAPBUFS  12
 #else
 #define NR_MAPBUFS  8
 #endif
 
-// Number of buffers: if CONFIG_FS_EXT_BUFFER set L2, otherwise number of L1 buffers
+/* Number of buffers: if CONFIG_FS_EXT_BUFFER or CONFIG_FS_XMS_BUFFER is defined,
+   this is the number of L2 buffers, otherwise its the number of L1 buffers */
 static int NR_BUFFERS;
 
-// Buffer heads: local heap allocated, NR_BUFFERS total
+/* Buffer heads: local heap allocated, NR_BUFFERS total */
 static struct buffer_head *buffer_heads;
 
-// Internal L1 buffers, must be kernel DS addressable
+/* Internal L1 buffers, must be kernel DS addressable */
 static char L1buf[NR_MAPBUFS][BLOCK_SIZE];
 
-// Buffer cache
+/* Buffer cache */
 static struct buffer_head *bh_lru;
 static struct buffer_head *bh_llru;
 
-// External L2 buffers are allocated within global memory segments
-// each segment being up to 64K in size for segment register addressing
-// Total global memory used is (BLOCK_SIZE * CONFIG_FS_NR_EXT_BUFFERS)
-
-#ifdef CONFIG_FS_EXTERNAL_BUFFER
+/*
+ * External L2 buffers are allocated within main or xms memory segments.
+ * If CONFIG_FS_XMS_BUFFER is set and unreal mode and A20 gate can be enabled,
+ *   extended/xms memory will be used and CONFIG_FS_NR_EXT_BUFFERS ignored.
+ * Total extended/xms memory would be (BLOCK_SIZE * CONFIG_FS_NR_XMS_BUFFERS).
+ * Otherwise, total main memory used is (BLOCK_SIZE * CONFIG_FS_NR_EXT_BUFFERS),
+ * each main memory segment being up to 64K in size for segment register addressing
+ */
+#if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
 static struct buffer_head *L1map[NR_MAPBUFS];	/* L1 indexed pointer to L2 buffer */
 static struct wait_queue L1wait;		/* Wait for a free L1 buffer area */
 static int lastL1map;
@@ -90,16 +97,28 @@ static void put_last_lru(register struct buffer_head *bh)
 int INITPROC buffer_init(void)
 {
     register struct buffer_head *bh;
-#ifdef CONFIG_FS_EXTERNAL_BUFFER
+#if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
     segment_s *seg = 0;		/* init stops compiler warning*/
-    int bufs_to_alloc = CONFIG_FS_NR_EXT_BUFFERS;
+    int bufs_to_alloc;
+    //int use_xms = 0;
     int nbufs = 0;
     int i = NR_MAPBUFS;
 
-    NR_BUFFERS = CONFIG_FS_NR_EXT_BUFFERS;
     do {
 	L1map[--i] = NULL;
     } while (i > 0);
+
+    NR_BUFFERS = bufs_to_alloc = CONFIG_FS_NR_EXT_BUFFERS;
+#ifdef CONFIG_FS_XMS_BUFFER
+    if (enable_unreal_mode()) {
+	if (/*verify_a20() ||*/ enable_a20_gate()) {
+	    //use_xms = 1;
+	    //NR_BUFFERS = CONFIG_FS_NR_XMS_BUFFERS;
+	    printk("XMS: unreal mode and A20 enabled\n");
+	} else printk("XMS: Can't enable A20 gate\n");
+    } else printk("XMS: Can't enable unreal mode\n");
+#endif
+
 #else
     char *p = (char *)L1buf;
     NR_BUFFERS = NR_MAPBUFS;
@@ -116,7 +135,7 @@ int INITPROC buffer_init(void)
 	put_last_lru(bh);
       buf_init:
 
-#ifdef CONFIG_FS_EXTERNAL_BUFFER
+#if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
 	if (--nbufs <= 0) {
 	    /* allocate buffers in 64k chunks so addressable with segment/offset*/
 	    if ((nbufs = bufs_to_alloc) > 64)
@@ -225,7 +244,7 @@ static struct buffer_head *get_free_buffer(void)
 
     bh = bh_lru;
     while (bh->b_count || buffer_dirty (bh) || buffer_locked (bh)
-#ifdef CONFIG_FS_EXTERNAL_BUFFER
+#if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
 		|| bh->b_data
 #endif
 								) {
@@ -353,7 +372,7 @@ struct buffer_head *getblk32(kdev_t dev, block32_t block)
  */
     bh->b_dev = dev;
     bh->b_blocknr = block;
-#ifdef CONFIG_FS_EXTERNAL_BUFFER
+#if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
     bh->b_seg = bh->b_data? kernel_ds: bh->b_ds;
 #endif
     goto return_it;
@@ -462,7 +481,7 @@ int sys_sync(void)
     return 0;
 }
 
-#ifdef CONFIG_FS_EXTERNAL_BUFFER
+#if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
 /* map_buffer copies a buffer into L1 buffer space. It will freeze forever
  * before failing, so it can return void.  This is mostly 8086 dependant,
  * although the interface is not.
@@ -551,4 +570,4 @@ char *buffer_data(struct buffer_head *bh)
 {
 	return (bh->b_data? bh->b_data: bh->b_L2data);
 }
-#endif /* CONFIG_FS_EXTERNAL_BUFFER*/
+#endif /* CONFIG_FS_EXTERNAL_BUFFER | CONFIG_FS_XMS_BUFFER*/
