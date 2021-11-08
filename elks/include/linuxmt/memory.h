@@ -31,4 +31,7 @@ word_t fmemcmpw (void * dst_off, seg_t dst_seg, void * src_off, seg_t src_seg, s
 #define _FP_OFF(fp)	((unsigned)(unsigned long)(void __far *)(fp))
 #define _MK_FP(seg,off)	((void __far *)((((unsigned long)(seg)) << 16) | (off)))
 
+int enable_unreal_mode(void);
+int enable_a20_gate(void);
+
 #endif
