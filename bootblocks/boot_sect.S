@@ -230,8 +230,12 @@ _reboot:
 _reboot1:
 #ifndef CONFIG_ARCH_PC98
 	call _puts
+#endif
 
 	xor %ax,%ax  // wait for key
+#ifdef CONFIG_ARCH_PC98
+	int $0x18
+#else
 	int $0x16
 #endif
 	ljmpw $0xffff,$0  // do a cold(er) boot
