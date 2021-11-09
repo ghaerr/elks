@@ -8,8 +8,18 @@
 # int enable_a20_gate(void)	- Enable A20 gate, return 0 on fail
 # int verify_a20		- Verify A20 gate status, return 0 if disabled
 # void set_a20			- ASM routine: enable (AH=1) or disable (AH=0) A20 gate
-# void linear_32fmemcpyw (void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
-#		size_t count)	- Copy between XMS and far memory
+# void linear32_fmemcpyw (void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
+#		size_t count)	- Copy words between XMS and far memory
+# void linear32_fmemcpyb (void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
+#		size_t count)	- Copy bytes between XMS and far memory
+# NOTE: the linear32_fmemcpy routines use "unprotected" EBX, EBX, ESI and EDI registers,
+#  and interrupts are left on so as to minimize device driver problems.
+#  This means that these routines CANNOT be called from an interrupt service routine,
+#  as the unprotected registers would be overwritten. This could be solved by
+#  turning interrupts off in the routine at the cost of delaying interrupt service
+#  for the duration of the copy, which might be too long for time-sensitive drivers,
+#  like fast serial ports. Further, no other routines should be written that use
+#  the 32-bit register set without coordinating with the functions in this file.
 #
 	.code16
 	.text
@@ -171,6 +181,7 @@ empty_8042:
 # void linear_32fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
 #		size_t count)
 # WARNING: Requires 32-bit CPU, with unreal mode and A20 gate enabled!
+#          Trashes EBX, ECX, ESI and EDI without saving.
 #
 linear32_fmemcpyw:
 	push   %es
@@ -179,6 +190,7 @@ linear32_fmemcpyw:
 	xorl   %esi,%esi
 	mov    %sp,%si
 
+	//cli                 // uncomment if extended registers used in interrupt routines
 	xorl   %ecx,%ecx
 	mov    16(%si),%cx    // word count -> ECX
 
@@ -200,6 +212,7 @@ linear32_fmemcpyw:
 	addr32                // 32-bit address prefix
 	rep
 	movsw                 // word [ES:EDI++] <- [DS:ESI++], ECX times
+	//sti
 
 	mov    %ax,%si
 	mov    %dx,%di
@@ -212,6 +225,7 @@ linear32_fmemcpyw:
 # void linear_32fmemcpyb(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
 #		size_t count)
 # WARNING: Requires 32-bit CPU, with unreal mode and A20 gate enabled!
+#          Trashes EBX, ECX, ESI and EDI without saving.
 #
 linear32_fmemcpyb:
 	push   %es
@@ -220,6 +234,7 @@ linear32_fmemcpyb:
 	xorl   %esi,%esi
 	mov    %sp,%si
 
+	//cli                 // uncomment if extended registers used in interrupt routines
 	xorl   %ecx,%ecx
 	mov    16(%si),%cx    // word count -> ECX
 
@@ -247,6 +262,7 @@ linear32_fmemcpyb:
 	addr32                // 32-bit address prefix
 	rep
 	movsb                 // byte [ES:EDI++] <- [DS:ESI++], ECX times
+	//sti
 
 	mov    %ax,%si
 	mov    %dx,%di

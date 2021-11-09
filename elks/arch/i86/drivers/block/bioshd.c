@@ -703,13 +703,16 @@ static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *b
 		BD_AX = (cmd == WRITE ? BIOSHD_WRITE : BIOSHD_READ) | this_pass;
 		BD_CX = ((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
 		BD_DX = (head << 8) | drive;
+#ifdef CONFIG_FS_XMS_BUFFER
 		if (seg >> 16) {
 			BD_ES = DMASEG;		/* if xms buffer use DMASEG*/
 			BD_BX = 0;
 			if (cmd == WRITE)	/* copy xms buffer down before write*/
 				xms_fmemcpyw(0, DMASEG, buf, seg, this_pass*512/2);
 			set_cache_invalid();
-		} else {
+		} else
+#endif
+		{
 			BD_ES = (seg_t)seg;
 			BD_BX = (unsigned) buf;
 		}
@@ -732,11 +735,13 @@ static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *b
 		       "ES:BX=0x%04X:0x%04X\n", out_ax, in_ax, BD_ES, BD_BX);
 		return 0;
 	}
+#ifdef CONFIG_FS_XMS_BUFFER
 	if (seg >> 16) {
 		if (cmd == READ)	/* copy DMASEG up to xms*/
 			xms_fmemcpyw(buf, seg, 0, DMASEG, this_pass*512/2);
 		set_cache_invalid();
 	}
+#endif
 	return this_pass;
 }
 

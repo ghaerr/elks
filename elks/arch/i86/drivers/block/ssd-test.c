@@ -31,7 +31,7 @@
 static segment_s *ssd_seg = 0;
 
 /* initialize SSD device */
-int ssddev_init(void)
+sector_t ssddev_init(void)
 {
     return NUM_SECTS;	/* return max # 512-byte sectors on device */
 }
@@ -74,19 +74,19 @@ int ssddev_ioctl(struct inode *inode, struct file *file,
 }
 
 /* write one 1K block (two sectors) to SSD */
-int ssddev_write_blk(sector_t start, char *buf, seg_t seg)
+int ssddev_write_blk(sector_t start, char *buf, ramdesc_t seg)
 {
     unsigned long offset = start << 9;
 
-    fmemcpyw(0, ssd_seg->base + (unsigned int)(offset >> 4), buf, seg, 512);
+    xms_fmemcpyw(0, ssd_seg->base + (unsigned int)(offset >> 4), buf, seg, 1024/2);
     return 2;	/* # sectors written */
 }
 
 /* read one 1K block (two sectors) from SSD */
-int ssddev_read_blk(sector_t start, char *buf, seg_t seg)
+int ssddev_read_blk(sector_t start, char *buf, ramdesc_t seg)
 {
     unsigned long offset = start << 9;
 
-    fmemcpyw(buf, seg, 0, ssd_seg->base + (unsigned int)(offset >> 4), 512);
+    xms_fmemcpyw(buf, seg, 0, ssd_seg->base + (unsigned int)(offset >> 4), 1024/2);
     return 2;	/* # sectors read */
 }

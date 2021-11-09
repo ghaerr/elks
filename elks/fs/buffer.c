@@ -155,7 +155,7 @@ int INITPROC buffer_init(void)
 	    if (xms_enabled) {
 		xms_seg += 0x00010000L;		/* 64K */
 		//xms_seg += 0x00001000L;		/* 64K */
-		printk("xms_alloc %lx nbufs %d\n", xms_seg, nbufs);
+		//printk("xms_alloc %lx nbufs %d\n", xms_seg, nbufs);
 	    } else
 #endif
 	    {

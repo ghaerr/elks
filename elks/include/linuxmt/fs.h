@@ -7,13 +7,14 @@
 
 #ifdef __KERNEL__
 
+#include <linuxmt/config.h>
 #include <linuxmt/types.h>
 #include <linuxmt/wait.h>
 #include <linuxmt/vfs.h>
 #include <linuxmt/kdev_t.h>
 #include <linuxmt/ioctl.h>
 #include <linuxmt/net.h>
-#include <linuxmt/config.h>
+#include <linuxmt/memory.h>
 
 #include <arch/bitops.h>
 
