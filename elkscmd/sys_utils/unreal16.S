@@ -51,11 +51,11 @@ videoline = 0xb8000+80*2*22
 _start:
 
 	call	enable_unreal_mode
-	cmp	$1,%ax
+	cmp	$-1,%ax
 	jnz	1f
 	mov     $needs_386_msg,%si
 	jmp	msg_and_exit
-1:	cmp	$2,%ax
+1:	cmp	$-2,%ax
 	jnz	2f
 	mov     $v86_msg,%si
 	jmp	msg_and_exit
@@ -90,14 +90,15 @@ _start:
 
 	mov	$a20_enabled_msg,%si
 	call	verify_a20	# check initial A20 gate status
+	cmp	$0,%ax		# 0=disabled
 	jnz	1f		# NZ=enabled
 	mov	$a20_disabled_msg,%si
 	call	puts
 
 	call	enable_a20_gate	# enable A20 and return gate status
 	mov	$a20_enabled_msg,%si
-	cmp	$0,%ax
-	jz	1f		# 0=enabled
+	cmp	$0,%ax		# 0=fail
+	jnz	1f		# NZ=enabled
 	mov	$a20_disabled_msg,%si
 1:	call	puts
 
@@ -109,6 +110,7 @@ msg_and_exit:
 	call	puts
 exit:   mov     $0,%bx
         mov     $sys_exit,%ax
+	sti
         int     $syscall
 
 # write string at SI
