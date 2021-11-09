@@ -86,8 +86,8 @@ void INITPROC kernel_init(void)
     sched_init();
     setup_arch(&base, &end);
     mm_init(base, end);
-    if (buffer_init())
-		panic("No buf mem");
+    if (buffer_init())	/* also enables xms and unreal mode if configured and possible*/
+	panic("No buf mem");
     inode_init();
     irq_init();
     tty_init();

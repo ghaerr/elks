@@ -82,6 +82,6 @@ NET="-netdev user,id=mynet,$FWD -device ne2k_isa,irq=12,netdev=mynet"
 
 # Configure QEMU as pure ISA system
 
-exec $QEMU $CONSOLE -nodefaults -name ELKS -machine isapc -cpu 486,tsc -m 1M \
+exec $QEMU $CONSOLE -nodefaults -name ELKS -machine isapc -cpu 486,tsc -m 2M \
 $KEYBOARD $QDISPLAY -vga std -rtc base=utc $SERIAL \
 $NET $NETDUMP $IMAGE $DISK2 $@

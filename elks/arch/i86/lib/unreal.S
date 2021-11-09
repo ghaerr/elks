@@ -7,7 +7,9 @@
 #				  returns > 0 on success else error code
 # int enable_a20_gate(void)	- Enable A20 gate, return 0 on fail
 # int verify_a20		- Verify A20 gate status, return 0 if disabled
-# set_a20		- ASM routine: enable (AH=1) or disable (AH=0) A20 gate
+# void set_a20			- ASM routine: enable (AH=1) or disable (AH=0) A20 gate
+# void linear_32fmemcpyw (void * dst_off, ramdesc_t dst_seg, void * src_off, ramdesc_t src_seg,
+#		size_t count)	- Copy between XMS and far memory
 #
 	.code16
 	.text
@@ -16,6 +18,7 @@
 	.global	enable_a20_gate
 	.global	verify_a20
 	.global	set_a20
+	.global	linear32_fmemcpyw
 
 # Try to set unreal mode. Currently requires 386 CPU or better.
 # Returns 0 if OK, otherwise error code (1=not 386, 2=in V86 mode).
@@ -161,6 +164,46 @@ empty_8042:
 	jnz	0b		# yes, read and discard
 	test	$2,%al		# input buffer (data _to_ keyboard) empty?
 	jnz	empty_8042	# no, loop
+	ret
+
+#
+# void linear_32fmemcpyw (void * dst_off, ramdesc_t dst_seg, void * src_off, ramdesc_t src_seg,
+#		size_t count)
+# WARNING: Requires 32-bit CPU, with unreal mode and A20 gate enabled!
+#
+linear32_fmemcpyw:
+	push   %es
+	mov    %si,%ax
+	mov    %di,%dx
+	xorl   %esi,%esi
+	mov    %sp,%si
+
+	xorl   %ecx,%ecx
+	mov    16(%si),%cx    // word count -> ECX
+
+	xorl   %ebx,%ebx
+	mov    4(%si),%bx     // word dest offset -> EBX
+	movl   6(%esi),%edi   // long dest address -> EDI
+	addl   %ebx,%edi      // EDI is linear destination
+
+	xorl   %ebx,%ebx
+	mov    10(%si),%bx    // word src offset -> EBX
+	movl   12(%esi),%esi  // long src address -> ESI
+	addl   %ebx,%esi      // ESI is linear source
+
+	xor    %bx,%bx        // ES = DS = 0 for 32-bit linear addressing
+	mov    %bx,%es
+	mov    %bx,%ds
+	cld
+	addr32                // 32-bit address prefix
+	rep
+	movsw                 // word [ES:EDI++] <- [DS:ESI++], ECX times
+
+	mov    %ax,%si
+	mov    %dx,%di
+	mov    %ss,%ax
+	mov    %ax,%ds
+	pop    %es
 	ret
 
 # The GDT contains 8-byte DESCRIPTORS for each protected-mode segment.

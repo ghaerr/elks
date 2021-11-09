@@ -100,7 +100,6 @@ int INITPROC buffer_init(void)
 #if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
     segment_s *seg = 0;		/* init stops compiler warning*/
     int bufs_to_alloc;
-    //int use_xms = 0;
     int nbufs = 0;
     int i = NR_MAPBUFS;
 
@@ -112,11 +111,13 @@ int INITPROC buffer_init(void)
 #ifdef CONFIG_FS_XMS_BUFFER
     if (enable_unreal_mode()) {
 	if (/*verify_a20() ||*/ enable_a20_gate()) {
-	    //use_xms = 1;
+	    xms_enabled = 1;	/* enables xms_fmemcpyw()*/
 	    //NR_BUFFERS = CONFIG_FS_NR_XMS_BUFFERS;
-	    printk("XMS: unreal mode and A20 enabled\n");
-	} else printk("XMS: Can't enable A20 gate\n");
-    } else printk("XMS: Can't enable unreal mode\n");
+	    printk("xms: unreal mode and A20 enabled\n");
+	    char *q = "U n r e a l   m o d e ";
+	    xms_fmemcpyw((char *)(80*2*4), 0x000b8000L, q, kernel_ds, strlen(q)/2);
+	} else printk("xms: can't enable A20 gate\n");
+    } else printk("xms: can't enable unreal mode\n");
 #endif
 
 #else

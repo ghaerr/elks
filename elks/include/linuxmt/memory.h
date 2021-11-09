@@ -35,4 +35,14 @@ int enable_unreal_mode(void);	/* returns > 0 on success */
 int enable_a20_gate(void);	/* returns 0 on fail */
 int verify_a20(void);		/* returns 0 if a20 disabled */
 
+extern int xms_enabled;		/* global set if unreal mode and A20 gate enabled */
+
+/* copy to/from XMS or far memory - XMS requires unreal mode and A20 gate enabled */
+void xms_fmemcpyw(void * dst_off, ramdesc_t dst_seg, void * src_off, ramdesc_t src_seg,
+		size_t count);
+
+/* low level copy - must have 386 CPU and xms_enabled before calling! */
+void linear32_fmemcpyw(void * dst_off, ramdesc_t dst_seg, void * src_off, ramdesc_t src_seg,
+		size_t count);
+
 #endif
