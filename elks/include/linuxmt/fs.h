@@ -119,7 +119,7 @@
 
 struct buffer_head {
     char			*b_data;	/* Address if in L1 buffer area, else 0 */
-    seg_t			b_seg;		/* Current (L1 or L2) buffer segment */
+    ramdesc_t			b_seg;		/* Current L1 or L2 (main/xms) buffer segment */
     block32_t			b_blocknr;	/* 32-bit block numbers required for FAT */
     kdev_t			b_dev;
     struct buffer_head		*b_next_lru;
@@ -130,7 +130,7 @@ struct buffer_head {
     char			b_dirty;
     char			b_uptodate;
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
-    seg_t			b_ds;		/* L2 buffer data segment */
+    ramdesc_t			b_ds;		/* L2 buffer data segment */
     char			*b_L2data;	/* Offset into L2 allocation block */
     char			b_mapcount;	/* count of L2 buffer mapped into L1 */
     unsigned char		b_num;		/* Buffer number, for debugging */

@@ -47,8 +47,6 @@ typedef __u16			sig_t;
 
 typedef __s16			sem_t;
 
-typedef __u32			ramdesc_t;
-
 /*@ignore@*/
 
 /* The next three lines cause splint to complain needlessly */

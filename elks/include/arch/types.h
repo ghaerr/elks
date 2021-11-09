@@ -28,6 +28,7 @@ typedef __u16 word_t;
 typedef __u32 long_t;
 typedef __u16 seg_t;
 typedef __u32 addr_t;
+typedef __u32 ramdesc_t;
 
 /* Then we define registers, etc... */
 

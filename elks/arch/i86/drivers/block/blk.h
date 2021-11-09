@@ -20,7 +20,7 @@ struct request {
     unsigned char rq_status;
     sector_t rq_sector;
     char *rq_buffer;
-    seg_t rq_seg;
+    ramdesc_t rq_seg;		/* L2 main/xms buffer segment */
     struct buffer_head *rq_bh;
     struct request *rq_next;
 

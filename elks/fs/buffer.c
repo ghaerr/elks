@@ -107,18 +107,27 @@ int INITPROC buffer_init(void)
 	L1map[--i] = NULL;
     } while (i > 0);
 
-    NR_BUFFERS = bufs_to_alloc = CONFIG_FS_NR_EXT_BUFFERS;
+    NR_BUFFERS = CONFIG_FS_NR_EXT_BUFFERS;
 #ifdef CONFIG_FS_XMS_BUFFER
+    ramdesc_t xms_seg;
     if (enable_unreal_mode()) {
 	if (/*verify_a20() ||*/ enable_a20_gate()) {
-	    xms_enabled = 1;	/* enables xms_fmemcpyw()*/
-	    //NR_BUFFERS = CONFIG_FS_NR_XMS_BUFFERS;
+
+	    xms_enabled = 1;				/* enables xms_fmemcpyw()*/
+	    xms_seg = 0x00100000L - 0x00010000L;	/* 1M - 64K*/
+	    //xms_seg = 0x000D0000L - 0x00010000L;	/* D000 - 64K*/
+	    //xms_seg = 0x0000D000L - 0x00001000L;	/* D000 - 64K*/
+	    NR_BUFFERS = CONFIG_FS_NR_XMS_BUFFERS;
+
 	    printk("xms: unreal mode and A20 enabled\n");
-	    char *q = "U n r e a l   m o d e ";
-	    xms_fmemcpyw((char *)(80*2*4), 0x000b8000L, q, kernel_ds, strlen(q)/2);
-	} else printk("xms: can't enable A20 gate\n");
-    } else printk("xms: can't enable unreal mode\n");
+	    //char *q = "U n r e a l   m o d e ";
+	    //xms_fmemcpyw((char *)(80*2*4), 0x000b8000L, q, kernel_ds, strlen(q)/2);
+	} else
+	    printk("xms: can't enable A20 gate\n");
+    } else
+	printk("xms: can't enable unreal mode\n");
 #endif
+    bufs_to_alloc = NR_BUFFERS;
 
 #else
     char *p = (char *)L1buf;
@@ -142,11 +151,25 @@ int INITPROC buffer_init(void)
 	    if ((nbufs = bufs_to_alloc) > 64)
 		nbufs = 64;
 	    bufs_to_alloc -= nbufs;
-	    seg = seg_alloc (nbufs << (BLOCK_SIZE_BITS - 4),
-		SEG_FLAG_EXTBUF|SEG_FLAG_ALIGN1K);
-	    if (!seg) return 2;
+#ifdef CONFIG_FS_XMS_BUFFER
+	    if (xms_enabled) {
+		xms_seg += 0x00010000L;		/* 64K */
+		//xms_seg += 0x00001000L;		/* 64K */
+		printk("xms_alloc %lx nbufs %d\n", xms_seg, nbufs);
+	    } else
+#endif
+	    {
+		seg = seg_alloc (nbufs << (BLOCK_SIZE_BITS - 4),
+		    SEG_FLAG_EXTBUF|SEG_FLAG_ALIGN1K);
+		if (!seg) return 2;
+	    }
 	}
-	bh->b_seg = bh->b_ds = seg->base;
+#ifdef CONFIG_FS_XMS_BUFFER
+	if (xms_enabled)
+	   bh->b_seg = bh->b_ds = xms_seg;
+	else
+#endif
+	    bh->b_seg = bh->b_ds = seg->base;
 	bh->b_mapcount = 0;
 	bh->b_data = (char *)0;		/* not in L1 cache*/
 	bh->b_L2data = (char *)((i & 63) << BLOCK_SIZE_BITS);	/* L2 location*/
@@ -516,7 +539,7 @@ void map_buffer(register struct buffer_head *bh)
 	    debug("UNMAP: %d <- %d\n", bmap->b_num, i);
 
 	    /* Unmap/copy L1 to L2 */
-	    fmemcpyw(bmap->b_L2data, bmap->b_ds, bmap->b_data, kernel_ds, BLOCK_SIZE/2);
+	    xms_fmemcpyw(bmap->b_L2data, bmap->b_ds, bmap->b_data, kernel_ds, BLOCK_SIZE/2);
 	    bmap->b_data = (char *)0;
 	    bmap->b_seg = bmap->b_ds;
 	    break;		/* success */
@@ -533,7 +556,7 @@ void map_buffer(register struct buffer_head *bh)
     L1map[i] = bh;
     bh->b_data = (char *)L1buf + (i << BLOCK_SIZE_BITS);
     if (buffer_uptodate(bh))
-	fmemcpyw(bh->b_data, kernel_ds, bh->b_L2data, bh->b_ds, BLOCK_SIZE/2);
+	xms_fmemcpyw(bh->b_data, kernel_ds, bh->b_L2data, bh->b_ds, BLOCK_SIZE/2);
     debug("MAP:   %d -> %d\n", bh->b_num, i);
   end_map_buffer:
     bh->b_seg = kernel_ds;
