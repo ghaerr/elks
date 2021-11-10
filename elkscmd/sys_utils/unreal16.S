@@ -97,9 +97,9 @@ _start:
 	mov	$a20_enabled_msg,%si
 	call	verify_a20	# check initial A20 gate status
 	cmp	$0,%ax		# 0=disabled
-	jnz	1f		# NZ=enabled
+	jnz	2f		# NZ=enabled
 	mov	$a20_disabled_msg,%si
-	call	puts
+2:	call	puts
 
 	mov	$trying_a20_msg,%si
 	call	puts

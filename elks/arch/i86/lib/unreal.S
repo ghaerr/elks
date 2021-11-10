@@ -21,6 +21,13 @@
 #  like fast serial ports. Further, no other routines should be written that use
 #  the 32-bit register set without coordinating with the functions in this file.
 #
+
+# configurable options for A20 gate
+#   USE_A20ASM		- use Chris Giese A20.ASM method (send D0, read, OR 2, D1, write)
+#   USE_HIMEM_AT	- use himem.sys PC AT method (send D1,DF,FF)
+#define USE_A20ASM
+//#define USE_HIMEM_AT
+
 	.code16
 	.text
 
@@ -135,7 +142,10 @@ verify_a20:
 1:	mov	$0,%ax		# return 0 if disabled
 	ret
 
+#
 # enable/disable A20 gate using keyboard port/controller, entry AH=0 disable
+
+#ifdef USE_A20ASM
 set_a20:
 	cli
 	call	empty_8042
@@ -165,8 +175,7 @@ set_a20:
 	//sti
 	ret
 
-0:
-	jmp	1f		# a delay (probably not effective nor necessary)
+0:	jmp	1f		# a delay (probably not effective nor necessary)
 1:	in	$0x60,%al	# read and discard data/status from 8042
 empty_8042:
 	jmp	2f		# delay
@@ -176,6 +185,63 @@ empty_8042:
 	test	$2,%al		# input buffer (data _to_ keyboard) empty?
 	jnz	empty_8042	# no, loop
 	ret
+#endif
+
+#ifdef USE_HIMEM_AT
+set_a20:
+	cli
+	xor	%ah,%ah
+	jz	reset_a20
+
+	call	sync_8042
+	jnz	a20_err
+
+	mov	$0xD1,%al	# send D1h
+	out	%al,$0x64
+	call	sync_8042
+	jnz	a20_err
+
+	mov	$0xDF,%al	# send DFh
+	out	%al,$0x60
+	call	sync_8042
+	jnz	a20_err
+
+	# wait for A20 line to settle down (up to 20 usecs)
+	mov	$0xFF,%al	# send FFh (pulse output port NULL)
+	out	%al,$0x64
+	call	sync_8042
+a20_err:
+	//sti
+	ret
+reset_a20:
+	call	sync_8042
+	jnz	a20_err
+
+	mov	$0xD1,%al	# send D1h
+	out	%al,$0x64
+	call	sync_8042
+	jnz	a20_err
+
+	mov	$0xDD,%al	# send DDh
+	out	%al,$0x60
+	call	sync_8042
+	jnz	a20_err
+
+
+	# wait for A20 line to settle down (up to 20 usecs)
+	mov	$0xFF,%al	# send FFh (pulse output port NULL)
+	out	%al,$0x64
+	call	sync_8042
+	//sti
+	ret
+
+sync_8042:
+	xor	%cx,%cx
+1:	in	$0x64,%al
+	and	$2,%al
+	loopnz	1b
+	ret
+#endif
 
 #
 # void linear_32fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
