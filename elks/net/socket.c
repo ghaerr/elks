@@ -604,8 +604,8 @@ int sys_setsockopt(int fd, int level, int option_name, void *option_value,
     }
 
     if (setoption)
-	sock->flags |= setoption;
-    else sock->flags &= ~setoption;
+	sock->flags |= flags;
+    else sock->flags &= ~flags;
 
     return 0;
 }

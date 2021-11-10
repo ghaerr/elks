@@ -192,6 +192,12 @@ int main(int argc, char **argv)
 		fprintf(stderr, "telnetd: Can't open socket (check if ktcp is running)\n");
 		exit(-1);
 	}
+
+	/* set local port reuse, allows server to be restarted in less than 10 secs */
+	ret = 1;
+	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &ret, sizeof(int)) < 0)
+		perror("setsockopt SO_REUSEADDR");
+
 	memset(&addr_in, 0, sizeof(addr_in));
 	addr_in.sin_family = AF_INET;
 	addr_in.sin_addr.s_addr = htons(INADDR_ANY);

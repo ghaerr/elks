@@ -32,6 +32,7 @@ static unsigned char sbuf[TCPDEV_BUFSIZ];
 int tcpdevfd;
 
 extern int cbs_in_user_timeout;
+extern int cbs_in_time_wait;
 
 int tcpdev_init(char *fdev)
 {
@@ -78,12 +79,22 @@ static void tcpdev_bind(void)
 	    next_port++;
 	port = next_port;
     } else {
-	/* check if port already bound */
-	struct tcpcb_list *n2 = tcpcb_check_port(port);
-	if (n2 && !db->reuseaddr) {
-	    tcpcb_remove(n);
-	    retval_to_sock(db->sock, -EADDRINUSE);
-	    return;
+	struct tcpcb_list_s *n2 = tcpcb_check_port(port);
+	if (n2) {			/* port already bound */
+	    if (!db->reuseaddr) {	/* no SO_REUSEADDR on socket */
+		printf("tcp: port %u already bound, rejecting\n", port);
+		tcpcb_remove(n);
+		retval_to_sock(db->sock, -EADDRINUSE);
+		return;
+	    }
+
+	    /* remove TCB control block on SO_REUSEADDR to save heap space */
+	    if (n2->tcpcb.state == TS_TIME_WAIT) {
+		LEAVE_TIME_WAIT(&n2->tcpcb);	/* entered via FIN_WAIT_2 state on FIN rcvd*/
+		tcpcb_remove(n2);
+		printf("tcp: port %u reused, removing previous time_wait socket\n", port);
+	    } else
+		printf("tcp: port %u reused, other socket NOT in time_wait!\n", port);
 	}
     }
 

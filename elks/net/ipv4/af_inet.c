@@ -117,11 +117,12 @@ static int inet_bind(register struct socket *sock, struct sockaddr *addr,
 
     /* TODO : Check if the user has permision to bind the port */
 
-	down(&rwlock);
+    down(&rwlock);
     cmd = (struct tdb_bind *)get_tdout_buf();
     cmd->cmd = TDC_BIND;
     cmd->sock = sock;
-	cmd->reuseaddr = sock->flags & SF_REUSE_ADDR;
+
+    cmd->reuseaddr = sock->flags & SF_REUSE_ADDR;
     memcpy_fromfs(&cmd->addr, addr, sockaddr_len);
 
     tcpdev_inetwrite(cmd, sizeof(struct tdb_bind));
@@ -132,7 +133,7 @@ static int inet_bind(register struct socket *sock, struct sockaddr *addr,
 
     ret = ((struct tdb_return_data *)tdin_buf)->ret_value;
     tcpdev_clear_data_avail();
-	up(&rwlock);
+    up(&rwlock);
 
     return (ret >= 0 ? 0 : ret);
 }
