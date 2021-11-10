@@ -40,6 +40,10 @@ int verify_a20(void);		/* returns 0 if a20 disabled */
 #ifdef CONFIG_FS_XMS_BUFFER
 typedef __u32 ramdesc_t;	/* special physical ram descriptor */
 
+/* allocate from XMS memory */
+int xms_init(void);		/* enables unreal mode and A20 gate */
+ramdesc_t xms_alloc(long_t size);
+
 /* copy to/from XMS or far memory - XMS requires unreal mode and A20 gate enabled */
 void xms_fmemcpyw(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src_seg,
 		size_t count);
@@ -52,7 +56,6 @@ void linear32_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_
 void linear32_fmemcpyb(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
 		size_t count);
 
-extern int xms_enabled;		/* global set if unreal mode and A20 gate enabled */
 #else
 
 typedef seg_t ramdesc_t;	/* ramdesc_t is just a regular segment descriptor */

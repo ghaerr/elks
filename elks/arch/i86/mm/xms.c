@@ -21,8 +21,36 @@
  *     in linear32_fmemcypw.
  */
 
-int xms_enabled;
+static int xms_enabled;
+static long_t xms_alloc_ptr = 0x00100000L;	/* 1M */
 
+/* try to enable unreal mode and A20 gate. Return 1 if successful */
+int xms_init(void)
+{
+	if (enable_unreal_mode()) {
+		if (/*verify_a20() ||*/ enable_a20_gate()) {
+			xms_enabled = 1;	/* enables xms_fmemcpyw()*/
+
+			printk("xms: unreal mode and A20 enabled\n");
+		} else
+			printk("xms: can't enable A20 gate\n");
+	} else
+		printk("xms: can't enable unreal mode (needs 386)\n");
+
+	return xms_enabled;
+}
+
+/* allocate from XMS memory - very simple for now, no free */
+ramdesc_t xms_alloc(long_t size)
+{
+	long_t mem = xms_alloc_ptr;
+
+	xms_alloc_ptr += size;
+	//printk("xms_alloc %lx size %lu\n", mem, size);
+	return mem;
+}
+
+/* copy words between XMS and far memory */
 void xms_fmemcpyw(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src_seg,
 		size_t count)
 {
@@ -40,6 +68,7 @@ void xms_fmemcpyw(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src
 	fmemcpyw(dst_off, (seg_t)dst_seg, src_off, (seg_t)src_seg, count);
 }
 
+/* copy bytes between XMS and far memory */
 void xms_fmemcpyb(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src_seg,
 		size_t count)
 {
