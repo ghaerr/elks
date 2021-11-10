@@ -50,6 +50,9 @@ videoline = 0xb8000+80*2*22
     .global _start
 _start:
 
+	mov	$trying_unreal_msg,%si
+	call	puts
+
 	call	enable_unreal_mode
 	cmp	$-1,%ax
 	jnz	1f
@@ -88,11 +91,17 @@ _start:
 #	mov	$1,%ah		# test disable A20
 #	call	set_a20
 
+	mov	$verify_a20_msg,%si
+	call	puts
+
 	mov	$a20_enabled_msg,%si
 	call	verify_a20	# check initial A20 gate status
 	cmp	$0,%ax		# 0=disabled
 	jnz	1f		# NZ=enabled
 	mov	$a20_disabled_msg,%si
+	call	puts
+
+	mov	$trying_a20_msg,%si
 	call	puts
 
 	call	enable_a20_gate	# enable A20 and return gate status
@@ -135,6 +144,18 @@ strlen:	push	%si
         ret
 
         .data
+
+trying_unreal_msg:
+        .ascii "Trying to enable unreal mode...\n"
+        .byte  0
+
+verify_a20_msg:
+        .ascii "Verifying A20 gate status...\n"
+        .byte  0
+
+trying_a20_msg:
+        .ascii "Trying to enable A20 gate...\n"
+        .byte  0
 
 needs_386_msg:
         .ascii "Sorry, 80386+ CPU required\n"
