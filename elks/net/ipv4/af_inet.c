@@ -49,7 +49,7 @@ int inet_process_tcpdev(register char *buf, int len)
         tcpdev_clear_data_avail();
 	debug_net("INET(%d) chg_state sock %x %d\n", current->pid, sock, sock->state);
 	if (sock->state == SS_DISCONNECTING) {
-	    sock->flags |= SO_CLOSING;
+	    sock->flags |= SF_CLOSING;
 	    wake_up(sock->wait);
 	}
         break;
@@ -100,7 +100,7 @@ static int inet_release(struct socket *sock, struct socket *peer)
     cmd = (struct tdb_release *)get_tdout_buf();
     cmd->cmd = TDC_RELEASE;
     cmd->sock = sock;
-    cmd->reset = sock->flags & SO_RST_ON_CLOSE;
+    cmd->reset = sock->flags & SF_RST_ON_CLOSE;
     ret = tcpdev_inetwrite(cmd, sizeof(struct tdb_release));
     return (ret >= 0 ? 0 : ret);
 }
@@ -121,6 +121,7 @@ static int inet_bind(register struct socket *sock, struct sockaddr *addr,
     cmd = (struct tdb_bind *)get_tdout_buf();
     cmd->cmd = TDC_BIND;
     cmd->sock = sock;
+	cmd->reuseaddr = sock->flags & SF_REUSE_ADDR;
     memcpy_fromfs(&cmd->addr, addr, sockaddr_len);
 
     tcpdev_inetwrite(cmd, sizeof(struct tdb_bind));
@@ -222,9 +223,9 @@ static int inet_accept(register struct socket *sock,
 
     /* Sleep until tcpdev has news */
     while (bufin_sem == 0) {
-        //sock->flags |= SO_WAITDATA;
+        //sock->flags |= SF_WAITDATA;
         interruptible_sleep_on(sock->wait);
-        //sock->flags &= ~SO_WAITDATA;
+        //sock->flags &= ~SF_WAITDATA;
         if (current->signal) {
 	    debug_net("INET(%d) accept RESTARTSYS\n", current->pid);
             return -ERESTARTSYS;
@@ -257,7 +258,7 @@ static int inet_read(register struct socket *sock, char *ubuf, int size,
     /* ensure read blocks until data - wait for ktcp to report data available*/
     while (sock->avail_data == 0) {
 	/* return EOF on socket remote closed*/
-	if (sock->flags & SO_CLOSING)
+	if (sock->flags & SF_CLOSING)
 	    return 0;
 	debug_net("INET(%d) read waiting on sock->avail_data sock %x\n", current->pid, sock);
 	interruptible_sleep_on(sock->wait);

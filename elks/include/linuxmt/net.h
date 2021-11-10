@@ -67,11 +67,13 @@ struct proto_ops {
     int (*fcntl) ();
 };
 
-#define SO_CLOSING	(1 << 0)
-#define SO_ACCEPTCON	(1 << 1)
-#define SO_WAITDATA	(1 << 2)
-#define SO_NOSPACE	(1 << 3)
-#define SO_RST_ON_CLOSE	(1 << 4)
+/* careful: option names are close to public SO_ options in socket.h */
+#define SF_CLOSING	(1 << 0)
+#define SF_ACCEPTCON	(1 << 1)
+#define SF_WAITDATA	(1 << 2)
+#define SF_NOSPACE	(1 << 3)
+#define SF_RST_ON_CLOSE	(1 << 4)
+#define SF_REUSE_ADDR	(1 << 5)
 
 struct net_proto {
     char *name;			/* Protocol name */

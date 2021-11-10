@@ -142,7 +142,7 @@ static size_t sock_read(struct inode *inode, struct file *file,
 	return -EBADF;
     }
 
-    if (sock->flags & SO_ACCEPTCON)
+    if (sock->flags & SF_ACCEPTCON)
 	return -EINVAL;
 
     if (size == 0)
@@ -165,7 +165,7 @@ static size_t sock_write(struct inode *inode, struct file *file,
 	return -EBADF;
     }
 
-    if (sock->flags & SO_ACCEPTCON)
+    if (sock->flags & SF_ACCEPTCON)
 	return -EINVAL;
 
     if (size == 0)
@@ -200,7 +200,7 @@ int sock_awaitconn(register struct socket *mysock,
     /*
      *      We must be listening
      */
-    if (!(servsock->flags & SO_ACCEPTCON))
+    if (!(servsock->flags & SF_ACCEPTCON))
 	return -EINVAL;
 
     /*
@@ -408,7 +408,7 @@ int sys_listen(int fd, int backlog)
     if (ops && ops->listen)
 	ops->listen(sock, backlog);
 
-    sock->flags |= SO_ACCEPTCON;
+    sock->flags |= SF_ACCEPTCON;
     return 0;
 
 }
@@ -426,7 +426,7 @@ int sys_accept(int fd, struct sockaddr *upeer_sockaddr, int *upeer_addrlen)
     if (sock->state != SS_UNCONNECTED)
 	return -EINVAL;
 
-    if (!(sock->flags & SO_ACCEPTCON))
+    if (!(sock->flags & SF_ACCEPTCON))
 	return -EINVAL;
 
     if (!(newsock = sock_alloc())) {
@@ -571,23 +571,41 @@ int sys_setsockopt(int fd, int level, int option_name, void *option_value,
 	unsigned int option_len)
 {
     register struct socket *sock;
-    int err;
+    int flags;
+    int setoption = 0;
     struct linger l;
 
     if (!(sock = sockfd_lookup(fd, NULL)))
 	return -ENOTSOCK;
 
-    if (option_name != SO_LINGER || option_len != sizeof(struct linger))
+    flags = check_addr_to_kernel(option_value, option_len);
+    if (flags < 0)
+	return flags;
+
+    switch (option_name) {
+    case SO_LINGER:
+	if (option_len != sizeof(struct linger))
+	    return -EINVAL;
+	memcpy_fromfs(&l, option_value, sizeof(struct linger));
+	flags = SF_RST_ON_CLOSE;
+	if (l.l_onoff != 0 && l.l_linger == 0)
+	    setoption = 1;
+	break;
+
+    case SO_REUSEADDR:
+	if (option_len != sizeof(int))
+	    return -EINVAL;
+	memcpy_fromfs(&setoption, option_value, sizeof(int));
+	flags = SF_REUSE_ADDR;
+	break;
+
+    default:
 	return -EINVAL;
+    }
 
-    err = check_addr_to_kernel(option_value, sizeof(struct linger));
-    if (err < 0)
-	return err;
-    memcpy_fromfs(&l, option_value, sizeof(struct linger));
-
-    if (l.l_onoff != 0 && l.l_linger == 0)
-	sock->flags |= SO_RST_ON_CLOSE;
-    else sock->flags &= ~SO_RST_ON_CLOSE;
+    if (setoption)
+	sock->flags |= setoption;
+    else sock->flags &= ~setoption;
 
     return 0;
 }

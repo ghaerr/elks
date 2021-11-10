@@ -15,7 +15,8 @@ struct sockaddr {
 /* for setsockopt(2) */
 #define SOL_SOCKET	1
 
-/* careful: option name scheme interferes with internal SO_ options in net.h*/
+/* careful: option names are close to internal SF_ options in net.h*/
+#define SO_REUSEADDR	2
 #define SO_LINGER	13		/* only implemented for l_linger = 0*/
 
 struct linger {

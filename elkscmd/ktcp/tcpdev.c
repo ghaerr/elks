@@ -78,7 +78,9 @@ static void tcpdev_bind(void)
 	    next_port++;
 	port = next_port;
     } else {
-	if (tcpcb_check_port(port) != NULL) {	/* Port already bound */
+	/* check if port already bound */
+	struct tcpcb_list *n2 = tcpcb_check_port(port);
+	if (n2 && !db->reuseaddr) {
 	    tcpcb_remove(n);
 	    retval_to_sock(db->sock, -EADDRINUSE);
 	    return;
