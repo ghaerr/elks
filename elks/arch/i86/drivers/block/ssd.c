@@ -63,7 +63,7 @@ static void ssd_release(struct inode *inode, struct file *filp)
 static void do_ssd_request(void)
 {
     char *buf;
-    seg_t seg;
+    ramdesc_t seg;
     sector_t start;
     int ret;
 
@@ -84,16 +84,17 @@ static void do_ssd_request(void)
 	buf = CURRENT->rq_buffer;
 	seg = CURRENT->rq_seg;
 	start = CURRENT->rq_sector;
-	if (start >= NUM_SECTS) {
+	/* all ELKS requests are 1K blocks = 2 sectors */
+	if (start >= NUM_SECTS-1) {
 	    debug("SSD: bad request sector %lu\n", start);
 	    end_request(0);
 	    continue;
 	}
 	if (CURRENT->rq_cmd == WRITE) {
-	    debug("SSD: writing sector %lu\n", start);
+	    debug("SSD: writing block start sector %lu\n", start);
 	    ret = ssddev_write_blk(start, buf, seg);
 	} else {
-	    debug("SSD: reading sector %lu\n", start);
+	    debug("SSD: reading block start sector %lu\n", start);
 	    ret = ssddev_read_blk(start, buf, seg);
 	}
 	if (ret == 2)

@@ -465,7 +465,9 @@ fail:
  * 
  * returns: 0 on success, negative value on failure.
  */
-static int sd_read(unsigned char __far *buffer, sector_t sector) {
+static int sd_read(char *buf, ramdesc_t seg, sector_t sector) {
+    /* init far pointer to segment:offset. FIXME won't work with XMS buffers*/
+    unsigned char __far *buffer = _MK_FP((seg_t)seg, (unsigned)buf);
     int ret;
     uint16_t count = SD_FIXED_SECTOR_SIZE;
 
@@ -507,7 +509,9 @@ fail:
  * 
  * returns: 0 on success, negative value on failure.
  */
-static int sd_write(unsigned char __far *buffer, sector_t sector) {
+static int sd_write(char *buf, ramdesc_t seg, sector_t sector) {
+    /* init far pointer to segment:offset. FIXME won't work with XMS buffers*/
+    unsigned char __far *buffer = _MK_FP((seg_t)seg, (unsigned)buf);
     int ret;
     uint16_t count = SD_FIXED_SECTOR_SIZE;
 
@@ -591,19 +595,17 @@ int ssddev_ioctl(struct inode *inode, struct file *file,
  * 
  * returns: 0 on error, 1 if just one sector was written, 2 on success.
  */
-int ssddev_write_blk(sector_t start, char *buf, seg_t seg)
+int ssddev_write_blk(sector_t start, char *buf, ramdesc_t seg)
 {
-    /* init far pointer to segment:offset */
-    unsigned char __far *buffer = _MK_FP(seg, (unsigned)buf);
     int ret;
 
-    ret = sd_write(buffer, start);
+    ret = sd_write(buf, seg, start);
     if (ret != 0) {
         /* no sectors were written */
         return 0;
     }
 
-    ret = sd_write(buffer + 512, start + 1);
+    ret = sd_write(buf + 512, seg, start + 1);
     if (ret != 0) {
         /* just one sector was written */
         return 1;
@@ -618,19 +620,17 @@ int ssddev_write_blk(sector_t start, char *buf, seg_t seg)
  * 
  * returns: 0 on error, 1 if just one sector was read, 2 on success.
  */
-int ssddev_read_blk(sector_t start, char *buf, seg_t seg)
+int ssddev_read_blk(sector_t start, char *buf, ramdesc_t seg)
 {
-    /* init far pointer to segment:offset */
-    unsigned char __far *buffer = _MK_FP(seg, (unsigned)buf);
     int ret;
 
-    ret = sd_read(buffer, start);
+    ret = sd_read(buf, seg, start);
     if (ret != 0) {
         /* no sectors were read */
         return 0;
     }
 
-    ret = sd_read(buffer + 512, start + 1);
+    ret = sd_read(buf + 512, seg, start + 1);
     if (ret != 0) {
         /* just one sector was read */
         return 1;

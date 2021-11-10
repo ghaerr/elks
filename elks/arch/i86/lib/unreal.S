@@ -7,7 +7,19 @@
 #				  returns > 0 on success else error code
 # int enable_a20_gate(void)	- Enable A20 gate, return 0 on fail
 # int verify_a20		- Verify A20 gate status, return 0 if disabled
-# set_a20		- ASM routine: enable (AH=1) or disable (AH=0) A20 gate
+# void set_a20			- ASM routine: enable (AH=1) or disable (AH=0) A20 gate
+# void linear32_fmemcpyw (void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
+#		size_t count)	- Copy words between XMS and far memory
+# void linear32_fmemcpyb (void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
+#		size_t count)	- Copy bytes between XMS and far memory
+# NOTE: the linear32_fmemcpy routines use "unprotected" EBX, EBX, ESI and EDI registers,
+#  and interrupts are left on so as to minimize device driver problems.
+#  This means that these routines CANNOT be called from an interrupt service routine,
+#  as the unprotected registers would be overwritten. This could be solved by
+#  turning interrupts off in the routine at the cost of delaying interrupt service
+#  for the duration of the copy, which might be too long for time-sensitive drivers,
+#  like fast serial ports. Further, no other routines should be written that use
+#  the 32-bit register set without coordinating with the functions in this file.
 #
 	.code16
 	.text
@@ -16,6 +28,8 @@
 	.global	enable_a20_gate
 	.global	verify_a20
 	.global	set_a20
+	.global	linear32_fmemcpyw
+	.global	linear32_fmemcpyb
 
 # Try to set unreal mode. Currently requires 386 CPU or better.
 # Returns 0 if OK, otherwise error code (1=not 386, 2=in V86 mode).
@@ -161,6 +175,100 @@ empty_8042:
 	jnz	0b		# yes, read and discard
 	test	$2,%al		# input buffer (data _to_ keyboard) empty?
 	jnz	empty_8042	# no, loop
+	ret
+
+#
+# void linear_32fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
+#		size_t count)
+# WARNING: Requires 32-bit CPU, with unreal mode and A20 gate enabled!
+#          Trashes EBX, ECX, ESI and EDI without saving.
+#
+linear32_fmemcpyw:
+	push   %es
+	mov    %si,%ax
+	mov    %di,%dx
+	xorl   %esi,%esi
+	mov    %sp,%si
+
+	//cli                 // uncomment if extended registers used in interrupt routines
+	xorl   %ecx,%ecx
+	mov    16(%si),%cx    // word count -> ECX
+
+	xorl   %ebx,%ebx
+	mov    4(%si),%bx     // word dest offset -> EBX
+	movl   6(%esi),%edi   // long dest address -> EDI
+	addl   %ebx,%edi      // EDI is linear destination
+
+	xorl   %ebx,%ebx
+	mov    10(%si),%bx    // word src offset -> EBX
+	movl   12(%esi),%esi  // long src address -> ESI
+	addl   %ebx,%esi      // ESI is linear source
+
+	xor    %bx,%bx        // ES = DS = 0 for 32-bit linear addressing
+	mov    %bx,%es
+	mov    %bx,%ds
+
+	cld
+	addr32                // 32-bit address prefix
+	rep
+	movsw                 // word [ES:EDI++] <- [DS:ESI++], ECX times
+	//sti
+
+	mov    %ax,%si
+	mov    %dx,%di
+	mov    %ss,%ax
+	mov    %ax,%ds
+	pop    %es
+	ret
+
+#
+# void linear_32fmemcpyb(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
+#		size_t count)
+# WARNING: Requires 32-bit CPU, with unreal mode and A20 gate enabled!
+#          Trashes EBX, ECX, ESI and EDI without saving.
+#
+linear32_fmemcpyb:
+	push   %es
+	mov    %si,%ax
+	mov    %di,%dx
+	xorl   %esi,%esi
+	mov    %sp,%si
+
+	//cli                 // uncomment if extended registers used in interrupt routines
+	xorl   %ecx,%ecx
+	mov    16(%si),%cx    // word count -> ECX
+
+	xorl   %ebx,%ebx
+	mov    4(%si),%bx     // word dest offset -> EBX
+	movl   6(%esi),%edi   // long dest address -> EDI
+	addl   %ebx,%edi      // EDI is linear destination
+
+	xorl   %ebx,%ebx
+	mov    10(%si),%bx    // word src offset -> EBX
+	movl   12(%esi),%esi  // long src address -> ESI
+	addl   %ebx,%esi      // ESI is linear source
+
+	xor    %bx,%bx        // ES = DS = 0 for 32-bit linear addressing
+	mov    %bx,%es
+	mov    %bx,%ds
+
+	cld
+	shrl   $1,%ecx        // copy words
+	addr32                // 32-bit address prefix
+	rep
+	movsw                 // word [ES:EDI++] <- [DS:ESI++], ECX times
+
+	rcll    $1,%ecx       // then possibly final byte
+	addr32                // 32-bit address prefix
+	rep
+	movsb                 // byte [ES:EDI++] <- [DS:ESI++], ECX times
+	//sti
+
+	mov    %ax,%si
+	mov    %dx,%di
+	mov    %ss,%ax
+	mov    %ax,%ds
+	pop    %es
 	ret
 
 # The GDT contains 8-byte DESCRIPTORS for each protected-mode segment.

@@ -172,8 +172,8 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
     sector_t sector, count;
     int max_req;
 
-    debug_blk("BLK(%x) %lu %s addr %x:%x\n", bh->b_dev, bh->b_blocknr,
-		rw==READ? "read": "write", bh->b_seg, buffer_data(bh));
+    debug_blk("BLK %lu %s %lx:%x\n", bh->b_blocknr, rw==READ? "read": "write",
+	bh->b_seg, buffer_data(bh));
     count = (sector_t) (BLOCK_SIZE >> 9);
     sector = bh->b_blocknr * count;
 
@@ -405,7 +405,11 @@ void INITPROC blk_dev_init(void)
     } while (++req < &all_requests[NR_REQUEST]);
 
 #ifdef CONFIG_BLK_DEV_RAM
-    rd_init();
+    rd_init();		/* RAMDISK block device*/
+#endif
+
+#if defined(CONFIG_BLK_DEV_SSD_TEST) || defined(CONFIG_BLK_DEV_SSD_SD8018X)
+    ssd_init();		/* SSD block device*/
 #endif
 
 #ifdef CONFIG_BLK_DEV_HD
@@ -418,11 +422,6 @@ void INITPROC blk_dev_init(void)
 
 #ifdef CONFIG_BLK_DEV_BIOS
     bioshd_init();
-#endif
-
-/* if *some* SSD block device is set, then init it */
-#if defined(CONFIG_BLK_DEV_TEST) || defined(CONFIG_BLK_DEV_SSD_SD8018X)
-    ssd_init();
 #endif
 
 #ifdef CONFIG_ROMFS_FS

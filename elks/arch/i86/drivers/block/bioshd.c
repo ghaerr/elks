@@ -682,8 +682,8 @@ static void get_chst(struct drive_infot *drivep, sector_t start, unsigned int *c
 }
 
 /* do bios I/O, return # sectors read/written */
-static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *buf, seg_t seg,
-	int cmd, unsigned int count)
+static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *buf,
+	ramdesc_t seg, int cmd, unsigned int count)
 {
 	int drive, errs;
 	unsigned int cylinder, head, sector, this_pass;
@@ -703,8 +703,19 @@ static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *b
 		BD_AX = (cmd == WRITE ? BIOSHD_WRITE : BIOSHD_READ) | this_pass;
 		BD_CX = ((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
 		BD_DX = (head << 8) | drive;
-		BD_ES = seg;
-		BD_BX = (unsigned) buf;
+#ifdef CONFIG_FS_XMS_BUFFER
+		if (seg >> 16) {
+			BD_ES = DMASEG;		/* if xms buffer use DMASEG*/
+			BD_BX = 0;
+			if (cmd == WRITE)	/* copy xms buffer down before write*/
+				xms_fmemcpyw(0, DMASEG, buf, seg, this_pass*512/2);
+			set_cache_invalid();
+		} else
+#endif
+		{
+			BD_ES = (seg_t)seg;
+			BD_BX = (unsigned) buf;
+		}
 		debug_bios("bioshd(%d): cmd %d CHS %d/%d/%d count %d\n",
 		    drive, cmd, cylinder, head, sector, this_pass);
 		in_ax = BD_AX;
@@ -724,6 +735,13 @@ static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *b
 		       "ES:BX=0x%04X:0x%04X\n", out_ax, in_ax, BD_ES, BD_BX);
 		return 0;
 	}
+#ifdef CONFIG_FS_XMS_BUFFER
+	if (seg >> 16) {
+		if (cmd == READ)	/* copy DMASEG up to xms*/
+			xms_fmemcpyw(buf, seg, 0, DMASEG, this_pass*512/2);
+		set_cache_invalid();
+	}
+#endif
 	return this_pass;
 }
 
@@ -776,7 +794,8 @@ static void bios_readtrack(struct drive_infot *drivep, sector_t start)
 }
 
 /* check whether cache is valid for one sector*/
-static int cache_valid(struct drive_infot *drivep, sector_t start, char *buf, seg_t seg)
+static int cache_valid(struct drive_infot *drivep, sector_t start, char *buf,
+	ramdesc_t seg)
 {
 	unsigned int offset;
 
@@ -785,13 +804,13 @@ static int cache_valid(struct drive_infot *drivep, sector_t start, char *buf, se
 
 	offset = (int)(start - cache_startsector) << 9;
 	debug_bios("bioshd(%d): cache hit lba %ld\n", hd_drive_map[drivep-drive_info], start);
-	fmemcpyw(buf, seg, (void *)offset, DMASEG, 512/2);
+	xms_fmemcpyw(buf, seg, (void *)offset, DMASEG, 512/2);
 	return 1;
 }
 
 /* read from cache, return # sectors read*/
-static int do_cache_read(struct drive_infot *drivep, sector_t start, char *buf, seg_t seg,
-	int cmd)
+static int do_cache_read(struct drive_infot *drivep, sector_t start, char *buf,
+	ramdesc_t seg, int cmd)
 {
 	if (cmd == READ) {
 	    if (cache_valid(drivep, start, buf, seg))	/* try cache first*/

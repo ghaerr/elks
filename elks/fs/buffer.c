@@ -15,8 +15,7 @@
 #include <arch/irq.h>
 
 /*
- * Number of external/main (L2) buffers specified in config by CONFIG_FS_NR_EXT_BUFFERS
- * Number of extended/xms  (L2) buffers specified in config by CONFIG_FS_NR_XMS_BUFFERS
+ * Kernel buffer management.
  */
 
 /* Number of internal L1 buffers,
@@ -27,11 +26,7 @@
 #define NR_MAPBUFS  8
 #endif
 
-/* Number of buffers: if CONFIG_FS_EXT_BUFFER or CONFIG_FS_XMS_BUFFER is defined,
-   this is the number of L2 buffers, otherwise its the number of L1 buffers */
-static int NR_BUFFERS;
-
-/* Buffer heads: local heap allocated, NR_BUFFERS total */
+/* Buffer heads: local heap allocated */
 static struct buffer_head *buffer_heads;
 
 /* Internal L1 buffers, must be kernel DS addressable */
@@ -40,6 +35,7 @@ static char L1buf[NR_MAPBUFS][BLOCK_SIZE];
 /* Buffer cache */
 static struct buffer_head *bh_lru;
 static struct buffer_head *bh_llru;
+static struct buffer_head *bh_next;
 
 /*
  * External L2 buffers are allocated within main or xms memory segments.
@@ -48,6 +44,9 @@ static struct buffer_head *bh_llru;
  * Total extended/xms memory would be (BLOCK_SIZE * CONFIG_FS_NR_XMS_BUFFERS).
  * Otherwise, total main memory used is (BLOCK_SIZE * CONFIG_FS_NR_EXT_BUFFERS),
  * each main memory segment being up to 64K in size for segment register addressing
+ *
+ * Number of external/main (L2) buffers specified in config by CONFIG_FS_NR_EXT_BUFFERS
+ * Number of extended/xms  (L2) buffers specified in config by CONFIG_FS_NR_XMS_BUFFERS
  */
 #if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
 static struct buffer_head *L1map[NR_MAPBUFS];	/* L1 indexed pointer to L2 buffer */
@@ -94,70 +93,79 @@ static void put_last_lru(register struct buffer_head *bh)
     }
 }
 
-int INITPROC buffer_init(void)
+static void add_buffers(int nbufs, char *buf, ramdesc_t seg)
 {
     register struct buffer_head *bh;
+    int n = 0;
+    static int bh_num = 0;
+
+    for (bh = bh_next; n < nbufs; n++, bh = ++bh_next) {
+	if (bh != buffer_heads) {
+	    bh->b_next_lru = bh->b_prev_lru = bh;
+	    put_last_lru(bh);
+	}
+
 #if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
-    segment_s *seg = 0;		/* init stops compiler warning*/
-    int bufs_to_alloc;
-    //int use_xms = 0;
-    int nbufs = 0;
-    int i = NR_MAPBUFS;
+	bh->b_seg = bh->b_ds = seg;
+	//bh->b_mapcount = 0;
+	//bh->b_data = (char *)0;	/* not in L1 cache*/
+	bh->b_L2data = (char *)((n & 63) << BLOCK_SIZE_BITS);	/* L2 offset*/
+	bh->b_num = bh_num++;		/* for debugging*/
+#else
+	bh->b_data = buf;
+	buf += BLOCK_SIZE;
+	bh->b_seg = seg;
+#endif
+    }
+}
 
-    do {
-	L1map[--i] = NULL;
-    } while (i > 0);
+int INITPROC buffer_init(void)
+{
+    /* XMS buffers override EXT buffers override internal buffers*/
+#if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
+    int bufs_to_alloc = CONFIG_FS_NR_EXT_BUFFERS;
 
-    NR_BUFFERS = bufs_to_alloc = CONFIG_FS_NR_EXT_BUFFERS;
 #ifdef CONFIG_FS_XMS_BUFFER
-    if (enable_unreal_mode()) {
-	if (/*verify_a20() ||*/ enable_a20_gate()) {
-	    //use_xms = 1;
-	    //NR_BUFFERS = CONFIG_FS_NR_XMS_BUFFERS;
-	    printk("XMS: unreal mode and A20 enabled\n");
-	} else printk("XMS: Can't enable A20 gate\n");
-    } else printk("XMS: Can't enable unreal mode\n");
+    int xms_enabled = xms_init();	/* try to enable unreal mode and A20 gate*/
+    if (xms_enabled)
+	bufs_to_alloc = CONFIG_FS_NR_XMS_BUFFERS;
 #endif
 
 #else
-    char *p = (char *)L1buf;
-    NR_BUFFERS = NR_MAPBUFS;
+    int bufs_to_alloc = NR_MAPBUFS;
 #endif
 
-    buffer_heads = heap_alloc(NR_BUFFERS * sizeof(struct buffer_head),
+    buffer_heads = heap_alloc(bufs_to_alloc * sizeof(struct buffer_head),
 	HEAP_TAG_BUFHEAD|HEAP_TAG_CLEAR);
     if (!buffer_heads) return 1;
-    bh_lru = bh_llru = bh = buffer_heads;
-
-    goto buf_init;
-    do {
-	bh->b_next_lru = bh->b_prev_lru = bh;
-	put_last_lru(bh);
-      buf_init:
+    bh_next = bh_lru = bh_llru = buffer_heads;
 
 #if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
-	if (--nbufs <= 0) {
-	    /* allocate buffers in 64k chunks so addressable with segment/offset*/
-	    if ((nbufs = bufs_to_alloc) > 64)
-		nbufs = 64;
-	    bufs_to_alloc -= nbufs;
-	    seg = seg_alloc (nbufs << (BLOCK_SIZE_BITS - 4),
+    do {
+	int nbufs;
+
+	/* allocate buffers in 64k chunks so addressable with segment/offset*/
+	if ((nbufs = bufs_to_alloc) > 64)
+	    nbufs = 64;
+	bufs_to_alloc -= nbufs;
+#ifdef CONFIG_FS_XMS_BUFFER
+	if (xms_enabled) {
+	    ramdesc_t seg = xms_alloc((long_t)nbufs << BLOCK_SIZE_BITS);
+	    add_buffers(nbufs, 0, seg);
+	} else
+#endif
+	{
+	    segment_s *seg = seg_alloc (nbufs << (BLOCK_SIZE_BITS - 4),
 		SEG_FLAG_EXTBUF|SEG_FLAG_ALIGN1K);
 	    if (!seg) return 2;
+	    add_buffers(nbufs, 0, seg->base);
 	}
-	bh->b_seg = bh->b_ds = seg->base;
-	bh->b_mapcount = 0;
-	bh->b_data = (char *)0;		/* not in L1 cache*/
-	bh->b_L2data = (char *)((i & 63) << BLOCK_SIZE_BITS);	/* L2 location*/
-	bh->b_num = i++;
+    } while (bufs_to_alloc > 0);
 #else
-	bh->b_data = p;
-	bh->b_seg = kernel_ds;
-	p += BLOCK_SIZE;
+    /* no EXT or XMS buffers, internal L1 only */
+    add_buffers(NR_MAPBUFS, (char *)L1buf, kernel_ds);
 #endif
-
-    } while (++bh < buffer_heads + NR_BUFFERS);
-	return 0;
+    return 0;
 }
 
 /*
@@ -515,7 +523,7 @@ void map_buffer(register struct buffer_head *bh)
 	    debug("UNMAP: %d <- %d\n", bmap->b_num, i);
 
 	    /* Unmap/copy L1 to L2 */
-	    fmemcpyw(bmap->b_L2data, bmap->b_ds, bmap->b_data, kernel_ds, BLOCK_SIZE/2);
+	    xms_fmemcpyw(bmap->b_L2data, bmap->b_ds, bmap->b_data, kernel_ds, BLOCK_SIZE/2);
 	    bmap->b_data = (char *)0;
 	    bmap->b_seg = bmap->b_ds;
 	    break;		/* success */
@@ -532,7 +540,7 @@ void map_buffer(register struct buffer_head *bh)
     L1map[i] = bh;
     bh->b_data = (char *)L1buf + (i << BLOCK_SIZE_BITS);
     if (buffer_uptodate(bh))
-	fmemcpyw(bh->b_data, kernel_ds, bh->b_L2data, bh->b_ds, BLOCK_SIZE/2);
+	xms_fmemcpyw(bh->b_data, kernel_ds, bh->b_L2data, bh->b_ds, BLOCK_SIZE/2);
     debug("MAP:   %d -> %d\n", bh->b_num, i);
   end_map_buffer:
     bh->b_seg = kernel_ds;

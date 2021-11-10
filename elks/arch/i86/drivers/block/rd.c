@@ -245,10 +245,10 @@ static void do_rd_request(void)
 	debug("entry %d, seg %x, offset %d\n", index, rd_segment[index].seg, offset);
 
 	if (CURRENT->rq_cmd == WRITE) {
-	    fmemcpyw((char *) (offset * SECTOR_SIZE), rd_segment[index].seg,
+	    xms_fmemcpyw((char *) (offset * SECTOR_SIZE), rd_segment[index].seg,
 		buff, CURRENT->rq_seg, 1024/2);
 	} else {
-	    fmemcpyw(buff, CURRENT->rq_seg,
+	    xms_fmemcpyw(buff, CURRENT->rq_seg,
 		(byte_t *) (offset * SECTOR_SIZE), rd_segment[index].seg, 1024/2);
 	}
 	end_request(1);
