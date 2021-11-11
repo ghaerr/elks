@@ -113,8 +113,7 @@ struct iptcp_s {
 #define	TS_LAST_ACK	9
 #define	TS_TIME_WAIT	10
 
-#define CB_BUF_USED(x)	((x)->buf_used)
-#define CB_BUF_SPACE(x)	((x)->buf_size - CB_BUF_USED((x)))
+#define CB_BUF_SPACE(x)	((x)->buf_size - (x)->buf_used)
 
 struct tcpcb_s {
 	void *	newsock;

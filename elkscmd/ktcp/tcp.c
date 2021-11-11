@@ -252,7 +252,7 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	    //if (cb->bytes_to_push <= 0)
 	    if (cb->bytes_to_push >= 0)
 		tcpcb_need_push++;
-	    cb->bytes_to_push = CB_BUF_USED(cb);
+	    cb->bytes_to_push = cb->buf_used;
 	}
 	tcpdev_checkread(cb);
     }

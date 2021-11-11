@@ -268,16 +268,16 @@ void tcpcb_push_data(void)
 	    tcpdev_checkread(&n->tcpcb);
 }
 
-/* There must be free space greater-equal than len */
+/* There must be free space greater-equal than len or will wrap*/
 void tcpcb_buf_write(struct tcpcb_s *cb, unsigned char *data, int len)
 {
     int tail = cb->buf_tail;
 
-    cb->buf_used += len;
     while (--len >= 0) {
-	cb->buf_base[tail] = *data++;
-	if (++tail >= cb->buf_size)
+	cb->buf_base[tail++] = *data++;
+	if (tail >= cb->buf_size)
 	    tail = 0;
+	cb->buf_used++;
     }
     cb->buf_tail = tail;
 }
@@ -287,11 +287,11 @@ void tcpcb_buf_read(struct tcpcb_s *cb, unsigned char *data, int len)
 {
     int head = cb->buf_head;
 
-    cb->buf_used -= len;
     while (--len >= 0) {
-	*data++= cb->buf_base[head];
-	if (++head >= cb->buf_size)
+	*data++= cb->buf_base[head++];
+	if (head >= cb->buf_size)
 	    head = 0;
+	cb->buf_used--;
     }
     cb->buf_head = head;
 }
