@@ -349,7 +349,7 @@ static void tcp_fin_wait_2(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	/* Remove the flag */
 	iptcp->tcph->flags &= ~TF_FIN;
 	cbs_in_user_timeout--;
-	ENTER_TIME_WAIT(cb);
+	ENTER_TIME_WAIT(cb);		/* this sets the 10 sec wait after active close! */
 	needack = 1;
     }
 

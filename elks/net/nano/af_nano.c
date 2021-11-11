@@ -247,9 +247,9 @@ static int nano_accept(register struct socket *sock,
 	if (flags & O_NONBLOCK)
 	    return -EAGAIN;
 
-	sock->flags |= SO_WAITDATA;
+	sock->flags |= SF_WAITDATA;
 	interruptible_sleep_on(sock->wait);
-	sock->flags &= ~SO_WAITDATA;
+	sock->flags &= ~SF_WAITDATA;
 
 	if (current->signal /* & ~current->blocked */ )
 	    return -ERESTARTSYS;
@@ -316,9 +316,9 @@ static int nano_read(register struct socket *sock,
 	if (nonblock)
 	    return -EAGAIN;
 
-	sock->flags |= SO_WAITDATA;
+	sock->flags |= SF_WAITDATA;
 	interruptible_sleep_on(sock->wait);
-	sock->flags &= ~SO_WAITDATA;
+	sock->flags &= ~SF_WAITDATA;
 
 	if (current->signal /* & ~current->blocked */ )
 	    return -ERESTARTSYS;
@@ -386,11 +386,11 @@ static int nano_write(register struct socket *sock,
     pupd = NA_DATA(sock)->npd_peerupd;	/* safer than sock->conn */
 
     while (!(space = NA_BUF_SPACE(pupd))) {
-	sock->flags |= SO_NOSPACE;
+	sock->flags |= SF_NOSPACE;
 	if (nonblock)
 	    return -EAGAIN;
 
-	sock->flags &= ~SO_NOSPACE;
+	sock->flags &= ~SF_NOSPACE;
 	interruptible_sleep_on(sock->wait);
 
 	if (current->signal /* & ~current->blocked */ )
@@ -465,7 +465,7 @@ static int nano_select(register struct socket *sock,
      *      Handle server sockets specially.
      */
 
-    if (sock->flags & SO_ACCEPTCON) {
+    if (sock->flags & SF_ACCEPTCON) {
 	if (sel_type == SEL_IN) {
 	    if (sock->iconn)
 		return 1;

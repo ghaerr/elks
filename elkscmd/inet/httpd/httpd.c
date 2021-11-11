@@ -152,6 +152,11 @@ int main(int argc, char **argv)
 		exit(-1);
 	}
 
+	/* set local port reuse, allows server to be restarted in less than 10 secs */
+	ret = 1;
+	if (setsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR, &ret, sizeof(int)) < 0)
+		perror("setsockopt SO_REUSEADDR");
+
 	localadr.sin_family = AF_INET;
 	localadr.sin_port = htons(DEF_PORT);
 	localadr.sin_addr.s_addr = INADDR_ANY;

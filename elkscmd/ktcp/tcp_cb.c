@@ -237,6 +237,8 @@ void tcpcb_expire_timeouts(void)
 	    case TS_TIME_WAIT:
 		if (TIME_GT(Now, n->tcpcb.time_wait_exp)) {
 		    LEAVE_TIME_WAIT(&n->tcpcb);
+			debug_close("tcp: exit TIME_WAIT state on port %u remote %s:%u\n",
+				n->tcpcb.localport, in_ntoa(n->tcpcb.remaddr), n->tcpcb.remport);
 		    tcpcb_remove(n);
 		}
 		break;
