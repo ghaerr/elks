@@ -330,8 +330,12 @@ static void tcp_fin_wait_1(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
     if (SEQ_LT(lastack, cb->send_una)) {
 
-	/* out FIN was acked */
-	cb->state = TS_FIN_WAIT_2;	/* cbs_in_user_timeout stays unchanged */
+	/* our FIN was acked */
+	if (cb->state == TS_CLOSING) {	/* FIN and ACK received, enter TIME_WAIT */
+	    cbs_in_user_timeout--;
+	    ENTER_TIME_WAIT(cb);
+	} else
+	    cb->state = TS_FIN_WAIT_2;	/* cbs_in_user_timeout stays unchanged */
 	cb->time_wait_exp = Now;
     }
 

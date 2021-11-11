@@ -60,7 +60,7 @@ start_network()
 	echo $ktcp
 	if $ktcp; then
 		echo -n "Starting daemons "
-		for daemon in telnetd httpd
+		for daemon in telnetd httpd ftpd
 		do
 			if test -f /bin/$daemon
 			then
@@ -78,7 +78,7 @@ start_network()
 stop_network()
 {
 	echo "Stopping network"
-	kill $(ps | grep "ktcp|telnet|httpd" | cut -c 1-5) > /dev/null 2>&1
+	kill $(ps | grep "ktcp|telnet|httpd|ftpd" | cut -c 1-5) > /dev/null 2>&1
 }
 
 if test "$#" -lt 1; then

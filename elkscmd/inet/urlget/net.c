@@ -48,11 +48,17 @@ int port;
 	in_adr.sin_family = AF_INET;
 	in_adr.sin_port = htons(port);
 	in_adr.sin_addr.s_addr = in_gethostbyname(host);
+	if (in_adr.sin_addr.s_addr == 0) {
+		fprintf(stderr, "Can't find host '%s' in /etc/hosts\n", host);
+		close (netfd);
+		return -1;
+	}
 
 	ret = connect(netfd, (struct sockaddr *)&in_adr, sizeof(struct sockaddr_in));
 	if (ret < 0){
-		perror("Connection failed");
-		exit(1);
+		perror("Connect failed");
+		close(netfd);
+		return -1;
 	}
 
 	return(netfd);

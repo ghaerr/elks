@@ -19,6 +19,7 @@ SUBDIRS = \
     telnetd \
     tinyirc \
     urlget \
+	ftp \
     # EOL
 
 all:

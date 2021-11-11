@@ -28,6 +28,7 @@
 #define USE_A20ASM
 //#define USE_HIMEM_AT
 
+	.arch	i386,nojumps
 	.code16
 	.text
 

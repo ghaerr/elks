@@ -151,7 +151,6 @@ disk_utils/partype				:diskutil				:1440k
 disk_utils/ramdisk				:diskutil				:1440k
 disk_utils/fdisk				:be-diskutil	:360k
 busyelks/busyelks				:busyelks
-inet/httpd/httpd				:net
 inet/httpd/sample_index.html	::var/www/index.html	:net
 ktcp/ktcp						:net
 ktcp/resolv.conf	::etc/resolv.conf	:net
@@ -160,6 +159,8 @@ inet/nettools/nslookup			:net
 inet/nettools/arp				:net
 inet/telnet/telnet				:net
 inet/telnetd/telnetd			:net
+inet/httpd/httpd				:net
+inet/ftp/ftpd					:net
 inet/tinyirc/tinyirc			:net
 inet/urlget/urlget				:net
 inet/urlget/urlget :::ftpget	:net
