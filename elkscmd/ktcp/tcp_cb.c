@@ -77,7 +77,7 @@ struct tcpcb_list_s *tcpcb_new(int bufsize)
 
     memset(&n->tcpcb, 0, sizeof(struct tcpcb_s));
     n->tcpcb.buf_size = bufsize;
-    n->tcpcb.rtt = TIMEOUT_INITIAL_RTT << 4;
+    n->tcpcb.rtt = TIMEOUT_INITIAL_RTT;
 
     /* Link it to the list */
     if (tcpcbs) {
@@ -249,7 +249,7 @@ void tcpcb_expire_timeouts(void)
 	    case TS_FIN_WAIT_2:
 	    case TS_LAST_ACK:
 	    case TS_CLOSING:
-		if (TIME_GT(Now - (TIMEOUT_CLOSE_WAIT << 4), n->tcpcb.time_wait_exp)) {
+		if (TIME_GT(Now - TIMEOUT_CLOSE_WAIT, n->tcpcb.time_wait_exp)) {
 		    cbs_in_user_timeout--;
 		    tcpcb_remove(n);
 		}

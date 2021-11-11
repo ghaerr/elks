@@ -35,22 +35,18 @@
 /* bytes to subtract from window size and when to force app write*/
 #define PUSH_THRESHOLD	512
 
-/* timeout values in seconds*/
-//#define TIMEOUT_ENTER_WAIT	30	/* length of TIME_WAIT state*/
-#define TIMEOUT_ENTER_WAIT	10	/* length of TIME_WAIT state*/
-//#define TIMEOUT_CLOSE_WAIT	240	/* length of CLOSING/LAST_ACK/FIN_WAIT states*/
-#define TIMEOUT_CLOSE_WAIT	10	/* length of CLOSING/LAST_ACK/FIN_WAIT states*/
-//#define TIMEOUT_INITIAL_RTT	4	/* initial RTT before retransmit*/
-#define TIMEOUT_INITIAL_RTT	1	/* initial RTT before retransmit*/
+/* timeout values in 1/16 seconds, or (seconds << 4). Half second = 8*/
+#define TIMEOUT_ENTER_WAIT	(8)	/* TIME_WAIT state (was 30, then 10)*/
+#define TIMEOUT_CLOSE_WAIT	(10<<4)	/* CLOSING/LAST_ACK/FIN_WAIT states (was 240)*/
+#define TIMEOUT_INITIAL_RTT	(1<<4)	/* initial RTT before retransmit (was 4)*/
+#define TCP_RETRANS_MAXWAIT	(4<<4)	/* max retransmit wait (4 secs)*/
+#define TCP_RETRANS_MINWAIT_SLIP 8	/* min retrans timeout for slip/cslip (1/2 sec)*/
+#define TCP_RETRANS_MINWAIT_ETH	4	/* min retrans timeout for ethernet (1/4 sec)*/
 
 /* retransmit settings*/
 #define TCP_RTT_ALPHA			90
 #define TCP_RETRANS_MAXMEM		4096	/* max retransmit total memory*/
 #define TCP_RETRANS_MAXTRIES		6	/* max # retransmits (~12 secs total)*/
-/* timeout values in 1/16 seconds*/
-#define TCP_RETRANS_MAXWAIT		64	/* max retransmit wait (4 secs)*/
-#define TCP_RETRANS_MINWAIT_SLIP	8	/* minimum retrans timeout for slip/cslip (1/2 sec)*/
-#define TCP_RETRANS_MINWAIT_ETH		4	/* minimum retrans timeout for ethernet (1/4 sec)*/
 
 #define SEQ_LT(a,b)	((long)((a)-(b)) < 0)
 #define SEQ_LEQ(a,b)	((long)((a)-(b)) <= 0)
@@ -69,10 +65,9 @@
 #define TF_ALL (TF_FIN | TF_SYN | TF_RST | TF_PSH | TF_ACK | TF_URG)
 
 #define	TCP_DATAOFF(x)		( (x)->data_off >> 2 )
-
 #define TCP_SETHDRSIZE(c,s)	( (c)->data_off = (s) << 2 )
 
-#define ENTER_TIME_WAIT(cb)	{ (cb)->time_wait_exp = Now + (TIMEOUT_ENTER_WAIT << 4); \
+#define ENTER_TIME_WAIT(cb)	{ (cb)->time_wait_exp = Now + TIMEOUT_ENTER_WAIT; \
 				  (cb)->state = TS_TIME_WAIT; \
 				  tcp_timeruse++; \
 				  cbs_in_time_wait++; }

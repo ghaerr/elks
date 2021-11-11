@@ -401,7 +401,7 @@ void usage() {
 
 int main(int argc, char **argv){
 
-	int listenfd, connfd, port = FTP_PORT;
+	int listenfd, connfd, ret, port = FTP_PORT;
 	struct sockaddr_in servaddr;
 	pid_t pid;
 
@@ -439,6 +439,20 @@ int main(int argc, char **argv){
 		perror("Error in listen");
 		exit(3);
 	}
+
+	/* become daemon, debug output on 1 and 2*/
+	if ((ret = fork()) == -1) {
+		fprintf(stderr, "ftpd: Can't fork to become daemon\n");
+		exit(1);
+	}
+	if (ret) exit(0);
+	ret = open("/dev/console", O_RDWR);
+	close(STDIN_FILENO);
+	dup2(ret, STDOUT_FILENO);
+	dup2(ret, STDERR_FILENO);
+	if (ret > STDERR_FILENO)
+		close(ret);
+	setsid();
 
 	while(1){
 		if ((connfd = accept(listenfd, NULL, NULL)) < 0) {
