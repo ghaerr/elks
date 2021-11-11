@@ -89,9 +89,8 @@ void net_close(int fd, int errflag) {
 	int ret;
 	struct linger l;
 
-	/* Send RST on close was previously turned on by net_connect*/
 	if (errflag) {
-		l.l_onoff = 1;  /* turn off linger option: will send FIN on close*/
+		l.l_onoff = 1; /* Force RST on close */
 		l.l_linger = 0;
 		ret = setsockopt(fd, SOL_SOCKET, SO_LINGER, &l, sizeof(l));
 		if (ret < 0)
@@ -125,11 +124,17 @@ int get_client_ip_port(char *str, char *client_ip, unsigned int *client_port){
 int setup_data_connection(char *client_ip, unsigned int client_port, int server_port){
 	
 	struct sockaddr_in cliaddr, tempaddr;
-	int fd, sockwait = 0;
+	int fd, sockwait = 0, on = 1;
 
 	if ( (fd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
     		perror("socket error");
     		return -1;
+	}
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof (on)) < 0) {
+		/* This should not happen */
+		printf("Data channel socket error: REUSEADDR, closing channel.\n");
+		close(fd);
+		return -1;
 	}
 
 	/* bind port for data connection to be server port - 1 using a temporary struct sockaddr_in */
@@ -208,6 +213,9 @@ int get_command(char *command){
 }
 
 /* For now - 'fake' login processing - always returns OK */
+/* If/when LOGIN is changed to do real user authentication, */
+/* move the cmd processing to the main command loop, add LOGOUT */
+/* support and use setuid()/seteuid() in the child process. */
 
 int do_login(int controlfd, char *buf) {
 	char *str = "331 User OK.\r\n";
@@ -428,7 +436,7 @@ int main(int argc, char **argv){
 	}
 
 	if (listen(listenfd, LISTENQ) < 0 ) {
-		perror("Error in listen:");
+		perror("Error in listen");
 		exit(3);
 	}
 
