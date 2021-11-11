@@ -262,7 +262,10 @@ static void lsfile(char *name, struct stat *statbuf, int flags)
 
 	if (!pp) pp = buf;
 	else pp++;
-	printf(fmt, pp);
+	if (flags & LSF_ONEPER)
+		printf("%s", pp);	/* One per line: No trailing spaces! */
+	else 
+		printf(fmt, pp);
 
 #ifdef S_ISLNK
     if ((flags & LSF_LONG) && S_ISLNK(statbuf->st_mode)) {
