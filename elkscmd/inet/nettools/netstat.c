@@ -75,7 +75,7 @@ int main(void)
     }
 
     localadr.sin_family = AF_INET;
-    localadr.sin_port = 0;
+    localadr.sin_port = PORT_ANY;
     localadr.sin_addr.s_addr = INADDR_ANY;  
     ret = bind(s, (struct sockaddr *)&localadr, sizeof(struct sockaddr_in));
     if ( ret == -1) {

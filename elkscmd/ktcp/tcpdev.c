@@ -65,7 +65,12 @@ static void tcpdev_bind(void)
 	return;
     }
 
-    n = tcpcb_new();
+    /*
+     * If binding to PORT_ANY, assume calling connect later,
+     * allocate normal (larger) sized input buffer.
+     * Otherwise, assume later listen, so allocate small buffer.
+     */
+    n = tcpcb_new(db->addr.sin_port == PORT_ANY? CB_NORMAL_SIZE: CB_LISTEN_SIZE);
     if (n == NULL) {
 	retval_to_sock(db->sock,-ENOMEM);
 	return;
@@ -285,7 +290,7 @@ void tcpdev_checkread(struct tcpcb_s *cb)
 
 #if 0 /* removed - wait_data mechanism no longer used in inet_read*/
     struct tdb_return_data *ret_data = (struct tdb_return_data *)sbuf;
-    //unsigned int data_avail = CB_BUF_USED(cb);
+    //unsigned int data_avail = cb->buf_used;
     data_avail = cb->wait_data < cb->bytes_to_push ? cb->wait_data : cb->bytes_to_push;
     cb->bytes_to_push -= data_avail;
     if (cb->bytes_to_push <= 0)

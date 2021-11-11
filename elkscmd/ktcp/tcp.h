@@ -11,10 +11,10 @@
 
 /*
  * /etc/tcpdev max read/write size
- * Must be at least as big as CB_IN_BUF_SIZE
+ * Must be at least as big as CB_NORMAL_SIZE
  * And at least as big as TCPDEV_INBUFFERSIZE in <linuxmt/tcpdev.h> (currently 1024)
  */
-#define TCPDEV_BUFSIZ	(CB_IN_BUF_SIZE + sizeof(struct tdb_return_data))
+#define TCPDEV_BUFSIZ	(CB_NORMAL_SIZE + sizeof(struct tdb_return_data))
 
 /* max tcp buffer size (no ip header)*/
 #define TCP_BUFSIZ	(TCPDEV_BUFSIZ + sizeof(tcphdr_t) + TCP_OPT_MSS_LEN)
@@ -22,14 +22,15 @@
 /* max ip buffer size (with link layer frame)*/
 #define IP_BUFSIZ	(TCP_BUFSIZ + sizeof(iphdr_t) + sizeof(struct ip_ll))
 
-/* control block input buffer size - max window size*/
-#define CB_IN_BUF_SIZE	4096	/* doesn't need to be power of two*/
+/* control block input buffer size - max window size, doesn't have to be power of two*/
+#define CB_NORMAL_SIZE	4096	/* normal input buffer size*/
+#define CB_LISTEN_SIZE  128	/* small buffer size for listening sockets*/
 
 /* max outstanding send window size*/
 #define TCP_SEND_WINDOW_MAX	1024	/* should be less than TCP_RETRANS_MAXMEM*/
 
 /* max advertised receive window size*/
-#define THROTTLE_MAX_WINDOW	512	/* FIXME CB_IN_BUF_SIZE when PTY fixed*/
+#define THROTTLE_MAX_WINDOW	512	/* FIXME CB_NORMAL_SIZE when PTY fixed*/
 
 /* bytes to subtract from window size and when to force app write*/
 #define PUSH_THRESHOLD	512
@@ -112,8 +113,7 @@ struct iptcp_s {
 #define	TS_LAST_ACK	9
 #define	TS_TIME_WAIT	10
 
-#define CB_BUF_USED(x)	((x)->buf_len)
-#define CB_BUF_SPACE(x)	(CB_IN_BUF_SIZE - CB_BUF_USED((x)))
+#define CB_BUF_SPACE(x)	((x)->buf_size - (x)->buf_used)
 
 struct tcpcb_s {
 	void *	newsock;
@@ -131,10 +131,6 @@ struct tcpcb_s {
 
 	__u32	time_wait_exp;
 	__u16	wait_data;
-	__u8	buf_base[CB_IN_BUF_SIZE];
-	__u16	buf_head;
-	__u16	buf_tail;
-	__u16	buf_len;
 
 	short	bytes_to_push;
 
@@ -153,6 +149,12 @@ struct tcpcb_s {
 	__u16	flags;
 	__u8	*data;
 	__u16	datalen;
+
+	__u16	buf_head;
+	__u16	buf_tail;
+	__u16	buf_used;		/* # valid bytes in buffer */
+	__u16	buf_size;		/* total buffer size */
+	__u8	buf_base[];
 };
 
 /* TCP options*/
@@ -163,9 +165,9 @@ struct tcpcb_s {
 #define TCP_OPT_MSS_LEN		4	/* total MSS option length*/
 
 struct	tcpcb_list_s {
-	struct tcpcb_s		tcpcb;
 	struct tcpcb_list_s	*prev;
 	struct tcpcb_list_s	*next;
+	struct tcpcb_s		tcpcb;	/* must be last */
 };
 
 struct	tcp_retrans_list_s {
@@ -188,7 +190,7 @@ int tcpcb_need_push;
 int tcp_timeruse;		/* # retransmits alloced*/
 int tcp_retrans_memory;		/* total retransmit memory*/
 
-struct tcpcb_list_s *tcpcb_new(void);
+struct tcpcb_list_s *tcpcb_new(int bufsize);
 struct tcpcb_list_s *tcpcb_find(__u32 addr, __u16 lport, __u16 rport);
 struct tcpcb_list_s *tcpcb_find_by_sock(void *sock);
 

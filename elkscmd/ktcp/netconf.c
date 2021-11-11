@@ -66,5 +66,5 @@ void netconf_send(struct tcpcb_s *cb)
 	tcpcb_buf_write(cb, (unsigned char *)&arp_cache, ARP_CACHE_MAX*sizeof(struct arp_cache));
 	break;
     }
-    cb->bytes_to_push = CB_BUF_USED(cb);
+    cb->bytes_to_push = cb->buf_used;
 }
