@@ -36,7 +36,7 @@
 #define PUSH_THRESHOLD	512
 
 /* timeout values in 1/16 seconds, or (seconds << 4). Half second = 8*/
-#define TIMEOUT_ENTER_WAIT	(8)	/* TIME_WAIT state (was 30, then 10)*/
+#define TIMEOUT_ENTER_WAIT	(4<<4)	/* TIME_WAIT state (was 30, then 10)*/
 #define TIMEOUT_CLOSE_WAIT	(10<<4)	/* CLOSING/LAST_ACK/FIN_WAIT states (was 240)*/
 #define TIMEOUT_INITIAL_RTT	(1<<4)	/* initial RTT before retransmit (was 4)*/
 #define TCP_RETRANS_MAXWAIT	(4<<4)	/* max retransmit wait (4 secs)*/

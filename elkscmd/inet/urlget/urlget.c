@@ -48,6 +48,7 @@ _PROTOTYPE(void usage, (char * prg));
 char ftpphost[15+1];
 unsigned int ftppport;
 int use_stdin = 0;
+char *progname;
 
 #define	SCHEME_HTTP	1
 #define	SCHEME_FTP	2
@@ -206,7 +207,7 @@ int httpget(char *host, int port, char *user, char *pass, char *path,
 
    fd = net_connect(host, port);
    if (fd < 0) {
-   	fprintf(stderr, "httpget: Could not connect to %s:%d\n", host, port);
+	fprintf(stderr, "httpget: Could not connect to %s:%d\n", host, port);
    	return(-1);
    }
 
@@ -350,7 +351,7 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
    }
    fd = net_connect(host, port);
    if (fd < 0) {
-   	fprintf(stderr, "ftp: Could not connect to %s:%d\n", host, port);
+	fprintf(stderr, "%s: Could not connect to %s:%d\n", progname, host, port);
    	return(-1);
    }
    fpr = fdopen(fd, "r");
@@ -358,7 +359,7 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
 
    s = ftpreply(fpr);	/* Get server ID message, should be 220 status. */
    if (s / 100 != 2) {
-	fprintf(stderr, "ftp: Connect error: %d\n", s);
+	fprintf(stderr, "%s: Connect error: %d\n", progname, s);
 	goto error;
    }
    s = ftpcmd(fpw, fpr, "USER", *user ? user : "ftp");
@@ -366,7 +367,7 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
    	s = ftpcmd(fpw, fpr, "PASS", *pass ? pass : "urlget@x.com");
 
    if (s / 100 != 2) {
-	fprintf(stderr, "ftp: Authentication failed: %d\n", s);
+	fprintf(stderr, "%s: Authentication failed: %d\n", progname, s);
 	goto error;
    }
 
@@ -379,14 +380,14 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
 		if (infile >= 0) {		/* ftpput: Try to create the directory */
    			s = ftpcmd(fpw, fpr, "MKD", unesc(p));
 			if ((s/100) != 2) {	/* 257 = success */
-				fprintf(stderr, "ftp: Create directory %s failed, error %d\n", p, s);
+				fprintf(stderr, "%s: Create directory %s failed, error %d\n", progname, p, s);
 				goto error;
 			} 
-			if (verbose) fprintf(stderr, "ftp: Destination directory created: %s\n", p);
+			if (verbose) fprintf(stderr, "%s: Destination directory created: %s\n", progname, p);
    			s = ftpcmd(fpw, fpr, "CWD", unesc(p)); /* assume success */
 
 		} else {
-			fprintf(stderr, "ftp: Remote change directory failed: %s -- status %d\n", p, s);
+			fprintf(stderr, "%s: Remote change directory failed: %s -- status %d\n", progname, p, s);
 			goto error;	/* assume this is fatal */
 		}
 	}
@@ -396,7 +397,7 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
    sprintf(typec, "%c", type == 'd' ? 'A' : type);
    s = ftpcmd(fpw, fpr, "TYPE", typec);
    if (s / 100 != 2) {
-	fprintf(stderr, "ftp: Type error: %d\n", s);
+	fprintf(stderr, "%s: Type error: %d\n", progname, s);
 	goto error;
    }
    if (strlen(p) == 0) type = 'd'; 	/* last char is '/', it's a directory, list files */
@@ -405,12 +406,12 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
    s = ftpcmd(fpw, fpr, "PASV", "");
  
    if (ftppport==0) {			/* set in ftpcmd */
-	fprintf(stderr, "ftp: Error listing directory: %d\n", s);
+	fprintf(stderr, "%s: Error listing directory: %d\n", progname, s);
 	goto error; 
    }
    fd2 = net_connect(ftpphost, ftppport);
    if (fd2 < 0) {	
-	fprintf(stderr, "ftp: Network connect error.\n");
+	fprintf(stderr, "%s: Network connect error.\n", progname);
 	goto error;
    }
    if (verbose) 
@@ -420,7 +421,7 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
    if (infile < 0) { 		/* ftpget */
 	s = ftpcmd(fpw, fpr, type == 'd' ? list : "RETR", unesc(p));
    	if ((s/100) != 1) {
-		fprintf(stderr, "ftp: Cannot open remote file: %d\n", s);
+		fprintf(stderr, "%s: Cannot open remote file: %d\n", progname, s);
 		goto error;
    	}
 	while ((s = read(fd2, buffer, sizeof(buffer))) > 0) {
@@ -448,7 +449,7 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
    } else { 		/* ftpput */
 	s = ftpcmd(fpw, fpr, "STOR", unesc(p));
    	if (s / 100 != 1) {
-		fprintf(stderr, "ftp: Cannot open destination file: %d\n", s);
+		fprintf(stderr, "%s: Cannot open destination file: %d\n", progname, s);
 		/* 553 is the most common error */
 		if (s == 553) fprintf(stderr, "Permission denied.\n");
 		goto error;
@@ -466,7 +467,7 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
 		fprintf(stderr, "ftpput: Network write error, transfer aborted.\n");
 		s2 = ftpcmd(fpw, fpr, "DELE", unesc(p)); /* delete remote file */
 		if (verbose)
-			fprintf(stderr, "ftp: Cleaning up - removing %s, status %d\n", p, s);
+			fprintf(stderr, "%s: Cleaning up - removing %s, status %d\n", progname, p, s);
 	} else
 		s = 0;
 	close(infile);
@@ -521,17 +522,17 @@ int tcpget(char *host, int port, char *user, char *pass, char *path) {
 
 int main(int argc, char **argv) {
 
-   char *prog, *url, scheme;
+   char *url, scheme;
    char user[64], pass[64], host[64];
    int port, s;
    int type = 'i';	/* default ftp type */
    char *path, *ps, *p, *at;
    int opt_d = 0, opt_h = 0, opt_p = 0, opt_v = 0;
 
-   if ((prog = strrchr(*argv, '/')))
-	prog++;
+   if ((progname = strrchr(*argv, '/')))
+	progname++;
    else
-   	prog = *argv;
+	progname = *argv;
    argv++;
    argc--;
 
@@ -550,16 +551,16 @@ int main(int argc, char **argv) {
 		opt_p = -1;
 		break;
 	default:
-		usage(prog);
+		usage(progname);
 		return(-1);
 	}
 	argv++;
 	argc--;
    }
 
-   if ((strcmp(prog, "ftpget") == 0) || (strcmp(prog, "ftpput") == 0)) {
+   if ((strcmp(progname, "ftpget") == 0) || (strcmp(progname, "ftpput") == 0)) {
    	if (argc < 2 || argc > 5) { 
-   		fprintf(stderr, "Usage: %s [-v] host[:port] path [user [pass]]\n", prog);
+		fprintf(stderr, "Usage: %s [-v] host[:port] path [user [pass]]\n", progname);
 		fprintf(stderr, "Add / to path for directory listing (ftpget), -v for long listing\n");
 		fprintf(stderr, "e.g. ftpget 90.147.160.69 /mirrors/\n");
    		return(-1);
@@ -583,7 +584,7 @@ int main(int argc, char **argv) {
    		argc++;
    	} else
    		*pass = '\0';
-	if (strcmp(prog, "ftpput") == 0) {
+	if (strcmp(progname, "ftpput") == 0) {
 		type = 'S';		/* Always send files as binary, 'S' is the put vs. get flag */
 		if (*argv[0] == '-')	/* Allow ftpput to use stdin */
 			use_stdin++;
@@ -591,9 +592,9 @@ int main(int argc, char **argv) {
 	s = ftpio(host, port, user, pass, path, type, opt_v);
 	return(s);
    }
-   if (strcmp(prog, "httpget") == 0) {
+   if (strcmp(progname, "httpget") == 0) {
    	if (argc != 2) {
-   		fprintf(stderr, "Usage: %s [-h] [-d] [-p] host[:port] path\n", prog);
+		fprintf(stderr, "Usage: %s [-h] [-d] [-p] host[:port] path\n", progname);
    		return(-1);
    	}
    	strncpy(host, *argv++, sizeof(host));
@@ -608,7 +609,7 @@ int main(int argc, char **argv) {
    }
 
    if (argc != 1) {
-   	fprintf(stderr, "Usage: %s [-h] [-p] url\n", prog);
+	fprintf(stderr, "Usage: %s [-h] [-p] url\n", progname);
 	fprintf(stderr, "e.g. urlget http://216.58.209.67/index.html\n");
    	return(-1);
    }
@@ -628,7 +629,7 @@ int main(int argc, char **argv) {
    	scheme = SCHEME_TCP;
    	ps = url + 6;
    } else {
-	fprintf(stderr, "%s: I do not handle this scheme\n", prog);
+	fprintf(stderr, "%s: I do not handle this scheme\n", progname);
 	return(-1);
    }
 
