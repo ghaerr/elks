@@ -64,18 +64,19 @@ struct tcpcb_s *tcpcb_getbynum(int num)
 	    return &n->tcpcb;
 }
 
-struct tcpcb_list_s *tcpcb_new(void)
+struct tcpcb_list_s *tcpcb_new(int bufsize)
 {
     struct tcpcb_list_s *n;
 
-    n = (struct tcpcb_list_s *) malloc(sizeof(struct tcpcb_list_s));
+    n = (struct tcpcb_list_s *) malloc(sizeof(struct tcpcb_list_s) + bufsize);
     if (n == NULL) {
 	debug_tcp("ktcp: Out of memory for CB\n");
 	return NULL;
     }
-    debug_mem("Alloc CB %d bytes\n", sizeof(struct tcpcb_list_s));
+    debug_mem("Alloc CB %d bytes\n", sizeof(struct tcpcb_list_s) + bufsize);
 
     memset(&n->tcpcb, 0, sizeof(struct tcpcb_s));
+    n->tcpcb.buf_size = bufsize;
     n->tcpcb.rtt = TIMEOUT_INITIAL_RTT << 4;
 
     /* Link it to the list */
@@ -91,13 +92,15 @@ struct tcpcb_list_s *tcpcb_new(void)
     return n;
 }
 
-struct tcpcb_list_s *tcpcb_clone(struct tcpcb_s *cb)
+struct tcpcb_list_s *tcpcb_clone(struct tcpcb_s *cb, int bufsize)
 {
-    struct tcpcb_list_s *n = tcpcb_new();
+    struct tcpcb_list_s *n = tcpcb_new(bufsize);
 
-    if (n)
+    if (n) {
 	memcpy(&n->tcpcb, cb, sizeof(struct tcpcb_s));
-
+	n->tcpcb.buf_size = bufsize;
+	n->tcpcb.buf_head = n->tcpcb.buf_tail = n->tcpcb.buf_used = 0;
+    }
     return n;
 }
 
@@ -270,10 +273,10 @@ void tcpcb_buf_write(struct tcpcb_s *cb, unsigned char *data, int len)
 {
     int tail = cb->buf_tail;
 
-    cb->buf_len += len;
+    cb->buf_used += len;
     while (--len >= 0) {
 	cb->buf_base[tail] = *data++;
-	if (++tail >= CB_IN_BUF_SIZE)
+	if (++tail >= cb->buf_size)
 	    tail = 0;
     }
     cb->buf_tail = tail;
@@ -284,10 +287,10 @@ void tcpcb_buf_read(struct tcpcb_s *cb, unsigned char *data, int len)
 {
     int head = cb->buf_head;
 
-    cb->buf_len -= len;
+    cb->buf_used -= len;
     while (--len >= 0) {
 	*data++= cb->buf_base[head];
-	if (++head >= CB_IN_BUF_SIZE)
+	if (++head >= cb->buf_size)
 	    head = 0;
     }
     cb->buf_head = head;

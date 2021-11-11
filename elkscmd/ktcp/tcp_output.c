@@ -364,7 +364,9 @@ void tcp_output(struct tcpcb_s *cb)
 
     cb->send_nxt += cb->datalen;
 
-    len = CB_BUF_SPACE(cb) - PUSH_THRESHOLD;
+    len = CB_BUF_SPACE(cb);
+    if (cb->buf_size > CB_LISTEN_SIZE)	/* advertise real usable for "listen" buffers */
+	len -= PUSH_THRESHOLD;
     if (len <= 0)
 	len = 1;			/* Never advertise zero window size */
     if (len > THROTTLE_MAX_WINDOW)	/* throttle down to allow ELKS apps to keep up */

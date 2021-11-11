@@ -902,9 +902,9 @@ char *hostname;
 	sa.sin_port = htons((unsigned short) IRCPORT);
 	s = socket(hp->h_addrtype, SOCK_STREAM, 0);
 #else
-	sa.sin_addr.s_addr = in_gethostbyname(hostname);
 	sa.sin_family = AF_INET;
-	sa.sin_port = htons((unsigned short) IRCPORT);
+	sa.sin_port = PORT_ANY;
+	sa.sin_addr.s_addr = INADDR_ANY;
 	s = socket(AF_INET, SOCK_STREAM, 0);
 #endif
 	if (s > 0) {
@@ -913,6 +913,8 @@ char *hostname;
 		exit(1);
 	    }
 	}
+	sa.sin_port = htons((unsigned short) IRCPORT);
+	sa.sin_addr.s_addr = in_gethostbyname(hostname);
 	if (connect(s, (struct sockaddr *) &sa, sizeof(sa)) < 0) {
 	close(s);
 	s = -1;

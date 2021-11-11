@@ -65,7 +65,12 @@ static void tcpdev_bind(void)
 	return;
     }
 
-    n = tcpcb_new();
+    /*
+     * If binding to PORT_ANY, assume calling connect later,
+     * allocate normal (larger) sized input buffer.
+     * Otherwise, assume later listen, so allocate small buffer.
+     */
+    n = tcpcb_new(db->addr.sin_port == PORT_ANY? CB_NORMAL_SIZE: CB_LISTEN_SIZE);
     if (n == NULL) {
 	retval_to_sock(db->sock,-ENOMEM);
 	return;
