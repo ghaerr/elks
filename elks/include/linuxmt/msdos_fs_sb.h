@@ -17,7 +17,11 @@ struct msdos_sb_info { /* space in struct super_block is 28 bytes */
 
 # ifdef CONFIG_FS_DEV
 #define DEVINO_BASE MSDOS_DPB
+#ifdef CONFIG_ARCH_PC98
+#define DEVDIR_SIZE 30
+#else
 #define DEVDIR_SIZE 28
+#endif
 
 struct msdos_devdir_entry {
     char    *name;

@@ -56,6 +56,10 @@
 #define NUM_DRIVES	8	/* =256/NUM_MINOR max number of drives*/
 #define DRIVE_FD0	4	/* first floppy drive =NUM_DRIVES/2*/
 #define DRIVE_FD1	5	/* second floppy drive*/
+#ifdef CONFIG_ARCH_PC98
+#define DRIVE_FD2	6
+#define DRIVE_FD3	7
+#endif
 
 #define MAJOR_NR BIOSHD_MAJOR
 #define BIOSDISK
@@ -209,9 +213,13 @@ static unsigned short int INITPROC bioshd_getfdinfo(void)
 #if defined(CONFIG_IMG_FD1232)
     drive_info[DRIVE_FD0] = fd_types[5];	/*  /dev/fd0    */
     drive_info[DRIVE_FD1] = fd_types[5];	/*  /dev/fd1    */
+    drive_info[DRIVE_FD2] = fd_types[5];	/*  /dev/fd2    */
+    drive_info[DRIVE_FD3] = fd_types[5];	/*  /dev/fd3    */
 #elif defined(CONFIG_IMG_FD1440)
     drive_info[DRIVE_FD0] = fd_types[3];	/*  /dev/fd0    */
     drive_info[DRIVE_FD1] = fd_types[3];	/*  /dev/fd1    */
+    drive_info[DRIVE_FD2] = fd_types[3];	/*  /dev/fd2    */
+    drive_info[DRIVE_FD3] = fd_types[3];	/*  /dev/fd3    */
 #endif
 
     return ndrives;
@@ -424,7 +432,11 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 #endif
 	int count;
 
+#ifdef CONFIG_ARCH_PC98
+	target &= 3;
+#else
 	target &= 1;
+#endif
 
 /* Try to look for an ELKS disk parameter block in the first sector.  If
  * it exists, we can obtain the disk geometry from it.

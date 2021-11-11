@@ -29,6 +29,10 @@ struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
     { "hdb4",	S_IFBLK | 0644, MKDEV(3, 36) },
     { "fd0",	S_IFBLK | 0644, MKDEV(3, 128)},
     { "fd1",	S_IFBLK | 0644, MKDEV(3, 160)},
+#ifdef CONFIG_ARCH_PC98
+    { "fd2",	S_IFBLK | 0644, MKDEV(3, 192)},
+    { "fd3",	S_IFBLK | 0644, MKDEV(3, 224)},
+#endif
     { "rd0",	S_IFBLK | 0644, MKDEV(1, 0) },
     { "kmem",	S_IFCHR | 0644, MKDEV(1, 2) },
     { "null",	S_IFCHR | 0644, MKDEV(1, 3) },
