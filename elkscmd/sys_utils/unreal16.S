@@ -65,6 +65,7 @@ _start:
 
 # demo use of 32-bit address by copying stuff directly to memory-mapped screen
 2:      push    %es
+	cli			# interrupts off - trashes ESI/EDI/ECX
         xor     %di,%di
         mov     %di,%es
         movl    $videoline,%edi
@@ -81,6 +82,7 @@ _start:
 # or poke byte
         addr32 movb $'!',%es:videoline+22
         addr32 movb $0x2C,%es:videoline+23
+	sti			# interrupt back on
         pop     %es
 
 # output unreal enabled message
@@ -119,7 +121,6 @@ msg_and_exit:
 	call	puts
 exit:   mov     $0,%bx
         mov     $sys_exit,%ax
-	sti
         int     $syscall
 
 # write string at SI

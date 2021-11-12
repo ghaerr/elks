@@ -23,6 +23,7 @@
 #
 
 # configurable options for A20 gate
+#   USE_BIOS		- use BIOS AX=2401h INT 15h method (always tried first)
 #   USE_A20ASM		- use Chris Giese A20.ASM method (send D0, read, OR 2, D1, write)
 #   USE_HIMEM_AT	- use himem.sys PC AT method (send D1,DF,FF)
 #define USE_A20ASM
@@ -71,6 +72,7 @@ enable_unreal_mode:
 	addl $gdt, %eax
 	movl %eax, gdt_ptr+2
 
+	pushf			# save interrupt status
 	cli                     # interrupts off
 	pushl %ds
 	pushl %es
@@ -96,7 +98,7 @@ enable_unreal_mode:
 	popl %fs
 	popl %es
 	popl %ds
-	//sti
+	popf			# restore interrupt status
 
 	mov	$1,%ax		# system is in unreal mode, return 1
 	ret
@@ -111,9 +113,14 @@ in_vm86mode:
 # Attempt to enable A20 address gate, return 0 on fail
 enable_a20_gate:
 	mov	$1,%ah		# enable A20
-	call	set_a20
+	call	bios_set_a20	# try BIOS first
 	call	verify_a20	# returns 1 if enabled, 0 if disabled
-	ret
+	and	%ax,%ax
+	jnz	1f
+	mov	$1,%ah		# enable A20
+	call	set_a20		# call configurable A20 handler
+	call	verify_a20	# returns 1 if enabled, 0 if disabled
+1:	ret
 
 # verify if A20 gate is enabled, return 0 if disabled
 verify_a20:
@@ -125,6 +132,9 @@ verify_a20:
 	dec	%ax
 	mov	%ax,%es
 
+	pushf			# save interrupt status
+	cli			# interrupts off
+
 	mov	%es:0x10,%ax	# read word at FFFF:0010 (1 meg)
 	not	%ax		# 1's complement
 	pushw	0		# save word at 0000:0000 (0)
@@ -135,6 +145,7 @@ verify_a20:
 
 	popw	0
 
+	popf			# restore interrupt status
 	pop	%es
 	pop	%ds
 	jz	1f		# if ZF=1, the A20 gate is NOT enabled
@@ -145,10 +156,21 @@ verify_a20:
 
 #
 # enable/disable A20 gate using keyboard port/controller, entry AH=0 disable
+bios_set_a20:
+	or	%ah,%ah
+	jz	bios_reset_a20
+	mov	$0x2401,%ax	# BIOS enable A20
+	int	$0x15		# CF clear on success
+	ret
+bios_reset_a20:
+	mov	$0x2400,%ax	# BIOS disable A20
+	int	$0x15
+	ret
 
 #ifdef USE_A20ASM
 set_a20:
-	cli
+	pushf			# save interrupt status
+	cli			# interrupts off
 	call	empty_8042
 	mov	$0xD0,%al	# 8042 command byte to read output port
 	out	%al,$0x64
@@ -173,7 +195,7 @@ set_a20:
 	out	%al,$0x60
 
 	call	empty_8042
-	//sti
+	popf			# restore interrupt status
 	ret
 
 0:	jmp	1f		# a delay (probably not effective nor necessary)
@@ -190,14 +212,15 @@ empty_8042:
 
 #ifdef USE_HIMEM_AT
 set_a20:
-	cli
+	pushf			# save interrupt status
+	cli			# interrupts off
 	xor	%ah,%ah
 	jz	reset_a20
 
 	call	sync_8042
 	jnz	a20_err
 
-	mov	$0xD1,%al	# send D1h
+	mov	$0xD1,%al	# send D1h (write output)
 	out	%al,$0x64
 	call	sync_8042
 	jnz	a20_err
@@ -212,13 +235,13 @@ set_a20:
 	out	%al,$0x64
 	call	sync_8042
 a20_err:
-	//sti
+	popf			# restore interrupt status
 	ret
 reset_a20:
 	call	sync_8042
 	jnz	a20_err
 
-	mov	$0xD1,%al	# send D1h
+	mov	$0xD1,%al	# send D1h (write output)
 	out	%al,$0x64
 	call	sync_8042
 	jnz	a20_err
@@ -233,7 +256,7 @@ reset_a20:
 	mov	$0xFF,%al	# send FFh (pulse output port NULL)
 	out	%al,$0x64
 	call	sync_8042
-	//sti
+	popf			# restore interrupt status
 	ret
 
 sync_8042:
@@ -257,6 +280,7 @@ linear32_fmemcpyw:
 	xorl   %esi,%esi
 	mov    %sp,%si
 
+	//pushf               // save interrupt status
 	//cli                 // uncomment if extended registers used in interrupt routines
 	xorl   %ecx,%ecx
 	mov    16(%si),%cx    // word count -> ECX
@@ -279,7 +303,7 @@ linear32_fmemcpyw:
 	addr32                // 32-bit address prefix
 	rep
 	movsw                 // word [ES:EDI++] <- [DS:ESI++], ECX times
-	//sti
+	//popf                // restore interrupt status
 
 	mov    %ax,%si
 	mov    %dx,%di
@@ -301,6 +325,7 @@ linear32_fmemcpyb:
 	xorl   %esi,%esi
 	mov    %sp,%si
 
+	//pushf               // save interrupt status
 	//cli                 // uncomment if extended registers used in interrupt routines
 	xorl   %ecx,%ecx
 	mov    16(%si),%cx    // word count -> ECX
@@ -329,7 +354,7 @@ linear32_fmemcpyb:
 	addr32                // 32-bit address prefix
 	rep
 	movsb                 // byte [ES:EDI++] <- [DS:ESI++], ECX times
-	//sti
+	//popf                // restore interrupt status
 
 	mov    %ax,%si
 	mov    %dx,%di
