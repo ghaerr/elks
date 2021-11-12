@@ -7,7 +7,7 @@
  * Implements HTTP POST & GET, FTP GET,PUT and directory listings, TCP GET (typical via 
  * netcat at the other end.
  * 
- * Assumes hard links to the approproate names - ftpget, urlget, tcpget, tcpput.
+ * Assumes hard links to the appropriate names - ftpget, ftpput, urlget, tcpget, tcpput.
  * Optons (http only):
  * 	-h -- include header in output stream (httpget)
  * 	-d -- discard data (httpget)
@@ -43,7 +43,7 @@ _PROTOTYPE(int ftpcmd, (FILE *fpw, FILE *fpr, char *cmd, char *arg));
 _PROTOTYPE(int ftpio, (char *host, int port, char *user, char *pass, char *path, int type, int verbose));
 _PROTOTYPE(int tcpget, (char *host, int port, char *user, char *pass, char *path));
 _PROTOTYPE(int main, (int argc, char *argv[]));
-_PROTOTYPE(void usage, (char * prg));
+_PROTOTYPE(void usage, (void));
 
 char ftpphost[15+1];
 unsigned int ftppport;
@@ -57,7 +57,7 @@ char *progname;
 
 #define TRANS_DEBUG	0	/* for debug dumps */
 
-char buffer[8000];
+char buffer[4096];
 
 #if 0
 _PROTOTYPE(int strncasecmp, (const char *s1, const char *s2, size_t len));
@@ -195,6 +195,18 @@ int skipit(char *buf, int len, int *skip) {
    return(0);
 }
 
+/* Display an error message*/
+void errmsg(const char *msg, ...)
+{
+    va_list args;
+
+    va_start(args, msg);
+    fprintf(stderr, "%s: ", progname);
+    vfprintf(stderr, msg, args);
+    fprintf(stderr, "\n");
+    va_end(args);
+}
+
 int httpget(char *host, int port, char *user, char *pass, char *path, 
 	int headers, int discard, int post) {
 
@@ -207,7 +219,7 @@ int httpget(char *host, int port, char *user, char *pass, char *path,
 
    fd = net_connect(host, port);
    if (fd < 0) {
-	fprintf(stderr, "httpget: Could not connect to %s:%d\n", host, port);
+	errmsg("Could not connect to %s:%d", host, port);
    	return(-1);
    }
 
@@ -351,7 +363,7 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
    }
    fd = net_connect(host, port);
    if (fd < 0) {
-	fprintf(stderr, "%s: Could not connect to %s:%d\n", progname, host, port);
+	errmsg("Could not connect to %s:%d", host, port);
    	return(-1);
    }
    fpr = fdopen(fd, "r");
@@ -359,7 +371,7 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
 
    s = ftpreply(fpr);	/* Get server ID message, should be 220 status. */
    if (s / 100 != 2) {
-	fprintf(stderr, "%s: Connect error: %d\n", progname, s);
+	errmsg("Connect error: %d", s);
 	goto error;
    }
    s = ftpcmd(fpw, fpr, "USER", *user ? user : "ftp");
@@ -367,7 +379,7 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
    	s = ftpcmd(fpw, fpr, "PASS", *pass ? pass : "urlget@x.com");
 
    if (s / 100 != 2) {
-	fprintf(stderr, "%s: Authentication failed: %d\n", progname, s);
+	errmsg("Authentication failed: %d\n", s);
 	goto error;
    }
 
@@ -380,14 +392,14 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
 		if (infile >= 0) {		/* ftpput: Try to create the directory */
    			s = ftpcmd(fpw, fpr, "MKD", unesc(p));
 			if ((s/100) != 2) {	/* 257 = success */
-				fprintf(stderr, "%s: Create directory %s failed, error %d\n", progname, p, s);
+				errmsg("Create directory %s failed, error %d", p, s);
 				goto error;
 			} 
-			if (verbose) fprintf(stderr, "%s: Destination directory created: %s\n", progname, p);
+			if (verbose) errmsg("Destination directory created: %s", p);
    			s = ftpcmd(fpw, fpr, "CWD", unesc(p)); /* assume success */
 
 		} else {
-			fprintf(stderr, "%s: Remote change directory failed: %s -- status %d\n", progname, p, s);
+			errmsg("Remote change directory failed: %s -- status %d", p, s);
 			goto error;	/* assume this is fatal */
 		}
 	}
@@ -397,7 +409,7 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
    sprintf(typec, "%c", type == 'd' ? 'A' : type);
    s = ftpcmd(fpw, fpr, "TYPE", typec);
    if (s / 100 != 2) {
-	fprintf(stderr, "%s: Type error: %d\n", progname, s);
+	errmsg("Type error: %d", s);
 	goto error;
    }
    if (strlen(p) == 0) type = 'd'; 	/* last char is '/', it's a directory, list files */
@@ -406,12 +418,12 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
    s = ftpcmd(fpw, fpr, "PASV", "");
  
    if (ftppport==0) {			/* set in ftpcmd */
-	fprintf(stderr, "%s: Error listing directory: %d\n", progname, s);
+	errmsg("Error listing directory: %d", s);
 	goto error; 
    }
    fd2 = net_connect(ftpphost, ftppport);
    if (fd2 < 0) {	
-	fprintf(stderr, "%s: Network connect error.\n", progname);
+	errmsg("Network connect error");
 	goto error;
    }
    if (verbose) 
@@ -421,7 +433,7 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
    if (infile < 0) { 		/* ftpget */
 	s = ftpcmd(fpw, fpr, type == 'd' ? list : "RETR", unesc(p));
    	if ((s/100) != 1) {
-		fprintf(stderr, "%s: Cannot open remote file: %d\n", progname, s);
+		errmsg("Cannot open remote file: %d", s);
 		goto error;
    	}
 	while ((s = read(fd2, buffer, sizeof(buffer))) > 0) {
@@ -431,7 +443,7 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
 	}
 	if (verbose) fprintf(stderr, ".\n");
 	if (s < 0) {
-		fprintf(stderr, "ftpget: File write error");
+		errmsg("File write error");
 		if (s2 == -1)
 			perror("");
 		else
@@ -443,15 +455,15 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
 	}
 	s = ftpreply(fpr);	/* get 'Transfer Complete' message */
 	if (verbose)
-		fprintf(stderr,"ftpget/put: Exit status %d\n", s);
+		errmsg("Exit status %d", s);
 	s = 0;
 
    } else { 		/* ftpput */
 	s = ftpcmd(fpw, fpr, "STOR", unesc(p));
    	if (s / 100 != 1) {
-		fprintf(stderr, "%s: Cannot open destination file: %d\n", progname, s);
+		errmsg("Cannot open destination file: %d", s);
 		/* 553 is the most common error */
-		if (s == 553) fprintf(stderr, "Permission denied.\n");
+		if (s == 553) errmsg("Permission denied");
 		goto error;
    	}
 
@@ -464,10 +476,10 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
 	if (s < 0) {
 		/* The server will RST the data channel on write errors,
 		 * no need to do any housekeeping at this end. */
-		fprintf(stderr, "ftpput: Network write error, transfer aborted.\n");
+		errmsg("Network write error, transfer aborted");
 		s2 = ftpcmd(fpw, fpr, "DELE", unesc(p)); /* delete remote file */
 		if (verbose)
-			fprintf(stderr, "%s: Cleaning up - removing %s, status %d\n", progname, p, s);
+			errmsg("Cleaning up - removing %s, status %d", p, s);
 	} else
 		s = 0;
 	close(infile);
@@ -495,13 +507,13 @@ int tcpget(char *host, int port, char *user, char *pass, char *path) {
    int s2;
 
    if (port == 0) {
-   	fprintf(stderr, "tcpget: No port specified\n");
+	errmsg("No port specified");
    	return(-1);
    }
 
    fd = net_connect(host, port);
    if (fd < 0) {
-   	fprintf(stderr, "tcpget: Could not connect to %s:%d\n", host, port);
+	errmsg("Could not connect to %s:%d", host, port);
    	return(-1);
    }
    if (*path == '/')
@@ -551,7 +563,7 @@ int main(int argc, char **argv) {
 		opt_p = -1;
 		break;
 	default:
-		usage(progname);
+		usage();
 		return(-1);
 	}
 	argv++;
@@ -629,7 +641,7 @@ int main(int argc, char **argv) {
    	scheme = SCHEME_TCP;
    	ps = url + 6;
    } else {
-	fprintf(stderr, "%s: I do not handle this scheme\n", progname);
+	errmsg("Must specify http://, ftp:// or tcp:// url prefix");
 	return(-1);
    }
 
@@ -698,7 +710,6 @@ int main(int argc, char **argv) {
 		s = httpget(host, port, user, pass, path, opt_h, opt_d, opt_p);
 		break;
 	case SCHEME_FTP:
-		/* no support for ftpput yet */
 		s = ftpio(host, port, user, pass, path, type, opt_v);
 		break;
 	case SCHEME_TCP:
@@ -709,8 +720,8 @@ int main(int argc, char **argv) {
    return(s);
 }
 
-void usage(char * prg) {	/* FIXME: this is confusing, add usage() per protocol */
-	fprintf(stderr, "%s: Error in options.\n\t-h include header in output (http only)\n", prg);
+void usage(void) {	/* FIXME: this is confusing, add usage() per protocol */
+	fprintf(stderr, "%s: Error in options.\n\t-h include header in output (http only)\n", progname);
 	fprintf(stderr, "\t-d ignore content, show header only (http)\n");
 	fprintf(stderr, "\t-v verbose output\n\t-p use POST instead of GET (http)\n");
 	fprintf(stderr, "Refer to the ELKS File Transfer Howto for details.\n");
