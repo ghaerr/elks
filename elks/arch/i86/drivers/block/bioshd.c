@@ -208,7 +208,7 @@ static unsigned short int INITPROC bioshd_gethdinfo(void) {
 #ifdef CONFIG_ARCH_PC98
 static unsigned short int INITPROC bioshd_getfdinfo(void)
 {
-    int ndrives = 2;
+    int ndrives = 4;
 
 #if defined(CONFIG_IMG_FD1232)
     drive_info[DRIVE_FD0] = fd_types[5];	/*  /dev/fd0    */
@@ -879,7 +879,11 @@ static void do_bioshd_request(void)
 	drivep = &drive_info[drive];
 
 	/* make sure it's a disk that we are dealing with. */
+#ifdef CONFIG_ARCH_PC98
+	if (drive > DRIVE_FD3 || drivep->heads == 0) {
+#else
 	if (drive > DRIVE_FD1 || drivep->heads == 0) {
+#endif
 	    printk("bioshd: non-existent drive\n");
 	    end_request(0);
 	    continue;
