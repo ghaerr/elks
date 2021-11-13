@@ -48,7 +48,7 @@ int net_connect(char *host, int port)
 	l.l_linger = 0;	/* must be 0 to turn on option*/
 	ret = setsockopt(netfd, SOL_SOCKET, SO_LINGER, &l, sizeof(l));
 	if (ret < 0)
-		perror("setsockopt RST");
+		perror("SO_LINGER RST");
 
 	in_adr.sin_family = AF_INET;
 	in_adr.sin_port = htons(port);
@@ -80,7 +80,7 @@ void net_close(int fd, int errflag)
 		l.l_linger = 0;
 		ret = setsockopt(fd, SOL_SOCKET, SO_LINGER, &l, sizeof(l));
 		if (ret < 0)
-			perror("setsockopt FIN");
+			perror("SO_LINGER FIN");
 	}
 	close(fd);
 }

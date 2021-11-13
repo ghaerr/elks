@@ -58,6 +58,7 @@ static void tcpdev_bind(void)
 {
     struct tdb_bind *db = (struct tdb_bind *)sbuf; /* read from sbuf*/
     struct tcpcb_list_s *n;
+    int size;
     __u16 port;
 
     if (db->addr.sin_family != AF_INET) {
@@ -65,12 +66,9 @@ static void tcpdev_bind(void)
 	return;
     }
 
-    /*
-     * If binding to PORT_ANY, assume calling connect later,
-     * allocate normal (larger) sized input buffer.
-     * Otherwise, assume later listen, so allocate small buffer.
-     */
-    n = tcpcb_new(db->addr.sin_port == PORT_ANY? CB_NORMAL_SIZE: CB_LISTEN_SIZE);
+    /* SO_RCVBUF currently only sets listen or connect buffer size, NOT accept size!*/
+    size = db->rcv_bufsiz? db->rcv_bufsiz: CB_NORMAL_BUFSIZ;
+    n = tcpcb_new(size);
     if (n == NULL) {
 	retval_to_sock(db->sock,-ENOMEM);
 	return;
@@ -86,8 +84,8 @@ static void tcpdev_bind(void)
     } else {
 	struct tcpcb_list_s *n2 = tcpcb_check_port(port);
 	if (n2) {			/* port already bound */
-	    if (!db->reuseaddr) {	/* no SO_REUSEADDR on socket */
-		printf("tcp: port %u already bound, rejecting (use SO_REUSEADDR?)\n", port);
+	    if (!db->reuse_addr) {	/* no SO_REUSEADDR on socket */
+		debug_tcp("tcp: port %u already bound, rejecting (use SO_REUSEADDR?)\n", port);
 		tcpcb_remove(n);
 		retval_to_sock(db->sock, -EADDRINUSE);
 		return;
@@ -97,7 +95,7 @@ static void tcpdev_bind(void)
 	    if (n2->tcpcb.state == TS_TIME_WAIT) {
 		LEAVE_TIME_WAIT(&n2->tcpcb);	/* entered via FIN_WAIT_2 state on FIN rcvd*/
 		tcpcb_remove(n2);
-		printf("tcp: port %u reused, freeing previous socket in time_wait\n", port);
+		debug_tcp("tcp: port %u reused, freeing previous socket in time_wait\n", port);
 	    } else
 		printf("tcp: port %u reused, can't free previous socket in state %d\n",
 			port, n2->tcpcb.state);
@@ -182,7 +180,7 @@ static void tcpdev_connect(void)
 
     n = tcpcb_find_by_sock(db->sock);
     if (!n || n->tcpcb.state != TS_CLOSED) {
-	printf("ktcp: panic in connect\n");
+	debug_tcp("tcp: panic in connect\n");
 	return;
     }
 

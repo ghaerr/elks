@@ -365,7 +365,7 @@ void tcp_output(struct tcpcb_s *cb)
     cb->send_nxt += cb->datalen;
 
     len = CB_BUF_SPACE(cb);
-    if (cb->buf_size > CB_LISTEN_SIZE)	/* advertise real usable for "listen" buffers */
+    if (cb->buf_size > PUSH_THRESHOLD)	/* FIXME temp hack for small listen buffers */
 	len -= PUSH_THRESHOLD;
     if (len <= 0)
 	len = 1;			/* Never advertise zero window size */
@@ -382,7 +382,6 @@ void tcp_output(struct tcpcb_s *cb)
 	options[0] = TCP_OPT_MSS;
 	options[1] = TCP_OPT_MSS_LEN;		/* total options length (4)*/
 	*(__u16 *)(options + 2) = htons(MTU - 40);
-	//*(__u16 *)(options + 2) = htons(512 - 40);
 	header_len += TCP_OPT_MSS_LEN;
     }
 

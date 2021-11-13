@@ -8,6 +8,7 @@
 #define ETH_TYPE_IPV4 0x0008
 #define ETH_TYPE_ARP  0x0608
 
+#define ETH_MTU		1500
 
 /* Ethernet header (no VLAN tag) */
 

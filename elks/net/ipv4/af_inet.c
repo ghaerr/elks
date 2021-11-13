@@ -122,7 +122,8 @@ static int inet_bind(register struct socket *sock, struct sockaddr *addr,
     cmd->cmd = TDC_BIND;
     cmd->sock = sock;
 
-    cmd->reuseaddr = sock->flags & SF_REUSE_ADDR;
+    cmd->reuse_addr = sock->flags & SF_REUSE_ADDR;
+    cmd->rcv_bufsiz = sock->rcv_bufsiz;
     memcpy_fromfs(&cmd->addr, addr, sockaddr_len);
 
     tcpdev_inetwrite(cmd, sizeof(struct tdb_bind));

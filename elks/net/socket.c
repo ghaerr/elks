@@ -81,6 +81,7 @@ static struct socket *sock_alloc(void)
 	0,		/* type */
 	SS_UNCONNECTED, /* state */
 	0,		/* flags */
+	0,		/* rcv_bufsiz */
 	NULL,		/* ops */
 	NULL,		/* data */
 #if defined(CONFIG_INET)
@@ -94,7 +95,6 @@ static struct socket *sock_alloc(void)
 #endif
 	NULL,		/* wait */
 	NULL,		/* inode */
-	NULL,		/* fasync_list */
 	NULL,		/* file */
     };
     register struct inode *inode;
@@ -593,9 +593,14 @@ int sys_setsockopt(int fd, int level, int option_name, void *option_value,
 	break;
 
     case SO_REUSEADDR:
+    case SO_RCVBUF:
 	if (option_len != sizeof(int))
 	    return -EINVAL;
 	memcpy_fromfs(&setoption, option_value, sizeof(int));
+	if (option_name == SO_RCVBUF) {
+	    sock->rcv_bufsiz = setoption;
+	    return 0;
+	}
 	flags = SF_REUSE_ADDR;
 	break;
 

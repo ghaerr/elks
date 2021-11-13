@@ -22,6 +22,7 @@ struct socket {
     short type;
     unsigned char state;
     unsigned char flags;
+    unsigned int rcv_bufsiz;
     struct proto_ops *ops;
     void *data;
 
@@ -38,7 +39,6 @@ struct socket {
 
     struct wait_queue *wait;
     struct inode *inode;
-    struct fasync_struct *fasync_list;
     struct file *file;
 };
 

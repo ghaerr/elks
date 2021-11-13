@@ -44,12 +44,12 @@ ipaddr_t netmask_ip;
 
 /* defaults*/
 int linkprotocol = 	LINK_ETHER;
-unsigned int MTU =	SLIP_MTU;
 char ethdev[] = 	"/dev/eth";
 char *serdev = 		"/dev/ttyS0";
 speed_t baudrate = 	57600;
 
 int dflag;
+unsigned int MTU;
 static int intfd;	/* interface fd*/
 
 void ktcp_run(void)
@@ -143,6 +143,7 @@ int main(int argc,char **argv)
 {
     int ch;
     int bflag = 0;
+    int mtu = 0;
     static char *linknames[3] = { "ethernet", "slip", "cslip" };
 
     while ((ch = getopt(argc, argv, "bdm:p:s:l:")) != -1) {
@@ -154,7 +155,7 @@ int main(int argc,char **argv)
 	    dflag++;
 	    break;
 	case 'm':		/* MTU*/
-		MTU = atoi(optarg);
+		mtu = atoi(optarg);
 		break;
 	case 'p':		/* link protocol*/
 	    linkprotocol = !strcmp(optarg, "eth")? LINK_ETHER :
@@ -179,6 +180,7 @@ int main(int argc,char **argv)
     local_ip = in_gethostbyname(optind < argc? argv[optind++]: DEFAULT_IP);
     gateway_ip = in_gethostbyname(optind < argc? argv[optind++]: DEFAULT_GATEWAY);
     netmask_ip = in_gethostbyname(optind < argc? argv[optind++]: DEFAULT_NETMASK);
+    MTU = mtu ? mtu : (linkprotocol == LINK_ETHER ? ETH_MTU : SLIP_MTU);
 
     /* must exit() in next two stages on error to reset kernel tcpdev_inuse to 0*/
     if ((tcpdevfd = tcpdev_init("/dev/tcpdev")) < 0)

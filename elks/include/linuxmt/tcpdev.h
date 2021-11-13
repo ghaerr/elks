@@ -48,7 +48,8 @@ struct tdb_listen {
 struct tdb_bind {
     unsigned char cmd;
     struct socket *sock;
-    int reuseaddr;
+    int reuse_addr;
+    int rcv_bufsiz;
     struct sockaddr_in addr;
 };
 

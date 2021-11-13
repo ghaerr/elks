@@ -17,7 +17,11 @@ struct sockaddr {
 
 /* careful: option names are close to internal SF_ options in net.h*/
 #define SO_REUSEADDR	2
+#define SO_RCVBUF	8		/* set TCP CB receive buffer size*/
 #define SO_LINGER	13		/* only implemented for l_linger = 0*/
+
+/* non-standard options */
+#define SO_LISTEN_BUFSIZ	128	/* suggested buffer size for listen to save mem*/
 
 struct linger {
         int             l_onoff;        /* Linger active                */
