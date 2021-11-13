@@ -184,8 +184,8 @@ static void tcp_listen(struct iptcp_s *iptcp, struct tcpcb_s *lcb)
     if (h->flags & TF_ACK)
 	debug_tcp("tcp: ACK in listen not implemented\n");
 
-    /* duplicate control block but with normal sized input buffer */
-    n = tcpcb_clone(lcb, CB_NORMAL_SIZE);    /* copy lcb into linked list*/
+    /* duplicate control block but with normal sized input buffer, SO_RCVBUF ignored for now */
+    n = tcpcb_clone(lcb, CB_NORMAL_BUFSIZ);    /* copy lcb into linked list*/
     if (!n)
 	return;		     /* no memory for new connection*/
     cb = &n->tcpcb;

@@ -11,10 +11,10 @@
 
 /*
  * /etc/tcpdev max read/write size
- * Must be at least as big as CB_NORMAL_SIZE
+ * Must be at least as big as CB_NORMAL_BUFSIZ
  * And at least as big as TCPDEV_INBUFFERSIZE in <linuxmt/tcpdev.h> (currently 1024)
  */
-#define TCPDEV_BUFSIZ	(CB_NORMAL_SIZE + sizeof(struct tdb_return_data))
+#define TCPDEV_BUFSIZ	(CB_NORMAL_BUFSIZ + sizeof(struct tdb_return_data))
 
 /* max tcp buffer size (no ip header)*/
 #define TCP_BUFSIZ	(TCPDEV_BUFSIZ + sizeof(tcphdr_t) + TCP_OPT_MSS_LEN)
@@ -22,15 +22,17 @@
 /* max ip buffer size (with link layer frame)*/
 #define IP_BUFSIZ	(TCP_BUFSIZ + sizeof(iphdr_t) + sizeof(struct ip_ll))
 
-/* control block input buffer size - max window size, doesn't have to be power of two*/
-#define CB_NORMAL_SIZE	4096	/* normal input buffer size*/
-#define CB_LISTEN_SIZE  128	/* small buffer size for listening sockets*/
+/*
+ * control block input buffer size - max window size, doesn't have to be power of two
+ * default will be (ETH_MTU - IP_HDRSIZ) * 3 + PUSH_THRESHOLD = (1500-40) * 3 + 512 = 4892
+ */
+#define CB_NORMAL_BUFSIZ	4096	/* normal input buffer size*/
 
 /* max outstanding send window size*/
 #define TCP_SEND_WINDOW_MAX	1024	/* should be less than TCP_RETRANS_MAXMEM*/
 
 /* max advertised receive window size*/
-#define THROTTLE_MAX_WINDOW	512	/* FIXME CB_NORMAL_SIZE when PTY fixed*/
+#define THROTTLE_MAX_WINDOW	512	/* FIXME CB_NORMAL_BUFSIZ when PTY fixed*/
 
 /* bytes to subtract from window size and when to force app write*/
 #define PUSH_THRESHOLD	512

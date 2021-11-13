@@ -196,7 +196,12 @@ int main(int argc, char **argv)
 	/* set local port reuse, allows server to be restarted in less than 10 secs */
 	ret = 1;
 	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &ret, sizeof(int)) < 0)
-		perror("setsockopt SO_REUSEADDR");
+		perror("SO_REUSEADDR");
+
+	/* set small listen buffer to save ktcp memory */
+	ret = SO_LISTEN_BUFSIZ;
+	if (setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &ret, sizeof(int)) < 0)
+		perror("SO_RCVBUF");
 
 	memset(&addr_in, 0, sizeof(addr_in));
 	addr_in.sin_family = AF_INET;
