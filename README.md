@@ -25,7 +25,11 @@ Overwrite the include/autoconf.h with the content of sample_pc98/autoconf_pc98.h
 (The time stamp of the autoconf.h should be newer than .config)  
 ./make clean  
 ./make  
-FD image will be created under image/  
+FD image will be created under image/ 
+  
+## Downloads  
+Test images will be available for download.  
+[Downloads](https://github.com/tyama501/elks/releases)  
   
 ## Reference  
 INT 1Bh (DISK BIOS)  
