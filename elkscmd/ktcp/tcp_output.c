@@ -369,7 +369,7 @@ void tcp_output(struct tcpcb_s *cb)
 	len -= PUSH_THRESHOLD;
     if (len <= 0)
 	len = 1;			/* Never advertise zero window size */
-    debug_tune("tcp: space %u, window %u\n", CB_BUF_SPACE(cb), len);
+    debug_tune("tcp output: space %u, window %u\n", CB_BUF_SPACE(cb), len);
     th->window = htons(len);
     th->urgpnt = 0;
     th->flags = cb->flags;

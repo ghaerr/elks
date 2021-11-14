@@ -112,19 +112,18 @@ struct iptcp_s {
 struct tcpcb_s {
 	void *	newsock;
 	void *	sock;	/* the socket in kernel space */
-#define SS_NULL		0
-#define	SS_ACCEPT	1
+
 	__u32	localaddr;
 	__u16	localport;
 	__u32	remaddr;
 	__u16	remport;
 
 	__u8	state;
-	__u8	unaccepted;			/* boolean */
-	timeq_t	rtt;				/* in 1/16 secs*/
+	__u8	unaccepted;		/* boolean */
+	timeq_t	rtt;			/* in 1/16 secs*/
 
 	__u32	time_wait_exp;
-	__u16	wait_data;
+	//__u16	wait_data;
 
 	short	bytes_to_push;
 
