@@ -21,8 +21,8 @@
 //#define RAWTELNET	/* set in telnet and telnetd for raw telnet without IAC*/
 
 #define MAX_BUFFER 512		/* should be equal to TDB_WRITE_MAX and PTYOUTQ_SIZE*/
-static char buf_in  [MAX_BUFFER];
-static char buf_out [MAX_BUFFER];
+static char buf_in  [1500];
+static char buf_out [1500];
 
 char *nargv[2] = {"/bin/login", NULL};
 
@@ -137,7 +137,7 @@ static void client_loop (int fdsock, int fdterm)
 
 		/* network -> login process*/
 		if (!count_in && FD_ISSET (fdsock, &fds_read)) {
-			count_in = read (fdsock, buf_in, MAX_BUFFER);
+			count_in = read (fdsock, buf_in, sizeof(buf_in));
 			if (count_in <= 0) {
 				if (count < 0)
 					perror ("telnetd read sock");
@@ -155,7 +155,7 @@ static void client_loop (int fdsock, int fdterm)
 
 		/* login process -> network*/
 		if (!count_out && FD_ISSET (fdterm, &fds_read)) {
-			count_out = read (fdterm, buf_out, MAX_BUFFER);
+			count_out = read (fdterm, buf_out, sizeof(buf_out));
 			if (count_out <= 0) {
 				if (count_out < 0)
 					perror ("telnetd read term");

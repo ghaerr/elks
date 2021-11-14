@@ -26,9 +26,6 @@
 
 timeq_t Now;
 
-extern int cbs_in_time_wait;		// FIXME remove extern
-extern int cbs_in_user_timeout;
-
 #if DEBUG_TCPDATA
 static char *tcp_flags(int flags)
 {
@@ -105,7 +102,7 @@ void tcp_send_fin(struct tcpcb_s *cb)
     cb->send_nxt++;
 }
 
-static void tcp_send_ack(struct tcpcb_s *cb)
+void tcp_send_ack(struct tcpcb_s *cb)
 {
     cb->flags = TF_ACK;
     cb->datalen = 0;
@@ -235,7 +232,7 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     datasize = iptcp->tcplen - TCP_DATAOFF(h);
 
     if (datasize != 0) {
-	//debug_tcp("tcp: recv data len %u avail %u\n", datasize, CB_BUF_SPACE(cb));
+	debug_tune("tcp: recv data len %u avail %u\n", datasize, CB_BUF_SPACE(cb));
 	/* Process the data */
 	data = (__u8 *)h + TCP_DATAOFF(h);
 
@@ -248,13 +245,12 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
 	tcpcb_buf_write(cb, data, datasize);
 
+	/* always push data for now*/
 	if (1 || (h->flags & TF_PSH) || CB_BUF_SPACE(cb) <= PUSH_THRESHOLD) {
-	    //if (cb->bytes_to_push <= 0)
-	    if (cb->bytes_to_push >= 0)
+	    if (cb->bytes_to_push <= 0)
 		tcpcb_need_push++;
 	    cb->bytes_to_push = cb->buf_used;
 	}
-	tcpdev_checkread(cb);
     }
 
     if (h->flags & TF_ACK) {		/* update unacked*/
@@ -268,6 +264,7 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	printf("tcp: RST from %s:%u->%u\n", in_ntoa(cb->remaddr), ntohs(h->sport), ntohs(h->dport));
 	rmv_all_retrans_cb(cb);
 	if (cb->state == TS_CLOSE_WAIT) {
+	    cbs_in_user_timeout--;
 	    ENTER_TIME_WAIT(cb);
 	    tcpdev_sock_state(cb, SS_UNCONNECTED);	/* no wakeup?*/
 	} else {
@@ -399,18 +396,6 @@ static void tcp_last_ack(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	cb->state = TS_CLOSED;
 	tcpcb_remove_cb(cb); 	/* deallocate*/
     }
-}
-
-/* called every ktcp run cycle*/
-void tcp_update(void)
-{
-    if (cbs_in_time_wait > 0 || cbs_in_user_timeout > 0) {
-	debug_tcp("tcp: time_wait %d user_timeout %d\n", cbs_in_time_wait, cbs_in_user_timeout);
-	tcpcb_expire_timeouts();
-    }
-
-    //if (tcpcb_need_push > 0)
-	tcpcb_push_data();
 }
 
 /* process an incoming TCP packet*/

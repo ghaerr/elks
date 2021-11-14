@@ -31,9 +31,6 @@ static unsigned char sbuf[TCPDEV_BUFSIZ];
 
 int tcpdevfd;
 
-extern int cbs_in_user_timeout;
-extern int cbs_in_time_wait;
-
 int tcpdev_init(char *fdev)
 {
     int fd  = open(fdev, O_NONBLOCK | O_RDWR);
@@ -231,12 +228,13 @@ static void tcpdev_read(void)
 
     cb = &n->tcpcb;
     if (cb->state == TS_CLOSING || cb->state == TS_LAST_ACK || cb->state == TS_TIME_WAIT) {
-debug_tcp("tcpdev_read: returning -EPIPE to socket read\n");
+	debug_tcp("tcpdev_read: returning -EPIPE to socket read\n");
 	retval_to_sock(sock, -EPIPE);
 	return;
     }
 
     data_avail = cb->bytes_to_push;
+    debug_tune("tcpdev_read %u bytes avail %u\n", db->size, data_avail);
 
     if (data_avail == 0) {
 	if (cb->state == TS_CLOSE_WAIT)
@@ -262,6 +260,11 @@ debug_tcp("tcpdev_read: returning -EPIPE to socket read\n");
     ret_data->sock = sock;
     tcpcb_buf_read(cb, ret_data->data, data_avail);
     write(tcpdevfd, sbuf, sizeof(struct tdb_return_data) + data_avail);
+
+    /* send ACK to restart server should window have been full (unless it's netstat)*/
+    if (cb->remport != NETCONF_PORT || cb->remaddr != 0)
+	if (cb->remport != local_ip)	/* no ack to localhost either*/
+		tcp_send_ack(cb);
 }
 
 /* inform kernel of socket data bytes available*/

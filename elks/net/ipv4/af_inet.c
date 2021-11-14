@@ -290,11 +290,13 @@ static int inet_read(register struct socket *sock, char *ubuf, int size,
     ret = ((struct tdb_return_data *)tdin_buf)->ret_value;
 
     if (ret > 0) {
-	debug_net("INET(%d) READ %u avail %u\n", current->pid, ret, sock->avail_data);
+	debug_tune("INET(%d) READ %u ask %u avail %u\n",
+	    current->pid, ret, size, sock->avail_data);
         memcpy_tofs(ubuf, &((struct tdb_return_data *)tdin_buf)->data,
-		(size_t) ((struct tdb_return_data *)tdin_buf)->size);
+	    (size_t) ((struct tdb_return_data *)tdin_buf)->size);
         sock->avail_data = 0;
-    } else debug_net("INET(%d) READ %d avail %u\n", ret, sock->avail_data);
+    } else debug_net("INET(%d) READ %d ask %u avail %u\n",
+	current->pid, ret, size, sock->avail_data);
 
     up(&sock->sem);
 

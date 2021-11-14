@@ -40,6 +40,7 @@
 #define DEBUG_SIG	0		/* signals*/
 #define DEBUG_SUP	0		/* superblock, mount, umount*/
 #define DEBUG_TTY	0		/* tty driver*/
+#define DEBUG_TUNE	0		/* tunable debug statements*/
 #define DEBUG_WAIT	0		/* wait, exit*/
 
 #if DEBUG_EVENT
@@ -118,6 +119,12 @@ void debug_setcallback(void (*cbfunc));	/* callback on debug event*/
 #define debug_tty	PRINTK
 #else
 #define debug_tty(...)
+#endif
+
+#if DEBUG_TUNE
+#define debug_tune	PRINTK
+#else
+#define debug_tune(...)
 #endif
 
 #if DEBUG_WAIT

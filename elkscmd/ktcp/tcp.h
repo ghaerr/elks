@@ -12,7 +12,7 @@
 /*
  * /etc/tcpdev max read/write size
  * Must be at least as big as CB_NORMAL_BUFSIZ
- * And at least as big as TCPDEV_INBUFFERSIZE in <linuxmt/tcpdev.h> (currently 1024)
+ * And at least as big as TCPDEV_INBUFFERSIZE in <linuxmt/tcpdev.h> (currently 1500)
  */
 #define TCPDEV_BUFSIZ	(CB_NORMAL_BUFSIZ + sizeof(struct tdb_return_data))
 
@@ -26,15 +26,12 @@
  * control block input buffer size - max window size, doesn't have to be power of two
  * default will be (ETH_MTU - IP_HDRSIZ) * 3 + PUSH_THRESHOLD = (1500-40) * 3 + 512 = 4892
  */
-#define CB_NORMAL_BUFSIZ	4096	/* normal input buffer size*/
+#define CB_NORMAL_BUFSIZ	4892	/* normal input buffer size*/
 
 /* max outstanding send window size*/
 #define TCP_SEND_WINDOW_MAX	1024	/* should be less than TCP_RETRANS_MAXMEM*/
 
-/* max advertised receive window size*/
-#define THROTTLE_MAX_WINDOW	512	/* FIXME CB_NORMAL_BUFSIZ when PTY fixed*/
-
-/* bytes to subtract from window size and when to force app write*/
+/* bytes to subtract from window size (was remaining buf space to force push)*/
 #define PUSH_THRESHOLD	512
 
 /* timeout values in 1/16 seconds, or (seconds << 4). Half second = 8*/
@@ -183,9 +180,11 @@ struct	tcp_retrans_list_s {
 
 };
 
-int tcpcb_need_push;
-int tcp_timeruse;		/* # retransmits alloced*/
-int tcp_retrans_memory;		/* total retransmit memory*/
+extern int tcp_timeruse;	/* retrans timer active, call tcp_retrans */
+extern int cbs_in_time_wait;	/* time_wait timer active, call tcp_expire_timeouts */
+extern int cbs_in_user_timeout;	/* fin_wait/closing/last_ack active, call " */
+extern int tcpcb_need_push;	/* push required, tcpcb_push_data/call tcpcb_checkread */
+extern int tcp_retrans_memory;	/* total retransmit memory in use */
 
 struct tcpcb_list_s *tcpcb_new(int bufsize);
 struct tcpcb_list_s *tcpcb_find(__u32 addr, __u16 lport, __u16 rport);
@@ -195,10 +194,10 @@ __u16 tcp_chksum(struct iptcp_s *h);
 __u16 tcp_chksumraw(struct tcphdr_s *h, __u32 saddr, __u32 daddr, __u16 len);
 void tcp_print(struct iptcp_s *head, int recv, struct tcpcb_s *cb);
 void tcp_output(struct tcpcb_s *cb);
-void tcp_update(void);
 int tcp_init(void);
 void tcp_process(struct iphdr_s *iph);
 void tcp_connect(struct tcpcb_s *cb);
+void tcp_send_ack(struct tcpcb_s *cb);
 void tcp_send_fin(struct tcpcb_s *cb);
 void tcp_send_reset(struct tcpcb_s *cb);
 void tcp_reset_connection(struct tcpcb_s *cb);
