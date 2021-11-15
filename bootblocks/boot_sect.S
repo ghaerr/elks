@@ -18,7 +18,7 @@
 
 // Must match ELKS
 #define ELKS_INITSEG (0x0100)
-#define ELKS_SYSSEG  (0x1000)
+#define ELKS_SYSSEG  (0x1300)
 
 // Whether to try to do whole-track reads, or read one sector at a time
 //
