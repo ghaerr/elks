@@ -31,9 +31,6 @@ static unsigned char sbuf[TCPDEV_BUFSIZ];
 
 int tcpdevfd;
 
-extern int cbs_in_user_timeout;
-extern int cbs_in_time_wait;
-
 int tcpdev_init(char *fdev)
 {
     int fd  = open(fdev, O_NONBLOCK | O_RDWR);
@@ -231,21 +228,24 @@ static void tcpdev_read(void)
 
     cb = &n->tcpcb;
     if (cb->state == TS_CLOSING || cb->state == TS_LAST_ACK || cb->state == TS_TIME_WAIT) {
-debug_tcp("tcpdev_read: returning -EPIPE to socket read\n");
+	debug_tcp("tcpdev_read: returning -EPIPE to socket read\n");
 	retval_to_sock(sock, -EPIPE);
 	return;
     }
 
     data_avail = cb->bytes_to_push;
+    debug_tune("tcpdev_read %u bytes avail %u\n", db->size, data_avail);
 
     if (data_avail == 0) {
-	if (cb->state == TS_CLOSE_WAIT)
+	if (cb->state == TS_CLOSE_WAIT) {
+	    printf("tcp: read on CLOSE_WAIT socket\n");
 	    retval_to_sock(sock, -EPIPE);
-	else if (db->nonblock)
+	} else if (db->nonblock)
 	    retval_to_sock(sock, -EAGAIN);
-	else
+	else {
 	    //cb->wait_data = db->size;	  /* wait_data use removed, no async reads*/
 	    retval_to_sock(sock, -EINTR); /* don't set wait_data, return -EINTR instead*/
+	}
 	return;
     }
 
@@ -254,7 +254,7 @@ debug_tcp("tcpdev_read: returning -EPIPE to socket read\n");
     if (cb->bytes_to_push <= 0)
 	tcpcb_need_push--;
 
-    /*printf("ktcpdev READ: sock %x %d bytes\n", sock, data_avail);*/
+    //printf("ktcpdev read: %d bytes\n", data_avail);
     ret_data = (struct tdb_return_data *)sbuf;
     ret_data->type = TDT_RETURN;
     ret_data->ret_value = data_avail;
@@ -262,6 +262,24 @@ debug_tcp("tcpdev_read: returning -EPIPE to socket read\n");
     ret_data->sock = sock;
     tcpcb_buf_read(cb, ret_data->data, data_avail);
     write(tcpdevfd, sbuf, sizeof(struct tdb_return_data) + data_avail);
+
+    /* if remote closed and more data, update data avail then indicate disconnecting*/
+    if (cb->state == TS_CLOSE_WAIT) {
+	if (cb->bytes_to_push <= 0) {
+	    printf("tcp: disconnecting after final read %d\n", data_avail);
+	    tcpdev_sock_state(cb, SS_DISCONNECTING);
+	} else {
+	    printf("tcp: application read too small after FIN, data_avail %d\n",
+		cb->bytes_to_push);
+	    tcpdev_checkread(cb);		/* inform kernel of remaining data*/
+	}
+	return;
+    }
+
+    /* send ACK to restart server should window have been full (unless it's netstat)*/
+    if (cb->remport != NETCONF_PORT || cb->remaddr != 0)
+	if (cb->remport != local_ip)	/* no ack to localhost either*/
+		tcp_send_ack(cb);
 }
 
 /* inform kernel of socket data bytes available*/
@@ -274,7 +292,7 @@ void tcpdev_checkread(struct tcpcb_s *cb)
     if (cb->bytes_to_push <= 0)
 	return;
 
-    if (cb->wait_data == 0) {
+    //if (cb->wait_data == 0) {
 	/*printf("ktcpdev checkSELECT: sock %x %d bytes\n", sock, cb->bytes_to_push);*/
 
 	/* Update the avail_data in the kernel socket (for select) */
@@ -285,7 +303,7 @@ void tcpdev_checkread(struct tcpcb_s *cb)
 	return_data.size = 0;
 	write(tcpdevfd, &return_data, sizeof(return_data));
 	return;
-    }
+    //}
 
 #if 0 /* removed - wait_data mechanism no longer used in inet_read*/
     struct tdb_return_data *ret_data = (struct tdb_return_data *)sbuf;

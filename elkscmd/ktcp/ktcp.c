@@ -52,23 +52,47 @@ int dflag;
 unsigned int MTU;
 static int intfd;	/* interface fd*/
 
+// rename		timer			function called when active
+//			----------------	-------------------------------------
+// tcp_timeruse		timer_retrans		tcp_retrans
+// cbs_in_time_wait	timer_time_wait		tcp_expire_timeouts
+// cbs_in_user_wait	timer_close_wait	tcp_expire_timeouts
+// tcpcb_need_push				tcpcb_push_data -> tcpdev_checkread
+
+int tcp_timeruse;		/* retrans timer active, call tcp_retrans */
+int cbs_in_time_wait;		/* time_wait timer active, call tcp_expire_timeouts */
+int cbs_in_user_timeout;	/* fin_wait/closing/last_ack active, call " */
+int tcpcb_need_push;		/* push required, tcpcb_push_data/call tcpcb_checkread */
+int tcp_retrans_memory;		/* total retransmit memory in use*/
+
 void ktcp_run(void)
 {
     fd_set fdset;
     struct timeval timeint, *tv;
     int count;
-extern int tcp_timeruse;
-extern int cbs_in_time_wait;
-extern int cbs_in_user_timeout;
 
     while (1) {
-	//if (tcp_timeruse > 0 || tcpcb_need_push > 0) {
-	if (tcp_timeruse > 0 || tcpcb_need_push > 0 || cbs_in_time_wait > 0 || cbs_in_user_timeout > 0) {
+	if (tcp_timeruse > 0 || tcpcb_need_push > 0 ||
+	    cbs_in_time_wait > 0 || cbs_in_user_timeout > 0) {
 
-	    timeint.tv_sec  = 1;
-	    timeint.tv_usec = 0;
+	    //printf("tcp: timer %d needpush %d timewait %d usertime %d\n", tcp_timeruse,
+		//tcpcb_need_push, cbs_in_time_wait, cbs_in_user_timeout);
+
+	    /* don't wait long if data needs pushing to tcpdev */
+	    if (tcpcb_need_push) {
+		timeint.tv_sec  = 0;
+		timeint.tv_usec = 1000;	/* 1msec */
+		//printf("SMALL WAIT\n");
+	    } else {
+		timeint.tv_sec  = 1;
+		timeint.tv_usec = 0;
+		//intf("1SEC WAIT\n");
+	    }
 	    tv = &timeint;
-	} else tv = NULL;
+	} else {
+	    //printf("select WAIT\n");
+	    tv = NULL;		/* no timeout if no timers active or push needed */
+	}
 
 	FD_ZERO(&fdset);
 	FD_SET(intfd, &fdset);
@@ -83,8 +107,16 @@ extern int cbs_in_user_timeout;
 
 	Now = timer_get_time();
 
-	/* expire timeouts and push data*/
-	tcp_update();
+	/* expire timeouts*/
+	if (cbs_in_time_wait > 0 || cbs_in_user_timeout > 0) {
+	    debug_tcp("tcp: time_wait %d user_timeout %d\n",
+		cbs_in_time_wait, cbs_in_user_timeout);
+	    tcpcb_expire_timeouts();
+	}
+
+	/* always push data*/
+	//if (tcpcb_need_push > 0)
+	    tcpcb_push_data();
 
 	/* process received packets*/
 	if (FD_ISSET(intfd, &fdset)) {

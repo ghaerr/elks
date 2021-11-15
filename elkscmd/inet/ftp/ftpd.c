@@ -24,8 +24,8 @@
 #include	<sys/types.h>
 #include 	<dirent.h>
 
-#define 	MAXLINE 	1024
-#define		LISTENQ		1024
+#define 	CMDBUFSIZ 	256
+#define		IOBUFSIZ	1500
 #define		TRUE		1
 #define		FALSE		0
 #define		FTP_PORT	21
@@ -220,15 +220,15 @@ int get_command(char *command){
 int do_login(int controlfd, char *buf) {
 	char *str = "331 User OK.\r\n";
 
-	//bzero(buf, MAXLINE);
-    	if(read(controlfd, buf, MAXLINE) < 0)
+	//bzero(buf, CMDBUFSIZ);
+	if(read(controlfd, buf, CMDBUFSIZ) < 0)
 		return -1;
 	if (strncmp(buf, "USER", 4) < 0) 
 		return -1;
 	write(controlfd, str, strlen(str));
 
-	//bzero(buf, MAXLINE);
-    	if(read(controlfd, buf, MAXLINE) < 0) 
+	//bzero(buf, CMDBUFSIZ);
+	if(read(controlfd, buf, CMDBUFSIZ) < 0)
 		return -1;
 	if (strncmp(buf, "PASS", 4) < 0) 
 		return -1;
@@ -238,16 +238,14 @@ int do_login(int controlfd, char *buf) {
 }
 
 int do_list(int controlfd, int datafd, char *input){
-	char *str, cmd_buf[MAXLINE], iobuf[MAXLINE];
+	char *str, cmd_buf[CMDBUFSIZ], iobuf[IOBUFSIZ];
    	FILE *in;
 	DIR *dir;
 	struct dirent *dp;
 	int len, nlst = 0;;
-    	extern FILE *popen();
-	extern int pclose();
 
-	bzero(cmd_buf, (int)sizeof(cmd_buf));
-	bzero(iobuf, (int)sizeof(iobuf));
+	bzero(cmd_buf, sizeof(cmd_buf));
+	bzero(iobuf, sizeof(iobuf));
 
 	str = "150 Opening ASCII mode data connection for /bin/ls.\r\n";
 	if (strncmp(input, "NLST", 4) == 0) { /* this is for MGET, must handle globbing
@@ -279,14 +277,14 @@ int do_list(int controlfd, int datafd, char *input){
 		while ((dp = readdir(dir)) != NULL) {
 			if (*dp->d_name != '.') {
 				//printf("%s\n", dp->d_name);
-				if (len + dp->d_namlen + 2 < MAXLINE) {
+				if (len + dp->d_namlen + 2 < IOBUFSIZ) {
 					strcat(iobuf, dp->d_name);
 					strcat(iobuf, "\r\n");
 					len += dp->d_namlen +2;
 				} else {
 					write(datafd, iobuf, strlen(iobuf));
 					len = 0;
-					bzero(iobuf, (int)sizeof(iobuf));
+					bzero(iobuf, sizeof(iobuf));
 				}
 			}
 		}
@@ -307,12 +305,12 @@ int do_list(int controlfd, int datafd, char *input){
         	return -1;
 	}
 
-	while (fgets(iobuf, MAXLINE-1, in) != NULL) {
+	while (fgets(iobuf, IOBUFSIZ-1, in) != NULL) {
 		len = strlen(iobuf);
 		iobuf[len-1] = '\r';	/* Fix FTP ASCII-style line endings */
 		iobuf[len] = '\n';
 		write(datafd, iobuf, len+1);
-		bzero(iobuf, (int)sizeof(iobuf));
+		bzero(iobuf, sizeof(iobuf));
 	}
 	pclose(in);
 
@@ -320,12 +318,12 @@ int do_list(int controlfd, int datafd, char *input){
 }
 
 int do_retr(int controlfd, int datafd, char *input){
-	char *str, cmd_buf[MAXLINE], iobuf[MAXLINE];
+	char *str, cmd_buf[CMDBUFSIZ], iobuf[IOBUFSIZ];
 	int fd, len;
 	struct stat fst;
 
-	bzero(cmd_buf, (int)sizeof(cmd_buf));
-	bzero(iobuf, (int)sizeof(iobuf));
+	bzero(cmd_buf, sizeof(cmd_buf));
+	bzero(iobuf, sizeof(iobuf));
 
 	/* FIXME - verify that the data connection is actually open */
 	if (get_filename(input, cmd_buf) > 0) {
@@ -353,12 +351,12 @@ int do_retr(int controlfd, int datafd, char *input){
 }
 
 int do_stor(int controlfd, int datafd, char *input) {
-	char *str, cmd_buf[MAXLINE], iobuf[MAXLINE];
+	char *str, cmd_buf[CMDBUFSIZ], iobuf[IOBUFSIZ];
 	int fp;
 	int n = 0, len;
 
-	bzero(cmd_buf, (int)sizeof(cmd_buf));
-	bzero(iobuf, (int)sizeof(iobuf));
+	bzero(cmd_buf, sizeof(cmd_buf));
+	bzero(iobuf, sizeof(iobuf));
 
 
 	if (get_filename(input, cmd_buf) < 0) {
@@ -378,7 +376,7 @@ int do_stor(int controlfd, int datafd, char *input) {
 
 	sprintf(iobuf, "150 Opening BINARY data connection for '%s'.\r\n", cmd_buf);
 	write(controlfd, iobuf, strlen(iobuf));
-    	while ((n = read(datafd, iobuf, MAXLINE)) > 0) {
+	while ((n = read(datafd, iobuf, sizeof(iobuf))) > 0) {
 		if ((len = write(fp, iobuf, n)) != n) {
 			if (len < 0 )
 				perror("File write error");
@@ -445,7 +443,7 @@ int main(int argc, char **argv){
 		exit(2);
 	}
 
-	if (listen(listenfd, LISTENQ) < 0 ) {
+	if (listen(listenfd, 3) < 0 ) {
 		perror("Error in listen");
 		exit(3);
 	}
@@ -476,8 +474,8 @@ int main(int argc, char **argv){
 
 			int datafd = 0, code, quit = FALSE;
 			unsigned int client_port = 0;
-			char type = 'I';
-			char client_ip[50], command[MAXLINE], namebuf[50];
+			//char type = 'I';
+			char client_ip[50], command[CMDBUFSIZ], namebuf[50];
 			char *str = "220 Welcome - ELKS minimal FTP server speaking.\n";
 			char *complete = "226 Transfer Complete.\r\n";
 
@@ -580,7 +578,7 @@ int main(int argc, char **argv){
 				case CMD_TYPE: 	/* ASCII or binary, ignored for now */
 					str = strtok(command, " ");
 					str = strtok(NULL, " ");
-					type = *str;
+					//type = *str;
 					str = "200 Command OK.\r\n";
                     			write(connfd, str, strlen(str));
 					break;

@@ -7,7 +7,8 @@
 /* turn these on for ELKS debugging*/
 #define USE_DEBUG_EVENT 1	/* use CTRLP to toggle debug output*/
 #define DEBUG_STARTDEF	0	/* default startup debug display*/
-#define DEBUG_TCP	1	/* TCP ops*/
+#define DEBUG_TCP	0	/* TCP ops*/
+#define DEBUG_TUNE	1	/* tuning options*/
 #define DEBUG_TCPDATA	0	/* TCP data packets*/
 #define DEBUG_RETRANS	1	/* TCP retransmissions*/
 #define DEBUG_CLOSE	1	/* TCP close ops*/
@@ -33,6 +34,12 @@ void dprintf(const char *, ...);
 #define debug_tcp	DPRINTF
 #else
 #define debug_tcp(...)
+#endif
+
+#if DEBUG_TUNE
+#define debug_tune	DPRINTF
+#else
+#define debug_tune(...)
 #endif
 
 #if DEBUG_TCPDATA

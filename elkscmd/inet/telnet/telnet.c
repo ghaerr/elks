@@ -30,7 +30,7 @@
 #define where() (fprintf(stderr, "%s %d:", __FILE__, __LINE__))
 #endif
 
-#define BUFSIZE		1024
+#define BUFSIZE		1500
 
 static int tcp_fd;
 static char *term_env;

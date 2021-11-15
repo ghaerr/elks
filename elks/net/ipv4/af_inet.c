@@ -47,7 +47,7 @@ int inet_process_tcpdev(register char *buf, int len)
     case TDT_CHG_STATE:
         sock->state = (unsigned char) ((struct tdb_return_data *)buf)->ret_value;
         tcpdev_clear_data_avail();
-	debug_net("INET(%d) chg_state sock %x %d\n", current->pid, sock, sock->state);
+	debug_tune("INET(%d) chg_state sock %x %d\n", current->pid, sock, sock->state);
 	if (sock->state == SS_DISCONNECTING) {
 	    sock->flags |= SF_CLOSING;
 	    wake_up(sock->wait);
@@ -57,7 +57,7 @@ int inet_process_tcpdev(register char *buf, int len)
     case TDT_AVAIL_DATA:
         down(&sock->sem);
         sock->avail_data = ((struct tdb_return_data *)buf)->ret_value;
-	debug_net("INET(%d) avail_data sock %x %u bufin %d\n", current->pid, sock, sock->avail_data, bufin_sem);
+	debug_tune("INET(%d) sock %x avail %u bufin %d\n", current->pid, sock, sock->avail_data, bufin_sem);
         up(&sock->sem);
         tcpdev_clear_data_avail();
         wake_up(sock->wait);
@@ -262,7 +262,7 @@ static int inet_read(register struct socket *sock, char *ubuf, int size,
 	/* return EOF on socket remote closed*/
 	if (sock->flags & SF_CLOSING)
 	    return 0;
-	debug_net("INET(%d) read waiting on sock->avail_data sock %x\n", current->pid, sock);
+	debug_tune("INET(%d) read waiting on sock->avail_data sock %x buf_in %d\n", current->pid, sock, bufin_sem);
 	interruptible_sleep_on(sock->wait);
 	if (current->signal)
 	    return -EINTR;
@@ -276,25 +276,27 @@ static int inet_read(register struct socket *sock, char *ubuf, int size,
     cmd->nonblock = nonblock;
     tcpdev_inetwrite(cmd, sizeof(struct tdb_read));
 
-    debug_net("INET(%d) read waiting on wait %x, bufin %d\n",
+    debug_tune("INET(%d) read waiting on wait %x, bufin %d\n",
 	current->pid, sock->wait, bufin_sem);
     /* Sleep until tcpdev has news and we have a lock on the buffer */
     while (bufin_sem == 0) {
-	debug_net("INET(%d) read WAIT sock %x bufin_sem\n", current->pid, sock);
+	debug_tune("INET(%d) read WAIT sock %x bufin_sem\n", current->pid, sock);
         interruptible_sleep_on(sock->wait);
     }
-    debug_net("INET(%d) read wait done bufin_sem %d\n", current->pid, bufin_sem);
+    debug_tune("INET(%d) read wait done bufin_sem %d\n", current->pid, bufin_sem);
 
     down(&sock->sem);
 
     ret = ((struct tdb_return_data *)tdin_buf)->ret_value;
 
     if (ret > 0) {
-	debug_net("INET(%d) READ %u avail %u\n", current->pid, ret, sock->avail_data);
+	debug_tune("INET(%d) READ %u ask %u avail %u\n",
+	    current->pid, ret, size, sock->avail_data);
         memcpy_tofs(ubuf, &((struct tdb_return_data *)tdin_buf)->data,
-		(size_t) ((struct tdb_return_data *)tdin_buf)->size);
+	    (size_t) ((struct tdb_return_data *)tdin_buf)->size);
         sock->avail_data = 0;
-    } else debug_net("INET(%d) READ %d avail %u\n", ret, sock->avail_data);
+    } else debug_net("INET(%d) READ %d ask %u avail %u\n",
+	current->pid, ret, size, sock->avail_data);
 
     up(&sock->sem);
 
