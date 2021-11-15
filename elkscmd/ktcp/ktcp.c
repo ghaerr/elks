@@ -82,15 +82,12 @@ void ktcp_run(void)
 	    if (tcpcb_need_push) {
 		timeint.tv_sec  = 0;
 		timeint.tv_usec = 1000;	/* 1msec */
-		//printf("SMALL WAIT\n");
 	    } else {
 		timeint.tv_sec  = 1;
 		timeint.tv_usec = 0;
-		//intf("1SEC WAIT\n");
 	    }
 	    tv = &timeint;
 	} else {
-	    //printf("select WAIT\n");
 	    tv = NULL;		/* no timeout if no timers active or push needed */
 	}
 

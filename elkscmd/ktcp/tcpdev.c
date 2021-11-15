@@ -266,7 +266,7 @@ static void tcpdev_read(void)
     /* if remote closed and more data, update data avail then indicate disconnecting*/
     if (cb->state == TS_CLOSE_WAIT) {
 	if (cb->bytes_to_push <= 0) {
-	    printf("tcp: disconnecting after final read %d\n", data_avail);
+	    debug_tune("tcp: disconnecting after final read %d\n", data_avail);
 	    tcpdev_sock_state(cb, SS_DISCONNECTING);
 	} else {
 	    printf("tcp: application read too small after FIN, data_avail %d\n",

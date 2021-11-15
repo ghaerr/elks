@@ -139,7 +139,7 @@ static void tcp_syn_sent(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
     if (h->flags & (TF_SYN|TF_ACK)) {
 	if (cb->seg_ack != cb->send_una + 1) {
-printf("SYN sent, wrong ACK (listen port not expired)\n");
+	    printf("tcp: SYN sent, wrong ACK (listen port not expired)\n");
 	    /* Send RST */
 	    cb->send_nxt = h->acknum;
 	    //tcp_send_reset(cb);
@@ -232,7 +232,7 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     datasize = iptcp->tcplen - TCP_DATAOFF(h);
 
     if (datasize != 0) {
-	printf("tcp: recv data len %u avail%u\n", datasize, CB_BUF_SPACE(cb));
+	debug_tune("tcp: recv data len %u avail %u\n", datasize, CB_BUF_SPACE(cb));
 	/* Process the data */
 	data = (__u8 *)h + TCP_DATAOFF(h);
 
@@ -278,7 +278,7 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	cb->rcv_nxt++;
 	cb->state = TS_CLOSE_WAIT;
 	cb->time_wait_exp = Now;	/* used for debug output only*/
-printf("tcp: got FIN with data %d buffer %d\n", datasize, cb->buf_used);
+	debug_tune("tcp: got FIN with data %d buffer %d\n", datasize, cb->buf_used);
 	if (cb->bytes_to_push <= 0)
 	    tcpdev_sock_state(cb, SS_DISCONNECTING);
     }

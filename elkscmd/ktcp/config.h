@@ -10,7 +10,7 @@
 #define DEBUG_TCP	0	/* TCP ops*/
 #define DEBUG_TUNE	1	/* tuning options*/
 #define DEBUG_TCPDATA	0	/* TCP data packets*/
-#define DEBUG_RETRANS	1	/* TCP retransmissions*/
+#define DEBUG_RETRANS	0	/* TCP retransmissions*/
 #define DEBUG_CLOSE	1	/* TCP close ops*/
 #define DEBUG_IP	0
 #define DEBUG_ARP	0
