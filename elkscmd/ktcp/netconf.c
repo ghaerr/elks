@@ -67,4 +67,5 @@ void netconf_send(struct tcpcb_s *cb)
 	break;
     }
     cb->bytes_to_push = cb->buf_used;
+    tcpcb_need_push++;
 }
