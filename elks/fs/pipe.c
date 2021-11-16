@@ -25,10 +25,6 @@
 #include <arch/segment.h>
 #include <arch/bitops.h>
 
-/* tunable parameters*/
-#define MAX_PIPES	8
-#define PIPE_BUFSIZ	512	/* doesn't have to be power of two*/
-
 static int get_unused_fd(struct file *f)
 {
     int fd = 0;

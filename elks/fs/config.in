@@ -39,7 +39,7 @@ mainmenu_option next_comment
 
 	bool 'XMS buffer cache'                CONFIG_FS_XMS_BUFFER       n
 	if [ "$CONFIG_FS_XMS_BUFFER" == "y" ]; then
-	    int 'Number of XMS buffers'        CONFIG_FS_NR_XMS_BUFFERS   128
+	    int 'Number of XMS buffers'        CONFIG_FS_NR_XMS_BUFFERS   256
 	fi
 
 	bool 'Pipe support'                    CONFIG_PIPE                y
