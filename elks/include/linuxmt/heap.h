@@ -21,6 +21,7 @@
 #define HEAP_TAG_TTY     0x03
 #define HEAP_TAG_INTHAND 0x04
 #define HEAP_TAG_BUFHEAD 0x05
+#define HEAP_TAG_PIPE    0x06
 
 
 // TODO: move free list node from header to body

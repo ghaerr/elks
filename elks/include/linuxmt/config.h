@@ -5,7 +5,6 @@
 #include <linuxmt/major.h>
 
 /* tunable parameters*/
-#define MAX_PIPES	4	/* pipe buffers are statically allocated in kernel */
 #define PIPE_BUFSIZ	80	/* doesn't have to be power of two */
 
 

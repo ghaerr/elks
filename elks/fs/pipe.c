@@ -19,6 +19,7 @@
 #include <linuxmt/fs.h>
 #include <linuxmt/kdev_t.h>
 #include <linuxmt/wait.h>
+#include <linuxmt/heap.h>
 #include <linuxmt/debug.h>
 
 #include <arch/system.h>
@@ -70,34 +71,15 @@ int pipe_lseek(struct inode *inode, struct file *file, loff_t offset,
 
 #ifdef CONFIG_PIPE
 
-/*
- *	FIXME - we should pull pipes off the root (or pipe ?) fs as per
- *	V7, and they should be buffers
- */
-
-static unsigned char pipe_base[MAX_PIPES][PIPE_BUFSIZ];
-static int pipe_in_use[(MAX_PIPES + 15)/16];
-
+/* pipes are allocated from kernel local heap */
 static unsigned char *get_pipe_mem(void)
 {
-    int i = 0;
-
-    i = find_first_zero_bit(pipe_in_use, MAX_PIPES);
-    if (i < MAX_PIPES) {
-	set_bit(i, pipe_in_use);
-	return pipe_base[i];
-    }
-
-    debug("PIPE: No more buffers.\n");		/* FIXME */
-    return NULL;
+    return heap_alloc(PIPE_BUFSIZ, HEAP_TAG_PIPE);
 }
 
 static void free_pipe_mem(unsigned char *buf)
 {
-    int i;
-
-    i = ((unsigned int)pipe_base - (unsigned int)buf) / PIPE_BUFSIZ;
-    if (i < MAX_PIPES) clear_bit(i, pipe_in_use);
+    heap_free(buf);
 }
 
 static size_t pipe_read(register struct inode *inode, struct file *filp,
