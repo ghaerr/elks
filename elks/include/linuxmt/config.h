@@ -4,6 +4,11 @@
 #include <autoconf.h>
 #include <linuxmt/major.h>
 
+/* tunable parameters*/
+#define MAX_PIPES	4	/* pipe buffers are statically allocated in kernel */
+#define PIPE_BUFSIZ	80	/* doesn't have to be power of two */
+
+
 #ifdef CONFIG_ARCH_IBMPC
 /*
  * Compile-time configuration
@@ -41,7 +46,12 @@
 #define SETUP_PART_OFFSETHI	0	/* partition offset high word */
 #define SYS_CAPS		0	/* no XT/AT capabilities */
 
-#define SETUP_HEAPSIZE		1232	/* minimum kernel heap for now*/
+/*
+ * An absolute minimum of 1K heap + 8 buffers (@26 = 208) = 1232
+ * More heap should be specified if serial driver used, default inq = 1K bytes
+ * Comment out SETUP_HEAPSIZE to use normal max heap, extended to 64K kernel data segment
+ */
+#define SETUP_HEAPSIZE		1232	/* force kernel heap size if specified*/
 
 #define CONFIG_8018X_FCPU	16
 #define CONFIG_8018X_EB
