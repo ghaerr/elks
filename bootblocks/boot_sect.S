@@ -8,17 +8,15 @@
 // If BOOT_FAT is defined, this assembles to a single-sector bootloader that
 // reads and runs /linux on a FAT12/FAT16 filesystem
 
-#include <autoconf.h>
+#include <linuxmt/config.h>
 #include <linuxmt/boot.h>
 
 #include "boot_err.h"
 
-#define BOOTADDR  0x7C00
-#define LOADSEG   ELKS_INITSEG
+#define BOOTADDR      0x7C00
+#define LOADSEG       DEF_INITSEG
+#define ELKS_INITSEG  DEF_INITSEG
 
-// Must match ELKS
-#define ELKS_INITSEG (0x0100)
-#define ELKS_SYSSEG  (0x1300)
 
 // Whether to try to do whole-track reads, or read one sector at a time
 //
