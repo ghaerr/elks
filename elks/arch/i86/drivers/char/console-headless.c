@@ -66,6 +66,7 @@ static int Console_write(register struct tty *tty)
 #ifdef CONFIG_ARCH_PC98
     int tty_out;
     int tvram_x;
+    int i;
     static int esc_seq = 0;
     static int esc_num = 0;
 #endif
@@ -92,11 +93,20 @@ static int Console_write(register struct tty *tty)
 	    else if (tty_out == 'K') {
 	        clear_tvram();
 	    }
+	    else if (tty_out == 'H') {
+	        write_tvram_x(0);
+	    }
+	    else if (tty_out == 'J') {
+	        for (i = 0; i < 2000; i++) {
+	            early_putchar(' ');
+	        }
+	        write_tvram_x(0);
+	    }
 	}
 	else {
 	    esc_seq = 0;
 	    esc_num = 0;
-    }
+	}
 
 	if (!esc_seq) {
 	    early_putchar(tty_out);
