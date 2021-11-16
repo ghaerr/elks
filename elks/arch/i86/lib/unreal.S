@@ -145,14 +145,14 @@ verify_a20:
 
 	popw	0
 
-	popf			# restore interrupt status
-	pop	%es
-	pop	%ds
 	jz	1f		# if ZF=1, the A20 gate is NOT enabled
 	mov	$1,%ax		# return 1 if enabled
+9:	popf			# restore interrupt status
+	pop	%es
+	pop	%ds
 	ret
 1:	mov	$0,%ax		# return 0 if disabled
-	ret
+	jmp	9b
 
 #
 # enable/disable A20 gate using keyboard port/controller, entry AH=0 disable

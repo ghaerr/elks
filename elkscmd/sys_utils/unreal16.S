@@ -40,6 +40,7 @@ sys_write = 4
 syscall = 0x80
 videoline = 0xb8000+80*2*22
 
+    .arch	i386,nojumps
     .code16
     .text
 	.extern	enable_unreal_mode

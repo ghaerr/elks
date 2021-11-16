@@ -27,7 +27,7 @@ static long_t xms_alloc_ptr = 0x00100000L;	/* 1M */
 /* try to enable unreal mode and A20 gate. Return 1 if successful */
 int xms_init(void)
 {
-	if (enable_unreal_mode()) {
+	if (enable_unreal_mode() > 0) {
 		if (/*verify_a20() ||*/ enable_a20_gate()) {
 			xms_enabled = 1;	/* enables xms_fmemcpyw()*/
 
