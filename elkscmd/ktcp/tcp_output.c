@@ -298,8 +298,8 @@ void tcp_reoutput(struct tcp_retrans_list_s *n)
     netstats.tcpretranscnt++;
 }
 
-/* called every ktcp cycle when tcp_timeruse nonzero*/
-void tcp_retrans(void)
+/* called every ktcp cycle when tcp_timeruse nonzero - check for expired retrans*/
+void tcp_retrans_expire(void)
 {
     struct tcp_retrans_list_s *n;
     int rtt;
@@ -335,6 +335,17 @@ void tcp_retrans(void)
 		ntohl(n->tcphdr[0].seqnum) - n->cb->iss + datalen,
 		n->cb->send_nxt - n->cb->send_una, n->next_retrans - Now);
 
+	n = n->next;
+    }
+}
+
+/* called every ktcp cycle when tcp_timeruse nonzero - check for retransmit* required*/
+void tcp_retrans_retransmit(void)
+{
+    struct tcp_retrans_list_s *n;
+
+    n = retrans_list;
+    while (n != NULL) {
 	/* check for retrans time up*/
 	if (TIME_GEQ(Now, n->next_retrans)) {
 	    tcp_reoutput(n);
