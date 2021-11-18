@@ -82,7 +82,7 @@ void ktcp_run(void)
 	    /* don't wait long if data needs pushing to tcpdev */
 	    if (tcpcb_need_push || loopagain) {
 		timeint.tv_sec  = 0;
-		timeint.tv_usec = loopagain? 0: 1000;	/* 1msec */
+		timeint.tv_usec = tcpcb_need_push? 1000: 0;	/* 1msec */
 	    } else {
 		timeint.tv_sec  = 1;
 		timeint.tv_usec = 0;
