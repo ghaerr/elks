@@ -27,12 +27,12 @@
 #define TIMER2_INTERVAL (CONFIG_8018X_FCPU * 1000000L / (4 * 1000))
 
 /*
- * With a reference of 1ms (1kHz) coming into Timer0, calculate how
+ * With a reference of 1ms (1kHz) coming into Timer1, calculate how
  * many counts are needed to achieve the "HZ" rate (usually 100Hz).
  *
- * Timer0Interval = 1kHz / HZ
+ * Timer1Interval = 1kHz / HZ
  */
-#define TIMER0_INTERVAL (1000 / HZ)
+#define TIMER1_INTERVAL (1000 / HZ)
 
 void enable_timer_tick(void)
 {
@@ -41,16 +41,16 @@ void enable_timer_tick(void)
     /* Clear the Timer count register before starting it */
     outw(0x0000, 0xff00 + 0x40); /* T2CNT */
 
-    /* Set Timer0 Maxcount register */
-    outw(TIMER0_INTERVAL, 0xff00 + 0x32); /* T0CMPA */
+    /* Set Timer1 Maxcount register */
+    outw(TIMER1_INTERVAL, 0xff00 + 0x3a); /* T1CMPA */
     /* Clear the Timer count register before starting it */
-    outw(0x0000, 0xff00 + 0x30); /* T0CNT */
+    outw(0x0000, 0xff00 + 0x38); /* T1CNT */
 
     /* Enable Timer2, release inhibit to change EN bit, continuous mode */
     outw(0xc001, 0xff00 + 0x46); /* T2CON */
 
-    /* Enable Timer0, release inhibit to change EN bit, INT enabled, use Timer2 as source, continuous mode */
-    outw(0xe009, 0xff00 + 0x36); /* T0CON */
+    /* Enable Timer1, release inhibit to change EN bit, INT enabled, use Timer2 as source, continuous mode */
+    outw(0xe009, 0xff00 + 0x3e); /* T1CON */
 }
 
 void disable_timer_tick(void)
@@ -58,6 +58,6 @@ void disable_timer_tick(void)
     /* Disable Timer2, release inhibit to change EN bit */
     outw(0x4000, 0xff00 + 0x46); /* T2CON */
 
-    /* Disable Timer0, release inhibit to change EN bit */
-    outw(0x4000, 0xff00 + 0x36); /* T0CON */
+    /* Disable Timer1, release inhibit to change EN bit */
+    outw(0x4000, 0xff00 + 0x3e); /* T1CON */
 }

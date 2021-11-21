@@ -3,9 +3,9 @@
  *
  * June 2020 Greg Haerr
  *
- * Use ramdisk utility for testing:
- *	ramdisk /dev/ssd make 192
- *	mkfs /dev/ssd 192
+ * Use ramdisk utility for testing: (block argument = half of NUM_SECTS below)
+ *	ramdisk /dev/ssd make 96
+ *	mkfs /dev/ssd 96
  *	sync
  *	fsck -lvf /dev/ssd
  *	mount /dev/ssd /mnt

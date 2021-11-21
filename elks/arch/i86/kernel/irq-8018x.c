@@ -11,11 +11,9 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/types.h>
 
+#include <arch/ports.h>
 #include <arch/io.h>
 #include <arch/irq.h>
-
-/* TMR and SER interrupts are enabled by default */
-unsigned int cache_08 = 0xfa;
 
 /*
  *	Low level interrupt handling for the X86 8018X
@@ -24,18 +22,16 @@ unsigned int cache_08 = 0xfa;
 
 void init_irq(void)
 {
+    /* Mask all interrupt sources */
+    outw(0xfd, 0xff00 + 0x08); /* IMASK */
 }
 
 void enable_irq(unsigned int irq)
 {
-    unsigned int mask;
-
-    mask = ~(1 << irq);
-
-    cache_08 &= mask;
-
-    /* TODO: Create a list of PCB registers instead of using hardcoded offsets */
-    outw(cache_08, 0xff00 + 0x08); /* IMASK */
+    if (irq == TIMER_IRQ) {
+        /* 8018x: Timer Interrupt unmasked, priority 7 */
+        outw(7, 0xff00 + 0x12); /* TCUCON */
+    }
 }
 
 int remap_irq(int irq)
@@ -46,8 +42,10 @@ int remap_irq(int irq)
 // Get interrupt vector from IRQ
 
 int irq_vector (int irq)
-	{
-	// IRQ 0-7  are mapped to vectors INT 08h-0Fh
-
-	return irq + 0x08;
-	}
+{
+    if (irq == TIMER_IRQ) {
+        /* 8018x: Timer 1 Interrupt => Interrupt type (vector) 18 */
+        return 18;
+    }
+    return -EINVAL;
+}
