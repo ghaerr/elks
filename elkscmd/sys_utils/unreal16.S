@@ -79,8 +79,6 @@ _start:
         cld
         .byte 0x67		# addr32
         rep movsb
-	.byte 0x67		# 80386 B1 step chip bug on mixing addresses
-	nop
 
 # or poke byte
         addr32 movb $'!',%es:videoline+22

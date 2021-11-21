@@ -40,7 +40,6 @@ mainmenu_option next_comment
 	bool 'XMS buffer cache'                CONFIG_FS_XMS_BUFFER       n
 	if [ "$CONFIG_FS_XMS_BUFFER" == "y" ]; then
 	    int 'Number of XMS buffers'        CONFIG_FS_NR_XMS_BUFFERS   256
-	    bool 'Use BIOS INT 15H instead of unreal mode' CONFIG_FS_XMS_INT15 n
 	fi
 
 	bool 'Pipe support'                    CONFIG_PIPE                y
