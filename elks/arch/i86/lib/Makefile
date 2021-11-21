@@ -36,6 +36,7 @@ SRCS1 = \
 	peekpoke.S \
 	string.S \
 	bios16.S \
+	bios15.S \
 	unreal.S \
 	printreg.S \
 	atomic.S \

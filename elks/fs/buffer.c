@@ -129,12 +129,12 @@ int INITPROC buffer_init(void)
     int xms_enabled = xms_init();	/* try to enable unreal mode and A20 gate*/
     if (xms_enabled)
 	bufs_to_alloc = CONFIG_FS_NR_XMS_BUFFERS;
+    printk(" %d %s buffers\n", bufs_to_alloc, xms_enabled? "xms": "ext");
 #endif
 
 #else
     int bufs_to_alloc = NR_MAPBUFS;
 #endif
-
     buffer_heads = heap_alloc(bufs_to_alloc * sizeof(struct buffer_head),
 	HEAP_TAG_BUFHEAD|HEAP_TAG_CLEAR);
     if (!buffer_heads) return 1;
