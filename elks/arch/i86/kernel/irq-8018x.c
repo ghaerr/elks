@@ -12,6 +12,7 @@
 #include <linuxmt/types.h>
 
 #include <arch/ports.h>
+#include <arch/8018x.h>
 #include <arch/io.h>
 #include <arch/irq.h>
 
@@ -22,30 +23,43 @@
 
 void init_irq(void)
 {
-    /* Mask all interrupt sources */
-    outw(0xfd, 0xff00 + 0x08); /* IMASK */
+    /* Mask all interrupt sources on the IMASK register */
+    outw(0xfd, PCB_IMASK);
 }
 
 void enable_irq(unsigned int irq)
 {
     if (irq == TIMER_IRQ) {
-        /* 8018x: Timer Interrupt unmasked, priority 7 */
-        outw(7, 0xff00 + 0x12); /* TCUCON */
+        /* 8018x: Timer Interrupt unmasked, priority 7. */
+        outw(7, PCB_TCUCON);
+    } else if ((irq == UART0_IRQ_RX) || (irq == UART0_IRQ_TX)) {
+        /**
+         * 8018x: Enabling Serial Interrupts will enable the RX and TX IRQs
+         * at the same time, this is a CPU limitation.
+         * Serial Interrupts unmasked, priority 1.
+         */
+        outw(1, PCB_SCUCON);
     }
 }
 
 int remap_irq(int irq)
 {
+    /* no remaps */
     return irq;
 }
 
 // Get interrupt vector from IRQ
-
-int irq_vector (int irq)
+int irq_vector(int irq)
 {
     if (irq == TIMER_IRQ) {
         /* 8018x: Timer 1 Interrupt => Interrupt type (vector) 18 */
-        return 18;
+        return CPU_VEC_TIMER1;
+    } else if (irq == UART0_IRQ_RX) {
+        /* 8018x: Serial 0 RX Interrupt => Interrupt type (vector) 20 */
+        return CPU_VEC_S0_RX;
+    } else if (irq == UART0_IRQ_TX) {
+        /* 8018x: Serial 0 TX Interrupt => Interrupt type (vector) 21 */
+        return CPU_VEC_S0_TX;
     }
     return -EINVAL;
 }

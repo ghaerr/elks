@@ -56,6 +56,10 @@ ifdef CONFIG_CONSOLE_BIOS
 OBJS += console-bios.o console-bios-asm.o bell-8254.o
 endif
 
+ifdef CONFIG_CONSOLE_8018X
+OBJS += console-serial-8018x.o
+else
+
 ifdef CONFIG_CONSOLE_HEADLESS
 OBJS += console-headless.o
 endif
@@ -64,6 +68,7 @@ ifdef CONFIG_KEYBOARD_SCANCODE
 OBJS += kbd-scancode.o
 else
 OBJS += kbd-poll.o conio-$(CONIO).o
+endif
 endif
 
 ifdef CONFIG_CHAR_DEV_RS

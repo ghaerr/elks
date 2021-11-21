@@ -82,7 +82,8 @@ static void tcpdev_bind(void)
 	struct tcpcb_list_s *n2 = tcpcb_check_port(port);
 	if (n2) {			/* port already bound */
 	    if (!db->reuse_addr) {	/* no SO_REUSEADDR on socket */
-		debug_tcp("tcp: port %u already bound, rejecting (use SO_REUSEADDR?)\n", port);
+		printf("tcp: port %u already bound, rejecting (use SO_REUSEADDR?)\n", port);
+reject:
 		tcpcb_remove(n);
 		retval_to_sock(db->sock, -EADDRINUSE);
 		return;
@@ -92,10 +93,12 @@ static void tcpdev_bind(void)
 	    if (n2->tcpcb.state == TS_TIME_WAIT) {
 		LEAVE_TIME_WAIT(&n2->tcpcb);	/* entered via FIN_WAIT_2 state on FIN rcvd*/
 		tcpcb_remove(n2);
-		debug_tcp("tcp: port %u reused, freeing previous socket in time_wait\n", port);
-	    } else
-		printf("tcp: port %u reused, can't free previous socket in state %d\n",
+		printf("tcp: port %u REUSED, freeing previous socket in time_wait\n", port);
+	    } else {
+		printf("tcp: port %u NOT reused, previous socket in state %d\n",
 			port, n2->tcpcb.state);
+		goto reject;
+	    }
 	}
     }
 

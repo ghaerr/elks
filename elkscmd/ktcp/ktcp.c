@@ -70,18 +70,19 @@ void ktcp_run(void)
     fd_set fdset;
     struct timeval timeint, *tv;
     int count;
+    int loopagain = 0;
 
     while (1) {
-	if (tcp_timeruse > 0 || tcpcb_need_push > 0 ||
+	if (tcp_timeruse > 0 || tcpcb_need_push > 0 || loopagain ||
 	    cbs_in_time_wait > 0 || cbs_in_user_timeout > 0) {
 
 	    //printf("tcp: timer %d needpush %d timewait %d usertime %d\n", tcp_timeruse,
 		//tcpcb_need_push, cbs_in_time_wait, cbs_in_user_timeout);
 
 	    /* don't wait long if data needs pushing to tcpdev */
-	    if (tcpcb_need_push) {
+	    if (tcpcb_need_push || loopagain) {
 		timeint.tv_sec  = 0;
-		timeint.tv_usec = 1000;	/* 1msec */
+		timeint.tv_usec = tcpcb_need_push? 1000: 0;	/* 1msec */
 	    } else {
 		timeint.tv_sec  = 1;
 		timeint.tv_usec = 0;
@@ -115,20 +116,33 @@ void ktcp_run(void)
 	//if (tcpcb_need_push > 0)
 	    tcpcb_push_data();
 
+	loopagain = 0;
+
 	/* process received packets*/
 	if (FD_ISSET(intfd, &fdset)) {
 		if (linkprotocol == LINK_ETHER)
 			eth_process();
 		else slip_process();
+		loopagain = 1;
 	}
 
 	/* process application socket actions*/
-	if (FD_ISSET(tcpdevfd, &fdset))
+	if (FD_ISSET(tcpdevfd, &fdset)) {
 		tcpdev_process();
+		loopagain = 1;
+	}
 
-	/* check for retransmit needed*/
+	/* check for expired retrans packets and free them*/
 	if (tcp_timeruse > 0)
-		tcp_retrans();
+		tcp_retrans_expire();
+
+	/* read all packets and sockets before handling retransmits*/
+	if (loopagain)
+		continue;
+
+	/* check for retransmit packets required*/
+	if (tcp_timeruse > 0)
+		tcp_retrans_retransmit();
 
 	tcpcb_printall();
     }
