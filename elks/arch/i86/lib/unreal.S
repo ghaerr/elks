@@ -199,9 +199,11 @@ set_a20:
 	ret
 
 0:	jmp	1f		# a delay (probably not effective nor necessary)
-1:	in	$0x60,%al	# read and discard data/status from 8042
+1:	jmp	2f
+2:	in	$0x60,%al	# read and discard data/status from 8042
 empty_8042:
-	jmp	2f		# delay
+	jmp	1f
+1:	jmp	2f		# delay
 2:	in	$0x64,%al
 	test	$1,%al		# output buffer (data _from_ keyboard) full?
 	jnz	0b		# yes, read and discard
@@ -267,8 +269,43 @@ sync_8042:
 	ret
 #endif
 
+#if 0
 #
-# void linear_32fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
+# word_t linear32_peekw(void *src_off, addr_t src_seg)
+# WARNING: Requires 32-bit CPU, with unreal mode and A20 gate enabled!
+#          Trashes EBX and ESI without saving.
+#
+	.global	linear32_peekw
+linear32_peekw:
+	call   setgpf
+	mov    %si,%dx
+
+	//pushf               // save interrupt status
+	//cli                 // uncomment if extended registers used in interrupt routines
+	xorl   %esi,%esi
+	mov    %sp,%si
+
+	xorl   %ebx,%ebx
+	mov    2(%si),%bx     // word src offset -> EBX
+	movl   4(%esi),%esi   // long src address -> ESI
+	addl   %ebx,%esi      // ESI is linear destination
+
+	xor    %bx,%bx        // DS = 0 for 32-bit linear addressing
+	mov    %bx,%ds
+
+	cld
+	addr32                // 32-bit address prefix
+	lodsw                 // AX = [DS:ESI++]
+	//popf                // restore interrupt status
+
+	mov    %dx,%si
+	mov    %ss,%bx
+	mov    %bx,%ds
+	ret
+#endif
+
+#
+# void linear32_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
 #		size_t count)
 # WARNING: Requires 32-bit CPU, with unreal mode and A20 gate enabled!
 #          Trashes EBX, ECX, ESI and EDI without saving.
@@ -277,11 +314,12 @@ linear32_fmemcpyw:
 	push   %es
 	mov    %si,%ax
 	mov    %di,%dx
-	xorl   %esi,%esi
-	mov    %sp,%si
 
 	//pushf               // save interrupt status
 	//cli                 // uncomment if extended registers used in interrupt routines
+	xorl   %esi,%esi
+	mov    %sp,%si
+
 	xorl   %ecx,%ecx
 	mov    16(%si),%cx    // word count -> ECX
 
@@ -303,6 +341,9 @@ linear32_fmemcpyw:
 	addr32                // 32-bit address prefix
 	rep
 	movsw                 // word [ES:EDI++] <- [DS:ESI++], ECX times
+	.byte  0x67           // 80386 B1 step chip bug on address size mixing
+	nop
+
 	//popf                // restore interrupt status
 
 	mov    %ax,%si
@@ -313,7 +354,7 @@ linear32_fmemcpyw:
 	ret
 
 #
-# void linear_32fmemcpyb(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
+# void linear32_fmemcpyb(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
 #		size_t count)
 # WARNING: Requires 32-bit CPU, with unreal mode and A20 gate enabled!
 #          Trashes EBX, ECX, ESI and EDI without saving.
@@ -322,11 +363,12 @@ linear32_fmemcpyb:
 	push   %es
 	mov    %si,%ax
 	mov    %di,%dx
-	xorl   %esi,%esi
-	mov    %sp,%si
 
 	//pushf               // save interrupt status
 	//cli                 // uncomment if extended registers used in interrupt routines
+	xorl   %esi,%esi
+	mov    %sp,%si
+
 	xorl   %ecx,%ecx
 	mov    16(%si),%cx    // word count -> ECX
 
@@ -349,11 +391,16 @@ linear32_fmemcpyb:
 	addr32                // 32-bit address prefix
 	rep
 	movsw                 // word [ES:EDI++] <- [DS:ESI++], ECX times
+	.byte  0x67           // 80386 B1 step chip bug on address size mixing
+	nop
 
 	rcll    $1,%ecx       // then possibly final byte
 	addr32                // 32-bit address prefix
 	rep
 	movsb                 // byte [ES:EDI++] <- [DS:ESI++], ECX times
+	.byte  0x67           // 80386 B1 step chip bug on address size mixing
+	nop
+
 	//popf                // restore interrupt status
 
 	mov    %ax,%si
@@ -440,7 +487,7 @@ LINEAR_SEL = . - gdt
         .word 0xFFFF    # limit 0xFFFFF
         .word 0         # base 0
         .byte 0
-        .byte 0x92      # present, ring 0, data, expand-up, writable
+        .byte 0x93      # present, ring 0, data, expand-up, writable, accessed
 # can put zero byte here (instead of 0xCF) to DISABLE unreal mode:
         .byte 0xCF      # page-granular, 32-bit, limit=4GB-1
         .byte 0
