@@ -78,6 +78,7 @@ struct tdb_write {
 #define	TDT_CHG_STATE	2
 #define	TDT_AVAIL_DATA	3
 #define TDT_ACCEPT	4
+#define TDT_BIND	5
 
 struct tdb_return_data {
     char type;
@@ -88,6 +89,14 @@ struct tdb_return_data {
 };
 
 struct tdb_accept_ret {
+    char type;
+    int ret_value;
+    struct socket *sock;
+    __u32 addr_ip;
+    __u16 addr_port;
+};
+
+struct tdb_bind_ret {
     char type;
     int ret_value;
     struct socket *sock;

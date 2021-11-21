@@ -69,11 +69,6 @@ CONFIG_INET=y
 # CONFIG_UNIX is not set
 
 #
-# Advanced socket options
-#
-# CONFIG_SOCK_CLIENTONLY is not set
-
-#
 # Filesystem Support
 #
 CONFIG_MINIX_FS=y

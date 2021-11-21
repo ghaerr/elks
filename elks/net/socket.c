@@ -77,25 +77,28 @@ int move_addr_to_user(char *kaddr, size_t klen, char *uaddr, int *ulen)
 
 static struct socket *sock_alloc(void)
 {
-    static struct socket ini_sock = {
-	0,		/* type */
+    static struct socket ini_sock = {	/* order dependent on net.h! */
 	SS_UNCONNECTED, /* state */
 	0,		/* flags */
 	0,		/* rcv_bufsiz */
 	NULL,		/* ops */
 	NULL,		/* data */
-#if defined(CONFIG_INET)
-	0,		/* avail_data */
-	0,		/* sem */
-#endif
-#if defined(CONFIG_UNIX) || defined(CONFIG_NANO) || defined(CONFIG_INET)
+	NULL,		/* wait */
+	NULL,		/* inode */
+	NULL,		/* file */
+
+#if defined(CONFIG_UNIX) || defined(CONFIG_NANO)
 	NULL,		/* conn */
 	NULL,		/* iconn */
 	NULL,		/* next */
 #endif
-	NULL,		/* wait */
-	NULL,		/* inode */
-	NULL,		/* file */
+#if defined(CONFIG_INET)
+	0,		/* avail_data */
+	0,		/* sem */
+	0,		/* remaddr */
+	0,		/* remport */
+	0		/* localport */
+#endif
     };
     register struct inode *inode;
     register struct socket *sock;
@@ -192,8 +195,8 @@ static int sock_select(struct inode *inode, struct file *file, int sel_type)
     return 0;
 }
 
-int sock_awaitconn(register struct socket *mysock,
-		   struct socket *servsock, int flags)
+#if defined(CONFIG_UNIX) || defined(CONFIG_NANO)
+int sock_awaitconn(register struct socket *mysock, struct socket *servsock, int flags)
 {
     register struct socket *last;
 
@@ -262,7 +265,6 @@ int sock_awaitconn(register struct socket *mysock,
 }
 
 
-#if defined(CONFIG_UNIX) || defined(CONFIG_NANO) || defined(CONFIG_INET)
 static void sock_release_peer(register struct socket *peer)
 {
     /* FIXME - some of these are not implemented */
@@ -280,7 +282,7 @@ static void sock_release(register struct socket *sock)
     if ((oldstate = sock->state) != SS_UNCONNECTED)
 	sock->state = SS_DISCONNECTING;
 
-#if defined(CONFIG_UNIX) || defined(CONFIG_NANO) || defined(CONFIG_INET)
+#if defined(CONFIG_UNIX) || defined(CONFIG_NANO)
     struct socket *nextsock;
     for (peersock = sock->iconn; peersock; peersock = nextsock) {
 	nextsock = peersock->next;
@@ -295,7 +297,7 @@ static void sock_release(register struct socket *sock)
     if (sock->ops)
 	sock->ops->release(sock, peersock);
 
-#if defined(CONFIG_UNIX) || defined(CONFIG_NANO) || defined(CONFIG_INET)
+#if defined(CONFIG_UNIX) || defined(CONFIG_NANO)
     if (peersock)
 	sock_release_peer(peersock);
 #endif
@@ -379,20 +381,6 @@ static int get_fd(register struct inode *inode)
     return fd;
 }
 
-#ifdef CONFIG_SOCK_CLIENTONLY
-
-int sys_listen(int fd, int backlog)
-{
-    return -EINVAL;
-}
-
-int sys_accept(int fd, struct sockaddr *upeer_sockaddr, int *upeer_addrlen)
-{
-    return -EINVAL;
-}
-
-#else
-
 int sys_listen(int fd, int backlog)
 {
     register struct socket *sock;
@@ -434,7 +422,7 @@ int sys_accept(int fd, struct sockaddr *upeer_sockaddr, int *upeer_addrlen)
 	return -ENOSR;		/* Was EAGAIN, but we are out of system resources! */
     }
 
-    newsock->type = sock->type;
+    //newsock->type = sock->type;
     newsock->ops = sock->ops;
     if ((i = sock->ops->dup(newsock, sock)) < 0) {
 	sock_release(newsock);
@@ -452,14 +440,11 @@ int sys_accept(int fd, struct sockaddr *upeer_sockaddr, int *upeer_addrlen)
 	return -EINVAL;
     }
 
-    if (upeer_sockaddr) {
+    if (upeer_sockaddr)
 	newsock->ops->getname(newsock, upeer_sockaddr, upeer_addrlen, 1);
-    }
 
     return fd;
 }
-
-#endif /* CONFIG_SOCK_CLIENTONLY*/
 
 int sys_connect(int fd, struct sockaddr *uservaddr, int addrlen)
 {
@@ -549,7 +534,7 @@ int sys_socket(int family, int type, int protocol)
     if (!(sock = sock_alloc()))
 	return -ENOSR;
 
-    sock->type = type;
+    //sock->type = peer;
     sock->ops = ops;
     if ((fd = sock->ops->create(sock, protocol)) < 0) {
 	sock_release(sock);
@@ -614,4 +599,18 @@ int sys_setsockopt(int fd, int level, int option_name, void *option_value,
 
     return 0;
 }
+
+int sys_getsocknam(int fd, struct sockaddr *usockaddr, int *usockaddr_len, int peer)
+{
+    struct socket *sock;
+
+    if (!(sock = sockfd_lookup(fd, NULL)))
+	return -ENOTSOCK;
+
+    if (!usockaddr)
+	return -EINVAL;
+
+    return sock->ops->getname(sock, usockaddr, usockaddr_len, peer);
+}
+
 #endif /* CONFIG_SOCKET */

@@ -111,12 +111,12 @@ struct iptcp_s {
 
 struct tcpcb_s {
 	void *	newsock;
-	void *	sock;	/* the socket in kernel space */
+	void *	sock;			/* the socket in kernel space */
 
-	__u32	localaddr;
-	__u16	localport;
-	__u32	remaddr;
-	__u16	remport;
+	__u32	localaddr;		/* in network byte order */
+	__u32	remaddr;		/* in host byte order */
+	__u16	remport;		/* in network byte order */
+	__u16	localport;		/* in host byte order */
 
 	__u8	state;
 	__u8	unaccepted;		/* boolean */

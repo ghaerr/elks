@@ -20,6 +20,7 @@
 #include <linuxmt/fcntl.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/net.h>
+#include <linuxmt/in.h>
 #include <linuxmt/tcpdev.h>
 #include <linuxmt/debug.h>
 
@@ -65,6 +66,7 @@ int inet_process_tcpdev(register char *buf, int len)
 
     case TDT_RETURN:
     case TDT_ACCEPT:
+    case TDT_BIND:
 	debug_net("INET(%d) retval %d bufin %d\n", current->pid, ((struct tdb_return_data *)buf)->ret_value, bufin_sem);
         wake_up(sock->wait);
 	break;
@@ -85,7 +87,6 @@ static int inet_create(struct socket *sock, int protocol)
 
 static int inet_dup(struct socket *newsock, struct socket *oldsock)
 {
-    debug("inet_dup()\n");
     return inet_create(newsock, 0);
 }
 
@@ -132,6 +133,8 @@ static int inet_bind(register struct socket *sock, struct sockaddr *addr,
     while (bufin_sem == 0)
         interruptible_sleep_on(sock->wait);
 
+    sock->localaddr = ((struct tdb_bind_ret *)tdin_buf)->addr_ip;
+    sock->localport = ((struct tdb_bind_ret *)tdin_buf)->addr_port;
     ret = ((struct tdb_return_data *)tdin_buf)->ret_value;
     tcpdev_clear_data_avail();
     up(&rwlock);
@@ -183,7 +186,6 @@ static int inet_connect(register struct socket *sock,
     return ret;
 }
 
-#ifndef CONFIG_SOCK_CLIENTONLY
 
 static int inet_listen(register struct socket *sock, int backlog)
 {
@@ -208,8 +210,7 @@ static int inet_listen(register struct socket *sock, int backlog)
     return ret;
 }
 
-static int inet_accept(register struct socket *sock,
-		       struct socket *newsock, int flags)
+static int inet_accept(register struct socket *sock, struct socket *newsock, int flags)
 {
     register struct tdb_accept *cmd;
     int ret;
@@ -234,6 +235,8 @@ static int inet_accept(register struct socket *sock,
 	}
     }
 
+    newsock->remaddr = ((struct tdb_accept_ret *)tdin_buf)->addr_ip;
+    newsock->remport = ((struct tdb_accept_ret *)tdin_buf)->addr_port;
     ret = ((struct tdb_accept_ret *)tdin_buf)->ret_value;
     tcpdev_clear_data_avail();
     if (ret >= 0) {
@@ -242,8 +245,6 @@ static int inet_accept(register struct socket *sock,
     }
     return ret;
 }
-
-#endif
 
 static int inet_read(register struct socket *sock, char *ubuf, int size,
 		     int nonblock)
@@ -403,6 +404,26 @@ static int inet_recv(struct socket *sock, void *buff, int len, int nonblock,
     return inet_read(sock, buff, len, nonblock);
 }
 
+static int inet_getname(struct socket *sock, struct sockaddr *usockaddr,
+	int *usockaddr_len, int peer)
+{
+    struct sockaddr_in sockaddr;
+
+    sockaddr.sin_family = AF_INET;
+    if (peer) {
+	if (sock->state != SS_CONNECTED)
+	    return -EINVAL;
+	sockaddr.sin_port = sock->remport;
+	sockaddr.sin_addr.s_addr = sock->remaddr;
+    } else {
+	sockaddr.sin_port = sock->localport;
+	sockaddr.sin_addr.s_addr = sock->localaddr;
+    }
+
+    return move_addr_to_user((char *)&sockaddr, sizeof(struct sockaddr_in),
+				    (char *)usockaddr, usockaddr_len);
+}
+
 int not_implemented(void)
 {
     debug("not_implemented\n");
@@ -419,25 +440,13 @@ static struct proto_ops inet_proto_ops = {
     inet_bind,
     inet_connect,
     not_implemented,	/* inet_socketpair */
-
-#ifdef CONFIG_SOCK_CLIENTONLY
-    NULL,
-#else
     inet_accept,
-#endif
-
-    not_implemented,	/* inet_getname */
+    inet_getname,
     inet_read,
     inet_write,
     inet_select,
     not_implemented,	/* inet_ioctl */
-
-#ifdef CONFIG_SOCK_CLIENTONLY
-    NULL,
-#else
     inet_listen,
-#endif
-
     inet_send,
     inet_recv,
     not_implemented,	/* inet_sendto */
