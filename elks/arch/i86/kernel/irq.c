@@ -41,7 +41,7 @@ void do_IRQ(int i,void *regs)
         printk("Unexpected interrupt: %u\n", i);
         return;
     }
-	(*ih)(i, regs);
+    (*ih)(i, regs);
 }
 
 
@@ -50,7 +50,7 @@ void do_IRQ(int i,void *regs)
 // including the 0..7 processor exceptions & traps
 
 struct int_handler {
-	byte_t call;  // CALLF opcode (9Ah)
+	byte_t call;		/* CALLF opcode (9Ah) */
 	int_proc proc;
 	word_t seg;
 	byte_t irq;
@@ -63,19 +63,19 @@ typedef struct int_handler int_handler_s;
 // that redirects to the static handler
 
 static int int_handler_add (int irq, int vect, int_proc proc)
-	{
+{
 	int_handler_s * h = (int_handler_s *) heap_alloc (sizeof (int_handler_s), HEAP_TAG_INTHAND);
 	if (!h) return -ENOMEM;
 
-	h->call = 0x9A;  // CALLF opcode
+	h->call = 0x9A;		/* CALLF opcode */
 	h->proc = proc;
-	h->seg  = kernel_cs;  // resident kernel code segment
+	h->seg  = kernel_cs;	/* resident kernel code segment */
 	h->irq  = irq;
 
 	int_vector_set (vect, (int_proc) h, kernel_ds);
 
 	return 0;
-	}
+}
 
 
 int request_irq(int irq, irq_handler handler, int hflag)
@@ -85,23 +85,23 @@ int request_irq(int irq, irq_handler handler, int hflag)
     irq = remap_irq(irq);
     if (irq < 0 || !handler) return -EINVAL;
 
-	if (irq_action [irq]) return -EBUSY;
+    if (irq_action [irq]) return -EBUSY;
 
     save_flags(flags);
     clr_irq();
 
-	irq_action [irq] = handler;
+    irq_action [irq] = handler;
 
-	int_proc proc;
-	if (hflag == INT_SPECIFIC)
-		proc = (int_proc) handler;
-	else
-		proc = _irqit;
+    int_proc proc;
+    if (hflag == INT_SPECIFIC)
+	proc = (int_proc) handler;
+    else
+	proc = _irqit;
 
-	// TODO: IRQ number has no meaning for an INT handler
-	// see above simplification TODO
-	if (int_handler_add (irq, irq_vector (irq), proc))
-		return -ENOMEM;
+    // TODO: IRQ number has no meaning for an INT handler
+    // see above simplification TODO
+    if (int_handler_add (irq, irq_vector (irq), proc))
+	return -ENOMEM;
 
     enable_irq(irq);
 
@@ -140,18 +140,18 @@ void free_irq(unsigned int irq)
 
 void INITPROC irq_init(void)
 {
-    init_irq();  // PIC initialization
+    init_irq();		/* PIC initialization */
 
-	// TODO: no more need to disable the timer
-	// BEFORE the interrupt initialization
-	// as timer vector is kept as is
+    // TODO: no more need to disable the timer
+    // BEFORE the interrupt initialization
+    // as timer vector is kept as is
 
-	// TODO: move that timer stuff in `timer.c`
-	// to clearly separate the PIC and PIT driving
+    // TODO: move that timer stuff in `timer.c`
+    // to clearly separate the PIC and PIT driving
     disable_timer_tick();
 
-    irqtab_init();  // now only saves previous vector 08h (timer)
-	int_handler_add (0x80, 0x80, _irqit);  // system call
+    irqtab_init();	/* now only saves previous vector 08h (timer) */
+    int_handler_add (0x80, 0x80, _irqit); /* system call */
 
     /* Set off the initial timer interrupt handler */
     if (request_irq(TIMER_IRQ, timer_tick, INT_GENERIC))
