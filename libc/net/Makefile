@@ -2,7 +2,7 @@
 
 include $(TOPDIR)/libc/Makefile.inc
 
-SRCS= in_aton.c in_ntoa.c in_gethostbyname.c
+SRCS= in_aton.c in_ntoa.c in_gethostbyname.c getsocknam.c
 OBJS= $(SRCS:.c=.o)
 
 $(OBJS): $(SRCS)

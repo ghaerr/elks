@@ -19,27 +19,30 @@ typedef enum {
 } socket_state;
 
 struct socket {
-    short type;
     unsigned char state;
     unsigned char flags;
     unsigned int rcv_bufsiz;
     struct proto_ops *ops;
     void *data;
+    struct wait_queue *wait;
+    struct inode *inode;
+    struct file *file;
 
-#if defined(CONFIG_INET)
-    /* I added this here for smaller code and memory use - HarKal */
-    int avail_data;
-    sem_t sem;
-#endif
-#if defined(CONFIG_UNIX) || defined(CONFIG_NANO) || defined(CONFIG_INET)
+#if defined(CONFIG_UNIX) || defined(CONFIG_NANO)
     struct socket *conn;
     struct socket *iconn;
     struct socket *next;
 #endif
 
-    struct wait_queue *wait;
-    struct inode *inode;
-    struct file *file;
+#if defined(CONFIG_INET)
+    int avail_data;
+    sem_t sem;
+    __u32 remaddr;		/* all in network byte order */
+    __u32 localaddr;
+    __u16 remport;
+    __u16 localport;
+#endif
+
 };
 
 struct proto_ops {

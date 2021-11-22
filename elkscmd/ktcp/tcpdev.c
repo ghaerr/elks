@@ -57,6 +57,7 @@ static void tcpdev_bind(void)
     struct tcpcb_list_s *n;
     int size;
     __u16 port;
+    struct tdb_bind_ret bind_ret;
 
     if (db->addr.sin_family != AF_INET) {
 	retval_to_sock(db->sock,-EINVAL);
@@ -107,7 +108,12 @@ reject:
     n->tcpcb.localport = port;
     n->tcpcb.state = TS_CLOSED;
 
-    retval_to_sock(db->sock,0);
+    bind_ret.type = TDT_BIND;
+    bind_ret.ret_value = 0;
+    bind_ret.sock = db->sock;
+    bind_ret.addr_ip = local_ip;
+    bind_ret.addr_port = htons(port);
+    write(tcpdevfd, &bind_ret, sizeof(bind_ret));
 }
 
 static void tcpdev_accept(void)
@@ -143,7 +149,7 @@ static void tcpdev_accept(void)
     accept_ret.ret_value = 0;
     accept_ret.sock = sock;
     accept_ret.addr_ip = cb->remaddr;
-    accept_ret.addr_port = cb->remport;
+    accept_ret.addr_port = htons(cb->remport);
     write(tcpdevfd, &accept_ret, sizeof(accept_ret));
 }
 
@@ -164,7 +170,7 @@ void tcpdev_checkaccept(struct tcpcb_s *cb)
     accept_ret.ret_value = 0;
     accept_ret.sock = cb->sock;
     accept_ret.addr_ip = cb->remaddr;
-    accept_ret.addr_port = cb->remport;
+    accept_ret.addr_port = htons(cb->remport);
 
     cb->sock = listencb->newsock;
     cb->unaccepted = 0;

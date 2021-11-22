@@ -213,6 +213,14 @@ int main(int argc, char **argv)
 		exit(-1);
 	}
 
+#if 0 /* test code for getsockname */
+	unsigned int len = sizeof(addr_in);
+	if (getsockname(sockfd, (struct sockaddr *)&addr_in, &len) < 0)
+		perror("getsockname");
+	fprintf(stderr, "getsockname %s:%u\n", in_ntoa(addr_in.sin_addr.s_addr),
+			ntohs(addr_in.sin_port));
+#endif
+
 	if (listen(sockfd, 3) == -1) {
 		perror("listen error");
 		close(sockfd);
@@ -235,7 +243,8 @@ int main(int argc, char **argv)
 	//signal(SIGCHLD, sigchild);
 
 	while (1) {
-		connectionfd = accept (sockfd, (struct sockaddr *) NULL, NULL);
+		unsigned int len = sizeof(addr_in);
+		connectionfd = accept(sockfd, (struct sockaddr *)&addr_in, &len);
 		if (connectionfd < 0) {
 			perror ("telnetd accept");
 			break;
@@ -246,6 +255,14 @@ int main(int argc, char **argv)
 		if ((ret = fork()) == -1)		/* handle new accept*/
 			fprintf(stderr, "telnetd: No processes\n");
 		else if (ret == 0) {
+#if 0 /* test code for accept and getpeername */
+			fprintf(stderr, "accept from %s:%u\n", in_ntoa(addr_in.sin_addr.s_addr),
+				ntohs(addr_in.sin_port));
+			if (getpeername(connectionfd, (struct sockaddr *)&addr_in, &len) < 0)
+			    perror("getpeername");
+			fprintf(stderr, "getpeername %s:%u\n", in_ntoa(addr_in.sin_addr.s_addr),
+				ntohs(addr_in.sin_port));
+#endif
 			close(sockfd);
 			pid = term_init(&pty_fd);
 			if (pid != -1) {

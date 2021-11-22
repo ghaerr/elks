@@ -11,10 +11,6 @@ mainmenu_option next_comment
         bool '  NANO sockets'                          CONFIG_NANO             n
         bool '  TCP/IP sockets'                        CONFIG_INET             y
         bool '  UNIX sockets'                          CONFIG_UNIX             n
-
-        comment '  Advanced socket options'
-
-        bool '  Client socket support only'            CONFIG_SOCK_CLIENTONLY  n
-        fi
+    fi
 
 endmenu

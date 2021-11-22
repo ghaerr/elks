@@ -52,8 +52,10 @@ struct msghdr {
 #define SOCK_RDM        4	/* reliably-delivered message   */
 #define SOCK_SEQPACKET  5	/* sequential packet socket     */
 
+#ifdef __KERNEL__
 struct proto_ops;
 extern int sock_register(int,struct proto_ops *);
 extern int move_addr_to_user(char *,size_t,char *,int *);
+#endif
 
 #endif
