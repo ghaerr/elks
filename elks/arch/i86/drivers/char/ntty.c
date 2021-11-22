@@ -288,6 +288,12 @@ size_t tty_write(struct inode *inode, struct file *file, char *data, size_t len)
     while (i < len) {
 	s = chq_wait_wr(&tty->outq, file->f_flags & O_NONBLOCK);
 	if (s < 0) {
+	    /* FIXME EAGAIN not returned, cycle required on telnet nonblocking terminal */
+	    if (s == -EINTR || s == -EAGAIN) {
+		wake_up(&tty->outq.wait);
+		schedule();
+		continue;
+	    }
 	    if (i == 0)
 		i = s;
 	    break;
