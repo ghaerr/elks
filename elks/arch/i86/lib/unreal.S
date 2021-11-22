@@ -437,42 +437,66 @@ linear32_fmemcpyb:
 #        +-------+-------+-------+-------+-------+-------+-------+-------+
 #
 #        +-------+-------+-------+-------+-------+-------+-------+-------+
-#byte 5  |   P   |      DPL      | <----------- segment type ----------> |
+#byte 5  |   P   |      DPL      |   1   |   0   |  E/C  |  W/R  |   A   |
 #        +-------+-------+-------+-------+-------+-------+-------+-------+
+#
+# This is the access/descriptor type byte, which sets the type of descriptor,
+# and the permissions for the associated segment. The permissions are
+# interpreted differently based on whether the segment is loaded into
+# a code, data, or stack segment register.
 #
 # P is the Segment Present bit. It should always be 1.
 #
 # DPL is the DESCRIPTOR PRIVILEGE LEVEL. For simple code like this, these
 # two bits should always be zeroes.
 #
-# Segment Type (again, for simple code like this) is hex 12 for data
-# segments, hex 1A for code segments.
+# For data or executable Segment Descriptors, the next bits are always 1,0.
+#
+# The E/C bit specifies Expand-down for data segments, Conforming for code.
+#
+# The W/R bit specifies Writable for data segments, Readable for code.
+#
+# The A bit is written to 1 by the CPU when the segment is accessed.
+#
+# For unreal mode data, the P, W and A bits would be set, which gives hex 93.
 #
 #        +-------+-------+-------+-------+-------+-------+-------+-------+
-#byte 6  |   G   |   B   |   0   | avail | bit 19<-- seg limit--->bit 16 |
+#byte 6  |   G   |  B/D  |   0   | Avail | bit 19<-- seg limit--->bit 16 |
 #        +-------+-------+-------+-------+-------+-------+-------+-------+
 #
 # G is the Limit Granularity. If zero, the segment limit is in bytes
 # (0 to 1M, in 1-byte increments). If one, the segment limit is in 4K PAGES
-# (0 to 4G, in 4K increments). For simple code, set this bit to 1, and
+# (0 to 4G, in 4K increments). For unreal mode, set this bit to 1, and
 # set the segment limit to its highest value (FFFFF hex). You now have
 # segments that are 4G in size! The Intel CPUs can address no more than
 # 4G of memory, so this is like having no segments at all. No wonder
 # protected mode is popular.
 #
-# B is the Big bit; also called the D (Default) bit. For code segments,
+# For code segments, B is the Big bit. When set, this specifies that
 # all instructions will use 32-bit operands and addresses by default
-# (BITS 32, in NASM syntax, USE32 in Microsoft syntax) if this bit is set.
-# 16-bit protected mode is not very interesting, so set this bit to 1.
+# (BITS 32, in NASM syntax, USE32 in Microsoft syntax). For 16-bit
+# code segments, the operand and address override instruction prefixes
+# (hex 66 and 67) are used to specify access to 32-bit data, which are used
+# to implement unreal mode access to extended memory.
 #
-# None of these notes apply to the NULL descriptor. All of its bytes
-# should be set to zero.
+# For data segments, D is the Default bit. When set, this specifies the
+# width of ESP/SP when used as a stack segment. It should be set to 1
+# when creating a 32-bit sized segment, otherwise 0.
+#
+# The Avail bit is available for operating system use by the programmer.
+#
+# For unreal mode data, the G and D bits would be set, along with bits 19:16
+# specifying a 4GB-1 segment limit, giving hex CF.
 #
 #        +-------+-------+-------+-------+-------+-------+-------+-------+
 #byte 7  |bit 31<---------------- segment base------------------->bit 24 |
 #        +-------+-------+-------+-------+-------+-------+-------+-------+
+#
+# None of these notes apply to the NULL descriptor. All of its bytes
+# should be set to zero.
+#
 
-	.data
+        .data
 # Global Descriptor Table
 # NULL descriptor (required):
 gdt:    .word 0         # limit 15:0
@@ -488,7 +512,8 @@ LINEAR_SEL = . - gdt
         .word 0         # base 0
         .byte 0
         .byte 0x93      # present, ring 0, data, expand-up, writable, accessed
-# can put zero byte here (instead of 0xCF) to DISABLE unreal mode:
+# putting a zero byte here (instead of 0xCF) effectively disables unreal mode:
+#       .byte 0         # byte-granular, 16-bit, limit=64K-1
         .byte 0xCF      # page-granular, 32-bit, limit=4GB-1
         .byte 0
 gdt_len = . - gdt
