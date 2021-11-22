@@ -139,14 +139,14 @@ static void client_loop (int fdsock, int fdterm)
 		if (!count_in && FD_ISSET (fdsock, &fds_read)) {
 			count_in = read (fdsock, buf_in, sizeof(buf_in));
 			if (count_in <= 0) {
-				if (count < 0)
+				if (count_in < 0)
 					perror ("telnetd read sock");
 				break;
 			}
 		}
 		if (count_in && FD_ISSET (fdterm, &fds_write)) {
 #ifdef RAWTELNET
-			count = write (fdterm, buf_in, count_in);
+			write (fdterm, buf_in, count_in);
 #else
 			tel_in(fdterm, fdsock, buf_in, count_in);
 #endif
@@ -164,7 +164,7 @@ static void client_loop (int fdsock, int fdterm)
 		}
 		if (count_out && FD_ISSET (fdsock, &fds_write)) {
 #ifdef RAWTELNET
-			count = write (fdsock, buf_out, count_out);
+			write (fdsock, buf_out, count_out);
 #else
 			tel_out(fdsock, buf_out, count_out);
 #endif
