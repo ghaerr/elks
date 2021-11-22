@@ -412,7 +412,7 @@ static void tcpdev_release(void)
     void * sock = db->sock;
 
     n = tcpcb_find_by_sock(sock);
-    debug_close("tcpdev release: close socket %x, tcb %x\n", sock, n);
+    debug_close("tcpdev release: close socket %p, state is %s\n", sock, tcp_states[n->tcpcb.state]);
     if (n) {
 	cb = &n->tcpcb;
 	switch(cb->state){
@@ -430,9 +430,11 @@ static void tcpdev_release(void)
 			tcpcb_remove(n);
 			return;
 		}
+		debug_close("tcp[%p] setting state to FIN_WAIT_1\n", cb->sock);
 		cb->state = TS_FIN_WAIT_1;
 		goto common_close;
 	    case TS_CLOSE_WAIT:
+		debug_close("tcp[%p] setting state to LAST_ACK\n", cb->sock);
 		cb->state = TS_LAST_ACK;
 common_close:
 		if (db->reset) {		/* SO_LINGER w/zero timer */
@@ -442,6 +444,10 @@ common_close:
 		    cb->time_wait_exp = Now;
 		    tcp_send_fin(cb);
 		}
+		break;
+	    default:
+		debug_close("tcp[%p] NO state change from %s on release\n",
+		    cb->sock, tcp_states[cb->state]);
 		break;
 	}
     }

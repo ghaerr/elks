@@ -276,6 +276,7 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
     if (h->flags & TF_FIN) {
 	cb->rcv_nxt++;
+	debug_close("tcp[%p] packet in established, fin: 1, data: %d, setting state to CLOSE_WAIT\n", cb->sock, datasize);
 	cb->state = TS_CLOSE_WAIT;
 	cb->time_wait_exp = Now;	/* used for debug output only*/
 	debug_tune("tcp: got FIN with data %d buffer %d\n", datasize, cb->buf_used);
@@ -311,12 +312,16 @@ static void tcp_fin_wait_1(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     __u32 lastack;
     int needack = 0;
 
+    debug_close("tcp[%p] packet in fin_wait_1, fin: %d\n",
+	cb->sock, (iptcp->tcph->flags&TF_FIN)? 1: 0);
+
     cb->time_wait_exp = Now;
     if (iptcp->tcph->flags & TF_FIN) {
 	cb->rcv_nxt ++;
 
 	/* Remove the flag */
 	iptcp->tcph->flags &= ~TF_FIN;
+	debug_close("tcp[%p] setting state to CLOSING\n", cb->sock);
 	cb->state = TS_CLOSING; 	/* cbs_in_user_timeout stays unchanged */
 	cb->time_wait_exp = Now;
 	needack = 1;
@@ -331,10 +336,13 @@ static void tcp_fin_wait_1(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
 	/* our FIN was acked */
 	if (cb->state == TS_CLOSING) {	/* FIN and ACK received, enter TIME_WAIT */
+	    debug_close("tcp[%p] setting state to TIME_WAIT\n", cb->sock);
 	    cbs_in_user_timeout--;
 	    ENTER_TIME_WAIT(cb);
-	} else
+	} else {
+	    debug_close("tcp[%p] set state CLOSED\n", cb->sock);
 	    cb->state = TS_FIN_WAIT_2;	/* cbs_in_user_timeout stays unchanged */
+	}
 	cb->time_wait_exp = Now;
     }
 
@@ -346,14 +354,18 @@ static void tcp_fin_wait_2(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 {
     int needack = 0;
 
+    debug_close("tcp[%p] packet in fin_wait_2, fin: %d\n",
+	cb->sock, (iptcp->tcph->flags&TF_FIN)? 1: 0);
+
     cb->time_wait_exp = Now;
     if (iptcp->tcph->flags & TF_FIN) {
 	cb->rcv_nxt ++;
 
 	/* Remove the flag */
 	iptcp->tcph->flags &= ~TF_FIN;
+	debug_close("tcp[%p] setting state to TIME_WAIT\n", cb->sock);
 	cbs_in_user_timeout--;
-	ENTER_TIME_WAIT(cb);		/* this sets the 10 sec wait after active close! */
+	ENTER_TIME_WAIT(cb);	/* this sets the 10 sec wait after active close! */
 	needack = 1;
     }
 
@@ -367,6 +379,9 @@ static void tcp_fin_wait_2(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 static void tcp_closing(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 {
     __u32 lastack;
+
+    debug_close("tcp[%p] packet in closing state, fin: %d\n",
+	cb->sock, (iptcp->tcph->flags&TF_FIN)? 1: 0);
 
     cb->time_wait_exp = Now;
     lastack = cb->send_una;
@@ -383,6 +398,7 @@ static void tcp_closing(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     if (SEQ_LT(lastack, cb->send_una)) {
 
 	/* our FIN was acked */
+	debug_close("tcp[%p] setting state to TIME_WAIT\n", cb->sock);
 	cbs_in_user_timeout--;
 	ENTER_TIME_WAIT(cb);
     }
@@ -390,11 +406,15 @@ static void tcp_closing(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
 static void tcp_last_ack(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 {
+    debug_close("tcp[%p] packet in last_ack, fin: %d\n",
+	cb->sock, (iptcp->tcph->flags&TF_FIN)? 1: 0);
+
     cb->time_wait_exp = Now;
     if (iptcp->tcph->flags & (TF_ACK|TF_RST)) {
 
 	/* our FIN was acked */
 	cbs_in_user_timeout--;
+	debug_close("tcp[%p] set state CLOSED\n", cb->sock);
 	cb->state = TS_CLOSED;
 	tcpcb_remove_cb(cb); 	/* deallocate*/
     }

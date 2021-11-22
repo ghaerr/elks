@@ -28,7 +28,7 @@
 #include <ktcp/tcp.h>
 #include <ktcp/netconf.h>
 
-char tcp_states[11][13] = {
+char *tcp_states[11] = {
 	"CLOSED",
 	"LISTEN",
 	"SYN_SENT",
