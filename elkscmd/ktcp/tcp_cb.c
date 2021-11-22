@@ -226,7 +226,7 @@ void tcpcb_expire_timeouts(void)
 
     while (n) {
 	next = n->next;
-#if DEBUG_CLOSE
+#if 0 //DEBUG_CLOSE
 	if (n->tcpcb.state > TS_ESTABLISHED) {
 	    int secs = (unsigned)(n->tcpcb.time_wait_exp - Now);
 	    unsigned int tenthsecs = ((secs + 8) & 15) >> 1;
@@ -239,8 +239,9 @@ void tcpcb_expire_timeouts(void)
 	    case TS_TIME_WAIT:
 		if (TIME_GT(Now, n->tcpcb.time_wait_exp)) {
 		    LEAVE_TIME_WAIT(&n->tcpcb);
-			debug_close("tcp: exit TIME_WAIT state on port %u remote %s:%u\n",
-				n->tcpcb.localport, in_ntoa(n->tcpcb.remaddr), n->tcpcb.remport);
+		    debug_close("tcp[%p] exit TIME_WAIT state on port %u remote %s:%u\n",
+				n->tcpcb.sock, n->tcpcb.localport,
+				in_ntoa(n->tcpcb.remaddr), n->tcpcb.remport);
 		    tcpcb_remove(n);
 		}
 		break;
