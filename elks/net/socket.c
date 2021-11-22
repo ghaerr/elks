@@ -505,17 +505,12 @@ void INITPROC sock_init(void)
 {
     register struct net_proto *pro;
 
-#ifndef CONFIG_SMALL_KERNEL
-    printk("ELKS network sockets\n");
-#endif
-
     /* Kick all configured protocols. */
     pro = protocols;
     while (pro->name != NULL) {
 	(*pro->init_func) (pro);
 	pro++;
     }
-    /* We're all done... */
 }
 
 int sys_socket(int family, int type, int protocol)
@@ -534,7 +529,7 @@ int sys_socket(int family, int type, int protocol)
     if (!(sock = sock_alloc()))
 	return -ENOSR;
 
-    //sock->type = peer;
+    //sock->type = type;
     sock->ops = ops;
     if ((fd = sock->ops->create(sock, protocol)) < 0) {
 	sock_release(sock);
