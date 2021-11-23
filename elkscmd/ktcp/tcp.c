@@ -238,7 +238,8 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
 	/* check if buffer space for received packet*/
 	if (datasize > CB_BUF_SPACE(cb)) {
-	    printf("tcp: dropping packet, no buffer space: %u > %d\n", datasize, CB_BUF_SPACE(cb));
+	    printf("tcp: dropping packet, no buffer space: %u > %d\n",
+		datasize, CB_BUF_SPACE(cb));
 	    netstats.tcpdropcnt++;
 	    return;
 	}
@@ -279,7 +280,7 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	debug_close("tcp[%p] packet in established, fin: 1, data: %d, setting state to CLOSE_WAIT\n", cb->sock, datasize);
 	cb->state = TS_CLOSE_WAIT;
 	cb->time_wait_exp = Now;	/* used for debug output only*/
-	debug_tune("tcp: got FIN with data %d buffer %d\n", datasize, cb->buf_used);
+	debug_tcp("tcp: got FIN with data %d buffer %d\n", datasize, cb->buf_used);
 	if (cb->bytes_to_push <= 0)
 	    tcpdev_sock_state(cb, SS_DISCONNECTING);
     }

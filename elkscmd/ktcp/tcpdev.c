@@ -243,7 +243,7 @@ static void tcpdev_read(void)
     }
 
     data_avail = cb->bytes_to_push;
-    debug_tune("tcpdev_read %u bytes avail %u\n", db->size, data_avail);
+    //debug_tune("tcpdev_read %u bytes avail %u\n", db->size, data_avail);
 
     if (data_avail == 0) {
 	if (cb->state == TS_CLOSE_WAIT) {
@@ -275,7 +275,7 @@ static void tcpdev_read(void)
     /* if remote closed and more data, update data avail then indicate disconnecting*/
     if (cb->state == TS_CLOSE_WAIT) {
 	if (cb->bytes_to_push <= 0) {
-	    debug_tune("tcp: disconnecting after final read %d\n", data_avail);
+	    debug_tcp("tcp: disconnecting after final read %d\n", data_avail);
 	    tcpdev_sock_state(cb, SS_DISCONNECTING);
 	} else {
 	    printf("tcp: application read too small after FIN, data_avail %d\n",
@@ -412,9 +412,11 @@ static void tcpdev_release(void)
     void * sock = db->sock;
 
     n = tcpcb_find_by_sock(sock);
-    debug_close("tcpdev release: close socket %p, state is %s\n", sock, tcp_states[n->tcpcb.state]);
     if (n) {
 	cb = &n->tcpcb;
+	debug_close("tcpdev release: close socket %p, state is %s\n",
+	    sock, tcp_states[cb->state]);
+
 	switch(cb->state){
 	    case TS_CLOSED:
 		tcpcb_remove(n);

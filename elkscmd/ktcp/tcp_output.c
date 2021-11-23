@@ -390,8 +390,8 @@ void tcp_output(struct tcpcb_s *cb)
 	len = 1;			/* Never advertise zero window size */
 #endif
 
-    debug_tune("tcp output: space %u min sws %u window %u\n",
-	CB_BUF_SPACE(cb), minwindow, len);
+    debug_tune("tcp output: min sws %u space %u window %u\n",
+	minwindow, CB_BUF_SPACE(cb), len);
     th->window = htons(len);
     th->urgpnt = 0;
     th->flags = cb->flags;
