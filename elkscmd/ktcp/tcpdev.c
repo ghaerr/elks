@@ -237,17 +237,17 @@ static void tcpdev_read(void)
 
     cb = &n->tcpcb;
     if (cb->state == TS_CLOSING || cb->state == TS_LAST_ACK || cb->state == TS_TIME_WAIT) {
-	debug_tcp("tcpdev_read: returning -EPIPE to socket read\n");
+	printf("tcpdev_read: returning -EPIPE to socket read state %d\n", cb->state);
 	retval_to_sock(sock, -EPIPE);
 	return;
     }
 
     data_avail = cb->bytes_to_push;
-    debug_tune("tcpdev_read %u bytes avail %u\n", db->size, data_avail);
+    //debug_tune("tcpdev_read %u bytes avail %u\n", db->size, data_avail);
 
     if (data_avail == 0) {
 	if (cb->state == TS_CLOSE_WAIT) {
-	    printf("tcp: read on CLOSE_WAIT socket\n");
+	    printf("tcpdev_read: read on CLOSE_WAIT socket, return -EPIPE\n");
 	    retval_to_sock(sock, -EPIPE);
 	} else if (db->nonblock)
 	    retval_to_sock(sock, -EAGAIN);
@@ -275,7 +275,7 @@ static void tcpdev_read(void)
     /* if remote closed and more data, update data avail then indicate disconnecting*/
     if (cb->state == TS_CLOSE_WAIT) {
 	if (cb->bytes_to_push <= 0) {
-	    debug_tune("tcp: disconnecting after final read %d\n", data_avail);
+	    debug_tcp("tcp: disconnecting after final read %d\n", data_avail);
 	    tcpdev_sock_state(cb, SS_DISCONNECTING);
 	} else {
 	    printf("tcp: application read too small after FIN, data_avail %d\n",
@@ -359,7 +359,7 @@ static void tcpdev_write(void)
 
     n = tcpcb_find_by_sock(sock);
     if (!n || n->tcpcb.state == TS_CLOSED) {
-	debug_tcp("tcp: write to unknown socket\n");
+	printf("tcpdev_write: write to unknown socket\n");
 	retval_to_sock(sock, -EPIPE);
 	return;
     }
@@ -367,6 +367,7 @@ static void tcpdev_write(void)
     cb = &n->tcpcb;
 
     if (cb->state != TS_ESTABLISHED && cb->state != TS_CLOSE_WAIT) {
+	printf("tcpdev_write: write to socket in improper state %d\n", cb->state);
 	retval_to_sock(sock, -EPIPE);
 	return;
     }
@@ -412,9 +413,11 @@ static void tcpdev_release(void)
     void * sock = db->sock;
 
     n = tcpcb_find_by_sock(sock);
-    debug_close("tcpdev release: close socket %p, state is %s\n", sock, tcp_states[n->tcpcb.state]);
     if (n) {
 	cb = &n->tcpcb;
+	debug_close("tcpdev release: close socket %p, state is %s\n",
+	    sock, tcp_states[cb->state]);
+
 	switch(cb->state){
 	    case TS_CLOSED:
 		tcpcb_remove(n);

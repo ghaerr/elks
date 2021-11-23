@@ -24,14 +24,15 @@
 
 /*
  * control block input buffer size - max window size, doesn't have to be power of two
- * default will be (ETH_MTU - IP_HDRSIZ) * 3 + PUSH_THRESHOLD = (1500-40) * 3 + 512 = 4892
+ * default will be (ETH_MTU - IP_HDRSIZ) * 3 = (1500-40) * 3 = 4380
  */
-#define CB_NORMAL_BUFSIZ	4892	/* normal input buffer size*/
+#define CB_NORMAL_BUFSIZ	4892	/* bufsize for older receive window algorithm*/
+//#define CB_NORMAL_BUFSIZ	4380	/* normal input buffer size*/
 
 /* max outstanding send window size*/
 #define TCP_SEND_WINDOW_MAX	1024	/* should be less than TCP_RETRANS_MAXMEM*/
 
-/* bytes to subtract from window size (was remaining buf space to force push)*/
+/* threshold to wait before pushing data to application (turned off for now) */
 #define PUSH_THRESHOLD	512
 
 /* timeout values in 1/16 seconds, or (seconds << 4). Half second = 8*/
