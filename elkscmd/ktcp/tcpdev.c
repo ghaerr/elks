@@ -237,7 +237,7 @@ static void tcpdev_read(void)
 
     cb = &n->tcpcb;
     if (cb->state == TS_CLOSING || cb->state == TS_LAST_ACK || cb->state == TS_TIME_WAIT) {
-	debug_tcp("tcpdev_read: returning -EPIPE to socket read\n");
+	printf("tcpdev_read: returning -EPIPE to socket read state %d\n", cb->state);
 	retval_to_sock(sock, -EPIPE);
 	return;
     }
@@ -247,7 +247,7 @@ static void tcpdev_read(void)
 
     if (data_avail == 0) {
 	if (cb->state == TS_CLOSE_WAIT) {
-	    printf("tcp: read on CLOSE_WAIT socket\n");
+	    printf("tcpdev_read: read on CLOSE_WAIT socket, return -EPIPE\n");
 	    retval_to_sock(sock, -EPIPE);
 	} else if (db->nonblock)
 	    retval_to_sock(sock, -EAGAIN);
@@ -359,7 +359,7 @@ static void tcpdev_write(void)
 
     n = tcpcb_find_by_sock(sock);
     if (!n || n->tcpcb.state == TS_CLOSED) {
-	debug_tcp("tcp: write to unknown socket\n");
+	printf("tcpdev_write: write to unknown socket\n");
 	retval_to_sock(sock, -EPIPE);
 	return;
     }
@@ -367,6 +367,7 @@ static void tcpdev_write(void)
     cb = &n->tcpcb;
 
     if (cb->state != TS_ESTABLISHED && cb->state != TS_CLOSE_WAIT) {
+	printf("tcpdev_write: write to socket in improper state %d\n", cb->state);
 	retval_to_sock(sock, -EPIPE);
 	return;
     }

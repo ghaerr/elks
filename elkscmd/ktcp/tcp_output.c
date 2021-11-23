@@ -366,7 +366,7 @@ void tcp_output(struct tcpcb_s *cb)
 {
     struct tcphdr_s *th = (struct tcphdr_s *)tcpbuf;
     struct addr_pair apair;
-    int header_len, len, minwindow;
+    int header_len, len;
 
     th->sport = htons(cb->localport);
     th->dport = htons(cb->remport);
@@ -375,23 +375,25 @@ void tcp_output(struct tcpcb_s *cb)
 
     cb->send_nxt += cb->datalen;
 
-#if 1
+#if 0
     /* must have half the buffer or MTU bytes available for nonzero window */
-    minwindow = cb->buf_size >> 1;
+    int minwindow = cb->buf_size >> 1;
     if (minwindow > MTU)
 	minwindow = MTU;
     len = CB_BUF_SPACE(cb);
     if (len < minwindow)
 	len = 0;			/* advertise zero window, stops sender */
+    debug_tune("tcp output: min sws %u space %u window %u\n",
+	minwindow, CB_BUF_SPACE(cb), len);
 #else
+    len = CB_BUF_SPACE(cb);
     if (cb->buf_size > PUSH_THRESHOLD)	/* FIXME temp hack for small listen buffers */
 	len -= PUSH_THRESHOLD;
     if (len <= 0)
 	len = 1;			/* Never advertise zero window size */
+    debug_tune("tcp output: space %u window %u\n", CB_BUF_SPACE(cb), len);
 #endif
 
-    debug_tune("tcp output: min sws %u space %u window %u\n",
-	minwindow, CB_BUF_SPACE(cb), len);
     th->window = htons(len);
     th->urgpnt = 0;
     th->flags = cb->flags;
