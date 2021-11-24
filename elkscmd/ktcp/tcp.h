@@ -26,8 +26,13 @@
  * control block input buffer size - max window size, doesn't have to be power of two
  * default will be (ETH_MTU - IP_HDRSIZ) * 3 = (1500-40) * 3 = 4380
  */
+#define USE_SWS		0		/* =1 to use silly window algorithm */
+
+#if USE_SWS
+#define CB_NORMAL_BUFSIZ	4380	/* normal input buffer size*/
+#else
 #define CB_NORMAL_BUFSIZ	4892	/* bufsize for older receive window algorithm*/
-//#define CB_NORMAL_BUFSIZ	4380	/* normal input buffer size*/
+#endif
 
 /* max outstanding send window size*/
 #define TCP_SEND_WINDOW_MAX	1024	/* should be less than TCP_RETRANS_MAXMEM*/
