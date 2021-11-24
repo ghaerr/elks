@@ -288,6 +288,7 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     if (datasize == 0 && ((h->flags & TF_ALL) == TF_ACK))
 	return; /* ACK with no data received - so don't answer*/
 
+    debug_tune("ACK %d\n", datasize);
     cb->rcv_nxt += datasize;
     tcp_send_ack(cb);
 }
