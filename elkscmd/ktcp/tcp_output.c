@@ -362,6 +362,35 @@ void tcp_retrans_retransmit(void)
     }
 }
 
+static int tcp_calc_rcv_window(struct tcpcb_s *cb)
+{
+    int len;
+
+#if USE_SWS
+    /* must have half the buffer or MTU bytes available for nonzero window */
+    int minwindow = cb->buf_size >> 1;
+    if (minwindow > MTU-40)
+	minwindow = MTU-40;
+    len = CB_BUF_SPACE(cb);
+    if (len < minwindow)
+	len = 0;			/* advertise zero window, stops sender */
+    debug_tune("tcp output: datalen %d min sws %u space %u window %u\n",
+	cb->datalen, minwindow, CB_BUF_SPACE(cb), len);
+#else
+    len = CB_BUF_SPACE(cb);
+    if (cb->buf_size > PUSH_THRESHOLD)	/* FIXME temp hack for small listen buffers */
+	len -= PUSH_THRESHOLD;
+    if (len < 0)
+	len = 0;			/* zero window will stop sender */
+    //if (len <= 0)
+	//len = 1;			/* Never advertise zero window size */
+    debug_tune("tcp output: datalen %d space %u window %u\n",
+	cb->datalen, CB_BUF_SPACE(cb), len);
+#endif
+
+    return len;
+}
+
 void tcp_output(struct tcpcb_s *cb)
 {
     struct tcphdr_s *th = (struct tcphdr_s *)tcpbuf;
@@ -375,12 +404,7 @@ void tcp_output(struct tcpcb_s *cb)
 
     cb->send_nxt += cb->datalen;
 
-    len = CB_BUF_SPACE(cb);
-    if (cb->buf_size > PUSH_THRESHOLD)	/* FIXME temp hack for small listen buffers */
-	len -= PUSH_THRESHOLD;
-    if (len <= 0)
-	len = 1;			/* Never advertise zero window size */
-    debug_tune("tcp output: space %u, window %u\n", CB_BUF_SPACE(cb), len);
+    len = tcp_calc_rcv_window(cb);
     th->window = htons(len);
     th->urgpnt = 0;
     th->flags = cb->flags;
