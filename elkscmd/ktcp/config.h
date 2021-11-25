@@ -55,8 +55,7 @@ void dprintf(const char *, ...);
 #endif
 
 #if DEBUG_CLOSE
-//#define debug_close	DPRINTF
-#define debug_close	printf
+#define debug_close	DPRINTF
 #else
 #define debug_close(...)
 #endif
