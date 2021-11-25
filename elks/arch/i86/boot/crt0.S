@@ -20,6 +20,9 @@
 	.global read_tvram_x
 	.global write_tvram_x
 	.global clear_tvram
+	.global cursor_on
+	.global cursor_off
+	.global cursor_set
 #endif
 
 _start:
@@ -212,6 +215,20 @@ get_end:
 	ret
 early_getinit:
 	mov $3,%ah
+	int $0x18
+	ret
+cursor_on:
+	mov $17,%ah
+	int $0x18
+	ret
+cursor_off:
+	mov $18,%ah
+	int $0x18
+	ret
+cursor_set:
+	mov %sp,%bx
+	mov 2(%bx),%dx
+	mov $19,%ah
 	int $0x18
 	ret
 #endif

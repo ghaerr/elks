@@ -20,6 +20,9 @@ void console_init(void)
 {
     kbd_init();
     printk("Headless console\n");
+#ifdef CONFIG_ARCH_PC98
+    cursor_on();
+#endif
 }
 
 void Console_conin(unsigned char Key)
@@ -111,6 +114,7 @@ static int Console_write(register struct tty *tty)
 	if (!esc_seq) {
 	    early_putchar(tty_out);
 	}
+	cursor_set(read_tvram_x());
 #else
 	conio_putc((byte_t)tty_outproc(tty));
 #endif
