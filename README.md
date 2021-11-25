@@ -15,8 +15,8 @@ Progress (with emulator and PC-9801RX21)
 Boot : can call start_kernel  
 Kernel : modifying irq, timer  
 driver : modifying bios FD read, console-headless, kbd-poll  
-init : in progress  
-command : not yet  
+init : can login with root  
+command : cat,clear,date,ed,ls,ps,pwd can be used  
 
 ## How to build (for now)  
 ./build.sh to make the environment.  
