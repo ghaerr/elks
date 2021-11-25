@@ -51,8 +51,9 @@ void tcp_print(struct iptcp_s *head, int recv, struct tcpcb_s *cb)
     debug_tcpdata("[%s] ", tcp_flags(head->tcph->flags));
     if (cb) {
       if (recv) {
-	if (head->tcplen > 20) debug_tcp("seq %lu-%lu ", ntohl(head->tcph->seqnum) - cb->irs,
-				ntohl(head->tcph->seqnum) - cb->irs+head->tcplen-20);
+	if (head->tcplen > 20)
+	    debug_tcpdata("seq %lu-%lu ", ntohl(head->tcph->seqnum) - cb->irs,
+		ntohl(head->tcph->seqnum) - cb->irs+head->tcplen-20);
 	debug_tcpdata("ack %lu ", ntohl(head->tcph->acknum) - cb->iss);
       } else {
 	if (head->tcplen > 20) debug_tcpdata("seq %lu-%lu ",
@@ -262,8 +263,10 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
     if (h->flags & TF_RST) {
 	/* TODO: Check seqnum for security */
-	printf("tcp: RST from %s:%u->%u\n", in_ntoa(cb->remaddr), ntohs(h->sport), ntohs(h->dport));
+	printf("tcp: RST from %s:%u->%u\n",
+	    in_ntoa(cb->remaddr), ntohs(h->sport), ntohs(h->dport));
 	rmv_all_retrans_cb(cb);
+
 	if (cb->state == TS_CLOSE_WAIT) {
 	    cbs_in_user_timeout--;
 	    ENTER_TIME_WAIT(cb);
@@ -278,6 +281,7 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     if (h->flags & TF_FIN) {
 	cb->rcv_nxt++;
 	debug_close("tcp[%p] packet in established, fin: 1, data: %d, setting state to CLOSE_WAIT\n", cb->sock, datasize);
+
 	cb->state = TS_CLOSE_WAIT;
 	cb->time_wait_exp = Now;	/* used for debug output only*/
 	debug_tcp("tcp: got FIN with data %d buffer %d\n", datasize, cb->buf_used);
@@ -288,8 +292,8 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     if (datasize == 0 && ((h->flags & TF_ALL) == TF_ACK))
 	return; /* ACK with no data received - so don't answer*/
 
-    debug_tune("ACK %d\n", datasize);
     cb->rcv_nxt += datasize;
+    debug_tune("tcp: ACK seq %ld len %d\n", cb->rcv_nxt - cb->irs, datasize);
     tcp_send_ack(cb);
 }
 
@@ -324,6 +328,7 @@ static void tcp_fin_wait_1(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	/* Remove the flag */
 	iptcp->tcph->flags &= ~TF_FIN;
 	debug_close("tcp[%p] setting state to CLOSING\n", cb->sock);
+
 	cb->state = TS_CLOSING; 	/* cbs_in_user_timeout stays unchanged */
 	cb->time_wait_exp = Now;
 	needack = 1;
@@ -339,10 +344,12 @@ static void tcp_fin_wait_1(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	/* our FIN was acked */
 	if (cb->state == TS_CLOSING) {	/* FIN and ACK received, enter TIME_WAIT */
 	    debug_close("tcp[%p] setting state to TIME_WAIT\n", cb->sock);
+
 	    cbs_in_user_timeout--;
 	    ENTER_TIME_WAIT(cb);
 	} else {
 	    debug_close("tcp[%p] set state CLOSED\n", cb->sock);
+
 	    cb->state = TS_FIN_WAIT_2;	/* cbs_in_user_timeout stays unchanged */
 	}
 	cb->time_wait_exp = Now;
@@ -366,6 +373,7 @@ static void tcp_fin_wait_2(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	/* Remove the flag */
 	iptcp->tcph->flags &= ~TF_FIN;
 	debug_close("tcp[%p] setting state to TIME_WAIT\n", cb->sock);
+
 	cbs_in_user_timeout--;
 	ENTER_TIME_WAIT(cb);	/* this sets the 10 sec wait after active close! */
 	needack = 1;
@@ -401,6 +409,7 @@ static void tcp_closing(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
 	/* our FIN was acked */
 	debug_close("tcp[%p] setting state to TIME_WAIT\n", cb->sock);
+
 	cbs_in_user_timeout--;
 	ENTER_TIME_WAIT(cb);
     }
@@ -417,6 +426,7 @@ static void tcp_last_ack(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	/* our FIN was acked */
 	cbs_in_user_timeout--;
 	debug_close("tcp[%p] set state CLOSED\n", cb->sock);
+
 	cb->state = TS_CLOSED;
 	tcpcb_remove_cb(cb); 	/* deallocate*/
     }
@@ -479,8 +489,14 @@ void tcp_process(struct iphdr_s *iph)
     if (cb->state != TS_LISTEN && cb->state != TS_SYN_SENT
 			       && cb->state != TS_SYN_RECEIVED) {
 	if (cb->rcv_nxt != ntohl(tcph->seqnum)) {
-	    if (cb->rcv_nxt != ntohl(tcph->seqnum + 1))
+	    int datalen = iptcp.tcplen - TCP_DATAOFF(iptcp.tcph);
+
+	    printf("tcp: dropping packet, bad seqno: need %ld got %ld size %d\n",
+		cb->rcv_nxt - cb->irs, ntohl(tcph->seqnum) - cb->irs, datalen);
+
+	    if (cb->rcv_nxt != ntohl(tcph->seqnum) + 1)
 		tcp_send_ack(cb);
+
 	    return;
 	}
 

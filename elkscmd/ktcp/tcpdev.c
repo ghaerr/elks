@@ -258,10 +258,6 @@ static void tcpdev_read(void)
 	return;
     }
 
-    if (data_avail > cb->buf_used)	// FIXME testing only
-	printf("tcpdev_read: data_avail > used, avail %d used %d\n",
-	    data_avail, cb->buf_used);
-
     data_avail = db->size < data_avail ? db->size : data_avail;
     cb->bytes_to_push -= data_avail;
     if (cb->bytes_to_push <= 0)
@@ -292,7 +288,8 @@ static void tcpdev_read(void)
     /* send ACK to restart server should window have been full (unless it's netstat)*/
     if (cb->remport != NETCONF_PORT || cb->remaddr != 0)
 	if (cb->remport != local_ip) {	/* no ack to localhost either*/
-	    debug_tune("addtl ACK, app read %d bytes\n", data_avail);
+	    debug_tune("tcp: extra ACK seq %ld, app read %d bytes\n",
+		cb->rcv_nxt - cb->irs, data_avail);
 	    tcp_send_ack(cb);
 	}
 }

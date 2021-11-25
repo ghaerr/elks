@@ -372,19 +372,22 @@ static int tcp_calc_rcv_window(struct tcpcb_s *cb)
     if (minwindow > MTU-40)
 	minwindow = MTU-40;
     len = CB_BUF_SPACE(cb);
-    if (len < minwindow)
-	len = 0;			/* advertise zero window, stops sender */
-    debug_tune("tcp output: datalen %d min sws %u space %u window %u\n",
+    if (len < minwindow)	/* FIXME this results in "shrinking the window" */
+	len = 0;
+    debug_tune("tcp output: len %d min sws %u space %u window %u\n",
 	cb->datalen, minwindow, CB_BUF_SPACE(cb), len);
 #else
+    /*
+     * Using free buffer space as the receive window seems to work well,
+     * and never results in "shrinking the window", since the advertised
+     * window is always exactly the space remaining, the rest having already
+     * been accepted. The receive window is the buffer size.
+     * There is no "push threshold" subtracted from the buffer size. This
+     * probably only works well with smarter TCPs.
+     */
     len = CB_BUF_SPACE(cb);
-    if (cb->buf_size > PUSH_THRESHOLD)	/* FIXME temp hack for small listen buffers */
-	len -= PUSH_THRESHOLD;
-    if (len < 0)
-	len = 0;			/* zero window will stop sender */
-    //if (len <= 0)
-	//len = 1;			/* Never advertise zero window size */
-    debug_tune("tcp output: datalen %d space %u window %u\n",
+
+    debug_tune("tcp output: len %d space %u window %u\n",
 	cb->datalen, CB_BUF_SPACE(cb), len);
 #endif
 
