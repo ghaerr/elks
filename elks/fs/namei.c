@@ -135,7 +135,7 @@ static int lookup(register struct inode *dir, char *name, size_t len,
 static int follow_link(struct inode *dir, register struct inode *inode,
 		int flag, int mode, struct inode **res_inode)
 {
-    register struct inode_operations *iop = inode->i_op;
+    struct inode_operations *iop;
     int error = 0;
 
     *res_inode = inode;
@@ -143,7 +143,7 @@ static int follow_link(struct inode *dir, register struct inode *inode,
 	iput(inode);
 	*res_inode = NULL;
 	error = -ENOENT;
-    } else if (iop && iop->follow_link) {
+    } else if ((iop = inode->i_op) && iop->follow_link) {
 	dir->i_count++;
 	error = iop->follow_link(dir, inode, flag, mode, res_inode);
     }
