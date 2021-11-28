@@ -45,7 +45,7 @@ sys_utils/getty			:boot	:sysutil
 sys_utils/login			:boot	:sysutil
 ash/ash		::bin/sh	:boot	:ash	# install as /bin/sh
 #sash/sash	::bin/sh	:boot	:~ash	# install as /bin/sh if no ASH
-sash/sash				:boot	:sash
+sash/sash				:1440k	:sash
 sys_utils/mount			:boot	:sysutil
 sys_utils/umount		:boot	:sysutil
 sys_utils/clock			:boot	:sysutil
