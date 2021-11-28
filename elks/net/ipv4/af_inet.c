@@ -231,6 +231,7 @@ static int inet_accept(register struct socket *sock, struct socket *newsock, int
         //sock->flags &= ~SF_WAITDATA;
         if (current->signal) {
 	    debug_net("INET(%d) accept RESTARTSYS\n", current->pid);
+	    tcpdev_clear_data_avail();
             return -ERESTARTSYS;
 	}
     }

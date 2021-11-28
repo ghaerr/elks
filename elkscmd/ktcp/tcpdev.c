@@ -143,7 +143,9 @@ static void tcpdev_accept(void)
     cb->unaccepted = 0;
 
     cb->sock = db->newsock;
-    cb->newsock = 0;
+printf("tcpdev accept: sock[%p]\n", cb->sock);
+    cb->newsock = 0;		// probably needless
+    n->tcpcb.newsock = 0;	// set listen accept socket back to 0
 
     accept_ret.type = TDT_ACCEPT;
     accept_ret.ret_value = 0;
@@ -173,6 +175,7 @@ void tcpdev_checkaccept(struct tcpcb_s *cb)
     accept_ret.addr_port = htons(cb->remport);
 
     cb->sock = listencb->newsock;
+printf("tcpdev checkaccept: sock[%p]\n", cb->sock);
     cb->unaccepted = 0;
     listencb->newsock = 0;
     write(tcpdevfd, &accept_ret, sizeof(accept_ret));
