@@ -187,8 +187,10 @@ static void tcp_listen(struct iptcp_s *iptcp, struct tcpcb_s *lcb)
     if (!n)
 	return;		     /* no memory for new connection*/
     cb = &n->tcpcb;
-    cb->unaccepted = 1;      /* Mark as unaccepted */
-    cb->newsock = lcb->sock; /* lcb-> is the socket in kernel space */
+    cb->unaccepted = 1;      		/* indicate new control block is unaccepted*/
+    cb->newsock = lcb->sock;		/* temp hold listen socket in newsock*/
+printf("tcp listen: got SYN clone sock[%p]\n", cb->sock);
+    /* now both listen CB and unaccepted CB have same sock pointer*/
 
     cb->seg_seq = ntohl(h->seqnum);
     cb->seg_ack = ntohl(h->acknum);
@@ -226,7 +228,7 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     __u16 datasize;
     __u8 *data;
 
-if (!cb->sock) { printf("tcp established: null socket\n"); return; }
+if (!cb->sock) { printf("tcp established: NULL SOCKET\n"); return; }
 
     h = iptcp->tcph;
 
@@ -304,7 +306,7 @@ static void tcp_synrecv(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     struct tcphdr_s *h = iptcp->tcph;
 
     if (h->flags & TF_RST)
-	cb->state = TS_LISTEN;		/* FIXME: not valid any more */
+	cb->state = TS_LISTEN;		/* FIXME: not valid, should dealloc extra CB*/
     else if ((h->flags & TF_ACK) == 0)
 	debug_tcp("tcp: NO ACK IN SYNRECV\n");
     else {
