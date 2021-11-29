@@ -173,6 +173,8 @@ printf("tcpdev checkaccept: searching accept->newsock[%p]\n", cb->newsock);
     /* SYN occured before accept sys call*/
     listencb = &lp->tcpcb;
 printf("tcpdev checkaccept: found listen socket[%p] newsocket[%p]\n", listencb->sock, listencb->newsock);
+    if (!listencb->newsock)
+	return;				/* wait for sys accept as newsock not set yet*/
 
     accept_ret.type = TDT_ACCEPT;
     accept_ret.ret_value = 0;

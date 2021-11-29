@@ -228,7 +228,7 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     __u16 datasize;
     __u8 *data;
 
-if (!cb->sock) { printf("tcp established: NULL SOCKET\n"); return; }
+if (!cb->sock) { printf("tcp established: NULL SOCKET\n"); }
 
     h = iptcp->tcph;
 
