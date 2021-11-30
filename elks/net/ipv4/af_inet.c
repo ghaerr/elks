@@ -48,7 +48,7 @@ int inet_process_tcpdev(register char *buf, int len)
     case TDT_CHG_STATE:
         sock->state = (unsigned char) ((struct tdb_return_data *)buf)->ret_value;
         tcpdev_clear_data_avail();
-	debug_tune("INET(%d) chg_state sock %x %d\n", current->pid, sock, sock->state);
+	debug_net("INET(%d) chg_state sock %x %d\n", current->pid, sock, sock->state);
 	if (sock->state == SS_DISCONNECTING) {
 	    sock->flags |= SF_CLOSING;
 	    wake_up(sock->wait);
@@ -220,7 +220,7 @@ static int inet_accept(register struct socket *sock, struct socket *newsock, int
     register struct tdb_accept *cmd;
     int ret;
 
-    debug_tune("INET(%d) accept wait sock %x newsock %x\n", current->pid, sock, newsock);
+    debug_net("INET(%d) accept wait sock %x newsock %x\n", current->pid, sock, newsock);
     cmd = (struct tdb_accept *)get_tdout_buf();
     cmd->cmd = TDC_ACCEPT;
     cmd->sock = sock;
@@ -235,12 +235,12 @@ static int inet_accept(register struct socket *sock, struct socket *newsock, int
         interruptible_sleep_on(sock->wait);
         //sock->flags &= ~SF_WAITDATA;
         if (current->signal) {
-	    printk("INET(%d) accept RESTARTSYS bufin %d\n", current->pid, bufin_sem);
+	    debug_net("INET(%d) accept RESTARTSYS bufin %d\n", current->pid, bufin_sem);
             return -ERESTARTSYS;
 	}
     }
 
-    debug_tune("INET(%d) accepted sock %x newsock %x\n", current->pid, sock, newsock);
+    debug_net("INET(%d) accepted sock %x newsock %x\n", current->pid, sock, newsock);
     newsock->remaddr = ((struct tdb_accept_ret *)tdin_buf)->addr_ip;
     newsock->remport = ((struct tdb_accept_ret *)tdin_buf)->addr_port;
     ret = ((struct tdb_accept_ret *)tdin_buf)->ret_value;

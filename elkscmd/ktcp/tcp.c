@@ -495,7 +495,7 @@ void tcp_process(struct iphdr_s *iph)
 	if (cb->rcv_nxt != ntohl(tcph->seqnum)) {
 	    int datalen = iptcp.tcplen - TCP_DATAOFF(iptcp.tcph);
 
-	    printf("tcp: dropping packet, bad seqno: need %ld got %ld size %d\n",
+	    debug_tune("tcp: dropping packet, bad seqno: need %ld got %ld size %d\n",
 		cb->rcv_nxt - cb->irs, ntohl(tcph->seqnum) - cb->irs, datalen);
 
 	    if (cb->rcv_nxt != ntohl(tcph->seqnum) + 1)

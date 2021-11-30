@@ -12,8 +12,8 @@
 #define DEBUG_TCPDATA	0	/* TCP data packets*/
 #define DEBUG_RETRANS	0	/* TCP retransmissions*/
 #define DEBUG_WINDOW	0	/* TCP window size*/
-#define DEBUG_ACCEPT	1	/* TCP accept*/
-#define DEBUG_CLOSE	1	/* TCP close ops*/
+#define DEBUG_ACCEPT	0	/* TCP accept*/
+#define DEBUG_CLOSE	0	/* TCP close ops*/
 #define DEBUG_IP	0
 #define DEBUG_ARP	0
 #define DEBUG_ETH	0
