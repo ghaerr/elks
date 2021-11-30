@@ -83,7 +83,7 @@ static void tcpdev_bind(void)
 	struct tcpcb_list_s *n2 = tcpcb_check_port(port);
 	if (n2) {			/* port already bound */
 	    if (!db->reuse_addr) {	/* no SO_REUSEADDR on socket */
-		printf("tcp: port %u already bound, rejecting (use SO_REUSEADDR?)\n", port);
+		debug_tune("tcp: port %u already bound, rejecting (use SO_REUSEADDR?)\n", port);
 reject:
 		tcpcb_remove(n);
 		retval_to_sock(db->sock, -EADDRINUSE);
@@ -297,7 +297,7 @@ static void tcpdev_read(void)
 	    debug_tcp("tcp: disconnecting after final read %d\n", data_avail);
 	    tcpdev_sock_state(cb, SS_DISCONNECTING);
 	} else {
-	    printf("tcp: application read too small after FIN, data_avail %d\n",
+	    debug_tcp("tcp: application read too small after FIN, data_avail %d\n",
 		cb->bytes_to_push);
 	    tcpdev_checkread(cb);		/* inform kernel of remaining data*/
 	}

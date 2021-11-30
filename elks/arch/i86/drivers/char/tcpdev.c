@@ -37,9 +37,7 @@ char tcpdev_inuse;
 
 char *get_tdout_buf(void)
 {
-    //printk("TCPDEV(%d) get_tdout down bufout_sem %d\n", current->pid, bufout_sem);
     down(&bufout_sem);
-    //printk("TCPDEV(%d) get_tdout GOT bufout_sem %d\n", current->pid, bufout_sem);
     return (char *)tdout_buf;
 }
 
@@ -53,7 +51,7 @@ static size_t tcpdev_read(struct inode *inode, struct file *filp, char *data,
 	    return -EAGAIN;
 	interruptible_sleep_on(&tcpdevq);
 	if (current->signal) {
-	    printk("TCPDEV(%d) read RESTARTSYS tdtail %d\n", current->pid, tdout_tail);
+	    debug_net("TCPDEV(%d) read RESTARTSYS tdtail %d\n", current->pid, tdout_tail);
 	    return -ERESTARTSYS;
 	}
     }
@@ -92,7 +90,6 @@ int tcpdev_inetwrite(void *data, unsigned int len)
 void tcpdev_clear_data_avail(void)
 {
     up(&bufin_sem);
-    //printk("TCPDEV(%d) clear data_avail bufin %d\n", current->pid, bufin_sem);
 }
 
 static size_t tcpdev_write(struct inode *inode, struct file *filp,
@@ -104,9 +101,7 @@ static size_t tcpdev_write(struct inode *inode, struct file *filp,
 	return -EINVAL;
     }
     if (len > 0) {
-	//printk("TCPDEV(%d) write: down bufin_sem %d\n", current->pid, bufin_sem);
 	down(&bufin_sem);
-	//printk("TCPDEV(%d) write: GOT bufin_sem %d\n", current->pid, bufin_sem);
 
 	tdin_tail = (unsigned) len;
 	memcpy_fromfs(tdin_buf, data, len);

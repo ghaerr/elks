@@ -158,7 +158,8 @@ void up(register sem_t *s)
 {
     if (++(*s) == 0)		/* Gone non-negative */
 	wake_up((void *) s);
-if (*s != 0) printk("kernel: sem up %x FAIL %d\n", s, *s);
+
+    if (*s != 0) debug_net("kernel: sem up %x FAIL %d\n", s, *s);
 }
 
 void down(register sem_t *s)
@@ -169,5 +170,6 @@ void down(register sem_t *s)
 
     /* Take it */
     --(*s);
-if (*s != -1) printk("kernel: sem down %x FAIL %d\n", s, *s);
+
+    if (*s != -1) debug_net("kernel: sem down %x FAIL %d\n", s, *s);
 }
