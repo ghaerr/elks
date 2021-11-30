@@ -28,7 +28,12 @@
 #define		TRUE		1
 #define		FALSE		0
 #define		FTP_PORT	21
-#define		PASV_PORT	49821;	/* 'random' port for passive connections */
+#define		PASV_PORT	49821U	/* 'random' port for passive connections */
+#define		BLOAT
+
+#ifndef MAXPATHLEN
+#define		MAXPATHLEN	256
+#endif
 
 #define		UC(b)		(((int) b) & 0xff)
 
@@ -72,8 +77,8 @@ enum {
 	CMD_CLOSE
 };
 
-//static long myaddr;
 static int debug = 0;
+static int qemu = 0;
 
 /* Trim leading and trailing whitespaces */
 void trim(char *str) {
@@ -139,7 +144,6 @@ int get_client_ip_port(char *str, char *client_ip, unsigned int *client_port){
 	x6 = atoi(n6);
 	*client_port = (256*x5)+x6;
 
-	if (debug) printf("client_ip: %s client_port: %u\n", client_ip, *client_port);
 	return 1;
 }
 
@@ -172,17 +176,12 @@ int setup_data_connection(char *client_ip, unsigned int client_port, int server_
 		if (sockwait++ > 10 || errno != EADDRINUSE) {
 			printf("Bind: Could not connect on port %d\n", server_port-1);
     			perror("bind error");
-    			//tempaddr.sin_port   = htons(some_other_port);
 			return -1;
 		} 
-		if (debug) printf(".");
 		sleep(1);
-		//server_port = 876; /* TESTING - 'random' (!!) #  below 1024 */
-    		//tempaddr.sin_port   = htons(server_port - sockwait);
 	}
-	if (debug) printf("\n");
 
-	//initiate data connection fd with client ip and client port             
+	/* initiate data connection fd with client ip and client port             */
 	bzero(&cliaddr, sizeof(cliaddr));
 
 	cliaddr.sin_family = AF_INET;
@@ -199,7 +198,7 @@ int setup_data_connection(char *client_ip, unsigned int client_port, int server_
 
 int get_filename(char *input, char *fileptr){
 
-    char *filename = NULL;
+	char *filename = NULL;
 
 	filename = strtok(input, " ");
 	filename = strtok(NULL, " \r\n");
@@ -232,6 +231,7 @@ int get_command(char *command){
 	else if (strncmp(command, "PWD", 3) == 0) {value = CMD_PWD;}
 	else if (strncmp(command, "CWD", 3) == 0) {value = CMD_CWD;}
 	else if (strncmp(command, "MKD", 3) == 0) {value = CMD_MKD;}
+	else if (strncmp(command, "RMD", 3) == 0) {value = CMD_RMD;}
 	else value = CMD_UNKNOWN;
 	return value;
 }
@@ -299,13 +299,13 @@ int do_list(int controlfd, int datafd, char *input) {
 		*iobuf = '\0';
 		while ((dp = readdir(dir)) != NULL) {
 			if (*dp->d_name != '.') {
-				//printf("%s\n", dp->d_name);
-				if (len + dp->d_namlen + 2 < IOBUFSIZ) {
+				if (len + dp->d_namlen + 3 < IOBUFSIZ) {
 					strcat(iobuf, dp->d_name);
 					strcat(iobuf, "\r\n");
 					len += dp->d_namlen +2;
 				} else {
 					write(datafd, iobuf, strlen(iobuf));
+					//if (debug) write(1, iobuf, strlen(iobuf));
 					len = 0;
 					bzero(iobuf, sizeof(iobuf));
 				}
@@ -313,8 +313,12 @@ int do_list(int controlfd, int datafd, char *input) {
 		}
 		if (len) {
 			write(datafd, iobuf, strlen(iobuf));
-			//printf("NLST <%s>\n", iobuf);
+			if (debug) {
+				printf("NLST <%s>\n", iobuf);
+				//write(1, iobuf, strlen(iobuf));
+			}
 		}
+		close(datafd);
 		closedir(dir); 
 		return 2;
 	}
@@ -327,7 +331,7 @@ int do_list(int controlfd, int datafd, char *input) {
     		write(controlfd, str, strlen(str));
         	return -1;
 	}
-	bzero(iobuf, IOBUFSIZ);
+	bzero(iobuf, sizeof(iobuf));
 //#define BUFFERED_DIR
 #ifndef BUFFERED_DIR
 	int status = 1;
@@ -336,7 +340,7 @@ int do_list(int controlfd, int datafd, char *input) {
 		iobuf[len-1] = '\r';    /* Fix FTP ASCII-style line endings */
 		iobuf[len++] = '\n';
 		if (write(datafd, iobuf, len) != len) {
-			printf("LIST: fd %d len%d\n", datafd, len);
+			printf("LIST: fd %d len %d\n", datafd, len);
 			perror("LIST: Data socket write error");
 			status = -1;
 			break;
@@ -375,7 +379,8 @@ int do_list(int controlfd, int datafd, char *input) {
 
 /* Passive mode: Server listens for incoming data connection */
 int do_pasv(int controlfd, int *datafd) {
-	int fd, i = 1, port = PASV_PORT;
+	int fd;
+	unsigned int i = 1, port = PASV_PORT;
 	struct sockaddr_in pasv;
 	char *p, *a;
 	char str[100], *pasv_err = "425 Can't open passive connection.\r\n";
@@ -389,12 +394,11 @@ int do_pasv(int controlfd, int *datafd) {
 	//if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &i, sizeof(i)) < 0) 
 		//perror("SO_REUSEADDR");
 	i = SO_LISTEN_BUFSIZ;
-	if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &i, sizeof(i)) < 0)
+	if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &i, sizeof(int)) < 0)
                 perror("SO_RCVBUF");
 
 	//bzero(&pasv, sizeof(pasv));
 	pasv.sin_family = AF_INET;
-	//pasv.sin_addr.s_addr = myaddr;
 	pasv.sin_addr.s_addr = htonl(INADDR_ANY);
 	pasv.sin_port = htons(port);
 	i = 0;
@@ -405,9 +409,15 @@ int do_pasv(int controlfd, int *datafd) {
 			if (debug) printf("Bind: Could not connect on port %u\n", port);
     			perror("bind error");
     			write(controlfd, pasv_err, strlen(pasv_err));
+			close(fd);
 			return -1;
 		} 
 		port++;
+		if (qemu) {
+			sleep(1);
+			//usleep(800);	/* Experimental */
+			if (port >= (PASV_PORT + 4)) port = PASV_PORT;
+		}
     		pasv.sin_port = htons(port);
 	}
 	i = sizeof(pasv);
@@ -422,13 +432,16 @@ int do_pasv(int controlfd, int *datafd) {
 		close(fd);
 		return -1;
 	}
+
 	a = (char *) &pasv.sin_addr;
-	//a = (char *) &myaddr;
 	p = (char *) &pasv.sin_port;
 	sprintf(str, "227 Entering Passive Mode (%d,%d,%d,%d,%d,%d)\r\n", UC(a[0]),
 		UC(a[1]), UC(a[2]), UC(a[3]), UC(p[0]), UC(p[1]));
+
+	if (qemu)
+		sprintf(str, "227 Entering Passive Mode (127,0,0,1,31,%u)\r\n", 105 + (port-PASV_PORT));
     	write(controlfd, str, strlen(str));
-	//if (debug) printf("%s", str);
+	if (debug) printf("%s", str);
 	i = sizeof(pasv);
 	if ((*datafd = accept(fd, (struct sockaddr *)&pasv, (unsigned int *)&i)) < 0 ) {
 		perror("accept error");	
@@ -436,8 +449,7 @@ int do_pasv(int controlfd, int *datafd) {
 		return -1;
 	}
 	close(fd);
-	printf("Accepted connection from %s/%u on fd %d\n", in_ntoa(pasv.sin_addr.s_addr), ntohs(pasv.sin_port), i);
-	//*datafd = i;
+	if (debug) printf("Accepted connection from %s/%u on fd %d\n", in_ntoa(pasv.sin_addr.s_addr), ntohs(pasv.sin_port), *datafd);
 
 	return 0;
 
@@ -452,7 +464,6 @@ int do_retr(int controlfd, int datafd, char *input){
 	bzero(cmd_buf, sizeof(cmd_buf));
 	bzero(iobuf, sizeof(iobuf));
 
-	/* FIXME - verify that the data connection is actually open */
 	if (get_filename(input, cmd_buf) > 0) {
 		trim(cmd_buf);
 		if (debug) printf("RETR: <%s> fd %d\n", cmd_buf, datafd);
@@ -492,12 +503,11 @@ int do_stor(int controlfd, int datafd, char *input) {
 
 	if (get_filename(input, cmd_buf) < 0) {
 		if (debug) printf("No file specified.\n");
-		str = "450 Requested file action not taken.\r\n";
+		str = "450 Requested action not taken - no file.\r\n";
     		write(controlfd, str, strlen(str));
 		return -1;
 	}
 
-	/* FIXME - verify that the data connection is actually open */
 	/* FIXME - need to query protection mode for the source file and use that */
 	//trim(cmd_buf);
 	if ((fp = open(cmd_buf, O_CREAT|O_RDWR, 0644)) < 1) {
@@ -538,7 +548,7 @@ int main(int argc, char **argv){
 	struct sockaddr_in servaddr;
 	pid_t pid;
 
-	if (argc > 2) {
+	if (argc > 2) {	/* FIXME - improve parameter checking */
 		usage();
 		exit(1);
 	}
@@ -548,8 +558,11 @@ int main(int argc, char **argv){
 		argv++;
 		if (*argv[0] == '-') 
 			if (argv[0][1] == 'd')
-				debug ++;
-			else
+				debug++;
+			else if (argv[0][1] == 'q') {
+				debug++;
+				qemu++;
+			} else
 				usage(), exit(-1);
 		else 
 			port = atoi(argv[0]);
@@ -581,7 +594,7 @@ int main(int argc, char **argv){
 		exit(2);
 	}
 
-	if (listen(listenfd, 3) < 0 ) {
+	if (listen(listenfd, 1) < 0 ) {
 		perror("Error in listen");
 		exit(3);
 	}
@@ -605,7 +618,7 @@ int main(int argc, char **argv){
 			perror("Accept error:");
 			break;
 		}
-		if (debug) printf("New Client Detected...\n");
+		if (debug) printf("Connnect from new Client.\n");
 		/* child process */
 		if((pid = fork()) == 0) {
 			close(listenfd);
@@ -613,14 +626,14 @@ int main(int argc, char **argv){
 			int datafd = -1, code, quit = FALSE;
 			unsigned int client_port = 0;
 			//char type = 'I';
-			char client_ip[50], command[256], namebuf[50];
-			char *str = "220 Welcome - ELKS minimal FTP server speaking.\n";
+			char client_ip[50], command[CMDBUFSIZ], namebuf[MAXPATHLEN];
+			char *str = "220 Welcome - ELKS minimal FTP server speaking.\r\n";
 			char *complete = "226 Transfer Complete.\r\n";
 
 			if (debug) printf("Child running - cmd chan is %d.\n", connfd);
 			write(connfd, str, strlen(str));
+
 			/* Do the standard housekeeping */
-			/* FIXME: this needs to go into the main command loop */
 			if (do_login(connfd) < 0) {
 				printf("Login failed, terminating session.\n");
 				break;
@@ -694,6 +707,7 @@ int main(int argc, char **argv){
 		    				write(connfd, complete, strlen(complete));
 					/* if there was an error, the error reply has already been sent, 
 					 * this does not make sense */
+					usleep(1000);	/* Experimental */
 					close(datafd);
 					datafd = -1;
 					break;
@@ -719,26 +733,54 @@ int main(int argc, char **argv){
 				case CMD_ABOR: /* ABORT FIXME */
 					break;
 
-				case CMD_SYST: /* SYST command */
+				case CMD_SYST: /* Identify ourselves */
 		    			str = "215 UNIX Type: L8 (Linux)\r\n";
 		    			write(connfd, str, strlen(str));
 					break;
 
-				case CMD_QUIT: /* QUIT, terminate loop */
-					quit = TRUE;
-		    			if (debug) printf("Quitting...\n");
-		    			str = "221 Goodbye.\n";
-		    			write(connfd, str, strlen(str));
-					if (datafd < 0) close(datafd);
-		    			close(connfd);
-					break;
-
 				case CMD_TYPE: 	/* ASCII or binary, ignored for now */
+						/* DIR is always ascii, files are always binary */
 					str = strtok(command, " ");
 					str = strtok(NULL, " ");
 					//type = *str;
 					str = "200 Command OK.\r\n";
 		    			write(connfd, str, strlen(str));
+					break;
+#ifdef BLOAT
+				case CMD_MKD:
+					bzero(namebuf, sizeof(namebuf));
+					if (get_filename(command, namebuf) < 0) {
+						str = "501 Syntax error - MKDIR needs parameter.\r\n";
+		    				write(connfd, str, strlen(str));
+					} else {
+						trim(namebuf);
+						if (mkdir(namebuf, 0755) < 0) {
+							if (debug) printf("Cannot create directory %s\n", namebuf);
+							str = "550 No action - DIR not created.\r\n";
+		    					write(connfd, str, strlen(str));
+						} else {
+							str = "250 MKDIR successful.\r\n";
+		    					write(connfd, str, strlen(str));
+						}
+					}
+					break;
+
+				case CMD_RMD:
+					bzero(namebuf, sizeof(namebuf));
+					if (get_filename(command, namebuf) < 0) {
+						str = "501 Syntax error - RMD needs parameter.\r\n";
+		    				write(connfd, str, strlen(str));
+					} else {
+						trim(namebuf);
+						if (rmdir(namebuf) < 0) {
+							if (debug) printf("Cannot delete %s\n", namebuf);
+							str = "550 No action - file not found.\r\n";
+		    					write(connfd, str, strlen(str));
+						} else {
+							str = "250 RMDIR successful.\r\n";
+		    					write(connfd, str, strlen(str));
+						}
+					}
 					break;
 
 				case CMD_DELE:
@@ -758,16 +800,15 @@ int main(int argc, char **argv){
 						}
 					}
 					break;
-
+#endif
 				case CMD_PWD:
-					str = getcwd(client_ip, 50); /* use client_ip as temp buffer */
-					sprintf(command, "257 \"%s\" is current directory.\r\n", client_ip);
+					str = getcwd(namebuf, MAXPATHLEN); 
+					sprintf(command, "257 \"%s\" is current directory.\r\n", str);
 		    			write(connfd, command, strlen(command));
 					break;
 
 				case CMD_CWD:
 					/* FIXME: if no arg, change back to home dir */
-					/* namebuf is only 50 bytes, check for overrun */
 					bzero(namebuf, sizeof(namebuf));
 					if (get_filename(command, namebuf) < 0) {
 						str = "501 Syntax error - CWD needs parameter.\r\n";
@@ -775,7 +816,7 @@ int main(int argc, char **argv){
 					} else {
 						trim(namebuf);
 						if (chdir(namebuf) < 0) {
-							if (debug) printf("Cannot change directory to %s\n", namebuf);
+							if (debug) printf("Cannot chdir to %s\n", namebuf);
 							str = "550 No action - directory not found.\r\n";
 		    					write(connfd, str, strlen(str));
 						} else {
@@ -785,8 +826,17 @@ int main(int argc, char **argv){
 					}
 					break;
 
+				case CMD_CLOSE:	/* Since login is outside the main loop, CLOSE means QUIT */
+				case CMD_QUIT:
+					quit = TRUE;
+		    			str = "221 Goodbye.\n";
+		    			write(connfd, str, strlen(str));
+					close(datafd);
+					break;
+
 				case CMD_UNKNOWN:
-					str = "503 Unknown command \r\n";
+				default:
+					str = "503 Unknown command.\r\n";
 		    			write(connfd, str, strlen(str));
 					break;
 				}
