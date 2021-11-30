@@ -107,7 +107,7 @@ static struct socket *sock_alloc(void)
 	return NULL;
 
     sock = &inode->u.socket_i;
-printk("sock_alloc %x\n", sock);
+    debug_tune("sock_alloc %x\n", sock);
 
     *sock = ini_sock;
 
@@ -305,7 +305,7 @@ static void sock_release(register struct socket *sock)
 
     sock->file = NULL;
     iput(SOCK_INODE(sock));
-printk("sock_free %x\n", sock);
+    debug_tune("sock_free %x\n", sock);
 }
 
 static void sock_close(register struct inode *inode, struct file *filp)
@@ -394,7 +394,7 @@ int sys_listen(int fd, int backlog)
     if (sock->state != SS_UNCONNECTED)
 	return -EINVAL;
 
-printk("NET(%d) sys_listen sock %x\n", current->pid, sock);
+    debug_tune("NET(%d) sys_listen sock %x\n", current->pid, sock);
     ops = sock->ops;
     if (ops && ops->listen)
 	ops->listen(sock, backlog);

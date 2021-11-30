@@ -58,7 +58,8 @@ int inet_process_tcpdev(register char *buf, int len)
     case TDT_AVAIL_DATA:
         down(&sock->sem);
         sock->avail_data = ((struct tdb_return_data *)buf)->ret_value;
-	debug_tune("INET(%d) sock %x avail %u bufin %d\n", current->pid, sock, sock->avail_data, bufin_sem);
+	debug_net("INET(%d) sock %x avail %u bufin %d\n",
+	    current->pid, sock, sock->avail_data, bufin_sem);
         up(&sock->sem);
         tcpdev_clear_data_avail();
         wake_up(sock->wait);
@@ -67,7 +68,8 @@ int inet_process_tcpdev(register char *buf, int len)
     case TDT_RETURN:
     case TDT_ACCEPT:
     case TDT_BIND:
-	debug_net("INET(%d) retval %d bufin %d\n", current->pid, ((struct tdb_return_data *)buf)->ret_value, bufin_sem);
+	debug_net("INET(%d) retval %d bufin %d\n",
+	    current->pid, ((struct tdb_return_data *)buf)->ret_value, bufin_sem);
         wake_up(sock->wait);
 	break;
     }
@@ -113,6 +115,7 @@ static int inet_bind(register struct socket *sock, struct sockaddr *addr,
     int ret;
 
     debug_net("INET(%d) bind sock %x\n", current->pid, sock);
+
     if (!sockaddr_len || sockaddr_len > sizeof(struct sockaddr_in))
         return -EINVAL;
 
@@ -122,7 +125,6 @@ static int inet_bind(register struct socket *sock, struct sockaddr *addr,
     cmd = (struct tdb_bind *)get_tdout_buf();
     cmd->cmd = TDC_BIND;
     cmd->sock = sock;
-
     cmd->reuse_addr = sock->flags & SF_REUSE_ADDR;
     cmd->rcv_bufsiz = sock->rcv_bufsiz;
     memcpy_fromfs(&cmd->addr, addr, sockaddr_len);
@@ -139,6 +141,7 @@ static int inet_bind(register struct socket *sock, struct sockaddr *addr,
     tcpdev_clear_data_avail();
     up(&rwlock);
 
+    debug_net("INET(%d) bind returns %d\n", current->pid, ret);
     return (ret >= 0 ? 0 : ret);
 }
 
@@ -193,6 +196,7 @@ static int inet_listen(register struct socket *sock, int backlog)
     int ret;
 
     debug("inet_listen(socket : 0x%x)\n", sock);
+    down(&rwlock);
     cmd = (struct tdb_listen *)get_tdout_buf();
     cmd->cmd = TDC_LISTEN;
     cmd->sock = sock;
@@ -206,6 +210,7 @@ static int inet_listen(register struct socket *sock, int backlog)
 
     ret = ((struct tdb_return_data *)tdin_buf)->ret_value;
     tcpdev_clear_data_avail();
+    up(&rwlock);
 
     return ret;
 }
@@ -215,7 +220,7 @@ static int inet_accept(register struct socket *sock, struct socket *newsock, int
     register struct tdb_accept *cmd;
     int ret;
 
-    printk("INET(%d) accept wait sock %x -> newsock %x\n", current->pid, sock, newsock);
+    debug_tune("INET(%d) accept wait sock %x newsock %x\n", current->pid, sock, newsock);
     cmd = (struct tdb_accept *)get_tdout_buf();
     cmd->cmd = TDC_ACCEPT;
     cmd->sock = sock;
@@ -230,13 +235,12 @@ static int inet_accept(register struct socket *sock, struct socket *newsock, int
         interruptible_sleep_on(sock->wait);
         //sock->flags &= ~SF_WAITDATA;
         if (current->signal) {
-	    debug_net("INET(%d) accept RESTARTSYS\n", current->pid);
-	    tcpdev_clear_data_avail();
+	    printk("INET(%d) accept RESTARTSYS bufin %d\n", current->pid, bufin_sem);
             return -ERESTARTSYS;
 	}
     }
 
-    printk("INET(%d) accepted sock %x -> newsock %x\n", current->pid, sock, newsock);
+    debug_tune("INET(%d) accepted sock %x newsock %x\n", current->pid, sock, newsock);
     newsock->remaddr = ((struct tdb_accept_ret *)tdin_buf)->addr_ip;
     newsock->remport = ((struct tdb_accept_ret *)tdin_buf)->addr_port;
     ret = ((struct tdb_accept_ret *)tdin_buf)->ret_value;
@@ -265,7 +269,10 @@ static int inet_read(register struct socket *sock, char *ubuf, int size,
 	/* return EOF on socket remote closed*/
 	if (sock->flags & SF_CLOSING)
 	    return 0;
-	debug_tune("INET(%d) read waiting on sock->avail_data sock %x buf_in %d\n", current->pid, sock, bufin_sem);
+
+	debug_net("INET(%d) read waiting on sock->avail_data sock %x buf_in %d\n",
+	    current->pid, sock, bufin_sem);
+
 	interruptible_sleep_on(sock->wait);
 	if (current->signal)
 	    return -EINTR;
@@ -279,22 +286,24 @@ static int inet_read(register struct socket *sock, char *ubuf, int size,
     cmd->nonblock = nonblock;
     tcpdev_inetwrite(cmd, sizeof(struct tdb_read));
 
-    debug_tune("INET(%d) read waiting on wait %x, bufin %d\n",
+    debug_net("INET(%d) read waiting on wait %x, bufin %d\n",
 	current->pid, sock->wait, bufin_sem);
+
     /* Sleep until tcpdev has news and we have a lock on the buffer */
     while (bufin_sem == 0) {
-	debug_tune("INET(%d) read WAIT sock %x bufin_sem\n", current->pid, sock);
+	debug_net("INET(%d) read WAIT sock %x bufin_sem\n", current->pid, sock);
         interruptible_sleep_on(sock->wait);
     }
-    debug_tune("INET(%d) read wait done bufin_sem %d\n", current->pid, bufin_sem);
+    debug_net("INET(%d) read wait done bufin_sem %d\n", current->pid, bufin_sem);
 
     down(&sock->sem);
 
     ret = ((struct tdb_return_data *)tdin_buf)->ret_value;
 
     if (ret > 0) {
-	debug_tune("INET(%d) READ %u ask %u avail %u\n",
+	debug_net("INET(%d) READ %u ask %u avail %u\n",
 	    current->pid, ret, size, sock->avail_data);
+
         memcpy_tofs(ubuf, &((struct tdb_return_data *)tdin_buf)->data,
 	    (size_t) ((struct tdb_return_data *)tdin_buf)->size);
         sock->avail_data = 0;
@@ -331,17 +340,17 @@ static int inet_write(register struct socket *sock, char *ubuf, int size,
 	cmd->cmd = TDC_WRITE;
 	cmd->sock = sock;
 	cmd->nonblock = nonblock;
-
         cmd->size = count > TDB_WRITE_MAX ? TDB_WRITE_MAX : count;
 
 	debug_net("INET(%d) WRITE %u\n", current->pid, cmd->size);
+
         memcpy_fromfs(cmd->data, ubuf, (size_t) cmd->size);
 	usize = cmd->size;
         tcpdev_inetwrite(cmd, sizeof(struct tdb_write));
 
 	/* Sleep until tcpdev has news and we have a lock on the buffer */
         while (bufin_sem == 0) {
-	    debug_net("INET(%d) write WAIT sock %x bufin_sem\n", current->pid, sock);
+	    debug_net("INET(%d) write WAIT sock %x\n", current->pid, sock);
             interruptible_sleep_on(sock->wait);
 	}
 	debug_net("INET(%d) write WAIT done bufin_sem %d\n", current->pid, bufin_sem);

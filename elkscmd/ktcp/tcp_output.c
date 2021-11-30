@@ -374,7 +374,7 @@ static int tcp_calc_rcv_window(struct tcpcb_s *cb)
     len = CB_BUF_SPACE(cb);
     if (len < minwindow)	/* FIXME this results in "shrinking the window" */
 	len = 0;
-    debug_tune("tcp output: len %d min sws %u space %u window %u\n",
+    debug_window("tcp output: len %d min sws %u space %u window %u\n",
 	cb->datalen, minwindow, CB_BUF_SPACE(cb), len);
 #else
     /*
@@ -387,7 +387,7 @@ static int tcp_calc_rcv_window(struct tcpcb_s *cb)
      */
     len = CB_BUF_SPACE(cb);
 
-    debug_tune("tcp output: len %d space %u window %u\n",
+    debug_window("tcp output: len %d space %u window %u\n",
 	cb->datalen, CB_BUF_SPACE(cb), len);
 #endif
 

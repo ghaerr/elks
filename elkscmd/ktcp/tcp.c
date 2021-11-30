@@ -189,7 +189,7 @@ static void tcp_listen(struct iptcp_s *iptcp, struct tcpcb_s *lcb)
     cb = &n->tcpcb;
     cb->unaccepted = 1;      		/* indicate new control block is unaccepted*/
     cb->newsock = lcb->sock;		/* temp hold listen socket in newsock*/
-printf("tcp listen: got SYN clone sock[%p]\n", cb->sock);
+    debug_accept("tcp listen: got SYN, cloning sock[%p]\n", cb->sock);
     /* now both listen CB and unaccepted CB have same sock pointer*/
 
     cb->seg_seq = ntohl(h->seqnum);
@@ -228,7 +228,7 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     __u16 datasize;
     __u8 *data;
 
-if (!cb->sock) { printf("tcp established: NULL SOCKET\n"); }
+if (!cb->sock) { debug_accept("tcp established: NULL SOCKET\n"); }
 
     h = iptcp->tcph;
 
@@ -237,7 +237,7 @@ if (!cb->sock) { printf("tcp established: NULL SOCKET\n"); }
     datasize = iptcp->tcplen - TCP_DATAOFF(h);
 
     if (datasize != 0) {
-	debug_tune("tcp: recv data len %u avail %u\n", datasize, CB_BUF_SPACE(cb));
+	debug_window("tcp: recv data len %u avail %u\n", datasize, CB_BUF_SPACE(cb));
 	/* Process the data */
 	data = (__u8 *)h + TCP_DATAOFF(h);
 
@@ -297,7 +297,7 @@ if (!cb->sock) { printf("tcp established: NULL SOCKET\n"); }
 	return; /* ACK with no data received - so don't answer*/
 
     cb->rcv_nxt += datasize;
-    debug_tune("tcp: ACK seq %ld len %d\n", cb->rcv_nxt - cb->irs, datasize);
+    debug_window("tcp: ACK seq %ld len %d\n", cb->rcv_nxt - cb->irs, datasize);
     tcp_send_ack(cb);
 }
 
