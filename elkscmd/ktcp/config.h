@@ -11,6 +11,8 @@
 #define DEBUG_TUNE	1	/* tuning options*/
 #define DEBUG_TCPDATA	0	/* TCP data packets*/
 #define DEBUG_RETRANS	0	/* TCP retransmissions*/
+#define DEBUG_WINDOW	0	/* TCP window size*/
+#define DEBUG_ACCEPT	1	/* TCP accept*/
 #define DEBUG_CLOSE	1	/* TCP close ops*/
 #define DEBUG_IP	0
 #define DEBUG_ARP	0
@@ -52,6 +54,18 @@ void dprintf(const char *, ...);
 #define debug_retrans	DPRINTF
 #else
 #define debug_retrans(...)
+#endif
+
+#if DEBUG_WINDOW
+#define debug_window	DPRINTF
+#else
+#define debug_window(...)
+#endif
+
+#if DEBUG_ACCEPT
+#define debug_accept	DPRINTF
+#else
+#define debug_accept(...)
 #endif
 
 #if DEBUG_CLOSE

@@ -131,23 +131,28 @@ static void tcpdev_accept(void)
     }
     cb = &n->tcpcb;
     newn = tcpcb_find_unaccepted(sock);
-    if (!newn) {
+    if (!newn) {			/* SYN not yet received by listen*/
 	if (db->nonblock)
 	    retval_to_sock(db->sock,-EAGAIN);
 	else
-	    cb->newsock = db->newsock;
+	    cb->newsock = db->newsock;	/* save new sock in listen CB for later*/
+	debug_accept("tcp accept: WAIT (on SYN) sock[%p] saving newsock[%p]\n", sock, db->newsock);
 	return;
     }
 
-    cb = &newn->tcpcb;
-    cb->unaccepted = 0;
+    /* SYN already received by listen*/
+    cb = &newn->tcpcb;			/* get accepted CB*/
 
+    debug_accept("tcpdev accept: ACCEPT (SYN received before accept) sock[%p], using newsock[%p]\n", sock, db->newsock);
+
+    cb->unaccepted = 0;
     cb->sock = db->newsock;
-    cb->newsock = 0;
+    cb->newsock = 0;			/* clear newsock in accepted CB*/
+    n->tcpcb.newsock = 0;		/* clear newsock in listen CB*/
 
     accept_ret.type = TDT_ACCEPT;
     accept_ret.ret_value = 0;
-    accept_ret.sock = sock;
+    accept_ret.sock = sock;		/* report back listen socket*/
     accept_ret.addr_ip = cb->remaddr;
     accept_ret.addr_port = htons(cb->remport);
     write(tcpdevfd, &accept_ret, sizeof(accept_ret));
@@ -162,19 +167,31 @@ void tcpdev_checkaccept(struct tcpcb_s *cb)
     debug_tcpdev("tcpdev_checkaccept\n");
     if (!cb->unaccepted)
 	return;
-    if (!(lp = tcpcb_find_by_sock(cb->newsock)))
+    debug_accept("tcpdev checkaccept: sock[%p] searching for newsock[%p]\n",
+	cb->sock, cb->newsock);
+    if (!(lp = tcpcb_find_by_sock(cb->newsock))) /* search listen CB socket*/
 	return;
+
+    /* SYN occured before accept sys call*/
     listencb = &lp->tcpcb;
+    debug_accept("tcpdev checkaccept: found listen socket[%p] newsocket[%p]\n",
+	listencb->sock, listencb->newsock);
+
+    if (!listencb->newsock)
+	return;				/* wait for sys accept as newsock not set yet*/
 
     accept_ret.type = TDT_ACCEPT;
     accept_ret.ret_value = 0;
-    accept_ret.sock = cb->sock;
+    accept_ret.sock = listencb->sock;	/* report back listen socket*/
     accept_ret.addr_ip = cb->remaddr;
     accept_ret.addr_port = htons(cb->remport);
 
-    cb->sock = listencb->newsock;
+    debug_accept("tcpdev checkaccept: ACCEPT (SYN received before accept) sock[%p] newsock[%p]\n", listencb->sock, listencb->newsock);
+
     cb->unaccepted = 0;
+    cb->sock = listencb->newsock;
     listencb->newsock = 0;
+
     write(tcpdevfd, &accept_ret, sizeof(accept_ret));
 }
 
@@ -214,6 +231,8 @@ static void tcpdev_listen(void)
 	retval_to_sock(db->sock,-EINVAL);
 	return;
     }
+
+    debug_accept("tcp listen: port %u sock[%p]\n", n->tcpcb.localport, db->sock);
     n->tcpcb.state = TS_LISTEN;
     n->tcpcb.newsock = 0;
     retval_to_sock(db->sock, 0);
@@ -243,7 +262,7 @@ static void tcpdev_read(void)
     }
 
     data_avail = cb->bytes_to_push;
-    //debug_tune("tcpdev_read %u bytes avail %u\n", db->size, data_avail);
+    //debug_window("tcpdev_read %u bytes avail %u\n", db->size, data_avail);
 
     if (data_avail == 0) {
 	if (cb->state == TS_CLOSE_WAIT) {
@@ -288,7 +307,7 @@ static void tcpdev_read(void)
     /* send ACK to restart server should window have been full (unless it's netstat)*/
     if (cb->remport != NETCONF_PORT || cb->remaddr != 0)
 	if (cb->remport != local_ip) {	/* no ack to localhost either*/
-	    debug_tune("tcp: extra ACK seq %ld, app read %d bytes\n",
+	    debug_window("tcp: extra ACK seq %ld, app read %d bytes\n",
 		cb->rcv_nxt - cb->irs, data_avail);
 	    tcp_send_ack(cb);
 	}
