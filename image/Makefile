@@ -43,9 +43,9 @@ compress:
 
 images: images-minix images-mbr images-fat
 
-images-minix: fd360-minix fd720-minix fd1440-minix fd2880-minix hd32-minix
+images-minix: fd360-minix fd720-minix fd1200-minix fd1440-minix fd2880-minix hd32-minix
 
-images-fat: fd360-fat fd720-fat fd1440-fat fd2880-fat hd32-fat hd32mbr-fat
+images-fat: fd360-fat fd720-fat fd1200-fat fd1440-fat fd2880-fat hd32-fat hd32mbr-fat
 
 images-mbr: hd32-minix hd32mbr-minix
 
@@ -65,6 +65,15 @@ fd720-minix:
 	echo CONFIG_IMG_DEV=y		>> Config
 	echo CONFIG_IMG_BOOT=y		>> Config
 	$(MAKE) -f Make.image "CONFIG=$(TOPDIR)/image/Config" NAME=fd720-minix
+	rm Config
+
+fd1200-minix:
+	echo CONFIG_APPS_720K=y		> Config
+	echo CONFIG_IMG_FD1200=y	>> Config
+	echo CONFIG_IMG_MINIX=y		>> Config
+	echo CONFIG_IMG_DEV=y		>> Config
+	echo CONFIG_IMG_BOOT=y		>> Config
+	$(MAKE) -f Make.image "CONFIG=$(TOPDIR)/image/Config" NAME=fd1200-minix
 	rm Config
 
 fd1440-minix:
@@ -114,6 +123,15 @@ fd720-fat:
 	echo CONFIG_IMG_DEV=y		>> Config
 	echo CONFIG_IMG_BOOT=y		>> Config
 	$(MAKE) -f Make.image "CONFIG=$(TOPDIR)/image/Config" NAME=fd720-fat
+	rm Config
+
+fd1200-fat:
+	echo CONFIG_APPS_720K=y		> Config
+	echo CONFIG_IMG_FD1200=y	>> Config
+	echo CONFIG_IMG_FAT=y		>> Config
+	echo CONFIG_IMG_DEV=y		>> Config
+	echo CONFIG_IMG_BOOT=y		>> Config
+	$(MAKE) -f Make.image "CONFIG=$(TOPDIR)/image/Config" NAME=fd1200-fat
 	rm Config
 
 fd1440-fat:
