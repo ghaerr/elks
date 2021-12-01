@@ -460,7 +460,7 @@ void tcp_process(struct iphdr_s *iph)
     }
 
     if (!cbnode) {
-	printf("tcp: refusing packet %s:%u->%d\n", in_ntoa(iph->saddr),
+	printf("tcp: refusing packet from %s:%u to :%u\n", in_ntoa(iph->saddr),
 		ntohs(tcph->sport), ntohs(tcph->dport));
 
 	if (tcph->flags & TF_RST)

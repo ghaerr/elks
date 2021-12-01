@@ -391,8 +391,8 @@ int do_pasv(int controlfd, int *datafd) {
 		return -1;
 	}
 
-	//if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &i, sizeof(i)) < 0) 
-		//perror("SO_REUSEADDR");
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &i, sizeof(i)) < 0)
+		perror("SO_REUSEADDR");
 	i = SO_LISTEN_BUFSIZ;
 	if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &i, sizeof(int)) < 0)
                 perror("SO_RCVBUF");
@@ -414,9 +414,9 @@ int do_pasv(int controlfd, int *datafd) {
 		} 
 		port++;
 		if (qemu) {
-			sleep(1);
+			//sleep(1);
 			//usleep(800);	/* Experimental */
-			if (port >= (PASV_PORT + 4)) port = PASV_PORT;
+			if (port >= (PASV_PORT + 8)) port = PASV_PORT;
 		}
     		pasv.sin_port = htons(port);
 	}
@@ -598,7 +598,7 @@ int main(int argc, char **argv){
 		perror("Error in listen");
 		exit(3);
 	}
-	if (!debug) {
+	if (debug < 2) {
 		/* become daemon, debug output on 1 and 2*/
 		if ((ret = fork()) == -1) {
 			fprintf(stderr, "ftpd: Can't fork to become daemon\n");
