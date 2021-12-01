@@ -55,7 +55,7 @@ KEYBOARD=
 #SERIAL="-chardev msmouse,id=chardev1 -device isa-serial,chardev=chardev1,id=serial1"
 
 # Uncomment this to route ELKS /dev/ttyS0 to host terminal
-#CONSOLE="-serial stdio"
+CONSOLE="-serial stdio"
 # Hides qemu window also
 #CONSOLE="-serial stdio -nographic"
 
@@ -67,8 +67,22 @@ KEYBOARD=
 # Incoming http forwarding: example: connect to ELKS httpd with 'http://localhost:8080'
 # HOSTFWD="-net user,hostfwd=tcp:127.0.0.1:8080-10.0.2.15:80"
 
-# Simultaneous telnet and http forwarding
-FWD="hostfwd=tcp:127.0.0.1:8080-10.0.2.15:80,hostfwd=tcp:127.0.0.1:2323-10.0.2.15:23"
+# Simultaneous telnet, http and ftp forwarding
+FWD="\
+hostfwd=tcp:127.0.0.1:8080-10.0.2.15:80,\
+hostfwd=tcp:127.0.0.1:2323-10.0.2.15:23,\
+hostfwd=tcp::8020-:20,\
+hostfwd=tcp::8021-:21,\
+hostfwd=tcp::8041-:49821,\
+hostfwd=tcp::8042-:49822,\
+hostfwd=tcp::8043-:49823,\
+hostfwd=tcp::8044-:49824,\
+hostfwd=tcp::8045-:49825,\
+hostfwd=tcp::8046-:49826,\
+hostfwd=tcp::8047-:49827,\
+hostfwd=tcp::8048-:49828,\
+hostfwd=tcp::8049-:49829"
+
 # new style
 #NET="-net nic,model=ne2k_isa -net user,$FWD"
 # old style, with configurable interrupt line

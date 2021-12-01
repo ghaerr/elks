@@ -29,6 +29,7 @@
 #define		FALSE		0
 #define		FTP_PORT	21
 #define		PASV_PORT	49821U	/* 'random' port for passive connections */
+#define		QEMU_PORT	8041U	/* outside port for QEMU */
 #define		BLOAT
 
 #ifndef MAXPATHLEN
@@ -391,13 +392,12 @@ int do_pasv(int controlfd, int *datafd) {
 		return -1;
 	}
 
-	//if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &i, sizeof(i)) < 0) 
-		//perror("SO_REUSEADDR");
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &i, sizeof(i)) < 0)
+		perror("SO_REUSEADDR");
 	i = SO_LISTEN_BUFSIZ;
 	if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &i, sizeof(int)) < 0)
                 perror("SO_RCVBUF");
 
-	//bzero(&pasv, sizeof(pasv));
 	pasv.sin_family = AF_INET;
 	pasv.sin_addr.s_addr = htonl(INADDR_ANY);
 	pasv.sin_port = htons(port);
@@ -414,9 +414,7 @@ int do_pasv(int controlfd, int *datafd) {
 		} 
 		port++;
 		if (qemu) {
-			sleep(1);
-			//usleep(800);	/* Experimental */
-			if (port >= (PASV_PORT + 4)) port = PASV_PORT;
+			if (port >= (PASV_PORT + 9)) port = PASV_PORT;
 		}
     		pasv.sin_port = htons(port);
 	}
@@ -438,8 +436,11 @@ int do_pasv(int controlfd, int *datafd) {
 	sprintf(str, "227 Entering Passive Mode (%d,%d,%d,%d,%d,%d)\r\n", UC(a[0]),
 		UC(a[1]), UC(a[2]), UC(a[3]), UC(p[0]), UC(p[1]));
 
-	if (qemu)
-		sprintf(str, "227 Entering Passive Mode (127,0,0,1,31,%u)\r\n", 105 + (port-PASV_PORT));
+	if (qemu) {
+		unsigned int qport = QEMU_PORT + port - PASV_PORT;
+		sprintf(str, "227 Entering Passive Mode (127,0,0,1,%u,%u)\r\n",
+			htons(qport)&0xff, htons(qport)>>8);
+	}
     	write(controlfd, str, strlen(str));
 	if (debug) printf("%s", str);
 	i = sizeof(pasv);
@@ -598,7 +599,7 @@ int main(int argc, char **argv){
 		perror("Error in listen");
 		exit(3);
 	}
-	if (!debug) {
+	if (debug < 2) {
 		/* become daemon, debug output on 1 and 2*/
 		if ((ret = fork()) == -1) {
 			fprintf(stderr, "ftpd: Can't fork to become daemon\n");
