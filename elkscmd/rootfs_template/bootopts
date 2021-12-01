@@ -1,8 +1,8 @@
 ##
 #console=ttyS0 debug net=eth 3
-#ftpd=-q
+#ftpd=-q net=eth
 #init=/bin/init 3 n	# multiuser serial no sysinit
 #init=/bin/sh		# singleuser shell
 #console=ttyS0,19200	# serial console
-#root=hda1 ro	# hd partition 1, read-only root
-#netirq=9 netport=0x300	# NIC parms
+#root=hda1 ro		# hd part 1, read-only root
+#netirq=9 netport=0x300
