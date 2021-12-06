@@ -1,3 +1,10 @@
 export PATH=/bin
 # change for localtime
 export TZ=GMT0
+# export TZ=JST-9
+
+# use clock -u -s if RTC is UTC
+# use clock -s if RTC is localtime
+clock -s
+
+date
