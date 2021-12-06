@@ -429,8 +429,10 @@ int main(int argc, char **argv)
       if (!universal) {
           struct timezone tz;
 
-          gettimeofday(NULL, &tz);
-          systime += tz.tz_minuteswest * 60L;
+          //gettimeofday(NULL, &tz);
+          tzset();
+          //systime += tz.tz_minuteswest * 60L;
+          systime += timezone;
       }
 #if 0
 /*
