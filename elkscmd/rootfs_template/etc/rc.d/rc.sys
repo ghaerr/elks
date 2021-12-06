@@ -8,7 +8,7 @@ umask 022
 export PATH=/bin
 
 # init date from hardware
-clock -s
+#clock -s
 
 check_filesystem()
 {
@@ -65,4 +65,4 @@ then
     cat /etc/motd
 fi
 
-date
+#date
