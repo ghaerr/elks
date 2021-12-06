@@ -371,7 +371,7 @@ int main(int argc, char **argv)
 #if ELKS
       /* system time is offset by TZ variable for now, localtime handled in C library*/
       tz.tz_minuteswest = 0;
-      tz.tz_dsttime = 0;
+      tz.tz_dsttime = DST_NONE;
 #else
       tz.tz_minuteswest = timezone / 60;
       tz.tz_dsttime = daylight;
@@ -395,7 +395,7 @@ int main(int argc, char **argv)
       else
 	tmp = localtime (&systime);
 
-      asm("cli \n");
+      clr_irq();
       save_control = cmos_read (11);   /* tell the clock it's being set */
       cmos_write (11, (save_control | 0x80));
       save_freq_select = cmos_read (10);       /* stop and reset prescaler */
@@ -411,7 +411,7 @@ int main(int argc, char **argv)
 
       cmos_write (10, save_freq_select);
       cmos_write (11, save_control);
-      asm("sti \n");
+      set_irq();
     }
   return 0;
 }
