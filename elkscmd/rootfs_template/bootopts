@@ -1,10 +1,12 @@
-##
-#console=ttyS0 debug net=eth 3
-#ftpd=-q net=eth
-#HOSTNAME=elks
-#TZ=MDT7
-#init=/bin/init 3 n	# muser serial no sysinit
-#init=/bin/sh		# suser shell
-#console=ttyS0,19200	# ser console
-#root=hda1 ro		# hd part 1, read-only root
-#netirq=9 netport=0x300
+## boot options max size 511 bytes
+#console=ttyS0 debug net=eth 3 # serial console, multiuser, networking
+#TZ=MDT7		# timezone
+#ftpd=-q net=eth	# ftpd on qemu
+#HOSTNAME=elks1	 	# set network IP from /etc/hosts
+#GATEWAY=10.0.2.2
+#NETMASK=255.255.255.0
+#netirq=9 netport=0x300 # NIC
+#init=/bin/init 3 n	# multiuser serial no /etc/rc.d/rc.sys
+#init=/bin/sh		# singleuser shell
+#console=ttyS0,19200	# serial console
+#root=hda1 ro		# root hd partition 1, read-only
