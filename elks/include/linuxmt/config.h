@@ -95,16 +95,17 @@
 #define SETUP_DATA	REL_INITSEG
 
 /* Define segment locations of low memory, must not overlap */
-#define DEF_OPTSEG	0x50  /* 0x100 bytes boot options*/
-#define REL_INITSEG	0x60  /* 0x200 bytes setup data */
-#define DMASEG		0x80  /* 0x400 bytes floppy sector buffer */
+#define DEF_OPTSEG	0x50  /* 0x200 bytes boot options*/
+#define OPTSEGSZ 0x200    /* max size of /bootopts file (1K max) */
+#define REL_INITSEG	0x70  /* 0x200 bytes setup data */
+#define DMASEG		0x90  /* 0x400 bytes floppy sector buffer */
 
 #ifdef CONFIG_TRACK_CACHE     /* floppy track buffer in low mem */
 #define DMASEGSZ 0x2400	      /* SECTOR_SIZE * 18 (9216) */
-#define REL_SYSSEG	0x2C0 /* kernel code segment */
+#define REL_SYSSEG	0x2D0 /* kernel code segment */
 #else
 #define DMASEGSZ 0x0400	      /* BLOCK_SIZE (1024) */
-#define REL_SYSSEG	0x0C0 /* kernel code segment */
+#define REL_SYSSEG	0x0D0 /* kernel code segment */
 #endif
 
 #endif /* !CONFIG_ROMCODE */

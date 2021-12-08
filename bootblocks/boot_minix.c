@@ -5,12 +5,13 @@
 // Sector 2 : boot loader
 //------------------------------------------------------------------------------
 
+#include "linuxmt/config.h"
 #include "minix.h"
 
 // Global constants
 
-#define LOADSEG 0x0100
-#define OPTSEG	0x0050		// bootopts copied here
+#define LOADSEG DEF_INITSEG
+#define OPTSEG	DEF_OPTSEG             // bootopts copied here
 
 // Global variables
 

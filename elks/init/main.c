@@ -43,7 +43,7 @@ static char *argv_init[80] = { NULL, bininit, NULL };
 #if ENV
 static char *envp_init[MAX_INIT_ENVS+1];
 #endif
-static unsigned char options[256];
+static unsigned char options[OPTSEGSZ];
 
 extern int boot_rootdev;
 extern int dprintk_on;
@@ -118,7 +118,7 @@ void INITPROC kernel_init(void)
 #ifdef CONFIG_BOOTOPTS
     if (opts)
 	finalize_options();
-    else printk("/bootopts IGNORED: header not ## or size > 255\n");
+    else printk("/bootopts IGNORED: header not ## or size > %d\n", OPTSEGSZ-1);
 #endif
 
     mm_stat(base, end);
@@ -244,8 +244,8 @@ static int INITPROC parse_options(void)
 	/* copy /bootops loaded by boot loader at 0050:0000*/
 	fmemcpyb(options, kernel_ds, 0, DEF_OPTSEG, sizeof(options));
 
-	/* check file starts with ## and max len 255 bytes*/
-	if (*(unsigned short *)options != 0x2323 || options[255])
+	/* check file starts with ## and max len 511 bytes*/
+	if (*(unsigned short *)options != 0x2323 || options[OPTSEGSZ-1])
 		return 0;
 #if DEBUG
 	printk("/bootopts: %s", &options[3]);
