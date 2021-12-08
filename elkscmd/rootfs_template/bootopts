@@ -1,8 +1,10 @@
 ##
 #console=ttyS0 debug net=eth 3
 #ftpd=-q net=eth
-#init=/bin/init 3 n	# multiuser serial no sysinit
-#init=/bin/sh		# singleuser shell
-#console=ttyS0,19200	# serial console
+#HOSTNAME=elks
+#TZ=MDT7
+#init=/bin/init 3 n	# muser serial no sysinit
+#init=/bin/sh		# suser shell
+#console=ttyS0,19200	# ser console
 #root=hda1 ro		# hd part 1, read-only root
 #netirq=9 netport=0x300
