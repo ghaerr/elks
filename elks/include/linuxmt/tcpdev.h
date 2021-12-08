@@ -13,7 +13,7 @@
 /* should be equal to PTYOUTQ_SIZE and telnetd buffer size*/
 #define	TDB_WRITE_MAX		512	/* max data in tdb_write packet to ktcp*/
 
-#define TCPDEV_INBUFFERSIZE	1024
+#define TCPDEV_INBUFFERSIZE	1500	/* max data writable to tcpdev from ktcp*/
 #define TCPDEV_OUTBUFFERSIZE	(TDB_WRITE_MAX + sizeof(struct tdb_write))
 
 #define TCPDEV_MAXREAD TCPDEV_INBUFFERSIZE - sizeof(struct tdb_return_data)
@@ -29,6 +29,7 @@
 struct tdb_release {
     unsigned char cmd;
     struct socket *sock;
+    int reset;
 };
 
 struct tdb_accept {
@@ -47,6 +48,8 @@ struct tdb_listen {
 struct tdb_bind {
     unsigned char cmd;
     struct socket *sock;
+    int reuse_addr;
+    int rcv_bufsiz;
     struct sockaddr_in addr;
 };
 
@@ -75,6 +78,7 @@ struct tdb_write {
 #define	TDT_CHG_STATE	2
 #define	TDT_AVAIL_DATA	3
 #define TDT_ACCEPT	4
+#define TDT_BIND	5
 
 struct tdb_return_data {
     char type;
@@ -85,6 +89,14 @@ struct tdb_return_data {
 };
 
 struct tdb_accept_ret {
+    char type;
+    int ret_value;
+    struct socket *sock;
+    __u32 addr_ip;
+    __u16 addr_port;
+};
+
+struct tdb_bind_ret {
     char type;
     int ret_value;
     struct socket *sock;

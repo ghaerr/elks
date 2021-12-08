@@ -6,11 +6,10 @@
 #include <time.h>
 #include <sys/time.h>
 #include <string.h>
-#ifdef __ia16__
 #include <arch/irq.h>
 #include <arch/io.h>
-#endif
 
+#define ELKS 1
 
 /* V1.0
  * CMOS clock manipulation - Charles Hedrick, hedrick@cs.rutgers.edu, Apr 1992
@@ -137,9 +136,11 @@
  * I had to remove the code that waits for the falling edge
  * of the update flag -- it never seems to actually happen!
  * And since the long code is so slow, the program just locks.
+ *
+ * v1.6 Work with RTC localtime as well as UTC
  */
 
-#define VERSION "1.5.ELKS"
+#define VERSION "1.6"
 
 /* Globals */
 int readit = 0;
@@ -158,49 +159,6 @@ int usage(void)
     exit(1);
 }
 
-#ifdef __BCC__
-#asm
-_inb:
-    push bp
-    mov bp, sp
-    push dx
-    xor ax, ax
-    mov dx, 4[bp]
-    in al, dx
-    pop dx
-    pop bp
-    ret
-#endasm
-
-#asm
-_outb:
-    push bp
-    mov bp, sp
-    push ax
-    push dx
-    xor ax, ax
-    mov al, 4[bp]
-    mov dx, 6[bp]
-    out dx, al
-    pop dx
-    pop ax
-    pop bp
-    ret
-#endasm
-
-#asm
-_clr_irq:
-    cli
-    ret
-#endasm
-
-#asm
-_set_irq:
-    sti
-    ret
-#endasm
-#endif
-
 unsigned char cmos_read(unsigned char reg)
 {
   register unsigned char ret;
@@ -211,9 +169,7 @@ unsigned char cmos_read(unsigned char reg)
   return ret;
 }
 
-void cmos_write(reg, val)
-unsigned char reg;
-unsigned char val;
+void cmos_write(unsigned char reg, unsigned char val)
 {
   clr_irq ();
   outb_p (reg | 0x80, 0x70);
@@ -221,9 +177,7 @@ unsigned char val;
   set_irq ();
 }
 
-
-int cmos_read_bcd (addr)
-int addr;
+int cmos_read_bcd (int addr)
 {
   int b;
   b = cmos_read (addr);
@@ -273,8 +227,7 @@ int hex_bcd(int hex_data)
 /*    doesn't check boundary conditions */
 /*    doesn't set wday or yday */
 /*    doesn't return the local time */
-time_t utc_mktime(t)
-struct tm *t;
+time_t utc_mktime(struct tm *t)
 {
     static int mday[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
     int year_ofs;
@@ -318,10 +271,7 @@ int main(int argc, char **argv)
 {
   struct tm tm;
   time_t systime;
-  time_t last_time;
   int arg;
-  double factor;
-  double not_adjusted;
   unsigned char save_control, save_freq_select;
 
 #ifdef CONFIG_ARCH_PC98
@@ -367,22 +317,6 @@ int main(int argc, char **argv)
 
   if (readit || setit)
     {
-#if 0
-      long i;
-
-/* read RTC exactly on falling edge of update flag */
-/* Wait for rise.... (may take upto 1 second) */
-
-      for (i = 0; i < 10000000L; i++)
-	if (cmos_read (10) & 0x80)
-	  break;
-
-/* Wait for fall.... (must try at least 2.228 ms) */
-
-      for (i = 0; i < 1000000L; i++)
-	if (!(cmos_read (10) & 0x80))
-	  break;
-#endif /* 0 */
 
 #ifdef CONFIG_ARCH_PC98
       read_calendar(tm_seg, tm_offset);
@@ -422,17 +356,18 @@ int main(int argc, char **argv)
     {
 /*
  * utc_mktime() assumes we're in Greenwich, England.  If the CMOS
- * clock isn't in GMT, we need to adjust.  We'll just use the
- * time zone information returned in gettimeofday().
+ * clock isn't in GMT, we need to adjust.
  */
       systime = utc_mktime(&tm);
       if (!universal) {
-          struct timezone tz;
-
-          //gettimeofday(NULL, &tz);
-          tzset();
-          //systime += tz.tz_minuteswest * 60L;
+#if ELKS
+          tzset();			/* read TZ= env string and set timezone var */
           systime += timezone;
+#else
+          struct timezone tz;
+          gettimeofday(NULL, &tz);
+          systime += tz.tz_minuteswest * 60L;
+#endif
       }
 #if 0
 /*
@@ -490,24 +425,24 @@ int main(int argc, char **argv)
 	  exit (2);
 	}
 
-#ifndef KEEP_OFF
       tv.tv_sec = systime;
       tv.tv_usec = 0;
-#if 0
+#if ELKS
+      /* system time is offset by TZ variable for now, localtime handled in C library*/
+      tz.tz_minuteswest = 0;
+      tz.tz_dsttime = DST_NONE;
+#else
       tz.tz_minuteswest = timezone / 60;
       tz.tz_dsttime = daylight;
+#endif
 
       if (settimeofday (&tv, &tz) != 0)
-#else
-      if (settimeofday (&tv, NULL) != 0)
-#endif
         {
 	  fprintf (stderr,
 		   "Unable to set time -- probably you are not root\n");
 	  exit (1);
 	}
 
-#endif
     }
 
   if (writeit)
@@ -519,15 +454,8 @@ int main(int argc, char **argv)
       else
 	tmp = localtime (&systime);
 
-#ifndef KEEP_OFF
-#ifdef __BCC__
-#asm
-      cli
-#endasm
-#endif
-#ifdef __ia16__
-  asm("cli \n");
-#endif
+      clr_irq();
+
 #ifdef CONFIG_ARCH_PC98
       timebuf[5] = hex_bcd(tmp->tm_sec);
       timebuf[4] = hex_bcd(tmp->tm_min);
@@ -558,15 +486,7 @@ int main(int argc, char **argv)
       cmos_write (10, save_freq_select);
       cmos_write (11, save_control);
 #endif
-#ifdef __BCC__
-#asm
-      sti
-#endasm
-#endif
-#ifdef __ia16__
-   asm("sti \n");
-#endif
-#endif
+      set_irq();
     }
-  exit (0);
+  return 0;
 }

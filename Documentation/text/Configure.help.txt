@@ -682,9 +682,18 @@ CONFIG_SOCK_CLIENTONLY
 
   If you are not sure just say NO.
 
-Support SiBO Solid State Disks
-CONFIG_BLK_DEV_SSD
-  Say "y" here to include support for SiBO solid state disks.
+No support for solid state disks.
+CONFIG_BLK_DEV_SSD_NONE
+  No support for solid state disks.
+
+SSD memory-mapped ssd disk
+CONFIG_BLK_DEV_SSD_TEST
+  Select this driver to use a memory mapped ssd disk.
+
+8018X bit-banged SPI low-level SD driver
+CONFIG_BLK_DEV_SSD_SD8018X
+  Select this driver if you have an 8018x CPU and you have some GPIO lines
+  available for a bit-banged SPI driver that can be used with the ssd SD card driver.
 
 #############################################################################
 

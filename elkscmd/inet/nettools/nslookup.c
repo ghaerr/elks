@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
   memset(&addr, 0, sizeof(addr));
 
   addr.sin_family = AF_INET;
-  addr.sin_port = 0; /* any port */
+  addr.sin_port = PORT_ANY;
   addr.sin_addr.s_addr = INADDR_ANY;
 
   if (bind(fd, (struct sockaddr *)&addr, sizeof(struct sockaddr_in))==-1) {

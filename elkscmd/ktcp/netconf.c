@@ -54,6 +54,7 @@ void netconf_send(struct tcpcb_s *cb)
 	    cbstats.remaddr = ncb->remaddr;
 	    cbstats.remport = ncb->remport;
 	    cbstats.localport = ncb->localport;
+		cbstats.time_wait_exp = ncb->time_wait_exp;
 	} else
 	    cbstats.valid = 0;
 	tcpcb_buf_write(cb, (unsigned char *)&cbstats, sizeof(cbstats));
@@ -65,5 +66,6 @@ void netconf_send(struct tcpcb_s *cb)
 	tcpcb_buf_write(cb, (unsigned char *)&arp_cache, ARP_CACHE_MAX*sizeof(struct arp_cache));
 	break;
     }
-    cb->bytes_to_push = CB_BUF_USED(cb);
+    cb->bytes_to_push = cb->buf_used;
+    tcpcb_need_push++;
 }

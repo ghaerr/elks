@@ -288,6 +288,12 @@ size_t tty_write(struct inode *inode, struct file *file, char *data, size_t len)
     while (i < len) {
 	s = chq_wait_wr(&tty->outq, file->f_flags & O_NONBLOCK);
 	if (s < 0) {
+	    /* FIXME EAGAIN not returned, cycle required on telnet nonblocking terminal */
+	    if (s == -EINTR || s == -EAGAIN) {
+		wake_up(&tty->outq.wait);
+		schedule();
+		continue;
+	    }
 	    if (i == 0)
 		i = s;
 	    break;
@@ -464,6 +470,7 @@ extern struct tty_ops bioscon_ops;	/* CONFIG_CONSOLE_BIOS*/
 extern struct tty_ops headlesscon_ops;	/* CONFIG_CONSOLE_HEADLESS*/
 extern struct tty_ops rs_ops;		/* CONFIG_CHAR_DEV_RS*/
 extern struct tty_ops ttyp_ops;		/* CONFIG_PSEUDO_TTY*/
+extern struct tty_ops i8018xcon_ops;/* CONFIG_CONSOLE_8018X */
 
 void INITPROC tty_init(void)
 {
@@ -482,6 +489,8 @@ void INITPROC tty_init(void)
 	ttyp->ops = &dircon_ops;
 #elif defined(CONFIG_CONSOLE_BIOS)
 	ttyp->ops = &bioscon_ops;
+#elif defined(CONFIG_CONSOLE_8018X)
+	ttyp->ops = &i8018xcon_ops;
 #else
 	ttyp->ops = &headlesscon_ops;
 #endif

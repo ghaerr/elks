@@ -7,13 +7,14 @@
 
 #ifdef __KERNEL__
 
+#include <linuxmt/config.h>
 #include <linuxmt/types.h>
 #include <linuxmt/wait.h>
 #include <linuxmt/vfs.h>
 #include <linuxmt/kdev_t.h>
 #include <linuxmt/ioctl.h>
 #include <linuxmt/net.h>
-#include <linuxmt/config.h>
+#include <linuxmt/memory.h>
 
 #include <arch/bitops.h>
 
@@ -119,19 +120,18 @@
 
 struct buffer_head {
     char			*b_data;	/* Address if in L1 buffer area, else 0 */
+    ramdesc_t			b_seg;		/* Current L1 or L2 (main/xms) buffer segment */
     block32_t			b_blocknr;	/* 32-bit block numbers required for FAT */
     kdev_t			b_dev;
     struct buffer_head		*b_next_lru;
     struct buffer_head		*b_prev_lru;
     struct wait_queue		b_wait;
-    block_t			b_count;
-    seg_t			b_seg;		/* Current (L1 or L2) buffer segment */
+    unsigned char		b_count;
     char			b_lock;
     char			b_dirty;
     char			b_uptodate;
-    char			b_reserved;
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
-    seg_t			b_ds;		/* L2 buffer data segment */
+    ramdesc_t			b_ds;		/* L2 buffer data segment */
     char			*b_L2data;	/* Offset into L2 allocation block */
     char			b_mapcount;	/* count of L2 buffer mapped into L1 */
     unsigned char		b_num;		/* Buffer number, for debugging */
@@ -183,7 +183,7 @@ struct inode {
     unsigned short		i_flags;
     unsigned char		i_lock;
     unsigned char		i_dirt;
-    short			i_sem;
+    sem_t			i_sem;
 #ifdef BLOAT_FS
     unsigned long int		i_blksize;
     unsigned long int		i_blocks;

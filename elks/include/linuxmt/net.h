@@ -19,28 +19,30 @@ typedef enum {
 } socket_state;
 
 struct socket {
-    short type;
     unsigned char state;
-    long flags;
+    unsigned char flags;
+    unsigned int rcv_bufsiz;
     struct proto_ops *ops;
     void *data;
+    struct wait_queue *wait;
+    struct inode *inode;
+    struct file *file;
 
-#if defined(CONFIG_INET)
-    /* I added this here for smaller code and memory use - HarKal */
-    int avail_data;
-    short sem;
-#endif
-
-#if defined(CONFIG_UNIX) || defined(CONFIG_NANO) || defined(CONFIG_INET)
+#if defined(CONFIG_UNIX) || defined(CONFIG_NANO)
     struct socket *conn;
     struct socket *iconn;
     struct socket *next;
 #endif
 
-    struct wait_queue *wait;
-    struct inode *inode;
-    struct fasync_struct *fasync_list;
-    struct file *file;
+#if defined(CONFIG_INET)
+    int avail_data;
+    sem_t sem;
+    __u32 remaddr;		/* all in network byte order */
+    __u32 localaddr;
+    __u16 remport;
+    __u16 localport;
+#endif
+
 };
 
 struct proto_ops {
@@ -68,10 +70,13 @@ struct proto_ops {
     int (*fcntl) ();
 };
 
-#define SO_CLOSING	(1 << 12)
-#define SO_ACCEPTCON	(1 << 13)
-#define SO_WAITDATA	(1 << 14)
-#define SO_NOSPACE	(1 << 15)
+/* careful: option names are close to public SO_ options in socket.h */
+#define SF_CLOSING	(1 << 0)
+#define SF_ACCEPTCON	(1 << 1)
+#define SF_WAITDATA	(1 << 2)
+#define SF_NOSPACE	(1 << 3)
+#define SF_RST_ON_CLOSE	(1 << 4)
+#define SF_REUSE_ADDR	(1 << 5)
 
 struct net_proto {
     char *name;			/* Protocol name */

@@ -26,28 +26,44 @@
 
 timeq_t Now;
 
-extern int cbs_in_time_wait;		// FIXME remove extern
-extern int cbs_in_user_timeout;
+#if DEBUG_TCPDATA
+static char *tcp_flags(int flags)
+{
+    static char buf[7];
+    char *p = buf;
+
+    if (flags & TF_FIN) *p++ = 'F';
+    if (flags & TF_SYN) *p++ = 'S';
+    if (flags & TF_RST) *p++ = 'R';
+    if (flags & TF_PSH) *p++ = 'P';
+    if (flags & TF_URG) *p++ = 'U';
+    if (flags & TF_ACK) *p++ = 'A';
+    *p = 0;
+    return buf;
+}
+#endif
 
 void tcp_print(struct iptcp_s *head, int recv, struct tcpcb_s *cb)
 {
-#if DEBUG_TCP
-    debug_tcp("TCP: %s ", recv? "recv": "send");
-    debug_tcp("src:%u dst:%u ", ntohs(head->tcph->sport), ntohs(head->tcph->dport));
-    debug_tcp("flags:0x%x ",head->tcph->flags);
+#if DEBUG_TCPDATA
+    debug_tcpdata("tcp: %s ", recv? "recv": "send");
+    debug_tcpdata("%u->%u ", ntohs(head->tcph->sport), ntohs(head->tcph->dport));
+    debug_tcpdata("[%s] ", tcp_flags(head->tcph->flags));
     if (cb) {
       if (recv) {
-    	if (head->tcplen > 20) debug_tcp("seq:%ld-%ld ", ntohl(head->tcph->seqnum) - cb->irs, 
-				ntohl(head->tcph->seqnum) - cb->irs+head->tcplen-20);
-	debug_tcp("ack:%ld ", ntohl(head->tcph->acknum) - cb->iss);
+	if (head->tcplen > 20)
+	    debug_tcpdata("seq %lu-%lu ", ntohl(head->tcph->seqnum) - cb->irs,
+		ntohl(head->tcph->seqnum) - cb->irs+head->tcplen-20);
+	debug_tcpdata("ack %lu ", ntohl(head->tcph->acknum) - cb->iss);
       } else {
-    	if (head->tcplen > 20) debug_tcp("seq:%ld-%ld ", ntohl(head->tcph->seqnum) - cb->iss, 
+	if (head->tcplen > 20) debug_tcpdata("seq %lu-%lu ",
+	ntohl(head->tcph->seqnum) - cb->iss,
 	ntohl(head->tcph->seqnum) - cb->iss+head->tcplen-20);
- 	debug_tcp("ack:%ld ", ntohl(head->tcph->acknum) - cb->irs);
+	debug_tcpdata("ack %lu ", ntohl(head->tcph->acknum) - cb->irs);
       }
     }
-    debug_tcp("win:%u urg:%d ", ntohs(head->tcph->window), head->tcph->urgpnt);
-    debug_tcp("chk:0x%x len:%u\n", tcp_chksum(head), head->tcplen);
+    debug_tcpdata("win %u urg %d ", ntohs(head->tcph->window), head->tcph->urgpnt);
+    debug_tcpdata("chk %x len %u\n", tcp_chksum(head), head->tcplen);
 #endif
 }
 
@@ -65,11 +81,18 @@ static __u32 choose_seq(void)
     return timer_get_time();
 }
 
-/* abruptly terminate connection*/
-static void tcp_reset_connection(struct tcpcb_s *cb)	//FIXME remove
+void tcp_send_reset(struct tcpcb_s *cb)
 {
-	tcp_send_reset(cb);
-	tcpcb_remove_cb(cb);	/* deallocate*/
+    cb->flags = TF_RST;
+    cb->datalen = 0;
+    tcp_output(cb);
+}
+
+/* abruptly terminate connection*/
+void tcp_reset_connection(struct tcpcb_s *cb)
+{
+    tcp_send_reset(cb);
+    tcpcb_remove_cb(cb);	/* deallocate*/
 }
 
 void tcp_send_fin(struct tcpcb_s *cb)
@@ -80,14 +103,7 @@ void tcp_send_fin(struct tcpcb_s *cb)
     cb->send_nxt++;
 }
 
-void tcp_send_reset(struct tcpcb_s *cb)
-{
-    cb->flags = TF_RST;
-    cb->datalen = 0;
-    tcp_output(cb);
-}
-
-static void tcp_send_ack(struct tcpcb_s *cb)
+void tcp_send_ack(struct tcpcb_s *cb)
 {
     cb->flags = TF_ACK;
     cb->datalen = 0;
@@ -124,7 +140,7 @@ static void tcp_syn_sent(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
     if (h->flags & (TF_SYN|TF_ACK)) {
 	if (cb->seg_ack != cb->send_una + 1) {
-printf("SYN sent, wrong ACK (listen port not expired)\n");
+	    printf("tcp: SYN sent, wrong ACK (listen port not expired)\n");
 	    /* Send RST */
 	    cb->send_nxt = h->acknum;
 	    //tcp_send_reset(cb);
@@ -140,10 +156,9 @@ printf("SYN sent, wrong ACK (listen port not expired)\n");
 	cb->send_nxt++;
 	cb->send_una++;
 	cb->state = TS_ESTABLISHED;
-	cb->flags = TF_ACK;
+	debug_tcp("TS_ESTABLISHED\n");
 
-	cb->datalen = 0;
-	tcp_output(cb);
+	tcp_send_ack(cb);
 	retval_to_sock(cb->sock, 0);
 
 	return;
@@ -167,12 +182,15 @@ static void tcp_listen(struct iptcp_s *iptcp, struct tcpcb_s *lcb)
     if (h->flags & TF_ACK)
 	debug_tcp("tcp: ACK in listen not implemented\n");
 
-    n = tcpcb_clone(lcb);    /* copy lcb into linked list*/
+    /* duplicate control block but with normal sized input buffer, SO_RCVBUF ignored for now */
+    n = tcpcb_clone(lcb, CB_NORMAL_BUFSIZ);    /* copy lcb into linked list*/
     if (!n)
 	return;		     /* no memory for new connection*/
     cb = &n->tcpcb;
-    cb->unaccepted = 1;      /* Mark as unaccepted */
-    cb->newsock = lcb->sock; /* lcb-> is the socket in kernel space */
+    cb->unaccepted = 1;      		/* indicate new control block is unaccepted*/
+    cb->newsock = lcb->sock;		/* temp hold listen socket in newsock*/
+    debug_accept("tcp listen: got SYN, cloning sock[%p]\n", cb->sock);
+    /* now both listen CB and unaccepted CB have same sock pointer*/
 
     cb->seg_seq = ntohl(h->seqnum);
     cb->seg_ack = ntohl(h->acknum);
@@ -210,6 +228,8 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     __u16 datasize;
     __u8 *data;
 
+if (!cb->sock) { debug_accept("tcp established: NULL SOCKET\n"); }
+
     h = iptcp->tcph;
 
     cb->rcv_wnd = ntohs(h->window);
@@ -217,28 +237,26 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     datasize = iptcp->tcplen - TCP_DATAOFF(h);
 
     if (datasize != 0) {
-	//debug_tcp("tcp: recv data len %u\n", datasize);
+	debug_window("tcp: recv data len %u avail %u\n", datasize, CB_BUF_SPACE(cb));
 	/* Process the data */
 	data = (__u8 *)h + TCP_DATAOFF(h);
 
-//printf("space free %d\n", CB_BUF_SPACE(cb));
 	/* check if buffer space for received packet*/
 	if (datasize > CB_BUF_SPACE(cb)) {
-	    printf("tcp: dropping packet, data too large: %u > %d\n", datasize, CB_BUF_SPACE(cb));
-	    //tcp_reset_connection(cb);	//FIXME this causes RST received then panic in read/write
+	    printf("tcp: dropping packet, no buffer space: %u > %d\n",
+		datasize, CB_BUF_SPACE(cb));
 	    netstats.tcpdropcnt++;
 	    return;
 	}
 
 	tcpcb_buf_write(cb, data, datasize);
 
-	if (1 || (h->flags & TF_PSH) || CB_BUF_SPACE(cb) <= PUSH_THRESHOLD) {
-	    //if (cb->bytes_to_push <= 0)
-	    if (cb->bytes_to_push >= 0)
+	/* always push data for now*/
+	if (1 /*|| (h->flags & TF_PSH) || CB_BUF_SPACE(cb) <= PUSH_THRESHOLD*/) {
+	    if (cb->bytes_to_push <= 0)
 		tcpcb_need_push++;
-	    cb->bytes_to_push = CB_BUF_USED(cb);
+	    cb->bytes_to_push = cb->buf_used;
 	}
-	tcpdev_checkread(cb);
     }
 
     if (h->flags & TF_ACK) {		/* update unacked*/
@@ -249,32 +267,38 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
     if (h->flags & TF_RST) {
 	/* TODO: Check seqnum for security */
-printf("tcp: RST received, removing retrans packets\n");
+	printf("tcp: RST from %s:%u->%u\n",
+	    in_ntoa(cb->remaddr), ntohs(h->sport), ntohs(h->dport));
 	rmv_all_retrans_cb(cb);
+
 	if (cb->state == TS_CLOSE_WAIT) {
+	    cbs_in_user_timeout--;
 	    ENTER_TIME_WAIT(cb);
+	    tcpdev_sock_state(cb, SS_UNCONNECTED);	/* no wakeup?*/
 	} else {
-	    //cb->state = TS_CLOSED;
-	    tcpdev_sock_state(cb, SS_UNCONNECTED);
+	    tcpdev_sock_state(cb, SS_DISCONNECTING);	/* wakes up process*/
 	    tcpcb_remove_cb(cb); 	/* deallocate*/
 	}
-	tcpdev_sock_state(cb, SS_UNCONNECTED);
 	return;
     }
 
     if (h->flags & TF_FIN) {
 	cb->rcv_nxt++;
+	debug_close("tcp[%p] packet in established, fin: 1, data: %d, setting state to CLOSE_WAIT\n", cb->sock, datasize);
+
 	cb->state = TS_CLOSE_WAIT;
-	tcpdev_sock_state(cb, SS_DISCONNECTING);
+	cb->time_wait_exp = Now;	/* used for debug output only*/
+	debug_tcp("tcp: got FIN with data %d buffer %d\n", datasize, cb->buf_used);
+	if (cb->bytes_to_push <= 0)
+	    tcpdev_sock_state(cb, SS_DISCONNECTING);
     }
 
     if (datasize == 0 && ((h->flags & TF_ALL) == TF_ACK))
 	return; /* ACK with no data received - so don't answer*/
 
     cb->rcv_nxt += datasize;
-    cb->flags = TF_ACK;
-    cb->datalen = 0;
-    tcp_output(cb);
+    debug_window("tcp: ACK seq %ld len %d\n", cb->rcv_nxt - cb->irs, datasize);
+    tcp_send_ack(cb);
 }
 
 static void tcp_synrecv(struct iptcp_s *iptcp, struct tcpcb_s *cb)
@@ -282,11 +306,12 @@ static void tcp_synrecv(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     struct tcphdr_s *h = iptcp->tcph;
 
     if (h->flags & TF_RST)
-	cb->state = TS_LISTEN;		/* FIXME: not valid any more */
+	cb->state = TS_LISTEN;		/* FIXME: not valid, should dealloc extra CB*/
     else if ((h->flags & TF_ACK) == 0)
 	debug_tcp("tcp: NO ACK IN SYNRECV\n");
     else {
 	cb->state = TS_ESTABLISHED;
+	debug_tcp("TS_ESTABLISHED\n");
 	tcpdev_checkaccept(cb);
 	tcp_established(iptcp, cb);
     }
@@ -297,12 +322,17 @@ static void tcp_fin_wait_1(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     __u32 lastack;
     int needack = 0;
 
+    debug_close("tcp[%p] packet in fin_wait_1, fin: %d\n",
+	cb->sock, (iptcp->tcph->flags&TF_FIN)? 1: 0);
+
     cb->time_wait_exp = Now;
     if (iptcp->tcph->flags & TF_FIN) {
 	cb->rcv_nxt ++;
 
 	/* Remove the flag */
 	iptcp->tcph->flags &= ~TF_FIN;
+	debug_close("tcp[%p] setting state to CLOSING\n", cb->sock);
+
 	cb->state = TS_CLOSING; 	/* cbs_in_user_timeout stays unchanged */
 	cb->time_wait_exp = Now;
 	needack = 1;
@@ -315,21 +345,30 @@ static void tcp_fin_wait_1(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
     if (SEQ_LT(lastack, cb->send_una)) {
 
-	/* out FIN was acked */
-	cb->state = TS_FIN_WAIT_2;	/* cbs_in_user_timeout stays unchanged */
+	/* our FIN was acked */
+	if (cb->state == TS_CLOSING) {	/* FIN and ACK received, enter TIME_WAIT */
+	    debug_close("tcp[%p] setting state to TIME_WAIT\n", cb->sock);
+
+	    cbs_in_user_timeout--;
+	    ENTER_TIME_WAIT(cb);
+	} else {
+	    debug_close("tcp[%p] set state CLOSED\n", cb->sock);
+
+	    cb->state = TS_FIN_WAIT_2;	/* cbs_in_user_timeout stays unchanged */
+	}
 	cb->time_wait_exp = Now;
     }
 
-    if (needack) {
-	cb->flags = TF_ACK;		/* TODO : Unify this somewhere */
-	cb->datalen = 0;
-	tcp_output(cb);
-    }
+    if (needack)
+	tcp_send_ack(cb);
 }
 
 static void tcp_fin_wait_2(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 {
     int needack = 0;
+
+    debug_close("tcp[%p] packet in fin_wait_2, fin: %d\n",
+	cb->sock, (iptcp->tcph->flags&TF_FIN)? 1: 0);
 
     cb->time_wait_exp = Now;
     if (iptcp->tcph->flags & TF_FIN) {
@@ -337,24 +376,26 @@ static void tcp_fin_wait_2(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
 	/* Remove the flag */
 	iptcp->tcph->flags &= ~TF_FIN;
+	debug_close("tcp[%p] setting state to TIME_WAIT\n", cb->sock);
+
 	cbs_in_user_timeout--;
-	ENTER_TIME_WAIT(cb);
+	ENTER_TIME_WAIT(cb);	/* this sets the 10 sec wait after active close! */
 	needack = 1;
     }
 
     /* Process like there was no FIN */
     tcp_established(iptcp, cb);
 
-    if (needack) {
-	cb->flags = TF_ACK;		/* TODO: Unify this somewhere */
-	cb->datalen = 0;
-	tcp_output(cb);
-    }
+    if (needack)
+	tcp_send_ack(cb);
 }
 
 static void tcp_closing(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 {
     __u32 lastack;
+
+    debug_close("tcp[%p] packet in closing state, fin: %d\n",
+	cb->sock, (iptcp->tcph->flags&TF_FIN)? 1: 0);
 
     cb->time_wait_exp = Now;
     lastack = cb->send_una;
@@ -371,6 +412,8 @@ static void tcp_closing(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     if (SEQ_LT(lastack, cb->send_una)) {
 
 	/* our FIN was acked */
+	debug_close("tcp[%p] setting state to TIME_WAIT\n", cb->sock);
+
 	cbs_in_user_timeout--;
 	ENTER_TIME_WAIT(cb);
     }
@@ -378,26 +421,19 @@ static void tcp_closing(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
 static void tcp_last_ack(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 {
+    debug_close("tcp[%p] packet in last_ack, fin: %d\n",
+	cb->sock, (iptcp->tcph->flags&TF_FIN)? 1: 0);
+
     cb->time_wait_exp = Now;
     if (iptcp->tcph->flags & (TF_ACK|TF_RST)) {
 
 	/* our FIN was acked */
 	cbs_in_user_timeout--;
+	debug_close("tcp[%p] set state CLOSED\n", cb->sock);
+
 	cb->state = TS_CLOSED;
 	tcpcb_remove_cb(cb); 	/* deallocate*/
     }
-}
-
-/* called every ktcp run cycle*/
-void tcp_update(void)
-{
-    if (cbs_in_time_wait > 0 || cbs_in_user_timeout > 0) {
-debug_tcp("ktcp: update %x,%x\n", cbs_in_time_wait, cbs_in_user_timeout);
-	tcpcb_expire_timeouts();
-    }
-
-    //if (tcpcb_need_push > 0)
-	tcpcb_push_data();
 }
 
 /* process an incoming TCP packet*/
@@ -424,10 +460,31 @@ void tcp_process(struct iphdr_s *iph)
     }
 
     if (!cbnode) {
-	printf("tcp: Refusing packet %s:%u->%d\n", in_ntoa(iph->saddr),
+	printf("tcp: refusing packet from %s:%u to :%u\n", in_ntoa(iph->saddr),
 		ntohs(tcph->sport), ntohs(tcph->dport));
 
-	/* TODO : send RST and stuff */
+	if (tcph->flags & TF_RST)
+		return;
+
+	/* Dummy up a new control block and send RST to shutdown sender */
+	cbnode = tcpcb_new(1);
+	if (cbnode) {
+	    __u32 seqno = ntohl(tcph->seqnum);
+	    cbnode->tcpcb.state = TS_CLOSED;
+	    cbnode->tcpcb.localaddr = iph->daddr;
+	    cbnode->tcpcb.localport = ntohs(tcph->dport);
+	    cbnode->tcpcb.remaddr = iph->saddr;
+	    cbnode->tcpcb.remport = ntohs(tcph->sport);
+	    if (tcph->flags & TF_ACK) {
+		cbnode->tcpcb.flags = TF_RST;
+		cbnode->tcpcb.send_nxt = ntohl(tcph->acknum);
+	    } else
+		cbnode->tcpcb.flags = TF_RST|TF_ACK;
+	    cbnode->tcpcb.rcv_nxt = (tcph->flags & TF_SYN)? seqno+1: seqno;
+	    tcp_output(&cbnode->tcpcb);		/* send RST*/
+	    tcpcb_remove_cb(&cbnode->tcpcb);	/* deallocate*/
+	}
+
 	netstats.tcpdropcnt++;
 	return;
     }
@@ -436,8 +493,14 @@ void tcp_process(struct iphdr_s *iph)
     if (cb->state != TS_LISTEN && cb->state != TS_SYN_SENT
 			       && cb->state != TS_SYN_RECEIVED) {
 	if (cb->rcv_nxt != ntohl(tcph->seqnum)) {
-	    if (cb->rcv_nxt != ntohl(tcph->seqnum + 1))
+	    int datalen = iptcp.tcplen - TCP_DATAOFF(iptcp.tcph);
+
+	    debug_tune("tcp: dropping packet, bad seqno: need %ld got %ld size %d\n",
+		cb->rcv_nxt - cb->irs, ntohl(tcph->seqnum) - cb->irs, datalen);
+
+	    if (cb->rcv_nxt != ntohl(tcph->seqnum) + 1)
 		tcp_send_ack(cb);
+
 	    return;
 	}
 
@@ -465,7 +528,6 @@ void tcp_process(struct iphdr_s *iph)
 	    break;
 
 	case TS_ESTABLISHED:
-	    debug_tcp("TS_ESTABLISHED\n");
 	    tcp_established(&iptcp, cb);
 	    break;
 

@@ -20,7 +20,8 @@
 
 #include "ne2k.h"
 
-int net_irq = NE2K_IRQ;		/* default IRQ, changed by netirq= in /bootopts */
+int net_irq = NE2K_IRQ;	/* default IRQ, changed by netirq= in /bootopts */
+int net_port = NE2K_PORT; /* default IO PORT, changed by netport= in /bootopts */
 
 // Static data
 struct wait_queue rxwait;
@@ -28,11 +29,11 @@ struct wait_queue txwait;
 
 static byte_t ne2k_inuse = 0;
 
-//static byte_t def_mac_addr [6] = {0x52, 0x54, 0x00, 0x12, 0x34, 0x56};  /* QEMU default */
-static byte_t mac_addr [6]; /* Current MAC address, from HW or default */
+static byte_t mac_addr[6]  = {0x52, 0x54, 0x00, 0x12, 0x34, 0x56};  /* QEMU default */
+			     /* Overwritten by actual HW MAC address if found */
 
 extern word_t _ne2k_has_data;
-extern word_t _ne2k_skip_cnt;	/* In case the NIC ring buffer overflows, skip this # of packets,
+extern word_t _ne2k_skip_cnt;	/* If the NIC ring buffer overflows, skip this # of packets,
 				 * zero means 'all'. */
 
 /*
@@ -159,8 +160,9 @@ static void ne2k_int(int irq, struct pt_regs * regs)
 
 	stat = ne2k_int_stat();
 #if 0
-        page = ne2k_getpage();
-        printk("|%04x|", page);
+	printk("/%d/", stat);
+	page = ne2k_getpage();
+	printk("|%04x|", page);
 #endif
 
         if (stat & NE2K_STAT_OF) {
@@ -188,7 +190,7 @@ static void ne2k_int(int irq, struct pt_regs * regs)
 	if (stat & NE2K_STAT_RDC) {
 		printk("eth: Warning - RDC intr. (0x%x)\n", stat);
 		/* The RDC interrupt should be disabled in the low level driver.
-		 * When real DMA transfer from NIC til system RAM is enabled, this is where
+		 * When real DMA transfer from NIC to system RAM is enabled, this is where
 		 * we handle transfer completion.
 		 * NOTICE: If we get here, a remote DMA transfer was aborted. This should
 		 * not happen.
@@ -274,7 +276,6 @@ static int ne2k_open(struct inode * inode, struct file * file)
 
 		ne2k_reset();
 		ne2k_init();
-		ne2k_addr_set(mac_addr);
 		ne2k_start();
 
 		ne2k_inuse = 1;
@@ -341,12 +342,11 @@ void ne2k_drv_init(void)
 				 * PROM size is 32 bytes.
 				 */
 	byte_t hw_addr[6];
-	byte_t *addr;
 
 	while (1) {
 		err = ne2k_probe();
 		if (err) {
-			printk ("eth: NE2K not detected\n");
+			printk ("eth: NE2K not found at 0x%x, irq %d\n", net_port, net_irq);
 			break;
 		}
 		err = request_irq (net_irq, ne2k_int, INT_GENERIC);
@@ -365,31 +365,29 @@ void ne2k_drv_init(void)
 
 		ne2k_get_hw_addr(prom);
 
-		while (i < 6) hw_addr[i] = prom[i]&0xff,i++;
-		//i=0;while (i < 16) printk("%02X ", prom[i++]);
-
 		/* If there is no prom (i.e. emulator), use default */
-       if ((hw_addr[0] == 0xff) && (hw_addr[1] == 0xff)) {
-               //addr = def_mac_addr;
-           err = -1;
-       } else {
-                addr = hw_addr;
-           err = 0;
-       }
+		if (((prom[0]&0xff) == 0xff) && ((prom[1]&0xff) == 0xff)) {
+			err = -1;
+		} else {
+			while (i < 6) hw_addr[i] = prom[i]&0xff,i++;
+			err = 0;
+		}
 
-       if (!err) {
-           printk ("eth: NE2K at 0x%x, irq %d, MAC %02x", NE2K_PORT, net_irq, addr[0]);
-           i = 1;
-           while (i < 6) printk(":%02x", addr[i++]);
-           printk("\n");
+		printk ("eth: NE2K at 0x%x, irq %d, ", net_port, net_irq);
+		if (!err) {	/* address found, interface is present */
 
-           memcpy(mac_addr, addr, 6);
-           ne2k_addr_set(addr);   /* Set NIC mac addr now so IOCTL works */
+			printk ("MAC %02x", hw_addr[0]);
+			i = 1;
+			while (i < 6) printk(":%02x", hw_addr[i++]);
+			printk("\n");
+
+			memcpy(mac_addr, hw_addr, 6);
+			ne2k_addr_set(hw_addr);   /* Set NIC mac addr now so IOCTL works */
 #if DEBUG_ETH
-		debug_setcallback(ne2k_display_status);
+			debug_setcallback(ne2k_display_status);
 #endif
-       } else
-           printk("eth: Cannot access NE2K interface.\n");
+		} else
+			printk("not responding.\n");
 
 		break;
 
@@ -398,7 +396,8 @@ void ne2k_drv_init(void)
 	_ne2k_skip_cnt = 0;	/* # of packets to discard if the NIC buffer overflows. 
                  		 * Zero is the default, discard entire buffer less one pkt.
 				 * May be changed via ioctl.
-				 * A big # will elar the entire bnuffer.
+				 * A big # will clear the entire buffer.
 				 * On a floppy based system, anything else is useless.
 				 */
+	return;
 }

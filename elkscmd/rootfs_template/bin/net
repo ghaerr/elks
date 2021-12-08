@@ -12,12 +12,11 @@
 # See qemu.sh NET= line for host forwarding into ELKS using QEMU
 #
 
-# default IP address, gateway and network mask
-localip=10.0.2.15
-gateway=10.0.2.2
-#localip=10.0.0.15
-#gateway=10.0.0.127
-netmask=255.255.255.0
+# Default IP address, gateway and network mask set by env variables in
+# /bootopts or /etc/profile. They can be IP addresses or names in /etc/hosts.
+localip=$HOSTNAME
+gateway=$GATEWAY
+netmask=$NETMASK
 
 # default link layer [eth|slip|cslip]
 link=eth
@@ -68,6 +67,11 @@ start_network()
 				$daemon || true
 			fi
 		done
+		if test -f /bin/ftpd
+		then
+			echo -n "ftpd $ftpd"
+			ftpd $ftpd || true
+		fi
 		echo ""
 	else
 		echo "Network start failed"
@@ -78,6 +82,7 @@ start_network()
 stop_network()
 {
 	echo "Stopping network"
+	kill $(ps | grep "ktcp|telnet|httpd|ftpd" | cut -c 1-5) > /dev/null 2>&1
 }
 
 if test "$#" -lt 1; then

@@ -4,6 +4,9 @@
 #include <autoconf.h>
 #include <linuxmt/major.h>
 
+/* tunable parameters*/
+#define PIPE_BUFSIZ	80	/* doesn't have to be power of two */
+
 //#ifdef CONFIG_ARCH_IBMPC
 #if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_PC98)
 /*
@@ -42,7 +45,12 @@
 #define SETUP_PART_OFFSETHI	0	/* partition offset high word */
 #define SYS_CAPS		0	/* no XT/AT capabilities */
 
-#define SETUP_HEAPSIZE		1024	/* minimum kernel heap for now*/
+/*
+ * An absolute minimum of 1K heap + 8 buffers (@26 = 208) = 1232
+ * More heap should be specified if serial driver used, default inq = 1K bytes
+ * Comment out SETUP_HEAPSIZE to use normal max heap, extended to 64K kernel data segment
+ */
+#define SETUP_HEAPSIZE		1232	/* force kernel heap size if specified*/
 
 #define CONFIG_8018X_FCPU	16
 #define CONFIG_8018X_EB
@@ -63,7 +71,7 @@
 
 /* Don't touch these, unless you really know what you are doing. */
 #define DEF_INITSEG	0x0100	/* setup data, for netboot use 0x5000 */
-#define DEF_SYSSEG	0x1000
+#define DEF_SYSSEG	0x1300	/* initial system image load address by boot code */
 #define DEF_SETUPSEG	DEF_INITSEG + 0x20
 #define DEF_SYSSIZE	0x2F00
 
@@ -88,30 +96,32 @@
 
 /* Define segment locations of low memory, must not overlap */
 #ifdef CONFIG_ARCH_PC98
-#define DEF_OPTSEG	0x60  /* 0x100 bytes boot options*/
+#define DEF_OPTSEG	0x60  /* 0x200 bytes boot options*/
+#define OPTSEGSZ 0x200    /* max size of /bootopts file (1K max) */
+#define REL_INITSEG	0x80  /* 0x200 bytes setup data */
+#define DMASEG		0xA0  /* 0x400 bytes floppy sector buffer */
+#else
+#define DEF_OPTSEG	0x50  /* 0x200 bytes boot options*/
+#define OPTSEGSZ 0x200    /* max size of /bootopts file (1K max) */
 #define REL_INITSEG	0x70  /* 0x200 bytes setup data */
 #define DMASEG		0x90  /* 0x400 bytes floppy sector buffer */
-#else
-#define DEF_OPTSEG	0x50  /* 0x100 bytes boot options*/
-#define REL_INITSEG	0x60  /* 0x200 bytes setup data */
-#define DMASEG		0x80  /* 0x400 bytes floppy sector buffer */
 #endif
 
 #ifdef CONFIG_TRACK_CACHE     /* floppy track buffer in low mem */
 #ifdef CONFIG_ARCH_PC98
 #define DMASEGSZ 0x2000	      /* SECTOR_SIZE * 8 (8192) */
-#define REL_SYSSEG	0x290 /* kernel code segment */
+#define REL_SYSSEG	0x2A0 /* kernel code segment */
 #else
 #define DMASEGSZ 0x2400	      /* SECTOR_SIZE * 18 (9216) */
-#define REL_SYSSEG	0x2C0 /* kernel code segment */
+#define REL_SYSSEG	0x2D0 /* kernel code segment */
 #endif
 #else
 #ifdef CONFIG_ARCH_PC98
 #define DMASEGSZ 0x0400	      /* BLOCK_SIZE (1024) */
-#define REL_SYSSEG	0x0D0 /* kernel code segment */
+#define REL_SYSSEG	0x0E0 /* kernel code segment */
 #else
 #define DMASEGSZ 0x0400	      /* BLOCK_SIZE (1024) */
-#define REL_SYSSEG	0x0C0 /* kernel code segment */
+#define REL_SYSSEG	0x0D0 /* kernel code segment */
 #endif
 #endif
 

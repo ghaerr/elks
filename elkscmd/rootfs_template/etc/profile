@@ -1,10 +1,6 @@
 export PATH=/bin
-# change for localtime
-export TZ=GMT0
-# export TZ=JST-9
-
-# use clock -u -s if RTC is UTC
-# use clock -s if RTC is localtime
-clock -s
-
-date
+# timezone, hostname etc can be set in either /bootopts or here
+#export TZ=GMT0
+#export HOSTNAME=10.0.2.15
+#export GATEWAY=10.0.2.2
+#export NETMASK=255.255.255.0

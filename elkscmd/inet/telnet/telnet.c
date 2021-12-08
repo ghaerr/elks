@@ -30,7 +30,7 @@
 #define where() (fprintf(stderr, "%s %d:", __FILE__, __LINE__))
 #endif
 
-#define BUFSIZE		1024
+#define BUFSIZE		1500
 
 static int tcp_fd;
 static char *term_env;
@@ -151,6 +151,15 @@ int main(int argc, char *argv[])
 	locadr.sin_port = PORT_ANY;
 	locadr.sin_addr.s_addr = INADDR_ANY;
 
+#if 0	/* test code to force RST on telnet exit*/
+{
+	struct linger l;
+
+	l.l_onoff = 1;
+	l.l_linger = 0;		/* send RST on close */
+	setsockopt(tcp_fd, SOL_SOCKET, SO_LINGER, &l, sizeof(l));
+}
+#endif
 	ret = bind(tcp_fd, (struct sockaddr *)&locadr, sizeof(struct sockaddr_in));
 	if (ret < 0){
 		perror("Bind failed");

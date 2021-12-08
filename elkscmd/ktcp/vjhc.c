@@ -71,6 +71,7 @@ static int rcv_toss;
 static rcv_state_ut *rcv_state;
 static rcv_state_ut *rcv_last;
 
+#ifndef __ia16__
 /* Encode/decode ops - used to be macros, changed to functions
  * for reduced code size
  */
@@ -92,6 +93,7 @@ static unsigned long ntohl(unsigned long x)
 			  ((((unsigned long)x) & 0xff00) << 8)	|
 			  ((((unsigned long)x) & 0xff) << 24) );
 }
+#endif
 
 void vjhc_encode(__u8 *cp, const __u32 n)
 {

@@ -1,14 +1,15 @@
-# This file performs system initialization
+# System initialization script
 
 echo Running $0 script
-# uncomment to display script execution
 #set -x
 
 umask 022
 export PATH=/bin
 
-# init date from hardware
-#clock -s
+# get TZ timezone variable from /bootopts or /etc/profile
+# remove -u option if RTC is localtime
+source /etc/profile
+clock -s -u
 
 check_filesystem()
 {
@@ -32,7 +33,6 @@ fi
 #
 #mount -t msdos /dev/fd1 /mnt || true
 #mount -t msdos /dev/hda1 /mnt
-#mount -t msdos /dev/hda /mnt
 #mount /dev/hda /mnt
 
 #
@@ -51,11 +51,9 @@ cslip)
 	;;
 *)
 	# normal network start
-	#net start
 	#net start eth
 	#net start cslip 19200
 	#net start slip 115200 /dev/ttyS0
-	#net stop
 	;;
 esac
 
@@ -65,4 +63,4 @@ then
     cat /etc/motd
 fi
 
-#date
+date

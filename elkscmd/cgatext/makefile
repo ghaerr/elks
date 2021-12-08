@@ -12,7 +12,7 @@ NAME	= cgatext
 OUT	= $(NAME)
 CFLAGS	+= -I$(ELKS)/elks/include/arch
 OBJS	+= main.o
-LIBS	= $(ELKS_LIB86)/libmem.a
+LIBS	= $(ELKS_LIB86)/lib86.a
 
 all: $(OUT)
 

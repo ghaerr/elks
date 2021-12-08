@@ -39,6 +39,7 @@ mainmenu_option next_comment
 		if [ "$CONFIG_IMG_MINIX" == "y" -o "$CONFIG_IMG_FAT" == "y" ]; then
 			bool 'Bootable' CONFIG_IMG_BOOT y
 		fi
+		bool 'Compressed exectuables' CONFIG_APPS_COMPRESS n
 
 		comment 'Binary Images'
 

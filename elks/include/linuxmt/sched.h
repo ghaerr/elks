@@ -152,12 +152,12 @@ void finish_wait(struct wait_queue *p);
 
 /*@-namechecks@*/
 
-extern void _wake_up(struct wait_queue *,unsigned short int);
+extern void _wake_up(struct wait_queue *,int);
 
 /*@+namechecks@*/
 
-extern void down(short *);
-extern void up(short *);
+extern void down(sem_t *);
+extern void up(sem_t *);
 
 extern void wake_up_process(struct task_struct *);
 

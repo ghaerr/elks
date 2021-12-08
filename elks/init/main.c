@@ -16,8 +16,8 @@
 /*
  *	System variable setups
  */
-#define ENV             1		/* allow environ variables as bootopts*/
-#define DEBUG           1		/* display parsing at boot*/
+#define ENV		1		/* allow environ variables as bootopts*/
+#define DEBUG		0		/* display parsing at boot*/
 
 #define MAX_INIT_ARGS	8
 #define MAX_INIT_ENVS	8
@@ -27,7 +27,7 @@ int root_mountflags = MS_RDONLY;
 #else
 int root_mountflags = 0;
 #endif
-int net_irq;
+int net_irq, net_port;
 static int boot_console;
 static char bininit[] = "/bin/init";
 static char *init_command = bininit;
@@ -43,7 +43,7 @@ static char *argv_init[80] = { NULL, bininit, NULL };
 #if ENV
 static char *envp_init[MAX_INIT_ENVS+1];
 #endif
-static unsigned char options[256];
+static unsigned char options[OPTSEGSZ];
 
 extern int boot_rootdev;
 extern int dprintk_on;
@@ -51,7 +51,6 @@ static char * INITPROC root_dev_name(int dev);
 static int INITPROC parse_options(void);
 static void INITPROC finalize_options(void);
 static char * INITPROC option(char *s);
-static long INITPROC atol(char *number);
 #endif
 
 static void init_task(void);
@@ -89,7 +88,8 @@ void INITPROC kernel_init(void)
     sched_init();
     setup_arch(&base, &end);
     mm_init(base, end);
-    buffer_init();
+    if (buffer_init())	/* also enables xms and unreal mode if configured and possible*/
+	panic("No buf mem");
     inode_init();
     irq_init();
     tty_init();
@@ -120,7 +120,7 @@ void INITPROC kernel_init(void)
 #ifdef CONFIG_BOOTOPTS
     if (opts)
 	finalize_options();
-    else printk("/bootopts IGNORED: header not ## or size > 255\n");
+    else printk("/bootopts IGNORED: header not ## or size > %d\n", OPTSEGSZ-1);
 #endif
 
     mm_stat(base, end);
@@ -246,8 +246,8 @@ static int INITPROC parse_options(void)
 	/* copy /bootops loaded by boot loader at 0050:0000*/
 	fmemcpyb(options, kernel_ds, 0, DEF_OPTSEG, sizeof(options));
 
-	/* check file starts with ## and max len 255 bytes*/
-	if (*(unsigned short *)options != 0x2323 || options[255])
+	/* check file starts with ## and max len 511 bytes*/
+	if (*(unsigned short *)options != 0x2323 || options[OPTSEGSZ-1])
 		return 0;
 #if DEBUG
 	printk("/bootopts: %s", &options[3]);
@@ -284,7 +284,7 @@ static int INITPROC parse_options(void)
 				*p++ = 0;
 #ifdef CONFIG_CHAR_DEV_RS
 				/* set serial console baud rate*/
-				rs_setbaud(dev, atol(p));
+				rs_setbaud(dev, simple_strtol(p, 10));
 #endif
 			}
 
@@ -316,6 +316,11 @@ static int INITPROC parse_options(void)
 			net_irq = atoi(line+7);
 			continue;
 		}
+		if (!strncmp(line,"netport=",8)) {
+			net_port = (int)simple_strtol(line+8, 16);
+			continue;
+		}
+		
 		/*
 		 * Then check if it's an environment variable or an init argument.
 		 */
@@ -395,17 +400,6 @@ static char * INITPROC option(char *s)
 	return s;
 }
 
-#ifdef CONFIG_CHAR_DEV_RS
-static long INITPROC atol(char *number)
-{
-    long n = 0;
-
-    while (*number >= '0' && *number <= '9')
-	n = (n * 10) + *number++ - '0';
-    return n;
-}
-#endif
-
 char *strchr(char *s, int c)
 {
 	for(; *s != (char)c; ++s) {
@@ -414,5 +408,4 @@ char *strchr(char *s, int c)
 	}
 	return s;
 }
-
 #endif /* CONFIG_BOOTOPTS*/

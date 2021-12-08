@@ -21,8 +21,8 @@
 //#define RAWTELNET	/* set in telnet and telnetd for raw telnet without IAC*/
 
 #define MAX_BUFFER 512		/* should be equal to TDB_WRITE_MAX and PTYOUTQ_SIZE*/
-static char buf_in  [MAX_BUFFER];
-static char buf_out [MAX_BUFFER];
+static char buf_in  [1500];
+static char buf_out [1500];
 
 char *nargv[2] = {"/bin/login", NULL};
 
@@ -137,16 +137,16 @@ static void client_loop (int fdsock, int fdterm)
 
 		/* network -> login process*/
 		if (!count_in && FD_ISSET (fdsock, &fds_read)) {
-			count_in = read (fdsock, buf_in, MAX_BUFFER);
+			count_in = read (fdsock, buf_in, sizeof(buf_in));
 			if (count_in <= 0) {
-				if (count < 0)
+				if (count_in < 0)
 					perror ("telnetd read sock");
 				break;
 			}
 		}
 		if (count_in && FD_ISSET (fdterm, &fds_write)) {
 #ifdef RAWTELNET
-			count = write (fdterm, buf_in, count_in);
+			write (fdterm, buf_in, count_in);
 #else
 			tel_in(fdterm, fdsock, buf_in, count_in);
 #endif
@@ -155,7 +155,7 @@ static void client_loop (int fdsock, int fdterm)
 
 		/* login process -> network*/
 		if (!count_out && FD_ISSET (fdterm, &fds_read)) {
-			count_out = read (fdterm, buf_out, MAX_BUFFER);
+			count_out = read (fdterm, buf_out, sizeof(buf_out));
 			if (count_out <= 0) {
 				if (count_out < 0)
 					perror ("telnetd read term");
@@ -164,7 +164,7 @@ static void client_loop (int fdsock, int fdterm)
 		}
 		if (count_out && FD_ISSET (fdsock, &fds_write)) {
 #ifdef RAWTELNET
-			count = write (fdsock, buf_out, count_out);
+			write (fdsock, buf_out, count_out);
 #else
 			tel_out(fdsock, buf_out, count_out);
 #endif
@@ -192,6 +192,17 @@ int main(int argc, char **argv)
 		fprintf(stderr, "telnetd: Can't open socket (check if ktcp is running)\n");
 		exit(-1);
 	}
+
+	/* set local port reuse, allows server to be restarted in less than 10 secs */
+	ret = 1;
+	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &ret, sizeof(int)) < 0)
+		perror("SO_REUSEADDR");
+
+	/* set small listen buffer to save ktcp memory */
+	ret = SO_LISTEN_BUFSIZ;
+	if (setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &ret, sizeof(int)) < 0)
+		perror("SO_RCVBUF");
+
 	memset(&addr_in, 0, sizeof(addr_in));
 	addr_in.sin_family = AF_INET;
 	addr_in.sin_addr.s_addr = htons(INADDR_ANY);
@@ -201,6 +212,14 @@ int main(int argc, char **argv)
 		close(sockfd);
 		exit(-1);
 	}
+
+#if 0 /* test code for getsockname */
+	unsigned int len = sizeof(addr_in);
+	if (getsockname(sockfd, (struct sockaddr *)&addr_in, &len) < 0)
+		perror("getsockname");
+	fprintf(stderr, "getsockname %s:%u\n", in_ntoa(addr_in.sin_addr.s_addr),
+			ntohs(addr_in.sin_port));
+#endif
 
 	if (listen(sockfd, 3) == -1) {
 		perror("listen error");
@@ -224,7 +243,8 @@ int main(int argc, char **argv)
 	//signal(SIGCHLD, sigchild);
 
 	while (1) {
-		connectionfd = accept (sockfd, (struct sockaddr *) NULL, NULL);
+		unsigned int len = sizeof(addr_in);
+		connectionfd = accept(sockfd, (struct sockaddr *)&addr_in, &len);
 		if (connectionfd < 0) {
 			perror ("telnetd accept");
 			break;
@@ -235,6 +255,14 @@ int main(int argc, char **argv)
 		if ((ret = fork()) == -1)		/* handle new accept*/
 			fprintf(stderr, "telnetd: No processes\n");
 		else if (ret == 0) {
+#if 0 /* test code for accept and getpeername */
+			fprintf(stderr, "accept from %s:%u\n", in_ntoa(addr_in.sin_addr.s_addr),
+				ntohs(addr_in.sin_port));
+			if (getpeername(connectionfd, (struct sockaddr *)&addr_in, &len) < 0)
+			    perror("getpeername");
+			fprintf(stderr, "getpeername %s:%u\n", in_ntoa(addr_in.sin_addr.s_addr),
+				ntohs(addr_in.sin_port));
+#endif
 			close(sockfd);
 			pid = term_init(&pty_fd);
 			if (pid != -1) {

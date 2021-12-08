@@ -10,6 +10,7 @@ struct general_stats_s {
 
 struct cb_stats_s {
 	__u32	remaddr;
+	__u32	time_wait_exp;
 	__u16	rtt;		/* Round trip time in ms */
 	__u16	remport;
 	__u16	localport;

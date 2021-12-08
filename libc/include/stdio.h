@@ -157,4 +157,7 @@ int vfscanf(register FILE *fp, register char *fmt, va_list ap);
 int vscanf(__const char *fmt, va_list ap);
 int vsscanf(char *sp, __const char *fmt, va_list ap);
 
+extern FILE *popen(char *, char *);
+extern int pclose(FILE *);
+
 #endif /* __STDIO_H */

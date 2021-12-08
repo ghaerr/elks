@@ -21,7 +21,6 @@
 
 static struct tcpcb_list_s	*tcpcbs;
 
-int cbs_in_time_wait, cbs_in_user_timeout;
 int tcpcb_num;		/* for netstat*/
 
 void tcpcb_init(void)
@@ -64,19 +63,20 @@ struct tcpcb_s *tcpcb_getbynum(int num)
 	    return &n->tcpcb;
 }
 
-struct tcpcb_list_s *tcpcb_new(void)
+struct tcpcb_list_s *tcpcb_new(int bufsize)
 {
     struct tcpcb_list_s *n;
 
-    n = (struct tcpcb_list_s *) malloc(sizeof(struct tcpcb_list_s));
+    n = (struct tcpcb_list_s *) malloc(sizeof(struct tcpcb_list_s) + bufsize);
     if (n == NULL) {
-	debug_tcp("ktcp: Out of memory 2\n");
+	debug_tcp("ktcp: Out of memory for CB\n");
 	return NULL;
     }
-    debug_mem("Alloc CB %d bytes\n", sizeof(struct tcpcb_list_s));
+    debug_mem("Alloc CB %d bytes\n", sizeof(struct tcpcb_list_s) + bufsize);
 
     memset(&n->tcpcb, 0, sizeof(struct tcpcb_s));
-    n->tcpcb.rtt = TIMEOUT_INITIAL_RTT << 4;
+    n->tcpcb.buf_size = bufsize;
+    n->tcpcb.rtt = TIMEOUT_INITIAL_RTT;
 
     /* Link it to the list */
     if (tcpcbs) {
@@ -91,13 +91,15 @@ struct tcpcb_list_s *tcpcb_new(void)
     return n;
 }
 
-struct tcpcb_list_s *tcpcb_clone(struct tcpcb_s *cb)
+struct tcpcb_list_s *tcpcb_clone(struct tcpcb_s *cb, int bufsize)
 {
-    struct tcpcb_list_s *n = tcpcb_new();
+    struct tcpcb_list_s *n = tcpcb_new(bufsize);
 
-    if (n)
+    if (n) {
 	memcpy(&n->tcpcb, cb, sizeof(struct tcpcb_s));
-
+	n->tcpcb.buf_size = bufsize;
+	n->tcpcb.buf_head = n->tcpcb.buf_tail = n->tcpcb.buf_used = 0;
+    }
     return n;
 }
 
@@ -117,21 +119,19 @@ void tcpcb_remove(struct tcpcb_list_s *n)
     struct tcpcb_list_s *next = n->next;
 
     debug_tcp("tcp: REMOVING control block %x\n", n);
+    debug_mem("Free CB\n");
     tcpcb_num--;	/* for netstat*/
 
     if (n->prev)
 	n->prev->next = next;
     else {
-
 	/* Head update */
 	n = next;
 	n->prev = NULL;
 
 	rmv_all_retrans(tcpcbs);
-	debug_mem("Free CB\n");
 	free(tcpcbs);
 	tcpcbs = n;
-
 	return;
     }
 
@@ -140,7 +140,6 @@ void tcpcb_remove(struct tcpcb_list_s *n)
 
     rmv_all_retrans(n);
     free(n);
-    debug_mem("Free CB\n");
 }
 
 struct tcpcb_list_s *tcpcb_check_port(__u16 lport)
@@ -204,27 +203,53 @@ void tcpcb_rmv_all_unaccepted(struct tcpcb_s *cb)
     }
 }
 
+#if DEBUG_CLOSE
+char *tcp_states[11] = {
+	"CLOSED",
+	"LISTEN",
+	"SYN_SENT",
+	"SYN_RECEIVED",
+	"ESTABLISHED",
+	"FIN_WAIT_1",
+	"FIN_WAIT_2",
+	"CLOSE_WAIT",
+	"CLOSING",
+	"LAST_ACK",
+	"TIME_WAIT"
+};
+
+#endif
+
 void tcpcb_expire_timeouts(void)
 {
     struct tcpcb_list_s *n = tcpcbs, *next;
 
     while (n) {
 	next = n->next;
-debug_tcp("expire state %d\n", n->tcpcb.state);
+#if 0 //DEBUG_CLOSE
+	if (n->tcpcb.state > TS_ESTABLISHED) {
+	    int secs = (unsigned)(n->tcpcb.time_wait_exp - Now);
+	    unsigned int tenthsecs = ((secs + 8) & 15) >> 1;
+	    secs >>= 4;
+	    debug_close("tcp: expire check %s (%d.%d)\n",
+		tcp_states[n->tcpcb.state], secs, tenthsecs);
+	}
+#endif
 	switch (n->tcpcb.state) {
 	    case TS_TIME_WAIT:
 		if (TIME_GT(Now, n->tcpcb.time_wait_exp)) {
 		    LEAVE_TIME_WAIT(&n->tcpcb);
+		    debug_close("tcp[%p] exit TIME_WAIT state on port %u remote %s:%u\n",
+				n->tcpcb.sock, n->tcpcb.localport,
+				in_ntoa(n->tcpcb.remaddr), n->tcpcb.remport);
 		    tcpcb_remove(n);
 		}
 		break;
-	    case TS_CLOSE_WAIT:		//FIXME added
-		debug_tcp("expire close\n");
 	    case TS_FIN_WAIT_1:
 	    case TS_FIN_WAIT_2:
 	    case TS_LAST_ACK:
 	    case TS_CLOSING:
-		if (TIME_GT(Now - (TIMEOUT_CLOSE_WAIT << 4), n->tcpcb.time_wait_exp)) {
+		if (TIME_GT(Now - TIMEOUT_CLOSE_WAIT, n->tcpcb.time_wait_exp)) {
 		    cbs_in_user_timeout--;
 		    tcpcb_remove(n);
 		}
@@ -243,16 +268,16 @@ void tcpcb_push_data(void)
 	    tcpdev_checkread(&n->tcpcb);
 }
 
-/* There must be free space greater-equal than len */
+/* There must be free space greater-equal than len or will wrap*/
 void tcpcb_buf_write(struct tcpcb_s *cb, unsigned char *data, int len)
 {
     int tail = cb->buf_tail;
 
-    cb->buf_len += len;
     while (--len >= 0) {
-	cb->buf_base[tail] = *data++;
-	if (++tail >= CB_IN_BUF_SIZE)
+	cb->buf_base[tail++] = *data++;
+	if (tail >= cb->buf_size)
 	    tail = 0;
+	cb->buf_used++;
     }
     cb->buf_tail = tail;
 }
@@ -262,11 +287,11 @@ void tcpcb_buf_read(struct tcpcb_s *cb, unsigned char *data, int len)
 {
     int head = cb->buf_head;
 
-    cb->buf_len -= len;
     while (--len >= 0) {
-	*data++= cb->buf_base[head];
-	if (++head >= CB_IN_BUF_SIZE)
+	*data++= cb->buf_base[head++];
+	if (head >= cb->buf_size)
 	    head = 0;
+	cb->buf_used--;
     }
     cb->buf_head = head;
 }

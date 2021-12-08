@@ -35,7 +35,7 @@ include $(BASEDIR)/Makefile-rules
 #########################################################################
 # Objects to be compiled.
 
-OBJS  = init.o malloc.o user.o memcpyfs.o
+OBJS  = init.o malloc.o user.o memcpyfs.o xms.o
 
 #########################################################################
 # Commands.

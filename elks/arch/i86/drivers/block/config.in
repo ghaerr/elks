@@ -50,7 +50,10 @@ mainmenu_option next_comment
 	hex 'Preload RAM disk segment address' CONFIG_RAMDISK_SEGMENT 0
 	int 'Preload RAM disk sectors' CONFIG_RAMDISK_SECTORS 128
     fi
-    bool 'SSD disk support'			CONFIG_BLK_DEV_SSD	n
+	choice 'SSD disk driver' \
+		"None CONFIG_BLK_DEV_SSD_NONE \
+		ssd_test CONFIG_BLK_DEV_SSD_TEST \
+		ssd_sd_8018x CONFIG_BLK_DEV_SSD_SD8018X " None
 
     comment 'Block device options'
     bool 'Character access to block devices'	CONFIG_BLK_DEV_CHAR	y

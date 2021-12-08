@@ -253,9 +253,20 @@ int main(int argc, char **argv)
     fprintf(stderr, "System is %d kB\n", sz / 1024);
 #endif
     sys_size = (sz + 15) / 16;
-    fprintf(stderr, "System is %d\n", sz);
+    fprintf(stderr, "System is %d (%xh paras)\n", sz, sys_size);
     if (sys_size > SYS_SIZE)
 	die("System is too big");
+#ifndef CONFIG_ROMCODE
+    /* compute boot load address to avoid overwriting image at boot relocation time*/
+    fsz = (ex->a_hdrlen + (intel_long(ex->a_text) + intel_long(ex->a_data)) + 15) / 16
+	+ REL_SYSSEG;
+    fprintf(stderr, "Text/Data load ending segment is %x, limit %x\n", fsz, DEF_SYSSEG);
+    if (fsz > DEF_SYSSEG + REL_SYSSEG) {	/* start of reloc entry table at boot */
+	fprintf(stderr, "System too large for DEF_SYSSEG at %x, increase DEF_SYSSEG\n",
+	    DEF_SYSSEG);
+	exit(1);
+    }
+#endif
     while (sz > 0) {
 	int32_t l, n;
 
