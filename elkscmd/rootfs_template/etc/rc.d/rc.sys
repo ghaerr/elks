@@ -6,7 +6,7 @@ echo Running $0 script
 umask 022
 export PATH=/bin
 
-# get TZ timezone variable from /etc/profile
+# get TZ timezone variable from /bootopts or /etc/profile
 # remove -u option if RTC is localtime
 source /etc/profile
 clock -s -u

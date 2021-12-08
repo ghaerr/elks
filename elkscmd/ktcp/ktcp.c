@@ -187,6 +187,7 @@ int main(int argc,char **argv)
     int ch;
     int bflag = 0;
     int mtu = 0;
+    char *p;
     static char *linknames[3] = { "ethernet", "slip", "cslip" };
 
     while ((ch = getopt(argc, argv, "bdm:p:s:l:")) != -1) {
@@ -219,10 +220,17 @@ int main(int argc,char **argv)
 	}
     }
 
-    /* using in_gethostbyname rather than in_aton allows /etc/hosts aliases to be used as parms*/
-    local_ip = in_gethostbyname(optind < argc? argv[optind++]: DEFAULT_IP);
-    gateway_ip = in_gethostbyname(optind < argc? argv[optind++]: DEFAULT_GATEWAY);
-    netmask_ip = in_gethostbyname(optind < argc? argv[optind++]: DEFAULT_NETMASK);
+    /*
+     * Default IP, gateway and netmask set by env variables in
+     * /bootopts or /etc/profile. They can be IP addresses or
+     * names in /etc/hosts.
+     */
+    char *default_ip = (p=getenv("HOSTNAME"))? p: DEFAULT_IP;
+    char *default_gateway = (p=getenv("GATEWAY"))? p: DEFAULT_GATEWAY;
+    char *default_netmask = (p=getenv("NETMASK"))? p: DEFAULT_NETMASK;
+    local_ip = in_gethostbyname(optind < argc? argv[optind++]: default_ip);
+    gateway_ip = in_gethostbyname(optind < argc? argv[optind++]: default_gateway);
+    netmask_ip = in_gethostbyname(optind < argc? argv[optind++]: default_netmask);
     MTU = mtu ? mtu : (linkprotocol == LINK_ETHER ? ETH_MTU : SLIP_MTU);
 
     /* must exit() in next two stages on error to reset kernel tcpdev_inuse to 0*/
