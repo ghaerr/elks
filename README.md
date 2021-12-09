@@ -11,12 +11,12 @@ CONFIG_IMG_FD1232 is also needed to be defined to use 1232KiB, 1024Bytes per sec
   
 Only CONFIG_IMG_FD1232 and CONFIG_IMG_FD1440 with FAT Filesystem are planned to support.  
   
-Progress (with emulator and PC-9801RX21)  
+Progress (with Neko Project 21/W emulator and PC-9801RX21, PC-9801UV21)  
 Boot : can call start_kernel  
 Kernel : modifying irq, timer  
 driver : modifying bios FD read, console-headless, kbd-poll  
 init : can login with root  
-command : cat,clear,date,ed,ls,ps,pwd can be used  
+command : cat,clear,clock,date,ed,ls,ps,pwd can be used  
 
 ## How to build (for now)  
 ./build.sh to make the environment.  
@@ -26,6 +26,11 @@ Overwrite the include/autoconf.h with the content of sample_pc98/autoconf_pc98.h
 ./make clean  
 ./make  
 FD image will be created under image/ 
+  
+## Screenshots
+
+ELKS/pc98 running on PC-9801UV21  
+<img src=Screenshots/PC-9801UV21.png width="400pix"> 
   
 ## Downloads  
 Test images will be available for download.  
