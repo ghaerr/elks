@@ -350,8 +350,11 @@ size_error:
 
 // Get the memory size
 // FIXME move BIOS INT 12h to arch-specific section
-
+#ifdef CONFIG_ARCH_PC98
+	mov $640,%ax // 640KB memory
+#else
 	int $0x12   // AX in KB
+#endif
 	mov $6,%cl  // to paragraphs
 	shl %cl,%ax
 
@@ -1062,6 +1065,89 @@ putc:	push %bx
 	ret
 
 #endif /* CONFIG_ARCH_8018X*/
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Architecture specific routines for 8018X
+//	Entry point arch_set_initseg is specific for various platform setup
+//	of SETUP_xxx variables (see config.h)
+
+#ifdef CONFIG_ARCH_PC98
+
+arch_set_initseg:
+
+   movb $0,4       // display page
+   movw $0x5003,6  // video mode 03h, window width 80
+
+   //call getcpu
+
+// mov $0x30,%si
+// call puts
+// mov $'\n',%ax
+// call putc
+
+   push %es
+   mov $INITSEG,%ax
+   mov %ax,%es
+   mov $24,%cx
+   mov $0x90,%di
+   xor %ax,%ax
+   cld
+   rep
+   stosw
+   pop %es
+
+   mov $INITSEG,%ax
+   mov %ax,%ds
+   ret
+
+putc:
+   push %ds
+   push %bx
+   push %di
+   push %es
+   push %dx
+   push %cs
+   pop %ds
+   cmp $'\r',%ax
+   jz putesc_r
+   cmp $'\n',%ax
+   jz putesc_n
+   xor %ah,%ah
+   mov $tvram_x,%bx
+   mov (%bx),%di
+   mov $0xa000,%dx
+   mov %dx,%es
+   mov %ax,%es:(%di)
+   inc %di
+   inc %di
+   mov %di,(%bx)
+put_end:
+   pop %dx
+   pop %es
+   pop %di
+   pop %bx
+   pop %ds
+   ret
+putesc_r:
+   mov $tvram_x,%bx
+   mov (%bx),%ax
+   mov $160,%dl
+   div %dl
+   mul %dl
+   mov %ax,(%bx)
+   jmp put_end
+putesc_n:
+   mov $tvram_x,%bx
+   mov (%bx),%ax
+   mov $160,%dl
+   div %dl
+   inc %al
+   mul %dl
+   mov %ax,(%bx)
+   jmp put_end
+tvram_x:
+   .word 480
+#endif /* CONFIG_ARCH_PC98 */
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

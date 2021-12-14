@@ -6,6 +6,7 @@
  *	This file rings the PC speaker at a specified frequency.
  */
 
+#include <linuxmt/config.h>
 #include <arch/ports.h>
 #include <arch/io.h>
 

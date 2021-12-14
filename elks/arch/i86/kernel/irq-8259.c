@@ -3,21 +3,18 @@
  *
  * This file contains code used for the 8259 PIC only.
  */
-
 #include <linuxmt/config.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/types.h>
-
 #include <arch/io.h>
 #include <arch/irq.h>
+#include <arch/ports.h>
 
-/* 8259 Command/Data ports */
-#define PIC1_CMD   0x20   /* master */
-#define PIC1_DATA  0x21
-#define PIC2_CMD   0xA0   /* slave */
-#define PIC2_DATA  0xA1
-
+#ifdef CONFIG_ARCH_PC98
+#undef inb_p
+#define inb_p	inb		/* no delay using I/O port 0x80 */
+#endif
 
 /*
  *	Low level interrupt handling for the X86 PC/XT and PC/AT platform

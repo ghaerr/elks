@@ -290,7 +290,7 @@ updct:
 	pop	%ax		// Saved IRQ
 	cli			// Disable interrupts to avoid reentering ISR
 
-#ifdef CONFIG_ARCH_IBMPC
+#if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_PC98)
 //
 //	Determine if trap or interrupt
 //
@@ -323,10 +323,10 @@ do_eoi:
 !	controller EOI..
 !
 */
-	out	%al,$0xA0
+	out	%al,$PIC2_CMD		// Ack on secondary controller
 	jmp	a5
 a5:	jmp	a6
-a6:	out	%al,$0x20		// Ack on primary controller
+a6:	out	%al,$PIC1_CMD		// Ack on primary controller
 
 #elif defined(CONFIG_ARCH_8018X)
 //
