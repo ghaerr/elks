@@ -58,8 +58,15 @@ endif
 
 ifdef CONFIG_CONSOLE_8018X
 OBJS += console-serial-8018x.o
-else
+endif
 
+ifdef CONFIG_ARCH_PC98
+#OBJS += console-headless-pc98.o conio-pc98-asm.o kbd-poll.o
+OBJS += console-headless.o conio-bios.o kbd-poll.o
+OBJS += lp.o
+endif
+
+ifdef CONFIG_ARCH_IBMPC
 ifdef CONFIG_CONSOLE_HEADLESS
 OBJS += console-headless.o
 endif
