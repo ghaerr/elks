@@ -3,28 +3,18 @@
  *
  * This file contains code used for the 8259 PIC only.
  */
-
 #include <linuxmt/config.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/types.h>
-
 #include <arch/io.h>
 #include <arch/irq.h>
+#include <arch/ports.h>
 
-/* 8259 Command/Data ports */
 #ifdef CONFIG_ARCH_PC98
-#define PIC1_CMD   0x00   /* master */
-#define PIC1_DATA  0x02
-#define PIC2_CMD   0x08   /* slave */
-#define PIC2_DATA  0x0A
-#else
-#define PIC1_CMD   0x20   /* master */
-#define PIC1_DATA  0x21
-#define PIC2_CMD   0xA0   /* slave */
-#define PIC2_DATA  0xA1
+#undef inb_p
+#define inb_p	inb		/* no delay using I/O port 0x80 */
 #endif
-
 
 /*
  *	Low level interrupt handling for the X86 PC/XT and PC/AT platform
@@ -47,19 +37,11 @@ void enable_irq(unsigned int irq)
 
     mask = ~(1 << (irq & 7));
     if (irq < 8) {
-#ifdef CONFIG_ARCH_PC98
-	unsigned char cache_21 = inb(PIC1_DATA);
-#else
 	unsigned char cache_21 = inb_p(PIC1_DATA);
-#endif
 	cache_21 &= mask;
 	outb(cache_21, PIC1_DATA);
     } else {
-#ifdef CONFIG_ARCH_PC98
-	unsigned char cache_A1 = inb(PIC2_DATA);
-#else
 	unsigned char cache_A1 = inb_p(PIC2_DATA);
-#endif
 	cache_A1 &= mask;
 	outb(cache_A1, PIC2_DATA);
     }
