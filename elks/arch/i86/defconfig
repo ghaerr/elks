@@ -18,19 +18,13 @@
 # System
 #
 CONFIG_ARCH_IBMPC=y
-CONFIG_PC_AUTO=y
-# CONFIG_PC_XT is not set
-# CONFIG_PC_AT is not set
-# CONFIG_PC_MCA is not set
-CONFIG_IBMPC_CLONE=y
-# CONFIG_IBMPC_COMPAQ is not set
+# CONFIG_ARCH_8081X is not set
+# CONFIG_ARCH_PC98 is not set
 
 #
 # Platform
 #
 CONFIG_CPU_8086=y
-# CONFIG_CPU_80186 is not set
-# CONFIG_CPU_80286 is not set
 
 #
 # Devices
