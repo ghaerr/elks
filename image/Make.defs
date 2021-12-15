@@ -43,7 +43,11 @@ MINIX_MKFSOPTS=
 # -k		only update offsets 11 through 61 in boot block, all else unchanged
 # -N 0		serial number 0
 # -v label	volume label (don't use with first format as uses two directory entries)
+ifdef CONFIG_IMG_FD1232
+FAT_MKFSOPTS = -s 8 -h 2 -t 77 -M 1024 -d 2 -L 2 -r 6 -k -N 0 -c 1
+else
 FAT_MKFSOPTS = -f $(TARGET_BLKS) -M 512 -d 2 -L 9 -r 14 -k -N 0 -c 1
+endif
 
 # mcopy options
 # -v		verbose
@@ -76,6 +80,12 @@ TARGET_FILE = $(IMG_DIR)/fd1200.bin
 TARGET_BLKS = 1200
 BPB = -B15,2,80
 MINIX_MKFSOPTS = -1 -n14 -i256 -s$(TARGET_BLKS)
+endif
+
+ifdef CONFIG_IMG_FD1232
+TARGET_FILE = $(IMG_DIR)/fd1232.bin
+TARGET_BLKS = 1232
+BPB = -B8,2,77
 endif
 
 ifdef CONFIG_IMG_FD1440

@@ -1067,18 +1067,13 @@ putc:	push %bx
 #endif /* CONFIG_ARCH_8018X*/
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// Architecture specific routines for 8018X
+// Architecture specific routines for NEC PC98
 //	Entry point arch_set_initseg is specific for various platform setup
 //	of SETUP_xxx variables (see config.h)
 
 #ifdef CONFIG_ARCH_PC98
 
 arch_set_initseg:
-
-   movb $0,4       // display page
-   movw $0x5003,6  // video mode 03h, window width 80
-
-   //call getcpu
 
 // mov $0x30,%si
 // call puts
@@ -1108,9 +1103,9 @@ putc:
    push %dx
    push %cs
    pop %ds
-   cmp $'\r',%ax
+   cmp $'\r',%al
    jz putesc_r
-   cmp $'\n',%ax
+   cmp $'\n',%al
    jz putesc_n
    xor %ah,%ah
    mov $tvram_x,%bx

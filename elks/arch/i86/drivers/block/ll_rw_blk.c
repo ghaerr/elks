@@ -174,7 +174,7 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
 
     debug_blk("BLK %lu %s %lx:%x\n", bh->b_blocknr, rw==READ? "read": "write",
 	bh->b_seg, buffer_data(bh));
-    count = (sector_t) (BLOCK_SIZE >> 9);
+    count = BLOCK_SIZE / SECTOR_SIZE;
     sector = bh->b_blocknr * count;
 
 #ifdef BDEV_SIZE_CHK
