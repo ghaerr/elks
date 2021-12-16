@@ -227,8 +227,9 @@ CONFIG_IMG_MINIX=y
 # CONFIG_IMG_FAT is not set
 # CONFIG_IMG_RAW is not set
 # CONFIG_IMG_ROM is not set
-# CONFIG_IMG_FD1680 is not set
+# CONFIG_IMG_FD2880 is not set
 CONFIG_IMG_FD1440=y
+# CONFIG_IMG_FD1232 is not set
 # CONFIG_IMG_FD1200 is not set
 # CONFIG_IMG_FD720 is not set
 # CONFIG_IMG_FD360 is not set
