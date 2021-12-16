@@ -348,13 +348,8 @@ size_error:
 	mov $INITSEG,%ax
 	mov %ax,%ds
 
-// Get the memory size
-// FIXME move BIOS INT 12h to arch-specific section
-#ifdef CONFIG_ARCH_PC98
-	mov $640,%ax // 640KB memory
-#else
-	int $0x12   // AX in KB
-#endif
+// Get the memory size in Kbytes in AX
+	call arch_get_mem
 	mov $6,%cl  // to paragraphs
 	shl %cl,%ax
 
@@ -737,10 +732,16 @@ hello_mess:
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Architecture specific routines for IBM PC
-//	Entry point arch_set_initseg is specific for various platform setup
-//	of SETUP_xxx variables (see config.h)
+//	Entry points specific for platform setup of SETUP_xxx variables (see config.h)
+//		arch_set_initseg
+//		arch_get_mem
 
 #ifdef CONFIG_ARCH_IBMPC
+
+// Return total memory in Kbytes
+arch_get_mem:
+	int $0x12   // AX in KB
+	ret
 
 // Set INITSEG values for IBM PC
 // Set keyboard repeat rate using INT 16h
@@ -1037,21 +1038,22 @@ v_id3:	.byte 0,0,0,0
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Architecture specific routines for 8018X
-//	Entry point arch_set_initseg is specific for various platform setup
-//	of SETUP_xxx variables (see config.h)
+//	Entry points specific for platform setup of SETUP_xxx variables (see config.h)
+//		arch_set_initseg
+//		arch_get_mem
 
 #ifdef CONFIG_ARCH_8018X
 
+// Return total memory in Kbytes
+arch_get_mem:
+	mov $SETUP_MEM_KBYTES,%ax
+	ret
+
 // Set INITSEG values for 8081X architecture
 // currently hard-coded in config.h
-
 arch_set_initseg:
-
 	mov	$INITSEG,%ax
 	mov	%ax,%ds
-	// TODO: get size of memory in 1K bytes in AX
-	// change SETUP_MEM_KBYTES define in config.h
-	//mov	%ax,0x2a
 	ret
 
 // Write AL to console, save all other registers
@@ -1067,18 +1069,21 @@ putc:	push %bx
 #endif /* CONFIG_ARCH_8018X*/
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// Architecture specific routines for 8018X
-//	Entry point arch_set_initseg is specific for various platform setup
-//	of SETUP_xxx variables (see config.h)
+// Architecture specific routines for NEC PC98
+//	Entry points specific for platform setup of SETUP_xxx variables (see config.h)
+//		arch_set_initseg
+//		arch_get_mem
 
 #ifdef CONFIG_ARCH_PC98
 
+// Return total memory in Kbytes
+arch_get_mem:
+	mov $SETUP_MEM_KBYTES,%ax
+	ret
+
+// Set INITSEG values for PC98 architecture
+// currently hard-coded in config.h
 arch_set_initseg:
-
-   movb $0,4       // display page
-   movw $0x5003,6  // video mode 03h, window width 80
-
-   //call getcpu
 
 // mov $0x30,%si
 // call puts
@@ -1108,9 +1113,9 @@ putc:
    push %dx
    push %cs
    pop %ds
-   cmp $'\r',%ax
+   cmp $'\r',%al
    jz putesc_r
-   cmp $'\n',%ax
+   cmp $'\n',%al
    jz putesc_n
    xor %ah,%ah
    mov $tvram_x,%bx

@@ -16,12 +16,13 @@ struct buffer_head * FATPROC msdos_sread(kdev_t dev, sector_t sector, void **sta
 {
 	register struct buffer_head *bh;
 
-	if (!(bh = bread32(dev, sector >> 1)))
+	if (!(bh = bread32(dev, sector >> (BLOCK_SIZE_BITS - SECTOR_BITS))))
 		return NULL;
 
 	map_buffer(bh);
 	//debug_fat("msread sector %ld block %lu\n", sector, bh->b_blocknr);
-	*start = bh->b_data + (((int)sector & 1) << SECTOR_BITS);
+	*start = bh->b_data +
+		(((int)sector & (BLOCK_SIZE_BITS - SECTOR_BITS)) << SECTOR_BITS);
 	return bh;
 }
 

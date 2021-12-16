@@ -52,6 +52,10 @@ void INITPROC mm_stat(seg_t start, seg_t end)
 	printk(", CPUID `%s'", proc_name);
 #endif
 
+#ifdef CONFIG_ARCH_PC98
+    printk("PC-9801 class machine, NEC CPU, ");
+#endif
+
 #ifdef CONFIG_ARCH_8018X
     printk("8018X machine, ");
 #endif

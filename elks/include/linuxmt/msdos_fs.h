@@ -14,14 +14,17 @@
 #define FATPROC
 #endif
 
-#define MSDOS_ROOT_INO  1 /* == MINIX_ROOT_INO */
-#define SECTOR_SIZE     512 /* sector size (bytes) */
-#define SECTOR_BITS	9 /* log2(SECTOR_SIZE) */
-#define MSDOS_DPB	(MSDOS_DPS*2) /* dir entries per block */
-#define MSDOS_DPB_BITS	5 /* log2(MSDOS_DPB) */
+#define MSDOS_ROOT_INO  1		/* == MINIX_ROOT_INO */
+#define MSDOS_DIR_BITS	5		/* log2(sizeof(struct msdos_dir_entry)) */
+#define MSDOS_DPB	(BLOCK_SIZE/sizeof(struct msdos_dir_entry)) /* dir entries/block*/
+#define MSDOS_DPB_BITS	5		/* log2(MSDOS_DPB) */
 #define MSDOS_DPS	(SECTOR_SIZE/sizeof(struct msdos_dir_entry))
-#define MSDOS_DPS_BITS	4 /* log2(MSDOS_DPS) */
-#define MSDOS_DIR_BITS	5 /* log2(sizeof(struct msdos_dir_entry)) */
+#if SECTOR_SIZE == 1024
+#define MSDOS_DPS_BITS	5		/* log2(MSDOS_DPS) */
+#endif
+#if SECTOR_SIZE == 512
+#define MSDOS_DPS_BITS	4		/* log2(MSDOS_DPS) */
+#endif
 
 #define MSDOS_SUPER_MAGIC 0x4d44 /* MD */
 

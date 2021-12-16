@@ -28,12 +28,20 @@
  * By Ross Biro July 1994
  */
 
+#ifdef CONFIG_ARCH_PC98
+#define BIOSHD_INT		0x1B
+#define BIOSHD_RESET		0x0300
+#define BIOSHD_WRITE		0xD500
+#define BIOSHD_READ		0xD600
+#else
 #define BIOSHD_INT		0x13
-#define BIOSHD_TESTDRIVE	0x1000
-#define BIOSHD_DRIVE_PARMS	0x0800
 #define BIOSHD_RESET		0x0000
 #define BIOSHD_WRITE		0x0300
 #define BIOSHD_READ		0x0200
+#endif
+
+#define BIOSHD_TESTDRIVE	0x1000
+#define BIOSHD_DRIVE_PARMS	0x0800
 
 #define MAJOR_NR		BIOSHD_MAJOR
 

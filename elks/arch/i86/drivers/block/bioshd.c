@@ -56,11 +56,21 @@
 #define NUM_DRIVES	8	/* =256/NUM_MINOR max number of drives*/
 #define DRIVE_FD0	4	/* first floppy drive =NUM_DRIVES/2*/
 #define DRIVE_FD1	5	/* second floppy drive*/
+#define DRIVE_FD2	6	/* PC98 only*/
+#define DRIVE_FD3	7	/* PC98 only*/
 
 #define MAJOR_NR BIOSHD_MAJOR
 #define BIOSDISK
 
 #include "blk.h"
+
+#ifdef CONFIG_ARCH_IBMPC
+#define MAXDRIVES	2
+#endif
+
+#ifdef CONFIG_ARCH_PC98
+#define MAXDRIVES	4
+#endif
 
 #define FDC_DOR     0x3F2       /* floppy digital output register*/
 
@@ -111,6 +121,9 @@ struct drive_infot fd_types[] = {	/* AT/PS2 BIOS reported floppy formats*/
     {80,  9, 2, 2},
     {80, 18, 2, 3},
     {80, 36, 2, 4},
+#ifdef CONFIG_ARCH_PC98
+    {77,  8, 2, 5},
+#endif
 };
 
 static unsigned char hd_drive_map[NUM_DRIVES] = {/* BIOS drive mappings*/
@@ -210,7 +223,7 @@ static unsigned short int INITPROC bioshd_getfdinfo(void)
  * ndrives is number of drives in your system (either 0, 1 or 2)
  */
 
-    int ndrives = 2;
+    int ndrives = MAXDRIVES;
 
 /* drive_info[] should be set *only* for existing drives;
  * comment out drive_info lines if you don't need them
@@ -226,14 +239,32 @@ static unsigned short int INITPROC bioshd_getfdinfo(void)
  *	  2	720 KB
  *	  3	1.44 MB
  *	  4	2.88 MB or Unknown
+ *	  5	1.232 MB (PC98 1K sectors)
  *
  * Warning: drive will be reported as 2880 KB at bootup if you've set it
  * as unknown (4). Floppy probe will detect correct floppy format at each
  * change so don't bother with that
  */
 
+#ifdef CONFIG_ARCH_PC98
+#if defined(CONFIG_IMG_FD1232)
+    drive_info[DRIVE_FD0] = fd_types[5];
+    drive_info[DRIVE_FD1] = fd_types[5];
+    drive_info[DRIVE_FD2] = fd_types[5];
+    drive_info[DRIVE_FD3] = fd_types[5];
+#elif defined(CONFIG_IMG_FD1440)
+    drive_info[DRIVE_FD0] = fd_types[3];
+    drive_info[DRIVE_FD1] = fd_types[3];
+    drive_info[DRIVE_FD2] = fd_types[3];
+    drive_info[DRIVE_FD3] = fd_types[3];
+#endif
+#endif
+
+#ifdef CONFIG_ARCH_IBMPC
     drive_info[DRIVE_FD0] = fd_types[2];	/*  /dev/fd0    */
     drive_info[DRIVE_FD1] = fd_types[2];	/*  /dev/fd1    */
+#endif
+
     return ndrives;
 }
 
@@ -395,12 +426,16 @@ static void probe_floppy(int target, struct hd_struct *hdp)
  * two lists and adjusting for loop' parameters in line 433 and 446 (or
  * somewhere near)
  */
-
+#ifdef CONFIG_ARCH_PC98
+	static char sector_probe[2] = { 8, 18 };
+	static char track_probe[2] = { 77, 80 };
+#else
 	static char sector_probe[5] = { 8, 9, 15, 18, 36 };
 	static char track_probe[2] = { 40, 80 };
+#endif
 	int count;
 
-	target &= 1;
+	target &= MAXDRIVES - 1;
 
 /* Try to look for an ELKS disk parameter block in the first sector.  If
  * it exists, we can obtain the disk geometry from it.
@@ -439,7 +474,7 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 	    if (read_sector(target, (int)track_probe[count] - 1, 1))
 		break;
 	    drivep->cylinders = (int)track_probe[count];
-	} while (++count < 2);
+	} while (++count < (int)sizeof(track_probe)/sizeof(track_probe[0]));
 
 /* Next, probe for sector number. We probe on track 0, which is
  * safe for all formats, and if we get a seek error, we assume that
@@ -452,7 +487,7 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 	    if (read_sector(target, 0, (int)sector_probe[count]))
 		break;
 	    drivep->sectors = (int)sector_probe[count];
-	} while (++count < 5);
+	} while (++count < (int)sizeof(sector_probe)/sizeof(sector_probe[0]));
 
 	drivep->heads = 2;
 
@@ -858,7 +893,7 @@ static void do_bioshd_request(void)
 	drivep = &drive_info[drive];
 
 	/* make sure it's a disk that we are dealing with. */
-	if (drive > DRIVE_FD1 || drivep->heads == 0) {
+	if (drive > (DRIVE_FD0 + MAXDRIVES - 1) || drivep->heads == 0) {
 	    printk("bioshd: non-existent drive\n");
 	    end_request(0);
 	    continue;
@@ -877,7 +912,7 @@ static void do_bioshd_request(void)
 	count = req->rq_nr_sectors;
 #endif
 	/* all ELKS requests are 1K blocks*/
-	count = 2;
+	count = BLOCK_SIZE / SECTOR_SIZE;
 
 	buf = req->rq_buffer;
 	while (count > 0) {
@@ -898,7 +933,7 @@ static void do_bioshd_request(void)
 
 	    count -= num_sectors;
 	    start += num_sectors;
-	    buf += num_sectors << 9;
+	    buf += num_sectors << SECTOR_BITS;
 	}
 
 	/* satisfied that request */
