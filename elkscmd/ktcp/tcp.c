@@ -228,14 +228,35 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     __u16 datasize;
     __u8 *data;
 
-if (!cb->sock) { debug_accept("tcp established: NULL SOCKET\n"); }
-
     h = iptcp->tcph;
 
     cb->rcv_wnd = ntohs(h->window);
 
-    datasize = iptcp->tcplen - TCP_DATAOFF(h);
+    if (h->flags & TF_RST) {
+	/* TODO: Check seqnum for security */
+	printf("tcp: RST from %s:%u->%u\n",
+	    in_ntoa(cb->remaddr), ntohs(h->sport), ntohs(h->dport));
+	rmv_all_retrans_cb(cb);
 
+	if (cb->state == TS_CLOSE_WAIT) {
+	    cbs_in_user_timeout--;
+	    ENTER_TIME_WAIT(cb);
+	    tcpdev_sock_state(cb, SS_DISCONNECTING);	/* wakes up process*/
+	} else {
+	    tcpdev_sock_state(cb, SS_DISCONNECTING);	/* wakes up process*/
+	    tcpcb_remove_cb(cb); 	/* deallocate*/
+	}
+	return;
+    }
+
+    if (cb->unaccepted && (h->flags & TF_FIN)) {
+	debug_tcp("tcp: FIN received before accept, dropping packet\n");
+
+	/* We can't change state before accept processing, so drop packet*/
+	return;
+    }
+
+    datasize = iptcp->tcplen - TCP_DATAOFF(h);
     if (datasize != 0) {
 	debug_window("tcp: recv data len %u avail %u\n", datasize, CB_BUF_SPACE(cb));
 	/* Process the data */
@@ -263,23 +284,6 @@ if (!cb->sock) { debug_accept("tcp established: NULL SOCKET\n"); }
 	acknum = ntohl(h->acknum);
 	if (SEQ_LT(cb->send_una, acknum))
 	    cb->send_una = acknum;
-    }
-
-    if (h->flags & TF_RST) {
-	/* TODO: Check seqnum for security */
-	printf("tcp: RST from %s:%u->%u\n",
-	    in_ntoa(cb->remaddr), ntohs(h->sport), ntohs(h->dport));
-	rmv_all_retrans_cb(cb);
-
-	if (cb->state == TS_CLOSE_WAIT) {
-	    cbs_in_user_timeout--;
-	    ENTER_TIME_WAIT(cb);
-	    tcpdev_sock_state(cb, SS_UNCONNECTED);	/* no wakeup?*/
-	} else {
-	    tcpdev_sock_state(cb, SS_DISCONNECTING);	/* wakes up process*/
-	    tcpcb_remove_cb(cb); 	/* deallocate*/
-	}
-	return;
     }
 
     if (h->flags & TF_FIN) {
