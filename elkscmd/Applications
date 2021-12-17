@@ -119,7 +119,7 @@ misc_utils/uudecode				:miscutil				:1440k
 misc_utils/ed					:be-miscutil		:720k
 elvis/elvis	::bin/vi			:elvis				:720k
 minix1/banner					:minix1					:1440k
-minix1/decomp16					:minix1					:1440k
+#minix1/decomp16				:minix1					:1440k
 minix1/fgrep					:minix1					:1440k
 minix1/grep						:minix1			:360k
 minix1/sum						:minix1					:1440k
@@ -134,7 +134,7 @@ minix2/lp						:minix2					:1440k
 minix2/pwdauth					:minix2					:1440k
 minix2/remsync					:minix2					:1440k
 minix2/synctree					:minix2					:1440k
-minix2/tget						:minix2					:1440k
+#minix2/tget					:minix2					:1440k
 minix3/sed						:minix3				:720k
 minix3/file						:minix3				:720k
 minix3/head						:minix3				:720k
@@ -160,6 +160,7 @@ inet/nettools/arp				:net
 inet/telnet/telnet				:net
 inet/telnetd/telnetd			:net
 inet/httpd/httpd				:net
+inet/ftp/ftp					:net
 inet/ftp/ftpd					:net
 inet/tinyirc/tinyirc			:net
 inet/urlget/urlget				:net
