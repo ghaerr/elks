@@ -254,12 +254,9 @@ not_elks:
 
 boot_it:
 	// w00t!
-#ifdef SAVE_DRVNUM
 	mov drive_num,%al
 	xor %ah,%ah
-#else
-	xor %ax,%ax
-#endif
+
 	RESTORE_DDPT
 	push %es
 	pop %ds
