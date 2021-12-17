@@ -29,6 +29,14 @@
 	.set FAT_TABLE_SIZE, 7
 	.set FAT_SEC_PER_TRK, 15
 	.set FAT_NUM_HEADS, 2
+#elif defined(CONFIG_IMG_FD1232)
+	.set FAT_SEC_PER_CLUS, 1
+	.set FAT_ROOT_ENT_CNT, 192
+	.set FAT_TOT_SEC, 1232
+	.set FAT_MEDIA_BYTE, 0xfe
+	.set FAT_TABLE_SIZE, 2
+	.set FAT_SEC_PER_TRK, 8
+	.set FAT_NUM_HEADS, 2
 #elif defined(CONFIG_IMG_FD1440)
 	.set FAT_SEC_PER_CLUS, 1
 	.set FAT_ROOT_ENT_CNT, 224
@@ -91,7 +99,7 @@
 bs_oem_name:				// OEM name
 	.ascii "ELKSFAT1"
 bpb_byts_per_sec:			// Bytes per sector
-	.word 0x200
+	.word SECTOR_SIZE
 bpb_sec_per_clus:			// Sectors per cluster
 	.byte FAT_SEC_PER_CLUS
 bpb_rsvd_sec_cnt:			// Reserved sectors, including this one
@@ -142,7 +150,7 @@ bpb_fil_sys_type:			// Filesystem type (8 bytes)
 	.set bpb_fat_sz_32,0x24		// FAT32 fat size, 32-bit
 
 .macro FAT_LOAD_AND_RUN_KERNEL
-	.set buf, entry + 0x200
+	.set buf, entry + SECTOR_SIZE
 
 	// Load the first sector of the root directory
 	movb bpb_num_fats,%al
@@ -195,13 +203,21 @@ find_system:
 					// we calculated before
 	add %ax,%bx
 	mov bpb_root_ent_cnt,%ax	// Then account for the sectors
+#if defined(CONFIG_IMG_FD1232)
+	add $0x1f,%ax
+	mov $5,%cl
+#else
 	add $0xf,%ax			// holding the root directory
 	mov $4,%cl
+#endif
 	shr %cl,%ax
 	add %bx,%ax
 
 	// Load the file as one single blob at ELKS_INITSEG:0
 	mov 0x1d(%si),%dx		// File size divided by 0x100
+#if defined(CONFIG_IMG_FD1232)
+	shr %dx
+#endif
 	shr %dx				// Now by 0x200 --- a sector count
 	inc %dx				// Account for any incomplete sector
 					// (this may overestimate a bit)
@@ -230,11 +246,6 @@ find_system:
 	mov $elks_magic,%di
 	mov $0x4C45,%ax
 	scasw
-.if 0 // removed for FAT boot space
-	jnz not_elks
-	mov $0x534B,%ax
-	scasw
-.endif
 	jz boot_it
 
 not_elks:
@@ -243,8 +254,12 @@ not_elks:
 
 boot_it:
 	// w00t!
+#ifdef SAVE_DRVNUM
 	mov drive_num,%al
 	xor %ah,%ah
+#else
+	xor %ax,%ax
+#endif
 	RESTORE_DDPT
 	push %es
 	pop %ds

@@ -84,7 +84,7 @@ struct elks_disk_parms {
 } __attribute__((packed));
 
 struct elks_boot_sect {
-    __u8 xx1[0x1FE - sizeof(struct elks_disk_parms)];
+    __u8 xx1[SECTOR_SIZE - 2 - sizeof(struct elks_disk_parms)];
     struct elks_disk_parms disk_parms;
     __u8 xx2[2];		/* 0xAA55 */
 } __attribute__((packed));

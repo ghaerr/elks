@@ -43,14 +43,15 @@
    Fields which are specific to ELKS are indicated below.  */
 
 #if defined __ASSEMBLER__ && !defined BOOTSEG
-part_offset	=	0x1e2		/* sector offset of booted partition*/
-elks_magic	=	0x1e6		/* should read "ELKS" (45 4c 4b 53) */
-setup_sects	=	0x1f1
-root_flags	=	0x1f2
-syssize		=	0x1f4
-elks_flags	=	0x1f6		/* 16-bit ELKS flags (EF_...) */
-root_dev	=	0x1fc
-boot_flag	=	0x1fe
+EBASE	 	= SECTOR_SIZE-512	/* last 512 bytes of sector */
+part_offset	= EBASE+0x1e2		/* sector offset of booted partition*/
+elks_magic	= EBASE+0x1e6		/* should read "ELKS" (45 4c 4b 53) */
+setup_sects	= EBASE+0x1f1
+root_flags	= EBASE+0x1f2
+syssize		= EBASE+0x1f4
+elks_flags	= EBASE+0x1f6		/* 16-bit ELKS flags (EF_...) */
+root_dev	= EBASE+0x1fc
+boot_flag	= EBASE+0x1fe
 #endif
 
 #endif

@@ -7,6 +7,14 @@
 /* tunable parameters*/
 #define PIPE_BUFSIZ	80	/* doesn't have to be power of two */
 
+#ifdef CONFIG_IMG_FD1232
+#define SECTOR_SIZE     1024	/* sector size (bytes) */
+#define SECTOR_BITS	10	/* log2(SECTOR_SIZE) */
+#else
+#define SECTOR_SIZE     512	/* sector size (bytes) */
+#define SECTOR_BITS	9	/* log2(SECTOR_SIZE) */
+#endif
+
 /*
  * Compile-time configuration
  */
