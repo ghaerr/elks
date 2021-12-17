@@ -13,13 +13,25 @@
 
 #include "boot_err.h"
 
-#if defined(CONFIG_IMG_FD1440)
-#define BOOTSEG98 0x1FE0
+// configuration settings for boot code
+
+#ifdef CONFIG_ARCH_PC98
+// Japanese NEC PC98
+
+#if defined(CONFIG_IMG_FD1232)
+#define BOOTSEGM	0x1FC0
 #else
-#define BOOTSEG98 0x1FC0
+#define BOOTSEGM	0x1FE0
+#endif
+#define SEGMEMTOP	0xA000		// 640K memory
+
+#else
+// IBM PC
+
+#define BOOTADDR	0x7C00
+#define SAVE_DRVNUM			// save drive number
 #endif
 
-#define BOOTADDR      0x7C00
 #define LOADSEG       DEF_INITSEG
 #define ELKS_INITSEG  DEF_INITSEG
 
@@ -72,12 +84,10 @@ floppy_table:
 entry1:
 #endif
 
-#ifdef CONFIG_ARCH_PC98
-	mov $0xA000,%ax  // For 640KB memory
-#else
 	// Get the memory size
-	// TODO: optional BIOS INT 12h
-
+#ifdef SEGMEMTOP
+	mov $SEGMEMTOP,%ax
+#else
 	int $0x12   // in KB
 	mov $6,%cl  // to paragraphs
 	shl %cl,%ax
@@ -95,19 +105,15 @@ entry1:
 	xor %sp,%sp
 
 	xor %di,%di
-#ifdef CONFIG_ARCH_PC98
-	mov $BOOTSEG98,%ax
+#ifdef BOOTSEGM
+	mov $BOOTSEGM,%ax	// DS:SI = BOOTSEGM:0
 	mov %ax,%ds
 	xor %si,%si
 #else
-	mov %di,%ds
+	mov %di,%ds		// DS:SI = 0:BOOTADDR
 	mov $BOOTADDR,%si
 #endif
-#if defined(CONFIG_IMG_FD1232)
-	mov $512,%cx  // 512 words = 1024 B
-#else
-	mov $256,%cx  // 256 words = 512 B
-#endif
+	mov $SECTOR_SIZE/2,%cx  // sector size in words
 	rep
 	movsw
 
@@ -159,7 +165,7 @@ _next1:
 
 	// Save boot drive as provided by BIOS
 
-#ifndef CONFIG_ARCH_PC98
+#ifdef SAVE_DRVNUM
 	mov %dl,drive_num  // DX preserved above
 #endif
 
@@ -221,13 +227,10 @@ _except:
 	.global _reboot
 
 _reboot:
-#ifndef CONFIG_ARCH_PC98
 	mov $msg_reboot,%bx
-#endif
+
 _reboot1:
-#ifndef CONFIG_ARCH_PC98
 	call _puts
-#endif
 
 	xor %ax,%ax  // wait for key
 #ifdef CONFIG_ARCH_PC98
@@ -256,9 +259,11 @@ _putc:
 	inc %di
 	mov %di,(%si)
 #else
+	push %bx
 	mov $7,%bx    // page 0 - color 7
 	mov $0xE,%ah  // teletype write
 	int $0x10     // BIOS video services
+	pop %bx
 #endif
 	ret
 
@@ -271,21 +276,11 @@ puts:
 	.global _puts
 
 _puts:
-
 	mov (%bx),%al
-#ifdef CONFIG_ARCH_PC98
 	or %al,%al
 	jz 1f
 	call _putc
 	inc %bx
-#else
-	or %al,%al
-	jz 1f
-	push %bx
-	call _putc
-	pop %bx
-	inc %bx
-#endif
 	jmp _puts
 1:  ret
 
@@ -402,7 +397,7 @@ dr_over2:
 
 dr_over3:
 #endif
-#ifndef CONFIG_ARCH_PC98
+#ifdef SAVE_DRVNUM
 	mov drive_num,%dl
 #endif
 
@@ -413,10 +408,8 @@ dr_try:
 	push %cx
 	push %dx
 	push %es
-#ifndef CONFIG_ARCH_PC98
-	mov -6(%bp),%bx
-#endif
 	mov 4(%bp),%es
+
 #ifdef CONFIG_ARCH_PC98
 	push %bp
 	mov -6(%bp),%ax
@@ -432,16 +425,18 @@ dr_try:
 	pop %ax
 	pop %es
 	mov $0xD6,%ah    // Read Data
-#if defined(CONFIG_IMG_FD1440)
-	mov $0x200,%bx   // 512Bytes
-	mov $0x02,%ch    // 512Bytes per sector
-#else
+#if defined(CONFIG_IMG_FD1232)
 	mov $0x400,%bx   // 1024Bytes
 	mov $0x03,%ch    // 1024Bytes per sector
+#else
+	mov $0x200,%bx   // 512Bytes
+	mov $0x02,%ch    // 512Bytes per sector
 #endif
 	int $0x1B
 	pop %bp
 #else
+
+	mov -6(%bp),%bx
 #ifdef FAST_READ
 	mov $0x02,%ah    // BIOS read disk
 #else
@@ -450,11 +445,10 @@ dr_try:
 	int $0x13
 #endif
 	pop %es
-
 	jnc dr_cont
 
 #ifndef CONFIG_ARCH_PC98
-	xor %ah,%ah
+	xor %ah,%ah       // BIOS reset disk
 	int $0x13
 #endif
 	// PATCH: failure trace
@@ -628,22 +622,19 @@ boot_it:
 
 //------------------------------------------------------------------------------
 
-#ifdef CONFIG_ARCH_PC98
-msg_boot:
-	.asciz "ELKS/pc98"
-tvram_x:
-	.word 0
-#else
 msg_boot:
 	.asciz "ELKS"
-#endif
 
 msg_error:
 	.ascii "!\r\n"
 	// fall through
 
-#ifndef CONFIG_ARCH_PC98
 msg_reboot:
+#ifdef CONFIG_ARCH_PC98
+	.byte 0
+tvram_x:
+	.word 0
+#else
 	.asciz "Press key\r\n"
 #endif
 
@@ -655,15 +646,12 @@ end_of_code:
 // For future expansion, fields should be added at the _front_ of structure
 
 #ifdef BOOT_FAT
-#if defined(CONFIG_IMG_FD1232)
-	.org 0x3F7
-#else
-	.org 0x1F7              // FAT boot sectors use older EPB for now
-#endif
+	// FAT boot sectors use older EPB for now
+	.org SECTOR_SIZE-9	// 0x1F7 on IBM PC
 elks_parms_start:
 
 #else
-	.org 0x1F3
+	.org SECTOR_SIZE-0x0D	// 0x1F3 on IBM PC
 elks_parms_start:
 
 	.global sect_offset
@@ -722,9 +710,8 @@ head_max:
 #endif
 #if defined(CONFIG_IMG_FD360) || defined(CONFIG_IMG_FD720) \
     || defined(CONFIG_IMG_FD1200) || defined(CONFIG_IMG_FD1440) \
-    || defined(CONFIG_IMG_FD1680) || defined(CONFIG_IMG_FD2880)
-	.byte 2
-#elif defined(CONFIG_IMG_FD1232)
+    || defined(CONFIG_IMG_FD1680) || defined(CONFIG_IMG_FD2880) \
+	|| defined(CONFIG_IMG_FD1232)
 	.byte 2
 #elif defined(CONFIG_IMG_HD)
 	.byte CONFIG_IMG_HEAD
@@ -737,11 +724,7 @@ head_max:
 
 	.byte . - elks_parms_start
 	.ascii "eL"
-#if defined(CONFIG_IMG_FD1232)
-	.org 0x3FE
-#else
-	.org 0x1FE
-#endif
+	.org SECTOR_SIZE-2	// 0x1FE on IBM PC
 
 //------------------------------------------------------------------------------
 
@@ -761,11 +744,7 @@ head_max:
 // Here comes the first sector of the payload
 // that is specific to the filesystem
 
-#if defined(CONFIG_IMG_FD1232)
-	.org 0x400
-#else
-	.org 0x200
-#endif
+	.org SECTOR_SIZE
 
 payload:
 #endif

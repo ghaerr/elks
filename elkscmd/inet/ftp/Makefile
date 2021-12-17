@@ -12,17 +12,21 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-SRCS = ftpd.c
+SRCS = ftpd.c ftp.c
+BINS = ftp ftpd
 OBJS = $(SRCS:.c=.o)
 
-all:	ftpd
+all:	$(BINS)
 
-ftpd:	$(OBJS)
-	$(LD) $(LDFLAGS) -o ftpd $(OBJS) $(LDLIBS)
+ftp:	ftp.o
+	$(LD) $(LDFLAGS) -maout-stack=8192 -o ftp ftp.o $(LDLIBS)
 
-install: ftpd
-	$(INSTALL) ftpd $(DESTDIR)/bin
+ftpd:	ftpd.o
+	$(LD) $(LDFLAGS) -maout-stack=8192 -o ftpd ftpd.o $(LDLIBS)
+
+install: ftpd ftp
+	$(INSTALL) $(BINS)  $(DESTDIR)/bin
 
 clean:
-	rm -f ftpd *.o
+	rm -f $(BINS) $(OBJS)
 

@@ -54,14 +54,6 @@
 #define BLOCK_SIZE	1024
 #define BLOCK_SIZE_BITS 10
 
-#ifdef CONFIG_IMG_FD1232	/* FIXME use different CONFIG_ option for sector size */
-#define SECTOR_SIZE     1024	/* sector size (bytes) */
-#define SECTOR_BITS	10	/* log2(SECTOR_SIZE) */
-#else
-#define SECTOR_SIZE     512	/* sector size (bytes) */
-#define SECTOR_BITS	9	/* log2(SECTOR_SIZE) */
-#endif
-
 #define MAY_EXEC	1
 #define MAY_WRITE	2
 #define MAY_READ	4
