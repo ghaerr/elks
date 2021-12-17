@@ -157,7 +157,7 @@ int setup_data_connection(char *client_ip, unsigned int client_port, int server_
     		perror("socket error");
     		return -1;
 	}
-#if 0
+#if 1
 	int on = 1;
 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof (on)) < 0) {
 		/* This should not happen */
@@ -395,7 +395,7 @@ int do_pasv(int controlfd, int *datafd) {
 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &i, sizeof(i)) < 0)
 		perror("SO_REUSEADDR");
 	i = SO_LISTEN_BUFSIZ;
-	if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &i, sizeof(int)) < 0)
+	if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &i, sizeof(i)) < 0)
                 perror("SO_RCVBUF");
 
 	pasv.sin_family = AF_INET;
@@ -453,9 +453,7 @@ int do_pasv(int controlfd, int *datafd) {
 	if (debug) printf("Accepted connection from %s/%u on fd %d\n", in_ntoa(pasv.sin_addr.s_addr), ntohs(pasv.sin_port), *datafd);
 
 	return 0;
-
 }
-
 
 int do_retr(int controlfd, int datafd, char *input){
 	char *str, cmd_buf[CMDBUFSIZ], iobuf[IOBUFSIZ];
@@ -511,7 +509,7 @@ int do_stor(int controlfd, int datafd, char *input) {
 
 	/* FIXME - need to query protection mode for the source file and use that */
 	//trim(cmd_buf);
-	if ((fp = open(cmd_buf, O_CREAT|O_RDWR, 0644)) < 1) {
+	if ((fp = open(cmd_buf, O_CREAT|O_RDWR|O_TRUNC, 0644)) < 1) {
 		perror("File create failure");
 		str = "552 File create error, transfer aborted.\r\n";
 		write(controlfd, str, strlen(str));
@@ -573,7 +571,7 @@ int main(int argc, char **argv){
 		exit(1);
 	}
 
-#if 0
+#if 1
 	/* set local port reuse, allows server to be restarted in less than 10 secs */
 	ret = 1;
 	if (setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &ret, sizeof(ret)) < 0)
