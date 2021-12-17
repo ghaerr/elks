@@ -157,7 +157,7 @@ int main(int argc,char **argv)
 	unsigned char blk[SECT_SIZE*2];
 	unsigned char inblk[SECT_SIZE];
 
-	if (argc != 3 && argc != 4 && argc != 5)
+	if (argc < 2 || argc > 6)
 		fatalmsg("Usage: %s <image> [-F] [-K] [-S{m,f}] [-{B,P}<sectors>,<heads>[,<tracks>]] [<input_boot_image>]\n", argv[0]);
 
 	outfile = *++argv; argc--;
