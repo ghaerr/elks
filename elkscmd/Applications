@@ -131,7 +131,7 @@ minix1/cksum					:be-minix1				:1440k
 minix1/du						:be-minix1				:1440k
 minix2/env						:minix2					:1440k
 minix2/lp						:minix2					:1440k
-minix2/pwdauth					:minix2					:1440k
+#minix2/pwdauth					:minix2					:1440k
 minix2/remsync					:minix2					:1440k
 minix2/synctree					:minix2					:1440k
 #minix2/tget					:minix2					:1440k
