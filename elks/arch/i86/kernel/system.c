@@ -74,11 +74,13 @@ void INITPROC setup_arch(seg_t *start, seg_t *end)
 #endif
 }
 
-/* Stubs for functions needed elsewhere */
+/*
+ * The following routines may need porting on non-IBM PC architectures
+ */
 
 void hard_reset_now(void)
 {
-#ifdef __ia16__
+#ifdef CONFIG_ARCH_IBMPC
     asm("mov $0x40,%ax\n\t"
 	"mov %ax,%ds\n\t"
 	"movw $0x1234,0x72\n\t"
@@ -87,7 +89,6 @@ void hard_reset_now(void)
 #endif
 }
 
-#ifdef CONFIG_APM
 /*
  *	Use Advanced Power Management to power off system
  *	For details on how this code works, see
@@ -95,7 +96,7 @@ void hard_reset_now(void)
  */
 void apm_shutdown_now(void)
 {
-#ifdef __ia16__
+#if defined(CONFIG_APM) && defined(CONFIG_ARCH_IBMPC)
     asm("movw $0x5301,%ax\n\t"
 	"xorw %bx,%bx\n\t"
 	"int $0x15\n\t"
@@ -112,7 +113,4 @@ void apm_shutdown_now(void)
 	"apm_error:\n\t"
 	);
 #endif
-    printk("Cannot power off: APM not supported\n");
-    return;
 }
-#endif
