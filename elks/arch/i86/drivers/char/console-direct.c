@@ -67,6 +67,7 @@ static unsigned short int NumConsoles = MAX_CONSOLES;
 
 int Current_VCminor = 0;
 int kraw = 0;
+unsigned VideoSeg = 0xB800;
 
 #ifdef CONFIG_EMUL_ANSI
 #define TERM_TYPE " emulating ANSI "

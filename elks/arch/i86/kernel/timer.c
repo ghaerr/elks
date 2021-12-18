@@ -1,6 +1,7 @@
 #include <linuxmt/config.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/timer.h>
+#include <linuxmt/ntty.h>
 
 #include <arch/io.h>
 #include <arch/irq.h>
@@ -33,7 +34,7 @@ void timer_tick(int irq, struct pt_regs *regs)
 	static unsigned char wheel[4] = {'-', '\\', '|', '/'};
 	static int c = 0;
 
-	pokeb((79 + 0*80) * 2, 0xB800, wheel[c++ & 0x03]);
+	pokeb((79 + 0*80) * 2, VideoSeg, wheel[c++ & 0x03]);
     }
 #endif
 }
@@ -42,6 +43,6 @@ void spin_timer(int onflag)
 {
 #ifdef CONFIG_CONSOLE_DIRECT
     if ((spin_on = onflag) == 0)
-	pokeb((79 + 0*80) * 2, 0xB800, ' ');
+	pokeb((79 + 0*80) * 2, VideoSeg, ' ');
 #endif
 }
