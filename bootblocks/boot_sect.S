@@ -29,7 +29,7 @@
 // IBM PC
 
 #define BOOTADDR	0x7C00
-#define SAVE_DRVNUM			// save drive number
+#define BIOS_DRVNUM			// use boot drive number from BIOS
 #endif
 
 #define LOADSEG       DEF_INITSEG
@@ -165,7 +165,7 @@ _next1:
 
 	// Save boot drive as provided by BIOS
 
-#ifdef SAVE_DRVNUM
+#ifdef BIOS_DRVNUM
 	mov %dl,drive_num  // DX preserved above
 #endif
 
@@ -397,7 +397,7 @@ dr_over2:
 
 dr_over3:
 #endif
-#ifdef SAVE_DRVNUM
+#ifdef BIOS_DRVNUM
 	mov drive_num,%dl
 #endif
 
@@ -418,19 +418,18 @@ dr_try:
 	xor %ax,%ax
 	mov %ax,%es
 	mov $0x584,%bx
-	mov %es:(%bx),%al    // Physical Device Address
+	mov %es:(%bx),%al // Physical Device Address
 	push %ax
 	and $0x0F,%al
 	mov %al,drive_num
 	pop %ax
 	pop %es
 	mov $0xD6,%ah    // Read Data
+	mov $SECTOR_SIZE,%bx
 #if defined(CONFIG_IMG_FD1232)
-	mov $0x400,%bx   // 1024Bytes
-	mov $0x03,%ch    // 1024Bytes per sector
+	mov $0x03,%ch    // 1024 Bytes per sector
 #else
-	mov $0x200,%bx   // 512Bytes
-	mov $0x02,%ch    // 512Bytes per sector
+	mov $0x02,%ch    // 512 Bytes per sector
 #endif
 	int $0x1B
 	pop %bp
@@ -500,12 +499,7 @@ dr_cont:
 	decw -4(%bp)
 	jz dr_exit
 	incw -2(%bp)
-
-#if defined(CONFIG_IMG_FD1232)
-	addb $4,-6+1(%bp)
-#else
-	addb $2,-6+1(%bp)
-#endif
+	addb $SECTOR_SIZE>>8,-6+1(%bp)	// increment by sector size
 #endif
 	jnc dr_next
 	addb $0x10,4+1(%bp)
