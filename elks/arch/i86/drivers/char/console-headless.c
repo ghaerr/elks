@@ -37,10 +37,12 @@ void Console_conout(dev_t dev, char Ch)
     conio_putc(Ch);
 }
 
+#ifndef CONFIG_ARCH_PC98
 void bell(void)
 {
     conio_putc(7);	/* send ^G */
 }
+#endif
 
 static int Console_ioctl(struct tty *tty, int cmd, char *arg)
 {
