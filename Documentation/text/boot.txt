@@ -59,7 +59,40 @@ The boot sector contains some parameters at the end:
 *patched by arch/i86/tools/build when the kernel is being built.
 Only 497, 500,501 and 508,509 are used at present.
 
-New ELKS "INITSEG" (setup data segment) offsets:
+Setup and INITSEG Variables
+---------------------------
+INITSEG variables are mostly used to pass information from the boot loader
+to setup, and also the kernel. This is unfortunately still a kind of
+black-magic area of ELKS.
+
+Setup is ASM code that executes immediately after the boot loader, and
+prior to the kernel. It is located in the 2nd 512 bytes of the kernel image
+on disk (/linux).
+
+The first 512 bytes of the kernel disk image is a dummy boot sector that
+contains preset values for certain setup variable locations. Following that
+is the a.out kernel executable header and then the kernel text, fartext,
+data and relocation table sections.
+
+When building the kernel image Image, a special tool called build is used to
+concatenate the dummy boot loader, the setup code and the kernel executable
+together. build also writes the sizes of setup and the kernel into INITSEG,
+which at the time is the dummy boot sector.
+
+Setup's data segment is at a fixed location and is called INITSEG, and is
+initially the contents of the dummy boot sector. Setup is required to
+perform the relocations from the a.out relocation table on the kernel
+executable, and also to determine certain hardware configurations easier done
+in assembly, which are saved in it's data segment (INITSEG), which is also
+known to the kernel, since it's at a fixed segment address.
+
+After relocation, setup passes control to the kernel _start in crt0.S, which
+then calls start_kernel. The kernel can still read various INITSEG values
+using the setupb/setupw functions.
+
+ELKS "INITSEG" (setup data segment) offsets:
++------+-----+------+-------------------+--------------------------+------------
+| Hex  | Dec | Size | Name              | Description              | Where set
 +------+-----+------+-------------------+--------------------------+------------
 | 0007 |   7 | byte | screen_cols       | screen width             | setup.S
 | 000E |  14 | byte | screen_lines      | screen height            | setup.S
