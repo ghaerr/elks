@@ -256,7 +256,6 @@ boot_it:
 	// w00t!
 	mov drive_num,%al
 	xor %ah,%ah
-
 	RESTORE_DDPT
 	push %es
 	pop %ds

@@ -91,6 +91,7 @@ void INITPROC kernel_init(void)
     inode_init();
     irq_init();
     tty_init();
+
 #ifdef CONFIG_BOOTOPTS
     /* parse options found in /bootops */
     int opts = parse_options();
@@ -105,6 +106,7 @@ void INITPROC kernel_init(void)
 #ifdef CONFIG_CHAR_DEV_RS
     serial_init();
 #endif
+
     device_init();
 
 #ifdef CONFIG_SOCKET

@@ -38,7 +38,6 @@ extern void INITPROC setup_dev(register struct gendisk *);
 extern void INITPROC blk_dev_init(void);
 extern int INITPROC bioshd_init(void);
 extern int INITPROC get_ide_data(int, struct drive_infot *);
-
 extern int directhd_init(void);
 extern void floppy_init(void);
 extern void rd_init(void);
