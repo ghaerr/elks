@@ -58,3 +58,25 @@ The boot sector contains some parameters at the end:
 
 *patched by arch/i86/tools/build when the kernel is being built.
 Only 497, 500,501 and 508,509 are used at present.
+
+New ELKS "INITSEG" (setup data segment) offsets:
++------+-----+------+-------------------+--------------------------+------------
+| 0007 |   7 | byte | screen_cols       | screen width             | setup.S
+| 000E |  14 | byte | screen_lines      | screen height            | setup.S
+| 0020 |  32 | byte | cpu_type          | deprecated               | setup.S
+| 002A |  42 | word | mem_kbytes        | base memory size in K    | setup.S
+| 0030 |  48 |16byte| proc_name         | processor name           | setup.S
+| 0050 |  80 |13byte| cpu_id            | cpu id                   | setup.S
+| 01E2 | 482 | long | part_offset       | partition offset in sects| boot_sect.S
+| 01E2 | 482 | long | part_offset       | partition offset in sects| boot_sect.S
+| 01E6 | 486 | long | elks_magic        | "ELKS"                   | bootsect.S
+| 01EF | 495 | word | SETUPSEG          | UNUSED                   |
+| 01F1 | 497 | byte | setup_sects       | size in 512-byte sects   | build tool
+| 01F2 | 498 | word | root_flags        | UNUSED                   |
+| 01F4 | 500 | word | syssize           | kernel size in paras     | build tool
+| 01F6 | 502 | word | elks_flags        | BLOB, BIOS_DRV           | boot_sect.S
+| 01F8 | 504 | word | RAMDISK           | UNUSED                   |
+| 01FA | 506 | word | SVGAMODE          | UNUSED                   |
+| 01FC | 508 | word | root_dev          | BIOS drive or kdev_t     | boot_sect.S
+| 01FE | 510 | word | boot_flag         | AA55h                    | boot_sect.S
++------+-----+------+-------------------+--------------------------+------------

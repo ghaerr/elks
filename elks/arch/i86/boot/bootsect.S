@@ -61,6 +61,7 @@ ROOT_DEV = 0
 #define RAMDISK 	0
 #endif 
 
+#define DUMMYBOOT
 #include <linuxmt/boot.h>
 
 .global     _start

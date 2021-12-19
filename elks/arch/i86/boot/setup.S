@@ -62,18 +62,18 @@
 !	...
 !	0x50:	zero terminated string containing the cpuid, 13 bytes
 !	...
-!	0x1e2:	part_offset, 4 bytes. Sector offset of booted MBR partition
-!	0x1e6:	elks_magic, 2 bytes
-!	0x1ef:	SETUPSEG
-!	0x1f1:	SETUPSECS, 1 byte
-!	0x1f2:	ROOTFLAGS, 2 bytes
-!	0x1f4:	SYSSIZE, 2 bytes
-!	0x1f6:	ELKSFLAGS, 2 bytes
-!	0x1f8:	RAMDISK
-!	0x1fa:	SVGA_MODE
-!	0x1fc:	ROOT_DEV, 2 bytes. Either BIOS boot device or actual kdev_t ROOT_DEV
-!	0x1fe:	0x55 = boot_flag, Low part
-!	0x1ff:	0xAA = boot_flag, High part
+!	0x1e2:	part_offset	long Sector offset of booted MBR partition
+!	0x1e6:	elks_magic	long "ELKS"
+!	0x1ea-0x1ee:		5 bytes UNUSED
+!	0x1ef:	SETUPSEG	word UNUSED
+!	0x1f1:	setup_sects	byte in 512-byte sectors, written by build tool
+!	0x1f2:	ROOTFLAGS	word UNUSED
+!	0x1f4:	syssize		word in paragraphs, written by build tool
+!	0x1f6:	elks_flags	word EF_xxx
+!	0x1f8:	RAMDISK		word UNUSED
+!	0x1fa:	SVGA_MODE	word UNUSED
+!	0x1fc:	root_dev	word Either BIOS boot device or actual kdev_t ROOT_DEV
+!	0x1fe:	boot_flag	word = 0xAA55
 !
 ! NOTE! These had better be the same as in bootsect.s!
 */
