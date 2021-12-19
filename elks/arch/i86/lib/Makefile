@@ -42,11 +42,11 @@ SRCS1 = \
 	# end of list
 
 ifeq ($(CONFIG_ARCH_IBMPC), y)
-SRCS1 += bios16.S
+SRCS1 += bios13.S
 endif
 
 ifeq ($(CONFIG_ARCH_PC98), y)
-SRCS1 += bios27.S
+SRCS1 += bios1B.S
 endif
 
 OBJS1 = $(SRCS1:.S=.o)

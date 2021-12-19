@@ -7,6 +7,14 @@
 /* tunable parameters*/
 #define PIPE_BUFSIZ	80	/* doesn't have to be power of two */
 
+#ifdef CONFIG_IMG_FD1232
+#define SECTOR_SIZE     1024	/* sector size (bytes) */
+#define SECTOR_BITS	10	/* log2(SECTOR_SIZE) */
+#else
+#define SECTOR_SIZE     512	/* sector size (bytes) */
+#define SECTOR_BITS	9	/* log2(SECTOR_SIZE) */
+#endif
+
 /*
  * Compile-time configuration
  */
@@ -38,10 +46,10 @@
 #define SETUP_VID_LINES		25	/* video # lines */
 #define SETUP_CPU_TYPE		1	/* processor type = 8086 */
 #define SETUP_MEM_KBYTES	640	/* base memory in 1K bytes */
-#define SETUP_ROOT_DEV		0x380	/* root device, kdev_t or BIOS dev */
-#define SETUP_ELKS_FLAGS	0	/* flags for root device type */
-#define SETUP_PART_OFFSETLO	0	/* partition offset low word */
-#define SETUP_PART_OFFSETHI	0	/* partition offset high word */
+#define SETUP_ROOT_DEV		setupw(0x1fc)	/* root device, kdev_t or BIOS dev */
+#define SETUP_ELKS_FLAGS	setupw(0x1f6)	/* flags for root device type */
+#define SETUP_PART_OFFSETLO	setupw(0x1e2)	/* partition offset low word */
+#define SETUP_PART_OFFSETHI	setupw(0x1e4)	/* partition offset high word */
 #define SYS_CAPS		0	/* no XT/AT capabilities */
 #endif
 

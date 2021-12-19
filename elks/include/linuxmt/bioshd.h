@@ -38,10 +38,9 @@
 #define BIOSHD_RESET		0x0000
 #define BIOSHD_WRITE		0x0300
 #define BIOSHD_READ		0x0200
-#endif
-
 #define BIOSHD_TESTDRIVE	0x1000
 #define BIOSHD_DRIVE_PARMS	0x0800
+#endif
 
 #define MAJOR_NR		BIOSHD_MAJOR
 

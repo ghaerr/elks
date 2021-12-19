@@ -1,17 +1,11 @@
 /*
- *	16bit PC BIOS interface library
- *
- *	FIXME: Only supports IRQ 0x13 for now. Needs to do 0x10 later!
- *
+ *	PC98 Disk BIOS INT 0x1B Interface
+ *	Dec 2021 by @tyama501, based on bios13.S
  */
 
 #include <linuxmt/config.h>
 
-/*
- *	Quick drop into assembler for this one.
- */
-
-    .code16
+	.code16
 
 	.text
 	.global	call_bios
@@ -53,7 +47,40 @@ call_bios:
 
 //	Do a disk interrupt.
 
-	int $0x13
+	push %ax
+	push %bx
+	push %cx
+	push %dx
+	push %bp
+
+	xchg %ch,%cl     // cylinder number for PC_98
+	xchg %ch,%dl     // sector number for PC_98
+	xchg %bx,%bp
+
+#ifdef CONFIG_IMG_FD1232
+	mov $0x400,%bx   // 1024Bytes
+	mov %ch,%al
+	and $0x0F,%al
+	or  $0x90,%al    // Physical Device Address
+	mov $0x03,%ch    // 1024Bytes per sector
+#else
+	mov $0x200,%bx   // 512Bytes
+	cmp $2,%al
+	jnz ch_1440
+	shl %bx          // 1024Bytes
+ch_1440:
+	mov %ch,%al
+	and $0x0F,%al
+	or  $0x30,%al    // Physical Device Address
+	mov $0x02,%ch    // 512Bytes per sector
+#endif
+	int $0x1B
+
+	pop %bp
+	pop %dx
+	pop %cx
+	pop %bx
+	pop %ax
 
 //	Now recover the results
 //	Make some breathing room

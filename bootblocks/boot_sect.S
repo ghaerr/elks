@@ -13,10 +13,27 @@
 
 #include "boot_err.h"
 
-#define BOOTADDR      0x7C00
+// configuration settings for boot code
+
+#ifdef CONFIG_ARCH_PC98
+// Japanese NEC PC98
+
+#if defined(CONFIG_IMG_FD1232)
+#define BOOTSEGM	0x1FC0
+#else
+#define BOOTSEGM	0x1FE0
+#endif
+#define MEMTOPSEG	0xA000		// 640K memory
+
+#else
+// IBM PC
+
+#define BOOTADDR	0x7C00
+#define BIOS_DRVNUM			// use boot drive number from BIOS
+#endif
+
 #define LOADSEG       DEF_INITSEG
 #define ELKS_INITSEG  DEF_INITSEG
-
 
 // Whether to try to do whole-track reads, or read one sector at a time
 //
@@ -66,12 +83,15 @@ floppy_table:
 
 entry1:
 #endif
-	// Get the memory size
-	// TODO: optional BIOS INT 12h
 
+	// Get the memory size
+#ifdef MEMTOPSEG
+	mov $MEMTOPSEG,%ax
+#else
 	int $0x12   // in KB
 	mov $6,%cl  // to paragraphs
 	shl %cl,%ax
+#endif
 
 	// Move to the highest & aligned 64K
 
@@ -85,9 +105,15 @@ entry1:
 	xor %sp,%sp
 
 	xor %di,%di
-	mov %di,%ds
+#ifdef BOOTSEGM
+	mov $BOOTSEGM,%ax	// DS:SI = BOOTSEGM:0
+	mov %ax,%ds
+	xor %si,%si
+#else
+	mov %di,%ds		// DS:SI = 0:BOOTADDR
 	mov $BOOTADDR,%si
-	mov $256,%cx  // 256 words = 512 B
+#endif
+	mov $SECTOR_SIZE/2,%cx  // sector size in words
 	rep
 	movsw
 
@@ -139,10 +165,16 @@ _next1:
 
 	// Save boot drive as provided by BIOS
 
+#ifdef BIOS_DRVNUM
 	mov %dl,drive_num  // DX preserved above
+#endif
 
 	// Print header
 
+#ifdef CONFIG_ARCH_PC98
+	mov $0x0C,%ah
+	int $0x18
+#endif
 	mov $msg_boot,%bx
 	call _puts
 
@@ -201,8 +233,11 @@ _reboot1:
 	call _puts
 
 	xor %ax,%ax  // wait for key
+#ifdef CONFIG_ARCH_PC98
+	int $0x18
+#else
 	int $0x16
-
+#endif
 	ljmpw $0xffff,$0  // do a cold(er) boot
 
 //------------------------------------------------------------------------------
@@ -211,9 +246,25 @@ _reboot1:
 
 _putc:
 
+#ifdef CONFIG_ARCH_PC98
+	mov $tvram_x,%si
+	mov (%si),%di
+	xor %ah,%ah
+	push %es
+	mov $0xa000,%dx
+	mov %dx,%es
+	mov %ax,%es:(%di)
+	pop %es
+	inc %di
+	inc %di
+	mov %di,(%si)
+#else
+	push %bx
 	mov $7,%bx    // page 0 - color 7
 	mov $0xE,%ah  // teletype write
 	int $0x10     // BIOS video services
+	pop %bx
+#endif
 	ret
 
 	.global puts
@@ -225,13 +276,10 @@ puts:
 	.global _puts
 
 _puts:
-
 	mov (%bx),%al
 	or %al,%al
 	jz 1f
-	push %bx
 	call _putc
-	pop %bx
 	inc %bx
 	jmp _puts
 1:  ret
@@ -294,10 +342,14 @@ dr_loop:
 	add sect_offset,%ax
 	adc sect_offset+2,%dx
 	div %bx
+#ifdef CONFIG_ARCH_PC98
+	mov %al,%cl      // cylinder number for PC_98
+#else
 	mov %al,%ch      // CH = low 8 bits of physical cylinder number
 	ror %ah
 	ror %ah
 	mov %ah,%cl      // stash higher 2 bits of cylinder number in CL
+#endif
 
 	xchg %ax,%dx
 	xor %dx,%dx
@@ -308,8 +360,12 @@ dr_loop:
 	mov sect_max,%bx // BX = sectors per track
 #endif
 	div %bx          // DL = physical sector number - 1
+#ifdef CONFIG_ARCH_PC98
+	inc %dl          // sector number for PC_98
+#else
 	or %dl,%cl       // stash {physical sector number - 1} in CL
 	inc %cx          // base 1 for sector number
+#endif
 	mov %al,%dh      // DH = physical head number
 
 #ifdef FAST_READ
@@ -341,7 +397,9 @@ dr_over2:
 
 dr_over3:
 #endif
+#ifdef BIOS_DRVNUM
 	mov drive_num,%dl
+#endif
 
 dr_try:
 #ifdef FAST_READ
@@ -350,21 +408,48 @@ dr_try:
 	push %cx
 	push %dx
 	push %es
-	mov -6(%bp),%bx
 	mov 4(%bp),%es
+
+#ifdef CONFIG_ARCH_PC98
+	push %bp
+	mov -6(%bp),%ax
+	mov %ax,%bp
+	push %es
+	xor %ax,%ax
+	mov %ax,%es
+	mov $0x584,%bx
+	mov %es:(%bx),%al // Physical Device Address
+	push %ax
+	and $0x0F,%al
+	mov %al,drive_num
+	pop %ax
+	pop %es
+	mov $0xD6,%ah    // Read Data
+	mov $SECTOR_SIZE,%bx
+#if defined(CONFIG_IMG_FD1232)
+	mov $0x03,%ch    // 1024 Bytes per sector
+#else
+	mov $0x02,%ch    // 512 Bytes per sector
+#endif
+	int $0x1B
+	pop %bp
+#else
+
+	mov -6(%bp),%bx
 #ifdef FAST_READ
 	mov $0x02,%ah    // BIOS read disk
 #else
 	mov $0x0201,%ax
 #endif
 	int $0x13
+#endif
 	pop %es
-
 	jnc dr_cont
 
-	xor %ah,%ah
+#ifndef CONFIG_ARCH_PC98
+	xor %ah,%ah       // BIOS reset disk
 	int $0x13
-
+#endif
 	// PATCH: failure trace
 
 	mov $'*',%al
@@ -414,8 +499,7 @@ dr_cont:
 	decw -4(%bp)
 	jz dr_exit
 	incw -2(%bp)
-
-	addb $2,-6+1(%bp)
+	addb $SECTOR_SIZE>>8,-6+1(%bp)	// increment by sector size
 #endif
 	jnc dr_next
 	addb $0x10,4+1(%bp)
@@ -540,7 +624,13 @@ msg_error:
 	// fall through
 
 msg_reboot:
+#ifdef CONFIG_ARCH_PC98
+	.byte 0
+tvram_x:
+	.word 0
+#else
 	.asciz "Press key\r\n"
+#endif
 
 	.global end_of_code
 end_of_code:
@@ -550,11 +640,12 @@ end_of_code:
 // For future expansion, fields should be added at the _front_ of structure
 
 #ifdef BOOT_FAT
-	.org 0x1F7              // FAT boot sectors use older EPB for now
+	// FAT boot sectors use older EPB for now
+	.org SECTOR_SIZE-9	// 0x1F7 on IBM PC
 elks_parms_start:
 
 #else
-	.org 0x1F3
+	.org SECTOR_SIZE-0x0D	// 0x1F3 on IBM PC
 elks_parms_start:
 
 	.global sect_offset
@@ -577,6 +668,8 @@ track_max:
       || defined(CONFIG_IMG_FD1440) || defined(CONFIG_IMG_FD1680) \
 	  || defined(CONFIG_IMG_FD2880)
 	.word 80
+#elif defined(CONFIG_IMG_FD1232)
+	.word 77
 #elif defined(CONFIG_IMG_HD)
 	.word CONFIG_IMG_CYL
 #else
@@ -591,6 +684,8 @@ sect_max:
 	.byte 9
 #elif defined(CONFIG_IMG_FD1200)
 	.byte 15
+#elif defined(CONFIG_IMG_FD1232)
+	.byte 8
 #elif defined(CONFIG_IMG_FD1440)
 	.byte 18
 #elif defined(CONFIG_IMG_FD1680)
@@ -609,7 +704,8 @@ head_max:
 #endif
 #if defined(CONFIG_IMG_FD360) || defined(CONFIG_IMG_FD720) \
     || defined(CONFIG_IMG_FD1200) || defined(CONFIG_IMG_FD1440) \
-    || defined(CONFIG_IMG_FD1680) || defined(CONFIG_IMG_FD2880)
+    || defined(CONFIG_IMG_FD1680) || defined(CONFIG_IMG_FD2880) \
+	|| defined(CONFIG_IMG_FD1232)
 	.byte 2
 #elif defined(CONFIG_IMG_HD)
 	.byte CONFIG_IMG_HEAD
@@ -622,7 +718,7 @@ head_max:
 
 	.byte . - elks_parms_start
 	.ascii "eL"
-	.org 0x1FE
+	.org SECTOR_SIZE-2	// 0x1FE on IBM PC
 
 //------------------------------------------------------------------------------
 
@@ -642,7 +738,7 @@ head_max:
 // Here comes the first sector of the payload
 // that is specific to the filesystem
 
-	.org 0x200
+	.org SECTOR_SIZE
 
 payload:
 #endif

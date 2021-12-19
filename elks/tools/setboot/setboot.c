@@ -3,7 +3,7 @@
  *
  * 7 Feb 2020 Greg Haerr <greg@censoft.com>
  *
- * Usage: setboot <image> [-F] [-S{m,f}] [-{B,P}<sectors>,<heads>[,<tracks>]] [<input_boot_sector>]
+ * Usage: setboot <image> [-F] [-K] [-S{m,f}] [-{B,P}<sectors>,<heads>[,<tracks>]] [<input_boot_sector>]
  *
  *	setboot writes image after optionally reading an input boot sector and
  *		optionally modifying boot sector disk parameters passed as parameters.
@@ -17,6 +17,8 @@
  *			-> read <bootsector>, write partition table, write <image>
  *		setboot <image> -F <bootsector>
  *			-> read <bootsector>, copy skipping FAT BPB to output <image>
+ *		setboot <image> -K -B18,2 <bootsector>
+ *			-> 1K sector size, read <bootsector>, set 18 sectors 2 heads, write <image>
  *
  *	Currently only writes ELKS sector_max and head_max values.
  */
@@ -26,12 +28,12 @@
 #include <stdarg.h>
 #include <sys/stat.h>
 
-#define SECT_SIZE 512
+int SECT_SIZE = 512;
 
 /* See bootblocks/minix.map for the offsets */
-#define ELKS_BPB_NumTracks	0x1F7		/* offset of number of tracks (word)*/
-#define ELKS_BPB_SecPerTrk	0x1F9		/* offset of sectors per track (byte)*/
-#define ELKS_BPB_NumHeads	0x1FA		/* offset of number of heads (byte)*/
+#define ELKS_BPB_NumTracks	(SECT_SIZE-512+0x1F7) /* offset of number of tracks (word)*/
+#define ELKS_BPB_SecPerTrk	(SECT_SIZE-512+0x1F9) /* offset of sectors per track (byte)*/
+#define ELKS_BPB_NumHeads	(SECT_SIZE-512+0x1FA) /* offset of number of heads (byte)*/
 
 /* MINIX-only offsets*/
 #define MINIX_SectOffset	0x1F3		/* offset of partition start sector (long)*/
@@ -152,11 +154,11 @@ int main(int argc,char **argv)
 	int opt_update_start_sector_minix = 0;
 	int opt_update_start_sector_fat = 0;
 	char *outfile, *infile = NULL;
-	unsigned char blk[SECT_SIZE*2];
-	unsigned char inblk[SECT_SIZE];
+	unsigned char blk[2048];		/* max SECT_SIZE * 2 */
+	unsigned char inblk[1024];		/* max SECT_SIZE */
 
-	if (argc != 3 && argc != 4 && argc != 5)
-		fatalmsg("Usage: %s <image> [-F] [-S{m,f}] [-{B,P}<sectors>,<heads>[,<tracks>]] [<input_boot_image>]\n", argv[0]);
+	if (argc < 2 || argc > 6)
+		fatalmsg("Usage: %s <image> [-F] [-K] [-S{m,f}] [-{B,P}<sectors>,<heads>[,<tracks>]] [<input_boot_image>]\n", argv[0]);
 
 	outfile = *++argv; argc--;
 
@@ -195,6 +197,12 @@ int main(int argc,char **argv)
 			if (argv[1][2] == 'm') opt_update_start_sector_minix = 1;
 			if (argv[1][2] == 'f') opt_update_start_sector_fat = 1;
 			printf("Updating start sector in ELKS boot sector\n");
+			argv++;
+			argc--;
+		}
+		else if (argv[1][1] == 'K') {
+			SECT_SIZE = 1024;
+			printf("1024 byte sector size\n");
 			argv++;
 			argc--;
 		}
@@ -254,7 +262,7 @@ int main(int argc,char **argv)
 		if (opt_updatebpb)				/* update BPB before writing*/
 			setSHparms(blk);
 
-		if (blk[510] != 0x55 || blk[511] != 0xaa)
+		if (blk[SECT_SIZE-2] != 0x55 || blk[SECT_SIZE-1] != 0xaa)	/* 510, 511*/
 			fprintf(stderr, "Warning: '%s' may not be valid bootable sector\n", infile);
 
 		if (fwrite(blk,1,count,ofp) != count) die("fwrite(%s)", infile);
