@@ -42,15 +42,20 @@
    Boot Protocol (https://www.kernel.org/doc/html/latest/x86/boot.html).
    Fields which are specific to ELKS are indicated below.  */
 
-#if defined __ASSEMBLER__ && !defined BOOTSEG
-part_offset	=	0x1e2		/* sector offset of booted partition*/
-elks_magic	=	0x1e6		/* should read "ELKS" (45 4c 4b 53) */
-setup_sects	=	0x1f1
-root_flags	=	0x1f2
-syssize		=	0x1f4
-elks_flags	=	0x1f6		/* 16-bit ELKS flags (EF_...) */
-root_dev	=	0x1fc
-boot_flag	=	0x1fe
+#ifndef DUMMYBOOT
+#define screen_cols	7		/* byte screen width*/
+#define screen_lines	14		/* byte screen height*/
+#define cpu_type	0x20		/* byte cpu type*/
+#define mem_kbytes	0x2a		/* word base memory size in Kbytes*/
+#define proc_name	0x30		/* 16 bytes processor name string*/
+#define cpu_id		0x50		/* 13 bytes cpu id string*/
+#define part_offset	0x1e2		/* long sector offset of booted partition*/
+#define elks_magic	0x1e6		/* long "ELKS" (45 4c 4b 53) checked by bootsect.S*/
+#define setup_sects	0x1f1		/* byte 512-byte sectors used by setup.S*/
+#define syssize		0x1f4		/* word paragraph kernel size used by setup.S*/
+#define elks_flags	0x1f6		/* word 16-bit ELKS flags, BLOB and BIOS_DRV*/
+#define root_dev	0x1fc		/* word BIOS drive or kdev_t ROOT_DEV*/
+#define boot_flag	0x1fe		/* word constant AA55h*/
 #endif
 
 #endif
