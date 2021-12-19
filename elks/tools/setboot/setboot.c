@@ -154,8 +154,8 @@ int main(int argc,char **argv)
 	int opt_update_start_sector_minix = 0;
 	int opt_update_start_sector_fat = 0;
 	char *outfile, *infile = NULL;
-	unsigned char blk[SECT_SIZE*2];
-	unsigned char inblk[SECT_SIZE];
+	unsigned char blk[2048];		/* max SECT_SIZE * 2 */
+	unsigned char inblk[1024];		/* max SECT_SIZE */
 
 	if (argc < 2 || argc > 6)
 		fatalmsg("Usage: %s <image> [-F] [-K] [-S{m,f}] [-{B,P}<sectors>,<heads>[,<tracks>]] [<input_boot_image>]\n", argv[0]);
@@ -262,7 +262,7 @@ int main(int argc,char **argv)
 		if (opt_updatebpb)				/* update BPB before writing*/
 			setSHparms(blk);
 
-		if (blk[510] != 0x55 || blk[511] != 0xaa)
+		if (blk[SECT_SIZE-2] != 0x55 || blk[SECT_SIZE-1] != 0xaa)	/* 510, 511*/
 			fprintf(stderr, "Warning: '%s' may not be valid bootable sector\n", infile);
 
 		if (fwrite(blk,1,count,ofp) != count) die("fwrite(%s)", infile);

@@ -60,8 +60,6 @@ extern int run_init_process_sptr(char *cmd, char *sptr, int slen);
 
 void start_kernel(void)
 {
-    printk("start kernel\n");
-
     kernel_init();
 
     /* fork and run procedure init_task() as task #1*/
@@ -93,7 +91,6 @@ void INITPROC kernel_init(void)
     inode_init();
     irq_init();
     tty_init();
-
 #ifdef CONFIG_BOOTOPTS
     /* parse options found in /bootops */
     int opts = parse_options();
@@ -108,7 +105,6 @@ void INITPROC kernel_init(void)
 #ifdef CONFIG_CHAR_DEV_RS
     serial_init();
 #endif
-
     device_init();
 
 #ifdef CONFIG_SOCKET

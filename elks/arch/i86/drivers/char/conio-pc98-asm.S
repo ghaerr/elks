@@ -1,11 +1,13 @@
-// conio API for PC-98
-
-	.arch i8086, nojumps
+// CONIO API to BIOS for PC98 Console
+// @tyama501 Dec 2021
+//
+	.arch	i8086, nojumps
 	.code16
 	.text
 
 	.global early_putchar
 	.global early_getchar
+	.global conio_poll
 	.global early_getinit
 	.global read_tvram_x
 	.global write_tvram_x
@@ -104,20 +106,7 @@ scroll_lp:
 	stosw
 	mov %dx,tvram_x
 	jmp put_end
-early_getchar:
-	push %bx
-	mov $5,%ah
-	int $0x18
-	cmp $0x01,%bh
-	jz get_end
-	xor %ax,%ax
-get_end:
-	pop %bx
-	ret
-early_getinit:
-	mov $3,%ah
-	int $0x18
-	ret
+
 read_tvram_x:
 	push %ds
 	push %cs
@@ -125,6 +114,7 @@ read_tvram_x:
 	mov tvram_x,%ax
 	pop %ds
 	ret
+
 write_tvram_x:
 	mov %sp,%bx
 	mov 2(%bx),%ax
@@ -134,6 +124,7 @@ write_tvram_x:
 	mov %ax,tvram_x
 	pop %ds
 	ret
+
 clear_tvram:
 	push %bx
 	push %dx
@@ -150,19 +141,40 @@ clear_tvram:
 	pop %dx
 	pop %bx
 	ret
+
+early_getchar:
+conio_poll:
+	push %bx
+	mov $5,%ah
+	int $0x18
+	cmp $0x01,%bh
+	jz get_end
+	xor %ax,%ax
+get_end:
+	pop %bx
+	ret
+
+early_getinit:
+	mov $3,%ah
+	int $0x18
+	ret
+
 cursor_on:
 	mov $17,%ah
 	int $0x18
 	ret
+
 cursor_off:
 	mov $18,%ah
 	int $0x18
 	ret
+
 cursor_set:
 	mov %sp,%bx
 	mov 2(%bx),%dx
 	mov $19,%ah
 	int $0x18
 	ret
+
 tvram_x:
 	.word 960

@@ -1,6 +1,6 @@
 /*
  *	PC98 Disk BIOS INT 0x1B Interface
- *	Dec 2021 by @tyama501, based on bios16.S
+ *	Dec 2021 by @tyama501, based on bios13.S
  */
 
 #include <linuxmt/config.h>

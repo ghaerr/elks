@@ -22,12 +22,7 @@ static void kbd_timer(int data)
 {
     int dav, extra = 0;
 
-#ifdef CONFIG_ARCH_PC98
-    if ((dav = early_getchar())) {
-#else
     if ((dav = conio_poll())) {
-#endif
-
 	if (dav & 0xFF)
 	    Console_conin(dav & 0x7F);
 	else {
@@ -87,11 +82,7 @@ static void restart_timer(void)
 
 void kbd_init(void)
 {
-#ifdef CONFIG_ARCH_PC98
-    early_getinit();
-#else
     conio_init();
-#endif
 #if 0
     enable_irq(1);		/* enable BIOS Keyboard interrupts */
 #endif

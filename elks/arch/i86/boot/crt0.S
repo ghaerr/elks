@@ -13,9 +13,7 @@
 
 	.global _start
 	.extern	start_kernel
-#ifndef CONFIG_ARCH_PC98
 	.global early_putchar
-#endif
 
 _start:
 
