@@ -177,4 +177,4 @@ cursor_set:
 	ret
 
 tvram_x:
-	.word 960
+	.word 480
