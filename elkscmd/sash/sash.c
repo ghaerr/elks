@@ -11,6 +11,7 @@
 
 #include <signal.h>
 #include <errno.h>
+#include <setjmp.h>
 
 typedef struct {
 	char	*name;
@@ -241,6 +242,7 @@ static	void	showprompt();
 static	BOOL	trybuiltin();
 
 BOOL	intflag;
+jmp_buf jb;
 
 int main(int argc, char **argv)
 {
@@ -348,6 +350,9 @@ readfile(name)
 #endif
 
 	while (TRUE) {
+		if (setjmp(jb)) {
+			printf("Got intr. \n");
+		}
 		fflush(stdout);
 #ifdef CMD_SOURCE
 		if (ttyflag)
@@ -894,6 +899,8 @@ catchint()
 
 	if (intcrlf)
 		write(STDOUT, "\n", 1);
+	printf("gotcha!");
+	longjmp(jb, 1);
 }
 
 
