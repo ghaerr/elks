@@ -35,8 +35,9 @@
 #include <fcntl.h>
 #include <stdint.h>
 
-#include <linuxmt/errno.h>
 #include <linuxmt/config.h>
+#include <linuxmt/errno.h>
+#include <linuxmt/boot.h>
 
 #include "a.out.h"
 
@@ -285,11 +286,11 @@ int main(int argc, char **argv)
 	sz -= l;
     }
     close(id);
-    if (lseek(1, 497, 0) == 497) {
+    if (lseek(1, setup_sects, 0) == setup_sects) {
 	if (write(1, &setup_sectors, 1) != 1)
 	    die("Write of setup sectors failed");
     }
-    if (lseek(1, 500, 0) == 500) {
+    if (lseek(1, syssize, 0) == syssize) {
 	buf[0] = (sys_size & 0xff);
 	buf[1] = ((sys_size >> 8) & 0xff);
 	if (write(1, buf, 2) != 2)

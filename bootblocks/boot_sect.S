@@ -23,7 +23,7 @@
 #else
 #define BOOTSEGM	0x1FE0
 #endif
-#define SEGMEMTOP	0xA000		// 640K memory
+#define MEMTOPSEG	0xA000		// 640K memory
 
 #else
 // IBM PC
@@ -85,8 +85,8 @@ entry1:
 #endif
 
 	// Get the memory size
-#ifdef SEGMEMTOP
-	mov $SEGMEMTOP,%ax
+#ifdef MEMTOPSEG
+	mov $MEMTOPSEG,%ax
 #else
 	int $0x12   // in KB
 	mov $6,%cl  // to paragraphs
