@@ -23,6 +23,8 @@ struct	chunk	{
 	char	data[CHUNKINITSIZE];	/* actually of varying length */
 };
 
+static int chunkmaxmem = 2048;		/* maximum memory used in wildcard expansion */
+static int chunkmemused = 0;
 static	CHUNK *	chunklist;
 
 /*
@@ -39,10 +41,14 @@ getchunk(int size)
 	if (size < CHUNKINITSIZE)
 		size = CHUNKINITSIZE;
 
-	chunk = (CHUNK *) malloc(size + sizeof(CHUNK) - CHUNKINITSIZE);
+	size += sizeof(CHUNK) - CHUNKINITSIZE;
+	if (chunkmemused + size > chunkmaxmem)
+		return NULL;
+	chunk = (CHUNK *) malloc(size);
 	if (chunk == NULL)
 		return NULL;
 
+	chunkmemused += size;
 	chunk->next = chunklist;
 	chunklist = chunk;
 
@@ -64,6 +70,7 @@ freewildcards(void)
 		chunklist = chunk->next;
 		free((char *) chunk);
 	}
+	chunkmemused = 0;
 }
 
 /*
@@ -231,13 +238,15 @@ expandwildcards(char *name, int maxargc, char **retargv)
 
 		if (matches >= maxargc) {
 			fprintf(stderr, "Too many filename matches\n");
+			freewildcards();
 			closedir(dirp);
 			return -1;
 		}
 
 		cp1 = getchunk(dirlen + strlen(dp->d_name) + 1);
 		if (cp1 == NULL) {
-			fprintf(stderr, "No memory for filename\n");
+			fprintf(stderr, "No memory for filenames\n");
+			freewildcards();
 			closedir(dirp);
 			return -1;
 		}
