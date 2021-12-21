@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #define FALSE	0
 #define TRUE	1
@@ -165,8 +166,9 @@ namesort(char **p1, char **p2)
  * The expanded names are stored in memory chunks which can later all
  * be freed at once.  Returns zero if the name is not a wildcard, or
  * returns the count of matched files if the name is a wildcard and
- * there was at least one match, or returns -1 if either no filenames
- * matched or too many filenames matched (with an error output).
+ * there was at least one match, or returns < 0 if either no filenames
+ * matched (-ENOENT), too many filenames matched (-NOBUFS), no memory
+ * available (-ENOMEM), or bad regular expression (-EINVAL).
  */
 int
 expandwildcards(char *name, int maxargc, char **retargv)
@@ -192,12 +194,8 @@ expandwildcards(char *name, int maxargc, char **retargv)
 	if ((cp1 == NULL) && (cp2 == NULL) && (cp3 == NULL))
 		return 0;
 
-	if ((cp1 && (cp1 < last)) || (cp2 && (cp2 < last)) ||
-		(cp3 && (cp3 < last)))
-	{
-		fprintf(stderr, "Wildcards only implemented for last filename component\n");
-		return -1;
-	}
+	if ((cp1 && (cp1 < last)) || (cp2 && (cp2 < last)) || (cp3 && (cp3 < last)))
+		return -EINVAL; /* Wildcards only implemented for last filename component*/
 
 	dirname[0] = '.';
 	dirname[1] = '\0';
@@ -212,10 +210,8 @@ expandwildcards(char *name, int maxargc, char **retargv)
 	}
 
 	dirp = opendir(dirname);
-	if (dirp == NULL) {
-		perror(dirname);
-		return -1;
-	}
+	if (dirp == NULL)
+		return -ENOENT;
 
 	dirlen = strlen(dirname);
 	if (last == name) {
@@ -237,18 +233,16 @@ expandwildcards(char *name, int maxargc, char **retargv)
 			continue;
 
 		if (matches >= maxargc) {
-			fprintf(stderr, "Too many filename matches\n");
 			freewildcards();
 			closedir(dirp);
-			return -1;
+			return -ENOBUFS; /* Too many filename matches*/
 		}
 
 		cp1 = getchunk(dirlen + strlen(dp->d_name) + 1);
 		if (cp1 == NULL) {
-			fprintf(stderr, "No memory for filenames\n");
 			freewildcards();
 			closedir(dirp);
-			return -1;
+			return -ENOMEM;	/* No memory for filenames*/
 		}
 
 		if (dirlen)
@@ -260,10 +254,8 @@ expandwildcards(char *name, int maxargc, char **retargv)
 
 	closedir(dirp);
 
-	if (matches == 0) {
-		fprintf(stderr, "No matches\n");
-		return -1;
-	}
+	if (matches == 0)
+		return -ENOENT;	/* No matches*/
 
 	qsort((char *) retargv, matches, sizeof(char *), namesort);
 
