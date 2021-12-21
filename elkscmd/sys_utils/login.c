@@ -33,8 +33,6 @@
 #define PATHLEN 256
 #define STR_SIZE (PATHLEN + 7)
 
-extern char *getpass(char *prompt);
-
 void login(register struct passwd * pwd, struct utmp * ut_ent)
 {
 	int envno = 0;
