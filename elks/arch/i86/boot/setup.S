@@ -78,7 +78,7 @@
 ! NOTE! These had better be the same as in bootsect.s!
 */
 
-#define __ASSEMBLY__
+#define __ASSEMBLY_setup_sects
 #include <linuxmt/config.h>
 #include <linuxmt/boot.h>
 
@@ -359,7 +359,7 @@ size_error:
 	and $0xF000,%ax
 	mov %ax,%es
 
-	mov 0x1F1,%al  // setup sector count
+	mov setup_sects,%al  // setup sector count
 	cbw
 	mov $8,%cl     // to words
 	shl %cl,%ax

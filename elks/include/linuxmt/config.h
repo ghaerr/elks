@@ -90,8 +90,8 @@
 #define CAP_ALL         0xFF      /* all capabilities if PC/AT only */
 
 /* Don't touch these, unless you really know what you are doing. */
-#define DEF_INITSEG	0x0100	/* setup data, for netboot use 0x5000 */
-#define DEF_SYSSEG	0x1300	/* initial system image load address by boot code */
+#define DEF_INITSEG	0x0100	/* initial Image load address by boot code */
+#define DEF_SYSSEG	0x1300	/* kernel copied here by setup.S code */
 #define DEF_SETUPSEG	DEF_INITSEG + 0x20
 #define DEF_SYSSIZE	0x2F00
 

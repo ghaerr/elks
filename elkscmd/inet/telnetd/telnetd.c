@@ -24,7 +24,8 @@
 static char buf_in  [1500];
 static char buf_out [1500];
 
-char *nargv[2] = {"/bin/login", NULL};
+char *binlogin[2] = {"/bin/login", NULL};
+char *binsh[2] = {"/bin/sh", NULL};
 
 static pid_t term_init(int *pty_fd)
 {
@@ -88,7 +89,8 @@ again:
 		dup2(tty_fd, STDIN_FILENO);
 		dup2(tty_fd, STDOUT_FILENO);
 		dup2(tty_fd, STDERR_FILENO);
-		execv(nargv[0], nargv);
+		execv(binlogin[0], binlogin);	/* try /bin/login first*/
+		execv(binsh[0], binsh);		/* then /bin/sh for small systems*/
 		perror("execv");
 		exit(1);
 	}
