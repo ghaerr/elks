@@ -78,7 +78,6 @@
 ! NOTE! These had better be the same as in bootsect.s!
 */
 
-#define __ASSEMBLY_setup_sects
 #include <linuxmt/config.h>
 #include <linuxmt/boot.h>
 
