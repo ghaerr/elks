@@ -96,8 +96,6 @@
 #define DEF_SYSSIZE	0x2F00
 
 #ifdef CONFIG_ROMCODE
-#define SETUP_DATA	CONFIG_ROM_SETUP_DATA
-
 #ifdef CONFIG_BLK_DEV_BIOS    /* BIOS disk driver*/
 #define DMASEG		0x80  /* 0x400 bytes floppy sector buffer */
 #ifdef CONFIG_TRACK_CACHE     /* floppy track buffer in low mem */
@@ -110,9 +108,9 @@
 #else
 #define KERNEL_DATA     0x80  /* kernel data segment */
 #endif
+#define SETUP_DATA	CONFIG_ROM_SETUP_DATA
 #endif /* CONFIG_ROMCODE */
 
-#define SETUP_DATA	REL_INITSEG
 
 #if (defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_8018X)) && !defined(CONFIG_ROMCODE)
 /* Define segment locations of low memory, must not overlap */
@@ -128,6 +126,7 @@
 #define DMASEGSZ 0x0400	      /* BLOCK_SIZE (1024) */
 #define REL_SYSSEG	0x0D0 /* kernel code segment */
 #endif
+#define SETUP_DATA	REL_INITSEG
 #endif /* (CONFIG_ARCH_IBMPC || CONFIG_ARCH_8018X) && !CONFIG_ROMCODE */
 
 #if defined(CONFIG_ARCH_PC98) && !defined(CONFIG_ROMCODE)
@@ -144,6 +143,7 @@
 #define DMASEGSZ 0x0400	      /* BLOCK_SIZE (1024) */
 #define REL_SYSSEG	0x0E0 /* kernel code segment */
 #endif
+#define SETUP_DATA	REL_INITSEG
 #endif /* CONFIG_ARCH_PC98 && !CONFIG_ROMCODE */
 
 
