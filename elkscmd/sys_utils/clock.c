@@ -189,6 +189,40 @@ void cmos_write_bcd(int addr, int value)
   cmos_write (addr, ((value / 10) << 4) + value % 10);
 }
 
+#ifdef CONFIG_ARCH_PC98
+void read_calendar(unsigned int tm_seg, unsigned int tm_offset)
+{
+  __asm__ volatile ("mov %0,%%es;"
+                    "mov $0,%%ah;"
+                    "int $0x1C;"
+                    :
+                    :"a" (tm_seg), "b" (tm_offset)
+                    :"%es", "memory", "cc");
+
+}
+
+void write_calendar(unsigned int tm_seg, unsigned int tm_offset)
+{
+  __asm__ volatile ("mov %0,%%es;"
+                    "mov $1,%%ah;"
+                    "int $0x1C;"
+                    :
+                    :"a" (tm_seg), "b" (tm_offset)
+                    :"%es", "memory", "cc");
+
+}
+
+int bcd_hex(unsigned char bcd_data)
+{
+  return (bcd_data & 15) + (bcd_data >> 4) * 10;
+}
+
+int hex_bcd(int hex_data)
+{
+  return ((hex_data / 10) << 4) + hex_data % 10;
+}
+#endif
+
 /* our own happy mktime() replacement, with the following drawbacks: */
 /*    doesn't check boundary conditions */
 /*    doesn't set wday or yday */
@@ -240,6 +274,17 @@ int main(int argc, char **argv)
   int arg;
   unsigned char save_control, save_freq_select;
 
+#ifdef CONFIG_ARCH_PC98
+  unsigned char timebuf[6];
+  unsigned char __far *timeaddr;
+  unsigned int tm_seg;
+  unsigned int tm_offset;
+
+  timeaddr = (unsigned char __far *) timebuf;
+  tm_seg =  ((long) timeaddr) >> 16;
+  tm_offset = ((long) timeaddr) & 0xFFFF;
+#endif
+
   while ((arg = getopt (argc, argv, "rwsuv")) != -1)
     {
       switch (arg)
@@ -273,6 +318,17 @@ int main(int argc, char **argv)
   if (readit || setit)
     {
 
+#ifdef CONFIG_ARCH_PC98
+      read_calendar(tm_seg, tm_offset);
+      tm.tm_sec = bcd_hex(timebuf[5]);
+      tm.tm_min = bcd_hex(timebuf[4]);
+      tm.tm_hour = bcd_hex(timebuf[3]);
+      tm.tm_wday = bcd_hex(timebuf[1] & 0xF);
+      tm.tm_mday = bcd_hex(timebuf[2]);
+      tm.tm_mon = timebuf[1] >> 4;
+      tm.tm_year = bcd_hex(timebuf[0]);
+#else
+
 /* The purpose of the "do" loop is called "low-risk programming" */
 /* In theory it should never run more than once */
       do
@@ -286,10 +342,13 @@ int main(int argc, char **argv)
 	  tm.tm_year = cmos_read_bcd (9);
 	}
       while (tm.tm_sec != cmos_read_bcd (0));
+#endif
       if (tm.tm_year < 70)
 	    tm.tm_year += 100;  /* 70..99 => 1970..1999, 0..69 => 2000..2069 */
       tm.tm_mon--;		/* DOS uses 1 base */
+#ifndef CONFIG_ARCH_PC98
       tm.tm_wday -= 3;		/* DOS uses 3 - 9 for week days */
+#endif
       tm.tm_isdst = -1;		/* don't know whether it's daylight */
     }
 
@@ -396,6 +455,21 @@ int main(int argc, char **argv)
 	tmp = localtime (&systime);
 
       clr_irq();
+
+#ifdef CONFIG_ARCH_PC98
+      timebuf[5] = hex_bcd(tmp->tm_sec);
+      timebuf[4] = hex_bcd(tmp->tm_min);
+      timebuf[3] = hex_bcd(tmp->tm_hour);
+      timebuf[1] = hex_bcd(tmp->tm_wday);
+      timebuf[2] = hex_bcd(tmp->tm_mday);
+      timebuf[1] = (timebuf[1] & 0xF) + ((tmp->tm_mon + 1) << 4);
+      if (tmp->tm_year >= 100)
+	timebuf[0] = hex_bcd(tmp->tm_year-100);
+      else
+	timebuf[0] = hex_bcd(tmp->tm_year);
+
+      write_calendar(tm_seg, tm_offset);
+#else
       save_control = cmos_read (11);   /* tell the clock it's being set */
       cmos_write (11, (save_control | 0x80));
       save_freq_select = cmos_read (10);       /* stop and reset prescaler */
@@ -411,6 +485,7 @@ int main(int argc, char **argv)
 
       cmos_write (10, save_freq_select);
       cmos_write (11, save_control);
+#endif
       set_irq();
     }
   return 0;
