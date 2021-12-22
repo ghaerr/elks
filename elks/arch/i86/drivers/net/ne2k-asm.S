@@ -930,7 +930,7 @@ ne2k_probe:
 	in	%dx,%al
 	cmp	$0xff,%al	// cannot be FF
 	jz	np_err
-	cmp	0,%al		// cannot be 0
+	cmp	$0,%al		// cannot be 0
 	jz	np_err
 	
 	xor     %ax,%ax
