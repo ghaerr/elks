@@ -16,6 +16,7 @@
 #include <sys/wait.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <time.h>
 #include "telnet.h"
 
 //#define RAWTELNET	/* set in telnet and telnetd for raw telnet without IAC*/
@@ -119,9 +120,12 @@ static void client_loop (int fdsock, int fdterm)
     int count_in = 0;
     int count_out = 0;
     int count_fd = (fdsock > fdterm) ? (fdsock + 1) : (fdterm + 1);
+    struct timeval timeint;
 
-	telnet_init(fdsock);
+    telnet_init(fdsock);
 
+    timeint.tv_sec = 0;
+    timeint.tv_usec = 50000L;	/* slow timeout to fix select hang bug in #1048 */
     while (1) {
 		FD_ZERO (&fds_read);
 		if (!count_in)  FD_SET (fdsock, &fds_read);
@@ -131,7 +135,7 @@ static void client_loop (int fdsock, int fdterm)
 		if (count_in)  FD_SET (fdterm, &fds_write);
 		if (count_out) FD_SET (fdsock, &fds_write);
 
-		count = select (count_fd, &fds_read, &fds_write, NULL, NULL);
+		count = select (count_fd, &fds_read, &fds_write, NULL, &timeint);
 		if (count < 0) {
 			perror ("telnetd select");
 			break;
