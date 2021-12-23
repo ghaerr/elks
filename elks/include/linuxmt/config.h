@@ -58,19 +58,13 @@
 #define SETUP_VID_COLS		80	/* video # columns */
 #define SETUP_VID_LINES		25	/* video # lines */
 #define SETUP_CPU_TYPE		5	/* processor type 80186 */
-#define SETUP_MEM_KBYTES	128	/* base memory in 1K bytes */
+#define SETUP_MEM_KBYTES	512	/* base memory in 1K bytes */
 #define SETUP_ROOT_DEV		0x0600	/* root device ROMFS */
 #define SETUP_ELKS_FLAGS	0	/* flags for root device type */
 #define SETUP_PART_OFFSETLO	0	/* partition offset low word */
 #define SETUP_PART_OFFSETHI	0	/* partition offset high word */
 #define SYS_CAPS		0	/* no XT/AT capabilities */
 
-/*
- * An absolute minimum of 1K heap + 8 buffers (@26 = 208) = 1232
- * More heap should be specified if serial driver used, default inq = 1K bytes
- * Comment out SETUP_HEAPSIZE to use normal max heap, extended to 64K kernel data segment
- */
-#define SETUP_HEAPSIZE		1232	/* force kernel heap size if specified*/
 
 #define CONFIG_8018X_FCPU	16
 #define CONFIG_8018X_EB
