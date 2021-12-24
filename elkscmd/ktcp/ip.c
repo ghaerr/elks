@@ -179,7 +179,7 @@ void ip_sendpacket(unsigned char *packet, int len, struct addr_pair *apair, stru
     memcpy((char *)iph + iphdrlen, packet, len); //FIXME don't copy, fixup in upper layer
 
     ip_print(iph, 0);
-#if DEBUG_TCP
+#if DEBUG_TCPPKT | DEBUG_TCPDATA
     if (iph->protocol == PROTO_TCP && cb) {	/* really - one of them is enough */
 	struct iptcp_s iptcp;
 	iptcp.iph = iph;

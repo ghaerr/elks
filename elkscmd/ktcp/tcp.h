@@ -202,5 +202,7 @@ void tcp_send_fin(struct tcpcb_s *cb);
 void tcp_send_reset(struct tcpcb_s *cb);
 void tcp_reset_connection(struct tcpcb_s *cb);
 
+void hexdump(unsigned char *addr, int count, int summary, char *prefix);
+
 extern char *tcp_states[];	/* used in DEBUG_CLOSE only*/
 #endif
