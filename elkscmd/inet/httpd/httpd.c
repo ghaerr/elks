@@ -33,7 +33,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/wait.h>
-extern pid_t waitpid(pid_t, int *, int);
 
 #define DEF_PORT		80
 #define DEF_DOCBASE	"/var/www"
