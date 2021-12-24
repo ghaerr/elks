@@ -59,19 +59,21 @@ start_network()
 	echo $ktcp
 	if $ktcp; then
 		echo -n "Starting daemons "
-		for daemon in telnetd httpd
+		if test "$NETSTART" = ""; then NETSTART="telnetd ftpd httpd"; fi
+		for daemon in $NETSTART
 		do
 			if test -f /bin/$daemon
 			then
-				echo -n "$daemon "
-				$daemon || true
+				if test "$daemon" = "ftpd"
+				then
+					echo -n "ftpd $ftpd "
+					$daemon $ftpd || true
+				else
+					echo -n "$daemon "
+					$daemon || true
+				fi
 			fi
 		done
-		if test -f /bin/ftpd
-		then
-			echo -n "ftpd $ftpd"
-			ftpd $ftpd || true
-		fi
 		echo ""
 	else
 		echo "Network start failed"
