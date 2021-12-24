@@ -8,8 +8,9 @@
 #define USE_DEBUG_EVENT 1	/* use CTRLP to toggle debug output*/
 #define DEBUG_STARTDEF	0	/* default startup debug display*/
 #define DEBUG_TCP	0	/* TCP ops*/
+#define DEBUG_TCPPKT	0	/* TCP packets info*/
+#define DEBUG_TCPDATA	1	/* TCP packet data display*/
 #define DEBUG_TUNE	1	/* tuning options*/
-#define DEBUG_TCPDATA	0	/* TCP data packets*/
 #define DEBUG_RETRANS	0	/* TCP retransmissions*/
 #define DEBUG_WINDOW	0	/* TCP window size*/
 #define DEBUG_ACCEPT	0	/* TCP accept*/
@@ -42,6 +43,12 @@ void dprintf(const char *, ...);
 #define debug_tune	DPRINTF
 #else
 #define debug_tune(...)
+#endif
+
+#if DEBUG_TCPPKT
+#define debug_tcppkt	DPRINTF
+#else
+#define debug_tcppkt(...)
 #endif
 
 #if DEBUG_TCPDATA

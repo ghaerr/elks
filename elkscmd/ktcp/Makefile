@@ -5,7 +5,7 @@ include $(BASEDIR)/Make.defs
 SHELL		= /bin/sh
 
 CFILES		= ktcp.c slip.c ip.c icmp.c tcp.c tcp_cb.c tcp_output.c \
-		  timer.c tcpdev.c netconf.c vjhc.c deveth.c arp.c
+		  timer.c tcpdev.c netconf.c vjhc.c deveth.c arp.c hexdump.c
 
 OBJS		= $(CFILES:.c=.o)
 

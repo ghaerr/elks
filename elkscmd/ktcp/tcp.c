@@ -26,7 +26,7 @@
 
 timeq_t Now;
 
-#if DEBUG_TCPDATA
+#if DEBUG_TCPPKT
 static char *tcp_flags(int flags)
 {
     static char buf[7];
@@ -45,25 +45,31 @@ static char *tcp_flags(int flags)
 
 void tcp_print(struct iptcp_s *head, int recv, struct tcpcb_s *cb)
 {
-#if DEBUG_TCPDATA
-    debug_tcpdata("tcp: %s ", recv? "recv": "send");
-    debug_tcpdata("%u->%u ", ntohs(head->tcph->sport), ntohs(head->tcph->dport));
-    debug_tcpdata("[%s] ", tcp_flags(head->tcph->flags));
+#if DEBUG_TCPPKT
+    debug_tcppkt("tcp: %s ", recv? "recv": "send");
+    debug_tcppkt("%u->%u ", ntohs(head->tcph->sport), ntohs(head->tcph->dport));
+    debug_tcppkt("[%s] ", tcp_flags(head->tcph->flags));
     if (cb) {
       if (recv) {
 	if (head->tcplen > 20)
-	    debug_tcpdata("seq %lu-%lu ", ntohl(head->tcph->seqnum) - cb->irs,
+	    debug_tcppkt("seq %lu-%lu ", ntohl(head->tcph->seqnum) - cb->irs,
 		ntohl(head->tcph->seqnum) - cb->irs+head->tcplen-20);
-	debug_tcpdata("ack %lu ", ntohl(head->tcph->acknum) - cb->iss);
+	debug_tcppkt("ack %lu ", ntohl(head->tcph->acknum) - cb->iss);
       } else {
-	if (head->tcplen > 20) debug_tcpdata("seq %lu-%lu ",
+	if (head->tcplen > 20) debug_tcppkt("seq %lu-%lu ",
 	ntohl(head->tcph->seqnum) - cb->iss,
 	ntohl(head->tcph->seqnum) - cb->iss+head->tcplen-20);
-	debug_tcpdata("ack %lu ", ntohl(head->tcph->acknum) - cb->irs);
+	debug_tcppkt("ack %lu ", ntohl(head->tcph->acknum) - cb->irs);
       }
     }
-    debug_tcpdata("win %u urg %d ", ntohs(head->tcph->window), head->tcph->urgpnt);
-    debug_tcpdata("chk %x len %u\n", tcp_chksum(head), head->tcplen);
+    debug_tcppkt("win %u urg %d ", ntohs(head->tcph->window), head->tcph->urgpnt);
+    debug_tcppkt("chk %x len %u\n", tcp_chksum(head), head->tcplen);
+#endif
+#if DEBUG_TCPDATA
+    int datalen = head->tcplen - TCP_DATAOFF(head->tcph);
+    unsigned char *data = (__u8 *)head->tcph + TCP_DATAOFF(head->tcph);
+    if (datalen)
+	hexdump(data, datalen, 0, recv? "<- ": "-> ");
 #endif
 }
 
