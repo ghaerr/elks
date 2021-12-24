@@ -4,7 +4,7 @@
 #
 # Examples:
 #	net start eth			start ethernet networking
-#	net start slip			start slip networking at default baudrate
+#	net start slip			start slip networking
 #	net start slip 19200	start slip at 19200 baud
 #	net start cslip 4800 /dev/ttyS1
 #
