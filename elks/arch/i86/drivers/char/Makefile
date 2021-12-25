@@ -48,10 +48,12 @@ ifeq ($(CONFIG_ARCH_IBMPC), y)
 	OBJS += lp.o
 endif
 
-ifdef CONFIG_CONSOLE_DIRECT
 ifdef CONFIG_ARCH_PC98
-OBJS += console-direct.o
+ifdef CONFIG_CONSOLE_DIRECT
+OBJS += console-direct-pc98.o
+endif
 else
+ifdef CONFIG_CONSOLE_DIRECT
 OBJS += console-direct.o bell-8254.o
 endif
 endif
