@@ -48,8 +48,14 @@ ifeq ($(CONFIG_ARCH_IBMPC), y)
 	OBJS += lp.o
 endif
 
+ifdef CONFIG_ARCH_PC98
+ifdef CONFIG_CONSOLE_DIRECT
+OBJS += console-direct-pc98.o
+endif
+else
 ifdef CONFIG_CONSOLE_DIRECT
 OBJS += console-direct.o bell-8254.o
+endif
 endif
 
 ifdef CONFIG_CONSOLE_BIOS
@@ -61,7 +67,10 @@ OBJS += console-serial-8018x.o
 endif
 
 ifdef CONFIG_ARCH_PC98
-OBJS += console-headless.o conio-pc98.o conio-pc98-asm.o kbd-poll.o
+ifdef CONFIG_CONSOLE_HEADLESS
+OBJS += console-headless.o
+endif
+OBJS += conio-pc98.o conio-pc98-asm.o kbd-poll.o
 OBJS += lp.o
 endif
 
