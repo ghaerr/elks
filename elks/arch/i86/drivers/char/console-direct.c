@@ -84,10 +84,8 @@ static void SetDisplayPage(register Console * C)
     register char *CCBasep;
 
     CCBasep = (char *) CCBase;
-#ifndef CONFIG_ARCH_PC98
     outw((unsigned short int) ((C->basepage & 0xff00) | 0x0c), CCBasep);
     outw((unsigned short int) ((C->basepage << 8) | 0x0d), CCBasep);
-#endif
 }
 
 static void PositionCursor(register Console * C)
@@ -96,26 +94,17 @@ static void PositionCursor(register Console * C)
     int Pos;
 
     Pos = C->cx + Width * C->cy + C->basepage;
-#ifdef CONFIG_ARCH_PC98
-#else
     outb(14, CCBasep);
     outb((unsigned char) ((Pos >> 8) & 0xFF), CCBasep + 1);
     outb(15, CCBasep);
     outb((unsigned char) (Pos & 0xFF), CCBasep + 1);
-#endif
 }
 
 static void VideoWrite(register Console * C, char c)
 {
-#ifdef CONFIG_ARCH_PC98
-    pokew((word_t)((C->cx + C->cy * Width) << 1),
-    		(seg_t) C->vseg,
-	  ((word_t)c));
-#else
     pokew((word_t)((C->cx + C->cy * Width) << 1),
     		(seg_t) C->vseg,
 	  ((word_t)C->attr << 8) | ((word_t)c));
-#endif
 }
 
 static void ClearRange(register Console * C, int x, int y, int xx, int yy)
@@ -126,11 +115,7 @@ static void ClearRange(register Console * C, int x, int y, int xx, int yy)
     vp = (__u16 *)((__u16)(x + y * Width) << 1);
     do {
 	for (x = 0; x < xx; x++)
-#ifdef CONFIG_ARCH_PC98
-	    pokew((word_t) (vp++), (seg_t) C->vseg, ((word_t) ' '));
-#else
 	    pokew((word_t) (vp++), (seg_t) C->vseg, (((word_t) C->attr << 8) | ' '));
-#endif
 	vp += (Width - xx);
     } while (++y <= yy);
 }
@@ -194,32 +179,18 @@ void console_init(void)
     unsigned PageSizeW;
     unsigned VideoSeg;
 
-#ifdef CONFIG_ARCH_PC98
-    MaxCol = (Width = 80) - 1;
-#else
     MaxCol = (Width = peekb(0x4a, 0x40)) - 1;  /* BIOS data segment */
-#endif
 
     /* Trust this. Cga does not support peeking at 0x40:0x84. */
     MaxRow = (Height = 25) - 1;
-#ifdef CONFIG_ARCH_PC98
-    CCBase = 0;
-    PageSizeW = 2000;
-#else
     CCBase = (void *) peekw(0x63, 0x40);
     PageSizeW = ((unsigned int)peekw(0x4C, 0x40) >> 1);
-#endif
 
-#ifdef CONFIG_ARCH_PC98
-    VideoSeg = 0xA000;
-	NumConsoles = 1;
-#else
     VideoSeg = 0xb800;
     if (peekb(0x49, 0x40) == 7) {
 	VideoSeg = 0xB000;
 	NumConsoles = 1;
     }
-#endif
 
     C = Con;
     Visible = C;
@@ -227,13 +198,8 @@ void console_init(void)
     for (i = 0; i < NumConsoles; i++) {
 	C->cx = C->cy = 0;
 	if (!i) {
-#ifdef CONFIG_ARCH_PC98
-	    C->cx = 0;
-	    C->cy = 0;
-#else
 	    C->cx = peekb(0x50, 0x40);
 	    C->cy = peekb(0x51, 0x40);
-#endif
 	}
 	C->fsm = std_char;
 	C->basepage = i * PageSizeW;
