@@ -170,7 +170,7 @@ void console_init(void)
     register Console *C;
     register int i;
     unsigned PageSizeW;
-    unsigned VideoSeg;
+    //unsigned VideoSeg;
 
     MaxCol = (Width = 80) - 1;
 
@@ -178,7 +178,6 @@ void console_init(void)
 
     PageSizeW = 2000;
 
-    VideoSeg = 0xA000;
     NumConsoles = 1;
 
     C = Con;
