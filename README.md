@@ -1,7 +1,10 @@
+Now it is started merging to the original ELKS repository.  
+New features will be added there.  
+https://github.com/jbruchon/elks  
+
 # ELKS/pc98  
   
 This is the fork repository for porting ELKS to PC-9801/PC-9821 architecture.  
-(just started)  
   
 PC-9801/PC-9821 are Japanese computers in 80's and 90's.  
 
@@ -45,6 +48,9 @@ http://oswiki.osask.jp/?%28PIT%298254
 
 INT 18h (Keyboard BIOS)  
 https://web.archive.org/web/20051120083002/http://www2.muroran-it.ac.jp/circle/mpc/program/pc98dos/keyboard.html  
+
+Text V-RAM  
+http://software.aufheben.info/contents.html?contents_key=textvram  
 
 The following text is the original README of ELKS.  
 
