@@ -36,7 +36,7 @@ static pid_t term_init(int *pty_fd)
 	char pty_name[12];
 
 again:
-	sprintf(pty_name, "/dev/ptyp%d", n);
+	sprintf(pty_name, "/dev/ptyp%d", n);		/* master side (PTY) /dev/ptyp0 = 2,8 */
 	if ((*pty_fd = open(pty_name, O_RDWR)) < 0) {
 		if ((errno == EBUSY) && (n < 3)) {
 			n++;
@@ -59,7 +59,7 @@ again:
 		close(*pty_fd);
 
 		setsid();
-		pty_name[5] = 't'; /* results in: /dev/ttyp%d */
+		pty_name[5] = 't'; /* results in /dev/ttyp%d, slave side (TTY) /dev/ttyp0 = 4,8 */
 		if ((tty_fd = open(pty_name, O_RDWR)) < 0) {
 			fprintf(stderr, "telnetd: Can't open pty %s\n", pty_name);
 			exit(1);
@@ -125,7 +125,7 @@ static void client_loop (int fdsock, int fdterm)
     telnet_init(fdsock);
 
     timeint.tv_sec = 0;
-    timeint.tv_usec = 50000L;	/* slow timeout to fix select hang bug in #1048 */
+    timeint.tv_usec = 50000L;	/* slow 50ms timeout to fix select hang bug in #1048 */
     while (1) {
 		FD_ZERO (&fds_read);
 		if (!count_in)  FD_SET (fdsock, &fds_read);
