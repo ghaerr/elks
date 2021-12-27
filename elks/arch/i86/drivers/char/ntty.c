@@ -260,7 +260,7 @@ int tty_outproc(register struct tty *tty)
     return ch;
 }
 
-void tty_echo(register struct tty *tty, unsigned char ch)
+static void tty_echo(register struct tty *tty, unsigned char ch)
 {
     if ((tty->termios.c_lflag & ECHO)
 		|| ((tty->termios.c_lflag & ECHONL) && (ch == '\n'))) {
@@ -510,7 +510,7 @@ void INITPROC tty_init(void)
     /* put slave pseudo tty entries after serial entries */
     for (i = PTY_MINOR_OFFSET; (i) < NR_PTYS + PTY_MINOR_OFFSET; i++) {
 	ttyp->ops = &ttyp_ops;
-	(ttyp++)->minor = i;
+	(ttyp++)->minor = i;		/* ttyp0 = PTY slave PTY_MINOR_OFFSET */
     }
 #endif
 

@@ -365,7 +365,7 @@ static int inet_write(register struct socket *sock, char *ubuf, int size,
             if (ret == -ERESTARTSYS) {
 		/* delay process 100ms*/
 		current->state = TASK_INTERRUPTIBLE;
-		current->timeout = jiffies + 10;
+		current->timeout = jiffies + (HZ / 10); /* 1/10 sec = 100ms*/
                 schedule();
             } else
                 return ret;

@@ -58,19 +58,13 @@
 #define SETUP_VID_COLS		80	/* video # columns */
 #define SETUP_VID_LINES		25	/* video # lines */
 #define SETUP_CPU_TYPE		5	/* processor type 80186 */
-#define SETUP_MEM_KBYTES	128	/* base memory in 1K bytes */
+#define SETUP_MEM_KBYTES	512	/* base memory in 1K bytes */
 #define SETUP_ROOT_DEV		0x0600	/* root device ROMFS */
 #define SETUP_ELKS_FLAGS	0	/* flags for root device type */
 #define SETUP_PART_OFFSETLO	0	/* partition offset low word */
 #define SETUP_PART_OFFSETHI	0	/* partition offset high word */
 #define SYS_CAPS		0	/* no XT/AT capabilities */
 
-/*
- * An absolute minimum of 1K heap + 8 buffers (@26 = 208) = 1232
- * More heap should be specified if serial driver used, default inq = 1K bytes
- * Comment out SETUP_HEAPSIZE to use normal max heap, extended to 64K kernel data segment
- */
-#define SETUP_HEAPSIZE		1232	/* force kernel heap size if specified*/
 
 #define CONFIG_8018X_FCPU	16
 #define CONFIG_8018X_EB
@@ -90,14 +84,12 @@
 #define CAP_ALL         0xFF      /* all capabilities if PC/AT only */
 
 /* Don't touch these, unless you really know what you are doing. */
-#define DEF_INITSEG	0x0100	/* setup data, for netboot use 0x5000 */
-#define DEF_SYSSEG	0x1300	/* initial system image load address by boot code */
+#define DEF_INITSEG	0x0100	/* initial Image load address by boot code */
+#define DEF_SYSSEG	0x1300	/* kernel copied here by setup.S code */
 #define DEF_SETUPSEG	DEF_INITSEG + 0x20
 #define DEF_SYSSIZE	0x2F00
 
 #ifdef CONFIG_ROMCODE
-#define SETUP_DATA	CONFIG_ROM_SETUP_DATA
-
 #ifdef CONFIG_BLK_DEV_BIOS    /* BIOS disk driver*/
 #define DMASEG		0x80  /* 0x400 bytes floppy sector buffer */
 #ifdef CONFIG_TRACK_CACHE     /* floppy track buffer in low mem */
@@ -110,9 +102,9 @@
 #else
 #define KERNEL_DATA     0x80  /* kernel data segment */
 #endif
+#define SETUP_DATA	CONFIG_ROM_SETUP_DATA
 #endif /* CONFIG_ROMCODE */
 
-#define SETUP_DATA	REL_INITSEG
 
 #if (defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_8018X)) && !defined(CONFIG_ROMCODE)
 /* Define segment locations of low memory, must not overlap */
@@ -128,6 +120,7 @@
 #define DMASEGSZ 0x0400	      /* BLOCK_SIZE (1024) */
 #define REL_SYSSEG	0x0D0 /* kernel code segment */
 #endif
+#define SETUP_DATA	REL_INITSEG
 #endif /* (CONFIG_ARCH_IBMPC || CONFIG_ARCH_8018X) && !CONFIG_ROMCODE */
 
 #if defined(CONFIG_ARCH_PC98) && !defined(CONFIG_ROMCODE)
@@ -144,6 +137,7 @@
 #define DMASEGSZ 0x0400	      /* BLOCK_SIZE (1024) */
 #define REL_SYSSEG	0x0E0 /* kernel code segment */
 #endif
+#define SETUP_DATA	REL_INITSEG
 #endif /* CONFIG_ARCH_PC98 && !CONFIG_ROMCODE */
 
 

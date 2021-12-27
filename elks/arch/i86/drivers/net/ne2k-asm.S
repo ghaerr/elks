@@ -1,6 +1,9 @@
 //-----------------------------------------------------------------------------
 // NE2K driver - low part - MAC routines
 //
+// Updated by Santiago Hormazabal on Dec 2021:
+//  . 8 bit access if CONFIG_ETH_BYTE_ACCESS is set, using a ne1k patch from
+//    NCommander.
 // Updated by Helge Skrivervik July 2020:
 //	. pick up MAC address from prom
 //	. fixed read ring buffer wrap around errors
@@ -8,6 +11,7 @@
 // oct-2021: Pick up I/O port # from init/bootopts (HS)
 //-----------------------------------------------------------------------------
 
+#include <linuxmt/config.h>
 #include "arch/ports.h"
 #include <arch/asm-offsets.h>
 
@@ -190,8 +194,16 @@ dma_write:
 
 emw_loop:
 
+#ifdef CONFIG_ETH_BYTE_ACCESS
+    lodsb
+    outb     %al,%dx
+    lodsb
+    outb     %al,%dx
+#else
 	lodsw
 	out     %ax,%dx
+#endif
+
 	loop    emw_loop
 
 	// wait for DMA completed
@@ -306,8 +318,15 @@ buf_local:
 	add	$io_ne2k_data_io,%dx
 	cld
 emr_loop:
+#ifdef CONFIG_ETH_BYTE_ACCESS
+    inb      %dx,%al
+    stosb
+    inb      %dx,%al
+    stosb
+#else
 	in      %dx,%ax
 	stosw
+#endif
 	loop    emr_loop
 
 	// wait for DMA to complete
@@ -702,7 +721,11 @@ ne2k_base_init:
 
 	mov	net_port,%dx
 	add	$io_ne2k_data_conf,%dx
+#ifdef CONFIG_ETH_BYTE_ACCESS
+	mov     $0x48,%al	// set byte access
+#else
 	mov     $0x49,%al	// set word access
+#endif
 	out     %al,%dx
 
 	// clear DMA length 
@@ -907,7 +930,7 @@ ne2k_probe:
 	in	%dx,%al
 	cmp	$0xff,%al	// cannot be FF
 	jz	np_err
-	cmp	0,%al		// cannot be 0
+	cmp	$0,%al		// cannot be 0
 	jz	np_err
 	
 	xor     %ax,%ax

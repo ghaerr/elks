@@ -1,7 +1,3 @@
-// enable the autoconfig tool
-
-#define __ASSEMBLY__
-
 #include <linuxmt/config.h>
 #include <arch/asm-offsets.h>
 

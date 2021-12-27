@@ -34,7 +34,6 @@ char ** argv;
     struct passwd *pwd;
     char *pbuf, salt[3];
     char nbuf1[128], nbuf2[128];
-    int n;
     time_t now;
     int ch;
     int failure_cnt;

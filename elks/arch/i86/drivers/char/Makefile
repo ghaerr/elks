@@ -68,7 +68,7 @@ endif
 
 ifdef CONFIG_ARCH_PC98
 ifdef CONFIG_CONSOLE_HEADLESS
-OBJS += console-headless.o conio-pc98.o conio-pc98-asm.o
+OBJS += console-headless.o
 endif
 OBJS += conio-pc98.o conio-pc98-asm.o kbd-poll.o
 OBJS += lp.o

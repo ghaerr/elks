@@ -21,6 +21,7 @@
 #include	<time.h>
 #include	<sys/stat.h>
 #include	<sys/types.h>
+#include	<sys/wait.h>
 #include 	<dirent.h>
 
 #define 	CMDBUFSIZ 	512
@@ -617,6 +618,7 @@ int main(int argc, char **argv){
 			perror("Accept error:");
 			break;
 		}
+		waitpid(-1, NULL, WNOHANG);		/* reap previous accepts*/
 		if (debug) printf("Connnect from new Client.\n");
 		/* child process */
 		if((pid = fork()) == 0) {
