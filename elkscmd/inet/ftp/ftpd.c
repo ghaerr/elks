@@ -23,14 +23,25 @@
 #include	<sys/types.h>
 #include 	<dirent.h>
 
+#define		BLOAT
+
+#ifdef BLOAT
+#define GLOB
+#endif
+
+#ifdef GLOB
+#include <pwd.h>
+#include <regex.h>
+#endif
+
 #define 	CMDBUFSIZ 	512
 #define		IOBUFSIZ	1500
 #define		TRUE		1
 #define		FALSE		0
 #define		FTP_PORT	21
+#define		MAXARGS 256     /* max names in wildcard expansion */
 #define		PASV_PORT	49821U	/* 'random' port for passive connections */
 #define		QEMU_PORT	8041U	/* outside port for QEMU */
-#define		BLOAT
 
 #ifndef MAXPATHLEN
 #define		MAXPATHLEN	256
@@ -80,6 +91,7 @@ enum {
 
 static int debug = 0;
 static int qemu = 0;
+static char real_ip[20];
 
 /* Trim leading and trailing whitespaces */
 void trim(char *str) {
@@ -100,6 +112,13 @@ void trim(char *str) {
 	str[i - begin] = '\0'; // Null terminate string.
 }
 
+int send_reply(int fd, int code, char *str) {
+	char cp[70];
+
+	sprintf(cp, "%d %s.\r\n", code, str);
+	return (write(fd, cp, strlen(cp)));
+}
+
 void clean(char *s) {	/* chop off CRLF at end of string */
 	int l = strlen(s);
 
@@ -110,6 +129,7 @@ void clean(char *s) {	/* chop off CRLF at end of string */
 			break;
 		l--;
 	}
+	trim(s);
 	return;
 }
 
@@ -152,6 +172,7 @@ int setup_data_connection(char *client_ip, unsigned int client_port, int server_
 	
 	struct sockaddr_in cliaddr, tempaddr;
 	int fd, sockwait = 0;
+	char *ip = client_ip;
 
 	if ( (fd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
     		perror("socket error");
@@ -185,9 +206,11 @@ int setup_data_connection(char *client_ip, unsigned int client_port, int server_
 	/* initiate data connection fd with client ip and client port             */
 	bzero(&cliaddr, sizeof(cliaddr));
 
+	if (qemu) ip = real_ip;		/* for QEMU hack, use this IP instead of 
+					 * the one sent by the client. */
 	cliaddr.sin_family = AF_INET;
 	cliaddr.sin_port = htons(client_port);
-	cliaddr.sin_addr.s_addr = in_aton(client_ip);
+	cliaddr.sin_addr.s_addr = in_aton(ip);
 
 	if (connect(fd, (struct sockaddr *) &cliaddr, sizeof(cliaddr)) < 0) {
     		perror("connect error");
@@ -243,37 +266,34 @@ int get_command(char *command){
 /* support and use setuid()/seteuid() in the child process. */
 
 int do_login(int controlfd) {
-	char *str = "331 User OK.\r\n";
 	char buf[200];
 
 	if(read(controlfd, buf, 200) < 0)
 		return -1;
 	if (strncmp(buf, "USER", 4)) 
 		return -1;
-	write(controlfd, str, strlen(str));
+	send_reply(controlfd, 331, "User OK");
 
 	if(read(controlfd, buf, 200) < 0)
 		return -1;
 	if (strncmp(buf, "PASS", 4)) 
 		return -1;
-	str = "230 Password OK.\r\n";
 	chdir("/root");		/* brute force ... */
-	write(controlfd, str, strlen(str));
+	send_reply(controlfd, 230, "Password OK");
 	return 0; /* always OK */
 }
 
 int do_list(int controlfd, int datafd, char *input) {
 	char *str, cmd_buf[CMDBUFSIZ], iobuf[IOBUFSIZ];
    	FILE *in;
-	DIR *dir;
-	struct dirent *dp;
-	int len, nlst = 0;;
+	DIR *dir = NULL;
+	int len, nlst = 0, glob = 0, status = 1;
 
 	bzero(cmd_buf, sizeof(cmd_buf));
 	bzero(iobuf, sizeof(iobuf));
 
 	str = "150 Opening ASCII mode data connection for /bin/ls.\r\n";
-	if (strncmp(input, "NLST", 4) == 0) { /* this is for MGET, should handle globbing */
+	if (strncmp(input, "NLST", 4) == 0) { 
 		nlst++;
 		str = "125 List started OK.\r\n";
 	}
@@ -285,18 +305,45 @@ int do_list(int controlfd, int datafd, char *input) {
 		strcat(cmd_buf, "/bin/ls -l");
 	}
 
+	//FIXME: Need to split LIST and NLST processing - this is messy
+#ifdef GLOB
+	glob++;
+#endif
+
 	if (debug) printf("LIST/NDIR: '%s' fd %d\n", cmd_buf, datafd);
-    	dir = opendir(iobuf); 	/* test for existence */
-    	if (!dir) {
-    		str= "550 No Such File or Directory.\r\n";
-    		write(controlfd, str, strlen(str));
-    		return -1;
-    	} 
+	if (!glob) {
+    		dir = opendir(iobuf); 	/* test for existence */
+    		if (!dir) {
+			send_reply(controlfd, 550, "No such file or directory");
+    			return -1;
+    		} 
+	}
     	write(controlfd, str, strlen(str));
 
-	/* NLST processing, just a simple list of names */
+	/* NLST processing, a list of names, one per line */
 	if (nlst) {
 		len = 0;
+#ifdef GLOB
+		char *myargv[MAXARGS];
+		int i = 0, count;
+
+		count = expandwildcards(iobuf, MAXARGS, myargv);
+		*iobuf = '\0';
+		while (i < count) {
+			if (len + strlen(myargv[i] + 3) < IOBUFSIZ) {
+				strcat(iobuf, myargv[i]);
+				strcat(iobuf, "\r\n");
+				len += strlen(myargv[i]+2);
+				i++;
+			} else {
+				write(datafd, iobuf, strlen(iobuf));
+				//if (debug) write(1, iobuf, strlen(iobuf));
+				len = 0;
+				bzero(iobuf, sizeof(iobuf));
+			}
+		}
+#else
+		struct dirent *dp;
 		*iobuf = '\0';
 		while ((dp = readdir(dir)) != NULL) {
 			if (*dp->d_name != '.') {
@@ -312,6 +359,8 @@ int do_list(int controlfd, int datafd, char *input) {
 				}
 			}
 		}
+		closedir(dir); 
+#endif
 		if (len) {
 			write(datafd, iobuf, strlen(iobuf));
 			if (debug) {
@@ -320,23 +369,20 @@ int do_list(int controlfd, int datafd, char *input) {
 			}
 		}
 		close(datafd);
-		closedir(dir); 
 		return 2;
 	}
-	closedir(dir); 
+	if (dir) closedir(dir); //FIXME - part of the LIST/NDIR mess
 
-	// LIST - pipe output from ls-command back to the client
+	/*
+	 * LIST - pipe output from ls-command back to the client
+	 */
 
 	if (!(in = popen(cmd_buf, "r"))) {
-    		str = "451 Requested action aborted. Local error in processing.\n";
-    		write(controlfd, str, strlen(str));
+		send_reply(controlfd, 451, "Requested action aborted. Local error in processing");
         	return -1;
 	}
 	bzero(iobuf, sizeof(iobuf));
-//#define BUFFERED_DIR
-#ifndef BUFFERED_DIR
-	int status = 1;
-	while (fgets(iobuf, IOBUFSIZ-1, in) != NULL) {
+	while (fgets(iobuf, IOBUFSIZ-2, in) != NULL) {
 		len = strlen(iobuf);
 		iobuf[len-1] = '\r';    /* Fix FTP ASCII-style line endings */
 		iobuf[len++] = '\n';
@@ -347,30 +393,6 @@ int do_list(int controlfd, int datafd, char *input) {
 			break;
 		}
 		bzero(iobuf, sizeof(iobuf));
-#else
-	int bufpos = 0, status = 1;
-	while (fgets(cmd_buf, CMDBUFSIZ-1, in) != NULL) {
-		len = strlen(cmd_buf);
-		cmd_buf[len-1] = '\r';	/* Fix FTP ASCII-style line endings */
-		cmd_buf[len] = '\n';
-		cmd_buf[++len] = '\0';
-		//printf("%s", cmd_buf);
-		if ((len + bufpos) < IOBUFSIZ) {
-			strcat(iobuf,cmd_buf);
-			bufpos += len;
-		} else {
-			status = write(datafd, iobuf, bufpos);
-			printf("%d:", status);
-			bzero(iobuf, sizeof(iobuf));
-			bufpos = 0;
-			if (status < 0) {perror("Write socket"); break;}
-		}
-	}
-	if (bufpos) {
-		status = write(datafd, iobuf, bufpos);
-		printf("%d\n", status);
-		if (status < 0) perror("Write socket"); 
-#endif
 	}
 	close(datafd);
 	pclose(in);
@@ -444,6 +466,8 @@ int do_pasv(int controlfd, int *datafd) {
     	write(controlfd, str, strlen(str));
 	if (debug) printf("%s", str);
 	i = sizeof(pasv);
+	//FIXME: The accept() will block forever - this will happen in QEMU if an external client
+	// requests a passive mode connection.
 	if ((*datafd = accept(fd, (struct sockaddr *)&pasv, (unsigned int *)&i)) < 0 ) {
 		perror("accept error");	
 		close(fd);
@@ -456,7 +480,7 @@ int do_pasv(int controlfd, int *datafd) {
 }
 
 int do_retr(int controlfd, int datafd, char *input){
-	char *str, cmd_buf[CMDBUFSIZ], iobuf[IOBUFSIZ];
+	char cmd_buf[CMDBUFSIZ], iobuf[IOBUFSIZ];
 	int fd, len;
 	struct stat fst;
 
@@ -478,21 +502,23 @@ int do_retr(int controlfd, int datafd, char *input){
 				}
 			close(fd);
 		} else {
-			str = "550 No Such File or Directory.\r\n";
-    			write(controlfd, str, strlen(str));
+			//str = "550 No Such File or Directory.\r\n";
+    			//write(controlfd, str, strlen(str));
+			send_reply(controlfd, 550, "No such file or directory");
     			return -1;
 		}
 	} else {  /* FIXME: this part may not be required */
 		if (debug) printf("File not found: %s\n", cmd_buf);
-		str = "450 Requested file action not taken.\r\nFilename Not Detected.\r\n";
-    		write(controlfd, str, strlen(str));
+		//str = "450 Requested file action not taken.\r\nFilename Not Detected.\r\n";
+    		//write(controlfd, str, strlen(str));
+		send_reply(controlfd, 450, "Requested file action not taken.\r\nFilename Not Detected");
 		return -1;
 	}
 	return 1;
 }
 
 int do_stor(int controlfd, int datafd, char *input) {
-	char *str, cmd_buf[CMDBUFSIZ], iobuf[IOBUFSIZ];
+	char cmd_buf[CMDBUFSIZ], iobuf[IOBUFSIZ];
 	int fp;
 	int n = 0, len;
 
@@ -502,8 +528,9 @@ int do_stor(int controlfd, int datafd, char *input) {
 
 	if (get_filename(input, cmd_buf) < 0) {
 		if (debug) printf("No file specified.\n");
-		str = "450 Requested action not taken - no file.\r\n";
-    		write(controlfd, str, strlen(str));
+		//str = "450 Requested action not taken - no file.\r\n";
+    		//write(controlfd, str, strlen(str));
+		send_reply(controlfd, 450, "Requested action not taken - no file");
 		return -1;
 	}
 
@@ -511,8 +538,9 @@ int do_stor(int controlfd, int datafd, char *input) {
 	//trim(cmd_buf);
 	if ((fp = open(cmd_buf, O_CREAT|O_RDWR|O_TRUNC, 0644)) < 1) {
 		perror("File create failure");
-		str = "552 File create error, transfer aborted.\r\n";
-		write(controlfd, str, strlen(str));
+		//str = "552 File create error, transfer aborted.\r\n";
+		//write(controlfd, str, strlen(str));
+		send_reply(controlfd, 552, "File create error, transfer aborted");
 		return -1;
 	}
 
@@ -525,8 +553,9 @@ int do_stor(int controlfd, int datafd, char *input) {
 			else
 				printf("File write error: %s\n", cmd_buf);
 			close(fp);
-			str = "552 Storage space exceeded, transfer aborted.\r\n";
-			write(controlfd, str, strlen(str));
+			//str = "552 Storage space exceeded, transfer aborted.\r\n";
+			//write(controlfd, str, strlen(str));
+			send_reply(controlfd, 552, "Storage space exceeded, transfer aborted");
 			return -2;
 		}
 	}
@@ -540,22 +569,20 @@ void usage() {
 }
 
 
-int main(int argc, char **argv){
-
+int main(int argc, char **argv) {
 	int listenfd, connfd, ret, port = FTP_PORT;
-	//int passive_mode = 0;
 	struct sockaddr_in servaddr;
 	pid_t pid;
+	char *cp;
 
 	if (argc > 2) {	/* FIXME - improve parameter checking */
 		usage();
 		exit(1);
 	}
 
-	//myaddr = in_gethostbyname("elks");
 	while (--argc) {
 		argv++;
-		if (*argv[0] == '-') 
+		if (*argv[0] == '-') {
 			if (argv[0][1] == 'd')
 				debug++;
 			else if (argv[0][1] == 'q') {
@@ -563,20 +590,24 @@ int main(int argc, char **argv){
 				qemu++;
 			} else
 				usage(), exit(-1);
-		else 
+		} else 
 			port = atoi(argv[0]);
 	}
+	if ((cp = getenv("QEMU")) != NULL) {
+		qemu = atoi(cp);
+		//printf("QEMU set to %d\n", qemu);
+		if (qemu) debug++;	//FIXME: Temporary - for debugging
+	}
+		
 	if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		perror("socket error");
 		exit(1);
 	}
 
-#if 1
 	/* set local port reuse, allows server to be restarted in less than 10 secs */
 	ret = 1;
 	if (setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &ret, sizeof(ret)) < 0)
 		perror("SO_REUSEADDR");
-#endif
 
 	/* set small listen buffer to save ktcp memory */
 	ret = SO_LISTEN_BUFSIZ;
@@ -597,6 +628,7 @@ int main(int argc, char **argv){
 		perror("Error in listen");
 		exit(3);
 	}
+	if (debug) printf("ftpd running - debug on.\n");
 	if (debug < 2) {
 		/* become daemon, debug output on 1 and 2*/
 		if ((ret = fork()) == -1) {
@@ -612,12 +644,16 @@ int main(int argc, char **argv){
 			close(ret);
 		setsid();
 	}
+
+	struct sockaddr_in client;
+	ret = sizeof(client);
 	while (1) {
-		if ((connfd = accept(listenfd, NULL, NULL)) < 0) {
+		if ((connfd = accept(listenfd, (struct sockaddr *)&client, (unsigned int *)&ret)) < 0) {
 			perror("Accept error:");
 			break;
 		}
-		if (debug) printf("Connnect from new Client.\n");
+		strncpy(real_ip, in_ntoa(client.sin_addr.s_addr), 18); // Save for QEMU hack
+		if (debug) printf("New connection from %s\n", real_ip);
 		/* child process */
 		if((pid = fork()) == 0) {
 			close(listenfd);
@@ -626,13 +662,13 @@ int main(int argc, char **argv){
 			unsigned int client_port = 0;
 			//char type = 'I';
 			char client_ip[50], command[CMDBUFSIZ], namebuf[MAXPATHLEN];
-			char *str = "220 Welcome - ELKS minimal FTP server speaking.\r\n";
+			char *str;
 			char *complete = "226 Transfer Complete.\r\n";
 
 			if (debug) printf("Child running - cmd chan is %d.\n", connfd);
-			write(connfd, str, strlen(str));
+			send_reply(connfd, 220, "Welcome - ELKS minimal FTP server speaking");
 
-			/* Do the standard housekeeping */
+			/* standard housekeeping */
 			if (do_login(connfd) < 0) {
 				printf("Login failed, terminating session.\n");
 				break;
@@ -656,13 +692,15 @@ int main(int argc, char **argv){
 					}
     					get_client_ip_port(command, client_ip, &client_port);
     					if ((datafd = setup_data_connection(client_ip, client_port, port)) < 0) {
-						str = "425 Can't open data connection.\r\n";
 						if (debug) printf("PORT command failed.\n");
 						datafd = -1;
-						write(connfd, str, strlen(str));
+						//str = "425 Can't open data connection.\r\n";
+						//write(connfd, str, strlen(str));
+						send_reply(connfd, 425, "Can't open data connection");
 					} else {
-						str = "200 PORT command successful.\r\n";
-						write(connfd, str, strlen(str));
+						//str = "200 PORT command successful.\r\n";
+						//write(connfd, str, strlen(str));
+						send_reply(connfd, 200, "PORT command successful");
 					}
 					break;
 
@@ -672,8 +710,9 @@ int main(int argc, char **argv){
 						datafd = -1;
 					}
 					if (do_pasv(connfd, &datafd) < 0) {
-						str = "502 PASV: Cannot open server socket.\r\n";
-						write(connfd, str, strlen(str));
+						//str = "502 PASV: Cannot open server socket.\r\n";
+						//write(connfd, str, strlen(str));
+						send_reply(connfd, 502, "PASV: Cannot open server socket");
 						close(datafd);
 						datafd = -1;
 					}
@@ -685,21 +724,24 @@ int main(int argc, char **argv){
     						if (do_list(connfd, datafd, command) < 2)
 		    					write(connfd, complete, strlen(complete));
 						else {
-							/* NLST - different resonse codes */
-							str = "250 List completed successfully.\r\n";
-		    					write(connfd, str, strlen(str));
+							/* NLST - different response codes */
+							//str = "250 List completed successfully.\r\n";
+		    					//write(connfd, str, strlen(str));
+							send_reply(connfd, 250, "List completed successfully");
 						}
 					} else {
-						str = "503 Bad sequence of commands.\r\n";
-						write(connfd, str, strlen(str));
+						//str = "503 Bad sequence of commands.\r\n";
+						//write(connfd, str, strlen(str));
+						send_reply(connfd, 503, "Bad sequence of commands");
 					}
 					datafd = -1;
 					break;
 
     				case CMD_RETR: /* Retrieve files */
 					if (datafd < 0) { /* no data connection, don't even try ... */
-						str = "426 Connection closed, transfer aborted.\r\n";
-		    				write(connfd, str, strlen(str));
+						//str = "426 Connection closed, transfer aborted.\r\n";
+		    				//write(connfd, str, strlen(str));
+						send_reply(connfd, 426, "Connection closed, transfer aborted");
 						break;
 					}
     					if (do_retr(connfd, datafd, command) > 0 ) 
@@ -713,8 +755,9 @@ int main(int argc, char **argv){
 
     				case CMD_STOR: /* Store files */
 					if (datafd < 0) { /* no data connection, don't even try ... */
-						str = "426 Connection closed, transfer aborted.\r\n";
-		    				write(connfd, str, strlen(str));
+						//str = "426 Connection closed, transfer aborted.\r\n";
+		    				//write(connfd, str, strlen(str));
+						send_reply(connfd, 426, "Connection closed, transfer aborted");
 						break;
 					}
     					if ((code = do_stor(connfd, datafd, command)) > 0) {
@@ -730,36 +773,34 @@ int main(int argc, char **argv){
 					break;
 
 				case CMD_ABOR: /* ABORT FIXME */
+					if (debug) printf("Got ABORT\n");
 					break;
 
 				case CMD_SYST: /* Identify ourselves */
-		    			str = "215 UNIX Type: L8 (Linux)\r\n";
-		    			write(connfd, str, strlen(str));
+					send_reply(connfd, 215, "UNIX Type: L8 (Linux)");
 					break;
 
 				case CMD_TYPE: 	/* ASCII or binary, ignored for now */
 						/* DIR is always ascii, files are always binary */
-					str = strtok(command, " ");
-					str = strtok(NULL, " ");
+					//str = strtok(command, " ");
+					//str = strtok(NULL, " ");
 					//type = *str;
-					str = "200 Command OK.\r\n";
-		    			write(connfd, str, strlen(str));
+					//str = "200 Command OK.\r\n";
+		    			//write(connfd, str, strlen(str));
+					send_reply(connfd, 200, "Command OK");
 					break;
 #ifdef BLOAT
 				case CMD_MKD:
 					bzero(namebuf, sizeof(namebuf));
 					if (get_filename(command, namebuf) < 0) {
-						str = "501 Syntax error - MKDIR needs parameter.\r\n";
-		    				write(connfd, str, strlen(str));
+						send_reply(connfd, 501, "Syntax error - MKDIR needs parameter");
 					} else {
 						trim(namebuf);
 						if (mkdir(namebuf, 0755) < 0) {
 							if (debug) printf("Cannot create directory %s\n", namebuf);
-							str = "550 No action - DIR not created.\r\n";
-		    					write(connfd, str, strlen(str));
+							send_reply(connfd, 550, "No action - DIR not created");
 						} else {
-							str = "250 MKDIR successful.\r\n";
-		    					write(connfd, str, strlen(str));
+							send_reply(connfd, 250, "MKDIR successful");
 						}
 					}
 					break;
@@ -767,35 +808,28 @@ int main(int argc, char **argv){
 				case CMD_RMD:
 					bzero(namebuf, sizeof(namebuf));
 					if (get_filename(command, namebuf) < 0) {
-						str = "501 Syntax error - RMD needs parameter.\r\n";
-		    				write(connfd, str, strlen(str));
+						send_reply(connfd, 501, "Syntax error - RMD needs parameter");
 					} else {
 						trim(namebuf);
 						if (rmdir(namebuf) < 0) {
 							if (debug) printf("Cannot delete %s\n", namebuf);
-							str = "550 No action - file not found.\r\n";
-		    					write(connfd, str, strlen(str));
-						} else {
-							str = "250 RMDIR successful.\r\n";
-		    					write(connfd, str, strlen(str));
-						}
+							send_reply(connfd, 550, "No action - file not found");
+						} else
+							send_reply(connfd, 250, "RMDIR successful");
 					}
 					break;
 
 				case CMD_DELE:
 					bzero(namebuf, sizeof(namebuf));
 					if (get_filename(command, namebuf) < 0) {
-						str = "501 Syntax error - DELE needs parameter.\r\n";
-		    				write(connfd, str, strlen(str));
+						send_reply(connfd, 501, "Syntax error - DELE needs parameter");
 					} else {
 						trim(namebuf);
 						if (unlink(namebuf) < 0) {
 							if (debug) printf("Cannot delete %s\n", namebuf);
-							str = "550 No action - file not found.\r\n";
-		    					write(connfd, str, strlen(str));
+							send_reply(connfd, 550, "No action - file not found");
 						} else {
-							str = "250 Delete successful.\r\n";
-		    					write(connfd, str, strlen(str));
+							send_reply(connfd, 250, "Delete successful");
 						}
 					}
 					break;
@@ -810,33 +844,27 @@ int main(int argc, char **argv){
 					/* FIXME: if no arg, change back to home dir */
 					bzero(namebuf, sizeof(namebuf));
 					if (get_filename(command, namebuf) < 0) {
-						str = "501 Syntax error - CWD needs parameter.\r\n";
-		    				write(connfd, str, strlen(str));
+						send_reply(connfd, 501, "Syntax error - CWD needs parameter");
 					} else {
 						trim(namebuf);
 						if (chdir(namebuf) < 0) {
 							if (debug) printf("Cannot chdir to %s\n", namebuf);
-							str = "550 No action - directory not found.\r\n";
-		    					write(connfd, str, strlen(str));
-						} else {
-							str = "250 CWD successful.\r\n";
-		    					write(connfd, str, strlen(str));
-						}
+							send_reply(connfd, 550, "No action - directory not found");
+						} else 
+							send_reply(connfd, 250, "CWD successful");
 					}
 					break;
 
 				case CMD_CLOSE:	/* Since login is outside the main loop, CLOSE means QUIT */
 				case CMD_QUIT:
 					quit = TRUE;
-		    			str = "221 Goodbye.\n";
-		    			write(connfd, str, strlen(str));
+					send_reply(connfd, 221, "Goodbye");
 					close(datafd);
 					break;
 
 				case CMD_UNKNOWN:
 				default:
-					str = "503 Unknown command.\r\n";
-		    			write(connfd, str, strlen(str));
+					send_reply(connfd, 503, "Unknown command");
 					break;
 				}
 				if (quit == TRUE) break;
