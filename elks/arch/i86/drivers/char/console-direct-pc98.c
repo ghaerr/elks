@@ -72,6 +72,7 @@ static unsigned short int NumConsoles = MAX_CONSOLES;
 int Current_VCminor = 0;
 int kraw = 0;
 unsigned VideoSeg = 0xA000;
+unsigned AttributeSeg = 0xA200;
 
 #ifdef CONFIG_EMUL_ANSI
 #define TERM_TYPE " emulating ANSI "
@@ -97,7 +98,25 @@ static void PositionCursor(register Console * C)
 
 static void VideoWrite(register Console * C, char c)
 {
-    pokew((word_t)((C->cx + C->cy * Width) << 1), (seg_t) C->vseg, ((word_t)c));
+    word_t addr;
+    word_t attr98;
+    unsigned char fg_igrb;
+    unsigned char bg_igrb;
+
+    addr = (C->cx + C->cy * Width) << 1;
+
+    fg_igrb = (C->attr & 0x8) | ((C->attr & 0x2) << 1) | ((C->attr & 0x4) >> 1) | (C->attr & 0x1);
+    bg_igrb = (C->attr & 0x80) | ((C->attr & 0x20) << 1) | ((C->attr & 0x40) >> 1) | (C->attr & 0x10);
+
+    if (fg_igrb == bg_igrb)
+	attr98 = 0x00 | ((fg_igrb & 0x7) << 5); /* No display */
+    else if (fg_igrb == 0)
+	attr98 = 0x05 | ((bg_igrb & 0x7) << 5); /* Use bg color and invert */
+    else
+	attr98 = 0x01 | ((fg_igrb & 0x7) << 5); /* Use fg color */
+
+    pokew(addr, (seg_t) AttributeSeg, attr98);
+    pokew(addr, (seg_t) C->vseg, (word_t)c);
 }
 
 static void ClearRange(register Console * C, int x, int y, int xx, int yy)
