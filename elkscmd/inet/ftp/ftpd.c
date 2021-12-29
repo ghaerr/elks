@@ -21,6 +21,7 @@
 #include	<time.h>
 #include	<sys/stat.h>
 #include	<sys/types.h>
+#include 	<sys/wait.h>
 #include 	<dirent.h>
 
 #define		BLOAT
@@ -502,15 +503,11 @@ int do_retr(int controlfd, int datafd, char *input){
 				}
 			close(fd);
 		} else {
-			//str = "550 No Such File or Directory.\r\n";
-    			//write(controlfd, str, strlen(str));
 			send_reply(controlfd, 550, "No such file or directory");
     			return -1;
 		}
 	} else {  /* FIXME: this part may not be required */
 		if (debug) printf("File not found: %s\n", cmd_buf);
-		//str = "450 Requested file action not taken.\r\nFilename Not Detected.\r\n";
-    		//write(controlfd, str, strlen(str));
 		send_reply(controlfd, 450, "Requested file action not taken.\r\nFilename Not Detected");
 		return -1;
 	}
@@ -528,8 +525,6 @@ int do_stor(int controlfd, int datafd, char *input) {
 
 	if (get_filename(input, cmd_buf) < 0) {
 		if (debug) printf("No file specified.\n");
-		//str = "450 Requested action not taken - no file.\r\n";
-    		//write(controlfd, str, strlen(str));
 		send_reply(controlfd, 450, "Requested action not taken - no file");
 		return -1;
 	}
@@ -538,8 +533,6 @@ int do_stor(int controlfd, int datafd, char *input) {
 	//trim(cmd_buf);
 	if ((fp = open(cmd_buf, O_CREAT|O_RDWR|O_TRUNC, 0644)) < 1) {
 		perror("File create failure");
-		//str = "552 File create error, transfer aborted.\r\n";
-		//write(controlfd, str, strlen(str));
 		send_reply(controlfd, 552, "File create error, transfer aborted");
 		return -1;
 	}
@@ -553,8 +546,6 @@ int do_stor(int controlfd, int datafd, char *input) {
 			else
 				printf("File write error: %s\n", cmd_buf);
 			close(fp);
-			//str = "552 Storage space exceeded, transfer aborted.\r\n";
-			//write(controlfd, str, strlen(str));
 			send_reply(controlfd, 552, "Storage space exceeded, transfer aborted");
 			return -2;
 		}
@@ -628,7 +619,7 @@ int main(int argc, char **argv) {
 		perror("Error in listen");
 		exit(3);
 	}
-	if (debug) printf("ftpd running - debug on.\n");
+	//if (debug) printf("ftpd running - debug on.\n");
 	if (debug < 2) {
 		/* become daemon, debug output on 1 and 2*/
 		if ((ret = fork()) == -1) {
@@ -652,8 +643,9 @@ int main(int argc, char **argv) {
 			perror("Accept error:");
 			break;
 		}
-		strncpy(real_ip, in_ntoa(client.sin_addr.s_addr), 18); // Save for QEMU hack
-		if (debug) printf("New connection from %s\n", real_ip);
+		waitpid(-1, NULL, WNOHANG);		/* reap previous accepts*/
+		strncpy(real_ip, in_ntoa(client.sin_addr.s_addr), 20); // Save for QEMU hack
+		if (debug) printf("New connection from %s (0x%lx)\n", real_ip, client.sin_addr.s_addr);
 		/* child process */
 		if((pid = fork()) == 0) {
 			close(listenfd);
@@ -694,14 +686,9 @@ int main(int argc, char **argv) {
     					if ((datafd = setup_data_connection(client_ip, client_port, port)) < 0) {
 						if (debug) printf("PORT command failed.\n");
 						datafd = -1;
-						//str = "425 Can't open data connection.\r\n";
-						//write(connfd, str, strlen(str));
 						send_reply(connfd, 425, "Can't open data connection");
-					} else {
-						//str = "200 PORT command successful.\r\n";
-						//write(connfd, str, strlen(str));
+					} else 
 						send_reply(connfd, 200, "PORT command successful");
-					}
 					break;
 
 				case CMD_PASV: /* Enter Passive mode */
@@ -710,8 +697,6 @@ int main(int argc, char **argv) {
 						datafd = -1;
 					}
 					if (do_pasv(connfd, &datafd) < 0) {
-						//str = "502 PASV: Cannot open server socket.\r\n";
-						//write(connfd, str, strlen(str));
 						send_reply(connfd, 502, "PASV: Cannot open server socket");
 						close(datafd);
 						datafd = -1;
@@ -725,22 +710,15 @@ int main(int argc, char **argv) {
 		    					write(connfd, complete, strlen(complete));
 						else {
 							/* NLST - different response codes */
-							//str = "250 List completed successfully.\r\n";
-		    					//write(connfd, str, strlen(str));
-							send_reply(connfd, 250, "List completed successfully");
+							send_reply(connfd, 250, "List completed");
 						}
-					} else {
-						//str = "503 Bad sequence of commands.\r\n";
-						//write(connfd, str, strlen(str));
+					} else 
 						send_reply(connfd, 503, "Bad sequence of commands");
-					}
 					datafd = -1;
 					break;
 
     				case CMD_RETR: /* Retrieve files */
 					if (datafd < 0) { /* no data connection, don't even try ... */
-						//str = "426 Connection closed, transfer aborted.\r\n";
-		    				//write(connfd, str, strlen(str));
 						send_reply(connfd, 426, "Connection closed, transfer aborted");
 						break;
 					}
@@ -755,8 +733,6 @@ int main(int argc, char **argv) {
 
     				case CMD_STOR: /* Store files */
 					if (datafd < 0) { /* no data connection, don't even try ... */
-						//str = "426 Connection closed, transfer aborted.\r\n";
-		    				//write(connfd, str, strlen(str));
 						send_reply(connfd, 426, "Connection closed, transfer aborted");
 						break;
 					}
@@ -785,8 +761,6 @@ int main(int argc, char **argv) {
 					//str = strtok(command, " ");
 					//str = strtok(NULL, " ");
 					//type = *str;
-					//str = "200 Command OK.\r\n";
-		    			//write(connfd, str, strlen(str));
 					send_reply(connfd, 200, "Command OK");
 					break;
 #ifdef BLOAT
