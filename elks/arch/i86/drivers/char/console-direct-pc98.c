@@ -72,6 +72,7 @@ static unsigned short int NumConsoles = MAX_CONSOLES;
 int Current_VCminor = 0;
 int kraw = 0;
 unsigned VideoSeg = 0xA000;
+unsigned AttributeSeg = 0xA200;
 
 #ifdef CONFIG_EMUL_ANSI
 #define TERM_TYPE " emulating ANSI "
@@ -95,9 +96,36 @@ static void PositionCursor(register Console * C)
     cursor_set(Pos * 2);
 }
 
+static word_t conv_pcattr(word_t attr)
+{
+    static unsigned char grb[16] = {0x00, 0x20, 0x80, 0xA0, 0x40, 0x60, 0xC0, 0xE0,
+                                    0x00, 0x20, 0x80, 0xA0, 0x40, 0x60, 0xC0, 0xE0};
+
+    word_t attr98;
+    unsigned char fg_grb;
+    unsigned char bg_grb;
+
+    fg_grb = grb[attr & 0xF];
+    bg_grb = grb[(attr & 0xF0) >> 4];
+
+    if (fg_grb == bg_grb)
+	attr98 = fg_grb;        /* No display */
+    else if (fg_grb == 0)
+	attr98 = 0x05 | bg_grb; /* Use bg color and invert */
+    else
+	attr98 = 0x01 | fg_grb; /* Use fg color */
+
+    return attr98;
+}
+
 static void VideoWrite(register Console * C, char c)
 {
-    pokew((word_t)((C->cx + C->cy * Width) << 1), (seg_t) C->vseg, ((word_t)c));
+    word_t addr;
+
+    addr = (C->cx + C->cy * Width) << 1;
+
+    pokew(addr, (seg_t) AttributeSeg, conv_pcattr(C->attr));
+    pokew(addr, (seg_t) C->vseg, (word_t)c);
 }
 
 static void ClearRange(register Console * C, int x, int y, int xx, int yy)
@@ -107,8 +135,10 @@ static void ClearRange(register Console * C, int x, int y, int xx, int yy)
     xx = xx - x + 1;
     vp = (__u16 *)((__u16)(x + y * Width) << 1);
     do {
-	for (x = 0; x < xx; x++)
-	    pokew((word_t) (vp++), (seg_t) C->vseg, ((word_t) ' '));
+	for (x = 0; x < xx; x++) {
+	    pokew((word_t) vp, AttributeSeg, conv_pcattr(C->attr));
+	    pokew((word_t) (vp++), (seg_t) C->vseg, (word_t) ' ');
+	}
 	vp += (Width - xx);
     } while (++y <= yy);
 }
@@ -118,8 +148,10 @@ static void ScrollUp(register Console * C, int y)
     register __u16 *vp;
 
     vp = (__u16 *)((__u16)(y * Width) << 1);
-    if ((unsigned int)y < MaxRow)
+    if ((unsigned int)y < MaxRow) {
+	fmemcpyb(vp, AttributeSeg, vp + Width, AttributeSeg, (MaxRow - y) * (Width << 1));
 	fmemcpyb(vp, C->vseg, vp + Width, C->vseg, (MaxRow - y) * (Width << 1));
+    }
     ClearRange(C, 0, MaxRow, MaxCol, MaxRow);
 }
 
@@ -131,6 +163,7 @@ static void ScrollDown(register Console * C, int y)
 
     vp = (__u16 *)((__u16)(yy * Width) << 1);
     while (--yy >= y) {
+	fmemcpyb(vp, AttributeSeg, vp - Width, AttributeSeg, Width << 1);
 	fmemcpyb(vp, C->vseg, vp - Width, C->vseg, Width << 1);
 	vp -= Width;
     }
