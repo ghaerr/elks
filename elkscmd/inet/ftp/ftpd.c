@@ -644,7 +644,8 @@ int main(int argc, char **argv) {
 		}
 
 		waitpid(-1, NULL, WNOHANG);		/* reap previous accepts*/
-		if (debug) printf("Connnect from new Client.\n");
+		if (debug) printf("Connnect from new client %s:%u.\n",
+			in_ntoa(client.sin_addr.s_addr), ntohs(client.sin_port));
 
 		if ((ret = fork()) == -1)       /* handle new accept*/
 			fprintf(stderr, "ftpd: No processes\n");
