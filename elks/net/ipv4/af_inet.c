@@ -230,15 +230,16 @@ static int inet_accept(register struct socket *sock, struct socket *newsock, int
     tcpdev_inetwrite(cmd, sizeof(struct tdb_accept));
 
     /* Sleep until tcpdev has news */
-    while (bufin_sem == 0) {
-        //sock->flags |= SF_WAITDATA;
+    do {	/* always sleep once to prevent accept race condition #1082 */
+
         interruptible_sleep_on(sock->wait);
-        //sock->flags &= ~SF_WAITDATA;
+        //interruptible_sleep_on(newsock->wait);
+
         if (current->signal) {
 	    debug_net("INET(%d) accept RESTARTSYS bufin %d\n", current->pid, bufin_sem);
             return -ERESTARTSYS;
 	}
-    }
+    } while (bufin_sem == 0);
 
     debug_tune("INET(%d) accepted sock %x newsock %x\n", current->pid, sock, newsock);
     newsock->remaddr = ((struct tdb_accept_ret *)tdin_buf)->addr_ip;

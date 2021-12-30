@@ -638,15 +638,14 @@ int main(int argc, char **argv) {
 	struct sockaddr_in client;
 	ret = sizeof(client);
 	while (1) {
-	    static int num = 0;
-		printf("FTPD accept #%d\n", ++num);
 		if ((connfd = accept(listenfd, (struct sockaddr *)&client, (unsigned int *)&ret)) < 0) {
 			perror("Accept error:");
 			break;
 		}
-		printf("FTPD accept #%d returns %d\n", num, connfd);
+
 		waitpid(-1, NULL, WNOHANG);		/* reap previous accepts*/
 		if (debug) printf("Connnect from new Client.\n");
+
 		if ((ret = fork()) == -1)       /* handle new accept*/
 			fprintf(stderr, "ftpd: No processes\n");
 		else if (ret != 0)

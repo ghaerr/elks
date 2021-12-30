@@ -40,7 +40,7 @@
 #define DEBUG_SIG	0		/* signals*/
 #define DEBUG_SUP	0		/* superblock, mount, umount*/
 #define DEBUG_TTY	0		/* tty driver*/
-#define DEBUG_TUNE	1		/* tunable debug statements*/
+#define DEBUG_TUNE	0		/* tunable debug statements*/
 #define DEBUG_WAIT	0		/* wait, exit*/
 
 #if DEBUG_EVENT

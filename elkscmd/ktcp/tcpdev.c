@@ -153,6 +153,7 @@ static void tcpdev_accept(void)
     accept_ret.type = TDT_ACCEPT;
     accept_ret.ret_value = 0;
     accept_ret.sock = sock;		/* report back listen socket*/
+    //accept_ret.sock = db->newsock;	/* report back new socket*/
     accept_ret.addr_ip = cb->remaddr;
     accept_ret.addr_port = htons(cb->remport);
     write(tcpdevfd, &accept_ret, sizeof(accept_ret));
@@ -183,6 +184,7 @@ void tcpdev_checkaccept(struct tcpcb_s *cb)
     accept_ret.type = TDT_ACCEPT;
     accept_ret.ret_value = 0;
     accept_ret.sock = listencb->sock;	/* report back listen socket*/
+    //accept_ret.sock = listencb->newsock;	/* report back new socket*/
     accept_ret.addr_ip = cb->remaddr;
     accept_ret.addr_port = htons(cb->remport);
 
