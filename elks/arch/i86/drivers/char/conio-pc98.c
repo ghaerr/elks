@@ -16,6 +16,16 @@ void bell(void)
 {
 }
 
+int conio_poll(void)
+{
+    int cdata;
+    int adata;
+
+    cdata = early_getchar();
+    adata = early_getarrow();
+    return (adata & 0xFF00) | (cdata & 0x00FF);
+}
+
 void conio_putc(byte_t c)
 {
     int tvram_x;

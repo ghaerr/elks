@@ -7,7 +7,7 @@
 
 	.global early_putchar
 	.global early_getchar
-	.global conio_poll
+	.global early_getarrow
 	.global early_getinit
 	.global read_tvram_x
 	.global write_tvram_x
@@ -143,7 +143,6 @@ clear_tvram:
 	ret
 
 early_getchar:
-conio_poll:
 	push %bx
 	mov $5,%ah
 	int $0x18
@@ -152,6 +151,11 @@ conio_poll:
 	xor %ax,%ax
 get_end:
 	pop %bx
+	ret
+
+early_getarrow:
+	mov $0x0407,%ax
+	int $0x18
 	ret
 
 early_getinit:
