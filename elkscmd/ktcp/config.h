@@ -13,7 +13,7 @@
 #define DEBUG_TUNE	1	/* tuning options*/
 #define DEBUG_RETRANS	0	/* TCP retransmissions*/
 #define DEBUG_WINDOW	0	/* TCP window size*/
-#define DEBUG_ACCEPT	0	/* TCP accept*/
+#define DEBUG_ACCEPT	1	/* TCP accept*/
 #define DEBUG_CLOSE	0	/* TCP close ops*/
 #define DEBUG_IP	0
 #define DEBUG_ARP	0

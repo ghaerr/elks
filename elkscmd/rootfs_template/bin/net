@@ -64,14 +64,8 @@ start_network()
 		do
 			if test -f /bin/$daemon
 			then
-				if test "$daemon" = "ftpd"
-				then
-					echo -n "ftpd $ftpd "
-					$daemon $ftpd || true
-				else
-					echo -n "$daemon "
-					$daemon || true
-				fi
+				echo -n "$daemon "
+				$daemon || true
 			fi
 		done
 		echo ""

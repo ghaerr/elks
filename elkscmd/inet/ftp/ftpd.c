@@ -563,7 +563,6 @@ void usage() {
 int main(int argc, char **argv) {
 	int listenfd, connfd, ret, port = FTP_PORT;
 	struct sockaddr_in servaddr;
-	pid_t pid;
 	char *cp;
 
 	if (argc > 2) {	/* FIXME - improve parameter checking */
@@ -639,14 +638,20 @@ int main(int argc, char **argv) {
 	struct sockaddr_in client;
 	ret = sizeof(client);
 	while (1) {
+	    static int num = 0;
+		printf("FTPD accept #%d\n", ++num);
 		if ((connfd = accept(listenfd, (struct sockaddr *)&client, (unsigned int *)&ret)) < 0) {
 			perror("Accept error:");
 			break;
 		}
+		printf("FTPD accept #%d returns %d\n", num, connfd);
 		waitpid(-1, NULL, WNOHANG);		/* reap previous accepts*/
 		if (debug) printf("Connnect from new Client.\n");
-		/* child process */
-		if((pid = fork()) == 0) {
+		if ((ret = fork()) == -1)       /* handle new accept*/
+			fprintf(stderr, "ftpd: No processes\n");
+		else if (ret != 0)
+			close(connfd);
+		else {							/* child process */
 			close(listenfd);
 
 			int datafd = -1, code, quit = FALSE;
@@ -849,7 +854,5 @@ int main(int argc, char **argv) {
     			_exit(1);
 		}
 		/* End child process */
-
-		close(connfd);
 	}
 }

@@ -220,7 +220,7 @@ static int inet_accept(register struct socket *sock, struct socket *newsock, int
     register struct tdb_accept *cmd;
     int ret;
 
-    debug_net("INET(%d) accept wait sock %x newsock %x\n", current->pid, sock, newsock);
+    debug_tune("INET(%d) accept wait sock %x newsock %x\n", current->pid, sock, newsock);
     cmd = (struct tdb_accept *)get_tdout_buf();
     cmd->cmd = TDC_ACCEPT;
     cmd->sock = sock;
@@ -240,7 +240,7 @@ static int inet_accept(register struct socket *sock, struct socket *newsock, int
 	}
     }
 
-    debug_net("INET(%d) accepted sock %x newsock %x\n", current->pid, sock, newsock);
+    debug_tune("INET(%d) accepted sock %x newsock %x\n", current->pid, sock, newsock);
     newsock->remaddr = ((struct tdb_accept_ret *)tdin_buf)->addr_ip;
     newsock->remport = ((struct tdb_accept_ret *)tdin_buf)->addr_port;
     ret = ((struct tdb_accept_ret *)tdin_buf)->ret_value;
