@@ -21,7 +21,7 @@
 #include	<time.h>
 #include	<sys/stat.h>
 #include	<sys/types.h>
-#include 	<sys/wait.h>
+#include	<sys/wait.h>
 #include 	<dirent.h>
 
 #define		BLOAT
@@ -644,8 +644,7 @@ int main(int argc, char **argv) {
 			break;
 		}
 		waitpid(-1, NULL, WNOHANG);		/* reap previous accepts*/
-		strncpy(real_ip, in_ntoa(client.sin_addr.s_addr), 20); // Save for QEMU hack
-		if (debug) printf("New connection from %s (0x%lx)\n", real_ip, client.sin_addr.s_addr);
+		if (debug) printf("Connnect from new Client.\n");
 		/* child process */
 		if((pid = fork()) == 0) {
 			close(listenfd);
@@ -657,6 +656,7 @@ int main(int argc, char **argv) {
 			char *str;
 			char *complete = "226 Transfer Complete.\r\n";
 
+			strncpy(real_ip, in_ntoa(client.sin_addr.s_addr), 20); // Save for QEMU hack
 			if (debug) printf("Child running - cmd chan is %d.\n", connfd);
 			send_reply(connfd, 220, "Welcome - ELKS minimal FTP server speaking");
 
