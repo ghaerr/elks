@@ -1,7 +1,7 @@
 ## boot options max size 511 bytes
 #console=ttyS0 debug net=eth 3 # serial console, multiuser, networking
 #TZ=MDT7		# timezone
-#ftpd=-q net=eth	# ftpd on qemu
+#QEMU=1	net=eth		# ftpd on QEMU
 #HOSTNAME=elks1	 	# set network IP from /etc/hosts
 #GATEWAY=10.0.2.2
 #NETMASK=255.255.255.0
