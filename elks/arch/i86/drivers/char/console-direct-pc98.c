@@ -31,6 +31,8 @@
 #define A_REVERSE	0x70
 #define A_BLANK		0x00
 
+#define A98_DEFAULT	0xE1
+
 /* character definitions*/
 #define BS		'\b'
 #define NL		'\n'
@@ -98,15 +100,14 @@ static void PositionCursor(register Console * C)
 
 static word_t conv_pcattr(word_t attr)
 {
-    static unsigned char grb[16] = {0x00, 0x20, 0x80, 0xA0, 0x40, 0x60, 0xC0, 0xE0,
-                                    0x00, 0x20, 0x80, 0xA0, 0x40, 0x60, 0xC0, 0xE0};
+    static unsigned char grb[8] = {0x00, 0x20, 0x80, 0xA0, 0x40, 0x60, 0xC0, 0xE0};
 
     word_t attr98;
     unsigned char fg_grb;
     unsigned char bg_grb;
 
-    fg_grb = grb[attr & 0xF];
-    bg_grb = grb[(attr & 0xF0) >> 4];
+    fg_grb = grb[attr & 0x7];
+    bg_grb = grb[(attr & 0x70) >> 4];
 
     if (fg_grb == bg_grb)
 	attr98 = fg_grb;        /* No display */
@@ -121,22 +122,27 @@ static word_t conv_pcattr(word_t attr)
 static void VideoWrite(register Console * C, char c)
 {
     word_t addr;
+    word_t attr;
 
     addr = (C->cx + C->cy * Width) << 1;
+    attr = (C->attr == A_DEFAULT) ? A98_DEFAULT : conv_pcattr(C->attr);
 
-    pokew(addr, (seg_t) AttributeSeg, conv_pcattr(C->attr));
+    pokew(addr, (seg_t) AttributeSeg, attr);
     pokew(addr, (seg_t) C->vseg, (word_t)c);
 }
 
 static void ClearRange(register Console * C, int x, int y, int xx, int yy)
 {
     register __u16 *vp;
+    word_t attr;
+
+    attr = (C->attr == A_DEFAULT) ? A98_DEFAULT : conv_pcattr(C->attr);
 
     xx = xx - x + 1;
     vp = (__u16 *)((__u16)(x + y * Width) << 1);
     do {
 	for (x = 0; x < xx; x++) {
-	    pokew((word_t) vp, AttributeSeg, conv_pcattr(C->attr));
+	    pokew((word_t) vp, AttributeSeg, attr);
 	    pokew((word_t) (vp++), (seg_t) C->vseg, (word_t) ' ');
 	}
 	vp += (Width - xx);
