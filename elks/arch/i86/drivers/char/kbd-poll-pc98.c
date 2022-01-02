@@ -36,6 +36,14 @@ static void kbd_timer(int data)
 	        dav = 'C';	/* right*/
 	    else if (dav & 0x8)
 	        dav = 'D';	/* left*/
+	    else if (dav & 0x80) {		/* Roll Down for PC-98 */
+	        dav = '5';	/* pgup*/
+	        extra = '~';
+	    }
+	    else if (dav & 0x40) {		/* Roll Up for PC-98 */
+	        dav = '6';	/* pgdn*/
+	        extra = '~';
+	    }
 	    else
 	        dav = 0;
 
