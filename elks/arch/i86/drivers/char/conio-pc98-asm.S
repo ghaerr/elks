@@ -8,6 +8,7 @@
 	.global early_putchar
 	.global bios_getchar
 	.global bios_getarrow
+	.global bios_getroll
 	.global bios_getinit
 	.global read_tvram_x
 	.global write_tvram_x
@@ -155,6 +156,11 @@ get_end:
 
 bios_getarrow:
 	mov $0x0407,%ax
+	int $0x18
+	ret
+
+bios_getroll:
+	mov $0x0406,%ax
 	int $0x18
 	ret
 

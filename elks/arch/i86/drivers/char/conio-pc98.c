@@ -20,10 +20,12 @@ int conio_poll(void)
 {
     int cdata;
     int adata;
+    int rdata;
 
     cdata = bios_getchar();
     adata = bios_getarrow();
-    return (adata & 0xFF00) | (cdata & 0x00FF);
+    rdata = bios_getroll();
+    return (rdata & 0xC000) | (adata & 0x3F00) | (cdata & 0x00FF);
 }
 
 void conio_putc(byte_t c)
