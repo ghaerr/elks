@@ -8,7 +8,7 @@
 
 void conio_init()
 {
-    early_getinit();
+    bios_getinit();
     cursor_on();
 }
 
@@ -21,8 +21,8 @@ int conio_poll(void)
     int cdata;
     int adata;
 
-    cdata = early_getchar();
-    adata = early_getarrow();
+    cdata = bios_getchar();
+    adata = bios_getarrow();
     return (adata & 0xFF00) | (cdata & 0x00FF);
 }
 
