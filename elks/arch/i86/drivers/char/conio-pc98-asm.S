@@ -6,9 +6,10 @@
 	.text
 
 	.global early_putchar
-	.global early_getchar
-	.global conio_poll
-	.global early_getinit
+	.global bios_getchar
+	.global bios_getarrow
+	.global bios_getroll
+	.global bios_getinit
 	.global read_tvram_x
 	.global write_tvram_x
 	.global clear_tvram
@@ -142,8 +143,7 @@ clear_tvram:
 	pop %bx
 	ret
 
-early_getchar:
-conio_poll:
+bios_getchar:
 	push %bx
 	mov $5,%ah
 	int $0x18
@@ -154,7 +154,17 @@ get_end:
 	pop %bx
 	ret
 
-early_getinit:
+bios_getarrow:
+	mov $0x0407,%ax
+	int $0x18
+	ret
+
+bios_getroll:
+	mov $0x0406,%ax
+	int $0x18
+	ret
+
+bios_getinit:
 	mov $3,%ah
 	int $0x18
 	ret
