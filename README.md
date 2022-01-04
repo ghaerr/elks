@@ -7,27 +7,26 @@ https://github.com/jbruchon/elks
 This is the fork repository for porting ELKS to PC-9801/PC-9821 architecture.  
   
 PC-9801/PC-9821 are Japanese computers in 80's and 90's.  
-
-Currently it is needed to adding definition of CONFIG_ARCH_PC98 manually.  
-CONFIG_IMG_FD1232 is also needed to be defined to use 1232KiB, 1024Bytes per sector.   
-(Please see sample_pc98/autoconf_pc98.h and config_pc98)  
+  
+CONFIG_ARCH_PC98 is needed to be defined.  
+CONFIG_IMG_FD1232 is also needed to be defined to use 1232KiB, 1024Bytes per sector.  
   
 Only CONFIG_IMG_FD1232 and CONFIG_IMG_FD1440 with FAT Filesystem are planned to support.  
   
 Progress (with Neko Project 21/W emulator and PC-9801RX21, PC-9801UV21)  
 Boot : can call start_kernel  
 Kernel : modifying irq, timer  
-driver : modifying bios FD read, console-headless, kbd-poll  
+driver : modifying bios FD read, console-headless, console-direct, kbd-poll  
 init : can login with root  
-command : cat,clear,clock,date,ed,ls,ps,pwd can be used  
+command : cat,clear,clock,date,ed,kilo,ls,more,ps,pwd,vi can be used  
 
 ## How to build (for now)  
 ./build.sh to make the environment.  
-Overwrite the .config with the content of sample_pc98/config_pc98.  
-Overwrite the include/autoconf.h with the content of sample_pc98/autoconf_pc98.h.  
-(The time stamp of the autoconf.h should be newer than .config)  
-./make clean  
-./make  
+Overwrite the .config with the content of pc98.config.  
+make menuconfig.  
+(Exit and save configuration to create include/autoconf.h)  
+make clean  
+make  
 FD image will be created under image/ 
   
 ## Screenshots
