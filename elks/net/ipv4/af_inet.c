@@ -220,7 +220,7 @@ static int inet_accept(register struct socket *sock, struct socket *newsock, int
     register struct tdb_accept *cmd;
     int ret;
 
-    debug_net("INET(%d) accept wait sock %x newsock %x\n", current->pid, sock, newsock);
+    debug_tune("INET(%d) accept wait sock %x newsock %x\n", current->pid, sock, newsock);
     cmd = (struct tdb_accept *)get_tdout_buf();
     cmd->cmd = TDC_ACCEPT;
     cmd->sock = sock;
@@ -230,17 +230,18 @@ static int inet_accept(register struct socket *sock, struct socket *newsock, int
     tcpdev_inetwrite(cmd, sizeof(struct tdb_accept));
 
     /* Sleep until tcpdev has news */
-    while (bufin_sem == 0) {
-        //sock->flags |= SF_WAITDATA;
+    do {	/* always sleep once to prevent accept race condition #1082 */
+
         interruptible_sleep_on(sock->wait);
-        //sock->flags &= ~SF_WAITDATA;
+        //interruptible_sleep_on(newsock->wait);
+
         if (current->signal) {
 	    debug_net("INET(%d) accept RESTARTSYS bufin %d\n", current->pid, bufin_sem);
             return -ERESTARTSYS;
 	}
-    }
+    } while (bufin_sem == 0);
 
-    debug_net("INET(%d) accepted sock %x newsock %x\n", current->pid, sock, newsock);
+    debug_tune("INET(%d) accepted sock %x newsock %x\n", current->pid, sock, newsock);
     newsock->remaddr = ((struct tdb_accept_ret *)tdin_buf)->addr_ip;
     newsock->remport = ((struct tdb_accept_ret *)tdin_buf)->addr_port;
     ret = ((struct tdb_accept_ret *)tdin_buf)->ret_value;
