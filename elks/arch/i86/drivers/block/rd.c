@@ -20,6 +20,7 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/fs.h>
 #include <linuxmt/debug.h>
 
 #define MAJOR_NR RAM_MAJOR
@@ -30,7 +31,6 @@
 #define MAX_SEGMENTS	8	/* max # seperate allocation segments*/
 #define ALLOC_SIZE	4096	/* allocation size in paragaphs*/
 #define PARA		16	/* size of paragraph*/
-#define SECTOR_SIZE	512
 
 typedef __u16 rd_sector_t;	/* sector number*/
 

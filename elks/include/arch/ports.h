@@ -28,28 +28,43 @@
  *   Change I/O port and driver IRQ number to match your hardware
  */
 
-#ifdef CONFIG_CHAR_DEV_RS
-//#define CONFIG_FAST_IRQ4             /* COM1 very fast serial driver, no ISIG handling*/
-//#define CONFIG_FAST_IRQ3             /* COM2 very fast serial driver, no ISIG handling*/
-#endif
-
+#ifdef CONFIG_ARCH_IBMPC
 /* timer, timer-8254.c*/
-#ifdef CONFIG_ARCH_PC98
-#define TIMER_CMDS_PORT 0x77		/* command port */
-#define TIMER_DATA_PORT 0x71		/* data port    */
-#else
 #define TIMER_CMDS_PORT 0x43		/* command port */
 #define TIMER_DATA_PORT 0x40		/* data port    */
-#endif
 #define TIMER_IRQ	0		/* can't change*/
 
 /* bell, bell-8254.c*/
-#ifdef CONFIG_ARCH_PC98
-#define TIMER2_PORT	0x75		/* timer 2 data port for speaker frequency*/
-#else
 #define TIMER2_PORT	0x42		/* timer 2 data port for speaker frequency*/
-#endif
 #define SPEAKER_PORT	0x61
+
+/* 8259 interrupt controller, irq-8259.c*/
+#define PIC1_CMD   0x20			/* master */
+#define PIC1_DATA  0x21
+#define PIC2_CMD   0xA0			/* slave */
+#define PIC2_DATA  0xA1
+#endif
+
+#ifdef CONFIG_ARCH_8018X
+#define TIMER_IRQ	0		/* logical IRQ number, NOT related to the actual IRQ vector! */
+#endif
+
+#ifdef CONFIG_ARCH_PC98
+/* timer, timer-8254.c*/
+#define TIMER_CMDS_PORT 0x77		/* command port */
+#define TIMER_DATA_PORT 0x71		/* data port    */
+#define TIMER_IRQ	0		/* can't change*/
+
+/* bell, bell-8254.c*/
+#define TIMER2_PORT	0x75		/* timer 2 data port for speaker frequency*/
+#define SPEAKER_PORT	0x61
+
+/* 8259 interrupt controller, irq-8259.c*/
+#define PIC1_CMD   0x00			/* master */
+#define PIC1_DATA  0x02
+#define PIC2_CMD   0x08			/* slave */
+#define PIC2_DATA  0x0A
+#endif
 
 /* keyboard, kbd-scancode.c*/
 #define KBD_IO		0x60
@@ -57,6 +72,11 @@
 #define KBD_IRQ		1
 
 /* serial, serial.c*/
+#ifdef CONFIG_CHAR_DEV_RS
+//#define CONFIG_FAST_IRQ4             /* COM1 very fast serial driver, no ISIG handling*/
+//#define CONFIG_FAST_IRQ3             /* COM2 very fast serial driver, no ISIG handling*/
+#endif
+
 #define COM1_PORT	0x3f8
 #define COM1_IRQ	4		/* unregistered unless COM1_PORT found*/
 

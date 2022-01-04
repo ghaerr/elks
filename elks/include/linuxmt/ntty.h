@@ -109,6 +109,10 @@ extern void tty_freeq(struct tty *tty);
 
 extern void set_console(dev_t dev);
 
+#ifdef CONFIG_CONSOLE_DIRECT
+extern unsigned VideoSeg;
+#endif
+
 /* tty.flags */
 #define TTY_STOPPED 	1
 #define TTY_OPEN	2

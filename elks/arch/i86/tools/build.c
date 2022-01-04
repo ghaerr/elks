@@ -35,8 +35,9 @@
 #include <fcntl.h>
 #include <stdint.h>
 
-#include <linuxmt/errno.h>
 #include <linuxmt/config.h>
+#include <linuxmt/errno.h>
+#include <linuxmt/boot.h>
 
 #include "a.out.h"
 
@@ -170,8 +171,8 @@ int main(int argc, char **argv)
     if ((*(unsigned short *) (buf + 510)) !=
 	(unsigned short) intel_short(0xAA55))
 	    die("Boot block hasn't got boot flag (0xAA55)");
-    buf[508] = (char) minor_root;
-    buf[509] = (char) major_root;
+    buf[root_dev] = (char) minor_root;		/* WRITE root_dev*/
+    buf[root_dev+1] = (char) major_root;
     i = write(1, buf, 512);
     if (i != 512)
 	die("Write call failed");
@@ -285,12 +286,12 @@ int main(int argc, char **argv)
 	sz -= l;
     }
     close(id);
-    if (lseek(1, 497, 0) == 497) {
-	if (write(1, &setup_sectors, 1) != 1)
+    if (lseek(1, setup_sects, 0) == setup_sects) {
+	if (write(1, &setup_sectors, 1) != 1)		/* WRITE setup_sectors*/
 	    die("Write of setup sectors failed");
     }
-    if (lseek(1, 500, 0) == 500) {
-	buf[0] = (sys_size & 0xff);
+    if (lseek(1, syssize, 0) == syssize) {
+	buf[0] = (sys_size & 0xff);			/* WRITE sys_size*/
 	buf[1] = ((sys_size >> 8) & 0xff);
 	if (write(1, buf, 2) != 2)
 	    die("Write failed");

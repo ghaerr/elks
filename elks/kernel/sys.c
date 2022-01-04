@@ -23,8 +23,6 @@
 
 static int C_A_D = 1;
 
-extern void hard_reset_now(void);
-extern void apm_shutdown_now(void);
 extern int sys_kill(sig_t,pid_t);
 
 /*
@@ -52,16 +50,17 @@ int sys_reboot(unsigned int magic, unsigned int magic_too, int flag)
 		return 0;
 	    case 0x0123:		/* reboot*/
 		hard_reset_now();
+		printk("Reboot failed\n");
+		/* fall through*/
 	    case 0x6789:		/* shutdown*/
 		sys_kill(1, SIGKILL);
 		sys_kill(-1, SIGKILL);
 		printk("System halted\n");
 		do_exit(0);
-#ifdef CONFIG_APM
+		/* no return*/
 	    case 0xDEAD:		/* poweroff*/
 		apm_shutdown_now();
 		printk("APM shutdown failed\n");
-#endif
 	}
     }
 

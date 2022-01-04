@@ -27,32 +27,26 @@ static void kbd_timer(int data)
 	    Console_conin(dav & 0x7F);
 	else {
 	    dav = (dav >> 8) & 0xFF;
-#ifndef CONFIG_CONSOLE_HEADLESS
-	    if (dav >= 0x3B && dav <= 0x3D) {	/* temp console switch on F1-F3*/
-		Console_set_vc(dav - 0x3B);
-		dav = 0;
+
+	    if (dav & 0x4)
+	        dav = 'A';	/* up*/
+	    else if (dav & 0x20)
+	        dav = 'B';	/* down*/
+	    else if (dav & 0x10)
+	        dav = 'C';	/* right*/
+	    else if (dav & 0x8)
+	        dav = 'D';	/* left*/
+	    else if (dav & 0x80) {		/* Roll Down for PC-98 */
+	        dav = '5';	/* pgup*/
+	        extra = '~';
 	    }
-	    else if ((dav >= 0x68) && (dav < 0x6B)) {	/* Change VC */
-		Console_set_vc((unsigned)(dav - 0x68));
-		dav = 0;
+	    else if (dav & 0x40) {		/* Roll Up for PC-98 */
+	        dav = '6';	/* pgdn*/
+	        extra = '~';
 	    }
 	    else
-#endif
-	    if (dav >= 0x3B && dav < 0x45)	/* Function keys */
-		dav = dav - 0x3B + 'a';
-	    else {
-		switch(dav) {
-		case 0x48: dav = 'A'; break;	/* up*/
-		case 0x50: dav = 'B'; break;	/* down*/
-		case 0x4d: dav = 'C'; break;	/* right*/
-		case 0x4b: dav = 'D'; break;	/* left*/
-		case 0x47: dav = 'H'; break;	/* home*/
-		case 0x4f: dav = 'F'; break;	/* end*/
-		case 0x49: dav = '5'; extra = '~'; break; /* pgup*/
-		case 0x51: dav = '6'; extra = '~'; break; /* pgdn*/
-		default:   dav = 0;
-		}
-	    }
+	        dav = 0;
+
 	    if (dav) {
 		Console_conin(033);
 #ifdef CONFIG_EMUL_ANSI

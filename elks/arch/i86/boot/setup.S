@@ -62,23 +62,22 @@
 !	...
 !	0x50:	zero terminated string containing the cpuid, 13 bytes
 !	...
-!	0x1e2:	part_offset, 4 bytes. Sector offset of booted MBR partition
-!	0x1e6:	elks_magic, 2 bytes
-!	0x1ef:	SETUPSEG
-!	0x1f1:	SETUPSECS, 1 byte
-!	0x1f2:	ROOTFLAGS, 2 bytes
-!	0x1f4:	SYSSIZE, 2 bytes
-!	0x1f6:	ELKSFLAGS, 2 bytes
-!	0x1f8:	RAMDISK
-!	0x1fa:	SVGA_MODE
-!	0x1fc:	ROOT_DEV, 2 bytes. Either BIOS boot device or actual kdev_t ROOT_DEV
-!	0x1fe:	0x55 = boot_flag, Low part
-!	0x1ff:	0xAA = boot_flag, High part
+!	0x1e2:	part_offset	long Sector offset of booted MBR partition
+!	0x1e6:	elks_magic	long "ELKS"
+!	0x1ea-0x1ee:		5 bytes UNUSED
+!	0x1ef:	SETUPSEG	word UNUSED
+!	0x1f1:	setup_sects	byte in 512-byte sectors, written by build tool
+!	0x1f2:	ROOTFLAGS	word UNUSED
+!	0x1f4:	syssize		word in paragraphs, written by build tool
+!	0x1f6:	elks_flags	word EF_xxx
+!	0x1f8:	RAMDISK		word UNUSED
+!	0x1fa:	SVGA_MODE	word UNUSED
+!	0x1fc:	root_dev	word Either BIOS boot device or actual kdev_t ROOT_DEV
+!	0x1fe:	boot_flag	word = 0xAA55
 !
 ! NOTE! These had better be the same as in bootsect.s!
 */
 
-#define __ASSEMBLY__
 #include <linuxmt/config.h>
 #include <linuxmt/boot.h>
 
@@ -348,14 +347,8 @@ size_error:
 	mov $INITSEG,%ax
 	mov %ax,%ds
 
-// Get the memory size
-// FIXME move BIOS INT 12h to arch-specific section
-
-#ifdef CONFIG_ARCH_PC98
-	movw $0x280,%ax  // For 640KB memory
-#else
-	int $0x12   // AX in KB
-#endif
+// Get the memory size in Kbytes in AX
+	call arch_get_mem
 	mov $6,%cl  // to paragraphs
 	shl %cl,%ax
 
@@ -365,7 +358,7 @@ size_error:
 	and $0xF000,%ax
 	mov %ax,%es
 
-	mov 0x1F1,%al  // setup sector count
+	mov setup_sects,%al  // setup sector count
 	cbw
 	mov $8,%cl     // to words
 	shl %cl,%ax
@@ -733,20 +726,21 @@ hex4sp: call hex4
 	ret
 
 hello_mess:
-#ifdef CONFIG_ARCH_PC98
-	.ascii "ELKS Setup "
-#else
 	.ascii "\r\nELKS Setup "
-#endif
 	.byte 0
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Architecture specific routines for IBM PC
-//	Entry point arch_set_initseg is specific for various platform setup
-//	of SETUP_xxx variables (see config.h)
+//	Entry points specific for platform setup of SETUP_xxx variables (see config.h)
+//		arch_set_initseg
+//		arch_get_mem
 
-//#ifdef CONFIG_ARCH_IBMPC
-#if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_PC98)
+#ifdef CONFIG_ARCH_IBMPC
+
+// Return total memory in Kbytes
+arch_get_mem:
+	int $0x12   // AX in KB
+	ret
 
 // Set INITSEG values for IBM PC
 // Set keyboard repeat rate using INT 16h
@@ -759,39 +753,6 @@ hello_mess:
 
 arch_set_initseg:
 
-#ifdef CONFIG_ARCH_PC98
-	movb $0,15		// no VGA in system
-	mov $25,%al		// height of display in rows
-novga:
-	mov %al,14
-
-	movb $0,4		// display page
-	movw $0x5003,6	// video mode 03h, window width 80
-
-	call getcpu
-
-//	mov $0x30,%si
-//	call puts
-//	mov $'\n',%ax
-//	call putc
-
-	push %es
-	mov $INITSEG,%ax
-	mov %ax,%es
-	mov $24,%cx
-	mov $0x90,%di
-	xor %ax,%ax
-	cld
-	rep
-	stosw
-	pop %es
-
-	mov $INITSEG,%ax
-	mov %ax,%ds
-
-	movw $0x280,0x2a  // For 640KB memory
-	ret
-#else
 #ifdef CONFIG_HW_KEYBOARD_BIOS
 	mov	$0x0305,%ax	// set the keyboard repeat rate to the max
 	xor	%bx,%bx
@@ -853,58 +814,8 @@ novga:	mov	%al,14		// CGA 25 rows
 	int	$0x12		// determine the size of the basememory
 	mov	%ax,0x2a
 	ret
-#endif
 
 // Write AL to console, save all other registers
-#ifdef CONFIG_ARCH_PC98
-putc:
-	push %ds
-	push %bx
-	push %di
-	push %es
-	push %dx
-	push %cs
-	pop %ds
-	cmp $'\r',%ax
-	jz putesc_r
-	cmp $'\n',%ax
-	jz putesc_n
-	xor %ah,%ah
-	mov $tvram_x,%bx
-	mov (%bx),%di
-	mov $0xa000,%dx
-	mov %dx,%es
-	mov %ax,%es:(%di)
-	inc %di
-	inc %di
-	mov %di,(%bx)
-put_end:
-	pop %dx
-	pop %es
-	pop %di
-	pop %bx
-	pop %ds
-	ret
-putesc_r:
-	mov $tvram_x,%bx
-	mov (%bx),%ax
-	mov $160,%dl
-	div %dl
-	mul %dl
-	mov %ax,(%bx)
-	jmp put_end
-putesc_n:
-	mov $tvram_x,%bx
-	mov (%bx),%ax
-	mov $160,%dl
-	div %dl
-	inc %al
-	mul %dl
-	mov %ax,(%bx)
-	jmp put_end
-tvram_x:
-	.word 480
-#else
 putc:	push %bx
 	push %cx
 	push %dx
@@ -915,7 +826,6 @@ putc:	push %bx
 	pop %cx
 	pop %bx
 	ret
-#endif
 
 /*
 ! TODO move to setup-cpuid.S or remove entirely (inaccurate/outdated)
@@ -1127,21 +1037,22 @@ v_id3:	.byte 0,0,0,0
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Architecture specific routines for 8018X
-//	Entry point arch_set_initseg is specific for various platform setup
-//	of SETUP_xxx variables (see config.h)
+//	Entry points specific for platform setup of SETUP_xxx variables (see config.h)
+//		arch_set_initseg
+//		arch_get_mem
 
 #ifdef CONFIG_ARCH_8018X
 
+// Return total memory in Kbytes
+arch_get_mem:
+	mov $SETUP_MEM_KBYTES,%ax
+	ret
+
 // Set INITSEG values for 8081X architecture
 // currently hard-coded in config.h
-
 arch_set_initseg:
-
 	mov	$INITSEG,%ax
 	mov	%ax,%ds
-	// TODO: get size of memory in 1K bytes in AX
-	// change SETUP_MEM_KBYTES define in config.h
-	//mov	%ax,0x2a
 	ret
 
 // Write AL to console, save all other registers
@@ -1155,6 +1066,92 @@ putc:	push %bx
 	ret
 
 #endif /* CONFIG_ARCH_8018X*/
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Architecture specific routines for NEC PC98
+//	Entry points specific for platform setup of SETUP_xxx variables (see config.h)
+//		arch_set_initseg
+//		arch_get_mem
+
+#ifdef CONFIG_ARCH_PC98
+
+// Return total memory in Kbytes
+arch_get_mem:
+	mov $SETUP_MEM_KBYTES,%ax
+	ret
+
+// Set INITSEG values for PC98 architecture
+// currently hard-coded in config.h
+arch_set_initseg:
+
+// mov $0x30,%si
+// call puts
+// mov $'\n',%ax
+// call putc
+
+   push %es
+   mov $INITSEG,%ax
+   mov %ax,%es
+   mov $24,%cx
+   mov $0x90,%di
+   xor %ax,%ax
+   cld
+   rep
+   stosw
+   pop %es
+
+   mov $INITSEG,%ax
+   mov %ax,%ds
+   ret
+
+putc:
+   push %ds
+   push %bx
+   push %di
+   push %es
+   push %dx
+   push %cs
+   pop %ds
+   cmp $'\r',%al
+   jz putesc_r
+   cmp $'\n',%al
+   jz putesc_n
+   xor %ah,%ah
+   mov $tvram_x,%bx
+   mov (%bx),%di
+   mov $0xa000,%dx
+   mov %dx,%es
+   mov %ax,%es:(%di)
+   inc %di
+   inc %di
+   mov %di,(%bx)
+put_end:
+   pop %dx
+   pop %es
+   pop %di
+   pop %bx
+   pop %ds
+   ret
+putesc_r:
+   mov $tvram_x,%bx
+   mov (%bx),%ax
+   mov $160,%dl
+   div %dl
+   mul %dl
+   mov %ax,(%bx)
+   jmp put_end
+putesc_n:
+   mov $tvram_x,%bx
+   mov (%bx),%ax
+   mov $160,%dl
+   div %dl
+   inc %al
+   mul %dl
+   mov %ax,(%bx)
+   jmp put_end
+tvram_x:
+   .word 160
+#endif /* CONFIG_ARCH_PC98 */
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

@@ -3,50 +3,20 @@
 comment 'Just accept the defaults unless you know what you are doing'
 
 mainmenu_option next_comment
-	comment 'Hardware'
-
 	comment 'System'
 
 	choice 'Select system' \
 		"IBM-PC CONFIG_ARCH_IBMPC \
-		 8018X	CONFIG_ARCH_8018X" IBM-PC
+		 8018X	CONFIG_ARCH_8018X \
+		 PC-98	CONFIG_ARCH_PC98" IBM-PC
+
+	comment 'Platform'
+
+	define_bool CONFIG_CPU_8086 y
 
 	if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
 
-		choice 'Select IBM-PC variant' \
-			"Auto  CONFIG_PC_AUTO \
-			 PC-XT CONFIG_PC_XT   \
-			 PC-AT CONFIG_PC_AT   \
-			 PS-2  CONFIG_PC_MCA" Auto
-
-		choice 'Model of computer' \
-			"TrueClone CONFIG_IBMPC_CLONE \
-			 Compaq    CONFIG_IBMPC_COMPAQ" TrueClone
-
-		if [ "$CONFIG_IBMPC_COMPAQ" = "y" ]; then
-			bool 'Switch Compaq DeskPro to fast mode' CONFIG_COMPAQ_FAST n
-		fi
-
-		comment 'Platform'
-
-		if [ "$CONFIG_PC_XT" == "y" ]; then
-
-			comment '(IBM PC/XT has 8088)'
-			define_bool CONFIG_CPU_8086 y
-
-		elif [ "$CONFIG_PC_AT" == "y" ]; then
-
-			comment '(IBM PC/AT has 80286)'
-			define_bool CONFIG_CPU_80286 y
-
-		else
-
-			choice 'Processor' \
-				"8086   CONFIG_CPU_8086   \
-				 80186  CONFIG_CPU_80186  \
-				 80286  CONFIG_CPU_80286" 8086
-
-		fi
+		bool 'Switch Compaq DeskPro to fast mode' CONFIG_COMPAQ_FAST n
 
 		comment 'Devices'
 
@@ -66,9 +36,13 @@ mainmenu_option next_comment
 
 	elif [ "$CONFIG_ARCH_8018X" = "y" ]; then
 
-		comment 'Platform'
+		comment 'Devices'
+
+	elif [ "$CONFIG_ARCH_PC98" = "y" ]; then
 
 		comment 'Devices'
+
+		define_bool CONFIG_APM n
 
 	fi
 

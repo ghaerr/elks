@@ -8,6 +8,10 @@
  * Rewritten by Greg Haerr <greg@censoft.com> July 1999
  * added reverse video, cleaned up code, reduced size
  * added enough ansi escape sequences for visual editing
+ *
+ * Modified for PC-98
+ * T. Yamada 2021
+ *
  */
 
 #include <linuxmt/types.h>
@@ -26,6 +30,8 @@
 #define A_BLINK 	0x80
 #define A_REVERSE	0x70
 #define A_BLANK		0x00
+
+#define A98_DEFAULT	0xE1
 
 /* character definitions*/
 #define BS		'\b'
@@ -61,13 +67,14 @@ struct console {
 static struct wait_queue glock_wait;
 static Console Con[MAX_CONSOLES], *Visible;
 static Console *glock;		/* Which console owns the graphics hardware */
-static void *CCBase;
+//static void *CCBase;
 static int Width, MaxCol, Height, MaxRow;
 static unsigned short int NumConsoles = MAX_CONSOLES;
 
 int Current_VCminor = 0;
 int kraw = 0;
-unsigned VideoSeg = 0xB800;
+unsigned VideoSeg = 0xA000;
+unsigned AttributeSeg = 0xA200;
 
 #ifdef CONFIG_EMUL_ANSI
 #define TERM_TYPE " emulating ANSI "
@@ -81,41 +88,63 @@ static void std_char(register Console *, char);
 
 static void SetDisplayPage(register Console * C)
 {
-    register char *CCBasep;
-
-    CCBasep = (char *) CCBase;
-    outw((unsigned short int) ((C->basepage & 0xff00) | 0x0c), CCBasep);
-    outw((unsigned short int) ((C->basepage << 8) | 0x0d), CCBasep);
 }
 
 static void PositionCursor(register Console * C)
 {
-    register char *CCBasep = (char *) CCBase;
     int Pos;
 
     Pos = C->cx + Width * C->cy + C->basepage;
-    outb(14, CCBasep);
-    outb((unsigned char) ((Pos >> 8) & 0xFF), CCBasep + 1);
-    outb(15, CCBasep);
-    outb((unsigned char) (Pos & 0xFF), CCBasep + 1);
+    cursor_set(Pos * 2);
+}
+
+static word_t conv_pcattr(word_t attr)
+{
+    static unsigned char grb[8] = {0x00, 0x20, 0x80, 0xA0, 0x40, 0x60, 0xC0, 0xE0};
+
+    word_t attr98;
+    unsigned char fg_grb;
+    unsigned char bg_grb;
+
+    fg_grb = grb[attr & 0x7];
+    bg_grb = grb[(attr & 0x70) >> 4];
+
+    if (fg_grb == bg_grb)
+	attr98 = fg_grb;        /* No display */
+    else if (fg_grb == 0)
+	attr98 = 0x05 | bg_grb; /* Use bg color and invert */
+    else
+	attr98 = 0x01 | fg_grb; /* Use fg color */
+
+    return attr98;
 }
 
 static void VideoWrite(register Console * C, char c)
 {
-    pokew((word_t)((C->cx + C->cy * Width) << 1),
-    		(seg_t) C->vseg,
-	  ((word_t)C->attr << 8) | ((word_t)c));
+    word_t addr;
+    word_t attr;
+
+    addr = (C->cx + C->cy * Width) << 1;
+    attr = (C->attr == A_DEFAULT) ? A98_DEFAULT : conv_pcattr(C->attr);
+
+    pokew(addr, (seg_t) AttributeSeg, attr);
+    pokew(addr, (seg_t) C->vseg, (word_t)c);
 }
 
 static void ClearRange(register Console * C, int x, int y, int xx, int yy)
 {
     register __u16 *vp;
+    word_t attr;
+
+    attr = (C->attr == A_DEFAULT) ? A98_DEFAULT : conv_pcattr(C->attr);
 
     xx = xx - x + 1;
     vp = (__u16 *)((__u16)(x + y * Width) << 1);
     do {
-	for (x = 0; x < xx; x++)
-	    pokew((word_t) (vp++), (seg_t) C->vseg, (((word_t) C->attr << 8) | ' '));
+	for (x = 0; x < xx; x++) {
+	    pokew((word_t) vp, AttributeSeg, attr);
+	    pokew((word_t) (vp++), (seg_t) C->vseg, (word_t) ' ');
+	}
 	vp += (Width - xx);
     } while (++y <= yy);
 }
@@ -125,8 +154,10 @@ static void ScrollUp(register Console * C, int y)
     register __u16 *vp;
 
     vp = (__u16 *)((__u16)(y * Width) << 1);
-    if ((unsigned int)y < MaxRow)
+    if ((unsigned int)y < MaxRow) {
+	fmemcpyb(vp, AttributeSeg, vp + Width, AttributeSeg, (MaxRow - y) * (Width << 1));
 	fmemcpyb(vp, C->vseg, vp + Width, C->vseg, (MaxRow - y) * (Width << 1));
+    }
     ClearRange(C, 0, MaxRow, MaxCol, MaxRow);
 }
 
@@ -138,6 +169,7 @@ static void ScrollDown(register Console * C, int y)
 
     vp = (__u16 *)((__u16)(yy * Width) << 1);
     while (--yy >= y) {
+	fmemcpyb(vp, AttributeSeg, vp - Width, AttributeSeg, Width << 1);
 	fmemcpyb(vp, C->vseg, vp - Width, C->vseg, Width << 1);
 	vp -= Width;
     }
@@ -177,20 +209,15 @@ void console_init(void)
     register Console *C;
     register int i;
     unsigned PageSizeW;
-    unsigned VideoSeg;
+    //unsigned VideoSeg;
 
-    MaxCol = (Width = peekb(0x4a, 0x40)) - 1;  /* BIOS data segment */
+    MaxCol = (Width = 80) - 1;
 
-    /* Trust this. Cga does not support peeking at 0x40:0x84. */
     MaxRow = (Height = 25) - 1;
-    CCBase = (void *) peekw(0x63, 0x40);
-    PageSizeW = ((unsigned int)peekw(0x4C, 0x40) >> 1);
 
-    VideoSeg = 0xb800;
-    if (peekb(0x49, 0x40) == 7) {
-	VideoSeg = 0xB000;
-	NumConsoles = 1;
-    }
+    PageSizeW = 2000;
+
+    NumConsoles = 1;
 
     C = Con;
     Visible = C;
@@ -198,8 +225,8 @@ void console_init(void)
     for (i = 0; i < NumConsoles; i++) {
 	C->cx = C->cy = 0;
 	if (!i) {
-	    C->cx = peekb(0x50, 0x40);
-	    C->cy = peekb(0x51, 0x40);
+	    C->cx = read_tvram_x() % 160;
+	    C->cy = read_tvram_x() / 160;
 	}
 	C->fsm = std_char;
 	C->basepage = i * PageSizeW;

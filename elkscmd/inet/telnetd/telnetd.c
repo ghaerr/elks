@@ -16,6 +16,7 @@
 #include <sys/wait.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <time.h>
 #include "telnet.h"
 
 //#define RAWTELNET	/* set in telnet and telnetd for raw telnet without IAC*/
@@ -24,7 +25,8 @@
 static char buf_in  [1500];
 static char buf_out [1500];
 
-char *nargv[2] = {"/bin/login", NULL};
+char *binlogin[2] = {"/bin/login", NULL};
+char *binsh[2] = {"/bin/sh", NULL};
 
 static pid_t term_init(int *pty_fd)
 {
@@ -34,7 +36,7 @@ static pid_t term_init(int *pty_fd)
 	char pty_name[12];
 
 again:
-	sprintf(pty_name, "/dev/ptyp%d", n);
+	sprintf(pty_name, "/dev/ptyp%d", n);		/* master side (PTY) /dev/ptyp0 = 2,8 */
 	if ((*pty_fd = open(pty_name, O_RDWR)) < 0) {
 		if ((errno == EBUSY) && (n < 3)) {
 			n++;
@@ -57,7 +59,7 @@ again:
 		close(*pty_fd);
 
 		setsid();
-		pty_name[5] = 't'; /* results in: /dev/ttyp%d */
+		pty_name[5] = 't'; /* results in /dev/ttyp%d, slave side (TTY) /dev/ttyp0 = 4,8 */
 		if ((tty_fd = open(pty_name, O_RDWR)) < 0) {
 			fprintf(stderr, "telnetd: Can't open pty %s\n", pty_name);
 			exit(1);
@@ -88,7 +90,8 @@ again:
 		dup2(tty_fd, STDIN_FILENO);
 		dup2(tty_fd, STDOUT_FILENO);
 		dup2(tty_fd, STDERR_FILENO);
-		execv(nargv[0], nargv);
+		execv(binlogin[0], binlogin);	/* try /bin/login first*/
+		execv(binsh[0], binsh);		/* then /bin/sh for small systems*/
 		perror("execv");
 		exit(1);
 	}
@@ -117,9 +120,12 @@ static void client_loop (int fdsock, int fdterm)
     int count_in = 0;
     int count_out = 0;
     int count_fd = (fdsock > fdterm) ? (fdsock + 1) : (fdterm + 1);
+    struct timeval timeint;
 
-	telnet_init(fdsock);
+    telnet_init(fdsock);
 
+    timeint.tv_sec = 0;
+    timeint.tv_usec = 50000L;	/* slow 50ms timeout to fix select hang bug in #1048 */
     while (1) {
 		FD_ZERO (&fds_read);
 		if (!count_in)  FD_SET (fdsock, &fds_read);
@@ -129,7 +135,7 @@ static void client_loop (int fdsock, int fdterm)
 		if (count_in)  FD_SET (fdterm, &fds_write);
 		if (count_out) FD_SET (fdsock, &fds_write);
 
-		count = select (count_fd, &fds_read, &fds_write, NULL, NULL);
+		count = select (count_fd, &fds_read, &fds_write, NULL, &timeint);
 		if (count < 0) {
 			perror ("telnetd select");
 			break;

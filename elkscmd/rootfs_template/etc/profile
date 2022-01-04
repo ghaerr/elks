@@ -4,3 +4,4 @@ export PATH=/bin
 #export HOSTNAME=10.0.2.15
 #export GATEWAY=10.0.2.2
 #export NETMASK=255.255.255.0
+#export QEMU=1

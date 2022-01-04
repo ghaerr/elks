@@ -60,8 +60,6 @@ extern int run_init_process_sptr(char *cmd, char *sptr, int slen);
 
 void start_kernel(void)
 {
-    printk("start kernel\n");
-
     kernel_init();
 
     /* fork and run procedure init_task() as task #1*/
@@ -393,9 +391,22 @@ static void INITPROC finalize_options(void)
 /* return whitespace-delimited string*/
 static char * INITPROC option(char *s)
 {
-	for(; *s != ' ' && *s != '\t' && *s != '\n'; ++s) {
+	char *t = s;
+	if (*s == '#')
+		return s;
+	for(; *s != ' ' && *s != '\t' && *s != '\n'; ++s, ++t) {
 		if (*s == '\0')
 			return NULL;
+		if (*s == '"') {
+			s++;
+			while (*s != '"') {
+				if (*s == '\0')
+					return NULL;
+				*t++ = *s++;
+			}
+			*t++ = 0;
+			break;
+		}
 	}
 	return s;
 }

@@ -27,11 +27,15 @@ struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
     { "hdb2",	S_IFBLK | 0644, MKDEV(3, 34) },
     { "hdb3",	S_IFBLK | 0644, MKDEV(3, 35) },
     { "hdb4",	S_IFBLK | 0644, MKDEV(3, 36) },
+#ifdef CONFIG_ARCH_IBMPC
+    { "hdc",	S_IFBLK | 0644, MKDEV(3, 64) },
+    { "hdd",	S_IFBLK | 0644, MKDEV(3, 96) },
+#endif
     { "fd0",	S_IFBLK | 0644, MKDEV(3, 128)},
     { "fd1",	S_IFBLK | 0644, MKDEV(3, 160)},
 #ifdef CONFIG_ARCH_PC98
-    { "fd2",	S_IFBLK | 0644, MKDEV(3, 192)},
-    { "fd3",	S_IFBLK | 0644, MKDEV(3, 224)},
+    { "fd2",   S_IFBLK | 0644, MKDEV(3, 192)},
+    { "fd3",   S_IFBLK | 0644, MKDEV(3, 224)},
 #endif
     { "rd0",	S_IFBLK | 0644, MKDEV(1, 0) },
     { "kmem",	S_IFCHR | 0644, MKDEV(1, 2) },
@@ -145,7 +149,7 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%
 		return NULL;
 	}
 
-	total_displayed = total_sectors / 2;
+	total_displayed = total_sectors >> (BLOCK_SIZE_BITS - SECTOR_BITS);
 	if (total_displayed >= 10000) {
 		total_displayed /= 1000;
 		kbytes_or_mbytes = 'M';

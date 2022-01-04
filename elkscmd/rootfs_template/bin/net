@@ -4,7 +4,7 @@
 #
 # Examples:
 #	net start eth			start ethernet networking
-#	net start slip			start slip networking at default baudrate
+#	net start slip			start slip networking
 #	net start slip 19200	start slip at 19200 baud
 #	net start cslip 4800 /dev/ttyS1
 #
@@ -59,7 +59,8 @@ start_network()
 	echo $ktcp
 	if $ktcp; then
 		echo -n "Starting daemons "
-		for daemon in telnetd httpd
+		if test "$NETSTART" = ""; then NETSTART="telnetd ftpd httpd"; fi
+		for daemon in $NETSTART
 		do
 			if test -f /bin/$daemon
 			then
@@ -67,11 +68,6 @@ start_network()
 				$daemon || true
 			fi
 		done
-		if test -f /bin/ftpd
-		then
-			echo -n "ftpd $ftpd"
-			ftpd $ftpd || true
-		fi
 		echo ""
 	else
 		echo "Network start failed"

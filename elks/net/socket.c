@@ -430,11 +430,13 @@ int sys_accept(int fd, struct sockaddr *upeer_sockaddr, int *upeer_addrlen)
 	return i;
     }
 
+    debug_tune("(%d) before accept sock %x newsock %x\n", current->pid, sock,newsock);
     i = newsock->ops->accept(sock, newsock, file->f_flags);
     if (i < 0) {
 	sock_release(newsock);
 	return i;
     }
+    debug_tune("(%d) after accept sock %x newsock %x\n", current->pid, sock,newsock);
 
     if ((fd = get_fd(SOCK_INODE(newsock))) < 0) {
 	sock_release(newsock);

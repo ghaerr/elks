@@ -56,15 +56,21 @@
 #define NUM_DRIVES	8	/* =256/NUM_MINOR max number of drives*/
 #define DRIVE_FD0	4	/* first floppy drive =NUM_DRIVES/2*/
 #define DRIVE_FD1	5	/* second floppy drive*/
-#ifdef CONFIG_ARCH_PC98
-#define DRIVE_FD2	6
-#define DRIVE_FD3	7
-#endif
+#define DRIVE_FD2	6	/* PC98 only*/
+#define DRIVE_FD3	7	/* PC98 only*/
 
 #define MAJOR_NR BIOSHD_MAJOR
 #define BIOSDISK
 
 #include "blk.h"
+
+#ifdef CONFIG_ARCH_IBMPC
+#define MAXDRIVES	2
+#endif
+
+#ifdef CONFIG_ARCH_PC98
+#define MAXDRIVES	4
+#endif
 
 #define FDC_DOR     0x3F2       /* floppy digital output register*/
 
@@ -78,7 +84,7 @@ struct elks_disk_parms {
 } __attribute__((packed));
 
 struct elks_boot_sect {
-    __u8 xx1[0x1FE - sizeof(struct elks_disk_parms)];
+    __u8 xx1[SECTOR_SIZE - 2 - sizeof(struct elks_disk_parms)];
     struct elks_disk_parms disk_parms;
     __u8 xx2[2];		/* 0xAA55 */
 } __attribute__((packed));
@@ -205,27 +211,7 @@ static unsigned short int INITPROC bioshd_gethdinfo(void) {
 }
 #endif
 
-#ifdef CONFIG_ARCH_PC98
-static unsigned short int INITPROC bioshd_getfdinfo(void)
-{
-    int ndrives = 4;
-
-#if defined(CONFIG_IMG_FD1232)
-    drive_info[DRIVE_FD0] = fd_types[5];	/*  /dev/fd0    */
-    drive_info[DRIVE_FD1] = fd_types[5];	/*  /dev/fd1    */
-    drive_info[DRIVE_FD2] = fd_types[5];	/*  /dev/fd2    */
-    drive_info[DRIVE_FD3] = fd_types[5];	/*  /dev/fd3    */
-#elif defined(CONFIG_IMG_FD1440)
-    drive_info[DRIVE_FD0] = fd_types[3];	/*  /dev/fd0    */
-    drive_info[DRIVE_FD1] = fd_types[3];	/*  /dev/fd1    */
-    drive_info[DRIVE_FD2] = fd_types[3];	/*  /dev/fd2    */
-    drive_info[DRIVE_FD3] = fd_types[3];	/*  /dev/fd3    */
-#endif
-
-    return ndrives;
-}
-//#ifdef CONFIG_BLK_DEV_BFD_HARD
-#elif defined(CONFIG_BLK_DEV_BFD_HARD)
+#ifdef CONFIG_BLK_DEV_BFD_HARD
 /* hard-coded floppy configuration*/
 static unsigned short int INITPROC bioshd_getfdinfo(void)
 {
@@ -237,7 +223,7 @@ static unsigned short int INITPROC bioshd_getfdinfo(void)
  * ndrives is number of drives in your system (either 0, 1 or 2)
  */
 
-    int ndrives = 2;
+    int ndrives = MAXDRIVES;
 
 /* drive_info[] should be set *only* for existing drives;
  * comment out drive_info lines if you don't need them
@@ -253,14 +239,32 @@ static unsigned short int INITPROC bioshd_getfdinfo(void)
  *	  2	720 KB
  *	  3	1.44 MB
  *	  4	2.88 MB or Unknown
+ *	  5	1.232 MB (PC98 1K sectors)
  *
  * Warning: drive will be reported as 2880 KB at bootup if you've set it
  * as unknown (4). Floppy probe will detect correct floppy format at each
  * change so don't bother with that
  */
 
+#ifdef CONFIG_ARCH_PC98
+#if defined(CONFIG_IMG_FD1232)
+    drive_info[DRIVE_FD0] = fd_types[5];
+    drive_info[DRIVE_FD1] = fd_types[5];
+    drive_info[DRIVE_FD2] = fd_types[5];
+    drive_info[DRIVE_FD3] = fd_types[5];
+#elif defined(CONFIG_IMG_FD1440)
+    drive_info[DRIVE_FD0] = fd_types[3];
+    drive_info[DRIVE_FD1] = fd_types[3];
+    drive_info[DRIVE_FD2] = fd_types[3];
+    drive_info[DRIVE_FD3] = fd_types[3];
+#endif
+#endif
+
+#ifdef CONFIG_ARCH_IBMPC
     drive_info[DRIVE_FD0] = fd_types[2];	/*  /dev/fd0    */
     drive_info[DRIVE_FD1] = fd_types[2];	/*  /dev/fd1    */
+#endif
+
     return ndrives;
 }
 
@@ -422,7 +426,6 @@ static void probe_floppy(int target, struct hd_struct *hdp)
  * two lists and adjusting for loop' parameters in line 433 and 446 (or
  * somewhere near)
  */
-
 #ifdef CONFIG_ARCH_PC98
 	static char sector_probe[2] = { 8, 18 };
 	static char track_probe[2] = { 77, 80 };
@@ -432,11 +435,7 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 #endif
 	int count;
 
-#ifdef CONFIG_ARCH_PC98
-	target &= 3;
-#else
-	target &= 1;
-#endif
+	target &= MAXDRIVES - 1;
 
 /* Try to look for an ELKS disk parameter block in the first sector.  If
  * it exists, we can obtain the disk geometry from it.
@@ -475,7 +474,7 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 	    if (read_sector(target, (int)track_probe[count] - 1, 1))
 		break;
 	    drivep->cylinders = (int)track_probe[count];
-	} while (++count < 2);
+	} while (++count < (int)sizeof(track_probe)/sizeof(track_probe[0]));
 
 /* Next, probe for sector number. We probe on track 0, which is
  * safe for all formats, and if we get a seek error, we assume that
@@ -488,11 +487,7 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 	    if (read_sector(target, 0, (int)sector_probe[count]))
 		break;
 	    drivep->sectors = (int)sector_probe[count];
-#ifdef CONFIG_ARCH_PC98
-	} while (++count < 2);
-#else
-	} while (++count < 5);
-#endif
+	} while (++count < (int)sizeof(sector_probe)/sizeof(sector_probe[0]));
 
 	drivep->heads = 2;
 
@@ -898,11 +893,7 @@ static void do_bioshd_request(void)
 	drivep = &drive_info[drive];
 
 	/* make sure it's a disk that we are dealing with. */
-#ifdef CONFIG_ARCH_PC98
-	if (drive > DRIVE_FD3 || drivep->heads == 0) {
-#else
-	if (drive > DRIVE_FD1 || drivep->heads == 0) {
-#endif
+	if (drive > (DRIVE_FD0 + MAXDRIVES - 1) || drivep->heads == 0) {
 	    printk("bioshd: non-existent drive\n");
 	    end_request(0);
 	    continue;
@@ -921,11 +912,7 @@ static void do_bioshd_request(void)
 	count = req->rq_nr_sectors;
 #endif
 	/* all ELKS requests are 1K blocks*/
-#if defined(CONFIG_IMG_FD1232)
-	count = 1;
-#else
-	count = 2;
-#endif
+	count = BLOCK_SIZE / SECTOR_SIZE;
 
 	buf = req->rq_buffer;
 	while (count > 0) {
@@ -946,11 +933,7 @@ static void do_bioshd_request(void)
 
 	    count -= num_sectors;
 	    start += num_sectors;
-#if defined(CONFIG_IMG_FD1232)
-	    buf += num_sectors << 10;
-#else
-	    buf += num_sectors << 9;
-#endif
+	    buf += num_sectors << SECTOR_BITS;
 	}
 
 	/* satisfied that request */

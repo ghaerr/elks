@@ -99,11 +99,7 @@
 bs_oem_name:				// OEM name
 	.ascii "ELKSFAT1"
 bpb_byts_per_sec:			// Bytes per sector
-#if defined(CONFIG_IMG_FD1232)
-	.word 0x400
-#else
-	.word 0x200
-#endif
+	.word SECTOR_SIZE
 bpb_sec_per_clus:			// Sectors per cluster
 	.byte FAT_SEC_PER_CLUS
 bpb_rsvd_sec_cnt:			// Reserved sectors, including this one
@@ -154,11 +150,7 @@ bpb_fil_sys_type:			// Filesystem type (8 bytes)
 	.set bpb_fat_sz_32,0x24		// FAT32 fat size, 32-bit
 
 .macro FAT_LOAD_AND_RUN_KERNEL
-#if defined(CONFIG_IMG_FD1232)
-	.set buf, entry + 0x400
-#else
-	.set buf, entry + 0x200
-#endif
+	.set buf, entry + SECTOR_SIZE
 
 	// Load the first sector of the root directory
 	movb bpb_num_fats,%al
@@ -254,11 +246,6 @@ find_system:
 	mov $elks_magic,%di
 	mov $0x4C45,%ax
 	scasw
-.if 0 // removed for FAT boot space
-	jnz not_elks
-	mov $0x534B,%ax
-	scasw
-.endif
 	jz boot_it
 
 not_elks:
