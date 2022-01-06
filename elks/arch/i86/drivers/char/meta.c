@@ -40,7 +40,6 @@ static struct ud_driver *get_driver(int major)
 
 struct ud_request *new_request(void)
 {
-    int i;
     register struct ud_request *r = requests;
 
     do {
@@ -68,9 +67,10 @@ int post_request(struct ud_driver *driver, struct ud_request *request)
 }
 
 
-static void do_meta_request(kdev_t device)
+static void do_meta_request(void)
 {
-    int major = MAJOR(device);
+    //int major = MAJOR(device);
+    int major = MAJOR(CURRENT->rq_dev); /* FIXME: change MAX_BLKDEV and create /dev/meta*/
     struct ud_driver *driver = get_driver(major);
     struct ud_request *udr;
     struct request *req;
@@ -78,7 +78,7 @@ static void do_meta_request(kdev_t device)
 
     printk("do_meta_request %d %x\n", major, blk_dev[major].current_request);
     if (NULL == driver) {
-	end_request(0, req->rq_dev);
+	end_request(0);
 	return;
     }
     printk("1");
@@ -117,7 +117,7 @@ static void do_meta_request(kdev_t device)
 	/* REQUEST HAS BEEN RETURNED BY USER PROGRAM */
 	/* request must be dealt with and ended */
 	if (udr->udr_status == 1) {
-	    end_request(0, req->rq_dev);
+	    end_request(0);
 	    udr->udr_status = 0;
 	    continue;
 	}
@@ -132,7 +132,7 @@ static void do_meta_request(kdev_t device)
 	    		driver->udd_data, driver->udd_task->mm.dseg, 1024/2);
 #endif
 	}
-	end_request(1, req->rq_dev);
+	end_request(1);
 	wake_up(&udr->udr_wait);
     }
 }
