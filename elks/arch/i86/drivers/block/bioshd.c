@@ -34,7 +34,6 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/genhd.h>
-#include <linuxmt/hdreg.h>
 #include <linuxmt/biosparm.h>
 #include <linuxmt/major.h>
 #include <linuxmt/bioshd.h>
@@ -45,10 +44,12 @@
 #include <linuxmt/debug.h>
 #include <linuxmt/timer.h>
 
+#include <arch/hdreg.h>
 #include <arch/io.h>
 #include <arch/segment.h>
 #include <arch/system.h>
 #include <arch/irq.h>
+#include <arch/ports.h>
 
 /* the following must match with /dev minor numbering scheme*/
 #define NUM_MINOR	32	/* max minor devices per drive*/
@@ -72,11 +73,8 @@
 #define MAXDRIVES	4
 #endif
 
-#if defined(CONFIG_BLK_DEV_BHD) && !defined(CONFIG_SMALL_KERNEL)
-#define PRINT_HD_DRIVE_INFO		(NUM_DRIVES/2)
-#endif
-
-#define FDC_DOR     0x3F2       /* floppy digital output register*/
+/* comment out following line for single-line drive info summary*/
+#define PRINT_DRIVE_INFO	NUM_DRIVES
 
 struct elks_disk_parms {
     __u16 track_max;		/* number of tracks, little-endian */
@@ -575,51 +573,31 @@ int INITPROC bioshd_init(void)
 
 #ifdef CONFIG_BLK_DEV_BFD
     _fd_count = bioshd_getfdinfo();
-#if 0
-    enable_irq(6);		/* Floppy */
+#if NOTNEEDED
+    enable_irq(FLOPPY_IRQ);	/* Floppy */
 #endif
 #endif
 #ifdef CONFIG_BLK_DEV_BHD
     _hd_count = bioshd_gethdinfo();
-#if 0
+#if NOTNEEDED
     if (sys_caps & CAP_PC_AT) {	/* PC/AT or greater */
-	enable_irq(HD_IRQ);	/* AT ST506 */
-	enable_irq(15);		/* AHA1542 */
+	enable_irq(HD1_AT_IRQ);	/* AT ST506 */
+	enable_irq(HD2_AT_IRQ);	/* AHA1542 */
     }
     else {
-	enable_irq(5);		/* XT ST506 */
+	enable_irq(HD_IRQ);	/* XT ST506 */
     }
 #endif
     bioshd_gendisk.nr_real = _hd_count;
 #endif /* CONFIG_BLK_DEV_BHD */
 
-#ifdef CONFIG_BLK_DEV_BFD
-#ifdef CONFIG_BLK_DEV_BHD
-    printk("bioshd: %d floppy drive%s and %d hard drive%s\n",
-	   _fd_count, _fd_count == 1 ? "" : "s",
-	   _hd_count, _hd_count == 1 ? "" : "s");
-#else
-    printk("bioshd: %d floppy drive%s\n",
-	   _fd_count, _fd_count == 1 ? "" : "s");
-#endif
-#else
-#ifdef CONFIG_BLK_DEV_BHD
-    printk("bioshd: %d hard drive%s\n",
-	   _hd_count, _hd_count == 1 ? "" : "s");
-#endif
-#endif
-
-    if (!(_fd_count + _hd_count)) return 0;
-
-    copy_ddpt();	/* make a RAM copy of the disk drive parameter table*/
-
-#ifdef PRINT_HD_DRIVE_INFO
+#ifdef PRINT_DRIVE_INFO
     {
 	register struct drive_infot *drivep;
 	static char UNITS[4] = "kMGT";
 
 	drivep = drive_info;
-	for (count = 0; count < PRINT_HD_DRIVE_INFO; count++, drivep++) {
+	for (count = 0; count < PRINT_DRIVE_INFO; count++, drivep++) {
 	    if (drivep->heads != 0) {
 		char *unit = UNITS;
 		__u32 size = ((__u32) drivep->sectors) * 5 /* 0.1 kB units */;
@@ -641,7 +619,27 @@ int INITPROC bioshd_init(void)
 	    }
 	}
     }
-#endif /* PRINT_HD_DRIVE_INFO */
+#else /* one line version */
+#ifdef CONFIG_BLK_DEV_BFD
+#ifdef CONFIG_BLK_DEV_BHD
+    printk("bioshd: %d floppy drive%s and %d hard drive%s\n",
+	   _fd_count, _fd_count == 1 ? "" : "s",
+	   _hd_count, _hd_count == 1 ? "" : "s");
+#else
+    printk("bioshd: %d floppy drive%s\n",
+	   _fd_count, _fd_count == 1 ? "" : "s");
+#endif
+#else
+#ifdef CONFIG_BLK_DEV_BHD
+    printk("bioshd: %d hard drive%s\n",
+	   _hd_count, _hd_count == 1 ? "" : "s");
+#endif
+#endif
+#endif /* PRINT_DRIVE_INFO */
+
+    if (!(_fd_count + _hd_count)) return 0;
+
+    copy_ddpt();	/* make a RAM copy of the disk drive parameter table*/
 
     count = register_blkdev(MAJOR_NR, DEVICE_NAME, &bioshd_fops);
 

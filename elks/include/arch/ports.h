@@ -89,14 +89,16 @@
 #define COM4_PORT	0x2e8
 #define COM4_IRQ	2		/* unregistered unless COM4_PORT found*/
 
-/* ne2k, ne2k.c, may be overridden in /bootopts
- * using netirq= and netport= 		*/
-#define NE2K_IRQ	12
+/* ne2k, ne2k.c, may be overridden in /bootopts using netirq= and netport= */
 #define NE2K_PORT	0x300
+#define NE2K_IRQ	12
 
 /* wd, wd.c*/
-#define WD_IRQ		2
 #define WD_PORT		0x240
+#define WD_IRQ		2
+
+/* bioshd.c*/
+#define FDC_DOR		0x3F2		/* floppy digital output register*/
 
 /* obsolete - experimental IDE hard drive, directhd.c (broken)*/
 #define HD1_PORT	0x1f0
