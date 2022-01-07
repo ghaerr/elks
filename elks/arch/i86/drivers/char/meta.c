@@ -3,7 +3,11 @@
  *
  * Copyright (C) 1999 by Alistair Riddoch
  *
- * ELKS meta driver for user space device drivers (UDDs)
+ * ELKS driver for user space device drivers (UDDs)
+ *
+ * FIXME This driver is experimental and does NOT currently work.
+ * FIXME It uses character device MAJOR_NR to index blk_dev[], must be fixed.
+ * FIXME Also requires device parameter to request_fn() routine.
  */
 
 #include <linuxmt/config.h>
@@ -17,15 +21,15 @@
 #include <linuxmt/udd.h>
 #include <linuxmt/debug.h>
 
-#define MAJOR_NR	MISC_MAJOR
-
+#define MAJOR_NR	UDD_MAJOR	/* FIXME "CURRENT" macro fails in end_request()*/
 #define METADISK
-
 #include "../block/blk.h"
 
 struct ud_driver drivers[MAX_UDD];
 
 struct ud_request requests[MAX_UDR];
+
+static int udd_major = -1;	/* FIXME required until device passed to request_fn*/
 
 static struct ud_driver *get_driver(int major)
 {
@@ -70,7 +74,7 @@ int post_request(struct ud_driver *driver, struct ud_request *request)
 static void do_meta_request(void)
 {
     //int major = MAJOR(device);
-    int major = MAJOR(CURRENT->rq_dev); /* FIXME: change MAX_BLKDEV and create /dev/meta*/
+    int major = udd_major; /* FIXME required until device passed to request_fn*/
     struct ud_driver *driver = get_driver(major);
     struct ud_request *udr;
     struct request *req;
@@ -81,20 +85,15 @@ static void do_meta_request(void)
 	end_request(0);
 	return;
     }
-    printk("1");
     while (1) {
 	req = blk_dev[major].current_request;
-	printk("2");
 	if (!req || req->rq_dev < 0 || req->rq_sector == -1)
 	    return;
-	printk("5");
 	udr = new_request();
 	udr->udr_type = UDR_BLK + req->rq_cmd;
 	udr->udr_ptr = req->rq_sector;
 	udr->udr_minor = MINOR(req->rq_dev);
-	printk("6");
 	post_request(driver, udr);
-	printk("7");
 
 	/* Should really check here whether we have a request */
 	if (req->rq_cmd == WRITE) {
@@ -106,7 +105,6 @@ static void do_meta_request(void)
 	    		buff, kernel_ds, 1024/2);
 #endif
 	}
-	printk("8");
 
 	/* Wake up the driver so it can deal with the request */
 	wake_up(&driver->udd_wait);
@@ -248,8 +246,7 @@ void meta_select()
 /* Do nothing */
 }
 
-static int meta_ioctl(struct inode *inode,
-		      struct file *filp, int cmd, char *arg)
+static int meta_ioctl(struct inode *inode, struct file *filp, int cmd, char *arg)
 {
     struct ud_driver *driver;
     int i, minor = MINOR(inode->i_rdev);
@@ -286,12 +283,11 @@ static int meta_ioctl(struct inode *inode,
 	    blk_dev[driver->udd_major].request_fn = do_meta_request;
 	}
 	printk("device\n");
+	udd_major = driver->udd_major;	/* FIXME until device passed to request_fn*/
 	driver->udd_task = current;
-#if 0
-	driver->udd_rwait = NULL;	/* FIXME: Not valid */
-#endif
 	return minor;
-      reg_err:
+
+reg_err:
 	driver->udd_type = UDD_NONE;
 	return -ENODEV;
     }
@@ -304,9 +300,6 @@ static int meta_ioctl(struct inode *inode,
     switch (cmd) {
     case META_POLL:
 	printk("waiting for request\n");
-#if 0
-	driver->udd_wait = NULL;	/* FIXME: not valid */
-#endif
 	driver->udd_req = NULL;
 	wake_up(&driver->udd_rwait);
 	interruptible_sleep_on(&driver->udd_wait);
@@ -329,9 +322,6 @@ static int meta_ioctl(struct inode *inode,
 	verified_memcpy_fromfs(driver->udd_req, arg,
 			       sizeof(struct ud_request_trunc));
 	wake_up(&driver->udd_req->udr_wait);
-#if 0
-	driver->udd_req->udr_wait = NULL;	/* FIXME: Not valid */
-#endif
 	interruptible_sleep_on(&driver->udd_req->udr_wait);
 	break;
     default:
@@ -373,10 +363,8 @@ static struct file_operations meta_chr_fops = {
 
 void meta_init(void)
 {
-    int i;
-
-    printk("meta driver Copyright (C) 1999 Alistair Riddoch\n");
-    if (!(i = register_chrdev(MAJOR_NR, DEVICE_NAME, &meta_chr_fops)))
+    printk("Userspace device driver Copyright (C) 1999 Alistair Riddoch\n");
+    if (!register_chrdev(MAJOR_NR, DEVICE_NAME, &meta_chr_fops))
 	meta_initialised = 1;
 }
 

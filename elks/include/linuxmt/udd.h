@@ -14,8 +14,8 @@
 
 #include <linuxmt/fs.h>
 
-#define MAX_UDD	8
-#define MAX_UDR	32
+#define MAX_UDD	1 /* FIXME only 1 UDD until device passed to request_fn*/
+#define MAX_UDR	8
 
 struct ud_driver {
     int udd_type;

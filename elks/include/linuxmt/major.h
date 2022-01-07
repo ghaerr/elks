@@ -24,7 +24,7 @@
  *  4 - /dev/tty*,ttyp*,ttyS*                         char tty, pty slave, serial
  *  5 -
  *  6 - /dev/lp                /dev/rom               block romflash
- *  7 -
+ *  7 -                        /dev/udd               block meta user device driver
  *  8 - /dev/tcpdev                                   kernel <-> ktcp comm
  *  9 - /dev/eth                                      NIC driver
  * 10 - /dev/cgatext
@@ -40,7 +40,7 @@
 #define TTY_MAJOR         4
 #define TTYAUX_MAJOR      5
 #define LP_MAJOR          6
-#define MISC_MAJOR        7
+#define UDD_MAJOR         7
 #define TCPDEV_MAJOR      8
 #define ETH_MAJOR         9  /* should be rather a network-class driver */
 #define CGATEXT_MAJOR     10
