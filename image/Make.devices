@@ -170,6 +170,11 @@ endif
 #	$MKSET  0 15 $(MKDEV) /dev/loop c 7
 
 ##############################################################################
+# UDD user device driver, experimental
+
+#	$(MKDEV) /dev/udd c 7 0
+
+##############################################################################
 # TCPDEV, used by ktcp
 
 	$(MKDEV) /dev/tcpdev c 8 0
