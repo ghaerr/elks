@@ -13,7 +13,7 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
-#include <linuxmt/hdreg.h>
+#include <arch/hdreg.h>
 
 #include "../fdisk.h"
 #include "cmd.h"

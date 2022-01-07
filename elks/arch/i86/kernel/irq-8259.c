@@ -22,7 +22,7 @@
 
 void init_irq(void)
 {
-#if 0
+#if NOTNEEDED
     if (sys_caps & CAP_IRQ2MAP9) {	/* PC/AT or greater */
 	save_flags(flags);
 	clr_irq();

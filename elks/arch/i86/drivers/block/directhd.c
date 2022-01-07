@@ -6,7 +6,6 @@
  * 14.04.1998 Bugfixes by Alastair Bridgewater nyef@sudval.org
  */
 
-#include <linuxmt/hdreg.h>
 #include <linuxmt/major.h>
 #include <linuxmt/genhd.h>
 #include <linuxmt/fs.h>
@@ -15,6 +14,7 @@
 #include <linuxmt/directhd.h>
 #include <linuxmt/debug.h>
 
+#include <arch/hdreg.h>
 #include <arch/io.h>
 #include <arch/segment.h>
 
