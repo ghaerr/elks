@@ -72,6 +72,10 @@
 #define MAXDRIVES	4
 #endif
 
+#if defined(CONFIG_BLK_DEV_BHD) && !defined(CONFIG_SMALL_KERNEL)
+#define PRINT_HD_DRIVE_INFO		(NUM_DRIVES/2)
+#endif
+
 #define FDC_DOR     0x3F2       /* floppy digital output register*/
 
 struct elks_disk_parms {
@@ -556,19 +560,6 @@ static struct file_operations bioshd_fops = {
 #endif
 };
 
-#ifdef DOSHD_VERBOSE_DRIVES
-#define TEMP_PRINT_DRIVES_MAX		NUM_DRIVES
-#else
-#ifdef CONFIG_BLK_DEV_BHD
-#define TEMP_PRINT_DRIVES_MAX		(NUM_DRIVES/2)
-#endif
-#endif
-
-/* Reduced code size option */
-#ifdef CONFIG_SMALL_KERNEL
-#undef TEMP_PRINT_DRIVES_MAX
-#endif
-
 int INITPROC bioshd_init(void)
 {
     register struct gendisk *ptr;
@@ -622,14 +613,15 @@ int INITPROC bioshd_init(void)
 
     copy_ddpt();	/* make a RAM copy of the disk drive parameter table*/
 
-#ifdef TEMP_PRINT_DRIVES_MAX
+#ifdef PRINT_HD_DRIVE_INFO
     {
 	register struct drive_infot *drivep;
-	static char *unit = "kMGT";
+	static char UNITS[4] = "kMGT";
 
 	drivep = drive_info;
-	for (count = 0; count < TEMP_PRINT_DRIVES_MAX; count++, drivep++) {
+	for (count = 0; count < PRINT_HD_DRIVE_INFO; count++, drivep++) {
 	    if (drivep->heads != 0) {
+		char *unit = UNITS;
 		__u32 size = ((__u32) drivep->sectors) * 5 /* 0.1 kB units */;
 
 		size *= ((__u32) drivep->cylinders) * drivep->heads;
@@ -649,7 +641,7 @@ int INITPROC bioshd_init(void)
 	    }
 	}
     }
-#endif /* TEMP_PRINT_DRIVES_MAX */
+#endif /* PRINT_HD_DRIVE_INFO */
 
     count = register_blkdev(MAJOR_NR, DEVICE_NAME, &bioshd_fops);
 
