@@ -69,14 +69,14 @@ extern void resetup_one_dev(struct gendisk *dev, int drive);
 #ifdef MAJOR_NR
 
 /*
- * Add entries as needed. Currently the only block devices
- * supported are hard-disks and floppies.
+ * Add entries as needed. Current block devices are
+ * hard-disks, floppies, SSD and ramdisk.
  */
 
 #ifdef RAMDISK
 
 /* ram disk */
-#define DEVICE_NAME "ramdisk"
+#define DEVICE_NAME "rd"
 #define DEVICE_REQUEST do_rd_request
 #define DEVICE_NR(device) ((device) & 7)
 #define DEVICE_ON(device)
@@ -86,8 +86,8 @@ extern void resetup_one_dev(struct gendisk *dev, int drive);
 
 #ifdef SSDDISK
 
-/* SiBO solid-state disk */
-#define DEVICE_NAME "ssddisk"
+/* solid-state disk */
+#define DEVICE_NAME "ssd"
 #define DEVICE_REQUEST do_ssd_request
 #define DEVICE_NR(device) ((device) & 3)
 #define DEVICE_ON(device)
@@ -100,7 +100,7 @@ extern void resetup_one_dev(struct gendisk *dev, int drive);
 static void floppy_on();	/*(unsigned int nr); */
 static void floppy_off();	/*(unsigned int nr); */
 
-#define DEVICE_NAME "floppy"
+#define DEVICE_NAME "fd"
 #define DEVICE_INTR do_floppy
 #define DEVICE_REQUEST do_fd_request
 #define DEVICE_NR(device) ((device) & 3)
@@ -111,7 +111,7 @@ static void floppy_off();	/*(unsigned int nr); */
 
 #ifdef ATDISK
 
-#define DEVICE_NAME "harddisk"
+#define DEVICE_NAME "hd"
 #define DEVICE_REQUEST do_directhd_request
 #define DEVICE_NR(device) (MINOR(device)>>6)
 #define DEVICE_ON(device)
@@ -121,7 +121,7 @@ static void floppy_off();	/*(unsigned int nr); */
 
 #ifdef BIOSDISK
 
-#define DEVICE_NAME "BIOSHD"
+#define DEVICE_NAME "bioshd"
 #define DEVICE_REQUEST do_bioshd_request
 #define DEVICE_NR(device) (MINOR(device)>>MINOR_SHIFT)
 #define DEVICE_ON(device)
@@ -131,7 +131,7 @@ static void floppy_off();	/*(unsigned int nr); */
 
 #ifdef METADISK
 
-#define DEVICE_NAME "meta"
+#define DEVICE_NAME "udd"
 #define DEVICE_REQUEST do_meta_request
 #define DEVICE_NR(device) (MINOR(device))
 #define DEVICE_ON(device)
@@ -152,7 +152,7 @@ static void end_request(int uptodate)
     req = CURRENT;
 
     if (!uptodate) {
-	printk("%s:I/O error\n", DEVICE_NAME);
+	printk("%s: I/O error: ", DEVICE_NAME);
 	printk("dev %x, sector %lu\n", req->rq_dev, req->rq_sector);
 
 #ifdef MULTI_BH

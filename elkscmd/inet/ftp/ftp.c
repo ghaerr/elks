@@ -4,20 +4,16 @@
  * by Helge Skrivervik - helge@skrivervik.com - December 2021
  *
  *	TODO:
- *	- split open/login into its own function, move them to the main command loop
- *	  (remove the requirement to have user name and pw on the command line)
- *	- cmd line server address argument must lookup in /etc/hosts
  *	- add support for multi-argument commands (e.g. <put sourcefile destfile> ...)
  *	- add missing commands (rmdir, mls, nlist, ...), 
- *	- Add port # to the open command
  *	- ... create common function for commands that are alomost alike
- *	- clean up messags and debug levels
  *	- fix trucation of file names in FAT, minix (warnings, name collisions)
  *	- lcd with no params should print current local directory
  *	- evaluate whether using select() is useful or just a complication
  *	... add ABORT support in PUT
  *	- handle server timeout (no activity): Unsolicited server input (code 421)
  *	- add '15632 bytes sent in 0.00 secs (27.5561 MB/s)' type message after transfer
+ *	- validity check on server host name/address to avoid system hang
  *	- more testing of error conditions & error messages
  */
 
@@ -25,6 +21,7 @@
 #ifdef  BLOATED
 #define GLOB		/* include wildcard processing */
 #endif
+#define	QEMUHACK	/* Include code for QEMU special treatment */
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -42,6 +39,7 @@
 #include <sys/time.h>
 #include <dirent.h>
 #include <errno.h>
+#include <signal.h>
 #ifdef GLOB
 #include <pwd.h>
 #include <regex.h>
@@ -50,9 +48,12 @@
 
 #define	IOBUFLEN 1500
 #define BUF_SIZE 512
-#define ADDRBUF	50
+#define ADDRBUF	40
 #define NLSTBUF 1500
 #define MAXARGS	256	/* max names in wildcard expansion */
+#define MAXPARMS 30	/* reasonable max # of internal cmdline parameters */
+#define ALRMINTVL 10
+#define DFLT_PORT 21
 
 #define	TRUE	1
 #define	FALSE	0
@@ -74,6 +75,9 @@ extern char *getpass(char *prompt);
 static void settype(int controlfd, char t);
 static int do_passive(int cmdfd);
 static int do_active(int cmdfd);
+static int send_cmd(int, char *);
+static int is_connected(int);
+static int parse_cmd(char *, char **);
 
 static FILE *fcmd;
 
@@ -93,11 +97,11 @@ enum {	// commands in disconnected mode
 	CMD_DELE,
 	CMD_MGET,
 	CMD_CLOSE,
+	CMD_PORT,
+	CMD_PASV,
 	CMD_CONNECT,	// flag
 	// commands in any mode
 	CMD_QUIT,
-	CMD_PORT,
-	CMD_PASV,
 	CMD_TYPE,
 	CMD_BIN,
 	CMD_NULL,
@@ -153,9 +157,15 @@ struct cmd_tab cmdtab[] = {
 	//{"user", CMD_USER, "Open new connection, log in."},
 	{"", CMD_NULL, ""}
 };
-static int debug = 0;
+static int debug = 1;
 static char type = ASCII, atype = ASCII;
 static int prompt = TRUE, glob = TRUE;
+static int check_connected = 0;
+static char srvr_ip[ADDRBUF], myip[ADDRBUF]; 	/* For qemu hack */
+
+#ifdef QEMUHACK
+static int qemu = 0;
+#endif
 
 /* Trim leading and trailing whitespaces */
 void trim(char *str) {
@@ -164,13 +174,11 @@ void trim(char *str) {
 	int end = strlen(str) - 1;
 
 	while (isspace((unsigned char) str[begin])) begin++;
-
 	while ((end >= begin) && isspace((unsigned char) str[end])) end--;
 
 	/* Shift all characters to the start of the string. */
 	for (i = begin; i <= end; i++)
 			str[i - begin] = str[i];
-
 	str[i - begin] = '\0'; // Null terminate string.
 }
 
@@ -182,7 +190,14 @@ void help() {
 		printf("%s:\t%s\n", c->cmd, c->hlp);
 		c++;
 	}
-	return;
+}
+#endif
+
+#if 0
+void sig_handler(int signum) {	/* handle ALARM signals (watch server timeouts) */
+	check_connected++;
+	//alarm(ALRMINTVL);
+	printf("tik-tok ");
 }
 #endif
 
@@ -204,14 +219,24 @@ int ask(char *source, char *name) {
 }
 		
 /* Read (and echo) reply from server */
-
+/* NOTE: The fd argument is not used (replaced by global fcmd for buffered IO). */
+/* fd is kept because it makes the code easier to read. */
 int get_reply(int fd, char *buf, int size, int dbg) {
 
-	if (fgets(buf, size, fcmd) == NULL)
+	if (fgets(buf, size, fcmd) == NULL) {
+		check_connected++;
 		return -1;
+	}
 	/* dbg - at which debug level this command should be echoed */
 	if (debug >= dbg) printf("%s", buf);
 	return 1;
+}
+
+int is_connected(int cmdfd) {
+	char str[IOBUFLEN];
+
+	if (send_cmd(cmdfd, "NOOP\r\n") < 0) return errno;	/* verify connection first, detect timeout */
+	return (get_reply(cmdfd, str, IOBUFLEN, 1));
 }
 
 /* Send command to server, echo if required */
@@ -221,14 +246,16 @@ int send_cmd(int cmdfd, char *cmd) {
 
 	s = write(cmdfd, cmd, strlen(cmd));
 	if (debug > 1) printf("---> %s", cmd);
+	if (s < 0) check_connected++;
 	return s;
 }
 	
 /* Read and process user commands */
 
-int get_cmd(char *buffer, int len) {
+int get_cmd(char *buffer, int len, char **argv) {
 	struct cmd_tab *c;
 	int cmdlen;
+	char *cmd;
 
 	do {
 		printf("ftp> ");
@@ -237,17 +264,15 @@ int get_cmd(char *buffer, int len) {
 		if (*buffer == '\4') return -1; // ^D
 	} while (strlen(buffer) < 2);
 
-	buffer[strlen(buffer)-1] = '\0';	/* remove cf/lf */
+	if (*buffer == '!') return CMD_SHELL;
+	if (*buffer == '?') return CMD_HELP;
 
-	if (strchr(buffer, ' '))
-		cmdlen = (int)(strchr(buffer, ' ') - buffer);
-	else
-		cmdlen = strlen(buffer);
-
+	parse_cmd(buffer, argv);
+	cmd = *argv;
+	cmdlen = strlen(cmd);
 	c = cmdtab;
+
 	while (*c->cmd != '\0') {
-		if (*buffer == '!') return CMD_SHELL;
-		if (*buffer == '?') return CMD_HELP;
 		//FIXME: Need to check command uniqueness @ 3 chars
 		if (!strncmp(buffer, c->cmd, MAX(cmdlen, MIN(strlen(c->cmd), 3))))
 			return c->value;
@@ -270,57 +295,52 @@ int get_port_string(char *str, char *ip, int p0, int p1) {
 	return 1;
 }
 
+/* Decipher the PASV info from the server - oly called from do_passive() */
 
-int get_client_ip_port(char *str, char *client_ip, unsigned int *client_port) {
-	char *n1, *n2, *n3, *n4, *n5, *n6;
-	int p5, p6;
+int get_server_ip_port(char *str, char *server_ip, unsigned int *server_port) {
+	char *n[6];
+	int p5 = 0, p6;
 
 	if (strtok(str, "(") == NULL)
 		return -1;
-	n1 = strtok(NULL, ",");
-	n2 = strtok(NULL, ",");
-	n3 = strtok(NULL, ",");
-	n4 = strtok(NULL, ",");
-	n5 = strtok(NULL, ",");
-	n6 = strtok(NULL, ")");
+	while (p5 < 6)
+		n[p5++] = strtok(NULL, ",)");
 
-	sprintf(client_ip, "%s.%s.%s.%s", n1, n2, n3, n4);
-
-	p5 = atoi(n5);
-	p6 = atoi(n6);
-	*client_port = (256 * p5) + p6;
+	sprintf(server_ip, "%s.%s.%s.%s", n[0], n[1], n[2], n[3]);
+	p5 = atoi(n[4]);
+	p6 = atoi(n[5]);
+	*server_port = (256 * p5) + p6;
 
 	return 1;
 }
 
-int get_ip_port(int fd, char *ip, int *port) {
+int get_ip_port(int fd, char *ip, unsigned int *port) {
 	struct sockaddr_in addr;
 	socklen_t len = sizeof(addr);
 
 	getsockname(fd, (struct sockaddr*) &addr, &len);
-	sprintf(ip, in_ntoa(addr.sin_addr.s_addr));
+	strcpy(ip, in_ntoa(addr.sin_addr.s_addr));
 	*port = (unsigned int)ntohs(addr.sin_port);
+	//printf("get_ip: %lx %u\n", addr.sin_addr.s_addr, *port);
 	return 1;
 }
 
-//FIXME: Add multi-parameter support, return in a **argv type array
-int get_parm(char *input, char *fileptr) {
-	char cpy[MAXPATHLEN];
+/* Parse command line, return command list and # of args found */
+
+int parse_cmd(char *input, char **argv) {
 	char *parm;
+	int i = 0;
 
-	strcpy(cpy, input);
-	trim(cpy);
-	//printf("get_parm: %s ", cpy);
-	parm = strtok(cpy, " ");
-	parm = strtok(NULL, " \r\n\t");
-
-	if (parm == NULL){
-		fileptr = "\0";
-		return -1;
-	} else {
-		strcpy(fileptr, parm);
-		return 1;
+	trim(input);
+	//printf("parse_cmd: <%s>\n", input);
+	argv[i++] = strtok(input, " ");
+	while ((parm = strtok(NULL, " \r\n\t"))) {
+		argv[i++] = parm;
+		//printf("parse_cmd: %s\n", parm);
 	}
+	argv[i] = NULL;
+	argv[i+1] = NULL;		// Insurance
+	return i;
 }
 
 
@@ -370,7 +390,8 @@ int do_nlst(int controlfd, char *buf, int len, char *dir, int mode) {
 	}
 	get_reply(controlfd, lbuf, sizeof(lbuf), 1);
 	if (*lbuf != '1') {		/* 125 List started OK */
-		printf("Get filelist failed: %s", buf);
+		printf("Couldn't get remote filelist.\n");
+		close(datafd);
 		return -1;
 	}
 	n = 0;
@@ -384,44 +405,53 @@ int do_nlst(int controlfd, char *buf, int len, char *dir, int mode) {
 		n = len - 1;
 		while (buf[n] != '\n') n--;
 	}
+	//if (debug > 3) printf("do_nlst: got %d (%d) bytes\n", n, i);
 	buf[++n] = '\0';
 
 	close(datafd);
-	get_reply(controlfd, lbuf, sizeof(lbuf), 1);	/* Should be '226 Transfer complete' */
+	get_reply(controlfd, lbuf, sizeof(lbuf), 1);
 	return 1;
 }
 		
-
-
-int do_ls(int controlfd, int datafd, char *input, int mode) {
-	char filelist[MAXPATHLEN], recvline[IOBUFLEN+1];
+/* Implements the dir command */
+int do_ls(int controlfd, int datafd, char **cmdline, int mode) {
+	char recvline[IOBUFLEN+1];
 	fd_set rdset;
-	int n, maxfdp1, data_finished = FALSE, control_finished = FALSE;
+	int nfd, n, maxfdp1, data_finished = FALSE, control_finished = FALSE;
+	int fd = 1; 	// Defaults to stdout
 
-	bzero(filelist, sizeof(filelist));
 	if (atype != ASCII) settype(controlfd, ASCII);
 
-	if (get_parm(input, filelist) < 0) 
-		sprintf(recvline, "LIST\r\n");
+	if (cmdline[1])
+		sprintf(recvline, "LIST %s\r\n", cmdline[1]);
 	else
-		sprintf(recvline, "LIST %s\r\n", filelist);
-
-	send_cmd(controlfd, recvline);
+		sprintf(recvline, "LIST\r\n");
+	if (cmdline[2]) {					// save output in file
+		if ((fd = open(cmdline[2], O_WRONLY|O_TRUNC|O_CREAT, 0664)) < 0) {
+			printf("DIR: Cannot open output file '%s'\n", cmdline[2]);
+			return -1;
+		}
+	}
+	if (send_cmd(controlfd, recvline) < 0) {
+		printf("No connection.\n");
+		check_connected++;
+		return -1;
+	}
 	if (mode == PORT) {	/* active mode, wait for connection */
-		if ((n = dataconn(datafd)) < 0) {
+		if ((nfd = dataconn(datafd)) < 0) {
 			printf("Active mode connect failed.\n");
 			return -1;
 		}
-		datafd = n;
-	}
+	} else
+		nfd = datafd;
 
 	FD_ZERO(&rdset);
 
-	maxfdp1 = MAX(controlfd, datafd) + 1;
+	maxfdp1 = MAX(controlfd, nfd) + 1;
 
 	while (1) {
 		if (control_finished == FALSE) FD_SET(controlfd, &rdset);
-		if (data_finished == FALSE)  FD_SET(datafd, &rdset);
+		if (data_finished == FALSE)  FD_SET(nfd, &rdset);
 		select(maxfdp1, &rdset, NULL, NULL, NULL);
 
 		if (FD_ISSET(controlfd, &rdset)) {
@@ -435,14 +465,12 @@ int do_ls(int controlfd, int datafd, char *input, int mode) {
 			FD_CLR(controlfd, &rdset);
 		}
 
-		if (FD_ISSET(datafd, &rdset)) {
-			while ((n = read(datafd, recvline, IOBUFLEN)) > 0) {
-				//printf("%s", recvline); 
-				//bzero(recvline, (int)sizeof(recvline)); 
-				write(1, recvline, n);
+		if (FD_ISSET(nfd, &rdset)) {
+			while ((n = read(nfd, recvline, IOBUFLEN)) > 0) {
+				write(fd, recvline, n);
 			}
 			data_finished = TRUE;
-			FD_CLR(datafd, &rdset);
+			FD_CLR(nfd, &rdset);
 		}
 		if ((control_finished == TRUE) && (data_finished == TRUE)) {
 			get_reply(controlfd, recvline, IOBUFLEN, 1);
@@ -451,20 +479,24 @@ int do_ls(int controlfd, int datafd, char *input, int mode) {
 			break;
 		}
 	}
+	if (fd > 1) {
+		printf("Listing saved in %s\n", cmdline[2]);
+		close(fd);
+	}
+	close(nfd);
 	return 1;
 }
 
-int do_get(int controlfd, char *file1, char *file2, int mode) {
+int do_get(int controlfd, char *src, char *dst, int mode) {
 	char iobuf[IOBUFLEN+1];
 	int status = 1, bcnt = 0, fd, n, datafd = -1, icount = 0;
 	int maxfdp1, data_finished = FALSE, control_finished = FALSE;
 	fd_set rdset;
 
-	//bzero(iobuf, sizeof(iobuf));
-	if (*file2 == '\0') file2 = file1;
+	if (dst == NULL) dst = src;
 
-	if ((fd = open(file2, O_WRONLY|O_TRUNC|O_CREAT, 0664)) < 0) {
-		printf("GET: Cannot open local file '%s'\n", file2);
+	if ((fd = open(dst, O_WRONLY|O_TRUNC|O_CREAT, 0664)) < 0) {
+		printf("GET: Cannot open local file '%s'\n", dst);
 		return -1;
 	}
 	if (atype != type) settype(controlfd, type);
@@ -476,7 +508,7 @@ int do_get(int controlfd, char *file1, char *file2, int mode) {
 		datafd = do_passive(controlfd);
 	if (datafd < 0) return -1;
 
-	sprintf(iobuf, "RETR %s\r\n", file1);
+	sprintf(iobuf, "RETR %s\r\n", src);
 	send_cmd(controlfd, iobuf);
 
 	get_reply(controlfd, iobuf, IOBUFLEN, 1);
@@ -488,7 +520,7 @@ int do_get(int controlfd, char *file1, char *file2, int mode) {
 
 	if (mode == PORT) {	/* active mode, wait for connection */
 		if ((n = dataconn(datafd)) < 0) {
-			printf("Active mode connect failed: %d.\n", errno);
+			perror("Active mode connect failed");
 			status = -2;	// Fatal error
 			goto get_out;
 		}
@@ -499,7 +531,7 @@ int do_get(int controlfd, char *file1, char *file2, int mode) {
 	FD_ZERO(&rdset);
 
 	maxfdp1 = MAX(controlfd, datafd) + 1;
-	printf("remote: %s, local: %s\n", file1, file2);
+	printf("remote: %s, local: %s\n", src, dst);
 	/*
 	 * NOTICE: When fetching very small or NULL size files, the '150 Opening'
 	 * message and the 226 Transfer Complete message arrive almost at the same time.
@@ -517,7 +549,7 @@ int do_get(int controlfd, char *file1, char *file2, int mode) {
 		if (!select_return) { 
 			if (debug > 2) printf("get: select timeout.\n");
 			if (icount++ > 2 || data_finished == TRUE) {	
-				//Experimental: Got timeout, need reply - which is probalby sitting in the
+				// Experimental: Got timeout, need reply - which is probalby sitting in the
 				// fgets() input buffer.
 				// If it isn't, we're stuck here.
 				get_reply(controlfd, iobuf, IOBUFLEN, 1);
@@ -559,14 +591,14 @@ get_out:
 	return status;
 }
 
-int do_put(int controlfd, char *file1, char *file2, int mode){
+int do_put(int controlfd, char *src, char *dst, int mode){
 	char iobuf[IOBUFLEN+1];
 	int datafd, fd, n, status = 1;
 
 	bzero(iobuf, sizeof(iobuf));
 
 	if (atype != type) settype(controlfd, type);
-	if (*file2 == '\0') file2 = file1;
+	if (dst == NULL) dst = src;
 #ifdef BLOATED
 	if (mode != PASV)
 		datafd = do_active(controlfd);
@@ -575,14 +607,14 @@ int do_put(int controlfd, char *file1, char *file2, int mode){
 		datafd = do_passive(controlfd);
 	if (datafd < 0) return -1;
 
-	if ((fd = open(file1, O_RDONLY)) < 0) {	/* FIXME: we've checked this already ... */
-		printf("MPUT: Cannot open local file: %s\n", file1);
+	if ((fd = open(src, O_RDONLY)) < 0) {	/* FIXME: we've checked this already ... */
+		printf("MPUT: Cannot open local file: %s\n", src);
 		return -1;
 	}
 
-	sprintf(iobuf, "STOR %s\r\n", file2);
+	sprintf(iobuf, "STOR %s\r\n", dst);
 	send_cmd(controlfd, iobuf);
-	printf("local: %s, remote: %s\n", file1, file2);
+	printf("local: %s, remote: %s\n", src, dst);
 
 	get_reply(controlfd, iobuf, IOBUFLEN, 1);
 	
@@ -654,9 +686,9 @@ int do_put(int controlfd, char *file1, char *file2, int mode){
 	while ((n = read(fd, iobuf, IOBUFLEN)) > 0) {
 		write(datafd, iobuf, n);	// FIXME: NO error checking
 	}
+#endif
 	close(datafd);
 	get_reply(controlfd, iobuf, IOBUFLEN, 1);
-#endif
 
 put_out:
 	close(fd);
@@ -672,30 +704,33 @@ int do_active(int cmdfd) {
 	struct sockaddr_in myaddr;
 	int fd, i = 0;
 	unsigned int myport;
-	char str[BUF_SIZE], *p, *myip;
+	char str[BUF_SIZE], port_mode_ip[ADDRBUF], *p;
 
+#ifdef QEMUHACK
+	if (qemu) {
+		printf("Active mode is not supported in QEMU, use passive mode.\n");
+		return -1;
+	}
+#endif
 	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		perror("socket error");
 		return -1;
 	}
-#if 0
+#if 1
 	int on = 1;
-	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof (on)) < 0) {
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0) {
 		/* This should not happen */
-		printf("Data channel socket error: REUSEADDR, closing channel.\n");
-		close(fd);
-		return -1;
+		perror("SO_REUSEADDR");
 	}
 #endif
 
 	i = SO_LISTEN_BUFSIZ;
 	if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &i, sizeof(i)) < 0) 
 		perror("SO_RCVBUF");
-
 	bzero(&myaddr, sizeof(myaddr));
 	myaddr.sin_family = AF_INET;
 	myaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-	myaddr.sin_port = htons(0);	/* system picks a port */
+	myaddr.sin_port = htons(0);	/* if 0, system picks a port */
 	i = sizeof(myaddr);
 
 	if (bind(fd, (struct sockaddr *) &myaddr, i) < 0) {
@@ -703,15 +738,9 @@ int do_active(int cmdfd) {
 		return -1;
 	}
 
-	if (getsockname(fd, (struct sockaddr *)&myaddr, (unsigned int *)&i) < 0) {
-		perror("getsockname");
-		close(fd);
-		return -1;
-	}
- 	myip = in_ntoa(myaddr.sin_addr.s_addr);
-	myport = ntohs(myaddr.sin_port);
-	p = (char *)&myaddr.sin_port;
-	if (debug > 1) printf("Listening on %s port %u\n", myip, myport);
+	get_ip_port(fd, port_mode_ip, &myport);
+	if (debug > 1) printf("PORT: Listening on %s port %u\n", port_mode_ip, myport);
+	p = (char *)&myport;
 
 	if (listen(fd, 1) < 0) {
 		perror("Listen failed");
@@ -719,11 +748,11 @@ int do_active(int cmdfd) {
 		return -1;
 	}
 
-	get_port_string(str, myip, (int) UC(p[0]), (int) UC(p[1]));
+	get_port_string(str, myip, (int) UC(p[1]), (int) UC(p[0]));
 	send_cmd(cmdfd, str);
 
-	if (get_reply(cmdfd, str, BUF_SIZE, 1) < 0) {	// 200 Port command successful ...
-		/* command channel error, probably server timeout */
+	if ((get_reply(cmdfd, str, BUF_SIZE, 1) < 0) || (*str != '2')) { // Should be '200 Port command successful' ...
+		/* command channel error, probably server timeout or '551 Rejected data connection' */
 		close(fd);
 		fd = -1;
 	}
@@ -738,17 +767,16 @@ int do_passive(int cmdfd) {
 	struct sockaddr_in srvaddr;
 	int fd = 0;
 	unsigned int port;
-	char command[BUF_SIZE], ip_addr[ADDRBUF];
-	//FILE *cmd;
+	char command[BUF_SIZE], *ip, ip_addr[ADDRBUF];
 
 	send_cmd(cmdfd, "PASV\r\n");
 	get_reply(cmdfd, command, BUF_SIZE, 1);
 	if (strncmp(command, "227", 3)) {
-		printf("Server error, cannot connect.\n");
+		printf("Server error.\n");
 		return -1;
 	}
 	
-	if (get_client_ip_port(command, ip_addr, &port) < 0) {
+	if (get_server_ip_port(command, ip_addr, &port) < 0) {
 		printf("Passive mode error: %s", command);
 		return -1;
 	}
@@ -766,11 +794,15 @@ int do_passive(int cmdfd) {
 		return -1;
 	} 
 
+	ip = ip_addr;
+#ifdef QEMUHACK
+	if (qemu) ip = srvr_ip;
+#endif
 	srvaddr.sin_family = AF_INET;
-	srvaddr.sin_addr.s_addr = in_aton(ip_addr);
+	srvaddr.sin_addr.s_addr = in_aton(ip);
 	srvaddr.sin_port = htons(port);
 
-	if (debug > 1) printf("Connecting to %s @ %u\n", ip_addr, port);
+	if (debug > 1) printf("Connecting to %s @ %u\n", ip, port);
 
 	if (connect(fd, (struct sockaddr *) &srvaddr, sizeof(srvaddr)) < 0) {
 			perror("connect error");
@@ -779,86 +811,93 @@ int do_passive(int cmdfd) {
 	return fd;
 }
 
-int do_mput(int controlfd, char *mdir, int mode) {
+int do_mput(int controlfd, char **argv, int mode) {
 	DIR *dir = NULL;
 	struct dirent *dp;
 	struct stat buf;
 	char iobuf[IOBUFLEN+1];
 	int l, i, filecount = 0, count = 0;
 	
+	argv++; 			// move past command
+	while (*argv) {
 #ifdef GLOB
-	char *myargv[MAXARGS];
+		char *myargv[MAXARGS];
 
-	if (glob) count = expandwildcards(mdir, MAXARGS, myargv);
-	//FIXME: Simplify this by having expandwildcards() return mdir as a single arg
-	if (!count) {
+		if (glob) count = expandwildcards(*argv, MAXARGS, myargv);
+		if (!count) {
 #endif
-		// Assume argument is a dir, FIXME when we support multiple args.
-	    	dir = opendir(mdir); 	/* test for existence */
-    		if (!dir) {
-    			printf("Directory not found: %s\n", mdir);
-    			return -1;
-    		} 
-		*iobuf = '\0';
-		// If no wildcards, we're assuming the parameter is a directory.
-		// This is nonstandard. The normal is to not accept a directory and
-		// expect a series of filename arguments when globbing is off.
-
-		// FIXME: The test for directories may be superfluous, let do_put handle it.
-		while ((dp = readdir(dir)) != NULL) {
-			stat(dp->d_name, &buf);
-			if ((*dp->d_name != '.') && !S_ISDIR(buf.st_mode) && (l = ask("mput", dp->d_name)) == 0) {
-				if (do_put(controlfd, dp->d_name, "", mode) < 0) break;
-				filecount++;
+	    	dir = opendir(*argv); 	/* Accept 1st level directories */ 
+    		if (dir) {
+			*iobuf = '\0';
+			while ((dp = readdir(dir)) != NULL) {
+				l = 0;
+				stat(dp->d_name, &buf);
+				if ((*dp->d_name != '.') && !S_ISDIR(buf.st_mode) && (l = ask("mput", dp->d_name)) == 0) {
+					if (do_put(controlfd, dp->d_name, NULL, mode) < 0) break;
+					filecount++;
+				}
+				if (l < 0) break;
 			}
-			if (l < 0) break;
+			closedir(dir); 
+		} else {	// may be just a plain file
+			if (access(*argv, F_OK) == 0)
+				if (do_put(controlfd, *argv, NULL, mode) > 0) filecount++;
 		}
-		closedir(dir); 
 #ifdef GLOB
-	} else { 	/* wildcard list */
-		for (i = 0; i < count; i++) {
-			if ((l = ask("mput", myargv[i])) == 0 ) {
-				if (do_put(controlfd, myargv[i], "", mode) < 0) break;
-				filecount++;
+		} else { 	/* wildcard list */
+			for (i = 0; i < count; i++) {
+				if ((l = ask("mput", myargv[i])) == 0 ) {
+					//FIXME: Test for directories - like above??
+					if (do_put(controlfd, myargv[i], NULL, mode) < 0) break;
+					filecount++;
+				}
+				if (l < 0) break;
 			}
-			if (l < 0) break;
-		}
-	} 
-	freewildcards();
+		} 
+		freewildcards();
 #endif
+		argv++;
+	}
 	printf("mput: %d files transferred.\n", filecount);
 	return 1;
 }
 
-int do_mget(int controlfd, char *rdir, int mode) {
+int do_mget(int controlfd, char **argv, int mode) {
 	char lbuf[NLSTBUF+1];
 	char *name, *next = NULL;
 	int n, l, filecount = 0;
 
 	bzero(lbuf, NLSTBUF);
-	if (!glob) {
-		printf("Globbing is off and multiple arguments are not supported.\nmget will return a single file.\n");
-		name = rdir;
-	} else {
-		if (do_nlst(controlfd, lbuf, NLSTBUF, rdir, mode) < 1) 
+	//if (!glob) {
+		//printf("Globbing is off and multiple arguments are not supported.\nmget will return a single file.\n");
+		//name = rdir;
+	//} else {
+	argv++;			// move past command
+	while (*argv) {
+		if (do_nlst(controlfd, lbuf, NLSTBUF, *argv, mode) < 1) 
 			return -1;
-		name = lbuf;
-		*(next = strchr(lbuf, '\r')) = '\0';
-	}
-	while (name != NULL) {
-		if ((l = ask("mget", name)) == -1) break;
-		next += 2;
-		if (!l) {
-			//if (prompt == FALSE) printf("remote: %s, local: %s\n", name, name);
-			if ((n = do_get(controlfd, name, "", mode)) < -1) 
-				break;	// Error -2 is fatal, -1 = this file failed.
-			if (n > 0) filecount++;
+		if (!strlen(lbuf)) {
+			printf("%s: not found\n", *argv++);
+			continue;
 		}
-		if (!glob) break;	// FIXME: when multiple args supported
-		name = next;
-		next = strchr(next, '\r');
-		if (next == NULL) break;
-		*next = '\0';
+		name = lbuf;
+		printf("from nlst: %d\n", strlen(lbuf));
+		*(next = strchr(lbuf, '\r')) = '\0';
+		while (name != NULL) {
+			if ((l = ask("mget", name)) == -1) break;
+			next += 2;
+			if (!l) {
+				if ((n = do_get(controlfd, name, NULL, mode)) < -1) 
+					break;	// Error -2 is fatal, -1 = this file failed.
+				if (n > 0) filecount++;
+			}
+			name = next;
+			next = strchr(next, '\r');
+			if (next == NULL) break;
+			*next = '\0';
+		}
+		if (l == -1) break;
+		argv++;
 	}
 	if (filecount > 1) printf("mget: %d files transferred.\n", filecount);
 	return 1;
@@ -885,9 +924,10 @@ void settype(int controlfd, char t) {
 int connect_cmd(char *ip, unsigned int server_port) {
 	struct sockaddr_in servaddr;
 	int controlfd;
+	unsigned int myport;
 
 	if ((controlfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		perror("socket error");
+		printf("Can't open socket - check if ktcp is running.\n");
 		return -1;
 	}
 	//printf("CMD socket OK.\n");
@@ -901,16 +941,36 @@ int connect_cmd(char *ip, unsigned int server_port) {
 		perror("bind");
 		return -2;
 	}
+	get_ip_port(controlfd, myip, &myport);
+	if (debug > 2) printf("BIND: I am %s:%u\n", myip, myport);
 
 	bzero(&servaddr, sizeof(servaddr));
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_port   = htons(server_port);
-	servaddr.sin_addr.s_addr = in_aton(ip);	
-
-	if (debug > 1) printf("Connecting to %s @ port %u\n", ip, server_port);
-	if (connect(controlfd, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
-		perror("connect error");
+	if (isalpha(*ip))
+		servaddr.sin_addr.s_addr = in_gethostbyname(ip);	
+	else
+		servaddr.sin_addr.s_addr = in_aton(ip);	
+	if (servaddr.sin_addr.s_addr == 0 ) {
+		printf("Host name not found.\n");
 		return -1;
+	}
+#ifdef QEMUHACK
+	if (qemu) {
+		long madr = in_aton(myip);
+		long loopback = in_aton("127.0.0.1");
+		if ((servaddr.sin_addr.s_addr == loopback) || (servaddr.sin_addr.s_addr == madr)) {
+			printf("loopback detected, disabling QEMU mode.\n");
+			qemu = 0;
+			servaddr.sin_addr.s_addr = madr;
+		}
+	}
+#endif
+
+	if (debug > 1) printf("Connecting to %s @ port %u\n", in_ntoa(servaddr.sin_addr.s_addr), server_port);
+	if (connect(controlfd, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
+		perror("Connect failed");
+		controlfd = -1;
 	}
 	return controlfd;
 }
@@ -923,20 +983,33 @@ void do_close(int controlfd, char *str, int len) {
 			sprintf(str, "Server timed out.\n");
 		printf("Closing: %s", str);
 	}
+	fclose(fcmd);
 	return;
 }
 
 int do_login(char *user, char *passwd, char *buffer, int len, char *ip, unsigned int port) {
-	char localbf[50], *lip;
+	char localbf[50], *lip, *cp;
 	int controlfd = -1;
 
+#ifdef QEMUHACK
+	// QEMU mode - must be repeated on every login, since a loopback connection will temporarily
+	// disable QEMU mode.
+	if ((cp = getenv("QEMU")) != NULL) {	/* Enable QEMU hack from environment */
+		qemu = atoi(cp);
+		printf("QEMU set to %d\n", qemu);
+		if (qemu) debug++;      //FIXME: Temporary - for debugging
+	}
+#endif
 	lip = ip;
 	if (*lip == '\0') {	/* ask for server address */
-		printf("Connect to: ");	//FIXME: must be able to specify port # too 
+		printf("Connect to: ");	
 		lip = gets(localbf);
 		if (!lip) return -1;
-		strcpy(ip, lip);
-	}
+		ip = strtok(lip, " ");
+		cp = strtok(NULL, " ");
+		if (cp) port = atoi(cp);
+		//printf("ip %s, port %u\n", ip, port);
+	} 
 	if ((controlfd = connect_cmd(ip, port)) < 0)
 		return -1;
 	printf("Connected to %s.\n", ip);
@@ -947,7 +1020,6 @@ int do_login(char *user, char *passwd, char *buffer, int len, char *ip, unsigned
 
 	/* Do the login process */
 
-	//printf("name '%s', pw '%s'\n", user, passwd);
 	printf("Name (%s:%s): ", ip, user);
 	if (strlen(gets(localbf)) > 2) strcpy(user, localbf); /* no boundary checking */
 	sprintf(buffer, "USER %s\r\n", user);
@@ -972,7 +1044,6 @@ int do_login(char *user, char *passwd, char *buffer, int len, char *ip, unsigned
 		printf("Login failed: %s", buffer);
 		return -1;
 	}
-	//printf("\nLogin OK.\n");
 	send_cmd(controlfd, "SYST\r\n");
 	get_reply(controlfd, buffer, len, 1);
 	if (strstr(buffer, "UNIX")) {
@@ -982,16 +1053,20 @@ int do_login(char *user, char *passwd, char *buffer, int len, char *ip, unsigned
 	return controlfd;
 }
 
+void parm_err(void) {
+	printf("Command needs parameter.\n");
+}
+
 int main(int argc, char **argv) {
 
-	int server_port = 21, controlfd = -1, datafd, code, connected = 0;
+	int server_port = DFLT_PORT, controlfd = -1, datafd, code, connected = 0;
 	int mode = PASV, mput, mget, f_mode, autologin = 1;
-	char command[BUF_SIZE], ip[ADDRBUF], str[IOBUFLEN+1], user[30], passwd[30];
-	char param[MAXPATHLEN];
+	char command[BUF_SIZE], str[IOBUFLEN+1], user[30], passwd[30];
+	char *param[MAXPARMS];
 
 	strcpy(user, "ftp");
 	*passwd = '\0';
-	*ip = '\0';
+	*srvr_ip = '\0';
 
 	while (argc > 1) {
 		argc--;
@@ -1022,6 +1097,11 @@ int main(int argc, char **argv) {
 				prompt = FALSE;
 				break;
 #endif
+#ifdef QEMUHACK
+			case 'q':
+				qemu++;
+				break;
+#endif
 			default:
 				printf("Error in arguments.\n");
 				exit(-1);
@@ -1029,54 +1109,75 @@ int main(int argc, char **argv) {
 			argv++;
 			argc--;
 		} else {
-			if (strchr(*argv, '.') != 0) strcat(ip, *argv);
-			else server_port = atoi(*argv);
+			if ((strchr(*argv, '.') != 0) && (isdigit((int)**argv))) 
+				strcpy(srvr_ip, *argv); 		//numeric ip
+			else if (isalpha((int)**argv))
+				strcat(srvr_ip, in_ntoa(in_gethostbyname(*argv)));
+			else 
+				server_port = atoi(*argv);
 		}
 	}
-	if (*ip == '\0') {
-		autologin = 0;
+	
+	if (*srvr_ip == '\0') {
+		autologin = 0;	// Don't attempt autologin unless there is a server name/address on the cmd line
 	}
+	if ((debug > 2) && (*srvr_ip != '\0')) 
+		printf("cmd line: ip %s port %u %s\n", srvr_ip, server_port, (server_port == DFLT_PORT)? "(default)" : ""); 
 
 	if (autologin) {
-		if ((controlfd = do_login(user, passwd, command, sizeof(command), ip, server_port)) > 0)
+		if ((controlfd = do_login(user, passwd, command, sizeof(command), srvr_ip, server_port)) > 0)
 			connected++;
 	}
 	bzero(command, BUF_SIZE);
+	//signal(SIGALRM, sig_handler);
 
 	while(1) {
 		mput = 0; mget = 0;
 		f_mode = R_OK;
-		if ((code = get_cmd(command, sizeof(command))) < 0) break; /* got EOF */
-		
+		//alarm(ALRMINTVL);
+		if ((code = get_cmd(command, sizeof(command), param)) < 0) break; /* got EOF */
+		if (check_connected) {
+			connected = is_connected(controlfd);
+			check_connected = 0;
+		}
+		//alarm(0);
+
 		// prequalify commands so we don't have to do mode checking on every command
 		if (!connected && (code > CMD_NOCONNECT) && (code < CMD_CONNECT)) {
 			printf("Not connected.\n");
 			continue;
 		}
+
 		switch (code) {
 
 		case CMD_OPEN:
-			if (connected) {	// already connected, check with NOOP
-				send_cmd(controlfd, "NOOP\r\n");
-				if (get_reply(controlfd, str, IOBUFLEN, 1) < 0) {
+			if (connected) {
+				if (is_connected(controlfd) < 0) {
 					printf("Server has gone away, closing connection.\n");
 					close(controlfd);
 					connected = 0;
 				} else {
-					printf("Already connected to %s, use close first.\n", ip);
+					printf("Already connected to %s, use close first.\n", srvr_ip);
 					break;
 				}
 			}
-			if (get_parm(command, param) > 0) strcpy(ip, param);
-			if ((controlfd = do_login(user, passwd, str, sizeof(str), ip, server_port)) < 0) 
-				printf("Login failed, connection closed.\n");
-			else
+			if (param[1]) {
+				strcpy(srvr_ip, param[1]);
+				server_port = DFLT_PORT;
+				if (param[2])
+					server_port = atoi(param[2]);
+			}
+			if ((controlfd = do_login(user, passwd, str, sizeof(str), srvr_ip, server_port)) < 0) {
+				printf("Login failed.\n");
+				server_port = DFLT_PORT;
+			} else
 				connected++;
 			break;
 
 		case CMD_CLOSE:
 			do_close(controlfd, str, sizeof(str));
 			connected = 0;
+			server_port = DFLT_PORT;
 			break;
 
 		case CMD_MPUT:
@@ -1085,11 +1186,16 @@ int main(int argc, char **argv) {
 			/* fall thru */
 
 		case CMD_PUT:
-			if (get_parm(command, param) < 0) break;
+			if (!param[1]) {
+				//FIXME: Should ask for file names interactrively 
+				parm_err();
+				break;
+			}
 #ifndef GLOB
-			if (*param == '*') *param = '.';  /* No globbing, full directory transfer */
-			if (access(param, f_mode) < 0) {
-				perror(param);
+			char name = param[1];
+			if (*name == '*') *name = '.';  /* No globbing, full directory transfer */
+			if (access(name, f_mode) < 0) {
+				perror(name);
 				break;
 			}
 #else
@@ -1098,7 +1204,7 @@ int main(int argc, char **argv) {
 			if (mput)
 				do_mput(controlfd, param, mode);
 			else 
-				do_put(controlfd, param, "", mode);
+				do_put(controlfd, param[1], param[2], mode);
 			break;
 
 
@@ -1107,12 +1213,14 @@ int main(int argc, char **argv) {
 			/* fall thru */
 
 		case CMD_GET:
-			if (get_parm(command, param) < 0) break;
-			if (mget) {
-				if (do_mget(controlfd, param, mode) < 0) 
-					printf("MGET error.\n");
-			} else 
-				do_get(controlfd, param, "", mode);
+			if (!param[1]) {
+				parm_err();
+				break;
+			}
+			if (mget)
+				do_mget(controlfd, param, mode);
+			else 
+				do_get(controlfd, param[1], param[2], mode);
 			break;
 
 		case CMD_DIR:
@@ -1123,19 +1231,19 @@ int main(int argc, char **argv) {
 			else
 #endif
 				datafd = do_passive(controlfd);
-			if (datafd > 0)
-				if (do_ls(controlfd, datafd, command, mode) < 0) {
-					printf("DIR error\n");
+			if (datafd > 0) {
+				if (do_ls(controlfd, datafd, param, mode) < 0) {
+					check_connected++;
 				}
-			close(datafd);
+			} else check_connected++;
 			break;
 
 		case CMD_CWD:
-			if (get_parm(command, param) < 0) {
-				printf("Command needs parameter.\n");
+			if (!param[1]) {
+				parm_err();		// FIXME: No arg - return to home dir
 				break;
 			}
-			sprintf(str, "CWD %s\r\n", param);
+			sprintf(str, "CWD %s\r\n", param[1]);
 			send_cmd(controlfd, str);
 			get_reply(controlfd, command, BUF_SIZE, 0);
 			break;
@@ -1156,21 +1264,21 @@ int main(int argc, char **argv) {
 			break;
 			
 		case CMD_DELE:
-			if (get_parm(command, param) < 0) {
-				printf("Command needs parameter.\n");
+			if (!param[1]) {
+				parm_err();
 				break;
 			}
-			sprintf(str, "DELE %s\r\n", param);
+			sprintf(str, "DELE %s\r\n", param[1]);
 			send_cmd(controlfd, str);
 			get_reply(controlfd, command, BUF_SIZE, 0);
 			break;
 
 		case CMD_MKD:
-			if (get_parm(command, param) < 0) {
-				printf("Command needs parameter.\n");
+			if (!param[1]) {
+				parm_err();
 				break;
 			}
-			sprintf(str, "MKD %s\r\n", param);
+			sprintf(str, "MKD %s\r\n", param[1]);
 			send_cmd(controlfd, str);
 			get_reply(controlfd, command, BUF_SIZE, 0);
 			break;
@@ -1180,16 +1288,11 @@ int main(int argc, char **argv) {
 			break;
 
 		case CMD_LCWD:
-			if (get_parm(command, param) < 0) {
-				printf("Command needs parameter.\n");
-				break;
+			if (param[1]) {
+				if (chdir(param[1]) < 0)
+					perror(param[1]);
 			}
-			if (chdir(param) < 0) {
-				perror(param);
-			} else {
-				getcwd(str, IOBUFLEN);
-				printf("local directory now %s\n", str);
-			}
+			printf("Local directory: %s\n", getcwd(str, IOBUFLEN));
 			break;
 			
 		case CMD_VERB:
@@ -1204,9 +1307,9 @@ int main(int argc, char **argv) {
 
 
 		case CMD_STATUS:
-			// include the server ID line here
+			if (is_connected(controlfd) < 0) connected = 0;
 			if (connected) {
-				printf("Connected to %s [port %d] as user %s\n", ip, server_port, user);
+				printf("Connected to %s [port %d] as user %s\n", srvr_ip, server_port, user);
 				send_cmd(controlfd, "SYST\r\n");
 				get_reply(controlfd, str, sizeof(str), 10);
 				printf("Remote system: %s", &str[4]);
@@ -1218,7 +1321,7 @@ int main(int argc, char **argv) {
 			printf("Transfer mode: %s\n", (mode == PASV) ? "passive" : "active");
 			printf("File mode: %s\n", (type == ASCII) ? "ASCII" : "IMAGE");
 			printf("Multifile prompting is %s\n", prompt ? "on" : "off");
-			// add file count, byte count etc. later.
+			// add statistics - file count, byte count etc. - later.
 			printf("\n");
 			break;
 
@@ -1261,14 +1364,14 @@ int main(int argc, char **argv) {
 			break;
 
 		case CMD_DEBUG:
-			if (get_parm(command, param) < 0)
+			if (!param[1])
 				debug++;
 			else {
-				if (isdigit(*param))
-					debug = atoi(param);
+				if (isdigit(*param[1]))
+					debug = atoi(param[1]);
 				else {
-					if (!strcmp(param, "off")) debug = 0;
-					else printf("Illegal parameter.\n");
+					if (!strcmp(param[1], "off")) debug = 0;
+					else printf("Illegal parameter: %s\n", param[1]);
 				}
 			}
 			if (debug) printf("Debug is on (%d).\n", debug);

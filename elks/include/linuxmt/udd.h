@@ -14,13 +14,13 @@
 
 #include <linuxmt/fs.h>
 
-#define MAX_UDD	8
-#define MAX_UDR	32
+#define MAX_UDD	1 /* FIXME only 1 UDD until device passed to request_fn*/
+#define MAX_UDR	8
 
 struct ud_driver {
     int udd_type;
     int udd_major;
-    struct task *udd_task;
+    struct task_struct *udd_task;
     char *udd_data;
     struct ud_request *udd_req;
     struct wait_queue udd_wait;
@@ -37,7 +37,7 @@ struct ud_driver {
 struct ud_driver_trunc {
     int udd_type;
     int udd_major;
-    struct task *udd_task;
+    struct task_struct *udd_task;
     char *udd_data;
 };
 
