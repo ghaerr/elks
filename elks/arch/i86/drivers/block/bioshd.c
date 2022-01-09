@@ -66,11 +66,11 @@
 #include "blk.h"
 
 #ifdef CONFIG_ARCH_IBMPC
-#define MAXDRIVES	2
+#define MAXDRIVES	2	/* max floppy drives*/
 #endif
 
 #ifdef CONFIG_ARCH_PC98
-#define MAXDRIVES	4
+#define MAXDRIVES	4	/* max floppy drives*/
 #endif
 
 /* comment out following line for single-line drive info summary*/
@@ -600,7 +600,11 @@ int INITPROC bioshd_init(void)
 	for (count = 0; count < PRINT_DRIVE_INFO; count++, drivep++) {
 	    if (drivep->heads != 0) {
 		char *unit = UNITS;
-		__u32 size = ((__u32) drivep->sectors) * 5 /* 0.1 kB units */;
+#ifdef CONFIG_IMG_FD1232
+		__u32 size = ((__u32) drivep->sectors) * 10;	/* 0.1 kB units */
+#else
+		__u32 size = ((__u32) drivep->sectors) * 5;	/* 0.1 kB units */
+#endif
 
 		size *= ((__u32) drivep->cylinders) * drivep->heads;
 
@@ -613,7 +617,7 @@ int INITPROC bioshd_init(void)
 		}
 		debug("DBG: Size = %lu (%X/%X)\n",size,*unit,unit[1]);
 		printk("/dev/%cd%c: %d cylinders, %d heads, %d sectors = %lu.%u %cb\n",
-		    (count < 2 ? 'h' : 'f'), (count % 2) + (count < 2 ? 'a' : '0'),
+		    (count < 4 ? 'h' : 'f'), (count & 3) + (count < 4 ? 'a' : '0'),
 		    drivep->cylinders, drivep->heads, drivep->sectors,
 		    (size/10), (int) (size%10), *unit);
 	    }
