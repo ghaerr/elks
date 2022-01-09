@@ -2,6 +2,10 @@
  * Minimal FTP server for ELKS
  * November 2021 by Helge Skrivervik - helge@skrivervik.com
  *
+ * TODO:
+ *	- Add timeout
+ *	- Add ABORT support
+ *
  */
 
 #include	<time.h>
@@ -90,6 +94,32 @@ enum {
 	CMD_CLOSE
 };
 
+struct cmd_tab {
+	char *cmd;
+	int value;
+	//char *hlp;
+};
+
+struct cmd_tab cmdtab[] = {
+	{"LIST", CMD_LIST},
+	{"RETR", CMD_RETR},
+	{"STOR", CMD_STOR},
+	{"ABOR", CMD_ABOR},
+	{"SYST", CMD_SYST},
+	{"QUIT", CMD_QUIT},
+	{"PASV", CMD_PASV},
+	{"PORT", CMD_PORT},
+	{"TYPE", CMD_TYPE},
+	{"DELE", CMD_DELE},
+	{"NLST", CMD_NLST},
+	{"NOOP", CMD_NOOP},
+	{"PWD", CMD_PWD},
+	{"CWD", CMD_CWD},
+	{"MKD", CMD_MKD},
+	{"RMD", CMD_RMD},
+	{"", CMD_UNKNOWN}
+};
+
 static int debug = 0;
 static int qemu = 0;
 static char real_ip[20];
@@ -148,28 +178,25 @@ void net_close(int fd, int errflag) {
 	close(fd);
 }
 
-int get_client_ip_port(char *str, char *client_ip, unsigned int *client_port){
-	char *n1, *n2, *n3, *n4, *n5, *n6;
-	int x5, x6;
+int get_client_ip_port(char *str, char *client_ip, unsigned int *client_port) {
+	char *n[6];
+	int p5 = 0, p6;
 
-	strtok(str, " ");
-	n1 = strtok(NULL, ",");
-	n2 = strtok(NULL, ",");
-	n3 = strtok(NULL, ",");
-	n4 = strtok(NULL, ",");
-	n5 = strtok(NULL, ",");
-	n6 = strtok(NULL, ",");
+	// Sample PORT CMD: 'PORT 10,0,2,2,211,37'
+	if (strtok(str, " ") == NULL) 
+		return -1;
+	while (p5 < 6)
+		n[p5++] = strtok(NULL, ",");
 
-	sprintf(client_ip, "%s.%s.%s.%s", n1, n2, n3, n4);
-
-	x5 = atoi(n5);
-	x6 = atoi(n6);
-	*client_port = (256*x5)+x6;
+	sprintf(client_ip, "%s.%s.%s.%s", n[0], n[1], n[2], n[3]);
+	p5 = atoi(n[4]);
+	p6 = atoi(n[5]);
+	*client_port = (256 * p5) + p6;
 
 	return 1;
 }
 
-int setup_data_connection(char *client_ip, unsigned int client_port, int server_port){
+int do_active(char *client_ip, unsigned int client_port, unsigned int server_port) {
 	
 	struct sockaddr_in cliaddr, tempaddr;
 	int fd, sockwait = 0;
@@ -188,8 +215,7 @@ int setup_data_connection(char *client_ip, unsigned int client_port, int server_
 		return -1;
 	}
 #endif
-
-	/* bind port for data connection to be server port - 1 using a temporary struct sockaddr_in */
+	/* port for data connection is server_port-1 - usually 20 */
 	bzero(&tempaddr, sizeof(tempaddr));
 	tempaddr.sin_family = AF_INET;
 	tempaddr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -209,6 +235,7 @@ int setup_data_connection(char *client_ip, unsigned int client_port, int server_
 
 	if (qemu) ip = real_ip;		/* for QEMU hack, use this IP instead of 
 					 * the one sent by the client. */
+	//printf("DEBUG: connect to (real) %s/%u\n", ip, client_port);
 	cliaddr.sin_family = AF_INET;
 	cliaddr.sin_port = htons(client_port);
 	cliaddr.sin_addr.s_addr = in_aton(ip);
@@ -221,44 +248,30 @@ int setup_data_connection(char *client_ip, unsigned int client_port, int server_
 	return fd;
 }
 
-int get_filename(char *input, char *fileptr){
+int get_param(char *input, char *fileptr) {
 
-	char *filename = NULL;
+	char *param;
 
-	filename = strtok(input, " ");
-	filename = strtok(NULL, " \r\n");
-	//printf("get_filename: filename=<%s>\n", filename);
+	param = strtok(input, " ");
+	param = strtok(NULL, " \r\n");
 	
-	if (filename == NULL) {
+	if (param == NULL)
         	return -1;
-	} else {
-    		strncpy(fileptr, filename, strlen(filename));
-    		return 1;
-    }
+
+    	strncpy(fileptr, param, strlen(param));
+    	return 1;
 }
 
-int get_command(char *command){
+int get_command(char *cmdline) {
+	struct cmd_tab *c = cmdtab;
 
-	int value = 0;
-
-	// FIXME - there are far more elegant ways of doing this!
-	if (strncmp(command, "LIST", 4) == 0)	  {value = CMD_LIST;}
-	else if (strncmp(command, "RETR", 4) == 0) {value = CMD_RETR;}
-	else if (strncmp(command, "STOR", 4) == 0) {value = CMD_STOR;}
-	else if (strncmp(command, "ABOR", 4) == 0) {value = CMD_ABOR;}
-	else if (strncmp(command, "SYST", 4) == 0) {value = CMD_SYST;}
-	else if (strncmp(command, "QUIT", 4) == 0) {value = CMD_QUIT;}
-	else if (strncmp(command, "PASV", 4) == 0) {value = CMD_PASV;}
-	else if (strncmp(command, "PORT", 4) == 0) {value = CMD_PORT;}
-	else if (strncmp(command, "TYPE", 4) == 0) {value = CMD_TYPE;}
-	else if (strncmp(command, "DELE", 4) == 0) {value = CMD_DELE;}
-	else if (strncmp(command, "NLST", 4) == 0) {value = CMD_NLST;}
-	else if (strncmp(command, "PWD", 3) == 0) {value = CMD_PWD;}
-	else if (strncmp(command, "CWD", 3) == 0) {value = CMD_CWD;}
-	else if (strncmp(command, "MKD", 3) == 0) {value = CMD_MKD;}
-	else if (strncmp(command, "RMD", 3) == 0) {value = CMD_RMD;}
-	else value = CMD_UNKNOWN;
-	return value;
+	while (*c->cmd != '\0') {
+		//printf("<%s> ", c->cmd);
+		if (!strncmp(cmdline, c->cmd, strlen(c->cmd)))
+                        return c->value;
+                c++;
+        }
+        return CMD_UNKNOWN;
 }
 
 /* For now - 'fake' login processing - always returns OK */
@@ -269,13 +282,14 @@ int get_command(char *command){
 int do_login(int controlfd) {
 	char buf[200];
 
-	if(read(controlfd, buf, 200) < 0)
+	if (read(controlfd, buf, 200) < 0)
 		return -1;
+	clean(buf);
 	if (strncmp(buf, "USER", 4)) 
 		return -1;
 	send_reply(controlfd, 331, "User OK");
 
-	if(read(controlfd, buf, 200) < 0)
+	if (read(controlfd, buf, 200) < 0)
 		return -1;
 	if (strncmp(buf, "PASS", 4)) 
 		return -1;
@@ -298,7 +312,7 @@ int do_list(int controlfd, int datafd, char *input) {
 		nlst++;
 		str = "125 List started OK.\r\n";
 	}
-	if (get_filename(input, iobuf) > 0) {
+	if (get_param(input, iobuf) > 0) {
 		trim(iobuf);
 		sprintf(cmd_buf, "/bin/ls -l %s", iobuf);
 	} else {
@@ -306,12 +320,11 @@ int do_list(int controlfd, int datafd, char *input) {
 		strcat(cmd_buf, "/bin/ls -l");
 	}
 
-	//FIXME: Need to split LIST and NLST processing - this is messy
+	//FIXME: Should split LIST and NLST processing - this is messy
 #ifdef GLOB
 	glob++;
 #endif
 
-	if (debug) printf("LIST/NDIR: '%s' fd %d\n", cmd_buf, datafd);
 	if (!glob) {
     		dir = opendir(iobuf); 	/* test for existence */
     		if (!dir) {
@@ -321,7 +334,7 @@ int do_list(int controlfd, int datafd, char *input) {
 	}
     	write(controlfd, str, strlen(str));
 
-	/* NLST processing, a list of names, one per line */
+	/* NLST processing, send a list of names, one per line */
 	if (nlst) {
 		len = 0;
 #ifdef GLOB
@@ -329,7 +342,14 @@ int do_list(int controlfd, int datafd, char *input) {
 		int i = 0, count;
 
 		count = expandwildcards(iobuf, MAXARGS, myargv);
-		*iobuf = '\0';
+		if (!count) {	// may be a plain file, which is ok to return.
+			if (access(iobuf, F_OK) == 0) {
+				strcat(iobuf, "\r\n");
+				len = strlen(iobuf);
+			}
+		} else
+			*iobuf = '\0';
+		if (debug > 1) printf("ftpd: nlst %s got %d\n", iobuf, count);
 		while (i < count) {
 			if (len + strlen(myargv[i] + 3) < IOBUFSIZ) {
 				strcat(iobuf, myargv[i]);
@@ -360,14 +380,11 @@ int do_list(int controlfd, int datafd, char *input) {
 				}
 			}
 		}
-		closedir(dir); 
 #endif
+		if (!glob) closedir(dir); 
 		if (len) {
 			write(datafd, iobuf, strlen(iobuf));
-			if (debug) {
-				printf("NLST <%s>\n", iobuf);
-				//write(1, iobuf, strlen(iobuf));
-			}
+			if (debug) printf("NLST <%s>\n", iobuf);
 		}
 		close(datafd);
 		return 2;
@@ -404,7 +421,7 @@ int do_list(int controlfd, int datafd, char *input) {
 /* Passive mode: Server listens for incoming data connection */
 int do_pasv(int controlfd, int *datafd) {
 	int fd;
-	unsigned int i = 1, port = PASV_PORT;
+	unsigned int i = 1, port = 0;
 	struct sockaddr_in pasv;
 	char *p, *a;
 	char str[100], *pasv_err = "425 Can't open passive connection.\r\n";
@@ -423,6 +440,7 @@ int do_pasv(int controlfd, int *datafd) {
 
 	pasv.sin_family = AF_INET;
 	pasv.sin_addr.s_addr = htonl(INADDR_ANY);
+	if (qemu) port = PASV_PORT;	// Force predictable port #
 	pasv.sin_port = htons(port);
 	i = 0;
 	while (bind(fd, (struct sockaddr *)&pasv, sizeof(pasv)) < 0) {
@@ -436,9 +454,8 @@ int do_pasv(int controlfd, int *datafd) {
 			return -1;
 		} 
 		port++;
-		if (qemu) {
+		if (qemu) 
 			if (port >= (PASV_PORT + 9)) port = PASV_PORT;
-		}
     		pasv.sin_port = htons(port);
 	}
 	i = sizeof(pasv);
@@ -449,7 +466,7 @@ int do_pasv(int controlfd, int *datafd) {
 	if (debug) printf("getsockname: adr %s, port %u\n", in_ntoa(pasv.sin_addr.s_addr), ntohs(pasv.sin_port));
 	if (listen(fd, 1) < 0) {
     		write(controlfd, pasv_err, strlen(pasv_err));
-		if (debug) printf("PASV: Listen failed.\n");
+		if (debug) perror("PASV");
 		close(fd);
 		return -1;
 	}
@@ -475,7 +492,8 @@ int do_pasv(int controlfd, int *datafd) {
 		return -1;
 	}
 	close(fd);
-	if (debug) printf("Accepted connection from %s/%u on fd %d\n", in_ntoa(pasv.sin_addr.s_addr), ntohs(pasv.sin_port), *datafd);
+	if (debug) 
+		printf("Accepted connection from %s/%u on fd %d\n", in_ntoa(pasv.sin_addr.s_addr), ntohs(pasv.sin_port), *datafd);
 
 	return 0;
 }
@@ -488,16 +506,16 @@ int do_retr(int controlfd, int datafd, char *input){
 	bzero(cmd_buf, sizeof(cmd_buf));
 	bzero(iobuf, sizeof(iobuf));
 
-	if (get_filename(input, cmd_buf) > 0) {
+	if (get_param(input, cmd_buf) > 0) {
 		trim(cmd_buf);
-		if (debug) printf("RETR: <%s> fd %d\n", cmd_buf, datafd);
+		if (debug > 1) printf("RETR: <%s> fd %d\n", cmd_buf, datafd);
 		if ((fd = open(cmd_buf, O_RDONLY)) > 0 ) {
 			fstat(fd, &fst);
 			sprintf(iobuf, "150 Opening BINARY data connection for %s (%ld bytes).\r\n", cmd_buf, fst.st_size);
 			write(controlfd, iobuf, strlen(iobuf));
 			while ((len = read(fd, iobuf, sizeof(iobuf))) > 0) 
 				if (write(datafd, iobuf, len) != len) {
-					printf("RETR error fd %d len %d\n", datafd, len);
+					//printf("RETR error fd %d len %d\n", datafd, len);
 					perror("Data write error"); 
 					break;
 				}
@@ -506,9 +524,8 @@ int do_retr(int controlfd, int datafd, char *input){
 			send_reply(controlfd, 550, "No such file or directory");
     			return -1;
 		}
-	} else {  /* FIXME: this part may not be required */
-		if (debug) printf("File not found: %s\n", cmd_buf);
-		send_reply(controlfd, 450, "Requested file action not taken.\r\nFilename Not Detected");
+	} else { 
+		if (debug) printf("RETR: Command needs parameter, no action.\n");
 		return -1;
 	}
 	return 1;
@@ -523,13 +540,13 @@ int do_stor(int controlfd, int datafd, char *input) {
 	bzero(iobuf, sizeof(iobuf));
 
 
-	if (get_filename(input, cmd_buf) < 0) {
-		if (debug) printf("No file specified.\n");
+	if (get_param(input, cmd_buf) < 0) {
+		//if (debug) printf("No file specified.\n");
 		send_reply(controlfd, 450, "Requested action not taken - no file");
 		return -1;
 	}
 
-	/* FIXME - need to query protection mode for the source file and use that */
+	/* FIXME - should query protection mode for the source file and use that */
 	//trim(cmd_buf);
 	if ((fp = open(cmd_buf, O_CREAT|O_RDWR|O_TRUNC, 0644)) < 1) {
 		perror("File create failure");
@@ -537,8 +554,8 @@ int do_stor(int controlfd, int datafd, char *input) {
 		return -1;
 	}
 
-	sprintf(iobuf, "150 Opening BINARY data connection for '%s'.\r\n", cmd_buf);
-	write(controlfd, iobuf, strlen(iobuf));
+	sprintf(iobuf, "Opening BINARY data connection for '%s'", cmd_buf);
+	send_reply(controlfd, 150, iobuf);
 	while ((n = read(datafd, iobuf, sizeof(iobuf))) > 0) {
 		if ((len = write(fp, iobuf, n)) != n) {
 			if (len < 0 )
@@ -561,8 +578,9 @@ void usage() {
 
 
 int main(int argc, char **argv) {
-	int listenfd, connfd, ret, port = FTP_PORT;
-	struct sockaddr_in servaddr;
+	int listenfd, connfd, ret;
+	unsigned int myport = FTP_PORT;
+	struct sockaddr_in servaddr, myaddr;
 	char *cp;
 
 	if (argc > 2) {	/* FIXME - improve parameter checking */
@@ -581,7 +599,7 @@ int main(int argc, char **argv) {
 			} else
 				usage(), exit(-1);
 		} else 
-			port = atoi(argv[0]);
+			myport = atoi(argv[0]);
 	}
 	if ((cp = getenv("QEMU")) != NULL) {
 		qemu = atoi(cp);
@@ -607,7 +625,7 @@ int main(int argc, char **argv) {
 	//bzero(&servaddr, sizeof(servaddr));
 	servaddr.sin_family      = AF_INET;
 	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-	servaddr.sin_port	= htons(port);
+	servaddr.sin_port	= htons(myport);
 	
 	if (bind(listenfd, (struct sockaddr*) &servaddr, sizeof(servaddr)) < 0 ) {
 		perror("Cannot bind socket");
@@ -617,6 +635,11 @@ int main(int argc, char **argv) {
 	if (listen(listenfd, 1) < 0 ) {
 		perror("Error in listen");
 		exit(3);
+	}
+	ret = sizeof(myaddr);	/* save my own address for later use */
+	if (getsockname(listenfd, (struct sockaddr *) &myaddr, (unsigned int *)&ret) < 0) {
+		perror("getsockname");
+		//return -1;
 	}
 	//if (debug) printf("ftpd running - debug on.\n");
 	if (debug < 2) {
@@ -639,12 +662,12 @@ int main(int argc, char **argv) {
 	ret = sizeof(client);
 	while (1) {
 		if ((connfd = accept(listenfd, (struct sockaddr *)&client, (unsigned int *)&ret)) < 0) {
-			perror("Accept error:");
+			perror("Accept error");
 			break;
 		}
 
 		waitpid(-1, NULL, WNOHANG);		/* reap previous accepts*/
-		if (debug) printf("Connnect from new client %s:%u.\n",
+		if (debug) printf("Accepted connection from %s:%u.\n",
 			in_ntoa(client.sin_addr.s_addr), ntohs(client.sin_port));
 
 		if ((ret = fork()) == -1)       /* handle new accept*/
@@ -662,12 +685,20 @@ int main(int argc, char **argv) {
 			char *complete = "226 Transfer Complete.\r\n";
 
 			strncpy(real_ip, in_ntoa(client.sin_addr.s_addr), 20); // Save for QEMU hack
-			if (debug) printf("Child running - cmd chan is %d.\n", connfd);
+			// Turn off qemu mode if we're talking to ourselves (loopback)
+			if (qemu && (myaddr.sin_addr.s_addr == client.sin_addr.s_addr)) {
+				if (debug) printf("Loopback detected, disabling qemu mode.\n");
+				qemu = 0; 
+			}
+			if (debug)
+				printf("local: %s, remote: %s, QEMU: %d\n", in_ntoa(myaddr.sin_addr.s_addr), real_ip, qemu);
+
 			send_reply(connfd, 220, "Welcome - ELKS minimal FTP server speaking");
 
 			/* standard housekeeping */
 			if (do_login(connfd) < 0) {
-				printf("Login failed, terminating session.\n");
+				printf("Login failed, closing session.\n");
+				close(connfd);
 				break;
 			}
 
@@ -678,7 +709,7 @@ int main(int argc, char **argv) {
 					break;
 				clean(command);
     				code = get_command(command);
-    				if (debug) printf("cmd: '%s' %d\n", command, code);
+    				//if (debug) printf("cmd: '%s' %d\n", command, code);
 
 				switch (code) {
 
@@ -687,8 +718,11 @@ int main(int argc, char **argv) {
 						close(datafd);
 						datafd = -1;
 					}
-    					get_client_ip_port(command, client_ip, &client_port);
-    					if ((datafd = setup_data_connection(client_ip, client_port, port)) < 0) {
+    					if (get_client_ip_port(command, client_ip, &client_port) < 0) {
+						printf("PORT cmd error.\n");
+						break;
+					}
+    					if ((datafd = do_active(client_ip, client_port, myport)) < 0) {
 						if (debug) printf("PORT command failed.\n");
 						datafd = -1;
 						send_reply(connfd, 425, "Can't open data connection");
@@ -771,7 +805,7 @@ int main(int argc, char **argv) {
 #ifdef BLOAT
 				case CMD_MKD:
 					bzero(namebuf, sizeof(namebuf));
-					if (get_filename(command, namebuf) < 0) {
+					if (get_param(command, namebuf) < 0) {
 						send_reply(connfd, 501, "Syntax error - MKDIR needs parameter");
 					} else {
 						trim(namebuf);
@@ -786,7 +820,7 @@ int main(int argc, char **argv) {
 
 				case CMD_RMD:
 					bzero(namebuf, sizeof(namebuf));
-					if (get_filename(command, namebuf) < 0) {
+					if (get_param(command, namebuf) < 0) {
 						send_reply(connfd, 501, "Syntax error - RMD needs parameter");
 					} else {
 						trim(namebuf);
@@ -800,7 +834,7 @@ int main(int argc, char **argv) {
 
 				case CMD_DELE:
 					bzero(namebuf, sizeof(namebuf));
-					if (get_filename(command, namebuf) < 0) {
+					if (get_param(command, namebuf) < 0) {
 						send_reply(connfd, 501, "Syntax error - DELE needs parameter");
 					} else {
 						trim(namebuf);
@@ -813,6 +847,11 @@ int main(int argc, char **argv) {
 					}
 					break;
 #endif
+				case CMD_NOOP:
+					sprintf(command, "200 Howdy.\r\n");
+		    			write(connfd, command, strlen(command));
+					break;
+
 				case CMD_PWD:
 					str = getcwd(namebuf, MAXPATHLEN); 
 					sprintf(command, "257 \"%s\" is current directory.\r\n", str);
@@ -822,7 +861,7 @@ int main(int argc, char **argv) {
 				case CMD_CWD:
 					/* FIXME: if no arg, change back to home dir */
 					bzero(namebuf, sizeof(namebuf));
-					if (get_filename(command, namebuf) < 0) {
+					if (get_param(command, namebuf) < 0) {
 						send_reply(connfd, 501, "Syntax error - CWD needs parameter");
 					} else {
 						trim(namebuf);
