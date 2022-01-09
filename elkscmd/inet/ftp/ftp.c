@@ -253,7 +253,7 @@ int send_cmd(int cmdfd, char *cmd) {
 /* Read and process user commands */
 
 int get_cmd(char *buffer, int len, char **argv) {
-	struct cmd_tab *c;
+	struct cmd_tab *c = cmdtab;
 	int cmdlen;
 	char *cmd;
 
@@ -270,7 +270,6 @@ int get_cmd(char *buffer, int len, char **argv) {
 	parse_cmd(buffer, argv);
 	cmd = *argv;
 	cmdlen = strlen(cmd);
-	c = cmdtab;
 
 	while (*c->cmd != '\0') {
 		//FIXME: Need to check command uniqueness @ 3 chars
@@ -295,7 +294,7 @@ int get_port_string(char *str, char *ip, int p0, int p1) {
 	return 1;
 }
 
-/* Decipher the PASV info from the server - oly called from do_passive() */
+/* Decipher the PASV info from the server - only called from do_passive() */
 
 int get_server_ip_port(char *str, char *server_ip, unsigned int *server_port) {
 	char *n[6];
@@ -868,10 +867,6 @@ int do_mget(int controlfd, char **argv, int mode) {
 	int n, l, filecount = 0;
 
 	bzero(lbuf, NLSTBUF);
-	//if (!glob) {
-		//printf("Globbing is off and multiple arguments are not supported.\nmget will return a single file.\n");
-		//name = rdir;
-	//} else {
 	argv++;			// move past command
 	while (*argv) {
 		if (do_nlst(controlfd, lbuf, NLSTBUF, *argv, mode) < 1) 
@@ -881,7 +876,6 @@ int do_mget(int controlfd, char **argv, int mode) {
 			continue;
 		}
 		name = lbuf;
-		printf("from nlst: %d\n", strlen(lbuf));
 		*(next = strchr(lbuf, '\r')) = '\0';
 		while (name != NULL) {
 			if ((l = ask("mget", name)) == -1) break;
