@@ -175,6 +175,15 @@ static unsigned short int INITPROC bioshd_gethdinfo(void) {
     int drive, ndrives = 0;
     register struct drive_infot *drivep = &drive_info[0];
 
+#ifdef CONFIG_ARCH_PC98
+    for (drive = 0; drive < NUM_DRIVES/2; drive++) {
+	BD_AX = BIOSHD_DRIVE_PARMS;
+	BD_DX = drive + 0x80;
+	BD_ES = BD_DI = BD_SI = 0;
+	if (!call_bios(&bdt))
+	    ndrives++;
+    }
+#else
     BD_AX = BIOSHD_DRIVE_PARMS;
     BD_DX = 0x80;		/* query hard drives only*/
     BD_ES = BD_DI = BD_SI = 0;	/* guard against BIOS bugs*/
@@ -182,6 +191,7 @@ static unsigned short int INITPROC bioshd_gethdinfo(void) {
 	ndrives = BD_DX & 0xff;
     else
 	debug_bios("bioshd: get_drive_parms fail on hd\n");
+#endif
     if (ndrives > NUM_DRIVES/2)
 	ndrives = NUM_DRIVES/2;
 
@@ -190,10 +200,16 @@ static unsigned short int INITPROC bioshd_gethdinfo(void) {
 	BD_DX = drive + 0x80;
 	BD_ES = BD_DI = BD_SI = 0;	/* guard against BIOS bugs*/
 	if (call_bios(&bdt) == 0) {
+#ifdef CONFIG_ARCH_PC98
+	    drivep->heads = BD_DX >> 8;
+	    drivep->sectors = BD_DX & 0xff;
+	    drivep->cylinders = BD_CX;
+#else
 	    drivep->heads = (BD_DX >> 8) + 1;
 	    drivep->sectors = BD_CX & 0x3f;
 	    /* NOTE: some BIOS may underreport cylinders by 1*/
 	    drivep->cylinders = (((BD_CX & 0xc0) << 2) | (BD_CX >> 8)) + 1;
+#endif
 	    drivep->fdtype = -1;
 	    printk("bioshd: hd%c BIOS CHS %d,%d,%d\n", 'a'+drive, drivep->cylinders,
 		drivep->heads, drivep->sectors);

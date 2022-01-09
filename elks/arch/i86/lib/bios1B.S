@@ -47,7 +47,9 @@ call_bios:
 
 //	Do a disk interrupt.
 
-	push %ax
+	cmp $0x84,%ah
+	jz sense
+
 	push %bx
 	push %cx
 	push %dx
@@ -57,6 +59,31 @@ call_bios:
 	xchg %ch,%dl     // sector number for PC_98
 	xchg %bx,%bp
 
+
+	push %ax
+	mov %ch,%al
+	and $0x80,%al
+	cmp $0x80,%al
+	jnz fd
+
+hd:
+	pop %ax
+	mov $0x200,%bx   // 512Bytes
+	cmp $2,%al
+	jnz ch_hd
+	shl %bx          // 1024Bytes
+ch_hd:
+	mov %ch,%al
+	and $0x0F,%al
+	or  $0xA0,%al    // Physical Device Address
+	push %dx
+	and $0xC0,%dl
+	mov %dl,%ch      // MSBits of cylinder number
+	pop %dx
+	jmp call_1B
+
+fd:
+	pop %ax
 #ifdef CONFIG_IMG_FD1232
 	mov $0x400,%bx   // 1024Bytes
 	mov %ch,%al
@@ -74,13 +101,23 @@ ch_1440:
 	or  $0x30,%al    // Physical Device Address
 	mov $0x02,%ch    // 512Bytes per sector
 #endif
+
+call_1B:
 	int $0x1B
 
 	pop %bp
 	pop %dx
 	pop %cx
 	pop %bx
-	pop %ax
+	jmp result
+
+sense:
+	mov %dl,%al
+	and $0x0F,%al
+	or  $0xA0,%al    // Physical Device Address
+	int $0x1B
+
+result:
 
 //	Now recover the results
 //	Make some breathing room

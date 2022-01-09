@@ -33,6 +33,7 @@
 #define BIOSHD_RESET		0x0300
 #define BIOSHD_WRITE		0xD500
 #define BIOSHD_READ		0xD600
+#define BIOSHD_DRIVE_PARMS	0x8400
 #else
 #define BIOSHD_INT		0x13
 #define BIOSHD_RESET		0x0000
