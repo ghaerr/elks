@@ -384,7 +384,7 @@ int do_list(int controlfd, int datafd, char *input) {
 		if (!glob) closedir(dir); 
 		if (len) {
 			write(datafd, iobuf, strlen(iobuf));
-			if (debug) printf("NLST <%s>\n", iobuf);
+			//if (debug) printf("NLST <%s>\n", iobuf);
 		}
 		close(datafd);
 		return 2;
