@@ -169,15 +169,14 @@ static void add_request(struct blk_dev_struct *dev, struct request *req)
 static void make_request(unsigned short major, int rw, struct buffer_head *bh)
 {
     struct request *req;
-    sector_t sector, count;
     int max_req;
 
     debug_blk("BLK %lu %s %lx:%x\n", bh->b_blocknr, rw==READ? "read": "write",
 	bh->b_seg, buffer_data(bh));
-    count = BLOCK_SIZE / SECTOR_SIZE;
-    sector = bh->b_blocknr * count;
 
 #ifdef BDEV_SIZE_CHK
+    sector_t count = BLOCK_SIZE / SECTOR_SIZE;	/* FIXME must move to lower level*/
+    sector_t sector = bh->b_blocknr * count;
     if (blk_size[major])
 	if (blk_size[major][MINOR(bh->b_dev)] < (sector + count) >> 1) {
 	    printk("attempt to access beyond end of device\n");
@@ -235,7 +234,7 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
 
     /* fill up the request-info, and add it to the queue */
     req->rq_cmd = (__u8) rw;
-    req->rq_sector = sector;
+    req->rq_blocknr = bh->b_blocknr;
     req->rq_seg = bh->b_seg;
     req->rq_buffer = buffer_data(bh);
     req->rq_bh = bh;

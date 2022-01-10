@@ -1,6 +1,8 @@
 #ifndef _SSD_H
 #define _SSD_H
 
+#define SD_FIXED_SECTOR_SIZE 512
+
 sector_t ssddev_init(void);
 int ssddev_ioctl(struct inode *inode, struct file *file,
             unsigned int cmd, unsigned int arg);

@@ -77,7 +77,6 @@ static void do_meta_request(void)
     int major = udd_major; /* FIXME required until device passed to request_fn*/
     struct ud_driver *driver = get_driver(major);
     struct ud_request *udr;
-    struct request *req;
     char *buff;
 
     printk("do_meta_request %d %x\n", major, blk_dev[major].current_request);
@@ -86,12 +85,12 @@ static void do_meta_request(void)
 	return;
     }
     while (1) {
-	req = blk_dev[major].current_request;
-	if (!req || req->rq_dev < 0 || req->rq_sector == -1)
+	struct request *req = blk_dev[major].current_request;
+	if (!req || req->rq_dev < 0)
 	    return;
 	udr = new_request();
 	udr->udr_type = UDR_BLK + req->rq_cmd;
-	udr->udr_ptr = req->rq_sector;
+	udr->udr_ptr = req->rq_blocknr;
 	udr->udr_minor = MINOR(req->rq_dev);
 	post_request(driver, udr);
 

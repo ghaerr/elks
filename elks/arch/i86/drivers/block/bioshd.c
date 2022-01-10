@@ -861,17 +861,11 @@ static void do_bioshd_request(void)
 	while (1) {
       next_block:
 
-	/* make sure we have a valid request - Done by INIT_REQUEST */
-	if (!CURRENT)
-	    break;
-
-	/* now initialize it */
-	INIT_REQUEST;
-
-	/* make sure it's still valid */
 	req = CURRENT;
-	if (req == NULL || req->rq_sector == (sector_t) -1)
+	if (!req)	/* break for spin_timer stop before INIT_REQUEST */
 	    break;
+
+	INIT_REQUEST(req);
 
 	if (bioshd_initialized != 1) {
 	    end_request(0);
@@ -888,7 +882,10 @@ static void do_bioshd_request(void)
 	    continue;
 	}
 
-	start = req->rq_sector;
+	/* all ELKS requests are 1K blocks*/
+	count = BLOCK_SIZE / drivep->sector_size;
+	start = req->rq_blocknr * count;
+
 	if (hd[minor].start_sect == -1 || start >= hd[minor].nr_sects) {
 	    printk("bioshd: bad partition start=%ld sect=%ld nr_sects=%ld.\n",
 		   start, hd[minor].start_sect, hd[minor].nr_sects);
@@ -896,12 +893,6 @@ static void do_bioshd_request(void)
 	    continue;
 	}
 	start += hd[minor].start_sect;
-
-#ifdef BLOAT_FS
-	count = req->rq_nr_sectors;
-#endif
-	/* all ELKS requests are 1K blocks*/
-	count = BLOCK_SIZE / drivep->sector_size;
 
 	buf = req->rq_buffer;
 	while (count > 0) {
