@@ -32,6 +32,7 @@
 #define ALLOC_SIZE	4096	/* allocation size in paragaphs*/
 #define PARA		16	/* size of paragraph*/
 
+#define RD_SECTOR_SIZE	512
 typedef __u16 rd_sector_t;	/* sector number*/
 
 static struct {			/* ramdrive information*/
@@ -167,10 +168,10 @@ static int rd_ioctl(register struct inode *inode, struct file *file,
 		       i, (int) size, j, rd_segment[j].seg);
 
 		/* recalculate size to reflect size in sectors, not pages */
-		size = size / (SECTOR_SIZE / PARA);
+		size = size / (RD_SECTOR_SIZE / PARA);
 		rd_segment[j].sectors = size;
 		drive_info[target].size += rd_segment[j].sectors;
-		size = (long) rd_segment[j].sectors * SECTOR_SIZE;
+		size = (long) rd_segment[j].sectors * RD_SECTOR_SIZE;
 		debug("RD: index %d set to %d sectors, %ld bytes\n",
 		       j, rd_segment[j].sectors, size);
 
@@ -185,7 +186,7 @@ static int rd_ioctl(register struct inode *inode, struct file *file,
 	drive_info[target].valid = 1;
 	debug("RD: ramdisk %d created sectors %d index %d bytes %ld\n",
 		target, drive_info[target].size, drive_info[target].start,
-		(long)drive_info[target].size * SECTOR_SIZE);
+		(long)drive_info[target].size * RD_SECTOR_SIZE);
 	return 0;
 
     case RDDESTROY:
@@ -209,23 +210,18 @@ static void do_rd_request(void)
     byte_t *buff;
 
     while (1) {
-	if (!CURRENT || CURRENT->rq_dev < 0)
-	    return;
-
-	INIT_REQUEST;
-
-	if (!CURRENT || CURRENT->rq_sector == (sector_t) -1)
-	    return;
+	struct request *req = CURRENT;
+	INIT_REQUEST(req);
 
 	if (!rd_initialised) {
 	    end_request(0);
 	    return;
 	}
 
-	start = (rd_sector_t) CURRENT->rq_sector;
-	buff = (byte_t *) CURRENT->rq_buffer;
-	target = DEVICE_NR(CURRENT->rq_dev);
-	debug("RD: %s dev %d sector %d, ", CURRENT->rq_cmd == READ? "read": "write",
+	start = (rd_sector_t) req->rq_blocknr * (BLOCK_SIZE / RD_SECTOR_SIZE);
+	buff = (byte_t *) req->rq_buffer;
+	target = DEVICE_NR(req->rq_dev);
+	debug("RD: %s dev %d sector %d, ", req->rq_cmd == READ? "read": "write",
 		target, start);
 	if (drive_info[target].valid == 0 || start >= drive_info[target].size) {
 	    debug("RD: bad request on ram%d, size %d, sector %d\n",
@@ -244,12 +240,12 @@ static void do_rd_request(void)
 	}
 	debug("entry %d, seg %x, offset %d\n", index, rd_segment[index].seg, offset);
 
-	if (CURRENT->rq_cmd == WRITE) {
-	    xms_fmemcpyw((char *) (offset * SECTOR_SIZE), rd_segment[index].seg,
-		buff, CURRENT->rq_seg, 1024/2);
+	if (req->rq_cmd == WRITE) {
+	    xms_fmemcpyw((char *) (offset * RD_SECTOR_SIZE), rd_segment[index].seg,
+		buff, req->rq_seg, 1024/2);
 	} else {
-	    xms_fmemcpyw(buff, CURRENT->rq_seg,
-		(byte_t *) (offset * SECTOR_SIZE), rd_segment[index].seg, 1024/2);
+	    xms_fmemcpyw(buff, req->rq_seg,
+		(byte_t *) (offset * RD_SECTOR_SIZE), rd_segment[index].seg, 1024/2);
 	}
 	end_request(1);
     }

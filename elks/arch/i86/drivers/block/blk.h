@@ -18,7 +18,7 @@ struct request {
     kdev_t rq_dev;		/* -1 if no request */
     unsigned char rq_cmd;	/* READ or WRITE */
     unsigned char rq_status;
-    sector_t rq_sector;
+    block32_t rq_blocknr;
     char *rq_buffer;
     ramdesc_t rq_seg;		/* L2 main/xms buffer segment */
     struct buffer_head *rq_bh;
@@ -27,7 +27,7 @@ struct request {
 #ifdef BLOAT_FS
 /* This may get used for dealing with waiting for requests later*/
     struct task_struct *rq_waiting;
-    unsigned int rq_nr_sectors;	/* always 2 */
+    unsigned int rq_nr_sectors;
     unsigned int rq_current_nr_sectors;
 #endif
 };
@@ -46,20 +46,19 @@ struct request {
 #define IN_ORDER(s1,s2) \
 ((s1)->rq_cmd > (s2)->rq_cmd || ((s1)->rq_cmd == (s2)->rq_cmd && \
 ((s1)->rq_dev < (s2)->rq_dev || (((s1)->rq_dev == (s2)->rq_dev && \
-(s1)->rq_sector < (s2)->rq_sector)))))
+(s1)->rq_blocknr < (s2)->rq_blocknr)))))
 
 struct blk_dev_struct {
     void (*request_fn) ();
     struct request *current_request;
 };
 
-#define SECTOR_MASK 2		/* 1024 logical 512 physical */
-
 /* For bioshd.c, idequery.c */
 struct drive_infot {            /* CHS per drive*/
     int cylinders;
     int sectors;
     int heads;
+    int sector_size;
     int fdtype;                 /* floppy fd_types[] index  or -1 if hd */
 };
 
@@ -153,13 +152,14 @@ static void end_request(int uptodate)
 
     if (!uptodate) {
 	printk("%s: I/O error: ", DEVICE_NAME);
-	printk("dev %x, sector %lu\n", req->rq_dev, req->rq_sector);
+	printk("dev %x, block %lu\n", req->rq_dev, req->rq_blocknr);
 
 #ifdef MULTI_BH
+#ifdef BLOAT_FS
 	req->rq_nr_sectors--;
-	req->rq_nr_sectors &= ~SECTOR_MASK;
-	req->rq_sector += (BLOCK_SIZE / 512);
-	req->rq_sector &= ~SECTOR_MASK;
+	req->rq_nr_sectors &= ~2;	/* 1K block size, 512 byte sector*/
+#endif
+	req->rq_blocknr++;
 
 #endif
     }
@@ -208,14 +208,14 @@ static void end_request(int uptodate)
 }
 #endif /* MAJOR_NR */
 
-#define INIT_REQUEST \
-	if (!CURRENT) {\
+#define INIT_REQUEST(req) \
+	if (!req || req->rq_dev < 0) {\
 		return; \
 	} \
-	if (MAJOR(CURRENT->rq_dev) != MAJOR_NR) \
-		panic("%s: request list destroyed (%d, %d)", DEVICE_NAME, MAJOR(CURRENT->rq_dev), MAJOR_NR); \
-	if ((CURRENT->rq_bh) && (!buffer_locked(CURRENT->rq_bh))) { \
-			panic("%s:block not locked", DEVICE_NAME); \
+	if (MAJOR(req->rq_dev) != MAJOR_NR) \
+		panic("%s: request list destroyed (%d, %d)", DEVICE_NAME, MAJOR(req->rq_dev), MAJOR_NR); \
+	if ((req->rq_bh) && (!buffer_locked(req->rq_bh))) { \
+		panic("%s:block not locked", DEVICE_NAME); \
 	}
 
 #endif
