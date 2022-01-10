@@ -27,8 +27,6 @@
 #include "ssd.h"
 #include "spi-8018x.h"
 
-#define SD_FIXED_SECTOR_SIZE 512
-
 enum SdR1Flags {
     IDLE = 1,
     ERASE_RESET = 2,

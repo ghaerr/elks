@@ -68,29 +68,24 @@ static void do_ssd_request(void)
     int ret;
 
     while (1) {
-	if (!CURRENT)
-	    return;
-
-	INIT_REQUEST;
-
-	if (!CURRENT || CURRENT->rq_sector == (sector_t) -1)
-	    return;
+	struct request *req = CURRENT;
+	INIT_REQUEST(req);
 
 	if (!NUM_SECTS) {
 	    end_request(0);
 	    continue;
 	}
 
-	buf = CURRENT->rq_buffer;
-	seg = CURRENT->rq_seg;
-	start = CURRENT->rq_sector;
+	buf = req->rq_buffer;
+	seg = req->rq_seg;
+	start = req->rq_blocknr * (BLOCK_SIZE / SD_FIXED_SECTOR_SIZE);
 	/* all ELKS requests are 1K blocks = 2 sectors */
 	if (start >= NUM_SECTS-1) {
 	    debug("SSD: bad request sector %lu\n", start);
 	    end_request(0);
 	    continue;
 	}
-	if (CURRENT->rq_cmd == WRITE) {
+	if (req->rq_cmd == WRITE) {
 	    debug("SSD: writing block start sector %lu\n", start);
 	    ret = ssddev_write_blk(start, buf, seg);
 	} else {

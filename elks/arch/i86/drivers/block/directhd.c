@@ -465,20 +465,15 @@ void do_directhd_request(void)
     int port;
 
     while (1) {			/* process HD requests */
-	if (!CURRENT || CURRENT->rq_dev < 0)
-	    return;
-
-	INIT_REQUEST;
-
-	if (CURRENT == NULL || CURRENT->rq_sector == -1)
-	    return;
+	struct request *req = CURRENT;
+	INIT_REQUEST(req);
 
 	if (directhd_initialized != 1) {
 	    end_request(0);
 	    continue;
 	}
 
-	minor = MINOR(CURRENT->rq_dev);
+	minor = MINOR(req->rq_dev);
 	drive = minor >> 6;
 
 	/* check if drive exists */
@@ -487,13 +482,10 @@ void do_directhd_request(void)
 	    end_request(0);
 	    continue;
 	}
-#ifdef BLOAT_FS
-	count = CURRENT->rq_nr_sectors;
-#else
-	count = 2;
-#endif
-	start = CURRENT->rq_sector;
-	buff = CURRENT->rq_buffer;
+
+	count = BLOCK_SIZE / 512;
+	start = req->rq_blocknr * count;
+	buff = req->rq_buffer;
 
 	/* safety check should be here */
 
@@ -527,7 +519,7 @@ void do_directhd_request(void)
 
 	    port = io_ports[drive / 2];
 
-	    if (CURRENT->rq_cmd == READ) {
+	    if (req->rq_cmd == READ) {
 #ifdef USE_DEBUG_CODE
 		printk("athd: drive: %d this_pass: %d sector: %d head: %d\n", drive, this_pass, sector, head);
 		printk("athd: cyl: %d start: %ld tmp: %d count: %ld di[d].s: %d di[0].s: %d\n", cylinder, start, tmp, count, drive_info[drive].sectors, drive_info[0].sectors);
@@ -577,7 +569,7 @@ void do_directhd_request(void)
 		/* read this_pass * 512 bytes, which is 63 * 512 b max. */
 		insw(port, buff, this_pass * 512);
 	    }
-	    if (CURRENT->rq_cmd == WRITE) {
+	    if (req->rq_cmd == WRITE) {
 		/* write from buffer */
 		while (WAITING(port));
 		/* send drive parameters */
