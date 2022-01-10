@@ -21,8 +21,6 @@
 #include <arch/segment.h>
 #include <arch/bitops.h>
 
-extern struct file_operations *get_blkfops();
-
 extern int root_mountflags;
 
 struct super_block super_blocks[NR_SUPER];
