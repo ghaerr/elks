@@ -53,13 +53,12 @@ struct blk_dev_struct {
     struct request *current_request;
 };
 
-#define SECTOR_MASK 2		/* 1024 logical 512 physical */
-
 /* For bioshd.c, idequery.c */
 struct drive_infot {            /* CHS per drive*/
     int cylinders;
     int sectors;
     int heads;
+    int sector_size;
     int fdtype;                 /* floppy fd_types[] index  or -1 if hd */
 };
 
@@ -156,6 +155,7 @@ static void end_request(int uptodate)
 	printk("dev %x, sector %lu\n", req->rq_dev, req->rq_sector);
 
 #ifdef MULTI_BH
+#define SECTOR_MASK 2		/* 1024 logical 512 physical */
 	req->rq_nr_sectors--;
 	req->rq_nr_sectors &= ~SECTOR_MASK;
 	req->rq_sector += (BLOCK_SIZE / 512);

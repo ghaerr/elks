@@ -40,6 +40,7 @@
 #include <linuxmt/fs.h>
 #include <linuxmt/string.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/memory.h>
 #include <linuxmt/config.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/timer.h>
@@ -85,12 +86,6 @@ struct elks_disk_parms {
     __u8 marker[2];		/* should be "eL" */
 } __attribute__((packed));
 
-struct elks_boot_sect {
-    __u8 xx1[SECTOR_SIZE - 2 - sizeof(struct elks_disk_parms)];
-    struct elks_disk_parms disk_parms;
-    __u8 xx2[2];		/* 0xAA55 */
-} __attribute__((packed));
-
 static int bioshd_initialized = 0;
 static struct biosparms bdt;
 
@@ -118,13 +113,13 @@ static int access_count[NUM_DRIVES];	/* for invalidating buffers/inodes*/
 static int bioshd_sizes[NUM_DRIVES << MINOR_SHIFT];	/* used only with BDEV_SIZE_CHK*/
 
 struct drive_infot fd_types[] = {	/* AT/PS2 BIOS reported floppy formats*/
-    {40,  9, 2, 0},
-    {80, 15, 2, 1},
-    {80,  9, 2, 2},
-    {80, 18, 2, 3},
-    {80, 36, 2, 4},
+    {40,  9, 2, 512, 0},
+    {80, 15, 2, 512, 1},
+    {80,  9, 2, 512, 2},
+    {80, 18, 2, 512, 3},
+    {80, 36, 2, 512, 4},
 #ifdef CONFIG_ARCH_PC98
-    {77,  8, 2, 5},
+    {77,  8, 2, 1024,5},
 #endif
 };
 
@@ -195,6 +190,7 @@ static unsigned short int INITPROC bioshd_gethdinfo(void) {
 	    /* NOTE: some BIOS may underreport cylinders by 1*/
 	    drivep->cylinders = (((BD_CX & 0xc0) << 2) | (BD_CX >> 8)) + 1;
 	    drivep->fdtype = -1;
+	    drivep->sector_size = 512;
 	    printk("bioshd: hd%c BIOS CHS %d,%d,%d\n", 'a'+drive, drivep->cylinders,
 		drivep->heads, drivep->sectors);
 	}
@@ -444,9 +440,8 @@ static void probe_floppy(int target, struct hd_struct *hdp)
  */
 
 	if (!read_sector(target, 0, 1)) {
-	    struct elks_boot_sect __far *boot
-		= (struct elks_boot_sect __far *)((__u32)DMASEG << 16);
-	    struct elks_disk_parms __far *parms = &boot->disk_parms;
+	    struct elks_disk_parms __far *parms = _MK_FP(DMASEG, drivep->sector_size -
+		2 - sizeof(struct elks_disk_parms));
 
 	    if (parms->marker[0] == 'e' && parms->marker[1] == 'L'
 		&& parms->size >= offsetof(struct elks_disk_parms, size)) {
@@ -906,7 +901,7 @@ static void do_bioshd_request(void)
 	count = req->rq_nr_sectors;
 #endif
 	/* all ELKS requests are 1K blocks*/
-	count = BLOCK_SIZE / SECTOR_SIZE;
+	count = BLOCK_SIZE / drivep->sector_size;
 
 	buf = req->rq_buffer;
 	while (count > 0) {
@@ -927,7 +922,7 @@ static void do_bioshd_request(void)
 
 	    count -= num_sectors;
 	    start += num_sectors;
-	    buf += num_sectors << SECTOR_BITS;
+	    buf += num_sectors * drivep->sector_size;
 	}
 
 	/* satisfied that request */
