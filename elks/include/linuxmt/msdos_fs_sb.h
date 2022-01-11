@@ -41,17 +41,6 @@ struct msdos_sb_info { /* space in struct super_block is 28 bytes */
 #define SECTOR_BITS_SB(sb)		9		/* log2(SECTOR_SIZE) */
 #define MSDOS_DPS_SB(sb)		(512/sizeof(struct msdos_dir_entry)) /* dirents/sector */
 #define MSDOS_DPS_BITS(inode)	4		/* log2(MSDOS_DPS) */
-
-#endif
-
-//#define MSDOS_DPS	(SECTOR_SIZE/sizeof(struct msdos_dir_entry))
-
-#if SECTOR_SIZE == 1024
-//#define MSDOS_DPS_BITS	5		/* log2(MSDOS_DPS) */
-#endif
-
-#if SECTOR_SIZE == 512
-//#define MSDOS_DPS_BITS	4		/* log2(MSDOS_DPS) */
 #endif
 
 #ifdef CONFIG_FS_DEV
