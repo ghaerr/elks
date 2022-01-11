@@ -309,9 +309,6 @@ struct inode_operations {
 
 struct super_operations {
     void			(*read_inode) ();
-#ifdef BLOAT_FS
-    int 			(*notify_change) ();
-#endif
     void			(*write_inode) ();
     void			(*put_inode) ();
     void			(*put_super) ();
@@ -320,6 +317,9 @@ struct super_operations {
     void			(*statfs_kern) ();
 #endif
     int 			(*remount_fs) ();
+#ifdef BLOAT_FS
+    int 			(*notify_change) ();
+#endif
 };
 
 struct file_system_type {

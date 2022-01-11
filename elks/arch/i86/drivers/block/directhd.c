@@ -47,12 +47,7 @@ static struct file_operations directhd_fops = {
     NULL,			/* select */
     directhd_ioctl,		/* ioctl */
     directhd_open,		/* open */
-    directhd_release,		/* release */
-#ifdef BLOAT_FS
-    NULL,			/* fsync */
-    NULL,			/* check_media_change */
-    NULL,			/* revalidate */
-#endif
+    directhd_release		/* release */
 };
 
 /* what is this good for ? */

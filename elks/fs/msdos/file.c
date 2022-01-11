@@ -54,10 +54,7 @@ struct inode_operations msdos_file_inode_operations_no_bmap = {
 #ifdef USE_GETBLK
 	NULL,			/* getblk */
 #endif
-	msdos_truncate,		/* truncate */
-#ifdef BLOAT_FS
-	NULL
-#endif
+	msdos_truncate		/* truncate */
 };
 
 

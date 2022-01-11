@@ -546,11 +546,6 @@ static struct file_operations bioshd_fops = {
     bioshd_ioctl,		/* ioctl */
     bioshd_open,		/* open */
     bioshd_release		/* release */
-#ifdef BLOAT_FS
-    ,NULL,			/* fsync */
-    NULL,			/* check_media_change */
-    NULL			/* revalidate */
-#endif
 };
 
 int INITPROC bioshd_init(void)

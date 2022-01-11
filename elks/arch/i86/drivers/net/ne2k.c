@@ -311,12 +311,6 @@ static struct file_operations ne2k_fops =
     ne2k_ioctl,
     ne2k_open,
     ne2k_release
-
-#ifdef BLOAT_FS
-    NULL,         /* fsync */
-    NULL,         /* check_media_type */
-    NULL          /* revalidate */
-#endif
 };
 
 #if DEBUG_ETH

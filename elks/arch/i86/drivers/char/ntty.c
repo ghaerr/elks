@@ -453,15 +453,9 @@ static struct file_operations tty_fops = {
     tty_write,
     NULL,
     tty_select,
-    tty_ioctl,			/* ioctl */
+    tty_ioctl,
     tty_open,
     tty_release
-#ifdef BLOAT_FS
-	,
-    NULL,
-    NULL,
-    NULL
-#endif
 };
 
 /* TTY subdrivers, linked in via configuration*/
@@ -470,7 +464,7 @@ extern struct tty_ops bioscon_ops;	/* CONFIG_CONSOLE_BIOS*/
 extern struct tty_ops headlesscon_ops;	/* CONFIG_CONSOLE_HEADLESS*/
 extern struct tty_ops rs_ops;		/* CONFIG_CHAR_DEV_RS*/
 extern struct tty_ops ttyp_ops;		/* CONFIG_PSEUDO_TTY*/
-extern struct tty_ops i8018xcon_ops;/* CONFIG_CONSOLE_8018X */
+extern struct tty_ops i8018xcon_ops;	/* CONFIG_CONSOLE_8018X*/
 
 void INITPROC tty_init(void)
 {

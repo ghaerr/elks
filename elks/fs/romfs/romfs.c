@@ -199,12 +199,6 @@ static struct file_operations romfs_file_operations = {
 	NULL,           /* ioctl */
 	NULL,           /* open */
 	NULL            /* release */
-#ifdef BLOAT_FS
-	,
-	NULL,           /* fsync */
-	NULL,           /* check_media_change */
-	NULL            /* revalidate */
-#endif
 };
 
 static struct inode_operations romfs_inode_operations = {
@@ -223,10 +217,6 @@ static struct inode_operations romfs_inode_operations = {
 	NULL,             /* getblk -- not really */
 #endif
 	NULL              /* truncate */
-#ifdef BLOAT_FS
-	,
-	NULL              /* permission */
-#endif
 };
 
 static mode_t romfs_modemap [] = {
@@ -317,11 +307,8 @@ static void romfs_statfs(struct super_block *sb, struct statfs *buf, size_t bufs
 
 
 static struct super_operations romfs_super_ops =
-	{
+{
 	romfs_read_inode,
-#ifdef BLOAT_FS
-	NULL,  /* notify change */
-#endif
 	NULL,  /* write inode */
 	NULL,  /* put inode */
 	romfs_put_super,
@@ -330,7 +317,7 @@ static struct super_operations romfs_super_ops =
 	romfs_statfs,
 #endif
 	NULL   /* remount */
-	};
+};
 
 
 /* Read superblock from memory */

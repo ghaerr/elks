@@ -100,12 +100,6 @@ static struct request *get_request(int n, kdev_t dev)
     register struct request *req;
     register struct request *limit;
 
-#ifdef BLOAT_FS
-    /* This function is called with a constant value for n */
-    if (n <= 0)
-	panic("get_request(%d): impossible!\n", n);
-#endif
-
     limit = all_requests + n;
     if (limit != prev_limit) {
 	prev_limit = limit;
