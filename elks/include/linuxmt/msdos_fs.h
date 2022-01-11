@@ -15,16 +15,6 @@
 #endif
 
 #define MSDOS_ROOT_INO  1		/* == MINIX_ROOT_INO */
-#define MSDOS_DIR_BITS	5		/* log2(sizeof(struct msdos_dir_entry)) */
-#define MSDOS_DPB	(BLOCK_SIZE/sizeof(struct msdos_dir_entry)) /* dir entries/block*/
-#define MSDOS_DPB_BITS	5		/* log2(MSDOS_DPB) */
-#define MSDOS_DPS	(SECTOR_SIZE/sizeof(struct msdos_dir_entry))
-#if SECTOR_SIZE == 1024
-#define MSDOS_DPS_BITS	5		/* log2(MSDOS_DPS) */
-#endif
-#if SECTOR_SIZE == 512
-#define MSDOS_DPS_BITS	4		/* log2(MSDOS_DPS) */
-#endif
 
 #define MSDOS_SUPER_MAGIC 0x4d44 /* MD */
 
@@ -129,7 +119,7 @@ struct fat_cache {
 
 /* misc.c */
 
-struct buffer_head * FATPROC msdos_sread(kdev_t dev, sector_t sector, void **start);
+struct buffer_head * FATPROC msdos_sread(struct super_block *s, sector_t sector, void **start);
 void FATPROC lock_creation(void);
 void FATPROC unlock_creation(void);
 int  FATPROC msdos_add_cluster(struct inode *inode);

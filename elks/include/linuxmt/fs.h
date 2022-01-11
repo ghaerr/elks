@@ -381,6 +381,7 @@ extern struct inode *__iget(struct super_block *,ino_t);
 
 /*@+namechecks@*/
 
+extern struct file_operations *get_blkfops(unsigned int);
 extern int register_blkdev(unsigned int,char *,struct file_operations *);
 extern int unregister_blkdev(void);
 extern int blkdev_open(struct inode *,struct file *);
@@ -395,12 +396,6 @@ extern int unregister_chrdev(void);
 extern struct file_operations def_chr_fops;
 extern struct inode_operations chrdev_inode_operations;
 
-extern void init_fifo(struct inode *);
-
-extern struct file_operations connecting_fifo_fops;
-extern struct file_operations read_fifo_fops;
-extern struct file_operations write_fifo_fops;
-extern struct file_operations rdwr_fifo_fops;
 extern struct file_operations read_pipe_fops;
 extern struct file_operations write_pipe_fops;
 extern struct file_operations rdwr_pipe_fops;
