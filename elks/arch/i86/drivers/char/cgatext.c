@@ -87,12 +87,7 @@ static struct file_operations cgatext_fops =
   NULL,	/* select */
   NULL,	/* ioctl */
   NULL,	/* open */
-  NULL,	/* release */
-#ifdef BLOAT_FS
-  NULL,	/* fsync */
-  NULL,	/* check_media_change */
-  NULL,	/* revalidate */
-#endif
+  NULL	/* release */
 };
 
 void

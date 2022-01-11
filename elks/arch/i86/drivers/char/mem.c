@@ -26,10 +26,7 @@
 #include <linuxmt/mem.h>
 #include <linuxmt/heap.h>
 
-#if defined(CONFIG_CHAR_DEV_MEM_PORT_READ) \
- || defined(CONFIG_CHAR_DEV_MEM_PORT_WRITE)
-#	include <arch/io.h>
-#endif
+#include <arch/io.h>
 #include <arch/segment.h>
 
 #define DEV_MEM_MINOR		1
@@ -73,8 +70,7 @@ int memory_lseek(struct inode *inode, register struct file *filp,
 /*
  * /dev/null code
  */
-int null_lseek(struct inode *inode, struct file *filp,
-		  off_t offset, int origin)
+int null_lseek(struct inode *inode, struct file *filp, off_t offset, int origin)
 {
     debugmem("null_lseek()\n");
     filp->f_pos = 0;
@@ -96,10 +92,8 @@ size_t null_write(struct inode *inode, struct file *filp, char *data, size_t len
 /*
  * /dev/port code
  */
-#if defined(CONFIG_CHAR_DEV_MEM_PORT_READ) \
- || defined(CONFIG_CHAR_DEV_MEM_PORT_WRITE)
-int port_lseek(struct inode *inode, struct file *filp,
-		  off_t offset, int origin)
+#if defined(CONFIG_CHAR_DEV_MEM_PORT_READ) || defined(CONFIG_CHAR_DEV_MEM_PORT_WRITE)
+int port_lseek(struct inode *inode, struct file *filp, off_t offset, int origin)
 {
     debugmem("port_lseek()\n");
 
@@ -203,8 +197,7 @@ size_t zero_read(struct inode *inode, struct file *filp, char *data, size_t len)
     return (size_t)len;
 }
 
-static unsigned short int split_seg_off(unsigned short int *offset,
-			  long int posn)
+static unsigned short int split_seg_off(unsigned short int *offset, long int posn)
 {
     *offset = (unsigned short int) (((unsigned long int) posn) & 0xF);
     return (unsigned short int) (((unsigned long int) posn) >> 4);
@@ -295,16 +288,9 @@ static struct file_operations null_fops = {
     NULL,			/* ioctl */
     NULL,			/* open */
     NULL			/* release */
-#ifdef BLOAT_FS
-	,
-    NULL,			/* fsync */
-    NULL,			/* check_media_change */
-    NULL			/* revalidate */
-#endif
 };
 
-#if defined(CONFIG_CHAR_DEV_MEM_PORT_READ) \
-|| defined(CONFIG_CHAR_DEV_MEM_PORT_WRITE)
+#if defined(CONFIG_CHAR_DEV_MEM_PORT_READ) || defined(CONFIG_CHAR_DEV_MEM_PORT_WRITE)
 static struct file_operations port_fops = {
     port_lseek,			/* lseek */
     port_read,			/* read */
@@ -314,12 +300,6 @@ static struct file_operations port_fops = {
     NULL,			/* ioctl */
     NULL,			/* open */
     NULL			/* release */
-#ifdef BLOAT_FS
-	,
-    NULL,			/* fsync */
-    NULL,			/* check_media_change */
-    NULL			/* revalidate */
-#endif
 };
 #endif
 
@@ -332,12 +312,6 @@ static struct file_operations full_fops = {
     NULL,			/* ioctl */
     NULL,			/* open */
     NULL			/* release */
-#ifdef BLOAT_FS
-	,
-    NULL,			/* fsync */
-    NULL,			/* check_media_change */
-    NULL			/* revalidate */
-#endif
 };
 
 static struct file_operations zero_fops = {
@@ -349,12 +323,6 @@ static struct file_operations zero_fops = {
     NULL,			/* ioctl */
     NULL,			/* open */
     NULL			/* release */
-#ifdef BLOAT_FS
-	,
-    NULL,			/* fsync */
-    NULL,			/* check_media_change */
-    NULL			/* revalidate */
-#endif
 };
 
 static struct file_operations kmem_fops = {
@@ -366,12 +334,6 @@ static struct file_operations kmem_fops = {
     kmem_ioctl,			/* ioctl */
     NULL,			/* open */
     NULL			/* release */
-#ifdef BLOAT_FS
-	,
-    NULL,			/* fsync */
-    NULL,			/* check_media_change */
-    NULL			/* revalidate */
-#endif
 };
 
 /*
@@ -406,8 +368,7 @@ int memory_open(register struct inode *inode, struct file *filp)
 	&kmem_fops,	/* DEV_MEM_MINOR */
 	&kmem_fops,	/* DEV_KMEM_MINOR */
 	&null_fops,	/* DEV_NULL_MINOR */
-#if defined(CONFIG_CHAR_DEV_MEM_PORT_READ) \
- || defined(CONFIG_CHAR_DEV_MEM_PORT_WRITE)
+#if defined(CONFIG_CHAR_DEV_MEM_PORT_READ) || defined(CONFIG_CHAR_DEV_MEM_PORT_WRITE)
 	&port_fops,	/* DEV_PORT_MINOR */
 #else
         NULL,
@@ -438,12 +399,6 @@ static struct file_operations memory_fops = {
     NULL,			/* ioctl */
     memory_open,		/* open */
     NULL			/* release */
-#ifdef BLOAT_FS
-	,
-    NULL,			/* fsync */
-    NULL,			/* check_media_change */
-    NULL			/* revalidate */
-#endif
 };
 
 /*@+type@*/

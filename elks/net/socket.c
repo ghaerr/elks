@@ -344,12 +344,6 @@ static struct file_operations socket_file_ops = {
     NULL,			/* ioctl */
     NULL,			/* open */
     sock_close			/* close */
-#ifdef BLOAT_FS
-	,
-    NULL,			/* fsync */
-    NULL,			/* check_media_change */
-    NULL			/* revalidate */
-#endif
 };
 
 struct inode_operations sock_inode_operations = {
@@ -366,10 +360,7 @@ struct inode_operations sock_inode_operations = {
 #ifdef USE_GETBLK
     NULL,			/* getblk */
 #endif
-    NULL,			/* truncate */
-#ifdef BLOAT_FS
-    NULL			/* permission */
-#endif
+    NULL			/* truncate */
 };
 
 static int get_fd(register struct inode *inode)

@@ -94,9 +94,6 @@ void minix_put_super(register struct super_block *sb)
 
 static struct super_operations minix_sops = {
     minix_read_inode,
-#ifdef BLOAT_FS
-    NULL,
-#endif
     minix_write_inode,
     minix_put_inode,
     minix_put_super,

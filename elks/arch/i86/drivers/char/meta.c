@@ -159,12 +159,7 @@ static struct file_operations ubd_fops = {
     NULL,			/* select */
     ubd_ioctl,			/* ioctl */
     ubd_open,			/* open */
-    ubd_release,		/* release */
-#ifdef BLOAT_FS
-    NULL,
-    NULL,
-    NULL
-#endif
+    ubd_release			/* release */
 };
 
 int ucd_lseek()
@@ -215,12 +210,7 @@ static struct file_operations ucd_fops = {
     ucd_select,			/* select */
     ucd_ioctl,			/* ioctl */
     ucd_open,			/* open */
-    ucd_release,		/* release */
-#ifdef BLOAT_FS
-    NULL,
-    NULL,
-    NULL
-#endif
+    ucd_release			/* release */
 };
 
 static int meta_initialised = 0;
@@ -352,12 +342,7 @@ static struct file_operations meta_chr_fops = {
     NULL,			/* select */
     meta_ioctl,			/* ioctl */
     meta_open,			/* open */
-    meta_release,		/* release */
-#ifdef BLOAT_FS
-    NULL,
-    NULL,
-    NULL
-#endif
+    meta_release		/* release */
 };
 
 void meta_init(void)

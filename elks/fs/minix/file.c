@@ -183,10 +183,7 @@ static struct file_operations minix_file_operations = {
     NULL,			/* select - default */
     NULL,			/* ioctl - default */
     NULL,			/* no special open is needed */
-    NULL,			/* release */
-#ifdef BLOAT_FS
-    NULL			/* fsync : minix_file_fsync */
-#endif
+    NULL			/* release */
 };
 
 struct inode_operations minix_file_inode_operations = {
@@ -204,8 +201,5 @@ struct inode_operations minix_file_inode_operations = {
 #ifdef USE_GETBLK
     minix_getblk,		/* getblk */
 #endif
-    minix_truncate,		/* truncate */
-#ifdef BLOAT_FS
-    NULL			/* permission */
-#endif
+    minix_truncate		/* truncate */
 };

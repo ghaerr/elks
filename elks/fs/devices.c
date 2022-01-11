@@ -145,10 +145,7 @@ struct inode_operations blkdev_inode_operations = {
 #ifdef USE_GETBLK
     NULL,			/* getblk */
 #endif
-    NULL,			/* truncate */
-#ifdef BLOAT_FS
-    NULL			/* permission */
-#endif
+    NULL			/* truncate */
 };
 
 /*
@@ -180,7 +177,7 @@ struct file_operations def_chr_fops = {
     NULL,			/* select */
     NULL,			/* ioctl */
     chrdev_open,		/* open */
-    NULL,			/* release */
+    NULL			/* release */
 };
 
 struct inode_operations chrdev_inode_operations = {
@@ -198,10 +195,7 @@ struct inode_operations chrdev_inode_operations = {
 #ifdef USE_GETBLK
     NULL,			/* getblk */
 #endif
-    NULL,			/* truncate */
-#ifdef BLOAT_FS
-    NULL			/* permission */
-#endif
+    NULL			/* truncate */
 };
 
 /*

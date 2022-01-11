@@ -36,10 +36,7 @@ static struct file_operations msdos_dir_operations = {
 	NULL,			/* select - default */
 	NULL,			/* ioctl - default */
 	NULL,			/* no special open code */
-	NULL,			/* no special release code */
-#ifdef BLOAT_FS
-	NULL			/* default fsync */
-#endif
+	NULL			/* no special release code */
 };
 
 /*
@@ -60,10 +57,7 @@ struct inode_operations msdos_dir_inode_operations = {
 #ifdef USE_GETBLK
 	NULL,			/* getblk */
 #endif
-	NULL,			/* truncate */
-#ifdef BLOAT_FS
-	NULL			/* permission */
-#endif
+	NULL			/* truncate */
 };
 
 /*@+type@*/
