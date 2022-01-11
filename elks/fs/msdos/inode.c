@@ -90,10 +90,9 @@ static struct super_block *msdos_read_super(struct super_block *s, char *data,
 	struct msdos_sb_info *sb = MSDOS_SB(s);
 	struct msdos_boot_sector *b;
 	struct buffer_head *bh;
-	struct file_operations *fops;
 	long total_sectors, total_displayed, data_sectors;
 	char kbytes_or_mbytes = 'k';
-	int fat32, blksize;
+	int fat32;
 
 	cache_init();
 	lock_super(s);
@@ -105,11 +104,29 @@ static struct super_block *msdos_read_super(struct super_block *s, char *data,
 		return NULL;
 	}
 
-	/* have to get SECTOR_SIZE somehow... */
-	fops = get_blkfops(MAJOR(s->s_dev));
+#ifdef CONFIG_VAR_SECTOR_SIZE
+	/* get disk sector size using block device ioctl */
+	struct file_operations *fops = get_blkfops(MAJOR(s->s_dev));
+
 	if (!fops || !fops->ioctl ||
-		(blksize = fops->ioctl(NULL, NULL, HDIO_GET_SECTOR_SIZE, s->s_dev)) <= 0)
-			blksize = 512;
+		(sb->sector_size = fops->ioctl(NULL, NULL, HDIO_GET_SECTOR_SIZE, s->s_dev)) <= 0)
+			sb->sector_size = 512;
+	switch (sb->sector_size) {
+	case 512:
+		sb->sector_bits = 9;	/* log2(sector_size) */
+		sb->msdos_dps = 16;		/* SECTOR_SIZE / sizeof(struct msdos_dir_entry) */
+		sb->msdos_dps_bits = 4;	/* log2(msdos_dps) */
+		break;
+	case 1024:
+		sb->sector_bits = 10;	/* log2(sector_size) */
+		sb->msdos_dps = 32;		/* SECTOR_SIZE / sizeof(struct msdos_dir_entry) */
+		sb->msdos_dps_bits = 5;	/* log2(msdos_dps) */
+		break;
+	default:
+		printk("FAT: %d sector size not supported\n", sb->sector_size);
+		return NULL;
+	}
+#endif
 
 	map_buffer(bh);
 	b = (struct msdos_boot_sector *) bh->b_data;
@@ -130,7 +147,7 @@ static struct super_block *msdos_read_super(struct super_block *s, char *data,
 	sb->dir_start= b->reserved + b->fats*sb->fat_length;
 	sb->dir_entries = *((unsigned short *) b->dir_entries);
 	sb->data_start = sb->dir_start +
-		((sb-> dir_entries << MSDOS_DIR_BITS) >> SECTOR_BITS);
+		((sb-> dir_entries << MSDOS_DIR_BITS) >> SECTOR_BITS_SB(s));
 	total_sectors = *((unsigned short *) b->sectors)?
 		*((unsigned short *) b->sectors) : b->total_sect;
 	data_sectors = total_sectors - sb->data_start;
@@ -144,11 +161,11 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%
 	sb->fat_length, sb->dir_start, sb->dir_entries,
 	sb->data_start, total_sectors, b->total_sect);
 
-	if (!sb->fats || (sb->dir_entries & (MSDOS_DPS-1))
+	if (!sb->fats || (sb->dir_entries & (MSDOS_DPS_SB(s)-1))
 	    || !b->cluster_size || 
 #ifndef FAT_BITS_32
 		sb->clusters+2 > (unsigned long) sb->fat_length *
-			(SECTOR_SIZE * 8 / sb->fat_bits)
+			(SECTOR_SIZE_SB(s) * 8 / sb->fat_bits)
 #else
 		!fat32
 #endif
@@ -158,7 +175,7 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%
 		return NULL;
 	}
 
-	total_displayed = total_sectors >> (BLOCK_SIZE_BITS - SECTOR_BITS);
+	total_displayed = total_sectors >> (BLOCK_SIZE_BITS - SECTOR_BITS_SB(s));
 	if (total_displayed >= 10000) {
 		total_displayed /= 1000;
 		kbytes_or_mbytes = 'M';
@@ -210,7 +227,7 @@ static void msdos_statfs(struct super_block *s,struct statfs *buf)
 
 	cluster_size = MSDOS_SB(s)->cluster_size;
 	tmp.f_type = s->s_magic;
-	tmp.f_bsize = SECTOR_SIZE;
+	tmp.f_bsize = SECTOR_SIZE_SB(s);
 	tmp.f_blocks = MSDOS_SB(s)->clusters * cluster_size;
 	free = 0;
 	for (this = 2; this < MSDOS_SB(s)->clusters+2; this++)
@@ -247,7 +264,8 @@ void msdos_read_inode(register struct inode *inode)
 			nr = inode->u.msdos_i.i_start = MSDOS_SB(inode->i_sb)->root_cluster;
 			if (nr) {
 				while (nr != -1) {
-					inode->i_size += (cluster_t)SECTOR_SIZE*MSDOS_SB(inode->i_sb)->cluster_size;
+					inode->i_size += (cluster_t)SECTOR_SIZE(inode) *
+						MSDOS_SB(inode->i_sb)->cluster_size;
 					if (!(nr = fat_access(inode->i_sb,nr,-1L))) {
 						printk("FAT: can't read dir %ld\n", (unsigned long)inode->i_ino);
 						break;
@@ -301,7 +319,8 @@ void msdos_read_inode(register struct inode *inode)
 		inode->i_size = 0;
 		/* read FAT chain to set directory size */
 		for (this = inode->u.msdos_i.i_start; this && this != -1; this = fat_access(inode->i_sb,this,-1L))
-			inode->i_size += (cluster_t)SECTOR_SIZE*MSDOS_SB(inode->i_sb)->cluster_size;
+			inode->i_size += (cluster_t)SECTOR_SIZE(inode) *
+				MSDOS_SB(inode->i_sb)->cluster_size;
 	}
 	else {
 		inode->i_mode = MSDOS_MKMODE(raw_entry->attr,0755 & ~current->fs.umask) | S_IFREG;
