@@ -82,11 +82,11 @@ static size_t msdos_file_read(register struct inode *inode,register struct file 
 	if (filp->f_pos >= inode->i_size || count <= 0) return 0;
 	start = buf;
 	while ((left = MIN(inode->i_size-filp->f_pos,count-(buf-start))) != 0) {
-		if (!(sector = msdos_smap(inode,filp->f_pos >> SECTOR_BITS)))
+		if (!(sector = msdos_smap(inode,filp->f_pos >> SECTOR_BITS(inode))))
 			break;
-		offset = (int)filp->f_pos & (SECTOR_SIZE-1);
-		if (!(bh = msdos_sread(inode->i_dev,sector,&data))) break;
-		filp->f_pos += (size = MIN(SECTOR_SIZE-offset,left));
+		offset = (int)filp->f_pos & (SECTOR_SIZE(inode)-1);
+		if (!(bh = msdos_sread(inode->i_sb,sector,&data))) break;
+		filp->f_pos += (size = MIN(SECTOR_SIZE(inode)-offset,left));
 		memcpy_tofs(buf,(char *)data+offset,size);
 		buf += size;
 		unmap_brelse(bh);
@@ -123,16 +123,16 @@ static size_t msdos_file_write(register struct inode *inode,register struct file
 	if (count <= 0) return 0;
 	error = 0;
 	for (start = buf; count; count -= size) {
-		while (!(sector = msdos_smap(inode,filp->f_pos >> SECTOR_BITS)))
+		while (!(sector = msdos_smap(inode,filp->f_pos >> SECTOR_BITS(inode))))
 			if ((error = msdos_add_cluster(inode)) < 0) break;
 		if (error) break;
-		offset = (int)filp->f_pos & (SECTOR_SIZE-1);
-		size = MIN(SECTOR_SIZE-offset,count);
-		if (!(bh = msdos_sread(inode->i_dev,sector,&data))) {
+		offset = (int)filp->f_pos & (SECTOR_SIZE(inode)-1);
+		size = MIN(SECTOR_SIZE(inode)-offset,count);
+		if (!(bh = msdos_sread(inode->i_sb,sector,&data))) {
 			error = -EIO;
 			break;
 		}
-		memcpy_fromfs((char *)data+((int)filp->f_pos & (SECTOR_SIZE-1)),
+		memcpy_fromfs((char *)data+((int)filp->f_pos & (SECTOR_SIZE(inode)-1)),
 			    buf,written = size);
 		buf += size;
 		filp->f_pos += written;
@@ -156,7 +156,7 @@ void msdos_truncate(register struct inode *inode)
 	cluster_t cluster;
 
 	debug_fat("truncate\n");
-	cluster = (cluster_t)SECTOR_SIZE*MSDOS_SB(inode->i_sb)->cluster_size;
+	cluster = (cluster_t)SECTOR_SIZE(inode)*MSDOS_SB(inode->i_sb)->cluster_size;
 	(void)fat_free(inode,(inode->i_size + (cluster-1)) / cluster);
 	inode->u.msdos_i.i_attrs |= ATTR_ARCH;
 	inode->i_dirt = 1;

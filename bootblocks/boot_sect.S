@@ -24,12 +24,14 @@
 #define BOOTSEGM	0x1FE0
 #endif
 #define MEMTOPSEG	0xA000		// 640K memory
+#define SECTOR_SIZE	1024
 
 #else
 // IBM PC
 
 #define BOOTADDR	0x7C00
 #define BIOS_DRVNUM			// use boot drive number from BIOS
+#define SECTOR_SIZE	512
 #endif
 
 #define LOADSEG       DEF_INITSEG

@@ -39,17 +39,17 @@ cluster_t FATPROC fat_access(struct super_block *sb,cluster_t this,cluster_t new
 		last = first+1;
 	}
 #endif
-	if (!(bh = msdos_sread(sb->s_dev,
-			(sector_t)(MSDOS_SB(sb)->fat_start+(first >> SECTOR_BITS)),&data))) {
+	if (!(bh = msdos_sread(sb,
+			(sector_t)(MSDOS_SB(sb)->fat_start+(first >> SECTOR_BITS_SB(sb))),&data))) {
 		printk("FAT: bread fat failed\n");
 		return 0;
 	}
-	if ((first >> SECTOR_BITS) == (last >> SECTOR_BITS)) {
+	if ((first >> SECTOR_BITS_SB(sb)) == (last >> SECTOR_BITS_SB(sb))) {
 		bh2 = bh;
 		data2 = data;
 	} else {	/* FAT entry crosses sector boundary, only possible with fat12*/
-		if (!(bh2 = msdos_sread(sb->s_dev,
-				(sector_t)(MSDOS_SB(sb)->fat_start+(last >> SECTOR_BITS)),&data2))) {
+		if (!(bh2 = msdos_sread(sb,
+			(sector_t)(MSDOS_SB(sb)->fat_start+(last >> SECTOR_BITS_SB(sb))),&data2))) {
 			unmap_brelse(bh);
 			printk("FAT: bread fat failed\n");
 			return 0;
@@ -59,16 +59,16 @@ cluster_t FATPROC fat_access(struct super_block *sb,cluster_t this,cluster_t new
 	if (fatsz == 32)
 #endif
 	{
-		next = ((unsigned long *)data)[(first & (SECTOR_SIZE-1)) >> 2];
+		next = ((unsigned long *)data)[(first & (SECTOR_SIZE_SB(sb)-1)) >> 2];
 		if (next >= 0xffffff8L) next = -1;
 	}
 #ifndef FAT_BITS_32
 	else if (fatsz == 16) {
-		next = ((unsigned short *)data)[(first & (SECTOR_SIZE-1)) >> 1];
+		next = ((unsigned short *)data)[(first & (SECTOR_SIZE_SB(sb)-1)) >> 1];
 		if (next >= 0xfff8) next = -1;
 	} else {	/* fat12*/
-		p_first = &((unsigned char *)data)[first & (SECTOR_SIZE-1)];
-		p_last = &((unsigned char *)data2)[(first+1) & (SECTOR_SIZE-1)];
+		p_first = &((unsigned char *)data)[first & (SECTOR_SIZE_SB(sb)-1)];
+		p_last = &((unsigned char *)data2)[(first+1) & (SECTOR_SIZE_SB(sb)-1)];
 		if (this & 1) next = ((*p_first >> 4) | (*p_last << 4)) & 0xfff;
 		else next = (*p_first+(*p_last << 8)) & 0xfff;
 		if (next >= 0xff8) next = -1;
@@ -78,10 +78,12 @@ cluster_t FATPROC fat_access(struct super_block *sb,cluster_t this,cluster_t new
 #ifndef FAT_BITS_32
 		if (fatsz == 32)
 #endif
-			((unsigned long *)data)[(first & (SECTOR_SIZE-1))>>2] = (unsigned long)new_value;
+			((unsigned long *)data)[(first & (SECTOR_SIZE_SB(sb)-1))>>2] =
+				(unsigned long)new_value;
 #ifndef FAT_BITS_32
 		else if (fatsz == 16)
-			((unsigned short *)data)[(first & (SECTOR_SIZE-1)) >> 1] = (unsigned short)new_value;
+			((unsigned short *)data)[(first & (SECTOR_SIZE_SB(sb)-1)) >> 1] =
+				(unsigned short)new_value;
 		else {	/* fat12*/
 			if (this & 1) {
 				*p_first = (*p_first & 0xf) | (new_value << 4);
@@ -105,20 +107,21 @@ cluster_t FATPROC fat_access(struct super_block *sb,cluster_t this,cluster_t new
 		//FIXME needs rewrite for speed using operations above then mark dirty
 		//FIXME or perhaps just make a complete FAT table copy on unmount!
 		for (copy = 1; copy < MSDOS_SB(sb)->fats; copy++) {
-			if (!(c_bh = msdos_sread(sb->s_dev,
-						(sector_t)(MSDOS_SB(sb)->fat_start+(first >> SECTOR_BITS) +
-						MSDOS_SB(sb)->fat_length*copy),&c_data))) break;
-			memcpy(c_data,data,SECTOR_SIZE);
+			if (!(c_bh = msdos_sread(sb,
+				(sector_t)(MSDOS_SB(sb)->fat_start+(first >> SECTOR_BITS_SB(sb)) +
+				MSDOS_SB(sb)->fat_length*copy), &c_data)))
+				break;
+			memcpy(c_data,data,SECTOR_SIZE_SB(sb));
 		debug_fat("fat_access block cbh write %lu\n", bh->b_blocknr);
 			c_bh->b_dirty = 1;
 			if (data != data2 || bh != bh2) {
-				if (!(c_bh2 = msdos_sread(sb->s_dev,
-						(sector_t)(MSDOS_SB(sb)->fat_start+(first >> SECTOR_BITS) +
-						MSDOS_SB(sb)->fat_length*copy + 1),&c_data2))) {
+				if (!(c_bh2 = msdos_sread(sb,
+					(sector_t)(MSDOS_SB(sb)->fat_start+(first >> SECTOR_BITS_SB(sb)) +
+					MSDOS_SB(sb)->fat_length*copy + 1), &c_data2))) {
 					unmap_brelse(c_bh);
 					break;
 				}
-				memcpy(c_data2,data2,SECTOR_SIZE);
+				memcpy(c_data2,data2,SECTOR_SIZE_SB(sb));
 				c_bh2->b_dirty = 1;		//FIXME looks like bug without this
 		debug_fat("fat_access block cbh2 write %lu\n", c_bh2->b_blocknr);
 				unmap_brelse(c_bh2);
@@ -267,7 +270,7 @@ sector_t FATPROC msdos_smap(struct inode *inode, sector_t sector)
 	if ((sb->fat_bits != 32)
 		&& (inode->i_ino == MSDOS_ROOT_INO
 		    || (S_ISDIR(inode->i_mode) && !inode->u.msdos_i.i_start))) {
-		if (sector >= sb->dir_entries >> MSDOS_DPS_BITS) return 0;
+		if (sector >= sb->dir_entries >> MSDOS_DPS_BITS(inode)) return 0;
 		return sector+sb->dir_start;
 	}
 #endif
