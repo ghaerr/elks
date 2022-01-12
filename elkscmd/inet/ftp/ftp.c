@@ -221,6 +221,7 @@ int ask(char *source, char *name) {
 /* Read (and echo) reply from server */
 /* NOTE: The fd argument is not used (replaced by global fcmd for buffered IO). */
 /* fd is kept because it makes the code easier to read. */
+
 int get_reply(int fd, char *buf, int size, int dbg) {
 
 	if (fgets(buf, size, fcmd) == NULL) {
@@ -232,11 +233,18 @@ int get_reply(int fd, char *buf, int size, int dbg) {
 	return 1;
 }
 
-int is_connected(int cmdfd) {
+int is_connected(int cmdfd) {	// return 1 if connected, otherwise 0
 	char str[IOBUFLEN];
 
-	if (send_cmd(cmdfd, "NOOP\r\n") < 0) return errno;	/* verify connection first, detect timeout */
-	return (get_reply(cmdfd, str, IOBUFLEN, 1));
+	if (cmdfd < 0) 
+		return 0;	/* no cmd channel has been opened */
+	if (send_cmd(cmdfd, "NOOP\r\n") < 0) {
+		fclose(fcmd);
+		close(cmdfd);
+		cmdfd = -1;
+		return 0;
+	}
+	return ((get_reply(cmdfd, str, IOBUFLEN, 1) > 0)? 1 : 0 );
 }
 
 /* Send command to server, echo if required */
@@ -488,7 +496,7 @@ int do_ls(int controlfd, int datafd, char **cmdline, int mode) {
 
 int do_get(int controlfd, char *src, char *dst, int mode) {
 	char iobuf[IOBUFLEN+1];
-	int status = 1, bcnt = 0, fd, n, datafd = -1, icount = 0;
+	int status = 1, bcnt = 0, fd, n, datafd = -1;
 	int maxfdp1, data_finished = FALSE, control_finished = FALSE;
 	fd_set rdset;
 
@@ -537,7 +545,7 @@ int do_get(int controlfd, char *src, char *dst, int mode) {
 	 * So when get_reply() fetches the former, the latter ends up in the input buffer,
 	 * and the loop below will not receive anything on the control channel.
 	 */
-	struct timeval tv; int select_return;
+	struct timeval tv; int select_return, icount = 0;
 	while (1) {
 		if (control_finished == FALSE) FD_SET(controlfd, &rdset);
 		if (data_finished == FALSE) FD_SET(datafd, &rdset);
@@ -547,18 +555,23 @@ int do_get(int controlfd, char *src, char *dst, int mode) {
 /// Experimental
 		if (!select_return) { 
 			if (debug > 2) printf("get: select timeout.\n");
+			// Handle zero length files
 			if (icount++ > 2 || data_finished == TRUE) {	
-				// Experimental: Got timeout, need reply - which is probalby sitting in the
+				// Experimental: Got timeout, need reply - which is probably sitting in the
 				// fgets() input buffer.
-				// If it isn't, we're stuck here.
-				get_reply(controlfd, iobuf, IOBUFLEN, 1);
+				// Or the server closed before select was called (zero length file)
+				// and we just need to get outa here.
+				if (control_finished == FALSE) {
+					get_reply(controlfd, iobuf, IOBUFLEN, 1);
+					control_finished = TRUE;
+				}
 				break;
 			}
 		}
 
 		if (FD_ISSET(controlfd, &rdset)) {
 			get_reply(controlfd, iobuf, IOBUFLEN, 1);
-			//printf("get select cntrl\n");
+			//if (debug > 2) printf("get: select cntrl\n");
 			if (*iobuf != '2') {
 				printf("Unexpected: %s" , iobuf);
 				continue;
@@ -771,7 +784,7 @@ int do_passive(int cmdfd) {
 	send_cmd(cmdfd, "PASV\r\n");
 	get_reply(cmdfd, command, BUF_SIZE, 1);
 	if (strncmp(command, "227", 3)) {
-		printf("Server error.\n");
+		printf("Server disconnected.\n");
 		return -1;
 	}
 	
@@ -996,6 +1009,7 @@ int do_login(char *user, char *passwd, char *buffer, int len, char *ip, unsigned
 #endif
 	lip = ip;
 	if (*lip == '\0') {	/* ask for server address */
+				//FIXME: Needs sanity checking on input
 		printf("Connect to: ");	
 		lip = gets(localbf);
 		if (!lip) return -1;
@@ -1006,7 +1020,7 @@ int do_login(char *user, char *passwd, char *buffer, int len, char *ip, unsigned
 	} 
 	if ((controlfd = connect_cmd(ip, port)) < 0)
 		return -1;
-	printf("Connected to %s.\n", ip);
+	//printf("Connected to %s.\n", ip);
 	fcmd = fdopen(controlfd, "r+");
 
 	/* Get the ID message from the server */
@@ -1021,6 +1035,7 @@ int do_login(char *user, char *passwd, char *buffer, int len, char *ip, unsigned
 	get_reply(controlfd, buffer, len, 1);	/* 331 Password required ... */
 	if (*buffer != '3') {
 		printf("Error in username: %s", buffer);
+		fclose(fcmd);
 		return -1;
 	}
 	lip = getpass("Password:");
@@ -1036,6 +1051,7 @@ int do_login(char *user, char *passwd, char *buffer, int len, char *ip, unsigned
 	}
 	if (*buffer != '2') {	/* 230 User xxx logged in. */
 		printf("Login failed: %s", buffer);
+		fclose(fcmd);
 		return -1;
 	}
 	send_cmd(controlfd, "SYST\r\n");
@@ -1121,6 +1137,7 @@ int main(int argc, char **argv) {
 	if (autologin) {
 		if ((controlfd = do_login(user, passwd, command, sizeof(command), srvr_ip, server_port)) > 0)
 			connected++;
+		else server_port = DFLT_PORT;
 	}
 	bzero(command, BUF_SIZE);
 	//signal(SIGALRM, sig_handler);
@@ -1146,10 +1163,8 @@ int main(int argc, char **argv) {
 
 		case CMD_OPEN:
 			if (connected) {
-				if (is_connected(controlfd) < 0) {
+				if (!(connected = is_connected(controlfd))) {
 					printf("Server has gone away, closing connection.\n");
-					close(controlfd);
-					connected = 0;
 				} else {
 					printf("Already connected to %s, use close first.\n", srvr_ip);
 					break;
@@ -1161,10 +1176,9 @@ int main(int argc, char **argv) {
 				if (param[2])
 					server_port = atoi(param[2]);
 			}
-			if ((controlfd = do_login(user, passwd, str, sizeof(str), srvr_ip, server_port)) < 0) {
-				printf("Login failed.\n");
-				server_port = DFLT_PORT;
-			} else
+			if ((controlfd = do_login(user, passwd, str, sizeof(str), srvr_ip, server_port)) < 0) 
+				server_port = DFLT_PORT;	/* reset to default */
+			else
 				connected++;
 			break;
 
@@ -1301,21 +1315,24 @@ int main(int argc, char **argv) {
 
 
 		case CMD_STATUS:
-			if (is_connected(controlfd) < 0) connected = 0;
+			connected = is_connected(controlfd);
 			if (connected) {
 				printf("Connected to %s [port %d] as user %s\n", srvr_ip, server_port, user);
 				send_cmd(controlfd, "SYST\r\n");
 				get_reply(controlfd, str, sizeof(str), 10);
 				printf("Remote system: %s", &str[4]);
 			}
-			else printf("Not connected.\n");
-			if (!debug) printf("Debug is off.\n");
-			else printf("Debug: %d\n", debug);
+			else 
+				printf("Not connected.\n");
+			if (!debug) 
+				printf("Debug is off.\n");
+			else 
+				printf("Debug: %d\n", debug);
 			printf("Globbing: %s\n", glob ? "on" : "off");
 			printf("Transfer mode: %s\n", (mode == PASV) ? "passive" : "active");
 			printf("File mode: %s\n", (type == ASCII) ? "ASCII" : "IMAGE");
 			printf("Multifile prompting is %s\n", prompt ? "on" : "off");
-			// add statistics - file count, byte count etc. - later.
+			// FIXME add statistics - file count, byte count etc.
 			printf("\n");
 			break;
 
