@@ -590,12 +590,9 @@ int INITPROC bioshd_init(void)
 	for (count = 0; count < PRINT_DRIVE_INFO; count++, drivep++) {
 	    if (drivep->heads != 0) {
 		char *unit = UNITS;
-#ifdef CONFIG_IMG_FD1232
-		__u32 size = ((__u32) drivep->sectors) * 10;	/* 0.1 kB units */
-#else
 		__u32 size = ((__u32) drivep->sectors) * 5;	/* 0.1 kB units */
-#endif
-
+		if (drivep->sector_size == 1024)
+		    size <<= 1;
 		size *= ((__u32) drivep->cylinders) * drivep->heads;
 
 		/* Select appropriate unit */
