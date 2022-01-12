@@ -20,11 +20,12 @@
 
 #if defined(CONFIG_IMG_FD1232)
 #define BOOTSEGM	0x1FC0
+#define SECTOR_SIZE	1024
 #else
 #define BOOTSEGM	0x1FE0
+#define SECTOR_SIZE	512
 #endif
 #define MEMTOPSEG	0xA000		// 640K memory
-#define SECTOR_SIZE	1024
 
 #else
 // IBM PC
