@@ -525,12 +525,7 @@ static struct file_operations wd_fops =
 	wd_select,
 	wd_ioctl,
 	wd_open,
-	wd_release,
-#ifdef BLOAT_FS
-	NULL,         /* fsync */
-	NULL,         /* check_media_type */
-	NULL,         /* revalidate */
-#endif
+	wd_release
 };
 
 /*

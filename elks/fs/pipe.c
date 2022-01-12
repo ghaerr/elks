@@ -303,10 +303,7 @@ struct inode_operations pipe_inode_operations = {
 #ifdef USE_GETBLK
     NULL,			/* getblk */
 #endif
-    NULL,			/* truncate */
-#ifdef BLOAT_FS
-    NULL			/* permission */
-#endif
+    NULL			/* truncate */
 };
 
 static int do_pipe(register int *fd)

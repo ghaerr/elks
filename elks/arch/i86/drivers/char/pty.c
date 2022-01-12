@@ -169,12 +169,6 @@ static struct file_operations pty_fops = {
     NULL,			/* ioctl */
     pty_open,
     pty_release
-#ifdef BLOAT_FS
-	,
-    NULL,
-    NULL,
-    NULL
-#endif
 };
 
 /* /dev/ttyp0 slave side is TTY with matching minor number */

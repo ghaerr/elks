@@ -100,12 +100,6 @@ static struct request *get_request(int n, kdev_t dev)
     register struct request *req;
     register struct request *limit;
 
-#ifdef BLOAT_FS
-    /* This function is called with a constant value for n */
-    if (n <= 0)
-	panic("get_request(%d): impossible!\n", n);
-#endif
-
     limit = all_requests + n;
     if (limit != prev_limit) {
 	prev_limit = limit;
@@ -152,6 +146,7 @@ static void add_request(struct blk_dev_struct *dev, struct request *req)
     mark_buffer_clean(req->rq_bh);
     if (!(tmp = dev->current_request)) {
 	dev->current_request = req;
+	set_irq();
 	(dev->request_fn) ();
     }
     else {
@@ -162,8 +157,8 @@ static void add_request(struct blk_dev_struct *dev, struct request *req)
 	}
 	req->rq_next = tmp->rq_next;
 	tmp->rq_next = req;
+	set_irq();
     }
-    set_irq();
 }
 
 static void make_request(unsigned short major, int rw, struct buffer_head *bh)

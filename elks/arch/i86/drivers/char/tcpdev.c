@@ -172,12 +172,6 @@ static struct file_operations tcpdev_fops = {
     NULL,			/* ioctl */
     tcpdev_open,		/* open */
     tcpdev_release		/* release */
-#ifdef BLOAT_FS
-	,
-    NULL,			/* fsync */
-    NULL,			/* check_media_type */
-    NULL			/* revalidate */
-#endif
 };
 
 /*@+type@*/

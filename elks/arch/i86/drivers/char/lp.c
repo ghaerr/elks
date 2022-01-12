@@ -266,12 +266,6 @@ static struct file_operations lp_fops = {
     NULL,			/* ioctl */
     lp_open,			/* open */
     lp_release			/* release */
-#ifdef BLOAT_FS
-	,
-    NULL,			/* fsync */
-    NULL,			/* check_media_type */
-    NULL			/* revalidate */
-#endif
 };
 
 /*@+type@*/

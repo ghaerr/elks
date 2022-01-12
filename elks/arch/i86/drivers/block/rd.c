@@ -260,11 +260,6 @@ static struct file_operations rd_fops = {
     rd_ioctl,			/* ioctl */
     rd_open,			/* open */
     rd_release			/* release */
-#ifdef BLOAT_FS
-    ,NULL,			/* fsync */
-    NULL,			/* check_media_change */
-    NULL			/* revalidate */
-#endif
 };
 
 void rd_init(void)

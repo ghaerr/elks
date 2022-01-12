@@ -371,9 +371,6 @@ static void msdos_write_inode(register struct inode *inode)
 
 static struct super_operations msdos_sops = {
 	msdos_read_inode,
-#ifdef BLOAT_FS
-	NULL,
-#endif
 	msdos_write_inode,
 	msdos_put_inode,
 	msdos_put_super,
