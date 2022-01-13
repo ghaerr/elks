@@ -80,6 +80,8 @@ ch_hd:
 	and $0xC0,%dl
 	mov %dl,%ch      // MSBits of cylinder number
 	pop %dx
+	and $0x3F,%dl
+	dec %dl
 	jmp call_1B
 
 fd:
