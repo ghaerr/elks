@@ -362,7 +362,6 @@ int sys_fchown(unsigned int fd, uid_t user, gid_t group)
 int sys_open(char *filename, int flags, int mode)
 {
     struct inode *inode;
-    register struct inode *pinode;
     int error, flag;
 
     flag = flags;
@@ -372,9 +371,8 @@ int sys_open(char *filename, int flags, int mode)
     debug_file("OPEN '%t' flags 0x%x", filename, flags);
     error = open_namei(filename, flag, mode, &inode, NULL);
     if (!error) {
-	pinode = inode;
-	if ((error = open_fd(flags, pinode)) < 0)
-	    iput(pinode);
+	if ((error = open_fd(flags, inode)) < 0)
+	    iput(inode);
     }
     debug_file(" = %d\n", error);
     return error;
