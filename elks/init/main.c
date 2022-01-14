@@ -46,6 +46,7 @@ static char *envp_init[MAX_INIT_ENVS+1];
 static unsigned char options[OPTSEGSZ];
 
 extern int boot_rootdev;
+extern int boot_bufs;
 extern int dprintk_on;
 static char * INITPROC root_dev_name(int dev);
 static int INITPROC parse_options(void);
@@ -86,9 +87,6 @@ void INITPROC kernel_init(void)
     sched_init();
     setup_arch(&base, &end);
     mm_init(base, end);
-    if (buffer_init())	/* also enables xms and unreal mode if configured and possible*/
-	panic("No buf mem");
-    inode_init();
     irq_init();
     tty_init();
 
@@ -106,6 +104,10 @@ void INITPROC kernel_init(void)
 #ifdef CONFIG_CHAR_DEV_RS
     serial_init();
 #endif
+
+    inode_init();
+    if (buffer_init())	/* also enables xms and unreal mode if configured and possible*/
+	panic("No buf mem");
 
     device_init();
 
@@ -316,6 +318,10 @@ static int INITPROC parse_options(void)
 		}
 		if (!strncmp(line,"netport=",8)) {
 			net_port = (int)simple_strtol(line+8, 16);
+			continue;
+		}
+		if (!strncmp(line,"bufs=",5)) {
+			boot_bufs = (int)simple_strtol(line+5, 10);
 			continue;
 		}
 		

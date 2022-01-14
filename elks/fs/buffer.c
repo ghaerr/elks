@@ -26,6 +26,8 @@
 #define NR_MAPBUFS  8
 #endif
 
+int boot_bufs;		/* /bootopts # buffers override */
+
 /* Buffer heads: local heap allocated */
 static struct buffer_head *buffer_heads;
 
@@ -124,17 +126,20 @@ int INITPROC buffer_init(void)
     /* XMS buffers override EXT buffers override internal buffers*/
 #if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
     int bufs_to_alloc = CONFIG_FS_NR_EXT_BUFFERS;
+    int xms_enabled = 0;
 
 #ifdef CONFIG_FS_XMS_BUFFER
-    int xms_enabled = xms_init();	/* try to enable unreal mode and A20 gate*/
+    xms_enabled = xms_init();	/* try to enable unreal mode and A20 gate*/
     if (xms_enabled)
 	bufs_to_alloc = CONFIG_FS_NR_XMS_BUFFERS;
-    printk(" %d %s buffers\n", bufs_to_alloc, xms_enabled? "xms": "ext");
 #endif
-
+    if (boot_bufs)
+	bufs_to_alloc = boot_bufs;
+    printk("%d %s buffers\n", bufs_to_alloc, xms_enabled? "xms": "ext");
 #else
     int bufs_to_alloc = NR_MAPBUFS;
 #endif
+
     buffer_heads = heap_alloc(bufs_to_alloc * sizeof(struct buffer_head),
 	HEAP_TAG_BUFHEAD|HEAP_TAG_CLEAR);
     if (!buffer_heads) return 1;

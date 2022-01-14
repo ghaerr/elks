@@ -49,7 +49,7 @@ int xms_init(void)
 	enabled = verify_a20();
 	printk(" now %s, ", enabled? "on" : "off");
 #ifdef CONFIG_FS_XMS_INT15
-	printk("using int 15,");
+	printk("using int 15, ");
 #else
 	if (!enabled) {
 		printk("xms disabled, A20 error,");
@@ -59,7 +59,7 @@ int xms_init(void)
 		printk("xms disabled, requires 386,");
 		return 0;
 	}
-	printk("using unreal mode,");
+	printk("using unreal mode, ");
 #endif
 	xms_enabled = 1;	/* enables xms_fmemcpyw()*/
 	return xms_enabled;
