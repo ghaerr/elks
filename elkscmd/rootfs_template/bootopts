@@ -4,9 +4,10 @@
 #QEMU=1	net=eth		# ftpd on QEMU
 #HOSTNAME=elks1	 	# set network IP from /etc/hosts
 #GATEWAY=10.0.2.2
-#NETMASK=255.255.255.0
+#NETMASK=
 #NETSTART="telnetd ftpd"
 #netirq=9 netport=0x300 # NIC
+#bufs=128
 #init=/bin/init 3 n	# multiuser serial no /etc/rc.d/rc.sys
 #init=/bin/sh		# singleuser shell
 #console=ttyS0,19200	# serial console
