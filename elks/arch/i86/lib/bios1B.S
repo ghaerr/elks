@@ -120,6 +120,7 @@ sense:
 	int $0x1B
 
 result:
+	mov $0,%al
 
 //	Now recover the results
 //	Make some breathing room
