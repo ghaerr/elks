@@ -268,7 +268,7 @@ static int isUnsupportedTerm(void) {
 
 /* Raw mode: 1960 magic shit. */
 static int enableRawMode(int fd) {
-    struct termios raw;
+    struct termios raw, speed;
     static char once = 0;
 
     if (!isatty(STDIN_FILENO)) goto fatal;
@@ -282,7 +282,13 @@ static int enableRawMode(int fd) {
         once = 1;
     }
 
-    raw = orig_termios;  /* modify the original mode */
+    /* modify the original mode except baud rate/char size/stop bits/parity */
+    if (tcgetattr(fd, &speed) != -1) {
+	orig_termios.c_cflag &= ~(CBAUD | CBAUDEX | CSIZE | CSTOPB | PARENB | PARODD);
+	orig_termios.c_cflag |=
+	    speed.c_cflag & (CBAUD | CBAUDEX | CSIZE | CSTOPB | PARENB | PARODD);
+    }
+    raw = orig_termios;
     /* input modes: no break, no CR to NL, no parity check, no strip char,
      * no start/stop output control. */
     raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
