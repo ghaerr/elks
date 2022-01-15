@@ -171,11 +171,14 @@ static unsigned short int INITPROC bioshd_gethdinfo(void) {
     register struct drive_infot *drivep = &drive_info[0];
 
 #ifdef CONFIG_ARCH_PC98
+    int call_bios_rvalue;
+
     for (drive = 0; drive < NUM_DRIVES/2; drive++) {
 	BD_AX = BIOSHD_DRIVE_PARMS;
 	BD_DX = drive + 0x80;
 	BD_ES = BD_DI = BD_SI = 0;
-	if (!call_bios(&bdt))
+	call_bios_rvalue = call_bios(&bdt);
+	if ((call_bios_rvalue == 0) && (BD_DX & 0xff))
 	    ndrives++;
     }
 #else
