@@ -128,6 +128,10 @@ static unsigned char hd_drive_map[NUM_DRIVES] = {/* BIOS drive mappings*/
     0x00, 0x01, 0x02, 0x03		/* fd0, fd1 */
 };
 
+#ifdef CONFIG_ARCH_PC98
+static unsigned char scsi_drive_map[7];
+#endif
+
 static int _fd_count = 0;  		/* number of floppy disks */
 static int _hd_count = 0;  		/* number of hard disks */
 
@@ -171,15 +175,16 @@ static unsigned short int INITPROC bioshd_gethdinfo(void) {
     register struct drive_infot *drivep = &drive_info[0];
 
 #ifdef CONFIG_ARCH_PC98
+    int scsi_id;
     int call_bios_rvalue;
 
-    for (drive = 0; drive < NUM_DRIVES/2; drive++) {
+    for (scsi_id = 0; scsi_id < 7; scsi_id++) {
 	BD_AX = BIOSHD_DRIVE_PARMS;
-	BD_DX = drive + 0x80;
+	BD_DX = scsi_id + 0x80;
 	BD_ES = BD_DI = BD_SI = 0;
 	call_bios_rvalue = call_bios(&bdt);
 	if ((call_bios_rvalue == 0) && (BD_DX & 0xff))
-	    ndrives++;
+	    scsi_drive_map[ndrives++] = scsi_id;
     }
 #else
     BD_AX = BIOSHD_DRIVE_PARMS;
@@ -195,7 +200,11 @@ static unsigned short int INITPROC bioshd_gethdinfo(void) {
 
     for (drive = 0; drive < ndrives; drive++) {
 	BD_AX = BIOSHD_DRIVE_PARMS;
+#ifdef CONFIG_ARCH_PC98
+	BD_DX = scsi_drive_map[drive] + 0x80;
+#else
 	BD_DX = drive + 0x80;
+#endif
 	BD_ES = BD_DI = BD_SI = 0;	/* guard against BIOS bugs*/
 	if (call_bios(&bdt) == 0) {
 #ifdef CONFIG_ARCH_PC98
@@ -729,7 +738,14 @@ static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *b
 	unsigned short in_ax, out_ax;
 
 	drive = drivep - drive_info;
+#ifdef CONFIG_ARCH_PC98
+	if (drive < 4)
+	    drive = scsi_drive_map[drive] | (hd_drive_map[drive] & 0xf0);
+	else
+	    drive = hd_drive_map[drive];
+#else
 	drive = hd_drive_map[drive];
+#endif
 	get_chst(drivep, start, &cylinder, &head, &sector, &this_pass);
 
 	/* limit I/O to requested sector count*/
@@ -796,7 +812,14 @@ static void bios_readtrack(struct drive_infot *drivep, sector_t start)
 	int errs = 0;
 	unsigned short out_ax;
 
+#ifdef CONFIG_ARCH_PC98
+	if (drive < 4)
+	    drive = scsi_drive_map[drive] | (hd_drive_map[drive] & 0xf0);
+	else
+	    drive = hd_drive_map[drive];
+#else
 	drive = hd_drive_map[drive];
+#endif
 	get_chst(drivep, start, &cylinder, &head, &sector, &num_sectors);
 
 	if (num_sectors > (DMASEGSZ >> 9)) num_sectors = DMASEGSZ >> 9;
