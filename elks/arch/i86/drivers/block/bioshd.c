@@ -72,6 +72,7 @@
 
 #ifdef CONFIG_ARCH_PC98
 #define MAXDRIVES	4	/* max floppy drives*/
+static unsigned char scsi_drive_map[7];
 #endif
 
 /* comment out following line for single-line drive info summary*/
@@ -127,10 +128,6 @@ static unsigned char hd_drive_map[NUM_DRIVES] = {/* BIOS drive mappings*/
     0x80, 0x81, 0x82, 0x83,		/* hda, hdb */
     0x00, 0x01, 0x02, 0x03		/* fd0, fd1 */
 };
-
-#ifdef CONFIG_ARCH_PC98
-static unsigned char scsi_drive_map[7];
-#endif
 
 static int _fd_count = 0;  		/* number of floppy disks */
 static int _hd_count = 0;  		/* number of hard disks */
@@ -729,6 +726,19 @@ static void get_chst(struct drive_infot *drivep, sector_t start, unsigned int *c
 		start, *c, *h, *s, *t);
 }
 
+/* map drives */
+static void map_drive(int *drive)
+{
+#ifdef CONFIG_ARCH_PC98
+	if (*drive < 4)
+	    *drive = scsi_drive_map[*drive] | (hd_drive_map[*drive] & 0xf0);
+	else
+	    *drive = hd_drive_map[*drive];
+#else
+	*drive = hd_drive_map[*drive];
+#endif
+}
+
 /* do bios I/O, return # sectors read/written */
 static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *buf,
 	ramdesc_t seg, int cmd, unsigned int count)
@@ -738,14 +748,7 @@ static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *b
 	unsigned short in_ax, out_ax;
 
 	drive = drivep - drive_info;
-#ifdef CONFIG_ARCH_PC98
-	if (drive < 4)
-	    drive = scsi_drive_map[drive] | (hd_drive_map[drive] & 0xf0);
-	else
-	    drive = hd_drive_map[drive];
-#else
-	drive = hd_drive_map[drive];
-#endif
+	map_drive(&drive);
 	get_chst(drivep, start, &cylinder, &head, &sector, &this_pass);
 
 	/* limit I/O to requested sector count*/
@@ -812,14 +815,7 @@ static void bios_readtrack(struct drive_infot *drivep, sector_t start)
 	int errs = 0;
 	unsigned short out_ax;
 
-#ifdef CONFIG_ARCH_PC98
-	if (drive < 4)
-	    drive = scsi_drive_map[drive] | (hd_drive_map[drive] & 0xf0);
-	else
-	    drive = hd_drive_map[drive];
-#else
-	drive = hd_drive_map[drive];
-#endif
+	map_drive(&drive);
 	get_chst(drivep, start, &cylinder, &head, &sector, &num_sectors);
 
 	if (num_sectors > (DMASEGSZ >> 9)) num_sectors = DMASEGSZ >> 9;
