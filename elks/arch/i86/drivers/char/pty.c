@@ -122,10 +122,9 @@ size_t pty_write (struct inode *inode, struct file *file, char *data, size_t len
 		}
 
 		ret = get_user_char ((void *)(data++));
-		if (!tty_intcheck(tty, ret)) {
+		if (!tty_intcheck(tty, ret))
 			chq_addch_nowakeup (&tty->inq, ret);
-			count++;
-		}
+		count++;
 	}
 	if (count > 0)
 		wake_up(&tty->inq.wait);
