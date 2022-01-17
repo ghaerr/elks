@@ -40,7 +40,7 @@ printline(int address, int *num, char *chr, int count, int summary, char *prefix
 	for (j = 0; j < count; j++)
 	{
 		if (j == 8)
-			putchar(' ');
+			printf(" ");
 		if (num[j] >= 0)
 			printf(" %02x", num[j]);
 		else
@@ -52,7 +52,7 @@ printline(int address, int *num, char *chr, int count, int summary, char *prefix
 	for (j=count; j < 16; j++)
 	{
 		if (j == 8)
-			putchar(' ');
+			printf(" ");
 		printf("   ");
 	}
 
