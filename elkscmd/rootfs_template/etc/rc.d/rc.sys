@@ -38,7 +38,7 @@ fi
 #
 # start networking
 #
-# first check /bootopts "net=" environment variable
+# check /bootopts "net=" env variable
 case "$net" in
 eth)
 	net start eth
