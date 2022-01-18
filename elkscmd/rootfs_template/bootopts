@@ -1,6 +1,6 @@
 ## boot options max size 511 bytes
 #console=ttyS0 debug net=eth 3 # serial console, multiuser, networking
-#QEMU=1			# network testing
+#QEMU=1			# to use ftp/ftpd in qemu
 #TZ=MDT7		# timezone
 #netirq=9 netport=0x300 # NIC
 #bufs=128

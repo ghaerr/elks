@@ -50,10 +50,9 @@ cslip)
 	net start cslip
 	;;
 *)
-	# normal network start
-	#net start eth
-	#net start cslip 19200
-	#net start slip 115200 /dev/ttyS0
+	if test "$net" != ""; then
+		echo "Unrecognized /bootopts network option: net=$net"
+	fi
 	;;
 esac
 
