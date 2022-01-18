@@ -72,6 +72,7 @@
 
 #ifdef CONFIG_ARCH_PC98
 #define MAXDRIVES	4	/* max floppy drives*/
+static unsigned char scsi_drive_map[7];
 #endif
 
 /* comment out following line for single-line drive info summary*/
@@ -170,6 +171,19 @@ static unsigned short int INITPROC bioshd_gethdinfo(void) {
     int drive, ndrives = 0;
     register struct drive_infot *drivep = &drive_info[0];
 
+#ifdef CONFIG_ARCH_PC98
+    int scsi_id;
+    int call_bios_rvalue;
+
+    for (scsi_id = 0; scsi_id < 7; scsi_id++) {
+	BD_AX = BIOSHD_DRIVE_PARMS;
+	BD_DX = scsi_id + 0x80;
+	BD_ES = BD_DI = BD_SI = 0;
+	call_bios_rvalue = call_bios(&bdt);
+	if ((call_bios_rvalue == 0) && (BD_DX & 0xff))
+	    scsi_drive_map[ndrives++] = scsi_id;
+    }
+#else
     BD_AX = BIOSHD_DRIVE_PARMS;
     BD_DX = 0x80;		/* query hard drives only*/
     BD_ES = BD_DI = BD_SI = 0;	/* guard against BIOS bugs*/
@@ -177,18 +191,29 @@ static unsigned short int INITPROC bioshd_gethdinfo(void) {
 	ndrives = BD_DX & 0xff;
     else
 	debug_bios("bioshd: get_drive_parms fail on hd\n");
+#endif
     if (ndrives > NUM_DRIVES/2)
 	ndrives = NUM_DRIVES/2;
 
     for (drive = 0; drive < ndrives; drive++) {
 	BD_AX = BIOSHD_DRIVE_PARMS;
+#ifdef CONFIG_ARCH_PC98
+	BD_DX = scsi_drive_map[drive] + 0x80;
+#else
 	BD_DX = drive + 0x80;
+#endif
 	BD_ES = BD_DI = BD_SI = 0;	/* guard against BIOS bugs*/
 	if (call_bios(&bdt) == 0) {
+#ifdef CONFIG_ARCH_PC98
+	    drivep->heads = BD_DX >> 8;
+	    drivep->sectors = BD_DX & 0xff;
+	    drivep->cylinders = BD_CX;
+#else
 	    drivep->heads = (BD_DX >> 8) + 1;
 	    drivep->sectors = BD_CX & 0x3f;
 	    /* NOTE: some BIOS may underreport cylinders by 1*/
 	    drivep->cylinders = (((BD_CX & 0xc0) << 2) | (BD_CX >> 8)) + 1;
+#endif
 	    drivep->fdtype = -1;
 	    drivep->sector_size = 512;
 	    printk("bioshd: hd%c BIOS CHS %d,%d,%d\n", 'a'+drive, drivep->cylinders,
@@ -701,6 +726,19 @@ static void get_chst(struct drive_infot *drivep, sector_t start, unsigned int *c
 		start, *c, *h, *s, *t);
 }
 
+/* map drives */
+static void map_drive(int *drive)
+{
+#ifdef CONFIG_ARCH_PC98
+	if (*drive < 4)
+	    *drive = scsi_drive_map[*drive] | (hd_drive_map[*drive] & 0xf0);
+	else
+	    *drive = hd_drive_map[*drive];
+#else
+	*drive = hd_drive_map[*drive];
+#endif
+}
+
 /* do bios I/O, return # sectors read/written */
 static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *buf,
 	ramdesc_t seg, int cmd, unsigned int count)
@@ -710,7 +748,7 @@ static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *b
 	unsigned short in_ax, out_ax;
 
 	drive = drivep - drive_info;
-	drive = hd_drive_map[drive];
+	map_drive(&drive);
 	get_chst(drivep, start, &cylinder, &head, &sector, &this_pass);
 
 	/* limit I/O to requested sector count*/
@@ -777,7 +815,7 @@ static void bios_readtrack(struct drive_infot *drivep, sector_t start)
 	int errs = 0;
 	unsigned short out_ax;
 
-	drive = hd_drive_map[drive];
+	map_drive(&drive);
 	get_chst(drivep, start, &cylinder, &head, &sector, &num_sectors);
 
 	if (num_sectors > (DMASEGSZ >> 9)) num_sectors = DMASEGSZ >> 9;
