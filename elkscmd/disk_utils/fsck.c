@@ -84,7 +84,7 @@
 #define BITS_PER_BLOCK (BLOCK_SIZE<<3)
 
 static char * program_name = "fsck.minix";
-static char * program_version = "1.0.1 - 09/01/20";
+/*static char * program_version = "1.0.1 - 09/01/20";*/
 static char * device_name = NULL;
 static int IN;
 static int repair=0, automatic=0, verbose=0, list=0, show=0, warn_mode=0,
@@ -894,9 +894,9 @@ void check(void)
 
 int main(int argc, char ** argv)
 {
-	struct termios termios,tmp;
 	int count;
 	int retcode = 0;
+	struct termios termios,tmp;
 
 	if (argc && *argv)
 		program_name = *argv;
@@ -934,7 +934,7 @@ int main(int argc, char ** argv)
 	IN = open(device_name,repair?O_RDWR:O_RDONLY);
 	if (IN < 0)
 		die("unable to open '%s'");
-	printf("%s %s\n", program_name, program_version);
+	/*printf("%s %s\n", program_name, program_version);*/
 	for (count=0 ; count<3 ; count++)
 		sync();
 	read_tables();
@@ -946,8 +946,7 @@ int main(int argc, char ** argv)
 	 * command line.
 	 */
 	if (!(SupeP->s_state & MINIX_ERROR_FS) &&
-	      (SupeP->s_state & MINIX_VALID_FS) &&
-	      !force) {
+		(SupeP->s_state & MINIX_VALID_FS) && !force) {
 		if (repair)
 			printf("%s is clean, no check.\n", device_name);
 		if (repair && !automatic)
