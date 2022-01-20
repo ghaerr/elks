@@ -120,7 +120,7 @@ void INITPROC kernel_init(void)
 #ifdef CONFIG_BOOTOPTS
     if (opts)
 	finalize_options();
-    else printk("/bootopts IGNORED: header not ## or size > %d\n", OPTSEGSZ-1);
+    else printk("/bootopts ignored: header not ##, size > %d or FAT boot\n", OPTSEGSZ-1);
 #endif
 
     mm_stat(base, end);

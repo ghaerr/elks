@@ -456,7 +456,7 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 	static char sector_probe[5] = { 8, 9, 15, 18, 36 };
 	static char track_probe[2] = { 40, 80 };
 #endif
-	int count;
+	int count, found_EPB = 0;
 
 	target &= MAXDRIVES - 1;
 
@@ -476,8 +476,9 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 
 		if (drivep->cylinders != 0 && drivep->sectors != 0
 		    && drivep->heads != 0) {
-		    printk("fd: found valid ELKS disk parameters on /dev/fd%d "
-			   "boot sector\n", target);
+		    found_EPB = 1;
+		    /*printk("fd: found valid ELKS disk parameters on /dev/fd%d "
+			   "boot sector\n", target);*/
 		    goto got_geom;
 		}
 	    }
@@ -522,12 +523,12 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 	if (drivep->cylinders == 0 || drivep->sectors == 0) {
 	    *drivep = fd_types[drivep->fdtype];
 	    printk("fd: Floppy drive autoprobe failed!\n");
-	}
-	else
-	    printk("fd: /dev/fd%d probably has %d sectors, %d heads, and "
-		   "%d cylinders\n",
-		   target, drivep->sectors, drivep->heads, drivep->cylinders);
+	} else {
+	    printk("fd: /dev/fd%d %s has %d cylinders, %d heads, and %d sectors\n",
+		   target, found_EPB? "found ELKS parm block,": "probably",
+		   drivep->cylinders, drivep->heads, drivep->sectors);
 
+	}
 	hdp->start_sect = 0;
 	hdp->nr_sects = ((sector_t)(drivep->sectors * drivep->heads))
 				* ((sector_t)drivep->cylinders);

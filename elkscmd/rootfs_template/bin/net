@@ -12,18 +12,8 @@
 # See qemu.sh NET= line for host forwarding into ELKS using QEMU
 #
 
-# Default IP address, gateway and network mask set by env variables in
-# /bootopts or /etc/profile. They can be IP addresses or names in /etc/hosts.
-localip=$HOSTNAME
-gateway=$GATEWAY
-netmask=$NETMASK
-
-# default link layer [eth|slip|cslip]
-link=eth
-
-# default serial port and baud rate if slip/cslip
-device=/dev/ttyS0
-baud=38400
+# read net configuration file
+source /etc/net.cfg
 
 usage()
 {
@@ -39,6 +29,7 @@ getty_off()
 
 start_network()
 {
+	custom_prestart_network
 	echo "Starting networking" on $link
 	case "$link" in
 	slip)
@@ -59,26 +50,25 @@ start_network()
 	echo $ktcp
 	if $ktcp; then
 		echo -n "Starting daemons "
-		if test "$NETSTART" = ""; then NETSTART="telnetd ftpd httpd"; fi
-		for daemon in $NETSTART
+		for daemon in $netstart
 		do
-			if test -f /bin/$daemon
-			then
-				echo -n "$daemon "
-				$daemon || true
-			fi
+			eval cmdline=\$$daemon
+			echo -n "'$cmdline' "
+			$cmdline || true
 		done
 		echo ""
 	else
 		echo "Network start failed"
 		exit 1
 	fi
+	custom_poststart_network
 }
 
 stop_network()
 {
 	echo "Stopping network"
 	kill $(ps | grep "ktcp|telnet|httpd|ftpd" | cut -c 1-5) > /dev/null 2>&1
+	custom_stop_network
 }
 
 if test "$#" -lt 1; then
