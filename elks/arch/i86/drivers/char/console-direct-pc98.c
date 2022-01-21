@@ -21,6 +21,7 @@
 #include <linuxmt/ntty.h>
 #include <arch/io.h>
 #include "console.h"
+#include "conio-pc98-asm.h"
 
 /* Assumes ASCII values. */
 #define isalpha(c) (((unsigned char)(((c) | 0x20) - 'a')) < 26)
