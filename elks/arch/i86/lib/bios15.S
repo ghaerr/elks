@@ -44,7 +44,7 @@ block_move:
 1:	xor	%ax,%ax		# success return AX = 0
 2:	pop	%bp
 	pop	%si
-	pop	%ax
+	pop	%es
 	ret
 
 #if 0
