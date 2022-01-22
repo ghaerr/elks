@@ -48,6 +48,7 @@
 
 #define	IOBUFLEN 1500
 #define BUF_SIZE 512
+#define CMD_BUF 80
 #define ADDRBUF	40
 #define NLSTBUF 1500
 #define MAXARGS	256	/* max names in wildcard expansion */
@@ -79,7 +80,7 @@ static int send_cmd(int, char *);
 static int is_connected(int);
 static int parse_cmd(char *, char **);
 
-static FILE *fcmd;
+//static FILE *fcmd;
 
 enum {	// commands in disconnected mode
 	CMD_OPEN,	// Must be first!!
@@ -218,10 +219,10 @@ int ask(char *source, char *name) {
 	//return 1;
 }
 		
+#if 0
 /* Read (and echo) reply from server */
 /* NOTE: The fd argument is not used (replaced by global fcmd for buffered IO). */
 /* fd is kept because it makes the code easier to read. */
-
 int get_reply(int fd, char *buf, int size, int dbg) {
 
 	if (fgets(buf, size, fcmd) == NULL) {
@@ -232,19 +233,94 @@ int get_reply(int fd, char *buf, int size, int dbg) {
 	if (debug >= dbg) printf("%s", buf);
 	return 1;
 }
+#else
+/*
+ * get_reply: Return exactly one complete reply from the server.
+ * - Collect long (multiline) replies
+ * - Buffer replies if several arrive concurrently (never more than one extra)
+ * - Return buffer status when queried
+ *
+ * This version of get_reply eliminates the use of buffered IO in order for select() to work predictably
+ * and enable querying of possible buffered replies (the peculiarities created by the huge difference in speed
+ * between and ELKS system and a more recent system).
+ * E.g when receiving small (and zero length) files in particular, the 'Transfer Complete' control message 
+ * will arrive before any data and be read as part of the previous command response.
+ * Multiline control responses (typically at login), will some times arrive in several packets and must be
+ * assembled properly.
+ * This is not elegant, but it is very memory efficiant (abusing the *buf parameter for all the work).
+ */
+
+int get_reply(int fd, char *buf, int size, int dbg) {
+	static char lbuf[CMD_BUF];
+	static int lb = 0;
+	
+	char *cp;
+	int l = 0;
+
+	if (dbg < 0) 		/* Just return status */
+		return lb;
+
+	if (lb) {		/* something in the buffer, return it */
+		strcpy(buf, lbuf);
+		if (debug >= dbg) printf("(bf) %s", buf);
+		lb = 0;
+		return 1;
+	}
+	bzero(buf, size);
+
+	while (1) {	/* Need this hack to handle multi-line replies which may */
+			/* arrive in several packets and some times require several reads. */
+		if ((l = read(fd, &buf[lb], size-lb)) <= 0) {
+			check_connected++;
+			lb = 0;
+			return -1;
+		}	// FIXME: Should check whether we're actually running out of buffer space
+		buf[l+lb] = '\0';
+
+		// find the start of the last received line 
+		cp = strrchr(&buf[lb], '\n') - 1;
+		while (*cp != '\n' && cp >= &buf[lb]) --cp;
+		cp++;
+		lb += l;
+		if (*(cp+3) != '-') {	/* end of continuation if blank */
+			break;
+		}
+	}
+	buf[lb] = '\0';
+	lb = 0;
+
+	// cp points to the start of the last record,
+	// compare starus codes to see if we have an extra
+	// reply to set aside for the next call.
+
+	if (cp != buf) {
+		if (strncmp(buf, cp, 3)) {
+			strcpy(lbuf, cp);	// save the extra reply
+			lb = strlen(cp);
+			*cp = '\0';
+			//printf("\nreturned <%s>\nsaved <%s>\n", buf, lbuf);
+		}
+	}
+	
+	if (debug >= dbg) printf("%s", buf);
+	return 1;
+}
+
+#endif
 
 int is_connected(int cmdfd) {	// return 1 if connected, otherwise 0
 	char str[IOBUFLEN];
 
 	if (cmdfd < 0) 
-		return 0;	/* no cmd channel has been opened */
+		return 0;
+
 	if (send_cmd(cmdfd, "NOOP\r\n") < 0) {
-		fclose(fcmd);
+		//fclose(fcmd);
 		close(cmdfd);
 		cmdfd = -1;
 		return 0;
 	}
-	return ((get_reply(cmdfd, str, IOBUFLEN, 1) > 0)? 1 : 0 );
+	return ((get_reply(cmdfd, str, sizeof(str), 1) > 0)? 1 : 0 );
 }
 
 /* Send command to server, echo if required */
@@ -351,7 +427,7 @@ int parse_cmd(char *input, char **argv) {
 }
 
 
-int dataconn(int fd) {		/* wait for the actual data connection in active mode */
+int dataconn(int fd) {		/* wait for the actual data connection in PORT mode */
 	struct sockaddr_in myaddr;
 	int datafd, i = sizeof(myaddr);
 
@@ -462,7 +538,7 @@ int do_ls(int controlfd, int datafd, char **cmdline, int mode) {
 		select(maxfdp1, &rdset, NULL, NULL, NULL);
 
 		if (FD_ISSET(controlfd, &rdset)) {
-			get_reply(controlfd, recvline, IOBUFLEN, 1);
+			get_reply(controlfd, recvline, sizeof(recvline), 1);
 			if (*recvline != '1') {	/* 150 Opening ASCII mode connecion ... */
 				printf("Unexpected response: %s", recvline);
 				break;
@@ -480,7 +556,7 @@ int do_ls(int controlfd, int datafd, char **cmdline, int mode) {
 			FD_CLR(nfd, &rdset);
 		}
 		if ((control_finished == TRUE) && (data_finished == TRUE)) {
-			get_reply(controlfd, recvline, IOBUFLEN, 1);
+			get_reply(controlfd, recvline, sizeof(recvline), 1);
 			if (*recvline != '2') 	/* 226 Transfer Complete */
 				printf("DIR: Transfer error: %s\n", recvline);
 			break;
@@ -518,7 +594,7 @@ int do_get(int controlfd, char *src, char *dst, int mode) {
 	sprintf(iobuf, "RETR %s\r\n", src);
 	send_cmd(controlfd, iobuf);
 
-	get_reply(controlfd, iobuf, IOBUFLEN, 1);
+	get_reply(controlfd, iobuf, sizeof(iobuf), 1);
 	if (*iobuf != '1') {	/* Any error on the remote side will emit a 5xx response */
 		if (!debug) printf("%s", iobuf);
 		status = -1;
@@ -542,36 +618,39 @@ int do_get(int controlfd, char *src, char *dst, int mode) {
 	/*
 	 * NOTICE: When fetching very small or NULL size files, the '150 Opening'
 	 * message and the 226 Transfer Complete message arrive almost at the same time.
-	 * So when get_reply() fetches the former, the latter ends up in the input buffer,
+	 * When get_reply() fetches the former, the latter ends up in the input buffer,
 	 * and the loop below will not receive anything on the control channel.
+	 * This problem is now handled in the new get_reply function, which may be poked to see
+	 * if there's data pending.
 	 */
 	struct timeval tv; int select_return, icount = 0;
+	tv.tv_usec = 500;	//Experimental
 	while (1) {
 		if (control_finished == FALSE) FD_SET(controlfd, &rdset);
 		if (data_finished == FALSE) FD_SET(datafd, &rdset);
 		tv.tv_sec  = 0;
-		tv.tv_usec = 1000;	//Experimental
+		tv.tv_usec *= 2;	//Experimental
 		select_return = select(maxfdp1, &rdset, NULL, NULL, &tv);
-/// Experimental
+
 		if (!select_return) { 
-			if (debug > 2) printf("get: select timeout.\n");
+			if (debug > 2) printf("get: select timeout (%d)\n", icount);
 			// Handle zero length files
+			//FIXME: Simplify this now that we have a new get_reply
 			if (icount++ > 2 || data_finished == TRUE) {	
 				// Experimental: Got timeout, need reply - which is probably sitting in the
-				// fgets() input buffer.
+				// input buffer.
 				// Or the server closed before select was called (zero length file)
 				// and we just need to get outa here.
-				if (control_finished == FALSE) {
-					get_reply(controlfd, iobuf, IOBUFLEN, 1);
+				if (control_finished == FALSE && (get_reply(controlfd, NULL, 0, -1) > 0)) {
+					get_reply(controlfd, iobuf, sizeof(iobuf), 1);
 					control_finished = TRUE;
 				}
-				break;
-			}
+			}	//FIXME: add counter to avoid looping forever
 		}
 
 		if (FD_ISSET(controlfd, &rdset)) {
-			get_reply(controlfd, iobuf, IOBUFLEN, 1);
-			//if (debug > 2) printf("get: select cntrl\n");
+			if (debug > 2) printf("get: select ctrl\n");
+			get_reply(controlfd, iobuf, sizeof(iobuf), 1);
 			if (*iobuf != '2') {
 				printf("Unexpected: %s" , iobuf);
 				continue;
@@ -628,7 +707,7 @@ int do_put(int controlfd, char *src, char *dst, int mode){
 	send_cmd(controlfd, iobuf);
 	printf("local: %s, remote: %s\n", src, dst);
 
-	get_reply(controlfd, iobuf, IOBUFLEN, 1);
+	get_reply(controlfd, iobuf, sizeof(iobuf), 1);
 	
 	if (*iobuf != '1') {	/* Any error on the remote side will emit a 5xx response */
 		if (!debug) printf("%s", iobuf);	// Make sure the user gets the error
@@ -646,7 +725,7 @@ int do_put(int controlfd, char *src, char *dst, int mode){
 
 #if 0
 	//bzero(iobuf, sizeof(iobuf));
-	//get_reply(controlfd, iobuf, IOBUFLEN, 1);	/* get '150 Opening connection ...' */
+	//get_reply(controlfd, iobuf, sizeof(iobuf), 1);	/* get '150 Opening connection ...' */
 	if (*iobuf != '1') {
 		printf("PORT command failed, %s", iobuf);
 		close(datafd);
@@ -671,7 +750,7 @@ int do_put(int controlfd, char *src, char *dst, int mode){
 		select(maxfdp1, &rdset, &wrset, NULL, NULL);
 
 		if (FD_ISSET(controlfd, &rdset)) {
-			get_reply(controlfd, iobuf, IOBUFLEN, 1);
+			get_reply(controlfd, iobuf, sizeof(iobuf), 1);
 			// FIXME - improve error handling
 			if (*iobuf != '2' && !debug) {
 				printf("%s", iobuf);
@@ -700,7 +779,7 @@ int do_put(int controlfd, char *src, char *dst, int mode){
 	}
 #endif
 	close(datafd);
-	get_reply(controlfd, iobuf, IOBUFLEN, 1);
+	get_reply(controlfd, iobuf, sizeof(iobuf), 1);
 
 put_out:
 	close(fd);
@@ -763,7 +842,7 @@ int do_active(int cmdfd) {
 	get_port_string(str, myip, (int) UC(p[1]), (int) UC(p[0]));
 	send_cmd(cmdfd, str);
 
-	if ((get_reply(cmdfd, str, BUF_SIZE, 1) < 0) || (*str != '2')) { // Should be '200 Port command successful' ...
+	if ((get_reply(cmdfd, str, sizeof(str), 1) < 0) || (*str != '2')) { // Should be '200 Port command successful' ...
 		/* command channel error, probably server timeout or '551 Rejected data connection' */
 		close(fd);
 		fd = -1;
@@ -782,7 +861,7 @@ int do_passive(int cmdfd) {
 	char command[BUF_SIZE], *ip, ip_addr[ADDRBUF];
 
 	send_cmd(cmdfd, "PASV\r\n");
-	get_reply(cmdfd, command, BUF_SIZE, 1);
+	get_reply(cmdfd, command, sizeof(command), 1);
 	if (strncmp(command, "227", 3)) {
 		printf("Server disconnected.\n");
 		return -1;
@@ -911,7 +990,7 @@ int do_mget(int controlfd, char **argv, int mode) {
 }
 
 void settype(int controlfd, char t) {
-	char b[ADDRBUF];
+	char b[CMD_BUF];
 
 	/* atype - active type (what we've told the server)
 	 * type - selected file transfer type (via BIN or ASCII commands)
@@ -920,7 +999,7 @@ void settype(int controlfd, char t) {
 	sprintf(b, "TYPE %c\r\n", t);
 	send_cmd(controlfd, b);
 
-	get_reply(controlfd, b, ADDRBUF, 1);	/* Should be '200 Type set to ...' */
+	get_reply(controlfd, b, sizeof(b), 1);	/* Should be '200 Type set to ...' */
 	if (*b != '2') 
 		printf("Failed to set type: %s", b);
 	else 
@@ -990,7 +1069,8 @@ void do_close(int controlfd, char *str, int len) {
 			sprintf(str, "Server timed out.\n");
 		printf("Closing: %s", str);
 	}
-	fclose(fcmd);
+	//fclose(fcmd);
+	close(controlfd);
 	return;
 }
 
@@ -999,12 +1079,12 @@ int do_login(char *user, char *passwd, char *buffer, int len, char *ip, unsigned
 	int controlfd = -1;
 
 #ifdef QEMUHACK
-	// QEMU mode - must be repeated on every login, since a loopback connection will temporarily
-	// disable QEMU mode.
-	if ((cp = getenv("QEMU")) != NULL) {	/* Enable QEMU hack from environment */
+	// Check for QEMU mode - repeat on every login, since a loopback connection may have temporarily
+	// disabled QEMU mode.
+	if ((cp = getenv("QEMU")) != NULL) {
 		qemu = atoi(cp);
 		printf("QEMU set to %d\n", qemu);
-		if (qemu) debug++;      //FIXME: Temporary - for debugging
+		//if (qemu) debug++;      //FIXME: Temporary - for debugging
 	}
 #endif
 	lip = ip;
@@ -1021,7 +1101,7 @@ int do_login(char *user, char *passwd, char *buffer, int len, char *ip, unsigned
 	if ((controlfd = connect_cmd(ip, port)) < 0)
 		return -1;
 	//printf("Connected to %s.\n", ip);
-	fcmd = fdopen(controlfd, "r+");
+	//fcmd = fdopen(controlfd, "r+");
 
 	/* Get the ID message from the server */
 	get_reply(controlfd, buffer, len, 0);	/* 220 XYZ ftp server ready etc. */
@@ -1035,7 +1115,7 @@ int do_login(char *user, char *passwd, char *buffer, int len, char *ip, unsigned
 	get_reply(controlfd, buffer, len, 1);	/* 331 Password required ... */
 	if (*buffer != '3') {
 		printf("Error in username: %s", buffer);
-		fclose(fcmd);
+		//fclose(fcmd);
 		return -1;
 	}
 	lip = getpass("Password:");
@@ -1043,15 +1123,18 @@ int do_login(char *user, char *passwd, char *buffer, int len, char *ip, unsigned
 	if (strlen(lip) < 2) lip = passwd; /* use passwd from command line if present */
 	sprintf(buffer, "PASS %s\r\n", lip);
 	send_cmd(controlfd, buffer);
-
+#if 0
 	/* Gobble up welcome message - line by line to catch continuation */
 	while (fgets(buffer, len, fcmd) != NULL) {
 		printf("%s", buffer);
 		if (buffer[3] == ' ') break;
 	}
+#else
+	get_reply(controlfd, buffer, len, 1);
+#endif
 	if (*buffer != '2') {	/* 230 User xxx logged in. */
 		printf("Login failed: %s", buffer);
-		fclose(fcmd);
+		do_close(controlfd, buffer, len);
 		return -1;
 	}
 	send_cmd(controlfd, "SYST\r\n");
@@ -1070,7 +1153,7 @@ void parm_err(void) {
 int main(int argc, char **argv) {
 
 	int server_port = DFLT_PORT, controlfd = -1, datafd, code, connected = 0;
-	int mode = PASV, mput, mget, f_mode, autologin = 1;
+	int mode = PASV, i, mput, mget, f_mode, autologin = 1;
 	char command[BUF_SIZE], str[IOBUFLEN+1], user[30], passwd[30];
 	char *param[MAXPARMS];
 
@@ -1116,13 +1199,13 @@ int main(int argc, char **argv) {
 				printf("Error in arguments.\n");
 				exit(-1);
 			}
-			argv++;
-			argc--;
+			//argv++;
+			//argc--;
 		} else {
 			if ((strchr(*argv, '.') != 0) && (isdigit((int)**argv))) 
 				strcpy(srvr_ip, *argv); 		//numeric ip
 			else if (isalpha((int)**argv))
-				strcat(srvr_ip, in_ntoa(in_gethostbyname(*argv)));
+				strcpy(srvr_ip, in_ntoa(in_gethostbyname(*argv)));
 			else 
 				server_port = atoi(*argv);
 		}
@@ -1253,12 +1336,12 @@ int main(int argc, char **argv) {
 			}
 			sprintf(str, "CWD %s\r\n", param[1]);
 			send_cmd(controlfd, str);
-			get_reply(controlfd, command, BUF_SIZE, 0);
+			get_reply(controlfd, command, sizeof(command), 0);
 			break;
 			
 		case CMD_PWD:
 			send_cmd(controlfd, "PWD\r\n");
-			get_reply(controlfd, command, BUF_SIZE, 0);
+			get_reply(controlfd, command, sizeof(command), 0);
 			break;
 
 		case CMD_QUIT:
@@ -1268,7 +1351,8 @@ int main(int argc, char **argv) {
 
 #ifdef BLOATED
 		case CMD_SHELL:
-			system(&command[1]);
+			if ((i = system(&command[1]))) 
+				printf("Shell fork failed, code %d\n", i);
 			break;
 			
 		case CMD_DELE:
@@ -1278,7 +1362,7 @@ int main(int argc, char **argv) {
 			}
 			sprintf(str, "DELE %s\r\n", param[1]);
 			send_cmd(controlfd, str);
-			get_reply(controlfd, command, BUF_SIZE, 0);
+			get_reply(controlfd, command, sizeof(command), 0);
 			break;
 
 		case CMD_MKD:
@@ -1288,7 +1372,7 @@ int main(int argc, char **argv) {
 			}
 			sprintf(str, "MKD %s\r\n", param[1]);
 			send_cmd(controlfd, str);
-			get_reply(controlfd, command, BUF_SIZE, 0);
+			get_reply(controlfd, command, sizeof(command), 0);
 			break;
 
 		case CMD_HELP:
@@ -1327,7 +1411,7 @@ int main(int argc, char **argv) {
 			if (!debug) 
 				printf("Debug is off.\n");
 			else 
-				printf("Debug: %d\n", debug);
+				printf("Debug level: %d\n", debug);
 			printf("Globbing: %s\n", glob ? "on" : "off");
 			printf("Transfer mode: %s\n", (mode == PASV) ? "passive" : "active");
 			printf("File mode: %s\n", (type == ASCII) ? "ASCII" : "IMAGE");
@@ -1375,9 +1459,7 @@ int main(int argc, char **argv) {
 			break;
 
 		case CMD_DEBUG:
-			if (!param[1])
-				debug++;
-			else {
+			if (param[1]) {
 				if (isdigit(*param[1]))
 					debug = atoi(param[1]);
 				else {
