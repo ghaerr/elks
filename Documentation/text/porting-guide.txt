@@ -45,6 +45,17 @@ Orckit OR556 (or556)
 		PIT
 		Serial
 
+NEC PC-9801 Personal Computer (CONFIG_ARCH_PC98)
+	System
+		640K RAM
+		8259 PIC
+		8253 PIT
+	Keyboard
+		8251 keyboard controller
+		BIOS INT 18h polled keyboard
+	Disk Filesystem
+		BIOS INT 1Bh Floppy/Hard Disk(SCSI)
+
 SIBO (discontinued)
 
 
