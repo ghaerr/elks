@@ -556,7 +556,7 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 	probe_floppy(target, hdp);
 #endif
 
-    inode->i_size = hdp->nr_sects << 9;
+    inode->i_size = hdp->nr_sects * drive_info[target].sector_size;
     /* limit inode size to max filesize for CHS >= 4MB (2^22)*/
     if (hdp->nr_sects >= 0x00400000L)	/* 2^22*/
 	inode->i_size = 0x7ffffffL;	/* 2^31 - 1*/
@@ -819,7 +819,8 @@ static void bios_readtrack(struct drive_infot *drivep, sector_t start)
 	map_drive(&drive);
 	get_chst(drivep, start, &cylinder, &head, &sector, &num_sectors);
 
-	if (num_sectors > (DMASEGSZ >> 9)) num_sectors = DMASEGSZ >> 9;
+	if (num_sectors > (DMASEGSZ / drivep->sector_size))
+		num_sectors = DMASEGSZ / drivep->sector_size;
 
 	do {
 		BD_AX = BIOSHD_READ | num_sectors;
@@ -861,7 +862,7 @@ static int cache_valid(struct drive_infot *drivep, sector_t start, char *buf,
 	if (drivep != cache_drive || start < cache_startsector || start > cache_endsector)
 	    return 0;
 
-	offset = (int)(start - cache_startsector) << 9;
+	offset = (int)(start - cache_startsector) * drivep->sector_size;
 	debug_bios("bioshd(%d): cache hit lba %ld\n", hd_drive_map[drivep-drive_info], start);
 	xms_fmemcpyw(buf, seg, (void *)offset, DMASEG, 512/2);
 	return 1;
