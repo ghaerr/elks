@@ -127,8 +127,8 @@
 #define DMASEG		0xA0  /* 0x400 bytes floppy sector buffer */
 
 #ifdef CONFIG_TRACK_CACHE     /* floppy track buffer in low mem */
-#define DMASEGSZ 0x2000	      /* SECTOR_SIZE * 8 (8192) */
-#define REL_SYSSEG	0x2A0 /* kernel code segment */
+#define DMASEGSZ 0x2400	      /* SECTOR_SIZE * 18 (9216) > SECTOR_SIZE * 8 (8192) */
+#define REL_SYSSEG	0x2E0 /* kernel code segment */
 #else
 #define DMASEGSZ 0x0400	      /* BLOCK_SIZE (1024) */
 #define REL_SYSSEG	0x0E0 /* kernel code segment */

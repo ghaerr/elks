@@ -69,9 +69,19 @@ call_bios:
 hd:
 	pop %ax
 	mov $0x200,%bx   // 512Bytes
+#ifdef CONFIG_TRACK_CACHE
+	push %ax
+	mov $0,%ah
+	push %dx
+	mul %bx
+	mov %ax,%bx
+	pop %dx
+	pop %ax
+#else
 	cmp $2,%al
 	jnz ch_hd
 	shl %bx          // 1024Bytes
+#endif
 ch_hd:
 	mov %ch,%al
 	and $0x0F,%al
@@ -88,15 +98,34 @@ fd:
 	pop %ax
 #ifdef CONFIG_IMG_FD1232
 	mov $0x400,%bx   // 1024Bytes
+#ifdef CONFIG_TRACK_CACHE
+	push %ax
+	mov $0,%ah
+	push %dx
+	mul %bx
+	mov %ax,%bx
+	pop %dx
+	pop %ax
+#endif
 	mov %ch,%al
 	and $0x0F,%al
 	or  $0x90,%al    // Physical Device Address
 	mov $0x03,%ch    // 1024Bytes per sector
 #else
 	mov $0x200,%bx   // 512Bytes
+#ifdef CONFIG_TRACK_CACHE
+	push %ax
+	mov $0,%ah
+	push %dx
+	mul %bx
+	mov %ax,%bx
+	pop %dx
+	pop %ax
+#else
 	cmp $2,%al
 	jnz ch_1440
 	shl %bx          // 1024Bytes
+#endif
 ch_1440:
 	mov %ch,%al
 	and $0x0F,%al
