@@ -77,6 +77,7 @@ hd:
 	mov %ax,%bx
 	pop %dx
 	pop %ax
+	jc  detect_err
 #else
 	cmp $2,%al
 	jnz ch_hd
@@ -106,6 +107,7 @@ fd:
 	mov %ax,%bx
 	pop %dx
 	pop %ax
+	jc  detect_err
 #endif
 	mov %ch,%al
 	and $0x0F,%al
@@ -121,6 +123,7 @@ fd:
 	mov %ax,%bx
 	pop %dx
 	pop %ax
+	jc  detect_err
 #else
 	cmp $2,%al
 	jnz ch_1440
@@ -136,11 +139,16 @@ ch_1440:
 call_1B:
 	int $0x1B
 
+pop_result:
 	pop %bp
 	pop %dx
 	pop %cx
 	pop %bx
 	jmp result
+
+detect_err:
+	mov $0x80,%ah
+	jmp pop_result
 
 sense:
 	mov %dl,%al
