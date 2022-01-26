@@ -352,7 +352,7 @@ static int sd_get_capacity_from_csd(uint8_t * csd, unsigned long * capacity) {
         csd_c_size |= csd[9];
         ++csd_c_size;
 
-        *capacity = csd_c_size * 512UL * 1024UL;
+        *capacity = csd_c_size * SD_FIXED_SECTOR_SIZE * 1024UL;
     } else if (csd_structure == 0x00) {
         // 5
         csd_read_bl_len = csd[5] & 0x0f;
@@ -603,7 +603,7 @@ int ssddev_write_blk(sector_t start, char *buf, ramdesc_t seg)
         return 0;
     }
 
-    ret = sd_write(buf + 512, seg, start + 1);
+    ret = sd_write(buf + SD_FIXED_SECTOR_SIZE, seg, start + 1);
     if (ret != 0) {
         /* just one sector was written */
         return 1;
@@ -628,7 +628,7 @@ int ssddev_read_blk(sector_t start, char *buf, ramdesc_t seg)
         return 0;
     }
 
-    ret = sd_read(buf + 512, seg, start + 1);
+    ret = sd_read(buf + SD_FIXED_SECTOR_SIZE, seg, start + 1);
     if (ret != 0) {
         /* just one sector was read */
         return 1;
