@@ -23,7 +23,7 @@ Then enable "NE2K device driver" in "Driver support -> Network device drivers". 
 you then compile ELKS again, the ne2k driver will be loaded.
 
 The ktcp driver, which implements the tcp/ip stack, is a user mode driver. This is 
-loaded with the /etc/rc.d/rc.sysinit script by ELKS at during boot.
+loaded with the /etc/rc.sys script by ELKS at during boot.
 
 When you enter "ps" you will see the ktcp process. You can enter "kill 5" to remove it 
 and enter "ktcp 10.0.2.15 /dev/eth &" on the command line, it will be loaded again. 
