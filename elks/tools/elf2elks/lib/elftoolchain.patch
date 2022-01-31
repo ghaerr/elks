@@ -1,0 +1,10 @@
+diff -r -U2 elftoolchain-0.7.1/common/native-elf-format elftoolchain-0.7.1-patched/common/native-elf-format
+--- elftoolchain-0.7.1/common/native-elf-format	2016-01-07 19:26:27.000000000 +0000
++++ elftoolchain-0.7.1-patched/common/native-elf-format	2022-01-31 17:16:11.523876114 +0000
+@@ -38,4 +38,6 @@
+         } else if (match($0, ".*[xX]86-64")) {
+             elfarch = "EM_X86_64";
++        } else if (match($0, "AArch64")) {
++            elfarch = "EM_AARCH64";
+         } else {
+             elfarch = "unknown";
