@@ -4,7 +4,8 @@
 
 #include <linuxmt/config.h>
 
-    .code16
+	.arch	i8086, nojumps
+	.code16
 	.text
 	.global	call_bios
 
