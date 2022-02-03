@@ -7,6 +7,8 @@
 
 # What is this ?
 
+This is a stable fork of ELKS Linux. It is version 0.4 of ELKS with some extra bug fixes and configurations.
+
 This is a project providing a Linux-like OS for systems based on the Intel
 IA16 architecture (16-bit processors: 8086, 8088, 80188, 80186, 80286,
 NEC V20, V30 and compatibles).
