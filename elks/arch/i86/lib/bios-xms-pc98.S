@@ -21,17 +21,15 @@ block_move:
 	push	%es
 	push	%si
 	push	%di
-	push	%bx
-	push	%cx
 	push	%bp
 	mov	%sp,%bp
 
 	xor	%si,%si
 	xor	%di,%di
 
-	mov	10(%bp),%cx	# word count
+	mov	12(%bp),%cx	# word count
 	shl	%cx		# byte count -> CX
-	mov	8(%bp),%bx	# gdtp -> ES:BX
+	mov	10(%bp),%bx	# gdtp -> ES:BX
 	push	%ds
 	pop	%es
 
@@ -43,8 +41,6 @@ block_move:
 	jmp	2f
 1:	xor	%ax,%ax		# success return AX = 0
 2:	pop	%bp
-	pop	%cx
-	pop	%bx
 	pop	%di
 	pop	%si
 	pop	%es
