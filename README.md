@@ -6,7 +6,7 @@
 
 # What is this fork?
 
-This is a stable fork of ELKS Linux. It is version 0.4 of ELKS with some extra bug fixes and configurations. It is a version that has been tested.
+This is a stable fork of ELKS Linux. It is version 0.4 of ELKS with some extra bug fixes and configurations. It is a version that has been tested. Check releases for more information on the changes.
 
 # What is this ?
 
