@@ -14,7 +14,7 @@
 #	and uses a int15_fmemcpy wrapper above it to prefill the passed GDT table.
 #
 
-	.arch	i386,nojumps
+	.arch	i8086, nojumps
 	.code16
 	.text
 

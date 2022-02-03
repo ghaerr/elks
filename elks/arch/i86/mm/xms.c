@@ -131,8 +131,7 @@ void xms_fmemcpyb(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src
 				int15_fmemcpyw(buf, (addr_t)kernel_ds<<4, src_off, src_seg, 1);
 				pokeb((word_t)dst_off, (seg_t)(dst_seg>>4), buf[0]);
 			} else {
-				/* move from kernel data segment to XMS, seems to never happen for odd count */
-printk("l32_fmemcpyb dst %d\n", count);
+				/* move from kernel data segment to XMS, very infrequent for odd count */
 				addr_t kernel_ds_32 = (addr_t)kernel_ds << 4;
 				int15_fmemcpyw(buf, kernel_ds_32, dst_off, dst_seg, 1);
 				buf[0] = peekb((word_t)src_off, (seg_t)(src_seg>>4));

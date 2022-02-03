@@ -618,7 +618,8 @@ main(int argc, char *argv[], char *envp[])
 			  PROT_EXEC|PROT_READ|PROT_WRITE,
 			  MAP_ANON|MAP_PRIVATE|MAP_32BIT, 
 			  -1, 0);
-	if( (intptr_t)elks_base < 0 || (uintptr_t)elks_base >= 0x100000000ull)
+	if( elks_base == MAP_FAILED ||
+	    (uintptr_t)elks_base >= 0x100000000ull - (0x30000 + pg_sz) )
 	{
 		fprintf(stderr, "Elks memory is at an illegal address\n");
 		exit(255);

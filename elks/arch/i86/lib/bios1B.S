@@ -5,6 +5,7 @@
 
 #include <linuxmt/config.h>
 
+	.arch	i8086, nojumps
 	.code16
 
 	.text

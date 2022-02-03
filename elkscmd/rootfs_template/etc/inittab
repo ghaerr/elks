@@ -1,14 +1,9 @@
 id:1:initdefault:
 
-si::sysinit:/etc/rc.d/rc.sys
+si::sysinit:/etc/rc.sys
 
-#l0:0:wait:/etc/rc.d/rc 0
-#l1:1:wait:/etc/rc.d/rc 1
-#l2:2:wait:/etc/rc.d/rc 2
-#l3:3:wait:/etc/rc.d/rc 3
-#l6:6:wait:/etc/rc.d/rc 6
-
-#ud::once:/sbin/update
+#l1:1:wait:/etc/rc 1
+#ud::once:/bin/update
 
 # getty runlevels
 # 1 single user tty1 only

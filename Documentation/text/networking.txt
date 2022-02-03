@@ -130,7 +130,7 @@ On the ELKS side, you need to have the kernel compiled with inet sockets.
 You also build the ktcp module found in elksnet/ktcp. You boot up ELKS and
 log in, then you do :
 
-# ktcp 192.168.1.2 /dev/ttyS0 &
+# net start slip
 
 This tells ELKS to use your first serial line and that the local IP is
 192.168.1.2. Note that this way the default baud rate will be used(9600bps).
@@ -143,8 +143,8 @@ The above command will set the first serial line at 1200 bps.
 This is it. Ping ELKS from the gateway to see if everything is fine.
 
 * Note that if you use the disks that are created from the elkscmd package
-with "make images.zip", the networking setup is much easier. Just edit the
-/etc/rc.d/rc.sysinit file to enter the machine's IP and serial baud rate.
+with "make images", the networking setup is much easier. Just edit the
+/etc/net.cfg file to enter the machine's IP and serial baud rate.
 
 
 3. Status
