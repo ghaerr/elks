@@ -95,14 +95,20 @@
 
 /* wd, wd.c*/
 <<<<<<< HEAD
+<<<<<<< HEAD
 #define WD_IRQ		3
 #define WD_PORT		0x280
 =======
+=======
+>>>>>>> 34b50e3c737367b1da77db5f007176a041a97632
 #define WD_PORT		0x240
 #define WD_IRQ		2
 
 /* bioshd.c*/
 #define FDC_DOR		0x3F2		/* floppy digital output register*/
+<<<<<<< HEAD
+>>>>>>> 34b50e3c737367b1da77db5f007176a041a97632
+=======
 >>>>>>> 34b50e3c737367b1da77db5f007176a041a97632
 
 /* obsolete - experimental IDE hard drive, directhd.c (broken)*/
