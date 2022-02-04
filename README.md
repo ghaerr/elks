@@ -4,6 +4,9 @@
 ![cross](https://github.com/jbruchon/elks/workflows/cross/badge.svg)
 ![main](https://github.com/jbruchon/elks/workflows/main/badge.svg)
 
+# What is this fork?
+
+This is a stable fork of ELKS Linux. It is version 0.4 of ELKS with some extra bug fixes and configurations. It is a version that has been tested. Check releases for more information on the changes.
 
 # What is this ?
 
