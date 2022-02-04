@@ -19,7 +19,6 @@
 #include <ktcp/arp.h>
 #include <arpa/inet.h>
 
-struct sockaddr_in localadr,remaddr;
 struct arp_cache arp_cache[ARP_CACHE_MAX];
 
 char *mac_ntoa(eth_addr_t eth_addr)
@@ -35,6 +34,7 @@ int main(void)
 {
     int i, s, ret;
     struct stat_request_s sr;
+    struct sockaddr_in localadr, remaddr;
 
     if ( (s = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 	perror("socket error");
@@ -42,7 +42,7 @@ int main(void)
     }
 
     localadr.sin_family = AF_INET;
-    localadr.sin_port = 0;
+    localadr.sin_port = PORT_ANY;
     localadr.sin_addr.s_addr = INADDR_ANY;  
     ret = bind(s, (struct sockaddr *)&localadr, sizeof(struct sockaddr_in));
     if ( ret == -1) {

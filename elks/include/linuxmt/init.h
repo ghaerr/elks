@@ -17,7 +17,7 @@ struct drive_infot;
 
 /* kernel init routines*/
 extern void INITPROC kernel_init(void);
-extern void INITPROC buffer_init(void);
+extern int  INITPROC buffer_init(void);
 extern void console_init(void);
 extern void INITPROC fs_init(void);
 extern void INITPROC inode_init(void);
@@ -27,6 +27,7 @@ extern void INITPROC mm_init(seg_t,seg_t);
 extern void INITPROC mm_stat(seg_t, seg_t);
 extern void INITPROC sched_init(void);
 extern void INITPROC serial_init(void);
+extern void INITPROC rs_setbaud(dev_t dev, unsigned long baud);
 extern void INITPROC sock_init(void);
 extern void INITPROC tty_init(void);
 

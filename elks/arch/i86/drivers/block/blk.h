@@ -18,18 +18,17 @@ struct request {
     kdev_t rq_dev;		/* -1 if no request */
     unsigned char rq_cmd;	/* READ or WRITE */
     unsigned char rq_status;
-    sector_t rq_sector;
+    block32_t rq_blocknr;
     char *rq_buffer;
-    seg_t rq_seg;
+    ramdesc_t rq_seg;		/* L2 main/xms buffer segment */
     struct buffer_head *rq_bh;
     struct request *rq_next;
 
 #ifdef BLOAT_FS
 /* This may get used for dealing with waiting for requests later*/
     struct task_struct *rq_waiting;
-    unsigned int rq_nr_sectors;	/* always 2 */
+    unsigned int rq_nr_sectors;
     unsigned int rq_current_nr_sectors;
-    unsigned char rq_errors;
 #endif
 };
 
@@ -47,20 +46,19 @@ struct request {
 #define IN_ORDER(s1,s2) \
 ((s1)->rq_cmd > (s2)->rq_cmd || ((s1)->rq_cmd == (s2)->rq_cmd && \
 ((s1)->rq_dev < (s2)->rq_dev || (((s1)->rq_dev == (s2)->rq_dev && \
-(s1)->rq_sector < (s2)->rq_sector)))))
+(s1)->rq_blocknr < (s2)->rq_blocknr)))))
 
 struct blk_dev_struct {
     void (*request_fn) ();
     struct request *current_request;
 };
 
-#define SECTOR_MASK 2		/* 1024 logical 512 physical */
-
 /* For bioshd.c, idequery.c */
 struct drive_infot {            /* CHS per drive*/
     int cylinders;
     int sectors;
     int heads;
+    int sector_size;
     int fdtype;                 /* floppy fd_types[] index  or -1 if hd */
 };
 
@@ -70,14 +68,14 @@ extern void resetup_one_dev(struct gendisk *dev, int drive);
 #ifdef MAJOR_NR
 
 /*
- * Add entries as needed. Currently the only block devices
- * supported are hard-disks and floppies.
+ * Add entries as needed. Current block devices are
+ * hard-disks, floppies, SSD and ramdisk.
  */
 
 #ifdef RAMDISK
 
 /* ram disk */
-#define DEVICE_NAME "ramdisk"
+#define DEVICE_NAME "rd"
 #define DEVICE_REQUEST do_rd_request
 #define DEVICE_NR(device) ((device) & 7)
 #define DEVICE_ON(device)
@@ -87,8 +85,8 @@ extern void resetup_one_dev(struct gendisk *dev, int drive);
 
 #ifdef SSDDISK
 
-/* SiBO solid-state disk */
-#define DEVICE_NAME "ssddisk"
+/* solid-state disk */
+#define DEVICE_NAME "ssd"
 #define DEVICE_REQUEST do_ssd_request
 #define DEVICE_NR(device) ((device) & 3)
 #define DEVICE_ON(device)
@@ -101,7 +99,7 @@ extern void resetup_one_dev(struct gendisk *dev, int drive);
 static void floppy_on();	/*(unsigned int nr); */
 static void floppy_off();	/*(unsigned int nr); */
 
-#define DEVICE_NAME "floppy"
+#define DEVICE_NAME "fd"
 #define DEVICE_INTR do_floppy
 #define DEVICE_REQUEST do_fd_request
 #define DEVICE_NR(device) ((device) & 3)
@@ -112,15 +110,7 @@ static void floppy_off();	/*(unsigned int nr); */
 
 #ifdef ATDISK
 
-/* harddisk: timeout is 6 seconds.. */
-#define DEVICE_NAME "harddisk"
-
-#if 0
-#define DEVICE_INTR do_hd
-#define DEVICE_TIMEOUT HD_TIMER
-#define TIMEOUT_VALUE 600
-#endif
-
+#define DEVICE_NAME "hd"
 #define DEVICE_REQUEST do_directhd_request
 #define DEVICE_NR(device) (MINOR(device)>>6)
 #define DEVICE_ON(device)
@@ -128,19 +118,9 @@ static void floppy_off();	/*(unsigned int nr); */
 
 #endif
 
-#ifdef XTDISK
-
-#define DEVICE_NAME "xt disk"
-#define DEVICE_REQUEST do_xd_request
-#define DEVICE_NR(device) (MINOR(device) >> 6)
-#define DEVICE_ON(device)
-#define DEVICE_OFF(device)
-
-#endif
-
 #ifdef BIOSDISK
 
-#define DEVICE_NAME "BIOSHD"
+#define DEVICE_NAME "bioshd"
 #define DEVICE_REQUEST do_bioshd_request
 #define DEVICE_NR(device) (MINOR(device)>>MINOR_SHIFT)
 #define DEVICE_ON(device)
@@ -150,7 +130,7 @@ static void floppy_off();	/*(unsigned int nr); */
 
 #ifdef METADISK
 
-#define DEVICE_NAME "meta"
+#define DEVICE_NAME "udd"
 #define DEVICE_REQUEST do_meta_request
 #define DEVICE_NR(device) (MINOR(device))
 #define DEVICE_ON(device)
@@ -161,26 +141,6 @@ static void floppy_off();	/*(unsigned int nr); */
 #define CURRENT		(blk_dev[MAJOR_NR].current_request)
 #define CURRENT_DEV	DEVICE_NR(CURRENT->rq_dev)
 
-#ifdef DEVICE_INTR
-void (*DEVICE_INTR) () = NULL;
-#endif
-
-#ifdef DEVICE_TIMEOUT
-
-#define SET_TIMER \
-		((timer_table[DEVICE_TIMEOUT].expires = jiffies + TIMEOUT_VALUE), \
-		(timer_active |= 1<<DEVICE_TIMEOUT))
-
-#define CLEAR_TIMER	timer_active &= ~(1<<DEVICE_TIMEOUT)
-
-#define SET_INTR(x)	if ((DEVICE_INTR = (x)) != NULL) \
-			SET_TIMER; \
-			else \
-			CLEAR_TIMER;
-#else
-#define SET_INTR(x) (DEVICE_INTR = (x))
-#endif
-
 static void (DEVICE_REQUEST) ();
 
 static void end_request(int uptodate)
@@ -190,19 +150,16 @@ static void end_request(int uptodate)
 
     req = CURRENT;
 
-#ifdef BLOAT_FS
-    req->rq_errors = 0;
-#endif
-
     if (!uptodate) {
-	printk("%s:I/O error\n", DEVICE_NAME);
-	printk("dev %x, sector %lu\n", req->rq_dev, req->rq_sector);
+	printk("%s: I/O error: ", DEVICE_NAME);
+	printk("dev %x, block %lu\n", req->rq_dev, req->rq_blocknr);
 
 #ifdef MULTI_BH
+#ifdef BLOAT_FS
 	req->rq_nr_sectors--;
-	req->rq_nr_sectors &= ~SECTOR_MASK;
-	req->rq_sector += (BLOCK_SIZE / 512);
-	req->rq_sector &= ~SECTOR_MASK;
+	req->rq_nr_sectors &= ~2;	/* 1K block size, 512 byte sector*/
+#endif
+	req->rq_blocknr++;
 
 #endif
     }
@@ -251,21 +208,14 @@ static void end_request(int uptodate)
 }
 #endif /* MAJOR_NR */
 
-#ifdef DEVICE_INTR
-#define CLEAR_INTR SET_INTR(NULL)
-#else
-#define CLEAR_INTR
-#endif
-
-#define INIT_REQUEST \
-	if (!CURRENT) {\
-		CLEAR_INTR; \
+#define INIT_REQUEST(req) \
+	if (!req || req->rq_dev < 0) {\
 		return; \
 	} \
-	if (MAJOR(CURRENT->rq_dev) != MAJOR_NR) \
-		panic("%s: request list destroyed (%d, %d)", DEVICE_NAME, MAJOR(CURRENT->rq_dev), MAJOR_NR); \
-	if ((CURRENT->rq_bh) && (!buffer_locked(CURRENT->rq_bh))) { \
-			panic("%s:block not locked", DEVICE_NAME); \
+	if (MAJOR(req->rq_dev) != MAJOR_NR) \
+		panic("%s: request list destroyed (%d, %d)", DEVICE_NAME, MAJOR(req->rq_dev), MAJOR_NR); \
+	if ((req->rq_bh) && (!buffer_locked(req->rq_bh))) { \
+		panic("%s:block not locked", DEVICE_NAME); \
 	}
 
 #endif

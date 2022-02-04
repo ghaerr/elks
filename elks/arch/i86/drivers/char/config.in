@@ -5,11 +5,12 @@
 mainmenu_option next_comment
     comment 'Character device drivers'
 
-    if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
 	choice 'Select console driver'			\
 		"Direct         CONFIG_CONSOLE_DIRECT	\
 		 BIOS           CONFIG_CONSOLE_BIOS	\
+		 8018x			CONFIG_CONSOLE_8018X \
 		 Headless       CONFIG_CONSOLE_HEADLESS"	Direct
+	bool '  Scancode keyboard driver'	CONFIG_KEYBOARD_SCANCODE y
 	bool 'Serial Console'	CONFIG_CONSOLE_SERIAL		n
 	if [[ "$CONFIG_CONSOLE_DIRECT" = "y" || "$CONFIG_CONSOLE_BIOS" = "y" ]]; then
 	    choice 'Console terminal emulation'		\
@@ -23,19 +24,8 @@ mainmenu_option next_comment
 	if [ "$CONFIG_CONSOLE_DIRECT" = "y" ]; then
 	    source elks/arch/i86/drivers/char/KeyMaps/config.in
 	fi
-    else
-	choice 'Select console driver'			\
-		"Direct     CONFIG_SIBO_CONSOLE_DIRECT	\
-		 Serial     CONFIG_CONSOLE_SERIAL"	Direct
-	if [ "$CONFIG_SIBO_CONSOLE_DIRECT" = "y" ]; then
-	    bool '  Support virtual consoles'	CONFIG_SIBO_VIRTUAL_CONSOLE  n
-	    bool '  Direct console serial echo'	CONFIG_SIBO_CONSOLE_ECHO     n
-	    define_bool CONFIG_SIBO_DEFAULT_KEYMAP y
-	fi
-    fi
 
     comment 'Other character devices'
-    if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
 	if [ "$CONFIG_CONSOLE_SERIAL" = "n" ]; then
 	    bool 'Serial device driver'		CONFIG_CHAR_DEV_RS	  y
 	else
@@ -43,8 +33,12 @@ mainmenu_option next_comment
 	fi
 	bool 'Parallel device driver'		CONFIG_CHAR_DEV_LP	  y
 	bool 'CGA text mode videobuffer'	CONFIG_CHAR_DEV_CGATEXT	  n
-    fi
     bool 'Memory character devices'		CONFIG_CHAR_DEV_MEM	  y
+    if [ "$CONFIG_CHAR_DEV_MEM" = "y" ]; then
+	bool '  Port read'	CONFIG_CHAR_DEV_MEM_PORT_READ	y
+	bool '  Port write'	CONFIG_CHAR_DEV_MEM_PORT_WRITE	y
+    fi
+
     bool 'Pseudo tty device driver'		CONFIG_PSEUDO_TTY	  y
 
     if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then

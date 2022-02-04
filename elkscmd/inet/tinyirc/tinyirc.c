@@ -87,7 +87,8 @@ struct passwd *userinfo;
 #ifdef	POSIX
 struct termios _tty;
 tcflag_t _res_oflg, _res_lflg;
-#define raw() (_tty.c_lflag &= ~(ICANON | ECHO | ICRNL | ISIG), \
+#define raw() (_tty.c_lflag &= ~(ICANON | ECHO | ISIG), \
+	_tty.c_iflag &= ~ICRNL, \
 	_tty.c_oflag &= ~ONLCR, tcsetattr(my_tty, TCSANOW, &_tty))
 #define savetty() ((void) tcgetattr(my_tty, &_tty), \
 	_res_oflg = _tty.c_oflag, _res_lflg = _tty.c_lflag)
@@ -901,9 +902,9 @@ char *hostname;
 	sa.sin_port = htons((unsigned short) IRCPORT);
 	s = socket(hp->h_addrtype, SOCK_STREAM, 0);
 #else
-	sa.sin_addr.s_addr = in_gethostbyname(hostname);
 	sa.sin_family = AF_INET;
-	sa.sin_port = htons((unsigned short) IRCPORT);
+	sa.sin_port = PORT_ANY;
+	sa.sin_addr.s_addr = INADDR_ANY;
 	s = socket(AF_INET, SOCK_STREAM, 0);
 #endif
 	if (s > 0) {
@@ -912,6 +913,8 @@ char *hostname;
 		exit(1);
 	    }
 	}
+	sa.sin_port = htons((unsigned short) IRCPORT);
+	sa.sin_addr.s_addr = in_gethostbyname(hostname);
 	if (connect(s, (struct sockaddr *) &sa, sizeof(sa)) < 0) {
 	close(s);
 	s = -1;

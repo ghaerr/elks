@@ -4,12 +4,11 @@
 
 mainmenu_option next_comment
 	comment 'Network device drivers'
-	if [ "$CONFIG_ARCH_SIBO" != "y" ]; then
-		bool 'Ethernet device support' CONFIG_ETH n
-		if [ "$CONFIG_ETH" = "y" ]; then
-			choice 'Select Ethernet device' \
-				"ne2k   CONFIG_ETH_NE2K \
-				 WD/SMC CONFIG_ETH_WD" ne2k
-		fi
+	bool 'Ethernet device support' CONFIG_ETH n
+	if [ "$CONFIG_ETH" = "y" ]; then
+		choice 'Select Ethernet device' \
+			"ne2k	CONFIG_ETH_NE2K \
+			WD/SMC8003	CONFIG_ETH_WD" ne2k
+		bool '8 bit access for Ethernet devices'      CONFIG_ETH_BYTE_ACCESS      n
 	fi
 endmenu

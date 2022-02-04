@@ -196,11 +196,11 @@ extern char *strchr();
 # define TMPNAME	"%s/elv%x%04x.%03x" /* temp file */
 # define CUTNAME	"%s/elv_%04x%.03x" /* cut buffer's temp file */
 # ifndef EXRC
-#  define EXRC		".exrc"		/* init file in current directory */
+#  define EXRC		".virc"		/* init file in current directory */
 # endif
 # define SCRATCHOUT	"%s/soXXXXXX"	/* temp file used as input to filter */
 # ifndef EXINIT
-#  define EXINIT	"EXINIT"
+#  define EXINIT	"VIINIT"
 # endif
 # ifndef SHELL
 #  define SHELL		"/bin/sh"	/* default shell */

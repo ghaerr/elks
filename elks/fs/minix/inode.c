@@ -94,9 +94,6 @@ void minix_put_super(register struct super_block *sb)
 
 static struct super_operations minix_sops = {
     minix_read_inode,
-#ifdef BLOAT_FS
-    NULL,
-#endif
     minix_write_inode,
     minix_put_inode,
     minix_put_super,
@@ -110,8 +107,9 @@ static struct super_operations minix_sops = {
 static void minix_mount_warning(register struct super_block *sb, char *prefix)
 {
 	if ((sb->u.minix_sb.s_mount_state & (MINIX_VALID_FS|MINIX_ERROR_FS)) != MINIX_VALID_FS)
-		printk("MINIX-fs: %smounting %s, running fsck is recommended.\n", prefix,
-	     !(sb->u.minix_sb.s_mount_state & MINIX_VALID_FS) ? "unchecked file system" : "file system with errors");
+		printk("MINIX-fs: %smounting %s 0x%x, running fsck is recommended.\n", prefix,
+	     !(sb->u.minix_sb.s_mount_state & MINIX_VALID_FS) ?
+		 "unchecked file system" : "file system with errors", sb->s_dev);
 }
 
 

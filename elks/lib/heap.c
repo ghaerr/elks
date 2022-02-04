@@ -3,6 +3,7 @@
 
 #include <linuxmt/kernel.h>
 #include <linuxmt/heap.h>
+#include <linuxmt/string.h>
 //#include <linuxmt/lock.h>
 
 // Minimal block size to hold heap header
@@ -91,7 +92,11 @@ void * heap_alloc (word_t size, byte_t tag)
 {
 	WAIT_LOCK (&_heap_lock);
 	heap_s * h = free_get (size, tag);
-	if (h) h++;  // skip header
+	if (h) {
+		h++;						// skip header
+		if (tag & HEAP_TAG_CLEAR)
+			memset(h, 0, size);
+	}
 	if (!h) printk("HEAP: no memory (%u bytes)\n", size);
 	EVENT_UNLOCK (&_heap_lock);
 	return h;
@@ -131,7 +136,7 @@ void heap_free (void * data)
 	// Try to merge with next block if free
 
 	list_s * n = h->all.next;
-	if (n->next != &_heap_all) {
+	if (n != &_heap_all) {
 		heap_s * next = structof (n, heap_s, all);
 		if (next->tag == HEAP_TAG_FREE) {
 			list_remove (&(next->free));

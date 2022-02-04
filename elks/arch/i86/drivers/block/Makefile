@@ -48,8 +48,12 @@ ifeq ($(CONFIG_ROMFS_FS), y)
 OBJS += romflash.o
 endif
 
-ifeq ($(CONFIG_ARCH_SIBO), y)
-OBJS += sibo_ssd.o ssd_asm.o
+ifeq ($(CONFIG_BLK_DEV_SSD_TEST), y)
+	OBJS += ssd.o ssd-test.o
+endif
+
+ifeq ($(CONFIG_BLK_DEV_SSD_SD8018X), y)
+	OBJS += ssd.o ssd-sd.o spi-8018x.o
 endif
 
 # experimental (and not working) direct hd support

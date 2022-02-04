@@ -23,7 +23,7 @@ Then enable "NE2K device driver" in "Driver support -> Network device drivers". 
 you then compile ELKS again, the ne2k driver will be loaded.
 
 The ktcp driver, which implements the tcp/ip stack, is a user mode driver. This is 
-loaded with the /etc/rc.d/rc.sysinit script by ELKS at during boot.
+loaded with the /etc/net.cfg and /bin/net scripts by ELKS during or after boot.
 
 When you enter "ps" you will see the ktcp process. You can enter "kill 5" to remove it 
 and enter "ktcp 10.0.2.15 /dev/eth &" on the command line, it will be loaded again. 
@@ -110,7 +110,7 @@ As already mentioned, you need this hostfwd parameter since Qemu features a fire
 which prohibits to access the ip addresses on ELKS. The hostfw parameter enables this 
 for the specified address and port.
 
-With the rc.sysinit script, which ELKS runs at boot time, the httpd web server has been
+With the /etc/net.cfg script, which ELKS runs at boot time, the httpd web server has been
 loaded already. Enter "ps" to check this.
 
 This web server is installed with a web page in /usr/lib/httpd. You can read the web page 
@@ -212,10 +212,8 @@ of the ELKS telnet client with gcc to be used on the host. This way you have a t
 client on the host which will work with the ELKS telnet server.
 The command line to use for that is "telnetc 127.0.0.1 2323".
 
-Check the rc.sysinit script, which ELKS runs at boot time, so that the telnetd server
-is loaded and the httpd web server is comment out. Otherwise the telnetd server will not
-work well because of insufficient memory. You can also load it with "telnetd &" at run 
-time, but make sure httpd is not loaded.
+Check the /etc/net.cfg script, which ELKS runs at boot time, so that the telnetd server
+is loaded.  You can also load it with "telnetd &" at run time.
 
 
 16th of March 2017 Georg Potthast

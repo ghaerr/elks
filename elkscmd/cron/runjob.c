@@ -37,6 +37,9 @@ runjobprocess(crontab *tab,cron *job,struct passwd *usr)
     char *shell;
     input[0] = input[1] = 0;
 
+#if TEST
+	printf("cron: running '%s'\n", job->command);
+#endif
     if ( (shell=jobenv(tab, "SHELL")) == 0 )
 	shell = _PATH_BSHELL;
 
@@ -64,6 +67,7 @@ runjobprocess(crontab *tab,cron *job,struct passwd *usr)
 
 	execle(shell, "sh", "-c", job->command, (char*)0, tab->env);
 	perror(shell);
+	exit(1);
     }
     else {					/* runjobprocess() */
 	close(input[0]);
@@ -90,9 +94,8 @@ runjobprocess(crontab *tab,cron *job,struct passwd *usr)
 	}
 #endif        
 	/* wait for all subprocesses to finish */
-	//while ( wait(&status) != -1 )
-    while ( waitpid(-1, &status, 0) != -1 )
-	    ;
+	while (wait(&status) != -1)
+	    continue;
     }
     exit(0);
 }

@@ -90,7 +90,7 @@ fchown		+66	3
 dlload		+67	2	- Removed support for dynamic libraries
 setsid		+68	0
 sbrk        +69 2	* Legacy number from Linux
-knlvsn		+74	1	= CONFIG_SYS_VERSION
+knlvsn		+74	1
 #
 # From /usr/include/asm-generic/unistd.h
 #
@@ -99,6 +99,8 @@ bind		+200	3	= CONFIG_SOCKET
 listen		+201	2	= CONFIG_SOCKET
 accept		+202	3	= CONFIG_SOCKET
 connect		+203	3	= CONFIG_SOCKET
+setsockopt	+204	5	= CONFIG_SOCKET
+getsocknam	+205	4	= CONFIG_SOCKET
 #
 # Name			No	Args	Flag&comment
 #

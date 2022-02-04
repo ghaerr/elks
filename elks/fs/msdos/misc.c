@@ -12,16 +12,17 @@
 #include <linuxmt/stat.h>
 #include <linuxmt/debug.h>
 
-struct buffer_head * FATPROC msdos_sread(kdev_t dev, sector_t sector, void **start)
+struct buffer_head * FATPROC msdos_sread(struct super_block *s, sector_t sector, void **start)
 {
 	register struct buffer_head *bh;
 
-	if (!(bh = bread32(dev, sector >> 1)))
+	if (!(bh = bread32(s->s_dev, sector >> (BLOCK_SIZE_BITS - SECTOR_BITS_SB(s)))))
 		return NULL;
 
 	map_buffer(bh);
 	//debug_fat("msread sector %ld block %lu\n", sector, bh->b_blocknr);
-	*start = bh->b_data + (((int)sector & 1) << SECTOR_BITS);
+	*start = bh->b_data +
+		(((int)sector & (BLOCK_SIZE_BITS - SECTOR_BITS_SB(s))) << SECTOR_BITS_SB(s));
 	return bh;
 }
 
@@ -52,8 +53,9 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 	sector_t sector;
 	void *data;
 	struct buffer_head *bh;
-	int fatsz = MSDOS_SB(inode->i_sb)->fat_bits;
-	cluster_t previous = MSDOS_SB(inode->i_sb)->previous_cluster;
+	struct msdos_sb_info *sb = MSDOS_SB(inode->i_sb);
+	int fatsz = sb->fat_bits;
+	cluster_t previous = sb->previous_cluster;
 
 	debug_fat("add_cluster\n");
 #ifndef FAT_BITS_32
@@ -62,7 +64,7 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 #endif
 	while (lock) sleep_on(&wait);
 	lock = 1;
-	limit = MSDOS_SB(inode->i_sb)->clusters;
+	limit = sb->clusters;
 	for (count = 0; count < limit; count++) {
 		this = ((count+previous) % limit)+2;
 		if (fat_access(inode->i_sb,this,-1L) == 0) break;
@@ -70,7 +72,7 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 	debug("free cluster: %d\r\n",this);
 
 	previous = (count+previous+1) % limit;
-	MSDOS_SB(inode->i_sb)->previous_cluster = previous;;
+	sb->previous_cluster = previous;;
 	if (count >= limit) {
 		lock = 0;
 		wake_up(&wait);
@@ -87,8 +89,8 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 
 	if (!S_ISDIR(inode->i_mode)) {
 		last = inode->i_size?
-			get_cluster(inode,(inode->i_size-1) / SECTOR_SIZE /
-			MSDOS_SB(inode->i_sb)->cluster_size) : 0;
+			get_cluster(inode,(inode->i_size-1) / SECTOR_SIZE(inode) / sb->cluster_size)
+			: 0;
 	} else {
 		last = 0;
 		if ((current = inode->u.msdos_i.i_start) != 0) {
@@ -110,12 +112,11 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 	}
 	if (last) debug("next set to %d\r\n",fat_access(inode->i_sb,last,-1L));
 
-	for (current = 0; current < MSDOS_SB(inode->i_sb)->cluster_size; current++) {
-		sector = MSDOS_SB(inode->i_sb)->data_start+(this-2) *
-			MSDOS_SB(inode->i_sb)->cluster_size+current;
+	for (current = 0; current < sb->cluster_size; current++) {
+		sector = sb->data_start + (this - 2) * sb->cluster_size+current;
 		debug("zeroing sector %lu\r\n", sector);
 
-		if (current < MSDOS_SB(inode->i_sb)->cluster_size-1 && !(sector & 1)) {
+		if (current < sb->cluster_size-1 && !(sector & 1)) {
 			if (!(bh = getblk32(inode->i_dev, sector >> 1)))
 				printk("FAT: getblk fail\n");
 			else {
@@ -125,9 +126,9 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 			}
 			current++;
 		} else {
-			if (!(bh = msdos_sread(inode->i_dev,sector,&data)))
+			if (!(bh = msdos_sread(inode->i_sb,sector,&data)))
 				printk("FAT: sread fail\n");
-			else memset(data,0,SECTOR_SIZE);
+			else memset(data,0,SECTOR_SIZE(inode));
 		}
 		if (bh) {
 			debug_fat("add_cluster block write %lu\n", bh->b_blocknr);
@@ -136,11 +137,11 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 		}
 	}
 	if (S_ISDIR(inode->i_mode)) {
-		if (inode->i_size & (SECTOR_SIZE-1)) {
+		if (inode->i_size & (SECTOR_SIZE(inode)-1)) {
 			printk("FAT: bad dir size\n");
 			return -ENOSPC;
 		}
-		inode->i_size += (cluster_t)SECTOR_SIZE*MSDOS_SB(inode->i_sb)->cluster_size;
+		inode->i_size += (cluster_t)SECTOR_SIZE(inode)*sb->cluster_size;
 		inode->i_dirt = 1;
 		debug("size is %d now (%x)\r\n",inode->i_size,inode);
 	}
@@ -235,16 +236,16 @@ ino_t FATPROC msdos_get_entry(struct inode *dir,loff_t *pos,struct buffer_head *
 
 	while (1) {
 		offset = *pos;
-		if ((sector = msdos_smap(dir,(sector_t)(*pos >> SECTOR_BITS))) == -1)
+		if ((sector = msdos_smap(dir,(sector_t)(*pos >> SECTOR_BITS(dir)))) == -1)
 			return -1;
 		if (!sector)
 			return -1; /* FAT error ... */
 		*pos += sizeof(struct msdos_dir_entry);
 		if (*bh)
 			unmap_brelse(*bh);
-		if (!(*bh = msdos_sread(dir->i_dev,sector,&data)))
+		if (!(*bh = msdos_sread(dir->i_sb,sector,&data)))
 			continue;
-		*de = (struct msdos_dir_entry *) ((char *)data+(offset & (SECTOR_SIZE-1)));
+		*de = (struct msdos_dir_entry *) ((char *)data+(offset & (SECTOR_SIZE(dir)-1)));
 
 		/* return value will overfow for FAT16/32 if sector is beyond 2MB boundary */
 #ifndef CONFIG_32BIT_INODES
@@ -254,7 +255,7 @@ ino_t FATPROC msdos_get_entry(struct inode *dir,loff_t *pos,struct buffer_head *
 		}
 #endif
 		//debug_fat("get entry %lu\n", sector);
-		return (sector << MSDOS_DPS_BITS)+((offset & (SECTOR_SIZE-1)) >> MSDOS_DIR_BITS);
+		return (sector << MSDOS_DPS_BITS(dir))+((offset & (SECTOR_SIZE(dir)-1)) >> MSDOS_DIR_BITS);
 	}
 }
 
@@ -311,8 +312,8 @@ static cluster_t FATPROC raw_found(struct super_block *sb, cluster_t sector,
 	int entry;
 	cluster_t start = -1;
 
-	if ((bh = msdos_sread(sb->s_dev,sector,(void **) &data))) {
-	  for (entry = 0; entry < MSDOS_DPS; entry++) {
+	if ((bh = msdos_sread(sb,sector,(void **) &data))) {
+	  for (entry = 0; entry < MSDOS_DPS_SB(sb); entry++) {
 #ifndef FAT_BITS_32
 		unsigned short starthi = (MSDOS_SB(sb)->fat_bits == 32) ? data[entry].starthi : 0;
 #else
@@ -331,7 +332,7 @@ static cluster_t FATPROC raw_found(struct super_block *sb, cluster_t sector,
 			start = number;
 	    }
 		if (ino)
-			*ino = sector*MSDOS_DPS + entry;
+			*ino = sector*MSDOS_DPS_SB(sb) + entry;
 		break;
 	  }
 	  unmap_brelse(bh);
@@ -346,7 +347,7 @@ static cluster_t FATPROC raw_scan_root(register struct super_block *sb,
 	int count;
 	cluster_t cluster = 0;
 
-	for (count = 0; count < MSDOS_SB(sb)->dir_entries/MSDOS_DPS; count++) {
+	for (count = 0; count < MSDOS_SB(sb)->dir_entries/MSDOS_DPS_SB(sb); count++) {
 		if ((cluster = raw_found(sb,(cluster_t)(MSDOS_SB(sb)->dir_start+count),name, number,
 				ino)) >= 0) break;
 	}

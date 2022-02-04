@@ -156,7 +156,7 @@ void seg_free (segment_s * seg)
 	// Try to merge with next segment if free
 
 	list_s * n = seg->all.next;
-	if (n->next != &_seg_all) {
+	if (n != &_seg_all) {
 		segment_s * next = structof (n, segment_s, all);
 		if (next->flags == SEG_FLAG_FREE) {
 			list_remove (&(next->free));

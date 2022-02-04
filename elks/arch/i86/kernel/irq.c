@@ -21,101 +21,14 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/timer.h>
 #include <linuxmt/types.h>
+#include <linuxmt/heap.h>
 
-#include <arch/io.h>
-#include <arch/irq.h>
 #include <arch/ports.h>
+#include <arch/segment.h>
+#include <arch/irq.h>
 
-/* Enable 80386 Traps */
-/*#define ENABLE_TRAPS */
 
-struct irqaction {
-	void (*handler)();
-	void *dev_id;
-};
-
-static void default_handler(int i, void *regs, void *dev);
-
-static struct irqaction irq_action[] = {
-    {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
-    {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
-    {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
-    {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
-    {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
-    {default_handler, NULL},
-#ifdef ENABLE_TRAPS
-    {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
-    {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
-    {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
-    {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
-    {default_handler, NULL}, {default_handler, NULL}, {default_handler, NULL},
-    {default_handler, NULL},
-#endif
-};
-
-unsigned char cache_21 = 0xff, cache_A1 = 0xff;
-
-#ifdef CONFIG_ARCH_SIBO
-void enable_irq(unsigned int irq)
-{
-    /* Not supported on SIBO */
-}
-
-static int remap_irq(unsigned int irq)
-{
-    return irq;
-}
-
-#else
-
-/*
- *	Low level interrupt handling for the X86 PC/XT and PC/AT
- *	platform
- */
-
-void enable_irq(unsigned int irq)
-{
-    unsigned char mask;
-
-    mask = ~(1 << (irq & 7));
-    if (irq < 8) {
-	cache_21 &= mask;
-	outb(cache_21,((void *) 0x21));
-    } else {
-	cache_A1 &= mask;
-	outb(cache_A1,((void *) 0xA1));
-    }
-}
-
-static int remap_irq(int irq)
-{
-    if (((unsigned int)irq > 15) || ((irq > 7) && (arch_cpu < 6)))
-	return -EINVAL;
-    if (irq == 2 && arch_cpu > 5)
-	irq = 9;			/* Map IRQ 9/2 over */
-    return irq;
-}
-
-#if 0
-void disable_irq(unsigned int irq)
-{
-    flag_t flags;
-    unsigned char mask = 1 << (irq & 7);
-
-    save_flags(flags);
-    clr_irq();
-    if (irq < 8) {
-	cache_21 |= mask;
-	outb(cache_21,((void *) 0x21));
-    } else {
-	cache_A1 |= mask;
-	outb(cache_A1,((void *) 0xA1));
-    }
-    restore_flags(flags);
-}
-#endif
-
-#endif
+static irq_handler irq_action [16];
 
 /*
  *	Called by the assembler hooks
@@ -123,44 +36,74 @@ void disable_irq(unsigned int irq)
 
 void do_IRQ(int i,void *regs)
 {
-    register struct irqaction *irq = irq_action + i;
-
-    irq->handler(i, regs, irq->dev_id);
+    register irq_handler ih = irq_action [i];
+    if (!ih) {
+        printk("Unexpected interrupt: %u\n", i);
+        return;
+    }
+    (*ih)(i, regs);
 }
 
-static void default_handler(int i, void *regs, void *dev)
+
+// TODO: simplify the whole by replacing IRQ by INT number
+// Would also allow to handle any of the 0..255 interrupts
+// including the 0..7 processor exceptions & traps
+
+struct int_handler {
+	byte_t call;		/* CALLF opcode (9Ah) */
+	int_proc proc;
+	word_t seg;
+	byte_t irq;
+} __attribute__ ((packed));
+
+typedef struct int_handler int_handler_s;
+
+
+// Add a dynamically allocated handler
+// that redirects to the static handler
+
+static int int_handler_add (int irq, int vect, int_proc proc)
 {
-#ifdef ENABLE_TRAPS
-    if (i > 15)
-	printk("Unexpected trap: %u\n", i-16);
-    else
-#endif
-	printk("Unexpected interrupt: %u\n", i);
+	int_handler_s * h = (int_handler_s *) heap_alloc (sizeof (int_handler_s), HEAP_TAG_INTHAND);
+	if (!h) return -ENOMEM;
+
+	h->call = 0x9A;		/* CALLF opcode */
+	h->proc = proc;
+	h->seg  = kernel_cs;	/* resident kernel code segment */
+	h->irq  = irq;
+
+	int_vector_set (vect, (int_proc) h, kernel_ds);
+
+	return 0;
 }
 
-int request_irq(int irq, void (*handler)(int,struct pt_regs *,void *), void *dev_id)
+
+int request_irq(int irq, irq_handler handler, int hflag)
 {
-    register struct irqaction *action;
     flag_t flags;
 
     irq = remap_irq(irq);
-    if (irq < 0)
-	return -EINVAL;
+    if (irq < 0 || !handler) return -EINVAL;
 
-    action = irq_action + irq;
-    if (action->handler != default_handler)
-	return -EBUSY;
-
-    if (!handler)
-	return -EINVAL;
+    if (irq_action [irq]) return -EBUSY;
 
     save_flags(flags);
     clr_irq();
 
-    action->handler = handler;
-    action->dev_id = dev_id;
+    irq_action [irq] = handler;
 
-    enable_irq((unsigned int) irq);
+    int_proc proc;
+    if (hflag == INT_SPECIFIC)
+	proc = (int_proc) handler;
+    else
+	proc = _irqit;
+
+    // TODO: IRQ number has no meaning for an INT handler
+    // see above simplification TODO
+    if (int_handler_add (irq, irq_vector (irq), proc))
+	return -ENOMEM;
+
+    enable_irq(irq);
 
     restore_flags(flags);
 
@@ -168,17 +111,15 @@ int request_irq(int irq, void (*handler)(int,struct pt_regs *,void *), void *dev
 }
 
 #if 0
-
 void free_irq(unsigned int irq)
 {
-    register struct irqaction * action = irq_action + irq;
     flag_t flags;
 
     if (irq > 15) {
 	printk("Trying to free IRQ%u\n",irq);
 	return;
     }
-    if (action->handler == default_handler) {
+    if (!irq_action [irq]) {
 	printk("Trying to free free IRQ%u\n",irq);
 	return;
     }
@@ -187,14 +128,10 @@ void free_irq(unsigned int irq)
 
     disable_irq(irq);
 
-    action->handler = default_handler;
-    action->dev_id = NULL;
-/*    action->flags = 0;
-    action->name = NULL;*/
+    irq_action [irq] = NULL;
 
     restore_flags(flags);
 }
-
 #endif
 
 /*
@@ -203,31 +140,23 @@ void free_irq(unsigned int irq)
 
 void INITPROC irq_init(void)
 {
-    flag_t flags;
+    init_irq();		/* PIC initialization */
 
-#ifdef CONFIG_HW_259_USE_ORIGINAL_MASK	/* for example Debugger :-) */
-    cache_21 = inb_p(0x21);
-#endif
+    // TODO: no more need to disable the timer
+    // BEFORE the interrupt initialization
+    // as timer vector is kept as is
 
-    stop_timer();
+    // TODO: move that timer stuff in `timer.c`
+    // to clearly separate the PIC and PIT driving
+    disable_timer_tick();
 
-    /* Old IRQ 8 handler is nuked in this routine */
-    irqtab_init();			/* Store DS */
+    irqtab_init();	/* now only saves previous vector 08h (timer) */
+    int_handler_add (0x80, 0x80, _irqit); /* system call */
 
     /* Set off the initial timer interrupt handler */
-    if (request_irq(TIMER_IRQ, timer_tick, NULL))
-	panic("Unable to get timer");
+    if (request_irq(TIMER_IRQ, timer_tick, INT_GENERIC))
+    	panic("Unable to get timer");
 
-    /* Re-start the timer only after irq is set */
-
+    /* Re-start the timer */
     enable_timer_tick();
-
-#ifndef CONFIG_ARCH_SIBO
-    if (arch_cpu > 5) {		/* PC-AT or greater */
-	save_flags(flags);
-	clr_irq();
-	enable_irq(2);		/* Cascade slave PIC */
-	restore_flags(flags);
-    }
-#endif
 }

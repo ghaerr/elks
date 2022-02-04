@@ -17,12 +17,13 @@
  *
  * Explanations of chmem (size) output:
  *	TEXT	size of code
+ *	FTEXT	size of far segment code (for medium memory model programs)
  *	DATA	size of initialized data
  *	BSS		size of uninitialized data
  * 	HEAP	header heap size (0 = default 4K, 0xFFFF = allocate maximum heap)
  *	STACK	header minimum stack size (0 = default 4K)
  *	TOTDATA	size of DATA+BSS+heap+stack
- *	TOTAL	size of TODATA+TEXT (in-memory size less environment)
+ *	TOTAL	size of TOTDATA+TEXT+FTEXT (in-memory size less environment)
  */
 
 #include <stdio.h>
@@ -30,6 +31,7 @@
 #include <stdarg.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <string.h>
 #include <linuxmt/minix.h>
 
 #define SEPBIT   0x00200000	/* this bit is set for separate I/D */
@@ -61,11 +63,13 @@ int do_chmem(char *filename, int changeheap, int changestack,
 	unsigned int	oldheap, oldstack, dsegsize, displayheap, newheap;
 	unsigned long	newstack, totdata, total;
 	struct minix_exec_hdr header;
+	struct elks_supl_hdr suplhdr;
 
 	if ((fd = open(filename, 2)) < 0)
 		return msg("Can't open %s\n", filename);
 
-	if (read(fd, &header, sizeof(header)) != sizeof(header))
+	if (read(fd, &header, sizeof(header)) != sizeof(header)
+	    || header.hlen < sizeof(header))
 		return msg("Bad header: %s\n", filename);
 
 	if ((header.type & 0xFFFF) != MAGIC)
@@ -74,6 +78,12 @@ int do_chmem(char *filename, int changeheap, int changestack,
 	if (header.version > 1)
 		return msg("%s: unsupported a.out version %u\n", filename,
 			   (unsigned)header.version);
+
+	if (header.hlen >= sizeof(header) + sizeof(suplhdr)) {
+		if (read(fd, &suplhdr, sizeof(suplhdr)) != sizeof(suplhdr))
+			return msg("Bad header: %s\n", filename);
+	} else
+		memset(&suplhdr, 0, sizeof(suplhdr));
 
 	dsegsize = (size_t)header.dseg + (size_t)header.bseg;
 	if ((header.type & SEPBIT) == 0)	/* not seperate I&D*/
@@ -93,14 +103,22 @@ int do_chmem(char *filename, int changeheap, int changestack,
 
 	if (header.chmem >= 0xFFF0) {
 		totdata = 0xFFF0;
-		total = totdata + (size_t)header.tseg;
+		total = totdata + (size_t)header.tseg + (size_t)suplhdr.esh_ftseg;
 	} else {
 		totdata = (unsigned long)oldheap+oldstack+dsegsize;
-		total = (unsigned long)(size_t)header.tseg+(size_t)header.dseg+(size_t)header.bseg+oldheap+oldstack;
+		total = (unsigned long)(size_t)header.tseg+(size_t)suplhdr.esh_ftseg
+			+(size_t)header.dseg+(size_t)header.bseg+oldheap+oldstack;
 	}
-	printf("%5u  %5u  %5u  %5u  %5u   %6lu %6lu %s%s\n",
-		(size_t)header.tseg, (size_t)header.dseg, (size_t)header.bseg, displayheap, header.minstack, totdata, total,
-		filename, header.version == 0? " (v0 header)": "");
+	printf("%5u  %5u  %5u  %5u  %5u  %5u   %6lu %6lu %s",
+		(size_t)header.tseg, (size_t)suplhdr.esh_ftseg, (size_t)header.dseg, (size_t)header.bseg,
+		displayheap, header.minstack, totdata, total, filename);
+
+	if (header.version == 0)
+		printf(" (v0 header)");
+	if (suplhdr.esh_compr_tseg || suplhdr.esh_compr_dseg || suplhdr.esh_compr_ftseg)
+		printf(" (%u %u %u)",
+			suplhdr.esh_compr_tseg, suplhdr.esh_compr_ftseg, suplhdr.esh_compr_dseg);
+	printf("\n");
 
 	if (!changeheap && !changestack) {
 		close(fd);
@@ -134,8 +152,9 @@ int do_chmem(char *filename, int changeheap, int changestack,
 		totdata = (unsigned long)newheap+newstack+dsegsize;
 		total = (unsigned long)(size_t)header.tseg+(size_t)header.dseg+(size_t)header.bseg+newheap+newstack;
 	}
-	printf("%5u  %5u  %5u  %5lu  %5lu   %6lu %6lu %s\n",
-	       (size_t)header.tseg, (size_t)header.dseg, (size_t)header.bseg, heap, stack, totdata, total, filename);
+	printf("%5u  %5u  %5u  %5u  %5lu  %5lu   %6lu %6lu %s\n",
+	       (size_t)header.tseg, (size_t)suplhdr.esh_ftseg, (size_t)header.dseg, (size_t)header.bseg, heap, stack,
+	       totdata, total, filename);
 
 	header.chmem = (unsigned)heap;
 	header.minstack = (unsigned)stack;
@@ -175,7 +194,7 @@ main(int argc, char **argv)
 	if (optind >= argc)
 		usage();
 
-	printf(" TEXT   DATA    BSS   HEAP  STACK  TOTDATA  TOTAL\n");
+	printf(" TEXT  FTEXT   DATA    BSS   HEAP  STACK  TOTDATA  TOTAL\n");
 	while (optind < argc) {
 		if (do_chmem(argv[optind], changeheap, changestack,
 					   heap, stack))

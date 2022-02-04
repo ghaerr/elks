@@ -33,18 +33,15 @@
 #define PATHLEN 256
 #define STR_SIZE (PATHLEN + 7)
 
-extern char *getpass(char *prompt);
-
 void login(register struct passwd * pwd, struct utmp * ut_ent)
 {
+	int envno = 0;
+	char **newenv;
 	char user_env[STR_SIZE];
 	char shell_env[STR_SIZE];
 	char home_env[STR_SIZE];
 	char sh_name[STR_SIZE];
-	int envno = 0;
-	char * renv[5];
-	environ = renv;
-
+	char *renv[16];
 
 	if (fchown(0,pwd->pw_uid,pwd->pw_gid)<0) perror("login (chown)");
 #ifdef USE_UTMP
@@ -66,19 +63,27 @@ void login(register struct passwd * pwd, struct utmp * ut_ent)
 		exit(1);
 	}
 
+	/* copy capitalized /bootopts env vars to login environment */
+	newenv = renv;
+	while (*environ) {
+		if (*environ[0] >= 'A' && *environ[0] <= 'Z')
+			newenv[envno++] = *environ;
+		environ++;
+	}
+
 	strcpy(user_env,"USER=");
 	strncpy(user_env+5,pwd->pw_name, STR_SIZE - 6);
-	environ[envno++] = user_env;
+	newenv[envno++] = user_env;
 
 	strcpy(home_env,"HOME=");
 	strncpy(home_env+5,pwd->pw_dir, STR_SIZE - 6);
-	environ[envno++] = home_env;
+	newenv[envno++] = home_env;
 
 	strcpy(shell_env,"SHELL=");
 	strncpy(shell_env+6,pwd->pw_shell, STR_SIZE - 7);
-	environ[envno++] = shell_env;
-	environ[envno++] = "TERM=ansi";
-	environ[envno] = NULL;
+	newenv[envno++] = shell_env;
+	newenv[envno++] = "TERM=ansi";
+	newenv[envno] = NULL;
 
 	*sh_name = '-';
 	strncpy(sh_name+1,pwd->pw_shell, STR_SIZE - 1);
@@ -86,9 +91,12 @@ void login(register struct passwd * pwd, struct utmp * ut_ent)
 	if (chdir(pwd->pw_dir)<0)
 		write(STDOUT_FILENO, "No home directory. Starting in /\n", 33);
 
+	environ = renv;
 	execl(pwd->pw_shell,sh_name,(char*)0);
 
-	write(STDOUT_FILENO, "No shell!\n", 10);
+	write(STDOUT_FILENO, "No shell (errno ", 16);
+	write(STDOUT_FILENO, itoa(errno), 2);
+	write(STDOUT_FILENO, ")\n", 2);
 	exit(1);
 }
 

@@ -1,8 +1,10 @@
-##
-#console=ttyS0 debug net=eth 3 # condensed
-#init=/bin/init 3	# multiuser serial
+## boot options max size 511 bytes
+#console=ttyS0 debug net=eth 3 # serial console, multiuser, networking
+#QEMU=1			# to use ftp/ftpd in qemu
+#TZ=MDT7		# timezone
+#netirq=9 netport=0x300 # NIC
+#bufs=128
+#init=/bin/init 3 n	# multiuser serial no /etc/rc.sys
 #init=/bin/sh		# singleuser shell
-#console=ttyS0		# serial console
-#root=hda1			# hd partition 1
-#ro					# read-only root
-#net=eth
+#console=ttyS0,19200	# serial console
+#root=hda1 ro		# root hd partition 1, read-only

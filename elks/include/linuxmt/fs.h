@@ -7,13 +7,14 @@
 
 #ifdef __KERNEL__
 
+#include <linuxmt/config.h>
 #include <linuxmt/types.h>
 #include <linuxmt/wait.h>
 #include <linuxmt/vfs.h>
 #include <linuxmt/kdev_t.h>
 #include <linuxmt/ioctl.h>
 #include <linuxmt/net.h>
-#include <linuxmt/config.h>
+#include <linuxmt/memory.h>
 
 #include <arch/bitops.h>
 
@@ -119,19 +120,18 @@
 
 struct buffer_head {
     char			*b_data;	/* Address if in L1 buffer area, else 0 */
+    ramdesc_t			b_seg;		/* Current L1 or L2 (main/xms) buffer segment */
     block32_t			b_blocknr;	/* 32-bit block numbers required for FAT */
     kdev_t			b_dev;
     struct buffer_head		*b_next_lru;
     struct buffer_head		*b_prev_lru;
     struct wait_queue		b_wait;
-    block_t			b_count;
-    seg_t			b_seg;		/* Current (L1 or L2) buffer segment */
+    unsigned char		b_count;
     char			b_lock;
     char			b_dirty;
     char			b_uptodate;
-    char			b_reserved;
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
-    seg_t			b_ds;		/* L2 buffer data segment */
+    ramdesc_t			b_ds;		/* L2 buffer data segment */
     char			*b_L2data;	/* Offset into L2 allocation block */
     char			b_mapcount;	/* count of L2 buffer mapped into L1 */
     unsigned char		b_num;		/* Buffer number, for debugging */
@@ -183,7 +183,7 @@ struct inode {
     unsigned short		i_flags;
     unsigned char		i_lock;
     unsigned char		i_dirt;
-    short			i_sem;
+    sem_t			i_sem;
 #ifdef BLOAT_FS
     unsigned long int		i_blksize;
     unsigned long int		i_blocks;
@@ -309,9 +309,6 @@ struct inode_operations {
 
 struct super_operations {
     void			(*read_inode) ();
-#ifdef BLOAT_FS
-    int 			(*notify_change) ();
-#endif
     void			(*write_inode) ();
     void			(*put_inode) ();
     void			(*put_super) ();
@@ -320,6 +317,9 @@ struct super_operations {
     void			(*statfs_kern) ();
 #endif
     int 			(*remount_fs) ();
+#ifdef BLOAT_FS
+    int 			(*notify_change) ();
+#endif
 };
 
 struct file_system_type {
@@ -381,6 +381,7 @@ extern struct inode *__iget(struct super_block *,ino_t);
 
 /*@+namechecks@*/
 
+extern struct file_operations *get_blkfops(unsigned int);
 extern int register_blkdev(unsigned int,char *,struct file_operations *);
 extern int unregister_blkdev(void);
 extern int blkdev_open(struct inode *,struct file *);
@@ -395,12 +396,6 @@ extern int unregister_chrdev(void);
 extern struct file_operations def_chr_fops;
 extern struct inode_operations chrdev_inode_operations;
 
-extern void init_fifo(struct inode *);
-
-extern struct file_operations connecting_fifo_fops;
-extern struct file_operations read_fifo_fops;
-extern struct file_operations write_fifo_fops;
-extern struct file_operations rdwr_fifo_fops;
 extern struct file_operations read_pipe_fops;
 extern struct file_operations write_pipe_fops;
 extern struct file_operations rdwr_pipe_fops;
@@ -478,6 +473,10 @@ extern size_t block_write(struct inode *,struct file *,char *,size_t);
 #else
 #define block_read NULL
 #define block_write NULL
+#endif
+
+#ifdef CONFIG_EXEC_COMPRESS
+extern size_t decompress(char *buf, seg_t seg, size_t orig_size, size_t compr_size, int safety);
 #endif
 
 #ifdef BLOAT_FS

@@ -64,7 +64,7 @@
 			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">After
 			ELKS has booted, login with &quot;root&quot; and check that ktcp
 			is running with the command &quot;ps&quot;. Then use vi to look at
-			the &quot;/etc/rc.d/rc.sys&quot; file and check the ttybaud
+			the &quot;/etc/rc.sys&quot; file and check the ttybaud
 			and localip entries in there.</FONT></P>
 			<P STYLE="margin-bottom: 0.5cm; font-weight: normal"><FONT FACE="Arial, sans-serif">This
 			is my setting in the file rc.sys:</FONT></P>
@@ -76,7 +76,7 @@ localip=192.168.1.10
 sliptty=/dev/ttyS0
 ttybaud=9600</PRE><P STYLE="margin-bottom: 0.5cm; font-weight: normal">
 			<FONT FACE="Arial, sans-serif">If you want to change these
-			settings, modify this file in &quot;elkscmd/rootfs_template/etc/rc.d&quot;
+			settings, modify this file in &quot;elkscmd/rootfs_template/etc/rc.sys&quot;
 			and compile ELKS again. Or modify the file in ELKS and enter the
 			&quot;reboot&quot; command. This is all that is required on the
 			ELKS side of the slip connection.</FONT></P>

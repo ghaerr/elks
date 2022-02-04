@@ -5,7 +5,7 @@ endif
 
 include $(TOPDIR)/Make.defs
 
-.PHONY: all clean kconfig defconfig config menuconfig
+.PHONY: all clean libc kconfig defconfig config menuconfig
 
 all: .config include/autoconf.h
 	$(MAKE) -C libc all
@@ -15,6 +15,9 @@ all: .config include/autoconf.h
 	$(MAKE) -C elkscmd all
 	$(MAKE) -C image all
 	$(MAKE) -C elksemu PREFIX='$(TOPDIR)/cross' elksemu
+
+kclean:
+	$(MAKE) -C elks kclean
 
 clean:
 	$(MAKE) -C libc clean
@@ -30,6 +33,11 @@ clean:
 	    echo ' * `make config` or `make menuconfig` to configure it.' ;\
 	    echo ;\
 	fi
+
+libc:
+	$(MAKE) -C libc DESTDIR='$(TOPDIR)/cross' uninstall
+	$(MAKE) -C libc all
+	$(MAKE) -C libc DESTDIR='$(TOPDIR)/cross' install
 
 elks/arch/i86/drivers/char/KeyMaps/config.in:
 	$(MAKE) -C elks/arch/i86/drivers/char/KeyMaps config.in

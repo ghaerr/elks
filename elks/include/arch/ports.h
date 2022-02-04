@@ -25,65 +25,58 @@
  * 15*  AT HD IDE (/dev/hdb) CONFIG_BLK_DEV_HD      Driver doesn't work
  *
  * Edit settings below to change port address or IRQ:
- *   #define CONFIG_NEED_IRQx to map interrupt vector to ELKS
  *   Change I/O port and driver IRQ number to match your hardware
  */
 
-#define CONFIG_NEED_IRQ0		/* Timer, required*/
-
-#ifdef CONFIG_CONSOLE_DIRECT
-#define CONFIG_NEED_IRQ1
-#endif
-
-#ifdef CONFIG_CHAR_DEV_RS
-//#define CONFIG_FAST_IRQ4		/* COM1 very fast serial driver, no ISIG handling*/
-//#define CONFIG_FAST_IRQ3		/* COM2 very fast serial driver, no ISIG handling*/
-#define CONFIG_NEED_IRQ4		/* COM1 normal serial driver*/
-#define CONFIG_NEED_IRQ3		/* COM2 normal serial driver*/
-//#define CONFIG_NEED_IRQ5		/* COM3*/
-//#define CONFIG_NEED_IRQ2		/* COM4, XT only*/
-#endif
-
-#ifdef CONFIG_ETH_NE2K
-//#define CONFIG_NEED_IRQ9		/* ensure NE2K_IRQ set properly below also*/
-#define CONFIG_NEED_IRQ12
-#endif
-
-#ifdef CONFIG_ETH_WD
-#define CONFIG_NEED_IRQ2		/* only available on XT, slave PIC on AT*/
-#endif
-
-/* unused*/
-//#define CONFIG_NEED_IRQ6
-//#define CONFIG_NEED_IRQ7
-//#define CONFIG_NEED_IRQ8
-//#define CONFIG_NEED_IRQ10
-//#define CONFIG_NEED_IRQ11
-//#define CONFIG_NEED_IRQ13
-
-/* obsolete - driver won't compile*/
-#ifdef CONFIG_BLK_DEV_FD
-#define CONFIG_NEED_IRQ6
-#endif
-
-/* obsolete - driver doesn't work*/
-#ifdef CONFIG_BLK_DEV_HD
-#define CONFIG_NEED_IRQ5
-#define CONFIG_NEED_IRQ14
-#define CONFIG_NEED_IRQ15
-#endif
-
-/* timer, timer.c*/
+#ifdef CONFIG_ARCH_IBMPC
+/* timer, timer-8254.c*/
 #define TIMER_CMDS_PORT 0x43		/* command port */
 #define TIMER_DATA_PORT 0x40		/* data port    */
 #define TIMER_IRQ	0		/* can't change*/
 
-/* keyboard, xt_kbd.c*/
+/* bell, bell-8254.c*/
+#define TIMER2_PORT	0x42		/* timer 2 data port for speaker frequency*/
+#define SPEAKER_PORT	0x61
+
+/* 8259 interrupt controller, irq-8259.c*/
+#define PIC1_CMD   0x20			/* master */
+#define PIC1_DATA  0x21
+#define PIC2_CMD   0xA0			/* slave */
+#define PIC2_DATA  0xA1
+#endif
+
+#ifdef CONFIG_ARCH_8018X
+#define TIMER_IRQ	0		/* logical IRQ number, NOT related to the actual IRQ vector! */
+#endif
+
+#ifdef CONFIG_ARCH_PC98
+/* timer, timer-8254.c*/
+#define TIMER_CMDS_PORT 0x77		/* command port */
+#define TIMER_DATA_PORT 0x71		/* data port    */
+#define TIMER_IRQ	0		/* can't change*/
+
+/* bell, bell-8254.c*/
+#define TIMER2_PORT	0x75		/* timer 2 data port for speaker frequency*/
+#define SPEAKER_PORT	0x61
+
+/* 8259 interrupt controller, irq-8259.c*/
+#define PIC1_CMD   0x00			/* master */
+#define PIC1_DATA  0x02
+#define PIC2_CMD   0x08			/* slave */
+#define PIC2_DATA  0x0A
+#endif
+
+/* keyboard, kbd-scancode.c*/
 #define KBD_IO		0x60
 #define KBD_CTL		0x61
 #define KBD_IRQ		1
 
 /* serial, serial.c*/
+#ifdef CONFIG_CHAR_DEV_RS
+//#define CONFIG_FAST_IRQ4             /* COM1 very fast serial driver, no ISIG handling*/
+//#define CONFIG_FAST_IRQ3             /* COM2 very fast serial driver, no ISIG handling*/
+#endif
+
 #define COM1_PORT	0x3f8
 #define COM1_IRQ	4		/* unregistered unless COM1_PORT found*/
 
@@ -96,14 +89,21 @@
 #define COM4_PORT	0x2e8
 #define COM4_IRQ	2		/* unregistered unless COM4_PORT found*/
 
-/* ne2k, ne2k.c */
-//#define NE2K_IRQ	9		/* ensure CONFIG_NEED_IRQxx set properly above*/
-#define NE2K_IRQ	12
+/* ne2k, ne2k.c, may be overridden in /bootopts using netirq= and netport= */
 #define NE2K_PORT	0x300
+#define NE2K_IRQ	12
 
 /* wd, wd.c*/
+<<<<<<< HEAD
 #define WD_IRQ		3
 #define WD_PORT		0x280
+=======
+#define WD_PORT		0x240
+#define WD_IRQ		2
+
+/* bioshd.c*/
+#define FDC_DOR		0x3F2		/* floppy digital output register*/
+>>>>>>> 34b50e3c737367b1da77db5f007176a041a97632
 
 /* obsolete - experimental IDE hard drive, directhd.c (broken)*/
 #define HD1_PORT	0x1f0
@@ -112,5 +112,5 @@
 #define HD1_AT_IRQ	14		/* missing request_irq call*/
 #define HD2_AT_IRQ	15		/* missing request_irq call*/
 
-/* obsoleete - experimental floppy drive, floppy.c (won't compile)*/
+/* obsolete - experimental floppy drive, floppy.c (won't compile)*/
 #define FLOPPY_IRQ	6		/* missing request_irq call*/

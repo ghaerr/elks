@@ -34,6 +34,8 @@ extern struct passwd * getpwnam __P ((__const char *));
 extern struct passwd * __getpwent __P ((__const int passwd_fd));
 #endif
 
+extern char *getpass(char *prompt);
+
 #endif /* pwd.h  */
 
 

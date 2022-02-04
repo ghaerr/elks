@@ -17,6 +17,7 @@ OBJS = \
 	dirname.o \
 	getcwd.o \
 	getenv.o \
+	getpass.o \
 	getopt.o \
 	itoa.o \
 	ltostr.o \
@@ -29,6 +30,7 @@ OBJS = \
 	system.o \
 	tmpnam.o \
 	ultostr.o \
+	wildcard.o \
 	# end of list
 
 all: $(LIB)

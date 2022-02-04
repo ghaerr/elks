@@ -135,11 +135,13 @@ void wake_up_process(register struct task_struct *p)
  * a process. The process itself must remove the queue once it has woken.
  */
 
-void _wake_up(register struct wait_queue *q, unsigned short int it)
+void _wake_up(register struct wait_queue *q, int it)
 {
     register struct task_struct *p;
 
     for_each_task(p) {
+	if (p->state == TASK_UNUSED)
+		continue;
 	if ((p->waitpt == q) || ((p->waitpt == &select_queue) && select_poll (p, q)))
 	    if (p->state == TASK_INTERRUPTIBLE ||
 		(it && p->state == TASK_UNINTERRUPTIBLE)) {
@@ -152,13 +154,15 @@ void _wake_up(register struct wait_queue *q, unsigned short int it)
  *	Semaphores. These are not IRQ safe nor needed to be so for ELKS
  */
 
-void up(register short *s)
+void up(register sem_t *s)
 {
     if (++(*s) == 0)		/* Gone non-negative */
 	wake_up((void *) s);
+
+    if (*s != 0) debug_net("kernel: sem up %x FAIL %d\n", s, *s);
 }
 
-void down(register short *s)
+void down(register sem_t *s)
 {
     /* Wait for the semaphore */
     while (*s < 0)
@@ -166,4 +170,6 @@ void down(register short *s)
 
     /* Take it */
     --(*s);
+
+    if (*s != -1) debug_net("kernel: sem down %x FAIL %d\n", s, *s);
 }

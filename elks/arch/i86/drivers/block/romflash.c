@@ -7,14 +7,14 @@
 
 
 static int romflash_open (struct inode * i, struct file * f)
-	{
+{
 	i->i_size = 0x10000;  // 8086 address space
 	return 0;
-	}
+}
 
 
 static struct file_operations romflash_fops =
-	{
+{
 	NULL,           /* lseek */
 	NULL,           /* read */
 	NULL,           /* write */
@@ -23,14 +23,7 @@ static struct file_operations romflash_fops =
 	NULL,           /* ioctl */
 	romflash_open,  /* open */
 	NULL            /* release */
-
-#ifdef BLOAT_FS
-    ,NULL           /* fsync */
-    ,NULL           /* check_media_change */
-    ,NULL           /* revalidate */
-#endif
-
-	};
+};
 
 
 void romflash_init (void)

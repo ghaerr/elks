@@ -2,12 +2,19 @@
 #define CONFIG_H
 
 /* compile time options*/
-#define CSLIP		1	/* compile in CSLIP support*/
+#define CSLIP		0	/* compile in CSLIP support*/
 
 /* turn these on for ELKS debugging*/
 #define USE_DEBUG_EVENT 1	/* use CTRLP to toggle debug output*/
 #define DEBUG_STARTDEF	0	/* default startup debug display*/
-#define DEBUG_TCP	1
+#define DEBUG_TCP	0	/* TCP ops*/
+#define DEBUG_TCPPKT	0	/* TCP packets info*/
+#define DEBUG_TCPDATA	1	/* TCP packet data display*/
+#define DEBUG_TUNE	1	/* tuning options*/
+#define DEBUG_RETRANS	0	/* TCP retransmissions*/
+#define DEBUG_WINDOW	0	/* TCP window size*/
+#define DEBUG_ACCEPT	0	/* TCP accept*/
+#define DEBUG_CLOSE	0	/* TCP close ops*/
 #define DEBUG_IP	0
 #define DEBUG_ARP	0
 #define DEBUG_ETH	0
@@ -30,6 +37,48 @@ void dprintf(const char *, ...);
 #define debug_tcp	DPRINTF
 #else
 #define debug_tcp(...)
+#endif
+
+#if DEBUG_TUNE
+#define debug_tune	DPRINTF
+#else
+#define debug_tune(...)
+#endif
+
+#if DEBUG_TCPPKT
+#define debug_tcppkt	DPRINTF
+#else
+#define debug_tcppkt(...)
+#endif
+
+#if DEBUG_TCPDATA
+#define debug_tcpdata	DPRINTF
+#else
+#define debug_tcpdata(...)
+#endif
+
+#if DEBUG_RETRANS
+#define debug_retrans	DPRINTF
+#else
+#define debug_retrans(...)
+#endif
+
+#if DEBUG_WINDOW
+#define debug_window	DPRINTF
+#else
+#define debug_window(...)
+#endif
+
+#if DEBUG_ACCEPT
+#define debug_accept	DPRINTF
+#else
+#define debug_accept(...)
+#endif
+
+#if DEBUG_CLOSE
+#define debug_close	DPRINTF
+#else
+#define debug_close(...)
 #endif
 
 #if DEBUG_IP

@@ -1,0 +1,550 @@
+<!-- Creator     : groff version 1.19.2 -->
+<!-- CreationDate: Thu Apr 26 08:03:35 2007 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p     { margin-top: 0; margin-bottom: 0; }
+       pre   { margin-top: 0; margin-bottom: 0; }
+       table { margin-top: 0; margin-bottom: 0; }
+</style>
+<title>NANO</title>
+
+</head>
+<body>
+
+<h1 align=center>NANO</h1>
+
+<a href="#NOM">NOM</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#OPTIONS">OPTIONS</a><br>
+<a href="#FICHIERS D&rsquo;INITIALISATION">FICHIERS D&rsquo;INITIALISATION</a><br>
+<a href="#NOTES">NOTES</a><br>
+<a href="#BOGUES">BOGUES</a><br>
+<a href="#SITE INTERNET">SITE INTERNET</a><br>
+<a href="#VOIR AUSSI">VOIR AUSSI</a><br>
+<a href="#AUTEUR">AUTEUR</a><br>
+<a href="#TRADUCTION">TRADUCTION</a><br>
+
+<hr>
+
+
+<a name="NOM"></a>
+<h2>NOM</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">nano &minus;
+NAno un NOuvel &eacute;diteur, un clone libre et
+am&eacute;lior&eacute; de Pico</p>
+
+<a name="SYNOPSIS"></a>
+<h2>SYNOPSIS</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>nano</b>
+<i>[OPTIONS]&nbsp;[[+LIGNE,COLONNE]&nbsp;FICHIER]...</i></p>
+
+<a name="DESCRIPTION"></a>
+<h2>DESCRIPTION</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Cette page de
+manuel d&eacute;crit bri&egrave;vement la commande
+<b>nano</b>.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>nano</b> est
+un &eacute;diteur petit, sympathique et libre, qui vise
+&agrave; remplacer Pico, l&rsquo;&eacute;diteur par
+d&eacute;faut du logiciel non libre Pine. <b>nano</b> ne se
+contentant pas de copier l&rsquo;interface et
+l&rsquo;ergonomie de Pico, il offre &eacute;galement
+certaines fonctions manquantes (ou d&eacute;sactiv&eacute;es
+par d&eacute;faut) dans Pico. Ces fonctionnalit&eacute;s
+sont, par exemple, les fonctions de recherche et de
+remplacement, et la possibilit&eacute; de sauter directement
+&agrave; une ligne et &agrave; une colonne
+pr&eacute;cise.</p>
+
+<a name="OPTIONS"></a>
+<h2>OPTIONS</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>+</b><i>LIGNE</i><b>,</b><i>COLONNE</i></p>
+
+<p style="margin-left:22%;">D&eacute;marre avec le curseur
+positionn&eacute; &agrave; la colonne <i>COLONNE</i> de la
+ligne <i>LIGNE</i> (l&rsquo;un des deux, au moins, devant
+&ecirc;tre sp&eacute;cifi&eacute;) au lieu de
+d&eacute;marrer &agrave; la colonne&nbsp;1,
+ligne&nbsp;1.</p>
+
+<table width="100%" border=0 rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+
+<p style="margin-top: 1em" valign="top"><b>&minus;?</b></p> </td>
+<td width="8%"></td>
+<td width="36%">
+
+
+<p style="margin-top: 1em" valign="top">Identique &agrave;
+<b>-h (&minus;&minus;help)</b>.</p></td>
+<td width="42%">
+</td>
+</table>
+
+<p style="margin-left:11%;"><b>&minus;A
+(&minus;&minus;smarthome)</b></p>
+
+<p style="margin-left:22%;">Rend plus malin le
+fonctionnement de la touche
+&laquo;&nbsp;D&eacute;but&nbsp;&raquo;. Lorsque l&rsquo;on
+appuie sur cette touche &agrave; n&rsquo;importe quel
+endroit except&eacute; au tout d&eacute;but du texte
+d&rsquo;une ligne (i.&nbsp;e. au premier caract&egrave;re
+non blanc), le curseur se positionnera au d&eacute;but du
+texte de la ligne (qu&rsquo;il soit en avant ou en
+arri&egrave;re). Si le curseur est d&eacute;j&agrave;
+l&agrave;, il se placera au vrai d&eacute;but de la
+ligne.</p>
+
+<p style="margin-left:11%;"><b>&minus;B
+(&minus;&minus;backup)</b></p>
+
+<p style="margin-left:22%;">Lors de l&rsquo;&eacute;criture
+d&rsquo;un fichier, cr&eacute;e une copie de
+s&eacute;curit&eacute; de la version
+pr&eacute;c&eacute;dente, en ajoutant un tilde (~) au nom du
+fichier.</p>
+
+<p style="margin-left:11%;"><b>&minus;D
+(&minus;&minus;boldtext)</b></p>
+
+<p style="margin-left:22%;">Utilise des caract&egrave;res
+gras &agrave; la place de la vid&eacute;o inverse.</p>
+
+<p style="margin-left:11%;"><b>&minus;C</b>
+<i>r&eacute;pertoire</i>
+<b>(&minus;&minus;backupdir=</b><i>r&eacute;pertoire</i><b>)</b></p>
+
+<p style="margin-left:22%;">D&eacute;finit le
+r&eacute;pertoire utilis&eacute; par <b>nano</b> pour
+enregistrer les copies de s&eacute;curit&eacute; uniques si
+celles-ci sont activ&eacute;es.</p>
+
+<p style="margin-left:11%;"><b>&minus;E
+(&minus;&minus;tabstospaces)</b></p>
+
+<p style="margin-left:22%;">Convertit les tabulations
+clavier en espaces.</p>
+
+<p style="margin-left:11%;"><b>&minus;F
+(&minus;&minus;multibuffer)</b></p>
+
+<p style="margin-left:22%;">Active le mode multi-espace,
+autorisant l&rsquo;&eacute;dition simultan&eacute;e de
+plusieurs fichiers, si ce mode est disponible.</p>
+
+<p style="margin-left:11%;"><b>&minus;H
+(&minus;&minus;historylog)</b></p>
+
+<p style="margin-left:22%;">Enregistre les cha&icirc;nes
+ayant fait l&rsquo;objet d&rsquo;une recherche ou d&rsquo;un
+remplacement dans le fichier <i>~/.nano_history</i> afin de
+permettre leur r&eacute;utilisation. Ceci n&rsquo;est
+possible que si <b>nano</b> est configur&eacute; pour
+utiliser les fichiers nanorc.</p>
+
+<p style="margin-left:11%;"><b>&minus;I
+(&minus;&minus;ignorercfiles)</b></p>
+
+<p style="margin-left:22%;">Ne pas utiliser pas les
+fichiers <i>SYSCONFDIR/nanorc</i> et <i>~/.nanorc</i> (si
+<b>nano</b> est capable de les utiliser).</p>
+
+<p style="margin-left:11%;"><b>&minus;K
+(&minus;&minus;rebindkeypad)</b></p>
+
+<p style="margin-left:22%;">Interpr&egrave;te les touches
+du pav&eacute; num&eacute;rique afin qu&rsquo;elles
+fonctionnent toutes correctement. Vous ne devriez utiliser
+cette option que si ce n&rsquo;est pas le cas, car nano ne
+sera plus capable d&rsquo;utiliser la souris correctement
+lorsque cette option sera activ&eacute;e.</p>
+
+<p style="margin-left:11%;"><b>&minus;L
+(&minus;&minus;nonewlines)</b></p>
+
+<p style="margin-left:22%;">Ne pas ajouter de passage
+&agrave; la ligne &agrave; la fin des fichiers.</p>
+
+<p style="margin-left:11%;"><b>&minus;N
+(&minus;&minus;noconvert)</b></p>
+
+<p style="margin-left:22%;">D&eacute;sactive la conversion
+automatique des fichiers depuis les formats Mac et DOS.</p>
+
+<p style="margin-left:11%;"><b>&minus;O
+(&minus;&minus;morespace)</b></p>
+
+<p style="margin-left:22%;">Utiliser la ligne blanche
+situ&eacute;e sous la ligne de titre comme espace
+suppl&eacute;mentaire d&rsquo;&eacute;dition.</p>
+
+<p style="margin-left:11%;"><b>&minus;Q</b>
+<i>cha&icirc;ne</i>
+<b>(&minus;&minus;quotestr=</b><i>cha&icirc;ne</i><b>)</b></p>
+
+<p style="margin-left:22%;">D&eacute;finit le
+pr&eacute;fixe par d&eacute;faut des citations. Nano utilise
+ce pr&eacute;fixe pour r&eacute;aliser une justification
+correcte des citations. Si nano est capable d&rsquo;utiliser
+des expressions rationnelles, le pr&eacute;fixe par
+d&eacute;faut sera
+&quot;<i>^([&nbsp;\t]*[#:&gt;\|}])+</i>&quot;, sinon, ce
+sera &quot;<i>&gt;&nbsp;</i>&quot;. Dans l&rsquo;expression
+rationnelle pr&eacute;c&eacute;dente,
+&laquo;&nbsp;<i>\t&nbsp;</i>&raquo; repr&eacute;sente une
+tabulation.</p>
+
+<p style="margin-left:11%;"><b>&minus;R
+(&minus;&minus;restricted)</b></p>
+
+<p style="margin-left:22%;">Mode restreint&nbsp;: aucune
+lecture ou &eacute;criture de fichiers non indiqu&eacute;s
+sur la ligne de commande, pas de lecture des fichiers
+nanorc, interdiction de suspendre, interdiction
+d&rsquo;ajouter au d&eacute;but, &agrave; la fin, de
+sauvegarder un fichier ayant d&eacute;j&agrave; un nom sous
+un nom diff&eacute;rent, d&rsquo;utiliser une copie de
+s&eacute;curit&eacute; ou le correcteur orthographique.
+Cette option peut aussi &ecirc;tre activ&eacute;e en
+appelant <b>nano</b> sous un nom commen&ccedil;ant par
+&laquo;&nbsp;r&nbsp;&raquo; (par exemple
+&laquo;&nbsp;rnano&nbsp;&raquo;).</p>
+
+<p style="margin-left:11%;"><b>&minus;S
+(&minus;&minus;smooth)</b></p>
+
+<p style="margin-left:22%;">Active le d&eacute;filement
+progressif. Le texte d&eacute;filera ligne-par-ligne au lieu
+de d&eacute;filer morceau-par-morceau.</p>
+
+<p style="margin-left:11%;"><b>&minus;T</b> <i>nombre</i>
+<b>(&minus;&minus;tabsize=</b><i>nombre</i><b>)</b></p>
+
+<p style="margin-left:22%;">D&eacute;finit la taille
+(largeur) des tabulations en nombre de colonnes. Le nombre
+indiqu&eacute; doit &ecirc;tre strictement sup&eacute;rieur
+&agrave; 0. La valeur par d&eacute;faut est de 8.</p>
+
+<p style="margin-left:11%;"><b>&minus;U
+(&minus;&minus;quickblank)</b></p>
+
+<p style="margin-left:22%;">Effacement rapide de la ligne
+d&rsquo;&eacute;tat. Les messages affich&eacute;s par la
+ligne d&rsquo;&eacute;tat dispara&icirc;tront apr&egrave;s
+une frappe clavier au lieu de 25. Notez que l&rsquo;option
+<b>-c</b> prend le pas sur cette option.</p>
+
+<p style="margin-left:11%;"><b>&minus;V
+(&minus;&minus;version)</b></p>
+
+<p style="margin-left:22%;">Affiche la version, puis
+s&rsquo;arr&ecirc;te.</p>
+
+<p style="margin-left:11%;"><b>&minus;W
+(&minus;&minus;wordbounds)</b></p>
+
+<p style="margin-left:22%;">D&eacute;tection plus
+pr&eacute;cise des limites de mots, obtenue en
+consid&eacute;rant les caract&egrave;res de ponctuation
+comme faisant partie des mots.</p>
+
+<p style="margin-left:11%;"><b>&minus;Y</b>
+<i>cha&icirc;ne</i>
+<b>(&minus;&minus;syntax=</b><i>cha&icirc;ne</i><b>)</b></p>
+
+<p style="margin-left:22%;">Indique quel mode de
+colorisation syntaxique adopter, parmi les modes
+d&eacute;finis dans le fichier <i>.nanorc</i>, si cette
+fonctionnalit&eacute; est disponible.</p>
+
+<p style="margin-left:11%;"><b>&minus;c
+(&minus;&minus;const)</b></p>
+
+<p style="margin-left:22%;">Affiche en permanence la
+position du curseur. Notez que cette option prend le pas sur
+l&rsquo;option <b>-U</b>.</p>
+
+<p style="margin-left:11%;"><b>&minus;d
+(&minus;&minus;rebinddelete)</b></p>
+
+<p style="margin-left:22%;">Interpr&egrave;te
+diff&eacute;remment la touche
+&laquo;&nbsp;Supprimer&nbsp;&raquo;, afin que les touches
+&laquo;&nbsp;Effacement arri&egrave;re&nbsp;&raquo; et
+&laquo;&nbsp;Supprimer&nbsp;&raquo; fonctionnent
+correctement. Vous ne devriez avoir besoin de cette option
+que si, sur votre syst&egrave;me, la touche
+&laquo;&nbsp;Effacement arri&egrave;re&nbsp;&raquo; produit
+l&rsquo;effet de la touche
+&laquo;&nbsp;Supprimer&nbsp;&raquo;.</p>
+
+<p style="margin-left:11%;"><b>&minus;h
+(&minus;&minus;help)</b></p>
+
+<p style="margin-left:22%;">Affiche un r&eacute;sum&eacute;
+des options de lancement de nano, puis
+s&rsquo;arr&ecirc;te.</p>
+
+<p style="margin-left:11%;"><b>&minus;i
+(&minus;&minus;autoindent)</b></p>
+
+<p style="margin-left:22%;">Indentation automatique.
+Commence chaque nouvelle ligne au m&ecirc;me niveau que la
+ligne pr&eacute;c&eacute;dente. Utile pour
+l&rsquo;&eacute;dition de code source.</p>
+
+<p style="margin-left:11%;"><b>&minus;k
+(&minus;&minus;cut)</b></p>
+
+<p style="margin-left:22%;">Coupe le texte du curseur
+&agrave; la fin de la ligne, au lieu de couper la ligne
+enti&egrave;re.</p>
+
+<p style="margin-left:11%;"><b>&minus;l
+(&minus;&minus;nofollow)</b></p>
+
+<p style="margin-left:22%;">Si le fichier
+&eacute;dit&eacute; est un lien symbolique, au lieu de le
+suivre, remplace le lien par le nouveau fichier. Sans doute
+utile pour &eacute;diter les fichiers de <i>/tmp</i>,
+non&nbsp;?</p>
+
+<p style="margin-left:11%;"><b>&minus;m
+(&minus;&minus;mouse)</b></p>
+
+<p style="margin-left:22%;">Active l&rsquo;utilisation de
+la souris, si elle est disponible pour votre syst&egrave;me.
+Lorsque celle-ci est activ&eacute;e, il est possible
+d&rsquo;utiliser la souris pour positionner le curseur, pour
+marquer le texte (avec un double-clic) et pour lancer les
+fonctions correspondant aux raccourcis. Il est possible
+d&rsquo;utiliser la souris sous X&nbsp;Window ou en mode
+console avec gpm.</p>
+
+<p style="margin-left:11%;"><b>&minus;o</b>
+<i>r&eacute;pertoire</i>
+<b>(&minus;&minus;operatingdir=</b><i>r&eacute;pertoire</i><b>)</b></p>
+
+<p style="margin-left:22%;">D&eacute;finit le
+r&eacute;pertoire de travail. Demande &agrave; <b>nano</b>
+de mettre en place quelque chose de similaire &agrave; un
+environnement d&rsquo;ex&eacute;cution restreint
+(<i>chroot</i>).</p>
+
+<p style="margin-left:11%;"><b>&minus;p
+(&minus;&minus;preserve)</b></p>
+
+<p style="margin-left:22%;">Pr&eacute;serve les
+s&eacute;quences XON et XOFF (^Q et ^S), afin qu&rsquo;elle
+soient re&ccedil;ues par le terminal.</p>
+
+<p style="margin-left:11%;"><b>&minus;r</b> <i>colonne</i>
+<b>(&minus;&minus;fill=</b><i>colonne</i><b>)</b></p>
+
+<p style="margin-left:22%;">Passe automatiquement &agrave;
+la ligne une fois arriv&eacute; &agrave; la colonne
+<i>colonne</i>. Si la valeur indiqu&eacute;e est de 0 ou
+moins, le point de passage &agrave; la ligne aura lieu
+&agrave; la taille de l&rsquo;&eacute;cran moins
+<i>colonne</i>. Cela permet de faire varier le point de
+passage &agrave; la ligne lorsque l&rsquo;on change la
+taille de l&rsquo;&eacute;cran. La valeur par d&eacute;faut
+est de -8.</p>
+
+<p style="margin-left:11%;"><b>&minus;s</b>
+<i>programme</i>
+<b>(&minus;&minus;speller=</b><i>programme</i><b>)</b></p>
+
+<p style="margin-left:22%;">Choix d&rsquo;un correcteur
+orthographique de remplacement.</p>
+
+<p style="margin-left:11%;"><b>&minus;t
+(&minus;&minus;tempfile)</b></p>
+
+<p style="margin-left:22%;">S&rsquo;il a &eacute;t&eacute;
+modifi&eacute;, le fichier sera sauvegard&eacute;
+automatiquement sans demande de confirmation. Identique
+&agrave; l&rsquo;option <b>-t</b> de Pico.</p>
+
+<p style="margin-left:11%;"><b>&minus;v
+(&minus;&minus;view)</b></p>
+
+<p style="margin-left:22%;">Mode visualisation (lecture
+seule).</p>
+
+<p style="margin-left:11%;"><b>&minus;w
+(&minus;&minus;nowrap)</b></p>
+
+<p style="margin-left:22%;">D&eacute;sactive le passage
+automatique &agrave; la ligne.</p>
+
+<p style="margin-left:11%;"><b>&minus;x
+(&minus;&minus;nohelp)</b></p>
+
+<p style="margin-left:22%;">D&eacute;sactive la barre
+d&rsquo;aide affich&eacute;e en bas de
+l&rsquo;&eacute;cran.</p>
+
+<p style="margin-left:11%;"><b>&minus;z
+(&minus;&minus;suspend)</b></p>
+
+<p style="margin-left:22%;">Autorise &agrave; suspendre
+l&rsquo;&eacute;diteur.</p>
+
+<p style="margin-left:11%;"><b>&minus;a, &minus;b,
+&minus;e, &minus;f, &minus;g, &minus;j</b></p>
+
+<p style="margin-left:22%;">Ignor&eacute;, pour &ecirc;tre
+compatible avec Pico.</p>
+
+<a name="FICHIERS D&rsquo;INITIALISATION"></a>
+<h2>FICHIERS D&rsquo;INITIALISATION</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>nano</b> lit
+les fichiers d&rsquo;initialisation dans l&rsquo;ordre
+suivant&nbsp;: <i>SYSCONFDIR/nanorc</i>, puis
+<i>~/.nanorc</i>. R&eacute;f&eacute;rez-vous &agrave; la
+page de manuel de <b>nanorc(5)</b> et au fichier
+d&rsquo;exemple <i>nanorc.sample</i>, qui devraient tous les
+deux &ecirc;tre livr&eacute;s avec <b>nano</b>.</p>
+
+<a name="NOTES"></a>
+<h2>NOTES</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Si aucun
+correcteur orthographique de remplacement n&rsquo;est
+indiqu&eacute; dans la ligne de commande ou dans l&rsquo;un
+des fichiers nanorc, <b>nano</b> prendra la commande
+indiqu&eacute;e par la variable d&rsquo;environnement
+<b>SPELL</b> si elle est d&eacute;finie.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Dans certains
+cas, <b>nano</b> essaiera de sauvegarder le fichier en cours
+d&rsquo;&eacute;dition dans un fichier de secours. Cela
+arrivera principalement si <b>nano</b> re&ccedil;oit un
+signal SIGHUP ou SIGTERM, ou bien se trouve &agrave; court
+de m&eacute;moire. Le nom de ce fichier de secours sera
+<i>nano.save</i> si le fichier en cours n&rsquo;avait pas
+encore de nom, ou sera compos&eacute; du nom du fichier en
+cours suivi du suffixe &laquo;&nbsp;.save&nbsp;&raquo;. Si
+un fichier de ce nom existe d&eacute;j&agrave; dans le
+r&eacute;pertoire, un &laquo;&nbsp;.save&nbsp;&raquo; et un
+nombre seront ajout&eacute;s &agrave; la fin du nom du
+fichier en cours afin de le rendre unique (par exemple,
+&laquo;&nbsp;.save.1&nbsp;&raquo;). En mode multi-espace,
+<b>nano</b> r&eacute;alisera une sauvegarde de tous les
+fichiers en cours dans leurs fichiers de secours
+respectifs.</p>
+
+<a name="BOGUES"></a>
+<h2>BOGUES</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Merci de nous
+faire parvenir vos commentaires et de nous signaler les
+bogues, en &eacute;crivant, en anglais, &agrave;
+<b>nano@nano-editor.org</b>.</p>
+
+<p style="margin-left:11%; margin-top: 1em">La liste de
+discussion anglophone <b>nano</b> est disponible &agrave;
+l&rsquo;adresse <b>nano-devel@gnu.org</b>.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Pour vous
+abonner, envoyez un courrier &eacute;lectronique &agrave;
+<b>nano-devel-request@gnu.org</b>, ayant pour objet
+&laquo;&nbsp;subscribe&nbsp;&raquo;.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em">N&rsquo;h&eacute;sitez
+pas &eacute;galement &agrave; envoyez vos commentaires,
+suggestions et corrections relatives &agrave;
+l&rsquo;adaptation fran&ccedil;aise de cette page de manuel
+ou du logiciel &agrave;
+<b>jean-philippe.guerard@tigreraye.org</b>.</p>
+
+<a name="SITE INTERNET"></a>
+<h2>SITE INTERNET</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em">http://www.nano-editor.org/</p>
+
+<a name="VOIR AUSSI"></a>
+<h2>VOIR AUSSI</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>nanorc</b>(5)
+<i><br>
+/usr/share/doc/nano/</i> (ou son &eacute;quivalent sur votre
+syst&egrave;me)</p>
+
+<a name="AUTEUR"></a>
+<h2>AUTEUR</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Chris
+Allegretta &lt;chrisa@asty.org&gt; et d&rsquo;autres (voir
+les fichiers <i>AUTHORS</i> et <i>THANKS</i> pour plus
+d&rsquo;information). Cette page de manuel a
+&eacute;t&eacute; initialement r&eacute;dig&eacute;e par
+Jordi Mallach &lt;jordi@gnu.org&gt; pour le syst&egrave;me
+Debian (mais elle peut &ecirc;tre utilis&eacute;e par
+d&rsquo;autres).</p>
+
+<a name="TRADUCTION"></a>
+<h2>TRADUCTION</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Cette
+adaptation fran&ccedil;aise a &eacute;t&eacute;
+r&eacute;alis&eacute;e par Jean-Philippe&nbsp;Gu&eacute;rard
+&lt;jean-philippe.guerard@tigreraye.org&gt; le
+28&nbsp;octobre&nbsp;2006 &agrave; partir de la version du
+28&nbsp;octobre&nbsp;2006 de la page de manuel de nano
+2.0.0. Cette page a &eacute;t&eacute; relue par
+G&eacute;rard Delafond.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Un maximum de
+soin a &eacute;t&eacute; apport&eacute; lors de
+l&rsquo;&eacute;laboration de cette traduction&nbsp;;
+n&eacute;anmoins, quelques imperfections peuvent subsister.
+Si vous en rencontrez, que ce soit dans la version
+fran&ccedil;aise ou dans la version originale,
+n&rsquo;h&eacute;sitez pas &agrave; les signaler &agrave;
+l&rsquo;auteur ou au traducteur.</p>
+
+<p style="margin-left:11%; margin-top: 1em">La version
+originale la plus &agrave; jour de ce document est toujours
+consultable via la commande&nbsp;:</p>
+
+<p style="margin-left:11%; margin-top: 1em">LANGUAGE=en man
+nano</p>
+<hr>
+</body>
+</html>

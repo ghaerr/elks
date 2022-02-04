@@ -12,8 +12,6 @@
 	.code16
 	.text
 
-	.extern	ds_kernel
-
 #ifdef CONFIG_FAST_IRQ4
 //
 // fast com1 interrupt routine, uses "jmp _irq_com1" from interrupt vector
@@ -27,7 +25,11 @@ _irq_com1:
 	push	%dx
 	push	%ds
 
-	mov	%cs:ds_kernel,%ds	// recover kernel data segment
+	// Recover kernel data segment
+	// Was pushed by the CALLF of the dynamic handler
+	mov	%sp,%bx
+	mov	%ss:12(%bx),%ds
+
 	call	fast_com1_irq		// call special C interrupt routine
 					// which doesn't use any SS/SP/BP addressing
 
@@ -39,6 +41,7 @@ _irq_com1:
 	pop	%cx
 	pop	%bx
 	pop	%ax
+	add	$4,%sp		// skip the trampoline DS:*irq
 	iret
 #endif
 
@@ -55,7 +58,11 @@ _irq_com2:
 	push	%dx
 	push	%ds
 
-	mov	%cs:ds_kernel,%ds	// recover kernel data segment
+	// Recover kernel data segment
+	// Was pushed by the CALLF of the dynamic handler
+	mov	%sp,%bx
+	mov	%ss:12(%bx),%ds
+
 	call	fast_com2_irq		// call special C interrupt routine
 					// which doesn't use any SS/SP/BP addressing
 
@@ -67,5 +74,6 @@ _irq_com2:
 	pop	%cx
 	pop	%bx
 	pop	%ax
+	add	$4,%sp		// skip the trampoline DS:*irq
 	iret
 #endif

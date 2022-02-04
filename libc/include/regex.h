@@ -19,3 +19,6 @@ extern regexp *regcomp();
 extern int regexec();
 extern void regsub();
 extern void regerror();
+
+extern int expandwildcards(char *name, int maxargc, char **retargv);
+extern void freewildcards(void);

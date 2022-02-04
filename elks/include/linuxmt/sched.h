@@ -71,9 +71,11 @@ struct task_struct {
     pid_t			pgrp;
     struct tty			*tty;
     struct task_struct		*p_parent;
+#if BLOAT
     struct task_struct		*p_prevsib;
     struct task_struct		*p_nextsib;
     struct task_struct		*p_child;
+#endif
     struct wait_queue		child_wait;
     int				exit_status;	/* process exit status*/
     struct inode		*t_inode;
@@ -150,12 +152,12 @@ void finish_wait(struct wait_queue *p);
 
 /*@-namechecks@*/
 
-extern void _wake_up(struct wait_queue *,unsigned short int);
+extern void _wake_up(struct wait_queue *,int);
 
 /*@+namechecks@*/
 
-extern void down(short *);
-extern void up(short *);
+extern void down(sem_t *);
+extern void up(sem_t *);
 
 extern void wake_up_process(struct task_struct *);
 

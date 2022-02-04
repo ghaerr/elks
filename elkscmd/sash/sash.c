@@ -349,7 +349,10 @@ readfile(name)
 
 	while (TRUE) {
 		fflush(stdout);
-		if (ttyflag) showprompt();
+#ifdef CMD_SOURCE
+		if (ttyflag)
+#endif
+			showprompt();
 
 #ifdef CMD_SOURCE
 		if (intflag && !ttyflag && (fp != stdin)) {
@@ -362,6 +365,7 @@ readfile(name)
 		if (fgets(buf, CMDLEN - 1, fp) == NULL) {
 			if (ferror(fp) && (errno == EINTR)) {
 				clearerr(fp);
+				intflag = FALSE;
 				continue;
 			}
 			break;
@@ -903,6 +907,60 @@ catchquit()
 
 	if (intcrlf)
 		write(STDOUT, "\n", 1);
+}
+
+/* replacement fread to fix fgets not returning ferror/errno properly on SIGINT*/
+size_t fread(void *buf, size_t size, size_t nelm, FILE *fp)
+{
+   int len, v;
+   size_t bytes, got = 0;
+   __io_init_vars();        /* replaces Inline_init*/
+
+   v = fp->mode;
+
+   /* Want to do this to bring the file pointer up to date */
+   if (v & __MODE_WRITING)
+      fflush(fp);
+
+   /* Can't read or there's been an EOF or error then return zero */
+   if ((v & (__MODE_READ | __MODE_EOF | __MODE_ERR)) != __MODE_READ)
+      return 0;
+
+   /* This could be long, doesn't seem much point tho */
+   bytes = size * nelm;
+
+   len = fp->bufread - fp->bufpos;
+   if (len >= bytes)            /* Enough buffered */
+   {
+      memcpy(buf, fp->bufpos, bytes);
+      fp->bufpos += bytes;
+      return nelm;
+   }
+   else if (len > 0)            /* Some buffered */
+   {
+      memcpy(buf, fp->bufpos, len);
+      fp->bufpos += len;
+      got = len;
+   }
+
+   /* Need more; do it with a direct read */
+   len = read(fp->fd, (char *)buf + got, bytes - got);
+   /* Possibly for now _or_ later */
+#if 1	/* Fixes stdio when SIGINT received*/
+   if (intflag) {
+      len = -1;
+      errno = EINTR;
+   }
+#endif
+   if (len < 0)
+   {
+      fp->mode |= __MODE_ERR;
+      len = 0;
+   }
+   else if (len == 0)
+      fp->mode |= __MODE_EOF;
+
+   return (got + len) / size;
 }
 
 /* END CODE */

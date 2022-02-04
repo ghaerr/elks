@@ -260,7 +260,7 @@ int tty_outproc(register struct tty *tty)
     return ch;
 }
 
-void tty_echo(register struct tty *tty, unsigned char ch)
+static void tty_echo(register struct tty *tty, unsigned char ch)
 {
     if ((tty->termios.c_lflag & ECHO)
 		|| ((tty->termios.c_lflag & ECHONL) && (ch == '\n'))) {
@@ -288,6 +288,12 @@ size_t tty_write(struct inode *inode, struct file *file, char *data, size_t len)
     while (i < len) {
 	s = chq_wait_wr(&tty->outq, file->f_flags & O_NONBLOCK);
 	if (s < 0) {
+	    /* FIXME EAGAIN not returned, cycle required on telnet nonblocking terminal */
+	    if (s == -EINTR || s == -EAGAIN) {
+		wake_up(&tty->outq.wait);
+		schedule();
+		continue;
+	    }
 	    if (i == 0)
 		i = s;
 	    break;
@@ -345,32 +351,32 @@ again:
 	    ch = chq_getch(&tty->inq);
 	}
 
-	    if (icanon) {
-		if (ch == tty->termios.c_cc[VERASE]) {
-		    if (i > 0) {
-			i--;
-			k = ((get_user_char((void *)(--data))
-			    == '\t') ? TAB_SPACES : 1);
-			do {
-			    tty_echo(tty, ch);
-			} while (--k);
-		    }
-		    continue;
-		}
-		if ((tty->termios.c_iflag & ICRNL) && (ch == '\r'))
-		    ch = '\n';
+	if ((tty->termios.c_iflag & ICRNL) && (ch == '\r'))
+	    ch = '\n';
 
-		if (ch == tty->termios.c_cc[VEOF])
-		    break;
-	    } else {
-		if (vtime && vmin)	/* start timeout after first character*/
-		    nonblock = 1;
+	if (icanon) {
+	    if (ch == tty->termios.c_cc[VERASE]) {
+		if (i > 0) {
+		    i--;
+		    k = ((get_user_char((void *)(--data)) == '\t') ? TAB_SPACES : 1);
+		    do {
+			tty_echo(tty, ch);
+		    } while (--k);
+		}
+		continue;
 	    }
-	    put_user_char(ch, (void *)(data++));
-	    tty_echo(tty, ch);
-	    i++;
-	    if (icanon && ((ch == '\n') || (ch == tty->termios.c_cc[VEOL])))
+
+	    if (ch == tty->termios.c_cc[VEOF])
 		break;
+	} else {
+	    if (vtime && vmin)	/* start timeout after first character*/
+		nonblock = 1;
+	}
+	put_user_char(ch, (void *)(data++));
+	tty_echo(tty, ch);
+	i++;
+	if (icanon && ((ch == '\n') || (ch == tty->termios.c_cc[VEOL])))
+	    break;
     }
     return i;
 }
@@ -447,15 +453,9 @@ static struct file_operations tty_fops = {
     tty_write,
     NULL,
     tty_select,
-    tty_ioctl,			/* ioctl */
+    tty_ioctl,
     tty_open,
     tty_release
-#ifdef BLOAT_FS
-	,
-    NULL,
-    NULL,
-    NULL
-#endif
 };
 
 /* TTY subdrivers, linked in via configuration*/
@@ -464,6 +464,7 @@ extern struct tty_ops bioscon_ops;	/* CONFIG_CONSOLE_BIOS*/
 extern struct tty_ops headlesscon_ops;	/* CONFIG_CONSOLE_HEADLESS*/
 extern struct tty_ops rs_ops;		/* CONFIG_CHAR_DEV_RS*/
 extern struct tty_ops ttyp_ops;		/* CONFIG_PSEUDO_TTY*/
+extern struct tty_ops i8018xcon_ops;	/* CONFIG_CONSOLE_8018X*/
 
 void INITPROC tty_init(void)
 {
@@ -482,6 +483,8 @@ void INITPROC tty_init(void)
 	ttyp->ops = &dircon_ops;
 #elif defined(CONFIG_CONSOLE_BIOS)
 	ttyp->ops = &bioscon_ops;
+#elif defined(CONFIG_CONSOLE_8018X)
+	ttyp->ops = &i8018xcon_ops;
 #else
 	ttyp->ops = &headlesscon_ops;
 #endif
@@ -501,7 +504,7 @@ void INITPROC tty_init(void)
     /* put slave pseudo tty entries after serial entries */
     for (i = PTY_MINOR_OFFSET; (i) < NR_PTYS + PTY_MINOR_OFFSET; i++) {
 	ttyp->ops = &ttyp_ops;
-	(ttyp++)->minor = i;
+	(ttyp++)->minor = i;		/* ttyp0 = PTY slave PTY_MINOR_OFFSET */
     }
 #endif
 

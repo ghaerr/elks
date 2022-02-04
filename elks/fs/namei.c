@@ -37,6 +37,13 @@ int permission(register struct inode *inode, int mask)
     __u16 mode = inode->i_mode;
     int error = -EACCES;
 
+    if (mask & MAY_WRITE) {	/* disallow writing over running programs */
+	__ptask p = &task[0];
+	do {
+	    if (p->state <= TASK_STOPPED && (p->t_inode == inode))
+		return -EBUSY;
+	} while (++p < &task[MAX_TASKS]);
+    }
     if ((mask & MAY_WRITE) && IS_RDONLY(inode) &&
         !S_ISCHR(inode->i_mode) && !S_ISBLK(inode->i_mode)) /* allow writable devices*/
 	error = -EROFS;
@@ -135,7 +142,7 @@ static int lookup(register struct inode *dir, char *name, size_t len,
 static int follow_link(struct inode *dir, register struct inode *inode,
 		int flag, int mode, struct inode **res_inode)
 {
-    register struct inode_operations *iop = inode->i_op;
+    struct inode_operations *iop;
     int error = 0;
 
     *res_inode = inode;
@@ -143,7 +150,7 @@ static int follow_link(struct inode *dir, register struct inode *inode,
 	iput(inode);
 	*res_inode = NULL;
 	error = -ENOENT;
-    } else if (iop && iop->follow_link) {
+    } else if ((iop = inode->i_op) && iop->follow_link) {
 	dir->i_count++;
 	error = iop->follow_link(dir, inode, flag, mode, res_inode);
     }

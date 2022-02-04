@@ -264,9 +264,9 @@ static int unix_accept(struct socket *sock, struct socket *newsock, int flags)
 	if (flags & O_NONBLOCK)
 	    return -EAGAIN;
 
-	sock->flags |= SO_WAITDATA;
+	sock->flags |= SF_WAITDATA;
 	interruptible_sleep_on(sock->wait);
-	sock->flags &= ~SO_WAITDATA;
+	sock->flags &= ~SF_WAITDATA;
 
 	if (current->signal /* & ~current->blocked */ )
 	    return -ERESTARTSYS;
@@ -330,9 +330,9 @@ static int unix_read(struct socket *sock, char *ubuf, int size, int nonblock)
 	if (nonblock)
 	    return -EAGAIN;
 
-	sock->flags |= SO_WAITDATA;
+	sock->flags |= SF_WAITDATA;
 	interruptible_sleep_on(sock->wait);
-	sock->flags &= ~SO_WAITDATA;
+	sock->flags &= ~SF_WAITDATA;
 
 	if (current->signal /* & ~current->blocked */ )
 	    return -ERESTARTSYS;
@@ -397,12 +397,12 @@ static int unix_write(struct socket *sock, char *ubuf, int size, int nonblock)
     pupd = UN_DATA(sock)->peerupd;	/* safer than sock->conn */
 
     while (!(space = UN_BUF_SPACE(pupd))) {
-	sock->flags |= SO_NOSPACE;
+	sock->flags |= SF_NOSPACE;
 
 	if (nonblock)
 	    return -EAGAIN;
 
-	sock->flags &= ~SO_NOSPACE;
+	sock->flags &= ~SF_NOSPACE;
 	interruptible_sleep_on(sock->wait);
 
 	if (current->signal /* & ~current->blocked */ )
@@ -474,7 +474,7 @@ static int unix_select(struct socket *sock, int sel_type)
      *      Handle server sockets specially.
      */
 
-    if (sock->flags & SO_ACCEPTCON) {
+    if (sock->flags & SF_ACCEPTCON) {
 	if (sel_type == SEL_IN) {
 
 	    if (sock->iconn)

@@ -132,10 +132,11 @@ else
 # Begin PC image build
 
 boot/system:	$(XINCLUDE) $(AARCHIVES) $(ADRIVERS) boot/crt0.o
-	(cd $(BASEDIR) ; $(LD) $(LDFLAGS) -M $(ARCH_LD) -T $(TOPDIR)/elks/elks-small.ld \
+	(cd $(BASEDIR) ; $(LD) $(CPU_LD) -M $(ARCH_LD) -T $(TOPDIR)/elks/elks-small.ld \
 		$(ARCH_DIR)/boot/crt0.o \
 		init/main.o '-(' $(ARCHIVES) $(DRIVERS) '-)' $(LIBGCC) \
 		-o $(ARCH_DIR)/boot/system > $(ARCH_DIR)/boot/system.map ; \
+		$(NM) $(ARCH_DIR)/boot/system > $(ARCH_DIR)/boot/system-nm.map; \
 		$(POSTLINK) $(ROMPOSTLINKFLAGS) $(ARCH_DIR)/boot/system)
 #		sort -k3,4 $(ARCH_DIR)/boot/system.tmp > $(ARCH_DIR)/boot/system.map ; \
 #		rm -f $(ARCH_DIR)/boot/system.tmp )

@@ -21,8 +21,6 @@
 #include <arch/segment.h>
 #include <arch/bitops.h>
 
-extern struct file_operations *get_blkfops();
-
 extern int root_mountflags;
 
 struct super_block super_blocks[NR_SUPER];
@@ -47,11 +45,11 @@ extern struct file_system_type msdos_fs_type;
 
 static struct file_system_type *file_systems[] = {
 /* first filesystem is default filesystem for mount w/o -t parm*/
-#ifdef CONFIG_MINIX_FS
-	&minix_fs_type,
-#endif
 #ifdef CONFIG_ROMFS_FS
 	&romfs_fs_type,
+#endif
+#ifdef CONFIG_MINIX_FS
+	&minix_fs_type,
 #endif
 #ifdef CONFIG_FS_FAT
 	&msdos_fs_type,

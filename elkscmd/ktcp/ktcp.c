@@ -44,31 +44,53 @@ ipaddr_t netmask_ip;
 
 /* defaults*/
 int linkprotocol = 	LINK_ETHER;
-unsigned int MTU =	SLIP_MTU;
 char ethdev[] = 	"/dev/eth";
 char *serdev = 		"/dev/ttyS0";
 speed_t baudrate = 	57600;
 
 int dflag;
+unsigned int MTU;
 static int intfd;	/* interface fd*/
+
+// rename		timer			function called when active
+//			----------------	-------------------------------------
+// tcp_timeruse		timer_retrans		tcp_retrans
+// cbs_in_time_wait	timer_time_wait		tcp_expire_timeouts
+// cbs_in_user_wait	timer_close_wait	tcp_expire_timeouts
+// tcpcb_need_push				tcpcb_push_data -> tcpdev_checkread
+
+int tcp_timeruse;		/* retrans timer active, call tcp_retrans */
+int cbs_in_time_wait;		/* time_wait timer active, call tcp_expire_timeouts */
+int cbs_in_user_timeout;	/* fin_wait/closing/last_ack active, call " */
+int tcpcb_need_push;		/* push required, tcpcb_push_data/call tcpcb_checkread */
+int tcp_retrans_memory;		/* total retransmit memory in use*/
 
 void ktcp_run(void)
 {
     fd_set fdset;
     struct timeval timeint, *tv;
     int count;
-extern int tcp_timeruse;
-extern int cbs_in_time_wait;
-extern int cbs_in_user_timeout;
+    int loopagain = 0;
 
     while (1) {
-	//if (tcp_timeruse > 0 || tcpcb_need_push > 0) {
-	if (tcp_timeruse > 0 || tcpcb_need_push > 0 || cbs_in_time_wait > 0 || cbs_in_user_timeout > 0) {
+	if (tcp_timeruse > 0 || tcpcb_need_push > 0 || loopagain ||
+	    cbs_in_time_wait > 0 || cbs_in_user_timeout > 0) {
 
-	    timeint.tv_sec  = 1;
-	    timeint.tv_usec = 0;
+	    //printf("tcp: timer %d needpush %d timewait %d usertime %d\n", tcp_timeruse,
+		//tcpcb_need_push, cbs_in_time_wait, cbs_in_user_timeout);
+
+	    /* don't wait long if data needs pushing to tcpdev */
+	    if (tcpcb_need_push || loopagain) {
+		timeint.tv_sec  = 0;
+		timeint.tv_usec = tcpcb_need_push? 1000: 0;	/* 1msec */
+	    } else {
+		timeint.tv_sec  = 1;
+		timeint.tv_usec = 0;
+	    }
 	    tv = &timeint;
-	} else tv = NULL;
+	} else {
+	    tv = NULL;		/* no timeout if no timers active or push needed */
+	}
 
 	FD_ZERO(&fdset);
 	FD_SET(intfd, &fdset);
@@ -83,23 +105,44 @@ extern int cbs_in_user_timeout;
 
 	Now = timer_get_time();
 
-	/* expire timeouts and push data*/
-	tcp_update();
+	/* expire timeouts*/
+	if (cbs_in_time_wait > 0 || cbs_in_user_timeout > 0) {
+	    debug_tcp("tcp: time_wait %d user_timeout %d\n",
+		cbs_in_time_wait, cbs_in_user_timeout);
+	    tcpcb_expire_timeouts();
+	}
+
+	/* always push data*/
+	//if (tcpcb_need_push > 0)
+	    tcpcb_push_data();
+
+	loopagain = 0;
 
 	/* process received packets*/
 	if (FD_ISSET(intfd, &fdset)) {
 		if (linkprotocol == LINK_ETHER)
 			eth_process();
 		else slip_process();
+		loopagain = 1;
 	}
 
 	/* process application socket actions*/
-	if (FD_ISSET(tcpdevfd, &fdset))
+	if (FD_ISSET(tcpdevfd, &fdset)) {
 		tcpdev_process();
+		loopagain = 1;
+	}
 
-	/* check for retransmit needed*/
+	/* check for expired retrans packets and free them*/
 	if (tcp_timeruse > 0)
-		tcp_retrans();
+		tcp_retrans_expire();
+
+	/* read all packets and sockets before handling retransmits*/
+	if (loopagain)
+		continue;
+
+	/* check for retransmit packets required*/
+	if (tcp_timeruse > 0)
+		tcp_retrans_retransmit();
 
 	tcpcb_printall();
     }
@@ -143,6 +186,8 @@ int main(int argc,char **argv)
 {
     int ch;
     int bflag = 0;
+    int mtu = 0;
+    char *p;
     static char *linknames[3] = { "ethernet", "slip", "cslip" };
 
     while ((ch = getopt(argc, argv, "bdm:p:s:l:")) != -1) {
@@ -154,7 +199,7 @@ int main(int argc,char **argv)
 	    dflag++;
 	    break;
 	case 'm':		/* MTU*/
-		MTU = atoi(optarg);
+		mtu = atoi(optarg);
 		break;
 	case 'p':		/* link protocol*/
 	    linkprotocol = !strcmp(optarg, "eth")? LINK_ETHER :
@@ -175,10 +220,18 @@ int main(int argc,char **argv)
 	}
     }
 
-    /* using in_gethostbyname rather than in_aton allows /etc/hosts aliases to be used as parms*/
-    local_ip = in_gethostbyname(optind < argc? argv[optind++]: DEFAULT_IP);
-    gateway_ip = in_gethostbyname(optind < argc? argv[optind++]: DEFAULT_GATEWAY);
-    netmask_ip = in_gethostbyname(optind < argc? argv[optind++]: DEFAULT_NETMASK);
+    /*
+     * Default IP, gateway and netmask set by env variables in
+     * /bootopts or /etc/profile. They can be IP addresses or
+     * names in /etc/hosts.
+     */
+    char *default_ip = (p=getenv("HOSTNAME"))? p: DEFAULT_IP;
+    char *default_gateway = (p=getenv("GATEWAY"))? p: DEFAULT_GATEWAY;
+    char *default_netmask = (p=getenv("NETMASK"))? p: DEFAULT_NETMASK;
+    local_ip = in_gethostbyname(optind < argc? argv[optind++]: default_ip);
+    gateway_ip = in_gethostbyname(optind < argc? argv[optind++]: default_gateway);
+    netmask_ip = in_gethostbyname(optind < argc? argv[optind++]: default_netmask);
+    MTU = mtu ? mtu : (linkprotocol == LINK_ETHER ? ETH_MTU : SLIP_MTU);
 
     /* must exit() in next two stages on error to reset kernel tcpdev_inuse to 0*/
     if ((tcpdevfd = tcpdev_init("/dev/tcpdev")) < 0)

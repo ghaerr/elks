@@ -35,12 +35,19 @@ include $(BASEDIR)/Makefile-rules
 #########################################################################
 # Objects to be compiled.
 
-ifeq ($(CONFIG_ARCH_SIBO), y)
-OBJS  = strace.o system.o irq.o ../sibo/irqtab.o process.o \
-		entry.o signal.o timer.o
-else
 OBJS  = strace.o system.o irq.o irqtab.o process.o \
 		entry.o signal.o timer.o
+
+ifeq ($(CONFIG_ARCH_IBMPC), y)
+OBJS += irq-8259.o timer-8254.o
+endif
+
+ifeq ($(CONFIG_ARCH_PC98), y)
+OBJS += irq-8259.o timer-8254.o
+endif
+
+ifeq ($(CONFIG_ARCH_8018X), y)
+OBJS += irq-8018x.o timer-8018x.o
 endif
 
 #########################################################################

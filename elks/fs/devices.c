@@ -106,11 +106,10 @@ int check_disk_change(kdev_t dev)
 int blkdev_open(struct inode *inode, struct file *filp)
 {
     register struct file_operations *fop;
-    register char *pi;
+    int i;
 
-    pi = (char *)MAJOR(inode->i_rdev);
-    if ((unsigned int)pi >= MAX_BLKDEV
-		|| !(fop = blkdevs[(unsigned int)pi].ds_fops)) return -ENODEV;
+    i = MAJOR(inode->i_rdev);
+    if (i >= MAX_BLKDEV || !(fop = blkdevs[i].ds_fops)) return -ENODEV;
     filp->f_op = fop;
     return (fop->open) ? fop->open(inode, filp) : 0;
 }
@@ -146,10 +145,7 @@ struct inode_operations blkdev_inode_operations = {
 #ifdef USE_GETBLK
     NULL,			/* getblk */
 #endif
-    NULL,			/* truncate */
-#ifdef BLOAT_FS
-    NULL			/* permission */
-#endif
+    NULL			/* truncate */
 };
 
 /*
@@ -159,11 +155,10 @@ struct inode_operations blkdev_inode_operations = {
 static int chrdev_open(struct inode *inode, struct file *filp)
 {
     register struct file_operations *fop;
-    register char *pi;
+    int i;
 
-    pi = (char *)MAJOR(inode->i_rdev);
-    if ((unsigned int)pi >= MAX_CHRDEV
-		|| !(fop = chrdevs[(unsigned int)pi].ds_fops)) return -ENODEV;
+    i = MAJOR(inode->i_rdev);
+    if (i >= MAX_CHRDEV || !(fop = chrdevs[i].ds_fops)) return -ENODEV;
     filp->f_op = fop;
     return (fop->open) ? fop->open(inode, filp) : 0;
 }
@@ -182,7 +177,7 @@ struct file_operations def_chr_fops = {
     NULL,			/* select */
     NULL,			/* ioctl */
     chrdev_open,		/* open */
-    NULL,			/* release */
+    NULL			/* release */
 };
 
 struct inode_operations chrdev_inode_operations = {
@@ -200,10 +195,7 @@ struct inode_operations chrdev_inode_operations = {
 #ifdef USE_GETBLK
     NULL,			/* getblk */
 #endif
-    NULL,			/* truncate */
-#ifdef BLOAT_FS
-    NULL			/* permission */
-#endif
+    NULL			/* truncate */
 };
 
 /*

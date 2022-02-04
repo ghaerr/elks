@@ -23,8 +23,6 @@
 
 static int C_A_D = 1;
 
-extern void hard_reset_now(void);
-extern void apm_shutdown_now(void);
 extern int sys_kill(sig_t,pid_t);
 
 /*
@@ -52,16 +50,17 @@ int sys_reboot(unsigned int magic, unsigned int magic_too, int flag)
 		return 0;
 	    case 0x0123:		/* reboot*/
 		hard_reset_now();
+		printk("Reboot failed\n");
+		/* fall through*/
 	    case 0x6789:		/* shutdown*/
 		sys_kill(1, SIGKILL);
 		sys_kill(-1, SIGKILL);
 		printk("System halted\n");
 		do_exit(0);
-#ifdef CONFIG_APM
+		/* no return*/
 	    case 0xDEAD:		/* poweroff*/
 		apm_shutdown_now();
 		printk("APM shutdown failed\n");
-#endif
 	}
     }
 
@@ -82,8 +81,6 @@ void ctrl_alt_del(void)
     kill_process(1, (sig_t) SIGINT, 1);
 }
 
-#ifdef CONFIG_SYS_VERSION
-
 /*
  * This function returns the version number associated with this kernel.
  */
@@ -94,8 +91,6 @@ int sys_knlvsn(char *vsn)
 
     return verified_memcpy_tofs(vsn, p, strlen(p) + 1);
 }
-
-#endif
 
 /*
  * setgid() is implemented like SysV w/ SAVED_IDS
@@ -215,7 +210,7 @@ int sys_setpgid(pid_t pid, pid_t pgid)
 	return -EINVAL;
 
     for_each_task(p) {
-	if (p->pid == pid) {
+	if (p->pid == pid && p->state != TASK_UNUSED) {
 
 	    if (p->p_pptr == current || p->p_opptr == current) {
 
@@ -235,7 +230,7 @@ int sys_setpgid(pid_t pid, pid_t pgid)
 		struct task_struct *tmp;
 
 		for_each_task(tmp) {
-		    if ((tmp->pgrp == pgid)
+		    if ((tmp->pgrp == pgid && tmp->state != TASK_UNUSED)
 			&& (tmp->session == current->session)) {
 			goto ok_pgid:
 		    }
@@ -259,7 +254,7 @@ int sys_getpgid(pid_t pid)
     if (!pid)
 	return current->pgrp;
     for_each_task(p)
-	if (p->pid == pid)
+	if (p->pid == pid && p->state != TASK_UNUSED)
 	    return p->pgrp;
     return -ESRCH;
 }
@@ -276,7 +271,7 @@ int sys_getsid(pid_t pid)
     if (!pid)
 	return current->session;
     for_each_task(p)
-	if (p->pid == pid)
+	if (p->pid == pid && p->state != TASK_UNUSED)
 	    return p->session;
     return -ESRCH;
 

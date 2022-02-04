@@ -7,6 +7,7 @@
 #include <linuxmt/msdos_fs.h>
 #include <linuxmt/msdos_fs_i.h>
 #include <linuxmt/msdos_fs_sb.h>
+#include <linuxmt/bioshd.h>	/* for HDIO_GET_SECTOR_SIZE on bioshd*/
 #include <linuxmt/kernel.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/errno.h>
@@ -27,8 +28,16 @@ struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
     { "hdb2",	S_IFBLK | 0644, MKDEV(3, 34) },
     { "hdb3",	S_IFBLK | 0644, MKDEV(3, 35) },
     { "hdb4",	S_IFBLK | 0644, MKDEV(3, 36) },
+#ifdef CONFIG_ARCH_IBMPC
+    { "hdc",	S_IFBLK | 0644, MKDEV(3, 64) },
+    { "hdd",	S_IFBLK | 0644, MKDEV(3, 96) },
+#endif
     { "fd0",	S_IFBLK | 0644, MKDEV(3, 128)},
     { "fd1",	S_IFBLK | 0644, MKDEV(3, 160)},
+#ifdef CONFIG_ARCH_PC98
+    { "fd2",   S_IFBLK | 0644, MKDEV(3, 192)},
+    { "fd3",   S_IFBLK | 0644, MKDEV(3, 224)},
+#endif
     { "rd0",	S_IFBLK | 0644, MKDEV(1, 0) },
     { "kmem",	S_IFCHR | 0644, MKDEV(1, 2) },
     { "null",	S_IFCHR | 0644, MKDEV(1, 3) },
@@ -75,11 +84,12 @@ static void msdos_put_super(register struct super_block *sb)
 
 /* Read the super block of an MS-DOS FS. */
 
-static struct super_block *msdos_read_super(register struct super_block *s, char *data,
+static struct super_block *msdos_read_super(struct super_block *s, char *data,
 	int silent)
 {
+	struct msdos_sb_info *sb = MSDOS_SB(s);
+	struct msdos_boot_sector *b;
 	struct buffer_head *bh;
-	register struct msdos_boot_sector *b;
 	long total_sectors, total_displayed, data_sectors;
 	char kbytes_or_mbytes = 'k';
 	int fat32;
@@ -93,45 +103,69 @@ static struct super_block *msdos_read_super(register struct super_block *s, char
 		printk("FAT: can't read super\n");
 		return NULL;
 	}
+
+#ifdef CONFIG_VAR_SECTOR_SIZE
+	/* get disk sector size using block device ioctl */
+	struct file_operations *fops = get_blkfops(MAJOR(s->s_dev));
+
+	if (!fops || !fops->ioctl ||
+		(sb->sector_size = fops->ioctl(NULL, NULL, HDIO_GET_SECTOR_SIZE, s->s_dev)) <= 0)
+			sb->sector_size = 512;
+	switch (sb->sector_size) {
+	case 512:
+		sb->sector_bits = 9;	/* log2(sector_size) */
+		sb->msdos_dps = 16;		/* SECTOR_SIZE / sizeof(struct msdos_dir_entry) */
+		sb->msdos_dps_bits = 4;	/* log2(msdos_dps) */
+		break;
+	case 1024:
+		sb->sector_bits = 10;	/* log2(sector_size) */
+		sb->msdos_dps = 32;		/* SECTOR_SIZE / sizeof(struct msdos_dir_entry) */
+		sb->msdos_dps_bits = 5;	/* log2(msdos_dps) */
+		break;
+	default:
+		printk("FAT: %d sector size not supported\n", sb->sector_size);
+		return NULL;
+	}
+#endif
+
 	map_buffer(bh);
 	b = (struct msdos_boot_sector *) bh->b_data;
-	MSDOS_SB(s)->cluster_size = b->cluster_size;
-	MSDOS_SB(s)->fats = b->fats;
-	MSDOS_SB(s)->fat_start = b->reserved;
+	sb->cluster_size = b->cluster_size;
+	sb->fats = b->fats;
+	sb->fat_start = b->reserved;
 	if(!b->fat_length && b->fat32_length){
 		fat32 = 1;
-		MSDOS_SB(s)->fat_length = (unsigned short)b->fat32_length;
-		MSDOS_SB(s)->root_cluster = b->root_cluster;
+		sb->fat_length = (unsigned short)b->fat32_length;
+		sb->root_cluster = b->root_cluster;
 	} else {
 		fat32 = 0;
 #ifndef FAT_BITS_32
-		MSDOS_SB(s)->fat_length = b->fat_length;
-		MSDOS_SB(s)->root_cluster = 0;
+		sb->fat_length = b->fat_length;
+		sb->root_cluster = 0;
 #endif
 	}
-	MSDOS_SB(s)->dir_start= b->reserved + b->fats*MSDOS_SB(s)->fat_length;
-	MSDOS_SB(s)->dir_entries = *((unsigned short *) b->dir_entries);
-	MSDOS_SB(s)->data_start = MSDOS_SB(s)->dir_start +
-		((MSDOS_SB(s)-> dir_entries << MSDOS_DIR_BITS) >> SECTOR_BITS);
+	sb->dir_start= b->reserved + b->fats*sb->fat_length;
+	sb->dir_entries = *((unsigned short *) b->dir_entries);
+	sb->data_start = sb->dir_start +
+		((sb-> dir_entries << MSDOS_DIR_BITS) >> SECTOR_BITS_SB(s));
 	total_sectors = *((unsigned short *) b->sectors)?
 		*((unsigned short *) b->sectors) : b->total_sect;
-	data_sectors = total_sectors - MSDOS_SB(s)->data_start;
-	MSDOS_SB(s)->clusters = MSDOS_SB(s)->cluster_size?
-		data_sectors/MSDOS_SB(s)->cluster_size : 0;
-	MSDOS_SB(s)->fat_bits = fat32 ? 32 : MSDOS_SB(s)->clusters > MSDOS_FAT12 ? 16 : 12;
-	MSDOS_SB(s)->previous_cluster = 0;
+	data_sectors = total_sectors - sb->data_start;
+	sb->clusters = sb->cluster_size?  data_sectors/sb->cluster_size : 0;
+	sb->fat_bits = fat32 ? 32 : sb->clusters > MSDOS_FAT12 ? 16 : 12;
+	sb->previous_cluster = 0;
 	unmap_brelse(bh);
 
 printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%ld\n",
-  b->media,MSDOS_SB(s)->cluster_size,MSDOS_SB(s)->fats,MSDOS_SB(s)->fat_start,
-  MSDOS_SB(s)->fat_length,MSDOS_SB(s)->dir_start,MSDOS_SB(s)->dir_entries,
-  MSDOS_SB(s)->data_start,total_sectors,b->total_sect);
+	b->media, sb->cluster_size, sb->fats, sb->fat_start,
+	sb->fat_length, sb->dir_start, sb->dir_entries,
+	sb->data_start, total_sectors, b->total_sect);
 
-	if (!MSDOS_SB(s)->fats || (MSDOS_SB(s)->dir_entries & (MSDOS_DPS-1))
+	if (!sb->fats || (sb->dir_entries & (MSDOS_DPS_SB(s)-1))
 	    || !b->cluster_size || 
 #ifndef FAT_BITS_32
-		MSDOS_SB(s)->clusters+2 > (unsigned long)
-			MSDOS_SB(s)->fat_length * (SECTOR_SIZE * 8 / MSDOS_SB(s)->fat_bits)
+		sb->clusters+2 > (unsigned long) sb->fat_length *
+			(SECTOR_SIZE_SB(s) * 8 / sb->fat_bits)
 #else
 		!fat32
 #endif
@@ -141,13 +175,13 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%
 		return NULL;
 	}
 
-	total_displayed = total_sectors / 2;
+	total_displayed = total_sectors >> (BLOCK_SIZE_BITS - SECTOR_BITS_SB(s));
 	if (total_displayed >= 10000) {
 		total_displayed /= 1000;
 		kbytes_or_mbytes = 'M';
 }
 	printk("FAT: %ld%c, fat%d format\n", total_displayed, kbytes_or_mbytes,
-		MSDOS_SB(s)->fat_bits);
+		sb->fat_bits);
 
 #ifdef BLOAT_FS
 	s->s_magic = MSDOS_SUPER_MAGIC;
@@ -173,8 +207,8 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%
 		ino = msdos_get_entry(s->s_mounted, &pos, &bh, &de); 
 		if (ino == -1) break;
 		if (de->attr == ATTR_DIR && !strncmp(de->name, "DEV        ", 11)) {
-				MSDOS_SB(s)->dev_ino = ino;
-				break;
+			sb->dev_ino = ino;
+			break;
 		}
 	}
 	if (bh)
@@ -186,18 +220,18 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%
 
 
 #ifdef BLOAT_FS
-static void msdos_statfs(struct super_block *sb,struct statfs *buf)
+static void msdos_statfs(struct super_block *s,struct statfs *buf)
 {
 	cluster_t cluster_size,free,this;
 	struct statfs tmp;
 
-	cluster_size = MSDOS_SB(sb)->cluster_size;
-	tmp.f_type = sb->s_magic;
-	tmp.f_bsize = SECTOR_SIZE;
-	tmp.f_blocks = MSDOS_SB(sb)->clusters * cluster_size;
+	cluster_size = MSDOS_SB(s)->cluster_size;
+	tmp.f_type = s->s_magic;
+	tmp.f_bsize = SECTOR_SIZE_SB(s);
+	tmp.f_blocks = MSDOS_SB(s)->clusters * cluster_size;
 	free = 0;
-	for (this = 2; this < MSDOS_SB(sb)->clusters+2; this++)
-		if (!fat_access(sb,this,-1L))
+	for (this = 2; this < MSDOS_SB(s)->clusters+2; this++)
+		if (!fat_access(s,this,-1L))
 			free++;
 	free *= cluster_size;
 	tmp.f_bfree = free;
@@ -230,7 +264,8 @@ void msdos_read_inode(register struct inode *inode)
 			nr = inode->u.msdos_i.i_start = MSDOS_SB(inode->i_sb)->root_cluster;
 			if (nr) {
 				while (nr != -1) {
-					inode->i_size += (cluster_t)SECTOR_SIZE*MSDOS_SB(inode->i_sb)->cluster_size;
+					inode->i_size += (cluster_t)SECTOR_SIZE(inode) *
+						MSDOS_SB(inode->i_sb)->cluster_size;
 					if (!(nr = fat_access(inode->i_sb,nr,-1L))) {
 						printk("FAT: can't read dir %ld\n", (unsigned long)inode->i_ino);
 						break;
@@ -284,7 +319,8 @@ void msdos_read_inode(register struct inode *inode)
 		inode->i_size = 0;
 		/* read FAT chain to set directory size */
 		for (this = inode->u.msdos_i.i_start; this && this != -1; this = fat_access(inode->i_sb,this,-1L))
-			inode->i_size += (cluster_t)SECTOR_SIZE*MSDOS_SB(inode->i_sb)->cluster_size;
+			inode->i_size += (cluster_t)SECTOR_SIZE(inode) *
+				MSDOS_SB(inode->i_sb)->cluster_size;
 	}
 	else {
 		inode->i_mode = MSDOS_MKMODE(raw_entry->attr,0755 & ~current->fs.umask) | S_IFREG;
@@ -335,9 +371,6 @@ static void msdos_write_inode(register struct inode *inode)
 
 static struct super_operations msdos_sops = {
 	msdos_read_inode,
-#ifdef BLOAT_FS
-	NULL,
-#endif
 	msdos_write_inode,
 	msdos_put_inode,
 	msdos_put_super,

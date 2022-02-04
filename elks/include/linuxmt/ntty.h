@@ -24,7 +24,6 @@
 /* Predefined maximum number of tty character devices */
 
 #define MAX_CONSOLES 3
-#define MAX_SERIAL   4
 #define MAX_PTYS     4
 
 #define TTY_MINOR_OFFSET 0
@@ -109,6 +108,10 @@ extern void tty_freeq(struct tty *tty);
 		/* Allocate and free character queues*/
 
 extern void set_console(dev_t dev);
+
+#ifdef CONFIG_CONSOLE_DIRECT
+extern unsigned VideoSeg;
+#endif
 
 /* tty.flags */
 #define TTY_STOPPED 	1

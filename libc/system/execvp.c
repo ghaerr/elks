@@ -126,7 +126,7 @@ execvp(char *fname, char **argv)
    int flen, plen;
    char * bp = sbrk(0);
 
-   if( *fname != '/' && (path = getenv("PATH")) != 0 )
+   if( !strchr(fname, '/') && (path = getenv("PATH")) != 0 )
    {
       flen = strlen(fname)+2;
 
@@ -136,6 +136,7 @@ execvp(char *fname, char **argv)
 	 {
 	    tryrun(fname, argv);
 	    if( errno == EACCES ) besterr = EACCES;
+	    if( errno == ENOMEM || errno == ENOEXEC ) goto out;
 	    if( *path ) path++; else break;
 	 }
 	 else
@@ -155,6 +156,7 @@ execvp(char *fname, char **argv)
 
 	    tryrun(pname, argv);
 	    if( errno == EACCES ) besterr = EACCES;
+	    if( errno == ENOMEM || errno == ENOEXEC ) goto out;
 
 	    brk(pname);
 	    pname = fname;

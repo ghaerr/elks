@@ -18,6 +18,7 @@
 
 #ifdef CONFIG_PSEUDO_TTY
 
+/* /dev/ptyp0 master (PTY) open */
 int pty_open(struct inode *inode, struct file *file)
 {
     register struct tty *otty;
@@ -33,6 +34,7 @@ int pty_open(struct inode *inode, struct file *file)
     return 0;
 }
 
+/* /dev/ptyp0 master close */
 void pty_release(struct inode *inode, struct file *file)
 {
     register struct tty *otty;
@@ -42,14 +44,15 @@ void pty_release(struct inode *inode, struct file *file)
 	kill_pg(otty->pgrp, SIGHUP, 1);
 }
 
+/* /dev/ptyp0 master select */
 int pty_select (struct inode *inode, struct file *file, int sel_type)
 {
 	int res = 0;
 	register struct tty *tty = determine_tty (inode->i_rdev);
 
 	switch (sel_type) {
-		case SEL_IN:
-		debug("pty select(%d)\n", current->pid);
+	case SEL_IN:
+		debug("pty select(%d) len %d\n", current->pid, tty->outq.len);
 		if (tty->outq.len == 0 && tty->usecount) {
 			select_wait (&tty->outq.wait);
 			break;
@@ -57,7 +60,7 @@ int pty_select (struct inode *inode, struct file *file, int sel_type)
 		res = 1;
 		break;
 
-		case SEL_OUT:
+	case SEL_OUT:
 		if (tty->inq.len == tty->inq.size) {
 			select_wait (&tty->inq.wait);
 			break;
@@ -65,19 +68,20 @@ int pty_select (struct inode *inode, struct file *file, int sel_type)
 		res = 1;
 		break;
 
-		default:
+	default:
 		res = -EINVAL;
 	}
 
 	return res;
 }
 
+/* /dev/ptyp0 master read (from slave /dev/ttyp0 outq to telnetd) */
 size_t pty_read (struct inode *inode, struct file *file, char *data, size_t len)
 {
 	int count = 0;
 	int err;
 
-	struct tty *tty = determine_tty (inode->i_rdev);
+	struct tty *tty = determine_tty (inode->i_rdev); /* get slave TTY*/
 	if (tty == NULL) return -EBADF;
 
 	/* return EOF on master closed*/
@@ -100,26 +104,27 @@ size_t pty_read (struct inode *inode, struct file *file, char *data, size_t len)
 	return count;
 }
 
+/* /dev/ptyp0 master write (from telnetd to slave /dev/ttyp0 inq) */
 size_t pty_write (struct inode *inode, struct file *file, char *data, size_t len)
 {
 	int count = 0;
 	register int ret;
 
-	struct tty *tty = determine_tty (inode->i_rdev);
+	struct tty *tty = determine_tty (inode->i_rdev); /* get slave TTY*/
 	if (tty == NULL) return -EBADF;
 
 	while (count < len) {
 		ret = chq_wait_wr (&tty->inq, (file->f_flags & O_NONBLOCK) | count);
 		if (ret < 0) {
+			//if (ret == -EINTR) continue;
 			if (count == 0) count = ret;
 			break;
 		}
 
 		ret = get_user_char ((void *)(data++));
-		if (!tty_intcheck(tty, ret)) {
+		if (!tty_intcheck(tty, ret))
 			chq_addch_nowakeup (&tty->inq, ret);
-			count++;
-		}
+		count++;
 	}
 	if (count > 0)
 		wake_up(&tty->inq.wait);
@@ -127,6 +132,7 @@ size_t pty_write (struct inode *inode, struct file *file, char *data, size_t len
 	return count;
 }
 
+/* /dev/ttyp0 slave (TTY) open */
 static int ttyp_open(struct tty *tty)
 {
 	if (tty->usecount++)
@@ -134,6 +140,7 @@ static int ttyp_open(struct tty *tty)
 	return tty_allocq(tty, PTYINQ_SIZE, PTYOUTQ_SIZE);
 }
 
+/* /dev/ttyp0 slave (TTY) close */
 static void ttyp_release(struct tty *tty)
 {
 	debug("TTYP release\n");
@@ -143,6 +150,7 @@ static void ttyp_release(struct tty *tty)
 	}
 }
 
+/* /dev/ttyp0 slave TTY subdriver write - no action, master read will handle transfer */
 static int ttyp_write(register struct tty *tty)
 {
     return 0;
@@ -150,6 +158,7 @@ static int ttyp_write(register struct tty *tty)
 
 /*@-type@*/
 
+/* /dev/ptyp0 master side is character special file */
 static struct file_operations pty_fops = {
     pipe_lseek,			/* Same behavoir, return -ESPIPE */
     pty_read,
@@ -159,14 +168,9 @@ static struct file_operations pty_fops = {
     NULL,			/* ioctl */
     pty_open,
     pty_release
-#ifdef BLOAT_FS
-	,
-    NULL,
-    NULL,
-    NULL
-#endif
 };
 
+/* /dev/ttyp0 slave side is TTY with matching minor number */
 struct tty_ops ttyp_ops = {
     ttyp_open,
     ttyp_release,

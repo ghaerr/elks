@@ -50,7 +50,7 @@ ipaddr_t in_gethostbyname(char *str)
 			*cp++ = '\0';
 		//printf("name %s addr %s\n", name, in_ntoa(addr));
 		if (!strcmp(name, str))
-			break;
+			goto out;
 		while (cp && *cp) {
 			if (*cp == ' ' || *cp == '\t') {
 				cp++;
@@ -64,6 +64,7 @@ ipaddr_t in_gethostbyname(char *str)
 				goto out;
 		}
 	}
+	addr = 0;	/* read all of /etc/hosts, fail*/
 out:
 	//if (addr) printf("found %s\n", name);
 	fclose(fp);

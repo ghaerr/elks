@@ -24,7 +24,7 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>
-#include <linuxmt/hdreg.h>
+#include <arch/hdreg.h>
 #include <linuxmt/minix_fs.h>
 #include <linuxmt/kdev_t.h>
 #include "../../bootblocks/mbr_autogen.c"

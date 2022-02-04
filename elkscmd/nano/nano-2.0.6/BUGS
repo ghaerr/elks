@@ -1,0 +1,143 @@
+** Open BUGS **
+
+** Fixed BUGS **
+- Marked cutting sometimes leaves a newline in the file unintelligently,
+  such as when all of a line is selected but the mark doesn't proceed to
+  the new line. (8) [FIXED/IRRELEVANT]
+- Certains are not lined up properly when there are tabs in them at 
+  certain col values. (9) [FIXED]
+- edit_refresh() and update_line() do not handle selecting text when the
+  cursor is beyond COLS (10) [FIXED]
+- No way to do a replace with the empty string (11) [FIXED, yay!]
+- Spelling support is not elegant like Pico's integration of the 'spell'
+  program.  nano only uses ispell (for now) (12) [FIXED]
+- Moving to the end of a line when close to a multiple of COLS and at
+  least COLS * 2 does not make the screen jump early like it would for
+  if we were around COLS (bugs in edit_refresh, update_line) (13)
+  [FIXED, mostly]
+- When at the very bottom of the edit window, do_wrap() goes berserk and
+  puts the cursor somewhere bad; subsequent keystrokes crash the program
+  (14) [FIXED, mostly]
+- Doing a replacement of a substring of the replace string (e.g.
+  replacing "ed" with "fred" causes an infinite loop). (15) [FIXED]
+- Cutting a file with marked text and both marker ends on the same line
+  causes a random segfault (16) [FIXED]
+- Cutting more than one line resets the KEEP_CUTBUFFER flag in 0.9.3.
+  Error is in bitwise assignment (nano.h). (17) [FIXED]
+- The wrapping code does not work right for lines like the following:
+ *                                                                     *
+  Error is in do_wrap, must be rewritten. (18) [FIXED]
+- nano fails to follow symlinks, even though -l isn't being used (20).
+  [Bug in global flag init, FIXED]
+- When using --help or --version, the SIGINT character gets lost. (21)
+  [FIXED]
+- edit_refresh() and update_line() (and related functions) have 
+  trouble when a tab is the character that is the boundary at COLS (23)
+  [FIXED]
+- There is an off-by-one error in keeping track of totsize.  It is
+  caused by the fact that we count the newline at the end when we read
+  in a file but we do not, in fact, display this newline.  This should
+  go away implicitly when the "Magic Line" returns, but it is noted here
+  for documentation's sake. (24) [FIXED]
+- In replace with completely adjacent strings, every other search string
+  will be missed (try replace ':' in a string like ':::::::::') (28)
+  [FIXED]
+- If nano opens a read-only file with the --tempfile option, and a
+  change is made to the buffer, and a write is attempted, nano will not
+  give you a dialog about not being able to write the file, and it will
+  not let the user exit (29, discovered by Joshua Jensen) [FIXED]
+- Using nano -k, marked text is not cut properly. (31) [FIXED]
+- Invoking -t or -k has the effect of invoking both options. (32)
+  [FIXED]
+- totsize becomes incorrect after word-wrapping (25) [FIXED]
+- Wrapping a line with autoindent mode sometimes causes a segfault (19)
+  [FIXED]
+- When inserting files, the display sometimes fails to display properly
+  until a pageup/down occurs (22) [FIXED]
+- In search/replace code, there is too much refreshing in bottomwin (26)
+  [FIXED]
+- In replace, there is no way to accept the default replace string. (27)
+  [FIXED]
+- Using nano -t, user can not exit until a filename is given via ^O.
+  (30) [FIXED]
+- totsize problems still abound in do_justify (33) [FIXED]
+- Using -k, cut text is not pasted properly. (34) [FIXED].
+- Using -k, pasted text is not updated properly if it goes beyond
+  editbot. (35) [FIXED]
+- Doing a cut with -k can screw up the filestruct; fault is in cutting
+  code. (36) [FIXED]
+- Hitting enter on the magic line makes new lines, but they are not
+  written out to disk when saved..... (37). [FIXED]
+- Page up and page down do not work the same way as in Pico (# of
+  lines). (38) [FIXED]
+- When doing a search and the marker is set, the screen does not always
+  properly update the inverted text (39). [FIXED]
+- Searches for a string that only exists on one line multiple times will
+  fail after finding the last occurrence (discovered by Ken Tyler) (40).
+  [FIXED]
+- Meta-Z is currently broken to toggle suspend.  I guess I still don't
+  know signals very well =-) (41) [FIXED].
+- Unable to cut the entire file using the marker (discovered by Ken
+  Tyler) (42). [FIXED]
+- The keypad does not work when nano runs in the Gnome terminal (43).
+  [FIXED]
+- When reading in a file, if the file is a directory, the contents of
+  the file being edited are blown away (discovered by  Chris Pimlot)
+  (44). [FIXED]
+- In certain terms, nano will leave a "ghost" of screen upon exit when
+  called from inside mutt (among other settings) (45). [FIXED]
+- In replace, hitting the Goto line shortcut key does nothing after a
+  search string is entered (discovered by Rocco Corsi) (46) [FIXED].
+- When typing in a string in search or replace and hitting
+  CASE_SENSITIVE or the other search string, the current string edit is
+  blown away in favor of the last stored search (47) [FIXED]
+- If nano fails to open a file when it starts up, doing almost anything
+  causes a segfault (discovered by Ben Roberts) (48). [FIXED]
+- In certain terminals, nano would not work properly with keypad().
+  Turned out to be the silly timeout(0) call, which is completely
+  unneeded, anyway. (49) [FIXED]
+- With less than a page of text, doing a page down will move the current
+  line to the top of the screen, which it shouldn't do. (50) [FIXED]
+- With PDCurses, running Meta-X turns off the keypad. (51) [FIXED]
+- Resizing the window completely screws up the display if in any other
+  mode than normal editing (help screen, search and replace, file
+  browser...) (52) [FIXED]
+- Alt speller argument (-s, --speller) does not take a string argument
+  of more than one word. (53) [FIXED].
+- Cut to end cutting (-k) causes segfaults (try cutting "- Backup making
+  (filename~)?" line in TODO file) (discovered by
+  higuita@cadernoverde.com) (54) [FIXED].
+- When using autoindent (-i), wrapped text does not get autoindented
+  (55, discovered by Mark Senior) [FIXED].
+- When using -R (regex) and -p (Pico mode), subsequent searches after
+  the first fail if no string is entered (56) [FIXED].
+- Page down on a file of editwinrows fails (again). Reported by Ryan
+  Krebs (57) [FIXED].
+- File browser aborts on Solaris in qsort() call. (Reported by Matthias
+  Andree) (58) [FIXED].
+- Can modify the current file in view mode with ^W^R (discovered by
+  Rocco Corsi) (58) [FIXED].
+- When page up is used after two page downs, the screen doesn't update
+  properly (discovered by David Lawrence Ramsey) (59) [FIXED].
+- On BSD systems, marked cutting and paste often screws up the last line
+  in the cutbuffer (discovered by Barry Pederson) (60) [FIXED]
+- Blank lines are not kept when cutting with -k (discovered by Rocco)
+  (61) [FIXED].
+- nano will not suspend properly inside of mutt (62) [FIXED].
+- When switching from Pico mode to normal mode, the previous search is
+  not displayed until cancelling the search (63) [FIXED].
+- If you change search options but don't change the search string in
+  normal mode, hitting Enter causes the search/replace to abort (64)
+  (Jordi Mallach) [FIXED].
+- Cutting one line of text causes the screen to recenter the line
+  (reported and fixed by David Lawrence Ramsey) (65) [FIXED].
+- When cutting marked text including the bottom of the file, a new
+  "magic line" is not created" (reported by David Lawrence Ramsey, fixed
+  by David Lawrence Ramsey & Chris) (66) [FIXED].
+- ^C does not work after a suspend in tcsh (discovered by Trevor Cordes)
+  (68) [FIXED].
+- Home and End control keys (^A, ^E) do not always work in filename
+  prompt (bug found by Ian Turner) (69) [1.0 series only] [FIXED].
+- Trying to insert a file of 0 bytes will hang nano (70) [FIXED].
+
+$Id: BUGS,v 1.81 2006/11/21 04:11:18 dolorous Exp $

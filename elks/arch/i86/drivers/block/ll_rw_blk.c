@@ -100,12 +100,6 @@ static struct request *get_request(int n, kdev_t dev)
     register struct request *req;
     register struct request *limit;
 
-#ifdef BLOAT_FS
-    /* This function is called with a constant value for n */
-    if (n <= 0)
-	panic("get_request(%d): impossible!\n", n);
-#endif
-
     limit = all_requests + n;
     if (limit != prev_limit) {
 	prev_limit = limit;
@@ -152,6 +146,7 @@ static void add_request(struct blk_dev_struct *dev, struct request *req)
     mark_buffer_clean(req->rq_bh);
     if (!(tmp = dev->current_request)) {
 	dev->current_request = req;
+	set_irq();
 	(dev->request_fn) ();
     }
     else {
@@ -162,21 +157,21 @@ static void add_request(struct blk_dev_struct *dev, struct request *req)
 	}
 	req->rq_next = tmp->rq_next;
 	tmp->rq_next = req;
+	set_irq();
     }
-    set_irq();
 }
 
 static void make_request(unsigned short major, int rw, struct buffer_head *bh)
 {
     struct request *req;
-    sector_t sector, count;
     int max_req;
 
-    debug_blk("BLK(%x) %lu %s\n", bh->b_dev, bh->b_blocknr, rw==READ? "read": "write");
-    count = (sector_t) (BLOCK_SIZE >> 9);
-    sector = bh->b_blocknr * count;
+    debug_blk("BLK %lu %s %lx:%x\n", bh->b_blocknr, rw==READ? "read": "write",
+	bh->b_seg, buffer_data(bh));
 
 #ifdef BDEV_SIZE_CHK
+    sector_t count = BLOCK_SIZE / SECTOR_SIZE;	/* FIXME must move to lower level*/
+    sector_t sector = bh->b_blocknr * count;
     if (blk_size[major])
 	if (blk_size[major][MINOR(bh->b_dev)] < (sector + count) >> 1) {
 	    printk("attempt to access beyond end of device\n");
@@ -234,7 +229,7 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
 
     /* fill up the request-info, and add it to the queue */
     req->rq_cmd = (__u8) rw;
-    req->rq_sector = sector;
+    req->rq_blocknr = bh->b_blocknr;
     req->rq_seg = bh->b_seg;
     req->rq_buffer = buffer_data(bh);
     req->rq_bh = bh;
@@ -242,7 +237,6 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
 #ifdef BLOAT_FS
     req->rq_nr_sectors = count;
     req->rq_current_nr_sectors = count;
-    req->rq_errors = 0;
 #endif
 
     req->rq_next = NULL;
@@ -405,7 +399,11 @@ void INITPROC blk_dev_init(void)
     } while (++req < &all_requests[NR_REQUEST]);
 
 #ifdef CONFIG_BLK_DEV_RAM
-    rd_init();
+    rd_init();		/* RAMDISK block device*/
+#endif
+
+#if defined(CONFIG_BLK_DEV_SSD_TEST) || defined(CONFIG_BLK_DEV_SSD_SD8018X)
+    ssd_init();		/* SSD block device*/
 #endif
 
 #ifdef CONFIG_BLK_DEV_HD
@@ -414,16 +412,10 @@ void INITPROC blk_dev_init(void)
 
 #ifdef CONFIG_BLK_DEV_FD
     floppy_init();
-#else
-    outb_p(0xc, (void *) 0x3f2);	//FIXME move somewhere
 #endif
 
 #ifdef CONFIG_BLK_DEV_BIOS
     bioshd_init();
-#endif
-
-#ifdef CONFIG_BLK_DEV_SSD
-    ssd_init();
 #endif
 
 #ifdef CONFIG_ROMFS_FS

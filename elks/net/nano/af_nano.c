@@ -18,6 +18,8 @@
 
 #ifdef CONFIG_NANO
 
+int sock_awaitconn(register struct socket *mysock, struct socket *servsock, int flags);
+
 struct nano_proto_data nano_datas[NSOCKETS_NANO];
 
 static struct nano_proto_data *nano_data_alloc(void)
@@ -146,10 +148,8 @@ static int nano_release(register struct socket *sock, struct socket *peer)
 static int nano_bind(struct socket *sock,
 		     struct sockaddr *umyaddr, int sockaddr_len)
 {
-    int ano, i;
     register struct nano_proto_data *upd = sock->data;
     register struct nano_proto_data *pupd;
-    unsigned short old_ds;
 
     printk("nano_bind %x\n", sock);
 
@@ -194,7 +194,7 @@ static int nano_connect(register struct socket *sock,
 /*    if (sock->state == SS_CONNECTED)
 	return -EISCONN;*/	/*Already checked in socket.c*/
 
-    if (get_user(&(((sockaddr_na *)uservaddr)->sun_family)) != AF_NANO) {
+    if (get_user(&(((struct sockaddr_na *)uservaddr)->sun_family)) != AF_NANO) {
 	printk("ADR - {%d}\n", sockna.sun_family);
 	return -EINVAL;
     }
@@ -247,9 +247,9 @@ static int nano_accept(register struct socket *sock,
 	if (flags & O_NONBLOCK)
 	    return -EAGAIN;
 
-	sock->flags |= SO_WAITDATA;
+	sock->flags |= SF_WAITDATA;
 	interruptible_sleep_on(sock->wait);
-	sock->flags &= ~SO_WAITDATA;
+	sock->flags &= ~SF_WAITDATA;
 
 	if (current->signal /* & ~current->blocked */ )
 	    return -ERESTARTSYS;
@@ -289,8 +289,8 @@ static int nano_getname(register struct socket *sock,
     } else
 	upd = NA_DATA(sock);
 
-    return move_addr_to_user(&upd->npd_sockaddr_na, upd->npd_sockaddr_len,
-				    usockaddr, usockaddr_len)
+    return move_addr_to_user((char *)&upd->npd_sockaddr_na, upd->npd_sockaddr_len,
+				    (char *)usockaddr, usockaddr_len);
 }
 
 static int nano_read(register struct socket *sock,
@@ -316,9 +316,9 @@ static int nano_read(register struct socket *sock,
 	if (nonblock)
 	    return -EAGAIN;
 
-	sock->flags |= SO_WAITDATA;
+	sock->flags |= SF_WAITDATA;
 	interruptible_sleep_on(sock->wait);
-	sock->flags &= ~SO_WAITDATA;
+	sock->flags &= ~SF_WAITDATA;
 
 	if (current->signal /* & ~current->blocked */ )
 	    return -ERESTARTSYS;
@@ -386,11 +386,11 @@ static int nano_write(register struct socket *sock,
     pupd = NA_DATA(sock)->npd_peerupd;	/* safer than sock->conn */
 
     while (!(space = NA_BUF_SPACE(pupd))) {
-	sock->flags |= SO_NOSPACE;
+	sock->flags |= SF_NOSPACE;
 	if (nonblock)
 	    return -EAGAIN;
 
-	sock->flags &= ~SO_NOSPACE;
+	sock->flags &= ~SF_NOSPACE;
 	interruptible_sleep_on(sock->wait);
 
 	if (current->signal /* & ~current->blocked */ )
@@ -456,8 +456,7 @@ static int nano_write(register struct socket *sock,
     return (size - todo);
 }
 
-static int nano_select(register struct socket *sock,
-		       int sel_type, select_table * wait)
+static int nano_select(register struct socket *sock, int sel_type)
 {
     struct nano_proto_data *upd, *peerupd;
 
@@ -465,14 +464,14 @@ static int nano_select(register struct socket *sock,
      *      Handle server sockets specially.
      */
 
-    if (sock->flags & SO_ACCEPTCON) {
+    if (sock->flags & SF_ACCEPTCON) {
 	if (sel_type == SEL_IN) {
 	    if (sock->iconn)
 		return 1;
-	    select_wait(sock->wait, wait);
+	    select_wait(sock->wait);
 	    return (sock->iconn ? 1 : 0);
 	}
-	select_wait(sock->wait, wait);
+	select_wait(sock->wait);
 
 	return 0;
     }
@@ -485,7 +484,7 @@ static int nano_select(register struct socket *sock,
 	else if (sock->state != SS_CONNECTED)
 	    return 1;
 
-	select_wait(sock->wait, wait);
+	select_wait(sock->wait);
 
 	return 0;
     }
@@ -499,7 +498,7 @@ static int nano_select(register struct socket *sock,
 	if (NA_BUF_SPACE(peerupd) > 0)
 	    return 1;
 
-	select_wait(sock->wait, wait);
+	select_wait(sock->wait);
 
 	return 0;
     }

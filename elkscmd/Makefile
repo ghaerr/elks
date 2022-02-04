@@ -15,7 +15,7 @@ include $(BASEDIR)/Make.defs
 # All subdirectories to build & clean
 
 # TODO: broken command compilations
-# byacc screen m4 xvi
+# byacc screen m4 xvi nano
 SUBDIRS =       \
 	ash         \
 	bc          \

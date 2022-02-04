@@ -45,7 +45,7 @@ sys_utils/getty			:boot	:sysutil
 sys_utils/login			:boot	:sysutil
 ash/ash		::bin/sh	:boot	:ash	# install as /bin/sh
 #sash/sash	::bin/sh	:boot	:~ash	# install as /bin/sh if no ASH
-sash/sash				:boot	:sash
+sash/sash				:1440k	:sash
 sys_utils/mount			:boot	:sysutil
 sys_utils/umount		:boot	:sysutil
 sys_utils/clock			:boot	:sysutil
@@ -74,11 +74,11 @@ file_utils/sync					:fileutil		:360k
 file_utils/touch				:fileutil			:720k
 sys_utils/chmem					:sysutil			:720k
 sys_utils/kill					:sysutil			:720k
-sys_utils/ps					:sysutil		:360k
+sys_utils/ps					:sysutil		:360k	:sash
 sys_utils/reboot				:sysutil		:360k
 sys_utils/makeboot				:sysutil		:360k
 sys_utils/man					:sysutil				:1440k
-sys_utils/meminfo				:sysutil				:1440k
+sys_utils/meminfo				:sysutil		:360k	:sash
 sys_utils/mouse					:sysutil				:1440k
 sys_utils/passwd				:sysutil				:1440k
 sys_utils/poweroff				:sysutil			:720k
@@ -108,16 +108,18 @@ misc_utils/miniterm				:miscutil			:720k
 misc_utils/fdtest				:miscutil				:1440k
 misc_utils/tar					:miscutil				:1440k
 misc_utils/od					:miscutil				:1440k
-misc_utils/hd					:miscutil		:360k
+misc_utils/hd					:miscutil				:1440k
 misc_utils/time					:miscutil			:720k
 misc_utils/kilo					:miscutil				:1440k
+misc_utils/mined				:miscutil				:1440k
+misc_utils/sleep				:miscutil				:1440k
 misc_utils/tty					:miscutil				:1440k
 misc_utils/uuencode				:miscutil				:1440k
 misc_utils/uudecode				:miscutil				:1440k
 misc_utils/ed					:be-miscutil		:720k
 elvis/elvis	::bin/vi			:elvis				:720k
 minix1/banner					:minix1					:1440k
-minix1/decomp16					:minix1					:1440k
+#minix1/decomp16				:minix1					:1440k
 minix1/fgrep					:minix1					:1440k
 minix1/grep						:minix1			:360k
 minix1/sum						:minix1					:1440k
@@ -129,10 +131,10 @@ minix1/cksum					:be-minix1				:1440k
 minix1/du						:be-minix1				:1440k
 minix2/env						:minix2					:1440k
 minix2/lp						:minix2					:1440k
-minix2/pwdauth					:minix2					:1440k
+#minix2/pwdauth					:minix2					:1440k
 minix2/remsync					:minix2					:1440k
 minix2/synctree					:minix2					:1440k
-minix2/tget						:minix2					:1440k
+#minix2/tget					:minix2					:1440k
 minix3/sed						:minix3				:720k
 minix3/file						:minix3				:720k
 minix3/head						:minix3				:720k
@@ -149,7 +151,6 @@ disk_utils/partype				:diskutil				:1440k
 disk_utils/ramdisk				:diskutil				:1440k
 disk_utils/fdisk				:be-diskutil	:360k
 busyelks/busyelks				:busyelks
-inet/httpd/httpd				:net
 inet/httpd/sample_index.html	::var/www/index.html	:net
 ktcp/ktcp						:net
 ktcp/resolv.conf	::etc/resolv.conf	:net
@@ -158,9 +159,13 @@ inet/nettools/nslookup			:net
 inet/nettools/arp				:net
 inet/telnet/telnet				:net
 inet/telnetd/telnetd			:net
+inet/httpd/httpd				:net
+inet/ftp/ftp					:net
+inet/ftp/ftpd					:net
 inet/tinyirc/tinyirc			:net
 inet/urlget/urlget				:net
 inet/urlget/urlget :::ftpget	:net
+inet/urlget/urlget :::ftpput	:net
 inet/urlget/urlget :::httpget	:net
 #mtools/mcopy					:mtools					:1400k
 #mtools/mdel					:mtools					:1440k
@@ -173,10 +178,11 @@ inet/urlget/urlget :::httpget	:net
 #mtools/mtype					:mtools					:1440k
 #mtools/mwrite					:mtools					:1440k
 bc/bc							:other					:1440k
-prems/pres/pres					:other
-nano-X/bin/nxclock				:nanox					:1440k
-nano-X/bin/nxdemo				:nanox					:1440k
-nano-X/bin/nxlandmine			:nanox				:720k
+#prems/pres/pres				:other
+#nano/nano-2.0.6/src/nano		:other					:1440k
+#nano-X/bin/nxclock				:nanox					:1440k
+#nano-X/bin/nxdemo				:nanox					:1440k
+nano-X/bin/nxlandmine			:nanox					:1440k
 nano-X/bin/nxterm				:nanox
 nano-X/bin/nxworld				:nanox					:1440k
 nano-X/bin/nxworld.map	::lib/nxworld.map	:nanox		:1440k

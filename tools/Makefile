@@ -97,7 +97,7 @@ $(DISTDIR)/$(MPC_DIST).tar.gz:
 
 # GCC for IA16
 
-GCC_VER=1b50b0dda4247d4fc5519d10a56d67af353dc438
+GCC_VER=17bd8a491ca31f8fd867b1f1a380cbbc5ef53b07
 GCC_DIST=gcc-ia16-$(GCC_VER)
 
 $(DISTDIR)/$(GCC_DIST).tar.gz:
@@ -154,7 +154,7 @@ all:: $(CROSSDIR)/.gcc.install
 
 # EMU86
 
-EMU86_VER=8ce15f85c1b86b955422a60f8bedb4b5b183cb8a
+EMU86_VER=f99937262b2566d3d20339e5b200e8483cdec3a2
 EMU86_DIST=emu86-$(EMU86_VER)
 
 $(DISTDIR)/$(EMU86_DIST).tar.gz:
@@ -179,6 +179,7 @@ $(BUILDDIR)/.emu86.src: $(DISTDIR)/$(EMU86_DIST).tar.gz
 	touch $(BUILDDIR)/.emu86.src
 
 $(BUILDDIR)/.emu86.build: $(BUILDDIR)/.emu86.src
+#	cp $(BUILDDIR)/emu86/config-elks.mk $(BUILDDIR)/emu86/config.mk
 	$(MAKE) -C $(BUILDDIR)/emu86 all
 	touch $(BUILDDIR)/.emu86.build
 

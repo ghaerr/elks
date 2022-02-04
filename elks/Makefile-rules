@@ -200,9 +200,13 @@ AS      = ia16-elf-as
 ASFLAGS = $(CPU_AS) $(ARCH_AS) --32-segelf
 CC      = $(CROSS_CC)
 CFLAGS  = $(CROSS_CFLAGS) $(CPU_CC) $(ARCH_CC) $(CFLBASE) -Wall -Os -Wno-strict-aliasing
+CFLAGS += -fno-delete-null-pointer-checks -Wnull-dereference
+#CFLAGS += -Wconversion
+#CFLAGS += -Wextra
 LD      = ia16-elf-ld.gold
 LDFLAGS = $(CPU_LD) -s
 POSTLINK = elf2elks
+NM      = ia16-elf-nm
 AR      = ia16-elf-ar
 
 INCLUDES += -I$(TOPDIR)/libc/include
@@ -250,6 +254,14 @@ elks:
 
 #########################################################################
 # Standard commands.
+
+dokclean: $(CLEANDEP)
+	rm -fv *~ *.a *.bak *.lint *.map *.o *.tmp core $(CLEANME)
+	@for DIR in */ ; do \
+		if [ -f "$$DIR/Makefile" -a "$$DIR" != "tools" ]; then \
+			${MAKE} -C "$$DIR" dokclean ; \
+		fi ; \
+	done
 
 doclean: $(CLEANDEP)
 	rm -fv *~ *.a *.bak *.lint *.map *.o *.tmp core $(CLEANME)

@@ -2,6 +2,8 @@
  *  linux/lib/string.c
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
+ *
+ *  12 Oct 21 ghaerr Add simple_strtol, remove old atoi
  */
 
 /*
@@ -13,6 +15,54 @@
 
 #include <linuxmt/types.h>
 #include <linuxmt/string.h>
+
+#define isdigit(c)	((c) >= '0' && (c) <= '9')
+#define isalpha(c)	(((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))
+
+long simple_strtol(char *s, int base)
+{
+	register int c;
+	int neg;
+	long result = 0;
+
+	/* Skip spaces and pick up leading +/- sign, if any */
+	do {
+		c = *s++;
+	} while (c != '\0' && c <= ' ');
+	if (((neg = c) == '-') || c == '+')
+		c = *s++;
+
+	/*
+	 * If base is 0, allow 0x for hex and 0 for octal;
+	 * if base is already 16, allow 0x.
+	 */
+	if ((base == 0 || base == 16) &&
+		c == '0' && (*s == 'x' || *s == 'X')) {
+			c = s[1];
+			s += 2;
+			base = 16;
+		}
+	if (base == 0)
+		base = c == '0' ? 8 : 10;
+
+	do {
+		if (isdigit(c))
+			c -= '0';
+		else if (isalpha(c))
+			c = (c & 0xdf) - 'A' + 10;
+		else break;
+		if (c >= base)
+			break;
+		result = result * base + c;
+	} while ((c = *s++) != '\0');
+
+	return (neg == '-') ? -result: result;
+}
+
+int atoi(char *number)
+{
+	return (int)simple_strtol(number, 10);
+}
 
 #ifndef __HAVE_ARCH_STRCPY
 
@@ -27,6 +77,8 @@ char *strcpy(char *dest, char *src)
 }
 
 #endif
+
+#if 0
 
 #ifndef __HAVE_ARCH_ATOI
 
@@ -50,8 +102,6 @@ int atoi(register char *number)
 }
 
 #endif
-
-#if 0
 
 #ifndef __HAVE_ARCH_STRNCPY
 

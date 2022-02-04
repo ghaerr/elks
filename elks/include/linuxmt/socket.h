@@ -12,6 +12,22 @@ struct sockaddr {
     char sa_data [MAX_SOCK_ADDR];
 };
 
+/* for setsockopt(2) */
+#define SOL_SOCKET	1
+
+/* careful: option names are close to internal SF_ options in net.h*/
+#define SO_REUSEADDR	2
+#define SO_RCVBUF	8		/* set TCP CB receive buffer size*/
+#define SO_LINGER	13		/* only implemented for l_linger = 0*/
+
+/* non-standard options */
+#define SO_LISTEN_BUFSIZ	128	/* suggested buffer size for listen to save mem*/
+
+struct linger {
+        int             l_onoff;        /* Linger active                */
+        int             l_linger;       /* How long to linger for       */
+};
+
 struct msghdr {
     void *		msg_name;
     int 		msg_namelen;
@@ -36,8 +52,10 @@ struct msghdr {
 #define SOCK_RDM        4	/* reliably-delivered message   */
 #define SOCK_SEQPACKET  5	/* sequential packet socket     */
 
+#ifdef __KERNEL__
 struct proto_ops;
 extern int sock_register(int,struct proto_ops *);
 extern int move_addr_to_user(char *,size_t,char *,int *);
+#endif
 
 #endif

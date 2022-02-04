@@ -3,11 +3,26 @@
 
 #include <linuxmt/types.h>
 
-extern void disable_irq(unsigned int);
-extern void enable_irq(unsigned int);
-extern void do_IRQ(int,void *);
-extern int request_irq(int,void (*)(int,struct pt_regs *,void *),void *);
-extern void free_irq(unsigned int);
+/* irq.c*/
+
+#define INT_GENERIC  0  // use the generic interrupt handler (aka '_irqit')
+#define INT_SPECIFIC 1  // use a specific interrupt handler
+
+typedef void (* int_proc) (void);  // any INT handler
+typedef void (* irq_handler) (int,struct pt_regs *);   // IRQ handler
+
+void do_IRQ(int,void *);
+int request_irq(int,irq_handler,int hflag);
+void int_vector_set (int vect, int_proc proc, int seg);
+void _irqit (void);
+
+
+/* irq-8259.c*/
+void init_irq(void);
+void enable_irq(unsigned int);
+int remap_irq(int);
+int irq_vector (int irq);
+
 void idle_halt(void);
 
 #ifdef __KERNEL__

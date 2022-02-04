@@ -10,6 +10,8 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
+ELKS_LIB=$(ELKS_DIR)/arch/i86/lib
+
 # clock enabled and has direct I/O port access
 # knl, insmod removed as useless
 # exitemu disabled because it calls INT directly to DOSEMU
@@ -43,8 +45,8 @@ init: init.o
 getty: getty.o
 	$(LD) $(LDFLAGS) -maout-heap=1024 -maout-stack=1024 -o getty getty.o $(LDLIBS)
 
-login: getpass.o login.o
-	$(LD) $(LDFLAGS) -o login getpass.o login.o $(LDLIBS)
+login: login.o
+	$(LD) $(LDFLAGS) -maout-stack=2048 -o login login.o $(LDLIBS)
 
 kill: kill.o
 	$(LD) $(LDFLAGS) -o kill kill.o $(LDLIBS)
@@ -55,8 +57,8 @@ mount: mount.o
 umount: umount.o
 	$(LD) $(LDFLAGS) -o umount umount.o $(LDLIBS)
 
-passwd: getpass.o passwd.o
-	$(LD) $(LDFLAGS) -o passwd getpass.o passwd.o $(LDLIBS)
+passwd: passwd.o
+	$(LD) $(LDFLAGS) -o passwd passwd.o $(LDLIBS)
 
 reboot: reboot.o
 	$(LD) $(LDFLAGS) -o reboot reboot.o $(LDLIBS)
@@ -65,10 +67,10 @@ shutdown: shutdown.o
 	$(LD) $(LDFLAGS) -o shutdown shutdown.o $(LDLIBS)
 
 ps: ps.o
-	$(LD) $(LDFLAGS) -o ps ps.o $(LDLIBS)
+	$(LD) $(LDFLAGS) -maout-heap=1024 -maout-stack=2048 -o ps ps.o $(LDLIBS)
 
 meminfo: meminfo.o
-	$(LD) $(LDFLAGS) -o meminfo meminfo.o $(LDLIBS)
+	$(LD) $(LDFLAGS) -maout-heap=1 -maout-stack=512 -o meminfo meminfo.o $(LDLIBS)
 
 who: who.o
 	$(LD) $(LDFLAGS) -o who who.o $(LDLIBS)
@@ -103,9 +105,12 @@ console: console.o
 makeboot: makeboot.o
 	$(LD) $(LDFLAGS) -o makeboot makeboot.o $(LDLIBS)
 
-unreal16: unreal16.o
+unreal.o: $(ELKS_LIB)/unreal.S
+	$(LD) -melks-libc -mcmodel=small -c $(ELKS_LIB)/unreal.S -o unreal.o
+
+unreal16: unreal16.o unreal.o
 	$(LD) -melks-libc -mcmodel=small -c unreal16.S -o unreal16.o
-	$(LD) -melks-libc -mcmodel=small -nostdlib -o unreal16 unreal16.o
+	$(LD) -melks-libc -mcmodel=small -nostdlib -o unreal16 unreal16.o unreal.o
 
 all: $(PRGS)
 

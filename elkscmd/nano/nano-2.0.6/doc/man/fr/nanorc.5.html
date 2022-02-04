@@ -1,0 +1,582 @@
+<!-- Creator     : groff version 1.19.2 -->
+<!-- CreationDate: Thu Apr 26 08:03:36 2007 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p     { margin-top: 0; margin-bottom: 0; }
+       pre   { margin-top: 0; margin-bottom: 0; }
+       table { margin-top: 0; margin-bottom: 0; }
+</style>
+<title>NANORC</title>
+
+</head>
+<body>
+
+<h1 align=center>NANORC</h1>
+
+<a href="#NOM">NOM</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#OPTIONS">OPTIONS</a><br>
+<a href="#FICHIERS">FICHIERS</a><br>
+<a href="#VOIR AUSSI">VOIR AUSSI</a><br>
+<a href="#AUTEUR">AUTEUR</a><br>
+<a href="#TRADUCTION">TRADUCTION</a><br>
+
+<hr>
+
+
+<a name="NOM"></a>
+<h2>NOM</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">nanorc &minus;
+fichier de configuration de l&rsquo;&eacute;diteur nano du
+projet GNU</p>
+
+<a name="DESCRIPTION"></a>
+<h2>DESCRIPTION</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Cette page de
+manuel d&eacute;crit bri&egrave;vement le fichier de
+configuration de l&rsquo;&eacute;diteur <b>nano</b> GNU.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>nano</b> est
+un petit &eacute;diteur sympathique et libre, qui vise
+&agrave; remplacer Pico, l&rsquo;&eacute;diteur par
+d&eacute;faut du logiciel non libre Pine. <b>nano</b> ne se
+contentant pas de copier l&rsquo;interface et
+l&rsquo;ergonomie de Pico, il offre &eacute;galement
+certaines fonctionnalit&eacute;s manquantes (ou
+d&eacute;sactiv&eacute;es par d&eacute;faut) de Pico. Ces
+fonctionnalit&eacute;s sont, par exemple, les fonctions de
+recherche et de remplacement et la possibilit&eacute; de
+sauter directement &agrave; une ligne et &agrave; une
+colonne pr&eacute;cise.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Le fichier
+<i>nanorc</i> contient les param&egrave;tres par
+d&eacute;faut de <b>nano</b>. Il ne doit pas &ecirc;tre au
+format DOS ou Mac. Lors de son d&eacute;marrage, nano
+commencera par lire le fichier de configuration
+g&eacute;n&eacute;ral <i>SYSCONFDIR/nanorc</i>, puis lira le
+fichier de configuration personnel de l&rsquo;utilisateur
+<i>~/.nanorc</i>.</p>
+
+<a name="OPTIONS"></a>
+<h2>OPTIONS</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Le fichier de
+configuration accepte une s&eacute;rie de commandes
+<b>set</b> (activer) et <b>unset</b> (d&eacute;sactiver),
+qui permettent de d&eacute;finir le param&eacute;trage de
+nano au d&eacute;marrage sans avoir &agrave; utiliser
+d&rsquo;options de ligne de commande. De plus, les mots
+clefs <b>syntax</b> (syntaxe), <b>color</b> (couleur) et
+<b>icolor</b> (couleur insensible &agrave; la casse) sont
+utilis&eacute;s pour d&eacute;finir les r&egrave;gles de
+colorisation pour diff&eacute;rents motifs de texte.
+<b>nano</b> lit une commande par ligne.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Les options du
+fichier de configuration ont priorit&eacute; sur les valeurs
+par d&eacute;faut utilis&eacute;es par nano. Les options de
+la ligne de commande sont prioritaires par rapport aux
+options du fichier de configuration. Les options sont
+d&eacute;sactiv&eacute;es (unset) par d&eacute;faut, sauf
+les options prenant un argument.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Les apostrophes
+(&laquo;&nbsp;<i>&rsquo;&nbsp;</i>&raquo;) et les guillemets
+droits (&laquo;&nbsp;<i>&quot;&nbsp;</i>&raquo;)
+pr&eacute;sents dans des cha&icirc;nes de caract&egrave;res
+utilis&eacute;es comme param&egrave;tres n&rsquo;ont pas
+besoin d&rsquo;&ecirc;tre pr&eacute;c&eacute;d&eacute;es
+d&rsquo;une barre oblique invers&eacute;e
+(&laquo;&nbsp;<i>\&nbsp;</i>&raquo;). La cha&icirc;ne sera
+termin&eacute;e par le dernier guillemet droit. Par exemple,
+pour l&rsquo;option <b>brackets</b>,
+&quot;<i>&quot;&rsquo;)&gt;]}</i>&quot; correspondra
+&agrave; <i>&quot;</i>, <i>&rsquo;</i>, <i>)</i>,
+<i>&gt;</i>, <i>]</i> et <i>}</i>.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Les commandes
+et arguments reconnus sont&nbsp;: <b><br>
+set/unset autoindent</b></p>
+
+<p style="margin-left:15%;">Active l&rsquo;indentation
+automatique.</p>
+
+<p style="margin-left:11%;"><b>set/unset backup</b></p>
+
+<p style="margin-left:15%;">Cr&eacute;e des copies de
+s&eacute;curit&eacute; nomm&eacute;es
+<i>nom_du_fichier~</i>.</p>
+
+<p style="margin-left:11%;"><b>set backupdir</b>
+<i>r&eacute;pertoire</i></p>
+
+<p style="margin-left:15%;">D&eacute;finit le
+r&eacute;pertoire utilis&eacute; par <b>nano</b> pour
+enregistrer les copies de s&eacute;curit&eacute; uniques, si
+l&rsquo;enregistrement de copies de s&eacute;curit&eacute;
+est activ&eacute;.</p>
+
+<p style="margin-left:11%;"><b>set/unset backwards</b></p>
+
+<p style="margin-left:15%;">Par d&eacute;faut, les
+recherches se font vers l&rsquo;arri&egrave;re.</p>
+
+<p style="margin-left:11%;"><b>set/unset boldtext</b></p>
+
+<p style="margin-left:15%;">Utilise des caract&egrave;res
+gras &agrave; la place de la vid&eacute;o inverse.</p>
+
+<p style="margin-left:11%;"><b>set brackets</b>
+<i>cha&icirc;ne</i></p>
+
+<p style="margin-left:15%;">D&eacute;finit les
+caract&egrave;res consid&eacute;r&eacute;s comme des
+crochets fermants lors de la justification des paragraphes.
+Ces caract&egrave;res ne doivent pas contenir
+d&rsquo;espaces. Seules les ponctuations terminales,
+&eacute;ventuellement suivies de crochets fermants, peuvent
+terminer une phrase.</p>
+
+<p style="margin-left:15%; margin-top: 1em">(N.D.T.&nbsp;:
+reportez-vous au paragraphe sur l&rsquo;option <b>punct</b>
+pour plus d&rsquo;informations.)</p>
+
+<p style="margin-left:15%; margin-top: 1em">La valeur par
+d&eacute;faut de cette option est&nbsp;:
+&quot;<i>&quot;&rsquo;)&gt;]}</i>&quot;.</p>
+
+<p style="margin-left:11%;"><b>set/unset
+casesensitive</b></p>
+
+<p style="margin-left:15%;">Par d&eacute;faut, les
+recherches ne tiennent pas compte de la casse.</p>
+
+<p style="margin-left:11%;"><b>set/unset const</b></p>
+
+<p style="margin-left:15%;">Affiche en permanence la
+position du curseur dans la ligne d&rsquo;&eacute;tat.</p>
+
+<p style="margin-left:11%;"><b>set/unset cut</b></p>
+
+<p style="margin-left:15%;">Par d&eacute;faut, coupe le
+texte du curseur &agrave; la fin de la ligne, au lieu de
+couper la ligne enti&egrave;re.</p>
+
+<p style="margin-left:11%;"><b>set fill</b> <i>n</i></p>
+
+<p style="margin-left:15%;">Passe automatiquement &agrave;
+la ligne une fois arriv&eacute; &agrave; la colonne
+<i>n</i>. Si la valeur indiqu&eacute;e est de 0 ou moins, le
+point de passage &agrave; la ligne aura lieu &agrave; la
+taille de l&rsquo;&eacute;cran moins <i>n</i>. Cela permet
+de faire varier le point de passage &agrave; la ligne
+lorsque l&rsquo;on change la taille de l&rsquo;&eacute;cran.
+La valeur par d&eacute;faut est de -8.</p>
+
+<p style="margin-left:11%;"><b>set/unset historylog</b></p>
+
+<p style="margin-left:15%;">Active l&rsquo;utilisation de
+<i>~/.nano_history</i> pour enregistrer et relire les
+cha&icirc;nes ayant fait l&rsquo;objet d&rsquo;une recherche
+ou d&rsquo;un remplacement.</p>
+
+<p style="margin-left:11%;"><b>set matchbrackets</b>
+<i>cha&icirc;ne</i></p>
+
+<p style="margin-left:15%;">D&eacute;finit les crochets
+ouvrants et fermant pour la recherche de crochets
+correspondants. Cette liste ne doit pas contenir de blancs.
+L&rsquo;ensemble des crochets ouvrants doit &ecirc;tre
+indiqu&eacute; en premier, suivi de l&rsquo;ensemble des
+crochets fermant, qui doit &ecirc;tre dans le m&ecirc;me
+ordre. La valeur par d&eacute;faut de cette option est
+&quot;<i>(&lt;[{)&gt;]}</i>&quot;.</p>
+
+<p style="margin-left:11%;"><b>set/unset morespace</b></p>
+
+<p style="margin-left:15%;">Utiliser la ligne blanche
+situ&eacute;e sous la ligne de titre comme espace
+suppl&eacute;mentaire d&rsquo;&eacute;dition.</p>
+
+<p style="margin-left:11%;"><b>set/unset mouse</b></p>
+
+<p style="margin-left:15%;">Active l&rsquo;utilisation de
+la souris, si elle est disponible pour votre syst&egrave;me.
+Lorsque celle-ci est activ&eacute;e, il est possible
+d&rsquo;utiliser la souris pour positionner le curseur, pour
+marquer le texte (avec un double-clic) et pour lancer les
+fonctions correspondant aux raccourcis. Il est possible
+d&rsquo;utiliser la souris sous X&nbsp;Window ou en mode
+console avec gpm.</p>
+
+<p style="margin-left:11%;"><b>set/unset
+multibuffer</b></p>
+
+<p style="margin-left:15%;">Mode multi-espace&nbsp;: permet
+de charger les fichiers dans leur propre espace.</p>
+
+<p style="margin-left:11%;"><b>set/unset noconvert</b></p>
+
+<p style="margin-left:15%;">Pas de conversion depuis les
+formats DOS et Mac.</p>
+
+<p style="margin-left:11%;"><b>set/unset nofollow</b></p>
+
+<p style="margin-left:15%;">Ne suit pas les liens
+symboliques lors de l&rsquo;&eacute;criture des
+fichiers.</p>
+
+<p style="margin-left:11%;"><b>set/unset nohelp</b></p>
+
+<p style="margin-left:15%;">D&eacute;sactive les lignes
+d&rsquo;aide affich&eacute;e en bas de
+l&rsquo;&eacute;cran.</p>
+
+<p style="margin-left:11%;"><b>set/unset nonewlines</b></p>
+
+<p style="margin-left:15%;">Ne pas ajouter de passage
+&agrave; la ligne &agrave; la fin des fichiers.</p>
+
+<p style="margin-left:11%;"><b>set/unset nowrap</b></p>
+
+<p style="margin-left:15%;">D&eacute;sactive le passage
+automatique &agrave; la ligne.</p>
+
+<p style="margin-left:11%;"><b>set operatingdir</b>
+<i>r&eacute;pertoire</i></p>
+
+<p style="margin-left:15%;"><b>nano</b> ne lira et
+n&rsquo;&eacute;crira des fichiers qu&rsquo;&agrave;
+l&rsquo;int&eacute;rieur du <i>r&eacute;pertoire</i> et de
+ses sous-r&eacute;pertoires. De plus, celui-ci devient le
+r&eacute;pertoire courant, afin que les fichiers soient lus
+depuis ce r&eacute;pertoire. Par d&eacute;faut, cette
+fonction est d&eacute;sactiv&eacute;e.</p>
+
+<p style="margin-left:11%;"><b>set/unset preserve</b></p>
+
+<p style="margin-left:15%;">Pr&eacute;serve les
+s&eacute;quences XON et XOFF (^Q et ^S).</p>
+
+<p style="margin-left:11%;"><b>set punct</b>
+<i>cha&icirc;ne</i></p>
+
+<p style="margin-left:15%;">D&eacute;finit les
+caract&egrave;res interpr&eacute;t&eacute;s comme des
+ponctuations terminales lors de la justification des
+paragraphes. Ces caract&egrave;res ne peuvent inclure de
+blancs. Seules les ponctuations terminales,
+&eacute;ventuellement suivies de crochets fermants, peuvent
+terminer une phrase. La valeur par d&eacute;faut de cette
+option est &quot;<i>!.?</i>&quot;.</p>
+
+<p style="margin-left:15%; margin-top: 1em">(N.D.T.&nbsp;:
+ce r&eacute;glage permet, lors de la justification, de
+conserver 2&nbsp;espaces au lieu d&rsquo;une derri&egrave;re
+les ponctuations terminales, ce qui correspond aux normes
+typographiques anglo-saxonnes, mais n&rsquo;a pas lieu
+d&rsquo;&ecirc;tre en fran&ccedil;ais. Pour le
+fran&ccedil;ais, le plus simple est d&rsquo;indiquer, dans
+le fichier nanorc, une cha&icirc;ne vide pour ce
+param&egrave;tre.)</p>
+
+<p style="margin-left:11%;"><b>set/unset quickblank</b></p>
+
+<p style="margin-left:15%;">Effacement rapide de la ligne
+d&rsquo;&eacute;tat. Les messages affich&eacute;s par la
+ligne d&rsquo;&eacute;tat dispara&icirc;tront apr&egrave;s
+une frappe clavier au lieu de 25.</p>
+
+<p style="margin-left:11%;"><b>set quotestr</b>
+<i>cha&icirc;ne</i></p>
+
+<p style="margin-left:15%;">D&eacute;finit le
+pr&eacute;fixe par d&eacute;faut utilis&eacute; pour les
+citations dans les courriers &eacute;lectroniques. Ce
+pr&eacute;fixe est utilis&eacute; pour r&eacute;aliser une
+justification correcte de ces citations. Il s&rsquo;agira,
+si votre syst&egrave;me le permet, d&rsquo;une expression
+rationnelle &eacute;tendue. Dans le cas contraire, il
+s&rsquo;agira d&rsquo;une cha&icirc;ne de texte brut. Si
+vous disposez des expressions rationnelles, la valeur par
+d&eacute;faut de cette option sera
+&quot;<i>^([&nbsp;\t]*[#:&gt;\|}])+</i>&quot;, sinon, ce
+sera &quot;&gt;&nbsp;&quot;. Notez que le
+&laquo;&nbsp;\t&nbsp;&raquo; ci-dessus correspond &agrave;
+un caract&egrave;re de tabulation.</p>
+
+<p style="margin-left:11%;"><b>set/unset
+rebinddelete</b></p>
+
+<p style="margin-left:15%;">Interpr&egrave;te
+diff&eacute;remment la touche
+&laquo;&nbsp;Supprimer&nbsp;&raquo;, afin que les touches
+&laquo;&nbsp;Effacement arri&egrave;re&nbsp;&raquo; et
+&laquo;&nbsp;Supprimer&nbsp;&raquo; fonctionnent
+correctement. Vous ne devriez avoir besoin de cette option
+que si, sur votre syst&egrave;me, la touche
+&laquo;&nbsp;Effacement arri&egrave;re&nbsp;&raquo; produit
+l&rsquo;effet de la touche &laquo;&nbsp;
+Supprimer&nbsp;&raquo;.</p>
+
+<p style="margin-left:11%;"><b>set/unset
+rebindkeypad</b></p>
+
+<p style="margin-left:15%;">Interpr&egrave;te les touches
+du pav&eacute; num&eacute;rique afin qu&rsquo;elles
+fonctionnent toutes correctement. Vous ne devriez utiliser
+cette option que si ce n&rsquo;est pas le cas, car nano ne
+sera plus capable d&rsquo;utiliser la souris correctement
+lorsque cette option sera activ&eacute;e.</p>
+
+<p style="margin-left:11%;"><b>set/unset regexp</b></p>
+
+<p style="margin-left:15%;">Utilise par d&eacute;faut des
+expressions rationnelles &eacute;tendues pour les
+recherches.</p>
+
+<p style="margin-left:11%;"><b>set/unset smarthome</b></p>
+
+<p style="margin-left:15%;">Rend plus malin le
+fonctionnement de la touche
+&laquo;&nbsp;D&eacute;but&nbsp;&raquo;. Lorsque cette touche
+est press&eacute;e &agrave; n&rsquo;importe quel endroit
+except&eacute; au tout d&eacute;but du texte d&rsquo;une
+ligne (i.&nbsp;e. au premier caract&egrave;re non blanc), le
+curseur se positionnera au d&eacute;but du texte de la ligne
+(qu&rsquo;il soit en avant ou en arri&egrave;re). Si le
+curseur est d&eacute;j&agrave; l&agrave;, il se placera au
+vrai d&eacute;but de la ligne.</p>
+
+<p style="margin-left:11%;"><b>set/unset smooth</b></p>
+
+<p style="margin-left:15%;">Active le d&eacute;filement
+ligne-par-ligne du texte.</p>
+
+<p style="margin-left:11%;"><b>set speller</b>
+<i>programme</i></p>
+
+<p style="margin-left:15%;">Utilise le correcteur
+orthographique <i>programme</i> au lieu du correcteur
+int&eacute;gr&eacute;, qui s&rsquo;appuie sur
+<i>spell</i>.</p>
+
+<p style="margin-left:11%;"><b>set/unset suspend</b></p>
+
+<p style="margin-left:15%;">Autorise &agrave; suspendre
+<b>nano</b>.</p>
+
+<p style="margin-left:11%;"><b>set tabsize</b> <i>n</i></p>
+
+<p style="margin-left:15%;">Utilise une taille de
+tabulation de <i>n</i> colonnes. Cette valeur doit
+&ecirc;tre strictement sup&eacute;rieure &agrave; 0. La
+valeur par d&eacute;faut est de&nbsp;8.</p>
+
+<p style="margin-left:11%;"><b>set/unset
+tabstospaces</b></p>
+
+<p style="margin-left:15%;">Convertit les tabulations
+clavier en espaces.</p>
+
+<p style="margin-left:11%;"><b>set/unset tempfile</b></p>
+
+<p style="margin-left:15%;">S&rsquo;il a &eacute;t&eacute;
+modifi&eacute;, le fichier sera sauvegard&eacute;
+automatiquement en quittant, sans demande de
+confirmation.</p>
+
+<p style="margin-left:11%;"><b>set/unset view</b></p>
+
+<p style="margin-left:15%;">Interdit de modifier les
+fichiers.</p>
+
+<p style="margin-left:11%;"><b>set whitespace</b>
+<i>cha&icirc;ne</i></p>
+
+<p style="margin-left:15%;">D&eacute;finit les deux
+caract&egrave;res utilis&eacute;s pour afficher les premiers
+caract&egrave;res des tabulations et des espaces. Ces deux
+caract&egrave;res doivent &ecirc;tre mono-colonne.</p>
+
+<p style="margin-left:11%;"><b>set/unset wordbounds</b></p>
+
+<p style="margin-left:15%;">D&eacute;tection plus
+pr&eacute;cise des limites de mots, obtenue en
+consid&eacute;rant les caract&egrave;res de ponctuation
+comme faisant partie des mots.</p>
+
+<p style="margin-left:11%;"><b>syntax</b>
+<i>cha&icirc;ne</i>
+<b>[&quot;</b><i>motif_de_fichier</i><b>&quot; ... ]</b></p>
+
+<p style="margin-left:15%;">D&eacute;finit une syntaxe
+nomm&eacute;e <i>cha&icirc;ne</i> qui pourra &ecirc;tre
+activ&eacute; via l&rsquo;option <b>-Y</b> (ou
+<b>--syntax</b>) ou qui sera automatiquement activ&eacute;e
+si le nom du fichier en cours correspond &agrave;
+l&rsquo;expression rationnelle &eacute;tendue
+<i>motif_de_fichier</i>. Toutes les instructions suivantes
+de colorisation <b>color</b> ou <b>icolor</b>
+s&rsquo;appliqueront &agrave; cette syntaxe,
+jusqu&rsquo;&agrave; la d&eacute;finition d&rsquo;une
+nouvelle syntaxe.</p>
+
+<p style="margin-left:15%; margin-top: 1em">La syntaxe
+nomm&eacute;e <i>none</i> (aucune) est
+r&eacute;serv&eacute;e&nbsp;; si elle est indiqu&eacute;e
+dans la ligne de commande, cela revient &agrave; ne
+d&eacute;finir aucune syntaxe. La syntaxe nomm&eacute;e
+<i>default</i> (par d&eacute;faut) est sp&eacute;ciale, elle
+ne n&eacute;cessite aucun motif de <i>motif_de_fichier</i>,
+et s&rsquo;applique aux fichiers ne correspondant &agrave;
+aucun des <i>motif_de_fichier</i> des autres syntaxes.</p>
+
+<p style="margin-left:11%;"><b>color</b>
+<i>couleur_texte</i><b>[,</b><i>couleur_fond</i><b>]</b>
+<i>motif</i> <b>...</b></p>
+
+<p style="margin-left:15%;">Pour la syntaxe en cours,
+affiche toutes les expressions correspondant &agrave;
+l&rsquo;expression rationnelle &eacute;tendue <i>motif</i>
+en utilisant la couleur de texte <i>couleur_texte</i> et la
+couleur de fond <i>couleur_fond</i>, l&rsquo;une de ces deux
+couleurs au moins devant &ecirc;tre d&eacute;finie. Les
+couleurs accept&eacute;es par <b>nano</b> pour le texte et
+le fond sont&nbsp;: <i>white</i> (blanc), <i>black</i>
+(noir), <i>red</i> (rouge), <i>blue</i> (bleu), <i>green</i>
+(vert), <i>yellow</i> (jaune), <i>magenta</i>, et
+<i>cyan</i>. Pour la couleur du texte, vous pouvez ajouter
+&agrave; ces couleurs le pr&eacute;fixe <i>bright</i>
+(lumineux) pour obtenir une couleur plus lumineuse. Si votre
+terminal est capable de g&eacute;rer la transparence, ne pas
+sp&eacute;cifier de <i>couleur_fond</i> indique &agrave;
+<b>nano</b> d&rsquo;essayer d&rsquo;utiliser un fond
+transparent.</p>
+
+<p style="margin-left:11%;"><b>icolor</b>
+<i>couleur_texte</i><b>[,</b><i>couleur_fond</i><b>]</b>
+<i>motif</i> <b>...</b></p>
+
+<p style="margin-left:15%;">Comme ci-dessus, mais la
+recherche des motifs est effectu&eacute;e sans tenir compte
+de la casse.</p>
+
+<p style="margin-left:11%;"><b>color</b>
+<i>couleur_texte</i><b>[,</b><i>couleur_fond</i><b>]
+start=&quot;</b><i>motif_d&eacute;but</i><b>&quot;
+end=&quot;</b><i>motif_fin</i><b>&quot;</b></p>
+
+<p style="margin-left:15%;">Affiche les expressions
+commen&ccedil;ant par l&rsquo;expression rationnelle
+&eacute;tendue <i>motif_d&eacute;but</i> et se terminant par
+l&rsquo;expression rationnelle &eacute;tendue
+<i>motif_fin</i> en utilisant la couleur de texte
+<i>couleur_texte</i> et la couleur de fond
+<i>couleur_fond</i>, l&rsquo;une de ces deux couleurs au
+moins devant &ecirc;tre d&eacute;finie. Cela permet &agrave;
+la colorisation syntaxique de s&rsquo;&eacute;tendre sur
+plusieurs lignes. Notez que toutes les occurrences
+successives de <i>motif_d&eacute;but</i> apr&egrave;s le
+<i>motif_d&eacute;but</i> initial seront surlign&eacute;es
+jusqu&rsquo;&agrave; la prochaine instance de
+<i>motif_fin</i>.</p>
+
+<p style="margin-left:11%;"><b>icolor</b>
+<i>couleur_texte</i><b>[,</b><i>couleur_fond</i><b>]
+start=&quot;</b><i>motif_d&eacute;but</i><b>&quot;
+end=&quot;</b><i>motif_fin</i><b>&quot;</b></p>
+
+<p style="margin-left:15%;">Comme ci-dessus, mais la
+recherche des motifs est effectu&eacute;e sans tenir compte
+de la casse.</p>
+
+<p style="margin-left:11%;"><b>include</b>
+<i>fichier_de_syntaxes</i></p>
+
+<p style="margin-left:15%;">Lit le fichier
+<i>fichier_de_syntaxes</i> contenant une liste
+autosuffisante de d&eacute;finitions de syntaxes. Ce fichier
+ne doit contenir que des commandes <b>syntax</b>,
+<b>color</b> et <b>icolor</b>.</p>
+
+<a name="FICHIERS"></a>
+<h2>FICHIERS</h2>
+
+
+
+<p style="margin-left:11%; margin-top: 1em"><i>$SYSCONFDIR/nanorc</i></p>
+
+<p style="margin-left:22%;">Fichier de configuration
+g&eacute;n&eacute;ral</p>
+
+<p style="margin-left:11%;"><i>~/.nanorc</i></p>
+
+<p style="margin-left:22%;">Fichier de configuration
+personnel</p>
+
+<a name="VOIR AUSSI"></a>
+<h2>VOIR AUSSI</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>nano</b>(1)
+<i><br>
+/usr/share/doc/nano/examples/nanorc.sample</i> (ou son
+&eacute;quivalent sur votre syst&egrave;me)</p>
+
+<a name="AUTEUR"></a>
+<h2>AUTEUR</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Chris
+Allegretta &lt;chrisa@asty.org&gt; et d&rsquo;autres (voir
+les fichiers <i>AUTHORS</i> et <i>THANKS</i> pour plus
+d&rsquo;information). Cette page de manuel a
+&eacute;t&eacute; initialement r&eacute;dig&eacute;e par
+Jordi Mallach &lt;jordi@gnu.org&gt; pour le syst&egrave;me
+Debian (mais elle peut &ecirc;tre utilis&eacute;e par
+d&rsquo;autres).</p>
+
+<a name="TRADUCTION"></a>
+<h2>TRADUCTION</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Cette
+adaptation fran&ccedil;aise a &eacute;t&eacute;
+r&eacute;alis&eacute;e par Jean-Philippe&nbsp;Gu&eacute;rard
+&lt;jean-philippe.guerard@tigreraye.org&gt; le
+28&nbsp;octobre&nbsp;2006 &agrave; partir de la version du
+28&nbsp;octobre&nbsp;2006 de la page de manuel de nanorc
+(pour la version 2.0.0 de nano). Cette page a
+&eacute;t&eacute; relue par G&eacute;rard Delafond.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Un maximum de
+soin a &eacute;t&eacute; apport&eacute; lors de
+l&rsquo;&eacute;laboration de cette traduction&nbsp;;
+n&eacute;anmoins, quelques imperfections peuvent subsister.
+Si vous en rencontrez, que ce soit dans la version
+fran&ccedil;aise ou dans la version originale,
+n&rsquo;h&eacute;sitez pas &agrave; les signaler &agrave;
+l&rsquo;auteur ou au traducteur.</p>
+
+<p style="margin-left:11%; margin-top: 1em">La version
+originale la plus &agrave; jour de ce document est toujours
+consultable via la commande&nbsp;:</p>
+
+<p style="margin-left:11%; margin-top: 1em">LANGUAGE=en man
+nano</p>
+<hr>
+</body>
+</html>

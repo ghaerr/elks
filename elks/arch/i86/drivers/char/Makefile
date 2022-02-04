@@ -35,31 +35,67 @@ include $(BASEDIR)/Makefile-rules
 #########################################################################
 # Objects to be compiled.
 
-ifeq ($(CONFIG_ARCH_SIBO), y)
-OBJS  = init.o sibo/sibo_con.o sibo/sibo_conasm.o sibo/sibo_font.o \
-	sibo/sibo_key.o sibo/sibo_keyasm.o mem.o \
-	meta.o ntty.o sibo/sibo_serasm.o pty.o
+OBJS  = init.o mem.o ntty.o meta.o tcpdev.o pty.o
+
+ifeq ($(CONFIG_ARCH_8018X), y)
+	CONIO = 8018x
+	SERIAL = template
+endif
+
+ifeq ($(CONFIG_ARCH_IBMPC), y)
+	CONIO = bios
+	SERIAL = 8250
+	OBJS += lp.o
+endif
+
+ifdef CONFIG_ARCH_PC98
+ifdef CONFIG_CONSOLE_DIRECT
+OBJS += console-direct-pc98.o
+endif
 else
-OBJS  = serial.o serfast.o lp.o init.o mem.o \
-	ntty.o meta.o tcpdev.o pty.o bell.o
+ifdef CONFIG_CONSOLE_DIRECT
+OBJS += console-direct.o bell-8254.o
+endif
+endif
+
+ifdef CONFIG_CONSOLE_BIOS
+OBJS += console-bios.o console-bios-asm.o bell-8254.o
+endif
+
+ifdef CONFIG_CONSOLE_8018X
+OBJS += console-serial-8018x.o
+endif
+
+ifdef CONFIG_ARCH_PC98
+ifdef CONFIG_CONSOLE_HEADLESS
+OBJS += console-headless.o
+endif
+OBJS += conio-pc98.o conio-pc98-asm.o kbd-poll-pc98.o
+OBJS += lp.o
+endif
+
+ifdef CONFIG_ARCH_IBMPC
+ifdef CONFIG_CONSOLE_HEADLESS
+OBJS += console-headless.o
+endif
+
+ifdef CONFIG_KEYBOARD_SCANCODE
+OBJS += kbd-scancode.o
+else
+OBJS += kbd-poll.o conio-$(CONIO).o
+endif
+endif
+
+ifdef CONFIG_CHAR_DEV_RS
+	OBJS += serial-$(SERIAL).o
+	ifdef CONFIG_ARCH_IBMPC
+		OBJS += serfast.o
+	endif
+endif
 
 ifdef CONFIG_CHAR_DEV_CGATEXT
 	OBJS += cgatext.o
 endif
-
-ifdef CONFIG_CONSOLE_DIRECT
-OBJS += dircon.o xt_key.o
-endif
-
-ifdef CONFIG_CONSOLE_BIOS
-OBJS += bioscon.o bioscon-asm.o
-endif
-
-ifdef CONFIG_CONSOLE_HEADLESS
-OBJS += headless-bios.o bios-asm.o
-endif
-
-endif # CONFIG_ARCH_SIBO
 
 #########################################################################
 # Commands.
@@ -71,6 +107,10 @@ chr_drv.a: $(OBJS)
 
 KeyMaps/keymaps.h:
 	$(MAKE) -C KeyMaps keymaps.h
+
+dircon.o: console.c
+
+bioscon.o: console.c
 
 #########################################################################
 # Standard commands.

@@ -1,8 +1,10 @@
+# for CONFIG_ROMCODE
+include $(TOPDIR)/.config
 
 CC = ia16-elf-gcc
 # See boot_minix.c on -fno-top-level-reorder.
 CROSS_CFLAGS = -mregparmcall -fno-toplevel-reorder -fno-inline -mcmodel=tiny -mno-segment-relocation-stuff -ffreestanding -mtune=i8086
-INCLUDES = -I $(TOPDIR)/include
+INCLUDES = -I $(TOPDIR)/include -I $(TOPDIR)/elks/include
 CFLAGS = -Wall -Os $(CROSS_CFLAGS) $(INCLUDES)
 
 AS = ia16-elf-as
@@ -14,7 +16,13 @@ LDFLAGS = -T $(TOPDIR)/elks/elks-raw.ld
 
 .PHONY: all
 
-all: minix.bin probe.bin fat.bin mbr.bin
+TARGETS = mbr.bin
+
+ifneq ($(CONFIG_ROMCODE), y)
+TARGETS += minix.bin probe.bin fat.bin
+endif
+
+all: $(TARGETS)
 
 minix.bin: boot_sect.o boot_minix.o
 	$(LD) $(LDFLAGS) -M -o minix.bin boot_sect.o boot_minix.o > minix.map

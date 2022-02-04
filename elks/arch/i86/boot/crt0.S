@@ -1,7 +1,3 @@
-// enable the autoconfig tool
-
-#define __ASSEMBLY__
-
 #include <linuxmt/config.h>
 #include <arch/asm-offsets.h>
 
@@ -58,6 +54,7 @@ _start:
 int3:	int	$3		// C breakpoint for emu86
 	ret
 
+#ifndef CONFIG_ARCH_PC98
 early_putchar:
 	mov   %sp,%bx
 	mov   2(%bx),%al
@@ -65,6 +62,7 @@ early_putchar:
 	mov   $0x0007,%bx
 	int   $0x10
 	ret
+#endif
 
 //	Segment beginnings
 

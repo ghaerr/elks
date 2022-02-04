@@ -31,8 +31,6 @@ static unsigned char sbuf[TCPDEV_BUFSIZ];
 
 int tcpdevfd;
 
-extern int cbs_in_user_timeout;
-
 int tcpdev_init(char *fdev)
 {
     int fd  = open(fdev, O_NONBLOCK | O_RDWR);
@@ -57,14 +55,18 @@ static void tcpdev_bind(void)
 {
     struct tdb_bind *db = (struct tdb_bind *)sbuf; /* read from sbuf*/
     struct tcpcb_list_s *n;
+    int size;
     __u16 port;
+    struct tdb_bind_ret bind_ret;
 
     if (db->addr.sin_family != AF_INET) {
 	retval_to_sock(db->sock,-EINVAL);
 	return;
     }
 
-    n = tcpcb_new();
+    /* SO_RCVBUF currently only sets listen or connect buffer size, NOT accept size!*/
+    size = db->rcv_bufsiz? db->rcv_bufsiz: CB_NORMAL_BUFSIZ;
+    n = tcpcb_new(size);
     if (n == NULL) {
 	retval_to_sock(db->sock,-ENOMEM);
 	return;
@@ -78,10 +80,26 @@ static void tcpdev_bind(void)
 	    next_port++;
 	port = next_port;
     } else {
-	if (tcpcb_check_port(port) != NULL) {	/* Port already bound */
-	    tcpcb_remove(n);
-	    retval_to_sock(db->sock,-EINVAL);
-	    return;
+	struct tcpcb_list_s *n2 = tcpcb_check_port(port);
+	if (n2) {			/* port already bound */
+	    if (!db->reuse_addr) {	/* no SO_REUSEADDR on socket */
+		debug_tune("tcp: port %u already bound, rejecting (use SO_REUSEADDR?)\n", port);
+reject:
+		tcpcb_remove(n);
+		retval_to_sock(db->sock, -EADDRINUSE);
+		return;
+	    }
+
+	    /* remove TCB control block on SO_REUSEADDR to save heap space */
+	    if (n2->tcpcb.state == TS_TIME_WAIT) {
+		LEAVE_TIME_WAIT(&n2->tcpcb);	/* entered via FIN_WAIT_2 state on FIN rcvd*/
+		tcpcb_remove(n2);
+		printf("tcp: port %u REUSED, freeing previous socket in time_wait\n", port);
+	    } else {
+		printf("tcp: port %u NOT reused, previous socket in state %d\n",
+			port, n2->tcpcb.state);
+		goto reject;
+	    }
 	}
     }
 
@@ -90,7 +108,12 @@ static void tcpdev_bind(void)
     n->tcpcb.localport = port;
     n->tcpcb.state = TS_CLOSED;
 
-    retval_to_sock(db->sock,0);
+    bind_ret.type = TDT_BIND;
+    bind_ret.ret_value = 0;
+    bind_ret.sock = db->sock;
+    bind_ret.addr_ip = local_ip;
+    bind_ret.addr_port = htons(port);
+    write(tcpdevfd, &bind_ret, sizeof(bind_ret));
 }
 
 static void tcpdev_accept(void)
@@ -108,25 +131,31 @@ static void tcpdev_accept(void)
     }
     cb = &n->tcpcb;
     newn = tcpcb_find_unaccepted(sock);
-    if (!newn) {
+    if (!newn) {			/* SYN not yet received by listen*/
 	if (db->nonblock)
 	    retval_to_sock(db->sock,-EAGAIN);
 	else
-	    cb->newsock = db->newsock;
+	    cb->newsock = db->newsock;	/* save new sock in listen CB for later*/
+	debug_accept("tcp accept: WAIT (on SYN) sock[%p] saving newsock[%p]\n", sock, db->newsock);
 	return;
     }
 
-    cb = &newn->tcpcb;
-    cb->unaccepted = 0;
+    /* SYN already received by listen*/
+    cb = &newn->tcpcb;			/* get accepted CB*/
 
+    debug_accept("tcpdev accept: ACCEPT (SYN received before accept) sock[%p], using newsock[%p]\n", sock, db->newsock);
+
+    cb->unaccepted = 0;
     cb->sock = db->newsock;
-    cb->newsock = 0;
+    cb->newsock = 0;			/* clear newsock in accepted CB*/
+    n->tcpcb.newsock = 0;		/* clear newsock in listen CB*/
 
     accept_ret.type = TDT_ACCEPT;
     accept_ret.ret_value = 0;
-    accept_ret.sock = sock;
+    accept_ret.sock = sock;		/* report back listen socket*/
+    //accept_ret.sock = db->newsock;	/* report back new socket*/
     accept_ret.addr_ip = cb->remaddr;
-    accept_ret.addr_port = cb->remport;
+    accept_ret.addr_port = htons(cb->remport);
     write(tcpdevfd, &accept_ret, sizeof(accept_ret));
 }
 
@@ -139,19 +168,32 @@ void tcpdev_checkaccept(struct tcpcb_s *cb)
     debug_tcpdev("tcpdev_checkaccept\n");
     if (!cb->unaccepted)
 	return;
-    if (!(lp = tcpcb_find_by_sock(cb->newsock)))
+    debug_accept("tcpdev checkaccept: sock[%p] searching for newsock[%p]\n",
+	cb->sock, cb->newsock);
+    if (!(lp = tcpcb_find_by_sock(cb->newsock))) /* search listen CB socket*/
 	return;
+
+    /* SYN occured before accept sys call*/
     listencb = &lp->tcpcb;
+    debug_accept("tcpdev checkaccept: found listen socket[%p] newsocket[%p]\n",
+	listencb->sock, listencb->newsock);
+
+    if (!listencb->newsock)
+	return;				/* wait for sys accept as newsock not set yet*/
 
     accept_ret.type = TDT_ACCEPT;
     accept_ret.ret_value = 0;
-    accept_ret.sock = cb->sock;
+    accept_ret.sock = listencb->sock;	/* report back listen socket*/
+    //accept_ret.sock = listencb->newsock;	/* report back new socket*/
     accept_ret.addr_ip = cb->remaddr;
-    accept_ret.addr_port = cb->remport;
+    accept_ret.addr_port = htons(cb->remport);
 
-    cb->sock = listencb->newsock;
+    debug_accept("tcpdev checkaccept: ACCEPT (SYN received before accept) sock[%p] newsock[%p]\n", listencb->sock, listencb->newsock);
+
     cb->unaccepted = 0;
+    cb->sock = listencb->newsock;
     listencb->newsock = 0;
+
     write(tcpdevfd, &accept_ret, sizeof(accept_ret));
 }
 
@@ -163,7 +205,7 @@ static void tcpdev_connect(void)
 
     n = tcpcb_find_by_sock(db->sock);
     if (!n || n->tcpcb.state != TS_CLOSED) {
-	printf("ktcp: panic in connect\n");
+	debug_tcp("tcp: panic in connect\n");
 	return;
     }
 
@@ -191,6 +233,8 @@ static void tcpdev_listen(void)
 	retval_to_sock(db->sock,-EINVAL);
 	return;
     }
+
+    debug_accept("tcp listen: port %u sock[%p]\n", n->tcpcb.localport, db->sock);
     n->tcpcb.state = TS_LISTEN;
     n->tcpcb.newsock = 0;
     retval_to_sock(db->sock, 0);
@@ -203,7 +247,7 @@ static void tcpdev_read(void)
     struct tdb_return_data *ret_data;
     struct tcpcb_list_s *n;
     struct tcpcb_s *cb;
-    int data_avail;
+    unsigned int data_avail;
     void * sock = db->sock;
 
     n = tcpcb_find_by_sock(sock);
@@ -214,21 +258,24 @@ static void tcpdev_read(void)
 
     cb = &n->tcpcb;
     if (cb->state == TS_CLOSING || cb->state == TS_LAST_ACK || cb->state == TS_TIME_WAIT) {
-debug_tcp("tcpdev_read: returning -EPIPE to socket read\n");
+	printf("tcpdev_read: returning -EPIPE to socket read state %d\n", cb->state);
 	retval_to_sock(sock, -EPIPE);
 	return;
     }
 
     data_avail = cb->bytes_to_push;
+    //debug_window("tcpdev_read %u bytes avail %u\n", db->size, data_avail);
 
     if (data_avail == 0) {
-	if (cb->state == TS_CLOSE_WAIT)
+	if (cb->state == TS_CLOSE_WAIT) {
+	    printf("tcpdev_read: read on CLOSE_WAIT socket, return -EPIPE\n");
 	    retval_to_sock(sock, -EPIPE);
-	else if (db->nonblock)
+	} else if (db->nonblock)
 	    retval_to_sock(sock, -EAGAIN);
-	else
+	else {
 	    //cb->wait_data = db->size;	  /* wait_data use removed, no async reads*/
 	    retval_to_sock(sock, -EINTR); /* don't set wait_data, return -EINTR instead*/
+	}
 	return;
     }
 
@@ -237,7 +284,7 @@ debug_tcp("tcpdev_read: returning -EPIPE to socket read\n");
     if (cb->bytes_to_push <= 0)
 	tcpcb_need_push--;
 
-    /*printf("ktcpdev READ: sock %x %d bytes\n", sock, data_avail);*/
+    //printf("ktcpdev read: %d bytes\n", data_avail);
     ret_data = (struct tdb_return_data *)sbuf;
     ret_data->type = TDT_RETURN;
     ret_data->ret_value = data_avail;
@@ -245,6 +292,27 @@ debug_tcp("tcpdev_read: returning -EPIPE to socket read\n");
     ret_data->sock = sock;
     tcpcb_buf_read(cb, ret_data->data, data_avail);
     write(tcpdevfd, sbuf, sizeof(struct tdb_return_data) + data_avail);
+
+    /* if remote closed and more data, update data avail then indicate disconnecting*/
+    if (cb->state == TS_CLOSE_WAIT) {
+	if (cb->bytes_to_push <= 0) {
+	    debug_tcp("tcp: disconnecting after final read %d\n", data_avail);
+	    tcpdev_sock_state(cb, SS_DISCONNECTING);
+	} else {
+	    debug_tcp("tcp: application read too small after FIN, data_avail %d\n",
+		cb->bytes_to_push);
+	    tcpdev_checkread(cb);		/* inform kernel of remaining data*/
+	}
+	return;
+    }
+
+    /* send ACK to restart server should window have been full (unless it's netstat)*/
+    if (cb->remport != NETCONF_PORT || cb->remaddr != 0)
+	if (cb->remport != local_ip) {	/* no ack to localhost either*/
+	    debug_window("tcp: extra ACK seq %ld, app read %d bytes\n",
+		cb->rcv_nxt - cb->irs, data_avail);
+	    tcp_send_ack(cb);
+	}
 }
 
 /* inform kernel of socket data bytes available*/
@@ -257,7 +325,7 @@ void tcpdev_checkread(struct tcpcb_s *cb)
     if (cb->bytes_to_push <= 0)
 	return;
 
-    if (cb->wait_data == 0) {
+    //if (cb->wait_data == 0) {
 	/*printf("ktcpdev checkSELECT: sock %x %d bytes\n", sock, cb->bytes_to_push);*/
 
 	/* Update the avail_data in the kernel socket (for select) */
@@ -268,11 +336,11 @@ void tcpdev_checkread(struct tcpcb_s *cb)
 	return_data.size = 0;
 	write(tcpdevfd, &return_data, sizeof(return_data));
 	return;
-    }
+    //}
 
 #if 0 /* removed - wait_data mechanism no longer used in inet_read*/
     struct tdb_return_data *ret_data = (struct tdb_return_data *)sbuf;
-    //int data_avail = CB_BUF_USED(cb);
+    //unsigned int data_avail = cb->buf_used;
     data_avail = cb->wait_data < cb->bytes_to_push ? cb->wait_data : cb->bytes_to_push;
     cb->bytes_to_push -= data_avail;
     if (cb->bytes_to_push <= 0)
@@ -297,7 +365,7 @@ static void tcpdev_write(void)
     struct tcpcb_list_s *n;
     struct tcpcb_s *cb;
     void *  sock = db->sock;
-    int size;
+    unsigned int size, maxwindow;
 
     sock = db->sock;
     /*
@@ -308,14 +376,14 @@ static void tcpdev_write(void)
 
     /* This is a bit ugly but I'm to lazy right now */
     if (tcp_retrans_memory > TCP_RETRANS_MAXMEM) {
-	printf("ktcp: RETRANS limit exceeded\n");
+	printf("ktcp: RETRANS memory limit exceeded\n");
 	retval_to_sock(sock, -ENOMEM);
 	return;
     }
 
     n = tcpcb_find_by_sock(sock);
     if (!n || n->tcpcb.state == TS_CLOSED) {
-	printf("ktcp: write to unknown socket\n");
+	printf("tcpdev_write: write to unknown socket\n");
 	retval_to_sock(sock, -EPIPE);
 	return;
     }
@@ -323,6 +391,7 @@ static void tcpdev_write(void)
     cb = &n->tcpcb;
 
     if (cb->state != TS_ESTABLISHED && cb->state != TS_CLOSE_WAIT) {
+	printf("tcpdev_write: write to socket in improper state %d\n", cb->state);
 	retval_to_sock(sock, -EPIPE);
 	return;
     }
@@ -337,16 +406,20 @@ static void tcpdev_write(void)
 	return;
     }
 
-    debug_tcpdev("tcpdev write: window %ld retrans cnt %d\n",
-	cb->send_nxt - cb->send_una, tcp_timeruse);
-
-    /* delay sending if outstanding send window too large*/
-    if (cb->send_nxt - cb->send_una > TCP_SEND_WINDOW_MAX) {
-	debug_tcp("tcp write: limiting write %d at max send window %ld\n",
-	    size, cb->send_nxt - cb->send_una);
-	retval_to_sock(sock, -ERESTARTSYS);	/* kernel will retry 10ms later*/
+    /* Delay sending if outstanding send window too large. FIXME could hang if no ACKs rcvd*/
+    maxwindow = cb->rcv_wnd;
+    if (maxwindow > TCP_SEND_WINDOW_MAX)	/* limit retrans memory usage*/
+	maxwindow = TCP_SEND_WINDOW_MAX;
+    if (cb->send_nxt - cb->send_una + size > maxwindow) {
+	debug_tcp("tcp limit: seq %lu size %d maxwnd %u unack %lu rcvwnd %u\n",
+	    cb->send_nxt - cb->iss, size, maxwindow, cb->send_nxt - cb->send_una, cb->rcv_wnd);
+	retval_to_sock(sock, -ERESTARTSYS);	/* kernel will retry 100ms later*/
 	return;
     }
+
+    debug_tcp("tcp write: seq %lu size %d rcvwnd %u unack %lu (cnt %d, mem %u)\n",
+	cb->send_nxt - cb->iss, size, cb->rcv_wnd, cb->send_nxt - cb->send_una,
+	tcp_timeruse, tcp_retrans_memory);
 
     cb->flags = TF_PSH|TF_ACK;
     cb->datalen = size;
@@ -364,9 +437,11 @@ static void tcpdev_release(void)
     void * sock = db->sock;
 
     n = tcpcb_find_by_sock(sock);
-    debug_tcp("tcpdev: got close from ELKS process, %x\n", n);
     if (n) {
 	cb = &n->tcpcb;
+	debug_close("tcpdev release: close socket %p, state is %s\n",
+	    sock, tcp_states[cb->state]);
+
 	switch(cb->state){
 	    case TS_CLOSED:
 		tcpcb_remove(n);
@@ -382,16 +457,24 @@ static void tcpdev_release(void)
 			tcpcb_remove(n);
 			return;
 		}
+		debug_close("tcp[%p] setting state to FIN_WAIT_1\n", cb->sock);
 		cb->state = TS_FIN_WAIT_1;
-		cbs_in_user_timeout++;
-		cb->time_wait_exp = Now;
-		tcp_send_fin(cb);
-		break;
+		goto common_close;
 	    case TS_CLOSE_WAIT:
+		debug_close("tcp[%p] setting state to LAST_ACK\n", cb->sock);
 		cb->state = TS_LAST_ACK;
-		cbs_in_user_timeout++;
-		cb->time_wait_exp = Now;
-		tcp_send_fin(cb);
+common_close:
+		if (db->reset) {		/* SO_LINGER w/zero timer */
+		   tcp_reset_connection(cb);	/* send RST and deallocate */
+		} else {
+		    cbs_in_user_timeout++;
+		    cb->time_wait_exp = Now;
+		    tcp_send_fin(cb);
+		}
+		break;
+	    default:
+		debug_close("tcp[%p] NO state change from %s on release\n",
+		    cb->sock, tcp_states[cb->state]);
 		break;
 	}
     }

@@ -75,7 +75,7 @@ static size_t minix_file_read(struct inode *inode, register struct file *filp,
 		if (!read) read = -EIO;
 		break;
 	    }
-	    fmemcpyb(buf, current->t_regs.ds,
+	    xms_fmemcpyb(buf, current->t_regs.ds,
 		buffer_data(bh) + (((size_t)(filp->f_pos)) & (BLOCK_SIZE - 1)), bh->b_seg,
 		chars);
 	    brelse(bh);
@@ -146,7 +146,7 @@ static size_t minix_file_write(struct inode *inode, register struct file *filp,
 	/*
 	 *      Alter buffer, mark dirty
 	 */
-	fmemcpyb(buffer_data(bh) + offset, bh->b_seg, buf, current->t_regs.ds, chars);
+	xms_fmemcpyb(buffer_data(bh) + offset, bh->b_seg, buf, current->t_regs.ds, chars);
 	mark_buffer_uptodate(bh, 1);
 	mark_buffer_dirty(bh, 1);
 	brelse(bh);
@@ -183,10 +183,7 @@ static struct file_operations minix_file_operations = {
     NULL,			/* select - default */
     NULL,			/* ioctl - default */
     NULL,			/* no special open is needed */
-    NULL,			/* release */
-#ifdef BLOAT_FS
-    NULL			/* fsync : minix_file_fsync */
-#endif
+    NULL			/* release */
 };
 
 struct inode_operations minix_file_inode_operations = {
@@ -204,8 +201,5 @@ struct inode_operations minix_file_inode_operations = {
 #ifdef USE_GETBLK
     minix_getblk,		/* getblk */
 #endif
-    minix_truncate,		/* truncate */
-#ifdef BLOAT_FS
-    NULL			/* permission */
-#endif
+    minix_truncate		/* truncate */
 };

@@ -62,23 +62,22 @@
 !	...
 !	0x50:	zero terminated string containing the cpuid, 13 bytes
 !	...
-!	0x1e2:	part_offset, 4 bytes. Sector offset of booted MBR partition
-!	0x1e6:	elks_magic, 2 bytes
-!	0x1ef:	SETUPSEG
-!	0x1f1:	SETUPSECS, 1 byte
-!	0x1f2:	ROOTFLAGS, 2 bytes
-!	0x1f4:	SYSSIZE, 2 bytes
-!	0x1f6:	ELKSFLAGS, 2 bytes
-!	0x1f8:	RAMDISK
-!	0x1fa:	SVGA_MODE
-!	0x1fc:	ROOT_DEV, 2 bytes. Either BIOS boot device or actual kdev_t ROOT_DEV
-!	0x1fe:	0x55 = boot_flag, Low part
-!	0x1ff:	0xAA = boot_flag, High part
+!	0x1e2:	part_offset	long Sector offset of booted MBR partition
+!	0x1e6:	elks_magic	long "ELKS"
+!	0x1ea-0x1ee:		5 bytes UNUSED
+!	0x1ef:	SETUPSEG	word UNUSED
+!	0x1f1:	setup_sects	byte in 512-byte sectors, written by build tool
+!	0x1f2:	ROOTFLAGS	word UNUSED
+!	0x1f4:	syssize		word in paragraphs, written by build tool
+!	0x1f6:	elks_flags	word EF_xxx
+!	0x1f8:	RAMDISK		word UNUSED
+!	0x1fa:	SVGA_MODE	word UNUSED
+!	0x1fc:	root_dev	word Either BIOS boot device or actual kdev_t ROOT_DEV
+!	0x1fe:	boot_flag	word = 0xAA55
 !
 ! NOTE! These had better be the same as in bootsect.s!
 */
 
-#define __ASSEMBLY__
 #include <linuxmt/config.h>
 #include <linuxmt/boot.h>
 
@@ -111,7 +110,7 @@ _start:
 
 #ifdef CONFIG_ROMCODE
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// Entry point for non-EMU86 ROM systems
+// Entry point for IBM PC compatible option ROMs
 
 	.byte 0x55,0xaa		// sign for ROM-Extension
 	.byte 2*CONFIG_ROM_CHECKSUM_SIZE // space for lengthcode (promsize/512)
@@ -143,6 +142,8 @@ no_sig:	lea	no_sig_mess,%si
 1:                             // And halt
 	jmp	1b
 
+no_sig_mess:	.ascii	"No ELKS setup signature found ..."
+		.byte	0x00
 
 // If setup and kernel were loaded as a blob, we need to separate them out,
 // then move to our own stack
@@ -220,66 +221,19 @@ start_os:
 	mov	$INITSEG,%ax	// DS = setup data segment
 	mov	%ax,%ds
 
-#ifdef CONFIG_HW_KEYBOARD_BIOS
-	mov	$0x0305,%ax	// set the keyboard repeat rate to the max
-	xor	%bx,%bx
-	int	$0x16
-#endif
-
-#ifdef CONFIG_HW_VGA
-// check for EGA/VGA and some config parameters
- 	mov	$0x12,%ah	// Get video data
-	mov	$0x10,%bl
-	int	$0x10
-	mov	%ax,8
-	mov	%bx,10
-	mov	%cx,12
-	mov	$0x5019,%ax
-	cmp	$0x10,%bl
-	je	novga
-	mov	$0x1a00,%ax	// Added check for EGA/VGA discrimination
-	int	$0x10
-	mov	%ax,%bx
-	mov	$0x5019,%ax
-	movb	$0,15		// by default, no VGA
-	cmp	$0x1a,%bl	// 1a means VGA, anything else EGA or lower
-	jne	novga
-	movb	$1,15		// we've detected a VGA
-#else
-        movb  $0,15		// no VGA in system
-#ifdef CONFIG_HW_VIDEO_LINES_PER_SCREEN
-        mov   $CONFIG_HW_VIDEO_LINES_PER_SCREEN,%al
-#else
-        mov   $25,%al		// height of display in rows
-#endif
-#endif
-
-novga:	mov	%al,14		// CGA 25 rows
-
-// Get video-card data
-
-	mov	$0x0f,%ah
-	int	$0x10
-	mov	%bx,4		// bh = display page
-	mov	%ax,6		// al = video mode, ah = window width
-
-	call	getcpu
-
-	push	%es		// clear BIOS data for harddisk 0/1, 12 bytes
-	mov	$INITSEG,%ax	// and BIOS data for floppy disk 0/1, 12 bytes
-	mov	%ax,%es
-	mov	$24,%cx
-	mov	$0x80,%di
+#ifdef CONFIG_ROMCODE
+	mov	%ax,%es		// clear setup data segment
+	xor	%di,%di
 	xor	%ax,%ax
+	mov	$256,%cx
 	cld
 	rep
 	stosw
-	pop	%es
+#endif
 
-	mov	$INITSEG,%ax
-	mov	%ax,%ds
-	int	$0x12		// determine the size of the basememory
-	mov	%ax,0x2a
+// Set various INITSEG values used by kernel SETUP_xxx defines (see config.h)
+
+	call	arch_set_initseg
 
 // End of shared setup code
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -393,10 +347,8 @@ size_error:
 	mov $INITSEG,%ax
 	mov %ax,%ds
 
-// Get the memory size
-// TODO: optional BIOS INT 12h
-
-	int $0x12   // AX in KB
+// Get the memory size in Kbytes in AX
+	call arch_get_mem
 	mov $6,%cl  // to paragraphs
 	shl %cl,%ax
 
@@ -406,7 +358,7 @@ size_error:
 	and $0xF000,%ax
 	mov %ax,%es
 
-	mov 0x1F1,%al  // setup sector count
+	mov setup_sects,%al  // setup sector count
 	cbw
 	mov $8,%cl     // to words
 	shl %cl,%ax
@@ -723,10 +675,160 @@ add_ptr:
 	ret
 #endif /* REL_SYS*/
 
+// Utility/debugging routines
+
+// Write DS:SI asciiz string to console
+1:	call	putc
+puts:	lodsb
+	test	%al,%al
+	jnz	1b
+	ret
+
+// Output hex nibble, byte and word. All registers saved.
+hex1:	push %ax
+	and $0x0F,%al
+	add $'0',%al
+	cmp $'9',%al
+	jle 1f
+	add $('A'-'9'-1),%al
+1:	call putc
+	pop %ax
+	ret
+
+hex2:	push %ax
+	push %cx
+	push %dx
+	mov %al,%dl
+	mov $4,%cl
+	shr %cl,%al
+	call hex1
+	mov %dl,%al
+	call hex1
+	pop %dx
+	pop %cx
+	pop %ax
+	ret
+
+hex4:	push %ax
+	push %ax
+	mov %ah,%al
+	call hex2
+	pop %ax
+	call hex2
+	pop %ax
+	ret
+
+hex4sp: call hex4
+	push %ax
+	mov $' ',%ax
+	call putc
+	pop %ax
+	ret
+
+hello_mess:
+	.ascii "\r\nELKS Setup "
+	.byte 0
+
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Architecture specific routines for IBM PC
+//	Entry points specific for platform setup of SETUP_xxx variables (see config.h)
+//		arch_set_initseg
+//		arch_get_mem
+
+#ifdef CONFIG_ARCH_IBMPC
+
+// Return total memory in Kbytes
+arch_get_mem:
+	int $0x12   // AX in KB
+	ret
+
+// Set INITSEG values for IBM PC
+// Set keyboard repeat rate using INT 16h
+// Determine display type using INT 10h AH=12 and INT 10h AH=1A
+// Get display page and mode using INT 10h AH=0F
+// Determine CPU type using somewhat outdated methods
+// Clear BIOS data area for fd/hd (24 bytes)
+// Determine size of main memory using INT 12h
+// FIXME move to separate setup-bios.S file or individual drivers
+
+arch_set_initseg:
+
+#ifdef CONFIG_HW_KEYBOARD_BIOS
+	mov	$0x0305,%ax	// set the keyboard repeat rate to the max
+	xor	%bx,%bx
+	int	$0x16
+#endif
+
+#ifdef CONFIG_HW_VGA
+// check for EGA/VGA and some config parameters
+	mov	$0x12,%ah	// Get video data
+	mov	$0x10,%bl
+	int	$0x10
+	mov	%ax,8
+	mov	%bx,10
+	mov	%cx,12
+	mov	$0x5019,%ax
+	cmp	$0x10,%bl
+	je	novga
+	mov	$0x1a00,%ax	// Added check for EGA/VGA discrimination
+	int	$0x10
+	mov	%ax,%bx
+	mov	$0x5019,%ax
+	movb	$0,15		// by default, no VGA
+	cmp	$0x1a,%bl	// 1a means VGA, anything else EGA or lower
+	jne	novga
+	movb	$1,15		// we've detected a VGA
+#else
+        movb  $0,15		// no VGA in system
+#ifdef CONFIG_HW_VIDEO_LINES_PER_SCREEN
+        mov   $CONFIG_HW_VIDEO_LINES_PER_SCREEN,%al
+#else
+        mov   $25,%al		// height of display in rows
+#endif
+#endif /* CONFIG_HW_VGA*/
+
+novga:	mov	%al,14		// CGA 25 rows
+
+// Get video-card data
+
+	mov	$0x0f,%ah
+	int	$0x10
+	mov	%bx,4		// bh = display page
+	mov	%ax,6		// al = video mode, ah = window width
+
+	call	getcpu
+
+	push	%es		// clear BIOS data for harddisk 0/1, 12 bytes
+	mov	$INITSEG,%ax	// and BIOS data for floppy disk 0/1, 12 bytes
+	mov	%ax,%es
+	mov	$24,%cx
+	mov	$0x80,%di
+	xor	%ax,%ax
+	cld
+	rep
+	stosw
+	pop	%es
+
+	mov	$INITSEG,%ax
+	mov	%ax,%ds
+	int	$0x12		// determine the size of the basememory
+	mov	%ax,0x2a
+	ret
+
+// Write AL to console, save all other registers
+putc:	push %bx
+	push %cx
+	push %dx
+	mov $0x0E,%ah
+	mov $7,%bx      // page 0
+	int $0x10
+	pop %dx
+	pop %cx
+	pop %bx
+	ret
 
 /*
-! TODO: move probing to boot tools
+! TODO move to setup-cpuid.S or remove entirely (inaccurate/outdated)
 ! Probe for the CPU
 ! These information is taken from "PC intern 3.0", Data Becker Verlag, 1992
 ! and from the Linux-Kernel, arch/i386/kernel/head.S
@@ -897,70 +999,6 @@ queue_end:
 
 	or	%dx,%dx
 	ret
-#endif
-
-// Utility/debugging routines
-
-// Write DS:SI asciiz string to console
-1:	call	putc
-puts:	lodsb
-	test	%al,%al
-	jnz	1b
-	ret
-
-// Write AX to console
-putc:	push %bx
-	push %cx
-	push %dx
-	mov $0x0E,%ah
-	mov $7,%bx      // page 0
-	int $0x10
-	pop %dx
-	pop %cx
-	pop %bx
-	ret
-
-// Output hex nibble, byte and word. All registers saved.
-hex1:	push %ax
-	and $0x0F,%al
-	add $'0',%al
-	cmp $'9',%al
-	jle 1f
-	add $('A'-'9'-1),%al
-1:	call putc
-	pop %ax
-	ret
-
-hex2:	push %ax
-	push %cx
-	push %dx
-	mov %al,%dl
-	mov $4,%cl
-	shr %cl,%al
-	call hex1
-	mov %dl,%al
-	call hex1
-	pop %dx
-	pop %cx
-	pop %ax
-	ret
-
-hex4:	push %ax
-	push %ax
-	mov %ah,%al
-	call hex2
-	pop %ax
-	call hex2
-	pop %ax
-	ret
-
-hex4sp: call hex4
-	push %ax
-	mov $' ',%ax
-	call putc
-	pop %ax
-	ret
-
 //
 // The processor name must not be longer than 15 characters!
 //
@@ -994,16 +1032,128 @@ v_id2:	.byte 0,0,0,0
 v_id3:	.byte 0,0,0,0
 	.byte 0
 
-no_sig_mess:	.ascii	"No ELKS setup signature found ..."
-		.byte	0x00
+#endif /* !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_8086)*/
+#endif /* CONFIG_ARCH_IBMPC*/
 
-hello_mess:
-	.ascii "\r\nELKS Setup "
-	.byte 0
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Architecture specific routines for 8018X
+//	Entry points specific for platform setup of SETUP_xxx variables (see config.h)
+//		arch_set_initseg
+//		arch_get_mem
 
-// variables in ROM are not very useful
-start_sys_seg:	.word	SYSSEG
+#ifdef CONFIG_ARCH_8018X
 
+// Return total memory in Kbytes
+arch_get_mem:
+	mov $SETUP_MEM_KBYTES,%ax
+	ret
+
+// Set INITSEG values for 8081X architecture
+// currently hard-coded in config.h
+arch_set_initseg:
+	mov	$INITSEG,%ax
+	mov	%ax,%ds
+	ret
+
+// Write AL to console, save all other registers
+putc:	push %bx
+	push %cx
+	push %dx
+	// TODO: send character in AL to console
+	pop %dx
+	pop %cx
+	pop %bx
+	ret
+
+#endif /* CONFIG_ARCH_8018X*/
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Architecture specific routines for NEC PC98
+//	Entry points specific for platform setup of SETUP_xxx variables (see config.h)
+//		arch_set_initseg
+//		arch_get_mem
+
+#ifdef CONFIG_ARCH_PC98
+
+// Return total memory in Kbytes
+arch_get_mem:
+	mov $SETUP_MEM_KBYTES,%ax
+	ret
+
+// Set INITSEG values for PC98 architecture
+// currently hard-coded in config.h
+arch_set_initseg:
+
+// mov $0x30,%si
+// call puts
+// mov $'\n',%ax
+// call putc
+
+   push %es
+   mov $INITSEG,%ax
+   mov %ax,%es
+   mov $24,%cx
+   mov $0x90,%di
+   xor %ax,%ax
+   cld
+   rep
+   stosw
+   pop %es
+
+   mov $INITSEG,%ax
+   mov %ax,%ds
+   ret
+
+putc:
+   push %ds
+   push %bx
+   push %di
+   push %es
+   push %dx
+   push %cs
+   pop %ds
+   cmp $'\r',%al
+   jz putesc_r
+   cmp $'\n',%al
+   jz putesc_n
+   xor %ah,%ah
+   mov $tvram_x,%bx
+   mov (%bx),%di
+   mov $0xa000,%dx
+   mov %dx,%es
+   mov %ax,%es:(%di)
+   inc %di
+   inc %di
+   mov %di,(%bx)
+put_end:
+   pop %dx
+   pop %es
+   pop %di
+   pop %bx
+   pop %ds
+   ret
+putesc_r:
+   mov $tvram_x,%bx
+   mov (%bx),%ax
+   mov $160,%dl
+   div %dl
+   mul %dl
+   mov %ax,(%bx)
+   jmp put_end
+putesc_n:
+   mov $tvram_x,%bx
+   mov (%bx),%ax
+   mov $160,%dl
+   div %dl
+   inc %al
+   mul %dl
+   mov %ax,(%bx)
+   jmp put_end
+tvram_x:
+   .word 160
+#endif /* CONFIG_ARCH_PC98 */
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 // This must be last
 setup_sig1:	.word	SIG1

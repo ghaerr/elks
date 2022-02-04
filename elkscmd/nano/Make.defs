@@ -1,0 +1,19 @@
+#
+# Not using standard Make.defs for building nano for two reasons:
+#	Nano requires medium model, not directly supported in application builds yet.
+#	Want to keep nano and ncurses versions relatively unmodified due to their
+#	large size and many versions.
+#
+CC = ia16-elf-gcc
+CPP = ia16-elf-gcc -E
+RANLIB = ia16-elf-ranlib
+CFLAGS = -melks-libc -mcmodel=medium -msegment-relocation-stuff -mtune=i8086 -Wall -Os
+CFLAGS += $(INCLUDES)
+
+# nano adds CFLAGS += -ffunction-sections after including this file
+# ncurses adds CFLAGS += -fno-inline after including this file
+
+CFLAGS += -DELKS=1 -DGAWK -DNO_MBSUPPORT
+CFLAGS += -I../../ncurses-5.2
+LDFLAGS = -maout-heap=0xffff
+LIBS = -L../../ncurses-5.2/lib -lncurses

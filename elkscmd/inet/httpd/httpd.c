@@ -33,7 +33,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/wait.h>
-extern pid_t waitpid(pid_t, int *, int);
 
 #define DEF_PORT		80
 #define DEF_DOCBASE	"/var/www"
@@ -42,8 +41,7 @@ extern pid_t waitpid(pid_t, int *, int);
 #define WS(c)	( ((c) == ' ') || ((c) == '\t') || ((c) == '\r') || ((c) == '\n') )
 
 int listen_sock;
-#define BUF_SIZE	1024
-char buf[BUF_SIZE];
+char buf[1536];
 
 char* get_mime_type(char *name)
 {
@@ -91,7 +89,7 @@ void process_request(int fd)
 	char *c, *file, fullpath[128];
 	struct stat st;
 	
-	ret = read(fd, buf, BUF_SIZE);
+	ret = read(fd, buf, sizeof(buf));
 	
 	c = buf;
 	while (*c && !WS(*c) && c < (buf + sizeof(buf))){
@@ -133,10 +131,10 @@ void process_request(int fd)
 	write(fd, buf, strlen(buf));
 	
 	do {
-		ret = read(fin, buf, BUF_SIZE);
+		ret = read(fin, buf, sizeof(buf));
 		if (ret > 0)
 			ret = write(fd, buf, ret);
-	} while (ret == BUF_SIZE);
+	} while (ret == sizeof(buf));
 	
 	close(fin);
 	
@@ -151,6 +149,16 @@ int main(int argc, char **argv)
 		fprintf(stderr, "httpd: Can't open socket (check if ktcp is running)\n");
 		exit(-1);
 	}
+
+	/* set local port reuse, allows server to be restarted in less than 10 secs */
+	ret = 1;
+	if (setsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR, &ret, sizeof(int)) < 0)
+		perror("SO_REUSEADDR");
+
+	/* set small listen buffer to save ktcp memory */
+	ret = SO_LISTEN_BUFSIZ;
+	if (setsockopt(listen_sock, SOL_SOCKET, SO_RCVBUF, &ret, sizeof(int)) < 0)
+		perror("SO_RCVBUF");
 
 	localadr.sin_family = AF_INET;
 	localadr.sin_port = htons(DEF_PORT);
