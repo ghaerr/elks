@@ -49,7 +49,11 @@ int xms_init(void)
 	enabled = verify_a20();
 	printk(" now %s, ", enabled? "on" : "off");
 #ifdef CONFIG_FS_XMS_INT15
+#ifdef CONFIG_ARCH_PC98
+	printk("using int 1F, ");
+#else
 	printk("using int 15, ");
+#endif
 #else
 	if (!enabled) {
 		printk("xms disabled, A20 error,");
