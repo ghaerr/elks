@@ -35,16 +35,14 @@ SRCS1 = \
 	fmemory.S \
 	peekpoke.S \
 	string.S \
-	bios15.S \
-	unreal.S \
 	printreg.S \
 	atomic.S \
 	# end of list
 
 ifeq ($(CONFIG_ARCH_PC98), y)
-SRCS1 += bios1B.S
+SRCS1 += bios1B.S bios-xms-pc98.S
 else
-SRCS1 += bios13.S
+SRCS1 += bios13.S bios15.S unreal.S
 endif
 
 OBJS1 = $(SRCS1:.S=.o)
