@@ -1,7 +1,7 @@
 /*
  * Convert an ELF "executable" file which employs H. Peter Anvin's segelf
  * relocations, into an ELKS executable.
- * Copyright (c) 2020 TK Chia
+ * Copyright (c) 2020--2022 TK Chia
  *
  * This file is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by
@@ -30,6 +30,8 @@
 #include <sys/stat.h>
 #ifndef __DJGPP__
 # include <libgen.h>
+#else
+# include <io.h>
 #endif
 #include "libelf.h"
 
@@ -349,7 +351,11 @@ input_for_header (void)
   size_t num_scns, sidx;
   Elf32_Ehdr *ehdr;
 
+#ifdef O_BINARY
+  ifd = open (file_name, O_RDONLY | O_BINARY);
+#else
   ifd = open (file_name, O_RDONLY);
+#endif
   if (ifd == -1)
     error_with_errno ("cannot open input file `%s'", file_name);
 
@@ -550,6 +556,9 @@ start_output (void)
   ofd = mkstemp (tmp_file_name);
   if (ofd == -1)
     error_with_errno ("cannot create temporary output file");
+#ifdef O_BINARY
+  setmode (ofd, O_BINARY);
+#endif
 
   INFO ("created temporary file `%s'", tmp_file_name);
 }
