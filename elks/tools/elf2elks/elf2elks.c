@@ -1,7 +1,7 @@
 /*
  * Convert an ELF "executable" file which employs H. Peter Anvin's segelf
  * relocations, into an ELKS executable.
- * Copyright (c) 2020 TK Chia
+ * Copyright (c) 2020--2022 TK Chia
  *
  * This file is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by
@@ -349,7 +349,11 @@ input_for_header (void)
   size_t num_scns, sidx;
   Elf32_Ehdr *ehdr;
 
+#ifdef O_BINARY
+  ifd = open (file_name, O_RDONLY | O_BINARY);
+#else
   ifd = open (file_name, O_RDONLY);
+#endif
   if (ifd == -1)
     error_with_errno ("cannot open input file `%s'", file_name);
 
