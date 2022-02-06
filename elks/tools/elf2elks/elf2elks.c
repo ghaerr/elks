@@ -30,6 +30,8 @@
 #include <sys/stat.h>
 #ifndef __DJGPP__
 # include <libgen.h>
+#else
+# include <io.h>
 #endif
 #include "libelf.h"
 
@@ -554,6 +556,9 @@ start_output (void)
   ofd = mkstemp (tmp_file_name);
   if (ofd == -1)
     error_with_errno ("cannot create temporary output file");
+#ifdef O_BINARY
+  setmode (ofd, O_BINARY);
+#endif
 
   INFO ("created temporary file `%s'", tmp_file_name);
 }
