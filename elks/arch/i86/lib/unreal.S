@@ -294,8 +294,7 @@ linear32_peekw:
 	mov    %bx,%ds
 
 	cld
-	addr32                // 32-bit address prefix
-	lodsw                 // AX = [DS:ESI++]
+	addr32 lodsw          // AX = [DS:ESI++]
 	//popf                // restore interrupt status
 
 	mov    %dx,%si
@@ -338,11 +337,8 @@ linear32_fmemcpyw:
 	mov    %bx,%ds
 
 	cld
-	addr32                // 32-bit address prefix
-	rep
-	movsw                 // word [ES:EDI++] <- [DS:ESI++], ECX times
-	.byte  0x67           // 80386 B1 step chip bug on address size mixing
-	nop
+	addr32 rep movsw      // word [ES:EDI++] <- [DS:ESI++], ECX times
+	addr32 nop            // 80386 B1 step chip bug on address size mixing
 
 	//popf                // restore interrupt status
 
@@ -388,18 +384,12 @@ linear32_fmemcpyb:
 
 	cld
 	shrl   $1,%ecx        // copy words
-	addr32                // 32-bit address prefix
-	rep
-	movsw                 // word [ES:EDI++] <- [DS:ESI++], ECX times
-	.byte  0x67           // 80386 B1 step chip bug on address size mixing
-	nop
+	addr32 rep movsw      // word [ES:EDI++] <- [DS:ESI++], ECX times
+	addr32 nop            // 80386 B1 step chip bug on address size mixing
 
 	rcll    $1,%ecx       // then possibly final byte
-	addr32                // 32-bit address prefix
-	rep
-	movsb                 // byte [ES:EDI++] <- [DS:ESI++], ECX times
-	.byte  0x67           // 80386 B1 step chip bug on address size mixing
-	nop
+	addr32 rep movsb      // byte [ES:EDI++] <- [DS:ESI++], ECX times
+	addr32 nop            // 80386 B1 step chip bug on address size mixing
 
 	//popf                // restore interrupt status
 

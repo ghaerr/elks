@@ -98,7 +98,7 @@ CFLAGS=$(CFLBASE) $(WARNINGS) $(LOCALFLAGS) $(INCLUDES) -D__ELKS__ -DELKS_VERSIO
 # Standard compilation rules.
 
 .S.s:
-	gcc -E -traditional $(INCLUDES) $(CCDEFS) -o $*.s $<
+	$(CC) -E -traditional $(INCLUDES) $(CCDEFS) -o $*.s $<
 
 .s.o:
 	$(AS) $(ASFLAGS) -o $*.o $<

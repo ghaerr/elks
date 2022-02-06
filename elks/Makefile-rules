@@ -232,7 +232,7 @@ endif
 .S.s: ;
 
 .S.o:
-	gcc -E -traditional $(INCLUDES) $(CCDEFS) -o $*.tmp $<
+	$(CC) -E -traditional $(INCLUDES) $(CCDEFS) -o $*.tmp $<
 	$(AS) $(ASFLAGS) -o $*.o $*.tmp
 	rm $*.tmp
 

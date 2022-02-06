@@ -47,7 +47,6 @@ copy_bin_files()
 {
 	echo "Copying files from /bin..."
 	cp /bin/sh	$MNT/bin
-	cp /bin/sash	$MNT/bin
 	cp /bin/cp	$MNT/bin
 	cp /bin/echo	$MNT/bin
 	cp /bin/init	$MNT/bin
