@@ -175,7 +175,7 @@ securepath(char *path)
     }
     if ( stat(path, &sb) != 0 ) fatal("%s: can't stat", path);
     if ( stat(".", &sb1) != 0 ) fatal(".: can't stat");
-    if ( (sb.st_dev != sb1.st_dev) || (sb.st_ino != sb1.st_ino) ) fatal("cwd not %s", CRONDIR);
+    if ( (sb.st_dev != sb1.st_dev) || (sb.st_ino != sb1.st_ino) ) fatal("cwd not %s", _PATH_CRONDIR);
 }
 
 
@@ -336,13 +336,13 @@ main(int argc, char **argv)
 	interval = 1;
     
     if (xis_crondir() != 0) {
-        printf("No '%s' directory - terminating\n",CRONDIR);
+        printf("No '%s' directory - terminating\n", _PATH_CRONDIR);
         exit (1);
     }
 
-    xchdir(CRONDIR);
+    xchdir(_PATH_CRONDIR);
 
-    securepath(CRONDIR);
+    securepath(_PATH_CRONDIR);
 
     ct_dirtime = 0;
 

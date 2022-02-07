@@ -14,6 +14,7 @@
 #include <string.h>
 #include <utime.h>
 #include <ctype.h>
+#include <paths.h>
 #if HAVE_LIBGEN_H
 #   include <libgen.h>
 #endif
@@ -59,7 +60,7 @@ cat(char *file)
     FILE *f;
 
     superpowers();
-    xchdir(CRONDIR);
+    xchdir(_PATH_CRONDIR);
 
     if ( f = fopen(file, "r") ) {
 	while ( (c = fgetc(f)) != EOF ) {
@@ -133,7 +134,7 @@ newcrontab(char *file, char *name)
     }
 
     superpowers();
-    xchdir(CRONDIR);
+    xchdir(_PATH_CRONDIR);
 
     if ( out = fopen(name, "w") ) {
 	while ( ((c = fgetc(in_tmp)) != EOF) && (fputc(c,out) != EOF) )
@@ -249,7 +250,7 @@ main(int argc, char **argv)
     strncpy(whoami, pwd->pw_name, sizeof whoami);
 
     if (xis_crondir() != 0) {
-        printf("No '%s' directory - terminating\n",CRONDIR);
+        printf("No '%s' directory - terminating\n",_PATH_CRONDIR);
         exit (1);
     }
     
@@ -288,7 +289,7 @@ main(int argc, char **argv)
     }
     else if (remove) {
 	superpowers();
-	xchdir(CRONDIR);
+	xchdir(_PATH_CRONDIR);
 	if (unlink(pwd->pw_name) == -1)
 	    fatal("%s: %s", pwd->pw_name, strerror(errno));
     }

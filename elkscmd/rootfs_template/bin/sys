@@ -71,7 +71,6 @@ copy_etc_files()
 	cp /etc/inittab	$MNT/etc
 	cp /etc/passwd	$MNT/etc
 	cp /etc/profile	$MNT/etc
-	cp /etc/sashrc	$MNT/etc
 	cp /etc/issue	$MNT/etc
 }
 
