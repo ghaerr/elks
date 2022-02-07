@@ -107,8 +107,8 @@ ifdef CONFIG_IMG_DEV
 	mmd -i $(TARGET_FILE) ::/dev
 endif
 	for f in $$(cd $(DESTDIR); find * -name '*'); do \
-		[ -d $(DESTDIR)/$$f -a "$$f" != "dev" ] && mmd -i $(TARGET_FILE) ::$$f; \
-		[ -f $(DESTDIR)/$$f ] && mcopy -i $(TARGET_FILE) $(FAT_COPYOPTS) $(DESTDIR)/$$f ::$$f; \
+		if [ -d $(DESTDIR)/$$f -a "$$f" != "dev" ]; then mmd -D o -i $(TARGET_FILE) ::$$f || exit 1; fi; \
+		if [ -f $(DESTDIR)/$$f ]; then mcopy -i $(TARGET_FILE) $(FAT_COPYOPTS) $(DESTDIR)/$$f ::$$f || exit 1; fi; \
 	done
 	# Protect contiguous /linux by marking as RO, System and Hidden
 	mattrib -i $(TARGET_FILE) +r +s +h ::/linux
