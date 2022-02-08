@@ -30,12 +30,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+#include <paths.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/wait.h>
 
 #define DEF_PORT		80
-#define DEF_DOCBASE	"/var/www"
 #define DEF_CONTENT	"text/html"
 
 #define WS(c)	( ((c) == ' ') || ((c) == '\t') || ((c) == '\r') || ((c) == '\n') )
@@ -109,7 +109,7 @@ void process_request(int fd)
 	*c = 0;
 
 	/* TODO : Use strncat when security is the only problem of this server! */
-	strcpy(fullpath, DEF_DOCBASE);
+	strcpy(fullpath, _PATH_DOCBASE);
 	strcat(fullpath, file);
 	
 	if (!stat(fullpath, &st) && (st.st_mode & S_IFMT) == S_IFDIR) {

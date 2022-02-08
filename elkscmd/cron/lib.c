@@ -14,7 +14,7 @@
 #include <ctype.h>
 #include <time.h>
 #include <dirent.h>
-
+#include <paths.h>
 #include "cron.h"
 
 #ifdef ELKS
@@ -57,7 +57,7 @@ _error(int severity, char *fmt, va_list ptr)
 	fputc('\n',stderr);
     }
     else {
-    if ( (ftmp = fopen(LOGFILE, "a+")) == 0 ) {
+    if ( (ftmp = fopen(_PATH_CRONLOG, "a+")) == 0 ) {
 	    error("can't create logfile: %s", strerror(errno));
 	    return;
 	}  
@@ -219,15 +219,15 @@ xis_crondir (void)
 {
     FILE *ftmp;
     
-    DIR* dir = opendir(CRONDIR);
+    DIR* dir = opendir(_PATH_CRONDIR);
     if (dir) { /* Directory exists. */
         closedir(dir);
         return 0;
     } else { /* Directory does not exist or opendir failed. */
-        int result = mkdir(CRONDIR,0777); /*-1 fail, 0 ok */
+        int result = mkdir(_PATH_CRONDIR,0777); /*-1 fail, 0 ok */
         if (result == -1) return -1;
         /* created CRONDIR, generate root crontab file template */
-        if ( (ftmp = fopen(TEMPLATEFILE, "a+")) == 0 ) {
+        if ( (ftmp = fopen(_PATH_CRONTAB, "a+")) == 0 ) {
             error("can't create crontab template: %s", strerror(errno));
             return -1;
         }  

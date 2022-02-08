@@ -18,6 +18,7 @@ all: $(PRGS)
 
 install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
+	$(INSTALL) resolv.cfg $(DESTDIR)/etc
 
 netstat: netstat.o
 	$(LD) $(LDFLAGS) netstat.o -o netstat $(LDLIBS)

@@ -49,10 +49,11 @@ mainmenu_option next_comment
 
 				#comment "Internet applets"
 
-				#bool 'httpd'      CONFIG_APP_HTTPD      y
-				#bool 'nettools'   CONFIG_APP_NET_TOOLS  y
 				#bool 'telnet'     CONFIG_APP_TELNET     y
 				#bool 'telnetd'    CONFIG_APP_TELNETD    y
+				#bool 'ftp'        CONFIG_APP_FTP        y
+				#bool 'httpd'      CONFIG_APP_HTTPD      y
+				#bool 'nettools'   CONFIG_APP_NET_TOOLS  y
 				#bool 'tinyirc'    CONFIG_APP_TINYIRC    y
 				#bool 'urlget'     CONFIG_APP_URLGET     y
 
