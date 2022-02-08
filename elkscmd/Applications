@@ -153,9 +153,9 @@ disk_utils/fdisk				:be-diskutil	:360k
 busyelks/busyelks				:busyelks
 inet/httpd/sample_index.html	::var/www/index.html	:net
 ktcp/ktcp						:net
-ktcp/resolv.conf	::etc/resolv.conf	:net
 inet/nettools/netstat			:net
 inet/nettools/nslookup			:net
+#inet/nettools/resolv.cfg	::etc/resolv.cfg	:net
 inet/nettools/arp				:net
 inet/telnet/telnet				:net
 inet/telnetd/telnetd			:net

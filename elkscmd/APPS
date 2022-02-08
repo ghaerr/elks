@@ -117,9 +117,10 @@ CONFIG_APP_LEVEE		levee/			Levee vi editor, broken, not installed.
 CONFIG_APP_XVI			xvi/			vi editor, won't compile, not installed.
 
 # Internet stack
-CONFIG_APP_KTCP			ktcp/			ELKS TCP/IP stack. Installs /bin/ktcp and /etc/resolv.conf
+CONFIG_APP_KTCP			ktcp/			ELKS TCP/IP stack. Installs /bin/ktcp
+CONFIG_APP_FTP			inet/ftp/		Installs /bin/ftp, /bin/ftpd
 CONFIG_APP_HTTPD		inet/httpd/		Installs /bin/httpd and /var/www/index.html
-CONFIG_APP_NET_TOOLS	inet/nettools/	Installs /bin/netstat, /bin/nslookup
+CONFIG_APP_NET_TOOLS	inet/nettools/	Installs /bin/netstat, /bin/nslookup, /etc/resolv.cfg
 CONFIG_APP_TELNET		inet/telnet/	Installs /bin/telnet
 CONFIG_APP_TELNETD		inet/telnetd/	Installs /bin/telnetd
 CONFIG_APP_TINYIRC		inet/tinyirc/	Installs /bin/tinyirc
