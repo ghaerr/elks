@@ -24,7 +24,7 @@ from that popular platform.
 ## Screenshots
 
 ELKS running on QEMU
-![ss1](https://github.com/jbruchon/elks/blob/master/Screenshots/ELKS_0.4.0.png)
+![ss1](https://github.com/jbruchon/elks/blob/master/Screenshots/ELKS_0.5.0.png)
 
 Olivetti M24 8086 CPU
 ![ss2](https://github.com/jbruchon/elks/blob/master/Screenshots/Olivetti_M24_8086_CPU.png)
