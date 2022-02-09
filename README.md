@@ -5,15 +5,12 @@
 ![main](https://github.com/jbruchon/elks/workflows/main/badge.svg)
 
 
-# What is this ?
+# What is ELKS?
 
-This is a project providing a Linux-like OS for systems based on the Intel
+ELKS is a project providing a Linux-like OS for systems based on the Intel
 IA16 architecture (16-bit processors: 8086, 8088, 80188, 80186, 80286,
-NEC V20, V30 and compatibles).
-
-Such systems are ancient computers (IBM-PC XT / AT and clones), or more
-recent SBC / SoC / FPGA that reuse the huge hardware & software legacy
-from that popular platform.
+NEC V20, V30 and compatibles). Such systems are ancient computers (IBM-PC
+XT / AT and clones) as well as more recent SBCs, SoCs, and FPGAs.
 
 ## Watch ELKS in action
 
@@ -36,7 +33,7 @@ ELKS Networking showing netstat and process list
 
 A full set of disk images are available for download, for you to try out ELKS: [Downloads](https://github.com/jbruchon/elks/releases).
 
-## How to build ?
+## How to build
 
 Full build instructions are [here](https://github.com/jbruchon/elks/blob/master/BUILD.md).
 
@@ -50,6 +47,4 @@ More information is in the Documentation folder: [Index of ELKS Documentation](h
 
 ## More information
 
-Questions? Problems? Patches? Open an issue in this project!
-
-You can also join and email the 'Linux-8086' list at linux-8086@vger.kernel.org.
+Questions? Problems? Patches? Open an issue on the ELKS GitHub project!
