@@ -257,6 +257,7 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
     if (cb->unaccepted && (h->flags & TF_FIN)) {
 	debug_tcp("tcp: FIN received before accept, dropping packet\n");
+	netstats.tcpdropcnt++;
 
 	/* We can't change state before accept processing, so drop packet*/
 	return;
@@ -507,6 +508,7 @@ void tcp_process(struct iphdr_s *iph)
 
 	    debug_tune("tcp: dropping packet, bad seqno: need %ld got %ld size %d\n",
 		cb->rcv_nxt - cb->irs, ntohl(tcph->seqnum) - cb->irs, datalen);
+	    netstats.tcpdropcnt++;
 
 	    if (cb->rcv_nxt != ntohl(tcph->seqnum) + 1)
 		tcp_send_ack(cb);
