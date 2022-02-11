@@ -44,16 +44,16 @@ void ChangetoDnsNameFormat(unsigned char* dns,unsigned char* host)
     *dns++='\0';
 }
 
-/* Get the DNS server from the /etc/resolv.conf file */
+/* Get the DNS server from the /etc/resolv.cfg file */
 char* get_dns_server()
 {
     FILE *fp;
     static char line[200];
     char ipaddress[200];
     char* ptr;
-    if((fp = fopen("/etc/resolv.conf" , "r")) == NULL)
+    if((fp = fopen(_PATH_RESOLV , "r")) == NULL)
     {
-        //printf("failed to read resolv.conf\n");
+        //printf("failed to read resolv.cfg\n");
 	sprintf(line,"208.67.222.222"); /*nameserver*/
 	return &line;
     }
@@ -163,4 +163,3 @@ int main(int argc, char *argv[]) {
   close(fd);
   return 0;
 }
-

@@ -9,13 +9,18 @@
 #define	_PATH_NOLOGIN	"/etc/nologin"
 #define	_PATH_LOGIN	"/bin/login"
 #define	_PATH_BSHELL	"/bin/sh"
-#define _PATH_UTMP	"/var/run/utmp"
-#define _PATH_WTMP	"/var/log/wtmp"
-#define	_PATH_DEFPATH	"/bin:/usr/bin:/usr/local/bin:."
+#define	_PATH_DEFPATH	"/bin:."
 #define	_PATH_DEV	"/dev/"
 #define _PATH_DEVNULL	"/dev/null"
 #define	_PATH_TMP	"/tmp/"
+#define _PATH_LOCALE	"/lib/locale"
+#define _PATH_UTMP	"/var/utmp"
+#define _PATH_WTMP	"/var/log/wtmp"
 #define _PATH_LASTLOG	"/var/log/lastlog"
-#define _PATH_LOCALE	"/usr/lib/locale"
+#define _PATH_DOCBASE	"/var/www"
+#define _PATH_CRONDIR	"/var/cron"
+#define _PATH_CRONTAB	"/var/cron/root"
+#define _PATH_CRONLOG	"/var/cron/cron.log"
+
 
 #endif /* __PATHS_H */

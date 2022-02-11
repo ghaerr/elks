@@ -79,7 +79,7 @@ runjobprocess(crontab *tab,cron *job,struct passwd *usr)
 	}
 	close(input[1]);
 
-#if 0 //no email support in ELKS yet
+#ifdef _PATH_MAIL //no email support in ELKS yet
 	if ( fork() == 0 ) {
         if (recv(output[0], peek, 1, MSG_PEEK) == 1 ) {
 		close(0);dup2(output[0],0);
@@ -87,8 +87,8 @@ runjobprocess(crontab *tab,cron *job,struct passwd *usr)
 		    to = usr->pw_name;
 		snprintf(subject, sizeof subject,
 			 "Cron <%s> %s", to, job->command);
-		execle(PATH_MAIL, "mail", "-s", subject, to, (char*)0, tab->env);
-		fatal("can't exec(\"%s\"): %s", PATH_MAIL, strerror(errno));
+		execle(_PATH_MAIL, "mail", "-s", subject, to, (char*)0, tab->env);
+		fatal("can't exec(\"%s\"): %s", _PATH_MAIL, strerror(errno));
         }
         exit(0);
 	}
