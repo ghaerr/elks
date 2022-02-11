@@ -29,7 +29,6 @@ struct fs_struct {
 struct mm_struct {
     struct segment		*seg_code;
     struct segment		*seg_data;
-    char			flags;
 };
 
 struct signal_struct {
@@ -50,6 +49,7 @@ struct task_struct {
 /* Kernel info */
     pid_t			pid;
     pid_t			ppid;
+    pid_t			pgrp;
     pid_t			session;
     uid_t			uid;
     uid_t			euid;
@@ -59,7 +59,8 @@ struct task_struct {
     gid_t			sgid;
 
 /* Scheduling + status variables */
-    __s16			state;
+    unsigned char		state;
+    struct wait_queue		child_wait;
     __u32			timeout;	/* for select() */
     struct wait_queue		*waitpt;	/* Wait pointer */
     struct wait_queue		*poll[POLL_MAX];  /* polled queues */
@@ -68,15 +69,8 @@ struct task_struct {
     struct file_struct		files;		/* File system structure */
     struct fs_struct		fs;		/* File roots */
     struct mm_struct		mm;		/* Memory blocks */
-    pid_t			pgrp;
     struct tty			*tty;
     struct task_struct		*p_parent;
-#if BLOAT
-    struct task_struct		*p_prevsib;
-    struct task_struct		*p_nextsib;
-    struct task_struct		*p_child;
-#endif
-    struct wait_queue		child_wait;
     int				exit_status;	/* process exit status*/
     struct inode		*t_inode;
     sigset_t			signal;		/* Signal status */
@@ -119,7 +113,6 @@ extern __task task[MAX_TASKS];
 
 extern volatile jiff_t jiffies;	/* ticks updated by the timer interrupt*/
 extern __ptask current;
-extern int need_resched;
 
 extern struct timeval xtime;
 extern jiff_t xtime_jiffies;

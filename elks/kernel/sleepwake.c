@@ -84,7 +84,7 @@ void wait_clear(struct wait_queue *p)
     pcurrent->waitpt = NULL;
 }
 
-static void __sleep_on(register struct wait_queue *p, __s16 state)
+static void __sleep_on(register struct wait_queue *p, unsigned char state)
 {
     //if (current == &task[0]) panic("task[0] trying to sleep from %x", p);
     debug_sched("sleep: %d waitq %04x\n", current->pid, p);
