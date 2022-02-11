@@ -141,18 +141,21 @@ struct buffer_head {
 #define BLOCK_READ	0
 #define BLOCK_WRITE	1
 
-#define mark_buffer_dirty(bh, st) ((bh)->b_dirty = (st))
+#define mark_buffer_dirty(bh) ((bh)->b_dirty = 1)
 #define mark_buffer_clean(bh) ((bh)->b_dirty = 0)
-#define buffer_dirty(bh) ((bh)->b_dirty)
-#define buffer_clean(bh) (!(bh)->b_dirty)
-#define buffer_uptodate(bh) ((bh)->b_uptodate)
-#define buffer_locked(bh) ((bh)->b_lock)
+#define buffer_dirty(bh)	((bh)->b_dirty)
+#define buffer_clean(bh)	(!(bh)->b_dirty)
+#define buffer_uptodate(bh)	((bh)->b_uptodate)
+#define buffer_locked(bh)	((bh)->b_lock)
+#define buffer_seg(bh)		((bh)->b_seg)
+#define buffer_count(bh)	((bh)->b_count)
+#define buffer_blocknr(bh)	((bh)->b_blocknr)
+#define buffer_dev(bh)		((bh)->b_dev)
 
 #define iget(_a, _b) __iget(_a, _b)
 
-extern void brelse(struct buffer_head *);
-extern void bforget(struct buffer_head *);
-
+void brelse(struct buffer_head *);
+void bforget(struct buffer_head *);
 void wait_on_buffer (struct buffer_head *);
 void lock_buffer (struct buffer_head *);
 void unlock_buffer (struct buffer_head *);

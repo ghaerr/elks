@@ -20,7 +20,7 @@ struct buffer_head * FATPROC msdos_sread(struct super_block *s, sector_t sector,
 		return NULL;
 
 	map_buffer(bh);
-	//debug_fat("msread sector %ld block %lu\n", sector, bh->b_blocknr);
+	//debug_fat("msread sector %ld block %lu\n", sector, buffer_blocknr(bh));
 	*start = bh->b_data +
 		(((int)sector & (BLOCK_SIZE_BITS - SECTOR_BITS_SB(s))) << SECTOR_BITS_SB(s));
 	return bh;
@@ -122,7 +122,7 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 			else {
 				map_buffer(bh);
 				memset(bh->b_data,0,BLOCK_SIZE);
-				bh->b_uptodate = 1;
+				mark_buffer_uptodate(bh, 1);
 			}
 			current++;
 		} else {
@@ -131,8 +131,8 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 			else memset(data,0,SECTOR_SIZE(inode));
 		}
 		if (bh) {
-			debug_fat("add_cluster block write %lu\n", bh->b_blocknr);
-			bh->b_dirty = 1;
+			debug_fat("add_cluster block write %lu\n", buffer_blocknr(bh));
+			mark_buffer_dirty(bh);
 			unmap_brelse(bh);
 		}
 	}

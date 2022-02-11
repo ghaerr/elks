@@ -364,8 +364,8 @@ static void msdos_write_inode(register struct inode *inode)
 	raw_entry->start = (unsigned short)inode->u.msdos_i.i_start;
 	raw_entry->starthi = ((unsigned short *)&inode->u.msdos_i.i_start)[1];
 	date_unix2dos(inode->i_mtime,&raw_entry->time,&raw_entry->date);
-	debug_fat("write_inode block write %lu\n", bh->b_blocknr);
-	bh->b_dirty = 1;
+	debug_fat("write_inode block write %lu\n", buffer_blocknr(bh));
+	mark_buffer_dirty(bh);
 	unmap_brelse(bh);
 }
 

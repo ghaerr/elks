@@ -53,7 +53,7 @@ static int minix_set_super_state(struct super_block *sb, int notflags, int newst
 		ms->s_state &= notflags;
 	else ms->s_state = newstate;
 	debug_sup("MINIX set super state %d\n", newstate);
-	mark_buffer_dirty(bh, 1);
+	mark_buffer_dirty(bh);
 	unmap_buffer(bh);
 	return oldstate;
 }
@@ -220,7 +220,7 @@ struct super_block *minix_read_super(register struct super_block *s, char *data,
     }
     if (!(s->s_flags & MS_RDONLY)) {
 		ms->s_state &= ~MINIX_VALID_FS;
-		mark_buffer_dirty(bh, 1);
+		mark_buffer_dirty(bh);
 		s->s_dirt = 1;
 		fsync_dev(s->s_dev);	/* force unchecked flag immediately after mount*/
     }
@@ -285,7 +285,7 @@ static unsigned short map_iblock(struct inode *inode, block_t i,
     b_zone = &(((block_t *) (bh->b_data))[block]);
     if (create && !(*b_zone)) {
 	if ((*b_zone = minix_new_block(inode->i_sb))) {
-	    bh->b_dirty = 1;
+	    mark_buffer_dirty(bh);
 	}
     }
     unmap_brelse(bh);
@@ -445,7 +445,7 @@ static struct buffer_head *minix_update_inode(register struct inode *inode)
 	if (S_ISCHR(inode->i_mode) || S_ISBLK(inode->i_mode))
 	    raw_inode->i_zone[0] = kdev_t_to_nr(inode->i_rdev);
 	inode->i_dirt = 0;
-	mark_buffer_dirty(bh, 1);
+	mark_buffer_dirty(bh);
 	unmap_buffer(bh);
     }
     return bh;

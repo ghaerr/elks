@@ -290,17 +290,22 @@ void __brelse(register struct buffer_head *buf)
 #endif
 }
 
+void brelse(register struct buffer_head *bh)
+{
+    if (bh) __brelse(bh);
+}
+
 /*
  * bforget() is like brelse(), except it removes the buffer
  * data validity.
  */
 #if 0
-void __bforget(struct buffer_head *buf)
+void __bforget(struct buffer_head *bh)
 {
-    wait_on_buffer(buf);
-    buf->b_dirty = 0;
-    DCR_COUNT(buf);
-    buf->b_dev = NODEV;
+    wait_on_buffer(bh);
+    bh->b_dirty = 0;
+    DCR_COUNT(bh);
+    bh->b_dev = NODEV;
     wake_up(&bufwait);
 }
 #endif
