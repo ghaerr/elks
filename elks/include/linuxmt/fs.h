@@ -125,7 +125,6 @@ struct buffer_head {
     kdev_t			b_dev;
     struct buffer_head		*b_next_lru;
     struct buffer_head		*b_prev_lru;
-    struct wait_queue		b_wait;
     unsigned char		b_count;
     char			b_lock;
     char			b_dirty;
@@ -134,25 +133,27 @@ struct buffer_head {
     ramdesc_t			b_ds;		/* L2 buffer data segment */
     char			*b_L2data;	/* Offset into L2 allocation block */
     char			b_mapcount;	/* count of L2 buffer mapped into L1 */
-    unsigned char		b_num;		/* Buffer number, for debugging */
 #endif
 };
 
 #define BLOCK_READ	0
 #define BLOCK_WRITE	1
 
-#define mark_buffer_dirty(bh, st) ((bh)->b_dirty = (st))
+#define mark_buffer_dirty(bh) ((bh)->b_dirty = 1)
 #define mark_buffer_clean(bh) ((bh)->b_dirty = 0)
-#define buffer_dirty(bh) ((bh)->b_dirty)
-#define buffer_clean(bh) (!(bh)->b_dirty)
-#define buffer_uptodate(bh) ((bh)->b_uptodate)
-#define buffer_locked(bh) ((bh)->b_lock)
+#define buffer_dirty(bh)	((bh)->b_dirty)
+#define buffer_clean(bh)	(!(bh)->b_dirty)
+#define buffer_uptodate(bh)	((bh)->b_uptodate)
+#define buffer_locked(bh)	((bh)->b_lock)
+#define buffer_seg(bh)		((bh)->b_seg)
+#define buffer_count(bh)	((bh)->b_count)
+#define buffer_blocknr(bh)	((bh)->b_blocknr)
+#define buffer_dev(bh)		((bh)->b_dev)
 
 #define iget(_a, _b) __iget(_a, _b)
 
-extern void brelse(struct buffer_head *);
-extern void bforget(struct buffer_head *);
-
+void brelse(struct buffer_head *);
+void bforget(struct buffer_head *);
 void wait_on_buffer (struct buffer_head *);
 void lock_buffer (struct buffer_head *);
 void unlock_buffer (struct buffer_head *);
@@ -223,8 +224,6 @@ struct file {
 #ifdef BLOAT_FS
     off_t			f_reada;
     unsigned long		f_version;
-    void			*private_data;
-				/* needed for tty driver, but not ntty */
 #endif
 };
 
@@ -313,11 +312,9 @@ struct super_operations {
     void			(*put_inode) ();
     void			(*put_super) ();
     void			(*write_super) ();
+    int 			(*remount_fs) ();
 #ifdef BLOAT_FS	/* i8086 statfs goes to kernel, then user */
     void			(*statfs_kern) ();
-#endif
-    int 			(*remount_fs) ();
-#ifdef BLOAT_FS
     int 			(*notify_change) ();
 #endif
 };

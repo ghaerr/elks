@@ -166,14 +166,14 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
     struct request *req;
     int max_req;
 
-    debug_blk("BLK %lu %s %lx:%x\n", bh->b_blocknr, rw==READ? "read": "write",
-	bh->b_seg, buffer_data(bh));
+    debug_blk("BLK %lu %s %lx:%x\n", buffer_blocknr(bh), rw==READ? "read": "write",
+	buffer_seg(bh), buffer_data(bh));
 
 #ifdef BDEV_SIZE_CHK
     sector_t count = BLOCK_SIZE / SECTOR_SIZE;	/* FIXME must move to lower level*/
-    sector_t sector = bh->b_blocknr * count;
+    sector_t sector = buffer_blocknr(bh) * count;
     if (blk_size[major])
-	if (blk_size[major][MINOR(bh->b_dev)] < (sector + count) >> 1) {
+	if (blk_size[major][MINOR(buffer_dev(bh))] < (sector + count) >> 1) {
 	    printk("attempt to access beyond end of device\n");
 	    return;
 	}
@@ -207,7 +207,7 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
     }
 
     /* find an unused request. */
-    req = get_request(max_req, bh->b_dev);
+    req = get_request(max_req, buffer_dev(bh));
     set_irq();
 
 	// Try again blocking if no request available
@@ -220,7 +220,7 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
  */
 
 #ifdef MULTI_BH
-	req = __get_request_wait(max_req, bh->b_dev);
+	req = __get_request_wait(max_req, buffer_dev(bh));
 #else
 	panic("Can't get request.");
 #endif
@@ -229,8 +229,8 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
 
     /* fill up the request-info, and add it to the queue */
     req->rq_cmd = (__u8) rw;
-    req->rq_blocknr = bh->b_blocknr;
-    req->rq_seg = bh->b_seg;
+    req->rq_blocknr = buffer_blocknr(bh);
+    req->rq_seg = buffer_seg(bh);
     req->rq_buffer = buffer_data(bh);
     req->rq_bh = bh;
 
@@ -332,11 +332,11 @@ void ll_rw_block(int rw, int nr, register struct buffer_head **bh)
 	    return;
     }
     dev = NULL;
-    if ((major = MAJOR(bh[0]->b_dev)) < MAX_BLKDEV)
+    if ((major = MAJOR(buffer_dev(bh[0])) < MAX_BLKDEV)
 	dev = blk_dev + major;
     if (!dev || !dev->request_fn) {
 	printk("ll_rw_block: Trying to read nonexistent block-device %s (%lu)\n",
-	     kdevname(bh[0]->b_dev), bh[0]->b_blocknr);
+	     kdevname(buffer_dev(bh[0])), buffer_blocknr(bh[0]));
 	goto sorry;
     }
 
@@ -355,8 +355,8 @@ void ll_rw_block(int rw, int nr, register struct buffer_head **bh)
   sorry:
     for (i = 0; i < nr; i++)
 	if (bh[i]) {
-	    bh[i]->b_dirty = 0;
-	    bh[i]->b_uptodate = 0;
+		mark_buffer_clean(bh[i]);
+		mark_buffer_uptodate(bh[i], 0);
 	}
 }
 #endif /* MULTI_BH */
@@ -370,13 +370,13 @@ void ll_rw_blk(int rw, register struct buffer_head *bh)
     unsigned short int major;
 
     dev = NULL;
-    if ((major = MAJOR(bh->b_dev)) < MAX_BLKDEV)
+    if ((major = MAJOR(buffer_dev(bh))) < MAX_BLKDEV)
 	dev = blk_dev + major;
     if (!dev || !dev->request_fn) {
 	printk("ll_rw_blk: Trying to read nonexistent block-device %s (%lu)\n",
-	       kdevname(bh->b_dev), bh->b_blocknr);
-	bh->b_dirty = 0;
-	bh->b_uptodate = 0;
+	       kdevname(buffer_dev(bh)), buffer_blocknr(bh));
+	mark_buffer_clean(bh);
+	mark_buffer_uptodate(bh, 0);
     } else
 	make_request(major, rw, bh);
 }

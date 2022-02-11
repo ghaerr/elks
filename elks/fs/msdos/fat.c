@@ -93,12 +93,12 @@ cluster_t FATPROC fat_access(struct super_block *sb,cluster_t this,cluster_t new
 				*p_first = new_value & 0xff;
 				*p_last = (*p_last & 0xf0) | (new_value >> 8);
 			}
-			if (bh != bh2) debug_fat("fat_access block bh2 dirty %lu\n", bh2->b_blocknr);
-			bh2->b_dirty = 1;
+			if (bh != bh2) debug_fat("fat_access block bh2 dirty %lu\n", buffer_blocknr(bh2));
+			mark_buffer_dirty(bh2);
 		}
 #endif
-		debug_fat("fat_access block bh dirty %lu\n", bh->b_blocknr);
-		bh->b_dirty = 1;
+		debug_fat("fat_access block bh dirty %lu\n", buffer_blocknr(bh));
+		mark_buffer_dirty(bh);
 #if 0000 //FIXME
 		/* update extra FAT table copies*/
 		//FIXME does not look like multiple fat table update is working
@@ -112,8 +112,8 @@ cluster_t FATPROC fat_access(struct super_block *sb,cluster_t this,cluster_t new
 				MSDOS_SB(sb)->fat_length*copy), &c_data)))
 				break;
 			memcpy(c_data,data,SECTOR_SIZE_SB(sb));
-		debug_fat("fat_access block cbh write %lu\n", bh->b_blocknr);
-			c_bh->b_dirty = 1;
+		debug_fat("fat_access block cbh write %lu\n", buffer_blocknr(bh));
+			mark_buffer_dirty(c_bh);
 			if (data != data2 || bh != bh2) {
 				if (!(c_bh2 = msdos_sread(sb,
 					(sector_t)(MSDOS_SB(sb)->fat_start+(first >> SECTOR_BITS_SB(sb)) +
@@ -122,8 +122,8 @@ cluster_t FATPROC fat_access(struct super_block *sb,cluster_t this,cluster_t new
 					break;
 				}
 				memcpy(c_data2,data2,SECTOR_SIZE_SB(sb));
-				c_bh2->b_dirty = 1;		//FIXME looks like bug without this
-		debug_fat("fat_access block cbh2 write %lu\n", c_bh2->b_blocknr);
+				mark_buffer_dirty(c_bh2);	//FIXME looks like bug without this
+		debug_fat("fat_access block cbh2 write %lu\n", buffer_blocknr(c_bh2));
 				unmap_brelse(c_bh2);
 			}
 			unmap_brelse(c_bh);

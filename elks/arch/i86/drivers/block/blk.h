@@ -171,9 +171,7 @@ static void end_request(int uptodate)
     bh->b_reqnext = NULL;
 #endif
 
-    clr_irq();
-    bh->b_uptodate = uptodate;
-    set_irq();
+    mark_buffer_uptodate(bh, uptodate);
     unlock_buffer(bh);
 
 #ifdef BLOAT_FS

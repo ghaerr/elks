@@ -34,9 +34,10 @@ include $(BASEDIR)/Makefile-rules
 
 #########################################################################
 # Objects to compile.
+# unused: wait.o lock.o
 
 OBJS  = sched.o printk.o sleepwake.o dma.o version.o sys.o fork.o \
-	exit.o time.o signal.o wait.o lock.o
+	exit.o time.o signal.o
 
 #########################################################################
 # Commands:

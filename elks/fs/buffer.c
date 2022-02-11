@@ -75,6 +75,8 @@ static int nr_free_bh = NR_BUFFERS;
 #define SET_COUNT(bh)
 #endif
 
+#define buf_num(bh)	((bh) - buffer_heads)	/* buffer number, for debugging */
+
 static void put_last_lru(register struct buffer_head *bh)
 {
     register struct buffer_head *bhn;
@@ -99,7 +101,6 @@ static void add_buffers(int nbufs, char *buf, ramdesc_t seg)
 {
     register struct buffer_head *bh;
     int n = 0;
-    static int bh_num = 0;
 
     for (bh = bh_next; n < nbufs; n++, bh = ++bh_next) {
 	if (bh != buffer_heads) {
@@ -112,7 +113,6 @@ static void add_buffers(int nbufs, char *buf, ramdesc_t seg)
 	//bh->b_mapcount = 0;
 	//bh->b_data = (char *)0;	/* not in L1 cache*/
 	bh->b_L2data = (char *)((n & 63) << BLOCK_SIZE_BITS);	/* L2 offset*/
-	bh->b_num = bh_num++;		/* for debugging*/
 #else
 	bh->b_data = buf;
 	buf += BLOCK_SIZE;
@@ -181,7 +181,7 @@ void wait_on_buffer(register struct buffer_head *bh)
 {
     while (buffer_locked(bh)) {
 	INR_COUNT(bh);
-	sleep_on(&bh->b_wait);
+	sleep_on((struct wait_queue *)bh);	/* use bh as wait address*/
 	DCR_COUNT(bh);
     }
 }
@@ -201,7 +201,7 @@ void lock_buffer(register struct buffer_head *bh)
 void unlock_buffer(register struct buffer_head *bh)
 {
     bh->b_lock = 0;
-    wake_up(&bh->b_wait);
+    wake_up((struct wait_queue *)bh);	/* use bh as wait address*/
 }
 
 void invalidate_buffers(kdev_t dev)
@@ -290,17 +290,22 @@ void __brelse(register struct buffer_head *buf)
 #endif
 }
 
+void brelse(register struct buffer_head *bh)
+{
+    if (bh) __brelse(bh);
+}
+
 /*
  * bforget() is like brelse(), except it removes the buffer
  * data validity.
  */
 #if 0
-void __bforget(struct buffer_head *buf)
+void __bforget(struct buffer_head *bh)
 {
-    wait_on_buffer(buf);
-    buf->b_dirty = 0;
-    DCR_COUNT(buf);
-    buf->b_dev = NODEV;
+    wait_on_buffer(bh);
+    bh->b_dirty = 0;
+    DCR_COUNT(bh);
+    bh->b_dev = NODEV;
     wake_up(&bufwait);
 }
 #endif
@@ -507,7 +512,7 @@ void map_buffer(register struct buffer_head *bh)
     /* If buffer is already mapped, just increase the refcount and return */
     if (bh->b_data /*|| bh->b_seg != kernel_ds*/) {
 	if (!bh->b_mapcount)
-	    debug("REMAP: %d\n", bh->b_num);
+	    debug("REMAP: %d\n", buf_num(bh));
 	goto end_map_buffer;
     }
 
@@ -515,7 +520,7 @@ void map_buffer(register struct buffer_head *bh)
     /* search for free L1 buffer or wait until one is available*/
     for (;;) {
 	if (++i >= NR_MAPBUFS) i = 0;
-	debug("map:   %d try %d\n", bh->b_num, i);
+	debug("map:   %d try %d\n", buf_num(bh), i);
 
 	/* First check for the trivial case, to avoid dereferencing a null pointer */
 	if (!(bmap = L1map[i]))
@@ -523,9 +528,9 @@ void map_buffer(register struct buffer_head *bh)
 
 	/* L1 with zero count can be unmapped and reused for this request*/
 	if (bmap->b_mapcount < 0)
-		printk("map_buffer: %d BAD mapcount %d\n", bmap->b_num, bmap->b_mapcount);
+		printk("map_buffer: %d BAD mapcount %d\n", buf_num(bmap), bmap->b_mapcount);
 	if (!bmap->b_mapcount) {
-	    debug("UNMAP: %d <- %d\n", bmap->b_num, i);
+	    debug("UNMAP: %d <- %d\n", buf_num(bmap), i);
 
 	    /* Unmap/copy L1 to L2 */
 	    xms_fmemcpyw(bmap->b_L2data, bmap->b_ds, bmap->b_data, kernel_ds, BLOCK_SIZE/2);
@@ -535,7 +540,7 @@ void map_buffer(register struct buffer_head *bh)
 	}
 	if (i == lastL1map) {
 	    /* no free L1 buffers, must wait for L1 unmap_buffer*/
-	    debug("MAPWAIT: %d\n", bh->b_num);
+	    debug("MAPWAIT: %d\n", buf_num(bh));
 	    sleep_on(&L1wait);
 	}
     }
@@ -546,7 +551,7 @@ void map_buffer(register struct buffer_head *bh)
     bh->b_data = (char *)L1buf + (i << BLOCK_SIZE_BITS);
     if (buffer_uptodate(bh))
 	xms_fmemcpyw(bh->b_data, kernel_ds, bh->b_L2data, bh->b_ds, BLOCK_SIZE/2);
-    debug("MAP:   %d -> %d\n", bh->b_num, i);
+    debug("MAP:   %d -> %d\n", buf_num(bh), i);
   end_map_buffer:
     bh->b_seg = kernel_ds;
     bh->b_mapcount++;
@@ -561,13 +566,13 @@ void unmap_buffer(register struct buffer_head *bh)
 {
     if (bh) {
 	if (bh->b_mapcount <= 0) {
-	    printk("unmap_buffer: %d BAD mapcount %d\n", bh->b_num, bh->b_mapcount);
+	    printk("unmap_buffer: %d BAD mapcount %d\n", buf_num(bh), bh->b_mapcount);
 	    bh->b_mapcount = 0;
 	} else if (--bh->b_mapcount == 0) {
-	    debug("unmap: %d\n", bh->b_num);
+	    debug("unmap: %d\n", buf_num(bh));
 	    wake_up(&L1wait);
 	} else
-	    debug("unmap_buffer: %d mapcount %d\n", bh->b_num, bh->b_mapcount+1);
+	    debug("unmap_buffer: %d mapcount %d\n", buf_num(bh), bh->b_mapcount+1);
     }
 }
 
