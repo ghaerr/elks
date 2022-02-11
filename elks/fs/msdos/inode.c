@@ -375,10 +375,10 @@ static struct super_operations msdos_sops = {
 	msdos_put_inode,
 	msdos_put_super,
 	NULL, /* write_super*/
+	NULL  /* remount*/
 #ifdef BLOAT_FS
 	msdos_statfs,
 #endif
-	NULL
 };
 
 struct file_system_type msdos_fs_type = {

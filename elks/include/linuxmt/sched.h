@@ -61,7 +61,7 @@ struct task_struct {
 /* Scheduling + status variables */
     unsigned char		state;
     struct wait_queue		child_wait;
-    __u32			timeout;	/* for select() */
+    jiff_t			timeout;	/* for select() */
     struct wait_queue		*waitpt;	/* Wait pointer */
     struct wait_queue		*poll[POLL_MAX];  /* polled queues */
     struct task_struct		*next_run;

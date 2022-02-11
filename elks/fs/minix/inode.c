@@ -98,10 +98,10 @@ static struct super_operations minix_sops = {
     minix_put_inode,
     minix_put_super,
     minix_write_super,
-#ifdef BLOAT_FS
-    minix_statfs,
-#endif
     minix_remount
+#ifdef BLOAT_FS
+    minix_statfs
+#endif
 };
 
 static void minix_mount_warning(register struct super_block *sb, char *prefix)

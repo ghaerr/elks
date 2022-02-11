@@ -313,10 +313,10 @@ static struct super_operations romfs_super_ops =
 	NULL,  /* put inode */
 	romfs_put_super,
 	NULL,  /* write super */
-#ifdef BLOAT_FS
-	romfs_statfs,
-#endif
 	NULL   /* remount */
+#ifdef BLOAT_FS
+	romfs_statfs
+#endif
 };
 
 

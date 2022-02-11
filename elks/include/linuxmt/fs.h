@@ -224,8 +224,6 @@ struct file {
 #ifdef BLOAT_FS
     off_t			f_reada;
     unsigned long		f_version;
-    void			*private_data;
-				/* needed for tty driver, but not ntty */
 #endif
 };
 
@@ -314,11 +312,9 @@ struct super_operations {
     void			(*put_inode) ();
     void			(*put_super) ();
     void			(*write_super) ();
+    int 			(*remount_fs) ();
 #ifdef BLOAT_FS	/* i8086 statfs goes to kernel, then user */
     void			(*statfs_kern) ();
-#endif
-    int 			(*remount_fs) ();
-#ifdef BLOAT_FS
     int 			(*notify_change) ();
 #endif
 };
