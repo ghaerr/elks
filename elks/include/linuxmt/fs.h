@@ -125,7 +125,6 @@ struct buffer_head {
     kdev_t			b_dev;
     struct buffer_head		*b_next_lru;
     struct buffer_head		*b_prev_lru;
-    struct wait_queue		b_wait;
     unsigned char		b_count;
     char			b_lock;
     char			b_dirty;
@@ -134,7 +133,6 @@ struct buffer_head {
     ramdesc_t			b_ds;		/* L2 buffer data segment */
     char			*b_L2data;	/* Offset into L2 allocation block */
     char			b_mapcount;	/* count of L2 buffer mapped into L1 */
-    unsigned char		b_num;		/* Buffer number, for debugging */
 #endif
 };
 
