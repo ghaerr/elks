@@ -180,7 +180,7 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
 #endif
 
     /* Uhhuh.. Nasty dead-lock possible here.. */
-    if (buffer_locked(bh))
+    if (EBH(bh)->b_locked)
 	return;
     /* Maybe the above fixes it, and maybe it doesn't boot. Life is interesting */
     lock_buffer(bh);
