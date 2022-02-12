@@ -1,6 +1,8 @@
 #ifndef __LINUXMT_FS_H
 #define __LINUXMT_FS_H
 
+//#define CONFIG_FAR_BUFHEADS
+
 /*
  * This file has definitions for some important file table structures etc.
  */
@@ -120,6 +122,11 @@
 
 struct buffer_head {
     char			*b_data;	/* Address if in L1 buffer area, else 0 */
+#ifdef CONFIG_FAR_BUFHEADS
+};
+/* a little tricky here - buffer_head is split into near and far components */
+struct ext_buffer_head {
+#endif
     ramdesc_t			b_seg;		/* Current L1 or L2 (main/xms) buffer segment */
     block32_t			b_blocknr;	/* 32-bit block numbers required for FAT */
     kdev_t			b_dev;
@@ -135,19 +142,25 @@ struct buffer_head {
     char			b_mapcount;	/* count of L2 buffer mapped into L1 */
 #endif
 };
-typedef struct buffer_head ext_buffer_head;
+
+#ifdef CONFIG_FAR_BUFHEADS
+typedef struct ext_buffer_head ext_buffer_head;
 ext_buffer_head *EBH(struct buffer_head *);	/* convert bh to ebh */
+#else
+#define EBH(bh)		(bh)
+typedef struct buffer_head ext_buffer_head;
+#endif
 
 #define BLOCK_READ	0
 #define BLOCK_WRITE	1
 
 /* macros for calling outside of buffer.c*/
-#define mark_buffer_dirty(bh) ((bh)->b_dirty = 1)
-#define mark_buffer_clean(bh) ((bh)->b_dirty = 0)
-#define buffer_seg(bh)		((bh)->b_seg)
-#define buffer_count(bh)	((bh)->b_count)
-#define buffer_blocknr(bh)	((bh)->b_blocknr)
-#define buffer_dev(bh)		((bh)->b_dev)
+#define mark_buffer_dirty(bh)	(EBH(bh)->b_dirty = 1)
+#define mark_buffer_clean(bh)	(EBH(bh)->b_dirty = 0)
+#define buffer_seg(bh)		(EBH(bh)->b_seg)
+#define buffer_count(bh)	(EBH(bh)->b_count)
+#define buffer_blocknr(bh)	(EBH(bh)->b_blocknr)
+#define buffer_dev(bh)		(EBH(bh)->b_dev)
 
 #define iget(_a, _b) __iget(_a, _b)
 
