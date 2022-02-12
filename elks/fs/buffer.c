@@ -77,6 +77,11 @@ static int nr_free_bh = NR_BUFFERS;
 
 #define buf_num(bh)	((bh) - buffer_heads)	/* buffer number, for debugging */
 
+ext_buffer_head *EBH(struct buffer_head *bh)
+{
+	return bh;
+}
+
 static void put_last_lru(register struct buffer_head *bh)
 {
     register struct buffer_head *bhn;
@@ -179,28 +184,23 @@ int INITPROC buffer_init(void)
 
 void wait_on_buffer(register struct buffer_head *bh)
 {
-    while (buffer_locked(bh)) {
+    while (bh->b_locked) {
 	INR_COUNT(bh);
 	sleep_on((struct wait_queue *)bh);	/* use bh as wait address*/
 	DCR_COUNT(bh);
     }
 }
 
-// Lock buffer in memory
-// when driver is working on it
-// or client is reading from / writing to it
-
-// TODO: replace by a 'lock_t'
-
 void lock_buffer(register struct buffer_head *bh)
 {
+    ext_buffer_head *ebh = EBH(bh);
     wait_on_buffer(bh);
-    bh->b_lock = 1;
+    bh->b_locked = 1;
 }
 
 void unlock_buffer(register struct buffer_head *bh)
 {
-    bh->b_lock = 0;
+    bh->b_locked = 0;
     wake_up((struct wait_queue *)bh);	/* use bh as wait address*/
 }
 
@@ -211,8 +211,6 @@ void invalidate_buffers(kdev_t dev)
     do {
 	if (bh->b_dev != dev) continue;
 	wait_on_buffer(bh);
-/*	if (bh->b_dev != dev)*/	/* This will never happen */
-/*	    continue;*/
 	if (bh->b_count) continue;
 	bh->b_uptodate = 0;
 	bh->b_dirty = 0;
@@ -228,7 +226,7 @@ static void sync_buffers(kdev_t dev, int wait)
 	/*
 	 *      Skip clean buffers.
 	 */
-	if ((dev && (bh->b_dev != dev)) || (buffer_clean(bh)))
+	if ((dev && (bh->b_dev != dev)) || !bh->b_dirty)
 	   continue;
 
 	/*
@@ -237,7 +235,7 @@ static void sync_buffers(kdev_t dev, int wait)
 	 *      If buffer is locked; skip it unless wait is requested
 	 *      AND pass > 0.
 	 */
-	if (buffer_locked(bh)) {
+	if (bh->b_locked) {
 	    if (!wait) continue;
 	    wait_on_buffer(bh);
 	}
@@ -256,7 +254,7 @@ static struct buffer_head *get_free_buffer(void)
     register struct buffer_head *bh;
 
     bh = bh_lru;
-    while (bh->b_count || buffer_dirty (bh) || buffer_locked (bh)
+    while (bh->b_count || bh->b_dirty || bh->b_locked
 #if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
 		|| bh->b_data
 #endif
@@ -277,16 +275,16 @@ static struct buffer_head *get_free_buffer(void)
  * Release a buffer head
  */
 
-void __brelse(register struct buffer_head *buf)
+void __brelse(register struct buffer_head *bh)
 {
-    wait_on_buffer(buf);
+    wait_on_buffer(bh);
 
-    if (buf->b_count == 0) panic("brelse");
+    if (bh->b_count == 0) panic("brelse");
 #if 0
-    if (!--buf->b_count)
+    if (!--bh->b_count)
 	wake_up(&bufwait);
 #else
-    DCR_COUNT(buf);
+    DCR_COUNT(bh);
 #endif
 }
 
@@ -315,10 +313,10 @@ void __bforget(struct buffer_head *bh)
 
 struct buffer_head *readbuf(register struct buffer_head *bh)
 {
-    if (!buffer_uptodate(bh)) {
+    if (!bh->b_uptodate) {
 	ll_rw_blk(READ, bh);
 	wait_on_buffer(bh);
-	if (!buffer_uptodate(bh)) {
+	if (!bh->b_uptodate) {
 	    brelse(bh);
 	    bh = NULL;
 	}
@@ -386,7 +384,7 @@ struct buffer_head *getblk32(kdev_t dev, block32_t block)
     } while (n_bh == NULL);
     bh = n_bh;				/* Block not found, use the new buffer */
 /* OK, FINALLY we know that this buffer is the only one of its kind,
- * and that it's unused (b_count=0), unlocked (buffer_locked=0), and clean
+ * and that it's unused (b_count=0), unlocked (b_locked=0), and clean
  */
     bh->b_dev = dev;
     bh->b_blocknr = block;
@@ -402,7 +400,7 @@ struct buffer_head *getblk32(kdev_t dev, block32_t block)
     }
     INR_COUNT(bh);
     wait_on_buffer(bh);
-    if (buffer_clean(bh) && buffer_uptodate(bh))
+    if (!bh->b_dirty && bh->b_uptodate)
 	put_last_lru(bh);
 
   return_it:
@@ -429,10 +427,7 @@ struct buffer_head *bread32(kdev_t dev, block32_t block)
 #if 0
 
 /* NOTHING is using breada at this point, so I can pull it out... Chad */
-
-struct buffer_head *breada(kdev_t dev,
-			   block_t block,
-			   int bufsize,
+struct buffer_head *breada(kdev_t dev, block_t block, int bufsize,
 			   unsigned int pos, unsigned int filesize)
 {
     register struct buffer_head *bh, *bha;
@@ -549,7 +544,7 @@ void map_buffer(register struct buffer_head *bh)
     lastL1map = i;
     L1map[i] = bh;
     bh->b_data = (char *)L1buf + (i << BLOCK_SIZE_BITS);
-    if (buffer_uptodate(bh))
+    if (bh->b_uptodate)
 	xms_fmemcpyw(bh->b_data, kernel_ds, bh->b_L2data, bh->b_ds, BLOCK_SIZE/2);
     debug("MAP:   %d -> %d\n", buf_num(bh), i);
   end_map_buffer:

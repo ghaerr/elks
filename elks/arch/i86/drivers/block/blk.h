@@ -212,7 +212,7 @@ static void end_request(int uptodate)
 	} \
 	if (MAJOR(req->rq_dev) != MAJOR_NR) \
 		panic("%s: request list destroyed (%d, %d)", DEVICE_NAME, MAJOR(req->rq_dev), MAJOR_NR); \
-	if ((req->rq_bh) && (!buffer_locked(req->rq_bh))) { \
+	if ((req->rq_bh) && (!(req->rq_bh)->b_locked)) { \
 		panic("%s:block not locked", DEVICE_NAME); \
 	}
 

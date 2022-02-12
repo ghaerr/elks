@@ -126,25 +126,24 @@ struct buffer_head {
     struct buffer_head		*b_next_lru;
     struct buffer_head		*b_prev_lru;
     unsigned char		b_count;
-    char			b_lock;
-    char			b_dirty;
-    char			b_uptodate;
+    unsigned char		b_locked;
+    unsigned char		b_dirty;
+    unsigned char		b_uptodate;
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
     ramdesc_t			b_ds;		/* L2 buffer data segment */
     char			*b_L2data;	/* Offset into L2 allocation block */
     char			b_mapcount;	/* count of L2 buffer mapped into L1 */
 #endif
 };
+typedef struct buffer_head ext_buffer_head;
+ext_buffer_head *EBH(struct buffer_head *);	/* convert bh to ebh */
 
 #define BLOCK_READ	0
 #define BLOCK_WRITE	1
 
+/* macros for calling outside of buffer.c*/
 #define mark_buffer_dirty(bh) ((bh)->b_dirty = 1)
 #define mark_buffer_clean(bh) ((bh)->b_dirty = 0)
-#define buffer_dirty(bh)	((bh)->b_dirty)
-#define buffer_clean(bh)	(!(bh)->b_dirty)
-#define buffer_uptodate(bh)	((bh)->b_uptodate)
-#define buffer_locked(bh)	((bh)->b_lock)
 #define buffer_seg(bh)		((bh)->b_seg)
 #define buffer_count(bh)	((bh)->b_count)
 #define buffer_blocknr(bh)	((bh)->b_blocknr)
