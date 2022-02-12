@@ -632,11 +632,6 @@ void unmap_brelse(struct buffer_head *bh)
 
 char *buffer_data(struct buffer_head *bh)
 {
-    ext_buffer_head *ebh;
-
-    if (bh->b_data)
-	return bh->b_data;
-    ebh = EBH(bh);
-    return ebh->b_L2data;
+    return (bh->b_data? bh->b_data: EBH(bh)->b_L2data);
 }
 #endif /* CONFIG_FS_EXTERNAL_BUFFER | CONFIG_FS_XMS_BUFFER*/
