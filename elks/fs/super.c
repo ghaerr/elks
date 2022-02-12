@@ -326,7 +326,7 @@ int do_mount(kdev_t dev, char *dir, int type, int flags, char *data)
     dirp = dir_i;
     if ((dirp->i_count != 1 || dirp->i_mount) || (!fs_may_mount(dev)))
  	goto BUSY;
-    sb = read_super(dev, type, flags, data, 0);
+    sb = read_super(dev, type, flags, data, flags & MS_AUTOMOUNT);
     if (!sb) {
 	error = -EINVAL;
 	goto ERROUT1;

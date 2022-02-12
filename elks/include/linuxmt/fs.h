@@ -89,6 +89,7 @@
 #define MS_NOEXEC	    8	/* disallow program execution */
 #define MS_SYNCHRONOUS	   16	/* writes are synced at once */
 #define MS_REMOUNT	   32	/* alter flags of a mounted FS */
+#define MS_AUTOMOUNT	   64	/* auto mount based on superblock */
 
 #define S_APPEND	  256	/* append-only file */
 #define S_IMMUTABLE	  512	/* immutable file */
