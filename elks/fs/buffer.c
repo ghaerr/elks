@@ -154,7 +154,8 @@ int INITPROC buffer_init(void)
     if (bufs_to_alloc > 256) bufs_to_alloc = 256; /* protect against high XMS value*/
 #endif
 
-    printk("%d %s buffers\n", bufs_to_alloc, xms_enabled? "xms": "ext");
+    printk("%d %s buffers, %ld ram\n", bufs_to_alloc, xms_enabled? "xms": "ext",
+		(long)bufs_to_alloc << 10);
 #else
     int bufs_to_alloc = NR_MAPBUFS;
 #endif
@@ -164,7 +165,7 @@ int INITPROC buffer_init(void)
     if (!buffer_heads) return 1;
 #ifdef CONFIG_FAR_BUFHEADS
     size_t size = bufs_to_alloc * sizeof(ext_buffer_head);
-    segment_s *seg = seg_alloc(size >> 4, SEG_FLAG_EXTBUF);
+    segment_s *seg = seg_alloc((size + 15) >> 4, SEG_FLAG_EXTBUF);
     if (!seg) return 1;
     fmemsetw(0, seg->base, 0, size >> 1);
     ext_buffer_heads = _MK_FP(seg->base, 0);

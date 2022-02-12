@@ -21,6 +21,8 @@
 #include <utime.h>
 #include <errno.h>
 
+static char	buf1[2048];
+static char	buf2[2048];
 
 int main(int argc, char **argv)
 {
@@ -31,8 +33,6 @@ int main(int argc, char **argv)
 	long		pos;
 	char		*bp1;
 	char		*bp2;
-	char		buf1[512];
-	char		buf2[512];
 	struct	stat	statbuf1;
 	struct	stat	statbuf2;
 
