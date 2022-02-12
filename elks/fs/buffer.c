@@ -32,7 +32,7 @@ int boot_bufs;		/* /bootopts # buffers override */
 static struct buffer_head *buffer_heads;
 
 #ifdef CONFIG_FAR_BUFHEADS
-struct ext_buffer_head ext_buffer_heads[64]; //FIXME
+static ext_buffer_head *ext_buffer_heads;
 
 /* convert a buffer_head ptr to ext_buffer_head ptr */
 ext_buffer_head *EBH(struct buffer_head *bh)
@@ -148,6 +148,12 @@ int INITPROC buffer_init(void)
 #endif
     if (boot_bufs)
 	bufs_to_alloc = boot_bufs;
+#ifdef CONFIG_FAR_BUFHEADS
+    if (bufs_to_alloc > 2500) bufs_to_alloc = 2500; /* max 64K far bufheads @26 bytes*/
+#else
+    if (bufs_to_alloc > 256) bufs_to_alloc = 256; /* protect against high XMS value*/
+#endif
+
     printk("%d %s buffers\n", bufs_to_alloc, xms_enabled? "xms": "ext");
 #else
     int bufs_to_alloc = NR_MAPBUFS;
@@ -156,6 +162,13 @@ int INITPROC buffer_init(void)
     buffer_heads = heap_alloc(bufs_to_alloc * sizeof(struct buffer_head),
 	HEAP_TAG_BUFHEAD|HEAP_TAG_CLEAR);
     if (!buffer_heads) return 1;
+#ifdef CONFIG_FAR_BUFHEADS
+    size_t size = bufs_to_alloc * sizeof(ext_buffer_head);
+    segment_s *seg = seg_alloc(size >> 4, SEG_FLAG_EXTBUF);
+    if (!seg) return 1;
+    fmemsetw(0, seg->base, 0, size >> 1);
+    ext_buffer_heads = _MK_FP(seg->base, 0);
+#endif
     bh_next = bh_lru = bh_llru = buffer_heads;
 
 #if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)

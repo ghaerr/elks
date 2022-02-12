@@ -1,8 +1,6 @@
 #ifndef __LINUXMT_FS_H
 #define __LINUXMT_FS_H
 
-//#define CONFIG_FAR_BUFHEADS
-
 /*
  * This file has definitions for some important file table structures etc.
  */
@@ -120,12 +118,16 @@
 #define IS_APPEND(inode) ((inode)->i_flags & S_APPEND)
 #define IS_IMMUTABLE(inode) ((inode)->i_flags & S_IMMUTABLE)
 
+#ifdef CONFIG_FS_XMS_BUFFER
+#define CONFIG_FAR_BUFHEADS	/* split buffer_head and move to far memory */
+#endif
+
 struct buffer_head {
     char			*b_data;	/* Address if in L1 buffer area, else 0 */
 #ifdef CONFIG_FAR_BUFHEADS
 };
 /* a little tricky here - buffer_head is split into near and far components */
-struct ext_buffer_head {
+struct ext_buffer_head_s {
 #endif
     ramdesc_t			b_seg;		/* Current L1 or L2 (main/xms) buffer segment */
     block32_t			b_blocknr;	/* 32-bit block numbers required for FAT */
@@ -144,23 +146,23 @@ struct ext_buffer_head {
 };
 
 #ifdef CONFIG_FAR_BUFHEADS
-typedef struct ext_buffer_head ext_buffer_head;
+#define ext_buffer_head		struct ext_buffer_head_s __far
 ext_buffer_head *EBH(struct buffer_head *);	/* convert bh to ebh */
 #else
 #define EBH(bh)		(bh)
-typedef struct buffer_head ext_buffer_head;
+typedef struct buffer_head	ext_buffer_head;
 #endif
 
-#define BLOCK_READ	0
-#define BLOCK_WRITE	1
-
-/* macros for calling outside of buffer.c*/
+/* macros for buffer_head pointers called outside of buffer.c*/
 #define mark_buffer_dirty(bh)	(EBH(bh)->b_dirty = 1)
 #define mark_buffer_clean(bh)	(EBH(bh)->b_dirty = 0)
 #define buffer_seg(bh)		(EBH(bh)->b_seg)
 #define buffer_count(bh)	(EBH(bh)->b_count)
 #define buffer_blocknr(bh)	(EBH(bh)->b_blocknr)
 #define buffer_dev(bh)		(EBH(bh)->b_dev)
+
+#define BLOCK_READ	0
+#define BLOCK_WRITE	1
 
 #define iget(_a, _b) __iget(_a, _b)
 
