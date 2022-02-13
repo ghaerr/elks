@@ -6,19 +6,19 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <paths.h>
 
-char **__sys_errlist =0;
+char **__sys_errlist;
 int __sys_nerr = 0;
 
 char *
-strerror(err)
-int err;
+strerror(int err)
 {
    int fd = -1;
-   static char retbuf[80];
-   char inbuf[256];
    int cc;
    int bufoff = 0;
+   char inbuf[256];
+   static char retbuf[60];
 
    if( __sys_nerr )
    {
@@ -27,7 +27,7 @@ int err;
    }
 
    if( err <= 0 ) goto unknown;	/* NB the <= allows comments in the file */
-   fd = open("/lib/liberror.txt", 0);
+   fd = open(_PATH_ERRSTRING, 0);
    if( fd < 0 ) goto unknown;
 
    while( (cc=read(fd, inbuf, sizeof(inbuf))) > 0 )
@@ -52,7 +52,7 @@ int err;
 	    retbuf[bufoff++] = inbuf[i];
       }
    }
-unknown:;
+unknown:
    if( fd >= 0 ) close(fd);
    strcpy(retbuf, "Unknown error ");
    strcpy(retbuf+14, itoa(err));

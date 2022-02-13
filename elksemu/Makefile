@@ -72,7 +72,7 @@ defn_tab.v:	$(INSTALLED_DEFN_TAB)
 	    $(error cannot find defn_tab.v from elks-libc installation))
 	cp $< $@
 
-efile.h: $(TOPDIR)/elkscmd/rootfs_template/lib/liberror.txt
+efile.h: $(TOPDIR)/elkscmd/rootfs_template/etc/perror
 	sh mkefile $<
 
 dummy:

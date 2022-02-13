@@ -16,23 +16,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-/*#include <minix/minlib.h>*/
 #include <stdio.h>
 
-#define BUFFER_SIZE 512
-
 int rc = 0;
-
 char *defargv[] = {"-", 0};
-
-int main();
-void error();
-void sum();
-//void putd();
+static char buf[2048];
 
 void error(char *s, char *f)
 {
-
   fprintf(stderr, "sum: ");
   fprintf(stderr, s);
 
@@ -43,13 +34,12 @@ void error(char *s, char *f)
 
 void sum(int fd, char *fname)
 {
-  char buf[BUFFER_SIZE];
   register int i, n;
   long size = 0;
   unsigned crc = 0;
-  unsigned tmp, blks;
+  unsigned tmp;
 
-  while ((n = read(fd, buf, BUFFER_SIZE)) > 0) {
+  while ((n = read(fd, buf, sizeof(buf))) > 0) {
 	for (i = 0; i < n; i++) {
 		crc = (crc >> 1) + ((crc & 1) ? 0x8000 : 0);
 		tmp = buf[i] & 0377;
