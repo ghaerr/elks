@@ -21,6 +21,7 @@
 #	:boot		Required for ELKS to boot
 #	:360k		Minimal set of apps to fit on 360k disks
 #	:720k		Set of apps to fit on 720k disks (includes :net)
+#	:1200k		Set of apps to fit on 1200 disks (almost all of 1440k)
 #	:1440k		All apps selected for 1440k disks
 #	:ash		Ash (bash) shell							ash
 #	:sash		Sash (standalone very small) shell			sash
@@ -45,7 +46,7 @@ sys_utils/getty			:boot	:sysutil
 sys_utils/login			:boot	:sysutil
 ash/ash		::bin/sh	:boot	:ash	# install as /bin/sh
 #sash/sash	::bin/sh	:boot	:~ash	# install as /bin/sh if no ASH
-sash/sash				:1440k	:sash
+sash/sash		:1200k :1440k	:sash
 sys_utils/mount			:boot	:sysutil
 sys_utils/umount		:boot	:sysutil
 sys_utils/clock			:boot	:sysutil
@@ -54,16 +55,16 @@ sh_utils/test			:boot	:shutil
 sh_utils/true			:boot	:be-shutil
 sh_utils/echo			:boot	:be-shutil
 file_utils/cat			:boot	:be-fileutil
-file_utils/chgrp				:be-fileutil			:1440k
-file_utils/chmod				:be-fileutil			:1440k
-file_utils/chown				:be-fileutil			:1440k
-file_utils/cmp					:be-fileutil			:1440k
+file_utils/chgrp				:be-fileutil			:1200k	:1440k
+file_utils/chmod				:be-fileutil			:1200k	:1440k
+file_utils/chown				:be-fileutil			:1200k	:1440k
+file_utils/cmp					:be-fileutil			:1200k	:1440k
 file_utils/cp					:be-fileutil	:360k
-file_utils/df					:be-fileutil			:1440k
-file_utils/dd					:be-fileutil			:1440k
+file_utils/df					:be-fileutil			:1200k	:1440k
+file_utils/dd					:be-fileutil			:1200k	:1440k
 file_utils/mkdir				:fileutil		:360k
 file_utils/mknod				:fileutil		:360k
-file_utils/mkfifo				:fileutil				:1440k
+file_utils/mkfifo				:fileutil				:1200k	:1440k
 file_utils/more					:fileutil			:720k
 file_utils/mv					:fileutil		:360k
 file_utils/ln					:fileutil			:720k
@@ -74,81 +75,81 @@ file_utils/sync					:fileutil		:360k
 file_utils/touch				:fileutil			:720k
 sys_utils/chmem					:sysutil			:720k
 sys_utils/kill					:sysutil			:720k
-sys_utils/ps					:sysutil		:360k	:sash
+sys_utils/ps			:sash	:sysutil		:360
 sys_utils/reboot				:sysutil		:360k
 sys_utils/makeboot				:sysutil		:360k
-sys_utils/man					:sysutil				:1440k
-sys_utils/meminfo				:sysutil		:360k	:sash
-sys_utils/mouse					:sysutil				:1440k
-sys_utils/passwd				:sysutil				:1440k
+sys_utils/man					:sysutil				:1200k	:1440k
+sys_utils/meminfo		:sash	:sysutil		:360k
+sys_utils/mouse					:sysutil				:1200k	:1440k
+sys_utils/passwd				:sysutil				:1200k	:1440k
 sys_utils/poweroff				:sysutil			:720k
-sys_utils/sercat				:sysutil				:1440k
-sys_utils/console				:sysutil				:1440k
-#sys_utils/who					:sysutil				:1440k
+sys_utils/sercat				:sysutil				:1200k	:1440k
+sys_utils/console				:sysutil				:1200k	:1440k
+#sys_utils/who					:sysutil				:1200k	:1440k
 sys_utils/unreal16				:sysutil
-screen/screen					:screen				:1440k
-cron/cron   					:cron				:1440k
-cron/crontab   					:cron				:1440k
+screen/screen					:screen					:1200k	:1440k
+cron/cron   					:cron					:1200k	:1440k
+cron/crontab   					:cron					:1200k	:1440k
 sh_utils/basename				:be-shutil			:720k
-sh_utils/clear					:shutil		:1440k
+sh_utils/clear					:shutil					:1200k	:1440k
 sh_utils/date					:be-shutil		:360k
 sh_utils/dirname				:be-shutil			:720k
-sh_utils/false					:be-shutil				:1440k
-sh_utils/logname				:shutil					:1440k
-sh_utils/mesg					:shutil					:1440k
-sh_utils/stty					:shutil					:1440k
-sh_utils/printenv				:shutil					:1440k
+sh_utils/false					:be-shutil				:1200k	:1440k
+sh_utils/logname				:shutil					:1200k	:1440k
+sh_utils/mesg					:shutil					:1200k	:1440k
+sh_utils/stty					:shutil					:1200k	:1440k
+sh_utils/printenv				:shutil					:1200k	:1440k
 sh_utils/pwd					:shutil			:360k
 sh_utils/tr						:shutil				:720k
-sh_utils/which					:shutil					:1440k
-sh_utils/whoami					:shutil					:1440k
-sh_utils/xargs					:shutil					:1440k
+sh_utils/which					:shutil					:1200k	:1440k
+sh_utils/whoami					:shutil					:1200k	:1440k
+sh_utils/xargs					:shutil					:1200k	:1440k
 sh_utils/yes					:shutil				:720k
 misc_utils/miniterm				:miscutil			:720k
-misc_utils/fdtest				:miscutil				:1440k
-misc_utils/tar					:miscutil				:1440k
-misc_utils/od					:miscutil				:1440k
-misc_utils/hd					:miscutil				:1440k
+misc_utils/fdtest				:miscutil				:1200k	:1440k
+misc_utils/tar					:miscutil				:1200k	:1440k
+misc_utils/od					:miscutil				:1200k	:1440k
+misc_utils/hd					:miscutil				:1200k	:1440k
 misc_utils/time					:miscutil			:720k
-misc_utils/kilo					:miscutil				:1440k
-misc_utils/mined				:miscutil				:1440k
-misc_utils/sleep				:miscutil				:1440k
-misc_utils/tty					:miscutil				:1440k
-misc_utils/uuencode				:miscutil				:1440k
-misc_utils/uudecode				:miscutil				:1440k
+misc_utils/kilo					:miscutil				:1200k	:1440k
+misc_utils/mined				:miscutil				:1200k	:1440k
+misc_utils/sleep				:miscutil				:1200k	:1440k
+misc_utils/tty					:miscutil				:1200k	:1440k
+misc_utils/uuencode				:miscutil				:1200k	:1440k
+misc_utils/uudecode				:miscutil				:1200k	:1440k
 misc_utils/ed					:be-miscutil		:720k
 elvis/elvis	::bin/vi			:elvis				:720k
-minix1/banner					:minix1					:1440k
+minix1/banner					:minix1					:1200k	:1440k
 #minix1/decomp16				:minix1					:1440k
-minix1/fgrep					:minix1					:1440k
+minix1/fgrep					:minix1					:1200k	:1440k
 minix1/grep						:minix1			:360k
-minix1/sum						:minix1					:1440k
+minix1/sum						:minix1					:1200k	:1440k
 minix1/uniq						:minix1				:720k
-minix1/wc						:minix1					:1440k
-minix1/proto					:minix1					:1440k
+minix1/wc						:minix1					:1200k	:1440k
+minix1/proto					:minix1					:1200k	:1440k
 minix1/cut						:be-minix1			:720k
-minix1/cksum					:be-minix1				:1440k
-minix1/du						:be-minix1				:1440k
-minix2/env						:minix2					:1440k
-minix2/lp						:minix2					:1440k
-#minix2/pwdauth					:minix2					:1440k
-minix2/remsync					:minix2					:1440k
-minix2/synctree					:minix2					:1440k
-#minix2/tget					:minix2					:1440k
+minix1/cksum					:be-minix1				:1200k	:1440k
+minix1/du						:be-minix1				:1200k	:1440k
+minix2/env						:minix2					:1200k	:1440k
+minix2/lp						:minix2					:1200k	:1440k
+#minix2/pwdauth					:minix2							:1440k
+minix2/remsync					:minix2							:1440k
+minix2/synctree					:minix2							:1440k
+#minix2/tget					:minix2							:1440k
 minix3/sed						:minix3				:720k
 minix3/file						:minix3				:720k
 minix3/head						:minix3				:720k
 minix3/sort						:minix3				:720k
 minix3/tail						:minix3				:720k
-minix3/tee						:minix3					:1440k
-minix3/cal						:be-minix3				:1440k
+minix3/tee						:minix3					:1200k	:1440k
+minix3/cal						:be-minix3				:1200k	:1440k
 minix3/diff						:be-minix3			:720k
 minix3/find						:be-minix3			:720k
-disk_utils/fsck					:diskutil				:1440k
+disk_utils/fsck					:diskutil				:1200k	:1440k
 disk_utils/mkfs					:diskutil		:360k
 disk_utils/mkfat				:diskutil		:360k
-disk_utils/partype				:diskutil				:1440k
-disk_utils/ramdisk				:diskutil				:1440k
+disk_utils/partype				:diskutil				:1200k	:1440k
+disk_utils/ramdisk				:diskutil				:1200k	:1440k
 disk_utils/fdisk				:be-diskutil	:360k
 busyelks/busyelks				:busyelks
 inet/httpd/sample_index.html	::var/www/index.html	:net
@@ -167,9 +168,9 @@ inet/urlget/urlget				:net
 inet/urlget/urlget :::ftpget	:net
 inet/urlget/urlget :::ftpput	:net
 inet/urlget/urlget :::httpget	:net
-#mtools/mcopy					:mtools					:1400k
+#mtools/mcopy					:mtools					:1440k
 #mtools/mdel					:mtools					:1440k
-#mtools/mdir					:mtools					:1400k
+#mtools/mdir					:mtools					:1440k
 #mtools/mkdfs					:mtools					:1440k
 #mtools/mmd						:mtools					:1440k
 #mtools/mrd						:mtools					:1440k
@@ -182,7 +183,7 @@ bc/bc							:other					:1440k
 #nano/nano-2.0.6/src/nano		:other					:1440k
 #nano-X/bin/nxclock				:nanox					:1440k
 #nano-X/bin/nxdemo				:nanox					:1440k
-nano-X/bin/nxlandmine			:nanox					:1440k
+nano-X/bin/nxlandmine			:nanox					:1200k	:1440k
 nano-X/bin/nxterm				:nanox
 nano-X/bin/nxworld				:nanox					:1440k
 nano-X/bin/nxworld.map	::lib/nxworld.map	:nanox		:1440k
