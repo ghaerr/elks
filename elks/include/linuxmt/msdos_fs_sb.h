@@ -3,12 +3,15 @@
 
 struct msdos_sb_info { /* space in struct super_block is 28 bytes */
 	unsigned short cluster_size; /* sectors/cluster */
-	unsigned char fats,fat_bits; /* number of FATs, FAT bits (12 or 16) */
-	unsigned short fat_start,fat_length; /* FAT start & length (sec.) */
-	unsigned short dir_start,dir_entries; /* root dir start & entries */
+	unsigned char fats;          /* number of FATs */
+	unsigned char fat_bits;      /* FAT bits (12 or 16) */
+	unsigned short fat_start;    /* FAT start sector */
+	unsigned short fat_length;   /* FAT length in sectors */
+	unsigned short dir_start;    /* root dir start cluster */
+	unsigned short dir_entries;  /* root dir # entries */
 	unsigned short data_start;   /* first data sector */
 	unsigned long clusters;      /* number of clusters */
-	unsigned long root_cluster;
+	unsigned long root_cluster;  /* root directory cluster */
 	long previous_cluster;       /* used in add_cluster */
 #ifdef CONFIG_FS_DEV
 	ino_t dev_ino;               /* "/dev" ino */
