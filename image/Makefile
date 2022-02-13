@@ -68,7 +68,7 @@ fd720-minix:
 	rm Config
 
 fd1200-minix:
-	echo CONFIG_APPS_720K=y		> Config
+	echo CONFIG_APPS_1200K=y	> Config
 	echo CONFIG_IMG_FD1200=y	>> Config
 	echo CONFIG_IMG_MINIX=y		>> Config
 	echo CONFIG_IMG_DEV=y		>> Config
@@ -126,7 +126,7 @@ fd720-fat:
 	rm Config
 
 fd1200-fat:
-	echo CONFIG_APPS_720K=y		> Config
+	echo CONFIG_APPS_1200K=y	> Config
 	echo CONFIG_IMG_FD1200=y	>> Config
 	echo CONFIG_IMG_FAT=y		>> Config
 	echo CONFIG_IMG_DEV=y		>> Config
