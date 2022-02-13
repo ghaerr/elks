@@ -155,6 +155,7 @@ int FATPROC msdos_get_entry_long(
 
 			if (is_long) {
 				unsigned char sum;
+#pragma GCC diagnostic ignored "-Waggressive-loop-optimizations"
 				for (i = sum = 0; i < MSDOS_NAME; i++) {
 					sum = ((sum&1)<<7) | ((sum&0xfe)>>1);
 					sum += de->name[i];

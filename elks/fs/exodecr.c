@@ -86,7 +86,7 @@ static void
 init_table(void)
 {
     int i;
-    unsigned short int b2;
+    unsigned short int b2 = 0;
 
     for(i = 0; i < 52; ++i)
     {
