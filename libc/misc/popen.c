@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/wait.h>
-
+#include <paths.h>
 
 FILE * popen(command, rw)
 char * command;
@@ -25,7 +25,7 @@ char * rw;
          close(pipe_fd[reading]);
       }
 
-      execl("/bin/sh", "sh", "-c", command, (char*)0);
+      execl(_PATH_BSHELL, "sh", "-c", command, (char*)0);
       _exit(255);
    }
 
