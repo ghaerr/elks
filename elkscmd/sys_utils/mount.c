@@ -4,6 +4,7 @@
  * provided that this copyright notice remains intact.
  *
  * Sep 2020 - added ro and remount,rw options - ghaerr
+ * Feb 2022 - add -a auto mount w/o type specifier, -q query fs type
  */
 
 #include <stdio.h>
@@ -18,6 +19,7 @@ int main(int argc, char **argv)
 	char	*str;
 	int		type = 0;		/* default fs*/
 	int		flags = 0;
+	int		query = 0;
 	char	*option;
 
 	argc--;
@@ -28,6 +30,12 @@ int main(int argc, char **argv)
 		str = *argv++ ;
 
 		while (*++str) switch (*str) {
+			case 'q':
+				query = 1;
+				/* fall through and automount */
+			case 'a':
+				flags |= MS_AUTOMOUNT;
+				break;
 			case 't':
 				if ((argc <= 0) || (**argv == '-')) {
 					write(STDERR_FILENO, "mount: missing file system type\n", 32);
@@ -52,11 +60,11 @@ int main(int argc, char **argv)
 
 				option = *argv++;
 				if (!strcmp(option, "ro"))
-					flags = MS_RDONLY;
+					flags |= MS_RDONLY;
 				else if (!strcmp(option, "remount,rw"))
-					flags = MS_REMOUNT;
+					flags |= MS_REMOUNT;
 				else if (!strcmp(option, "remount,ro"))
-					flags = MS_REMOUNT|MS_RDONLY;
+					flags |= MS_REMOUNT|MS_RDONLY;
 				else {
 					write(STDERR_FILENO, "mount: bad option string\n", 25);
 					return 1;
@@ -71,13 +79,24 @@ int main(int argc, char **argv)
 	}
 
 	if (argc != 2) {
-		write(STDERR_FILENO, "Usage: mount [-t type] [-o ro|remount,rw] <device> <directory>\n", 63);
+		write(STDERR_FILENO, "Usage: mount [-a][-q][-t type] [-o ro|remount,rw] <device> <directory>\n", 63);
 		return 1;
 	}
 
 	if (mount(argv[0], argv[1], type, flags) < 0) {
-		perror("mount failed");
+		if (flags & MS_AUTOMOUNT) {
+			type = (!type || type == FST_MINIX)? FST_MSDOS: FST_MINIX;
+			if (mount(argv[0], argv[1], type, flags) >= 0)
+				goto mount_ok;
+		}
+		if (!query)
+			perror("mount failed");
 		return 1;
 	}
+
+mount_ok:
+	/* if query return type: 1=fail, 2=MINIX, 3=FAT */
+	if (query)
+		return (!type || type == FST_MINIX)? 2: 3;
 	return 0;
 }
