@@ -4,6 +4,7 @@
 #TZ=MDT7		# timezone
 #netirq=9 netport=0x300 # NIC
 #bufs=2500		# XMS max, EXT max is 256
+#sync=30		# sync seconds
 #init=/bin/init 3 n	# multiuser serial no /etc/rc.sys
 #init=/bin/sh		# singleuser shell
 #console=ttyS0,19200	# serial console
