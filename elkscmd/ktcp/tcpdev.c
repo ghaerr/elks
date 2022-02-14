@@ -94,7 +94,7 @@ reject:
 	    if (n2->tcpcb.state == TS_TIME_WAIT) {
 		LEAVE_TIME_WAIT(&n2->tcpcb);	/* entered via FIN_WAIT_2 state on FIN rcvd*/
 		tcpcb_remove(n2);
-		printf("tcp: port %u REUSED, freeing previous socket in time_wait\n", port);
+		debug_tune("tcp: port %u REUSED, freeing previous socket in time_wait\n", port);
 	    } else {
 		printf("tcp: port %u NOT reused, previous socket in state %d\n",
 			port, n2->tcpcb.state);
