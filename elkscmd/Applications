@@ -156,7 +156,6 @@ inet/httpd/sample_index.html	::var/www/index.html	:net
 ktcp/ktcp						:net
 inet/nettools/netstat			:net
 inet/nettools/nslookup			:net
-#inet/nettools/resolv.cfg	::etc/resolv.cfg	:net
 inet/nettools/arp				:net
 inet/telnet/telnet				:net
 inet/telnetd/telnetd			:net
