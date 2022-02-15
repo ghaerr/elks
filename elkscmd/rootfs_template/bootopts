@@ -1,10 +1,11 @@
 ## boot options max size 511 bytes
-#console=ttyS0 debug net=eth 3 # serial console, multiuser, networking
+#console=ttyS0,57600 debug net=eth 3 # serial console, multiuser, networking
 #QEMU=1			# to use ftp/ftpd in qemu
-#TZ=MDT7		# timezone
+#TZ=MDT7
+#LOCALIP=10.0.2.16
 #netirq=9 netport=0x300 # NIC
-#bufs=2500		# XMS max, EXT max is 256
-#sync=30		# sync seconds
+#bufs=2500		# system buffers
+#sync=30		# autosync secs
 #init=/bin/init 3 n	# multiuser serial no /etc/rc.sys
 #init=/bin/sh		# singleuser shell
 #console=ttyS0,19200	# serial console

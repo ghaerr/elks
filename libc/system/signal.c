@@ -44,6 +44,7 @@ Sig signal(int number, Sig pointer)
    int rv;
    if( number < 1 || number > _NSIG ) { errno=EINVAL; return SIG_ERR; }
 
+#pragma GCC diagnostic ignored "-Wpointer-to-int-cast"
    if( pointer == SIG_DFL || pointer == SIG_IGN )
       rv = _signal(number, (__kern_sighandler_t) (long) (int) pointer);
    else
