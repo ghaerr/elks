@@ -3,7 +3,7 @@ id:1:initdefault:
 si::sysinit:/etc/rc.sys
 
 #l1:1:wait:/etc/rc 1
-#ud::once:/bin/update
+#ud::once:/bin/printenv
 
 # getty runlevels
 # 1 single user tty1 only

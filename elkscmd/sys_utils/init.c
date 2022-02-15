@@ -268,14 +268,18 @@ pid_t respawn(const char **a)
 	setsid();
 	strcpy(buf, a[3]);
 	if (!strncmp(buf, GETTY, sizeof(GETTY)-1)) {
-	    char *baudrate;
+	    char *baudrate, *p;
 	    devtty = strchr(buf, ' ');
 
 	    if (!devtty) fatalmsg("Bad getty line: '%s'\r\n", buf);
 	    *devtty++ = 0;
 	    baudrate = strchr(devtty, ' ');
-	    if (baudrate)
+	    if (baudrate) {
 		*baudrate++ = 0;
+		/* if baud specified on cmdline, override if getty= env var in /bootopts*/
+		if ((p = getenv("getty")) != NULL)
+		    baudrate = p;
+	    }
 	    if ((fd = open(devtty, O_RDWR)) < 0)
 			fatalmsg("Can't open %s (errno %d)\r\n", devtty, errno);
 
@@ -298,11 +302,10 @@ pid_t respawn(const char **a)
 		fatalmsg("Can't open %s (errno %d)\r\n", CONSOLE, errno);
 
 	    argv[0] = SHELL;
-	    argv[1] = "-e";
+	    argv[1] = "-c";
 	    argv[2] = buf;
-	    argv[3] = strtok(buf, " ");
-	    argv[4] = NULL;
-	    debug("execv '%s' '%s' '%s' '%s'\r\n", argv[0], argv[1], argv[2], argv[3]);
+	    argv[3] = NULL;
+	    debug("execv '%s' '%s' '%s'\r\n", argv[0], argv[1], argv[2]);
 
 	    dup2(fd ,STDIN_FILENO);
 	    dup2(fd ,STDOUT_FILENO);
@@ -512,9 +515,9 @@ int main(int argc, char **argv)
 
 	/* debug /bootopts:*/
 	printf("ARGS: ");
-	char **av = argv;
-	while (*av)
-		printf("'%s'", *av++);
+	char **av2 = argv;
+	while (*av2)
+		printf("'%s'", *av2++);
 	printf("\n");
 	printf("ENV: ");
 	extern char **environ;
