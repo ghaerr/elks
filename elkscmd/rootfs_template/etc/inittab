@@ -15,5 +15,5 @@ si::sysinit:/etc/rc.sys
 t1:1356:respawn:/bin/getty /dev/tty1
 t2:56:respawn:/bin/getty /dev/tty2
 t3:56:respawn:/bin/getty /dev/tty3
-s0:2346:respawn:/bin/getty /dev/ttyS0 9600
+s0:2346:respawn:/bin/getty /dev/ttyS0
 s1:46:respawn:/bin/getty /dev/ttyS1 9600

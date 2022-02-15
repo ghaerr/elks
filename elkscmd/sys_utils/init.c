@@ -268,18 +268,14 @@ pid_t respawn(const char **a)
 	setsid();
 	strcpy(buf, a[3]);
 	if (!strncmp(buf, GETTY, sizeof(GETTY)-1)) {
-	    char *baudrate, *p;
+	    char *baudrate;
 	    devtty = strchr(buf, ' ');
 
 	    if (!devtty) fatalmsg("Bad getty line: '%s'\r\n", buf);
 	    *devtty++ = 0;
 	    baudrate = strchr(devtty, ' ');
-	    if (baudrate) {
+	    if (baudrate)
 		*baudrate++ = 0;
-		/* if baud specified on cmdline, override if getty= env var in /bootopts*/
-		if ((p = getenv("getty")) != NULL)
-		    baudrate = p;
-	    }
 	    if ((fd = open(devtty, O_RDWR)) < 0)
 			fatalmsg("Can't open %s (errno %d)\r\n", devtty, errno);
 

@@ -1,12 +1,13 @@
 # Start/stop ELKS networking
 #
-# Usage: net [start|stop] [eth|slip|cslip] [baud] [device]
+# Usage: net [start|stop|show] [eth|slip|cslip] [baud] [device]
 #
 # Examples:
 #	net start eth			start ethernet networking
 #	net start slip			start slip networking
 #	net start slip 19200	start slip at 19200 baud
 #	net start cslip 4800 /dev/ttyS1
+#	net show				shows settings for 'net start'
 #
 # See slattach.sh for Linux slip setup
 # See qemu.sh NET= line for host forwarding into ELKS using QEMU
@@ -17,7 +18,7 @@ source /etc/net.cfg
 
 usage()
 {
-	echo "Usage: net [start|stop] [eth|slip|cslip] [baud] [device]"
+	echo "Usage: net [start|stop|show] [eth|slip|cslip] [baud] [device]"
 	exit 1
 }
 
@@ -82,6 +83,9 @@ start)
 	if test "$4" != ""; then device=$4; fi
 	start_network ;;
 stop) stop_network ;;
+show)
+	echo -n ip $localip gateway $gateway mask $netmask $link
+	if test "$link" != "eth"; then echo "" $baud $device; else echo; fi ;;
 *) usage ;;
 esac
 
