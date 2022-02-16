@@ -146,8 +146,8 @@ int main(int argc, char **argv)
 	struct sockaddr_in localadr;
 
 	if ((listen_sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		fprintf(stderr, "httpd: Can't open socket (check if ktcp is running)\n");
-		exit(-1);
+		perror("httpd");
+		return -1;
 	}
 
 	/* set local port reuse, allows server to be restarted in less than 10 secs */
@@ -166,17 +166,17 @@ int main(int argc, char **argv)
 
 	if (bind(listen_sock, (struct sockaddr *)&localadr, sizeof(struct sockaddr_in)) < 0) {
 		fprintf(stderr, "httpd: bind error (may already be running)\n");
-		exit(-1);
+		return 1;
 	}
 	if (listen(listen_sock, 5) < 0) {
-		perror("listen error");
-		exit(-1);
+		perror("listen");
+		return 1;
 	}
 
 	/* become daemon, debug output on 1 and 2*/
 	if ((ret = fork()) == -1) {
-		fprintf(stderr, "httpd: Can't fork to become daemon\n");
-		exit(1);
+		perror("httpd");
+		return 1;
 	}
 	if (ret) exit(0);
 	ret = open("/dev/null", O_RDWR); /* our log file! */
@@ -192,7 +192,7 @@ int main(int argc, char **argv)
 		
 		if (conn_sock < 0) {
 			if (errno == ENOTSOCK)
-				exit(-1);
+				exit(1);
 			continue;
 		}
 
