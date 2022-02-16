@@ -83,10 +83,18 @@ void line_break(void);
 void page_break(void);
 void print_header(void);
 void print_footer(void);
+void step(char **pcurr, char **pnext);
+int do_command(void);
+int do_argvcmd(int cmd_id);
+int fetch_word(void);
+int open_page(char * name);
+int do_argvcmd(int cmd_id);
+int do_noargs(int cmd_id);
+void build_headers(void);
 
 int find_page(char *name, char *sect)
 {
-static char defpath[] = "/lib/man:/usr/man";
+static char defpath[] = "/lib:/etc";
 static char defsect[] = "1:2:3:4:5:6:7:8:9";
 static char defsuff[] = ":.gz:.Z";
 static char manorcat[] = "man:cat";
@@ -120,7 +128,6 @@ static char manorcat[] = "man:cat";
 	 for (mp=nmp=manpath,step(&mp,&nmp); mp; step(&mp, &nmp))
 	    for (su=nsu=mansuff,step(&su,&nsu); su; step(&su, &nsu)) {
 	       sprintf(fbuf, "%s/%s%s/%s.%s%s", mp, mc, ms, name, ms, su);
-
 	       /* Got it ? */
 	       if (access(fbuf, 0) < 0) continue;
 	       if (flg_w)
@@ -144,7 +151,7 @@ static char manorcat[] = "man:cat";
    return rv;
 }
 
-int step(char **pcurr, char **pnext)
+void step(char **pcurr, char **pnext)
 {
    char *curr = *pcurr;
    char *next = *pnext;
@@ -224,7 +231,9 @@ struct cmd_list_s {
   { "BY", 0, 0 },	/* I wonder where this should go ? */
 
   { "nf", 0, 1 },	/* Line break, Turn line fill off */
+  { "NF", 0, 1 },	/* Line break, Turn line fill off */
   { "fi", 0, 2 },	/* Line break, Turn line fill on */
+  { "FI", 0, 2 },	/* Line break, Turn line fill on */
   { "sp", 0, 3 },	/* Line break, line space (arg for Nr lines) */
   { "br", 0, 4 },	/* Line break */
   { "bp", 0, 5 },	/* Page break */
@@ -404,7 +413,7 @@ int fetch_word(void)
       if (p<word+sizeof(word)-1) *p++ = ch; col++;
       if (ch == '\\') {
          if ((ch=fgetc(ifd)) == EOF) break;
-	 /* if (ch == ' ') ch = ' ' + 0x80;	/* XXX Is this line needed? */
+	 /* if (ch == ' ') ch = ' ' + 0x80;*/	/* XXX Is this line needed? */
          if (p<word+sizeof(word)-1) *p++ = ch; col++;
       }
    }
@@ -417,7 +426,7 @@ int fetch_word(void)
 int do_command(void)
 {
    char * cmd;
-   int ch, i;
+   int i;
    char lbuf[10];
 
    cmd = word + 1;
@@ -539,8 +548,7 @@ int do_fontwords(int this_font, int other_font, int early_exit)
    return 0;
 }
 
-do_noargs(cmd_id)
-int cmd_id;
+int do_noargs(int cmd_id)
 {
    if (cmd_id < 10) line_break();
    switch (cmd_id) {
@@ -568,8 +576,7 @@ int cmd_id;
    return 0;
 }
 
-do_argvcmd(cmd_id)
-int cmd_id;
+int do_argvcmd(int cmd_id)
 {
    int ch;
 
@@ -629,7 +636,7 @@ int cmd_id;
    return 0;
 }
 
-build_headers()
+void build_headers(void)
 {
    char buffer[5][80];
    int  strno=0, stroff=0;

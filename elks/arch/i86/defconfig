@@ -212,6 +212,11 @@ CONFIG_APP_KTCP=y
 #CONFIG_APP_URLGET=y
 
 #
+# Man pages
+#
+# CONFIG_APP_MAN_PAGES is not set
+
+#
 # Select Applications by Image Size
 #
 CONFIG_APPS_BY_IMAGESZ=n
