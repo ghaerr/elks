@@ -70,7 +70,7 @@ int inet_process_tcpdev(register char *buf, int len)
 	sock->flags |= SF_CONNECT;
 	sock->retval = ((struct tdb_return_data *)buf)->ret_value;
 	debug_net("INET(%d) sock %x connect %d bufin %d\n",
-	current->pid, sock, sock->retval, bufin_sem);
+	    current->pid, sock, sock->retval, bufin_sem);
 	up(&sock->sem);
 	tcpdev_clear_data_avail();
 	wake_up(sock->wait);
