@@ -184,7 +184,7 @@ static int inet_connect(struct socket *sock, struct sockaddr *uservaddr,
     do {
 	interruptible_sleep_on(sock->wait);
 	if (current->signal)
-	    return -EINTR;
+	    return -ETIMEDOUT;
     } while (!(sock->flags & SF_CONNECT));
 
     if (sock->retval == 0)

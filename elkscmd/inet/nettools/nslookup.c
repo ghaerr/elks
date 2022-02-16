@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -55,6 +56,11 @@ struct RR {				/* resource record */
 	__u32	rdata;		/* IP address for TYPE_A */
 };
 
+static void alarm_cb(int sig)
+{
+	/* no action */
+}
+
 /* convert e.g. www.google.com (host) to 3www6google3com (dns) */
 static void format_dns(char *dns, char *host)
 {
@@ -83,6 +89,7 @@ ipaddr_t in_resolve(char *hostname, char *server)
 	char *dnsname;
 	struct sockaddr_in addr;
 	unsigned short flags;
+	__sighandler_t old;
 	char buf[256];
 
 	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -99,8 +106,11 @@ ipaddr_t in_resolve(char *hostname, char *server)
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = in_aton(server? server: DEFAULT_DNS);
 	addr.sin_port = htons(53);
+	old = signal(SIGALRM, alarm_cb);
+	alarm(2);
 	if (connect(fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
 		printf("Can't connect to %s\n", in_ntoa(addr.sin_addr.s_addr));
+		signal(SIGALRM, old);
 		close(fd);
 		return 0;
 	}
@@ -126,6 +136,7 @@ ipaddr_t in_resolve(char *hostname, char *server)
 
 	write(fd, buf, len + 2);
 	rc = read(fd,buf,200);
+	alarm(0);
 	close(fd);
 
 #if DEBUG

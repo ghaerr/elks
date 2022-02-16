@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
 	remadr.sin_addr.s_addr = ipaddr;
 
 	printf("Connecting to %s (%s:%u)\n", argv[1], in_ntoa(ipaddr), port);
-	ret = connect(tcp_fd, (struct sockaddr *)&remadr, sizeof(struct sockaddr_in));
+	ret = in_connect(tcp_fd, (struct sockaddr *)&remadr, sizeof(struct sockaddr_in), 10);
 	if (ret < 0){
 		perror("Connection failed");
 		exit(1);
