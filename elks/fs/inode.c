@@ -18,10 +18,6 @@
 
 #include <arch/system.h>
 
-#ifdef BLOAT_FS
-int event = 0;
-#endif
-
 static struct inode inode_block[NR_INODE];
 static struct inode *inode_lru = inode_block;
 static struct inode *inode_llru = inode_block;

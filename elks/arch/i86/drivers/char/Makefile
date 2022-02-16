@@ -35,7 +35,7 @@ include $(BASEDIR)/Makefile-rules
 #########################################################################
 # Objects to be compiled.
 
-OBJS  = init.o mem.o ntty.o meta.o tcpdev.o pty.o
+OBJS  = init.o mem.o ntty.o meta.o tcpdev.o pty.o lp.o
 
 ifeq ($(CONFIG_ARCH_8018X), y)
 	CONIO = 8018x
@@ -45,7 +45,6 @@ endif
 ifeq ($(CONFIG_ARCH_IBMPC), y)
 	CONIO = bios
 	SERIAL = 8250
-	OBJS += lp.o
 endif
 
 ifdef CONFIG_ARCH_PC98
@@ -71,7 +70,6 @@ ifdef CONFIG_CONSOLE_HEADLESS
 OBJS += console-headless.o
 endif
 OBJS += conio-pc98.o conio-pc98-asm.o kbd-poll-pc98.o
-OBJS += lp.o
 endif
 
 ifdef CONFIG_ARCH_IBMPC
