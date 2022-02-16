@@ -141,6 +141,11 @@
 #define	EDQUOT		122	/* Quota exceeded */
 #define	ENOMEDIUM	123	/* No medium found */
 #define	EMEDIUMTYPE	124	/* Wrong medium type */
+#define ENONAMESERVER	125	/* Nameserver not found */
+#define ENONAME		126	/* Name not found */
+#define EBADQUERY	127	/* Bad query format */
+#define EQUERYREFUSED	128	/* Query refused */
+#define ESERVERERR	129	/* Server error */
 
 /*****************************************************************************/
 
