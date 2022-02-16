@@ -20,11 +20,10 @@ typedef enum {
 
 struct socket {
     unsigned char state;
+    struct wait_queue *wait;
     unsigned char flags;
     unsigned int rcv_bufsiz;
     struct proto_ops *ops;
-    void *data;
-    struct wait_queue *wait;
     struct inode *inode;
     struct file *file;
 
@@ -32,12 +31,13 @@ struct socket {
     struct socket *conn;
     struct socket *iconn;
     struct socket *next;
+    void *data;
 #endif
 
 #if defined(CONFIG_INET)
-    int avail_data;
-    int retval;
-    sem_t sem;
+    sem_t sem;			/* one operation at a time per socket */
+    int avail_data;		/* data available for reading from ktcp */
+    int retval;			/* event return value from ktcp */
     __u32 remaddr;		/* all in network byte order */
     __u32 localaddr;
     __u16 remport;

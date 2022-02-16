@@ -378,8 +378,6 @@ struct iattr {
 };
 
 extern int notify_change(struct inode *,struct iattr *);
-
-extern int event;		/* Event counter */
 #endif
 
 extern int sys_open(char *,int,int);

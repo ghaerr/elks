@@ -79,11 +79,10 @@ static struct socket *sock_alloc(void)
 {
     static struct socket ini_sock = {	/* order dependent on net.h! */
 	SS_UNCONNECTED, /* state */
+	NULL,		/* wait */
 	0,		/* flags */
 	0,		/* rcv_bufsiz */
 	NULL,		/* ops */
-	NULL,		/* data */
-	NULL,		/* wait */
 	NULL,		/* inode */
 	NULL,		/* file */
 
@@ -91,6 +90,7 @@ static struct socket *sock_alloc(void)
 	NULL,		/* conn */
 	NULL,		/* iconn */
 	NULL,		/* next */
+	NULL,		/* data */
 #endif
 #if defined(CONFIG_INET)
 	0,		/* avail_data */
