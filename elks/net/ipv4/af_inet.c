@@ -93,8 +93,10 @@ static int inet_create(struct socket *sock, int protocol)
 {
     debug_net("INET(%d) create sock %x\n", current->pid, sock);
 
-    if (protocol != 0 || !tcpdev_inuse)
+    if (protocol != 0)
         return -EINVAL;
+    if (!tcpdev_inuse)
+	return -ENETDOWN;
 
     return 0;
 }

@@ -16,6 +16,7 @@
 #define DEBUG		0		/* =1 to display debug messages */
 
 #define DEFAULT_DNS	"208.67.222.222"	/* DNS server IP */
+#define DNS_ENV		"DNSIP"				/* DNS server IP environment var */
 
 /* flag codes */
 #define QUERY		0x0000	/* DNS query (opcode 0) */
@@ -93,6 +94,11 @@ ipaddr_t in_resolve(char *hostname, char *server)
 	__sighandler_t old;
 	char buf[256];
 
+	if (server == NULL)
+		server = getenv(DNS_ENV);
+	if (server == NULL)
+		server = DEFAULT_DNS;
+
 	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 		return 0;
 
@@ -107,11 +113,12 @@ ipaddr_t in_resolve(char *hostname, char *server)
 	}
 
 	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = in_aton(server? server: DEFAULT_DNS);
+	addr.sin_addr.s_addr = in_aton(server);
 	addr.sin_port = htons(53);
 	old = signal(SIGALRM, alarm_cb);
 	alarm(2);
 	if (connect(fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+		alarm(0);
 		signal(SIGALRM, old);
 		close(fd);
 		errno = ENONAMESERVER;
@@ -140,6 +147,7 @@ ipaddr_t in_resolve(char *hostname, char *server)
 	write(fd, buf, len + 2);
 	rc = read(fd,buf,200);
 	alarm(0);
+	signal(SIGALRM, old);
 	close(fd);
 
 #if DEBUG
@@ -198,16 +206,14 @@ ipaddr_t in_resolve(char *hostname, char *server)
 int main(int ac, char **av)
 {
 	ipaddr_t result;
-	char *server;
+	char *server = NULL;
 
 	if (ac < 2) {
 		printf("Usage: nslookup <domain> [nameserver]\n");
 		return 1;
 	}
 	if (ac > 2)
-			server = av[2];
-	else
-		server = getenv("DNS");
+		server = av[2];
 
 	result = in_resolve(av[1], server);
 	if (result)
