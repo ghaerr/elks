@@ -23,40 +23,38 @@ struct arp_cache arp_cache[ARP_CACHE_MAX];
 
 char *mac_ntoa(eth_addr_t eth_addr)
 {
-	unsigned char *p = (unsigned char *)eth_addr;
+    unsigned char *p = (unsigned char *)eth_addr;
     static char b[18];
 
     sprintf(b, "%02x.%02x.%02x.%02x.%02x.%02x",p[0],p[1],p[2],p[3],p[4],p[5]);
     return b;
 }
 
-int main(void)
+int main(int ac, char **av)
 {
     int i, s, ret;
     struct stat_request_s sr;
     struct sockaddr_in localadr, remaddr;
 
-    if ( (s = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-	perror("socket error");
-	exit(-1);
+    if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+	perror("arp");
+	return 1;
     }
 
     localadr.sin_family = AF_INET;
     localadr.sin_port = PORT_ANY;
     localadr.sin_addr.s_addr = INADDR_ANY;  
-    ret = bind(s, (struct sockaddr *)&localadr, sizeof(struct sockaddr_in));
-    if ( ret == -1) {
-	perror("bind error");
-	exit(-1);
+    if (bind(s, (struct sockaddr *)&localadr, sizeof(struct sockaddr_in)) < 0) {
+	perror("bind");
+	return 1;
     }
 
     remaddr.sin_family = AF_INET;
     remaddr.sin_port = htons(NETCONF_PORT);
     remaddr.sin_addr.s_addr = 0;
-    ret = connect(s, (struct sockaddr *)&remaddr, sizeof(struct sockaddr_in));
-    if ( ret == -1) {
-	perror("connect error");
-	exit(-1);
+    if (connect(s, (struct sockaddr *)&remaddr, sizeof(struct sockaddr_in)) < 0) {
+	perror("connect");
+	return 1;
     }
 
     sr.type = NS_ARP;
@@ -64,10 +62,11 @@ int main(void)
     ret = read(s, arp_cache, ARP_CACHE_MAX*sizeof(struct arp_cache));
     if (ret != ARP_CACHE_MAX*sizeof(struct arp_cache)) {
 	perror("read");
-	exit(-1);
+	return 1;
     }
 
     for(i=0; i<ARP_CACHE_MAX; i++) {
 	printf("%-15s %s\n", in_ntoa(arp_cache[i].ip_addr), mac_ntoa(arp_cache[i].eth_addr));
     }
+    return 1;
 }

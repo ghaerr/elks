@@ -127,24 +127,24 @@ assert (optsize);
 #endif
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char **argv)
 {
 	unsigned short port;
 	struct sockaddr_in locadr, remadr;
-	int ret, nonblock;
+	int nonblock;
 	ipaddr_t ipaddr;
 
 	if (argc < 2 || argc > 3) {
 		fprintf(stderr, "Usage: %s host <port>\r\n", argv[0]);
-		exit(1);
+		return 1;
 	}
 	tcgetattr(0, &def_termios);
 	signal(SIGINT, finish);
 
 	tcp_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (tcp_fd < 0) {
-		fprintf(stderr, "Can't open socket (check if ktcp is running)\n");
-		exit(1);
+		perror("telnet");
+		return 1;
 	}
 	
 	locadr.sin_family = AF_INET;
@@ -160,13 +160,16 @@ int main(int argc, char *argv[])
 	setsockopt(tcp_fd, SOL_SOCKET, SO_LINGER, &l, sizeof(l));
 }
 #endif
-	ret = bind(tcp_fd, (struct sockaddr *)&locadr, sizeof(struct sockaddr_in));
-	if (ret < 0){
-		perror("Bind failed");
-		exit(1);
+	if (bind(tcp_fd, (struct sockaddr *)&locadr, sizeof(struct sockaddr_in)) < 0) {
+		perror("bind");
+		return 1;
 	}
 
 	ipaddr = in_gethostbyname(argv[1]);
+	if (!ipaddr) {
+		perror(argv[1]);
+		return 1;
+	}
 	port = (argc >= 3)? atoi(argv[2]): 23;
 
 	remadr.sin_family = AF_INET;
@@ -174,10 +177,9 @@ int main(int argc, char *argv[])
 	remadr.sin_addr.s_addr = ipaddr;
 
 	printf("Connecting to %s (%s:%u)\n", argv[1], in_ntoa(ipaddr), port);
-	ret = in_connect(tcp_fd, (struct sockaddr *)&remadr, sizeof(struct sockaddr_in), 10);
-	if (ret < 0){
+	if (in_connect(tcp_fd, (struct sockaddr *)&remadr, sizeof(struct sockaddr_in), 10) < 0) {
 		perror("Connection failed");
-		exit(1);
+		return 1;
 	}
 	printf("Connected\r\n");
 
@@ -200,8 +202,7 @@ int main(int argc, char *argv[])
 		FD_SET(0, &fdset);
 		FD_SET(tcp_fd, &fdset);
 
-		ret = select(tcp_fd + 1, &fdset, NULL, NULL, NULL);
-		if (ret < 0) {
+		if (select(tcp_fd + 1, &fdset, NULL, NULL, NULL) < 0) {
 			perror("select");
 			break;
 		}
