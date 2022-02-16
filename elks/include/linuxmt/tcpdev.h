@@ -18,6 +18,7 @@
 
 #define TCPDEV_MAXREAD TCPDEV_INBUFFERSIZE - sizeof(struct tdb_return_data)
 
+/* outgoing ops */
 #define TDC_BIND	1
 #define TDC_ACCEPT	2
 #define TDC_CONNECT	3
@@ -74,11 +75,13 @@ struct tdb_write {
     unsigned char data[TDB_WRITE_MAX];
 };
 
+/* incoming (ktcp to kernel) ops */
 #define	TDT_RETURN	1
 #define	TDT_CHG_STATE	2
 #define	TDT_AVAIL_DATA	3
 #define TDT_ACCEPT	4
 #define TDT_BIND	5
+#define TDT_CONNECT	6
 
 struct tdb_return_data {
     char type;

@@ -265,7 +265,7 @@ void tcpcb_push_data(void)
 
     for (n=tcpcbs; n; n=n->next)
 	if (n->tcpcb.bytes_to_push > 0)
-	    tcpdev_checkread(&n->tcpcb);
+	    notify_data_avail(&n->tcpcb);
 }
 
 /* There must be free space greater-equal than len or will wrap*/

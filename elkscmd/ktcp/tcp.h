@@ -183,7 +183,7 @@ struct	tcp_retrans_list_s {
 extern int tcp_timeruse;	/* retrans timer active, call tcp_retrans */
 extern int cbs_in_time_wait;	/* time_wait timer active, call tcp_expire_timeouts */
 extern int cbs_in_user_timeout;	/* fin_wait/closing/last_ack active, call " */
-extern int tcpcb_need_push;	/* push required, tcpcb_push_data/call tcpcb_checkread */
+extern int tcpcb_need_push;	/* push required, tcpcb_push_data/call notify_data_avail */
 extern int tcp_retrans_memory;	/* total retransmit memory in use */
 
 struct tcpcb_list_s *tcpcb_new(int bufsize);
