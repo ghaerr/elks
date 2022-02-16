@@ -7,6 +7,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
+#include <errno.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -14,6 +16,7 @@
 #define DEBUG		0		/* =1 to display debug messages */
 
 #define DEFAULT_DNS	"208.67.222.222"	/* DNS server IP */
+#define DNS_ENV		"DNSIP"				/* DNS server IP environment var */
 
 /* flag codes */
 #define QUERY		0x0000	/* DNS query (opcode 0) */
@@ -55,6 +58,11 @@ struct RR {				/* resource record */
 	__u32	rdata;		/* IP address for TYPE_A */
 };
 
+static void alarm_cb(int sig)
+{
+	/* no action */
+}
+
 /* convert e.g. www.google.com (host) to 3www6google3com (dns) */
 static void format_dns(char *dns, char *host)
 {
@@ -83,7 +91,13 @@ ipaddr_t in_resolve(char *hostname, char *server)
 	char *dnsname;
 	struct sockaddr_in addr;
 	unsigned short flags;
+	__sighandler_t old;
 	char buf[256];
+
+	if (server == NULL)
+		server = getenv(DNS_ENV);
+	if (server == NULL)
+		server = DEFAULT_DNS;
 
 	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 		return 0;
@@ -92,16 +106,22 @@ ipaddr_t in_resolve(char *hostname, char *server)
 	addr.sin_port = PORT_ANY;
 	addr.sin_addr.s_addr = INADDR_ANY;
 	if (bind(fd, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)) < 0) {
+		int e = errno;
 		close(fd);
+		errno = e;
 		return 0;
 	}
 
 	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = in_aton(server? server: DEFAULT_DNS);
+	addr.sin_addr.s_addr = in_aton(server);
 	addr.sin_port = htons(53);
+	old = signal(SIGALRM, alarm_cb);
+	alarm(2);
 	if (connect(fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
-		printf("Can't connect to %s\n", in_ntoa(addr.sin_addr.s_addr));
+		alarm(0);
+		signal(SIGALRM, old);
 		close(fd);
+		errno = ENONAMESERVER;
 		return 0;
 	}
 
@@ -126,6 +146,8 @@ ipaddr_t in_resolve(char *hostname, char *server)
 
 	write(fd, buf, len + 2);
 	rc = read(fd,buf,200);
+	alarm(0);
+	signal(SIGALRM, old);
 	close(fd);
 
 #if DEBUG
@@ -133,11 +155,15 @@ ipaddr_t in_resolve(char *hostname, char *server)
 	for (int i=0;i<rc;i++) printf("%2x,",buf[i] & 0xff);
 	printf("\n");
 #endif
-	if (rc < sizeof(struct DNS_HEADER) + sizeof(struct RR))
+
+	if (rc < sizeof(struct DNS_HEADER) + sizeof(struct RR)) {
+		errno = ESERVERERR;
 		return 0;
+	}
 
 	dns = (struct DNS_HEADER *)buf;
 	flags = htons(dns->flags);
+
 #if DEBUG
 	printf("response id %04x\n", htons(dns->id));
 	printf("response code %04x\n", flags);
@@ -146,20 +172,19 @@ ipaddr_t in_resolve(char *hostname, char *server)
 	printf("response ns count %04x\n", htons(dns->nscount));
 	printf("response ar count %04x\n", htons(dns->arcount));
 #endif
-	if ((flags & RC) != NO_ERROR) {
-		char *str;
 
+	if ((flags & RC) != NO_ERROR) {
 		switch (flags & RC) {
-		case FORMAT_ERROR:	str = "Bad format"; break;
-		case NAME_ERROR:	str = "Name not found"; break;
-		case REFUSED:		str = "Query refused"; break;
-		default:			str = "Server error"; break;
+		case FORMAT_ERROR:	errno = EBADQUERY; break;
+		case NAME_ERROR:	errno = ENONAME; break;
+		case REFUSED:		errno = EQUERYREFUSED; break;
+		default:			errno = ESERVERERR; break;
 		}
-		printf("DNS: %s: %s\n", hostname, str);
 		return 0;
 	}
 
 	rr = (struct RR *)&buf[rc - sizeof(struct RR)];
+
 #if DEBUG
 	printf("response type %04x\n", htons(rr->type));
 	printf("response class %04x\n", htons(rr->class));
@@ -168,9 +193,12 @@ ipaddr_t in_resolve(char *hostname, char *server)
 	printf("response rdata %08lx\n", htonl(rr->rdata));
 	printf("response IP %s\n", in_ntoa(rr->rdata));
 #endif
+
 	/* dns may return auth data but not answer */
-	if (htons(dns->ancount) == 0)
+	if (htons(dns->ancount) == 0) {
+		errno = ENONAME;
 		return 0;
+	}
 
 	return rr->rdata;
 }
@@ -178,7 +206,7 @@ ipaddr_t in_resolve(char *hostname, char *server)
 int main(int ac, char **av)
 {
 	ipaddr_t result;
-	char *server;
+	char *server = NULL;
 
 	if (ac < 2) {
 		printf("Usage: nslookup <domain> [nameserver]\n");
@@ -186,12 +214,10 @@ int main(int ac, char **av)
 	}
 	if (ac > 2)
 		server = av[2];
-	else
-		server = getenv("DNS");
 
 	result = in_resolve(av[1], server);
 	if (result)
 		printf("%s is %s\n", av[1], in_ntoa(result));
-	else printf("%s: Name not found\n", av[1]);
+	else perror(av[1]);
 	return (result == 0);
 }

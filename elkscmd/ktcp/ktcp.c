@@ -57,12 +57,12 @@ static int intfd;	/* interface fd*/
 // tcp_timeruse		timer_retrans		tcp_retrans
 // cbs_in_time_wait	timer_time_wait		tcp_expire_timeouts
 // cbs_in_user_wait	timer_close_wait	tcp_expire_timeouts
-// tcpcb_need_push				tcpcb_push_data -> tcpdev_checkread
+// tcpcb_need_push				tcpcb_push_data -> notify_data_avail
 
 int tcp_timeruse;		/* retrans timer active, call tcp_retrans */
 int cbs_in_time_wait;		/* time_wait timer active, call tcp_expire_timeouts */
 int cbs_in_user_timeout;	/* fin_wait/closing/last_ack active, call " */
-int tcpcb_need_push;		/* push required, tcpcb_push_data/call tcpcb_checkread */
+int tcpcb_need_push;		/* push required, tcpcb_push_data/call notify_data_avail */
 int tcp_retrans_memory;		/* total retransmit memory in use*/
 
 void ktcp_run(void)

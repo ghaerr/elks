@@ -45,7 +45,7 @@ setuid		+23	1
 getuid		+24	1	* this gets both uid and euid
 stime		25	2	- this must not exist - even as a libc.
 ptrace		26	4	@ adb/sdb/dbx need this.
-alarm		27	2
+alarm		+27	2
 fstat		+28	2	 
 pause		29	0	 
 utime		+30	2	 

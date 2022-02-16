@@ -39,18 +39,32 @@ int tcpdev_init(char *fdev)
     return fd;
 }
 
-void retval_to_sock(void *sock, int r)
+void notify_sock(void *sock, int type, int value)
 {
     struct tdb_return_data return_data;
 
-    debug_tcpdev("tcpdev_retval_to_sock\n");
-    return_data.type = TDT_RETURN;
-    return_data.ret_value = r;
+    return_data.type = type;
+    return_data.ret_value = value;
     return_data.sock = sock;
     return_data.size = 0;
     write(tcpdevfd, &return_data, sizeof(return_data));
 }
 
+/* inform kernel of socket data bytes available*/
+void notify_data_avail(struct tcpcb_s *cb)
+{
+    if (cb->bytes_to_push <= 0)
+	return;
+
+    notify_sock(cb->sock, TDT_AVAIL_DATA, cb->bytes_to_push);
+}
+
+void retval_to_sock(void *sock, int retval)
+{
+    notify_sock(sock, TDT_RETURN, retval);
+}
+
+/* called every ktcp cycle when tcpdevfd data is ready*/
 static void tcpdev_bind(void)
 {
     struct tdb_bind *db = (struct tdb_bind *)sbuf; /* read from sbuf*/
@@ -159,23 +173,23 @@ static void tcpdev_accept(void)
     write(tcpdevfd, &accept_ret, sizeof(accept_ret));
 }
 
-void tcpdev_checkaccept(struct tcpcb_s *cb)
+void tcpdev_notify_accept(struct tcpcb_s *cb)
 {
     struct tcpcb_s *listencb;
     struct tcpcb_list_s *lp;
     struct tdb_accept_ret accept_ret;
 
-    debug_tcpdev("tcpdev_checkaccept\n");
+    debug_tcpdev("tcpdev_notify_accept\n");
     if (!cb->unaccepted)
 	return;
-    debug_accept("tcpdev checkaccept: sock[%p] searching for newsock[%p]\n",
+    debug_accept("tcpdev notify_accept: sock[%p] searching for newsock[%p]\n",
 	cb->sock, cb->newsock);
     if (!(lp = tcpcb_find_by_sock(cb->newsock))) /* search listen CB socket*/
 	return;
 
     /* SYN occured before accept sys call*/
     listencb = &lp->tcpcb;
-    debug_accept("tcpdev checkaccept: found listen socket[%p] newsocket[%p]\n",
+    debug_accept("tcpdev notify_accept: found listen socket[%p] newsocket[%p]\n",
 	listencb->sock, listencb->newsock);
 
     if (!listencb->newsock)
@@ -188,7 +202,7 @@ void tcpdev_checkaccept(struct tcpcb_s *cb)
     accept_ret.addr_ip = cb->remaddr;
     accept_ret.addr_port = htons(cb->remport);
 
-    debug_accept("tcpdev checkaccept: ACCEPT (SYN received before accept) sock[%p] newsock[%p]\n", listencb->sock, listencb->newsock);
+    debug_accept("tcpdev notify_accept: ACCEPT (SYN received before accept) sock[%p] newsock[%p]\n", listencb->sock, listencb->newsock);
 
     cb->unaccepted = 0;
     cb->sock = listencb->newsock;
@@ -218,7 +232,7 @@ static void tcpdev_connect(void)
 
     if (n->tcpcb.remport == NETCONF_PORT && n->tcpcb.remaddr == 0) {
 	n->tcpcb.state = TS_ESTABLISHED;
-	retval_to_sock(n->tcpcb.sock, 0);
+	notify_sock(n->tcpcb.sock, TDT_CONNECT, 0);	/* success*/
     } else
 	tcp_connect(&n->tcpcb);
 }
@@ -297,11 +311,11 @@ static void tcpdev_read(void)
     if (cb->state == TS_CLOSE_WAIT) {
 	if (cb->bytes_to_push <= 0) {
 	    debug_tcp("tcp: disconnecting after final read %d\n", data_avail);
-	    tcpdev_sock_state(cb, SS_DISCONNECTING);
+		notify_sock(cb->sock, TDT_CHG_STATE, SS_DISCONNECTING);
 	} else {
 	    debug_tcp("tcp: application read too small after FIN, data_avail %d\n",
 		cb->bytes_to_push);
-	    tcpdev_checkread(cb);		/* inform kernel of remaining data*/
+	    notify_data_avail(cb);	/* inform kernel of remaining data*/
 	}
 	return;
     }
@@ -313,49 +327,6 @@ static void tcpdev_read(void)
 		cb->rcv_nxt - cb->irs, data_avail);
 	    tcp_send_ack(cb);
 	}
-}
-
-/* inform kernel of socket data bytes available*/
-void tcpdev_checkread(struct tcpcb_s *cb)
-{
-    void * sock;
-    struct tdb_return_data return_data;
-
-    debug_tcpdev("tcpdev_checkread\n");
-    if (cb->bytes_to_push <= 0)
-	return;
-
-    //if (cb->wait_data == 0) {
-	/*printf("ktcpdev checkSELECT: sock %x %d bytes\n", sock, cb->bytes_to_push);*/
-
-	/* Update the avail_data in the kernel socket (for select) */
-	sock = cb->sock;
-	return_data.type = TDT_AVAIL_DATA;
-	return_data.ret_value = cb->bytes_to_push;
-	return_data.sock = sock;
-	return_data.size = 0;
-	write(tcpdevfd, &return_data, sizeof(return_data));
-	return;
-    //}
-
-#if 0 /* removed - wait_data mechanism no longer used in inet_read*/
-    struct tdb_return_data *ret_data = (struct tdb_return_data *)sbuf;
-    //unsigned int data_avail = cb->buf_used;
-    data_avail = cb->wait_data < cb->bytes_to_push ? cb->wait_data : cb->bytes_to_push;
-    cb->bytes_to_push -= data_avail;
-    if (cb->bytes_to_push <= 0)
-	tcpcb_need_push--;
-
-    /*printf("ktcpdev checkREAD: sock %x %d bytes\n", sock, data_avail);*/
-    ret_data->type = TDT_RETURN;
-    ret_data->ret_value = data_avail;
-    ret_data->size = data_avail;
-    ret_data->sock = cb->sock;
-    tcpcb_buf_read(cb, ret_data->data, data_avail);
-    write(tcpdevfd, sbuf, sizeof(struct tdb_return_data) + data_avail);
-
-    cb->wait_data = 0;
-#endif
 }
 
 /* kernel write data to ktcp (network)*/
@@ -370,7 +341,7 @@ static void tcpdev_write(void)
     sock = db->sock;
     /*
      * Must save db->size as sbuf invalid after call to tcp_output,
-     * as when localhost tcpdev_checkread call uses same sbuf.
+     * as when localhost notify_data_avail call uses same sbuf.
      */
     size = db->size;
 
@@ -400,7 +371,7 @@ static void tcpdev_write(void)
 	if (db->size == sizeof(struct stat_request_s)) {
 	    netconf_request((struct stat_request_s *)db->data);
 	    netconf_send(cb);		/* queue response*/
-	    tcpdev_checkread(cb);	/* set sock->data_avail to allow inet_read()*/
+	    notify_data_avail(cb);	/* set sock->data_avail to allow inet_read()*/
 	}
 	retval_to_sock(sock, size);
 	return;
@@ -480,20 +451,6 @@ common_close:
     }
 }
 
-void tcpdev_sock_state(struct tcpcb_s *cb, int state)
-{
-    void * sock = cb->sock;
-    struct tdb_return_data return_data;
-
-    debug_tcpdev("tcpdev_sock_state\n");
-    return_data.type = TDT_CHG_STATE;
-    return_data.ret_value = state;
-    return_data.sock = sock;
-    return_data.size = 0;
-    write(tcpdevfd, &return_data, sizeof(return_data));
-}
-
-/* called every ktcp cycle when tcpdevfd data is ready*/
 void tcpdev_process(void)
 {
 	int len = read(tcpdevfd, sbuf, TCPDEV_BUFSIZ);
