@@ -40,7 +40,16 @@ ext_buffer_head *EBH(struct buffer_head *bh)
 	int idx = bh - buffer_heads;
 	return ext_buffer_heads + idx;
 }
-#endif
+
+/* functions for buffer_head points called outside of buffer.c */
+void mark_buffer_dirty(struct buffer_head *bh)     { EBH(bh)->b_dirty = 1; }
+void mark_buffer_clean(struct buffer_head *bh)     { EBH(bh)->b_dirty = 0; }
+ramdesc_t buffer_seg(struct buffer_head *bh)       { return EBH(bh)->b_seg; }
+unsigned char buffer_count(struct buffer_head *bh) { return EBH(bh)->b_count; }
+block32_t buffer_blocknr(struct buffer_head *bh)   { return EBH(bh)->b_blocknr; }
+kdev_t buffer_dev(struct buffer_head *bh)          { return EBH(bh)->b_dev; }
+
+#endif /* CONFIG_FAR_BUFHEADS */
 
 /* Internal L1 buffers, must be kernel DS addressable */
 static char L1buf[NR_MAPBUFS][BLOCK_SIZE];
