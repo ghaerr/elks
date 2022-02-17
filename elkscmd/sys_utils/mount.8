@@ -3,7 +3,7 @@
 mount \- mount a file system
 .SH SYNOPSIS
 .B mount
-[\-t fstype] device directory
+[\-a][\-t fstype][\-o ro|remount,rw] device directory
 .SH DESCRIPTION
 This document describes the ELKS version of
 .BR mount .
@@ -22,12 +22,17 @@ is mounted, its root directory replaces the
 given.
 .SS OPTIONS
 .TP
+.I "-a"
+Auto-mount the filesystem by inspecting its superblock.
+.TP
 .I "-t"
 Specify the type of filesystem to be mounted. Default is
 .B minix .
 .SH EXAMPLES
 .IP
 mount \-t minix /dev/hda1 /mnt
+.IP
+mount \-a /dev/fd1 /mnt
 .LP
 .SH EXIT STATUS
 .TP

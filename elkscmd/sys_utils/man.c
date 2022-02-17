@@ -441,13 +441,15 @@ int do_command(void)
    if (cmd_list[i].cmd[0] == 0) {
       if (verbose) {
          strncpy(lbuf, cmd, 3); lbuf[3] = 0;
-         line_break();
-         i=left_indent; left_indent=0;
-         strcpy(word, "**** Unknown formatter command: .");
+         //line_break();
+         //i=left_indent; left_indent=0;
+         //strcpy(word, "**** Unknown formatter command: .");
+         strcpy(word, " .");
          strcat(word, lbuf);
+	 strcat(word, " ");
          print_word(word);
-         line_break();
-         left_indent=i;
+         //line_break();
+         //left_indent=i;
       }
 
       i=0;	/* Treat as comment */
