@@ -32,6 +32,7 @@
 #endif
 #include <ctype.h>
 #include <string.h>
+#include <paths.h>
 
 FILE * ofd = stdout;
 FILE * ifd = stdin;
@@ -94,7 +95,7 @@ void build_headers(void);
 
 int find_page(char *name, char *sect)
 {
-static char defpath[] = "/lib:/etc";
+static char defpath[] = _PATH_MANPAGES;
 static char defsect[] = "1:2:3:4:5:6:7:8:9";
 static char defsuff[] = ":.gz:.Z";
 static char manorcat[] = "man:cat";
