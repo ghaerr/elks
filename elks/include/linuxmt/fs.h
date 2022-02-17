@@ -147,20 +147,32 @@ struct ext_buffer_head_s {
 };
 
 #ifdef CONFIG_FAR_BUFHEADS
+/* buffer heads allocated in main (far) memory */
 #define ext_buffer_head		struct ext_buffer_head_s __far
 ext_buffer_head *EBH(struct buffer_head *);	/* convert bh to ebh */
-#else
-#define EBH(bh)		(bh)
-typedef struct buffer_head	ext_buffer_head;
-#endif
 
-/* macros for buffer_head pointers called outside of buffer.c*/
-#define mark_buffer_dirty(bh)	(EBH(bh)->b_dirty = 1)
-#define mark_buffer_clean(bh)	(EBH(bh)->b_dirty = 0)
-#define buffer_seg(bh)		(EBH(bh)->b_seg)
-#define buffer_count(bh)	(EBH(bh)->b_count)
-#define buffer_blocknr(bh)	(EBH(bh)->b_blocknr)
-#define buffer_dev(bh)		(EBH(bh)->b_dev)
+/* functions for buffer_head pointers called outside of buffer.c */
+void mark_buffer_dirty(struct buffer_head *bh);
+void mark_buffer_clean(struct buffer_head *bh);
+ramdesc_t buffer_seg(struct buffer_head *bh);
+unsigned char buffer_count(struct buffer_head *bh);
+block32_t buffer_blocknr(struct buffer_head *bh);
+kdev_t buffer_dev(struct buffer_head *bh);
+
+#else
+/* buffer heads in kernel data segment */
+typedef struct buffer_head	ext_buffer_head;
+#define EBH(bh)		(bh)
+
+/* macros for buffer_head pointers called outside of buffer.c */
+#define mark_buffer_dirty(bh)	((bh)->b_dirty = 1)
+#define mark_buffer_clean(bh)	((bh)->b_dirty = 0)
+#define buffer_seg(bh)		((bh)->b_seg)
+#define buffer_count(bh)	((bh)->b_count)
+#define buffer_blocknr(bh)	((bh)->b_blocknr)
+#define buffer_dev(bh)		((bh)->b_dev)
+
+#endif /* CONFIG_FAR_BUFHEADS */
 
 #define BLOCK_READ	0
 #define BLOCK_WRITE	1

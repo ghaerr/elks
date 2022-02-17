@@ -79,7 +79,7 @@ sys_utils/kill					:sysutil			:720k
 sys_utils/ps			:sash	:sysutil		:360
 sys_utils/reboot				:sysutil		:360k
 sys_utils/makeboot				:sysutil		:360k
-sys_utils/man					:sysutil				:1200k	:1440k
+sys_utils/man			:man	:sysutil				:1200k	:1440k
 sys_utils/meminfo		:sash	:sysutil		:360k
 sys_utils/mouse					:sysutil				:1200k	:1440k
 sys_utils/passwd				:sysutil				:1200k	:1440k
