@@ -856,9 +856,11 @@ void line_break(void)
       }
       else switch (ch >> 8) {
       case 2:
-         fputc(ch&0xFF, ofd); fputc('\b', ofd); fputc(ch&0xFF, ofd); break;
+         //fputc(ch&0xFF, ofd); fputc('\b', ofd); fputc(ch&0xFF, ofd); break;
+         fputs("\e[1m", ofd); fputc(ch&0xFF, ofd); fputs("\e[0m", ofd); break;
       case 3:
-         fputc('_', ofd); fputc('\b', ofd); fputc(ch&0xFF, ofd); break;
+         //fputc('_', ofd); fputc('\b', ofd); fputc(ch&0xFF, ofd); break;
+         fputs("\e[7m", ofd); fputc(ch&0xFF, ofd); fputs("\e[0m", ofd); break;
       default:
          fputc(ch&0xFF, ofd); break;
       }

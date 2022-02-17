@@ -13,6 +13,8 @@
 #include <fcntl.h>
 #include <termios.h>
 
+#define MORE_STRING	"\e[7m--More--\e[0m"
+
 int fd;
 char mbuf[BUFSIZ];
 
@@ -137,18 +139,19 @@ int main(int argc, char **argv)
 			}
 
 			putchar(ch);
+#if 0
 			if (col >= 80) {
 				col -= 80;
 				line++;
 			}
-
+#endif
 			if (line < 25)
 				continue;
 
 			if (col > 0)
 				putchar('\n');
 
-			if ((mw = more_wait(1, "--More--")) > 0) {
+			if ((mw = more_wait(1, MORE_STRING)) > 0) {
 				line = 1; /* user requested next file immediately */
 				break;
 			}
