@@ -42,11 +42,6 @@ char *tcp_states[11] = {
 	"TIME_WAIT"	
 };
 
-int s;
-int ret,size;
-struct sockaddr_in localadr,remaddr;
-char buf[100];
-
 timeq_t timer_get_time(void)
 {
     struct timezone	tz;
@@ -54,53 +49,53 @@ timeq_t timer_get_time(void)
 
     gettimeofday(&tv, &tz);
 
-	/* return 1/16 second ticks, 1,000,000/16 = 62500*/
+    /* return 1/16 second ticks, 1,000,000/16 = 62500*/
     return (tv.tv_sec << 4) | ((unsigned long)tv.tv_usec / 62500U);
 }
 
-int main(void)
+int main(int ac, char **av)
 {
     struct general_stats_s *gstats;
     struct cb_stats_s *cbstats;
     struct packet_stats_s *ns;
     struct stat_request_s sr;
-    int i;
+    int i, s;
     unsigned int retrans_mem;
-    char addr[16];
+    struct sockaddr_in localadr,remaddr;
     __u8 *addrbytes;
+    char buf[100];
+    char addr[16];
 	    
-    if ( (s = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-	fprintf(stderr, "netstat: Can't open socket (check if ktcp running)\n");
-	exit(-1);
+    if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+	perror("netstat");
+	return 1;
     }
 
     localadr.sin_family = AF_INET;
     localadr.sin_port = PORT_ANY;
     localadr.sin_addr.s_addr = INADDR_ANY;  
-    ret = bind(s, (struct sockaddr *)&localadr, sizeof(struct sockaddr_in));
-    if ( ret == -1) {
-	perror("bind error");
-	exit(-1);
+    if (bind(s, (struct sockaddr *)&localadr, sizeof(struct sockaddr_in)) < 0) {
+	perror("bind");
+	return 1;
     }
 
     remaddr.sin_family = AF_INET;
     remaddr.sin_port = htons(NETCONF_PORT);
     remaddr.sin_addr.s_addr = 0;
-    ret = connect(s, (struct sockaddr *)&remaddr, sizeof(struct sockaddr_in));
-    if ( ret == -1) {
-	perror("connect error");
-	exit(-1);
+    if (connect(s, (struct sockaddr *)&remaddr, sizeof(struct sockaddr_in)) < 0) {
+	perror("connect");
+	return 1;
     }
 
     sr.type = NS_GENERAL;
     write(s, &sr, sizeof(sr));	
-    ret = read(s, buf, sizeof(buf));
+    read(s, buf, sizeof(buf));
     gstats = (struct general_stats_s *)buf;
     retrans_mem = gstats->retrans_memory;
 
     sr.type = NS_NETSTATS;
     write(s, &sr, sizeof(sr));
-    ret = read(s, buf, sizeof(buf));
+    read(s, buf, sizeof(buf));
     ns = (struct packet_stats_s *)buf;
     printf("----- Received ---------  ----- Sent -------------\n");
     printf("TCP Packets      %7lu  TCP Packets      %7lu\n", ns->tcprcvcnt, ns->tcpsndcnt);
@@ -138,4 +133,5 @@ int main(void)
 		}
 		printf("\n");
     }
+    return 0;
 }

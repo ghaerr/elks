@@ -51,7 +51,6 @@ void del_from_runqueue(register struct task_struct *p)
 
 }
 
-
 static void process_timeout(int __data)
 {
     register struct task_struct *p = (struct task_struct *) __data;

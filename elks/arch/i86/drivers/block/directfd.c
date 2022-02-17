@@ -1070,7 +1070,7 @@ static void redo_fd_request(void)
 	if (MAJOR(CURRENT->dev) != MAJOR_NR)
 	    panic("%s: request list destroyed", DEVICE_NAME);
 	if (CURRENT->bh) {
-	    if (!buffer_locked(CURRENT->bh))
+	    if (!(CURRENT->bh)->b_locked)
 		panic("%s: block not locked", DEVICE_NAME);
 	}
     }

@@ -27,7 +27,7 @@ ipaddr_t in_gethostbyname(char *str)
 		return htonl(INADDR_LOOPBACK);
 
 	if ((fp = fopen(_PATH_HOSTS, "r")) == NULL)
-		return 0;
+		goto try_resolver;
 
 	while ((p = fgets(buf, sizeof(buf), fp)) != NULL) {
 		if (*p == '#')
@@ -50,7 +50,7 @@ ipaddr_t in_gethostbyname(char *str)
 			*cp++ = '\0';
 		//printf("name %s addr %s\n", name, in_ntoa(addr));
 		if (!strcmp(name, str))
-			goto out;
+			goto found;
 		while (cp && *cp) {
 			if (*cp == ' ' || *cp == '\t') {
 				cp++;
@@ -61,11 +61,15 @@ ipaddr_t in_gethostbyname(char *str)
 			if (cp != NULL)
 				*cp++ = '\0';
 			if (!strcmp(name, str))
-				goto out;
+				goto found;
 		}
 	}
-	addr = 0;	/* read all of /etc/hosts, fail*/
-out:
+
+	/* read all of /etc/hosts, no match found*/
+try_resolver:
+	addr = in_resolv(str, NULL);
+
+found:
 	//if (addr) printf("found %s\n", name);
 	fclose(fp);
 	return addr;

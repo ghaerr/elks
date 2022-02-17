@@ -28,6 +28,7 @@ include $(BASEDIR)/Makefile-rules
 
 #########################################################################
 # Objects to be compiled.
+# unused: atomic.S
 
 # Precompiled assembly
 
@@ -36,7 +37,6 @@ SRCS1 = \
 	peekpoke.S \
 	string.S \
 	printreg.S \
-	atomic.S \
 	# end of list
 
 ifeq ($(CONFIG_ARCH_PC98), y)
@@ -49,9 +49,7 @@ OBJS1 = $(SRCS1:.S=.o)
 
 # Non-precompiled assembly
 
-SRCS2 = \
-	border.s \
-	# end of list
+SRCS2 =
 
 OBJS2 = $(SRCS2:.s=.o)
 

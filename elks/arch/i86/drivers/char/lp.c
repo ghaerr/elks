@@ -5,6 +5,9 @@
  */
 
 #include <linuxmt/config.h>
+
+#ifdef CONFIG_CHAR_DEV_LP
+
 #include <linuxmt/errno.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/lp.h>
@@ -15,10 +18,6 @@
 #include <linuxmt/debug.h>
 
 #include <arch/io.h>
-
-#if 0
-static int access_count[LP_PORTS] = {0,};
-#endif
 
 struct lp_info {
     char *io;
@@ -50,6 +49,7 @@ static struct lp_info ports[] = {
 static int port_order[LP_PORTS] = { 0, };
 
 #endif
+//static int access_count[LP_PORTS] = {0,};
 
 /*
 #define USE_LP_RESET
@@ -208,9 +208,7 @@ static int lp_open(struct inode *inode, struct file *file)
  */
     lpp->flags = LP_EXIST | LP_BUSY;
 
-#if 0
-    access_count[target]++;
-#endif
+    //access_count[target]++;
 
     return 0;
 }
@@ -225,9 +223,7 @@ static void lp_release(struct inode *inode, struct file *file)
     ports[port_order[target]].flags = LP_EXIST;	/* not busy */
 #endif
 
-#if 0
-    access_count[target]--;
-#endif
+    //access_count[target]--;
 
     return;
 }
@@ -312,3 +308,5 @@ void lp_init(void)
     if (register_chrdev(LP_MAJOR, LP_DEVICE_NAME, &lp_fops))
 	printk("lp: unable to register\n");
 }
+
+#endif /* CONFIG_CHAR_DEV_LP */

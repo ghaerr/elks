@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include <paths.h>
 
 int
 system(char *command)
@@ -25,7 +26,7 @@ system(char *command)
       signal(SIGQUIT, SIG_DFL);
       signal(SIGINT,  SIG_DFL);
 
-      execl("/bin/sh", "sh", "-c", command, (char*)0);
+      execl(_PATH_BSHELL, "sh", "-c", command, (char*)0);
       _exit(127);
    }
 

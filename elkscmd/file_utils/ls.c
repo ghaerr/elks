@@ -74,19 +74,28 @@ static void setfmt();
 static char *modestring(int mode);
 static char *timestring(time_t t);
 
+struct sort {
+    char *name;
+    time_t modtime;
+};
 
 struct stack
 {
     int size, allocd;
-    char **buf;
+    struct sort *buf;
 };
 
 static int cols = 0, col = 0, reverse = 1;
+static int sortbytime = 0;
 static char fmt[16] = "%s";
 
-static int namesort(const char **a, const char **b)
+static int namesort(const struct sort *a, const struct sort *b)
 {
-    return reverse * strcmp(*a, *b);
+    if (sortbytime) {
+	if (reverse) return (a->modtime < b->modtime);
+	else return (a->modtime > b->modtime);
+    }
+    return reverse * strcmp(a->name, b->name);
 }
 
 static void initstack(struct stack *pstack)
@@ -98,16 +107,16 @@ static void initstack(struct stack *pstack)
 
 static char *popstack(struct stack *pstack)
 {
-    return (pstack->size)?pstack->buf[--(pstack->size)]:NULL;
+    return (pstack->size)?pstack->buf[--(pstack->size)].name:NULL;
 }
 
-static void pushstack(struct stack *pstack, char *entry)
+static void pushstack(struct stack *pstack, char *entry, time_t modtime)
 {
-    char **allocbuf;
+    struct sort *allocbuf;
 
     if (pstack->size == pstack->allocd) {
         (pstack->allocd) += 8;
-        allocbuf = (char**)realloc(pstack->buf, sizeof(char*)*pstack->allocd);
+        allocbuf = (struct sort*)realloc(pstack->buf, sizeof(struct sort)*pstack->allocd);
         if (!allocbuf) {
             free(pstack->buf);
             fprintf(stderr, "ls: error: out of memory (realloc pstack failed)\n");
@@ -115,12 +124,13 @@ static void pushstack(struct stack *pstack, char *entry)
         }
         pstack->buf = allocbuf;
   }
-  pstack->buf[(pstack->size)++] = entry;
+  pstack->buf[pstack->size].modtime = modtime;
+  pstack->buf[(pstack->size)++].name = entry;
 }
 
 static void sortstack(struct stack *pstack)
 {
-    qsort(pstack->buf, pstack->size, sizeof(char*), namesort);
+    qsort(pstack->buf, pstack->size, sizeof(struct sort), namesort);
 }
 
 static void getfiles(char *name, struct stack *pstack, int flags)
@@ -153,7 +163,9 @@ static void getfiles(char *name, struct stack *pstack, int flags)
 	    strcpy(fullname, name);
 	    if (!endslash) strcat(fullname, "/");
 	    strcat(fullname, dp->d_name);
-	    pushstack(pstack, strdup(fullname));
+	    struct stat statbuf;
+	    time_t modtime = (sortbytime && (LSTAT(fullname, &statbuf) >= 0))? statbuf.st_mtime: 0;
+	    pushstack(pstack, strdup(fullname), modtime);
 	}
     }
     closedir(dirp);
@@ -385,10 +397,10 @@ static void setfmt(struct stack *pstack, int flags)
 
     if (~flags & LSF_LONG) {
 	for (maxlen = i = 0; i < pstack->size; i++) {
-	    if ( NULL != (cp = strrchr(pstack->buf[i], '/')) )
+	    if ( NULL != (cp = strrchr(pstack->buf[i].name, '/')) )
 		cp++;
 	    else
-		cp = pstack->buf[i];
+		cp = pstack->buf[i].name;
 	    if ((len = strlen (cp)) > maxlen)
 		maxlen = len;
 	}
@@ -460,6 +472,9 @@ int main(int argc, char **argv)
 		case '1':
 			flags |= LSF_ONEPER;
 			break;
+		case 't':
+			sortbytime = 1;
+			break;
 		case 'r':
 			reverse = -reverse;
 			break;
@@ -485,9 +500,9 @@ int main(int argc, char **argv)
 	    return EXIT_FAILURE;
 	}
 	if (recursive && S_ISDIR(statbuf.st_mode))
-	    pushstack(&dirs, strdup(*argv));
+	    pushstack(&dirs, strdup(*argv), statbuf.st_mtime);
 	else
-	    pushstack(&files, strdup(*argv));
+	    pushstack(&files, strdup(*argv), statbuf.st_mtime);
     }
     if (recursive)
 	recursive--;
@@ -509,7 +524,7 @@ int main(int argc, char **argv)
 	    if (!is_dir || !recursive || (flags & LSF_LONG))
 		lsfile(name, &statbuf, flags);
 	    if (is_dir && recursive && not_dotdir(name))
-		pushstack(&dirs, name);
+		pushstack(&dirs, name, statbuf.st_mtime);
 	    else
 		free(name);
 	}
@@ -539,6 +554,7 @@ usage:
     fprintf(stderr, "  -F: add character to displayed name based on entry type\n");
     fprintf(stderr, "  -i: show inode numbers beside names\n");
     fprintf(stderr, "  -l: show files in long (detailed) format\n");
+    fprintf(stderr, "  -t: sort by time modified (most recently first)\n");
     fprintf(stderr, "  -r: reverse sort order\n");
     fprintf(stderr, "  -R: recursively list directory contents\n");
     fprintf(stderr, "  -1: one entry per line\n");

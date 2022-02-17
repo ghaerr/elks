@@ -206,7 +206,7 @@ static int minix_add_entry(register struct inode *dir,
 #endif
 
     de->inode = (__u16)ino;
-    mark_buffer_dirty(bh, 1);
+    mark_buffer_dirty(bh);
     unmap_brelse(bh);
     return 0;
 }
@@ -309,7 +309,7 @@ int minix_mkdir(register struct inode *dir, char *name, size_t len, int mode)
     de->inode = dir->i_ino;
     dir->i_nlink++;
     strcpy(de->name, "..");
-    mark_buffer_dirty(bh, 1);
+    mark_buffer_dirty(bh);
     unmap_brelse(bh);
     debug("m_mkdir: dir_block update succeeded\n");
 /*--------------------------------------------------------------------------------*/
@@ -418,7 +418,7 @@ int minix_rmdir(register struct inode *dir, char *name, size_t len)
 		dir->i_version = ++event;
 #endif
 
-		mark_buffer_dirty(bh, 1);
+		mark_buffer_dirty(bh);
 		inode->i_nlink = 0;
 		inode->i_dirt = 1;
 		inode->i_ctime = dir->i_ctime = dir->i_mtime = CURRENT_TIME;
@@ -469,7 +469,7 @@ int minix_unlink(register struct inode *dir, char *name, size_t len)
     dir->i_version = ++event;
 #endif
 
-    mark_buffer_dirty(bh, 1);
+    mark_buffer_dirty(bh);
     dir->i_ctime = dir->i_mtime = CURRENT_TIME;
     dir->i_dirt = 1;
     inode->i_nlink--;
@@ -510,7 +510,7 @@ int minix_symlink(struct inode *dir, char *name, size_t len, char *symname)
     map_buffer(bh);
     memcpy_fromfs(bh->b_data, symname, error);
     bh->b_data[error] = 0;
-    mark_buffer_dirty(bh, 1);
+    mark_buffer_dirty(bh);
     unmap_brelse(bh);
 /*----------------------------------------------------------------------*/
     error = minix_add_entry(dir, name, len, inode->i_ino);

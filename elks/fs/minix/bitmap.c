@@ -78,7 +78,7 @@ void minix_free_block(register struct super_block *sb, unsigned short block)
 	s = "trying to free block not in datazone";
     else {
 	bh = get_hash_table(sb->s_dev, (block_t) block);
-	if (bh) bh->b_dirty = 0;
+	if (bh) mark_buffer_clean(bh);
 	brelse(bh);
 	zone = block - sb->u.minix_sb.s_firstdatazone + 1;
 	bh = sb->u.minix_sb.s_zmap[zone >> 13];
@@ -87,7 +87,7 @@ void minix_free_block(register struct super_block *sb, unsigned short block)
 	    map_buffer(bh);
 	    if (!clear_bit(zone & 8191, bh->b_data))
 		s = "already cleared";
-	    mark_buffer_dirty(bh, 1);
+	    mark_buffer_dirty(bh);
 	    unmap_buffer(bh);
 	}
     }
@@ -117,7 +117,7 @@ block_t minix_new_block(register struct super_block *sb)
 			printk("mnb: still zero bit!%d\n", j);
 			return 0;
 		}
-	    mark_buffer_dirty(bh, 1);
+	    mark_buffer_dirty(bh);
 	    unmap_buffer(bh);
 	    if (!k)
 		break;
@@ -125,7 +125,7 @@ block_t minix_new_block(register struct super_block *sb)
 	    map_buffer(bh);
 	    memset(bh->b_data, 0, BLOCK_SIZE);
 	    mark_buffer_uptodate(bh, 1);
-	    mark_buffer_dirty(bh, 1);
+	    mark_buffer_dirty(bh);
 	    unmap_brelse(bh);
 	    return k;
 	}
@@ -167,7 +167,7 @@ void minix_free_inode(register struct inode *inode)
 	    debug("minix_free_inode: bit %ld already cleared.\n",((unsigned int)inode->i_ino & 8191));
 	}
 	clear_inode(inode);
-	mark_buffer_dirty(bh, 1);
+	mark_buffer_dirty(bh);
 	unmap_buffer(bh);
     }
 }
@@ -196,7 +196,7 @@ struct inode *minix_new_inode(struct inode *dir, __u16 mode)
 		s = "mni: already set\n";
 		break;
 	    }
-	    mark_buffer_dirty(bh, 1);
+	    mark_buffer_dirty(bh);
 	    unmap_buffer(bh);
 	    if (!k) {
 		s = "new_inode: iput fail\n";

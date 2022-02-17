@@ -219,8 +219,8 @@ int httpget(char *host, int port, char *user, char *pass, char *path,
 
    fd = net_connect(host, port);
    if (fd < 0) {
-	errmsg("Could not connect to %s:%d", host, port);
-   	return(-1);
+	perror(host);
+	return -1;
    }
 
    if (post) {
@@ -273,7 +273,7 @@ int httpget(char *host, int port, char *user, char *pass, char *path,
 
    net_close(fd, 0);	/* send FIN on close */
 
-   return(0);
+   return 0;
 }
 
 void ftppasv(char *reply) {
@@ -363,8 +363,8 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
    }
    fd = net_connect(host, port);
    if (fd < 0) {
-	errmsg("Could not connect to %s:%d", host, port);
-   	return(-1);
+	perror(host);
+	return -1;
    }
    fpr = fdopen(fd, "r");
    fpw = fdopen(fd, "w");
@@ -423,7 +423,7 @@ int ftpio(char *host, int port, char *user, char *pass, char *path, int type, in
    }
    fd2 = net_connect(ftpphost, ftppport);
    if (fd2 < 0) {	
-	errmsg("Network connect error");
+	perror(ftpphost);
 	goto error;
    }
    if (verbose) 
@@ -508,13 +508,13 @@ int tcpget(char *host, int port, char *user, char *pass, char *path) {
 
    if (port == 0) {
 	errmsg("No port specified");
-   	return(-1);
+	return -1;
    }
 
    fd = net_connect(host, port);
    if (fd < 0) {
-	errmsg("Could not connect to %s:%d", host, port);
-   	return(-1);
+	perror(host);
+	return -1;
    }
    if (*path == '/')
    	path++;
@@ -529,7 +529,7 @@ int tcpget(char *host, int port, char *user, char *pass, char *path) {
 	}
    }
    net_close(fd, 0);	/* send FIN*/
-   return(0);
+   return 0;
 }
 
 int main(int argc, char **argv) {

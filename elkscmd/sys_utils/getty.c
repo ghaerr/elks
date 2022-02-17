@@ -46,15 +46,12 @@
 #include <termios.h>
 #include <stdarg.h>
 #include <errno.h>
+#include <paths.h>
 
 #define DEBUG		0	/* set =1 for debug messages*/
 
 /* debug messages go here*/
-#define CONSOLE		"/dev/console"
-
-#define LOGIN		"/bin/login"
-#define HOSTFILE	"/etc/hostname"
-#define ISSUE		"/etc/issue"
+#define CONSOLE		_PATH_CONSOLE
 
 /* For those requiring a super-small getty, the following define cuts out
  * all of the extra functionality regarding the /etc/issue code sequences.
@@ -94,7 +91,7 @@ char	Host[256], *Date = 0, *Time = 0;
 
 void host(void) {
     char *ptr;
-    int fp = open(HOSTFILE,O_RDONLY), sz;
+    int fp = open(_PATH_HOSTNAME,O_RDONLY), sz;
 
     if (fp) {
 	sz = read( fp, Host, 255);
@@ -271,7 +268,7 @@ int main(int argc, char **argv)
         tcsetattr(STDIN_FILENO, TCSAFLUSH, &termios);
     } else debug("tcgetattr(0) failed\n");
 
-    fd = open(ISSUE, O_RDONLY);
+    fd = open(_PATH_ISSUE, O_RDONLY);
     if (fd >= 0) {
 	put('\n');
 #ifdef SUPER_SMALL
@@ -401,7 +398,7 @@ int main(int argc, char **argv)
 	    char *nargv[3];
 
 	    debug("calling login: %s\n", Buffer);
-	    nargv[0] = LOGIN;
+	    nargv[0] = _PATH_LOGIN;
 	    nargv[1] = Buffer;
 	    nargv[2] = NULL;
 	    execv(nargv[0], nargv);

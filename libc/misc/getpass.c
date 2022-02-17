@@ -12,6 +12,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <termios.h>
+#include <paths.h>
 
 char *getpass(char *prompt)
 {
@@ -26,7 +27,7 @@ char *getpass(char *prompt)
     int reset_terminal;
 
     /* grab our input device */
-    in = fopen("/dev/tty", "r");
+    in = fopen(_PATH_TTY, "r");
     if (in == NULL) {
         in = stdin;
     }

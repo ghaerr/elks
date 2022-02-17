@@ -20,11 +20,10 @@ typedef enum {
 
 struct socket {
     unsigned char state;
+    struct wait_queue *wait;
     unsigned char flags;
     unsigned int rcv_bufsiz;
     struct proto_ops *ops;
-    void *data;
-    struct wait_queue *wait;
     struct inode *inode;
     struct file *file;
 
@@ -32,11 +31,13 @@ struct socket {
     struct socket *conn;
     struct socket *iconn;
     struct socket *next;
+    void *data;
 #endif
 
 #if defined(CONFIG_INET)
-    int avail_data;
-    sem_t sem;
+    sem_t sem;			/* one operation at a time per socket */
+    int avail_data;		/* data available for reading from ktcp */
+    int retval;			/* event return value from ktcp */
     __u32 remaddr;		/* all in network byte order */
     __u32 localaddr;
     __u16 remport;
@@ -71,12 +72,13 @@ struct proto_ops {
 };
 
 /* careful: option names are close to public SO_ options in socket.h */
-#define SF_CLOSING	(1 << 0)
-#define SF_ACCEPTCON	(1 << 1)
-#define SF_WAITDATA	(1 << 2)
-#define SF_NOSPACE	(1 << 3)
-#define SF_RST_ON_CLOSE	(1 << 4)
-#define SF_REUSE_ADDR	(1 << 5)
+#define SF_CLOSING	(1 << 0) /* inet */
+#define SF_ACCEPTCON	(1 << 1) /* unix, nano, sockets */
+#define SF_WAITDATA	(1 << 2) /* unix, nano */
+#define SF_NOSPACE	(1 << 3) /* unix, nano */
+#define SF_RST_ON_CLOSE	(1 << 4) /* inet */
+#define SF_REUSE_ADDR	(1 << 5) /* inet */
+#define SF_CONNECT	(1 << 6) /* inet */
 
 struct net_proto {
     char *name;			/* Protocol name */

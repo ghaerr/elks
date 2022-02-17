@@ -83,6 +83,7 @@ uid_t geteuid(void);
 char * getcwd (char * buf, size_t size);
 void sync(void);
 void usleep(unsigned long useconds);
+unsigned alarm(unsigned seconds);
 
 int getopt(int argc, char * const argv[], const char *opts);
 extern char *optarg;

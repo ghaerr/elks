@@ -1,5 +1,5 @@
 #ifdef L_vscanf
-#include <stdio.g>
+#include <stdio.h>
 
 int
 vscanf(__const char *fmt, va_list ap)

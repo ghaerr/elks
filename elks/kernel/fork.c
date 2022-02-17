@@ -111,14 +111,6 @@ pid_t do_fork(int virtual)
 
     t->ppid = currentp->pid;
     t->p_parent = currentp;
-#if BLOAT
-    /* Set up our family tree */
-    t->p_nextsib = t->p_child = NULL;
-    if ((t->p_prevsib = currentp->p_child) != NULL) {
-	currentp->p_child->p_nextsib = t;
-    }
-    currentp->p_child = t;
-#endif
 
     /*
      *      Build a return stack for t.

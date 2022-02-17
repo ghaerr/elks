@@ -3,7 +3,7 @@
 mount \- mount a file system
 .SH SYNOPSIS
 .B mount
-[\-t fstype] device directory
+[\-a][\-q][\-t fstype][\-o ro|remount,rw] device directory
 .SH DESCRIPTION
 This document describes the ELKS version of
 .BR mount .
@@ -11,7 +11,7 @@ This version is extremely minimal and should not be used whenever using a
 better version is practical.
 .PP
 .BR mount
-takes as arguents the name of a 
+takes as arguments the name of a 
 .I device
 and a 
 .I directory
@@ -22,12 +22,23 @@ is mounted, its root directory replaces the
 given.
 .SS OPTIONS
 .TP
+.I "-a"
+Auto-mount the filesystem by inspecting its superblock.
+.TP
 .I "-t"
 Specify the type of filesystem to be mounted. Default is
 .B minix .
+.TP
+.I "-o"
+Specify ro (readonly) or remount,rw (remount read/write) options.
+.TP
+.I "-q"
+Query filesystem type and set return value based on filesystem.
 .SH EXAMPLES
 .IP
 mount \-t minix /dev/hda1 /mnt
+.IP
+mount \-a /dev/fd1 /mnt
 .LP
 .SH EXIT STATUS
 .TP
@@ -35,7 +46,13 @@ mount \-t minix /dev/hda1 /mnt
 Filesystem mounted successfully.
 .TP
 .B 1
-Wrong number of arguments, or mount was unsuccessful.
+Wrong number of arguments, mount was unsuccessful, or unknown filesystem type.
+.TP
+.B 2
+When used with \-q, filesystem is MINIX.
+.TP
+.B 3
+When used with \-q, filesystem is MSDOS/FAT.
 .SH BUGS
 Unlike more complex versions of mount, this one does not use an mtab file
 to keep track of mounted filesystems, or refer to an fstab file for details

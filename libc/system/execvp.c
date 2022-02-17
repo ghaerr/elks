@@ -3,6 +3,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <paths.h>
 
 #ifdef __AS386_16__
 static int
@@ -98,7 +99,7 @@ static void
 tryrun(char *pname, char **argv)
 {
 #ifdef __AS386_16__
-   static char *shprog[] = {"/bin/sh", "", 0};
+   static char *shprog[] = {_PATH_BSHELL, "", 0};
 #endif
    struct stat st;
 

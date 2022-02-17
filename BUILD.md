@@ -7,6 +7,7 @@ To build ELKS, you need a GNU development environment, including:
 - bison
 - texinfo
 - libncurses5-dev
+- mtools-4.0.23 (for MSDOS/FAT images)
 
 ## Quickstart
 
@@ -51,13 +52,14 @@ https://github.com/elks-org/elks/actions?query=workflow%3Across
 
 `make all`
 
-The target root folder is built in `target`', and depending on your
-configuration, that folder is packed as either a floppy disk image
-(fd360, fd720, fd1440), a hard disk image (hd, without MBR),
-or a file image (ROM, TAR), into the `image` folder.
+The target root folder is built in `target`, and depending on your
+configuration, that folder is used to create either a floppy disk image
+(fd360, fd720, fd1200, fd1440, fd2880), a flat 32MB hard disk image (without MBR),
+or a ROM file image into the `image` folder. The image extension is '.img'
+and will be in either ELKS (MINIX) or MSDOS (FAT) filesystem format.
+Building FAT images requires the 'mtools-4.0.23' package to be installed.
 
-6- Before writting that image on the real medium,
-you can test it first on QEMU:
+6- Before writting that image on the real medium, you can test it first on QEMU:
 
 `./qemu.sh`
 
@@ -65,3 +67,9 @@ you can test it first on QEMU:
 step 4 after cleaning only the kernel, the user land and the image:
 
 `make clean`
+
+8- One can also build ELKS distribution images for the entire suite of
+supported floppy formats and hard disks (with and without MBRs) for both
+MINIX and MSDOS FAT format. To create these images, use the following:
+
+`cd image; make images`

@@ -78,8 +78,8 @@ size_t block_read(struct inode *inode, register struct file *filp,
 		break;
 	    }
 	    xms_fmemcpyb(buf, current->t_regs.ds,
-		buffer_data(bh) + (((size_t)(filp->f_pos)) & (BLOCK_SIZE - 1)), bh->b_seg,
-		chars);
+		buffer_data(bh) + (((size_t)(filp->f_pos)) & (BLOCK_SIZE - 1)),
+		buffer_seg(bh), chars);
 	    brelse(bh);
 	} else fmemsetb(buf, current->t_regs.ds, 0, chars);
 	buf += chars;
@@ -152,9 +152,10 @@ size_t block_write(struct inode *inode, register struct file *filp,
 	/*
 	 *      Alter buffer, mark dirty
 	 */
-	xms_fmemcpyb(buffer_data(bh) + offset, bh->b_seg, buf, current->t_regs.ds, chars);
+	xms_fmemcpyb(buffer_data(bh) + offset, buffer_seg(bh), buf,
+		current->t_regs.ds, chars);
 	mark_buffer_uptodate(bh, 1);
-	mark_buffer_dirty(bh, 1);
+	mark_buffer_dirty(bh);
 	brelse(bh);
 	buf += chars;
 	filp->f_pos += chars;
@@ -205,8 +206,10 @@ static int blk_rw(struct inode *inode, register struct file *filp,
 	    /*
 	     *      Alter buffer, mark dirty
 	     */
-	    xms_fmemcpyb(buffer_data(bh) + offset, bh->b_seg, buf, current->t_regs.ds, chars);
-	    bh->b_uptodate = bh->b_dirty = 1;
+	    xms_fmemcpyb(buffer_data(bh) + offset, buffer_seg(bh), buf,
+		current->t_regs.ds, chars);
+	    mark_buffer_dirty(bh);
+	    mark_buffer_uptodate(bh, 1);
 	    /*
 	     *      Writing: queue physical I/O
 	     */
@@ -221,7 +224,8 @@ static int blk_rw(struct inode *inode, register struct file *filp,
 	    /*
 	     *      Empty buffer data. Buffer unchanged
 	     */
-	    xms_fmemcpyb(buf, current->t_regs.ds, buffer_data(bh) + offset, bh->b_seg, chars);
+	    xms_fmemcpyb(buf, current->t_regs.ds, buffer_data(bh) + offset,
+		buffer_seg(bh), chars);
 	}
 	/*
 	 *      Move on and release buffer

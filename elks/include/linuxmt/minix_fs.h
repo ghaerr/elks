@@ -73,11 +73,6 @@ struct minix_dir_entry {
 
 #ifdef __KERNEL__
 
-#if 0
-extern int minix_rename(void);
-extern int minix_sync_file(void);
-#endif
-
 extern unsigned short minix_bmap(register struct inode *,block_t,int);
 extern struct buffer_head *minix_bread(struct inode *,block_t,int);
 extern unsigned long minix_count_free_blocks(register struct super_block *);

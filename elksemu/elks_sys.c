@@ -128,12 +128,12 @@ static int elks_open(int bx,int cx,int dx,int di,int si)
 	dbprintf(("open(%s, %d, %d)\n",
 		dp,cx,dx));
 
-	/* Nasty hack so /lib/liberror.txt doesn't exist on the host.
+	/* Nasty hack so /etc/perror doesn't exist on the host.
 	 */
-	if (strcmp(dp, "/lib/liberror.txt") == 0 ) {
-	   int fd = open("/tmp/liberror.txt", O_CREAT|O_EXCL|O_RDWR, 0666);
+	if (strcmp(dp, "/etc/perror") == 0 ) {
+	   int fd = open("/tmp/perror", O_CREAT|O_EXCL|O_RDWR, 0666);
 	   if (fd < 0) return fd;
-	   unlink("/tmp/liberror.txt");
+	   unlink("/tmp/perror");
 	   write(fd, efile, sizeof(efile));
 	   lseek(fd, 0L, 0);
 	   return fd;

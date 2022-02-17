@@ -119,3 +119,11 @@
 119 No XENIX semaphores available 
 120 Is a named type file 
 121 Remote I/O error 
+122 Quota exceeded 
+123 No medium found 
+124 Wrong medium type 
+125 Nameserver not found 
+126 Name not found 
+127 Bad query format 
+128 Query refused 
+129 Server error 

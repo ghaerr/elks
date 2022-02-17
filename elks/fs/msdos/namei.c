@@ -190,8 +190,8 @@ static int FATPROC msdos_create_entry(register struct inode *dir,char *name,int 
 	de->start = 0;
 	date_unix2dos(CURRENT_TIME,&de->time,&de->date);
 	de->size = 0;
-	debug_fat("create_entry block write %lu\n", bh->b_blocknr);
-	bh->b_dirty = 1;
+	debug_fat("create_entry block write %lu\n", buffer_blocknr(bh));
+	mark_buffer_dirty(bh);
 	if ((*result = iget(dir->i_sb,ino)) != 0) msdos_read_inode(*result);
 	unmap_brelse(bh);
 	if (!*result) return -EIO;
@@ -323,8 +323,8 @@ int msdos_rmdir(register struct inode *dir,const char *name,int len)
 	dir->i_mtime = CURRENT_TIME;
 	inode->i_dirt = dir->i_dirt = 1;
 	de->name[0] = DELETED_FLAG;
-	debug_fat("rmdir block write %lu\n", bh->b_blocknr);
-	bh->b_dirty = 1;
+	debug_fat("rmdir block write %lu\n", buffer_blocknr(bh));
+	mark_buffer_dirty(bh);
 	res = 0;
 rmdir_done:
 	unmap_brelse(bh);
@@ -363,8 +363,8 @@ int msdos_unlink(register struct inode *dir,const char *name,int len)
 	inode->i_dirt = 1;
 	de->name[0] = DELETED_FLAG;
 	dir->i_dirt = 1;
-	debug_fat("unlink block write %lu\n", bh->b_blocknr);
-	bh->b_dirty = 1;
+	debug_fat("unlink block write %lu\n", buffer_blocknr(bh));
+	mark_buffer_dirty(bh);
 unlink_done:
 	unmap_brelse(bh);
 	if (inode) debug_fat("unlink iput inode %u dirt %d count %d\n",

@@ -171,9 +171,7 @@ static void end_request(int uptodate)
     bh->b_reqnext = NULL;
 #endif
 
-    clr_irq();
-    bh->b_uptodate = uptodate;
-    set_irq();
+    mark_buffer_uptodate(bh, uptodate);
     unlock_buffer(bh);
 
 #ifdef BLOAT_FS
@@ -209,13 +207,12 @@ static void end_request(int uptodate)
 #endif /* MAJOR_NR */
 
 #define INIT_REQUEST(req) \
-	if (!req || req->rq_dev < 0) {\
+	if (!req || req->rq_dev < 0) \
 		return; \
-	} \
 	if (MAJOR(req->rq_dev) != MAJOR_NR) \
-		panic("%s: request list destroyed (%d, %d)", DEVICE_NAME, MAJOR(req->rq_dev), MAJOR_NR); \
-	if ((req->rq_bh) && (!buffer_locked(req->rq_bh))) { \
+		panic("%s: request list destroyed (%d, %d)", \
+			DEVICE_NAME, MAJOR(req->rq_dev), MAJOR_NR); \
+	if (req->rq_bh && !EBH(req->rq_bh)->b_locked) \
 		panic("%s:block not locked", DEVICE_NAME); \
-	}
 
 #endif

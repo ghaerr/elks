@@ -81,17 +81,27 @@ static void msdos_put_super(register struct super_block *sb)
 	return;
 }
 
+static void print_formatted(long n)
+{
+	char kbytes_or_mbytes = 'k';
+
+	if (n >= 10000) {
+		n /= 1000;
+		kbytes_or_mbytes = 'M';
+	}
+	printk("%ld%c", n, kbytes_or_mbytes);
+}
 
 /* Read the super block of an MS-DOS FS. */
-
 static struct super_block *msdos_read_super(struct super_block *s, char *data,
 	int silent)
 {
 	struct msdos_sb_info *sb = MSDOS_SB(s);
 	struct msdos_boot_sector *b;
 	struct buffer_head *bh;
-	long total_sectors, total_displayed, data_sectors;
-	char kbytes_or_mbytes = 'k';
+	long total_sectors, data_sectors;
+	cluster_t cluster;
+	long total_displayed, free_displayed = 0;
 	int fat32;
 
 	cache_init();
@@ -176,12 +186,13 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%
 	}
 
 	total_displayed = total_sectors >> (BLOCK_SIZE_BITS - SECTOR_BITS_SB(s));
-	if (total_displayed >= 10000) {
-		total_displayed /= 1000;
-		kbytes_or_mbytes = 'M';
-}
-	printk("FAT: %ld%c, fat%d format\n", total_displayed, kbytes_or_mbytes,
-		sb->fat_bits);
+	for (cluster = 2; cluster < sb->clusters + 2; cluster++)
+		if (!fat_access(s, cluster, -1))
+			free_displayed++;
+	free_displayed = free_displayed >> (BLOCK_SIZE_BITS - SECTOR_BITS_SB(s));
+	printk("FAT: total "); print_formatted(total_displayed);
+	printk(", free ");     print_formatted(free_displayed);
+	printk(", fat%d format\n", sb->fat_bits);
 
 #ifdef BLOAT_FS
 	s->s_magic = MSDOS_SUPER_MAGIC;
@@ -189,7 +200,6 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%
 	/* set up enough so that it can read an inode */
 	s->s_op = &msdos_sops;
 	if (!(s->s_mounted = iget(s,(ino_t)MSDOS_ROOT_INO))) {
-/*		s->s_dev = 0;*/
 		printk("FAT: can't read rootdir\n");
 		return NULL;
 	}
@@ -364,8 +374,8 @@ static void msdos_write_inode(register struct inode *inode)
 	raw_entry->start = (unsigned short)inode->u.msdos_i.i_start;
 	raw_entry->starthi = ((unsigned short *)&inode->u.msdos_i.i_start)[1];
 	date_unix2dos(inode->i_mtime,&raw_entry->time,&raw_entry->date);
-	debug_fat("write_inode block write %lu\n", bh->b_blocknr);
-	bh->b_dirty = 1;
+	debug_fat("write_inode block write %lu\n", buffer_blocknr(bh));
+	mark_buffer_dirty(bh);
 	unmap_brelse(bh);
 }
 
@@ -375,10 +385,10 @@ static struct super_operations msdos_sops = {
 	msdos_put_inode,
 	msdos_put_super,
 	NULL, /* write_super*/
+	NULL  /* remount*/
 #ifdef BLOAT_FS
 	msdos_statfs,
 #endif
-	NULL
 };
 
 struct file_system_type msdos_fs_type = {

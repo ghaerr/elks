@@ -137,8 +137,8 @@ static size_t msdos_file_write(register struct inode *inode,register struct file
 			inode->i_size = filp->f_pos;
 			inode->i_dirt = 1;
 		}
-		debug_fat("file block write %lu\n", bh->b_blocknr);
-		bh->b_dirty = 1;
+		debug_fat("file block write %lu\n", buffer_blocknr(bh));
+		mark_buffer_dirty(bh);
 		unmap_brelse(bh);
 	}
 	inode->i_mtime = CURRENT_TIME;

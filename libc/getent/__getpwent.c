@@ -87,6 +87,7 @@ restart:
 	  *field_begin++='\0';
 	}
     }
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
   passwd.pw_gid=(gid_t) strtoul(gid_ptr, &endptr, 10);
   if (*endptr!='\0') goto restart;
   

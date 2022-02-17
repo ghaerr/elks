@@ -49,7 +49,7 @@ static int V1_trunc_direct(register struct inode *inode)
 	    brelse(bh);
 	    goto repeat;
 	}
-	if ((bh && bh->b_count != 1) || tmp != *p) {
+	if ((bh && buffer_count(bh) != 1) || tmp != *p) {
 	    retry = 1;
 	    brelse(bh);
 	    continue;
@@ -99,13 +99,13 @@ static int V1_trunc_indirect(register struct inode *inode,
 	    brelse(bh);
 	    goto repeat;
 	}
-	if ((bh && bh->b_count != 1) || tmp != *ind) {
+	if ((bh && buffer_count(bh) != 1) || tmp != *ind) {
 	    retry = 1;
 	    brelse(bh);
 	    continue;
 	}
 	*ind = 0;
-	mark_buffer_dirty(ind_bh, 1);
+	mark_buffer_dirty(ind_bh);
 	brelse(bh);
 	minix_free_block(inode->i_sb, tmp);
     }
@@ -113,7 +113,7 @@ static int V1_trunc_indirect(register struct inode *inode,
     for (i = 0; i < 512; i++)
 	if (*(ind++)) break;
     if (i >= 512) {
-	if (ind_bh->b_count != 1) retry = 1;
+	if (buffer_count(ind_bh) != 1) retry = 1;
 	else {
 	    tmp = *p;
 	    *p = 0;
@@ -150,13 +150,13 @@ static int V1_trunc_dindirect(register struct inode *inode,
 	if (i < DINDIRECT_BLOCK(offset)) goto repeat;
 	dind = i + (unsigned short *) dind_bh->b_data;
 	retry |= V1_trunc_indirect(inode, offset + (i << 9), dind);
-	mark_buffer_dirty(dind_bh, 1);
+	mark_buffer_dirty(dind_bh);
     }
     dind = (unsigned short *) dind_bh->b_data;
     for (i = 0; i < 512; i++)
 	if (*(dind++)) break;
     if (i >= 512) {
-	if (dind_bh->b_count != 1) retry = 1;
+	if (buffer_count(dind_bh) != 1) retry = 1;
 	else {
 	    tmp = *p;
 	    *p = 0;

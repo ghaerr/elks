@@ -65,11 +65,23 @@ int inet_process_tcpdev(register char *buf, int len)
         wake_up(sock->wait);
 	break;
 
+    case TDT_CONNECT:
+	down(&sock->sem);
+	sock->flags |= SF_CONNECT;
+	sock->retval = ((struct tdb_return_data *)buf)->ret_value;
+	debug_net("INET(%d) sock %x connect %d bufin %d\n",
+	    current->pid, sock, sock->retval, bufin_sem);
+	up(&sock->sem);
+	tcpdev_clear_data_avail();
+	wake_up(sock->wait);
+	break;
+
     case TDT_RETURN:
     case TDT_ACCEPT:
     case TDT_BIND:
 	debug_net("INET(%d) retval %d bufin %d\n",
 	    current->pid, ((struct tdb_return_data *)buf)->ret_value, bufin_sem);
+	/* tcpdev_clear_data_avail() called by woken process */
         wake_up(sock->wait);
 	break;
     }
@@ -81,8 +93,10 @@ static int inet_create(struct socket *sock, int protocol)
 {
     debug_net("INET(%d) create sock %x\n", current->pid, sock);
 
-    if (protocol != 0 || !tcpdev_inuse)
+    if (protocol != 0)
         return -EINVAL;
+    if (!tcpdev_inuse)
+	return -ENETDOWN;
 
     return 0;
 }
@@ -145,12 +159,10 @@ static int inet_bind(register struct socket *sock, struct sockaddr *addr,
     return (ret >= 0 ? 0 : ret);
 }
 
-static int inet_connect(register struct socket *sock,
-			struct sockaddr *uservaddr,
+static int inet_connect(struct socket *sock, struct sockaddr *uservaddr,
 			size_t sockaddr_len, int flags)
 {
     register struct tdb_connect *cmd;
-    int ret;
 
     debug_net("INET(%d) connect sock %x\n", current->pid, sock);
 
@@ -163,10 +175,7 @@ static int inet_connect(register struct socket *sock,
     if (sock->state == SS_CONNECTING)
         return -EINPROGRESS;
 
-/*    if (sock->state == SS_CONNECTED)
-        return -EISCONN;*/	/*Already checked in socket.c*/
-
-    down(&rwlock);
+    sock->flags &= ~SF_CONNECT;
     cmd = (struct tdb_connect *)get_tdout_buf();
     cmd->cmd = TDC_CONNECT;
     cmd->sock = sock;
@@ -174,19 +183,15 @@ static int inet_connect(register struct socket *sock,
 
     tcpdev_inetwrite(cmd, sizeof(struct tdb_connect));
 
-    /* Sleep until tcpdev has news */
-    while (bufin_sem == 0)
-        interruptible_sleep_on(sock->wait);
+    do {
+	interruptible_sleep_on(sock->wait);
+	if (current->signal)
+	    return -ETIMEDOUT;
+    } while (!(sock->flags & SF_CONNECT));
 
-    ret = ((struct tdb_return_data *)tdin_buf)->ret_value;
-    tcpdev_clear_data_avail();
-    up(&rwlock);
-
-    if (ret >= 0) {
+    if (sock->retval == 0)
 	sock->state = SS_CONNECTED;
-	ret = 0;
-    }
-    return ret;
+    return sock->retval;
 }
 
 
@@ -253,8 +258,7 @@ static int inet_accept(register struct socket *sock, struct socket *newsock, int
     return ret;
 }
 
-static int inet_read(register struct socket *sock, char *ubuf, int size,
-		     int nonblock)
+static int inet_read(struct socket *sock, char *ubuf, int size, int nonblock)
 {
     register struct tdb_read *cmd;
     int ret;
@@ -298,7 +302,6 @@ static int inet_read(register struct socket *sock, char *ubuf, int size,
     debug_net("INET(%d) read wait done bufin_sem %d\n", current->pid, bufin_sem);
 
     down(&sock->sem);
-
     ret = ((struct tdb_return_data *)tdin_buf)->ret_value;
 
     if (ret > 0) {

@@ -138,19 +138,18 @@ static void tcp_syn_sent(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     cb->seg_ack = ntohl(h->acknum);
 
     if (h->flags & TF_RST) {
-	retval_to_sock(cb->sock, -ECONNREFUSED);
-	//cb->state = TS_CLOSED;
+	notify_sock(cb->sock, TDT_CONNECT, -ECONNREFUSED);
 	tcpcb_remove_cb(cb); 	/* deallocate*/
 	return;
     }
 
-    if (h->flags & (TF_SYN|TF_ACK)) {
+    if ((h->flags & (TF_SYN|TF_ACK)) == (TF_SYN|TF_ACK)) {
 	if (cb->seg_ack != cb->send_una + 1) {
 	    printf("tcp: SYN sent, wrong ACK (listen port not expired)\n");
 	    /* Send RST */
 	    cb->send_nxt = h->acknum;
 	    //tcp_send_reset(cb);
-	    retval_to_sock(cb->sock, -ECONNREFUSED);
+	    notify_sock(cb->sock, TDT_CONNECT, -ECONNREFUSED);
 	    tcpcb_remove_cb(cb);	/* deallocate*/
 	    return;
 	}
@@ -165,8 +164,7 @@ static void tcp_syn_sent(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	debug_tcp("TS_ESTABLISHED\n");
 
 	tcp_send_ack(cb);
-	retval_to_sock(cb->sock, 0);
-
+	notify_sock(cb->sock, TDT_CONNECT, 0);	/* success*/
 	return;
     }
 }
@@ -247,9 +245,9 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	if (cb->state == TS_CLOSE_WAIT) {
 	    cbs_in_user_timeout--;
 	    ENTER_TIME_WAIT(cb);
-	    tcpdev_sock_state(cb, SS_DISCONNECTING);	/* wakes up process*/
+	    notify_sock(cb->sock, TDT_CHG_STATE, SS_DISCONNECTING);
 	} else {
-	    tcpdev_sock_state(cb, SS_DISCONNECTING);	/* wakes up process*/
+	    notify_sock(cb->sock, TDT_CHG_STATE, SS_DISCONNECTING);
 	    tcpcb_remove_cb(cb); 	/* deallocate*/
 	}
 	return;
@@ -257,6 +255,7 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
     if (cb->unaccepted && (h->flags & TF_FIN)) {
 	debug_tcp("tcp: FIN received before accept, dropping packet\n");
+	netstats.tcpdropcnt++;
 
 	/* We can't change state before accept processing, so drop packet*/
 	return;
@@ -300,7 +299,7 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	cb->time_wait_exp = Now;	/* used for debug output only*/
 	debug_tcp("tcp: got FIN with data %d buffer %d\n", datasize, cb->buf_used);
 	if (cb->bytes_to_push <= 0)
-	    tcpdev_sock_state(cb, SS_DISCONNECTING);
+	    notify_sock(cb->sock, TDT_CHG_STATE, SS_DISCONNECTING);
     }
 
     if (datasize == 0 && ((h->flags & TF_ALL) == TF_ACK))
@@ -322,7 +321,7 @@ static void tcp_synrecv(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     else {
 	cb->state = TS_ESTABLISHED;
 	debug_tcp("TS_ESTABLISHED\n");
-	tcpdev_checkaccept(cb);
+	tcpdev_notify_accept(cb);
 	tcp_established(iptcp, cb);
     }
 }
@@ -507,6 +506,7 @@ void tcp_process(struct iphdr_s *iph)
 
 	    debug_tune("tcp: dropping packet, bad seqno: need %ld got %ld size %d\n",
 		cb->rcv_nxt - cb->irs, ntohl(tcph->seqnum) - cb->irs, datalen);
+	    netstats.tcpdropcnt++;
 
 	    if (cb->rcv_nxt != ntohl(tcph->seqnum) + 1)
 		tcp_send_ack(cb);

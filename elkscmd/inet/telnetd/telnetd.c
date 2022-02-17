@@ -195,8 +195,8 @@ int main(int argc, char **argv)
 	pid_t pid;
 
 	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-		fprintf(stderr, "telnetd: Can't open socket (check if ktcp is running)\n");
-		exit(-1);
+		perror("telnetd");
+		return 1;
 	}
 
 	/* set local port reuse, allows server to be restarted in less than 10 secs */
@@ -216,7 +216,7 @@ int main(int argc, char **argv)
 	if (bind(sockfd, (struct sockaddr *)&addr_in, sizeof(addr_in)) == -1) {
 		fprintf(stderr, "telnetd: bind error (may already be running)\n");
 		close(sockfd);
-		exit(-1);
+		return 1;
 	}
 
 #if 0 /* test code for getsockname */
@@ -227,16 +227,16 @@ int main(int argc, char **argv)
 			ntohs(addr_in.sin_port));
 #endif
 
-	if (listen(sockfd, 3) == -1) {
-		perror("listen error");
+	if (listen(sockfd, 3) < 0) {
+		perror("listen");
 		close(sockfd);
-		exit(-1);
+		return 1;
 	}
 
 	/* become daemon, debug output on 1 and 2*/
 	if ((ret = fork()) == -1) {
-		fprintf(stderr, "telnetd: Can't fork to become daemon\n");
-		exit(1);
+		perror("telnetd");
+		return 1;
 	}
 	if (ret) exit(0);
 	fd = open("/dev/console", O_RDWR);

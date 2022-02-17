@@ -89,6 +89,7 @@
 #define MS_NOEXEC	    8	/* disallow program execution */
 #define MS_SYNCHRONOUS	   16	/* writes are synced at once */
 #define MS_REMOUNT	   32	/* alter flags of a mounted FS */
+#define MS_AUTOMOUNT	   64	/* auto mount based on superblock */
 
 #define S_APPEND	  256	/* append-only file */
 #define S_IMMUTABLE	  512	/* immutable file */
@@ -118,41 +119,68 @@
 #define IS_APPEND(inode) ((inode)->i_flags & S_APPEND)
 #define IS_IMMUTABLE(inode) ((inode)->i_flags & S_IMMUTABLE)
 
+#ifdef CONFIG_FS_XMS_BUFFER
+#define CONFIG_FAR_BUFHEADS	/* split buffer_head and move to far memory */
+#endif
+
 struct buffer_head {
     char			*b_data;	/* Address if in L1 buffer area, else 0 */
+#ifdef CONFIG_FAR_BUFHEADS
+};
+/* a little tricky here - buffer_head is split into near and far components */
+struct ext_buffer_head_s {
+#endif
     ramdesc_t			b_seg;		/* Current L1 or L2 (main/xms) buffer segment */
     block32_t			b_blocknr;	/* 32-bit block numbers required for FAT */
     kdev_t			b_dev;
     struct buffer_head		*b_next_lru;
     struct buffer_head		*b_prev_lru;
-    struct wait_queue		b_wait;
     unsigned char		b_count;
-    char			b_lock;
-    char			b_dirty;
-    char			b_uptodate;
+    unsigned char		b_locked;
+    unsigned char		b_dirty;
+    unsigned char		b_uptodate;
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
     ramdesc_t			b_ds;		/* L2 buffer data segment */
     char			*b_L2data;	/* Offset into L2 allocation block */
     char			b_mapcount;	/* count of L2 buffer mapped into L1 */
-    unsigned char		b_num;		/* Buffer number, for debugging */
 #endif
 };
+
+#ifdef CONFIG_FAR_BUFHEADS
+/* buffer heads allocated in main (far) memory */
+#define ext_buffer_head		struct ext_buffer_head_s __far
+ext_buffer_head *EBH(struct buffer_head *);	/* convert bh to ebh */
+
+/* functions for buffer_head pointers called outside of buffer.c */
+void mark_buffer_dirty(struct buffer_head *bh);
+void mark_buffer_clean(struct buffer_head *bh);
+ramdesc_t buffer_seg(struct buffer_head *bh);
+unsigned char buffer_count(struct buffer_head *bh);
+block32_t buffer_blocknr(struct buffer_head *bh);
+kdev_t buffer_dev(struct buffer_head *bh);
+
+#else
+/* buffer heads in kernel data segment */
+typedef struct buffer_head	ext_buffer_head;
+#define EBH(bh)		(bh)
+
+/* macros for buffer_head pointers called outside of buffer.c */
+#define mark_buffer_dirty(bh)	((bh)->b_dirty = 1)
+#define mark_buffer_clean(bh)	((bh)->b_dirty = 0)
+#define buffer_seg(bh)		((bh)->b_seg)
+#define buffer_count(bh)	((bh)->b_count)
+#define buffer_blocknr(bh)	((bh)->b_blocknr)
+#define buffer_dev(bh)		((bh)->b_dev)
+
+#endif /* CONFIG_FAR_BUFHEADS */
 
 #define BLOCK_READ	0
 #define BLOCK_WRITE	1
 
-#define mark_buffer_dirty(bh, st) ((bh)->b_dirty = (st))
-#define mark_buffer_clean(bh) ((bh)->b_dirty = 0)
-#define buffer_dirty(bh) ((bh)->b_dirty)
-#define buffer_clean(bh) (!(bh)->b_dirty)
-#define buffer_uptodate(bh) ((bh)->b_uptodate)
-#define buffer_locked(bh) ((bh)->b_lock)
-
 #define iget(_a, _b) __iget(_a, _b)
 
-extern void brelse(struct buffer_head *);
-extern void bforget(struct buffer_head *);
-
+void brelse(struct buffer_head *);
+void bforget(struct buffer_head *);
 void wait_on_buffer (struct buffer_head *);
 void lock_buffer (struct buffer_head *);
 void unlock_buffer (struct buffer_head *);
@@ -223,8 +251,6 @@ struct file {
 #ifdef BLOAT_FS
     off_t			f_reada;
     unsigned long		f_version;
-    void			*private_data;
-				/* needed for tty driver, but not ntty */
 #endif
 };
 
@@ -313,11 +339,9 @@ struct super_operations {
     void			(*put_inode) ();
     void			(*put_super) ();
     void			(*write_super) ();
+    int 			(*remount_fs) ();
 #ifdef BLOAT_FS	/* i8086 statfs goes to kernel, then user */
     void			(*statfs_kern) ();
-#endif
-    int 			(*remount_fs) ();
-#ifdef BLOAT_FS
     int 			(*notify_change) ();
 #endif
 };
@@ -366,8 +390,6 @@ struct iattr {
 };
 
 extern int notify_change(struct inode *,struct iattr *);
-
-extern int event;		/* Event counter */
 #endif
 
 extern int sys_open(char *,int,int);

@@ -12,6 +12,7 @@ echo "Using QEMU: $QEMU"
 # MINIX or FAT .config build
 #IMAGE="-fda image/fd2880.img"
 IMAGE="-fda image/fd1440.img"
+#IMAGE="-fda image/fd1200.img"
 #IMAGE="-fda image/fd720.img"
 #IMAGE="-fda image/fd360.img"
 #IMAGE="-hda image/hd.img"
@@ -20,6 +21,7 @@ IMAGE="-fda image/fd1440.img"
 # FAT package manager build
 #IMAGE="-fda image/fd360-fat.img"
 #IMAGE="-fda image/fd720-fat.img"
+#IMAGE="-fda image/fd1200-fat.img"
 #IMAGE="-fda image/fd1440-fat.img"
 #IMAGE="-fda image/fd2880-fat.img"
 #IMAGE="-hda image/hd32-fat.img"
@@ -28,19 +30,34 @@ IMAGE="-fda image/fd1440.img"
 # MINIX package manager build
 #IMAGE="-fda image/fd360-minix.img"
 #IMAGE="-fda image/fd720-minix.img"
+#IMAGE="-fda image/fd1200-minix.img"
 #IMAGE="-fda image/fd1440-minix.img"
 #IMAGE="-fda image/fd2880-minix.img"
 #IMAGE="-hda image/hd32-minix.img"
 
+# MBR builds
+#IMAGE="-hda image/hd32-minix.img"
+#IMAGE="-hda image/hd32mbr-minix.img"
+#IMAGE="-hda image/hd32mbr-minix.img -hdb image/hd32-minix.img"
+#IMAGE="-hda image/hd32mbr-fat.img"
+#IMAGE="-fda image/fd1440.img -drive file=image/hd32mbr-minix.img,if=ide"
+#IMAGE="-boot order=a -fda image/fd1440.img -drive file=image/hd32-minix.img,if=ide"
+#IMAGE="-boot order=a -fda image/fd1440.img -drive file=image/hd32mbr-minix.img,if=ide"
+#IMAGE="-boot order=a -fda image/fd1440.img -drive file=test.img,if=ide"
+
 # Second disk for mount after boot
 #DISK2="-fdb image/fd360-fat.img"
 #DISK2="-fdb image/fd720-fat.img"
+#DISK2="-fdb image/fd1200-fat.img"
 #DISK2="-fdb image/fd1440-fat.img"
 #DISK2="-fdb image/fd2880-fat.img"
 #DISK2="-fdb image/fd360-minix.img"
 #DISK2="-fdb image/fd720-minix.img"
+#DISK2="-fdb image/fd1200-minix.img"
 #DISK2="-fdb image/fd1440-minix.img"
 #DISK2="-fdb image/fd2880-minix.img"
+#DISK2="-hdb image/hd32-minix.img"
+#DISK2="-hdb image/hd32-fat.img"
 
 [ -z "$IMAGE" ] && { echo 'Disk image not found!'; exit 1; }
 echo "Using disk image: $IMAGE"
@@ -96,6 +113,6 @@ NET="-netdev user,id=mynet,$FWD -device ne2k_isa,irq=12,netdev=mynet"
 
 # Configure QEMU as pure ISA system
 
-exec $QEMU $CONSOLE -nodefaults -name ELKS -machine isapc -cpu 486,tsc -m 2M \
+exec $QEMU $CONSOLE -nodefaults -name ELKS -machine isapc -cpu 486,tsc -m 4M \
 $KEYBOARD $QDISPLAY -vga std -rtc base=utc $SERIAL \
 $NET $NETDUMP $IMAGE $DISK2 $@

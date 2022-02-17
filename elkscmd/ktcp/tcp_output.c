@@ -289,9 +289,9 @@ void tcp_reoutput(struct tcp_retrans_list_s *n)
 	n->rto = TCP_RETRANS_MAXWAIT;
     n->next_retrans = Now + n->rto;
 
-    printf("tcp retrans: seq %lu size %d rcvwnd %u unack %lu rto %ld rtt %ld (RETRY %d cnt %d mem %u)\n",
-	ntohl(n->tcphdr[0].seqnum) - n->cb->iss, n->len - TCP_DATAOFF(&n->tcphdr[0]),
-	n->cb->rcv_wnd, n->cb->send_nxt - n->cb->send_una,
+    printf("tcp retrans: seq %lu+%u size %d rcvwnd %u unack %lu rto %ld rtt %ld (RETRY %d cnt %d mem %u)\n",
+	ntohl(n->tcphdr[0].seqnum) - n->cb->iss, datalen,
+	n->len - TCP_DATAOFF(&n->tcphdr[0]), n->cb->rcv_wnd, n->cb->send_una - n->cb->iss,
 	n->rto, n->cb->rtt, n->retrans_num, tcp_timeruse, tcp_retrans_memory);
 
     ip_sendpacket((unsigned char *)n->tcphdr, n->len, &n->apair, n->cb);
@@ -317,6 +317,7 @@ void tcp_retrans_expire(void)
     n = retrans_list;
     while (n != NULL) {
 	datalen = n->len - TCP_DATAOFF(&n->tcphdr[0]);
+	if (n->tcphdr[0].flags & TF_FIN) datalen++;
 
 	/* calc RTT and remove if seqno was acked*/
 	if (SEQ_LEQ(ntohl(n->tcphdr[0].seqnum) + datalen, n->cb->send_una)) {
@@ -326,14 +327,15 @@ void tcp_retrans_expire(void)
 		    n->cb->rtt = (TCP_RTT_ALPHA * n->cb->rtt + (100 - TCP_RTT_ALPHA) * rtt) / 100;
 		debug_tcp("tcp: rtt %d RTT %ld RTO %ld\n", rtt, n->cb->rtt, n->rto);
 	    }
-	    debug_retrans("tcp retrans: remove seq %lu unack %lu\n",
-		ntohl(n->tcphdr[0].seqnum) - n->cb->iss, n->cb->send_nxt - n->cb->send_una);
+	    debug_retrans("tcp retrans: remove seq %lu+%u unack %lu\n",
+		ntohl(n->tcphdr[0].seqnum) - n->cb->iss, datalen,
+		n->cb->send_una - n->cb->iss);
 	    n = rmv_from_retrans(n);
 	    continue;
 	} else
-	    debug_retrans("tcp retrans: check seq %lu unack %lu time %ld\n",
-		ntohl(n->tcphdr[0].seqnum) - n->cb->iss + datalen,
-		n->cb->send_nxt - n->cb->send_una, n->next_retrans - Now);
+	    debug_retrans("tcp retrans: check seq %lu+%u unack %lu time %ld\n",
+		ntohl(n->tcphdr[0].seqnum) - n->cb->iss, datalen,
+		n->cb->send_una - n->cb->iss, n->next_retrans - Now);
 
 	n = n->next;
     }
@@ -351,7 +353,7 @@ void tcp_retrans_retransmit(void)
 	    tcp_reoutput(n);
 	    if (n->retrans_num >= TCP_RETRANS_MAXTRIES) {
 		printf("tcp retrans: max retries exceeded seq %lu unack %lu time %ld\n",
-		    ntohl(n->tcphdr[0].seqnum) - n->cb->iss, n->cb->send_nxt - n->cb->send_una,
+		    ntohl(n->tcphdr[0].seqnum) - n->cb->iss, n->cb->send_una - n->cb->iss,
 		    n->next_retrans - Now);
 		tcp_send_reset(n->cb);		/* CB deallocated on received RST*/
 		n = rmv_from_retrans(n);
@@ -399,6 +401,9 @@ void tcp_output(struct tcpcb_s *cb)
     struct tcphdr_s *th = (struct tcphdr_s *)tcpbuf;
     struct addr_pair apair;
     int header_len, len;
+
+    debug_tcp("tcp output: seq %lu unack %lu\n",
+	cb->send_nxt - cb->iss, cb->send_una - cb->iss);
 
     th->sport = htons(cb->localport);
     th->dport = htons(cb->remport);
