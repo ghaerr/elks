@@ -63,6 +63,10 @@ mainmenu_option next_comment
 		else
 			comment '(ktcp needs TCP/IP sockets)'
 		fi
+
+		comment 'Man pages'
+
+		bool 'Man Pages'      		CONFIG_APP_MAN_PAGES  y
 	else
 		comment "Select Applications by Image Size"
 

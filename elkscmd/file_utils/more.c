@@ -4,8 +4,6 @@
  * provided that this copyright notice remains intact.
  */
 
-#include "futils.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,8 +11,14 @@
 #include <fcntl.h>
 #include <termios.h>
 
+#include "futils.h"
+
+#define MORE_STRING	"\e[7m--More--\e[0m"
+
 int fd;
+int LINES = 25;
 char mbuf[BUFSIZ];
+
 
 int more_wait(int fout, char *msg)
 {
@@ -27,18 +31,19 @@ int more_wait(int fout, char *msg)
 	if (tcgetattr(1, &termios) >= 0) {
 		struct termios termios2;
 		tcgetattr(1, &termios2);
-		termios2.c_lflag &= ~ICANON;
+		termios2.c_lflag &= ~(ICANON|ECHO);
 		termios2.c_cc[VMIN] = 1;
 		tcsetattr(1, TCSAFLUSH, &termios2);
 	}
 
 	cnt = read(1, buf, sizeof(buf));
+	LINES = 25;
 
 	ch = buf[0];
 	if (ch == ':') {
 		write(fout, "\r          \r:", 13);
 		if (cnt < 2) 
-	           cnt = read(1, &buf[1], sizeof(buf-1));
+	           cnt = read(1, &buf[1], sizeof(buf)-1);
 		ch = buf[1];
 	}
 	switch (ch) {
@@ -54,11 +59,22 @@ int more_wait(int fout, char *msg)
 		ret = -1;
 		break;
 	case '1':
-                if (cnt < 2) 
-                   cnt = read(1, &buf[2], sizeof(buf-2));
+		if (cnt < 2)
+		    cnt = read(1, &buf[2], sizeof(buf)-2);
 		if (buf[2] == 'G') 	/* rewind to beginning of file */
-		    (void) lseek(fd, 0, SEEK_SET);
+		    lseek(fd, 0, SEEK_SET);
 		/* else just ignore */
+		break;
+	case '\n':
+	case '\r':
+		LINES = 2;
+		break;
+	case '2':
+		LINES = 3;
+		break;
+	case '3':
+		LINES = 4;
+		break;
 	}
 	write(fout, "\r          \r", 12);
 	tcsetattr(1, TCSAFLUSH, &termios);
@@ -137,18 +153,19 @@ int main(int argc, char **argv)
 			}
 
 			putchar(ch);
+#if 0
 			if (col >= 80) {
 				col -= 80;
 				line++;
 			}
-
-			if (line < 25)
+#endif
+			if (line < LINES)
 				continue;
 
 			if (col > 0)
 				putchar('\n');
 
-			if ((mw = more_wait(1, "--More--")) > 0) {
+			if ((mw = more_wait(1, MORE_STRING)) > 0) {
 				line = 1; /* user requested next file immediately */
 				break;
 			}

@@ -79,7 +79,7 @@ int main(int argc, char **argv)
 	}
 
 	if (argc != 2) {
-		write(STDERR_FILENO, "Usage: mount [-a][-q][-t type] [-o ro|remount,rw] <device> <directory>\n", 63);
+		write(STDERR_FILENO, "Usage: mount [-a][-q][-t type] [-o ro|remount,rw] <device> <directory>\n", 71);
 		return 1;
 	}
 
