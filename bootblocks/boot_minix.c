@@ -23,8 +23,8 @@
 // as the context is not a user process
 // but code loaded in uninitialized memory
 
-static byte_t sb_block [BLOCK_SIZE];  // super block block buffer
-static struct super_block *sb_data;   // super block structure
+byte_t sb_block [BLOCK_SIZE];  // super block block buffer
+#define sb_data	((struct super_block *)sb_block)
 
 static int i_now;
 static int i_boot;
@@ -132,7 +132,6 @@ static void load_super ()
 {
 	disk_read (2, 2, sb_block, seg_data ());
 
-	sb_data = (struct super_block *) sb_block;
 	/*
 	if (sb_data->s_log_zone_size) {
 		//log_err ("zone size");
