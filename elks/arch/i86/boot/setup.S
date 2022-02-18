@@ -29,21 +29,23 @@
 ! changes to support .fartext headers and relocation
 ! Sep 2020 Greg Haerr
 !
+! load /bootopts file for FAT fs using boot sector's ram buffers
+! Feb 2022 Greg Haerr
+!
 ! The following data is passed to the main kernel (relative to INITSEG)
 !
 ! index
 !	...
 !	4:	display page
 !	6:	video mode, 1 byte
-!	7:	window width, 1 byte
+!	7:	screen_cols	byte window width
 !	8:	video data, 2 bytes
 !	10:	mono/color, video memory size, 2 bytes 
-!	12:	feature bits, switch settings, 2 bytes
-!	14:	window height, 1 byte
+!	14:	screen_lines	byte window height
 !	15:	VGA present, 1 byte
 !			0 = not present
 !			1 = present
-!	0x20:	Processor type, 1 byte
+!	0x20:	cpu_type	byte Processor type
 !			0  = 8088
 !			1  = 8086
 !			2  = NEC V20
@@ -57,10 +59,9 @@
 !			10 = Pentium PRO
 !			255 = VM86 mode
 !	...
-!	0x2a:	size of the base memory, in kbytes, 2 bytes
-!	0x30:	zero terminated string containing the processor's name, 16 bytes
-!	...
-!	0x50:	zero terminated string containing the cpuid, 13 bytes
+!	0x2a:	mem_kbytes	word	size of base memory in kbytes
+!	0x30:	proc_name	byte[16] processor name string
+!	0x50:	cpu_id		byte[13] cpuid string
 !	...
 !	0x1e2:	part_offset	long Sector offset of booted MBR partition
 !	0x1e6:	elks_magic	long "ELKS"
@@ -92,8 +93,8 @@
 #define KERNEL_MAGICNUMBER MINIX_SPLITID_LOW
 
 #ifndef CONFIG_ROMCODE
-  INITSEG  = DEF_INITSEG	// (DATASEG) we move boot here - out of the way
-  SYSSEG   = DEF_SYSSEG 	// system loaded at 0x10000 (65536).
+  INITSEG  = DEF_INITSEG	// initial setup data seg, we move boot here - out of the way
+  SYSSEG   = DEF_SYSSEG 	// first kernel blob load point before relocation
   SETUPSEG = DEF_SETUPSEG	// this is the current code segment
 #else
   INITSEG  = CONFIG_ROM_SETUP_DATA
@@ -812,7 +813,7 @@ novga:	mov	%al,14		// CGA 25 rows
 	mov	$INITSEG,%ax
 	mov	%ax,%ds
 	call	arch_get_mem	// save base memory size
-	mov	%ax,0x2a
+	mov	%ax,mem_kbytes
 
 	call	bootopts	// load /bootopts into DEF_OPTSEG (0050:0000)
 	ret
@@ -1039,10 +1040,12 @@ v_id3:	.byte 0,0,0,0
 
 #if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_PC98)
 //
-// load /bootopts if FAT filesystem boot
+// load /bootopts for FAT filesystem boot
 //
 // Uses previous boot sector's BPB contents for disk geometry
 // and previous boot sector's buffer which still holds root directory sector.
+// No disk I/O is performed unless /bootopts found.
+// Will fail gracefully on MINIX filesystems, no need for check of fs fstype.
 bootopts:
 	push	%ds
 	push	%es
@@ -1050,7 +1053,7 @@ bootopts:
 	// set ES = boot sector (BPB) address in high memory
 	mov	$INITSEG,%ax
 	mov	%ax,%ds
-	mov	0x2a,%ax	// Kbytes of memory
+	mov	mem_kbytes,%ax	// Kbytes of memory
 	mov	$6,%cl		// to paras
 	shl	%cl,%ax
 	sub	$0x1000,%ax	// find highest aligned 64K
@@ -1076,7 +1079,7 @@ bootopts:
 #else
 	mov	$INITSEG,%ax
 	mov	%ax,%ds
-	mov	0x1fc,%dl	// DL = boot drive
+	mov	root_dev,%dl	// DL = boot drive
 
 	mov	$DEF_OPTSEG,%ax	// ES:BX = DEF_OPTSEG:0
 	mov	%ax,%es
@@ -1110,7 +1113,7 @@ root_ents_to_check = 8			// # dir entries to check for /bootopts
 
 // return logical sector number (LBA) for bootopts file in AX
 //
-// Searches root directory already read into boot sector's buffer to
+// Searches root directory previously read into boot sector's buffer to
 // find starting cluster, then converts to LBA based on boot sector's BPB info.
 get_bootopts_sector:
 	push	%es
@@ -1118,7 +1121,7 @@ get_bootopts_sector:
 	mov	%es:root_ent_cnt,%ax	// push root directory entry count
 	push	%ax
 
-	mov	%es:num_fats,%al	// calculate sectors before root directory
+	mov	%es:num_fats,%al	// calculate # sectors before root directory
 	xor	%ah,%ah
 	mov	%es:fat_sz_16,%bx	// check FAT16 fat size
 	and	%bx,%bx
@@ -1126,7 +1129,7 @@ get_bootopts_sector:
 	mov	%es:fat_sz_32,%bx	// get loword FAT32 fat size instead
 1:	mulw	%bx
 	add	%es:rsvd_sec_cnt,%ax
-	push	%ax			// push sectors before root directory
+	push	%ax			// push # sectors before root directory
 
 	mov	%es:sec_per_clus,%bl	// BL = sectors per cluster
 
@@ -1155,7 +1158,7 @@ find:	add	$0x20,%si		// look for /bootopts in root directory at DS:SI
 	dec	%ax
 	mov	%bl,%cl			// CH = 0, CX = sectors per cluster
 	mul	%cx
-	pop	%bx			// BX = sectors before root directory
+	pop	%bx			// BX = # sectors before root directory
 	add	%ax,%bx
 	pop	%ax			// AX = root directory entry count
 #ifdef CONFIG_IMG_FD1232
@@ -1303,7 +1306,7 @@ arch_set_initseg:
    mov $INITSEG,%ax
    mov %ax,%ds
    call arch_get_mem		// save base memory for bootopts routine
-   mov %ax,0x2a
+   mov %ax,mem_kbytes
 
    call bootopts		// attempting loading /bootopts config file
 
