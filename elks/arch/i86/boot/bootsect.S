@@ -565,7 +565,8 @@ root_flags:
 syssize:
 	.word SYSSIZE
 elks_flags:
-	.word ELKSFLAGS
+	.byte EF_NONE
+	.byte 0
 ram_size:
 	.word RAMDISK
 vid_mode:

@@ -36,7 +36,6 @@
 #endif
 
 #define LOADSEG       DEF_INITSEG
-#define ELKS_INITSEG  DEF_INITSEG
 
 // Whether to try to do whole-track reads, or read one sector at a time
 //
@@ -595,26 +594,19 @@ not_elks:
 	jmp _except
 
 boot_it:
-.if LOADSEG != ELKS_INITSEG
-	.error
-.endif
 
 	// Signify that /linux was loaded as 1 blob
-.if ((EF_AS_BLOB|EF_BIOS_DEV_NUM) & 0xff) == 0
-	orb $(EF_AS_BLOB|EF_BIOS_DEV_NUM)>>8,elks_flags+1
-.else
-	orw $(EF_AS_BLOB|EF_BIOS_DEV_NUM),elks_flags
-.endif
+	orb $(EF_AS_BLOB|EF_BIOS_DEV_NUM),elks_flags
 	mov %dx,root_dev
 	mov %cx,part_offset  // save sector offset of booted partition
 	mov %bx,part_offset+2
 
 	RESTORE_DDPT
 
-	mov $ELKS_INITSEG,%ax
+	mov $LOADSEG,%ax
 	mov %ax,%ds
 	mov %ax,%es
-	ljmp $ELKS_INITSEG+0x20,$0
+	ljmp $LOADSEG+0x20,$0
 #endif
 
 //------------------------------------------------------------------------------

@@ -148,9 +148,79 @@ ELKS "INITSEG" (setup data segment) offsets:
 | 01F1 | 497 | byte | setup_sects       | size in 512-byte sects   | build.c
 | 01F2 | 498 | word | ROOTFLAGS         | UNUSED                   |
 | 01F4 | 500 | word | syssize           | kernel size in paras     | build.c
-| 01F6 | 502 | word | elks_flags        | BLOB, BIOS_DRV           | boot_sect.S
+| 01F6 | 502 | byte | elks_flags        | BLOB, BIOS_DRV           | boot_sect.S
+! 01F7 | 503 | byte |                   | UNUSED                   |
 | 01F8 | 504 | word | RAMDISK           | UNUSED                   |
 | 01FA | 506 | word | SVGAMODE          | UNUSED                   |
 | 01FC | 508 | word | root_dev          | BIOS drive or kdev_t     | build.c,boot_sect.S
 | 01FE | 510 | word | boot_flag         | AA55h                    | boot_sect.S
 +------+-----+------+-------------------+--------------------------+------------
+
+
+ELKS memory at boot and detailed boot description
+
+ +Step -----------------  seg  off  linear size (size  start) -------------------------------+
+ |  interrupt vectors    0000:0000 00000  0400 (1024) @0
+ |  BIOS data area       0040:0000 00400  0100 (256)  @1024
+ |4 bootopts             0050:0000 00500  0100 (256)  @1280 DEF_OPTSEG loaded by minix.o
+ |8 3rd setup data       0060:0000 00600  0200 (512)  @1536 REL_INITSEG (copied by setup)
+ |  ...
+ |  disk track cache     0080:0000 00800  2400 (9216) @2K   DMASEG
+ |  ...
+ |3 1st kblob load addr  0100:0000 01000  2F00 (188K) @4K   DEF_INIT/LOADSEG/ELKS_INITSEG
+ |5 1st setup exec addr  0120:0000 01200  0200 (512)  @4.5K DEF_INIT+20
+ |9 2nd kernel load&exec 02D0:0000 2D000  2F00 (188K) @11K  REL_SYSSEG (relocated by setup)
+ |1 1st boot exec addr   07C0:0000 07C00  0200 (512)  @31K  BOOTADDR (loaded by BIOS at boot)
+ |                       0800:0000 08000  0000 (32K)  @32K
+ |                       1000:0000 10000  0000        @64K
+ |6 1st kernel load addr 1300:0000 13000  2F00 (188K) @76K  DEF_SYSSEG (copied by setup)
+ |  ...
+ |  ...
+ |7 2nd setup exec addr  9000:0000 90000 00200 (512)  @576K copied by setup
+ |2 2nd boot exec addr   9000:0000 90000 00200 (512)  @576K ES=DS=SS=CS (tiny model) copied
+ !  bios_sect disk buf   9000:0200 90200 00200 (512)  @576.5K (FAT BPB or minix payload here)
+ |  top of 640k ram      A000:0000 A0000 A0000        @640K
+ +-------------------------------------------------------------------------------------------+
+
+1	BIOS loads disk sector 1 (bios_sect.S) to 07C0:0000
+2	bios_sect.S copies itself to high memory 9000:0000 (8000:0000 on QEMU)
+	bios_sect stack grows down from 9000:0000
+
+	MINIX bios_sect calls payload at 9000:0200 (minix_boot.S, tiny model CS=DS=SS)
+	bios_sect .text and .data is ~03F6, linked with minix_boot.o is 1K boot sector
+	payload .data (offset after .text and .rodata) starts around 9000:03F6 to 9000:1406
+3	payload reads MINIX superblock/fs and loads /linux as blob to 0100:0000 (DEF_INIT)
+4	payload reads MINIX superblock/fs and loads /bootopts sector to 0050:0000 (DEF_OPTSEG)
+	boot_sect saves elks_flags (and other?) to 0100:0000 (DEF_INIT, which is SETUP data seg)
+		set by boot_sect: elks_flags
+		set by build: setup_sect, syssize
+5	boot_sect checks ELKS setup signature and jumps to setup code seg 0120:0000 (DEF_INIT+20)
+
+	FAT bios_sect reads FAT BPB within itself at 9000:0000 and loads FAT root dir at 9000:0200
+	boot_sect .text is ~01E2, .data starts at ~01f7, standalone size is 512 byte boot sector
+3	boot_sect reads FAT root dir to load LINUX as blob to 0100:0000 (DEF_INIT)
+(4)		no room to load BOOTOPTS sector to 0050:0000 (DEF_OPTSEG)
+	boot_sect saves elks_flags (and other?) to 0100:0000 (DEF_INIT, which is SETUP data seg)
+5	boot_sect checks ELKS setup signature and jumps to setup code seg 0120:0000 (DEF_INIT+20)
+	setup uses root dir at 9000:0200 and BPB at 9000:0000 to load BOOTOPTS sector to 0050:0000
+
+6	setup CS at 0120:0000 (DEF_INIT+20) checks ELKS sig and copies kernel to 1300:0 (DEF_SYSSEG)
+6+	FAT only - setup reads high mem root dir 9000:0200 to get BOOTOPTS cluster
+		uses high mem BPB at 9000:0000 for secs_per_cluster, etc
+7	setup copies its code segment from 0120:0000 (DEF_INIT+2) to high memory 9000:0 (8000 qemu)
+8	setup now at 9000:0000 copies its data seg from 0100:0 (DEF_INIT) to 0700:0 (REL_INITSEG)
+9	setup copies&relocates kernel from 1300:0000 (DEF_SYSSEG) to 02D0:0000 (REL_SYSSEG)
+	DMASEG starts after 0700:0000 (REL_INITSEG) at 0900:0000 to 02D0:0000 (REL_SYSSEG)
+9+	finally, setup jumps to kernel at 02D0:0000 (REL_SYSSEG)
+
+Current kernel is 80K in size (=14000h)
+Boot loader:
+	0100:0000 DEF_INIT @4K
+		+ 1400:0000 size of kernel (80K)
+	1500:0000 end of 80K kernel
+	3000:0000 max end of 188K kernel @192K
+Setup.S:
+	1300:0000 DEF_SYSSEG @76K
+		+ 1400:0000 size of kernel (80K)
+	2700:0000 end of 80K kernel
+	4200:0000 max end of 188K kernel @264K
