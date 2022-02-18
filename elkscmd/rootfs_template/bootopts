@@ -8,5 +8,5 @@
 #sync=30		# autosync secs
 #init=/bin/init 3 n	# multiuser serial no /etc/rc.sys
 #init=/bin/sh		# singleuser shell
-#console=ttyS0,19200	# serial console
+#console=ttyS0,19200 3	# serial console
 #root=hda1 ro		# root hd partition 1, read-only

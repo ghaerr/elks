@@ -154,7 +154,7 @@ bpb_fil_sys_type:			// Filesystem type (8 bytes)
 
 	// Load the first sector of the root directory
 	movb bpb_num_fats,%al
-	cbtw
+	xor %ah,%ah
 	mov bpb_fat_sz_16,%bx		// check FAT16 fat size
 	and %bx,%bx
 	jnz 1f				// nonzero means FAT16 filesystem
