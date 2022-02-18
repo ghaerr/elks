@@ -28,7 +28,7 @@
 #define SETUP_CPU_TYPE		setupb(0x20)	/* processor type */
 #define SETUP_MEM_KBYTES	setupw(0x2a)	/* base memory in 1K bytes */
 #define SETUP_ROOT_DEV		setupw(0x1fc)	/* root device, kdev_t or BIOS dev */
-#define SETUP_ELKS_FLAGS	setupw(0x1f6)	/* flags for root device type */
+#define SETUP_ELKS_FLAGS	setupb(0x1f6)	/* flags for root device type */
 #define SETUP_PART_OFFSETLO	setupw(0x1e2)	/* partition offset low word */
 #define SETUP_PART_OFFSETHI	setupw(0x1e4)	/* partition offset high word */
 #ifdef CONFIG_ROMCODE
@@ -43,7 +43,7 @@
 #define SETUP_CPU_TYPE		1	/* processor type = 8086 */
 #define SETUP_MEM_KBYTES	640	/* base memory in 1K bytes */
 #define SETUP_ROOT_DEV		setupw(0x1fc)	/* root device, kdev_t or BIOS dev */
-#define SETUP_ELKS_FLAGS	setupw(0x1f6)	/* flags for root device type */
+#define SETUP_ELKS_FLAGS	setupb(0x1f6)	/* flags for root device type */
 #define SETUP_PART_OFFSETLO	setupw(0x1e2)	/* partition offset low word */
 #define SETUP_PART_OFFSETHI	setupw(0x1e4)	/* partition offset high word */
 #define SYS_CAPS		0	/* no XT/AT capabilities */

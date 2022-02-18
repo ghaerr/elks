@@ -46,7 +46,7 @@ SETUPSECS = 4				/* nr of setup-sectors */
 BOOTSEG   = 0x07C0			/* original address of boot-sector */
 INITSEG   = DEF_INITSEG		/* we move boot here - out of the way */
 SETUPSEG  = DEF_SETUPSEG
-SYSSEG    = DEF_SYSSEG		/* system loaded at 0x10000 (65536). */
+SYSSEG    = DEF_SYSSEG		/* initial kernel load address */
 SYSSEGB   = DEF_SYSSEG + 2
 
 // ROOT_DEV is now written by "build".
@@ -565,7 +565,8 @@ root_flags:
 syssize:
 	.word SYSSIZE
 elks_flags:
-	.word ELKSFLAGS
+	.byte EF_NONE
+	.byte 0
 ram_size:
 	.word RAMDISK
 vid_mode:

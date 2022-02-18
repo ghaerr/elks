@@ -70,7 +70,8 @@
 !	0x1f1:	setup_sects	byte in 512-byte sectors, written by build tool
 !	0x1f2:	ROOTFLAGS	word UNUSED
 !	0x1f4:	syssize		word in paragraphs, written by build tool
-!	0x1f6:	elks_flags	word EF_xxx
+!	0x1f6:	elks_flags	byte EF_xxx
+!	0x1f7:			byte UNUSED
 !	0x1f8:	RAMDISK		word UNUSED
 !	0x1fa:	SVGA_MODE	word UNUSED
 !	0x1fc:	root_dev	word Either BIOS boot device or actual kdev_t ROOT_DEV
@@ -152,11 +153,7 @@ no_sig_mess:	.ascii	"No ELKS setup signature found ..."
 chk_blob:
 	mov	$INITSEG,%ax
 	mov	%ax,%ds
-.if (EF_AS_BLOB & 0xff) == 0
-	testb	$(EF_AS_BLOB>>8),elks_flags+1
-.else
-	testw	$EF_AS_BLOB,elks_flags
-.endif
+	testb	$EF_AS_BLOB,elks_flags
 	jz	no_blob
 	std			// move backwards --- we are moving from a
 				// lower address to a higher one
