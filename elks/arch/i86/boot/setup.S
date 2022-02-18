@@ -71,7 +71,7 @@
 !	0x1f2:	ROOTFLAGS	word UNUSED
 !	0x1f4:	syssize		word in paragraphs, written by build tool
 !	0x1f6:	elks_flags	byte EF_xxx
-!	0x1f7:				byte UNUSED
+!	0x1f7:			byte UNUSED
 !	0x1f8:	RAMDISK		word UNUSED
 !	0x1fa:	SVGA_MODE	word UNUSED
 !	0x1fc:	root_dev	word Either BIOS boot device or actual kdev_t ROOT_DEV

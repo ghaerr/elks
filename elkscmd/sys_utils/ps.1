@@ -4,20 +4,16 @@ ps \- list processes
 .SH SYNOPSIS
 .B ps
 .SH DESCRIPTION
-This document describes the ELKS version of
-.BR ps .
-This version is extremely minimal and should not be used whenever using a
-better version is practical. It is also uterly non-portable as it accesses
-the kernel task structure directly.
-.PP
 .BR ps
-prints a list of all the processes currently running on the system giving on
-a line for each process, its process id, process group, owner, state,
-the kernel inode address of the corresponding binary and the name of the
-process. The state is given either as R for running, or S for sleeping.
-The kernel inode address is included as an aid to debugging the kernel,
-and provides no other useful information. The name of the process
-is taken from its argv[0] as passed to its main function.
+prints a list of all the processes currently running on the system, giving
+a line for each process. The process id, process group, tty, user, state,
+the kernel code and data segment address of the corresponding binary, the process
+heap total and free, overall process memory size, and the process name
+and command line are displayed.
+.PP
+The state is given either as R for running, or S for interruptible sleeping,
+s for uninterruptible sleeping, T for stopped, Z for zombie and E for exiting.
+The name of the process is taken from its argv[0] as passed to its main function.
 .SH EXAMPLES
 .IP
 ps

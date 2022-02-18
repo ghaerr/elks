@@ -19,10 +19,10 @@
 // Japanese NEC PC98
 
 #if defined(CONFIG_IMG_FD1232)
-#define BOOTSEGM	0x1FC0
+#define BOOTSEG		0x1FC0
 #define SECTOR_SIZE	1024
 #else
-#define BOOTSEGM	0x1FE0
+#define BOOTSEG		0x1FE0
 #define SECTOR_SIZE	512
 #endif
 #define MEMTOPSEG	0xA000		// 640K memory
@@ -107,8 +107,8 @@ entry1:
 	xor %sp,%sp
 
 	xor %di,%di
-#ifdef BOOTSEGM
-	mov $BOOTSEGM,%ax	// DS:SI = BOOTSEGM:0
+#ifdef BOOTSEG
+	mov $BOOTSEG,%ax	// DS:SI = BOOTSEG:0
 	mov %ax,%ds
 	xor %si,%si
 #else
@@ -525,52 +525,6 @@ dr_exit:
 // TODO: to be moved to the MINIX specific payload
 
 run_prog:
-
-/*
-static
-run_prog()
-{
-// It all worked, run the loaded executable
-#asm
-#ifdef HARDDISK
-  mov	dx,[bootpart+2]
-  xchg	dh,dl		! DX => hard drive
-  push	[bootpart]	! CX => partition offset
-  xor	si,si
-#else
-  xor	dx,dx		! DX=0 => floppy drive
-  push	dx		! CX=0 => partition offset = 0
-  mov	si,[_n_sectors]	! Save for monitor.out
-#endif
-
-  mov	bx,#LOADSEG
-  mov	ds,bx		! DS = loadaddress
-  xor	di,di		! Zero
-  mov	ax,[di]
-  cmp	ax,#0x0301	! Right magic ?
-  jnz	binfile		! Yuk ... assume .SYS
-  inc	bx
-  inc	bx		! bx = initial CS
-  mov	ax,[di+2]
-  and	ax,#$20		! Is it split I/D ?
-  jz	impure		! No ...
-  mov	cl,#4
-  mov	ax,[di+8]
-  shr	ax,cl
-impure:
-  pop	cx
-  add	ax,bx
-  mov	ss,ax
-  mov	sp,[di+24]	! Chmem value
-  mov	ds,ax
-binfile:
-
-  push	bx
-  push	di		!  jmpi	0,#LOADSEG+2
-  retf
-#endasm
-}
-*/
 
 	mov drive_num,%dl
 	xor %dh,%dh

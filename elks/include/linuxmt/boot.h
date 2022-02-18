@@ -6,7 +6,6 @@
 #define __LINUXMT_BOOT_H
 
 /* Root flags */
-
 #define RF_NONE 	0
 #define RF_RO		1
 
