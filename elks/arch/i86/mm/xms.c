@@ -44,21 +44,25 @@ int xms_init(void)
 	int enabled;
 
 	/* display initial A20 and A20 enable result */
-	printk("xms: A20 was %s", verify_a20()? "on" : "off");
+	printk("xms: ");
+#ifndef CONFIG_FS_XMS_INT15
+	if (check_unreal_mode() <= 0) {
+		printk("disabled, requires 386, ");
+		return 0;
+	}
+#endif
+	printk("A20 was %s", verify_a20()? "on" : "off");
 	enable_a20_gate();
 	enabled = verify_a20();
 	printk(" now %s, ", enabled? "on" : "off");
+	if (!enabled) {
+		printk("disabled, A20 error, ");
+		return 0;
+	}
 #ifdef CONFIG_FS_XMS_INT15
 	printk("using int 15/1F, ");
 #else
-	if (!enabled) {
-		printk("xms disabled, A20 error,");
-		return 0;
-	}
-	if (enable_unreal_mode() <= 0) {
-		printk("xms disabled, requires 386,");
-		return 0;
-	}
+	enable_unreal_mode();
 	printk("using unreal mode, ");
 #endif
 	xms_enabled = 1;	/* enables xms_fmemcpyw()*/
