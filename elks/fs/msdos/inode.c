@@ -188,7 +188,7 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%
 	total_displayed = total_sectors >> (BLOCK_SIZE_BITS - SECTOR_BITS_SB(s));
 	for (cluster = 2; cluster < sb->clusters + 2; cluster++)
 		if (!fat_access(s, cluster, -1))
-			free_displayed++;
+			free_displayed += sb->cluster_size;
 	free_displayed = free_displayed >> (BLOCK_SIZE_BITS - SECTOR_BITS_SB(s));
 	printk("FAT: total "); print_formatted(total_displayed);
 	printk(", free ");     print_formatted(free_displayed);
