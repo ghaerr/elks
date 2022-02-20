@@ -33,6 +33,7 @@
 	.code16
 	.text
 
+	.global	check_unreal_mode
 	.global	enable_unreal_mode
 	.global	enable_a20_gate
 	.global	verify_a20
@@ -40,11 +41,10 @@
 	.global	linear32_fmemcpyw
 	.global	linear32_fmemcpyb
 
-# Try to set unreal mode. Currently requires 386 CPU or better.
-# Returns 0 if OK, otherwise error code (1=not 386, 2=in V86 mode).
-enable_unreal_mode:
-# check for 32-bit CPU
-	pushf
+# Check if unreal mode capable. Currently requires 32-bit CPU (386+)
+# Returns 1 if OK, otherwise error code (-1=not 386, -2=in V86 mode).
+check_unreal_mode:
+	pushf			# check for 32-bit CPU
 		pushf
 		popw %bx        # old FLAGS -> BX
 		movw %bx,%ax
@@ -64,6 +64,17 @@ enable_unreal_mode:
 	andb $1,%bl
 	jne	in_vm86mode
 
+	mov	$1,%ax		# unreal mode capable, return 1
+	ret
+not_32bit:
+	mov	$-1,%ax		# requires 32 bit CPU
+	ret
+in_vm86mode:
+	mov	$-2,%ax		# CPU in V86 mode
+	ret
+
+# Put CPU in unreal mode. Requires 32-bit CPU (386+) to call!
+enable_unreal_mode:
 # point gdt_ptr to gdt
 	xorl %eax,%eax
 	movw %ds,%ax
@@ -101,13 +112,6 @@ enable_unreal_mode:
 	popf			# restore interrupt status
 
 	mov	$1,%ax		# system is in unreal mode, return 1
-	ret
-
-not_32bit:
-	mov	$-1,%ax		# requires 32 bit CPU
-	ret
-in_vm86mode:
-	mov	$-2,%ax		# CPU in V86 mode
 	ret
 
 # Attempt to enable A20 address gate, return 0 on fail
