@@ -1,5 +1,6 @@
 # Image files
 *.bin
+*.img
 
 # Temporary files
 romfs.devices
