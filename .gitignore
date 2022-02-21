@@ -20,6 +20,7 @@
 # Normal output and testing dirs
 #
 
+Make.local
 cross
 target
 

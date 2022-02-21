@@ -5,6 +5,7 @@ $(error TOPDIR is not defined)
 endif
 
 include $(TOPDIR)/Make.defs
+-include Make.local
 
 .PHONY: all prune
 
@@ -23,7 +24,7 @@ BUILDDIR=$(CROSSDIR)/build
 
 # BINUTILS for IA16
 
-BINUTILS_VER=164dc55d3d9488a487d39c2e7f3f8cadf6dc12f5
+BINUTILS_VER?=164dc55d3d9488a487d39c2e7f3f8cadf6dc12f5
 BINUTILS_DIST=binutils-ia16-$(BINUTILS_VER)
 
 $(DISTDIR)/$(BINUTILS_DIST).tar.gz:
@@ -62,11 +63,11 @@ all:: $(CROSSDIR)/.binutils.install
 
 # GCC prerequisites: GNU MP, MPFR, and MPC libraries
 
-GMP_VER=6.1.2
+GMP_VER?=6.1.2
 GMP_DIST=gmp-$(GMP_VER)
-MPFR_VER=3.1.5
+MPFR_VER?=3.1.5
 MPFR_DIST=mpfr-$(MPFR_VER)
-MPC_VER=1.0.3
+MPC_VER?=1.0.3
 MPC_DIST=mpc-$(MPC_VER)
 
 $(DISTDIR)/$(GMP_DIST).tar.bz2:
@@ -97,7 +98,7 @@ $(DISTDIR)/$(MPC_DIST).tar.gz:
 
 # GCC for IA16
 
-GCC_VER=17bd8a491ca31f8fd867b1f1a380cbbc5ef53b07
+GCC_VER?=17bd8a491ca31f8fd867b1f1a380cbbc5ef53b07
 GCC_DIST=gcc-ia16-$(GCC_VER)
 
 $(DISTDIR)/$(GCC_DIST).tar.gz:
@@ -154,7 +155,7 @@ all:: $(CROSSDIR)/.gcc.install
 
 # EMU86
 
-EMU86_VER=f99937262b2566d3d20339e5b200e8483cdec3a2
+EMU86_VER?=f99937262b2566d3d20339e5b200e8483cdec3a2
 EMU86_DIST=emu86-$(EMU86_VER)
 
 $(DISTDIR)/$(EMU86_DIST).tar.gz:
