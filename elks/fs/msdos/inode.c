@@ -100,7 +100,7 @@ static struct super_block *msdos_read_super(struct super_block *s, char *data,
 	struct msdos_boot_sector *b;
 	struct buffer_head *bh;
 	long total_sectors, data_sectors;
-	cluster_t cluster;
+	cluster_t cluster, max_clusters;
 	long total_displayed, free_displayed = 0;
 	int fat32;
 
@@ -162,7 +162,7 @@ static struct super_block *msdos_read_super(struct super_block *s, char *data,
 		*((unsigned short *) b->sectors) : b->total_sect;
 	data_sectors = total_sectors - sb->data_start;
 	sb->clusters = sb->cluster_size?  data_sectors/sb->cluster_size : 0;
-	sb->fat_bits = fat32 ? 32 : sb->clusters > MSDOS_FAT12 ? 16 : 12;
+	sb->fat_bits = fat32 ? 32 : sb->clusters > MSDOS_FAT12_MAX_CLUSTERS ? 16 : 12;
 	sb->previous_cluster = 0;
 	unmap_brelse(bh);
 
@@ -171,16 +171,26 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%
 	sb->fat_length, sb->dir_start, sb->dir_entries,
 	sb->data_start, total_sectors, b->total_sect);
 
-	if (!sb->fats || (sb->dir_entries & (MSDOS_DPS_SB(s)-1))
-	    || !b->cluster_size || 
-#ifndef FAT_BITS_32
-		sb->clusters+2 > (unsigned long) sb->fat_length *
-			(SECTOR_SIZE_SB(s) * 8 / sb->fat_bits)
-#else
-		!fat32
+	/* calculate max clusters based on FAT table size */
+	max_clusters = (unsigned long)sb->fat_length *
+		(SECTOR_SIZE_SB(s) * 8 / sb->fat_bits) - 2;
+	/*
+	 * Allow disks created with too small a FAT to be mounted, but limit free space.
+	 * (This is a bug in FreeDOS mkfat - MSDOS 6.22 will overwrite root directory
+	 * when FAT table expands past limit).
+	 * Disk free space will be shown incorrectly between ELKS and MSDOS in this case.
+	 */
+	if (sb->clusters > max_clusters) {
+	    printk("FAT: #clus=%ld > max=%ld, limiting free space\n",
+		    sb->clusters, max_clusters);
+	    sb->clusters = max_clusters;
+	}
+
+	if (!sb->fats || (sb->dir_entries & (MSDOS_DPS_SB(s)-1)) || !b->cluster_size
+#ifdef FAT_BITS_32
+		|| !fat32
 #endif
-		) {
-/*		s->s_dev = 0;*/
+			) {
 		printk("FAT: Unsupported format\n");
 		return NULL;
 	}
