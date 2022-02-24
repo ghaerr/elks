@@ -66,7 +66,7 @@ mainmenu_option next_comment
 
 		comment 'Man pages'
 
-		bool 'Man Pages'      		CONFIG_APP_MAN_PAGES  y
+		bool 'Man Pages'      		CONFIG_APP_MAN_PAGES  n
 	else
 		comment "Select Applications by Image Size"
 

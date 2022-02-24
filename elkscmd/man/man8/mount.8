@@ -1,0 +1,62 @@
+.TH MOUNT 1
+.SH NAME
+mount \- mount a file system
+.SH SYNOPSIS
+\fBmount [\fB\-r\fR] [\fB\-t \fItype\fR] [\fB\-o \fIoptions\fR] \fIspecial \fIfile\fR
+.br
+.SH OPTIONS
+.TP 5
+.B \-a
+# All file systems in /etc/fstab except \/ are mounted. File systems marked 'noauto' are skipped
+.TP 5
+.B \-r
+# File system is mounted read-only
+.TP 5
+.B \-t
+# File system type
+.TP 5
+.B \-n
+# Don't update mtab
+.TP 5
+.B \-o
+# Options passed to FS server
+.SH EXAMPLES
+.TP 20
+.B mount /dev/fd1 /user
+# Mount diskette 1 on \fI/user\fP
+.TP 20
+.B mount \-t procfs none /proc
+# Mount proc file system on \fI/proc\fP
+.TP 20
+.B mount \-a
+# Mount all file systems listed in /etc/fstab except \/.
+.SH DESCRIPTION
+.PP
+The file system contained on the special file \fIspecial\fP is mounted on
+\fIfile\fP. If the value of "\fBnone\fP" is given for \fIspecial\fP,
+the file system is mounted without a block special device underneath it.
+In the first example above, the root directory of the file system in drive 1
+can be accessed as
+.B /user
+after the mount.
+When the file system is no longer needed, it must be unmounted before being
+removed from the drive.
+.PP
+The
+.B \-t
+parameter may be used to mount a file system of a type other than the default.
+The
+.B \-o
+flag may be used to pass options to the file system server.
+The interpretation of these options is up to the server.
+.PP
+If \fBmount\fP is invoked without any parameters, it will print the list of
+currently mounted file systems according to
+.BR mtab (5).
+.SH "SEE ALSO"
+.BR df (1),
+.BR mkfs (1),
+.BR fsck (1),
+.BR umount (1),
+.BR mount (2),
+.BR fstab (5).

@@ -1,0 +1,651 @@
+.\"	$NetBSD: boot.8,v 1.58 2011/05/31 03:43:47 uebayasi Exp $
+.\"
+.\" Copyright (c) 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" This code is derived from software written and contributed
+.\" to Berkeley by William Jolitz.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
+.\"
+.Dd May 26, 2011
+.Dt BOOT 8 i386
+.Os
+.Sh NAME
+.Nm boot
+.Nd
+system bootstrapping procedures
+.Sh DESCRIPTION
+.Tn IA-32
+computers
+.Po
+the
+.Tn IBM PC
+and its clones
+.Pc
+that can run
+.Nx Ns /i386
+can use any of the following boot procedures, depending on what the hardware and
+.Tn BIOS
+support:
+.Pp
+.Bl -tag -width "pxeboot(8)"
+.It boot
+bootstrap
+.Nx
+from the system
+.Tn BIOS
+.It Xr dosboot 8
+bootstrap
+.Nx
+from
+.Tn MS-DOS
+.It Xr w95boot 8
+bootstrap
+.Nx
+from
+.Tn Windows 95
+.It Xr pxeboot 8
+network bootstrap
+.Nx
+from a
+.Tn TCP/IP
+.Tn LAN
+with
+.Tn DHCP ,
+.Tn TFTP ,
+and
+.Tn NFS .
+.El
+.Ss Power fail and crash recovery
+Normally, the system will reboot itself at power-up or after crashes.
+An automatic consistency check of the file systems will be performed,
+and unless this fails, the system will resume multi-user operations.
+.Ss Cold starts
+The 386
+.Tn "PC AT"
+clones attempt to boot the floppy disk drive A (otherwise known as drive
+0) first, and failing that, attempt to boot the hard disk C (otherwise
+known as hard disk controller 1, drive 0).
+The
+.Nx
+bootblocks are loaded and started either by the
+.Tn BIOS ,
+or by a boot selector program (such as OS-BS, BOOTEASY, the OS/2 Boot Menu or
+.Nx Ns 's
+.No boot-selecting
+master boot record - see
+.Xr mbr 8 ) .
+.Ss Normal Operation
+Once running, a banner similar to the following will appear:
+.Bd -unfilled -offset indent
+\*[Gt]\*[Gt] NetBSD BIOS Boot, revision 3.0
+\*[Gt]\*[Gt] (user@buildhost, builddate)
+\*[Gt]\*[Gt] Memory: 637/15360 k
+Press return to boot now, any other key for boot menu
+booting hd0a:netbsd - starting in 5
+.Ed
+.Pp
+After a countdown, the system image listed will be loaded.
+In the example above, it will be
+.Dq Li hd0a:netbsd
+which is the file
+.Nm netbsd
+on partition
+.Dq a
+of the
+.Nx
+.Tn MBR
+partition of the first hard disk known to the
+.Tn BIOS
+.Po
+which is an
+.Tn IDE
+or similar device - see the
+.Sx BUGS
+section
+.Pc .
+.Pp
+Pressing a key within the time limit, or before the boot program starts, will
+enter interactive mode.
+When using a short or 0 timeout, it is often useful to interrupt the boot
+by holding down a shift key, as some BIOSes and BIOS extensions will drain the
+keystroke buffer at various points during POST.
+.Pp
+If present, the file
+.Pa /boot.cfg
+will be used to configure the behaviour of the boot loader including
+setting the timeout, choosing a console device, altering the banner
+text and displaying a menu allowing boot commands to be easily chosen.
+See
+.Xr boot.cfg 5 .
+.Pp
+The
+.Nx Ns /i386
+boot loader can boot a kernel using either the native
+.Nx
+boot protocol, or the
+.Dq multiboot
+protocol (which is compatible with some other operating systems).
+In the native
+.Nx
+boot protocol, options are passed from the boot loader
+to the kernel via flag bits in the
+.Va boothowto
+variable (see
+.Xr boothowto 9 ) .
+In the multiboot protocol, options are passed from the boot loader
+to the kernel as strings.
+.Ss Diagnostic Output
+If the first stage boot fails to load the boot, it will print a terse
+message indicating the reason for the failure.
+The possible error messages and their cause are listed in
+.Xr mbr 8 .
+.Pp
+If the first stage boot succeeds, the banner will be shown and the
+error messages should be self-explanatory.
+.Ss Interactive mode
+In interactive mode, the boot loader will present a prompt, allowing
+input of these commands:
+.\" NOTE: much of this text is duplicated in the MI boot.8.
+.\" Some of it is
+.\" also duplicated in the i386-specific dosboot.8 and pxeboot.8;
+.\" please try to keep all relevant files synchronized.
+.Bl -tag -width 04n -offset 04n
+.It Ic boot Oo Va device : Ns Oc Oo Va filename Oc Oo Fl 1234abcdmqsvxz Oc
+The default
+.Va device
+will be set to the disk that the boot loader was
+loaded from.
+To boot from an alternate disk, the full name of the device should
+be given at the prompt.
+.Va device
+is of the form
+.Xo Va xd
+.Op Va N Ns Op Va x
+.Xc
+where
+.Va xd
+is the device from which to boot,
+.Va N
+is the unit number, and
+.Va x
+is the partition letter.
+.Pp
+The following list of supported devices may vary from installation to
+installation:
+.Pp
+.Bl -hang -compact
+.It hd
+Hard disks as numbered by the BIOS.
+This includes ST506, IDE, ESDI, RLL disks on a WD100[2367] or
+lookalike controller(s), and SCSI disks
+on SCSI controllers recognized by the BIOS.
+.It fd
+Floppy drives as numbered by the BIOS.
+.El
+.Pp
+The default
+.Va filename
+is
+.Pa netbsd ;
+if the boot loader fails to successfully
+open that image, it then tries
+.Pa netbsd.gz
+(expected to be a kernel image compressed by gzip), followed by
+.Pa netbsd.old ,
+.Pa netbsd.old.gz ,
+.Pa onetbsd ,
+and finally
+.Pa onetbsd.gz .
+Alternate system images can be loaded by just specifying the name of the image.
+.Pp
+Options are:
+.Bl -tag -width xxx
+.It Fl 1
+Sets the machine-dependent flag
+.Sy RB_MD1
+in
+.Va boothowto .
+In
+.Nx Ns /i386 ,
+this disables multiprocessor boot;
+the kernel will boot in uniprocessor mode.
+.It Fl 2
+Sets the machine-dependent flag
+.Sy RB_MD2
+in
+.Va boothowto .
+In
+.Nx Ns /i386 ,
+this disables ACPI.
+.It Fl 3
+Sets the machine-dependent flag
+.Sy RB_MD3
+in
+.Va boothowto .
+In
+.Nx Ns /i386 ,
+this has no effect.
+.It Fl 4
+Sets the machine-dependent flag
+.Sy RB_MD4
+in
+.Va boothowto .
+In
+.Nx Ns /i386 ,
+this has no effect.
+.It Fl a
+Sets the
+.Sy RB_ASKNAME
+flag in
+.Va boothowto .
+This causes the kernel to prompt for the root file system device,
+the system crash dump device, and the path to
+.Xr init 8 .
+.It Fl b
+Sets the
+.Sy RB_HALT
+flag in
+.Va boothowto .
+This causes subsequent reboot attempts to halt instead of rebooting.
+.It Fl c
+Sets the
+.Sy RB_USERCONF
+flag in
+.Va boothowto .
+This causes the kernel to enter the
+.Xr userconf 4
+device configuration manager as soon as possible during the boot.
+.Xr userconf 4
+allows devices to be enabled or disabled, and allows device locators
+(such as hardware addresses or bus numbers)
+to be modified before the kernel attempts to attach the devices.
+.It Fl d
+Sets the
+.Sy RB_KDB
+flag in
+.Va boothowto .
+Requests the kernel to enter debug mode, in which it
+waits for a connection from a kernel debugger; see
+.Xr ddb 4 .
+.It Fl m
+Sets the
+.Sy RB_MINIROOT
+flag in
+.Va boothowto .
+Informs the kernel that a mini-root file system is present in memory.
+.It Fl q
+Sets the
+.Sy AB_QUIET
+flag in
+.Va boothowto .
+Boot the system in quiet mode.
+.It Fl s
+Sets the
+.Sy RB_SINGLE
+flag in
+.Va boothowto .
+Boot the system in single-user mode.
+.It Fl v
+Sets the
+.Sy AB_VERBOSE
+flag in
+.Va boothowto .
+Boot the system in verbose mode.
+.It Fl x
+Sets the
+.Sy AB_DEBUG
+flag in
+.Va boothowto .
+Boot the system with debug messages enabled.
+.It Fl z
+Sets the
+.Sy AB_SILENT
+flag in
+.Va boothowto .
+Boot the system in silent mode.
+.El
+.It Ic consdev Va dev
+Immediately switch the console to the specified device
+.Va dev
+and reprint the banner.
+.Va dev
+must be one of
+.\" .Bl -item -width com[0123]kbd -offset indent -compact
+.Ar pc , com0 , com1 , com2 ,
+.Ar com3 , com0kbd , com1kbd , com2kbd ,
+.Ar com3kbd ,
+or
+.Ar auto .
+See
+.Sx Console Selection Policy
+in
+.Xr boot_console 8 .
+.It Ic dev Op Va device
+Set the default drive and partition for subsequent filesystem
+operations.
+Without an argument, print the current setting.
+.Va device
+is of the form specified in
+.Cm boot .
+.It Ic help
+Print an overview about commands and arguments.
+.It Ic load Va module Op Ar arguments
+Load the specified kernel
+.Va module ,
+and pass it the specified
+.Ar arguments .
+If the module name is not an absolute path,
+.Pa /stand/ Xo Ns
+.Aq Sy arch Ns
+.Pa / Ns
+.Aq Sy osversion Ns
+.Pa /modules/ Ns
+.Aq Sy module Ns
+.Pa / Ns
+.Aq Sy module Ns
+.Pa .kmod
+.Xc
+is used.
+Possible used of the
+.Ic load
+command include loading a memory disk image before booting a kernel,
+or loading a
+.Tn Xen
+DOM0 kernel before booting the
+.Tn Xen
+hypervisor.
+See
+.Xr boot.cfg 5
+for examples.
+.Pp
+In addition to the
+.Cm boot
+options specified above, the DOM0 kernel accepts
+.Po Ar arguments
+being separated with spaces
+.Pc :
+.Bl -tag -width xxx
+.It Ic bootdev Ns = Ns Ar dev Po or Ic root Ns = Ns Ar dev Pc
+Override the default boot device.
+.Ar dev
+can be a unit name
+.Po Dq wd0
+.Pc ,
+or an interface name
+.Po Dq bge0 ,
+.Dq wm0 ,
+.Ns ...
+.Pc ,
+for cases where the root file system has to be loaded
+from network (see the
+.Sx BUGS
+section in
+.Xr pxeboot 8 ) .
+.It Ic console Ns = Ns Ar dev
+Console used by DOM0 kernel during boot.
+.Ar dev
+accepts the same values as the ones given for the
+.Cm consdev
+command.
+See
+.Sx Console Selection Policy
+in
+.Xr boot_console 8 .
+.It Xo Ic ip Ns = Ns
+.Ar my_ip Ns : Ns Ar serv_ip Ns : Ns Ar gw_ip Ns : Ns
+.Ar mask Ns : Ns Ar host Ns : Ns Ar iface
+.Xc
+Specify various parameters for a network boot (IPs are in
+dot notation),
+each one separated by a colon:
+.Bl -tag -width xxxxxxx
+.It Va my_ip
+address of the host
+.It Va serv_ip
+address of the NFS server
+.It Va gw_ip
+address of the gateway
+.It Va mask
+network mask
+.It Va host
+address of the host
+.It Va iface
+interface
+.Po e.g. Dq xennet0
+or
+.Dq eth0
+.Pc
+.El
+.It Ic nfsroot Ns = Ns Ar address Ns : Ns Ar rootpath
+Boot the system with root on NFS.
+.Ar address
+is the address of the NFS server, and
+.Ar rootpath
+is the remote mount point for the root file system.
+.It Ic pciback.hide Ns = Ns Ar pcidevs
+Pass a list of PCI IDs for use with the PCI backend driver,
+.Xr pciback 4 .
+.Ar pcidevs
+is formed of multiple IDs (in bus:device.function notation),
+each ID being surrounded with brackets.
+PCI domain IDs are currently ignored.
+See
+.Xr pciback 4 .
+.El
+.It Ic load_mods Va mods_path_pattern
+Load modules specified by pattern like /some_path/mod*.
+.It Ic ls Op Pa path
+Print a directory listing of
+.Pa path ,
+containing inode number, filename, and file type.
+.Pa path
+can contain a device specification.
+.It Ic modules Bro Ar on | off | enabled | disabled Brc
+The values
+.Ar enabled , on
+will enable module loading for
+.Cm boot
+and
+.Cm multiboot ,
+whereas
+.Ar disabled , off
+will turn off the feature.
+.It Ic multiboot Va kernel Op Ar arguments
+Boot the specified
+.Va kernel ,
+using the
+.Dq multiboot
+protocol instead of the native
+.Nx
+boot protocol.
+The
+.Va kernel
+is specified in the same way as with the
+.Ic boot
+command.
+.Pp
+The multiboot protocol may be used in the following cases:
+.Bl -tag -width indent
+.It Nx Ns / Ns  Xen No kernels
+The
+.Tn Xen
+DOM0 kernel must be loaded as a module using the
+.Ic load
+command, and the
+.Tn Xen
+hypervisor must be booted using the
+.Ic multiboot
+command.
+Options for the DOM0 kernel (such as
+.Dq -s
+for single user mode) must be passed as options to the
+.Ic load
+command.
+Options for the hypervisor (such as
+.Dq dom0_mem=256M
+to reserve 256 MB of memory for DOM0)
+must be passed as options to the
+.Ic multiboot
+command.
+See
+.Xr boot.cfg 5
+for examples on how to boot
+.Nx Ns / Ns  Xen.
+.It Nx No multiboot kernels
+A
+.Nx
+kernel that was built with
+.Cd options MULTIBOOT
+(see
+.Xr multiboot 8 )
+may be booted with either the
+.Ic boot
+or
+.Ic multiboot
+command, passing the same
+.Ar arguments
+in either case.
+.It Non- Ns Nx No kernels
+A kernel for a
+.No non- Ns Nx
+operating system that expects to be booted using the
+multiboot protocol (such as by the GNU
+.Dq GRUB
+boot loader)
+may be booted using the
+.Ic multiboot
+command.
+See the foreign operating system's documentation for the available
+.Ar arguments .
+.El
+.It Ic quit
+Reboot the system.
+.It Ic userconf Va command
+Pass the
+.Va command
+to
+.Xr userconf 4
+at boot time .
+These commands are processed before the interactive
+.Xr userconf 4
+shell is executed, if requested .
+.It Ic vesa Bro Va modenum | Ar on | off | enabled | disabled | list Brc
+Initialise the video card to the specified resolution and bit depth.
+The
+.Va modenum
+should be in the form of
+.Ar 0x100 , 800x600 , 800x600x32 .
+The values
+.Ar enabled , on
+put the display into the default mode, and
+.Ar disabled , off
+returns the display into standard vga mode.
+The value
+.Ar list
+lists all supported modes.
+.El
+.Pp
+In an emergency, the bootstrap methods described in the
+.Nx
+installation notes for the i386 architecture
+can be used to boot from floppy or other media,
+or over the network.
+.Sh FILES
+.Bl -tag -width /usr/mdec/bootxx_fstype -compact
+.It Pa /boot
+boot program code loaded by the primary bootstrap
+.It Pa /boot.cfg
+optional configuration file
+.It Pa /netbsd
+system code
+.It Pa /netbsd.gz
+gzip-compressed system code
+.It Pa /usr/mdec/boot
+master copy of the boot program (copy to /boot)
+.It Pa /usr/mdec/bootxx_fstype
+primary bootstrap for filesystem type fstype, copied to the start of
+the
+.Nx
+partition by
+.Xr installboot 8 .
+.El
+.Sh SEE ALSO
+.Xr ddb 4 ,
+.Xr pciback 4 ,
+.Xr userconf 4 ,
+.Xr boot.cfg 5 ,
+.Xr boot_console 8 ,
+.Xr dosboot 8 ,
+.Xr halt 8 ,
+.Xr installboot 8 ,
+.Xr mbr 8 ,
+.Xr multiboot 8 ,
+.Xr pxeboot 8 ,
+.Xr reboot 8 ,
+.Xr shutdown 8 ,
+.Xr w95boot 8 ,
+.Xr boothowto 9
+.Sh BUGS
+The kernel file name must be specified before, not after, the boot options.
+Any
+.Ar filename
+specified after the boot options, e.g.:
+.Pp
+.Bd -unfilled -offset indent -compact
+.Cm boot -d netbsd.test
+.Ed
+.Pp
+is ignored, and the default kernel is booted.
+.Pp
+Hard disks are always accessed by
+.Tn BIOS
+functions.
+Unit numbers are
+.Tn BIOS
+device numbers which might differ from numbering in the
+.Nx
+kernel or physical parameters
+.Po
+e.g.,
+.Tn SCSI
+slave numbers
+.Pc .
+There isn't any distinction between
+.Dq sd
+and
+.Dq wd
+devices at the bootloader level.
+This is less a bug of the bootloader code than
+a shortcoming of the PC architecture.
+The default disk device's name printed in the starting message
+is derived from the
+.Dq type
+field of the
+.Nx
+disklabel (if it is a hard disk).
