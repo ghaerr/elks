@@ -172,7 +172,7 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%
 	sb->data_start, total_sectors, b->total_sect);
 
 	/* calculate max clusters based on FAT table size */
-	max_clusters = (unsigned long)sb->fat_length *
+	max_clusters = (cluster_t)sb->fat_length *
 		(SECTOR_SIZE_SB(s) * 8 / sb->fat_bits) - 2;
 	/*
 	 * Allow disks created with too small a FAT to be mounted, but limit free space.

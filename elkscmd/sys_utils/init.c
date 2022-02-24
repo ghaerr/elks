@@ -200,6 +200,7 @@ void scanFile(void func())
 	char buf[BUFSIZE+1];
 	FILE *fp;
 
+	alarm(0);	/* eliminate possibility of interrupted fgets read */
 	fp = fopen(INITTAB, "r");
 	if (!fp) fatalmsg("Missing %s\r\n", INITTAB);
 
@@ -209,6 +210,7 @@ void scanFile(void func())
 		parseLine(buf, func);
 	}
 	fclose(fp);
+	alarm(sync_interval);
 }
 
 /* returns a pointer to the child or NULL */
@@ -498,6 +500,7 @@ void handle_signal(int sig)
 		break;
 	case SIGALRM:
 		signal(SIGALRM, handle_signal);
+		debug("SYNC\r\n");
 		sync();
 		alarm(sync_interval);
 		break;
