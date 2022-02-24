@@ -1,0 +1,592 @@
+.\" Copyright (c) 1980, 1983, 1986, 1991, 1993
+.\"     The Regents of the University of California. 
+.\" All rights reserved.  The Berkeley software License Agreement
+.\" specifies the terms and conditions for redistribution.
+.\"
+.\"	@(#)intro.2	8.5 (Berkeley) 2/27/95
+.\"
+.\" Adapted to MINIX 3 
+.\"
+.Dd July 14, 2010
+.Dt INTRO 2
+.Os
+.Sh NAME
+.Nm intro ,
+.Nm errno
+.Nd introduction to system calls and error numbers
+.Sh SYNOPSIS
+.In errno.h
+.Sh DESCRIPTION
+This section provides an overview of the system calls,
+their error returns, and other common definitions and concepts.
+.Sh DIAGNOSTICS
+Nearly all of the system calls provide an error number in the external
+variable
+.Va errno .
+.Pp
+When a system call detects an error,
+it returns an integer value
+indicating failure (usually \-1)
+and sets the variable
+.Va errno
+accordingly.
+(This allows interpretation of the failure on receiving
+a \-1 and to take action accordingly.)
+Successful calls never set
+.Va errno ;
+once set, it remains until another error occurs.
+It should only be examined after an error has been reported, because
+otherwise a leftover value from some previous error may be found
+instead.
+.Po
+Many library functions that are not system calls also set
+.Va errno
+on return, in the same fashion.
+In these cases a nonzero value may be left in
+.Va errno
+even upon successful return if some internal action failed.
+.Pc
+.Pp
+The manual page for each system call will list some of the common
+errno codes that system call can return, but that should not be
+considered an exhaustive list, i.e.
+a properly written program should be able to gracefully recover from
+any error that a system call might return.
+Documenting all the error codes that a system call can return in
+a more specification-like manner would take more resources than
+this project has available.
+.Pp
+Note also that a number of system calls overload the meanings of these
+error numbers, and that in these cases the meanings must be
+interpreted according to the type and circumstances of the call.
+.Pp
+The following is a list of the errors and their
+names as given in
+.In errno.h .
+.Bl -hang -width Ds
+.It Er 0 OK Em "Error 0" .
+Not used.  (The symbol "OK" is only used inside the kernel source.)
+.It 1 EPERM Em "Operation not permitted" .
+An attempt was made to perform an operation limited to processes
+with appropriate privileges or to the owner of a file or other
+resources.
+.It Er 2 ENOENT Em "No such file or directory" .
+A component of a specified pathname did not exist, or the
+pathname was an empty string.
+.It Er 3 ESRCH Em "No such process" .
+No process could be found corresponding to that specified by the given
+process ID.
+It Er 4 EINTR Em "Interrupted function call" .
+An asynchronous signal (such as
+.Dv SIGINT
+or
+.Dv SIGQUIT )
+was caught by the process during the execution of an interruptible
+function.
+If the signal handler performs a normal return, the
+interrupted function call will seem to have returned the error condition.
+.It Er 5 EIO Em "Input/output error" .
+Some physical input or output error occurred.
+This error will not be reported until a subsequent operation on the same file
+descriptor and may be lost (over written) by any subsequent errors.
+.It Er 6 ENXIO Em "Device not configured" .
+Input or output on a special file referred to a device that did not
+exist, or
+made a request beyond the limits of the device.
+This error may also occur when, for example,
+a tape drive is not online or no disk pack is
+loaded on a drive.
+.It Er 7 E2BIG Em "Arg list too long" .
+The number of bytes used for the argument and environment
+list of the new process exceeded the current limit of
+262144 bytes
+.Pf ( Dv ARG_MAX
+in
+.In limits.h ) .
+.It Er 8 ENOEXEC Em "Exec format error" .
+A request was made to execute a file
+that, although it has the appropriate permissions,
+was not in the format required for an
+executable file.
+.It Er 9 EBADF Em "Bad file descriptor" .
+A file descriptor argument was out of range, referred to no open file,
+or a
+.Xr read 2
+(or
+.Xr write 2 )
+request was made to a file that was
+only open for writing (or reading).
+.It Er 10 ECHILD Em "\&No child processes" .
+A
+.Xr wait 2
+or
+.Xr waitpid 2
+function was executed by a process that had no existing or unwaited-for
+child processes.
+.It Er 11 EAGAIN Em "Resource temporarily unavailable" .
+This is a temporary condition and later calls to the
+same routine may complete normally.
+.It Er 12 ENOMEM Em "Cannot allocate memory" .
+The new process image required more memory than was allowed by the hardware
+or by system-imposed memory management constraints.
+Soft limits may be increased to their corresponding hard limits.
+.It Er 13 EACCES Em "Permission denied" .
+An attempt was made to access a file in a way forbidden
+by its file access permissions.
+.It Er 14 EFAULT Em "Bad address" .
+The system detected an invalid address in attempting to
+use an argument of a call.
+The reliable detection of this error cannot be guaranteed and when not detected
+may result in the generation of a signal, indicating an address violation,
+which is sent to the process.
+.It Er 15 ENOTBLK Em "Block device required" .
+A block device operation was attempted on a non-block device or file.
+.It Er 16 EBUSY Em "Resource busy" .
+An attempt to use a system resource which was in use at the time
+in a manner which would have conflicted with the request.
+.It Er 17 EEXIST Em "File exists" .
+An existing file was mentioned in an inappropriate context,
+for instance, as the new link name in a
+.Xr link 2
+function.
+.It Er 18 EXDEV Em "Improper link" .
+A hard link to a file on another file system
+was attempted.
+.It Er 19 ENODEV Em "Operation not supported by device" .
+An attempt was made to apply an inappropriate
+function to a device,
+for example,
+trying to read a write-only device such as a printer.
+.It Er 20 ENOTDIR Em "Not a directory" .
+A component of the specified pathname existed, but it was
+not a directory, when a directory was expected.
+.It Er 21 EISDIR Em "Is a directory" .
+An attempt was made to open a directory with write mode specified.
+.It Er 22 EINVAL Em "Invalid argument" .
+Some invalid argument was supplied.
+(For example, specifying an undefined signal to a
+.Xr signal 3
+or
+.Xr kill 2
+function).
+.It Er 23 ENFILE Em "Too many open files in system" .
+Maximum number of file descriptors allowable on the system
+has been reached and a requests for an open cannot be satisfied
+until at least one has been closed.
+.It Er 24 EMFILE Em "Too many open files" .
+\*[Lt]As released, the limit on the number of
+open files per process is 64.\*[Gt]
+The
+.Xr getrlimit 2
+call with the
+.Ar RLIMIT_NOFILE
+resource will obtain the current limit.
+.It Er 25 ENOTTY Em "Inappropriate ioctl for device" .
+A control function (see
+.Xr ioctl 2 )
+was attempted for a file or
+special device for which the operation was inappropriate.
+.en 26 ETXTBSY "Text file busy
+Attempt to execute a program that is open for writing.  Obsolete under MINIX 3.
+.It Er 27 EFBIG Em "File too large" .
+The size of a file exceeded the maximum.
+(The system-wide maximum file size is
+2147483648 (2GB) bytes.
+Each file system may impose a lower limit for files contained within it).
+.It Er 28 ENOSPC Em "Device out of space" .
+A
+.Xr write 2
+to an ordinary file, the creation of a
+directory or symbolic link, or the creation of a directory
+entry failed because no more disk blocks were available
+on the file system, or the allocation of an inode for a newly
+created file failed because no more inodes were available
+on the file system.
+.It Er 29 ESPIPE Em "Illegal seek" .
+An
+.Xr lseek 2
+function was issued on a socket, pipe or
+.Tn FIFO .
+.It Er 30 EROFS Em "Read-only file system" .
+An attempt was made to modify a file or directory
+was made
+on a file system that was read-only at the time.
+.It Er 31 EMLINK Em "Too many links" .
+The number of hard links to a single file has exceeded the maximum.
+(The system-wide maximum number of hard links is 32767.
+Each file system may impose a lower limit for files contained within it).
+.It Er 32 EPIPE Em "Broken pipe" .
+A write on a pipe, socket or
+.Tn FIFO
+for which there is no process
+to read the data.
+.It Er 33 EDOM Em "Numerical argument out of domain" .
+A numerical input argument was outside the defined domain of the mathematical
+function.
+.It Er 34 ERANGE Em "Result too large or too small" .
+The result of the function is too large or too small to be represented
+in the available space.
+.It Er 35 EDEADLK Em "Resource deadlock avoided" .
+An attempt was made to lock a system resource that
+would have resulted in a deadlock situation.
+.It Er 36 ENAMETOOLONG Em "File name too long" .
+A component of a path name exceeded 
+.Pq Dv NAME_MAX
+characters, or an entire
+path name exceeded 255
+.Pq Dv PATH_MAX 
+characters.
+.It Er 37 ENOLCK Em "No locks available" .
+A system-imposed limit on the number of simultaneous file
+locks was reached.
+.It Er 38 ENOSYS Em "Function not implemented" .
+Attempted a system call that is not available on this
+system.
+.It Er 39 ENOTEMPTY Em "Directory not empty" .
+A directory with entries other than
+.Ql \&.
+and
+.Ql \&..
+was supplied to a remove directory or rename call.
+.It Er 40 ELOOP Em "Too many levels of symbolic links" .
+A path name lookup involved more than 16
+.Pq Dv SYMLOOP_MAX
+symbolic links.
+.It Er 41 ERESTART Em "Service restarted" .
+.It Er 43 ERESTART Em "Identifier removed" .
+An IPC identifier was removed while the current process was waiting on it.
+.It Er 44 EILSEQ Em "Illegal byte sequence" .
+A wide character/multibyte character encoding error occurred.
+.It Er 45 EFTYPE Em "Inappropriate file type or format" .
+Attempted a file operation on a file of a type for which it was invalid.
+.It Er 46 EOVERFLOW Em "Value too large to be stored in data type" .
+A numerical result of the function was too large to be stored in the
+caller-provided space.
+.It Er 50 EPACKSIZE Em "Invalid packet size" .
+.It Er 51 ENOBUFS Em "\&No buffer space available" .
+An operation on a socket or pipe was not performed because
+the system lacked sufficient buffer space or because a queue was full.
+.It Er 52 EBADIOCTL Em "Illegal ioctl for device" .
+.It Er 53 EBADMODE Em "Bad mode in ioctl" .
+.It Er 54 EWOULDBLOCK Em "Would block" .
+.It Er 55 ENETUNREACH Em "Network is unreachable" .
+A socket operation was attempted to an unreachable network.
+.It Er 56 EHOSTUNREACH Em "No route to host" .
+A socket operation was attempted to an unreachable host.
+.It Er 57 EISCONN Em "Socket is already connected" .
+A
+.Xr connect 2
+request was made on an already connected socket; or,
+a
+.Xr sendto 2
+or
+.Xr sendmsg 2
+request on a connected socket specified a destination
+when already connected.
+.It Er 58 EADDRINUSE Em "Address already in use" .
+Only one usage of each address is normally permitted.
+.It Er 59 ECONNREFUSED Em "Connection refused" .
+No connection could be made because the target machine actively
+refused it.
+This usually results from trying to connect
+to a service that is inactive on the foreign host.
+.It Er 60 ECONNRESET Em "Connection reset by peer" .
+A connection was forcibly closed by a peer.
+This normally results from a loss of the connection on the remote
+socket due to a timeout or a reboot.
+.It Er 61 ETIMEDOUT Em "Operation timed out" .
+A
+.Xr connect 2
+or
+.Xr send 2
+request failed because the connected party did not
+properly respond after a period of time.
+(The timeout period is dependent on the communication protocol).
+.It Er 62 EURG Em "Urgent data present" .
+.It Er 63 ENOURG Em "No urgent data present" .
+.It Er 64 ENOTCONN Em "Socket is not connected" .
+An request to send or receive data was disallowed because
+the socket was not connected and (when sending on a datagram socket)
+no address was supplied.
+.It Er 65 ESHUTDOWN Em "Cannot send after socket shutdown" .
+A request to send data was disallowed because the socket
+had already been shut down with a previous
+.Xr shutdown 2
+call.
+.It Er 66 ENOCONN Em "No such connection" .
+.It Er 67 EAFNOSUPPORT Em "Address family not supported by protocol family" .
+An address incompatible with the requested protocol was used.
+For example, you shouldn't necessarily expect to be able to use
+.Tn NS
+addresses with
+.Tn ARPA
+Internet protocols.
+.It Er 68 EPROTONOSUPPORT Em "Protocol not supported" .
+The protocol has not been configured into the
+system or no implementation for it exists.
+.It Er 69 EPROTOTYPE Em "Protocol wrong type for socket" .
+A protocol was specified that does not support the semantics of the
+socket type requested.
+For example, you cannot use the
+.Tn ARPA
+Internet
+.Tn UDP
+protocol with type
+.Dv SOCK_STREAM .
+.It Er 70 EINPROGRESS Em "Operation now in progress" .
+An operation that takes a long time to complete (such as
+a
+.Xr connect 2 )
+was attempted on a non-blocking object (see
+.Xr fcntl 2 ) .
+.It Er 71 EADDRNOTAVAIL Em "Cannot assign requested address" .
+Normally results from an attempt to create a socket with an
+address not on this machine.
+.It Er 72 EALREADY Em "Operation already in progress" .
+An operation was attempted on a non-blocking object that already
+had an operation in progress.
+.It Er 73 EMSGSIZE Em "Message too long" .
+A message sent on a socket was larger than the internal message buffer
+or some other network limit.
+.It Er 74 ENOTSOCK Em "Socket operation on non-socket" .
+Self-explanatory.
+.It Er 75 ENOPROTOOPT Em "Protocol option not available" .
+A bad option or level was specified in a
+.Xr getsockopt 2
+or
+.Xr setsockopt 2
+call.
+.It Er 76 EOPNOTSUPP Em "Operation not supported" (has alias ENOTSUP) .
+The attempted operation is not supported for the type of object referenced.
+Usually this occurs when a file descriptor refers to a file or socket
+that cannot support this operation,
+for example, trying to
+.Em accept
+a connection on a datagram socket.
+.It Er 77 ENETDOWN Em "Network is down" .
+A socket operation encountered a dead network.
+.It Er 78 EPFNOSUPPORT Em "Protocol family not supported" .
+A socket operation specified an unsupported protocol family.
+.It Er 79 EDESTADDRREQ Em "Destination address required" .
+A required address was omitted from an operation on a socket.
+.It Er 80 EHOSTDOWN Em "Host is down" .
+The destination host has been determined to be down or disconnected.
+.El
+.Sh DEFINITIONS
+.Bl -tag -width Ds
+.It Process ID
+Each active process in the system is uniquely identified by a positive
+integer called a process ID.  The range of this ID is from 1 to 29999.
+.It Parent process ID
+A new process is created by a currently active process; (see
+.Xr fork 2 ) .
+The parent process ID of a process is initially the process ID of its creator.
+If the creating process exits,
+the parent process ID of each child is set to the ID of 
+.Em init ,
+.Xr init 8 .
+.It Process Group
+Each active process is a member of a process group that is identified by
+a positive integer called the process group ID.
+This is the process ID of the group leader.
+This grouping permits the signaling of related processes (see
+.Xr termios 4 ).
+.It Session
+A session is a set of one or more process groups.
+A session is created by a successful call to
+.Xr setsid 2 ,
+which causes the caller to become the only member of the only process
+group in the new session.
+.It Session leader
+A process that has created a new session by a successful call to
+.Xr setsid 2 ,
+is known as a session leader.
+Only a session leader may acquire a terminal as its controlling terminal (see
+.Xr termios 4 ) .
+.It Controlling process
+A session leader with a controlling terminal is a controlling process.
+.It Controlling terminal
+A terminal that is associated with a session is known as the controlling
+terminal for that session and its members.
+.It "Real User ID and Real Group ID"
+Each user on the system is identified by a positive integer
+termed the real user ID.
+.Pp
+Each user is also a member of one or more groups.
+One of these groups is distinguished from others and
+used in implementing accounting facilities.
+The positive integer corresponding to this distinguished group is
+termed the real group ID.
+.Pp
+All processes have a real user ID and real group ID.
+These are initialized from the equivalent attributes
+of the process that created it.
+.It "Effective User Id, Effective Group Id, and Group Access List"
+Access to system resources is governed by two values:
+the effective user ID and the group access list.
+(In POSIX.1, the group access list is known as the set of supplementary
+group IDs, and it is unspecified whether the effective group ID is
+a member of the list.)
+.Pp
+The effective user ID and effective group ID are initially the
+process's real user ID and real group ID respectively.  Either
+may be modified through execution of a set-user-ID or set-group-ID
+file (possibly by one its ancestors) (see
+.BR execve (2)).
+.Pp
+The group access list is an additional set of group ID's
+used only in determining resource accessibility.
+Access checks are performed as described below in
+.Qq File Access Permissions .
+It Super-user
+A process is recognized as a
+.Em super-user
+process and is granted special privileges if its effective user ID is 0.
+.It Descriptor
+An integer assigned by the system when a file is referenced
+by
+.Xr open 2
+or
+.Xr dup 2 ,
+or when a socket is created by
+.Xr pipe 2 ,
+.Xr socket 2 ,
+or
+.Xr socketpair 2 ,
+which uniquely identifies an access path to that file or socket from
+a given process or any of its children.
+.It File Name
+Names consisting of up to 60
+.Pq Dv NAME_MAX
+characters may be used to name
+an ordinary file, special file, or directory.
+.Pp
+These characters may be selected from the set of all
+.Tn ASCII
+character
+excluding 0 (NUL) and the
+.Tn ASCII
+code for
+.Ql \&/
+(slash).
+(The parity bit, bit 7, must be 0).
+.Pp
+Note that it is generally unwise to use
+.Ql \&* ,
+.Ql \&? ,
+.Ql \&[
+or
+.Ql \&]
+as part of
+file names because of the special meaning attached to these characters
+by the shell.
+.It Pathname
+A path name is a
+.Tn NUL Ns -terminated
+character string starting with an
+optional slash
+.Ql \&/ ,
+followed by zero or more directory names separated
+by slashes, optionally followed by a file name.
+The total length of a path name must be less than 255
+.Pq Dv PATH_MAX
+characters.
+.Pp
+If a path name begins with a slash, the path search begins at the
+.Em root
+directory.
+Otherwise, the search begins from the current working directory.
+A slash by itself names the root directory.
+An empty string is not a valid pathname.
+.It Directory
+A directory is a special type of file that contains entries
+that are references to other files.
+Directory entries are called links.
+By convention, a directory contains at least two links,
+.Ql \&.
+and
+.Ql \&.. ,
+referred to as
+.Em dot
+and
+.Em dot-dot
+respectively.
+Dot refers to the directory itself and dot-dot refers to its parent directory.
+.It "Root Directory and Current Working Directory"
+Each process has associated with it a concept of a root directory
+and a current working directory for the purpose of resolving path
+name searches.
+A process's root directory need not be the root
+directory of the root file system.
+.It File Access Permissions
+Every file in the file system has a set of access permissions.
+These permissions are used in determining whether a process
+may perform a requested operation on the file (such as opening
+a file for writing).
+Access permissions are established at the time a file is created.
+They may be changed at some later time through the
+.Xr chmod 2
+call.
+.Pp
+File access is broken down according to whether a file may be: read,
+written, or executed.
+Directory files use the execute permission to control if the
+directory may be searched.
+.Pp
+File access permissions are interpreted by the system as
+they apply to three different classes of users: the owner
+of the file, those users in the file's group, anyone else.
+Every file has an independent set of access permissions for
+each of these classes.
+When an access check is made, the system decides if permission should be
+granted by checking the access information applicable to the caller.
+.Pp
+Read, write, and execute/search permissions on
+a file are granted to a process if:
+.Pp
+The process's effective user ID is that of the super-user.
+(Note: even the super-user cannot execute a non-executable file).
+.Pp
+The process's effective user ID matches the user ID of the owner
+of the file and the owner permissions allow the access.
+.Pp
+The process's effective user ID does not match the user ID of the
+owner of the file, and either the process's effective
+group ID matches the group ID
+of the file, or the group ID of the file is in
+the process's group access list,
+and the group permissions allow the access.
+.Pp
+Neither the effective user ID nor effective group ID
+and group access list of the process
+match the corresponding user ID and group ID of the file,
+but the permissions for ``other users'' allow access.
+.Pp
+Otherwise, permission is denied.
+.It Sockets and Address Families
+A socket is an endpoint for communication between processes.
+Each socket has queues for sending and receiving data.
+.Pp
+Sockets are typed according to their communications properties.
+These properties include whether messages sent and received
+at a socket require the name of the partner, whether communication
+is reliable, the format used in naming message recipients, etc.
+.Pp
+Each instance of the system supports some
+collection of socket types; consult
+.Xr socket 2
+for more information about the types available and
+their properties.
+.Pp
+Each instance of the system supports some number of sets of
+communications protocols.
+Each protocol set supports addresses of a certain format.
+An Address Family is the set of addresses for a specific group of protocols.
+Each socket has an address
+chosen from the address family in which the socket was created.
+.El
+.Sh SEE ALSO
+.Xr intro 3 ,
+.Xr perror 3
+
+

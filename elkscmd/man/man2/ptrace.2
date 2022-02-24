@@ -1,0 +1,238 @@
+.TH PTRACE 2 "September 27, 2009"
+.UC 4
+.SH NAME
+ptrace \- process trace
+.SH SYNOPSIS
+.nf
+.ft B
+#include <sys/types.h>
+#include <sys/ptrace.h>
+
+long ptrace(int \fIreq\fP, pid_t \fIpid\fP, long \fIaddr\fP, long \fIdata\fP)
+.ft R
+.fi
+.SH DESCRIPTION
+The \fBptrace\fP call provides a primitive means to trace (debug) another
+process. A process can submit itself to tracing using a \fBT_OK\fP ptrace
+request, or can be attached to by a tracer using a \fBT_ATTACH\fP request.
+From that point on, whenever a signal is sent to the traced process,
+the process will be stopped. Its tracer will be told about the signal
+causing the stop, via
+.BR wait (2).
+The tracer can then inspect the traced process, and choose how to continue the
+process's execution and whether to pass on the signal to it.
+.PP
+In the current model, the tracer will be notified of the signal before any
+checks on ignore or block masks are made. A \fBSIGKILL\fP signal cannot be
+intercepted by the tracer, and will always kill the traced process.
+.PP
+When the traced process performs a successful
+.BR execve (2)
+call, it will be stopped and a \fBSIGTRAP\fP will be generated for it.
+Set-uid and set-gid bits on the new executable are ignored.
+.PP
+The \fIreq\fP parameter specifies the process trace request. The interpretation
+of the remaining parameters depends on the given request. For all requests
+except \fBT_OK\fP, the \fIpid\fP parameter specifies process ID of the target
+process. For all requests except \fBT_OK\fP and \fBT_ATTACH\fP, the process
+must be stopped. The following requests are supported:
+.TP 2
+.B T_OK
+Set the caller's parent to be its tracer. All other arguments are ignored.
+This request is typically made by the child fork of a debugger,
+before performing an
+.BR execve (2)
+call.
+.TP
+.B T_GETINS, T_GETDATA
+Retrieve a value from the given process's instruction and data area,
+respectively, at the address given in \fIaddr\fP.
+.TP
+.B T_SETINS, T_SETDATA
+Set the value from the given process's instruction and data area, respectively,
+at the address given in \fIaddr\fP, to the value given in \fIdata\fP.
+.TP
+.B T_GETUSER
+Retrieve the value at the zero-based offset given in \fIaddr\fP from the
+process's \fBstruct proc\fP kernel structure, followed by, aligned on
+\fBlong\fP size boundary, its \fBstruct priv\fP kernel structure.
+.TP
+.B T_SETUSER
+Set some of the given process's registers at the beginning of its
+\fBstruct proc\fP kernel structure. The value in \fIdata\fP will be written to
+the zero-based offset given in \fIaddr\fP from the process's \fBstruct proc\fP
+kernel structure.
+.TP
+.B T_RESUME
+Resume execution of the process. A nonzero \fIdata\fP argument will be
+interpreted as a signal to pass to the process.
+.TP
+.B T_STEP
+Single-step an instruction. A nonzero \fIdata\fP argument will be interpreted
+as a signal to pass to the process.
+.TP
+.B T_SYSCALL
+Resume execution with system call tracing. When the traced process makes a
+system call, a \fBSIGTRAP\fP signal will be generated. A subsequent
+\fBT_SYSCALL\fP request will then cause a \fBSIGTRAP\fP signal to be generated
+when the process leaves the system call. A nonzero \fIdata\fP argument will be
+interpreted as a signal to pass to the process.
+.TP
+.B T_EXIT
+Terminate the traced process, with the exit code given in the \fIdata\fP
+argument. This call will return once the process has exited.
+.TP
+.B T_ATTACH
+Attach to the given process. The process will be stopped with a \fBSIGSTOP\fP
+signal.
+.TP
+.B T_DETACH
+Detach from the given process. Any signals still pending for the tracer are
+passed on directly to the process. A nonzero \fIdata\fP argument will be
+interpreted as an additional signal to pass to the process.
+.TP
+.B T_SETOPT
+Set the given process's trace options to the bit combination of flags given
+in the \fIdata\fP argument.
+.TP
+.B T_GETRANGE
+Get a range of values from the address space of the traced process. The
+\fIaddr\fP argument must be a pointer to a fully initialized
+\fBstruct ptrace_range\fP structure.
+.TP
+.B T_SETRANGE
+Set a range of values in the address space of the traced process. The
+\fIaddr\fP argument must be a pointer to a fully initialized
+\fBstruct ptrace_range\fP structure.
+.PP
+The following option flags are currently supported for \fBT_SETOPT\fP:
+.TP 2
+.B TO_TRACEFORK
+When the traced process performs a
+.BR fork (2),
+automatically attach to the new child as well.
+The child will be stopped with a \fBSIGSTOP\fP signal right after forking.
+.TP
+.B TO_ALTEXEC
+Send \fBSIGSTOP\fP instead of \fBSIGTRAP\fP upon a successful
+.BR execve (2).
+This allows the tracer to disambiguate between this case and other traps.
+.TP
+.B TO_NOEXEC
+Do not send any signal upon a successful
+.BR execve (2).
+.PP
+The default set of trace options when tracing is initiated with \fBT_OK\fP is
+\fB0\fP.
+The default set of trace options after attaching with \fBT_ATTACH\fP is
+\fBTO_NOEXEC\fP.
+.PP
+The \fBT_GETRANGE\fP and \fBT_SETRANGE\fP calls use the following structure:
+.PP
+.RS
+.nf
+.ft B
+.ta +4n +8n
+struct ptrace_range {
+	int	pr_space;
+	long	pr_addr;
+	size_t	pr_size;
+	void	*pr_ptr;
+};
+.ft R
+.fi
+.RE
+.PP
+The \fBpr_space\fP field specifies the address space from which to retrieve
+or set the values. It must be set to either of the following values:
+.PP
+.TP 10
+.B TS_INS
+Text space.
+.TP
+.B TS_DATA
+Data space.
+.PP
+The \fBpr_addr\fP field specifies the start address of the target area in the
+traced process. The \fBpr_size\fP field specifies the number of bytes to
+retrieve or set, and must be between 1 and LONG_MAX. The \fBpr_ptr\fP field
+must point to a buffer in the calling process that is used to store the
+retrieved values (for \fBT_GETRANGE\fP) or contains the values to set (for
+\fBT_SETRANGE\fP).
+.PP
+All addresses specified for the \fBT_GETINS\fP, \fBT_GETDATA\fP,
+\fBT_GETUSER\fP requests and their \fBT_SET\fP* counterparts must be
+aligned on \fBlong\fP boundary. Similarly, only \fBlong\fP sized values can be
+retrieved and set at a time.
+.SH "RETURN VALUE"
+All but the \fBT_GETINS\fP, \fBT_GETDATA\fP, \fBT_GETUSER\fP requests return 0
+upon successful completion.
+Otherwise, a value of -1 is returned and \fIerrno\fP is set to indicate the
+error.
+.PP
+The \fBT_GETINS\fP, \fBT_GETDATA\fP, \fBT_GETUSER\fP requests return the
+resulting data. Here, -1 is a legitimate return value.
+To distinguish between this and an error, clear \fIerrno\fP
+before the \fBptrace\fP call, and check whether it is zero afterwards.
+.SH ERRORS
+The functions will fail if any of the following errors occur:
+.TP 10
+.B EINVAL
+Invalid request, signal, space, or length given.
+.TP
+.B ESRCH
+The given process is not found, exiting, or not traced by the caller.
+.TP
+.B EBUSY
+The given process is not stopped, or already being traced.
+.TP
+.B EFAULT
+The given address is invalid, inaccessible, or not properly aligned.
+.TP
+.B EPERM
+Attaching is denied, because the caller equals the given process,
+or the caller is not root and does not match the given process's
+user or group ID, or the caller is not root and the given process
+is a system process, or the caller is a system process,
+or the given process may not be traced at all.
+.SH LIMITATIONS
+Signals are not ordered. Attaching to a process guarantees that a \fBSIGSTOP\fP
+will arrive at the tracer, but it is not guaranteed that this will be the first
+signal to arrive. The same goes for automatically attached children of the
+traced process. Similarly, if the tracer wants to detach from a running
+process, it will typically send a \fBSIGSTOP\fP using
+.BR kill (2)
+to the process to stop it, but there is no guarantee that this will be the
+first signal to arrive.
+.PP
+Signals not caused by the process itself (e.g. those caused by
+.BR kill (2))
+will arrive at the tracer while the process is in stopped state, but this does
+not imply that the process is in a stable state at that point. The process may
+still have a system call pending, and this means that registers and memory of
+the process may change almost arbitrarily after the tracer has been told about
+the arrival of the current signal. Implementers of debuggers are advised to
+make minimal assumptions about the conditions of the process when an unexpected
+signal arrives.
+.PP
+It is not possible to use \fBT_SYSCALL\fP to get a trap upon leaving of a
+system call, if \fBT_SYSCALL\fP was not used to get a trap upon entering that
+system call. This is in fact helpful: after attaching to a process, the first
+\fBT_SYSCALL\fP call will always cause a trap after entering the next system
+call. As the only exception, \fBT_SYSCALL\fP on a
+.BR fork (2)
+call of a process with \fBTO_TRACEFORK\fP set, will result in two traps upon
+leaving: one for the parent, and one for the child. The child's \fBSIGSTOP\fP
+signal will always come before the \fBSIGTRAP\fP from its leaving the system
+call.
+.PP
+There is no way to reliably distinguish between real signals and signals
+generated for the tracer.
+.PP
+For system stability reasons, the PM and VM servers cannot be traced.
+.SH "SEE ALSO"
+.BR wait (2),
+.BR kill (2),
+.BR mdb (1)
+.SH AUTHOR
+Manual page written by David van Moolenbroek <dcvmoole@cs.vu.nl>
