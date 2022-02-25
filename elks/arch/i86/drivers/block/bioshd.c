@@ -413,7 +413,7 @@ static int read_sector(int drive, int track, int sector)
  * when new floppy probe is used
  */
 
-    register int count = MAX_ERRS;
+    int count = 1;		/* no retries on probing*/
 
     set_cache_invalid();
     do {
@@ -450,24 +450,24 @@ static void probe_floppy(int target, struct hd_struct *hdp)
  * somewhere near)
  */
 #ifdef CONFIG_ARCH_PC98
-	static char sector_probe[2] = { 8, 18 };
-	static char track_probe[2] = { 77, 80 };
+	static unsigned char sector_probe[2] = { 8, 18 };
+	static unsigned char track_probe[2] = { 77, 80 };
 #else
-	static char sector_probe[5] = { 8, 9, 15, 18, 36 };
-	static char track_probe[2] = { 40, 80 };
+	static unsigned char sector_probe[5] = { 8, 9, 15, 18, 36 };
+	static unsigned char track_probe[2] = { 40, 80 };
 #endif
-	int count, found_EPB = 0;
+	int count, found_PB = 0;
 
 	target &= MAXDRIVES - 1;
 
-/* Try to look for an ELKS disk parameter block in the first sector.  If
- * it exists, we can obtain the disk geometry from it.
- */
-
+	/* Try to look for an ELKS or DOS parameter block in the first sector.
+	 * If it exists, we can obtain the disk geometry from it.
+	 */
 	if (!read_sector(target, 0, 1)) {
 	    struct elks_disk_parms __far *parms = _MK_FP(DMASEG, drivep->sector_size -
 		2 - sizeof(struct elks_disk_parms));
 
+	    /* first check for ELKS parm block */
 	    if (parms->marker[0] == 'e' && parms->marker[1] == 'L'
 		&& parms->size >= offsetof(struct elks_disk_parms, size)) {
 		drivep->cylinders = parms->track_max;
@@ -476,15 +476,38 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 
 		if (drivep->cylinders != 0 && drivep->sectors != 0
 		    && drivep->heads != 0) {
-		    found_EPB = 1;
+		    found_PB = 1;
 		    /*printk("fd: found valid ELKS disk parameters on /dev/fd%d "
 			   "boot sector\n", target);*/
 		    goto got_geom;
 		}
 	    }
+
+	    /* second check for valid FAT BIOS parm block */
+	    unsigned char __far *boot = _MK_FP(DMASEG, 0);
+	    if (
+		//(boot[510] == 0x55 && boot[511] == 0xAA) &&	/* bootable sig*/
+		((boot[3] == 'M' && boot[4] == 'S') ||		/* OEM 'MSDOS'*/
+		 (boot[3] == 'I' && boot[4] == 'B'))	 &&	/* or 'IBM'*/
+		(boot[54] == 'F' && boot[55] == 'A')	   ) {	/* fil_sys 'FAT'*/
+
+		/* has valid MSDOS 3.31+ FAT BPB, use it */
+		drivep->sectors = boot[24];		/* bpb_sec_per_trk */
+		drivep->heads = boot[26];		/* bpb_num_heads */
+		unsigned char media = boot[21];		/* bpb_media_byte */
+		drivep->cylinders =
+			(media == 0xFD)? 40:
+#ifdef CONFIG_IMG_FD1232
+			(media == 0xFE)? 77:
+#endif
+					 80;		/* FD1232 is 77 tracks */
+		drivep->cylinders = (media == 0xFD)? 40: 80;
+		found_PB = 2;
+		goto got_geom;
+	    }
 	}
 
-	printk("fd: probing disc in /dev/fd%d\n", target);
+	/*printk("fd: probing disc in /dev/fd%d\n", target);*/
 
 /* First probe for cylinder number. We probe on sector 1, which is
  * safe for all formats, and if we get a seek error, we assume that
@@ -494,10 +517,11 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 	drivep->cylinders = 0;
 	count = 0;
 	do {
-	    if (read_sector(target, (int)track_probe[count] - 1, 1))
+	    /* skip probing first entry */
+	    if (count && read_sector(target, track_probe[count] - 1, 1))
 		break;
-	    drivep->cylinders = (int)track_probe[count];
-	} while (++count < (int)sizeof(track_probe)/sizeof(track_probe[0]));
+	    drivep->cylinders = track_probe[count];
+	} while (++count < sizeof(track_probe)/sizeof(track_probe[0]));
 
 /* Next, probe for sector number. We probe on track 0, which is
  * safe for all formats, and if we get a seek error, we assume that
@@ -507,25 +531,24 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 	drivep->sectors = 0;
 	count = 0;
 	do {
-	    if (read_sector(target, 0, (int)sector_probe[count]))
+	    /* skip reading first entry */
+	    if (count && read_sector(target, 0, sector_probe[count]))
 		break;
-	    drivep->sectors = (int)sector_probe[count];
-	} while (++count < (int)sizeof(sector_probe)/sizeof(sector_probe[0]));
+	    drivep->sectors = sector_probe[count];
+	} while (++count < sizeof(sector_probe)/sizeof(sector_probe[0]));
 
 	drivep->heads = 2;
 
       got_geom:
-
-/* I moved this out of for loop to prevent trashing the screen
- * with seducing (repeating) probe messages about disk types
- */
 
 	if (drivep->cylinders == 0 || drivep->sectors == 0) {
 	    *drivep = fd_types[drivep->fdtype];
 	    printk("fd: Floppy drive autoprobe failed!\n");
 	} else {
 	    printk("fd: /dev/fd%d %s has %d cylinders, %d heads, and %d sectors\n",
-		   target, found_EPB? "found ELKS parm block,": "probably",
+		   target,
+		   (found_PB == 2)? "DOS format," :
+		   (found_PB == 1)? "ELKS bootable,": "probed, probably",
 		   drivep->cylinders, drivep->heads, drivep->sectors);
 
 	}
