@@ -171,6 +171,11 @@ static void AnsiCmd(register Console * C, char c)
 	    case 1:
 		C->attr |= A_BOLD;
 		break;
+	    case 4:
+		n = C->attr;
+		C->attr &= ~(A_DEFAULT | A_REVERSE);
+		C->attr |= A_UNDERLINE;
+		break;
 	    case 5:
 		C->attr |= A_BLINK;
 		break;

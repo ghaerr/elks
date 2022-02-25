@@ -34,6 +34,16 @@
 #include <string.h>
 #include <paths.h>
 
+/* default .TH [extra1] value */
+#define DEFAULT_EXTRA1	"ELKS Embeddable Linux Kernel Subset"
+
+/* font translations to ANSI sequences (\fB -> bold, \fI -> underline) */
+#define ANSI_NORMAL	 "\e[0m"	/* no attribute */
+#define ANSI_BOLD	 "\e[1m"	/* bold */
+#define ANSI_UNDERLINE   "\e[4m"	/* underline (normal on console for now) */
+//#define ANSI_UNDERLINE "\e[7m"	/* reverse video */
+//#define ANSI_UNDERLINE "\e[32m"	/* green */
+
 FILE * ofd = stdout;
 FILE * ifd = stdin;
 int ifd_class = 0;		/* Type of ifd, 0=stdin, 1=file, 2=pipe */
@@ -680,6 +690,9 @@ void build_headers(void)
 
    /* Ok we should have upto 5 arguments build the header and footer */
 
+   if (buffer[2][0] == 0)
+      strcpy(buffer[2], DEFAULT_EXTRA1);	/* header middle */
+
    memset(little_header, ' ', right_margin);
 
    memset(line_header, ' ', right_margin);
@@ -695,8 +708,9 @@ void build_headers(void)
    if (ch > right_margin) ch = right_margin-12;
    memcpy(line_header+right_margin/2-ch/2, buffer[4], ch);
 
-   memcpy(little_header, line_header, right_margin/2+ch/2+1);
-   strcpy(little_header+right_margin-strlen(buffer[2]), buffer[2]);
+   //memcpy(little_header, line_header, right_margin/2+ch/2+1);
+   memcpy(little_header, line_header, right_margin);
+   //strcpy(little_header+right_margin-strlen(buffer[2]), buffer[2]);
 
    memset(line_footer, ' ', right_margin-6);
    line_footer[right_margin-6] = 0;
@@ -705,6 +719,7 @@ void build_headers(void)
    ch = strlen(buffer[2]);
    if (ch > right_margin) ch = right_margin-12;
    memcpy(line_footer+right_margin/2-ch/2, buffer[2], ch);
+   memcpy(little_header+right_margin/2-ch/2, buffer[2], ch);
 
    do_skipeol();
 }
@@ -858,12 +873,13 @@ void line_break(void)
 	    fputc(' ', ofd);
       }
       else switch (ch >> 8) {
-      case 2:
-         //fputc(ch&0xFF, ofd); fputc('\b', ofd); fputc(ch&0xFF, ofd); break;
-         fputs("\e[1m", ofd); fputc(ch&0xFF, ofd); fputs("\e[0m", ofd); break;
-      case 3:
-         //fputc('_', ofd); fputc('\b', ofd); fputc(ch&0xFF, ofd); break;
-         fputs("\e[7m", ofd); fputc(ch&0xFF, ofd); fputs("\e[0m", ofd); break;
+      case 2:	/* \fB (bold) -> ANSI bold */
+         /*fputc(ch&0xFF, ofd); fputc('\b', ofd); fputc(ch&0xFF, ofd); break;*/
+         fputs(ANSI_BOLD, ofd); fputc(ch&0xFF, ofd); fputs(ANSI_NORMAL, ofd); break;
+      case 3:	/* \fI (italic) -> ANSI underline */
+         /*fputc('_', ofd); fputc('\b', ofd); fputc(ch&0xFF, ofd); break;*/
+         fputs(ANSI_UNDERLINE, ofd); fputc(ch&0xFF, ofd); fputs(ANSI_NORMAL, ofd); break;
+      case 1:	/* roman -> no action */
       default:
          fputc(ch&0xFF, ofd); break;
       }
