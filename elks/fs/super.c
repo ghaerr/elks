@@ -137,29 +137,28 @@ void put_super(kdev_t dev)
     }
 }
 
-#ifdef BLOAT_FS
-
-int sys_ustat(__u16 dev, struct ustat *ubuf)
+int sys_ustatfs(dev_t dev, struct statfs *ubuf)
 {
-    register struct super_block *s;
-    struct ustat tmp;
+    struct super_block *s;
     struct statfs sbuf;
 
+    if (dev < NR_SUPER)
+	dev = super_blocks[(int)dev].s_dev;
     s = get_super(to_kdev_t(dev));
     if (s == NULL) return -EINVAL;
 
+    if (ubuf == NULL) return 0;	/* for querying mounted filesystem w/o statfs */
+
     if (!(s->s_op->statfs_kern)) return -ENOSYS;
 
-    s->s_op->statfs_kern(s, &sbuf, sizeof(struct statfs));
+    s->s_op->statfs_kern(s, &sbuf);
+    sbuf.f_type = s->s_type->type;
+    sbuf.f_flags = s->s_flags;
+    sbuf.f_dev = s->s_dev;
+    memcpy(sbuf.f_mntonname, s->s_mntonname, MNAMELEN);
 
-    memset(&tmp, 0, sizeof(struct ustat));
-    tmp.f_tfree = sbuf.f_bfree;
-    tmp.f_tinode = sbuf.f_ffree;
-
-    return verified_memcpy_tofs(ubuf, &tmp, sizeof(struct ustat)))
+    return verified_memcpy_tofs(ubuf, &sbuf, sizeof(sbuf));
 }
-
-#endif
 
 static struct super_block *read_super(kdev_t dev, int t, int flags,
 				      char *data, int silent)
@@ -340,6 +339,7 @@ int do_mount(kdev_t dev, char *dir, int type, int flags, char *data)
     else {
 	sb->s_covered = dirp;
 	dirp->i_mount = sb->s_mounted;
+	verified_memcpy_fromfs(sb->s_mntonname, dir, MNAMELEN);
 	error = 0;		/* we don't iput(dir_i) - see umount */
     }
   ERROUT:
@@ -481,6 +481,7 @@ void mount_root(void)
 	    /* NOTE! it is logically used 4 times, not 1 */
 	    sb->s_mounted->i_count += 3;
 	    sb->s_covered = sb->s_mounted;
+	    memcpy(sb->s_mntonname, "/", 2);
 /*	    sb->s_flags = (unsigned short int) root_mountflags;*/
 	    current->fs.pwd = current->fs.root = sb->s_mounted;
 	    printk("VFS: Mounted root 0x%04x (%s filesystem)%s.\n", ROOT_DEV,

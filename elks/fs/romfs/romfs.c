@@ -285,25 +285,19 @@ static void romfs_read_inode (struct inode * i)
 /* Nothing to do */
 
 static void romfs_put_super (struct super_block * sb)
-	{
+{
 	lock_super (sb);
 	sb->s_dev = 0;
 	unlock_super (sb);
-	}
-
-
-#ifdef BLOAT_FS
-static void romfs_statfs(struct super_block *sb, struct statfs *buf, size_t bufsize)
-{
-    struct statfs tmp;
-
-    memset(&tmp, 0, sizeof(tmp));
-    tmp.f_type = ROMFS_MAGIC;
-    tmp.f_bsize = ROMBSIZE;
-    tmp.f_blocks = (sb->u.romfs_sb.s_maxsize + ROMBSIZE - 1) >> ROMBSBITS;
-    memcpy(buf, &tmp, bufsize);
 }
-#endif
+
+
+static void romfs_statfs(struct super_block *s, struct statfs *sf)
+{
+	memset(sf, 0, sizeof(struct statfs));
+	sf->f_bsize = ROMBSIZE;
+	sf->f_blocks = (sb->u.romfs_sb.s_maxsize + ROMBSIZE - 1) >> ROMBSBITS;
+}
 
 
 static struct super_operations romfs_super_ops =
@@ -313,10 +307,8 @@ static struct super_operations romfs_super_ops =
 	NULL,  /* put inode */
 	romfs_put_super,
 	NULL,  /* write super */
-	NULL   /* remount */
-#ifdef BLOAT_FS
+	NULL,  /* remount */
 	romfs_statfs
-#endif
 };
 
 

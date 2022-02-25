@@ -17,8 +17,6 @@
 
 #include <arch/bitops.h>
 
-#ifdef BLOAT_FS
-
 static char nibblemap[] = { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 };
 
 static unsigned short count_used(struct buffer_head *map[],
@@ -41,8 +39,7 @@ static unsigned short count_used(struct buffer_head *map[],
 	    numbits = 0;
 	}
 	for (j = 0; j < end; j++)
-	    sum += nibblemap[bh->b_data[j] & 0xf]
-		+ nibblemap[(bh->b_data[j] >> 4) & 0xf];
+	    sum += nibblemap[bh->b_data[j] & 0xf] + nibblemap[(bh->b_data[j] >> 4) & 0xf];
 	unmap_buffer(bh);
     }
     return sum;
@@ -51,18 +48,16 @@ static unsigned short count_used(struct buffer_head *map[],
 unsigned short minix_count_free_blocks(register struct super_block *sb)
 {
     return (sb->u.minix_sb.s_nzones -
-			count_used(sb->u.minix_sb.s_zmap, sb->u.minix_sb.s_zmap_blocks, sb->u.minix_sb.s_nzones))
-			<< sb->u.minix_sb.s_log_zone_size;
+	count_used(sb->u.minix_sb.s_zmap, sb->u.minix_sb.s_zmap_blocks,
+	    sb->u.minix_sb.s_nzones)) << sb->u.minix_sb.s_log_zone_size;
 }
-
 
 unsigned short minix_count_free_inodes(register struct super_block *sb)
 {
     return (sb->u.minix_sb.s_ninodes -
-			count_used(sb->u.minix_sb.s_imap, sb->u.minix_sb.s_imap_blocks, sb->u.minix_sb.s_ninodes));
+	count_used(sb->u.minix_sb.s_imap, sb->u.minix_sb.s_imap_blocks,
+	    sb->u.minix_sb.s_ninodes));
 }
-
-#endif
 
 void minix_free_block(register struct super_block *sb, unsigned short block)
 {

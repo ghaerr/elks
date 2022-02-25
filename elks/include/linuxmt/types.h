@@ -8,9 +8,7 @@
 typedef __s32			loff_t;
 typedef __s32			off_t;
 
-typedef __u32			daddr_t;
 typedef __u32			jiff_t;
-typedef __u32			lflag_t;
 typedef __u32			lsize_t;
 typedef __u32			speed_t;
 typedef __u32			tcflag_t;
@@ -59,12 +57,5 @@ typedef __u32			fd_mask_t;
 #include <linuxmt/posix_types.h>
 
 typedef __kernel_fd_set 	fd_set;
-
-struct ustat {
-    daddr_t			f_tfree;
-    ino_t			f_tinode;
-    char			f_fname[6];
-    char			f_fpack[6];
-};
 
 #endif

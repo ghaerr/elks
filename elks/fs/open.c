@@ -4,7 +4,6 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
-#include <linuxmt/vfs.h>
 #include <linuxmt/types.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/fcntl.h>
@@ -24,15 +23,13 @@
 
 #if 0
 
-int sys_statfs(char *path, register struct statfs *buf)
+int sys_statfs(char *path, register struct statfs *ubuf)
 {
-    register struct inode *inode;
+    struct super_block *s;
+    struct inode *inode;
     int error;
-    struct statfs tmp;
+    struct statfs sbuf;
 
-    error = verify_area(VERIFY_WRITE, buf, sizeof(struct statfs));
-    if (error)
-	return error;
     error = namei(path, &inode, 0, 0);
     if (error)
 	return error;
@@ -40,10 +37,16 @@ int sys_statfs(char *path, register struct statfs *buf)
 	iput(inode);
 	return -ENOSYS;
     }
-    inode->i_sb->s_op->statfs_kern(inode->i_sb, &tmp, sizeof(struct statfs));
+    s = inode->i_sb;
+    s->s_op->statfs_kern(inode->i_sb, &sbuf);
+    sbuf.f_type = s->s_type->type;
+    sbuf.f_flags = s->s_flags;
+    sbuf.f_dev = s->s_dev;
+    memcpy(sbuf.f_mntonname, s->s_mntonname, MNAMELEN);
+
     iput(inode);
-    memcpy(buf, &tmp, sizeof(tmp));
-    return 0;
+
+    return verified_memcpy_tofs(ubuf, &sbuf, sizeof(sbuf));
 }
 
 int do_truncate(register struct inode *inode, loff_t length)
