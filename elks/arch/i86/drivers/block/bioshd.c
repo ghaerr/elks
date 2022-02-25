@@ -164,7 +164,7 @@ static void set_cache_invalid(void)
 	cache_drive = NULL;
 }
 
-static int bios_disk(unsigned cmd, unsigned num_sectors, unsigned drive,
+static int bios_disk_rw(unsigned cmd, unsigned num_sectors, unsigned drive,
 	unsigned cylinder, unsigned head, unsigned sector, unsigned seg, unsigned offset)
 {
 #ifdef CONFIG_ARCH_PC98
@@ -434,7 +434,7 @@ static int read_sector(int drive, int cylinder, int sector)
     do {
 	set_irq();
 	set_ddpt(36);		/* set to large value to avoid BIOS issues*/
-	if (!bios_disk(BIOSHD_READ, 1, drive, cylinder, 0, sector, DMASEG, 0))
+	if (!bios_disk_rw(BIOSHD_READ, 1, drive, cylinder, 0, sector, DMASEG, 0))
 	    return 0;			/* everything is OK */
 	reset_bioshd(drive);
     } while (--count > 0);
@@ -810,8 +810,8 @@ static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *b
 		out_ax = 0;
 
 		set_ddpt(drivep->sectors);
-		if (bios_disk(cmd == WRITE? BIOSHD_WRITE: BIOSHD_READ, this_pass, drive,
-					cylinder, head, sector, segment, offset)) {
+		if (bios_disk_rw(cmd == WRITE? BIOSHD_WRITE: BIOSHD_READ, this_pass,
+					drive, cylinder, head, sector, segment, offset)) {
 			printk("bioshd(%d): cmd %d retry #%d CHS %d/%d/%d count %d\n",
 			    drive, cmd, MAX_ERRS - errs + 1, cylinder, head, sector, this_pass);
 		    out_ax = BD_AX;
@@ -859,7 +859,7 @@ static void bios_readtrack(struct drive_infot *drivep, sector_t start)
 			drive, cylinder, head, sector, num_sectors);
 
 		set_ddpt(drivep->sectors);
-		if (bios_disk(BIOSHD_READ, num_sectors, drive,
+		if (bios_disk_rw(BIOSHD_READ, num_sectors, drive,
 						cylinder, head, sector, DMASEG, 0)) {
 			printk("bioshd(%d): track read retry #%d CHS %d/%d/%d count %d\n",
 			    drive, errs + 1, cylinder, head, sector, num_sectors);
