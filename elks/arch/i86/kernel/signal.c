@@ -70,6 +70,9 @@ int do_signal(void)
 	    //debug_sig("Stack at %x\n", currentp->t_regs.sp);
 	    *sd = SIGDISP_DFL;
 	    debug_sig("SIGNAL reset pending signals\n");
+	    if (currentp->signal)
+		printk("SIGNAL(%d) ignoring signal (mask=%s)\n",
+		    currentp->pid, currentp->signal);
 	    currentp->signal = 0;
 
 	    return 1;
