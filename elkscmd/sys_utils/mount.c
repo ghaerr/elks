@@ -14,7 +14,11 @@
 #include <stdlib.h>
 #include <sys/mount.h>
 
-struct dev_name_struct {
+static char *fs_typename[] = {
+	0, "minix", "msdos", "romfs"
+};
+
+static struct dev_name_struct {
         char *name;
         dev_t num;
 } devices[] = {
@@ -39,7 +43,7 @@ static char *dev_name(dev_t dev)
 #define NAMEOFF 5
         static char name[10] = "/dev/";
 
-        for (i=0; i<8; i++) {
+        for (i=0; i<sizeof(devices)/sizeof(devices[0])-1; i++) {
                 if (devices[i].num == (dev & 0xfff0)) {
                         strcpy(&name[NAMEOFF], devices[i].name);
                         if (i < 3) {
@@ -61,9 +65,9 @@ static int show_mount(dev_t dev)
 	if (ustatfs(dev, &statfs) < 0)
 		return -1;
 
-	printf("%-10s (%04x): blocks %6lu free %6lu mount %s\n",
-		dev_name(statfs.f_dev), statfs.f_dev, statfs.f_blocks, statfs.f_bfree,
-		statfs.f_mntonname);
+	printf("%-8s (%s) blocks %6lu free %6lu mount %s\n",
+		dev_name(statfs.f_dev), fs_typename[statfs.f_type], statfs.f_blocks,
+		statfs.f_bfree, statfs.f_mntonname);
 	return 0;
 }
 
