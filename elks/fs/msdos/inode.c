@@ -81,7 +81,7 @@ static void msdos_put_super(register struct super_block *sb)
 	return;
 }
 
-static void print_formatted(long n)
+static void print_formatted(unsigned long n)
 {
 	char kbytes_or_mbytes = 'k';
 
@@ -89,7 +89,7 @@ static void print_formatted(long n)
 		n /= 1000;
 		kbytes_or_mbytes = 'M';
 	}
-	printk("%ld%c", n, kbytes_or_mbytes);
+	printk("%lu%c", n, kbytes_or_mbytes);
 }
 
 /* Read the super block of an MS-DOS FS. */
@@ -99,9 +99,8 @@ static struct super_block *msdos_read_super(struct super_block *s, char *data,
 	struct msdos_sb_info *sb = MSDOS_SB(s);
 	struct msdos_boot_sector *b;
 	struct buffer_head *bh;
-	long total_sectors, data_sectors;
-	cluster_t cluster, max_clusters;
-	long total_displayed, free_displayed = 0;
+	unsigned long total_sectors, data_sectors, total_displayed;
+	cluster_t max_clusters;
 	int fat32;
 
 	cache_init();
@@ -196,12 +195,16 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%
 	}
 
 	total_displayed = total_sectors >> (BLOCK_SIZE_BITS - SECTOR_BITS_SB(s));
+#if 0
+	long free_displayed = 0;
+	cluster_t cluster;
 	for (cluster = 2; cluster < sb->clusters + 2; cluster++)
 		if (!fat_access(s, cluster, -1))
 			free_displayed += sb->cluster_size;
 	free_displayed = free_displayed >> (BLOCK_SIZE_BITS - SECTOR_BITS_SB(s));
+#endif
 	printk("FAT: total "); print_formatted(total_displayed);
-	printk(", free ");     print_formatted(free_displayed);
+	//printk(", free ");     print_formatted(free_displayed);
 	printk(", fat%d format\n", sb->fat_bits);
 
 #ifdef BLOAT_FS
@@ -241,13 +244,13 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%
 
 static void msdos_statfs(struct super_block *s,struct statfs *sf)
 {
-	cluster_t cluster, cluster_size, total, free;
+	cluster_t cluster, cluster_size;
+	unsigned long total, free = 0;
 
 	cluster_size = MSDOS_SB(s)->cluster_size;
 	sf->f_bsize = SECTOR_SIZE_SB(s);
 	total  = (MSDOS_SB(s)->clusters * cluster_size) + MSDOS_SB(s)->data_start;
 	sf->f_blocks = total >> (BLOCK_SIZE_BITS - SECTOR_BITS_SB(s));
-	free = 0;
 	for (cluster = 2; cluster < MSDOS_SB(s)->clusters + 2; cluster++)
 		if (!fat_access(s, cluster, -1))
 			free += cluster_size;
