@@ -75,8 +75,8 @@ struct minix_dir_entry {
 
 extern unsigned short minix_bmap(register struct inode *,block_t,int);
 extern struct buffer_head *minix_bread(struct inode *,block_t,int);
-extern unsigned long minix_count_free_blocks(register struct super_block *);
-extern unsigned long minix_count_free_inodes(register struct super_block *);
+extern unsigned short minix_count_free_blocks(register struct super_block *);
+extern unsigned short minix_count_free_inodes(register struct super_block *);
 extern int minix_create(register struct inode *,char *,size_t,int,
 			struct inode **);
 extern void minix_free_block(register struct super_block *,block_t);

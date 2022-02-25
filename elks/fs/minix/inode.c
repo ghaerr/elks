@@ -239,12 +239,11 @@ struct super_block *minix_read_super(register struct super_block *s, char *data,
 void minix_statfs(struct super_block *s, struct statfs *sf)
 {
     sf->f_bsize = BLOCK_SIZE;
-    sf->f_blocks = (s->u.minix_sb.s_nzones - s->u.minix_sb.s_firstdatazone)
-		<< s->u.minix_sb.s_log_zone_size;
-    sf->f_bfree = 0; //minix_count_free_blocks(s);
-    sf->f_bavail = 0; //sf->f_bfree;
+    sf->f_blocks = s->u.minix_sb.s_nzones << s->u.minix_sb.s_log_zone_size;
+    sf->f_bfree = minix_count_free_blocks(s);
+    sf->f_bavail = sf->f_bfree;
     sf->f_files = s->u.minix_sb.s_ninodes;
-    sf->f_ffree = 0; //minix_count_free_inodes(s);
+    sf->f_ffree = minix_count_free_inodes(s);
 }
 
 /* Adapted from Linux 0.12's inode.c.  _bmap() is a big function, I know

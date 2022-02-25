@@ -41,6 +41,7 @@ int sys_statfs(char *path, register struct statfs *ubuf)
     s->s_op->statfs_kern(inode->i_sb, &sbuf);
     sbuf.f_type = s->s_type->type;
     sbuf.f_flags = s->s_flags;
+    sbuf.f_dev = s->s_dev;
     memcpy(sbuf.f_mntonname, s->s_mntonname, MNAMELEN);
 
     iput(inode);
