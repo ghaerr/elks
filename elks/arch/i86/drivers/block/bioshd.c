@@ -156,11 +156,31 @@ static struct gendisk bioshd_gendisk = {
     NULL			/* next */
 };
 
+struct drive_infot *last_drive;	/* set to last drivep-> used in read/write */
 static struct drive_infot *cache_drive;
 
 static void set_cache_invalid(void)
 {
 	cache_drive = NULL;
+}
+
+static int bios_disk(unsigned cmd, unsigned num_sectors, unsigned drive,
+	unsigned cylinder, unsigned head, unsigned sector, unsigned seg, unsigned offset)
+{
+#ifdef CONFIG_ARCH_PC98
+	BD_AX = cmd | num_sectors;
+	BD_CX = (unsigned int) ((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
+	BD_DX = (head << 8) | drive;
+	BD_ES = seg;
+	BD_BX = offset;
+#else
+	BD_AX = cmd | num_sectors;
+	BD_CX = (unsigned int) ((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
+	BD_DX = (head << 8) | drive;
+	BD_ES = seg;
+	BD_BX = offset;
+#endif
+	return call_bios(&bdt);
 }
 
 #ifdef CONFIG_BLK_DEV_BHD
@@ -406,28 +426,16 @@ static void reset_bioshd(int drive)
     /* ignore errors with carry set*/
 }
 
-static int read_sector(int drive, int track, int sector)
+static int read_sector(int drive, int cylinder, int sector)
 {
-
-/* i took this code from bioshd_open() where it replicates code used
- * when new floppy probe is used
- */
-
     int count = 1;		/* no retries on probing*/
 
     set_cache_invalid();
     do {
-	/* BIOS read sector */
-
-	BD_AX = (unsigned short int) (BIOSHD_READ | 1); /* Read 1 sector  */
-	BD_BX = 0;					/* Seg offset = 0 */
-	BD_ES = DMASEG;					/* Target segment */
-	BD_CX = (unsigned short int) ((track << 8) | sector);
-	BD_DX = drive;					/* Head 0 | drive */
-
 	set_irq();
 	set_ddpt(36);		/* set to large value to avoid BIOS issues*/
-	if (!call_bios(&bdt)) return 0;			/* everything is OK */
+	if (!bios_disk(BIOSHD_READ, 1, drive, cylinder, 0, sector, DMASEG, 0))
+	    return 0;			/* everything is OK */
 	reset_bioshd(drive);
     } while (--count > 0);
     return 1;			/* error */
@@ -769,6 +777,7 @@ static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *b
 {
 	int drive, errs;
 	unsigned int cylinder, head, sector, this_pass;
+	unsigned int segment, offset;
 	unsigned short in_ax, out_ax;
 
 	drive = drivep - drive_info;
@@ -782,21 +791,18 @@ static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *b
 
 	errs = MAX_ERRS;	/* BIOS disk reads should be retried at least three times */
 	do {
-		BD_AX = (cmd == WRITE ? BIOSHD_WRITE : BIOSHD_READ) | this_pass;
-		BD_CX = ((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
-		BD_DX = (head << 8) | drive;
 #ifdef CONFIG_FS_XMS_BUFFER
 		if (seg >> 16) {
-			BD_ES = DMASEG;		/* if xms buffer use DMASEG*/
-			BD_BX = 0;
+			segment = DMASEG;		/* if xms buffer use DMASEG*/
+			offset = 0;
 			if (cmd == WRITE)	/* copy xms buffer down before write*/
 				xms_fmemcpyw(0, DMASEG, buf, seg, this_pass*(drivep->sector_size >> 1));
 			set_cache_invalid();
 		} else
 #endif
 		{
-			BD_ES = (seg_t)seg;
-			BD_BX = (unsigned) buf;
+			segment = (seg_t)seg;
+			offset = (unsigned) buf;
 		}
 		debug_bios("bioshd(%d): cmd %d CHS %d/%d/%d count %d\n",
 		    drive, cmd, cylinder, head, sector, this_pass);
@@ -804,13 +810,15 @@ static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *b
 		out_ax = 0;
 
 		set_ddpt(drivep->sectors);
-		if (call_bios(&bdt)) {
+		if (bios_disk(cmd == WRITE? BIOSHD_WRITE: BIOSHD_READ, this_pass, drive,
+					cylinder, head, sector, segment, offset)) {
 			printk("bioshd(%d): cmd %d retry #%d CHS %d/%d/%d count %d\n",
 			    drive, cmd, MAX_ERRS - errs + 1, cylinder, head, sector, this_pass);
 		    out_ax = BD_AX;
 		    reset_bioshd(drive);
 		}
 	} while (out_ax && --errs);	/* On error, retry up to MAX_ERRS times */
+	last_drive = drivep;
 
 	if (out_ax) {
 		printk("bioshd: error: out AX=0x%04X in AX=0x%04X "
@@ -846,23 +854,20 @@ static void bios_readtrack(struct drive_infot *drivep, sector_t start)
 		num_sectors = DMASEGSZ / drivep->sector_size;
 
 	do {
-		BD_AX = BIOSHD_READ | num_sectors;
-		BD_CX = (unsigned int) ((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
-		BD_DX = (head << 8) | drive;
-		BD_ES = DMASEG;
-		BD_BX = 0;
 		out_ax = 0;
 		debug_bios("bioshd(%d): track read CHS %d/%d/%d count %d\n",
 			drive, cylinder, head, sector, num_sectors);
 
 		set_ddpt(drivep->sectors);
-		if (call_bios(&bdt)) {
+		if (bios_disk(BIOSHD_READ, num_sectors, drive,
+						cylinder, head, sector, DMASEG, 0)) {
 			printk("bioshd(%d): track read retry #%d CHS %d/%d/%d count %d\n",
 			    drive, errs + 1, cylinder, head, sector, num_sectors);
 		    out_ax = BD_AX;
 		    reset_bioshd(drive);
 		}
 	} while (out_ax && ++errs < 1);	/* no track retries, for testing only*/
+	last_drive = drivep;
 
 	if (out_ax) {
 		set_cache_invalid();
