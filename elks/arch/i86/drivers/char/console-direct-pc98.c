@@ -28,6 +28,7 @@
 
 #define A_DEFAULT 	0x07
 #define A_BOLD 		0x08
+#define A_UNDERLINE 	0x07
 #define A_BLINK 	0x80
 #define A_REVERSE	0x70
 #define A_BLANK		0x00
