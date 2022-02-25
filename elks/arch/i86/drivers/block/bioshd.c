@@ -497,18 +497,18 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 		//(boot[510] == 0x55 && boot[511] == 0xAA) &&	/* bootable sig*/
 		((boot[3] == 'M' && boot[4] == 'S') ||		/* OEM 'MSDOS'*/
 		 (boot[3] == 'I' && boot[4] == 'B'))	 &&	/* or 'IBM'*/
-		(boot[54] == 'F' && boot[55] == 'A')	   ) {	/* fil_sys 'FAT'*/
+		(boot[54] == 'F' && boot[55] == 'A')	   ) {	/* v4.0 fil_sys 'FAT'*/
 
-		/* has valid MSDOS 3.31+ FAT BPB, use it */
+		/* has valid MSDOS 4.0+ FAT BPB, use it */
 		drivep->sectors = boot[24];		/* bpb_sec_per_trk */
 		drivep->heads = boot[26];		/* bpb_num_heads */
 		unsigned char media = boot[21];		/* bpb_media_byte */
 		drivep->cylinders =
 			(media == 0xFD)? 40:
 #ifdef CONFIG_IMG_FD1232
-			(media == 0xFE)? 77:
+			(media == 0xFE)? 77:		/* FD1232 is 77 tracks */
 #endif
-					 80;		/* FD1232 is 77 tracks */
+					 80;
 		drivep->cylinders = (media == 0xFD)? 40: 80;
 		found_PB = 2;
 		goto got_geom;
