@@ -61,7 +61,7 @@ static int show_mount(dev_t dev)
 	if (ustatfs(dev, &statfs) < 0)
 		return -1;
 
-	printf("%s (%04x): blocks %6lu free %6lu mount %s\n",
+	printf("%-10s (%04x): blocks %6lu free %6lu mount %s\n",
 		dev_name(statfs.f_dev), statfs.f_dev, statfs.f_blocks, statfs.f_bfree,
 		statfs.f_mntonname);
 	return 0;
