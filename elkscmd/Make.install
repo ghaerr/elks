@@ -141,6 +141,7 @@ endif
 
 ifdef CONFIG_APPS_2880K
 	TAGS = :*|
+	CONFIG_APP_MAN_PAGES=y
 endif
 
 TAGS += :end
