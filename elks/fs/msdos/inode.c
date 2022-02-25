@@ -239,28 +239,22 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%
 }
 
 
-#ifdef BLOAT_FS
-static void msdos_statfs(struct super_block *s,struct statfs *buf)
+static void msdos_statfs(struct super_block *s,struct statfs *sf)
 {
-	cluster_t cluster_size,free,this;
-	struct statfs tmp;
+	cluster_t cluster, cluster_size, free;
 
 	cluster_size = MSDOS_SB(s)->cluster_size;
-	tmp.f_type = s->s_magic;
-	tmp.f_bsize = SECTOR_SIZE_SB(s);
-	tmp.f_blocks = MSDOS_SB(s)->clusters * cluster_size;
+	sf->f_bsize = SECTOR_SIZE_SB(s);
+	sf->f_blocks = MSDOS_SB(s)->clusters * cluster_size;
 	free = 0;
-	for (this = 2; this < MSDOS_SB(s)->clusters+2; this++)
-		if (!fat_access(s,this,-1L))
-			free++;
-	free *= cluster_size;
-	tmp.f_bfree = free;
-	tmp.f_bavail = free;
-	tmp.f_files = 0;
-	tmp.f_ffree = 0;
-	memcpy(buf, &tmp, bufsiz);
+	for (cluster = 2; cluster < MSDOS_SB(s)->clusters + 2; cluster++)
+		if (!fat_access(s, cluster, -1))
+			free += cluster_size;
+	sf->f_bfree = free;
+	sf->f_bavail = free;
+	sf->f_files = 0;
+	sf->f_ffree = 0;
 }
-#endif
 
 
 void msdos_read_inode(register struct inode *inode)
@@ -394,11 +388,9 @@ static struct super_operations msdos_sops = {
 	msdos_write_inode,
 	msdos_put_inode,
 	msdos_put_super,
-	NULL, /* write_super*/
-	NULL  /* remount*/
-#ifdef BLOAT_FS
-	msdos_statfs,
-#endif
+	NULL,		/* write_super*/
+	NULL,		/* remount*/
+	msdos_statfs
 };
 
 struct file_system_type msdos_fs_type = {
