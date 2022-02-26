@@ -1,5 +1,5 @@
 /*
- * HS (@mellvik) for the ELKS project - march 2020 
+ * Helge Skrivervik (@mellvik) for the ELKS project - march 2020 
  * 
  * implements csh like command history for sash
  * 
@@ -8,6 +8,7 @@
 #include "sash.h"
 #ifdef CMD_HISTORY
 
+//#define DEBUG
 #define HISTMAX 200
 #define HISTMIN 20
 #define CMDBUF  100
@@ -16,10 +17,10 @@ static  int     lastcom = -1;   /* index of most recent command */
 static  int     histind = 0;    /* cmd # for history list */
 static  char    **histbuf;      /* array holding commands */
 int     histcnt = HISTMIN;
-void	phex(char *);
-void	phlist();
-
-/*#define DEBUG*/
+#ifdef DEBUG
+static	void	phex(char *);
+static	void	phlist(void);
+#endif
 
 void
 init_hist() {
@@ -89,12 +90,12 @@ cmd_get(int idx) { /* return the selected command from the history buffer */
 static char *
 cmd_search(char * pat) {
 	int idx, i;
-	char *found;
 
-	//printf("search %s, histcnt %d\n", pat, histcnt);
+	//printf("search '%s', histcnt %d\n", pat, histcnt);
 	for (i = 0; i < histcnt; i++) {
 		idx = map_ind(-i);
-		if ((found = strstr(histbuf[idx], pat)))
+		//if (strstr(histbuf[idx], pat) != NULL)	/* match 'pat' anywhere in histbuf entry */
+		if (!strncmp(histbuf[idx], pat, strlen(pat)))	/* match 'pat' from start of histbuf entry */
 			return(histbuf[idx]);
 	}
 	return(NULL);
@@ -166,8 +167,8 @@ add_to_history(char *cm) {
         }
         histbuf[lastcom] = p;
         histind++;
-        /*fprintf(stderr, " CMD: %s --- adr: %04x %04x %04x\n", cm, p, histbuf[lastcom]);
-        phlist();*/
+        //fprintf(stderr, " CMD: %s --- adr: %04x %04x %04x\n", cm, p, histbuf[lastcom]);
+        //phlist();
         return(0);
 }
 #ifdef DEBUG
@@ -236,7 +237,7 @@ history(char *cmd) {
         h = echo = 0;
         cm = cmd;       /* save pointer for reuse */
 
-        while (1) {	/* for an easy break */
+        while (1) {
 
         if (*cmd == '^') {
                 /* do substitution on the previous command */
