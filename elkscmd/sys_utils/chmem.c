@@ -60,17 +60,19 @@ int do_chmem(char *filename, int changeheap, int changestack,
 	 unsigned long heap, unsigned long stack)
 {
 	int				fd;
+	int				rdonly = !changeheap && !changestack;
 	unsigned int	oldheap, oldstack, dsegsize, displayheap, newheap;
 	unsigned long	newstack, totdata, total;
 	struct minix_exec_hdr header;
 	struct elks_supl_hdr suplhdr;
 
-	if ((fd = open(filename, 2)) < 0)
-		return msg("Can't open %s\n", filename);
-
+	if ((fd = open(filename, rdonly? O_RDONLY: O_RDWR)) < 0) {
+		perror(filename);
+		return 1;
+	}
 	if (read(fd, &header, sizeof(header)) != sizeof(header)
 	    || header.hlen < sizeof(header))
-		return msg("Bad header: %s\n", filename);
+		return msg("%s: bad header\n", filename);
 
 	if ((header.type & 0xFFFF) != MAGIC)
 		return msg("%s: not an executable\n", filename);
@@ -81,7 +83,7 @@ int do_chmem(char *filename, int changeheap, int changestack,
 
 	if (header.hlen >= sizeof(header) + sizeof(suplhdr)) {
 		if (read(fd, &suplhdr, sizeof(suplhdr)) != sizeof(suplhdr))
-			return msg("Bad header: %s\n", filename);
+			return msg("%s: bad header\n", filename);
 	} else
 		memset(&suplhdr, 0, sizeof(suplhdr));
 
@@ -120,7 +122,7 @@ int do_chmem(char *filename, int changeheap, int changestack,
 			suplhdr.esh_compr_tseg, suplhdr.esh_compr_ftseg, suplhdr.esh_compr_dseg);
 	printf("\n");
 
-	if (!changeheap && !changestack) {
+	if (rdonly) {
 		close(fd);
 		return 0;
 	}
@@ -161,8 +163,11 @@ int do_chmem(char *filename, int changeheap, int changestack,
 	header.version = 1;
 
 	lseek(fd, 0L, SEEK_SET);
-	if (write(fd, &header, sizeof(header)) != sizeof(header))
-		return msg("Can't write header: %s\n", filename);
+	if (write(fd, &header, sizeof(header)) != sizeof(header)) {
+		perror(filename);
+		close(fd);
+		return 1;
+	}
 	close(fd);
 
 	return 0;
