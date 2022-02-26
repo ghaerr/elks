@@ -33,6 +33,25 @@ struct partition
     sector_t nr_sects;		/* nr of sectors in partition */
 };
 
+#ifdef CONFIG_ARCH_PC98
+struct partition_pc98
+{
+    unsigned char boot_ind;	/* bootable */
+    unsigned char active;	/* active or sleep */
+    unsigned int dummy;
+    unsigned char ipl_sector;	/* ipl sector */
+    unsigned char ipl_head;	/* ipl head */
+    unsigned int ipl_cyl;  	/* ipl cylinder */
+    unsigned char sector;	/* starting sector */
+    unsigned char head;		/* starting head */
+    unsigned int cyl;	  	/* starting cylinder */
+    unsigned char end_sector;	/* end sector */
+    unsigned char end_head;	/* end head */
+    unsigned int end_cyl;	/* end cylinder */
+    char name[16];
+};
+#endif
+
 struct hd_struct
 {
     sector_t start_sect;

@@ -27,8 +27,15 @@
 
 #include <arch/system.h>
 
+#include "blk.h"
+
 #define NR_SECTS(p)	p->nr_sects
 #define START_SECT(p)	p->start_sect
+#ifdef CONFIG_ARCH_PC98
+#define NR_SECTS_PC98(p98)	END_SECT_PC98(p98) - START_SECT_PC98(p98) + 1
+#define START_SECT_PC98(p98)	(sector_t) (p98->cyl * last_drive->heads + p98->head) * last_drive->sectors + p98->sector
+#define END_SECT_PC98(p98)	(sector_t) (p98->end_cyl * last_drive->heads + p98->end_head) * last_drive->sectors + p98->end_sector
+#endif
 
 struct gendisk *gendisk_head = NULL;
 int boot_partition = 0;		/* MBR boot partition, if any*/
@@ -203,6 +210,9 @@ static int INITPROC msdos_partition(struct gendisk *hd,
 {
     struct buffer_head *bh;
     register struct partition *p;
+#ifdef CONFIG_ARCH_PC98
+    struct partition_pc98 *p98;
+#endif
     register struct hd_struct *hdp;
     unsigned short int i, minor = current_minor;
 
@@ -260,6 +270,23 @@ out:
 		hdp->nr_sects = 2;
 	}
     }
+
+#ifdef CONFIG_ARCH_PC98
+    if (*(unsigned short *) (bh->b_data + 0x4) == 0x5049 &&
+        *(unsigned short *) (bh->b_data + 0x6) == 0x314C) {
+	printk(" pc-98 IPL1");
+	current_minor -= 4;
+	minor = current_minor;
+	p98 = (struct partition_pc98 *) (bh->b_data + 0x200);
+	current_minor += 4;
+	for (i = 1; i <= 4; minor++, i++, p98++) {
+	    if (!START_SECT_PC98(p98))
+	        continue;
+
+	    add_partition(hd, minor, first_sector + START_SECT_PC98(p98), NR_SECTS_PC98(p98));
+	}
+    }
+#endif
     printk("\n");
     unmap_brelse(bh);
     return 1;
