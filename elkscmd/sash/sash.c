@@ -317,10 +317,7 @@ sourcecfg(path, cfgfile)
  * Read commands from the specified file.
  * A null name pointer indicates to read from stdin.
  */
-static void
-readfile(name)
-	char	*name;
-{
+static void readfile(char *name) {
 	FILE	*fp;
 	int	cc;
 	char	buf[CMDLEN];
@@ -380,6 +377,10 @@ readfile(name)
 		buf[cc] = '\0';
 		if (strlen(buf) < 1) continue; 	/* blank line */
 #ifdef CMD_HISTORY
+		if (buf[0] == 27) {	/* catch accidental arrow keypresses */
+			fprintf(stderr, "Illegal character in command\n");
+			continue;
+		}
 		if ((fp == stdin) && histcnt && history(buf))
 				continue;	
 

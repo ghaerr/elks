@@ -504,6 +504,10 @@ do_mount(int argc, char **argv)
 				argc--;
 				break;
 
+			case 'a':
+				flags |= MS_AUTOMOUNT;
+				break;
+
 			default:
 				fprintf(stderr, "mount: unknown option\n");
 				return;
@@ -516,8 +520,13 @@ do_mount(int argc, char **argv)
 	}
 
 	if (mount(argv[0], argv[1], type, flags) < 0) {
-		perror("mount failed");
-		return;
+		if (flags & MS_AUTOMOUNT) {
+			type = (!type || type == FST_MINIX)? FST_MSDOS: FST_MINIX;
+			if (mount(argv[0], argv[1], type, flags) < 0) {
+				perror("mount failed");
+				return;
+			}
+		}
 	}
 }
 #endif /* CMD_MOUNT */
