@@ -7,13 +7,13 @@ tail \- print the last few lines of a file
 .SH OPTIONS
 .TP 5
 .B \-c
-# The count refers to characters
+The count refers to characters
 .TP 5
 .B \-f
-# On FIFO or special file, keep reading after EOF
+On FIFO or special file, keep reading after EOF
 .TP 5
 .B \-n
-# The count refers to lines
+The count refers to lines
 .SH EXAMPLES
 .TP 20
 .B tail \-n 6
@@ -34,5 +34,3 @@ The default count is 10 lines.
 The default file is \fIstdin\fR.
 If the value of \fIn\fR for the \fB\-c\fR or \fB\-n\fR flags starts with
 a + sign, counting starts at the beginning, rather than the end of the file.
-.SH "SEE ALSO"
-.BR head (1).
