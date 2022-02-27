@@ -2,11 +2,8 @@
 .SH NAME
 term \- turn PC into a dumb terminal [IBM]
 .SH SYNOPSIS
-.in +.5i
-.ti -.5i
 \fBterm\fR [\fIbaudrate\fR]\fR [\fIparity\fR] [\fIbits_per_character\fR]
 [\fB\-\fIdial_string\fR] [\fB\-c\fIkcmd\fR] [\fIdevice\fR]\fR
-.in -.5i
 .br
 .SH EXAMPLES
 .TP 20
@@ -49,9 +46,8 @@ data.  Do not quit \fIterm\fR to do this, or your modem line will be reset!
 \fITerm\fP keeps the modem line open on file descriptor 9 while running the
 subshell, so you can type
 .PP
-.in +.5i
+.TP 20
 <&9 >&9
-.in -.5i
 .PP
 at the end of your ZMODEM command to connect it to the modem.  With
 .BI \-c kcmd

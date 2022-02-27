@@ -9,7 +9,6 @@ The actions performed by
 can be summarized by this pseudo shell program:
 .RS
 .nf
-.if t .ft C
 
 # Open 0, 1, 2.
 exec </dev/null >/dev/log 2>&1
@@ -46,7 +45,6 @@ while :; do
 	done < /dev/ttytab
 done
 
-.if t .ft R
 .fi
 .RE
 The first action of

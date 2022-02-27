@@ -18,10 +18,6 @@ remsync - remotely synchronize file trees
 .I tree
 .RI [ diff-file ]
 .SH DESCRIPTION
-.de SP
-.if t .sp 0.4
-.if n .sp
-..
 .B Remsync
 synchronizes file trees of distant machines, i.e. machines that do not have
 a fast network between them.  It accomplishes this in three steps:
@@ -139,15 +135,15 @@ machine "darask":
 .RS
 .nf
 finiah# remsync -s /usr /tmp/finiah.state
-.SP
+.sp
 Edit the state file to ignore .Xauthority files and /usr/var.
-.SP
+.sp
 finiah# tar cvf /dev/fd0 /tmp/finiah.state
-.SP
+.sp
 darask# tar xvf /dev/fd0
 .br
 darask# remsync -dv /usr /tmp/finiah.state | vol 1440 /dev/fd0
-.SP
+.sp
 finiah# vol 1440 /dev/fd0 | remsync -v /usr
 .fi
 .RE

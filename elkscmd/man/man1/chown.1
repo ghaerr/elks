@@ -1,0 +1,22 @@
+.TH CHOWN 1
+.SH NAME
+chown \- change owner
+.SH SYNOPSIS
+\fBchown \fIowner\fR \fIfile\fR ...\fR
+.br
+.SH EXAMPLES
+.TP 25
+.B chown ast file1 file2
+# Make \fIast\fR the owner of the files
+.SH DESCRIPTION
+.PP
+The owner field of the named files is changed to
+.I owner 
+(i.e., login name specified).
+Alternatively, a decimal uid may be specified instead of a user name.
+Only the superuser may execute this command.
+.SH "SEE ALSO"
+.BR chgrp (1),
+.BR chmod (1),
+.BR ls (1),
+.BR chown (2).

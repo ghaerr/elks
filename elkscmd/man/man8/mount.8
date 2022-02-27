@@ -3,8 +3,11 @@
 mount \- mount a file system
 .SH SYNOPSIS
 .B mount
-.I
-[\-a][\-q][\-t fstype][\-o ro|remount,rw] device directory
+.B [\-a]
+.B [\-q]
+.B [\-t fstype]
+.B [\-o ro|remount,rw]
+.I device directory
 .SH DESCRIPTION
 .BR mount
 takes as arguments the name of a 
@@ -21,17 +24,17 @@ If \fBmount\fP is invoked without any parameters, it will print the list of
 currently mounted filesystems.
 .SH OPTIONS
 .TP
-.I "-a"
+.B "-a"
 Auto-mount the filesystem by inspecting its superblock.
 .TP
-.I "-t"
+.B "-t"
 Specify the type of filesystem to be mounted. Default is
 .B minix .
 .TP
-.I "-o"
+.B "-o"
 Specify ro (readonly) or remount,rw (remount read/write) options.
 .TP
-.I "-q"
+.B "-q"
 Query filesystem type and set return value based on filesystem.
 .SH EXAMPLES
 .TP 30
@@ -43,25 +46,25 @@ Query filesystem type and set return value based on filesystem.
 .LP
 .SH EXIT STATUS
 .TP
-.B 0
+.I 0
 Filesystem mounted successfully.
 .TP
-.B 1
+.I 1
 Wrong number of arguments, mount was unsuccessful, or unknown filesystem type.
 .TP
-.B 2
+.I 2
 When used with \-q, filesystem is MINIX.
 .TP
-.B 3
+.I 3
 When used with \-q, filesystem is MSDOS/FAT.
+.SH SEE ALSO
+.BR umount (8),
+.BR mkfs (8),
+.BR fsck (8),
+.BR mount (2).
 .SH AUTHORS
 David Bell
 .br
 Al Riddoch
 .br
 Greg Haerr
-.SH SEE ALSO
-.BR umount (8),
-.BR mkfs (8),
-.BR fsck (8),
-.BR mount (2).
