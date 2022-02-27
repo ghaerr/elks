@@ -4,17 +4,13 @@
  * by Helge Skrivervik - helge@skrivervik.com - December 2021
  *
  *	TODO:
- *	- add support for multi-argument commands (e.g. <put sourcefile destfile> ...)
  *	- add missing commands (rmdir, mls, nlist, ...), 
  *	- ... create common function for commands that are alomost alike
  *	- fix trucation of file names in FAT, minix (warnings, name collisions)
  *	- lcd with no params should print current local directory
- *	- evaluate whether using select() is useful or just a complication
- *	... add ABORT support in PUT
+ *	- add ABORT support in PUT
  *	- handle server timeout (no activity): Unsolicited server input (code 421)
  *	- add '15632 bytes sent in 0.00 secs (27.5561 MB/s)' type message after transfer
- *	- validity check on server host name/address to avoid system hang
- *	- more testing of error conditions & error messages
  */
 
 #define BLOATED		/* fully featured if defined */
@@ -282,16 +278,15 @@ int get_reply(int fd, char *buf, int size, int dbg) {
 		while (*cp != '\n' && cp >= &buf[lb]) --cp;
 		cp++;
 		lb += l;
-		if (*(cp+3) != '-') {	/* end of continuation if blank */
+		if (*(cp+3) != '-') 	/* end of continuation if blank */
 			break;
-		}
 	}
 	buf[lb] = '\0';
 	lb = 0;
 
 	// cp points to the start of the last record,
-	// compare starus codes to see if we have an extra
-	// reply to set aside for the next call.
+	// compare status codes to see if we have an extra
+	// reply to save for the next call.
 
 	if (cp != buf) {
 		if (strncmp(buf, cp, 3)) {
@@ -895,7 +890,7 @@ int do_passive(int cmdfd) {
 
 	if (debug > 1) printf("Connecting to %s @ %u\n", ip, port);
 
-	if (connect(fd, (struct sockaddr *) &srvaddr, sizeof(srvaddr)) < 0) {
+	if (in_connect(fd, (struct sockaddr *) &srvaddr, sizeof(srvaddr), 10) < 0) {
 			perror("connect error");
 			return -1;
 	}

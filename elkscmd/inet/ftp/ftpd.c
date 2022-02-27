@@ -3,13 +3,12 @@
  * November 2021 by Helge Skrivervik - helge@skrivervik.com
  *
  * TODO:
- *	- Add timeout
+ *	- Add timeout (typically 900 seconds of inactivity)
  *	- Add ABORT support
  *
  */
 
 #include	<time.h>
-#include	<sys/types.h>
 #include	<sys/socket.h>
 #include	<string.h>
 #include	<arpa/inet.h>
@@ -22,7 +21,6 @@
 #include	<netdb.h>
 #include	<errno.h>
 #include	<fcntl.h>
-#include	<time.h>
 #include	<sys/stat.h>
 #include	<sys/types.h>
 #include	<sys/wait.h>
@@ -35,8 +33,8 @@
 #endif
 
 #ifdef GLOB
-#include <pwd.h>
-#include <regex.h>
+#include	<pwd.h>
+#include	<regex.h>
 #endif
 
 #define 	CMDBUFSIZ 	512
@@ -240,7 +238,7 @@ int do_active(char *client_ip, unsigned int client_port, unsigned int server_por
 	cliaddr.sin_port = htons(client_port);
 	cliaddr.sin_addr.s_addr = in_aton(ip);
 
-	if (connect(fd, (struct sockaddr *) &cliaddr, sizeof(cliaddr)) < 0) {
+	if (in_connect(fd, (struct sockaddr *) &cliaddr, sizeof(cliaddr), 10) < 0) {
     		perror("connect error");
     		return -1;
 	}
