@@ -156,11 +156,31 @@ static struct gendisk bioshd_gendisk = {
     NULL			/* next */
 };
 
+struct drive_infot *last_drive;	/* set to last drivep-> used in read/write */
 static struct drive_infot *cache_drive;
 
 static void set_cache_invalid(void)
 {
 	cache_drive = NULL;
+}
+
+static int bios_disk_rw(unsigned cmd, unsigned num_sectors, unsigned drive,
+	unsigned cylinder, unsigned head, unsigned sector, unsigned seg, unsigned offset)
+{
+#ifdef CONFIG_ARCH_PC98
+	BD_AX = cmd | num_sectors;
+	BD_CX = (unsigned int) ((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
+	BD_DX = (head << 8) | drive;
+	BD_ES = seg;
+	BD_BX = offset;
+#else
+	BD_AX = cmd | num_sectors;
+	BD_CX = (unsigned int) ((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
+	BD_DX = (head << 8) | drive;
+	BD_ES = seg;
+	BD_BX = offset;
+#endif
+	return call_bios(&bdt);
 }
 
 #ifdef CONFIG_BLK_DEV_BHD
@@ -406,28 +426,16 @@ static void reset_bioshd(int drive)
     /* ignore errors with carry set*/
 }
 
-static int read_sector(int drive, int track, int sector)
+static int read_sector(int drive, int cylinder, int sector)
 {
-
-/* i took this code from bioshd_open() where it replicates code used
- * when new floppy probe is used
- */
-
-    register int count = MAX_ERRS;
+    int count = 1;		/* no retries on probing*/
 
     set_cache_invalid();
     do {
-	/* BIOS read sector */
-
-	BD_AX = (unsigned short int) (BIOSHD_READ | 1); /* Read 1 sector  */
-	BD_BX = 0;					/* Seg offset = 0 */
-	BD_ES = DMASEG;					/* Target segment */
-	BD_CX = (unsigned short int) ((track << 8) | sector);
-	BD_DX = drive;					/* Head 0 | drive */
-
 	set_irq();
 	set_ddpt(36);		/* set to large value to avoid BIOS issues*/
-	if (!call_bios(&bdt)) return 0;			/* everything is OK */
+	if (!bios_disk_rw(BIOSHD_READ, 1, drive, cylinder, 0, sector, DMASEG, 0))
+	    return 0;			/* everything is OK */
 	reset_bioshd(drive);
     } while (--count > 0);
     return 1;			/* error */
@@ -450,24 +458,24 @@ static void probe_floppy(int target, struct hd_struct *hdp)
  * somewhere near)
  */
 #ifdef CONFIG_ARCH_PC98
-	static char sector_probe[2] = { 8, 18 };
-	static char track_probe[2] = { 77, 80 };
+	static unsigned char sector_probe[2] = { 8, 18 };
+	static unsigned char track_probe[2] = { 77, 80 };
 #else
-	static char sector_probe[5] = { 8, 9, 15, 18, 36 };
-	static char track_probe[2] = { 40, 80 };
+	static unsigned char sector_probe[5] = { 8, 9, 15, 18, 36 };
+	static unsigned char track_probe[2] = { 40, 80 };
 #endif
-	int count, found_EPB = 0;
+	int count, found_PB = 0;
 
 	target &= MAXDRIVES - 1;
 
-/* Try to look for an ELKS disk parameter block in the first sector.  If
- * it exists, we can obtain the disk geometry from it.
- */
-
+	/* Try to look for an ELKS or DOS parameter block in the first sector.
+	 * If it exists, we can obtain the disk geometry from it.
+	 */
 	if (!read_sector(target, 0, 1)) {
 	    struct elks_disk_parms __far *parms = _MK_FP(DMASEG, drivep->sector_size -
 		2 - sizeof(struct elks_disk_parms));
 
+	    /* first check for ELKS parm block */
 	    if (parms->marker[0] == 'e' && parms->marker[1] == 'L'
 		&& parms->size >= offsetof(struct elks_disk_parms, size)) {
 		drivep->cylinders = parms->track_max;
@@ -476,15 +484,38 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 
 		if (drivep->cylinders != 0 && drivep->sectors != 0
 		    && drivep->heads != 0) {
-		    found_EPB = 1;
+		    found_PB = 1;
 		    /*printk("fd: found valid ELKS disk parameters on /dev/fd%d "
 			   "boot sector\n", target);*/
 		    goto got_geom;
 		}
 	    }
+
+	    /* second check for valid FAT BIOS parm block */
+	    unsigned char __far *boot = _MK_FP(DMASEG, 0);
+	    if (
+		//(boot[510] == 0x55 && boot[511] == 0xAA) &&	/* bootable sig*/
+		((boot[3] == 'M' && boot[4] == 'S') ||		/* OEM 'MSDOS'*/
+		 (boot[3] == 'I' && boot[4] == 'B'))	 &&	/* or 'IBM'*/
+		(boot[54] == 'F' && boot[55] == 'A')	   ) {	/* v4.0 fil_sys 'FAT'*/
+
+		/* has valid MSDOS 4.0+ FAT BPB, use it */
+		drivep->sectors = boot[24];		/* bpb_sec_per_trk */
+		drivep->heads = boot[26];		/* bpb_num_heads */
+		unsigned char media = boot[21];		/* bpb_media_byte */
+		drivep->cylinders =
+			(media == 0xFD)? 40:
+#ifdef CONFIG_IMG_FD1232
+			(media == 0xFE)? 77:		/* FD1232 is 77 tracks */
+#endif
+					 80;
+		drivep->cylinders = (media == 0xFD)? 40: 80;
+		found_PB = 2;
+		goto got_geom;
+	    }
 	}
 
-	printk("fd: probing disc in /dev/fd%d\n", target);
+	/*printk("fd: probing disc in /dev/fd%d\n", target);*/
 
 /* First probe for cylinder number. We probe on sector 1, which is
  * safe for all formats, and if we get a seek error, we assume that
@@ -494,10 +525,11 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 	drivep->cylinders = 0;
 	count = 0;
 	do {
-	    if (read_sector(target, (int)track_probe[count] - 1, 1))
+	    /* skip probing first entry */
+	    if (count && read_sector(target, track_probe[count] - 1, 1))
 		break;
-	    drivep->cylinders = (int)track_probe[count];
-	} while (++count < (int)sizeof(track_probe)/sizeof(track_probe[0]));
+	    drivep->cylinders = track_probe[count];
+	} while (++count < sizeof(track_probe)/sizeof(track_probe[0]));
 
 /* Next, probe for sector number. We probe on track 0, which is
  * safe for all formats, and if we get a seek error, we assume that
@@ -507,25 +539,24 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 	drivep->sectors = 0;
 	count = 0;
 	do {
-	    if (read_sector(target, 0, (int)sector_probe[count]))
+	    /* skip reading first entry */
+	    if (count && read_sector(target, 0, sector_probe[count]))
 		break;
-	    drivep->sectors = (int)sector_probe[count];
-	} while (++count < (int)sizeof(sector_probe)/sizeof(sector_probe[0]));
+	    drivep->sectors = sector_probe[count];
+	} while (++count < sizeof(sector_probe)/sizeof(sector_probe[0]));
 
 	drivep->heads = 2;
 
       got_geom:
-
-/* I moved this out of for loop to prevent trashing the screen
- * with seducing (repeating) probe messages about disk types
- */
 
 	if (drivep->cylinders == 0 || drivep->sectors == 0) {
 	    *drivep = fd_types[drivep->fdtype];
 	    printk("fd: Floppy drive autoprobe failed!\n");
 	} else {
 	    printk("fd: /dev/fd%d %s has %d cylinders, %d heads, and %d sectors\n",
-		   target, found_EPB? "found ELKS parm block,": "probably",
+		   target,
+		   (found_PB == 2)? "DOS format," :
+		   (found_PB == 1)? "ELKS bootable,": "probed, probably",
 		   drivep->cylinders, drivep->heads, drivep->sectors);
 
 	}
@@ -746,6 +777,7 @@ static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *b
 {
 	int drive, errs;
 	unsigned int cylinder, head, sector, this_pass;
+	unsigned int segment, offset;
 	unsigned short in_ax, out_ax;
 
 	drive = drivep - drive_info;
@@ -759,21 +791,18 @@ static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *b
 
 	errs = MAX_ERRS;	/* BIOS disk reads should be retried at least three times */
 	do {
-		BD_AX = (cmd == WRITE ? BIOSHD_WRITE : BIOSHD_READ) | this_pass;
-		BD_CX = ((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
-		BD_DX = (head << 8) | drive;
 #ifdef CONFIG_FS_XMS_BUFFER
 		if (seg >> 16) {
-			BD_ES = DMASEG;		/* if xms buffer use DMASEG*/
-			BD_BX = 0;
+			segment = DMASEG;		/* if xms buffer use DMASEG*/
+			offset = 0;
 			if (cmd == WRITE)	/* copy xms buffer down before write*/
 				xms_fmemcpyw(0, DMASEG, buf, seg, this_pass*(drivep->sector_size >> 1));
 			set_cache_invalid();
 		} else
 #endif
 		{
-			BD_ES = (seg_t)seg;
-			BD_BX = (unsigned) buf;
+			segment = (seg_t)seg;
+			offset = (unsigned) buf;
 		}
 		debug_bios("bioshd(%d): cmd %d CHS %d/%d/%d count %d\n",
 		    drive, cmd, cylinder, head, sector, this_pass);
@@ -781,13 +810,15 @@ static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *b
 		out_ax = 0;
 
 		set_ddpt(drivep->sectors);
-		if (call_bios(&bdt)) {
+		if (bios_disk_rw(cmd == WRITE? BIOSHD_WRITE: BIOSHD_READ, this_pass,
+					drive, cylinder, head, sector, segment, offset)) {
 			printk("bioshd(%d): cmd %d retry #%d CHS %d/%d/%d count %d\n",
 			    drive, cmd, MAX_ERRS - errs + 1, cylinder, head, sector, this_pass);
 		    out_ax = BD_AX;
 		    reset_bioshd(drive);
 		}
 	} while (out_ax && --errs);	/* On error, retry up to MAX_ERRS times */
+	last_drive = drivep;
 
 	if (out_ax) {
 		printk("bioshd: error: out AX=0x%04X in AX=0x%04X "
@@ -823,23 +854,20 @@ static void bios_readtrack(struct drive_infot *drivep, sector_t start)
 		num_sectors = DMASEGSZ / drivep->sector_size;
 
 	do {
-		BD_AX = BIOSHD_READ | num_sectors;
-		BD_CX = (unsigned int) ((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
-		BD_DX = (head << 8) | drive;
-		BD_ES = DMASEG;
-		BD_BX = 0;
 		out_ax = 0;
 		debug_bios("bioshd(%d): track read CHS %d/%d/%d count %d\n",
 			drive, cylinder, head, sector, num_sectors);
 
 		set_ddpt(drivep->sectors);
-		if (call_bios(&bdt)) {
+		if (bios_disk_rw(BIOSHD_READ, num_sectors, drive,
+						cylinder, head, sector, DMASEG, 0)) {
 			printk("bioshd(%d): track read retry #%d CHS %d/%d/%d count %d\n",
 			    drive, errs + 1, cylinder, head, sector, num_sectors);
 		    out_ax = BD_AX;
 		    reset_bioshd(drive);
 		}
 	} while (out_ax && ++errs < 1);	/* no track retries, for testing only*/
+	last_drive = drivep;
 
 	if (out_ax) {
 		set_cache_invalid();

@@ -1,0 +1,24 @@
+.TH TELNET 1
+.SH NAME
+telnet \- user interface to the TELNET protocol
+.SH SYNOPSIS
+telnet
+.I host
+[
+.I port
+]
+.SH DESCRIPTION
+.I Telnet
+is used to communicate with another host using the TELNET protocol.
+.PP
+Once a connection has been opened, all
+text typed is immediately sent to the remote host for processing.
+.PP
+.SH BUGS
+.PP
+There is no way to exit
+.B telnet
+except by disconnecting from the remote host. This is usually
+done by typing ^D (control-D).
+.PP
+There is no adequate way for dealing with flow control.

@@ -98,10 +98,8 @@ static struct super_operations minix_sops = {
     minix_put_inode,
     minix_put_super,
     minix_write_super,
-    minix_remount
-#ifdef BLOAT_FS
+    minix_remount,
     minix_statfs
-#endif
 };
 
 static void minix_mount_warning(register struct super_block *sb, char *prefix)
@@ -238,22 +236,15 @@ struct super_block *minix_read_super(register struct super_block *s, char *data,
     return NULL;
 }
 
-#ifdef BLOAT_FS
-void minix_statfs(register struct super_block *sb, struct statfs *buf, int bufsiz)
+void minix_statfs(struct super_block *s, struct statfs *sf)
 {
-    struct statfs tmp;
-
-    tmp.f_type = sb->s_magic;
-    tmp.f_bsize = BLOCK_SIZE;
-    tmp->f_blocks = (sb->u.minix_sb.s_nzones - sb->u.minix_sb.s_firstdatazone) << sb->u.minix_sb.s_log_zone_size;
-    tmp.f_bfree = minix_count_free_blocks(sb);
-    tmp.f_bavail = tmp.f_bfree;
-    tmp.f_files = (long) sb->u.minix_sb.s_ninodes;
-    tmp.f_ffree = minix_count_free_inodes(sb);
-    tmp.f_namelen = sb->u.minix_sb.s_namelen;
-    memcpy(buf, &tmp, bufsiz);
+    sf->f_bsize = BLOCK_SIZE;
+    sf->f_blocks = s->u.minix_sb.s_nzones << s->u.minix_sb.s_log_zone_size;
+    sf->f_bfree = minix_count_free_blocks(s);
+    sf->f_bavail = sf->f_bfree;
+    sf->f_files = s->u.minix_sb.s_ninodes;
+    sf->f_ffree = minix_count_free_inodes(s);
 }
-#endif
 
 /* Adapted from Linux 0.12's inode.c.  _bmap() is a big function, I know
 

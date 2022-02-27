@@ -28,7 +28,6 @@
  *			for details.
  */
 
-#include <linuxmt/vfs.h>
 #include <linuxmt/types.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/fcntl.h>

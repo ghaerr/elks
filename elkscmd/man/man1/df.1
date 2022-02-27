@@ -1,0 +1,62 @@
+.TH DF 1
+.SH NAME
+df \- report on free disk space
+.SH SYNOPSIS
+\fBdf\fP [\fB\-ikP\fP] [\fB\-t\fP \fItype\fP] [\fIfile\fP ...]
+.SH DESCRIPTION
+.B Df
+lists the amount of free space on the currently mounted devices (no arguments),
+or the devices given as arguments.  If the argument is not a device then the
+device it resides on is listed.
+.SH OPTIONS
+Without options,
+.B df
+will give a listing like this:
+.sp
+.nf
+Filesystem    1k-Blocks     free     used    %  FUsed%  Mounted on
+/dev/fd0           1440      635      805  56%    26%   /
+/dev/hda1         32768    32390      378   2%     1%   /tmp
+/dev/hda2        784657   517809   266848  35%    29%   /usr
+.fi
+.PP
+The
+.B \-i
+option shifts the focus to the files:
+.sp
+.nf
+Filesystem        Files     free     used    %  BUsed%  Mounted on
+/dev/hda1          1024      759      265  26%    56%   /
+/dev/hda2          5472     5468        4   1%     2%   /tmp
+/dev/hdb1         65535    46734    18801  29%    35%   /usr
+.fi
+.PP
+Option
+.B \-P
+makes
+.B df
+use \s-2POSIX\s+2 defined output in 512 byte units:
+.sp
+.nf
+Filesystem     512-blocks    Used  Available  Capacity  Mounted on
+/dev/fd1           2880      1628     1252       57%    /
+/dev/hda1         65536       756    64780        2%    /tmp
+/dev/hda2       1569314    533748  1035566       35%    /usr
+.fi
+.PP
+With
+.B \-k
+1024 byte units would be used.
+.PP
+The
+.B \-t
+option limits
+.BR df 's
+output to file systems of the given
+.IR type .
+.SH BUGS
+Default output should also be in 512 byte units says \s-2POSIX\s+2.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)
+.SH "SEE ALSO"
+.BR du (1).

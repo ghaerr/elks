@@ -29,7 +29,6 @@ int root_mountflags = 0;
 #endif
 int net_irq, net_port;
 static int boot_console;
-static int sync_interval;
 static char bininit[] = "/bin/init";
 static char *init_command = bininit;
 
@@ -71,17 +70,11 @@ void start_kernel(void)
     /*
      * We are now the idle task. We won't run unless no other process can run.
      */
-	jiff_t wake = jiffies;
     while (1) {
         schedule();
 #ifdef CONFIG_IDLE_HALT
         idle_halt ();
 #endif
-		/* sync all devices if sync= set in /bootopts */
-		if (sync_interval && jiffies >= wake) {
-			fsync_dev(0);
-			wake = jiffies + sync_interval * HZ;
-		}
     }
 }
 
@@ -328,10 +321,6 @@ static int INITPROC parse_options(void)
 		}
 		if (!strncmp(line,"bufs=",5)) {
 			boot_bufs = (int)simple_strtol(line+5, 10);
-			continue;
-		}
-		if (!strncmp(line,"sync=",5)) {
-			sync_interval = (int)simple_strtol(line+5, 10);
 			continue;
 		}
 		

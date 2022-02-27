@@ -112,10 +112,6 @@ ifdef CONFIG_APP_SYS_UTILS
 	TAGS += :sysutil|
 endif
 
-ifdef CONFIG_APP_MAN_PAGES
-	TAGS += :man|
-endif
-
 ifdef CONFIG_APP_TEST
 	INSTDIRS += test
 endif
@@ -145,6 +141,7 @@ endif
 
 ifdef CONFIG_APPS_2880K
 	TAGS = :*|
+	CONFIG_APP_MAN_PAGES=y
 endif
 
 TAGS += :end
@@ -201,5 +198,11 @@ endif
 ifdef CONFIG_APP_CGATEXT
 	make -C cgatext install
 endif
+ifdef CONFIG_APP_MAN_PAGES
+	mkdir $(DESTDIR)/lib/man1; cp -rp man/man1 $(DESTDIR)/lib
+	mkdir $(DESTDIR)/lib/man5; cp -rp man/man5 $(DESTDIR)/lib
+	mkdir $(DESTDIR)/lib/man8; cp -rp man/man8 $(DESTDIR)/lib
+endif
+
 
 ###############################################################################

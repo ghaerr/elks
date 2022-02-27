@@ -47,7 +47,6 @@ sys_utils/login			:boot	:sysutil
 ash/ash		::bin/sh	:boot	:ash	# install as /bin/sh
 #sash/sash	::bin/sh	:boot	:~ash	# install as /bin/sh if no ASH
 sash/sash		:1200k :1440k	:sash
-sash/sash.1		::lib/man1/sash.1	:man
 sys_utils/mount			:boot	:sysutil
 sys_utils/umount		:boot	:sysutil
 sys_utils/clock			:boot	:sysutil
@@ -79,7 +78,7 @@ sys_utils/kill					:sysutil			:720k
 sys_utils/ps			:sash	:sysutil		:360
 sys_utils/reboot				:sysutil		:360k
 sys_utils/makeboot				:sysutil		:360k
-sys_utils/man			:man	:sysutil				:1200k	:1440k
+sys_utils/man					:sysutil				:1200k	:1440k
 sys_utils/meminfo		:sash	:sysutil		:360k
 sys_utils/mouse					:sysutil				:1200k	:1440k
 sys_utils/passwd				:sysutil				:1200k	:1440k
@@ -88,26 +87,8 @@ sys_utils/sercat				:sysutil				:1200k	:1440k
 sys_utils/console				:sysutil				:1200k	:1440k
 #sys_utils/who					:sysutil				:1200k	:1440k
 sys_utils/unreal16				:sysutil
-sys_utils/getty.1	::lib/man1/getty.1	:man
-sys_utils/kill.1	::lib/man1/kill.1	:man
-sys_utils/login.1	::lib/man1/login.1	:man
-sys_utils/man.1		::lib/man1/man.1	:man
-sys_utils/passwd.1	::lib/man1/passwd.1	:man
-sys_utils/ps.1		::lib/man1/ps.1		:man
-sys_utils/getty.1	::lib/man1/getty.1	:man
-sys_utils/getty.1	::lib/man1/getty.1	:man
-sys_utils/mount.8	::lib/man8/mount.8	:man
-sys_utils/reboot.8	::lib/man8/reboot.8	:man
-sys_utils/umount.8	::lib/man8/umount.8	:man
-#sys_utils/who.1	::lib/man1/who.1	:man
-#sys_utils/knl.8	::lib/man8/knl.8	:man
-#sys_utils/rdev.8	::lib/man8/rdev.8	:man
 screen/screen					:screen					:1200k	:1440k
-screen/screen.1		::lib/man1/screen.1	:man
 cron/cron   					:cron					:1200k	:1440k
-cron/crontab.1		::lib/man1/crontab.1	:man
-cron/crontab.5		::lib/man5/crontab.5	:man
-cron/cron.8			::lib/man8/cron.8	:man
 sh_utils/basename				:be-shutil			:720k
 sh_utils/clear					:shutil					:1200k	:1440k
 sh_utils/date					:be-shutil		:360k
@@ -135,8 +116,6 @@ misc_utils/sleep				:miscutil				:1200k	:1440k
 misc_utils/tty					:miscutil				:1200k	:1440k
 misc_utils/uuencode				:miscutil				:1200k	:1440k
 misc_utils/uudecode				:miscutil				:1200k	:1440k
-misc_utils/mined.1		::lib/man1/mined.1	:man
-#misc_utils/compress.1	::lib/man1/compress.1	:man
 #misc_utils/ed					:be-miscutil		:720k
 elvis/elvis	::bin/vi			:elvis				:720k
 minix1/banner					:minix1					:1200k	:1440k
@@ -200,7 +179,6 @@ inet/urlget/urlget :::httpget	:net
 #mtools/mwrite					:mtools					:1440k
 bc/bc							:other					:1440k
 #m4/m4							:other					:1440k
-#m4/m4.1			::lib/man1/mr.1		:man
 #prems/pres/pres				:other
 #nano/nano-2.0.6/src/nano		:other					:1440k
 #nano-X/bin/nxclock				:nanox					:1440k

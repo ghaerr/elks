@@ -1,5 +1,9 @@
 /* sys/mount.h*/
 
+#include <features.h>
+#include <sys/types.h>
+#include __SYSARCHINC__(statfs.h)
+
 /* filesystem types*/
 #define FST_MINIX	1
 #define FST_MSDOS	2
@@ -16,5 +20,7 @@
 
 int mount(const char *dev, const char *dir, int type, int flags);
 int umount(const char *dir);
+
+int ustatfs(dev_t dev, struct statfs *statfs);
 
 int reboot(int magic1, int magic2, int magic3);

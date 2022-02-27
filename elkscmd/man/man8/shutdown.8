@@ -1,0 +1,18 @@
+.TH SHUTDOWN 8
+.SH NAME
+shutdown \- shut down the system quickly
+.SH SYNOPSIS
+.B shutdown
+.SH DESCRIPTION
+.B Shutdown
+is a program that allows the superuser to shut down the system immediately.
+A
+.B sync
+and unmount of the root filesystem are performed, and after 3 seconds
+have elapsed, the system is halted.
+.SH "SEE ALSO"
+.BR sync (1),
+.BR unmount (1),
+.BR reboot (1),
+.BR poweroff (1),
+.BR reboot (2).

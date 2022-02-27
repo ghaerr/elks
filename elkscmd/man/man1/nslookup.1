@@ -1,0 +1,36 @@
+.TH NSLOOKUP 1
+.SH NAME
+nslookup \- Domain name server name lookup
+.SH SYNOPSIS
+.B nslookup
+.I domain [nameserver]
+.SH EXAMPLES
+.TP 25
+.B nslookup google.com
+# Display the IP address of google.com
+.SH DESCRIPTION
+.B Nslookup
+prepares a DNS query to the
+.I nameserver
+if specified, otherwise the default DNS nameserver of 208.67.222.222.
+The result IP address of the query is then displayed.
+.SH EXIT STATUS
+.TP 10
+.B 0
+Success
+.TP 10
+.B 1
+Format error, bad query
+.TP 10
+.B 2
+Server failed
+.TP 10
+.B 3
+Name doesn't exist
+.TP 10
+.B 5
+Query refused
+.SH AUTHOR
+Greg Haerr
+.SH "SEE ALSO"
+.BR in_resolv (3).

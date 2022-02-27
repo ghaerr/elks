@@ -10,13 +10,13 @@
 #include <linuxmt/config.h>
 #include <linuxmt/types.h>
 #include <linuxmt/wait.h>
-#include <linuxmt/vfs.h>
 #include <linuxmt/kdev_t.h>
 #include <linuxmt/ioctl.h>
 #include <linuxmt/net.h>
 #include <linuxmt/memory.h>
 
 #include <arch/bitops.h>
+#include <arch/statfs.h>
 
 #ifdef CONFIG_PIPE
 #include <linuxmt/pipe_fs_i.h>
@@ -260,10 +260,11 @@ struct super_block {
     unsigned char		s_dirt;
     struct file_system_type	*s_type;
     struct super_operations	*s_op;
-    unsigned short int		s_flags;
+    unsigned short 		s_flags;
     struct inode		*s_covered;
     struct inode		*s_mounted;
     struct wait_queue		s_wait;
+    char			s_mntonname[MNAMELEN];
 #ifdef BLOAT_FS
     unsigned char		s_rd_only;
     __u32			s_magic;
@@ -340,8 +341,8 @@ struct super_operations {
     void			(*put_super) ();
     void			(*write_super) ();
     int 			(*remount_fs) ();
-#ifdef BLOAT_FS	/* i8086 statfs goes to kernel, then user */
     void			(*statfs_kern) ();
+#ifdef BLOAT_FS
     int 			(*notify_change) ();
 #endif
 };

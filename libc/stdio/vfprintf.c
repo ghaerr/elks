@@ -224,6 +224,7 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
 
 	 case 's':		/* String */
 	    ptmp = va_arg(ap, char*);
+	    if (!ptmp) ptmp = "(null)";
 	  nopad:
 	    sign = '\0';
 	    pad = ' ';

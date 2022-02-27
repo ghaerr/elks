@@ -10,9 +10,6 @@
 
 /*
  * This is a small version of reboot for use in the ELKS project.
- * It is not fully functional, and may not be the most efficient
- * implementation for larger systems. It minimises memory usage and
- * code size.
  */
 
 #include <stdio.h>
@@ -28,11 +25,12 @@ int main(int argc, char **argv)
 	sync();
 	if (umount("/")) {
 		perror("reboot umount");
-		exit(1);
+		return 1;
 	}
 	sleep(3);
 	if (reboot(0x1D1E,0xC0DE,0x0123)) {
 		perror("reboot");
-		exit(1);
+		return 1;
 	}
+	return 0;
 }

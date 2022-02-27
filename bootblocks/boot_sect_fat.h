@@ -154,7 +154,7 @@ bpb_fil_sys_type:			// Filesystem type (8 bytes)
 
 	// Load the first sector of the root directory
 	movb bpb_num_fats,%al
-	cbtw
+	xor %ah,%ah
 	mov bpb_fat_sz_16,%bx		// check FAT16 fat size
 	and %bx,%bx
 	jnz 1f				// nonzero means FAT16 filesystem
@@ -213,7 +213,7 @@ find_system:
 	shr %cl,%ax
 	add %bx,%ax
 
-	// Load the file as one single blob at ELKS_INITSEG:0
+	// Load the file as one single blob at LOADSEG:0
 	mov 0x1d(%si),%dx		// File size divided by 0x100
 #if defined(CONFIG_IMG_FD1232)
 	shr %dx
@@ -225,17 +225,17 @@ find_system:
 	// #issuecomment-581034966), BIOS reads may reportedly fail if %es
 	// for read calls is not aligned to a large power of 2; to be on the
 	// safe side, rewrite 0x100:0 into something like 0:0x1000...)
-	mov $ELKS_INITSEG,%cx
+	mov $LOADSEG,%cx
 	mov %cx,%es
-.if (ELKS_INITSEG & 0xff) == 0
-	mov $ELKS_INITSEG>>4,%ch
+.if (LOADSEG & 0xff) == 0
+	mov $LOADSEG>>4,%ch
 .else
-	mov $ELKS_INITSEG<<4,%cx
+	mov $LOADSEG<<4,%cx
 .endif
-.if (ELKS_INITSEG & 0xf000) == 0
+.if (LOADSEG & 0xf000) == 0
 	xor %bx,%bx
 .else
-	mov $ELKS_INITSEG&0xf000,%bx
+	mov $LOADSEG&0xf000,%bx
 .endif
 	push %bx
 	call disk_read
@@ -260,15 +260,11 @@ boot_it:
 	push %es
 	pop %ds
 	// Signify that /linux was loaded as 1 blob
-.if ((EF_AS_BLOB|EF_BIOS_DEV_NUM) & 0xff) == 0
-	orb $(EF_AS_BLOB|EF_BIOS_DEV_NUM)>>8,elks_flags+1
-.else
-	orw $(EF_AS_BLOB|EF_BIOS_DEV_NUM),elks_flags
-.endif
+	orb $(EF_AS_BLOB|EF_BIOS_DEV_NUM),elks_flags
 	mov %ax,root_dev
 	mov %cx,part_offset  // save sector offset of booted partition
 	mov %si,part_offset+2
-	ljmp $ELKS_INITSEG+0x20,$0
+	ljmp $LOADSEG+0x20,$0
 
 kernel_name:
 	.ascii "LINUX      "

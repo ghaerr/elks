@@ -34,6 +34,7 @@
 #include <memory.h>
 #include <errno.h>
 #include <time.h>
+#include <paths.h>
 
 #define USE_UTMP	0	/* =1 to use /var/run/utmp*/
 #define DEBUG		0	/* =1 for debug messages*/
@@ -47,10 +48,12 @@
 #endif
 
 #define BUFSIZE      256
-#define INITTAB      "/etc/inittab"
-#define INITLVL      "/etc/initlvl"
-#define SHELL        "/bin/sh"
-#define GETTY        "/bin/getty"
+#define INITTAB      _PATH_INITTAB
+#define INITLVL      _PATH_INITLVL
+#define SHELL        _PATH_BSHELL
+#define GETTY        _PATH_GETTY
+#define ENV_SYNC     "sync"		/* sync= /bootopts env var override */
+#define SYNC_DEFAULT 0			/* default sync timer */
 #define MAXCHILD     8
 
 /* 'hashed' strings */
@@ -94,6 +97,7 @@ static struct tabentry children[MAXCHILD], *nextchild=children, *thisOne;
 static char runlevel;
 static char prevRunlevel;
 static char nosysinit;
+static int sync_interval = SYNC_DEFAULT;
 #if USE_UTMP
 static struct utmp utentry;
 #endif
@@ -196,6 +200,7 @@ void scanFile(void func())
 	char buf[BUFSIZE+1];
 	FILE *fp;
 
+	alarm(0);	/* eliminate possibility of interrupted fgets read */
 	fp = fopen(INITTAB, "r");
 	if (!fp) fatalmsg("Missing %s\r\n", INITTAB);
 
@@ -205,6 +210,7 @@ void scanFile(void func())
 		parseLine(buf, func);
 	}
 	fclose(fp);
+	alarm(sync_interval);
 }
 
 /* returns a pointer to the child or NULL */
@@ -464,9 +470,10 @@ void handle_signal(int sig)
 	char c;
 
 	debug("signaled %d\r\n", sig);
-	signal(SIGHUP, handle_signal);
 	switch(sig) {
 	case SIGHUP:
+		signal(SIGHUP, handle_signal);
+
 		/* got signaled by another instance of init, change runlevel! */
 		fd = open(INITLVL, O_RDONLY);
 		if (fd < 0) {
@@ -491,6 +498,12 @@ void handle_signal(int sig)
 			scanFile(enterRunlevel);
 		}
 		break;
+	case SIGALRM:
+		signal(SIGALRM, handle_signal);
+		debug("SYNC\r\n");
+		sync();
+		alarm(sync_interval);
+		break;
 	}
 }
 
@@ -499,6 +512,7 @@ int main(int argc, char **argv)
 	pid_t pid;
 	int ac = argc;
 	char **av = argv;
+	char *p;
 
 //	argv[0] = "init";
 	initname = argv[0];
@@ -537,6 +551,7 @@ int main(int argc, char **argv)
 	/* am I the No.1 init? */
 	if (getpid() == 1) {
 		signal(SIGHUP, handle_signal);
+		signal(SIGALRM, handle_signal);
 #if USE_UTMP
 		setutent();
 #endif
@@ -565,6 +580,11 @@ int main(int argc, char **argv)
 		close(1);
 		close(2);
 #endif
+		/* setup buffer auto-sync using /bootopts env var */
+		if ((p = getenv(ENV_SYNC)) != NULL)
+			sync_interval = atoi(p);
+		alarm(sync_interval);
+
 		/* endless loop waiting for signals or child exit*/
 		while (1) {
 			pid = wait(NULL);

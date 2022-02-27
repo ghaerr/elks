@@ -1,0 +1,233 @@
+.\"" Modified Thu Jun 23 19:05:15 2011 by Vivek Prakash <vivekprakash@acm.org>
+.TH HIER 7  2011-06-23 "MINIX 3" "MINIX 3 Programmer's Manual"
+.SH NAME
+hier \- Description of the file system hierarchy
+.SH DESCRIPTION
+A tour through the MINIX 3 directory hierarchy.
+.TP
+.I /
+This is where the whole tree starts, and is called root.
+.TP
+.I /bin/
+Contains the utility programs; see also \fB/sbin/\fP, \fB/usr/bin/\fP, \fB/usr/sbin\fP.
+.PP
+.nf
+	  \fBcat\fP    show files, \fBcat\fP(1)	
+	  \fBcp\fP     copy files and directories, \fBcp\fP(1)
+	  \fBmount\fP  mount file systems, \fBmount\fP(1) 
+	  \fBsh\fP     shell
+	  ...
+.fi
+.TP
+.I /dev/
+Contains device, block, or other special files. See
+.BR mknod(2).	
+.PP
+.nf
+	  \fBconsole\fP computer's console device, \fBtty\fP(4)
+	  \fBfd*\fP     floppy disk, \fBfd\fP(4)
+	  \fBc?d*\fP    hard disk, \fBhd\fP(4)
+	  \fBnull\fP    accetps and discards all input; produces no output
+	  \fBtty*\fP    terminal device, \fBtty\fP(4)
+	  \fBzero\fP    the zero device; produces null bytes
+	  ...
+.fi
+.TP
+.I /etc/
+System configuration and data files; see also \fB/usr/etc/\fP.
+.PP
+.nf
+	  \fBethers\fP  ethernet addresses database, \fBethers\fP(5)
+	  \fBfstab\fP   filesystem table, \fBfstab\fP(5)
+	  \fBgroup\fP   group permissions file
+	  \fBhostname.file\fP	
+			name of the local system, \fBusage\fP(5)
+	  \fBhosts\fP   TCP/IP hosts database, \fBhosts\fP(5)
+	  \fBhosts.equiv\fP
+			trusted remote users or hosts, \fBrhosts\fP(5)
+	  \fBinet.conf\fP  
+			internet server config file, \fBinet\fP(8)
+	  \fBkeymap\fP  keymap for custom keyboard, \fBloadkeys\fP(1)
+	  \fBman.conf\fP
+			configuration file for man(1), \fBman.conf\fP(5)
+	  \fBmotd\fP    system message of the day, \fBlogin\fP(1)
+	  \fBmtab\fP    mounted file system table, \fBfstab\fP(5)
+	  \fBpasswd\fP  user database, \fBpasswd\fP(1) 
+	  \fBprofile\fP system wide shell profile
+	  \fBrc\fP      system startup script, \fBboot\fP(8)
+	  \fBresolv.conf\fP
+			TCP/IP domain name system, \fBresolv.conf\fP(5)
+	  \fBservices\fP
+			TCP/IP names to services
+	  \fBserv.access\fP
+			internet service access control, \fBserv.access\fP(5)
+	  \fBshadow\fP  shadow password database, \fBpasswd\fP(5)
+	  \fBtermcap\fP terminal type descriptions, \fBtermcap\fP(1)
+	  \fBttytab\fP  terminals device table, \fBttytab\fP(5)
+	  \fButmp\fP    user login database, \fButmp\fP(5)
+	  ...
+.fi
+.TP
+.I /home/
+Contains home directories for users.
+.PP
+.nf
+	  \fBbin\fP     home directory for user bin
+	  \fBast\fP     Honorary home directory of Andrew S. Tanenbaum
+.fi
+.TP
+.I /mnt/
+Mount point for temporarily mounted file system.
+.TP
+.I /proc/
+Mount point for the process file system, which provides information about running processes and the kernel. 
+.TP
+.I /root/
+This directory is the home directory for the root user.
+.PP
+.nf
+	  \fB.ashrc\fP  ash (shell) startup configuration, \fBash\fP(1)
+	  \fB.exrc\fP   ex/vi (editor) startup configuration, \fBvim\fP(1)
+	  \fB.profile\fP
+			login shell profile configuration
+	  \fB.rhosts\fP remote users permission file, \fBrhosts\fP(5)
+	  \fB.ssh/\fP   contains user private keys, known_hosts and 
+			authorized_keys, \fBssh\fP(1)  	
+.fi
+.TP
+.I /sbin/
+Contains system programs and administrative utilites.
+.TP
+.I /tmp/	
+Contains small, short-lived temporary files; see also \fB/usr/tmp/\fP. 
+.TP
+.I /usr/	
+Contains source and majority of system utilities and files
+.PP
+.nf
+	  \fIadm/\fP	Contains System administration files. 
+	  
+		  	\fBlastlog\fP	last logins, \fBlogin\fP(1)
+		  	\fBlog\fP  	default log file
+		  	\fBold\fP  	last weeks log files
+		  	\fBwtmp\fP  	user logins and logouts, \fBlogin\fP(1)
+		  	\fB*.cache\fP	cached data of some programs
+		  	...
+	  
+	  \fIast/\fP	Contains user skeleton files. 
+
+	  \fIbin/\fP	Common user programs and utilities.
+
+		  	\fBman\fP  	show manual pages, \fBman\fP(1)
+		  	...
+
+	  \fIetc/\fP	More system data files; see also \fB/etc\fP. 
+
+		  	\fBdaily\fP	daily system cleanup
+	  		\fBrc\fP     	continued system initialization, \fBboot\fP(8)
+
+	  \fIinclude/\fP	
+		   Standard C include files.			
+
+		   \fBarpa\fP		include files for Internet service protocols	
+		   \fBmachine\fP	machine specific include files 
+		   \fBminix\fP 	MINIX 3 kernel include files
+		   \fBnetinet\fP	include files for Inernet standard protocols, see 
+				   \fBinet\fP(8)
+		   \fBsys\fP		system C include files.
+		   ...
+
+	  \fIlib/\fP	Compiler libraries and other support files. 
+   
+   		 \fBcawf/\fP	text formatter support files, \fBcawf\fP(1)
+   		 \fBcrontab\fP	cron jobs, \fBcron\fP(8)
+   		 \fBdict/\fP	word lists
+   		 \fBlibc.a\fP	C library
+   		 ...
+
+  	 \fIman/\fP	Contains manual pages in subdirectories according to 
+		  	the man page sections. See \fBman\fP(1).
+
+	    	\fBcat*/\fP	preformatted manual pages
+	    	\fBman0/\fP	section 0, Book style user commands
+	    	\fBman1/\fP	user commands
+	    	\fBman2/\fP	system calls
+	    	\fBman3/\fP	library routines
+	    	\fBman4/\fP	device files
+	    	\fBman5/\fP	file formats
+	    	\fBman6/\fP	games
+	    	\fBman7/\fP	miscellaneous
+	    	\fBman8/\fP	system utilities
+	    	\fBwhatis\fP	table of manual pages, \fBwhatis\fP(5)
+	    	...
+
+  	 \fImdec/\fP	
+   	 	Contains binaries associated with various boot programs. 
+
+	    	\fBboot\fP  	bootstrap code, \fBinstallboot\fP(8)
+	    	...
+
+  	\fIpkg/\fP
+   		 Contains programs which are related to local softwares.
+    
+  		 \fBbin/\fP  	utilities for locally installed programs
+   		 \fBetc/\fP  	local configuration and data files
+   		 \fBman/\fP  	manual pages associated with local programs
+   		 ...
+
+     	 \fIpreserve/\fP
+	   	Contains saved elvis editor buffers. 
+	    	See \fBelvprsv\fP(8), \fBelvrec\fP(1).
+
+     	 \fIspool/\fP
+	    	Contains spooled files for various commands and 
+	    	mail programs.
+
+	    	\fBat/\fP  	spooled jobs for \fBat\fP(1)
+	    	\fBat/past/\fP  completed \fBat\fP(1) jobs
+	    	\fBcrontabs/\fP spooled jobs for \fBcron\fP(8)	
+	    	\fBlpd/\fP  	spooled files for printing
+	    	\fBmail/\fP  	mail drops, \fBmail\fP(1)
+	    	\fBuser\fP  	mailbox of user
+	    	...
+
+   	\fIsrc/\fP	 Contains system and command source files. 
+
+	    	\fBLICENSE\fP	MINIX 3 license to use
+	    	\fBMakefile\fP	targets for building and installing libraries, 
+			    	utilities and boot files
+	    	\fBbenchmarks/\fP
+			    	test programs for system and graphic tests
+	    	\fBcommands/\fP	source file for command utilities
+	    	\fBcommon/\fP	
+			\fBinclude/\fP	includes common to NetBSD and Minix
+			\fBlib/\fP	lib files common to NetBSD kernel and libc
+	    	\fBdocs/\fP	documents related to recent source changes
+	    	\fBdrivers/\fP	source files for various device drivers
+	    	\fBetc/\fP  	source for files in /etc/	
+	    	\fBinclude/\fP	standard C include source files
+	    	\fBkernel/\fP	kernel source files
+	    	\fBlib/\fP  	source for libraries in /usr/lib/
+	    	\fBman/\fP  	manual pages	
+	    	\fBservers/\fP	source files for system servers
+	        \fBshare/\fP	source for files in /usr/share/
+	    	\fBtest/\fP	source files for system test programs	
+	    	\fBtools/\fP	kernel image making tools
+	    	...
+
+  	 \fItmp/\fP	Contains large, short lived temporary files.
+.fi
+
+.SH "SEE ALSO"
+.BR ls (1),
+.BR man (1),
+.BR find (1),
+.BR grep (1),
+.BR mount (1).
+.SH NOTES
+Not all of the directories and files shown are present.  They must be
+created as needed.
+.SH BUGS
+Many of the listed manual references do not yet exist.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

@@ -81,7 +81,7 @@ static void msdos_put_super(register struct super_block *sb)
 	return;
 }
 
-static void print_formatted(long n)
+static void print_formatted(unsigned long n)
 {
 	char kbytes_or_mbytes = 'k';
 
@@ -89,7 +89,7 @@ static void print_formatted(long n)
 		n /= 1000;
 		kbytes_or_mbytes = 'M';
 	}
-	printk("%ld%c", n, kbytes_or_mbytes);
+	printk("%lu%c", n, kbytes_or_mbytes);
 }
 
 /* Read the super block of an MS-DOS FS. */
@@ -99,9 +99,8 @@ static struct super_block *msdos_read_super(struct super_block *s, char *data,
 	struct msdos_sb_info *sb = MSDOS_SB(s);
 	struct msdos_boot_sector *b;
 	struct buffer_head *bh;
-	long total_sectors, data_sectors;
-	cluster_t cluster;
-	long total_displayed, free_displayed = 0;
+	unsigned long total_sectors, data_sectors, total_displayed;
+	cluster_t max_clusters;
 	int fat32;
 
 	cache_init();
@@ -162,7 +161,7 @@ static struct super_block *msdos_read_super(struct super_block *s, char *data,
 		*((unsigned short *) b->sectors) : b->total_sect;
 	data_sectors = total_sectors - sb->data_start;
 	sb->clusters = sb->cluster_size?  data_sectors/sb->cluster_size : 0;
-	sb->fat_bits = fat32 ? 32 : sb->clusters > MSDOS_FAT12 ? 16 : 12;
+	sb->fat_bits = fat32 ? 32 : sb->clusters > MSDOS_FAT12_MAX_CLUSTERS ? 16 : 12;
 	sb->previous_cluster = 0;
 	unmap_brelse(bh);
 
@@ -171,27 +170,41 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%
 	sb->fat_length, sb->dir_start, sb->dir_entries,
 	sb->data_start, total_sectors, b->total_sect);
 
-	if (!sb->fats || (sb->dir_entries & (MSDOS_DPS_SB(s)-1))
-	    || !b->cluster_size || 
-#ifndef FAT_BITS_32
-		sb->clusters+2 > (unsigned long) sb->fat_length *
-			(SECTOR_SIZE_SB(s) * 8 / sb->fat_bits)
-#else
-		!fat32
+	/* calculate max clusters based on FAT table size */
+	max_clusters = (cluster_t)sb->fat_length *
+		(SECTOR_SIZE_SB(s) * 8 / sb->fat_bits) - 2;
+	/*
+	 * Allow disks created with too small a FAT to be mounted, but limit free space.
+	 * (This is a bug in FreeDOS mkfat - MSDOS 6.22 will overwrite root directory
+	 * when FAT table expands past limit).
+	 * Disk free space will be shown incorrectly between ELKS and MSDOS in this case.
+	 */
+	if (sb->clusters > max_clusters) {
+	    printk("FAT: #clus=%ld > max=%ld, limiting free space\n",
+		    sb->clusters, max_clusters);
+	    sb->clusters = max_clusters;
+	}
+
+	if (!sb->fats || (sb->dir_entries & (MSDOS_DPS_SB(s)-1)) || !b->cluster_size
+#ifdef FAT_BITS_32
+		|| !fat32
 #endif
-		) {
-/*		s->s_dev = 0;*/
+			) {
 		printk("FAT: Unsupported format\n");
 		return NULL;
 	}
 
 	total_displayed = total_sectors >> (BLOCK_SIZE_BITS - SECTOR_BITS_SB(s));
+#if 0
+	long free_displayed = 0;
+	cluster_t cluster;
 	for (cluster = 2; cluster < sb->clusters + 2; cluster++)
 		if (!fat_access(s, cluster, -1))
-			free_displayed++;
+			free_displayed += sb->cluster_size;
 	free_displayed = free_displayed >> (BLOCK_SIZE_BITS - SECTOR_BITS_SB(s));
+#endif
 	printk("FAT: total "); print_formatted(total_displayed);
-	printk(", free ");     print_formatted(free_displayed);
+	//printk(", free ");     print_formatted(free_displayed);
 	printk(", fat%d format\n", sb->fat_bits);
 
 #ifdef BLOAT_FS
@@ -229,28 +242,24 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%
 }
 
 
-#ifdef BLOAT_FS
-static void msdos_statfs(struct super_block *s,struct statfs *buf)
+static void msdos_statfs(struct super_block *s,struct statfs *sf)
 {
-	cluster_t cluster_size,free,this;
-	struct statfs tmp;
+	cluster_t cluster, cluster_size;
+	unsigned long total, free = 0;
 
 	cluster_size = MSDOS_SB(s)->cluster_size;
-	tmp.f_type = s->s_magic;
-	tmp.f_bsize = SECTOR_SIZE_SB(s);
-	tmp.f_blocks = MSDOS_SB(s)->clusters * cluster_size;
-	free = 0;
-	for (this = 2; this < MSDOS_SB(s)->clusters+2; this++)
-		if (!fat_access(s,this,-1L))
-			free++;
-	free *= cluster_size;
-	tmp.f_bfree = free;
-	tmp.f_bavail = free;
-	tmp.f_files = 0;
-	tmp.f_ffree = 0;
-	memcpy(buf, &tmp, bufsiz);
+	sf->f_bsize = SECTOR_SIZE_SB(s);
+	total  = (MSDOS_SB(s)->clusters * cluster_size) + MSDOS_SB(s)->data_start;
+	sf->f_blocks = total >> (BLOCK_SIZE_BITS - SECTOR_BITS_SB(s));
+	for (cluster = 2; cluster < MSDOS_SB(s)->clusters + 2; cluster++)
+		if (!fat_access(s, cluster, -1))
+			free += cluster_size;
+	free >>= (BLOCK_SIZE_BITS - SECTOR_BITS_SB(s));
+	sf->f_bfree = free;
+	sf->f_bavail = free;
+	sf->f_files = 0;
+	sf->f_ffree = 0;
 }
-#endif
 
 
 void msdos_read_inode(register struct inode *inode)
@@ -384,11 +393,9 @@ static struct super_operations msdos_sops = {
 	msdos_write_inode,
 	msdos_put_inode,
 	msdos_put_super,
-	NULL, /* write_super*/
-	NULL  /* remount*/
-#ifdef BLOAT_FS
-	msdos_statfs,
-#endif
+	NULL,		/* write_super*/
+	NULL,		/* remount*/
+	msdos_statfs
 };
 
 struct file_system_type msdos_fs_type = {

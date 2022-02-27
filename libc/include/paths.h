@@ -4,6 +4,7 @@
 #define	___PATHS_H
 
 
+#define	_PATH_GETTY	"/bin/getty"
 #define	_PATH_LOGIN	"/bin/login"
 #define	_PATH_BSHELL	"/bin/sh"
 #define	_PATH_DEFPATH	"/bin:."
@@ -15,6 +16,8 @@
 #define _PATH_LOCALE	"/lib/locale"
 #define _PATH_MANPAGES	"/lib"
 #define _PATH_HOSTNAME	"/etc/hostname"
+#define _PATH_INITLVL	"/etc/initlvl"
+#define _PATH_INITTAB	"/etc/inittab"
 #define _PATH_ISSUE	"/etc/issue"
 #define _PATH_MOTD	"/etc/motd"
 #define _PATH_ERRSTRING	"/etc/perror"

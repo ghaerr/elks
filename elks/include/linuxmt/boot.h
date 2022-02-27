@@ -6,7 +6,6 @@
 #define __LINUXMT_BOOT_H
 
 /* Root flags */
-
 #define RF_NONE 	0
 #define RF_RO		1
 
@@ -17,13 +16,12 @@
 #endif
 
 /* ELKS flags */
-
 #define EF_NONE		0
-#define EF_AS_BLOB	0x8000		/* says that setup and kernel are
+#define EF_AS_BLOB	0x01		/* says that setup and kernel are
 					   loaded as one blob at SETUPSEG:0,
 					   and setup may need to move kernel
 					   to SYSSEG:0 */
-#define EF_BIOS_DEV_NUM	0x4000		/* says that root_dev does not give
+#define EF_BIOS_DEV_NUM	0x02		/* says that root_dev does not give
 					   a <major, minor> block device
 					   number, but only a BIOS drive
 					   number (and possibly other
@@ -31,8 +29,6 @@
 					   should use this drive number to
 					   figure out the correct root
 					   device */
-
-#define ELKSFLAGS	EF_NONE
 
 /* If we are not building the (dummy) boot sector (elks/elks/arch/i86/boot/
    {bootsect.S, netbootsect.S}) at the start of /linux, then define
@@ -53,7 +49,7 @@
 #define elks_magic	0x1e6		/* long "ELKS" (45 4c 4b 53) checked by bootsect.S*/
 #define setup_sects	0x1f1		/* byte 512-byte sectors used by setup.S*/
 #define syssize		0x1f4		/* word paragraph kernel size used by setup.S*/
-#define elks_flags	0x1f6		/* word 16-bit ELKS flags, BLOB and BIOS_DRV*/
+#define elks_flags	0x1f6		/* byte ELKS flags, BLOB and BIOS_DRV*/
 #define root_dev	0x1fc		/* word BIOS drive or kdev_t ROOT_DEV*/
 #define boot_flag	0x1fe		/* word constant AA55h*/
 #endif

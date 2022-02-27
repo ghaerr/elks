@@ -1,0 +1,39 @@
+.TH UUENCODE 1
+.SH NAME
+uuencode \- encode a binary file to ASCII (e.g., for mailing)
+.SH SYNOPSIS
+\fBuuencode\fR [\fB\-\fIn\fR] \fIfile\fR [\fB\-\fR]\fR
+.br
+.SH OPTIONS
+.TP 5
+.B \-\fIn\fR
+How many lines to put in each file
+.SH EXAMPLES
+.TP 20
+.B uuencode file
+# Encode \fIfile\fR to \fIfile.uue\fR
+.TP 20
+.B uuencode file \- >x
+# Encode \fIfile\fR and write on \fIstdout\fR
+.TP 20
+.B uuencode \-800 file
+# Output on \fIfile.uaa\fR, \fIfile.uab\fR etc.
+.SH DESCRIPTION
+.PP
+\fIUuencode\fR is a famous program that converts an arbitrary (usually binary)
+file to an encoding using only 64 ASCII characters.
+\fIUudecode\fR converts it back to the original file.
+.sp
+The files produced can even be sent successfully over BITNET, which is 
+notorious for mangling files.
+It is possible to have \fIuuencode\fR automatically split the encoded file up
+into small chunks.
+The output files then get the suffixes \fI.uaa\fR, \fI.uab\fR, etc., instead
+of \fI.uue\fR.
+When \fIuudecode\fR is given \fIfile.uaa\fR to decode, it automatically includes
+the subsequent pieces.
+.sp
+The encoding takes 3 bytes (24 bits) from the input file and renders it 
+as 4 bytes in the output file.
+.SH "SEE ALSO"
+.BR uudecode (1).

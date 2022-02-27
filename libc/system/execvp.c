@@ -147,7 +147,7 @@ execvp(char *fname, char **argv)
 	    plen = strlen(path);
 	    pname = sbrk(plen+flen);
 	    if ((int)pname == -1) {
-		errno = E2BIG;
+		errno = ENOMEM;
 		goto out;
 	    }
 
@@ -157,7 +157,7 @@ execvp(char *fname, char **argv)
 
 	    tryrun(pname, argv);
 	    if( errno == EACCES ) besterr = EACCES;
-	    if( errno == ENOMEM || errno == ENOEXEC ) goto out;
+	    if( errno == ENOMEM || errno == E2BIG || errno == ENOEXEC ) goto out;
 
 	    brk(pname);
 	    pname = fname;

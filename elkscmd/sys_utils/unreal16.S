@@ -54,7 +54,7 @@ _start:
 	mov	$trying_unreal_msg,%si
 	call	puts
 
-	call	enable_unreal_mode
+	call	check_unreal_mode
 	cmp	$-1,%ax
 	jnz	1f
 	mov     $needs_386_msg,%si
@@ -65,7 +65,8 @@ _start:
 	jmp	msg_and_exit
 
 # demo use of 32-bit address by copying stuff directly to memory-mapped screen
-2:      push    %es
+2:      call	enable_unreal_mode
+	push    %es
 	cli			# interrupts off - trashes ESI/EDI/ECX
         xor     %di,%di
         mov     %di,%es
