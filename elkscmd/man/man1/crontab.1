@@ -1,93 +1,70 @@
 .TH CRONTAB 1
 .SH NAME
-crontab \- User crontab manipulation
+crontab \- manage crontab files
 .SH SYNOPSIS
-.B crontab \-c
-.RI [ user ]
-.I file
+.B crontab
+[\fB-u \fIuser\fR] [\fIfile\fR]
 .br
-.B crontab \-l
-.RI [ user ]
-.br
-.B crontab \-r
-.RI [ user ]
-.br
-.B crontab \-p
+.B crontab
+[\fB-u \fIuser\fR] { \fB-l, -r -e\fR }
 .SH DESCRIPTION
 The
 .B crontab
-program allows users to manipulate their personal crontab files.  These
-files are hidden in
-.BI /usr/spool/crontabs/ user
-where
-.I user
-is the login name of a given user.  The system daemon
+utility is used to update, delete, or display the
+files that
+.BR cron 8
+uses to schedule jobs.  If invoked without options,
 .B cron
-uses these crontabs, among others, to run tasks that are to be repeated at
-regular intervals.  See
-.BR crontab (5)
-on what a good crontab file should look like.
-.PP
-Only the superuser can specify a user name to manipulate the crontab of a
-given user.  Any other user can only touch their own crontab file.
-.SH OPTIONS
-.TP
-\fB\-c\fR [\fIuser\fR] \fIfile\fR
-Install
-.I file
-as the crontab file of
-.IR user .
-.TP
-\fB\-l\fR [\fIuser\fR]
-List the crontab file of
-.I user
-to standard output.
-.TP
-\fB\-r\fR [\fIuser\fR]
-Remove the crontab file of
-.IR user .
-.TP
-\fB\-p\fR
-Tell cron to reload its tables.  Useful for system administrators to signal
-a change to any of the system crontab files.  Changes made by the
-.B crontab
-program are signalled automatically.  (Mnemonic: \-p = "ping".)
-.SH FILES
-.TP \w'/usr/spool/crontabs/user'u+5n
-.BI /usr/spool/crontabs/ user
-Per user personal crontab file.
-.SH "SEE ALSO"
-.BR crontab (5),
-.BR cron (8).
-.SH DIAGNOSTICS
-.B Crontab
-preparses a new crontab and only installs it if correct.  All errors are
-sent to standard error, messages about installing a new table and telling
-.B cron
-to reload are sent to standard output.
+copies the specified file, or the standard input
+if no file is specified, into the directory that
+holds all the system
+.BR crontabs (5) .
+.SS OPTIONS
+.TP 10
+.B -e
+Edits a copy of the current user's crontab file, or creates an
+empty file to edit if their crontab does not exist.  When editing
+is complete, the file is install as the user's crontab file.
+.sp
+The environment variables
+.I \&$EDITOR
+and
+.I \&$VISUAL
+determines which editor is used
+.RI ( \&$EDITOR ,
+then
+.IR \&$VISUAL ,
+and if neither of these is defined,
+.BR vi )
+.TP 10
+.B -l
+Lists the crontab file for the current user.
+.TP 10
+.B -r
+Removes the crontab file for the current user.
+.TP 10
+.B \-u \fIuser\fR
+If you are logged in as the superuser,  you can use 
+.B -u
+to specify a particular user's crontab to update,
+delete, or list.
 .SH BUGS
+If you inadvertently enter the crontab command with no
+arguments, you will lose your existing crontab unless
+you exit with a
+.B Control-C .
 .B Crontab
-misses a
-.B \-e
-option that other implementations of this command allow one to edit the
-current crontab and install the result.  Seems quite handy until you try to
-install a new crontab from an automated script.  That's why this command
-has a
-.B \-c
-option that installs a prepared crontab file.  Use
-.PP
-.RS
-.nf
-crontab \-l >/tmp/tab
-${EDITOR\-vi} /tmp/tab
-crontab \-c /tmp/tab
-.fi
-.RE
-.PP
-to get the same effect as
-.BR "crontab \-e" .
+attempts to catch this bug by refusing to overwrite a
+crontab with an empty one, but it's better to be safe
+than sorry.
+.SH FILES
+.TP 20
+.B "/var/cron"
+Where 
+.BR cron (8)
+looks for crontabs.
+.SH SEE ALSO
+.BR crontab (5) ,
+.BR cron (8) .
 .SH AUTHOR
-Kees J. Bot (kjb@cs.vu.nl)
-
-.\"
-.\" $PchId: crontab.1,v 1.3 2000/07/17 18:51:04 philip Exp $
+David Parsons (orc@pell.portland.or.us)
