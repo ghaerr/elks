@@ -1,23 +1,34 @@
-.TH WHO 1
+.TH who 1
 .SH NAME
-who \- print list of currently logged in users
+who \- show who is logged on
 .SH SYNOPSIS
-\fBwho\fR [\fIfile\fR]\fR
-.br
-.SH EXAMPLES
-.TP 20
 .B who
-# Print user names, terminals and times
 .SH DESCRIPTION
+This document describes the ELKS version of
+.BR who .
+This version is extremely minimal and should not be used whenever using a
+better version is practical.
 .PP
-\fIWho\fR prints a list of currently logged in users.  For each one, 
-the user name, terminal, and login time is printed.  
-This program gets its information from the file \fI/etc/utmp\fR, which 
-is updated by init and login.  
-If the file does not exist, neither of these will create it, and 
-\fIwho\fR will not work.  Note that if you decide to create an empty  
-\fI/usr/adm/wtmp\fR to enable the login accounting, it will grow forever and 
-eventually fill up your disk unless you manually truncate it from time to time.
-If an optional file name is provided, the logins in that file will be printed.
-.SH "SEE ALSO"
-.BR utmp (5).
+.B who
+list users currently logged onto the system as recorded in the utmp
+file. Each user is displayed as a line containing the username,
+the tty name, the time they logged in and information about where
+they are logged in from.
+.SH EXAMPLES
+.IP
+who
+.LP
+.SH EXIT STATUS
+.TP
+.B 0
+.SH FILES
+.PD 0
+.TP
+.B /var/utmp
+.TP
+.B /etc/passwd
+.PD
+.SH AUTHORS
+Al Riddoch (ajr@ecs.soton.ac.uk)
+.SH SEE ALSO
+.BR utmp (5)

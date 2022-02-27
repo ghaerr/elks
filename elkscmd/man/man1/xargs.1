@@ -41,8 +41,7 @@
 xargs \- construct argument list(s) and execute utility.
 .SH SYNOPSIS
 .B xargs
-.RB [ \-ft0 ]
-.RB [[ \-x ]
+.RB [
 .B \-n
 .IR number ]
 .RB [ \-s
@@ -104,26 +103,6 @@ The sum of the length of the utility name and the arguments passed to
 The current default value for
 .I size
 is ARG_MAX - 2048.
-.TP
-.B \-t
-Echo the command to be executed to standard error immediately before it
-is executed.
-.TP
-.B \-x
-Force
-.B xargs
-to terminate immediately if a command line containing
-.I number
-arguments will not fit in the specified (or default) command line length.
-.TP
-.B \-0
-Read null-byte terminated pathnames from standard input as may have been
-produced by the
-.B \-print0
-option of
-.BR find (1).
-This is a MINIX 3 specific extension to
-.BR xargs .
 .PP
 If no
 .I utility
