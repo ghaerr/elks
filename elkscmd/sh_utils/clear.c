@@ -4,7 +4,6 @@
 
 int main(int argc, char *argv[])
 {
-  write(STDOUT_FILENO, CLEARSEQ, 7);
-
-  return 0;
+	write(STDOUT_FILENO, CLEARSEQ, sizeof(CLEARSEQ) - 1);
+	return 0;
 }

@@ -5,15 +5,15 @@ dd \- convert and copy a file
 \fBdd\fR [\fIoption = value\fR] ...\fR
 .br
 .SH EXAMPLES
-.TP 20
+.TP 30
 .B dd if=/dev/fd0 of=/dev/fd1
-# Copy disk 0 to disk 1
-.TP 20
+Copy disk 0 to disk 1
+.TP 30
 .B dd if=x of=y bs=1w skip=4
-# Copy \fIx\fP to \fIy\fP, skipping 4 words
-.TP 20
+Copy \fIx\fP to \fIy\fP, skipping 4 words
+.TP 30
 .B dd if=x of=y count=3
-# Copy three 512\-byte blocks
+Copy three 512\-byte blocks
 .SH DESCRIPTION
 .PP
 This command is intended for copying partial files.
@@ -56,5 +56,3 @@ number to indicate words (2 bytes), blocks (512 bytes), or K
 When
 .I dd
 is finished, it reports the number of full and partial blocks read and written.
-.SH "SEE ALSO"
-.BR vol (1).

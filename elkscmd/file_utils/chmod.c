@@ -6,8 +6,6 @@
  * Most simple built-in commands are here.
  */
 
-#include "futils.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,10 +17,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include <utime.h>
-#include <errno.h>
-
-#define isoctal(ch) (((ch) >= '0') && ((ch) <= '7'))
-
+#include "futils.h"
 
 int main(int argc, char **argv)
 {
@@ -30,7 +25,7 @@ int main(int argc, char **argv)
 	int	mode;
 
 	if (argc < 3) {
-		fprintf(stderr, "You must specify a mode number and at least one file or directory.\n");
+		errmsg("You must specify a mode number and at least one file or directory.\n");
 		goto usage;
 	}
 
@@ -39,7 +34,7 @@ int main(int argc, char **argv)
 	while (isoctal(*cp)) mode = mode * 8 + (*cp++ - '0');
 
 	if (*cp) {
-		fprintf(stderr, "Mode must be an octal number\n");
+		errmsg("Mode must be an octal number\n");
 		goto usage;
 	}
 	argc--;
@@ -53,7 +48,9 @@ int main(int argc, char **argv)
 	return 0;
 
 usage:
-	fprintf(stderr, "usage: %s mode file1 [file2] ...\n", argv[0]);
-	fprintf(stderr, "Mode must be specified as an octal number (i.e. 755 is 'rwxr-xr-x')\n");
+	errmsg("usage: ");
+	errstr(argv[0]);
+	errmsg(" mode file1 [file2] ...\n");
+	errmsg("mode must be specified as an octal number (i.e. 755 is 'rwxr-xr-x').\n");
 	return 1;
 }
