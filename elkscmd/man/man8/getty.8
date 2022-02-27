@@ -1,40 +1,71 @@
-.TH GETTY 8
+.TH getty 8 "ELKS System Utilities" "ELKS" \" -*- nroff -*-
 .SH NAME
-getty \- system login banner
+getty \- initialise a terminal for login
 .SH SYNOPSIS
 .B getty
-.RI [ banner " ...]"
+/dev/device [baud]
 .SH DESCRIPTION
-.B Getty
-displays a system identification banner, reads a user name from standard
-input and executes
+Set the default terminal parameters including baud rate and
+display a system identification banner
+.B (/etc/issue)
+to the terminal, followed by a login prompt.
+Then read a user name from standard
+input and execute
 .B login
 with that name as argument.
-.PP
-.B Getty
-uses its arguments separated by spaces as a login banner.  The character
-sequences
-.BR \en ,
-.BR \es
-and
-.BR \et
-are printed as newline, space and tab.  Any other
-.BI \e x
-prints that
-.IR x .
-The character sequences
-.BR %s ,
-.BR %n ,
-etc. produce the same output as
-.BR "uname \-s" ,
-.BR "uname \-n" ,
-etc.  The default banner is
-.PP
-.RS
-%s\es\esRelease\es%r\esVersion\es%v\en\en%n\eslogin:\es
-.RE
-.SH "SEE ALSO"
-.BR ttytab (5),
-.BR init (8).
-.SH AUTHOR
-Kees J. Bot <kjb@cs.vu.nl>
+.P
+This version supports the following meta-codes in 
+.B /etc/issue
+if the configuration variable
+SUPER_SMALL has NOT been defined:
+.TP
+.B @@
+The '@' character.
+.TP
+.B @B
+The current Baud rate of the serial port, taken from the command line.
+.TP
+.B @D
+The current date in DD-MMM-YYYY format. 25-Dec-1984 would be an example.
+.TP
+.B @H
+The current system hostname. If /etc/hostname is found, the contents
+of its first line are used, otherwise "LocalHost" is assumed.
+.TP
+.B @L
+The current connection identifier, taken from the command line.
+.TP
+.B @S
+The current system type, always "ELKS".
+.TP
+.B @T
+The current system time in 24 hour HH:MM:SS format.
+.. .TP
+.. .B @U
+.. The current number of connected users.
+.TP
+.B @V
+The current kernel version. This is currently fixed during compilation.
+.P
+Also supported are the standard C escape codes.
+.SH EXIT STATUS
+.TP
+.B 1
+Exec of /bin/login failed.
+.SH FILES
+.TP
+.B /bin/login
+The program used to complete the login process.
+.TP
+.B /etc/hostname
+The current system hostname.
+.TP
+.B /etc/issue
+The current pre-login message.
+.PD
+.SH AUTHORS
+Al Riddoch (ajr@ecs.soton.ac.uk)
+.SH SEE ALSO
+.BR login (8)
+.BR init (8)
+.BR inittab (5)

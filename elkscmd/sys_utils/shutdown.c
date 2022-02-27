@@ -11,9 +11,6 @@
 
 /*
  * This is a small version of shutdown for use in the ELKS project.
- * It is not fully functional, and may not be the most efficient
- * implementation for larger systems. It minimises memory usage and
- * code size.
  */
 
 #include <stdio.h>
@@ -22,18 +19,17 @@
 #include <errno.h>
 #include <sys/mount.h>
 
-int main(argc,argv)
-int argc;
-char ** argv;
+int main(int argc, char **argv)
 {
 	sync();
 	if (umount("/")) {
 		perror("shutdown umount");
-		exit(1);
+		return 1;
 	}
 	sleep(3);
 	if (reboot(0x1D1E,0xC0DE,0x6789)) {
 		perror("shutdown");
-		exit(1);
+		return 1;
 	}
+	return 0;
 }
