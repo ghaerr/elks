@@ -194,7 +194,7 @@ int open_page(char * name)
    p = strrchr(name, '.');
    if (p) {
       if (strcmp(p, ".gz") == 0) command = "gzip -dc ";
-      if (strcmp(p, ".Z") == 0)  command = "uncompress -c ";
+      if (strcmp(p, ".Z") == 0)  command = "compress -dc ";
    }
 
    if (command) {
