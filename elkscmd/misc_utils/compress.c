@@ -292,6 +292,7 @@ static char ident[] = "(N)compress 4.2.4";
 #endif /* DOS */
 
 #ifdef ELKS
+#  pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #  define BITS 12		/* 16-bits processor max 12 bits	*/
 #  undef BYTEORDER
 #  define BYTEORDER 4321	/* CM: FIXME: Assumes little-endian ELKS */
@@ -722,7 +723,7 @@ main(argc, argv)
     	REG3	char	**filelist;
 	REG4	char	**fileptr;
 
-    	if (fgnd_flag = (signal(SIGINT, SIG_IGN) != SIG_IGN))
+	if ((fgnd_flag = (signal(SIGINT, SIG_IGN)) != SIG_IGN))
 		signal(SIGINT, (SIG_TYPE)abort_compress);
 
 	signal(SIGTERM, (SIG_TYPE)abort_compress);
@@ -957,9 +958,9 @@ comprexx(fileptr)
 #endif
 			if (!quiet)
 			    	fprintf(stderr,"%s is a directory -- ignored\n", tempname);
-		  	break;
+		break;
 
-		case S_IFREG:	/* regular file */
+	case S_IFREG:	/* regular file */
 		  	if (do_decomp != 0)
 			{/* DECOMPRESSION */
 		    	if (!zcat_flg) {
@@ -1243,7 +1244,7 @@ compdir(dir)
 	** think it's worth it. -- Dave Mack
 	*/
 
-	while (dp = readdir(dirp)) {
+	while ((dp = readdir(dirp)) != NULL) {
 		if (dp->d_ino == 0)
 			continue;
 

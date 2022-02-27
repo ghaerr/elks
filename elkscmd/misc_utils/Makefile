@@ -14,8 +14,8 @@ KERNEL_LIBS = $(TOPDIR)/elks/arch/i86/lib/lib86.a
 
 ###############################################################################
 
-#TODO: fix compress uncompress zcat lpfilter disabled
-PRGS = tar miniterm ed fdtest od hd time kilo mined sleep tty uuencode uudecode
+#TODO: fix uncompress zcat lpfilter disabled
+PRGS = tar miniterm ed fdtest od hd time kilo mined sleep tty uuencode uudecode compress
 
 #PRGS_HOST=compress.host
 
