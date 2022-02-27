@@ -1,84 +1,24 @@
-.\" Copyright (c) 1983 Regents of the University of California.
-.\" All rights reserved.  The Berkeley software License Agreement
-.\" specifies the terms and conditions for redistribution.
-.\"
-.\"	@(#)telnet.1c	6.5 (Berkeley) 5/10/86
-.\"
 .TH TELNET 1
-.UC 5
 .SH NAME
-telnet \- user interface to the \s-1TELNET\s0 protocol
+telnet \- user interface to the TELNET protocol
 .SH SYNOPSIS
-telnet [
+telnet
 .I host
 [
 .I port
-] ]
+]
 .SH DESCRIPTION
 .I Telnet
-is used to communicate with another host using the
-.B TELNET
-protocol.
-If 
-.I telnet
-is invoked without arguments, it enters command mode,
-indicated by its prompt (\*(lqtelnet>\*(rq).
-In this mode, it accepts and executes the commands listed below.
-If it is invoked with arguments, it performs an
-.B open
-command (see below) with those arguments.
+is used to communicate with another host using the TELNET protocol.
 .PP
-Once a connection has been opened,
-.I telnet
-enters an input mode.
-The input mode entered will be either \*(lqcharacter at a time\*(rq
-or \*(lqline by line\*(rq
-depending on what the remote system supports.
-.PP
-In \*(lqcharacter at a time\*(rq mode, most
+Once a connection has been opened, all
 text typed is immediately sent to the remote host for processing.
 .PP
-In \*(lqline by line\*(rq mode, all text is echoed locally,
-and (normally) only completed lines are sent to the remote host.
-The \*(lqlocal echo character\*(rq (initially \*(lq^E\*(rq) may be used
-to turn off and on the local echo
-(this would mostly be used to enter passwords
-without the password being echoed).
-.PP
-In either mode, if the
-.I localchars
-toggle is TRUE (the default in line mode; see below),
-the user's
-.IR quit ,
-.IR intr ,
-and
-.I flush
-characters are trapped locally, and sent as
-.B TELNET
-protocol sequences to the remote side.
-There are options (see
-.B toggle
-.I autoflush
-and
-.B toggle
-.I autosynch
-below)
-which cause this action to flush subsequent output to the terminal
-(until the remote host acknowledges the
-.B TELNET
-sequence) and flush previous terminal input
-(in the case of
-.I quit
-and
-.IR intr ).
 .SH BUGS
 .PP
+There is no way to exit
+.B telnet
+except by disconnecting from the remote host. This is usually
+done by typing ^D (control-D).
+.PP
 There is no adequate way for dealing with flow control.
-.PP
-On some remote systems, echo has to be turned off manually when in
-\*(lqline by line\*(rq mode.
-.PP
-In \*(lqline by line\*(rq mode, the terminal's
-.I eof
-character is only recognized (and sent to the remote system)
-when it is the first character on a line.

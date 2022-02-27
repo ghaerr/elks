@@ -1,4 +1,4 @@
-.TH getty 8 "ELKS System Utilities" "ELKS" \" -*- nroff -*-
+.TH getty 8
 .SH NAME
 getty \- initialise a terminal for login
 .SH SYNOPSIS
@@ -58,14 +58,14 @@ Exec of /bin/login failed.
 The program used to complete the login process.
 .TP
 .B /etc/hostname
-The current system hostname.
+The system hostname (not yet implemented).
 .TP
 .B /etc/issue
-The current pre-login message.
+The pre-login message.
 .PD
 .SH AUTHORS
 Al Riddoch (ajr@ecs.soton.ac.uk)
 .SH SEE ALSO
-.BR login (8)
-.BR init (8)
+.BR login (8),
+.BR init (8),
 .BR inittab (5)

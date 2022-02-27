@@ -7,12 +7,21 @@ cmp \- compare two files
 .SH EXAMPLES
 .TP 20
 .B cmp file1 file2
-Tell whether the files are the same, or print first position of difference.
+# Tell whether the files are the same, or print first position of difference.
 .SH DESCRIPTION
 .PP
-Two files are compared.
-If they are identical, exit status 0 is returned.
-If they differ, exit status 1 is returned.
-If the files cannot be opened, exit status 2 is returned.
+Two files are compared. If the files differ, the location
+of the first byte of difference is displayed, otherwise
+no message is displayed.
+.SH EXIT STATUS
+.TP 10
+.B 0
+Files identical
+.TP 10
+.B 1
+Files differ
+.TP 10
+.B 2
+File(s) cannot be opened
 .SH "SEE ALSO"
 .BR diff (1).
