@@ -4,17 +4,22 @@
 #include <string.h>
 
 /*
- * Type tty name
+ * Display tty name
  */
+
+#define msgout(str) write(STDOUT_FILENO, str, sizeof(str) - 1)
+#define strout(str) write(STDOUT_FILENO, str, strlen(str))
 
 int main(int argc, char **argv)
 {
-	register char *p;
+	char *p = ttyname(0);
 
-	p = ttyname(0);
-	if(argc==2 && !strcmp(argv[1], "-s"))
+	if(argc == 2 && !strcmp(argv[1], "-s"))
 		;	/* silent mode,  just exit code */
-	else
-		printf("%s\n", (p? p: "not a tty"));
+	else {
+		if (p) strout(p);
+		else msgout("not a tty");
+		msgout("\n");
+	}
 	exit(p? 0: 1);
 }

@@ -8,4 +8,9 @@
  */
 
 #define	PATHLEN		256	
+
 #define	isdecimal(ch)	(((ch) >= '0') && ((ch) <= '9'))
+#define isoctal(ch)     (((ch) >= '0') && ((ch) <= '7'))
+
+#define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
+#define errstr(str) write(STDERR_FILENO, str, strlen(str))

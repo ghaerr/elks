@@ -2,8 +2,8 @@
 .SH NAME
 umount \- unmount a mounted file system
 .SH SYNOPSIS
-\fBumount \fIname\fR
-.br
+.B umount
+.I [device | directory ]
 .SH EXAMPLES
 .TP 20
 .B umount /dev/fd1
@@ -14,15 +14,27 @@ umount \- unmount a mounted file system
 .SH DESCRIPTION
 .PP
 This command unmounts a file system identified by
-.IR name .
+.IR device
+or
+.IR directory .
 This name may be either a block special file, or the path name of a mount
 point.
+.sp
 A mounted file system is unmounted after the cache has been flushed to disk.
 A diskette should never be removed while it is mounted.
 If this happens, and is discovered before another diskette is inserted, the
 original one can be replaced without harm.
 Attempts to unmount a file system holding working directories or open files
 will be rejected with a \&'device busy\&' message.
+.SH EXIT STATUS
+.TP
+.B 0
+Filesystem unmounted successfully.
+.TP
+.B 1
+Wrong number of arguments, or umount was unsuccessful.
+.SH AUTHORS
+David Bell
 .SH "SEE ALSO"
-.BR mount (1),
+.BR mount (8),
 .BR umount (2).

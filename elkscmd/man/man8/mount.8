@@ -1,62 +1,67 @@
-.TH MOUNT 1
+.TH mount 8
 .SH NAME
 mount \- mount a file system
 .SH SYNOPSIS
-\fBmount [\fB\-r\fR] [\fB\-t \fItype\fR] [\fB\-o \fIoptions\fR] \fIspecial \fIfile\fR
-.br
-.SH OPTIONS
-.TP 5
-.B \-a
-# All file systems in /etc/fstab except \/ are mounted. File systems marked 'noauto' are skipped
-.TP 5
-.B \-r
-# File system is mounted read-only
-.TP 5
-.B \-t
-# File system type
-.TP 5
-.B \-n
-# Don't update mtab
-.TP 5
-.B \-o
-# Options passed to FS server
-.SH EXAMPLES
-.TP 20
-.B mount /dev/fd1 /user
-# Mount diskette 1 on \fI/user\fP
-.TP 20
-.B mount \-t procfs none /proc
-# Mount proc file system on \fI/proc\fP
-.TP 20
-.B mount \-a
-# Mount all file systems listed in /etc/fstab except \/.
+.B mount
+.I
+[\-a][\-q][\-t fstype][\-o ro|remount,rw] device directory
 .SH DESCRIPTION
-.PP
-The file system contained on the special file \fIspecial\fP is mounted on
-\fIfile\fP. If the value of "\fBnone\fP" is given for \fIspecial\fP,
-the file system is mounted without a block special device underneath it.
-In the first example above, the root directory of the file system in drive 1
-can be accessed as
-.B /user
-after the mount.
-When the file system is no longer needed, it must be unmounted before being
-removed from the drive.
-.PP
-The
-.B \-t
-parameter may be used to mount a file system of a type other than the default.
-The
-.B \-o
-flag may be used to pass options to the file system server.
-The interpretation of these options is up to the server.
+.BR mount
+takes as arguments the name of a 
+.I device
+and a 
+.I directory
+name to be used as a mount point. Once the filesystem on the
+.I device
+is mounted, its root directory replaces the 
+.I directory 
+given.
 .PP
 If \fBmount\fP is invoked without any parameters, it will print the list of
-currently mounted file systems according to
-.BR mtab (5).
-.SH "SEE ALSO"
-.BR df (1),
-.BR mkfs (1),
-.BR fsck (1),
-.BR umount (1),
-.BR mount (2),
-.BR fstab (5).
+currently mounted filesystems.
+.SH OPTIONS
+.TP
+.I "-a"
+Auto-mount the filesystem by inspecting its superblock.
+.TP
+.I "-t"
+Specify the type of filesystem to be mounted. Default is
+.B minix .
+.TP
+.I "-o"
+Specify ro (readonly) or remount,rw (remount read/write) options.
+.TP
+.I "-q"
+Query filesystem type and set return value based on filesystem.
+.SH EXAMPLES
+.TP 30
+.B mount \-t minix /dev/hda1 /mnt
+# Mount first partition of first hard drive (type MINIX) on /mnt
+.TP 30
+.B mount \-a /dev/fd1 /mnt
+# Mount diskette 1 (MINIX or DOS) on /mnt
+.LP
+.SH EXIT STATUS
+.TP
+.B 0
+Filesystem mounted successfully.
+.TP
+.B 1
+Wrong number of arguments, mount was unsuccessful, or unknown filesystem type.
+.TP
+.B 2
+When used with \-q, filesystem is MINIX.
+.TP
+.B 3
+When used with \-q, filesystem is MSDOS/FAT.
+.SH AUTHORS
+David Bell
+.br
+Al Riddoch
+.br
+Greg Haerr
+.SH SEE ALSO
+.BR umount (8),
+.BR mkfs (8),
+.BR fsck (8),
+.BR mount (2).

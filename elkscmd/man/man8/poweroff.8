@@ -1,13 +1,21 @@
-.TH POWEROFF 1
+.TH POWEROFF 8
 .SH NAME
-poweroff \- power off the machine
+poweroff \- power off the system immediately
 .SH SYNOPSIS
 .B poweroff
 .SH DESCRIPTION
-This command powers off the machine, by calling
-.B shutdown
-and passing the
-.I off
-directive to the boot monitor.
+.B Poweroff
+is a program that allows the superuser to power off the system immediately.
+A
+.B sync
+and unmount of the root filesystem are performed, and after 3 seconds
+have elapsed, the system is powered off.
+.SH BUGS
+Not all systems support powering off, in which case the system
+will remain on but halted.
 .SH "SEE ALSO"
-.BR shutdown (8).
+.BR sync (1),
+.BR unmount (1),
+.BR reboot (1),
+.BR shutdown (1),
+.BR reboot (2).

@@ -6,8 +6,6 @@
  * Most simple built-in commands are here.
  */
 
-#include "futils.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,6 +18,7 @@
 #include <grp.h>
 #include <utime.h>
 #include <errno.h>
+#include "futils.h"
 
 int main(int argc, char **argv)
 {
@@ -37,13 +36,13 @@ int main(int argc, char **argv)
 			gid = gid * 10 + (*cp++ - '0');
 
 		if (*cp) {
-			fprintf(stderr, "Bad gid value\n");
+			errmsg("Bad gid value\n");
 			goto usage;
 		}
 	} else {
 		grp = getgrnam(cp);
 		if (grp == NULL) {
-			fprintf(stderr, "Unknown group name\n");
+			errmsg("Unknown group name\n");
 			goto usage;
 		}
 
@@ -62,6 +61,8 @@ int main(int argc, char **argv)
 	return 0;
 
 usage:
-	fprintf(stderr, "usage: %s group_name file1 [file2] ...\n", argv[0]);
+	errmsg("usage: ");
+	errstr(argv[0]);
+	errmsg(" group_name file1 [file2] ...\n");
 	return 1;
 }

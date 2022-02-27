@@ -1,78 +1,87 @@
-.TH PS 1
+.TH ps 1 "ELKS System Utilities" "ELKS" \" -*- nroff -*-
 .SH NAME
-ps \- process status
+ps \- list processes
 .SH SYNOPSIS
-\fBps \fR[\fR[\fB\-\fR]\fBalxE\fR] 
-.br
-.SH OPTIONS
-.TP 5
-.B \-a
-# Print all processes with controlling terminals
-.TP 5
-.B \-l
-# Give long listing
-.TP 5
-.B \-x
-# Include processes without a terminal
-.TP 5
-.B \-E
-# Print kernel endpoint numbers where pids are normally printed
-.SH EXAMPLES
-.TP 20
 .B ps
-# Show user's own processes in short format
-.TP 20
-.B ps \-axlE
-# Print all processes and tasks in long format
-.TP 20
-.B ps \axlE
-# Same -- the '\-' is optional
 .SH DESCRIPTION
+.BR ps
+prints a list of all the processes currently running on the system, giving
+a line for each process. The process id, process group, tty, user, state,
+the kernel code and data segment address of the corresponding binary, the process
+heap total and free, overall process memory size, and the process name
+and command line are displayed.
 .PP
-\fIPs\fR prints the status of active processes.  Normally only the caller's own
-processes are listed in short format (the PID, TTY, TIME and CMD fields as
-explained below).  The long listing contains:
-.PP
-  ST
-	State:
-		R: runnable
-		W: waiting (on a message)
-		S: sleeping (i.e.,suspended on PM or VFS)
-		Z: zombie
-		T: stopped
-.PP
-  UID, PID, PPID, PGRP
-	The user, process, parent process and process group ID's.
-.PP
-  SZ
-	Size of the process in kilobytes.
-.PP
-  RECV
-	Process/task on which a receiving process is waiting or sleeping.
-.PP
-  TTY	
-	Controlling tty for the process.
-.PP
-  TIME
-	Process' cumulative (user + system) execution time.
-.PP
-  CMD	Command line arguments of the process.
-.PP
-.PP
-The \fI/proc\fR file system is used to obtain the process information.
-Terminal names in \fI/dev\fR are used to generate the
-mnemonic names in the TTY column, so \fIps\fR is independent of terminal naming
-conventions.
-.SH NOTES
-The '\-' option prefix is not required.
-For marginal compatibility with System V usage, the hidden option
-.B \-e
-means the same as
-.BR \-ax ,
-and
-.B \-f
-is the same as
-.BR \-l .
-
-.\" edited by ASW 2004-12-14
-
+Each line of the listing contains:
+.TP 10
+PID
+The process ID.
+.TP 10
+GRP
+The process group.
+.TP 10
+TTY
+The controlling TTY.
+.TP 10
+USER
+The user ID.
+.TP 10
+STAT
+Process status (see below).
+.TP 10
+CSEG
+Code segment in main memory in hex.
+.TP 10
+DSEG
+Data segment in main memory in hex.
+.TP 10
+HEAP
+Current heap used (decimal).
+.TP 10
+FREE
+Remaining heap and stack space available (decimal).
+.TP 10
+SIZE
+Total main memory uysed in bytes.
+.TP 10
+COMMAND
+Program name and arguments.
+.SH "PROCESS STATES"
+Process states are from the following table:
+.TP 10
+R
+Running
+.TP 10
+S
+Interruptible sleeping
+.TP 10
+s
+Uninterruptible sleeping
+.TP 10
+T
+Stopped
+.TP 10
+Z
+Zombie
+.TP 10
+E
+Exiting
+.SH EXIT STATUS
+.TP
+.B 0
+Process table read successfully.
+.TP
+.B 1
+Unable to accesss 
+.I /dev/kmem
+or could not read task entries.
+.SH FILES
+.PD 0
+.TP
+.B /dev/kmem
+.PD
+.SH BUGS
+This is not really much like real UNIX ps yet.
+.SH AUTHORS
+Al Riddoch (ajr@ecs.soton.ac.uk)
+.br
+Greg Haerr (greg@censoft.com)

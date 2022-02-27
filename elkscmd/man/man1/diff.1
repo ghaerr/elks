@@ -1,0 +1,35 @@
+.TH DIFF 1
+.SH NAME
+diff \- print differences between two files
+.SH SYNOPSIS
+.B
+diff
+.I
+[\-c N] [\-e] [\-b] oldfile Inewfile
+.br
+.SH OPTIONS
+.TP 5
+.B \-c N
+Provide \fIN\fR lines of context
+.TP 5
+.B \-e
+Prints an ed script, so you can convert oldfile to newfile with the command
+.B
+ed oldfile < `diff -e oldfile newfile`.
+.TP 5
+.B \-b
+Causes trailing blanks to be ignored and spaces of multiple blanks to
+be reduced to one blank before comparison.
+.SH EXAMPLES
+.TP 25
+.B diff old new >f
+# Write context diff on \fIf\fR
+.TP 25
+.B diff \-c1 old new >f
+# Use only 1 line of context
+.SH DESCRIPTION
+.PP
+Some update programs, like \fIpatch\fR, can use context diffs to update
+files, even in the presence of other, independent changes.
+.SH "SEE ALSO"
+.BR cmp (1).

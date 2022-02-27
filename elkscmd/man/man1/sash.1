@@ -24,10 +24,10 @@ are built-in to
 These built-in commands are:
 .PP
 .NF
-     -chgrp, -chmod, -chown, -cmp, -cp, -dd, -echo,
-     -ed, -grep, -kill, -ln, -ls, -mkdir, -mknod,
-     -more, -mount, -mv, -printenv, -pwd, -rm, -rmdir,
-     -sync, -tar, -touch, -umount
+     chgrp, chmod, chown, cmp, cp, dd, echo,
+     ed, grep, kill, ln, ls, mkdir, mknod,
+     more, mount, mv, printenv, pwd, rm, rmdir,
+     sync, tar, touch, umount
 .FI
 .PP
 These commands are generally similar to the standard programs with similar
@@ -85,30 +85,30 @@ dirname.  If
 is absent, then the current directory is changed
 to the user's home directory (value of the $HOME environment variable).
 .TP
-.B -chgrp gid filename ...
+.B chgrp gid filename ...
 Change the group id for the specified list of files.  The
 .I gid
 can
 either be a group name, or a decimal value.
 .TP
-.B -chmod mode filename ...
+.B chmod mode filename ...
 Change the mode of the specified list of files.  The
 .I mode
 argument
 can only be an octal value.
 .TP
-.B -chown uid filename ...
+.B chown uid filename ...
 Change the owner id for the specified list of files.  The
 .I uid
 can
 either be a user name, or a decimal value.
 .TP
-.B -cmp filename1 filename2
+.B cmp filename1 filename2
 Determines whether or not the specified filenames have identical data.
 This says that the files are links to each other, are different sizes,
 differ at a particular byte number, or are identical.
 .TP
-.B -cp srcname ... destname
+.B cp srcname ... destname
 Copies one or more files from the
 .I srcname
 to the
@@ -118,7 +118,7 @@ than one srcname is given, or if destname is a directory, then all
 the srcnames are copied into the destname directory with the same
 names as the srcnames.
 .TP
-.B -dd if=name of=name [bs=n] [count=n] [skip=n] [seek=n]
+.B dd if=name of=name [bs=n] [count=n] [skip=n] [seek=n]
 Copy data from one file to another with the specified parameters.
 The
 .I if
@@ -143,12 +143,12 @@ from the set 'kbw', which multiplies the value by 1024, 512, and 2
 respectively.  The command reports the number of full blocks read
 and written, and whether or not any partial block was read or written.
 .TP
-.B -echo [args] ...
+.B echo [args] ...
 Echo the arguments to the -echo command.  Wildcards are expanded, so
 this is convenient to get a quick list of filenames in a directory.
 The output is always terminated with a newline.
 .TP
-.B -ed [filename]
+.B ed [filename]
 Edit the specified file using line-mode commands.  The following
 .B ed
 commands are provided: = c r w i a d p l s f k z and q.
@@ -169,7 +169,7 @@ completely by the executed program.
 Quit from
 .BR sash .
 .TP
-.B -grep [-in] word filename ...
+.B grep [-in] word filename ...
 Display lines of the specified files which contain the given word.
 If only one filename is given, then only the matching lines are
 printed.  If multiple filenames are given, then the filenames are
@@ -183,13 +183,13 @@ numbers of the matching lines are also printed.
 .B help
 Displays a list of built-in commands.
 .TP
-.B -kill [-signal] pid ...
+.B kill [-signal] pid ...
 Sends the specified signal to the specified list of processes.
 .I Signal
 is a numberic value, or one of the special values HUP, INT,
 QUIT, or KILL.
 .TP
-.B -ln [-s] srcname ... destname
+.B ln [-s] srcname ... destname
 Links one or more files from the
 .I srcname
 to the specified
@@ -200,7 +200,7 @@ put in the destname directory with the same name as the source name.
 The default links are hard links.  Using -s makes symbolic links.
 For symbolic links, only one srcname can be specified.
 .TP
-.B -ls [-lid] filename ...
+.B ls [-lid] filename ...
 Display information about the specified filesnames, which may be
 directories.  The normal listing is simply a list of filenames,
 one per line.  The options available are -l, -i, and -d.  The -l
@@ -209,11 +209,11 @@ The -i option also displays the inode numbers of the files.  The
 -d option displays information about a directory, instead of the
 files within it.
 .TP
-.B -mkdir dirname ...
+.B mkdir dirname ...
 Creates the specified directories.  They are created with the
 default permissions.
 .TP
-.B -mknod filename type major minor
+.B mknod filename type major minor
 Creates a special device node, either a character file or a block
 file.
 .I Filename
@@ -226,17 +226,17 @@ is the major device number.
 is the minor device number.
 Both of these numbers are decimal.
 .TP
-.B -more filename ...
+.B more filename ...
 Type out the contents of the specified filenames, one page at a
 time.  For each page displayed, you can type 'n' and a return to go
 to the next file, 'q' and a return to quit the command completely,
 or just a return to go to the next page.
 .TP
-.B -mount [-t type] devname dirname
+.B mount [-t type] devname dirname
 Mount a filesystem on a directory name.  The -t option specifies the
 type of filesystem being mounted, and defaults to "minix".
 .TP
-.B -mv srcname ... destname
+.B mv srcname ... destname
 Moves one or more files from the
 .I srcname
 to the
@@ -247,7 +247,7 @@ same names as the srcnames.  Renames are attempted first, but if
 this fails because of the files being on different filesystems,
 then a copies and deletes are done instead.
 .TP
-.B -printenv [name]
+.B printenv [name]
 If
 .I name
 is not given, this prints out the values of all the current
@@ -259,17 +259,17 @@ is given, then only that environment variable value is printed.
 Sets the prompt string that is displayed before reading of a
 command.  A space is always added to the specified prompt.
 .TP
-.B -pwd
+.B pwd
 Prints the current working directory.
 .TP
 .B quit
 Exits from
 .BR sash .
 .TP
-.B -rm filename ...
+.B rm filename ...
 Removes one or more files.
 .TP
-.B -rmdir dirname ...
+.B rmdir dirname ...
 Removes one or more directories.  The directories must be empty
 for this to be successful.
 .TP
@@ -279,10 +279,10 @@ Set the value of an environment variable.
 .B source filename
 Execute commands which are contained in the specified filename.
 .TP
-.B -sync
+.B sync
 Do a "sync" system call to force dirty blocks out to the disk.
 .TP
-.B -tar [xtv]f devname [filename] ...
+.B tar [xtv]f devname [filename] ...
 List or restore files from a tar archive.  This command can only
 read tar files, not create them.  The available options are xtvf.
 The f option must be specified, and accepts a device or file
@@ -291,7 +291,7 @@ given, all files in the archive are listed or extracted.  Otherwise,
 only those files starting with the specified filenames are done.
 Leading slashes in the tar archive filenames are removed.
 .TP
-.B -touch filename ...
+.B touch filename ...
 Updates the modify times of the specifed files.  If a file does not
 exist, then it will be created with the default protection.
 .TP
@@ -304,7 +304,7 @@ permissions of newly created files.  If
 is not given, then the
 current umask value is printed.  The mask is an octal value.
 .TP
-.B -umount filename
+.B umount filename
 Unmounts a file system.  The filename can either be the device name
 which is mounted, or else the directory name which the file system
 is mounted onto.
@@ -312,21 +312,6 @@ is mounted onto.
 .B unalias name
 Remove the definition for the specified alias.
 .SH WARNINGS
-.B Sash
-should obviously be linked statically, otherwise it's purpose is lost.
-.PP
-The system is still vulnerable to unrunnable shared versions of
-.B init
-and
-.B sh.
-A patch to the kernel to run
-.B sash
-directly instead of
-.B init
-if the proper keyword is given to
-.B lilo
-would be very useful.
-.PP
 Several other system commands might be necessary for system recovery,
 but aren't built-in to
 .BR sash .

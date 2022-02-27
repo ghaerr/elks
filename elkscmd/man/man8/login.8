@@ -5,18 +5,14 @@ login \- log on to the system
 .B login
 [username]
 .SH DESCRIPTION
-This document describes the ELKS version of
-.BR login .
-This version is extremely minimal and should not be used whenever using a
-better version is practical.
 .B login
 is used at the beginning of each terminal session to verify that the users
-password is entered corrently, to update the utmp file to indicate the
-user is logged in, change to the correct user id and group id, initialise
+password is entered corrently,
+change to the correct user id and group id, initialise
 the users environment, change to the users home directory and start the users
 shell.
-.SS OPTIONS
-.TP
+.SH OPTIONS
+.TP 15
 .I "[username]"
 Log in the user with the given name. If none is specified then a prompt
 is printed and a username accepted.
@@ -36,7 +32,6 @@ Set to the users shell.
 .SB TERM
 Set to the current terminal.
 .SH EXIT STATUS
-<exit status info>
 .TP
 .B 1
 Failed to log in user.
@@ -59,4 +54,4 @@ David Murn (scuffer@hups.apana.org.au)
 Shane Kerr (kerr@wizard.net)
 .SH SEE ALSO
 .BR getty (8),
-.BR utmp (5)
+.BR init (8).
