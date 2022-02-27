@@ -107,7 +107,7 @@ int find_page(char *name, char *sect)
 {
 static char defpath[] = _PATH_MANPAGES;
 static char defsect[] = "1:2:3:4:5:6:7:8:9";
-static char defsuff[] = ":.gz:.Z";
+static char defsuff[] = ":.Z:.gz";
 static char manorcat[] = "man:cat";
 
    char fbuf[256];
@@ -421,11 +421,11 @@ int fetch_word(void)
    ungetc(ch, ifd);
 
    while ((ch=fgetc(ifd)) != EOF && !isspace(ch)) {
-      if (p<word+sizeof(word)-1) *p++ = ch; col++;
+      if (p<word+sizeof(word)-1) *p++ = ch, col++;
       if (ch == '\\') {
          if ((ch=fgetc(ifd)) == EOF) break;
 	 /* if (ch == ' ') ch = ' ' + 0x80;*/	/* XXX Is this line needed? */
-         if (p<word+sizeof(word)-1) *p++ = ch; col++;
+         if (p<word+sizeof(word)-1) *p++ = ch, col++;
       }
    }
    *p = 0;
@@ -769,8 +769,10 @@ void print_word(char *pword)
 	 {
 	    /* XXX Humm character xlate */
 
-	    if (*s == '*') if (s[1]) ++s;
-	    if (s[1]) ++s; if (s[1]) ++s;
+	    if (*s == '*')
+		if (s[1]) ++s;
+	    if (s[1]) ++s;
+	    if (s[1]) ++s;
 	    *d++ = '*' + cur_font;
 	    length++;
 	    continue;
