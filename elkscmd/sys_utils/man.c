@@ -242,9 +242,7 @@ struct cmd_list_s {
   { "BY", 0, 0 },	/* I wonder where this should go ? */
 
   { "nf", 0, 1 },	/* Line break, Turn line fill off */
-  { "NF", 0, 1 },	/* Line break, Turn line fill off */
   { "fi", 0, 2 },	/* Line break, Turn line fill on */
-  { "FI", 0, 2 },	/* Line break, Turn line fill on */
   { "sp", 0, 3 },	/* Line break, line space (arg for Nr lines) */
   { "br", 0, 4 },	/* Line break */
   { "bp", 0, 5 },	/* Page break */
