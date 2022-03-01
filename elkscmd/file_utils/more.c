@@ -3,24 +3,93 @@
  * Permission is granted to use, distribute, or modify this source,
  * provided that this copyright notice remains intact.
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <termios.h>
-
 #include "futils.h"
 
 #define MORE_STRING	"\e[7m--More--\e[0m"
 
-int fd;
-int LINES = 25;
-char mbuf[BUFSIZ];
+static int fd;
+static int LINES = 25;
+static int MAXLINES = 25;
 
+/* Use the DSR ESC [6n escape sequence to query the cursor position */
+static int getCursorPosition(int ifd, int ofd, int *rows, int *cols)
+{
+	unsigned int i = 0;
+	char buf[32];
+	struct termios org, vmin;
 
-int more_wait(int fout, char *msg)
+	/* change to raw mode to wait 200ms instead of 1 character for DSR response*/
+	if (tcgetattr(ifd, &org) < 0)
+		return -1;
+	vmin = org;
+	vmin.c_iflag &= (IXON|IXOFF|IXANY|ISTRIP|IGNBRK);
+	vmin.c_oflag &= ~OPOST;
+	vmin.c_lflag &= ISIG;
+	vmin.c_cc[VMIN] = 0; vmin.c_cc[VTIME] = 2; /* 0 bytes, 200ms timer */
+	if (tcsetattr(ifd, TCSAFLUSH, &vmin) < 0)
+		return -1;
+
+	/* Send DSR (report cursor location) */
+	write(ofd, "\x1b[6n", 4);
+
+	/* Read the response: ESC [ rows ; cols R */
+	while (i < sizeof(buf)-1) {
+		if (read(ifd, buf+i, 1) != 1)
+			break;
+		if (buf[i++] == 'R')
+			break;
+	}
+	buf[i] = '\0';
+
+	/* reset to original mode*/
+	tcsetattr(ifd, TCSAFLUSH, &org);
+
+	/* Parse it. */
+	if (buf[0] != 033 || buf[1] != '[')
+		return -1;
+	*rows = atoi(buf+2);
+	char *p = buf+2;
+	while (*p != ';')
+		if (*p++ == '\0')
+			return -1;
+	if (*p == '\0')
+		return -1;
+	*cols = atoi(p+1);
+	return 0;
+}
+
+/* Try to get the number of lines/columns from passed terminal file descriptors */
+static int getWindowSize(int ifd, int ofd, int *rows, int *cols)
+{
+	int orig_row, orig_col;
+	char seq[32];
+
+	/* get initial cursor position so we can restore it later */
+	if (getCursorPosition(ifd, ofd, &orig_row, &orig_col) < 0)
+		return -1;
+
+	/* goto right/bottom margin and get position */
+	write(ofd,"\x1b[999C\x1b[999B",12);
+	if (getCursorPosition(ifd, ofd, rows, cols) < 0)
+		return -1;
+
+	/* restore position */
+	strcpy(seq, "\033[");
+	strcat(seq, itoa(orig_row));
+	strcat(seq, ";");
+	strcat(seq, itoa(orig_col));
+	strcat(seq, "H");
+	write(ofd, seq, strlen(seq));
+	return 0;
+}
+
+static int more_wait(int fout, char *msg)
 {
 	struct termios termios;
 	char buf[80], ch;
@@ -37,7 +106,7 @@ int more_wait(int fout, char *msg)
 	}
 
 	cnt = read(1, buf, sizeof(buf));
-	LINES = 25;
+	LINES = MAXLINES;
 
 	ch = buf[0];
 	if (ch == ':') {
@@ -81,15 +150,17 @@ int more_wait(int fout, char *msg)
 	return ret;
 }
 
-int cat_file(int m_in, int m_out) {
-	int m_stat = 1;
+static int cat_file(int ifd, int ofd)
+{
+	int n = 1;
+	char mbuf[BUFSIZ];
 
-	while (m_stat > 0) {
-		m_stat = read(m_in, mbuf, BUFSIZ);
-		if (m_stat > 0)
-			write(m_out, mbuf, m_stat);
+	while (n > 0) {
+		n = read(ifd, mbuf, sizeof(mbuf));
+		if (n > 0)
+			write(ofd, mbuf, n);
 	}
-	return (m_stat);
+	return n;
 } 
 
 int main(int argc, char **argv)
@@ -100,6 +171,8 @@ int main(int argc, char **argv)
 	char	*name, ch, next[80];
 	char 	*divider = "\n::::::::::::::\n";
 
+	if (isatty(2) && getWindowSize(2, 2, &line, &col) == 0)
+		LINES = MAXLINES = line;
 	multi = (argc >= 3); 		/* multiple input files */
 	do {
 		line = 1;
