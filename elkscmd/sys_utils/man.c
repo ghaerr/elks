@@ -107,7 +107,7 @@ int find_page(char *name, char *sect)
 {
 static char defpath[] = _PATH_MANPAGES;
 static char defsect[] = "1:2:3:4:5:6:7:8:9";
-static char defsuff[] = ":.gz:.Z";
+static char defsuff[] = ":.Z:.gz";
 static char manorcat[] = "man:cat";
 
    char fbuf[256];
@@ -194,7 +194,7 @@ int open_page(char * name)
    p = strrchr(name, '.');
    if (p) {
       if (strcmp(p, ".gz") == 0) command = "gzip -dc ";
-      if (strcmp(p, ".Z") == 0)  command = "uncompress -c ";
+      if (strcmp(p, ".Z") == 0)  command = "compress -dc ";
    }
 
    if (command) {
@@ -242,9 +242,7 @@ struct cmd_list_s {
   { "BY", 0, 0 },	/* I wonder where this should go ? */
 
   { "nf", 0, 1 },	/* Line break, Turn line fill off */
-  { "NF", 0, 1 },	/* Line break, Turn line fill off */
   { "fi", 0, 2 },	/* Line break, Turn line fill on */
-  { "FI", 0, 2 },	/* Line break, Turn line fill on */
   { "sp", 0, 3 },	/* Line break, line space (arg for Nr lines) */
   { "br", 0, 4 },	/* Line break */
   { "bp", 0, 5 },	/* Page break */
@@ -421,11 +419,11 @@ int fetch_word(void)
    ungetc(ch, ifd);
 
    while ((ch=fgetc(ifd)) != EOF && !isspace(ch)) {
-      if (p<word+sizeof(word)-1) *p++ = ch; col++;
+      if (p<word+sizeof(word)-1) *p++ = ch, col++;
       if (ch == '\\') {
          if ((ch=fgetc(ifd)) == EOF) break;
 	 /* if (ch == ' ') ch = ' ' + 0x80;*/	/* XXX Is this line needed? */
-         if (p<word+sizeof(word)-1) *p++ = ch; col++;
+         if (p<word+sizeof(word)-1) *p++ = ch, col++;
       }
    }
    *p = 0;
@@ -769,8 +767,10 @@ void print_word(char *pword)
 	 {
 	    /* XXX Humm character xlate */
 
-	    if (*s == '*') if (s[1]) ++s;
-	    if (s[1]) ++s; if (s[1]) ++s;
+	    if (*s == '*')
+		if (s[1]) ++s;
+	    if (s[1]) ++s;
+	    if (s[1]) ++s;
 	    *d++ = '*' + cur_font;
 	    length++;
 	    continue;

@@ -104,6 +104,7 @@ sh_utils/which					:shutil					:1200k	:1440k
 #sh_utils/whoami				:shutil					:1200k	:1440k
 sh_utils/xargs					:shutil					:1200k	:1440k
 sh_utils/yes					:shutil				:720k
+misc_utils/compress				:miscutil						:1440k
 misc_utils/miniterm				:miscutil			:720k
 misc_utils/fdtest				:miscutil				:1200k	:1440k
 misc_utils/tar					:miscutil				:1200k	:1440k

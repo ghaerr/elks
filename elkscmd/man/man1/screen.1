@@ -1,9 +1,4 @@
-.if n .ds Q \&"
-.if n .ds U \&"
-.if t .ds Q ``
-.if t .ds U ''
 .TH SCREEN 1 "2 March 1987"
-.UC 4
 .SH NAME
 screen \- screen manager with VT100/ANSI terminal emulation
 .SH SYNOPSIS
@@ -212,13 +207,11 @@ and can be surrounded by single quotes or double quotes.
 The following initialization commands are recognized by
 .IR screen :
 .PP
-.ne 3
 .B "escape \fIxy\fP"
 .PP
 Set the command character to \fIx\fP and the character generating a literal
 command character to \fIy\fP (see the \-e option above).
 .PP
-.ne 3
 .B "bell \fImessage\fP"
 .PP
 When a bell character is sent to a background window,
@@ -234,14 +227,12 @@ The default message is
 An empty message can be supplied to the \*Qbell\*U command to suppress
 output of a message line (bell "").
 .PP
-.ne 3
 .B "mode \fImode\fP"
 .PP
 The mode of each newly allocated pseudo-tty is set to \fImode\fP.
 \fIMode\fP is an octal number.
 When no \*Qmode\*U command is given, mode 0622 is used.
 .PP
-.ne 3
 .B "screen [\fIn\fP] [\fIcmds args\fP]"
 .PP
 Establish a window.
@@ -270,7 +261,6 @@ When the initialization is completed,
 always switches to the default window, so window #0 is displayed
 when the above \*Q.screenrc\*U is used.
 .PP
-.ne 3
 .B "chdir [\fIdirectory\fP]"
 .PP
 Change the \fIcurrent directory\fP of
@@ -287,7 +277,6 @@ Hardcopy files are always written to the directory in which the current
 window has been created (that is, \fInot\fP in the current directory
 of the shell running in the window).
 .PP
-.ne 3
 .B "bind \fIkey\fP [\fIfunction\fP | \fIcmd args\fP]"
 .PP
 Bind a function to a key.

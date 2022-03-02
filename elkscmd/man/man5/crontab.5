@@ -2,15 +2,7 @@
 .SH NAME
 crontab \- table of jobs to be performed by cron
 .SH SYNOPSIS
-.nf
-.ft B
-/usr/lib/crontab
-/usr/local/lib/crontab
-/var/lib/crontab
-/var/opt/\fIname\fP/lib/crontab\ \ \fR(Minix-vmd only)\fB
-/usr/spool/crontabs/\fIuser\fP
-.ft R
-.fi
+.B /var/cron/\fIuser\fR
 .SH DESCRIPTION
 The
 .BR cron (8)
@@ -35,8 +27,6 @@ over a network.
 If a given time is valid in all five fields then a command is executed.
 Here are a few examples that illustrate the possibilities:
 .PP
-.if t .RS
-.if t .ft C
 .nf
 # min hour mday mon wday command
    ?   3    *    *   *   /usr/etc/daily  # Daily system cleanup
@@ -45,8 +35,6 @@ Here are a few examples that illustrate the possibilities:
    0   9   25   12   *   \-u ast sing     # Andy sings on Xmas morning
    0   0   13    *   5   echo Beware!    # For the superstitious
 .fi
-.if t .ft P
-.if t .RE
 .PP
 The command may optionally be prefixed by
 .BI \-u " user"
@@ -64,12 +52,8 @@ line as the time fields then percent characters are changed into newlines,
 this is not done for a TAB indented command.  The following three entries
 give the same output:
 .PP
-.RS
-.if t .ft C
 .nf
-.ta +8n
-0 12  *  *  *   echo 'Hello'; echo '  World!'
-#1
+0 12  *  *  *   echo 'Hello'; echo '  World!' #1
 0 12  *  *  *   echo 'Hello%  World!'  #2
 0 12  *  *  *        #3
 	cat <<EOF    #4
@@ -77,8 +61,6 @@ give the same output:
 	\&  World!
 	EOF
 .fi
-.if t .ft P
-.RE
 .PP
 Comments start with a "#" character and continue until end of line.  They,
 excess whitespace, and empty lines are ignored.  Of the comments in the
@@ -89,24 +71,12 @@ command and are passed to the shell who then happens to ignore them.  There
 is no interpretation of command characters other than the percent in a
 oneliner.  The time fields must all be on the same line.
 .SH FILES
-.TP 25n
-.B /usr/lib/crontab
-Main MINIX 3 crontab file.
-.TP
-.B /usr/local/lib/crontab
-Local jobs for all systems in an organization.
-.TP
-.B /var/lib/crontab
-System specific jobs.
-.TP
-.B /var/opt/\fIname\fP/lib/crontab
-Per package jobs for Minix-vmd.
-.TP
-.B /usr/lib/packages
-List of installed packages.
-.TP
-.B /usr/spool/crontabs/\fIuser\fP
-Per user jobs.
+.TP 20
+.B /var/cron
+Main crontab directory.
+.TP 20
+.B /var/cron/\fIuser\fR
+Per user crontab jobs.
 .SH "SEE ALSO"
 .BR crontab (1),
 .BR cron (8).
@@ -132,6 +102,3 @@ lags behind on the system time then the next time to run it is computed from
 the current system time.
 .SH AUTHOR
 Kees J. Bot (kjb@cs.vu.nl)
-
-.\"
-.\" $PchId: crontab.5,v 1.3 2000/07/17 18:53:05 philip Exp $

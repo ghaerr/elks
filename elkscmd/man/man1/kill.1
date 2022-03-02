@@ -3,7 +3,8 @@
 kill \- Send a process a signal
 .SH SYNOPSIS
 .B kill
-[\-signal] pid...
+.B [\-signal]
+.I pid...
 .SH DESCRIPTION
 .B kill
 send a signal to the process specified by each
@@ -14,9 +15,9 @@ By default signal 15 (SIGTERM) is
 sent.  Process 0 means all the processes in the sender's process group.  A
 process  group can be signalled by the negative value of the process group
 ID.  Signals may be numerical, or the name of the signal without SIG.
-.SH OPTIONS
+.SS OPTIONS
 .TP 10
-.I "\-signal"
+.B "\-signal"
 The signal to be sent. May be HUP, INT QUIT or KILL, or a numeric signal number.
 .SH EXAMPLES
 .TP 20
@@ -31,16 +32,16 @@ The signal to be sent. May be HUP, INT QUIT or KILL, or a numeric signal number.
 the processes with ids 4 and 6 and the process group with 23.
 .SH EXIT STATUS
 .TP
-.B 0
+.I 0
 Success
 .TP
-.B 1
+.I 1
 Unknown signal specified, or non-numeric pid specified.
 .SH BUGS
 Does not support full list of text signal names.
+.SH SEE ALSO
+.BR kill (2).
 .SH AUTHORS
 David I. Bell
 .br
 Al Riddoch (ajr@ecs.soton.ac.uk) (this manpage)
-.SH SEE ALSO
-.BR kill (2).

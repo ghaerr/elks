@@ -328,9 +328,8 @@ static void disableRawMode(int fd) {
  * and return it. On error -1 is returned, on success the position of the
  * cursor. */
 static int getCursorPosition(int ifd, int ofd) {
-    char buf[32];
-    int cols, rows;
     unsigned int i = 0;
+    char buf[32];
     struct termios org, vmin;
 
     /* change raw mode to wait 200ms instead of 1 character for DSR response*/
@@ -355,8 +354,13 @@ static int getCursorPosition(int ifd, int ofd) {
 
     /* Parse it. */
     if (buf[0] != ESC || buf[1] != '[') return -1;
-    if (sscanf(buf+2,"%d;%d",&rows,&cols) != 2) return -1;
-    return cols;
+    char *p = buf+2;
+    while (*p != ';')
+        if (*p++ == '\0')
+            return -1;
+    if (*p == '\0')
+        return -1;
+    return atoi(p+1);	/* cols, last parm */
 }
 #endif /* DYNAMIC_LINELEN*/
 

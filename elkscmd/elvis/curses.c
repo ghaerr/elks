@@ -477,67 +477,76 @@ static void starttcap()
 #undef PAIR
 }
 
-/* Use the ESC [6n escape sequence to query the cursor position
- * and return it. On error -1 is returned, on success the position of the
- * cursor. */
+/* Use the DSR ESC [6n escape sequence to query the cursor position */
 static int getCursorPosition(int ifd, int ofd, int *rows, int *cols)
 {
-    char buf[32];
-    unsigned int i = 0;
-    struct termios org, vmin;
+	unsigned int i = 0;
+	char buf[32];
+	struct termios org, vmin;
 
-    /* change to raw mode to wait 200ms instead of 1 character for DSR response*/
-    if (tcgetattr(ifd,&org) == -1) return -1;
-    vmin = org;
+	/* change to raw mode to wait 200ms instead of 1 character for DSR response*/
+	if (tcgetattr(ifd, &org) < 0)
+		return -1;
+	vmin = org;
 	vmin.c_iflag &= (IXON|IXOFF|IXANY|ISTRIP|IGNBRK);
 	vmin.c_oflag &= ~OPOST;
 	vmin.c_lflag &= ISIG;
-    vmin.c_cc[VMIN] = 0; vmin.c_cc[VTIME] = 2; /* 0 bytes, 200ms timer */
-    //vmin.c_cc[VMIN] = 1; vmin.c_cc[VTIME] = 0; /* 1 bytes, no timer */
-    if (tcsetattr(ifd,TCSAFLUSH,&vmin) == -1) return -1;
+	vmin.c_cc[VMIN] = 0; vmin.c_cc[VTIME] = 2; /* 0 bytes, 200ms timer */
+	if (tcsetattr(ifd, TCSAFLUSH, &vmin) < 0)
+		return -1;
 
-    /* Report cursor location */
-    if (write(ofd, "\x1b[6n", 4) != 4) return -1;
+	/* Send DSR (report cursor location) */
+	write(ofd, "\x1b[6n", 4);
 
-    /* Read the response: ESC [ rows ; cols R */
-    while (i < sizeof(buf)-1) {
-        if (read(ifd,buf+i,1) != 1) return -1;
-        if (buf[i++] == 'R') break;
-    }
-    buf[i] = '\0';
+	/* Read the response: ESC [ rows ; cols R */
+	while (i < sizeof(buf)-1) {
+		if (read(ifd, buf+i, 1) != 1)
+			break;
+		if (buf[i++] == 'R')
+			break;
+	}
+	buf[i] = '\0';
 
-    /* reset to original mode*/
-    tcsetattr(ifd,TCSAFLUSH,&org);
+	/* reset to original mode*/
+	tcsetattr(ifd, TCSAFLUSH, &org);
 
-//printf("\nBUF='%s'\n", buf+1);
-    /* Parse it. */
-    if (buf[0] != 033 || buf[1] != '[') return -1;
-    if (sscanf(buf+2,"%d;%d",rows,cols) != 2) return -1;
-    return 0;
+	/* Parse it. */
+	if (buf[0] != 033 || buf[1] != '[')
+		return -1;
+	*rows = atoi(buf+2);
+	char *p = buf+2;
+	while (*p != ';')
+		if (*p++ == '\0')
+			return -1;
+	if (*p == '\0')
+		return -1;
+	*cols = atoi(p+1);
+	return 0;
 }
 
-/* Try to get the number of columns in the current terminal.
- * Returns 0 on success, -1 on error. */
+/* Try to get the number of lines/columns from passed terminal file descriptors */
 static int getWindowSize(int ifd, int ofd, int *rows, int *cols)
 {
-        int orig_row, orig_col, retval;
+	int orig_row, orig_col;
+	char seq[32];
 
-        /* Get the initial position so we can restore it later. */
-        retval = getCursorPosition(ifd,ofd,&orig_row,&orig_col);
-        if (retval == -1) return -1;
+	/* get initial cursor position so we can restore it later */
+	if (getCursorPosition(ifd, ofd, &orig_row, &orig_col) < 0)
+		return -1;
 
-        /* Go to right/bottom margin and get position. */
-        if (write(ofd,"\x1b[999C\x1b[999B",12) != 12) return -1;
-        retval = getCursorPosition(ifd,ofd,rows,cols);
-        if (retval == -1) return -1;
+	/* goto right/bottom margin and get position */
+	write(ofd,"\x1b[999C\x1b[999B",12);
+	if (getCursorPosition(ifd, ofd, rows, cols) < 0)
+		return -1;
 
-        /* Restore position. */
-        char seq[32];
-        sprintf(seq,"\x1b[%d;%dH",orig_row,orig_col);
-        if (write(ofd,seq,strlen(seq)) == -1) {
-            /* Can't recover... */
-        }
-        return 0;
+	/* restore position */
+	strcpy(seq, "\033[");
+	strcat(seq, itoa(orig_row));
+	strcat(seq, ";");
+	strcat(seq, itoa(orig_col));
+	strcat(seq, "H");
+	write(ofd, seq, strlen(seq));
+	return 0;
 }
 
 /*

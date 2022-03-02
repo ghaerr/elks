@@ -3,7 +3,8 @@
 man \- display on-line reference manuals
 .SH SYNOPSIS
 .B man
-[\-w] [\-b|\-q] [section-number] page ...
+[\fB\-w\fR] [\fB\-b\fR|\fB\-q\fR]
+.I [section-number] page ...
 .SH DESCRIPTION
 This document describes the ELKS version of
 .BR man .
@@ -49,22 +50,21 @@ as nroff, as we currently do not have one. It supports a subset of nroff
 -man features which are sufficient for displaying ELKS manual pages.
 .SS OPTIONS
 .TP
-.I "-w"
+.B "-w"
 Do not display any manual pages, but print the location of each one found.
 .TP
-.I "-v"
+.B "-v"
 Force verbose output. (default)
 .TP
-.I "-q"
+.B "-q"
 Force quiet output.
 .SH EXAMPLES
 .IP
-man ls
+.B man ls
+# Display the manual page for ls
 .IP
-man -w cp
-.LP
-Display the manual page for ls, and the location of the manual page for cp
-respectively.
+.B man -w cp
+# Display the location of man page for cp
 .SH ENVIRONMENT
 .B man
 obeys the following environment variables.
@@ -85,10 +85,10 @@ program specified by PAGER, and gzip and compress used to uncompress compressed
 munual pages.
 .SH EXIT STATUS
 .TP
-.B 0
+.I 0
 Completed successfully.
 .TP
-.B 1
+.I 1
 No
 .I page
 specified on no manual page found.
@@ -105,4 +105,5 @@ Rob de Bath
 Al Riddoch (ajr@ecs.soton.ac.uk) (this manpage)
 .SH SEE ALSO
 .BR more (1),
+.BR compress (1),
 .BR cat (1).
