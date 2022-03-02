@@ -10,6 +10,7 @@
  * Copies /linux and creates /dev for FAT
  * If -M: write MBR using compiled-in mbr.bin
  * If -F: allow writing to flat (non-MBR) hard drive
+ * If -f file: use boot file
  *
  * Nov 2020 Greg Haerr
  */
@@ -300,16 +301,18 @@ void fatalmsg(const char *s, ...)
 int main(int ac, char **av)
 {
 	char *rootdevice, *targetdevice;
+	char *bootfile;
 	int rootfstype, fstype, fd, n;
 	int opt_writembr = 0;
 	int opt_writeflat = 0;
+	int opt_usefile = 0;
 	int fat32 = 0;
 	dev_t rootdev, targetdev;
 	struct stat sbuf;
 
-	if (ac < 2 || ac > 3) {
+	if (ac < 2 || ac > 5) {
 usage:
-		fatalmsg("Usage: makeboot [-M][-F] /dev/{fd0,fd1,hda1,hda2,etc}\n");
+		fatalmsg("Usage: makeboot [-M][-F][-f file] /dev/{fd0,fd1,hda1,hda2,etc}\n");
 	}
 	while (av[1] && av[1][0] == '-') {
 		if (av[1][1] == 'M') {
@@ -319,6 +322,14 @@ usage:
 		}
 		else if (av[1][1] == 'F') {
 			opt_writeflat = 1;
+			av++;
+			ac--;
+		}
+		else if (av[1][1] == 'f') {
+			opt_usefile = 1;
+			av++;
+			ac--;
+			bootfile = av[1];
 			av++;
 			ac--;
 		} else goto usage;
@@ -336,6 +347,7 @@ usage:
 	rootdevice = devname(rootdev);
 
 	fd = open(rootdevice, O_RDONLY);
+
 	if (fd < 0)
 		fatalmsg("Can't open boot device %s\n", rootdevice);
 
@@ -349,6 +361,12 @@ usage:
 
 	bootsecsize = (rootfstype == FST_MINIX)? 1024: 512;
 	lseek(fd, 0L, SEEK_SET);
+	if (opt_usefile) {
+		close(fd);
+		fd = open(bootfile, O_RDONLY);
+		if (fd < 0)
+			fatalmsg("Can't open boot file %s\n", bootfile);
+	}
 	n = read(fd, bootblock, bootsecsize);
 	if (n != bootsecsize)
 		fatalmsg("Can't read boot device %s boot sector\n", rootdevice);
