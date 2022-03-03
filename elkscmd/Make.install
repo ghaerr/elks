@@ -203,6 +203,8 @@ ifdef CONFIG_APP_MAN_PAGES
 	cp -rp man/man1 $(DESTDIR)/lib; compress -b 12 $(DESTDIR)/lib/man1/*
 	mkdir $(DESTDIR)/lib/man5;
 	cp -rp man/man5 $(DESTDIR)/lib; compress -b 12 $(DESTDIR)/lib/man5/*
+	mkdir $(DESTDIR)/lib/man7;
+	cp -rp man/man7 $(DESTDIR)/lib; compress -b 12 $(DESTDIR)/lib/man7/*
 	mkdir $(DESTDIR)/lib/man8;
 	cp -rp man/man8 $(DESTDIR)/lib; compress -b 12 $(DESTDIR)/lib/man8/*
 endif
