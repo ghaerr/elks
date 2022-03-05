@@ -53,7 +53,7 @@ void abort (void);
 int atexit (void (* function) ());
 void exit (int status);
 int system(const char *command);
-int qsort(void *base, size_t nel, size_t width,
+void qsort(void *base, size_t nel, size_t width,
 	int (*compar)(/*const void *, const void * */));
 
 #ifndef __STRICT_ANSI__

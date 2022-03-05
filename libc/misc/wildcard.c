@@ -157,7 +157,7 @@ match(char *text, char *pattern)
 static int
 namesort(char **p1, char **p2)
 {
-	return strcmp(*p2, *p1);
+	return strcmp(*p1, *p2);
 }
 
 /*

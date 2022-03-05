@@ -1,3 +1,6 @@
+/* NOTE: This qsort routine corrupts memory, found by use in file_utils/ls.c */
+/* NOTE: Also has reversed sort direction from standard                      */
+
 /*
  * This file lifted in toto from 'Dlibs' on the atari ST  (RdeBath)
  *
