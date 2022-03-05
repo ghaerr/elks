@@ -542,6 +542,13 @@ void read_tables(void)
 /*	inode_buffer = malloc(BLOCK_SIZE); RUBOUT
 	if (!inode_buffer)
 		die("Unable to allocate buffer for inodes"); RUBOUT */
+
+	/* check for filesystem too large since libc malloc fails improperly FIXME */
+	if (ZONES > 32767) {
+		fprintf(stderr, "Filesystem too large to check (%u zones, max 32767)\n", ZONES);
+		exit(8);
+	}
+
 	inode_count = malloc(INODES);
 	if (!inode_count)
 		die("Unable to allocate buffer for inode count");

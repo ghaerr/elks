@@ -46,9 +46,9 @@ static char *dev_name(dev_t dev)
         for (i=0; i<sizeof(devices)/sizeof(devices[0])-1; i++) {
                 if (devices[i].num == (dev & 0xfff0)) {
                         strcpy(&name[NAMEOFF], devices[i].name);
-                        if (i < 3) {
-                                if (dev & 0x03) {
-                                        name[NAMEOFF+3] = '0' + (dev & 3);
+                        if (i < 4) {
+                                if (dev & 0x07) {
+                                        name[NAMEOFF+3] = '0' + (dev & 7);
                                         name[NAMEOFF+4] = 0;
                                 }
                         }
@@ -65,7 +65,7 @@ static int show_mount(dev_t dev)
 	if (ustatfs(dev, &statfs) < 0)
 		return -1;
 
-	printf("%-8s (%s) blocks %6lu free %6lu mount %s\n",
+	printf("%-9s (%s) blocks %6lu free %6lu mount %s\n",
 		dev_name(statfs.f_dev), fs_typename[statfs.f_type], statfs.f_blocks,
 		statfs.f_bfree, statfs.f_mntonname);
 	return 0;
