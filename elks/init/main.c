@@ -172,6 +172,7 @@ static struct dev_name_struct {
 	{ "hda",     0x0300 },
 	{ "hdb",     0x0320 },
 	{ "hdc",     0x0340 },
+	{ "hdd",     0x0360 },
 	{ "fd0",     0x0380 },
 	{ "fd1",     0x03a0 },
 	{ "ttyS",    0x0440 },
@@ -194,9 +195,9 @@ static char * INITPROC root_dev_name(int dev)
 	for (i=0; i<5; i++) {
 		if (devices[i].num == (dev & 0xfff0)) {
 			strcpy(&name[NAMEOFF], devices[i].name);
-			if (i < 3) {
-				if (dev & 0x03) {
-					name[NAMEOFF+3] = '0' + (dev & 3);
+			if (i < 4) {
+				if (dev & 0x07) {
+					name[NAMEOFF+3] = '0' + (dev & 7);
 					name[NAMEOFF+4] = 0;
 				}
 			}
