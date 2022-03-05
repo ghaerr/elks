@@ -85,8 +85,10 @@ struct stack
     struct sort *buf;
 };
 
-static int cols = 0, col = 0, reverse = -1;
+static int cols = 0, col = 0;
+static int reverse = -1;
 static int sortbytime = 0;
+static int nosort = 0;
 static char fmt[16] = "%s";
 
 static int namesort(const struct sort *a, const struct sort *b)
@@ -130,7 +132,8 @@ static void pushstack(struct stack *pstack, char *entry, time_t modtime)
 
 static void sortstack(struct stack *pstack)
 {
-    qsort(pstack->buf, pstack->size, sizeof(struct sort), namesort);
+    if (nosort == 0)
+	qsort(pstack->buf, pstack->size, sizeof(struct sort), namesort);
 }
 
 static void getfiles(char *name, struct stack *pstack, int flags)
@@ -460,7 +463,7 @@ int main(int argc, char **argv)
 			flags |= LSF_LONG;
 			break;
 		case 'd':
-			flags |= LSF_DIR;
+			flags |= LSF_DIR;	/* FIXME not implemented */
 			recursive = 0;
 			break;
 		case 'R':
@@ -486,6 +489,9 @@ int main(int argc, char **argv)
 			break;
 		case 'r':
 			reverse = -reverse;
+			break;
+		case 'U':
+			nosort = 1;
 			break;
 		default:
 			if (~flags) fprintf(stderr, "unknown option '%c'\n", *cp);
@@ -563,10 +569,9 @@ int main(int argc, char **argv)
     return EXIT_SUCCESS;
 
 usage:
-    fprintf(stderr, "usage: %s [-aAdFilrR1] [file1] [file2] ...\n", name);
+    fprintf(stderr, "usage: %s [-aAFilrR1U] [file1] [file2] ...\n", name);
     fprintf(stderr, "  -a: list all files (including '.' and '..')\n");
     fprintf(stderr, "  -A: list hidden files too\n");
-    fprintf(stderr, "  -d: list directory entries instead of contents (not implemented)\n");
     fprintf(stderr, "  -F: add character to displayed name based on entry type\n");
     fprintf(stderr, "  -i: show inode numbers beside names\n");
     fprintf(stderr, "  -l: show files in long (detailed) format\n");
@@ -574,5 +579,6 @@ usage:
     fprintf(stderr, "  -r: reverse sort order\n");
     fprintf(stderr, "  -R: recursively list directory contents\n");
     fprintf(stderr, "  -1: one entry per line\n");
+    fprintf(stderr, "  -U: don't sort output\n");
     return EXIT_FAILURE;
 }
