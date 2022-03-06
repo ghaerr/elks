@@ -579,6 +579,10 @@ int do_noargs(int cmd_id)
            left_indent     -= standard_tab;
            old_para_indent -= standard_tab;
 	   break;
+   case 9: pending_nl = 1;
+           next_line_indent = old_para_indent + standard_tab;
+	   left_indent = old_para_indent;
+	   break;
 
    case 10: right_adjust=1; break;
    case 11: right_adjust=0; break;

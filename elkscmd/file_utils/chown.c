@@ -6,8 +6,6 @@
  * Most simple built-in commands are here.
  */
 
-#include "futils.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,6 +18,7 @@
 #include <grp.h>
 #include <utime.h>
 #include <errno.h>
+#include "futils.h"
 
 int main(int argc, char **argv)
 {
@@ -37,13 +36,13 @@ int main(int argc, char **argv)
 			uid = uid * 10 + (*cp++ - '0');
 
 		if (*cp) {
-			fprintf(stderr, "Bad uid value\n");
+			errmsg("Bad uid value\n");
 			goto usage;
 		}
 	} else {
 		pwd = getpwnam(cp);
 		if (pwd == NULL) {
-			fprintf(stderr, "Unknown user name\n");
+			errmsg("Unknown user name\n");
 			goto usage;
 		}
 
@@ -62,6 +61,6 @@ int main(int argc, char **argv)
 	return 0;
 
 usage:
-	fprintf(stderr, "usage: %s new_owner file1 [file2] ...\n", argv[0]);
+	errmsg("usage: chown new_owner file1 [file2] ...\n");
 	return 1;
 }
