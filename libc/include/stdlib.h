@@ -58,7 +58,8 @@ void qsort(void *base, size_t nel, size_t width,
 
 #ifndef __STRICT_ANSI__
 void breakpoint ();
-char *itoa __P ((int));
+char *itoa (int);
+char *ltoa (long);
 #endif
 
 char * ltostr (long val, int radix);

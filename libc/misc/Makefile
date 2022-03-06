@@ -20,6 +20,7 @@ OBJS = \
 	getpass.o \
 	getopt.o \
 	itoa.o \
+	ltoa.o \
 	ltostr.o \
 	mktemp.o \
 	popen.o \

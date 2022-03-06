@@ -90,7 +90,8 @@ int linkfiles(char *srcdir, char *destdir)
 
 		newsrc = buildname(srcdir, dp->d_name);
 		if (lstat(newsrc, &sbuf) >= 0 && (S_ISDIR(sbuf.st_mode) || S_ISLNK(sbuf.st_mode))) {
-			fprintf(stderr, "Can't move directory or symlink: %s\n", newsrc);
+			errstr(newsrc);
+			errmsg(": can't move directory or symlink\n");
 			closedir(dirp);
 			return 0;
 		}
@@ -231,7 +232,8 @@ int main(int argc, char **argv)
 	dirflag = isadir(lastarg);
 
 	if ((argc > 3) && !dirflag) {
-		fprintf(stderr, "%s: not a directory\n", lastarg);
+		errstr(lastarg);
+		errmsg(": not a directory\n");
 		goto usage;
 	}
 
@@ -315,7 +317,7 @@ int main(int argc, char **argv)
 	return 0;
 
 usage:
-	fprintf(stderr, "usage: %s source_file dest_file\n", argv[0]);
-	fprintf(stderr, "       %s file1 [file2] ... dest_dir\n", argv[0]);
+	errmsg("usage: mv source_file dest_file\n");
+	errmsg("       mv file1 [file2] ... dest_dir\n");
 	return 1;
 }

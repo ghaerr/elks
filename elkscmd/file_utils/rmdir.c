@@ -3,10 +3,11 @@
 #include <sys/stat.h>
 #include <stdio.h>
 #include <string.h>
+#include "futils.h"
 
-unsigned short newmode;
+static unsigned short newmode;
 
-int remove_dir(char *name, int f)
+static int remove_dir(char *name, int f)
 {
 	int er, era=2;
 	char *line;
@@ -21,7 +22,7 @@ int remove_dir(char *name, int f)
 }
 	
 
-int main (int argc, char **argv)
+int main(int argc, char **argv)
 {
 	int i, parent = 0, er = 0;
 	
@@ -37,9 +38,8 @@ int main (int argc, char **argv)
 			while (argv[i][strlen(argv[i])-1] == '/')
 				argv[i][strlen(argv[i])-1] = '\0';
 			if (remove_dir(argv[i],parent)) {
-				write(STDERR_FILENO,"rmdir: cannot remove directory ",31);
-				write(STDERR_FILENO,argv[i],strlen(argv[i]));
-				write(STDERR_FILENO,"\n",1);
+				errstr(argv[i]);
+				errmsg(": cannot remove directory\n");
 				er = 1;
 			}
 		} else goto usage;
@@ -47,6 +47,6 @@ int main (int argc, char **argv)
 	return er;
 
 usage:
-	fprintf(stderr, "usage: %s remove_dir1 [remove_dir2] ...\n", argv[0]);
+	errmsg("usage: rmdir directory [...]\n");
 	return 1;
 }
