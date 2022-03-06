@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <grp.h>
+#include <paths.h>
 
 struct group *
 getgrnam(const char * name)
@@ -36,7 +37,7 @@ getgrnam(const char * name)
       return NULL;
     }
 
-  if ((grp_fd=open("/etc/group", O_RDONLY))<0)
+  if ((grp_fd=open(_PATH_GROUP, O_RDONLY))<0)
     return NULL;
 
   while ((group=__getgrent(grp_fd))!=NULL)

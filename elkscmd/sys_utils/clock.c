@@ -140,7 +140,8 @@
  * v1.6 Work with RTC localtime as well as UTC
  */
 
-#define VERSION "1.6"
+#define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
+#define errstr(str) write(STDERR_FILENO, str, strlen(str))
 
 /* Globals */
 int readit = 0;
@@ -150,12 +151,11 @@ int universal = 0;
 
 int usage(void)
 {
-    fprintf(stderr, "clock [-u] -r|w|s|v\n");
-    fprintf(stderr, "  r: read and print CMOS clock\n");
-    fprintf(stderr, "  w: write CMOS clock from system time\n");
-    fprintf(stderr, "  s: set system time from CMOS clock\n");
-    fprintf(stderr, "  u: CMOS clock is in universal time\n");
-    fprintf(stderr, "  v: print version (%s) and exit\n", VERSION);
+    errmsg("clock [-u] -r|w|s\n");
+    errmsg("  r: read and print CMOS clock\n");
+    errmsg("  w: write CMOS clock from system time\n");
+    errmsg("  s: set system time from CMOS clock\n");
+    errmsg("  u: CMOS clock is in universal time\n");
     exit(1);
 }
 
@@ -301,9 +301,6 @@ int main(int argc, char **argv)
 	case 'u':
 	  universal = 1;
 	  break;
-	case 'v':
-	  fprintf(stderr, "clock %s\n", VERSION);
-	  exit(0);
 	default:
 	  usage ();
 	}
@@ -409,7 +406,8 @@ int main(int argc, char **argv)
 
   if (readit)
     {
-      printf ("%s", ctime (&systime ));
+      char *p = ctime(&systime);
+      write(STDOUT_FILENO, p, strlen(p));
     }
 
   if (setit)
@@ -421,7 +419,7 @@ int main(int argc, char **argv)
 
       if (getuid () != 0)
 	{
-	  fprintf (stderr, "Sorry, must be root to set time\n");
+	  errmsg("Sorry, must be root to set time\n");
 	  exit (2);
 	}
 
@@ -438,8 +436,7 @@ int main(int argc, char **argv)
 
       if (settimeofday (&tv, &tz) != 0)
         {
-	  fprintf (stderr,
-		   "Unable to set time -- probably you are not root\n");
+	  errmsg("Unable to set time -- probably you are not root\n");
 	  exit (1);
 	}
 

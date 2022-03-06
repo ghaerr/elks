@@ -16,6 +16,9 @@
 #define BUF_SIZE 4096
 #define CTRL_D	04
 
+#define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
+#define errstr(str) write(STDERR_FILENO, str, strlen(str))
+
 int verbose = 0;
 int fd;
 char readbuf[BUF_SIZE];
@@ -23,7 +26,7 @@ struct termios org, new;
 
 void sig_handler(int sig)
 {
-	fprintf(stderr, "Interrupt\n");
+	errmsg("Interrupt\n");
 	tcsetattr(fd, TCSAFLUSH, &org);
 	close(fd);
 	exit(1);
@@ -36,7 +39,11 @@ void copyfile(int ifd, int ofd)
 	while ((n = read(ifd, readbuf, BUF_SIZE)) > 0) {
 		if (n == 1 && readbuf[0] == CTRL_D)
 			return;
-		if (verbose) fprintf(stderr, " %d bytes read\n", n);
+		if (verbose) {
+			char *p = itoa(n);
+			errstr(p);
+			errmsg("  bytes read\n");
+		}
 		write(ofd, readbuf, n);
 	}
 	if (n < 0) perror("read");
@@ -64,7 +71,7 @@ int main(int argc, char **argv)
 		new.c_cc[VMIN] = 255;			/* min bytes to read if VTIME = 0*/
 		new.c_cc[VTIME] = 1;			/* intercharacter timeout if VMIN > 0, timeout if VMIN = 0*/
 		tcsetattr(fd, TCSAFLUSH, &new);
-	} else fprintf(stderr, "Can't set termios\n");
+	} else errmsg("Can't set termios\n");
 	signal(SIGINT, sig_handler);
 
 	copyfile(fd, STDOUT_FILENO);

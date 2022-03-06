@@ -61,6 +61,6 @@ int main(int argc, char **argv)
 	return 0;
 
 usage:
-	errmsg("usage: chown new_owner file1 [file2] ...\n");
+	errmsg("usage: chown {user_name|user_id} file [...]\n");
 	return 1;
 }

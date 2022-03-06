@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <pwd.h>
+#include <paths.h>
 
 struct passwd *
 getpwuid(uid_t uid)
@@ -29,7 +30,7 @@ getpwuid(uid_t uid)
   int passwd_fd;
   struct passwd * passwd;
 
-  if ((passwd_fd=open("/etc/passwd", O_RDONLY))<0)
+  if ((passwd_fd=open(_PATH_PASSWD, O_RDONLY))<0)
     return NULL;
 
   while ((passwd=__getpwent(passwd_fd))!=NULL)

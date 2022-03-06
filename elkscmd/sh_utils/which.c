@@ -3,6 +3,9 @@
 #include <string.h>
 #include <unistd.h>
 
+#define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
+#define errstr(str) write(STDERR_FILENO, str, strlen(str))
+
 int
 main(argc,argv)
 int argc;
@@ -15,12 +18,11 @@ char ** argv;
 	int quit, found;
 
 	if (argc < 2) {
-		write(STDERR_FILENO, "Usage: which cmd [cmd, ..]\n", 37);
-		exit(1);
+		errmsg("Usage: which cmd [...]\n");
+		return 1;
 	}
-	if ((envpath = getenv("PATH")) == 0) {
+	if ((envpath = getenv("PATH")) == 0)
 		envpath = ".";
-	}
 
 	argv[argc] = 0;
 	for (argv++ ; *argv; argv++) {
@@ -48,5 +50,5 @@ char ** argv;
 			printf("No %s in %s\n", *argv, envpath);
 		}
 	}
-	exit(0);
+	return 0;
 }

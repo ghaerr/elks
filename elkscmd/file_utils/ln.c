@@ -115,4 +115,3 @@ usage:
 	errmsg("Creating hard links to directories is not allowed and will return an error.\n");
 	return 1;
 }
-

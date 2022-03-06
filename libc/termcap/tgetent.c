@@ -3,6 +3,7 @@
 #include <string.h>
 #include <termcap.h>
 #include <unistd.h>
+#include <paths.h>
 
 /* Finding the termcap entry in the termcap data base.  */
 
@@ -352,7 +353,7 @@ tgetent(char *bp, const char *name)
 #ifdef VMS
     termcap_name = "emacs_library:[etc]termcap.dat";
 #else
-    termcap_name = "/etc/termcap";
+    termcap_name = _PATH_TERMCAP;
 #endif
 
   /* Here we know we must search a file and termcap_name has its name.  */
