@@ -35,32 +35,6 @@
 .\"	@(#)sh.1	5.1 (Berkeley) 3/7/91
 .\"
 .TH SH 1 "March 7, 1991"
-.de h \" subheading
-.sp
-.ti -0.3i
-.B "\\$1"
-.PP
-..
-.de d \" begin display
-.sp
-.in +4
-.nf
-..
-.de e \" end display
-.in -4
-.fi
-.sp
-..
-.de c \" command, etc.
-.br
-.HP 3
-\fB\\$1\fR
-.br
-..
-.de b \" begin builtin command
-.HP 3
-.B \\$1
-..
 .SH NAME
 ash, sh, bigsh, ., break, case, cd, command, continue, eval, exec, exit, export, for, getopts, hash, if, jobs, local, read, readonly, return, set, setvar, shift, trap, umask, unset, wait, while \- a shell
 .SH SYNOPSIS
@@ -85,7 +59,7 @@ with features similar to those of the System V shell.
 This manual page lists all the features of
 .I ash
 but concentrates on the ones not in other shells.
-.h "Invocation"
+.SS "Invocation"
 If the
 .B -c
 options is given, then the shell executes the specified shell command.
@@ -170,7 +144,7 @@ important for executables to have enough memory assigned to them. The
 binary was provided for shells that need much memory. This command is
 retained for backward compatibility and need not be used on MINIX 3.1.4
 and later.
-.h "Control Structures"
+.SS "Control Structures"
 A
 .I list
 is a sequence of zero or more commands separated by newlines,
@@ -196,7 +170,8 @@ command.  ``|'' has a higher priority than ``||'' or ``&&''.
 An
 .I if
 command looks like
-.d
+.IP
+.nf
 \fBif\fR list
 \fBthen\fR	list
 .ti -\w'[ 'u
@@ -205,16 +180,17 @@ command looks like
 .ti -\w'[ 'u
 [ \fBelse\fR	list ]
 \fBfi\fR
-.e
+.fi
 .PP
 A
 .I while
 command looks like
-.d
+.IP
+.nf
 \fBwhile\fR list
 \fBdo\fR	list
 \fBdone\fR
-.e
+.fi
 The two lists are executed repeatedly while the exit status of the first
 list is zero.  The
 .I until
@@ -228,11 +204,12 @@ is zero.
 The
 .I for
 command looks like
-.d
+.IP
+.nf
 \fBfor\fR variable \fBin\fR word...
 \fBdo\fR	list
 \fBdone\fR
-.e
+.fi
 The words are expanded, and then the list is executed repeatedly with
 the variable set to each word in turn.
 .B do
@@ -246,10 +223,11 @@ The
 and
 .I continue
 commands look like
-.d
+.IP
+.nf
 \fBbreak\fR [ num ]
 \fBcontinue\fR [ num ]
-.e
+.fi
 .I Break
 terminates the
 .I num
@@ -267,30 +245,34 @@ These are implemented as builtin commands.
 The
 .I case
 command looks like
-.d
+.IP
+.nf
 \fBcase\fR word \fBin\fR
 pattern\fB)\fR list \fB;;\fR
 \&...
 \fBesac\fR
-.e
+.fi
 The pattern can actually be one or more patterns (see
 .I Patterns
 below), separated by ``|'' characters.
 .PP
 Commands may be grouped by writing either
-.d
+.IP
+.nf
 \fB(\fRlist\fB)\fR
-.e
+.fi
 or
-.d
+.IP
+.nf
 \fB{\fR list; \fB}\fR
-.e
+.fi
 The first of these executes the commands in a subshell.
 .PP
 A function definition looks like
-.d
+.IP
+.nf
 name \fB( )\fR command
-.e
+.fi
 A function definition is an executable statement; when executed it installs
 a function named
 .B name
@@ -301,9 +283,10 @@ Variables may be declared to be local to a function by using a
 .I local
 command.  This should appear as the first staement of a function,
 and looks like
-.d
+.IP
+.nf
 \fBlocal\fR [ variable | \fB-\fR ] ...
-.e
+.fi
 .I Local
 is implemented as a builtin command.
 .PP
@@ -338,13 +321,14 @@ when the function returns.
 The
 .I return
 command looks like
-.d
+.IP
+.nf
 \fBreturn\fR [ exitstatus ]
-.e
+.fi
 It terminates the currently executing function.
 .I Return
 is implemented as a builtin command.
-.h "Simple Commands"
+.SS "Simple Commands"
 A simple command is a sequence of words.  The execution of a simple
 command proceeds as follows.  First, the leading words of the form
 ``name=value'' are stripped off and assigned to the environment of
@@ -382,7 +366,7 @@ will run the interpreter in this case.  The arguments to the interpreter
 will consist of any arguments given on the first line of the program,
 followed by the name of the program, followed by the arguments passed
 to the program.
-.h "Redirection"
+.SS "Redirection"
 Input/output redirections can be intermixed with the words in a simple
 command and can be placed following any of the other commands.  When
 redirection occurs, the shell saves the old values of the file descriptors
@@ -412,7 +396,7 @@ procedures containing here documents in a natural fashion.)
 Any of the preceding redirection operators may be preceded by a single
 digit specifying the file descriptor to be redirected.  There cannot
 be any white space between the digit and the redirection operator.
-.h "Path Search"
+.SS "Path Search"
 When locating a command, the shell first looks to see if it has a
 shell function by that name.  Then, if PATH does not contain an
 entry for "%builtin", it looks for a builtin command by that name.
@@ -433,7 +417,7 @@ whose name is the name of the command being searched for.
 .PP
 Command names containing a slash are simply executed without performing
 any of the above searches.
-.h "The Environment"
+.SS "The Environment"
 The environment of a command is a set of name/value pairs.  When the
 shell is invoked, it reads these names and values, sets the shell
 variables with these names to the corresponding values, and marks
@@ -444,7 +428,7 @@ command can be used to mark additional variables as exported.
 The environment of a command is constructed by constructing name/value
 pairs from all the exported shell variables, and then modifying this
 set by the assignments which precede the command, if any.
-.h "Expansion"
+.SS "Expansion"
 The process of evaluating words when a shell procedure is executed is
 called
 .IR expansion .
@@ -456,18 +440,21 @@ in a case statement, the file name
 which follows a redirection symbol, or an assignment to the environment
 of a command, then the word cannot be split into multiple words.  In
 these cases, the last two steps of the expansion process are omitted.
-.h "Variable Substitution"
+.SS "Variable Substitution"
 To be written.
-.h "Command Substitution"
+.SS "Command Substitution"
 .I Ash
 accepts two syntaxes for command substitution:
-.d
+.IP
+.nf
 `\fIlist\fR`
-.e
+.fi
 and
-.d
+.IP
+.nf
 $(\fIlist\fR)
-.e
+.fi
+.PP
 Either of these may be included in a word.
 During the command substitution process, the command (syntactly a
 .IR list )
@@ -475,7 +462,7 @@ will be executed and anything that the command writes to the standard
 output will be captured by the shell.  The final newline (if any) of
 the output will be deleted; the rest of the output will be substituted
 for the command in the word.
-.h "Word Splitting"
+.SS "Word Splitting"
 When the value of a variable or the output of a command is substituted,
 the resulting text is subject to word splitting, unless the dollar sign
 introducing the variable or backquotes containing the text were enclosed
@@ -506,7 +493,7 @@ positional parameters.  (Note that this differs from the System V shell.
 The System V documentation claims that "$@" behaves this way; in fact
 on the System V shell "$@" is equivalent to "" when there are no
 positional paramteters.)
-.h "File Name Generation"
+.SS "File Name Generation"
 Unless the
 .B -f
 flag is set, file name generation is performed after word splitting is
@@ -529,7 +516,7 @@ itself.  Otherwise the
 .B -z
 flag forces the word to be replaced with the names of the files that it
 matches, even if there are zero names.
-.h "Patterns"
+.SS "Patterns"
 A
 .I pattern
 consists of normal characters, which match themselves, and meta-characters.
@@ -561,7 +548,7 @@ the first character of the character class.
 To include a ``]'' in a character class, make it the first character listed
 (after the ``!'', if any).
 To include a minus sign, make it the first or last character listed.
-.h "The /u Directory"
+.SS "The /u Directory"
 By convention, the name ``/u/user'' refers to the home directory of the
 specified user.  There are good reasons why this feature should be supported
 by the file system (using a feature such as symbolic links) rather than
@@ -573,24 +560,26 @@ If the mapping is done by
 setting the
 .B -f
 flag will turn it off.
-.h "Character Set"
+.SS "Character Set"
 .I Ash
 silently discards nul characters.  Any other character will be handled
 correctly by
 .IR ash ,
 including characters with the high order bit set.
-.h "Job Names and Job Control"
+.SS "Job Names and Job Control"
 The term
 .I job
 refers to a process created by a shell command, or in the case of a
 pipeline, to the set of processes in the pipeline.  The ways to refer
 to a job are:
-.d
+.IP
+.nf
 %\fInumber\fR
 %\fIstring\fR
 %%
 \fIprocess_id\fR
-.e
+.fi
+.PP
 The first form identifies a job by job number.
 When a command is run,
 .I ash
@@ -617,12 +606,12 @@ the job in the background by typing
 .IR bg ,
 or you can continue it in the foreground by typing
 .IR fg .
-.h "Atty"
+.SS "Atty"
 If the shell variable ATTY is set, and the shell variable TERM is not
 set to ``emacs'', then \fIash\fR generates appropriate escape sequences
 to talk to
 .IR atty (1).
-.h "Exit Statuses"
+.SS "Exit Statuses"
 By tradition, an exit status of zero means that a command has succeeded
 and a nonzero exit status indicates that the command failed.  This is
 better than no convention at all, but in practice it is extremely useful
@@ -654,7 +643,7 @@ contradicts the convention described here.
 .PP
 When a command is terminated by a signal, the uses 128 plus the signal
 number as the exit code for the command.
-.h "Builtin Commands"
+.SS "Builtin Commands"
 This concluding section lists the builtin commands which are builtin
 because they need to perform some operation that can't be performed by a
 separate process.  In addition to these, there are several other commands
@@ -672,7 +661,8 @@ commands described below that accept options use the System V Release 2
 .IR getopt (3)
 syntax.
 .sp
-.b bg
+.HP 3
+.B bg
 [
 .I job
 ] ...
@@ -680,12 +670,14 @@ syntax.
 Continue the specified jobs (or the current job if no jobs are given)
 in the background.
 This command is only available on systems with Bekeley job control.
-.b command
+.HP 3
+.B command
 .IR "command arg" ...
 .br
 Execute the specified builtin command.  (This is useful when you have a
 shell function with the same name as a builtin command.)
-.b cd
+.HP 3
+.B cd
 [
 .I directory
 ]
@@ -702,19 +694,22 @@ name that the user gave.  These may be different either because
 the CDPATH mechanism was used or because a symbolic link was crossed.
 .\" .b ".\fI\h'0.1i'file"
 .\" Cawf can't do \h'0.1i'
-.b .
+.HP 3
+.B .
 .I file
 .br
 The commands in the specified file are read and executed by the shell.
 A path search is not done to find the file because the directories in
 PATH generally contain files that are intended to be executed, not read.
-.b eval
+.HP 3
+.B eval
 .IR string ...
 .br
 The strings are parsed as shell commands and executed.
 (This differs from the System V shell, which concatenates the arguments
 (separated by spaces) and parses the result as a single command.)
-.b exec
+.HP 3
+.B exec
 [
 .IR "command arg" ...
 ]
@@ -727,7 +722,8 @@ program, not a shell builtin or function).
 Any redirections on the exec command are marked as permanent, so that they
 are not undone when the exec command finishes.
 If the command is not found, the exec command causes the shell to exit.
-.b exit
+.HP 3
+.B exit
 [
 .I exitstatus
 ]
@@ -737,7 +733,8 @@ Terminate the shell process.  If
 is given it is used as the
 exit status of the shell; otherwise the exit status of the preceding
 command is used.
-.b export
+.HP 3
+.B export
 .IR name ...
 .br
 The specified names are exported so that they will appear in the environment
@@ -745,25 +742,29 @@ of subsequent commands.  The only way to un-export a variable is to unset it.
 .I Ash
 allows the value of a variable to be set at the same time it is exported
 by writing
-.d
+.IP
+.nf
 \fBexport\fR name=value
-.e
+.fi
 With no arguments the export command lists the names of all exported variables.
-.b fg
+.HP 3
+.B fg
 [
 .I job
 ]
 .br
 Move the specified job or the current job to the foreground.
 This command is only available on systems with Bekeley job control.
-.b getopts
+.HP 3
+.B getopts
 .I optstring
 .I var
 .br
 The System V
 .I getopts
 command.
-.b hash
+.HP 3
+.B hash
 .B -rv
 .IR command ...
 .br
@@ -788,18 +789,21 @@ option causes the
 .I hash
 command to delete all the entries in the hash table except for
 functions.
-.b jobid
+.HP 3
+.B jobid
 [
 .I job
 ]
 .br
 Print the process id's of the processes in the job.  If the job argument
 is omitted, use the current job.
-.b jobs
+.HP 3
+.B jobs
 .br
 This command lists out all the background processes which are children
 of the current shell process.
-.b pwd
+.HP 3
+.B pwd
 .br
 Print the current directory.  The builtin command may differ from the
 program of the same name because the builtin command remembers what
@@ -807,7 +811,8 @@ the current directory is rather than recomputing it each time.  This
 makes it faster.  However, if the current directory is renamed, the
 builtin version of pwd will continue to print the old name for the
 directory.
-.b read
+.HP 3
+.B read
 [
 .B -p
 .I prompt
@@ -835,7 +840,8 @@ If a backslash is followed by a newline, the backslash and the newline
 will be deleted.  If a backslash is followed by any other character,
 the backslash will be deleted and the following character will be treated
 as though it were not in IFS, even if it is.
-.b readonly
+.HP 3
+.B readonly
 .IR name ...
 .br
 The specified names are marked as read only, so that they cannot be
@@ -843,12 +849,14 @@ subsequently modified or unset.
 .I Ash
 allows the value of a variable to be set at the same time it is marked
 read only by writing
-.d
+.IP
+.nf
 \fBreadonly\fR name=value
-.e
+.fi
 With no arguments the readonly command lists the names of all
 read only variables.
-.b set
+.HP 3
+.B set
 [
 {
 .BI - options
@@ -876,9 +884,7 @@ Only the first argument to
 can contain options.
 The possible options are:
 .sp
-.ta 0.4i
-.in +0.4i
-.ti -0.4i
+.RS
 \fB-e\fR	Causes the shell to exit when a command terminates with
 a nonzero exit status, except when the exit status of the command is
 explicitly tested.  The exit status of a command is considered to be
@@ -891,21 +897,25 @@ or
 or if the command is the left hand operand of an ``&&'' or ``||''
 operator.
 .sp
-.ti -0.4i
+.RE
+.RS
 \fB-f\fR	Turn off file name generation.
 .sp
-.ti -0.4i
+.RE
+.RS
 \fB-I\fR	Cause the shell to ignore end of file conditions.
 (This doesn't apply when the shell a script sourced using the ``.''
 command.)  The shell will in fact exit if it gets 50 eof's in a
 row.
 .sp
-.ti -0.4i
+.RE
+.RS
 \fB-i\fR	Make the shell interactive.  This causes the shell to
 prompt for input, to trap interrupts, to ignore quit and terminate signals,
 and to return to the main command loop rather than exiting on error.
 .sp
-.ti -0.4i
+.RE
+.RS
 \fB-j\fR	Turns on Berkeley job control, on systems that support it.
 When the shell starts up, the
 .B -j
@@ -913,24 +923,28 @@ is set by default if the
 .B -i
 flag is set.
 .sp
-.ti -0.4i
+.RE
+.RS
 \fB-n\fR	Causes the shell to read commands but not execute them.
 (This is marginally useful for checking the syntax of scripts.)
 .sp
-.ti -0.4i
+.RE
+.RS
 \fB-s\fR	If this flag is set when the shell starts up, the shell
 reads commands from its standard input.  The shell doesn't examine the
 value of this flag any other time.
 .sp
-.ti -0.4i
+.RE
+.RS
 \fB-x\fR	If this flag is set, the shell will print out each
 command before executing it.
 .sp
-.ti -0.4i
+.RE
+.RS
 \fB-z\fR	If this flag is set, the file name generation process
 may generate zero files.  If it is not set, then a pattern which does
 not match any files will be replaced by a quoted version of the pattern.
-.in -0.4i
+.RE
 .sp
 The third use of the set command is to set the values of the shell's
 positional parameters to the specified
@@ -941,11 +955,13 @@ use ``\fB--\fR'' as the first argument to
 If no args are present, the set command will leave the value of the
 positional parameters unchanged, so to set the positional parameters
 to set of values that may be empty, execute the command
-.d
+.IP
+.nf
 shift $#
-.e
+.fi
 first to clear out the old values of the positional parameters.
-.b setvar
+.HP 3
+.B setvar
 .I variable
 .I value
 .br
@@ -960,7 +976,8 @@ rather than using
 .I Setvar
 is intended to be used in functions that assign values to variables whose
 names are passed as parameters.)
-.b shift
+.HP 3
+.B shift
 [
 .I n
 ]
@@ -971,7 +988,8 @@ times.
 A shift sets the value of $1 to the value of $2, the value of $2 to
 the value of $3, and so on, decreasing the value of $# by one.
 If there are zero positional parameters, shifting doesn't do anything.
-.b trap
+.HP 3
+.B trap
 [
 .I action
 ]
@@ -989,7 +1007,8 @@ When the shell forks off a subshell, it resets trapped (but not ignored)
 signals to the default action.
 The trap command has no effect on signals that were ignored on entry
 to the shell.
-.b umask
+.HP 3
+.B umask
 [
 .I mask
 ]
@@ -998,13 +1017,15 @@ Set the value of umask (see
 .IR umask (2))
 to the specified octal value.  If the argument is omitted, the umask
 value is printed.
-.b unset
+.HP 3
+.B unset
 .IR name ...
 .br
 The specified variables and functions are unset and unexported.
 If a given name corresponds to both a variable and a function, both the
 variable and the function are unset.
-.b wait
+.HP 3
+.B wait
 [
 .I job
 ]
@@ -1014,7 +1035,8 @@ last process in the job.  If the argument is omitted, wait for all jobs
 to complete and the return an exit status of zero.
 .SH EXAMPLES
 The following function redefines the \fIcd\fR command:
-.d
+.IP
+.nf
 cd() {
 	if command cd "$@"
 	then	if test -f .enter
@@ -1023,7 +1045,7 @@ cd() {
 		fi
 	fi
 }
-.e
+.fi
 This function causes the file ``.enter'' to be read when you enter a
 directory, if it exists.  The \fIcommand\fR command is used to access the
 real \fIcd\fR command.  The ``return 0'' ensures that the function will
@@ -1035,7 +1057,8 @@ you want to.
 The suspend function distributed with
 .I ash
 looks like
-.d
+.IP
+.nf
 # Copyright (C) 1989 by Kenneth Almquist.  All rights reserved.
 # This file is part of ash, which is distributed under the terms
 # specified by the Ash General Public License.
@@ -1045,21 +1068,22 @@ suspend() {
 	set +j
 	kill -TSTP 0
 }
-.e
+.fi
 This turns off job control and then sends a stop signal to the current
 process group, which suspends the shell.  (When job control is turned
 on, the shell ignores the TSTP signal.)  Job control will be turned back
 on when the function returns because ``-'' is local to the function.
 As an example of what \fInot\fR to do, consider an earlier version of
 \fIsuspend\fR:
-.d
+.IP
+.nf
 suspend() {
 	suspend_flag=$-
 	set +j
 	kill -TSTP 0
 	set -$suspend_flag
 }
-.e
+.fi
 There are two problems with this.  First, \fBsuspend_flag\fR is a global
 variable rather than a local one, which will cause problems in the
 (unlikely) circumstance that the user is using that variable for some
@@ -1077,9 +1101,9 @@ you type frequently.  For example, I set
 .br
 .\" \h'1i'export h=$HOME
 .\" Cawf can't do \h'1i'
-.in +1i
+.RS
 export h=$HOME
-.in -1i
+.RE
 .br
 in my .profile so that I can type the name of my home directory simply
 by typing ``$h''.
@@ -1105,19 +1129,20 @@ option.
 .SH AUTHORS
 Kenneth Almquist
 .SH "SEE ALSO"
-echo(1), expr(1), line(1), pwd(1), true(1).
+.BR echo (1), test (1), pwd (1), true (1).
 .SH BUGS
 When command substitution occurs inside a here document, the commands inside
 the here document are run with their standard input closed.  For example,
 the following will not work because the standard input of the
 .I line
 command will be closed when the command is run:
-.d
+.IP
+.nf
 cat <<-!
 Line 1: $(line)
 Line 2: $(line)
 !
-.e
+.fi
 .PP
 Unsetting a function which is currently being executed may cause strange
 behavior.
