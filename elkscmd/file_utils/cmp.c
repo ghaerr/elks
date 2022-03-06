@@ -20,25 +20,6 @@
 #include <errno.h>
 #include "futils.h"
 
-static char *ltoa(long i)
-{
-	int   sign = (i < 0);
-	static char a[16];
-	char *b = a + sizeof(a) - 1;
-
-	if (sign)
-		i = -i;
-	*b = 0;
-	do {
-		*--b = '0' + (i % 10);
-		i /= 10;
-	}
-	while (i);
-	if (sign)
-		*--b = '-';
-	return b;
-}
-
 static char	buf1[2048];
 static char	buf2[2048];
 

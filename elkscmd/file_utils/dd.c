@@ -43,25 +43,6 @@ static struct param params[] = {
 /* Fixed buffer */
 static char localbuf[BUFSIZ];		/* use disk block size for efficiency*/
 
-static char *ltoa(long i)
-{
-	int   sign = (i < 0);
-	static char a[16];
-	char *b = a + sizeof(a) - 1;
-
-	if (sign)
-		i = -i;
-	*b = 0;
-	do {
-		*--b = '0' + (i % 10);
-		i /= 10;
-	}
-	while (i);
-	if (sign)
-		*--b = '-';
-	return b;
-}
-
 /*
  * Read a number with a possible multiplier.
  * Returns -1 if the number format is illegal.
