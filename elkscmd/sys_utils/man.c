@@ -563,30 +563,32 @@ int do_noargs(int cmd_id)
 {
    if (cmd_id < 10) line_break();
    switch (cmd_id) {
-   case 1: no_fill = 1; break;
-   case 2: no_fill = 0; break;
-   case 3: pending_nl = 1; break;
-   case 4: break;
-   case 5: page_break(); break;
-   case 6: left_indent = old_para_indent;
+   case 1: no_fill = 1; break;			/* .nf */
+   case 2: no_fill = 0; break;			/* .fi */
+   case 3: pending_nl = 1; break;		/* .sp */
+   case 4: break;				/* .br */
+   case 5: page_break(); break;			/* .bp */
+   case 6: left_indent = old_para_indent;	/* .PP */
            pending_nl = 1;
 	   break;
-   case 7: pending_nl = 1;
+   case 7: pending_nl = 1;			/* .RS */
            left_indent += standard_tab;
            old_para_indent += standard_tab;
 	   break;
-   case 8: pending_nl = 1;
+   case 8: pending_nl = 1;			/* .RE */
            left_indent     -= standard_tab;
            old_para_indent -= standard_tab;
 	   break;
-   case 9: pending_nl = 1;
+   case 9: pending_nl = 1;			/* .HP */
            next_line_indent = old_para_indent + standard_tab;
 	   left_indent = old_para_indent;
 	   break;
 
-   case 10: right_adjust=1; break;
-   case 11: right_adjust=0; break;
-   case 12: input_tab=atoi(word); if (input_tab<=0) input_tab=8; break;
+   case 10: right_adjust=1; break;		/* .ad */
+   case 11: right_adjust=0; break;		/* .na */
+   case 12: input_tab=atoi(word);		/* .ta */
+            if (input_tab<=0) input_tab=8;
+	    break;
    }
    return 0;
 }
@@ -601,20 +603,20 @@ int do_argvcmd(int cmd_id)
    ungetc(ch, ifd);
 
    switch (cmd_id + 10*(ch=='\n')) {
-   case 1:	/* Title and headers */
+   case 1:	/* .TH Title and headers */
       page_break();
       left_indent = old_para_indent = standard_tab;
       build_headers();
       break;
 
-   case 2:	/* Section */
+   case 2:	/* .SH Section */
       left_indent = 0;
       next_line_indent = old_para_indent = standard_tab;
       no_nl = 0; keep_nl = 1; pending_nl=1;
 
       do_fontwords(1,1,0);
       return 0;
-   case 3:	/* Subsection */
+   case 3:	/* .SS Subsection */
       left_indent = standard_tab/2;
       next_line_indent = old_para_indent = standard_tab;
       no_nl = 0; keep_nl = 1; pending_nl=1;
@@ -622,8 +624,8 @@ int do_argvcmd(int cmd_id)
       do_fontwords(1,1,0);
       break;
 
+   case 5:	/* .TP New para, indent except line 1 */
    case 15:
-   case 5:	/* New para, indent except line 1 */
       do_skipeol();
       next_line_indent = old_para_indent + standard_tab;
       left_indent = old_para_indent;
@@ -632,7 +634,7 @@ int do_argvcmd(int cmd_id)
       optional_keep = 1;
       break;
 
-   case 4:	/* New para, indent except argument 1 */
+   case 4:	/* .IP New para, indent except argument 1 */
       next_line_indent = old_para_indent + standard_tab;
       left_indent = old_para_indent;
       pending_nl=1;
