@@ -43,6 +43,24 @@ static struct param params[] = {
 /* Fixed buffer */
 static char localbuf[BUFSIZ];		/* use disk block size for efficiency*/
 
+static char *ltoa(long i)
+{
+	int   sign = (i < 0);
+	static char a[16];
+	char *b = a + sizeof(a) - 1;
+
+	if (sign)
+		i = -i;
+	*b = 0;
+	do {
+		*--b = '0' + (i % 10);
+		i /= 10;
+	}
+	while (i);
+	if (sign)
+		*--b = '-';
+	return b;
+}
 
 /*
  * Read a number with a possible multiplier.
@@ -115,7 +133,7 @@ int main(int argc, char **argv)
 		str = *++argv;
 		cp = strchr(str, '=');
 		if (cp == NULL) {
-			fprintf(stderr, "Missing or invalid argument(s)\n");
+			errmsg("Missing or invalid argument(s)\n");
 			goto usage;
 		}
 		*cp++ = '\0';
@@ -128,7 +146,7 @@ int main(int argc, char **argv)
 		switch (par->value) {
 			case PAR_IF:
 				if (infile) {
-					fprintf(stderr, "Multiple input files illegal\n");
+					errmsg("Multiple input files illegal\n");
 					goto usage;
 				}
 	
@@ -137,7 +155,7 @@ int main(int argc, char **argv)
 
 			case PAR_OF:
 				if (outfile) {
-					fprintf(stderr, "Multiple output files illegal\n");
+					errmsg("Multiple output files illegal\n");
 					goto usage;
 				}
 
@@ -147,7 +165,7 @@ int main(int argc, char **argv)
 			case PAR_BS:
 				blocksize = getnum(cp);
 				if (blocksize <= 0) {
-					fprintf(stderr, "Bad block size value\n");
+					errmsg("Bad block size value\n");
 					goto usage;
 				}
 				break;
@@ -155,7 +173,7 @@ int main(int argc, char **argv)
 			case PAR_COUNT:
 				count = getnum(cp);
 				if (count < 0) {
-					fprintf(stderr, "Bad count value\n");
+					errmsg("Bad count value\n");
 					goto usage;
 				}
 				break;
@@ -163,7 +181,7 @@ int main(int argc, char **argv)
 			case PAR_SEEK:
 				seekval = getnum(cp);
 				if (seekval < 0) {
-					fprintf(stderr, "Bad seek value\n");
+					errmsg("Bad seek value\n");
 					goto usage;
 				}
 				break;
@@ -171,13 +189,13 @@ int main(int argc, char **argv)
 			case PAR_SKIP:
 				skipval = getnum(cp);
 				if (skipval < 0) {
-					fprintf(stderr, "Bad skip value\n");
+					errmsg("Bad skip value\n");
 					goto usage;
 				}
 				break;
 
 			default:
-				fprintf(stderr, "Unknown dd parameter\n");
+				errmsg("Unknown dd parameter\n");
 				goto usage;
 		}
 	}
@@ -194,7 +212,7 @@ int main(int argc, char **argv)
 	if (blocksize > sizeof(localbuf)) {
 		buf = malloc(blocksize);
 		if (buf == NULL) {
-			fprintf(stderr, "Cannot allocate buffer\n");
+			errmsg("Cannot allocate buffer\n");
 			return retval;
 		}
 	}
@@ -232,7 +250,7 @@ int main(int argc, char **argv)
 				}
 
 				if (incc == 0) {
-					fprintf(stderr, "Skipped beyond end of file\n");
+					errmsg("Skipped beyond end of file\n");
 					goto cleanup;
 				}
 			}
@@ -282,19 +300,40 @@ cleanup:
 cleanup2:
 	close(infd);
 	if (buf != localbuf) free(buf);
-	fprintf(stderr, "%ld+%d records in\n", intotal / blocksize,
-		(intotal % blocksize) != 0);
-	fprintf(stderr, "%ld+%d records out\n", outtotal / blocksize,
-		(outtotal % blocksize) != 0);
-	fprintf(stderr, "%ld bytes (%ld%c KiB) copied\n", outtotal, outtotal >> 10, (outtotal & 0x3ff) ? '+' : '\0');
+
+	/* %ld+%ld records in */
+	cp = ltoa(intotal / blocksize);
+	errstr(cp);
+	errmsg("+");
+	cp = ltoa((intotal % blocksize) != 0);
+	errstr(cp);
+	errmsg(" records in\n");
+
+	/* %ld+%ld records out */
+	cp = ltoa(outtotal / blocksize);
+	errstr(cp);
+	errmsg("+");
+	cp = ltoa((outtotal % blocksize) != 0);
+	errstr(cp);
+	errmsg(" records out\n");
+
+	/* %ld butes (%ld%c KiB) copied */
+	cp = ltoa(outtotal);
+	errstr(cp);
+	errmsg(" bytes (");
+	cp = ltoa(outtotal >> 10);
+	errstr(cp);
+	if (outtotal & 0x3ff)
+		errmsg("+");
+	errmsg(" KiB) copied\n");
 	return retval;
 
 usage:
-	fprintf(stderr, "\nUsage: dd if=<inflie> of=<outfile> [optional_params ...]\n\n");
-	fprintf(stderr, "If if= and/or of= are omitted, stdin/stdout will be used.\n");
-	fprintf(stderr, "Optional parameters:\n");
-	fprintf(stderr, "bs=<blocksize>  seek=<count>  skip=<count>  count=<count>\n");
-	fprintf(stderr, "seek/skip skips <count> blocks in input/output files, respectively\n");
-	fprintf(stderr, "count copies only <count> blocks (default is until end of file)\n\n");
-	return retval;
+	errmsg("usage: dd if=<infile> of=<outfile> [optional_params ...]\n\n");
+	errmsg("If if= and/or of= are omitted, stdin/stdout will be used.\n");
+	errmsg("Optional parameters:\n");
+	errmsg("bs=<blocksize>  seek=<count>  skip=<count>  count=<count>\n");
+	errmsg("seek/skip skips <count> blocks in input/output files, respectively\n");
+	errmsg("count copies only <count> blocks (default is until end of file)\n\n");
+	return 1;
 }

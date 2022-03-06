@@ -6,8 +6,6 @@
  * Most simple built-in commands are here.
  */
 
-#include "futils.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,6 +18,7 @@
 #include <grp.h>
 #include <utime.h>
 #include <errno.h>
+#include "futils.h"
 
 int main(int argc, char **argv)
 {

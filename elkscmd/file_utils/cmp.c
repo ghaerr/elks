@@ -6,8 +6,6 @@
  * Most simple built-in commands are here.
  */
 
-#include "futils.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,6 +18,26 @@
 #include <grp.h>
 #include <utime.h>
 #include <errno.h>
+#include "futils.h"
+
+static char *ltoa(long i)
+{
+	int   sign = (i < 0);
+	static char a[16];
+	char *b = a + sizeof(a) - 1;
+
+	if (sign)
+		i = -i;
+	*b = 0;
+	do {
+		*--b = '0' + (i % 10);
+		i /= 10;
+	}
+	while (i);
+	if (sign)
+		*--b = '-';
+	return b;
+}
 
 static char	buf1[2048];
 static char	buf2[2048];
@@ -51,12 +69,12 @@ int main(int argc, char **argv)
 	if ((statbuf1.st_dev == statbuf2.st_dev) &&
 		(statbuf1.st_ino == statbuf2.st_ino))
 	{
-		printf("Files are links to each other\n");
+		errmsg("Files are links to each other\n");
 		return 0;
 	}
 
 	if (statbuf1.st_size != statbuf2.st_size) {
-		printf("Files are different sizes\n");
+		errmsg("Files are different sizes\n");
 		return 1;
 	}
 
@@ -84,22 +102,22 @@ int main(int argc, char **argv)
 		cc2 = read(fd2, buf2, sizeof(buf2));
 		if (cc2 < 0) {
 			perror(argv[2]);
-			goto differ;
+			return 2;
 		}
 
 		if ((cc1 == 0) && (cc2 == 0)) {
-			printf("Files are identical\n");
-			goto same;
+			errmsg("Files are identical\n");
+			return 0;
 		}
 
 		if (cc1 < cc2) {
-			printf("First file is shorter than second\n");
-			goto differ;
+			errmsg("First file is shorter than second\n");
+			return 1;
 		}
 
 		if (cc1 > cc2) {
-			printf("Second file is shorter than first\n");
-			goto differ;
+			errmsg("Second file is shorter than first\n");
+			return 1;
 		}
 
 		if (memcmp(buf1, buf2, cc1) == 0) {
@@ -112,14 +130,15 @@ int main(int argc, char **argv)
 		while (*bp1++ == *bp2++)
 			pos++;
 
-		printf("Files differ at byte position %ld\n", pos);
-		goto differ;
+		errmsg("Files differ at byte position ");
+		char *p = ltoa(pos);
+		errstr(p);
+		errmsg("\n");
+		return 1;
 	}
-same:
 	return 0;
 
 usage:
-	fprintf(stderr, "usage: %s file1 file2\n", argv[0]);
-differ:
+	errmsg("usage: cmp file1 file2\n");
 	return 1;
 }

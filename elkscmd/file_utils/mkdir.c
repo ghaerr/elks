@@ -3,6 +3,7 @@
 #include <sys/stat.h>
 #include <stdio.h>
 #include <string.h>
+#include "futils.h"
 
 static unsigned short newmode;
 
@@ -18,17 +19,16 @@ static int make_dir(char *name, int f)
 		line[1] = 0;
 		make_dir(iname,1);
 	}
-	if (mkdir(name, newmode) && !f)
-		return(1);
-	else
-		return(0);
+	if (mkdir(name, newmode) < 0 && !f)
+		return 1;
+	return 0;
 
 }
 	
 
 int main(int argc, char **argv)
 {
-	int i, parent = 0, er = 0;
+	int i, parent = 0, retr = 0;
 
 	if (argc < 2) goto usage;
 	
@@ -43,14 +43,15 @@ int main(int argc, char **argv)
 				argv[i][strlen(argv[i])-1] = '\0';
 
 			if (make_dir(argv[i],parent)) {
-				fprintf(stderr, "mkdir: cannot create directory: %s\n", argv[i]);
-				er = 1;
+				errstr(argv[i]);
+				errmsg(": cannot create directory\n");
+				retr = 1;
 			}
 		} else goto usage;
 	}
-	return er;
+	return retr;
 
 usage:
-	fprintf(stderr, "usage: %s new_dir1 [new_dir2] ...\n", argv[0]);
+	errmsg("usage: mkdir directory [...]\n");
 	return 1;
 }
