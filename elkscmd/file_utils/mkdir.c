@@ -9,8 +9,8 @@ static unsigned short newmode;
 
 static int make_dir(char *name, int f)
 {
-	char iname[256];
 	char *line;
+	char iname[256];
 	
 	strcpy(iname, name);
 	if (((line = rindex(iname,'/')) != NULL) && f) {
@@ -28,7 +28,7 @@ static int make_dir(char *name, int f)
 
 int main(int argc, char **argv)
 {
-	int i, parent = 0, retr = 0;
+	int i, parent = 0, ret = 0;
 
 	if (argc < 2) goto usage;
 	
@@ -45,13 +45,13 @@ int main(int argc, char **argv)
 			if (make_dir(argv[i],parent)) {
 				errstr(argv[i]);
 				errmsg(": cannot create directory\n");
-				retr = 1;
+				ret = 1;
 			}
 		} else goto usage;
 	}
-	return retr;
+	return ret;
 
 usage:
-	errmsg("usage: mkdir directory [...]\n");
+	errmsg("usage: mkdir [-p] directory [...]\n");
 	return 1;
 }

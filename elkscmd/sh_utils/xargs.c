@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <string.h>
 
 #define MAX_ARGS 20
 #define MAX_IARGS 10
@@ -27,10 +28,11 @@
 
 #define DEFAULT_CMD "/bin/echo"
 
+#define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
+#define errstr(str) write(STDERR_FILENO, str, strlen(str))
+
 int max_args = MAX_ARGS;
 int max_chars = MAX_CHARS;	/* Not yet implemented */
-
-char * progname;
 
 /* Command to run if none specified */
 char * default_cmd = DEFAULT_CMD;
@@ -49,7 +51,7 @@ char * nargv[MAX_ARGS + MAX_IARGS + 2];
 
 void usage(char ** argv)
 {
-	fprintf(stderr, "%s [-n max-args] [-s max-chars] [command [initial-arguments]]\n", argv[0]);
+	errmsg("xargs [-n max-args] [-s max-chars] [command [initial-arguments]]\n");
 	exit(1);
 }
 
@@ -120,17 +122,20 @@ void build_cmd(int argc, char ** argv)
 	int i;
 
 	if (argc > (MAX_IARGS + MAX_ARGS - max_args)) {
-		fprintf(stderr, "%s: Too many initial arguments.\n", progname);
+		errmsg("xargs: Too many initial arguments.\n");
 		exit(1);
 	}
-	for (i = 0; i < argc; i++) {
+	for (i = 0; i < argc; i++)
 		nargv[i] = argv[i];
-	}
 	nargc += argc;
 }
 
 #define BSIZE 64
-#define out_of_mem() { perror("malloc"); exit(1); }
+static void out_of_mem()
+{
+	errmsg("xargs: out of memory\n");
+	exit(1);
+}
 
 /*
  * next_token()
@@ -203,7 +208,7 @@ void run(char * argv0, char ** argv)
 	pid = vfork();
 	switch (pid) {
 		case -1:
-			perror("fork");
+			errmsg("cannot fork\n");
 			exit(1);
 			break;
 		case 0:
@@ -213,7 +218,8 @@ void run(char * argv0, char ** argv)
 			return;
 	}
 	execvp(argv0, argv);
-	perror("argv0");
+	errstr(argv0);
+	errmsg(": cannot exec\n");
 	exit(1);
 }
 
@@ -223,7 +229,6 @@ int main(int argc, char ** argv)
 	int new_argc;
 	char * tok = NULL;
 
-	progname = argv[0];
 	num_args = do_args(argc, argv);
 
 	if (num_args >= argc) {
@@ -249,5 +254,5 @@ int main(int argc, char ** argv)
 		}
 	} while (tok != NULL);
 
-	exit(0);
+	return 0;
 }

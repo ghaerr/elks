@@ -107,7 +107,7 @@ int find_page(char *name, char *sect)
 {
 static char defpath[] = _PATH_MANPAGES;
 static char defsect[] = "1:2:3:4:5:6:7:8:9";
-static char defsuff[] = ":.Z:.gz";
+static char defsuff[] = ":.Z";
 static char manorcat[] = "man:cat";
 
    char fbuf[256];
@@ -193,7 +193,7 @@ int open_page(char * name)
 
    p = strrchr(name, '.');
    if (p) {
-      if (strcmp(p, ".gz") == 0) command = "gzip -dc ";
+      //if (strcmp(p, ".gz") == 0) command = "gzip -dc ";
       if (strcmp(p, ".Z") == 0)  command = "compress -dc ";
    }
 

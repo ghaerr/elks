@@ -2,8 +2,6 @@
  * Copyright (c) 1993 by David I. Bell
  * Permission is granted to use, distribute, or modify this source,
  * provided that this copyright notice remains intact.
- *
- * Most simple built-in commands are here.
  */
 
 #include <stdio.h>
@@ -22,21 +20,20 @@
 int main(int argc, char **argv)
 {
 	char	*cp;
-	int	mode;
+	int	mode = 0;
 
-	if (argc < 3) {
-		errmsg("You must specify a mode number and at least one file or directory.\n");
+	if (argc < 3)
 		goto usage;
-	}
 
-	mode = 0;
 	cp = argv[1];
-	while (isoctal(*cp)) mode = mode * 8 + (*cp++ - '0');
+	while (isoctal(*cp))
+		mode = mode * 8 + (*cp++ - '0');
 
 	if (*cp) {
-		errmsg("Mode must be an octal number\n");
-		goto usage;
+		errmsg("mode must be specified as an octal number (e.g. 755 is 'rwxr-xr-x').\n");
+		return 1;
 	}
+
 	argc--;
 	argv++;
 
@@ -48,9 +45,6 @@ int main(int argc, char **argv)
 	return 0;
 
 usage:
-	errmsg("usage: ");
-	errstr(argv[0]);
-	errmsg(" mode file1 [file2] ...\n");
-	errmsg("mode must be specified as an octal number (i.e. 755 is 'rwxr-xr-x').\n");
+	errmsg("usage: chmod mode file [...]\n");
 	return 1;
 }

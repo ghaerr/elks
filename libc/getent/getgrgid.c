@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <grp.h>
+#include <paths.h>
 
 struct group *
 getgrgid(const gid_t gid)
@@ -29,7 +30,7 @@ getgrgid(const gid_t gid)
   struct group * group;
   int grp_fd;
 
-  if ((grp_fd=open("/etc/group", O_RDONLY))<0)
+  if ((grp_fd=open(_PATH_GROUP, O_RDONLY))<0)
     return NULL;
 
   while ((group=__getgrent(grp_fd))!=NULL)

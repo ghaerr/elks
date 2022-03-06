@@ -61,8 +61,6 @@ int main(int argc, char **argv)
 	return 0;
 
 usage:
-	errmsg("usage: ");
-	errstr(argv[0]);
-	errmsg(" group_name file1 [file2] ...\n");
+	errmsg("usage: chgrp {group_name|group_id} file [...]\n");
 	return 1;
 }
