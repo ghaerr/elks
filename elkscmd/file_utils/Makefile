@@ -32,8 +32,8 @@ chown: chown.o
 cmp: cmp.o
 	$(LD) $(LDFLAGS) -o cmp cmp.o $(LDLIBS)
 
-cp: cp.o
-	$(LD) $(LDFLAGS) -maout-heap=0xffff -o cp cp.o $(LDLIBS)
+cp: cp.o tio_vfprintf.o
+	$(LD) $(LDFLAGS) -maout-heap=0xffff -o cp cp.o tio_vfprintf.o $(LDLIBS)
 
 df: df.o
 	$(LD) $(LDFLAGS) -o df df.o $(LDLIBS)

@@ -331,7 +331,7 @@ static int do_copies(void)
 				char *p = strrchr(inode_build->path, '/');
 				if (p && *++p == '.') {
 					if (opt_verbose)
-						printf("Skipping zero length%s\n", inode_build->path);
+						printf("Skipping zero length %s\n", inode_build->path);
 					continue;
 				}
 			}

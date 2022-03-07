@@ -28,17 +28,17 @@ fsck: fsck.o
 fdisk: fdisk.o
 	$(LD) $(LDFLAGS) -o fdisk fdisk.o $(LDLIBS)
 
-mkfs: mkfs.o
-	$(LD) $(LDFLAGS) -o mkfs mkfs.o $(LDLIBS)
+mkfs: mkfs.o ../file_utils/tio_vfprintf.o
+	$(LD) $(LDFLAGS) -o mkfs mkfs.o ../file_utils/tio_vfprintf.o $(LDLIBS)
 
-mkfat: mkfat.o
-	$(LD) $(LDFLAGS) -o mkfat mkfat.o $(LDLIBS)
+mkfat: mkfat.o ../file_utils/tio_vfprintf.o
+	$(LD) $(LDFLAGS) -o mkfat mkfat.o ../file_utils/tio_vfprintf.o $(LDLIBS)
 
 partype: partype.o
 	$(LD) $(LDFLAGS) -o partype partype.o $(LDLIBS)
 
-ramdisk: ramdisk.o
-	$(LD) $(LDFLAGS) -o ramdisk ramdisk.o $(LDLIBS)
+ramdisk: ramdisk.o ../file_utils/tio_vfprintf.o
+	$(LD) $(LDFLAGS) -o ramdisk ramdisk.o ../file_utils/tio_vfprintf.o $(LDLIBS)
 
 clean:
 	rm -f *.o $(FORMATMOD) core $(PRGS)
