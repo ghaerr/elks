@@ -17,16 +17,20 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <time.h>
+#include <paths.h>
 #include "telnet.h"
 
 //#define RAWTELNET	/* set in telnet and telnetd for raw telnet without IAC*/
+
+#define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
+#define errstr(str) write(STDERR_FILENO, str, strlen(str))
 
 #define MAX_BUFFER 512		/* should be equal to TDB_WRITE_MAX and PTYOUTQ_SIZE*/
 static char buf_in  [1500];
 static char buf_out [1500];
 
-char *binlogin[2] = {"/bin/login", NULL};
-char *binsh[2] = {"/bin/sh", NULL};
+char *binlogin[2] = {_PATH_LOGIN, NULL};
+char *binsh[2] = {_PATH_BSHELL, NULL};
 
 static pid_t term_init(int *pty_fd)
 {
@@ -36,20 +40,23 @@ static pid_t term_init(int *pty_fd)
 	char pty_name[12];
 
 again:
-	sprintf(pty_name, "/dev/ptyp%d", n);		/* master side (PTY) /dev/ptyp0 = 2,8 */
+	strcpy(pty_name, "/dev/ptyp");		/* master side (PTY) /dev/ptyp0 = 2,8 */
+	strcat(pty_name, itoa(n));
 	if ((*pty_fd = open(pty_name, O_RDWR)) < 0) {
 		if ((errno == EBUSY) && (n < 3)) {
 			n++;
 			goto again;
 		}
-		fprintf(stderr, "Can't create pty %s\n", pty_name);
+		errmsg("telnetd: Can't create pty ");
+		errstr(pty_name);
+		errmsg("\n");
 		return -1;
 	}
 	signal(SIGCHLD, SIG_IGN);
 	signal(SIGINT, SIG_IGN);
 	
 	if ((pid = fork()) == -1) {
-		fprintf(stderr, "telnetd: No processes\n");
+		perror("telnetd");
 		return -1;
 	}
 	if (!pid) {
@@ -61,7 +68,9 @@ again:
 		setsid();
 		pty_name[5] = 't'; /* results in /dev/ttyp%d, slave side (TTY) /dev/ttyp0 = 4,8 */
 		if ((tty_fd = open(pty_name, O_RDWR)) < 0) {
-			fprintf(stderr, "telnetd: Can't open pty %s\n", pty_name);
+			errmsg("telnetd: Can't open pty ");
+			errstr(pty_name);
+			errmsg("\n");
 			exit(1);
 		}
 
@@ -214,7 +223,7 @@ int main(int argc, char **argv)
 	addr_in.sin_addr.s_addr = htons(INADDR_ANY);
 	addr_in.sin_port = htons(23);
 	if (bind(sockfd, (struct sockaddr *)&addr_in, sizeof(addr_in)) == -1) {
-		fprintf(stderr, "telnetd: bind error (may already be running)\n");
+		errmsg("telnetd: bind error (may already be running)\n");
 		close(sockfd);
 		return 1;
 	}
@@ -259,7 +268,7 @@ int main(int argc, char **argv)
 		waitpid(-1, NULL, WNOHANG);		/* reap previous accepts*/
 
 		if ((ret = fork()) == -1)		/* handle new accept*/
-			fprintf(stderr, "telnetd: No processes\n");
+			perror("telnetd");
 		else if (ret == 0) {
 #if 0 /* test code for accept and getpeername */
 			fprintf(stderr, "accept from %s:%u\n", in_ntoa(addr_in.sin_addr.s_addr),

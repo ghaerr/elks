@@ -197,7 +197,7 @@ int main(int argc, char **argv)
 		}
 
 		if ((ret = fork()) == -1)
-			fprintf(stderr, "httpd: No processes\n");
+			perror("httpd");
 		else if (ret == 0) {
 			close(listen_sock);
 			process_request(conn_sock);
