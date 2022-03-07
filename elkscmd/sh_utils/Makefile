@@ -45,8 +45,8 @@ pwd: pwd.o
 true: true.o
 	$(LD) $(LDFLAGS) -o true true.o $(LDLIBS)
 
-which: which.o
-	$(LD) $(LDFLAGS) -o which which.o $(LDLIBS)
+which: which.o ../file_utils/tio_vfprintf.o
+	$(LD) $(LDFLAGS) -o which which.o ../file_utils/tio_vfprintf.o $(LDLIBS)
 
 whoami: whoami.o
 	$(LD) $(LDFLAGS) -o whoami whoami.o $(LDLIBS)
@@ -57,17 +57,17 @@ yes: yes.o
 logname: logname.o
 	$(LD) $(LDFLAGS) -o logname logname.o $(LDLIBS)
 
-tr: tr.o
-	$(LD) $(LDFLAGS) -o tr tr.o $(LDLIBS)
+tr: tr.o ../file_utils/tio_vfprintf.o
+	$(LD) $(LDFLAGS) -o tr tr.o ../file_utils/tio_vfprintf.o $(LDLIBS)
 
 xargs: xargs.o
 	$(LD) $(LDFLAGS) -o xargs xargs.o $(LDLIBS)
 
-mesg: mesg.o
-	$(LD) $(LDFLAGS) -o mesg mesg.o $(LDLIBS)
+mesg: mesg.o ../file_utils/tio_vfprintf.o
+	$(LD) $(LDFLAGS) -o mesg mesg.o ../file_utils/tio_vfprintf.o $(LDLIBS)
 
-stty: stty.o
-	$(LD) $(LDFLAGS) -o stty stty.o $(LDLIBS)
+stty: stty.o ../file_utils/tio_vfprintf.o
+	$(LD) $(LDFLAGS) -o stty stty.o ../file_utils/tio_vfprintf.o $(LDLIBS)
 
 test: test.o
 	$(LD) $(LDFLAGS) -o test test.o $(LDLIBS)
