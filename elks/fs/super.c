@@ -182,10 +182,12 @@ static struct super_block *read_super(kdev_t dev, int t, int flags,
     type = file_systems[0];
 #endif
 
-    for (s = super_blocks; s->s_dev; s++)
-	continue;
-    if (s >= super_blocks + NR_SUPER)
-	return NULL;
+    for (s = super_blocks; ; s++) {
+	if (s >= super_blocks + NR_SUPER)
+	    return NULL;
+	if (s->s_dev == 0)
+	    break;
+    }
 
     s->s_dev = dev;
     s->s_flags = flags;

@@ -301,7 +301,7 @@ void fatalmsg(const char *s, ...)
 int main(int ac, char **av)
 {
 	char *rootdevice, *targetdevice;
-	char *bootfile;
+	char *bootfile = 0;
 	int rootfstype, fstype, fd, n;
 	int opt_writembr = 0;
 	int opt_writeflat = 0;

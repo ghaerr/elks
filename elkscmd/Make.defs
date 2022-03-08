@@ -95,6 +95,12 @@ CFLAGS=$(CFLBASE) $(WARNINGS) $(LOCALFLAGS) $(INCLUDES) -D__ELKS__ -DELKS_VERSIO
 
 ###############################################################################
 #
+# Special libraries for some programs
+TINYPRINTF=$(ELKSCMD_DIR)/lib/tiny_vfprintf.o
+
+
+###############################################################################
+#
 # Standard compilation rules.
 
 .S.s:

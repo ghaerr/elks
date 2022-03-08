@@ -8,8 +8,7 @@
  * Limitations:
  *	%s, %c, %d, %u, %x, %o, %ld, %lu, %lx only
  *  No field widths
- *  Should not mix with stdio input functions or library routines that use fopen
- *    Replaces stdin, stdout, stderr buffers to single buffer
+ *    Replaces stdout and stderr buffers with single buffer
  *
  * Mar 2020 Greg Haerr
  */
@@ -22,20 +21,6 @@
 #include <sys/types.h>
 
 static unsigned char bufout[80];
-
-FILE  stdin[1] =
-{
-   {
-    bufout,
-    bufout,
-    bufout,
-    bufout,
-    bufout + sizeof(bufout),
-    0,
-    _IOFBF | __MODE_READ | __MODE_IOTRAN
-   }
-};
-
 
 FILE  stdout[1] =
 {
