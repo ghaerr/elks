@@ -73,7 +73,6 @@ static void restart_timer(void)
 {
     static struct timer_list timer;
 
-    init_timer(&timer);
     timer.tl_expires = jiffies + (8 * HZ/100);	/* every 8/100 second*/
     timer.tl_function = kbd_timer;
     add_timer(&timer);
