@@ -1,29 +1,24 @@
 .TH FTP 1 ELKS
-.UC 5
 .SH NAME
 ftp \- Internet file transfer program
 .SH SYNOPSIS
 .B ftp
-[ 
-.B \-v
-] [
-.B \-d
-] [
-.B \-i
-] [
-.B \-A
-] [
-.B \-P
-] [
-.B \-p password
-] [
-.B \-u username
-] [
-.B \-q
-] [
-.B host
+.RB [ \-v ] 
+.RB [ \-d ]
+.RB [ \-i ]
+.RB [ \-A ]
+.RB [ \-P ]
 [
-.B port
+.B \-p 
+.I password
+] [
+.B \-u 
+.I username
+]
+.RB [ \-q ]
+.RI [ host
+[
+.I port
 ] ]
 .SH DESCRIPTION
 .I Ftp
@@ -42,7 +37,7 @@ server on that host; otherwise,
 will enter its command interpreter and await instructions
 from the user.  When 
 .I ftp
-is awaiting commands the prompt \*(lqftp>\*(rq
+is awaiting commands the prompt `ftp>'
 is provided to the user.  The following commands are recognized
 by
 .IR ftp .
@@ -94,7 +89,7 @@ command will set the debug-value to either 0 or one (toggle).
 When debugging is on,
 .I ftp
 prints each command sent to the remote machine, preceded
-by the string \*(lq--->\*(rq. A number of other messages and numbers will also be printed, depending on the level.
+by the string `--->'. A number of other messages and numbers will also be printed, depending on the level.
 If 
 .I debug
 is off, only minimal information is displayed, such as the file names transferred.
@@ -146,8 +141,9 @@ is specified, the current local directory is listed.
 Expand the \fIremote-files\fP on the remote machine
 and do a \fBget\fP for each file name thus produced.
 See \fBglob\fR for details on the filename expansion.
-.I ftp is not doing any filename translation, so file names will be coerced into the
-format accepted by the local file system (minix or FAT).
+.I ftp 
+is not doing any filename translation, so file names will be coerced into the
+format accepted by the destination file system (minix or FAT).
 .TP
 \fBmkdir\fP \fIdirectory-name\fP
 Make a directory on the remote machine.
@@ -259,7 +255,7 @@ Receiving transfers will be halted by sending a ftp protocol ABOR
 command to the remote server, and discarding any further data received.
 The speed at which this is accomplished depends upon the remote
 server's support for ABOR processing.
-If the remote server does not support the ABOR command, an "ftp>"
+If the remote server does not support the ABOR command, an `ftp>'
 prompt will not appear until the remote server has completed
 sending the requested file.
 .PP
