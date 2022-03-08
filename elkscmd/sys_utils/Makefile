@@ -42,8 +42,8 @@ PRGS = \
 init: init.o
 	$(LD) $(LDFLAGS) -maout-heap=4096 -maout-stack=1024 -o init init.o $(LDLIBS)
 
-getty: getty.o ../file_utils/tio_vfprintf.o
-	$(LD) $(LDFLAGS) -maout-heap=1024 -maout-stack=1024 -o getty getty.o ../file_utils/tio_vfprintf.o $(LDLIBS)
+getty: getty.o $(TINYPRINTF)
+	$(LD) $(LDFLAGS) -maout-heap=1024 -maout-stack=1024 -o getty getty.o $(TINYPRINTF) $(LDLIBS)
 
 login: login.o
 	$(LD) $(LDFLAGS) -maout-stack=2048 -o login login.o $(LDLIBS)
@@ -93,8 +93,8 @@ poweroff: poweroff.o
 chmem: chmem.o
 	$(LD) $(LDFLAGS) -o chmem chmem.o $(LDLIBS)
 
-mouse: mouse.o ../file_utils/tio_vfprintf.o
-	$(LD) $(LDFLAGS) -o mouse mouse.o ../file_utils/tio_vfprintf.o $(LDLIBS)
+mouse: mouse.o $(TINYPRINTF)
+	$(LD) $(LDFLAGS) -o mouse mouse.o $(TINYPRINTF) $(LDLIBS)
 
 sercat: sercat.o
 	$(LD) $(LDFLAGS) -o sercat sercat.o $(LDLIBS)
@@ -102,8 +102,8 @@ sercat: sercat.o
 console: console.o
 	$(LD) $(LDFLAGS) -o console console.o $(LDLIBS)
 
-makeboot: makeboot.o ../file_utils/tio_vfprintf.o
-	$(LD) $(LDFLAGS) -o makeboot makeboot.o ../file_utils/tio_vfprintf.o $(LDLIBS)
+makeboot: makeboot.o $(TINYPRINTF)
+	$(LD) $(LDFLAGS) -o makeboot makeboot.o $(TINYPRINTF) $(LDLIBS)
 
 unreal.o: $(ELKS_LIB)/unreal.S
 	$(LD) -melks-libc -mcmodel=small -c $(ELKS_LIB)/unreal.S -o unreal.o
