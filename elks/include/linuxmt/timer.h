@@ -17,7 +17,6 @@
  */
 struct timer_list {
     struct timer_list *tl_next;
-    struct timer_list *tl_prev;
     jiff_t tl_expires;
     int tl_data;
     void (*tl_function) ();
@@ -26,10 +25,9 @@ struct timer_list {
 struct pt_regs;
 
 /* sched.c*/
-extern void init_timer(struct timer_list *);
-extern void add_timer(struct timer_list *);
-extern int del_timer(struct timer_list *);
-extern void do_timer(struct pt_regs *);
+void add_timer(struct timer_list *);
+int del_timer(struct timer_list *);
+void do_timer(struct pt_regs *);
 
 /* timer.c*/
 void timer_tick(int, struct pt_regs *);

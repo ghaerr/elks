@@ -23,8 +23,6 @@ __ptask previous;
 //static unsigned char nr_running;
 extern int intr_count;
 
-static void run_timer_list();
-
 void add_to_runqueue(register struct task_struct *p)
 {
     //nr_running++;
@@ -112,7 +110,6 @@ void schedule(void)
     if (next != prev) {
 
         if (timeout) {
-            init_timer(&timer);
             timer.tl_expires = timeout;
             timer.tl_data = (int) prev;
             timer.tl_function = process_timeout;
@@ -131,68 +128,55 @@ void schedule(void)
 	debug_sched("resched: %d prevstate %d\n", current->pid, prev->state);
 }
 
-struct timer_list tl_list = { NULL, NULL, 0L, 0, NULL };
+static struct timer_list *next_timer;
 
-void init_timer(register struct timer_list *timer)
+void add_timer(struct timer_list * timer)
 {
-    timer->tl_next = timer->tl_prev = NULL;
-}
-
-static int detach_timer(register struct timer_list *timer)
-{
-    register struct timer_list *tmr;
-    int retval = 0;
-
-    if ((tmr = timer->tl_next)) {
-        tmr->tl_prev = timer->tl_prev;
-    }
-    if ((tmr = timer->tl_prev)) {
-        tmr->tl_next = timer->tl_next;
-	retval = 1;
-    }
-    init_timer(timer);
-    return retval;
-}
-
-int del_timer(struct timer_list *timer)
-{
-    int ret;
+    struct timer_list **p;
     flag_t flags;
 
+    timer->tl_next = NULL;
+    p = &next_timer;
     save_flags(flags);
     clr_irq();
-    ret = detach_timer(timer);
+    while (*p) {
+        if ((*p)->tl_expires > timer->tl_expires) {
+            timer->tl_next = *p;
+            break;
+        }
+        p = &(*p)->tl_next;
+    }
+    *p = timer;
     restore_flags(flags);
-    return ret;
 }
 
-void add_timer(register struct timer_list *timer)
+int del_timer(struct timer_list * timer)
 {
+    struct timer_list **p;
     flag_t flags;
-    register struct timer_list *next = &tl_list;
-    struct timer_list *prev;
 
+    p = &next_timer;
     save_flags(flags);
     clr_irq();
-
-    do {
-        prev = next;
-    } while ((next = next->tl_next) && (next->tl_expires < timer->tl_expires));
-
-    (timer->tl_prev = prev)->tl_next = timer;
-    if ((timer->tl_next = next))
-        next->tl_prev = timer;
-
+    while (*p) {
+        if (*p == timer) {
+            *p = timer->tl_next;
+            restore_flags(flags);
+            return 1;
+        }
+        p = &(*p)->tl_next;
+    }
     restore_flags(flags);
+    return 0;
 }
 
 static void run_timer_list(void)
 {
-    register struct timer_list *timer;
+    struct timer_list *timer;
 
     clr_irq();
-    while ((timer = tl_list.tl_next) && timer->tl_expires <= jiffies) {
-        detach_timer(timer);
+    while ((timer = next_timer) && timer->tl_expires <= jiffies) {
+        del_timer(timer);
         set_irq();
         timer->tl_function(timer->tl_data);
         clr_irq();
