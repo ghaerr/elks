@@ -110,7 +110,7 @@
 110 Connection timed out 
 111 Connection refused 
 112 Host is down 
-113 No route to host 
+113 Host not reachable 
 114 Operation already in progress 
 115 Operation now in progress 
 116 Stale NFS file handle 
