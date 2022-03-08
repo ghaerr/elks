@@ -14,7 +14,7 @@
 
 static struct timer_list alarms[NR_ALARMS];
 
-void alarm_callback(int data)
+static void alarm_callback(int data)
 {
 	struct task_struct *p = (struct task_struct *)data;
 
