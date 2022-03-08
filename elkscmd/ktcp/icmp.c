@@ -62,19 +62,18 @@ void icmp_process(struct iphdr_s *iph, unsigned char *packet)
    case ICMP_TYPE_DST_UNRCH:
 	dp = (struct icmp_dest_unreachable_s *)packet;
 	dpip = (struct iphdr_s *)dp->iphdr;
-	len = ntohs(dpip->tot_len) - 4 * IP_HLEN(dpip);
-	dptcp = (struct tcphdr_s *)dp->iphdr + len;
-	printf("icmp: len %d\n", len);
+	len = 4 * IP_HLEN(dpip);
+	dptcp = (struct tcphdr_s *)(dp->iphdr + len);
 	printf("icmp: destination unreachable code %d from %s\n",
 		dp->code, in_ntoa(iph->saddr));
-	printf("icmp: src %s:%u ", in_ntoa(dpip->saddr), ntohs(dptcp->sport));
-	printf("dst %s:%u\n", in_ntoa(dpip->daddr), ntohs(dptcp->dport));
+	debug_ip("icmp: src %s:%u ", in_ntoa(dpip->saddr), ntohs(dptcp->sport));
+	debug_ip("dst %s:%u\n", in_ntoa(dpip->daddr), ntohs(dptcp->dport));
 	cbnode = tcpcb_find(dpip->daddr, ntohs(dptcp->sport), ntohs(dptcp->dport));
 	if (cbnode) {
 	    struct tcpcb_s *cb = &cbnode->tcpcb;
 	    notify_sock(cb->sock, TDT_CONNECT, -EHOSTUNREACH);
 	    tcpcb_remove_cb(cb);	/* deallocate */
-	} else printf("icmp: Connection not found\n");
+	} else debug_ip("icmp: Connection not found\n");
 	break;
     default:
 	printf("icmp: unrecognized ICMP type %d\n", packet[0]);
