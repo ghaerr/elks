@@ -26,6 +26,10 @@ If this happens, and is discovered before another diskette is inserted, the
 original one can be replaced without harm.
 Attempts to unmount a file system holding working directories or open files
 will be rejected with a \&'device busy\&' message.
+.sp
+As a special case,
+.B umount /
+will attempt to unmount the root filesystem and remount it read-only.
 .SH EXIT STATUS
 .TP
 .I 0

@@ -6,7 +6,7 @@ mount \- mount a file system
 .B [\-a]
 .B [\-q]
 .B [\-t fstype]
-.B [\-o ro|remount,rw]
+.B [\-o ro|remount,{rw|ro}]
 .I device directory
 .SH DESCRIPTION
 .BR mount
@@ -32,7 +32,8 @@ Specify the type of filesystem to be mounted. Default is
 .B minix .
 .TP
 .B "-o"
-Specify ro (readonly) or remount,rw (remount read/write) options.
+Specify ro (readonly), remount,rw (remount read/write)
+or remount,ro (remount read-only) options.
 .TP
 .B "-q"
 Query filesystem type and set return value based on filesystem.

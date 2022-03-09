@@ -9,18 +9,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 #include <fcntl.h>
 #include <sys/mount.h>
+
+#define msg(str) write(STDOUT_FILENO, str, sizeof(str) - 1)
+#define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
 
 int main(int argc, char **argv)
 {
 	if (argc != 2) {
-		write(STDERR_FILENO, "Usage: umount <device>|<directory>\n", 35);
+		errmsg("Usage: umount <device>|<directory>\n");
 		return 1;
 	}
 	if (umount(argv[1]) < 0) {
 		perror(argv[1]);
-		exit(1);
+		return 1;
 	}
+	if (!strcmp(argv[1], "/"))
+		msg("/: Remounted read-only\n");
 	return 0;
 }

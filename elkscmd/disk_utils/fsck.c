@@ -527,7 +527,7 @@ void read_tables(void)
 /*		namelen = 14; RUBOUT */
 /*		dirsize = 16; RUBOUT */
 	} else {
-		die("bad magic number in super-block");
+		die("not a MINIX filesystem (perhaps DOS?)");
 	}
 	/*else if (MAGIC == MINIX_SUPER_MAGIC2) { RUBOUT
 		namelen = 30;
