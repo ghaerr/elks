@@ -71,7 +71,10 @@ void icmp_process(struct iphdr_s *iph, unsigned char *packet)
 	cbnode = tcpcb_find(dpip->daddr, ntohs(dptcp->sport), ntohs(dptcp->dport));
 	if (cbnode) {
 	    struct tcpcb_s *cb = &cbnode->tcpcb;
-	    notify_sock(cb->sock, TDT_CONNECT, -EHOSTUNREACH);
+	    int err = (dp->code == 1)? -EHOSTUNREACH :
+		      (dp->code >= 9)? -ECONNREFUSED : -ENETUNREACH;
+
+	    notify_sock(cb->sock, TDT_CONNECT, err);
 	    tcpcb_remove_cb(cb);	/* deallocate */
 	} else debug_ip("icmp: Connection not found\n");
 	break;
