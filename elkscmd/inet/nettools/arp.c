@@ -66,7 +66,9 @@ int main(int ac, char **av)
     }
 
     for(i=0; i<ARP_CACHE_MAX; i++) {
-	printf("%-15s %s\n", in_ntoa(arp_cache[i].ip_addr), mac_ntoa(arp_cache[i].eth_addr));
+	if (arp_cache[i].ip_addr)
+		printf("%-15s %s\n", in_ntoa(arp_cache[i].ip_addr),
+			mac_ntoa(arp_cache[i].eth_addr));
     }
     return 1;
 }
