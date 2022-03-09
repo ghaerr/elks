@@ -24,6 +24,7 @@
 #include	<sys/stat.h>
 #include	<sys/types.h>
 #include	<sys/wait.h>
+#include	<signal.h>
 #include 	<dirent.h>
 
 #define		BLOAT
@@ -120,6 +121,8 @@ struct cmd_tab cmdtab[] = {
 
 static int debug = 0;
 static int qemu = 0;
+static int timeout = 900;
+static int controlfd;
 static char real_ip[20];
 
 /* Trim leading and trailing whitespaces */
@@ -141,11 +144,11 @@ void trim(char *str) {
 	str[i - begin] = '\0'; // Null terminate string.
 }
 
-int send_reply(int fd, int code, char *str) {
+int send_reply(int code, char *str) {
 	char cp[70];
 
 	sprintf(cp, "%d %s.\r\n", code, str);
-	return (write(fd, cp, strlen(cp)));
+	return (write(controlfd, cp, strlen(cp)));
 }
 
 void clean(char *s) {	/* chop off CRLF at end of string */
@@ -265,7 +268,7 @@ int get_command(char *cmdline) {
 
 	while (*c->cmd != '\0') {
 		//printf("<%s> ", c->cmd);
-		if (!strncmp(cmdline, c->cmd, strlen(c->cmd)))
+		if (!strncasecmp(cmdline, c->cmd, strlen(c->cmd)))
                         return c->value;
                 c++;
         }
@@ -276,8 +279,10 @@ int get_command(char *cmdline) {
 /* If/when LOGIN is changed to do real user authentication, */
 /* move the cmd processing to the main command loop, add LOGOUT */
 /* support and use setuid()/seteuid() in the child process. */
+/* The plan is to use /etc/passwd authentication and /etc/ftpusers */
+/* as supplement. */
 
-int do_login(int controlfd) {
+int do_login() {
 	char buf[200];
 
 	if (read(controlfd, buf, 200) < 0)
@@ -285,18 +290,27 @@ int do_login(int controlfd) {
 	clean(buf);
 	if (strncmp(buf, "USER", 4)) 
 		return -1;
-	send_reply(controlfd, 331, "User OK");
+	send_reply(331, "User OK");
 
 	if (read(controlfd, buf, 200) < 0)
 		return -1;
 	if (strncmp(buf, "PASS", 4)) 
 		return -1;
 	chdir("/root");		/* brute force ... */
-	send_reply(controlfd, 230, "Password OK");
+	send_reply(230, "Password OK");
 	return 0; /* always OK */
 }
 
-int do_list(int controlfd, int datafd, char *input) {
+void toolong() {	/* session timeout, close connection */
+	char cmd_buf[CMDBUFSIZ];
+
+	sprintf(cmd_buf, "Timeout (%d seconds): closing control connection.", timeout);
+	send_reply(421, cmd_buf);
+	close(controlfd);
+	_exit(0);
+}
+
+int do_list(int datafd, char *input) {
 	char *str, cmd_buf[CMDBUFSIZ], iobuf[IOBUFSIZ];
    	FILE *in;
 	DIR *dir = NULL;
@@ -326,7 +340,7 @@ int do_list(int controlfd, int datafd, char *input) {
 	if (!glob) {
     		dir = opendir(iobuf); 	/* test for existence */
     		if (!dir) {
-			send_reply(controlfd, 550, "No such file or directory");
+			send_reply(550, "No such file or directory");
     			return -1;
     		} 
 	}
@@ -394,7 +408,7 @@ int do_list(int controlfd, int datafd, char *input) {
 	 */
 
 	if (!(in = popen(cmd_buf, "r"))) {
-		send_reply(controlfd, 451, "Requested action aborted. Local error in processing");
+		send_reply(451, "Requested action aborted. Local error in processing");
         	return -1;
 	}
 	bzero(iobuf, sizeof(iobuf));
@@ -417,7 +431,7 @@ int do_list(int controlfd, int datafd, char *input) {
 }
 
 /* Passive mode: Server listens for incoming data connection */
-int do_pasv(int controlfd, int *datafd) {
+int do_pasv(int *datafd) {
 	int fd;
 	unsigned int i = 1, port = 0;
 	struct sockaddr_in pasv;
@@ -496,7 +510,7 @@ int do_pasv(int controlfd, int *datafd) {
 	return 0;
 }
 
-int do_retr(int controlfd, int datafd, char *input){
+int do_retr(int datafd, char *input){
 	char cmd_buf[CMDBUFSIZ], iobuf[IOBUFSIZ];
 	int fd, len;
 	struct stat fst;
@@ -519,7 +533,7 @@ int do_retr(int controlfd, int datafd, char *input){
 				}
 			close(fd);
 		} else {
-			send_reply(controlfd, 550, "No such file or directory");
+			send_reply(550, "No such file or directory");
     			return -1;
 		}
 	} else { 
@@ -529,7 +543,7 @@ int do_retr(int controlfd, int datafd, char *input){
 	return 1;
 }
 
-int do_stor(int controlfd, int datafd, char *input) {
+int do_stor(int datafd, char *input) {
 	char cmd_buf[CMDBUFSIZ], iobuf[IOBUFSIZ];
 	int fp;
 	int n = 0, len;
@@ -540,7 +554,7 @@ int do_stor(int controlfd, int datafd, char *input) {
 
 	if (get_param(input, cmd_buf) < 0) {
 		//if (debug) printf("No file specified.\n");
-		send_reply(controlfd, 450, "Requested action not taken - no file");
+		send_reply(450, "Requested action not taken - no file");
 		return -1;
 	}
 
@@ -548,12 +562,12 @@ int do_stor(int controlfd, int datafd, char *input) {
 	//trim(cmd_buf);
 	if ((fp = open(cmd_buf, O_CREAT|O_RDWR|O_TRUNC, 0644)) < 1) {
 		perror("File create failure");
-		send_reply(controlfd, 552, "File create error, transfer aborted");
+		send_reply(552, "File create error, transfer aborted");
 		return -1;
 	}
 
 	sprintf(iobuf, "Opening BINARY data connection for '%s'", cmd_buf);
-	send_reply(controlfd, 150, iobuf);
+	send_reply(150, iobuf);
 	while ((n = read(datafd, iobuf, sizeof(iobuf))) > 0) {
 		if ((len = write(fp, iobuf, n)) != n) {
 			if (len < 0 )
@@ -561,7 +575,7 @@ int do_stor(int controlfd, int datafd, char *input) {
 			else
 				printf("File write error: %s\n", cmd_buf);
 			close(fp);
-			send_reply(controlfd, 552, "Storage space exceeded, transfer aborted");
+			send_reply(552, "Storage space exceeded, transfer aborted");
 			return -2;
 		}
 	}
@@ -571,12 +585,12 @@ int do_stor(int controlfd, int datafd, char *input) {
 }
 
 void usage() {
-	printf("Usage: ftpd [-d] [<listen-port>]\n");
+	printf("Usage: ftpd [-d] [-q] [<listen-port>]\n");
 }
 
 
 int main(int argc, char **argv) {
-	int listenfd, connfd, ret;
+	int listenfd, ret;
 	unsigned int myport = FTP_PORT;
 	struct sockaddr_in servaddr, myaddr;
 	char *cp;
@@ -659,7 +673,7 @@ int main(int argc, char **argv) {
 	struct sockaddr_in client;
 	ret = sizeof(client);
 	while (1) {
-		if ((connfd = accept(listenfd, (struct sockaddr *)&client, (unsigned int *)&ret)) < 0) {
+		if ((controlfd = accept(listenfd, (struct sockaddr *)&client, (unsigned int *)&ret)) < 0) {
 			perror("Accept error");
 			break;
 		}
@@ -671,7 +685,7 @@ int main(int argc, char **argv) {
 		if ((ret = fork()) == -1)       /* handle new accept*/
 			fprintf(stderr, "ftpd: No processes\n");
 		else if (ret != 0)
-			close(connfd);
+			close(controlfd);
 		else {							/* child process */
 			close(listenfd);
 
@@ -691,22 +705,25 @@ int main(int argc, char **argv) {
 			if (debug)
 				printf("local: %s, remote: %s, QEMU: %d\n", in_ntoa(myaddr.sin_addr.s_addr), real_ip, qemu);
 
-			send_reply(connfd, 220, "Welcome - ELKS minimal FTP server speaking");
+			send_reply(220, "Welcome - ELKS minimal FTP server speaking");
 
 			/* standard housekeeping */
-			if (do_login(connfd) < 0) {
+			if (do_login(controlfd) < 0) {
 				printf("Login failed, closing session.\n");
-				close(connfd);
+				close(controlfd);
 				break;
 			}
 
 			/* Main command loop */
 			while(1) {
 				bzero(command, (int)sizeof(command));
-				if (read(connfd, command, sizeof(command)) <= 0) 
+				if (read(controlfd, command, sizeof(command)) <= 0) 
 					break;
 				clean(command);
+				signal(SIGALRM, toolong);
+				alarm(timeout);
     				code = get_command(command);
+				alarm(0);
     				//if (debug) printf("cmd: '%s' %d\n", command, code);
 
 				switch (code) {
@@ -723,9 +740,9 @@ int main(int argc, char **argv) {
     					if ((datafd = do_active(client_ip, client_port, myport)) < 0) {
 						if (debug) printf("PORT command failed.\n");
 						datafd = -1;
-						send_reply(connfd, 425, "Can't open data connection");
+						send_reply(425, "Can't open data connection");
 					} else 
-						send_reply(connfd, 200, "PORT command successful");
+						send_reply(200, "PORT command successful");
 					break;
 
 				case CMD_PASV: /* Enter Passive mode */
@@ -733,8 +750,8 @@ int main(int argc, char **argv) {
 						close(datafd);
 						datafd = -1;
 					}
-					if (do_pasv(connfd, &datafd) < 0) {
-						send_reply(connfd, 502, "PASV: Cannot open server socket");
+					if (do_pasv( &datafd) < 0) {
+						send_reply(502, "PASV: Cannot open server socket");
 						close(datafd);
 						datafd = -1;
 					}
@@ -743,24 +760,24 @@ int main(int argc, char **argv) {
 				case CMD_NLST:
     				case CMD_LIST:	/* List files */
 					if (datafd >= 0) {
-    						if (do_list(connfd, datafd, command) < 2)
-		    					write(connfd, complete, strlen(complete));
+    						if (do_list(datafd, command) < 2)
+		    					write(controlfd, complete, strlen(complete));
 						else {
 							/* NLST - different response codes */
-							send_reply(connfd, 250, "List completed");
+							send_reply(250, "List completed");
 						}
 					} else 
-						send_reply(connfd, 503, "Bad sequence of commands");
+						send_reply(503, "Bad sequence of commands");
 					datafd = -1;
 					break;
 
     				case CMD_RETR: /* Retrieve files */
 					if (datafd < 0) { /* no data connection, don't even try ... */
-						send_reply(connfd, 426, "Connection closed, transfer aborted");
+						send_reply(426, "Connection closed, transfer aborted");
 						break;
 					}
-    					if (do_retr(connfd, datafd, command) > 0 ) 
-		    				write(connfd, complete, strlen(complete));
+    					if (do_retr(datafd, command) > 0 ) 
+		    				write(controlfd, complete, strlen(complete));
 					/* if there was an error, the error reply has already been sent, 
 					 * this does not make sense */
 					usleep(1000);	/* Experimental */
@@ -770,11 +787,11 @@ int main(int argc, char **argv) {
 
     				case CMD_STOR: /* Store files */
 					if (datafd < 0) { /* no data connection, don't even try ... */
-						send_reply(connfd, 426, "Connection closed, transfer aborted");
+						send_reply(426, "Connection closed, transfer aborted");
 						break;
 					}
-    					if ((code = do_stor(connfd, datafd, command)) > 0) {
-		    				write(connfd, complete, strlen(complete));
+    					if ((code = do_stor(datafd, command)) > 0) {
+		    				write(controlfd, complete, strlen(complete));
 						close(datafd);
 					} else {
 						if (code == -2)
@@ -790,7 +807,7 @@ int main(int argc, char **argv) {
 					break;
 
 				case CMD_SYST: /* Identify ourselves */
-					send_reply(connfd, 215, "UNIX Type: L8 (Linux)");
+					send_reply(215, "UNIX Type: L8 (Linux)");
 					break;
 
 				case CMD_TYPE: 	/* ASCII or binary, ignored for now */
@@ -798,20 +815,20 @@ int main(int argc, char **argv) {
 					//str = strtok(command, " ");
 					//str = strtok(NULL, " ");
 					//type = *str;
-					send_reply(connfd, 200, "Command OK");
+					send_reply(200, "Command OK");
 					break;
 #ifdef BLOAT
 				case CMD_MKD:
 					bzero(namebuf, sizeof(namebuf));
 					if (get_param(command, namebuf) < 0) {
-						send_reply(connfd, 501, "Syntax error - MKDIR needs parameter");
+						send_reply(501, "Syntax error - MKDIR needs parameter");
 					} else {
 						trim(namebuf);
 						if (mkdir(namebuf, 0755) < 0) {
 							if (debug) printf("Cannot create directory %s\n", namebuf);
-							send_reply(connfd, 550, "No action - DIR not created");
+							send_reply(550, "No action - DIR not created");
 						} else {
-							send_reply(connfd, 250, "MKDIR successful");
+							send_reply(250, "MKDIR successful");
 						}
 					}
 					break;
@@ -819,75 +836,75 @@ int main(int argc, char **argv) {
 				case CMD_RMD:
 					bzero(namebuf, sizeof(namebuf));
 					if (get_param(command, namebuf) < 0) {
-						send_reply(connfd, 501, "Syntax error - RMD needs parameter");
+						send_reply(501, "Syntax error - RMD needs parameter");
 					} else {
 						trim(namebuf);
 						if (rmdir(namebuf) < 0) {
 							if (debug) printf("Cannot delete %s\n", namebuf);
-							send_reply(connfd, 550, "No action - file not found");
+							send_reply(550, "No action - file not found");
 						} else
-							send_reply(connfd, 250, "RMDIR successful");
+							send_reply(250, "RMDIR successful");
 					}
 					break;
 
 				case CMD_DELE:
 					bzero(namebuf, sizeof(namebuf));
 					if (get_param(command, namebuf) < 0) {
-						send_reply(connfd, 501, "Syntax error - DELE needs parameter");
+						send_reply(501, "Syntax error - DELE needs parameter");
 					} else {
 						trim(namebuf);
 						if (unlink(namebuf) < 0) {
 							if (debug) printf("Cannot delete %s\n", namebuf);
-							send_reply(connfd, 550, "No action - file not found");
+							send_reply(550, "No action - file not found");
 						} else {
-							send_reply(connfd, 250, "Delete successful");
+							send_reply(250, "Delete successful");
 						}
 					}
 					break;
 #endif
 				case CMD_NOOP:
 					sprintf(command, "200 Howdy.\r\n");
-		    			write(connfd, command, strlen(command));
+		    			write(controlfd, command, strlen(command));
 					break;
 
 				case CMD_PWD:
 					str = getcwd(namebuf, MAXPATHLEN); 
 					sprintf(command, "257 \"%s\" is current directory.\r\n", str);
-		    			write(connfd, command, strlen(command));
+		    			write(controlfd, command, strlen(command));
 					break;
 
 				case CMD_CWD:
 					/* FIXME: if no arg, change back to home dir */
 					bzero(namebuf, sizeof(namebuf));
 					if (get_param(command, namebuf) < 0) {
-						send_reply(connfd, 501, "Syntax error - CWD needs parameter");
+						send_reply(501, "Syntax error - CWD needs parameter");
 					} else {
 						trim(namebuf);
 						if (chdir(namebuf) < 0) {
 							if (debug) printf("Cannot chdir to %s\n", namebuf);
-							send_reply(connfd, 550, "No action - directory not found");
+							send_reply(550, "No action - directory not found");
 						} else 
-							send_reply(connfd, 250, "CWD successful");
+							send_reply(250, "CWD successful");
 					}
 					break;
 
 				case CMD_CLOSE:	/* Since login is outside the main loop, CLOSE means QUIT */
 				case CMD_QUIT:
 					quit = TRUE;
-					send_reply(connfd, 221, "Goodbye");
+					send_reply(221, "Goodbye");
 					close(datafd);
 					break;
 
 				case CMD_UNKNOWN:
 				default:
-					send_reply(connfd, 503, "Unknown command");
+					send_reply(503, "Unknown command");
 					break;
 				}
 				if (quit == TRUE) break;
 
 			}
     			if (debug) printf("Child process exiting...\n");
-    			close(connfd);
+    			close(controlfd);
     			_exit(1);
 		}
 		/* End child process */
