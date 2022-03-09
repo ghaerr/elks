@@ -94,7 +94,10 @@ struct arp_cache *arp_cache_add(ipaddr_t ip_addr, eth_addr_t eth_addr)
 	if (eth_addr) {
 		memcpy (entry->eth_addr, eth_addr, sizeof (eth_addr_t));
 		entry->valid = 1;
-	} else entry->valid = 0;	/* no MAC address yet, awaiting ARP reply*/
+	} else {
+		entry->valid = 0;	/* no MAC address yet, awaiting ARP reply*/
+		memset (entry->eth_addr, 0, sizeof(eth_addr_t));
+	}
 	entry->qpacket = NULL;
 	debug_arp("arp: adding cache entry for %s, valid=%d\n", in_ntoa(ip_addr), entry->valid);
 
