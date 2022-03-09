@@ -4,17 +4,13 @@
  * by Helge Skrivervik - helge@skrivervik.com - December 2021
  *
  *	TODO:
- *	- add support for multi-argument commands (e.g. <put sourcefile destfile> ...)
  *	- add missing commands (rmdir, mls, nlist, ...), 
  *	- ... create common function for commands that are alomost alike
  *	- fix trucation of file names in FAT, minix (warnings, name collisions)
  *	- lcd with no params should print current local directory
- *	- evaluate whether using select() is useful or just a complication
- *	... add ABORT support in PUT
+ *	- add ABORT support in PUT
  *	- handle server timeout (no activity): Unsolicited server input (code 421)
  *	- add '15632 bytes sent in 0.00 secs (27.5561 MB/s)' type message after transfer
- *	- validity check on server host name/address to avoid system hang
- *	- more testing of error conditions & error messages
  */
 
 #define BLOATED		/* fully featured if defined */
@@ -48,7 +44,7 @@
 
 #define	IOBUFLEN 1500
 #define BUF_SIZE 512
-#define CMD_BUF 80
+#define CMDBUF 80
 #define ADDRBUF	40
 #define NLSTBUF 1500
 #define MAXARGS	256	/* max names in wildcard expansion */
@@ -248,10 +244,11 @@ int get_reply(int fd, char *buf, int size, int dbg) {
  * Multiline control responses (typically at login), will some times arrive in several packets and must be
  * assembled properly.
  * This is not elegant, but it is very memory efficiant (abusing the *buf parameter for all the work).
+ * DO NOT call get_reply with a buf size of less than BUF_SIZ (512b).
  */
 
 int get_reply(int fd, char *buf, int size, int dbg) {
-	static char lbuf[CMD_BUF];
+	static char lbuf[CMDBUF];
 	static int lb = 0;
 	
 	char *cp;
@@ -261,7 +258,7 @@ int get_reply(int fd, char *buf, int size, int dbg) {
 		return lb;
 
 	if (lb) {		/* something in the buffer, return it */
-		strcpy(buf, lbuf);
+		strncpy(buf, lbuf, size);
 		if (debug >= dbg) printf("(bf) %s", buf);
 		lb = 0;
 		return 1;
@@ -282,20 +279,19 @@ int get_reply(int fd, char *buf, int size, int dbg) {
 		while (*cp != '\n' && cp >= &buf[lb]) --cp;
 		cp++;
 		lb += l;
-		if (*(cp+3) != '-') {	/* end of continuation if blank */
+		if (*(cp+3) != '-') 	/* end of continuation if blank */
 			break;
-		}
 	}
 	buf[lb] = '\0';
 	lb = 0;
 
 	// cp points to the start of the last record,
-	// compare starus codes to see if we have an extra
-	// reply to set aside for the next call.
+	// compare status codes to see if we have an extra
+	// reply to save for the next call.
 
 	if (cp != buf) {
 		if (strncmp(buf, cp, 3)) {
-			strcpy(lbuf, cp);	// save the extra reply
+			strncpy(lbuf, cp, sizeof(lbuf));	// save the extra reply
 			lb = strlen(cp);
 			*cp = '\0';
 			//printf("\nreturned <%s>\nsaved <%s>\n", buf, lbuf);
@@ -444,10 +440,12 @@ int dataconn(int fd) {		/* wait for the actual data connection in PORT mode */
 
 /* Get a list of filenames from remote, for use in MGET */
 /* FIXME: The length of the file list is too limited */
+/*        We can call do_nlst several times instead of increasing buffer space. */
+/*	  For multifile transfers, the additional time is negligible */
 
 int do_nlst(int controlfd, char *buf, int len, char *dir, int mode) {
 	int n, i, datafd;
-	char lbuf[BUF_SIZE];
+	char pbuf[BUF_SIZE];
 
 	if (atype != ASCII) settype(controlfd, ASCII);
 #ifdef BLOATED
@@ -461,8 +459,8 @@ int do_nlst(int controlfd, char *buf, int len, char *dir, int mode) {
 		return -1;
 	}
 
-	sprintf(lbuf, "NLST %s\r\n", dir);
-	send_cmd(controlfd, lbuf);
+	sprintf(pbuf, "NLST %s\r\n", dir);
+	send_cmd(controlfd, pbuf);
 
 	if (mode == PORT) {	/* active mode, wait for connection */
 		if ((n = dataconn(datafd)) < 0) {
@@ -471,28 +469,28 @@ int do_nlst(int controlfd, char *buf, int len, char *dir, int mode) {
 		}
 		datafd = n;
 	}
-	get_reply(controlfd, lbuf, sizeof(lbuf), 1);
-	if (*lbuf != '1') {		/* 125 List started OK */
+	get_reply(controlfd, pbuf, sizeof(pbuf), 1);
+	if (pbuf[0] != '1') {		/* 125 List started OK */
 		printf("Couldn't get remote filelist.\n");
 		close(datafd);
 		return -1;
 	}
 	n = 0;
 	bzero(buf, len);
-	while (n < len) {
-		if ((i = read(datafd, &buf[n], len - n)) <= 0) break;
-		n =+ i;
+	while (n < len-1) {
+		if ((i = read(datafd, &buf[n], len-n-1)) <= 0) break;
+		if (debug > 3) printf("do_nlst: got %d (%d) bytes\n", n, i);
+		n += i;
 	}
-	if (n >= len) {
-		printf("Warning: File list too long, truncated.\n");
-		n = len - 1;
+	if (i > 0) {
+		printf("Warning: File list too long, truncated\n");
+		n = len - 2;
 		while (buf[n] != '\n') n--;
 	}
-	//if (debug > 3) printf("do_nlst: got %d (%d) bytes\n", n, i);
 	buf[++n] = '\0';
-
+	//printf("NLST: %d (%d) %s<<<\n", n, strlen(buf), buf);
 	close(datafd);
-	get_reply(controlfd, lbuf, sizeof(lbuf), 1);
+	get_reply(controlfd, pbuf, sizeof(pbuf), 1);
 	return 1;
 }
 		
@@ -579,7 +577,7 @@ int do_get(int controlfd, char *src, char *dst, int mode) {
 	if (dst == NULL) dst = src;
 
 	if ((fd = open(dst, O_WRONLY|O_TRUNC|O_CREAT, 0664)) < 0) {
-		printf("GET: Cannot open local file '%s'\n", dst);
+		printf("GET: Cannot open/create '%s'\n", dst);
 		return -1;
 	}
 	if (atype != type) settype(controlfd, type);
@@ -624,28 +622,31 @@ int do_get(int controlfd, char *src, char *dst, int mode) {
 	 * if there's data pending.
 	 */
 	struct timeval tv; int select_return, icount = 0;
-	tv.tv_usec = 500;	//Experimental
+	long usec = 500;
+
 	while (1) {
 		if (control_finished == FALSE) FD_SET(controlfd, &rdset);
 		if (data_finished == FALSE) FD_SET(datafd, &rdset);
 		tv.tv_sec  = 0;
-		tv.tv_usec *= 2;	//Experimental
+		tv.tv_usec = usec;
+		if (icount < 5 ) usec *= 2;
+
 		select_return = select(maxfdp1, &rdset, NULL, NULL, &tv);
 
 		if (!select_return) { 
 			if (debug > 2) printf("get: select timeout (%d)\n", icount);
-			// Handle zero length files
-			//FIXME: Simplify this now that we have a new get_reply
+
+			// Handle zero length/small files
 			if (icount++ > 2 || data_finished == TRUE) {	
-				// Experimental: Got timeout, need reply - which is probably sitting in the
-				// input buffer.
-				// Or the server closed before select was called (zero length file)
-				// and we just need to get outa here.
+				// Got timeout, the reply is either delayed or has arrived already.
+				// If a file is zero length, the server will have closed the connection
+				// even before we get here.
 				if (control_finished == FALSE && (get_reply(controlfd, NULL, 0, -1) > 0)) {
+					// found reply message in the reply buffer
 					get_reply(controlfd, iobuf, sizeof(iobuf), 1);
 					control_finished = TRUE;
 				}
-			}	//FIXME: add counter to avoid looping forever
+			}
 		}
 
 		if (FD_ISSET(controlfd, &rdset)) {
@@ -672,7 +673,7 @@ int do_get(int controlfd, char *src, char *dst, int mode) {
 			data_finished = TRUE;
 			FD_CLR(datafd, &rdset);
 		}
-		if ((control_finished == TRUE) && (data_finished == TRUE))
+		if (icount > 30 || ((control_finished == TRUE) && (data_finished == TRUE)))
 			break;
 
 	}
@@ -895,9 +896,9 @@ int do_passive(int cmdfd) {
 
 	if (debug > 1) printf("Connecting to %s @ %u\n", ip, port);
 
-	if (connect(fd, (struct sockaddr *) &srvaddr, sizeof(srvaddr)) < 0) {
-			perror("connect error");
-			return -1;
+	if (in_connect(fd, (struct sockaddr *) &srvaddr, sizeof(srvaddr), 10) < 0) {
+		perror("ftp");
+		return -1;
 	}
 	return fd;
 }
@@ -990,7 +991,7 @@ int do_mget(int controlfd, char **argv, int mode) {
 }
 
 void settype(int controlfd, char t) {
-	char b[CMD_BUF];
+	char b[CMDBUF];
 
 	/* atype - active type (what we've told the server)
 	 * type - selected file transfer type (via BIN or ASCII commands)
@@ -1054,8 +1055,8 @@ int connect_cmd(char *ip, unsigned int server_port) {
 #endif
 
 	if (debug > 1) printf("Connecting to %s @ port %u\n", in_ntoa(servaddr.sin_addr.s_addr), server_port);
-	if (connect(controlfd, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0) {
-		perror("Connect failed");
+	if (in_connect(controlfd, (struct sockaddr *) &servaddr, sizeof(servaddr), 10) < 0) {
+		perror("ftp");
 		controlfd = -1;
 	}
 	return controlfd;
@@ -1168,9 +1169,17 @@ int main(int argc, char **argv) {
 			switch ((*argv)[1]) {
 			case 'u':
 				strcpy(user, argv[1]);
+				argv++; argc--;
 				break;
 			case 'p':
 				strcpy(passwd, argv[1]);
+				argv++; argc--;
+				break;
+			case 'd':
+				if (isdigit(*argv[1]) && (strlen(argv[1]) == 1)) {
+					debug = atoi(argv[1]);
+					argv++; argc--;
+				} else debug++;
 				break;
 #ifdef BLOATED
 			case 'n':
@@ -1183,8 +1192,7 @@ int main(int argc, char **argv) {
 				mode = PORT;
 				break;
 			case 'v':
-			case 'd':
-				debug++; // Multiple -d increases debug level
+				debug = 1;
 				break;
 			case 'i':
 				prompt = FALSE;
@@ -1199,8 +1207,6 @@ int main(int argc, char **argv) {
 				printf("Error in arguments.\n");
 				exit(-1);
 			}
-			//argv++;
-			//argc--;
 		} else {
 			if ((strchr(*argv, '.') != 0) && (isdigit((int)**argv))) 
 				strcpy(srvr_ip, *argv); 		//numeric ip
@@ -1352,7 +1358,7 @@ int main(int argc, char **argv) {
 #ifdef BLOATED
 		case CMD_SHELL:
 			if ((i = system(&command[1]))) 
-				printf("Shell fork failed, code %d\n", i);
+				if (debug > 2) printf("Shell returned %d\n", i);	// the shell emits its own error msg
 			break;
 			
 		case CMD_DELE:
