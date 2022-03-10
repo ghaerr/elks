@@ -10,10 +10,6 @@ int fcntl(int \fIfd\fP, int \fIcmd\fP, \fR[\fP\fIdata\fP\fR]\fP)
 .ft P
 .fi
 .SH DESCRIPTION
-.de SP
-.if t .sp 0.4
-.if n .sp
-..
 .B Fcntl()
 performs several file descriptor related functions, like duplicating a file
 descriptor, setting the "close on exec" attribute, etc.  The
@@ -25,7 +21,7 @@ is the command code of the operation to perform, and
 is an optional argument to give or receive parameters.  The command
 codes and other symbols and types are declared in <fcntl.h>.  The commands
 are:
-.SP
+.sp
 .BI "fcntl(" fd ", F_DUPFD, int " fd2 ")"
 .RS
 Returns a new file descriptor that is a duplicate of file descriptor
@@ -36,7 +32,7 @@ duplicate file descriptor is the first free file descriptor greater than
 or equal to
 .IR fd2 .
 .RE
-.SP
+.sp
 .BI "fcntl(" fd ", F_GETFD)"
 .RS
 Returns the file descriptor flags associated with file descriptor
@@ -48,7 +44,7 @@ executes another program.  The Minix-vmd specific
 .B FD_ASYNCHIO
 flag marks a file descriptor for asynchronous I/O operation.
 .RE
-.SP
+.sp
 .BI "fcntl(" fd ", F_SETFD, int " flags ")"
 .RS
 Set the file descriptor flags of
@@ -56,7 +52,7 @@ Set the file descriptor flags of
 to
 .IR flags .
 .RE
-.SP
+.sp
 .BI "fcntl(" fd ", F_GETFL)"
 .RS
 Return the file status flags and file access modes associated with the file
@@ -75,7 +71,7 @@ The file status flags are
 (read-write).  These flags are also used in the second argument of
 .BR open (2).
 .RE
-.SP
+.sp
 .BI "fcntl(" fd ", F_SETFL, int " flags ")"
 .RS
 Set the file status flags of the file referenced by
@@ -88,11 +84,11 @@ and
 .B O_APPEND
 may be changed.  Access mode flags are ignored.
 .RE
-.SP
+.sp
 The next four commands use a parameter of type
 .B struct flock
 that is defined in <fcntl.h> as:
-.SP
+.sp
 .RS
 .nf
 .ta +4n +8n +12n
@@ -105,7 +101,7 @@ struct flock {
 };
 .fi
 .RE
-.SP
+.sp
 This structure describes a segment of a file.
 .B L_type
 is the lock operation performed on the file segment:
@@ -139,7 +135,7 @@ file.
 is the process-id of the process currently holding a lock on the segment.
 It is returned by
 .BR F_GETLK .
-.SP
+.sp
 .BI "fcntl(" fd ", F_GETLK, struct flock *" lkp ")"
 .RS
 Find out if some other process has a lock on a segment of the file
@@ -161,7 +157,7 @@ that describes the lock held by the other process.
 .B L_start
 is set relative to the start of the file.
 .RE
-.SP
+.sp
 .BI "fcntl(" fd ", F_SETLK, struct flock *" lkp ")"
 .RS
 Register a lock on a segment of the file associated with file descriptor
@@ -172,7 +168,7 @@ pointed to by
 .IR lkp .
 This call returns an error if any part of the segment is already locked.
 .RE
-.SP
+.sp
 .BI "fcntl(" fd ", F_SETLKW, struct flock *" lkp ")"
 .RS
 Register a lock on a segment of the file associated with file descriptor
@@ -184,7 +180,7 @@ pointed to by
 This call blocks waiting for the lock to be released if any part of the
 segment is already locked.
 .RE
-.SP
+.sp
 .BI "fcntl(" fd ", F_FREESP, struct flock *" lkp ")"
 .RS
 This call frees a segment of disk space occupied by the
@@ -204,7 +200,7 @@ is nonzero then the file keeps its size, but the freed bytes now read as
 zeros.  (Other than sharing the flock structure, this call has nothing to do
 with locking.)  (This call is common among UNIX(-like) systems.)
 .RE
-.SP
+.sp
 .BI "fcntl(" fd ", F_SEEK, u64_t " pos ")"
 .RS
 This Minix-vmd specific call sets the file position of the file associated
@@ -213,11 +209,11 @@ with file descriptor
 to the byte offset indicated by the 64-bit number
 .IR pos .
 This is analogous to the call
-.SP
+.sp
 .RS
 .BI "lseek(" fd ", " pos ", SEEK_SET)"
 .RE
-.SP
+.sp
 except that
 .B F_SEEK
 can be used on devices larger than 4 gigabyte.

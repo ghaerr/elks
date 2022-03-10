@@ -18,21 +18,17 @@ pid_t fork(void)
 .ft R
 .fi
 .SH DESCRIPTION
-.de SP
-.if t .sp 0.4
-.if n .sp
-..
 .B Fork
 causes creation of a new process.
 The new process (child process) is an exact copy of the
 calling process except for the following:
 .RS
-.SP
+.sp
 The child process has a unique process ID.
-.SP
+.sp
 The child process has a different parent process ID (i.e.,
 the process ID of the parent process).
-.SP
+.sp
 The child process has its own copy of the parent's descriptors.
 These descriptors reference the same underlying objects, so that,
 for instance, file pointers in file objects are shared between
@@ -46,7 +42,7 @@ by the parent.
 This descriptor copying is also used by the shell to
 establish standard input and output for newly created processes
 as well as to set up pipes.
-.SP
+.sp
 The child starts with no pending signals and an inactive alarm timer.
 .RE
 .SH "RETURN VALUE

@@ -5,8 +5,6 @@ accept \- accepts incoming connections on a socket
 .ft B
 #include <sys/socket.h>
 
-.in +5
-.ti -5
 int accept(int \fIsd\fP, struct sockaddr * \fIaddr\fP, socklen_t * \fIaddr_len\fP);
 .br
 .ft P
@@ -29,5 +27,5 @@ The \fIsd\fP argument is not a socket.
 [EINVAL]
 The socket is not listening or in an invalid state.
 .SH SEE ALSO
-.BR socket(2),
-.BR connect(2)
+.BR socket (2),
+.BR connect (2)

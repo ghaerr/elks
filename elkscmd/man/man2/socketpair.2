@@ -5,8 +5,6 @@ socketpair \- creates a pair of connected sockets.
 .ft B
 #include <sys/socket.h>
 
-.in +5
-.ti -5
 int socketpair(int \fIdomain\fP, int \fItype\fP, int \fIprotocol\fP, int \fIsv[2]\fP);
 .br
 .ft P
@@ -39,7 +37,5 @@ This function is only implemented for unix domain sockets. Therefore,
 the only valid value for \fIdomain\fP is
 .B AF_UNIX
 .SH SEE ALSO
-.BR socket(2),
-.BR unix(8)
-.SH HISTORY
-This function first appeared in Minix 3.1.8.
+.BR socket (2),
+.BR unix (8)

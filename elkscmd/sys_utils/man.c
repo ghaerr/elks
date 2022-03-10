@@ -32,7 +32,14 @@
 #endif
 #include <ctype.h>
 #include <string.h>
+
+#ifdef __ia16__			/* ELKS */
 #include <paths.h>
+#define MORE			"more"
+#else					/* Host */
+#define _PATH_MANPAGES	"."
+#define MORE			"more -R"
+#endif
 
 /* default .TH [extra1] value */
 #define DEFAULT_EXTRA1	"ELKS Embeddable Linux Kernel Subset"
@@ -44,8 +51,8 @@
 //#define ANSI_UNDERLINE "\e[7m"	/* reverse video */
 //#define ANSI_UNDERLINE "\e[32m"	/* green */
 
-FILE * ofd = stdout;
-FILE * ifd = stdin;
+FILE * ofd;
+FILE * ifd;
 int ifd_class = 0;		/* Type of ifd, 0=stdin, 1=file, 2=pipe */
 
 char whitespace[256];
@@ -74,6 +81,7 @@ int  gaps_on_line = 0;		/* Gaps on line for adjustments */
 int  *line_ptr = 0;
 int  line[256];		/* Buffer for building output line */
 int  cur_font = 0x100;	/* Current font, 1 == Roman */
+int  old_font = 0x100;	/* Old font, 1 == Roman */
 
 char line_header[256] = "";	/* Page header line */
 char line_footer[256] = "";	/* Page footer line */
@@ -240,6 +248,9 @@ struct cmd_list_s {
   { "Id", 0, 0 },	/* Line for RCS tokens */
 
   { "BY", 0, 0 },	/* I wonder where this should go ? */
+  { "UC", 0, 0 },	/* University of California man page */
+  { "in", 0, 0 },	/* ignore .in */
+  { "ti", 0, 0 },	/* ignore .ti */
 
   { "nf", 0, 1 },	/* Line break, Turn line fill off */
   { "fi", 0, 2 },	/* Line break, Turn line fill on */
@@ -261,6 +272,7 @@ struct cmd_list_s {
   { "SS", 1, 3 },	/* Subsection */
   { "IP", 1, 4 },	/* New para, indent except argument 1 */
   { "TP", 1, 5 },	/* New para, indent except line 1 */
+  { "ft", 1, 6 },	/* Font {R,B,I,P} */
 
   { "B",  2, 22 },	/* Various font fiddles */
   { "BI", 2, 23 },
@@ -625,7 +637,7 @@ int do_argvcmd(int cmd_id)
       break;
 
    case 5:	/* .TP New para, indent except line 1 */
-   case 15:
+   case 15:	/* .TP no argument */
       do_skipeol();
       next_line_indent = old_para_indent + standard_tab;
       left_indent = old_para_indent;
@@ -644,9 +656,19 @@ int do_argvcmd(int cmd_id)
       do_skipeol();
       break;
 
-   case 14:
+   case 14:	/* .IP no argument */
       pending_nl = 1;
       left_indent = old_para_indent + standard_tab;
+      break;
+
+   case 6:	/* .ft {R,B,I,P} */
+      do_skipeol();
+      switch (word[0]) {
+      case 'B': print_word("\\fB"); old_font = cur_font; break;
+      case 'I': print_word("\\fI"); old_font = cur_font; break;
+      case 'R': print_word("\\fR"); old_font = cur_font; break;
+      case 'P': old_font = cur_font; print_word("\\fP"); break;
+      }
       break;
    }
 
@@ -755,10 +777,11 @@ void print_word(char *pword)
 	 if (*s == 'f')
 	 {
 	    if (s[1]) {
-	       static char fnt[] = " RBI";
+	       static char fnt[] = " RBIP";
 	       char * p = strchr(fnt, *++s);
 	       if (p == 0) cur_font = 0x100;
 	       else         cur_font = 0x100*(p-fnt);
+		   if (cur_font == 0x400) cur_font = old_font;
 	    }
 	    continue;
 	 }
@@ -947,6 +970,8 @@ int main(int argc, char **argv)
    char * mansect = 0;
    char * manname = 0;
 
+   ifd = stdin;
+   ofd = stdout;
    for (ar=1; ar<argc; ar++) if (argv[ar][0] == '-') {
       char * p;
       for (p=argv[ar]+1; *p; p++) switch (*p) {
@@ -982,8 +1007,9 @@ int main(int argc, char **argv)
 
    /* ifd is now the file - display it */
    if (isatty(1)) {	/* If writing to a tty do it to a pager */
-      ofd = popen(getenv("PAGER"), "w");
-      if (ofd == 0) ofd = popen("more", "w");
+	  char *pager = getenv("PAGER");
+      ofd = pager? popen(pager, "w"): 0;
+      if (ofd == 0) ofd = popen(MORE, "w");
       if (ofd == 0) {
          ofd = stdout;
       } else {

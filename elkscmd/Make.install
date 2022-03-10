@@ -201,6 +201,8 @@ endif
 ifdef CONFIG_APP_MAN_PAGES
 	mkdir $(DESTDIR)/lib/man1
 	cp -rp man/man1 $(DESTDIR)/lib; compress -b 12 $(DESTDIR)/lib/man1/*
+	mkdir $(DESTDIR)/lib/man2
+	cp -rp man/man2 $(DESTDIR)/lib; compress -b 12 $(DESTDIR)/lib/man2/*
 	mkdir $(DESTDIR)/lib/man5;
 	cp -rp man/man5 $(DESTDIR)/lib; compress -b 12 $(DESTDIR)/lib/man5/*
 	mkdir $(DESTDIR)/lib/man7;
