@@ -3,7 +3,6 @@
  * November 2021 by Helge Skrivervik - helge@skrivervik.com
  *
  * TODO:
- *	- Add timeout (typically 900 seconds of inactivity)
  *	- Add ABORT support
  *
  */
@@ -112,6 +111,7 @@ struct cmd_tab cmdtab[] = {
 	{"DELE", CMD_DELE},
 	{"NLST", CMD_NLST},
 	{"NOOP", CMD_NOOP},
+	{"SITE", CMD_SITE},
 	{"PWD", CMD_PWD},
 	{"CWD", CMD_CWD},
 	{"MKD", CMD_MKD},
@@ -122,6 +122,7 @@ struct cmd_tab cmdtab[] = {
 static int debug = 0;
 static int qemu = 0;
 static int timeout = 900;
+static int maxtimeout = 7200;
 static int controlfd;
 static char real_ip[20];
 
@@ -253,8 +254,8 @@ int get_param(char *input, char *fileptr) {
 
 	char *param;
 
-	param = strtok(input, " ");
-	param = strtok(NULL, " \r\n");
+	param = strtok(input, " ");	/* skip command name */
+	param = strtok(NULL, "\r\n");	/* get the rest of the line */
 	
 	if (param == NULL)
         	return -1;
@@ -304,10 +305,14 @@ int do_login() {
 void toolong() {	/* session timeout, close connection */
 	char cmd_buf[CMDBUFSIZ];
 
-	sprintf(cmd_buf, "Timeout (%d seconds): closing control connection.", timeout);
+	sprintf(cmd_buf, "Timeout (%d seconds): closing control connection", timeout);
 	send_reply(421, cmd_buf);
-	close(controlfd);
-	_exit(0);
+}
+
+int checknum(char *s) {
+	while (*s != '\0')
+		if (!isdigit(*s++)) return 0;
+	return 1;
 }
 
 int do_list(int datafd, char *input) {
@@ -716,14 +721,14 @@ int main(int argc, char **argv) {
 
 			/* Main command loop */
 			while(1) {
+				signal(SIGALRM, toolong);
+				alarm(timeout);
 				bzero(command, (int)sizeof(command));
 				if (read(controlfd, command, sizeof(command)) <= 0) 
 					break;
-				clean(command);
-				signal(SIGALRM, toolong);
-				alarm(timeout);
-    				code = get_command(command);
 				alarm(0);
+				clean(command);
+    				code = get_command(command);
     				//if (debug) printf("cmd: '%s' %d\n", command, code);
 
 				switch (code) {
@@ -887,7 +892,38 @@ int main(int argc, char **argv) {
 							send_reply(250, "CWD successful");
 					}
 					break;
-
+#ifdef BLOAT
+				case CMD_SITE:	/* allow client to set or query server idle timeout */
+					bzero(namebuf, sizeof(namebuf));
+					if (get_param(command, namebuf) < 0) {
+						send_reply(501, "Syntax error - SITE needs subcommand");
+						break;
+					}
+					if (strncasecmp(namebuf, "IDLE", 4)) {
+						send_reply(501, "Error - unsupported SITE subcommand");
+						break;
+					}
+					if (strlen(namebuf) < 6) {
+						sprintf(command, "Current idle time limit is %d seconds, max %d",
+							timeout, maxtimeout);
+						send_reply(200, command);
+					} else {
+						int ii = 0;
+						trim(&namebuf[5]);
+						if (checknum(&namebuf[5])) 
+							ii = atoi(&namebuf[5]);
+						if (ii < 30 || ii > maxtimeout) {
+							sprintf(command, "Max idle time must be between 30 and %d seconds", 
+								maxtimeout);
+							send_reply(501, command);
+							break;
+						}
+						timeout = ii;
+						sprintf(command, "Idle time set to %d seconds", timeout);
+						send_reply(200, command);
+					}
+					break;
+#endif
 				case CMD_CLOSE:	/* Since login is outside the main loop, CLOSE means QUIT */
 				case CMD_QUIT:
 					quit = TRUE;
@@ -903,6 +939,7 @@ int main(int argc, char **argv) {
 				if (quit == TRUE) break;
 
 			}
+			alarm(0);
     			if (debug) printf("Child process exiting...\n");
     			close(controlfd);
     			_exit(1);
