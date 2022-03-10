@@ -14,18 +14,14 @@ exit, _exit \- terminate a process
 void _exit(int \fIstatus\fP)
 .fi
 .SH DESCRIPTION
-.de SP
-.if t .sp 0.4
-.if n .sp
-..
 .B _exit
 terminates a process with the following consequences:
 .RS
-.SP
+.sp
 All of the descriptors open in the calling process are closed.
 This may entail delays, for example, waiting for output to drain;
 a process in this state may not be killed, as it is already dying.
-.SP
+.sp
 If the parent process of the calling process is executing a
 .B wait
 or is interested in the SIGCHLD signal (Minix-vmd),
@@ -33,7 +29,7 @@ then it is notified of the calling process's termination and
 the low-order eight bits of \fIstatus\fP are made available to it;
 see
 .BR wait (2).
-.SP
+.sp
 The parent process ID of all of the calling process's existing child
 processes are also set to 1.  This means that the initialization process
 (see 
