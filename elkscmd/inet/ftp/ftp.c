@@ -96,6 +96,7 @@ enum {	// commands in disconnected mode
 	CMD_CLOSE,
 	CMD_PORT,
 	CMD_PASV,
+	CMD_SITE,
 	CMD_CONNECT,	// flag
 	// commands in any mode
 	CMD_QUIT,
@@ -150,6 +151,7 @@ struct cmd_tab cmdtab[] = {
 	{"lcd", CMD_LCWD, "Change local working directory"},
 	{"glob", CMD_GLOB, "Toggle globbing"},
 	{"passive", CMD_PASV, "Toggle passive/active mode"},
+	{"site", CMD_SITE, "Send command to server - supports 'idle'"},
 #endif
 	//{"user", CMD_USER, "Open new connection, log in."},
 	{"", CMD_NULL, ""}
@@ -158,6 +160,7 @@ static int debug = 1;
 static char type = ASCII, atype = ASCII;
 static int prompt = TRUE, glob = TRUE;
 static int check_connected = 0;
+static int connected = 0;
 static char srvr_ip[ADDRBUF], myip[ADDRBUF]; 	/* For qemu hack */
 
 #ifdef QEMUHACK
@@ -187,14 +190,6 @@ void help() {
 		printf("%s:\t%s\n", c->cmd, c->hlp);
 		c++;
 	}
-}
-#endif
-
-#if 0
-void sig_handler(int signum) {	/* handle ALARM signals (watch server timeouts) */
-	check_connected++;
-	//alarm(ALRMINTVL);
-	printf("tik-tok ");
 }
 #endif
 
@@ -243,8 +238,8 @@ int get_reply(int fd, char *buf, int size, int dbg) {
  * will arrive before any data and be read as part of the previous command response.
  * Multiline control responses (typically at login), will some times arrive in several packets and must be
  * assembled properly.
- * This is not elegant, but it is very memory efficiant (abusing the *buf parameter for all the work).
- * DO NOT call get_reply with a buf size of less than BUF_SIZ (512b).
+ * Not elegant, but very memory efficiant (abusing the *buf parameter for all the work).
+ * DO NOT call get_reply with a buf size less than BUF_SIZ (512b).
  */
 
 int get_reply(int fd, char *buf, int size, int dbg) {
@@ -260,6 +255,7 @@ int get_reply(int fd, char *buf, int size, int dbg) {
 	if (lb) {		/* something in the buffer, return it */
 		strncpy(buf, lbuf, size);
 		if (debug >= dbg) printf("(bf) %s", buf);
+		if (!strncmp(buf, "421", 3)) connected = 0;	/* look for server timeout */
 		lb = 0;
 		return 1;
 	}
@@ -298,7 +294,9 @@ int get_reply(int fd, char *buf, int size, int dbg) {
 		}
 	}
 	
-	if (debug >= dbg) printf("%s", buf);
+	if (!strncmp(buf, "421", 3)) connected = 0;
+	if (debug >= dbg || !connected) printf("%s", buf); // If the server timed out, always
+							   // print the status message.
 	return 1;
 }
 
@@ -307,13 +305,11 @@ int get_reply(int fd, char *buf, int size, int dbg) {
 int is_connected(int cmdfd) {	// return 1 if connected, otherwise 0
 	char str[IOBUFLEN];
 
-	if (cmdfd < 0) 
+	if (cmdfd < 0 || !connected) 
 		return 0;
 
 	if (send_cmd(cmdfd, "NOOP\r\n") < 0) {
-		//fclose(fcmd);
 		close(cmdfd);
-		cmdfd = -1;
 		return 0;
 	}
 	return ((get_reply(cmdfd, str, sizeof(str), 1) > 0)? 1 : 0 );
@@ -325,8 +321,10 @@ int send_cmd(int cmdfd, char *cmd) {
 	int s;
 
 	s = write(cmdfd, cmd, strlen(cmd));
-	if (debug > 1) printf("---> %s", cmd);
-	if (s < 0) check_connected++;
+	if (s < 0)
+		check_connected++;
+	else
+		if (debug > 1) printf("---> %s", cmd);
 	return s;
 }
 	
@@ -455,7 +453,6 @@ int do_nlst(int controlfd, char *buf, int len, char *dir, int mode) {
 #endif
 		datafd = do_passive(controlfd);
 	if (datafd <= 0) {
-		printf("NLST: Failed to open data connection.\n");
 		return -1;
 	}
 
@@ -516,6 +513,7 @@ int do_ls(int controlfd, int datafd, char **cmdline, int mode) {
 	if (send_cmd(controlfd, recvline) < 0) {
 		printf("No connection.\n");
 		check_connected++;
+		if (fd > 1) close(fd);
 		return -1;
 	}
 	if (mode == PORT) {	/* active mode, wait for connection */
@@ -724,16 +722,6 @@ int do_put(int controlfd, char *src, char *dst, int mode){
 		datafd = n;
 	}
 
-#if 0
-	//bzero(iobuf, sizeof(iobuf));
-	//get_reply(controlfd, iobuf, sizeof(iobuf), 1);	/* get '150 Opening connection ...' */
-	if (*iobuf != '1') {
-		printf("PORT command failed, %s", iobuf);
-		close(datafd);
-		return -1;
-	}
-#endif
-
 #if PUTSELECT
 	int maxfdp1, data_finished = FALSE, control_finished = FALSE;
 	fd_set wrset, rdset;
@@ -742,9 +730,7 @@ int do_put(int controlfd, char *src, char *dst, int mode){
 
 	maxfdp1 = MAX(controlfd, datafd) + 1;
 
-	// FIXME: Using select does not make sense until this code is rearranged
-	// so that the control connection is checked while the transfer is ongoing
-	// to accomodate transfer abort.
+	// FIXME: Add support for ABORTing a transfer
 	while (1) {
 		if (control_finished == FALSE) FD_SET(controlfd, &rdset);
 		if (data_finished == FALSE) FD_SET(datafd, &wrset);
@@ -776,7 +762,10 @@ int do_put(int controlfd, char *src, char *dst, int mode){
 	}
 #else
 	while ((n = read(fd, iobuf, IOBUFLEN)) > 0) {
-		write(datafd, iobuf, n);	// FIXME: NO error checking
+		if (write(datafd, iobuf, n) < n) {
+			perror("put");
+			break;
+		}
 	}
 #endif
 	close(datafd);
@@ -808,13 +797,12 @@ int do_active(int cmdfd) {
 		perror("socket error");
 		return -1;
 	}
-#if 1
+
 	int on = 1;
 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0) {
 		/* This should not happen */
 		perror("SO_REUSEADDR");
 	}
-#endif
 
 	i = SO_LISTEN_BUFSIZ;
 	if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &i, sizeof(i)) < 0) 
@@ -864,7 +852,6 @@ int do_passive(int cmdfd) {
 	send_cmd(cmdfd, "PASV\r\n");
 	get_reply(cmdfd, command, sizeof(command), 1);
 	if (strncmp(command, "227", 3)) {
-		printf("Server disconnected.\n");
 		return -1;
 	}
 	
@@ -1001,9 +988,7 @@ void settype(int controlfd, char t) {
 	send_cmd(controlfd, b);
 
 	get_reply(controlfd, b, sizeof(b), 1);	/* Should be '200 Type set to ...' */
-	if (*b != '2') 
-		printf("Failed to set type: %s", b);
-	else 
+	if (*b == '2')
 		atype = t;
 	return;
 }
@@ -1153,7 +1138,7 @@ void parm_err(void) {
 
 int main(int argc, char **argv) {
 
-	int server_port = DFLT_PORT, controlfd = -1, datafd, code, connected = 0;
+	int server_port = DFLT_PORT, controlfd = -1, datafd, code;
 	int mode = PASV, i, mput, mget, f_mode, autologin = 1;
 	char command[BUF_SIZE], str[IOBUFLEN+1], user[30], passwd[30];
 	char *param[MAXPARMS];
@@ -1229,18 +1214,15 @@ int main(int argc, char **argv) {
 		else server_port = DFLT_PORT;
 	}
 	bzero(command, BUF_SIZE);
-	//signal(SIGALRM, sig_handler);
 
 	while(1) {
 		mput = 0; mget = 0;
 		f_mode = R_OK;
-		//alarm(ALRMINTVL);
 		if ((code = get_cmd(command, sizeof(command), param)) < 0) break; /* got EOF */
 		if (check_connected) {
 			connected = is_connected(controlfd);
 			check_connected = 0;
 		}
-		//alarm(0);
 
 		// prequalify commands so we don't have to do mode checking on every command
 		if (!connected && (code > CMD_NOCONNECT) && (code < CMD_CONNECT)) {
@@ -1253,7 +1235,7 @@ int main(int argc, char **argv) {
 		case CMD_OPEN:
 			if (connected) {
 				if (!(connected = is_connected(controlfd))) {
-					printf("Server has gone away, closing connection.\n");
+					printf("Server has gone away, connection closed\n");
 				} else {
 					printf("Already connected to %s, use close first.\n", srvr_ip);
 					break;
@@ -1284,7 +1266,7 @@ int main(int argc, char **argv) {
 
 		case CMD_PUT:
 			if (!param[1]) {
-				//FIXME: Should ask for file names interactrively 
+				//FIXME: Should ask for file names interactively 
 				parm_err();
 				break;
 			}
@@ -1335,6 +1317,12 @@ int main(int argc, char **argv) {
 			} else check_connected++;
 			break;
 
+		case CMD_SITE:		//FIXME: Add prompt for subcommand
+			sprintf(str, "SITE %s %s\r\n", param[1]?param[1]:"", param[2]?param[2]:"");
+			send_cmd(controlfd, str);
+			get_reply(controlfd, command, sizeof(command), 0);
+			break;
+		
 		case CMD_CWD:
 			if (!param[1]) {
 				parm_err();		// FIXME: No arg - return to home dir
