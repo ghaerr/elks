@@ -21,26 +21,26 @@ ftp \- Internet file transfer program
 .I port
 ] ]
 .SH DESCRIPTION
-.I Ftp
+.B Ftp
 is the user interface to the Internet standard File Transfer Protocol.
 The program allows a user to transfer files to and from a
 remote network site.
 .PP
 The client host with which 
-.I ftp
+.B ftp
 is to communicate may be specified on the command line.
 If this is done,
-.I ftp
+.B ftp
 will immediately attempt to establish a connection to an FTP
 server on that host; otherwise, 
-.I ftp
+.B ftp
 will enter its command interpreter and await instructions
 from the user.  When 
-.I ftp
+.B ftp
 is awaiting commands the prompt `ftp>'
 is provided to the user.  The following commands are recognized
 by
-.IR ftp .
+.BR ftp .
 Commands may be abbreviated to 3 characters.
 .TP
 \fB\&!\fP [ \fIcommand\fP [ \fIargs\fP ] ]
@@ -61,7 +61,7 @@ to support binary image transfer.
 .B bye
 Terminate the FTP session with the remote server
 and exit
-.IR ftp .
+.BR ftp .
 An end of file will also terminate the session and exit.
 .TP
 .BI cd " remote-directory"
@@ -87,7 +87,7 @@ Note that the
 .I verbose
 command will set the debug-value to either 0 or one (toggle).
 When debugging is on,
-.I ftp
+.B ftp
 prints each command sent to the remote machine, preceded
 by the string `--->'. A number of other messages and numbers will also be printed, depending on the level.
 If 
@@ -120,7 +120,7 @@ Note:  \fBmget\fP and \fBmput\fP are not meant to transfer
 entire directory subtrees of files.  That can be done by
 transferring a \fBtar\fP(1) archive of the subtree (in binary mode).
 When transferring full directories, using `*' may some times cause
-.I ftp
+.B ftp
 to run out of memory. In such cases, try `.' instead.
 .TP
 \fBhash\f
@@ -129,7 +129,7 @@ transferred.  The size of a data block is 1024 bytes.
 (Currently not implemented in ELKS.)
 .TP
 \fBhelp\fP
-Prints a list of the known commands.
+Prints a list of the known commands with a short explanation.
 .TP
 \fBlcd\fP [ \fIdirectory\fP ]
 Change the working directory on the local machine.  If
@@ -141,7 +141,7 @@ is specified, the current local directory is listed.
 Expand the \fIremote-files\fP on the remote machine
 and do a \fBget\fP for each file name thus produced.
 See \fBglob\fR for details on the filename expansion.
-.I ftp 
+.B ftp 
 is not doing any filename translation, so file names will be coerced into the
 format accepted by the destination file system (minix or FAT).
 .TP
@@ -159,12 +159,12 @@ Establish a connection to the specified
 .I host
 FTP server.  An optional port number may be supplied,
 in which case, 
-.I ftp
+.B ftp
 will attempt to contact an FTP server at that port.
 If the 
 .I auto-login
 option is on (default), 
-.I ftp
+.B ftp
 will also attempt to automatically log the user in to
 the FTP server (see below).
 .TP
@@ -175,9 +175,9 @@ user to selectively retrieve or store files.
 If prompting is turned off (default is on), any \fBmget\fP or \fBmput\fP
 will transfer all files.
 The options are y/n/q where `q' will cause exit to the 
-.I ftp command prompt. This is particularly useful on ELKS because a ^C
+.B ftp command prompt. This is particularly useful on ELKS because a ^C
 will terminate the 
-.I ftp
+.B ftp
 program, not the current transfer.
 .TP
 \fBput\fP \fIlocal-file\fP [ \fIremote-file\fP ]
@@ -212,7 +212,7 @@ Delete a directory on the remote machine.
 .BI passive
 toggles the file transfer mode between `passive' and `port' modes. Port mode is the traditional
 method in which the client sends and IP-address and a port number for the server to connect to.
-.I ftp
+.B ftp
 creates a new connection for each file transfer and each directory transfer. Since `Port' mode for obious reasons
 doesn't work with NAT (Netwok Address Translation), `Passive' mode was introduced. In passive mode, the roles are reversed,
 and the server tells the client which IP-address and port number to use for each file transfer. Passive mode is the default.
@@ -221,7 +221,7 @@ when transferring many files (`mget', `mput').
 .TP
 .B status
 Show the current status of
-.IR ftp .
+.BR ftp .
 .TP
 .B system
 Show the type of operating system running on the remote machine.
@@ -234,14 +234,14 @@ to
 If no type is specified, the current type
 is printed.  The default type is network ASCII.
 When opening a connection,
-.I ftp
+.B ftp
 requests `status' from the remote system in order to determine a reasonable default `type'. 
 I.e. if the remote system us Unix/linux, the default `type' is set to binary.
 .TP
 .B verbose
 Toggle verbose mode.  Verbose mode is equivalent to debug level 1.
 .TP
-\fB?\fP [ \fIcommand\fP ]
+\fB?\fP
 A synonym for help.
 .PP
 Command arguments which have embedded spaces may be quoted with
@@ -260,14 +260,14 @@ prompt will not appear until the remote server has completed
 sending the requested file.
 .PP
 The terminal interrupt key sequence will be ignored when
-.I ftp
+.B ftp
 has completed any local processing and is awaiting a reply
 from the remote server.
 A long delay in this mode may result from the ABOR processing described
 above, or from unexpected behavior by the remote server, including
 violations of the ftp protocol.
 If the delay results from unexpected remote server behavior, the local
-.I ftp
+.B ftp
 program must be killed by hand.
 .SH OPTIONS
 Options may be specified at the command line, or to the 
@@ -280,10 +280,10 @@ The
 The
 .B \-n
 option restrains 
-.I ftp
+.B ftp
 from attempting \*(lqauto-login\*(rq upon initial connection.
 If auto-login is enabled, 
-.I ftp
+.B ftp
 will prompt for the remote machine login name (default is the user
 identity on the local machine), and, if necessary, prompt for a password
 and an account with which to login.
@@ -304,7 +304,7 @@ option disables file name globbing.
 .SH "QEMU support"
 When running ELKS inside the QEMU emulator, use the 
 .B \-q option with 
-.I ftp 
+.B ftp 
 in order to map addresses and ports correctly. With this option, `passive' mode file transfers
 between ELKS and the host are fully supported. If connecting inside the ELKS system (loopback), both `passive' 
 and `port' modes work.
@@ -324,5 +324,5 @@ File name mapping beween hosts with different OSes are undefined and may yield u
 File modes are neither queried not preserved. 
 .PP
 The ELKS
-.I ftp
+.B ftp
 client has no support for command line history or editing.

@@ -7,7 +7,7 @@ ftpd \- Internet File Transfer Protocol server
 .RB [ \-q ]
 .RI [ port ]
 .SH DESCRIPTION
-.I Ftpd
+.B Ftpd
 implements the server side of the Internet File Transfer Protocol,
 and listens to the standard FTP port # 21, unless otherwise specified on the command line.
 .PP
@@ -17,35 +17,36 @@ option is specified,
 debugging information is written to the console. Multiple 
 .B \-d
 options may be specified for increased verbosity level. More than 4 is not meaningful.
-.I Ftpd
+.B Ftpd
 will normally detach itself from the controlling terminal. If the debug level is 2 or higher, such detach is prevented. 
 .PP
 If the
 .B \-q
-option is specified or the variable 
-.B QEMU=1 
-is found in the environment,
-.I ftpd
+option is specified or the environment variable 
+.I QEMU=1 
+is present,
+.B ftpd
 will assume it is running in the QEMU emulator and remap ports and IP-addresses accordingly.
 The mappings correspond with the setup provided for QEMU in the 
-.B qemu.sh
-script in the ELKS distribution.
+.I qemu.sh
+script in the ELKS distribution. When QEMU mode is active, the server 
+will look for loopback connections (ELKS internal) and turn off QEMU mode 
+if detected, in order for file transfers to work correctly. This is meaningful for testing only.
 .PP
 The ftp server
-will timeout an inactive session after 15 minutes. (Not yet implemented in ELKS.)
+will timeout an inactive session after 15 minutes. 
 .PP
 The ftp server currently supports (or will support) the following ftp
-requests; case is not distinguished. The commands marked with a '*' are planned, not implemented.
+requests; case is not distinguished. The commands marked with a '*' are planned, but not currently implemented.
 .PP
 .nf
 .ta \w'Request        'u
 \fBRequest	Description\fP
 ABOR*	abort previous command
-CDUP*	change to parent of current working directory
 CWD	change working directory
 DELE	delete a file
 HELP	give help information
-LIST	give list files in a directory (``ls -lgA'')
+LIST	give list files in a directory (``ls -l'')
 MKD	make a directory
 NLST	give name list of files in directory 
 NOOP	do nothing
@@ -57,6 +58,7 @@ QUIT	terminate session
 RETR	retrieve a file
 RMD*	remove a directory
 SIZE*	return size of file
+SITE	accept SITE specific command
 STAT	return status of server
 STOR	store a file
 SYST	show operating system type of server system
@@ -67,30 +69,42 @@ USER	specify user name
 The remaining ftp requests specified in Internet RFC 959 are
 reported as unrecognized.
 .PP
+For simplicity, the 
+.I TYPE
+command is ignored. File transfers are always binary (IMAGE mode), directory transfers are ASCII.
+This applies only to the server, it is still necessary to set the desired transfer mode in the client.
+.PP
 The ftp server will abort an active file transfer only when the
 ABOR command is preceded by a Telnet "Interrupt Process" (IP)
 signal and a Telnet "Synch" signal in the command Telnet stream,
 as described in Internet RFC 959. (Not yet implemented in ELKS].
 .PP
-.I Ftpd
+The
+.I SITE 
+command implements only the
+.I IDLE
+subcommand, which without a parameter will display the current idle timeout value in seconds. Add a numeric argument to the 
+.i IDLE 
+subcommand to set the timeout value. Acceptable range is 30 to 2700 seconds.
+.B Ftpd
 interprets file names according to the ``globbing''
 conventions used by the ELKS 
 .IR sash (1).
 This allows users to utilize the metacharacters ``*?[].
 .PP
-The currrent ELKS-implementation of 
-.I ftpd
+The current ELKS-implementation of 
+.B ftpd
 requires username and password to be specified, but ignores them. 
 Future implementations may support authentication via 
 .IR /etc/passwd ,
 (no null passwords), and 
 .IR /etc/ftpusers ,
 which contains user names not to be allowed 
-.I ftp 
+.B ftp 
 access.
 Anonymous authentication is not supported.
 .PP
-.I Ftpd
+.B Ftpd
 implements no securtity measures, and runs from the authenticated user's (currently root) home directory.
 CWD to any directory is allowed, which - in combination with the DELETE and RMDIR commands - may be very dangerous.
 .SH "SEE ALSO"
