@@ -27,11 +27,11 @@ reaching a non-indented paragraph (i.e. at .SH or .SS).
 .SH "REQUEST SUMMARY"
 .nf
 Request	  Cause   Explanation
-		  Break? 
+          Break?
 .fi
 .sp
 .TP 20
-.BR ".TH n s c v d " yes
+.BR ".TH n s c v d\ " yes
 Begin page named 
 .B n
 of chapter
@@ -44,27 +44,27 @@ is the date of the most recent change;
 is version number.
 Sets prevailing indent and tabs to default.
 .TP 20
-.BR ".SH t         " yes
+.BR ".SH t       \ " yes
 Subhead. Quote to embed blanks.
 .TP 20
-.BR ".SS t         " yes
+.BR ".SS t       \ " yes
 Subsection. Quote to embed blanks. No indent for t.
 .TP 20
-.BR ".PP           " yes
+.BR ".PP          \ " yes
 Begin paragraph.
 Set prevailing indent to default.
 .TP 20
-.BR ".HP x         " yes
+.BR ".HP x       \ " yes
 Begin paragraph with hanging indent.
 Set prevailing indent to
 .BR x .
 .TP 20
-.BR ".TP x         " yes
+.BR ".TP x       \ " yes
 Begin indented paragraph with hanging tag given by next line.
 Set prevailing indent to
 .BR x .
 .TP 20
-.BR ".IP t x       " yes
+.BR ".IP t x   \ " yes
 Same as
 .B .TP t
 with tag
@@ -73,38 +73,38 @@ Often used to get an indented paragraph without a tag.
 Set prevailing indent to
 .BR x .
 .TP 20
-.BR ".RS           " yes
+.BR ".RS          \ " yes
 Start relative indent, move left margin in distance 5.
 .TP 20
-.BR ".RE           " yes
+.BR ".RE          \ " yes
 End of relative indent.
 Set prevailing indent to amount of starting .RS.
 .TP 20
-.BR ".nf           " yes
+.BR ".nf          \ " yes
 Turn line fill off.
 .TP 20
-.BR ".fi           " yes
+.BR ".fi          \ " yes
 Turn line fill on.
 .TP 20
-.BR ".na           " no
+.BR ".na          \ " no
 Leave right margin unaligned.
 .TP 20
-.BR ".ad           " no
+.BR ".ad          \ " no
 Line up right margin.
 .TP 20
-.BR ".B t          " no
+.BR ".B t         \ " no
 Text t is bold. Quote to embed blanks.
 .TP 20
-.BR ".I t          " no
+.BR ".I t         \ " no
 Text t is italic. Quote to embed blanks.
 .TP 20
-.BR ".BI t         " no
+.BR ".BI t       \ " no
 Text alternates bold followed by italic. Quote to embed blanks.
 .TP 20
-.BR ".BR t         " no
+.BR ".BR t       \ " no
 Text alternates bold followed by roman. Quote to embed blanks.
 .TP 20
-.BR ".IR t         " no
+.BR ".IR t       \ " no
 Text alternates italic followed by roman. Quote to embed blanks.
 .SH EXAMPLE
 The following illustrates some of the requests available
