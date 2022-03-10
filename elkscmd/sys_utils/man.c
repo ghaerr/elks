@@ -664,10 +664,10 @@ int do_argvcmd(int cmd_id)
    case 6:	/* .ft {R,B,I,P} */
       do_skipeol();
       switch (word[0]) {
-      case 'B': print_word("\\fB"); break;
-      case 'I': print_word("\\fI"); break;
-      case 'R': print_word("\\fR"); break;
-      case 'P': print_word("\\fP"); break;
+      case 'B': print_word("\\fB"); old_font = cur_font; break;
+      case 'I': print_word("\\fI"); old_font = cur_font; break;
+      case 'R': print_word("\\fR"); old_font = cur_font; break;
+      case 'P': old_font = cur_font; print_word("\\fP"); break;
       }
       break;
    }
@@ -781,7 +781,7 @@ void print_word(char *pword)
 	       char * p = strchr(fnt, *++s);
 	       if (p == 0) cur_font = 0x100;
 	       else         cur_font = 0x100*(p-fnt);
-		   if (cur_font == 0x400) cur_font = sp_font;
+		   if (cur_font == 0x400) cur_font = old_font;
 	    }
 	    continue;
 	 }
