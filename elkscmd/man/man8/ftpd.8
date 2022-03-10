@@ -58,6 +58,7 @@ QUIT	terminate session
 RETR	retrieve a file
 RMD*	remove a directory
 SIZE*	return size of file
+SITE	accept SITE specific command
 STAT	return status of server
 STOR	store a file
 SYST	show operating system type of server system
@@ -78,6 +79,13 @@ ABOR command is preceded by a Telnet "Interrupt Process" (IP)
 signal and a Telnet "Synch" signal in the command Telnet stream,
 as described in Internet RFC 959. (Not yet implemented in ELKS].
 .PP
+The
+.I SITE 
+command implements only the
+.I IDLE
+subcommand, which without a parameter will display the current idle timeout value in seconds. Add a numeric argument to the 
+.i IDLE 
+subcommand to set the timeout value. Acceptable range is 30 to 2700 seconds.
 .B Ftpd
 interprets file names according to the ``globbing''
 conventions used by the ELKS 
