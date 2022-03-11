@@ -2,11 +2,7 @@
  * Copyright (c) 1993 by David I. Bell
  * Permission is granted to use, distribute, or modify this source,
  * provided that this copyright notice remains intact.
- *
- * Most simple built-in commands are here.
  */
-
-#include "futils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,6 +17,7 @@
 #include <utime.h>
 #include <errno.h>
 #include <dirent.h>
+#include "futils.h"
 
 #define BUF_SIZE 1024 
 
@@ -29,8 +26,7 @@
  * Return 1 if a filename is a directory.
  * Nonexistant files return 0.
  */
-int isadir(name)
-	char	*name;
+int isadir(char *name)
 {
 	struct	stat	statbuf;
 
@@ -127,10 +123,7 @@ int linkfiles(char *srcdir, char *destdir)
  * error message output.  (Failure is not indicted if the attributes cannot
  * be set.)
  */
-int copyfile(srcname, destname, setmodes)
-	char	*srcname;
-	char	*destname;
-	int	setmodes;
+int copyfile(char *srcname, char *destname, int setmodes)
 {
 	int		rfd;
 	int		wfd;
@@ -280,8 +273,13 @@ int main(int argc, char **argv)
 		if (rename(srcname, destname) >= 0)
 			continue;
 
-		/* handle broken kernel directory rename (issue #583)*/
-		if (errno == EPERM && access(destname, F_OK) < 0 && isadir(srcname)) {
+		if (errno == EPERM && access(destname, F_OK) < 0) {
+			/* handle FAT filesystem with no link function (used in rename) */
+			if (!isadir(srcname))
+				goto copy;
+
+			/* handle broken kernel directory rename (issue #583)*/
+			/*if (isadir(srcname)) {*/
 			char destdir[PATHLEN];
 
 			if (mkdir(destname, 0777 & ~umask(0))) {
@@ -303,11 +301,14 @@ int main(int argc, char **argv)
 			continue;
 		}
 
+		if (errno == EPERM && access(destname, F_OK) < 0 && !isadir(srcname))
+			goto copy;
+
 		if (errno != EXDEV) {
 			perror(destname);
 			continue;
 		}
-
+copy:
 		if (copyfile(srcname, destname, 1))
 			continue;
 
@@ -318,6 +319,6 @@ int main(int argc, char **argv)
 
 usage:
 	errmsg("usage: mv source_file dest_file\n");
-	errmsg("       mv file1 [file2] ... dest_dir\n");
+	errmsg("       mv file [...] dest_dir\n");
 	return 1;
 }
