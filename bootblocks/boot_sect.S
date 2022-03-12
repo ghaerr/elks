@@ -18,16 +18,10 @@
 #ifdef CONFIG_ARCH_PC98
 // Japanese NEC PC98
 
-#define BOOTSEG
 #define BOOTCS
 #if defined(CONFIG_IMG_FD1232)
-//#define BOOTSEG		0x1FC0
 #define SECTOR_SIZE	1024
-#elif defined(CONFIG_IMG_HD)
-//#define BOOTSEG		0x1F80
-#define SECTOR_SIZE	512
 #else
-//#define BOOTSEG		0x1FE0
 #define SECTOR_SIZE	512
 #endif
 #define MEMTOPSEG	0xA000		// 640K memory
@@ -112,12 +106,8 @@ entry1:
 	xor %sp,%sp
 
 	xor %di,%di
-#ifdef BOOTSEG
 #ifdef BOOTCS
 	mov %cs,%ax
-#else
-	mov $BOOTSEG,%ax	// DS:SI = BOOTSEG:0
-#endif
 	mov %ax,%ds
 	xor %si,%si
 #else
