@@ -18,11 +18,10 @@
 #ifdef CONFIG_ARCH_PC98
 // Japanese NEC PC98
 
+#define BOOTCS
 #if defined(CONFIG_IMG_FD1232)
-#define BOOTSEG		0x1FC0
 #define SECTOR_SIZE	1024
 #else
-#define BOOTSEG		0x1FE0
 #define SECTOR_SIZE	512
 #endif
 #define MEMTOPSEG	0xA000		// 640K memory
@@ -107,8 +106,8 @@ entry1:
 	xor %sp,%sp
 
 	xor %di,%di
-#ifdef BOOTSEG
-	mov $BOOTSEG,%ax	// DS:SI = BOOTSEG:0
+#ifdef BOOTCS
+	mov %cs,%ax
 	mov %ax,%ds
 	xor %si,%si
 #else
@@ -346,6 +345,9 @@ dr_loop:
 	div %bx
 #ifdef CONFIG_ARCH_PC98
 	mov %al,%cl      // cylinder number for PC_98
+#if defined(CONFIG_IMG_HD)
+	mov %ah,%ch      // higher bits of cylinder number for PC_98
+#endif
 #else
 	mov %al,%ch      // CH = low 8 bits of physical cylinder number
 	ror %ah
@@ -363,7 +365,9 @@ dr_loop:
 #endif
 	div %bx          // DL = physical sector number - 1
 #ifdef CONFIG_ARCH_PC98
+#if defined(CONFIG_IMG_FD1232) || defined(CONFIG_IMG_FD1440)
 	inc %dl          // sector number for PC_98
+#endif
 #else
 	or %dl,%cl       // stash {physical sector number - 1} in CL
 	inc %cx          // base 1 for sector number
@@ -423,6 +427,9 @@ dr_try:
 	mov %es:(%bx),%al // Physical Device Address
 	push %ax
 	and $0x0F,%al
+#if defined(CONFIG_IMG_HD)
+	or $0x80,%al
+#endif
 	mov %al,drive_num
 	pop %ax
 	pop %es
@@ -430,7 +437,7 @@ dr_try:
 	mov $SECTOR_SIZE,%bx
 #if defined(CONFIG_IMG_FD1232)
 	mov $0x03,%ch    // 1024 Bytes per sector
-#else
+#elif defined(CONFIG_IMG_FD1440)
 	mov $0x02,%ch    // 512 Bytes per sector
 #endif
 	int $0x1B

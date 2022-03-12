@@ -1307,9 +1307,9 @@ arch_set_initseg:
    mov %ax,%ds
    call arch_get_mem		// save base memory for bootopts routine
    mov %ax,mem_kbytes
-
+#ifdef CONFIG_BOOTOPTS
    call bootopts		// attempting loading /bootopts config file
-
+#endif
    ret
 
 putc:
