@@ -37,8 +37,7 @@
 #include <paths.h>
 #define MORE			"more"
 #else					/* Host */
-#define _PATH_MANPAGES	"."
-#define MORE			"more -R"
+#define MORE			"less -R"
 #endif
 
 /* default .TH [extra1] value */
