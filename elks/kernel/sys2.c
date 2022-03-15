@@ -51,7 +51,7 @@ unsigned int sys_alarm(unsigned int secs)
 			return 0;
 		}
 		del_timer(ap);
-		ap->tl_expires = jiffies + (secs * HZ);
+		ap->tl_expires = jiffies + ((unsigned long)secs * HZ);
 		ap->tl_function = alarm_callback;
 		ap->tl_data = (int)current;	/* must delete timer on process exit*/
 		add_timer(ap);
