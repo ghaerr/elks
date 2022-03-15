@@ -1,9 +1,6 @@
 /*
  * date  small utility to check and set system time.
  *
- * Usage: /bin/date
- *       date [?[?]] | <date>
- *
  * 1999-11-07  mario.frasca@home.ict.nl
  *
  *  Copyright 1999 Mario Frasca
@@ -17,7 +14,13 @@
 
 #include <stdio.h>
 #include <time.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 #include <sys/time.h>
+
+#define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
+#define errstr(str) write(STDERR_FILENO, str, strlen(str))
 
 /* our own happy mktime() replacement, with the following drawbacks: */
 /*    doesn't check boundary conditions */
@@ -65,11 +68,11 @@ struct tm *t;
 
 void usage()
 {
-	fputs("date : read or modify current system date\n", stdout);
-	fputs("usage: date [option] [[yy]yy-m-dTh:m:s]\n", stdout);
-	fputs(" -s STRING  set time described by STRING\n", stdout);
-	fputs(" -i         interactively set time\n", stdout);
-	fputs(" -c STRING  interactively set time if `now' is before STRING\n", stdout);
+	errmsg("usage: date [-s [yy]yy-m-dTh:m:s]\n");
+#if 0
+	errmsg(" -i         interactively set time\n");
+	errmsg(" -c STRING  interactively set time if `now' is before STRING\n");
+#endif
 	exit(1);
 }
 
@@ -116,16 +119,19 @@ int main(argc, argv)
 char ** argv;
 int argc;
 {
+	char *p;
+	//char buf[32];
+
 	time_t systime;
 	time(&systime);
 
 	if (argc==1)
 	{
-		fputs(ctime(&systime), stdout);
+		p = ctime(&systime);
+		write(STDOUT_FILENO, p, strlen(p));
 	}
 	else
 	{
-		char *p, buf[32];
 		struct timeval tv;
 		int param = 1;
 
@@ -133,28 +139,27 @@ int argc;
 			usage();
 			
 		switch(argv[param][1]){
+#if 0
 		case 'c':
 			if (decodedatestring(argv[++param], &tv)) usage();
 			if (systime > tv.tv_sec)
-			return 0;
+				return 0;
 		case 'i':
 			fputs("insert current date: ", stdout);
-			fgets(buf, 31, stdin);
+			fgets(buf, sizeof(buf)-1, stdin);
 			if (decodedatestring(buf, &tv)) usage();
 			break;
-
+#endif
 		case 's':
 			if (decodedatestring(argv[++param], &tv)) usage();
 			break;
-
 		default:
 			usage();
 		}
 
       if (settimeofday (&tv, NULL) != 0)
 		{
-			fprintf (stderr,
-				"Unable to set time -- probably you are not root\n");
+			errmsg("Unable to set time -- probably you are not root\n");
 			exit (1);
 		}
 /*		

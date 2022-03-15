@@ -28,17 +28,17 @@ fsck: fsck.o
 fdisk: fdisk.o
 	$(LD) $(LDFLAGS) -o fdisk fdisk.o $(LDLIBS)
 
-mkfs: mkfs.o
-	$(LD) $(LDFLAGS) -o mkfs mkfs.o $(LDLIBS)
+mkfs: mkfs.o $(TINYPRINTF)
+	$(LD) $(LDFLAGS) -o mkfs mkfs.o $(TINYPRINTF) $(LDLIBS)
 
-mkfat: mkfat.o
-	$(LD) $(LDFLAGS) -o mkfat mkfat.o $(LDLIBS)
+mkfat: mkfat.o $(TINYPRINTF)
+	$(LD) $(LDFLAGS) -o mkfat mkfat.o $(TINYPRINTF) $(LDLIBS)
 
 partype: partype.o
 	$(LD) $(LDFLAGS) -o partype partype.o $(LDLIBS)
 
-ramdisk: ramdisk.o
-	$(LD) $(LDFLAGS) -o ramdisk ramdisk.o $(LDLIBS)
+ramdisk: ramdisk.o $(TINYPRINTF)
+	$(LD) $(LDFLAGS) -o ramdisk ramdisk.o $(TINYPRINTF) $(LDLIBS)
 
 clean:
 	rm -f *.o $(FORMATMOD) core $(PRGS)

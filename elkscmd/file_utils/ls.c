@@ -76,7 +76,7 @@ static char *timestring(time_t t);
 
 struct sort {
     char *name;
-    time_t modtime;
+    long modtime;
 };
 
 struct stack
@@ -85,15 +85,17 @@ struct stack
     struct sort *buf;
 };
 
-static int cols = 0, col = 0, reverse = 1;
+static int cols = 0, col = 0;
+static int reverse = -1;
 static int sortbytime = 0;
+static int nosort = 0;
 static char fmt[16] = "%s";
 
 static int namesort(const struct sort *a, const struct sort *b)
 {
     if (sortbytime) {
-	if (reverse) return (a->modtime < b->modtime);
-	else return (a->modtime > b->modtime);
+	long lval = reverse * (b->modtime - a->modtime);
+	return (int)(lval >> 16);	/* return sign of long compare */
     }
     return reverse * strcmp(a->name, b->name);
 }
@@ -115,7 +117,7 @@ static void pushstack(struct stack *pstack, char *entry, time_t modtime)
     struct sort *allocbuf;
 
     if (pstack->size == pstack->allocd) {
-        (pstack->allocd) += 8;
+        pstack->allocd += 64;
         allocbuf = (struct sort*)realloc(pstack->buf, sizeof(struct sort)*pstack->allocd);
         if (!allocbuf) {
             free(pstack->buf);
@@ -125,12 +127,13 @@ static void pushstack(struct stack *pstack, char *entry, time_t modtime)
         pstack->buf = allocbuf;
   }
   pstack->buf[pstack->size].modtime = modtime;
-  pstack->buf[(pstack->size)++].name = entry;
+  pstack->buf[pstack->size++].name = entry;
 }
 
 static void sortstack(struct stack *pstack)
 {
-    qsort(pstack->buf, pstack->size, sizeof(struct sort), namesort);
+    if (nosort == 0)
+	qsort(pstack->buf, pstack->size, sizeof(struct sort), namesort);
 }
 
 static void getfiles(char *name, struct stack *pstack, int flags)
@@ -182,19 +185,28 @@ static void lsfile(char *name, struct stat *statbuf, int flags)
     struct passwd	*pwd;
     struct group	*grp;
     long		len;
-    char		buf[PATHLEN];
-    static char		username[12];
     static int		userid;
     static int		useridknown;
-    static char		groupname[12];
     static int		groupid;
     static int		groupidknown;
     char		class;
     char		*classp;
-	char		*pp;
+    char		*pp;
+    static char		username[12];
+    static char		groupname[12];
+    char		buf[PATHLEN];
+    struct stat		sbuf;
 
     cp = buf;
     *cp = '\0';
+
+    if (flags * (LSF_INODE|LSF_LONG|LSF_CLASS) && !statbuf) {
+	if (LSTAT(name, &sbuf) < 0) {
+	    perror(name);
+	    return;
+	}
+	statbuf = &sbuf;
+    }
 
     if (flags & LSF_INODE) {
 	sprintf(cp, "%5lu ", (unsigned long)statbuf->st_ino);
@@ -262,22 +274,22 @@ static void lsfile(char *name, struct stat *statbuf, int flags)
 #endif
     }
 
-	strcpy(buf, name);
-	pp = strrchr(buf, '/');
+    strcpy(buf, name);
+    pp = strrchr(buf, '/');
 
-	/* If a class character exists for the file name, add it on */
+    /* If a class character exists for the file name, add it on */
     if (class != '\0') {
-		classp = &buf[strlen(buf)];
-		*classp++ = class;
-		*classp = '\0';
+	classp = &buf[strlen(buf)];
+	*classp++ = class;
+	*classp = '\0';
     }
 
-	if (!pp) pp = buf;
-	else pp++;
-	if (flags & LSF_ONEPER)
-		printf("%s", pp);	/* One per line: No trailing spaces! */
-	else 
-		printf(fmt, pp);
+    if (!pp) pp = buf;
+    else pp++;
+    if (flags & LSF_ONEPER)
+	printf("%s", pp);	/* One per line: No trailing spaces! */
+    else
+	printf(fmt, pp);
 
 #ifdef S_ISLNK
     if ((flags & LSF_LONG) && S_ISLNK(statbuf->st_mode)) {
@@ -451,7 +463,7 @@ int main(int argc, char **argv)
 			flags |= LSF_LONG;
 			break;
 		case 'd':
-			flags |= LSF_DIR;
+			flags |= LSF_DIR;	/* FIXME not implemented */
 			recursive = 0;
 			break;
 		case 'R':
@@ -477,6 +489,9 @@ int main(int argc, char **argv)
 			break;
 		case 'r':
 			reverse = -reverse;
+			break;
+		case 'U':
+			nosort = 1;
 			break;
 		default:
 			if (~flags) fprintf(stderr, "unknown option '%c'\n", *cp);
@@ -515,13 +530,20 @@ int main(int argc, char **argv)
 	while (files.size) {
 	    name = popstack(&files);
 	    TRACESTRING(name)
+	    if (!recursive || (flags & LSF_LONG)) {
+		lsfile(name, NULL, flags);
+		if (!recursive) {
+		    free(name);
+		    continue;
+		}
+	    }
 	    if (LSTAT(name, &statbuf) < 0) {
 		perror(name);
 		free(name);
 		continue;
 	    }
 	    is_dir = S_ISDIR(statbuf.st_mode);
-	    if (!is_dir || !recursive || (flags & LSF_LONG))
+	    if (!is_dir)
 		lsfile(name, &statbuf, flags);
 	    if (is_dir && recursive && not_dotdir(name))
 		pushstack(&dirs, name, statbuf.st_mtime);
@@ -547,10 +569,9 @@ int main(int argc, char **argv)
     return EXIT_SUCCESS;
 
 usage:
-    fprintf(stderr, "usage: %s [-aAdFilrR1] [file1] [file2] ...\n", name);
+    fprintf(stderr, "usage: %s [-aAFilrR1U] [file1] [file2] ...\n", name);
     fprintf(stderr, "  -a: list all files (including '.' and '..')\n");
     fprintf(stderr, "  -A: list hidden files too\n");
-    fprintf(stderr, "  -d: list directory entries instead of contents (not implemented)\n");
     fprintf(stderr, "  -F: add character to displayed name based on entry type\n");
     fprintf(stderr, "  -i: show inode numbers beside names\n");
     fprintf(stderr, "  -l: show files in long (detailed) format\n");
@@ -558,5 +579,6 @@ usage:
     fprintf(stderr, "  -r: reverse sort order\n");
     fprintf(stderr, "  -R: recursively list directory contents\n");
     fprintf(stderr, "  -1: one entry per line\n");
+    fprintf(stderr, "  -U: don't sort output\n");
     return EXIT_FAILURE;
 }

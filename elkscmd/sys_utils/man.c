@@ -32,7 +32,13 @@
 #endif
 #include <ctype.h>
 #include <string.h>
+
+#ifdef __ia16__			/* ELKS */
 #include <paths.h>
+#define MORE			"more"
+#else					/* Host */
+#define MORE			"less -R"
+#endif
 
 /* default .TH [extra1] value */
 #define DEFAULT_EXTRA1	"ELKS Embeddable Linux Kernel Subset"
@@ -44,8 +50,8 @@
 //#define ANSI_UNDERLINE "\e[7m"	/* reverse video */
 //#define ANSI_UNDERLINE "\e[32m"	/* green */
 
-FILE * ofd = stdout;
-FILE * ifd = stdin;
+FILE * ofd;
+FILE * ifd;
 int ifd_class = 0;		/* Type of ifd, 0=stdin, 1=file, 2=pipe */
 
 char whitespace[256];
@@ -74,6 +80,7 @@ int  gaps_on_line = 0;		/* Gaps on line for adjustments */
 int  *line_ptr = 0;
 int  line[256];		/* Buffer for building output line */
 int  cur_font = 0x100;	/* Current font, 1 == Roman */
+int  old_font = 0x100;	/* Old font, 1 == Roman */
 
 char line_header[256] = "";	/* Page header line */
 char line_footer[256] = "";	/* Page footer line */
@@ -107,7 +114,7 @@ int find_page(char *name, char *sect)
 {
 static char defpath[] = _PATH_MANPAGES;
 static char defsect[] = "1:2:3:4:5:6:7:8:9";
-static char defsuff[] = ":.Z:.gz";
+static char defsuff[] = ":.Z";
 static char manorcat[] = "man:cat";
 
    char fbuf[256];
@@ -193,7 +200,7 @@ int open_page(char * name)
 
    p = strrchr(name, '.');
    if (p) {
-      if (strcmp(p, ".gz") == 0) command = "gzip -dc ";
+      //if (strcmp(p, ".gz") == 0) command = "gzip -dc ";
       if (strcmp(p, ".Z") == 0)  command = "compress -dc ";
    }
 
@@ -240,6 +247,9 @@ struct cmd_list_s {
   { "Id", 0, 0 },	/* Line for RCS tokens */
 
   { "BY", 0, 0 },	/* I wonder where this should go ? */
+  { "UC", 0, 0 },	/* University of California man page */
+  { "in", 0, 0 },	/* ignore .in */
+  { "ti", 0, 0 },	/* ignore .ti */
 
   { "nf", 0, 1 },	/* Line break, Turn line fill off */
   { "fi", 0, 2 },	/* Line break, Turn line fill on */
@@ -261,6 +271,7 @@ struct cmd_list_s {
   { "SS", 1, 3 },	/* Subsection */
   { "IP", 1, 4 },	/* New para, indent except argument 1 */
   { "TP", 1, 5 },	/* New para, indent except line 1 */
+  { "ft", 1, 6 },	/* Font {R,B,I,P} */
 
   { "B",  2, 22 },	/* Various font fiddles */
   { "BI", 2, 23 },
@@ -563,26 +574,32 @@ int do_noargs(int cmd_id)
 {
    if (cmd_id < 10) line_break();
    switch (cmd_id) {
-   case 1: no_fill = 1; break;
-   case 2: no_fill = 0; break;
-   case 3: pending_nl = 1; break;
-   case 4: break;
-   case 5: page_break(); break;
-   case 6: left_indent = old_para_indent;
+   case 1: no_fill = 1; break;			/* .nf */
+   case 2: no_fill = 0; break;			/* .fi */
+   case 3: pending_nl = 1; break;		/* .sp */
+   case 4: break;				/* .br */
+   case 5: page_break(); break;			/* .bp */
+   case 6: left_indent = old_para_indent;	/* .PP */
            pending_nl = 1;
 	   break;
-   case 7: pending_nl = 1;
+   case 7: pending_nl = 1;			/* .RS */
            left_indent += standard_tab;
            old_para_indent += standard_tab;
 	   break;
-   case 8: pending_nl = 1;
+   case 8: pending_nl = 1;			/* .RE */
            left_indent     -= standard_tab;
            old_para_indent -= standard_tab;
 	   break;
+   case 9: pending_nl = 1;			/* .HP */
+           next_line_indent = old_para_indent + standard_tab;
+	   left_indent = old_para_indent;
+	   break;
 
-   case 10: right_adjust=1; break;
-   case 11: right_adjust=0; break;
-   case 12: input_tab=atoi(word); if (input_tab<=0) input_tab=8; break;
+   case 10: right_adjust=1; break;		/* .ad */
+   case 11: right_adjust=0; break;		/* .na */
+   case 12: input_tab=atoi(word);		/* .ta */
+            if (input_tab<=0) input_tab=8;
+	    break;
    }
    return 0;
 }
@@ -597,20 +614,20 @@ int do_argvcmd(int cmd_id)
    ungetc(ch, ifd);
 
    switch (cmd_id + 10*(ch=='\n')) {
-   case 1:	/* Title and headers */
+   case 1:	/* .TH Title and headers */
       page_break();
       left_indent = old_para_indent = standard_tab;
       build_headers();
       break;
 
-   case 2:	/* Section */
+   case 2:	/* .SH Section */
       left_indent = 0;
       next_line_indent = old_para_indent = standard_tab;
       no_nl = 0; keep_nl = 1; pending_nl=1;
 
       do_fontwords(1,1,0);
       return 0;
-   case 3:	/* Subsection */
+   case 3:	/* .SS Subsection */
       left_indent = standard_tab/2;
       next_line_indent = old_para_indent = standard_tab;
       no_nl = 0; keep_nl = 1; pending_nl=1;
@@ -618,8 +635,8 @@ int do_argvcmd(int cmd_id)
       do_fontwords(1,1,0);
       break;
 
-   case 15:
-   case 5:	/* New para, indent except line 1 */
+   case 5:	/* .TP New para, indent except line 1 */
+   case 15:	/* .TP no argument */
       do_skipeol();
       next_line_indent = old_para_indent + standard_tab;
       left_indent = old_para_indent;
@@ -628,7 +645,7 @@ int do_argvcmd(int cmd_id)
       optional_keep = 1;
       break;
 
-   case 4:	/* New para, indent except argument 1 */
+   case 4:	/* .IP New para, indent except argument 1 */
       next_line_indent = old_para_indent + standard_tab;
       left_indent = old_para_indent;
       pending_nl=1;
@@ -638,9 +655,19 @@ int do_argvcmd(int cmd_id)
       do_skipeol();
       break;
 
-   case 14:
+   case 14:	/* .IP no argument */
       pending_nl = 1;
       left_indent = old_para_indent + standard_tab;
+      break;
+
+   case 6:	/* .ft {R,B,I,P} */
+      do_skipeol();
+      switch (word[0]) {
+      case 'B': old_font = cur_font; print_word("\\fB"); break;
+      case 'I': old_font = cur_font; print_word("\\fI"); break;
+      case 'R': old_font = cur_font; print_word("\\fR"); break;
+      case 'P': cur_font = old_font; print_word("\\fP"); break;
+      }
       break;
    }
 
@@ -749,10 +776,11 @@ void print_word(char *pword)
 	 if (*s == 'f')
 	 {
 	    if (s[1]) {
-	       static char fnt[] = " RBI";
+	       static char fnt[] = " RBIP";
 	       char * p = strchr(fnt, *++s);
 	       if (p == 0) cur_font = 0x100;
 	       else         cur_font = 0x100*(p-fnt);
+		   if (cur_font == 0x400) cur_font = sp_font;
 	    }
 	    continue;
 	 }
@@ -941,6 +969,8 @@ int main(int argc, char **argv)
    char * mansect = 0;
    char * manname = 0;
 
+   ifd = stdin;
+   ofd = stdout;
    for (ar=1; ar<argc; ar++) if (argv[ar][0] == '-') {
       char * p;
       for (p=argv[ar]+1; *p; p++) switch (*p) {
@@ -976,8 +1006,9 @@ int main(int argc, char **argv)
 
    /* ifd is now the file - display it */
    if (isatty(1)) {	/* If writing to a tty do it to a pager */
-      ofd = popen(getenv("PAGER"), "w");
-      if (ofd == 0) ofd = popen("more", "w");
+	  char *pager = getenv("PAGER");
+      ofd = pager? popen(pager, "w"): 0;
+      if (ofd == 0) ofd = popen(MORE, "w");
       if (ofd == 0) {
          ofd = stdout;
       } else {

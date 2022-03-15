@@ -527,7 +527,7 @@ void read_tables(void)
 /*		namelen = 14; RUBOUT */
 /*		dirsize = 16; RUBOUT */
 	} else {
-		die("bad magic number in super-block");
+		die("not a MINIX filesystem (perhaps DOS?)");
 	}
 	/*else if (MAGIC == MINIX_SUPER_MAGIC2) { RUBOUT
 		namelen = 30;
@@ -542,6 +542,13 @@ void read_tables(void)
 /*	inode_buffer = malloc(BLOCK_SIZE); RUBOUT
 	if (!inode_buffer)
 		die("Unable to allocate buffer for inodes"); RUBOUT */
+
+	/* check for filesystem too large since libc malloc fails improperly FIXME */
+	if (ZONES > 32767) {
+		fprintf(stderr, "Filesystem too large to check (%u zones, max 32767)\n", ZONES);
+		exit(8);
+	}
+
 	inode_count = malloc(INODES);
 	if (!inode_count)
 		die("Unable to allocate buffer for inode count");

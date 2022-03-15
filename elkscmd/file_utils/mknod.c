@@ -3,6 +3,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <stdlib.h>
+#include "futils.h"
 
 #ifndef makedev
 #define makedev(maj, min)  (((maj) << 8) | (min))
@@ -26,35 +27,28 @@ int main(int argc, char **argv)
 			filetype = S_IFCHR;
 			break;
 		default:
-			write(STDERR_FILENO,"mknod: usage error\n",19);
-			return 1;
+			goto usage;
 		}
-		major = (int)strtol(argv[3],NULL,0);
-		minor = (int)strtol(argv[4],NULL,0);
+		major = atoi(argv[3]);
+		minor = atoi(argv[4]);
 		
-		if ( errno != ERANGE )
+		if (errno != ERANGE)
 			if (mknod (argv[1], newmode | filetype, makedev(major, minor))) {
-				write(STDERR_FILENO,"mknod: cannot make device ",27);
-				write(STDERR_FILENO,argv[1],strlen(argv[1]));
-				write(STDERR_FILENO,"\n",1);
-				exit(1);
+				errstr(argv[1]);
+				errmsg(": cannot make device\n");
+				return 1;
 			}
 	} else if ((argc == 3) && (argv[2][0] == 'p')) {
-	
-/* The second line mith mkfifo is used in the GNU version but there
-   is no mkfifo call in elks libc yet */
-		if (mknod (argv[1],newmode | S_IFIFO, 0))
-/*		if (mkfifo (argv[1],newmode)) */
-		{
-			write(STDERR_FILENO,"mknod: cannot make fifo ",25);
-			write(STDERR_FILENO,argv[1],strlen(argv[1]));
-			write(STDERR_FILENO,"\n",1);
-			exit(1);
+		if (mknod (argv[1],newmode | S_IFIFO, 0)) {
+			errstr(argv[1]);
+			errmsg(": cannot make fifo\n");
+			return 1;
 		}
 
-	} else {
-	
-		write(STDERR_FILENO,"mknod: usage error\n",19);
-	}
+	} else goto usage;
 	return 0;
+
+usage:
+	errmsg("usage: mknod [bcup] device major minor\n");
+	return 1;
 }

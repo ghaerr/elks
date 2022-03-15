@@ -5,7 +5,6 @@ ascii \- the ASCII character set.
 The ASCII character set is as follows:
 .PP
 .nf
-.if t .ft C
 |000 nul|001 soh|002 stx|003 etx|004 eot|005 enq|006 ack|007 bel|
 |010 bs |011 ht |012 nl |013 vt |014 np |015 cr |016 so |017 si |
 |020 dle|021 dc1|022 dc2|023 dc3|024 dc4|025 nak|026 syn|027 etb|
@@ -17,7 +16,7 @@ The ASCII character set is as follows:
 |100  @ |101  A |102  B |103  C |104  D |105  E |106  F |107  G |
 |110  H |111  I |112  J |113  K |114  L |115  M |116  N |117  O |
 |120  P |121  Q |122  R |123  S |124  T |125  U |126  V |127  W |
-|130  X |131  Y |132  Z |133  [ |134  \e |135  ] |136  ^ |137  _ |
+|130  X |131  Y |132  Z |133  [ |134  \\ |135  ] |136  ^ |137  _ |
 |140  ` |141  a |142  b |143  c |144  d |145  e |146  f |147  g |
 |150  h |151  i |152  j |153  k |154  l |155  m |156  n |157  o |
 |160  p |161  q |162  r |163  s |164  t |165  u |166  v |167  w |
@@ -34,19 +33,16 @@ The ASCII character set is as follows:
 |40  @ |41  A |42  B |43  C |44  D |45  E |46  F |47  G |
 |48  H |49  I |4A  J |4B  K |4C  L |4D  M |4E  N |4F  O |
 |50  P |51  Q |52  R |53  S |54  T |55  U |56  V |57  W |
-|58  X |59  Y |5A  Z |5B  [ |5C  \e |5D  ] |5E  ^ |5F  _ |
+|58  X |59  Y |5A  Z |5B  [ |5C  \\ |5D  ] |5E  ^ |5F  _ |
 |60  ` |61  a |62  b |63  c |64  d |65  e |66  f |67  g |
 |68  h |69  i |6A  j |6B  k |6C  l |6D  m |6E  n |6F  o |
 |70  p |71  q |72  r |73  s |74  t |75  u |76  v |77  w |
 |78  x |79  y |7A  z |7B  { |7C  | |7D  } |7E  ~ |7F del|
 
-.if t .ft P
 .nf
-.bp
 These are what your terminal shows for the top 96 codes:
 .PP
 .nf
-.if t .ft C
 |240    |241  ¡ |242  ¢ |243  £ |244  ¤ |245  ¥ |246  ¦ |247  § |
 |250  ¨ |251  © |252  ª |253  « |254  ¬ |255  ­ |256  ® |257  ¯ |
 |260  ° |261  ± |262  ² |263  ³ |264  ´ |265  µ |266  ¶ |267  · |
@@ -72,5 +68,4 @@ These are what your terminal shows for the top 96 codes:
 |E8  è |E9  é |EA  ê |EB  ë |EC  ì |ED  í |EE  î |EF  ï |
 |F0  ð |F1  ñ |F2  ò |F3  ó |F4  ô |F5  õ |F6  ö |F7  ÷ |
 |F8  ø |F9  ù |FA  ú |FB  û |FC  ü |FD  ý |FE  þ |FF  ÿ |
-.if t .ft P
 .nf

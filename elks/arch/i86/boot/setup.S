@@ -812,7 +812,9 @@ novga:	mov	%al,14		// CGA 25 rows
 	call	arch_get_mem	// save base memory size
 	mov	%ax,mem_kbytes
 
+#ifdef CONFIG_BOOTOPTS
 	call	bootopts	// load /bootopts into DEF_OPTSEG (0050:0000)
+#endif
 	ret
 
 // Write AL to console, save all other registers
@@ -1035,7 +1037,8 @@ v_id3:	.byte 0,0,0,0
 #endif /* !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_8086)*/
 #endif /* CONFIG_ARCH_IBMPC*/
 
-#if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_PC98)
+
+#ifdef CONFIG_BOOTOPTS
 //
 // load /bootopts for FAT filesystem boot
 //
@@ -1233,7 +1236,7 @@ getchs:
 	call	hex2
 
 	ret
-#endif /* defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_PC98)
+#endif /* ifdef CONFIG_BOOTOPTS */
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Architecture specific routines for 8018X
@@ -1304,9 +1307,9 @@ arch_set_initseg:
    mov %ax,%ds
    call arch_get_mem		// save base memory for bootopts routine
    mov %ax,mem_kbytes
-
+#ifdef CONFIG_BOOTOPTS
    call bootopts		// attempting loading /bootopts config file
-
+#endif
    ret
 
 putc:

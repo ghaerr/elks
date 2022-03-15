@@ -39,6 +39,15 @@ struct icmp_echo_s {
 	__u16	seqnum;
 };
 
+struct icmp_dest_unreachable_s {
+	__u8	type;
+	__u8	code;
+	__u16	chksum;
+	__u16	unused;
+	__u16	nexthop_mtu;
+	unsigned char iphdr[];
+};
+
 int icmp_init(void);
 void icmp_process(struct iphdr_s *iph, unsigned char *packet);
 

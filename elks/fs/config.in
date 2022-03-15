@@ -15,7 +15,7 @@ mainmenu_option next_comment
 
 	bool 'FAT filesystem' CONFIG_FS_FAT 'n'
 	if [ "$CONFIG_FS_FAT" == "y" ]; then
-		bool 'Fake FAT /dev folder' CONFIG_FS_DEV 'y'
+		bool 'Fake FAT /dev folder' CONFIG_FS_DEV                 y
 	fi
 
 	comment 'Filesystem settings'

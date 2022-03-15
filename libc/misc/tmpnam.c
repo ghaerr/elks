@@ -6,9 +6,10 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <string.h>
+#include <paths.h>
 
 #ifndef P_tmpdir
-#define P_tmpdir "/tmp"
+#define P_tmpdir _PATH_TMP
 #endif 
 
 #ifndef L_tmpnam

@@ -3,10 +3,11 @@
 #include <dirent.h>
 #include <string.h>
 #include <unistd.h>
+#include <paths.h>
 
 char * ttyname (int fd)
 {
-   static char dev[] = "/dev";
+   static char dev[] = _PATH_DEV;
    struct stat st, dst;
    DIR  *fp;
    struct dirent *d;

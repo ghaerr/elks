@@ -5,7 +5,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <utime.h>
-
+#include "futils.h"
 
 int main(int argc, char **argv)
 {
@@ -14,7 +14,7 @@ int main(int argc, char **argv)
 	struct stat sbuf;
 
 	if (argc < 2) {
-		write(STDERR_FILENO, "usage: touch file1 [file2] [file3] ...\n", 39);
+		errmsg("usage: touch file [...]\n");
 		return 1;
 	}
 	if ((argv[1][0] == '-') && (argv[1][1] == 'c'))
@@ -25,8 +25,11 @@ int main(int argc, char **argv)
 			if (stat(argv[i], &sbuf)) {
 				if (!ncreate) {
 					int fd = creat(argv[i], 0666);
-					if (fd < 0)
-						perror("touch"), err = 1;
+					if (fd < 0) {
+						errstr(argv[i]);
+						errmsg(": cannot create file\n");
+						err = 1;
+					}
 					else close(fd);
 				}
 			} else

@@ -6,21 +6,16 @@
  */
 
 
-static void
-hit(buf, val)
-char * buf;
-int val;
+static void hit(char *buf, int val)
 {
    *buf = '0' + val%10;
 }
 
 void
-__asctime(buffer, ptm)
-register char * buffer;
-struct tm * ptm;
+__asctime(char *buffer, struct tm *ptm)
 {
-static char days[] = "SunMonTueWedThuFriSat";
-static char mons[] = "JanFebMarAprMayJunJulAugSepOctNovDec";
+   static char days[] = "SunMonTueWedThuFriSat";
+   static char mons[] = "JanFebMarAprMayJunJulAugSepOctNovDec";
    int year;
 
    /*              012345678901234567890123456 */
@@ -32,7 +27,9 @@ static char mons[] = "JanFebMarAprMayJunJulAugSepOctNovDec";
      memcpy(buffer+4, mons+3*(ptm->tm_mon), 3);
 
 
-   hit(buffer+ 8, ptm->tm_mday/10);
+   if (ptm->tm_mday < 10)
+      buffer[8] = ' ';
+   else hit(buffer+ 8, ptm->tm_mday/10);
    hit(buffer+ 9, ptm->tm_mday   );
    hit(buffer+11, ptm->tm_hour/10);
    hit(buffer+12, ptm->tm_hour   );

@@ -74,13 +74,3 @@ to support the expansion.  (Minix-vmd)
 .BR execve (2),
 .BR malloc (3),
 .BR end (3).
-.SH NOTES
-Minix-vmd rounds a small data segment limit up to 3 megabytes.
-.SH BUGS
-Setting the break may fail due to a temporary lack of
-virtual memory under Minix-vmd.  It is not possible to distinguish this
-from a failure caused by exceeding the maximum size of
-the data segment.
-
-.\"
-.\" $PchId: brk.2,v 1.2 2000/08/11 20:05:51 philip Exp $

@@ -20,11 +20,12 @@ OBJS = \
 	getpass.o \
 	getopt.o \
 	itoa.o \
+	ltoa.o \
 	ltostr.o \
 	mktemp.o \
 	popen.o \
 	putenv.o \
-	qsort.o \
+	qsort-bsd.o \
 	rand.o \
 	strtol.o \
 	system.o \

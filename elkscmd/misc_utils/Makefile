@@ -24,8 +24,8 @@ all: $(PRGS) $(PRGS_HOST)
 ed: ed.o
 	$(LD) $(LDFLAGS) -o ed ed.o $(LDLIBS)
 
-fdtest: fdtest.o
-	$(LD) $(LDFLAGS) -o fdtest fdtest.o $(KERNEL_LIBS) $(LDLIBS)
+fdtest: fdtest.o $(TINYPRINTF)
+	$(LD) $(LDFLAGS) -o fdtest fdtest.o $(TINYPRINTF) $(KERNEL_LIBS) $(LDLIBS)
 
 tar: tar.o
 	$(LD) $(LDFLAGS) -o tar tar.o $(LDLIBS)

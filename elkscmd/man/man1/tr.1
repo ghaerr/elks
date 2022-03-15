@@ -16,10 +16,10 @@ Delete all characters specified in \fIstring1\fR
 Squeeze all runs of characters in \fIstring1\fR to one character
 .SH EXAMPLES
 .TP 20
-.B tr \(fmA\-Z\(fm \(fma\-z\(fm <x >y
+.B tr 'A\-Z' 'a\-z' <x >y
 # Convert upper case to lower case
 .TP 20
-.B tr \-d \(fm0123456789\(fm <f1 >f2
+.B tr \-d '0123456789' <f1 >f2
 # Delete all digits from \fIf1\fR
 .SH DESCRIPTION
 .PP
@@ -38,7 +38,7 @@ not.  Here is what the example above would look like for a
 that needs the brackets:
 .PP
 .RS
-.B "tr \(fm[A\-Z]\(fm \(fm[a\-z]\(fm <x >y"
+.B "tr '[A\-Z]' '[a\-z]' <x >y"
 .RE
 .PP
 Use [ and ] if you want to be portable, because a
@@ -46,15 +46,16 @@ Use [ and ] if you want to be portable, because a
 that doesn't need them will still accept the syntax and mindlessly
 translate [ into [ and ] into ].
 .PP
-MINIX tr supports the following character classes: alnum, alpha, digit, lower,
+.B tr
+supports the following character classes: alnum, alpha, digit, lower,
 upper and xdigit. If any of these keywords is encountered between backets and 
 colons, it is replaced by respectively alphanumeric characters, alphabetic
 characters, decimal digits, lowercase letters, uppercase letters and 
 hexadecimal digits. The following are equivalent with the given examples:
 .TP 20
-.B tr \(fm[:upper:]\(fm \(fm[:lower:]\(fm <x >y
+.B tr '[:upper:]' '[:lower:]' <x >y
 # Convert upper case to lower case
 .TP 20
-.B tr \-d \(fm[:digit:]\(fm <f1 >f2
+.B tr \-d '[:digit:]' <f1 >f2
 # Delete all digits from \fIf1\fR
 

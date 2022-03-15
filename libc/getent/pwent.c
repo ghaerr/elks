@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <pwd.h>
 #include <fcntl.h>
+#include <paths.h>
 
 /*
  * setpwent(), endpwent(), and getpwent() are included in the same object
@@ -39,7 +40,7 @@ setpwent(void)
   if (pw_fd!=-1)
     close(pw_fd);
 
-  pw_fd=open("/etc/passwd", O_RDONLY);
+  pw_fd=open(_PATH_PASSWD, O_RDONLY);
 }
 
 void

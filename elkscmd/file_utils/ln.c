@@ -6,8 +6,6 @@
  * Most simple built-in commands are here.
  */
 
-#include "futils.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,6 +18,7 @@
 #include <grp.h>
 #include <utime.h>
 #include <errno.h>
+#include "futils.h"
 
 /*
  * Return 1 if a filename is a directory.
@@ -87,7 +86,8 @@ int main(int argc, char **argv)
 	dirflag = isadir(lastarg);
 
 	if ((argc > 3) && !dirflag) {
-		fprintf(stderr, "%s: not a directory\n", lastarg);
+		errstr(lastarg);
+		errmsg(": not a directory\n");
 		goto usage;
 	}
 
@@ -110,9 +110,8 @@ int main(int argc, char **argv)
 	return 0;
 
 usage:
-	fprintf(stderr, "usage: %s [-s] link_target link_name\n", argv[0]);
-	fprintf(stderr, "Hard links are made by default. The -s option creates symbolic links instead.\n");
-	fprintf(stderr, "Creating hard links to directories is not allowed and will return an error.\n");
+	errmsg("usage: ln [-s] link_target link_name\n");
+	errmsg("Hard links are made by default. The -s option creates symbolic links instead.\n");
+	errmsg("Creating hard links to directories is not allowed and will return an error.\n");
 	return 1;
 }
-

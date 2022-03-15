@@ -2,11 +2,7 @@
  * Copyright (c) 1993 by David I. Bell
  * Permission is granted to use, distribute, or modify this source,
  * provided that this copyright notice remains intact.
- *
- * Most simple built-in commands are here.
  */
-
-#include "futils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,6 +17,7 @@
 #include <utime.h>
 #include <errno.h>
 #include <dirent.h>
+#include "futils.h"
 
 #define BUF_SIZE 1024 
 
@@ -29,8 +26,7 @@
  * Return 1 if a filename is a directory.
  * Nonexistant files return 0.
  */
-int isadir(name)
-	char	*name;
+int isadir(char *name)
 {
 	struct	stat	statbuf;
 
@@ -90,7 +86,8 @@ int linkfiles(char *srcdir, char *destdir)
 
 		newsrc = buildname(srcdir, dp->d_name);
 		if (lstat(newsrc, &sbuf) >= 0 && (S_ISDIR(sbuf.st_mode) || S_ISLNK(sbuf.st_mode))) {
-			fprintf(stderr, "Can't move directory or symlink: %s\n", newsrc);
+			errstr(newsrc);
+			errmsg(": can't move directory or symlink\n");
 			closedir(dirp);
 			return 0;
 		}
@@ -126,10 +123,7 @@ int linkfiles(char *srcdir, char *destdir)
  * error message output.  (Failure is not indicted if the attributes cannot
  * be set.)
  */
-int copyfile(srcname, destname, setmodes)
-	char	*srcname;
-	char	*destname;
-	int	setmodes;
+int copyfile(char *srcname, char *destname, int setmodes)
 {
 	int		rfd;
 	int		wfd;
@@ -231,7 +225,8 @@ int main(int argc, char **argv)
 	dirflag = isadir(lastarg);
 
 	if ((argc > 3) && !dirflag) {
-		fprintf(stderr, "%s: not a directory\n", lastarg);
+		errstr(lastarg);
+		errmsg(": not a directory\n");
 		goto usage;
 	}
 
@@ -278,8 +273,13 @@ int main(int argc, char **argv)
 		if (rename(srcname, destname) >= 0)
 			continue;
 
-		/* handle broken kernel directory rename (issue #583)*/
-		if (errno == EPERM && access(destname, F_OK) < 0 && isadir(srcname)) {
+		if (errno == EPERM && access(destname, F_OK) < 0) {
+			/* handle FAT filesystem with no link function (used in rename) */
+			if (!isadir(srcname))
+				goto copy;
+
+			/* handle broken kernel directory rename (issue #583)*/
+			/*if (isadir(srcname)) {*/
 			char destdir[PATHLEN];
 
 			if (mkdir(destname, 0777 & ~umask(0))) {
@@ -301,11 +301,14 @@ int main(int argc, char **argv)
 			continue;
 		}
 
+		if (errno == EPERM && access(destname, F_OK) < 0 && !isadir(srcname))
+			goto copy;
+
 		if (errno != EXDEV) {
 			perror(destname);
 			continue;
 		}
-
+copy:
 		if (copyfile(srcname, destname, 1))
 			continue;
 
@@ -315,7 +318,7 @@ int main(int argc, char **argv)
 	return 0;
 
 usage:
-	fprintf(stderr, "usage: %s source_file dest_file\n", argv[0]);
-	fprintf(stderr, "       %s file1 [file2] ... dest_dir\n", argv[0]);
+	errmsg("usage: mv source_file dest_file\n");
+	errmsg("       mv file [...] dest_dir\n");
 	return 1;
 }

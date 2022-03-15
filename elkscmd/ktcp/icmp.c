@@ -11,13 +11,16 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 #include <stdio.h>
+#include <fcntl.h>
+#include <errno.h>
 #include <arpa/inet.h>
 #include "config.h"
 #include "ip.h"
 #include "tcp.h"
 #include "icmp.h"
+#include "tcp_cb.h"
+#include "tcpdev.h"
 #include "netconf.h"
 
 int icmp_init(void)
@@ -25,14 +28,21 @@ int icmp_init(void)
     return 0;
 }
 
-void icmp_process(struct iphdr_s *iph,unsigned char *packet)
+void icmp_process(struct iphdr_s *iph, unsigned char *packet)
 {
-    struct icmp_echo_s *ep = (struct icmp_echo_s *)packet;
+    struct icmp_echo_s *ep;
     struct addr_pair apair;
+
+    struct icmp_dest_unreachable_s *dp;
+    struct iphdr_s *dpip;
+    struct tcphdr_s *dptcp;
+    struct tcpcb_list_s *cbnode;
+
     int len;
 
     switch (packet[0]){
     case ICMP_TYPE_ECHO_REQ:
+	ep = (struct icmp_echo_s *)packet;
 	len = ntohs(iph->tot_len) - 4 * IP_HLEN(iph);
 	debug_ip("icmp: PING from %s (len %d id %u seqnum %u)\n",
 	    in_ntoa(iph->saddr), len, ntohs(ep->id), ntohs(ep->seqnum));
@@ -50,11 +60,26 @@ void icmp_process(struct iphdr_s *iph,unsigned char *packet)
 	netstats.icmpsndcnt++;
 	break;
    case ICMP_TYPE_DST_UNRCH:
+	dp = (struct icmp_dest_unreachable_s *)packet;
+	dpip = (struct iphdr_s *)dp->iphdr;
+	len = 4 * IP_HLEN(dpip);
+	dptcp = (struct tcphdr_s *)(dp->iphdr + len);
 	printf("icmp: destination unreachable code %d from %s\n",
-		ep->code, in_ntoa(iph->saddr));
+		dp->code, in_ntoa(iph->saddr));
+	debug_ip("icmp: src %s:%u ", in_ntoa(dpip->saddr), ntohs(dptcp->sport));
+	debug_ip("dst %s:%u\n", in_ntoa(dpip->daddr), ntohs(dptcp->dport));
+	cbnode = tcpcb_find(dpip->daddr, ntohs(dptcp->sport), ntohs(dptcp->dport));
+	if (cbnode) {
+	    struct tcpcb_s *cb = &cbnode->tcpcb;
+	    int err = (dp->code == 1)? -EHOSTUNREACH :
+		      (dp->code >= 9)? -ECONNREFUSED : -ENETUNREACH;
+
+	    notify_sock(cb->sock, TDT_CONNECT, err);
+	    tcpcb_remove_cb(cb);	/* deallocate */
+	} else debug_ip("icmp: Connection not found\n");
 	break;
     default:
-	debug_ip("icmp: unrecognized ICMP request %d\n", ep->type);
+	printf("icmp: unrecognized ICMP type %d\n", packet[0]);
 	break;
     }
 }

@@ -14,6 +14,8 @@
 #include <stdlib.h>
 #include <sys/mount.h>
 
+#define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
+
 static char *fs_typename[] = {
 	0, "minix", "msdos", "romfs"
 };
@@ -46,9 +48,9 @@ static char *dev_name(dev_t dev)
         for (i=0; i<sizeof(devices)/sizeof(devices[0])-1; i++) {
                 if (devices[i].num == (dev & 0xfff0)) {
                         strcpy(&name[NAMEOFF], devices[i].name);
-                        if (i < 3) {
-                                if (dev & 0x03) {
-                                        name[NAMEOFF+3] = '0' + (dev & 3);
+                        if (i < 4) {
+                                if (dev & 0x07) {
+                                        name[NAMEOFF+3] = '0' + (dev & 7);
                                         name[NAMEOFF+4] = 0;
                                 }
                         }
@@ -65,7 +67,7 @@ static int show_mount(dev_t dev)
 	if (ustatfs(dev, &statfs) < 0)
 		return -1;
 
-	printf("%-8s (%s) blocks %6lu free %6lu mount %s\n",
+	printf("%-9s (%s) blocks %6lu free %6lu mount %s\n",
 		dev_name(statfs.f_dev), fs_typename[statfs.f_type], statfs.f_blocks,
 		statfs.f_bfree, statfs.f_mntonname);
 	return 0;
@@ -82,7 +84,7 @@ static void show(void)
 
 static void usage(void)
 {
-	write(STDERR_FILENO, "Usage: mount [-a][-q][-t type] [-o ro|remount,rw] <device> <directory>\n", 71);
+	errmsg("usage: mount [-a][-q][-t type] [-o ro|remount,{rw|ro}] <device> <directory>\n");
 }
 
 int main(int argc, char **argv)
@@ -109,7 +111,7 @@ int main(int argc, char **argv)
 				break;
 			case 't':
 				if ((argc <= 0) || (**argv == '-')) {
-					write(STDERR_FILENO, "mount: missing file system type\n", 32);
+					errmsg("mount: missing file system type\n");
 					return 1;
 				}
 
@@ -125,7 +127,7 @@ int main(int argc, char **argv)
 
 			case 'o':
 				if ((argc <= 0) || (**argv == '-')) {
-					write(STDERR_FILENO, "mount: missing option string\n", 29);
+					errmsg("mount: missing option string\n");
 					return 1;
 				}
 
@@ -137,14 +139,14 @@ int main(int argc, char **argv)
 				else if (!strcmp(option, "remount,ro"))
 					flags |= MS_REMOUNT|MS_RDONLY;
 				else {
-					write(STDERR_FILENO, "mount: bad option string\n", 25);
+					errmsg("mount: bad option string\n");
 					return 1;
 				}
 				argc--;
 				break;
 
 			default:
-				write(STDERR_FILENO, "mount: unknown option\n", 22);
+				errmsg("mount: unknown option\n");
 				return 1;
 		}
 	}

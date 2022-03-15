@@ -3,87 +3,133 @@
 .\"
 .TH MAN 7
 .SH NAME
-man - nroff macro package for manual pages
+man - macros for use in manual pages
 .SH SYNOPSIS
-.B nroff \-man
-.IR file " ..."
+.B man
+.I file
+.I [section]
 .SH DESCRIPTION
-.de SP
-.if t .sp 0.4
-.if n .sp
-..
-These macros are used to lay out reference pages for manuals.
+These macros are used to lay out reference pages for manuals. The
+.BR man (1)
+program internally implements these macros, as
+.B nroff
+is not present.
 .PP
 Any text argument
 .I t
 may be zero to six words.  Quotes may be used to include blanks in a 'word'.
-.I Text
-can be empty, but unlike normal \s-2UNIX\s+2 macros, the next line is not used.
+.I T
+can be empty, in which case the next line is used.
 .PP
 A prevailing indent distance is remembered between successive
 indented paragraphs, and is reset to default value upon
 reaching a non-indented paragraph (i.e. at .SH or .SS).
-.SH FILES
-.TP 25n
-/usr/lib/tmac/tmac.an
-For standard MINIX 3 nroff.
-.TP
-/usr/lib/cawf/man.mac
-For cawf.
-.SH SEE ALSO
-.BR nroff (1),
-.BR man (1).
 .SH "REQUEST SUMMARY"
 .nf
-.ta +15n +9n
-Request	Cause	Explanation
-	Break? 
-
-\&.B t	no	Text t is bold. Quote to imbed blanks.
-\&.I t	no	Text t is italic. Quote to imbed blanks.
-\&.IP x	yes	Set prevailing indent to 5. Begin
-		indented paragraph with hanging tag
-		given by first argument.	Tag x is
-		always placed on a separate line.
-\&.LP	yes	Same as .PP.
-\&.PP	yes	Begin paragraph.	Set prevailing
-		indent to 5.
-\&.RE	yes	End of relative indent.	Set prevailing
-		indent to amount of starting .RS.
-\&.RS	yes	Start relative indent, move left margin
-		in distance 5.
-\&.SH t	yes	Subhead. Quote to imbed blanks.
-\&.SS t	yes	Subsection. Quote to imbed blanks. No
-		indent for t.
-\&.TH n s c v d	yes	Begin page named n of chapter s; c is
-		the chapter name; d is the date of the
-		most recent change; v is version number.
-		Sets prevailing indent and tabs to 5.
+Request	  Cause   Explanation
+          Break?
 .fi
+.sp
+.TP 20
+.BR ".TH n s c v d\ " yes
+Begin page named 
+.B n
+of chapter
+.BR s ;
+.B c
+is the chapter name;
+.B d
+is the date of the most recent change;
+.B v
+is version number.
+Sets prevailing indent and tabs to default.
+.TP 20
+.BR ".SH t       \ " yes
+Subhead. Quote to embed blanks.
+.TP 20
+.BR ".SS t       \ " yes
+Subsection. Quote to embed blanks. No indent for t.
+.TP 20
+.BR ".PP          \ " yes
+Begin paragraph.
+Set prevailing indent to default.
+.TP 20
+.BR ".HP x       \ " yes
+Begin paragraph with hanging indent.
+Set prevailing indent to
+.BR x .
+.TP 20
+.BR ".TP x       \ " yes
+Begin indented paragraph with hanging tag given by next line.
+Set prevailing indent to
+.BR x .
+.TP 20
+.BR ".IP t x   \ " yes
+Same as
+.B .TP t
+with tag
+.BR t .
+Often used to get an indented paragraph without a tag.
+Set prevailing indent to
+.BR x .
+.TP 20
+.BR ".RS          \ " yes
+Start relative indent, move left margin in distance 5.
+.TP 20
+.BR ".RE          \ " yes
+End of relative indent.
+Set prevailing indent to amount of starting .RS.
+.TP 20
+.BR ".nf          \ " yes
+Turn line fill off.
+.TP 20
+.BR ".fi          \ " yes
+Turn line fill on.
+.TP 20
+.BR ".na          \ " no
+Leave right margin unaligned.
+.TP 20
+.BR ".ad          \ " no
+Line up right margin.
+.TP 20
+.BR ".B t         \ " no
+Text t is bold. Quote to embed blanks.
+.TP 20
+.BR ".I t         \ " no
+Text t is italic. Quote to embed blanks.
+.TP 20
+.BR ".BI t       \ " no
+Text alternates bold followed by italic. Quote to embed blanks.
+.TP 20
+.BR ".BR t       \ " no
+Text alternates bold followed by roman. Quote to embed blanks.
+.TP 20
+.BR ".IR t       \ " no
+Text alternates italic followed by roman. Quote to embed blanks.
 .SH EXAMPLE
 The following illustrates some of the requests available
-with this macro package:
+using these macros:
 .RS
 .nf
-\&.\e" this is a comment
+\&.\\" this is a comment
 \&.TH DEMO 1
 \&.SH NAME
-demo \e- show how to use \e-man package
+demo \\- show how to use \e-man package
 \&.SH SYNOPSIS
 \&.B demo
 \&.RI [ options ]
 \&.IR file " ..."
 \&.SH DESCRIPTION
 This is a test for showing how to use the
-\&.BR nroff (1)
-man package. It shows how to use .TH, .SH, .PP, .B, .I, and .IP
+\&.BR man (1)
+command. It shows how to use .TH, .SH, .PP, .B, .I, and .IP
 commands.
 \&.PP
 This will be a new paragraph. You can also use normal
 \&.BR nroff (1)
 commands in the text.
-\&.SS Nroff Commands
-\&.IP '\ee"'
+\&.SS Man Commands
+\&.IP '\\"'
 This is the comment command.  \e" You won't see this.
 \&.IP nf
 No fill mode (the normal mode is fill mode where things
@@ -103,60 +149,53 @@ Now we should be at a new paragraph.
 .RE
 .PP
 Executing
-.B nroff \-man demo.man
+.B man ./demo.1
 results in the following output:  (Ignoring page headers and footers)
 .PP
 .RS
 .B NAME
 .RS
-demo \e- show how to use \e-man package
+demo \- show how to use \-man package
 .RE
-.SP
+.sp
 .B SYNOPSIS
 .RS
 .B demo
 .RI [ options ]
 .IR file " ..."
 .RE
-.SP
+.sp
 .B DESCRIPTION
 .RS
 This is a test for showing how to use the
-.BR nroff (1)
-man package. It shows how to use .TH, .SH, .PP, .B, .I, and .IP
+.BR man (1)
+command. It shows how to use .TH, .SH, .PP, .B, .I, and .IP
 commands.
-.SP
+.sp
 This will be a new paragraph. You can also use normal
-.BR nroff (1)
-commands in the text.
+.BR man (1)
+macros in the text.
 .RE
-.SP
-.ti +2n
-.B Nroff Commands
+.sp
+.B Man Commands
 .RS
 .RS
-.ta +5n
-.SP
-.ti -5n
-\&'\e"'	This is the comment command.
-.SP
-.ti -5n
+.sp
+\&'\\"'	This is the comment command.
+.sp
 nf	No fill mode (the normal mode is fill mode where things
 get justified right and left).
-.SP
-.ti -5n
+.sp
 fi	Re-enter fill mode.
-.SP
-.ti -5n
+.sp
 br	Break line here no matter what.
-.SP
-.ti -5n
+.sp
 sp	Vertical space (also causes a break to occur).
 .sp
 Note that to continue an indent and make a new paragraph (as
 is the case here), just put in a space (.sp).
 .RE
-.SP
+.sp
 Now we should be at a new paragraph.
 .RE
 .RE
@@ -224,8 +263,15 @@ A typical manual page for a command or function is laid out as follows:
           The list of options along with a description of how
           each affects the commands operation.
 
+     .SH EXAMPLES
+          Examples of how to use the command.
+
      .SH ENVIRONMENT
           Environment variables used.
+
+     .SH DIAGNOSTICS
+          A list of diagnostic messages and an explanation of
+          each.
 
      .SH FILES
           A list of files associated with the command or func-
@@ -237,42 +283,12 @@ A typical manual page for a command or function is laid out as follows:
           This section contains no troff(1) escapes or commands,
           and no macro requests.
 
-     .SH DIAGNOSTICS
-          A list of diagnostic messages and an explanation of
-          each.
-
-     .SH NOTES
-          Any additional notes such as installation-dependent
-          functionality.
-
      .SH BUGS
           A description of limitations, known defects, and possi-
           ble problems associated with the command or function.
 
      .SH AUTHOR
           The program's author and any pertinent release info.
-
-     .SH VERSION
-          The program's current version number and release date.
 .fi
-.SH BUGS
-Even though
-.BR cawf (1)
-has a better chance at formatting a random manual page then the standard
-MINIX 3 nroff, it has two annoying bugs in its macro set.  Both .PP and .IP 
-reset the indentation level to the level set by .SH.  This means that
-you can't use them in a piece of text indented by .RS.  For .IP this is
-troublesome, you can see why in the unformatted source of this text.  .PP
-can simply be replaced by .sp, or better yet, by .SP with the following
-macro defined somewhere in your text:
-.PP
-.RS
-.nf
-\&.de SP
-\&.if t .sp 0.4
-\&.if n .sp
-\&..
-.fi
-.RE
-.PP
-This will make .SP use 4/10 of a line if formatted by troff, just like .PP.
+.SH SEE ALSO
+.BR man (1).

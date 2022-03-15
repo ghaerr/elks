@@ -1,0 +1,95 @@
+.TH meminfo 1
+.SH NAME
+meminfo \- list system memory usage
+.SH SYNOPSIS
+.B meminfo
+.SH DESCRIPTION
+.B meminfo
+traverses the kernel local heap and displays a line for each in-use or free entry. 
+Since the local heap also manages the system memory outside of the kernel
+normally available for running application programs, the in-use or free
+segments of system memory outside the kernel
+(sometimes called external or main memory) will also be displayed.
+.PP
+For every line, the local heap address, type and size are displayed.
+For external memory, the external memory segment, type, size and access count
+are also displayed. Each of these are detailed below.
+.PP
+At the bottom of the listing, the total size and free size of the kernel
+local heap are displayed, along with the external (main) memory system total,
+used and free space in kilobytes (KB).
+.PP
+By inspecting the external (main) memory entries, one can determine
+how much contiguous memory is available for running additional programs,
+as well as the amount of memory used for kernel system buffers, and
+application program code and data segments.
+.PP
+Each line of the listing contains:
+.TP 10
+HEAP
+The kernel local heap address.
+.TP 10
+TYPE
+The type of memory allocated (or free).
+.TP 10
+SIZE
+The size in bytes of the allocated or free local memory.
+.PP
+For external/main memory (type SEG), the following additional items are displayed:
+.TP 10
+SEG
+The segment address of the external/main memory.
+.TP 10
+TYPE
+What the external/main memory segment is used for (or free).
+.TP 10
+SIZE
+The size in bytes of the allocated or free external/main memory segment.
+.TP 10
+CNT
+The access count (0 is free, >1 is shared).
+.SH "LOCAL HEAP TYPES"
+Local memory allocation types can be one of the following:
+.TP 10
+SEG
+External (main) memory segment.
+.TP 10
+TTY
+TTY input or output buffer.
+.TP 10
+INT
+Interrupt handler trampoline.
+.TP 10
+BUFH
+System buffer headers. The buffer data contents may be in extended (main) or XMS memory.
+.TP 10
+PIPE
+Pipe buffer.
+.TP 10
+free
+Unallocated memory in the local heap.
+.SH "EXTERNAL (MAIN) MEMORY TYPES"
+Main memory allocation types can be one of the following:
+.TP 10
+CSEG
+Running application code segment.
+.TP 10
+DSEG
+Running application data segment.
+.TP 10
+BUF
+System buffer data, 1024 bytes per buffer.
+.TP 10
+RDSK
+Ramdisk data.
+.TP 10
+free
+Unallocated main memory.
+.SH FILES
+.TP 10
+.B /dev/kmem
+.SH BUGS
+.B meminfo
+does not yet display XMS memory usage.
+.SH AUTHOR
+Greg Haerr (greg@censoft.com)

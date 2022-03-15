@@ -6,4 +6,5 @@ bin/objdump86
 bin/elf2elks
 bin/elks-compress
 bin/exomizer
+bin/eman
 elftoolchain-0.7.1

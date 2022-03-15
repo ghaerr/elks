@@ -11,6 +11,7 @@ include $(BASEDIR)/Make.rules
 ###############################################################################
 
 # note: grep doesn't read stdin, replaced with minix1/grep
+# removed: l
 PRGS = ln ls mkdir mkfifo mknod more mv rm rmdir sync touch \
 	cat chgrp chmod chown cmp cp dd df grep
 
@@ -31,8 +32,8 @@ chown: chown.o
 cmp: cmp.o
 	$(LD) $(LDFLAGS) -o cmp cmp.o $(LDLIBS)
 
-cp: cp.o
-	$(LD) $(LDFLAGS) -maout-heap=0xffff -o cp cp.o $(LDLIBS)
+cp: cp.o $(TINYPRINTF)
+	$(LD) $(LDFLAGS) -maout-heap=0xffff -o cp cp.o $(TINYPRINTF) $(LDLIBS)
 
 df: df.o
 	$(LD) $(LDFLAGS) -o df df.o $(LDLIBS)

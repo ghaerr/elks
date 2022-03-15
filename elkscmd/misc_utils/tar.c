@@ -3,14 +3,25 @@
  * Permission is granted to use, distribute, or modify this source,
  * provided that this copyright notice remains intact.
  *
- * The "tar" built-in command.
+ * The tar command.
  */
 
-#include "mutils.h"
-
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
+typedef	int	BOOL;
+
+#define	FALSE	((BOOL) 0)
+#define	TRUE	((BOOL) 1)
+
+#define	isoctal(ch)	(((ch) >= '0') && ((ch) <= '7'))
+
+static char	buf[2048];
 
 /*
  * Tar file format.
@@ -45,275 +56,14 @@ static	BOOL	warnedroot;
 static	BOOL	eof;
 static	BOOL	verbose;
 static	long	datacc;
-static	int	outfd;
+static	int     outfd;
 static	char	outname[NAMSIZ];
-
-static	void	doheader();
-static	void	dodata();
-static	void	createpath(char *name, mode_t mode);
-static	long	getoctal();
-
-int main(int argc, char **argv)
-{
-	char	*str;
-	char	*devname;
-	char	*cp;
-	int	devfd;
-	int	cc;
-	long	incc;
-	int	blocksize;
-	BOOL	listflag;
-	BOOL	fileflag;
-	char	buf[8192];
-
-	if (argc < 2) {
-		fprintf(stderr, "Too few arguments for tar\n");
-		return 1;
-	}
-
-	extracting = FALSE;
-	listflag = FALSE;
-	fileflag = FALSE;
-	verbose = FALSE;
-	badwrite = FALSE;
-	badheader = FALSE;
-	warnedroot = FALSE;
-	eof = FALSE;
-	inheader = TRUE;
-	incc = 0;
-	datacc = 0;
-	outfd = -1;
-	blocksize = sizeof(buf);
-
-	for (str = argv[1]; *str; str++) {
-		switch (*str) {
-			case 'f':	fileflag = TRUE; break;
-			case 't':	listflag = TRUE; break;
-			case 'x':	extracting = TRUE; break;
-			case 'v':	verbose = TRUE; break;
-
-			case 'c':
-			case 'a':
-				fprintf(stderr, "Writing is not supported\n");
-				return 1;
-
-			default:
-				fprintf(stderr, "Unknown tar flag\n");
-				return 1;
-		}
-	}
-
-	if (!fileflag) {
-		fprintf(stderr, "The 'f' flag must be specified\n");
-		return 1;
-	}
-
-	if (argc < 3) {
-		fprintf(stderr, "Missing input name\n");
-		return 1;
-	}
-	devname = argv[2];
-
-	if (extracting + listflag != 1) {
-		fprintf(stderr, "Exactly one of 'x' or 't' must be specified\n");
-		return 1;
-	}
-
-	devfd = open(devname, 0);
-	if (devfd < 0) {
-		perror(devname);
-		return 1;
-	}
-
-	while (TRUE) {
-		if ((incc == 0) && !eof) {
-			while (incc < blocksize) {
-				cc = read(devfd, &buf[incc], blocksize - incc);
-				if (cc < 0) {
-					perror(devname);
-					goto done;
-				}
-
-				if (cc == 0)
-					break;
-
-				incc += cc;
-			}
-			cp = buf;
-		}
-
-		if (inheader) {
-			if ((incc == 0) || eof)
-				goto done;
-
-			if (incc < TBLOCK) {
-				fprintf(stderr, "Short block for header\n");
-				goto done;
-			}
-
-			doheader((struct header *) cp);
-
-			cp += TBLOCK;
-			incc -= TBLOCK;
-
-			continue;
-		}
-
-		cc = incc;
-		if (cc > datacc)
-			cc = datacc;
-
-		dodata(cp, cc);
-
-		if (cc % TBLOCK)
-			cc += TBLOCK - (cc % TBLOCK);
-
-		cp += cc;
-		incc -= cc;
-	}
-
-done:
-	close(devfd);
-	return 0;
-}
-
-
-static void
-doheader(hp)
-	struct	header	*hp;
-{
-	mode_t mode;
-	int	uid;
-	int	gid;
-	long	size;
-	time_t	mtime;
-	char	*name;
-	int	cc;
-	BOOL	hardlink;
-	BOOL	softlink;
-
-	/*
-	 * If the block is completely empty, then this is the end of the
-	 * archive file.  If the name is null, then just skip this header.
-	 */
-	name = hp->name;
-	if (*name == '\0') {
-		for (cc = TBLOCK; cc > 0; cc--) {
-			if (*name++)
-				return;
-		}
-
-		eof = TRUE;
-		return;
-	}
-
-	mode = getoctal(hp->mode, sizeof(hp->mode));
-	uid = getoctal(hp->uid, sizeof(hp->uid));
-	gid = getoctal(hp->gid, sizeof(hp->gid));
-	size = getoctal(hp->size, sizeof(hp->size));
-	mtime = getoctal(hp->mtime, sizeof(hp->mtime));
-	//int chksum = getoctal(hp->chksum, sizeof(hp->chksum));
-
-	if ((uid < 0) || (gid < 0) || (size < 0)) {
-		if (!badheader)
-			fprintf(stderr, "Bad tar header, skipping\n");
-		badheader = TRUE;
-		return;
-	}
-
-	badheader = FALSE;
-	badwrite = FALSE;
-
-	hardlink = ((hp->linkflag == 1) || (hp->linkflag == '1'));
-	softlink = ((hp->linkflag == 2) || (hp->linkflag == '2'));
-
-	if (name[strlen(name) - 1] == '/')
-		mode |= S_IFDIR;
-	else if ((mode & S_IFMT) == 0)
-		mode |= S_IFREG;
-
-	if (*name == '/') {
-		while (*name == '/')
-			name++;
-
-		if (!warnedroot)
-			fprintf(stderr, "Absolute paths detected, removing leading slashes\n");
-		warnedroot = TRUE;
-	}
-
-	if (!extracting) {
-		if (verbose)
-                    {
-			printf("%s %3d/%-d %9ld %s %s ", modestring(mode),
-				uid, gid, size, timestring(mtime), name);
-                    }
-		else
-			printf("%s", name);
-
-		if (hardlink)
-			printf(" (link to \"%s\")", hp->linkname);
-		else if (softlink)
-			printf(" (symlink to \"%s\")", hp->linkname);
-		else if (S_ISREG(mode)) {
-			inheader = (size == 0);
-			datacc = size;
-		}
-
-		printf("\n");
-		return;
-	}
-
-	if (verbose)
-		printf("x %s\n", name);
-
-
-	if (hardlink) {
-		if (link(hp->linkname, name) < 0)
-			perror(name);
-		return;
-	}
-
-	if (softlink) {
-#ifdef	S_ISLNK
-		if (symlink(hp->linkname, name) < 0)
-			perror(name);
-#else
-		fprintf(stderr, "Cannot create symbolic links\n");
-#endif
-		return;
-	}
-
-	if (S_ISDIR(mode)) {
-		createpath(name, mode);
-		return;
-	}
-
-	createpath(name, 0777);
-
-	inheader = (size == 0);
-	datacc = size;
-
-	outfd = creat(name, mode);
-	if (outfd < 0) {
-		perror(name);
-		badwrite = TRUE;
-		return;
-	}
-
-	if (size == 0) {
-		close(outfd);
-		outfd = -1;
-	}
-}
-
-
 
 /*
  * Handle a data block of some specified size.
  */
 static void
-dodata(cp, count)
-	char	*cp;
+dodata(char *cp, int count)
 {
 	int	cc;
 
@@ -380,8 +130,7 @@ createpath(char *name, mode_t mode)
  * at the end.  Returns -1 on an illegal format.
  */
 static long
-getoctal(cp, len)
-	char	*cp;
+getoctal(char *cp, int len)
 {
 	long	val;
 
@@ -410,25 +159,11 @@ getoctal(cp, len)
 	return val;
 }
 
-#define BUF_SIZE 1024 
-
-typedef	struct	chunk	CHUNK;
-#define	CHUNKINITSIZE	4
-struct	chunk	{
-	CHUNK	*next;
-	char	data[CHUNKINITSIZE];	/* actually of varying length */
-};
-
-
-static	CHUNK *	chunklist;
-
-
-
 /*
  * Return the standard ls-like mode string from a file mode.
  * This is static and so is overwritten on each call.
  */
-char *
+static char *
 modestring(mode_t mode)
 {
 	static	char	buf[12];
@@ -496,7 +231,7 @@ modestring(mode_t mode)
  * The string is returned from a static buffer, and so is overwritten for
  * each call.
  */
-char *
+static char *
 timestring(time_t t)
 {
 	time_t		now;
@@ -516,4 +251,253 @@ timestring(time_t t)
 	}
 
 	return buf;
+}
+
+static void
+doheader(struct header *hp)
+{
+	mode_t mode;
+	int	uid;
+	int	gid;
+	long	size;
+	time_t	mtime;
+	char	*name;
+	int	cc;
+	BOOL	hardlink;
+	BOOL	softlink;
+
+	/*
+	 * If the block is completely empty, then this is the end of the
+	 * archive file.  If the name is null, then just skip this header.
+	 */
+	name = hp->name;
+	if (*name == '\0') {
+		for (cc = TBLOCK; cc > 0; cc--) {
+			if (*name++)
+				return;
+		}
+
+		eof = TRUE;
+		return;
+	}
+
+	mode = getoctal(hp->mode, sizeof(hp->mode));
+	uid = getoctal(hp->uid, sizeof(hp->uid));
+	gid = getoctal(hp->gid, sizeof(hp->gid));
+	size = getoctal(hp->size, sizeof(hp->size));
+	mtime = getoctal(hp->mtime, sizeof(hp->mtime));
+	//int chksum = getoctal(hp->chksum, sizeof(hp->chksum));
+
+	if ((uid < 0) || (gid < 0) || (size < 0)) {
+		if (!badheader)
+			fprintf(stderr, "Bad tar header, skipping\n");
+		badheader = TRUE;
+		return;
+	}
+
+	badheader = FALSE;
+	badwrite = FALSE;
+
+	hardlink = ((hp->linkflag == 1) || (hp->linkflag == '1'));
+	softlink = ((hp->linkflag == 2) || (hp->linkflag == '2'));
+
+	if (name[strlen(name) - 1] == '/')
+		mode |= S_IFDIR;
+	else if ((mode & S_IFMT) == 0)
+		mode |= S_IFREG;
+
+	if (*name == '/') {
+		while (*name == '/')
+			name++;
+
+		if (!warnedroot)
+			fprintf(stderr, "Absolute paths detected, removing leading slashes\n");
+		warnedroot = TRUE;
+	}
+
+	if (!extracting) {
+		if (verbose) {
+			printf("%s %3d/%-d %9ld %s %s ", modestring(mode),
+				uid, gid, size, timestring(mtime), name);
+		}
+		else
+			printf("%s", name);
+
+		if (hardlink)
+			printf(" (link to \"%s\")", hp->linkname);
+		else if (softlink)
+			printf(" (symlink to \"%s\")", hp->linkname);
+		else if (S_ISREG(mode)) {
+			inheader = (size == 0);
+			datacc = size;
+		}
+
+		printf("\n");
+		return;
+	}
+
+	if (verbose)
+		printf("x %s\n", name);
+
+
+	if (hardlink) {
+		if (link(hp->linkname, name) < 0)
+			perror(name);
+		return;
+	}
+
+	if (softlink) {
+#ifdef	S_ISLNK
+		if (symlink(hp->linkname, name) < 0)
+			perror(name);
+#else
+		fprintf(stderr, "Cannot create symbolic links\n");
+#endif
+		return;
+	}
+
+	if (S_ISDIR(mode)) {
+		createpath(name, mode);
+		return;
+	}
+
+	createpath(name, 0777);
+
+	inheader = (size == 0);
+	datacc = size;
+
+	outfd = creat(name, mode);
+	if (outfd < 0) {
+		perror(name);
+		badwrite = TRUE;
+		return;
+	}
+
+	if (size == 0) {
+		close(outfd);
+		outfd = -1;
+	}
+}
+
+int main(int argc, char **argv)
+{
+	char	*str;
+	char	*devname;
+	char	*cp;
+	int	devfd;
+	int	cc;
+	long	incc;
+	int	blocksize;
+	BOOL	listflag;
+	BOOL	fileflag;
+
+	if (argc < 2) {
+usage:
+		fprintf(stderr, "usage: tar {t|x|v|f} tarfile\n");
+		return 1;
+	}
+
+	extracting = FALSE;
+	listflag = FALSE;
+	fileflag = FALSE;
+	verbose = FALSE;
+	badwrite = FALSE;
+	badheader = FALSE;
+	warnedroot = FALSE;
+	eof = FALSE;
+	inheader = TRUE;
+	incc = 0;
+	datacc = 0;
+	outfd = -1;
+	blocksize = sizeof(buf);
+
+	for (str = argv[1]; *str; str++) {
+		switch (*str) {
+			case 'f':	fileflag = TRUE; break;
+			case 't':	listflag = TRUE; break;
+			case 'x':	extracting = TRUE; break;
+			case 'v':	verbose = TRUE; break;
+
+			case 'c':
+			case 'a':
+				fprintf(stderr, "Writing is not supported\n");
+				return 1;
+
+			default:
+				goto usage;
+		}
+	}
+
+	if (!fileflag) {
+		fprintf(stderr, "The 'f' flag must be specified\n");
+		return 1;
+	}
+
+	if (argc < 3)
+		goto usage;
+
+	devname = argv[2];
+
+	if (extracting + listflag != 1) {
+		fprintf(stderr, "Exactly one of 'x' or 't' must be specified\n");
+		return 1;
+	}
+
+	devfd = open(devname, 0);
+	if (devfd < 0) {
+		perror(devname);
+		return 1;
+	}
+
+	cp = buf;
+	while (TRUE) {
+		if ((incc == 0) && !eof) {
+			while (incc < blocksize) {
+				cc = read(devfd, &buf[incc], blocksize - incc);
+				if (cc < 0) {
+					perror(devname);
+					goto done;
+				}
+
+				if (cc == 0)
+					break;
+
+				incc += cc;
+			}
+			cp = buf;
+		}
+
+		if (inheader) {
+			if ((incc == 0) || eof)
+				goto done;
+
+			if (incc < TBLOCK) {
+				fprintf(stderr, "Short block for header\n");
+				goto done;
+			}
+
+			doheader((struct header *) cp);
+
+			cp += TBLOCK;
+			incc -= TBLOCK;
+
+			continue;
+		}
+
+		cc = incc;
+		if (cc > datacc)
+			cc = datacc;
+
+		dodata(cp, cc);
+
+		if (cc % TBLOCK)
+			cc += TBLOCK - (cc % TBLOCK);
+
+		cp += cc;
+		incc -= cc;
+	}
+
+done:
+	close(devfd);
+	return 0;
 }

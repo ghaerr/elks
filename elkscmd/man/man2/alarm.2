@@ -18,8 +18,7 @@ unsigned int alarm(unsigned int \fIseconds\fP)
 .fi
 .SH DESCRIPTION
 .B Alarm
-causes signal SIGALRM, see
-.BR sigaction (2),
+causes signal SIGALRM
 to be sent to the invoking process
 in a number of seconds given by the argument.
 Unless caught or ignored, the signal terminates the process.
@@ -33,6 +32,4 @@ caught may be delayed an arbitrary amount.
 The return value is the amount of time previously remaining in the alarm clock.
 .SH "SEE ALSO"
 .BR pause (2),
-.BR sigsuspend (2),
-.BR sigaction (2),
 .BR sleep (3).
