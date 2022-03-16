@@ -49,7 +49,7 @@ struct syscall_info elks_table[] = {
     { "fork",		packinfo(0, P_NONE,   P_NONE,    P_NONE   ) },
     { "read",		packinfo(3, P_USHORT, P_PDATA,   P_USHORT ) },
     { "write",		packinfo(3, P_USHORT, P_PDATA,   P_USHORT ) },
-    { "open",		packinfo(3, P_PSTR,   P_SSHORT,  P_SSHORT ) },
+    { "open",		packinfo(3, P_PSTR,   P_USHORT,  P_USHORT ) },
     { "close",		packinfo(1, P_USHORT, P_NONE,    P_NONE   ) },
     { "wait4",		packinfo(3, P_SSHORT, P_PSSHORT, P_SSHORT ) },
     { "creat",		packinfo(9, P_NONE,   P_NONE,    P_NONE   ) },
