@@ -228,7 +228,8 @@ static int msdos_readdir(struct inode *dir, struct file *filp, char *dirbuf,
 	ino_t ino;
 	off_t dirpos;
 	int res, namelen;
-	char name[14];
+	/* static not reentrant: conserve stack usage*/
+	static char name[14];
 
 	if (!dir || !S_ISDIR(dir->i_mode)) return -EBADF;
 	if (dir->i_ino == MSDOS_ROOT_INO) {

@@ -49,7 +49,7 @@ struct syscall_info elks_table[] = {
     { "fork",		packinfo(0, P_NONE,   P_NONE,    P_NONE   ) },
     { "read",		packinfo(3, P_USHORT, P_PDATA,   P_USHORT ) },
     { "write",		packinfo(3, P_USHORT, P_PDATA,   P_USHORT ) },
-    { "open",		packinfo(3, P_PSTR,   P_SSHORT,  P_SSHORT ) },
+    { "open",		packinfo(3, P_PSTR,   P_USHORT,  P_USHORT ) },
     { "close",		packinfo(1, P_USHORT, P_NONE,    P_NONE   ) },
     { "wait4",		packinfo(3, P_SSHORT, P_PSSHORT, P_SSHORT ) },
     { "creat",		packinfo(9, P_NONE,   P_NONE,    P_NONE   ) },
@@ -71,7 +71,7 @@ struct syscall_info elks_table[] = {
     { "getuid",		packinfo(0, P_NONE,   P_NONE,    P_NONE   ) },
     { "stime",		packinfo(9, P_NONE,   P_NONE,    P_NONE   ) },
     { "ptrace",		packinfo(9, P_NONE,   P_NONE,    P_NONE   ) },
-    { "alarm",		packinfo(9, P_NONE,   P_NONE,    P_NONE   ) },
+    { "alarm",		packinfo(1, P_USHORT, P_NONE,    P_NONE   ) },
     { "fstat",		packinfo(2, P_USHORT, P_PDATA,   P_NONE   ) },
     { "pause",		packinfo(9, P_NONE,   P_NONE,    P_NONE   ) },
     { "utime",		packinfo(2, P_PSTR,   P_PDATA,   P_NONE   ) },
@@ -114,7 +114,7 @@ struct syscall_info elks_table[] = {
     { "dlload",		packinfo(2, P_DATA,   P_DATA,    P_NONE   ) },
     { "setsid",		packinfo(0, P_NONE,   P_NONE,    P_NONE   ) },
     { "sbrk",		packinfo(1, P_SSHORT, P_NONE,    P_NONE   ) },
-    { "",		packinfo(9, P_NONE,   P_NONE,    P_NONE   ) },
+    { "ustatfs",	packinfo(2, P_USHORT, P_PDATA,   P_NONE   ) },
     { "",		packinfo(9, P_NONE,   P_NONE,    P_NONE   ) },
     { "",		packinfo(9, P_NONE,   P_NONE,    P_NONE   ) },
     { "",		packinfo(9, P_NONE,   P_NONE,    P_NONE   ) },
@@ -248,8 +248,8 @@ struct syscall_info elks_table[] = {
     { "listen",		packinfo(2, P_SSHORT, P_SSHORT,  P_NONE   ) },
     { "accept",		packinfo(3, P_SSHORT, P_DATA,    P_PUSHORT) },
     { "connect",	packinfo(3, P_SSHORT, P_PDATA,   P_SSHORT ) },
-    { "setsockopt",	packinfo(5, P_SSHORT, P_SSHORT,  P_SSHORT, P_PDATA, P_PUSHORT ) },
-    { "getsocknam",	packinfo(4, P_SSHORT, P_DATA,    P_PUSHORT, P_SSHORT) },
+    { "setsockopt",	packinfo(5, P_SSHORT, P_SSHORT,  P_SSHORT ) }, /* +2 args*/
+    { "getsocknam",	packinfo(4, P_SSHORT, P_DATA,    P_PUSHORT) }, /* +1 arg*/
 };
 
 #endif
