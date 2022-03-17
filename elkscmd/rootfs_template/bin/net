@@ -1,6 +1,6 @@
 # Start/stop ELKS networking
 #
-# Usage: net [start|stop|show] [eth|slip|cslip] [baud] [device]
+# Usage: net [start|stop|restart|show] [eth|slip|cslip] [baud] [device]
 #
 # Examples:
 #	net start eth			start ethernet networking
@@ -83,6 +83,9 @@ start)
 	if test "$4" != ""; then device=$4; fi
 	start_network ;;
 stop) stop_network ;;
+restart)
+	stop_network
+	start_network ;;
 show)
 	echo -n ip $localip gateway $gateway mask $netmask $link
 	if test "$link" != "eth"; then echo "" $baud $device; else echo; fi ;;

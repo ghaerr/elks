@@ -180,4 +180,4 @@ hd32mbr-fat:
 
 clean:
 	-rm -rf $(DESTDIR)
-	-rm -f *.img
+	-rm -f *.img *.bin
