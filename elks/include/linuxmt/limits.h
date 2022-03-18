@@ -3,7 +3,11 @@
 
 #define MAX_TASKS	16	/* Max # processes */
 
+#ifdef CONFIG_ARCH_PC98
+#define KSTACK_BYTES	740	/* Size of kernel stacks */
+#else
 #define KSTACK_BYTES	640	/* Size of kernel stacks */
+#endif
 
 #define POLL_MAX	6	/* Maximum number of polled queues per process */
 
