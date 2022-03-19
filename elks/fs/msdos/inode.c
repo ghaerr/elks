@@ -156,7 +156,7 @@ static struct super_block *msdos_read_super(struct super_block *s, char *data,
 	sb->dir_start= b->reserved + b->fats*sb->fat_length;
 	sb->dir_entries = *((unsigned short *) b->dir_entries);
 	sb->data_start = sb->dir_start +
-		((sb-> dir_entries << MSDOS_DIR_BITS) >> SECTOR_BITS_SB(s));
+		(sb-> dir_entries >> (SECTOR_BITS_SB(s) - MSDOS_DIR_BITS));
 	total_sectors = *((unsigned short *) b->sectors)?
 		*((unsigned short *) b->sectors) : b->total_sect;
 	data_sectors = total_sectors - sb->data_start;
