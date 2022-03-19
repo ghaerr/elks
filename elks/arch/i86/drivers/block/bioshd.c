@@ -98,6 +98,7 @@ static struct biosparms bdt;
 #define BD_DX bdt.dx
 #define BD_SI bdt.si
 #define BD_DI bdt.di
+#define BD_BP bdt.bp
 #define BD_ES bdt.es
 #define BD_FL bdt.fl
 
@@ -168,11 +169,31 @@ static int bios_disk_rw(unsigned cmd, unsigned num_sectors, unsigned drive,
 	unsigned cylinder, unsigned head, unsigned sector, unsigned seg, unsigned offset)
 {
 #ifdef CONFIG_ARCH_PC98
-	BD_AX = cmd | num_sectors;
-	BD_CX = (unsigned int) ((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
-	BD_DX = (head << 8) | drive;
+    struct drive_infot *drivep;
+    if (drive < 0x80) {
+	drivep = &drive_info[DRIVE_FD0 + drive];
+#if defined(CONFIG_IMG_FD1232)
+	BD_AX = cmd | 0x90 | drive;
+#elif defined(CONFIG_IMG_FD1440)
+	BD_AX = cmd | 0x30 | drive;
+#endif
+	if (drivep->sector_size == 1024) {
+	    BD_CX = (3 << 8) | cylinder;
+	}
+	else {
+	    BD_CX = (2 << 8) | cylinder;
+	}
+	BD_DX = (head << 8) | sector;
+    }
+    else {
+	drivep = &drive_info[0x0F & drive];
+	BD_AX = cmd | 0xA0 | (0x0F & drive);
+	BD_CX = cylinder;
+	BD_DX = (head << 8) | (sector - 1);
+    }
 	BD_ES = seg;
-	BD_BX = offset;
+	BD_BP = offset;
+	BD_BX = (unsigned int) (num_sectors * drivep->sector_size);
 #else
 	BD_AX = cmd | num_sectors;
 	BD_CX = (unsigned int) ((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
