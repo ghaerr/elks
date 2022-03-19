@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: setup
-        run: 'sudo apt install bison flex texinfo libncurses5-dev libelf-dev'
+        run: 'sudo apt install bison flex texinfo libncurses5-dev libelf-dev mtools ncompress'
 
       - name: checkout
         uses: actions/checkout@v2
@@ -40,10 +40,94 @@ jobs:
         run: tools/build.sh
 
       - name: build
-        run: ./build.sh auto
+        run: ./build.sh auto allimages
 
       - name: upload
         uses: actions/upload-artifact@v1
         with:
           name: fd1440.img
           path: image/fd1440.img
+
+      - name: upload2
+        uses: actions/upload-artifact@v1
+        with:
+          name: fd360-minix.img
+          path: image/fd360-minix.img
+
+      - name: upload3
+        uses: actions/upload-artifact@v1
+        with:
+          name: fd720-minix.img
+          path: image/fd720-minix.img
+
+      - name: upload4
+        uses: actions/upload-artifact@v1
+        with:
+          name: fd1200-minix.img
+          path: image/fd1200-minix.img
+
+      - name: upload5
+        uses: actions/upload-artifact@v1
+        with:
+          name: fd1440-minix.img
+          path: image/fd1440-minix.img
+
+      - name: upload6
+        uses: actions/upload-artifact@v1
+        with:
+          name: fd2880-minix.img
+          path: image/fd2880-minix.img
+
+      - name: upload7
+        uses: actions/upload-artifact@v1
+        with:
+          name: hd32-minix.img
+          path: image/hd32-minix.img
+
+      - name: upload8
+        uses: actions/upload-artifact@v1
+        with:
+          name: hd32mbr-minix.img
+          path: image/hd32mbr-minix.img
+
+      - name: upload9
+        uses: actions/upload-artifact@v1
+        with:
+          name: fd360-fat.img
+          path: image/fd360-fat.img
+
+      - name: upload10
+        uses: actions/upload-artifact@v1
+        with:
+          name: fd720-fat.img
+          path: image/fd720-fat.img
+
+      - name: upload11
+        uses: actions/upload-artifact@v1
+        with:
+          name: fd1200-fat.img
+          path: image/fd1200-fat.img
+
+      - name: upload12
+        uses: actions/upload-artifact@v1
+        with:
+          name: fd1440-fat.img
+          path: image/fd1440-fat.img
+
+      - name: upload13
+        uses: actions/upload-artifact@v1
+        with:
+          name: fd2880-fat.img
+          path: image/fd2880-fat.img
+
+      - name: upload14
+        uses: actions/upload-artifact@v1
+        with:
+          name: hd32-fat.img
+          path: image/hd32-fat.img
+
+      - name: upload15
+        uses: actions/upload-artifact@v1
+        with:
+          name: hd32mbr-fat.img
+          path: image/hd32mbr-fat.img

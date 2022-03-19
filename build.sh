@@ -58,6 +58,15 @@ if [ "$1" != "auto" ]; then
 echo "Building all..."
 make -j1 all || clean_exit 5
 
+# Possibly build all images
+
+if [ "$2" = "allimages" ]; then
+	echo "Building all images..."
+	cd image
+	make -j1 images || clean_exit 6
+	cd ..
+fi
+
 # Success
 
 echo "Target image is in 'image' folder."

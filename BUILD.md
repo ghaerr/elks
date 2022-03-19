@@ -12,7 +12,7 @@ To build ELKS, you need a GNU development environment, including:
 ## Quickstart
 
 A script is provided to automate the whole build process
-(cross toool chain, configuration, kernel, user land and target image),
+(cross tool chain, configuration, kernel, user land and target image),
 and make it easier for ELKS newbies:
 
 `./build.sh`
@@ -32,7 +32,7 @@ If you want to clean everything up afterwards (except the cross tool chain):
 
 2- Build the cross tool chain, mainly based on a recent GCC-IA16
 (DEV86 including BCC was used for previous versions, but has been
-dropped because it was obsolete and no more maintained):
+dropped because it was obsolete and no longer maintained):
 
 `tools/build.sh`
 
