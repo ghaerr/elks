@@ -17,8 +17,8 @@ LDFLAGS += -maout-heap=1024 -maout-stack=1024
 
 all: $(PRG)
 
-$(PRG): httpd.o
-	$(LD) $(LDFLAGS) -o $(PRG) httpd.o $(LDLIBS)
+$(PRG): httpd.o $(TINYPRINTF)
+	$(LD) $(LDFLAGS) -o $(PRG) httpd.o $(TINYPRINTF) $(LDLIBS)
 
 install: $(PRG)
 	$(INSTALL) $(PRG) $(DESTDIR)/bin

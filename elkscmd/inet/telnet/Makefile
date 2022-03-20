@@ -17,8 +17,8 @@ OBJS = $(SRCS:.c=.o)
 
 all:	telnet
 
-telnet:	$(OBJS)
-	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
+telnet:	$(OBJS) $(TINYPRINTF)
+	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(TINYPRINTF) $(LDLIBS)
 
 install: telnet
 	$(INSTALL) telnet $(DESTDIR)/bin

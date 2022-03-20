@@ -8,7 +8,7 @@
 #include <fcntl.h>
 
 static 	int	errcode;
-static	int	usage(char *);
+static	int	usage(void);
 static	void	rm();
 static 	int	yes();
 static	int 	dotname();
@@ -19,7 +19,7 @@ main(int argc, char **argv) {
 	char *arg;
 
 	if (argc < 2)
-		return(usage(argv[0]));
+		return usage();
 	errcode = 0;
 
         while(argc>1 && argv[1][0]=='-') {
@@ -43,7 +43,7 @@ main(int argc, char **argv) {
                                 recurse++;
                                 break;
                         default:
-                                return(usage(*argv));
+                                return usage();
                         }
         }
         while(--argc > 0) {
@@ -56,9 +56,10 @@ main(int argc, char **argv) {
         return(errcode);
 }
 
-int usage(char * a) {
-	fprintf(stderr, "usage: %s [-rfi] file1 [file2] ...\n", a);
-	return(1);
+int usage(void)
+{
+	fprintf(stderr, "usage: rm [-rfi] file1 [file2] ...\n");
+	return 1;
 }
 
 void

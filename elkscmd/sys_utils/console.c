@@ -8,13 +8,15 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 
+#define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
+
 int main(int argc, char **argv)
 {
 	int fd;
 	struct stat statbuf;
 
 	if (argc != 2) {
-		printf("Usage: console </dev/ttyXX>\n");
+		errmsg("usage: console </dev/ttyXX>\n");
 		return 1;
 	}
 
