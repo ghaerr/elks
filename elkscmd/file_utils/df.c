@@ -39,7 +39,7 @@ int istty;	/* isatty(1) */
 
 void usage(void)
 {
-	fprintf(stderr, "Usage: df [-ikP] [device]...\n");
+	fprintf(stderr, "usage: df [-ikP] [device_or_mount_point]\n");
 	exit(1);
 }
 
@@ -119,7 +119,7 @@ int df(char *device)
   lseek(fd, (off_t) BLOCK_SIZE * 2L, SEEK_SET);	/* skip rest of super block */
   sp = &super;
   if (sp->s_magic != MINIX_SUPER_MAGIC && sp->s_magic != MINIX_SUPER_MAGIC2) {
-	fprintf(stderr, "df: %s: Not a valid file system\n", device);
+	fprintf(stderr, "df: %s: Not a MINIX file system\n", device);
 	close(fd);
 	return(1);
   }

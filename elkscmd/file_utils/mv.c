@@ -318,7 +318,6 @@ copy:
 	return 0;
 
 usage:
-	errmsg("usage: mv source_file dest_file\n");
-	errmsg("       mv file [...] dest_dir\n");
+	errmsg("usage: mv source [...] target_file_or_directory\n");
 	return 1;
 }

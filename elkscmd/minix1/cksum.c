@@ -130,7 +130,7 @@ static void crc(int fd, char *name)
   if (name)
 	printf(" %s\n", name);
   else
-	putchar('\n');
+	printf("\n");
 }
 
 /* Main module. No options switches allowed, none parsed. */
