@@ -19,11 +19,10 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <utmp.h>
 
-void main(argc, argv)
-int argc;
-char ** argv;
+int main(int argc, char **argv)
 {
     register struct utmp * entry;
     char * timestr;
@@ -39,5 +38,5 @@ char ** argv;
 			timestr,
 			entry->ut_host);
 	}
-    exit(0);
+    return 0;
 }
