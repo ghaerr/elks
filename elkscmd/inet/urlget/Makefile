@@ -17,8 +17,8 @@ OBJS = $(SRCS:.c=.o)
 
 all:	urlget
 
-urlget:	$(OBJS)
-	$(LD) $(LDFLAGS) -o urlget $(OBJS) $(LDLIBS)
+urlget:	$(OBJS) $(TINYPRINTF)
+	$(LD) $(LDFLAGS) -o urlget $(OBJS) $(TINYPRINTF) $(LDLIBS)
 
 install: urlget
 	$(INSTALL) urlget $(DESTDIR)/bin

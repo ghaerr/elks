@@ -3,13 +3,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
-#define errstr(str) write(STDERR_FILENO, str, strlen(str))
-
 int
-main(argc,argv)
-int argc;
-char ** argv;
+main(int argc, char **argv)
 {
 	char *envpath;
 	char *path, *cp;
@@ -18,7 +13,7 @@ char ** argv;
 	int quit, found;
 
 	if (argc < 2) {
-		errmsg("Usage: which cmd [...]\n");
+		printf("Usage: which cmd [...]\n");
 		return 1;
 	}
 	if ((envpath = getenv("PATH")) == 0)

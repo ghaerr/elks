@@ -21,7 +21,7 @@
  *****************************************************************/
 
 #include <string.h>
-#include <stdio.h>
+#include <unistd.h>
 
 char *glyphs[] = {
 	  "         @@@  @@   @@  @ @   @@@@@          @@     @@@  ",
@@ -143,9 +143,10 @@ char *argv[];
 			if (line[b] != ' ') break;
 			line[b] = '\0';
 		}
-		printf("%s\n", line);
+		write(STDOUT_FILENO, line, strlen(line));
+		write(STDOUT_FILENO, "\n", 1);
 	}
-	printf("\n");
+	write(STDOUT_FILENO, "\n", 1);
   }
   return(0);
 }

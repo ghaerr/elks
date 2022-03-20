@@ -18,14 +18,14 @@ PRGS = file head sed sort tail tee cal diff find
 # Rules
 #
 
-cal: cal.o
-	$(LD) $(LDFLAGS) -o cal cal.o $(LDLIBS)
+cal: cal.o $(TINYPRINTF)
+	$(LD) $(LDFLAGS) -o cal cal.o $(TINYPRINTF) $(LDLIBS)
 
 diff: diff.o
 	$(LD) $(LDFLAGS) -o diff diff.o $(LDLIBS)
 
-file: file.o
-	$(LD) $(LDFLAGS) -o file file.o $(LDLIBS)
+file: file.o $(TINYPRINTF)
+	$(LD) $(LDFLAGS) -o file file.o $(TINYPRINTF) $(LDLIBS)
 
 find: find.o
 	$(LD) $(LDFLAGS) -o find find.o $(LDLIBS)

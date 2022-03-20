@@ -51,8 +51,8 @@ login: login.o
 kill: kill.o
 	$(LD) $(LDFLAGS) -o kill kill.o $(LDLIBS)
 
-mount: mount.o
-	$(LD) $(LDFLAGS) -o mount mount.o $(LDLIBS)
+mount: mount.o $(TINYPRINTF)
+	$(LD) $(LDFLAGS) -o mount mount.o $(TINYPRINTF) $(LDLIBS)
 
 umount: umount.o
 	$(LD) $(LDFLAGS) -o umount umount.o $(LDLIBS)
@@ -66,11 +66,11 @@ reboot: reboot.o
 shutdown: shutdown.o
 	$(LD) $(LDFLAGS) -o shutdown shutdown.o $(LDLIBS)
 
-ps: ps.o
-	$(LD) $(LDFLAGS) -maout-heap=1024 -maout-stack=2048 -o ps ps.o $(LDLIBS)
+ps: ps.o $(TINYPRINTF)
+	$(LD) $(LDFLAGS) -maout-heap=1024 -maout-stack=2048 -o ps ps.o $(TINYPRINTF) $(LDLIBS)
 
-meminfo: meminfo.o
-	$(LD) $(LDFLAGS) -maout-heap=1 -maout-stack=512 -o meminfo meminfo.o $(LDLIBS)
+meminfo: meminfo.o $(TINYPRINTF)
+	$(LD) $(LDFLAGS) -maout-heap=1 -maout-stack=512 -o meminfo meminfo.o $(TINYPRINTF) $(LDLIBS)
 
 who: who.o
 	$(LD) $(LDFLAGS) -o who who.o $(LDLIBS)
@@ -90,8 +90,8 @@ man: man.o
 poweroff: poweroff.o
 	$(LD) $(LDFLAGS) -o poweroff poweroff.o $(LDLIBS)
 
-chmem: chmem.o
-	$(LD) $(LDFLAGS) -o chmem chmem.o $(LDLIBS)
+chmem: chmem.o $(TINYPRINTF)
+	$(LD) $(LDFLAGS) -o chmem chmem.o $(TINYPRINTF) $(LDLIBS)
 
 mouse: mouse.o $(TINYPRINTF)
 	$(LD) $(LDFLAGS) -o mouse mouse.o $(TINYPRINTF) $(LDLIBS)

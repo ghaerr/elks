@@ -39,7 +39,6 @@ static struct param params[] = {
 	{ NULL,		PAR_NONE }
 };
 
-
 /* Fixed buffer */
 static char localbuf[BUFSIZ];		/* use disk block size for efficiency*/
 
@@ -310,11 +309,6 @@ cleanup2:
 	return retval;
 
 usage:
-	errmsg("usage: dd if=<infile> of=<outfile> [optional_params ...]\n\n");
-	errmsg("If if= and/or of= are omitted, stdin/stdout will be used.\n");
-	errmsg("Optional parameters:\n");
-	errmsg("bs=<blocksize>  seek=<count>  skip=<count>  count=<count>\n");
-	errmsg("seek/skip skips <count> blocks in input/output files, respectively\n");
-	errmsg("count copies only <count> blocks (default is until end of file)\n\n");
+	errmsg("usage: dd [if=file][of=file][bs=N][count=N][seek=N][skip=N]\n");
 	return 1;
 }
