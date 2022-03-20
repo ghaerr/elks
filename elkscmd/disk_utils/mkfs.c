@@ -61,6 +61,7 @@
 
 #ifndef __linux__
 #define volatile
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif
 
 #define MINIX_ROOT_INO 1
@@ -266,7 +267,7 @@ void setup_tables(void)
 	memset(inode_buffer,0,2048);
 	printf("%u inodes\n",INODES);
 	printf("%u blocks\n",ZONES);
-	printf("Firstdatazone=%d (%d)\n",FIRSTZONE,NORM_FIRSTZONE);
+	printf("Firstdatazone=%d (%ld)\n",FIRSTZONE,NORM_FIRSTZONE);
 	printf("Zonesize=%d\n",BLOCK_SIZE<<ZONESIZE);
 	printf("Maxsize=%ld\n\n",MAXSIZE);
 }
@@ -274,10 +275,8 @@ void setup_tables(void)
 
 int main(int argc, char ** argv)
 {
-	int i;
 	char * tmp;
 	struct stat statbuf;
-	char * listfile = NULL;
 
 	if (INODE_SIZE * MINIX_INODES_PER_BLOCK != BLOCK_SIZE)
 		die("bad inode size");

@@ -386,8 +386,8 @@ char *l_text;			/* begin of the char array		 */
 char *filename(path_string)
 char *path_string;
 {
-  char name[NAME_MAX + 2];	/* filename plus /		 	 */
   char *ptr;
+  static char name[NAME_MAX + 2]; /* filename plus /		 	 */
 
   name[0] = '/';
   ptr = strrchr(path_string, '/');

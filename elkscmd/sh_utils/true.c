@@ -1,9 +1,5 @@
-#include <unistd.h>
-#include <string.h>
-
-
-void
-main (void)
+int
+main(int ac, char **av)
 {
-	exit(0);
+	return 0;
 }
