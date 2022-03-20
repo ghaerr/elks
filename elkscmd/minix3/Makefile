@@ -27,8 +27,8 @@ diff: diff.o
 file: file.o $(TINYPRINTF)
 	$(LD) $(LDFLAGS) -o file file.o $(TINYPRINTF) $(LDLIBS)
 
-find: find.o $(TINYPRINTF)
-	$(LD) $(LDFLAGS) -o find find.o $(TINYPRINTF) $(LDLIBS)
+find: find.o
+	$(LD) $(LDFLAGS) -o find find.o $(LDLIBS)
 
 head: head.o
 	$(LD) $(LDFLAGS) -o head head.o $(LDLIBS)

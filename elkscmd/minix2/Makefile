@@ -30,11 +30,11 @@ man: man.o
 remsync: remsync.o
 	$(LD) $(LDFLAGS) -o remsync remsync.o $(LDLIBS)
 
-synctree: synctree.o $(TINYPRINTF)
-	$(LD) $(LDFLAGS) -o synctree synctree.o $(TINYPRINTF) $(LDLIBS)
+synctree: synctree.o
+	$(LD) $(LDFLAGS) -o synctree synctree.o $(LDLIBS)
 
-tget: tget.o $(TINYPRINTF)
-	$(LD) $(LDFLAGS) -o tget tget.o $(TINYPRINTF) $(LDLIBS)
+tget: tget.o
+	$(LD) $(LDFLAGS) -o tget tget.o $(LDLIBS)
 
 
 all: $(PRGS)

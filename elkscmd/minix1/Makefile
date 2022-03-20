@@ -31,8 +31,8 @@ decomp16: decomp16.o
 du: du.o $(TINYPRINTF)
 	$(LD) $(LDFLAGS) -o du du.o $(TINYPRINTF) $(LDLIBS)
 
-fgrep: fgrep.o $(TINYPRINTF)
-	$(LD) $(LDFLAGS) -o fgrep fgrep.o $(TINYPRINTF) $(LDLIBS)
+fgrep: fgrep.o
+	$(LD) $(LDFLAGS) -o fgrep fgrep.o $(LDLIBS)
 
 grep: grep.o
 	$(LD) $(LDFLAGS) -o grep grep.o $(LDLIBS)

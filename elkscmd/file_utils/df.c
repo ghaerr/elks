@@ -154,8 +154,8 @@ int df(char *device)
   /* Print results. */
   printf("%s", device);
   n= strlen(device);
-  if (n > 15 && istty) { putchar('\n'); n= 0; }
-  while (n < 15) { putchar(' '); n++; }
+  if (n > 15 && istty) { printf("\n"); n= 0; }
+  while (n < 15) { printf(" "); n++; }
 
   if (!Pflag && !iflag) {
 	printf(" %7ld  %7ld  %7ld %3d%%   %3d%%\n",
