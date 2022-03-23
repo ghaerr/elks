@@ -62,7 +62,7 @@
 #define SETUP_PART_OFFSETLO	0	/* partition offset low word */
 #define SETUP_PART_OFFSETHI	0	/* partition offset high word */
 #define SYS_CAPS		0	/* no XT/AT capabilities */
-#define UTS_MACHINE		"8018X"
+#define UTS_MACHINE		"8018x"
 
 #define CONFIG_8018X_FCPU	16
 #define CONFIG_8018X_EB
