@@ -124,14 +124,17 @@ net/net.a:
 
 tools:
 	${MAKE} -C tools all
+	-rm include/linuxmt/compiler-generated.h
+	-rm kernel/version.o
 
 #########################################################################
 # Compiler-generated definitions not given as command arguments.
 
 include/linuxmt/compiler-generated.h:
 	printf > include/linuxmt/compiler-generated.h		\
-		'#define %s %s\n'				\
-		UTS_VERSION "\"#$(DIST) $(shell date +%Y-%m-%d)\""
+		'#define UTS_RELEASE %s\n' "\"$(DIST)\""
+	printf >> include/linuxmt/compiler-generated.h		\
+		'#define UTS_VERSION %s\n' "\"$(shell git log --abbrev-commit | head -1 | sed 's/commit/commit/') $(shell date '+%d %b %Y %T %z')\""
 
 #########################################################################
 # lint rule

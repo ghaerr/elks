@@ -17,18 +17,16 @@ in <sys/utsname.h> as follows:
 .nf
 .ta +4n +6n +25n
 struct utsname {
-	char	sysname[15+1];		/* System name */
-	char	nodename[255+1];	/* Node/Network name */
+	char	sysname[7+1];		/* System name */
+	char	nodename[15+1];		/* Node/Network name */
 	char	release[11+1];		/* O.S. release */
-	char	version[7+1];		/* O.S. version */
-	char	machine[11+1];		/* Machine hardware */
-	char	arch[11+1];		/* Architecture */
+	char	version[47+1];		/* O.S. version */
+	char	machine[15+1];		/* Machine hardware */
 };
 .fi
 .PP
-The strings are always null terminated, and may be of a different length then
-shown here.  The first five are required by \s-2POSIX\s+2, the last is
-MINIX 3 specific.
+The strings are always null terminated, and may be of a different length than
+shown here.  The first five are required by \s-2POSIX\s+2.
 .SH "SEE ALSO"
 .BR uname (1).
 .SH AUTHOR

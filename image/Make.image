@@ -52,7 +52,7 @@ ifdef CONFIG_APPS_COMPRESS
 endif
 	$(MAKE) -C $(BOOTBLOCKS_DIR)
 	bash -c "./ver.pl $(ELKS_DIR)/Makefile-rules > $(DESTDIR)/etc/issue"
-	git log --abbrev-commit | head -1 | sed 's/commit/ELKS built from commit/' > $(DESTDIR)/etc/motd
+	#git log --abbrev-commit | head -1 | sed 's/commit/ELKS built from commit/' > $(DESTDIR)/etc/motd
 ifdef CONFIG_IMG_BOOT
 	install $(ELKS_DIR)/arch/i86/boot/Image $(DESTDIR)/linux
 endif
