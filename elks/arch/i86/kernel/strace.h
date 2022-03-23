@@ -118,7 +118,7 @@ struct syscall_info elks_table[] = {
     { "",		packinfo(9, P_NONE,   P_NONE,    P_NONE   ) },
     { "",		packinfo(9, P_NONE,   P_NONE,    P_NONE   ) },
     { "",		packinfo(9, P_NONE,   P_NONE,    P_NONE   ) },
-    { "knlvsn",		packinfo(1, P_PSTR,   P_NONE,    P_NONE   ) },
+    { "uname",		packinfo(1, P_PDATA,  P_NONE,    P_NONE   ) },
     { "",		packinfo(9, P_NONE,   P_NONE,    P_NONE   ) },
     { "",		packinfo(9, P_NONE,   P_NONE,    P_NONE   ) },
     { "",		packinfo(9, P_NONE,   P_NONE,    P_NONE   ) },

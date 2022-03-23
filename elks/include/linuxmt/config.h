@@ -34,6 +34,7 @@
 #ifdef CONFIG_ROMCODE
 #define SYS_CAPS	(CAP_PC_AT|CAP_DRIVE_PARMS)
 #endif
+#define UTS_MACHINE		"ibmpc i8086"
 #endif
 
 #ifdef CONFIG_ARCH_PC98
@@ -47,6 +48,7 @@
 #define SETUP_PART_OFFSETLO	setupw(0x1e2)	/* partition offset low word */
 #define SETUP_PART_OFFSETHI	setupw(0x1e4)	/* partition offset high word */
 #define SYS_CAPS		0	/* no XT/AT capabilities */
+#define UTS_MACHINE		"pc-98 i8086"
 #endif
 
 #ifdef CONFIG_ARCH_8018X
@@ -60,7 +62,7 @@
 #define SETUP_PART_OFFSETLO	0	/* partition offset low word */
 #define SETUP_PART_OFFSETHI	0	/* partition offset high word */
 #define SYS_CAPS		0	/* no XT/AT capabilities */
-
+#define UTS_MACHINE		"8018X"
 
 #define CONFIG_8018X_FCPU	16
 #define CONFIG_8018X_EB
@@ -145,10 +147,9 @@
 /*
  * Defines for what uname() should return.
  * The definitions for UTS_RELEASE and UTS_VERSION are now passed as
- * kernel compilation parameters, and should only be used by linux/version.c
+ * kernel compilation parameters, and should only be used by elks/kernel/version.c
  */
 #define UTS_SYSNAME "ELKS"
-#define UTS_MACHINE "i8086"
-#define UTS_NODENAME "(none)"		/* set by sethostname() */
+#define UTS_NODENAME "elks"		/* someday set by sethostname() */
 
 #endif

@@ -38,8 +38,9 @@ cslip)
 esac
 
 # View message of day
-if test -f /etc/motd; then
-    cat /etc/motd
-fi
+uname -snrm
+#if test -f /etc/motd; then
+#	cat /etc/motd
+#fi
 
 date

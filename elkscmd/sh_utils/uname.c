@@ -2,31 +2,27 @@
 #include <string.h>
 #include <sys/utsname.h>
 
-static void print_element ();
-
 /* Values that are bitwise or'd into toprint'. */
-/* Operating system name. */
-#define PRINT_SYSNAME 1
-
-/* Node name on a communications network. */
-#define PRINT_NODENAME 2
-
-/* Operating system release. */
-#define PRINT_RELEASE 4
-
-/* Operating system version. */
-#define PRINT_VERSION 8
-
-/* Machine hardware name. */
-#define PRINT_MACHINE 16
+#define PRINT_SYSNAME	1		/* Operating system name. */
+#define PRINT_NODENAME	2		/* Node name on a communications network. */
+#define PRINT_RELEASE	4		/* Operating system release. */
+#define PRINT_VERSION	8		/* Operating system version. */
+#define PRINT_MACHINE	16		/* Machine hardware name. */
 
 /* Mask indicating which elements of the name to print. */
 static unsigned char toprint;
 
-void
-main (argc, argv)
-	int argc;
-	char **argv;
+static void print_element(unsigned char mask, char *element)
+{
+	if (toprint & mask)
+	{
+		toprint &= ~mask;
+		write(STDOUT_FILENO,element,strlen(element));
+		write(STDOUT_FILENO,toprint ? " " : "\n",1);
+	}
+}
+
+int main(int argc, char **argv)
 {
 	int	i;
 	struct utsname name;
@@ -35,7 +31,8 @@ main (argc, argv)
 
 	for (i=1;i<argc;i++)
 	{
-		switch(argv[i][1])
+		char *p = &argv[i][1];
+		while (*p) switch(*p++)
 		{
 	        case 's':
         		toprint |= PRINT_SYSNAME;
@@ -77,19 +74,5 @@ main (argc, argv)
 		print_element (PRINT_MACHINE, name.machine);
 	}
 
-	exit(0);
+	return 0;
 }
-
-static void
-print_element (mask, element)
-	unsigned char mask;
-	char *element;
-{
-	if (toprint & mask)
-	{
-		toprint &= ~mask;
-		write(STDOUT_FILENO,element,strlen(element));
-		write(STDOUT_FILENO,toprint ? " " : "\n",1);
-	}
-}
-

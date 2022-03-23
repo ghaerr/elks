@@ -54,6 +54,7 @@ sys_utils/shutdown		:boot	:sysutil
 sh_utils/test			:boot	:shutil
 sh_utils/true			:boot	:be-shutil
 sh_utils/echo			:boot	:be-shutil
+sh_utils/uname			:boot	:be-shutil
 file_utils/cat			:boot	:be-fileutil
 file_utils/chgrp				:be-fileutil			:1200k	:1440k
 file_utils/chmod				:be-fileutil			:1200k	:1440k

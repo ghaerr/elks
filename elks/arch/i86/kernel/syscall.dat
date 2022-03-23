@@ -91,7 +91,7 @@ dlload		+67	2	- Removed support for dynamic libraries
 setsid		+68	0
 sbrk		+69	2	* Legacy number from Linux
 ustatfs		+70	2
-knlvsn		+74	1
+uname		+74	1	. was knlvsn
 #
 # From /usr/include/asm-generic/unistd.h
 #
