@@ -425,13 +425,7 @@ dr_try:
 	mov %ax,%es
 	mov $0x584,%bx
 	mov %es:(%bx),%al // Physical Device Address
-	push %ax
-	and $0x0F,%al
-#if defined(CONFIG_IMG_HD)
-	or $0x80,%al
-#endif
 	mov %al,drive_num
-	pop %ax
 	pop %es
 	mov $0xD6,%ah    // Read Data
 	mov $SECTOR_SIZE,%bx
