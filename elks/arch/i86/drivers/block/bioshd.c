@@ -221,8 +221,7 @@ static unsigned short int INITPROC bioshd_gethdinfo(void) {
     int call_bios_rvalue;
 
     for (scsi_id = 0; scsi_id < 7; scsi_id++) {
-	BD_AX = BIOSHD_DRIVE_PARMS;
-	BD_DX = scsi_id + 0xA0;
+	BD_AX = BIOSHD_DRIVE_PARMS | (scsi_id + 0xA0);
 	BD_ES = BD_DI = BD_SI = 0;
 	call_bios_rvalue = call_bios(&bdt);
 	if ((call_bios_rvalue == 0) && (BD_DX & 0xff))
@@ -242,10 +241,10 @@ static unsigned short int INITPROC bioshd_gethdinfo(void) {
 	ndrives = NUM_DRIVES/2;
 
     for (drive = 0; drive < ndrives; drive++) {
-	BD_AX = BIOSHD_DRIVE_PARMS;
 #ifdef CONFIG_ARCH_PC98
-	BD_DX = hd_drive_map[drive];
+	BD_AX = BIOSHD_DRIVE_PARMS | hd_drive_map[drive];
 #else
+	BD_AX = BIOSHD_DRIVE_PARMS;
 	BD_DX = drive + 0x80;
 #endif
 	BD_ES = BD_DI = BD_SI = 0;	/* guard against BIOS bugs*/
@@ -446,15 +445,30 @@ static void copy_ddpt(void)
 
 static void reset_bioshd(int drive)
 {
+#ifdef CONFIG_ARCH_PC98
+    BD_AX = BIOSHD_RESET | drive;
+#else
     BD_AX = BIOSHD_RESET;
     BD_DX = drive;
+#endif
     call_bios(&bdt);
     /* ignore errors with carry set*/
+}
+
+/* map drives */
+static void map_drive(int *drive)
+{
+	*drive = hd_drive_map[*drive];
 }
 
 static int read_sector(int drive, int cylinder, int sector)
 {
     int count = 1;		/* no retries on probing*/
+
+#ifdef CONFIG_ARCH_PC98
+    drive += DRIVE_FD0;
+    map_drive(&drive);
+#endif
 
     set_cache_invalid();
     do {
@@ -782,12 +796,6 @@ static void get_chst(struct drive_infot *drivep, sector_t start, unsigned int *c
 	*t = drivep->sectors - *s + 1;
 	debug_bios("bioshd: lba %ld is CHS %d/%d/%d remaining sectors %d\n",
 		start, *c, *h, *s, *t);
-}
-
-/* map drives */
-static void map_drive(int *drive)
-{
-	*drive = hd_drive_map[*drive];
 }
 
 /* do bios I/O, return # sectors read/written */

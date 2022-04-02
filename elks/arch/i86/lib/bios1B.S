@@ -48,17 +48,7 @@ call_bios:
 
 //	Do a disk interrupt.
 
-	cmp $0x84,%ah
-	jz sense
-
 call_1B:
-	int $0x1B
-	jmp result
-
-sense:
-	mov %dl,%al
-	and $0x0F,%al
-	or  $0xA0,%al    // Physical Device Address
 	int $0x1B
 
 result:
