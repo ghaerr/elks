@@ -133,6 +133,11 @@ static void init_task(void)
 
     mount_root();
 
+#if defined(CONFIG_APP_SASH) && !defined(CONFIG_APP_ASH)
+    /* when no /bin/init, force initial process group on console to make signals work*/
+    current->session = current->pgrp = 1;
+#endif
+
     /* Don't open /dev/console for /bin/init, 0-2 closed immediately and fragments heap*/
     //if (strcmp(init_command, bininit) != 0) {
 	/* Set stdin/stdout/stderr to /dev/console if not running /bin/init*/
@@ -154,7 +159,7 @@ static void init_task(void)
 	run_init_process_sptr(init_command, (char *)argv_init, argv_slen);
     } else
 #endif
-	run_init_process(bininit);
+    run_init_process(bininit);
 
     printk("No init - running /bin/sh\n");
     current->ppid = 1;			/* turns off auto-child reaping*/
