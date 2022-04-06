@@ -1,16 +1,14 @@
+#ifndef __HAS_NO_FLOATS__
+
 /* Copyright (C) Robert de Bath <robert@debath.co.uk>
  * This file is part of the Linux-8086 C library and is distributed
  * under the GNU Library General Public License.
  */
+#include <stdlib.h>
 
 double 
-#ifdef __STDC__
-atof(const char *p)
-#else
-atof(p)
-char *p;
-#endif
+atof(const char *str)
 {
-   return strtod(p, (char**)0);
+   return strtod(str, (char **)NULL);
 }
-
+#endif

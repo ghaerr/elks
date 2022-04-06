@@ -9,12 +9,14 @@ LIB = out.a
 OBJS = \
 	aliases.o \
 	atexit.o \
+	atof.o \
 	atoi.o \
 	atol.o \
 	basename.o \
 	crypt.o \
 	ctype.o \
 	dirname.o \
+	ecvt.o \
 	getcwd.o \
 	getenv.o \
 	getpass.o \
@@ -27,6 +29,7 @@ OBJS = \
 	putenv.o \
 	qsort-bsd.o \
 	rand.o \
+	strtod.o \
 	strtol.o \
 	system.o \
 	tmpnam.o \
