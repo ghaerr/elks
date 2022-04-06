@@ -16,8 +16,9 @@
 #define EXIT_FAILURE 1
 #define EXIT_SUCCESS 0
 
-extern int rand __P ((void));
-extern void srand __P ((unsigned int seed));
+#define RAND_MAX	0x7fff
+int rand(void);
+void srand(unsigned int seed);
 
 long strtol(const char * nptr, char ** endptr, int base);
 unsigned long strtoul(const char * nptr, char ** endptr, int base);

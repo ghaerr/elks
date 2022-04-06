@@ -44,6 +44,7 @@ __fp_print_func(double val, int style, int preci, char * ptmp)
       *ptmp++ = '0';
       decpt--;
    }
+   *ptmp = 0;
    if (style == 'g' && diddecpt) {
 	for (;;) {
 	   int c = *--ptmp;
@@ -52,6 +53,7 @@ __fp_print_func(double val, int style, int preci, char * ptmp)
 	   if (c != '0') break;
 	}
    }
+
 }
 
 #if 0
