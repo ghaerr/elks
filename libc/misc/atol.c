@@ -4,10 +4,9 @@
  */
 
 long
-atol(number)
-register char  *number;
+atol(const char *number)
 {
-   register long   n = 0, neg = 0;
+   long   n = 0, neg = 0;
 
    while (*number <= ' ' && *number > 0)
       ++number;

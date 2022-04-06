@@ -24,14 +24,12 @@
 #endif
 
 extern FILE *__IO_list;		/* For fflush at exit */
-extern int (*__fp_print)();
 
 #if defined(__cplusplus)
 extern "C" {
 #endif
 
 void __io_init_vars(void);
-void __fp_print_func(double * pval, int style, int preci, char * ptmp);
 
 #if defined(__cplusplus)
 }
