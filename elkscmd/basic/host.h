@@ -2,6 +2,7 @@
 #define pgm_read_word(x)		(x)
 #define pgm_read_byte_near(x)	(x)
 #define float double			/* ELKS gcc 'double' use gen much less code */
+#define FS_ACCESS_ALLOWED
 
 void host_cls();
 void host_showBuffer();
@@ -21,15 +22,11 @@ void host_digitalWrite(int pin,int state);
 int host_digitalRead(int pin);
 int host_analogRead(int pin);
 void host_pinMode(int pin, int mode);
-void host_saveProgram(int autoexec);
-void host_loadProgram();
-
 double host_floor(double x);
 
-#if 0
-void writeExtEEPROM(unsigned int address, byte data);
-void host_directoryExtEEPROM();
-int host_saveExtEEPROM(char *fileName);
-int host_loadExtEEPROM(char *fileName);
-int host_removeExtEEPROM(char *fileName);
+#ifdef FS_ACCESS_ALLOWED
+void host_directoryListing();
+int host_saveProgramToFile(char *fileName);
+int host_loadProgramFromFile(char *fileName);
+int host_removeFile(char *fileName);
 #endif
