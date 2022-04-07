@@ -23,11 +23,13 @@ __fp_print_func(double val, int style, int preci, char * ptmp)
    if(negative)
       *ptmp++ = '-';
 
-   if (decpt<0) {
+   if (decpt<=0) {
       *ptmp++ = '0';
       *ptmp++ = '.';
+      diddecpt = 1;
       while(decpt<0) {
-	 *ptmp++ = '0'; decpt++;
+	 *ptmp++ = '0';
+	 decpt++;
       }
    }
 

@@ -18,6 +18,7 @@ include $(BASEDIR)/Make.defs
 # byacc screen m4 xvi nano
 SUBDIRS =       \
 	ash         \
+	basic       \
 	bc          \
 	busyelks    \
 	disk_utils  \

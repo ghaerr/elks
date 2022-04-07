@@ -17,9 +17,9 @@ mainmenu_option next_comment
 
 		bool 'busyelks'			CONFIG_APP_BUSYELKS		n
 		bool 'cgatext'			CONFIG_APP_CGATEXT	    n
-        bool 'screen'     		CONFIG_APP_SCREEN       y
+		bool 'screen'     		CONFIG_APP_SCREEN       y
 		bool 'cron'           	CONFIG_APP_CRON        	y
-        busyelks 'diskutils'	CONFIG_APP_DISK_UTILS	y
+		busyelks 'diskutils'	CONFIG_APP_DISK_UTILS	y
 		busyelks 'fileutils'	CONFIG_APP_FILE_UTILS	y
 		busyelks 'shutils'	 	CONFIG_APP_SH_UTILS		y
 		bool 'sysutils'			CONFIG_APP_SYS_UTILS	y
@@ -30,6 +30,7 @@ mainmenu_option next_comment
 		busyelks 'miscutils'	CONFIG_APP_MISC_UTILS	y
 		bool 'mtools'			CONFIG_APP_MTOOLS		n
 		bool 'nano-X'			CONFIG_APP_NANOX		y
+		bool 'BASIC'			CONFIG_APP_BASIC		y
 		bool 'other'         	CONFIG_APP_OTHER        y
 
 		comment 'Commands not compiling'
