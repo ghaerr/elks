@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <unistd.h>
+
+#include <linuxmt/config.h>
 
 __STDIO_PRINT_FLOATS;		// link in libc printf float support
 
@@ -139,17 +142,60 @@ double host_floor(double x)
 }
 
 void host_sleep(long ms) {
-    //delay(ms);
+    usleep(ms * 1000);
 }
 
+
+#ifdef CONFIG_ARCH_8018X
+/**
+ * NOTE: This only works on MY 80C188EB board, needs to be more
+ * generalized using the 8018x's GPIOs instead!
+ */
+#include "arch/io.h"
+
+static uint8_t the_leds = 0xfe;
 void host_digitalWrite(int pin,int state) {
-    //digitalWrite(pin, state ? HIGH : LOW);
+    if (pin > 7) {
+        return;
+    }
+
+    uint8_t new_state = 1 << pin;
+    if (state == 0) {
+        the_leds |= new_state;
+    } else {
+        the_leds &= ~new_state;
+    }
+    /* there's a latch on port 0x2002 where 8 leds are connected to */
+    outb(the_leds, 0x2002);
 }
 
 int host_digitalRead(int pin) {
-    //return digitalRead(pin);
+    if (pin > 7) {
+        if (pin == 69) {
+            /* buffer on port 0x2003, bit #3 is the switch */
+            return inb(0x2003) & (1 << 3) ? 1 : 0;
+        }
+        return 0;
+    }
+
+    /* there's a buffer on port 0x2001 where an 8 switches dip switch is conncted to */
+    uint8_t b = inb(0x2001);
+    uint8_t bit = 1 << pin;
+
+    if (b & bit) {
+        return 1;
+    }
 	return 0;
 }
+#else
+
+void host_digitalWrite(int pin,int state) {
+}
+
+int host_digitalRead(int pin) {
+    return 0;
+}
+#endif
 
 int host_analogRead(int pin) {
     //return analogRead(pin);
@@ -160,137 +206,86 @@ void host_pinMode(int pin,int mode) {
     //pinMode(pin, mode);
 }
 
-void host_saveProgram(int autoexec) {
-#if 0
-    EEPROM.write(0, autoexec ? MAGIC_AUTORUN_NUMBER : 0x00);
-    EEPROM.write(1, sysPROGEND & 0xFF);
-    EEPROM.write(2, (sysPROGEND >> 8) & 0xFF);
-    for (int i=0; i<sysPROGEND; i++)
-        EEPROM.write(3+i, mem[i]);
-#endif
-}
+#ifdef FS_ACCESS_ALLOWED
 
-void host_loadProgram() {
-#if 0
-    // skip the autorun byte
-    sysPROGEND = EEPROM.read(1) | (EEPROM.read(2) << 8);
-    for (int i=0; i<sysPROGEND; i++)
-        mem[i] = EEPROM.read(i+3);
-#endif
-}
+#include <dirent.h>
 
-#if 0
-void writeExtEEPROM(unsigned int address, byte data) 
-{
-  if (address % 32 == 0) host_click();
-  rtc.start((EXTERNAL_EEPROM_ADDR<<1)|I2C_WRITE);
-  rtc.write((int)(address >> 8));   // MSB
-  rtc.write((int)(address & 0xFF)); // LSB
-  rtc.write(data);
-  rtc.stop();
-  delay(5);
-}
- 
-byte readExtEEPROM(unsigned int address) 
-{
-  rtc.start((EXTERNAL_EEPROM_ADDR<<1)|I2C_WRITE);
-  rtc.write((int)(address >> 8));   // MSB
-  rtc.write((int)(address & 0xFF)); // LSB
-  rtc.restart((EXTERNAL_EEPROM_ADDR<<1)|I2C_READ);
-  byte b = rtc.read(true);
-  rtc.stop();
-  return b;
-}
+void host_directoryListing() {
+	DIR		*dirp;
+	struct	dirent	*dp;
 
-// get the EEPROM address of a file, or the end if fileName is null
-unsigned int getExtEEPROMAddr(char *fileName) {
-    unsigned int addr = 0;
-    while (1) {
-        unsigned int len = readExtEEPROM(addr) | (readExtEEPROM(addr+1) << 8);
-        if (len == 0) break;
-        
-        if (fileName) {
-            int found = true;
-            for (int i=0; i<=strlen(fileName); i++) {
-                if (fileName[i] != readExtEEPROM(addr+2+i)) {
-                    found = false;
-                    break;
-                }
-            }
-            if (found) return addr;
-        }
-        addr += len;
+    dirp = opendir(".");
+    if (dirp == NULL) {
+        host_outputString("Error reading dir .\n");
+        return;
     }
-    return fileName ? EXTERNAL_EEPROM_SIZE : addr;
-}
 
-void host_directoryExtEEPROM() {
-    unsigned int addr = 0;
-    while (1) {
-        unsigned int len = readExtEEPROM(addr) | (readExtEEPROM(addr+1) << 8);
-        if (len == 0) break;
-        int i = 0;
-        while (1) {
-            char ch = readExtEEPROM(addr+2+i);
-            if (!ch) break;
-            host_outputChar(readExtEEPROM(addr+2+i));
-            i++;
+    while ((dp = readdir(dirp)) != NULL) {
+        char *dot = strrchr(dp->d_name, '.'); /* Find last '.', if there is one */
+        if (dot && (strcasecmp(dot, ".bas") == 0))
+        {
+            host_outputString(dp->d_name);
+            host_newLine();
         }
-        addr += len;
-        host_outputChar(' ');
     }
-    host_outputFreeMem(EXTERNAL_EEPROM_SIZE - addr - 2);
+
+    closedir(dirp);
 }
 
-int host_removeExtEEPROM(char *fileName) {
-    unsigned int addr = getExtEEPROMAddr(fileName);
-    if (addr == EXTERNAL_EEPROM_SIZE) return false;
-    unsigned int len = readExtEEPROM(addr) | (readExtEEPROM(addr+1) << 8);
-    unsigned int last = getExtEEPROMAddr(NULL);
-    unsigned int count = 2 + last - (addr + len);
-    while (count--) {
-        byte b = readExtEEPROM(addr+len);
-        writeExtEEPROM(addr, b);
-        addr++;
+int host_removeFile(char *fileName) {
+    if (unlink(fileName) < 0) {
+        host_outputString("Could not remove ");
+        host_outputString(fileName);
+        host_newLine();
+        return false;
     }
     return true;    
 }
 
-int host_loadExtEEPROM(char *fileName) {
-    unsigned int addr = getExtEEPROMAddr(fileName);
-    if (addr == EXTERNAL_EEPROM_SIZE) return false;
-    // skip filename
-    addr += 2;
-    while (readExtEEPROM(addr++)) ;
-    sysPROGEND = readExtEEPROM(addr) | (readExtEEPROM(addr+1) << 8);
-    for (int i=0; i<sysPROGEND; i++)
-        mem[i] = readExtEEPROM(addr+2+i);
+int host_loadProgramFromFile(char *fileName) {
+    FILE* fh = fopen(fileName, "rb");
+
+    if (fh < 0) {
+        sprintf(stderr, "Error opening file '%s'\n", fileName);
+        return false;
+    }
+
+    fseek(fh, 0, SEEK_END);
+    long fsize = ftell(fh);
+    if (fsize > sizeof(mem)) {
+        sprintf(stderr, "File too large to fit in memory\n");
+        fclose(fh);
+        return false;
+    }
+    fseek(fh, 0, SEEK_SET);
+
+    if (fread(mem, 1, sizeof(mem), fh) == fsize) {
+        sysPROGEND = fsize;
+        fclose(fh);
+        return true;
+    }
+
+    sprintf(stderr, "Error reading file '%s'\n", fileName);
+
+    fclose(fh);
+    return false;
 }
 
-int host_saveExtEEPROM(char *fileName) {
-    unsigned int addr = getExtEEPROMAddr(fileName);
-    if (addr != EXTERNAL_EEPROM_SIZE)
-        host_removeExtEEPROM(fileName);
-    addr = getExtEEPROMAddr(NULL);
-    unsigned int fileNameLen = strlen(fileName);
-    unsigned int len = 2 + fileNameLen + 1 + 2 + sysPROGEND;
-    if ((long)EXTERNAL_EEPROM_SIZE - addr - len - 2 < 0)
+int host_saveProgramToFile(char *fileName) {
+    FILE* fh = fopen(fileName, "wb");
+
+    if (fh < 0) {
+        sprintf(stderr, "Error opening file '%s'\n", fileName);
         return false;
-    // write overall length
-    writeExtEEPROM(addr++, len & 0xFF);
-    writeExtEEPROM(addr++, (len >> 8) & 0xFF);
-    // write filename
-    for (int i=0; i<strlen(fileName); i++)
-        writeExtEEPROM(addr++, fileName[i]);
-    writeExtEEPROM(addr++, 0);
-    // write length & program    
-    writeExtEEPROM(addr++, sysPROGEND & 0xFF);
-    writeExtEEPROM(addr++, (sysPROGEND >> 8) & 0xFF);
-    for (int i=0; i<sysPROGEND; i++)
-        writeExtEEPROM(addr++, mem[i]);
-    // 0 length marks end
-    writeExtEEPROM(addr++, 0);
-    writeExtEEPROM(addr++, 0);
+    }
+
+    if (fwrite(mem, 1, sysPROGEND, fh) != sysPROGEND) {
+        sprintf(stderr, "Error writing file\n");
+        fclose(fh);
+        return false;
+    }
+
+    fclose(fh);
     return true;
 }
 #endif

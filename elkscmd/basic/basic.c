@@ -1689,6 +1689,7 @@ int parseLoadSaveCmd() {
     if (op == TOKEN_SAVE && curToken == TOKEN_PLUS) {
         getNextToken();
         autoexec = 1;
+        // TODO: handle "autoexec" case
     }
     else if (curToken != TOKEN_EOL && curToken != TOKEN_CMD_SEP) {
         int val = parseExpression();
@@ -1699,37 +1700,29 @@ int parseLoadSaveCmd() {
     }
 
     if (executeMode) {
+#ifdef FS_ACCESS_ALLOWED
         if (gotFileName) {
-#if EXTERNAL_EEPROM
             char fileName[MAX_IDENT_LEN+1];
             if (strlen(stackGetStr()) > MAX_IDENT_LEN)
                 return ERROR_BAD_PARAMETER;
             strcpy(fileName, stackPopStr());
             if (op == TOKEN_SAVE) {
-                if (!host_saveExtEEPROM(fileName))
+                if (!host_saveProgramToFile(fileName))
                     return ERROR_OUT_OF_MEMORY;
             }
             else if (op == TOKEN_LOAD) {
                 reset();
-                if (!host_loadExtEEPROM(fileName))
+                if (!host_loadProgramFromFile(fileName))
                     return ERROR_BAD_PARAMETER;
             }
             else if (op == TOKEN_DELETE) {
-                if (!host_removeExtEEPROM(fileName))
+                if (!host_removeFile(fileName))
                     return ERROR_BAD_PARAMETER;
             }
+        }
+#else
+        return ERROR_UNEXPECTED_CMD;
 #endif
-        }
-        else {
-            if (op == TOKEN_SAVE)
-                host_saveProgram(autoexec);
-            else if (op == TOKEN_LOAD) {
-                reset();
-                host_loadProgram();
-            }
-            else
-                return ERROR_UNEXPECTED_CMD;
-        }
     }
     return 0;
 }
@@ -1767,8 +1760,8 @@ int parseSimpleCmd() {
                 host_showBuffer();
                 break;
             case TOKEN_DIR:
-#if EXTERNAL_EEPROM
-                host_directoryExtEEPROM();
+#ifdef FS_ACCESS_ALLOWED
+                host_directoryListing();
 #endif
                 break;
         }
