@@ -12,6 +12,7 @@ stty
 test
 tr
 true
+uname
 which
 whoami
 xargs
