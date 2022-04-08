@@ -23,7 +23,7 @@ PRGS += float
 all: $(PRGS) $(PRGS_HOST)
 
 float: float.o
-	$(LD) $(LDFLAGS) -o float float.o $(ECVT) $(LDLIBS) -lc
+	$(LD) $(LDFLAGS) -o float float.o $(LDLIBS) -lc
 
 ed: ed.o
 	$(LD) $(LDFLAGS) -o ed ed.o $(LDLIBS)

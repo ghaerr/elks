@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <math.h>
 
 __STDIO_PRINT_FLOATS;	/* force float libc printf/sprintf support */
 
@@ -14,7 +15,6 @@ extern void z(float);
 extern xprintf(char *, float, float);
 void x(float f)
 {
-	//z(f);
 }
 
 char *host_floatToStr(float f, char *buf) {
@@ -85,16 +85,59 @@ int main(int argc, char **argv) {
 	printf("3.1415926 = %f\n", strtod("3.1415926", 0));
 	printf("3.1415926 = %f\n", (FLOAT)3.1415926);
 	printf("2e5 = %g\n", strtod("2e5", 0));
-	printf("floor(3.1415926) = %f\n", host_floor(3.1415926));
-	printf("floor(-3.1415926) = %f\n", host_floor(-3.1415926));
+
+	volatile double pi = 3.1415926535;
+	volatile double pio2 = 3.1415926535 / 2.0;
+	volatile double one = 1.0;
+	volatile double e = 2.718282;
+	volatile double two = 2.0;
+	volatile double three = 3.0;
+	volatile double four = 4.0;
+
+	printf("floor(3.1415926) = %f,%f\n", floor(pi), host_floor(pi));
+	printf("floor(-3.1415926) = %f,%f\n", floor(-pi), host_floor(-pi));
+	printf("exp(1) = %f\n", exp(one));
+	printf("log(2.718282) = %f\n", log(e));
+	printf("pow(3,4) = %f\n", pow(three, four));
+	printf("sqrt(2) = %f\n", sqrt(two));
+
+	volatile float pif = 3.1415926535;
+	volatile float onef = 1.0;
+	volatile float ef = 2.718282;
+	volatile float twof = 2.0;
+	volatile float threef = 3.0;
+	volatile float fourf = 4.0;
+
+	printf("\n");
+	printf("floorf(3.1415926) = %f,%f\n", floorf(pif), host_floor(pif));
+	printf("floorf(-3.1415926) = %f,%f\n", floorf(-pif), host_floor(-pif));
+	printf("expf(1) = %f\n", expf(onef));
+	printf("logf(2.718282) = %f\n", logf(ef));
+	printf("powf(3,4) = %f\n", powf(threef, fourf));
+	printf("sqrtf(2) = %f\n", sqrtf(twof));
+
+	//tan(one);
+	//asin(one);
+	//acos(one);
+	//atan(one);
 
 	// beware: floating point literals are double
 	// (float) cast doesn't stop promotion to double on varargs routines
+	// gcc will use math builtin if argument is constant
 	//f = (float)3.1415926;
 	f = 3.1515926;
 	g = f * g;
 	printf("2 x %g = %g\n", (float)f, (float)g);
 	x(f);
+
+	volatile double d = 0;
+	printf("cos(%f) = %f\n", d, cos(d));
+	d += pio2;
+	printf("cos(%f) = %f\n", d, cos(d));
+	d += pio2;
+	printf("cos(%f) = %f\n", d, cos(d));
+	d += pio2;
+	printf("cos(%f) = %f\n", d, cos(d));
 
 	return 0;
 }

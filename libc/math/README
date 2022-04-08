@@ -1,0 +1,8 @@
+The ELKS math library is ported by Greg Haerr from OpenLibm (openlibm.org).
+
+The OpenLibm code derives from the FreeBSD msun and OpenBSD libm implementations,
+which in turn derive from FDLIBM 5.3.
+
+Currently, only a few of the math functions have been brought over, see <math.h>.
+
+Apr 2022 Greg Haerr

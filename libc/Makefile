@@ -16,6 +16,7 @@ SUBDIRS = \
 	gcc \
 	getent \
 	malloc \
+	math \
 	misc \
 	net \
 	regex \
