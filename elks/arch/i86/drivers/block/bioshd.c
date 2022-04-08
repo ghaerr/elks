@@ -72,7 +72,6 @@
 
 #ifdef CONFIG_ARCH_PC98
 #define MAXDRIVES	4	/* max floppy drives*/
-static unsigned char scsi_drive_map[7];
 #endif
 
 /* comment out following line for single-line drive info summary*/
@@ -98,6 +97,7 @@ static struct biosparms bdt;
 #define BD_DX bdt.dx
 #define BD_SI bdt.si
 #define BD_DI bdt.di
+#define BD_BP bdt.bp
 #define BD_ES bdt.es
 #define BD_FL bdt.fl
 
@@ -124,10 +124,21 @@ struct drive_infot fd_types[] = {	/* AT/PS2 BIOS reported floppy formats*/
 #endif
 };
 
-static unsigned char hd_drive_map[NUM_DRIVES] = {/* BIOS drive mappings*/
+#ifdef CONFIG_ARCH_PC98
+unsigned char hd_drive_map[NUM_DRIVES] = {/* BIOS drive mappings*/
+    0xA0, 0xA1, 0xA2, 0xA3,		/* hda, hdb */
+#ifdef CONFIG_IMG_FD1232
+    0x90, 0x91, 0x92, 0x93		/* fd0, fd1 */
+#else
+    0x30, 0x31, 0x32, 0x33		/* fd0, fd1 */
+#endif
+};
+#else
+unsigned char hd_drive_map[NUM_DRIVES] = {/* BIOS drive mappings*/
     0x80, 0x81, 0x82, 0x83,		/* hda, hdb */
     0x00, 0x01, 0x02, 0x03		/* fd0, fd1 */
 };
+#endif
 
 static int _fd_count = 0;  		/* number of floppy disks */
 static int _hd_count = 0;  		/* number of hard disks */
@@ -168,11 +179,25 @@ static int bios_disk_rw(unsigned cmd, unsigned num_sectors, unsigned drive,
 	unsigned cylinder, unsigned head, unsigned sector, unsigned seg, unsigned offset)
 {
 #ifdef CONFIG_ARCH_PC98
-	BD_AX = cmd | num_sectors;
-	BD_CX = (unsigned int) ((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
-	BD_DX = (head << 8) | drive;
+	BD_AX = cmd | drive;
+    if ((0xF0 & drive) == 0xA0) {
+	BD_BX = (unsigned int) (num_sectors << 9);
+	BD_CX = cylinder;
+	BD_DX = (head << 8) | ((sector - 1) & 0xFF);
+    }
+    else {
+	if ((0xF0 & drive) == 0x90) {
+	    BD_BX = (unsigned int) (num_sectors << 10);
+	    BD_CX = (3 << 8) | cylinder;
+	}
+	else {
+	    BD_BX = (unsigned int) (num_sectors << 9);
+	    BD_CX = (2 << 8) | cylinder;
+	}
+	BD_DX = (head << 8) | sector;
+    }
 	BD_ES = seg;
-	BD_BX = offset;
+	BD_BP = offset;
 #else
 	BD_AX = cmd | num_sectors;
 	BD_CX = (unsigned int) ((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
@@ -196,12 +221,12 @@ static unsigned short int INITPROC bioshd_gethdinfo(void) {
     int call_bios_rvalue;
 
     for (scsi_id = 0; scsi_id < 7; scsi_id++) {
-	BD_AX = BIOSHD_DRIVE_PARMS;
-	BD_DX = scsi_id + 0x80;
+	BD_AX = BIOSHD_DRIVE_PARMS | (scsi_id + 0xA0);
 	BD_ES = BD_DI = BD_SI = 0;
 	call_bios_rvalue = call_bios(&bdt);
 	if ((call_bios_rvalue == 0) && (BD_DX & 0xff))
-	    scsi_drive_map[ndrives++] = scsi_id;
+	    hd_drive_map[ndrives++] = scsi_id + 0xA0;
+	if (ndrives >= 4) break;
     }
 #else
     BD_AX = BIOSHD_DRIVE_PARMS;
@@ -216,10 +241,10 @@ static unsigned short int INITPROC bioshd_gethdinfo(void) {
 	ndrives = NUM_DRIVES/2;
 
     for (drive = 0; drive < ndrives; drive++) {
-	BD_AX = BIOSHD_DRIVE_PARMS;
 #ifdef CONFIG_ARCH_PC98
-	BD_DX = scsi_drive_map[drive] + 0x80;
+	BD_AX = BIOSHD_DRIVE_PARMS | hd_drive_map[drive];
 #else
+	BD_AX = BIOSHD_DRIVE_PARMS;
 	BD_DX = drive + 0x80;
 #endif
 	BD_ES = BD_DI = BD_SI = 0;	/* guard against BIOS bugs*/
@@ -420,15 +445,30 @@ static void copy_ddpt(void)
 
 static void reset_bioshd(int drive)
 {
+#ifdef CONFIG_ARCH_PC98
+    BD_AX = BIOSHD_RESET | drive;
+#else
     BD_AX = BIOSHD_RESET;
     BD_DX = drive;
+#endif
     call_bios(&bdt);
     /* ignore errors with carry set*/
+}
+
+/* map drives */
+static void map_drive(int *drive)
+{
+	*drive = hd_drive_map[*drive];
 }
 
 static int read_sector(int drive, int cylinder, int sector)
 {
     int count = 1;		/* no retries on probing*/
+
+#ifdef CONFIG_ARCH_PC98
+    drive += DRIVE_FD0;
+    map_drive(&drive);
+#endif
 
     set_cache_invalid();
     do {
@@ -758,19 +798,6 @@ static void get_chst(struct drive_infot *drivep, sector_t start, unsigned int *c
 		start, *c, *h, *s, *t);
 }
 
-/* map drives */
-static void map_drive(int *drive)
-{
-#ifdef CONFIG_ARCH_PC98
-	if (*drive < 4)
-	    *drive = scsi_drive_map[*drive] | (hd_drive_map[*drive] & 0xf0);
-	else
-	    *drive = hd_drive_map[*drive];
-#else
-	*drive = hd_drive_map[*drive];
-#endif
-}
-
 /* do bios I/O, return # sectors read/written */
 static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *buf,
 	ramdesc_t seg, int cmd, unsigned int count)
@@ -1079,11 +1106,26 @@ kdev_t INITPROC bioshd_conv_bios_drive(unsigned int biosdrive)
     int partition = 0;
     extern int boot_partition;
 
+#ifdef CONFIG_ARCH_PC98
+    if ((biosdrive & 0xF0) == 0xA0) {		/* hard drive*/
+	for (minor = 0; minor < 4; minor++) {
+	    if (biosdrive == hd_drive_map[minor]) break;
+	}
+	if (minor >= 4) minor = 0;
+	partition = boot_partition;	/* saved from add_partition()*/
+    } else {
+	for (minor = 4; minor < 8; minor++) {
+	    if (biosdrive == hd_drive_map[minor]) break;
+	}
+	if (minor >= 8) minor = 4;
+    }
+#else
     if (biosdrive & 0x80) {		/* hard drive*/
 	minor = biosdrive & 0x03;
 	partition = boot_partition;	/* saved from add_partition()*/
     } else
 	minor = (biosdrive & 0x03) + DRIVE_FD0;
+#endif
 
     return MKDEV(BIOSHD_MAJOR, (minor << MINOR_SHIFT) + partition);
 }
