@@ -1,3 +1,5 @@
+#ifndef __MATH_H
+#define __MATH_H
 /*
  * ELKS libc math header file
  *
@@ -18,47 +20,48 @@
 #define M_SQRT2     1.41421356237309504880  /* sqrt(2) */
 #define M_SQRT1_2   0.70710678118654752440  /* 1/sqrt(2) */
 
-double floor(double x);
+double floor(double x);		/* round to largest integral value not greater than x */
 float floorf(float x);
 
-double sqrt(double x);
+double sqrt(double x);		/* square root function */
 float sqrtf(float x);
 
-double fabs(double x);
+double fabs(double x);		/* absolute value function */
 float fabsf(float x);
 
-double exp(double x);
+double exp(double x);		/* e**x, base-e exponential */
 float expf(float x);
 
-double exp2(double x);
+double exp2(double x);		/* 2**x, base-2 exponential */
 float exp2f(float x);
 
-double pow(double x, double y);
+double pow(double x, double y);	/* x**y, x raised to the power of y */
 float powf(float x, float y);
 
-double log(double x);
+double log(double x);		/* natural logarithm */
 float logf(float x);
 
-double log2(double x);
+double log2(double x);		/* base 2 logarithm */
 float log2f(float x);
 
-double log10(double x);
+double log10(double x);		/* base 10 logarithm */
 float log10f(float x);
 
-double sin(double x);
-float sinf(float x);
-
-double cos(double x);
+double cos(double x);		/* cosine function */
 float cosf(float x);
 
-double tan(double x);
+double sin(double x);		/* sine function */
+float sinf(float x);
+
+double tan(double x);		/* tangent function */
 float tanf(float x);
 
-double acos(double x);
+double acos(double x);		/* arc cosine function */
 float acosf(float x);
 
-double asin(double x);
+double asin(double x);		/* arc sine function */
 float asinf(float x);
 
-double atan(double x);
+double atan(double x);		/* arc tangent of one variable */
 float atanf(float x);
+#endif
