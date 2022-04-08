@@ -88,6 +88,8 @@ int main(int argc, char **argv) {
 	printf("floor(3.1415926) = %f\n", host_floor(3.1415926));
 	printf("floor(-3.1415926) = %f\n", host_floor(-3.1415926));
 
+	// beware: floating point literals are double
+	// (float) cast doesn't stop promotion to double on varargs routines
 	//f = (float)3.1415926;
 	f = 3.1515926;
 	g = f * g;

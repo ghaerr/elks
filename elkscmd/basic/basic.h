@@ -1,9 +1,7 @@
-#ifndef _BASIC_H
-#define _BASIC_H
-
 #include <stdint.h>
 
 #define MEMORY_SIZE	10240		// max tokenized memory bytes for program
+#define TOKEN_BUF_SIZE  64      // max tokenized bytes per line
 #define MAX_IDENT_LEN	8
 #define MAX_NUMBER_LEN	30
 #define MAX_PATH_LEN	64		// for LOAD/SAVE filename strings
@@ -144,6 +142,3 @@ void reset();
 int tokenize(unsigned char *input, unsigned char *output, int outputSize);
 int processInput(unsigned char *tokenBuf);
 void listProg(uint16_t first, uint16_t last);
-
-#endif
-

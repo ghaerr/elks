@@ -11,7 +11,6 @@
 __STDIO_PRINT_FLOATS;		// link in libc printf float support
 
 unsigned char mem[MEMORY_SIZE];
-#define TOKEN_BUF_SIZE    64
 static unsigned char tokenBuf[TOKEN_BUF_SIZE];
 
 static FILE *infile;
@@ -66,15 +65,13 @@ char *host_readLine() {
 }
 
 char host_getKey() {
-#if 1
-	return 0;
-#else
+#if 0
     char c = inkeyChar;
     inkeyChar = 0;
     if (c >= 32 && c <= 126)
         return c;
-    else return 0;
 #endif
+    return 0;
 }
 
 int host_ESCPressed() {
@@ -205,7 +202,13 @@ int host_directoryListing() {
 }
 
 int host_removeFile(char *fileName) {
-    if (unlink(fileName) < 0)
+	char file[MAX_PATH_LEN+5];
+
+	strcpy(file, fileName);
+	if (!strstr(file, ".bas"))
+		strcat(file, ".bas");
+
+    if (unlink(file) < 0)
 		return ERROR_FILE_ERROR;
     return ERROR_NONE;
 }
