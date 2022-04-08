@@ -1,14 +1,12 @@
-#include "host.h"
-#include "basic.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
 #include <unistd.h>
+#include <limits.h>
+#include <math.h>
 
-#include <linuxmt/config.h>
-
-__STDIO_PRINT_FLOATS;		// link in libc printf float support
+#include "host.h"
+#include "basic.h"
 
 unsigned char mem[MEMORY_SIZE];
 static unsigned char tokenBuf[TOKEN_BUF_SIZE];
@@ -40,11 +38,25 @@ void host_outputLong(long num) {
 	fprintf(outfile, "%ld", num);
 }
 
+// for float testing compatibility, use same FP formatting routines on host for now
+// floats have approx 7 sig figs, 15 for double
+#ifdef __ia6__
+__STDIO_PRINT_FLOATS;		// link in libc printf float support
+
 char *host_floatToStr(float f, char *buf) {
-    // floats have approx 7 sig figs
-	sprintf(buf, "%g", (double)f);
+	sprintf(buf, "%.*g", MATH_PRECISION, (double)f);
     return buf;
 }
+#else
+void __fp_print_func(double val, int style, int preci, char * ptmp);
+char *ecvt(double val, int ndig, int *pdecpt, int *psign);
+char *fcvt(double val, int ndig, int *pdecpt, int *psign);
+
+char *host_floatToStr(float f, char *buf) {
+	__fp_print_func(f, 'g', MATH_PRECISION, buf);
+    return buf;
+}
+#endif
 
 void host_outputFloat(float f) {
     char buf[32];
@@ -116,7 +128,9 @@ void host_sleep(long ms) {
     usleep(ms * 1000);
 }
 
-
+#ifdef __ia16__
+#include <linuxmt/config.h>
+#endif
 #ifdef CONFIG_ARCH_8018X
 /**
  * NOTE: This only works on MY 80C188EB board, needs to be more
@@ -177,7 +191,7 @@ void host_pinMode(int pin,int mode) {
     //pinMode(pin, mode);
 }
 
-#ifdef FS_ACCESS_ALLOWED
+#if DISK_FUNCTIONS
 
 #include <dirent.h>
 

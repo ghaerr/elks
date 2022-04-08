@@ -15,6 +15,7 @@
 #define TOKEN_NUMBER	        3	// special case - number follows
 #define TOKEN_STRING	        4	// special case - string follows
 
+#define FIRST_NON_ALPHA_TOKEN   8
 #define TOKEN_LBRACKET	        8
 #define TOKEN_RBRACKET	        9
 #define TOKEN_PLUS	    	10
@@ -30,6 +31,8 @@
 #define TOKEN_CMD_SEP	        20
 #define TOKEN_SEMICOLON	        21
 #define TOKEN_COMMA		22
+#define LAST_NON_ALPHA_TOKEN    22
+#define FIRST_IDENT_TOKEN       23
 #define TOKEN_AND		23	// FIRST_IDENT_TOKEN
 #define TOKEN_OR		24
 #define TOKEN_NOT		25
@@ -73,12 +76,18 @@
 #define TOKEN_ANALOGRD          63
 #define TOKEN_DIR               64
 #define TOKEN_DELETE            65
-
-#define FIRST_IDENT_TOKEN 23
-#define LAST_IDENT_TOKEN 65
-
-#define FIRST_NON_ALPHA_TOKEN    8
-#define LAST_NON_ALPHA_TOKEN    22
+#define TOKEN_PI		66
+#define TOKEN_ABS		67
+#define TOKEN_COS		68
+#define TOKEN_SIN		69
+#define TOKEN_TAN		70
+#define TOKEN_ACS		71
+#define TOKEN_ASN		72
+#define TOKEN_ATN		73
+#define TOKEN_EXP		74
+#define TOKEN_LN		75
+#define TOKEN_POW		76
+#define LAST_IDENT_TOKEN	76
 
 #define ERROR_NONE				0
 // parse errors
@@ -109,6 +118,8 @@
 #define ERROR_BAD_PARAMETER                     24
 #define ERROR_EOF				25
 #define ERROR_FILE_ERROR			26
+#define ERROR_FUNCTION_NOT_BUILTIN		27
+#define ERROR_WRONG_NUM_FUNCTION_ARGS		28
 
 extern unsigned char mem[];
 extern int sysPROGEND;

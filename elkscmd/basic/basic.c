@@ -43,7 +43,6 @@
  */
 
 // TODO
-// ABS, SIN, COS, EXP etc
 // DATA, READ, RESTORE
 
 #include <stdio.h>
@@ -52,6 +51,7 @@
 #include <ctype.h>
 #include <float.h>
 #include <limits.h>
+#include <math.h>
 
 #include "host.h"
 #include "basic.h"
@@ -88,6 +88,8 @@ const char string_23[] PROGMEM = "Error in VAL input";
 const char string_24[] PROGMEM = "Bad parameter";
 const char string_25[] PROGMEM = "End of file";
 const char string_26[] PROGMEM = "File error";
+const char string_27[] PROGMEM = "Function not builtin";
+const char string_28[] PROGMEM = "Wrong number of function arguments";
 
 const char* const errorTable[] PROGMEM = {
     string_0, string_1, string_2, string_3,
@@ -96,7 +98,8 @@ const char* const errorTable[] PROGMEM = {
     string_12, string_13, string_14, string_15,
     string_16, string_17, string_18, string_19,
     string_20, string_21, string_22, string_23,
-    string_24, string_25, string_26
+    string_24, string_25, string_26, string_27,
+	string_28
 };
 
 // Token flags
@@ -119,21 +122,75 @@ const char* const errorTable[] PROGMEM = {
 PROGMEM const TokenTableEntry tokenTable[] = {
     {0, 0}, {0, 0}, {0, 0}, {0, 0},
     {0, 0}, {0, 0}, {0, 0}, {0, 0},
-    {"(", 0}, {")",0}, {"+",0}, {"-",0},
-    {"*",0}, {"/",0}, {"=",0}, {">",0},
-    {"<",0}, {"<>",0}, {">=",0}, {"<=",0},
-    {":",TKN_FMT_POST}, {";",0}, {",",0}, {"AND",TKN_FMT_PRE|TKN_FMT_POST},
-    {"OR",TKN_FMT_PRE|TKN_FMT_POST}, {"NOT",TKN_FMT_POST}, {"PRINT",TKN_FMT_POST}, {"LET",TKN_FMT_POST},
-    {"LIST",TKN_FMT_POST}, {"RUN",TKN_FMT_POST}, {"GOTO",TKN_FMT_POST}, {"REM",TKN_FMT_POST},
-    {"STOP",TKN_FMT_POST}, {"INPUT",TKN_FMT_POST},  {"CONT",TKN_FMT_POST}, {"IF",TKN_FMT_POST},
-    {"THEN",TKN_FMT_PRE|TKN_FMT_POST}, {"LEN",1|TKN_ARG1_TYPE_STR}, {"VAL",1|TKN_ARG1_TYPE_STR}, {"RND",0},
-    {"INT",1}, {"STR$", 1|TKN_RET_TYPE_STR}, {"FOR",TKN_FMT_POST}, {"TO",TKN_FMT_PRE|TKN_FMT_POST},
-    {"STEP",TKN_FMT_PRE|TKN_FMT_POST}, {"NEXT", TKN_FMT_POST}, {"MOD",TKN_FMT_PRE|TKN_FMT_POST}, {"NEW",TKN_FMT_POST},
-    {"GOSUB",TKN_FMT_POST}, {"RETURN",TKN_FMT_POST}, {"DIM", TKN_FMT_POST}, {"LEFT$",2|TKN_ARG1_TYPE_STR|TKN_RET_TYPE_STR},
-    {"RIGHT$",2|TKN_ARG1_TYPE_STR|TKN_RET_TYPE_STR}, {"MID$",3|TKN_ARG1_TYPE_STR|TKN_RET_TYPE_STR}, {"CLS",TKN_FMT_POST}, {"PAUSE",TKN_FMT_POST},
-    {"POSITION", TKN_FMT_POST},  {"PIN",TKN_FMT_POST}, {"PINMODE", TKN_FMT_POST}, {"INKEY$", 0},
-    {"SAVE", TKN_FMT_POST}, {"LOAD", TKN_FMT_POST}, {"PINREAD",1}, {"ANALOGRD",1},
-    {"DIR", TKN_FMT_POST}, {"DELETE", TKN_FMT_POST}
+    {"(", 0},
+    {")",0},
+    {"+",0},
+    {"-",0},
+    {"*",0},
+    {"/",0},
+    {"=",0},
+    {">",0},
+    {"<",0},
+    {"<>",0},
+    {">=",0},
+    {"<=",0},
+    {":",TKN_FMT_POST},
+    {";",0},
+    {",",0},
+    {"AND",TKN_FMT_PRE|TKN_FMT_POST},
+    {"OR",TKN_FMT_PRE|TKN_FMT_POST},
+    {"NOT",TKN_FMT_POST},
+    {"PRINT",TKN_FMT_POST},
+    {"LET",TKN_FMT_POST},
+    {"LIST",TKN_FMT_POST},
+    {"RUN",TKN_FMT_POST},
+    {"GOTO",TKN_FMT_POST},
+    {"REM",TKN_FMT_POST},
+    {"STOP",TKN_FMT_POST},
+    {"INPUT",TKN_FMT_POST},
+    {"CONT",TKN_FMT_POST},
+    {"IF",TKN_FMT_POST},
+    {"THEN",TKN_FMT_PRE|TKN_FMT_POST},
+    {"LEN",1|TKN_ARG1_TYPE_STR},
+    {"VAL",1|TKN_ARG1_TYPE_STR},
+    {"RND",0},
+    {"INT",1},
+    {"STR$", 1|TKN_RET_TYPE_STR},
+    {"FOR",TKN_FMT_POST},
+    {"TO",TKN_FMT_PRE|TKN_FMT_POST},
+    {"STEP",TKN_FMT_PRE|TKN_FMT_POST},
+    {"NEXT", TKN_FMT_POST},
+    {"MOD",TKN_FMT_PRE|TKN_FMT_POST},
+    {"NEW",TKN_FMT_POST},
+    {"GOSUB",TKN_FMT_POST},
+    {"RETURN",TKN_FMT_POST},
+    {"DIM",TKN_FMT_POST},
+    {"LEFT$",2|TKN_ARG1_TYPE_STR|TKN_RET_TYPE_STR},
+    {"RIGHT$",2|TKN_ARG1_TYPE_STR|TKN_RET_TYPE_STR},
+    {"MID$",3|TKN_ARG1_TYPE_STR|TKN_RET_TYPE_STR},
+    {"CLS",TKN_FMT_POST},
+    {"PAUSE",TKN_FMT_POST},
+    {"POSITION",TKN_FMT_POST},
+    {"PIN",TKN_FMT_POST},
+    {"PINMODE",TKN_FMT_POST},
+    {"INKEY$",0},
+    {"SAVE",TKN_FMT_POST},
+    {"LOAD",TKN_FMT_POST},
+    {"PINREAD",1},
+    {"ANALOGRD",1},
+    {"DIR",TKN_FMT_POST},
+    {"DELETE",TKN_FMT_POST},
+    {"PI",0},
+    {"ABS",1},
+    {"COS",1},
+    {"SIN",1},
+    {"TAN",1},
+    {"ACS",1},
+    {"ASN",1},
+    {"ATN",1},
+    {"EXP",1},
+    {"LN",1},
+    {"POW",2}
 };
 
 
@@ -1022,7 +1079,7 @@ int parseFnCallExpr() {
         // if this isn't the last argument, eat the ,
         if (i+1<reqdArgs) {
             if (curToken != TOKEN_COMMA)
-                return ERROR_UNEXPECTED_TOKEN;
+                return ERROR_WRONG_NUM_FUNCTION_ARGS;
             getNextToken();
         }
     }
@@ -1032,6 +1089,14 @@ int parseFnCallExpr() {
         switch (op) {
         case TOKEN_INT:
             stackPushNum((float)host_floor(stackPopNum()));
+            break;
+        case TOKEN_ABS:
+            {
+                float f = stackPopNum();
+                if (f < (float)0)
+                    f = -f;
+                stackPushNum(f);
+            }
             break;
         case TOKEN_STR:
             {
@@ -1105,6 +1170,16 @@ int parseFnCallExpr() {
             tmp = (int)stackPopNum();
             if (!stackPushNum(host_analogRead(tmp))) return ERROR_OUT_OF_MEMORY;
             break;
+        case TOKEN_POW:
+#if MATH_FUNCTIONS
+			{
+				float y = stackPopNum();
+				stackPushNum(POW(stackPopNum(), y));
+				break;
+			}
+#else
+            return ERROR_FUNCTION_NOT_BUILTIN;
+#endif
         default:
             return ERROR_UNEXPECTED_TOKEN;
         }
@@ -1112,6 +1187,56 @@ int parseFnCallExpr() {
     if (curToken != TOKEN_RBRACKET) return ERROR_EXPR_MISSING_BRACKET;
     getNextToken();	// eat )
     return ret;
+}
+
+// parse a single argument math function call e.g. COS(a)
+int parseMathFn() {
+    int op = curToken;
+    getNextToken();
+    if (curToken != TOKEN_LBRACKET) return ERROR_EXPR_MISSING_BRACKET;
+    getNextToken();
+
+    int val = parseExpression();
+    if (!IS_TYPE_NUM(val))
+        return ERROR_EXPR_EXPECTED_NUM;
+
+    if (executeMode) {
+#if MATH_FUNCTIONS
+        switch (op) {
+        case TOKEN_COS:
+            stackPushNum(COS(stackPopNum()));
+            break;
+        case TOKEN_SIN:
+            stackPushNum(SIN(stackPopNum()));
+            break;
+        case TOKEN_TAN:
+            stackPushNum(TAN(stackPopNum()));
+            break;
+        case TOKEN_ACS:
+            stackPushNum(ACOS(stackPopNum()));
+            break;
+        case TOKEN_ASN:
+            stackPushNum(ASIN(stackPopNum()));
+            break;
+        case TOKEN_ATN:
+            stackPushNum(ATAN(stackPopNum()));
+            break;
+        case TOKEN_EXP:
+            stackPushNum(EXP(stackPopNum()));
+            break;
+        case TOKEN_LN:
+            stackPushNum(LOG(stackPopNum()));
+            break;
+        default:
+            return ERROR_UNEXPECTED_TOKEN;
+        }
+#else
+		return ERROR_FUNCTION_NOT_BUILTIN;
+#endif
+    }
+    if (curToken != TOKEN_RBRACKET) return ERROR_EXPR_MISSING_BRACKET;
+    getNextToken();	// eat )
+    return TYPE_NUMBER;
 }
 
 // parse an identifer e.g. a$ or a(5,3)
@@ -1177,10 +1302,21 @@ int parseParenExpr() {
     return val;
 }
 
-int parse_RND() {
+int parse_PseudoID() {
+    int op = curToken;
     getNextToken();
-    if (executeMode && !stackPushNum((float)rand()/(float)RAND_MAX))
-        return ERROR_OUT_OF_MEMORY;
+    if (executeMode) {
+        switch (op) {
+        case TOKEN_RND:
+            if (!stackPushNum((float)rand()/(float)RAND_MAX))
+                return ERROR_OUT_OF_MEMORY;
+            break;
+        case TOKEN_PI:
+            if (!stackPushNum((float)M_PI))
+                return ERROR_OUT_OF_MEMORY;
+            break;
+        }
+    }
     return TYPE_NUMBER;	
 }
 
@@ -1230,8 +1366,9 @@ int parsePrimary() {
         return parseParenExpr();
 
         // "psuedo-identifiers"
-    case TOKEN_RND:	
-        return parse_RND();
+    case TOKEN_RND:
+    case TOKEN_PI:
+        return parse_PseudoID();
     case TOKEN_INKEY:
         return parse_INKEY();
 
@@ -1242,6 +1379,7 @@ int parsePrimary() {
 
         // functions
     case TOKEN_INT: 
+    case TOKEN_ABS:
     case TOKEN_STR: 
     case TOKEN_LEN: 
     case TOKEN_VAL:
@@ -1250,7 +1388,19 @@ int parsePrimary() {
     case TOKEN_MID: 
     case TOKEN_PINREAD:
     case TOKEN_ANALOGRD:
+    case TOKEN_POW:
         return parseFnCallExpr();
+
+        // single argument math functions
+    case TOKEN_COS:
+    case TOKEN_SIN:
+    case TOKEN_TAN:
+    case TOKEN_ACS:
+    case TOKEN_ASN:
+    case TOKEN_ATN:
+    case TOKEN_EXP:
+    case TOKEN_LN:
+        return parseMathFn();
 
     default:
         return ERROR_UNEXPECTED_TOKEN;
@@ -1705,7 +1855,7 @@ int parseLoadSaveCmd() {
             if (strlen(stackGetStr()) >= MAX_IDENT_LEN)
                 return ERROR_BAD_PARAMETER;
             strcpy(fileName, stackPopStr());
-#ifdef FS_ACCESS_ALLOWED
+#if DISK_FUNCTIONS
             if (op == TOKEN_SAVE)
                 return host_saveProgramToFile(fileName, autoexec);
             else if (op == TOKEN_LOAD) {
@@ -1754,7 +1904,7 @@ int parseSimpleCmd() {
                 host_showBuffer();
                 break;
             case TOKEN_DIR:
-#ifdef FS_ACCESS_ALLOWED
+#if DISK_FUNCTIONS
                  return host_directoryListing();
 #else
 		return ERROR_FILE_ERROR;
