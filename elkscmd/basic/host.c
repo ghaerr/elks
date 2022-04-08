@@ -15,62 +15,36 @@ unsigned char mem[MEMORY_SIZE];
 static unsigned char tokenBuf[TOKEN_BUF_SIZE];
 
 static FILE *infile;
+static FILE *outfile;
 
 void host_cls() {
-	printf("\033[H\033[2J");
+	fprintf(outfile, "\033[H\033[2J");
 }
 
 void host_moveCursor(int x, int y) {
-	printf("\033[%d;%dH", y, x);
+	fprintf(outfile, "\033[%d;%dH", y, x);
 }
 
 void host_showBuffer() {
-	fflush(stdout);
+	fflush(outfile);
 }
 
 void host_outputString(char *str) {
-	printf("%s", str);
+	fprintf(outfile, "%s", str);
 }
 
 void host_outputChar(char c) {
-	printf("%c", c);
+	fprintf(outfile, "%c", c);
 }
 
 void host_outputLong(long num) {
-	printf("%ld", num);
+	fprintf(outfile, "%ld", num);
 }
 
 char *host_floatToStr(float f, char *buf) {
-#if 1
+    // floats have approx 7 sig figs
 	sprintf(buf, "%g", (double)f);
     return buf;
-#else
-    // floats have approx 7 sig figs
-    float a = fabs(f);
-    if (f == 0.0f) {
-        buf[0] = '0'; 
-        buf[1] = 0;
-    }
-    else if (a<0.0001 || a>1000000) {
-        // this will output -1.123456E99 = 13 characters max including trailing nul
-        dtostre(f, buf, 6, 0);
-    }
-    else {
-        int decPos = 7 - (int)(floor(log10(a))+1.0f);
-        dtostrf(f, 1, decPos, buf);
-        if (decPos) {
-            // remove trailing 0s
-            char *p = buf;
-            while (*p) p++;
-            p--;
-            while (*p == '0') {
-                *p-- = 0;
-            }
-            if (*p == '.') *p = 0;
-        }   
-    }
-    return buf;
-#endif
 }
 
 void host_outputFloat(float f) {
@@ -79,7 +53,7 @@ void host_outputFloat(float f) {
 }
 
 void host_newLine() {
-	printf("\n");
+	fprintf(outfile, "\n");
 }
 
 char *host_readLine() {
@@ -124,17 +98,17 @@ void host_outputFreeMem(unsigned int val)
 #define LONG_MAX_P1 ((LONG_MAX/2 + 1) * 2.0)
 
 /* small ELKS floor function using 32-bit longs */
-double host_floor(double x)
+float host_floor(float x)
 {
   if (x >= 0.0) {
     if (x < LONG_MAX_P1) {
-      return (double)(long)x;
+      return (float)(long)x;
     }
     return x;
   } else if (x < 0.0) {
     if (x >= LONG_MIN) {
       long ix = (long) x;
-      return (ix == x) ? x : (double)(ix-1);
+      return (ix == x) ? x : (float)(ix-1);
     }
     return x;
   }
@@ -210,89 +184,57 @@ void host_pinMode(int pin,int mode) {
 
 #include <dirent.h>
 
-void host_directoryListing() {
+int host_directoryListing() {
 	DIR		*dirp;
 	struct	dirent	*dp;
 
     dirp = opendir(".");
-    if (dirp == NULL) {
-        host_outputString("Error reading dir .\n");
-        return;
-    }
+    if (dirp == NULL)
+		return ERROR_FILE_ERROR;
 
     while ((dp = readdir(dirp)) != NULL) {
         char *dot = strrchr(dp->d_name, '.'); /* Find last '.', if there is one */
-        if (dot && (strcasecmp(dot, ".bas") == 0))
-        {
+        if (dot && (strcasecmp(dot, ".bas") == 0)) {
             host_outputString(dp->d_name);
             host_newLine();
         }
     }
-
     closedir(dirp);
+
+	return ERROR_NONE;
 }
 
 int host_removeFile(char *fileName) {
-    if (unlink(fileName) < 0) {
-        host_outputString("Could not remove ");
-        host_outputString(fileName);
-        host_newLine();
-        return false;
-    }
-    return true;    
+    if (unlink(fileName) < 0)
+		return ERROR_FILE_ERROR;
+    return ERROR_NONE;
 }
 
-int host_loadProgramFromFile(char *fileName) {
-    FILE* fh = fopen(fileName, "rb");
+int host_saveProgramToFile(char *fileName, int autoexec) {
+	char file[MAX_PATH_LEN+5];
 
-    if (fh < 0) {
-        sprintf(stderr, "Error opening file '%s'\n", fileName);
-        return false;
-    }
+	strcpy(file, fileName);
+	if (!strstr(file, ".bas"))
+		strcat(file, ".bas");
+	FILE* fh = fopen(file, "w");
 
-    fseek(fh, 0, SEEK_END);
-    long fsize = ftell(fh);
-    if (fsize > sizeof(mem)) {
-        sprintf(stderr, "File too large to fit in memory\n");
-        fclose(fh);
-        return false;
-    }
-    fseek(fh, 0, SEEK_SET);
+	if (!fh)
+		return ERROR_FILE_ERROR;
 
-    if (fread(mem, 1, sizeof(mem), fh) == fsize) {
-        sysPROGEND = fsize;
-        fclose(fh);
-        return true;
-    }
+	outfile = fh;
+	listProg(0, 0);
+	if (autoexec)
+		fprintf(outfile, "RUN\n");
+	fclose(outfile);
+	outfile = stdout;
 
-    sprintf(stderr, "Error reading file '%s'\n", fileName);
-
-    fclose(fh);
-    return false;
-}
-
-int host_saveProgramToFile(char *fileName) {
-    FILE* fh = fopen(fileName, "wb");
-
-    if (fh < 0) {
-        sprintf(stderr, "Error opening file '%s'\n", fileName);
-        return false;
-    }
-
-    if (fwrite(mem, 1, sysPROGEND, fh) != sysPROGEND) {
-        sprintf(stderr, "Error writing file\n");
-        fclose(fh);
-        return false;
-    }
-
-    fclose(fh);
-    return true;
+    return ERROR_NONE;
 }
 #endif
 
 // BASIC
 
-int loop() {
+int loop(int showOK) {
     int ret = ERROR_NONE;
 
     lineNumber = 0;
@@ -316,38 +258,52 @@ int loop() {
             host_outputChar('-');
         }
         printf("%s\n", errorTable[ret]);
-    }
+    } else if (showOK)
+        printf("Ok\n\n");
     return ret;
 }
 
+int host_loadProgramFromFile(char *fileName) {
+	int err;
+	char file[MAX_PATH_LEN+5];
+
+	strcpy(file, fileName);
+	if (!strstr(file, ".bas"))
+		strcat(file, ".bas");
+
+	infile = fopen(file, "r");
+	if (!infile)
+		return ERROR_FILE_ERROR;
+
+	while ((err = loop(0)) == ERROR_NONE)
+		continue;
+
+	fclose(infile);
+	infile = stdin;
+	if (err == ERROR_EOF) err = ERROR_NONE;
+	return err;
+}
+
 int main(int ac, char **av) {
+	infile = stdin;
+	outfile = stdout;
+
 	reset();
 
 	printf("Sinclair BASIC\n");
 	host_outputFreeMem(sysVARSTART - sysPROGEND);
 	printf("\n");
-	//printf("float = %d\n", sizeof(float));
-	//printf("LONG_MAX = %ld,%ld\n", LONG_MAX, LONG_MIN);
-	//printf("3.1415926 = %f\n", strtod("3.1415926", 0));
-	//printf("3.1415926 = %f\n", (double)3.1415926);
-	//printf("2e5 = %g\n", strtod("2e5", 0));
-	//printf("floor(3.1415926) = %f\n", host_floor(3.1415926));
-	//printf("floor(-3.1415926) = %f\n", host_floor(-3.1415926));
 
-	infile = stdin;
 	if (ac > 1) {
-		infile = fopen(av[1], "r");
-		if (!infile) {
-			printf("Can't open %s\n", av[1]);
+		int err = host_loadProgramFromFile(av[1]);
+		if (err != ERROR_NONE) {
+			printf("Can't load %s\n", av[1]);
 			exit(1);
-		}
-		while (loop() == ERROR_NONE)
-			continue;
-		infile = stdin;
+		} else printf("Ok\n\n");
 	}
     
 	for(;;)
-		if (loop() == ERROR_EOF)
+		if (loop(1) == ERROR_EOF)
 			break;
 	return 0;
 }

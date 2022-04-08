@@ -87,6 +87,7 @@ const char string_22[] PROGMEM = "Bad string index";
 const char string_23[] PROGMEM = "Error in VAL input";
 const char string_24[] PROGMEM = "Bad parameter";
 const char string_25[] PROGMEM = "End of file";
+const char string_26[] PROGMEM = "File error";
 
 const char* const errorTable[] PROGMEM = {
     string_0, string_1, string_2, string_3,
@@ -95,7 +96,7 @@ const char* const errorTable[] PROGMEM = {
     string_12, string_13, string_14, string_15,
     string_16, string_17, string_18, string_19,
     string_20, string_21, string_22, string_23,
-    string_24, string_25
+    string_24, string_25, string_26
 };
 
 // Token flags
@@ -1684,14 +1685,13 @@ int parse_GOSUB() {
 // DELETE "x"
 int parseLoadSaveCmd() {
     int op = curToken;
-    char autoexec = 0, gotFileName = 0;
+    int autoexec = 0, gotFileName = 0;
     getNextToken();
     if (op == TOKEN_SAVE && curToken == TOKEN_PLUS) {
         getNextToken();
         autoexec = 1;
-        // TODO: handle "autoexec" case
     }
-    else if (curToken != TOKEN_EOL && curToken != TOKEN_CMD_SEP) {
+    if (curToken != TOKEN_EOL && curToken != TOKEN_CMD_SEP) {
         int val = parseExpression();
         if (val & ERROR_MASK) return val;
         if (!IS_TYPE_STR(val))
@@ -1700,29 +1700,23 @@ int parseLoadSaveCmd() {
     }
 
     if (executeMode) {
-#ifdef FS_ACCESS_ALLOWED
         if (gotFileName) {
-            char fileName[MAX_IDENT_LEN+1];
-            if (strlen(stackGetStr()) > MAX_IDENT_LEN)
+            char fileName[MAX_PATH_LEN];
+            if (strlen(stackGetStr()) >= MAX_IDENT_LEN)
                 return ERROR_BAD_PARAMETER;
             strcpy(fileName, stackPopStr());
-            if (op == TOKEN_SAVE) {
-                if (!host_saveProgramToFile(fileName))
-                    return ERROR_OUT_OF_MEMORY;
-            }
+#ifdef FS_ACCESS_ALLOWED
+            if (op == TOKEN_SAVE)
+                return host_saveProgramToFile(fileName, autoexec);
             else if (op == TOKEN_LOAD) {
                 reset();
-                if (!host_loadProgramFromFile(fileName))
-                    return ERROR_BAD_PARAMETER;
+                return host_loadProgramFromFile(fileName);
             }
-            else if (op == TOKEN_DELETE) {
-                if (!host_removeFile(fileName))
-                    return ERROR_BAD_PARAMETER;
-            }
-        }
-#else
-        return ERROR_UNEXPECTED_CMD;
+            else if (op == TOKEN_DELETE)
+                return host_removeFile(fileName);
 #endif
+        } else return ERROR_EXPR_EXPECTED_STR;
+        return ERROR_UNEXPECTED_CMD;
     }
     return 0;
 }
@@ -1761,7 +1755,9 @@ int parseSimpleCmd() {
                 break;
             case TOKEN_DIR:
 #ifdef FS_ACCESS_ALLOWED
-                host_directoryListing();
+                 return host_directoryListing();
+#else
+		return ERROR_FILE_ERROR;
 #endif
                 break;
         }
@@ -1872,10 +1868,10 @@ int processInput(unsigned char *tokenBuf) {
     unsigned char *lineStartPtr = 0;
     if (curToken == TOKEN_INTEGER) {
         long val = (long)numVal;
-		if (val > 65535)
+        if (val > 65535)
             return ERROR_LINE_NUM_TOO_BIG;
-		if (val == 0)
-			return ERROR_LEXER_BAD_NUM;
+        if (val == 0)
+                return ERROR_LEXER_BAD_NUM;
         else {
             gotLineNumber = (uint16_t)val;
             lineStartPtr = tokenBuffer;
