@@ -63,6 +63,8 @@ struct drive_infot {            /* CHS per drive*/
 };
 extern struct drive_infot *last_drive;	/* set to last drivep-> used in read/write */
 
+extern unsigned char hd_drive_map[];
+
 extern struct blk_dev_struct blk_dev[MAX_BLKDEV];
 extern void resetup_one_dev(struct gendisk *dev, int drive);
 

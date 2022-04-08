@@ -93,10 +93,14 @@ static void INITPROC add_partition(struct gendisk *hd, unsigned short int minor,
      * If the root device is already fully known, i.e. ROOT_DEV is already
      * a device number, then we do not really need boot_partition.
      */
+#ifdef CONFIG_ARCH_PC98
+    if (ROOT_DEV == hd_drive_map[minor >> hd->minor_shift]) {
+#else
     if (ROOT_DEV == (0x80 | minor >> hd->minor_shift)) {
+#endif
 	sector_t boot_start = SETUP_PART_OFFSETLO | (sector_t) SETUP_PART_OFFSETHI << 16;
 	if (start == boot_start)
-	    boot_partition = minor;
+	    boot_partition = minor & 0x7;
     }
 }
 

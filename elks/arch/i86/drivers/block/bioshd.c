@@ -125,7 +125,7 @@ struct drive_infot fd_types[] = {	/* AT/PS2 BIOS reported floppy formats*/
 };
 
 #ifdef CONFIG_ARCH_PC98
-static unsigned char hd_drive_map[NUM_DRIVES] = {/* BIOS drive mappings*/
+unsigned char hd_drive_map[NUM_DRIVES] = {/* BIOS drive mappings*/
     0xA0, 0xA1, 0xA2, 0xA3,		/* hda, hdb */
 #ifdef CONFIG_IMG_FD1232
     0x90, 0x91, 0x92, 0x93		/* fd0, fd1 */
@@ -134,7 +134,7 @@ static unsigned char hd_drive_map[NUM_DRIVES] = {/* BIOS drive mappings*/
 #endif
 };
 #else
-static unsigned char hd_drive_map[NUM_DRIVES] = {/* BIOS drive mappings*/
+unsigned char hd_drive_map[NUM_DRIVES] = {/* BIOS drive mappings*/
     0x80, 0x81, 0x82, 0x83,		/* hda, hdb */
     0x00, 0x01, 0x02, 0x03		/* fd0, fd1 */
 };
@@ -181,17 +181,17 @@ static int bios_disk_rw(unsigned cmd, unsigned num_sectors, unsigned drive,
 #ifdef CONFIG_ARCH_PC98
 	BD_AX = cmd | drive;
     if ((0xF0 & drive) == 0xA0) {
-	BD_BX = (unsigned int) (num_sectors * 512);
+	BD_BX = (unsigned int) (num_sectors << 9);
 	BD_CX = cylinder;
-	BD_DX = (head << 8) | (sector - 1);
+	BD_DX = (head << 8) | ((sector - 1) & 0xFF);
     }
     else {
 	if ((0xF0 & drive) == 0x90) {
-	    BD_BX = (unsigned int) (num_sectors * 1024);
+	    BD_BX = (unsigned int) (num_sectors << 10);
 	    BD_CX = (3 << 8) | cylinder;
 	}
 	else {
-	    BD_BX = (unsigned int) (num_sectors * 512);
+	    BD_BX = (unsigned int) (num_sectors << 9);
 	    BD_CX = (2 << 8) | cylinder;
 	}
 	BD_DX = (head << 8) | sector;
@@ -1107,11 +1107,18 @@ kdev_t INITPROC bioshd_conv_bios_drive(unsigned int biosdrive)
     extern int boot_partition;
 
 #ifdef CONFIG_ARCH_PC98
-    for (minor = 0; minor < NUM_DRIVES; minor++) {
-	if (biosdrive == hd_drive_map[minor]) break;
+    if ((biosdrive & 0xF0) == 0xA0) {		/* hard drive*/
+	for (minor = 0; minor < 4; minor++) {
+	    if (biosdrive == hd_drive_map[minor]) break;
+	}
+	if (minor >= 4) minor = 0;
+	partition = boot_partition;	/* saved from add_partition()*/
+    } else {
+	for (minor = 4; minor < 8; minor++) {
+	    if (biosdrive == hd_drive_map[minor]) break;
+	}
+	if (minor >= 8) minor = 4;
     }
-    if ((biosdrive & 0xF0) == 0xA0)
-	partition = boot_partition;
 #else
     if (biosdrive & 0x80) {		/* hard drive*/
 	minor = biosdrive & 0x03;
