@@ -1,13 +1,11 @@
 Sinclair basic examples and compatibility
 	randomize, data, read
 	inkey$
-	SAVE
 	go to -> goto
-float -> double
-parse 1e4 etc
+^C stop
+parse 1e4 numbers
 strtol must return LONG_MAX or MIN on over/underflow
-cleanup floor statements at start
 %.12f variable precision output
 print Nan
-^C stop
 TOKEN_INTEGER - size 4 or 2, line number only?
+	don't convert to integer then float each time

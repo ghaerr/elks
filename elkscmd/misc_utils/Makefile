@@ -22,10 +22,8 @@ PRGS += float
 
 all: $(PRGS) $(PRGS_HOST)
 
-# FIXME work around undefined 'memcpy' in libgcc.a
-ECVT=../../libc/build-ml/elkslibc/misc/ecvt.o
 float: float.o
-	$(LD) $(LDFLAGS) -o float float.o $(ECVT) $(LDLIBS)
+	$(LD) $(LDFLAGS) -o float float.o $(ECVT) $(LDLIBS) -lc
 
 ed: ed.o
 	$(LD) $(LDFLAGS) -o ed ed.o $(LDLIBS)
