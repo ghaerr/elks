@@ -344,10 +344,7 @@ dr_loop:
 	adc sect_offset+2,%dx
 	div %bx
 #ifdef CONFIG_ARCH_PC98
-	mov %al,%cl      // cylinder number for PC_98
-#if defined(CONFIG_IMG_HD)
-	mov %ah,%ch      // higher bits of cylinder number for PC_98
-#endif
+	mov %ax,%cx      // cylinder number for PC_98
 #else
 	mov %al,%ch      // CH = low 8 bits of physical cylinder number
 	ror %ah
@@ -364,11 +361,7 @@ dr_loop:
 	mov sect_max,%bx // BX = sectors per track
 #endif
 	div %bx          // DL = physical sector number - 1
-#ifdef CONFIG_ARCH_PC98
-#if defined(CONFIG_IMG_FD1232) || defined(CONFIG_IMG_FD1440)
-	inc %dl          // sector number for PC_98
-#endif
-#else
+#ifndef CONFIG_ARCH_PC98
 	or %dl,%cl       // stash {physical sector number - 1} in CL
 	inc %cx          // base 1 for sector number
 #endif
@@ -425,21 +418,20 @@ dr_try:
 	mov %ax,%es
 	mov $0x584,%bx
 	mov %es:(%bx),%al // Physical Device Address
-	push %ax
-	and $0x0F,%al
-#if defined(CONFIG_IMG_HD)
-	or $0x80,%al
-#endif
 	mov %al,drive_num
-	pop %ax
 	pop %es
 	mov $0xD6,%ah    // Read Data
 	mov $SECTOR_SIZE,%bx
+	test $0x10,%al
+	jz pc98_1b
 #if defined(CONFIG_IMG_FD1232)
 	mov $0x03,%ch    // 1024 Bytes per sector
+	inc %dl          // sector number for PC_98
 #elif defined(CONFIG_IMG_FD1440)
 	mov $0x02,%ch    // 512 Bytes per sector
+	inc %dl          // sector number for PC_98
 #endif
+pc98_1b:
 	int $0x1B
 	pop %bp
 #else
