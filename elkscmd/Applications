@@ -101,7 +101,7 @@ sh_utils/stty					:shutil					:1200k	:1440k
 sh_utils/printenv				:shutil					:1200k	:1440k
 sh_utils/pwd					:shutil			:360k
 sh_utils/tr						:shutil				:720k
-sh_utils/which					:shutil					:1200k	:1440k
+#sh_utils/which					:shutil					:1200k	:1440k
 #sh_utils/whoami				:shutil					:1200k	:1440k
 sh_utils/xargs					:shutil					:1200k	:1440k
 sh_utils/yes					:shutil				:720k
