@@ -1,10 +1,8 @@
-Arduino/Sinclair Basic
+ELKS Sinclair Basic
 ======================
 From Robin Edwards' ArduinoBASIC (https://github.com/robinhedwards/ArduinoBASIC).
 
 A complete BASIC interpreter for your 80's home computer! The BASIC supports almost all the usual features, with float and string variables, multi-dimensional arrays, FOR-NEXT, GOSUB-RETURN, etc.
-
-[![Demo](http://img.youtube.com/vi/JB5RXoO1IwQ/0.jpg)](http://www.youtube.com/watch?v=JB5RXoO1IwQ)
 
 BASIC Language
 --------------
@@ -31,10 +29,8 @@ Only the addition operator is supported on strings (plus the functions below).
 Commands
 ```
 PRINT <expr>;<expr>... e.g. PRINT "A=";a
-LET variable = <expr> e.g. LET A$="Hello".
+LET variable = <expr> e.g. LET A$="Hello"
 variable = <expr> e.g. A=5
-LIST [start],[end] e.g. LIST or LIST 10,100
-RUN [lineNumber]
 GOTO lineNumber
 REM <comment> e.g. REM ** My Program ***
 STOP
@@ -43,24 +39,46 @@ INPUT variable e.g. INPUT a$ or INPUT a(5,3)
 IF <expr> THEN cmd e.g. IF a>10 THEN a = 0: GOTO 20
 FOR variable = start TO end STEP step
 NEXT variable
-NEW
 GOSUB lineNumber
 RETURN
 DIM variable(n1,n2...)
 CLS
 PAUSE milliseconds
 POSITION x,y sets the cursor
+NEW
+LIST [start],[end] e.g. LIST or LIST 10,100
+RUN [lineNumber]
+LOAD "filename" from filesystem
+SAVE "filename" to filesystem
+SAVE+ "filename" to filesystem, set auto-run on load
+DELETE "filename" from filesystem
+DIR
+
+Architecture-specific
 PIN pinNum, value (0 = low, non-zero = high)
-PINMODE pinNum, mode ( 0 = input, 1 = output)
-LOAD (from internal EEPROM)
-SAVE (to internal EEPROM) e.g. use SAVE + to set auto-run on boot flag
-LOAD "filename", SAVE "filename, DIR, DELETE "filename" if using with external EEPROM.
+PINMODE pinNum, mode - not implemented
+
+Not yet implemented
+POKE offset,segment,value
+OUT port,value
+RANDOMIZE [nmber]
+READ var
+DATA
+RESTORE [line]
+INPUT [prompt,] variable
+PRINT <expr>,<expr> (tab separated output)
+MODE number (set graphics mode)
+COLOR fg[,bg]
+PLOT x,y
+DRAW x,y[,a]
+CIRCLE x,y[,r]
 ```
 
 "Pseudo-identifiers"
 ```
 INKEY$ - returns (and eats) the last key pressed buffer (non-blocking). e.g. PRINT INKEY$
 RND - random number betweeen 0 and 1. e.g. LET a = RND
+PI - 3.1415926
 ```
 
 Functions
@@ -68,10 +86,32 @@ Functions
 LEN(string) e.g. PRINT LEN("Hello") -> 5
 VAL(string) e.g. PRINT VAL("1+2")
 INT(number) e.g. INT(1.5)-> 1
+ABS(number) e.g. ABS(-1)-> 1
 STR$(number) e.g. STR$(2) -> "2"
 LEFT$(string,n)
 RIGHT$(string,n)
 MID$(string,start,n)
-PINREAD(pin) - see Arduino digitalRead()
-ANALOGRD(pin) - see Arduino analogRead()
+COS(x)
+SIN(x)
+TAN(x)
+ACS(x)
+ASN(x)
+ATN(x)
+EXP(x)
+LN(x)
+POW(x,y) e.g. POW(2,0.5) -> 1.414 square root of 2
+
+Architecture-specific
+PINREAD(pin)
+ANALOGRD(pin) - not implemented
+
+Not yet implemented
+SGN(number) e.g. SGN(-1) -> -1
+CHR$(number) e.g. CHR$(32) -> " "
+CODE(string) e.g. CODE(" ") -> 32
+PEEK(offset,segment) - not yet i
+IN(port)
+SCREEN$(line,col)
+ATTR(line,col)
+POINT(x,y)
 ```
