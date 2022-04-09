@@ -87,7 +87,9 @@
 #define TOKEN_EXP		74
 #define TOKEN_LN		75
 #define TOKEN_POW		76
-#define LAST_IDENT_TOKEN	76
+#define TOKEN_CHR		77
+#define TOKEN_CODE		78
+#define LAST_IDENT_TOKEN	78
 
 #define ERROR_NONE				0
 // parse errors
@@ -96,7 +98,7 @@
 #define ERROR_LEXER_UNEXPECTED_INPUT	        3
 #define ERROR_LEXER_UNTERMINATED_STRING         4
 #define ERROR_EXPR_MISSING_BRACKET		5
-#define ERROR_UNEXPECTED_TOKEN			6
+#define ERROR_UNEXPECTED_TOKEN			6	/* Error in expr */
 #define ERROR_EXPR_EXPECTED_NUM			7
 #define ERROR_EXPR_EXPECTED_STR			8
 #define ERROR_LINE_NUM_TOO_BIG			9

@@ -1,5 +1,5 @@
 10 i = pi
-20 print i
+20 print i,i
 30 i = rnd
 40 print i
 50 i = 1
@@ -15,3 +15,7 @@
 500 next i
 600 print "pow(3,4) = ";pow(3,4)
 700 print "exp(1) = ";exp(1)
+710 print chr$(65);"=A"
+720 print code(" ");"=32"
+800 input "Enter a string:",a$
+900 print a$
