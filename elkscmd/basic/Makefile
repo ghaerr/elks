@@ -16,13 +16,20 @@ HOST_CFLAGS = -O3
 ###############################################################################
 
 PRGS = basic
+OBJS = basic.o host.o
+
+ifeq ($(CONFIG_ARCH_8018X), y)
+OBJS += host-8018x.o
+else
+OBJS += host-stubs.o
+endif
 
 all: $(PRGS)
 
-basic: basic.o host.o basic.h host.h
-	$(LD) $(LDFLAGS) -o basic basic.o host.o $(LDLIBS)
+basic: $(OBJS) basic.h host.h
+	$(LD) $(LDFLAGS) -o basic $(OBJS) $(LDLIBS)
 
-HOSTSRC = basic.c host.c
+HOSTSRC = basic.c host.c host-stubs.c
 HOSTSRC += ../../libc/misc/ecvt.c
 HOSTSRC += ../../libc/stdio/__fp_print_func.c
 hostbasic: $(HOSTSRC) host.h basic.h
