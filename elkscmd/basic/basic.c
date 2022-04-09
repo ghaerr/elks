@@ -155,7 +155,7 @@ PROGMEM const TokenTableEntry tokenTable[] = {
     {"VAL",1|TKN_ARG1_TYPE_STR},
     {"RND",0},
     {"INT",1},
-    {"STR$", 1|TKN_RET_TYPE_STR},
+    {"STR$",1|TKN_RET_TYPE_STR},
     {"FOR",TKN_FMT_POST},
     {"TO",TKN_FMT_PRE|TKN_FMT_POST},
     {"STEP",TKN_FMT_PRE|TKN_FMT_POST},
@@ -190,7 +190,9 @@ PROGMEM const TokenTableEntry tokenTable[] = {
     {"ATN",1},
     {"EXP",1},
     {"LN",1},
-    {"POW",2}
+    {"POW",2},
+    {"CHR$",1|TKN_RET_TYPE_STR},
+    {"CODE",1|TKN_ARG1_TYPE_STR}
 };
 
 
@@ -1100,14 +1102,27 @@ int parseFnCallExpr() {
             break;
         case TOKEN_STR:
             {
-                char buf[16];
+                char buf[MAX_NUMBER_LEN+1];
                 if (!stackPushStr(host_floatToStr(stackPopNum(), buf)))
+                    return ERROR_OUT_OF_MEMORY;
+            }
+            break;
+        case TOKEN_CHR:
+            {
+                char buf[2];
+                buf[0] = (int)stackPopNum();
+                buf[1] = '\0';
+                if (!stackPushStr(buf))
                     return ERROR_OUT_OF_MEMORY;
             }
             break;
         case TOKEN_LEN:
             tmp = strlen(stackPopStr());
             if (!stackPushNum(tmp)) return ERROR_OUT_OF_MEMORY;
+            break;
+        case TOKEN_CODE:
+            if (!stackPushNum((float)*(unsigned char *)stackPopStr()))
+		return ERROR_OUT_OF_MEMORY;
             break;
         case TOKEN_VAL:
             {
@@ -1381,7 +1396,9 @@ int parsePrimary() {
     case TOKEN_INT: 
     case TOKEN_ABS:
     case TOKEN_STR: 
+    case TOKEN_CHR:
     case TOKEN_LEN: 
+    case TOKEN_CODE:
     case TOKEN_VAL:
     case TOKEN_LEFT: 
     case TOKEN_RIGHT: 
@@ -1614,7 +1631,7 @@ int parse_LIST() {
 
 int parse_PRINT() {
     getNextToken();
-    // zero + expressions seperated by semicolons
+    // zero + expressions seperated by semicolons or commas
     int newLine = 1;
     while (curToken != TOKEN_EOL && curToken != TOKEN_CMD_SEP) {
         int val = parseExpression();
@@ -1629,6 +1646,11 @@ int parse_PRINT() {
         if (curToken == TOKEN_SEMICOLON) {
             newLine = 0;
             getNextToken();
+        }
+        if (curToken == TOKEN_COMMA) {
+            newLine = 0;
+            getNextToken();
+			if (executeMode) host_outputString("\t");
         }
     }
     if (executeMode) {
@@ -1673,6 +1695,14 @@ int parseTwoIntCmd() {
 int parseAssignment(int inputStmt) {
     char ident[MAX_IDENT_LEN+1];
     int val;
+    if (inputStmt && (curToken == TOKEN_STRING)) {
+        int val = parseExpression();
+        if (val & ERROR_MASK) return val;
+        if (curToken != TOKEN_COMMA) return ERROR_UNEXPECTED_TOKEN;
+        if (executeMode)
+            host_outputString(stackPopStr());
+        getNextToken();
+    }
     if (curToken != TOKEN_IDENT) return ERROR_UNEXPECTED_TOKEN;
     if (executeMode)
         strcpy(ident, identVal);

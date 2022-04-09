@@ -2,7 +2,7 @@ ELKS Sinclair Basic
 ======================
 From Robin Edwards' ArduinoBASIC (https://github.com/robinhedwards/ArduinoBASIC).
 
-A complete BASIC interpreter for your 80's home computer! The BASIC supports almost all the usual features, with float and string variables, multi-dimensional arrays, FOR-NEXT, GOSUB-RETURN, etc.
+A complete BASIC interpreter for your 80's home computer! This BASIC supports almost all the usual features, with float and string variables, multi-dimensional arrays, FOR-NEXT, GOSUB-RETURN, etc.
 
 BASIC Language
 --------------
@@ -28,14 +28,14 @@ Only the addition operator is supported on strings (plus the functions below).
 
 Commands
 ```
-PRINT <expr>;<expr>... e.g. PRINT "A=";a
+PRINT <expr>;,<expr>... e.g. PRINT "A=";a
 LET variable = <expr> e.g. LET A$="Hello"
 variable = <expr> e.g. A=5
 GOTO lineNumber
 REM <comment> e.g. REM ** My Program ***
 STOP
 CONT (continue from a STOP)
-INPUT variable e.g. INPUT a$ or INPUT a(5,3)
+INPUT [string prompt,] variable e.g. INPUT a$ or INPUT a(5,3)
 IF <expr> THEN cmd e.g. IF a>10 THEN a = 0: GOTO 20
 FOR variable = start TO end STEP step
 NEXT variable
@@ -48,10 +48,10 @@ POSITION x,y sets the cursor
 NEW
 LIST [start],[end] e.g. LIST or LIST 10,100
 RUN [lineNumber]
-LOAD "filename" from filesystem
-SAVE "filename" to filesystem
-SAVE+ "filename" to filesystem, set auto-run on load
-DELETE "filename" from filesystem
+LOAD "filename" loads filename.bas
+SAVE "filename" saves filename.bas
+SAVE+ "filename" saves filename.bas, sets auto-run on load
+DELETE "filename" deletes filename.bas
 DIR
 
 Architecture-specific
@@ -65,8 +65,6 @@ RANDOMIZE [nmber]
 READ var
 DATA
 RESTORE [line]
-INPUT [prompt,] variable
-PRINT <expr>,<expr> (tab separated output)
 MODE number (set graphics mode)
 COLOR fg[,bg]
 PLOT x,y
@@ -84,32 +82,36 @@ PI - 3.1415926
 Functions
 ```
 LEN(string) e.g. PRINT LEN("Hello") -> 5
-VAL(string) e.g. PRINT VAL("1+2")
+VAL(string) e.g. PRINT VAL("1+2") runtime evaluated
 INT(number) e.g. INT(1.5)-> 1
 ABS(number) e.g. ABS(-1)-> 1
+CHR$(number) e.g. CHR$(32) -> " "
+CODE(string) e.g. CODE(" ") -> 32
 STR$(number) e.g. STR$(2) -> "2"
 LEFT$(string,n)
 RIGHT$(string,n)
 MID$(string,start,n)
-COS(x)
-SIN(x)
-TAN(x)
-ACS(x)
-ASN(x)
-ATN(x)
-EXP(x)
-LN(x)
+COS(x) cosine
+SIN(x) sine
+TAN(x) tangent
+ACS(x) arc cosine
+ASN(x) arc sine
+ATN(x) arc tangent
+EXP(x) e exponential
+LN(x) natural logarithm
 POW(x,y) e.g. POW(2,0.5) -> 1.414 square root of 2
 
 Architecture-specific
 PINREAD(pin)
 ANALOGRD(pin) - not implemented
 
+Not implemented
+x^y x to the y power - use POW(x,y)
+SQR(number) square root, use POW(number,0.5)
+SGN(number) sign, use IF number < 0 etc
+
 Not yet implemented
-SGN(number) e.g. SGN(-1) -> -1
-CHR$(number) e.g. CHR$(32) -> " "
-CODE(string) e.g. CODE(" ") -> 32
-PEEK(offset,segment) - not yet i
+PEEK(offset,segment)
 IN(port)
 SCREEN$(line,col)
 ATTR(line,col)
