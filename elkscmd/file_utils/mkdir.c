@@ -10,14 +10,15 @@ static unsigned short newmode;
 static int make_dir(char *name, int f)
 {
 	char *line;
-	char iname[256];
+	char iname[80];
 	
 	strcpy(iname, name);
 	if (((line = rindex(iname,'/')) != NULL) && f) {
 		while ((line > iname) && (*line == '/'))
 			--line;
 		line[1] = 0;
-		make_dir(iname,1);
+		if (*line != '/')
+			make_dir(iname,1);
 	}
 	if (mkdir(name, newmode) < 0 && !f)
 		return 1;

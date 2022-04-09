@@ -161,6 +161,8 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
+	if (flags == 0 && type == 0)
+		flags = MS_AUTOMOUNT;
 	if (mount(argv[0], argv[1], type, flags) < 0) {
 		if (flags & MS_AUTOMOUNT) {
 			type = (!type || type == FST_MINIX)? FST_MSDOS: FST_MINIX;
