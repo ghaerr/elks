@@ -1,0 +1,15 @@
+Sinclair basic examples and compatibility
+	randomize, data, read
+	inkey$
+^C stop
+parse 1e4 numbers
+strtol must return LONG_MAX or MIN on over/underflow
+double precision too large w/POW for ELKS, need medium model
+	why is double math lib so much larger?
+	possibly add SQRT if no POW for space
+check what other math functions require adjust()
+check host_floor works ok with double precision using 32 bit ints
+%.14f variable precision output in __fp_print_func
+print Nan
+TOKEN_INTEGER - size 4 or 2, line number only?
+	don't convert to integer then float each time

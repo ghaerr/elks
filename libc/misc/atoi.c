@@ -6,7 +6,7 @@
 #include <stdlib.h>
 
 int
-atoi(register const char *number)
+atoi(const char *number)
 {
 #ifdef USE_ATOL_AS_ATOI
 	return atol(number);

@@ -7,7 +7,6 @@ CFLAGS	+= -DL_ftell
 OBJS = \
 	stdio.o \
 	__fopen.o \
-	__fp_print.o \
 	__fp_print_func.o \
 	__io_init.o \
 	__io_list.o \

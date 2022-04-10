@@ -656,6 +656,6 @@ error_copy:
 	fprintf(stderr, "Failed to copy %s -> %s\n", srcname, destname);
 	return 1;
 usage:
-	fprintf(stderr, "Usage: cp [-R][-v] source [...] target_file_or_directory\n");
+	fprintf(stderr, "usage: cp [-R][-v] source [...] target_file_or_directory\n");
 	return 1;
 }

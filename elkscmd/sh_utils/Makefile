@@ -10,9 +10,9 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-# TODO: uname write	# Do not compile
+# TODO: write	# Do not compile
 PRGS=basename clear date dirname echo false printenv pwd true which whoami \
-	yes logname tr xargs mesg stty test
+	yes logname tr xargs mesg stty test uname
 
 write: write.o ../sys_utils/utent.o
 
@@ -57,8 +57,8 @@ yes: yes.o
 logname: logname.o
 	$(LD) $(LDFLAGS) -o logname logname.o $(LDLIBS)
 
-tr: tr.o $(TINYPRINTF)
-	$(LD) $(LDFLAGS) -o tr tr.o $(TINYPRINTF) $(LDLIBS)
+tr: tr.o
+	$(LD) $(LDFLAGS) -o tr tr.o $(LDLIBS)
 
 xargs: xargs.o
 	$(LD) $(LDFLAGS) -o xargs xargs.o $(LDLIBS)
@@ -66,12 +66,14 @@ xargs: xargs.o
 mesg: mesg.o $(TINYPRINTF)
 	$(LD) $(LDFLAGS) -o mesg mesg.o $(TINYPRINTF) $(LDLIBS)
 
-stty: stty.o $(TINYPRINTF)
-	$(LD) $(LDFLAGS) -o stty stty.o $(TINYPRINTF) $(LDLIBS)
+stty: stty.o
+	$(LD) $(LDFLAGS) -o stty stty.o $(LDLIBS)
 
 test: test.o
 	$(LD) $(LDFLAGS) -o test test.o $(LDLIBS)
 
+uname: uname.o
+	$(LD) $(LDFLAGS) -o uname uname.o $(LDLIBS)
 
 install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin

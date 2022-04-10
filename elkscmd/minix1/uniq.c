@@ -41,7 +41,7 @@ static FILE *xfopen(const char *fn, const char *mode)
   return(p);
 }
 
-static char *skip(const char *s)
+static char *skip(char *s)
 {
   int n;
 

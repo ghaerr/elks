@@ -231,7 +231,7 @@ FILE *input;
 {
   int n;
   register char *bp;
-  register int c;
+  register int c = 0;
   char *new_buf;
   size_t new_size;
 

@@ -8,10 +8,6 @@
  * License v2, or at your option any later version.
  */
 
-/*
- * This is a small version of reboot for use in the ELKS project.
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -23,9 +19,12 @@
 int main(int argc, char **argv)
 {
 	sync();
-	if (umount("/")) {
-		perror("reboot umount");
-		return 1;
+	if (umount("/") < 0) {
+		/* -f forces reboot even if mount fails */
+		if (argc < 2 || argv[1][0] != '-' || argv[1][1] != 'f')	 {
+			perror("reboot umount");
+			return 1;
+		}
 	}
 	sleep(3);
 	if (reboot(0x1D1E,0xC0DE,0x0123)) {

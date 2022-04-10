@@ -3,6 +3,25 @@
 meminfo \- list system memory usage
 .SH SYNOPSIS
 .B meminfo
+.RB [ \-a ]
+.RB [ \-f ]
+.RB [ \-t ]
+.RB [ \-b ]
+.br
+.SS OPTIONS
+Defaults to showing all memory.
+.TP 5
+.B -a
+Show application memory
+.TP 5
+.B -f
+Show free memory
+.TP 5
+.B -t
+Show tty memory
+.TP 5
+.B -b
+Show buffer memory
 .SH DESCRIPTION
 .B meminfo
 traverses the kernel local heap and displays a line for each in-use or free entry. 

@@ -16,19 +16,22 @@
 #define EXIT_FAILURE 1
 #define EXIT_SUCCESS 0
 
-extern int rand __P ((void));
-extern void srand __P ((unsigned int seed));
+#define RAND_MAX	0x7fff
+int rand(void);
+void srand(unsigned int seed);
 
-extern long strtol __P ((const char * nptr, char ** endptr, int base));
-extern unsigned long strtoul __P ((const char * nptr,
-				   char ** endptr, int base));
+long strtol(const char * nptr, char ** endptr, int base);
+unsigned long strtoul(const char * nptr, char ** endptr, int base);
+
 #ifndef __HAS_NO_FLOATS__
-extern double strtod __P ((const char * nptr, char ** endptr));
-extern double atof __P ((__const char *__nptr));
+double strtod(const char *nptr, char ** endptr);
+double atof(const char *str);
+char *ecvt(double val, int ndig, int *pdecpt, int *psign);
+char *fcvt(double val, int nfrac, int *pdecpt, int *psign);
 #endif
 
-extern long int atol __P ((__const char *__nptr));
-extern int atoi __P ((__const char *__nptr));
+long atol(const char *str);
+int atoi(const char *str);
 
 /* Returned by `div'.  */
 typedef struct

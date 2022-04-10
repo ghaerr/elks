@@ -8,61 +8,36 @@
 #include <fcntl.h>
 
 static 	int	errcode;
-static	int	usage(char *);
-static	void	rm();
-static 	int	yes();
-static	int 	dotname();
 
-int
-main(int argc, char **argv) {
-	int force=0, recurse = 0, interact =0 ;
-	char *arg;
-
-	if (argc < 2)
-		return(usage(argv[0]));
-	errcode = 0;
-
-        while(argc>1 && argv[1][0]=='-') {
-                arg = *++argv;
-                argc--;
-
-                /*
-                 *  all files following a single '-' are considered file names
-                 */
-                if (*(arg+1) == '\0') break;
-
-                while(*++arg != '\0')
-                        switch(*arg) {
-                        case 'f':
-                                force++;
-                                break;
-                        case 'i':
-                                interact++;
-                                break;
-                        case 'r':
-                                recurse++;
-                                break;
-                        default:
-                                return(usage(*argv));
-                        }
-        }
-        while(--argc > 0) {
-                if(!strcmp(*++argv, "..")) {
-                        fprintf(stderr, "rm: cannot remove `..'\n");
-                        continue;
-                }
-                rm(*argv, force, recurse, interact, 0);
-        }
-        return(errcode);
+int usage(void)
+{
+	fprintf(stderr, "usage: rm [-rfi] file [...]\n");
+	return 1;
 }
 
-int usage(char * a) {
-	fprintf(stderr, "usage: %s [-rfi] file1 [file2] ...\n", a);
-	return(1);
+int yes(void) {
+        int i, b;
+
+        i = b = getchar();
+        while(b != '\n' && b != EOF)
+                b = getchar();
+        return(i == 'y');
 }
 
-void
-rm(char *arg, int fflg, int rflg, int iflg, int level) {
+int dotname(char *s) {
+        if ((s[0] == '.')) {
+                if (s[1] == '.')
+                        if (s[2] == '\0')
+                                return(1);
+                        else
+                                return(0);
+                else if(s[1] == '\0')
+                        return(1);
+        }
+	return(0);
+}
+
+void rm(char *arg, int fflg, int rflg, int iflg, int level) {
         struct stat buf;
         struct dirent *dp;
         DIR *dirp;
@@ -130,27 +105,45 @@ rm(char *arg, int fflg, int rflg, int iflg, int level) {
         }
 	return;
 }
-                                
 
-int
-dotname(char *s) {
-        if ((s[0] == '.')) {
-                if (s[1] == '.')
-                        if (s[2] == '\0')
-                                return(1);
-                        else
-                                return(0);
-                else if(s[1] == '\0')
-                        return(1);
+int main(int argc, char **argv) {
+	int force=0, recurse = 0, interact =0 ;
+	char *arg;
+
+	if (argc < 2)
+		return usage();
+	errcode = 0;
+
+        while(argc>1 && argv[1][0]=='-') {
+                arg = *++argv;
+                argc--;
+
+                /*
+                 *  all files following a single '-' are considered file names
+                 */
+                if (*(arg+1) == '\0') break;
+
+                while(*++arg != '\0')
+                        switch(*arg) {
+                        case 'f':
+                                force++;
+                                break;
+                        case 'i':
+                                interact++;
+                                break;
+                        case 'r':
+                                recurse++;
+                                break;
+                        default:
+                                return usage();
+                        }
         }
-	return(0);
-}
-
-int yes(void) {
-        int i, b;
-
-        i = b = getchar();
-        while(b != '\n' && b != EOF)
-                b = getchar();
-        return(i == 'y');
+        while(--argc > 0) {
+                if(!strcmp(*++argv, "..")) {
+                        fprintf(stderr, "rm: cannot remove `..'\n");
+                        continue;
+                }
+                rm(*argv, force, recurse, interact, 0);
+        }
+        return(errcode);
 }

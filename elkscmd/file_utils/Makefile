@@ -35,8 +35,8 @@ cmp: cmp.o
 cp: cp.o $(TINYPRINTF)
 	$(LD) $(LDFLAGS) -maout-heap=0xffff -o cp cp.o $(TINYPRINTF) $(LDLIBS)
 
-df: df.o
-	$(LD) $(LDFLAGS) -o df df.o $(LDLIBS)
+df: df.o $(TINYPRINTF)
+	$(LD) $(LDFLAGS) -o df df.o $(TINYPRINTF) $(LDLIBS)
 
 dd: dd.o
 	$(LD) $(LDFLAGS) -maout-heap=12288 -o dd dd.o $(LDLIBS)
@@ -68,8 +68,8 @@ more: more.o
 mv: mv.o
 	$(LD) $(LDFLAGS) -o mv mv.o $(LDLIBS)
 
-rm: rm.o
-	$(LD) $(LDFLAGS) -maout-stack=12228 -o rm rm.o $(LDLIBS)
+rm: rm.o $(TINYPRINTF)
+	$(LD) $(LDFLAGS) -maout-stack=12228 -o rm rm.o $(TINYPRINTF) $(LDLIBS)
 
 rmdir: rmdir.o
 	$(LD) $(LDFLAGS) -o rmdir rmdir.o $(LDLIBS)

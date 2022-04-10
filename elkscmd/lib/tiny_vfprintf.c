@@ -1,13 +1,14 @@
 /*
  * Tiny vfprintf - based on ELKS stdio
  *
- * Reduces executable size when linked with app.
+ * Reduces executable size when linked with app for programs requiring
+ *  output to terminal only (stdout, stderr) and no file I/O.
  * Automatically usable with:
  *  printf, fprintf, sprintf
  *
  * Limitations:
- *	%s, %c, %d, %u, %x, %o, %ld, %lu, %lx only
- *  No field widths
+ *	%s, %c, %d, %u, %x, %o, %ld, %lu, %lx, %lo only w/field width & precision
+ *  Don't use with fopen (stdout, stderr only)
  *    Replaces stdout and stderr buffers with single buffer
  *
  * Mar 2020 Greg Haerr
@@ -73,11 +74,58 @@ static void __fputc(int ch, FILE *fp)
    fp->bufwrite = fp->bufend;
 }
 
+/*
+ * Output the given field in the manner specified by the arguments. Return
+ * the number of characters output.
+ */
+static int
+prtfld(FILE *op, unsigned char *buf, int ljustf, char pad, int width, int preci)
+{
+   int cnt = 0, len;
+   unsigned char ch;
+
+   len = strlen((char *)buf);
+
+   if ((preci != -1) && (len > preci))  /* limit max data width */
+      len = preci;
+
+   if (width < len)             /* flexible field width or width overflow */
+      width = len;
+
+   /*
+    * at this point: width = total field width len   = actual data width
+    */
+   cnt = width;
+   width -= len;
+
+   while (width || len)
+   {
+      if (!ljustf && width)     /* left padding */
+      {
+         ch = pad;
+         --width;
+      }
+      else if (len)
+      {
+         ch = *buf++;        /* main field */
+         --len;
+      }
+      else
+      {
+         ch = pad;              /* right padding */
+         --width;
+      }
+      __fputc(ch, op);
+   }
+
+   return cnt;
+}
+
 int vfprintf(FILE *op, const char *fmt, va_list ap)
 {
    int cnt = 0;
-   int lval;
-   int radix;
+   int i, width, preci, radix;
+   int ljustf, lval, pad, dpoint;
    char *ptmp;
    char  tmp[64];
 
@@ -85,14 +133,42 @@ int vfprintf(FILE *op, const char *fmt, va_list ap)
    {
       if (*fmt == '%')
       {
+	 ljustf = 0;		/* left justify flag */
+	 dpoint = 0;		/* found decimal point */
+	 lval = 0;
+	 width = -1;		/* min field width */
+	 preci = -1;		/* max data width */
+	 pad = ' ';		/* justification padding char */
 	 radix = 10;		/* number base */
 	 ptmp = tmp;		/* pointer to area to print */
-	 lval = 0;
        fmtnxt:
-	 ++fmt;
+	 i = 0;
+	 for(;;)
+	 {
+	    ++fmt;
+	    if(*fmt < '0' || *fmt > '9' ) break;
+	    i = (i * 10) + (*fmt - '0');
+	    if (dpoint)
+	       preci = i;
+	    else if (!i && (pad == ' '))
+	    {
+	       pad = '0';
+	       goto fmtnxt;
+	    }
+	    else
+	       width = i;
+	 }
 
 	 switch (*fmt)
 	 {
+	 case '-':		/* left justification */
+	    ljustf = 1;
+	    goto fmtnxt;
+
+	 case '.':		/* secondary width field */
+	    dpoint = 1;
+	    goto fmtnxt;
+
 	 case 'l':		/* long data */
 	    lval = 1;
 	    goto fmtnxt;
@@ -107,9 +183,9 @@ int vfprintf(FILE *op, const char *fmt, va_list ap)
 	    radix = 8;
 	    goto usproc;
 
-     case 'x':      /* Unsigned hexadecimal */
-        radix = 16;
-        /* fall thru */
+	 case 'x':      /* Unsigned hexadecimal */
+	    radix = 16;
+	    /* fall thru */
 
 	 case 'u':		/* Unsigned decimal */
 	  usproc:
@@ -127,10 +203,7 @@ int vfprintf(FILE *op, const char *fmt, va_list ap)
 	    ptmp = va_arg(ap, char*);
 	  nopad:
 	  printit:
-	    do {
-	    	__fputc(*ptmp++, op);
-		cnt++;
-	    } while (*ptmp);
+	    cnt += prtfld(op, (unsigned char *)ptmp, ljustf, pad, width, preci);
 	    break;
 
 	 default:		/* unknown character */

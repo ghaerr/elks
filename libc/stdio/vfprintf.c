@@ -22,14 +22,18 @@
  */
 
 #include <sys/types.h>
-
 #include <fcntl.h>
 #include <string.h>
-
+#include <stdlib.h>
 #include "_stdio.h"
 
-extern char * ltostr (long val, int radix);
-extern char * ultostr (unsigned long val, int radix);
+#ifndef __HAS_NO_FLOATS__
+/*
+ * Use '__STDIO_PRINT_FLOATS;' in user program to link in libc %e,%f,%g
+ * printf/sprintf support (see stdio.h).
+ */
+void (*__fp_print)();	/* =0 by default by linker which disables float support */
+#endif
 
 static int
 prtfld(FILE *op, unsigned char *buf,
@@ -241,7 +245,7 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
 	 case 'G':
 	    if ( __fp_print )
 	    {
-	       (*__fp_print)(&va_arg(ap, double), *fmt, preci, ptmp);
+	       (*__fp_print)(va_arg(ap, double), *fmt, preci, ptmp);
 	       preci = -1;
 	       goto printit;
 	    }
@@ -267,9 +271,7 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
    return (cnt);
 }
 
-#ifdef L_fp_print
-#ifndef __HAS_NO_FLOATS__
-
+#if 0
 #ifdef __AS386_16__
 #asm
   loc   1         ! Make sure the pointer is in the correct segment
@@ -294,5 +296,4 @@ __xfpcvt(void)
    extern int (*__fp_print)();
    __fp_print = __fp_print_func;
 }
-#endif
 #endif

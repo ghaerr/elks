@@ -23,12 +23,12 @@
 #include <ctype.h>
 #include <stdlib.h>
 
-long int
+long
 strtol(const char *nptr, char **endptr, int base)
 {
   const char * ptr;
   unsigned short negative;
-  long int number;
+  long number;
 
   ptr=nptr;
 
@@ -39,15 +39,15 @@ strtol(const char *nptr, char **endptr, int base)
   if (*ptr=='-')
     negative=1;
 
-  number=(long int)strtoul(nptr, endptr, base);
+  number=(long)strtoul(nptr, endptr, base);
 
   return (negative ? -number:number);
 }
 
-unsigned long int
+unsigned long
 strtoul(const char *nptr, char **endptr, int base)
 {
-  unsigned long int number;
+  unsigned long number;
 
   /* Sanity check the arguments */
   if (base==1 || base>36 || base<0)

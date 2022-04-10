@@ -38,6 +38,13 @@ mainmenu_option next_comment
 
 		comment 'Devices'
 
+		comment 'INTx pins (0=disabled)'
+		int 'INT0 Logical IRQ' CONFIG_8018X_INT0 0
+		int 'INT1 Logical IRQ' CONFIG_8018X_INT1 12
+		int 'INT0 Logical IRQ' CONFIG_8018X_INT2 0
+		int 'INT0 Logical IRQ' CONFIG_8018X_INT3 0
+		int 'INT0 Logical IRQ' CONFIG_8018X_INT4 0
+
 	elif [ "$CONFIG_ARCH_PC98" = "y" ]; then
 
 		comment 'Devices'

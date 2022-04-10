@@ -6,13 +6,13 @@
 #include <signal.h>
 #include <unistd.h>
 #include <stdlib.h>
-#if 0
-#include <minix/minlib.h>
-#endif
 #include "defs.h"
 
 #define	MAXFD	18
 #define CHUNK_SIZE	BUFSIZ		/* use disk block size for stack limit and efficiency*/
+
+#define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
+#define errstr(str) write(STDERR_FILENO, str, strlen(str))
 
 int fd[MAXFD];
 
@@ -33,12 +33,11 @@ char **argv;
 	    case 'i':		/* Interrupt turned off. */
 		iflag++;
 		break;
-	    case 'a':		/* Append to outputfile(s), instead of
-			 * overwriting them. */
+	    case 'a':		/* Append to outputfile(s), instead of overwriting them. */
 		aflag++;
 		break;
 	    default:
-		fprintf(stderr,"Usage: tee [-i] [-a] [files].\n");
+		errmsg("usage: tee [-i][-a] [file ...]\n");
 		exit(1);
 	}
 	argv++;
@@ -52,9 +51,9 @@ char **argv;
 	} else {
 		if ((fd[s] = creat(*argv, 0666)) >= 0) continue;
 	}
-	fprintf(stderr,"Cannot open output file: ");
-	fprintf(stderr,*argv);
-	fprintf(stderr,"\n");
+	errmsg("Cannot open output file: ");
+	errmsg(*argv);
+	errmsg("\n");
 	exit(2);
   }
 

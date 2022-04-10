@@ -1,0 +1,38 @@
+.TH uname 1
+.SH NAME
+uname \- Display operating system name and system information
+.SH SYNOPSIS
+.B uname
+.RB [ \-asnrvm ]
+.SH DESCRIPTION
+The
+.B uname
+utility writes various operating system and system characteristics
+to the standard output.
+.SS OPTIONS
+Defaults to showing system name.
+.TP 5
+.B -a
+Behave as though all the options
+.B -snrvm
+were specified.
+.TP 5
+.B -s
+Show operating system name (ELKS).
+.TP 5
+.B -n
+Show nodename (name the system is known on TCP/IP).
+.TP 5
+.B -r
+Show the operating system release number.
+.TP 5
+.B -v
+Show the operating system version (commit number and date).
+.TP 5
+.B -m
+Show the machine hardware name.
+.SH BUGS
+The nodename is currently fixed as
+.IR elks .
+.SH AUTHOR
+Greg Haerr (greg@censoft.com)

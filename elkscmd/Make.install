@@ -85,6 +85,10 @@ ifdef CONFIG_APP_NANOX
 	TAGS += :nanox|
 endif
 
+ifdef CONFIG_APP_BASIC
+	TAGS += :basic|
+endif
+
 ifdef CONFIG_APP_OTHER
 	TAGS += :other|
 endif

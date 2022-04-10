@@ -15,14 +15,14 @@ include $(BASEDIR)/Make.rules
 # TODO: lpd man mt install	# Do not compile.
 PRGS=env lp pwdauth remsync synctree tget
 
-env: env.o
-	$(LD) $(LDFLAGS) -o env env.o $(LDLIBS)
+env: env.o $(TINYPRINTF)
+	$(LD) $(LDFLAGS) -o env env.o $(TINYPRINTF) $(LDLIBS)
 
 pwdauth: pwdauth.o
 	$(LD) $(LDFLAGS) -o pwdauth pwdauth.o $(LDLIBS)
 
-lp: lp.o
-	$(LD) $(LDFLAGS) -o lp lp.o $(LDLIBS)
+lp: lp.o $(TINYPRINTF)
+	$(LD) $(LDFLAGS) -o lp lp.o $(TINYPRINTF) $(LDLIBS)
 
 man: man.o
 	$(LD) $(LDFLAGS) -o man man.o $(LDLIBS)
