@@ -2,13 +2,17 @@
 
 #define DISK_FUNCTIONS			1	/* compile in DELETE/DIR/LIST/SAVE */
 #define MATH_FUNCTIONS			1	/* compile in COS, SIN, TAN, etc */
+#define MATH_INCLUDE_POW		1	/* compile in large POW function */
 #define MATH_DBL_PRECISION		0	/* 0=use 4-byte floats vs 8-byte double */
+#define MATH_CORRECT_NEAR_ZERO	1	/* adjust trig routines returning -0, +/-EPSILON */
 
 #if MATH_DBL_PRECISION
 #define MATH_PRECISION	14
+#define EPSILON         0.00000000000001
 #define float double
-#define COS(x)		cos(x)
-#define SIN(x)		sin(x)
+#define FABS(x)		fabs(x)
+#define COS(x)		adjust(cos(x))
+#define SIN(x)		adjust(sin(x))
 #define TAN(x)		tan(x)
 #define ACOS(x)		acos(x)
 #define ASIN(x)		asin(x)
@@ -18,8 +22,10 @@
 #define POW(x,y)	pow(x,y)
 #else
 #define MATH_PRECISION	6
-#define COS(x)		cosf(x)
-#define SIN(x)		sinf(x)
+#define EPSILON         0.000001
+#define FABS(x)		fabsf(x)
+#define COS(x)		adjust(cosf(x))
+#define SIN(x)		adjust(sinf(x))
 #define TAN(x)		tanf(x)
 #define ACOS(x)		acosf(x)
 #define ASIN(x)		asinf(x)
@@ -27,6 +33,12 @@
 #define EXP(x)		expf(x)
 #define LOG(x)		logf(x)
 #define POW(x,y)	powf(x,y)
+#endif
+
+#if MATH_CORRECT_NEAR_ZERO
+float adjust(float f);
+#else
+#define adjust(f)	(f)
 #endif
 
 #define PROGMEM

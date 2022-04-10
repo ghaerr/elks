@@ -38,9 +38,22 @@ void host_outputLong(long num) {
 	fprintf(outfile, "%ld", num);
 }
 
+#if MATH_CORRECT_NEAR_ZERO
+// experimental function to correct trig functions returning near zero values
+// some hosts return -0 or +/-0.00000000000001
+float adjust(float f) {
+	if (FABS(f) < (float)EPSILON) {
+		//printf("[%f,%f]", f, FABS(f));
+		return 0;
+	}
+	return f;
+}
+#endif
+
 // for float testing compatibility, use same FP formatting routines on host for now
 // floats have approx 7 sig figs, 15 for double
-#ifdef __ia6__
+
+#ifdef __ia16__
 __STDIO_PRINT_FLOATS;		// link in libc printf float support
 
 char *host_floatToStr(float f, char *buf) {
@@ -53,6 +66,7 @@ char *ecvt(double val, int ndig, int *pdecpt, int *psign);
 char *fcvt(double val, int ndig, int *pdecpt, int *psign);
 
 char *host_floatToStr(float f, char *buf) {
+
 	__fp_print_func(f, 'g', MATH_PRECISION, buf);
     return buf;
 }
@@ -106,15 +120,15 @@ void host_outputFreeMem(unsigned int val)
 /* LONG_MAX is not exact as a double, yet LONG_MAX + 1 is */
 #define LONG_MAX_P1 ((LONG_MAX/2 + 1) * 2.0)
 
-/* small ELKS floor function using 32-bit longs */
+/* small ELKS floor function using 32-bit longs, required for INT() fn */
 float host_floor(float x)
 {
-  if (x >= 0.0) {
+  if (x >= (float)0.0) {
     if (x < LONG_MAX_P1) {
       return (float)(long)x;
     }
     return x;
-  } else if (x < 0.0) {
+  } else if (x < (float)0.0) {
     if (x >= LONG_MIN) {
       long ix = (long) x;
       return (ix == x) ? x : (float)(ix-1);
