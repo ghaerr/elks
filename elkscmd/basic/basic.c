@@ -1186,7 +1186,7 @@ int parseFnCallExpr() {
             if (!stackPushNum(host_analogRead(tmp))) return ERROR_OUT_OF_MEMORY;
             break;
         case TOKEN_POW:
-#if MATH_FUNCTIONS
+#if MATH_FUNCTIONS && MATH_INCLUDE_POW
 			{
 				float y = stackPopNum();
 				stackPushNum(POW(stackPopNum(), y));
