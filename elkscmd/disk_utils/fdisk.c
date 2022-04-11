@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <ctype.h>
 #include <string.h>
 #include <sys/ioctl.h>
 
@@ -77,9 +78,6 @@ void list_types();
 void set_boot();
 void set_type();
 void list_partition(char *dev);
-
-#define isxdigit(x)	( ((x)>='0' && (x)<='9') || ((x)>='A' && (x)<='F') \
-						 || ((x)>='a' && (x)<='f') )
 
 #define sects_per_cyl ((unsigned long)(geometry.heads * geometry.sectors))
 

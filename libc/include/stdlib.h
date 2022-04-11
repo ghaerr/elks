@@ -20,8 +20,8 @@
 int rand(void);
 void srand(unsigned int seed);
 
-long strtol(const char * nptr, char ** endptr, int base);
-unsigned long strtoul(const char * nptr, char ** endptr, int base);
+long strtol(const char *str, char **endptr, int base);
+unsigned long strtoul(const char *str, char **endptr, int base);
 
 #ifndef __HAS_NO_FLOATS__
 double strtod(const char *nptr, char ** endptr);

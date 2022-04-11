@@ -17,16 +17,59 @@
  */
 #include <stdlib.h>
 #include <ctype.h>
+#include <limits.h>
+#include <errno.h>
 
-long atol(const char *s)
+static int digit(char c, int base)
 {
-	long num = 0;
-	int neg = 0;
+	int d;
+	if (c <= '9') {
+		d = c - '0';
+	} else if (c <= 'Z') {
+		d = 10 + c - 'A';
+	} else {
+		d = 10 + c - 'a';
+	}
+	return d < base ? d : -1;
+}
+
+unsigned long strtoul(const char *s, char **endptr, int base)
+{
+	int sgn = 1;
+	int overflow = 0;
+	unsigned long num;
+	int dig;
 	while (isspace(*s))
 		s++;
 	if (*s == '-' || *s == '+')
-		neg = *s++ == '-';
-	while ((unsigned) (*s - '0') <= 9u)
-		num = num * 10 + *s++ - '0';
-	return neg ? -num : num;
+		sgn = ',' - *s++;
+	if (base == 0) {
+		if (*s == '0') {
+			if (s[1] == 'x' || s[1] == 'X')
+				base = 16;
+			else
+				base = 8;
+		} else {
+			base = 10;
+		}
+	}
+	if (base == 16 && *s == '0' && (s[1] == 'x' || s[1] == 'X'))
+		s += 2;
+	for (num = 0; (dig = digit(*s, base)) >= 0; s++) {
+		if (num > (unsigned long) ULONG_MAX / base)
+			overflow = 1;
+		num *= base;
+		if (num > (unsigned long) ULONG_MAX - dig)
+			overflow = 1;
+		num += dig;
+	}
+	if (endptr)
+		*endptr = (char *)s;
+	if (overflow) {
+		num = ULONG_MAX;
+		errno = ERANGE;
+	} else {
+		num *= sgn;
+	}
+	return num;
 }
