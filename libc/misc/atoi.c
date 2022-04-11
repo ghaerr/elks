@@ -1,32 +1,18 @@
-/*
- * NEATLIBC C STANDARD LIBRARY
- *
- * Copyright (C) 2010-2020 Ali Gholami Rudi <ali at rudi dot ir>
- *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
 #include <stdlib.h>
 #include <ctype.h>
 
 int atoi(const char *s)
 {
-	int num = 0;
+	int n = 0;
 	int neg = 0;
-	while (isspace(*s))
+
+	while (*s == ' ' || *s == '\t')
 		s++;
-	if (*s == '-' || *s == '+')
-		neg = *s++ == '-';
+	switch (*s) {
+	case '-': neg = 1;
+	case '+': s++;
+	}
 	while ((unsigned) (*s - '0') <= 9u)
-		num = num * 10 + *s++ - '0';
-	return neg ? -num : num;
+		n = n * 10 + *s++ - '0';
+	return neg ? -n : n;
 }
