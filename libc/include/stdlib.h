@@ -24,10 +24,11 @@ long strtol(const char *str, char **endptr, int base);
 unsigned long strtoul(const char *str, char **endptr, int base);
 
 #ifndef __HAS_NO_FLOATS__
-double strtod(const char *nptr, char ** endptr);
+double strtod(const char *nptr, char **endptr);
 double atof(const char *str);
 char *ecvt(double val, int ndig, int *pdecpt, int *psign);
 char *fcvt(double val, int nfrac, int *pdecpt, int *psign);
+void dtostr(double val, int style, int preci, char *buf);
 #endif
 
 long atol(const char *str);

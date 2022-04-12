@@ -13,6 +13,7 @@ OBJS = \
 	basename.o \
 	crypt.o \
 	dirname.o \
+	dtostr.o \
 	ecvt.o \
 	getcwd.o \
 	getenv.o \
