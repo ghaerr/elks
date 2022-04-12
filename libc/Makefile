@@ -12,6 +12,7 @@ include Makefile.inc
 
 SUBDIRS = \
 	asm \
+	ctype \
 	error \
 	gcc \
 	getent \

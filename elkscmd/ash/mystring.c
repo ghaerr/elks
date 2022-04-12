@@ -155,7 +155,7 @@ number(s)
 
 	if (! is_number(s))
 		error2("Illegal number", (char *)s);
-	return atoi(s);
+	return (int)atol(s);
 }
 
 

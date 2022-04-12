@@ -6,9 +6,9 @@
 /*
  *  CTYPE.C	Character classification and conversion
  */
-
 #include <ctype.h>
 
+#ifdef __CTYPE_USE_TABLE
 unsigned char __ctype[257] =
 {
    0,							/* -1 */
@@ -52,4 +52,4 @@ unsigned char __ctype[257] =
    __CT_l, __CT_l, __CT_l, __CT_p,				/* 0x78..0x7B */
    __CT_p, __CT_p, __CT_p, __CT_c				/* 0x7C..0x7F */
 };
-
+#endif

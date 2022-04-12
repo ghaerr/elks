@@ -6,9 +6,8 @@
  */
 #include <stdlib.h>
 
-double 
-atof(const char *str)
+double atof(const char *str)
 {
-   return strtod(str, (char **)NULL);
+   return strtod(str, NULL);
 }
 #endif
