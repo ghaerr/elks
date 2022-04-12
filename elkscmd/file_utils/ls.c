@@ -76,7 +76,7 @@ static char *timestring(time_t t);
 
 struct sort {
     char *name;
-    long modtime;
+    long longval;
 };
 
 struct stack
@@ -88,13 +88,14 @@ struct stack
 static int cols = 0, col = 0;
 static int reverse = -1;
 static int sortbytime = 0;
+static int sortbysize = 0;
 static int nosort = 0;
 static char fmt[16] = "%s";
 
 static int namesort(const struct sort *a, const struct sort *b)
 {
-    if (sortbytime) {
-	long lval = reverse * (b->modtime - a->modtime);
+    if (sortbytime || sortbysize) {
+	long lval = reverse * (b->longval - a->longval);
 	return (int)(lval >> 16);	/* return sign of long compare */
     }
     return reverse * strcmp(a->name, b->name);
@@ -112,7 +113,7 @@ static char *popstack(struct stack *pstack)
     return (pstack->size)?pstack->buf[--(pstack->size)].name:NULL;
 }
 
-static void pushstack(struct stack *pstack, char *entry, time_t modtime)
+static void pushstack(struct stack *pstack, char *entry, long l)
 {
     struct sort *allocbuf;
 
@@ -126,7 +127,7 @@ static void pushstack(struct stack *pstack, char *entry, time_t modtime)
         }
         pstack->buf = allocbuf;
   }
-  pstack->buf[pstack->size].modtime = modtime;
+  pstack->buf[pstack->size].longval = l;
   pstack->buf[pstack->size++].name = entry;
 }
 
@@ -167,8 +168,12 @@ static void getfiles(char *name, struct stack *pstack, int flags)
 	    if (!endslash) strcat(fullname, "/");
 	    strcat(fullname, dp->d_name);
 	    struct stat statbuf;
-	    time_t modtime = (sortbytime && (LSTAT(fullname, &statbuf) >= 0))? statbuf.st_mtime: 0;
-	    pushstack(pstack, strdup(fullname), modtime);
+	    long l = 0;
+	    if (sortbytime || sortbysize) {
+		if (LSTAT(fullname, &statbuf) >= 0)
+		    l = sortbytime? statbuf.st_mtime: statbuf.st_size;
+	    }
+	    pushstack(pstack, strdup(fullname), l);
 	}
     }
     closedir(dirp);
@@ -487,6 +492,9 @@ int main(int argc, char **argv)
 		case 't':
 			sortbytime = 1;
 			break;
+		case 'S':
+			sortbysize = 1;
+			break;
 		case 'r':
 			reverse = -reverse;
 			break;
@@ -569,16 +577,6 @@ int main(int argc, char **argv)
     return EXIT_SUCCESS;
 
 usage:
-    fprintf(stderr, "usage: %s [-aAFilrR1U] [file1] [file2] ...\n", name);
-    fprintf(stderr, "  -a: list all files (including '.' and '..')\n");
-    fprintf(stderr, "  -A: list hidden files too\n");
-    fprintf(stderr, "  -F: add character to displayed name based on entry type\n");
-    fprintf(stderr, "  -i: show inode numbers beside names\n");
-    fprintf(stderr, "  -l: show files in long (detailed) format\n");
-    fprintf(stderr, "  -t: sort by time modified (most recently first)\n");
-    fprintf(stderr, "  -r: reverse sort order\n");
-    fprintf(stderr, "  -R: recursively list directory contents\n");
-    fprintf(stderr, "  -1: one entry per line\n");
-    fprintf(stderr, "  -U: don't sort output\n");
+    fprintf(stderr, "usage: %s [-aAFiltSrR1U] [name ...]\n", name);
     return EXIT_FAILURE;
 }
