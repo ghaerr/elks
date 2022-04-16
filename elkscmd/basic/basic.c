@@ -192,7 +192,11 @@ PROGMEM const TokenTableEntry tokenTable[] = {
     {"LN",1},
     {"POW",2},
     {"CHR$",1|TKN_RET_TYPE_STR},
-    {"CODE",1|TKN_ARG1_TYPE_STR}
+    {"CODE",1|TKN_ARG1_TYPE_STR},
+    {"PLOT",TKN_FMT_POST}
+#ifdef CONFIG_ARCH_PC98
+    ,{"LIO98INI",TKN_FMT_POST}
+#endif
 };
 
 
@@ -1686,6 +1690,11 @@ int parseTwoIntCmd() {
         case TOKEN_PINMODE: 
             host_pinMode(first,second); 
             break;
+        case TOKEN_PLOT:
+#ifdef CONFIG_ARCH_PC98
+            host_lio98_plot(first,second);
+#endif
+            break;
         }
     }
     return 0;
@@ -1940,6 +1949,11 @@ int parseSimpleCmd() {
 		return ERROR_FILE_ERROR;
 #endif
                 break;
+#ifdef CONFIG_ARCH_PC98
+            case TOKEN_LIO98INI:
+                host_lio98_init();
+                break;
+#endif
         }
     }
     return 0;
@@ -1999,6 +2013,7 @@ int parseStmts()
         case TOKEN_POSITION:
         case TOKEN_PIN:
         case TOKEN_PINMODE:
+        case TOKEN_PLOT:
             ret = parseTwoIntCmd(); 
             break;
             
@@ -2008,6 +2023,9 @@ int parseStmts()
         case TOKEN_RETURN:
         case TOKEN_CLS:
         case TOKEN_DIR:
+#ifdef CONFIG_ARCH_PC98
+        case TOKEN_LIO98INI:
+#endif
             ret = parseSimpleCmd();
             break;
             

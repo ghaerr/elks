@@ -89,7 +89,13 @@
 #define TOKEN_POW		76
 #define TOKEN_CHR		77
 #define TOKEN_CODE		78
-#define LAST_IDENT_TOKEN	78
+#define TOKEN_PLOT		79
+#ifdef CONFIG_ARCH_PC98
+#define TOKEN_LIO98INI	80
+#define LAST_IDENT_TOKEN	80
+#else
+#define LAST_IDENT_TOKEN	79
+#endif
 
 #define ERROR_NONE				0
 // parse errors

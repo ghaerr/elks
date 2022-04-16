@@ -24,6 +24,10 @@ else
 OBJS += host-stubs.o
 endif
 
+ifeq ($(CONFIG_ARCH_PC98), y)
+OBJS += host-pc98.o
+endif
+
 all: $(PRGS)
 
 basic: $(OBJS) basic.h host.h

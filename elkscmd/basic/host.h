@@ -73,3 +73,6 @@ void host_digitalWrite(int pin,int state);
 int host_digitalRead(int pin);
 int host_analogRead(int pin);
 void host_pinMode(int pin, int mode);
+
+void host_lio98_init(void);
+void host_lio98_plot(unsigned int x, unsigned int y);
