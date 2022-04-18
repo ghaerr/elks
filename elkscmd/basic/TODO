@@ -1,5 +1,5 @@
 Sinclair basic examples and compatibility
-	randomize, data, read
+	randomize
 	inkey$
 ^C stop
 parse 1e4 numbers

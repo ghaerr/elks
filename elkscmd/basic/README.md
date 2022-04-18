@@ -42,6 +42,9 @@ NEXT variable
 GOSUB lineNumber
 RETURN
 DIM variable(n1,n2...)
+READ var
+DATA
+RESTORE [lineNumber]
 CLS
 PAUSE milliseconds
 POSITION x,y sets the cursor
@@ -62,9 +65,6 @@ Not yet implemented
 POKE offset,segment,value
 OUT port,value
 RANDOMIZE [nmber]
-READ var
-DATA
-RESTORE [line]
 MODE number (set graphics mode)
 COLOR fg[,bg]
 PLOT x,y
