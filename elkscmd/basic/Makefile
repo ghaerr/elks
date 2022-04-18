@@ -31,7 +31,7 @@ basic: $(OBJS) basic.h host.h
 
 HOSTSRC = basic.c host.c host-stubs.c
 HOSTSRC += ../../libc/misc/ecvt.c
-HOSTSRC += ../../libc/stdio/__fp_print_func.c
+HOSTSRC += ../../libc/misc/dtostr.c
 hostbasic: $(HOSTSRC) host.h basic.h
 	$(HOSTCC) $(HOST_CFLAGS) $(HOSTSRC) -o $@
 

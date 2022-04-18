@@ -82,7 +82,7 @@ void host_newLine() {
 }
 
 char *host_readLine() {
-	static char buf[80];
+	static char buf[TOKEN_BUF_SIZE+1];
 
 	if (!fgets(buf, sizeof(buf), infile))
 		return NULL;
