@@ -1,8 +1,10 @@
-ELKS Sinclair Basic
-======================
+ELKS Basic
+==========
 From Robin Edwards' ArduinoBASIC (https://github.com/robinhedwards/ArduinoBASIC).
 
 A complete BASIC interpreter for your 80's home computer! This BASIC supports almost all the usual features, with float and string variables, multi-dimensional arrays, FOR-NEXT, GOSUB-RETURN, etc.
+
+This interpreter uses some of the commands from Sinclair the original BASIC, but string functions are the newer RIGHT$/LEFT$ variety, rather than A$(2 TO 5) Sinclair-style slicing.
 
 BASIC Language
 --------------
@@ -15,7 +17,7 @@ Array variables are independent from normal variables. So you can use both:
 LET a = 5
 DIM a(10)
 ```
-There is no ambiguity, since a on its own refers to the simple variable 'a', and a(n) referes to an element of the 'a' array.
+There is no ambiguity, since a on its own refers to the simple variable 'a', and a(n) referes to an element of the 'a' array. For string arrays, this is incompatible with some older verisons of BASIC where ordinary string variable's lengths needed preallocation, e.g. DIM A$(80) for an 80 character string. Here, all string variable values are managed dynamically.
 
 ```
 Arithmetic operators: + - * / MOD
@@ -43,7 +45,7 @@ GOSUB lineNumber
 RETURN
 DIM variable(n1,n2...)
 READ var
-DATA
+DATA NumberOrString [,NumberOrString...]
 RESTORE [lineNumber]
 CLS
 PAUSE milliseconds

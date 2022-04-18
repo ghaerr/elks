@@ -1,9 +1,35 @@
-Sinclair basic examples and compatibility
-	randomize
-	inkey$
-^C stop
+Possible new commands
+---------------------
+RANDOMIZE
+READ [comma separated variable list]
+DIM [comma seperated variable/array list]
+THEN <linenumber>
+END
+MODE number
+PLOT x,y
+INK number
+DIM C$ w/no parens for backwards compat with DIM C$(80) for string lengths?
+TRON - trace on, auto trace on when loading .bas file w/errors
+' comments
+remove ANALOGRD
+^C stop using termios
+improve "Expr error" / UNEXPECTED_TOKEN -> "Expecting %s"
+
+New functions
+-------------
+INKEY$
+UCASE$/LCASE$
+SQR(x)
+SGN(x)
+PRINT TAB(x)
+PRINT INK x
+PRINT POS x,y
+opt out compile for ACS/ASN/ATN or other math functions for size
+allow x^y for POW(x,y)
+
+Math issues
+-----------
 parse 1e4 numbers
-strtol must return LONG_MAX or MIN on over/underflow
 double precision too large w/POW for ELKS, need medium model
 	why is double math lib so much larger?
 	possibly add SQRT if no POW for space
