@@ -33,11 +33,11 @@ static int digit(char c, int base)
 	return d < base ? d : -1;
 }
 
-long strtol(const char *s, char **endptr, int base)
+unsigned long strtoul(const char *s, char **endptr, int base)
 {
 	int sgn = 1;
 	int overflow = 0;
-	long num;
+	unsigned long num;
 	int dig;
 	while (isspace(*s))
 		s++;
@@ -56,17 +56,17 @@ long strtol(const char *s, char **endptr, int base)
 	if (base == 16 && *s == '0' && (s[1] == 'x' || s[1] == 'X'))
 		s += 2;
 	for (num = 0; (dig = digit(*s, base)) >= 0; s++) {
-		if (num > LONG_MAX / base)
+		if (num > (unsigned long) ULONG_MAX / base)
 			overflow = 1;
 		num *= base;
-		if (num > LONG_MAX - dig)
+		if (num > (unsigned long) ULONG_MAX - dig)
 			overflow = 1;
 		num += dig;
 	}
 	if (endptr)
 		*endptr = (char *)s;
 	if (overflow) {
-		num = sgn > 0 ? LONG_MAX : LONG_MIN;
+		num = ULONG_MAX;
 		errno = ERANGE;
 	} else {
 		num *= sgn;

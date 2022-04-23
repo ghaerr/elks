@@ -8,52 +8,53 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 
-void
-__fp_print_func(double val, int style, int preci, char * ptmp)
+void dtostr(double val, int style, int preci, char *buf)
 {
    int decpt, negative, diddecpt = 0;
    char * cvt;
 
+   style = tolower(style);
    if (preci < 0) preci = 6;
 
    if (style == 'e')
-	cvt = ecvt(val, preci, &decpt, &negative);	/* preci = ndigits */
+       cvt = ecvt(val, preci, &decpt, &negative);	/* preci = ndigits */
    else cvt = fcvt(val, preci, &decpt, &negative);
    if(negative)
-      *ptmp++ = '-';
+      *buf++ = '-';
 
    if (decpt<=0) {
-      *ptmp++ = '0';
-      *ptmp++ = '.';
+      *buf++ = '0';
+      *buf++ = '.';
       diddecpt = 1;
       while(decpt<0) {
-	 *ptmp++ = '0';
-	 decpt++;
+         *buf++ = '0';
+         decpt++;
       }
    }
 
    while(*cvt) {
-      *ptmp++ = *cvt++;
+      *buf++ = *cvt++;
       if (decpt == 1) {
-	 *ptmp++ = '.';
-	 diddecpt = 1;
+         *buf++ = '.';
+         diddecpt = 1;
       }
       decpt--;
    }
 
    while(decpt > 0) {
-      *ptmp++ = '0';
+      *buf++ = '0';
       decpt--;
    }
-   *ptmp = 0;
+   *buf = 0;
    if (style == 'g' && diddecpt) {
-	for (;;) {
-	   int c = *--ptmp;
-	   if (c == '0' || c == '.')
-          *ptmp = 0;
-	   if (c != '0') break;
-	}
+      for (;;) {
+         int c = *--buf;
+         if (c == '0' || c == '.')
+            *buf = 0;
+         if (c != '0') break;
+      }
    }
 
 }

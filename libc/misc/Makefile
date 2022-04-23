@@ -2,8 +2,6 @@
 
 include $(TOPDIR)/libc/Makefile.inc
 
-CFLAGS	+= -DUSE_ATOL_AS_ATOI
-
 LIB = out.a
 
 OBJS = \
@@ -14,8 +12,8 @@ OBJS = \
 	atol.o \
 	basename.o \
 	crypt.o \
-	ctype.o \
 	dirname.o \
+	dtostr.o \
 	ecvt.o \
 	getcwd.o \
 	getenv.o \
@@ -27,10 +25,11 @@ OBJS = \
 	mktemp.o \
 	popen.o \
 	putenv.o \
-	qsort-bsd.o \
+	qsort.o \
 	rand.o \
 	strtod.o \
 	strtol.o \
+	strtoul.o \
 	system.o \
 	tmpnam.o \
 	ultostr.o \

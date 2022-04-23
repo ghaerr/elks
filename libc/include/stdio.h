@@ -143,10 +143,10 @@ int vsprintf (char * sp, const char * format, va_list ap);
 int vsnprintf (char * sp, size_t, const char * format, va_list ap);
 
 #ifndef __HAS_NO_FLOATS__
-void __fp_print_func(double val, int style, int preci, char *ptmp);
+void dtostr(double val, int style, int preci, char *buf);
 extern void  (*__fp_print)();
 /* use this macro to link in libc %e,%f,%g printf/sprintf support into user program */
-#define __STDIO_PRINT_FLOATS	void (*__fp_print)() = __fp_print_func
+#define __STDIO_PRINT_FLOATS	void (*__fp_print)() = dtostr
 #endif
 
 #define stdio_pending(fp) ((fp)->bufread>(fp)->bufpos)

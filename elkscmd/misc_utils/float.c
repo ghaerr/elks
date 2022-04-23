@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
 	printf("%s\n", fcvt(f, 12, &decpt, &neg));
 
 	char buf[32];
-	__fp_print_func(f, 'g', -1, buf);
+	dtostr(f, 'g', -1, buf);
 	printf("%s, %g, %f, %e\n", buf, f, f, f);
 
 	printf("float = %d\n", sizeof(float));

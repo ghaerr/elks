@@ -1,23 +1,18 @@
-/* Copyright (C) 1995,1996 Robert de Bath <rdebath@cix.compulink.co.uk>
- * This file is part of the Linux-8086 C library and is distributed
- * under the GNU Library General Public License.
- */
+#include <stdlib.h>
+#include <ctype.h>
 
-long
-atol(const char *number)
+long atol(const char *s)
 {
-   long   n = 0, neg = 0;
+	long n = 0;
+	int neg = 0;
 
-   while (*number <= ' ' && *number > 0)
-      ++number;
-   if (*number == '-')
-   {
-      neg = 1;
-      ++number;
-   }
-   else if (*number == '+')
-      ++number;
-   while (*number>='0' && *number<='9')
-      n = (n * 10) + ((*number++) - '0');
-   return (neg ? -n : n);
+	while (*s == ' ' || *s == '\t')
+		s++;
+	switch (*s) {
+	case '-': neg = 1;
+	case '+': s++;
+	}
+	while ((unsigned) (*s - '0') <= 9u)
+		n = n * 10 + *s++ - '0';
+	return neg ? -n : n;
 }

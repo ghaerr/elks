@@ -61,13 +61,13 @@ char *host_floatToStr(float f, char *buf) {
     return buf;
 }
 #else
-void __fp_print_func(double val, int style, int preci, char * ptmp);
+void dtostr(double val, int style, int preci, char *buf);
 char *ecvt(double val, int ndig, int *pdecpt, int *psign);
 char *fcvt(double val, int ndig, int *pdecpt, int *psign);
 
 char *host_floatToStr(float f, char *buf) {
 
-	__fp_print_func(f, 'g', MATH_PRECISION, buf);
+	dtostr(f, 'g', MATH_PRECISION, buf);
     return buf;
 }
 #endif
@@ -82,7 +82,7 @@ void host_newLine() {
 }
 
 char *host_readLine() {
-	static char buf[80];
+	static char buf[TOKEN_BUF_SIZE+1];
 
 	if (!fgets(buf, sizeof(buf), infile))
 		return NULL;

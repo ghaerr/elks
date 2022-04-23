@@ -199,7 +199,7 @@ int main(int argc,char **argv)
 	    dflag++;
 	    break;
 	case 'm':		/* MTU*/
-		mtu = atoi(optarg);
+		mtu = (int)atol(optarg);
 		break;
 	case 'p':		/* link protocol*/
 	    linkprotocol = !strcmp(optarg, "eth")? LINK_ETHER :

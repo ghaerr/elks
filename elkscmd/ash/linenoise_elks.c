@@ -360,7 +360,7 @@ static int getCursorPosition(int ifd, int ofd) {
             return -1;
     if (*p == '\0')
         return -1;
-    return atoi(p+1);	/* cols, last parm */
+    return (int)atol(p+1);	/* cols, last parm */
 }
 #endif /* DYNAMIC_LINELEN*/
 

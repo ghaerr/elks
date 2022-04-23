@@ -1,176 +1,67 @@
-/* NOTE: This qsort routine corrupts memory, found by use in file_utils/ls.c */
-/* NOTE: Also has reversed sort direction from standard                      */
-
 /*
- * This file lifted in toto from 'Dlibs' on the atari ST  (RdeBath)
+ * NEATLIBC C STANDARD LIBRARY
  *
- * 
- *    Dale Schumacher                         399 Beacon Ave.
- *    (alias: Dalnefre')                      St. Paul, MN  55104
- *    dal@syntel.UUCP                         United States of America
- *  "It's not reality that's important, but how you perceive things."
+ * Copyright (C) 2010-2020 Ali Gholami Rudi <ali at rudi dot ir>
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*
- * Sun Feb  8 21:02:15 EST 1998 claudio@pos.inf.ufpr.br (Claudio Matsuoka)
- * Changed sort direction
- */
-
+/* based on musl libc's qsort.c */
+#include <stdlib.h>
 #include <string.h>
 
-char *_qbuf = 0;		/* pointer to storage for qsort() */
+#define MIN(a, b)	((a) < (b) ? (a) : (b))
 
-#define	PIVOT			((i+j)>>1)
-#define moveitem(dst,src,size)	if(dst != src) memcpy(dst, src, size)
-
-static void
-_wqsort(base, lo, hi, cmp)
-register int *base;
-register int lo;
-register int hi;
-register int (*cmp) ();
+static void swap(char *a, char *b, int sz)
 {
-   int   k;
-   register int i, j, t;
-   register int *p = &k;
+	char tmp[64];
 
-   while (hi > lo)
-   {
-      i = lo;
-      j = hi;
-      t = PIVOT;
-      *p = base[t];
-      base[t] = base[i];
-      base[i] = *p;
-      while (i < j)
-      {
-	 while (((*cmp) ((base + j), p)) <= 0)
-	    --j;
-	 base[i] = base[j];
-	 while ((i < j) && (((*cmp) ((base + i), p)) > 0))
-	    ++i;
-	 base[j] = base[i];
-      }
-      base[i] = *p;
-      if ((i - lo) < (hi - i))
-      {
-	 _wqsort(base, lo, (i - 1), cmp);
-	 lo = i + 1;
-      }
-      else
-      {
-	 _wqsort(base, (i + 1), hi, cmp);
-	 hi = i - 1;
-      }
-   }
+	while (sz) {
+		int l = MIN(sizeof(tmp), sz);
+		memcpy(tmp, a, l);
+		memcpy(a, b, l);
+		memcpy(b, tmp, l);
+		a += l;
+		b += l;
+		sz -= l;
+	}
 }
 
-static void
-_lqsort(base, lo, hi, cmp)
-register long *base;
-register int lo;
-register int hi;
-register int (*cmp) ();
+static void fix(char *a, int root, int n, int sz, int (*cmp)(void *, void *))
 {
-   long  k;
-   register int i, j, t;
-   register long *p = &k;
-
-   while (hi > lo)
-   {
-      i = lo;
-      j = hi;
-      t = PIVOT;
-      *p = base[t];
-      base[t] = base[i];
-      base[i] = *p;
-      while (i < j)
-      {
-	 while (((*cmp) ((base + j), p)) <= 0)
-	    --j;
-	 base[i] = base[j];
-	 while ((i < j) && (((*cmp) ((base + i), p)) > 0))
-	    ++i;
-	 base[j] = base[i];
-      }
-      base[i] = *p;
-      if ((i - lo) < (hi - i))
-      {
-	 _lqsort(base, lo, (i - 1), cmp);
-	 lo = i + 1;
-      }
-      else
-      {
-	 _lqsort(base, (i + 1), hi, cmp);
-	 hi = i - 1;
-      }
-   }
+	while (2 * root <= n) {
+		int max = 2 * root;
+		if (max < n && cmp(a + max * sz, a + (max + 1) * sz) < 0)
+			max++;
+		if (max && cmp(a + root * sz, a + max * sz) < 0) {
+			swap(a + root * sz, a + max * sz, sz);
+			root = max;
+		} else {
+			break;
+		}
+	}
 }
 
-static void
-_nqsort(base, lo, hi, size, cmp)
-register char *base;
-register int lo;
-register int hi;
-register int size;
-register int (*cmp) ();
+void qsort(void *a, size_t n, size_t width, int (*cmp)(void *, void *))
 {
-   register int i, j;
-   register char *p = _qbuf;
+	int i;
 
-   while (hi > lo)
-   {
-      i = lo;
-      j = hi;
-      p = (base + size * PIVOT);
-      moveitem(_qbuf, p, size);
-      moveitem(p, (base + size * i), size);
-      moveitem((base + size * i), _qbuf, size);
-      p = _qbuf;
-      while (i < j)
-      {
-	 while (((*cmp) ((base + size * j), p)) <= 0)
-	    --j;
-	 moveitem((base + size * i), (base + size * j), size);
-	 while ((i < j) && (((*cmp) ((base + size * i), p)) > 0))
-	    ++i;
-	 moveitem((base + size * j), (base + size * i), size);
-      }
-      moveitem((base + size * i), p, size);
-      if ((i - lo) < (hi - i))
-      {
-	 _nqsort(base, lo, (i - 1), size, cmp);
-	 lo = i + 1;
-      }
-      else
-      {
-	 _nqsort(base, (i + 1), hi, size, cmp);
-	 hi = i - 1;
-      }
-   }
-}
-
-void
-qsort(base, num, size, cmp)
-char *base;
-int   num;
-int   size;
-int   (*cmp) ();
-{
-   char  _qtemp[128];
-
-   if (_qbuf == 0)
-   {
-      if (size > sizeof(_qtemp))/* records too large! */
-	 return;
-      _qbuf = _qtemp;
-   }
-   if (size == 2)
-      _wqsort(base, 0, num - 1, cmp);
-   else if (size == 4)
-      _lqsort(base, 0, num - 1, cmp);
-   else
-      _nqsort(base, 0, num - 1, size, cmp);
-   if (_qbuf == _qtemp)
-      _qbuf = 0;
+	if (!n)
+		return;
+	for (i = (n + 1) >> 1; i; i--)
+		fix(a, i - 1, n - 1, width, cmp);
+	for (i = n - 1; i; i--) {
+		swap(a, a + i * width, width);
+		fix(a, 0, i - 1, width, cmp);
+	}
 }

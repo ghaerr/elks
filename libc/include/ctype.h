@@ -1,10 +1,12 @@
+#ifndef __CTYPE_H
+#define __CTYPE_H
 /*
  *	ctype.h		Character classification and conversion
  */
 
-#ifndef __CTYPE_H
-#define __CTYPE_H
+#undef __CTYPE_USE_TABLE
 
+#ifdef __CTYPE_USE_TABLE
 extern	unsigned char	__ctype[];
 
 #define	__CT_d	0x01		/* numeric digit */
@@ -37,5 +39,24 @@ extern	unsigned char	__ctype[];
 #define	isspace(c)	(!!(__CT(c)&__CT_s))
 #define	isupper(c)	(!!(__CT(c)&__CT_u))
 #define	isxdigit(c)	(!!(__CT(c)&__CT_x))
+
+#else
+
+/* function versions */
+int isascii(int c);
+int isblank(int c);
+int isspace(int c);
+int isalpha(int c);
+int isdigit(int c);
+int isalnum(int c);
+int isupper(int c);
+int islower(int c);
+int isprint(int c);
+int ispunct(int c);
+int isxdigit(int c);
+
+int tolower(int c);
+int toupper(int c);
+#endif
 
 #endif /* __CTYPE_H */

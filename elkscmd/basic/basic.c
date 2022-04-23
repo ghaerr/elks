@@ -42,9 +42,6 @@
  * Apr 2022 ported to Linux, macOS & ELKS Greg Haerr
  */
 
-// TODO
-// DATA, READ, RESTORE
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -90,6 +87,7 @@ const char string_25[] PROGMEM = "End of file";
 const char string_26[] PROGMEM = "File error";
 const char string_27[] PROGMEM = "Function not builtin";
 const char string_28[] PROGMEM = "Wrong number of function arguments";
+const char string_29[] PROGMEM = "No DATA for READ";
 
 const char* const errorTable[] PROGMEM = {
     string_0, string_1, string_2, string_3,
@@ -99,7 +97,7 @@ const char* const errorTable[] PROGMEM = {
     string_16, string_17, string_18, string_19,
     string_20, string_21, string_22, string_23,
     string_24, string_25, string_26, string_27,
-	string_28
+    string_28, string_29
 };
 
 // Token flags
@@ -193,10 +191,11 @@ PROGMEM const TokenTableEntry tokenTable[] = {
     {"POW",2},
     {"CHR$",1|TKN_RET_TYPE_STR},
     {"CODE",1|TKN_ARG1_TYPE_STR},
-    {"PLOT",TKN_FMT_POST}
-#ifdef CONFIG_ARCH_PC98
-    ,{"LIO98INI",TKN_FMT_POST}
-#endif
+    {"DATA",TKN_FMT_POST},
+    {"READ",TKN_FMT_POST},
+    {"RESTORE",TKN_FMT_POST},
+    {"PLOT",TKN_FMT_POST},
+    {"LIO98INI",TKN_FMT_POST}
 };
 
 
@@ -978,6 +977,7 @@ uint16_t lineNumber, stmtNumber;
 // Note that IF a=1 THEN PRINT "x": print "y" is considered to be only 2 statements
 static uint16_t jumpLineNumber, jumpStmtNumber;
 static uint16_t stopLineNumber, stopStmtNumber;
+static uint16_t dataLineNumber;
 static char breakCurrentLine;
 
 static unsigned char *tokenBuffer, *prevToken;
@@ -1250,7 +1250,7 @@ int parseMathFn() {
             return ERROR_UNEXPECTED_TOKEN;
         }
 #else
-		return ERROR_FUNCTION_NOT_BUILTIN;
+        return ERROR_FUNCTION_NOT_BUILTIN;
 #endif
     }
     if (curToken != TOKEN_RBRACKET) return ERROR_EXPR_MISSING_BRACKET;
@@ -1563,7 +1563,8 @@ int expectNumber() {
     return 0;
 }
 
-int parse_RUN() {
+// parse both RUN and RESTORE
+int parse_RUN(int isRestore) {
     getNextToken();
     uint16_t startLine = 1;
     if (curToken != TOKEN_EOL) {
@@ -1576,10 +1577,16 @@ int parse_RUN() {
         }
     }
     if (executeMode) {
-        // clear variables
-        sysVARSTART = sysVAREND = sysGOSUBSTART = sysGOSUBEND = MEMORY_SIZE;
-        jumpLineNumber = startLine;
-        stopLineNumber = stopStmtNumber = 0;
+        if (isRestore) {
+            dataLineNumber = startLine;
+        }
+        else {
+            // clear variables
+            sysVARSTART = sysVAREND = sysGOSUBSTART = sysGOSUBEND = MEMORY_SIZE;
+            jumpLineNumber = startLine;
+            stopLineNumber = stopStmtNumber = 0;
+            dataLineNumber = 1;
+        }
     }
     return 0;
 }
@@ -1654,7 +1661,7 @@ int parse_PRINT() {
         if (curToken == TOKEN_COMMA) {
             newLine = 0;
             getNextToken();
-			if (executeMode) host_outputString("\t");
+            if (executeMode) host_outputString("\t");
         }
     }
     if (executeMode) {
@@ -1700,11 +1707,54 @@ int parseTwoIntCmd() {
     return 0;
 }
 
-// this handles both LET a$="hello" and INPUT a$ type assignments
-int parseAssignment(int inputStmt) {
+// get number or string from DATA statement
+int readDataStmt() {
+    int token, ret;
+    int type = TYPE_NUMBER;
+    static unsigned char *p;
+    if (dataLineNumber) {
+        p = findProgLine(dataLineNumber);
+nextdata:
+        for (;;) {
+            if (p == &mem[sysPROGEND])
+                    return ERROR_NO_DATA_FOR_READ;;
+            if (*(p + 2 + sizeof(uint16_t)) != TOKEN_DATA) {
+                p+= *(uint16_t *)p;         // next line
+                continue;
+            }
+            p+= 2 + sizeof(uint16_t) + 1;   // line size + line number + DATA token
+            dataLineNumber = 0;
+            break;
+        }
+    }
+    token = *p++;
+    switch (token) {
+    case TOKEN_NUMBER:
+        ret = stackPushNum(*(float *)p);
+        p += sizeof(float);
+        break;
+    case TOKEN_INTEGER:
+        ret = stackPushNum(*(long *)p);
+        p += sizeof(long);
+        break;
+    case TOKEN_STRING:
+        ret = stackPushStr((char *)p);
+        p += strlen((char *)p) + 1;
+        type = TYPE_STRING;
+        break;
+    case TOKEN_EOL:
+        goto nextdata;
+    }
+    if (*p != TOKEN_EOL) p+= 1;  // skip COMMA
+    if (!ret) return ERROR_OUT_OF_MEMORY;
+    return type;
+}
+
+// this handles LET a$="hello", INPUT a$ and READ a$ type assignments
+int parseAssignment(int token) {
     char ident[MAX_IDENT_LEN+1];
     int val;
-    if (inputStmt && (curToken == TOKEN_STRING)) {
+    if (token == TOKEN_INPUT && curToken == TOKEN_STRING) {
         int val = parseExpression();
         if (val & ERROR_MASK) return val;
         if (curToken != TOKEN_COMMA) return ERROR_UNEXPECTED_TOKEN;
@@ -1724,11 +1774,11 @@ int parseAssignment(int inputStmt) {
         if (val) return val;
         isArray = 1;
     }
-    if (inputStmt) {
+    if (token == TOKEN_INPUT) {
         // from INPUT statement
         if (executeMode) {
             char *inputStr = host_readLine();
-			if (!inputStr) return ERROR_EOF;
+            if (!inputStr) return ERROR_EOF;
             if (isStringIdentifier) {
                 if (!stackPushStr(inputStr)) return ERROR_OUT_OF_MEMORY;
             }
@@ -1740,6 +1790,12 @@ int parseAssignment(int inputStmt) {
             host_showBuffer();
         }
         val = isStringIdentifier ? TYPE_STRING : TYPE_NUMBER;
+    } else if (token == TOKEN_READ) {
+        val = isStringIdentifier ? TYPE_STRING : TYPE_NUMBER;
+        if (executeMode) {
+            val = readDataStmt();
+            if (val & ERROR_MASK) return val;
+        }
     }
     else {
         // from LET statement
@@ -1944,9 +2000,9 @@ int parseSimpleCmd() {
                 break;
             case TOKEN_DIR:
 #if DISK_FUNCTIONS
-                 return host_directoryListing();
+                return host_directoryListing();
 #else
-		return ERROR_FILE_ERROR;
+                return ERROR_FILE_ERROR;
 #endif
                 break;
 #ifdef CONFIG_ARCH_PC98
@@ -1974,10 +2030,31 @@ int parse_DIM() {
     return 0;
 }
 
+int parse_DATA() {
+    getNextToken();	// eat DATA
+    for (;;) {
+        switch (curToken) {
+        case TOKEN_NUMBER:
+        case TOKEN_INTEGER:
+        case TOKEN_STRING:
+            getNextToken();
+            break;
+        default:
+            return ERROR_UNEXPECTED_TOKEN;
+        }
+        if (curToken == TOKEN_EOL)
+            break;
+        if (curToken != TOKEN_COMMA)
+            return ERROR_UNEXPECTED_TOKEN;
+        getNextToken();
+    }
+    return 0;
+}
+
 static int targetStmtNumber;
 int parseStmts()
 {
-    int ret = 0;
+    int ret = 0, lastToken;
     breakCurrentLine = 0;
     jumpLineNumber = 0;
     jumpStmtNumber = 0;
@@ -1990,11 +2067,10 @@ int parseStmts()
         int needCmdSep = 1;
         switch (curToken) {
         case TOKEN_PRINT: ret = parse_PRINT(); break;
-        case TOKEN_LET: getNextToken(); ret = parseAssignment(false); break;
-        case TOKEN_IDENT: ret = parseAssignment(false); break;
-        case TOKEN_INPUT: getNextToken(); ret = parseAssignment(true); break;
+        case TOKEN_IDENT: ret = parseAssignment(TOKEN_IDENT); break;
         case TOKEN_LIST: ret = parse_LIST(); break;
-        case TOKEN_RUN: ret = parse_RUN(); break;
+        case TOKEN_RUN: ret = parse_RUN(false); break;
+        case TOKEN_RESTORE: ret = parse_RUN(true); break;
         case TOKEN_GOTO: ret = parse_GOTO(); break;
         case TOKEN_REM: getNextToken(); getNextToken(); break;
         case TOKEN_IF: ret = parse_IF(); needCmdSep = 0; break;
@@ -2003,7 +2079,16 @@ int parseStmts()
         case TOKEN_GOSUB: ret = parse_GOSUB(); break;
         case TOKEN_DIM: ret = parse_DIM(); break;
         case TOKEN_PAUSE: ret = parse_PAUSE(); break;
+        case TOKEN_DATA: ret = parse_DATA(); break;
         
+        case TOKEN_LET:
+        case TOKEN_INPUT:
+        case TOKEN_READ:
+            lastToken = curToken;
+            getNextToken();
+            ret = parseAssignment(lastToken);
+            break;
+
         case TOKEN_LOAD:
         case TOKEN_SAVE:
         case TOKEN_DELETE:

@@ -1,7 +1,7 @@
 #include <stdint.h>
 
 #define MEMORY_SIZE	10240		// max tokenized memory bytes for program
-#define TOKEN_BUF_SIZE  64      // max tokenized bytes per line
+#define TOKEN_BUF_SIZE  256             // max tokenized bytes per line
 #define MAX_IDENT_LEN	8
 #define MAX_NUMBER_LEN	30
 #define MAX_PATH_LEN	64		// for LOAD/SAVE filename strings
@@ -90,12 +90,12 @@
 #define TOKEN_CHR		77
 #define TOKEN_CODE		78
 #define TOKEN_PLOT		79
-#ifdef CONFIG_ARCH_PC98
 #define TOKEN_LIO98INI	80
-#define LAST_IDENT_TOKEN	80
-#else
-#define LAST_IDENT_TOKEN	79
-#endif
+#define TOKEN_DATA		79
+#define TOKEN_READ		80
+#define TOKEN_RESTORE		81
+#define LAST_IDENT_TOKEN	81
+>>>>>>> upstream_master
 
 #define ERROR_NONE				0
 // parse errors
@@ -128,6 +128,7 @@
 #define ERROR_FILE_ERROR			26
 #define ERROR_FUNCTION_NOT_BUILTIN		27
 #define ERROR_WRONG_NUM_FUNCTION_ARGS		28
+#define ERROR_NO_DATA_FOR_READ  		29
 
 extern unsigned char mem[];
 extern int sysPROGEND;
