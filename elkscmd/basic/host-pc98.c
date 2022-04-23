@@ -3,7 +3,6 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-//#include <malloc.h>
 
 #include "host.h"
 #include "basic.h"
@@ -12,59 +11,117 @@
 #define LIO_FAR_ADDR 0xF9900000
 #define INT_FAR_ADDR 0x00000280 // int 0xA0
 
-#define LIO_M_SIZE 4000
+#define LIO_M_SIZE 5200
+
+void (*intc5_h_p)(void);
 
 unsigned char __far *lio_m;
 unsigned int lio_m_seg;
 
 void int_A0(unsigned int l_seg)
 {
+    __asm__ volatile ("push %ds;"
+                      "push %es;"
+                      "push %bp;"
+                      "push %si;"
+                      "push %di;");
     __asm__ volatile ("mov %0,%%ds;"
                       "int $0xA0;"
                       :
                       :"a" (l_seg)
-                      :"%ds", "memory", "cc");
+                      :"memory", "cc");
+    __asm__ volatile ("pop %di;"
+                      "pop %si;"
+                      "pop %bp;"
+                      "pop %es;"
+                      "pop %ds;");
 }
 
 void int_A1(unsigned int l_seg)
 {
+    __asm__ volatile ("push %ds;"
+                      "push %es;"
+                      "push %bp;"
+                      "push %si;"
+                      "push %di;");
     __asm__ volatile ("mov %0,%%ds;"
                       "mov $0x0000,%%bx;"
                       "int $0xA1;"
                       :
                       :"a" (l_seg)
-                      :"%ds", "memory", "cc");
+                      :"memory", "cc");
+    __asm__ volatile ("pop %di;"
+                      "pop %si;"
+                      "pop %bp;"
+                      "pop %es;"
+                      "pop %ds;");
 }
 
 void int_A2(unsigned int l_seg)
 {
+    __asm__ volatile ("push %ds;"
+                      "push %es;"
+                      "push %bp;"
+                      "push %si;"
+                      "push %di;");
     __asm__ volatile ("mov %0,%%ds;"
                       "mov $0x0000,%%bx;"
                       "int $0xA2;"
                       :
                       :"a" (l_seg)
-                      :"%ds", "memory", "cc");
+                      :"memory", "cc");
+    __asm__ volatile ("pop %di;"
+                      "pop %si;"
+                      "pop %bp;"
+                      "pop %es;"
+                      "pop %ds;");
 }
 
 void int_A3(unsigned int l_seg)
 {
+    __asm__ volatile ("push %ds;"
+                      "push %es;"
+                      "push %bp;"
+                      "push %si;"
+                      "push %di;");
     __asm__ volatile ("mov %0,%%ds;"
                       "mov $0x0000,%%bx;"
                       "int $0xA3;"
                       :
                       :"a" (l_seg)
-                      :"%ds", "memory", "cc");
+                      :"memory", "cc");
+    __asm__ volatile ("pop %di;"
+                      "pop %si;"
+                      "pop %bp;"
+                      "pop %es;"
+                      "pop %ds;");
 }
 
 void int_A6(unsigned int l_seg)
 {
+    __asm__ volatile ("push %ds;"
+                      "push %es;"
+                      "push %bp;"
+                      "push %si;"
+                      "push %di;");
     __asm__ volatile ("mov %0,%%ds;"
                       "mov $0x01,%%ah;"
                       "mov $0x0000,%%bx;"
                       "int $0xA6;"
                       :
                       :"a" (l_seg)
-                      :"%ds", "memory", "cc");
+                      :"memory", "cc");
+    __asm__ volatile ("pop %di;"
+                      "pop %si;"
+                      "pop %bp;"
+                      "pop %es;"
+                      "pop %ds;");
+}
+
+void intc5_handler(void)
+{
+    printf("intC5\n");
+    __asm__ volatile ("iret");
 }
 
 void host_lio98_init(void) {
@@ -82,6 +139,12 @@ void host_lio98_init(void) {
         intvec++;
         lioaddr += 2;
     }
+
+    // Set interrupt handler for 0xC5
+    intc5_h_p = intc5_handler;
+    intvec = (unsigned long __far *) 0x00000314;
+    *intvec = (unsigned long) ((unsigned long __far *) intc5_h_p);
+    //printf("intc5_h_p %p intvec %lx\n", intc5_h_p, *intvec);
 
     // Allocate memory for LIO
     lio_m = (unsigned char __far *) malloc(LIO_M_SIZE);

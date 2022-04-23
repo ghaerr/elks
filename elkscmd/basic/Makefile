@@ -31,7 +31,7 @@ endif
 all: $(PRGS)
 
 basic: $(OBJS) basic.h host.h
-	$(LD) $(LDFLAGS) -o basic $(OBJS) $(LDLIBS)
+	$(LD) $(LDFLAGS) -maout-heap=10240 -maout-stack=6144 -o basic $(OBJS) $(LDLIBS)
 
 HOSTSRC = basic.c host.c host-stubs.c
 HOSTSRC += ../../libc/misc/ecvt.c
