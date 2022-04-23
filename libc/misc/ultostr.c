@@ -1,27 +1,22 @@
+/* Apr 2020 Greg Haerr - made small as possible */
 #include <stdlib.h>
+#define MAX_LONG_CHARS 34
 
-char *
-ultostr (unsigned long val, int radix)
+char *ultostr(unsigned long val, int radix)
 {
-  static char buf[34];
-  register char *p;
-  register int c;
+  static char buf[MAX_LONG_CHARS];
+  char *p = buf + sizeof(buf) - 1;
 
   if (radix > 36 || radix < 2)
     return 0;
 
-  p = buf + sizeof (buf);
-  *--p = '\0';
-
-  do
-    {
-      c = val % radix;
-      val /= radix;
+  *p = '\0';
+  do {
+      int c = val % radix;
       if (c > 9)
-	*--p = 'a' - 10 + c;
+        *--p = 'a' - 10 + c;
       else
-	*--p = '0' + c;
-    }
-  while (val);
+        *--p = '0' + c;
+  } while ((val /= radix) != 0);
   return p;
 }

@@ -1,24 +1,18 @@
-/* itoa.c <ndf@linux.mit.edu> */
-#define __MAX_INT_CHARS 7
+/* Apr 2020 Greg Haerr - handles INT_MIN */
+#include <stdio.h>
+#define MAX_INT_CHARS 7
 
-char *
-itoa(i)
-int   i;
+char *itoa(int val)
 {
-   static char a[__MAX_INT_CHARS];
-   char *b = a + sizeof(a) - 1;
-   int   sign = (i < 0);
+   static char buf[MAX_INT_CHARS];
+   char *b = buf + sizeof(buf) - 1;
+   unsigned int u = (val < 0)? 0u - val: val;
 
-   if (sign)
-      i = -i;
-   *b = 0;
-   do
-   {
-      *--b = '0' + (i % 10);
-      i /= 10;
-   }
-   while (i);
-   if (sign)
+   *b = '\0';
+   do {
+      *--b = '0' + (u % 10);
+   } while ((u /= 10) != 0);
+   if (val < 0)
       *--b = '-';
    return b;
 }

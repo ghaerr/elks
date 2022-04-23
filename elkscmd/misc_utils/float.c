@@ -139,5 +139,24 @@ int main(int argc, char **argv) {
 	d += pio2;
 	printf("cos(%f) = %f\n", d, cos(d));
 
+    printf("%s\n", itoa(0x7fff));
+    printf("%s\n", itoa(-0x7fff));
+    printf("%s\n", itoa(0x8000));
+    printf("%s\n", itoa(0xffff));
+
+    printf("%s\n", ltoa(0x7fffffff));
+    printf("%s\n", ltoa(-0x7fffffff));
+    printf("%s\n", ltoa(0x80000000));
+    printf("%s\n", ltoa(0xffffffff));
+
+    printf("%s\n", ltostr(0x7fffffff, 10));
+    printf("%s\n", ltostr(-0x7fffffff, 10));
+    printf("%s\n", ltostr(0x80000000, 10));
+    printf("%s\n", ltostr(0xffffffff, 10));
+
+    printf("%s\n", ultostr(0x7fffffff, 10));
+    printf("%s\n", ultostr(-0x7fffffff, 10));
+    printf("%s\n", ultostr(0x80000000, 10));
+    printf("%s\n", ultostr(0xffffffff, 10));
 	return 0;
 }

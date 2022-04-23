@@ -61,12 +61,11 @@ void qsort(void *base, size_t nel, size_t width,
 	int (*compar)(/*const void *, const void * */));
 
 #ifndef __STRICT_ANSI__
-void breakpoint ();
-char *itoa (int);
-char *ltoa (long);
+void breakpoint();
+char *itoa(int val);
+char *ltoa(long val);
+char *ltostr(long val, int radix);
+char *ultostr(unsigned long val, int radix);
 #endif
-
-char * ltostr (long val, int radix);
-char * ultostr (unsigned long val, int radix);
 
 #endif /* __STDLIB_H */
