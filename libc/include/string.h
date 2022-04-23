@@ -10,7 +10,7 @@
 /* Basic string functions */
 
 extern char * strcpy __P ((char*, __const char*));
-extern int strcmp __P ((__const char*, __const char*));
+int strcmp(const char *s1, const char *s2);
 
 extern char * strncat __P ((char*, char*, size_t));
 extern char * strncpy __P ((char*, char*, size_t));
