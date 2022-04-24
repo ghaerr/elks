@@ -1,20 +1,18 @@
-#include <stdlib.h>
+/* Apr 2020 Greg Haerr - handles LONG_MIN */
+#include <stdio.h>
+#define MAX_LONG_CHARS 34
 
-char *ltoa(long i)
+char *ltoa(long val)
 {
-	int   sign = (i < 0);
-	static char a[34];
-	char *b = a + sizeof(a) - 1;
+   static char buf[MAX_LONG_CHARS];
+   char *b = buf + sizeof(buf) - 1;
+   unsigned long u = (val < 0)? 0u - val: val;
 
-	if (sign)
-		i = -i;
-	*b = 0;
-	do {
-		*--b = '0' + (i % 10);
-		i /= 10;
-	}
-	while (i);
-	if (sign)
-		*--b = '-';
-	return b;
+   *b = '\0';
+   do {
+      *--b = '0' + (u % 10);
+   } while ((u /= 10) != 0);
+   if (val < 0)
+      *--b = '-';
+   return b;
 }
