@@ -1,24 +1,21 @@
-/* Copyright (C) 1995,1996 Robert de Bath <rdebath@cix.compulink.co.uk>
- * This file is part of the Linux-8086 C library and is distributed
- * under the GNU Library General Public License.
+/* From GNU C Library.
+ * Licensed under the GNU Lesser General Public License v2.1 or later.
  */
-
 #include <string.h>
 #include <ctype.h>
 
-int strncasecmp(char *s, char *d, size_t l)
+int strncasecmp(const char *s1, const char *s2, size_t n)
 {
-   while(l>0)
-   {
-      if( *s != *d )
-      {
-	 if( tolower(*s) != tolower(*d) )
-	    return *s - *d;
-      }
-      else
-	 if( *s == '\0' ) return 0;
-      s++; d++; l--;
-   }
-   return 0;
-}
+    const unsigned char *p1 = (const unsigned char *) s1;
+    const unsigned char *p2 = (const unsigned char *) s2;
+    int result;
 
+    if (p1 == p2 || n == 0)
+        return 0;
+
+    while ((result = tolower(*p1) - tolower(*p2++)) == 0)
+        if (*p1++ == '\0' || --n == 0)
+            break;
+
+    return result;
+}

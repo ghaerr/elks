@@ -10,7 +10,7 @@
 /* Basic string functions */
 
 extern char * strcpy __P ((char*, __const char*));
-extern int strcmp __P ((__const char*, __const char*));
+int strcmp(const char *s1, const char *s2);
 
 extern char * strncat __P ((char*, char*, size_t));
 extern char * strncpy __P ((char*, char*, size_t));
@@ -40,8 +40,8 @@ extern char * strerror __P ((int));
 #define rindex strrchr
 
 /* Other common BSD functions */
-extern int strcasecmp __P ((char*, char*));
-extern int strncasecmp __P ((char*, char*, size_t));
+int strcasecmp(const char *s1, const char *s2);
+int strncasecmp(const char *s1, const char *s2, size_t n);
 char *strpbrk __P ((const char *, const char *));
 char *strsep __P ((char **, char *));
 

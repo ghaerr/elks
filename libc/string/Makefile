@@ -14,7 +14,7 @@ OBJS = \
 	strcasecmp.o \
 	strcat.o \
 	strchr.o \
-	strcmp.o \
+	strcmp-c.o \
 	strcspn.o \
 	strcpy-c.o \
 	strdup.o \
