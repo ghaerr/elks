@@ -194,8 +194,8 @@ PROGMEM const TokenTableEntry tokenTable[] = {
     {"DATA",TKN_FMT_POST},
     {"READ",TKN_FMT_POST},
     {"RESTORE",TKN_FMT_POST},
-    {"PLOT",TKN_FMT_POST},
-    {"LIO98INI",TKN_FMT_POST}
+    {"MODE",TKN_FMT_POST},
+    {"PLOT",TKN_FMT_POST}
 };
 
 
@@ -1617,6 +1617,17 @@ int parse_PAUSE() {
     return 0;
 }
 
+int parse_MODE() {
+    getNextToken();
+    int val = expectNumber();
+    if (val) return val;	// error
+    if (executeMode) {
+        uint16_t mode = (uint16_t)stackPopNum();
+        host_mode(mode);
+    }
+    return 0;
+}
+
 int parse_LIST() {
     getNextToken();
     uint16_t first = 0, last = 0;
@@ -1698,7 +1709,7 @@ int parseTwoIntCmd() {
             host_pinMode(first,second); 
             break;
         case TOKEN_PLOT:
-            host_lio98_plot(first,second);
+            host_plot(first,second);
             break;
         }
     }
@@ -2003,9 +2014,6 @@ int parseSimpleCmd() {
                 return ERROR_FILE_ERROR;
 #endif
                 break;
-            case TOKEN_LIO98INI:
-                host_lio98_init();
-                break;
         }
     }
     return 0;
@@ -2075,6 +2083,7 @@ int parseStmts()
         case TOKEN_GOSUB: ret = parse_GOSUB(); break;
         case TOKEN_DIM: ret = parse_DIM(); break;
         case TOKEN_PAUSE: ret = parse_PAUSE(); break;
+        case TOKEN_MODE: ret = parse_MODE(); break;
         case TOKEN_DATA: ret = parse_DATA(); break;
         
         case TOKEN_LET:
@@ -2104,7 +2113,6 @@ int parseStmts()
         case TOKEN_RETURN:
         case TOKEN_CLS:
         case TOKEN_DIR:
-        case TOKEN_LIO98INI:
             ret = parseSimpleCmd();
             break;
             

@@ -14,9 +14,9 @@
 
 #define LIO_M_SIZE 5200
 
-unsigned char __far *lio_m;
-unsigned char lio_m_byte[LIO_M_SIZE];
-unsigned int lio_m_seg;
+static unsigned char __far *lio_m;
+static unsigned char lio_m_byte[LIO_M_SIZE];
+static unsigned int lio_m_seg;
 
 void int_A0(unsigned int l_seg)
 {
@@ -118,7 +118,7 @@ void int_A6(unsigned int l_seg)
                       "pop %ds;");
 }
 
-void host_lio98_init(void) {
+void host_mode(unsigned int mode) {
     unsigned long __far *intvec;
     unsigned int __far *lioaddr;
     unsigned int i;
@@ -144,32 +144,35 @@ void host_lio98_init(void) {
 
     int_A0(lio_m_seg); // Init
 
-    lio_m[0] = 0x03; // Color 640x400
-    lio_m[1] = 0x00;
-    lio_m[2] = 0x00;
-    lio_m[3] = 0x01;
-    int_A1(lio_m_seg);
+    if (mode) {
 
-    lio_m[0] = 0x00;
-    lio_m[1] = 0x00;
-    lio_m[2] = 0x00;
-    lio_m[3] = 0x00;
-    lio_m[4] = 0x7F; // 639
-    lio_m[5] = 0x02;
-    lio_m[6] = 0x8F; // 399
-    lio_m[7] = 0x01;
-    lio_m[8] = 0xFF;
-    lio_m[9] = 0xFF;
-    int_A2(lio_m_seg);
+        lio_m[0] = 0x03; // Color 640x400
+        lio_m[1] = 0x00;
+        lio_m[2] = 0x00;
+        lio_m[3] = 0x01;
+        int_A1(lio_m_seg);
 
-    lio_m[0] = 0xFF;
-    lio_m[1] = 0xFF;
-    lio_m[2] = 0xFF;
-    lio_m[3] = 0x02; // 16 Color mode
-    int_A3(lio_m_seg);
+        lio_m[0] = 0x00;
+        lio_m[1] = 0x00;
+        lio_m[2] = 0x00;
+        lio_m[3] = 0x00;
+        lio_m[4] = 0x7F; // 639
+        lio_m[5] = 0x02;
+        lio_m[6] = 0x8F; // 399
+        lio_m[7] = 0x01;
+        lio_m[8] = 0xFF;
+        lio_m[9] = 0xFF;
+        int_A2(lio_m_seg);
+
+        lio_m[0] = 0xFF;
+        lio_m[1] = 0xFF;
+        lio_m[2] = 0xFF;
+        lio_m[3] = 0x02; // 16 Color mode
+        int_A3(lio_m_seg);
+    }
 }
 
-void host_lio98_plot(unsigned int x, unsigned int y) {
+void host_plot(unsigned int x, unsigned int y) {
 
     y = 399 - y;
 
