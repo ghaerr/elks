@@ -89,13 +89,12 @@
 #define TOKEN_POW		76
 #define TOKEN_CHR		77
 #define TOKEN_CODE		78
-#define TOKEN_PLOT		79
-#define TOKEN_LIO98INI	80
 #define TOKEN_DATA		79
 #define TOKEN_READ		80
 #define TOKEN_RESTORE		81
-#define LAST_IDENT_TOKEN	81
->>>>>>> upstream_master
+#define TOKEN_PLOT		82
+#define TOKEN_LIO98INI		83
+#define LAST_IDENT_TOKEN	83
 
 #define ERROR_NONE				0
 // parse errors

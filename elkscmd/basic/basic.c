@@ -1698,9 +1698,7 @@ int parseTwoIntCmd() {
             host_pinMode(first,second); 
             break;
         case TOKEN_PLOT:
-#ifdef CONFIG_ARCH_PC98
             host_lio98_plot(first,second);
-#endif
             break;
         }
     }
@@ -2005,11 +2003,9 @@ int parseSimpleCmd() {
                 return ERROR_FILE_ERROR;
 #endif
                 break;
-#ifdef CONFIG_ARCH_PC98
             case TOKEN_LIO98INI:
                 host_lio98_init();
                 break;
-#endif
         }
     }
     return 0;
@@ -2108,9 +2104,7 @@ int parseStmts()
         case TOKEN_RETURN:
         case TOKEN_CLS:
         case TOKEN_DIR:
-#ifdef CONFIG_ARCH_PC98
         case TOKEN_LIO98INI:
-#endif
             ret = parseSimpleCmd();
             break;
             

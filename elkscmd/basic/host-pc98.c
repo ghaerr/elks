@@ -6,16 +6,16 @@
 
 #include "host.h"
 #include "basic.h"
-#include "arch/io.h"
 
-#define LIO_FAR_ADDR 0xF9900000
-#define INT_FAR_ADDR 0x00000280 // int 0xA0
+#define _MK_FP(seg,off) ((void __far *)((((unsigned long)(seg)) << 16) | (off)))
+
+#define LIOSEG 0xF990 /* ROM Segment for LIO */
+#define LIOINT 0xA0   /* Starting LIO interrupt number */
 
 #define LIO_M_SIZE 5200
 
-void (*intc5_h_p)(void);
-
 unsigned char __far *lio_m;
+unsigned char lio_m_byte[LIO_M_SIZE];
 unsigned int lio_m_seg;
 
 void int_A0(unsigned int l_seg)
@@ -118,36 +118,23 @@ void int_A6(unsigned int l_seg)
                       "pop %ds;");
 }
 
-void intc5_handler(void)
-{
-    printf("intC5\n");
-    __asm__ volatile ("iret");
-}
-
 void host_lio98_init(void) {
     unsigned long __far *intvec;
     unsigned int __far *lioaddr;
     unsigned int i;
 
-    intvec = (unsigned long __far *) INT_FAR_ADDR;
-
-    lioaddr = (unsigned int __far *) (LIO_FAR_ADDR + 6);
+    intvec = (unsigned long __far *) _MK_FP(0, LIOINT<<2); /* interrupt vector for INT 0xA0 */
+    lioaddr = (unsigned int __far *) _MK_FP(LIOSEG, 6);   /* Starting Rom Address for INT 0xA0 handler */
 
     // Set interrupt vector 0xA0 - 0xAF
     for (i = 0; i < 16; i++) {
-        *intvec = 0xF9900000 | (*lioaddr);
+        *intvec = (unsigned long) _MK_FP(LIOSEG, *lioaddr);
         intvec++;
         lioaddr += 2;
     }
 
-    // Set interrupt handler for 0xC5
-    intc5_h_p = intc5_handler;
-    intvec = (unsigned long __far *) 0x00000314;
-    *intvec = (unsigned long) ((unsigned long __far *) intc5_h_p);
-    //printf("intc5_h_p %p intvec %lx\n", intc5_h_p, *intvec);
-
     // Allocate memory for LIO
-    lio_m = (unsigned char __far *) malloc(LIO_M_SIZE);
+    lio_m = (unsigned char __far *) &lio_m_byte;
     //printf("lio_m : %lx\n", (long) lio_m);
 
     lio_m_seg = (unsigned int) ((((unsigned long) lio_m) >> 16) + ((((unsigned long) lio_m) & 0xFFFF) >> 4) + 1);
@@ -192,4 +179,18 @@ void host_lio98_plot(unsigned int x, unsigned int y) {
     lio_m[3] = (unsigned char) (y >> 8);
     lio_m[4] = (unsigned char) 7; // Pallet Number
     int_A6(lio_m_seg);
+}
+
+void host_digitalWrite(int pin,int state) {
+}
+
+int host_digitalRead(int pin) {
+    return 0;
+}
+
+int host_analogRead(int pin) {
+	return 0;
+}
+
+void host_pinMode(int pin,int mode) {
 }

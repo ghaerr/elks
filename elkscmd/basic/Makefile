@@ -18,10 +18,12 @@ HOST_CFLAGS = -O3
 PRGS = basic
 OBJS = basic.o host.o
 
+ifeq ($(CONFIG_ARCH_IBMPC), y)
+OBJS += host-stubs.o
+endif
+
 ifeq ($(CONFIG_ARCH_8018X), y)
 OBJS += host-8018x.o
-else
-OBJS += host-stubs.o
 endif
 
 ifeq ($(CONFIG_ARCH_PC98), y)
@@ -31,7 +33,7 @@ endif
 all: $(PRGS)
 
 basic: $(OBJS) basic.h host.h
-	$(LD) $(LDFLAGS) -maout-heap=10240 -maout-stack=6144 -o basic $(OBJS) $(LDLIBS)
+	$(LD) $(LDFLAGS) -o basic $(OBJS) $(LDLIBS)
 
 HOSTSRC = basic.c host.c host-stubs.c
 HOSTSRC += ../../libc/misc/ecvt.c
