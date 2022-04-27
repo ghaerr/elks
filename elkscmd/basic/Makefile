@@ -18,10 +18,16 @@ HOST_CFLAGS = -O3
 PRGS = basic
 OBJS = basic.o host.o
 
+ifeq ($(CONFIG_ARCH_IBMPC), y)
+OBJS += host-stubs.o
+endif
+
 ifeq ($(CONFIG_ARCH_8018X), y)
 OBJS += host-8018x.o
-else
-OBJS += host-stubs.o
+endif
+
+ifeq ($(CONFIG_ARCH_PC98), y)
+OBJS += host-pc98.o
 endif
 
 all: $(PRGS)

@@ -73,3 +73,7 @@ void host_digitalWrite(int pin,int state);
 int host_digitalRead(int pin);
 int host_analogRead(int pin);
 void host_pinMode(int pin, int mode);
+
+void host_mode(int mode);
+void host_gcls(void);
+void host_plot(int x, int y);
