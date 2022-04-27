@@ -1622,7 +1622,7 @@ int parse_MODE() {
     int val = expectNumber();
     if (val) return val;	// error
     if (executeMode) {
-        uint16_t mode = (uint16_t)stackPopNum();
+        int mode = (int)stackPopNum();
         host_mode(mode);
     }
     return 0;
@@ -2005,6 +2005,7 @@ int parseSimpleCmd() {
             }
             case TOKEN_CLS:
                 host_cls();
+                host_gcls();
                 host_showBuffer();
                 break;
             case TOKEN_DIR:

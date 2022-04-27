@@ -18,6 +18,8 @@ static unsigned char __far *lio_m;
 static unsigned char lio_m_byte[LIO_M_SIZE];
 static unsigned int lio_m_seg;
 
+static int gmode = 0;
+
 void int_A0(unsigned int l_seg)
 {
     __asm__ volatile ("push %ds;"
@@ -97,6 +99,26 @@ void int_A3(unsigned int l_seg)
                       "pop %ds;");
 }
 
+void int_A5(unsigned int l_seg)
+{
+    __asm__ volatile ("push %ds;"
+                      "push %es;"
+                      "push %bp;"
+                      "push %si;"
+                      "push %di;");
+    __asm__ volatile ("mov %0,%%ds;"
+                      "mov $0x0000,%%bx;"
+                      "int $0xA5;"
+                      :
+                      :"a" (l_seg)
+                      :"memory", "cc");
+    __asm__ volatile ("pop %di;"
+                      "pop %si;"
+                      "pop %bp;"
+                      "pop %es;"
+                      "pop %ds;");
+}
+
 void int_A6(unsigned int l_seg)
 {
     __asm__ volatile ("push %ds;"
@@ -118,33 +140,33 @@ void int_A6(unsigned int l_seg)
                       "pop %ds;");
 }
 
-void host_mode(unsigned int mode) {
+void host_mode(int mode) {
     unsigned long __far *intvec;
     unsigned int __far *lioaddr;
     unsigned int i;
 
-    intvec = (unsigned long __far *) _MK_FP(0, LIOINT<<2); /* interrupt vector for INT 0xA0 */
-    lioaddr = (unsigned int __far *) _MK_FP(LIOSEG, 6);   /* Starting Rom Address for INT 0xA0 handler */
+    gmode = mode;
 
-    // Set interrupt vector 0xA0 - 0xAF
-    for (i = 0; i < 16; i++) {
-        *intvec = (unsigned long) _MK_FP(LIOSEG, *lioaddr);
-        intvec++;
-        lioaddr += 2;
-    }
+    if (gmode) {
 
-    // Allocate memory for LIO
-    lio_m = (unsigned char __far *) &lio_m_byte;
-    //printf("lio_m : %lx\n", (long) lio_m);
+        intvec = (unsigned long __far *) _MK_FP(0, LIOINT<<2); /* interrupt vector for INT 0xA0 */
+        lioaddr = (unsigned int __far *) _MK_FP(LIOSEG, 6);   /* Starting Rom Address for INT 0xA0 handler */
 
-    lio_m_seg = (unsigned int) ((((unsigned long) lio_m) >> 16) + ((((unsigned long) lio_m) & 0xFFFF) >> 4) + 1);
-    //printf("lio_m_seg : %x\n", lio_m_seg);
+        // Set interrupt vector 0xA0 - 0xAF
+        for (i = 0; i < 16; i++) {
+            *intvec = (unsigned long) _MK_FP(LIOSEG, *lioaddr);
+            intvec++;
+            lioaddr += 2;
+        }
 
-    lio_m = (unsigned char __far *) (((unsigned long) lio_m_seg) << 16);
+        // Allocate memory for LIO
+        lio_m = (unsigned char __far *) &lio_m_byte;
 
-    int_A0(lio_m_seg); // Init
+        lio_m_seg = (unsigned int) ((((unsigned long) lio_m) >> 16) + ((((unsigned long) lio_m) & 0xFFFF) >> 4) + 1);
 
-    if (mode) {
+        lio_m = (unsigned char __far *) (((unsigned long) lio_m_seg) << 16);
+
+        int_A0(lio_m_seg); // Init
 
         lio_m[0] = 0x03; // Color 640x400
         lio_m[1] = 0x00;
@@ -172,16 +194,25 @@ void host_mode(unsigned int mode) {
     }
 }
 
-void host_plot(unsigned int x, unsigned int y) {
+void host_gcls(void) {
 
-    y = 399 - y;
+    if (gmode) {
+        int_A5(lio_m_seg);
+    }
+}
 
-    lio_m[0] = (unsigned char) (x & 0xFF);
-    lio_m[1] = (unsigned char) (x >> 8);
-    lio_m[2] = (unsigned char) (y & 0xFF);
-    lio_m[3] = (unsigned char) (y >> 8);
-    lio_m[4] = (unsigned char) 7; // Pallet Number
-    int_A6(lio_m_seg);
+void host_plot(int x, int y) {
+
+    if (gmode) {
+        y = 399 - y;
+
+        lio_m[0] = (unsigned char) (x & 0xFF);
+        lio_m[1] = (unsigned char) (x >> 8);
+        lio_m[2] = (unsigned char) (y & 0xFF);
+        lio_m[3] = (unsigned char) (y >> 8);
+        lio_m[4] = (unsigned char) 7; // Pallet Number
+        int_A6(lio_m_seg);
+    }
 }
 
 void host_digitalWrite(int pin,int state) {

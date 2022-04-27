@@ -74,5 +74,6 @@ int host_digitalRead(int pin);
 int host_analogRead(int pin);
 void host_pinMode(int pin, int mode);
 
-void host_mode(unsigned int mode);
-void host_plot(unsigned int x, unsigned int y);
+void host_mode(int mode);
+void host_gcls(void);
+void host_plot(int x, int y);
