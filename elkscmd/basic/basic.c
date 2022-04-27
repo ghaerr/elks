@@ -450,7 +450,7 @@ unsigned char *findVariable(char *searchName, int searchMask) {
         int type = *(p+2);
         if (type & searchMask) {
             unsigned char *name = p+3;
-            if (strcasecmp((char*)name, searchName) == 0)
+            if (strcmp((char*)name, searchName) == 0)
                 return p;
         }
         p+= *(uint16_t *)p;
@@ -878,16 +878,16 @@ int nextToken()
     if (isalpha(*tokenIn)) {
         char identStr[MAX_IDENT_LEN+1];
         int identLen = 0;
-        identStr[identLen++] = *tokenIn++; // copy first char
+        identStr[identLen++] = toupper(*tokenIn++); // copy first char
         while (isalnum(*tokenIn) || *tokenIn=='$') {
             if (identLen < MAX_IDENT_LEN)
-                identStr[identLen++] = *tokenIn;
+                identStr[identLen++] = toupper(*tokenIn);
             tokenIn++;
         }
         identStr[identLen] = 0;
         // check to see if this is a keyword
         for (int i = FIRST_IDENT_TOKEN; i <= LAST_IDENT_TOKEN; i++) {
-            if (strcasecmp(identStr, pgm_read_word(tokenTable[i].token)) == 0) {
+            if (strcmp(identStr, pgm_read_word(tokenTable[i].token)) == 0) {
                 if (tokenOutLeft <= 1) return ERROR_LEXER_TOO_LONG;
                 tokenOutLeft--;
                 *tokenOut++ = i;
