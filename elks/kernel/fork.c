@@ -52,6 +52,10 @@ struct task_struct *find_empty_process(void)
     *t = *currentp;
     t->state = TASK_UNINTERRUPTIBLE;
     t->pid = get_pid();
+#ifdef CONFIG_CPU_USAGE
+    t->ticks = 0;
+    t->average = 0;
+#endif
     t->t_kstackm = KSTACK_MAGIC;
     t->next_run = t->prev_run = NULL;
     return t;

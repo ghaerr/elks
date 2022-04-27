@@ -17,6 +17,7 @@
 #include <linuxmt/mem.h>
 #include <linuxmt/major.h>
 #include <linuxmt/sched.h>
+#include <linuxmt/fixedpt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -27,6 +28,7 @@
 #include <string.h>
 #include <dirent.h>
 #include <pwd.h>
+#include <getopt.h>
 
 #define LINEARADDRESS(off, seg)		((off_t) (((off_t)seg << 4) + off))
 
@@ -112,26 +114,74 @@ char *tty_name(int fd, unsigned int off, unsigned int seg)
 
 int main(int argc, char **argv)
 {
-	int i, c, fd;
+	int c, fd;
 	unsigned int j, ds, off;
 	word_t cseg, dseg;
 	struct task_struct task_table;
 	struct passwd * pwent;
+    int f_listall = 0;
+    char *progname = argv[0];
+    int f_uptime = !strcmp(progname, "uptime");
+
+    while ((c = getopt(argc, argv, "lu")) != -1) {
+        switch (c) {
+        case 'l':       /* list all - CSEG/DSEG */
+            f_listall = 1;
+            break;
+        case 'u':       /* uptime */
+            f_uptime = 1;
+            break;
+        default:
+            printf("Usage: %s: [-lu]\n", progname);
+            exit(1);
+        }
+    }
 
 	if ((fd = open("/dev/kmem", O_RDONLY)) < 0) {
 		perror("ps");
 		exit(1);
 	}
-	if ((i = ioctl(fd, MEM_GETDS, &ds))) {
-		perror("ps");
-		exit(1);
-	}
-	if ((i = ioctl(fd, MEM_GETTASK, &off))) {
+	if (ioctl(fd, MEM_GETDS, &ds) < 0) {
 		perror("ps");
 		exit(1);
 	}
 
-	printf("  PID   GRP  TTY USER STAT CSEG DSEG  HEAP   FREE   SIZE COMMAND\n");
+#ifdef CONFIG_CPU_USAGE
+    if (f_uptime) {
+        jiff_t uptime;
+        unsigned int upoff;
+
+	    if (ioctl(fd, MEM_GETUPTIME, &upoff) < 0 ||
+                !memread(fd, upoff, ds, &uptime, sizeof(uptime))) {
+		    perror("ps");
+		    exit(1);
+	    }
+
+        unsigned long n = uptime / HZ;
+        int days = n / (24 * 3600L);
+        n = n % (24 * 3600L);
+        int hours = n / 3600L;
+        n %= 3600;
+        int minutes = n / 60 ;
+
+        printf("up for %d days, %d hour%s, and %d minute%s\n",
+            days, hours, hours == 1? "": "s", minutes, minutes == 1? "": "s");
+        exit(0);
+    }
+#endif
+
+	if (ioctl(fd, MEM_GETTASK, &off) < 0) {
+		perror("ps");
+		exit(1);
+	}
+
+	printf("  PID   GRP  TTY USER STAT ");
+#ifdef CONFIG_CPU_USAGE
+    printf("CPU");
+#endif
+    printf(" ");
+	if (f_listall) printf("CSEG DSEG ");
+	printf(" HEAP  FREE   SIZE COMMAND\n");
 	for (j = 1; j <= MAX_TASKS; j++) {
 		if (!memread(fd, off + j*sizeof(struct task_struct), ds, &task_table, sizeof(task_table))) {
 			perror("ps");
@@ -163,20 +213,29 @@ int main(int argc, char **argv)
 				(pwent ? pwent->pw_name : "unknown"),
 				c);
 
+#ifdef CONFIG_CPU_USAGE
+        {
+            /* Round up, then divide by 2 for %. Change if SAMP_FREQ not 2 */
+            unsigned long cpu_percent = (task_table.average + FIXED_HALF) >> 1;
+            printf("%3d", FIXED_INT(cpu_percent));
+        }
+#endif
 		/* CSEG*/
 		cseg = (word_t)task_table.mm.seg_code;
-		printf("%4x ", cseg? getword(fd, (word_t)cseg+offsetof(struct segment, base), ds): 0);
+		if (f_listall) printf(" %4x ",
+            cseg? getword(fd, (word_t)cseg+offsetof(struct segment, base), ds): 0);
 
 		/* DSEG*/
 		dseg = (word_t)task_table.mm.seg_data;
-		printf("%4x ", dseg? getword(fd, (word_t)dseg+offsetof(struct segment, base), ds): 0);
+		if (f_listall) printf("%4x",
+            dseg? getword(fd, (word_t)dseg+offsetof(struct segment, base), ds): 0);
 
 		if (dseg) {
 			/* heap*/
-			printf("%5u ", (word_t)(task_table.t_endbrk - task_table.t_enddata));
+			printf(" %5u ", (word_t)(task_table.t_endbrk - task_table.t_enddata));
 
 			/* free*/
-			printf(" %5u ", (word_t)(task_table.t_regs.sp - task_table.t_endbrk));
+			printf("%5u ", (word_t)(task_table.t_regs.sp - task_table.t_endbrk));
 
 			/* stack*/
 			//printf("%5u ", (word_t)(task_table.t_begstack - task_table.t_regs.sp));

@@ -76,6 +76,11 @@ struct task_struct {
     sigset_t			signal;		/* Signal status */
     struct signal_struct	sig;		/* Signal block */
 
+#ifdef CONFIG_CPU_USAGE
+    unsigned long               average;        /* fixed point CPU % usage */
+    unsigned char               ticks;          /* # jiffies / 2 seconds */
+#endif
+
 #ifdef CONFIG_SUPPLEMENTARY_GROUPS
     gid_t			groups[NGROUPS];
 #endif

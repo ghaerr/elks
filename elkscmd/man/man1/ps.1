@@ -1,15 +1,24 @@
 .TH ps 1
 .SH NAME
-ps \- list processes
+ps \- list processes or uptime status
 .SH SYNOPSIS
 .B ps
+[\fB-lu\fR]
 .SH DESCRIPTION
 .BR ps
 prints a list of all the processes currently running on the system, giving
 a line for each process. The process id, process group, tty, user, state,
-the kernel code and data segment address of the corresponding binary, the process
-heap total and free, overall process memory size, and the process name
+CPU percentage utilization,
+process heap total and free, overall process memory size, and the process name
 and command line are displayed.
+The kernel code an data segment address of the corresponding binary are also
+displayed when the
+.B -l
+option is used.
+The
+.B uptime
+command is linked to
+.BR ps.
 .PP
 Each line of the listing contains:
 .TP 10
@@ -28,6 +37,9 @@ The user ID.
 STAT
 Process status (see below).
 .TP 10
+CPU
+CPU % utilization.
+.TP 10
 CSEG
 Code segment in main memory in hex.
 .TP 10
@@ -45,6 +57,13 @@ Total main memory uysed in bytes.
 .TP 10
 COMMAND
 Program name and arguments.
+.SS OPTIONS
+.TP
+.B \-l
+Display DSEG and CSEG columns.
+.TP
+.B \-u
+Display system uptime.
 .SH "PROCESS STATES"
 Process states are from the following table:
 .TP 10
