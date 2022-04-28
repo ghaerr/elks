@@ -1,4 +1,4 @@
-/* Apr 2022 ported by Greg Haerr from Research UNIX v7 */
+/* Apr 2022 ported by Greg Haerr from Research UNIX v7 with BSD addons*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
 
@@ -31,6 +31,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Copyright (c) 1980 Regents of the University of California.
+ * All rights reserved.  The Berkeley software License Agreement
+ * specifies the terms and conditions for redistribution.
  */
 #include <stdio.h>
 #include <sys/types.h>
@@ -40,15 +44,19 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <signal.h>
 #include <fcntl.h>
 #include <utime.h>
 #include <sys/wait.h>
 #include <sys/time.h>
+#include <errno.h>
 
 typedef unsigned long daddr_t;
-#define DIRSIZ  14
+#define MAXPATHLEN 128
+
 #define DO_REPLACE      0   /* =1 for tar 'r' option, requires awk */
+
+#define telldir(dirp)       lseek((dirp)->dd_fd, 0L, SEEK_CUR)
+#define seekdir(dirp,off)   lseek((dirp)->dd_fd, off, SEEK_SET)
 
 daddr_t	bsrch();
 #define TBLOCK	512
@@ -81,6 +89,7 @@ struct stat stbuf;
 
 int	rflag, xflag, vflag, tflag, mt, cflag, mflag;
 int	term, chksum, wflag, recno, first, linkerrok;
+int hflag, oflag;
 int	freemem = 1;
 int	nblock = 1;
 
@@ -212,6 +221,7 @@ char	*arg;
 	}
 }
 
+#if 0
 getwdir(s)
 char *s;
 {
@@ -237,6 +247,7 @@ char *s;
 	close(pipdes[0]);
 	close(pipdes[1]);
 }
+#endif
 
 putempty()
 {
@@ -253,6 +264,87 @@ flushtape()
 	write(mt, tbuf, TBLOCK*nblock);
 }
 
+#if 1
+dorep(argv)
+	char *argv[];
+{
+	register char *cp, *cp2;
+	char wdir[MAXPATHLEN], tempdir[MAXPATHLEN], *parent;
+
+	if (!cflag) {
+#if DO_REPLACE
+		getdir();
+		do {
+			passtape();
+			if (term)
+				done(0);
+			getdir();
+		} while (!endtape());
+		backtape();
+		if (tfile != NULL) {
+			char buf[200];
+
+			(void)sprintf(buf,
+"sort +0 -1 +1nr %s -o %s; awk '$1 != prev {print; prev=$1}' %s >%sX; mv %sX %s",
+				tname, tname, tname, tname, tname, tname);
+			fflush(tfile);
+			system(buf);
+			freopen(tname, "r", tfile);
+			fstat(fileno(tfile), &stbuf);
+			high = stbuf.st_size;
+		}
+#else
+        printf("tar: replace option not supported\n");
+        done(4);
+#endif
+	}
+
+	getcwd(wdir, sizeof(wdir));
+	while (*argv && ! term) {
+		cp2 = *argv;
+		if (!strcmp(cp2, "-C") && argv[1]) {
+			argv++;
+			if (chdir(*argv) < 0) {
+				fprintf(stderr, "tar: can't change directories to ");
+				perror(*argv);
+			} else
+				getcwd(wdir, sizeof(wdir));
+			argv++;
+			continue;
+		}
+		parent = wdir;
+		for (cp = *argv; *cp; cp++)
+			if (*cp == '/')
+				cp2 = cp;
+		if (cp2 != *argv) {
+			*cp2 = '\0';
+			if (chdir(*argv) < 0) {
+				fprintf(stderr, "tar: can't change directories to ");
+				perror(*argv);
+				continue;
+			}
+			parent = getcwd(tempdir, sizeof(tempdir));
+			*cp2 = '/';
+			cp2++;
+		}
+		putfile(*argv++, cp2, parent);
+		if (chdir(wdir) < 0) {
+			fprintf(stderr, "tar: cannot change back?: ");
+			perror(wdir);
+		}
+	}
+	putempty();
+	putempty();
+	flushtape();
+	if (linkerrok == 0)
+		return;
+	for (; ihead != NULL; ihead = ihead->nextp) {
+		if (ihead->count == 0)
+			continue;
+		fprintf(stderr, "tar: missing links to %s\n", ihead->pathname);
+	}
+}
+#else
 dorep(argv)
 char	*argv[];
 {
@@ -289,7 +381,7 @@ char	*argv[];
 #endif
 	}
 
-	getwdir(wdir);
+	getcwd(wdir, sizeof(wdir));
 	while (*argv && ! term) {
 		cp2 = *argv;
 		for (cp = *argv; *cp; cp++)
@@ -312,6 +404,7 @@ char	*argv[];
 			if (ihead->count != 0)
 				fprintf(stderr, "Missing links to %s\n", ihead->pathname);
 }
+#endif
 
 backtape()
 {
@@ -439,6 +532,229 @@ register struct stat *sp;
 	sprintf(dblock.dbuf.mtime, "%11lo ", sp->st_mtime);
 }
 
+#if 1
+putfile(longname, shortname, parent)
+	char *longname;
+	char *shortname;
+	char *parent;
+{
+	int infile = 0;
+	long blocks;
+	register char *cp;
+	struct direct *dp;
+	DIR *dirp;
+	register int i;
+	long l;
+	char newparent[NAMSIZ+64];
+	char buf[TBLOCK];
+
+	if (!hflag)
+		i = lstat(shortname, &stbuf);
+	else
+		i = stat(shortname, &stbuf);
+	if (i < 0) {
+		fprintf(stderr, "tar: ");
+		perror(longname);
+		return;
+	}
+	if (tfile != NULL && checkupdate(longname) == 0)
+		return;
+	if (checkw('r', longname) == 0)
+		return;
+	//if (Fflag && checkf(shortname, stbuf.st_mode, Fflag) == 0)
+		//return;
+
+	switch (stbuf.st_mode & S_IFMT) {
+	case S_IFDIR:
+		for (i = 0, cp = buf; (*cp++ = longname[i++]) != '\0';)
+			;
+		*--cp = '/';
+		*++cp = 0  ;
+		if (!oflag) {
+			if ((cp - buf) >= NAMSIZ) {
+				fprintf(stderr, "tar: %s: file name too long\n",
+				    longname);
+				return;
+			}
+			stbuf.st_size = 0;
+			tomodes(&stbuf);
+			strcpy(dblock.dbuf.name,buf);
+			(void)sprintf(dblock.dbuf.chksum, "%6o", checksum());
+			(void) writetape((char *)&dblock);
+		}
+		(void)sprintf(newparent, "%s/%s", parent, shortname);
+		if (chdir(shortname) < 0) {
+			perror(shortname);
+			return;
+		}
+		if ((dirp = opendir(".")) == NULL) {
+			fprintf(stderr, "tar: %s: directory read error\n",
+			    longname);
+			if (chdir(parent) < 0) {
+				fprintf(stderr, "tar: cannot change back?: ");
+				perror(parent);
+			}
+			return;
+		}
+		while ((dp = readdir(dirp)) != NULL && !term) {
+			if (!strcmp(".", dp->d_name) ||
+			    !strcmp("..", dp->d_name))
+				continue;
+			strcpy(cp, dp->d_name);
+			l = telldir(dirp);
+			closedir(dirp);
+			putfile(buf, cp, newparent);
+			dirp = opendir(".");
+			seekdir(dirp, l);
+		}
+		closedir(dirp);
+		if (chdir(parent) < 0) {
+			fprintf(stderr, "tar: cannot change back?: ");
+			perror(parent);
+		}
+		break;
+
+	case S_IFLNK:
+		tomodes(&stbuf);
+		if (strlen(longname) >= NAMSIZ) {
+			fprintf(stderr, "tar: %s: file name too long\n",
+			    longname);
+			return;
+		}
+		strcpy(dblock.dbuf.name, longname);
+		if (stbuf.st_size + 1 >= NAMSIZ) {
+			fprintf(stderr, "tar: %s: symbolic link too long\n",
+			    longname);
+			return;
+		}
+		i = readlink(shortname, dblock.dbuf.linkname, NAMSIZ - 1);
+		if (i < 0) {
+			fprintf(stderr, "tar: can't read symbolic link ");
+			perror(longname);
+			return;
+		}
+		dblock.dbuf.linkname[i] = '\0';
+		dblock.dbuf.linkflag = '2';
+		if (vflag)
+			fprintf(stderr, "a %s symbolic link to %s\n",
+			    longname, dblock.dbuf.linkname);
+		(void)sprintf(dblock.dbuf.size, "%11lo", 0L);
+		(void)sprintf(dblock.dbuf.chksum, "%6o", checksum());
+		(void) writetape((char *)&dblock);
+		break;
+
+	case S_IFREG:
+		if ((infile = open(shortname, 0)) < 0) {
+			fprintf(stderr, "tar: ");
+			perror(longname);
+			return;
+		}
+		tomodes(&stbuf);
+		if (strlen(longname) >= NAMSIZ) {
+			fprintf(stderr, "tar: %s: file name too long\n",
+			    longname);
+			close(infile);
+			return;
+		}
+		strcpy(dblock.dbuf.name, longname);
+		if (stbuf.st_nlink > 1) {
+			struct linkbuf *lp;
+			int found = 0;
+
+			for (lp = ihead; lp != NULL; lp = lp->nextp)
+				if (lp->inum == stbuf.st_ino &&
+				    lp->devnum == stbuf.st_dev) {
+					found++;
+					break;
+				}
+			if (found) {
+				strcpy(dblock.dbuf.linkname, lp->pathname);
+				dblock.dbuf.linkflag = '1';
+				(void)sprintf(dblock.dbuf.chksum, "%6o", checksum());
+				(void) writetape( (char *) &dblock);
+				if (vflag)
+					fprintf(stderr, "a %s link to %s\n",
+					    longname, lp->pathname);
+				lp->count--;
+				close(infile);
+				return;
+			}
+			lp = (struct linkbuf *) malloc(sizeof(*lp));
+			if (lp != NULL) {
+				lp->nextp = ihead;
+				ihead = lp;
+				lp->inum = stbuf.st_ino;
+				lp->devnum = stbuf.st_dev;
+				lp->count = stbuf.st_nlink - 1;
+				strcpy(lp->pathname, longname);
+			}
+		}
+#if 1
+
+    blocks = (stbuf.st_size + (TBLOCK-1)) / TBLOCK;
+    if (vflag) {
+        fprintf(stderr, "a %s ", longname);
+        fprintf(stderr, "%ld blocks\n", blocks);
+    }
+    sprintf(dblock.dbuf.chksum, "%6o", checksum());
+    writetape( (char *) &dblock);
+
+    while ((i = read(infile, buf, TBLOCK)) > 0 && blocks > 0) {
+        writetape(buf);
+        blocks--;
+    }
+    close(infile);
+    if (blocks != 0 || i != 0)
+        fprintf(stderr, "%s: file changed size\n", longname);
+    while (blocks-- >  0)
+        putempty();
+
+#else
+		blocks = (stbuf.st_size + (TBLOCK-1)) / TBLOCK;
+		if (vflag)
+			fprintf(vfile, "a %s %ld blocks\n", longname, blocks);
+		(void)sprintf(dblock.dbuf.chksum, "%6o", checksum());
+		hint = writetape((char *)&dblock);
+		maxread = max(stbuf.st_blksize, (nblock * TBLOCK));
+		if ((bigbuf = malloc((unsigned)maxread)) == 0) {
+			maxread = TBLOCK;
+			bigbuf = buf;
+		}
+
+		while ((i = read(infile, bigbuf, min((hint*TBLOCK), maxread))) > 0
+		  && blocks > 0) {
+		  	register int nblks;
+
+			nblks = ((i-1)/TBLOCK)+1;
+		  	if (nblks > blocks)
+		  		nblks = blocks;
+			hint = writetbuf(bigbuf, nblks);
+			blocks -= nblks;
+		}
+		close(infile);
+		if (bigbuf != buf)
+			free(bigbuf);
+		if (i < 0) {
+			fprintf(stderr, "tar: Read error on ");
+			perror(longname);
+		} else if (blocks != 0 || i != 0)
+			fprintf(stderr, "tar: %s: file changed size\n",
+			    longname);
+		while (--blocks >=  0)
+			putempty();
+#endif
+		break;
+
+	default:
+		fprintf(stderr, "tar: %s is not a file. Not dumped\n",
+		    longname);
+		break;
+	}
+}
+
+
+#else
+#define DIRSIZ  14
 putfile(longname, shortname)
 char *longname;
 char *shortname;
@@ -572,6 +888,7 @@ char *shortname;
 	while (blocks-- >  0)
 		putempty();
 }
+#endif
 
 
 prefix(s1, s2)
@@ -639,6 +956,49 @@ gotit:
 
 		checkdir(dblock.dbuf.name);
 
+#if 1
+        if (dblock.dbuf.linkflag == '2') {  /* symlink */
+            /*
+             * only unlink non directories or empty
+             * directories
+             */
+            if (rmdir(dblock.dbuf.name) < 0) {
+                if (errno == ENOTDIR)
+                    unlink(dblock.dbuf.name);
+            }
+            if (symlink(dblock.dbuf.linkname, dblock.dbuf.name)<0) {
+                fprintf(stderr, "tar: %s: symbolic link failed: ",
+                    dblock.dbuf.name);
+                perror("");
+                continue;
+            }
+            if (vflag)
+                fprintf(stderr, "x %s symbolic link to %s\n",
+                    dblock.dbuf.name, dblock.dbuf.linkname);
+            continue;
+        }
+        if (dblock.dbuf.linkflag == '1') {  /* regular link */
+            /*
+             * only unlink non directories or empty
+             * directories
+             */
+            if (rmdir(dblock.dbuf.name) < 0) {
+                if (errno == ENOTDIR)
+                    unlink(dblock.dbuf.name);
+            }
+            if (link(dblock.dbuf.linkname, dblock.dbuf.name) < 0) {
+                fprintf(stderr, "tar: can't link %s to %s: ",
+                    dblock.dbuf.name, dblock.dbuf.linkname);
+                perror("");
+                continue;
+            }
+            if (vflag)
+                fprintf(stderr, "%s linked to %s\n",
+                    dblock.dbuf.name, dblock.dbuf.linkname);
+            continue;
+        }
+
+#else
 		if (dblock.dbuf.linkflag == '1') {
 			unlink(dblock.dbuf.name);
 			if (link(dblock.dbuf.linkname, dblock.dbuf.name) < 0) {
@@ -649,6 +1009,8 @@ gotit:
 				fprintf(stderr, "%s linked to %s\n", dblock.dbuf.name, dblock.dbuf.linkname);
 			continue;
 		}
+#endif
+
 		if ((ofile = creat(dblock.dbuf.name, stbuf.st_mode & 07777)) < 0) {
 			fprintf(stderr, "tar: %s - cannot create\n", dblock.dbuf.name);
 			passtape();
@@ -696,6 +1058,8 @@ dotable()
 		printf("%s", dblock.dbuf.name);
 		if (dblock.dbuf.linkflag == '1')
 			printf(" linked to %s", dblock.dbuf.linkname);
+        if (dblock.dbuf.linkflag == '2')
+            printf(" symbolic link to %s", dblock.dbuf.linkname);
 		printf("\n");
 		passtape();
 	}
@@ -893,6 +1257,12 @@ noupdate:
 			break;
 		case 'm':
 			mflag++;
+			break;
+		case 'h':
+			hflag++;
+			break;
+		case 'o':
+			oflag++;
 			break;
 		case '-':
 			break;
