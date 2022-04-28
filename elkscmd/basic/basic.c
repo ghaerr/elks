@@ -862,7 +862,7 @@ int nextToken()
                 gotDecimal = true;
             else {
                 *tokenOut++ = TOKEN_INTEGER;
-                *(long*)tokenOut = (long)val;
+                *(long*)tokenOut = val;
                 tokenOut += sizeof(long);
             }
         }
