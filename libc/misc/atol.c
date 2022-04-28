@@ -14,5 +14,5 @@ long atol(const char *s)
 	}
 	while ((unsigned) (*s - '0') <= 9u)
 		n = n * 10 + *s++ - '0';
-	return neg ? -n : n;
+	return neg ? 0u - n : n;
 }

@@ -59,26 +59,6 @@ char *progname;
 
 char buffer[4096];
 
-#if 0
-_PROTOTYPE(int strncasecmp, (const char *s1, const char *s2, size_t len));
-int
-strncasecmp(s1, s2, len)
-const char *s1, *s2;
-size_t len;
-{
-        int c1, c2;
-        do {
-                if (len == 0)
-                        return 0;
-                len--;
-        } while (c1= toupper(*s1++), c2= toupper(*s2++), c1 == c2 && (c1 & c2))
-                ;
-        if (c1 & c2)
-                return c1 < c2 ? -1 : 1;
-        return c1 ? 1 : (c2 ? -1 : 0);
-}
-#endif
-
 char *unesc(char *s) {
    char *p, *p2;
    unsigned char c;
