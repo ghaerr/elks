@@ -12,11 +12,7 @@ unsigned char mem[MEMORY_SIZE];
 static unsigned char tokenBuf[TOKEN_BUF_SIZE];
 
 static FILE *infile;
-static FILE *outfile;
-
-void host_cls() {
-	fprintf(outfile, "\033[H\033[2J");
-}
+FILE *outfile;
 
 void host_moveCursor(int x, int y) {
 	fprintf(outfile, "\033[%d;%dH", y, x);

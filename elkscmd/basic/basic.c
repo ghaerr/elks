@@ -2005,7 +2005,6 @@ int parseSimpleCmd() {
             }
             case TOKEN_CLS:
                 host_cls();
-                host_gcls();
                 host_showBuffer();
                 break;
             case TOKEN_DIR:
