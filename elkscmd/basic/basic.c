@@ -194,6 +194,8 @@ PROGMEM const TokenTableEntry tokenTable[] = {
     {"DATA",TKN_FMT_POST},
     {"READ",TKN_FMT_POST},
     {"RESTORE",TKN_FMT_POST},
+    {"MODE",TKN_FMT_POST},
+    {"PLOT",TKN_FMT_POST}
 };
 
 
@@ -1615,6 +1617,17 @@ int parse_PAUSE() {
     return 0;
 }
 
+int parse_MODE() {
+    getNextToken();
+    int val = expectNumber();
+    if (val) return val;	// error
+    if (executeMode) {
+        int mode = (int)stackPopNum();
+        host_mode(mode);
+    }
+    return 0;
+}
+
 int parse_LIST() {
     getNextToken();
     uint16_t first = 0, last = 0;
@@ -1694,6 +1707,9 @@ int parseTwoIntCmd() {
             break;
         case TOKEN_PINMODE: 
             host_pinMode(first,second); 
+            break;
+        case TOKEN_PLOT:
+            host_plot(first,second);
             break;
         }
     }
@@ -2067,6 +2083,7 @@ int parseStmts()
         case TOKEN_GOSUB: ret = parse_GOSUB(); break;
         case TOKEN_DIM: ret = parse_DIM(); break;
         case TOKEN_PAUSE: ret = parse_PAUSE(); break;
+        case TOKEN_MODE: ret = parse_MODE(); break;
         case TOKEN_DATA: ret = parse_DATA(); break;
         
         case TOKEN_LET:
@@ -2086,6 +2103,7 @@ int parseStmts()
         case TOKEN_POSITION:
         case TOKEN_PIN:
         case TOKEN_PINMODE:
+        case TOKEN_PLOT:
             ret = parseTwoIntCmd(); 
             break;
             
