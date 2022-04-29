@@ -89,7 +89,7 @@ struct stat stbuf;
 
 int	rflag, xflag, vflag, tflag, mt, cflag, mflag;
 int	term, chksum, wflag, recno, first, linkerrok;
-int hflag, oflag;
+int hflag, oflag, pflag;
 int	freemem = 1;
 int	nblock = 1;
 
@@ -156,7 +156,7 @@ done(n)
 
 usage()
 {
-	fprintf(stderr, "tar: usage  tar -{txu}[cvfblm] [tapefile] [blocksize] file1 file2...\n");
+	fprintf(stderr, "tar: usage  tar -{txu}[cvfblmhop] [tapefile] [blocksize] file1 file2...\n");
 	done(1);
 }
 
@@ -902,6 +902,51 @@ register char *s1, *s2;
 	return(1);
 }
 
+#if 1
+/*
+ * Make all directories needed by `name'.  If `name' is itself
+ * a directory on the tar tape (indicated by a trailing '/'),
+ * return 1; else 0.
+ */
+checkdir(name)
+    register char *name;
+{
+    register char *cp;
+
+    /*
+     * Quick check for existence of directory.
+     */
+    if ((cp = rindex(name, '/')) == 0)
+        return (0);
+    *cp = '\0';
+    if (access(name, 0) == 0) { /* already exists */
+        *cp = '/';
+        return (cp[1] == '\0'); /* return (lastchar == '/') */
+    }
+    *cp = '/';
+
+    /*
+     * No luck, try to make all directories in path.
+     */
+    for (cp = name; *cp; cp++) {
+        if (*cp != '/')
+            continue;
+        *cp = '\0';
+        if (access(name, 0) < 0) {
+            if (mkdir(name, 0777 & ~umask(0)) < 0) {
+                perror(name);
+                *cp = '/';
+                return (0);
+            }
+            chown(name, stbuf.st_uid, stbuf.st_gid);
+            if (pflag && cp[1] == '\0') /* dir on the tape */
+                chmod(name, stbuf.st_mode & 07777);
+        }
+        *cp = '/';
+    }
+    return (cp[-1]=='/');
+}
+#else
 checkdir(name)
 register char *name;
 {
@@ -911,19 +956,25 @@ register char *name;
 		if (*cp == '/') {
 			*cp = '\0';
 			if (access(name, 01) < 0) {
+#if 1
+                mkdir(name, 0666);
+#else
 				if (fork() == 0) {
+                                mkdir(name, 0666);
 					execl("/bin/mkdir", "mkdir", name, NULL);
 					/*execl("/usr/bin/mkdir", "mkdir", name, 0);*/
 					fprintf(stderr, "tar: cannot find mkdir!\n");
 					done(0);
 				}
 				while (wait(&i) >= 0);
+#endif
 				chown(name, stbuf.st_uid, stbuf.st_gid);
 			}
 			*cp = '/';
 		}
 	}
 }
+#endif
 
 
 doxtract(argv)
@@ -954,7 +1005,12 @@ gotit:
 			continue;
 		}
 
-		checkdir(dblock.dbuf.name);
+        if (checkdir(dblock.dbuf.name)) {   /* have a directory */
+            //if (mflag == 0)
+                //dodirtimes(&dblock);
+            continue;
+        }
+
 
 #if 1
         if (dblock.dbuf.linkflag == '2') {  /* symlink */
@@ -1262,7 +1318,10 @@ noupdate:
 			hflag++;
 			break;
 		case 'o':
-			oflag++;
+            oflag++;
+			break;
+		case 'p':
+            pflag++;
 			break;
 		case '-':
 			break;
@@ -1289,10 +1348,8 @@ noupdate:
 		}
 
 	if (rflag) {
-		if (cflag && tfile != NULL) {
+		if (cflag && tfile != NULL)
 			usage();
-			done(1);
-		}
 		if (signal(SIGINT, SIG_IGN) != SIG_IGN)
 			signal(SIGINT, onintr);
 		if (signal(SIGHUP, SIG_IGN) != SIG_IGN)
