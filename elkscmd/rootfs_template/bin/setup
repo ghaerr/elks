@@ -1,0 +1,47 @@
+#
+# ELKS image network name/address setup script
+#
+# Usage: setup node_number
+#   node_number will be used as last digits in IP address and elks hostname
+#
+
+# defaults
+network=10.0.2
+bootopts=/bootopts
+hosts=/etc/hosts
+
+# check for argument, use as id
+if test "$#" -lt 1; then
+  echo "Usage: setup node_number"
+  echo
+  cat $bootopts
+  cat $hosts
+  exit 0
+fi
+
+# node_number used as last digits in IP address and hostname
+id=$1
+
+# template code follows
+hostname=elks$id
+localip=$network.$id
+gateway=$network.2
+
+# rewrite /bootopts
+sed -e "s/.*LOCALIP=.*/LOCALIP=$localip/" -e "s/.*HOSTNAME=.*/HOSTNAME=$hostname/" < $bootopts > /tmp/bootopts
+mv /tmp/bootopts $bootopts
+
+# rewrite /etc/hosts
+cat << EOF > $hosts
+#127.0.0.1	localhost
+$network.$id	elks$id
+$network.15	elks15
+$network.16	elks16
+$network.17	elks17
+$gateway	gateway
+EOF
+
+# display results
+cat $bootopts
+cat $hosts
+sync
