@@ -205,7 +205,7 @@ static void lsfile(char *name, struct stat *statbuf, int flags)
     cp = buf;
     *cp = '\0';
 
-    if (flags * (LSF_INODE|LSF_LONG|LSF_CLASS) && !statbuf) {
+    if (flags & (LSF_INODE|LSF_LONG|LSF_CLASS) && !statbuf) {
 	if (LSTAT(name, &sbuf) < 0) {
 	    perror(name);
 	    return;
@@ -468,7 +468,7 @@ int main(int argc, char **argv)
 			flags |= LSF_LONG;
 			break;
 		case 'd':
-			flags |= LSF_DIR;	/* FIXME not implemented */
+			flags |= LSF_DIR;
 			recursive = 0;
 			break;
 		case 'R':
@@ -536,10 +536,12 @@ int main(int argc, char **argv)
 	    printf("\n%s:\n", name);
  */
 	while (files.size) {
+            int didls = 0;
 	    name = popstack(&files);
 	    TRACESTRING(name)
 	    if (!recursive || (flags & LSF_LONG)) {
 		lsfile(name, NULL, flags);
+                didls = 1;
 		if (!recursive) {
 		    free(name);
 		    continue;
@@ -551,7 +553,7 @@ int main(int argc, char **argv)
 		continue;
 	    }
 	    is_dir = S_ISDIR(statbuf.st_mode);
-	    if (!is_dir)
+            if (!didls)
 		lsfile(name, &statbuf, flags);
 	    if (is_dir && recursive && not_dotdir(name))
 		pushstack(&dirs, name, statbuf.st_mtime);

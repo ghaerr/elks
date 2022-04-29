@@ -862,7 +862,7 @@ int nextToken()
                 gotDecimal = true;
             else {
                 *tokenOut++ = TOKEN_INTEGER;
-                *(long*)tokenOut = (long)val;
+                *(long*)tokenOut = val;
                 tokenOut += sizeof(long);
             }
         }
@@ -2005,7 +2005,6 @@ int parseSimpleCmd() {
             }
             case TOKEN_CLS:
                 host_cls();
-                host_gcls();
                 host_showBuffer();
                 break;
             case TOKEN_DIR:

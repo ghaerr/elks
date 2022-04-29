@@ -49,13 +49,13 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 {
 	static struct wait_queue wait;
 	static int lock = 0;
-	cluster_t count, this, limit, current, last;
+	cluster_t count, this, limit, curr, last;
 	sector_t sector;
 	void *data;
 	struct buffer_head *bh;
 	struct msdos_sb_info *sb = MSDOS_SB(inode->i_sb);
 	int fatsz = sb->fat_bits;
-	cluster_t previous = sb->previous_cluster;
+	cluster_t prev = sb->previous_cluster;
 
 	debug_fat("add_cluster\n");
 #ifndef FAT_BITS_32
@@ -66,13 +66,13 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 	lock = 1;
 	limit = sb->clusters;
 	for (count = 0; count < limit; count++) {
-		this = ((count+previous) % limit)+2;
+		this = ((count+prev) % limit)+2;
 		if (fat_access(inode->i_sb,this,-1L) == 0) break;
 	}
 	debug("free cluster: %d\r\n",this);
 
-	previous = (count+previous+1) % limit;
-	sb->previous_cluster = previous;;
+	prev = (count+prev+1) % limit;
+	sb->previous_cluster = prev;
 	if (count >= limit) {
 		lock = 0;
 		wake_up(&wait);
@@ -93,10 +93,10 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 			: 0;
 	} else {
 		last = 0;
-		if ((current = inode->u.msdos_i.i_start) != 0) {
-			cache_lookup(inode,0x7fffffffL,&last,&current);
-			while (current && current != -1)
-				if (!(current = fat_access(inode->i_sb, last = current,-1L))) {
+		if ((curr = inode->u.msdos_i.i_start) != 0) {
+			cache_lookup(inode,0x7fffffffL,&last,&curr);
+			while (curr && curr != -1)
+				if (!(curr = fat_access(inode->i_sb, last = curr,-1L))) {
 					printk("FAT: no EOF in file");
 					return -ENOSPC;
 				}
@@ -112,11 +112,11 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 	}
 	if (last) debug("next set to %d\r\n",fat_access(inode->i_sb,last,-1L));
 
-	for (current = 0; current < sb->cluster_size; current++) {
-		sector = sb->data_start + (this - 2) * sb->cluster_size+current;
+	for (curr = 0; curr < sb->cluster_size; curr++) {
+		sector = sb->data_start + (this - 2) * sb->cluster_size + curr;
 		debug("zeroing sector %lu\r\n", sector);
 
-		if (current < sb->cluster_size-1 && !(sector & 1)) {
+		if (curr < sb->cluster_size-1 && !(sector & 1)) {
 			if (!(bh = getblk32(inode->i_dev, sector >> 1)))
 				printk("FAT: getblk fail\n");
 			else {
@@ -124,7 +124,7 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 				memset(bh->b_data,0,BLOCK_SIZE);
 				mark_buffer_uptodate(bh, 1);
 			}
-			current++;
+			curr++;
 		} else {
 			if (!(bh = msdos_sread(inode->i_sb,sector,&data)))
 				printk("FAT: sread fail\n");
@@ -388,19 +388,19 @@ static cluster_t FATPROC raw_scan(struct super_block *sb, cluster_t start,
 
 ino_t FATPROC msdos_parent_ino(register struct inode *dir,int locked)
 {
-	cluster_t current,prev;
+	cluster_t curr,prev;
 	ino_t this = (ino_t)-1L;
 
 	if (!S_ISDIR(dir->i_mode))	/* actually coding error if occurs*/
 		return (ino_t)-1L;
 	if (dir->i_ino == MSDOS_ROOT_INO) return dir->i_ino;
 	if (!locked) lock_creation(); /* prevent renames */
-	if ((current = raw_scan(dir->i_sb,dir->u.msdos_i.i_start,MSDOS_DOTDOT,0L, NULL)) < 0) {
-	} else if (!current) this = MSDOS_ROOT_INO;
+	if ((curr = raw_scan(dir->i_sb,dir->u.msdos_i.i_start,MSDOS_DOTDOT,0L, NULL)) < 0) {
+	} else if (!curr) this = MSDOS_ROOT_INO;
 	else {
-		if ((prev = raw_scan(dir->i_sb,current,MSDOS_DOTDOT,0L,NULL)) < 0) {
+		if ((prev = raw_scan(dir->i_sb,curr,MSDOS_DOTDOT,0L,NULL)) < 0) {
 			if (MSDOS_SB(dir->i_sb)->fat_bits == 32 &&
-			    current == MSDOS_SB(dir->i_sb)->root_cluster)
+			    curr == MSDOS_SB(dir->i_sb)->root_cluster)
 					this = MSDOS_ROOT_INO;
 		} else {
 			if (prev == 0 
@@ -409,7 +409,7 @@ ino_t FATPROC msdos_parent_ino(register struct inode *dir,int locked)
 #endif
 		    )
 				prev = MSDOS_SB(dir->i_sb)->root_cluster;
-			raw_scan(dir->i_sb,prev,NULL,current,&this);
+			raw_scan(dir->i_sb,prev,NULL,curr,&this);
 		}
 	}
 	if (!locked) unlock_creation();

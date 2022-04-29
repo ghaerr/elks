@@ -14,6 +14,8 @@
 
 #define LIO_M_SIZE 5200
 
+extern FILE *outfile;
+
 static unsigned char __far *lio_m;
 static unsigned char lio_m_byte[LIO_M_SIZE];
 static unsigned int lio_m_seg;
@@ -194,7 +196,8 @@ void host_mode(int mode) {
     }
 }
 
-void host_gcls(void) {
+void host_cls() {
+    fprintf(outfile, "\033[H\033[2J");
 
     if (gmode) {
         int_A5(lio_m_seg);

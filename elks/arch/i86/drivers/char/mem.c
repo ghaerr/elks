@@ -25,6 +25,7 @@
 #include <linuxmt/debug.h>
 #include <linuxmt/mem.h>
 #include <linuxmt/heap.h>
+#include <linuxmt/timer.h>
 
 #include <arch/io.h>
 #include <arch/segment.h>
@@ -270,6 +271,11 @@ int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
     case MEM_GETHEAP:
 	retword = (unsigned short) &_heap_all;
 	break;
+    case MEM_GETUPTIME:
+#ifdef CONFIG_CPU_USAGE
+	retword = (unsigned short) &uptime;
+	break;
+#endif
     default:
 	return -EINVAL;
     }

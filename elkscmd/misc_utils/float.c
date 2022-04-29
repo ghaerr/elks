@@ -71,6 +71,118 @@ float host_floor(float x)
   return x; // NAN
 }
 
+/* fixed point math experimentation for calculating load averages */
+/*
+ * These are the constant used to fake the fixed-point load-average
+ * counting. Some notes:
+ *  - 11 bit fractions expand to 22 bits by the multiplies: this gives
+ *    a load-average precision of 10 bits integer + 11 bits fractional
+ *  - if you want to count load-averages more often, you need more
+ *    precision, or rounding will get you. With 2-second counting freq,
+ *    the EXP_n values would be 1981, 2034 and 2043 if still using only
+ *    11 bit fractions.
+ */
+#define HZ          100         /* jiff_t tick = 1/100 second */
+#define SAMP_FREQ   (5*HZ)      /* 5 sec intervals */
+
+typedef unsigned long fixed_point;  /* 10 bit int, 11 bit fraction in 32 bits */
+#define FSHIFT      11          /* nr of bits of precision */
+#define FIXED_1     (1<<FSHIFT) /* 1.0 as fixed-point */
+/*
+ * exponential decay math for load avg, fractional bits = 11 (=1/2048 resolution)
+ *      = e^-(sample_period/total_period) = 1/e^(sample_period/total_period)
+ * desc         sample       total    fraction     decimal  decimal*2^11
+ * 5sec/1min    5 secs       60 secs  1/e^(1/12)   0.9200   1884
+ * 5sec/5min    5 secs      300 secs  1/e^(1/60)   0.9835   2014
+ * 5sec/15min   5 secs      900 secs  1/e^(1/180)  0.9945   2037
+ */
+//#define EXP_1     (0.9200 * (1 << FSHIFT))
+//#define EXP_5     (0.9835 * (1 << FSHIFT))
+//#define EXP_15    (0.9945 * (1 << FSHIFT))
+#define EXP_1       1884        /* 1/exp(5sec/1min) as fixed-point */
+#define EXP_5       2014        /* 1/exp(5sec/5min) */
+#define EXP_15      2037        /* 1/exp(5sec/15min) */
+
+//#define EXP_0     (0.3679 * (1 << FSHIFT))
+#define EXP_0       753         /* 1/exp(2sec/2sec) as fixed-point */
+/*
+ * exponential decay math for cpu %
+ * desc         sample       total    fraction     decimal  decimal*2^11
+ * 2sec/2sec    2 secs       2 secs   1/e^(1/1)    0.3679   753
+ *
+ * process start:
+ *  current->average = 0;
+ *  current->ticks = 0;
+ * each timer tick:
+ *  current->ticks++;
+ * after total interval (2 secs):
+ *  CALC_LOAD(current->average, EXP_0, current->ticks << FSHIFT);
+ *  current->ticks = 0;
+ * to display:
+ *  CPU % = (1/(HZ * 2)) * 100 = 1/2 of average:
+ *  average = (average * 1024) >> FSHIFT
+ *  average = (average << 10) >> FSHIFT
+ *  average = average >> (FSHIFT - 10)
+ *  average = average >> 1.
+ */
+
+/* Fixed point math:
+ *
+ * Fixed point sum is first multiplied by fractional exponential,
+ * (i.e. original value) creating 10 bits integer + 22 bits fraction.
+ *
+ * Fixed point multiply of 10 bits integer and 11 bits fraction will
+ * result in 22 bits fraction and 10 bits integer (ignoring additional
+ * 10 bits integer overflow), which still fits in 32 bits.
+ *
+ * N, which is an integer multiple of FIXED_1, is then added in using
+ * (1-exponential, i.e. the new value). FIXED_1 * (FIXED_1-exp) will
+ * result in N being added above 22 bits fractional value.
+ *
+ * New value is then shifted right FSHIFT (11) bits to discard 11
+ * bits of fractional underflow, resulting in new 10 bit integer/11 bit
+ * fractional value again in 32 bit unsigned long.
+ */
+#define CALC_LOAD(load,exp,N) \
+    load *= exp;                /* multiply by 1/e^(sample/total) factor */ \
+    load += N*(FIXED_1-exp);    /* N is in FIXED_1 units */ \
+    load >>= FSHIFT;
+
+/* example load average use in kernel timer routine */
+#if 0
+fixed_point average[3];     /* Load averages */
+void timer_tick()
+{
+    static int count = SAMP_FREQ;
+
+    if (count-- <= 0) {
+        count = SAMP_FREQ;
+        fixed_point N = FIXED_1 * count_active_tasks();
+
+        CALC_LOAD(average[0], EXP_1, N);
+        CALC_LOAD(average[1], EXP_5, N);
+        CALC_LOAD(average[2], EXP_15, N);
+    }
+}
+
+/* integer and percentage fractional values of fixed point number */
+#define LOAD_INT(x)     ((x) >> FSHIFT)
+#define LOAD_FRAC(x)    LOAD_INT(((x) & (FIXED_1-1)) * 100)
+
+void print_loadavg()
+{
+    int a, b, c;
+    a = average[0] + (FIXED_1/(HZ * 2));    /* round by adding 0.5 interval */
+    b = average[1] + (FIXED_1/(HZ * 2));
+    c = average[2] + (FIXED_1/(HZ * 2));
+    printf("%d.%02d %d.%02d %d.%02d\n",
+        LOAD_INT(a), LOAD_FRAC(a),
+        LOAD_INT(b), LOAD_FRAC(b),
+        LOAD_INT(c), LOAD_FRAC(c));
+}
+#endif
+
+
 int main(int argc, char **argv) {
 	FLOAT f = 3.00 * g;
 	int decpt, neg;
