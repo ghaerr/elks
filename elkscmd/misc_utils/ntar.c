@@ -37,27 +37,27 @@
  * specifies the terms and conditions for redistribution.
  */
 #include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/dir.h>
-#include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
-#include <utime.h>
-#include <sys/wait.h>
-#include <sys/time.h>
 #include <errno.h>
+#include <utime.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/dir.h>
+#include <sys/time.h>
 
-typedef unsigned long daddr_t;
 #define MAXPATHLEN 128
 
 #define DO_REPLACE      0   /* =1 for tar 'r' option, requires awk */
 
+/* TODO: add to libc */
 #define telldir(dirp)       lseek((dirp)->dd_fd, 0L, SEEK_CUR)
 #define seekdir(dirp,off)   lseek((dirp)->dd_fd, off, SEEK_SET)
 
+typedef unsigned long daddr_t;
 daddr_t	bsrch();
 #define TBLOCK	512
 #define NBLOCK	20
@@ -90,7 +90,6 @@ struct stat stbuf;
 int	rflag, xflag, vflag, tflag, mt, cflag, mflag;
 int	term, chksum, wflag, recno, first, linkerrok;
 int hflag, oflag, pflag;
-int	freemem = 1;
 int	nblock = 1;
 
 daddr_t	low;
@@ -221,34 +220,6 @@ char	*arg;
 	}
 }
 
-#if 0
-getwdir(s)
-char *s;
-{
-	int i;
-	int	pipdes[2];
-
-	pipe(pipdes);
-	if ((i = fork()) == 0) {
-		close(1);
-		dup(pipdes[1]);
-		execl("/bin/pwd", "pwd", NULL);
-		/*execl("/usr/bin/pwd", "pwd", 0);*/
-		fprintf(stderr, "pwd failed!\n");
-		printf("/\n");
-		exit(1);
-	}
-	while (wait((int *)NULL) != -1)
-			;
-	read(pipdes[0], s, 50);
-	while(*s != '\n')
-		s++;
-	*s = '\0';
-	close(pipdes[0]);
-	close(pipdes[1]);
-}
-#endif
-
 putempty()
 {
 	char buf[TBLOCK];
@@ -264,7 +235,6 @@ flushtape()
 	write(mt, tbuf, TBLOCK*nblock);
 }
 
-#if 1
 dorep(argv)
 	char *argv[];
 {
@@ -344,67 +314,6 @@ dorep(argv)
 		fprintf(stderr, "tar: missing links to %s\n", ihead->pathname);
 	}
 }
-#else
-dorep(argv)
-char	*argv[];
-{
-	register char *cp, *cp2;
-	char wdir[60];
-
-	if (!cflag) {
-#if DO_REPLACE
-		getdir();
-		do {
-			passtape();
-			if (term)
-				done(0);
-			getdir();
-		} while (!endtape());
-		if (tfile != NULL) {
-			char buf[200];
-
-			strcat(buf, "sort +0 -1 +1nr ");
-			strcat(buf, tname);
-			strcat(buf, " -o ");
-			strcat(buf, tname);
-			sprintf(buf, "sort +0 -1 +1nr %s -o %s; awk '$1 != prev {print; prev=$1}' %s >%sX;mv %sX %s",
-				tname, tname, tname, tname, tname, tname);
-			fflush(tfile);
-			system(buf);
-			freopen(tname, "r", tfile);
-			fstat(fileno(tfile), &stbuf);
-			high = stbuf.st_size;
-		}
-#else
-        printf("tar: replace option not supported\n");
-        done(4);
-#endif
-	}
-
-	getcwd(wdir, sizeof(wdir));
-	while (*argv && ! term) {
-		cp2 = *argv;
-		for (cp = *argv; *cp; cp++)
-			if (*cp == '/')
-				cp2 = cp;
-		if (cp2 != *argv) {
-			*cp2 = '\0';
-			chdir(*argv);
-			*cp2 = '/';
-			cp2++;
-		}
-		putfile(*argv++, cp2);
-		chdir(wdir);
-	}
-	putempty();
-	putempty();
-	flushtape();
-	if (linkerrok == 1)
-		for (; ihead != NULL; ihead = ihead->nextp)
-			if (ihead->count != 0)
-				fprintf(stderr, "Missing links to %s\n", ihead->pathname);
-}
-#endif
 
 backtape()
 {
@@ -532,7 +441,6 @@ register struct stat *sp;
 	sprintf(dblock.dbuf.mtime, "%11lo ", sp->st_mtime);
 }
 
-#if 1
 putfile(longname, shortname, parent)
 	char *longname;
 	char *shortname;
@@ -689,60 +597,26 @@ putfile(longname, shortname, parent)
 				strcpy(lp->pathname, longname);
 			}
 		}
-#if 1
+        blocks = (stbuf.st_size + (TBLOCK-1)) / TBLOCK;
+        if (vflag) {
+            fprintf(stderr, "a %s ", longname);
+            fprintf(stderr, "%ld blocks\n", blocks);
+        }
+        sprintf(dblock.dbuf.chksum, "%6o", checksum());
+        writetape( (char *) &dblock);
 
-    blocks = (stbuf.st_size + (TBLOCK-1)) / TBLOCK;
-    if (vflag) {
-        fprintf(stderr, "a %s ", longname);
-        fprintf(stderr, "%ld blocks\n", blocks);
-    }
-    sprintf(dblock.dbuf.chksum, "%6o", checksum());
-    writetape( (char *) &dblock);
-
-    while ((i = read(infile, buf, TBLOCK)) > 0 && blocks > 0) {
-        writetape(buf);
-        blocks--;
-    }
-    close(infile);
-    if (blocks != 0 || i != 0)
-        fprintf(stderr, "%s: file changed size\n", longname);
-    while (blocks-- >  0)
-        putempty();
-
-#else
-		blocks = (stbuf.st_size + (TBLOCK-1)) / TBLOCK;
-		if (vflag)
-			fprintf(vfile, "a %s %ld blocks\n", longname, blocks);
-		(void)sprintf(dblock.dbuf.chksum, "%6o", checksum());
-		hint = writetape((char *)&dblock);
-		maxread = max(stbuf.st_blksize, (nblock * TBLOCK));
-		if ((bigbuf = malloc((unsigned)maxread)) == 0) {
-			maxread = TBLOCK;
-			bigbuf = buf;
-		}
-
-		while ((i = read(infile, bigbuf, min((hint*TBLOCK), maxread))) > 0
-		  && blocks > 0) {
-		  	register int nblks;
-
-			nblks = ((i-1)/TBLOCK)+1;
-		  	if (nblks > blocks)
-		  		nblks = blocks;
-			hint = writetbuf(bigbuf, nblks);
-			blocks -= nblks;
-		}
-		close(infile);
-		if (bigbuf != buf)
-			free(bigbuf);
+        while ((i = read(infile, buf, TBLOCK)) > 0 && blocks > 0) {
+            writetape(buf);
+            blocks--;
+        }
+        close(infile);
 		if (i < 0) {
 			fprintf(stderr, "tar: Read error on ");
 			perror(longname);
-		} else if (blocks != 0 || i != 0)
-			fprintf(stderr, "tar: %s: file changed size\n",
-			    longname);
-		while (--blocks >=  0)
-			putempty();
-#endif
+        } else if (blocks != 0 || i != 0)
+            fprintf(stderr, "%s: file changed size\n", longname);
+        while (blocks-- >  0)
+            putempty();
 		break;
 
 	default:
@@ -751,145 +625,6 @@ putfile(longname, shortname, parent)
 		break;
 	}
 }
-
-
-#else
-#define DIRSIZ  14
-putfile(longname, shortname)
-char *longname;
-char *shortname;
-{
-	int infile;
-	long blocks;
-	char buf[TBLOCK];
-	register char *cp, *cp2;
-	struct direct dbuf;
-	int i, j;
-
-	infile = open(shortname, 0);
-	if (infile < 0) {
-		fprintf(stderr, "tar: %s: cannot open file\n", longname);
-		return;
-	}
-
-	fstat(infile, &stbuf);
-
-	if (tfile != NULL && checkupdate(longname) == 0) {
-		close(infile);
-		return;
-	}
-	if (checkw('r', longname) == 0) {
-		close(infile);
-		return;
-	}
-
-	if ((stbuf.st_mode & S_IFMT) == S_IFDIR) {
-		for (i = 0, cp = buf; (*cp++ = longname[i++]) != 0;)
-            continue;
-		*--cp = '/';
-		cp++;
-		i = 0;
-		chdir(shortname);
-		while (read(infile, (char *)&dbuf, sizeof(dbuf)) > 0 && !term) {
-			if (dbuf.d_ino == 0) {
-				i++;
-				continue;
-			}
-			if (strcmp(".", dbuf.d_name) == 0 || strcmp("..", dbuf.d_name) == 0) {
-				i++;
-				continue;
-			}
-			cp2 = cp;
-			for (j=0; j < DIRSIZ; j++)
-				*cp2++ = dbuf.d_name[j];
-			*cp2 = '\0';
-			close(infile);
-			putfile(buf, cp);
-			infile = open(".", 0);
-			i++;
-			lseek(infile, (long) (sizeof(dbuf) * i), 0);
-		}
-		close(infile);
-		chdir("..");
-		return;
-	}
-	if ((stbuf.st_mode & S_IFMT) != S_IFREG) {
-		fprintf(stderr, "tar: %s is not a file. Not dumped\n", longname);
-		return;
-	}
-
-	tomodes(&stbuf);
-
-	cp2 = longname;
-	for (cp = dblock.dbuf.name, i=0; (*cp++ = *cp2++) && i < NAMSIZ; i++);
-	if (i >= NAMSIZ) {
-		fprintf(stderr, "%s: file name too long\n", longname);
-		close(infile);
-		return;
-	}
-
-	if (stbuf.st_nlink > 1) {
-		struct linkbuf *lp;
-		int found = 0;
-
-		for (lp = ihead; lp != NULL; lp = lp->nextp) {
-			if (lp->inum == stbuf.st_ino && lp->devnum == stbuf.st_dev) {
-				found++;
-				break;
-			}
-		}
-		if (found) {
-			strcpy(dblock.dbuf.linkname, lp->pathname);
-			dblock.dbuf.linkflag = '1';
-			sprintf(dblock.dbuf.chksum, "%6o", checksum());
-			writetape( (char *) &dblock);
-			if (vflag) {
-				fprintf(stderr, "a %s ", longname);
-				fprintf(stderr, "link to %s\n", lp->pathname);
-			}
-			lp->count--;
-			close(infile);
-			return;
-		}
-		else {
-			lp = (struct linkbuf *) malloc(sizeof(*lp));
-			if (lp == NULL) {
-				if (freemem) {
-					fprintf(stderr, "Out of memory. Link information lost\n");
-					freemem = 0;
-				}
-			}
-			else {
-				lp->nextp = ihead;
-				ihead = lp;
-				lp->inum = stbuf.st_ino;
-				lp->devnum = stbuf.st_dev;
-				lp->count = stbuf.st_nlink - 1;
-				strcpy(lp->pathname, longname);
-			}
-		}
-	}
-
-	blocks = (stbuf.st_size + (TBLOCK-1)) / TBLOCK;
-	if (vflag) {
-		fprintf(stderr, "a %s ", longname);
-		fprintf(stderr, "%ld blocks\n", blocks);
-	}
-	sprintf(dblock.dbuf.chksum, "%6o", checksum());
-	writetape( (char *) &dblock);
-
-	while ((i = read(infile, buf, TBLOCK)) > 0 && blocks > 0) {
-		writetape(buf);
-		blocks--;
-	}
-	close(infile);
-	if (blocks != 0 || i != 0)
-		fprintf(stderr, "%s: file changed size\n", longname);
-	while (blocks-- >  0)
-		putempty();
-}
-#endif
-
 
 prefix(s1, s2)
 register char *s1, *s2;
@@ -902,7 +637,6 @@ register char *s1, *s2;
 	return(1);
 }
 
-#if 1
 /*
  * Make all directories needed by `name'.  If `name' is itself
  * a directory on the tar tape (indicated by a trailing '/'),
@@ -946,35 +680,6 @@ checkdir(name)
     }
     return (cp[-1]=='/');
 }
-#else
-checkdir(name)
-register char *name;
-{
-	register char *cp;
-	int i;
-	for (cp = name; *cp; cp++) {
-		if (*cp == '/') {
-			*cp = '\0';
-			if (access(name, 01) < 0) {
-#if 1
-                mkdir(name, 0666);
-#else
-				if (fork() == 0) {
-                                mkdir(name, 0666);
-					execl("/bin/mkdir", "mkdir", name, NULL);
-					/*execl("/usr/bin/mkdir", "mkdir", name, 0);*/
-					fprintf(stderr, "tar: cannot find mkdir!\n");
-					done(0);
-				}
-				while (wait(&i) >= 0);
-#endif
-				chown(name, stbuf.st_uid, stbuf.st_gid);
-			}
-			*cp = '/';
-		}
-	}
-}
-#endif
 
 
 doxtract(argv)
@@ -1011,8 +716,6 @@ gotit:
             continue;
         }
 
-
-#if 1
         if (dblock.dbuf.linkflag == '2') {  /* symlink */
             /*
              * only unlink non directories or empty
@@ -1053,19 +756,6 @@ gotit:
                     dblock.dbuf.name, dblock.dbuf.linkname);
             continue;
         }
-
-#else
-		if (dblock.dbuf.linkflag == '1') {
-			unlink(dblock.dbuf.name);
-			if (link(dblock.dbuf.linkname, dblock.dbuf.name) < 0) {
-				fprintf(stderr, "%s: cannot link\n", dblock.dbuf.name);
-				continue;
-			}
-			if (vflag)
-				fprintf(stderr, "%s linked to %s\n", dblock.dbuf.name, dblock.dbuf.linkname);
-			continue;
-		}
-#endif
 
 		if ((ofile = creat(dblock.dbuf.name, stbuf.st_mode & 07777)) < 0) {
 			fprintf(stderr, "tar: %s - cannot create\n", dblock.dbuf.name);
