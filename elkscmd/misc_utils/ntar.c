@@ -43,6 +43,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <utime.h>
+#include <time.h>
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -59,6 +60,7 @@
 
 typedef unsigned long daddr_t;
 daddr_t	bsrch();
+daddr_t	lookup();
 #define TBLOCK	512
 #define NBLOCK	20
 #define NAMSIZ	100
@@ -89,7 +91,7 @@ struct stat stbuf;
 
 int	rflag, xflag, vflag, tflag, mt, cflag, mflag;
 int	term, chksum, wflag, recno, first, linkerrok;
-int hflag, oflag, pflag;
+int	hflag, oflag, pflag;
 int	nblock = 1;
 
 daddr_t	low;
@@ -163,7 +165,6 @@ longt(st)
 register struct stat *st;
 {
 	register char *cp;
-	char *ctime();
 
 	pmode(st);
 	printf("%3d/%1d", st->st_uid, st->st_gid);
@@ -202,10 +203,9 @@ char *name;
 checkupdate(arg)
 char	*arg;
 {
-	char name[100];
 	long	mtime;
 	daddr_t seekp;
-	daddr_t	lookup();
+	char name[100];
 
 	fseek(tfile, 0L, SEEK_SET);
 	for (;;) {
@@ -222,8 +222,8 @@ char	*arg;
 
 putempty()
 {
-	char buf[TBLOCK];
 	char *cp;
+	char buf[TBLOCK];
 
 	for (cp = buf; cp < &buf[TBLOCK]; )
 		*cp++ = '\0';
@@ -686,9 +686,9 @@ doxtract(argv)
 char	*argv[];
 {
 	long blocks, bytes;
-	char buf[TBLOCK];
 	char **cp;
 	int ofile;
+	char buf[TBLOCK];
 
 	for (;;) {
 		getdir();
@@ -804,8 +804,8 @@ dotable()
 		printf("%s", dblock.dbuf.name);
 		if (dblock.dbuf.linkflag == '1')
 			printf(" linked to %s", dblock.dbuf.linkname);
-        if (dblock.dbuf.linkflag == '2')
-            printf(" symbolic link to %s", dblock.dbuf.linkname);
+		if (dblock.dbuf.linkflag == '2')
+			printf(" symbolic link to %s", dblock.dbuf.linkname);
 		printf("\n");
 		passtape();
 	}
@@ -1008,10 +1008,10 @@ noupdate:
 			hflag++;
 			break;
 		case 'o':
-            oflag++;
+			oflag++;
 			break;
 		case 'p':
-            pflag++;
+			pflag++;
 			break;
 		case '-':
 			break;
