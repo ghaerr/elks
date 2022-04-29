@@ -47,3 +47,20 @@ int host_digitalRead(int pin) {
     }
 	return 0;
 }
+
+int host_analogRead(int pin) {
+	return 0;
+}
+
+void host_pinMode(int pin,int mode) {
+}
+
+void host_mode(int mode) {
+}
+
+void host_cls() {
+	fprintf(stdout, "\033[H\033[2J");
+}
+
+void host_plot(int x, int y) {
+}
