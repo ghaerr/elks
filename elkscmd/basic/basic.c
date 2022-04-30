@@ -195,7 +195,10 @@ PROGMEM const TokenTableEntry tokenTable[] = {
     {"READ",TKN_FMT_POST},
     {"RESTORE",TKN_FMT_POST},
     {"MODE",TKN_FMT_POST},
-    {"PLOT",TKN_FMT_POST}
+    {"COLOR",TKN_FMT_POST},
+    {"PLOT",TKN_FMT_POST},
+    {"DRAW",TKN_FMT_POST},
+    {"CIRCLE",TKN_FMT_POST}
 };
 
 
@@ -1716,6 +1719,78 @@ int parseTwoIntCmd() {
     return 0;
 }
 
+// parse a stmt that takes one or two int parameters 
+int parse1or2IntCmd() {
+    int op = curToken;
+    getNextToken();
+    int first = 0, second = -1;
+    int val = expectNumber();
+    if (val) return val;	// error
+    if (curToken == TOKEN_COMMA) {
+        getNextToken();
+        val = expectNumber();
+        if (val) return val;	// error
+        if (executeMode) {
+            second = (int)stackPopNum();
+            first = (int)stackPopNum();
+        }
+    }
+    else {
+        if (executeMode) {
+            first = (int)stackPopNum();
+        }
+    }
+    if (executeMode) {
+        switch(op) {
+        case TOKEN_COLOR:
+            host_color(first,second);
+            break;
+        }
+    }
+    return 0;
+}
+
+// parse a stmt that takes two or three int parameters 
+int parse2or3IntCmd() {
+    int op = curToken;
+    getNextToken();
+    int first = 0, second = 0, third = -1;
+    int val = expectNumber();
+    if (val) return val;	// error
+    if (curToken != TOKEN_COMMA)
+        return ERROR_UNEXPECTED_TOKEN;
+    getNextToken();
+    val = expectNumber();
+    if (val) return val;	// error
+    if (curToken == TOKEN_COMMA) {
+        getNextToken();
+        val = expectNumber();
+        if (val) return val;	// error
+        if (executeMode) {
+            third = (int)stackPopNum();
+            second = (int)stackPopNum();
+            first = (int)stackPopNum();
+        }
+    }
+    else {
+        if (executeMode) {
+            second = (int)stackPopNum();
+            first = (int)stackPopNum();
+        }
+    }
+    if (executeMode) {
+        switch(op) {
+        case TOKEN_DRAW:
+            host_draw(first,second,third);
+            break;
+        case TOKEN_CIRCLE:
+            host_circle(first,second,third);
+            break;
+        }
+    }
+    return 0;
+}
+
 // get number or string from DATA statement
 int readDataStmt() {
     int token, ret;
@@ -2106,7 +2181,16 @@ int parseStmts()
         case TOKEN_PLOT:
             ret = parseTwoIntCmd(); 
             break;
-            
+
+        case TOKEN_COLOR:
+            ret = parse1or2IntCmd();
+            break;
+
+        case TOKEN_DRAW:
+        case TOKEN_CIRCLE:
+            ret = parse2or3IntCmd();
+            break;
+
         case TOKEN_NEW:
         case TOKEN_STOP:
         case TOKEN_CONT:

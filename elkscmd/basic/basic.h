@@ -93,8 +93,11 @@
 #define TOKEN_READ		80
 #define TOKEN_RESTORE		81
 #define TOKEN_MODE		82
-#define TOKEN_PLOT		83
-#define LAST_IDENT_TOKEN	83
+#define TOKEN_COLOR		83
+#define TOKEN_PLOT		84
+#define TOKEN_DRAW		85
+#define TOKEN_CIRCLE	   	86
+#define LAST_IDENT_TOKEN	86
 
 #define ERROR_NONE				0
 // parse errors

@@ -22,6 +22,16 @@ static unsigned int lio_m_seg;
 
 static int gmode = 0;
 
+typedef struct {
+    int x;
+    int y;
+    int fgc;
+    int bgc;
+    int r;
+} xyc_t;
+
+static xyc_t gxyc = {0, 0, 7, 0, 1};
+
 void int_A0(unsigned int l_seg)
 {
     __asm__ volatile ("push %ds;"
@@ -142,6 +152,48 @@ void int_A6(unsigned int l_seg)
                       "pop %ds;");
 }
 
+void int_A7(unsigned int l_seg)
+{
+    __asm__ volatile ("push %ds;"
+                      "push %es;"
+                      "push %bp;"
+                      "push %si;"
+                      "push %di;");
+    __asm__ volatile ("mov %0,%%ds;"
+                      "mov $0x01,%%ah;"
+                      "mov $0x0000,%%bx;"
+                      "int $0xA7;"
+                      :
+                      :"a" (l_seg)
+                      :"memory", "cc");
+    __asm__ volatile ("pop %di;"
+                      "pop %si;"
+                      "pop %bp;"
+                      "pop %es;"
+                      "pop %ds;");
+}
+
+void int_A8(unsigned int l_seg)
+{
+    __asm__ volatile ("push %ds;"
+                      "push %es;"
+                      "push %bp;"
+                      "push %si;"
+                      "push %di;");
+    __asm__ volatile ("mov %0,%%ds;"
+                      "mov $0x01,%%ah;"
+                      "mov $0x0000,%%bx;"
+                      "int $0xA8;"
+                      :
+                      :"a" (l_seg)
+                      :"memory", "cc");
+    __asm__ volatile ("pop %di;"
+                      "pop %si;"
+                      "pop %bp;"
+                      "pop %es;"
+                      "pop %ds;");
+}
+
 void host_mode(int mode) {
     unsigned long __far *intvec;
     unsigned int __far *lioaddr;
@@ -204,6 +256,14 @@ void host_cls() {
     }
 }
 
+void host_color(int fgc, int bgc) {
+
+    if (gmode) {
+        gxyc.fgc = fgc;
+        gxyc.bgc = bgc;
+    }
+}
+
 void host_plot(int x, int y) {
 
     if (gmode) {
@@ -213,9 +273,78 @@ void host_plot(int x, int y) {
         lio_m[1] = (unsigned char) (x >> 8);
         lio_m[2] = (unsigned char) (y & 0xFF);
         lio_m[3] = (unsigned char) (y >> 8);
-        lio_m[4] = (unsigned char) 7; // Pallet Number
+        lio_m[4] = (unsigned char) (gxyc.fgc); // Pallet Number
         int_A6(lio_m_seg);
+
+        gxyc.x = x;
+        gxyc.y = y;
     }
+}
+
+void host_draw(int x, int y, int a) {
+
+    if (gmode) {
+        y = 399 - y;
+
+        lio_m[0] = (unsigned char) (gxyc.x & 0xFF); // X start
+        lio_m[1] = (unsigned char) (gxyc.x >> 8);
+        lio_m[2] = (unsigned char) (gxyc.y & 0xFF); // Y start
+        lio_m[3] = (unsigned char) (gxyc.y >> 8);
+        lio_m[4] = (unsigned char) (x & 0xFF);      // X End
+        lio_m[5] = (unsigned char) (x >> 8);
+        lio_m[6] = (unsigned char) (y & 0xFF);      // Y End
+        lio_m[7] = (unsigned char) (y >> 8);
+        lio_m[8] = (unsigned char) (gxyc.fgc);      // Pallet Number
+        lio_m[9] = (unsigned char) 0x00;
+        lio_m[10] = (unsigned char) 0x00;
+        lio_m[11] = (unsigned char) 0x00;
+        lio_m[12] = (unsigned char) 0x00;
+        lio_m[13] = (unsigned char) 0x00;
+        lio_m[14] = (unsigned char) 0x00;
+        lio_m[15] = (unsigned char) 0x00;
+        lio_m[16] = (unsigned char) 0x00;
+        lio_m[17] = (unsigned char) 0x00;
+        int_A7(lio_m_seg);
+
+        gxyc.x = x;
+        gxyc.y = y;
+    }
+}
+
+void host_circle(int x, int y, int r) {
+
+    printf("start circle, %d, %d, %d\n", x, y, r);
+    if (gmode) {
+        y = 399 - y;
+
+        lio_m[0] = (unsigned char) (x & 0xFF); // X Center
+        lio_m[1] = (unsigned char) (x >> 8);
+        lio_m[2] = (unsigned char) (y & 0xFF); // Y Center
+        lio_m[3] = (unsigned char) (y >> 8);
+        lio_m[4] = (unsigned char) (r & 0xFF); // X Radius
+        lio_m[5] = (unsigned char) (r >> 8);
+        lio_m[6] = (unsigned char) (r & 0xFF); // Y Radius
+        lio_m[7] = (unsigned char) (r >> 8);
+        lio_m[8] = (unsigned char) (gxyc.fgc); // Pallet Number
+        lio_m[9] = (unsigned char) 0x00;
+        lio_m[10] = (unsigned char) 0x00;
+        lio_m[11] = (unsigned char) 0x00;
+        lio_m[12] = (unsigned char) 0x00;
+        lio_m[13] = (unsigned char) 0x00;
+        lio_m[14] = (unsigned char) 0x00;
+        lio_m[15] = (unsigned char) 0x00;
+        lio_m[16] = (unsigned char) 0x00;
+        lio_m[17] = (unsigned char) 0x00;
+        lio_m[18] = (unsigned char) 0x00;
+        lio_m[19] = (unsigned char) 0x00;
+        lio_m[20] = (unsigned char) 0x00;
+        lio_m[21] = (unsigned char) 0x00;
+        lio_m[22] = (unsigned char) 0x00;
+        int_A8(lio_m_seg);
+
+        gxyc.r = r;
+    }
+    printf("end circle\n");
 }
 
 void host_digitalWrite(int pin,int state) {
