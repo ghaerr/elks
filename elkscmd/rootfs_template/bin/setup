@@ -1,8 +1,9 @@
 #
-# ELKS image network name/address setup script
+# Quick configure /bootopts and /etc/hosts files
 #
-# Usage: setup node_number
-#   node_number will be used as last digits in IP address and elks hostname
+# Usage: setup node_number [bootopts_enable_string]
+#	sets last digits of LOCALIP and HOSTNAME to node_number
+#	uncomment matching /bootopts lines
 #
 
 # defaults
@@ -10,25 +11,28 @@ network=10.0.2
 bootopts=/bootopts
 hosts=/etc/hosts
 
-# check for argument, use as id
+# 1st arg is node number
 if test "$#" -lt 1; then
-  echo "Usage: setup node_number"
+  echo "Usage: setup node_number [bootops_enable_string]"
   echo
   cat $bootopts
   cat $hosts
   exit 0
 fi
-
-# node_number used as last digits in IP address and hostname
 id=$1
 
-# template code follows
+# 2nd arg matchstr
+match_str=SEDNOMATCH
+if test "$#" -ge 2; then match_str=$2; fi
+
+# template strings
 hostname=elks$id
 localip=$network.$id
 gateway=$network.2
 
 # rewrite /bootopts
-sed -e "s/.*LOCALIP=.*/LOCALIP=$localip/" -e "s/.*HOSTNAME=.*/HOSTNAME=$hostname/" < $bootopts > /tmp/bootopts
+sed -e "s/.*LOCALIP=.*/LOCALIP=$localip/" -e "s/.*HOSTNAME=.*/HOSTNAME=$hostname/" \
+	-e "s/#\(.*$match_str.*\)/\1/" < $bootopts > /tmp/bootopts
 mv /tmp/bootopts $bootopts
 
 # rewrite /etc/hosts
