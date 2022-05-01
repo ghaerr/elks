@@ -2,3 +2,4 @@ export PATH=/bin
 # timezone can be set in either /bootopts or here
 #export TZ=GMT0
 #export MANPATH=/root/man:/lib
+PS1="$HOSTNAME$PS1"
