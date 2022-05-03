@@ -163,10 +163,10 @@ long FATPROC date_dos2unix(unsigned short time,unsigned short date)
 
 	month = ((date >> 5) & 15)-1;
 	year = date >> 9;
+	/* days since 1.1.70 plus 80's leap day */
 	return (time & 31)*2+60*((time >> 5) & 63)+(time >> 11)*3600L+86400L*
 	    ((date & 31)-1+day_n[month]+(year/4)+year*365-((year & 3) == 0 &&
-	    month < 2 ? 1 : 0)+3653);
-			/* days since 1.1.70 plus 80's leap day */
+	    month < 2 ? 1 : 0)+3653) + tz_offset * 3600L;
 }
 
 
@@ -176,6 +176,7 @@ void FATPROC date_unix2dos(long unix_date,unsigned short *time, unsigned short *
 {
 	int day,year,nl_day,month;
 
+	unix_date -= tz_offset * 3600L;     /* convert to localtime for FAT */
 	*time = (short)(unix_date % 60)/2 +
 			((short)((unix_date/60) % 60) << 5) +
 			((short)((unix_date/3600) % 24) << 11);

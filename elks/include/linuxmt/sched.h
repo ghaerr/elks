@@ -121,6 +121,7 @@ extern __ptask current;
 
 extern struct timeval xtime;
 extern jiff_t xtime_jiffies;
+extern int tz_offset;
 #define CURRENT_TIME (xtime.tv_sec + (jiffies - xtime_jiffies)/HZ)
 
 #define for_each_task(p) \
