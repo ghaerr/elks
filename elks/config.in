@@ -61,7 +61,7 @@ mainmenu_option next_comment
 	bool 'Minimize kernel size'               CONFIG_SMALL_KERNEL y
 	bool 'Boot Options in /bootopts'          CONFIG_BOOTOPTS     y
 	bool 'Calculate process CPU usage'        CONFIG_CPU_USAGE    y
-    string 'Compiled-in TZ= timezone string'  CONFIG_TIMEZONE ""
+	string 'Compiled-in TZ= timezone string'  CONFIG_TIMEZONE ""
 	bool 'System Trace'                       CONFIG_STRACE       n
 	bool 'Halt on Idle'                       CONFIG_IDLE_HALT    n
 

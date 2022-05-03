@@ -13,7 +13,7 @@ void tzset(void)
 	if (p) {
 		while (*p && !isnumber(*p))
 			p++;
-		timezone = atol(p) * 60 * 60;
+		timezone = atoi(p) * 3600L;
 	} else timezone = 0;
 	_tz_is_set = 1;
 }
