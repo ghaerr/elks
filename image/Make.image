@@ -56,6 +56,9 @@ endif
 ifdef CONFIG_IMG_BOOT
 	install $(ELKS_DIR)/arch/i86/boot/Image $(DESTDIR)/linux
 endif
+ifdef CONFIG_TIMEZONE
+	echo 'if test "$$TZ" = ""; then export' "TZ=$(CONFIG_TIMEZONE); fi" >> $(DESTDIR)/etc/profile
+endif
 
 # Create MINIX filesystem from template
 

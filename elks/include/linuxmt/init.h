@@ -34,6 +34,8 @@ extern void INITPROC tty_init(void);
 extern void INITPROC device_init(void);
 extern void INITPROC setup_dev(register struct gendisk *);
 
+extern void tz_init(char *tzstr);
+
 /* block device init routines*/
 extern void INITPROC blk_dev_init(void);
 extern int INITPROC bioshd_init(void);

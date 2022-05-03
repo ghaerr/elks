@@ -49,7 +49,7 @@ extern int boot_rootdev;
 extern int boot_bufs;
 extern int dprintk_on;
 static char * INITPROC root_dev_name(int dev);
-static int INITPROC parse_options(void);
+static int parse_options(void);
 static void INITPROC finalize_options(void);
 static char * INITPROC option(char *s);
 #endif
@@ -88,6 +88,10 @@ void INITPROC kernel_init(void)
     mm_init(base, end);
     irq_init();
     tty_init();
+
+#ifdef CONFIG_TIMEZONE
+    tz_init(CONFIG_TIMEZONE);
+#endif
 
 #ifdef CONFIG_BOOTOPTS
     /* parse options found in /bootops */
@@ -243,7 +247,7 @@ static int INITPROC parse_dev(char * line)
  * This routine also checks for options meant for the kernel.
  * These options are not given to init - they are for internal kernel use only.
  */
-static int INITPROC parse_options(void)
+static int parse_options(void)
 {
 	char *line = (char *)options;
 	char *next;
@@ -328,6 +332,10 @@ static int INITPROC parse_options(void)
 		if (!strncmp(line,"bufs=",5)) {
 			boot_bufs = (int)simple_strtol(line+5, 10);
 			continue;
+		}
+		if (!strncmp(line,"TZ=",3)) {
+			tz_init(line+3);
+			/* fall through and add line to environment */
 		}
 		
 		/*
