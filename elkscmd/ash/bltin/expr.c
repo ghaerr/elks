@@ -172,21 +172,8 @@ overflow:		error("Expression too complex");
 	    while (opsp < &opstack[STACKSIZE] && opsp->pri >= pri) {
 		  binary = opsp->op;
 		  for (;;) {
-			/*
-			 * 19980218 Claudio Matsuoka <claudio@conectiva.com>
-			 * Oh my, this is a nasty one! Once again, bcc
-			 * complains about invalid indirect to indirect
-			 * (mov byte ptr -9[bp],#_op_argflag[bx]).
-			 */
-#if 0
 			valsp--;
 			c = op_argflag[opsp->op];
-#else
-			char *kludge;
-			kludge = op_argflag;
-			kludge += opsp->op;
-			c = *kludge;
-#endif
 			if (c == OP_INT) {
 			      if (valsp->type == STRING)
 				    valsp->u.num = atol(valsp->u.string);
@@ -279,17 +266,6 @@ expr_is_false(val)
  * to stat, to avoid repeated stat calls on the same file.
  */
 
-/*
- * 19980218 Claudio Matsuoka <claudio@conectiva.com>
- * So, here's one more workaround for a bcc problem. This time bcc
- * complains about an illegal label when using `goto filetype'.
- */
-
-#define GOTO_FILETYPE_WORKAROUND { \
-	sp->u.num = ((fs->stat.st_mode & S_IFMT) == i && fs->rcode >= 0); \
-	sp->type = BOOLEAN; \
-	break; }
-
 void
 expr_operator(op, sp, fs)
       int op;
@@ -323,17 +299,17 @@ permission:
 	    goto filetype;
       case ISDIR:
 	    i = S_IFDIR;
-	    GOTO_FILETYPE_WORKAROUND;
+		goto filetype;
       case ISCHAR:
 	    i = S_IFCHR;
-	    GOTO_FILETYPE_WORKAROUND;
+		goto filetype;
       case ISBLOCK:
 	    i = S_IFBLK;
-	    GOTO_FILETYPE_WORKAROUND;
+		goto filetype;
       case ISFIFO:
 #ifdef S_IFIFO
 	    i = S_IFIFO;
-	    GOTO_FILETYPE_WORKAROUND;
+		goto filetype;
 #else
 	    goto false;
 #endif

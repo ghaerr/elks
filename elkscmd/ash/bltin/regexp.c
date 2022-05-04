@@ -8,6 +8,7 @@
  */
 
 #include "bltin.h"
+#include <stdlib.h>
 
 
 #define RE_END 0		/* end of regular expression */
@@ -46,7 +47,6 @@ char *re_compile(char *pattern)
 	char stack[10];
 	int paren_num;
 	int i;
-	char *malloc();
 
 	p = pattern;
 	if (*p == '^')
@@ -203,8 +203,6 @@ match(pattern, string)
 	char *r;
 	int len;
 	char c;
-	short *kludge;
-	char **kludge2;
 
 	p = pattern;
 	q = string;
@@ -257,25 +255,8 @@ ccl:
 			p++;
 			break;
 		case RE_MATCHED:
-			/*
-			 * 19980218 Claudio Matsuoka <claudio@conectiva.com>
-			 * Workaround for bcc compilation problem
-			 */
-			
-#if 0
 			r = match_begin[*p];
 			len = match_length[*p++];
-#else
-			kludge2 = match_begin;
-			kludge2 += *p;
-			r = *kludge2;
-
-			kludge = match_length;
-			kludge += *p;
-			len = *kludge;
-			p++;
-#endif
-
 			while (--len >= 0) {
 				if (*q++ != *r++)
 					goto bad;
@@ -307,17 +288,7 @@ bad:
 		return 0;
 	len = 1;
 	if (*curpat == RE_MATCHED) {
-		/*
-		 * 19980218 Claudio Matsuoka <claudio@conectiva.com>
-		 * Yet another workaround for a bcc problem.
-		 */
-#if 0
 		len = match_length[curpat[1]];
-#else
-		kludge = match_length;
-		kludge += curpat[1];
-		len = *kludge;
-#endif
 	}
 	while (--count >= low) {
 		if (match(p, start_count + count * len))

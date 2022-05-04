@@ -51,9 +51,6 @@ sys_utils/mount			:boot	:sysutil
 sys_utils/umount		:boot	:sysutil
 sys_utils/clock			:boot	:sysutil
 sys_utils/shutdown		:boot	:sysutil
-sh_utils/test			:boot	:shutil
-sh_utils/true			:boot	:be-shutil
-sh_utils/echo			:boot	:be-shutil
 sh_utils/uname			:boot	:be-shutil
 file_utils/cat			:boot	:be-fileutil
 file_utils/chgrp				:be-fileutil			:1200k	:1440k
@@ -61,7 +58,7 @@ file_utils/chmod				:be-fileutil			:1200k	:1440k
 file_utils/chown				:be-fileutil			:1200k	:1440k
 file_utils/cmp					:be-fileutil			:1200k	:1440k
 file_utils/cp					:be-fileutil	:360k
-file_utils/df					:be-fileutil			:1200k	:1440k
+file_utils/df					:be-fileutil    :360k
 file_utils/dd					:be-fileutil			:1200k	:1440k
 file_utils/mkdir				:fileutil		:360k
 file_utils/mknod				:fileutil		:360k
@@ -95,7 +92,10 @@ sh_utils/basename				:be-shutil			:720k
 sh_utils/clear					:shutil					:1200k	:1440k
 sh_utils/date					:be-shutil		:360k
 sh_utils/dirname				:be-shutil			:720k
-sh_utils/false					:be-shutil				:1200k	:1440k
+sh_utils/echo			        :be-shutil              :1200k  :1440k
+#sh_utils/test			        :shutil                 :1200k  :1440k
+#sh_utils/false					:be-shutil				:1200k	:1440k
+#sh_utils/true					:be-shutil				:1200k	:1440k
 #sh_utils/logname				:shutil					:1200k	:1440k
 #sh_utils/mesg					:shutil					:1200k	:1440k
 sh_utils/stty					:shutil					:1200k	:1440k
