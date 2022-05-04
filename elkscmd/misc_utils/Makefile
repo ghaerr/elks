@@ -15,8 +15,8 @@ KERNEL_LIBS = $(TOPDIR)/elks/arch/i86/lib/lib86.a
 ###############################################################################
 
 #TODO: fix uncompress zcat lpfilter disabled
-PRGS = miniterm ed fdtest od hd time kilo mined sleep tty uuencode uudecode compress
-PRGS += float ntar
+PRGS = tar miniterm ed fdtest od hd time kilo mined sleep tty uuencode uudecode compress
+PRGS += float
 
 #PRGS_HOST=compress.host
 
@@ -34,9 +34,6 @@ fdtest: fdtest.o $(TINYPRINTF)
 tar: tar.o
 	$(LD) $(LDFLAGS) -o tar tar.o $(LDLIBS)
 	
-ntar: ntar.o
-	$(LD) $(LDFLAGS) -o tar ntar.o $(LDLIBS)
-
 od: od.o
 	$(LD) $(LDFLAGS) -o od od.o $(LDLIBS)
 
