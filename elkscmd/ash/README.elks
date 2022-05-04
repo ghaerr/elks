@@ -91,3 +91,10 @@ TODO:
 (*) Added #define _SMALL_ in shell.h, which when defined removes some
     features that are no use to elks, such as checking for new mail.
 --------------------------------------------------------------
+20220504 Greg Haerr <greg@censoft.com>
+
+Removed Claudio's workarounds for bcc problems
+
+Activated test/expr builtin in build (was already being compiled in unused)
+
+--------------------------------------------------------------

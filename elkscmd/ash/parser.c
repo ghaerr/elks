@@ -679,11 +679,7 @@ STATIC int readtoken(void) {
  *  have parseword (readtoken1?) handle both words and redirection.]
  */
 
-/*
- * 19980209 Claudio Matsuoka <claudio@conectiva.com>
- * bcc fails with `return lasttoken = token', returning an invalid value.
- */
-#define RETURN(token)	{ lasttoken = token; return token; }
+#define RETURN(token)	return lasttoken = token
 
 STATIC int xxreadtoken(void) {
 	register c;

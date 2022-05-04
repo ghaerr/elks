@@ -332,6 +332,7 @@ void exitcmd(int argc, char **argv)
 }
 
 
+#if NOT_YET
 int lccmd(int argc, char **argv)
 {
 	if (argc > 1) {
@@ -347,7 +348,7 @@ int lccmd(int argc, char **argv)
 		return exitstatus;
 	}
 }
-
+#endif
 
 
 #ifdef notdef
