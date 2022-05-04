@@ -42,7 +42,7 @@ jiff_t xtime_jiffies;
 /* timezone in effect */
 static struct timezone xzone;
 
-/* timezone offset (in hours) from CONFIG_TIMEZONE or /bootopts TZ= string */
+/* timezone offset (in hours) from CONFIG_TIME_TZ or /bootopts TZ= string */
 int tz_offset;
 
 void tz_init(char *tzstr)

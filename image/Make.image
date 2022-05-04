@@ -56,8 +56,12 @@ endif
 ifdef CONFIG_IMG_BOOT
 	install $(ELKS_DIR)/arch/i86/boot/Image $(DESTDIR)/linux
 endif
-ifdef CONFIG_TIMEZONE
-	echo 'if test "$$TZ" = ""; then export' "TZ=$(CONFIG_TIMEZONE); fi" >> $(DESTDIR)/etc/profile
+ifdef CONFIG_TIME_TZ
+	echo 'if test "$$TZ" = ""; then export' "TZ=$(CONFIG_TIME_TZ); fi" >> $(DESTDIR)/etc/profile
+endif
+ifdef CONFIG_TIME_RTC_LOCALTIME
+	sed -e 's/clock -s -u/clock -s/' < $(DESTDIR)/etc/rc.sys > tmp
+	mv tmp $(DESTDIR)/etc/rc.sys
 endif
 
 # Create MINIX filesystem from template
