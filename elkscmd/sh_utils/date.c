@@ -25,9 +25,7 @@
 /* our own happy mktime() replacement, with the following drawbacks: */
 /*    doesn't check boundary conditions */
 /*    doesn't set wday or yday */
-/*    doesn't return the local time */
-time_t utc_mktime(t)
-struct tm *t;
+time_t utc_mktime(struct tm *t)
 {
 	static int moffset[12] = { 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
 	time_t ret;
@@ -62,6 +60,10 @@ struct tm *t;
   	ret *= 60L;
    ret += t->tm_sec;
 
+  /* correct for localtime */
+  tzset();
+  ret += timezone;
+
   /* return the result */
    return ret;
 }
@@ -76,9 +78,7 @@ void usage()
 	exit(1);
 }
 
-int decodedatestring(datestring, tv)
-char * datestring;
-struct timeval *tv;
+int decodedatestring(char *datestring, struct timeval *tv)
 {
 	time_t systime;
 	char * p;
@@ -115,9 +115,7 @@ struct timeval *tv;
 	return 0;
 }
 
-int main(argc, argv)
-char ** argv;
-int argc;
+int main(int argc, char **argv)
 {
 	char *p;
 	//char buf[32];
@@ -159,7 +157,7 @@ int argc;
 
       if (settimeofday (&tv, NULL) != 0)
 		{
-			errmsg("Unable to set time -- probably you are not root\n");
+			errmsg("Unable to set time -- must be root\n");
 			exit (1);
 		}
 /*		
