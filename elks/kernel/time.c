@@ -42,6 +42,17 @@ jiff_t xtime_jiffies;
 /* timezone in effect */
 static struct timezone xzone;
 
+/* timezone offset (in hours) from CONFIG_TIMEZONE or /bootopts TZ= string */
+int tz_offset;
+
+void tz_init(char *tzstr)
+{
+    if (strlen(tzstr) > 3) {
+        tz_offset = atoi(tzstr+3);
+        printk("TZ=%d\n", tz_offset);
+    }
+}
+
 /* set the time of day */
 int sys_settimeofday(register struct timeval *tv, struct timezone *tz)
 {
