@@ -68,6 +68,10 @@ mainmenu_option next_comment
 		comment 'Man pages'
 
 		bool 'Man Pages'      		CONFIG_APP_MAN_PAGES  n
+
+		if [ "$CONFIG_ROMCODE" = "y" ]; then
+			string 'TAG string for ROM apps'  CONFIG_APP_ROM_TAGS      ""
+		fi
 	else
 		comment "Select Applications by Image Size"
 
