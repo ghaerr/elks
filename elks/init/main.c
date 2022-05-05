@@ -89,8 +89,8 @@ void INITPROC kernel_init(void)
     irq_init();
     tty_init();
 
-#ifdef CONFIG_TIMEZONE
-    tz_init(CONFIG_TIMEZONE);
+#ifdef CONFIG_TIME_TZ
+    tz_init(CONFIG_TIME_TZ);
 #endif
 
 #ifdef CONFIG_BOOTOPTS

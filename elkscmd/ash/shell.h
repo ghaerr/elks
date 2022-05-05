@@ -57,13 +57,6 @@
  * a quit signal will generate a core dump.
  */
 
-/* ELKS */
-/* Remove _SMALL_ to enable all bloating features:- */
-/* (1) Checking for new mail */
-#define _SMALL_
-
-/* END ELKS */
-
 #define JOBS	  0
 #define SYMLINKS  0
 #define DIRENT	  1
@@ -75,6 +68,7 @@
 #define LINENOISE 1
 /* #define BSD */
 #define POSIX	  1
+#define MAIL      0
 #define DEBUG	  0
 
 #ifdef __STDC__

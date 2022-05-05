@@ -60,11 +60,11 @@ evalcmd 	eval
 execcmd 	exec
 exitcmd 	exit
 exportcmd	export readonly
-#exprcmd 	expr test [
+exprcmd 	expr test [
 fgcmd -j	fg
 getoptscmd	getopts
 hashcmd 	hash
-jobidcmd	jobid
+jobidcmd -j	jobid
 jobscmd 	jobs
 #lccmd		lc
 #linecmd 	line

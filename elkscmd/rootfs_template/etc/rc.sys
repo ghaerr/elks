@@ -7,7 +7,6 @@ umask 022
 export PATH=/bin
 
 # get TZ timezone variable from /bootopts or /etc/profile
-# remove -u option if RTC is localtime
 source /etc/profile
 clock -s -u
 
@@ -45,3 +44,5 @@ esac
 #uname -snrm
 
 date
+# display internal commands used
+#hash

@@ -61,7 +61,10 @@ mainmenu_option next_comment
 	bool 'Minimize kernel size'               CONFIG_SMALL_KERNEL y
 	bool 'Boot Options in /bootopts'          CONFIG_BOOTOPTS     y
 	bool 'Calculate process CPU usage'        CONFIG_CPU_USAGE    y
-	string 'Compiled-in TZ= timezone string'  CONFIG_TIMEZONE ""
+	bool 'Real time clock in localtime'       CONFIG_TIME_RTC_LOCALTIME n
+	if [ "$CONFIG_TIME_TZ" != "" ]; then
+		string 'Compiled-in TZ= timezone string'  CONFIG_TIME_TZ      "$CONFIG_TIME_TZ"
+	fi
 	bool 'System Trace'                       CONFIG_STRACE       n
 	bool 'Halt on Idle'                       CONFIG_IDLE_HALT    n
 

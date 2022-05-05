@@ -19,6 +19,10 @@ TAGS=
 # Old-style installation
 INSTDIRS=
 
+ifdef CONFIG_APP_ROM_TAGS
+	TAGS += "$(CONFIG_APP_ROM_TAGS)"
+endif
+
 #
 # Install apps by source directory
 #
@@ -140,7 +144,7 @@ ifdef CONFIG_APPS_1232K
 endif
 
 ifdef CONFIG_APPS_1440K
-	TAGS = :boot|:360k|:net|:720k|:1440k|:man|
+	TAGS = :boot|:360k|:net|:720k|:1200k|:1440k|:man|
 endif
 
 ifdef CONFIG_APPS_2880K

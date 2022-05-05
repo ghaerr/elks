@@ -27,10 +27,13 @@ OBJS=	builtins.o cd.o dirent.o error.o eval.o exec.o expand.o input.o \
 	jobs.o mail.o main.o memalloc.o miscbltin.o mystring.o nodes.o \
 	options.o parser.o redir.o show.o signames.o syntax.o trap.o \
 	output.o var.o init.o \
-	bltin/echo.o bltin/expr.o bltin/regexp.o bltin/operators.o \
 	linenoise_elks.o autocomplete.o
 
-LDFLAGS += -maout-heap=8192 -maout-stack=2048
+# builtins must be manually added
+OBJS += bltin/echo.o
+OBJS += bltin/expr.o bltin/regexp.o bltin/operators.o
+
+LDFLAGS += -maout-heap=8192 -maout-stack=2304
 
 #
 # Set READLINE in shell.h and add -ledit to LIBS if you want to use the

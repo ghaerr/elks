@@ -227,7 +227,7 @@ cmdloop(top) {
 		if (iflag && top) {
 			inter++;
 			showjobs(1);
-#ifndef _SMALL_
+#if MAIL
 			chkmail(0);
 #endif
 			flushout(&output);
@@ -332,6 +332,7 @@ void exitcmd(int argc, char **argv)
 }
 
 
+#if NOT_YET
 int lccmd(int argc, char **argv)
 {
 	if (argc > 1) {
@@ -347,7 +348,7 @@ int lccmd(int argc, char **argv)
 		return exitstatus;
 	}
 }
-
+#endif
 
 
 #ifdef notdef

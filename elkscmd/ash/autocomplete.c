@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "linenoise.h"
+#include "output.h"
 
 void completion(const char *buf, linenoiseCompletions *lc)
 {
@@ -70,7 +71,7 @@ void completion(const char *buf, linenoiseCompletions *lc)
 		struct stat st;
 		char path[128];
 
-		sprintf(path, "%s/%s", dir, lastentry);
+		fmtstr(path, sizeof(path), "%s/%s", dir, lastentry);
 		if (!stat(path, &st)) {
 			if (S_ISDIR(st.st_mode))
 				strcat(result, "/");
@@ -96,20 +97,20 @@ void completion(const char *buf, linenoiseCompletions *lc)
 				linenoiseAddCompletion(lc, result);
 
 				strcpy(result, dp->d_name);
-				sprintf(path, "%s/%s", dir, dp->d_name);
+				fmtstr(path, sizeof(path), "%s/%s", dir, dp->d_name);
 				if (!stat(path, &st) && S_ISDIR(st.st_mode))
 					strcat(result, "/");
 
 				if ((count & 3) == 0)
-					printf("\r\n");
-				printf("%-16s", result);
+					out1str("\r\n");
+				outfmt(out1, "%-16s", result);
 				count++;
 			}
 		}
 	}
 	if (count)
-		printf("\r\n");
-	fflush(stdout);
+		out1str("\r\n");
+	flushout(out1);
 	closedir(fp);
 }
 

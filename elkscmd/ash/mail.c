@@ -53,6 +53,7 @@ static char sccsid[] = "@(#)mail.c	5.1 (Berkeley) 3/7/91";
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#if MAIL
 
 #define MAXMBOXES 10
 
@@ -113,3 +114,4 @@ void chkmail(int silent) {
 	nmboxes = i;
 	popstackmark(&smark);
 }
+#endif
