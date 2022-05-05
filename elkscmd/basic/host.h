@@ -77,5 +77,5 @@ void host_pinMode(int pin, int mode);
 void host_mode(int mode);
 void host_color(int fgc, int bgc);
 void host_plot(int x, int y);
-void host_draw(int x, int y, int a);
+void host_draw(int x, int y);
 void host_circle(int x, int y, int r);

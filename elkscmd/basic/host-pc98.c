@@ -281,7 +281,7 @@ void host_plot(int x, int y) {
     }
 }
 
-void host_draw(int x, int y, int a) {
+void host_draw(int x, int y) {
 
     if (gmode) {
         y = 399 - y;
@@ -313,7 +313,6 @@ void host_draw(int x, int y, int a) {
 
 void host_circle(int x, int y, int r) {
 
-    printf("start circle, %d, %d, %d\n", x, y, r);
     if (gmode) {
         y = 399 - y;
 

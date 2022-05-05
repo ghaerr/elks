@@ -1686,105 +1686,46 @@ int parse_PRINT() {
     return 0;
 }
 
-// parse a stmt that takes two int parameters 
+// parse a stmt that takes N int parameters 
 // e.g. POSITION 3,2
-int parseTwoIntCmd() {
+int parseNIntCmd(int n) {
+    int para[n];
+    int i;
     int op = curToken;
     getNextToken();
     int val = expectNumber();
     if (val) return val;	// error
-    if (curToken != TOKEN_COMMA)
-        return ERROR_UNEXPECTED_TOKEN;
-    getNextToken();
-    val = expectNumber();
-    if (val) return val;	// error
+    for (i=1; i<n; i++) {
+        if (curToken != TOKEN_COMMA)
+            return ERROR_UNEXPECTED_TOKEN;
+        getNextToken();
+        val = expectNumber();
+        if (val) return val;	// error
+    }
     if (executeMode) {
-        int second = (int)stackPopNum();
-        int first = (int)stackPopNum();
+        for (i=n-1; i>=0; i--)
+            para[i] = (int)stackPopNum();
         switch(op) {
         case TOKEN_POSITION: 
-            host_moveCursor(first,second); 
+            host_moveCursor(para[0],para[1]);
             break;
         case TOKEN_PIN: 
-            host_digitalWrite(first,second); 
+            host_digitalWrite(para[0],para[1]);
             break;
         case TOKEN_PINMODE: 
-            host_pinMode(first,second); 
+            host_pinMode(para[0],para[1]);
+            break;
+        case TOKEN_COLOR:
+            host_color(para[0],para[1]);
             break;
         case TOKEN_PLOT:
-            host_plot(first,second);
+            host_plot(para[0],para[1]);
             break;
-        }
-    }
-    return 0;
-}
-
-// parse a stmt that takes one or two int parameters 
-int parse1or2IntCmd() {
-    int op = curToken;
-    getNextToken();
-    int first = 0, second = -1;
-    int val = expectNumber();
-    if (val) return val;	// error
-    if (curToken == TOKEN_COMMA) {
-        getNextToken();
-        val = expectNumber();
-        if (val) return val;	// error
-        if (executeMode) {
-            second = (int)stackPopNum();
-            first = (int)stackPopNum();
-        }
-    }
-    else {
-        if (executeMode) {
-            first = (int)stackPopNum();
-        }
-    }
-    if (executeMode) {
-        switch(op) {
-        case TOKEN_COLOR:
-            host_color(first,second);
-            break;
-        }
-    }
-    return 0;
-}
-
-// parse a stmt that takes two or three int parameters 
-int parse2or3IntCmd() {
-    int op = curToken;
-    getNextToken();
-    int first = 0, second = 0, third = -1;
-    int val = expectNumber();
-    if (val) return val;	// error
-    if (curToken != TOKEN_COMMA)
-        return ERROR_UNEXPECTED_TOKEN;
-    getNextToken();
-    val = expectNumber();
-    if (val) return val;	// error
-    if (curToken == TOKEN_COMMA) {
-        getNextToken();
-        val = expectNumber();
-        if (val) return val;	// error
-        if (executeMode) {
-            third = (int)stackPopNum();
-            second = (int)stackPopNum();
-            first = (int)stackPopNum();
-        }
-    }
-    else {
-        if (executeMode) {
-            second = (int)stackPopNum();
-            first = (int)stackPopNum();
-        }
-    }
-    if (executeMode) {
-        switch(op) {
         case TOKEN_DRAW:
-            host_draw(first,second,third);
+            host_draw(para[0],para[1]);
             break;
         case TOKEN_CIRCLE:
-            host_circle(first,second,third);
+            host_circle(para[0],para[1],para[2]);
             break;
         }
     }
@@ -2178,17 +2119,14 @@ int parseStmts()
         case TOKEN_POSITION:
         case TOKEN_PIN:
         case TOKEN_PINMODE:
-        case TOKEN_PLOT:
-            ret = parseTwoIntCmd(); 
-            break;
-
         case TOKEN_COLOR:
-            ret = parse1or2IntCmd();
+        case TOKEN_PLOT:
+        case TOKEN_DRAW:
+            ret = parseNIntCmd(2);
             break;
 
-        case TOKEN_DRAW:
         case TOKEN_CIRCLE:
-            ret = parse2or3IntCmd();
+            ret = parseNIntCmd(3);
             break;
 
         case TOKEN_NEW:
