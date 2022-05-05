@@ -533,8 +533,13 @@ function hex () {
 #	define_string define value
 
 function define_string () {
-    echo "$1=\"$2\"" >>$CONFIG
-    echo "#define $1 \"$2\"" >>$CFG_H
+    if [ "$2" != "" ]; then
+        echo "$1=\"$2\"" >>$CONFIG
+        echo "#define $1 \"$2\"" >>$CFG_H
+    else
+        #echo "# $1 is not set" >>$CONFIG
+        echo "#undef  $1" >>$CFG_H
+    fi
     eval "$1=\"$2\""
 }
 
