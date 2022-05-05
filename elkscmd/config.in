@@ -32,6 +32,7 @@ mainmenu_option next_comment
 		bool 'nano-X'			CONFIG_APP_NANOX		y
 		bool 'BASIC'			CONFIG_APP_BASIC		y
 		bool 'other'         	CONFIG_APP_OTHER        y
+		string 'Additional TAG string for app selection'  CONFIG_APP_TAGS      ''
 
 		comment 'Commands not compiling'
 
@@ -68,10 +69,6 @@ mainmenu_option next_comment
 		comment 'Man pages'
 
 		bool 'Man Pages'      		CONFIG_APP_MAN_PAGES  n
-
-		if [ "$CONFIG_ROMCODE" = "y" ]; then
-			string 'TAG string for ROM apps'  CONFIG_APP_ROM_TAGS      ""
-		fi
 	else
 		comment "Select Applications by Image Size"
 
