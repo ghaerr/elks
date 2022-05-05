@@ -372,6 +372,7 @@ waitcmd(argc, argv)  char **argv; {
 
 
 
+#if JOBS
 jobidcmd(argc, argv)  char **argv; {
 	register struct job *jp;
 	int i;
@@ -383,6 +384,7 @@ jobidcmd(argc, argv)  char **argv; {
 	}
 	return 0;
 }
+#endif
 
 
 

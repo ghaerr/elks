@@ -97,4 +97,5 @@ Removed Claudio's workarounds for bcc problems
 
 Activated test/expr builtin in build (was already being compiled in unused)
 
+Changed _SMALL_ to MAIL
 --------------------------------------------------------------
