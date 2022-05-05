@@ -142,6 +142,7 @@
 #include <sys/ioctl.h>
 #include "linenoise.h"
 #include "var.h"
+#include "output.h"
 
 /* set these to 0 to reduce the code size */
 #define COMPLETION_ON 1
@@ -151,8 +152,8 @@
 #define MASK_ON 0
 #define BEEP_ON 0
 #define HISTORY_SAVE 0
-
 #define LINENOISE_DEFAULT_HISTORY_MAX_LEN 100
+
 static char *unsupported_term[] = {"dumb","cons25","emacs",NULL};
 static linenoiseCompletionCallback *completionCallback = NULL;
 static linenoiseHintsCallback *hintsCallback = NULL;
@@ -392,7 +393,7 @@ static int getColumns(int ifd, int ofd)
         /* Restore position. */
         if (cols > start) {
             char seq[32];
-            sprintf(seq,"\x1b[%dD",cols-start);
+            fmtstr(seq, sizeof(seq), "\x1b[%dD",cols-start);
             if (write(ofd,seq,strlen(seq)) == -1) {
                 /* Can't recover... */
             }
@@ -418,8 +419,8 @@ void linenoiseClearScreen(void) {
  * the choices were already shown. */
 static void linenoiseBeep(void) {
 #if BEEP_ON
-    fprintf(stderr, "\x7");
-    fflush(stderr);
+    out2str("\x7");
+    flushout(out2);
 #endif
 }
 
@@ -443,7 +444,7 @@ static void freeCompletions(linenoiseCompletions *lc) {
  * structure as described in the structure definition. */
 static int completeLine(struct linenoiseState *ls) {
     linenoiseCompletions lc = { 0, NULL };
-    int nread, nwritten;
+    int nread;
     char c = 0;
 
     completionCallback(ls->buf,&lc);
@@ -491,8 +492,8 @@ static int completeLine(struct linenoiseState *ls) {
                 default:
                     /* Update buffer and return */
                     if (i < lc.len) {
-                        nwritten = sprintf(ls->buf,"%s",lc.cvec[i]);
-                        ls->len = ls->pos = nwritten;
+                        fmtstr(ls->buf, ls->buflen, "%s",lc.cvec[i]);
+                        ls->len = ls->pos = strlen(ls->buf);
                     }
                     stop = 1;
                     break;
@@ -589,7 +590,7 @@ void refreshShowHints(struct abuf *ab, struct linenoiseState *l, int plen) {
             if (hintlen > hintmaxlen) hintlen = hintmaxlen;
             if (bold == 1 && color == -1) color = 37;
             if (color != -1 || bold != 0)
-                sprintf(seq,"\033[%d;%d;49m",bold,color);
+                fmtstr(seq, sizeof(seq), "\033[%d;%d;49m",bold,color);
             else
                 seq[0] = '\0';
             abAppend(ab,seq,strlen(seq));
@@ -627,7 +628,7 @@ static void refreshSingleLine(struct linenoiseState *l) {
 
     abInit(&ab);
     /* Cursor to left edge */
-    sprintf(seq,"\r");
+    strcpy(seq, "\r");
     abAppend(&ab,seq,strlen(seq));
     /* Write the prompt and the current buffer content */
     abAppend(&ab,l->prompt,strlen(l->prompt));
@@ -641,10 +642,10 @@ static void refreshSingleLine(struct linenoiseState *l) {
     refreshShowHints(&ab,l,plen);
 #endif    
     /* Erase to right */
-    sprintf(seq,"\x1b[0K");
+    strcpy(seq, "\x1b[0K");
     abAppend(&ab,seq,strlen(seq));
     /* Move cursor to original position. */
-    sprintf(seq,"\r\x1b[%dC", (int)(pos+plen));
+    fmtstr(seq, sizeof(seq), "\r\x1b[%dC", (int)(pos+plen));
     abAppend(&ab,seq,strlen(seq));
     if (write(fd,ab.b,ab.len) == -1) {} /* Can't recover from write error. */
     abFree(&ab);
@@ -674,20 +675,20 @@ static void refreshMultiLine(struct linenoiseState *l) {
     abInit(&ab);
     if (old_rows-rpos > 0) {
         lndebug("go down %d", old_rows-rpos);
-        sprintf(seq,"\x1b[%dB", old_rows-rpos);
+        fmtstr(seq, sizeof(seq), "\x1b[%dB", old_rows-rpos);
         abAppend(&ab,seq,strlen(seq));
     }
 
     /* Now for every row clear it, go up. */
     for (j = 0; j < old_rows-1; j++) {
         lndebug("clear+up");
-        sprintf(seq,"\r\x1b[0K\x1b[1A");
+        strcpy(seq, "\r\x1b[0K\x1b[1A");
         abAppend(&ab,seq,strlen(seq));
     }
 
     /* Clean the top line. */
     lndebug("clear");
-    sprintf(seq,"\r\x1b[0K");
+    strcpy(seq, "\r\x1b[0K");
     abAppend(&ab,seq,strlen(seq));
 
     /* Write the prompt and the current buffer content */
@@ -712,7 +713,7 @@ static void refreshMultiLine(struct linenoiseState *l) {
     {
         lndebug("<newline>");
         abAppend(&ab,"\n",1);
-        sprintf(seq,"\r");
+        strcpy(seq, "\r");
         abAppend(&ab,seq,strlen(seq));
         rows++;
         if (rows > (int)l->maxrows) l->maxrows = rows;
@@ -725,7 +726,7 @@ static void refreshMultiLine(struct linenoiseState *l) {
     /* Go up till we reach the expected positon. */
     if (rows-rpos2 > 0) {
         lndebug("go-up %d", rows-rpos2);
-        sprintf(seq,"\x1b[%dA", rows-rpos2);
+        fmtstr(seq, sizeof(seq), "\x1b[%dA", rows-rpos2);
         abAppend(&ab,seq,strlen(seq));
     }
 
@@ -733,9 +734,9 @@ static void refreshMultiLine(struct linenoiseState *l) {
     col = (plen+(int)l->pos) % (int)l->cols;
     lndebug("set col %d", 1+col);
     if (col)
-        sprintf(seq,"\r\x1b[%dC", col);
+        fmtstr(seq, sizeof(seq), "\r\x1b[%dC", col);
     else
-        sprintf(seq,"\r");
+        strcpy(seq, "\r");
     abAppend(&ab,seq,strlen(seq));
 
     lndebug("\n");
@@ -1126,7 +1127,7 @@ static int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, size_t buflen, 
 void linenoisePrintKeyCodes(void) {
     char quit[4];
 
-    printf("Linenoise key codes debugging mode.\n"
+    out1str("Linenoise key codes debugging mode.\n"
             "Press keys to see scan codes. Type 'quit' at any time to exit.\n");
     if (enableRawMode(STDIN_FILENO) == -1) return;
     memset(quit,' ',4);
@@ -1140,10 +1141,10 @@ void linenoisePrintKeyCodes(void) {
         quit[sizeof(quit)-1] = c; /* Insert current char on the right. */
         if (memcmp(quit,"quit",sizeof(quit)) == 0) break;
 
-        printf("'%c' %02x (%d) (type quit to exit)\n",
+        outfmt(out1, "'%c' %02x (%d) (type quit to exit)\n",
             isprint(c) ? c : '?', (int)c, (int)c);
-        printf("\r"); /* Go left edge manually, we are in raw mode. */
-        fflush(stdout);
+        out1str("\r"); /* Go left edge manually, we are in raw mode. */
+        flushout(out1);
     }
     disableRawMode(STDIN_FILENO);
 }
@@ -1162,7 +1163,6 @@ static int linenoiseRaw(char *buf, size_t buflen, const char *prompt) {
     if (enableRawMode(STDIN_FILENO) == -1) return 0;    /* -1 will exit shell*/
     count = linenoiseEdit(STDIN_FILENO, STDOUT_FILENO, buf, buflen, prompt);
     disableRawMode(STDIN_FILENO);
-    //printf("\n");
     return count;
 }
 
@@ -1218,8 +1218,8 @@ char *linenoise(const char *prompt) {
     } else if (isUnsupportedTerm()) {
         size_t len;
 
-        printf("%s",prompt);
-        fflush(stdout);
+        out1str((char *)prompt);
+        flushout(out1);
         if (fgets(buf,LINENOISE_MAX_LINE,stdin) == NULL) return NULL;
         len = strlen(buf);
         while(len && (buf[len-1] == '\n' || buf[len-1] == '\r')) {
