@@ -52,6 +52,7 @@
 
 #define MAXPATHLEN 128
 
+#define ELKS            1
 #define DO_REPLACE      0   /* =1 for tar 'r' option, requires awk */
 
 /* TODO: add to libc */
@@ -157,7 +158,7 @@ done(n)
 
 usage()
 {
-	fprintf(stderr, "tar: usage  tar -{txu}[cvfblmhop] [tapefile] [blocksize] file1 file2...\n");
+	fprintf(stderr, "tar: usage  tar -{txu}[cvfblmhop] [tarfile] [blocksize] file1 file2...\n");
 	done(1);
 }
 
@@ -321,7 +322,7 @@ backtape()
 	if (recno >= nblock) {
 		recno = nblock - 1;
 		if (read(mt, tbuf, TBLOCK*nblock) < 0) {
-			fprintf(stderr, "Tar: tape read error after seek\n");
+			fprintf(stderr, "Tar: read error after seek\n");
 			done(4);
 		}
 		lseek(mt, (long) -TBLOCK, 1);
@@ -411,7 +412,7 @@ char *buffer;
 		nblock = 1;
 	if (recno >= nblock) {
 		if (write(mt, tbuf, TBLOCK*nblock) < 0) {
-			fprintf(stderr, "Tar: tape write error\n");
+			fprintf(stderr, "Tar: write error %d\n", errno);
 			done(2);
 		}
 		recno = 0;
@@ -419,7 +420,7 @@ char *buffer;
 	copy(&tbuf[recno++], buffer);
 	if (recno >= nblock) {
 		if (write(mt, tbuf, TBLOCK*nblock) < 0) {
-			fprintf(stderr, "Tar: tape write error\n");
+			fprintf(stderr, "Tar: write error %d\n", errno);
 			done(2);
 		}
 		recno = 0;
@@ -767,7 +768,7 @@ gotit:
 
 		blocks = ((bytes = stbuf.st_size) + TBLOCK-1)/TBLOCK;
 		if (vflag)
-			fprintf(stderr, "x %s, %ld bytes, %ld tape blocks\n", dblock.dbuf.name, bytes, blocks);
+			fprintf(stderr, "x %s, %ld bytes, %ld blocks\n", dblock.dbuf.name, bytes, blocks);
 		while (blocks-- > 0) {
 			readtape(buf);
 			if (bytes > TBLOCK) {
@@ -917,19 +918,32 @@ readtape(buffer)
 char *buffer;
 {
 	int i, j;
+	int n, off = 0, total = 0;
 
 	if (recno >= nblock || first == 0) {
 		if (first == 0 && nblock == 0)
 			j = NBLOCK;
 		else
 			j = nblock;
-		if ((i = read(mt, tbuf, TBLOCK*j)) < 0) {
-			fprintf(stderr, "Tar: tape read error\n");
+		n = TBLOCK * j;
+again:
+		if ((i = read(mt, (char *)tbuf+off, n)) < 0) {
+			fprintf(stderr, "Tar: read error, %d\n", errno);
 			done(3);
 		}
+#if ELKS
+		/* keep reading as pipe reads may only return 80 characters */
+		total += i;
+		if (i != 0 && (i % TBLOCK) != 0) {
+			off += i;
+			n -= i;
+			if (n != 0) goto again;
+		}
+		i = total;
+#endif
 		if (first == 0) {
 			if ((i % TBLOCK) != 0) {
-				fprintf(stderr, "Tar: tape blocksize error\n");
+				fprintf(stderr, "Tar: blocksize error\n");
 				done(3);
 			}
 			i /= TBLOCK;
