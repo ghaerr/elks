@@ -20,7 +20,7 @@
 #	--------	-----------------------------------------	-----------
 #	:boot		Required for ELKS to boot
 #	:128k		Minimal set of apps to fit on 128k rom image
-#	:192k		Adds BASIC and stty for rom image
+#	:192k		Additional apps to fit on 192k rom image
 #	:360k		Minimal set of apps to fit on 360k disks
 #	:720k		Set of apps to fit on 720k disks (includes :net)
 #	:1200k		Set of apps to fit on 1200 disks (almost all of 1440k)
@@ -49,8 +49,8 @@ sys_utils/login			:boot	:sysutil    :128k
 ash/ash		::bin/sh	:boot	:ash	# install as /bin/sh
 #sash/sash	::bin/sh	:boot	:~ash	# install as /bin/sh if no ASH
 sash/sash		:1200k :1440k	:sash
-sys_utils/mount			:boot	:sysutil
-sys_utils/umount		:boot	:sysutil
+sys_utils/mount			:boot	:sysutil    :128k
+sys_utils/umount		:boot	:sysutil    :128k
 sys_utils/clock			:boot	:sysutil    :128k
 sys_utils/shutdown		:boot	:sysutil    :128k
 sh_utils/uname			:boot	:be-shutil  :128k
@@ -193,4 +193,4 @@ nano-X/bin/nxlandmine			:nanox					:1200k	:1440k
 nano-X/bin/nxterm				:nanox
 nano-X/bin/nxworld				:nanox					:1440k
 nano-X/bin/nxworld.map	::lib/nxworld.map	:nanox		:1440k
-basic/basic						:basic					:1200k  :192k
+basic/basic						:basic					:1200k
