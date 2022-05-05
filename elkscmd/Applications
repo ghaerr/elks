@@ -99,7 +99,7 @@ sh_utils/echo			        :be-shutil              :1200k  :1440k
 #sh_utils/logname				:shutil					:1200k	:1440k
 #sh_utils/mesg					:shutil					:1200k	:1440k
 sh_utils/stty					:shutil					:1200k	:1440k
-sh_utils/printenv				:shutil					:1200k	:1440k
+sh_utils/printenv				:shutil		    :360k
 sh_utils/pwd					:shutil			:360k
 sh_utils/tr						:shutil				:720k
 #sh_utils/which					:shutil					:1200k	:1440k

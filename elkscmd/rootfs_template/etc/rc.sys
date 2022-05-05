@@ -44,3 +44,5 @@ esac
 #uname -snrm
 
 date
+# display internal commands used
+#hash

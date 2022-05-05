@@ -227,7 +227,7 @@ cmdloop(top) {
 		if (iflag && top) {
 			inter++;
 			showjobs(1);
-#ifndef _SMALL_
+#if MAIL
 			chkmail(0);
 #endif
 			flushout(&output);

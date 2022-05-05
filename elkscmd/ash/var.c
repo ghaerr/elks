@@ -235,7 +235,7 @@ void setvareq(char *s, int flags)
 			vp->flags &=~ (VTEXTFIXED|VSTACK|VUNSET);
 			vp->flags |= flags;
 			vp->text = s;
-#ifndef _SMALL_
+#if MAIL
 			if (vp == &vmpath || (vp == &vmail && ! mpathset()))
 				chkmail(1);
 #endif
