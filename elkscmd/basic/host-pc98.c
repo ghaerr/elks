@@ -15,6 +15,7 @@
 #define LIO_M_SIZE 5200
 
 extern FILE *outfile;
+extern void intc5_handler(void);
 
 static unsigned char __far *lio_m;
 static unsigned char lio_m_byte[LIO_M_SIZE];
@@ -213,6 +214,10 @@ void host_mode(int mode) {
             lioaddr += 2;
         }
 
+        // Set interrupt handler for 0xC5
+        intvec = _MK_FP(0, 0xC5 << 2);
+        *intvec = (unsigned long) ((unsigned long __far *) intc5_handler);
+
         // Allocate memory for LIO
         lio_m = (unsigned char __far *) &lio_m_byte;
 
@@ -343,7 +348,6 @@ void host_circle(int x, int y, int r) {
 
         gxyc.r = r;
     }
-    printf("end circle\n");
 }
 
 void host_digitalWrite(int pin,int state) {
