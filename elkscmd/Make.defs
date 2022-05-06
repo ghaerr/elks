@@ -79,7 +79,7 @@ ifeq ($(PLATFORM),i86-ELKS)
 	LDFLAGS=$(CFLBASE)
 	CHECK=gcc -c -o .null.o -Wall -pedantic
 	AS=ia16-elf-as
-	ASFLAGS=-mtune=i8086
+	ASFLAGS=-mtune=i8086 --32-segelf
 endif
 
 ifeq ($(PLATFORM),DEFAULT)
@@ -105,6 +105,11 @@ TINYPRINTF=$(ELKSCMD_DIR)/lib/tiny_vfprintf.o
 
 .S.s:
 	$(CC) -E -traditional $(INCLUDES) $(CCDEFS) -o $*.s $<
+
+.S.o:
+	$(CC) -E -traditional $(INCLUDES) $(CCDEFS) -o $*.tmp $<
+	$(AS) $(ASFLAGS) -o $*.o $*.tmp
+	rm -f $*.tmp
 
 .s.o:
 	$(AS) $(ASFLAGS) -o $*.o $<
