@@ -30,5 +30,14 @@ void host_cls() {
 	fprintf(outfile, "\033[H\033[2J");
 }
 
+void host_color(int fgc, int bgc) {
+}
+
 void host_plot(int x, int y) {
+}
+
+void host_draw(int x, int y) {
+}
+
+void host_circle(int x, int y, int r) {
 }

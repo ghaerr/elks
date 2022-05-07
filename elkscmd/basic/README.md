@@ -58,6 +58,11 @@ SAVE "filename" saves filename.bas
 SAVE+ "filename" saves filename.bas, sets auto-run on load
 DELETE "filename" deletes filename.bas
 DIR
+MODE number (set graphics mode, PC-98 only for now, e.g MODE 1 to use PLOT/DRAW/CIRCLE)
+COLOR fg,bg (PC-98 only for now)
+PLOT x,y (PC-98 only for now)
+DRAW x,y (PC-98 only for now)
+CIRCLE x,y,r (PC-98 only for now)
 
 Architecture-specific
 PIN pinNum, value (0 = low, non-zero = high)
@@ -67,11 +72,6 @@ Not yet implemented
 POKE offset,segment,value
 OUT port,value
 RANDOMIZE [nmber]
-MODE number (set graphics mode)
-COLOR fg[,bg]
-PLOT x,y
-DRAW x,y[,a]
-CIRCLE x,y[,r]
 ```
 
 "Pseudo-identifiers"
