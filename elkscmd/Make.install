@@ -19,8 +19,8 @@ TAGS=
 # Old-style installation
 INSTDIRS=
 
-ifdef CONFIG_APP_ROM_TAGS
-	TAGS += "$(CONFIG_APP_ROM_TAGS)"
+ifdef CONFIG_APP_TAGS
+	TAGS += "$(CONFIG_APP_TAGS)"
 endif
 
 #

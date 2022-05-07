@@ -20,7 +20,7 @@
 # script.
 #
 # William Roadcap was the original author of Menuconfig.
-# Jody Bruchon (jody@jodybruchon.com) is the current maintainer.
+# Michael Elizabeth Chastain (mec@shout.net) is the current maintainer.
 #
 # 07 Apr 1997 Bernhard Kaindl <bkaindl@netway.at>
 #	- get default values for new bool, tristate and dep_tristate
@@ -305,6 +305,12 @@ function hex () {
 # Add a menu item which will call our local string function.
 
 function string () {
+    set_x_info "$2" "$3"
+    echo -ne "'$2' '[$x] $1$info' " >>MCmenu
+    echo -e "function $2 () { l_string '$1' '$2' '$3' '$x' ;}" >>MCradiolists
+}
+
+function string_broken () {
     set_x_info "$2" "$3"
     echo -ne "'$2' '     $1: \"$x\"$info' " >>MCmenu
     echo -e "function $2 () { l_string '$1' '$2' '$3' '$x' ;}" >>MCradiolists
@@ -641,6 +647,21 @@ function l_hex_broken () {
 # Create a dialog for entering a string into a kernel option.
 
 function l_string () {
+    while true ; do
+	if $DIALOG --title "$1" --backtitle "$backtitle" \
+		--inputbox "$inputbox_instructions_string" \
+		10 75 "$4" 2>MCdialog.out
+	then
+	    answer="`cat MCdialog.out`"
+	    answer="${answer:-$3}"
+	    eval $2='${answer}'
+	    break
+	fi
+	help "$2" "$1"
+    done
+}
+
+function l_string_broken () {
     while true ; do
 	if $DIALOG --title "$1" --inputbox "$inputbox_instructions_string" \
 		   --backtitle "$backtitle" 10 75 "$4" 2>MCdialog.out
@@ -1108,8 +1129,13 @@ save_configuration () {
 
     function string () {
 	set_x_info "$2" "$3"
-	echo "$2=\"$x\""			>> $CONFIG
-	echo "#define $2 \"$x\""		>> $CFG_H
+	if [ "$x" != "" ]; then
+	    echo "$2=\"$x\""			>> $CONFIG
+	    echo "#define $2 \"$x\""		>> $CFG_H
+	else
+		#echo "# $2 is not set" >>$CONFIG
+		echo "#undef $2" >>$CFG_H
+	fi
     }
 
     function define_hex () {
