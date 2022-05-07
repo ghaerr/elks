@@ -27,7 +27,7 @@ OBJS += host-8018x.o
 endif
 
 ifeq ($(CONFIG_ARCH_PC98), y)
-OBJS += host-pc98.o
+OBJS += host-pc98.o intC5-pc98.o
 endif
 
 all: $(PRGS)
