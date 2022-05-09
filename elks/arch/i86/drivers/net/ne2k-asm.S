@@ -569,13 +569,14 @@ npg_next:
 npg_exit:
 	// This is effectively the replacement for the rx_stat routine,
 	// clear the has_data flag if ring buffer is empty.
-	cli			// Interrupts off (experimental)
+	cli			// Ensure we don't get a rece condition when
+				// updating _ne2k_has_data
 	call	ne2k_getpage
 	cmp	%ah,%bl		// ring buffer empty?
-	jnz	npg_more_data
+	jnz	npg_exit_ok
 	movw	$0,_ne2k_has_data
 
-npg_more_data:
+npg_exit_ok:
 	sti		// Enable interrupts
 	pop	%ax	// return byte count (from %cx)
 	//pop	%es

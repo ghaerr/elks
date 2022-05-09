@@ -18,6 +18,7 @@
 #include <linuxmt/limits.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/debug.h>
+#include <linuxmt/netstat.h>
 
 // Shared declarations between low and high parts
 
@@ -25,20 +26,14 @@
 
 int net_irq = NE2K_IRQ;	/* default IRQ, changed by netirq= in /bootopts */
 int net_port = NE2K_PORT; /* default IO PORT, changed by netport= in /bootopts */
-word_t net_rx_errs;	/* count receive errors */
-word_t net_tx_errs;	/* transmit errors */
-word_t net_oflow_errs; /* receive buffer overflow counter */
+struct netif_stat netif_stat;
 
 // Static data
 struct wait_queue rxwait;
 struct wait_queue txwait;
 
-static byte_t ne2k_inuse = 0;
-
 static byte_t mac_addr[6]  = {0x52, 0x54, 0x00, 0x12, 0x34, 0x57};  /* QEMU default */
 			     /* Overwritten by actual HW MAC address if found */
-static word_t _ne2k_skip_cnt;
-
 extern word_t _ne2k_next_pk;
 extern word_t _ne2k_is_8bit;
 extern word_t _ne2k_has_data;
@@ -75,19 +70,20 @@ static size_t ne2k_read(struct inode *inode, struct file *filp, char *data, size
 			break;
 		}
 
-		//printk("r%04x|%04x/",nhdr[0], nhdr[1]);
+		//printk("r%04x|%04x/",nhdr[0], nhdr[1]);	// NIC bnuffer header
 		debug_eth("eth read: req %d, got %d real %d\n", len, size, nhdr[1]);
+
 		if ((nhdr[1] > size) || (nhdr[0] == 0)) {
 			/* This is a sanity check, should not happen.
-			 * 1) The buffer size is too small (should be 1536)
-			 * 2) Driver problem and nhdr[] is not the actual NIC header
-			 * 3) Hardware problem since the NIC is programmed to not accept large packets from the wire
 			 *	
 			 * Most likely: We have a 8bit interface running with 16k buffer enabled.
-			 * In that case, well end up here all the time and eventually hang.
+			 * In that case, we'll end up here all the time and may eventually hang.
+			 * May want to add more tests for nhdr[0]:
+			 * 	Low byte should always be 1	(receive status reg)
+			 *	High byte should always be < 0x80 (points to next buffer page)
 			 */
 
-			printk("eth: truncated read (%04x %d), clearing buffer\n", nhdr[0], nhdr[1]);
+			printk("eth: oversized packet (%04x %d), clearing buffer\n", nhdr[0], nhdr[1]);
 			if (nhdr[0] == 0) { 	// must clear and reset
 				res = ne2k_clr_oflow(0); 
 				//printk("<%04x>", res);
@@ -95,6 +91,7 @@ static size_t ne2k_read(struct inode *inode, struct file *filp, char *data, size
 				ne2k_rx_init();	// Resets the ring buffer pointers to initial values,
 						// effectively purging the buffer.
 			_ne2k_has_data = 0;
+			netif_stat.rq_errors++;
 			res = -EIO;
 			break;
 		}
@@ -135,13 +132,7 @@ static size_t ne2k_write(struct inode *inode, struct file *file, char *data, siz
 		if (len > MAX_PACKET_ETH) len = MAX_PACKET_ETH;
 
 		if (len < 64) len = 64;  /* issue #133 */
-		if ((res = ne2k_pack_put(data, len))) {	///FIXME
-			//printk(">%d<", res);	// DEBUG STUFF
-			if (res == 0xff) {
-				res = -EIO;
-				break;
-			}
-		}
+		ne2k_pack_put(data, len);
 
 		res = len;
 		break;
@@ -204,13 +195,13 @@ static void ne2k_int(int irq, struct pt_regs *regs)
 #endif
 
         	if (stat & NE2K_STAT_OF) {
-			printk("eth: receive oflow (0x%x), keep %d\n", stat, _ne2k_skip_cnt);
-			page = ne2k_clr_oflow(_ne2k_skip_cnt); 	// 1+ -> keep this # of pkts
+			printk("eth: receive oflow (0x%x), keep %d\n", stat, netif_stat.oflow_keep);
+			page = ne2k_clr_oflow(netif_stat.oflow_keep); 	// 1+ -> keep this # of pkts
 								// 0 -> dump all
 			debug_eth("/CB%04x/ ", page);
 			//printk("*CB%04x", page);
 
-			net_oflow_errs++;
+			netif_stat.oflow_errors++;
 
 			if (_ne2k_has_data)
 				wake_up(&rxwait);
@@ -245,7 +236,7 @@ static void ne2k_int(int irq, struct pt_regs *regs)
 		if (stat & NE2K_STAT_TXE) { 	
 			/* transmit error detected, this should not happen. */
 			/* ne2k_get_tx_stat resets this int in the ISR */
-			net_tx_errs++;
+			netif_stat.tx_errors++;
 			printk("eth: TX-error, status 0x%02x\n", ne2k_get_tx_stat());
 			ne2k_get_tx_stat();	// just read the tx status reg to keep the NIC
 		}
@@ -253,7 +244,7 @@ static void ne2k_int(int irq, struct pt_regs *regs)
 			/* Receive error detected, may happen when traffic is heavy */
 			/* The 8bit interface gets lots of these */
 			/* ne2k_get_rx_stat resets this int in the ISR */
-			net_rx_errs++;
+			netif_stat.rx_errors++;
 			ne2k_clr_rxe();
 			printk("eth: RX-error, status 0x%02x\n", ne2k_get_rx_stat());
 		}
@@ -305,13 +296,13 @@ static int ne2k_ioctl(struct inode *inode, struct file *file, unsigned int cmd, 
 
 		case IOCTL_ETH_OFWSKIP_SET:
 			/* Set the number of packets to skip @ ring buffer overflow. */
-			_ne2k_skip_cnt = arg;
-			debug_eth("eth: OFW skip-cnt is now %d.\n", _ne2k_skip_cnt);
+			netif_stat.oflow_keep = arg;
+			debug_eth("eth: OFW keep-count is now %d.\n", netif_stat.oflow_keep);
 			break;
 
 		case IOCTL_ETH_OFWSKIP_GET:
 			/* Get the current overflow skip counter. */
-			arg = _ne2k_skip_cnt;
+			arg = netif_stat.oflow_keep;
 			break;
 #endif
 		default:
@@ -330,14 +321,14 @@ static int ne2k_open(struct inode *inode, struct file *file)
 {
 	int err = 0;
 
-	if (ne2k_inuse) {
+	if (netif_stat.if_status & NETIF_IS_OPEN) {
 		err = -EBUSY;
 	} else {
 		ne2k_reset();
 		ne2k_init();
 		ne2k_start();
 
-		ne2k_inuse = 1;
+		netif_stat.if_status |= NETIF_IS_OPEN;
 	}
 	return err;
 }
@@ -350,7 +341,7 @@ static void ne2k_release(struct inode *inode, struct file *file)
 {
 	ne2k_stop();
 
-	ne2k_inuse = 0;
+	netif_stat.if_status &= ~NETIF_IS_OPEN;
 }
 
 /*
@@ -373,7 +364,7 @@ static struct file_operations ne2k_fops =
 void ne2k_display_status(void)
 {
 	printk("\n---- Ethernet Stats ----\n");
-	printk("Skip Count %d\n", _ne2k_skip_cnt);
+	printk("Skip Count %d\n", netif_stat.oflow_keep);
 }
 #endif
 
@@ -392,7 +383,7 @@ void ne2k_drv_init(void)
 				 * the upper byte is either a copy of the lower or 00.
 				 * depending on the chip. This may be used to detect 8 vs 16
 				 * bit cards automagically.
-				 * The address occupies the first 6 bydes, followed by a 'card signature'.
+				 * The address occupies the first 6 bytes, followed by a 'card signature'.
 				 * If bytes 14 & 15 == 0x57, this is a ne2k clone.
 				 */
 	byte_t *cprom;
@@ -401,14 +392,15 @@ void ne2k_drv_init(void)
 				// Bit 0 set: 8 bit interface
 				// Bit 1 set: use 16k buffer regardless
 
+	memset(&netif_stat, 0, sizeof(netif_stat));
+	netif_stat.oflow_keep = 1;	// Default - keep one packet
 /* 
  * DEBUG: use the 2nd nibble of the port # for overflow skip-count
  * obviously works only if the i/o address has zero in this nibble.
  */
-	_ne2k_skip_cnt = 1;
 #if 0
 	i = (net_port&0xf0)>>4;
-	if (i) _ne2k_skip_cnt = i;
+	if (i) netif_stat.oflow_keep = i;
 	net_port &= 0xff0f;
 /* ----------------------------------*/
 #endif
@@ -455,6 +447,7 @@ void ne2k_drv_init(void)
 			for (i = 1; i < 12; i += 2) j += cprom[i];
 			for (i = 0; i < 12; i += 2) k += cprom[i]; // QEMU hack
 
+			if (j == k) netif_stat.if_status |= NETIF_IS_QEMU;
 			if (j && (j!=k)) {	
 				//printk("8 bit card detected \n");
 				is_8bit |= 1;	// keep 16k override if set
@@ -476,8 +469,8 @@ void ne2k_drv_init(void)
 		while (i < 6) printk(":%02x", mac_addr[i++]);
 		printk("\n");
 		if (is_8bit&2) printk("eth: Forced 16k buffer mode\n");
-		if (!is_8bit) _ne2k_skip_cnt = 3;	// Experimental
-		//printk("eth (debug): oflow-strategy %d\n", _ne2k_skip_cnt);
+		if (!is_8bit) netif_stat.oflow_keep = 3;	// Experimental
+		//printk("eth (debug): oflow-strategy %d\n", netif_stat.oflow_keep);
 
 		ne2k_addr_set(cprom);   /* Set NIC mac addr now so IOCTL works */
 #if DEBUG_ETH
@@ -486,9 +479,6 @@ void ne2k_drv_init(void)
 		break;
 
 	}
-	net_rx_errs = 0;
-	net_tx_errs = 0;
-	net_oflow_errs = 0;
 	_ne2k_has_data = 0;
 	_ne2k_is_8bit = is_8bit;
 
