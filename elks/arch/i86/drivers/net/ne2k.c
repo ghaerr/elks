@@ -26,14 +26,13 @@
 
 int net_irq = NE2K_IRQ;	/* default IRQ, changed by netirq= in /bootopts */
 int net_port = NE2K_PORT; /* default IO PORT, changed by netport= in /bootopts */
-struct netif_stat netif_stat;
+struct netif_stat netif_stat = 
+	{ 0, 0, 0, 0, 0, 0, {0x52, 0x54, 0x00, 0x12, 0x34, 0x57}};  /* QEMU default  + 1 */
 
 // Static data
 struct wait_queue rxwait;
 struct wait_queue txwait;
 
-static byte_t mac_addr[6]  = {0x52, 0x54, 0x00, 0x12, 0x34, 0x57};  /* QEMU default */
-			     /* Overwritten by actual HW MAC address if found */
 extern word_t _ne2k_next_pk;
 extern word_t _ne2k_is_8bit;
 extern word_t _ne2k_has_data;
@@ -269,29 +268,22 @@ static int ne2k_ioctl(struct inode *inode, struct file *file, unsigned int cmd, 
 
 	switch (cmd) {
 		case IOCTL_ETH_ADDR_GET:
-			memcpy_tofs((char *) arg, mac_addr, 6);
+			memcpy_tofs((char *)arg, netif_stat.mac_addr, 6);
 			break;
 
 #if 0 /* unused*/
 		case IOCTL_ETH_ADDR_SET:
-			memcpy_fromfs(mac_addr, (char *) arg, 6);
-			ne2k_addr_set(mac_addr);
-			break;
-
-		case IOCTL_ETH_HWADDR_GET:
-			/* Get the hardware address of the NIC,	which may be different
-			 * from the currently programmed address. Be careful with this,
-			 * it may interrupt ongoing send/receives.
-			 * arg must be byte[32].
-			 */
-			ne2k_get_hw_addr((word_t *) arg);
+			int i;
+			memcpy_fromfs(netif_stat.mac_addr, (char *) arg, 6);
+			ne2k_addr_set(netif_stat.mac_addr);
+			printk("eth: MAC address changed to %02x", netif_stat.mac_addr[0]);
+			for (i = 1; i < 6; i++) printk(":%02x", netif_stat.mac_addr[i]);
+			printk("\n");
 			break;
 
 		case IOCTL_ETH_GETSTAT:
-			/* Get statistics from the NIC hardware (error counts etc.)
-			 * arg is byte[3].
-			 */
-			ne2k_get_errstat((byte_t *)arg);
+			/* Return the entire netif_struct */
+			memcpy_tofs((char *)arg, netif_stat, sizeof(netif_stat));
 			break;
 
 		case IOCTL_ETH_OFWSKIP_SET:
@@ -300,10 +292,6 @@ static int ne2k_ioctl(struct inode *inode, struct file *file, unsigned int cmd, 
 			debug_eth("eth: OFW keep-count is now %d.\n", netif_stat.oflow_keep);
 			break;
 
-		case IOCTL_ETH_OFWSKIP_GET:
-			/* Get the current overflow skip counter. */
-			arg = netif_stat.oflow_keep;
-			break;
 #endif
 		default:
 			err = -EINVAL;
@@ -386,19 +374,19 @@ void ne2k_drv_init(void)
 				 * The address occupies the first 6 bytes, followed by a 'card signature'.
 				 * If bytes 14 & 15 == 0x57, this is a ne2k clone.
 				 */
-	byte_t *cprom;
+	byte_t *cprom, *mac_addr;
 
 	is_8bit = net_port&3;	// Set 8bit mode via /bootopts
 				// Bit 0 set: 8 bit interface
 				// Bit 1 set: use 16k buffer regardless
 
-	memset(&netif_stat, 0, sizeof(netif_stat));
 	netif_stat.oflow_keep = 1;	// Default - keep one packet
-/* 
- * DEBUG: use the 2nd nibble of the port # for overflow skip-count
- * obviously works only if the i/o address has zero in this nibble.
- */
+	mac_addr = &netif_stat.mac_addr;
 #if 0
+/* 
+ * DEBUG: use the 2nd nibble of the port # for overflow skip-count testing.
+ * Obviously works only if the i/o address has zero in this nibble.
+ */
 	i = (net_port&0xf0)>>4;
 	if (i) netif_stat.oflow_keep = i;
 	net_port &= 0xff0f;
@@ -406,9 +394,6 @@ void ne2k_drv_init(void)
 #endif
 
 	net_port &= 0xfffc;
-#ifdef CONFIG_ETH_BYTE_ACCESS
-	is_8bit = 1;		// Force 8 bit, 4k mode
-#endif
 
 	while (1) {
 		err = ne2k_probe();
@@ -447,13 +432,13 @@ void ne2k_drv_init(void)
 			for (i = 1; i < 12; i += 2) j += cprom[i];
 			for (i = 0; i < 12; i += 2) k += cprom[i]; // QEMU hack
 
-			if (j == k) netif_stat.if_status |= NETIF_IS_QEMU;
 			if (j && (j!=k)) {	
 				//printk("8 bit card detected \n");
 				is_8bit |= 1;	// keep 16k override if set
 			} else {
 				for (i = 0; i < 16; i++) cprom[i] = (char)prom[i]&0xff;
 			}
+			if (j == k && !memcmp(cprom, mac_addr, 5)) netif_stat.if_status |= NETIF_IS_QEMU;
 			//for (i = 0; i < 16; i++) printk("%02x", cprom[i]);
 			//printk("\n");
 
@@ -467,7 +452,9 @@ void ne2k_drv_init(void)
 		printk ("MAC %02x", mac_addr[0]);
 		i = 1;
 		while (i < 6) printk(":%02x", mac_addr[i++]);
+		if (netif_stat.if_status & NETIF_IS_QEMU) printk(" (QEMU)");
 		printk("\n");
+
 		if (is_8bit&2) printk("eth: Forced 16k buffer mode\n");
 		if (!is_8bit) netif_stat.oflow_keep = 3;	// Experimental
 		//printk("eth (debug): oflow-strategy %d\n", netif_stat.oflow_keep);
@@ -480,7 +467,21 @@ void ne2k_drv_init(void)
 
 	}
 	_ne2k_has_data = 0;
-	_ne2k_is_8bit = is_8bit;
+	_ne2k_is_8bit = is_8bit;	// Keep for now
+	netif_stat.if_status |= is_8bit;// Temporary
 
 	return;
+}
+
+/* remove if/when we get a memcmp library routine */
+
+int memcmp(void *str1, void *str2, size_t count) {
+	char *s1 = str1;
+	char *s2 = str2;
+  
+	while (count-- > 0) {
+		if (*s1++ != *s2++)
+			return s1[-1] < s2[-1] ? -1 : 1;
+	}
+	return 0;
 }
