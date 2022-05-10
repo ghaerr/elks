@@ -79,3 +79,8 @@ void host_color(int fgc, int bgc);
 void host_plot(int x, int y);
 void host_draw(int x, int y);
 void host_circle(int x, int y, int r);
+
+void host_outb(int port, int value);
+void host_outw(int port, int value);
+int host_inpb(int port);
+int host_inpw(int port);
