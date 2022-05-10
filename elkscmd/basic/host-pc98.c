@@ -3,6 +3,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <arch/io.h>
 
 #include "host.h"
 #include "basic.h"
@@ -362,4 +363,20 @@ int host_analogRead(int pin) {
 }
 
 void host_pinMode(int pin,int mode) {
+}
+
+void host_outb(int port, int value) {
+    outb(value, port);
+}
+
+void host_outw(int port, int value) {
+    outw(value, port);
+}
+
+int host_inpb(int port) {
+    return inb(port);
+}
+
+int host_inpw(int port) {
+    return inw(port);
 }

@@ -198,7 +198,11 @@ PROGMEM const TokenTableEntry tokenTable[] = {
     {"COLOR",TKN_FMT_POST},
     {"PLOT",TKN_FMT_POST},
     {"DRAW",TKN_FMT_POST},
-    {"CIRCLE",TKN_FMT_POST}
+    {"CIRCLE",TKN_FMT_POST},
+    {"INPB", 1},
+    {"INPW", 1},
+    {"OUTB", TKN_FMT_POST},
+    {"OUTW", TKN_FMT_POST},
 };
 
 
@@ -1202,6 +1206,18 @@ int parseFnCallExpr() {
 #else
             return ERROR_FUNCTION_NOT_BUILTIN;
 #endif
+        case TOKEN_INPB:
+        {
+            tmp = (int)stackPopNum();
+            if (!stackPushNum(host_inpb(tmp))) return ERROR_OUT_OF_MEMORY;
+            break;
+        }
+        case TOKEN_INPW:
+        {
+            tmp = (int)stackPopNum();
+            if (!stackPushNum(host_inpw(tmp))) return ERROR_OUT_OF_MEMORY;
+            break;
+        }
         default:
             return ERROR_UNEXPECTED_TOKEN;
         }
@@ -1413,6 +1429,8 @@ int parsePrimary() {
     case TOKEN_PINREAD:
     case TOKEN_ANALOGRD:
     case TOKEN_POW:
+    case TOKEN_INPB:
+    case TOKEN_INPW:
         return parseFnCallExpr();
 
         // single argument math functions
@@ -1726,6 +1744,12 @@ int parseNIntCmd(int n) {
             break;
         case TOKEN_CIRCLE:
             host_circle(para[0],para[1],para[2]);
+            break;
+        case TOKEN_OUTB:
+            host_outb(para[0],para[1]);
+            break;
+        case TOKEN_OUTW:
+            host_outw(para[0],para[1]);
             break;
         }
     }
@@ -2105,6 +2129,8 @@ int parseStmts()
         case TOKEN_LET:
         case TOKEN_INPUT:
         case TOKEN_READ:
+        case TOKEN_INPB:
+        case TOKEN_INPW:
             lastToken = curToken;
             getNextToken();
             ret = parseAssignment(lastToken);
@@ -2122,6 +2148,8 @@ int parseStmts()
         case TOKEN_COLOR:
         case TOKEN_PLOT:
         case TOKEN_DRAW:
+        case TOKEN_OUTB:
+        case TOKEN_OUTW:
             ret = parseNIntCmd(2);
             break;
 

@@ -63,6 +63,10 @@ COLOR fg,bg (PC-98 only for now)
 PLOT x,y (PC-98 only for now)
 DRAW x,y (PC-98 only for now)
 CIRCLE x,y,r (PC-98 only for now)
+INPB(port) (IO read byte from `port`)
+INPW(port) (IO read word from `port`)
+OUTB port, value (IO write byte `value` from `port`)
+OUTW port, value (IO write word `value` from `port`)
 
 Architecture-specific
 PIN pinNum, value (0 = low, non-zero = high)
@@ -70,7 +74,6 @@ PINMODE pinNum, mode - not implemented
 
 Not yet implemented
 POKE offset,segment,value
-OUT port,value
 RANDOMIZE [nmber]
 ```
 
@@ -114,7 +117,6 @@ SGN(number) sign, use IF number < 0 etc
 
 Not yet implemented
 PEEK(offset,segment)
-IN(port)
 SCREEN$(line,col)
 ATTR(line,col)
 POINT(x,y)

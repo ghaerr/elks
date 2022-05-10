@@ -97,7 +97,11 @@
 #define TOKEN_PLOT		84
 #define TOKEN_DRAW		85
 #define TOKEN_CIRCLE	   	86
-#define LAST_IDENT_TOKEN	86
+#define TOKEN_INPB       87
+#define TOKEN_INPW       88
+#define TOKEN_OUTB       89
+#define TOKEN_OUTW       90
+#define LAST_IDENT_TOKEN	90
 
 #define ERROR_NONE				0
 // parse errors
