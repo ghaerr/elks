@@ -42,7 +42,7 @@ start_network()
 		ktcp="ktcp -b -p cslip -s $baud -l $device $localip $gateway $netmask"
 		;;
 	eth)
-		ktcp="ktcp -b $localip $gateway $netmask"
+		ktcp="ktcp -b $mtu $localip $gateway $netmask"
 		;;
 	*)
 		usage ;;

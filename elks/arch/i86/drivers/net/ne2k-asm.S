@@ -1,14 +1,32 @@
 //-----------------------------------------------------------------------------
 // NE2K driver - low part - MAC routines
 //
-// Updated by Santiago Hormazabal on Dec 2021:
-//  . 8 bit access if CONFIG_ETH_BYTE_ACCESS is set, using a ne1k patch from
-//    NCommander.
-// Updated by Helge Skrivervik July 2020:
+// Updated by Helge Skrivervik (HS) July 2020:
 //	. pick up MAC address from prom
 //	. fixed read ring buffer wrap around errors
 //	. added ring buffer overflow handling
+//	. use word I/O
 // oct-2021: Pick up I/O port # from init/bootopts (HS)
+// Updated by Santiago Hormazabal on Dec 2021:
+//  . 8 bit access if CONFIG_ETH_BYTE_ACCESS is set, using a ne1k patch from
+//    NCommander.
+// apr-2022 (HS) : Support auto detection of 8bit mode, set 4k buffer size when in 8bit mode
+//	     assuming RTL8019 buffer restrictions.
+//	     Rewrote overflow handler, added direct access to many registers from C code
+//	     Cleaned up initialization code, optimized 8bit I/O
+//
+//-----------------------------------------------------------------------------
+// Terminology
+// The ring buffer pointer terminology used in the DP8390C/NS3249C document is confusing.
+// 'CURRENT' points to the next block to be filled by an incoming packet
+// 'BOUNDARY' points to the next block to be read from the NIC
+// The two must not be equal. If the ring buffer is empty, BOUNDARY = CURRENT -1
+// So the next block to read is not BOUNDARY but BOUNDARY + 1. Easy - except at
+// the wrap-around point: BOUNDARY may be 80 or 50, while the next block to read is 46.
+// For simplicity (to avoid the ring wraparound logic on every read)
+// the driver uses a variable to hold the next block to read - _ne2k_next_pk.
+// For debugging, this variable is also available to the C part of the driver.
+//
 //-----------------------------------------------------------------------------
 
 #include <linuxmt/config.h>
@@ -60,30 +78,35 @@ io_ne2k_reset      = 0x1F	// Really a port, not a register, force HW reset of th
 
 tx_first           = 0x40
 rx_first           = 0x46
-rx_last            = 0x80
+rx_last_16	   = 0x80
+rx_last_8	   = 0x50	// Use only 4k in 8 bit mode 
 
 //-----------------------------------------------------------------------------
 	.data
 	.extern current
 	.extern	net_port	// io-port base
 
+	.global _ne2k_next_pk
 _ne2k_next_pk:
 	.word 0	// being used as byte ...
-
-	.global _ne2k_skip_cnt
-_ne2k_skip_cnt:
-	.word 0	// # of packets to skip if buffer overrun, default is all (0)
 
 	.global _ne2k_has_data
 _ne2k_has_data:
 	.word 0 
+
+	.global _ne2k_is_8bit	// set if this is an 8bit card
+_ne2k_is_8bit:
+	.word 0
+
+_ne2k_rx_last:
+	.byte rx_last_16	// default to the 16 bit value
+
 
 	.text
 
 //-----------------------------------------------------------------------------
 // Set unicast address (aka MAC address)
 //-----------------------------------------------------------------------------
-
 // arg1 : pointer to unicast address (6 bytes)
 
 	.global ne2k_addr_set
@@ -92,7 +115,7 @@ ne2k_addr_set:
 
 	push    %bp
 	mov     %sp,%bp
-	push    %si  // used by compiler
+	push    %si  // used by compiler (???)
 
 	mov     4(%bp),%si
 
@@ -174,8 +197,6 @@ dma_write:
 	inc     %cx     // make byte count even
 	and     $0xfffe,%cx
 	call    dma_init
-	shr     %cx     // half -> word size transf
-
 
 	// start DMA write
 
@@ -185,41 +206,45 @@ dma_write:
 
 	// I/O write loop
 
-	mov	net_port,%dx	// Do this before changing the data segment
-	push	%dx		// Command register
+	//mov	net_port,%dx	// Do this before changing the data segment
 	add	$io_ne2k_data_io,%dx
+	mov	_ne2k_is_8bit,%ax
 	mov	current,%bx		// setup for far memory xfer
 	mov	TASK_USER_DS(%bx),%ds
 	cld
+	test	%ax,%ax		// checking _ne2k_is_8bit
+	jz	1f
 
-emw_loop:
+	// Byte loop
+4:	lodsb
+	outb     %al,%dx
+	loop    4b
+	jmp	2f
 
-#ifdef CONFIG_ETH_BYTE_ACCESS
-    lodsb
-    outb     %al,%dx
-    lodsb
-    outb     %al,%dx
-#else
-	lodsw
+	// word loop
+1:	shr	%cx
+3:	lodsw
 	out     %ax,%dx
-#endif
-
-	loop    emw_loop
-
+	loop	3b
+2:
 	// wait for DMA completed
 
-	pop	%dx	// instead of: mov	net_port,%dx
+	mov	net_port,%dx
 	add	$io_ne2k_int_stat,%dx
+
 check_dma_w:
 	in      %dx,%al
 	test    $0x40,%al       // dma done?
-	jz      check_dma_w     // loop if not
+	jnz	end_dma_w
 
-	mov     $0x40,%al       //clear DMA intr bit in ISR
+end_dma_w:
+	mov     $0x40,%al       // clear DMA intr bit in ISR
 	out     %al,%dx
+	sti			// Experimental
 
 
-	sti		// Experimental
+	mov	%cl,%al		// Error (debug) return
+	xor	%ah,%ah		// if AL is 0xff, we had a timeout, the dma never completed
 	pop     %si
 	pop	%ds
 	pop	%bx
@@ -228,10 +253,9 @@ check_dma_w:
 
 #if 0
 //-------------------------------------------------------------------------
-// This is an (untested) skeleton routine for DMA-assiste paket transfer
+// This is an (untested) skeleton routine for DMA-assisted packet transfer
 // from the NIC to host memory.
-// TODO: Add DMA channel setup and teardown. Makes sens to do that outiside of this
-// routine.
+// TODO: Add DMA channel setup and teardown. 
 //
 dma_r:	// Use the send data command to read exactly one backet, 
 	// the nic does everything on its own, needs only ES:DI
@@ -279,7 +303,7 @@ rlp_ret:
 // BX    : chip memory to read from
 // CX    : byte count
 // ES:DI : host memory to write to
-// AL:	 : 0: buffer is local, <>0: buffer is far
+// AL:	 : 0: buffer is local (kernel), <>0: buffer is far (process)
 
 dma_read:
 
@@ -288,11 +312,11 @@ dma_read:
 	push	%bx
 	push	%ax
 
-	cli		// Experimental - disable INTR
 	inc     %cx     // make byte count even
 	and     $0xfffe,%cx
+
+	cli		// Experimental - disable INTR
 	call    dma_init
-	shr     %cx     // half -> word size transf
 
 	mov     %ds,%bx
 	mov     %bx,%es
@@ -302,33 +326,35 @@ dma_read:
 	mov	current,%bx	// Normal: read directly into the (far) buffer
 	mov	TASK_USER_DS(%bx),%es
 
-buf_local:
 	pop	%bx
 	push	%bx
 
-	// start DMA read
-
+buf_local:
 	mov	net_port,%dx	// command register
-	mov	$0x0a,%al	// RD0 & STA
-	out     %al,%dx
-
-	// I/O read loop
+	mov	$0x0a,%al	// set RD0 & STA
+	out     %al,%dx		// start DMA read
 
 	mov	net_port,%dx
 	add	$io_ne2k_data_io,%dx
-	cld
-emr_loop:
-#ifdef CONFIG_ETH_BYTE_ACCESS
-    inb      %dx,%al
-    stosb
-    inb      %dx,%al
-    stosb
-#else
+	cld			// clear direction flag
+	cmpw	$0,_ne2k_is_8bit
+	jz	1f
+
+// Byte transfer
+byte_loop:
+	inb      %dx,%al
+	stosb
+	loop    byte_loop
+	jmp	3f
+
+// Word transfer
+1:
+	shr     %cx     // half -> word size transf
+word_loop:
 	in      %dx,%ax
 	stosw
-#endif
-	loop    emr_loop
-
+	loop	word_loop
+3:
 	// wait for DMA to complete
 
 	mov	net_port,%dx
@@ -358,12 +384,13 @@ check_dma_r:
 // 	read point is in the variable _NE2K_NEXT_PK. This trick is necessary
 //	because the internal logic in the NIC will trigger an overrun interrupt
 //	if the BOUNDARY pointer matches or exceeds the CURRENT pointer.
+//---------------
 // Used internally, exposed externally for debugging purposes.
 //
 	.global ne2k_getpage
 
 ne2k_getpage:
-	mov	$0x42,%al		// page 1
+	mov	$0x42,%al	// page 1
 	mov	net_port,%dx	// command register
 	out	%al,%dx
 
@@ -372,11 +399,11 @@ ne2k_getpage:
 	in      %dx,%al
 	mov     %al,%ah
 
-	mov	$0x02,%al		// page 0
+	mov	$0x02,%al	// page 0
 	mov	net_port,%dx	// command register
 	out	%al,%dx
 
-	mov	net_port,%dx
+	//mov	net_port,%dx
 	add	$io_ne2k_rx_get,%dx     // BOUNDARY
 	in      %dx,%al
 
@@ -427,15 +454,15 @@ nrs_exit:
 #else
 	// sep2020: keep ring buffer status in a variable
 	// instead of accessing the NIC registers continuously.
-	movw	_ne2k_has_data,%ax	// TEST !!!!!
+	call	ne2k_clr_int_reg // EXPERIMENTAL, should clear just the read.
+	movw	_ne2k_has_data,%ax
 #endif
 	ret
 
 //-----------------------------------------------------------------------------
 // Get received packet
 //-----------------------------------------------------------------------------
-// arg1 : packet buffer to receive the data. The buffer must be 4 bytes to hold 
-//	the NIC header plus the mac Ethernet frame size.
+// arg1: buffer to receive the data
 // arg2: int - requested read size (max buffer)
 // arg3: int array [2] (return) containing the NIC packet header.
 //
@@ -453,21 +480,22 @@ ne2k_pack_get:
 
 	//sub 	$4,%sp		// temp space
 	//mov	%sp,%di
-	mov	8(%bp),%di	// get the hdr into arg3
 
-	// get RX_put pointer
-
+	// get the 4 byte header first -> arg3
+	mov	8(%bp),%di	
 	mov	_ne2k_next_pk,%bh
 	xor	%bl,%bl		// Next pkt to read in BX
 
-	mov	$4,%cx
+	mov	$4,%cx		// Bytes to read
 	//mov     %ds,%ax
 	//mov     %ax,%es		// local address space
-	xor	%al,%al		// local address space
+	xor	%al,%al		// indicate local address space
 	call	dma_read
 
 	mov	0(%di),%ax	// AH : next record, AL : status
 	mov	2(%di),%cx	// packet size (without CRC)
+
+	// get the actual data
 
 	//add	$4,%sp
 	mov	4(%bp),%di	// Buffer address to receive data.
@@ -478,9 +506,12 @@ ne2k_pack_get:
 
 #if 0
 	// -------------------------------------------------------------
-	// Check packet size - not required since the NIC will not
+	// Packet size check not required since the NIC will not
 	// accept such packets per our initialization. Note, in order to handle
-	// erroneous packets, rx_get (BOUNDARY) pointer must be updated.
+	// erroneous packets, rx_get (BOUNDARY) pointer must be updated
+	// to point to the next packet.
+	// If oversized packets still occur, it's a driver problem (most likely
+	// reading the wrong buffer page).
 	// -------------------------------------------------------------
 	or      %cx,%cx		// zero length
 	jz      npg_err2
@@ -488,6 +519,17 @@ ne2k_pack_get:
 	cmp     $1528,%cx	// max - head - crc
 	jnc     npg_err
 #endif
+	// -------------------------------------------------------------
+	// This section did the smart thing when reading the NIC packet header:
+	// Got the entire block (256b) instead of the 4 first bytes. Which was great 
+	// for small packets (telnet, command packets etc.): One read instead of 2.
+	//
+	// Removed when changing to read directly into the process was introduced,
+	// there is no longer anywhere to put the first 4 bytes.
+	// It may be an idea to reintroduce a 256b buffer to take advantage 
+	// of this 'optimization' and at the same time help strangled 8bit 
+	// interfaces.
+
 	//sub	$252,%cx	// Got entire packet?
 	//jle	npg_cont
 				// If not, get rest.
@@ -500,7 +542,7 @@ npg_cont0:
 				// (keep the 4 byte NIC header)
 	push	%cx		// save length
 	push	%ax
-	add	$4,%bx
+	add	$4,%bx		// Skip the 4 bytes already read
 
 	mov	$1,%al		// use far transfer
 	call    dma_read
@@ -515,7 +557,8 @@ npg_cont:
 	dec	%al
 	cmp	$rx_first,%al
 	jnb	npg_next	// if the decrement sent us outside the ring..
-	mov	$rx_last-1,%al	// make it right ...
+	mov	_ne2k_rx_last,%al
+	dec	%al
 
 npg_next:
 
@@ -523,52 +566,22 @@ npg_next:
 	add	$io_ne2k_rx_get,%dx	// update RX_get (BOUNDARY)
 	out     %al,%dx
 
-#if 0	/* error processing - not used */
-	xor     %ax,%ax
-	jmp     npg_exit
-npg_err:
-	mov     $-1,%ax		// Packet too big
-	jmp	npg_exit
-
-npg_err2:
-	mov	$-2,%ax		// zero length packet
-#endif  /* ---------------------------- */
-
 npg_exit:
-#if 0	/* Handle ring buffer overflow - not used */
-        /* OFLOW handled by its interrupt handler */
-
-	mov	net_port,%dx  
-	add	$io_ne2k_int_stat,%dx  
-	in	%dx,%al			// get the status bits
-	test	$0x10,%al
-	jz	npg_no_oflw
-	push	%bx
-	call	ne2k_clr_oflow
-	pop	%bx
-
-npg_no_oflw:
-#endif
-	// The is effectively the replacement for the rx_stat routine,
+	// This is effectively the replacement for the rx_stat routine,
 	// clear the has_data flag if ring buffer is empty.
-	cli	// Interrupts off (experimental)
-	//mov	_ne2k_has_data,%ax
-	//dec	%ax	// TESTING
-	//cmp	$0,%ax
-	//jz	npg_zero	// don't set to zero unless sure (TESTING)
-	//mov	%ax,_ne2k_has_data
-npg_zero:
+	cli			// Ensure we don't get a rece condition when
+				// updating _ne2k_has_data
 	call	ne2k_getpage
 	cmp	%ah,%bl		// ring buffer empty?
-	jnz	npg_more_data
+	jnz	npg_exit_ok
 	movw	$0,_ne2k_has_data
-npg_more_data:
 
+npg_exit_ok:
 	sti		// Enable interrupts
 	pop	%ax	// return byte count (from %cx)
 	//pop	%es
 	pop     %di
-	mov	%bp,%sp	// restore stack pointer
+	//mov	%bp,%sp	// restore stack pointer
 	pop     %bp
 	ret
 
@@ -594,24 +607,19 @@ ne2k_tx_stat:
 	jmp     nts_exit
 
 nts_ready:
-
 	mov     $2,%ax
 
 nts_exit:
-
 	ret
 
 //-----------------------------------------------------------------------------
 // Send packet: First transfer packet data to NIC memory, then kick off
 // the actual transmit and return.
 //-----------------------------------------------------------------------------
-
-// arg1 : packet buffer to read from
+// arg1 : packet buffer to transfer
 // arg2 : size in bytes
-
 // returns:
-
-// AX : error code
+//	AX : error code
 
 	.global ne2k_pack_put
 
@@ -632,11 +640,12 @@ ne2k_pack_put:
 	// set TX pointer and length
 
 	mov	net_port,%dx
-	add	$io_ne2k_tx_start,%dx	// FIXME: This may not be required, done
+	add	$io_ne2k_tx_start,%dx	// FIXME: This is probably superfluous, done
 					// at initialization time, never changes.
-	mov     $tx_first,%al
-	out     %al,%dx
+	//mov     $tx_first,%al
+	//out     %al,%dx
 
+	//add	$io_ne2k_tx_len1,%dx	// use inc instead
 	inc     %dx		// io_ne2k_tx_len1
 	mov     %cl,%al
 	out     %al,%dx
@@ -649,15 +658,11 @@ ne2k_pack_put:
 tx_rdy_wait:
 	mov	net_port,%dx	// command register
 	in	%dx,%al
-	test	$0x4,%al	// Check that previous transmit competed.
+	test	$0x4,%al	// Check that previous transmit completed.
 	jnz	tx_rdy_wait
-	mov	$6,%al		// Set TX bit, starts transfer...
+	and	$0x18,%al
+	or	$6,%al		// set TX + STA; keep the others
 	out	%al,%dx
-
-	//mov	net_port,%dx
-	//add	$io_ne2k_int_stat,%dx	// reset tx intr bit
-	//mov	$2,%al		// Test, should not make any difference
-	//out	%al,%dx
 
 1:	mov	net_port,%dx	// command register
 	in      %dx,%al
@@ -674,7 +679,7 @@ tx_rdy_wait:
 // Get NE2K interrupt status
 //-----------------------------------------------------------------------------
 
-// returns:
+// returns interrupt status reg unmodified
 
 // AX : status
 //   01h = packet received
@@ -686,24 +691,17 @@ tx_rdy_wait:
 
 ne2k_int_stat:
 
-	// get interrupt status
-
 	mov	net_port,%dx
 	add	$io_ne2k_int_stat,%dx
 	in      %dx,%al
-	test    $0x13,%al	// ring buffer overflow, tx, rx
-	jz      nis_next
-
-	mov	%al,%bl		// save return value
-	and	$3,%al		// Reset TX & RX bits here, otherwise traffic 
-				// will stop. DO NOT reset the RDC & OFLOW 
-				// interrupts, it will disturb dma rd/wr.
-	out     %al,%dx
-	xor	%ax,%ax
-	mov	%bl,%al		// unsave
-
-nis_next:
-
+#if 0
+	mov	%al,%ah
+	and	$3,%al
+	jz	1f
+	out	%al,%dx
+1:	mov	%ah,%al
+#endif
+	xor	%ah,%ah
 	ret
 
 //--------------------------------------------------------------
@@ -713,19 +711,21 @@ nis_next:
 ne2k_base_init:
 
 	mov	net_port,%dx	// command register
-
 	mov	$0x21,%al	// page 0 + Abort DMA; STOP
 	out     %al,%dx
 
-	// data I/O in words for PC/AT and higher
+	// Set data size, 16 or 8 bits
+	// Some machines are 8 bit only,
+	// some interfaces are 8 bits only
 
 	mov	net_port,%dx
 	add	$io_ne2k_data_conf,%dx
-#ifdef CONFIG_ETH_BYTE_ACCESS
-	mov     $0x48,%al	// set byte access
-#else
 	mov     $0x49,%al	// set word access
-#endif
+	cmpw	$0,_ne2k_is_8bit
+	jz	1f
+	dec     %al	// if in 8bit mode, 
+			// set byte access, data_conf reg = 0x48
+1:	
 	out     %al,%dx
 
 	// clear DMA length 
@@ -736,10 +736,12 @@ ne2k_base_init:
 	out     %al,%dx
 	inc     %dx  		// = io_ne2k_dma_len2
 	out     %al,%dx
+
 	ret
 
 //-----------------------------------------------------------------------------
 // NE2K initialization
+// Called from device open
 //-----------------------------------------------------------------------------
 
 	.global ne2k_init
@@ -763,70 +765,114 @@ ne2k_init:
 	mov     $2,%al  // 2 for loopback
 	out     %al,%dx
 
-	// set RX ring limits
-	// all 16KB on-chip memory
+	// set RX ring limits - all 16KB on-chip memory
 	// except one TX frame at beginning (6 x 256B)
+	// (unless it's an 8 bit card, then only 4KB for send&receive)
 
 	mov	net_port,%dx
 	add	$io_ne2k_rx_first,%dx
-	mov     $rx_first,%al
+	mov     $rx_first,%al	// start of ring, usually 0x46
 	out     %al,%dx
 
-	// set RX_get pointer [BOUNDARY]
-
-	mov	net_port,%dx
-	add	$io_ne2k_rx_get,%dx
-	out     %al,%dx
+	// set page at which the ring buffer ends,
+	// defaults to the 16 bit value (0x80) 
+	movb	$rx_last_16,%al
+	testw	$1,_ne2k_is_8bit
+	jz	1f
+	testw	$2,_ne2k_is_8bit
+	jnz	1f	// 16k override for 8 bit interface
+	movb	$rx_last_8,%al
+1:	movb	%al,_ne2k_rx_last
 
 	mov	net_port,%dx
 	add	$io_ne2k_rx_last,%dx
-	mov     $rx_last,%al
 	out     %al,%dx
 
+	call	ne2k_rx_init	// initialize receive buffer
+#if 0	
+	// this code is moved to ne2k_rx_init - TO BE DELETED
+	// set RX_get pointer [BOUNDARY] accordingly
+
+	mov     $rx_first,%al
+	mov	%al,%ah		// save copy
 	mov	net_port,%dx
-	add	$io_ne2k_tx_start,%dx
-	mov     $tx_first,%al
-	out     %al,%dx
-
-	// clear all interrupt flags
-
-	mov	net_port,%dx
-	add	$io_ne2k_int_stat,%dx
-	mov     $0x7F,%al
-	out     %al,%dx
-
-	// set interrupt mask
-	// TX & RX & OFLW, no error interrupts
-
-	mov	net_port,%dx
-	add	$io_ne2k_int_mask,%dx
-	mov     $0x13,%al	// 0x53 = RDC, Overflow, RX, TX 
-				// 0x13 = Overflow, RX, TX
+	add	$io_ne2k_rx_get,%dx
 	out     %al,%dx
 
 	mov	$0x42,%al	// page 1
 	mov	net_port,%dx	// command register
 	out	%al,%dx
 
-	// set RX put pointer  = RX get
+	// set RX_put pointer  [CURRENT] = RX_get [BOUNDARY]
 
 	mov	net_port,%dx
 	add	$io_ne2k_rx_put,%dx
-	mov     $rx_first,%al
-	inc     %al		// CURRENT = always one ahead
+	mov	%ah,%al		// restore
+	//inc	%al
 	out     %al,%dx
-	mov	%al,_ne2k_next_pk
+	mov	%al,_ne2k_next_pk // at initialization, CURRENT and BOUNDARY are equal
 
-	mov	$0x02,%al	// page 0
+	mov	$0x22,%al	// back to page 0, 
+	mov	net_port,%dx	// command register
+	out	%al,%dx
+#endif
+	// initialize start of TX buffer
+	mov	net_port,%dx
+	add	$io_ne2k_tx_start,%dx
+	mov     $tx_first,%al
+	out     %al,%dx
+
+
+	// FIXME _ wait till open (start) before enabling intr
+	// set interrupt mask
+	mov	net_port,%dx
+	add	$io_ne2k_int_mask,%dx
+	mov     $0x17,%al	// 0x53 = RDC, Overflow, RX, TX 
+				// 0x13 = Overflow, RX, TX
+				// 0x17 = Overflow, RXE, RX, TX
+	out     %al,%dx
+
+	// NOTE: Transmitter not yet enabled, done in the _start routine
+	// FIXME: Should move the int mask and status reg clearing to 
+	// the _start routine too to avoid interrupts from a closed device.
+
+	ret
+
+//------------------------------------------------------------------------
+// rx_init
+// reset the ring buffer front and end pointers to initial values
+// Remember to clear _ne2k_has_data !!
+//------------------------------------------------------------------------
+
+	.global ne2k_rx_init
+
+ne2k_rx_init:
+
+	// set RX_get pointer [BOUNDARY] 
+
+	mov     $rx_first,%al
+	mov	%al,%ah		// save copy
+	mov	net_port,%dx
+	add	$io_ne2k_rx_get,%dx
+	out     %al,%dx
+
+	mov	$0x40,%al	// page 1
 	mov	net_port,%dx	// command register
 	out	%al,%dx
 
-	// now enable transmitter
-	mov	net_port,%dx
-	add	$io_ne2k_tx_conf,%dx
-	mov     $0,%al		// 2 for loopback
-	out     %al,%dx
+	// set RX_put pointer  [CURRENT] = RX_get [BOUNDARY]
 
+	//mov	net_port,%dx
+	add	$io_ne2k_rx_put,%dx
+	mov	%ah,%al		// restore
+	inc	%al		// works w/o this one,
+				// but this is safer
+	out     %al,%dx
+	mov	%al,_ne2k_next_pk // at initialization, CURRENT and BOUNDARY are equal
+
+	mov	$0x0,%al	// back to page 0, don't touch the other bits
+	mov	net_port,%dx	// command register
+	out	%al,%dx
 	ret
 
 //-----------------------------------------------------------------------------
@@ -840,7 +886,7 @@ ne2k_start:
 	// start the transceiver
 
 	mov	net_port,%dx	// command register
-	mov	$0x02,%al
+	mov	$0x22,%al	// ensure page 0
 	out	%al,%dx
 
 	// move out of internal loopback
@@ -849,6 +895,8 @@ ne2k_start:
 	add	$io_ne2k_tx_conf,%dx
 	xor	%al,%al
 	out	%al,%dx
+
+	// FIXME: Move setting the int mask here (from init)
 
 	ret
 
@@ -864,6 +912,12 @@ ne2k_stop:
 
 	mov	net_port,%dx	// command register
 	mov	$0x21,%al	// page 0 + stop
+	out     %al,%dx
+
+	// mask all interrrupts
+
+	add	$io_ne2k_int_mask,%dx
+	xor     %al,%al
 	out     %al,%dx
 
 	// half-duplex and internal loopback
@@ -884,26 +938,7 @@ ne2k_stop:
 	inc     %dx  // = io_ne2k_dma_len2
 	out     %al,%dx
 
-	// TODO: wait for the chip to get stable
-
-	ret
-
-//-----------------------------------------------------------------------------
-// NE2K termination
-//-----------------------------------------------------------------------------
-
-// call ne2k_stop() before
-
-	.global ne2k_term
-
-ne2k_term:
-
-	// mask all interrrupts
-
-	mov	net_port,%dx
-	add	$io_ne2k_int_mask,%dx
-	xor     %al,%al
-	out     %al,%dx
+	// TODO: wait for the chip to get stable????
 
 	ret
 
@@ -999,10 +1034,13 @@ ne2k_get_hw_addr:
 	mov     4(%bp),%di
 
 	// Effectively a soft reset of the NIC, required in order to get access to the
-	// Address PROM - 32 bytes of which only the first 6 bytes are of interest.
-	// NOTE: Since we're reading the entire PROM, we also have the opportunity to
-	// detect the type of card. The caller can do this since the entire dataset 
-	// is being returned.
+	// address PROM. The PROM is 16 bytes, we get 32 back if reading in word mode,
+	// the upper byte of each word is garbage. The MAC address is in the first 6 bytes.
+	// The remaining 10 bytes sometimes identify the card type. The PROM content from 
+	// an 8 bit Weird Electronics (RTL8019AS) card looks like this:
+	// 001f1102602d49534138455448204242, the last 10 bytes being 'ISA8ETH BB'.
+	// Many 16 bit cards have 0x57 in the last 2 bytes, supposedly indicating
+	// 'true ne2k clones'.
 
 w_reset:
 	call	ne2k_base_init	// basic initialization
@@ -1010,11 +1048,8 @@ w_reset:
 	xor	%al,%al
 	mov	net_port,%dx
 	add	$io_ne2k_int_mask,%dx
-	out	%al,%dx         // mask completion irq
-	mov	net_port,%dx
-	add	$io_ne2k_int_stat,%dx
-	mov	$0x7f,%al
-	out	%al,%dx		// clear interrupt status reg, required
+	out	%al,%dx         // mask all interrupts
+	call	ne2k_clr_int_reg// required
 
 	mov	net_port,%dx
 	add	$io_ne2k_rx_conf,%dx
@@ -1030,7 +1065,7 @@ w_reset:
 	xor	%al,%al		// AL = 0 : local xfer
 	call	dma_read
 
-	mov	net_port,%dx	// set tx back to normal
+	mov	net_port,%dx
 	add	$io_ne2k_tx_conf,%dx	// set tx back to normal
 	xor	%al,%al
 	out	%al,%dx
@@ -1041,10 +1076,16 @@ w_reset:
 
 //-----------------------------------------------------------------------------
 // NE2K clear overflow --- respond to an input ring buffer overflow interrupt
-// The recovery reads the last compete pcket into the provided (arg1) buffer.
 //-----------------------------------------------------------------------------
-//      
-//      Returns: AL = new BOUNDARY ptr, AH = CURRENT ptr
+//      input: arg1 = buffer recovery strategy
+//		0 -> clear input buffer	and reset the NIC
+//		1 -> keep the oldest (next-to-read) packet, always safe
+//		2 and higher: delete this # of packets from the end (BOUNDARY)
+//		towards the head. In 8bit/4k mode, >1 doesn't make much sense.
+//	[May want to automatically set reasonable values, such as 1 for 8bit,
+//	  4 for 16bit.]
+//
+//      Returns: AL = BOUNDARY ptr, AH = CURRENT ptr for debugging
 //
 
 	.global ne2k_clr_oflow
@@ -1055,107 +1096,148 @@ ne2k_clr_oflow:
 	push	%bp
 	mov	%sp,%bp
 
+of_cont_1:
 	sub	$4,%sp		// get temp space on the stack
-	mov	%sp,%di
+	mov	%sp,%di		//   for the dma_read call
+	mov     6(%bp),%bx	// arg1, # of packets to kill
 
+	// We have not cleared the OFLW INT bit yet, so NIC interrupts are not enabled 
+	//cli
 	mov	net_port,%dx	// command register
-of_chk_tx:	// Ensure no transmit is in progress
-	in	%dx,%al
-	test	4,%al
-	//jnz	of_chk_tx
+1:	in	%dx,%al
+	test	$0x4,%al	// must wait for transmit to complete
+	jnz	1b
 
-	call	ne2k_base_init	// stop & soft reset
+	mov	$0x21,%al	// page 0 + Abort DMA; STOP
+	out     %al,%dx
+
+	// clear dma counters, required
+	add	io_ne2k_dma_len1,%dx  // io_ne2k_dma_len1
+	xor	%al,%al
+	out     %al,%dx
+	inc     %dx		// io_ne2k_dma_len2
+	out     %al,%dx
 
 	mov	net_port,%dx
 	add	$io_ne2k_int_stat,%dx
 
-of_reset:
+of_reset_wait:
 	in	%dx,%al		// wait for reset to complete
 	test	$0x80,%al
-	jz	of_reset
+	jz	of_reset_wait
 
 	mov	net_port,%dx
 	add	$io_ne2k_tx_conf,%dx	// must set tx to loopback
 	mov	$2,%al
 	out	%al,%dx
+
 	mov	net_port,%dx	// Command register
 	mov	$0x22,%al	// Restart NIC
 	out	%al,%dx
 	
-	// NIC has stopped, now clear out the ring buffer
-
-	call	ne2k_getpage    // get BOUNDARY (AL) and CURRENT (AH) pointers
+	// NIC is running but offline, start deleting
+1:
+	//call	ne2k_getpage    // get BOUNDARY (AL) and CURRENT (AH) pointers
 
 of_drop_packets:
-	// loop through the number of packets given by %bx
-	// terminate if we reach the head of the buffer before the # of packets
-	// if cnt = 0, just keep the oldest packet in the ring.
-	mov	%ax,%cx		// save BOUNDARY & CURRENT
-	mov	_ne2k_next_pk,%ah
-	mov	_ne2k_skip_cnt,%bx	// get # of packets to discard
+
+	// initial housekeeping
+	mov	_ne2k_next_pk,%ah	// The 'real' BOUNDARY ptr
+	and	$0x7,%bx		// limit the packet counter value and check for ZERO
+	jnz	of_drop_loop1
+	call	ne2k_rx_init	// purge everything
+	call	ne2k_getpage	// update return values
+	push	%ax
+	jmp	of_exit0
+
 of_drop_loop1:
-	push	%cx
 	push	%bx
 	xor	%bl,%bl
 	mov	%ah,%bh         // Start of next pkt
 
-	// get header
+	// get header of next packet from ring buffer
 	mov	$4,%cx		// 4 bytes only
-	mov	$0,%al		// local xfer
-	call	dma_read
+	xor	%al,%al		// use local memory
+	call	dma_read	// remember: interrupts are disabled in dma_read!!
 
 	mov	0(%di),%ax	// AH : next record, AL : status
-	pop	%bx		// packet counter
-	pop	%cx		// need CURRENT (front of queue)
-	cmp	$0,%bx		// Zero = keep the oldest packet, skip the rest.
-	jnz	of_drop_loop2
 
-	mov	%cl,%al		// save BOUNDARY for return
-	push	%ax
-	mov	$0x42,%al	// page 1
+	pop	%bx		// packet counter
+	dec	%bx		// packet counter
+	jnz	of_drop_loop1	// BX = 1-7
+
+of_drop_1:
+	/// Move the front of the ring (CURRENT) to the block # in AH
+	///   effectively deleting the rest of the ring.
 	mov	net_port,%dx	// Command register
+	mov	$0x42,%al	// set page 1
 	out	%al,%dx
 
-	mov	net_port,%dx
+	//mov	net_port,%dx
 	add	$io_ne2k_rx_put,%dx
 	mov	%ah,%al		// set CURRENT to the beginning of the next pkt,
 	out	%al,%dx		// effectively clearing everything but the 
 				// first pkt in the buffer.
 	mov	net_port,%dx	// Command register
-	mov	$2,%al
-	out	%al,%dx		// page 0
-	pop	%ax
+	mov	$22,%al
+	out	%al,%dx		// set page 0
 	jmp	of_drop_ok
-of_drop_loop2:
-	cmp	%ch,%ah		// Has the tail caught up with the head yet?
-	jz	of_wraparound
-	dec	%bx	
-	jnz	of_drop_loop1
-	// discard completed, get %ax in order for return
 
-of_wraparound:
-	mov	%ah,%al
-	dec	%al	// don't care about wraparound, this is debug info
+of_drop_2:
+#if 0
+	// ALT 2 (BX = 2), delete this packet, keep the rest -
+	// by moving the BOUNDARY pointer to the beginning of the next packet
+	// May not be safe for 8bit interfaces, the 'next' (last) packet
+	// may be garbage. Experimental	- KEPT FOR REFERENCE
+	// Verdict: Does not work well for any setting.
+
+	//mov	%cl,%al		// save BOUNDARY for return
+	//push	%ax
+	mov	net_port,%dx
+	add	$io_ne2k_rx_get,%dx
+	mov	%ah,%al		// set BOUNDARY to the beginning of the next pkt,
+				// don't touch CURRENT
+	mov	%al,_ne2k_next_pk
+	// do the wrap-around excercise
+	dec	%al
+	cmp	$rx_first,%al
+	jnb	1f
+	mov	_ne2k_rx_last,%al
+	dec	%al
+1:
+	out     %al,%dx
+	mov	%ch,%ah		// return value
+	jmp	of_drop_ok
+#endif
 
 of_drop_ok:
-	push	%ax	// save for return
-	mov	net_port,%dx	// set tx back to normal
-	add	$io_ne2k_tx_conf,%dx
+	// check if the ring buffer is empty
+	// may seem moot, but the 8bit interface cannot hold more than 1 full size packet
+	// in the buffer, cleaning the only packet will leave the buffer effectively empty
+	call	ne2k_getpage		// REMOVE _ JUST TEST
+	push	%ax			// save for return
+	cmp	_ne2k_next_pk,%ah
+	jz	1f
+	movw	$1,_ne2k_has_data
+	jmp	of_exit0
+1:	movw	$0,_ne2k_has_data
 
+of_exit0:
+	mov	net_port,%dx		// set tx back to normal
+	add	$io_ne2k_tx_conf,%dx
 	xor	%al,%al
 	out	%al,%dx
-	mov	net_port,%dx	// clear all interrupt bits
-	add	$io_ne2k_int_stat,%dx
-	in	%dx,%al
-	out	%al,%dx
 
-	pop	%ax	// return value as if we'd called 
-			// getpage() (for debugging)
+	call	ne2k_clr_int_reg	// clear all interrupt bits
+	//sti
+
+	pop	%ax	// return value from getpage()
+			// (for debugging)
+of_exit:
 	mov	%bp,%sp
 	pop	%bp
 	pop	%di
 	ret
-
 
 
 //-----------------------------------------------------------------------------
@@ -1192,7 +1274,7 @@ ne2k_rdc:
 ne2k_get_errstat:
 
 // Currently useful only 4 debugging: Needs a regime to regularly collect 
-// and accumulate the numbers in order to be of value.
+// and accumulate the numbers in order to be of statistical value.
 #if 0
 	push	%bp
 	mov	%si,%bp
@@ -1230,13 +1312,81 @@ ne2k_get_errstat:
 ne2k_get_tx_stat:
 	mov	net_port,%dx
 	add	$io_ne2k_int_stat,%dx
-	mov	$0x08,%al	// Clear TXE bit in ISR
+	mov	$0x0a,%al	// Clear PTX & TXE bits in ISR
 	out	%al,%dx
 
 	mov	net_port,%dx
 	add	$io_ne2k_tx_stat,%dx
 	in	%dx,%al
 	xor	%ah,%ah
+	ret
+
+//---------------------------------------------------------------------------
+// Ne2k - get RX error status
+// return the content of the RX status register in AX
+//---------------------------------------------------------------------------
+
+	.global ne2k_get_rx_stat
+
+ne2k_get_rx_stat:
+	// called from interrupt RX RDY processing, must reset the 
+	// 
+	mov	net_port,%dx
+	add	$io_ne2k_int_stat,%dx
+	mov	$1,%al		// Clear PRX bit in ISR
+	out	%al,%dx
+
+	mov	net_port,%dx
+	add	$io_ne2k_rx_stat,%dx
+	in	%dx,%al
+	xor	%ah,%ah
+	ret
+
+//--------------------------------------------------------------------------
+// Ne2k - clear interrupt status reg
+//--------------------------------------------------------------------------
+
+	.global ne2k_clr_int_reg
+
+ne2k_clr_int_reg:
+	mov	net_port,%dx
+	add	$io_ne2k_int_stat,%dx
+	in	%dx,%al
+	out	%al,%dx
+	ret
+
+//--------------------------------------------------------------------------
+// Ne2k - clear tally counters
+//	  Just read the registers to clear them
+//--------------------------------------------------------------------------
+
+	.global ne2k_clr_err_cnt
+
+ne2k_clr_err_cnt:
+	mov	net_port,%dx
+	add	$io_ne2k_int_stat,%dx
+	mov	$0x20,%al
+	out	%al,%dx
+
+	mov	net_port,%dx
+	add	$io_ne2k_frame_errs,%dx
+	in	%dx,%al
+	inc	%dx	// CRC errors
+	in	%dx,%al
+	inc	%dx	// Missed packets
+	in	%dx,%al
+	ret
+
+//-------------------------------------------------------------------------
+// Ne2k - clear the RXE bit from the interrupt status reg
+//-------------------------------------------------------------------------
+	.global ne2k_clr_rxe
+
+ne2k_clr_rxe:
+	mov	net_port,%dx
+	add	$io_ne2k_int_stat,%dx
+	mov	$0x4,%al
+	out	%al,%dx
 	ret
 
 //-----------------------------------------------------------------------------

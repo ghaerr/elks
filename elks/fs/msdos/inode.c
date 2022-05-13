@@ -16,44 +16,49 @@
 #include <linuxmt/debug.h>
 
 #ifdef CONFIG_FS_DEV
-/* FAT device table, increase DEVDIR_SIZE to add entries*/
+/* FAT device table, increase DEVDIR_SIZE and DEVINO_BASE to add entries*/
 struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
     { "hda",	S_IFBLK | 0644, MKDEV(3, 0) },
     { "hda1",	S_IFBLK | 0644, MKDEV(3, 1) },
     { "hda2",	S_IFBLK | 0644, MKDEV(3, 2) },
     { "hda3",	S_IFBLK | 0644, MKDEV(3, 3) },
     { "hda4",	S_IFBLK | 0644, MKDEV(3, 4) },
-    { "hdb",	S_IFBLK | 0644, MKDEV(3, 32) },
-    { "hdb1",	S_IFBLK | 0644, MKDEV(3, 33) },
-    { "hdb2",	S_IFBLK | 0644, MKDEV(3, 34) },
-    { "hdb3",	S_IFBLK | 0644, MKDEV(3, 35) },
-    { "hdb4",	S_IFBLK | 0644, MKDEV(3, 36) },
-#ifdef CONFIG_ARCH_IBMPC
-    { "hdc",	S_IFBLK | 0644, MKDEV(3, 64) },
-    { "hdd",	S_IFBLK | 0644, MKDEV(3, 96) },
-#endif
-    { "fd0",	S_IFBLK | 0644, MKDEV(3, 128)},
-    { "fd1",	S_IFBLK | 0644, MKDEV(3, 160)},
-#ifdef CONFIG_ARCH_PC98
-    { "fd2",   S_IFBLK | 0644, MKDEV(3, 192)},
-    { "fd3",   S_IFBLK | 0644, MKDEV(3, 224)},
-#endif
+    { "hdb",	S_IFBLK | 0644, MKDEV(3, 32)},
+    { "hdb1",	S_IFBLK | 0644, MKDEV(3, 33)},
+    { "hdb2",	S_IFBLK | 0644, MKDEV(3, 34)},
+    { "hdb3",	S_IFBLK | 0644, MKDEV(3, 35)},
+    { "hdb4",	S_IFBLK | 0644, MKDEV(3, 36)},
+    { "hdc",	S_IFBLK | 0644, MKDEV(3, 64)},
+    { "hdc1",	S_IFBLK | 0644, MKDEV(3, 65)},
+    { "hdc2",	S_IFBLK | 0644, MKDEV(3, 66)},
+    { "hdc3",	S_IFBLK | 0644, MKDEV(3, 67)},
+    { "hdb4",	S_IFBLK | 0644, MKDEV(3, 68)},
+    { "hdd",	S_IFBLK | 0644, MKDEV(3, 96)},
+    { "hdd1",	S_IFBLK | 0644, MKDEV(3, 97)},
+    { "hdd2",	S_IFBLK | 0644, MKDEV(3, 98)},
+    { "hdd3",	S_IFBLK | 0644, MKDEV(3, 99)},
+    { "hdd4",	S_IFBLK | 0644, MKDEV(3,100)},
+    { "fd0",	S_IFBLK | 0644, MKDEV(3,128)},
+    { "fd1",	S_IFBLK | 0644, MKDEV(3,160)},
+    { "fd2",    S_IFBLK | 0644, MKDEV(3,192)},
+    { "fd3",    S_IFBLK | 0644, MKDEV(3,224)},
     { "rd0",	S_IFBLK | 0644, MKDEV(1, 0) },
     { "kmem",	S_IFCHR | 0644, MKDEV(1, 2) },
     { "null",	S_IFCHR | 0644, MKDEV(1, 3) },
     { "zero",	S_IFCHR | 0644, MKDEV(1, 5) },
-    { "tcpdev",	S_IFCHR | 0644, MKDEV(8, 0) },
-    { "eth",	S_IFCHR | 0644, MKDEV(9, 0) },
     { "tty1",	S_IFCHR | 0644, MKDEV(4, 0) },
     { "tty2",	S_IFCHR | 0644, MKDEV(4, 1) },
-    { "ttyp0",	S_IFCHR | 0644, MKDEV(4, 8) },
-    { "ttyp1",	S_IFCHR | 0644, MKDEV(4, 9) },
-    { "ptyp0",	S_IFCHR | 0644, MKDEV(2, 8) },
-    { "ptyp1",	S_IFCHR | 0644, MKDEV(2, 9) },
+    { "tty3",	S_IFCHR | 0644, MKDEV(4, 2) },
     { "ttyS0",	S_IFCHR | 0644, MKDEV(4, 64)},
     { "ttyS1",	S_IFCHR | 0644, MKDEV(4, 65)},
     { "console",S_IFCHR | 0600, MKDEV(4, 254)},
-    { "tty",	S_IFCHR | 0666, MKDEV(4, 255)}
+    { "tty",	S_IFCHR | 0666, MKDEV(4, 255)},
+    { "ttyp0",	S_IFCHR | 0644, MKDEV(4, 8) },
+    { "ptyp0",	S_IFCHR | 0644, MKDEV(2, 8) },
+    { "ttyp1",	S_IFCHR | 0644, MKDEV(4, 9) },
+    { "ptyp1",	S_IFCHR | 0644, MKDEV(2, 9) },
+    { "tcpdev",	S_IFCHR | 0644, MKDEV(8, 0) },
+    { "eth",	S_IFCHR | 0644, MKDEV(9, 0) },
 };
 #endif
 
