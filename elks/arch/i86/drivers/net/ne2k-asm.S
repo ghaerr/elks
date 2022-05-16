@@ -10,8 +10,8 @@
 // Updated by Santiago Hormazabal on Dec 2021:
 //  . 8 bit access if CONFIG_ETH_BYTE_ACCESS is set, using a ne1k patch from
 //    NCommander.
-// apr-2022 (HS) : Support auto detection of 8bit mode, set 4k buffer size when in 8bit mode
-//	     assuming RTL8019 buffer restrictions.
+// apr-2022 (HS) : Support auto detection of 8bit mode, set 4k or 16k buffer size when in 8bit mode
+//	     depending on configuration, 16k is the default, 4k is 'per spec'.
 //	     Rewrote overflow handler, added direct access to many registers from C code
 //	     Cleaned up initialization code, optimized 8bit I/O
 //
@@ -212,7 +212,7 @@ dma_write:
 	mov	current,%bx		// setup for far memory xfer
 	mov	TASK_USER_DS(%bx),%ds
 	cld
-	test	%ax,%ax		// checking _ne2k_is_8bit
+	test	$1,%ax		// checking _ne2k_is_8bit
 	jz	1f
 
 	// Byte loop
@@ -320,16 +320,18 @@ dma_read:
 
 	mov     %ds,%bx
 	mov     %bx,%es
+	movw	_ne2k_is_8bit,%dx
 	pop	%ax
 	cmp	$0,%al		// Use local buffer if zero
 	jz	buf_local
 	mov	current,%bx	// Normal: read directly into the (far) buffer
 	mov	TASK_USER_DS(%bx),%es
 
-	pop	%bx
-	push	%bx
+	//pop	%bx
+	//push	%bx
 
 buf_local:
+	mov	%dx,%bx		// _ne2k_is_8bit
 	mov	net_port,%dx	// command register
 	mov	$0x0a,%al	// set RD0 & STA
 	out     %al,%dx		// start DMA read
@@ -337,7 +339,8 @@ buf_local:
 	mov	net_port,%dx
 	add	$io_ne2k_data_io,%dx
 	cld			// clear direction flag
-	cmpw	$0,_ne2k_is_8bit
+	//cmpw	$0,_ne2k_is_8bit
+	test	$1,%bx		// is 8bit?
 	jz	1f
 
 // Byte transfer
@@ -524,11 +527,8 @@ ne2k_pack_get:
 	// Got the entire block (256b) instead of the 4 first bytes. Which was great 
 	// for small packets (telnet, command packets etc.): One read instead of 2.
 	//
-	// Removed when changing to read directly into the process was introduced,
+	// Removed when changing to read directly into process address space was introduced,
 	// there is no longer anywhere to put the first 4 bytes.
-	// It may be an idea to reintroduce a 256b buffer to take advantage 
-	// of this 'optimization' and at the same time help strangled 8bit 
-	// interfaces.
 
 	//sub	$252,%cx	// Got entire packet?
 	//jle	npg_cont
@@ -765,9 +765,10 @@ ne2k_init:
 	mov     $2,%al  // 2 for loopback
 	out     %al,%dx
 
-	// set RX ring limits - all 16KB on-chip memory
-	// except one TX frame at beginning (6 x 256B)
-	// (unless it's an 8 bit card, then only 4KB for send&receive)
+	// set RX ring limits - 16KB on-chip memory
+	// except one TX frame at beginning (6 x 256B).
+	// If bit 1 in _ne2k_is_8bit is set, use only 4k
+	// buffer.
 
 	mov	net_port,%dx
 	add	$io_ne2k_rx_first,%dx
@@ -777,11 +778,11 @@ ne2k_init:
 	// set page at which the ring buffer ends,
 	// defaults to the 16 bit value (0x80) 
 	movb	$rx_last_16,%al
-	testw	$1,_ne2k_is_8bit
-	jz	1f
+	//testw	$1,_ne2k_is_8bit
+	//jz	1f
 	testw	$2,_ne2k_is_8bit
-	jnz	1f	// 16k override for 8 bit interface
-	movb	$rx_last_8,%al
+	jz	1f
+	movb	$rx_last_8,%al	// Force 4K buffer restriction
 1:	movb	%al,_ne2k_rx_last
 
 	mov	net_port,%dx
@@ -789,33 +790,7 @@ ne2k_init:
 	out     %al,%dx
 
 	call	ne2k_rx_init	// initialize receive buffer
-#if 0	
-	// this code is moved to ne2k_rx_init - TO BE DELETED
-	// set RX_get pointer [BOUNDARY] accordingly
 
-	mov     $rx_first,%al
-	mov	%al,%ah		// save copy
-	mov	net_port,%dx
-	add	$io_ne2k_rx_get,%dx
-	out     %al,%dx
-
-	mov	$0x42,%al	// page 1
-	mov	net_port,%dx	// command register
-	out	%al,%dx
-
-	// set RX_put pointer  [CURRENT] = RX_get [BOUNDARY]
-
-	mov	net_port,%dx
-	add	$io_ne2k_rx_put,%dx
-	mov	%ah,%al		// restore
-	//inc	%al
-	out     %al,%dx
-	mov	%al,_ne2k_next_pk // at initialization, CURRENT and BOUNDARY are equal
-
-	mov	$0x22,%al	// back to page 0, 
-	mov	net_port,%dx	// command register
-	out	%al,%dx
-#endif
 	// initialize start of TX buffer
 	mov	net_port,%dx
 	add	$io_ne2k_tx_start,%dx
@@ -841,7 +816,6 @@ ne2k_init:
 //------------------------------------------------------------------------
 // rx_init
 // reset the ring buffer front and end pointers to initial values
-// Remember to clear _ne2k_has_data !!
 //------------------------------------------------------------------------
 
 	.global ne2k_rx_init
@@ -873,6 +847,7 @@ ne2k_rx_init:
 	mov	$0x0,%al	// back to page 0, don't touch the other bits
 	mov	net_port,%dx	// command register
 	out	%al,%dx
+	movw	$0,_ne2k_has_data	// Insurance, no data available
 	ret
 
 //-----------------------------------------------------------------------------
@@ -1083,7 +1058,9 @@ w_reset:
 //		2 and higher: delete this # of packets from the end (BOUNDARY)
 //		towards the head. In 8bit/4k mode, >1 doesn't make much sense.
 //	[May want to automatically set reasonable values, such as 1 for 8bit,
-//	  4 for 16bit.]
+//	  3 for 16bit.]
+//	NOTE: DO NOT use arg1=0 if responding to an OFLOW interrupt. It will cause 
+//		the NIC to hang.
 //
 //      Returns: AL = BOUNDARY ptr, AH = CURRENT ptr for debugging
 //
@@ -1146,9 +1123,10 @@ of_drop_packets:
 	and	$0x7,%bx		// limit the packet counter value and check for ZERO
 	jnz	of_drop_loop1
 	call	ne2k_rx_init	// purge everything
-	call	ne2k_getpage	// update return values
-	push	%ax
-	jmp	of_exit0
+	//call	ne2k_getpage	// update return values
+	//push	%ax
+	//jmp	of_exit0
+	jmp	of_drop_ok
 
 of_drop_loop1:
 	push	%bx
@@ -1214,15 +1192,16 @@ of_drop_ok:
 	// check if the ring buffer is empty
 	// may seem moot, but the 8bit interface cannot hold more than 1 full size packet
 	// in the buffer, cleaning the only packet will leave the buffer effectively empty
-	call	ne2k_getpage		// REMOVE _ JUST TEST
+	call	ne2k_getpage
 	push	%ax			// save for return
 	cmp	_ne2k_next_pk,%ah
-	jz	1f
+	jz	of_exit0
 	movw	$1,_ne2k_has_data
-	jmp	of_exit0
-1:	movw	$0,_ne2k_has_data
-
+	jmp	of_exit1
 of_exit0:
+	movw	$0,_ne2k_has_data
+
+of_exit1:
 	mov	net_port,%dx		// set tx back to normal
 	add	$io_ne2k_tx_conf,%dx
 	xor	%al,%al
