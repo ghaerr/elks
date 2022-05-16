@@ -13,6 +13,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <sys/mount.h>
+#include <linuxmt/fs.h>
 
 #define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
 
@@ -75,11 +76,10 @@ static int show_mount(dev_t dev)
 
 static void show(void)
 {
-	int i = 0;
+	int i;
 
-	for (;;)
-		if (show_mount(i++) < 0)
-			break;
+	for (i = 0; i < NR_SUPER; i++)
+		show_mount(i);
 }
 
 static void usage(void)
