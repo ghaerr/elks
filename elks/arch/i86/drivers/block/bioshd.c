@@ -180,7 +180,7 @@ static int bios_disk_rw(unsigned cmd, unsigned num_sectors, unsigned drive,
 {
 #ifdef CONFIG_ARCH_PC98
 	BD_AX = cmd | drive;
-    if ((0xF0 & drive) == 0xA0) {
+    if (((0xF0 & drive) == 0x80) || ((0xF0 & drive) == 0xA0)) {
 	BD_BX = (unsigned int) (num_sectors << 9);
 	BD_CX = cylinder;
 	BD_DX = (head << 8) | ((sector - 1) & 0xFF);
@@ -217,17 +217,43 @@ static unsigned short int INITPROC bioshd_gethdinfo(void) {
     register struct drive_infot *drivep = &drive_info[0];
 
 #ifdef CONFIG_ARCH_PC98
+    int ide_drives = 0;
     int scsi_id;
+    int device_type;
     int call_bios_rvalue;
 
-    for (scsi_id = 0; scsi_id < 7; scsi_id++) {
-	BD_AX = BIOSHD_DRIVE_PARMS | (scsi_id + 0xA0);
+    /* IDE */
+    for (drive = 0; drive < 4; drive++) {
+	BD_AX = BIOSHD_DRIVE_PARMS | (drive + 0x80);
 	BD_ES = BD_DI = BD_SI = 0;
 	call_bios_rvalue = call_bios(&bdt);
 	if ((call_bios_rvalue == 0) && (BD_DX & 0xff))
-	    hd_drive_map[ndrives++] = scsi_id + 0xA0;
-	if (ndrives >= 4) break;
+	    hd_drive_map[ide_drives++] = drive + 0x80;
+	if (ide_drives >= 4) break;
     }
+    if (ide_drives > 0)
+	printk("bioshd: Detected IDE hd.\n");
+    ndrives = ide_drives;
+
+    /* SCSI */
+    if (ndrives < 4) {
+	for (scsi_id = 0; scsi_id < 7; scsi_id++) {
+	    BD_AX = BIOSHD_DEVICE_TYPE | (scsi_id + 0xA0);
+	    BD_ES = BD_DI = BD_SI = 0;
+	    BD_BX = 0;
+	    call_bios(&bdt);
+	    device_type = BD_BX & 0xf; /* device_type = 0 for Hard Disk */
+
+	    BD_AX = BIOSHD_DRIVE_PARMS | (scsi_id + 0xA0);
+	    BD_ES = BD_DI = BD_SI = 0;
+	    call_bios_rvalue = call_bios(&bdt);
+	    if ((call_bios_rvalue == 0) && (BD_DX & 0xff) && (device_type == 0))
+	        hd_drive_map[ndrives++] = scsi_id + 0xA0;
+	    if (ndrives >= 4) break;
+	}
+    }
+    if (ndrives > ide_drives)
+	printk("bioshd: Detected SCSI hd.\n");
 #else
     BD_AX = BIOSHD_DRIVE_PARMS;
     BD_DX = 0x80;		/* query hard drives only*/
@@ -1107,7 +1133,7 @@ kdev_t INITPROC bioshd_conv_bios_drive(unsigned int biosdrive)
     extern int boot_partition;
 
 #ifdef CONFIG_ARCH_PC98
-    if ((biosdrive & 0xF0) == 0xA0) {		/* hard drive*/
+    if (((biosdrive & 0xF0) == 0x80) || ((biosdrive & 0xF0) == 0xA0)) {		/* hard drive*/
 	for (minor = 0; minor < 4; minor++) {
 	    if (biosdrive == hd_drive_map[minor]) break;
 	}
