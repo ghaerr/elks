@@ -224,12 +224,8 @@ static unsigned short int INITPROC bioshd_gethdinfo(void) {
 
     /* IDE */
     for (drive = 0; drive < 4; drive++) {
-	BD_AX = BIOSHD_DRIVE_PARMS | (drive + 0x80);
-	BD_ES = BD_DI = BD_SI = 0;
-	call_bios_rvalue = call_bios(&bdt);
-	if ((call_bios_rvalue == 0) && (BD_DX & 0xff))
+	if (peekb(0x55D,0) & (1 << drive))
 	    hd_drive_map[ide_drives++] = drive + 0x80;
-	if (ide_drives >= 4) break;
     }
     if (ide_drives > 0)
 	printk("bioshd: Detected IDE hd.\n");
@@ -238,17 +234,18 @@ static unsigned short int INITPROC bioshd_gethdinfo(void) {
     /* SCSI */
     if (ndrives < 4) {
 	for (scsi_id = 0; scsi_id < 7; scsi_id++) {
-	    BD_AX = BIOSHD_DEVICE_TYPE | (scsi_id + 0xA0);
-	    BD_ES = BD_DI = BD_SI = 0;
-	    BD_BX = 0;
-	    call_bios(&bdt);
-	    device_type = BD_BX & 0xf; /* device_type = 0 for Hard Disk */
-
 	    BD_AX = BIOSHD_DRIVE_PARMS | (scsi_id + 0xA0);
 	    BD_ES = BD_DI = BD_SI = 0;
 	    call_bios_rvalue = call_bios(&bdt);
-	    if ((call_bios_rvalue == 0) && (BD_DX & 0xff) && (device_type == 0))
-	        hd_drive_map[ndrives++] = scsi_id + 0xA0;
+	    if ((call_bios_rvalue == 0) && (BD_DX & 0xff)) {
+	        BD_AX = BIOSHD_DEVICE_TYPE | (scsi_id + 0xA0);
+	        BD_ES = BD_DI = BD_SI = 0;
+	        BD_BX = 0;
+	        call_bios(&bdt);
+	        device_type = BD_BX & 0xf; /* device_type = 0 for Hard Disk */
+	        if (device_type == 0)
+	            hd_drive_map[ndrives++] = scsi_id + 0xA0;
+	    }
 	    if (ndrives >= 4) break;
 	}
     }
