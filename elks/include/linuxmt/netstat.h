@@ -11,7 +11,6 @@ struct netif_stat {
 	__u16 if_status;	/* Interface status flags */
 	int   oflow_keep;	/* # of packets to keep if overflow */
 	char  mac_addr[6];	/* Current MAC address */
-	char  if_id[10];	/* rest of the PROM content (after the MAC address) */
 };
 
 /* status flags for if_status */
