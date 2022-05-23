@@ -49,7 +49,7 @@
 
 #define NR_INODE	96	/* this should be bigger than NR_FILE */
 #define NR_FILE 	64	/* this can well be larger on a larger system */
-#define NR_SUPER	5
+#define NR_SUPER	6
 
 #define BLOCK_SIZE	1024
 #define BLOCK_SIZE_BITS 10

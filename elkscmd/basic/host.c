@@ -254,7 +254,7 @@ int main(int ac, char **av) {
 
 	reset();
 
-	printf("Sinclair BASIC\n");
+	printf("ELKS BASIC\n");
 	host_outputFreeMem(sysVARSTART - sysPROGEND);
 	printf("\n");
 
