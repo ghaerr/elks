@@ -57,14 +57,15 @@ SUBDIRS = \
 # for default compiler options.
 #
 # Depending on the version of ia16-elf-gcc, there are two possibilities:
-#   * gcc has separate -melks-libc multilibs (and supports -melks-libc).
+#   * gcc has separate elks-libc multilibs, and supports the option
+#     -melks-libc and possibly also (post-May 2022) -mr=elks.
 #   * In a slightly older (pre-April 2019) arrangement, gcc supports -melks,
-#     and possibly -melks-libc, but does not have separate -melks-libc
+#     and possibly -melks-libc, but does not have separate elks-libc
 #     multilibs.
 #
-# For the first case, arrange to build elks-libc for the available
-# -melks-libc multilib settings.  Furthermore, if $(DESTDIR) is defined, add
-# an `install' makefile rule which will install the elks-libc files under
+# For the first case, arrange to build elks-libc for the available elks-libc
+# multilib settings.  Furthermore, if $(DESTDIR) is defined, add an
+# `install' makefile rule which will install the elks-libc files under
 # $(DESTDIR), such that they can be used from outside the ELKS source tree;
 # and also add an `uninstall' rule to allow elks-libc to be cleaned away.
 #
@@ -79,12 +80,13 @@ SUBDIRS = \
 #	-- tkchia
 
 ALLMULTIS:=$(strip $(shell $(CC) -print-multi-lib))
-ELKSLIBCMULTIS:=$(strip $(foreach ml,$(ALLMULTIS), \
-    $(if $(findstring @melks-libc@,$(lastword $(subst ;, ,$(ml)))@),$(ml))))
+ELKSLIBCMULTIS:=$(sort $(foreach ml,$(ALLMULTIS), \
+    $(if $(findstring elks-libc,$(ml))$(findstring elkslibc,$(ml)),$(ml))))
 
 ifneq "" "$(ELKSLIBCMULTIS)"
 BUILDMULTIS:=$(ELKSLIBCMULTIS)
-MAINMULTI:=$(filter %;@melks-libc,$(ELKSLIBCMULTIS))
+MAINMULTI:=$(firstword $(foreach ml,$(ELKSLIBCMULTIS), \
+    $(if $(findstring /,$(ml)),,$(ml))))
 else
 MAINMULTI:=$(filter .;,$(ALLMULTIS))
 BUILDMULTIS:=$(MAINMULTI)
