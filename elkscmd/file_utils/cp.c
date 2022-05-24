@@ -610,31 +610,37 @@ error_exit:
 	return 1;
 }
 
+void usage(void)
+{
+	fprintf(stderr, "usage: cp [-R][-v] source [...] target_file_or_directory\n");
+	exit(1);
+}
 
 int main(int argc, char **argv)
 {
 	int	dirflag, err = 0;
+	char	*p;
 	char	*srcname;
 	char	*destname;
 	char	*lastarg;
 
 	while (argv[1] && argv[1][0] == '-') {
-		if (argv[1][1] == 'R') {
-			opt_recurse = 1;
-			argv++;
-			argc--;
-		} else if (argv[1][1] == 'v') {
-			opt_verbose = 1;
-			argv++;
-			argc--;
-		}
+		for (p = &argv[1][1]; *p; p++) {
+		    if (*p == 'R')
+			    opt_recurse = 1;
+		    else if (*p == 'v')
+			    opt_verbose = 1;
+		    else usage();
+        }
+		argv++;
+		argc--;
 	}
-	if (argc < 3) goto usage;
+	if (argc < 3) usage();
 
 	lastarg = argv[argc - 1];
 	dirflag = isadir(lastarg);
 
-	if ((argc > 3) && !dirflag) {
+	if (argc > 3 && !dirflag) {
 		fprintf(stderr, "%s: not a directory\n", lastarg);
 		return 1;
 	}
@@ -646,16 +652,12 @@ int main(int argc, char **argv)
 			err |= copy_directory(srcname, destname);
 		} else {
 			if (dirflag) destname = buildname(destname, srcname);
-			if (copyfile(*++argv, destname, 0)) goto error_copy;
+			if (copyfile(*++argv, destname, 0)) {
+				fprintf(stderr, "Failed to copy %s -> %s\n", srcname, destname);
+				return 1;
+			}
 		}
 	}
 	sync();
 	return err;
-
-error_copy:
-	fprintf(stderr, "Failed to copy %s -> %s\n", srcname, destname);
-	return 1;
-usage:
-	fprintf(stderr, "usage: cp [-R][-v] source [...] target_file_or_directory\n");
-	return 1;
 }
