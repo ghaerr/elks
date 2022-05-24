@@ -40,7 +40,6 @@ extern word_t ne2k_clr_oflow(word_t);
 extern word_t ne2k_get_tx_stat(void);
 extern word_t ne2k_get_rx_stat(void);
 
-extern void ne2k_clr_int_reg(void);
 extern void ne2k_get_addr(byte_t *);
 extern void ne2k_get_hw_addr(word_t *);
 extern void ne2k_rdc(void);
