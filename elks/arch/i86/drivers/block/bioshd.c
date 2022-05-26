@@ -224,8 +224,12 @@ static unsigned short int INITPROC bioshd_gethdinfo(void) {
 
     /* IDE */
     for (drive = 0; drive < 4; drive++) {
-	if (peekb(0x55D,0) & (1 << drive))
+	if (peekb(0x55D,0) & (1 << drive)) {
+	    BD_AX = BIOSHD_MODESET | (drive + 0x80);
+	    BD_ES = BD_DI = BD_SI = 0;
+	    call_bios(&bdt);
 	    hd_drive_map[ide_drives++] = drive + 0x80;
+	}
     }
     if (ide_drives > 0)
 	printk("bioshd: Detected IDE hd.\n");
