@@ -96,6 +96,7 @@
 /* wd, wd.c*/
 #define WD_PORT		0x240
 #define WD_IRQ		2
+#define WD_RAM      0xCE00
 
 /* bioshd.c*/
 #define FDC_DOR		0x3F2		/* floppy digital output register*/
