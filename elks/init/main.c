@@ -27,7 +27,8 @@ int root_mountflags = MS_RDONLY;
 #else
 int root_mountflags = 0;
 #endif
-int net_irq, net_port, net_ram;
+int net_irq, net_port;
+unsigned int net_ram;
 static int boot_console;
 static char bininit[] = "/bin/init";
 static char *init_command = bininit;
@@ -330,7 +331,7 @@ static int parse_options(void)
 			continue;
 		}
 		if (!strncmp(line,"netram=",7)) {
-			net_ram = (int)simple_strtol(line+7, 16);
+			net_ram = (unsigned int)simple_strtol(line+7, 16);
 			continue;
 		}
 		if (!strncmp(line,"bufs=",5)) {
