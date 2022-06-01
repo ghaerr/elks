@@ -19,11 +19,14 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/debug.h>
 
+/* runtime configuration set in /bootopts or defaults in ports.h */
+int net_irq = WD_IRQ;	        /* default IRQ, set via netirq= */
+int net_port = WD_PORT;         /* default IO port, set via netport= */
+unsigned int net_ram = WD_RAM;  /* default shared memory address, set via netram= */
+
 /* I/O delay settings */
 #define INB	inb	/* use inb_p for 1us delay */
 #define OUTB	outb	/* use outb_p for 1us delay */
-
-#define WD_SHMEMSEG	0xce00U
 
 #define WD_STAT_RX	0x0001U	/* packet received */
 #define WD_STAT_TX	0x0002U	/* packet sent */
@@ -45,7 +48,7 @@
 #define WD_MEMENB	0x40U	/* Enable the shared memory */
 #define WD_IO_EXTENT	32U
 #define WD_8390_OFFSET	16U
-#define WD_8390_PORT	(WD_PORT + WD_8390_OFFSET)
+#define WD_8390_PORT	(net_port + WD_8390_OFFSET)
 
 #define E8390_RXCONFIG	0x04U	/* EN0_RXCR: broadcasts, no multicast,errors */
 #define E8390_RXOFF	0x20U	/* EN0_RXCR: Accept no packets */
@@ -126,8 +129,6 @@ typedef struct {
 	unsigned short count;	/* header + packet length in bytes */
 } __attribute__((packed)) e8390_pkt_hdr;
 
-int net_irq = WD_IRQ;		/* default IRQ, changed by netirq= in /bootopts */
-
 static struct wait_queue rxwait;
 static struct wait_queue txwait;
 
@@ -148,7 +149,7 @@ static void wd_get_hw_addr(word_t * data)
 	unsigned u;
 
 	for (u = 0U; u < 6U; u++)
-		data[u] = INB(WD_PORT + 8U + u);
+		data[u] = INB(net_port + 8U + u);
 }
 
 /*
@@ -157,8 +158,8 @@ static void wd_get_hw_addr(word_t * data)
 
 static void wd_reset(void)
 {
-	OUTB(WD_RESET, WD_PORT);
-	OUTB(((WD_SHMEMSEG >> 9U) & 0x3fU) | WD_MEMENB, WD_PORT);
+	OUTB(WD_RESET, net_port);
+	OUTB(((net_ram >> 9U) & 0x3fU) | WD_MEMENB, net_port);
 }
 
 /*
@@ -216,7 +217,7 @@ static void wd_init(void)
 
 static void wd_start(void)
 {
-	OUTB(((WD_SHMEMSEG >> 9U) & 0x3fU) | WD_MEMENB, WD_PORT);
+	OUTB(((net_ram >> 9U) & 0x3fU) | WD_MEMENB, net_port);
 }
 
 /*
@@ -225,7 +226,7 @@ static void wd_start(void)
 
 static void wd_stop(void)
 {
-	OUTB(((WD_SHMEMSEG >> 9U) & 0x3fU) & ~WD_MEMENB, WD_PORT);
+	OUTB(((net_ram >> 9U) & 0x3fU) & ~WD_MEMENB, net_port);
 }
 
 /*
@@ -258,7 +259,7 @@ static int wd_pack_get(char *data, size_t len)
 			debug_eth("eth: mismatched read page pointers %2x vs %2x.\n",
 				this_frame, current_rx_page);
 		hdr_start = (this_frame - WD_START_PG) << 8U;
-		rxhdr = _MK_FP(WD_SHMEMSEG, hdr_start);
+		rxhdr = _MK_FP(net_ram, hdr_start);
 		if ((rxhdr->count < 64U) ||
 		    (rxhdr->count > (MAX_PACKET_ETH + sizeof(e8390_pkt_hdr)))) {
 			debug_eth("eth: bogus packet size: %d, "
@@ -278,13 +279,13 @@ static int wd_pack_get(char *data, size_t len)
 		if (current_rx_page > this_frame || current_rx_page == WD_FIRST_RX_PG) {
 			/* no wrap around */
 			fmemcpyb(data, current->t_regs.ds,
-				(char *)hdr_start + sizeof(e8390_pkt_hdr), WD_SHMEMSEG, res);
+				(char *)hdr_start + sizeof(e8390_pkt_hdr), net_ram, res);
 		} else {	/* handle wrap-around */
 			size_t len1 = ((WD_STOP_PG - this_frame) << 8) - sizeof(e8390_pkt_hdr);
                         fmemcpyb(data, current->t_regs.ds,
-                                (char *)hdr_start + sizeof(e8390_pkt_hdr), WD_SHMEMSEG, len1);
+                                (char *)hdr_start + sizeof(e8390_pkt_hdr), net_ram, len1);
                         fmemcpyb(data+len1, current->t_regs.ds,
-                                (char *)(WD_FIRST_RX_PG << 8), WD_SHMEMSEG, res-len1);
+                                (char *)(WD_FIRST_RX_PG << 8), net_ram, res-len1);
  		}
 	} while (0);
 	/* this is not always strictly correct but apparently works */
@@ -327,7 +328,7 @@ static size_t wd_pack_put(char *data, size_t len)
 			len = MAX_PACKET_ETH;
 		if (len < 64U) len = 64U;  /* issue #133 */
 		fmemcpyb((byte_t *)((WD_FIRST_TX_PG - WD_START_PG) << 8U),
-			WD_SHMEMSEG, data, current->t_regs.ds, len);
+			net_ram, data, current->t_regs.ds, len);
 		OUTB(E8390_NODMA | E8390_PAGE0, WD_8390_PORT + E8390_CMD);
 		if (INB(WD_8390_PORT + E8390_CMD) & E8390_TRANS) {
 			printk("eth: attempted send with the tr busy.\n");
@@ -379,8 +380,8 @@ static void wd_clr_oflow(void)
 	current_rx_page = WD_FIRST_RX_PG;
 	wd_reset();
 	wd_init();
-	if (INB(WD_PORT + 14U) & 0x20U) /* enable IRQ on softcfg card */
-		OUTB(INB(WD_PORT + 4U) | 0x80U, WD_PORT + 4U);
+	if (INB(net_port + 14U) & 0x20U) /* enable IRQ on softcfg card */
+		OUTB(INB(net_port + 4U) | 0x80U, net_port + 4U);
 	wd_start();
 }
 
@@ -493,8 +494,8 @@ static int wd_open(struct inode * inode, struct file * file)
 		}
 		wd_reset();
 		wd_init();
-		if (INB(WD_PORT + 14U) & 0x20U) /* enable IRQ on softcfg card */
-			OUTB(INB(WD_PORT + 4U) | 0x80U, WD_PORT + 4U);
+		if (INB(net_port + 14U) & 0x20U) /* enable IRQ on softcfg card */
+			OUTB(INB(net_port + 4U) | 0x80U, net_port + 4U);
 		wd_start();
 		wd_inuse = 1U;
 	} while (0);
@@ -592,8 +593,8 @@ void wd_drv_init(void)
 		wd_get_hw_addr(hw_addr);
 		for (u = 0U; u < 6U; u++)
 			mac_addr[u] = (hw_addr[u] & 0xffU);
-		printk ("eth: SMC/WD8003 at 0x%x, irq %d, MAC %02X",
-			WD_PORT, net_irq, mac_addr[0]);
+		printk ("eth: SMC/WD8003 at 0x%x, irq %d, ram 0x%x MAC %02X",
+			net_port, net_irq, net_ram, mac_addr[0]);
 		for (u = 1U; u < 6U; u++)
 			printk(":%02X", mac_addr[u]);
 		printk("\n");

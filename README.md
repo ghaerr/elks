@@ -86,6 +86,9 @@ Olivetti M24 8086 CPU
 ELKS Networking showing netstat and process list
 ![ss3](https://github.com/jbruchon/elks/blob/master/Screenshots/ELKS_Networking.png)
 
+Running ELKS Basic on PC-9801UV21 (NEC V30 CPU)
+![ss4](https://github.com/jbruchon/elks/blob/master/Screenshots/PC-9801UV21_V30_CPU.png)
+
 ## Downloads
 
 A full set of disk images are available for download, for you to try out ELKS: [Downloads](https://github.com/jbruchon/elks/releases).

@@ -5,6 +5,7 @@
 #LOCALIP=10.0.2.16
 #HOSTNAME=elks16
 #netirq=9 netport=0x300 # NIC
+#netirq=3 netport=0x280 netram=0xd000
 #bufs=2500		# system buffers
 #sync=30		# autosync secs
 #init=/bin/init 3 n	# multiuser serial no /etc/rc.sys
