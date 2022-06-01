@@ -101,7 +101,8 @@
 #define TOKEN_INPW       88
 #define TOKEN_OUTB       89
 #define TOKEN_OUTW       90
-#define LAST_IDENT_TOKEN	90
+#define TOKEN_HEX       91
+#define LAST_IDENT_TOKEN	91
 
 #define ERROR_NONE				0
 // parse errors
