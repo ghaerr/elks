@@ -105,6 +105,7 @@ ATN(x) arc tangent
 EXP(x) e exponential
 LN(x) natural logarithm
 POW(x,y) e.g. POW(2,0.5) -> 1.414 square root of 2
+HEX$(number) e.g. HEX$(25923) -> "6543"
 
 Architecture-specific
 PINREAD(pin)
