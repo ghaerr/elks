@@ -99,10 +99,11 @@ int FATPROC msdos_get_entry_long(
 	if ((int)*pos & (sizeof(struct msdos_dir_entry) - 1)) return -ENOENT;
 	is_long = 0;
 	*ino = msdos_get_entry(dir,pos,bh,&de);
+	debug_fat("get_entry_long block %lu\n", (*bh)->b_blocknr);
 	while (*ino != (ino_t)-1L) {
-		if (de->name[0] == 0)		/* empty  entry and stop reading*/
+		if (de->name[0] == 0) {		/* empty  entry and stop reading*/
 			break;
-		else if (((unsigned char *)(de->name))[0] == DELETED_FLAG) {	/* empty entry*/
+		} else if (((unsigned char *)(de->name))[0] == DELETED_FLAG) {	/* empty entry*/
 			is_long = 0;
 			oldpos = *pos;
 		} else if (de->attr ==  ATTR_EXT) {		/* long filename entry*/
@@ -193,7 +194,7 @@ int FATPROC msdos_get_entry_long(
 				else if (!strcmp(de->name,MSDOS_DOTDOT))
 					*ino = msdos_parent_ino(dir,0);
 
-				debug_fat("dir: '%s' attr %x\n", de->name, de->attr);
+				debug_fat("dir: '%s' attr %x size %lx\n", de->name, de->attr, de->size);
 				if (is_long) {
 					*namelen = long_len;
 					*dirpos = oldpos;
