@@ -110,7 +110,7 @@ static struct super_block *msdos_read_super(struct super_block *s, char *data,
 
 	cache_init();
 	lock_super(s);
-	bh = bread(s->s_dev, (block_t)0);
+	bh = bread(s->s_dev, 0);
 	unlock_super(s);
 	if (bh == NULL) {
 /*		s->s_dev = 0;*/
@@ -323,7 +323,7 @@ void msdos_read_inode(register struct inode *inode)
 		return;
 	}
 #endif
-	if (!(bh = bread(inode->i_dev,(block_t)(inode->i_ino >> MSDOS_DPB_BITS)))) {
+	if (!(bh = bread32(inode->i_dev, inode->i_ino >> MSDOS_DPB_BITS))) {
 	    printk("FAT: read inode fail\n");
 		return;
 	}
@@ -371,7 +371,7 @@ static void msdos_write_inode(register struct inode *inode)
 #endif
 	debug_fat("write_inode %ld %d\n", (unsigned long)inode->i_ino, inode->i_dirt);
 	if (inode->i_ino == MSDOS_ROOT_INO || !inode->i_nlink) return;
-	if (!(bh = bread(inode->i_dev,(block_t)(inode->i_ino >> MSDOS_DPB_BITS)))) {
+	if (!(bh = bread32(inode->i_dev, inode->i_ino >> MSDOS_DPB_BITS))) {
 	    printk("FAT: write inode fail\n");
 	    return;
 	}
