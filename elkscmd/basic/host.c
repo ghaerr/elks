@@ -16,7 +16,6 @@ unsigned char mem[MEMORY_SIZE];
 static unsigned char tokenBuf[TOKEN_BUF_SIZE];
 
 FILE *outfile;
-static FILE *infile;
 static int intflag;
 static struct termios def_termios;
 
@@ -83,14 +82,15 @@ void host_newLine() {
 	fprintf(outfile, "\n");
 }
 
+/* returning NULL will stop interpreter */
 char *host_readLine() {
 	static char buf[TOKEN_BUF_SIZE+1];
 
-	while (!fgets(buf, sizeof(buf), infile)) {
-		if (ferror(infile) && (errno == EINTR)) {
-			clearerr(infile);
+	while (!fgets(buf, sizeof(buf), stdin)) {
+		if (ferror(stdin) && (errno == EINTR)) {
+			clearerr(stdin);
 			intflag = 0;
-			continue;
+			//continue;
 		}
 		return NULL;
 	}
@@ -303,16 +303,24 @@ int host_saveProgramToFile(char *fileName, int autoexec) {
 }
 #endif
 
+static char *file_readLine(FILE *fp, char *buf, int size) {
+	if (!fgets(buf, size, fp))
+		return NULL;
+	buf[strlen(buf)-1] = 0;
+	return buf;
+}
+
 // BASIC
 
-int loop(int showOK) {
+static int loop(FILE *infile) {
     int ret = ERROR_NONE;
+    char buf[TOKEN_BUF_SIZE+1];
 
     lineNumber = 0;
-    char *input = host_readLine();
-    if (!input) return ERROR_EOF;
+    char *input = infile? file_readLine(infile, buf, sizeof(buf)): host_readLine();
+    if (!input) return infile? ERROR_EOF: ERROR_BREAK_PRESSED;
 
-    if (!strcmp(input, "mem")) {
+    if (!strcasecmp(input, "mem")) {
         host_outputFreeMem(sysVARSTART - sysPROGEND);
         return ERROR_NONE;
     }
@@ -331,12 +339,13 @@ int loop(int showOK) {
             host_outputChar('-');
         }
         printf("%s\n", errorTable[ret]);
-    } else if (showOK)
+    } else if (!infile)
         printf("Ok\n\n");
     return ret;
 }
 
 int host_loadProgramFromFile(char *fileName) {
+    FILE *fp;
 	int err;
 	char file[MAX_PATH_LEN+5];
 
@@ -344,21 +353,19 @@ int host_loadProgramFromFile(char *fileName) {
 	if (!strstr(file, ".bas"))
 		strcat(file, ".bas");
 
-	infile = fopen(file, "r");
-	if (!infile)
+	fp = fopen(file, "r");
+	if (!fp)
 		return ERROR_FILE_ERROR;
 
-	while ((err = loop(0)) == ERROR_NONE)
+	while ((err = loop(fp)) == ERROR_NONE)
 		continue;
 
-	fclose(infile);
-	infile = stdin;
+	fclose(fp);
 	if (err == ERROR_EOF) err = ERROR_NONE;
 	return err;
 }
 
 int main(int ac, char **av) {
-	infile = stdin;
 	outfile = stdout;
 
 	tcgetattr(0, &def_termios);
@@ -379,7 +386,7 @@ int main(int ac, char **av) {
 	}
     
 	for(;;)
-		if (loop(1) == ERROR_EOF)
+		if (loop(NULL) == ERROR_EOF)
 			break;
 	tty_normal();
 	return 0;
