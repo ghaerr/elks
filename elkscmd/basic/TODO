@@ -16,7 +16,6 @@ improve "Expr error" / UNEXPECTED_TOKEN -> "Expecting %s"
 
 functions
 ---------
-INKEY$
 UCASE$/LCASE$
 SQR(x)
 SGN(x)

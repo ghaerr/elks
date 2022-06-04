@@ -82,37 +82,6 @@ void host_newLine() {
 	fprintf(outfile, "\n");
 }
 
-/* returning NULL will stop interpreter */
-char *host_readLine() {
-	static char buf[TOKEN_BUF_SIZE+1];
-
-	while (!fgets(buf, sizeof(buf), stdin)) {
-		if (ferror(stdin) && (errno == EINTR)) {
-			clearerr(stdin);
-			intflag = 0;
-			//continue;
-		}
-		return NULL;
-	}
-	buf[strlen(buf)-1] = 0;
-	return buf;
-}
-
-char host_getKey() {
-#if 0
-    char c = inkeyChar;
-    inkeyChar = 0;
-    if (c >= 32 && c <= 126)
-        return c;
-#endif
-    return 0;
-}
-
-int host_ESCPressed() {
-    return intflag;
-}
-
-#if NOTYET
 static void tty_raw(void)
 {
     struct termios termios;
@@ -127,7 +96,6 @@ static void tty_raw(void)
     int nonblock = 1;
     ioctl(0, FIONBIO, &nonblock);
 }
-#endif
 
 static void tty_isig(void)
 {
@@ -155,8 +123,41 @@ static void tty_normal(void)
 
 static void catchint(int sig)
 {
-	intflag = 1;
-	signal(SIGINT, catchint);
+    intflag = 1;
+    signal(SIGINT, catchint);
+}
+
+/* returning NULL will stop interpreter */
+char *host_readLine() {
+    static char buf[TOKEN_BUF_SIZE+1];
+
+    tty_isig();
+    while (!fgets(buf, sizeof(buf), stdin)) {
+        if (ferror(stdin) && (errno == EINTR)) {
+             clearerr(stdin);
+             intflag = 0;
+        }
+        tty_raw();
+        return NULL;
+    }
+    tty_raw();
+    buf[strlen(buf)-1] = 0;
+    return buf;
+}
+
+/* assumes stdin in unblocking raw mode, set before interpreter runs */
+int host_getKey() {
+    unsigned char buf[1];
+
+    if (read(0, buf, 1) == 1) {
+        if (buf[0] >= 32 && buf[0] <= 126)
+            return buf[0];
+    }
+    return 0;
+}
+
+int host_ESCPressed() {
+    return intflag;
 }
 
 /* replacement fread to fix fgets not returning ferror/errno properly on SIGINT*/
@@ -318,7 +319,7 @@ static int loop(FILE *infile) {
 
     lineNumber = 0;
     char *input = infile? file_readLine(infile, buf, sizeof(buf)): host_readLine();
-    if (!input) return infile? ERROR_EOF: ERROR_BREAK_PRESSED;
+    if (!input) return infile || feof(stdin)? ERROR_EOF: ERROR_BREAK_PRESSED;
 
     if (!strcasecmp(input, "mem")) {
         host_outputFreeMem(sysVARSTART - sysPROGEND);
@@ -329,6 +330,7 @@ static int loop(FILE *infile) {
     /* execute the token buffer */
     if (ret == ERROR_NONE) {
         intflag = 0;
+        if (!infile) tty_raw();
         ret = processInput(tokenBuf);
     }
 
