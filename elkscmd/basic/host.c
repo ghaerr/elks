@@ -4,6 +4,10 @@
 #include <unistd.h>
 #include <limits.h>
 #include <math.h>
+#include <termios.h>
+#include <sys/ioctl.h>
+#include <signal.h>
+#include <errno.h>
 
 #include "host.h"
 #include "basic.h"
@@ -11,8 +15,10 @@
 unsigned char mem[MEMORY_SIZE];
 static unsigned char tokenBuf[TOKEN_BUF_SIZE];
 
-static FILE *infile;
 FILE *outfile;
+static FILE *infile;
+static int intflag;
+static struct termios def_termios;
 
 void host_moveCursor(int x, int y) {
 	fprintf(outfile, "\033[%d;%dH", y, x);
@@ -80,8 +86,14 @@ void host_newLine() {
 char *host_readLine() {
 	static char buf[TOKEN_BUF_SIZE+1];
 
-	if (!fgets(buf, sizeof(buf), infile))
+	while (!fgets(buf, sizeof(buf), infile)) {
+		if (ferror(infile) && (errno == EINTR)) {
+			clearerr(infile);
+			intflag = 0;
+			continue;
+		}
 		return NULL;
+	}
 	buf[strlen(buf)-1] = 0;
 	return buf;
 }
@@ -97,15 +109,109 @@ char host_getKey() {
 }
 
 int host_ESCPressed() {
-#if 0
-    while (keyboard.available()) {
-        // read the next key
-        inkeyChar = keyboard.read();
-        if (inkeyChar == PS2_ESC)
-            return true;
-    }
+    return intflag;
+}
+
+#if NOTYET
+static void tty_raw(void)
+{
+    struct termios termios;
+
+    fflush(stdout);
+    tcgetattr(0, &termios);
+    termios.c_iflag &= ~(ICRNL|IGNCR|INLCR);
+    termios.c_lflag &= ~(ECHO|ECHOE|ECHONL|ICANON);
+    termios.c_lflag |= ISIG;
+    tcsetattr(0, TCSADRAIN, &termios);
+
+    int nonblock = 1;
+    ioctl(0, FIONBIO, &nonblock);
+}
 #endif
-    return false;
+
+static void tty_isig(void)
+{
+    int nonblock = 0;
+    struct termios termios;
+
+    fflush(stdout);
+    tcgetattr(0, &termios);
+    termios.c_iflag |= (ICRNL|IGNCR|INLCR);
+    termios.c_lflag |= (ECHO|ECHOE|ECHONL|ICANON);
+    termios.c_lflag |= ISIG;
+
+    ioctl(0, FIONBIO, &nonblock);
+    tcsetattr(0, TCSADRAIN, &termios);
+}
+
+static void tty_normal(void)
+{
+    int nonblock = 0;
+
+    fflush(stdout);
+    ioctl(0, FIONBIO, &nonblock);
+    tcsetattr(0, TCSADRAIN, &def_termios);
+}
+
+static void catchint(int sig)
+{
+	intflag = 1;
+	signal(SIGINT, catchint);
+}
+
+/* replacement fread to fix fgets not returning ferror/errno properly on SIGINT*/
+size_t fread(void *buf, size_t size, size_t nelm, FILE *fp)
+{
+   int len, v;
+   size_t bytes, got = 0;
+   extern void __io_init_vars();
+   __io_init_vars();        /* replaces Inline_init*/
+
+   v = fp->mode;
+
+   /* Want to do this to bring the file pointer up to date */
+   if (v & __MODE_WRITING)
+      fflush(fp);
+
+   /* Can't read or there's been an EOF or error then return zero */
+   if ((v & (__MODE_READ | __MODE_EOF | __MODE_ERR)) != __MODE_READ)
+      return 0;
+
+   /* This could be long, doesn't seem much point tho */
+   bytes = size * nelm;
+
+   len = fp->bufread - fp->bufpos;
+   if (len >= bytes)            /* Enough buffered */
+   {
+      memcpy(buf, fp->bufpos, bytes);
+      fp->bufpos += bytes;
+      return nelm;
+   }
+   else if (len > 0)            /* Some buffered */
+   {
+      memcpy(buf, fp->bufpos, len);
+      fp->bufpos += len;
+      got = len;
+   }
+
+   /* Need more; do it with a direct read */
+   len = read(fp->fd, (char *)buf + got, bytes - got);
+   /* Possibly for now _or_ later */
+#if 1   /* Fixes stdio when SIGINT received*/
+   if (intflag) {
+      len = -1;
+      errno = EINTR;
+   }
+#endif
+   if (len < 0)
+   {
+      fp->mode |= __MODE_ERR;
+      len = 0;
+   }
+   else if (len == 0)
+      fp->mode |= __MODE_EOF;
+
+   return (got + len) / size;
 }
 
 void host_outputFreeMem(unsigned int val)
@@ -213,8 +319,10 @@ int loop(int showOK) {
     ret = tokenize((unsigned char*)input, tokenBuf, TOKEN_BUF_SIZE);
 
     /* execute the token buffer */
-    if (ret == ERROR_NONE)
+    if (ret == ERROR_NONE) {
+        intflag = 0;
         ret = processInput(tokenBuf);
+    }
 
     if (ret != ERROR_NONE) {
         host_newLine();
@@ -253,6 +361,9 @@ int main(int ac, char **av) {
 	infile = stdin;
 	outfile = stdout;
 
+	tcgetattr(0, &def_termios);
+	tty_isig();
+	signal(SIGINT, catchint);
 	reset();
 
 	printf("ELKS BASIC\n");
@@ -270,5 +381,6 @@ int main(int ac, char **av) {
 	for(;;)
 		if (loop(1) == ERROR_EOF)
 			break;
+	tty_normal();
 	return 0;
 }
