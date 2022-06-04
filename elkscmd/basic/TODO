@@ -6,19 +6,12 @@ DIM [comma seperated variable/array list]
 THEN <linenumber>
 END
 
-MODE number
-PLOT x,y
-DRAW x,y[,a]
-CIRCLE x,y,r
-INK fg[,bg] or COLOR
-OUT port,value
 POKE offset,segment,value
 
 DIM C$ w/no parens for backwards compat with DIM C$(80) for string lengths?
 TRON - trace on, auto trace on when loading .bas file w/errors
 ' comments
 remove ANALOGRD
-^C stop using termios
 improve "Expr error" / UNEXPECTED_TOKEN -> "Expecting %s"
 
 functions
@@ -29,10 +22,8 @@ SQR(x)
 SGN(x)
 
 PEEK(offset,segment)
-IN(port)
 SCREEN$(line,col)
 ATTR(line,col)
-POINT(x,y)
 PRINT TAB(x)
 PRINT INK x
 PRINT POS x,y
