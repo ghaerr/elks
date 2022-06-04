@@ -190,6 +190,7 @@ int host_saveProgramToFile(char *fileName, int autoexec) {
 	if (autoexec)
 		fprintf(outfile, "RUN\n");
 	fclose(outfile);
+	sync();
 	outfile = stdout;
 
     return ERROR_NONE;
