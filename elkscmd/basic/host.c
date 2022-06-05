@@ -156,7 +156,7 @@ int host_getKey() {
     return 0;
 }
 
-int host_CtrlCPressed() {
+int host_breakPressed() {
     return intflag;
 }
 

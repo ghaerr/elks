@@ -57,7 +57,7 @@ float host_floor(float x);
 void host_newLine();
 char *host_readLine();
 int host_getKey();
-int host_CtrlCPressed();
+int host_breakPressed();
 void host_outputFreeMem(unsigned int val);
 void host_sleep(long ms);
 
