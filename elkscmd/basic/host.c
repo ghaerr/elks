@@ -156,7 +156,7 @@ int host_getKey() {
     return 0;
 }
 
-int host_ESCPressed() {
+int host_CtrlCPressed() {
     return intflag;
 }
 
@@ -318,6 +318,7 @@ static int loop(FILE *infile) {
     char buf[TOKEN_BUF_SIZE+1];
 
     lineNumber = 0;
+    intflag = 0;
     char *input = infile? file_readLine(infile, buf, sizeof(buf)): host_readLine();
     if (!input) return infile || feof(stdin)? ERROR_EOF: ERROR_BREAK_PRESSED;
 
@@ -340,7 +341,7 @@ static int loop(FILE *infile) {
             host_outputLong(lineNumber);
             host_outputChar('-');
         }
-        printf("%s\n", errorTable[ret]);
+        printf("%s\n\n", errorTable[ret]);
     } else if (!infile)
         printf("Ok\n\n");
     return ret;

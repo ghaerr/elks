@@ -2294,7 +2294,7 @@ int processInput(unsigned char *tokenBuf) {
             if (jumpStmtNumber)
                 targetStmtNumber = jumpStmtNumber;
 
-            if (host_ESCPressed())
+            if (host_CtrlCPressed())
             { 
                 ret = ERROR_BREAK_PRESSED; 
                 break; 
