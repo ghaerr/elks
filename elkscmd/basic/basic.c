@@ -1838,7 +1838,7 @@ int parseAssignment(int token) {
         // from INPUT statement
         if (executeMode) {
             char *inputStr = host_readLine();
-            if (!inputStr) return ERROR_EOF;
+            if (!inputStr) return ERROR_BREAK_PRESSED;
             if (isStringIdentifier) {
                 if (!stackPushStr(inputStr)) return ERROR_OUT_OF_MEMORY;
             }
@@ -2294,7 +2294,7 @@ int processInput(unsigned char *tokenBuf) {
             if (jumpStmtNumber)
                 targetStmtNumber = jumpStmtNumber;
 
-            if (host_ESCPressed())
+            if (host_breakPressed())
             { 
                 ret = ERROR_BREAK_PRESSED; 
                 break; 
