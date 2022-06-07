@@ -1,8 +1,6 @@
 
-VERSION=elks-0.5.0
-
 INCLUDES=-I$(TOPDIR)/include -I$(TOPDIR)/libc/include -I$(TOPDIR)/elks/include
-DEFINES=-D__LIBC__ -D__LIBC_VER__='"$(VERSION)"'
+DEFINES=-D__LIBC__
 
 INCS=$(INCLUDES)
 SDEFS=$(DEFINES)
