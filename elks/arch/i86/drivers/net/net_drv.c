@@ -11,4 +11,7 @@ void eth_init(void)
 #ifdef CONFIG_ETH_WD
 	wd_drv_init();
 #endif
+#ifdef CONFIG_ETH_EL3
+	el3_drv_init();
+#endif
 }

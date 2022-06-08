@@ -34,6 +34,9 @@ endif
 ifeq ($(CONFIG_ETH_WD), y)
 OBJS += wd.o
 endif
+ifeq ($(CONFIG_ETH_EL3), y)
+OBJS += el3-asm.o el3.o
+endif
 
 all: net_drv.a
 

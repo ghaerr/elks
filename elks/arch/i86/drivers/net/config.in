@@ -8,7 +8,9 @@ mainmenu_option next_comment
 	if [ "$CONFIG_ETH" = "y" ]; then
 		choice 'Select Ethernet device' \
 			"ne2k	CONFIG_ETH_NE2K \
-			WD/SMC8003	CONFIG_ETH_WD" ne2k
+			WD/SMC8003	CONFIG_ETH_WD\
+			3C509	CONFIG_ETH_EL3" ne2k
+		
 		bool '8 bit access for Ethernet devices'      CONFIG_ETH_BYTE_ACCESS      n
 	fi
 endmenu

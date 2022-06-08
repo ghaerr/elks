@@ -16,10 +16,11 @@
  *  6*  HW floppy drive     CONFIG_BLK_DEV_FD       Driver doesn't compile
  *  7   Unused (LPT)
  *  8   Unused (RTC)
- *  9   NE2K (/dev/eth)     CONFIG_ETH_NE2K         Optional
+ *  9   EL3 (/dev/eth)      CONFIG_ETH_EL3          Optional
  * 10   Unused (USB)                                Turned off
  * 11   Unused (Sound)                              Turned off
- * 12   Unused (Mouse)                              Turned off
+ * 12   NE2K (/dev/eth)     CONFIG_ETH_NE2K         Optional
+ * 12*  Unused (Mouse)                              Turned off
  * 13   Unused (Math coproc.)                       Turned off
  * 14*  AT HD IDE (/dev/hda) CONFIG_BLK_DEV_HD      Driver doesn't work
  * 15*  AT HD IDE (/dev/hdb) CONFIG_BLK_DEV_HD      Driver doesn't work
@@ -96,6 +97,11 @@
 /* wd, wd.c*/
 #define WD_PORT		0x240
 #define WD_IRQ		2
+#define WD_RAM		0xCE00
+
+/* el3, el3.c */
+#define EL3_PORT	0x330
+#define EL3_IRQ		9
 
 /* bioshd.c*/
 #define FDC_DOR		0x3F2		/* floppy digital output register*/
