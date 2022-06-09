@@ -4,6 +4,10 @@
 #include <unistd.h>
 #include <limits.h>
 #include <math.h>
+#include <termios.h>
+#include <sys/ioctl.h>
+#include <signal.h>
+#include <errno.h>
 
 #include "host.h"
 #include "basic.h"
@@ -11,8 +15,9 @@
 unsigned char mem[MEMORY_SIZE];
 static unsigned char tokenBuf[TOKEN_BUF_SIZE];
 
-static FILE *infile;
 FILE *outfile;
+static int intflag;
+static struct termios def_termios;
 
 void host_moveCursor(int x, int y) {
 	fprintf(outfile, "\033[%d;%dH", y, x);
@@ -77,35 +82,137 @@ void host_newLine() {
 	fprintf(outfile, "\n");
 }
 
-char *host_readLine() {
-	static char buf[TOKEN_BUF_SIZE+1];
+static void tty_raw(void)
+{
+    struct termios termios;
 
-	if (!fgets(buf, sizeof(buf), infile))
-		return NULL;
-	buf[strlen(buf)-1] = 0;
-	return buf;
+    fflush(stdout);
+    tcgetattr(0, &termios);
+    termios.c_iflag &= ~(ICRNL|IGNCR|INLCR);
+    termios.c_lflag &= ~(ECHO|ECHOE|ECHONL|ICANON);
+    termios.c_lflag |= ISIG;
+    tcsetattr(0, TCSADRAIN, &termios);
+
+    int nonblock = 1;
+    ioctl(0, FIONBIO, &nonblock);
 }
 
-char host_getKey() {
-#if 0
-    char c = inkeyChar;
-    inkeyChar = 0;
-    if (c >= 32 && c <= 126)
-        return c;
-#endif
+static void tty_isig(void)
+{
+    int nonblock = 0;
+    struct termios termios;
+
+    fflush(stdout);
+    tcgetattr(0, &termios);
+    termios.c_iflag |= (ICRNL|IGNCR|INLCR);
+    termios.c_lflag |= (ECHO|ECHOE|ECHONL|ICANON);
+    termios.c_lflag |= ISIG;
+
+    ioctl(0, FIONBIO, &nonblock);
+    tcsetattr(0, TCSADRAIN, &termios);
+}
+
+static void tty_normal(void)
+{
+    int nonblock = 0;
+
+    fflush(stdout);
+    ioctl(0, FIONBIO, &nonblock);
+    tcsetattr(0, TCSADRAIN, &def_termios);
+}
+
+static void catchint(int sig)
+{
+    intflag = 1;
+    signal(SIGINT, catchint);
+}
+
+/* returning NULL will stop interpreter */
+char *host_readLine() {
+    static char buf[TOKEN_BUF_SIZE+1];
+
+    tty_isig();
+    while (!fgets(buf, sizeof(buf), stdin)) {
+        if (ferror(stdin) && (errno == EINTR)) {
+             clearerr(stdin);
+             intflag = 0;
+        }
+        tty_raw();
+        return NULL;
+    }
+    tty_raw();
+    buf[strlen(buf)-1] = 0;
+    return buf;
+}
+
+/* assumes stdin in unblocking raw mode, set before interpreter runs */
+int host_getKey() {
+    unsigned char buf[1];
+
+    if (read(0, buf, 1) == 1) {
+        if (buf[0] >= 32 && buf[0] <= 126)
+            return buf[0];
+    }
     return 0;
 }
 
-int host_ESCPressed() {
-#if 0
-    while (keyboard.available()) {
-        // read the next key
-        inkeyChar = keyboard.read();
-        if (inkeyChar == PS2_ESC)
-            return true;
-    }
+int host_breakPressed() {
+    return intflag;
+}
+
+/* replacement fread to fix fgets not returning ferror/errno properly on SIGINT*/
+size_t fread(void *buf, size_t size, size_t nelm, FILE *fp)
+{
+   int len, v;
+   size_t bytes, got = 0;
+   extern void __io_init_vars();
+   __io_init_vars();        /* replaces Inline_init*/
+
+   v = fp->mode;
+
+   /* Want to do this to bring the file pointer up to date */
+   if (v & __MODE_WRITING)
+      fflush(fp);
+
+   /* Can't read or there's been an EOF or error then return zero */
+   if ((v & (__MODE_READ | __MODE_EOF | __MODE_ERR)) != __MODE_READ)
+      return 0;
+
+   /* This could be long, doesn't seem much point tho */
+   bytes = size * nelm;
+
+   len = fp->bufread - fp->bufpos;
+   if (len >= bytes)            /* Enough buffered */
+   {
+      memcpy(buf, fp->bufpos, bytes);
+      fp->bufpos += bytes;
+      return nelm;
+   }
+   else if (len > 0)            /* Some buffered */
+   {
+      memcpy(buf, fp->bufpos, len);
+      fp->bufpos += len;
+      got = len;
+   }
+
+   /* Need more; do it with a direct read */
+   len = read(fp->fd, (char *)buf + got, bytes - got);
+   /* Possibly for now _or_ later */
+#if 1   /* Fixes stdio when SIGINT received*/
+   if (intflag) {
+      len = -1;
+      errno = EINTR;
+   }
 #endif
-    return false;
+   if (len < 0)
+   {
+      fp->mode |= __MODE_ERR;
+      len = 0;
+   }
+   else if (len == 0)
+      fp->mode |= __MODE_EOF;
+
+   return (got + len) / size;
 }
 
 void host_outputFreeMem(unsigned int val)
@@ -190,30 +297,43 @@ int host_saveProgramToFile(char *fileName, int autoexec) {
 	if (autoexec)
 		fprintf(outfile, "RUN\n");
 	fclose(outfile);
+	sync();
 	outfile = stdout;
 
     return ERROR_NONE;
 }
 #endif
 
+static char *file_readLine(FILE *fp, char *buf, int size) {
+	if (!fgets(buf, size, fp))
+		return NULL;
+	buf[strlen(buf)-1] = 0;
+	return buf;
+}
+
 // BASIC
 
-int loop(int showOK) {
+static int loop(FILE *infile) {
     int ret = ERROR_NONE;
+    char buf[TOKEN_BUF_SIZE+1];
 
     lineNumber = 0;
-    char *input = host_readLine();
-    if (!input) return ERROR_EOF;
+    intflag = 0;
+    char *input = infile? file_readLine(infile, buf, sizeof(buf)): host_readLine();
+    if (!input) return infile || feof(stdin)? ERROR_EOF: ERROR_BREAK_PRESSED;
 
-    if (!strcmp(input, "mem")) {
+    if (!strcasecmp(input, "mem")) {
         host_outputFreeMem(sysVARSTART - sysPROGEND);
         return ERROR_NONE;
     }
     ret = tokenize((unsigned char*)input, tokenBuf, TOKEN_BUF_SIZE);
 
     /* execute the token buffer */
-    if (ret == ERROR_NONE)
+    if (ret == ERROR_NONE) {
+        intflag = 0;
+        if (!infile) tty_raw();
         ret = processInput(tokenBuf);
+    }
 
     if (ret != ERROR_NONE) {
         host_newLine();
@@ -221,13 +341,14 @@ int loop(int showOK) {
             host_outputLong(lineNumber);
             host_outputChar('-');
         }
-        printf("%s\n", errorTable[ret]);
-    } else if (showOK)
+        printf("%s\n\n", errorTable[ret]);
+    } else if (!infile)
         printf("Ok\n\n");
     return ret;
 }
 
 int host_loadProgramFromFile(char *fileName) {
+    FILE *fp;
 	int err;
 	char file[MAX_PATH_LEN+5];
 
@@ -235,23 +356,24 @@ int host_loadProgramFromFile(char *fileName) {
 	if (!strstr(file, ".bas"))
 		strcat(file, ".bas");
 
-	infile = fopen(file, "r");
-	if (!infile)
+	fp = fopen(file, "r");
+	if (!fp)
 		return ERROR_FILE_ERROR;
 
-	while ((err = loop(0)) == ERROR_NONE)
+	while ((err = loop(fp)) == ERROR_NONE)
 		continue;
 
-	fclose(infile);
-	infile = stdin;
+	fclose(fp);
 	if (err == ERROR_EOF) err = ERROR_NONE;
 	return err;
 }
 
 int main(int ac, char **av) {
-	infile = stdin;
 	outfile = stdout;
 
+	tcgetattr(0, &def_termios);
+	tty_isig();
+	signal(SIGINT, catchint);
 	reset();
 
 	printf("ELKS BASIC\n");
@@ -267,7 +389,8 @@ int main(int ac, char **av) {
 	}
     
 	for(;;)
-		if (loop(1) == ERROR_EOF)
+		if (loop(NULL) == ERROR_EOF)
 			break;
+	tty_normal();
 	return 0;
 }

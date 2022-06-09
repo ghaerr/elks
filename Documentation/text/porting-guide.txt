@@ -54,7 +54,7 @@ NEC PC-9801 Personal Computer (CONFIG_ARCH_PC98)
 		8251 keyboard controller
 		BIOS INT 18h polled keyboard
 	Disk Filesystem
-		BIOS INT 1Bh Floppy/Hard Disk(SCSI)
+		BIOS INT 1Bh Floppy/Hard Disk(SCSI/IDE)
 
 SIBO (discontinued)
 

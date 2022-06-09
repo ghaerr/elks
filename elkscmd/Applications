@@ -57,7 +57,7 @@ sh_utils/uname			:boot	:be-shutil  :128k
 sh_utils/date           :boot	:be-shutil  :128k
 file_utils/cat			:boot	:be-fileutil    :128k
 file_utils/chgrp				:be-fileutil			:1200k	:1440k
-file_utils/chmod				:be-fileutil			:1200k	:1440k
+file_utils/chmod				:be-fileutil    :360k
 file_utils/chown				:be-fileutil			:1200k	:1440k
 file_utils/cmp					:be-fileutil			:1200k	:1440k
 file_utils/cp					:be-fileutil	:360k

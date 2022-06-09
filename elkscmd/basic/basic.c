@@ -203,6 +203,7 @@ PROGMEM const TokenTableEntry tokenTable[] = {
     {"INPW", 1},
     {"OUTB", TKN_FMT_POST},
     {"OUTW", TKN_FMT_POST},
+    {"HEX$",1|TKN_RET_TYPE_STR},
 };
 
 
@@ -1118,6 +1119,15 @@ int parseFnCallExpr() {
                     return ERROR_OUT_OF_MEMORY;
             }
             break;
+        case TOKEN_HEX:
+            {
+                char buf[MAX_NUMBER_LEN+1];
+                tmp = (int)host_floor(stackPopNum());
+                snprintf(buf, MAX_NUMBER_LEN, "%X", tmp);
+                if (!stackPushStr(buf))
+                    return ERROR_OUT_OF_MEMORY;
+            }
+            break;
         case TOKEN_CHR:
             {
                 char buf[2];
@@ -1431,6 +1441,7 @@ int parsePrimary() {
     case TOKEN_POW:
     case TOKEN_INPB:
     case TOKEN_INPW:
+    case TOKEN_HEX:
         return parseFnCallExpr();
 
         // single argument math functions
@@ -1827,7 +1838,7 @@ int parseAssignment(int token) {
         // from INPUT statement
         if (executeMode) {
             char *inputStr = host_readLine();
-            if (!inputStr) return ERROR_EOF;
+            if (!inputStr) return ERROR_BREAK_PRESSED;
             if (isStringIdentifier) {
                 if (!stackPushStr(inputStr)) return ERROR_OUT_OF_MEMORY;
             }
@@ -2283,7 +2294,7 @@ int processInput(unsigned char *tokenBuf) {
             if (jumpStmtNumber)
                 targetStmtNumber = jumpStmtNumber;
 
-            if (host_ESCPressed())
+            if (host_breakPressed())
             { 
                 ret = ERROR_BREAK_PRESSED; 
                 break; 
