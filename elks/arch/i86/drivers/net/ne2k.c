@@ -17,6 +17,7 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/limits.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/string.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/netstat.h>
 

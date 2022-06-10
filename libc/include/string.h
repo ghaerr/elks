@@ -25,8 +25,9 @@ extern void * memccpy __P ((void*, void*, int, size_t));
 extern void * memchr __P ((__const void*, __const int, size_t));
 extern void * memset __P ((void*, int, size_t));
 extern int memcmp __P ((__const void*, __const void*, size_t));
-
 extern void * memmove __P ((void*, void*, size_t));
+
+void __far *fmemset(void __far *buf, int c, size_t l);
 
 /* Error messages */
 extern char * strerror __P ((int));

@@ -9,35 +9,27 @@ struct segment {
 	list_s    free;
 	seg_t     base;
 	segext_t  size;
-	word_t    flags;
-	word_t    ref_count;
+	byte_t    flags;
+	byte_t    ref_count;
+	word_t    pid;
 };
 
 typedef struct segment segment_s;
 
 // TODO: convert to tag
-#define SEG_FLAG_FREE    0x0000
-#define SEG_FLAG_USED	 0x0080
-#define SEG_FLAG_ALIGN1K 0x0040
-#define SEG_FLAG_TYPE	 0x000F
-#define SEG_FLAG_CSEG	 0x0001
-#define SEG_FLAG_DSEG	 0x0002
-#define SEG_FLAG_EXTBUF	 0x0003
-#define SEG_FLAG_RAMDSK	 0x0004
+#define SEG_FLAG_FREE    0x00
+#define SEG_FLAG_USED	 0x80
+#define SEG_FLAG_ALIGN1K 0x40
+#define SEG_FLAG_TYPE	 0x0F
+#define SEG_FLAG_CSEG	 0x01
+#define SEG_FLAG_DSEG	 0x02
+#define SEG_FLAG_EXTBUF	 0x03
+#define SEG_FLAG_RAMDSK	 0x04
+#define SEG_FLAG_PROG	 0x05
 
 #ifdef __KERNEL__
 
-#include <linuxmt/sched.h>
-#include <linuxmt/errno.h>
 #include <linuxmt/kernel.h>
-#include <linuxmt/string.h>
-
-#define VERIFY_READ 0
-#define VERIFY_WRITE 1
-
-#include <linuxmt/memory.h>
-
-#define verify_area(mode,point,size) verfy_area(point,size)
 
 /*@-namechecks@*/
 
@@ -46,6 +38,11 @@ void memcpy_tofs(void *,void *,size_t);
 int strlen_fromfs(void *,size_t);
 
 /*@+namechecks@*/
+
+#define VERIFY_READ 0
+#define VERIFY_WRITE 1
+
+#define verify_area(mode,point,size) verfy_area(point,size)
 
 int verfy_area(void *,size_t);
 void put_user_char(unsigned char,void *);
@@ -65,8 +62,9 @@ void seg_free (segment_s *);
 
 segment_s * seg_get (segment_s *);
 void seg_put (segment_s *);
-
 segment_s * seg_dup (segment_s *);
+
+void seg_free_pid(pid_t pid);
 
 void mm_get_usage (unsigned int * free, unsigned int * used);
 

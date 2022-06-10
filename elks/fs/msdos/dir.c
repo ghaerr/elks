@@ -16,6 +16,7 @@
 #include <linuxmt/errno.h>
 #include <linuxmt/stat.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/string.h>
 #include <linuxmt/debug.h>
 
 static size_t msdos_dir_read(struct inode *dir, struct file *filp, char *buf, size_t count)

@@ -22,6 +22,7 @@
 #include <linuxmt/fs.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/sched.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/mem.h>
 #include <linuxmt/heap.h>

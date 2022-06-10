@@ -1,5 +1,6 @@
 #include <linuxmt/config.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/sched.h>
 #include <linuxmt/timer.h>
 #include <linuxmt/ntty.h>
 #include <linuxmt/fixedpt.h>

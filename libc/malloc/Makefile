@@ -24,6 +24,7 @@ OBJS = \
 	noise.o \
 	realloc.o \
 	sbrk.o \
+	fmemalloc.o \
 
 .PHONY: all
 
