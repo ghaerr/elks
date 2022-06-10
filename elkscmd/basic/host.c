@@ -88,7 +88,7 @@ static void tty_raw(void)
 
     fflush(stdout);
     tcgetattr(0, &termios);
-    termios.c_iflag &= ~(ICRNL|IGNCR|INLCR);
+    //termios.c_iflag &= ~(ICRNL|IGNCR|INLCR);
     termios.c_lflag &= ~(ECHO|ECHOE|ECHONL|ICANON);
     termios.c_lflag |= ISIG;
     tcsetattr(0, TCSADRAIN, &termios);
@@ -104,7 +104,7 @@ static void tty_isig(void)
 
     fflush(stdout);
     tcgetattr(0, &termios);
-    termios.c_iflag |= (ICRNL|IGNCR|INLCR);
+    //termios.c_iflag |= (ICRNL|IGNCR|INLCR);
     termios.c_lflag |= (ECHO|ECHOE|ECHONL|ICANON);
     termios.c_lflag |= ISIG;
 
@@ -160,6 +160,7 @@ int host_breakPressed() {
     return intflag;
 }
 
+#if __ia16__
 /* replacement fread to fix fgets not returning ferror/errno properly on SIGINT*/
 size_t fread(void *buf, size_t size, size_t nelm, FILE *fp)
 {
@@ -214,6 +215,7 @@ size_t fread(void *buf, size_t size, size_t nelm, FILE *fp)
 
    return (got + len) / size;
 }
+#endif
 
 void host_outputFreeMem(unsigned int val)
 {
