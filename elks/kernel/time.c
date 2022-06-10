@@ -29,6 +29,7 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/string.h>
 
 #include <linuxmt/config.h>
 #include <arch/system.h>

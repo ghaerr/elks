@@ -5,7 +5,7 @@
 #include <linuxmt/types.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/mm.h>
-//#include <linuxmt/mem.h>
+#include <linuxmt/errno.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/heap.h>
 
@@ -45,6 +45,7 @@ static segment_s * seg_split (segment_s * s1, segext_t size0)
 		s2->size = size2;
 		s2->flags = SEG_FLAG_FREE;
 		s2->ref_count = 0;
+		s2->pid = 0;
 
 		list_insert_after (&s1->all, &s2->all);
 		list_insert_after (&s1->free, &s2->free);
@@ -107,6 +108,7 @@ static void seg_merge (segment_s * s1, segment_s * s2)
 {
 	list_remove (&s2->all);
 	s1->size += s2->size;
+	s1->pid = 0;
 	heap_free (s2);
 }
 
@@ -150,6 +152,7 @@ void seg_free (segment_s * seg)
 			seg = prev;
 		} else {
 			seg->flags = SEG_FLAG_FREE;
+			seg->pid = 0;
 		}
 	}
 
@@ -280,6 +283,38 @@ int sys_sbrk (int increment, __u16 * pbrk)
 	return 0;
 }
 
+// allocate memory for process, return segment
+int sys_fmemalloc(int paras, unsigned short *pseg)
+{
+	segment_s *seg;
+	int err;
+
+	err = verify_area(VERIFY_WRITE, pseg, sizeof(*pseg));
+	if (err) return err;
+	seg = seg_alloc((segext_t)paras, SEG_FLAG_PROG);
+	if (!seg) return -ENOMEM;
+	seg->pid = current->pid;
+	put_user(seg->base, pseg);
+	return 0;
+}
+
+// free all program allocated segments for PID pid
+void seg_free_pid(pid_t pid)
+{
+	list_s *n;
+
+again:
+	for (n = _seg_all.next; n != &_seg_all; ) {
+		segment_s * seg = structof (n, segment_s, all);
+
+		if (seg->pid == pid) {
+			seg_free(seg);
+			goto again;		/* free may have changed linked list */
+		}
+		n = seg->all.next;
+	}
+}
+
 
 // Initialize the memory manager.
 
@@ -294,9 +329,9 @@ void INITPROC mm_init(seg_t start, seg_t end)
 		seg->size = end - start;
 		seg->flags = SEG_FLAG_FREE;
 		seg->ref_count = 0;
+		seg->pid = 0;
 
 		list_insert_before (&_seg_all, &(seg->all));  // add tail
 		list_insert_before (&_seg_free, &(seg->free));  // add tail
 	}
 }
-

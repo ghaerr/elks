@@ -11,6 +11,7 @@
 #include <linuxmt/stat.h>
 #include <linuxmt/string.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/errno.h>
 
 /*
  * first_file points to a doubly linked list of all file structures in

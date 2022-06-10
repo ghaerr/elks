@@ -76,7 +76,6 @@
 
 /* FIXME remove all commented out code with RUBOUT in it */
 
-
 #define ROOT_INO 1
 
 #define UPPER(size,n) ((size+((n)-1))/(n))
@@ -130,7 +129,7 @@ static char inode_map[BLOCK_SIZE * MINIX_I_MAP_SLOTS];
 static char zone_map[BLOCK_SIZE * MINIX_Z_MAP_SLOTS];
 
 static unsigned char * inode_count = NULL;
-static unsigned char * zone_count = NULL;
+static unsigned char __far * zone_count = NULL;
 
 void recursive_check(unsigned int ino);
 
@@ -543,20 +542,14 @@ void read_tables(void)
 	if (!inode_buffer)
 		die("Unable to allocate buffer for inodes"); RUBOUT */
 
-	/* check for filesystem too large since libc malloc fails improperly FIXME */
-	if (ZONES > 32767) {
-		fprintf(stderr, "Filesystem too large to check (%u zones, max 32767)\n", ZONES);
-		exit(8);
-	}
-
+	printd("inodes %d zones %d\n", INODES, ZONES);
+	printd("imaps %d zmaps %d\n", IMAPS, ZMAPS);
 	inode_count = malloc(INODES);
 	if (!inode_count)
 		die("Unable to allocate buffer for inode count");
-	zone_count = malloc(ZONES);
+	zone_count = fmemalloc(ZONES);  /* ZONES <= 64K */
 	if (!zone_count)
-		die("Unable to allocate buffer for zone count");
-	printd("inodes %d zones %d\n", INODES, ZONES);
-	printd("imaps %d zmaps %d\n", IMAPS, ZMAPS);
+		die("Unable to allocate main memory for zone count");
 	if ((IMAPS * BLOCK_SIZE) != read(IN, inode_map, (IMAPS * BLOCK_SIZE)))
 		die("Unable to read inode map");
 	if ((ZMAPS * BLOCK_SIZE) != read(IN, zone_map, (ZMAPS * BLOCK_SIZE)))
@@ -569,8 +562,8 @@ void read_tables(void)
 		errors_uncorrected = 1;
 	}
 	if (show) {
-		printf("%d inodes\n",INODES);
-		printf("%d blocks\n",ZONES);
+		printf("%u inodes\n",INODES);
+		printf("%u blocks\n",ZONES);
 		printf("Pre-zone blocks 2+%d+%d+%d %d\n", IMAPS, ZMAPS, INODE_BLOCKS, NORM_FIRSTZONE);
 		printf("Firstdatazone=%d (%d)\n",FIRSTZONE,NORM_FIRSTZONE);
 		printf("Zonesize=%d\n",BLOCK_SIZE<<ZONESIZE);
@@ -889,7 +882,7 @@ void check(void)
 {
 	printd("check\n");
 	memset(inode_count,0,INODES*sizeof(*inode_count));
-	memset(zone_count,0,ZONES*sizeof(*zone_count));
+	fmemset(zone_count,0,ZONES*sizeof(*zone_count));
 	check_zones(ROOT_INO);
 	if (verbose > 1) {
 		printf("/");
