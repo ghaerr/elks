@@ -19,6 +19,7 @@ struct netif_stat {
 #define NETIF_FORCE_4K	2
 #define NETIF_IS_OPEN	4
 #define NETIF_IS_QEMU	8
+#define NETIF_FOUND	16
 
 
 
