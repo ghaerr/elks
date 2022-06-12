@@ -26,6 +26,7 @@
 #include <linuxmt/mm.h>  
 #include <linuxmt/debug.h> 
 #include <linuxmt/netstat.h>
+#include <netinet/in.h>
 
 #ifdef EL3_DEBUG
 static int el3_debug = EL3_DEBUG;
@@ -120,13 +121,11 @@ static void update_stats();
 /* Maximum events (Rx packets, etc.) to handle at each interrupt. */
 static int max_interrupt_work = 5;
 
-//#include "el3.h"
 #define pr_debug printk
 
 int net_irq = EL3_IRQ;  /* default IRQ, changed by netirq= in /bootopts */
 int net_port = EL3_PORT; /* default IO PORT, changed by netport= in /bootopts */
 
-#define htons(x)        __builtin_bswap16(x)
 struct netif_stat netif_stat =
 	{ 0, 0, 0, 0, 0, 0, {0x52, 0x54, 0x00, 0x12, 0x34, 0x57}};  /* QEMU default  + 1 */
 static char *mac_addr = (char *)&netif_stat.mac_addr;
@@ -167,7 +166,7 @@ void el3_drv_init( void ) {
 	}
 
 	// May want to probe before requesting the IRQ & device, but
-	// then we need a tiny prope routine, not the whole shebang.
+	// then we need a tiny probe routine, not the whole shebang.
 	if (el3_isa_probe()) {
 		//printk("not found\n");
 		return;
@@ -220,7 +219,7 @@ static int el3_isa_probe( void )
 
 	outb(0xd0, el3_id_port);			// select tag (0)
 	outb(0xe0 |(ioaddr >> 4), el3_id_port );	// Activate
-	printk("eth: EL3 @ IRQ %d, port %02x", net_irq, ioaddr);
+	printk("eth: 3C509 @ IRQ %d, port %02x", net_irq, ioaddr);
 
 	if ((i = id_read_eeprom(EEPROM_MFG_ID)) != 0x6d50) {
 		printk(" - probe failed (wrong ID), got %04x\n", i);
@@ -345,36 +344,23 @@ static size_t el3_write(struct inode *inode, struct file *file, char *data, size
 }
 
 /* *****************************************************************************************************
-	A note about ELKS and Interrupts
-	ELKS does not service network interrupts as they arrive. They're used as reminders
-	to service whenever possible. A more traditional approach is to act on the cause of an interrupt 
+	A note about ELKS, EL3 and Interrupts
+	ELKS does not service network interrupts as they arrive. Instead, when the application calls the
+	driver, the status is checked and a read initiated if data is ready - or a write is initiated if 
+	the interface is ready. Otherwise the application is but to sleep, to be awakened by the wake_up
+	calls from the driver. A more traditional approach is to act on the cause of an interrupt 
 	- e.g. transfer an arrived packet into a buffer, immediately.
 	The 3Com 3C509 family of NICs expect the latter, and the RxComplete and RxEarly interrupt status
-	bits can only be reset by emptying the FIFO.
+	bits can only be reset by emptying the NIC's FIFO.
 	In order to get this scheme to work with ELKS, we mask off the RxComplete interrupt immediately 
 	after seeing it, and reenable it in the packet read routine when the FIFO is empty. Not optimal
 	from a performance point of view, but it works and will do for now. 
 
 	As to Transmits, the TxComplete interrupt from the 3c5xx NICs indicate a transmit error. 
-	The TxAvailable interrupt signals the availability of enough space to hold a packet - of a 
-	predetermined size. Since ELKS (ktcp) limits the send to 512 bytes and we rarely experiment 
+	The TxAvailable interrupt signals the availability of enough space in the output FIFO to hold a
+	packet of a predetermined size. Since ELKS (ktcp) limits the send to 512 bytes and we rarely experiment 
 	with sizes above 1k, this driver sets the limit to 1040 bytes.
-	There are definite performance improvements to be gained by tuning this.
-	A note about ELKS and Interrupts
-	ELKS does not service network interrupts as they arrive. They're used as reminders
-	to service whenever possible. A more traditional approach is to act on the cause of an interrupt 
-	- e.g. transfer an arrived packet into a buffer, immediately.
-	The 3Com 3C509 family of NICs expect the latter, and the RxComplete and RxEarly interrupt status
-	bits can only be reset by emptying the FIFO.
-	In order to get this scheme to work with ELKS, we mask off the RxComplete interrupt immediately 
-	after seeing it, and reenable it in the packet read routine when the FIFO is empty. Not optimal
-	from a performance point of view, but it works and will do for now. 
-
-	As to Transmits, the TxComplete interrupt from the 3c5xx NICs indicate a transmit error. 
-	The TxAvailable interrupt signals the availability of enough space to hold a packet - of a 
-	predetermined size. Since ELKS (ktcp) limits the send to 512 bytes and we rarely experiment 
-	with sizes above 1k, this driver sets the limit to 1040 bytes.
-	There are definite performance improvements to be gained by tuning this.
+	There are definite performance improvements to be gained by tuning this. 
  *******************************************************************************************************/
 
 static void el3_int(int irq, struct pt_regs *regs)
