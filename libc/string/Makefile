@@ -10,6 +10,7 @@ OBJS = \
 	memcpy-c.o \
 	memmove.o \
 	memset-c.o \
+	fmemset-c.o \
 	movedata.o \
 	strcasecmp.o \
 	strcat.o \

@@ -29,4 +29,7 @@ extern void *(*__alloca_alloc) __P((size_t));
 #define malloc(x) ((*__alloca_alloc)(x))
 #endif
 
+/* alloc from main memory */
+void __far *fmemalloc(unsigned long size);
+
 #endif

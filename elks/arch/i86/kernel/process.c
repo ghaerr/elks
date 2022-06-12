@@ -2,6 +2,7 @@
 #include <linuxmt/debug.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/string.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/signal.h>
 #include <linuxmt/types.h>

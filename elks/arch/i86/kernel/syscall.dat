@@ -102,6 +102,7 @@ accept		+202	3	= CONFIG_SOCKET
 connect		+203	3	= CONFIG_SOCKET
 setsockopt	+204	5	= CONFIG_SOCKET
 getsocknam	+205	4	= CONFIG_SOCKET
+fmemalloc	+206	2	*
 #
 # Name			No	Args	Flag&comment
 #

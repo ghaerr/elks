@@ -28,6 +28,8 @@
 #include <linuxmt/config.h>
 #include <arch/segment.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/kernel.h>
+#include <linuxmt/sched.h>
 #include <linuxmt/kdev_t.h>
 #include <linuxmt/major.h>
 #include <linuxmt/ntty.h>

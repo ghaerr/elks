@@ -113,7 +113,7 @@ copy_etc_files()
 }
 
 # sys script starts here
-MNT=/tmp
+MNT=/tmp/mnt
 small=0
 
 if test "$1" = "-M"; then shift; arg=-M; fi
@@ -125,9 +125,10 @@ if test "$#" -lt 1; then usage; fi
 makeboot $arg $1
 FSTYPE=$?
 
+mkdir -p $MNT
 case "$FSTYPE" in
-1) mount $1 $MNT ;;
-2) mount -t msdos $1 $MNT ;;
+1) mount $1 $MNT || exit 1 ;;
+2) mount -t msdos $1 $MNT || exit 1 ;;
 *) exit 1 ;;
 esac
 
@@ -142,4 +143,5 @@ copy_etc_files
 
 sync
 umount $1
+rmdir $MNT
 sync

@@ -11,6 +11,7 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/string.h>
 #include <linuxmt/minix_fs.h>
 #include <linuxmt/stat.h>
 

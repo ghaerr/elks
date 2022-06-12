@@ -19,6 +19,7 @@
 #include <linuxmt/fcntl.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/string.h>
 #include <linuxmt/termios.h>
 #include <linuxmt/chqueue.h>
 #include <linuxmt/ntty.h>

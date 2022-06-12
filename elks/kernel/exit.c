@@ -110,8 +110,10 @@ void do_exit(int status)
 	seg_put(current->mm.seg_code);
     if (current->mm.seg_data)
 	seg_put(current->mm.seg_data);
-
     current->mm.seg_code = current->mm.seg_data = 0;
+
+    /* free program allocated memory */
+    seg_free_pid(current->pid);
 
 #if BLOAT
     /* Keep all of the family stuff straight */

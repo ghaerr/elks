@@ -32,6 +32,7 @@ build_ibm()
 
     cd image
     make images
+    cd ..
 }
 
 make clean

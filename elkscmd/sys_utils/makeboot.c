@@ -442,7 +442,7 @@ usage:
 	}
 
 	if (mkdir(MOUNTDIR, 0777) < 0)
-		fprintf(stderr, "Can't create temp mount point %s, may already exist\n", MOUNTDIR);
+		fprintf(stderr, "Temp mount point %s not created (may already exist)\n", MOUNTDIR);
 
 	if (mount(targetdevice, MOUNTDIR, fstype, 0) < 0) {
 		fprintf(stderr, "Error: Can't mount %s on %s\n", targetdevice, MOUNTDIR);

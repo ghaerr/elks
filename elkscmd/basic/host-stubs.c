@@ -3,8 +3,14 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#if __ia16__
 #include <arch/io.h>
-
+#else
+#define inb(port)           0
+#define inw(port)           0
+#define outb(value,port)
+#define outw(value,port)
+#endif
 #include "host.h"
 #include "basic.h"
 
