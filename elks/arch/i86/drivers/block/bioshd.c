@@ -381,6 +381,21 @@ static unsigned short int INITPROC bioshd_getfdinfo(void)
 	ndrives = (equip_flags >> 6) + 1;
 #endif
 
+#ifdef CONFIG_ARCH_PC98
+    for (drive = 0; drive < 4; drive++) {
+	if (peekb(0x55C,0) & (1 << drive)) {
+	    hd_drive_map[DRIVE_FD0 + ndrives] = drive + 0x90;
+	    ndrives++;	/* floppy drive count*/
+	}
+    }
+
+    /* set drive type for floppies*/
+    for (drive = 0; drive < ndrives; drive++) {
+	/* set drive type to 1.232M on PC-98 systems. */
+	*drivep = fd_types[5];
+	drivep++;
+    }
+#else
     /* Use INT 13h function 08h normally if PC/AT or higher*/
     if (sys_caps & CAP_DRIVE_PARMS) {
 	BD_AX = BIOSHD_DRIVE_PARMS;
@@ -412,6 +427,7 @@ static unsigned short int INITPROC bioshd_getfdinfo(void)
 
 	drivep++;
     }
+#endif
     return ndrives;
 }
 #endif
