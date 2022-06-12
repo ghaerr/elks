@@ -16,7 +16,7 @@
  *  6*  HW floppy drive     CONFIG_BLK_DEV_FD       Driver doesn't compile
  *  7   Unused (LPT)
  *  8   Unused (RTC)
- *  9   EL3 (/dev/eth)      CONFIG_ETH_EL3          Optional
+ *  9   3C509/EL3 (/dev/eth) CONFIG_ETH_EL3         Optional
  * 10   Unused (USB)                                Turned off
  * 11   Unused (Sound)                              Turned off
  * 12   NE2K (/dev/eth)     CONFIG_ETH_NE2K         Optional
@@ -90,7 +90,8 @@
 #define COM4_PORT	0x2e8
 #define COM4_IRQ	2		/* unregistered unless COM4_PORT found*/
 
-/* ne2k, ne2k.c, may be overridden in /bootopts using netirq= and netport= */
+/* Ethernet card settings may be overridden in /bootopts using netirq= and netport= */ 
+/* ne2k, ne2k.c */ 
 #define NE2K_PORT	0x300
 #define NE2K_IRQ	12
 
@@ -99,10 +100,9 @@
 #define WD_IRQ		2
 #define WD_RAM		0xCE00
 
-/* el3, el3.c */
+/* el3/3C509, el3.c */
 #define EL3_PORT	0x330
 #define EL3_IRQ		9
-
 
 /* bioshd.c*/
 #define FDC_DOR		0x3F2		/* floppy digital output register*/
