@@ -1,5 +1,5 @@
 //
-// Low level routines for ELKS el3 ethernet driver (3c509)
+// Low level routines for ELKS EtherLink III ethernet driver (3c509)
 //
 // Helge Skrivervik (@mellvik) june 2022
 //
@@ -19,40 +19,33 @@
 //-----------------------------------------------------------------------------
 // Read data from port
 //-----------------------------------------------------------------------------
-// arg1: Port address (int)
-// arg2: Data pointer (char *)
-// arg3: Words to read (int)
+// void el3_insw(int port, char *data, int count)
 //
-// returns:
-// Nothing
 
 	.global el3_insw
 
 el3_insw:
 
-	cli
-	push    %bp
-	mov     %sp,%bp
 	push    %di
+	mov	%sp,%di
 	push	%es
 
-	mov	4(%bp),%dx	// Port
-	mov	6(%bp),%di	// Buffer pointer
-	mov	8(%bp),%cx	// length (words)
+	mov	4(%di),%dx	// Port
+	mov	8(%di),%cx	// length (words)
+	mov	6(%di),%di	// Buffer pointer
 
         mov     current,%bx
         mov     TASK_USER_DS(%bx),%es	// destination segment = user process
+	cli
 
 word_loop:
         in      %dx,%ax
         stosw
         loop    word_loop
 
-        //pop     %bx
+	sti
         pop     %es
         pop     %di
-	pop	%bp
-	sti
 
         ret
 
@@ -60,26 +53,21 @@ word_loop:
 //-----------------------------------------------------------------------------
 // Write data to port
 //-----------------------------------------------------------------------------
-// arg1: Port address (int)
-// arg2: Data pointer (char *)
-// arg3: Word count (int)
+// void el3_sendpk(int port, char *data, int count)
 //
-// returns:
-// Nothing
 
 	.global el3_sendpk
 
 el3_sendpk:
-	cli
-        push    %bp
-        mov     %sp,%bp
         push    %si
+	mov	%sp,%si
 	push	%ds
 
-        mov     8(%bp),%cx      // word count
-        mov     6(%bp),%si      // buffer addr
-	mov	4(%bp),%dx	// Port
+	mov	4(%si),%dx	// Port
+        mov     8(%si),%cx      // byte count
+        mov     6(%si),%si      // buffer addr
 
+	cli
 	mov	%cx,%ax
 	outw	%ax,%dx		// send length
 	xor	%ax,%ax
@@ -96,11 +84,10 @@ wr_loop:
 	out     %ax,%dx
 	loop	wr_loop
 
+	sti
 	pop     %ds
 	pop	%si
-	pop	%bp
 
-	sti
 	ret
 
 //-------------------------------------------------
