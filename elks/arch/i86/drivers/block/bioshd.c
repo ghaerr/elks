@@ -384,16 +384,16 @@ static unsigned short int INITPROC bioshd_getfdinfo(void)
 #ifdef CONFIG_ARCH_PC98
     for (drive = 0; drive < 4; drive++) {
 	if (peekb(0x55C,0) & (1 << drive)) {
+#ifdef CONFIG_IMG_FD1232
 	    hd_drive_map[DRIVE_FD0 + ndrives] = drive + 0x90;
+	    *drivep = fd_types[5];
+#else
+	    hd_drive_map[DRIVE_FD0 + ndrives] = drive + 0x30;
+	    *drivep = fd_types[3];
+#endif
 	    ndrives++;	/* floppy drive count*/
+	    drivep++;
 	}
-    }
-
-    /* set drive type for floppies*/
-    for (drive = 0; drive < ndrives; drive++) {
-	/* set drive type to 1.232M on PC-98 systems. */
-	*drivep = fd_types[5];
-	drivep++;
     }
 #else
     /* Use INT 13h function 08h normally if PC/AT or higher*/
@@ -608,6 +608,12 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 	drivep->cylinders = 0;
 	count = 0;
 	do {
+#ifdef CONFIG_ARCH_PC98
+	    if (count == 1)
+	        hd_drive_map[target + DRIVE_FD0] = 0x30 | (hd_drive_map[target + DRIVE_FD0] & 0x0F); /* 1.44 MB */
+	    else
+	        hd_drive_map[target + DRIVE_FD0] = 0x90 | (hd_drive_map[target + DRIVE_FD0] & 0x0F); /* 1.232 MB */
+#endif
 	    /* skip probing first entry */
 	    if (count && read_sector(target, track_probe[count] - 1, 1))
 		break;
@@ -622,6 +628,12 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 	drivep->sectors = 0;
 	count = 0;
 	do {
+#ifdef CONFIG_ARCH_PC98
+	    if (count == 1)
+	        hd_drive_map[target + DRIVE_FD0] = 0x30 | (hd_drive_map[target + DRIVE_FD0] & 0x0F); /* 1.44 MB */
+	    else
+	        hd_drive_map[target + DRIVE_FD0] = 0x90 | (hd_drive_map[target + DRIVE_FD0] & 0x0F); /* 1.232 MB */
+#endif
 	    /* skip reading first entry */
 	    if (count && read_sector(target, 0, sector_probe[count]))
 		break;
