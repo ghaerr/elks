@@ -273,12 +273,13 @@ static int ne2k_ioctl(struct inode *inode, struct file *file, unsigned int cmd, 
 
 	switch (cmd) {
 		case IOCTL_ETH_ADDR_GET:
-			memcpy_tofs((byte_t *)arg, mac_addr, 6);
+			err = verified_memcpy_tofs((byte_t *)arg, mac_addr, 6);
 			break;
 
 #if LATER
 		case IOCTL_ETH_ADDR_SET:
-			memcpy_fromfs(mac_addr, (byte_t *) arg, 6);
+			if ((err = verified_memcpy_fromfs(mac_addr, (byte_t *) arg, 6)) != 0)
+				break;
 			ne2k_addr_set(mac_addr);
 			printk("eth: MAC address changed to %02x", mac_addr[0]);
 			for (i = 1; i < 6; i++) printk(":%02x", mac_addr[i]);
@@ -288,7 +289,7 @@ static int ne2k_ioctl(struct inode *inode, struct file *file, unsigned int cmd, 
 
 		case IOCTL_ETH_GETSTAT:
 			/* Return the entire netif_struct */
-			memcpy_tofs((char *)arg, &netif_stat, sizeof(netif_stat));
+			err = verified_memcpy_tofs((char *)arg, &netif_stat, sizeof(netif_stat));
 			break;
 
 		default:

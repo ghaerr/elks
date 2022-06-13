@@ -248,51 +248,6 @@ check_dma_w:
 	pop     %cx
 	ret
 
-#if 0
-//-------------------------------------------------------------------------
-// This is an (untested) skeleton routine for DMA-assisted packet transfer
-// from the NIC to host memory.
-// TODO: Add DMA channel setup and teardown. 
-//
-dma_r:	// Use the send data command to read exactly one backet, 
-	// the nic does everything on its own, needs only ES:DI
-	
-	push	%ax
-	push	%di
-	push	%dx
-	push    %es
-
-	mov     %ds,%ax
-	mov     %ax,%es	// only required if we're setting up the dma locally
-
-	mov	net_port,%dx
-	add	$io_ne2k_tx_len2,%dx
-	mov	$0x0f,%al	// prep for using the 'send packet' cmd
-	out	%al,%dx
-
-	mov	net_port,%dx	// command register
-	mov	$0x18,%al	// send packet
-	out	%al,%dx
-	// now the dma does the rest, and an RDC interrupt is fielded when complete
-	// we can loop here while waiting, or return and handle completion separately.
-	in	%dx,%al
-	test	$0x40,%al
-	jz	rlp
-rlp1:	
-	mov	net_port,%dx
-	add	$io_ne2k_int_stat,%dx
-	mov     $0x40,%al       // reset (only this bit in) ISR
-	out     %al,%dx         // Clear RDC
-
-rlp_ret:	
-	pop     %es
-	pop	%dx
-	pop	%di
-	pop	%ax
-
-	ret
-#endif
-	
 //-----------------------------------------------------------------------------
 // Read data block from chip with internal DMA
 //-----------------------------------------------------------------------------
