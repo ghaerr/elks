@@ -1,6 +1,6 @@
-/* 3c509.c: A 3c509 EtherLink3 ethernet driver for linux. */
 /*
-	For ELKS by Helge Skrivervik (@mellvik) may/june 2022
+	Driver for 3Com Etherlink III/3C5x9 network interface.
+	For ELKS and 3C509 by Helge Skrivervik (@mellvik) may/june 2022
 
 	Adapted from Linux driver by Donald Becker et al.
 
@@ -35,9 +35,6 @@ static int el3_debug = 0;
 #endif
 
 
-/* To minimize the size of the driver source I only define operating
-   constants if they are used several times.  You'll need the manual
-   anyway if you want to understand driver details. */
 /* Offsets from base I/O address. */
 #define EL3_DATA 0x00
 #define EL3_CMD 0x0eU
@@ -65,6 +62,7 @@ enum c509status {
 	IntReq = 0x0040U, StatsFull = 0x0080U, CmdBusy = 0x1000U, };
 
 static int active_imask = IntLatch|RxComplete|TxAvailable|TxComplete|StatsFull;
+
 /* The SetRxFilter command accepts the following classes: */
 enum RxFilter {
 	RxStation = 1, RxMulticast = 2, RxBroadcast = 4, RxProm = 8 };
@@ -101,7 +99,6 @@ enum RxFilter {
 static int el3_isa_probe();
 //static word_t read_eeprom(int, int);
 static word_t id_read_eeprom(int);
-void el3_drv_init();
 static size_t el3_write(struct inode *, struct file *, char *, size_t);
 static void el3_int(int, struct pt_regs *);
 static size_t el3_read(struct inode *, struct file *, char *, size_t);
@@ -110,13 +107,12 @@ static int el3_open(struct inode *, struct file *);
 static int el3_ioctl(struct inode *, struct file *, unsigned int, unsigned int);
 static int el3_select(struct inode *, struct file *, int);
 static void el3_down();
+static void update_stats();
+void el3_drv_init();
 void el3_sendpk(int, char *, int);
 void el3_insw(int, char *, int);
-extern void el3_mdelay(int);
-static void update_stats();
 
-//static int current_tag;
-// static struct net_device *el3_devs[EL3_MAX_CARDS];
+extern void el3_mdelay(int);
 
 /* Maximum events (Rx packets, etc.) to handle at each interrupt. */
 static int max_interrupt_work = 5;
@@ -128,7 +124,6 @@ int net_port = EL3_PORT; /* default IO PORT, changed by netport= in /bootopts */
 
 struct netif_stat netif_stat =
 	{ 0, 0, 0, 0, 0, 0, {0x52, 0x54, 0x00, 0x12, 0x34, 0x57}};  /* QEMU default  + 1 */
-static char *mac_addr = (char *)&netif_stat.mac_addr;
 static int ioaddr;	// FIXME  remove later
 
 // Static data
@@ -198,7 +193,9 @@ static int el3_isa_probe( void )
 {
 	short lrs_state = 0xff;
 	int i;
-	word_t *mac = (word_t *)mac_addr;
+	//word_t *mac = (word_t *)mac_addr;
+	word_t *mac = (word_t *)&netif_stat.mac_addr;
+	byte_t *mac_addr = (byte_t *)mac;
 
 	/* ISA boards are detected by sending the ID sequence to the
 	   ID_PORT.  We find cards past the first by setting the 'current_tag'
@@ -283,13 +280,11 @@ static size_t el3_write(struct inode *inode, struct file *file, char *data, size
 	int res;
 
 	while (1) {
-		/*
-		 *	FIXME: May need to block other interrupts for the duration
-		 */
+
 		prepare_to_wait_interruptible(&txwait);
+
 		if (len > MAX_PACKET_ETH) len = MAX_PACKET_ETH;
 		if (len < 64) len = 64;
-		//printk("T%d^", len);
 
 		if (inw(ioaddr + TX_FREE) < (len + 4)) {
 			// NO space in FIFO, wait
@@ -303,7 +298,9 @@ static size_t el3_write(struct inode *inode, struct file *file, char *data, size
 				break;
 			}
 		}
-		//EXPERIMENTAL
+		//printk("T");
+		//printk("T%d^", len);
+		
 		outw(SetIntrEnb | 0x0, ioaddr + EL3_CMD);	// Block interrupts
 		
 		el3_sendpk(ioaddr + TX_FIFO, data, len);
@@ -311,12 +308,9 @@ static size_t el3_write(struct inode *inode, struct file *file, char *data, size
 		/* Interrupt us when the FIFO has room for max-sized packet. */
 		// FIXME: Unsure about this one ... Tune later
 		outw(SetTxThreshold + 1536, ioaddr + EL3_CMD);
-		//EXPERIMENTAL
-		outw(SetIntrEnb | active_imask, ioaddr + EL3_CMD);	// Reenable interrupts
 
 		outb(0x00, ioaddr + TX_STATUS); /* Pop the status stack. */
 						/* may not be the right place to do this */
-		// END EXPERIMENTAL
 
 		/* Clear the Tx status stack. */
 #if 0		// FIXME - check if this is OK to remove.
@@ -332,12 +326,12 @@ static size_t el3_write(struct inode *inode, struct file *file, char *data, size
 			}
 		}
 #endif
-		// FIXME - need a better way to do this. Maybe trust interrupts ...
-		while (inb(ioaddr + EL3_STATUS) & CmdBusy) 
-			el3_mdelay(1);		// Wait - for now, to avoid collision
+		// FIXME - may not be needed. Maybe trust interrupts ...
+		//while (inb(ioaddr + EL3_STATUS) & CmdBusy) 
+			//el3_mdelay(1);		// Wait - for now, to avoid collision
 
 		res = len;
-		//printk("%02x@", inb(ioaddr + TX_STATUS));
+		outw(SetIntrEnb | active_imask, ioaddr + EL3_CMD);	// Reenable interrupts
 		break;
 	}
 	return res;
@@ -390,10 +384,11 @@ static void el3_int(int irq, struct pt_regs *regs)
 			wake_up(&txwait);
 		}
 		if (status & (AdapterFailure | StatsFull | TxComplete)) {
-			//printk("F");
+			printk("F");
 			/* Handle all uncommon interrupts. */
 			if (status & StatsFull)			/* Empty statistics. */
 				update_stats();
+
 #if 0			// Not currently used
 			if (status & RxEarly) {
 				//el3_rx(dev);
@@ -406,7 +401,7 @@ static void el3_int(int irq, struct pt_regs *regs)
 				int i = 4;
 
 				printk("el3: Transmit error, status %02x\n", inb(ioaddr + TX_STATUS));
-				while (--i>0 && (tx_status = inb(ioaddr + TX_STATUS)) > 0) {
+				while (--i > 0 && (tx_status = inb(ioaddr + TX_STATUS)) > 0) {
 					//if (tx_status & 0x38) dev->stats.tx_aborted_errors++;
 					if (tx_status & 0x30) outw(TxReset, ioaddr + EL3_CMD);
 					if (tx_status & 0x3C) outw(TxEnable, ioaddr + EL3_CMD);
@@ -427,7 +422,7 @@ static void el3_int(int irq, struct pt_regs *regs)
 		}
 
 		if (--i < 0) {	// This should not happen
-			printk("eth: EL3 Infinite loop in interrupt, status %4.4x.\n",
+			printk("eth: Infinite loop in interrupt, status %4.4x.\n",
 				   status);
 
 			/* Clear all interrupts. */
@@ -440,10 +435,6 @@ static void el3_int(int irq, struct pt_regs *regs)
 
 	outw(SetIntrEnb | active_imask, ioaddr + EL3_CMD);
 	//printk("i%04x!", inw(ioaddr + EL3_STATUS));
-	if (el3_debug > 4) {
-		pr_debug("EL3: exiting interrupt, status %4.4x.\n",
-			   inw(ioaddr + EL3_STATUS));
-	}
 
 	return;
 }
@@ -539,11 +530,12 @@ static size_t el3_read(struct inode *inode, struct file *filp, char *data, size_
 
 	while(1) {
 		
-		//printk("R");
+		rx_status = inw(ioaddr + RX_STATUS);
+		//printk("R%04x", rx_status);		// DEBUG
 		prepare_to_wait_interruptible(&rxwait);
 
 		//if (!(rx_status & 0x7ff)) {
-		if ((rx_status = inw(ioaddr + RX_STATUS)) & 0x8000) {
+		if (rx_status & 0x8000) {
 			if (filp->f_flags & O_NONBLOCK) {
 				res = -EAGAIN;
 				break;
@@ -554,10 +546,8 @@ static size_t el3_read(struct inode *inode, struct file *filp, char *data, size_
 				break;
 			}
 		}
-		//printk("%d", rx_status&0x7ff);		// DEBUG
-		// Early read is not implemented, thus only one read operation.
-		// Assuming that we actually have data.
-		res = -EIO;
+
+		outw(SetIntrEnb | 0x0, ioaddr + EL3_CMD);	// Block interrupts
 		if (rx_status & 0x4000) { /* Error, update stats. */
 			//short error = rx_status & 0x3800;
 
@@ -576,14 +566,11 @@ static size_t el3_read(struct inode *inode, struct file *filp, char *data, size_
 #endif
 			inw(ioaddr + EL3_STATUS); 				/* Delay. */
 			while (inw(ioaddr + EL3_STATUS) & 0x1000)
-				pr_debug("	Waiting for 3c509 to discard packet, status %x.\n",
+				pr_debug("eth: discard error packet, status %x.\n",
 					  inw(ioaddr + EL3_STATUS) );
 			res = -EIO;
 		} else {
 			short pkt_len = rx_status & 0x7ff;
-			if (el3_debug > 4)
-				pr_debug("Receiving packet size %d status %4.4x.\n",
-					  pkt_len, rx_status);
 			el3_insw(ioaddr + RX_FIFO, data, (pkt_len + 1) >> 1); //Word size
 
 			outw(RxDiscard, ioaddr + EL3_CMD); /* Pop top Rx packet. */
@@ -596,13 +583,12 @@ static size_t el3_read(struct inode *inode, struct file *filp, char *data, size_
 	finish_wait(&rxwait);
 	rx_status = inw(ioaddr + RX_STATUS);
 	if (rx_status & 0x07ff)
-		wake_up(&rxwait);	// more data
-	else {
-		active_imask |= RxComplete;	// activate 
-		outw(SetIntrEnb | active_imask, ioaddr + EL3_CMD);
-	}
+		wake_up(&rxwait);	// more data available
+	else
+		active_imask |= RxComplete;	// reactivate recv interrupts
 
-	//printk("RR%d:", res);
+	outw(SetIntrEnb | active_imask, ioaddr + EL3_CMD);
+	//printk("r%x:", rx_status);
 	return res;
 }
 
@@ -630,6 +616,7 @@ static void el3_down( void )
 static int el3_open(struct inode *inode, struct file *file)
 {
 	int i;
+	char *mac_addr = (char *)&netif_stat.mac_addr;
 
 	if (!(netif_stat.if_status & NETIF_FOUND)) 
 		return(-EINVAL);	// Does not exist 
@@ -637,17 +624,14 @@ static int el3_open(struct inode *inode, struct file *file)
 		return(-EBUSY);		// Already open
 	} 
 
-	/* Activating the board - done already, repeat doesn't harm */
+	/* Activating the board - done in _init, repeat doesn't harm */
 	outw(ENABLE_ADAPTER, ioaddr + WN0_CONF_CTRL);
 
 	/* Set the IRQ line. */
 	outw((net_irq << 12) | 0x0f00, ioaddr + WN0_IRQ);
 
 	/* Set the station address in window 2 each time opened. */
-	// FIXME: May not be required, done at init time ... 
 	EL3WINDOW(2);
-
-	// Set the MAC address
 	for (i = 0; i < 6; i++)
 		outb(mac_addr[i], ioaddr + i);
 	outw(RxReset, ioaddr + EL3_CMD);
@@ -662,14 +646,7 @@ static int el3_open(struct inode *inode, struct file *file)
 	// The IntStatusEnb reg defines which interrupts will be visible,
 	// The SetIntrEnb reg defines which of the visible interrupts will actually 
 	// trigger an interrupt (the INTR mask). 
-	outw(IntStatusEnb | 0xff, ioaddr + EL3_CMD); // Allow all status bits to be seen,
-						     // May want to restrict this to the
-						     // 'interesting' bits
-	// Allow these interrupts for now
 	outw(SetIntrEnb | active_imask, ioaddr + EL3_CMD);
-
-	/* Accept b-cast and phys addr only. */
-	outw(SetRxFilter | RxStation | RxBroadcast, ioaddr + EL3_CMD);
 
 	// Skip thinnet & AUI; we support TP only
 	EL3WINDOW(4);
@@ -677,14 +654,15 @@ static int el3_open(struct inode *inode, struct file *file)
 	el3_mdelay(1000);
 	EL3WINDOW(1);
 	
-	outw(SetTxThreshold | 1040, ioaddr + EL3_CMD); /* Signal TxAvailable when this # of 
+	/* FIXME - decrease this value to see if it impacts performance */
+	outw(SetTxThreshold | 1536, ioaddr + EL3_CMD); /* Signal TxAvailable when this # of 
 							* bytes is available */
 	//outw(SetRxThreshold | 60, ioaddr + EL3_CMD);	// Receive interrupts when 60 bytes
 							// are available
-	outw(RxEnable, ioaddr + EL3_CMD); /* Enable the receiver. */
-	outw(TxEnable, ioaddr + EL3_CMD); /* Enable transmitter. */
 
-#if LATER	// This is tuning, fix later
+#if LATER	// This is tuning, fix later.
+		// NOTE: Enabling full diplex is probably a bad idea, see
+		// https://www.kernel.org/doc/html/v5.17/networking/device_drivers/ethernet/3com/3c509.html
 	{
 		int sw_info, net_diag;
 
@@ -726,6 +704,7 @@ static int el3_open(struct inode *inode, struct file *file)
 		/* Enable link beat and jabber check. */
 		outw(inw(ioaddr + WN4_MEDIA) | MEDIA_TP, ioaddr + WN4_MEDIA);
 	}
+#endif
 
 	/* Switch to the stats window, and clear all stats by reading. */
 	outw(StatsDisable, ioaddr + EL3_CMD);
@@ -744,15 +723,12 @@ static int el3_open(struct inode *inode, struct file *file)
 
 	outw(RxEnable, ioaddr + EL3_CMD); /* Enable the receiver. */
 	outw(TxEnable, ioaddr + EL3_CMD); /* Enable transmitter. */
+
 	/* Allow status bits to be seen. */
 	outw(IntStatusEnb | 0xff, ioaddr + EL3_CMD);
-	/* Ack all pending events, and set active indicator mask. */
-	outw(AckIntr | IntLatch | TxAvailable | RxEarly | IntReq,
-		 ioaddr + EL3_CMD);
-	outw(SetIntrEnb | IntLatch|TxAvailable|TxComplete|RxComplete|StatsFull,
-		 ioaddr + EL3_CMD);
+
+	outw(SetIntrEnb | active_imask, ioaddr + EL3_CMD);
 	
-#endif
 	netif_stat.if_status |= NETIF_IS_OPEN;
 	return 0;
 }
@@ -768,22 +744,12 @@ static int el3_ioctl(struct inode *inode, struct file *file, unsigned int cmd, u
 	
 	switch (cmd) {
 		case IOCTL_ETH_ADDR_GET:
-			verified_memcpy_tofs((byte_t *)arg, mac_addr, 6);
+			err = verified_memcpy_tofs((byte_t *)arg, mac_addr, 6);
 			break;
 
-#if LATER       
-		case IOCTL_ETH_ADDR_SET:
-			verified_memcpy_fromfs(mac_addr, (byte_t *) arg, 6);
-			ne2k_addr_set(mac_addr); 
-			printk("eth: MAC address changed to %02x", mac_addr[0]);
-			for (i = 1; i < 6; i++) printk(":%02x", mac_addr[i]&0xff);
-			printk("\n");
-			break;
-#endif	  
-		
 		case IOCTL_ETH_GETSTAT:
 			/* Return the entire netif_struct */
-			verified_memcpy_tofs((char *)arg, &netif_stat, sizeof(netif_stat));
+			err = verified_memcpy_tofs((char *)arg, &netif_stat, sizeof(netif_stat));
 			break;
 		
 		default:
@@ -801,7 +767,11 @@ int el3_select(struct inode *inode, struct file *filp, int sel_type)
 {       
 	int res = 0;
 	
-	//printk("S:%d;",sel_type);
+	/* Need to block interrupts to avoid a race condition which happens if
+	   an interrupt happens just after we check RX_STATUS. The interrupt
+	   will turn off recdeive interrupts and select doesn't know that we have data.
+	 */
+	outw(SetIntrEnb | 0x0, ioaddr + EL3_CMD);
 	switch (sel_type) {
 		case SEL_OUT:
 			// FIXME - may need a more accurate tx status test
@@ -813,10 +783,10 @@ int el3_select(struct inode *inode, struct file *filp, int sel_type)
 			break;
 		
 		case SEL_IN:
-			// FIXME: Unsure whether this is the optimal
-			// test for select()
-			//if (!(inw(ioaddr+EL3_STATUS) & RxComplete)) {
+
+			// Don't use RxComplete for this test, it has been masked out!
 			if (inw(ioaddr+RX_STATUS) & 0x8000) {
+				//printk("s%x", inw(ioaddr+RX_STATUS));
 				select_wait(&rxwait);
 				break;
 			}
@@ -826,6 +796,8 @@ int el3_select(struct inode *inode, struct file *filp, int sel_type)
 		default:
 			res = -EINVAL;
 	}
+	//printk("S%d", res);
+	outw(SetIntrEnb | active_imask, ioaddr + EL3_CMD);	// reenable interrupts
 	return res;
 }
 
