@@ -75,7 +75,7 @@ el3_sendpk:
 	inc	%cx
 	shr	%cx		// make word count
 	inc	%cx
-	and	$0xfe,%cx	// make dword aligned
+	and	$0xfffe,%cx	// make dword aligned
 	mov     current,%bx	// setup for far memory xfer
 	mov     TASK_USER_DS(%bx),%ds
 
