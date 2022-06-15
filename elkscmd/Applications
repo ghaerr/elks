@@ -117,7 +117,7 @@ misc_utils/od					:miscutil				:1200k	:1440k
 misc_utils/hd					:miscutil				:1200k	:1440k
 misc_utils/time					:miscutil			:720k
 misc_utils/kilo					:miscutil				:1200k	:1440k
-misc_utils/mined				:miscutil				:1200k	:1440k
+misc_utils/mined ::bin/edit		:miscutil				:1200k	:1440k
 misc_utils/sleep				:miscutil				:1200k	:1440k
 misc_utils/tty					:miscutil				:1200k	:1440k
 misc_utils/uuencode				:miscutil				:1200k	:1440k
