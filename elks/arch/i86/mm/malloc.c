@@ -274,8 +274,13 @@ int sys_brk(__pptr newbrk)
 int sys_sbrk (int increment, __u16 * pbrk)
 {
 	__pptr brk = current->t_endbrk;		/* always return start of old break*/
+	int err;
+
+	err = verify_area(VERIFY_WRITE, pbrk, sizeof(*pbrk));
+	if (err)
+		return err;
 	if (increment) {
-		int err = sys_brk(brk + increment);
+		err = sys_brk(brk + increment);
 		if (err) return err;
 	}
 
@@ -290,9 +295,11 @@ int sys_fmemalloc(int paras, unsigned short *pseg)
 	int err;
 
 	err = verify_area(VERIFY_WRITE, pseg, sizeof(*pseg));
-	if (err) return err;
+	if (err)
+		return err;
 	seg = seg_alloc((segext_t)paras, SEG_FLAG_PROG);
-	if (!seg) return -ENOMEM;
+	if (!seg)
+		return -ENOMEM;
 	seg->pid = current->pid;
 	put_user(seg->base, pseg);
 	return 0;
