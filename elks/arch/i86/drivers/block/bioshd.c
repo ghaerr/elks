@@ -504,6 +504,18 @@ static void map_drive(int *drive)
 	*drive = hd_drive_map[*drive];
 }
 
+#ifdef CONFIG_ARCH_PC98
+/* switch device */
+static void switch_device98(int target, unsigned char device, struct drive_infot *drivep)
+{
+    hd_drive_map[target + DRIVE_FD0] = (device | (hd_drive_map[target + DRIVE_FD0] & 0x0F));
+    if (device == 0x30)
+	*drivep = fd_types[3];	/* 1.44 MB */
+    else if (device == 0x90)
+	*drivep = fd_types[5];	/* 1.232 MB */
+}
+#endif
+
 static int read_sector(int drive, int cylinder, int sector)
 {
     int count = 1;		/* no retries on probing*/
@@ -607,18 +619,25 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 
 	drivep->cylinders = 0;
 	count = 0;
-	do {
 #ifdef CONFIG_ARCH_PC98
-	    if (count == 1)
-	        hd_drive_map[target + DRIVE_FD0] = 0x30 | (hd_drive_map[target + DRIVE_FD0] & 0x0F); /* 1.44 MB */
-	    else
-	        hd_drive_map[target + DRIVE_FD0] = 0x90 | (hd_drive_map[target + DRIVE_FD0] & 0x0F); /* 1.232 MB */
-#endif
+	do {
+	    if (count)
+	        switch_device98(target, 0x30, drivep);	/* 1.44 MB */
+	    /* skip probing first entry */
+	    if (count && read_sector(target, track_probe[count] - 1, 1)) {
+	        switch_device98(target, 0x90, drivep);	/* 1.232 MB */
+	        break;
+	    }
+	    drivep->cylinders = track_probe[count];
+	} while (++count < sizeof(track_probe)/sizeof(track_probe[0]));
+#else
+	do {
 	    /* skip probing first entry */
 	    if (count && read_sector(target, track_probe[count] - 1, 1))
 		break;
 	    drivep->cylinders = track_probe[count];
 	} while (++count < sizeof(track_probe)/sizeof(track_probe[0]));
+#endif
 
 /* Next, probe for sector number. We probe on track 0, which is
  * safe for all formats, and if we get a seek error, we assume that
@@ -627,18 +646,25 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 
 	drivep->sectors = 0;
 	count = 0;
-	do {
 #ifdef CONFIG_ARCH_PC98
-	    if (count == 1)
-	        hd_drive_map[target + DRIVE_FD0] = 0x30 | (hd_drive_map[target + DRIVE_FD0] & 0x0F); /* 1.44 MB */
-	    else
-	        hd_drive_map[target + DRIVE_FD0] = 0x90 | (hd_drive_map[target + DRIVE_FD0] & 0x0F); /* 1.232 MB */
-#endif
+	do {
+	    if (count)
+	        switch_device98(target, 0x30, drivep);	/* 1.44 MB */
+	    /* skip reading first entry */
+	    if (count && read_sector(target, 0, sector_probe[count])) {
+	        switch_device98(target, 0x90, drivep);	/* 1.232 MB */
+	        break;
+	    }
+	    drivep->sectors = sector_probe[count];
+	} while (++count < sizeof(sector_probe)/sizeof(sector_probe[0]));
+#else
+	do {
 	    /* skip reading first entry */
 	    if (count && read_sector(target, 0, sector_probe[count]))
 		break;
 	    drivep->sectors = sector_probe[count];
 	} while (++count < sizeof(sector_probe)/sizeof(sector_probe[0]));
+#endif
 
 	drivep->heads = 2;
 
@@ -653,7 +679,7 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 		   (found_PB == 2)? "DOS format," :
 		   (found_PB == 1)? "ELKS bootable,": "probed, probably",
 		   drivep->cylinders, drivep->heads, drivep->sectors);
-
+	    printk("debug : device %x sector_size %d\n", hd_drive_map[target + DRIVE_FD0], drivep->sector_size);
 	}
 	hdp->start_sect = 0;
 	hdp->nr_sects = ((sector_t)(drivep->sectors * drivep->heads))
