@@ -54,8 +54,10 @@ struct msghdr {
 
 #ifdef __KERNEL__
 struct proto_ops;
-extern int sock_register(int,struct proto_ops *);
-extern int move_addr_to_user(char *,size_t,char *,int *);
+struct socket;
+int sock_register(int,struct proto_ops *);
+int move_addr_to_user(char *,size_t,char *,int *);
+int sock_awaitconn(struct socket *mysock, struct socket *servsock, int flags);
 #endif
 
 #endif
