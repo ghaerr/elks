@@ -10,6 +10,7 @@ struct netif_stat {
 	__u16 oflow_errors;	/* Receive buffer overflow interrupts */
 	__u16 if_status;	/* Interface status flags */
 	int   oflow_keep;	/* # of packets to keep if overflow */
+	int   usecount;		/* Count opens */
 	char  mac_addr[6];	/* Current MAC address */
 };
 
@@ -19,7 +20,7 @@ struct netif_stat {
 #define NETIF_FORCE_4K	2
 #define NETIF_IS_OPEN	4
 #define NETIF_IS_QEMU	8
-#define NETIF_FOUND	16
+#define NETIF_FOUND	16	/* To avoid looping in QEMU */
 
 
 

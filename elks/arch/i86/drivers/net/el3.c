@@ -28,13 +28,6 @@
 #include <linuxmt/netstat.h>
 #include <netinet/in.h>
 
-#ifdef EL3_DEBUG
-static int el3_debug = EL3_DEBUG;
-#else
-static int el3_debug = 0;
-#endif
-
-
 /* Offsets from base I/O address. */
 #define EL3_DATA 0x00
 #define EL3_CMD 0x0eU
@@ -61,7 +54,7 @@ enum c509status {
 	TxAvailable = 0x0008U, RxComplete = 0x0010U, RxEarly = 0x0020U,
 	IntReq = 0x0040U, StatsFull = 0x0080U, CmdBusy = 0x1000U, };
 
-static int active_imask = IntLatch|RxComplete|TxAvailable|TxComplete|StatsFull;
+static int active_imask = IntLatch|RxComplete|TxAvailable|TxComplete|AdapterFailure|StatsFull;
 
 /* The SetRxFilter command accepts the following classes: */
 enum RxFilter {
@@ -117,13 +110,11 @@ extern void el3_mdelay(int);
 /* Maximum events (Rx packets, etc.) to handle at each interrupt. */
 static int max_interrupt_work = 5;
 
-#define pr_debug printk
-
 int net_irq = EL3_IRQ;  /* default IRQ, changed by netirq= in /bootopts */
 int net_port = EL3_PORT; /* default IO PORT, changed by netport= in /bootopts */
 
 struct netif_stat netif_stat =
-	{ 0, 0, 0, 0, 0, 0, {0x52, 0x54, 0x00, 0x12, 0x34, 0x57}};  /* QEMU default  + 1 */
+	{ 0, 0, 0, 0, 0, 0, 0, {0x52, 0x54, 0x00, 0x12, 0x34, 0x57}};  /* QEMU default  + 1 */
 static int ioaddr;	// FIXME  remove later
 
 // Static data
@@ -214,8 +205,8 @@ static int el3_isa_probe( void )
 	}
 	outb(0xd0, el3_id_port);	// Set tag
 
-	outb(0xd0, el3_id_port);			// select tag (0)
-	outb(0xe0 |(ioaddr >> 4), el3_id_port );	// Activate
+	outb(0xd0, el3_id_port);		// select tag (0)
+	outb(0xe0 |(ioaddr >> 4), el3_id_port );// Set IOBASE address, activate
 	printk("eth: 3C509 @ IRQ %d, port %02x", net_irq, ioaddr);
 
 	if ((i = id_read_eeprom(EEPROM_MFG_ID)) != 0x6d50) {
@@ -269,8 +260,7 @@ static word_t id_read_eeprom(int index)
 	for (bit = 15; bit >= 0; bit--)
 		word = (word << 1) + (inb(el3_id_port) & 0x01);
 
-	if (el3_debug > 3)
-		pr_debug("  3c509 EEPROM word %d %04x.\n", index, word);
+	//printk("3c509 EEPROM word %d %04x.\n", index, word);
 
 	return word;
 }
@@ -369,22 +359,38 @@ static void el3_int(int irq, struct pt_regs *regs)
 		//printk("/%04x;", status);
 
 		if (status & (RxEarly | RxComplete)) {
-			//printk("r:%04x;", inw(ioaddr + RX_STATUS));
-			wake_up(&rxwait);
+			int err = inw(ioaddr + RX_STATUS);
+			if (err & 0x4000) {	// We have an error, record and recover
+				if (err & 0x3800) { 	// packet error
+					printk("eth: RX error, status 0x%04x len %d\n", err&0x3800, err&0x7ff);
+					netif_stat.rx_errors++;
+				} else {
+					printk("eth: Receive overflow, buffer cleared\n");
+					netif_stat.oflow_errors++;
+				}
+				outw(RxDiscard, ioaddr + EL3_CMD); /* Discard this packet. */
+				inw(ioaddr + EL3_STATUS); 				/* Delay. */
+				while ((err = inw(ioaddr + EL3_STATUS) & 0x1000)) {
+					// FIXME: Doesn't seem to be a problem, delete prinft later
+					printk("eth: RX discard wait (%x)\n", err);
+					el3_mdelay(1);
+				}
+			} else {
+				wake_up(&rxwait);
+				active_imask &= ~RxComplete;	// Disable RxComplete for now
+			}
+
 			//outw(SetRxThreshold | 60, ioaddr + EL3_CMD);	// Reactivate before ack
-			active_imask &= ~RxComplete;	// Disable RxComplete for now
 		}
 
 		if (status & TxAvailable) {
 			//printk("t:%02x;", inb(ioaddr + TX_STATUS));
-			if (el3_debug > 5)
-				pr_debug("TxAvailable.\n");
+
 			/* There's room in the FIFO for a full-sized packet. */
 			outw(AckIntr | TxAvailable, ioaddr + EL3_CMD);
 			wake_up(&txwait);
 		}
 		if (status & (AdapterFailure | StatsFull | TxComplete)) {
-			printk("F");
 			/* Handle all uncommon interrupts. */
 			if (status & StatsFull)			/* Empty statistics. */
 				update_stats();
@@ -401,6 +407,7 @@ static void el3_int(int irq, struct pt_regs *regs)
 				int i = 4;
 
 				printk("el3: Transmit error, status %02x\n", inb(ioaddr + TX_STATUS));
+				netif_stat.tx_errors++;
 				while (--i > 0 && (tx_status = inb(ioaddr + TX_STATUS)) > 0) {
 					//if (tx_status & 0x38) dev->stats.tx_aborted_errors++;
 					if (tx_status & 0x30) outw(TxReset, ioaddr + EL3_CMD);
@@ -408,9 +415,10 @@ static void el3_int(int irq, struct pt_regs *regs)
 					outb(0x00, ioaddr + TX_STATUS); /* Pop the status stack. */
 				}
 			}
-			// Receive overflow
+			// Adapter failure is either transmit overrun or receive underrun,
+			// both are really driver or host faults, should not happen.
 			if (status & AdapterFailure) {
-				printk("eth: NIC overflow, status %04x\n", status);
+				printk("eth: NIC underrun/overrun, status %04x\n", status);
 				/* Adapter failure requires Rx reset and reinit. */
 				outw(RxReset, ioaddr + EL3_CMD);
 				/* Set the Rx filter to the current state. */
@@ -469,8 +477,7 @@ el3_get_stats(struct net_device *dev)
 static void update_stats( void )
 {
 
-	if (el3_debug > 5)
-		pr_debug("   Updating the statistics.\n");
+	//printk("eth: Updating statistics.\n");
 
 	/* Turn off statistics updates while reading. */
 	outw(StatsDisable, ioaddr + EL3_CMD);
@@ -485,7 +492,7 @@ static void update_stats( void )
 	dev->stats.tx_window_errors	+= inb(ioaddr + 4);
 	dev->stats.rx_fifo_errors	+= inb(ioaddr + 5);
 	dev->stats.tx_packets		+= inb(ioaddr + 6);
-	/* Rx packets	*/		   inb(ioaddr + 7);
+	/* Rx packets */		   inb(ioaddr + 7);
 	/* Tx deferrals */		   inb(ioaddr + 8);
 #else
 	{
@@ -493,6 +500,7 @@ static void update_stats( void )
 	while (i++ < 9) inb(ioaddr + i);
 	}
 #endif
+	// The final two are word size
 	inw(ioaddr + 10);	/* Total Rx and Tx octets. */
 	inw(ioaddr + 12);
 
@@ -508,17 +516,15 @@ static void update_stats( void )
 
 static void el3_release(struct inode *inode, struct file *file)
 {
-	el3_down();
+	if (--netif_stat.usecount == 0) {
+		el3_down();
 
-	netif_stat.if_status &= ~NETIF_IS_OPEN;
+		/* Switching to window 0 disables the IRQ. */
+		EL3WINDOW(0);
 
-	/* Switching back to window 0 disables the IRQ. */
-	//EL3WINDOW(0);
-	/* But we explicitly zero the IRQ line select anyway. Don't do
-	 * it on EISA cards, it prevents the module from getting an
-	 * IRQ after unload+reload... */
-	//outw(0x0f00, ioaddr + WN0_IRQ);
-
+		/* But we explicitly zero the IRQ line select anyway */
+		outw(0x0f00, ioaddr + WN0_IRQ);
+	}
 	return;
 }
 
@@ -534,8 +540,7 @@ static size_t el3_read(struct inode *inode, struct file *filp, char *data, size_
 		//printk("R%04x", rx_status);		// DEBUG
 		prepare_to_wait_interruptible(&rxwait);
 
-		//if (!(rx_status & 0x7ff)) {
-		if (rx_status & 0x8000) {
+		if (rx_status & 0x8000) {	// FIFO empty or incomplete
 			if (filp->f_flags & O_NONBLOCK) {
 				res = -EAGAIN;
 				break;
@@ -548,26 +553,18 @@ static size_t el3_read(struct inode *inode, struct file *filp, char *data, size_
 		}
 
 		outw(SetIntrEnb | 0x0, ioaddr + EL3_CMD);	// Block interrupts
-		if (rx_status & 0x4000) { /* Error, update stats. */
-			//short error = rx_status & 0x3800;
+		if (rx_status & 0x4000) {	/* Error, should not happen	*/
+						/* Should be caught in the int handler */
+			short error = rx_status & 0x3800;
 
 			outw(RxDiscard, ioaddr + EL3_CMD);
-#ifdef LATER		// FIX stats later
-			dev->stats.rx_errors++;
-
-			switch (error) {
-			case 0x0000:	dev->stats.rx_over_errors++; break;
-			case 0x0800:	dev->stats.rx_length_errors++; break;
-			case 0x1000:	dev->stats.rx_frame_errors++; break;
-			case 0x1800:	dev->stats.rx_length_errors++; break;
-			case 0x2000:	dev->stats.rx_frame_errors++; break;
-			case 0x2800:	dev->stats.rx_crc_errors++; break;
-			}
-#endif
+			printk("eth: Error in read (%04x), buffer cleared\n", error);
 			inw(ioaddr + EL3_STATUS); 				/* Delay. */
-			while (inw(ioaddr + EL3_STATUS) & 0x1000)
-				pr_debug("eth: discard error packet, status %x.\n",
-					  inw(ioaddr + EL3_STATUS) );
+			while ((res = inw(ioaddr + EL3_STATUS) & 0x1000)) {
+				/// FIXME: printk to be removed	later, seems stable
+				printk("eth: RD discard delay (%x)\n", res);
+				el3_mdelay(1);
+			}
 			res = -EIO;
 		} else {
 			short pkt_len = rx_status & 0x7ff;
@@ -581,14 +578,10 @@ static size_t el3_read(struct inode *inode, struct file *filp, char *data, size_
 	}
 	
 	finish_wait(&rxwait);
-	rx_status = inw(ioaddr + RX_STATUS);
-	if (rx_status & 0x07ff)
-		wake_up(&rxwait);	// more data available
-	else
-		active_imask |= RxComplete;	// reactivate recv interrupts
+	active_imask |= RxComplete;	// reactivate recv interrupts
 
 	outw(SetIntrEnb | active_imask, ioaddr + EL3_CMD);
-	//printk("r%x:", rx_status);
+	//printk("r%x:", inw(ioaddr + RX_STATUS));
 	return res;
 }
 
@@ -620,24 +613,27 @@ static int el3_open(struct inode *inode, struct file *file)
 
 	if (!(netif_stat.if_status & NETIF_FOUND)) 
 		return(-EINVAL);	// Does not exist 
-	if (netif_stat.if_status & NETIF_IS_OPEN) {
-		return(-EBUSY);		// Already open
-	} 
+	if (netif_stat.usecount++)
+		return(0);		// Already open
 
+	EL3WINDOW(0);		// TESTING ONLY
 	/* Activating the board - done in _init, repeat doesn't harm */
 	outw(ENABLE_ADAPTER, ioaddr + WN0_CONF_CTRL);
 
 	/* Set the IRQ line. */
-	outw((net_irq << 12) | 0x0f00, ioaddr + WN0_IRQ);
+	outw((net_irq << 12), ioaddr + WN0_IRQ);
+
+	//printk("el3: IOBASE %x\n", inw(ioaddr + WN0_ADDR_CONF) & 0xf);
 
 	/* Set the station address in window 2 each time opened. */
 	EL3WINDOW(2);
 	for (i = 0; i < 6; i++)
 		outb(mac_addr[i], ioaddr + i);
-	outw(RxReset, ioaddr + EL3_CMD);
-	outw(TxReset, ioaddr + EL3_CMD);	// FIXME: Join these two
 
 	EL3WINDOW(1);
+	outw(RxReset, ioaddr + EL3_CMD);
+	outw(TxReset, ioaddr + EL3_CMD);
+
 	for (i = 0; i < 31; i++)
 		inb(ioaddr+TX_STATUS);		// Clear TX status stack
 
@@ -652,6 +648,7 @@ static int el3_open(struct inode *inode, struct file *file)
 	EL3WINDOW(4);
 	outw(MEDIA_TP, ioaddr + WN4_MEDIA);
 	el3_mdelay(1000);
+
 	EL3WINDOW(1);
 	
 	/* FIXME - decrease this value to see if it impacts performance */
@@ -661,7 +658,7 @@ static int el3_open(struct inode *inode, struct file *file)
 							// are available
 
 #if LATER	// This is tuning, fix later.
-		// NOTE: Enabling full diplex is probably a bad idea, see
+		// NOTE: Enabling full duplex is probably a bad idea, see
 		// https://www.kernel.org/doc/html/v5.17/networking/device_drivers/ethernet/3com/3c509.html
 	{
 		int sw_info, net_diag;
@@ -699,8 +696,7 @@ static int el3_open(struct inode *inode, struct file *file)
 		}
 
 		//outw(net_diag, ioaddr + WN4_NETDIAG);
-		//if (el3_debug > 3)
-		//	pr_debug("%s: 3c5x9 net diag word is now: %4.4x.\n", dev->name, net_diag);
+		//printk("%s: 3c5x9 net diag word is now: %4.4x.\n", dev->name, net_diag);
 		/* Enable link beat and jabber check. */
 		outw(inw(ioaddr + WN4_MEDIA) | MEDIA_TP, ioaddr + WN4_MEDIA);
 	}
