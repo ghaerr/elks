@@ -11,6 +11,7 @@
 #include <linuxmt/config.h>
 #include <linuxmt/socket.h>
 #include <linuxmt/fs.h>
+#include <linuxmt/sched.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/stat.h>
 #include <linuxmt/fcntl.h>
@@ -309,8 +310,8 @@ static int unix_getname(struct socket *sock,
     } else
 	upd = UN_DATA(sock);
 
-    return move_addr_to_user(&upd->sockaddr_un, upd->sockaddr_len,
-				    usockaddr, usockaddr_len);
+    return move_addr_to_user((char *)&upd->sockaddr_un, upd->sockaddr_len,
+				    (char *)usockaddr, usockaddr_len);
 }
 
 static int unix_read(struct socket *sock, char *ubuf, int size, int nonblock)

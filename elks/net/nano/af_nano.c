@@ -11,14 +11,13 @@
 #include <linuxmt/config.h>
 #include <linuxmt/socket.h>
 #include <linuxmt/fs.h>
+#include <linuxmt/sched.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/stat.h>
 #include <linuxmt/fcntl.h>
 #include "af_nano.h"
 
 #ifdef CONFIG_NANO
-
-int sock_awaitconn(register struct socket *mysock, struct socket *servsock, int flags);
 
 struct nano_proto_data nano_datas[NSOCKETS_NANO];
 

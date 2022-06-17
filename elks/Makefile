@@ -124,8 +124,8 @@ net/net.a:
 
 tools:
 	${MAKE} -C tools all
-	-rm include/linuxmt/compiler-generated.h
-	-rm kernel/version.o
+	-rm -f include/linuxmt/compiler-generated.h
+	-rm -f kernel/version.o
 
 #########################################################################
 # Compiler-generated definitions not given as command arguments.
