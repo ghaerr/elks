@@ -679,7 +679,6 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 		   (found_PB == 2)? "DOS format," :
 		   (found_PB == 1)? "ELKS bootable,": "probed, probably",
 		   drivep->cylinders, drivep->heads, drivep->sectors);
-	    printk("debug : device %x sector_size %d\n", hd_drive_map[target + DRIVE_FD0], drivep->sector_size);
 	}
 	hdp->start_sect = 0;
 	hdp->nr_sects = ((sector_t)(drivep->sectors * drivep->heads))
