@@ -249,15 +249,16 @@ void halt(void)
 void panic(char *error, ...)
 {
     va_list p;
-    register int *bp = (int *) &error - 2;
-    register char *j;
-    int i = 0;
 
     kputs("\npanic: ");
     va_start(p, error);
     vprintk(error, p);
     va_end(p);
 
+#if 0
+    int *bp = (int *) &error - 2;
+    char *j;
+    int i = 0;
     kputs("\napparent call stack:\n"
 	  "Line: Addr    Parameters\n"
 	  "~~~~: ~~~~    ~~~~~~~~~~");
@@ -270,6 +271,7 @@ void panic(char *error, ...)
 	    printk(" %04X", bp[(int)j]);
 	} while ((int)(++j) <= 8);
     } while (++i < 9);
+#endif
 
     halt();
 }
