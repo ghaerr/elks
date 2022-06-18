@@ -10,7 +10,6 @@ struct netif_stat {
 	__u16 oflow_errors;	/* Receive buffer overflow interrupts */
 	__u16 if_status;	/* Interface status flags */
 	int   oflow_keep;	/* # of packets to keep if overflow */
-	int   usecount;		/* Count opens */
 	char  mac_addr[6];	/* Current MAC address */
 };
 

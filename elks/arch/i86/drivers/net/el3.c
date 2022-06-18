@@ -114,10 +114,10 @@ int net_irq = EL3_IRQ;  /* default IRQ, changed by netirq= in /bootopts */
 int net_port = EL3_PORT; /* default IO PORT, changed by netport= in /bootopts */
 
 struct netif_stat netif_stat =
-	{ 0, 0, 0, 0, 0, 0, 0, {0x52, 0x54, 0x00, 0x12, 0x34, 0x57}};  /* QEMU default  + 1 */
+	{ 0, 0, 0, 0, 0, 0, {0x52, 0x54, 0x00, 0x12, 0x34, 0x57}};  /* QEMU default  + 1 */
 static int ioaddr;	// FIXME  remove later
+static int usecount = 0;
 
-// Static data
 struct wait_queue rxwait;
 struct wait_queue txwait;
 
@@ -516,7 +516,7 @@ static void update_stats( void )
 
 static void el3_release(struct inode *inode, struct file *file)
 {
-	if (--netif_stat.usecount == 0) {
+	if (--usecount == 0) {
 		el3_down();
 
 		/* Switching to window 0 disables the IRQ. */
@@ -613,7 +613,7 @@ static int el3_open(struct inode *inode, struct file *file)
 
 	if (!(netif_stat.if_status & NETIF_FOUND)) 
 		return(-EINVAL);	// Does not exist 
-	if (netif_stat.usecount++)
+	if (usecount++)
 		return(0);		// Already open
 
 	EL3WINDOW(0);		// TESTING ONLY
