@@ -28,7 +28,7 @@
 int net_irq = NE2K_IRQ;	/* default IRQ, changed by netirq= in /bootopts */
 int net_port = NE2K_PORT; /* default IO PORT, changed by netport= in /bootopts */
 struct netif_stat netif_stat = 
-	{ 0, 0, 0, 0, 0, {0x52, 0x54, 0x00, 0x12, 0x34, 0x57}};  /* QEMU default  + 1 */
+	{ 0, 0, 0, 0, 0, 0, {0x52, 0x54, 0x00, 0x12, 0x34, 0x57}};  /* QEMU default  + 1 */
 
 static int usecount = 0;
 struct wait_queue rxwait;
