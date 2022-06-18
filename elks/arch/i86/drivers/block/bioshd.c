@@ -381,6 +381,21 @@ static unsigned short int INITPROC bioshd_getfdinfo(void)
 	ndrives = (equip_flags >> 6) + 1;
 #endif
 
+#ifdef CONFIG_ARCH_PC98
+    for (drive = 0; drive < 4; drive++) {
+	if (peekb(0x55C,0) & (1 << drive)) {
+#ifdef CONFIG_IMG_FD1232
+	    hd_drive_map[DRIVE_FD0 + ndrives] = drive + 0x90;
+	    *drivep = fd_types[5];
+#else
+	    hd_drive_map[DRIVE_FD0 + ndrives] = drive + 0x30;
+	    *drivep = fd_types[3];
+#endif
+	    ndrives++;	/* floppy drive count*/
+	    drivep++;
+	}
+    }
+#else
     /* Use INT 13h function 08h normally if PC/AT or higher*/
     if (sys_caps & CAP_DRIVE_PARMS) {
 	BD_AX = BIOSHD_DRIVE_PARMS;
@@ -412,6 +427,7 @@ static unsigned short int INITPROC bioshd_getfdinfo(void)
 
 	drivep++;
     }
+#endif
     return ndrives;
 }
 #endif
@@ -487,6 +503,18 @@ static void map_drive(int *drive)
 {
 	*drive = hd_drive_map[*drive];
 }
+
+#ifdef CONFIG_ARCH_PC98
+/* switch device */
+static void switch_device98(int target, unsigned char device, struct drive_infot *drivep)
+{
+    hd_drive_map[target + DRIVE_FD0] = (device | (hd_drive_map[target + DRIVE_FD0] & 0x0F));
+    if (device == 0x30)
+	*drivep = fd_types[3];	/* 1.44 MB */
+    else if (device == 0x90)
+	*drivep = fd_types[5];	/* 1.232 MB */
+}
+#endif
 
 static int read_sector(int drive, int cylinder, int sector)
 {
@@ -591,12 +619,25 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 
 	drivep->cylinders = 0;
 	count = 0;
+#ifdef CONFIG_ARCH_PC98
+	do {
+	    if (count)
+	        switch_device98(target, 0x30, drivep);	/* 1.44 MB */
+	    /* skip probing first entry */
+	    if (count && read_sector(target, track_probe[count] - 1, 1)) {
+	        switch_device98(target, 0x90, drivep);	/* 1.232 MB */
+	        break;
+	    }
+	    drivep->cylinders = track_probe[count];
+	} while (++count < sizeof(track_probe)/sizeof(track_probe[0]));
+#else
 	do {
 	    /* skip probing first entry */
 	    if (count && read_sector(target, track_probe[count] - 1, 1))
 		break;
 	    drivep->cylinders = track_probe[count];
 	} while (++count < sizeof(track_probe)/sizeof(track_probe[0]));
+#endif
 
 /* Next, probe for sector number. We probe on track 0, which is
  * safe for all formats, and if we get a seek error, we assume that
@@ -605,12 +646,25 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 
 	drivep->sectors = 0;
 	count = 0;
+#ifdef CONFIG_ARCH_PC98
+	do {
+	    if (count)
+	        switch_device98(target, 0x30, drivep);	/* 1.44 MB */
+	    /* skip reading first entry */
+	    if (count && read_sector(target, 0, sector_probe[count])) {
+	        switch_device98(target, 0x90, drivep);	/* 1.232 MB */
+	        break;
+	    }
+	    drivep->sectors = sector_probe[count];
+	} while (++count < sizeof(sector_probe)/sizeof(sector_probe[0]));
+#else
 	do {
 	    /* skip reading first entry */
 	    if (count && read_sector(target, 0, sector_probe[count]))
 		break;
 	    drivep->sectors = sector_probe[count];
 	} while (++count < sizeof(sector_probe)/sizeof(sector_probe[0]));
+#endif
 
 	drivep->heads = 2;
 
@@ -625,7 +679,6 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 		   (found_PB == 2)? "DOS format," :
 		   (found_PB == 1)? "ELKS bootable,": "probed, probably",
 		   drivep->cylinders, drivep->heads, drivep->sectors);
-
 	}
 	hdp->start_sect = 0;
 	hdp->nr_sects = ((sector_t)(drivep->sectors * drivep->heads))
