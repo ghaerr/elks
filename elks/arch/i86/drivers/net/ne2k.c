@@ -28,9 +28,9 @@
 int net_irq = NE2K_IRQ;	/* default IRQ, changed by netirq= in /bootopts */
 int net_port = NE2K_PORT; /* default IO PORT, changed by netport= in /bootopts */
 struct netif_stat netif_stat = 
-	{ 0, 0, 0, 0, 0, 0, {0x52, 0x54, 0x00, 0x12, 0x34, 0x57}};  /* QEMU default  + 1 */
+	{ 0, 0, 0, 0, 0, {0x52, 0x54, 0x00, 0x12, 0x34, 0x57}};  /* QEMU default  + 1 */
 
-// Static data
+static int usecount = 0;
 struct wait_queue rxwait;
 struct wait_queue txwait;
 
@@ -305,18 +305,12 @@ static int ne2k_ioctl(struct inode *inode, struct file *file, unsigned int cmd, 
 
 static int ne2k_open(struct inode *inode, struct file *file)
 {
-	int err = 0;
-
-	if (netif_stat.if_status & NETIF_IS_OPEN) {
-		err = -EBUSY;
-	} else {
+	if (usecount++ == 0) {	// Don't initialize if already open
 		ne2k_reset();
 		ne2k_init();
 		ne2k_start();
-
-		netif_stat.if_status |= NETIF_IS_OPEN;
 	}
-	return err;
+	return 0;
 }
 
 /*
@@ -325,9 +319,9 @@ static int ne2k_open(struct inode *inode, struct file *file)
 
 static void ne2k_release(struct inode *inode, struct file *file)
 {
-	ne2k_stop();
+	if (--usecount == 0)
+		ne2k_stop();
 
-	netif_stat.if_status &= ~NETIF_IS_OPEN;
 }
 
 /*
