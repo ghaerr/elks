@@ -152,6 +152,12 @@ ifdef CONFIG_APPS_2880K
 	CONFIG_APP_MAN_PAGES=y
 endif
 
+#
+# System startup
+ifdef CONFIG_SYS_DEFSHELL_SASH
+	TAGS += :defsash|
+endif
+
 TAGS += :end
 
 ###############################################################################

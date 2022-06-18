@@ -737,7 +737,11 @@ hello_mess:
 
 // Return total memory in Kbytes
 arch_get_mem:
+#if SETUP_MEM_KBYTES_ASM
+	mov $SETUP_MEM_KBYTES_ASM,%ax  // force available memory (usually for testing)
+#else
 	int $0x12   // AX in KB
+#endif
 	ret
 
 // Set INITSEG values for IBM PC

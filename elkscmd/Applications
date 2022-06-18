@@ -27,6 +27,7 @@
 #	:1440k		All apps selected for 1440k disks
 #	:ash		Ash (bash) shell							ash
 #	:sash		Sash (standalone very small) shell			sash
+#	:defsash	Use sash as default shell                   sash
 #	:sysutil	System utilities							sys_utils
 #	:fileutil	File handling utilies						file_utils
 #	:shutil		Shell utilities								shell_utils
@@ -46,9 +47,9 @@
 sys_utils/init			:boot	:sysutil    :128k
 sys_utils/getty			:boot	:sysutil    :128k
 sys_utils/login			:boot	:sysutil    :128k
-ash/ash		::bin/sh	:boot	:ash	# install as /bin/sh
-#sash/sash	::bin/sh	:boot	:~ash	# install as /bin/sh if no ASH
-sash/sash		:1200k :1440k	:sash
+ash/ash		::bin/sh	:boot	:ash	    # install as /bin/sh
+sash/sash	::bin/sh	:boot	:defsash	# install as /bin/sh
+sash/sash		    	        :sash                   :1200k  :1440k
 sys_utils/mount			:boot	:sysutil    :128k
 sys_utils/umount		:boot	:sysutil    :128k
 sys_utils/clock			:boot	:sysutil    :128k

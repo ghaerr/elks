@@ -39,6 +39,7 @@ static char *init_command = bininit;
  */
 static int args, envs;
 static int argv_slen;
+static char argv_changed;
 /* argv_init doubles as sptr data for sys_execv later*/
 static char *argv_init[80] = { NULL, bininit, NULL };
 #if ENV
@@ -130,6 +131,14 @@ void INITPROC kernel_init(void)
     mm_stat(base, end);
 }
 
+static void try_exec_process(char *path)
+{
+    int num;
+
+    num = run_init_process(path);
+    if (num) printk("Can't run %s, errno %d\n", path, num);
+}
+
 /* this procedure runs in user mode as task 1*/
 static void init_task(void)
 {
@@ -138,7 +147,7 @@ static void init_task(void)
 
     mount_root();
 
-#if defined(CONFIG_APP_SASH) && !defined(CONFIG_APP_ASH)
+#ifdef CONFIG_SYS_NO_BININIT
     /* when no /bin/init, force initial process group on console to make signals work*/
     current->session = current->pgrp = 1;
 #endif
@@ -155,21 +164,24 @@ static void init_task(void)
 
 #ifdef CONFIG_BOOTOPTS
     /* special handling if argc/argv array setup*/
-    if (argv_init[0]) {
+    if (argv_changed) {
 	/* unset special sys_wait4() processing if pid 1 not /bin/init*/
 	if (strcmp(init_command, bininit) != 0)
 	    current->ppid = 1;		/* turns off auto-child reaping*/
-
 	/* run /bin/init or init= command, normally no return*/
 	run_init_process_sptr(init_command, (char *)argv_init, argv_slen);
     } else
 #endif
-    run_init_process(bininit);
+    {
+#ifndef CONFIG_SYS_NO_BININIT
+	try_exec_process(bininit);
+#endif
+    }
 
     printk("No init - running /bin/sh\n");
     current->ppid = 1;			/* turns off auto-child reaping*/
-    run_init_process("/bin/sh");
-    run_init_process("/bin/sash");
+    try_exec_process("/bin/sh");
+    try_exec_process("/bin/sash");
     panic("No init or sh found");
 }
 
@@ -320,6 +332,7 @@ static int parse_options(void)
 		if (!strncmp(line,"init=",5)) {
 			line += 5;
 			init_command = argv_init[1] = line;
+			argv_changed = 1;
 			continue;
 		}
 		if (!strncmp(line,"netirq=",7)) {
@@ -350,6 +363,7 @@ static int parse_options(void)
 			if (args >= MAX_INIT_ARGS)
 				break;
 			argv_init[args++] = line;
+			argv_changed = 1;
 		}
 #if ENV
 		else {
@@ -386,14 +400,16 @@ static void INITPROC finalize_options(void)
 
 	/* convert argv array to stack array for sys_execv*/
 	args--;
-	argv_init[0] = (char *)args;                /* 0 = argc*/
 	char *q = (char *)&argv_init[args+2+envs+1];
-	for (i=1; i<=args; i++) {                   /* 1..argc = av*/
+	if (argv_changed) {
+	    argv_init[0] = (char *)args;        	/* 0 = argc*/
+	    for (i=1; i<=args; i++) {                   /* 1..argc = av*/
 		char *p = argv_init[i];
 		char *savq = q;
-		while ((*q++ = *p++) != 0)
+                while ((*q++ = *p++) != 0)
 			;
 		argv_init[i] = (char *)(savq - (char *)argv_init);
+	    }
 	}
 	/*argv_init[args+1] = NULL;*/               /* argc+1 = 0*/
 #if ENV
