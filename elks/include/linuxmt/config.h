@@ -7,10 +7,6 @@
 /* tunable parameters*/
 #define PIPE_BUFSIZ	80	/* doesn't have to be power of two */
 
-#ifdef CONFIG_IMG_FD1232		/* FD1232 uses 1K byte sectors */
-#define CONFIG_VAR_SECTOR_SIZE	/* sector size may vary across disks */
-#endif
-
 /*
  * Compile-time configuration
  */
@@ -57,6 +53,8 @@
 #define SETUP_PART_OFFSETHI	setupw(0x1e4)	/* partition offset high word */
 #define SYS_CAPS		0	/* no XT/AT capabilities */
 #define UTS_MACHINE		"pc-98 i8086"
+
+#define CONFIG_VAR_SECTOR_SIZE	/* sector size may vary across disks */
 #endif
 
 #ifdef CONFIG_ARCH_8018X
