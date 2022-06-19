@@ -8,9 +8,11 @@ mainmenu_option next_comment
 	choice 'Select console driver'			\
 		"Direct         CONFIG_CONSOLE_DIRECT	\
 		 BIOS           CONFIG_CONSOLE_BIOS	\
-		 8018x			CONFIG_CONSOLE_8018X \
+		 8018x		CONFIG_CONSOLE_8018X 	\
 		 Headless       CONFIG_CONSOLE_HEADLESS"	Direct
-	bool '  Scancode keyboard driver'	CONFIG_KEYBOARD_SCANCODE y
+	if [ "$CONFIG_CONSOLE_DIRECT" = "y" ]; then
+		bool '  Scancode keyboard driver'	CONFIG_KEYBOARD_SCANCODE y
+	fi
 	bool 'Serial Console'	CONFIG_CONSOLE_SERIAL		n
 	if [[ "$CONFIG_CONSOLE_DIRECT" = "y" || "$CONFIG_CONSOLE_BIOS" = "y" ]]; then
 	    choice 'Console terminal emulation'		\
