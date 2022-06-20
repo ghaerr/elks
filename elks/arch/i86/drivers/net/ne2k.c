@@ -25,8 +25,11 @@
 
 #include "ne2k.h"
 
-int net_irq = NE2K_IRQ;	/* default IRQ, changed by netirq= in /bootopts */
-int net_port = NE2K_PORT; /* default IO PORT, changed by netport= in /bootopts */
+/* runtime configuration set in /bootopts or defaults in ports.h */
+#define net_irq     (netif_parms[0].irq)
+#define NET_PORT    (netif_parms[0].port)
+int net_port;   // temp kluge for ne2k-asm.S
+
 struct netif_stat netif_stat = 
 	{ 0, 0, 0, 0, 0, 0, {0x52, 0x54, 0x00, 0x12, 0x34, 0x57}};  /* QEMU default  + 1 */
 
@@ -378,7 +381,7 @@ void ne2k_drv_init(void)
 				 */
 	byte_t *cprom, *mac_addr;
 
-	is_8bit = net_port&3;	// Set 8bit mode via /bootopts
+	is_8bit = NET_PORT & 3;	// Set 8bit mode via /bootopts
 				// Bit 0 set: 8 bit interface
 				// Bit 1 set: use 4k buffer 
 
@@ -391,18 +394,19 @@ void ne2k_drv_init(void)
  * DEBUG: use the 2nd nibble of the port # for overflow skip-count testing.
  * Obviously works only if the i/o address has zero in this nibble.
  */
-	i = (net_port&0xf0)>>4;
+	i = (NET_PORT&0xf0)>>4;
 	if (i) netif_stat.oflow_keep = i;
-	net_port &= 0xff0f;
+	NET_PORT &= 0xff0f;
 /* -------------------------------------------------------------------------- */
 #endif
 
-	net_port &= 0xfffc;
+	NET_PORT &= 0xfffc;
+	net_port = NET_PORT;    // temp kluge for ne2k-asm.S
 
 	while (1) {
 		err = ne2k_probe();
 		if (err) {
-			printk("eth: NE2K not found at 0x%x, irq %d\n", net_port, net_irq);
+			printk("eth: NE2K not found at 0x%x, irq %d\n", NET_PORT, net_irq);
 			break;
 		}
 
@@ -436,7 +440,7 @@ void ne2k_drv_init(void)
 			//printk("\n");
 
 		}
-		printk ("eth: NE2K (%d bit) at 0x%x, irq %d, ", 16-8*(is_8bit&1), net_port, net_irq);
+		printk ("eth: NE2K (%d bit) at 0x%x, irq %d, ", 16-8*(is_8bit&1), NET_PORT, net_irq);
 		if (!err) 	/* address found, interface is present */
 			memcpy(mac_addr, cprom, 6);
 		else

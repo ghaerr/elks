@@ -18,11 +18,12 @@
 #include <linuxmt/limits.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/debug.h>
+#include <linuxmt/netstat.h>
 
 /* runtime configuration set in /bootopts or defaults in ports.h */
-int net_irq = WD_IRQ;	        /* default IRQ, set via netirq= */
-int net_port = WD_PORT;         /* default IO port, set via netport= */
-unsigned int net_ram = WD_RAM;  /* default shared memory address, set via netram= */
+#define net_irq     (netif_parms[1].irq)
+#define net_port    (netif_parms[1].port)
+#define net_ram     (netif_parms[1].ram)
 
 /* I/O delay settings */
 #define INB	inb	/* use inb_p for 1us delay */

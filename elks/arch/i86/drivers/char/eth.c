@@ -6,15 +6,13 @@
 #include <linuxmt/init.h>
 #include <linuxmt/major.h>
 #include <linuxmt/errno.h>
-#include <linuxmt/kernel.h>
-#include <linuxmt/sched.h>
+#include <linuxmt/fs.h>
+#include <linuxmt/netstat.h>
 
 /* character devices and their minor numbers */
 extern struct file_operations ne2k_fops;    /* 0 CONFIG_ETH_NE2K */
 extern struct file_operations wd_fops;      /* 1 CONFIG_ETH_WD */
 extern struct file_operations el3_fops;     /* 2 CONFIG_ETH_EL3 */
-
-#define MAX_ETHS    3
 
 struct eth {
     struct file_operations *ops;
@@ -41,8 +39,6 @@ static int eth_open(struct inode *inode, struct file *file)
 
     if (!ops)
         return -ENODEV;
-
-    printk("ETH open pid %d\n", current->pid);
     return ops->open(inode, file);
 }
 
@@ -52,8 +48,6 @@ static void eth_release(struct inode *inode, struct file *file)
 
     if (!ops)
         return;
-
-    printk("ETH close pid %d\n", current->pid);
     ops->release(inode, file);
 }
 
