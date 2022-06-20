@@ -110,8 +110,9 @@ extern void el3_mdelay(int);
 /* Maximum events (Rx packets, etc.) to handle at each interrupt. */
 static int max_interrupt_work = 5;
 
-int net_irq = EL3_IRQ;  /* default IRQ, changed by netirq= in /bootopts */
-int net_port = EL3_PORT; /* default IO PORT, changed by netport= in /bootopts */
+/* runtime configuration set in /bootopts or defaults in ports.h */
+#define net_irq     (netif_parms[1].irq)
+#define net_port    (netif_parms[1].port)
 
 struct netif_stat netif_stat =
 	{ 0, 0, 0, 0, 0, 0, {0x52, 0x54, 0x00, 0x12, 0x34, 0x57}};  /* QEMU default  + 1 */

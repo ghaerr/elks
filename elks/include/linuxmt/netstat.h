@@ -3,6 +3,17 @@
 
 #include <linuxmt/types.h>
 
+#define MAX_ETHS	3	/* max NICs */
+
+/* /bootopts parms for each NIC */
+struct netif_parms {
+	int	irq;
+	int	port;
+	unsigned int ram;
+};
+extern struct netif_parms netif_parms[MAX_ETHS];
+
+/* status for each NIC, returned through ioctl */
 struct netif_stat {
 	__u16 rx_errors;	/* Receive errors, flagged by NIC */
 	__u16 rq_errors;	/* Receive queue errors (in 8bit interfaces) */
@@ -14,7 +25,6 @@ struct netif_stat {
 };
 
 /* status flags for if_status */
-
 #define	NETIF_IS_8BIT	1
 #define NETIF_FORCE_4K	2
 #define NETIF_IS_OPEN	4

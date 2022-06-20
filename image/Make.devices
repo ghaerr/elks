@@ -180,9 +180,11 @@ endif
 	$(MKDEV) /dev/tcpdev c 8 0
 
 ##############################################################################
-# Ethernet device
+# Ethernet devices
 
-	$(MKDEV) /dev/eth c 9 0
+	$(MKDEV) /dev/ne2k c 9 0
+	$(MKDEV) /dev/wd8003 c 9 1
+	$(MKDEV) /dev/ec509 c 9 2
 
 ##############################################################################
 # CGATEXT

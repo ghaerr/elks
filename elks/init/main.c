@@ -9,9 +9,10 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/string.h>
 #include <linuxmt/fs.h>
-
+#include <linuxmt/netstat.h>
 #include <arch/system.h>
 #include <arch/segment.h>
+#include <arch/ports.h>
 
 /*
  *	System variable setups
@@ -27,8 +28,11 @@ int root_mountflags = MS_RDONLY;
 #else
 int root_mountflags = 0;
 #endif
-int net_irq, net_port;
-unsigned int net_ram;
+struct netif_parms netif_parms[MAX_ETHS] = {
+    { NE2K_IRQ, NE2K_PORT, 0 },
+    { WD_IRQ, WD_PORT, WD_RAM },
+    { EL3_IRQ, EL3_PORT, 0 },
+};
 static int boot_console;
 static char bininit[] = "/bin/init";
 static char *init_command = bininit;
@@ -251,6 +255,18 @@ static int INITPROC parse_dev(char * line)
 	return (base + atoi(line));
 }
 
+static void parse_nic(char *line, struct netif_parms *parms)
+{
+    char *p;
+
+    parms->irq = (int)simple_strtol(line, 0);
+    if ((p = strchr(line, ','))) {
+        parms->port = (int)simple_strtol(p+1, 0);
+        if ((p = strchr(p+1, ',')))
+            parms->ram = (int)simple_strtol(p+1, 0);
+    }
+}
+
 /*
  * This is a simple kernel command line parsing function: it parses
  * the command line from /bootopts, and fills in the arguments/environment
@@ -335,16 +351,16 @@ static int parse_options(void)
 			argv_changed = 1;
 			continue;
 		}
-		if (!strncmp(line,"netirq=",7)) {
-			net_irq = atoi(line+7);
+		if (!strncmp(line,"ne2k=",5)) {
+			parse_nic(line+5, &netif_parms[0]);
 			continue;
 		}
-		if (!strncmp(line,"netport=",8)) {
-			net_port = (int)simple_strtol(line+8, 16);
+		if (!strncmp(line,"wd8003=",7)) {
+			parse_nic(line+7, &netif_parms[1]);
 			continue;
 		}
-		if (!strncmp(line,"netram=",7)) {
-			net_ram = (unsigned int)simple_strtol(line+7, 16);
+		if (!strncmp(line,"3c509=",6)) {
+			parse_nic(line+6, &netif_parms[2]);
 			continue;
 		}
 		if (!strncmp(line,"bufs=",5)) {
