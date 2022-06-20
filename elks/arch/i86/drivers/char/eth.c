@@ -4,15 +4,10 @@
  */
 
 #include <linuxmt/init.h>
-#include <linuxmt/errno.h>
 #include <linuxmt/major.h>
-#include <linuxmt/ioctl.h>
-#include <linuxmt/fcntl.h>
-#include <linuxmt/fs.h>
+#include <linuxmt/errno.h>
+#include <linuxmt/kernel.h>
 #include <linuxmt/sched.h>
-#include <linuxmt/limits.h>
-#include <linuxmt/mm.h>
-#include <linuxmt/string.h>
 
 /* character devices and their minor numbers */
 extern struct file_operations ne2k_fops;    /* 0 CONFIG_ETH_NE2K */
