@@ -26,7 +26,7 @@
 #include "ne2k.h"
 
 /* runtime configuration set in /bootopts or defaults in ports.h */
-#define NET_IRQ     (netif_parms[0].irq)
+#define net_irq     (netif_parms[0].irq)
 #define NET_PORT    (netif_parms[0].port)
 int net_port;   // temp kluge for ne2k-asm.S
 
@@ -309,9 +309,9 @@ static int ne2k_ioctl(struct inode *inode, struct file *file, unsigned int cmd, 
 static int ne2k_open(struct inode *inode, struct file *file)
 {
 	if (usecount++ == 0) {	// Don't initialize if already open
-		int err = request_irq(NET_IRQ, ne2k_int, INT_GENERIC);
+		int err = request_irq(net_irq, ne2k_int, INT_GENERIC);
 		if (err) {
-			printk("eth: NE2K unable to use IRQ %d (errno %d)\n", NET_IRQ, err);
+			printk("eth: NE2K unable to use IRQ %d (errno %d)\n", net_irq, err);
 			return err;
 		}
 		ne2k_reset();
@@ -329,7 +329,7 @@ static void ne2k_release(struct inode *inode, struct file *file)
 {
 	if (--usecount == 0) {
 		ne2k_stop();
-		free_irq(NET_IRQ);
+		free_irq(net_irq);
 	}
 }
 
@@ -406,7 +406,7 @@ void ne2k_drv_init(void)
 	while (1) {
 		err = ne2k_probe();
 		if (err) {
-			printk("eth: NE2K not found at 0x%x, irq %d\n", NET_PORT, NET_IRQ);
+			printk("eth: NE2K not found at 0x%x, irq %d\n", NET_PORT, net_irq);
 			break;
 		}
 
@@ -440,7 +440,7 @@ void ne2k_drv_init(void)
 			//printk("\n");
 
 		}
-		printk ("eth: NE2K (%d bit) at 0x%x, irq %d, ", 16-8*(is_8bit&1), NET_PORT, NET_IRQ);
+		printk ("eth: NE2K (%d bit) at 0x%x, irq %d, ", 16-8*(is_8bit&1), NET_PORT, net_irq);
 		if (!err) 	/* address found, interface is present */
 			memcpy(mac_addr, cprom, 6);
 		else

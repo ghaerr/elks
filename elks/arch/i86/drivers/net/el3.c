@@ -111,8 +111,8 @@ extern void el3_mdelay(int);
 static int max_interrupt_work = 5;
 
 /* runtime configuration set in /bootopts or defaults in ports.h */
-#define net_irq     (netif_parms[1].irq)
-#define net_port    (netif_parms[1].port)
+#define net_irq     (netif_parms[2].irq)
+#define net_port    (netif_parms[2].port)
 
 struct netif_stat netif_stat =
 	{ 0, 0, 0, 0, 0, 0, {0x52, 0x54, 0x00, 0x12, 0x34, 0x57}};  /* QEMU default  + 1 */
