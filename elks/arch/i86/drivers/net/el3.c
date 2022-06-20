@@ -116,14 +116,14 @@ int net_port = EL3_PORT; /* default IO PORT, changed by netport= in /bootopts */
 struct netif_stat netif_stat =
 	{ 0, 0, 0, 0, 0, 0, {0x52, 0x54, 0x00, 0x12, 0x34, 0x57}};  /* QEMU default  + 1 */
 static int ioaddr;	// FIXME  remove later
-static int usecount = 0;
+static unsigned char usecount;
 
-struct wait_queue rxwait;
-struct wait_queue txwait;
+static struct wait_queue rxwait;
+static struct wait_queue txwait;
 
 static word_t el3_id_port;
 
-static struct file_operations el3_fops =
+struct file_operations el3_fops =
 {
     NULL,	 /* lseek */
     el3_read,
@@ -136,20 +136,7 @@ static struct file_operations el3_fops =
 };
 
 void el3_drv_init( void ) {
-	int err;
-
 	ioaddr = net_port;		// temporary
-	err = request_irq(net_irq, el3_int, INT_GENERIC);
-	if (err) {
-		printk("eth: Cannot allocate IRQ %d for EL3: %i\n",
-			net_irq, err);
-		return;
-	}
-	err = register_chrdev(ETH_MAJOR, "eth", &el3_fops);
-	if (err) {
-		printk("eth: device registration error: %i\n", err);
-		return;
-	}
 
 	// May want to probe before requesting the IRQ & device, but
 	// then we need a tiny probe routine, not the whole shebang.
@@ -524,6 +511,8 @@ static void el3_release(struct inode *inode, struct file *file)
 
 		/* But we explicitly zero the IRQ line select anyway */
 		outw(0x0f00, ioaddr + WN0_IRQ);
+
+        free_irq(net_irq);
 	}
 	return;
 }
@@ -608,7 +597,7 @@ static void el3_down( void )
 
 static int el3_open(struct inode *inode, struct file *file)
 {
-	int i;
+	int i, err;
 	char *mac_addr = (char *)&netif_stat.mac_addr;
 
 	if (!(netif_stat.if_status & NETIF_FOUND)) 
@@ -616,6 +605,11 @@ static int el3_open(struct inode *inode, struct file *file)
 	if (usecount++)
 		return(0);		// Already open
 
+	err = request_irq(net_irq, el3_int, INT_GENERIC);
+	if (err) {
+		printk("eth: EL3 unable to use IRQ %d (errno %d)\n", net_irq, err);
+		return err;
+	}
 	EL3WINDOW(0);		// TESTING ONLY
 	/* Activating the board - done in _init, repeat doesn't harm */
 	outw(ENABLE_ADAPTER, ioaddr + WN0_CONF_CTRL);

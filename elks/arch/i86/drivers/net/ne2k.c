@@ -30,9 +30,9 @@ int net_port = NE2K_PORT; /* default IO PORT, changed by netport= in /bootopts *
 struct netif_stat netif_stat = 
 	{ 0, 0, 0, 0, 0, 0, {0x52, 0x54, 0x00, 0x12, 0x34, 0x57}};  /* QEMU default  + 1 */
 
-static int usecount = 0;
-struct wait_queue rxwait;
-struct wait_queue txwait;
+static unsigned char usecount;
+static struct wait_queue rxwait;
+static struct wait_queue txwait;
 
 extern word_t _ne2k_next_pk;
 extern word_t _ne2k_is_8bit;
@@ -306,6 +306,11 @@ static int ne2k_ioctl(struct inode *inode, struct file *file, unsigned int cmd, 
 static int ne2k_open(struct inode *inode, struct file *file)
 {
 	if (usecount++ == 0) {	// Don't initialize if already open
+		int err = request_irq(net_irq, ne2k_int, INT_GENERIC);
+		if (err) {
+			printk("eth: NE2K unable to use IRQ %d (errno %d)\n", net_irq, err);
+			return err;
+		}
 		ne2k_reset();
 		ne2k_init();
 		ne2k_start();
@@ -319,16 +324,17 @@ static int ne2k_open(struct inode *inode, struct file *file)
 
 static void ne2k_release(struct inode *inode, struct file *file)
 {
-	if (--usecount == 0)
+	if (--usecount == 0) {
 		ne2k_stop();
-
+		free_irq(net_irq);
+	}
 }
 
 /*
  * Ethernet operations
  */
 
-static struct file_operations ne2k_fops =
+struct file_operations ne2k_fops =
 {
     NULL,         /* lseek */
     ne2k_read,
@@ -397,17 +403,6 @@ void ne2k_drv_init(void)
 		err = ne2k_probe();
 		if (err) {
 			printk("eth: NE2K not found at 0x%x, irq %d\n", net_port, net_irq);
-			break;
-		}
-		err = request_irq(net_irq, ne2k_int, INT_GENERIC);
-		if (err) {
-			printk("eth: NE2K IRQ %d request error: %i\n", net_irq, err);
-			break;
-		}
-
-		err = register_chrdev(ETH_MAJOR, "eth", &ne2k_fops);
-		if (err) {
-			printk("eth: register error: %i\n", err);
 			break;
 		}
 

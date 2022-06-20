@@ -37,6 +37,10 @@ include $(BASEDIR)/Makefile-rules
 
 OBJS  = init.o mem.o ntty.o meta.o tcpdev.o pty.o lp.o
 
+ifeq ($(CONFIG_ETH), y)
+    OBJS += eth.o
+endif
+
 ifeq ($(CONFIG_ARCH_8018X), y)
 	CONIO = 8018x
 	SERIAL = template

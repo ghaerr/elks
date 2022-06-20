@@ -13,6 +13,7 @@ typedef void (* irq_handler) (int,struct pt_regs *);   // IRQ handler
 
 void do_IRQ(int,void *);
 int request_irq(int,irq_handler,int hflag);
+void free_irq(unsigned int irq);
 void int_vector_set (int vect, int_proc proc, int seg);
 void _irqit (void);
 
@@ -20,6 +21,7 @@ void _irqit (void);
 /* irq-8259.c*/
 void init_irq(void);
 void enable_irq(unsigned int);
+void disable_irq(unsigned int irq);
 int remap_irq(int);
 int irq_vector (int irq);
 

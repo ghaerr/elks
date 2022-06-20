@@ -139,6 +139,7 @@ static unsigned char current_rx_page = WD_FIRST_RX_PG;
 
 static word_t wd_rx_stat(void);
 static word_t wd_tx_stat(void);
+static void wd_int(int irq, struct pt_regs * regs);
 
 /*
  * Get MAC
@@ -492,6 +493,11 @@ static int wd_open(struct inode * inode, struct file * file)
 			err = -EBUSY;
 			break;
 		}
+		err = request_irq(net_irq, wd_int, INT_GENERIC);
+		if (err) {
+			printk("eth: WD unable to use IRQ %d (errno %d)\n", net_irq, err);
+			break;
+		}
 		wd_reset();
 		wd_init();
 		if (INB(net_port + 14U) & 0x20U) /* enable IRQ on softcfg card */
@@ -510,6 +516,7 @@ static void wd_release(struct inode * inode, struct file * file)
 {
 	wd_stop();
 	wd_term();
+	free_irq(net_irq);
 	wd_inuse = 0U;
 }
 
@@ -517,7 +524,7 @@ static void wd_release(struct inode * inode, struct file * file)
  * Ethernet operations
  */
 
-static struct file_operations wd_fops =
+struct file_operations wd_fops =
 {
 	NULL,         /* lseek */
 	wd_read,
@@ -574,22 +581,10 @@ static void wd_int(int irq, struct pt_regs * regs)
 
 void wd_drv_init(void)
 {
-	int err;
 	unsigned u;
 	word_t hw_addr[6U];
 
 	do {
-		err = request_irq(net_irq, wd_int, INT_GENERIC);
-		if (err) {
-			printk("eth: WD IRQ %d request error: %i\n",
-				net_irq, err);
-			break;
-		}
-		err = register_chrdev(ETH_MAJOR, "eth", &wd_fops);
-		if (err) {
-			printk("eth: register error: %i\n", err);
-			break;
-		}
 		wd_get_hw_addr(hw_addr);
 		for (u = 0U; u < 6U; u++)
 			mac_addr[u] = (hw_addr[u] & 0xffU);
