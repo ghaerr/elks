@@ -9,6 +9,7 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/string.h>
 #include <linuxmt/fs.h>
+#include <linuxmt/utsname.h>
 #include <linuxmt/netstat.h>
 #include <arch/system.h>
 #include <arch/segment.h>
@@ -33,6 +34,7 @@ struct netif_parms netif_parms[MAX_ETHS] = {
     { WD_IRQ, WD_PORT, WD_RAM },
     { EL3_IRQ, EL3_PORT, 0 },
 };
+__u16 kernel_cs, kernel_ds;
 static int boot_console;
 static char bininit[] = "/bin/init";
 static char *init_command = bininit;
@@ -61,6 +63,7 @@ static char * INITPROC option(char *s);
 #endif
 
 static void init_task(void);
+static void INITPROC kernel_banner(seg_t start, seg_t end);
 extern int run_init_process(char *cmd);
 extern int run_init_process_sptr(char *cmd, char *sptr, int slen);
 
@@ -132,7 +135,34 @@ void INITPROC kernel_init(void)
     else printk("/bootopts ignored: header not ## or size > %d\n", OPTSEGSZ-1);
 #endif
 
-    mm_stat(base, end);
+    kernel_banner(base, end);
+}
+
+static void INITPROC kernel_banner(seg_t start, seg_t end)
+{
+#ifdef CONFIG_ARCH_IBMPC
+    printk("PC/%cT class machine, ", (sys_caps & CAP_PC_AT) ? 'A' : 'X');
+#endif
+
+#ifdef CONFIG_ARCH_PC98
+    printk("PC-9801 machine, ");
+#endif
+
+#ifdef CONFIG_ARCH_8018X
+    printk("8018X machine, ");
+#endif
+
+    printk("syscaps 0x%x, %uK base RAM.\n", sys_caps, SETUP_MEM_KBYTES);
+    printk("ELKS kernel %s (%u text, %u ftext, %u data, %u bss, %u heap)\n",
+           system_utsname.release,
+           (unsigned)_endtext, (unsigned)_endftext, (unsigned)_enddata,
+           (unsigned)_endbss - (unsigned)_enddata, heapsize);
+    printk("Kernel text at %x:0000, ", kernel_cs);
+#ifdef CONFIG_FARTEXT_KERNEL
+    printk("ftext %x:0000, ", (unsigned)((long)kernel_init >> 16));
+#endif
+    printk("data %x:0000, top %x:0, %uK free\n",
+           kernel_ds, end, (int) ((end - start) >> 6));
 }
 
 static void try_exec_process(char *path)
@@ -261,9 +291,9 @@ static void parse_nic(char *line, struct netif_parms *parms)
 
     parms->irq = (int)simple_strtol(line, 0);
     if ((p = strchr(line, ','))) {
-        parms->port = (int)simple_strtol(p+1, 0);
+        parms->port = (int)simple_strtol(p+1, 16);
         if ((p = strchr(p+1, ',')))
-            parms->ram = (int)simple_strtol(p+1, 0);
+            parms->ram = (int)simple_strtol(p+1, 16);
     }
 }
 

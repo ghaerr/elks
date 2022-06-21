@@ -24,7 +24,6 @@ CONFIG_ARCH_IBMPC=y
 #
 # Platform
 #
-CONFIG_CPU_8086=y
 
 #
 # Devices
