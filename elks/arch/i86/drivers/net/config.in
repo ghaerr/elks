@@ -9,6 +9,5 @@ mainmenu_option next_comment
 		bool 'NE2K'			CONFIG_ETH_NE2K y
 		bool 'WD/SMC8003'	CONFIG_ETH_WD y
 		bool '3C509'		CONFIG_ETH_EL3 y
-		bool '8 bit access for Ethernet devices'      CONFIG_ETH_BYTE_ACCESS      n
 	fi
 endmenu
