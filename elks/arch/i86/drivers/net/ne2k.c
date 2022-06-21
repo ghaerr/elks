@@ -30,10 +30,11 @@
 #define NET_PORT    (netif_parms[0].port)
 int net_port;   // temp kluge for ne2k-asm.S
 
-struct netif_stat netif_stat = 
+static struct netif_stat netif_stat =
 	{ 0, 0, 0, 0, 0, 0, {0x52, 0x54, 0x00, 0x12, 0x34, 0x57}};  /* QEMU default  + 1 */
 
 static unsigned char usecount;
+static unsigned char found;
 static struct wait_queue rxwait;
 static struct wait_queue txwait;
 
@@ -308,10 +309,13 @@ static int ne2k_ioctl(struct inode *inode, struct file *file, unsigned int cmd, 
 
 static int ne2k_open(struct inode *inode, struct file *file)
 {
+	if (!found)
+		return -ENODEV;
+
 	if (usecount++ == 0) {	// Don't initialize if already open
 		int err = request_irq(net_irq, ne2k_int, INT_GENERIC);
 		if (err) {
-			printk("eth: NE2K unable to use IRQ %d (errno %d)\n", net_irq, err);
+			printk("eth: ne2k unable to use IRQ %d (errno %d)\n", net_irq, err);
 			return err;
 		}
 		ne2k_reset();
@@ -406,9 +410,10 @@ void ne2k_drv_init(void)
 	while (1) {
 		err = ne2k_probe();
 		if (err) {
-			printk("eth: NE2K not found at 0x%x, irq %d\n", NET_PORT, net_irq);
+			printk("eth: ne2k at 0x%x, irq %d: not found\n", NET_PORT, net_irq);
 			break;
 		}
+		found = 1;
 
 		cprom = (byte_t *)prom;
 
@@ -440,7 +445,7 @@ void ne2k_drv_init(void)
 			//printk("\n");
 
 		}
-		printk ("eth: NE2K (%d bit) at 0x%x, irq %d, ", 16-8*(is_8bit&1), NET_PORT, net_irq);
+		printk ("eth: ne2k (%d bit) at 0x%x, irq %d: ", 16-8*(is_8bit&1), NET_PORT, net_irq);
 		if (!err) 	/* address found, interface is present */
 			memcpy(mac_addr, cprom, 6);
 		else
@@ -460,13 +465,10 @@ void ne2k_drv_init(void)
 		debug_setcallback(ne2k_display_status);
 #endif
 		break;
-
 	}
 	_ne2k_has_data = 0;
 	_ne2k_is_8bit = is_8bit;	// Keep for now
 	netif_stat.if_status |= is_8bit;// Temporary
-
-	return;
 }
 
 /* remove if/when we get a memcmp library routine */
