@@ -152,7 +152,7 @@ static void INITPROC kernel_banner(seg_t start, seg_t end)
     printk("8018X machine, ");
 #endif
 
-    printk("syscaps 0x%x, %uK base RAM.\n", sys_caps, SETUP_MEM_KBYTES);
+    printk("syscaps 0x%x, %uK base ram.\n", sys_caps, SETUP_MEM_KBYTES);
     printk("ELKS kernel %s (%u text, %u ftext, %u data, %u bss, %u heap)\n",
            system_utsname.release,
            (unsigned)_endtext, (unsigned)_endftext, (unsigned)_enddata,

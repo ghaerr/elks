@@ -795,20 +795,6 @@ novga:	mov	%al,14		// CGA 25 rows
 	int	$0x10
 	mov	%bx,4		// bh = display page
 	mov	%ax,6		// al = video mode, ah = window width
-#if 0
-	call	getcpu
-
-	push	%es		// clear BIOS data for harddisk 0/1, 12 bytes
-	mov	$INITSEG,%ax	// and BIOS data for floppy disk 0/1, 12 bytes
-	mov	%ax,%es
-	mov	$24,%cx
-	mov	$0x80,%di
-	xor	%ax,%ax
-	cld
-	rep
-	stosw
-	pop	%es
-#endif
 
 	mov	$INITSEG,%ax
 	mov	%ax,%ds
