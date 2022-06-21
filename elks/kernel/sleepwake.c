@@ -38,7 +38,7 @@
 
 void prepare_to_wait_interruptible(struct wait_queue *p)
 {
-    current->state = TASK_INTERRUPTIBLE;;
+    current->state = TASK_INTERRUPTIBLE;
     wait_set(p);
 }
 
