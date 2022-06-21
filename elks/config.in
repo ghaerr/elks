@@ -12,8 +12,6 @@ mainmenu_option next_comment
 
 	comment 'Platform'
 
-	define_bool CONFIG_CPU_8086 y
-
 	if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
 
 		bool 'Switch Compaq DeskPro to fast mode' CONFIG_COMPAQ_FAST n
