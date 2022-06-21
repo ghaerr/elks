@@ -783,6 +783,8 @@ novga:	mov	%al,14		// CGA 25 rows
 	mov	%bx,4		// bh = display page
 	mov	%ax,6		// al = video mode, ah = window width
 
+	call	getcpu		// implemented in cputype.S
+
 	mov	$INITSEG,%ax
 	mov	%ax,%ds
 	call	arch_get_mem	// save base memory size
@@ -804,6 +806,12 @@ putc:	push %bx
 	pop %cx
 	pop %bx
 	ret
+
+// include code to determine early CPU types
+// needed for guessing system capabilities (sys_caps) for XT vs AT BIOS
+// TODO: remove and use alternate mechanism for XT vs AT BIOS capabilities
+#include "cputype.S"
+
 #endif /* CONFIG_ARCH_IBMPC*/
 
 

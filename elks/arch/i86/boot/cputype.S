@@ -1,6 +1,7 @@
-// UNUSED - outdated and inaccurate
-
-#define CONFIG_CPU_8086
+// obsolote and inaccurate, but required for arch_cpu > 5
+// XT vs AT BIOS system capabilities (sys_caps) auto-detection by kernel
+//
+#define CONFIG_CPU_8086		/* required for this file only */
 
 /*
 ! Probe for the CPU
@@ -207,3 +208,5 @@ v_id3:	.byte 0,0,0,0
 	.byte 0
 
 #endif /* !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_8086)*/
+
+#undef CONFIG_CPU_8086
