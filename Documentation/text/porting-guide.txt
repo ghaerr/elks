@@ -1,6 +1,6 @@
 ELKS Porting Guide
 ==================
-21 May 2021 - Rev 3 ghaerr
+21 June 2022 - Rev 4 ghaerr
 
 Platforms (target)
 -------------------------------------------------
@@ -149,7 +149,7 @@ Other
 ELKS Non-device I/O Ports Used
 -------------------------------------------
 OUTB 80h - I/O delay							elks/include/arch/io.h
-OUTB CFh - Compaq Deskpro high speed			elks/arch/i86/system.c
+OUTB CFh - Compaq Deskpro high speed			elks/arch/i86/system.c CONFIG_COMPAQ_FAST
 
 
 BIOS Services Required for PC target			Config setting/Where used
@@ -177,4 +177,3 @@ INT 13h AH=08h Get drive parms					CONFIG_BLK_DEV_BIOS
 INT 16h AH=00h Wait and read keyboard char		CONFIG_CONSOLE_HEADLESS
 		boot_sect.S, conio-bios.S
 INT 16h AH=01h Peek keyboard char				CONFIG_CONSOLE_HEADLESS, conio-bios.S
-INT 16h AH=03h Set typematic rate				CONFIG_HW_KEYBOARD_BIOS

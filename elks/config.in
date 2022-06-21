@@ -23,13 +23,6 @@ mainmenu_option next_comment
 
 		comment 'BIOS support'
 
-		bool 'System has keyboard BIOS support'    CONFIG_HW_KEYBOARD_BIOS y
-		bool 'Get fontinfo via CRT-BIOS (40h:85h)' CONFIG_HW_VIDEO_HOC     y
-
-		if [ "$CONFIG_HW_VIDEO_HOC" != "y" ]; then
-			int 'Lines per page'                CONFIG_HW_VIDEO_LINES_PER_SCREEN    25
-		fi
-
 		bool 'Advanced Power Management support'         CONFIG_APM y
 
 	elif [ "$CONFIG_ARCH_8018X" = "y" ]; then
@@ -56,7 +49,6 @@ endmenu
 mainmenu_option next_comment
 	comment 'Kernel settings'
 
-	bool 'Minimize kernel size'               CONFIG_SMALL_KERNEL y
 	bool 'Boot Options in /bootopts'          CONFIG_BOOTOPTS     y
 	bool 'Calculate process CPU usage'        CONFIG_CPU_USAGE    y
 	bool 'Real time clock in localtime'       CONFIG_TIME_RTC_LOCALTIME n
@@ -67,8 +59,6 @@ mainmenu_option next_comment
 	if [ "$CONFIG_ARCH_IBMPC" = "y" ] || [ "$CONFIG_ARCH_8018X" = "y" ]; then
 		bool 'Build kernel as ROM-bootable'   CONFIG_ROMCODE      n
     fi
-
-	bool 'Include development code/drivers' CONFIG_EXPERIMENTAL n
 
     bool 'Far text kernel'	                CONFIG_FARTEXT_KERNEL y
 
