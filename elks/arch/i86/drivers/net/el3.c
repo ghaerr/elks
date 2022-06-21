@@ -113,16 +113,15 @@ static int max_interrupt_work = 5;
 /* runtime configuration set in /bootopts or defaults in ports.h */
 #define net_irq     (netif_parms[2].irq)
 #define net_port    (netif_parms[2].port)
-
-struct netif_stat netif_stat =
-	{ 0, 0, 0, 0, 0, 0, {0x52, 0x54, 0x00, 0x12, 0x34, 0x57}};  /* QEMU default  + 1 */
 static int ioaddr;	// FIXME  remove later
-static unsigned char usecount;
+static word_t el3_id_port;
 
+static struct netif_stat netif_stat =
+	{ 0, 0, 0, 0, 0, 0, {0x52, 0x54, 0x00, 0x12, 0x34, 0x57}};  /* QEMU default  + 1 */
+
+static unsigned char usecount;
 static struct wait_queue rxwait;
 static struct wait_queue txwait;
-
-static word_t el3_id_port;
 
 struct file_operations el3_fops =
 {
@@ -139,14 +138,8 @@ struct file_operations el3_fops =
 void el3_drv_init( void ) {
 	ioaddr = net_port;		// temporary
 
-	// May want to probe before requesting the IRQ & device, but
-	// then we need a tiny probe routine, not the whole shebang.
-	if (el3_isa_probe()) {
-		//printk("not found\n");
-		return;
-	}
-	netif_stat.if_status |= NETIF_FOUND;
-	
+	if (el3_isa_probe() == 0)
+		netif_stat.if_status |= NETIF_FOUND;
 }
 static int el3_find_id_port ( void ) {
 
@@ -195,17 +188,17 @@ static int el3_isa_probe( void )
 
 	outb(0xd0, el3_id_port);		// select tag (0)
 	outb(0xe0 |(ioaddr >> 4), el3_id_port );// Set IOBASE address, activate
-	printk("eth: 3C509 @ IRQ %d, port %02x", net_irq, ioaddr);
+	printk("eth: 3c509 at 0x%x, irq %d: ", ioaddr, net_irq);
 
-	if ((i = id_read_eeprom(EEPROM_MFG_ID)) != 0x6d50) {
-		printk(" - probe failed (wrong ID), got %04x\n", i);
+	if (id_read_eeprom(EEPROM_MFG_ID) != 0x6d50) {
+		printk("not found\n");
 		return 1;
 	}
 	/* Read in EEPROM data.
 	   3Com got the byte order backwards in the EEPROM. */
 	for (i = 0; i < 3; i++)
 		mac[i] = htons(id_read_eeprom(i));
-	printk(", MAC %02x", (mac_addr[0]&0xff));
+	printk("MAC %02x", (mac_addr[0]&0xff));
 	i = 1;
 	while (i < 6) printk(":%02x", (mac_addr[i++]&0xff));
 
@@ -215,7 +208,6 @@ static int el3_isa_probe( void )
 	printk("\n");
 	
 	return 0;
-
 }
 
 #if LATER
@@ -513,9 +505,8 @@ static void el3_release(struct inode *inode, struct file *file)
 		/* But we explicitly zero the IRQ line select anyway */
 		outw(0x0f00, ioaddr + WN0_IRQ);
 
-        free_irq(net_irq);
+		free_irq(net_irq);
 	}
-	return;
 }
 
 
@@ -602,13 +593,14 @@ static int el3_open(struct inode *inode, struct file *file)
 	char *mac_addr = (char *)&netif_stat.mac_addr;
 
 	if (!(netif_stat.if_status & NETIF_FOUND)) 
-		return(-EINVAL);	// Does not exist 
-	if (usecount++)
-		return(0);		// Already open
+		return -ENODEV;	        // No such device
+
+	if (usecount++ != 0)
+		return 0;		// Already open, success
 
 	err = request_irq(net_irq, el3_int, INT_GENERIC);
 	if (err) {
-		printk("eth: EL3 unable to use IRQ %d (errno %d)\n", net_irq, err);
+		printk("eth: 3c509 unable to use IRQ %d (errno %d)\n", net_irq, err);
 		return err;
 	}
 	EL3WINDOW(0);		// TESTING ONLY

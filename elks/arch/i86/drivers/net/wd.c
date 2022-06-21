@@ -133,7 +133,8 @@ typedef struct {
 static struct wait_queue rxwait;
 static struct wait_queue txwait;
 
-static byte_t wd_inuse = 0U;
+static byte_t wd_inuse;
+static byte_t wd_found;
 static byte_t mac_addr[6U];
 
 static unsigned char current_rx_page = WD_FIRST_RX_PG;
@@ -490,13 +491,17 @@ static int wd_open(struct inode * inode, struct file * file)
 	int err = 0;
 
 	do {
+		if (!wd_found) {
+			err = -ENODEV;
+			break;
+		}
 		if (wd_inuse) {
 			err = -EBUSY;
 			break;
 		}
 		err = request_irq(net_irq, wd_int, INT_GENERIC);
 		if (err) {
-			printk("eth: WD unable to use IRQ %d (errno %d)\n", net_irq, err);
+			printk("eth: wd8003 unable to use IRQ %d (errno %d)\n", net_irq, err);
 			break;
 		}
 		wd_reset();
@@ -587,10 +592,17 @@ void wd_drv_init(void)
 
 	do {
 		wd_get_hw_addr(hw_addr);
-		for (u = 0U; u < 6U; u++)
-			mac_addr[u] = (hw_addr[u] & 0xffU);
-		printk ("eth: SMC/WD8003 at 0x%x, irq %d, ram 0x%x MAC %02X",
-			net_port, net_irq, net_ram, mac_addr[0]);
+		for (u = 0U; u < 6U; u++) {
+			if ((mac_addr[u] = (hw_addr[u] & 0xff)) != 0xff)
+				wd_found = 1;
+		}
+		printk("eth: wd8003 at 0x%x, irq %d, ram 0x%x: ",
+			net_port, net_irq, net_ram);
+		if (!wd_found) {
+			printk("not found\n");
+			break;
+		}
+		printk("MAC %02X", mac_addr[0]);
 		for (u = 1U; u < 6U; u++)
 			printk(":%02X", mac_addr[u]);
 		printk("\n");
