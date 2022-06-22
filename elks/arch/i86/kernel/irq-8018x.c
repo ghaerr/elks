@@ -88,6 +88,11 @@ int remap_irq(int irq)
     return irq;
 }
 
+void disable_irq(unsigned int irq)
+{
+    // TODO disable passed interrupt
+}
+
 // Get interrupt vector from IRQ
 int irq_vector(int irq)
 {

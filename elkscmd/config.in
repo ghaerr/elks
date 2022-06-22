@@ -79,5 +79,9 @@ mainmenu_option next_comment
 		 Medium-720k	CONFIG_APPS_720K	\
 		 Small-360k		CONFIG_APPS_360K" Large-1440k
 	fi
+	comment "System startup"
+
+	bool 'Use sash as default shell'		CONFIG_SYS_DEFSHELL_SASH n
+	bool 'Dont run /bin/init on startup' 	CONFIG_SYS_NO_BININIT n
 
 endmenu

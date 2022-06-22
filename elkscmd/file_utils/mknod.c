@@ -49,6 +49,6 @@ int main(int argc, char **argv)
 	return 0;
 
 usage:
-	errmsg("usage: mknod [bcup] device major minor\n");
+	errmsg("usage: mknod device [bcup] major minor\n");
 	return 1;
 }

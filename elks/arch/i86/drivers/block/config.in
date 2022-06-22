@@ -31,12 +31,6 @@ mainmenu_option next_comment
 	    bool '  BIOS hard drive support'	CONFIG_BLK_DEV_BHD	y
 	    bool '  IDE hard drive CHS probe'	CONFIG_IDE_PROBE	y
 	fi
-	if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
-	    bool 'Experimental HW floppy disk support'	CONFIG_BLK_DEV_FD	n
-	    bool 'Experimental HW IDE hardisk support'	CONFIG_BLK_DEV_HD	n
-	else
-		comment '(direct disk support is experimental)'
-	fi
 
 	if [ "$CONFIG_BLK_DEV_FD" = "y" ]; then
 	    define_bool CONFIG_DMA y
@@ -44,12 +38,12 @@ mainmenu_option next_comment
 	    define_bool CONFIG_DMA n
 	fi
 
-    comment 'Additional block devices'
-    bool 'RAM disk support'			CONFIG_BLK_DEV_RAM	y
-    if [ "$CONFIG_BLK_DEV_RAM" == "y" ]; then
-	hex 'Preload RAM disk segment address' CONFIG_RAMDISK_SEGMENT 0
-	int 'Preload RAM disk sectors' CONFIG_RAMDISK_SECTORS 128
-    fi
+	comment 'Additional block devices'
+	bool 'RAM disk support'			CONFIG_BLK_DEV_RAM	y
+	if [ "$CONFIG_BLK_DEV_RAM" == "y" ]; then
+		hex 'Preload RAM disk segment address' CONFIG_RAMDISK_SEGMENT 0
+		int 'Preload RAM disk sectors' CONFIG_RAMDISK_SECTORS 128
+	fi
 	choice 'SSD disk driver' \
 		"None CONFIG_BLK_DEV_SSD_NONE \
 		ssd_test CONFIG_BLK_DEV_SSD_TEST \

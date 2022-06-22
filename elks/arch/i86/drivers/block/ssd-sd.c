@@ -18,6 +18,7 @@
 #include <linuxmt/config.h>
 #include <linuxmt/rd.h>
 #include <linuxmt/major.h>
+#include <linuxmt/fs.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/errno.h>

@@ -25,14 +25,18 @@
 
 #include "ne2k.h"
 
-int net_irq = NE2K_IRQ;	/* default IRQ, changed by netirq= in /bootopts */
-int net_port = NE2K_PORT; /* default IO PORT, changed by netport= in /bootopts */
-struct netif_stat netif_stat = 
+/* runtime configuration set in /bootopts or defaults in ports.h */
+#define net_irq     (netif_parms[0].irq)
+#define NET_PORT    (netif_parms[0].port)
+int net_port;   // temp kluge for ne2k-asm.S
+
+static struct netif_stat netif_stat =
 	{ 0, 0, 0, 0, 0, 0, {0x52, 0x54, 0x00, 0x12, 0x34, 0x57}};  /* QEMU default  + 1 */
 
-// Static data
-struct wait_queue rxwait;
-struct wait_queue txwait;
+static unsigned char usecount;
+static unsigned char found;
+static struct wait_queue rxwait;
+static struct wait_queue txwait;
 
 extern word_t _ne2k_next_pk;
 extern word_t _ne2k_is_8bit;
@@ -273,12 +277,13 @@ static int ne2k_ioctl(struct inode *inode, struct file *file, unsigned int cmd, 
 
 	switch (cmd) {
 		case IOCTL_ETH_ADDR_GET:
-			memcpy_tofs((byte_t *)arg, mac_addr, 6);
+			err = verified_memcpy_tofs((byte_t *)arg, mac_addr, 6);
 			break;
 
 #if LATER
 		case IOCTL_ETH_ADDR_SET:
-			memcpy_fromfs(mac_addr, (byte_t *) arg, 6);
+			if ((err = verified_memcpy_fromfs(mac_addr, (byte_t *) arg, 6)) != 0)
+				break;
 			ne2k_addr_set(mac_addr);
 			printk("eth: MAC address changed to %02x", mac_addr[0]);
 			for (i = 1; i < 6; i++) printk(":%02x", mac_addr[i]);
@@ -288,7 +293,7 @@ static int ne2k_ioctl(struct inode *inode, struct file *file, unsigned int cmd, 
 
 		case IOCTL_ETH_GETSTAT:
 			/* Return the entire netif_struct */
-			memcpy_tofs((char *)arg, &netif_stat, sizeof(netif_stat));
+			err = verified_memcpy_tofs((char *)arg, &netif_stat, sizeof(netif_stat));
 			break;
 
 		default:
@@ -304,18 +309,20 @@ static int ne2k_ioctl(struct inode *inode, struct file *file, unsigned int cmd, 
 
 static int ne2k_open(struct inode *inode, struct file *file)
 {
-	int err = 0;
+	if (!found)
+		return -ENODEV;
 
-	if (netif_stat.if_status & NETIF_IS_OPEN) {
-		err = -EBUSY;
-	} else {
+	if (usecount++ == 0) {	// Don't initialize if already open
+		int err = request_irq(net_irq, ne2k_int, INT_GENERIC);
+		if (err) {
+			printk("eth: ne2k unable to use IRQ %d (errno %d)\n", net_irq, err);
+			return err;
+		}
 		ne2k_reset();
 		ne2k_init();
 		ne2k_start();
-
-		netif_stat.if_status |= NETIF_IS_OPEN;
 	}
-	return err;
+	return 0;
 }
 
 /*
@@ -324,16 +331,17 @@ static int ne2k_open(struct inode *inode, struct file *file)
 
 static void ne2k_release(struct inode *inode, struct file *file)
 {
-	ne2k_stop();
-
-	netif_stat.if_status &= ~NETIF_IS_OPEN;
+	if (--usecount == 0) {
+		ne2k_stop();
+		free_irq(net_irq);
+	}
 }
 
 /*
  * Ethernet operations
  */
 
-static struct file_operations ne2k_fops =
+struct file_operations ne2k_fops =
 {
     NULL,         /* lseek */
     ne2k_read,
@@ -377,7 +385,7 @@ void ne2k_drv_init(void)
 				 */
 	byte_t *cprom, *mac_addr;
 
-	is_8bit = net_port&3;	// Set 8bit mode via /bootopts
+	is_8bit = NET_PORT & 3;	// Set 8bit mode via /bootopts
 				// Bit 0 set: 8 bit interface
 				// Bit 1 set: use 4k buffer 
 
@@ -390,31 +398,22 @@ void ne2k_drv_init(void)
  * DEBUG: use the 2nd nibble of the port # for overflow skip-count testing.
  * Obviously works only if the i/o address has zero in this nibble.
  */
-	i = (net_port&0xf0)>>4;
+	i = (NET_PORT&0xf0)>>4;
 	if (i) netif_stat.oflow_keep = i;
-	net_port &= 0xff0f;
+	NET_PORT &= 0xff0f;
 /* -------------------------------------------------------------------------- */
 #endif
 
-	net_port &= 0xfffc;
+	NET_PORT &= 0xfffc;
+	net_port = NET_PORT;    // temp kluge for ne2k-asm.S
 
 	while (1) {
 		err = ne2k_probe();
 		if (err) {
-			printk("eth: NE2K not found at 0x%x, irq %d\n", net_port, net_irq);
+			printk("eth: ne2k at 0x%x, irq %d: not found\n", NET_PORT, net_irq);
 			break;
 		}
-		err = request_irq(net_irq, ne2k_int, INT_GENERIC);
-		if (err) {
-			printk("eth: NE2K IRQ %d request error: %i\n", net_irq, err);
-			break;
-		}
-
-		err = register_chrdev(ETH_MAJOR, "eth", &ne2k_fops);
-		if (err) {
-			printk("eth: register error: %i\n", err);
-			break;
-		}
+		found = 1;
 
 		cprom = (byte_t *)prom;
 
@@ -446,7 +445,7 @@ void ne2k_drv_init(void)
 			//printk("\n");
 
 		}
-		printk ("eth: NE2K (%d bit) at 0x%x, irq %d, ", 16-8*(is_8bit&1), net_port, net_irq);
+		printk ("eth: ne2k (%d bit) at 0x%x, irq %d: ", 16-8*(is_8bit&1), NET_PORT, net_irq);
 		if (!err) 	/* address found, interface is present */
 			memcpy(mac_addr, cprom, 6);
 		else
@@ -466,13 +465,10 @@ void ne2k_drv_init(void)
 		debug_setcallback(ne2k_display_status);
 #endif
 		break;
-
 	}
 	_ne2k_has_data = 0;
 	_ne2k_is_8bit = is_8bit;	// Keep for now
 	netif_stat.if_status |= is_8bit;// Temporary
-
-	return;
 }
 
 /* remove if/when we get a memcmp library routine */

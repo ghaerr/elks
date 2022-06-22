@@ -1,6 +1,9 @@
 /*
  * bioshd.c - ELKS floppy and hard disk driver - uses BIOS
  *
+ * Driver Copyright (C) 1994 Yggdrasil Computing, Inc.
+ * Extended and modified for Linux 8086 by Alan Cox.
+ *
  * Originally from
  * doshd.c copyright (C) 1994 Yggdrasil Computing, Incorporated
  * 4880 Stevens Creek Blvd. Suite 205
@@ -729,11 +732,6 @@ int INITPROC bioshd_init(void)
 {
     register struct gendisk *ptr;
     int count;
-
-#ifndef CONFIG_SMALL_KERNEL
-    printk("bioshd: Driver Copyright (C) 1994 Yggdrasil Computing, Inc.\n"
-	   "Extended and modified for Linux 8086 by Alan Cox.\n");
-#endif
 
     /* FIXME perhaps remove for speed on floppy boot*/
     outb_p(0x0C, FDC_DOR);	/* FD motors off, enable IRQ and DMA*/

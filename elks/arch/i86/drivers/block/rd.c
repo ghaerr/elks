@@ -2,6 +2,7 @@
  * ELKS Ramdisk driver
  *
  * rd.c, written by Al Riddoch
+ * ramdisk driver Copyright (C) 1997 Alistair Riddoch
  * modified: July 4th, 5th 1999, Blaz Antonic
  * - allow variable ramdisk size (in 4096 blocks)
  * - allow ramdisks larger than 64 KB (which is segment limit)
@@ -264,10 +265,6 @@ static struct file_operations rd_fops = {
 
 void rd_init(void)
 {
-#ifndef CONFIG_SMALL_KERNEL
-    /* Al's very own ego boost :) */
-    printk("rd: ramdisk driver Copyright (C) 1997 Alistair Riddoch\n");
-#endif
     if (register_blkdev(MAJOR_NR, DEVICE_NAME, &rd_fops) == 0) {
 	blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
 	rd_initialised = 1;

@@ -110,11 +110,11 @@ int request_irq(int irq, irq_handler handler, int hflag)
     return 0;
 }
 
-#if 0
 void free_irq(unsigned int irq)
 {
     flag_t flags;
 
+    irq = remap_irq(irq);
     if (irq > 15) {
 	printk("Trying to free IRQ%u\n",irq);
 	return;
@@ -132,7 +132,6 @@ void free_irq(unsigned int irq)
 
     restore_flags(flags);
 }
-#endif
 
 /*
  *	IRQ setup.

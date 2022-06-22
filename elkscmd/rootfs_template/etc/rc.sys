@@ -20,8 +20,8 @@ fi
 #
 # check /bootopts "net=" env variable
 case "$net" in
-eth)
-	net start eth
+ne2k|wd8003|3c509)
+	net start $net
 	;;
 slip)
 	net start slip

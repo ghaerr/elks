@@ -44,7 +44,7 @@ ipaddr_t netmask_ip;
 
 /* defaults*/
 int linkprotocol = 	LINK_ETHER;
-char ethdev[] = 	"/dev/eth";
+char ethdev[14] = 	"/dev/ne2k";
 char *serdev = 		"/dev/ttyS0";
 speed_t baudrate = 	57600;
 
@@ -178,7 +178,7 @@ void catch(int sig)
 
 static void usage(void)
 {
-    printf("Usage: ktcp [-b] [-d] [-m MTU] [-p eth|slip|cslip] [-s baud] [-l device] [local_ip] [gateway] [netmask]\n");
+    printf("Usage: ktcp [-b] [-d] [-m MTU] [-p ne2k|wd8003|3c509|slip|cslip] [-s baud] [-l device] [local_ip] [gateway] [netmask]\n");
     exit(1);
 }
 
@@ -188,7 +188,7 @@ int main(int argc,char **argv)
     int bflag = 0;
     int mtu = 0;
     char *p;
-    static char *linknames[3] = { "ethernet", "slip", "cslip" };
+    static char *linknames[3] = { "", "slip", "cslip" };
 
     while ((ch = getopt(argc, argv, "bdm:p:s:l:")) != -1) {
 	switch (ch) {
@@ -202,11 +202,15 @@ int main(int argc,char **argv)
 		mtu = (int)atol(optarg);
 		break;
 	case 'p':		/* link protocol*/
-	    linkprotocol = !strcmp(optarg, "eth")? LINK_ETHER :
+	    linkprotocol = !strcmp(optarg, "ne2k")? LINK_ETHER :
+			   !strcmp(optarg, "wd8003")? LINK_ETHER :
+			   !strcmp(optarg, "3c509")? LINK_ETHER :
 			   !strcmp(optarg, "slip")? LINK_SLIP :
 			   !strcmp(optarg, "cslip")? LINK_CSLIP:
 			   -1;
 	    if (linkprotocol < 0) usage();
+	    if (linkprotocol == LINK_ETHER)
+		strcpy(&ethdev[5], optarg);
 	    break;
 	case 's':		/* serial speed*/
 	    baudrate = atol(optarg);
@@ -248,10 +252,10 @@ int main(int argc,char **argv)
     printf("gateway %s, ", in_ntoa(gateway_ip));
     printf("netmask %s\n", in_ntoa(netmask_ip));
 
-    printf("ktcp: %s ", linknames[linkprotocol]);
+    printf("ktcp: ");
     if (linkprotocol == LINK_ETHER)
-	printf("%s", mac_ntoa(eth_local_addr));
-    else printf("%s baud %lu", serdev, baudrate);
+	printf("%s mac %s", ethdev, mac_ntoa(eth_local_addr));
+    else printf("%s %s baud %lu", linknames[linkprotocol], serdev, baudrate);
     printf(" mtu %u\n", MTU);
 
     signal(SIGHUP, catch);

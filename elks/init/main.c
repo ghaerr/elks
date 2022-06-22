@@ -9,9 +9,11 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/string.h>
 #include <linuxmt/fs.h>
-
+#include <linuxmt/utsname.h>
+#include <linuxmt/netstat.h>
 #include <arch/system.h>
 #include <arch/segment.h>
+#include <arch/ports.h>
 
 /*
  *	System variable setups
@@ -27,8 +29,12 @@ int root_mountflags = MS_RDONLY;
 #else
 int root_mountflags = 0;
 #endif
-int net_irq, net_port;
-unsigned int net_ram;
+struct netif_parms netif_parms[MAX_ETHS] = {
+    { NE2K_IRQ, NE2K_PORT, 0 },
+    { WD_IRQ, WD_PORT, WD_RAM },
+    { EL3_IRQ, EL3_PORT, 0 },
+};
+__u16 kernel_cs, kernel_ds;
 static int boot_console;
 static char bininit[] = "/bin/init";
 static char *init_command = bininit;
@@ -39,6 +45,7 @@ static char *init_command = bininit;
  */
 static int args, envs;
 static int argv_slen;
+static char argv_changed;
 /* argv_init doubles as sptr data for sys_execv later*/
 static char *argv_init[80] = { NULL, bininit, NULL };
 #if ENV
@@ -56,6 +63,7 @@ static char * INITPROC option(char *s);
 #endif
 
 static void init_task(void);
+static void INITPROC kernel_banner(seg_t start, seg_t end);
 extern int run_init_process(char *cmd);
 extern int run_init_process_sptr(char *cmd, char *sptr, int slen);
 
@@ -127,7 +135,42 @@ void INITPROC kernel_init(void)
     else printk("/bootopts ignored: header not ## or size > %d\n", OPTSEGSZ-1);
 #endif
 
-    mm_stat(base, end);
+    kernel_banner(base, end);
+}
+
+static void INITPROC kernel_banner(seg_t start, seg_t end)
+{
+#ifdef CONFIG_ARCH_IBMPC
+    printk("PC/%cT class machine, ", (sys_caps & CAP_PC_AT) ? 'A' : 'X');
+#endif
+
+#ifdef CONFIG_ARCH_PC98
+    printk("PC-9801 machine, ");
+#endif
+
+#ifdef CONFIG_ARCH_8018X
+    printk("8018X machine, ");
+#endif
+
+    printk("syscaps 0x%x, %uK base ram.\n", sys_caps, SETUP_MEM_KBYTES);
+    printk("ELKS kernel %s (%u text, %u ftext, %u data, %u bss, %u heap)\n",
+           system_utsname.release,
+           (unsigned)_endtext, (unsigned)_endftext, (unsigned)_enddata,
+           (unsigned)_endbss - (unsigned)_enddata, heapsize);
+    printk("Kernel text at %x:0000, ", kernel_cs);
+#ifdef CONFIG_FARTEXT_KERNEL
+    printk("ftext %x:0000, ", (unsigned)((long)kernel_init >> 16));
+#endif
+    printk("data %x:0000, top %x:0, %uK free\n",
+           kernel_ds, end, (int) ((end - start) >> 6));
+}
+
+static void try_exec_process(char *path)
+{
+    int num;
+
+    num = run_init_process(path);
+    if (num) printk("Can't run %s, errno %d\n", path, num);
 }
 
 /* this procedure runs in user mode as task 1*/
@@ -138,7 +181,7 @@ static void init_task(void)
 
     mount_root();
 
-#if defined(CONFIG_APP_SASH) && !defined(CONFIG_APP_ASH)
+#ifdef CONFIG_SYS_NO_BININIT
     /* when no /bin/init, force initial process group on console to make signals work*/
     current->session = current->pgrp = 1;
 #endif
@@ -155,21 +198,24 @@ static void init_task(void)
 
 #ifdef CONFIG_BOOTOPTS
     /* special handling if argc/argv array setup*/
-    if (argv_init[0]) {
+    if (argv_changed) {
 	/* unset special sys_wait4() processing if pid 1 not /bin/init*/
 	if (strcmp(init_command, bininit) != 0)
 	    current->ppid = 1;		/* turns off auto-child reaping*/
-
 	/* run /bin/init or init= command, normally no return*/
 	run_init_process_sptr(init_command, (char *)argv_init, argv_slen);
     } else
 #endif
-    run_init_process(bininit);
+    {
+#ifndef CONFIG_SYS_NO_BININIT
+	try_exec_process(bininit);
+#endif
+    }
 
     printk("No init - running /bin/sh\n");
     current->ppid = 1;			/* turns off auto-child reaping*/
-    run_init_process("/bin/sh");
-    run_init_process("/bin/sash");
+    try_exec_process("/bin/sh");
+    try_exec_process("/bin/sash");
     panic("No init or sh found");
 }
 
@@ -237,6 +283,18 @@ static int INITPROC parse_dev(char * line)
 		dev++;
 	} while (dev->name);
 	return (base + atoi(line));
+}
+
+static void parse_nic(char *line, struct netif_parms *parms)
+{
+    char *p;
+
+    parms->irq = (int)simple_strtol(line, 0);
+    if ((p = strchr(line, ','))) {
+        parms->port = (int)simple_strtol(p+1, 16);
+        if ((p = strchr(p+1, ',')))
+            parms->ram = (int)simple_strtol(p+1, 16);
+    }
 }
 
 /*
@@ -320,18 +378,19 @@ static int parse_options(void)
 		if (!strncmp(line,"init=",5)) {
 			line += 5;
 			init_command = argv_init[1] = line;
+			argv_changed = 1;
 			continue;
 		}
-		if (!strncmp(line,"netirq=",7)) {
-			net_irq = atoi(line+7);
+		if (!strncmp(line,"ne2k=",5)) {
+			parse_nic(line+5, &netif_parms[0]);
 			continue;
 		}
-		if (!strncmp(line,"netport=",8)) {
-			net_port = (int)simple_strtol(line+8, 16);
+		if (!strncmp(line,"wd8003=",7)) {
+			parse_nic(line+7, &netif_parms[1]);
 			continue;
 		}
-		if (!strncmp(line,"netram=",7)) {
-			net_ram = (unsigned int)simple_strtol(line+7, 16);
+		if (!strncmp(line,"3c509=",6)) {
+			parse_nic(line+6, &netif_parms[2]);
 			continue;
 		}
 		if (!strncmp(line,"bufs=",5)) {
@@ -350,6 +409,7 @@ static int parse_options(void)
 			if (args >= MAX_INIT_ARGS)
 				break;
 			argv_init[args++] = line;
+			argv_changed = 1;
 		}
 #if ENV
 		else {
@@ -386,14 +446,16 @@ static void INITPROC finalize_options(void)
 
 	/* convert argv array to stack array for sys_execv*/
 	args--;
-	argv_init[0] = (char *)args;                /* 0 = argc*/
 	char *q = (char *)&argv_init[args+2+envs+1];
-	for (i=1; i<=args; i++) {                   /* 1..argc = av*/
+	if (argv_changed) {
+	    argv_init[0] = (char *)args;        	/* 0 = argc*/
+	    for (i=1; i<=args; i++) {                   /* 1..argc = av*/
 		char *p = argv_init[i];
 		char *savq = q;
-		while ((*q++ = *p++) != 0)
+                while ((*q++ = *p++) != 0)
 			;
 		argv_init[i] = (char *)(savq - (char *)argv_init);
+	    }
 	}
 	/*argv_init[args+1] = NULL;*/               /* argc+1 = 0*/
 #if ENV

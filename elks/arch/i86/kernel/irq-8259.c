@@ -66,7 +66,6 @@ int irq_vector (int irq)
 	return irq + ((irq >= 8) ? 0x68 : 0x08);
 	}
 
-#if 0
 void disable_irq(unsigned int irq)
 {
     flag_t flags;
@@ -85,4 +84,3 @@ void disable_irq(unsigned int irq)
     }
     restore_flags(flags);
 }
-#endif

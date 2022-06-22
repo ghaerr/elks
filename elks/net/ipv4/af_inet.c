@@ -1,12 +1,13 @@
 /*
  * net/ipv4/af_inet.c
  *
+ * TCP/IP stack by Harry Kalogirou
+ *
  * (C) 2001 Harry Kalogirou (harkal@rainbow.cs.unipi.gr)
  * 4 Aug 20 Greg Haerr - debugged semaphores and added multiprocess support
  *
- * The kernel side part of the ELKS TCP/IP stack. It uses tcpdev.c
- * to communicate with the actual TCP/IP stack that resides in
- * user space (ktcp)..
+ * The kernel side part of the ELKS TCP/IP stack. It uses tcpdev.c to
+ * communicate with the actual TCP/IP stack that resides in user space (ktcp).
  */
 
 //#define DEBUG
@@ -476,9 +477,6 @@ static struct proto_ops inet_proto_ops = {
 
 void inet_proto_init(struct net_proto *pro)
 {
-#ifndef CONFIG_SMALL_KERNEL
-    printk("TCP/IP stack by Harry Kalogirou\n");
-#endif
     sock_register(inet_proto_ops.family, &inet_proto_ops);
 }
 

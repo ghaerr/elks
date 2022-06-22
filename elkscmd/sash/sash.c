@@ -667,7 +667,7 @@ runcmd(char *cmd, int argc, char **argv)
 	 * If file has access but didn't execute, guess it's a shell script
 	 * and run 'sh -c cmd'.
 	 */
-	if (errno == ENOEXEC)
+	if (errno == ENOEXEC && !cflag)
 		execl("/bin/sh", "sh", "-c", cmd, (char*)0);
 
 	perror(argv[0]);	/* Usually 'No such file or directory'*/

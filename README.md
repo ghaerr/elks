@@ -105,6 +105,14 @@ Help on how to use ELKS, as well as technical tutorials, are available on our [W
 
 More information is in the Documentation folder: [Index of ELKS Documentation](https://htmlpreview.github.io/?https://github.com/jbruchon/elks/blob/master/Documentation/index.html).
 
+## Resources
+
+Other projects and resources interesting to ELKS and our programming community:
+
+- [Size Optimization Tricks](https://justine.lol/sizetricks/) A great article from Justine Tunney's blog showing how big things can be done without bloat.
+- [Blinkenlights](https://justine.lol/blinkenlights/) A visual debugger shows 8086 instruction execution starting from a PC boot sector.
+- [gcc-ia16](https://github.com/tkchia/gcc-ia16) TK Chia's gcc compiler targeted for 8086, maintained and used for the ELKS kernel and all its applications.
+
 ## More information
 
 Questions? Problems? Patches? Open an issue on the ELKS GitHub project!

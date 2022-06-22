@@ -11,14 +11,13 @@
 #include <linuxmt/config.h>
 #include <linuxmt/socket.h>
 #include <linuxmt/fs.h>
+#include <linuxmt/sched.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/stat.h>
 #include <linuxmt/fcntl.h>
 #include "af_nano.h"
 
 #ifdef CONFIG_NANO
-
-int sock_awaitconn(register struct socket *mysock, struct socket *servsock, int flags);
 
 struct nano_proto_data nano_datas[NSOCKETS_NANO];
 
@@ -569,9 +568,6 @@ struct proto_ops nano_proto_ops = {
 
 void nano_proto_init(struct net_proto *pro)
 {
-#ifndef CONFIG_SMALL_KERNEL
-    printk("ELKS NANO domain sockets\n");
-#endif
     sock_register(AF_NANO, &nano_proto_ops);
 }
 

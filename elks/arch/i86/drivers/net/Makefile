@@ -27,12 +27,15 @@ include $(BASEDIR)/Makefile-rules
 #########################################################################
 # Specific rules.
 
-OBJS = net_drv.o
+OBJS =
 ifeq ($(CONFIG_ETH_NE2K), y)
 OBJS += ne2k-asm.o ne2k.o
 endif
 ifeq ($(CONFIG_ETH_WD), y)
 OBJS += wd.o
+endif
+ifeq ($(CONFIG_ETH_EL3), y)
+OBJS += el3-asm.o el3.o
 endif
 
 all: net_drv.a

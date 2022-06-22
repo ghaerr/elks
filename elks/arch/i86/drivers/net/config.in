@@ -4,11 +4,10 @@
 
 mainmenu_option next_comment
 	comment 'Network device drivers'
-	bool 'Ethernet device support' CONFIG_ETH n
+	bool 'Ethernet device support' CONFIG_ETH y
 	if [ "$CONFIG_ETH" = "y" ]; then
-		choice 'Select Ethernet device' \
-			"ne2k	CONFIG_ETH_NE2K \
-			WD/SMC8003	CONFIG_ETH_WD" ne2k
-		bool '8 bit access for Ethernet devices'      CONFIG_ETH_BYTE_ACCESS      n
+		bool 'NE2K'			CONFIG_ETH_NE2K y
+		bool 'WD/SMC8003'	CONFIG_ETH_WD y
+		bool '3C509'		CONFIG_ETH_EL3 y
 	fi
 endmenu

@@ -48,8 +48,8 @@
  *
  * Usuage: fsck [-larvsm] device
  *	-l for a listing of all the filenames
- *	-a for automatic repairs (not implemented)
- *	-r for repairs (interactive) (not implemented)
+ *	-a for automatic repairs
+ *	-r for repairs (interactive)
  *	-v for verbose (tells how many files)
  *	-s for super-block info
  *	-m for minix-like "mode not cleared" warnings
@@ -913,7 +913,7 @@ int main(int argc, char ** argv)
 			switch (argv[0][0]) {
 				case 'l': list=1; break;
 				case 'a': automatic=1; repair=1; break;
-				case 'r': automatic=0; repair=1; break;
+				case 'r': repair=1; break;
 				case 'v': verbose++; break;
 				case 's': show=1; break;
 				case 'm': warn_mode=1; break;

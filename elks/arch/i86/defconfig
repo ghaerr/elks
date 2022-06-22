@@ -24,7 +24,6 @@ CONFIG_ARCH_IBMPC=y
 #
 # Platform
 #
-CONFIG_CPU_8086=y
 
 #
 # Devices
@@ -35,8 +34,6 @@ CONFIG_HW_SERIAL_FIFO=y
 #
 # BIOS support
 #
-CONFIG_HW_KEYBOARD_BIOS=y
-CONFIG_HW_VIDEO_HOC=y
 CONFIG_APM=y
 
 #
@@ -46,14 +43,12 @@ CONFIG_APM=y
 #
 # Memory manager
 #
-CONFIG_SMALL_KERNEL=y
 # CONFIG_STRACE is not set
 CONFIG_BOOTOPTS=y
 CONFIG_CPU_USAGE=y
 # CONFIG_TIME_RTC_LOCALTIME is not set
 # CONFIG_IDLE_HALT is not set
 # CONFIG_ROMCODE is not set
-CONFIG_EXPERIMENTAL=y
 CONFIG_FARTEXT_KERNEL=y
 
 #
@@ -157,7 +152,7 @@ CONFIG_PSEUDO_TTY=y
 #
 # Network device drivers
 #
-# CONFIG_ETH is not set
+CONFIG_ETH=y
 
 #
 # Userland
@@ -227,6 +222,10 @@ CONFIG_APPS_2880K=n
 CONFIG_APPS_1440K=y
 CONFIG_APPS_720K=n
 CONFIG_APPS_360K=n
+
+# System startup
+CONFIG_SYS_DEFSHELL_SASH=n
+CONFIG_SYS_NO_BININIT=n
 
 #
 # Target image
