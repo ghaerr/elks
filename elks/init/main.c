@@ -496,13 +496,4 @@ static char * INITPROC option(char *s)
 	}
 	return s;
 }
-
-char *strchr(char *s, int c)
-{
-	for(; *s != (char)c; ++s) {
-		if (*s == '\0')
-			return NULL;
-	}
-	return s;
-}
 #endif /* CONFIG_BOOTOPTS*/
