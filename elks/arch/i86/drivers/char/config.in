@@ -3,7 +3,7 @@
 #
 
 mainmenu_option next_comment
-    comment 'Character device drivers'
+	comment 'Character device drivers'
 
 	choice 'Select console driver'			\
 		"Direct         CONFIG_CONSOLE_DIRECT	\
@@ -27,7 +27,7 @@ mainmenu_option next_comment
 	    source elks/arch/i86/drivers/char/KeyMaps/config.in
 	fi
 
-    comment 'Other character devices'
+	comment 'Other character devices'
 	if [ "$CONFIG_CONSOLE_SERIAL" = "n" ]; then
 	    bool 'Serial device driver'		CONFIG_CHAR_DEV_RS	  y
 	else
@@ -35,18 +35,12 @@ mainmenu_option next_comment
 	fi
 	bool 'Parallel device driver'		CONFIG_CHAR_DEV_LP	  y
 	bool 'CGA text mode videobuffer'	CONFIG_CHAR_DEV_CGATEXT	  n
-    bool 'Memory character devices'		CONFIG_CHAR_DEV_MEM	  y
-    if [ "$CONFIG_CHAR_DEV_MEM" = "y" ]; then
-	bool '  Port read'	CONFIG_CHAR_DEV_MEM_PORT_READ	y
-	bool '  Port write'	CONFIG_CHAR_DEV_MEM_PORT_WRITE	y
-    fi
-
-    bool 'Pseudo tty device driver'		CONFIG_PSEUDO_TTY	  y
-
-    if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
-		bool 'Meta device driver'		CONFIG_DEV_META		  n
-	else
-		comment '(meta device is experimental)'
+	bool 'Memory character devices'		CONFIG_CHAR_DEV_MEM	  y
+	if [ "$CONFIG_CHAR_DEV_MEM" = "y" ]; then
+		bool '  Port read'	CONFIG_CHAR_DEV_MEM_PORT_READ	y
+		bool '  Port write'	CONFIG_CHAR_DEV_MEM_PORT_WRITE	y
 	fi
 
+	bool 'Pseudo tty device driver'		CONFIG_PSEUDO_TTY	  y
+	bool 'Meta device driver'		CONFIG_DEV_META		  n
 endmenu

@@ -580,9 +580,6 @@ struct proto_ops unix_proto_ops = {
 
 void unix_proto_init(struct net_proto *pro)
 {
-#ifndef CONFIG_SMALL_KERNEL
-    printk("ELKS UNIX domain sockets\n");
-#endif
     sock_register(AF_UNIX, &unix_proto_ops);
 }
 

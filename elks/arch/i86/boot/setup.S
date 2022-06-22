@@ -743,21 +743,12 @@ arch_get_mem:
 	ret
 
 // Set INITSEG values for IBM PC
-// Set keyboard repeat rate using INT 16h
 // Determine display type using INT 10h AH=12 and INT 10h AH=1A
 // Get display page and mode using INT 10h AH=0F
-// Determine CPU type using somewhat outdated methods
-// Clear BIOS data area for fd/hd (24 bytes)
 // Determine size of main memory using INT 12h
 // FIXME move to separate setup-bios.S file or individual drivers
 
 arch_set_initseg:
-
-#ifdef CONFIG_HW_KEYBOARD_BIOS
-	mov	$0x0305,%ax	// set the keyboard repeat rate to the max
-	xor	%bx,%bx
-	int	$0x16
-#endif
 
 #ifdef CONFIG_HW_VGA
 // check for EGA/VGA and some config parameters
@@ -780,11 +771,7 @@ arch_set_initseg:
 	movb	$1,15		// we've detected a VGA
 #else
         movb  $0,15		// no VGA in system
-#ifdef CONFIG_HW_VIDEO_LINES_PER_SCREEN
-        mov   $CONFIG_HW_VIDEO_LINES_PER_SCREEN,%al
-#else
         mov   $25,%al		// height of display in rows
-#endif
 #endif /* CONFIG_HW_VGA*/
 
 novga:	mov	%al,14		// CGA 25 rows
@@ -795,6 +782,8 @@ novga:	mov	%al,14		// CGA 25 rows
 	int	$0x10
 	mov	%bx,4		// bh = display page
 	mov	%ax,6		// al = video mode, ah = window width
+
+	call	getcpu		// implemented in cputype.S
 
 	mov	$INITSEG,%ax
 	mov	%ax,%ds
@@ -817,6 +806,12 @@ putc:	push %bx
 	pop %cx
 	pop %bx
 	ret
+
+// include code to determine early CPU types
+// needed for guessing system capabilities (sys_caps) for XT vs AT BIOS
+// TODO: remove and use alternate mechanism for XT vs AT BIOS capabilities
+#include "cputype.S"
+
 #endif /* CONFIG_ARCH_IBMPC*/
 
 
