@@ -29,6 +29,8 @@
 #define net_irq     (netif_parms[0].irq)
 #define NET_PORT    (netif_parms[0].port)
 int net_port;   // temp kluge for ne2k-asm.S
+#define net_ram     (netif_parms[0].ram)
+#define net_flags   (netif_parms[0].flags)
 
 static struct netif_stat netif_stat =
 	{ 0, 0, 0, 0, 0, 0, {0x52, 0x54, 0x00, 0x12, 0x34, 0x57}};  /* QEMU default  + 1 */

@@ -237,11 +237,11 @@ int memcmp(const void *s1, const void *s2, size_t n)
 
 char *strchr(const char *s, int c)
 {
-    while (*s) {
-        if (*s++ == (char) c)
-            return (char *)s;
+    for(; *s != (char)c; ++s) {
+        if (*s == '\0')
+            return NULL;
     }
-    return NULL;
+    return (char *)s;
 }
 
 #endif
