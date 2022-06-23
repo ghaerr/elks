@@ -852,30 +852,30 @@ bootopts:
 	call	getchs		// convert LBA in AX to CHS in CX,DH
 
 #ifdef CONFIG_ARCH_PC98
-	push %bp
+	push	%bp
 	mov	$INITSEG,%ax
 	mov	%ax,%ds
-	mov	root_dev,%al	// Physical Device Address
 
 	mov	$DEF_OPTSEG,%ax	// ES:BP = DEF_OPTSEG:0
 	mov	%ax,%es
 	xor	%bp,%bp
 
-	mov $0xD6,%ah		// Read Data
-	mov $512,%bx
-	test $0x10,%al		// Check Floppy Disk or Hard Disk
-	jz pc98_int1b
+	mov	root_dev,%al	// Physical Device Address
+	mov	$0xD6,%ah		// Read Data
+	mov	$512,%bx
+	test	$0x10,%al		// Check Floppy Disk or Hard Disk
+	jz	pc98_int1b
 #if defined(CONFIG_IMG_FD1232)
-	mov $1024,%bx
-	mov $0x03,%ch		// 1024 Bytes per sector
-	inc %dl				// sector number for PC_98 Floppy Disk
+	mov	$1024,%bx
+	mov	$0x03,%ch		// 1024 Bytes per sector
+	inc	%dl				// sector number for PC_98 Floppy Disk
 #elif defined(CONFIG_IMG_FD1440)
-	mov $0x02,%ch		// 512 Bytes per sector
-	inc %dl				// sector number for PC_98 Floppy Disk
+	mov	$0x02,%ch		// 512 Bytes per sector
+	inc	%dl				// sector number for PC_98 Floppy Disk
 #endif
 pc98_int1b:
-	int $0x1B			// BIOS disk interrupt
-	pop %bp
+	int	$0x1B			// BIOS disk interrupt
+	pop	%bp
 #else
 	mov	$INITSEG,%ax
 	mov	%ax,%ds
