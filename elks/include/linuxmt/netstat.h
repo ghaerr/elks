@@ -10,6 +10,7 @@ struct netif_parms {
 	int	irq;
 	int	port;
 	unsigned int ram;
+    unsigned int flags;
 };
 extern struct netif_parms netif_parms[MAX_ETHS];
 

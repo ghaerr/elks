@@ -30,9 +30,9 @@ int root_mountflags = MS_RDONLY;
 int root_mountflags = 0;
 #endif
 struct netif_parms netif_parms[MAX_ETHS] = {
-    { NE2K_IRQ, NE2K_PORT, 0 },
-    { WD_IRQ, WD_PORT, WD_RAM },
-    { EL3_IRQ, EL3_PORT, 0 },
+    { NE2K_IRQ, NE2K_PORT, 0, 0 },
+    { WD_IRQ, WD_PORT, WD_RAM, 0 },
+    { EL3_IRQ, EL3_PORT, 0, 0 },
 };
 __u16 kernel_cs, kernel_ds;
 static int boot_console;
@@ -292,8 +292,11 @@ static void parse_nic(char *line, struct netif_parms *parms)
     parms->irq = (int)simple_strtol(line, 0);
     if ((p = strchr(line, ','))) {
         parms->port = (int)simple_strtol(p+1, 16);
-        if ((p = strchr(p+1, ',')))
+        if ((p = strchr(p+1, ','))) {
             parms->ram = (int)simple_strtol(p+1, 16);
+            if ((p = strchr(p+1, ',')))
+                parms->flags = (int)simple_strtol(p+1, 0);
+        }
     }
 }
 
