@@ -36,12 +36,11 @@ long simple_strtol(char *s, int base)
 	 * If base is 0, allow 0x for hex and 0 for octal;
 	 * if base is already 16, allow 0x.
 	 */
-	if ((base == 0 || base == 16) &&
-		c == '0' && (*s == 'x' || *s == 'X')) {
-			c = s[1];
-			s += 2;
-			base = 16;
-		}
+	if ((base == 0 || base == 16) && c == '0' && (*s == 'x' || *s == 'X')) {
+		c = s[1];
+		s += 2;
+		base = 16;
+	}
 	if (base == 0)
 		base = c == '0' ? 8 : 10;
 
@@ -80,28 +79,6 @@ char *strcpy(char *dest, char *src)
 
 #if 0
 
-#ifndef __HAVE_ARCH_ATOI
-
-int atoi(register char *number)
-{
-    int n = 0;
-    char neg;
-
-/*      if (!number) */
-/*  	return 0; */
-    while (*number <= ' ') {
-	if (!*number++)
-	    return 0;
-    }
-    if (((neg = *number) == '-') || (*number == '+')) {
-	++number;
-    }
-    while (*number >= '0' && *number <= '9')
-	n = (n * 10) + (*number++ - '0');
-    return (neg == '-' ? -n : n);
-}
-
-#endif
 
 #ifndef __HAVE_ARCH_STRNCPY
 
@@ -181,22 +158,6 @@ int strncmp(register char *s1, register char *s2, size_t n)
 
 #endif
 
-#if 0
-
-#ifndef __HAVE_ARCH_STRCHR
-
-char *strchr(char *s, int c)
-{
-    while (*s) {
-	if (*s++ == (char) c)
-	    return s;
-    return NULL;
-}
-
-#endif
-
-#endif
-
 #ifndef __HAVE_ARCH_STRLEN
 
 size_t strlen(char *s)
@@ -227,7 +188,88 @@ size_t strnlen(char *s, size_t max)
 
 #endif
 
+#ifndef __HAVE_ARCH_MEMSET
+
+void *memset(void *s, char c, size_t count)
+{
+    register char *xs = s;
+
+    while (count--)
+	*xs++ = c;
+
+    return s;
+}
+
+#endif
+
+#ifndef __HAVE_ARCH_MEMCPY
+
+void *memcpy(void *dest, void *src, size_t count)
+{
+    register char *tmp = dest, *s = src;
+
+    while (count--)
+	*tmp++ = *s++;
+
+    return dest;
+}
+
+#endif
+
+#ifndef __HAVE_ARCH_MEMCMP
+
+int memcmp(const void *s1, const void *s2, size_t n)
+{
+    const unsigned char *su1 = s1;
+    const unsigned char *su2 = s2;
+    char res = 0;
+
+    for (; n > 0; n--)
+        if (!(res = *su1++ - *su2++))
+            break;
+
+    return res;
+}
+
+#endif
+
+#ifndef __HAVE_ARCH_STRCHR
+
+char *strchr(const char *s, int c)
+{
+    while (*s) {
+        if (*s++ == (char) c)
+            return (char *)s;
+    }
+    return NULL;
+}
+
+#endif
+
 #if 0
+
+#ifndef __HAVE_ARCH_ATOI
+
+int atoi(register char *number)
+{
+    int n = 0;
+    char neg;
+
+/*      if (!number) */
+/*  	return 0; */
+    while (*number <= ' ') {
+	if (!*number++)
+	    return 0;
+    }
+    if (((neg = *number) == '-') || (*number == '+')) {
+	++number;
+    }
+    while (*number >= '0' && *number <= '9')
+	n = (n * 10) + (*number++ - '0');
+    return (neg == '-' ? -n : n);
+}
+
+#endif
 
 #ifndef __HAVE_ARCH_STRSPN
 
@@ -291,24 +333,6 @@ char *strtok(char *s, char *ct)
 
 #endif
 
-#endif
-
-#ifndef __HAVE_ARCH_MEMSET
-
-void *memset(void *s, char c, size_t count)
-{
-    register char *xs = s;
-
-    while (count--)
-	*xs++ = c;
-
-    return s;
-}
-
-#endif
-
-#if 0
-
 #ifndef __HAVE_ARCH_BCOPY
 
 char *bcopy(char *src, char *dest, int count)
@@ -322,24 +346,6 @@ char *bcopy(char *src, char *dest, int count)
 }
 
 #endif
-
-#endif
-
-#ifndef __HAVE_ARCH_MEMCPY
-
-void *memcpy(void *dest, void *src, size_t count)
-{
-    register char *tmp = dest, *s = src;
-
-    while (count--)
-	*tmp++ = *s++;
-
-    return dest;
-}
-
-#endif
-
-#if 0
 
 #ifndef __HAVE_ARCH_MEMMOVE
 
@@ -358,26 +364,6 @@ void *memmove(void *dest, void *src, size_t count)
     }
 
     return dest;
-}
-
-#endif
-
-#endif
-
-#if 0
-
-#ifndef __HAVE_ARCH_MEMCMP
-
-int memcmp(void *cs, void *ct, size_t count)
-{
-    register unsigned char *su1 = cs, *su2 = ct;
-    char res = 0;
-
-    for (; count > 0; count--)
-	if (!(res = *su1++ - *su2++))
-	    break;
-
-    return res;
 }
 
 #endif

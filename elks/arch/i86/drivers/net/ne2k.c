@@ -470,16 +470,3 @@ void ne2k_drv_init(void)
 	_ne2k_is_8bit = is_8bit;	// Keep for now
 	netif_stat.if_status |= is_8bit;// Temporary
 }
-
-/* remove if/when we get a memcmp library routine */
-
-int memcmp(void *str1, void *str2, size_t count) {
-	char *s1 = str1;
-	char *s2 = str2;
-  
-	while (count-- > 0) {
-		if (*s1++ != *s2++)
-			return s1[-1] < s2[-1] ? -1 : 1;
-	}
-	return 0;
-}
