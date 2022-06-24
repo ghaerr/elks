@@ -79,7 +79,7 @@ void enable_irq(unsigned int irq)
     map = get_from_logical_irq(irq);
     if (map) {
         // set the priority mask and clear the MSK bit (bit 4)
-        outw(map->config_word, map->pcb_register & 0x7);
+        outw(map->config_word & 0x7, map->pcb_register);
     }
 }
 
@@ -95,7 +95,7 @@ void disable_irq(unsigned int irq)
     map = get_from_logical_irq(irq);
     if (map) {
         // set the priority mask and set the MSK bit (bit 4)
-        outw(map->config_word, 0x8 | (map->pcb_register & 0x7));
+        outw(0x8 | (map->config_word & 0x7), map->pcb_register);
     }
 }
 
