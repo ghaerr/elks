@@ -17,7 +17,7 @@ extern char *strcat(char *,char *);
 extern char *strncat(char *,char *,size_t);
 extern int strcmp(char *,char *);
 extern int strncmp(char *,char *,size_t);
-extern char *strchr(char *,int);
+extern char *strchr(const char *,int);
 extern size_t strlen(char *);
 extern size_t strnlen(char *,size_t);
 extern size_t strspn(char *,char *);
@@ -28,7 +28,7 @@ extern void bcopy(void *,void *,int);
 extern void *memset(void *,int,size_t);
 extern void *memcpy(void *,void *,size_t);
 extern void *memmove(void *,void *,size_t);
-extern int memcmp(void *,void *,size_t);
+extern int memcmp(const void *,const void *,size_t);
 extern char *strstr(char *,char *);
 
 /* The following prototype does not have a GNU manpage, so matches the

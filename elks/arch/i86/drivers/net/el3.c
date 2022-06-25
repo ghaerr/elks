@@ -113,6 +113,8 @@ static int max_interrupt_work = 5;
 /* runtime configuration set in /bootopts or defaults in ports.h */
 #define net_irq     (netif_parms[2].irq)
 #define net_port    (netif_parms[2].port)
+#define net_ram     (netif_parms[2].ram)
+#define net_flags   (netif_parms[2].flags)
 static int ioaddr;	// FIXME  remove later
 static word_t el3_id_port;
 

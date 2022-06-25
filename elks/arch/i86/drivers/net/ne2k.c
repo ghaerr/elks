@@ -29,6 +29,8 @@
 #define net_irq     (netif_parms[0].irq)
 #define NET_PORT    (netif_parms[0].port)
 int net_port;   // temp kluge for ne2k-asm.S
+#define net_ram     (netif_parms[0].ram)
+#define net_flags   (netif_parms[0].flags)
 
 static struct netif_stat netif_stat =
 	{ 0, 0, 0, 0, 0, 0, {0x52, 0x54, 0x00, 0x12, 0x34, 0x57}};  /* QEMU default  + 1 */
@@ -469,17 +471,4 @@ void ne2k_drv_init(void)
 	_ne2k_has_data = 0;
 	_ne2k_is_8bit = is_8bit;	// Keep for now
 	netif_stat.if_status |= is_8bit;// Temporary
-}
-
-/* remove if/when we get a memcmp library routine */
-
-int memcmp(void *str1, void *str2, size_t count) {
-	char *s1 = str1;
-	char *s2 = str2;
-  
-	while (count-- > 0) {
-		if (*s1++ != *s2++)
-			return s1[-1] < s2[-1] ? -1 : 1;
-	}
-	return 0;
 }

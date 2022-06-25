@@ -34,12 +34,10 @@ got_it:
 
 #endasm
 #else /* ifdef BCC_AX_ASM */
-   register char ch;
-   for(;;)
-   {
-     if( (ch= *s) == c ) return (char *) s;
-     if( ch == 0 ) return 0;
-     s++;
-   }
+    for(; *s != (char)c; ++s) {
+        if (*s == '\0')
+            return NULL;
+    }
+    return (char *)s;
 #endif /* ifdef BCC_AX_ASM */
 }

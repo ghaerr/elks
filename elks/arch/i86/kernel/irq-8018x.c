@@ -78,7 +78,8 @@ void enable_irq(unsigned int irq)
     struct irq_logical_map* map;
     map = get_from_logical_irq(irq);
     if (map) {
-        outw(map->config_word, map->pcb_register);
+        // set the priority mask and clear the MSK bit (bit 4)
+        outw(map->config_word & 0x7, map->pcb_register);
     }
 }
 
@@ -90,7 +91,12 @@ int remap_irq(int irq)
 
 void disable_irq(unsigned int irq)
 {
-    // TODO disable passed interrupt
+    struct irq_logical_map* map;
+    map = get_from_logical_irq(irq);
+    if (map) {
+        // set the priority mask and set the MSK bit (bit 4)
+        outw(0x8 | (map->config_word & 0x7), map->pcb_register);
+    }
 }
 
 // Get interrupt vector from IRQ
