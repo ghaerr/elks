@@ -37,15 +37,20 @@ struct netif_parms netif_parms[MAX_ETHS] = {
 __u16 kernel_cs, kernel_ds;
 static int boot_console;
 static char bininit[] = "/bin/init";
+static char binshell[] = "/bin/sh";
+#ifdef CONFIG_SYS_NO_BININIT
+static char *init_command = binshell;
+#else
 static char *init_command = bininit;
+#endif
 
 #ifdef CONFIG_BOOTOPTS
 /*
  * Parse /bootopts startup options
  */
-static int args, envs;
+static int args = 2;	/* room for argc and av[0] */
+static int envs;
 static int argv_slen;
-static char argv_changed;
 /* argv_init doubles as sptr data for sys_execv later*/
 static char *argv_init[80] = { NULL, bininit, NULL };
 #if ENV
@@ -130,9 +135,8 @@ void INITPROC kernel_init(void)
     fs_init();
 
 #ifdef CONFIG_BOOTOPTS
-    if (opts)
-	finalize_options();
-    else printk("/bootopts ignored: header not ## or size > %d\n", OPTSEGSZ-1);
+    finalize_options();
+    if (!opts) printk("/bootopts ignored: header not ## or size > %d\n", OPTSEGSZ-1);
 #endif
 
     kernel_banner(base, end);
@@ -197,24 +201,21 @@ static void init_task(void)
     //}
 
 #ifdef CONFIG_BOOTOPTS
-    /* special handling if argc/argv array setup*/
-    if (argv_changed) {
-	/* unset special sys_wait4() processing if pid 1 not /bin/init*/
-	if (strcmp(init_command, bininit) != 0)
-	    current->ppid = 1;		/* turns off auto-child reaping*/
-	/* run /bin/init or init= command, normally no return*/
-	run_init_process_sptr(init_command, (char *)argv_init, argv_slen);
-    } else
-#endif
-    {
-#ifndef CONFIG_SYS_NO_BININIT
-	try_exec_process(bininit);
-#endif
-    }
+    /* pass argc/argv/env array to init_command */
 
-    printk("No init - running /bin/sh\n");
+    /* unset special sys_wait4() processing if pid 1 not /bin/init*/
+    if (strcmp(init_command, bininit) != 0)
+        current->ppid = 1;      /* turns off auto-child reaping*/
+
+    /* run /bin/init or init= command, normally no return*/
+    run_init_process_sptr(init_command, (char *)argv_init, argv_slen);
+#else
+    try_exec_process(init_command);
+#endif /* CONFIG_BOOTOPTS */
+
+    printk("No init - running %s\n", binshell);
     current->ppid = 1;			/* turns off auto-child reaping*/
-    try_exec_process("/bin/sh");
+    try_exec_process(binshell);
     try_exec_process("/bin/sash");
     panic("No init or sh found");
 }
@@ -320,10 +321,10 @@ static int parse_options(void)
 	/* check file starts with ## and max len 511 bytes*/
 	if (*(unsigned short *)options != 0x2323 || options[OPTSEGSZ-1])
 		return 0;
+
 #if DEBUG
 	printk("/bootopts: %s", &options[3]);
 #endif
-	args = 2;	/* room for argc and av[0]*/
 	next = line;
 	while ((line = next) != NULL && *line) {
 		if ((next = option(line)) != NULL) {
@@ -381,7 +382,6 @@ static int parse_options(void)
 		if (!strncmp(line,"init=",5)) {
 			line += 5;
 			init_command = argv_init[1] = line;
-			argv_changed = 1;
 			continue;
 		}
 		if (!strncmp(line,"ne2k=",5)) {
@@ -412,7 +412,6 @@ static int parse_options(void)
 			if (args >= MAX_INIT_ARGS)
 				break;
 			argv_init[args++] = line;
-			argv_changed = 1;
 		}
 #if ENV
 		else {
@@ -449,16 +448,14 @@ static void INITPROC finalize_options(void)
 
 	/* convert argv array to stack array for sys_execv*/
 	args--;
+	argv_init[0] = (char *)args;        	/* 0 = argc*/
 	char *q = (char *)&argv_init[args+2+envs+1];
-	if (argv_changed) {
-	    argv_init[0] = (char *)args;        	/* 0 = argc*/
-	    for (i=1; i<=args; i++) {                   /* 1..argc = av*/
+	for (i=1; i<=args; i++) {                   /* 1..argc = av*/
 		char *p = argv_init[i];
 		char *savq = q;
-                while ((*q++ = *p++) != 0)
+		while ((*q++ = *p++) != 0)
 			;
 		argv_init[i] = (char *)(savq - (char *)argv_init);
-	    }
 	}
 	/*argv_init[args+1] = NULL;*/               /* argc+1 = 0*/
 #if ENV
