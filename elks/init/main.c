@@ -37,8 +37,9 @@ struct netif_parms netif_parms[MAX_ETHS] = {
 __u16 kernel_cs, kernel_ds;
 static int boot_console;
 static char bininit[] = "/bin/init";
+static char binshell[] = "/bin/sh";
 #ifdef CONFIG_SYS_NO_BININIT
-static char *init_command = "/bin/sh";
+static char *init_command = binshell;
 #else
 static char *init_command = bininit;
 #endif
@@ -212,9 +213,9 @@ static void init_task(void)
     try_exec_process(init_command);
 #endif /* CONFIG_BOOTOPTS */
 
-    printk("No init - running /bin/sh\n");
+    printk("No init - running %s\n", binshell);
     current->ppid = 1;			/* turns off auto-child reaping*/
-    try_exec_process("/bin/sh");
+    try_exec_process(binshell);
     try_exec_process("/bin/sash");
     panic("No init or sh found");
 }
