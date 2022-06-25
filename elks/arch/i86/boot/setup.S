@@ -852,7 +852,30 @@ bootopts:
 	call	getchs		// convert LBA in AX to CHS in CX,DH
 
 #ifdef CONFIG_ARCH_PC98
-	stc			// FIXME force error for now
+	push	%bp
+	mov	$INITSEG,%ax
+	mov	%ax,%ds
+
+	mov	$DEF_OPTSEG,%ax	// ES:BP = DEF_OPTSEG:0
+	mov	%ax,%es
+	xor	%bp,%bp
+
+	mov	root_dev,%al	// Physical Device Address
+	mov	$0xD6,%ah		// Read Data
+	mov	$512,%bx
+	test	$0x10,%al		// Check Floppy Disk or Hard Disk
+	jz	pc98_int1b
+#if defined(CONFIG_IMG_FD1232)
+	mov	$1024,%bx
+	mov	$0x03,%ch		// 1024 Bytes per sector
+	inc	%dl				// sector number for PC_98 Floppy Disk
+#elif defined(CONFIG_IMG_FD1440)
+	mov	$0x02,%ch		// 512 Bytes per sector
+	inc	%dl				// sector number for PC_98 Floppy Disk
+#endif
+pc98_int1b:
+	int	$0x1B			// BIOS disk interrupt
+	pop	%bp
 #else
 	mov	$INITSEG,%ax
 	mov	%ax,%ds
@@ -978,7 +1001,7 @@ getchs:
 	adc	%es:sect_offset+2,%dx	// DX:AX = disk LBA
 	div	%bx			// AX = cylinder, DX = head
 #ifdef CONFIG_ARCH_PC98
-	mov	%al,%cl			// PC-98 cylinder
+	mov	%ax,%cx			// PC-98 cylinder
 #else
 	mov	%al,%ch			// CH = low 8 bits of cylinder
 	ror	%ah
@@ -990,7 +1013,6 @@ getchs:
 	mov	%es:sec_per_trk,%bx	// BX = sect max
 	div	%bx			// DL = sector - 1
 #ifdef CONFIG_ARCH_PC98
-	inc	%dl			// PC-98 sector
 #else
 	or	%dl,%cl			// stash sector - 1 in CL
 	inc	%cx			// CX = sector
