@@ -280,10 +280,10 @@ int FATPROC msdos_scan(struct inode *dir,char *name,struct buffer_head **res_bh,
 	*res_bh = NULL;
 	while ((*ino = msdos_get_entry(dir,&pos,res_bh,&de)) != -1) {
 		if (name) {
-			if (de->name[0] && ((unsigned char *) (de->name))[0] != DELETED_FLAG
+			if (de->name[0] && (unsigned char)de->name[0] != DELETED_FLAG
 				&& !(de->attr & ATTR_VOLUME) && !strncmp(de->name,name,MSDOS_NAME)) break;
 		}
-		else if (!de->name[0] || ((unsigned char *) (de->name))[0] == DELETED_FLAG) {
+		else if (!de->name[0] || (unsigned char)de->name[0] == DELETED_FLAG) {
 				/* unset directory bit so read_inode doesn't traverse FAT table */
 				/* MSDOS sometimes has deleted DIR entries with non-zero first cluster */
 				de->attr &= ~ATTR_DIR;
@@ -329,12 +329,11 @@ static cluster_t FATPROC raw_found(struct super_block *sb, cluster_t sector,
 		if (name) {
 			if (strncmp(data[entry].name,name,MSDOS_NAME) != 0)
 				continue;
-			((unsigned short *)&start)[0] = data[entry].start;
-			((unsigned short *)&start)[1] = starthi;
+			start = data[entry].start | ((unsigned long)starthi << 16);
 	    } else {
-			if (*(unsigned char *)data[entry].name == DELETED_FLAG
+			if ((unsigned char)data[entry].name[0] == DELETED_FLAG
 				|| data[entry].start != (unsigned short)number
-				|| starthi != ((unsigned short *)&number)[1])
+				|| starthi != (unsigned short)(number >> 16))
 				continue;
 			start = number;
 	    }

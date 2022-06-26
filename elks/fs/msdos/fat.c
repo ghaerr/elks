@@ -275,7 +275,7 @@ sector_t FATPROC msdos_smap(struct inode *inode, sector_t sector)
 	}
 #endif
 	cluster = sector / sb->cluster_size;
-	offset = (unsigned)sector % sb->cluster_size;
+	offset = (unsigned int)sector % sb->cluster_size;
 	if (!(cluster = get_cluster(inode,cluster))) return 0;
 	return (cluster-2)*sb->cluster_size+sb->data_start+offset;
 }
