@@ -31,6 +31,7 @@ NOINDENT	=
 # Include standard commands.
 
 include $(BASEDIR)/Makefile-rules
+CFLAGS += -Wno-strict-aliasing
 
 #########################################################################
 # Objects to compile.
