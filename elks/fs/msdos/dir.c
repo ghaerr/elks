@@ -95,7 +95,7 @@ int FATPROC msdos_get_entry_long(
 	int is_long;
 	unsigned char alias_checksum = 0;
 	/* static not reentrant: conserve stack usage*/
-	static unsigned char unicodename[52+2];		/* Limited to two long entries */
+	static unsigned short unicodename[26+1];	/* Limited to two long entries */
 
 	if ((int)*pos & (sizeof(struct msdos_dir_entry) - 1)) return -ENOENT;
 	is_long = 0;
@@ -104,7 +104,7 @@ int FATPROC msdos_get_entry_long(
 	while (*ino != (ino_t)-1L) {
 		if (de->name[0] == 0) {		/* empty  entry and stop reading*/
 			break;
-		} else if (((unsigned char *)(de->name))[0] == DELETED_FLAG) {	/* empty entry*/
+		} else if ((unsigned char)de->name[0] == DELETED_FLAG) {	/* empty entry*/
 			is_long = 0;
 			oldpos = *pos;
 		} else if (de->attr ==  ATTR_EXT) {		/* long filename entry*/
@@ -117,7 +117,7 @@ int FATPROC msdos_get_entry_long(
 				alias_checksum = ds->alias_checksum;
 			}
 
-			*(short *)&unicodename[52] = 0;		/* nul terminate unicode buffer*/
+			unicodename[26] = 0;		        /* nul terminate unicode buffer*/
 			while (slot > 0) {					/* read entries until slot 0*/
 				if (ds->attr != ATTR_EXT ||
 					(ds->id & ~LAST_LONG_ENTRY) != slot ||
@@ -130,15 +130,15 @@ int FATPROC msdos_get_entry_long(
 				 */
 				slot--;
 				if (slot < 2) {
-					int offset = slot * 26;		/* 13 chars/entry * 2 chars/unicode char*/
+					int offset = slot * 13;		/* 13 chars/entry*/
 					memcpy(&unicodename[offset], ds->name0_4, 10);
-					offset += 10;
+					offset += 5;
 					memcpy(&unicodename[offset], ds->name5_10, 12);
-					offset += 12;
+					offset += 6;
 					memcpy(&unicodename[offset], ds->name11_12, 4);
-					offset += 4;
+					offset += 2;
 					if (ds->id & LAST_LONG_ENTRY)
-						*(short *)&unicodename[offset] = 0;
+						unicodename[offset] = 0;
 				}
 				if (slot > 0) {
 					*ino = msdos_get_entry(dir,pos,bh,&de);
@@ -166,8 +166,8 @@ int FATPROC msdos_get_entry_long(
 				if (sum != alias_checksum)
 					is_long = 0;
 
-				*(short *)&unicodename[28] = 0;		/* truncate name to 14 characters*/
-				long_len = unicode_to_ascii(longname, unicodename);
+				unicodename[14] = 0;		/* truncate name to 14 characters*/
+				long_len = unicode_to_ascii(longname, (unsigned char *)unicodename);
 				/* FIXME should handle:
 				 *	leading and trailing spaces ignored
 				 *	trailing periods ignored

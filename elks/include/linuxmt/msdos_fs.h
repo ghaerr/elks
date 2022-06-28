@@ -46,12 +46,12 @@
 typedef long cluster_t;
 
 struct msdos_boot_sector {
-	char ignored[13];		/*0*/
+	char ignored[13];	    /*0*/
 	unsigned char cluster_size; /* sectors/cluster 13*/
 	unsigned short reserved;    /* reserved sectors 14*/
 	unsigned char fats;	    /* number of FATs 16*/
-	unsigned char dir_entries[2];/* root directory entries 17*/
-	unsigned char sectors[2];   /* number of sectors 19*/
+	unsigned short dir_entries; /* root directory entries 17*/
+	unsigned short sectors;     /* number of sectors 19*/
 	unsigned char media;	    /* media code (unused) 21*/
 	unsigned short fat_length;  /* sectors/FAT 22*/
 	unsigned short secs_track;  /* sectors per track (unused) 24*/
@@ -67,7 +67,7 @@ struct msdos_boot_sector {
 	__u16	info_sector;	/* filesystem info sector (unused) */
 	__u16	backup_boot;	/* backup boot sector (unused) */
 	__u16	reserved2[6];	/* Unused */
-};
+} __attribute__((packed));
 
 struct msdos_dir_entry {
 	char name[8],ext[3]; /* name and extension */

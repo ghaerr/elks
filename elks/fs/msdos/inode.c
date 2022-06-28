@@ -160,14 +160,13 @@ static struct super_block *msdos_read_super(struct super_block *s, char *data,
 		sb->root_cluster = 0;
 #endif
 	}
-	sb->dir_start= b->reserved + b->fats*sb->fat_length;
-	sb->dir_entries = *((unsigned short *) b->dir_entries);
+	sb->dir_start= b->reserved + b->fats * sb->fat_length;
+	sb->dir_entries = b->dir_entries;
 	sb->data_start = sb->dir_start +
-		(sb-> dir_entries >> (SECTOR_BITS_SB(s) - MSDOS_DIR_BITS));
-	total_sectors = *((unsigned short *) b->sectors)?
-		*((unsigned short *) b->sectors) : b->total_sect;
+		(sb->dir_entries >> (SECTOR_BITS_SB(s) - MSDOS_DIR_BITS));
+	total_sectors = b->sectors? b->sectors : b->total_sect;
 	data_sectors = total_sectors - sb->data_start;
-	sb->clusters = sb->cluster_size?  data_sectors/sb->cluster_size : 0;
+	sb->clusters = sb->cluster_size?  data_sectors / sb->cluster_size : 0;
 	sb->fat_bits = fat32 ? 32 : sb->clusters > MSDOS_FAT12_MAX_CLUSTERS ? 16 : 12;
 	sb->previous_cluster = 0;
 	unmap_brelse(bh);
@@ -331,12 +330,11 @@ void msdos_read_inode(register struct inode *inode)
 	}
 	map_buffer(bh);
 	raw_entry = &((struct msdos_dir_entry *)(bh->b_data))[(int)inode->i_ino & (MSDOS_DPB-1)];
-	((unsigned short *)&inode->u.msdos_i.i_start)[0] = raw_entry->start;
-	((unsigned short *)&inode->u.msdos_i.i_start)[1] = 
+	inode->u.msdos_i.i_start = raw_entry->start |
 #ifndef FAT_BITS_32
-	    (fatsz == 32)? raw_entry->starthi : 0;
+	    ((fatsz == 32)? ((unsigned long)raw_entry->starthi << 16) : 0);
 #else
-	    raw_entry->starthi;
+	    ((unsigned long)raw_entry->starthi << 16);
 #endif
 	if (raw_entry->attr & ATTR_DIR) {
 		inode->i_mode = MSDOS_MKMODE(raw_entry->attr,0777 & ~current->fs.umask) | S_IFDIR;
@@ -388,7 +386,7 @@ static void msdos_write_inode(register struct inode *inode)
 	}
 	raw_entry->attr |= MSDOS_MKATTR(inode->i_mode) | inode->u.msdos_i.i_attrs;
 	raw_entry->start = (unsigned short)inode->u.msdos_i.i_start;
-	raw_entry->starthi = ((unsigned short *)&inode->u.msdos_i.i_start)[1];
+	raw_entry->starthi = (unsigned short)(inode->u.msdos_i.i_start >> 16);
 	date_unix2dos(inode->i_mtime,&raw_entry->time,&raw_entry->date);
 	debug_fat("write_inode block write %lu\n", buffer_blocknr(bh));
 	mark_buffer_dirty(bh);

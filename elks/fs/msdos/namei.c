@@ -316,7 +316,7 @@ int msdos_rmdir(register struct inode *dir,const char *name,int len)
 		pos = 0;
 		dbh = NULL;
 		while (msdos_get_entry(inode,&pos,&dbh,&dde) != -1)
-			if (dde->name[0] && ((unsigned char *) dde->name)[0] != DELETED_FLAG
+			if (dde->name[0] && (unsigned char)dde->name[0] != DELETED_FLAG
 				&& strncmp(dde->name,MSDOS_DOT, MSDOS_NAME)
 				&& strncmp(dde->name,MSDOS_DOTDOT, MSDOS_NAME))
 					goto rmdir_done; /* linux bug ??? */

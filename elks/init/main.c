@@ -318,6 +318,7 @@ static int parse_options(void)
 	/* copy /bootops loaded by boot loader at 0050:0000*/
 	fmemcpyb(options, kernel_ds, 0, DEF_OPTSEG, sizeof(options));
 
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
 	/* check file starts with ## and max len 511 bytes*/
 	if (*(unsigned short *)options != 0x2323 || options[OPTSEGSZ-1])
 		return 0;

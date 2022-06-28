@@ -198,7 +198,7 @@ ifneq ($(USEBCC), N)
 AS      = ia16-elf-as
 ASFLAGS = $(CPU_AS) $(ARCH_AS) --32-segelf
 CC      = $(CROSS_CC)
-CFLAGS  = $(CROSS_CFLAGS) $(CPU_CC) $(ARCH_CC) $(CFLBASE) -Wall -Os -Wno-strict-aliasing
+CFLAGS  = $(CROSS_CFLAGS) $(CPU_CC) $(ARCH_CC) $(CFLBASE) -Wall -Os
 CFLAGS += -fno-delete-null-pointer-checks -Wnull-dereference
 #CFLAGS += -Wconversion
 #CFLAGS += -Wextra
