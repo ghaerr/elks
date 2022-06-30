@@ -94,7 +94,7 @@ _ne2k_next_pk:
 _ne2k_has_data:
 	.word 0 
 
-	.global _ne2k_is_8bit	// set if this is an 8bit card
+	.global _ne2k_is_8bit	// flags 8 bit card and/or 4k buffer
 _ne2k_is_8bit:
 	.word 0
 
@@ -272,7 +272,6 @@ dma_read:
 
 	mov     %ds,%bx
 	mov     %bx,%es
-	//movw	_ne2k_is_8bit,%dx
 	pop	%ax
 	cmp	$0,%al		// Use local buffer if zero
 	jz	buf_local
@@ -288,7 +287,6 @@ buf_local:
 	//mov	net_port,%dx
 	add	$io_ne2k_data_io,%dx
 	cld			// clear direction flag
-	//test	$1,%bx		// is 8bit?
 	testw	$1,_ne2k_is_8bit
 	jz	word_loop0
 
@@ -547,7 +545,7 @@ ne2k_tx_stat:
 
 	mov	net_port,%dx	// command register
 	in      %dx,%al
-	and	$0x04,%al
+	test	$0x04,%al
 	jz      nts_ready
 
 	xor     %ax,%ax
@@ -600,17 +598,25 @@ tx_rdy_wait:
 	mov	net_port,%dx	// command register
 	in	%dx,%al
 	test	$0x4,%al	// Check that previous transmit completed.
+				// If we skip the completion test below
+				// (let the transmit run on its own for 
+				// efficiency) this test makes sense. OTOH
+				// we're doing the same test in write and select
+				// so objectively it's superfluous.
 	jnz	tx_rdy_wait
 	//and	$0x18,%al	// Don't do this, it will set RD2 and
 	//or	$6,%al		// cause an extra RDC abort interrupt
 	mov	$6,%al		// set TX + STA
-	out	%al,%dx
-
+	out	%al,%dx		// start transfer
+#if 0
+	// EXPERIMENTAL - do we want to wait for completen here?
+	// If we wait, we may as well check error status
+	// and repeat the send if it failed (while we have the data at hand).
 1:	mov	net_port,%dx	// command register
 	in      %dx,%al
 	test    $4,%al		// Wait for completion
 	jnz	1b
-
+#endif
 	xor     %ax, %ax	// Always zero return
 
 	pop     %si
@@ -656,7 +662,7 @@ ne2k_base_init:
 	//mov	net_port,%dx
 	add	$io_ne2k_data_conf,%dx
 	mov     $0x49,%al	// set word access
-	cmpw	$0,_ne2k_is_8bit
+	testw	$1,_ne2k_is_8bit
 	jz	1f
 	dec     %al	// if in 8bit mode, 
 			// set byte access, data_conf reg = 0x48
@@ -702,7 +708,7 @@ ne2k_init:
 
 	// set RX ring limits - 16KB on-chip memory
 	// except one TX frame at beginning (6 x 256B).
-	// If bit 1 in _ne2k_is_8bit is set, use only 4k
+	// If bit 1 (0x2) in _ne2k_is_8bit is set, use only 4k
 	// buffer.
 
 	mov	net_port,%dx
@@ -735,6 +741,8 @@ ne2k_init:
 	mov	net_port,%dx
 	add	$io_ne2k_int_mask,%dx
 
+	// Create and set the effective interrupt mask.
+	//
 	// NOTE: Don't enable RXE if running QEMU.
 	// Apparently there is a bug in QEMU which cause continuous interrupts
 	// (and status reg = 00) if RXE is enabled.
@@ -771,9 +779,9 @@ ne2k_rx_init:
 	mov	%al,%ah		// save copy
 	mov	net_port,%dx
 	add	$io_ne2k_rx_get,%dx
-	out     %al,%dx
+	out     %al,%dx		// Ring buffer starting point
 
-	mov	$0x40,%al	// page 1
+	mov	$0x40,%al	// Switch to register page 1
 	mov	net_port,%dx	// command register
 	out	%al,%dx
 
@@ -781,16 +789,16 @@ ne2k_rx_init:
 
 	//mov	net_port,%dx
 	add	$io_ne2k_rx_put,%dx
-	mov	%ah,%al		// restore
-	inc	%al		// works w/o this one,
-				// but this is safer
+	mov	%ah,%al		// restore $rx_first value
+	inc	%al		// Keep CURRENT one ahead of BOUNDARY
 	out     %al,%dx
-	mov	%al,_ne2k_next_pk 
+	mov	%al,_ne2k_next_pk 	// Initialize our local copy of
+					// BOUNDARY + 1
 
-	mov	$0x0,%al	// back to page 0, don't touch the other bits
+	xor	%ax,%ax	// Switch back to page 0, don't touch the other bits
 	mov	net_port,%dx	// command register
 	out	%al,%dx
-	movw	$0,_ne2k_has_data	// Insurance, no data available
+	movw	%ax,_ne2k_has_data	// ZERO - Insurance, no data available
 	ret
 
 //-----------------------------------------------------------------------------
@@ -905,8 +913,7 @@ np_exit:
 
 ne2k_reset:
 
-	// reset device
-	// with pulse on reset port
+	// reset device with pulse on reset port
 
 	mov	net_port,%dx
 	add	$io_ne2k_reset,%dx
@@ -1020,17 +1027,22 @@ of_cont_1:
 	mov	%sp,%di		//   for the dma_read call
 	mov     6(%bp),%bx	// arg1, # of packets to kill
 
-	// We have not cleared the OFLW INT bit yet, so NIC interrupts are not enabled 
+	// We have not cleared the OFLW INT bit yet, so NIC 
+	// interrupts are not enabled 
 
 	mov	net_port,%dx	// command register
+#if 0
+	// Should not be required - the STOP command will wait out
+	// whatever is in progess
 1:	in	%dx,%al
 	test	$0x4,%al	// wait if transmit in progress
 	jnz	1b
-
+#endif
 	mov	$0x21,%al	// page 0 + Abort DMA; STOP
 	out     %al,%dx
 
-	// clear dma counters, required
+	// clear dma counters, required for the STOP command to complete
+	// (and set the RST bit)
 	add	$io_ne2k_dma_len1,%dx  // io_ne2k_dma_len1
 	xor	%al,%al
 	out     %al,%dx
@@ -1060,7 +1072,7 @@ of_drop_packets:
 
 	// initial housekeeping
 	mov	_ne2k_next_pk,%ah	// The 'real' BOUNDARY ptr
-	and	$0x7,%bx		// limit the packet counter value and check for ZERO
+	and	$0x7,%bx		// limit the drop count and check for ZERO
 	jnz	of_drop_loop1
 	call	ne2k_rx_init		// purge everything
 	jmp	of_drop_ok		// ... and exit
@@ -1091,8 +1103,7 @@ of_drop_1:
 	//mov	net_port,%dx
 	add	$io_ne2k_rx_put,%dx
 	mov	%ah,%al		// set CURRENT to the beginning of the next pkt,
-	out	%al,%dx		// effectively clearing everything but the 
-				// first pkt in the buffer.
+	out	%al,%dx		// effectively clearing the rest of the ring.
 	mov	net_port,%dx	// Command register
 	mov	$22,%al
 	out	%al,%dx		// set page 0

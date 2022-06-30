@@ -27,6 +27,7 @@
 #include <linuxmt/debug.h> 
 #include <linuxmt/netstat.h>
 #include <netinet/in.h>
+#include "eth_msgs.h"
 
 /* Offsets from base I/O address. */
 #define EL3_DATA 0x00
@@ -106,21 +107,24 @@ void el3_sendpk(int, char *, int);
 void el3_insw(int, char *, int);
 
 extern void el3_mdelay(int);
+extern struct eth eths[];
 
 /* Maximum events (Rx packets, etc.) to handle at each interrupt. */
 static int max_interrupt_work = 5;
 
 /* runtime configuration set in /bootopts or defaults in ports.h */
-#define net_irq     (netif_parms[2].irq)
-#define net_port    (netif_parms[2].port)
-#define net_ram     (netif_parms[2].ram)
-#define net_flags   (netif_parms[2].flags)
+#define net_irq     (netif_parms[ETH_EL3].irq)
+#define net_port    (netif_parms[ETH_EL3].port)
+#define net_ram     (netif_parms[ETH_EL3].ram)
+#define net_flags   (netif_parms[ETH_EL3].flags)
 static int ioaddr;	// FIXME  remove later
 static word_t el3_id_port;
+static unsigned char found;
 
-static struct netif_stat netif_stat =
-	{ 0, 0, 0, 0, 0, 0, {0x52, 0x54, 0x00, 0x12, 0x34, 0x57}};  /* QEMU default  + 1 */
+static struct netif_stat netif_stat;
+static char model_name[] = "3c509";
 
+static unsigned short verbose;
 static unsigned char usecount;
 static struct wait_queue rxwait;
 static struct wait_queue txwait;
@@ -137,12 +141,16 @@ struct file_operations el3_fops =
     el3_release
 };
 
-void el3_drv_init( void ) {
+void el3_drv_init(int dev) {
 	ioaddr = net_port;		// temporary
 
 	if (el3_isa_probe() == 0)
-		netif_stat.if_status |= NETIF_FOUND;
+		found++;
+        eths[dev].stats = &netif_stat;
+	verbose = (net_flags&ETHF_VERBOSE);
+
 }
+
 static int el3_find_id_port ( void ) {
 
 	for ( el3_id_port = EP_ID_PORT_START ;
@@ -167,7 +175,6 @@ static int el3_isa_probe( void )
 {
 	short lrs_state = 0xff;
 	int i;
-	//word_t *mac = (word_t *)mac_addr;
 	word_t *mac = (word_t *)&netif_stat.mac_addr;
 	byte_t *mac_addr = (byte_t *)mac;
 
@@ -190,14 +197,14 @@ static int el3_isa_probe( void )
 
 	outb(0xd0, el3_id_port);		// select tag (0)
 	outb(0xe0 |(ioaddr >> 4), el3_id_port );// Set IOBASE address, activate
-	printk("eth: 3c509 at 0x%x, irq %d: ", ioaddr, net_irq);
+	printk("eth: %s at 0x%x, irq %d", model_name, ioaddr, net_irq);
 
 	if (id_read_eeprom(EEPROM_MFG_ID) != 0x6d50) {
-		printk("not found\n");
+		printk(" not found\n");
 		return 1;
 	}
 	/* Read in EEPROM data.
-	   3Com got the byte order backwards in the EEPROM. */
+	 * 3Com got the byte order backwards in the EEPROM. */
 	for (i = 0; i < 3; i++)
 		mac[i] = htons(id_read_eeprom(i));
 	printk("MAC %02x", (mac_addr[0]&0xff));
@@ -206,7 +213,7 @@ static int el3_isa_probe( void )
 
 	int iobase = id_read_eeprom(EEPROM_ADDR_CFG);
 	//int if_port = iobase >> 14;
-	printk(" (HW conf: irq %d port %x)", (id_read_eeprom(9) >> 12), (0x200 + ((iobase & 0x1f) << 4)));
+	printk(" (HWconf: port %x irq %d)", (0x200 + ((iobase & 0x1f) << 4)), (id_read_eeprom(9) >> 12));
 	printk("\n");
 	
 	return 0;
@@ -342,18 +349,20 @@ static void el3_int(int irq, struct pt_regs *regs)
 
 		if (status & (RxEarly | RxComplete)) {
 			int err = inw(ioaddr + RX_STATUS);
-			if (err & 0x4000) {	// We have an error, record and recover
-				if (err & 0x3800) { 	// packet error
-					printk("eth: RX error, status 0x%04x len %d\n", err&0x3800, err&0x7ff);
+			if (err & 0x4000) {	/* We have an error, record and recover */
+				if (err & 0x3800) { 	/* packet error */
+					if (verbose) printk(EMSG_RXERR, model_name, err);
+					//printk("eth: RX error, status %04x len %d\n", err&0x3800, err&0x7ff);
 					netif_stat.rx_errors++;
 				} else {
-					printk("eth: Receive overflow, buffer cleared\n");
+					if (verbose) printk(EMSG_OFLOW, model_name, 0);
 					netif_stat.oflow_errors++;
 				}
 				outw(RxDiscard, ioaddr + EL3_CMD); /* Discard this packet. */
 				inw(ioaddr + EL3_STATUS); 				/* Delay. */
 				while ((err = inw(ioaddr + EL3_STATUS) & 0x1000)) {
-					// FIXME: Doesn't seem to be a problem, delete prinft later
+					// FIXME: Doesn't seem to be a problem, delete printk later
+				
 					printk("eth: RX discard wait (%x)\n", err);
 					el3_mdelay(1);
 				}
@@ -388,7 +397,7 @@ static void el3_int(int irq, struct pt_regs *regs)
 				short tx_status;
 				int i = 4;
 
-				printk("el3: Transmit error, status %02x\n", inb(ioaddr + TX_STATUS));
+				if (verbose) printk(EMSG_TXERR, model_name, inb(ioaddr + TX_STATUS));
 				netif_stat.tx_errors++;
 				while (--i > 0 && (tx_status = inb(ioaddr + TX_STATUS)) > 0) {
 					//if (tx_status & 0x38) dev->stats.tx_aborted_errors++;
@@ -400,8 +409,8 @@ static void el3_int(int irq, struct pt_regs *regs)
 			// Adapter failure is either transmit overrun or receive underrun,
 			// both are really driver or host faults, should not happen.
 			if (status & AdapterFailure) {
-				printk("eth: NIC underrun/overrun, status %04x\n", status);
 				/* Adapter failure requires Rx reset and reinit. */
+				if (verbose) printk(EMSG_ERROR, model_name, status);
 				outw(RxReset, ioaddr + EL3_CMD);
 				/* Set the Rx filter to the current state. */
 				outw(SetRxFilter | RxStation | RxBroadcast, ioaddr + EL3_CMD);
@@ -541,7 +550,7 @@ static size_t el3_read(struct inode *inode, struct file *filp, char *data, size_
 			short error = rx_status & 0x3800;
 
 			outw(RxDiscard, ioaddr + EL3_CMD);
-			printk("eth: Error in read (%04x), buffer cleared\n", error);
+			printk("3c509: Error in read (%04x), buffer cleared\n", error);
 			inw(ioaddr + EL3_STATUS); 				/* Delay. */
 			while ((res = inw(ioaddr + EL3_STATUS) & 0x1000)) {
 				/// FIXME: printk to be removed	later, seems stable
@@ -594,7 +603,7 @@ static int el3_open(struct inode *inode, struct file *file)
 	int i, err;
 	char *mac_addr = (char *)&netif_stat.mac_addr;
 
-	if (!(netif_stat.if_status & NETIF_FOUND)) 
+	if (!found) 
 		return -ENODEV;	        // No such device
 
 	if (usecount++ != 0)
@@ -602,7 +611,7 @@ static int el3_open(struct inode *inode, struct file *file)
 
 	err = request_irq(net_irq, el3_int, INT_GENERIC);
 	if (err) {
-		printk("eth: 3c509 unable to use IRQ %d (errno %d)\n", net_irq, err);
+		printk(EMSG_IRQERR, model_name, net_irq, err);
 		return err;
 	}
 	EL3WINDOW(0);		// TESTING ONLY
@@ -713,8 +722,6 @@ static int el3_open(struct inode *inode, struct file *file)
 	outw(IntStatusEnb | 0xff, ioaddr + EL3_CMD);
 
 	outw(SetIntrEnb | active_imask, ioaddr + EL3_CMD);
-	
-	netif_stat.if_status |= NETIF_IS_OPEN;
 	return 0;
 }
 

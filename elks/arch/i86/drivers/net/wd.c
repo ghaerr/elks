@@ -1,8 +1,11 @@
 /*
  *
- * WD Ethernet driver - supports NICs using the WD8003 and compatible
- * chip sets. Tested with SMC 8003WC ISA 8-bit card.
+ * SMC/WD 80x3 (aka 'Elite') Ethernet driver for ELKS - supports wd8003 (8bit)
+ * and wd8013 (16 bit) in numerous cariants, with (assumed) reliable detection
+ * of 8 vs 16 bits.
  *
+ * By @pawosm-arm September 2020. 16 bit support and various other enhancements by 
+ * Helge Skrivervik (@mellvik) june 2022.
  */
 
 #include <arch/io.h>
@@ -19,22 +22,23 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/netstat.h>
+#include "eth_msgs.h"
 
 /* runtime configuration set in /bootopts or defaults in ports.h */
-#define net_irq     (netif_parms[1].irq)
-#define net_port    (netif_parms[1].port)
-#define net_ram     (netif_parms[1].ram)
-
-/* I/O delay settings */
-#define INB	inb	/* use inb_p for 1us delay */
-#define OUTB	outb	/* use outb_p for 1us delay */
+#define net_irq		(netif_parms[ETH_WD].irq)
+#define net_port	(netif_parms[ETH_WD].port)
+#define net_ram		(netif_parms[ETH_WD].ram)
+#define net_flags	(netif_parms[ETH_WD].flags)
 
 #define WD_STAT_RX	0x0001U	/* packet received */
 #define WD_STAT_TX	0x0002U	/* packet sent */
 #define WD_STAT_OF	0x0010U	/* RX ring overflow */
 
 #define WD_START_PG	0x00U	/* First page of TX buffer */
-#define WD_STOP_PG	0x20U	/* Last page + 1 of RX ring */
+#define WD_STOP_PG4	0x10U	/* Only used for arithmetic */
+#define WD_STOP_PG8	0x20U	/* Last page + 1 of RX ring if 8 bit i/f */
+#define WD_STOP_PG16	0x40U	/* Last page + 1 of RX ring if 16bit i/f */
+#define WD_STOP_PG32	0x80U	/* Last page + 1 of RX ring if 32K buf space */
 
 #define TX_2X_PAGES	12U
 #define TX_1X_PAGES	6U
@@ -43,15 +47,17 @@
 #define WD_FIRST_TX_PG	WD_START_PG
 #define WD_FIRST_RX_PG	(WD_FIRST_TX_PG + TX_PAGES)
 
-#define RX_PAGES	(WD_STOP_PG - WD_FIRST_RX_PG)
-
 #define WD_RESET	0x80U	/* Board reset */
 #define WD_MEMENB	0x40U	/* Enable the shared memory */
 #define WD_IO_EXTENT	32U
 #define WD_8390_OFFSET	16U
 #define WD_8390_PORT	(net_port + WD_8390_OFFSET)
+#define WD_CMDREG5	5	/* Offset to 16-bit-only ASIC register 5. */
 
-#define E8390_RXCONFIG	0x04U	/* EN0_RXCR: broadcasts, no multicast,errors */
+#define	ISA16		0x80	/* Enable 16 bit access from the ISA bus. */
+#define	NIC16		0x40	/* Enable 16 bit access from the 8390. */
+
+#define E8390_RXCONFIG	0x04U	/* EN0_RXCR: broadcasts, no multicast or errors */
 #define E8390_RXOFF	0x20U	/* EN0_RXCR: Accept no packets */
 #define E8390_TXCONFIG	0x00U	/* EN0_TXCR: Normal transmit mode */
 #define E8390_TXOFF	0x02U	/* EN0_TXCR: Transmitter off */
@@ -118,11 +124,12 @@
 #define ENISR_TX	0x02U	/* Transmitter, no error */
 #define ENISR_RX_ERR	0x04U	/* Receiver, with error */
 #define ENISR_TX_ERR	0x08U	/* Transmitter, with error */
-#define ENISR_OVER	0x10U	/* Receiver overwrote the ring */
+#define ENISR_OFLOW	0x10U	/* Receiver overwrote the ring */
 #define ENISR_COUNTERS	0x20U	/* Counters need emptying */
 #define ENISR_RDC	0x40U	/* remote dma complete */
 #define ENISR_RESET	0x80U	/* Reset completed */
-#define ENISR_ALL	0x3fU	/* Interrupts we will enable */
+#define ENISR_ALL	0x1fU	/* Enable these interrupts, skip RDC and stats */
+
 
 typedef struct {
 	unsigned char status;	/* status */
@@ -133,15 +140,21 @@ typedef struct {
 static struct wait_queue rxwait;
 static struct wait_queue txwait;
 
-static byte_t wd_inuse;
-static byte_t wd_found;
-static byte_t mac_addr[6U];
+static byte_t usecount;
+static byte_t is_8bit;
+static byte_t model_name[] = "WD80x3";
+static byte_t stop_page; 	/* actual last pg of ring (+1) */
+static unsigned char found;
+static unsigned int verbose;
 
-static unsigned char current_rx_page = WD_FIRST_RX_PG;
+static unsigned char current_rx_page;
+static struct netif_stat netif_stat;
 
 static word_t wd_rx_stat(void);
 static word_t wd_tx_stat(void);
 static void wd_int(int irq, struct pt_regs * regs);
+
+extern struct eth eths[];
 
 /*
  * Get MAC
@@ -151,8 +164,58 @@ static void wd_get_hw_addr(word_t * data)
 {
 	unsigned u;
 
-	for (u = 0U; u < 6U; u++)
-		data[u] = INB(net_port + 8U + u);
+	for (u = 0; u < 6; u++)
+		data[u] = inb(net_port + 8 + u);
+}
+
+/*
+ * Check if card exists, get MAC addr from PROM,
+ * determine bus width if possible.
+ */
+
+static int wd_probe(void) {
+	int i, tmp = 0;
+
+	for (i = 0; i < 8; i++)
+		tmp += inb(net_port + 8 + i);
+	if (inb(net_port + 8) == 0xff	/* Extra check to avoid soundcard. */
+		|| inb(net_port + 9) == 0xff
+		|| (tmp & 0xff) != 0xFF)
+		return -ENODEV;	
+
+	/*  device found - check what type */
+	tmp = inb(net_port+1);			/* fiddle with 16bit bit */
+	outb(tmp ^ 0x01, net_port+1 );		/* attempt to clear 16bit bit */
+	if (((inb(net_port+1) & 0x01) == 0x01)	/* A 16 bit card */
+				&& (tmp & 0x01) == 0x01	) {		/* In a 16 slot. */
+		int asic_reg5 = inb(net_port+WD_CMDREG5);
+		/* Magic to set ASIC to word-wide mode. */
+		outb(NIC16 | (asic_reg5&0x1f), net_port+WD_CMDREG5);
+		outb(tmp, net_port+1);
+		model_name[4] = '1';
+		is_8bit = 0;		/* We have a 16bit board here! */
+		stop_page = WD_STOP_PG16;	// FIXME: calculate from config parameter
+						// since some interfaces have large (32k)
+						// buffer ram
+		netif_stat.oflow_keep = 3;
+	} else {
+		model_name[4] = '0';	// FIXME: Incorrect if 16bit i/f in 8bit slot */
+		is_8bit = 1;		/* board must be 8 bit */
+		if (!(net_flags & (ETHF_8BIT_BUS | ETHF_16BIT_BUS)))
+			 netif_stat.if_status |= NETIF_AUTO_8BIT;
+		netif_stat.oflow_keep = 1;
+		stop_page = WD_STOP_PG8;
+	}
+	/* do the config flag processing */
+	if (net_flags&ETHF_8BIT_BUS)  is_8bit = 1;
+	if (net_flags&ETHF_16BIT_BUS) is_8bit = 0;	/* overrides 8bit */
+	if (net_flags&0x07)				/* Force buffer size */
+		stop_page = WD_STOP_PG4 << (net_flags&0x03);
+	verbose = (net_flags&ETHF_VERBOSE);	/* set verbose messages */
+	//printk("net_flags %04x stop_page %02x verbose %d\n", net_flags, stop_page, verbose);
+	outb(tmp, net_port+1);			/* Restore original reg1 value. */
+
+	return 0;
 }
 
 /*
@@ -161,57 +224,79 @@ static void wd_get_hw_addr(word_t * data)
 
 static void wd_reset(void)
 {
-	OUTB(WD_RESET, net_port);
-	OUTB(((net_ram >> 9U) & 0x3fU) | WD_MEMENB, net_port);
+	outb(WD_RESET, net_port);
+	// FIXME: should wait until reset has completed, works OK on slow machines.
+	outb(((net_ram >> 9U) & 0x3fU) | WD_MEMENB, net_port);
 }
 
 /*
- * Init
+ * Init	- basic 8390 initialization. If the strategy parameter is 0, do complete
+ *	  initialization, otherwise just recover from a receive overflow and 
+ *	  keep 'strategy' # of packets in the buffer.
  */
 
-static void wd_init_8390(void)
+static void wd_init_8390(int strategy)
 {
 	unsigned u;
+	const e8390_pkt_hdr __far *rxhdr;
+	word_t hdr_start;
+	byte_t *mac_addr = (byte_t *)&netif_stat.mac_addr;
 
-	OUTB(E8390_NODMA | E8390_PAGE0 | E8390_STOP,
+	outb(E8390_NODMA | E8390_PAGE0 | E8390_STOP,
 		WD_8390_PORT + E8390_CMD);
-	OUTB(0x48U, WD_8390_PORT + EN0_DCFG); /* 0x48 vs 0x49: 8 vs 16 bit */
+	outb(0x49 - is_8bit, WD_8390_PORT + EN0_DCFG); /* 0x48 vs 0x49: 8 vs 16 bit */
+
 	/* Clear the remote byte count registers. */
-	OUTB(0x00U, WD_8390_PORT + EN0_RCNTLO);
-	OUTB(0x00U, WD_8390_PORT + EN0_RCNTHI);
-	/* Set to monitor and loopback mode. */
-	OUTB(E8390_RXOFF, WD_8390_PORT + EN0_RXCR);
-	OUTB(E8390_TXOFF, WD_8390_PORT + EN0_TXCR);
-	/* Set the transmit page and receive ring. */
-	OUTB(WD_FIRST_TX_PG, WD_8390_PORT + EN0_TPSR);
-	OUTB(WD_FIRST_RX_PG, WD_8390_PORT + EN0_STARTPG);
-	OUTB(WD_STOP_PG - 1U, WD_8390_PORT + EN0_BOUNDARY);
-	OUTB(WD_STOP_PG, WD_8390_PORT + EN0_STOPPG);
-	/* Clear the pending interrupts and mask. */
-	OUTB(0xffU, WD_8390_PORT + EN0_ISR);
-	OUTB(0x00U, WD_8390_PORT + EN0_IMR);
-	/* Copy the station address into the DS8390 registers. */
-	clr_irq();
-	OUTB(E8390_NODMA | E8390_PAGE1 | E8390_STOP,
-		WD_8390_PORT + E8390_CMD);
-	for(u = 0U; u < 6U; u++)
-		OUTB(mac_addr[u], WD_8390_PORT + EN1_PHYS + u);
-	OUTB(WD_FIRST_RX_PG, WD_8390_PORT + EN1_CURPAG);
-	OUTB(E8390_NODMA | E8390_PAGE0 | E8390_STOP,
-		WD_8390_PORT + E8390_CMD);
-	set_irq();
-}
+	outb(0x00U, WD_8390_PORT + EN0_RCNTLO);
+	outb(0x00U, WD_8390_PORT + EN0_RCNTHI);
 
-static void wd_init(void)
-{
-	wd_init_8390();
-	OUTB(0xffU, WD_8390_PORT + EN0_ISR);
-	OUTB(ENISR_ALL, WD_8390_PORT + EN0_IMR);
-	OUTB(E8390_NODMA | E8390_PAGE0 | E8390_START,
-		WD_8390_PORT + E8390_CMD);
-	OUTB(E8390_TXCONFIG, WD_8390_PORT + EN0_TXCR); /* xmit on */
+	/* Set to monitor and loopback mode. */
+	outb(E8390_RXOFF, WD_8390_PORT + EN0_RXCR);
+	outb(E8390_TXOFF, WD_8390_PORT + EN0_TXCR);
+
+	/* Clear the pending interrupts and mask. */
+	outb(0xffU, WD_8390_PORT + EN0_ISR);
+	outb(0x00U, WD_8390_PORT + EN0_IMR);
+
+	if (strategy == 0) {	/* full initialization */
+		/* Set the transmit page and receive ring. */
+		outb(WD_FIRST_TX_PG, WD_8390_PORT + EN0_TPSR);
+		outb(WD_FIRST_RX_PG, WD_8390_PORT + EN0_STARTPG);
+		outb(stop_page, WD_8390_PORT + EN0_STOPPG);
+		current_rx_page = WD_FIRST_RX_PG;
+		outb(stop_page - 1, WD_8390_PORT + EN0_BOUNDARY);
+
+
+		/* Copy the station address into the DS8390 registers. */
+		clr_irq();
+		outb(E8390_NODMA | E8390_PAGE1 | E8390_STOP,
+			WD_8390_PORT + E8390_CMD);
+		for (u = 0U; u < 6U; u++)
+			outb(mac_addr[u], WD_8390_PORT + EN1_PHYS + u);
+		outb(WD_FIRST_RX_PG, WD_8390_PORT + EN1_CURPAG);
+		outb(E8390_NODMA | E8390_PAGE0 | E8390_STOP,
+			WD_8390_PORT + E8390_CMD);
+		set_irq();
+
+	} else {	/* 'strategy' is the # of packets to keep. */
+			/* This is for overflow recovery */
+		hdr_start = (current_rx_page - WD_START_PG) << 8U;
+		rxhdr = _MK_FP(net_ram, hdr_start);
+
+		// FIXME: currently retains only one packet regardless 
+		// of the value of strategy
+		//printk("front: %x end: %x-", rxhdr->next, current_rx_page);
+		outb(E8390_NODMA | E8390_PAGE1 | E8390_STOP,
+			WD_8390_PORT + E8390_CMD);
+		outb(rxhdr->next, WD_8390_PORT + EN1_CURPAG);
+		outb(E8390_NODMA | E8390_PAGE0 | E8390_STOP,
+			WD_8390_PORT + E8390_CMD);
+	}
+
+	outb(ENISR_ALL, WD_8390_PORT + EN0_IMR);
+	outb(E8390_TXCONFIG, WD_8390_PORT + EN0_TXCR); /* xmit on */
 	/* Only after the NIC is started: */
-	OUTB(E8390_RXCONFIG, WD_8390_PORT + EN0_RXCR); /* rx on */
+	outb(E8390_RXCONFIG, WD_8390_PORT + EN0_RXCR); /* rx on */
 }
 
 /*
@@ -220,25 +305,40 @@ static void wd_init(void)
 
 static void wd_start(void)
 {
-	OUTB(((net_ram >> 9U) & 0x3fU) | WD_MEMENB, net_port);
+	if (inb(net_port + 14U) & 0x20U) /* enable IRQ on softcfg card */
+		outb(inb(net_port + 4U) | 0x80U, net_port + 4U);
+	outb(((net_ram >> 9U) & 0x3fU) | WD_MEMENB, net_port);
+	/* insurance - these 2 should not be required */
+	outb(E8390_NODMA | E8390_PAGE0 | E8390_START, WD_8390_PORT + E8390_CMD);
+	outb(ENISR_ALL, WD_8390_PORT + EN0_IMR);	/* enable interrupts */
 }
 
 /*
- * Stop
+ * Stop & terminate
  */
 
 static void wd_stop(void)
 {
-	OUTB(((net_ram >> 9U) & 0x3fU) & ~WD_MEMENB, net_port);
+	outb(((net_ram >> 9U) & 0x3fU) & ~WD_MEMENB, net_port);
+	outb(0, WD_8390_PORT + EN0_IMR);	/* disable interrupts */
 }
 
 /*
- * Termination
+ * Clear overflow
+ *
+ *	For ELKS, when an overflow occurs, the kernel will probably just have
+ *	received a wakeup() from a RxComplete interrupt. 
+ *	If the overflow handler purges the receive buffer
+ *	completely, the next read will fail - there is nothing to read. No big
+ *	deal, but noisy (error messages) and inefficient since the buffer is at
+ *	least 8k. So we let 1 or more packets survive the overflow recovery (as
+ *	specified by the parameter to wd_init_8390() ).
  */
 
-static void wd_term(void)
+static void wd_clr_oflow(int keep)
 {
-	wd_init_8390(); /* SIC! */
+	wd_init_8390(keep);
+	wd_start();
 }
 
 /*
@@ -249,31 +349,44 @@ static int wd_pack_get(char *data, size_t len)
 {
 	const e8390_pkt_hdr __far *rxhdr;
 	word_t hdr_start;
-	unsigned char this_frame;
+	unsigned char this_frame, update = 1;
 	int res = -EIO;
 
+	//clr_irq();	// EXPERIMENTAL
+	outb(0x00U, WD_8390_PORT + EN0_IMR);	// Block interrupts
 	do {
 		/* Remove one frame from the ring. */
 		/* Boundary is always a page behind. */
-		this_frame = INB(WD_8390_PORT + EN0_BOUNDARY) + 1U;
-		if (this_frame >= WD_STOP_PG)
+		this_frame = inb(WD_8390_PORT + EN0_BOUNDARY) + 1U;
+		if (this_frame >= stop_page)
 			this_frame = WD_FIRST_RX_PG;
-		if (this_frame != current_rx_page)
-			debug_eth("eth: mismatched read page pointers %2x vs %2x.\n",
+		if (this_frame != current_rx_page)	/* Very useful for debugging ! */
+			printk("eth: mismatched read page pointers %2x vs %2x.\n",
 				this_frame, current_rx_page);
 		hdr_start = (this_frame - WD_START_PG) << 8U;
 		rxhdr = _MK_FP(net_ram, hdr_start);
+
 		if ((rxhdr->count < 64U) ||
 		    (rxhdr->count > (MAX_PACKET_ETH + sizeof(e8390_pkt_hdr)))) {
-			debug_eth("eth: bogus packet size: %d, "
-				"status = %#2x nxpg = %#2x.\n",
-				rxhdr->count, rxhdr->status, rxhdr->next);
+
+			/* This should not happen! The NIC is programmed to drop
+			 * erroneous packets. If we get here, it's most likely
+			 * a driver bug or a hardware problem. */
+			/* If this happens, we need to purge the NIC buffer entirely 
+			 * since if the size is bogus, the next packet pointer is
+			 * unreliable at best. */
+			netif_stat.rq_errors++;
+			if (verbose) printk(EMSG_DMGPKT, model_name, (unsigned int *)rxhdr, rxhdr->next);
+			
+			wd_clr_oflow(0);	/* Complete reset */
+			update = 0;		/* exit flag */
 			break;
 		}
 		current_rx_page = rxhdr->next;
 		if ((rxhdr->status & 0x0fU) != ENRSR_RXOK) {
-			debug_eth("eth: bogus packet: "
-				"status = %#2x nxpg = %#2x size = %d\n",
+			/* This shouldn't happen either, see comment above */
+			netif_stat.rx_errors++;
+			if (verbose) printk(EMSG_BGSPKT, model_name,
 				rxhdr->status, rxhdr->next, rxhdr->count);
 			break;
 		} 
@@ -284,15 +397,21 @@ static int wd_pack_get(char *data, size_t len)
 			fmemcpyb(data, current->t_regs.ds,
 				(char *)hdr_start + sizeof(e8390_pkt_hdr), net_ram, res);
 		} else {	/* handle wrap-around */
-			size_t len1 = ((WD_STOP_PG - this_frame) << 8) - sizeof(e8390_pkt_hdr);
+			size_t len1 = ((stop_page - this_frame) << 8) - sizeof(e8390_pkt_hdr);
                         fmemcpyb(data, current->t_regs.ds,
                                 (char *)hdr_start + sizeof(e8390_pkt_hdr), net_ram, len1);
                         fmemcpyb(data+len1, current->t_regs.ds,
                                 (char *)(WD_FIRST_RX_PG << 8), net_ram, res-len1);
  		}
 	} while (0);
-	/* this is not always strictly correct but apparently works */
-	OUTB(current_rx_page - 1U, WD_8390_PORT + EN0_BOUNDARY);
+
+	if (update) {	/* don't update if we ran overflow recovery */
+		this_frame = (current_rx_page == WD_FIRST_RX_PG) ? stop_page - 1 : current_rx_page - 1;
+		outb(this_frame, WD_8390_PORT + EN0_BOUNDARY);
+	}
+	//set_irq();
+	outb(ENISR_ALL, WD_8390_PORT + EN0_IMR);
+
 	return res;
 }
 
@@ -316,6 +435,7 @@ static size_t wd_read(struct inode * inode, struct file * filp,
 		}
 		res = wd_pack_get(data, len);	/* returns packet data size read*/
 	} while (0);
+
 	finish_wait(&rxwait);
 	return res;
 }
@@ -332,16 +452,18 @@ static size_t wd_pack_put(char *data, size_t len)
 		if (len < 64U) len = 64U;  /* issue #133 */
 		fmemcpyb((byte_t *)((WD_FIRST_TX_PG - WD_START_PG) << 8U),
 			net_ram, data, current->t_regs.ds, len);
-		OUTB(E8390_NODMA | E8390_PAGE0, WD_8390_PORT + E8390_CMD);
-		if (INB(WD_8390_PORT + E8390_CMD) & E8390_TRANS) {
+		outb(E8390_NODMA | E8390_PAGE0, WD_8390_PORT + E8390_CMD);
+
+		/* FIXME: possibly superfluous */
+		if (inb(WD_8390_PORT + E8390_CMD) & E8390_TRANS) {
 			printk("eth: attempted send with the tr busy.\n");
 			len = -EIO;
 			break;
 		}
-		OUTB(len & 0xffU, WD_8390_PORT + EN0_TCNTLO);
-		OUTB(len >> 8U, WD_8390_PORT + EN0_TCNTHI);
-		OUTB(WD_FIRST_TX_PG, WD_8390_PORT + EN0_TPSR);
-		OUTB(E8390_NODMA | E8390_TRANS | E8390_START,
+		outb(len & 0xffU, WD_8390_PORT + EN0_TCNTLO);
+		outb(len >> 8U, WD_8390_PORT + EN0_TCNTHI);
+		outb(WD_FIRST_TX_PG, WD_8390_PORT + EN0_TPSR);
+		outb(E8390_NODMA | E8390_TRANS | E8390_START,
 			WD_8390_PORT + E8390_CMD);
 	} while (0);
 	return len;
@@ -372,23 +494,6 @@ static size_t wd_write(struct inode * inode, struct file * file,
 }
 
 /*
- * Clear overflow
- */
-
-static void wd_clr_oflow(void)
-{
-	printk("eth: Buffer overflow, resetting.\n");
-	wd_stop();
-	wd_term();
-	current_rx_page = WD_FIRST_RX_PG;
-	wd_reset();
-	wd_init();
-	if (INB(net_port + 14U) & 0x20U) /* enable IRQ on softcfg card */
-		OUTB(INB(net_port + 4U) | 0x80U, net_port + 4U);
-	wd_start();
-}
-
-/*
  * Test for readiness
  */
 
@@ -396,18 +501,20 @@ static word_t wd_rx_stat(void)
 {
 	unsigned char rxing_page;
 
-	clr_irq();
+	clr_irq();	// FIXME: don't need this, just block
+			// our own interrupts
 	/* Get the rx page (incoming packet pointer). */
-	OUTB(E8390_NODMA | E8390_PAGE1, WD_8390_PORT + E8390_CMD);
-	rxing_page = INB(WD_8390_PORT + EN1_CURPAG);
-	OUTB(E8390_NODMA | E8390_PAGE0, WD_8390_PORT + E8390_CMD);
+	outb(E8390_NODMA | E8390_PAGE1, WD_8390_PORT + E8390_CMD);
+	rxing_page = inb(WD_8390_PORT + EN1_CURPAG);
+	outb(E8390_NODMA | E8390_PAGE0, WD_8390_PORT + E8390_CMD);
 	set_irq();
+
 	return (current_rx_page == rxing_page) ? 0U : WD_STAT_RX;
 }
 
 static word_t wd_tx_stat(void)
 {
-	return (INB(WD_8390_PORT + E8390_CMD) & E8390_TRANS) ? 0U :
+	return (inb(WD_8390_PORT + E8390_CMD) & E8390_TRANS) ? 0U :
 		WD_STAT_TX;
 }
 
@@ -447,12 +554,14 @@ static int wd_ioctl(struct inode * inode, struct file * file,
 
 	switch (cmd) {
 	case IOCTL_ETH_ADDR_GET:
-		memcpy_tofs((char *)arg, mac_addr, 6U);
+		err = verified_memcpy_tofs((char *)arg, &netif_stat.mac_addr, 6U);
 		break;
+
 #if 0 /* unused*/
 	case IOCTL_ETH_ADDR_SET:
 		err = -ENOSYS;
 		break;
+
 	case IOCTL_ETH_HWADDR_GET:
 		/* Get the hardware address of the NIC,	which may be different
 		 * from the currently programmed address. Be careful with this,
@@ -461,21 +570,14 @@ static int wd_ioctl(struct inode * inode, struct file * file,
 		 */
 		wd_get_hw_addr((word_t *)arg);
 		break;
-	case IOCTL_ETH_GETSTAT:
-		/* Get statistics from the NIC hardware (error counts etc.)
-		 * arg is byte[3].
-		 */
-		err = -ENOSYS;
-		break;
-	case IOCTL_ETH_OFWSKIP_SET:
-		/* Set the number of packets to skip @ ring buffer overflow. */
-		err = -ENOSYS;
-		break;
-	case IOCTL_ETH_OFWSKIP_GET:
-		/* Get the current overflow skip counter. */
-		err = -ENOSYS;
-		break;
 #endif
+
+	case IOCTL_ETH_GETSTAT:
+		/* Get error counts etc. */
+		/* FIXME: add mcounts recorded by the NIC */
+		err = verified_memcpy_tofs((char *)arg, &netif_stat, sizeof(netif_stat));
+		break;
+
 	default:
 		err = -EINVAL;
 	}
@@ -491,25 +593,19 @@ static int wd_open(struct inode * inode, struct file * file)
 	int err = 0;
 
 	do {
-		if (!wd_found) {
+		if (!found) {
 			err = -ENODEV;
 			break;
 		}
-		if (wd_inuse) {
-			err = -EBUSY;
+		if (usecount++) 
 			break;
-		}
 		err = request_irq(net_irq, wd_int, INT_GENERIC);
 		if (err) {
-			printk("eth: wd8003 unable to use IRQ %d (errno %d)\n", net_irq, err);
+			printk(EMSG_IRQERR, model_name, net_irq, err);
 			break;
 		}
-		wd_reset();
-		wd_init();
-		if (INB(net_port + 14U) & 0x20U) /* enable IRQ on softcfg card */
-			OUTB(INB(net_port + 4U) | 0x80U, net_port + 4U);
+		wd_init_8390(0);
 		wd_start();
-		wd_inuse = 1U;
 	} while (0);
 	return err;
 }
@@ -520,10 +616,11 @@ static int wd_open(struct inode * inode, struct file * file)
 
 static void wd_release(struct inode * inode, struct file * file)
 {
-	wd_stop();
-	wd_term();
-	free_irq(net_irq);
-	wd_inuse = 0U;
+	if (--usecount == 0) {
+		wd_stop();
+		wd_reset();
+		free_irq(net_irq);
+	}
 }
 
 /*
@@ -544,67 +641,87 @@ struct file_operations wd_fops =
 
 /*
  * Interrupt handler
+ *
+ * The logic behind clearing each interrupt bit as we handle them is
+ * that since we're (presumably) on a slow machine, a new interrupt may
+ * occur while processing. It will not trigger a physical interrupt since they're
+ * disabled, but the corresponding ISR bit will be set again and will be processed in the 
+ * next round of the while-loop, thus avoiding an occasional lost interrupt.
  */
-
-static word_t wd_int_stat(void)
-{
-	byte_t interrupts;
-	word_t retval = 0U;
-
-	/* Change to page 0 and read the intr status reg. */
-	OUTB(E8390_NODMA | E8390_PAGE0, WD_8390_PORT + E8390_CMD);
-	interrupts = INB(WD_8390_PORT + EN0_ISR);
-	if (interrupts & ENISR_RX)
-		retval |= WD_STAT_RX;
-	if (interrupts & ENISR_TX)
-		retval |= WD_STAT_TX;
-	if (interrupts & ENISR_OVER)
-		retval |= WD_STAT_OF;
-	else if (interrupts)
-		OUTB(0xffU, WD_8390_PORT + EN0_ISR); /* ack ALL */
-	OUTB(E8390_NODMA | E8390_PAGE0 | E8390_START,
-		WD_8390_PORT + E8390_CMD);
-	return retval;
-}
 
 static void wd_int(int irq, struct pt_regs * regs)
 {
 	word_t stat;
 
-	stat = wd_int_stat();
-	debug_eth("/%02X", stat & 0xffU);
-	if (stat & WD_STAT_OF)
-		wd_clr_oflow();
-	if (stat & WD_STAT_RX)
-		wake_up(&rxwait);
-	if (stat & WD_STAT_TX)
-		wake_up(&txwait);
+	outb(0, WD_8390_PORT + EN0_IMR);/* Block interrupts,
+					 * should not be required since the IRQ line
+					 * is held high until all unmasked bits have
+					 * been cleared. This is experimental.
+					 */
+	while (1) {
+		stat = inb(WD_8390_PORT + EN0_ISR);
+		//printk("/%02x;", stat&0xff);
+		if (!(stat & ENISR_ALL))
+			break;
+		if (stat & ENISR_OFLOW) {
+			printk(EMSG_OFLOW, model_name, stat, netif_stat.oflow_keep);
+			wd_clr_oflow(netif_stat.oflow_keep);
+			netif_stat.oflow_errors++;
+			continue; /* Everything has been reset, skip rest of the loop */
+		}
+		if (stat & ENISR_RX) {
+			wake_up(&rxwait);
+			outb(ENISR_RX, WD_8390_PORT + EN0_ISR);
+		}
+		if (stat & ENISR_TX) {
+			wake_up(&txwait);
+			outb(ENISR_TX, WD_8390_PORT + EN0_ISR);
+		}
+		if (stat & ENISR_RX_ERR) {
+			printk(EMSG_RXERR, model_name, inb(WD_8390_PORT + EN0_RSR));
+			netif_stat.rx_errors++;
+			outb(ENISR_RX_ERR, WD_8390_PORT + EN0_ISR);
+		}
+		if (stat & ENISR_TX_ERR) {
+			netif_stat.tx_errors++;
+			printk(EMSG_TXERR, model_name, inb(WD_8390_PORT + EN0_TSR));
+			outb(ENISR_TX_ERR, WD_8390_PORT + EN0_ISR);
+		}
+		if (stat & (ENISR_RDC|ENISR_COUNTERS)) {  /* Remaining bits - should not happen */
+			// FIXME: Need to add handling of the statistics registers
+			printk("eth: RDC/Stat error, status 0x%x\n", stat & 0xe0);
+			outb(ENISR_RDC|ENISR_COUNTERS, WD_8390_PORT + EN0_ISR);
+		}
+	}
+	outb(ENISR_ALL, WD_8390_PORT + EN0_IMR);
+			
 }
 
 /*
  * Ethernet main initialization (during boot)
  */
 
-void wd_drv_init(void)
+void wd_drv_init(int dev)
 {
 	unsigned u;
 	word_t hw_addr[6U];
+	byte_t *mac_addr = (byte_t *)&netif_stat.mac_addr;
 
-	do {
+	u = wd_probe();
+	printk("eth: %s at 0x%x, irq %d, ram 0x%x",
+		model_name, net_port, net_irq, net_ram);
+	if (u) {
+		printk(" not found\n");
+	} else {
+		found++;
 		wd_get_hw_addr(hw_addr);
-		for (u = 0U; u < 6U; u++) {
-			if ((mac_addr[u] = (hw_addr[u] & 0xff)) != 0xff)
-				wd_found = 1;
-		}
-		printk("eth: wd8003 at 0x%x, irq %d, ram 0x%x: ",
-			net_port, net_irq, net_ram);
-		if (!wd_found) {
-			printk("not found\n");
-			break;
-		}
-		printk("MAC %02X", mac_addr[0]);
-		for (u = 1U; u < 6U; u++)
+		for (u = 0; u < 6; u++) 
+			mac_addr[u] = hw_addr[u]&0xffU;
+		printk(", MAC %02X", mac_addr[0]);
+		for (u = 1U; u < 6U; u++) 
 			printk(":%02X", mac_addr[u]);
-		printk("\n");
-	} while (0);
+		printk(", flags 0x%x\n", net_flags);
+	}
+	eths[dev].stats = &netif_stat;
+	return;
 }
