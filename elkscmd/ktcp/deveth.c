@@ -51,6 +51,7 @@ int deveth_init(char *fdev)
 
         return -2;
     }
+    arp_gratuitous();;	/* send gratuituous ARP to the net */
 
     return devfd;
 }

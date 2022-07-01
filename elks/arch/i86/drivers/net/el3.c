@@ -27,7 +27,7 @@
 #include <linuxmt/debug.h> 
 #include <linuxmt/netstat.h>
 #include <netinet/in.h>
-#include "eth_msgs.h"
+#include "eth-msgs.h"
 
 /* Offsets from base I/O address. */
 #define EL3_DATA 0x00
@@ -207,7 +207,7 @@ static int el3_isa_probe( void )
 	 * 3Com got the byte order backwards in the EEPROM. */
 	for (i = 0; i < 3; i++)
 		mac[i] = htons(id_read_eeprom(i));
-	printk("MAC %02x", (mac_addr[0]&0xff));
+	printk(", MAC %02x", (mac_addr[0]&0xff));
 	i = 1;
 	while (i < 6) printk(":%02x", (mac_addr[i++]&0xff));
 

@@ -25,24 +25,12 @@ struct eth eths[MAX_ETHS];
 /* return file_operations pointer from minor number */
 static struct file_operations *get_ops(dev_t dev)
 {
-#if 1
     	unsigned short minor = MINOR(dev);
 
-	if (minor <= MAX_ETHS)
+	if (minor < MAX_ETHS)
 		return eths[MINOR(dev)].ops;
 	else
 		return NULL;
-#else
-    struct eth *eth = &eths[0];
-    unsigned short minor = MINOR(dev);
-
-    do {
-        if ((eth - eths) == minor)
-            return eth->ops;
-    } while (++eth < &eths[MAX_ETHS]);
-
-    return NULL;
-#endif
 }
 
 static int eth_open(struct inode *inode, struct file *file)

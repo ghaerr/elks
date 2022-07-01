@@ -27,6 +27,8 @@
 #include "netconf.h"
 
 struct arp_cache arp_cache [ARP_CACHE_MAX];
+void arp_prep_request(struct arp *, ipaddr_t);
+
 
 int arp_init (void)
 {
@@ -129,7 +131,18 @@ static void arp_print(register struct arp *arp)
 #endif
 }
 
-void arp_reply(unsigned char *packet,int size)
+/* send gratuitous ARP packet announcing our MAC to the net */
+void arp_gratuitous() {
+    struct arp ga;
+
+    /* Simply a slightly modified ARP request */
+    arp_prep_request(&ga, local_ip);
+    ga.op = htons(ARP_REPLY);
+    debug_arp("arp: Send Gratuitous\n");
+    eth_write((unsigned char *)&ga, sizeof(ga));
+}
+
+void arp_reply(unsigned char *packet)
 {
     register struct arp *arp = (struct arp *)packet;
     struct arp_addr swap;
@@ -157,27 +170,31 @@ void arp_reply(unsigned char *packet,int size)
     netstats.arpsndreplycnt++;
 }
 
+/* build arp request */
+void arp_prep_request(struct arp *ar, ipaddr_t ip) {
+
+    memset(ar->ll_eth_dest, 0xFF, 6);	/* broadcast*/
+    memcpy(ar->ll_eth_src, eth_local_addr, 6);
+    /*specify below in big endian*/ //FIXME
+    ar->ll_type_len = ETH_TYPE_ARP;
+    ar->hard_type=0x0100;
+    ar->proto_type = ETH_TYPE_IPV4;
+    ar->hard_len=6;
+    ar->proto_len=4;
+    ar->op = htons(ARP_REQUEST);
+    memcpy(ar->eth_src, eth_local_addr, 6);
+    ar->ip_src=local_ip;
+    memset(ar->eth_dest, 0, 6);
+    ar->ip_dest=ip;
+}
+
 void arp_request(ipaddr_t ipaddress)
 {
     struct arp arpreq;
 
     debug_arp("arp: SEND request\n");
 
-    /* build arp request */
-    memset(arpreq.ll_eth_dest, 0xFF, 6);	/* broadcast*/
-    memcpy(arpreq.ll_eth_src, eth_local_addr, 6);
-    /*specify below in big endian*/ //FIXME
-    arpreq.ll_type_len = ETH_TYPE_ARP;
-    arpreq.hard_type=0x0100;
-    arpreq.proto_type = ETH_TYPE_IPV4;
-    arpreq.hard_len=6;
-    arpreq.proto_len=4;
-    arpreq.op = htons(ARP_REQUEST);
-    memcpy(arpreq.eth_src, eth_local_addr, 6);
-    arpreq.ip_src=local_ip;
-    memset(arpreq.eth_dest, 0, 6);
-    arpreq.ip_dest=ipaddress;
-
+    arp_prep_request(&arpreq, ipaddress);
     arp_print(&arpreq);
     eth_write((unsigned char *)&arpreq, sizeof(arpreq));
     netstats.arpsndreqcnt++;
@@ -197,7 +214,7 @@ void arp_recvpacket(unsigned char *packet, int size)
 		if (arp->ip_dest == local_ip) {
 			if (!entry)
 				arp_cache_add(arp->ip_src, arp->eth_src);
-			arp_reply (packet, size);
+			arp_reply(packet);
 		}
 		netstats.arprcvreqcnt++;
 		break;

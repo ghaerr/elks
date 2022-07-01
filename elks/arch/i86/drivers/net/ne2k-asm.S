@@ -1296,16 +1296,4 @@ ne2k_clr_err_cnt:
 	in	%dx,%al
 	ret
 
-//-------------------------------------------------------------------------
-// Ne2k - clear the RXE bit from the interrupt status reg
-//-------------------------------------------------------------------------
-	.global ne2k_clr_rxe
-
-ne2k_clr_rxe:
-	mov	net_port,%dx
-	add	$io_ne2k_int_stat,%dx
-	mov	$0x4,%al
-	out	%al,%dx
-	ret
-
 //-----------------------------------------------------------------------------

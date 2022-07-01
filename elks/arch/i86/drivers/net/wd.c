@@ -22,7 +22,7 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/netstat.h>
-#include "eth_msgs.h"
+#include "eth-msgs.h"
 
 /* runtime configuration set in /bootopts or defaults in ports.h */
 #define net_irq		(netif_parms[ETH_WD].irq)
@@ -142,7 +142,7 @@ static struct wait_queue txwait;
 
 static byte_t usecount;
 static byte_t is_8bit;
-static byte_t model_name[] = "WD80x3";
+static byte_t model_name[] = "wd80x3";
 static byte_t stop_page; 	/* actual last pg of ring (+1) */
 static unsigned char found;
 static unsigned int verbose;

@@ -9,6 +9,7 @@
  *
  */
 
+#include <arch/io.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/major.h>
 #include <linuxmt/ioctl.h>
@@ -20,7 +21,7 @@
 #include <linuxmt/string.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/netstat.h>
-#include "eth_msgs.h"
+#include "eth-msgs.h"
 
 // Shared declarations between low and high parts
 
@@ -218,13 +219,15 @@ static void ne2k_int(int irq, struct pt_regs *regs)
 		}
 
 		if (stat & NE2K_STAT_RX) {
-			ne2k_get_rx_stat();	// Clear RX bit in ISR
+			outb(NE2K_STAT_RX, net_port + EN0_ISR); // Clear intr bit
 			_ne2k_has_data = 1; 	// data available
 			wake_up(&rxwait);
 		}
 
 		if (stat & NE2K_STAT_TX) {
-			ne2k_get_tx_stat();	// clear the TX bit in the ISR 
+			outb(NE2K_STAT_TX, net_port + EN0_ISR); // Clear intr bit
+			inb(net_port + EN0_TSR);
+			//ne2k_get_tx_stat();	// clear the TX bit in the ISR 
 			wake_up(&txwait);
 		}
 		debug_eth("%02X/%d/", stat, _ne2k_has_data);
@@ -260,10 +263,10 @@ static void ne2k_int(int irq, struct pt_regs *regs)
 		if (stat & NE2K_STAT_RXE) { 	
 			/* Receive error detected, may happen when traffic is heavy */
 			/* The 8 bit interface gets lots of these */
-			/* ne2k_get_rx_stat resets this int in the ISR */
+			/* Don't do anything, just count, report & clr */
 			netif_stat.rx_errors++;
-			if (verbose) printk(EMSG_RXERR, model_name, ne2k_get_rx_stat());
-			ne2k_clr_rxe();
+			if (verbose) printk(EMSG_RXERR, model_name, inb(net_port + EN0_RSR));
+			outb(NE2K_STAT_RXE, net_port + EN0_ISR); // Clear intr bit
 		}
 		if (stat & NE2K_STAT_CNT) { 	
 			/* The tally counters will overflow on 8 bit interfaces with

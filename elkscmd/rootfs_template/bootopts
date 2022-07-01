@@ -4,8 +4,9 @@
 #TZ=MDT7
 #LOCALIP=10.0.2.16
 #HOSTNAME=elks16
-#ne2k=9,0x300
-#wd8003=3,0x280,0xD000
+#ne2k=12,0x300,,0x80
+#wd8003=2,0x280,0xCE00,0x80
+#3c509=11,0x330,,0x80
 #bufs=2500		# system buffers
 #sync=30		# autosync secs
 #init=/bin/init 3 n	# multiuser serial no /etc/rc.sys

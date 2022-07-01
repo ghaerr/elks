@@ -32,9 +32,9 @@ int root_mountflags = 0;
 struct netif_parms netif_parms[MAX_ETHS] = {
     /* NOTE:  The order must match the defines in netstat.h:
      * ETH_NE2K, ETH_WD, ETH_EL3	*/
-    { NE2K_IRQ, NE2K_PORT, 0, 0 },
-    { WD_IRQ, WD_PORT, WD_RAM, 0 },
-    { EL3_IRQ, EL3_PORT, 0, 0 },
+    { NE2K_IRQ, NE2K_PORT, 0, NE2K_FLAGS },
+    { WD_IRQ, WD_PORT, WD_RAM, WD_FLAGS },
+    { EL3_IRQ, EL3_PORT, 0, EL3_FLAGS },
 };
 __u16 kernel_cs, kernel_ds;
 static int boot_console;
