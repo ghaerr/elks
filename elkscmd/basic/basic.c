@@ -204,6 +204,8 @@ PROGMEM const TokenTableEntry tokenTable[] = {
     {"OUTB", TKN_FMT_POST},
     {"OUTW", TKN_FMT_POST},
     {"HEX$",1|TKN_RET_TYPE_STR},
+    {"PEEK", 2},
+    {"POKE", TKN_FMT_POST},
 };
 
 
@@ -1228,6 +1230,12 @@ int parseFnCallExpr() {
             if (!stackPushNum(host_inpw(tmp))) return ERROR_OUT_OF_MEMORY;
             break;
         }
+        case TOKEN_PEEK:
+        {
+            int segment = stackPopNum();
+            stackPushNum(host_peekb(stackPopNum(), segment));
+            break;
+        }
         default:
             return ERROR_UNEXPECTED_TOKEN;
         }
@@ -1442,6 +1450,7 @@ int parsePrimary() {
     case TOKEN_INPB:
     case TOKEN_INPW:
     case TOKEN_HEX:
+    case TOKEN_PEEK:
         return parseFnCallExpr();
 
         // single argument math functions
@@ -1761,6 +1770,9 @@ int parseNIntCmd(int n) {
             break;
         case TOKEN_OUTW:
             host_outw(para[0],para[1]);
+            break;
+        case TOKEN_POKE:
+            host_pokeb(para[0],para[1],para[2]);
             break;
         }
     }
@@ -2165,6 +2177,7 @@ int parseStmts()
             break;
 
         case TOKEN_CIRCLE:
+        case TOKEN_POKE:
             ret = parseNIntCmd(3);
             break;
 
