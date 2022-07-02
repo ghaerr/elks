@@ -67,7 +67,7 @@ INPB(port) (IO read byte from `port`)
 INPW(port) (IO read word from `port`)
 OUTB port, value (IO write byte `value` from `port`)
 OUTW port, value (IO write word `value` from `port`)
-POKE offset,segment,value
+POKE offset,segment,value (Memory write byte `value` to `segment:offset`)
 
 Architecture-specific
 PIN pinNum, value (0 = low, non-zero = high)
@@ -106,7 +106,7 @@ EXP(x) e exponential
 LN(x) natural logarithm
 POW(x,y) e.g. POW(2,0.5) -> 1.414 square root of 2
 HEX$(number) e.g. HEX$(25923) -> "6543"
-PEEK(offset,segment)
+PEEK(offset,segment) Memory read byte from `segment:offset`
 
 Architecture-specific
 PINREAD(pin)
