@@ -45,6 +45,8 @@ float adjust(float f);
 #define pgm_read_word(x)        (x)
 #define pgm_read_byte_near(x)	(x)
 
+#define _MK_FP(seg,off) ((void __far *)((((unsigned long)(seg)) << 16) | (off)))
+
 void host_cls();
 void host_showBuffer();
 void host_moveCursor(int x, int y);
@@ -84,3 +86,6 @@ void host_outb(int port, int value);
 void host_outw(int port, int value);
 int host_inpb(int port);
 int host_inpw(int port);
+
+int host_peekb(int offset, int segment);
+void host_pokeb(int offset, int segment, int value);
