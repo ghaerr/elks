@@ -67,13 +67,13 @@ INPB(port) (IO read byte from `port`)
 INPW(port) (IO read word from `port`)
 OUTB port, value (IO write byte `value` from `port`)
 OUTW port, value (IO write word `value` from `port`)
+POKE offset,segment,value
 
 Architecture-specific
 PIN pinNum, value (0 = low, non-zero = high)
 PINMODE pinNum, mode - not implemented
 
 Not yet implemented
-POKE offset,segment,value
 RANDOMIZE [nmber]
 ```
 
@@ -106,6 +106,7 @@ EXP(x) e exponential
 LN(x) natural logarithm
 POW(x,y) e.g. POW(2,0.5) -> 1.414 square root of 2
 HEX$(number) e.g. HEX$(25923) -> "6543"
+PEEK(offset,segment)
 
 Architecture-specific
 PINREAD(pin)
@@ -117,7 +118,6 @@ SQR(number) square root, use POW(number,0.5)
 SGN(number) sign, use IF number < 0 etc
 
 Not yet implemented
-PEEK(offset,segment)
 SCREEN$(line,col)
 ATTR(line,col)
 POINT(x,y)
