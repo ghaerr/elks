@@ -8,8 +8,6 @@
 #include "host.h"
 #include "basic.h"
 
-#define _MK_FP(seg,off) ((void __far *)((((unsigned long)(seg)) << 16) | (off)))
-
 #define LIOSEG 0xF990 /* ROM Segment for LIO */
 #define LIOINT 0xA0   /* Starting LIO interrupt number */
 

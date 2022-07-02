@@ -54,7 +54,7 @@ float adjust(float f) {
 // for float testing compatibility, use same FP formatting routines on host for now
 // floats have approx 7 sig figs, 15 for double
 
-#ifdef __ia16__
+#if __ia16__
 __STDIO_PRINT_FLOATS;		// link in libc printf float support
 
 char *host_floatToStr(float f, char *buf) {
@@ -368,6 +368,24 @@ int host_loadProgramFromFile(char *fileName) {
 	fclose(fp);
 	if (err == ERROR_EOF) err = ERROR_NONE;
 	return err;
+}
+
+int host_peekb(int offset, int segment) {
+#if __ia16__
+    unsigned char __far *peek;
+    peek = _MK_FP(segment,offset);
+    return (int) *peek;
+#else
+    return 0;
+#endif
+}
+
+void host_pokeb(int offset, int segment, int value) {
+#if __ia16__
+    unsigned char __far *poke;
+    poke = _MK_FP(segment,offset);
+    *poke = (unsigned char) value;
+#endif
 }
 
 int main(int ac, char **av) {
