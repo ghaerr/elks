@@ -104,14 +104,14 @@ void /*INITPROC*/ eth_init(void)
 
 #ifdef CONFIG_ETH_NE2K
     eths[ETH_NE2K].ops = &ne2k_fops;
-    ne2k_drv_init(ETH_NE2K);
+    ne2k_drv_init();
 #endif
 #ifdef CONFIG_ETH_WD
     eths[ETH_WD].ops = &wd_fops;
-    wd_drv_init(ETH_WD);
+    wd_drv_init();
 #endif
 #ifdef CONFIG_ETH_EL3
     eths[ETH_EL3].ops = &el3_fops;
-    el3_drv_init(ETH_EL3);
+    el3_drv_init();
 #endif
 }

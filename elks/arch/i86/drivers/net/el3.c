@@ -141,13 +141,18 @@ struct file_operations el3_fops =
     el3_release
 };
 
-void el3_drv_init(int dev) {
+void el3_drv_init(void) {
 	ioaddr = net_port;		// temporary
 
-	if (el3_isa_probe() == 0)
-		found++;
-        eths[dev].stats = &netif_stat;
 	verbose = (net_flags&ETHF_VERBOSE);
+	if (el3_isa_probe() == 0) {
+		found++;
+		eths[ETH_EL3].stats = &netif_stat;
+		/* The EL3 will grab and hold its default IRQ line
+		 * unless we tell it not to. */
+		EL3WINDOW(0);
+		outw(0x0f00, ioaddr + WN0_IRQ);
+	}
 
 }
 
@@ -213,8 +218,8 @@ static int el3_isa_probe( void )
 
 	int iobase = id_read_eeprom(EEPROM_ADDR_CFG);
 	//int if_port = iobase >> 14;
-	printk(" (HWconf: port %x irq %d)", (0x200 + ((iobase & 0x1f) << 4)), (id_read_eeprom(9) >> 12));
-	printk("\n");
+	if (verbose) printk(" (HWconf: %x/%d)", (0x200 + ((iobase & 0x1f) << 4)), (id_read_eeprom(9) >> 12));
+	printk(", flags 0x%x\n", net_flags);
 	
 	return 0;
 }
@@ -570,7 +575,7 @@ static size_t el3_read(struct inode *inode, struct file *filp, char *data, size_
 	}
 	
 	finish_wait(&rxwait);
-	active_imask |= RxComplete;	// reactivate recv interrupts
+	active_imask |= RxComplete;	/* Reactivate recv interrupts */
 
 	outw(SetIntrEnb | active_imask, ioaddr + EL3_CMD);
 	//printk("r%x:", inw(ioaddr + RX_STATUS));
@@ -587,10 +592,17 @@ static void el3_down( void )
 	outw(RxDisable, ioaddr + EL3_CMD);
 	outw(TxDisable, ioaddr + EL3_CMD);
 
-	/* Disable link beat and jabber, if_port may change here next open(). */
-	EL3WINDOW(4);
-	outw(inw(ioaddr + WN4_MEDIA) & ~MEDIA_TP, ioaddr + WN4_MEDIA);
+#if 0	/* Some times this prevents TP from coming back on line in the next open() */
 
+	/* Disable link beat and jabber */
+	if (!(net_flags&ETHF_USE_AUI)) {
+		EL3WINDOW(4);
+		outw(inw(ioaddr + WN4_MEDIA) & ~MEDIA_TP, ioaddr + WN4_MEDIA);
+		el3_mdelay(500);
+	}
+#endif
+
+	EL3WINDOW(1);
 	outw(SetIntrEnb | 0x0, ioaddr + EL3_CMD);
 }
 
@@ -604,7 +616,7 @@ static int el3_open(struct inode *inode, struct file *file)
 	char *mac_addr = (char *)&netif_stat.mac_addr;
 
 	if (!found) 
-		return -ENODEV;	        // No such device
+		return -ENODEV;
 
 	if (usecount++ != 0)
 		return 0;		// Already open, success
@@ -614,7 +626,7 @@ static int el3_open(struct inode *inode, struct file *file)
 		printk(EMSG_IRQERR, model_name, net_irq, err);
 		return err;
 	}
-	EL3WINDOW(0);		// TESTING ONLY
+	EL3WINDOW(0);
 	/* Activating the board - done in _init, repeat doesn't harm */
 	outw(ENABLE_ADAPTER, ioaddr + WN0_CONF_CTRL);
 
@@ -633,19 +645,21 @@ static int el3_open(struct inode *inode, struct file *file)
 	outw(TxReset, ioaddr + EL3_CMD);
 
 	for (i = 0; i < 31; i++)
-		inb(ioaddr+TX_STATUS);		// Clear TX status stack
+		inb(ioaddr+TX_STATUS);		/* Clear TX status stack */
 
-	outw(AckIntr | 0xff, ioaddr + EL3_CMD);	// Get rid of stray interrupts
+	outw(AckIntr | 0xff, ioaddr + EL3_CMD);	/* Get rid of stray interrupts */
 
-	// The IntStatusEnb reg defines which interrupts will be visible,
-	// The SetIntrEnb reg defines which of the visible interrupts will actually 
-	// trigger an interrupt (the INTR mask). 
+	/* The IntStatusEnb reg defines which interrupts will be visible,
+	 * The SetIntrEnb reg defines which of the visible interrupts will actually 
+	 * trigger an interrupt (the INTR mask). */
 	outw(SetIntrEnb | active_imask, ioaddr + EL3_CMD);
 
-	// Skip thinnet & AUI; we support TP only
-	EL3WINDOW(4);
-	outw(MEDIA_TP, ioaddr + WN4_MEDIA);
-	el3_mdelay(1000);
+	/* Unless the flags say USE_AUI, activate link beat and jabber check for TP */
+	if (!(net_flags & ETHF_USE_AUI)) {
+		EL3WINDOW(4);
+		outw(inw(ioaddr + WN4_MEDIA) | MEDIA_TP, ioaddr + WN4_MEDIA);
+		el3_mdelay(1000);
+	}
 
 	EL3WINDOW(1);
 	

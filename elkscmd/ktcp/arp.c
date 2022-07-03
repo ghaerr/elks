@@ -132,7 +132,7 @@ static void arp_print(register struct arp *arp)
 }
 
 /* send gratuitous ARP packet announcing our MAC to the net */
-void arp_gratuitous() {
+void arp_gratuitous(void) {
     struct arp ga;
 
     /* Simply a slightly modified ARP request */

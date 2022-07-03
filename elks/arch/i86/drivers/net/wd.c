@@ -701,7 +701,7 @@ static void wd_int(int irq, struct pt_regs * regs)
  * Ethernet main initialization (during boot)
  */
 
-void wd_drv_init(int dev)
+void wd_drv_init(void)
 {
 	unsigned u;
 	word_t hw_addr[6U];
@@ -722,6 +722,6 @@ void wd_drv_init(int dev)
 			printk(":%02X", mac_addr[u]);
 		printk(", flags 0x%x\n", net_flags);
 	}
-	eths[dev].stats = &netif_stat;
+	eths[ETH_WD].stats = &netif_stat;
 	return;
 }

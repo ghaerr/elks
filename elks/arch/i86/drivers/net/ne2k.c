@@ -382,7 +382,7 @@ void ne2k_display_status(void)
  * FIXME: Needs return value to signal that initalization failed.
  */
 
-void ne2k_drv_init(int dev)
+void ne2k_drv_init(void)
 {
 	int err, i;
 	word_t prom[16];	/* PROM containing HW MAC address and more 
@@ -468,5 +468,5 @@ void ne2k_drv_init(int dev)
 		break;
 	}
 	_ne2k_has_data = 0;
-	eths[dev].stats = &netif_stat;
+	eths[ETH_NE2K].stats = &netif_stat;
 }

@@ -51,6 +51,7 @@ struct netif_stat {
 #define ETHF_4K_BUF	0x04	/* Force 32k NIC buffer */
 #define ETHF_8BIT_BUS	0x10	/* Force 8 bit */
 #define ETHF_16BIT_BUS 	0x20	/* Force 16 bit */
+#define ETHF_USE_AUI	0x40	/* Use AUI interface */
 #define ETHF_VERBOSE	0x80U	/* turn on verbose console error messages */
 
 #endif
