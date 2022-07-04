@@ -32,7 +32,6 @@ eth_addr_t eth_local_addr;
 
 static unsigned char sbuf[MAX_PACKET_ETH];
 static int devfd;
-void arp_gratuitous(void);
 
 //static eth_addr_t broad_addr = {255, 255, 255, 255, 255, 255};
 

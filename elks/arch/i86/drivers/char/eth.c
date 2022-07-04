@@ -14,12 +14,6 @@ extern struct file_operations ne2k_fops;    /* 0 CONFIG_ETH_NE2K */
 extern struct file_operations wd_fops;      /* 1 CONFIG_ETH_WD */
 extern struct file_operations el3_fops;     /* 2 CONFIG_ETH_EL3 */
 
-#if 0	/* moved to netstat.h */
-struct eth {
-    struct file_operations *ops;
-    struct netif_stat  *stats;
-};
-#endif
 struct eth eths[MAX_ETHS];
 
 /* return file_operations pointer from minor number */
