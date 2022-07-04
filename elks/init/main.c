@@ -30,9 +30,11 @@ int root_mountflags = MS_RDONLY;
 int root_mountflags = 0;
 #endif
 struct netif_parms netif_parms[MAX_ETHS] = {
-    { NE2K_IRQ, NE2K_PORT, 0, 0 },
-    { WD_IRQ, WD_PORT, WD_RAM, 0 },
-    { EL3_IRQ, EL3_PORT, 0, 0 },
+    /* NOTE:  The order must match the defines in netstat.h:
+     * ETH_NE2K, ETH_WD, ETH_EL3	*/
+    { NE2K_IRQ, NE2K_PORT, 0, NE2K_FLAGS },
+    { WD_IRQ, WD_PORT, WD_RAM, WD_FLAGS },
+    { EL3_IRQ, EL3_PORT, 0, EL3_FLAGS },
 };
 __u16 kernel_cs, kernel_ds;
 static int boot_console;
@@ -386,15 +388,15 @@ static int parse_options(void)
 			continue;
 		}
 		if (!strncmp(line,"ne2k=",5)) {
-			parse_nic(line+5, &netif_parms[0]);
+			parse_nic(line+5, &netif_parms[ETH_NE2K]);
 			continue;
 		}
 		if (!strncmp(line,"wd8003=",7)) {
-			parse_nic(line+7, &netif_parms[1]);
+			parse_nic(line+7, &netif_parms[ETH_WD]);
 			continue;
 		}
 		if (!strncmp(line,"3c509=",6)) {
-			parse_nic(line+6, &netif_parms[2]);
+			parse_nic(line+6, &netif_parms[ETH_EL3]);
 			continue;
 		}
 		if (!strncmp(line,"bufs=",5)) {

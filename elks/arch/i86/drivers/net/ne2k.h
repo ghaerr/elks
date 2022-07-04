@@ -3,17 +3,37 @@
 
 #include <arch/ports.h>
 
-// NE2K status
+/* NE2K interrupt status bits */
 
-#define NE2K_STAT_RX    0x0001  // packet received
-#define NE2K_STAT_TX    0x0002  // packet sent
-#define NE2K_STAT_RXE	0x0004	// RX error
-#define NE2K_STAT_TXE	0x0008	// TX error
-#define NE2K_STAT_OF    0x0010  // RX ring overflow
-#define NE2K_STAT_CNT   0x0020  // Tally counter overflow
-#define NE2K_STAT_RDC   0x0040  // Remote DMA complete
+#define NE2K_STAT_RX    0x0001  /* packet received */
+#define NE2K_STAT_TX    0x0002  /* packet sent */
+#define NE2K_STAT_RXE	0x0004	/* RX error */
+#define NE2K_STAT_TXE	0x0008	/* TX error */
+#define NE2K_STAT_OF    0x0010  /* RX ring overflow */
+#define NE2K_STAT_CNT   0x0020  /* Tally counter overflow */
+#define NE2K_STAT_RDC   0x0040  /* Remote DMA complete */
 
-// From low level NE2K MAC
+/* 8390 Page 0 register offsets (from net_port) */
+#define EN0_STARTPG	0x01U	/* Starting page of ring bfr WR */
+#define EN0_STOPPG	0x02U	/* Ending page +1 of ring bfr WR */
+#define EN0_BOUNDARY	0x03U	/* Boundary page of ring bfr RD WR */
+#define EN0_TSR		0x04U	/* Transmit status reg RD */
+#define EN0_TPSR	0x04U	/* Transmit starting page WR */
+#define EN0_ISR		0x07U	/* Interrupt status reg RD WR */
+#define EN0_RSR		0x0cU	/* rx status reg RD */
+#define EN0_RXCR	0x0cU	/* RX configuration reg WR */
+#define EN0_TXCR	0x0dU	/* TX configuration reg WR */
+#define EN0_DCFG	0x0eU	/* Data configuration reg WR */
+#define EN0_IMR		0x0fU	/* Interrupt mask reg WR */
+
+/* Configuration flags */
+#define NE2KF_4K_BUF	0x01	/* Force 4k buffer */
+#define NE2KF_16K_BUF	0x02	/* Force 16k buffer */
+#define NE2KF_8BIT_BUS	0x04	/* Force 8bit mode */
+#define NE2KF_16BIT_BUS	0x08	/* Force 16bit mode */
+#define NE2KF_VERBOSE	0x80U	/* Activate verbose mode */
+
+/* From low level NE2K MAC */
 
 extern word_t ne2k_int_stat();
 
@@ -45,7 +65,6 @@ extern void ne2k_get_hw_addr(word_t *);
 extern void ne2k_rdc(void);
 extern void ne2k_get_errstat(byte_t *);
 extern void ne2k_clr_err_cnt(void);
-extern void ne2k_clr_rxe(void);
 extern void ne2k_rx_init(void);
 
 #endif /* !NE2K_H */

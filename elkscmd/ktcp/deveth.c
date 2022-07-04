@@ -32,6 +32,7 @@ eth_addr_t eth_local_addr;
 
 static unsigned char sbuf[MAX_PACKET_ETH];
 static int devfd;
+
 //static eth_addr_t broad_addr = {255, 255, 255, 255, 255, 255};
 
 int deveth_init(char *fdev)
@@ -51,6 +52,7 @@ int deveth_init(char *fdev)
 
         return -2;
     }
+    arp_gratuitous();	/* send gratuituous ARP to the net */
 
     return devfd;
 }

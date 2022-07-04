@@ -14,23 +14,17 @@ extern struct file_operations ne2k_fops;    /* 0 CONFIG_ETH_NE2K */
 extern struct file_operations wd_fops;      /* 1 CONFIG_ETH_WD */
 extern struct file_operations el3_fops;     /* 2 CONFIG_ETH_EL3 */
 
-struct eth {
-    struct file_operations *ops;
-};
-static struct eth eths[MAX_ETHS];
+struct eth eths[MAX_ETHS];
 
 /* return file_operations pointer from minor number */
 static struct file_operations *get_ops(dev_t dev)
 {
-    struct eth *eth = &eths[0];
-    unsigned short minor = MINOR(dev);
+    	unsigned short minor = MINOR(dev);
 
-    do {
-        if ((eth - eths) == minor)
-            return eth->ops;
-    } while (++eth < &eths[MAX_ETHS]);
-
-    return NULL;
+	if (minor < MAX_ETHS)
+		return eths[MINOR(dev)].ops;
+	else
+		return NULL;
 }
 
 static int eth_open(struct inode *inode, struct file *file)
@@ -103,15 +97,15 @@ void /*INITPROC*/ eth_init(void)
     register_chrdev(ETH_MAJOR, "eth", &eth_fops);
 
 #ifdef CONFIG_ETH_NE2K
-    eths[0].ops = &ne2k_fops;
+    eths[ETH_NE2K].ops = &ne2k_fops;
     ne2k_drv_init();
 #endif
 #ifdef CONFIG_ETH_WD
-    eths[1].ops = &wd_fops;
+    eths[ETH_WD].ops = &wd_fops;
     wd_drv_init();
 #endif
 #ifdef CONFIG_ETH_EL3
-    eths[2].ops = &el3_fops;
+    eths[ETH_EL3].ops = &el3_fops;
     el3_drv_init();
 #endif
 }
