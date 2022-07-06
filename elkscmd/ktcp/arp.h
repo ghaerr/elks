@@ -53,6 +53,7 @@ struct arp_cache *arp_cache_update(ipaddr_t ip_addr, eth_addr_t eth_addr);
 struct arp_cache *arp_cache_add(ipaddr_t ip_addr, eth_addr_t eth_addr);
 void arp_recvpacket (unsigned char * packet, int size);
 void arp_request(ipaddr_t ipaddress);
+void arp_gratuitous(void);
 
 char *mac_ntoa(eth_addr_t eth_addr);
 

@@ -94,15 +94,18 @@
 /* ne2k, ne2k.c */ 
 #define NE2K_PORT	0x300
 #define NE2K_IRQ	12
+#define NE2K_FLAGS	0x80
 
 /* wd, wd.c*/
 #define WD_PORT		0x240
 #define WD_IRQ		2
 #define WD_RAM		0xCE00
+#define WD_FLAGS	0x80
 
 /* el3/3C509, el3.c */
 #define EL3_PORT	0x330
-#define EL3_IRQ		9
+#define EL3_IRQ		11
+#define EL3_FLAGS	0x80
 
 /* bioshd.c*/
 #define FDC_DOR		0x3F2		/* floppy digital output register*/
