@@ -6,8 +6,8 @@ usage()
 {
 	echo "Usage: sys [-3][-M][-F] /dev/{fd0,fd1,hda1,hda2,etc}"
 	echo "	-3 will transfer minimal (360k) system"
-	echo "	-M will transfer boot MBR to /dev/hd[a-d][1-4]
-	echo "	-F required for flat non-MBR /dev/hd[a-d]
+	echo "	-M will transfer boot MBR to /dev/hd[a-d][1-4]"
+	echo "	-F required for flat non-MBR /dev/hd[a-d]"
 	exit 1
 }
 
@@ -102,7 +102,8 @@ copy_bin_files()
 	cp /bin/sys	$MNT/bin
 	cp /bin/umount	$MNT/bin
 	else
-	cp /bin/*	$MNT/bin
+	cd /bin; cp -R . $MNT/bin
+	cd /
 	fi
 }
 
