@@ -390,7 +390,7 @@ static void el3_int(int irq, struct pt_regs *regs)
 			if (status & StatsFull)			/* Empty statistics. */
 				update_stats();
 
-#if 0			// Not currently used
+#if LATER		/* Candidate for optimization  */
 			if (status & RxEarly) {
 				//el3_rx(dev);
 				outw(AckIntr | RxEarly, ioaddr + EL3_CMD);
@@ -399,19 +399,19 @@ static void el3_int(int irq, struct pt_regs *regs)
 #endif
 			if (status & TxComplete) {		/* Really Tx error. */
 				short tx_status;
-				int i = 4;
+				int k = 4;
 
 				if (verbose) printk(EMSG_TXERR, model_name, inb(ioaddr + TX_STATUS));
 				netif_stat.tx_errors++;
-				while (--i > 0 && (tx_status = inb(ioaddr + TX_STATUS)) > 0) {
+				while (--k > 0 && (tx_status = inb(ioaddr + TX_STATUS)) > 0) {
 					//if (tx_status & 0x38) dev->stats.tx_aborted_errors++;
 					if (tx_status & 0x30) outw(TxReset, ioaddr + EL3_CMD);
 					if (tx_status & 0x3C) outw(TxEnable, ioaddr + EL3_CMD);
 					outb(0x00, ioaddr + TX_STATUS); /* Pop the status stack. */
 				}
 			}
-			// Adapter failure is either transmit overrun or receive underrun,
-			// both are really driver or host faults, should not happen.
+			/* Adapter failure is either transmit overrun or receive underrun,
+			 * both are really driver or host faults, should not happen. */
 			if (status & AdapterFailure) {
 				/* Adapter failure requires Rx reset and reinit. */
 				if (verbose) printk(EMSG_ERROR, model_name, status);
@@ -424,7 +424,7 @@ static void el3_int(int irq, struct pt_regs *regs)
 			}
 		}
 
-		if (--i < 0) {	// This should not happen
+		if (--i < 0) {		/* Should not happen */
 			printk("eth: Infinite loop in interrupt, status %4.4x.\n",
 				   status);
 

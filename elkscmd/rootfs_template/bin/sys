@@ -102,8 +102,7 @@ copy_bin_files()
 	cp /bin/sys	$MNT/bin
 	cp /bin/umount	$MNT/bin
 	else
-	cd /bin; cp -R . $MNT/bin
-	cd /
+	cp -R /bin $MNT/bin
 	fi
 }
 
