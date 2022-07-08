@@ -26,7 +26,7 @@ static char *args[] = {
 
 extern void ret_from_syscall(void);
 
-int run_init_process(char *cmd)
+int run_init_process(const char *cmd)
 {
     int num;
 
@@ -36,7 +36,7 @@ int run_init_process(char *cmd)
     return num;
 }
 
-int run_init_process_sptr(char *cmd, char *sptr, int slen)
+int run_init_process_sptr(const char *cmd, char *sptr, int slen)
 {
     int num;
 

@@ -51,7 +51,7 @@ struct msdos_sb_info { /* space in struct super_block is 28 bytes */
 #define DEVINO_BASE             (MSDOS_DPB*2)   /* (DEVDIR_SIZE+MSDOS_DBP-1) & ~(MSDOS_DBP-1) */
 
 struct msdos_devdir_entry {
-    char    *name;
+    const char *name;
     __u16   mode;
     kdev_t  rdev;
 };

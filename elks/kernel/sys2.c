@@ -22,12 +22,12 @@ static void alarm_callback(int data)
 	send_sig(SIGALRM, p, 1);
 }
 
-static struct timer_list *find_alarm(struct task_struct *task)
+static struct timer_list *find_alarm(struct task_struct *t)
 {
 	struct timer_list *ap;
 
 	for (ap = alarms; ap < &alarms[NR_ALARMS]; ap++ ) {
-		if (ap->tl_data == (int)task)
+		if (ap->tl_data == (int)t)
 			return ap;
 	}
 	return NULL;

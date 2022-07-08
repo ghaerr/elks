@@ -70,10 +70,10 @@ void put_user_long(unsigned long dv, void *dp)
     pokel((word_t)dp, current->t_regs.ds, dv);
 }
 
-int fs_memcmp(void *s, void *d, size_t len)
+int fs_memcmp(const void *s, const void *d, size_t len)
 {
-    register unsigned char *p1 = s;
-    register unsigned char *p2 = d;
+    register const unsigned char *p1 = s;
+    register const unsigned char *p2 = d;
     int c = 0;
 
     while (len-- && !c)

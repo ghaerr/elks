@@ -312,7 +312,7 @@ int FATPROC msdos_scan(struct inode *dir,char *name,struct buffer_head **res_bh,
 
 /* Retrieve sectors sector */
 static cluster_t FATPROC raw_found(struct super_block *sb, cluster_t sector,
-	char *name, cluster_t number, ino_t *ino)
+	const char *name, cluster_t number, ino_t *ino)
 {
 	struct buffer_head *bh;
 	struct msdos_dir_entry *data;
@@ -348,7 +348,7 @@ static cluster_t FATPROC raw_found(struct super_block *sb, cluster_t sector,
 
 /* Retrieve the root directory file */
 static cluster_t FATPROC raw_scan_root(register struct super_block *sb,
-	char *name, cluster_t number,ino_t *ino)
+	const char *name, cluster_t number,ino_t *ino)
 {
 	int count;
 	cluster_t cluster = 0;
@@ -362,7 +362,7 @@ static cluster_t FATPROC raw_scan_root(register struct super_block *sb,
 
 /* Retrieve the normal directory file */
 static cluster_t FATPROC raw_scan_nonroot(register struct super_block *sb,
-	cluster_t start, char *name, cluster_t number, ino_t *ino)
+	cluster_t start, const char *name, cluster_t number, ino_t *ino)
 {
 	int count;
 	cluster_t cluster;
@@ -385,7 +385,7 @@ static cluster_t FATPROC raw_scan_nonroot(register struct super_block *sb,
  * to retrieve the file, return to its ino and cluster number
  */
 static cluster_t FATPROC raw_scan(struct super_block *sb, cluster_t start,
-	char *name, cluster_t number, ino_t *ino)
+	const char *name, cluster_t number, ino_t *ino)
 {
     if (start)
 		return raw_scan_nonroot(sb,start,name,number,ino);

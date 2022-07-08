@@ -11,23 +11,23 @@
  * and the usage made thereof.
  */
 
-extern char *strcpy(char *,char *);
-extern char *strncpy(char *,char *,size_t);
-extern char *strcat(char *,char *);
-extern char *strncat(char *,char *,size_t);
-extern int strcmp(char *,char *);
-extern int strncmp(char *,char *,size_t);
+extern char *strcpy(char *,const char *);
+extern char *strncpy(char *,const char *,size_t);
+extern char *strcat(char *,const char *);
+extern char *strncat(char *,const char *,size_t);
+extern int strcmp(const char *,const char *);
+extern int strncmp(const char *,const char *,size_t);
 extern char *strchr(const char *,int);
-extern size_t strlen(char *);
-extern size_t strnlen(char *,size_t);
+extern size_t strlen(const char *);
+extern size_t strnlen(const char *,size_t);
 extern size_t strspn(char *,char *);
 extern size_t strcspn(char *,char *);
 extern char *strpbrk(char *,char *);
 extern char *strtok(char *,char *);
 extern void bcopy(void *,void *,int);
 extern void *memset(void *,int,size_t);
-extern void *memcpy(void *,void *,size_t);
-extern void *memmove(void *,void *,size_t);
+extern void *memcpy(void *,const void *,size_t);
+extern void *memmove(void *,const void *,size_t);
 extern int memcmp(const void *,const void *,size_t);
 extern char *strstr(char *,char *);
 

@@ -24,8 +24,8 @@ extern int kill_pg(pid_t,sig_t,int);
 extern int kill_sl(void);
 
 extern void halt(void);
-extern void panic(char *, ...);
-extern void printk(char *, ...);
+extern void panic(const char *, ...);
+extern void printk(const char *, ...);
 extern void early_putchar (int);
 
 extern int wait_for_keypress(void);
@@ -41,7 +41,7 @@ extern int in_group_p(gid_t);
  * "suser()" checks against the effective user id.
  */
 
-extern int sys_execve(char *,char *,size_t);
+extern int sys_execve(const char *,char *,size_t);
 
 #define suser() (current->euid == 0)
 
