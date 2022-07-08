@@ -278,7 +278,7 @@ int FATPROC msdos_scan(struct inode *dir,char *name,struct buffer_head **res_bh,
 
 	pos = 0;
 	*res_bh = NULL;
-	while ((*ino = msdos_get_entry(dir,&pos,res_bh,&de)) != -1U) {
+	while ((*ino = msdos_get_entry(dir,&pos,res_bh,&de)) != (ino_t)-1) {
 		if (name) {
 			if (de->name[0] && (unsigned char)de->name[0] != DELETED_FLAG
 				&& !(de->attr & ATTR_VOLUME) && !strncmp(de->name,name,MSDOS_NAME)) break;

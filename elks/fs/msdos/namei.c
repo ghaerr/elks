@@ -315,7 +315,7 @@ int msdos_rmdir(register struct inode *dir,const char *name,int len)
 		res = -ENOTEMPTY;
 		pos = 0;
 		dbh = NULL;
-		while (msdos_get_entry(inode,&pos,&dbh,&dde) != -1U)
+		while (msdos_get_entry(inode,&pos,&dbh,&dde) != (ino_t)-1)
 			if (dde->name[0] && (unsigned char)dde->name[0] != DELETED_FLAG
 				&& strncmp(dde->name,MSDOS_DOT, MSDOS_NAME)
 				&& strncmp(dde->name,MSDOS_DOTDOT, MSDOS_NAME))
