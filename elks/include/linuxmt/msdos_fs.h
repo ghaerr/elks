@@ -43,8 +43,6 @@
 
 #define MSDOS_FAT12_MAX_CLUSTERS    4084 /* maximum number of clusters in a 12 bit FAT */
 
-typedef long cluster_t;
-
 struct msdos_boot_sector {
 	char ignored[13];	    /*0*/
 	unsigned char cluster_size; /* sectors/cluster 13*/

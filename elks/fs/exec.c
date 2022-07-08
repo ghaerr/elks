@@ -59,13 +59,12 @@ static struct elks_supl_hdr esuph;
 	((segext_t)(((unsigned long)(bytes) + 15) >> 4))
 #else
 #   define add_overflow	__builtin_add_overflow
-#   define bytes_to_paras(bytes) ({ \
+#   define bytes_to_paras(bytes) __extension__({ \
 	segext_t __w; \
-	__asm("addw $15, %0; rcrw %0" \
+	asm("addw $15, %0; rcrw %0" \
 	      : "=&r" (__w) : "0" (bytes) \
 	      : "cc"); \
-	__w >> 3; \
-    })
+	__w >> 3; })
 #endif
 
 #ifdef CONFIG_EXEC_MMODEL

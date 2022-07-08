@@ -58,7 +58,7 @@ extern void meta_init(void);
 extern void pty_init(void);
 extern void tcpdev_init(void);
 
-extern void kfork_proc(void (*addr));
+extern void kfork_proc(void (*addr)());
 extern void arch_setup_user_stack(struct task_struct *, word_t entry);
 
 #endif

@@ -325,7 +325,7 @@ int msdos_rmdir(register struct inode *dir,const char *name,int len)
 	inode->i_nlink = 0;
 	dir->i_mtime = CURRENT_TIME;
 	inode->i_dirt = dir->i_dirt = 1;
-	de->name[0] = DELETED_FLAG;
+	de->name[0] = (unsigned char)DELETED_FLAG;
 	debug_fat("rmdir block write %lu\n", buffer_blocknr(bh));
 	mark_buffer_dirty(bh);
 	res = 0;
@@ -364,7 +364,7 @@ int msdos_unlink(register struct inode *dir,const char *name,int len)
 	inode->i_nlink = 0;
 	inode->u.msdos_i.i_busy = 1;
 	inode->i_dirt = 1;
-	de->name[0] = DELETED_FLAG;
+	de->name[0] = (unsigned char)DELETED_FLAG;
 	dir->i_dirt = 1;
 	debug_fat("unlink block write %lu\n", buffer_blocknr(bh));
 	mark_buffer_dirty(bh);

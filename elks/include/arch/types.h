@@ -66,10 +66,4 @@ typedef __u16			__pptr;
 #define NULL		((void *) 0)
 #endif
 
-#ifndef __STRICT_ANSI__
-#define FAR             __far
-#else
-#define FAR
-#endif
-
 #endif /* !__ARCH_8086_TYPES_H */

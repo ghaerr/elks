@@ -205,13 +205,17 @@ CFLAGS += -Wredundant-decls -Wuninitialized -Winline -Wswitch -Wshadow
 CFLAGS += -Wchar-subscripts -Wwrite-strings
 CFLAGS += -Wdiscarded-qualifiers -Wcast-align -Wcast-qual
 
+# uncomment for strong checking, won't work with CONFIG_FARTEXT_KERNEL
+#CFLAGS += -std=gnu99 -Wpedantic -D__STRICT_ANSI__
+
 # TODO: remove/add the following
 #CFLAGS += -Wbad-function-cast
 CFLAGS += -Wno-sign-compare
 CFLAGS += -Wno-cast-qual
-CFLAGS += -Wno-unused-parameter -Wno-missing-prototypes -Wno-empty-body
-#CFLAGS += -std=c11
-#CFLAGS += -ansi -Wstrict-prototypes -pedantic
+CFLAGS += -Wno-unused-parameter
+CFLAGS += -Wno-missing-prototypes
+CFLAGS += -Wno-empty-body
+#CFLAGS += -Wstrict-prototypes
 #CFLAGS += -Wconversion
 #CFLAGS += -Wextra
 
