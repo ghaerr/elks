@@ -102,7 +102,6 @@ static int el3_ioctl(struct inode *, struct file *, unsigned int, unsigned int);
 static int el3_select(struct inode *, struct file *, int);
 static void el3_down();
 static void update_stats();
-void el3_drv_init();
 void el3_sendpk(int, char *, int);
 void el3_insw(int, char *, int);
 

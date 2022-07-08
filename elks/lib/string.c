@@ -65,7 +65,7 @@ int atoi(char *number)
 
 #ifndef __HAVE_ARCH_STRCPY
 
-char *strcpy(char *dest, char *src)
+char *strcpy(char *dest, const char *src)
 {
     register char *tmp = dest;
 
@@ -82,9 +82,9 @@ char *strcpy(char *dest, char *src)
 
 #ifndef __HAVE_ARCH_STRNCPY
 
-char *strncpy(char *dest, char *src, size_t count)
+char *strncpy(char *dest, const char *src, size_t count)
 {
-    register char *tmp = dest;
+    register const char *tmp = dest;
 
     while (count-- && (*tmp++ = *src++))
 	/* Do nothing */ ;
@@ -96,9 +96,9 @@ char *strncpy(char *dest, char *src, size_t count)
 
 #ifndef __HAVE_ARCH_STRCAT
 
-char *strcat(char *dest, char *src)
+char *strcat(char *dest, const char *src)
 {
-    register char *tmp = dest;
+    register const char *tmp = dest;
 
     while (*tmp)
 	tmp++;
@@ -112,9 +112,9 @@ char *strcat(char *dest, char *src)
 
 #ifndef __HAVE_ARCH_STRNCAT
 
-char *strncat(char *dest, char *src, size_t count)
+char *strncat(char *dest, const char *src, size_t count)
 {
-    register char *tmp = dest;
+    register const char *tmp = dest;
 
     if (count) {
 	while (*tmp)
@@ -133,7 +133,7 @@ char *strncat(char *dest, char *src, size_t count)
 
 #ifndef __HAVE_ARCH_STRCMP
 
-int strcmp(register char *cs, register char *ct)
+int strcmp(register const char *cs, register const char *ct)
 {
     while (*(cs++) != *(ct++))
 	/* Do nothing */;
@@ -144,12 +144,12 @@ int strcmp(register char *cs, register char *ct)
 
 #ifndef __HAVE_ARCH_STRNCMP
 
-int strncmp(register char *s1, register char *s2, size_t n)
+int strncmp(register const char *s1, register const char *s2, size_t n)
 {
     int r = 0;
 
     while (n--
-	   && ((r = ((int)(*((unsigned char *)s1))) - *((unsigned char *)s2++))
+	   && ((r = ((int)(*((const unsigned char *)s1))) - *((const unsigned char *)s2++))
 	       == 0)
 	   && *s1++);
 
@@ -160,9 +160,9 @@ int strncmp(register char *s1, register char *s2, size_t n)
 
 #ifndef __HAVE_ARCH_STRLEN
 
-size_t strlen(char *s)
+size_t strlen(const char *s)
 {
-    register char *sc;
+    register const char *sc;
 
     for (sc = s; *sc; ++sc)
 	/* Do nothing */ ;
@@ -173,10 +173,10 @@ size_t strlen(char *s)
 
 #ifndef __HAVE_ARCH_STRNLEN
 
-size_t strnlen(char *s, size_t max)
+size_t strnlen(const char *s, size_t max)
 {
-    register char *p = s;
-    register char *maxp = (char *) max;
+    register const char *p = s;
+    size_t maxp = max;
 
     while (maxp && *p) {
 	++p;
@@ -204,9 +204,10 @@ void *memset(void *s, char c, size_t count)
 
 #ifndef __HAVE_ARCH_MEMCPY
 
-void *memcpy(void *dest, void *src, size_t count)
+void *memcpy(void *dest, const void *src, size_t count)
 {
-    register char *tmp = dest, *s = src;
+    register char *tmp = dest;
+    register const char *s = src;
 
     while (count--)
 	*tmp++ = *s++;
@@ -349,7 +350,7 @@ char *bcopy(char *src, char *dest, int count)
 
 #ifndef __HAVE_ARCH_MEMMOVE
 
-void *memmove(void *dest, void *src, size_t count)
+void *memmove(void *dest, const void *src, size_t count)
 {
     register char *tmp = dest, *s = src;
 

@@ -125,7 +125,7 @@ static int relocate(seg_t place_base, lsize_t rsize, segment_s *seg_code,
 }
 #endif
 
-int sys_execve(char *filename, char *sptr, size_t slen)
+int sys_execve(const char *filename, char *sptr, size_t slen)
 {
     register __ptask currentp;
     struct inode *inode;

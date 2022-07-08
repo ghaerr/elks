@@ -102,7 +102,7 @@ static struct super_operations minix_sops = {
     minix_statfs
 };
 
-static void minix_mount_warning(register struct super_block *sb, char *prefix)
+static void minix_mount_warning(register struct super_block *sb, const char *prefix)
 {
 	if ((sb->u.minix_sb.s_mount_state & (MINIX_VALID_FS|MINIX_ERROR_FS)) != MINIX_VALID_FS)
 		printk("MINIX-fs: %smounting %s 0x%x, running fsck is recommended.\n", prefix,
@@ -140,12 +140,12 @@ struct super_block *minix_read_super(register struct super_block *s, char *data,
 	int i;
     unsigned short block;
     kdev_t dev = s->s_dev;
-    char *msgerr;
-    static char *err0 = "";
-    static char *err1 = "minix: unable to read sb\n";
-    static char *err2 = "minix: bad superblock or bitmaps\n";
-    static char *err3 = "minix: get root inode failed\n";
-    static char *err4 = "minix: inode table too large\n";
+    const char *msgerr;
+    static const char *err0 = "";
+    static const char *err1 = "minix: unable to read sb\n";
+    static const char *err2 = "minix: bad superblock or bitmaps\n";
+    static const char *err3 = "minix: get root inode failed\n";
+    static const char *err4 = "minix: inode table too large\n";
 
     lock_super(s);
 	if (!(bh = bread(dev, (block_t) 1))) {
@@ -285,7 +285,7 @@ static unsigned short map_iblock(struct inode *inode, block_t i,
 
 unsigned short _minix_bmap(register struct inode *inode, block_t block, int create)
 {
-    register char *i;
+    int i;
 
 #if 0
 /* I do not understand what this bit means, it cannot be this big,
@@ -300,7 +300,7 @@ unsigned short _minix_bmap(register struct inode *inode, block_t block, int crea
 	return map_izone(inode, block, create);
     block -= 7;
     if (block < 512) {
-	i = (char *)map_izone(inode, 7, create);
+	i = map_izone(inode, 7, create);
 	goto map1;
     }
 
@@ -309,10 +309,10 @@ unsigned short _minix_bmap(register struct inode *inode, block_t block, int crea
      */
 
     block -= 512;
-    i = (char *)map_izone(inode, 8, create);
+    i = map_izone(inode, 8, create);
     if (i != 0) {
 	/* Two layer indirection */
-	i = (char *)map_iblock(inode, (block_t)i, (block_t) (block >> 9), create);
+	i = map_iblock(inode, (block_t)i, (block_t) (block >> 9), create);
 
   map1:
 	/*
@@ -320,9 +320,9 @@ unsigned short _minix_bmap(register struct inode *inode, block_t block, int crea
 	 */
 	if (i != 0)
 	    /* Ok now load the second indirect block */
-	    i = (char *)map_iblock(inode, (block_t)i, (block_t) (block & 511), create);
+	    i = map_iblock(inode, (block_t)i, (block_t) (block & 511), create);
     }
-    return (unsigned short)i;
+    return i;
 }
 
 struct buffer_head *minix_getblk(register struct inode *inode, block_t block, int create)

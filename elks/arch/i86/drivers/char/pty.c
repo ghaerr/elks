@@ -176,7 +176,8 @@ struct tty_ops ttyp_ops = {
     ttyp_release,
     ttyp_write,
     NULL,
-    NULL			/* ioctl*/
+    NULL,			/* ioctl*/
+    NULL                        /* conout */
 };
 
 /*@+type@*/

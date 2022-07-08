@@ -405,14 +405,14 @@ extern struct inode *__iget(struct super_block *,ino_t);
 /*@+namechecks@*/
 
 extern struct file_operations *get_blkfops(unsigned int);
-extern int register_blkdev(unsigned int,char *,struct file_operations *);
+extern int register_blkdev(unsigned int,const char *,struct file_operations *);
 extern int unregister_blkdev(void);
 extern int blkdev_open(struct inode *,struct file *);
 
 extern struct file_operations def_blk_fops;
 extern struct inode_operations blkdev_inode_operations;
 
-extern int register_chrdev(unsigned int,char *,struct file_operations *);
+extern int register_chrdev(unsigned int,const char *,struct file_operations *);
 extern int unregister_chrdev(void);
 /* extern int chrdev_open(struct inode *,struct file *); */
 
@@ -441,13 +441,13 @@ extern void sync_inodes(kdev_t);
 extern void sync_dev(kdev_t);
 extern void fsync_dev(kdev_t);
 extern void sync_supers(kdev_t);
-extern int namei(char *,struct inode **,int,int);
+extern int namei(const char *,struct inode **,int,int);
 
 #define lnamei(_a,_b) _namei(_a,NULL,0,_b)
 
 extern int permission(struct inode *,int);
 
-extern int open_namei(char *,int,int,struct inode **,struct inode *);
+extern int open_namei(const char *,int,int,struct inode **,struct inode *);
 extern int do_mknod(char *,int,int,dev_t);
 extern void iput(struct inode *);
 
@@ -512,7 +512,7 @@ extern void put_write_access(struct inode *);
 
 /*@-namechecks@*/
 
-extern int _namei(char *,struct inode *,int,struct inode **);
+extern int _namei(const char *,struct inode *,int,struct inode **);
 
 /*@+namechecks@*/
 

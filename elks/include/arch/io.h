@@ -3,8 +3,6 @@
 
 #define	port_MAX	0xFFFF
 
-extern void bell(void);
-
 #ifdef __ia16__
 
 #define outb(value,port) \

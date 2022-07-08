@@ -214,7 +214,6 @@ void console_init(void)
     register Console *C;
     register int i;
     unsigned PageSizeW;
-    //unsigned VideoSeg;
 
     MaxCol = (Width = 80) - 1;
 

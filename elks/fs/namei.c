@@ -95,7 +95,7 @@ void put_write_access(struct inode *inode)
  * routines for it. It also checks for fathers (pseudo-roots, mount-points)
  */
 
-static int lookup(register struct inode *dir, char *name, size_t len,
+static int lookup(register struct inode *dir, const char *name, size_t len,
 	   struct inode **result)
 {
     register struct inode_operations *iop;
@@ -165,10 +165,10 @@ static int follow_link(struct inode *dir, register struct inode *inode,
  * specified name, and the name within that directory.
  */
 
-static int dir_namei(register char *pathname, size_t * namelen,
-		     char **name, register struct inode *base, struct inode **res_inode)
+static int dir_namei(const char *pathname, size_t * namelen,
+    const char **name, register struct inode *base, struct inode **res_inode)
 {
-    char *thisname;
+    const char *thisname;
     struct inode *inode;
     struct inode *baser;
     size_t len;
@@ -227,10 +227,10 @@ static int dir_namei(register char *pathname, size_t * namelen,
  * follow_links != 0 means can follow links
  *
  */
-int _namei(char *pathname, register struct inode *base, int follow_links,
+int _namei(const char *pathname, register struct inode *base, int follow_links,
 	   struct inode **res_inode)
 {
-    char *basename;
+    const char *basename;
     int error;
     size_t namelen;
     struct inode *inode;
@@ -270,7 +270,7 @@ int _namei(char *pathname, register struct inode *base, int follow_links,
  *             NOT_DIR, pathname must not be a directory
  *             0,       pathname may be any
  */
-int namei(char *pathname, register struct inode **res_inode, int dir, int perm)
+int namei(const char *pathname, register struct inode **res_inode, int dir, int perm)
 {
     register struct inode *inode;
     int error = _namei(pathname, NULL, 1, res_inode);
@@ -299,13 +299,13 @@ int namei(char *pathname, register struct inode **res_inode, int dir, int perm)
  * for symlinks (where the permissions are checked later).
  */
 
-int open_namei(char *pathname, int flag, int mode,
+int open_namei(const char *pathname, int flag, int mode,
 	       struct inode **res_inode, struct inode *base)
 {
     register struct inode *dirp;
     register struct inode_operations *iop;
     struct inode *dir;
-    char *basename;
+    const char *basename;
     size_t namelen;
     int error;
     struct inode *inode;
@@ -413,7 +413,7 @@ int do_mknod(char *pathname, int offst, int mode, dev_t dev)
     register struct inode *dirp;
     register struct inode_operations *iop;
     struct inode *dir;
-    char *basename;
+    const char *basename;
     size_t namelen;
     /* declare function pointer with varying arguments as specified by ()
      * a pair of parentheses to bind the * to the name instead of the return type */
@@ -489,7 +489,7 @@ int do_rmthing(char *pathname, size_t offst)
     register struct inode *dirp;
     register struct inode_operations *iop;
     struct inode *dir;
-    char *basename;
+    const char *basename;
     size_t namelen;
     int (*op) ();
     int error;

@@ -314,7 +314,7 @@ static struct buffer_head *get_free_buffer(void)
  * Release a buffer head
  */
 
-void __brelse(struct buffer_head *bh)
+static void __brelse(struct buffer_head *bh)
 {
     ext_buffer_head *ebh = EBH(bh);
 
