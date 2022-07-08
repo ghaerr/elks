@@ -362,7 +362,7 @@ int sys_fchown(unsigned int fd, uid_t user, gid_t group)
  * used by symlinks.
  */
 
-int sys_open(char *filename, int flags, int mode)
+int sys_open(const char *filename, int flags, int mode)
 {
     struct inode *inode;
     int error, flag;

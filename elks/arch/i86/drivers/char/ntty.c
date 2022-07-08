@@ -283,7 +283,8 @@ static void tty_echo(register struct tty *tty, unsigned char ch)
 size_t tty_write(struct inode *inode, struct file *file, char *data, size_t len)
 {
     register struct tty *tty = determine_tty(inode->i_rdev);
-    int i, s;
+    size_t i;
+    int s;
 
     i = 0;
     while (i < len) {
@@ -311,11 +312,11 @@ size_t tty_read(struct inode *inode, struct file *file, char *data, size_t len)
 {
     register struct tty *tty = determine_tty(inode->i_rdev);
     int icanon = tty->termios.c_lflag & ICANON;
-    int vmin = tty->termios.c_cc[VMIN];
-    int vtime = tty->termios.c_cc[VTIME];
+    unsigned int vmin = tty->termios.c_cc[VMIN];
+    unsigned int vtime = tty->termios.c_cc[VTIME];
     int nonblock = (file->f_flags & O_NONBLOCK) || (!icanon && vtime && !vmin);
     jiff_t timeout;
-    int i = 0;
+    size_t i = 0;
     int ch, k;
 
     while (i < len) {

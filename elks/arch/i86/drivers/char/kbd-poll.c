@@ -33,7 +33,7 @@ static void kbd_timer(int data)
 		dav = 0;
 	    }
 	    else if ((dav >= 0x68) && (dav < 0x6B)) {	/* Change VC */
-		Console_set_vc((unsigned)(dav - 0x68));
+		Console_set_vc(dav - 0x68);
 		dav = 0;
 	    }
 	    else

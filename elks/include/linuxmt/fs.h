@@ -316,7 +316,7 @@ struct file_operations {
 struct inode_operations {
     struct file_operations	*default_file_ops;
     int 			(*create) ();
-    int 			(*lookup) (struct inode * dir, char * name, size_t len, struct inode ** res);
+    int 			(*lookup) (struct inode * dir, const char * name, size_t len, struct inode ** res);
     int 			(*link) ();
     int 			(*unlink) ();
     int 			(*symlink) ();
@@ -393,7 +393,7 @@ struct iattr {
 extern int notify_change(struct inode *,struct iattr *);
 #endif
 
-extern int sys_open(char *,int,int);
+extern int sys_open(const char *,int,int);
 extern int sys_close(unsigned int);	/* yes, it's really unsigned */
 
 /*@-namechecks@*/

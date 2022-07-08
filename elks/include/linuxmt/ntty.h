@@ -77,7 +77,7 @@ struct tty_ops {
 
 struct tty {
     struct tty_ops *ops;
-    unsigned short int minor;
+    unsigned short minor;
     unsigned int flags;
     struct ch_queue inq, outq;
     struct termios termios;

@@ -65,7 +65,7 @@ static struct wait_queue glock_wait;
 static Console Con[MAX_CONSOLES], *Visible;
 static Console *glock;		/* Which console owns the graphics hardware */
 static int Width, MaxCol, Height, MaxRow;
-static unsigned short int NumConsoles = MAX_CONSOLES;
+static int NumConsoles = MAX_CONSOLES;
 static int kraw;
 static int Current_VCminor = 0;
 
@@ -147,7 +147,7 @@ static void ScrollDown(register Console * C, int y)
  * CAUTION: It *WILL* break if the console driver doesn't get tty0-X.
  */
 
-void Console_set_vc(unsigned int N)
+void Console_set_vc(int N)
 {
     if ((N >= NumConsoles) || (Visible == &Con[N]) || glock)
 	return;
@@ -169,8 +169,8 @@ struct tty_ops bioscon_ops = {
 
 void console_init(void)
 {
-    register Console *C;
-    register int i;
+    Console *C;
+    int i;
 
     MaxCol = (Width = SETUP_VID_COLS) - 1;
 
@@ -209,6 +209,6 @@ void console_init(void)
 
     kbd_init();
 
-    printk("BIOS console %ux%u"TERM_TYPE"(%u virtual consoles)\n",
+    printk("BIOS console %ux%u"TERM_TYPE"(%d virtual consoles)\n",
 	   Width, Height, NumConsoles);
 }

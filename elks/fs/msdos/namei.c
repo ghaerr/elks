@@ -20,7 +20,7 @@ unsigned char FATPROC get_fs_byte(const void *dv)
 {
     unsigned char retv;
 
-    memcpy_fromfs(&retv,dv,1);
+    memcpy_fromfs(&retv,(void *)dv,1);
     return retv;
 }
 
@@ -124,7 +124,7 @@ static int FATPROC msdos_find_long(struct inode *dir, const char *name, int len,
 
 }
 
-int msdos_lookup(register struct inode *dir,char *name,size_t len,
+int msdos_lookup(register struct inode *dir,const char *name,size_t len,
     register struct inode **result)
 {
 	ino_t ino;
@@ -315,7 +315,7 @@ int msdos_rmdir(register struct inode *dir,const char *name,int len)
 		res = -ENOTEMPTY;
 		pos = 0;
 		dbh = NULL;
-		while (msdos_get_entry(inode,&pos,&dbh,&dde) != -1)
+		while (msdos_get_entry(inode,&pos,&dbh,&dde) != (ino_t)-1)
 			if (dde->name[0] && (unsigned char)dde->name[0] != DELETED_FLAG
 				&& strncmp(dde->name,MSDOS_DOT, MSDOS_NAME)
 				&& strncmp(dde->name,MSDOS_DOTDOT, MSDOS_NAME))
