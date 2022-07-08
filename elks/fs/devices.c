@@ -33,8 +33,7 @@ struct file_operations *get_blkfops(unsigned int major)
     return (major >= MAX_BLKDEV) ? NULL : blkdevs[major].ds_fops;
 }
 
-int register_chrdev(unsigned int major, char *name,
-		    register struct file_operations *fops)
+int register_chrdev(unsigned int major, const char *name, struct file_operations *fops)
 {
     register struct device_struct *dev = &chrdevs[major];
 
@@ -49,8 +48,7 @@ int register_chrdev(unsigned int major, char *name,
     return 0;
 }
 
-int register_blkdev(unsigned int major, char *name,
-		    register struct file_operations *fops)
+int register_blkdev(unsigned int major, const char *name, struct file_operations *fops)
 {
     register struct device_struct *dev = &blkdevs[major];
 

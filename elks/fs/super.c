@@ -56,7 +56,7 @@ static struct file_system_type *file_systems[] = {
 #endif
 	NULL
 };
-static char *fsname[] = { NULL, "minix", "msdos", "romfs" };
+static const char *fsname[] = { NULL, "minix", "msdos", "romfs" };
 
 #ifdef CONFIG_FULL_VFS
 static struct file_system_type *get_fs_type(int type)

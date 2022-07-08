@@ -62,7 +62,7 @@ unsigned short minix_count_free_inodes(register struct super_block *sb)
 void minix_free_block(register struct super_block *sb, unsigned short block)
 {
     register struct buffer_head *bh;
-    char *s;
+    const char *s;
     unsigned int zone;
 
     s = NULL;
@@ -132,7 +132,7 @@ block_t minix_new_block(register struct super_block *sb)
 void minix_free_inode(register struct inode *inode)
 {
     struct buffer_head *bh;
-    register char *s;
+    const char *s;
     int n;
 
     s = 0;
@@ -173,7 +173,7 @@ struct inode *minix_new_inode(struct inode *dir, __u16 mode)
     register struct buffer_head *bh;
     /* Adding an sb here does not make the code smaller */
     block_t i, j, k;
-    char *s;
+    const char *s;
 
     if (!dir || !(inode = new_inode(dir, mode))) return NULL;
     minix_set_ops(inode);

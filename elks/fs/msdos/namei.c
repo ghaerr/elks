@@ -20,7 +20,7 @@ unsigned char FATPROC get_fs_byte(const void *dv)
 {
     unsigned char retv;
 
-    memcpy_fromfs(&retv,(void *)dv,1);
+    memcpy_fromfs(&retv,dv,1);
     return retv;
 }
 
@@ -168,8 +168,8 @@ int msdos_lookup(register struct inode *dir,char *name,size_t len,
 
 /* Create a new directory entry (name is already formatted). */
 
-static int FATPROC msdos_create_entry(register struct inode *dir,char *name,int is_dir,
-    register struct inode **result)
+static int FATPROC msdos_create_entry(struct inode *dir,const char *name,int is_dir,
+    struct inode **result)
 {
 	struct buffer_head *bh;
 	struct msdos_dir_entry *de;

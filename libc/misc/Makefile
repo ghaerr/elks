@@ -22,6 +22,7 @@ OBJS = \
 	itoa.o \
 	ltoa.o \
 	ltostr.o \
+	lltostr.o \
 	mktemp.o \
 	popen.o \
 	putenv.o \
@@ -33,6 +34,7 @@ OBJS = \
 	system.o \
 	tmpnam.o \
 	ultostr.o \
+	ulltostr.o \
 	wildcard.o \
 	# end of list
 

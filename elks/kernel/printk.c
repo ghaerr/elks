@@ -68,7 +68,7 @@ void kputchar(int ch)
 	else early_putchar(ch);
 }
 
-static void kputs(register char *buf)
+static void kputs(const char *buf)
 {
 #ifdef CONFIG_EMUL_ANSI_PRINTK
 
@@ -99,7 +99,7 @@ static void kputs(register char *buf)
  *	Output a number
  */
 
-char *hex_string = "0123456789ABCDEF 0123456789abcdef ";	/* Also used by devices */
+const char *hex_string = "0123456789ABCDEF 0123456789abcdef ";	/* Also used by devices */
 
 static void numout(__u32 v, int width, int base, int useSign,
 		   int Lower, int Zero)
@@ -150,7 +150,7 @@ static void numout(__u32 v, int width, int base, int useSign,
     kputchar(vch);
 }
 
-static void vprintk(register char *fmt, va_list p)
+static void vprintk(const char *fmt, va_list p)
 {
     int c, n, width, zero;
     unsigned long v;
@@ -228,7 +228,7 @@ static void vprintk(register char *fmt, va_list p)
     }
 }
 
-void printk(char *fmt, ...)
+void printk(const char *fmt, ...)
 {
     va_list p;
 
@@ -246,7 +246,7 @@ void halt(void)
 	/* Do nothing */;
 }
 
-void panic(char *error, ...)
+void panic(const char *error, ...)
 {
     va_list p;
 

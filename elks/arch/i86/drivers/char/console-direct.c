@@ -181,7 +181,6 @@ void console_init(void)
     register Console *C;
     register int i;
     unsigned PageSizeW;
-    unsigned VideoSeg;
 
     MaxCol = (Width = peekb(0x4a, 0x40)) - 1;  /* BIOS data segment */
 
