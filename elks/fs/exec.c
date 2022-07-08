@@ -62,7 +62,8 @@ static struct elks_supl_hdr esuph;
 #   define bytes_to_paras(bytes) __extension__({ \
 	segext_t __w; \
 	asm("addw $15, %0; rcrw %0" \
-	      : "=&r" (__w) : "0" (bytes) \
+	      : "=&r" (__w) \
+              : "0" (bytes) \
 	      : "cc"); \
 	__w >> 3; })
 #endif
