@@ -10,4 +10,4 @@ extern char kbd_name[];
 void bell(void);
 
 /* for direct and bios consoles only*/
-void Console_set_vc(unsigned int N);
+void Console_set_vc(int N);

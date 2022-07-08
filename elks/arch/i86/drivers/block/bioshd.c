@@ -148,7 +148,7 @@ static int _hd_count = 0;  		/* number of hard disks */
 
 #define SPT		4	/* DDPT offset of sectors per track*/
 static unsigned char DDPT[14];	/* our copy of diskette drive parameter table*/
-unsigned long __far *vec1E = _MK_FP(0, 0x1E << 2);
+unsigned long FAR *vec1E = _MK_FP(0, 0x1E << 2);
 
 static int bioshd_ioctl(struct inode *, struct file *, unsigned int, unsigned int);
 static int bioshd_open(struct inode *, struct file *);
@@ -482,7 +482,7 @@ static void copy_ddpt(void)
 	fmemcpyw(DDPT, _FP_SEG(DDPT), (void *)(unsigned)oldvec, _FP_SEG(oldvec),
 		sizeof(DDPT)/2);
 	debug_bios("bioshd: DDPT vector %x:%x SPT %d\n", _FP_SEG(oldvec), (unsigned)oldvec, DDPT[SPT]);
-	*vec1E = (unsigned long)(void __far *)DDPT;
+	*vec1E = (unsigned long)(void FAR *)DDPT;
 }
 
 /* As far as I can tell this doesn't actually work, but we might
@@ -570,7 +570,7 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 	 * If it exists, we can obtain the disk geometry from it.
 	 */
 	if (!read_sector(target, 0, 1)) {
-	    struct elks_disk_parms __far *parms = _MK_FP(DMASEG, drivep->sector_size -
+	    struct elks_disk_parms FAR *parms = _MK_FP(DMASEG, drivep->sector_size -
 		2 - sizeof(struct elks_disk_parms));
 
 	    /* first check for ELKS parm block */
@@ -590,7 +590,7 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 	    }
 
 	    /* second check for valid FAT BIOS parm block */
-	    unsigned char __far *boot = _MK_FP(DMASEG, 0);
+	    unsigned char FAR *boot = _MK_FP(DMASEG, 0);
 	    if (
 		//(boot[510] == 0x55 && boot[511] == 0xAA) &&	/* bootable sig*/
 		((boot[3] == 'M' && boot[4] == 'S') ||		/* OEM 'MSDOS'*/
@@ -695,7 +695,7 @@ static int bioshd_open(struct inode *inode, struct file *filp)
     unsigned int target = DEVICE_NR(inode->i_rdev);	/* >> MINOR_SHIFT */
     struct hd_struct *hdp = &hd[MINOR(inode->i_rdev)];
 
-    if (!bioshd_initialized || target >= NUM_DRIVES || hdp->start_sect == -1)
+    if (!bioshd_initialized || target >= NUM_DRIVES || hdp->start_sect == -1U)
 	return -ENXIO;
 
 #if 0
@@ -1055,7 +1055,7 @@ static void do_bioshd_request(void)
 	count = BLOCK_SIZE / drivep->sector_size;
 	start = req->rq_blocknr * count;
 
-	if (hd[minor].start_sect == -1 || start >= hd[minor].nr_sects) {
+	if (hd[minor].start_sect == -1U || start >= hd[minor].nr_sects) {
 	    printk("bioshd: bad partition start=%ld sect=%ld nr_sects=%ld.\n",
 		   start, hd[minor].start_sect, hd[minor].nr_sects);
 	    end_request(0);

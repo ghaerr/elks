@@ -189,7 +189,7 @@ typedef void (*__sighandler_t)(int);
 /* Type of a signal handler which interfaces with the kernel.  This is always
    a far function that uses the `stdcall' calling convention, even for a
    user program that is being compiled for a different calling convention.  */
-typedef __attribute__((__stdcall__)) __far void (*__kern_sighandler_t)(int);
+typedef __attribute__((__stdcall__)) FAR void (*__kern_sighandler_t)(int);
 
 /*@+namechecks@*/ /*@ignore@*/
 

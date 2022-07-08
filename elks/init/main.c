@@ -183,7 +183,7 @@ static void try_exec_process(const char *path)
 static void init_task(void)
 {
     int num;
-    char *s;
+    const char *s;
 
     mount_root();
 

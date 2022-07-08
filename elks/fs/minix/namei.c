@@ -23,7 +23,7 @@
  */
 /* #define NO_TRUNCATE */
 
-static int namecompare(size_t len, size_t max, char *name, register char *buf)
+static int namecompare(size_t len, size_t max, const char *name, register char *buf)
 {
     return ((len < max) && (buf[len] != 0))
 	? 0 : !fs_memcmp(name, buf, len);
@@ -39,7 +39,7 @@ static int namecompare(size_t len, size_t max, char *name, register char *buf)
  * Note2: bh must already be mapped!
  */
 static int minix_match(size_t len,
-		       char *name,
+		       const char *name,
 		       register struct minix_dir_entry *de,
 		       size_t minixlen)
 {
@@ -66,7 +66,7 @@ static int minix_match(size_t len,
  */
 
 static struct buffer_head *minix_find_entry(register struct inode *dir,
-					    char *name, size_t namelen,
+					    const char *name, size_t namelen,
 					    struct minix_dir_entry **res_dir)
 {
     register struct buffer_head *bh;
@@ -111,7 +111,7 @@ static struct buffer_head *minix_find_entry(register struct inode *dir,
     return NULL;
 }
 
-int minix_lookup(register struct inode *dir, char *name, size_t len,
+int minix_lookup(register struct inode *dir, const char *name, size_t len,
 		 register struct inode **result)
 {
     struct minix_dir_entry *de;

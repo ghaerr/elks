@@ -220,7 +220,7 @@ void arch_build_stack(struct task_struct *t, char *addr)
  */
 int restart_syscall(void)
 {
-    struct uregs __far *user_stack;
+    struct uregs FAR *user_stack;
 
     user_stack = _MK_FP(current->t_regs.ss, current->t_regs.sp);
     user_stack->ip -= 2;		/* backup to INT 80h*/

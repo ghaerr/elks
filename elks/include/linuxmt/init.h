@@ -5,7 +5,7 @@
 
 #include <linuxmt/types.h>
 
-#ifdef CONFIG_FARTEXT_KERNEL
+#if defined(CONFIG_FARTEXT_KERNEL) && !defined(__STRICT_ANSI__)
 #define INITPROC __far __attribute__ ((far_section, noinline, section (".fartext.init")))
 #else
 #define INITPROC

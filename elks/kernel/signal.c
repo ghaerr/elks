@@ -114,7 +114,7 @@ int sys_kill(pid_t pid, sig_t sig)
 	return -EINVAL;
 
     count = retval = 0;
-    if (pid == -1) {
+    if (pid == (pid_t)-1) {
 	for_each_task(p)
 	    if (p->pid > 1 && p != pcurrent && p->state < TASK_ZOMBIE) {
 		count++;

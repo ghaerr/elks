@@ -238,7 +238,7 @@ static void wd_reset(void)
 static void wd_init_8390(int strategy)
 {
 	unsigned u;
-	const e8390_pkt_hdr __far *rxhdr;
+	const e8390_pkt_hdr FAR *rxhdr;
 	word_t hdr_start;
 	byte_t *mac_addr = (byte_t *)&netif_stat.mac_addr;
 
@@ -345,12 +345,12 @@ static void wd_clr_oflow(int keep)
  * Get packet
  */
 
-static int wd_pack_get(char *data, size_t len)
+static size_t wd_pack_get(char *data, size_t len)
 {
-	const e8390_pkt_hdr __far *rxhdr;
+	const e8390_pkt_hdr FAR *rxhdr;
 	word_t hdr_start;
 	unsigned char this_frame, update = 1;
-	int res = -EIO;
+	size_t res = -EIO;
 
 	//clr_irq();	// EXPERIMENTAL
 	outb(0x00U, WD_8390_PORT + EN0_IMR);	// Block interrupts
@@ -418,7 +418,7 @@ static int wd_pack_get(char *data, size_t len)
 static size_t wd_read(struct inode * inode, struct file * filp,
 	char * data, size_t len)
 {
-	int res = 0;
+	size_t res = 0;
 
 	do {
 		prepare_to_wait_interruptible(&rxwait);

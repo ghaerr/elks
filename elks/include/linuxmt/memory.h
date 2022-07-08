@@ -27,9 +27,9 @@ word_t fmemcmpb (void * dst_off, seg_t dst_seg, void * src_off, seg_t src_seg, s
 word_t fmemcmpw (void * dst_off, seg_t dst_seg, void * src_off, seg_t src_seg, size_t count);
 
 /* macros for far pointers (a la Turbo C++ and Open Watcom) */
-#define _FP_SEG(fp)	((unsigned)((unsigned long)(void __far *)(fp) >> 16))
-#define _FP_OFF(fp)	((unsigned)(unsigned long)(void __far *)(fp))
-#define _MK_FP(seg,off)	((void __far *)((((unsigned long)(seg)) << 16) | (off)))
+#define _FP_SEG(fp)	((unsigned)((unsigned long)(void FAR *)(fp) >> 16))
+#define _FP_OFF(fp)	((unsigned)(unsigned long)(void FAR *)(fp))
+#define _MK_FP(seg,off)	((void FAR *)((((unsigned long)(seg)) << 16) | (off)))
 
 /* unreal mode, A20 gate management */
 int check_unreal_mode(void);	/* check if unreal mode capable, returns > 0 on success */

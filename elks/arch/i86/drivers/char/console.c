@@ -429,7 +429,7 @@ static void Console_release(struct tty *tty)
 
 static int Console_open(register struct tty *tty)
 {
-    if (tty->minor >= NumConsoles)
+    if ((int)tty->minor >= NumConsoles)
 	return -ENODEV;
     return ttystd_open(tty);
 }

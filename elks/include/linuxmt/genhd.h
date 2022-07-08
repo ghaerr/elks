@@ -61,7 +61,7 @@ struct hd_struct
 struct gendisk
 {
     int major;			/* major number of driver */
-    char *major_name;		/* name of major driver */
+    const char *major_name;	/* name of major driver */
     int minor_shift;		/* number of times minor is shifted to
 				 * get real minor */
     int max_p;			/* maximum partitions per device */
