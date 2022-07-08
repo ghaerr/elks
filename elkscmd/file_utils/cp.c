@@ -25,7 +25,7 @@
 #define BUF_SIZE	BUFSIZ		/* use disk block size for stack limit and efficiency*/
 
 int opt_recurse = 0;
-int opt_verbose = 1;
+int opt_verbose = 0;
 int opt_nocopyzero = 0;
 int whole_disk_copy = 0;
 char *destination_dir;
