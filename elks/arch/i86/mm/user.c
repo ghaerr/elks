@@ -40,7 +40,7 @@ int verified_memcpy_tofs(void *daddr, void *saddr, size_t len)
     return err;
 }
 
-unsigned char get_user_char(void *dv)
+unsigned char get_user_char(const void *dv)
 {
     return peekb((word_t)dv, current->t_regs.ds);
 }
@@ -77,7 +77,7 @@ int fs_memcmp(const void *s, const void *d, size_t len)
     int c = 0;
 
     while (len-- && !c)
-	c = get_user_char((void *)(p1++)) - *p2++;
+	c = get_user_char(p1++) - *p2++;
 
     return c;
 }

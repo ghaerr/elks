@@ -441,13 +441,13 @@ extern void sync_inodes(kdev_t);
 extern void sync_dev(kdev_t);
 extern void fsync_dev(kdev_t);
 extern void sync_supers(kdev_t);
-extern int namei(char *,struct inode **,int,int);
+extern int namei(const char *,struct inode **,int,int);
 
 #define lnamei(_a,_b) _namei(_a,NULL,0,_b)
 
 extern int permission(struct inode *,int);
 
-extern int open_namei(char *,int,int,struct inode **,struct inode *);
+extern int open_namei(const char *,int,int,struct inode **,struct inode *);
 extern int do_mknod(char *,int,int,dev_t);
 extern void iput(struct inode *);
 
@@ -512,7 +512,7 @@ extern void put_write_access(struct inode *);
 
 /*@-namechecks@*/
 
-extern int _namei(char *,struct inode *,int,struct inode **);
+extern int _namei(const char *,struct inode *,int,struct inode **);
 
 /*@+namechecks@*/
 
