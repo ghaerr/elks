@@ -46,7 +46,7 @@
 #if DEBUG_EVENT
 void dprintk(char *, ...);		/* printk when debugging on*/
 void debug_event(void);			/* generate debug event*/
-void debug_setcallback(void (*cbfunc));	/* callback on debug event*/
+void debug_setcallback(void (*cbfunc)()); /* callback on debug event*/
 #define PRINTK		dprintk
 #else
 #define PRINTK		printk

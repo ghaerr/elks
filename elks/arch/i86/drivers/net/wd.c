@@ -238,7 +238,7 @@ static void wd_reset(void)
 static void wd_init_8390(int strategy)
 {
 	unsigned u;
-	const e8390_pkt_hdr FAR *rxhdr;
+	const e8390_pkt_hdr __far *rxhdr;
 	word_t hdr_start;
 	byte_t *mac_addr = (byte_t *)&netif_stat.mac_addr;
 
@@ -347,7 +347,7 @@ static void wd_clr_oflow(int keep)
 
 static size_t wd_pack_get(char *data, size_t len)
 {
-	const e8390_pkt_hdr FAR *rxhdr;
+	const e8390_pkt_hdr __far *rxhdr;
 	word_t hdr_start;
 	unsigned char this_frame, update = 1;
 	size_t res = -EIO;

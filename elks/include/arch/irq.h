@@ -27,17 +27,17 @@ int irq_vector (int irq);
 
 void idle_halt(void);
 
-#if defined(__ia16__) && !defined(__STRICT_ANSI__)
+#ifdef __ia16__
 #define save_flags(x)                   \
-        asm volatile("pushfw\n"         \
-                     "\tpopw %0\n"      \
+        asm volatile ("pushfw\n"        \
+                      "popw %0\n"       \
                         :"=r" (x)       \
                         : /* no input */\
                         :"memory")
 
 #define restore_flags(x)                \
-        asm volatile("pushw %0\n"       \
-                     "\tpopfw\n"        \
+        asm volatile ("pushw %0\n"      \
+                      "popfw\n"         \
                         : /* no output*/\
                         :"r" (x)        \
                         :"memory")
@@ -46,19 +46,18 @@ void idle_halt(void);
 // Note the memory barrier for the compiler
 
 /* disable interrupts */
-#define clr_irq()       asm volatile ("cli": : :"memory")
+#define clr_irq()               \
+        asm volatile ("cli\n"   \
+            : /* no output */   \
+            : /* no input */    \
+            :"memory")
 
 /* enable interrupts */
-#define set_irq()       asm volatile ("sti": : :"memory")
-#else
-
-#define save_flags(flags)       save_flags_asm(&flags)
-#define restore_flags(flags)    restore_flags_asm(&flags)
-void save_flags_asm(flag_t *);
-void restore_flags_asm(flag_t *);
-void clr_irq(void);
-void set_irq(void);
-
+#define set_irq()               \
+        asm volatile ("sti\n"   \
+            : /* no output */   \
+            : /* no input */    \
+            :"memory")
 #endif
 
 #endif

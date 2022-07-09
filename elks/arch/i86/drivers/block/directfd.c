@@ -322,14 +322,14 @@ static void floppy_ready(void);
 static void delay_loop(int cnt)
 {
     while (cnt > 0) {
-	__asm__("nop");
+	asm("nop");
 	cnt--;
     }
 }
 
 #ifdef TRP_ASM
 #define copy_buffer(from,to) \
-__asm__("cld ; rep ; movsl" \
+asm("cld ; rep ; movsl" \
 	: \
 	:"c" (BLOCK_SIZE/4),"S" ((long)(from)),"D" ((long)(to)) \
 	:"cx","di","si")

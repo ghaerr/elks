@@ -166,7 +166,7 @@ extern void kill_all(sig_t);
 extern void add_to_runqueue(struct task_struct *);
 
 extern struct task_struct *find_empty_process(void);
-extern void arch_build_stack(struct task_struct *, char *);
+extern void arch_build_stack(struct task_struct *, void (*)());
 extern int restart_syscall(void);
 extern unsigned int get_ustack(struct task_struct *,int);
 extern void put_ustack(register struct task_struct *,int,int);

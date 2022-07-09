@@ -280,7 +280,7 @@ int dprintk_on = DEBUG_STARTDEF;	/* toggled by debug events*/
 #if DEBUG_EVENT
 static void (*dprintk_cb)();		/* debug event callback function*/
 
-void debug_setcallback(void (*cbfunc))
+void debug_setcallback(void (*cbfunc)())
 {
     dprintk_cb = cbfunc;
 }
