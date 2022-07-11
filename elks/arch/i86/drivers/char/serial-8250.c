@@ -64,7 +64,7 @@ static struct serial_info ports[NR_SERIAL] = {
     {(char *)COM4_PORT, COM4_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 3,0,0},
 };
 
-static char ttytab[16];
+static char irq_to_port[16];
 static unsigned int divisors[] = {
     0,				/*  0 = B0      */
     2304,			/*  1 = B50     */
@@ -277,24 +277,14 @@ void fast_com2_irq(void)
 
 
 #if !defined(CONFIG_FAST_IRQ4) || !defined(CONFIG_FAST_IRQ3)
-#if 0
-static struct serial_info *get_line(int irq) {
-	int i;
-	for (i = 0; i < NR_SERIAL; i++ )
-		if (ports[i].irq == irq)
-			return (&ports[i]);
-	/* Assuming this cannot possibly fail ... */
-	return NULL;
-}
-#endif
+
 /*
  * Slower serial interrupt routine, called from _irq_com with passed irq #
  * Reads all FIFO data available per interrupt and can provide serial stats
  */
 void rs_irq(int irq, struct pt_regs *regs)
 {
-    struct serial_info *sp = &ports[(int)ttytab[irq]];
-    //struct serial_info *sp = get_line(irq);
+    struct serial_info *sp = &ports[(int)irq_to_port[irq]];
     char *io = sp->io;
     struct ch_queue *q = &sp->tty->inq;
 
@@ -451,7 +441,7 @@ static void rs_init(void)
     register struct tty *tty = ttys + NR_CONSOLES;
 
     do {
-	ttytab[sp->irq] = sp->index;
+	irq_to_port[sp->irq] = sp - ports;	/* Map irq to tty # */
 	if (!rs_probe(sp)) {
 	    switch(sp->irq) {
 #ifdef CONFIG_FAST_IRQ4
