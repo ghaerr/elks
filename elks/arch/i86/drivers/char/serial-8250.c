@@ -27,7 +27,8 @@ struct serial_info {
     unsigned char mcr;
     unsigned int  divisor;
     struct tty *tty;
-    int pad1, pad2, pad3;	// round out to 16 bytes for faster addressing of ports[]
+    int index;
+    int pad1, pad2;	// round out to 16 bytes for faster addressing of ports[]
 };
 
 /* flags*/
@@ -58,11 +59,12 @@ struct serial_info {
 
 static struct serial_info ports[NR_SERIAL] = {
     {(char *)COM1_PORT, COM1_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,0,0},
-    {(char *)COM2_PORT, COM2_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,0,0},
-    {(char *)COM3_PORT, COM3_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,0,0},
-    {(char *)COM4_PORT, COM4_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,0,0},
+    {(char *)COM2_PORT, COM2_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 1,0,0},
+    {(char *)COM3_PORT, COM3_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 2,0,0},
+    {(char *)COM4_PORT, COM4_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 3,0,0},
 };
 
+static char ttytab[16];
 static unsigned int divisors[] = {
     0,				/*  0 = B0      */
     2304,			/*  1 = B50     */
@@ -275,16 +277,24 @@ void fast_com2_irq(void)
 
 
 #if !defined(CONFIG_FAST_IRQ4) || !defined(CONFIG_FAST_IRQ3)
-
-static int irq_port[NR_SERIAL] = { 3, 1, 0, 2 }; //FIXME must change with ports.h
-
+#if 0
+static struct serial_info *get_line(int irq) {
+	int i;
+	for (i = 0; i < NR_SERIAL; i++ )
+		if (ports[i].irq == irq)
+			return (&ports[i]);
+	/* Assuming this cannot possibly fail ... */
+	return NULL;
+}
+#endif
 /*
  * Slower serial interrupt routine, called from _irq_com with passed irq #
  * Reads all FIFO data available per interrupt and can provide serial stats
  */
 void rs_irq(int irq, struct pt_regs *regs)
 {
-    struct serial_info *sp = &ports[irq_port[irq - 2]];
+    struct serial_info *sp = &ports[(int)ttytab[irq]];
+    //struct serial_info *sp = get_line(irq);
     char *io = sp->io;
     struct ch_queue *q = &sp->tty->inq;
 
@@ -441,6 +451,7 @@ static void rs_init(void)
     register struct tty *tty = ttys + NR_CONSOLES;
 
     do {
+	ttytab[sp->irq] = sp->index;
 	if (!rs_probe(sp)) {
 	    switch(sp->irq) {
 #ifdef CONFIG_FAST_IRQ4
@@ -475,7 +486,7 @@ void rs_conout(dev_t dev, char Ch)
 }
 
 #ifdef CONFIG_BOOTOPTS
-/* note: this function may be called prior to serial_init if serial console set*/
+/* note: this function may be called prior to serial_init if serial console set */
 void INITPROC rs_setbaud(dev_t dev, unsigned long baud)
 {
     register struct serial_info *sp = &ports[MINOR(dev) - RS_MINOR_OFFSET];
