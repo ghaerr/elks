@@ -27,8 +27,7 @@ struct serial_info {
     unsigned char mcr;
     unsigned int  divisor;
     struct tty *tty;
-    int index;
-    int pad1, pad2;	// round out to 16 bytes for faster addressing of ports[]
+    int pad1, pad2, pad3;	// round out to 16 bytes for faster addressing of ports[]
 };
 
 /* flags*/
@@ -59,9 +58,9 @@ struct serial_info {
 
 static struct serial_info ports[NR_SERIAL] = {
     {(char *)COM1_PORT, COM1_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,0,0},
-    {(char *)COM2_PORT, COM2_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 1,0,0},
-    {(char *)COM3_PORT, COM3_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 2,0,0},
-    {(char *)COM4_PORT, COM4_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 3,0,0},
+    {(char *)COM2_PORT, COM2_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,0,0},
+    {(char *)COM3_PORT, COM3_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,0,0},
+    {(char *)COM4_PORT, COM4_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,0,0},
 };
 
 static char irq_to_port[16];
