@@ -8,7 +8,7 @@ memcmp(const void *s1, const void *s2, size_t n)
     char res = 0;
 
     for (; n > 0; n--)
-        if (!(res = *su1++ - *su2++))
+	if ((res = *su1++ - *su2++))
             break;
 
     return res;
