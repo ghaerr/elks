@@ -78,10 +78,7 @@ ega_init(PSD psd)
 	/* framebuffer mmap size*/
 	psd->size = 0x10000;
 
-	/* Set up some default values for the VGA Graphics Registers. */
-	set_enable_sr (0x0f);
-	set_op (0);
-	set_mode (0);
+	/* Need to write setup code for PC-98 */
 
 	return 1;
 }
@@ -95,20 +92,13 @@ ega_drawpixel(PSD psd,unsigned int x, unsigned int y, PIXELVAL c)
 	assert (y >= 0 && y < psd->yres);
 	assert (c >= 0 && c < psd->ncolors);
   
-    //printf("drawpixel:%d %d %d\n", x, y, c);
-    
 	DRAWON;
-	//set_op(mode_table[gr_mode]);
-	//set_color (c);
-	//select_mask ();
-	//set_mask (mask[x&7]);
-	//RMW_FP (SCREENBASE + x / 8 + y * BYTESPERLINE);
 	for(plane=0; plane<4; ++plane) {
 		if  (c & (1 << plane)) {
-			ORBYTE_FP (screenbase_table[plane] + x / 8 + y * BYTESPERLINE,1<<(x&7));
+			ORBYTE_FP (screenbase_table[plane] + x / 8 + y * BYTESPERLINE,0x80>>(x&7));
 		}
 		else {
-			ANDBYTE_FP (screenbase_table[plane] + x / 8 + y * BYTESPERLINE,~(1<<(x&7)));
+			ANDBYTE_FP (screenbase_table[plane] + x / 8 + y * BYTESPERLINE,~(0x80>>(x&7)));
 		}
 	}
 	DRAWOFF;
@@ -122,8 +112,6 @@ ega_readpixel(PSD psd,unsigned int x,unsigned int y)
 	int		plane;
 	PIXELVAL	c = 0;
 	
-    //printf("readpixel:%d %d\n", x, y);
-
     assert (x >= 0 && x < psd->xres);
 	assert (y >= 0 && y < psd->yres);
   
@@ -149,9 +137,8 @@ ega_drawhorzline(PSD psd, unsigned int x1, unsigned int x2, unsigned int y,
 	unsigned int x1_ini;
 
 	x1_ini = x1;
-    //printf("drawhorzline:%d %d %d %d\n", x1, x2, y, c);
 
-    --x2;
+	--x2;
 	assert (x1 >= 0 && x1 < psd->xres);
 	assert (x2 >= 0 && x2 < psd->xres);
 	assert (x2 >= x1);
@@ -159,72 +146,65 @@ ega_drawhorzline(PSD psd, unsigned int x1, unsigned int x2, unsigned int y,
 	assert (c >= 0 && c < psd->ncolors);
 
 	DRAWON;
-	//set_color (c);
-	//set_op(mode_table[gr_mode]);
-	/*
-	* The following fast drawhline code is buggy for XOR drawing,
-	* for some reason.  So, we use the equivalent slower drawpixel
-	* method when not drawing MODE_SET.
-	*/
+	/* XOR/OR/AND mode is not supported for PC-98 for now */
 	if(gr_mode == MODE_SET) {
-      //dst = SCREENBASE + x1 / 8 + y * BYTESPERLINE;
 		for(plane=0; plane<4; ++plane) {
 			x1 = x1_ini;
         	dst = screenbase_table[plane] + x1 / 8 + y * BYTESPERLINE;
-		//select_mask ();
 			if (x1 / 8 == x2 / 8) {
-          //set_mask ((0xff >> (x1 % 8)) & (0xff << (7 - x2 % 8)));
-          //RMW_FP (dst);
 				while(x1 < x2) {
 					if  (c & (1 << plane)) {
-						ORBYTE_FP (dst,1<<(x1&7));
+						ORBYTE_FP (dst,0x80>>(x1&7));
 					}
 					else {
-						ANDBYTE_FP (dst,~(1<<(x1&7)));
+						ANDBYTE_FP (dst,~(0x80>>(x1&7)));
 					}
 					x1++;
 				}
 			} else {
 
-          //set_mask (0xff >> (x1 % 8));
-          //RMW_FP (dst++);
-				if  (c & (1 << plane)) {
-					ORBYTE_FP (dst,1<<(x1&7));
-				}
-				else {
-					ANDBYTE_FP (dst,~(1<<(x1&7)));
+				while (x1 % 8) {
+					if  (c & (1 << plane)) {
+						ORBYTE_FP (dst,0x80>>(x1&7));
+					}
+					else {
+						ANDBYTE_FP (dst,~(0x80>>(x1&7)));
+					}
+					x1++;
 				}
 				dst++;
 
-            //set_mask (0xff);
-			//last = SCREENBASE + x2 / 8 + y * BYTESPERLINE;
 				last = screenbase_table[plane] + x2 / 8 + y * BYTESPERLINE;
-				while (dst < last)
-              //PUTBYTE_FP(dst++, 1);
-					PUTBYTE_FP(dst++, 255);
-
-			//set_mask (0xff << (7 - x2 % 8));
-			//RMW_FP (dst);
-				if  (c & (1 << plane)) {
-					ORBYTE_FP (dst,1<<(x2&7));
+				while (dst < last) {
+					if  (c & (1 << plane)) {
+						PUTBYTE_FP(dst++, 255);
+					}
+					else {
+						PUTBYTE_FP(dst++, 0);
+					}
 				}
-				else {
-					ANDBYTE_FP (dst,~(1<<(x2&7)));
+
+				x1 = ((x2 >> 3) << 3);
+				while (x1 < x2) {
+					if  (c & (1 << plane)) {
+						ORBYTE_FP (dst,0x80>>(x1&7));
+					}
+					else {
+						ANDBYTE_FP (dst,~(0x80>>(x1&7)));
+					}
+					x1++;
 				}
 			}
 		}
 	} else {
 		/* slower method, draw pixel by pixel*/
-		//select_mask ();
 		while(x1 < x2) {
-          //set_mask (mask[x1&7]);
-          //RMW_FP (SCREENBASE + x1++ / 8 + y * BYTESPERLINE);
 			for(plane=0; plane<4; ++plane) {
 				if  (c & (1 << plane)) {
-					ORBYTE_FP (screenbase_table[plane] + x1 / 8 + y * BYTESPERLINE,1<<(x1&7));
+					ORBYTE_FP (screenbase_table[plane] + x1 / 8 + y * BYTESPERLINE,0x80>>(x1&7));
 				}
 				else {
-					ANDBYTE_FP (screenbase_table[plane] + x1 / 8 + y * BYTESPERLINE,~(1<<(x1&7)));
+					ANDBYTE_FP (screenbase_table[plane] + x1 / 8 + y * BYTESPERLINE,~(0x80>>(x1&7)));
 				}
 			}
 			x1++;
@@ -241,8 +221,6 @@ ega_drawvertline(PSD psd,unsigned int x, unsigned int y1, unsigned int y2,
 	FARADDR dst, last;
 	int		plane;
 
-    //printf("drawvertline:%d %d %d %d\n", x, y1, y2, c);
-
     assert (x >= 0 && x < psd->xres);
 	assert (y1 >= 0 && y1 < psd->yres);
 	assert (y2 >= 0 && y2 < psd->yres);
@@ -250,22 +228,15 @@ ega_drawvertline(PSD psd,unsigned int x, unsigned int y1, unsigned int y2,
 	assert (c >= 0 && c < psd->ncolors);
 
 	DRAWON;
-	//set_op(mode_table[gr_mode]);
-	//set_color (c);
-	//select_mask ();
-	//set_mask (mask[x&7]);
-	//dst = SCREENBASE + x / 8 + y1 * BYTESPERLINE;
-	//last = SCREENBASE + x / 8 + y2 * BYTESPERLINE;
 	for(plane=0; plane<4; ++plane) {
 		dst = screenbase_table[plane] + x / 8 + y1 * BYTESPERLINE;
 		last = screenbase_table[plane] + x / 8 + y2 * BYTESPERLINE;
 		while (dst < last) {
-      //RMW_FP (dst);
 			if  (c & (1 << plane)) {
-				ORBYTE_FP (dst,1<<(x&7));
+				ORBYTE_FP (dst,0x80>>(x&7));
 			}
 			else {
-				ANDBYTE_FP (dst,~(1<<(x&7)));
+				ANDBYTE_FP (dst,~(0x80>>(x&7)));
 			}
 			dst += BYTESPERLINE;
 		}
