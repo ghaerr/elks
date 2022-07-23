@@ -12,6 +12,7 @@
 # See slattach.sh for Linux slip setup
 # See qemu.sh NET= line for host forwarding into ELKS using QEMU
 #
+#set -x
 
 # read net configuration file
 source /etc/net.cfg
@@ -25,7 +26,7 @@ usage()
 getty_off()
 {
 	# turn off any serial gettys running
-	init 1
+	#init 1
 }
 
 start_network()
