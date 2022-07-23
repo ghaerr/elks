@@ -27,8 +27,7 @@
 #include "netconf.h"
 
 struct arp_cache arp_cache [ARP_CACHE_MAX];
-void arp_prep_request(struct arp *, ipaddr_t);
-
+static void arp_prep_request(struct arp *, ipaddr_t);
 
 int arp_init (void)
 {
@@ -171,8 +170,8 @@ void arp_reply(unsigned char *packet)
 }
 
 /* build arp request */
-void arp_prep_request(struct arp *ar, ipaddr_t ip) {
-
+static void arp_prep_request(struct arp *ar, ipaddr_t ip)
+{
     memset(ar->ll_eth_dest, 0xFF, 6);	/* broadcast*/
     memcpy(ar->ll_eth_src, eth_local_addr, 6);
     /*specify below in big endian*/ //FIXME

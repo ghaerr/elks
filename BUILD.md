@@ -8,6 +8,7 @@ To build ELKS, you need a GNU development environment, including:
 - texinfo
 - libncurses5-dev
 - mtools-4.0.23 (for MSDOS/FAT images)
+- compress (for compressed man pages; use `sudo apt-get install ncompress`)
 
 ## Quickstart
 
