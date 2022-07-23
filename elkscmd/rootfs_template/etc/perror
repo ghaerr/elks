@@ -5,7 +5,7 @@
 5 I/O error 
 6 No such device or address 
 7 Arg list too long 
-8 Exec format error 
+8 Exec format error (install ash for shell scripts) 
 9 Bad file number 
 10 No child processes 
 11 Try again 

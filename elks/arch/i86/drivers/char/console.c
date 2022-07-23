@@ -74,6 +74,10 @@ static void itoaQueue(int i)
 	Console_conin(*b++);
 }
 
+/* reverse map table ANSI -> ega      blk red grn yel blu mag cyn wht */
+static unsigned char ega_color[8] = {   0,8+4,  2,8+6,8+1,  5,  3, 7 };
+
+/* ESC [ processing */
 static void AnsiCmd(register Console * C, char c)
 {
     int n;
@@ -84,7 +88,7 @@ static void AnsiCmd(register Console * C, char c)
     if (!isalpha(c)) {
 	return;
     }
-    *(C->parmptr) = 0;
+    *C->parmptr = '\0';
 
     switch (c) {
     case 's':			/* Save the current location */
@@ -159,12 +163,12 @@ static void AnsiCmd(register Console * C, char c)
 	  n = atoi(p);
 	  if (n >= 30 && n <= 37) {
 	    C->attr &= 0xf8;
-	    C->attr |= (n-30) & 0x07;
+	    C->attr |= ega_color[n-30] & 0x0F;  /* some colors bright by default */
 	    C->color = C->attr;
 	  }
 	  else if (n >= 40 && n <= 47) {
 	    C->attr &= 0x8f;
-	    C->attr |= ((n-40) << 4) & 0x70;
+	    C->attr |= (ega_color[n-40] << 4) & 0x70;
 	    C->color = C->attr;
 	  }
 	  else switch (n) {
@@ -214,12 +218,25 @@ static void AnsiCmd(register Console * C, char c)
     C->fsm = std_char;
 }
 
-/* Escape character processing */
+/* ANSI emulator - ESC seen */
 static void esc_char(register Console * C, char c)
 {
     /* Parse CSI sequence */
     C->parmptr = C->params;
-    C->fsm = (c == '[' ? AnsiCmd : std_char);
+    switch (c) {
+    case '[':
+        C->fsm = AnsiCmd;
+        return;
+    case '7':           /* DEC save cursor pos */
+        C->savex = C->cx;
+        C->savey = C->cy;
+        break;
+    case '8':           /* DEC restore cursor pos */
+        C->cx = C->savex;
+        C->cy = C->savey;
+        break;
+    }
+    C->fsm = std_char;
 }
 #endif
 

@@ -25,6 +25,8 @@ static int digit(char c, int base)
 	int d;
 	if (c <= '9') {
 		d = c - '0';
+	} else if (c < 'A') {	/* NEATLIBC bugfix */
+		return -1;
 	} else if (c <= 'Z') {
 		d = 10 + c - 'A';
 	} else {

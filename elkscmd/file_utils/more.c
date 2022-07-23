@@ -11,11 +11,16 @@
 #include <termios.h>
 #include "futils.h"
 
-#define MORE_STRING	"\e[7m--More--\e[0m"
+#define MORE_STRING  "\e[7m--More--\e[0m"
+#define END_STRING   "\e[7m(END)\e[0m"
+#define CLEAR_SCREEN "\e[H\e[2J"
+
+#define WRITE(fd,str)   write(fd, str, strlen(str))
 
 static int fd;
 static int LINES = 25;
 static int MAXLINES = 25;
+static char cflag = 1;  /* -c flag: clear screen and wait for partial results */
 
 /* Use the DSR ESC [6n escape sequence to query the cursor position */
 static int getCursorPosition(int ifd, int ofd, int *rows, int *cols)
@@ -201,6 +206,7 @@ int main(int argc, char **argv)
 			}
 			continue;
 		}
+		if (cflag) WRITE(1, CLEAR_SCREEN);
 		while ((fd > -1) && ((read(fd, &ch, 1)) != 0)) {
 			switch (ch) {
 				case '\r':
@@ -252,6 +258,7 @@ int main(int argc, char **argv)
 			if (more_wait(1, strcat(next, argv[1])) < 0)
 				return 0;
 		}
+		else if (cflag) more_wait(1, END_STRING);
 		if (fd)
 			close(fd);
 	} while (--argc > 1);
