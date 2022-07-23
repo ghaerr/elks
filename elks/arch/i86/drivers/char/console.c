@@ -163,13 +163,11 @@ static void AnsiCmd(register Console * C, char c)
 	  n = atoi(p);
 	  if (n >= 30 && n <= 37) {
 	    C->attr &= 0xf8;
-	    //C->attr |= (n-30) & 0x07;
 	    C->attr |= ega_color[n-30] & 0x0F;  /* some colors bright by default */
 	    C->color = C->attr;
 	  }
 	  else if (n >= 40 && n <= 47) {
 	    C->attr &= 0x8f;
-	    //C->attr |= ((n-40) << 4) & 0x70;
 	    C->attr |= (ega_color[n-40] << 4) & 0x70;
 	    C->color = C->attr;
 	  }
