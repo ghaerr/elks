@@ -5,7 +5,7 @@
 
 #include <linuxmt/types.h>
 
-#ifdef CONFIG_FARTEXT_KERNEL
+#if defined(CONFIG_FARTEXT_KERNEL) && !defined(__STRICT_ANSI__)
 #define INITPROC __far __attribute__ ((far_section, noinline, section (".fartext.init")))
 #else
 #define INITPROC
@@ -58,7 +58,7 @@ extern void meta_init(void);
 extern void pty_init(void);
 extern void tcpdev_init(void);
 
-extern void kfork_proc(void (*addr));
+extern void kfork_proc(void (*addr)());
 extern void arch_setup_user_stack(struct task_struct *, word_t entry);
 
 #endif

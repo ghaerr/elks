@@ -71,8 +71,8 @@ static char * INITPROC option(char *s);
 
 static void init_task(void);
 static void INITPROC kernel_banner(seg_t start, seg_t end);
-extern int run_init_process(char *cmd);
-extern int run_init_process_sptr(char *cmd, char *sptr, int slen);
+extern int run_init_process(const char *cmd);
+extern int run_init_process_sptr(const char *cmd, char *sptr, int slen);
 
 
 void start_kernel(void)
@@ -171,7 +171,7 @@ static void INITPROC kernel_banner(seg_t start, seg_t end)
            kernel_ds, end, (int) ((end - start) >> 6));
 }
 
-static void try_exec_process(char *path)
+static void try_exec_process(const char *path)
 {
     int num;
 
@@ -183,7 +183,7 @@ static void try_exec_process(char *path)
 static void init_task(void)
 {
     int num;
-    char *s;
+    const char *s;
 
     mount_root();
 
@@ -224,7 +224,7 @@ static void init_task(void)
 
 #ifdef CONFIG_BOOTOPTS
 static struct dev_name_struct {
-	char *name;
+	const char *name;
 	int num;
 } devices[] = {
 	/* root_dev_name needs first 5 in order*/

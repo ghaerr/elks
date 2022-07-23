@@ -81,7 +81,7 @@ struct proto_ops {
 #define SF_CONNECT	(1 << 6) /* inet */
 
 struct net_proto {
-    char *name;			/* Protocol name */
+    const char *name;		/* Protocol name */
     void (*init_func) ();	/* Bootstrap */
 };
 

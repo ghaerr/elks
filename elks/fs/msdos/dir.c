@@ -238,8 +238,8 @@ static int msdos_readdir(struct inode *dir, struct file *filp, char *dirbuf,
 		/* Fake . and .. for the root directory*/
 		if ((int)filp->f_pos < 2) {
 			/* Tricky: returns "." or ".." depending on namelen*/
-			size_t namelen = (size_t)++filp->f_pos;
-			return filldir(dirbuf, "..", namelen, filp->f_pos, (ino_t)MSDOS_ROOT_INO);
+			size_t namlen = (size_t)++filp->f_pos;
+			return filldir(dirbuf, (char *)"..", namlen, filp->f_pos, (ino_t)MSDOS_ROOT_INO);
 		}
 		if ((int)filp->f_pos == 2)	/* reset to 0 after '..' for real directory offset*/
 			filp->f_pos = 0;

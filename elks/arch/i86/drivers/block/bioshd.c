@@ -695,7 +695,7 @@ static int bioshd_open(struct inode *inode, struct file *filp)
     unsigned int target = DEVICE_NR(inode->i_rdev);	/* >> MINOR_SHIFT */
     struct hd_struct *hdp = &hd[MINOR(inode->i_rdev)];
 
-    if (!bioshd_initialized || target >= NUM_DRIVES || hdp->start_sect == -1)
+    if (!bioshd_initialized || target >= NUM_DRIVES || hdp->start_sect == -1U)
 	return -ENXIO;
 
 #if 0
@@ -1055,7 +1055,7 @@ static void do_bioshd_request(void)
 	count = BLOCK_SIZE / drivep->sector_size;
 	start = req->rq_blocknr * count;
 
-	if (hd[minor].start_sect == -1 || start >= hd[minor].nr_sects) {
+	if (hd[minor].start_sect == -1U || start >= hd[minor].nr_sects) {
 	    printk("bioshd: bad partition start=%ld sect=%ld nr_sects=%ld.\n",
 		   start, hd[minor].start_sect, hd[minor].nr_sects);
 	    end_request(0);

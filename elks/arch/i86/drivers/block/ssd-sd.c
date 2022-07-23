@@ -64,7 +64,7 @@ static enum SdTypes _sd_type = Unknown;
  * Delays some amount of time (not exactly microseconds)
  */
 static void delay_us(uint16_t n) {
-    while (n--) __asm("nop");
+    while (n--) asm("nop");
 }
 
 /**

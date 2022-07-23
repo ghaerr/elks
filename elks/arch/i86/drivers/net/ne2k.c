@@ -42,8 +42,8 @@ static struct wait_queue txwait;
 static struct netif_stat netif_stat;
 static byte_t model_name[] = "ne2k";
 
-extern word_t _ne2k_next_pk;	// FIXME: CHange these to byte_t !!
-extern word_t _ne2k_is_8bit;
+extern int _ne2k_next_pk;
+extern word_t _ne2k_is_8bit;	// FIXME: Change to byte_t !!
 extern word_t _ne2k_has_data;
 extern struct eth eths[];
 
@@ -74,10 +74,7 @@ static size_t ne2k_read(struct inode *inode, struct file *filp, char *data, size
 				break;
 			}
 		}
-		if ((size = ne2k_pack_get(data, len, nhdr)) < 0) {
-			res = -EIO;
-			break;
-		}
+		size = ne2k_pack_get(data, len, nhdr);
 
 		//printk("r%04x|%04x/",nhdr[0], nhdr[1]);	// NIC buffer header
 		debug_eth("eth read: req %d, got %d real %d\n", len, size, nhdr[1]);

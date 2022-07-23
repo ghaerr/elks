@@ -198,10 +198,27 @@ ifneq ($(USEBCC), N)
 AS      = ia16-elf-as
 ASFLAGS = $(CPU_AS) $(ARCH_AS) --32-segelf
 CC      = $(CROSS_CC)
-CFLAGS  = $(CROSS_CFLAGS) $(CPU_CC) $(ARCH_CC) $(CFLBASE) -Wall -Os
+CFLAGS  = $(CROSS_CFLAGS) $(CPU_CC) $(ARCH_CC) $(CFLBASE) -Os
 CFLAGS += -fno-delete-null-pointer-checks -Wnull-dereference
+CFLAGS += -Wall -W -Wmissing-prototypes -Wpointer-arith -Wreturn-type
+CFLAGS += -Wredundant-decls -Wuninitialized -Winline -Wswitch -Wshadow
+CFLAGS += -Wchar-subscripts -Wwrite-strings
+CFLAGS += -Wdiscarded-qualifiers -Wcast-align -Wcast-qual
+
+# uncomment for strong checking, won't work with CONFIG_FARTEXT_KERNEL
+#CFLAGS += -std=gnu99 -Wpedantic -D__STRICT_ANSI__
+
+# TODO: remove/add the following
+#CFLAGS += -Wbad-function-cast
+CFLAGS += -Wno-sign-compare
+CFLAGS += -Wno-cast-qual
+CFLAGS += -Wno-unused-parameter
+CFLAGS += -Wno-missing-prototypes
+CFLAGS += -Wno-empty-body
+#CFLAGS += -Wstrict-prototypes
 #CFLAGS += -Wconversion
 #CFLAGS += -Wextra
+
 LD      = ia16-elf-ld.gold
 LDFLAGS = $(CPU_LD) -s
 POSTLINK = elf2elks

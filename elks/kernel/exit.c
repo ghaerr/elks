@@ -50,7 +50,7 @@ int sys_wait4(pid_t pid, int *status, int options)
 	for_each_task(p) {
 		if (p->p_parent == current && p->state != TASK_UNUSED) {
 		  if (p->state == TASK_ZOMBIE || p->state == TASK_STOPPED) {
-			if (pid == -1 || p->pid == pid || (!pid && p->pgrp == current->pgrp)) {
+			if (pid == (pid_t)-1 || p->pid == pid || (!pid && p->pgrp == current->pgrp)) {
 				if (status) {
 					if (verified_memcpy_tofs(status, &p->exit_status, sizeof(int)))
 						return -EFAULT;

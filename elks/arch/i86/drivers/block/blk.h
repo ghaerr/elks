@@ -210,7 +210,7 @@ static void end_request(int uptodate)
 #endif /* MAJOR_NR */
 
 #define INIT_REQUEST(req) \
-	if (!req || req->rq_dev < 0) \
+	if (!req || req->rq_dev == -1U) \
 		return; \
 	if (MAJOR(req->rq_dev) != MAJOR_NR) \
 		panic("%s: request list destroyed (%d, %d)", \

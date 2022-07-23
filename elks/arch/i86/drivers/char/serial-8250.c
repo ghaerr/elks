@@ -57,12 +57,13 @@ struct serial_info {
 	((unsigned char) (UART_MCR_DTR | UART_MCR_RTS | UART_MCR_OUT2))
 
 static struct serial_info ports[NR_SERIAL] = {
-    {(char *)COM1_PORT, COM1_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL},
-    {(char *)COM2_PORT, COM2_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL},
-    {(char *)COM3_PORT, COM3_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL},
-    {(char *)COM4_PORT, COM4_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL},
+    {(char *)COM1_PORT, COM1_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,0,0},
+    {(char *)COM2_PORT, COM2_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,0,0},
+    {(char *)COM3_PORT, COM3_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,0,0},
+    {(char *)COM4_PORT, COM4_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,0,0},
 };
 
+static char irq_to_port[16];
 static unsigned int divisors[] = {
     0,				/*  0 = B0      */
     2304,			/*  1 = B50     */
@@ -276,15 +277,13 @@ void fast_com2_irq(void)
 
 #if !defined(CONFIG_FAST_IRQ4) || !defined(CONFIG_FAST_IRQ3)
 
-static int irq_port[NR_SERIAL] = { 3, 1, 0, 2 }; //FIXME must change with ports.h
-
 /*
  * Slower serial interrupt routine, called from _irq_com with passed irq #
  * Reads all FIFO data available per interrupt and can provide serial stats
  */
 void rs_irq(int irq, struct pt_regs *regs)
 {
-    struct serial_info *sp = &ports[irq_port[irq - 2]];
+    struct serial_info *sp = &ports[(int)irq_to_port[irq]];
     char *io = sp->io;
     struct ch_queue *q = &sp->tty->inq;
 
@@ -441,6 +440,7 @@ static void rs_init(void)
     register struct tty *tty = ttys + NR_CONSOLES;
 
     do {
+	irq_to_port[sp->irq] = sp - ports;	/* Map irq to tty # */
 	if (!rs_probe(sp)) {
 	    switch(sp->irq) {
 #ifdef CONFIG_FAST_IRQ4
@@ -475,7 +475,7 @@ void rs_conout(dev_t dev, char Ch)
 }
 
 #ifdef CONFIG_BOOTOPTS
-/* note: this function may be called prior to serial_init if serial console set*/
+/* note: this function may be called prior to serial_init if serial console set */
 void INITPROC rs_setbaud(dev_t dev, unsigned long baud)
 {
     register struct serial_info *sp = &ports[MINOR(dev) - RS_MINOR_OFFSET];
@@ -504,7 +504,7 @@ void INITPROC serial_init(void)
 {
     register struct serial_info *sp = ports;
     int ttyno = 0;
-    static char *serial_type[] = {
+    static const char *serial_type[] = {
 	"n 8250",
 	" 16450",
 	" 16550",

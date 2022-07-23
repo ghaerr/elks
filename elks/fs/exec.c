@@ -59,13 +59,13 @@ static struct elks_supl_hdr esuph;
 	((segext_t)(((unsigned long)(bytes) + 15) >> 4))
 #else
 #   define add_overflow	__builtin_add_overflow
-#   define bytes_to_paras(bytes) ({ \
+#   define bytes_to_paras(bytes) __extension__({ \
 	segext_t __w; \
-	__asm("addw $15, %0; rcrw %0" \
-	      : "=&r" (__w) : "0" (bytes) \
+	asm("addw $15, %0; rcrw %0" \
+	      : "=&r" (__w) \
+              : "0" (bytes) \
 	      : "cc"); \
-	__w >> 3; \
-    })
+	__w >> 3; })
 #endif
 
 #ifdef CONFIG_EXEC_MMODEL
@@ -125,7 +125,7 @@ static int relocate(seg_t place_base, lsize_t rsize, segment_s *seg_code,
 }
 #endif
 
-int sys_execve(char *filename, char *sptr, size_t slen)
+int sys_execve(const char *filename, char *sptr, size_t slen)
 {
     register __ptask currentp;
     struct inode *inode;

@@ -112,7 +112,7 @@ int main(int argc, char **argv)
 			pos++;
 
 		errmsg("Files differ at byte position ");
-		char *p = ltoa(pos);
+		char *p = ltoa(pos+1);
 		errstr(p);
 		errmsg("\n");
 		return 1;

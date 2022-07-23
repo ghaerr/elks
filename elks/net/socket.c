@@ -93,9 +93,11 @@ static struct socket *sock_alloc(void)
 	NULL,		/* data */
 #endif
 #if defined(CONFIG_INET)
-	0,		/* avail_data */
 	0,		/* sem */
+	0,		/* avail_data */
+	0,		/* retval */
 	0,		/* remaddr */
+	0,		/* localaddr */
 	0,		/* remport */
 	0		/* localport */
 #endif

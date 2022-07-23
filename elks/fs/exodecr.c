@@ -38,7 +38,7 @@
 static unsigned short int base[52];
 static char bits[52];
 static unsigned char bit_buffer;
-static char *inp;
+static const char *inp;
 static seg_t segp = 0;
 
 #define read_byte()	peekb((word_t)--inp, segp)
@@ -59,7 +59,7 @@ static int bitbuffer_rotate(int carry)
 static unsigned short int
 read_bits(int bit_count)
 {
-    unsigned short int bits = 0;
+    unsigned short int ubits = 0;
     int byte_copy = bit_count & 8;
     bit_count &= 7;
 
@@ -71,15 +71,15 @@ read_bits(int bit_count)
             bit_buffer = read_byte();
             carry = bitbuffer_rotate(1);
         }
-        bits <<= 1;
-        bits |= carry;
+        ubits <<= 1;
+        ubits |= carry;
     }
     if (byte_copy != 0)
     {
-        bits <<= 8;
-        bits |= read_byte();
+        ubits <<= 8;
+        ubits |= read_byte();
     }
-    return bits;
+    return ubits;
 }
 
 static void
@@ -115,7 +115,7 @@ exo_decrunch(const char *in, char *out)
     char literal = 1;
     char reuse_offset_state = 1;
 
-    inp = (char *)in;
+    inp = in;
     bit_buffer = read_byte();
 
     init_table();

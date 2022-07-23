@@ -654,6 +654,7 @@ output_header (void)
     {
       mh.hlen = sizeof mh + sizeof esuph1 + sizeof esuph2;
       esuph1.trsize = (uint32_t) text_n_rels * sizeof (struct minix_reloc);
+      esuph1.drsize = (uint32_t) data_n_rels * sizeof (struct minix_reloc);
       esuph2.ftseg = ftext_sh->sh_size;
       esuph2.ftrsize = (uint32_t) ftext_n_rels * sizeof (struct minix_reloc);
       output (&mh, sizeof mh);
@@ -664,6 +665,7 @@ output_header (void)
     {
       mh.hlen = sizeof mh + sizeof esuph1;
       esuph1.trsize = (uint32_t) text_n_rels * sizeof (struct minix_reloc);
+      esuph1.drsize = (uint32_t) data_n_rels * sizeof (struct minix_reloc);
       output (&mh, sizeof mh);
       output (&esuph1, sizeof esuph1);
     }

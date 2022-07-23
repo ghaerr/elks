@@ -8,7 +8,7 @@
 #include <linuxmt/fs.h>
 #include <linuxmt/ctype.h>
 
-#ifdef CONFIG_FARTEXT_KERNEL
+#if defined(CONFIG_FARTEXT_KERNEL) && !defined(__STRICT_ANSI__)
 #define FATPROC __far __attribute__ ((far_section, noinline, section (".fartext.fatfs")))
 #else
 #define FATPROC
@@ -42,8 +42,6 @@
 #define MSDOS_DOTDOT "..         " /* "..", padded to MSDOS_NAME chars */
 
 #define MSDOS_FAT12_MAX_CLUSTERS    4084 /* maximum number of clusters in a 12 bit FAT */
-
-typedef long cluster_t;
 
 struct msdos_boot_sector {
 	char ignored[13];	    /*0*/
@@ -146,7 +144,7 @@ cluster_t FATPROC get_cluster(struct inode *inode, cluster_t cluster);
 
 /* namei.c */
 
-extern int msdos_lookup(struct inode *dir,char *name,size_t len,
+extern int msdos_lookup(struct inode *dir,const char *name,size_t len,
 	struct inode **result);
 extern int msdos_create(struct inode *dir,const char *name,int len,int mode,
 	struct inode **result);

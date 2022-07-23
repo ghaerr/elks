@@ -65,9 +65,9 @@ struct console {
 static struct wait_queue glock_wait;
 static Console Con[MAX_CONSOLES], *Visible;
 static Console *glock;		/* Which console owns the graphics hardware */
-static void *CCBase;
+static char *CCBase;
 static int Width, MaxCol, Height, MaxRow;
-static unsigned short int NumConsoles = MAX_CONSOLES;
+static int NumConsoles = MAX_CONSOLES;
 
 int Current_VCminor = 0;
 int kraw = 0;
@@ -85,19 +85,15 @@ static void std_char(register Console *, char);
 
 static void SetDisplayPage(register Console * C)
 {
-    register char *CCBasep;
-
-    CCBasep = (char *) CCBase;
-    outw((unsigned short int) ((C->basepage & 0xff00) | 0x0c), CCBasep);
-    outw((unsigned short int) ((C->basepage << 8) | 0x0d), CCBasep);
+    outw((unsigned short int) ((C->basepage & 0xff00) | 0x0c), CCBase);
+    outw((unsigned short int) ((C->basepage << 8) | 0x0d), CCBase);
 }
 
 static void PositionCursor(register Console * C)
 {
-    register char *CCBasep = (char *) CCBase;
-    int Pos;
+    char *CCBasep = CCBase;
+    int Pos = C->cx + Width * C->cy + C->basepage;
 
-    Pos = C->cx + Width * C->cy + C->basepage;
     outb(14, CCBasep);
     outb((unsigned char) ((Pos >> 8) & 0xFF), CCBasep + 1);
     outb(15, CCBasep);
@@ -156,7 +152,7 @@ static void ScrollDown(register Console * C, int y)
  * CAUTION: It *WILL* break if the console driver doesn't get tty0-X.
  */
 
-void Console_set_vc(unsigned int N)
+void Console_set_vc(int N)
 {
     if ((N >= NumConsoles) || (Visible == &Con[N]) || glock)
 	return;
@@ -178,16 +174,15 @@ struct tty_ops dircon_ops = {
 
 void console_init(void)
 {
-    register Console *C;
-    register int i;
-    unsigned PageSizeW;
-    unsigned VideoSeg;
+    Console *C;
+    int i;
+    unsigned int PageSizeW;
 
     MaxCol = (Width = peekb(0x4a, 0x40)) - 1;  /* BIOS data segment */
 
     /* Trust this. Cga does not support peeking at 0x40:0x84. */
     MaxRow = (Height = 25) - 1;
-    CCBase = (void *) peekw(0x63, 0x40);
+    CCBase = (char *)peekw(0x63, 0x40);
     PageSizeW = ((unsigned int)peekw(0x4C, 0x40) >> 1);
 
     VideoSeg = 0xb800;
@@ -225,6 +220,6 @@ void console_init(void)
 
     kbd_init();
 
-    printk("Direct console, %s kbd %ux%u"TERM_TYPE"(%u virtual consoles)\n",
+    printk("Direct console, %s kbd %ux%u"TERM_TYPE"(%d virtual consoles)\n",
 	   kbd_name, Width, Height, NumConsoles);
 }

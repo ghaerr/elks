@@ -6,8 +6,6 @@
  * ported from linux-2.0.34 by zouys, Oct 28th, 2010
  */
 
-typedef long cluster_t;
-
 struct msdos_inode_info {
 	cluster_t i_start; /* first cluster or 0 */
 	int i_attrs;	/* unused attribute bits */

@@ -124,7 +124,7 @@ static int FATPROC msdos_find_long(struct inode *dir, const char *name, int len,
 
 }
 
-int msdos_lookup(register struct inode *dir,char *name,size_t len,
+int msdos_lookup(register struct inode *dir,const char *name,size_t len,
     register struct inode **result)
 {
 	ino_t ino;
@@ -168,8 +168,8 @@ int msdos_lookup(register struct inode *dir,char *name,size_t len,
 
 /* Create a new directory entry (name is already formatted). */
 
-static int FATPROC msdos_create_entry(register struct inode *dir,char *name,int is_dir,
-    register struct inode **result)
+static int FATPROC msdos_create_entry(struct inode *dir,const char *name,int is_dir,
+    struct inode **result)
 {
 	struct buffer_head *bh;
 	struct msdos_dir_entry *de;
@@ -315,7 +315,7 @@ int msdos_rmdir(register struct inode *dir,const char *name,int len)
 		res = -ENOTEMPTY;
 		pos = 0;
 		dbh = NULL;
-		while (msdos_get_entry(inode,&pos,&dbh,&dde) != -1)
+		while (msdos_get_entry(inode,&pos,&dbh,&dde) != (ino_t)-1)
 			if (dde->name[0] && (unsigned char)dde->name[0] != DELETED_FLAG
 				&& strncmp(dde->name,MSDOS_DOT, MSDOS_NAME)
 				&& strncmp(dde->name,MSDOS_DOTDOT, MSDOS_NAME))
@@ -325,7 +325,7 @@ int msdos_rmdir(register struct inode *dir,const char *name,int len)
 	inode->i_nlink = 0;
 	dir->i_mtime = CURRENT_TIME;
 	inode->i_dirt = dir->i_dirt = 1;
-	de->name[0] = DELETED_FLAG;
+	de->name[0] = (unsigned char)DELETED_FLAG;
 	debug_fat("rmdir block write %lu\n", buffer_blocknr(bh));
 	mark_buffer_dirty(bh);
 	res = 0;
@@ -364,7 +364,7 @@ int msdos_unlink(register struct inode *dir,const char *name,int len)
 	inode->i_nlink = 0;
 	inode->u.msdos_i.i_busy = 1;
 	inode->i_dirt = 1;
-	de->name[0] = DELETED_FLAG;
+	de->name[0] = (unsigned char)DELETED_FLAG;
 	dir->i_dirt = 1;
 	debug_fat("unlink block write %lu\n", buffer_blocknr(bh));
 	mark_buffer_dirty(bh);

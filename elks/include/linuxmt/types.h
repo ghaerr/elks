@@ -18,6 +18,7 @@ typedef __u32			block32_t;
 typedef __u32			sector_t;
 typedef __u16			dev_t;
 typedef __u16			flag_t;
+typedef long			cluster_t;
 
 typedef __u32			u_ino_t;
 #ifndef __KERNEL__
@@ -36,7 +37,6 @@ typedef __u16			gid_t;
 typedef __u16			mode_t;
 typedef __u16			nlink_t;
 typedef __u16			segext_t;
-typedef __u16			uid_t;
 typedef __u16			umode_t;
 
 typedef __u8			cc_t;

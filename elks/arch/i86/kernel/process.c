@@ -26,7 +26,7 @@ static char *args[] = {
 
 extern void ret_from_syscall(void);
 
-int run_init_process(char *cmd)
+int run_init_process(const char *cmd)
 {
     int num;
 
@@ -36,7 +36,7 @@ int run_init_process(char *cmd)
     return num;
 }
 
-int run_init_process_sptr(char *cmd, char *sptr, int slen)
+int run_init_process_sptr(const char *cmd, char *sptr, int slen)
 {
     int num;
 
@@ -86,7 +86,7 @@ void stack_check(void)
  *	so we fork onto our kernel stack.
  */
 
-void kfork_proc(void (*addr))
+void kfork_proc(void (*addr)())
 {
     register struct task_struct *t;
 
@@ -198,12 +198,12 @@ void arch_setup_sighandler_stack(register struct task_struct *t,
  * function in the case of kfork_proc().
  */
 
-void arch_build_stack(struct task_struct *t, char *addr)
+void arch_build_stack(struct task_struct *t, void (*addr)())
 {
     register __u16 *tsp = ((__u16 *)(&(t->t_regs.ax))) - 1;
 
     if (addr == NULL)
-	addr = (char *)ret_from_syscall;
+	addr = ret_from_syscall;
     *tsp = (__u16)addr;			/* Start execution address */
 #ifdef __ia16__
     *(tsp-2) = kernel_ds;		/* Initial value for ES register */
