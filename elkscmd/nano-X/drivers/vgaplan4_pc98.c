@@ -43,7 +43,7 @@
 #endif
 
 static FARADDR screenbase_table[4] = {
-	SCREENBASE0, SCREENBASE1, SCREENBASE2, SCREENBASE3
+	SCREENBASE0, SCREENBASE2, SCREENBASE1, SCREENBASE3
 };
 
 /* extern data*/
@@ -95,10 +95,10 @@ ega_drawpixel(PSD psd,unsigned int x, unsigned int y, PIXELVAL c)
 	DRAWON;
 	for(plane=0; plane<4; ++plane) {
 		if  (c & (1 << plane)) {
-			ORBYTE_FP (screenbase_table[plane] + x / 8 + y * BYTESPERLINE,0x80>>(x&7));
+			ORBYTE_FP (screenbase_table[plane] + x / 8 + y * BYTESPERLINE,mask[x&7]);
 		}
 		else {
-			ANDBYTE_FP (screenbase_table[plane] + x / 8 + y * BYTESPERLINE,~(0x80>>(x&7)));
+			ANDBYTE_FP (screenbase_table[plane] + x / 8 + y * BYTESPERLINE,~mask[x&7]);
 		}
 	}
 	DRAWOFF;
@@ -138,7 +138,6 @@ ega_drawhorzline(PSD psd, unsigned int x1, unsigned int x2, unsigned int y,
 
 	x1_ini = x1;
 
-	--x2;
 	assert (x1 >= 0 && x1 < psd->xres);
 	assert (x2 >= 0 && x2 < psd->xres);
 	assert (x2 >= x1);
@@ -154,10 +153,10 @@ ega_drawhorzline(PSD psd, unsigned int x1, unsigned int x2, unsigned int y,
 			if (x1 / 8 == x2 / 8) {
 				while(x1 < x2) {
 					if  (c & (1 << plane)) {
-						ORBYTE_FP (dst,0x80>>(x1&7));
+						ORBYTE_FP (dst,mask[x1&7]);
 					}
 					else {
-						ANDBYTE_FP (dst,~(0x80>>(x1&7)));
+						ANDBYTE_FP (dst,~mask[x1&7]);
 					}
 					x1++;
 				}
@@ -165,14 +164,15 @@ ega_drawhorzline(PSD psd, unsigned int x1, unsigned int x2, unsigned int y,
 
 				while (x1 % 8) {
 					if  (c & (1 << plane)) {
-						ORBYTE_FP (dst,0x80>>(x1&7));
+						ORBYTE_FP (dst,mask[x1&7]);
 					}
 					else {
-						ANDBYTE_FP (dst,~(0x80>>(x1&7)));
+						ANDBYTE_FP (dst,~mask[x1&7]);
 					}
 					x1++;
 				}
-				dst++;
+				if (x1_ini % 8)
+					dst++;
 
 				last = screenbase_table[plane] + x2 / 8 + y * BYTESPERLINE;
 				while (dst < last) {
@@ -187,10 +187,10 @@ ega_drawhorzline(PSD psd, unsigned int x1, unsigned int x2, unsigned int y,
 				x1 = ((x2 >> 3) << 3);
 				while (x1 < x2) {
 					if  (c & (1 << plane)) {
-						ORBYTE_FP (dst,0x80>>(x1&7));
+						ORBYTE_FP (dst,mask[x1&7]);
 					}
 					else {
-						ANDBYTE_FP (dst,~(0x80>>(x1&7)));
+						ANDBYTE_FP (dst,~mask[x1&7]);
 					}
 					x1++;
 				}
@@ -201,10 +201,10 @@ ega_drawhorzline(PSD psd, unsigned int x1, unsigned int x2, unsigned int y,
 		while(x1 < x2) {
 			for(plane=0; plane<4; ++plane) {
 				if  (c & (1 << plane)) {
-					ORBYTE_FP (screenbase_table[plane] + x1 / 8 + y * BYTESPERLINE,0x80>>(x1&7));
+					ORBYTE_FP (screenbase_table[plane] + x1 / 8 + y * BYTESPERLINE,mask[x1&7]);
 				}
 				else {
-					ANDBYTE_FP (screenbase_table[plane] + x1 / 8 + y * BYTESPERLINE,~(0x80>>(x1&7)));
+					ANDBYTE_FP (screenbase_table[plane] + x1 / 8 + y * BYTESPERLINE,~mask[x1&7]);
 				}
 			}
 			x1++;
@@ -233,10 +233,10 @@ ega_drawvertline(PSD psd,unsigned int x, unsigned int y1, unsigned int y2,
 		last = screenbase_table[plane] + x / 8 + y2 * BYTESPERLINE;
 		while (dst < last) {
 			if  (c & (1 << plane)) {
-				ORBYTE_FP (dst,0x80>>(x&7));
+				ORBYTE_FP (dst,mask[x&7]);
 			}
 			else {
-				ANDBYTE_FP (dst,~(0x80>>(x&7)));
+				ANDBYTE_FP (dst,~mask[x&7]);
 			}
 			dst += BYTESPERLINE;
 		}
