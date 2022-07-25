@@ -38,23 +38,22 @@ struct termios def_vals = {
     0,							/* c_line*/
     { 3,	/* VINTR*/
     28,		/* VQUIT*/
-    /*127*/ 8,	/* VERASE*/
-    21,		/* VKILL*/
+    8,		/* VERASE*/
+    21,		/* VKILL unused*/
     4,		/* VEOF*/
     0,		/* VTIME*/
     1,		/* VMIN*/
-    0,		/* VSWTC*/
-    17,		/* VSTART*/
-    19,		/* VSTOP*/
-    26,		/* VSUSP*/
+    0,		/* VSWTCH unused*/
+    17,		/* VSTART unused*/
+    19,		/* VSTOP unused*/
+    26,		/* VSUSP unused*/
     0,		/* VEOL*/
-    18,		/* VREPRINT*/
-    15,		/* VDISCARD*/
-    23,		/* VWERASE*/
-    22,		/* VLNEXT*/
-    0,		/* VEOL2*/
-    0,
-    0 }
+    18,		/* VREPRINT unused*/
+    15,		/* VDISCARD unused*/
+    23,		/* VWERASE unused*/
+    22,		/* VLNEXT unused*/
+    127 	/* VERASE2*/
+    }
 };
 
 #define TAB_SPACES 8
@@ -265,7 +264,8 @@ static void tty_echo(register struct tty *tty, unsigned char ch)
 {
     if ((tty->termios.c_lflag & ECHO)
 		|| ((tty->termios.c_lflag & ECHONL) && (ch == '\n'))) {
-	if ((ch == tty->termios.c_cc[VERASE]) && (tty->termios.c_lflag & ECHOE)) {
+	if ((ch == tty->termios.c_cc[VERASE] || ch == tty->termios.c_cc[VERASE2])
+       && (tty->termios.c_lflag & ECHOE)) {
 	    chq_addch(&tty->outq, '\b');
 	    chq_addch(&tty->outq, ' ');
 	    chq_addch(&tty->outq, '\b');
@@ -357,7 +357,7 @@ again:
 	    ch = '\n';
 
 	if (icanon) {
-	    if (ch == tty->termios.c_cc[VERASE]) {
+	    if (ch == tty->termios.c_cc[VERASE] || ch == tty->termios.c_cc[VERASE2]) {
 		if (i > 0) {
 		    i--;
 		    k = ((get_user_char((void *)(--data)) == '\t') ? TAB_SPACES : 1);

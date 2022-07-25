@@ -55,8 +55,11 @@
 #ifndef TERASE_DEF
 #define TERASE_DEF	'\10'	/* ^H */
 #endif
+#ifndef TERASE2_DEF
+#define TERASE2_DEF	'\177'	/* ^? */
+#endif
 #ifndef TINTR_DEF
-#define TINTR_DEF	'\177'	/* ^? */
+#define TINTR_DEF	'\03'	/* ^C */
 #endif
 #ifndef TKILL_DEF
 #define TKILL_DEF	'\25'	/* ^U */
@@ -317,6 +320,7 @@ int flags;
 	print_char(termios.c_cc[VSUSP], TSUSP_DEF, "susp", all);
 	print_char(termios.c_cc[VSTART], TSTART_DEF, "start", all);
 	print_char(termios.c_cc[VSTOP], TSTOP_DEF, "stop", all);
+	print_char(termios.c_cc[VERASE2], TERASE2_DEF, "erase2", all);
 #ifdef __minix
 	print_char(termios.c_cc[VREPRINT], TREPRINT_DEF, "rprnt", all);
 	print_char(termios.c_cc[VLNEXT], TLNEXT_DEF, "lnext", all);
@@ -763,6 +767,11 @@ char *opt, *next;
 	return 1;
   }
 
+  if (match(opt, "erase2")) {
+	set_control(VERASE2, next);
+	return 1;
+  }
+
   if (match(opt, "intr")) {
 	set_control(VINTR, next);
 	return 1;
@@ -873,8 +882,9 @@ char *opt, *next;
   }
 
   if (match(opt, "ek")) {
-	termios.c_cc[VERASE]= TERASE_DEF;;
-	termios.c_cc[VKILL]= TKILL_DEF;;
+	termios.c_cc[VERASE]= TERASE_DEF;
+	termios.c_cc[VERASE2]= TERASE2_DEF;
+	termios.c_cc[VKILL]= TKILL_DEF;
 	return 0;
   }
 
@@ -899,6 +909,7 @@ char *opt, *next;
 	termios.c_cc[VEOF]= TEOF_DEF;
 	termios.c_cc[VEOL]= TEOL_DEF;
 	termios.c_cc[VERASE]= TERASE_DEF;
+	termios.c_cc[VERASE2]= TERASE2_DEF;
 	termios.c_cc[VINTR]= TINTR_DEF;
 	termios.c_cc[VKILL]= TKILL_DEF;
 	termios.c_cc[VQUIT]= TQUIT_DEF;
