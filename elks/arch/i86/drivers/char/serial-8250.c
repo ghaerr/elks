@@ -287,14 +287,15 @@ void rs_irq(int irq, struct pt_regs *regs)
     char *io = sp->io;
     struct ch_queue *q = &sp->tty->inq;
 
-#if 0	// turn on for serial stats
     int status = INB(io + UART_LSR);			/* check for data overrun*/
+    if ((status & UART_LSR_DR) == 0)			/* QEMU may interrupt w/no data*/
+	return;
+
+#if 0	// turn on for serial stats
     if (status & UART_LSR_OE)
 	printk("serial: data overrun\n");
     if (status & (UART_LSR_FE|UART_LSR_PE))
 	printk("serial: frame/parity error\n");
-    if ((status & UART_LSR_DR) == 0)			/* QEMU may interrupt w/no data*/
-	printk("serial: interrupt w/o data available\n");
 #endif
 
     /* read uart/fifo until empty*/
