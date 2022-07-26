@@ -47,8 +47,8 @@
 sys_utils/init			:boot	:sysutil    :128k
 sys_utils/getty			:boot	:sysutil    :128k
 sys_utils/login			:boot	:sysutil    :128k
-ash/ash		::bin/sh	:boot	:ash	    # install as /bin/sh
 sash/sash	::bin/sh	    	:defsash	# install as /bin/sh
+ash/ash		::bin/sh	:boot	:ash	    # install as /bin/sh (must follow :defsash)
 sash/sash		    	        :sash                   :1200k  :1440k
 sys_utils/mount			:boot	:sysutil    :128k
 sys_utils/umount		:boot	:sysutil    :128k
