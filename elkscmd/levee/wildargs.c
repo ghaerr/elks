@@ -63,7 +63,6 @@ char *token;
 register int *argcp;
 register char ***argvp;
 {
-    char **realloc(), **malloc();
     char *strdup();
     char **ap = *argvp;
     int ac = *argcp;
@@ -71,7 +70,7 @@ register char ***argvp;
 
     if ( ac%QUANTUM == 0) {	/* realloc more memory! */
 	size = (QUANTUM+ac)*sizeof(char**);
-	ap = (ac == 0)?malloc(size):realloc(ap, size);
+	ap = (ac == 0)? (char **)malloc(size): (char **)realloc(ap, size);
 	if (!ap) {
 	    *argcp = 0;
 	    goto memfail;

@@ -1,36 +1,37 @@
-
 #ifndef __STRING_H
 #define __STRING_H
 
-#pragma once
-
-#include <features.h>
 #include <stddef.h>
 
 /* Basic string functions */
 
-extern char * strcpy __P ((char*, __const char*));
+size_t strlen(const char * s);
+char *strcpy(char*, const char*);
+char *strcat(char * dest, const char * src);
 int strcmp(const char *s1, const char *s2);
 
-extern char * strncat __P ((char*, char*, size_t));
-extern char * strncpy __P ((char*, char*, size_t));
+char * strncpy(char*, char*, size_t);
+char * strncat(char*, char*, size_t);
+int strncmp(const char * s1, const char * s2, size_t n);
 
-char * strchr  (const char * s, int c);
-char * strrchr (const char * s, int c);
+char * strstr(const char *, const char *);
+char * strchr(const char * s, int c);
+char * strrchr(const char * s, int c);
 
-extern char * strdup __P ((const char*));
+char * strdup(const char*);
 
 /* Basic mem functions */
-extern void * memccpy __P ((void*, void*, int, size_t));
-extern void * memchr __P ((__const void*, __const int, size_t));
-extern void * memset __P ((void*, int, size_t));
-extern int memcmp __P ((__const void*, __const void*, size_t));
-extern void * memmove __P ((void*, void*, size_t));
+void * memcpy(void * dest, const void * src, size_t n);
+void * memccpy(void*, void*, int, size_t);
+void * memchr(const void*, const int, size_t);
+void * memset(void*, int, size_t);
+int memcmp(const void*, const void*, size_t);
+void * memmove(void*, void*, size_t);
 
 void __far *fmemset(void __far *buf, int c, size_t l);
 
 /* Error messages */
-extern char * strerror __P ((int));
+char * strerror(int);
 
 /* Minimal (very!) locale support */
 #define strcoll strcmp
@@ -43,30 +44,20 @@ extern char * strerror __P ((int));
 /* Other common BSD functions */
 int strcasecmp(const char *s1, const char *s2);
 int strncasecmp(const char *s1, const char *s2, size_t n);
-char *strpbrk __P ((const char *, const char *));
-char *strsep __P ((char **, char *));
+char *strtok(char * str, const char * delim);
+char *strpbrk(const char *, const char *);
+char *strsep(char **, char *);
 
-char * strstr (const char *, const char *);
-
-size_t strcspn __P ((char *, char *));
-size_t strspn __P ((const char *, const char *));
+size_t strcspn(char *, char *);
+size_t strspn(const char *, const char *);
 
 /* Linux silly hour */
-char *strfry __P ((char *));
+char *strfry(char *);
 
-void bzero (void * s, size_t n);
+void bzero(void * s, size_t n);
 
 // TODO: this is removed in POSIX-1.2008
 // TODO: replace by memcpy or memmove
-#define bcopy(s, d, n) memcpy ((d), (s), (n))
-
-void * memcpy (void * dest, const void * src, size_t n);
-
-char *strcat (char * dest, const char * src);
-size_t strlen (const char * s);
-int strncmp (const char * s1, const char * s2, size_t n);
-char *strtok (char * str, const char * delim);
-
-int sprintf (char * str, const char * format, ...);
+#define bcopy(s, d, n) memcpy((d), (s), (n))
 
 #endif

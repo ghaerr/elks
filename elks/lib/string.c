@@ -19,7 +19,7 @@
 #define isdigit(c)	((c) >= '0' && (c) <= '9')
 #define isalpha(c)	(((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))
 
-long simple_strtol(char *s, int base)
+long simple_strtol(const char *s, int base)
 {
 	register int c;
 	int neg;
@@ -58,7 +58,7 @@ long simple_strtol(char *s, int base)
 	return (neg == '-') ? -result: result;
 }
 
-int atoi(char *number)
+int atoi(const char *number)
 {
 	return (int)simple_strtol(number, 10);
 }

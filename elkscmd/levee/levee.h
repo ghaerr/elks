@@ -123,6 +123,9 @@ extern long gemdos();
 #include <stdio.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 
 #define OPEN_OLD(n)		open(n, O_RDONLY)
 #define OPEN_NEW(n)		open(n, O_WRONLY|O_CREAT|O_TRUNC, 0666)
