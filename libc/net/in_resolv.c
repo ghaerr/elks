@@ -91,7 +91,7 @@ ipaddr_t in_resolv(char *hostname, char *server)
 	char *dnsname;
 	struct sockaddr_in addr;
 	unsigned short flags;
-	__sighandler_t old;
+	sighandler_t old;
 	char buf[256];
 
 	if (server == NULL)

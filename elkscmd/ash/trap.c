@@ -146,7 +146,7 @@ clear_traps() {
 int
 setsignal(signo) {
 	int action;
-	__sighandler_t sigact;
+	sighandler_t sigact;
 	register char *t;
 	extern void onsig();
 

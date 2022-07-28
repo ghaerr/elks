@@ -8,8 +8,8 @@ int
 system(char *command)
 {
    int status, ret, pid;
-   __sighandler_t save_quit;
-   __sighandler_t save_int;
+   sighandler_t save_quit;
+   sighandler_t save_int;
 
    if( command == 0 ) return 1;
 

@@ -20,7 +20,7 @@
 static int fd;
 static int LINES = 25;
 static int MAXLINES = 25;
-static char cflag = 1;  /* -c flag: clear screen and wait for partial results */
+static char cflag = 0;  /* -c flag: clear screen on start */
 
 /* Use the DSR ESC [6n escape sequence to query the cursor position */
 static int getCursorPosition(int ifd, int ofd, int *rows, int *cols)
@@ -258,7 +258,7 @@ int main(int argc, char **argv)
 			if (more_wait(1, strcat(next, argv[1])) < 0)
 				return 0;
 		}
-		else if (cflag) more_wait(1, END_STRING);
+		else more_wait(1, END_STRING);
 		if (fd)
 			close(fd);
 	} while (--argc > 1);
