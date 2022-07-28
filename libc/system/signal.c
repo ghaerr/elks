@@ -1,7 +1,7 @@
 #include <errno.h>
 #include <signal.h>
 
-typedef __sighandler_t Sig;
+typedef sighandler_t Sig;
 
 extern int _signal (int, __kern_sighandler_t);
 #if defined __TINY__ || defined __SMALL__ || defined __COMPACT__

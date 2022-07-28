@@ -185,7 +185,7 @@ typedef unsigned long sigset_t;	/* at least 32 bits */
 #define SIG_SETMASK        2	/* for setting the signal mask */
 
 /* Type of a signal handler within userland.  */
-typedef void (*__sighandler_t)(int);
+typedef void (*sighandler_t)(int);
 /* Type of a signal handler which interfaces with the kernel.  This is always
    a far function that uses the `stdcall' calling convention, even for a
    user program that is being compiled for a different calling convention.  */
@@ -211,9 +211,9 @@ typedef __attribute__((__stdcall__)) __far void (*__kern_sighandler_t)(int);
  *     values can be 8-bit or smaller.  -- tkchia 20200512
  */
 
-#define SIG_DFL	((__sighandler_t) 0)	/* default signal handling */
-#define SIG_IGN	((__sighandler_t) 1)	/* ignore signal */
-#define SIG_ERR	((__sighandler_t) -1)	/* error return from signal */
+#define SIG_DFL	((sighandler_t) 0)	/* default signal handling */
+#define SIG_IGN	((sighandler_t) 1)	/* ignore signal */
+#define SIG_ERR	((sighandler_t) -1)	/* error return from signal */
 
 typedef unsigned char __sigdisposition_t;
 
