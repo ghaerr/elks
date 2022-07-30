@@ -319,6 +319,7 @@ static void rs_release(struct tty *tty)
     debug_tty("SERIAL close %d\n", current->pid);
     if (--tty->usecount == 0) {
 	OUTB(0, port->io + UART_IER);	/* Disable all interrupts */
+	free_irq(port->irq);
 	tty_freeq(tty);
     }
 }
@@ -331,14 +332,32 @@ static int rs_open(struct tty *tty)
     debug_tty("SERIAL open %d\n", current->pid);
 
     if (!(port->flags & SERF_EXIST))
-	return -ENODEV;
+	return -ENXIO;
 
     /* increment use count, don't init if already open*/
     if (tty->usecount++)
 	return 0;
 
+    switch(port->irq) {
+#ifdef CONFIG_FAST_IRQ4
+    case 4:
+	err = request_irq(port->irq, (irq_handler) _irq_com1, INT_SPECIFIC);
+	break;
+#endif
+#ifdef CONFIG_FAST_IRQ3
+    case 3:
+	err = request_irq(port->irq, (irq_handler) _irq_com2, INT_SPECIFIC);
+	break;
+#endif
+    default:
+	err = request_irq(port->irq, rs_irq, INT_GENERIC);
+	break;
+    }
+    if (err) goto errout;
+
     err = tty_allocq(tty, RSINQ_SIZE, RSOUTQ_SIZE);
     if (err) {
+errout:
 	--tty->usecount;
 	return err;
     }
@@ -443,21 +462,6 @@ static void rs_init(void)
     do {
 	irq_to_port[sp->irq] = sp - ports;	/* Map irq to tty # */
 	if (!rs_probe(sp)) {
-	    switch(sp->irq) {
-#ifdef CONFIG_FAST_IRQ4
-	    case 4:
-		request_irq(sp->irq, (irq_handler) _irq_com1, INT_SPECIFIC);
-		break;
-#endif
-#ifdef CONFIG_FAST_IRQ3
-	    case 3:
-		request_irq(sp->irq, (irq_handler) _irq_com2, INT_SPECIFIC);
-		break;
-#endif
-	    default:
-		request_irq(sp->irq, rs_irq, INT_GENERIC);
-		break;
-	    }
 	    sp->tty = tty;
 	    update_port(sp);
 	}
