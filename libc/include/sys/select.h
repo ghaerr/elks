@@ -2,7 +2,8 @@
 #define __SYS_SELECT_H
 
 #include <sys/types.h>
-#include <time.h>
+
+struct timeval;
 
 int select (int __nfds, fd_set * restrict __readfds,
 	fd_set * restrict __writefds, fd_set * restrict __errorfds,

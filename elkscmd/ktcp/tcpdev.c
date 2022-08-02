@@ -9,7 +9,6 @@
  *	2 of the License, or (at your option) any later version.
  */
 
-#define __KERNEL__
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -17,9 +16,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <errno.h>
 #include <arpa/inet.h>
-#include <linuxmt/tcpdev.h>
+#define __KERNEL__
+#include <errno.h>
 #include "ip.h"
 #include "tcp.h"
 #include "tcpdev.h"
