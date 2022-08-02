@@ -23,6 +23,7 @@ int main(int argc, char **argv)
 {
 	int i, fd;
 
+    printf("name %s\n", ttyname(0));
 	if (argc <= 1) {
 		if (copyfd(STDIN_FILENO)) {
 			perror("stdin");

@@ -186,7 +186,7 @@ static void keyboard_irq(int irq, struct pt_regs *regs)
     code = kb_read();
 
     if (kraw) {
-	Console_conin((unsigned char) code);
+	Console_conin(code & 255);
 	return;
     }
 

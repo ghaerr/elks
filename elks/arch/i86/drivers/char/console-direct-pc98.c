@@ -53,20 +53,19 @@ typedef struct console Console;
 
 struct console {
     int cx, cy;			/* cursor position */
-    void (*fsm)(register Console *, char);
+    void (*fsm)(Console *, int);
     unsigned char attr;		/* current attribute */
     unsigned char XN;		/* delayed newline on column 80 */
-    unsigned char color;	/* fg/bg attr */
-#ifdef CONFIG_EMUL_VT52
-    unsigned char tmp;		/* ESC Y ch save */
-#endif
+    unsigned int vseg;		/* video segment for page */
+    int basepage;		/* start of video ram */
 #ifdef CONFIG_EMUL_ANSI
     int savex, savey;		/* saved cursor position */
     unsigned char *parmptr;	/* ptr to params */
     unsigned char params[MAXPARMS];	/* ANSI params */
 #endif
-    unsigned int vseg;		/* video segment for page */
-    int basepage;		/* start of video ram */
+#ifdef CONFIG_EMUL_VT52
+    unsigned char tmp;		/* ESC Y ch save */
+#endif
 };
 
 static struct wait_queue glock_wait;
@@ -88,7 +87,7 @@ unsigned AttributeSeg = 0xA200;
 #define TERM_TYPE " dumb "
 #endif
 
-static void std_char(register Console *, char);
+static void std_char(Console *, int);
 
 static void SetDisplayPage(register Console * C)
 {
@@ -123,7 +122,7 @@ static word_t conv_pcattr(word_t attr)
     return attr98;
 }
 
-static void VideoWrite(register Console * C, char c)
+static void VideoWrite(register Console * C, int c)
 {
     word_t addr;
     word_t attr;
@@ -132,7 +131,7 @@ static void VideoWrite(register Console * C, char c)
     attr = (C->attr == A_DEFAULT) ? A98_DEFAULT : conv_pcattr(C->attr);
 
     pokew(addr, (seg_t) AttributeSeg, attr);
-    pokew(addr, (seg_t) C->vseg, (word_t)c);
+    pokew(addr, (seg_t) C->vseg, c & 255);
 }
 
 static void ClearRange(register Console * C, int x, int y, int xx, int yy)
@@ -235,7 +234,6 @@ void console_init(void)
 	C->basepage = i * PageSizeW;
 	C->vseg = VideoSeg + (C->basepage >> 3);
 	C->attr = A_DEFAULT;
-	C->color = A_DEFAULT;
 
 #ifdef CONFIG_EMUL_ANSI
 
