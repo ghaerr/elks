@@ -139,7 +139,7 @@ static int lp_char_polled(int c, unsigned int target)
     outb_p((unsigned char) c, lpp->io);
 
     {
-	int wait = 0;
+	wait = 0;
 	/* 5 us delay */
 	while (wait++ != LP_STROBE_WAIT)
 	    /* Do nothing */ ;

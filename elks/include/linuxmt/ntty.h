@@ -72,7 +72,7 @@ struct tty_ops {
     int (*write) ();
     int (*read) ();
     int (*ioctl) ();
-    void (*conout) (dev_t, char);
+    void (*conout) (dev_t, int);
 };
 
 struct tty {
