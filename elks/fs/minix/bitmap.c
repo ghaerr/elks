@@ -62,22 +62,19 @@ unsigned short minix_count_free_inodes(register struct super_block *sb)
 void minix_free_block(register struct super_block *sb, unsigned short block)
 {
     register struct buffer_head *bh;
-    const char *s;
+    const char *s = NULL;
     unsigned int zone;
 
-    s = NULL;
-    if (!sb)
-	s = "bad dev";
-    else if (block < sb->u.minix_sb.s_firstdatazone ||
-	    block >= sb->u.minix_sb.s_nzones)
-	s = "trying to free block not in datazone";
+    if (!sb) return;
+    if (block < sb->u.minix_sb.s_firstdatazone || block >= sb->u.minix_sb.s_nzones)
+	s = "not in datazone";
     else {
 	bh = get_hash_table(sb->s_dev, (block_t) block);
 	if (bh) mark_buffer_clean(bh);
 	brelse(bh);
 	zone = block - sb->u.minix_sb.s_firstdatazone + 1;
 	bh = sb->u.minix_sb.s_zmap[zone >> 13];
-	if (!bh) s = "bad bitbuf";
+	if (!bh) s = "null zmap";
 	else {
 	    map_buffer(bh);
 	    if (!clear_bit(zone & 8191, bh->b_data))
@@ -86,8 +83,8 @@ void minix_free_block(register struct super_block *sb, unsigned short block)
 	    unmap_buffer(bh);
 	}
     }
-    if (s != NULL)
-	printk("free_block (%s:%u): %s\n", kdevname(sb->s_dev), block, s);
+    if (s)
+	printk("free_block: block %u %s\n", block, s);
 }
 
 block_t minix_new_block(struct super_block *sb)
