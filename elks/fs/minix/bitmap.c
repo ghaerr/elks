@@ -109,7 +109,7 @@ repeat:
         return 0;
     }
     if (set_bit(j, bh->b_data)) {
-        printk("new_block: bit already set %d", j);
+        printk("new_block: bit already set %d\n", j);
         unmap_buffer(bh);
         goto repeat;
     }
@@ -119,7 +119,7 @@ repeat:
     if (j < sb->u.minix_sb.s_firstdatazone || j >= sb->u.minix_sb.s_nzones)
         return 0;
     if (!(bh = getblk(sb->s_dev, j))) {
-        printk("new_block: cannot get block %u", j);
+        printk("new_block: bad block %u\n", j);
         return 0;
     }
     map_buffer(bh);
@@ -133,22 +133,20 @@ repeat:
 void minix_free_inode(register struct inode *inode)
 {
     struct buffer_head *bh;
-    const char *s;
-    int n;
+    const char *s = NULL;
+    int n = 0;
 
-    s = 0;
-    n = 0;
-    if (!inode->i_dev) s = "no device\n";
+    if (!inode->i_dev) s = "no dev\n";
     else if (inode->i_count != 1) {
 	n = inode->i_count;
-	s = "count=%d\n";
+	s = "count %d\n";
     }
     else if (inode->i_nlink) {
 	n = inode->i_nlink;
-	s = "nlink=%d\n";
+	s = "nlink %d\n";
     }
     else if (!inode->i_sb) s = "no sb\n";
-    else if ((unsigned int)inode->i_ino < 1) s = "inode 0\n";
+    else if ((int)inode->i_ino == 0) s = "inode 0\n";
     else if ((unsigned int)inode->i_ino > inode->i_sb->u.minix_sb.s_ninodes)
 	s = "nonexistent inode\n";
     else if (!(bh = inode->i_sb->u.minix_sb.s_imap[(unsigned int)inode->i_ino >> 13]))
@@ -156,12 +154,10 @@ void minix_free_inode(register struct inode *inode)
     if (s) {
 	printk("free_inode: ");
 	printk(s, n);
-    }
-    else {
+    } else {
 	map_buffer(bh);
-	if (!clear_bit((unsigned int) ((unsigned int)inode->i_ino & 8191), bh->b_data)) {
-	    debug("minix_free_inode: bit %ld already cleared.\n",((unsigned int)inode->i_ino & 8191));
-	}
+	if (!clear_bit((int)inode->i_ino & 8191, bh->b_data))
+	    printk("free_inode: already cleared %d\n", (int)inode->i_ino & 8191);
 	clear_inode(inode);
 	mark_buffer_dirty(bh);
 	unmap_buffer(bh);
@@ -170,46 +166,46 @@ void minix_free_inode(register struct inode *inode)
 
 struct inode *minix_new_inode(struct inode *dir, __u16 mode)
 {
-    register struct inode *inode;
-    register struct buffer_head *bh;
-    /* Adding an sb here does not make the code smaller */
-    block_t i, j, k;
-    const char *s;
+    struct inode *inode;
+    struct buffer_head *bh = NULL;
+    block_t i, j;
 
-    if (!dir || !(inode = new_inode(dir, mode))) return NULL;
+    if (!dir || !(inode = new_inode(dir, mode)))
+        return NULL;
     minix_set_ops(inode);
 
-    s = "No new inodes found!\n";
-    i = 0;
-    do {
-	bh = inode->i_sb->u.minix_sb.s_imap[i];
-	map_buffer(bh);
-	j = (block_t) find_first_zero_bit((void *)(bh->b_data), 8192);
-	k = j + i * 8192;
-	if (k < inode->i_sb->u.minix_sb.s_ninodes) {
-	    if (set_bit(j, bh->b_data)) {	/* shouldn't happen */
-		unmap_buffer(bh);
-		s = "mni: already set\n";
-		break;
-	    }
-	    mark_buffer_dirty(bh);
-	    unmap_buffer(bh);
-	    if (!k) {
-		s = "new_inode: iput fail\n";
-		break;
-	    }
-	    inode->i_ino = (ino_t)k;
-	    inode->i_dirt = 1;
+    j = 8192;
+    for (i = 0; i < inode->i_sb->u.minix_sb.s_imap_blocks; i++) {
+        if (i > 0)
+            unmap_buffer(bh);
+        if ((bh = inode->i_sb->u.minix_sb.s_imap[i]) != NULL) {
+            map_buffer(bh);
+            if ((j = find_first_zero_bit((void *)bh->b_data, 8192)) < 8192)
+                break;
+        }
+    }
+    if (i >= inode->i_sb->u.minix_sb.s_imap_blocks || !bh || j >= 8192)
+        goto errout;
 
-#ifdef BLOAT_FS
-	    inode->i_blocks = inode->i_blksize = 0;
-#endif
+    j += i*8192;
+    if (!j || j >= inode->i_sb->u.minix_sb.s_ninodes)
+        goto errout;
 
-	    return inode;
-	}
-	unmap_buffer(bh);
-    } while (++i < inode->i_sb->u.minix_sb.s_imap_blocks);
-    printk(s);
+    if (set_bit(j & 8191, bh->b_data)) {    /* shouldn't happen */
+        printk("new_inode: bit already set %d\n", j);
+        goto errout2;
+    }
+    mark_buffer_dirty(bh);
+    unmap_buffer(bh);
+    inode->i_dirt = 1;
+    inode->i_ino = j;
+    return inode;
+
+errout:
+    printk("new_inode: Out of inodes\n");
+errout2:
+    if (bh)
+        unmap_buffer(bh);
     iput(inode);
     return NULL;
 }

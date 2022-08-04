@@ -198,7 +198,8 @@ struct super_block *minix_read_super(register struct super_block *s, char *data,
 			break;
 	    block++;
 	} while (++i < s->u.minix_sb.s_zmap_blocks);
-//printk("minix-fs: %d buffers used\n", block-2);
+	debug_sup("minix: %d buffers used, imap %d zmap %d\n", block-2,
+		s->u.minix_sb.s_imap_blocks, s->u.minix_sb.s_zmap_blocks);
 	if (block != 2 + s->u.minix_sb.s_imap_blocks + s->u.minix_sb.s_zmap_blocks) {
 		minix_release_bitmaps(s);
 		msgerr = err2;
