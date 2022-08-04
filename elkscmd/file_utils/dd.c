@@ -197,9 +197,10 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (!strcmp(infile, "-")) 
+	if (!strcmp(infile, "-"))  {
 		infd = 0;
-	else {
+		infile = "stdin";
+	} else {
 		infd = open(infile, 0);
 		if (infd < 0) {
 			perror(infile);
@@ -208,9 +209,10 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (!strcmp(outfile, "-"))
+	if (!strcmp(outfile, "-")) {
 		outfd = 1;
-	else {
+		outfile = "stdout";
+	} else {
 		outfd = creat(outfile, 0666);
 		if (outfd < 0) {
 			perror(outfile);

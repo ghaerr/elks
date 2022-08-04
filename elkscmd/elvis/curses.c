@@ -251,6 +251,8 @@ void resume_curses(quietly)
 # if UNIXV
 		ospeed = (oldtermios.c_cflag & CBAUD);
 		ERASEKEY = oldtermios.c_cc[VERASE];
+		if (ERASEKEY == '\b')		/* allow DEL as ERASEKEY also ('\b' always works) */
+			ERASEKEY = oldtermios.c_cc[VERASE2];
 		newtermios = oldtermios;
 		newtermios.c_iflag &= (IXON|IXOFF|IXANY|ISTRIP|IGNBRK);
 		newtermios.c_oflag &= ~OPOST;
