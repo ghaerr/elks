@@ -62,22 +62,19 @@ unsigned short minix_count_free_inodes(register struct super_block *sb)
 void minix_free_block(register struct super_block *sb, unsigned short block)
 {
     register struct buffer_head *bh;
-    const char *s;
+    const char *s = NULL;
     unsigned int zone;
 
-    s = NULL;
-    if (!sb)
-	s = "bad dev";
-    else if (block < sb->u.minix_sb.s_firstdatazone ||
-	    block >= sb->u.minix_sb.s_nzones)
-	s = "trying to free block not in datazone";
+    if (!sb) return;
+    if (block < sb->u.minix_sb.s_firstdatazone || block >= sb->u.minix_sb.s_nzones)
+	s = "not in datazone";
     else {
 	bh = get_hash_table(sb->s_dev, (block_t) block);
 	if (bh) mark_buffer_clean(bh);
 	brelse(bh);
 	zone = block - sb->u.minix_sb.s_firstdatazone + 1;
 	bh = sb->u.minix_sb.s_zmap[zone >> 13];
-	if (!bh) s = "bad bitbuf";
+	if (!bh) s = "null zmap";
 	else {
 	    map_buffer(bh);
 	    if (!clear_bit(zone & 8191, bh->b_data))
@@ -86,47 +83,51 @@ void minix_free_block(register struct super_block *sb, unsigned short block)
 	    unmap_buffer(bh);
 	}
     }
-    if (s != NULL)
-	printk("mfb (%s:%u): %s\n", kdevname(sb->s_dev), block, s);
+    if (s)
+	printk("free_block: block %u %s\n", block, s);
 }
 
-block_t minix_new_block(register struct super_block *sb)
+block_t minix_new_block(struct super_block *sb)
 {
-    register struct buffer_head *bh;
-    block_t i, j, k;
-
+    struct buffer_head *bh = NULL;
+    block_t i, j;
     if (!sb) return 0;
 
-    i = 0;
-    do {
-	bh = sb->u.minix_sb.s_zmap[i];
-	map_buffer(bh);
-	j = (block_t) find_first_zero_bit((void *)(bh->b_data), 8192);
-	k = j + i * 8192 + sb->u.minix_sb.s_firstdatazone - 1;
-	if (k < sb->u.minix_sb.s_nzones) {
-	    if (set_bit(j, bh->b_data)) {
-			printk("mnb: already set %d %d\n", j, bh->b_data);
-			return 0;
-	    }
-	    if (j == (block_t)find_first_zero_bit((void *)(bh->b_data), 8192)) {
-			printk("mnb: still zero bit!%d\n", j);
-			return 0;
-		}
-	    mark_buffer_dirty(bh);
-	    unmap_buffer(bh);
-	    if (!k)
-		break;
-	    bh = getblk(sb->s_dev, k);
-	    map_buffer(bh);
-	    memset(bh->b_data, 0, BLOCK_SIZE);
-	    mark_buffer_uptodate(bh, 1);
-	    mark_buffer_dirty(bh);
-	    unmap_brelse(bh);
-	    return k;
-	}
-	unmap_buffer(bh);
-    } while (++i < sb->u.minix_sb.s_zmap_blocks);
-    return 0;
+repeat:
+    j = 8192;
+    for (i = 0; i < sb->u.minix_sb.s_zmap_blocks; i++) {
+        if (i > 0)
+            unmap_buffer(bh);
+        if ((bh = sb->u.minix_sb.s_zmap[i]) != NULL) {
+            map_buffer(bh);
+            if ((j = find_first_zero_bit((void *)bh->b_data, 8192)) < 8192)
+                break;
+        }
+    }
+    if (i >= sb->u.minix_sb.s_zmap_blocks || !bh || j >= 8192) {
+        if (bh) unmap_buffer(bh);
+        return 0;
+    }
+    if (set_bit(j, bh->b_data)) {
+        printk("new_block: bit already set %d", j);
+        unmap_buffer(bh);
+        goto repeat;
+    }
+    mark_buffer_dirty(bh);
+    unmap_buffer(bh);
+    j += i*8192 + sb->u.minix_sb.s_firstdatazone - 1;
+    if (j < sb->u.minix_sb.s_firstdatazone || j >= sb->u.minix_sb.s_nzones)
+        return 0;
+    if (!(bh = getblk(sb->s_dev, j))) {
+        printk("new_block: cannot get block %u", j);
+        return 0;
+    }
+    map_buffer(bh);
+    memset(bh->b_data, 0, BLOCK_SIZE);
+    mark_buffer_uptodate(bh, 1);
+    mark_buffer_dirty(bh);
+    unmap_brelse(bh);
+    return j;
 }
 
 void minix_free_inode(register struct inode *inode)
