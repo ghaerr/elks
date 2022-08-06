@@ -21,11 +21,20 @@ NANOXDEMOS += bin/nxdemo
 # mouse and kbd drivers
 # SLOW_CPU discards unprocessed mouse input for slow systems
 LOCALFLAGS += -DSLOW_CPU=1
+ifeq ($(CONFIG_ARCH_PC98), y)
+DRIVERS += drivers/mou_null.o
+else
 DRIVERS += drivers/mou_ser.o
+endif
 DRIVERS += drivers/kbd_tty.o
 
 # portable C VGA driver
+ifeq ($(CONFIG_ARCH_PC98), y)
+DRIVERS += drivers/scr_pc98.o drivers/vgaplan4_pc98.o drivers/mempl4.o
+LDFLAGS += -maout-heap=0xffff
+else
 DRIVERS += drivers/scr_bios.o drivers/vgaplan4.o drivers/mempl4.o
+endif
 
 # higher speed asm VGA driver
 #DRIVERS += drivers/scr_bios.o drivers/elkplan4.o drivers/mempl4.o
