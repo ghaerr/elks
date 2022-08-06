@@ -28,7 +28,7 @@ file: file.o $(TINYPRINTF)
 	$(LD) $(LDFLAGS) -o file file.o $(TINYPRINTF) $(LDLIBS)
 
 find: find.o
-	$(LD) $(LDFLAGS) -o find find.o $(LDLIBS)
+	$(LD) $(LDFLAGS) -maout-heap=0x4000 -maout-stack=0x2000 -o find find.o $(LDLIBS)
 
 head: head.o
 	$(LD) $(LDFLAGS) -o head head.o $(LDLIBS)

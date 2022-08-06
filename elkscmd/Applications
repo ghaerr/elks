@@ -72,7 +72,7 @@ file_utils/mv					:fileutil		:360k
 file_utils/ln					:fileutil			:720k
 file_utils/ls					:fileutil		:360k   :128k
 file_utils/rm					:fileutil		:360k
-file_utils/rmdir				:fileutil			:720k
+file_utils/rmdir				:fileutil		:360k
 file_utils/sync					:fileutil		:360k
 file_utils/touch				:fileutil			:720k
 sys_utils/chmem					:sysutil			:720k
