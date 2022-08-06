@@ -75,8 +75,8 @@ static void itoaQueue(int i)
 }
 
 /* reverse map table ANSI -> ega      blk red grn yel blu mag cyn wht */
-static unsigned char ega_color[16] = {   0,8+4,  2,8+6,8+1,  5,  3, 7,
-                                         8, 12, 10, 14,  9, 13, 11, 15 };
+static unsigned char ega_color[16] = {  0,  4,  2,  6,  1,  5,  3,  7,
+                                        8, 12, 10, 14,  9, 13, 11, 15 };
 
 /* ESC [ processing */
 static void AnsiCmd(register Console * C, int c)
@@ -164,7 +164,7 @@ static void AnsiCmd(register Console * C, int c)
 	  n = atoi(p);
 	  if (n >= 30 && n <= 37) {             /* set fg color */
 	    C->attr &= 0xf0;                    /* don't save bright bit */
-	    C->attr |= ega_color[n-30];         /* some colors bright by default */
+	    C->attr |= ega_color[n-30];
 	  }
 	  else if (n >= 40 && n <= 47) {
 	    C->attr &= 0x8f;                    /* save blink bit */
