@@ -15,6 +15,7 @@
 #include <time.h>
 #include <signal.h>
 #include <errno.h>
+#include <stddef.h>
 #include <sys/types.h>
 #include <sys/resource.h>
 #include <sys/wait.h>
@@ -730,12 +731,42 @@ static int elks_sbrk(int bx,int cx,int dx,int di,int si)
 static int elks_termios(int bx,int cx,int dx,int di,int si)
 {
    int rv = 0;
+   struct termios tio;
+   /*
+    * Linux's `struct termios' has two additional fields .c_ispeed &
+    * .c_ospeed, which ELKS lacks, & it also knows about more control
+    * characters (NCCS > 17).  Do not include these extra fields when moving
+    * `struct termios' structures to & from the ELKS program.
+    *	-- tkchia 20220807
+    */
+   const size_t nb = offsetof(struct termios, c_cc[17]);
    switch(cx&0xFF)
    {
-   case 0x01: rv = ioctl(bx, TCGETS, ELKS_PTR(void, dx)); break;
-   case 0x02: rv = ioctl(bx, TCSETS, ELKS_PTR(void, dx)); break;
-   case 0x03: rv = ioctl(bx, TCSETSW, ELKS_PTR(void, dx)); break;
-   case 0x04: rv = ioctl(bx, TCSETSF, ELKS_PTR(void, dx)); break;
+   case 0x01: rv = ioctl(bx, TCGETS, &tio);
+	      if (!rv)
+		 memcpy(ELKS_PTR(void, dx), &tio, nb);
+	      break;
+   case 0x02: rv = ioctl(bx, TCGETS, &tio);
+	      if (!rv)
+	      {
+		 memcpy(&tio, ELKS_PTR(void, dx), nb);
+		 rv = ioctl(bx, TCSETS, &tio);
+	      }
+	      break;
+   case 0x03: rv = ioctl(bx, TCGETS, &tio);
+	      if (!rv)
+	      {
+		 memcpy(&tio, ELKS_PTR(void, dx), nb);
+		 rv = ioctl(bx, TCSETSW, &tio);
+	      }
+	      break;
+   case 0x04: rv = ioctl(bx, TCGETS, &tio);
+	      if (!rv)
+	      {
+		 memcpy(&tio, ELKS_PTR(void, dx), nb);
+		 rv = ioctl(bx, TCSETSF, &tio);
+	      }
+	      break;
 
    case 0x09: rv = ioctl(bx, TCSBRK, dx); break;
    case 0x0A: rv = ioctl(bx, TCXONC, dx); break;
