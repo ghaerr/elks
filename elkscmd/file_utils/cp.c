@@ -413,8 +413,8 @@ int do_mknod(char *srcfile, char *dstfile, int type, unsigned int major,
 	}
 
 	if (mknod(dstfile, sbuf.st_mode, sbuf.st_rdev)) {
-		fprintf(stderr, "Can't mknod %s (mode 0%o dev 0x%x) ", dstfile,
-			sbuf.st_mode, sbuf.st_rdev); fflush(stderr);
+		fprintf(stderr, "Can't mknod mode 0%o dev 0x%x ", sbuf.st_mode, sbuf.st_rdev);
+        fflush(stderr);
 		perror(dstfile);
 		return 1;
 	}
