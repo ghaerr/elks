@@ -531,7 +531,7 @@ input_for_header (void)
 	"%" PRIu32 " data reloc(s).", text_n_rels, ftext_n_rels, data_n_rels);
 }
 
-static char symtab_filename[256];
+static char symtab_filename[16];
 
 static void
 create_symtab (void)
@@ -543,7 +543,7 @@ create_symtab (void)
 
     if (!symtab) return;
 
-    snprintf(symtab_filename, sizeof(symtab_filename), "%s-symXXXXXX", file_name);
+    strcpy(symtab_filename, "symXXXXXX");
     mktemp(symtab_filename);
     outfp = fopen(symtab_filename, "w");
     if (!outfp)
@@ -558,11 +558,33 @@ create_symtab (void)
         int addr;
         unsigned char type;
         char name[128];
+        int text_start = 0, text_end;
+        int ftext_start = 0, ftext_end;
+        int data_start = 0, data_end;
 
-        /* 0x10000+ is text, 0x20000+ is far text 0x30000+ is data */
+        if (text_sh) {
+            text_start = text_sh->sh_addr;
+            text_end = text_start + text_sh->sh_size;
+        }
+        if (ftext_sh) {
+            ftext_start = ftext_sh->sh_addr;
+            ftext_end = ftext_start + ftext_sh->sh_size;
+        }
+        if (bss_sh) {
+            data_start = bss_sh->sh_addr;
+            data_end = bss_sh->sh_size;
+        }
+        if (data_sh) {
+            data_start = data_sh->sh_addr;
+            data_end = data_start + data_sh->sh_size;
+            if (bss_sh)
+                data_end += bss_sh->sh_size;
+        }
+
         if (sscanf(buf, "%x %c %s", &addr, &type, name) == 3) {
-            int istext = (addr >= 0x10000 && addr < 0x30000);
-            int isdata = (addr >= 0x30000 && addr < 0x40000);
+            int istext = text_start && (addr >= text_start && addr < text_end);
+            int isftext = ftext_start && (addr >= ftext_start && addr < ftext_end);
+            int isdata = data_start && (addr >= data_start && addr < data_end);
             if (isdata && lastwastext) {
                 putc('d', outfp);      /* TYPE 'd' */
                 putc(0x00, outfp);     /* ADDR 0 */
@@ -570,14 +592,18 @@ create_symtab (void)
                 putc(5 , outfp);       /* SYMLEN strlen(".data") */
                 fputs(".data", outfp); /* SYMBOL ".data" */
             }
-            if (addr >= 0x10000 && addr < 0x40000) {
+            if (isftext) {
+                if (type == 'T') type = 'F';
+                if (type == 't') type = 'f';
+            }
+            if (istext || isftext || isdata) {
                 putc(type, outfp);
                 putc(addr, outfp);
                 putc(addr>>8, outfp);
                 putc(strlen(name), outfp);
                 fputs(name, outfp);
             }
-            lastwastext = istext;
+            lastwastext = istext || isftext;
         }
     }
     putc(0x00, outfp);     /* TYPE (mapfile terminator) */
