@@ -1,7 +1,7 @@
 /* ELKS symbol table support */
 
 /* symbol table format
- *  | byte type | word address | byte symbol length | symbol | NUL |
+ *  | byte type | word address | byte symbol length | symbol |
  *  type: (lower case means static)
  *      T, t    .text
  *      F, f    .fartext
@@ -21,6 +21,7 @@
 
 unsigned char * noinstrument sym_read_symbols(char *path);
 char * noinstrument sym_text_symbol(void *addr, int exact);
+char * noinstrument sym_ftext_symbol(void *addr, int exact);
 char * noinstrument sym_data_symbol(void *addr, int exact);
 void * noinstrument sym_fn_start_address(void *addr);
 

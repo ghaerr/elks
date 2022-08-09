@@ -23,5 +23,7 @@ void nm(char *path)
 
 int main(int ac, char **av)
 {
-    nm(av[1]);
+    if (ac != 2)
+        fprintf(stderr, "Usage: nm86 <a.out executable>\n");
+    else nm(av[1]);
 }

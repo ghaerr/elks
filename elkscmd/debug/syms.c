@@ -52,7 +52,6 @@ unsigned char * noinstrument sym_read_symbols(char *path)
         || (!ALLOC(s, (int)hdr.syms))
         || (lseek(fd, -(int)hdr.syms, SEEK_END) < 0)
         || (read(fd, s, (int)hdr.syms) != (int)hdr.syms)) {
-                //printf("Can't load %s (%d)\n", path, errno);
                 int e = errno;
                 close(fd);
                 errno = e;
@@ -65,6 +64,11 @@ unsigned char * noinstrument sym_read_symbols(char *path)
 static int noinstrument type_text(unsigned char *p)
 {
     return (p[TYPE] == 'T' || p[TYPE] == 't');
+}
+
+static int noinstrument type_ftext(unsigned char *p)
+{
+    return (p[TYPE] == 'F' || p[TYPE] == 'f');
 }
 
 static int noinstrument type_data(unsigned char *p)
@@ -123,6 +127,12 @@ hex:
 char * noinstrument sym_text_symbol(void *addr, int exact)
 {
     return sym_string(addr, exact, type_text);
+}
+
+/* convert .fartext address to symbol */
+char * noinstrument sym_ftext_symbol(void *addr, int exact)
+{
+    return sym_string(addr, exact, type_ftext);
 }
 
 /* convert .data address to symbol */
