@@ -92,5 +92,6 @@ extern int optopt;
 extern int opterr;
 
 extern char ** environ;
+extern char * _program_filename;
 
 #endif
