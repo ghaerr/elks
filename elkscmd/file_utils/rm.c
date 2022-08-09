@@ -76,7 +76,7 @@ void rm(char *arg, int fflg, int rflg, int iflg, int level) {
                         if (dotname(arg))
                                 return;
                         if (rmdir(arg) < 0) {
-                                fprintf(stderr, "rm: ");
+                                fprintf(stderr, "rm: "); fflush(stderr);
                                 perror(arg);
                                 errcode++;
                         }
