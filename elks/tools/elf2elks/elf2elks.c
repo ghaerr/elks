@@ -84,6 +84,7 @@ struct minix_reloc
 
 static const char *me;
 static bool verbose = false, tiny = false, romable = false;
+static bool symtab = false;
 static const char *file_name = NULL;
 static char *tmp_file_name = NULL;
 static uint16_t total_data = 0, chmem = 0, stack = 0, heap = 0, entry = 0,
@@ -165,11 +166,12 @@ error_with_help (const char *fmt, ...)
 	   "\n"
 	   "\n"
 	   "%s -- convert ELF file into ELKS executable\n"
-	   "usage: %s [-v] [--tiny] [--aout-seg A --data-seg D] \\\n"
+	   "usage: %s [-v] [--tiny] [--symtab] [--aout-seg A --data-seg D] \\\n"
 	   "  [--total-data T | --chmem C | [--stack S] [--heap H]]\n"
 	   "options:\n"
 	   "  -v              print verbose debug information\n"
 	   "  --tiny          output tiny model ELKS a.out\n"
+	   "  --symtab        write symbol table to output file\n"
 	   "  --aout-seg A    output ROMable ELKS a.out, place a.out header\n"
 	   "                  in ROM at A:0\n"
 	   "  --data-seg D    output ROMable ELKS a.out, place data segment\n"
@@ -239,6 +241,8 @@ parse_args (int argc, char **argv)
 	    {
 	      if (strcmp (arg + 2, "tiny") == 0)
 		tiny = true;
+	      else if (strcmp (arg + 2, "symtab") == 0)
+		symtab = true;
 	      else if (strcmp (arg + 2, "total-data") == 0)
 		parm_uint16 (argc, argv, &total_data, &i);
 	      else if (strcmp (arg + 2, "chmem") == 0)
@@ -527,6 +531,60 @@ input_for_header (void)
 	"%" PRIu32 " data reloc(s).", text_n_rels, ftext_n_rels, data_n_rels);
 }
 
+static char symtab_filename[256];
+
+static void
+create_symtab (void)
+{
+    FILE *infp;
+    FILE *outfp;
+    char command[256];
+    char buf[128];
+
+    if (!symtab) return;
+
+    snprintf(symtab_filename, sizeof(symtab_filename), "%s-symXXXXXX", file_name);
+    mktemp(symtab_filename);
+    outfp = fopen(symtab_filename, "w");
+    if (!outfp)
+        error("Can't create temp file %s\n", symtab_filename);
+    snprintf(command, sizeof(command),
+        "ia16-elf-nm %s | sed -e '/&/d; /!/d' | sort", file_name);
+    infp = popen(command, "r");
+    if (!infp)
+        error("Can't popen '%s'\n", command);
+    int lastwastext = 0;
+    while(fgets(buf, sizeof(buf), infp) != NULL) {
+        int addr;
+        unsigned char type;
+        char name[128];
+
+        /* 0x10000+ is text, 0x20000+ is far text 0x30000+ is data */
+        if (sscanf(buf, "%x %c %s", &addr, &type, name) == 3) {
+            int istext = (addr >= 0x10000 && addr < 0x30000);
+            int isdata = (addr >= 0x30000 && addr < 0x40000);
+            if (isdata && lastwastext) {
+                putc('d', outfp);      /* TYPE 'd' */
+                putc(0x00, outfp);     /* ADDR 0 */
+                putc(0x00, outfp);
+                putc(5 , outfp);       /* SYMLEN strlen(".data") */
+                fputs(".data", outfp); /* SYMBOL ".data" */
+            }
+            if (addr >= 0x10000 && addr < 0x40000) {
+                putc(type, outfp);
+                putc(addr, outfp);
+                putc(addr>>8, outfp);
+                putc(strlen(name), outfp);
+                fputs(name, outfp);
+            }
+            lastwastext = istext;
+        }
+    }
+    putc(0x00, outfp);     /* TYPE (mapfile terminator) */
+    fclose(infp);
+    fclose(outfp);
+}
+
 static void
 start_output (void)
 {
@@ -647,6 +705,14 @@ output_header (void)
       mh.chmem = heap;
       mh.minstack = stack;
     }
+
+  if (symtab) {
+    struct stat sbuf;
+
+    if (stat(symtab_filename, &sbuf) < 0)
+      error("Can't stat %s\n", symtab_filename);
+    mh.syms = (uint32_t)sbuf.st_size;
+  }
 
   start_output ();
 
@@ -867,6 +933,21 @@ output_relocs (void)
 }
 
 static void
+output_symtab (void)
+{
+  int ifd, n;
+  char buf[1024];
+
+  if (!symtab) return;
+  if ((ifd = open(symtab_filename, O_RDONLY)) < 0)
+    error("Can't reopen %s\n", symtab_filename);
+  while ((n = read(ifd, buf, sizeof(buf))) > 0)
+    output(buf, n);
+  close(ifd);
+  unlink(symtab_filename);
+}
+
+static void
 end_output (void)
 {
   struct stat orig_stat;
@@ -896,10 +977,12 @@ main(int argc, char **argv)
   parse_args (argc, argv);
   elf_version (1);
   input_for_header ();
+  create_symtab ();
   output_header ();
   convert_relocs ();
   output_scns_stuff ();
   output_relocs ();
+  output_symtab ();
   end_output ();
   return 0;
 }
