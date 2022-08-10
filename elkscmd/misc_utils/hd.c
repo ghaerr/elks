@@ -112,7 +112,7 @@ void do_mem(char *spec)
    //printf("SEG %x OFF %x CNT %ld\n", seg, off, count);
 
    addr = (unsigned char __far *)(((unsigned long)seg << 16) | off);
-   offset = (((unsigned long)seg << 4) | off);
+   offset = (((unsigned long)seg << 4) + off);
    for ( ; count > 0; count -= 16, offset += 16) {
       int j, ch;
       memset(buf, '\0', 16);

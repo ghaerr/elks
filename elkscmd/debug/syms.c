@@ -89,7 +89,7 @@ void * noinstrument sym_fn_start_address(void *addr)
         if (!type_text(p) || ((unsigned short)addr < *(unsigned short *)(&p[ADDR])))
             break;
     }
-    return (void *) *(unsigned short *)(&lastp[ADDR]);
+    return (void *) (intptr_t) *(unsigned short *)(&lastp[ADDR]);
 }
 
 /* convert address to symbol string */
@@ -117,7 +117,7 @@ hex:
     }
     int lastaddr = *(unsigned short *)(&lastp[ADDR]);
     if (exact && addr - lastaddr) {
-        sprintf(buf, "%.*s+%x", lastp[SYMLEN], lastp+SYMBOL,
+        sprintf(buf, "%.*s+%xh", lastp[SYMLEN], lastp+SYMBOL,
                                 (unsigned int)addr - lastaddr);
     } else sprintf(buf, "%.*s", lastp[SYMLEN], lastp+SYMBOL);
     return buf;
