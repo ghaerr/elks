@@ -4,9 +4,6 @@
  * Aug 2022 Greg Haerr
  */
 #include <stdio.h>
-//#include <string.h>
-//#include <stdlib.h>
-//#include <unistd.h>
 #include "syms.h"
 #include "disasm.h"
 
@@ -31,7 +28,7 @@ void disassemble(int cs, void *ip, int opcount)
     printf("Disassembly of %s:\n", getsymbol(cs, (int)ip));
     for (n=0; n<opcount; n++) {
         nextip = disasm(cs, ip);
-        if (peekb(cs, ip) == 0xc3)  /* RET */
+        if (opcount == 32767 && peekb(cs, ip) == 0xc3)  /* RET */
             break;
         ip = nextip;
     }
