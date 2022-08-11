@@ -13,9 +13,8 @@ HOSTCFLAGS = -O3
 
 ###############################################################################
 
-PRGS = testsym
-OBJS = testsym.o syms.o stacktrace.o printreg.o
-OBJS += disasm.o
+PRGS = testsym disasm
+LIBOBJS += syms.o stacktrace.o printreg.o disasm.o
 #OBJS += ulltostr.o
 CFLAGS += -fno-optimize-sibling-calls
 CFLAGS += -fno-omit-frame-pointer
@@ -27,10 +26,17 @@ all: nm86 $(PRGS)
 nm86: nm86.c syms.c
 	$(HOSTCC) $(HOSTCFLAGS) -o $@ $^
 
-testsym: $(OBJS)
-	$(LD) $(LDFLAGS) -mno-post-link -o $@ $(OBJS) $(LDLIBS)
+TESTSYMOBJS = testsym.o $(LIBOBJS)
+testsym: $(TESTSYMOBJS)
+	$(LD) $(LDFLAGS) -mno-post-link -o $@ $(TESTSYMOBJS) $(LDLIBS)
 	elf2elks --symtab --heap 12000 $@
 	./nm86 $@ > $@.map
+	cp $@ $(TOPDIR)/elkscmd/rootfs_template/root
+
+DISASMOBJS = dis.o $(LIBOBJS)
+disasm: $(DISASMOBJS)
+	$(LD) $(LDFLAGS) -mno-post-link -o $@ $(DISASMOBJS) $(LDLIBS)
+	elf2elks --symtab --heap 12000 $@
 	cp $@ $(TOPDIR)/elkscmd/rootfs_template/root
 
 disasm.o: disasm.c

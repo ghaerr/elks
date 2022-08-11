@@ -14,11 +14,7 @@ void print_times(void);
 void noinstrument print_regs(void);
 void noinstrument print_sreg(void);
 int noinstrument getcsbyte(char *addr);
-int noinstrument getcs(void);
 unsigned long long noinstrument rdtsc(void);
-
-/* disasm.c */
-void * noinstrument disasm(unsigned short cs, void *ip);
 
 /* ulltostr.c */
 char * noinstrument lltostr(long long val, int radix);

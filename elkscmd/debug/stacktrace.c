@@ -91,10 +91,6 @@ void noinstrument print_stack(int arg1)
         int flag = calc_push_count(fn);
         int prev = flag;
         print_stack_line(i, addr, fn, flag);
-        //int n = 3;
-        //for (n=0; n<2; n++) {
-            //fn = disasm(getcs(), fn);
-        //}
         fn = addr[flag & COUNT_MASK];
         flag = calc_push_count(fn);
         if (flag & BP_PUSHED) {           /* caller pushed BP */

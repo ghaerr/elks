@@ -5,7 +5,7 @@
  * Inspired by Andrew Jenner's 8086 simulator 86sim.cpp
  */
 #include <stdio.h>
-#include "syms.h"
+#include "disasm.h"
 
 typedef unsigned char Byte;
 typedef unsigned short int Word;
@@ -31,9 +31,9 @@ extern Byte readByte(Word offset, int seg);	/* read next instruction byte */
 /* read next instruction byte; note: seg is not actual segment, but =1 for CS */
 Byte readByte(Word offset, int seg)
 {
-    extern unsigned char getcsbyte(unsigned short offset);
-    //return *(unsigned char __far *)(((unsigned long)seg << 16) | offset);
-    return getcsbyte(offset);
+    //extern unsigned char getcsbyte(unsigned short offset);
+    return *(unsigned char __far *)(((unsigned long)startCS << 16) | offset);
+    //return getcsbyte(offset);
 }
 
 static Byte d_fetchByte()
@@ -53,14 +53,14 @@ static const char *byteregs[] = {
 static const char *segregs[] = { "%es", "%cs", "%ss", "%ds"};
 
 static void decode();
-Word disasm(Word cs, Word ip)
+void * disasm(int cs, void *ip)
 {
 	startCS = cs;
-	startIP = ip;
+	startIP = (int)ip;
 	cols = 0;
-	if (!f_asmout) printf("%04hx:%04hx  ", cs, ip);
+	if (!f_asmout) printf("%04hx:%04hx  ", cs, (int)ip);
 	decode();
-	return startIP;
+	return (void *)startIP;
 }
 static Word d_fetchWord() { Word w = d_fetchByte(); w += d_fetchByte() << 8; return w; }
 static int d_modRMReg() { return (d_modRM >> 3) & 7; }
@@ -205,11 +205,12 @@ static void outs(const char *str, int flags)
 	if (flags & REGOP) printf("%s", wordSize? wordregs[opcode & 7]: byteregs[opcode & 7]);
 	if ((flags & (JMP|IMM|WORD)) == WORD) printf("%u", w2);
 	if (flags & JMP) {
-        int waddr = (startIP + w2) & 0xffff;
 		//if (flags & SBYTE) printf("%04x", startIP + c);
 		if (flags & SBYTE) printf(".%s%d // %04x", c>=0? "+": "", c+2, startIP+c);
-		//if (flags & WORD) printf("0x%04x // %04x", w2+2, (startIP + w2) & 0xffff);
-        if (flags & WORD) printf("%s (%04x)", sym_text_symbol((void *)waddr, 1), waddr);
+		if (flags & WORD) {
+			int waddr = (startIP + w2) & 0xffff;
+			printf("%s (%04x)", getsymbol(startCS, waddr), waddr);
+		}
 		if (flags & DWORD) printf("%04x:%04x", w, w2);
 	}
 	printf("\n");

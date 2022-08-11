@@ -24,4 +24,3 @@ char * noinstrument sym_text_symbol(void *addr, int exact);
 char * noinstrument sym_ftext_symbol(void *addr, int exact);
 char * noinstrument sym_data_symbol(void *addr, int exact);
 void * noinstrument sym_fn_start_address(void *addr);
-
