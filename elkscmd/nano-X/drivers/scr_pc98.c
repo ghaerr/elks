@@ -254,6 +254,7 @@ VGA_open(PSD psd)
 
 	/* init pc rom font routines*/
 	pcrom_init(psd);
+	outb(0x0B,0x68); // Dot Access for font
 #if 0
 	ROM_CHAR_HEIGHT = VGAMODE? 16: 14;
 #endif
@@ -272,6 +273,7 @@ VGA_close(PSD psd)
 	ega_hwterm(psd);
 #else
 	outb(0x0C,0xA2);   // GDC Stop
+	outb(0x0A,0x68);   // Code Access for font
 #endif
 }
 

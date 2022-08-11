@@ -42,7 +42,11 @@ endif
 # hercules driver
 #DRIVERS += drivers/scr_herc.o
 
+ifeq ($(CONFIG_ARCH_PC98), y)
+DRIVERS += drivers/romfont_pc98.o drivers/elksutilasm.o
+else
 DRIVERS += drivers/romfont.o drivers/elksutilasm.o
+endif
 
 # The following line links the nano-X application with the server.
 # This is required if no network is present, or for speed or debugging.
