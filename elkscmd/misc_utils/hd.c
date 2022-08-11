@@ -102,17 +102,20 @@ void do_fd(void)
 
 void do_mem(char *spec)
 {
-   unsigned int seg = 0, off = 0;
+   unsigned long seg = 0, off = 0;
    unsigned char __far *addr;
    long   count = 256;
    char  buf[20];
    int   num[16];
 
-   sscanf(spec, "%x:%x#%ld", &seg, &off, &count);
-   //printf("SEG %x OFF %x CNT %ld\n", seg, off, count);
+   sscanf(spec, "%lx:%lx#%ld", &seg, &off, &count);
+   if (seg > 0xffff || off > 0xffff) {
+        printf("Error: segment or offset larger than 0xffff\n");
+        return;
+   }
 
-   addr = (unsigned char __far *)(((unsigned long)seg << 16) | off);
-   offset = (((unsigned long)seg << 4) + off);
+   addr = (unsigned char __far *)((seg << 16) | (unsigned short)off);
+   offset = ((seg << 4) + (unsigned short)off);
    for ( ; count > 0; count -= 16, offset += 16) {
       int j, ch;
       memset(buf, '\0', 16);
@@ -250,6 +253,5 @@ int main(int argc, char **argv)
       else
          do_fd();
    }
-
-   exit(0);
+   return 0;
 }
