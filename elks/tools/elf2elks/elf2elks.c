@@ -85,8 +85,11 @@ struct minix_reloc
 static const char *me;
 static bool verbose = false, tiny = false, romable = false;
 static bool symtab = false;
+static bool symfile = false;
 static const char *file_name = NULL;
 static char *tmp_file_name = NULL;
+static char symtab_filename[256];
+
 static uint16_t total_data = 0, chmem = 0, stack = 0, heap = 0, entry = 0,
 		aout_seg = 0, text_seg = 0, ftext_seg = 0, data_seg = 0;
 static int ifd = -1, ofd = -1;
@@ -166,12 +169,14 @@ error_with_help (const char *fmt, ...)
 	   "\n"
 	   "\n"
 	   "%s -- convert ELF file into ELKS executable\n"
-	   "usage: %s [-v] [--tiny] [--symtab] [--aout-seg A --data-seg D] \\\n"
-	   "  [--total-data T | --chmem C | [--stack S] [--heap H]]\n"
+	   "usage: %s [-v] [--tiny] [--symtab] [--symfile file] \\\n"
+	   "  [--aout-seg A --data-seg D] \\\n"
+	   "  [[--total-data T | --chmem C | [--stack S] [--heap H]]\n"
 	   "options:\n"
 	   "  -v              print verbose debug information\n"
 	   "  --tiny          output tiny model ELKS a.out\n"
-	   "  --symtab        write symbol table to output file\n"
+	   "  --symtab        include symbol table in output file\n"
+	   "  --symfile file  write symbol table to file\n"
 	   "  --aout-seg A    output ROMable ELKS a.out, place a.out header\n"
 	   "                  in ROM at A:0\n"
 	   "  --data-seg D    output ROMable ELKS a.out, place data segment\n"
@@ -243,6 +248,12 @@ parse_args (int argc, char **argv)
 		tiny = true;
 	      else if (strcmp (arg + 2, "symtab") == 0)
 		symtab = true;
+	      else if (strcmp (arg + 2, "symfile") == 0)
+		{
+		    symfile = true;
+		    ++i;
+		    strcpy(symtab_filename, argv[i]);
+		}
 	      else if (strcmp (arg + 2, "total-data") == 0)
 		parm_uint16 (argc, argv, &total_data, &i);
 	      else if (strcmp (arg + 2, "chmem") == 0)
@@ -531,8 +542,6 @@ input_for_header (void)
 	"%" PRIu32 " data reloc(s).", text_n_rels, ftext_n_rels, data_n_rels);
 }
 
-static char symtab_filename[16];
-
 static void
 create_symtab (void)
 {
@@ -541,10 +550,12 @@ create_symtab (void)
     char command[256];
     char buf[128];
 
-    if (!symtab) return;
+    if (!symtab && !symfile) return;
 
-    strcpy(symtab_filename, "symXXXXXX");
-    mktemp(symtab_filename);
+    if (!symfile) {
+        strcpy(symtab_filename, "symXXXXXX");
+        mktemp(symtab_filename);
+    }
     outfp = fopen(symtab_filename, "w");
     if (!outfp)
         error("Can't create temp file %s\n", symtab_filename);
@@ -970,7 +981,8 @@ output_symtab (void)
   while ((n = read(ifd, buf, sizeof(buf))) > 0)
     output(buf, n);
   close(ifd);
-  unlink(symtab_filename);
+  if (!symfile)
+    unlink(symtab_filename);
 }
 
 static void

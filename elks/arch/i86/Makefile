@@ -48,10 +48,6 @@ ifeq ($(CONFIG_ROMCODE), y)
 ROMPOSTLINKFLAGS = --aout-seg 0x$(CONFIG_ROM_KERNEL_CODE:0x%=%) \
 		   --data-seg 0x$(CONFIG_ROM_KERNEL_DATA:0x%=%)
 
-else
-
-ROMPOSTLINKFLAGS =
-
 endif
 
 #########################################################################
@@ -135,11 +131,10 @@ boot/system:	$(XINCLUDE) $(AARCHIVES) $(ADRIVERS) boot/crt0.o
 	(cd $(BASEDIR) ; $(LD) $(CPU_LD) -M $(ARCH_LD) -T $(TOPDIR)/elks/elks-small.ld \
 		$(ARCH_DIR)/boot/crt0.o \
 		init/main.o '-(' $(ARCHIVES) $(DRIVERS) '-)' $(LIBGCC) \
-		-o $(ARCH_DIR)/boot/system > $(ARCH_DIR)/boot/system.map ; \
-		$(NM) $(ARCH_DIR)/boot/system > $(ARCH_DIR)/boot/system-nm.map; \
-		$(POSTLINK) $(ROMPOSTLINKFLAGS) $(ARCH_DIR)/boot/system)
-#		sort -k3,4 $(ARCH_DIR)/boot/system.tmp > $(ARCH_DIR)/boot/system.map ; \
-#		rm -f $(ARCH_DIR)/boot/system.tmp )
+		-o $(ARCH_DIR)/boot/system > $(ARCH_DIR)/boot/system-full.map ; \
+		$(NM) $(ARCH_DIR)/boot/system | sed -e '/&/d; /!/d' | sort > \
+			$(ARCH_DIR)/boot/system.map; \
+		$(POSTLINK) --symfile $(ARCH_DIR)/boot/system.sym $(ARCH_DIR)/boot/system)
 
 ifneq ($(CONFIG_ROMCODE), y)
 
