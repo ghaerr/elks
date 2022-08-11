@@ -65,7 +65,8 @@
 
 	.text
 
-// Loaded by the BIOS at 0:7C00h (32K - 1K) with DL = boot drive number
+// Loaded by the BIOS at 0:7C00h (32K - 1K) or 7C0h:0
+// with DL = boot drive number
 
 entry:
 
@@ -129,7 +130,7 @@ entry1:
 	lds (%bx),%si  // ds:si = BIOS original table
 	push %ds
 	push %si
-	push %cs
+	push %cx       // push address 0:78h (cx = 0)
 	push %bx
 .if floppy_table == entry
 	xor %di,%di
