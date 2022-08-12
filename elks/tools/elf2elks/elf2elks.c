@@ -252,6 +252,8 @@ parse_args (int argc, char **argv)
 		{
 		    symfile = true;
 		    ++i;
+                    if (i >= argc)
+                        error_with_help ("expected filename after `%s'", argv[i - 1]);
 		    strcpy(symtab_filename, argv[i]);
 		}
 	      else if (strcmp (arg + 2, "total-data") == 0)
