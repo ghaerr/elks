@@ -15,6 +15,8 @@
 
 /* Modified for PC-98
  * T. Yamada 2022
+ *
+ * For PC-98, the default for ROM_CHAR_HEIGHT is 13
  */
 
 #include <stdlib.h>
@@ -33,20 +35,8 @@ pcrom_init(PSD psd)
 {
 	char *	p;
 
-	/* use INT 10h to get address of rom character table*/
-	//rom_char_addr = int10(FNGETROMADDR, GETROM8x14);
-
 	outb(0x07,0x68); // set 7x13 font for PC-98
-#if 0
-	/* check bios data area for actual character height,
-	 * as the returned font isn't always 14 high
-	 */
-	ROM_CHAR_HEIGHT = GETBYTE_FP(MK_FP(0x0040, 0x0085));
-	if(ROM_CHAR_HEIGHT > MAX_ROM_HEIGHT)
-		ROM_CHAR_HEIGHT = MAX_ROM_HEIGHT;
-#endif
 #if ELKS
-	//ROM_CHAR_HEIGHT = 14;
 	ROM_CHAR_HEIGHT = 13;
 #endif
 	p = getenv("CHARHEIGHT");
@@ -93,16 +83,12 @@ void
 pcrom_gettextbits(PSD psd,UCHAR ch,IMAGEBITS *retmap,COORD *retwd, COORD *retht,
 	FONTID fontid)
 {
-	//FARADDR	bits;
 	int	n;
 
 	outb(0x00,0xA1); // second byte
 	outb(ch,0xA3);   // first byte
 
 	/* read character bits from rom*/
-	//bits = rom_char_addr + ch * ROM_CHAR_HEIGHT;
-	//for(n=0; n<ROM_CHAR_HEIGHT; ++n)
-	//	*retmap++ = GETBYTE_FP(bits++) << 8;
 	for(n=0; n<ROM_CHAR_HEIGHT; ++n) {
 		outb(n+1,0xA5);
 		*retmap++ = inportb(0xA9) << 8;

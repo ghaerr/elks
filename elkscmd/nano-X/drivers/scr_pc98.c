@@ -34,8 +34,10 @@
  * 	chipset.
  */
 
-/* Modified for PC-98 
+/* Modified for PC-98
  * T. Yamada 2022
+ *
+ * For PC-98, 640x400 resolution
  */
 
 #define HWINIT	0		/* =1 for non-bios direct hardware init*/
@@ -235,9 +237,8 @@ VGA_open(PSD psd)
 
 	free(lio_malloc);
 
-	/* init driver variables depending on ega/vga mode*/
+	/* init driver variables for PC-98*/
 	psd->xres = 640;
-	//psd->yres = VGAMODE? 480: 350;
 	psd->yres = 400;
 	psd->planes = 4;
 	psd->bpp = 4;
@@ -255,9 +256,6 @@ VGA_open(PSD psd)
 	/* init pc rom font routines*/
 	pcrom_init(psd);
 	outb(0x0B,0x68); // Dot Access for font
-#if 0
-	ROM_CHAR_HEIGHT = VGAMODE? 16: 14;
-#endif
 	/* FIXME: add palette code*/
 	return 1;
 }

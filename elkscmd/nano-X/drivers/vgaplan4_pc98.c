@@ -16,7 +16,7 @@
  * 
  */
 
-/* Modified for PC-98 
+/* Modified for PC-98
  * T. Yamada 2022
  */
 
@@ -78,8 +78,6 @@ ega_init(PSD psd)
 	/* framebuffer mmap size*/
 	psd->size = 0x10000;
 
-	/* Need to write setup code for PC-98 */
-
 	return 1;
 }
 
@@ -88,10 +86,10 @@ void
 ega_drawpixel(PSD psd,unsigned int x, unsigned int y, PIXELVAL c)
 {
 	int		plane;
-    assert (x >= 0 && x < psd->xres);
+	assert (x >= 0 && x < psd->xres);
 	assert (y >= 0 && y < psd->yres);
 	assert (c >= 0 && c < psd->ncolors);
-  
+
 	DRAWON;
 	for(plane=0; plane<4; ++plane) {
 		if  (c & (1 << plane)) {
@@ -111,14 +109,12 @@ ega_readpixel(PSD psd,unsigned int x,unsigned int y)
 	FARADDR		src;
 	int		plane;
 	PIXELVAL	c = 0;
-	
-    assert (x >= 0 && x < psd->xres);
+
+	assert (x >= 0 && x < psd->xres);
 	assert (y >= 0 && y < psd->yres);
-  
+
 	DRAWON;
-	//src = SCREENBASE + x / 8 + y * BYTESPERLINE;
 	for(plane=0; plane<4; ++plane) {
-      //set_read_plane(plane);
 		src = screenbase_table[plane] + x / 8 + y * BYTESPERLINE;
 		if(GETBYTE_FP(src) & mask[x&7])
 			c |= 1 << plane;
@@ -221,7 +217,7 @@ ega_drawvertline(PSD psd,unsigned int x, unsigned int y1, unsigned int y2,
 	FARADDR dst, last;
 	int		plane;
 
-    assert (x >= 0 && x < psd->xres);
+	assert (x >= 0 && x < psd->xres);
 	assert (y1 >= 0 && y1 < psd->yres);
 	assert (y2 >= 0 && y2 < psd->yres);
 	assert (y2 >= y1);
