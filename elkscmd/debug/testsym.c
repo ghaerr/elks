@@ -3,41 +3,11 @@
 #include <string.h>
 #include "syms.h"
 #include "stacktrace.h"
-#include "disasm.h"
-
-char * noinstrument getsymbol(int seg, int offset)
-{
-    static char buf[32];
-
-    if (seg == getcs())
-        return sym_text_symbol((void *)offset, 1);
-    sprintf(buf, "%04x", offset);
-    return buf;
-}
-
-#define peekb(cs,ip)  (*(unsigned char __far *)(((unsigned long)(cs) << 16) | (int)(ip)))
-
-void disassemble(int cs, void *ip, int opcount)
-{
-    int n;
-    void *nextip;
-
-    if (!opcount) opcount = 32767;
-    printf("Disassembly of %s:\n", getsymbol(cs, (int)ip));
-    for (n=0; n<opcount; n++) {
-        nextip = disasm(cs, ip);
-        if (peekb(cs, ip) == 0xc3)  /* RET */
-            break;
-        ip = nextip;
-    }
-}
 
 void z()
 {
     printf("Stack backtrace of z:\n");
     print_stack(0xDEAD);
-    disassemble(getcs(), z, 0);
-    disassemble(getcs(), disassemble, 0);
 }
 
 void y(int a)
