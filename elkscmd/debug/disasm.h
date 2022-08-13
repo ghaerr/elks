@@ -6,7 +6,7 @@
 char * noinstrument getsymbol(int seg, int offset);
 
 /* disasm.c */
-void * noinstrument disasm(int cs, void *ip);
+int disasm(int cs, int ip, int (*nextbyte)(int, int));
 
 /* printreg.S */
 int noinstrument getcs(void);

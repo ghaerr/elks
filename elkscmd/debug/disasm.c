@@ -17,33 +17,39 @@ enum { false = 0, true };
 bool wordSize;
 bool sourceIsRM;
 Byte opcode;
-int f_asmout;
+//int f_asmout;
 
 static Word startIP;
 static Word startCS;
-static Byte d_modRM;
-static int segOver;
 static int cols;
 
-/* user-defined external functions */
-extern Byte readByte(Word offset, int seg);	/* read next instruction byte */
+static Byte d_modRM;
+static int segOver;
 
-/* read next instruction byte; note: seg is not actual segment, but =1 for CS */
-Byte readByte(Word offset, int seg)
+/* user-defined external functions */
+//extern Byte readByte(Word offset, int seg);	/* read next instruction byte */
+
+static void decode();
+static int (*fetchbyte)(int, int);
+
+static Word d_fetchByte()
 {
-    //extern unsigned char getcsbyte(unsigned short offset);
-    return *(unsigned char __far *)(((unsigned long)startCS << 16) | offset);
-    //return getcsbyte(offset);
+    Byte b = fetchbyte(startCS, startIP++);
+	//Byte b = readByte(startIP++, 1);      /* for 86sim, seg =1 for CS */
+	//if (!f_asmout) printf("%02x ", b);
+    cols++;
+    return b;
 }
 
-static Byte d_fetchByte()
+int disasm(int cs, int ip, int (*nextbyte)(int, int))
 {
-	Byte b = readByte(startIP++, 1);
-	if (!f_asmout) {
-		printf("%02x ", b);
-		cols++;
-	}
-	return b;
+	startCS = cs;
+	startIP = (int)ip;
+    fetchbyte = nextbyte;
+	cols = 0;
+	//if (!f_asmout) printf("%04hx:%04hx  ", cs, ip);
+	decode();
+	return startIP;
 }
 
 static const char *wordregs[] = {
@@ -52,16 +58,6 @@ static const char *byteregs[] = {
 	"%al", "%cl", "%dl", "%bl", "%ah", "%ch", "%dh", "%bh"};
 static const char *segregs[] = { "%es", "%cs", "%ss", "%ds"};
 
-static void decode();
-void * disasm(int cs, void *ip)
-{
-	startCS = cs;
-	startIP = (int)ip;
-	cols = 0;
-	if (!f_asmout) printf("%04hx:%04hx  ", cs, (int)ip);
-	decode();
-	return (void *)startIP;
-}
 static Word d_fetchWord() { Word w = d_fetchByte(); w += d_fetchByte() << 8; return w; }
 static int d_modRMReg() { return (d_modRM >> 3) & 7; }
 static void outREG() {
