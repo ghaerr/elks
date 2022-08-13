@@ -1,0 +1,157 @@
+/*
+ * Copyright (c) 1999 Greg Haerr <greg@censoft.com>
+ *
+ * Screen Driver Utilities
+ * 
+ * PC ROM Font Routine Header (PC ROM font format)
+ *
+ * This file contains the PC ROM format low-level font/text
+ * drawing routines.  Only fixed pitch fonts are supported.
+ * The ROM character matrix is used for the text bitmaps.
+ *
+ * The environment variable CHARHEIGHT if set will set the assumed rom
+ * font character height, which defaults to 14.
+ */
+
+/* Modified for PC-98
+ * T. Yamada 2022
+ *
+ * For PC-98, the default for ROM_CHAR_HEIGHT is 13
+ */
+
+#include <stdlib.h>
+#include "../device.h"
+#include "vgaplan4.h"
+#include "romfont.h"
+
+/* local data*/
+//int	ROM_CHAR_HEIGHT = 14;	/* number of scan lines in fonts in ROM */
+int	ROM_CHAR_HEIGHT = 13;	/* number of scan lines in fonts in ROM */
+FARADDR rom_char_addr;
+
+/* init PC ROM routines, must be called in graphics mode*/
+void
+pcrom_init(PSD psd)
+{
+	char *	p;
+
+	outb(0x07,0x68); // set 7x13 font for PC-98
+#if ELKS
+	ROM_CHAR_HEIGHT = 13;
+#endif
+	p = getenv("CHARHEIGHT");
+	if(p)
+		ROM_CHAR_HEIGHT = atoi(p);
+}
+
+/*
+ * PC ROM low level get font info routine.  This routine
+ * returns info on a single bios ROM font.
+ */
+BOOL
+pcrom_getfontinfo(PSD psd,FONTID fontid,PFONTINFO pfontinfo)
+{
+	int	i;
+
+	pfontinfo->font = 0;
+	pfontinfo->height = ROM_CHAR_HEIGHT;
+	pfontinfo->maxwidth = ROM_CHAR_WIDTH;
+	pfontinfo->baseline = 3;
+	pfontinfo->fixed = TRUE;
+	for (i = 0; i < 256; i++)
+		pfontinfo->widths[i] = ROM_CHAR_WIDTH;
+	return TRUE;
+}
+
+/*
+ * PC ROM low level routine to calc bounding box for text output.
+ * Handles bios ROM font only.
+ */
+void
+pcrom_gettextsize(PSD psd,const UCHAR *str,int cc,COORD *retwd,COORD *retht,
+	FONTID fontid)
+{
+	*retwd = ROM_CHAR_WIDTH * cc;
+	*retht = ROM_CHAR_HEIGHT;
+}
+
+/*
+ * PC ROM low level routine to get the bitmap associated
+ * with a character.  Handles bios ROM font only.
+ */
+void
+pcrom_gettextbits(PSD psd,UCHAR ch,IMAGEBITS *retmap,COORD *retwd, COORD *retht,
+	FONTID fontid)
+{
+	int	n;
+
+	outb(0x00,0xA1); // second byte
+	outb(ch,0xA3);   // first byte
+
+	/* read character bits from rom*/
+	for(n=0; n<ROM_CHAR_HEIGHT; ++n) {
+		outb(n+1,0xA5);
+		*retmap++ = inportb(0xA9) << 8;
+	}
+
+	*retwd = ROM_CHAR_WIDTH;
+	*retht = ROM_CHAR_HEIGHT;
+}
+
+#if NOTUSED
+/* 
+ * Low level text draw routine, called only if no clipping
+ * is required.  This routine draws ROM font characters only.
+ */
+void
+pcrom_drawtext(PSD psd,COORD x,COORD y,const UCHAR *s,int n,PIXELVAL fg,
+	FONTID fontid)
+{
+	COORD 		width;			/* width of character */
+	COORD 		height;			/* height of character */
+	IMAGEBITS 	bitmap[MAX_ROM_HEIGHT];	/* bitmap for character */
+
+ 	/* x,y is bottom left corner*/
+	y -= (ROM_CHAR_HEIGHT - 1);
+	while (n-- > 0) {
+		psd->GetTextBits(psd, *s++, bitmap, &width, &height, pfont);
+		gen_drawbitmap(psd, x, y, width, height, bitmap, fg);
+		x += width;
+	}
+}
+
+/*
+ * Generalized low level bitmap output routine, called
+ * only if no clipping is required.  Only the set bits
+ * in the bitmap are drawn, in the foreground color.
+ */
+void
+gen_drawbitmap(PSD psd,COORD x, COORD y, COORD width, COORD height,
+	IMAGEBITS *table, PIXELVAL fgcolor)
+{
+  COORD minx;
+  COORD maxx;
+  IMAGEBITS bitvalue;	/* bitmap word value */
+  int bitcount;			/* number of bits left in bitmap word */
+
+  minx = x;
+  maxx = x + width - 1;
+  bitcount = 0;
+  while (height > 0) {
+	if (bitcount <= 0) {
+		bitcount = IMAGE_BITSPERIMAGE;
+		bitvalue = *table++;
+	}
+	if (IMAGE_TESTBIT(bitvalue))
+		psd->DrawPixel(psd, x, y, fgcolor);
+	bitvalue = IMAGE_SHIFTBIT(bitvalue);
+	--bitcount;
+	if (x++ == maxx) {
+		x = minx;
+		++y;
+		--height;
+		bitcount = 0;
+	}
+  }
+}
+#endif /* NOTUSED*/
