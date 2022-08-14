@@ -24,7 +24,7 @@ static Word startCS;
 static int cols;
 
 static Byte d_modRM;
-static int segOver;
+//static int segOver;
 
 /* user-defined external functions */
 //extern Byte readByte(Word offset, int seg);	/* read next instruction byte */
@@ -161,10 +161,12 @@ static void outs(const char *str, int flags)
 	printf("%s", str);
 	if (flags & BW) out_bw(flags);
 	if (flags != 0) putchar('\t');
+#if 0
 	if (segOver != -1) {
 		printf("%s", segregs[segOver]);
 		putchar(':');
 	}
+#endif
 	if ((flags & (OPS2|SREG)) == OPS2) {
 		if (sourceIsRM) outRM(w); else outREG();
 		putchar(',');
@@ -207,7 +209,7 @@ static void outs(const char *str, int flags)
 			int waddr = (startIP + w2) & 0xffff;
 			printf("%s (%04x)", getsymbol(startCS, waddr), waddr);
 		}
-		if (flags & DWORD) printf("%04x:%04x", w, w2);
+		if (flags & DWORD) printf("$%04x:$%04x", w, w2);
 	}
 	printf("\n");
 }
@@ -218,8 +220,9 @@ static void decode(void)
 		"add", "or", "adc", "sbb", "and", "sub", "xor", "cmp"
 	};
 
-    bool prefix = false;
 	int flags;
+#if 0
+    bool prefix = false;
     //do {
         //if (!repeating) {
             if (!prefix) {
@@ -230,6 +233,7 @@ static void decode(void)
             //opcode = fetchByte();
         //}
 nextopcode:
+#endif
 		opcode = d_fetchByte();
         //if (rep != 0 && (opcode < 0xa4 || opcode >= 0xb0 || opcode == 0xa8 ||
             //opcode == 0xa9))
@@ -265,9 +269,15 @@ nextopcode:
 				outs("pop", SREG);
                 break;
             case 0x26: case 0x2e: case 0x36: case 0x3e:  // segment override
+#if 1
+                d_modRM = (operation - 4) << 3;
+                outs("seg", SREG);
+                break;
+#else
                 segOver = operation - 4;
                 prefix = true;
 				goto nextopcode;
+#endif
             case 0x27: case 0x2f:  // DA
 				outs(opcode == 0x27? "daa": "das", 0);
                 break;
@@ -339,7 +349,7 @@ nextopcode:
                 break;
             case 0x8c:  // MOV rmw,segreg
 				sourceIsRM = 0;
-				outs("mov", RDMOD|OPS2);
+				outs("mov", RDMOD|OPS2|SREG);
 				break;
             case 0x8d:  // LEA
 				sourceIsRM = 1;
@@ -462,7 +472,7 @@ nextopcode:
             case 0xd0: case 0xd1: case 0xd2: case 0xd3:  // rot rmv,n
 				{
 				static const char *rotates[] = {
-					"rol", "ror", "rcl", "rcr", "shl", "shr", "SHL", "sar" };
+					"rol", "ror", "rcl", "rcr", "shl", "shr", "shl", "sar" };
 				d_modRM = d_fetchByte();
 				flags = BW|RM;
 				if (opcode & 2) flags |= SHIFTBYCL;
@@ -511,11 +521,11 @@ nextopcode:
 				outs("lock", 0);
 				break;
             case 0xf2:  // REPNZ
-				prefix = true;
+				//prefix = true;
 				outs("repnz ", 0);
 				break;
 			case 0xf3:  // REPZ
-				prefix = true;
+				//prefix = true;
 				outs("repz ", 0);
 				break;
 			case 0xf4:  // HLT
