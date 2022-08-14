@@ -505,7 +505,7 @@ nextopcode:
 				outs("jmp", JMP|WORD);
                 break;
             case 0xea:  // JMP cp
-				outs("jmp", JMP|DWORD);
+				outs("ljmpw", JMP|DWORD);
                 break;
             case 0xeb:  // JMP cb
 				outs("jmp", JMP|SBYTE);
