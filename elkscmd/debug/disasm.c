@@ -45,7 +45,7 @@ int disasm(int cs, int ip, int (*nextbyte)(int, int))
 {
 	startCS = cs;
 	startIP = (int)ip;
-    fetchbyte = nextbyte;
+	fetchbyte = nextbyte;
 	cols = 0;
 	//if (!f_asmout) printf("%04hx:%04hx  ", cs, ip);
 	decode();
@@ -276,7 +276,7 @@ nextopcode:
 #else
                 segOver = operation - 4;
                 prefix = true;
-				goto nextopcode;
+                goto nextopcode;
 #endif
             case 0x27: case 0x2f:  // DA
 				outs(opcode == 0x27? "daa": "das", 0);
