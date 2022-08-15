@@ -210,7 +210,7 @@ static void outs(const char *str, int flags)
             if (opcode == 0xfe || opcode == 0xff) printf("*0x%04x", w2);
             else printf("%s (%04x)", getsymbol(startCS, waddr), waddr);
         }
-		if (flags & DWORD) printf("$%04x:$%04x", w, w2);
+		if (flags & DWORD) printf("$0x%04x,$0x%04x", w, w2);
 	}
 	printf("\n");
 }
@@ -270,15 +270,17 @@ nextopcode:
 				outs("pop", SREG);
                 break;
             case 0x26: case 0x2e: case 0x36: case 0x3e:  // segment override
+                {
 #if 1
-                d_modRM = (operation - 4) << 3;
-                outs("seg", SREG);
+                static const char *segprefix[] = { "es", "cs", "ss", "ds"};
+                outs(segprefix[operation - 4], 0);
                 break;
 #else
                 segOver = operation - 4;
                 prefix = true;
                 goto nextopcode;
 #endif
+                }
             case 0x27: case 0x2f:  // DA
 				outs(opcode == 0x27? "daa": "das", 0);
                 break;
