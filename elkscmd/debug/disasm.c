@@ -205,10 +205,11 @@ static void outs(const char *str, int flags)
 	if (flags & JMP) {
 		//if (flags & SBYTE) printf("%04x", startIP + c);
 		if (flags & SBYTE) printf(".%s%d // %04x", c>=0? "+": "", c+2, startIP+c);
-		if (flags & WORD) {
-			int waddr = (startIP + w2) & 0xffff;
-			printf("%s (%04x)", getsymbol(startCS, waddr), waddr);
-		}
+        if (flags & WORD) {
+            int waddr = (startIP + w2) & 0xffff;
+            if (opcode == 0xfe || opcode == 0xff) printf("*0x%04x", w2);
+            else printf("%s (%04x)", getsymbol(startCS, waddr), waddr);
+        }
 		if (flags & DWORD) printf("$%04x:$%04x", w, w2);
 	}
 	printf("\n");
@@ -580,13 +581,13 @@ nextopcode:
 						outs("call", RM);
                         break;
                     case 3:  // CALL mp
-						outs("call", JMP|DWORD);
+						outs("lcallw", JMP|WORD);
                         break;
                     case 4:  // JMP rmw
 						outs("jmp", RM);
                         break;
                     case 5:  // JMP mp
-						outs("jmp", JMP|DWORD);
+						outs("ljmpw", JMP|WORD);
                         break;
                     case 6:  // PUSH rmw
 						outs("push", RM);
