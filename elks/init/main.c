@@ -63,10 +63,12 @@ static unsigned char options[OPTSEGSZ];
 extern int boot_rootdev;
 extern int boot_bufs;
 extern int dprintk_on;
+extern int set_serial_irq(int tty, int irq);
 static char * INITPROC root_dev_name(int dev);
 static int parse_options(void);
 static void INITPROC finalize_options(void);
 static char * INITPROC option(char *s);
+
 #endif
 
 static void init_task(void);
@@ -288,6 +290,22 @@ static int INITPROC parse_dev(char * line)
 	return (base + atoi(line));
 }
 
+static void comirq(char *line) {
+	int i;
+	char *l, *m;
+
+	l = line;
+	for (i = 0; i < 4; i++) {	/* assume decimal digits only */
+		m = l;
+		while ((*l) && (*l != ',')) l++;
+		if (l > m) {
+			*l = '\0';
+			set_serial_irq(i, (int)simple_strtol(m, 0));
+		}
+		l++;
+	}
+}
+
 static void parse_nic(char *line, struct netif_parms *parms)
 {
     char *p;
@@ -401,6 +419,10 @@ static int parse_options(void)
 		}
 		if (!strncmp(line,"bufs=",5)) {
 			boot_bufs = (int)simple_strtol(line+5, 10);
+			continue;
+		}
+		if (!strncmp(line,"comirq=",7)) {
+			comirq(line+7);
 			continue;
 		}
 		if (!strncmp(line,"TZ=",3)) {
