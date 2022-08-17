@@ -292,16 +292,18 @@ static int INITPROC parse_dev(char * line)
 
 static void comirq(char *line) {
 	int i;
-	char *l, *m;
+	char *l, *m, c;
 
 	l = line;
-	for (i = 0; i < 4; i++) {	/* assume decimal digits only */
+	for (i = 0; i < MAX_SERIAL; i++) {	/* assume decimal digits only */
 		m = l;
 		while ((*l) && (*l != ',')) l++;
+		c = *l;		/* ensure robust eol handling */
 		if (l > m) {
 			*l = '\0';
 			set_serial_irq(i, (int)simple_strtol(m, 0));
 		}
+		if (!c) break;
 		l++;
 	}
 }
