@@ -5,6 +5,7 @@
  * Inspired by Andrew Jenner's 8086 simulator 86sim.cpp
  */
 #include <stdio.h>
+#include <string.h>
 #include "disasm.h"
 
 typedef unsigned char Byte;
@@ -17,11 +18,11 @@ enum { false = 0, true };
 bool wordSize;
 bool sourceIsRM;
 Byte opcode;
-//int f_asmout;
+int f_asmout;
+int f_outcol;
 
 static Word startIP;
 static Word startCS;
-static int cols;
 
 static Byte d_modRM;
 //static int segOver;
@@ -37,7 +38,7 @@ static Word d_fetchByte()
     Byte b = fetchbyte(startCS, startIP++);
 	//Byte b = readByte(startIP++, 1);      /* for 86sim, seg =1 for CS */
 	//if (!f_asmout) printf("%02x ", b);
-    cols++;
+    f_outcol++;
     return b;
 }
 
@@ -46,7 +47,7 @@ int disasm(int cs, int ip, int (*nextbyte)(int, int))
 	startCS = cs;
 	startIP = (int)ip;
 	fetchbyte = nextbyte;
-	cols = 0;
+	f_outcol = 0;
 	//if (!f_asmout) printf("%04hx:%04hx  ", cs, ip);
 	decode();
 	return startIP;
@@ -156,8 +157,12 @@ static void outs(const char *str, int flags)
 	if (flags & DWORD)
 		w = d_fetchWord();
 
-	while (cols++ < 6)
+	while (f_outcol++ < 6)
 		printf("   ");
+    if (f_asmout && !strcmp(str, "???")) {
+        printf(".byte 0x%02x\n", opcode);
+        return;
+    }
 	printf("%s", str);
 	if (flags & BW) out_bw(flags);
 	if (flags != 0) putchar('\t');
@@ -208,7 +213,7 @@ static void outs(const char *str, int flags)
         if (flags & WORD) {
             int waddr = (startIP + w2) & 0xffff;
             if (opcode == 0xfe || opcode == 0xff) printf("*0x%04x", w2);
-            else printf("%s (%04x)", getsymbol(startCS, waddr), waddr);
+            else printf("%s // %04x", getsymbol(startCS, waddr), waddr);
         }
 		if (flags & DWORD) printf("$0x%04x,$0x%04x", w, w2);
 	}
