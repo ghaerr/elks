@@ -39,6 +39,7 @@ SUBDIRS =       \
 	cron        \
 	sh_utils    \
 	sys_utils   \
+	tui         \
 	test        \
 	# EOL
 

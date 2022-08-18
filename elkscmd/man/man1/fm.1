@@ -1,0 +1,93 @@
+.TH FM 1
+.SH NAME
+fm \- file manager
+.SH SYNOPSIS
+.B fm
+[\fBdirectory\fR]
+.SH DESCRIPTION
+.BR fm
+is a simple and efficient file browser that gets out of your way
+as much as possible. It will run on UNIX or ELKS based ANSI v3.64
+or xterm-256 terminals, with mouse support.
+.PP
+.B fm
+supports both vi-like and emacs-like key bindings, which are described below:
+.SH "KEY BINDINGS"
+.nf
+Z       Quit.
+?       Help.
+
+a-z     Move to matching entry.
+0-9     Move to matching entry.
+
+bs      Backup one directory level.
+DEL     Backup one directory level.
+left    Backup one directory level.
+
+right   Open file or enter directory.
+ret     Open file or enter directory.
+
+^N      Move to next entry.
+down    Move to next entry.
+pagedn  Scroll down half a page.
+^D      Scroll down half a page.
+
+^P      Move to previous entry.
+up      Move to previous entry.
+pageup  Scroll up half a page.
+^U      Scroll up half a page.
+
+home    Move to first entry.
+^       Move to first entry.
+H       Move to first entry.
+
+end     Move to last entry.
+$       Move to last entry.
+B       Move to last entry.
+
+/       Change filter.
+C       Change directory.
+~       Change to HOME directory.
+
+D       Toggle sort by directory first.
+S       Toggle sort by file size.
+T       Toggle sort by time modified.
+V       Toggle sort by version number.
+.       Toggle hidden .dot files.
+I       Toggle case sensitive sort.
+
+^L      Force a redraw.
+!       Spawn a shell in the current directory.
+E       Open selected entry with the vi editor.
+R       Run selected entry.
+.fi
+.PP
+Backing up one directory level will set the cursor position at the
+directory you came out of.
+.SH FILTERS
+Filters allow you to use regexes to display only the matched
+entries in the current directory view.
+This effectively allows searching through the directory tree
+for a particular entry.
+.PP
+Filters do not stack on top of each other.
+They are applied anew every time.
+.PP
+To reset the filter you can input an empty filter expression.
+.PP
+If
+.BR fm
+is invoked as root the default filter will also match hidden files.
+.SH ENVIRONMENT
+The
+.BR SHELL
+and
+.BR EDITOR
+environment variables take precedence when dealing with the
+! and E
+commands respectively.
+.SH AUTHORS
+.nf
+Lazaros Koromilas lostd@2f30.org,
+Dimitris Papastamos sin@2f30.org
+Greg Haerr.

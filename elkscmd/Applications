@@ -34,6 +34,7 @@
 #	:diskutil	Disk utilities								disk_utils
 #	:miscutil	Miscellaneous utilities						misc_utils
 #	:minix1,2,3	Minix utilities								minix{1,2,3}
+#   :tui        Text user interface library programs        tui
 #	:mtools		MSDOS utilities								mtools
 #	:elvis		Elvis vi editor								elvis
 #	:net		Networking apps								ktcp,inet
@@ -158,6 +159,10 @@ disk_utils/mkfat				:diskutil		:360k
 disk_utils/partype				:diskutil				:1200k	:1440k
 disk_utils/ramdisk				:diskutil				:1200k	:1440k
 disk_utils/fdisk				:be-diskutil	:360k
+tui/fm                          :tui                            :1440k
+tui/matrix                      :tui                            :1440k
+tui/cons                        :tui                            :1440k
+tui/ttyinfo                     :tui                            :1440k
 busyelks/busyelks				:busyelks
 inet/httpd/sample_index.html	::var/www/index.html	:net
 ktcp/ktcp						:net
