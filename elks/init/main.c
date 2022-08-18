@@ -63,7 +63,6 @@ static unsigned char options[OPTSEGSZ];
 extern int boot_rootdev;
 extern int boot_bufs;
 extern int dprintk_on;
-extern int set_serial_irq(int tty, int irq);
 static char * INITPROC root_dev_name(int dev);
 static int parse_options(void);
 static void INITPROC finalize_options(void);
@@ -290,7 +289,8 @@ static int INITPROC parse_dev(char * line)
 	return (base + atoi(line));
 }
 
-static void comirq(char *line) {
+static void comirq(char *line)
+{
 	int i;
 	char *l, *m, c;
 
