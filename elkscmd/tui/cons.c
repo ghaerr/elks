@@ -18,13 +18,16 @@
 
 extern unsigned short kCp437[256];
 
-/*                                           blk blu grn cyn red mag yel wht */
-static const unsigned char ansi_colors[8] = {30, 34, 32, 36, 31, 35, 33, 37};
+/* Default 16-color fg, 8 color bg palette                         */
+/*                                  0   1   2   3   4   5   6   7
+                                   blk blu grn cyn red mag yel wht */
+static const int ansi_colors[16] = {30, 34, 32, 36, 31, 35, 33, 37,
+                                    90, 94, 92, 96, 91, 95, 93, 97 };
 
 static char *attr_to_ansi(char *buf, unsigned int attr)
 {
     sprintf(buf, "\e[%d;%dm",
-        ansi_colors[attr & 0x07], ansi_colors[(attr & 0x70) >> 4] + 10);
+        ansi_colors[attr & 0x0F], ansi_colors[(attr & 0x70) >> 4] + 10);
     return buf;
 }
 
