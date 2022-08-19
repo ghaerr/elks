@@ -28,6 +28,9 @@ static char *attr_to_ansi(char *buf, unsigned int attr)
     return buf;
 }
 
+#define COLS    80
+#define LINES   25
+
 static void display(void)
 {
     int r, c, a;
@@ -36,10 +39,10 @@ static void display(void)
     char buf[16];
 
     printf("\e[H");
-    for (r=0; r<25; r++) {
+    for (r=0; r<LINES; r++) {
         a = -1;
-        for (c=0; c<80; c++) {
-            b = chattr[r*80 + c];
+        for (c=0; c<COLS; c++) {
+            b = chattr[r*COLS + c];
             ch = kCp437[b & 255];
             if (a != (b & 0xFF00)) {
                 fputs(attr_to_ansi(buf, b >> 8), stdout);
@@ -49,9 +52,12 @@ static void display(void)
                 fputs(buf, stdout);
             }
         }
-        printf("\n");
+        if (r == LINES - 1)
+            printf("\r");
+        else printf("\n");
     }
-    printf("\e[1;0;0m\n");
+    printf("\e[1;0;0m");
+    fflush(stdout);
 }
 
 int main(int ac, char **av)
