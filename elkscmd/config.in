@@ -28,6 +28,7 @@ mainmenu_option next_comment
 		bool 'minix2'			CONFIG_APP_MINIX2		y
 		busyelks 'minix3'		CONFIG_APP_MINIX3		y
 		busyelks 'miscutils'	CONFIG_APP_MISC_UTILS	y
+		bool 'Text UI'			CONFIG_APP_TUI  		y
 		bool 'mtools'			CONFIG_APP_MTOOLS		n
 		bool 'nano-X'			CONFIG_APP_NANOX		y
 		bool 'BASIC'			CONFIG_APP_BASIC		y
