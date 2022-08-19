@@ -17,12 +17,16 @@
  * T. Yamada 2022
  *
  * For PC-98, the default for ROM_CHAR_HEIGHT is 13
+ * Using Compiled in fonts
  */
 
 #include <stdlib.h>
 #include "../device.h"
 #include "vgaplan4.h"
 #include "romfont.h"
+#include "ramfont.h"
+
+extern MWCFONT font_X6x13;
 
 /* local data*/
 //int	ROM_CHAR_HEIGHT = 14;	/* number of scan lines in fonts in ROM */
@@ -35,7 +39,6 @@ pcrom_init(PSD psd)
 {
 	char *	p;
 
-	outb(0x07,0x68); // set 7x13 font for PC-98
 #if ELKS
 	ROM_CHAR_HEIGHT = 13;
 #endif
@@ -84,15 +87,12 @@ pcrom_gettextbits(PSD psd,UCHAR ch,IMAGEBITS *retmap,COORD *retwd, COORD *retht,
 	FONTID fontid)
 {
 	int	n;
-
-	outb(0x00,0xA1); // second byte
-	outb(ch,0xA3);   // first byte
+	MWIMAGEBITS *bits;
 
 	/* read character bits from rom*/
-	for(n=0; n<ROM_CHAR_HEIGHT; ++n) {
-		outb(n+1,0xA5);
-		*retmap++ = inportb(0xA9) << 8;
-	}
+	bits = font_X6x13.bits + ch * ROM_CHAR_HEIGHT;
+	for(n=0; n<ROM_CHAR_HEIGHT; ++n)
+		*retmap++ = *bits++;
 
 	*retwd = ROM_CHAR_WIDTH;
 	*retht = ROM_CHAR_HEIGHT;

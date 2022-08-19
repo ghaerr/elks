@@ -145,7 +145,7 @@ ega_drawhorzline(PSD psd, unsigned int x1, unsigned int x2, unsigned int y,
 	if(gr_mode == MODE_SET) {
 		for(plane=0; plane<4; ++plane) {
 			x1 = x1_ini;
-        	dst = screenbase_table[plane] + x1 / 8 + y * BYTESPERLINE;
+			dst = screenbase_table[plane] + x1 / 8 + y * BYTESPERLINE;
 			if (x1 / 8 == x2 / 8) {
 				while(x1 < x2) {
 					if  (c & (1 << plane)) {
@@ -246,8 +246,6 @@ ega_blit(PSD dstpsd, COORD dstx, COORD dsty, COORD w, COORD h,
 {
 #if HAVEBLIT
 	BOOL	srcvga, dstvga;
-
-    printf("ega_blit\n");
 
     /* decide which blit algorithm to use*/
 	srcvga = srcpsd->flags & PSF_SCREEN;

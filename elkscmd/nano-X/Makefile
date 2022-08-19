@@ -43,7 +43,7 @@ endif
 #DRIVERS += drivers/scr_herc.o
 
 ifeq ($(CONFIG_ARCH_PC98), y)
-DRIVERS += drivers/romfont_pc98.o drivers/elksutilasm.o
+DRIVERS += drivers/ramfont_pc98.o drivers/X6x13.o drivers/elksutilasm.o
 else
 DRIVERS += drivers/romfont.o drivers/elksutilasm.o
 endif
