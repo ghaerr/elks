@@ -26,7 +26,8 @@ char * noinstrument getsymbol(int seg, int offset)
 static int nextbyte_mem(int cs, int ip)
 {
     int b = peekb(cs, ip);
-    printf("%02x ", b);
+    if (!f_asmout) printf("%02x ", b);
+    else f_outcol = 0;
     return b;
 }
 
@@ -36,9 +37,9 @@ void disasm_mem(int cs, int ip, int opcount)
     int nextip;
 
     if (!opcount) opcount = 32767;
-    printf("Disassembly of %s:\n", getsymbol(cs, (int)ip));
+    if (!f_asmout) printf("Disassembly of %s:\n", getsymbol(cs, (int)ip));
     for (n=0; n<opcount; n++) {
-        printf("%04hx:%04hx  ", cs, ip);
+        if (!f_asmout) printf("%04hx:%04hx  ", cs, ip);
         nextip = disasm(cs, ip, nextbyte_mem);
         if (opcount == 32767 && peekb(cs, ip) == 0xc3)  /* RET */
             break;
@@ -51,7 +52,8 @@ static FILE *infp;
 static int nextbyte_file(int cs, int ip)
 {
     int b = fgetc(infp);
-    printf("%02x ", b);
+    if (!f_asmout) printf("%02x ", b);
+    else f_outcol = 0;
     return b;
 }
 
@@ -71,7 +73,7 @@ int disasm_file(char *filename)
     else filesize = sbuf.st_size;
 
     while (ip < filesize) {
-        printf("%04hx  ", ip);
+        if (!f_asmout) printf("%04hx  ", ip);
         nextip = disasm(0, ip, nextbyte_file);
         ip = nextip;
     }
@@ -84,11 +86,18 @@ int main(int ac, char **av)
     unsigned long seg = 0, off = 0;
     long count = 22;
 
+    if (ac > 1) {
+        if (!strcmp(av[1], "-a")) {
+            f_asmout = 1;
+            ac--;
+            av++;
+        }
+    }
     if (ac != 2) {
-        printf("Usage: disasm [[seg:off[#size] | filename]\n");
+        printf("Usage: disasm [-a] [[seg:off[#size] | filename]\n");
         return 1;
     }
-    printf("CS = %x\n", getcs());
+    if (!f_asmout) printf("CS = %x\n", getcs());
 
     if (strchr(av[1], ':')) {
         sscanf(av[1], "%lx:%lx#%ld", &seg, &off, &count);
