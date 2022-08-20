@@ -29,6 +29,7 @@
 
 
 static irq_handler irq_action [16];
+static void *irq_trampoline [16];
 
 /*
  *	Called by the assembler hooks
@@ -36,12 +37,10 @@ static irq_handler irq_action [16];
 
 void do_IRQ(int i,void *regs)
 {
-    register irq_handler ih = irq_action [i];
-    if (!ih) {
+    irq_handler ih = irq_action [i];
+    if (!ih)
         printk("Unexpected interrupt: %u\n", i);
-        return;
-    }
-    (*ih)(i, regs);
+    else (*ih)(i, regs);
 }
 
 
@@ -62,9 +61,14 @@ typedef struct int_handler int_handler_s;
 // Add a dynamically allocated handler
 // that redirects to the static handler
 
-static int int_handler_add (int irq, int vect, int_proc proc)
+static int_handler_s *handler_alloc(void)
 {
-	int_handler_s * h = (int_handler_s *) heap_alloc (sizeof (int_handler_s), HEAP_TAG_INTHAND);
+	return (int_handler_s *) heap_alloc (sizeof (int_handler_s), HEAP_TAG_INTHAND);
+}
+
+static int int_handler_add (int irq, int vect, int_proc proc, int_handler_s *h)
+{
+	if (!h) h = handler_alloc();
 	if (!h) return -ENOMEM;
 
 	h->call = 0x9A;		/* CALLF opcode */
@@ -77,60 +81,61 @@ static int int_handler_add (int irq, int vect, int_proc proc)
 	return 0;
 }
 
-
 int request_irq(int irq, irq_handler handler, int hflag)
 {
+    int_handler_s *h;
+    int_proc proc;
     flag_t flags;
 
     irq = remap_irq(irq);
     if (irq < 0 || !handler) return -EINVAL;
 
     if (irq_action [irq]) return -EBUSY;
+    h = handler_alloc();
+    if (!h) return -ENOMEM;
 
     save_flags(flags);
     clr_irq();
 
     irq_action [irq] = handler;
+    irq_trampoline [irq] = h;
 
-    int_proc proc;
     if (hflag == INT_SPECIFIC)
-	proc = (int_proc) handler;
+        proc = (int_proc) handler;
     else
-	proc = _irqit;
+        proc = _irqit;
 
     // TODO: IRQ number has no meaning for an INT handler
     // see above simplification TODO
-    if (int_handler_add (irq, irq_vector (irq), proc))
-	return -ENOMEM;
+    int_handler_add (irq, irq_vector (irq), proc, h);
 
     enable_irq(irq);
-
     restore_flags(flags);
 
     return 0;
 }
 
-void free_irq(unsigned int irq)
+int free_irq(int irq)
 {
     flag_t flags;
 
     irq = remap_irq(irq);
-    if (irq > 15) {
-	printk("Trying to free IRQ%u\n",irq);
-	return;
-    }
-    if (!irq_action [irq]) {
-	printk("Trying to free free IRQ%u\n",irq);
-	return;
+    if (irq < 0) return -EINVAL;
+
+    if (!irq_action[irq]) {
+        printk("Trying to free free IRQ%u\n",irq);
+        return -EINVAL;
     }
     save_flags(flags);
     clr_irq();
 
     disable_irq(irq);
-
-    irq_action [irq] = NULL;
-
+    int_vector_set(irq_vector(irq), 0, 0);  /* reset vector to 0:0 */
+    irq_action[irq] = NULL;
     restore_flags(flags);
+
+    heap_free(irq_trampoline[irq]);
+    return 0;
 }
 
 /*
@@ -150,7 +155,7 @@ void INITPROC irq_init(void)
     disable_timer_tick();
 
     irqtab_init();	/* now only saves previous vector 08h (timer) */
-    int_handler_add (0x80, 0x80, _irqit); /* system call */
+    int_handler_add (0x80, 0x80, _irqit, NULL); /* system call */
 
     /* Set off the initial timer interrupt handler */
     if (request_irq(TIMER_IRQ, timer_tick, INT_GENERIC))
