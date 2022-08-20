@@ -13,7 +13,7 @@ typedef void (* irq_handler) (int,struct pt_regs *);   // IRQ handler
 
 void do_IRQ(int,void *);
 int request_irq(int,irq_handler,int hflag);
-void free_irq(unsigned int irq);
+int free_irq(int irq);
 void int_vector_set (int vect, int_proc proc, int seg);
 void _irqit (void);
 
