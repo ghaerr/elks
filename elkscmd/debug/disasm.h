@@ -4,6 +4,7 @@
 
 /* to be defined by caller of disasm() */
 char * noinstrument getsymbol(int seg, int offset);
+char * noinstrument getsegsymbol(int seg);
 
 /* disasm.c */
 int disasm(int cs, int ip, int (*nextbyte)(int, int));

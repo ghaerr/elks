@@ -6,18 +6,47 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <linuxmt/mem.h>
 #include "syms.h"
 #include "disasm.h"
 
+#define KSYMTAB         "/lib/system.sym"
+char f_ksyms;
+unsigned short textseg, ftextseg, dataseg;
+
 char * noinstrument getsymbol(int seg, int offset)
 {
-    static char buf[32];
+    static char buf[8];
 
-    if (seg == getcs())
-        return sym_text_symbol((void *)offset, 1);
-    sprintf(buf, "%04x", offset);
+    if (f_ksyms) {
+        if (seg == textseg)
+            return sym_text_symbol((void *)offset, 1);
+        if (seg == ftextseg)
+            return sym_ftext_symbol((void *)offset, 1);
+        if (seg == dataseg)
+            return sym_data_symbol((void *)offset, 1);
+    }
+    sprintf(buf, f_asmout? "0x%04x": "%04x", offset);
+    return buf;
+}
+
+char * noinstrument getsegsymbol(int seg)
+{
+    static char buf[8];
+
+    if (f_ksyms) {
+        if (seg == textseg)
+            return ".text";
+        if (seg == ftextseg)
+            return ".fartext";
+        if (seg == dataseg)
+            return ".data";
+    }
+    sprintf(buf, f_asmout? "0x%04x": "%04x", seg);
     return buf;
 }
 
@@ -86,18 +115,38 @@ int main(int ac, char **av)
     unsigned long seg = 0, off = 0;
     long count = 22;
 
-    if (ac > 1) {
+    while (ac > 1 && av[1][0] == '-') {
         if (!strcmp(av[1], "-a")) {
             f_asmout = 1;
             ac--;
             av++;
         }
+        if (!strcmp(av[1], "-k")) {
+            f_ksyms = 1;
+            ac--;
+            av++;
+        }
     }
     if (ac != 2) {
-        printf("Usage: disasm [-a] [[seg:off[#size] | filename]\n");
+        printf("Usage: disasm [-k] [-a] [[seg:off[#size] | filename]\n");
         return 1;
     }
-    if (!f_asmout) printf("CS = %x\n", getcs());
+    if (f_ksyms) {
+        int fd;
+        if (!sym_read_symbols(KSYMTAB)) {
+            printf("Can't open %s\n", KSYMTAB);
+            exit(1);
+        }
+        fd = open("/dev/kmem", O_RDONLY);
+        if (fd < 0
+            || ioctl(fd, MEM_GETCS, &textseg) < 0
+            || ioctl(fd, MEM_GETDS, &dataseg) < 0
+            || ioctl(fd, MEM_GETFARTEXT, &ftextseg) < 0) {
+                printf("Can't get kernel segment values\n");
+                exit(1);
+        }
+        close(fd);
+    }
 
     if (strchr(av[1], ':')) {
         sscanf(av[1], "%lx:%lx#%ld", &seg, &off, &count);
