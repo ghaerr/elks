@@ -50,7 +50,6 @@ struct serial_info {
  * afaik 8250 works fine up to 19200
  */
 
-#define DEFAULT_BAUD_RATE	9600
 #define DEFAULT_LCR		UART_LCR_WLEN8
 
 #define DEFAULT_MCR		\
@@ -92,6 +91,12 @@ extern struct tty ttys[];
 #define	RS_IALLMOSTFULL 	(3 * INQ_SIZE / 4)
 #define	RS_IALLMOSTEMPTY	(    INQ_SIZE / 4)
 
+/* allow init to easily update the port irq from bootopts */
+void set_serial_irq(int tty, int irq)
+{
+	ports[tty].irq = irq;
+}
+	
 /*
  * Flush input by reading RX register.
  * Not used when FIFO enabled, as HW fifo cleared when enabled.
