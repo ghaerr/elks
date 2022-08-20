@@ -46,10 +46,6 @@ struct serial_info {
 #define INB		inb	// use inb_p for 1us delay
 #define OUTB		outb	// use outb_p for 1us delay
 
-/* all boxes should be able to do 9600 at least,
- * afaik 8250 works fine up to 19200
- */
-
 #define DEFAULT_LCR		UART_LCR_WLEN8
 
 #define DEFAULT_MCR		\
@@ -359,6 +355,7 @@ static int rs_open(struct tty *tty)
 	break;
     }
     if (err) goto errout;
+    irq_to_port[port->irq] = port - ports;	/* Map irq to this tty # */
 
     err = tty_allocq(tty, RSINQ_SIZE, RSOUTQ_SIZE);
     if (err) {
@@ -465,7 +462,6 @@ static void rs_init(void)
     register struct tty *tty = ttys + NR_CONSOLES;
 
     do {
-	irq_to_port[sp->irq] = sp - ports;	/* Map irq to tty # */
 	if (!rs_probe(sp)) {
 	    sp->tty = tty;
 	    update_port(sp);
