@@ -6,7 +6,7 @@
 
 void nm(char *path)
 {
-    unsigned char *syms = sym_read_symbols(path);
+    unsigned char *syms = sym_read_exe_symbols(path);
     unsigned char *p;
 
     if (!syms) {

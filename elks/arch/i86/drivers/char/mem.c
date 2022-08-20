@@ -27,6 +27,7 @@
 #include <linuxmt/mem.h>
 #include <linuxmt/heap.h>
 #include <linuxmt/timer.h>
+#include <linuxmt/init.h>
 
 #include <arch/io.h>
 #include <arch/segment.h>
@@ -262,6 +263,9 @@ int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
     case MEM_GETDS:
 	retword = kernel_ds;
 	break;
+    case MEM_GETFARTEXT:
+        retword = (unsigned)((long)kernel_init >> 16);
+        break;
     case MEM_GETUSAGE:
 	mm_get_usage (&(mu.free_memory), &(mu.used_memory));
 	memcpy_tofs(arg, &mu, sizeof(struct mem_usage));

@@ -26,18 +26,18 @@ all: nm86 $(PRGS)
 nm86: nm86.c syms.c
 	$(HOSTCC) $(HOSTCFLAGS) -o $@ $^
 
-TESTSYMOBJS = testsym.o $(LIBOBJS)
-testsym: $(TESTSYMOBJS)
-	$(LD) $(LDFLAGS) -mno-post-link -o $@ $(TESTSYMOBJS) $(LDLIBS)
+testsym: testsym.o $(LIBOBJS)
+	$(LD) $(LDFLAGS) -mno-post-link -o $@ $^ $(LDLIBS)
 	elf2elks --symtab --heap 12000 $@
 	./nm86 $@ > $@.map
 	cp $@ $(TOPDIR)/elkscmd/rootfs_template/root
 
-DISASMOBJS = dis.o disasm.o $(LIBOBJS)
-disasm: $(DISASMOBJS)
-	$(LD) $(LDFLAGS) -mno-post-link -o $@ $(DISASMOBJS) $(LDLIBS)
-	elf2elks --symtab --heap 12000 $@
-	cp $@ $(TOPDIR)/elkscmd/rootfs_template/root
+disasm: dis.o disasm.o $(LIBOBJS)
+	$(LD) $(LDFLAGS) -mno-post-link -o $@ $^ $(LDLIBS)
+	elf2elks --symtab --heap 0xffff $@
+	cp -p $@ $(TOPDIR)/elkscmd/rootfs_template/root
+	-mkdir $(TOPDIR)/elkscmd/rootfs_template/lib
+	cp -p $(TOPDIR)/elks/arch/i86/boot/system.sym $(TOPDIR)/elkscmd/rootfs_template/lib
 
 disasm.o: disasm.c
 	$(CC) $(CFLAGS) -fno-instrument-functions -c -o $*.o $<

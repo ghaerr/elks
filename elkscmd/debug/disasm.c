@@ -207,17 +207,22 @@ static void outs(const char *str, int flags)
 		printf("(0x%04x)", w2);
 	if (flags & REGOP) printf("%s", wordSize? wordregs[opcode & 7]: byteregs[opcode & 7]);
 	if ((flags & (JMP|IMM|WORD)) == WORD) printf("%u", w2);
-	if (flags & JMP) {
-		//if (flags & SBYTE) printf("%04x", startIP + c);
-		if (flags & SBYTE) printf(".%s%d // %04x", c>=0? "+": "", c+2, startIP+c);
+    if (flags & JMP) {
+        if (flags & SBYTE) {
+            if (f_asmout) printf(".%s%d // %04x", c>=0? "+": "", c+2, startIP+c);
+            else printf("%04x", startIP + c);
+        }
         if (flags & WORD) {
             int waddr = (startIP + w2) & 0xffff;
-            if (opcode == 0xfe || opcode == 0xff) printf("*0x%04x", w2);
-            else printf("%s // %04x", getsymbol(startCS, waddr), waddr);
+            if (opcode == 0xfe || opcode == 0xff) {
+                printf("*%s", getsymbol(startCS, w2));
+            } else printf("%s // %04x", getsymbol(startCS, waddr), waddr);
         }
-		if (flags & DWORD) printf("$0x%04x,$0x%04x", w, w2);
-	}
-	printf("\n");
+        if (flags & DWORD) {
+            printf("$%s,$%s", getsegsymbol(w), getsymbol(w, w2));
+        }
+    }
+    printf("\n");
 }
 
 static void decode(void)

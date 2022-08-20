@@ -19,6 +19,7 @@
 
 #define noinstrument    __attribute__((no_instrument_function))
 
+unsigned char * noinstrument sym_read_exe_symbols(char *path);
 unsigned char * noinstrument sym_read_symbols(char *path);
 char * noinstrument sym_text_symbol(void *addr, int exact);
 char * noinstrument sym_ftext_symbol(void *addr, int exact);

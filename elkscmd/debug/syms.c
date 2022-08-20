@@ -36,8 +36,8 @@ struct minix_exec_hdr {
     uint32_t  syms;
 };
 
-/* read symbol table into memory */
-unsigned char * noinstrument sym_read_symbols(char *path)
+/* read symbol table from executable into memory */
+unsigned char * noinstrument sym_read_exe_symbols(char *path)
 {
     int fd;
     unsigned char *s;
@@ -52,6 +52,30 @@ unsigned char * noinstrument sym_read_symbols(char *path)
         || (!ALLOC(s, (int)hdr.syms))
         || (lseek(fd, -(int)hdr.syms, SEEK_END) < 0)
         || (read(fd, s, (int)hdr.syms) != (int)hdr.syms)) {
+                int e = errno;
+                close(fd);
+                errno = e;
+                return NULL;
+    }
+    syms = s;
+    return syms;
+}
+
+/* read symbol table file into memory */
+unsigned char * noinstrument sym_read_symbols(char *path)
+{
+    int fd;
+    unsigned char *s;
+    struct stat sbuf;
+
+    if (syms) return syms;
+    if ((fd = open(path, O_RDONLY)) < 0)
+        return NULL;
+    errno = 0;
+    if (fstat(fd, &sbuf) < 0
+        || (sbuf.st_size == 0 || sbuf.st_size > 32767)
+        || (!ALLOC(s, (int)sbuf.st_size))
+        || (read(fd, s, (int)sbuf.st_size) != (int)sbuf.st_size)) {
                 int e = errno;
                 close(fd);
                 errno = e;
@@ -82,7 +106,7 @@ void * noinstrument sym_fn_start_address(void *addr)
 {
     unsigned char *p, *lastp;
 
-    if (!syms && !sym_read_symbols(_program_filename)) return (void *)-1;
+    if (!syms && !sym_read_exe_symbols(_program_filename)) return (void *)-1;
 
     lastp = syms;
     for (p = next(lastp); ; lastp = p, p = next(p)) {
@@ -99,7 +123,7 @@ static char * noinstrument sym_string(void *addr, int exact,
     unsigned char *p, *lastp;
     static char buf[32];
 
-    if (!syms && !sym_read_symbols(_program_filename)) {
+    if (!syms && !sym_read_exe_symbols(_program_filename)) {
 hex:
         sprintf(buf, "%.4x", (unsigned int)addr);
         return buf;
