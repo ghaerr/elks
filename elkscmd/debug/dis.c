@@ -110,29 +110,31 @@ int disasm_file(char *filename)
     return 0;
 }
 
+void usage(void)
+{
+    printf("Usage: disasm [-k] [-a] [[seg:off[#size] | filename]\n");
+    exit(1);
+}
+
 int main(int ac, char **av)
 {
     unsigned long seg = 0, off = 0;
+    int fd;
     long count = 22;
 
     while (ac > 1 && av[1][0] == '-') {
-        if (!strcmp(av[1], "-a")) {
+        if (av[1][1] == 'a')
             f_asmout = 1;
-            ac--;
-            av++;
-        }
-        if (!strcmp(av[1], "-k")) {
+        else if (av[1][1] == 'k')
             f_ksyms = 1;
-            ac--;
-            av++;
-        }
+        else usage();
+        ac--;
+        av++;
     }
-    if (ac != 2) {
-        printf("Usage: disasm [-k] [-a] [[seg:off[#size] | filename]\n");
-        return 1;
-    }
+    if (ac != 2)
+        usage();
+
     if (f_ksyms) {
-        int fd;
         if (!sym_read_symbols(KSYMTAB)) {
             printf("Can't open %s\n", KSYMTAB);
             exit(1);
