@@ -113,6 +113,20 @@ hd32-minix:
 	$(MAKE) -f Make.image "CONFIG=$(TOPDIR)/image/Config" NAME=hd32-minix
 	rm Config
 
+hd64-minix:
+	echo CONFIG_APPS_2880K=y	> Config
+	echo CONFIG_IMG_HD=y		>> Config
+	echo CONFIG_IMG_BLOCKS=64008 >> Config
+	echo CONFIG_IMG_SECT=63		>> Config
+	echo CONFIG_IMG_HEAD=16		>> Config
+	echo CONFIG_IMG_CYL=127		>> Config
+	echo CONFIG_IMG_MINIX=y		>> Config
+	echo CONFIG_IMG_DEV=y		>> Config
+	echo CONFIG_IMG_BOOT=y		>> Config
+	sed -n -e '/CONFIG_TIME_/p'	>> Config < $(TOPDIR)/.config
+	$(MAKE) -f Make.image "CONFIG=$(TOPDIR)/image/Config" NAME=hd64-minix
+	rm Config
+
 fd360-fat:
 	echo CONFIG_APPS_360K=y		> Config
 	echo CONFIG_IMG_FD360=y		>> Config

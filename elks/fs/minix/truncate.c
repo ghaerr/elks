@@ -41,9 +41,11 @@ static int V1_trunc_direct(register struct inode *inode)
     int retry = 0;
 
   repeat:
+  printk("DIRECT_BLOCK %ld\n", DIRECT_BLOCK);
     for (i = DIRECT_BLOCK; i < 7; i++) {
 	p = &inode->u.minix_i.i_zone[i];
 	if (!(tmp = *p)) continue;
+        printk("i=%d\n", i);
 	bh = get_hash_table(inode->i_dev, (block_t) tmp);
 	if (i < DIRECT_BLOCK) {
 	    brelse(bh);
@@ -88,6 +90,7 @@ static int V1_trunc_indirect(register struct inode *inode,
     }
     map_buffer(ind_bh);
   repeat:
+  printk("INDIRECT_BLOCK %d\n", INDIRECT_BLOCK(offset));
     for (i = INDIRECT_BLOCK(offset); i < 512; i++) {
 	if (i < 0) i = 0;
 	else if (i < INDIRECT_BLOCK(offset)) goto repeat;
@@ -145,6 +148,7 @@ static int V1_trunc_dindirect(register struct inode *inode,
     }
     map_buffer(dind_bh);
   repeat:
+  printk("DINDIRECT_BLOCK %d\n", DINDIRECT_BLOCK(offset));
     for (i = DINDIRECT_BLOCK(offset); i < 512; i++) {
 	if (i < 0) i = 0;
 	if (i < DINDIRECT_BLOCK(offset)) goto repeat;
