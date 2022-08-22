@@ -476,7 +476,7 @@ int copy_directory(char *source_dir, char *dest_dir)
 		return 1;
 	}
 
-	printf("Copying %d files, %lu blocks from %s to %s\n", inodes.count, numblocks,
+	if (opt_verbose) printf("Copying %d files, %lu blocks from %s to %s\n", inodes.count, numblocks,
 		source_dir, destination_dir);
 
 	err = do_copies();

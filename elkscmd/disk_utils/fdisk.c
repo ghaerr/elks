@@ -418,10 +418,10 @@ int main(int argc, char **argv)
 
 
     if (mode == MODE_LIST) {
-	if (*dev != 0) {
-	    list_partition(dev);
-	    exit(0);
-	} else goto usage;
+	if (*dev == 0)
+	    strcpy(dev,DEFAULT_DEV);
+	list_partition(dev);
+	exit(0);
     }
 
     if (mode == MODE_EDIT) {
