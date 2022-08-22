@@ -41,18 +41,14 @@ static int V1_trunc_direct(register struct inode *inode)
     int retry = 0;
 
   repeat:
-    for (i = (int)DIRECT_BLOCK; i < 7; i++) {
+    for (i = DIRECT_BLOCK; i < 7; i++) {
 	p = &inode->u.minix_i.i_zone[i];
 	if (!(tmp = *p)) continue;
 	bh = get_hash_table(inode->i_dev, (block_t) tmp);
-
-	if (i < (int)DIRECT_BLOCK) {	/* In case the file shrunk while
-					 * we were truncating. Unlikely
-					 * if at all possible. */
+	if (i < DIRECT_BLOCK) {
 	    brelse(bh);
 	    goto repeat;
 	}
-
 	if ((bh && buffer_count(bh) != 1) || tmp != *p) {
 	    retry = 1;
 	    brelse(bh);
