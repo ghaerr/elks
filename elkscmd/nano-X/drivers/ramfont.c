@@ -9,15 +9,12 @@
  * drawing routines.  Only fixed pitch fonts are supported.
  * The ROM character matrix is used for the text bitmaps.
  *
- * The environment variable CHARHEIGHT if set will set the assumed rom
- * font character height, which defaults to 14.
  */
 
-/* Modified for PC-98
+/* Modified to use Compiled in fonts
  * T. Yamada 2022
  *
- * For PC-98, the default for ROM_CHAR_HEIGHT is 13
- * Using Compiled in fonts
+ * The default for ROM_CHAR_HEIGHT is 13
  */
 
 #include <stdlib.h>
