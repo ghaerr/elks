@@ -962,26 +962,27 @@ int main(int argc, char ** argv)
 	check_root();
 	check();
 	if (verbose) {
-		int i, free;
+		int i;
+        unsigned int free;
 
 		for (i=1,free=0 ; i < INODES ; i++)
 			if (!inode_in_use(i))
 				free++;
-		printf("\n%6d inodes used (%d%%)\n",(INODES-free-1),
+		printf("\n%6u inodes used (%d%%)\n",(INODES-free-1),
 			100*(INODES-free-1)/(INODES-1));
 		for (i=FIRSTZONE,free=0 ; i < ZONES ; i++)
 			if (!zone_in_use(i))
 				free++;
-		printf("%6d zones used (%d%%)\n",(ZONES-free),
-			100*(ZONES-free)/ZONES);
-		printf("\n%6d regular files\n"
-		"%6d directories\n"
+		printf("%6u zones used (%d%%)\n", ZONES - free ,
+			(int)(100*((long)ZONES-free)/ZONES));
+		printf("\n%6u regular files\n"
+		"%6u directories\n"
 		"%6d character device files\n"
-		"%6d block device files\n"
-		"%6d links\n"
-		"%6d symbolic links\n"
+		"%6u block device files\n"
+		"%6u links\n"
+		"%6u symbolic links\n"
 		"------\n"
-		"%6d files\n",
+		"%6u files\n",
 		regular,directory,chardev,blockdev,
 		links-2*directory+1,symlinks,total-2*directory+1);
 	}

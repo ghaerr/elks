@@ -13,8 +13,8 @@
 #include <linuxmt/fcntl.h>
 
 #define DIRECT_BLOCK		((inode->i_size + 1023) >> 10)
-#define INDIRECT_BLOCK(offset)	((int)(DIRECT_BLOCK)-offset)
-#define DINDIRECT_BLOCK(offset) (((int)(DIRECT_BLOCK)-offset)>>9)
+#define INDIRECT_BLOCK(offset)	((long)(DIRECT_BLOCK)-offset)
+#define DINDIRECT_BLOCK(offset) (((long)(DIRECT_BLOCK)-offset)>>9)
 
 /*
  * Truncate has the most races in the whole filesystem: coding it is
@@ -37,7 +37,7 @@ static int V1_trunc_direct(register struct inode *inode)
     unsigned short *p;
     register struct buffer_head *bh;
     unsigned short tmp;
-    int i;
+    unsigned int i;
     int retry = 0;
 
   repeat:
@@ -45,9 +45,8 @@ static int V1_trunc_direct(register struct inode *inode)
     for (i = DIRECT_BLOCK; i < 7; i++) {
 	p = &inode->u.minix_i.i_zone[i];
 	if (!(tmp = *p)) continue;
-        printk("i=%d\n", i);
 	bh = get_hash_table(inode->i_dev, (block_t) tmp);
-	if (i < DIRECT_BLOCK) {
+	if (i < (unsigned int)DIRECT_BLOCK) {
 	    brelse(bh);
 	    goto repeat;
 	}
@@ -68,10 +67,11 @@ static int V1_trunc_direct(register struct inode *inode)
 }
 
 static int V1_trunc_indirect(register struct inode *inode,
-			     int offset, unsigned short *p)
+			     unsigned int offset, unsigned short *p)
 {
     struct buffer_head *bh;
     int i;
+    long j;
     unsigned short tmp;
     register struct buffer_head *ind_bh;
     unsigned short *ind;
@@ -90,15 +90,15 @@ static int V1_trunc_indirect(register struct inode *inode,
     }
     map_buffer(ind_bh);
   repeat:
-  printk("INDIRECT_BLOCK %d\n", INDIRECT_BLOCK(offset));
-    for (i = INDIRECT_BLOCK(offset); i < 512; i++) {
-	if (i < 0) i = 0;
-	else if (i < INDIRECT_BLOCK(offset)) goto repeat;
-	ind = i + (unsigned short *) ind_bh->b_data;
+  printk("INDIRECT_BLOCK %ld\n", INDIRECT_BLOCK(offset));
+    for (j = INDIRECT_BLOCK(offset); j < 512; j++) {
+	if (j < 0) j = 0;
+	else if (j < INDIRECT_BLOCK(offset)) goto repeat;
+	ind = (int)j + (unsigned short *) ind_bh->b_data;
 	tmp = *ind;
 	if (!tmp) continue;
 	bh = get_hash_table(inode->i_dev, (block_t) tmp);
-	if (i < INDIRECT_BLOCK(offset)) {
+	if (j < INDIRECT_BLOCK(offset)) {
 	    brelse(bh);
 	    goto repeat;
 	}
@@ -128,7 +128,7 @@ static int V1_trunc_indirect(register struct inode *inode,
 }
 
 static int V1_trunc_dindirect(register struct inode *inode,
-			      int offset, unsigned short *p)
+			      unsigned int offset, unsigned short *p)
 {
     int i;
     unsigned short tmp;
@@ -148,7 +148,7 @@ static int V1_trunc_dindirect(register struct inode *inode,
     }
     map_buffer(dind_bh);
   repeat:
-  printk("DINDIRECT_BLOCK %d\n", DINDIRECT_BLOCK(offset));
+  printk("DINDIRECT_BLOCK %ld\n", DINDIRECT_BLOCK(offset));
     for (i = DINDIRECT_BLOCK(offset); i < 512; i++) {
 	if (i < 0) i = 0;
 	if (i < DINDIRECT_BLOCK(offset)) goto repeat;
