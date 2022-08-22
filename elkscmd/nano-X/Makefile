@@ -21,11 +21,20 @@ NANOXDEMOS += bin/nxdemo
 # mouse and kbd drivers
 # SLOW_CPU discards unprocessed mouse input for slow systems
 LOCALFLAGS += -DSLOW_CPU=1
+ifeq ($(CONFIG_ARCH_PC98), y)
+DRIVERS += drivers/mou_null.o
+else
 DRIVERS += drivers/mou_ser.o
+endif
 DRIVERS += drivers/kbd_tty.o
 
 # portable C VGA driver
+ifeq ($(CONFIG_ARCH_PC98), y)
+DRIVERS += drivers/scr_pc98.o drivers/vgaplan4_pc98.o drivers/mempl4.o
+LDFLAGS += -maout-heap=0xffff
+else
 DRIVERS += drivers/scr_bios.o drivers/vgaplan4.o drivers/mempl4.o
+endif
 
 # higher speed asm VGA driver
 #DRIVERS += drivers/scr_bios.o drivers/elkplan4.o drivers/mempl4.o
@@ -33,7 +42,11 @@ DRIVERS += drivers/scr_bios.o drivers/vgaplan4.o drivers/mempl4.o
 # hercules driver
 #DRIVERS += drivers/scr_herc.o
 
+ifeq ($(CONFIG_ARCH_PC98), y)
+DRIVERS += drivers/ramfont.o drivers/X6x13.o drivers/elksutilasm.o
+else
 DRIVERS += drivers/romfont.o drivers/elksutilasm.o
+endif
 
 # The following line links the nano-X application with the server.
 # This is required if no network is present, or for speed or debugging.
