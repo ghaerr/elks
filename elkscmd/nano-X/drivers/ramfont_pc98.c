@@ -29,22 +29,12 @@
 extern MWCFONT font_X6x13;
 
 /* local data*/
-//int	ROM_CHAR_HEIGHT = 14;	/* number of scan lines in fonts in ROM */
-int	ROM_CHAR_HEIGHT = 13;	/* number of scan lines in fonts in ROM */
-FARADDR rom_char_addr;
+int	ROM_CHAR_HEIGHT = 13;	/* number of scan lines in fonts */
 
 /* init PC ROM routines, must be called in graphics mode*/
 void
 pcrom_init(PSD psd)
 {
-	char *	p;
-
-#if ELKS
-	ROM_CHAR_HEIGHT = 13;
-#endif
-	p = getenv("CHARHEIGHT");
-	if(p)
-		ROM_CHAR_HEIGHT = atoi(p);
 }
 
 /*
