@@ -191,15 +191,15 @@ int INITPROC buffer_init(void)
 	bufs_to_alloc -= nbufs;
 #ifdef CONFIG_FS_XMS_BUFFER
 	if (xms_enabled) {
-	    ramdesc_t seg = xms_alloc((long_t)nbufs << BLOCK_SIZE_BITS);
-	    add_buffers(nbufs, 0, seg);
+	    ramdesc_t xmsseg = xms_alloc((long_t)nbufs << BLOCK_SIZE_BITS);
+	    add_buffers(nbufs, 0, xmsseg);
 	} else
 #endif
 	{
-	    segment_s *seg = seg_alloc (nbufs << (BLOCK_SIZE_BITS - 4),
+	    segment_s *extseg = seg_alloc (nbufs << (BLOCK_SIZE_BITS - 4),
 		SEG_FLAG_EXTBUF|SEG_FLAG_ALIGN1K);
-	    if (!seg) return 2;
-	    add_buffers(nbufs, 0, seg->base);
+	    if (!extseg) return 2;
+	    add_buffers(nbufs, 0, extseg->base);
 	}
     } while (bufs_to_alloc > 0);
 #else

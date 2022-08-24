@@ -85,6 +85,10 @@ ifdef CONFIG_APP_MISC_UTILS
 	endif
 endif
 
+ifdef CONFIG_APP_TUI
+	TAGS += :tui|
+endif
+
 ifdef CONFIG_APP_NANOX
 	TAGS += :nanox|
 endif
@@ -136,18 +140,19 @@ ifdef CONFIG_APPS_720K
 endif
 
 ifdef CONFIG_APPS_1200K
-	TAGS = :boot|:360k|:net|:720k|:1200k|:man|
+	TAGS = :boot|:360k|:net|:720k|:1200k|
 endif
 
 ifdef CONFIG_APPS_1232K
-	TAGS = :boot|:360k|:net|:720k|:man|
+	TAGS = :boot|:360k|:net|:720k|
 endif
 
 ifdef CONFIG_APPS_1440K
-	TAGS = :boot|:360k|:net|:720k|:1200k|:1440k|:man|
+	TAGS = :boot|:360k|:net|:720k|:1200k|:1440k|
 endif
 
 ifdef CONFIG_APPS_2880K
+    # below TAGS relies on :ash rule following :defsash rule in Applications
 	TAGS = :*|
 	CONFIG_APP_MAN_PAGES=y
 endif
@@ -214,15 +219,20 @@ ifdef CONFIG_APP_CGATEXT
 endif
 ifdef CONFIG_APP_MAN_PAGES
 	mkdir -p $(DESTDIR)/lib/man1
-	cp -rp man/man1 $(DESTDIR)/lib; compress -b 12 $(DESTDIR)/lib/man1/*
+	cp -rp man/man1 $(DESTDIR)/lib
+	-compress -b 12 $(DESTDIR)/lib/man1/*
 	mkdir -p $(DESTDIR)/lib/man2
-	cp -rp man/man2 $(DESTDIR)/lib; compress -b 12 $(DESTDIR)/lib/man2/*
+	cp -rp man/man2 $(DESTDIR)/lib
+	-compress -b 12 $(DESTDIR)/lib/man2/*
 	mkdir -p $(DESTDIR)/lib/man5
-	cp -rp man/man5 $(DESTDIR)/lib; compress -b 12 $(DESTDIR)/lib/man5/*
+	cp -rp man/man5 $(DESTDIR)/lib
+	-compress -b 12 $(DESTDIR)/lib/man5/*
 	mkdir -p $(DESTDIR)/lib/man7
-	cp -rp man/man7 $(DESTDIR)/lib; compress -b 12 $(DESTDIR)/lib/man7/*
+	cp -rp man/man7 $(DESTDIR)/lib
+	-compress -b 12 $(DESTDIR)/lib/man7/*
 	mkdir -p $(DESTDIR)/lib/man8
-	cp -rp man/man8 $(DESTDIR)/lib; compress -b 12 $(DESTDIR)/lib/man8/*
+	cp -rp man/man8 $(DESTDIR)/lib
+	-compress -b 12 $(DESTDIR)/lib/man8/*
 endif
 
 

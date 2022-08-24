@@ -1,3 +1,8 @@
+#if DEBUG
+#define debug(...)      printf(__VA_ARGS)
+#else
+#define debug(...)
+#endif
 void pver();
 void usage(const char *name);
 void parse_opts(int *argc_p, char ***argv_p);
@@ -10,7 +15,7 @@ void cmd_sysinfo(struct minix_fs_dat *fs);
 struct minix_fs_dat *close_fs(struct minix_fs_dat *fs);
 void fatalmsg(const char *s, ...);
 void die(const char *s, ...);
-FILE *goto_blk(FILE *fp, int blk);
+FILE *goto_blk(FILE *fp, unsigned int blk);
 void *dofwrite(FILE *fp, void *buff, int cnt);
 void *dofread(FILE *fp, void *buff, int cnt);
 void *domalloc(unsigned long size, int elm);

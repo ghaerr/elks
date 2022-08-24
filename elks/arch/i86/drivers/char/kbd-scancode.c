@@ -186,7 +186,7 @@ static void keyboard_irq(int irq, struct pt_regs *regs)
     code = kb_read();
 
     if (kraw) {
-	Console_conin((unsigned char) code);
+	Console_conin(code & 255);
 	return;
     }
 
@@ -358,6 +358,12 @@ static void keyboard_irq(int irq, struct pt_regs *regs)
 		Console_set_vc(key - '1');
 		return;
 	    }
+            /* map Alt-a - Alt-z to ESC A - Z */
+            if (key >= 'a' && key <= 'z') {
+                Console_conin(ESC);
+                Console_conin(key-'a'+'A');
+                return;
+            }
 	    key |= 0x80;	/* ALT-.. (assume codepage is OEM 437) */
 	}
 	    

@@ -30,6 +30,8 @@ _start:
 	mov %ax,environ
 	push %ax
 	push %bx
+	mov (%bx),%bx
+	mov %bx,_program_filename
 	push %cx
 	CALL_(main)
 #ifdef __IA16_CALLCVT_CDECL
@@ -65,6 +67,7 @@ _exit_end:
 	.data
 
 	.extern environ
+	.extern _program_filename
 	.extern _cleanup
 
 // Zero data for null pointers (near & far)

@@ -11,9 +11,6 @@
  *
  * In this driver, psd->linelen is line byte length, not line pixel length
  *
- * This file is meant to compile under Linux, ELKS, and MSDOS
- * without changes.  Please try to keep it that way.
- * 
  */
 
 /* Modified for PC-98
@@ -22,25 +19,16 @@
 
 /*#define NDEBUG*/
 #include <assert.h>
-#if LINUX
-#include <sys/io.h>
-#endif
 #include "../device.h"
 #include "vgaplan4.h"
 #include "fb.h"
 
-#if MSDOS | ELKS
 /* assumptions for speed: NOTE: psd is ignored in these routines*/
-//#define SCREENBASE 		MK_FP(0xa000, 0)
 #define SCREENBASE0 	MK_FP(0xa800, 0)
 #define SCREENBASE1 	MK_FP(0xb000, 0)
 #define SCREENBASE2 	MK_FP(0xb800, 0)
 #define SCREENBASE3 	MK_FP(0xe000, 0)
 #define BYTESPERLINE		80
-#else
-#define SCREENBASE 		((char *)psd->addr)
-#define BYTESPERLINE		(psd->linelen)
-#endif
 
 static FARADDR screenbase_table[4] = {
 	SCREENBASE0, SCREENBASE2, SCREENBASE1, SCREENBASE3
@@ -48,11 +36,6 @@ static FARADDR screenbase_table[4] = {
 
 /* extern data*/
 extern MODE gr_mode;	/* temp kluge*/
-
-/* Values for the data rotate register to implement drawing modes. */
-static unsigned char mode_table[MODE_MAX + 1] = {
-	0x00, 0x18, 0x10, 0x08
-};
 
 /* precalculated mask bits*/
 static unsigned char mask[8] = {
@@ -63,18 +46,8 @@ static unsigned char mask[8] = {
 int
 ega_init(PSD psd)
 {
-#if LINUX
-	/* allow direct access to vga controller space*/
-	if(ioperm(0x3c0, 0x20, 1) == -1)
-		return 0;
-#endif
-
-#if MSDOS | ELKS
-	/* fill in screendevice struct if not framebuffer driver*/
-	//psd->addr = SCREENBASE;		/* long ptr -> short on 16bit sys*
 	psd->addr = SCREENBASE0;		/* long ptr -> short on 16bit sys*/
 	psd->linelen = BYTESPERLINE;
-#endif
 	/* framebuffer mmap size*/
 	psd->size = 0x10000;
 
@@ -145,7 +118,7 @@ ega_drawhorzline(PSD psd, unsigned int x1, unsigned int x2, unsigned int y,
 	if(gr_mode == MODE_SET) {
 		for(plane=0; plane<4; ++plane) {
 			x1 = x1_ini;
-        	dst = screenbase_table[plane] + x1 / 8 + y * BYTESPERLINE;
+			dst = screenbase_table[plane] + x1 / 8 + y * BYTESPERLINE;
 			if (x1 / 8 == x2 / 8) {
 				while(x1 < x2) {
 					if  (c & (1 << plane)) {
@@ -247,8 +220,6 @@ ega_blit(PSD dstpsd, COORD dstx, COORD dsty, COORD w, COORD h,
 #if HAVEBLIT
 	BOOL	srcvga, dstvga;
 
-    printf("ega_blit\n");
-
     /* decide which blit algorithm to use*/
 	srcvga = srcpsd->flags & PSF_SCREEN;
 	dstvga = dstpsd->flags & PSF_SCREEN;
@@ -270,14 +241,3 @@ ega_blit(PSD dstpsd, COORD dstx, COORD dsty, COORD w, COORD h,
 	}
 #endif /* HAVEBLIT*/
 }
-
-#if LINUX
-FBENTRY fbvgaplan4 = {
-	(void *)ega_init,
-	(void *)ega_drawpixel,
-	(void *)ega_readpixel,
-	(void *)ega_drawhorzline,
-	(void *)ega_drawvertline,
-	(void *)ega_blit
-};
-#endif

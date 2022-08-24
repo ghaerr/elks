@@ -14,7 +14,7 @@
  *  5*  HW IDE hard drive   CONFIG_BLK_DEV_HD       Driver doesn't work
  *  6*  Unused
  *  6*  HW floppy drive     CONFIG_BLK_DEV_FD       Driver doesn't compile
- *  7   Unused (LPT)
+ *  7   Unused (LPT, Com4)
  *  8   Unused (RTC)
  *  9   3C509/EL3 (/dev/eth) CONFIG_ETH_EL3         Optional
  * 10   Unused (USB)                                Turned off
@@ -88,7 +88,7 @@
 #define COM3_IRQ	5		/* unregistered unless COM3_PORT found*/
 
 #define COM4_PORT	0x2e8
-#define COM4_IRQ	2		/* unregistered unless COM4_PORT found*/
+#define COM4_IRQ	7		/* unregistered unless COM4_PORT found*/
 
 /* Ethernet card settings may be overridden in /bootopts using netirq= and netport= */ 
 /* ne2k, ne2k.c */ 

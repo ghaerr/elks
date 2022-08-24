@@ -67,7 +67,7 @@ void die(const char *s,...) {
  * @param blk - Block to go to
  * @return fp
  */
-FILE *goto_blk(FILE *fp,int blk) {
+FILE *goto_blk(FILE *fp,unsigned int blk) {
   fflush(fp);
   if (fseek(fp,blk*BLOCK_SIZE,SEEK_SET)) {
     die("fseek");

@@ -1,7 +1,8 @@
+#ifndef __LINUXMT_HEAP_H
+#define __LINUXMT_HEAP_H
+
 // Kernel library
 // Local heap management
-
-#pragma once
 
 #include <linuxmt/types.h>
 #include <linuxmt/list.h>
@@ -52,3 +53,5 @@ void heap_init ();
 #ifdef HEAP_DEBUG
 void heap_iterate (void (* cb) (heap_s * h));
 #endif /* HEAP_DEBUG */
+
+#endif

@@ -34,6 +34,7 @@
 #	:diskutil	Disk utilities								disk_utils
 #	:miscutil	Miscellaneous utilities						misc_utils
 #	:minix1,2,3	Minix utilities								minix{1,2,3}
+#   :tui        Text user interface library programs        tui
 #	:mtools		MSDOS utilities								mtools
 #	:elvis		Elvis vi editor								elvis
 #	:net		Networking apps								ktcp,inet
@@ -47,8 +48,8 @@
 sys_utils/init			:boot	:sysutil    :128k
 sys_utils/getty			:boot	:sysutil    :128k
 sys_utils/login			:boot	:sysutil    :128k
-ash/ash		::bin/sh	:boot	:ash	    # install as /bin/sh
 sash/sash	::bin/sh	    	:defsash	# install as /bin/sh
+ash/ash		::bin/sh	:boot	:ash	    # install as /bin/sh (must follow :defsash)
 sash/sash		    	        :sash                   :1200k  :1440k
 sys_utils/mount			:boot	:sysutil    :128k
 sys_utils/umount		:boot	:sysutil    :128k
@@ -72,7 +73,7 @@ file_utils/mv					:fileutil		:360k
 file_utils/ln					:fileutil			:720k
 file_utils/ls					:fileutil		:360k   :128k
 file_utils/rm					:fileutil		:360k
-file_utils/rmdir				:fileutil			:720k
+file_utils/rmdir				:fileutil		:360k
 file_utils/sync					:fileutil		:360k
 file_utils/touch				:fileutil			:720k
 sys_utils/chmem					:sysutil			:720k
@@ -158,6 +159,10 @@ disk_utils/mkfat				:diskutil		:360k
 disk_utils/partype				:diskutil				:1200k	:1440k
 disk_utils/ramdisk				:diskutil				:1200k	:1440k
 disk_utils/fdisk				:be-diskutil	:360k
+tui/fm                          :tui                            :1440k
+tui/matrix                      :tui                            :1440k
+tui/cons                        :tui                            :1440k
+tui/ttyinfo                     :tui                            :1440k
 busyelks/busyelks				:busyelks
 inet/httpd/sample_index.html	::var/www/index.html	:net
 ktcp/ktcp						:net

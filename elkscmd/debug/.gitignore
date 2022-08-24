@@ -1,0 +1,4 @@
+*.o
+nm86
+testsym
+disasm

@@ -22,7 +22,7 @@ void console_init(void)
     printk("Headless console\n");
 }
 
-void Console_conin(unsigned char Key)
+void Console_conin(int Key)
 {
     register struct tty *ttyp = &ttys[0];	/* /dev/tty1*/
 
@@ -30,7 +30,7 @@ void Console_conin(unsigned char Key)
 	chq_addch(&ttyp->inq, Key);
 }
 
-void Console_conout(dev_t dev, char Ch)
+void Console_conout(dev_t dev, int Ch)
 {
     if (Ch == '\n')
 	conio_putc('\r');
@@ -61,7 +61,7 @@ static int Console_write(register struct tty *tty)
     int cnt = 0;
 
     while (tty->outq.len > 0) {
-	conio_putc((byte_t)tty_outproc(tty));
+	conio_putc(tty_outproc(tty));
 	cnt++;
     }
     return cnt;

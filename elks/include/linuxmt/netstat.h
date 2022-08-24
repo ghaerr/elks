@@ -15,7 +15,7 @@ struct netif_parms {
 	int	irq;
 	int	port;
 	unsigned int ram;
-    unsigned int flags;
+	unsigned int flags;
 };
 // Should put this into the eths struct 
 extern struct netif_parms netif_parms[MAX_ETHS];

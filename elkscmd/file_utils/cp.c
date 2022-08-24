@@ -350,7 +350,8 @@ static int do_copies(void)
 
 			int cnt = readlink(inode_build->path, lnkname, sizeof(lnkname));
 			if (cnt < 0) {
-				fprintf(stderr, "Can't read symlink: %s\n", inode_build->path);
+				fprintf(stderr, "Can't read symlink "); fflush(stderr);
+				perror(inode_build->path);
 				err = 1;
 			} else {
 				lnkname[cnt] = 0;
@@ -387,14 +388,13 @@ int do_mkdir(char *srcdir, char *dstdir)
 	//if (opt_verbose) printf("mkdir %s\n", dstdir);
 
 	if (lstat(srcdir, &sbuf) < 0) {
-		fprintf(stderr, "Can't stat %s\n", srcdir);
+		perror(srcdir);
 		return 1;
 	}
 
 	if (mkdir(dstdir, sbuf.st_mode & 0777) < 0) {
-		if (errno == EEXIST)
-			fprintf(stderr, "Directory already exists: %s\n", dstdir);
-		else fprintf(stderr, "Can't make directory: %s\n", dstdir);
+		fprintf(stderr, "Can't make directory "); fflush(stderr);
+		perror(dstdir);
 		return 1;
 	}
 	return 0;
@@ -408,13 +408,14 @@ int do_mknod(char *srcfile, char *dstfile, int type, unsigned int major,
 	if (opt_verbose) printf("mknod %s %c %d %d\n", dstfile,
 		type == S_IFCHR? 'c': 'b', major, minor);
 	if (lstat(srcfile, &sbuf) < 0) {
-		fprintf(stderr, "Can't stat %s\n", srcfile);
+		perror(srcfile);
 		return 1;
 	}
 
 	if (mknod(dstfile, sbuf.st_mode, sbuf.st_rdev)) {
-		fprintf(stderr, "Can't mknod %s (mode 0%o dev 0x%x), errno %d\n", dstfile,
-			sbuf.st_mode, sbuf.st_rdev, errno);
+		fprintf(stderr, "Can't mknod mode 0%o dev 0x%x ", sbuf.st_mode, sbuf.st_rdev);
+        fflush(stderr);
+		perror(dstfile);
 		return 1;
 	}
 	return 0;
@@ -426,7 +427,8 @@ int do_symlink(char *symlnk, char *file)
 	if (opt_verbose) printf("Symlink %s -> %s\n", file, symlnk);
 
 	if (symlink(symlnk, file) < 0) {
-		fprintf(stderr, "Can't create symlink %s, errno %d\n", file, errno);
+		fprintf(stderr, "Can't create symlink "); fflush(stderr);
+		perror(symlnk);
 		return 1;
 	}
 	return 0;
@@ -456,7 +458,8 @@ int copy_directory(char *source_dir, char *dest_dir)
 	} else {
 		/* destination doesn't exist, create directory*/
 		if (mkdir(dest_dir, 0777) < 0) {
-			fprintf(stderr, "Can't make directory: %s\n", dest_dir);
+			fprintf(stderr, "Can't make directory "); fflush(stderr);
+			perror(dest_dir);
 			return 1;
 		}
 	}
@@ -473,7 +476,7 @@ int copy_directory(char *source_dir, char *dest_dir)
 		return 1;
 	}
 
-	printf("Copying %d files, %lu blocks from %s to %s\n", inodes.count, numblocks,
+	if (opt_verbose) printf("Copying %d files, %lu blocks from %s to %s\n", inodes.count, numblocks,
 		source_dir, destination_dir);
 
 	err = do_copies();

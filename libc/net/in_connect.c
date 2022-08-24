@@ -19,7 +19,7 @@ int in_connect(int socket, const struct sockaddr *address, socklen_t address_len
 		int secs)
 {
 	int ret;
-	__sighandler_t old;
+	sighandler_t old;
 
 	old = signal(SIGALRM, alarm_cb);
 	alarm(secs);

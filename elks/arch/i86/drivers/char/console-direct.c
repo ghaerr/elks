@@ -46,20 +46,19 @@ typedef struct console Console;
 
 struct console {
     int cx, cy;			/* cursor position */
-    void (*fsm)(register Console *, char);
+    void (*fsm)(Console *, int);
     unsigned char attr;		/* current attribute */
     unsigned char XN;		/* delayed newline on column 80 */
-    unsigned char color;	/* fg/bg attr */
-#ifdef CONFIG_EMUL_VT52
-    unsigned char tmp;		/* ESC Y ch save */
-#endif
+    unsigned int vseg;		/* video segment for page */
+    int basepage;		/* start of video ram */
 #ifdef CONFIG_EMUL_ANSI
     int savex, savey;		/* saved cursor position */
     unsigned char *parmptr;	/* ptr to params */
     unsigned char params[MAXPARMS];	/* ANSI params */
 #endif
-    unsigned int vseg;		/* video segment for page */
-    int basepage;		/* start of video ram */
+#ifdef CONFIG_EMUL_VT52
+    unsigned char tmp;		/* ESC Y ch save */
+#endif
 };
 
 static struct wait_queue glock_wait;
@@ -81,12 +80,12 @@ unsigned VideoSeg = 0xB800;
 #define TERM_TYPE " dumb "
 #endif
 
-static void std_char(register Console *, char);
+static void std_char(register Console *, int);
 
 static void SetDisplayPage(register Console * C)
 {
-    outw((unsigned short int) ((C->basepage & 0xff00) | 0x0c), CCBase);
-    outw((unsigned short int) ((C->basepage << 8) | 0x0d), CCBase);
+    outw((C->basepage & 0xff00) | 0x0c, CCBase);
+    outw((C->basepage << 8) | 0x0d, CCBase);
 }
 
 static void PositionCursor(register Console * C)
@@ -95,51 +94,53 @@ static void PositionCursor(register Console * C)
     int Pos = C->cx + Width * C->cy + C->basepage;
 
     outb(14, CCBasep);
-    outb((unsigned char) ((Pos >> 8) & 0xFF), CCBasep + 1);
+    outb((Pos >> 8) & 255, CCBasep + 1);
     outb(15, CCBasep);
-    outb((unsigned char) (Pos & 0xFF), CCBasep + 1);
+    outb(Pos & 255, CCBasep + 1);
 }
 
-static void VideoWrite(register Console * C, char c)
+static void VideoWrite(register Console * C, int c)
 {
-    pokew((word_t)((C->cx + C->cy * Width) << 1),
-    		(seg_t) C->vseg,
-	  ((word_t)C->attr << 8) | ((word_t)c));
+    pokew((C->cx + C->cy * Width) << 1, (seg_t) C->vseg,
+	  (C->attr << 8) | (c & 255));
 }
 
-static void ClearRange(register Console * C, int x, int y, int xx, int yy)
+static void ClearRange(register Console * C, int x, int y, int x2, int y2)
 {
-    register __u16 *vp;
+    register int vp;
 
-    xx = xx - x + 1;
-    vp = (__u16 *)((__u16)(x + y * Width) << 1);
+    x2 = x2 - x + 1;
+    vp = (x + y * Width) << 1;
     do {
-	for (x = 0; x < xx; x++)
-	    pokew((word_t) (vp++), (seg_t) C->vseg, (((word_t) C->attr << 8) | ' '));
-	vp += (Width - xx);
-    } while (++y <= yy);
+	for (x = 0; x < x2; x++) {
+            pokew(vp, (seg_t) C->vseg, (C->attr << 8) | ' ');
+            vp += 2;
+        }
+	vp += (Width - x2) << 1;
+    } while (++y <= y2);
 }
 
 static void ScrollUp(register Console * C, int y)
 {
-    register __u16 *vp;
+    register int vp;
 
-    vp = (__u16 *)((__u16)(y * Width) << 1);
+    vp = y * (Width << 1);
     if ((unsigned int)y < MaxRow)
-	fmemcpyw(vp, C->vseg, vp + Width, C->vseg, (MaxRow - y) * Width);
+	fmemcpyw((void *)vp, C->vseg,
+                 (void *)(vp + (Width << 1)), C->vseg, (MaxRow - y) * Width);
     ClearRange(C, 0, MaxRow, MaxCol, MaxRow);
 }
 
 #if defined (CONFIG_EMUL_VT52) || defined (CONFIG_EMUL_ANSI)
 static void ScrollDown(register Console * C, int y)
 {
-    register __u16 *vp;
+    register int vp;
     int yy = MaxRow;
 
-    vp = (__u16 *)((__u16)(yy * Width) << 1);
+    vp = yy * (Width << 1);
     while (--yy >= y) {
-	fmemcpyw(vp, C->vseg, vp - Width, C->vseg, Width);
-	vp -= Width;
+	fmemcpyw((void *)vp, C->vseg, (void *)(vp - (Width << 1)), C->vseg, Width);
+	vp -= Width << 1;
     }
     ClearRange(C, 0, y, MaxCol, y);
 }
@@ -204,12 +205,9 @@ void console_init(void)
 	C->basepage = i * PageSizeW;
 	C->vseg = VideoSeg + (C->basepage >> 3);
 	C->attr = A_DEFAULT;
-	C->color = A_DEFAULT;
 
 #ifdef CONFIG_EMUL_ANSI
-
 	C->savex = C->savey = 0;
-
 #endif
 
 	/* Do not erase early printk() */

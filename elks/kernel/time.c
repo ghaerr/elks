@@ -46,7 +46,7 @@ static struct timezone xzone;
 /* timezone offset (in hours) from CONFIG_TIME_TZ or /bootopts TZ= string */
 int tz_offset;
 
-void tz_init(char *tzstr)
+void tz_init(const char *tzstr)
 {
     if (strlen(tzstr) > 3) {
         tz_offset = atoi(tzstr+3);

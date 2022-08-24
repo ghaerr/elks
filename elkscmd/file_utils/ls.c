@@ -92,11 +92,16 @@ static int sortbysize = 0;
 static int nosort = 0;
 static char fmt[16] = "%s";
 
+/* return -1/0/1 based on sign of x */
+static int sign(long x)
+{
+    return (x > 0) - (x < 0);
+}
+
 static int namesort(const struct sort *a, const struct sort *b)
 {
     if (sortbytime || sortbysize) {
-	long lval = reverse * (b->longval - a->longval);
-	return (int)(lval >> 16);	/* return sign of long compare */
+	return sign(reverse * (b->longval - a->longval));
     }
     return reverse * strcmp(a->name, b->name);
 }
@@ -399,8 +404,9 @@ static char *timestring(time_t t)
     buf[12] = '\0';
 
     if ((t > now) || (t < now - 180*24*60L*60)) {
-	strcpy(&buf[7], &str[20]);
-	buf[11] = '\0';
+	buf[7] = ' ';
+	strcpy(&buf[8], &str[20]);
+	buf[12] = '\0';
     }
 
     return buf;

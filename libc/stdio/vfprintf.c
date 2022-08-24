@@ -164,8 +164,12 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
 	    i = va_arg(ap, int);
 	    if (dpoint)
 	       preci = i;
-	    else
-	       width = i;
+	    else {
+		if (i < 0) {
+		    width = -i;
+		    ljustf = 1;
+		} else width = i;
+            }
 	    goto fmtnxt;
 
 	 case '.':		/* secondary width field */

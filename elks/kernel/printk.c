@@ -44,7 +44,7 @@ dev_t dev_console;
 #else
 #define DEVCONSOLE  MKDEV(TTY_MAJOR,TTY_MINOR_OFFSET)	/* /dev/tty1*/
 #endif
-static void (*kputc)(dev_t, char) = 0;
+static void (*kputc)(dev_t, int) = 0;
 
 
 void set_console(dev_t dev)

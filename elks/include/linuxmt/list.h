@@ -1,7 +1,8 @@
-// Kernel library
-// Double-linked list
+#ifndef __LINUXMT_LIST_H
+#define __LINUXMT_LIST_H
 
-#pragma once
+/* Kernel library */
+/* Double-linked list */
 
 struct list {
 	struct list * prev;
@@ -16,3 +17,5 @@ void list_insert_before (list_s * next, list_s * node);
 void list_insert_after  (list_s * prev, list_s * node);
 
 void list_remove (list_s * node);
+
+#endif

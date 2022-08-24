@@ -41,13 +41,13 @@ copyrom:
 compress:
 	cd $(TOPDIR)/target/bin; elks-compress *
 
-images: images-minix images-mbr images-fat
+images: images-minix images-hd images-fat
 
-images-minix: fd360-minix fd720-minix fd1200-minix fd1440-minix fd2880-minix hd32-minix
+images-minix: fd360-minix fd720-minix fd1200-minix fd1440-minix fd2880-minix
 
 images-fat: fd360-fat fd720-fat fd1200-fat fd1440-fat fd2880-fat hd32-fat hd32mbr-fat
 
-images-mbr: hd32-minix hd32mbr-minix
+images-hd: hd32-minix hd32mbr-minix hd64-minix
 
 fd360-minix:
 	echo CONFIG_APPS_360K=y		> Config
@@ -111,6 +111,20 @@ hd32-minix:
 	echo CONFIG_IMG_BOOT=y		>> Config
 	sed -n -e '/CONFIG_TIME_/p'	>> Config < $(TOPDIR)/.config
 	$(MAKE) -f Make.image "CONFIG=$(TOPDIR)/image/Config" NAME=hd32-minix
+	rm Config
+
+hd64-minix:
+	echo CONFIG_APPS_2880K=y	> Config
+	echo CONFIG_IMG_HD=y		>> Config
+	echo CONFIG_IMG_BLOCKS=64008 >> Config
+	echo CONFIG_IMG_SECT=63		>> Config
+	echo CONFIG_IMG_HEAD=16		>> Config
+	echo CONFIG_IMG_CYL=127		>> Config
+	echo CONFIG_IMG_MINIX=y		>> Config
+	echo CONFIG_IMG_DEV=y		>> Config
+	echo CONFIG_IMG_BOOT=y		>> Config
+	sed -n -e '/CONFIG_TIME_/p'	>> Config < $(TOPDIR)/.config
+	$(MAKE) -f Make.image "CONFIG=$(TOPDIR)/image/Config" NAME=hd64-minix
 	rm Config
 
 fd360-fat:

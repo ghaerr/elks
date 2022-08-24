@@ -72,7 +72,7 @@ struct tty_ops {
     int (*write) ();
     int (*read) ();
     int (*ioctl) ();
-    void (*conout) (dev_t, char);
+    void (*conout) (dev_t, int);
 };
 
 struct tty {
@@ -106,6 +106,7 @@ extern void ttystd_release(struct tty *tty);
 extern int tty_allocq(struct tty *tty, int insize, int outsize);
 extern void tty_freeq(struct tty *tty);
 		/* Allocate and free character queues*/
+extern void set_serial_irq(int tty, int irq);
 
 extern void set_console(dev_t dev);
 

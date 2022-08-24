@@ -40,7 +40,13 @@
 //
 // Whole-track reads are disabled for the FAT bootloader because we are a
 // bit short of code space :-(
-#ifndef BOOT_FAT
+//
+// Whole-track reads are also disabled for the NEC PC98 platform for now;
+// it seems that, instead of a DDPT, we need to frob the PC98's F2DD_POINTER
+// (http://www.webtech.co.jp/company/doc/undocumented_mem/memsys.txt)
+// mechanism for configuring the "end of track" value; we will need to
+// somehow figure out this mechanism and test it :-( :-(
+#if !defined BOOT_FAT && !defined CONFIG_ARCH_PC98
 #   define FAST_READ
 #else
 #   undef FAST_READ
@@ -65,7 +71,8 @@
 
 	.text
 
-// Loaded by the BIOS at 0:7C00h (32K - 1K) with DL = boot drive number
+// Loaded by the BIOS at 0:7C00h (32K - 1K) or 7C0h:0
+// with DL = boot drive number
 
 entry:
 
@@ -129,7 +136,7 @@ entry1:
 	lds (%bx),%si  // ds:si = BIOS original table
 	push %ds
 	push %si
-	push %cs
+	push %cx       // push address 0:78h (cx = 0)
 	push %bx
 .if floppy_table == entry
 	xor %di,%di

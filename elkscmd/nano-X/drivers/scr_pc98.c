@@ -1,50 +1,20 @@
 /*
  * Copyright (c) 1999 Greg Haerr <greg@censoft.com>
  *
- * EGA/VGA 16 color 4 planes Screen Driver, PC bios version
- * 	This driver uses int10 bios to set/reset graphics/text modes,
- * 	and to get the address of the ROM character font which
- * 	is used for the character bitmaps.  All other access to the
- * 	hardware is controlled through this driver.
+ * PC-98 16 color 4 planes Screen Driver
+ * This driver is created and modifed, based on EGA/VGA driver.
+ * T. Yamada 2022
  *
- * 	Blitting enabled with #define HAVEBLIT in vgaplan4.h
+ * 	For PC-98, 640x400 resolution
+ * 	This driver uses LIO for graphical setting.
  *
- * 	This driver links with one of two other files, vgaplan4.c,
- * 	the portable VGA 4 planes 16 color driver, or asmplan4.s, which
- * 	is 8086 assembly language for speed.  This file itself
- * 	doesn't know about any planar or packed arrangement, relying soley
+ * 	This file itself doesn't know about any planar or packed arrangement, relying soley
  * 	on the following external routines for all graphics drawing:
  * 		ega_init, ega_drawpixel, ega_readpixel,
  * 		ega_drawhorzline, ega_drawvertline
- * 	In addition, romfont.c is linked in for the PC rom font routines.
- *
- * 	All text/font drawing code is based on the above routines and
- * 	the included entry points for getting the ROM bitmap data.  Compiled
- * 	in fonts aren't supported for size reasons.  scr_fb supports them.
- *
- * 	If the environment variable EGAMODE is set, the driver implements
- *	the EGA 640x350 (mode 10h) resolution, otherwise 640x480 (mode 12h)
- *	graphics mode is set.
- *
- *	The environment variable CHARHEIGHT if set will set the assumed rom
- *	font character height, which defaults to 14.
- *
- * 	If #define HWINIT 1 is set, the file vgainit.c is
- * 	used to provide non-bios direct hw initialization of the VGA
- * 	chipset.
  */
 
-/* Modified for PC-98
- * T. Yamada 2022
- *
- * For PC-98, 640x400 resolution
- */
-
-#define HWINIT	0		/* =1 for non-bios direct hardware init*/
-
-#if ELKS
 #include <linuxmt/ntty.h>
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include "../device.h"
@@ -60,36 +30,33 @@
 
 #define _MK_FP(seg,off) ((void __far *)((((unsigned long)(seg)) << 16) | (off)))
 
-/* VGA driver entry points*/
-static int  VGA_open(PSD psd);
-static void VGA_close(PSD psd);
-static void VGA_getscreeninfo(PSD psd,PSCREENINFO psi);;
-static void VGA_setpalette(PSD psd,int first,int count,RGBENTRY *pal);
-static void VGA_drawpixel(PSD psd,COORD x, COORD y, PIXELVAL c);
-static PIXELVAL VGA_readpixel(PSD psd,COORD x, COORD y);
-static void VGA_drawhline(PSD psd,COORD x1, COORD x2, COORD y, PIXELVAL c);
-static void VGA_drawvline(PSD psd,COORD x,COORD y1,COORD y2,PIXELVAL c);
-static void VGA_fillrect(PSD psd,COORD x1,COORD y1,COORD x2,COORD y2,PIXELVAL c);
+/* PC98 driver entry points*/
+static int  PC98_open(PSD psd);
+static void PC98_close(PSD psd);
+static void PC98_getscreeninfo(PSD psd,PSCREENINFO psi);;
+static void PC98_setpalette(PSD psd,int first,int count,RGBENTRY *pal);
+static void PC98_drawpixel(PSD psd,COORD x, COORD y, PIXELVAL c);
+static PIXELVAL PC98_readpixel(PSD psd,COORD x, COORD y);
+static void PC98_drawhline(PSD psd,COORD x1, COORD x2, COORD y, PIXELVAL c);
+static void PC98_drawvline(PSD psd,COORD x,COORD y1,COORD y2,PIXELVAL c);
+static void PC98_fillrect(PSD psd,COORD x1,COORD y1,COORD x2,COORD y2,PIXELVAL c);
 
 SCREENDEVICE	scrdev = {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, NULL,
-	VGA_open,
-	VGA_close,
-	VGA_getscreeninfo,
-	VGA_setpalette,
-	VGA_drawpixel,
-	VGA_readpixel,
-	VGA_drawhline,
-	VGA_drawvline,
-	VGA_fillrect,
+	PC98_open,
+	PC98_close,
+	PC98_getscreeninfo,
+	PC98_setpalette,
+	PC98_drawpixel,
+	PC98_readpixel,
+	PC98_drawhline,
+	PC98_drawvline,
+	PC98_fillrect,
 	pcrom_getfontinfo,
 	pcrom_gettextsize,
 	pcrom_gettextbits,
 	ega_blit
 };
-
-/* operating mode*/
-static BOOL VGAMODE = TRUE;	/* ega or vga screen rows*/
 
 void int_A0(unsigned int l_seg)
 {
@@ -171,7 +138,7 @@ void int_A3(unsigned int l_seg)
 }
 
 static int
-VGA_open(PSD psd)
+PC98_open(PSD psd)
 {
 	unsigned char *lio_malloc;
 	unsigned char __far *lio_m;
@@ -180,16 +147,6 @@ VGA_open(PSD psd)
 	unsigned long __far *intvec;
 	unsigned int __far *lioaddr;
 	unsigned int i;
-
-	/* setup operating mode from environment variable*/
-	if(getenv("EGAMODE"))
-		VGAMODE = FALSE;
-	else VGAMODE = TRUE;
-
-#if ELKS
-	/* disallow console switching while in graphics mode*/
-	//ioctl(0, DCGET_GRAPH); /*continue if failed*/
-#endif
 
 	intvec = (unsigned long __far *) _MK_FP(0, LIOINT<<2); /* interrupt vector for INT 0xA0 */
 	lioaddr = (unsigned int __far *) _MK_FP(LIOSEG, 6);   /* Starting Rom Address for INT 0xA0 handler */
@@ -261,22 +218,14 @@ VGA_open(PSD psd)
 }
 
 static void
-VGA_close(PSD psd)
+PC98_close(PSD psd)
 {
-#if ELKS
-	/* allow console switching again*/
-	//ioctl(0, DCREL_GRAPH);
-#endif
-#if HWINIT
-	ega_hwterm(psd);
-#else
 	outb(0x0C,0xA2);   // GDC Stop
 	outb(0x0A,0x68);   // Code Access for font
-#endif
 }
 
 static void
-VGA_getscreeninfo(PSD psd,PSCREENINFO psi)
+PC98_getscreeninfo(PSD psd,PSCREENINFO psi)
 {
 	psi->rows = psd->yres;
 	psi->cols = psd->xres;
@@ -286,31 +235,19 @@ VGA_getscreeninfo(PSD psd,PSCREENINFO psi)
 	psi->pixtype = psd->pixtype;
 	psi->fonts = NUMBER_FONTS;
 
-	if(VGAMODE) {
-		/* VGA 640x480*/
-		psi->xdpcm = 27;	/* assumes screen width of 24 cm*/
-		psi->ydpcm = 27;	/* assumes screen height of 18 cm*/
-	} else {
-		/* EGA 640x350*/
-		psi->xdpcm = 27;	/* assumes screen width of 24 cm*/
-		psi->ydpcm = 19;	/* assumes screen height of 18 cm*/
-	}
-
-#if ETA4000
-	/* SVGA 800x600*/
-	psi->xdpcm = 33;		/* assumes screen width of 24 cm*/
-	psi->ydpcm = 33;		/* assumes screen height of 18 cm*/
-#endif
+	/* 640x400 */
+	psi->xdpcm = 27;	/* assumes screen width of 24 cm*/
+	psi->ydpcm = 27;	/* assumes screen height of 15 cm*/
 }
 
 static void
-VGA_setpalette(PSD psd,int first,int count,RGBENTRY *pal)
+PC98_setpalette(PSD psd,int first,int count,RGBENTRY *pal)
 {
 	/* not yet implemented, std 16 color palette assumed*/
 }
 
 static void
-VGA_drawpixel(PSD psd,COORD x, COORD y, PIXELVAL c)
+PC98_drawpixel(PSD psd,COORD x, COORD y, PIXELVAL c)
 {
 #if HAVEBLIT
 	if(psd->flags & PSF_MEMORY)
@@ -321,7 +258,7 @@ VGA_drawpixel(PSD psd,COORD x, COORD y, PIXELVAL c)
 }
 
 static PIXELVAL
-VGA_readpixel(PSD psd,COORD x, COORD y)
+PC98_readpixel(PSD psd,COORD x, COORD y)
 {
 #if HAVEBLIT
 	if(psd->flags & PSF_MEMORY)
@@ -332,7 +269,7 @@ VGA_readpixel(PSD psd,COORD x, COORD y)
 
 /* Draw horizontal line from x1,y to x2,y including final point*/
 static void
-VGA_drawhline(PSD psd,COORD x1, COORD x2, COORD y, PIXELVAL c)
+PC98_drawhline(PSD psd,COORD x1, COORD x2, COORD y, PIXELVAL c)
 {
 	++x2;		/* draw final point*/
 #if HAVEBLIT
@@ -345,7 +282,7 @@ VGA_drawhline(PSD psd,COORD x1, COORD x2, COORD y, PIXELVAL c)
 
 /* Draw a vertical line from x,y1 to x,y2 including final point*/
 static void
-VGA_drawvline(PSD psd,COORD x, COORD y1, COORD y2, PIXELVAL c)
+PC98_drawvline(PSD psd,COORD x, COORD y1, COORD y2, PIXELVAL c)
 {
 	++y2;		/* draw final point*/
 #if HAVEBLIT
@@ -357,7 +294,7 @@ VGA_drawvline(PSD psd,COORD x, COORD y1, COORD y2, PIXELVAL c)
 }
 
 static void
-VGA_fillrect(PSD psd,COORD x1, COORD y1, COORD x2, COORD y2, PIXELVAL c)
+PC98_fillrect(PSD psd,COORD x1, COORD y1, COORD x2, COORD y2, PIXELVAL c)
 {
 	++x2;		/* draw last point*/
 #if HAVEBLIT

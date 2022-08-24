@@ -46,11 +46,6 @@ struct serial_info {
 #define INB		inb	// use inb_p for 1us delay
 #define OUTB		outb	// use outb_p for 1us delay
 
-/* all boxes should be able to do 9600 at least,
- * afaik 8250 works fine up to 19200
- */
-
-#define DEFAULT_BAUD_RATE	9600
 #define DEFAULT_LCR		UART_LCR_WLEN8
 
 #define DEFAULT_MCR		\
@@ -92,6 +87,12 @@ extern struct tty ttys[];
 #define	RS_IALLMOSTFULL 	(3 * INQ_SIZE / 4)
 #define	RS_IALLMOSTEMPTY	(    INQ_SIZE / 4)
 
+/* allow init to easily update the port irq from bootopts */
+void set_serial_irq(int tty, int irq)
+{
+	ports[tty].irq = irq;
+}
+	
 /*
  * Flush input by reading RX register.
  * Not used when FIFO enabled, as HW fifo cleared when enabled.
@@ -287,14 +288,15 @@ void rs_irq(int irq, struct pt_regs *regs)
     char *io = sp->io;
     struct ch_queue *q = &sp->tty->inq;
 
-#if 0	// turn on for serial stats
     int status = INB(io + UART_LSR);			/* check for data overrun*/
+    if ((status & UART_LSR_DR) == 0)			/* QEMU may interrupt w/no data*/
+	return;
+
+#if 0	// turn on for serial stats
     if (status & UART_LSR_OE)
 	printk("serial: data overrun\n");
     if (status & (UART_LSR_FE|UART_LSR_PE))
 	printk("serial: frame/parity error\n");
-    if ((status & UART_LSR_DR) == 0)			/* QEMU may interrupt w/no data*/
-	printk("serial: interrupt w/o data available\n");
 #endif
 
     /* read uart/fifo until empty*/
@@ -318,6 +320,7 @@ static void rs_release(struct tty *tty)
     debug_tty("SERIAL close %d\n", current->pid);
     if (--tty->usecount == 0) {
 	OUTB(0, port->io + UART_IER);	/* Disable all interrupts */
+	free_irq(port->irq);
 	tty_freeq(tty);
     }
 }
@@ -330,14 +333,33 @@ static int rs_open(struct tty *tty)
     debug_tty("SERIAL open %d\n", current->pid);
 
     if (!(port->flags & SERF_EXIST))
-	return -ENODEV;
+	return -ENXIO;
 
     /* increment use count, don't init if already open*/
     if (tty->usecount++)
 	return 0;
 
+    switch(port->irq) {
+#ifdef CONFIG_FAST_IRQ4
+    case 4:
+	err = request_irq(port->irq, (irq_handler) _irq_com1, INT_SPECIFIC);
+	break;
+#endif
+#ifdef CONFIG_FAST_IRQ3
+    case 3:
+	err = request_irq(port->irq, (irq_handler) _irq_com2, INT_SPECIFIC);
+	break;
+#endif
+    default:
+	err = request_irq(port->irq, rs_irq, INT_GENERIC);
+	break;
+    }
+    if (err) goto errout;
+    irq_to_port[port->irq] = port - ports;	/* Map irq to this tty # */
+
     err = tty_allocq(tty, RSINQ_SIZE, RSOUTQ_SIZE);
     if (err) {
+errout:
 	--tty->usecount;
 	return err;
     }
@@ -440,23 +462,7 @@ static void rs_init(void)
     register struct tty *tty = ttys + NR_CONSOLES;
 
     do {
-	irq_to_port[sp->irq] = sp - ports;	/* Map irq to tty # */
 	if (!rs_probe(sp)) {
-	    switch(sp->irq) {
-#ifdef CONFIG_FAST_IRQ4
-	    case 4:
-		request_irq(sp->irq, (irq_handler) _irq_com1, INT_SPECIFIC);
-		break;
-#endif
-#ifdef CONFIG_FAST_IRQ3
-	    case 3:
-		request_irq(sp->irq, (irq_handler) _irq_com2, INT_SPECIFIC);
-		break;
-#endif
-	    default:
-		request_irq(sp->irq, rs_irq, INT_GENERIC);
-		break;
-	    }
 	    sp->tty = tty;
 	    update_port(sp);
 	}
@@ -465,7 +471,7 @@ static void rs_init(void)
 }
 
 /* note: this function will be called prior to serial_init if serial console set*/
-void rs_conout(dev_t dev, char Ch)
+void rs_conout(dev_t dev, int Ch)
 {
     register struct serial_info *sp = &ports[MINOR(dev) - RS_MINOR_OFFSET];
 

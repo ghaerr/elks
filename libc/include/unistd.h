@@ -1,5 +1,5 @@
-
-#pragma once
+#ifndef __UNISTD_H
+#define __UNISTD_H
 
 #include <features.h>
 #include <sys/types.h>
@@ -92,3 +92,6 @@ extern int optopt;
 extern int opterr;
 
 extern char ** environ;
+extern char * _program_filename;
+
+#endif

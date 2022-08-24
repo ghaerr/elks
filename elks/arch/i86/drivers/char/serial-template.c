@@ -184,7 +184,7 @@ static int rs_open(struct tty *tty)
 }
 
 /* note: this function will be called prior to serial_init if serial console set*/
-void rs_conout(dev_t dev, char c)
+void rs_conout(dev_t dev, int c)
 {
     struct serial_info *sp = &ports[MINOR(dev) - RS_MINOR_OFFSET];
 

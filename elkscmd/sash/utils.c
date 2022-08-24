@@ -119,8 +119,9 @@ timestring(time_t t)
 	buf[12] = '\0';
 
 	if ((t > now) || (t < now - 365*24*60L*60)) {
-		strcpy(&buf[7], &str[20]);
-		buf[11] = '\0';
+		buf[7] = ' ';
+		strcpy(&buf[8], &str[20]);
+		buf[12] = '\0';
 	}
 
 	return buf;

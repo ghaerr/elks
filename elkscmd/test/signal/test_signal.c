@@ -9,7 +9,7 @@ void sigint (int signo)
 	_signo = signo;
 }
 
-extern __sighandler_t _sigtable [15];
+extern sighandler_t _sigtable [15];
 
 int main (int argc, char ** argv)
 {

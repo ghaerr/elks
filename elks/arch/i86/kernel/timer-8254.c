@@ -7,6 +7,7 @@
 #include <linuxmt/config.h>
 #include <linuxmt/config.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/memory.h>
 #include <linuxmt/timer.h>
 
 #include <arch/io.h>

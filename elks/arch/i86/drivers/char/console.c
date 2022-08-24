@@ -1,6 +1,6 @@
 /* shared console routines for Direct and BIOS consoles - #include in console drivers*/
 
-static void WriteChar(register Console * C, char c)
+static void WriteChar(register Console * C, int c)
 {
     /* check for graphics lock */
     while (glock) {
@@ -11,7 +11,7 @@ static void WriteChar(register Console * C, char c)
     C->fsm(C, c);
 }
 
-void Console_conout(dev_t dev, char Ch)
+void Console_conout(dev_t dev, int Ch)
 {
     Console *C = &Con[MINOR(dev)];
 
@@ -74,7 +74,12 @@ static void itoaQueue(int i)
 	Console_conin(*b++);
 }
 
-static void AnsiCmd(register Console * C, char c)
+/* reverse map table ANSI -> ega      blk red grn yel blu mag cyn wht */
+static unsigned char ega_color[16] = {  0,  4,  2,  6,  1,  5,  3,  7,
+                                        8, 12, 10, 14,  9, 13, 11, 15 };
+
+/* ESC [ processing */
+static void AnsiCmd(register Console * C, int c)
 {
     int n;
 
@@ -84,7 +89,7 @@ static void AnsiCmd(register Console * C, char c)
     if (!isalpha(c)) {
 	return;
     }
-    *(C->parmptr) = 0;
+    *C->parmptr = '\0';
 
     switch (c) {
     case 's':			/* Save the current location */
@@ -157,15 +162,17 @@ static void AnsiCmd(register Console * C, char c)
 	char *p = (char *)C->params;
 	do {
 	  n = atoi(p);
-	  if (n >= 30 && n <= 37) {
-	    C->attr &= 0xf8;
-	    C->attr |= (n-30) & 0x07;
-	    C->color = C->attr;
+	  if (n >= 30 && n <= 37) {             /* set fg color */
+	    C->attr &= 0xf0;                    /* don't save bright bit */
+	    C->attr |= ega_color[n-30];
 	  }
 	  else if (n >= 40 && n <= 47) {
-	    C->attr &= 0x8f;
-	    C->attr |= ((n-40) << 4) & 0x70;
-	    C->color = C->attr;
+	    C->attr &= 0x8f;                    /* save blink bit */
+	    C->attr |= ega_color[n-40] << 4;
+	  }
+	  else if (n >= 90 && n <= 97) {        /* set bright fg color */
+	    C->attr &= 0xf0;                    /* don't save bright bit */
+	    C->attr |= ega_color[n-90+8];
 	  }
 	  else switch (n) {
 	    case 1:
@@ -191,7 +198,7 @@ static void AnsiCmd(register Console * C, char c)
 	    case 49:
 	    case 0:
 	    default:
-		C->attr = C->color = A_DEFAULT;
+		C->attr = A_DEFAULT;
 		break;
 	  }
 	  while (*p >= '0' && *p <= '9')
@@ -214,23 +221,36 @@ static void AnsiCmd(register Console * C, char c)
     C->fsm = std_char;
 }
 
-/* Escape character processing */
-static void esc_char(register Console * C, char c)
+/* ANSI emulator - ESC seen */
+static void esc_char(register Console * C, int c)
 {
     /* Parse CSI sequence */
     C->parmptr = C->params;
-    C->fsm = (c == '[' ? AnsiCmd : std_char);
+    switch (c) {
+    case '[':
+        C->fsm = AnsiCmd;
+        return;
+    case '7':           /* DEC save cursor pos */
+        C->savex = C->cx;
+        C->savey = C->cy;
+        break;
+    case '8':           /* DEC restore cursor pos */
+        C->cx = C->savex;
+        C->cy = C->savey;
+        break;
+    }
+    C->fsm = std_char;
 }
 #endif
 
 #ifdef CONFIG_EMUL_VT52
-static void esc_Y2(register Console * C, char c)
+static void esc_Y2(register Console * C, int c)
 {
     Console_gotoxy(C, c - ' ', C->tmp);
     C->fsm = std_char;
 }
 
-static void esc_YS(register Console * C, char c)
+static void esc_YS(register Console * C, int c)
 {
     switch(C->tmp) {
     case 'Y':
@@ -246,7 +266,7 @@ static void esc_YS(register Console * C, char c)
 }
 
 /* Escape character processing */
-static void esc_char(register Console * C, char c)
+static void esc_char(register Console * C, int c)
 {
     /* process single ESC char sequences */
     C->fsm = std_char;
@@ -300,7 +320,7 @@ static void esc_char(register Console * C, char c)
 #endif
 
 /* Normal character processing */
-static void std_char(register Console * C, char c)
+static void std_char(register Console * C, int c)
 {
     switch(c) {
     case BEL:
@@ -414,7 +434,7 @@ static int Console_write(register struct tty *tty)
     int cnt = 0;
 
     while ((tty->outq.len > 0) && !glock) {
-	WriteChar(C, (char)tty_outproc(tty));
+	WriteChar(C, tty_outproc(tty));
 	cnt++;
     }
     if (C == Visible)

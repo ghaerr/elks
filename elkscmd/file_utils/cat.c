@@ -14,8 +14,10 @@ static int copyfd(int fd)
 {
 	int n;
 
-	while ((n = read(fd, readbuf, sizeof(readbuf))) > 0)
-		write(STDOUT_FILENO, readbuf, n);
+	while ((n = read(fd, readbuf, sizeof(readbuf))) > 0) {
+		if (write(STDOUT_FILENO, readbuf, n) != n)
+			return 1;
+    }
 	return n < 0? 1: 0;
 }
 

@@ -11,12 +11,11 @@ USEBCC 		= Y
 
 CLEANDEP	= 
 
-CLEANME 	= Image bootsect nbImage nbImage.rd netbootsect setup \
-		  system system.app
+CLEANME 	= Image bootsect nbImage netbootsect setup system
 
 DEPEND  	= 
 
-DISTFILES	= empty system.afl system.rsz tux.pic
+DISTFILES	=
 
 NOINDENT	=
 

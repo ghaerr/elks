@@ -930,8 +930,8 @@ int editorUpdateSyntax(erow *row) {
     return 0;
 }
 
-/* ELKS colors:
- * 31=blue, 32=green, 33=cyan, 34=red, 35=magenta, 36=yellow/orange, 37=white
+/* ANSI colors:
+ * 31=red, 32=green, 33=yellow, 34=blue, 35=magenta, 36=cyan, 37=white
  */
 /* Maps syntax highlight token types to terminal colors. */
 int editorSyntaxToColor(int hl) {
