@@ -100,7 +100,7 @@ struct minix_fs_dat *new_fs(const char *fn,int magic,unsigned long fsize,int ino
   IMAPS(fs) =UPPER(inodes + 1,BITS_PER_BLOCK);
   ZMAPS(fs)=UPPER(fsize-(1+IMAPS(fs)), BITS_PER_BLOCK);
   FIRSTZONE(fs) = NORM_FIRSTZONE(fs);
-//printf("IMAPS %u, ZMAPS %u, FIRST %u\n", IMAPS(fs), ZMAPS(fs), FIRSTZONE(fs));
+  debug("IMAPS %u, ZMAPS %u, FIRST %u\n", IMAPS(fs), ZMAPS(fs), FIRSTZONE(fs));
   if (IMAPS(fs) > MINIX_I_MAP_SLOTS)
     fatalmsg("Too many inodes requested: max is 32736\n");
 
@@ -231,9 +231,7 @@ struct minix_fs_dat *close_fs(struct minix_fs_dat *fs) {
   dofwrite(goto_blk(fs->fp,MINIX_SUPER_BLOCK+1),
 	  fs->inode_bmap,IMAPS(fs) * BLOCK_SIZE);
   // printf("ZMAPSIZE=%d\n",ZMAPS(fs));
-  // printf("%4d) FTELL=%d - %x\n",__LINE__,ftell(fs->fp),ftell(fs->fp));
   dofwrite(fs->fp,fs->zone_bmap,ZMAPS(fs) * BLOCK_SIZE);
-  // printf("%4d) FTELL=%d - %x\n",__LINE__,ftell(fs->fp),ftell(fs->fp));
   if (VERSION_2(fs))
     dofwrite(fs->fp,fs->ino.v2,INODE_BUFFER_SIZE(fs));
   else

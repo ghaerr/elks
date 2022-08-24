@@ -28,7 +28,7 @@
 
 int df(char *device);
 
-typedef int bit_t;
+typedef unsigned int bit_t;
 bit_t bit_count(unsigned blocks, bit_t bits, int fd);
 char *devname(char *dirname);
 

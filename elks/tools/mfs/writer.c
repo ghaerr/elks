@@ -43,11 +43,13 @@ void writefile(struct minix_fs_dat *fs,FILE *fp,int inode) {
 
   do {
     bsz = fread(blk,1,BLOCK_SIZE,fp);
+    if (!bsz) break;
     for (j=0;j<bsz;j++) if (blk[j]) break;
     if (j != bsz) { /* This is not a hole, so better write it */
       if (bsz < BLOCK_SIZE) memset(blk+bsz,0,BLOCK_SIZE-bsz);
       write_inoblk(fs,inode,blkcnt++,blk);
     } else {
+      debug("WRITER FREE HOLE %d bsz %d\n", blkcnt, bsz);
       free_inoblk(fs,inode,blkcnt++);
     }
     count += bsz;
