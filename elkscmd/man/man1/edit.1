@@ -1,18 +1,19 @@
-.TH MINED 1
-.CD "mined \(en \*(M2 editor"
-.SX "mined\fR [\fIfile\fR]
-.FL "\fR(none)"
+.TH EDIT 1
+.SH NAME
+edit - Screen editor
+.SH SYNOPSIS
+\fBedit\fR [\fIfile\fR]
 .TP 20
-.B mined file.c
+.B edit file.c
 # Edit an existing file
 .TP 20
-.B mined
+.B edit
 # Call editor to create a new file
 .TP 20
-.B ls \(enl | mined
-# Use \fImined\fR as a pager to inspect listing
-.PP
-\fIMined\fR is a simple screen editor.
+.B ls \(enl | edit
+# Use \fIedit\fR as a pager to inspect listing
+.SH DESCRIPTION
+\fIEdit\fR is a simple screen editor.
 At any instant, a window of 24 lines is visible on the screen.
 The current position in the file is shown by the cursor.
 Ordinary characters typed in are inserted at the cursor.
@@ -50,52 +51,47 @@ is the \*(OQescape\*(CQ key.
 Forward and backward searching requires a regular expression as the search
 pattern.
 Regular expressions follow the same rules as in the 
-.Ux
 editor,
-.I ed .
+.I ed
+.
 These rules can be stated as:
-.LI
-.IT
+.TP
 Any displayable character matches itself.
-.IT
+.TP
 \&. (period) matches any character except line feed.
-.IT
+.TP
 \&^ (circumflex) matches the start of the line.
-.IT
+.TP
 \&$ (dollar sign) matches the end of the line.
-.IT
+.TP
 \&\\c matches the character \fIc\fR (including period, circumflex, etc).
-.IT
+.TP
 [\fIstring\fR] matches any of the characters in the string.
-.IT
+.TP
 [^string] matches any of the characters except those in the string.
-.IT
+.TP
 [\fIx\(eny\fR] matches any characters between \fIx\fR and \fIy\fR (e.g., [\fIa\(enz\fR]).
-.IT
+.TP
 Pattern\(** matches any number of occurrences of \fIpattern\fR.
-.LX
+.PP
 Some examples of regular expressions are:
 .HS
-.in +1.25i
-.ta +1.0i
-.ti -1.0i
+.TP
 The boy	matches the string \*(OQThe boy\*(CQ
-.ti -1.0i
+.TP
 ^$	matches any empty line.
-.ti -1.0i
+.TP
 ^.$	matches any line containing exactly 1 character
-.ti -1.0i
+.TP
 ^A.*\\.$	matches any line starting with an \fIA\fR, ending with a period.
-.ti -1.0i
+.TP
 ^[A\(enZ]*$	matches any line containing only capital letters (or empty).
-.ti -1.0i
+.TP
 [A\(enZ0\(en9]	matches any line containing either a capital letter or a digit.
-.ti -1.0i
+.TP
 \&.*X$	matches any line ending in \*(OQX\*(CQ
-.ti -1.0i
+.TP
 A.*B	matches any line containing an \*(OQA\*(CQ and then a \*(OQB\*(CQ
-.in -1.25i
-.sp
 .PP
 Control characters cannot be entered into a file simply by typing them because
 all of them are editor commands.
@@ -105,101 +101,97 @@ Release both ALT and ESC and type the control character.
 Control characters are displayed in reverse video.
 .PP
 The 
-.I mined
+.I edit
 commands are as follows.
 .sp
-.in +1.25i
-.ta +1.0i
-.ti -1.25i
+.TP
 \fBCURSOR MOTION\fR
-.ti -1.0i
+.TP
 \fBarrows\fR	Move the cursor in the indicated direction
-.ti -1.0i
+.TP
 \fBCTRL-A\fR	Move cursor to start of current line
-.ti -1.0i
+.TP
 \fBCTRL-Z\fR	Move cursor to end of current line
-.ti -1.0i
+.TP
 \fBCTRL-^\fR	Move cursor to top of screen
-.ti -1.0i
+.TP
 \fBCTRL-_\fR	Move cursor to end of screen
-.ti -1.0i
+.TP
 \fBCTRL-F\fR	Move cursor forward to start of next word 
-.ti -1.0i
+.TP
 \fBCTRL-B\fR	Move cursor backward to start of previous word 
 
-.ti -1.25i
+.TP
 \fBSCREEN MOTION\fR
-.ti -1.0i
+.TP
 \fBHome key\fR	Move to first character of the file
-.ti -1.0i
+.TP
 \fBEnd key\fR	Move to last character of the file
-.ti -1.0i
+.TP
 \fBPgUp key\fR	Scroll window up 23 lines (closer to start of the file)
-.ti -1.0i
+.TP
 \fBPgDn key\fR	Scroll window down 23 lines (closer to end of the file)
-.ti -1.0i
+.TP
 \fBCTRL-U\fR	Scroll window up 1 line
-.ti -1.0i
+.TP
 \fBCTRL-D\fR	Scroll window down 1 line
 
-.ti -1.25i
+.TP
 \fBMODIFYING TEXT\fR
-.ti -1.0i
+.TP
 \fBDel key\fR	Delete the character under the cursor
-.ti -1.0i
+.TP
 \fBBackspace\fR	Delete the character to left of the cursor
-.ti -1.0i
+.TP
 \fBCTRL-N\fR	Delete the next word
-.ti -1.0i
+.TP
 \fBCTRL-P\fR	Delete the previous word
-.ti -1.0i
+.TP
 \fBCTRL-T\fR	Delete tail of line (all characters from cursor to end of line)
-.ti -1.0i
+.TP
 \fBCTRL-O\fR	Open up the line (insert line feed and back up)
-.ti -1.0i
+.TP
 \fBCTRL-G\fR	Get and insert a file at the cursor position
 
-.ti -1.25i
+.TP
 \fBBUFFER OPERATIONS\fR
-.ti -1.0i
+.TP
 \fBCTRL-@\fR	Set mark at current position for use with CTRL-C and CTRL-K
-.ti -1.0i
+.TP
 \fBCTRL-C\fR	Copy the text between the mark and the cursor into the buffer
-.ti -1.0i
+.TP
 \fBCTRL-K\fR	Delete text between mark and cursor; also copy it to the buffer
-.ti -1.0i
+.TP
 \fBCTRL-Y\fR	Yank contents of the buffer out and insert it at the cursor
-.ti -1.0i
+.TP
 \fBCTRL-Q\fR	Write the contents of the buffer onto a file
 
-.ti -1.25i
+.TP
 \fBMISCELLANEOUS\fR
-.ti -1.0i
+.TP
 \fBnumeric +\fR	Search forward (prompts for regular expression)
-.ti -1.0i
+.TP
 \fBnumeric \(mi\fR	Search backward (prompts for regular expression)
-.ti -1.0i
+.TP
 \fBnumeric 5\fR	Display the file status
-.ti -1.0i
+.TP
 \fBCTRL-]\fR	Go to specific line
-.ti -1.0i
+.TP
 \fBCTRL-R\fR	Global replace \fIpattern\fR with \fIstring\fR (from cursor to end)
-.ti -1.0i
+.TP
 \fBCTRL-L\fR	Line replace \fIpattern\fR with \fIstring\fR 
-.ti -1.0i
+.TP
 \fBCTRL-W\fR	Write the edited file back to the disk
-.ti -1.0i
+.TP
 \fBCTRL-X\fR	Exit the editor
-.ti -1.0i
+.TP
 \fBCTRL-S\fR	Fork off a shell (use CTRL-D to get back to the editor)
-.ti -1.0i
+.TP
 \fBCTRL-\\\fR	Abort whatever the editor was doing and wait for command
-.ti -1.0i
+.TP
 \fBCTRL-E\fR	Erase screen and redraw it
-.ti -1.0i
+.TP
 \fBCTRL-V\fR	Visit (edit) a new file
-.in -1.25i
-
-.SS "Author"
-.PP
-\fIMined\fR was designed by Andy Tanenbaum and written by Michiel Huisjes.
+.SH AUTHOR
+\fIEdit\fR was designed by Andy Tanenbaum and written by Michiel Huisjes,
+and called \fImined\fR on MINIX.
