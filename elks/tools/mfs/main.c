@@ -48,6 +48,9 @@
  * fix ln, ln -s
  * add getoptX() since Linux and OSX getopt() don't work together
  * fix -k option from always skipping zero-length files
+ * fix operation with block numbers > 32767 (requires unsigned int blkno in goto_blk)
+ * fix creating files using double indirect blocks (buggy ino_freezone)
+ * fix bad image created with files > 775K (DIND block 255 buggy ino_freezone)
  */
 
 #include <stdarg.h>

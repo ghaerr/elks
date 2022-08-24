@@ -11,6 +11,7 @@
 #include <linuxmt/minix_fs.h>
 #include <linuxmt/stat.h>
 #include <linuxmt/fcntl.h>
+#include <linuxmt/debug.h>
 
 #define DIRECT_BLOCK		((inode->i_size + 1023) >> 10)
 #define INDIRECT_BLOCK(offset)	((long)(DIRECT_BLOCK)-offset)
@@ -41,7 +42,7 @@ static int V1_trunc_direct(register struct inode *inode)
     int retry = 0;
 
   repeat:
-  printk("DIRECT_BLOCK %ld\n", DIRECT_BLOCK);
+    debug("DIRECT_BLOCK %ld\n", DIRECT_BLOCK);
     for (i = DIRECT_BLOCK; i < 7; i++) {
 	p = &inode->u.minix_i.i_zone[i];
 	if (!(tmp = *p)) continue;
@@ -90,7 +91,7 @@ static int V1_trunc_indirect(register struct inode *inode,
     }
     map_buffer(ind_bh);
   repeat:
-  printk("INDIRECT_BLOCK %ld\n", INDIRECT_BLOCK(offset));
+    debug("INDIRECT_BLOCK %ld\n", INDIRECT_BLOCK(offset));
     for (j = INDIRECT_BLOCK(offset); j < 512; j++) {
 	if (j < 0) j = 0;
 	else if (j < INDIRECT_BLOCK(offset)) goto repeat;
@@ -148,7 +149,7 @@ static int V1_trunc_dindirect(register struct inode *inode,
     }
     map_buffer(dind_bh);
   repeat:
-  printk("DINDIRECT_BLOCK %ld\n", DINDIRECT_BLOCK(offset));
+    debug("DINDIRECT_BLOCK %ld\n", DINDIRECT_BLOCK(offset));
     for (i = DINDIRECT_BLOCK(offset); i < 512; i++) {
 	if (i < 0) i = 0;
 	if (i < DINDIRECT_BLOCK(offset)) goto repeat;

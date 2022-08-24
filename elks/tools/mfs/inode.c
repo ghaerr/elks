@@ -81,7 +81,7 @@ int ino_zone(struct minix_fs_dat *fs,struct minix_inode *ino,int blk) {
   /* Double indirect block. */
   blk -= MINIX_ZONESZ;
   if (blk < MINIX_ZONESZ * MINIX_ZONESZ) {
-    int iblks[MINIX_ZONESZ];
+    u16 iblks[MINIX_ZONESZ];
     if (ino->i_dbl_indr_zone == 0) return 0;
     dofread(goto_blk(fs->fp,ino->i_dbl_indr_zone),iblks,sizeof iblks);
     if (iblks[blk / MINIX_ZONESZ] == 0) return 0;
@@ -177,6 +177,7 @@ void ino_setzone(struct minix_fs_dat *fs,struct minix_inode *ino,
     u16 iblks[MINIX_ZONESZ];
     if (ino->i_indir_zone == 0) {
       ino->i_indir_zone = get_free_block(fs);
+      debug("alloc block %d for IND\n", ino->i_indir_zone);
       mark_zone(fs,ino->i_indir_zone);
       memset(iblks,0,sizeof iblks);
     } else {
@@ -194,23 +195,30 @@ void ino_setzone(struct minix_fs_dat *fs,struct minix_inode *ino,
     u16 iblk,izone;
     if (ino->i_dbl_indr_zone == 0) {
       ino->i_dbl_indr_zone = get_free_block(fs);
+      debug("ALLOC block %d for DIND\n", ino->i_dbl_indr_zone);
       mark_zone(fs,ino->i_dbl_indr_zone);
       memset(iblks,0,sizeof iblks);
     } else {
+      debug("READING DIND block %d\n", ino->i_dbl_indr_zone);
       dofread(goto_blk(fs->fp,ino->i_dbl_indr_zone),iblks,sizeof iblks);
     }
     iblk = blk / MINIX_ZONESZ;
     blk %= MINIX_ZONESZ;
     if (iblks[iblk] == 0) {
       izone = iblks[iblk] = get_free_block(fs);
-      mark_zone(fs,iblks[iblk]);
+      debug("ALLOC block %d for IND\n", izone);
+      mark_zone(fs,izone);
+      debug("WRITING DIND block %u (added IND block %u)\n", ino->i_dbl_indr_zone, izone);
       dofwrite(goto_blk(fs->fp,ino->i_dbl_indr_zone),iblks,sizeof iblks);
       memset(iblks,0,sizeof iblks);      
     } else {
+      debug("READING IND block %u\n", iblks[iblk]);
       dofread(goto_blk(fs->fp,izone = iblks[iblk]),iblks,sizeof iblks);
       if (iblks[blk] && iblks[blk] != zone) unmark_zone(fs,iblks[blk]);
     }
+    debug("adding FILE %u block to IND block %u at location %d\n", zone, izone, blk);
     iblks[blk] = zone;
+    debug("WRITING IND %d\n", izone);
     dofwrite(goto_blk(fs->fp,izone),iblks,sizeof iblks);
     return;
   }
@@ -268,7 +276,7 @@ void ino2_freezone(struct minix_fs_dat *fs,struct minix2_inode *ino,u32 blk) {
     dblks[blk] = 0;
 
     for (i=0; i < MINIX2_ZONESZ; i++) {
-      if (dblks[blk]) {
+      if (dblks[i]) {
         dofwrite(goto_blk(fs->fp,iblks[iblk]),dblks,sizeof dblks);
         return;
       }
@@ -276,7 +284,7 @@ void ino2_freezone(struct minix_fs_dat *fs,struct minix2_inode *ino,u32 blk) {
     unmark_zone(fs,iblks[iblk]);
     iblks[iblk] = 0;
     for (i=0; i < MINIX2_ZONESZ; i++) {
-      if (iblks[blk]) {
+      if (iblks[i]) {
         dofwrite(goto_blk(fs->fp,ino->i_dbl_indr_zone),iblks,sizeof iblks);
         return;
       }
@@ -296,6 +304,7 @@ void ino2_freezone(struct minix_fs_dat *fs,struct minix2_inode *ino,u32 blk) {
  */
 void ino_freezone(struct minix_fs_dat *fs,struct minix_inode *ino,int blk) {
   int i;
+  debug("FREEZONE %d\n", blk);
   /* Direct block */
   if (blk < 7) {
     if (ino->i_zone[blk]) unmark_zone(fs,ino->i_zone[blk]);
@@ -339,7 +348,7 @@ void ino_freezone(struct minix_fs_dat *fs,struct minix_inode *ino,int blk) {
     dblks[blk] = 0;
 
     for (i=0; i < MINIX_ZONESZ; i++) {
-      if (dblks[blk]) {
+      if (dblks[i]) {
         dofwrite(goto_blk(fs->fp,iblks[iblk]),dblks,sizeof dblks);
         return;
       }
@@ -347,12 +356,13 @@ void ino_freezone(struct minix_fs_dat *fs,struct minix_inode *ino,int blk) {
     unmark_zone(fs,iblks[iblk]);
     iblks[iblk] = 0;
     for (i=0; i < MINIX_ZONESZ; i++) {
-      if (iblks[blk]) {
+      if (iblks[i]) {
         dofwrite(goto_blk(fs->fp,ino->i_dbl_indr_zone),iblks,sizeof iblks);
         return;
       }
     }
     unmark_zone(fs,ino->i_dbl_indr_zone);
+    debug("FREE DIND zone\n");
     ino->i_dbl_indr_zone = 0;    
     return;
   }
