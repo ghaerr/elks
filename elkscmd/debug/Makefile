@@ -13,7 +13,7 @@ HOSTCFLAGS = -O3
 
 ###############################################################################
 
-PRGS = testsym disasm
+PRGS = testsym disasm opcodes
 LIBOBJS += syms.o stacktrace.o printreg.o
 #OBJS += ulltostr.o
 CFLAGS += -fno-optimize-sibling-calls
@@ -38,6 +38,10 @@ disasm: dis.o disasm.o $(LIBOBJS)
 	cp -p $@ $(TOPDIR)/elkscmd/rootfs_template/root
 	-mkdir $(TOPDIR)/elkscmd/rootfs_template/lib
 	cp -p $(TOPDIR)/elks/arch/i86/boot/system.sym $(TOPDIR)/elkscmd/rootfs_template/lib
+
+opcodes: opcodes.o
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+	cp $@ $(TOPDIR)/elkscmd/rootfs_template/root
 
 disasm.o: disasm.c
 	$(CC) $(CFLAGS) -fno-instrument-functions -c -o $*.o $<
