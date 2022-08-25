@@ -538,10 +538,10 @@ timestring(time_t t)
 void
 printent(struct entry *ent, int active)
 {
-	unsigned int len = COLS - strlen(CURSR) - 1;
+	unsigned int len = NAME_COLS;
 	char cm = 0;
 	int attr = 0;
-	char name[NAME_MAX];
+	char name[PATH_MAX+1];
 
 	/* Copy name locally */
 	strlcpy(name, ent->name, sizeof(name));
@@ -576,7 +576,7 @@ printent(struct entry *ent, int active)
 	}
 
 	attron(attr);
-	name[NAME_MAX-1] = '\0';
+	name[NAME_COLS] = '\0';
 	printw("%s%*s %9lu  %s", active ? CURSR : EMPTY, -NAME_COLS, name, ent->size,
         timestring(ent->t));
 	attroff(attr);
@@ -726,10 +726,10 @@ void
 browse(char *ipath, char *ifilter)
 {
 	char *dir, *tmp, *run;
-	struct stat sb;
 	int r, shellscript, c;
-    enum runtype type;
-    int once = 1;
+	enum runtype type;
+	int once = 1;
+	struct stat sb;
 	char path[PATH_MAX], oldpath[PATH_MAX], newpath[PATH_MAX];
 	char fltr[LINE_MAX];
 
@@ -971,7 +971,7 @@ nochange:
 int
 main(int argc, char *argv[])
 {
-    char *ipath;
+	char *ipath;
 	char *ifilter;
 	char cwd[PATH_MAX];
 
