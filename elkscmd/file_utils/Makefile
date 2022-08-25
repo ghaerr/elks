@@ -13,7 +13,7 @@ include $(BASEDIR)/Make.rules
 # note: grep doesn't read stdin, replaced with minix1/grep
 # removed: l
 PRGS = ln ls mkdir mkfifo mknod more mv rm rmdir sync touch \
-	cat chgrp chmod chown cmp cp dd df grep
+	cat chgrp chmod chown cmp cp dd df grep split
 
 all: $(PRGS)
 
@@ -73,6 +73,9 @@ rm: rm.o $(TINYPRINTF)
 
 rmdir: rmdir.o
 	$(LD) $(LDFLAGS) -o rmdir rmdir.o $(LDLIBS)
+
+split: split.o
+	$(LD) $(LDFLAGS) -o split split.o $(LDLIBS)
 
 sync: sync.o
 	$(LD) $(LDFLAGS) -o sync sync.o $(LDLIBS)
