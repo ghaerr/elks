@@ -52,7 +52,7 @@ if [ "$1" != "auto" ]; then
 	make clean || clean_exit 4
 	fi
 
-# Build kernel, user land and image
+# Build default kernel, user land and image
 # Forcing single threaded build because of dirty dependencies (see #273)
 
 echo "Building all..."
@@ -65,6 +65,25 @@ if [ "$2" = "allimages" ]; then
 	cd image
 	make -j1 images || clean_exit 6
 	cd ..
+fi
+
+# Build 8018X kernel and image
+if [ "$1" = "auto" ]; then
+	echo "Building 8018X image..."
+    cp 8018x.config .config
+    make kclean || clean_exit 7
+    make -j1 || clean_exit 8
+fi
+
+# Build PC-98 kernel, some user land files and image
+if [ "$1" = "auto" ]; then
+	echo "Building PC-98 image..."
+    cp pc98-1232.config .config
+    make kclean || clean_exit 9
+    rm elkscmd/sys_utils/clock.o
+    rm elkscmd/basic/*.o
+    rm elkscmd/nano-X/*.o
+    make -j1 || clean_exit 10
 fi
 
 # Success

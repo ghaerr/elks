@@ -74,6 +74,7 @@ file_utils/ln					:fileutil			:720k
 file_utils/ls					:fileutil		:360k   :128k
 file_utils/rm					:fileutil		:360k
 file_utils/rmdir				:fileutil		:360k
+file_utils/split				:fileutil		         :1200k
 file_utils/sync					:fileutil		:360k
 file_utils/touch				:fileutil			:720k
 sys_utils/chmem					:sysutil			:720k
@@ -189,14 +190,14 @@ inet/urlget/urlget :::httpget	:net
 #mtools/mren					:mtools					:1440k
 #mtools/mtype					:mtools					:1440k
 #mtools/mwrite					:mtools					:1440k
-bc/bc							:other					:1440k
+bc/bc							:other
 #m4/m4							:other					:1440k
 #prems/pres/pres				:other
 #nano/nano-2.0.6/src/nano		:other					:1440k
 #nano-X/bin/nxclock				:nanox					:1440k
 #nano-X/bin/nxdemo				:nanox					:1440k
-nano-X/bin/nxlandmine			:nanox					:1200k	:1440k
+nano-X/bin/nxlandmine			:nanox				:1200k
 nano-X/bin/nxterm				:nanox
-nano-X/bin/nxworld				:nanox					:1440k
-nano-X/bin/nxworld.map	::lib/nxworld.map	:nanox		:1440k
-basic/basic						:basic					:1200k
+nano-X/bin/nxworld				:nanox
+nano-X/bin/nxworld.map	::lib/nxworld.map	:nanox
+basic/basic						:basic				:1200k
