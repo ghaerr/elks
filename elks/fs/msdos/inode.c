@@ -248,19 +248,22 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%
 }
 
 
-static void msdos_statfs(struct super_block *s,struct statfs *sf)
+static void msdos_statfs(struct super_block *s,struct statfs *sf, int flags)
 {
 	cluster_t cluster, cluster_size;
-	unsigned long total, free = 0;
+	unsigned long total, free;
 
 	cluster_size = MSDOS_SB(s)->cluster_size;
 	sf->f_bsize = SECTOR_SIZE_SB(s);
 	total  = (MSDOS_SB(s)->clusters * cluster_size) + MSDOS_SB(s)->data_start;
 	sf->f_blocks = total >> (BLOCK_SIZE_BITS - SECTOR_BITS_SB(s));
-	for (cluster = 2; cluster < MSDOS_SB(s)->clusters + 2; cluster++)
-		if (!fat_access(s, cluster, -1))
-			free += cluster_size;
-	free >>= (BLOCK_SIZE_BITS - SECTOR_BITS_SB(s));
+	if (!(flags & UF_NOFREESPACE)) {
+		free = 0;
+		for (cluster = 2; cluster < MSDOS_SB(s)->clusters + 2; cluster++)
+			if (!fat_access(s, cluster, -1))
+				free += cluster_size;
+		free >>= (BLOCK_SIZE_BITS - SECTOR_BITS_SB(s));
+	} else free = -1L;
 	sf->f_bfree = free;
 	sf->f_bavail = free;
 	sf->f_files = 0;

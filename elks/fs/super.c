@@ -137,7 +137,7 @@ void put_super(kdev_t dev)
     }
 }
 
-int sys_ustatfs(dev_t dev, struct statfs *ubuf)
+int sys_ustatfs(dev_t dev, struct statfs *ubuf, int flags)
 {
     struct super_block *s;
     struct statfs sbuf;
@@ -147,11 +147,12 @@ int sys_ustatfs(dev_t dev, struct statfs *ubuf)
     s = get_super(to_kdev_t(dev));
     if (s == NULL) return -EINVAL;
 
-    if (ubuf == NULL) return 0;	/* for querying mounted filesystem w/o statfs */
+    /* for querying mounted filesystem w/o statfs */
+    if (ubuf == NULL) return s->s_type->type;
 
     if (!(s->s_op->statfs_kern)) return -ENOSYS;
 
-    s->s_op->statfs_kern(s, &sbuf);
+    s->s_op->statfs_kern(s, &sbuf, flags);
     sbuf.f_type = s->s_type->type;
     sbuf.f_flags = s->s_flags;
     sbuf.f_dev = s->s_dev;
