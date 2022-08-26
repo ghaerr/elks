@@ -38,7 +38,7 @@ int sys_statfs(char *path, register struct statfs *ubuf)
 	return -ENOSYS;
     }
     s = inode->i_sb;
-    s->s_op->statfs_kern(inode->i_sb, &sbuf);
+    s->s_op->statfs_kern(inode->i_sb, &sbuf, 0);
     sbuf.f_type = s->s_type->type;
     sbuf.f_flags = s->s_flags;
     sbuf.f_dev = s->s_dev;

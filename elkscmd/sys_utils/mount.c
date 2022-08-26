@@ -65,7 +65,7 @@ static int show_mount(dev_t dev)
 {
 	struct statfs statfs;
 
-	if (ustatfs(dev, &statfs) < 0)
+	if (ustatfs(dev, &statfs, 0) < 0)
 		return -1;
 
 	printf("%-9s (%s) blocks %6lu free %6lu mount %s\n",

@@ -294,7 +294,7 @@ static void romfs_put_super (struct super_block * sb)
 
 
 /* FIXME not implemented */
-static void romfs_statfs(struct super_block *s, struct statfs *sf)
+static void romfs_statfs(struct super_block *s, struct statfs *sf, int flags)
 {
 	memset(sf, 0, sizeof(struct statfs));
 	//sf->f_bsize = ROMBSIZE;

@@ -102,11 +102,11 @@ int main(int argc, char *argv[])
   if (argc == 1) {	/* loop through all mounted devices */
 	int i;
   	for (i = 0; i < NR_SUPER; i++) {
-		if (ustatfs(i, &statfs) >= 0) {
+		if (ustatfs(i, &statfs, 0) >= 0) {
 			char *nm = dev_name(statfs.f_dev);
-			if (statfs.f_type > 2 || (statfs.f_type == 2 && (Pflag||iflag))) 
+			if (statfs.f_type > FST_MSDOS || (statfs.f_type == FST_MSDOS && (Pflag||iflag)))
 				printf("%s     -- Not a MINIX filesystem\n", nm);
-			else if (statfs.f_type == 2 && !Pflag)
+			else if (statfs.f_type == FST_MSDOS && !Pflag)
 				printf("%-15s %7ld  %7ld  %7ld %3d%%          %s (FAT)\n", nm,\
 				    statfs.f_blocks, statfs.f_bfree,\
 				    statfs.f_blocks-statfs.f_bfree,\
@@ -297,7 +297,7 @@ struct dnames *devname(char *dirname)
       strcpy(name + sizeof(dev), d->d_name);
       if (stat(name, &dst) == 0) {
 	 if (st.st_dev == dst.st_rdev) {
-	     if (ustatfs(st.st_dev, &statfs) < 0) {
+	     if (ustatfs(st.st_dev, &statfs, 0) < 0) {
 		dn.mpoint = NULL;
 	     } else {
 		dn.mpoint = statfs.f_mntonname;
