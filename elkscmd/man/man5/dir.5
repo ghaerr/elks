@@ -4,17 +4,18 @@ dir \- directory layout
 .SH SYNOPSIS
 .nf
 .ft B
-#include <sys/types.h>
-#include <sys/dir.h>
+#include <dirent.h>
 .SH DESCRIPTION
-The directories of the V1 and V2 file systems are arrays of the
-following structure defined in <sys/dir.h>:
+The directories of the MINIX and FAT file systems are arrays of the
+following structure defined in <dirent.h>:
 .PP
 .nf
 .ta +5n +15n +15n
-struct direct {
-	ino_t	d_ino;	/* I-node number */
-	char	d_name[14];	/* Name of up to 14 characters */
+#define MAXMANLEN	26		   /* 14 for MINIX, 26 for FAT */
+struct dirent {
+	u_ino_t	d_ino;	        /* I-node number */
+	unsigned short d_namlen;
+	char	d_name[MAXNAMLEN+1];   /* File name */
 };
 .fi
 .DT
@@ -30,12 +31,12 @@ returned by
 .BR stat (2)
 unless the entry is mounted on.
 .B D_name
-is the name of up to 14 characters, null-terminated only if less then 14
-in length.  Any character other than null or '\fB/\fP' is allowed.
+is the name of up to 26 characters, null-terminated.
+Any character other than null or '\fB/\fP' is allowed.
 .PP
 See
 .BR directory (3)
-for a portable way to access directories, MINIX 3 is probably the last system
+for a portable way to access directories, ELKS and MINIX 3 are probably the last systems
 with these old V7 format directories.
 .SH "SEE ALSO"
 .BR directory (3).
