@@ -131,3 +131,9 @@ jobs:
         with:
           name: hd32mbr-fat.img
           path: image/hd32mbr-fat.img
+
+      - name: upload16
+        uses: actions/upload-artifact@v1
+        with:
+          name: hd64-minix.img
+          path: image/hd64-minix.img
