@@ -415,7 +415,7 @@ static char *timestring(time_t t)
 
 static void setfmt(struct stack *pstack, int flags)
 {
-    int maxlen, i, len;
+    int maxlen, maxlen2, i, len;
     char * cp;
 
     if (~flags & LSF_LONG) {
@@ -428,7 +428,8 @@ static void setfmt(struct stack *pstack, int flags)
 		maxlen = len;
 	}
 	maxlen += 2;
-	cols = (COLS - 1) / maxlen;
+	maxlen2 = flags & LSF_INODE? maxlen + 6: maxlen;
+	cols = (COLS - 1) / maxlen2;
 	sprintf (fmt, "%%-%d.%ds", maxlen, maxlen);
     }
 }
