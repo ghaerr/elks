@@ -12,7 +12,7 @@
 #define LINE_MAX    80
 
 #if ELKS
-#define NAME_MAX    15
+#define NAME_MAX    15      /* could be expanded to 26 for FAT */
 #define NAME_COLS   20
 #else
 #define NAME_MAX    79

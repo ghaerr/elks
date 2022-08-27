@@ -274,7 +274,7 @@ struct dnames *devname(char *dirname)
    struct dirent *d;
    static struct statfs statfs;
    static struct dnames dn;
-   static char name[16]; /* should be MAXNAMLEN but that's overkill */
+   static char name[MAXNAMLEN];
 
    if (!strncmp(dirname, "/dev/", 5)) {
 	dn.name = dirname;
@@ -352,4 +352,3 @@ static char *dev_name(dev_t dev)
 	}
 	return NULL;
 }
-

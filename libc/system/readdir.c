@@ -8,8 +8,5 @@ readdir(DIR *dirp)
    cc = _readdir(dirp->dd_fd, dirp->dd_buf, 1);
    if (cc <= 0)
       return 0;
-   if (cc>1) dirp->dd_buf->d_name[cc] = 0;
-
    return dirp->dd_buf;
 }
-
