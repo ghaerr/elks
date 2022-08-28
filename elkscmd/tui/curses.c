@@ -187,8 +187,10 @@ void init_pair(int ndx, int fg, int bg)
     }
 }
 
-/*                                           blk blu grn cyn red mag yel wht */
-static const unsigned char ansi_colors[8] = {30, 34, 32, 36, 31, 35, 33, 37 };
+/*                                  0   1   2   3   4   5   6   7
+                                   blk blu grn cyn red mag yel wht */
+static const int ansi_colors[16] = {30, 34, 32, 36, 31, 35, 33, 37,
+                                    90, 94, 92, 96, 91, 95, 93, 97 };
 
 void attron(int a)
 {
