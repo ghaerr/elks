@@ -9,6 +9,8 @@ lists the amount of free space on the currently mounted devices (no arguments),
 or the device given as an argument.  If the argument is not a device buf a file or a directory, then the
 device it resides on is listed. FAT file systems are supported if the result would 
 be meaningful. I.e. not when using the \fB-i\fP or \fB-P\fP options.
+.PP
+File systems are always displayed in the order they were mounted.
 .SS OPTIONS
 Without options,
 .B df
@@ -30,11 +32,11 @@ option shifts the focus to inodes:
 .sp
 .nf
 Filesystem       Inodes     IUsed    IFree    %IUsed   Mounted on
-/dev/hda3         21845      1187    20658        6%   /
-/dev/fd0            256       185       71       73%   /fd
-/dev/hdb1     -- Not a MINIX filesystem
-/dev/hda2         21845       228    21617        2%   /mnt3
+/dev/hda3         21845      2298    19547       11%   /
+/dev/hda1         [Not a MINIX filesystem]             /mnt
+/dev/hda2         21845       228    21617        2%   /mnt2
 /dev/hda4         13776       313    13463        3%   /mnt4
+/dev/hdb1         [Not a MINIX filesystem]             /mnt5
 .fi
 .PP
 Option
@@ -44,12 +46,12 @@ makes
 use \s-2POSIX\s+2 defined output in 512 byte units:
 .sp
 .nf
-Filesystem     512-blocks    Used  Available  Capacity   Mounted on
-/dev/hda3        131070      8184   122886        7%     /
-/dev/fd0           2880      2120      760       74%     /fd
-/dev/hda1     -- Not a MINIX filesystem
-/dev/hda2        131070     11446   119624        9%     /mnt3
-/dev/hda4         82656      8398    74258       11%     /mnt4
+Filesystem     512-blocks    Used Available Capacity Mounted on
+/dev/hda3        131070     13876    117194      11% /
+/dev/hda1         [Not a MINIX filesystem]           /mnt
+/dev/hda2        131070     11446    119624       9% /mnt2
+/dev/hda4         82656      8398     74258      11% /mnt4
+/dev/hdb1         [Not a MINIX filesystem]           /mnt5
 .fi
 .PP
 With
@@ -57,8 +59,10 @@ With
 forces the use of 1024 byte units with the -P option.
 .SH BUGS
 Default output should also be in 512 byte units says \s-2POSIX\s+2.
-Getting data for FAT filesystems is slow.
+Getting data for FAT filesystems is slow. To just get a fast listing of mounted file systems, 
+use the \fBmount\fP command without parameters.
 .SH AUTHOR
 Kees J. Bot (kjb@cs.vu.nl)
 .SH "SEE ALSO"
-.BR du (1).
+.BR du (1)
+.BR mount (8).
