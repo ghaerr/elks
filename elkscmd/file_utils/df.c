@@ -38,6 +38,7 @@ struct dnames {
 };
 struct dnames *devname(char *);
 static char *dev_name(dev_t);
+int df_fat(char *, int);
 
 int iflag= 0;	/* Focus on inodes instead of blocks. */
 int Pflag= 0;	/* Posix standard output. */
@@ -93,25 +94,23 @@ int main(int argc, char *argv[])
 	printf("Filesystem       Inodes     IUsed    IFree    %%IUsed   Mounted on\n");
   } else {
 	if (!Pflag) 
-		printf("Filesystem    1k-Blocks     free     used    %%  FUsed%%  Mounted on\n");
+		printf("Filesystem    1K-blocks     Free     Used    %%  FUsed%%  Mounted on\n");
 	else 
-		printf("Filesystem    %4d-blocks    Used  Available  Capacity   Mounted on\n",
+		printf("Filesystem    %4d-blocks    Used Available Capacity Mounted on\n",
 			kflag ? 1024 : 512);
   }
 
   if (argc == 1) {	/* loop through all mounted devices */
 	int i;
   	for (i = 0; i < NR_SUPER; i++) {
-		if (ustatfs(i, &statfs, 0) >= 0) {
+		if (ustatfs(i, &statfs, UF_NOFREESPACE) >= 0) {
 			char *nm = dev_name(statfs.f_dev);
-			if (statfs.f_type > FST_MSDOS || (statfs.f_type == FST_MSDOS && (Pflag||iflag)))
-				printf("%s     -- Not a MINIX filesystem\n", nm);
+			char *filler = "  ";		/* Text alignment */
+			if (Pflag) filler = "";
+			if (statfs.f_type > FST_MSDOS || (statfs.f_type == FST_MSDOS && (Pflag||iflag))) 
+				printf("%-17s %-34s %s%s\n", nm, "[Not a MINIX filesystem]", filler, statfs.f_mntonname);
 			else if (statfs.f_type == FST_MSDOS && !Pflag)
-				printf("%-15s %7ld  %7ld  %7ld %3d%%          %s (FAT)\n", nm,\
-				    statfs.f_blocks, statfs.f_bfree,\
-				    statfs.f_blocks-statfs.f_bfree,\
-				    percent(statfs.f_blocks-statfs.f_bfree, statfs.f_blocks),\
-				    statfs.f_mntonname);
+				df_fat(nm, i);
 			else
 				df(nm, statfs.f_mntonname);
 		}
@@ -119,6 +118,17 @@ int main(int argc, char *argv[])
 	return 0;
   } else
   	return df(blockdev, dname->mpoint);
+}
+
+int df_fat(char *name, int dev) 
+{
+	struct statfs stat;
+	if (ustatfs(dev, &stat, 0) < 0)
+		return -1;
+	printf("%-15s %7ld  %7ld  %7ld %3d%%          %s (FAT)\n", name,
+	    stat.f_blocks, stat.f_bfree, stat.f_blocks - stat.f_bfree,
+	    percent(stat.f_blocks - stat.f_bfree, stat.f_blocks), stat.f_mntonname);
+	return 0;
 }
 
 int df(char *device, char *mpnt)
@@ -208,7 +218,7 @@ int df(char *device, char *mpnt)
   		totblocks *= 2;
   		busyblocks *= 2;
 	}
-	printf(" %7ld   %7ld  %7ld     %4d%%     %s\n",
+	printf(" %7ld   %7ld   %7ld    %4d%% %s\n",
 		L(totblocks),				/* Blocks */
 		L(busyblocks),				/* Used */
 		totblocks - busyblocks,			/* Available */
@@ -297,7 +307,7 @@ struct dnames *devname(char *dirname)
       strcpy(name + sizeof(dev), d->d_name);
       if (stat(name, &dst) == 0) {
 	 if (st.st_dev == dst.st_rdev) {
-	     if (ustatfs(st.st_dev, &statfs, 0) < 0) {
+	     if (ustatfs(st.st_dev, &statfs, UF_NOFREESPACE) < 0) {
 		dn.mpoint = NULL;
 	     } else {
 		dn.mpoint = statfs.f_mntonname;
