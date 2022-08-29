@@ -35,11 +35,13 @@ OBJS = \
 	opendir.o \
 	readdir.o \
 	rewinddir.o \
+	seekdir.o \
 	setjmp.o \
 	setpgrp.o \
 	signal.o \
 	sleep.o \
 	syscall0.o \
+	telldir.o \
 	time.o \
 	times.o \
 	usleep.o \

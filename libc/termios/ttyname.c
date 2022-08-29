@@ -11,7 +11,7 @@ char * ttyname (int fd)
    struct stat st, dst;
    DIR  *fp;
    struct dirent *d;
-   static char name[16]; /* should be MAXNAMLEN but that's overkill */
+   static char name[MAXNAMLEN];
    int noerr = errno;
 
    if (fstat(fd, &st) < 0)
@@ -38,9 +38,9 @@ char * ttyname (int fd)
       if (stat(name, &dst) == 0
          && st.st_dev == dst.st_dev && st.st_ino == dst.st_ino)
       {
-	 closedir(fp);
-	 errno = noerr;
-	 return name;
+         closedir(fp);
+         errno = noerr;
+         return name;
       }
    }
    closedir(fp);

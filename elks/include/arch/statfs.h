@@ -3,6 +3,9 @@
 
 #define MNAMELEN	32	/* length of buffer for returned name */
 
+/* ustatfs flags */
+#define UF_NOFREESPACE      1   /* don't calculate time-expensive free blocks */
+
 struct statfs {
 	int	f_type;		/* filesystem type */
 	unsigned short f_flags;	/* copy of mount flags */

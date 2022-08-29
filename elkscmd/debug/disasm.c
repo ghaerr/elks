@@ -331,8 +331,8 @@ nextopcode:
             case 0x7c: case 0x7d: case 0x7e: case 0x7f:  // Jcond cb
 				{
 				static const char *jumpnames[] = {
-					"jo ", "jno", "jb ", "jnb", "jz ", "jnz", "jbe", "ja ",
-					"js ", "jns", "jpe", "jpo","jl ", "jge", "jle", "jg " };
+					"jo ", "jno", "jb ", "jae", "je ", "jne", "jbe", "ja ",
+					"js ", "jns", "jp", "jnp","jl ", "jge", "jle", "jg " };
 				outs(jumpnames[opcode & 0x0f], JMP|SBYTE);
 				}
                 break;
@@ -382,17 +382,17 @@ nextopcode:
 				sourceIsRM = 0;	// acc src
 				outs("xchg", ACC|REGOP);
                 break;
-            case 0x98:  // CBW
+            case 0x98:  // CBTW
                 outs("cbtw", 0);
                 break;
-            case 0x99:  // CWD
-                outs("cwd", 0);
+            case 0x99:  // CWTD
+                outs("cwtd", 0);
                 break;
             case 0x9a:  // CALL cp
-				outs("call", JMP|DWORD);
+				outs("lcall", JMP|DWORD);
                 break;
             case 0x9b:  // WAIT
-				outs("wait", 0);
+				outs("fwait", 0);
 				break;
             case 0x9c:  // PUSHF
                 outs("pushf", 0);
@@ -456,10 +456,10 @@ nextopcode:
 				outs("mov", BW|IMM|REGOP);
                 break;
             case 0xc2: case 0xc3:  // RET
-                outs("ret", !wordSize? WORD: 0);
+                outs("ret", !wordSize? WORD: 0);    //FIXME should display $WORD
 				break;
 			case 0xca: case 0xcb:  // RETF
-                outs("retf", !wordSize? WORD: 0);
+                outs("lret", !wordSize? WORD: 0);   //FIXME should display $WORD
                 break;
             case 0xc4: case 0xc5:  // LES/LDS
 				//if (!useMemory) runtimeError("This instruction needs a memory address");
@@ -471,7 +471,7 @@ nextopcode:
 				outs("mov", BW|RDMOD|IMM|RM);
                 break;
             case 0xcc:  // INT 3
-				outs("int\t$3", 0);
+				outs("int3", 0);
 				break;
             case 0xcd:
 				wordSize = 0;
@@ -482,6 +482,7 @@ nextopcode:
 				break;
             case 0xcf:  // IRET
 				outs("iret", 0);
+                break;
             case 0xd0: case 0xd1: case 0xd2: case 0xd3:  // rot rmv,n
 				{
 				static const char *rotates[] = {
@@ -494,19 +495,20 @@ nextopcode:
 				}
                 break;
             case 0xd4:  // AAM
-				outs("aam", 0);
+				outs("aam", 0);     //FIXME should display $BYTE
                 break;
             case 0xd5:  // AAD
-				outs("aad", 0);
+				outs("aad", 0);     //FIXME should display $BYTE
                 break;
-            case 0xd6:  // SALC
+            case 0xd6:  // SALC (undocumented)
 				outs("salc", 0);
                 break;
             case 0xd7:  // XLATB
-				outs("xlatb", 0);
+				outs("xlatb", 0);   //FIXME xlat %ds:(%bx)?
                 break;
             case 0xe0: case 0xe1: case 0xe2:  // LOOPc cb
-				outs(opcode == 0xe0? "loopnz": "loopz", JMP|SBYTE);
+				outs(opcode == 0xe0? "loopne":
+                     opcode == 0xe1? "loope": "loop", JMP|SBYTE);
                 break;
             case 0xe3:  // JCXZ cb
 				outs("jcxz", JMP|SBYTE);
@@ -518,7 +520,7 @@ nextopcode:
 				outs("jmp", JMP|WORD);
                 break;
             case 0xea:  // JMP cp
-				outs("ljmpw", JMP|DWORD);
+				outs("ljmp", JMP|DWORD);
                 break;
             case 0xeb:  // JMP cb
 				outs("jmp", JMP|SBYTE);
@@ -555,7 +557,7 @@ nextopcode:
 						outs("test", BW|IMM|RM);
                         break;
                     case 2:  // NOT iv
-						outs("not", BW|RM);
+						outs("not", BW|RM);     //FIXME f6=notb, f7=notw
                         break;
                     case 3:  // NEG iv
 						outs("neg", BW|RM);

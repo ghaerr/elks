@@ -75,7 +75,7 @@ char *devname(unsigned int minor)
 	dev_t ttydev = MKDEV(TTY_MAJOR, minor);
 	struct stat st;
 	static char dev[] = "/dev";
-	static char name[16]; /* should be MAXNAMLEN but that's overkill */
+	static char name[MAXNAMLEN+1];
 
 	DIR *fp = opendir(dev);
 	if (fp == 0)

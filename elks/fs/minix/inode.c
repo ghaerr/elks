@@ -237,7 +237,7 @@ struct super_block *minix_read_super(register struct super_block *s, char *data,
     return NULL;
 }
 
-void minix_statfs(struct super_block *s, struct statfs *sf)
+void minix_statfs(struct super_block *s, struct statfs *sf, int flags)
 {
     sf->f_bsize = BLOCK_SIZE;
     sf->f_blocks = s->u.minix_sb.s_nzones << s->u.minix_sb.s_log_zone_size;

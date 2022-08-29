@@ -291,6 +291,7 @@ static int INITPROC parse_dev(char * line)
 
 static void comirq(char *line)
 {
+#ifdef CONFIG_ARCH_IBMPC
 	int i;
 	char *l, *m, c;
 
@@ -306,6 +307,7 @@ static void comirq(char *line)
 		if (!c) break;
 		l++;
 	}
+#endif
 }
 
 static void parse_nic(char *line, struct netif_parms *parms)

@@ -21,6 +21,6 @@
 int mount(const char *dev, const char *dir, int type, int flags);
 int umount(const char *dir);
 
-int ustatfs(dev_t dev, struct statfs *statfs);
+int ustatfs(dev_t dev, struct statfs *statfs, int flags);
 
 int reboot(int magic1, int magic2, int magic3);

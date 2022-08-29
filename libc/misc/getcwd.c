@@ -10,50 +10,75 @@
  * They don't use malloc or large amounts of stack space.
  */
 
-static char * recurser();	/* Routine to go up tree */
-static char * search_dir();	/* Routine to find the step back down */
 static char * path_buf;
 static int    path_size;
-
 static dev_t root_dev;
-static ino_t root_ino;
-
+static u_ino_t root_ino;
 static struct stat st;
 
-char *
-getcwd(buf, size)
-char * buf;
-int size;
+/* routine to find the step back down */
+static char *
+search_dir(dev_t this_dev, u_ino_t this_ino)
 {
-   path_buf = buf;
-   path_size = size;
+   DIR * dp;
+   struct dirent * d;
+   char * ptr;
+   int slen;
+   int slow_search = 0;
 
-   if( size < 3 ) { errno = ERANGE; return 0; }
-   strcpy(path_buf, ".");
+   if( stat(path_buf, &st) < 0 ) return NULL;
+   if( this_dev != st.st_dev ) slow_search = 1;
 
-   if( stat("/", &st) < 0 )
-	   {
-	   perror ("stat");
-	   return 0;
-	   }
+   slen = strlen(path_buf);
+   ptr = path_buf + slen -1;
+   if( *ptr != '/' )
+   {
+      if( slen + 2 > path_size )
+      {
+        errno = ERANGE;
+        return NULL;
+      }
+      strcpy(++ptr, "/");
+      slen++;
+   }
+   slen++;
 
-   root_dev = st.st_dev;
-   root_ino = st.st_ino;
+   dp = opendir(path_buf);
+   if( dp == NULL ) return NULL;
 
-   return recurser();
+   while( (d=readdir(dp)) != NULL )
+   {
+      if( slow_search || this_ino == d->d_ino )
+      {
+         if( slen + strlen(d->d_name) > path_size )
+         {
+            errno = ERANGE;
+            return NULL;
+         }
+         strcpy(ptr+1, d->d_name);
+         if( stat(path_buf, &st) < 0 )
+            continue;
+         if( st.st_ino == this_ino && st.st_dev == this_dev )
+         {
+            closedir(dp);
+            return path_buf;
+         }
+      }
+   }
+
+   closedir(dp);
+   errno = ENOENT;
+   return NULL;
 }
 
+/* routine to go up the tree */
 static char *
-recurser()
+recurser(void)
 {
    dev_t this_dev;
-   ino_t this_ino;
-   if( stat(path_buf, &st) < 0 )
-	   {
-	   perror ("stat");
-	   return 0;
-	   }
+   u_ino_t this_ino;
 
+   if( stat(path_buf, &st) < 0 ) return NULL;
    this_dev = st.st_dev;
    this_ino = st.st_ino;
    if( this_dev == root_dev && this_ino == root_ino )
@@ -61,63 +86,34 @@ recurser()
       strcpy(path_buf, "/");
       return path_buf;
    }
-   if( strlen(path_buf) + 4 > path_size ) { errno = ERANGE; return 0; }
+   if( strlen(path_buf) + 4 > path_size )
+   {
+      errno = ERANGE;
+      return NULL;
+   }
    strcat(path_buf, "/..");
-   if( recurser() == 0 ) return 0;
+   if( recurser() == NULL ) return NULL;
 
    return search_dir(this_dev, this_ino);
 }
 
-static char *
-search_dir(this_dev, this_ino)
-dev_t this_dev;
-ino_t this_ino;
+char *
+getcwd(char *buf, int size)
 {
-   DIR * dp;
-   struct dirent * d;
-   char * ptr;
-   int slen;
-   /* The test is for ELKS lib 0.0.9, this should be fixed in the real kernel*/
-   int slow_search = (sizeof(ino_t) != sizeof(d->d_ino));
+   path_buf = buf;
+   path_size = size;
 
-   if( stat(path_buf, &st) < 0 ) return 0;
-   if( this_dev != st.st_dev ) slow_search = 1;
-
-   slen = strlen(path_buf);
-   ptr = path_buf + slen -1;
-   if( *ptr != '/' )
+   if( size < 3 )
    {
-      if( slen + 2 > path_size ) { errno = ERANGE; return 0; }
-      strcpy(++ptr, "/");
-      slen++;
+      errno = ERANGE;
+      return NULL;
    }
-   slen++;
+   strcpy(path_buf, ".");
 
-   dp = opendir(path_buf);
-   if( dp == 0 )
-	   {
-	   perror ("opendir");
-	   return 0;
-	   }
+   if( stat("/", &st) < 0 ) return NULL;
 
-   while( (d=readdir(dp)) != 0 )
-   {
-      if( slow_search || this_ino == d->d_ino )
-      {
-         if( slen + strlen(d->d_name) > path_size )
-	    { errno = ERANGE; return 0; }
-         strcpy(ptr+1, d->d_name);
-	 if( stat(path_buf, &st) < 0 ) 
-	    continue;
-         if( st.st_ino == this_ino && st.st_dev == this_dev )
-	 {
-	    closedir(dp);
-	    return path_buf;
-	 }
-      }
-   }
+   root_dev = st.st_dev;
+   root_ino = st.st_ino;
 
-   closedir(dp);
-   errno = ENOENT;
-   return 0;
+   return recurser();
 }

@@ -65,12 +65,16 @@ static int show_mount(dev_t dev)
 {
 	struct statfs statfs;
 
-	if (ustatfs(dev, &statfs) < 0)
+	if (ustatfs(dev, &statfs, UF_NOFREESPACE) < 0)
 		return -1;
 
-	printf("%-9s (%s) blocks %6lu free %6lu mount %s\n",
+	if (statfs.f_type < FST_MSDOS) 
+		printf("%-9s (%5s) blocks %6lu free %6lu mount %s\n",
 		dev_name(statfs.f_dev), fs_typename[statfs.f_type], statfs.f_blocks,
 		statfs.f_bfree, statfs.f_mntonname);
+	else
+		printf("%-9s (%5s)                           mount %s\n",
+		dev_name(statfs.f_dev), fs_typename[statfs.f_type], statfs.f_mntonname);
 	return 0;
 }
 

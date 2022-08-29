@@ -55,10 +55,6 @@
 #define ELKS            1
 #define DO_REPLACE      0   /* =1 for tar 'r' option, requires awk */
 
-/* TODO: add to libc */
-#define telldir(dirp)       lseek((dirp)->dd_fd, 0L, SEEK_CUR)
-#define seekdir(dirp,off)   lseek((dirp)->dd_fd, off, SEEK_SET)
-
 typedef unsigned long daddr_t;
 daddr_t	bsrch();
 daddr_t	lookup();

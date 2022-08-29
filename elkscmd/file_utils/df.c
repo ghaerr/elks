@@ -22,20 +22,34 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
+#include <sys/mount.h>
 #include <linuxmt/minix_fs.h>
+#include <linuxmt/fs.h>
 
 #define BLOCK_SIZE	1024
 
-int df(char *device);
+int df(char *device, char *mpnt);
 
 typedef unsigned int bit_t;
 bit_t bit_count(unsigned blocks, bit_t bits, int fd);
-char *devname(char *dirname);
+struct dnames {
+	char *name;
+	char *mpoint;
+};
+struct dnames *devname(char *);
+static char *dev_name(dev_t);
+int df_fat(char *, int);
 
 int iflag= 0;	/* Focus on inodes instead of blocks. */
 int Pflag= 0;	/* Posix standard output. */
 int kflag= 0;	/* Output in kilobytes instead of 512 byte units for -P. */
 int istty;	/* isatty(1) */
+
+/* (num / tot) in percentages rounded up. */
+#define percent(num, tot)  ((int) ((100L * (num) + ((tot) - 1)) / (tot)))
+
+/* One must be careful printing all these _t types. */
+#define L(n)	((long) (n))
 
 void usage(void)
 {
@@ -47,6 +61,8 @@ int main(int argc, char *argv[])
 {
   char *device = "/";
   char *blockdev;
+  struct dnames *dname;
+  struct statfs statfs;
 
   while (argc > 1 && argv[1][0] == '-') {
   	char *opt= argv[1]+1;
@@ -56,8 +72,7 @@ int main(int argc, char *argv[])
   		case 'i':	iflag= 1;	break;
   		case 'k':	kflag= 1;	break;
   		case 'P':	Pflag= 1;	break;
-		default:
-			usage();
+		default:	usage();
 		}
 	}
 	argc--;
@@ -69,38 +84,58 @@ int main(int argc, char *argv[])
   if (argc > 1)
 	device = argv[1];
 
-  if (!(blockdev = devname(device))) {
+  dname = devname(device);
+  if (!(blockdev = dname->name)) {
 	fprintf(stderr, "Can't find /dev/ device for %s\n", device);
 	exit(1);
   }
 
-  if (Pflag) {
-	printf(!iflag ? "\
-Filesystem    %4d-blocks    Used  Available  Capacity\n" : "\
-Filesystem       Inodes     IUsed    IFree    %%IUsed\n",
-		kflag ? 1024 : 512);
+  if (iflag) {
+	printf("Filesystem       Inodes     IUsed    IFree    %%IUsed   Mounted on\n");
   } else {
-	printf("%s\n", !iflag ? "\
-Filesystem    1k-Blocks     free     used    %  FUsed%" : "\
-Filesystem        Files     free     used    %  BUsed%"
-	);
+	if (!Pflag) 
+		printf("Filesystem    1K-blocks     Free     Used    %%  FUsed%%  Mounted on\n");
+	else 
+		printf("Filesystem    %4d-blocks    Used Available Capacity Mounted on\n",
+			kflag ? 1024 : 512);
   }
 
-
-  return df(blockdev);
+  if (argc == 1) {	/* loop through all mounted devices */
+	int i;
+  	for (i = 0; i < NR_SUPER; i++) {
+		if (ustatfs(i, &statfs, UF_NOFREESPACE) >= 0) {
+			char *nm = dev_name(statfs.f_dev);
+			char *filler = "  ";		/* Text alignment */
+			if (Pflag) filler = "";
+			if (statfs.f_type > FST_MSDOS || (statfs.f_type == FST_MSDOS && (Pflag||iflag))) 
+				printf("%-17s %-34s %s%s\n", nm, "[Not a MINIX filesystem]", filler, statfs.f_mntonname);
+			else if (statfs.f_type == FST_MSDOS && !Pflag)
+				df_fat(nm, i);
+			else
+				df(nm, statfs.f_mntonname);
+		}
+	}
+	return 0;
+  } else
+  	return df(blockdev, dname->mpoint);
 }
 
-/* (num / tot) in percentages rounded up. */
-#define percent(num, tot)  ((int) ((100L * (num) + ((tot) - 1)) / (tot)))
+int df_fat(char *name, int dev) 
+{
+	struct statfs stat;
+	if (ustatfs(dev, &stat, 0) < 0)
+		return -1;
+	printf("%-15s %7ld  %7ld  %7ld %3d%%          %s (FAT)\n", name,
+	    stat.f_blocks, stat.f_bfree, stat.f_blocks - stat.f_bfree,
+	    percent(stat.f_blocks - stat.f_bfree, stat.f_blocks), stat.f_mntonname);
+	return 0;
+}
 
-/* One must be careful printing all these _t types. */
-#define L(n)	((long) (n))
-
-int df(char *device)
+int df(char *device, char *mpnt)
 {
   int fd;
   bit_t i_count, z_count;
-  block_t totblocks, busyblocks;
+  long totblocks, busyblocks;
   int n;
   struct minix_super_block super, *sp;
 
@@ -153,26 +188,28 @@ int df(char *device)
 
   /* Print results. */
   printf("%s", device);
-  n= strlen(device);
+  n = strlen(device);
   if (n > 15 && istty) { printf("\n"); n= 0; }
   while (n < 15) { printf(" "); n++; }
 
+  if (iflag) {
+	printf(" %7ld   %7ld  %7ld     %4d%%   %s\n",
+		L(sp->s_ninodes),			/* Inodes */
+		L(i_count),				/* IUsed */
+		L(sp->s_ninodes - i_count),		/* IAvail */
+		percent(i_count, sp->s_ninodes),	/* Capacity */
+		mpnt					/* Mount pnt */
+
+	);
+  }
   if (!Pflag && !iflag) {
-	printf(" %7ld  %7ld  %7ld %3d%%   %3d%%\n",
+	printf(" %7ld  %7ld  %7ld %3d%%   %3d%%   %s\n",
 		L(totblocks),				/* Blocks */
 		L(totblocks - busyblocks),		/* free */
 		L(busyblocks),				/* used */
 		percent(busyblocks, totblocks),		/* % */
-		percent(i_count, sp->s_ninodes)	/* FUsed% */
-	);
-  }
-  if (!Pflag && iflag) {
-	printf(" %7ld  %7ld  %7ld %3d%%   %3d%%\n",
-		L(sp->s_ninodes),			/* Files */
-		L(sp->s_ninodes - i_count),		/* free */
-		L(i_count),				/* used */
-		percent(i_count, sp->s_ninodes),	/* % */
-		percent(busyblocks, totblocks)		/* BUsed% */
+		percent(i_count, sp->s_ninodes),	/* FUsed% */
+		mpnt					/* Mount point */
 	);
   }
   if (Pflag && !iflag) {
@@ -181,19 +218,12 @@ int df(char *device)
   		totblocks *= 2;
   		busyblocks *= 2;
 	}
-	printf(" %7ld   %7ld  %7d     %4d%%\n",
+	printf(" %7ld   %7ld   %7ld    %4d%% %s\n",
 		L(totblocks),				/* Blocks */
 		L(busyblocks),				/* Used */
 		totblocks - busyblocks,			/* Available */
-		percent(busyblocks, totblocks)		/* Capacity */
-	);
-  }
-  if (Pflag && iflag) {
-	printf(" %7ld   %7ld  %7ld     %4d%%\n",
-		L(sp->s_ninodes),			/* Inodes */
-		L(i_count),				/* IUsed */
-		L(sp->s_ninodes - i_count),		/* IAvail */
-		percent(i_count, sp->s_ninodes)	/* Capacity */
+		percent(busyblocks, totblocks),		/* Capacity */
+		mpnt					/* Mount point */
 	);
   }
   close(fd);
@@ -245,17 +275,22 @@ bit_t bit_count(unsigned blocks, bit_t bits, int fd)
  * $PchId: df.c,v 1.7 1998/07/27 18:42:17 philip Exp $
  */
 
-/* return /dev/ device from dirname*/
-char *devname(char *dirname)
+/* return /dev/ device from dirname */
+struct dnames *devname(char *dirname)
 {
    static char dev[] = "/dev";
    struct stat st, dst;
    DIR  *fp;
    struct dirent *d;
-   static char name[16]; /* should be MAXNAMLEN but that's overkill */
+   static struct statfs statfs;
+   static struct dnames dn;
+   static char name[MAXNAMLEN];
 
-   if (!strncmp(dirname, "/dev/", 5))
-	return dirname;
+   if (!strncmp(dirname, "/dev/", 5)) {
+	dn.name = dirname;
+	dn.mpoint = dirname;
+	return &dn;
+   }
 
    if (stat(dirname, &st) < 0)
       return 0;
@@ -271,12 +306,59 @@ char *devname(char *dirname)
          continue;
       strcpy(name + sizeof(dev), d->d_name);
       if (stat(name, &dst) == 0) {
-		if (st.st_dev == dst.st_rdev) {
-			closedir(fp);
-			return name;
+	 if (st.st_dev == dst.st_rdev) {
+	     if (ustatfs(st.st_dev, &statfs, UF_NOFREESPACE) < 0) {
+		dn.mpoint = NULL;
+	     } else {
+		dn.mpoint = statfs.f_mntonname;
+	     }
+	     closedir(fp);
+	     dn.name = name;
+	     return &dn;
         }
       }
    }
    closedir(fp);
-   return 0;
+   return NULL;
+}
+
+/*
+ * Convert a block device number to name.
+ * From mount.c
+ */
+static struct dev_name_struct {
+        char *name;
+        dev_t num;
+} devices[] = {
+        /* root_dev_name needs first 5 in order*/
+        { "hda",     0x0300 },
+        { "hdb",     0x0320 },
+        { "hdc",     0x0340 },
+        { "hdd",     0x0360 },
+        { "fd0",     0x0380 },
+        { "fd1",     0x03a0 },
+        { "ssd",     0x0200 },
+        { "rd",      0x0100 },
+        { NULL,           0 }
+};
+
+static char *dev_name(dev_t dev)
+{
+	int i;
+#define NAMEOFF 5
+	static char name[10] = "/dev/";
+
+	for (i=0; i<sizeof(devices)/sizeof(devices[0])-1; i++) {
+		if (devices[i].num == (dev & 0xfff0)) {
+			strcpy(&name[NAMEOFF], devices[i].name);
+			if (i < 4) {
+				if (dev & 0x07) {
+					name[NAMEOFF+3] = '0' + (dev & 7);
+					name[NAMEOFF+4] = 0;
+				}
+			}
+			return name;
+		}
+	}
+	return NULL;
 }

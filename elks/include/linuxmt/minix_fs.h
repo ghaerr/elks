@@ -98,7 +98,7 @@ extern struct super_block *minix_read_super(register struct super_block *,
 extern int minix_remount(register struct super_block *,int *,char *);
 extern int minix_rmdir(register struct inode *,char *,size_t);
 extern void minix_set_ops(struct inode *);
-extern void minix_statfs(struct super_block *,struct statfs *);
+extern void minix_statfs(struct super_block *,struct statfs *, int);
 extern int minix_symlink(struct inode *,char *,size_t,char *);
 extern int minix_sync_inode(register struct inode *);
 extern void minix_truncate(register struct inode *);
