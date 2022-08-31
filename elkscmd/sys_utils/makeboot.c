@@ -10,7 +10,9 @@
  * Copies /linux and creates /dev for FAT
  * If -M: write MBR using compiled-in mbr.bin
  * If -F: allow writing to flat (non-MBR) hard drive
- * If -f file: use boot file
+ * If -f file: take bootblock from file
+ * If -s: Skip file copying, useful for bootblock copy only
+ * If -m: MBR only, skip file copy and bootblock
  *
  * Nov 2020 Greg Haerr
  */
@@ -69,8 +71,8 @@
 unsigned int SecPerTrk, NumHeads, NumTracks;
 unsigned long Start_sector;
 
-int bootsecsize;
-char bootblock[1024];				/* 1024 for MINIX, 512 for FAT */
+int bootsecsize, rootfstype;
+char bootblock[1024], *rootdevice;				/* 1024 for MINIX, 512 for FAT */
 char *fsname[3] = { "Unknown", "Minix", "FAT" };
 
 /* return /dev name of device*/
@@ -188,6 +190,7 @@ int setMBRparms(int fd)
 {
 	int n;
 	char MBR[512];
+	int *bsect = (int *)MBR;
 
 	lseek(fd, 0L, SEEK_SET);
 	n = read(fd, MBR, 512);
@@ -200,7 +203,8 @@ int setMBRparms(int fd)
 	for (n = 0; n < 512; n++)
 		if (n < PARTITION_START || n > PARTITION_END)
 			MBR[n] = mbr_bin[n];
-
+	if (bsect[255] != 0xaa55)
+		fprintf(stderr, "Warning: Possible data error in MBR\n");
 	lseek(fd, 0L, SEEK_SET);
 	n = write(fd, MBR, 512);
 	if (n != 512) {
@@ -298,25 +302,75 @@ void fatalmsg(const char *s, ...)
 	exit(-1);
 }
 
+/*
+ * Read bootblock from current partition or from file.
+ */
+void get_bootblock(char *bootf) {
+	int fd, n;
+	char *infile = rootdevice;
+	int *bsect = (int *)bootblock;
+	
+	if (bootf == NULL) {	/* get booblock from current root */
+		fd = open(rootdevice, O_RDONLY);
+		if (fd < 0)
+			fatalmsg("Can't open boot device %s\n", rootdevice);
+
+		if (!get_geometry(fd))
+			fatalmsg("Can't get geometry for boot device %s\n", rootdevice);
+		rootfstype = get_fstype(fd);
+		if (rootfstype == 0)
+			fatalmsg("Unknown boot device filesystem\n");
+		printf("System on %s: %s (CHS %d/%d/%d at offset %ld)\n",
+			rootdevice, fsname[rootfstype], NumTracks, NumHeads, SecPerTrk, Start_sector);
+		bootsecsize = (rootfstype == FST_MINIX)? 1024: 512;
+
+	} else {	/* get bootblock from file */
+
+		fd = open(bootf, O_RDONLY);
+		if (fd < 0)
+			fatalmsg("Can't open boot file %s\n", bootf);
+		infile = bootf;
+		bootsecsize = 1024;
+	}
+	lseek(fd, 0L, SEEK_SET);
+	n = read(fd, bootblock, bootsecsize);
+	if (n == 512) { rootfstype = FST_MSDOS; }
+	else if (n == 1024) { rootfstype = FST_MINIX; }
+	else
+		fatalmsg("Size error when reading bootblock from %s\n", infile);
+
+	if (bsect[255] != 0xaa55)
+		fatalmsg("Bad bootblock, wrong signature\n");
+	close(fd);
+}
+
 int main(int ac, char **av)
 {
-	char *rootdevice, *targetdevice;
+	char *targetdevice;
 	char *bootfile = 0;
-	int rootfstype, fstype, fd, n;
+	int fstype = -1, fd, n;
 	int opt_writembr = 0;
 	int opt_writeflat = 0;
-	int opt_usefile = 0;
+	int opt_nocopy = 0;
+	int opt_mbronly = 0;
 	int fat32 = 0;
 	dev_t rootdev, targetdev;
 	struct stat sbuf;
 
 	if (ac < 2 || ac > 5) {
 usage:
-		fatalmsg("Usage: makeboot [-M][-F][-f file] /dev/{fd0,fd1,hda1,hda2,etc}\n");
+		fatalmsg("Usage: makeboot [-M|m][-F] [-f file] [-s] /dev/{fd0,fd1,hda1,hda2,etc}\n");
 	}
 	while (av[1] && av[1][0] == '-') {
 		if (av[1][1] == 'M') {
 			opt_writembr = 1;
+			av++;
+			ac--;
+		}
+		if (av[1][1] == 'm') {
+			opt_writembr = 1;
+			opt_mbronly = 1;
+			opt_nocopy = 1;
 			av++;
 			ac--;
 		}
@@ -325,8 +379,12 @@ usage:
 			av++;
 			ac--;
 		}
+		else if (av[1][1] == 's') {
+			opt_nocopy = 1;
+			av++;
+			ac--;
+		}
 		else if (av[1][1] == 'f') {
-			opt_usefile = 1;
 			av++;
 			ac--;
 			bootfile = av[1];
@@ -346,31 +404,10 @@ usage:
 	rootdev = sbuf.st_dev;
 	rootdevice = devname(rootdev);
 
-	fd = open(rootdevice, O_RDONLY);
-
-	if (fd < 0)
-		fatalmsg("Can't open boot device %s\n", rootdevice);
-
-	if (!get_geometry(fd))
-		fatalmsg("Can't get geometry for boot device %s\n", rootdevice);
-	rootfstype = get_fstype(fd);
-	printf("System on %s: %s (CHS %d/%d/%d at offset %ld)\n",
-		rootdevice, fsname[rootfstype], NumTracks, NumHeads, SecPerTrk, Start_sector);
-	if (rootfstype == 0)
-		fatalmsg("Unknown boot device filesystem\n");
-
-	bootsecsize = (rootfstype == FST_MINIX)? 1024: 512;
-	lseek(fd, 0L, SEEK_SET);
-	if (opt_usefile) {
-		close(fd);
-		fd = open(bootfile, O_RDONLY);
-		if (fd < 0)
-			fatalmsg("Can't open boot file %s\n", bootfile);
+	if (opt_mbronly == 0) {
+		get_bootblock(bootfile);
+		fstype = rootfstype;
 	}
-	n = read(fd, bootblock, bootsecsize);
-	if (n != bootsecsize)
-		fatalmsg("Can't read boot device %s boot sector\n", rootdevice);
-	close(fd);
 
 	fd = open(targetdevice, O_RDWR);
 	if (fd < 0)
@@ -385,14 +422,16 @@ usage:
 		fatalmsg("Can't specify current boot device as target\n");
 
 	if (MINOR(targetdev) < BIOS_FD0_MINOR) {	/* hard drive*/
-		if (!opt_writeflat || opt_writembr) {
+		if (!opt_writeflat & !opt_mbronly) {
 			if ((targetdev & BIOS_MINOR_MASK) == 0)	/* non-partitioned device*/
 				fatalmsg("Must specify partitioned device (example /dev/hda1)\n");
 		}
-	} else {									/* floppy*/
+	} else {					/* floppy*/
 		if (opt_writembr)
-			fatalmsg("Can't use -M on floppy devices\n");
+			fatalmsg("Can't use -M or -m on floppy devices\n");
 	}
+
+	if (opt_mbronly) goto mbronly;
 
 	if (!get_geometry(fd))		/* gets ELKS CHS parameters for bootblock write*/
 		fatalmsg("Can't get geometry for target device %s\n", targetdevice);
@@ -401,18 +440,15 @@ usage:
 	printf("Target on %s: %s (CHS %d/%d/%d at offset %ld)\n",
 		targetdevice, fsname[fstype], NumTracks, NumHeads, SecPerTrk, Start_sector);
 
+	if (rootfstype != fstype)
+		fatalmsg("Target and System filesystem must be same type\n");
+
 	if (fstype == FST_MINIX) setMINIXparms(bootblock);
 	if (fstype == FST_MSDOS) {
 		if (!setFATparms(fd, bootblock)) {
 			close(fd);
 			return -1;
 		}
-	}
-
-	if (rootfstype != fstype)
-		fatalmsg("Target and System filesystem must be same type\n");
-
-	if (fstype == FST_MSDOS) {
 		fat32 = (*(unsigned short *)&bootblock[FAT_BPB_FATSz16] == 0);
 		if (fat32) {		/* if FAT32, check if root directory starts on cluster 2 */
 			unsigned long rootclus;
@@ -428,7 +464,36 @@ usage:
 	if (n != bootsecsize)
 		fatalmsg("Can't write target boot sector\n");
 	close(fd);
+	printf("Bootblock written\n");
 
+	if (opt_nocopy == 0) {
+		if (mkdir(MOUNTDIR, 0777) < 0)
+			fprintf(stderr, "Temp mount point %s not created (may already exist)\n", MOUNTDIR);
+
+		if (mount(targetdevice, MOUNTDIR, fstype, 0) < 0) {
+			fprintf(stderr, "Error: Can't mount %s on %s\n", targetdevice, MOUNTDIR);
+			goto errout2;
+		}
+		if (!copyfile(SYSFILE1, MOUNTDIR SYSFILE1, 1)) {
+			fprintf(stderr, "Error copying %s\n", SYSFILE1);
+			goto errout;
+		}
+
+		if (fstype == FST_MSDOS) {
+			if (mkdir(MOUNTDIR DEVDIR, 0777) < 0)
+				fprintf(stderr, "/dev directory may already exist on target\n");
+		} else {
+			if (!copyfile(SYSFILE2, MOUNTDIR SYSFILE2, 1))
+				fprintf(stderr, "Not copying %s file\n", SYSFILE2);
+		}
+	
+		if (umount(targetdevice) < 0)
+			fprintf(stderr, "Unmount error\n");
+		rmdir(MOUNTDIR);
+		printf("System ");
+	}
+
+mbronly:
 	if (opt_writembr) {
 		char *rawtargetdevice = devname(targetdev & ~BIOS_MINOR_MASK);
 		if (!rawtargetdevice)
@@ -439,38 +504,13 @@ usage:
 		if (setMBRparms(fd))
 			printf("Writing MBR on %s\n", rawtargetdevice);
 		close(fd);
+		printf("MBR ");
 	}
 
-	if (mkdir(MOUNTDIR, 0777) < 0)
-		fprintf(stderr, "Temp mount point %s not created (may already exist)\n", MOUNTDIR);
-
-	if (mount(targetdevice, MOUNTDIR, fstype, 0) < 0) {
-		fprintf(stderr, "Error: Can't mount %s on %s\n", targetdevice, MOUNTDIR);
-		goto errout2;
-	}
-	if (!copyfile(SYSFILE1, MOUNTDIR SYSFILE1, 1)) {
-		fprintf(stderr, "Error copying %s\n", SYSFILE1);
-		goto errout;
-	}
-
-	if (fstype == FST_MSDOS) {
-		if (mkdir(MOUNTDIR DEVDIR, 0777) < 0)
-			fprintf(stderr, "/dev directory may already exist on target\n");
-	} else {
-		if (!copyfile(SYSFILE2, MOUNTDIR SYSFILE2, 1))
-			fprintf(stderr, "Not copying %s file\n", SYSFILE2);
-	}
-
-	if (umount(targetdevice) < 0)
-		fprintf(stderr, "Unmount error\n");
-	rmdir(MOUNTDIR);
-	printf("System");
-	if (opt_writembr)
-		printf(", MBR");
-	printf(" and boot block transferred\n");
+	if (opt_writembr || !opt_nocopy) printf("transferred\n");
 	sync();
 
-	return fstype;		/* return filesystem type (1=MINIX, 2=FAT */
+	return fstype;		/* return filesystem type (1=MINIX, 2=FAT) */
 
 errout:
 	umount(targetdevice);

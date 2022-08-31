@@ -26,6 +26,7 @@ all: $(TARGETS)
 
 minix.bin: boot_sect.o boot_minix.o
 	$(LD) $(LDFLAGS) -M -o minix.bin boot_sect.o boot_minix.o > minix.map
+	dd if=minix.bin obs=1k conv=osync of=minix.tmp; mv minix.tmp minix.bin
 
 probe.bin: boot_sect.o boot_probe.o
 	$(LD) $(LDFLAGS) -M -o probe.bin boot_sect.o boot_probe.o > probe.map
