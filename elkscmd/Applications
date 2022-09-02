@@ -164,6 +164,7 @@ tui/fm                          :tui                            :1440k
 tui/matrix                      :tui                            :1440k
 tui/cons                        :tui                            :1440k
 tui/ttyinfo                     :tui                            :1440k
+tui/sl                          :tui
 busyelks/busyelks				:busyelks
 inet/httpd/sample_index.html	::var/www/index.html	:net
 ktcp/ktcp						:net
