@@ -1,0 +1,104 @@
+.TH MAKEBOOT 8
+.SH NAME
+makeboot \- prepare device as a system boot device
+.SH SYNOPSIS
+\fBmakeboot\fP [\fB\-M|F\fP] [\fB\-s\fP] [\fB\-f file\fR] \fIdevice\fR
+.br
+.SH OPTIONS
+.TP 5
+.B \-M
+Write the ELKS MBR (Master Boot Record) to the first sector of the specified device.
+.TP 5
+.B \-F
+Create a 'flat' (unpartitioned) device. 
+.TP 5
+.B \-f file
+Take the bootblock from the specified instead of the current root device.
+.TP 5
+.B \-s
+Copy system files from the current root to the target device.
+.SH EXAMPLES
+.TP 5
+Copy the bootblock from the current root partition to \fB/dev/hda4\fP:
+.sp
+.nf
+# makeboot /dev/hda4
+System on /dev/hda1: Minix (CHS 7818/16/63 at offset 63)
+Target on /dev/hda4: Minix (CHS 7818/16/63 at offset 7560000)
+Bootblock written
+.fi
+.TP 5
+Write the ELKS MBR til the specified device:
+.sp
+.nf
+# makeboot \-M /dev/hda4
+Writing MBR on /dev/hda
+.fi
+.sp
+Notice that while a partition (/dev/hda4) is specified on the command line, 
+.B makeboot
+changes that into a device (/dev/hda) since that's where the MBR goes.
+.TP 5
+Replace the bootblock on \fB/dev/hda4\fP with the one in \fB./minix.bin\fP and copy system files to the target partition.
+.sp
+.nf
+# makeboot \-s \-f ./minix.bin /dev/hda4
+Target on /dev/hda4: Minix (CHS 7818/16/63 at offset 7560000)
+Bootblock written
+Copying /linux to /tmp/mnt/linux
+Copying /bootopts to /tmp/mnt/bootopts
+System copied
+.fi
+.SH DESCRIPTION
+\fBmakeboot\fR prepares a device or partition for booting by installing a 
+bootloader and \- if the \fB-s\fP option is present \- some system files.
+The partition or device must already contain a file system, which may be either FAT (MSDOS) 
+or Minix.
+.PP
+Without options, a bootblock is copied from the current root device to the target. 
+A different bootblock may be specifying via the \fB-f\fP option, see examples above.
+Such transfer requires that the running system and the target has the same file system types.
+.B makeboot
+will complain and exit if this is not the case.
+.PP
+If the 
+.B -s
+option is present, the ELKS kernel (\fI/linux\fR) and the kernel configuration file 
+.I /bootopts
+will be copied to the target.
+.PP
+The 
+.B -M
+option may be used to write a Master Boot Record (MBR) to the target device. The 
+MBR will preserve the partition information currently present in the first sector of the target device.
+This operation is similar to the MSDOS 
+'fdisk /MBR' command.
+Refer to the
+.BR MBR (8)
+manpage for details about the ELKS MBR.
+.PP
+.B makeboot
+also supports 'flat devices' - aka unpartitioned devices. While lloppies are always unpartitioned,
+hard sisks usually have partitions and a Master Boot Record. By writing the 
+.I bootblock 
+to the first sector(s) of the disk, the entire disk becomes a single partition. The
+.I -F
+option does this.
+.PP
+.B makeboot
+is used by the 
+.B sys
+command to build a fully pouplated and bootable ELKS system from floppy or from another disk.
+.PP
+\fBfloppy\fP:
+on the specified devices.
+.SH BUGS
+.B makeboot
+cannot replace the MBR on the current root device.
+.SH "SEE ALSO"
+.BR sys (8),
+.BR mkfs (8),
+.BR minix (8),
+.BR FAT (8),
+.BR MBR (8),
+.BR boot (8).
