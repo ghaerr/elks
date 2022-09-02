@@ -192,7 +192,7 @@ int setMBRparms(int fd)
 {
 	int n;
 	char MBR[512];
-	short *bsect = (short *)MBR;
+	unsigned short *bsect = (unsigned short *)MBR;
 
 	lseek(fd, 0L, SEEK_SET);
 	n = read(fd, MBR, 512);
@@ -310,7 +310,7 @@ void fatalmsg(const char *s, ...)
 void get_bootblock(char *bootf) 
 {
 	int fd, n;
-	short *bsect = (short *)bootblock;
+	unsigned short *bsect = (unsigned short *)bootblock;
 	
 	if (bootf == NULL) {	/* get bootblock from current root */
 		fd = open(rootdevice, O_RDONLY);

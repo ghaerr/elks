@@ -1,0 +1,64 @@
+.TH SYS 8
+.SH NAME
+sys \- transfer ELKS to a new device or partition
+.SH SYNOPSIS
+\fBsys\fP [\fB\-M|F\fP] [\fB\-3\fP] \fIdevice\fR
+.br
+.SH OPTIONS
+.TP 5
+.B \-M
+Add a ELKS MBR (Master Boot Record) to the target drive.
+.TP 5
+.B \-F
+Create a 'flat' (unpartitioned) device. 
+.TP 5
+.B \-3
+Create a minimal system for a 360K floppy.
+.SH DESCRIPTION
+\fBsys\fR uses the currently running system to build a complete and bootable ELKS partition or drive. 
+The common case would be to boot ELKS from a floppy disk and build a hard disk based system 
+from there with a single command, such as
+.sp
+.B # sys -M /dev/hda1
+.PP
+If the 
+.B \-M
+option is included, the ELKS MBR will replace the current MBR - if any - on the taget drive.
+.PP
+.B sys
+will report progress as it runs, which will take some time if the system is running off of a floppy disk.
+Unless the 
+.B \-3 
+option is present, the entire system with 
+.I /bin
+and
+.I /etc
+directories will be copied and the device directory will be fully populated. With
+.B \-3
+only a subset suitable for very small floppy disks will be transferred.
+.PP
+The target file system - Minix of FAT - must exist before 
+.B sys
+can be run.
+.PP
+After running 
+.B sys
+successfully, the target drive/partition will be bootable and configured exactly like the source system.
+The next step could then be to use the
+.B setup 
+command to set the hostname and basic parameters (see the
+.B setup
+man-page for details).
+.SH BUGS
+.B sys
+performs limited option checking, so some error messages appear to come from 
+.B makeboot
+instead.
+.SH "SEE ALSO"
+.BR makeboot (8),
+.BR setup (8),
+.BR mkfs (8),
+.BR minix (8),
+.BR FAT (8),
+.BR MBR (8),
+.BR boot (8).
