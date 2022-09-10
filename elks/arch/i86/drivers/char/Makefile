@@ -51,6 +51,10 @@ ifeq ($(CONFIG_ARCH_IBMPC), y)
 	SERIAL = 8250
 endif
 
+ifeq ($(CONFIG_ARCH_PC98), y)
+	SERIAL = pc98
+endif
+
 ifdef CONFIG_ARCH_PC98
 ifdef CONFIG_CONSOLE_DIRECT
 OBJS += console-direct-pc98.o
