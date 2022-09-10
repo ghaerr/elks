@@ -17,5 +17,6 @@ more
 mv
 rm
 rmdir
+split
 sync
 touch

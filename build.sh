@@ -72,6 +72,7 @@ if [ "$1" = "auto" ]; then
 	echo "Building 8018X image..."
     cp 8018x.config .config
     make kclean || clean_exit 7
+    rm elkscmd/basic/*.o
     make -j1 || clean_exit 8
 fi
 
@@ -82,6 +83,7 @@ if [ "$1" = "auto" ]; then
     make kclean || clean_exit 9
     rm elkscmd/sys_utils/clock.o
     rm elkscmd/basic/*.o
+    rm elkscmd/sys_utils/ps.o
     rm elkscmd/nano-X/*.o
     make -j1 || clean_exit 10
 fi

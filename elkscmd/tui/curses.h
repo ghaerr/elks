@@ -35,6 +35,9 @@
 #define TRUE            1
 #define FALSE           0
 
+#define OK              0
+#define ERR             (-1)
+
 extern int LINES;
 extern int COLS;
 extern void *stdscr;
@@ -65,3 +68,10 @@ int getch();
 void wgetnstr(void *, char *, int);
 void attron(int a);
 void attroff(int a);
+
+void scrollok(void *,int);
+void leaveok(void *,int);
+void nodelay(void *,int);
+void refresh();
+void mvcur(int,int,int,int);
+int mvaddch(int,int,int);

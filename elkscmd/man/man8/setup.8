@@ -1,0 +1,43 @@
+.TH SETUP 8
+.SH NAME
+setup \- set up some basic parameters for ELKS runtime
+.SH SYNOPSIS
+\fBsetup\fP \fInumber\fR \fIbootopts-string\fR
+.br
+.SH DESCRIPTION
+\fBsetup\fR is a simple script to enable fast setup of several ELKS systems in a network. 
+The first parameter is the 'host number', the rightmost number of the system's IP address. 
+By default, an ELKS system has the IP address 10.0.2.15. The command
+.sp
+.B setup 17
+.sp
+will edit the 
+.I /etc/hosts
+file so that the local address becomes 10.0.2.17 and also set the hostname to
+.IR elks17 .
+.PP
+The second argument - if present - is a quick way to uncomment a line in the standard 
+.I /bootopts
+file. By default most lines in 
+.I /bootopts 
+are commented out with a leading hash (#) mark.
+.B setup 
+removes the hash mark from the first line containing the string in the second argument - if any. For example,
+if 
+.I /bootopts
+contains the line
+.sp
+.B #console=ttyS0,57600 debug net=ne2k 3 # sercons, multiuser, networking
+.sp
+then the command
+.sp
+.B setup 16 debug
+.sp
+will remove the hash and thus enable that line.
+.SH BUGS
+.B setup
+is very limited in its current incarnation and subject to rapid changes.
+.SH "SEE ALSO"
+.BR setup (8),
+.BR hosts (4),
+.BR bootopts (4).
