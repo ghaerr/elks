@@ -31,35 +31,60 @@ struct serial_info {
     struct tty *tty;
 };
 
+/* Timer 2 mode definitions */
+#define TIMER2_MODE3 0xB6   /* timer 2, binary count, mode 3, lsb/msb */
+
 /* UART-specific definititions for line and modem control register*/
 #define DEFAULT_LCR		UART_LCR_WLEN8
-//#define DEFAULT_MCR		(UART_MCR_DTR | UART_MCR_RTS | UART_MCR_OUT2)
 
 static struct serial_info ports[NR_SERIAL] = {
-    //{COM1_PORT, COM1_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL},
     {COM1_PORT, COM1_IRQ, 0, DEFAULT_LCR, 0, 0, NULL}
 };
 
 /* UART clock divisors per baud rate*/
-static unsigned int divisors[] = {
+/* For 5MHz system, 1/16 mode */
+static unsigned int divisors_5MHz[] = {
     0,				/*  0 = B0      */
-    2304,			/*  1 = B50     */
-    1536,			/*  2 = B75     */
-    1047,			/*  3 = B110    */
-    860,			/*  4 = B134    */
-    768,			/*  5 = B150    */
-    576,			/*  6 = B200    */
-    384,			/*  7 = B300    */
-    192,			/*  8 = B600    */
-    96,				/*  9 = B1200   */
-    64,				/* 10 = B1800   */
-    48,				/* 11 = B2400   */
-    24,				/* 12 = B4800   */
-    12,				/* 13 = B9600   */
-    6,				/* 14 = B19200  */
-    3,				/* 15 = B38400  */
-    2,				/* 16 = B57600  */
-    1,				/* 17 = B115200 */
+    0,				/*  1 = B50     */
+    0,				/*  2 = B75     */
+    0,				/*  3 = B110    */
+    0,				/*  4 = B134    */
+    0,				/*  5 = B150    */
+    0,				/*  6 = B200    */
+    512,			/*  7 = B300    */
+    256,			/*  8 = B600    */
+    128,			/*  9 = B1200   */
+    0,				/* 10 = B1800   */
+    64,				/* 11 = B2400   */
+    32,				/* 12 = B4800   */
+    16,				/* 13 = B9600   */
+    8,				/* 14 = B19200  */
+    4,				/* 15 = B38400  */
+    0,				/* 16 = B57600  */
+    0,				/* 17 = B115200 */
+    0				/*  0 = B230400 */
+};
+
+/* For 8MHz system, 1/16 mode */
+static unsigned int divisors_8MHz[] = {
+    0,				/*  0 = B0      */
+    0,				/*  1 = B50     */
+    0,				/*  2 = B75     */
+    0,				/*  3 = B110    */
+    0,				/*  4 = B134    */
+    0,				/*  5 = B150    */
+    0,				/*  6 = B200    */
+    416,			/*  7 = B300    */
+    208,			/*  8 = B600    */
+    104,			/*  9 = B1200   */
+    0,				/* 10 = B1800   */
+    52,				/* 11 = B2400   */
+    26,				/* 12 = B4800   */
+    13,				/* 13 = B9600   */
+    0,				/* 14 = B19200  */
+    0,				/* 15 = B38400  */
+    0,				/* 16 = B57600  */
+    0,				/* 17 = B115200 */
     0				/*  0 = B230400 */
 };
 
@@ -117,25 +142,31 @@ static void update_port(struct serial_info *port)
     cflags = port->tty->termios.c_cflag & CBAUD;
     if (cflags & CBAUDEX)
 	cflags = B38400 + (cflags & 03);
-    divisor = divisors[cflags];
+
+    if (peekb(0x501, 0) & 0x80) {
+	/* 8MHz system */
+	divisor = divisors_8MHz[cflags];
+    } else {
+	/* 5MHz system */
+	divisor = divisors_5MHz[cflags];
+    }
 
     /* FIXME: should update lcr parity and data width from termios values*/
 
     /* update divisor only if changed, since we have not TCSETW*/
-    if (divisor != port->divisor) {
+    if (!divisor) {
+	printk("This baud rate is not supported.\n");
+    }
+    else if (divisor != port->divisor) {
 	port->divisor = divisor;
 
 	clr_irq();
 
-	/* Set the divisor latch bit */
-	//outb(port->lcr | UART_LCR_DLAB, port->io + UART_LCR);
+	outb(TIMER2_MODE3, TIMER_CMDS_PORT);
 
 	/* Set the divisor low and high byte */
-	//outb((unsigned char)divisor, port->io + UART_DLL);
-	//outb((unsigned char)(divisor >> 8), port->io + UART_DLM);
-
-	/* Clear the divisor latch bit */
-	outb(port->lcr, port->io + UART_LCR);
+	outb((unsigned char)divisor, TIMER2_PORT);          /* LSB */
+	outb((unsigned char)(divisor >> 8), TIMER2_PORT);   /* MSB */
 
 	set_irq();
     }
@@ -163,7 +194,6 @@ static int rs_open(struct tty *tty)
     /* clear RX buffers */
     inb(port->io + UART_LSR);
     inb(port->io + UART_RX);
-    //inb(port->io + UART_IIR);
     inb(port->io + UART_MSR);
 
     /* set serial port parameters to match ports[rs_minor] */
@@ -172,12 +202,9 @@ static int rs_open(struct tty *tty)
     /* enable receiver data interrupt*/
     outb(UART_IER_RDI, port->io + UART_IER);
 
-    //outb(port->mcr, port->io + UART_MCR);
-
     /* clear Line/Modem Status, Intr ID and RX register */
     inb(port->io + UART_LSR);
     inb(port->io + UART_RX);
-    //inb(port->io + UART_IIR);
     inb(port->io + UART_MSR);
 
     return 0;
@@ -196,12 +223,6 @@ void rs_conout(dev_t dev, int c)
 /* initialize UART, interrupts off */
 static void rs_init(struct serial_info *sp)
 {
-    /* reset chip */
-    //outb(0x00, sp->io + UART_MCR);
-
-    /* FIFO off, clear RX and TX FIFOs */
-    //outb(UART_FCR_CLEAR_RCVR | UART_FCR_CLEAR_XMIT, sp->io + UART_FCR);
-
     /* clear RX register */
 }
 
