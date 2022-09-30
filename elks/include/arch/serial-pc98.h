@@ -18,10 +18,12 @@
 #define UART_IER	5	/* Out: Interrupt Mask Set Register */
 
 /* The definitions for the Mode Register */
-#define UART_LCR_WLEN5  0x00	/* Wordlength: 5 bits */
-#define UART_LCR_WLEN6  0x01	/* Wordlength: 6 bits */
-#define UART_LCR_WLEN7  0x02	/* Wordlength: 7 bits */
-#define UART_LCR_WLEN8  0x03	/* Wordlength: 8 bits */
+#define UART_LCR_STOP1	0x40	/* Stop bits: 1 stop bit */
+#define UART_LCR_WLEN5	0x00	/* Wordlength: 5 bits */
+#define UART_LCR_WLEN6	0x04	/* Wordlength: 6 bits */
+#define UART_LCR_WLEN7	0x08	/* Wordlength: 7 bits */
+#define UART_LCR_WLEN8	0x0C	/* Wordlength: 8 bits */
+#define UART_LCR_MODE16	0x02	/* x16 mode */
 
 /* The definitions for the Status Register */
 #define UART_LSR_TEMT	0x04	/* Transmitter empty */

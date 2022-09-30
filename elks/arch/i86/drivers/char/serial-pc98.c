@@ -35,7 +35,7 @@ struct serial_info {
 #define TIMER2_MODE3 0xB6   /* timer 2, binary count, mode 3, lsb/msb */
 
 /* UART-specific definititions for line and modem control register*/
-#define DEFAULT_LCR		UART_LCR_WLEN8
+#define DEFAULT_LCR		UART_LCR_STOP1 | UART_LCR_WLEN8 | UART_LCR_MODE16
 
 static struct serial_info ports[NR_SERIAL] = {
     {COM1_PORT, COM1_IRQ, 0, DEFAULT_LCR, 0, 0, NULL}
@@ -109,8 +109,8 @@ static int rs_write(struct tty *tty)
 /* serial interrupt routine, reads and queues received character */
 void rs_irq(int irq, struct pt_regs *regs)
 {
-    /* FIXME below line allows for max two serial ports */
-    struct serial_info *sp = (irq == ports[0].irq)? ports: &ports[1];
+    /* below line allows for max one serial port */
+    struct serial_info *sp = ports;
     unsigned int io = sp->io;
     struct ch_queue *q = &sp->tty->inq;
 
@@ -161,6 +161,9 @@ static void update_port(struct serial_info *port)
 	port->divisor = divisor;
 
 	clr_irq();
+
+	/* Set the mode register */
+	outb(port->lcr, port->io + UART_LCR);
 
 	outb(TIMER2_MODE3, TIMER_CMDS_PORT);
 
