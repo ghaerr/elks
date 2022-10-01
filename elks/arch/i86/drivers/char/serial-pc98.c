@@ -203,7 +203,7 @@ static int rs_open(struct tty *tty)
     update_port(port);
 
     /* enable receiver data interrupt*/
-    outb(UART_IER_RDI, port->io + UART_IER);
+    outb(inb(port->io + UART_IER) | UART_IER_RDI, port->io + UART_IER);
 
     /* clear Line/Modem Status, Intr ID and RX register */
     inb(port->io + UART_LSR);
