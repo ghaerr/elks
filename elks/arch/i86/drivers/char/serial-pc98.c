@@ -155,7 +155,7 @@ static void update_port(struct serial_info *port)
 
     /* update divisor only if changed, since we have not TCSETW*/
     if (!divisor) {
-	printk("This baud rate is not supported.\n");
+	printk("serial: baud rate not supported.\n");
     }
     else if (divisor != port->divisor) {
 	port->divisor = divisor;
