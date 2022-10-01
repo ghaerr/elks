@@ -127,7 +127,7 @@ static void rs_release(struct tty *tty)
 
     debug_tty("SERIAL close %d\n", current->pid);
     if (--tty->usecount == 0) {
-	outb(0, port->io + UART_IER);	/* Disable all interrupts */
+	outb(inb(port->io + UART_IER) & 0xF8, port->io + UART_IER);	/* Disable all interrupts */
 	tty_freeq(tty);
     }
 }
