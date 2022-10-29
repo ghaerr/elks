@@ -90,6 +90,8 @@ static unsigned int divisors_8MHz[] = {
 
 extern struct tty ttys[];
 
+static int rs_init_done = 0;
+
 /* serial write - busy loops until transmit buffer available */
 static int rs_write(struct tty *tty)
 {
@@ -162,9 +164,6 @@ static void update_port(struct serial_info *port)
 
 	clr_irq();
 
-	/* Set the mode register */
-	outb(port->lcr, port->io + UART_LCR);
-
 	outb(TIMER2_MODE3, TIMER_CMDS_PORT);
 
 	/* Set the divisor low and high byte */
@@ -218,15 +217,27 @@ void rs_conout(dev_t dev, int c)
 {
     struct serial_info *sp = &ports[MINOR(dev) - RS_MINOR_OFFSET];
 
-    while (!(inb(sp->io + UART_LSR) & UART_LSR_TEMT))
+    while (!(inb(sp->io + UART_LSR) & UART_LSR_THRE))
 	continue;
     outb(c, sp->io + UART_TX);
 }
 
-/* initialize UART, interrupts off */
+/* initialize UART */
 static void rs_init(struct serial_info *sp)
 {
-    /* clear RX register */
+    /* Reset */
+    /* Set the mode register */
+    outb(0x8E, sp->io + UART_LCR); // dummy, bit6 must be 0
+    outb(0x8E, sp->io + UART_LCR); // dummy, bit6 must be 0
+    outb(0x8E, sp->io + UART_LCR); // dummy, bit6 must be 0
+    /* Set the command word */
+    outb(0x8E | UART_LCR_RESET, sp->io + UART_LCR); // reset, set bit6
+
+    /* Set the mode register */
+    outb(sp->lcr, sp->io + UART_LCR);
+
+    /* Set the command word */
+    outb(UART_LCR_RTS_ON | UART_LCR_RX_EN | UART_LCR_DTR_ON | UART_LCR_TX_EN, sp->io + UART_LCR);
 }
 
 void INITPROC serial_init(void)
@@ -235,7 +246,9 @@ void INITPROC serial_init(void)
     struct tty *tty = ttys + NR_CONSOLES;
 
     for (sp = ports; sp < &ports[NR_SERIAL]; sp++, tty++) {
-	rs_init(sp);
+	/* If rs_init is not done at rs_setbaud for serial console, do it here */
+	if (!rs_init_done)
+	   rs_init(sp);
 	if (request_irq(sp->irq, rs_irq, INT_GENERIC))
 	    printk("Can't get serial IRQ %d\n", sp->irq);
 	else {
@@ -270,6 +283,9 @@ void INITPROC rs_setbaud(dev_t dev, unsigned long baud)
     struct serial_info *sp = &ports[MINOR(dev) - RS_MINOR_OFFSET];
     struct tty *tty = ttys + NR_CONSOLES + MINOR(dev) - RS_MINOR_OFFSET;
     unsigned int b;	/* use smaller 16-bit width to reduce code*/
+
+	rs_init(sp);
+	rs_init_done = 1;
 
 	if (baud == 115200) b = B115200;
 	else if ((unsigned)baud == 57600) b = B57600;
