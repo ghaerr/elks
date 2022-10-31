@@ -56,9 +56,8 @@
 #define TIMER_DATA_PORT 0x71		/* data port    */
 #define TIMER_IRQ	0		/* can't change*/
 
-/* bell, bell-8254.c*/
-#define TIMER2_PORT	0x75		/* timer 2 data port for speaker frequency*/
-#define SPEAKER_PORT	0x61
+/* serial, serial-pc98.c*/
+#define TIMER2_PORT	0x75		/* timer 2 data port for serial port*/
 
 /* 8259 interrupt controller, irq-8259.c*/
 #define PIC1_CMD   0x00			/* master */
@@ -78,6 +77,10 @@
 //#define CONFIG_FAST_IRQ3             /* COM2 very fast serial driver, no ISIG handling*/
 #endif
 
+#ifdef CONFIG_ARCH_PC98
+#define COM1_PORT	0x30
+#define COM1_IRQ	4		/* unregistered unless COM1_PORT found*/
+#else
 #define COM1_PORT	0x3f8
 #define COM1_IRQ	4		/* unregistered unless COM1_PORT found*/
 
@@ -89,6 +92,7 @@
 
 #define COM4_PORT	0x2e8
 #define COM4_IRQ	7		/* unregistered unless COM4_PORT found*/
+#endif
 
 /* Ethernet card settings may be overridden in /bootopts using netirq= and netport= */ 
 /* ne2k, ne2k.c */ 

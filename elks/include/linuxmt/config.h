@@ -42,7 +42,7 @@
 #endif /* CONFIG_ARCH_IBMPC */
 
 #ifdef CONFIG_ARCH_PC98
-#define MAX_SERIAL		2	/* max number of serial tty devices*/
+#define MAX_SERIAL		1	/* max number of serial tty devices*/
 #define SETUP_VID_COLS		80	/* video # columns */
 #define SETUP_VID_LINES		25	/* video # lines */
 #define SETUP_CPU_TYPE		1	/* processor type = 8086 */
