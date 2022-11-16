@@ -62,7 +62,7 @@ tags:           $(HDRS) $(SRCS); @ctags $(HDRS) $(SRCS)
 update:         $(DEST)/$(PROGRAM)
 
 $(DEST)/$(PROGRAM): $(SRCS) $(LIBS) $(HDRS)
-		@make -f $(MAKEFILE) DEST=$(DEST) install
+		@$(MAKE) -f $(MAKEFILE) DEST=$(DEST) install
 ###
 flparc.o: ../prem/prem.h
 pres.o: ../prem/prem.h pres.h
