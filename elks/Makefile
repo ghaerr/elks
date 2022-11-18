@@ -217,7 +217,7 @@ kclean: dokclean
 clean:	nodep doclean
 
 dep:	$(TOPDIR)/include/autoconf.h
-	@make dodep
+	@$(MAKE) dodep
 	@echo
 	@echo ' * Dependencies configured. Next, you need to run one of the'
 	@echo ' * following commands:'

@@ -47,13 +47,13 @@ all:	../bin/elks-compress ../bin/exomizer
 	$(CC) -o ../bin/elks-compress $(CFLAGS) $(OBJS)
 
 ../bin/exomizer:
-	make -C exomizer/src
+	$(MAKE) -C exomizer/src
 	cp -p exomizer/src/exomizer ../bin/exomizer
 
 doclean: elks-compress-doclean
 
 elks-compress-doclean:
-	make -C exomizer/src clean
+	$(MAKE) -C exomizer/src clean
 
 #########################################################################
 ### Dependencies:

@@ -54,7 +54,7 @@ all:
 	then echo -e "\n*** ERROR: You must configure ELKS first ***\n" >&2; exit 1; fi
 	for DIR in $(SUBDIRS); do $(MAKE) -C $$DIR all || exit 1; done
 ifdef CONFIG_APP_CGATEXT)
-	make -C cgatext
+	$(MAKE) -C cgatext
 endif
 
 install:
