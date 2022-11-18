@@ -51,7 +51,7 @@ static void elks_init()
 	memset(ldt, 0, sizeof ldt);
 	int cs_idx = 0, fcs_idx, ds_idx,
 	    ldt_count = modify_ldt(0, ldt, sizeof ldt);
-	unsigned cs, fcs, ds;
+	unsigned cs, ds;
 	if (ldt_count < 0)
 		ldt_count = 0;
 	while (cs_idx < ldt_count && ldt[cs_idx] != 0)
@@ -71,7 +71,7 @@ static void elks_init()
 	elks_cpu.regs.xcs = cs = cs_idx * 8 + 7;
 	/* Stash the far text descriptor number in .orig_eax or .orig_rax
 	   first... */
-	elks_cpu.regs.orig_xax = fcs = fcs_idx * 8 + 7;
+	elks_cpu.regs.orig_xax = fcs_idx * 8 + 7;
 	elks_cpu.regs.xds = elks_cpu.regs.xes = elks_cpu.regs.xss
 			  = ds = ds_idx * 8 + 7;
 	dbprintf(("LDT descriptor for text is %#x\n", cs));
@@ -296,14 +296,14 @@ static int load_elks(int fd, uint16_t argv_envp_bytes)
 			if (len <= min_len)
 				return -EINVAL;
 			heap = len - min_len;
-			if (heap < INIT_STACK)
+			if (heap < stack)
 				return -EINVAL;
-			heap -= INIT_STACK;
+			heap -= stack;
 			if (heap < argv_envp_bytes)
 				return -E2BIG;
 		} else {
 			len = min_len;
-			if (__builtin_add_overflow(len, INIT_HEAP + INIT_STACK,
+			if (__builtin_add_overflow(len, INIT_HEAP + stack,
 						   &len))
 				return -EFBIG;
 			if (__builtin_add_overflow(len, argv_envp_bytes, &len))
@@ -657,7 +657,6 @@ void db_printf(const char * fmt, ...)
 {
 	static FILE * db_fd = NULL;
 	va_list ptr;
-	int rv;
 	if( db_fd == NULL )
 	{
 		db_fd = fopen("/tmp/ELKS_log", "a");
@@ -666,7 +665,7 @@ void db_printf(const char * fmt, ...)
 	}
 	fprintf(db_fd, "%d: ", getpid());
 	va_start(ptr, fmt);
-	rv = vfprintf(db_fd,fmt,ptr);
+	vfprintf(db_fd,fmt,ptr);
 	va_end(ptr);
 	fflush(db_fd);
 }
