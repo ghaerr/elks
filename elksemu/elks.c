@@ -3,10 +3,10 @@
  *
  *	The 8086 mode code runs in protected mode by way of 16-bit segment
  *	descriptors which we set up in the LDT.
- *	We trap up to 386 mode for system call emulation and naughties. 
+ *	We trap up to 386 mode for system call emulation and naughties.
  */
 
-#define _GNU_SOURCE  /* for clone */ 
+#define _GNU_SOURCE  /* for clone */
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -26,7 +26,7 @@
 #include <sys/wait.h>
 #include <asm/ldt.h>
 #include <asm/ptrace-abi.h>
-#include "elks.h" 
+#include "elks.h"
 
 volatile struct elks_cpu_s elks_cpu;
 /* Paragraph aligned */
@@ -36,7 +36,7 @@ unsigned short brk_at = 0;
 #ifdef DEBUG
 #define dbprintf(x) db_printf x
 #else
-#define dbprintf(x) 
+#define dbprintf(x)
 #endif
 
 static int modify_ldt(int func, void *ptr, unsigned long bytes)
@@ -120,7 +120,7 @@ static void elks_take_interrupt(int arg)
 		kill(getpid(), SIGILL);
 		return;
 	}
-	
+
 	dbprintf(("syscall AX=%x BX=%x CX=%x DX=%x SP=%x "
 		  "stack=%x %x %x %x %x\n",
 		(unsigned short)elks_cpu.regs.xax,
@@ -133,7 +133,7 @@ static void elks_take_interrupt(int arg)
 		ELKS_PEEK(unsigned short, elks_cpu.regs.xsp + 4),
 		ELKS_PEEK(unsigned short, elks_cpu.regs.xsp + 6),
 		ELKS_PEEK(unsigned short, elks_cpu.regs.xsp + 8)));
-		
+
 	elks_cpu.regs.xax = elks_syscall();
 	dbprintf(("elks syscall returned %d\n",
 		  (int)(short)elks_cpu.regs.xax));
@@ -580,7 +580,7 @@ main(int argc, char *argv[], char *envp[])
 
 	/* This uses the _real_ user ID If the file is exec only that's */
 	/* ok cause the suid root will override.  */
-	/* BTW, be careful here, security problems are possible because of 
+	/* BTW, be careful here, security problems are possible because of
 	 * races if you change this. */
 
 	if( access(argv[1], X_OK) < 0
@@ -598,7 +598,7 @@ main(int argc, char *argv[], char *envp[])
 	if( st.st_mode & S_ISUID ) euid = st.st_uid;
 	if( st.st_mode & S_ISGID ) egid = st.st_gid;
 
-	/* Set the _real_ permissions, or revoke superuser priviliages */
+	/* Set the _real_ permissions, or revoke superuser privileges */
 	setregid(rgid, egid);
 	setreuid(ruid, euid);
 
@@ -616,7 +616,7 @@ main(int argc, char *argv[], char *envp[])
 	/* The Linux vm will deal with not allocating the unused pages */
 	elks_base = mmap(NULL, 0x30000 + pg_sz,
 			  PROT_EXEC|PROT_READ|PROT_WRITE,
-			  MAP_ANON|MAP_PRIVATE|MAP_32BIT, 
+			  MAP_ANON|MAP_PRIVATE|MAP_32BIT,
 			  -1, 0);
 	if( elks_base == MAP_FAILED ||
 	    (uintptr_t)elks_base >= 0x100000000ull - (0x30000 + pg_sz) )
@@ -625,7 +625,7 @@ main(int argc, char *argv[], char *envp[])
 		exit(255);
 	}
 	mprotect(elks_base + 0x30000, pg_sz, PROT_NONE);
-	
+
 	argv_envp_bytes = count_argv_envp_bytes(argv + 1, envp);
 
 	if (argv_envp_bytes > 0xffffu)
@@ -643,7 +643,7 @@ main(int argc, char *argv[], char *envp[])
 				strerror(-err));
 		exit(1);
 	}
-	
+
 	close(fd);
 
 	build_stack(argv + 1, envp, argv_envp_bytes);
@@ -655,19 +655,19 @@ main(int argc, char *argv[], char *envp[])
 #ifdef DEBUG
 void db_printf(const char * fmt, ...)
 {
-static FILE * db_fd = 0;
-  va_list ptr;
-  int rv;
-  if( db_fd == 0 )
-  {
-     db_fd = fopen("/tmp/ELKS_log", "a");
-     if( db_fd == 0 ) db_fd = stderr;
-     setbuf(db_fd, 0);
-  }
-  fprintf(db_fd, "%d: ", getpid());
-  va_start(ptr, fmt);
-  rv = vfprintf(db_fd,fmt,ptr);
-  va_end(ptr);
-  fflush(db_fd);
+	static FILE * db_fd = NULL;
+	va_list ptr;
+	int rv;
+	if( db_fd == NULL )
+	{
+		db_fd = fopen("/tmp/ELKS_log", "a");
+		if( db_fd == NULL ) db_fd = stderr;
+		setbuf(db_fd, 0);
+	}
+	fprintf(db_fd, "%d: ", getpid());
+	va_start(ptr, fmt);
+	rv = vfprintf(db_fd,fmt,ptr);
+	va_end(ptr);
+	fflush(db_fd);
 }
 #endif
