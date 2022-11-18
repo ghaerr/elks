@@ -435,7 +435,7 @@ void run_elks()
 		{
 			int err = errno;
 			fprintf(stderr, "ptrace(PTRACE_ATTACH ...) failed\n");
-			fprintf(stderr, "%s\n", strerror(errno));
+			fprintf(stderr, "%s\n", strerror(err));
 			exit(255);
 		}
 		wait_for_child();
