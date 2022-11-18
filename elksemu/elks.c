@@ -599,8 +599,13 @@ main(int argc, char *argv[], char *envp[])
 	if( st.st_mode & S_ISGID ) egid = st.st_gid;
 
 	/* Set the _real_ permissions, or revoke superuser privileges */
-	setregid(rgid, egid);
-	setreuid(ruid, euid);
+	if( setregid(rgid, egid) < 0
+	  || setreuid(ruid, euid) < 0
+	  )
+	{
+		fprintf(stderr, "Cannot drop superuser privileges\n");
+		exit(255);
+	}
 
 	dbprintf(("ELKSEMU\n"));
 	elks_init();
