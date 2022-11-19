@@ -19,7 +19,6 @@ static pid_t linux_pid[MAX_ELKS_PID + 1U];
 
 void elks_pid_init(void)
 {
-	unsigned h;
 	memset(linux_pid, 0, sizeof linux_pid);
 }
 
@@ -52,7 +51,6 @@ pid_t elks_to_linux_pid(int16_t epid)
 
 int16_t linux_to_elks_pid(pid_t lpid)
 {
-	unsigned i;
 	int16_t h, epid;
 	if (lpid <= 1)
 		return lpid;

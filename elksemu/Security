@@ -1,4 +1,4 @@
-Is is possible to install /usr/bin/elksemu as a suid-root executable.
+It is possible to install /usr/bin/elksemu as a suid-root executable.
 This gives two additional facilities when running elks executables.
 
 1) It is now possible to run programs that are execute only, without
