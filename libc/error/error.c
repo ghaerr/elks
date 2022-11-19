@@ -20,12 +20,6 @@ strerror(int err)
    char inbuf[256];
    static char retbuf[60];
 
-   if( __sys_nerr )
-   {
-      if( err < 0 || err >= __sys_nerr ) goto unknown;
-      return __sys_errlist[err];
-   }
-
    if( err <= 0 ) goto unknown;	/* NB the <= allows comments in the file */
    fd = open(_PATH_ERRSTRING, 0);
    if( fd < 0 ) goto unknown;
@@ -41,8 +35,8 @@ strerror(int err)
 	    if( err == atoi(retbuf) )
 	    {
 	       char * p = strchr(retbuf, ' ');
-	       if( p == 0 ) goto unknown;
-	       while(*p == ' ') p++;
+	       if( p == 0 ) goto done;
+	       while(*++p == ' ') ;
 	       close(fd);
 	       return p;
 	    }
@@ -52,8 +46,9 @@ strerror(int err)
 	    retbuf[bufoff++] = inbuf[i];
       }
    }
+done:
+   close(fd);
 unknown:
-   if( fd >= 0 ) close(fd);
    strcpy(retbuf, "Unknown error ");
    strcpy(retbuf+14, itoa(err));
    return retbuf;

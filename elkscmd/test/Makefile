@@ -3,6 +3,7 @@
 SUBDIRS =  \
 	eth    \
 	fat    \
+	libc   \
 	pty    \
 	socket \
 	select \

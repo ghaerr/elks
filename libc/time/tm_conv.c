@@ -74,7 +74,7 @@ static int   moffset[] =
 
 #include <time.h>
 
-static const unsigned short int __mon_lengths[2][12] =
+static const char __mon_lengths[2][12] =
   {
     /* Normal years.  */
     { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 },
@@ -87,8 +87,9 @@ void
 __tm_conv(struct tm *tmbuf, time_t *t, time_t offset)
 {
   long days, rem;
+  int yday;
   register int y;
-  register const unsigned short *ip;
+  register const char *ip;
 
   days = *t / SECS_PER_DAY;
   rem = *t % SECS_PER_DAY;
@@ -122,13 +123,14 @@ __tm_conv(struct tm *tmbuf, time_t *t, time_t offset)
       --y;
       days += __isleap(y) ? 366 : 365;
     }
+  yday = days;
   tmbuf->tm_year = y - 1900;
-  tmbuf->tm_yday = days;
+  tmbuf->tm_yday = yday;
   ip = __mon_lengths[__isleap(y)];
-  for (y = 0; days >= ip[y]; ++y)
-    days -= ip[y];
+  for (y = 0; yday >= ip[y]; ++y)
+    yday -= ip[y];
   tmbuf->tm_mon = y;
-  tmbuf->tm_mday = days + 1;
+  tmbuf->tm_mday = yday + 1;
   tmbuf->tm_isdst = -1;
 }
 
