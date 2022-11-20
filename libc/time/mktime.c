@@ -52,25 +52,6 @@ static const char *weekdays[] = {
 #endif
 
 /**
- * Determine whether or not year is a leap year
- *
- * @v tm_year           Years since 1900
- * @v is_leap_year      Year is a leap year
- */
-static int is_leap_year ( int tm_year ) {
-        int leap_year = 0;
-
-        if ( ( tm_year % 4 ) == 0 )
-                leap_year = 1;
-        if ( ( tm_year % 100 ) == 0 )
-                leap_year = 0;
-        if ( ( tm_year % 400 ) == 100 )
-                leap_year = 1;
-
-        return leap_year;
-}
-
-/**
  * Calculate number of leap years since 1900
  *
  * @v tm_year           Years since 1900
@@ -122,7 +103,7 @@ time_t mktime ( struct tm *tm ) {
         /* Calculate day of year */
         tm->tm_yday = ( ( tm->tm_mday - 1 ) +
                         days_to_month_start[ tm->tm_mon ] );
-        if ( ( tm->tm_mon >= 2 ) && is_leap_year ( tm->tm_year ) )
+        if ( ( tm->tm_mon >= 2 ) && __isleap( tm->tm_year ) )
                 tm->tm_yday++;
 
         /* Calculate day of week */
