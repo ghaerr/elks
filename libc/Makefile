@@ -95,11 +95,6 @@ endif
 
 MAINMULTISUBDIR=$(firstword $(subst ;, ,$(MAINMULTI)))
 
-# For now do not build multilibs for the regparmcall calling convention, as
-# the assembly code in elks-libc does not yet support it.  TODO.  -- tkchia
-BUILDMULTIS:=$(strip \
-    $(foreach ml,$(BUILDMULTIS), \
-	$(if $(findstring @mregparmcall@,$(ml)@),,$(ml))))
 ifeq "" "$(BUILDMULTIS)"
 $(error no multilib variants to build for elks-libc)
 endif

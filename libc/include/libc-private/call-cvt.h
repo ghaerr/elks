@@ -7,10 +7,12 @@
 /* Adjustment to stack frame offsets to account for far return addresses */
 # define FAR_ADJ_	2
 /* How to return from a subroutine with N bytes of arguments */
-# ifdef __IA16_CALLCVT_STDCALL
+# if defined __IA16_CALLCVT_STDCALL
 #   define RET_(n)	.if (n); lret $(n); .else; lret; .endif
 # elif defined __IA16_CALLCVT_CDECL
 #   define RET_(n)	lret
+# elif defined __IA16_CALLCVT_REGPARMCALL
+#   define RET_(n)	.if (n)>6; lret $(n)-6; .else; lret; .endif
 # else
 #   error "unknown calling convention!"
 # endif
@@ -29,10 +31,14 @@
 # endif
 #else
 # define FAR_ADJ_	0
-# ifdef __IA16_CALLCVT_STDCALL
+# if defined __IA16_CALLCVT_STDCALL
 #   define RET_(n)	.if (n); ret $(n); .else; ret; .endif
-# else
+# elif defined __IA16_CALLCVT_CDECL
 #   define RET_(n)	ret
+# elif defined __IA16_CALLCVT_REGPARMCALL
+#   define RET_(n)	.if (n)>6; ret $(n)-6; .else; ret; .endif
+# else
+#   error "unknown calling convention!"
 # endif
 # define CALL_N_(s)	call s
 # define CALL_(s)	call s

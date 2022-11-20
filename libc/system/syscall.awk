@@ -41,7 +41,11 @@ BEGIN {
 	print_syscall(sf, $3, $4)
 	printf "\t.global %s\n", funcname > sf;
 	printf "%s:\n", funcname > sf;
-	printf "\tmov\t$%d,%%ax\n", callno > sf;
+	regparmcall += 0;
+	if (regparmcall)
+		printf "\tmov\t$%d,%%bx\n", callno > sf;
+	else
+		printf "\tmov\t$%d,%%ax\n", callno > sf;
 	printf "\tjmp" > sf;
 	print_syscall(sf, $3, $4);
 	close(sf);
