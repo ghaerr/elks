@@ -1,37 +1,41 @@
 /*
- *	elks/arch/i86/drivers/char/bell.c
+ *	elks/arch/i86/drivers/char/bell-8254.c
  *
  *	Copyright 1999 Greg Haerr <greg@censoft.com>
+ *	Copyright 2022 TK Chia <@tkchia@mastodon.social>
  *
- *	This file rings the PC speaker at a specified frequency.
+ *	This file rings the PC speaker.
  */
 
 #include <linuxmt/config.h>
 #include <arch/ports.h>
 #include <arch/io.h>
+#include <arch/irq.h>
 
 #define BELL_FREQUENCY 800
 #define BELL_PERIOD (1193181/BELL_FREQUENCY)
-#define BELL_PERIOD_L (unsigned char)(BELL_PERIOD & 0xFF)
-#define BELL_PERIOD_H (unsigned char)(BELL_PERIOD / 256)
 
 /*
- * Turn PC speaker on at specified frequency.
+ * Turn PC speaker on at specified frequency (more precisely, wave period).
  */
-static void sound(void)
+void soundp(unsigned period)
 {
+    clr_irq();
     outb(inb(SPEAKER_PORT) | 0x03, SPEAKER_PORT);
     outb(0xB6, TIMER_CMDS_PORT);
-    outb(BELL_PERIOD_L, TIMER2_PORT);
-    outb(BELL_PERIOD_H, TIMER2_PORT);
+    outb((unsigned char)(period & 0xFF), TIMER2_PORT);
+    outb((unsigned char)(period / 256), TIMER2_PORT);
+    set_irq();
 }
 
 /*
  * Turn PC speaker off.
  */
-static void nosound(void)
+void nosound(void)
 {
+    clr_irq();
     outb(inb(SPEAKER_PORT) & ~0x03, SPEAKER_PORT);
+    set_irq();
 }
 
 /*
@@ -39,9 +43,9 @@ static void nosound(void)
  */
 void bell(void)
 {
-    register unsigned int i = 60000U;
+    volatile register unsigned int i = 60000U;
 
-    sound();
+    soundp(BELL_PERIOD);
     while (--i)
 	continue;
     nosound();

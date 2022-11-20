@@ -419,6 +419,15 @@ static int Console_ioctl(struct tty *tty, int cmd, char *arg)
 	    return 1;
 	}
 	break;
+    case KIOCSOUND:
+	{
+	    unsigned period = (unsigned) arg;
+	    if (period)
+		soundp(period);
+	    else
+		nosound();
+	}
+	return 0;
     case TCSETS:
     case TCSETSW:
     case TCSETSF:
