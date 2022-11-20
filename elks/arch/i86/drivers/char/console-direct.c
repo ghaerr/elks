@@ -18,6 +18,7 @@
 #include <linuxmt/errno.h>
 #include <linuxmt/chqueue.h>
 #include <linuxmt/ntty.h>
+#include <linuxmt/kd.h>
 #include <arch/io.h>
 #include "console.h"
 

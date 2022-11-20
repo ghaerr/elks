@@ -7,6 +7,8 @@ extern struct tty ttys[];
 void kbd_init(void);
 extern char kbd_name[];
 
+void soundp(unsigned);
+void nosound(void);
 void bell(void);
 
 /* for direct and bios consoles only*/
