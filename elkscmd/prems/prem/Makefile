@@ -117,5 +117,5 @@ update:         $(DEST)/$(LIBRARY)
 
 $(DEST)/$(LIBRARY): $(SRCS) $(HDRS) $(EXTHDRS)
 		@-$(AR) xo $(DEST)/$(LIBRARY)
-		@make -f $(MAKEFILE) DEST=$(DEST) install clean
+		@$(MAKE) -f $(MAKEFILE) DEST=$(DEST) install clean
 ###

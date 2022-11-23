@@ -14,7 +14,7 @@ syscall.mk: $(SYSCALLDAT) $(dir)syscall.awk
 	awk -f $(dir)syscall.awk $< > $@
 
 out::
-	make -f $(dir)out.mk
+	$(MAKE) -f $(dir)out.mk
 
 clean::
 	touch syscall.mk

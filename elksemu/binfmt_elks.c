@@ -4,7 +4,7 @@
  *  Copyright (C) 1996  Martin von Löwis
  *  original #!-checking implemented by tytso.
  *  ELKS hack added by Chad Page...
- *  Cleaned up some more by Robert de Bath 
+ *  Cleaned up some more by Robert de Bath
  */
 
 #include <linux/module.h>
@@ -22,7 +22,7 @@ static int do_load_elksaout(struct linux_binprm *bprm,struct pt_regs *regs)
 	int retval;
 
 	/* What a horrible hack! :-) */
-	if ((bprm->buf[0] != 1)   || (bprm->buf[1] != 3) || 
+	if ((bprm->buf[0] != 1)   || (bprm->buf[1] != 3) ||
 	    (bprm->buf[2] != 0x20 && bprm->buf[2] != 0x10) ||
 	    (bprm->buf[3] != 4) || bprm->sh_bang)
 		return -ENOEXEC;
@@ -61,7 +61,7 @@ static int do_load_elksaout(struct linux_binprm *bprm,struct pt_regs *regs)
 	}
 	bprm->p = copy_strings(1, &i_name, bprm->page, bprm->p, 2);
 	bprm->argc++;
-	if (!bprm->p) 
+	if (!bprm->p)
 		return -E2BIG;
 	/*
 	 * OK, now restart the process with the interpreter's inode.

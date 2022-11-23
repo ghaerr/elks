@@ -215,7 +215,7 @@ ifdef CONFIG_APP_BUSYELKS
 endif
 	for DIR in $(INSTDIRS); do $(MAKE) -C $$DIR install || exit 1; done
 ifdef CONFIG_APP_CGATEXT
-	make -C cgatext install
+	$(MAKE) -C cgatext install
 endif
 ifdef CONFIG_APP_MAN_PAGES
 	mkdir -p $(DESTDIR)/lib/man1

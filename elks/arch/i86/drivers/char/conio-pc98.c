@@ -16,6 +16,14 @@ void bell(void)
 {
 }
 
+void soundp(unsigned period)
+{
+}
+
+void nosound(void)
+{
+}
+
 int conio_poll(void)
 {
     int cdata;
