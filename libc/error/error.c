@@ -8,9 +8,6 @@
 #include <unistd.h>
 #include <paths.h>
 
-char **__sys_errlist;
-int __sys_nerr = 0;
-
 char *
 strerror(int err)
 {
