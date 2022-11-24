@@ -8,21 +8,20 @@
 #include <sys/stat.h>
 #include <errno.h>
 
-char *mktemp(s)
-char *s;
+char *mktemp(char *s)
 {
     char * ptr;
     static char c1 = 0;
     static char c2 = 0;
-    static char uniq_ch[] = 
+    static char uniq_ch[] =
 	 "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    size_t len;
 
-    
-    if (!s || strlen(s) < 6) {
+    if (!s || (len = strlen(s)) < 6) {
         errno = EINVAL;
         return 0;
     }
-    ptr = s + strlen(s) - 6;
+    ptr = s + len - 6;
     if (++c1 >= 62) {
 	c1 = 0;
 	if (++c2 >= 62) {
