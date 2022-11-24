@@ -1,6 +1,6 @@
-
-#include <unistd.h>
 #include <signal.h>
+#include <stdio.h>
+#include <unistd.h>
 
 static int _signo = 0;
 
@@ -13,15 +13,15 @@ extern sighandler_t _sigtable [15];
 
 int main (int argc, char ** argv)
 {
-	sig_t sigold;
+	sighandler_t sigold;
 
 	puts ("before signal()");
-	printf ("SIGINT=%u\n", _sigtable [1]);
+	printf ("SIGINT=%p\n", _sigtable [1]);
 
 	sigold = signal (SIGINT, sigint);
 	puts ("after signal()");
-	printf ("SIGINT=%u\n", _sigtable [1]);
-	printf ("sigint=%u\n", sigint);
+	printf ("SIGINT=%p\n", _sigtable [1]);
+	printf ("sigint=%p\n", sigint);
 
 	while (!_signo) sleep (1);
 	printf ("exiting:signo=%u\n", _signo);

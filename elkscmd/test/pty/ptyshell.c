@@ -13,13 +13,14 @@
  * some drivers to free memory.
  */
 
+#include <errno.h>
+#include <fcntl.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <errno.h>
-#include <signal.h>
+#include <string.h>
 #include <termios.h>
+#include <unistd.h>
 
 #define MAX_INPUT 250
 
@@ -86,7 +87,6 @@ int term_init()
 {
 	char pty_name[12];
 	int n = 0;
-	int rc;
 	
 	struct termios slave_orig_term_settings; // Saved terminal settings
 	struct termios new_term_settings; // Current terminal settings
@@ -110,7 +110,7 @@ again:
 	}
 	if (pid>0) {
 		// Save the default parameters of the slave side of the PTY - unused yet
-		rc = tcgetattr(tfs, &slave_orig_term_settings);
+		tcgetattr(tfs, &slave_orig_term_settings);
 		new_term_settings = slave_orig_term_settings;
 		// Set raw mode on the slave side of the PTY - not line oriented
 		//cfmakeraw (&new_term_settings);
@@ -138,4 +138,3 @@ again:
 	}
 	return 0;
 }
-	

@@ -114,8 +114,8 @@ if (bind(fd, (struct sockaddr *)&addr_in, sizeof(struct sockaddr_in))==-1) {
       }
     }
     bzero( buf, sizeof(buf));  
-    if (rc=read(fd,buf,100) > 0)
-    write(STDOUT_FILENO, "Server returned:",17);
+    if ((rc=read(fd,buf,100) > 0))
+      write(STDOUT_FILENO, "Server returned:",17);
     write(STDOUT_FILENO, buf, sizeof(buf));  
     write(STDOUT_FILENO, "\r", 1);
     bzero( buf, sizeof(buf));
