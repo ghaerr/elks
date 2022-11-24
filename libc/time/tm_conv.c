@@ -92,7 +92,7 @@ __tm_conv(struct tm *tmbuf, time_t *t, time_t offset)
   register const char *ip;
 
   days = *t / SECS_PER_DAY;
-  rem = *t % SECS_PER_DAY;
+  rem = *t - days * SECS_PER_DAY;
   rem += offset;
   while (rem < 0)
     {
@@ -105,9 +105,9 @@ __tm_conv(struct tm *tmbuf, time_t *t, time_t offset)
       ++days;
     }
   tmbuf->tm_hour = rem / SECS_PER_HOUR;
-  rem %= SECS_PER_HOUR;
+  rem -= tmbuf->tm_hour * SECS_PER_HOUR;
   tmbuf->tm_min = rem / 60;
-  tmbuf->tm_sec = rem % 60;
+  tmbuf->tm_sec = rem - tmbuf->tm_min * 60;
   /* January 1, 1970 was a Thursday.  */
   tmbuf->tm_wday = (4 + days) % 7;
   if (tmbuf->tm_wday < 0)
