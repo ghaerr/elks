@@ -1,7 +1,7 @@
-
-#include <unistd.h>
+#include <stdio.h>
 #include <sys/types.h>
 #include <time.h>
+#include <unistd.h>
 
 
 int main (int argc, char ** argv)

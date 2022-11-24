@@ -6,7 +6,7 @@ include $(BASEDIR)/Make.defs
 
 PGM = test_libc
 
-SRCS = error.c main.c time.c
+SRCS = error.c misc.c stdio.c test.c time.c
 
 OBJS = $(SRCS:.c=.o)
 
