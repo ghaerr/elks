@@ -60,10 +60,17 @@ int remap_irq(int irq)
 
 int irq_vector (int irq)
 	{
+#ifdef CONFIG_ARCH_PC98
+	// IRQ 0-7  are mapped to vectors INT 08h-0Fh
+	// IRQ 8-15 are mapped to vectors INT 10h-17h
+
+	return irq + 0x08;
+#else
 	// IRQ 0-7  are mapped to vectors INT 08h-0Fh
 	// IRQ 8-15 are mapped to vectors INT 70h-77h
 
 	return irq + ((irq >= 8) ? 0x68 : 0x08);
+#endif
 	}
 
 void disable_irq(unsigned int irq)

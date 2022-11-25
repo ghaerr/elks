@@ -51,7 +51,7 @@
 #define SETUP_ELKS_FLAGS	setupb(0x1f6)	/* flags for root device type */
 #define SETUP_PART_OFFSETLO	setupw(0x1e2)	/* partition offset low word */
 #define SETUP_PART_OFFSETHI	setupw(0x1e4)	/* partition offset high word */
-#define SYS_CAPS		0	/* no XT/AT capabilities */
+#define SYS_CAPS		CAP_IRQ8TO15	/* enable capabilities */
 #define UTS_MACHINE		"pc-98 i8086"
 
 #define CONFIG_VAR_SECTOR_SIZE	/* sector size may vary across disks */
@@ -79,12 +79,12 @@
  * Normally, all capabilities will be set if arch_cpu > 5 (PC/AT),
  * except when SYS_CAPS is defined for custom installations or emulations.
  */
-#define CAP_PC_AT       0x01      /* PC/AT capabilities */
+#define CAP_PC_AT       (CAP_IRQ8TO15|CAP_IRQ2MAP9)      /* PC/AT capabilities */
 #define CAP_DRIVE_PARMS	0x02      /* has INT 13h fn 8 drive parms */
 #define CAP_KBD_LEDS    0x04      /* has keyboard LEDs */
 #define CAP_HD_IDE      0x08      /* can do hard drive IDE probes */
-#define CAP_IRQ8TO15    CAP_PC_AT /* has IRQ 8 through 15 */
-#define CAP_IRQ2MAP9    CAP_PC_AT /* map IRQ 2 to 9 */
+#define CAP_IRQ8TO15    0x10      /* has IRQ 8 through 15 */
+#define CAP_IRQ2MAP9    0x20      /* map IRQ 2 to 9 */
 #define CAP_ALL         0xFF      /* all capabilities if PC/AT only */
 
 /* Don't touch these, unless you really know what you are doing. */
