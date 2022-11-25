@@ -167,7 +167,7 @@ unsigned char test_bit(unsigned int nr, void * add)
 	mask = 1 << (nr & 0x0f);
 	retval = ((mask & *addr) != 0L);
 	printd("test_bit %u at %x, word no %u is %x testing bit %u, result %d\n",
-		nr, add, (nr >> 4), *addr, (nr & 0x0f), retval);
+		nr, (unsigned int)add, (nr >> 4), *addr, (nr & 0x0f), retval);
 	return retval;
 }
 
@@ -304,7 +304,7 @@ void print_current_name(void)
 		/* FIXME 14 can be integrated */
 }
 
-int ask(const char * string,int def)
+int ask(const char * string, int def)
 {
 	int c;
 
@@ -333,6 +333,10 @@ int ask(const char * string,int def)
 			break;
 		} else if (c == 'N') {
 			def = 0;
+			break;
+		} else if (c == 'A') {	/* Hidden option; switch to automatic */
+			automatic = 1;
+			def = 1;
 			break;
 		} else if (c == ' ' || c == '\n')
 			break;
@@ -442,7 +446,7 @@ unsigned int map_block(struct minix_inode * inode, unsigned int blknr)
 	int blk_chg, block, result;
 	int i;
 
-	printd("map_block %x %d (", inode, blknr);
+	printd("map_block %x %u (", (unsigned int)inode, blknr);
 	for (i = 0; i < 7; i++) {
 		printd("%x ", inode->i_zone[i]);
 	}
@@ -548,8 +552,10 @@ void read_tables(void)
 	if (!inode_count)
 		die("Unable to allocate buffer for inode count");
 	zone_count = fmemalloc(ZONES);  /* ZONES <= 64K */
-	if (!zone_count)
+	if (!zone_count) {
+		fprintf(stderr, "ZONES: %u -- ", ZONES);
 		die("Unable to allocate main memory for zone count");
+	}
 	if ((IMAPS * BLOCK_SIZE) != read(IN, inode_map, (IMAPS * BLOCK_SIZE)))
 		die("Unable to read inode map");
 	if ((ZMAPS * BLOCK_SIZE) != read(IN, zone_map, (ZMAPS * BLOCK_SIZE)))
@@ -643,7 +649,7 @@ static int add_zone(unsigned short * znr, int * corrected)
 	if (!block)
 		return 0;
 	if (zone_count[block]) {
-		printf("Block has been used before. Now in file `");
+		printf("Block %u has been used before. Now in file `", block);
 		print_current_name();
 		printf("'.");
 		if (ask("Clear", 1)) {
@@ -655,9 +661,9 @@ static int add_zone(unsigned short * znr, int * corrected)
 	if (!block)
 		return 0;
 	if (!zone_in_use(block)) {
-		printf("Block %d in file `",block);
+		printf("Block %u in file `", block);
 		print_current_name();
-		printf("' is marked not in use.");
+		printf("' is marked not in use. ");
 		if (ask("Correct",1))
 			mark_zone(block);
 	}
@@ -832,7 +838,7 @@ void check_counts(void)
 		struct minix_inode * inode = map_inode(i);
 		if (!inode_in_use(i) && inode->i_mode && warn_mode) {
 			printf("Inode %d mode not cleared.",i);
-			if (ask("Clear",1)) {
+			if (ask(" Clear",1)) {
 				inode->i_mode = 0;
 				mapped_dirty++;
 				changed = 1;
@@ -842,20 +848,20 @@ void check_counts(void)
 			if (!inode_in_use(i))
 				continue;
 			printf("Inode %d not used, marked used in the bitmap.",i);
-			if (ask("Clear",1))
+			if (ask(" Clear",1))
 				unmark_inode(i);
 			continue;
 		}
 		if (!inode_in_use(i)) {
 			printf("Inode %d used, marked unused in the bitmap.",
 				i);
-			if (ask("Set",1))
+			if (ask(" Set",1))
 				mark_inode(i);
 		}
 		if (inode->i_nlinks != inode_count[i]) {
 			printf("Inode %d (mode = %07o), i_nlinks=%d, counted=%d.",
 				i,inode->i_mode,inode->i_nlinks,inode_count[i]);
-			if (ask("Set i_nlinks to count",1)) {
+			if (ask(" Set i_nlinks to count",1)) {
 				inode->i_nlinks=inode_count[i];
 				mapped_dirty++;
 				changed=1;
@@ -869,7 +875,7 @@ void check_counts(void)
 			if (bad_zone(i))
 				continue;
 			printf("Zone %d: marked in use, no file uses it.",i);
-			if (ask("Unmark",1))
+			if (ask(" Unmark",1))
 				unmark_zone(i);
 			continue;
 		}
