@@ -51,4 +51,4 @@ distclean: clean
 	$(RM) $(LIB) termcap tparam
 
 clean::
-	$(RM) $(OBJS) $(TC_OBJS) $(TP_OBJS)
+	$(RM) *.[aod]

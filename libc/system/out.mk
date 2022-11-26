@@ -1,6 +1,7 @@
 include $(TOPDIR)/libc/Makefile.inc
 
-CFLAGS	+= -DL_execlp -DL_sleep -DL_usleep -DL_times
+DEFINES	+= -DL_execl -DL_execle -DL_execlp -DL_execlpe \
+	   -DL_sleep -DL_usleep -DL_times
 
 ifneq "$(VPATH)" ""
 	dir	= $(VPATH)/
@@ -19,9 +20,11 @@ OBJS = \
 	execl.o \
 	execle.o \
 	execlp.o \
+	execlpe.o \
 	execv.o \
 	execve.o \
 	execvp.o \
+	execvpe.o \
 	getegid.o \
 	geteuid.o \
 	getgid.o \
@@ -52,10 +55,12 @@ OBJS = \
 include syscall.mk
 
 all: out.a
+.PHONY: all
 
 out.a: $(OBJS)
 	$(RM) $@
 	$(AR) $(ARFLAGS_SUB) $@ $^
 
-clean::
-	$(RM) $(OBJS)
+clean:
+	$(RM) *.[aod]
+.PHONY: clean

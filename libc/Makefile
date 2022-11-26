@@ -110,25 +110,26 @@ ifneq "" "$(MULTISUBDIR)"
 all: $(LIBC) $(CRT0)
 
 SUBDIRSINMULTILIB = $(SUBDIRS:%=$(TOPDIR)/libc/build-ml/$(MULTISUBDIR)/%)
+SUBLIBSINMULTILIB = $(SUBDIRSINMULTILIB:%=%/out.a)
 
-$(LIBC): $(SUBDIRSINMULTILIB)
+$(LIBC): $(SUBLIBSINMULTILIB)
 	mkdir -p $(@D)
 	set -e; \
 	( \
 		echo CREATE $(LIBC).tmp; \
 		for s in $^; \
-			do echo ADDLIB "$$s"/out.a; done; \
+			do echo ADDLIB "$$s"; done; \
 		echo SAVE \
 	) | $(AR) -M
 	mv $(LIBC).tmp $(LIBC)
 
 $(CRT0): crt0.S
 
-$(SUBDIRSINMULTILIB) : $(TOPDIR)/libc/build-ml/$(MULTISUBDIR)/%: %
-	mkdir -p $@
-	$(MAKE) -C $@ VPATH=$(abspath $<) -f $(abspath $<)/Makefile all
+$(SUBLIBSINMULTILIB) : $(TOPDIR)/libc/build-ml/$(MULTISUBDIR)/%/out.a: %
+	mkdir -p $(@D)
+	$(MAKE) -C $(@D) VPATH=$(abspath $<) -f $(abspath $<)/Makefile all
 # Use .PHONY to force recursive `make' in all subdirectories for each multilib
-.PHONY: $(SUBDIRSINMULTILIB)
+.PHONY: $(SUBLIBSINMULTILIB)
 
 $(SUBDIRS):
 

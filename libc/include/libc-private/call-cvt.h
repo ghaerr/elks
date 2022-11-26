@@ -16,6 +16,7 @@
 # else
 #   error "unknown calling convention!"
 # endif
+# define RET_VA_	lret
 /* How to call a subroutine of the same code far-ness in the (same) near text
    segment */
 # define CALL_N_(s)	pushw %cs; call s
@@ -26,10 +27,15 @@
 			.reloc __tmp, R_386_SEG16, #a; \
 			lcall $0, $(s)
 #   define CALL_(s)	CALL__(s, s##!)
+#   define JMP__(s, a)	.set __tmp, .+3; \
+			.reloc __tmp, R_386_SEG16, #a; \
+			ljmp $0, $(s)
+#   define JMP_(s)	JMP__(s, s##!)
 # else
 #   define CALL_(s)	.reloc .+3, R_386_OZSEG16, (s); lcall $0, $(s)
+#   define JMP_(s)	.reloc .+3, R_386_OZSEG16, (s); ljmp $0, $(s)
 # endif
-#else
+# else
 # define FAR_ADJ_	0
 # if defined __IA16_CALLCVT_STDCALL
 #   define RET_(n)	.if (n); ret $(n); .else; ret; .endif
@@ -40,8 +46,10 @@
 # else
 #   error "unknown calling convention!"
 # endif
+# define RET_VA_	ret
 # define CALL_N_(s)	call s
 # define CALL_(s)	call s
+# define JMP_(s)	jmp s
 #endif
 
 #endif

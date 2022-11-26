@@ -26,4 +26,4 @@ out.a: $(OBJS)
 	$(AR) $(ARFLAGS_SUB) $@ $^
 
 clean::
-	$(RM) $(OBJS) out.a
+	$(RM) *.[aod]
