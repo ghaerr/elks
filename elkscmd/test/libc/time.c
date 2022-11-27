@@ -40,7 +40,9 @@ char *tm_str(struct tm *tm)
 void check_tm(struct tm *a, struct tm *b)
 {
 	if (tm_cmp(a, b)) {
-		TEST_FAIL_STR(tm_str(a), tm_str(b));
+		char *a_str = strdup(tm_str(a));
+		TEST_FAIL_STR(a_str, tm_str(b));
+		free(a_str);
 	}
 }
 

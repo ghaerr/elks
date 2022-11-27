@@ -7,7 +7,7 @@
 TEST_CASE(stdio_init)
 {
 	char sector[512];
-	for (int i = 0; i < sizeof(sector); i++)
+	for (size_t i = 0; i < sizeof(sector); i++)
 		sector[i] = i & 0xff;
 
 	FILE* fp = fopen("/dev/null", "w");
