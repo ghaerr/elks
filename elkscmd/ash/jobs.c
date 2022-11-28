@@ -522,7 +522,6 @@ forkshell(jp, n, mode)
 	register struct job *jp;
 	{
 	int pid;
-	int pgrp;
 
 	TRACE(("forkshell(%%%d, 0x%x, %d) called\n", jp - jobtab, (int)n, mode));
 	INTOFF;
@@ -549,6 +548,7 @@ forkshell(jp, n, mode)
 #if JOBS
 		jobctl = 0;		/* do job control only in root shell */
 		if (wasroot && mode != FORK_NOJOB && jflag) {
+			int pgrp;
 			if (jp == NULL || jp->nprocs == 0)
 				pgrp = getpid();
 			else
@@ -590,15 +590,16 @@ forkshell(jp, n, mode)
 		}
 		return pid;
 	}
+#if JOBS
 	if (rootshell && mode != FORK_NOJOB && jflag) {
+		int pgrp;
 		if (jp == NULL || jp->nprocs == 0)
 			pgrp = pid;
 		else
 			pgrp = jp->ps[0].pid;
-#if JOBS
 		setpgrp(pid, pgrp);
-#endif
 	}
+#endif
 	if (mode == FORK_BG)
 		backgndpid = pid;		/* set $! */
 	if (jp) {

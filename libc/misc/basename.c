@@ -16,11 +16,11 @@ basename (char *path)
   if (last == -1)
     return def;
 
-  if (last == 0 && path[0] == '/')
-    return path;
-
   while (last > 0 && path[last] == '/')
     path[last--] = '\0';
+
+  if (last == 0 && path[0] == '/')
+    return path;
 
   base = rindex (path, '/');
 

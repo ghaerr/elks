@@ -1,3 +1,4 @@
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/time.h>
@@ -73,6 +74,9 @@ int main(int argc, char **argv)
 {
 	if (argc > 1 && !strcmp(argv[1], "-v"))
 		test_verbose = 1;
+
+	putenv("TZ");
+	tzset();
 
 	test_error_strerror();
 	test_misc_basename();

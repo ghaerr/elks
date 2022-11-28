@@ -11,7 +11,7 @@
  */
 
 static char * path_buf;
-static int    path_size;
+static size_t path_size;
 static dev_t root_dev;
 static u_ino_t root_ino;
 static struct stat st;
@@ -23,7 +23,7 @@ search_dir(dev_t this_dev, u_ino_t this_ino)
    DIR * dp;
    struct dirent * d;
    char * ptr;
-   int slen;
+   size_t slen;
    int slow_search = 0;
 
    if( stat(path_buf, &st) < 0 ) return NULL;
