@@ -40,4 +40,4 @@ out.a: $(OBJS)
 	$(AR) $(ARFLAGS_SUB) $@ $^
 
 clean:
-	rm -f $(OBJS) out.a
+	$(RM) *.[aod]

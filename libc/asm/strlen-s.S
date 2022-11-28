@@ -19,14 +19,18 @@ strlen:
 
 	mov %es,%dx
 
-	mov %ds,%ax
-	mov %ax,%es
+	mov %ds,%bx
+	mov %bx,%es
 
 	mov %di,%bx
 
 	// Do the scan
 
+#ifndef __IA16_CALLCVT_REGPARMCALL
 	mov 4+FAR_ADJ_(%bp),%di  // s
+#else
+	mov %ax,%di
+#endif
 	mov $-1,%cx
 	xor %ax,%ax
 

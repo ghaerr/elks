@@ -15,6 +15,6 @@ out.a: $(OBJS)
 	$(AR) $(ARFLAGS_SUB) $@ $^
 
 clean:
-	rm -f *.[ao]
+	$(RM) *.[aod]
 
 $(OBJS): $(SRCS)

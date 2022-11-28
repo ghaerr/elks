@@ -28,11 +28,16 @@ _start:
 	shl $1,%ax
 	add %bx,%ax     // envp [0]
 	mov %ax,environ
+#ifndef __IA16_CALLCVT_REGPARMCALL
 	push %ax
 	push %bx
+	push %cx
+#else
+	xchg %ax,%cx    // ax := argc, cx := envp
+	mov %bx,%dx     // dx := argv
+#endif
 	mov (%bx),%bx
 	mov %bx,_program_filename
-	push %cx
 	CALL_(main)
 #ifdef __IA16_CALLCVT_CDECL
 	add $6,%sp

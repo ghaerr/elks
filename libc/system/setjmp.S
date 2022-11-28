@@ -12,11 +12,13 @@ _setjmp:
 #if defined __MEDIUM__ || defined __LARGE__ || defined __HUGE__
 	pop %dx  // CS
 #endif
-#ifdef __IA16_CALLCVT_CDECL
+#if defined __IA16_CALLCVT_CDECL
 	mov %sp,%bx
 	mov (%bx),%bx  // TOS is prt -> env
 #elif defined __IA16_CALLCVT_STDCALL
 	pop %bx
+#elif defined __IA16_CALLCVT_REGPARMCALL
+	xchg %ax,%bx
 #else
 #error "unknown calling convention"
 #endif
@@ -49,8 +51,13 @@ _longjmp:
 #if defined __MEDIUM__ || defined __LARGE__ || defined __HUGE__
 	pop %dx  // CS
 #endif
+#ifndef __IA16_CALLCVT_REGPARMCALL
 	pop %bx  // env->
 	pop %ax  // rv
+#else
+	xchg %ax,%bx  // env->
+	xchg %ax,%dx  // rv
+#endif
 
 	mov 0(%bx),%cx  // PC
 #if defined __MEDIUM__ || defined __LARGE__ || defined __HUGE__

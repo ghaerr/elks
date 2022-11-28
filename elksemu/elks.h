@@ -164,6 +164,7 @@ struct elks_cpu_s
 #define orig_xax	orig_eax
 #endif
 
+extern const char *emu_prog;
 extern unsigned char * elks_base, *elks_data_base;
 extern uint16_t brk_at;
 extern volatile struct elks_cpu_s elks_cpu;
