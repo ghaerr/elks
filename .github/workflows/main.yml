@@ -19,9 +19,12 @@ jobs:
 
     steps:
       - name: setup1
-        run: 'sudo apt-cache policy mtools'
+        run: 'sudo apt-add-repository "deb http://azure.archive.ubuntu.com/ubuntu" focal/main amd64 Packages'
 
       - name: setup2
+        run: 'sudo apt-cache policy mtools'
+
+      - name: setup3
         run: 'sudo apt install bison flex texinfo libncurses5-dev libelf-dev mtools=4.0.24-1 ncompress'
 
       - name: checkout
