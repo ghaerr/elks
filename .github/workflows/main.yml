@@ -18,8 +18,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: setup
-        run: 'sudo apt install bison flex texinfo libncurses5-dev libelf-dev mtools ncompress'
+      - name: setup1
+        run: 'sudo apt-cache policy mtools'
+
+      - name: setup2
+        run: 'sudo apt install bison flex texinfo libncurses5-dev libelf-dev mtools=4.0.24 ncompress'
 
       - name: checkout
         uses: actions/checkout@v2
