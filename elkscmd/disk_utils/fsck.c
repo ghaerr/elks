@@ -953,10 +953,10 @@ int main(int argc, char ** argv)
 	 */
 	if (!(SupeP->s_state & MINIX_ERROR_FS) &&
 		(SupeP->s_state & MINIX_VALID_FS) && !force) {
-		if (repair)
+		if (repair || verbose)
 			printf("%s is clean, no check.\n", device_name);
 		if (repair && !automatic)
-			tcsetattr(0,TCSANOW,&termios);
+			tcsetattr(0, TCSANOW, &termios);
 		return retcode;
 	}
 	else if (force)
