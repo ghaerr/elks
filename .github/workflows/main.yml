@@ -22,7 +22,7 @@ jobs:
         run: 'sudo apt-cache policy mtools'
 
       - name: setup2
-        run: 'sudo apt install bison flex texinfo libncurses5-dev libelf-dev mtools=4.0.24 ncompress'
+        run: 'sudo apt install bison flex texinfo libncurses5-dev libelf-dev mtools=4.0.24-1 ncompress'
 
       - name: checkout
         uses: actions/checkout@v2
