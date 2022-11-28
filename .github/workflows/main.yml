@@ -18,14 +18,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: setup1
-        run: 'sudo apt-add-repository "deb http://azure.archive.ubuntu.com/ubuntu focal/main amd64 Packages"'
-
-      - name: setup2
-        run: 'sudo apt-cache policy mtools'
-
-      - name: setup3
-        run: 'sudo apt install bison flex texinfo libncurses5-dev libelf-dev mtools=4.0.24-1 ncompress'
+      - name: setup
+        run: 'sudo apt install bison flex texinfo libncurses5-dev libelf-dev mtools ncompress'
 
       - name: checkout
         uses: actions/checkout@v2
@@ -144,8 +138,3 @@ jobs:
           name: hd64-minix.img
           path: image/hd64-minix.img
 
-      - name: upload17
-        uses: actions/upload-artifact@v1
-        with:
-          name: fd1232.img
-          path: image/fd1232.img

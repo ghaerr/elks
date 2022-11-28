@@ -77,7 +77,7 @@ if [ "$1" = "auto" ]; then
 fi
 
 # Build PC-98 kernel, some user land files and image
-if [ "$1" = "auto" ]; then
+if [ "$1" = "pc98" ]; then
 	echo "Building PC-98 image..."
     cp pc98-1232.config .config
     make kclean || clean_exit 9
