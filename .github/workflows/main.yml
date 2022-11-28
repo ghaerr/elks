@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: setup1
-        run: 'sudo apt-add-repository "deb http://azure.archive.ubuntu.com/ubuntu" focal/main amd64 Packages'
+        run: 'sudo apt-add-repository "deb http://azure.archive.ubuntu.com/ubuntu focal/main amd64 Packages"'
 
       - name: setup2
         run: 'sudo apt-cache policy mtools'
