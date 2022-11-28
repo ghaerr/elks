@@ -65,6 +65,12 @@ _execlpe:
 	xchg %ax,%dx			/* set dx = argv; store arg0 */
 	stosw
 # if defined L_execle || defined L_execlpe
+	/*
+	 * Locate envp: scan the argv[] array for the final NULL.  Handle
+	 * the (rare) case where arg0 = NULL & so argv[] = { NULL }.  The
+	 * 0x3c "eats up" the `lodsw' (0xad) opcode for the first loop
+	 * iteration & turns it into `cmp $0xad,%al' (0x3c 0xad).
+	 */
 	.byte 0x3c
 .find_envp:
 	lodsw
