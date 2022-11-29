@@ -524,7 +524,7 @@ static void switch_device98(int target, unsigned char device, struct drive_infot
 
 static int read_sector(int drive, int cylinder, int sector)
 {
-    int count = 1;		/* no retries on probing*/
+    int count = 2;		/* one retry on probe or boot sector read */
 
 #ifdef CONFIG_ARCH_PC98
     drive += DRIVE_FD0;
@@ -624,6 +624,11 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 		goto got_geom;
 	    }
 	}
+#if DEBUG_PROBE
+        else {
+            printk("fd: attempted read of boot sector 1 failed\n");
+        }
+#endif
 #endif /* FORCE_PROBE */
 
 #if DEBUG_PROBE
