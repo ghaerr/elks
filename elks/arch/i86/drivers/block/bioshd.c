@@ -626,21 +626,22 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 	}
 #if DEBUG_PROBE
         else {
-            printk("fd: attempted read of boot sector 1 failed\n");
+            printk("fd: can't read boot sector\n");
         }
 #endif
 #endif /* FORCE_PROBE */
 
 #if DEBUG_PROBE
-	printk("fd: probing disc in /dev/fd%d:\n", target);
+	printk("fd: probing disc in /dev/fd%d\n", target);
 #endif
+
+	drivep->heads = 2;
 
 /* First probe for cylinder number. We probe on sector 1, which is
  * safe for all formats, and if we get a seek error, we assume that
- * the previous successfully probed format is the correct one.
+ * the previous format is the correct one.
  */
 
-	drivep->cylinders = 0;
 	count = 0;
 #ifdef CONFIG_ARCH_PC98
 	do {
@@ -670,10 +671,10 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 
 /* Next, probe for sector number. We probe on track 0, which is
  * safe for all formats, and if we get a seek error, we assume that
- * the previous successfully probed format is the correct one.
+ * the previous successfully probed format is the correct one, or if none,
+ * use the BIOS disk parameters.
  */
 
-	drivep->sectors = 0;
 	count = 0;
 #ifdef CONFIG_ARCH_PC98
 	do {
@@ -688,14 +689,17 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 	} while (++count < sizeof(sector_probe)/sizeof(sector_probe[0]));
 #else
 	do {
-	    /* skip reading first entry */
-	    if (count) {
-		int res = read_sector(target, 0, sector_probe[count]);
+	    int res = read_sector(target, 0, sector_probe[count]);
 #if DEBUG_PROBE
-		printk("SEC %d %s, ", sector_probe[count], res? "fail": "ok");
+	    printk("SEC %d %s, ", sector_probe[count], res? "fail": "ok");
 #endif
-		if (res)
-		    break;
+	    if (res) {
+                if (count == 0) {	/* failed on first sector read, use BIOS parms */
+		    printk("fd: disc probe failed, using BIOS settings\n");
+		    *drivep = fd_types[drivep->fdtype];
+		    goto got_geom;
+		}
+		break;
 	    }
 	    drivep->sectors = sector_probe[count];
 	} while (++count < sizeof(sector_probe)/sizeof(sector_probe[0]));
@@ -705,20 +709,11 @@ static void probe_floppy(int target, struct hd_struct *hdp)
     printk("\n");
 #endif
 
-	drivep->heads = 2;
-
-      got_geom:
-
-	if (drivep->cylinders == 0 || drivep->sectors == 0) {
-	    *drivep = fd_types[drivep->fdtype];
-	    printk("fd: Floppy drive autoprobe failed!\n");
-	} else {
-	    printk("fd: /dev/fd%d %s has %d cylinders, %d heads, and %d sectors\n",
-		   target,
+got_geom:
+	printk("fd: /dev/fd%d %s has %d cylinders, %d heads, and %d sectors\n", target,
 		   (found_PB == 2)? "DOS format," :
 		   (found_PB == 1)? "ELKS bootable,": "probed, probably",
 		   drivep->cylinders, drivep->heads, drivep->sectors);
-	}
 	hdp->start_sect = 0;
 	hdp->nr_sects = ((sector_t)(drivep->sectors * drivep->heads))
 				* ((sector_t)drivep->cylinders);
