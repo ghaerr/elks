@@ -104,7 +104,6 @@ endif
 fatfs:
 	rm -f $(TARGET_FILE)
 	dd if=/dev/zero of=$(TARGET_FILE) bs=1024 count=$(TARGET_BLKS)
-	mformat -V
 	mformat -i $(TARGET_FILE) $(FAT_MKFSOPTS)
 	# Linux has to be the first file for the boot sector loader
 	rm -f linux; touch linux

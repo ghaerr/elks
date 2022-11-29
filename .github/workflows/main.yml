@@ -15,7 +15,7 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
       - name: setup
@@ -138,3 +138,8 @@ jobs:
           name: hd64-minix.img
           path: image/hd64-minix.img
 
+      - name: upload17
+        uses: actions/upload-artifact@v1
+        with:
+          name: fd1232.img
+          path: image/fd1232.img
