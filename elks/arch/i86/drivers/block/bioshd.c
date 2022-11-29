@@ -55,6 +55,9 @@
 #include <arch/irq.h>
 #include <arch/ports.h>
 
+#define DEBUG_PROBE     1       /* =1 to display more floppy probing information */
+#define FORCE_PROBE     0       /* =1 to force floppy probing */
+
 /* the following must match with /dev minor numbering scheme*/
 #define NUM_MINOR	32	/* max minor devices per drive*/
 #define MINOR_SHIFT	5	/* =log2(NUM_MINOR) shift to get drive num*/
@@ -566,6 +569,7 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 
 	target &= MAXDRIVES - 1;
 
+#if !FORCE_PROBE
 	/* Try to look for an ELKS or DOS parameter block in the first sector.
 	 * If it exists, we can obtain the disk geometry from it.
 	 */
@@ -583,8 +587,11 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 		if (drivep->cylinders != 0 && drivep->sectors != 0
 		    && drivep->heads != 0) {
 		    found_PB = 1;
-		    /*printk("fd: found valid ELKS disk parameters on /dev/fd%d "
-			   "boot sector\n", target);*/
+#if DEBUG_PROBE
+		    printk("fd: found valid ELKS CHS %d,%d,%d disk parameters on /dev/fd%d "
+			   "boot sector\n", drivep->cylinders, drivep->heads, drivep->sectors,
+                           target);
+#endif
 		    goto got_geom;
 		}
 	    }
@@ -609,11 +616,19 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 					 80;
 		drivep->cylinders = (media == 0xFD)? 40: 80;
 		found_PB = 2;
+#if DEBUG_PROBE
+		    printk("fd: found valid FAT CHS %d,%d,%d disk parameters on /dev/fd%d "
+			   "boot sector\n", drivep->cylinders, drivep->heads, drivep->cylinders,
+                           target);
+#endif
 		goto got_geom;
 	    }
 	}
+#endif /* FORCE_PROBE */
 
-	/*printk("fd: probing disc in /dev/fd%d\n", target);*/
+#if DEBUG_PROBE
+	printk("fd: probing disc in /dev/fd%d:\n", target);
+#endif
 
 /* First probe for cylinder number. We probe on sector 1, which is
  * safe for all formats, and if we get a seek error, we assume that
@@ -636,8 +651,14 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 #else
 	do {
 	    /* skip probing first entry */
-	    if (count && read_sector(target, track_probe[count] - 1, 1))
-		break;
+	    if (count) {
+		int res = read_sector(target, track_probe[count] - 1, 1);
+#if DEBUG_PROBE
+		printk("CYL %d %s, ", track_probe[count]-1, res? "fail": "ok");
+#endif
+		if (res)
+		    break;
+	    }
 	    drivep->cylinders = track_probe[count];
 	} while (++count < sizeof(track_probe)/sizeof(track_probe[0]));
 #endif
@@ -663,10 +684,20 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 #else
 	do {
 	    /* skip reading first entry */
-	    if (count && read_sector(target, 0, sector_probe[count]))
-		break;
+	    if (count) {
+		int res = read_sector(target, 0, sector_probe[count]);
+#if DEBUG_PROBE
+		printk("SEC %d %s, ", sector_probe[count], res? "fail": "ok");
+#endif
+		if (res)
+		    break;
+	    }
 	    drivep->sectors = sector_probe[count];
 	} while (++count < sizeof(sector_probe)/sizeof(sector_probe[0]));
+#endif
+
+#if DEBUG_PROBE
+    printk("\n");
 #endif
 
 	drivep->heads = 2;
