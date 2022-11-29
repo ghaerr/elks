@@ -60,7 +60,9 @@ early_putchar:
 	mov   2(%bx),%al
 	mov   $0x0E,%ah
 	mov   $0x0007,%bx
+	push  %bp               // some BIOS may destroy BP
 	int   $0x10
+	pop   %bp
 	ret
 #endif
 

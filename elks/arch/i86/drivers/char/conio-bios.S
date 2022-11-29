@@ -36,7 +36,7 @@ conio_poll:
 // INT 10h BIOS AH=0Eh (write teletype)
 
 conio_putc:
-	push	%bp		// some BIOS destroy BP
+	push	%bp		// early IBM BIOS destroys BP
 	mov	%sp,%bp
 	mov	4(%bp),%al
 	mov	$0x0E,%ah	// write text in teletype mode
