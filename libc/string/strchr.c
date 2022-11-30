@@ -41,3 +41,7 @@ got_it:
     return (char *)s;
 #endif /* ifdef BCC_AX_ASM */
 }
+
+#ifdef __GNUC__
+char *index(const char *s, int c) __attribute__ ((weak, alias ("strchr")));
+#endif

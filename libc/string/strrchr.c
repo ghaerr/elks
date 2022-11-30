@@ -15,3 +15,7 @@ strrchr (const char * s, int c)
    }
    return (char *)prev;
 }
+
+#ifdef __GNUC__
+char *rindex(const char *s, int c) __attribute__ ((weak, alias ("strrchr")));
+#endif
