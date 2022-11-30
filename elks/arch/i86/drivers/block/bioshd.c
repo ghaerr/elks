@@ -55,7 +55,7 @@
 #include <arch/irq.h>
 #include <arch/ports.h>
 
-#define DEBUG_PROBE     1       /* =1 to display more floppy probing information */
+#define DEBUG_PROBE     0       /* =1 to display more floppy probing information */
 #define FORCE_PROBE     0       /* =1 to force floppy probing */
 
 /* the following must match with /dev minor numbering scheme*/
