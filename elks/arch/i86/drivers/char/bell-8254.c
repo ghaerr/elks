@@ -43,7 +43,7 @@ void nosound(void)
  */
 void bell(void)
 {
-    volatile register unsigned int i = 60000U;
+    register volatile unsigned int i = 60000U;
 
     soundp(BELL_PERIOD);
     while (--i)

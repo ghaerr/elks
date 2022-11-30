@@ -17,7 +17,9 @@ bios_setpage:
 	mov    %sp,%bx
 	mov    2(%bx),%al
 	mov    $5,%ah		// select active display page
+	push   %bp		// some BIOS may destroy BP
 	int    $0x10
+	pop    %bp
 	ret
 
 // void bios_setcursor (byte_t x, byte_t y, byte_t page)
@@ -29,14 +31,18 @@ bios_setcursor:
 	mov    4(%bx),%dh
 	mov    6(%bx),%bh
 	mov    $2,%ah		// set cursor position
+	push   %bp		// some BIOS may destroy BP
 	int    $0x10
+	pop    %bp
 	ret
 
 // void bios_getcursor (byte_t * x, byte_t * y)
 
 bios_getcursor:
 	mov    $3,%ah		// get cursor position
+	push   %bp		// some BIOS may destroy BP
 	int    $0x10
+	pop    %bp
 	mov    %sp,%bx
 	mov    2(%bx),%bx
 	mov    %dl,(%bx)
@@ -56,7 +62,9 @@ bios_writecharattr:
 	mov    %cl,%bl
 	mov    $1,%cx
 	mov    $9,%ah		// write char and attribute
+	push   %bp		// some BIOS may destroy BP
 	int    $0x10
+	pop    %bp
 	ret
 
 // void bios_scroll (byte_t attr, byte_t n, byte_t x, byte_t y, byte_t xx, byte_t yy)
@@ -77,5 +85,7 @@ bios_scroll:
 	neg    %al
 
 scroll_next:
+	push   %bp		// early IBM BIOS destroys BP
 	int    $0x10
+	pop    %bp
 	ret
