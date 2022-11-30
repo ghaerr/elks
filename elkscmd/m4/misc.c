@@ -203,8 +203,6 @@ int	optind = 0;	/* Global argv index. */
 
 static char	*scan = NULL;	/* Private scan pointer. */
 
-extern char	*index();
-
 int
 getopt(argc, argv, optstring)
 int argc;
@@ -232,7 +230,7 @@ char *optstring;
 	}
 
 	c = *scan++;
-	place = index(optstring, c);
+	place = strchr(optstring, c);
 
 	if (place == NULL || c == ':') {
 		fprintf(stderr, "%s: unknown option -%c\n", argv[0], c);

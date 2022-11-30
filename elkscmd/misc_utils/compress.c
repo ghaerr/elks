@@ -148,7 +148,6 @@
 #define ELKS
 #define LSTAT
 #define DIRENT
-#define RINDEX
 #define UTIME_H
 #include <ctype.h>
 #include "mutils.h"
@@ -666,9 +665,6 @@ void  	comprexx	ARGS((char **));
 void  	compdir		ARGS((char *));
 void  	compress	ARGS((int,int));
 void  	decompress	ARGS((int,int));
-#ifndef RINDEX
-char  	*rindex		ARGS((char *,int));
-#endif
 void  	read_error	ARGS((void));
 void  	write_error	ARGS((void));
 void 	abort_compress	ARGS((void));
@@ -738,7 +734,7 @@ main(argc, argv)
     	filelist = fileptr = (char **)malloc(argc*sizeof(char *));
     	*filelist = NULL;
 
-    	if ((progname = rindex(argv[0], '/')) != 0)
+	if ((progname = strrchr(argv[0], '/')) != 0)
 		progname++;
 	else
 		progname = argv[0];
@@ -1732,22 +1728,6 @@ resetbuf:	;
 	if (outpos > 0 && write(fdout, outbuf, outpos) != outpos)
 		write_error();
 }
-
-#ifndef RINDEX
-char *
-rindex(s, c)		/* For those who don't have it in libc.a */
-	REG1 char	*s;
-	REG2 int	 c;
-{
-	char *p;
-
-	for (p = NULL; *s; s++)
-	    if (*s == (char)c)
-			p = s;
-
-	return(p);
-}
-#endif
 
 void
 read_error()
