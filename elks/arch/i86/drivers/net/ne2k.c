@@ -41,6 +41,7 @@ static struct wait_queue rxwait;
 static struct wait_queue txwait;
 static struct netif_stat netif_stat;
 static byte_t model_name[] = "ne2k";
+static byte_t dev_name[] = "ne0";
 
 extern int _ne2k_next_pk;
 extern word_t _ne2k_is_8bit;	// FIXME: Change to byte_t !!
@@ -93,8 +94,7 @@ static size_t ne2k_read(struct inode *inode, struct file *filp, char *data, size
 			 */
 
 			netif_stat.rq_errors++;
-			if (verbose) printk(EMSG_DMGPKT, model_name, nhdr[0], nhdr[1]);
-			//printk("eth: damaged packet (%04x %u), clearing buffer\n", nhdr[0], nhdr[1]);
+			if (verbose) printk(EMSG_DMGPKT, dev_name, nhdr[0], nhdr[1]);
 
 			if (nhdr[0] == 0) { 	// When this happens, the NIC has serious trouble,
 						// need to reset as if we had a buffer overflow.
@@ -205,7 +205,7 @@ static void ne2k_int(int irq, struct pt_regs *regs)
 
         	if (stat & NE2K_STAT_OF) {
 			netif_stat.oflow_errors++;
-			if (verbose) printk(EMSG_OFLOW, model_name, stat, netif_stat.oflow_keep);
+			if (verbose) printk(EMSG_OFLOW, dev_name, stat, netif_stat.oflow_keep);
 			page = ne2k_clr_oflow(netif_stat.oflow_keep); 
 
 			debug_eth("/CB%04x/ ", page);
@@ -250,7 +250,7 @@ static void ne2k_int(int irq, struct pt_regs *regs)
 			/* ne2k_get_tx_stat resets this bit in the ISR */
 			netif_stat.tx_errors++;
 			k = ne2k_get_tx_stat();	// read tx status reg to keep the NIC happy
-			if (verbose) printk(EMSG_TXERR, model_name, k);
+			if (verbose) printk(EMSG_TXERR, dev_name, k);
 		}
 
 		/* RXErrors occur almost exclusively when using an 8 bit interface.
@@ -262,7 +262,7 @@ static void ne2k_int(int irq, struct pt_regs *regs)
 			/* The 8 bit interface gets lots of these */
 			/* Don't do anything, just count, report & clr */
 			netif_stat.rx_errors++;
-			if (verbose) printk(EMSG_RXERR, model_name, inb(net_port + EN0_RSR));
+			if (verbose) printk(EMSG_RXERR, dev_name, inb(net_port + EN0_RSR));
 			outb(NE2K_STAT_RXE, net_port + EN0_ISR); // Clear intr bit
 		}
 		if (stat & NE2K_STAT_CNT) { 	
@@ -324,7 +324,7 @@ static int ne2k_open(struct inode *inode, struct file *file)
 	if (usecount++ == 0) {	// Don't initialize if already open
 		int err = request_irq(net_irq, ne2k_int, INT_GENERIC);
 		if (err) {
-			printk(EMSG_IRQERR, model_name, net_irq, err);
+			printk(EMSG_IRQERR, dev_name, net_irq, err);
 			return err;
 		}
 		ne2k_reset();
@@ -393,9 +393,9 @@ void ne2k_drv_init(void)
 				 */
 	byte_t *cprom, *mac_addr;
 
-	netif_stat.oflow_keep = 1;	// Default - keep one packet if overflow.
-					// Do not set to 0 - it will cause the NIC to 
-					// (eventually) hang
+	netif_stat.oflow_keep = 1;	/* Default - keep one packet if overflow.
+					 * Do not set to 0 - it will cause the NIC to 
+					 * (eventually) hang. 	*/
 	mac_addr = (byte_t *)&netif_stat.mac_addr;
 
 	net_port = NET_PORT;    // temp kluge for ne2k-asm.S
@@ -405,19 +405,21 @@ void ne2k_drv_init(void)
 
 		err = ne2k_probe();
 		verbose = (net_flags&ETHF_VERBOSE);
-		printk("eth: %s at 0x%x, irq %d", model_name, net_port, net_irq);
+		printk("eth: %s at 0x%x, irq %d", dev_name, net_port, net_irq);
 		if (err) {
 			printk(" not found\n");
 			break;
 		}
 
+#if DELETEME
 		/* Should not happen since we already have probed the NIC successfully */
 		/* May be superflous - candidate for removal */
 		if (((prom[0]&0xff) == 0xff) && ((prom[1]&0xff) == 0xff)) {
-			printk("%s: No MAC address\n", model_name);
+			printk("%s: No MAC address\n", dev_name);
 			err = -1;
 			break;
 		} 
+#endif
 		found = 1;
 		cprom = (byte_t *)prom;
 		ne2k_get_hw_addr(prom);
@@ -433,6 +435,7 @@ void ne2k_drv_init(void)
 
 		if (j && (j!=k)) {	
 			_ne2k_is_8bit = 1;
+			model_name[2] = '1';
 			netif_stat.if_status |= NETIF_AUTO_8BIT; 
 		} else {
 			for (i = 0; i < 16; i++) cprom[i] = (char)prom[i]&0xff;
@@ -442,14 +445,17 @@ void ne2k_drv_init(void)
 		//for (i = 0; i < 16; i++) printk("%02x", cprom[i]);
 		//printk("\n");
 
-		if (net_flags&ETHF_8BIT_BUS) _ne2k_is_8bit = 1; 	/* Forced 8bit */
 		memcpy(mac_addr, cprom, 6);
-		if (verbose || (_ne2k_is_8bit&1)) printk(" (%dbit)", 16-8*(_ne2k_is_8bit&1));
-		printk(", MAC %02x", mac_addr[0]);
+		printk(", (%s) MAC %02x", model_name, mac_addr[0]);
 		ne2k_addr_set(cprom);   /* Set NIC mac addr now so IOCTL works */
 
 		i = 1;
 		while (i < 6) printk(":%02x", mac_addr[i++]);
+		if (net_flags&ETHF_8BIT_BUS) {
+			/* flag that we're forcing 8 bit bus on 16 NIC */
+			if (!_ne2k_is_8bit) printk(" (8bit)");
+			_ne2k_is_8bit = 1; 	/* Forced 8bit */
+		}
 		if (netif_stat.if_status & NETIF_IS_QEMU) 
 			printk(" (QEMU)");
 		if (net_flags&ETHF_4K_BUF) {

@@ -1,7 +1,7 @@
 /*
  *
  * SMC/WD 80x3 (aka 'Elite') Ethernet driver for ELKS - supports wd8003 (8bit)
- * and wd8013 (16 bit) in numerous cariants, with (assumed) reliable detection
+ * and wd8013 (16 bit) in numerous variants, with (assumed) reliable detection
  * of 8 vs 16 bits.
  *
  * By @pawosm-arm September 2020. 16 bit support and various other enhancements by 
@@ -143,6 +143,7 @@ static struct wait_queue txwait;
 static byte_t usecount;
 static byte_t is_8bit;
 static byte_t model_name[] = "wd80x3";
+static byte_t dev_name[] = "wd0";
 static byte_t stop_page; 	/* actual last pg of ring (+1) */
 static unsigned char found;
 static unsigned int verbose;
@@ -153,6 +154,7 @@ static struct netif_stat netif_stat;
 static word_t wd_rx_stat(void);
 static word_t wd_tx_stat(void);
 static void wd_int(int irq, struct pt_regs * regs);
+static void fmemcpy(void *, seg_t, void *, seg_t, size_t, int);
 
 extern struct eth eths[];
 
@@ -244,11 +246,11 @@ static void wd_init_8390(int strategy)
 
 	outb(E8390_NODMA | E8390_PAGE0 | E8390_STOP,
 		WD_8390_PORT + E8390_CMD);
-	outb(0x49 - is_8bit, WD_8390_PORT + EN0_DCFG); /* 0x48 vs 0x49: 8 vs 16 bit */
+	outb(0x49 - is_8bit, WD_8390_PORT + EN0_DCFG);	/* 0x48 vs 0x49: 8 vs 16 bit */
 
 	/* Clear the remote byte count registers. */
-	outb(0x00U, WD_8390_PORT + EN0_RCNTLO);
-	outb(0x00U, WD_8390_PORT + EN0_RCNTHI);
+	outb(0x00, WD_8390_PORT + EN0_RCNTLO);
+	outb(0x00, WD_8390_PORT + EN0_RCNTHI);
 
 	/* Set to monitor and loopback mode. */
 	outb(E8390_RXOFF, WD_8390_PORT + EN0_RXCR);
@@ -293,10 +295,6 @@ static void wd_init_8390(int strategy)
 			WD_8390_PORT + E8390_CMD);
 	}
 
-	outb(ENISR_ALL, WD_8390_PORT + EN0_IMR);
-	outb(E8390_TXCONFIG, WD_8390_PORT + EN0_TXCR); /* xmit on */
-	/* Only after the NIC is started: */
-	outb(E8390_RXCONFIG, WD_8390_PORT + EN0_RXCR); /* rx on */
 }
 
 /*
@@ -308,7 +306,10 @@ static void wd_start(void)
 	if (inb(net_port + 14U) & 0x20U) /* enable IRQ on softcfg card */
 		outb(inb(net_port + 4U) | 0x80U, net_port + 4U);
 	outb(((net_ram >> 9U) & 0x3fU) | WD_MEMENB, net_port);
-	/* insurance - these 2 should not be required */
+
+	outb(E8390_TXCONFIG, WD_8390_PORT + EN0_TXCR); /* xmit on */
+	outb(E8390_RXCONFIG, WD_8390_PORT + EN0_RXCR); /* rx on */
+
 	outb(E8390_NODMA | E8390_PAGE0 | E8390_START, WD_8390_PORT + E8390_CMD);
 	outb(ENISR_ALL, WD_8390_PORT + EN0_IMR);	/* enable interrupts */
 }
@@ -376,7 +377,7 @@ static size_t wd_pack_get(char *data, size_t len)
 			 * since if the size is bogus, the next packet pointer is
 			 * unreliable at best. */
 			netif_stat.rq_errors++;
-			if (verbose) printk(EMSG_DMGPKT, model_name, (unsigned int *)rxhdr, rxhdr->next);
+			if (verbose) printk(EMSG_DMGPKT, dev_name, (unsigned int *)rxhdr, rxhdr->next);
 			
 			wd_clr_oflow(0);	/* Complete reset */
 			update = 0;		/* exit flag */
@@ -386,7 +387,7 @@ static size_t wd_pack_get(char *data, size_t len)
 		if ((rxhdr->status & 0x0fU) != ENRSR_RXOK) {
 			/* This shouldn't happen either, see comment above */
 			netif_stat.rx_errors++;
-			if (verbose) printk(EMSG_BGSPKT, model_name,
+			if (verbose) printk(EMSG_BGSPKT, dev_name,
 				rxhdr->status, rxhdr->next, rxhdr->count);
 			break;
 		} 
@@ -394,14 +395,14 @@ static size_t wd_pack_get(char *data, size_t len)
 		if (res > len) res = len;
 		if (current_rx_page > this_frame || current_rx_page == WD_FIRST_RX_PG) {
 			/* no wrap around */
-			fmemcpyb(data, current->t_regs.ds,
-				(char *)hdr_start + sizeof(e8390_pkt_hdr), net_ram, res);
+			fmemcpy(data, current->t_regs.ds,
+				(char *)hdr_start + sizeof(e8390_pkt_hdr), net_ram, res, is_8bit);
 		} else {	/* handle wrap-around */
 			size_t len1 = ((stop_page - this_frame) << 8) - sizeof(e8390_pkt_hdr);
-                        fmemcpyb(data, current->t_regs.ds,
-                                (char *)hdr_start + sizeof(e8390_pkt_hdr), net_ram, len1);
-                        fmemcpyb(data+len1, current->t_regs.ds,
-                                (char *)(WD_FIRST_RX_PG << 8), net_ram, res-len1);
+			fmemcpy(data, current->t_regs.ds,
+				(char *)hdr_start + sizeof(e8390_pkt_hdr), net_ram, len1, is_8bit);
+			fmemcpy(data+len1, current->t_regs.ds,
+				(char *)(WD_FIRST_RX_PG << 8), net_ram, res-len1, is_8bit);
  		}
 	} while (0);
 
@@ -433,7 +434,7 @@ static size_t wd_read(struct inode * inode, struct file * filp,
 				break;
 			}
 		}
-		res = wd_pack_get(data, len);	/* returns packet data size read*/
+		res = wd_pack_get(data, len);	/* returns packet data size read */
 	} while (0);
 
 	finish_wait(&rxwait);
@@ -450,21 +451,24 @@ static size_t wd_pack_put(char *data, size_t len)
 		if (len > MAX_PACKET_ETH)
 			len = MAX_PACKET_ETH;
 		if (len < 64U) len = 64U;  /* issue #133 */
-		fmemcpyb((byte_t *)((WD_FIRST_TX_PG - WD_START_PG) << 8U),
-			net_ram, data, current->t_regs.ds, len);
+
+		fmemcpy((byte_t *)((WD_FIRST_TX_PG - WD_START_PG) << 8U),
+			net_ram, data, current->t_regs.ds, len, is_8bit);
 		outb(E8390_NODMA | E8390_PAGE0, WD_8390_PORT + E8390_CMD);
 
-		/* FIXME: possibly superfluous */
+#if REMOVE
+		/* FIXME: superfluous. Cannot get here unless we have a trans complete intr */
+		/* which means the NIC is ready for more */
 		if (inb(WD_8390_PORT + E8390_CMD) & E8390_TRANS) {
 			printk("eth: attempted send with the tr busy.\n");
 			len = -EIO;
 			break;
 		}
+#endif
 		outb(len & 0xffU, WD_8390_PORT + EN0_TCNTLO);
 		outb(len >> 8U, WD_8390_PORT + EN0_TCNTHI);
 		outb(WD_FIRST_TX_PG, WD_8390_PORT + EN0_TPSR);
-		outb(E8390_NODMA | E8390_TRANS | E8390_START,
-			WD_8390_PORT + E8390_CMD);
+		outb(E8390_NODMA | E8390_TRANS, WD_8390_PORT + E8390_CMD);
 	} while (0);
 	return len;
 }
@@ -601,7 +605,7 @@ static int wd_open(struct inode * inode, struct file * file)
 			break;
 		err = request_irq(net_irq, wd_int, INT_GENERIC);
 		if (err) {
-			printk(EMSG_IRQERR, model_name, net_irq, err);
+			printk(EMSG_IRQERR, dev_name, net_irq, err);
 			break;
 		}
 		wd_init_8390(0);
@@ -664,7 +668,7 @@ static void wd_int(int irq, struct pt_regs * regs)
 		if (!(stat & ENISR_ALL))
 			break;
 		if (stat & ENISR_OFLOW) {
-			printk(EMSG_OFLOW, model_name, stat, netif_stat.oflow_keep);
+			printk(EMSG_OFLOW, dev_name, stat, netif_stat.oflow_keep);
 			wd_clr_oflow(netif_stat.oflow_keep);
 			netif_stat.oflow_errors++;
 			continue; /* Everything has been reset, skip rest of the loop */
@@ -675,16 +679,17 @@ static void wd_int(int irq, struct pt_regs * regs)
 		}
 		if (stat & ENISR_TX) {
 			wake_up(&txwait);
+			//inb(WD_8390_PORT + EN0_TSR);	/* should be read every time */
 			outb(ENISR_TX, WD_8390_PORT + EN0_ISR);
 		}
 		if (stat & ENISR_RX_ERR) {
-			printk(EMSG_RXERR, model_name, inb(WD_8390_PORT + EN0_RSR));
+			printk(EMSG_RXERR, dev_name, inb(WD_8390_PORT + EN0_RSR));
 			netif_stat.rx_errors++;
 			outb(ENISR_RX_ERR, WD_8390_PORT + EN0_ISR);
 		}
 		if (stat & ENISR_TX_ERR) {
 			netif_stat.tx_errors++;
-			printk(EMSG_TXERR, model_name, inb(WD_8390_PORT + EN0_TSR));
+			printk(EMSG_TXERR, dev_name, inb(WD_8390_PORT + EN0_TSR));
 			outb(ENISR_TX_ERR, WD_8390_PORT + EN0_ISR);
 		}
 		if (stat & (ENISR_RDC|ENISR_COUNTERS)) {  /* Remaining bits - should not happen */
@@ -709,7 +714,7 @@ void wd_drv_init(void)
 
 	u = wd_probe();
 	printk("eth: %s at 0x%x, irq %d, ram 0x%x",
-		model_name, net_port, net_irq, net_ram);
+		dev_name, net_port, net_irq, net_ram);
 	if (u) {
 		printk(" not found\n");
 	} else {
@@ -717,11 +722,22 @@ void wd_drv_init(void)
 		wd_get_hw_addr(hw_addr);
 		for (u = 0; u < 6; u++) 
 			mac_addr[u] = hw_addr[u]&0xffU;
-		printk(", MAC %02X", mac_addr[0]);
+		printk(", (%s) MAC %02X", model_name, mac_addr[0]);
 		for (u = 1U; u < 6U; u++) 
 			printk(":%02X", mac_addr[u]);
 		printk(", flags 0x%x\n", net_flags);
 	}
 	eths[ETH_WD].stats = &netif_stat;
 	return;
+}
+
+/* Using this wrapper saves 44 bytes of RAM */
+/* Using word transfers when possible improves transfer time ~10%
+ * on large packets (measured @ 1200 bytes) */
+void fmemcpy(void *dst_off, seg_t dst_seg, void *src_off, seg_t src_seg, size_t count, int type) {
+
+	if (type == is_8bit)
+		fmemcpyb(dst_off, dst_seg, src_off, src_seg, count);
+	else
+		fmemcpyw(dst_off, dst_seg, src_off, src_seg, (count+1)>>1);
 }

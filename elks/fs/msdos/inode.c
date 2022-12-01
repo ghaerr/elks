@@ -58,9 +58,9 @@ struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
     { "ttyp1",	S_IFCHR | 0644, MKDEV(4, 9) },
     { "ptyp1",	S_IFCHR | 0644, MKDEV(2, 9) },
     { "tcpdev",	S_IFCHR | 0644, MKDEV(8, 0) },
-    { "ne2k",	S_IFCHR | 0644, MKDEV(9, 0) },
-    { "wd8003",	S_IFCHR | 0644, MKDEV(9, 1) },
-    { "3c509",	S_IFCHR | 0644, MKDEV(9, 2) },
+    { "ne0",	S_IFCHR | 0644, MKDEV(9, 0) },
+    { "wd0",	S_IFCHR | 0644, MKDEV(9, 1) },
+    { "3c0",	S_IFCHR | 0644, MKDEV(9, 2) },
 };
 #endif
 
