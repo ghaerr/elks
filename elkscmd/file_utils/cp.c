@@ -27,6 +27,7 @@
 int opt_recurse = 0;
 int opt_verbose = 0;
 int opt_nocopyzero = 0;
+int opt_force = 0;
 int whole_disk_copy = 0;
 char *destination_dir;
 
@@ -568,9 +569,15 @@ int copyfile(char *srcname, char *destname, int setmodes)
 
 	wfd = creat(destname, statbuf1.st_mode);
 	if (wfd < 0) {
-		perror(destname);
-		close(rfd);
-		return 1;
+		if (opt_force) {
+			if ((wfd = unlink(destname)) >= 0)
+				wfd = creat(destname, statbuf1.st_mode);
+		}
+		if (wfd < 9) {
+			perror(destname);
+			close(rfd);
+			return 1;
+		}
 	}
 
 	while ((rcc = read(rfd, buf, BUF_SIZE)) > 0) {
@@ -633,6 +640,8 @@ int main(int argc, char **argv)
 			    opt_recurse = 1;
 		    else if (*p == 'v')
 			    opt_verbose = 1;
+		    else if (*p == 'f')
+			    opt_force = 1;
 		    else usage();
         }
 		argv++;
