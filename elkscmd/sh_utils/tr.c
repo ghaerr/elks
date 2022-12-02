@@ -234,7 +234,7 @@ int main(int argc, char ** argv)
 		len2 = 0;
 	}
 	/* printf("{%d,%d}",len1,len2); */
-	if (len1 > len2) {
+	if (set2 && len1 > len2) {
 		if (truncate1) {
 			set1[len2] = '\0';
 		} else {
@@ -249,13 +249,11 @@ int main(int argc, char ** argv)
 	/* printf("String 1 = %s\n", set1);
 	printf("String 2 = %s\n", set2); */
 	while ((i = getchar()) != EOF) {
-		if (set2 == NULL || delete) {
-			if (delete) {
-				if ((ip = strchr(set1, i)) != NULL) {
-					i = 0;
-				}
+		if (delete) {
+			if ((ip = strchr(set1, i)) != NULL) {
+				i = 0;
 			}
-		} else {
+		} else if (set2) {
 			if ((ip = strchr(set1, i)) != NULL) {
 				i = ip - set1;
 				ip = set2 + i;
