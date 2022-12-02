@@ -38,7 +38,11 @@ int do_mknod(char *srcfile, char *dstfile, int type, unsigned int major, unsigne
 int do_symlink(char *symlnk, char *file); /* ln -s symlink file*/
 int copyfile(char *srcname, char *destname, int setmodes);
 
+#if __APPLE__
+#define MAJOR_SHIFT	24	/* OSX: right shift dev_t to get major device # */
+#else
 #define MAJOR_SHIFT	8
+#endif
 
 static char buf[BUF_SIZE];
 
