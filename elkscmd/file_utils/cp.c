@@ -24,11 +24,11 @@
 
 #define BUF_SIZE	BUFSIZ		/* use disk block size for stack limit and efficiency*/
 
-int opt_recurse = 0;
-int opt_verbose = 0;
-int opt_nocopyzero = 0;
-int opt_force = 0;
-int whole_disk_copy = 0;
+int opt_recurse;	/* implicitly initialized */
+int opt_verbose;
+int opt_nocopyzero;
+int opt_force;
+int whole_disk_copy;
 char *destination_dir;
 
 char *destdir(char *file);
@@ -38,11 +38,7 @@ int do_mknod(char *srcfile, char *dstfile, int type, unsigned int major, unsigne
 int do_symlink(char *symlnk, char *file); /* ln -s symlink file*/
 int copyfile(char *srcname, char *destname, int setmodes);
 
-#if __APPLE__
-#define MAJOR_SHIFT	24	/* OSX: right shift dev_t to get major device # */
-#else
 #define MAJOR_SHIFT	8
-#endif
 
 static char buf[BUF_SIZE];
 
@@ -165,7 +161,7 @@ static void inode_free(inode_build_t * inode)
 	free(inode);
 }
 
-#define BLOCK_SIZE		1024
+#define BLOCK_SIZE	1024
 #define BLOCK_SIZE_BITS	10
 
 /* calculate blocks used for passed file size*/
@@ -573,7 +569,7 @@ int copyfile(char *srcname, char *destname, int setmodes)
 			if ((wfd = unlink(destname)) >= 0)
 				wfd = creat(destname, statbuf1.st_mode);
 		}
-		if (wfd < 9) {
+		if (wfd < 0) {
 			perror(destname);
 			close(rfd);
 			return 1;
