@@ -122,6 +122,7 @@ static unsigned char found;
 
 static struct netif_stat netif_stat;
 static char model_name[] = "3c509";
+static char dev_name[] = "3c0";
 
 static unsigned short verbose;
 static unsigned char usecount;
@@ -201,7 +202,7 @@ static int el3_isa_probe( void )
 
 	outb(0xd0, el3_id_port);		// select tag (0)
 	outb(0xe0 |(ioaddr >> 4), el3_id_port );// Set IOBASE address, activate
-	printk("eth: %s at 0x%x, irq %d", model_name, ioaddr, net_irq);
+	printk("eth: %s at 0x%x, irq %d", dev_name, ioaddr, net_irq);
 
 	if (id_read_eeprom(EEPROM_MFG_ID) != 0x6d50) {
 		printk(" not found\n");
@@ -211,7 +212,7 @@ static int el3_isa_probe( void )
 	 * 3Com got the byte order backwards in the EEPROM. */
 	for (i = 0; i < 3; i++)
 		mac[i] = htons(id_read_eeprom(i));
-	printk(", MAC %02x", (mac_addr[0]&0xff));
+	printk(", (%s) MAC %02x", model_name, (mac_addr[0]&0xff));
 	i = 1;
 	while (i < 6) printk(":%02x", (mac_addr[i++]&0xff));
 
