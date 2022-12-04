@@ -1,6 +1,8 @@
 /* Copyright (C) 1995,1996 Robert de Bath <rdebath@cix.compulink.co.uk>
  * This file is part of the Linux-8086 C library and is distributed
  * under the GNU Library General Public License.
+ *
+ * Copyright (C) 2022 TK Chia <@tkchia@mastodon.social>
  */
 
 /*
@@ -12,6 +14,7 @@
  */
 
 #include <errno.h>
+#include <stdbool.h>
 
 /* ATEXIT.H */
 #define MAXONEXIT 20		/* AIUI Posix requires 10 */
@@ -24,7 +27,10 @@ extern void __do_exit();
 extern struct exit_table
 {
    vfuncp called;
+#ifdef L_on_exit
    void *argument;
+   bool use_arg;
+#endif
 }
 __on_exit_table[MAXONEXIT];
 
@@ -43,7 +49,10 @@ int atexit (vfuncp ptr)
    if( ptr )
    {
       __on_exit_table[__on_exit_count].called = ptr;
+#ifdef L_on_exit
       __on_exit_table[__on_exit_count].argument = 0;
+      __on_exit_table[__on_exit_count].use_arg = false;
+#endif
       __on_exit_count++;
    }
    return 0;
@@ -65,6 +74,7 @@ void *arg;
    {
       __on_exit_table[__on_exit_count].called = ptr;
       __on_exit_table[__on_exit_count].argument = arg;
+      __on_exit_table[__on_exit_count].use_arg = true;
       __on_exit_count++;
    }
    return 0;
@@ -86,6 +96,13 @@ void __do_exit (int rv)
    for (; count >= 0; count--)
    {
       ptr = __on_exit_table[count].called;
-      (*ptr) (rv, __on_exit_table[count].argument);
+#ifdef L_on_exit
+      if (__on_exit_table[count].use_arg)
+         (*ptr) (rv, __on_exit_table[count].argument);
+      else
+         (*ptr) ();
+#else
+      (*ptr) ();
+#endif
    }
 }

@@ -1,7 +1,9 @@
 #ifndef __LINUXMT_KD_H
 #define __LINUXMT_KD_H
 
-#include <linuxmt/types.h>
+#ifndef __ASSEMBLER__
+# include <linuxmt/types.h>
+#endif
 
 /*@-namechecks@*/
 
