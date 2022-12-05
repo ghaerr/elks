@@ -56,7 +56,7 @@ exit:
 #else
 	xchg %ax,%di
 #endif
-#if defined __MEDIUM__ || defined __LARGE__ || defined __HUGE__
+#ifdef __IA16_CMODEL_IS_FAR_TEXT
 	mov $_cleanup,%si
 	mov (%si),%bx
 	or 2(%si),%bx

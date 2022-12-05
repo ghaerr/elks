@@ -23,7 +23,7 @@ __do_global_dtors:
 	push	%si
 	mov	$__DTOR_LIST__+2+FAR_ADJ_,%si
 0:
-#if FAR_ADJ_
+#ifdef __IA16_CMODEL_IS_FAR_TEXT
 	lodsw
 	xchg	%ax,%cx
 	lodsw
@@ -45,7 +45,7 @@ __do_global_dtors:
 
 	.global	__DTOR_LIST__
 __DTOR_LIST__:
-#if FAR_ADJ_
+#ifdef __IA16_CMODEL_IS_FAR_TEXT
 	.long	-1
 #else
 	.hword	-1
@@ -55,7 +55,7 @@ __DTOR_LIST__:
 
 	.global	__DTOR_END__
 __DTOR_END__:
-#if FAR_ADJ_
+#ifdef __IA16_CMODEL_IS_FAR_TEXT
 	.long	0
 #else
 	.hword	0

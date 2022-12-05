@@ -23,7 +23,7 @@ __do_global_ctors:
 	push	%si
 	mov	$__CTOR_END__-2,%si
 0:
-#if FAR_ADJ_
+#ifdef __IA16_CMODEL_IS_FAR_TEXT
 	std
 	lodsw
 	lodsw
@@ -45,25 +45,25 @@ __do_global_ctors:
 	pop	%si
 	mov	$__do_global_dtors,%ax
 #if defined __IA16_CALLCVT_CDECL
-# if FAR_ADJ_
+# ifdef __IA16_CMODEL_IS_FAR_TEXT
 	push	%cs
 # endif
 	push	%ax
 	CALL_(atexit)
 	pop	%ax
-# if FAR_ADJ_
+# ifdef __IA16_CMODEL_IS_FAR_TEXT
 	pop	%ax
 # endif
 	RET_(0)
 #elif defined __IA16_CALLCVT_STDCALL
-# if FAR_ADJ_
+# ifdef __IA16_CMODEL_IS_FAR_TEXT
 	push	%cs
 # endif
 	push	%ax
 	CALL_(atexit)
 	RET_(0)
 #else
-# if FAR_ADJ_
+# ifdef __IA16_CMODEL_IS_FAR_TEXT
 	mov	%cs,%dx
 # endif
 	JMP_(atexit)
@@ -73,7 +73,7 @@ __do_global_ctors:
 
 	.global	__CTOR_LIST__
 __CTOR_LIST__:
-#if FAR_ADJ_
+#ifdef __IA16_CMODEL_IS_FAR_TEXT
 	.long	-1
 #else
 	.hword	-1
@@ -83,7 +83,7 @@ __CTOR_LIST__:
 
 	.global	__CTOR_END__
 __CTOR_END__:
-#if FAR_ADJ_
+#ifdef __IA16_CMODEL_IS_FAR_TEXT
 	.long	0
 #else
 	.hword	0
