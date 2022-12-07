@@ -28,6 +28,7 @@
 #include <asm/ptrace-abi.h>
 #include "elks.h"
 
+const char *emu_prog;
 volatile struct elks_cpu_s elks_cpu;
 /* Paragraph aligned */
 unsigned char *elks_base, *elks_fartext_base, *elks_data_base;
@@ -44,13 +45,14 @@ static int modify_ldt(int func, void *ptr, unsigned long bytes)
 	return syscall(SYS_modify_ldt, func, ptr, bytes);
 }
 
-static void elks_init()
+static void elks_init(char *prog)
 {
 	uint64_t ldt[8192];
 	struct user_desc cs_desc, fcs_desc, ds_desc;
+	int cs_idx = 0, fcs_idx, ds_idx, ldt_count;
+	emu_prog = prog;
 	memset(ldt, 0, sizeof ldt);
-	int cs_idx = 0, fcs_idx, ds_idx,
-	    ldt_count = modify_ldt(0, ldt, sizeof ldt);
+	ldt_count = modify_ldt(0, ldt, sizeof ldt);
 	unsigned cs, ds;
 	if (ldt_count < 0)
 		ldt_count = 0;
@@ -573,7 +575,7 @@ main(int argc, char *argv[], char *envp[])
 	 * running 16-bit protected mode code. */
 	else if (argc==2 && strcmp(argv[1], "-t")==0)
 	{
-		elks_init();
+		elks_init(argv[0]);
 		fprintf(stderr, "Yes, this Linux host supports elksemu\n");
 		exit(0);
 	}
@@ -608,7 +610,7 @@ main(int argc, char *argv[], char *envp[])
 	}
 
 	dbprintf(("ELKSEMU\n"));
-	elks_init();
+	elks_init(argv[0]);
 	elks_pid_init();
 
 	pg_sz = getpagesize();

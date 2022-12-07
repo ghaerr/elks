@@ -8,15 +8,12 @@
 #include <unistd.h>
 #include <paths.h>
 
-char **__sys_errlist;
-int __sys_nerr = 0;
-
 char *
 strerror(int err)
 {
    int fd = -1;
    int cc;
-   int bufoff = 0;
+   size_t bufoff = 0;
    char inbuf[256];
    static char retbuf[60];
 

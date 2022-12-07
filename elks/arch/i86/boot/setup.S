@@ -799,9 +799,11 @@ novga:	mov	%al,14		// CGA 25 rows
 putc:	push %bx
 	push %cx
 	push %dx
+	push %bp        // some BIOS may destroy BP
 	mov $0x0E,%ah
 	mov $7,%bx      // page 0
 	int $0x10
+	pop %bp
 	pop %dx
 	pop %cx
 	pop %bx

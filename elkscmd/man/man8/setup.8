@@ -27,7 +27,7 @@ if
 .I /bootopts
 contains the line
 .sp
-.B #console=ttyS0,57600 debug net=ne2k 3 # sercons, multiuser, networking
+.B #console=ttyS0,57600 debug net=ne0 3 # sercons, multiuser, networking
 .sp
 then the command
 .sp
@@ -38,6 +38,5 @@ will remove the hash and thus enable that line.
 .B setup
 is very limited in its current incarnation and subject to rapid changes.
 .SH "SEE ALSO"
-.BR setup (8),
 .BR hosts (4),
 .BR bootopts (4).

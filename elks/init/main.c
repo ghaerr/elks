@@ -409,16 +409,16 @@ static int parse_options(void)
 			init_command = argv_init[1] = line;
 			continue;
 		}
-		if (!strncmp(line,"ne2k=",5)) {
-			parse_nic(line+5, &netif_parms[ETH_NE2K]);
+		if (!strncmp(line,"ne0=",4)) {
+			parse_nic(line+4, &netif_parms[ETH_NE2K]);
 			continue;
 		}
-		if (!strncmp(line,"wd8003=",7)) {
-			parse_nic(line+7, &netif_parms[ETH_WD]);
+		if (!strncmp(line,"wd0=",4)) {
+			parse_nic(line+4, &netif_parms[ETH_WD]);
 			continue;
 		}
-		if (!strncmp(line,"3c509=",6)) {
-			parse_nic(line+6, &netif_parms[ETH_EL3]);
+		if (!strncmp(line,"3c0=",4)) {
+			parse_nic(line+4, &netif_parms[ETH_EL3]);
 			continue;
 		}
 		if (!strncmp(line,"bufs=",5)) {

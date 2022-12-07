@@ -37,9 +37,9 @@ char * strerror(int);
 #define strcoll strcmp
 #define strxfrm strncpy
 
-/* BSDisms */
-#define index strchr
-#define rindex strrchr
+/* deprecated BSDisms */
+char * index(const char * s, int c);  /* replace by strchr */
+char * rindex(const char * s, int c); /* replace by strrchr */
 
 /* Other common BSD functions */
 int strcasecmp(const char *s1, const char *s2);

@@ -2,21 +2,28 @@
 .SH NAME
 split \- split a file into pieces
 .SH SYNOPSIS
-\fBsplit\fP [ -\fBn\fP ] [ -\fBb\fP byte_cnt ] [ file [ name ] ]
+\fBsplit\fP [ -\fBl\fP line_cnt] [ -\fBb\fP byte_cnt ] [ file [ prefix ] ]
 .SH DESCRIPTION
 \fISplit\fP reads \fIfile\fP and writes it in
-.IR n -line
+.IR line_cnt
 pieces or in \fIbyte_cnt\fP byte pieces to a set of output
-files.  The default is in 1000 line pieces.  The name of the
-first output file is \fIname\fP with "aa" appended, and so
-on, lexicographically, to "zz".  If no output name is given,
+files.  The default is in 1000 line pieces.  The 
+.IR byte_cnt
+parameter takes a scaling suffix (like
+.BR dd (1)):
+k (x 1024), b (block, x 512), w (word, x 2). The -b and -l options are mutially 
+exclusive, specifying both will generate an error.
+.PP
+The name of the
+first output file is \fIprefix\fP with "aa" appended, and so
+on, lexicographically, to "zz".  If no output prefix is given,
 "x" is the default, in which case \fIsplit\fP will create
 files from "xaa" to "zzz".
 .PP
-If no input file is given, or if \fB-\fP is given in its stead, then
+If no input file is given, or if \fB-\fP is given instead, then
 the standard input file is used.
 .SH BUGS
-If you provide \fIname\fP, \fIsplit\fP can only create 676 separate
+If you provide \fIprefix\fP, \fIsplit\fP can only create 676 separate
 files.  The default naming convention allows 2028 separate files.
 .SH AUTHOR
 Ported from 4.3BSD Reno

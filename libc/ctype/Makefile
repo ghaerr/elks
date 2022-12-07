@@ -28,4 +28,4 @@ $(LIB): $(OBJS)
 	$(AR) $(ARFLAGS_SUB) $@ $^
 
 clean:
-	$(RM) $(OBJS) $(LIB)
+	$(RM) *.[aod]

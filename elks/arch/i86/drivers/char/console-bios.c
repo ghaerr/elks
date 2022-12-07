@@ -78,7 +78,7 @@ static int Current_VCminor = 0;
 #define TERM_TYPE " dumb "
 #endif
 
-static void std_char(register Console *, char);
+static void std_char(register Console *, int);
 
 static void PositionCursor(register Console * C)
 {

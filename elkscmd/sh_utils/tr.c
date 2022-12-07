@@ -56,15 +56,16 @@ void usage(char ** argv)
  *
  */
 
-int do_args(int argc, register char ** argv)
+int do_args(int argc, char ** argv)
 {
-	int i = 1, j;
+	int i = 1;
+	size_t j;
 
 	while (i < argc && argv[i][0] == '-') {
 		for (j = 1; j < strlen(argv[i]); j++) {
 			switch (argv[i][j]) {
 				case 'c':
-					complement1 = 1;
+					complement1 = 1; /* TODO implement */
 					break;
 				case 's':
 					squeeze = 1;
@@ -98,6 +99,20 @@ int do_args(int argc, register char ** argv)
 	return i;
 }
 
+void out_of_mem()
+{
+	perror("malloc");
+	exit(1);
+}
+
+void *xrealloc(void *ptr, size_t size)
+{
+	ptr = realloc(ptr, size);
+	if (ptr == NULL)
+		out_of_mem();
+	return ptr;
+}
+
 /*
  *
  * build_string()
@@ -110,14 +125,13 @@ int do_args(int argc, register char ** argv)
  */
 
 #define BSIZE 64
-#define out_of_mem() { perror("malloc"); exit(1); }
 
 char * build_string(char * set_descr, int num)
 {
-	register char * buf = malloc(BSIZE);
+	char * buf = calloc(1, BSIZE);
 	int size = BSIZE;
 	int tail = 0;
-	int i;
+	size_t i;
 	char ch, n1, n2;
 
 	if (buf == NULL) {
@@ -162,16 +176,24 @@ again:
 							ch = n1 * 8 + n2;
 							goto again;
 						}
+						/* fallthrough */
 					default:
 						fprintf(stderr, "%s: Illegal %c in set%d\n", progname, ch, num);
 						exit(1);
-							
+
 				}
 				break;
 			case '-':
-				if ((tail) && 
-				    ((n1 = set_descr[++i]) > buf[tail-1])) {
-					for (n2 = buf[tail-1] + 1;n2 <= n1;n2++){
+				n1 = ' ';
+				if ((tail) &&
+				    ((n1 = set_descr[++i]) >= (n2 = buf[tail-1] + 1))) {
+					int need = n1 - n2 + 1;
+					if (size - tail < need + 4) {
+						buf = xrealloc(buf, size + need);
+						memset(buf + size, 0, need);
+						size += need;
+					}
+					for (;n2 <= n1;n2++){
 						buf[tail++] = n2;
 					}
 				} else {
@@ -181,14 +203,12 @@ again:
 			default:
 				buf[tail++] = ch;
 				break;
-		
+
 		}
 		if ((size - tail) < 4) {
+			buf = xrealloc(buf, size + BSIZE);
+			memset(buf + size, 0, BSIZE);
 			size += BSIZE;
-			buf = realloc(buf, size);
-			if (buf == NULL) {
-				out_of_mem();
-			}
 		}
 	}
 	return buf;
@@ -197,9 +217,9 @@ again:
 int main(int argc, char ** argv)
 {
 	int num_args, i, lchar = 0;
-	register char * set1, * set2;
+	char * set1, * set2;
 	char * ip;
-	int len, len1, len2;
+	int len1, len2;
 
 	progname = argv[0];
 	num_args = do_args(argc, argv);
@@ -211,30 +231,29 @@ int main(int argc, char ** argv)
 		len2 = strlen(set2);
 	} else {
 		set2 = NULL;
+		len2 = 0;
 	}
 	/* printf("{%d,%d}",len1,len2); */
-	if (len1 > len2) {
+	if (set2 && len1 > len2) {
 		if (truncate1) {
-			len = len2;
-			set1[len] = '\0';
+			set1[len2] = '\0';
 		} else {
-			set2 = realloc(set2, len1);
+			char pad = len2 ? set2[len2 - 1] : '\0';
+			set2 = xrealloc(set2, len1 + 1);
 			for (i = len2; i < len1; i++) {
-				set2[i] = set2[len2 - 1];
+				set2[i] = pad;
 			}
-			len = len1;
+			set2[len1] = 0;
 		}
 	}
 	/* printf("String 1 = %s\n", set1);
 	printf("String 2 = %s\n", set2); */
 	while ((i = getchar()) != EOF) {
-		if (set2 == NULL || delete) {
-			if (delete) {
-				if ((ip = strchr(set1, i)) != NULL) {
-					i = 0;
-				}
+		if (delete) {
+			if ((ip = strchr(set1, i)) != NULL) {
+				i = 0;
 			}
-		} else {
+		} else if (set2) {
 			if ((ip = strchr(set1, i)) != NULL) {
 				i = ip - set1;
 				ip = set2 + i;

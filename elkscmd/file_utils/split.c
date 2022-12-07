@@ -18,7 +18,6 @@
  */
 
 #include <sys/param.h>
-//#include <sys/file.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -36,6 +35,7 @@
 #define MAXPATHLEN      256
 #endif
 #define MAXBSIZE        2048
+#define	isdecimal(ch)	(((ch) >= '0') && ((ch) <= '9'))
 
 static long	bytecnt,		/* byte count to split on */
 		numlines;		/* lines in each file */
@@ -50,12 +50,11 @@ void split2(void);
 void newfile(void);
 void wrerror(void);
 void usage(void);
+long getnum(char *);
 
 int main(int argc, char **argv)
 {
 	register int cnt;
-	//long atol();
-	//char *strcpy();
 
 	for (cnt = 1; cnt < argc; ++cnt) {
 		if (argv[cnt][0] == '-')
@@ -69,21 +68,28 @@ int main(int argc, char **argv)
 				if (numlines)
 					usage();
 				if (!argv[cnt][2])
-					bytecnt = atol(argv[++cnt]);
+					bytecnt = getnum(argv[++cnt]);
 				else
-					bytecnt = atol(argv[cnt] + 2);
+					bytecnt = getnum(argv[cnt] + 2);
 				if (bytecnt <= 0) {
 					fputs("split: byte count must be greater than zero.\n", stderr);
 					usage();
 				}
 				break;
-			default:
-				if (!isdigit(argv[cnt][1]) || bytecnt)
+			case 'l':
+				if (bytecnt)
 					usage();
-				if ((numlines = atol(argv[cnt] + 1)) <= 0) {
+				if (!argv[cnt][2]) 
+					numlines = getnum(argv[++cnt]);
+				else
+					numlines = getnum(argv[cnt] + 2);
+				if (numlines <= 0) {
 					fputs("split: line count must be greater than zero.\n", stderr);
 					usage();
 				}
+				break;
+			default:
+				usage();
 				break;
 			}
 		else if (ifd == ERR) {		/* input file */
@@ -249,7 +255,8 @@ void newfile(void)
  */
 void usage(void)
 {
-	fputs("usage: split [-] [-#] [-b byte_count] [file [prefix]]\n", stderr);
+	fputs("usage: split [-] [-b byte_count[k|b|w] ] [-l linecount ] [file [prefix]]\n", stderr);
+	fputs("	[k|b|w] byte multiplier - 1024|512|2 respectively\n", stderr);
 	exit(1);
 }
 
@@ -261,4 +268,45 @@ void wrerror(void)
 {
 	perror("split: write");
 	exit(1);
+}
+
+/*
+ * Read a number with a possible multiplier.
+ * Returns -1 if the number format is illegal.
+ * (from dd.c) 
+ */
+long getnum(char *cp)
+{
+	long value;
+
+	if (!isdecimal(*cp))
+		return -1;
+
+	value = 0;
+	while (isdecimal(*cp))
+		value = value * 10 + *cp++ - '0';
+
+	switch (*cp++) {
+		case 'k':
+			value *= 1024;
+			break;
+
+		case 'b':
+			value *= 512;
+			break;
+
+		case 'w':
+			value *= 2;
+			break;
+
+		case '\0':
+			return value;
+
+		default:
+			return -1;
+	}
+
+	if (*cp) return -1;
+
+	return value;
 }

@@ -246,7 +246,7 @@ static int msdos_readdir(struct inode *dir, struct file *filp, char *dirbuf,
 	}
 
 	res = msdos_get_entry_long(dir, &filp->f_pos, &bh, name, &namelen, &dirpos, &ino);
-	if (res)
+	if (res > 0)
 		filldir(dirbuf, name, namelen, dirpos, ino);
 	if (bh)
 		unmap_brelse(bh);

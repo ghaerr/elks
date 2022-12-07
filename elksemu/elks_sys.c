@@ -22,6 +22,7 @@
 #include <sys/ioctl.h>
 #include <dirent.h>
 #include <sys/time.h>
+#include <sys/ptrace.h>
 #include "elks.h"
 
 #include "efile.h"
@@ -429,7 +430,7 @@ static int elks_execve(int bx,int cx,int dx,int di,int si)
 		return -1;
 	}
 	close(fd);
-	if(mh.type != ELKS_SPLITID || mh.type != ELKS_SPLITID_AHISTORICAL)
+	if(mh.type != ELKS_SPLITID && mh.type != ELKS_SPLITID_AHISTORICAL)
 	   is_elks = 0;
 
 	arg_ct = env_ct = 0;
@@ -444,7 +445,7 @@ static int elks_execve(int bx,int cx,int dx,int di,int si)
 	ct=0;
 	if( is_elks )
 	{
-	   argp[0]="/usr/bin/elksemu";
+	   argp[0]=emu_prog;
 	   /* argp[1]=ELKS_PTR(char, bx); */
 	   ct=1;
 	}

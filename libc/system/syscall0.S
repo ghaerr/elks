@@ -28,7 +28,7 @@ _syscall_test:
 _syscall_ok:
 	RET_(0)
 
-#ifdef __IA16_CALLCVT_CDECL
+#if defined __IA16_CALLCVT_CDECL
 _syscall_1:
 	mov    %sp,%bx
 	mov    2+FAR_ADJ_(%bx),%bx
@@ -143,6 +143,41 @@ _syscall_5:
 	pop %di
 	pop %si
 	RET_(10)
+#elif defined __IA16_CALLCVT_REGPARMCALL
+_syscall_2p:
+	push %bp
+	mov %sp,%bp
+	mov 4+FAR_ADJ_(%bp),%cx
+	pop %bp
+_syscall_2:
+_syscall_3:
+	xchg %cx,%dx
+_syscall_1:
+	xchg %ax,%bx
+	jmp _syscall_0
+
+_syscall_4:
+	push %di
+	mov %sp,%di
+	mov 4+FAR_ADJ_(%di),%di
+	xchg %cx,%dx
+	xchg %ax,%bx
+	CALL_N_(_syscall_0)
+	pop %di
+	RET_(2)
+
+_syscall_5:
+	push %di
+	mov %sp,%di
+	push %si
+	mov 6+FAR_ADJ_(%di),%si
+	mov 4+FAR_ADJ_(%di),%di
+	xchg %cx,%dx
+	xchg %ax,%bx
+	CALL_N_(_syscall_0)
+	pop %si
+	pop %di
+	RET_(4)
 #else
 # error "unknown calling convention"
 #endif
@@ -167,7 +202,11 @@ _syscall_signal:
 	push %es
 
 	mov 6(%bp),%bx
+#ifndef __IA16_CALLCVT_REGPARMCALL
 	push %bx
+#else
+	mov %bx,%ax
+#endif
 #if defined __MEDIUM__ || defined __LARGE__ || defined __HUGE__
 	add %bx,%bx
 	add %bx,%bx
