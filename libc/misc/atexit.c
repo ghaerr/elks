@@ -16,27 +16,15 @@
 #include <errno.h>
 #include <stdbool.h>
 
-/* ATEXIT.H */
-#define MAXONEXIT 20		/* AIUI Posix requires 10 */
+#define MAXONEXIT 42		/* C90 requires 32 */
 
-typedef void (*vfuncp) ();
+typedef void (*vfuncp) (void);
 
 extern vfuncp _cleanup;
-extern void __do_exit();
+extern void __do_exit (int);
 
-extern struct exit_table
-{
-   vfuncp called;
-#ifdef L_on_exit
-   void *argument;
-   bool use_arg;
-#endif
-}
-__on_exit_table[MAXONEXIT];
-
-extern int __on_exit_count;
-
-/* End ATEXIT.H */
+static int __on_exit_count = 0;
+static vfuncp __on_exit_table[MAXONEXIT];
 
 int atexit (vfuncp ptr)
 {
@@ -48,46 +36,15 @@ int atexit (vfuncp ptr)
    _cleanup = __do_exit;
    if( ptr )
    {
-      __on_exit_table[__on_exit_count].called = ptr;
-#ifdef L_on_exit
-      __on_exit_table[__on_exit_count].argument = 0;
-      __on_exit_table[__on_exit_count].use_arg = false;
-#endif
+      __on_exit_table[__on_exit_count] = ptr;
       __on_exit_count++;
    }
    return 0;
 }
-
-#ifdef L_on_exit
-int
-on_exit(ptr, arg)
-vfuncp ptr;
-void *arg;
-{
-   if( __on_exit_count < 0 || __on_exit_count >= MAXONEXIT)
-   {
-      errno = ENOMEM;
-      return -1;
-   }
-   __cleanup = __do_exit;
-   if( ptr )
-   {
-      __on_exit_table[__on_exit_count].called = ptr;
-      __on_exit_table[__on_exit_count].argument = arg;
-      __on_exit_table[__on_exit_count].use_arg = true;
-      __on_exit_count++;
-   }
-   return 0;
-}
-
-#endif
-
-int   __on_exit_count = 0;
-struct exit_table __on_exit_table[MAXONEXIT];
 
 void __do_exit (int rv)
 {
-   register int   count = __on_exit_count-1;
+   register int count = __on_exit_count-1;
    register vfuncp ptr;
    __on_exit_count = -1;		/* ensure no more will be added */
    _cleanup = 0;			/* Calling exit won't re-do this */
@@ -95,14 +52,7 @@ void __do_exit (int rv)
    /* In reverse order */
    for (; count >= 0; count--)
    {
-      ptr = __on_exit_table[count].called;
-#ifdef L_on_exit
-      if (__on_exit_table[count].use_arg)
-         (*ptr) (rv, __on_exit_table[count].argument);
-      else
-         (*ptr) ();
-#else
+      ptr = __on_exit_table[count];
       (*ptr) ();
-#endif
    }
 }
