@@ -210,15 +210,18 @@ install uninstall:
 		    $(lastword $(subst ;, ,$(ml)))))'; \
 		$(MAKE) $@)
 	set -e; \
-	dest=$(DESTDIR)/share/misc/elks; \
+	dest1=$(DESTDIR)/share/misc/elks; \
+	dest2=$(DESTDIR)/ia16-elf/lib/rt-specs; \
 	case $@ in \
 	    install) \
-		mkdir -p "$$dest"; \
+		mkdir -p "$$dest1" "$$dest2"; \
 		cp build-ml/$(MAINMULTISUBDIR)/system/call_tab.v \
-		   build-ml/$(MAINMULTISUBDIR)/system/defn_tab.v "$$dest";; \
+		   build-ml/$(MAINMULTISUBDIR)/system/defn_tab.v "$$dest1"; \
+		cp $(TOPDIR)/elks/r-elks.spec "$$dest2";; \
 	    *) \
-		$(RM) "$$dest"/call_tab.v "$$dest"/defn_tab.v; \
-		rmdir -p "$$dest" || true;; \
+		$(RM) "$$dest1"/call_tab.v "$$dest1"/defn_tab.v \
+		      "$$dest2"/r-elks.spec; \
+		rmdir -p "$$dest1" "$$dest2" || true;; \
 	esac
 endif
 
