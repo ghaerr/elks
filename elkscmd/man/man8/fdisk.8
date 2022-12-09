@@ -1,56 +1,76 @@
 .TH FDISK 8
 .SH NAME
-fdisk \- partition a hard disk [IBM]
+fdisk \- create or update a partition table on a hard disk or SSD device
 .SH SYNOPSIS
-\fBfdisk\fR [\fB\-h\fIm\fR]\fR [\fB\-s\fIn\fR]\fR [\fIfile\fR]\fR
+\fBfdisk\fR [\fB\-l\fR] [\fIfile\fR]
 .br
 .SH OPTIONS
 .TP 5
-.B \-h
-Number of disk heads is \fIm\fR
-.TP 5
-.B \-s
-Number of sectors per track is \fIn\fR
-.SH EXAMPLES
-.TP 20
-.B fdisk /dev/c0d0
-# Examine disk partitions
-.TP 20
-.B fdisk \-h9 /dev/c0d0
-# Examine disk with 9 heads
+.B \-l
+list the partition table and exit.
 .SH DESCRIPTION
 .PP
-When \fIfdisk\fR starts up, it reads in the partition table and displays 
-it.
-It then presents a menu to allow the user to modify partitions, store the
-partition table on a file, or load it from a file.  Partitions can be marked
-as 
-\s-1MINIX 3\s-1,
-DOS or other, as well as active or not.
-Using \fIfdisk\fR is self-explanatory.  
-However, be aware that
-repartitioning a disk will cause information on it to be lost.  
-Rebooting the system \fIimmediately\fR 
-is mandatory after changing partition sizes and parameters.
-\s-1MINIX 3\s-1, 
-\&\s-2XENIX\s0, \s-2PC-IX\s0, and \s-2MS-DOS\s0 all have different 
-partition numbering schemes.
-Thus when using multiple systems on the same disk, be careful.
+When \fBfdisk\fR starts up, it reads in the partition table from 
+.BR file ,
+or - if no 
+.B file
+was specified, from the currently booted drive. If the boot drive is a floppy,
+.B fdisk
+will fail and exit.
 .PP
-Note that
-\s-1MINIX 3\s-1,
-unlike
-\&MS-DOS ,
-cannot access the last sector in a partition with an odd number of sectors.
-The reason that odd partition sizes do not cause a problem with
-\s-2MS-DOS\s0 is that \s-2MS-DOS\s0 allocates disk space in units of
-512-byte sectors, whereas 
-\s-1MINIX 3\s-1
-uses 1K blocks.
-\fIFdisk\fR has a variety of other features that can be seen by typing \fIh\fR.
+Unless the 
+.B -l
+option is present, 
+.B fdisk
+will enter interactive mode and allow the user to manipulate the partition
+table using the following commands:
 .PP
-.I Fdisk
-normally knows the geometry of the device by asking the driver.  You can use
-the \fB\-h\fP and \fB\-s\fP options to override the numbers found.
+.nf
+	Key Description
+	b   Set bootable flag
+	d   Delete partition
+	l   List partition types
+	n   Create new partion
+	p   Print partition table
+	q   Quit fdisk
+	t   Set partition type
+	w   Write partition table
+	?   Help
+.fi
+.PP
+.B Fdisk
+will fail on flat images (disks with no partition table), floppy devices and other devices with no partition. Selecting
+.I quit
+will discard any changes unless preceeded by the
+.I write
+command.
+.SH EXAMPLES
+.TP 10
+elks17# \fBfdisk\fP
+.nf
+Geometry: 7818 cylinders, 16 heads, 63 sectors.
+Command (? for help):
+.fi
+.R Fdisk 
+enters interactive mode.
+.TP 10
+elks17# \fBfdisk -l\fP
+.nf
+                      START              END          SECTOR
+Device      #:ID   Cyl Head Sect    Cyl Head Sect  Start   Size
+
+/dev/hda1  *1:80     0    1    1     66    15   63     63  67473
+/dev/hda2   2:80    67    0    1     200   15   63  67536 135072
+/dev/hda3   3:00     0    0    0      0    0    0      0      0
+/dev/hda4   4:80   332    0    1     432   15   63 7560000 101808
+.fi
+
+.B Fdisk 
+lists the partition table, the asterisk in the ID-column indictating an active
+partition.
+.SH BUGS
+.PP
+.B Fdisk
+does minimal sanity checking on input, it is possible to create a totaly bogus partition table.
 .SH "SEE ALSO"
 .BR part (8).

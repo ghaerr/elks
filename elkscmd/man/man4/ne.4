@@ -1,0 +1,205 @@
+.TH FD 4
+.SH NAME
+ne0 \- Driver for the ne1k and ne2k ISA Ethernet controller family
+.SH SYNOPSIS
+.nf
+ne1k, ne2k
+	/bootopts: ne0=9,0x380,,0x80
+	/dev/ne0 - major: 9 minor: 0
+.fi
+.SH DESCRIPTION
+The \fBne0\fP 
+device refers to the ELKS driver for the ne1k/ne2k family of 10Mbps 
+Ethernet interfaces (aka NICs) running
+on the PC ISA 8 or 16 bit bus. The 
+\fBne2k\fP
+has a full width 16 bit (double) edge connector an may be used in 16 or 8 bit modes. The
+.B ne1k
+has a single, 8bit wide edge connector and is an 8 bit only device.
+.PP
+The driver will automatically recognize the type of controller and adjust settings accordingly. 
+The actual settings will be displayed at boot time.
+.SH CONFIGURATION
+The default settings for the interface are set in the
+.I ports.h 
+file in the ELKS source tree, see the FILES section below. These settings may conveniently
+be overridden at boot-time via the
+.I /bootopts
+file using the syntax shown in the SYNOPSIS section above.
+.PP
+The first parameter is the IRQ (decimal), 
+the second is the base I/O port address (in hexadecimal), the third is always omitted for this 
+interface and the fourth is the 
+\fIflag\fP
+field described below. Any of the parameters may be omitted but the commas must be kept.
+.SH FLAGS
+The 
+.I flags 
+part of the configuration line enables/disables various interface and driver parmeters at boot time.
+These parameters vary slightly from one interface type/vendor to the next, so make sure to 
+look at the correct man page to get correct information.
+.PP
+The defaults are:
+.nf
+	Bus width:	Autodetect
+	Buffer size:	16k
+	Verbose msgs:	Off
+.fi
+As distributed, the settings in the 
+.I /bootopts
+file set the verbose flag (0x80) in the flags field to aid debugging.
+.PP
+.nf
+	NAME		VALUE	FUNCTION
+	ETHF_16K_BUF    0x02    Force 16k NIC buffer (default, not required)
+	ETHF_4K_BUF     0x04    Force  4k NIC buffer
+	ETHF_8BIT_BUS   0x10    Force  8 bit bus
+	ETHF_16BIT_BUS  0x20    Force 16 bit bus (currently unused)
+	ETHF_VERBOSE    0x80    Turn on console error messages
+.fi
+
+.SH TROUBLESHOOTING
+When the \fBne0\fP
+interface has been configured into the running kernel via
+\fImenuconfig\fP,
+a boot message will indicate whether the configuration works or not. The following message indicates success:
+.PP
+.nf
+eth: ne0 at 0x380, irq 9, (ne1k) MAC 00:1f:11:02:60:2d, flags 0x80
+.fi
+.PP
+The interface was found at the specified I/O address, the displayed MAC (Ethernet) address 
+was found and set. 
+The interrupt line (IRQ) is reported but not tested or activated at this point. If the interface does 
+not seem to work, the IRQ may be wrong.  
+If the interface has several connection options (AUI, BNC and/or TP), the card may need to 
+be configured specifically for the connection type in use.
+.PP
+If the interface is reported as 'not found' it is likely that the I/O address is wrong. 
+.PP
+.nf
+eth: ne0 at 0x300, irq 12 not found
+.fi
+.PP
+Check the configuration again – which on most reasonably modern NICs will mean firing 
+up a configuration utility under MSDOS. Older NICs are configured via physical jumpers,
+some have both, one jumper setting indicating 'soft configuration'.
+.PP
+If the interface seems to work but emit error messages while transferring data, make sure you set 
+the
+.I verbose
+flag in the 
+.I /bootopts 
+configuration to get as much detail as possible. Refer to the FLAGS and ERROR MESSAGES sections
+for details.
+.SH 16 VS 8 BIT
+The  most significant difference between the 
+.B ne1k
+and the
+.B ne2k
+is the bus width. The former supports the original PC/XT ISA 8 bit bus, the latter 
+uses the PC/AT 16 bit ISA bus. Less obvious is the difference
+in buffer space on the interface itself. While the 16 bit card has 16k 
+bytes of on board buffer for packet data, the 
+.B ne1k
+has only 4k. This severely affects performance and reliability when running under ELKS. 
+Some recent versions
+of the 
+.B ne1k
+actually has 16k of buffer space available, and the driver is by default set up to use the entire buffer.
+This improves speed of file transfers but decreases reliability and will cause 
+many errors reported on the console. The reliability issue is taken care of by TCP retransmits, 
+so the overall experience is still better with 16k buffer size.
+.PP
+However, in some rare cases,
+the forced use of 16k buffer on a
+.B ne1k
+interface may cause the system to hang, requiring a power cycle to recover. if this becomes a problem,
+change the configuration flags to force 4k buffer and also change the MTU in
+.I /etc/net.cfg
+to 1000. With these settings the 
+.B ne1k
+is as reliable as the 16 bit version and still reasonably fast.
+.PP
+Similarly, if a 16 bit interface is used on a system with only 8 bit ISA bus, the force-8-bit flag 
+must be set to make it work. There is not autodetection of the bus width in the driver.
+.SH DIAGNOSTICS
+The driver will emit the following error messages, some of them only if the verbose flag has been set.
+.PP
+.nf
+\fIne0: Damaged packet, hdr 0x%x %u, buffer cleared\fR
+.fi
+A damaged packet was found in the NICs buffer and is discarded, which will case a retransmit
+if part of a TCP session. This will normally happen only if an 8 bit interface is run with 
+16k buffer memory enabled. The numbers reported are from the interface's buffer header and
+of interest only to driver developers.
+.PP
+.nf
+\fIne0: Rcv oflow (0x%x), keep %d\fR
+.fi
+The interface was unable to handle the amount of incoming traffic and had to discard one or more packets.
+Since incoming packets are transferred directly from the interface buffer to user space,
+with no buffering by the operating system, this may happen frequently when under heavy load, 
+in particular when using the 
+.BR ne1k .
+The first number is a status code from the interface, the second is the number of packets
+kept in the interface's buffer. 
+.PP
+.nf
+\fIne0: TX-error, status 0x%x\fR
+.fi
+A link level error happened during transmit. This should not happen and may 
+indicate a physical problem with the network. In rare cases it may be an indication that
+the network is really busy. Remember that these interfaces are 10Mbps, more often than 
+not connected to a switch carrying Fast Ethernet or Gigabit Ethernet traffic. The broadcast
+traffic on such segment may have bursts that the old interfaces have a hard time keeping up with.
+This message is informational.
+.PP
+.nf
+\fIne0: RX-error, status 0x%x\fR
+.fi
+A link level error happened during receive. This should not happen but may occur 
+under heavy load when using the
+.B ne1k
+interface. It may also indicate physical problems with the network segment. This message is informational
+and will be suppressed if the verbose flag is off.
+.PP
+.nf
+\fIne0: Unable to use IRQ %d (errno %d)\fR
+.fi
+An interface is already using this  IRQ. 
+Network and other ISA interfaces are configured during boot, but the IRQ is assigned at runtime,
+when the actual interface is opened. Hence, it's OK to see several interfaces reporting the same IRQ at boot time.
+However, if the IRQ is already taken when a device is opened, this error message will be triggered.
+The conflict may be remedied by closing the offending device, but since the ISA bus does not
+provide any standardized mechanism for releasing IRQs, it may be necessary to reboot in order to
+reassign an IRQ.
+.PP
+.nf
+\fIne0: No MAC address\fR
+.fi
+A boot time message indicateing that the driver was unable to extract the MAC address from the interface, 
+and the configuration was aborted. 
+
+.SH IOCTLs
+The driver supports the following IOCTL calls:
+.PP
+.nf
+	NAME		     PARAMETER		PURPOSE
+	IOCTL_ETH_ADDR_GET   char[6]		Get MAC address
+	IOCTL_ETH_ADDR_SET   char[6]		Set MAC address
+	IOCTL_ETH_GETSTAT    struct netif_stat	Get stats from device
+.fi
+.PP
+The 
+.I ADDR_SET
+ioctl is currently unused and disabled.
+
+.SH FILES
+/dev/ne0, /bootopts, /etc/net.cfg, elks/include/arch/ports.h
+.SH "SEE ALSO"
+.BR ktcp (1),
+.BR wd0 (4),
+.BR 3c0 (8).
+.SH AUTHOR
+Rewritten for ELKS 2020-2022 by Helge Skrivervik, helge@skrivervik.com
