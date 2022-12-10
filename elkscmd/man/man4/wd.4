@@ -1,0 +1,201 @@
+.TH WD 4
+.SH NAME
+wd0 \- Driver for the wd/smc 8003 and 8013 ISA Ethernet controller family
+.SH SYNOPSIS
+.nf
+wd8003, wd8013
+	/bootopts: wd0=11,0x300,0xcc00,0x80
+	/dev/wd0 - major: 9 minor: 1
+.fi
+.SH DESCRIPTION
+The \fBwd0\fP 
+device refers to the ELKS driver for the wd8003/8013 family of 10Mbps 
+Ethernet interfaces (aka NICs) running
+on the PC ISA 8 or 16 bit bus. The 
+\fBwd8013\fP
+has a full width 16 bit (double) edge connector an may be used in 16 or 8 bit modes. The
+.B wd8003
+has a single, 8bit wide edge connector and is an 8 bit only device.
+.PP
+The driver will attempt to recognize the type of controller and adjust settings accordingly. 
+The actual settings will be displayed at boot time. If autodetection does not work, all settings
+may be overridden via the 
+.I /bootopts
+file.
+.SH CONFIGURATION
+The default settings for the interface are set in the
+.I ports.h 
+file in the ELKS source tree, see the FILES section below. These settings may conveniently
+be overridden at boot-time via the
+.I /bootopts
+file using the syntax shown in the SYNOPSIS section above.
+.PP
+The first parameter is the IRQ (decimal), 
+the second is the base I/O port address (in hexadecimal), the third is the shared memory
+address (also hexadecimal) and the fourth is the 
+\fIflag\fP
+field described below. Any of the parameters may be omitted and the defaults from 
+.I ports.h
+will be used. The commas must be kept.
+.SH FLAGS
+The 
+.I flags 
+part of the configuration line enables/disables various interface and driver parmeters at boot time.
+These parameters vary slightly from one interface type/vendor to the next, so make sure to 
+look at the correct man page to get correct information.
+.PP
+The defaults are:
+.nf
+	Bus width:	Autodetect
+	Buffer size:	8k
+	Verbose msgs:	Off
+.fi
+.PP
+As distributed, the settings in the 
+.I /bootopts
+file set the verbose flag (0x80) in the flags field to aid debugging.
+.PP
+.nf
+	NAME		VALUE	FUNCTION
+	ETHF_8BIT_BUS   0x10    Force  8 bit bus
+	ETHF_16BIT_BUS  0x20    Force 16 bit bus (currently unused)
+	ETHF_VERBOSE    0x80    Turn on console error messages
+.fi
+
+.SH TROUBLESHOOTING
+When the \fBne0\fP
+interface has been configured into the running kernel via
+\fImenuconfig\fP,
+a boot message will indicate whether the configuration works or not. The following message indicates success:
+.PP
+.nf
+eth: wd0 at 0x320, irq 11, ram 0xcc00, (wd8013) MAC 00:00:C0:BC:8F:4B, 
+						flags 0x80
+.fi
+.PP
+The interface was found at the specified I/O address, the shared memory address works and
+the displayed MAC (Ethernet) address was found and set. 
+The interrupt line (IRQ) is reported but not tested or activated at this point. If the interface does 
+not seem to work, the IRQ may be wrong.  
+If the interface has several connection options (AUI, BNC and/or TP), the card may need to 
+be configured specifically for the connection type in use.
+.PP
+If the interface is reported as 'not found' it is likely that the I/O address is wrong. 
+.PP
+.nf
+eth: wd0 at 0x320, irq 11, ram 0xcc00 not found
+.fi
+.PP
+Check the configuration again – in particular the IRQ and the shared memory address.
+On most reasonably modern NICs this means firing 
+up a configuration utility under MSDOS to do so called 'soft configuration'. 
+Older NICs are configured via physical jumpers,
+some have both, one jumper setting indicating 'soft configuration'. Make sure that the shared
+memory address is used by other ISA interfaces.
+.PP
+If the interface seems to work  or partly work but emit error messages while 
+transferring data, make sure you set the
+.I verbose
+flag in the 
+.I /bootopts 
+configuration to get as much detail as possible about what's going on. 
+Refer to the FLAGS and ERROR MESSAGES sections
+for details.
+.SH 16 VS 8 BIT
+The  most significant difference between the 
+.B wd8003
+and the
+.B wd8013
+is the bus width. The former supports the original PC/XT ISA 8 bit bus, the latter 
+uses the PC/AT 16 bit ISA bus. Unlike the 
+.I ne1k/ne2k
+family of interfaces, the 
+.I wd
+series use the same 8K buffer regardless of bus width. Cards with more buffer space do exist,
+but the increased buffer is not recognized by this driver.
+.SH DIAGNOSTICS
+The driver may emit the following error messages, some of them only if the verbose flag has been set.
+.PP
+.nf
+\fIwd0: Damaged packet, hdr 0x%x %u, buffer cleared\fR
+.fi
+A damaged packet was found in the NICs buffer and is discarded, which will cause a retransmit
+if the packet was part of a TCP session. Since the NIC is programmed to discard 
+erroneous packets automatically, this should not happen, and may - if it happens 
+more than once - indicate a hardware malfunction.
+.PP
+.nf
+\fIeth: mismatched read page pointers %2x vs %2x.\fR
+.fi
+This should never happen and indicates either a driver bug or a physical hardware problem.
+Contact the ELKS suppofrt sommunity if you see this error.
+.PP
+.nf
+\fIwd0: Rcv oflow (0x%x), keep %d\fR
+.fi
+The interface was unable to handle the amount of incoming traffic and had to discard one or more packets.
+Since incoming packets are transferred directly from the interface buffer to user space,
+with no buffering by the operating system, this may occur regularly when under heavy load. 
+If it happens in light load conditions, it may indicate a hardware or network media problem.
+The first number displayed is a status code from the NIC, of interest to the developers. 
+The second number indicates how many packets are retained in the NIC buffer after the 
+'cleanup process'.
+.PP
+.nf
+\fIwd0: TX-error, status 0x%x\fR
+.fi
+A link level error happened during transmit. This should not happen and may 
+indicate a physical problem with the network. In rare cases it may be an indication that
+the network is really busy. Keep in mind that these interfaces are 10Mbps, more often than 
+not connected to a switch carrying Fast Ethernet (100Mbps) or Gigabit Ethernet traffic. The broadcast
+traffic on such segments may have bursts that the old interfaces have a hard time keeping up with.
+This message is informational.
+.PP
+.nf
+\fIwd0: RX-error, status 0x%x\fR
+.fi
+A link level error happened during receive. This should not happen but may occur 
+under heavy load. The message is informational and will not show unless the verbolse-falg is set.
+.PP
+.nf
+\fIwd0: Bogus packet: status %#x nxpg %#x size %d\fR
+.fi
+A unusual status code was set by the NIC related to a recieved packet. This should not 
+happen, and would be of great interest to developers.
+.PP
+.nf
+\fIwd0: Unable to use IRQ %d (errno %d)\fR
+.fi
+An interface is already using this  IRQ. 
+Network and other ISA interfaces are configured during boot, but the IRQ is assigned at runtime,
+when the actual interface is opened. Hence, it's OK to see several interfaces reporting 
+the same IRQ at boot time.
+However, if the IRQ is already taken when a device is opened, this error message will be emitted.
+The conflict may be remedied by closing the offending device, but since the ISA bus does not
+provide any standardized mechanism for releasing IRQs, it may be necessary to reboot in order to
+reassign an IRQ.
+
+.SH IOCTLs
+The driver supports the following IOCTL calls:
+.PP
+.nf
+	NAME		     PARAMETER		PURPOSE
+	IOCTL_ETH_ADDR_GET   char[6]		Get MAC address
+	IOCTL_ETH_ADDR_SET   char[6]		Set MAC address
+	IOCTL_ETH_GETSTAT    struct netif_stat	Get stats from device
+.fi
+.PP
+The 
+.I ADDR_SET
+ioctl is currently unused and disabled.
+
+.SH FILES
+/dev/ne0, /bootopts, /etc/net.cfg, elks/include/arch/ports.h
+.SH "SEE ALSO"
+.BR ktcp (1),
+.BR ne0 (4),
+.BR 3c0 (8),
+.BR bootopts (5).
+.SH AUTHOR
+Adapted from the ELKS ne2k driver by @pawosm-arm (2020), expanded and partly 
+rewritten by @mellvik (2022).
