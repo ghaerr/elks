@@ -148,6 +148,35 @@ PC98_open(PSD psd)
 	unsigned int __far *lioaddr;
 	unsigned int i;
 
+	unsigned int __far *tvram;
+
+	// Clear 80*25 words text vram starting from segment 0xA000
+	tvram = (unsigned int __far *) _MK_FP(0xA000,0);
+	for (i = 0; i < 2000; i++) {
+		*tvram = 0;
+		tvram++;
+	}
+
+	/* init driver variables for PC-98*/
+	psd->xres = 640;
+	psd->yres = 400;
+	psd->planes = 4;
+	psd->bpp = 4;
+	psd->ncolors = 16;
+	psd->pixtype = PF_PALETTE;
+#if HAVEBLIT
+	psd->flags = PSF_SCREEN | PSF_HAVEBLIT;
+#else
+	psd->flags = PSF_SCREEN;
+#endif
+
+	/* init planes driver (sets psd->addr and psd->linelen)*/
+	ega_init(psd);
+
+	// Clear graphic vram
+	for (i = 0; i < psd->yres; i++)
+		ega_drawhorzline(psd, 0, psd->xres, i, 0);
+
 	intvec = (unsigned long __far *) _MK_FP(0, LIOINT<<2); /* interrupt vector for INT 0xA0 */
 	lioaddr = (unsigned int __far *) _MK_FP(LIOSEG, 6);   /* Starting Rom Address for INT 0xA0 handler */
 
@@ -193,22 +222,6 @@ PC98_open(PSD psd)
 	int_A3(lio_m_seg);
 
 	free(lio_malloc);
-
-	/* init driver variables for PC-98*/
-	psd->xres = 640;
-	psd->yres = 400;
-	psd->planes = 4;
-	psd->bpp = 4;
-	psd->ncolors = 16;
-	psd->pixtype = PF_PALETTE;
-#if HAVEBLIT
-	psd->flags = PSF_SCREEN | PSF_HAVEBLIT;
-#else
-	psd->flags = PSF_SCREEN;
-#endif
-
-	/* init planes driver (sets psd->addr and psd->linelen)*/
-	ega_init(psd);
 
 	/* init pc rom font routines*/
 	pcrom_init(psd);
