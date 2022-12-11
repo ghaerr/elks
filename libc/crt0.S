@@ -49,14 +49,10 @@ _start:
 	mov %di,%cx	// cx := envp
 #endif
 	CALL_(main)
-#ifdef __IA16_CALLCVT_CDECL
-	add $6,%sp
-#endif
 #ifndef __IA16_CALLCVT_REGPARMCALL
 	push %ax  // main return value
 #endif
 	CALL_N_(exit)  // no return
-	int $3
 
 	.section .finihead,"ax",@progbits
 

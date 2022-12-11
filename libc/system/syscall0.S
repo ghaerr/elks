@@ -20,8 +20,8 @@ _syscall_0:
 	int    $0x80
 
 _syscall_test:
-	cmp    $0,%ax
-	jge    _syscall_ok
+	test   %ax,%ax
+	jns    _syscall_ok
 	neg    %ax
 	mov    %ax,errno
 	mov    $-1,%ax
