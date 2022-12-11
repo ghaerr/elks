@@ -4,7 +4,7 @@
 #include "_stdio.h"
 
 #ifdef __GNUC__
-__attribute__((destructor(100)))
+__attribute__((destructor(99)))
 #endif
 static void
 __stdio_close_all(void)
@@ -23,7 +23,7 @@ __stdio_close_all(void)
 }
 
 #ifdef __GNUC__
-__attribute__((constructor(100)))
+__attribute__((constructor(99)))
 #endif
 void
 __io_init_vars(void)

@@ -17,10 +17,8 @@
 	.arch	i8086, nojumps
 	.code16
 
-	.text
+	.section .fini,"ax",@progbits
 
-	.global	__do_global_dtors
-__do_global_dtors:
 	push	%si
 	mov	$__DTOR_LIST__+2+FAR_ADJ_,%si
 0:
@@ -40,16 +38,16 @@ __do_global_dtors:
 	jmp	0b
 1:
 	pop	%si
-	RET_(0)
 
 	.section .data.__DTOR_LIST__,"aw",@progbits
 
+	.balign	2
 	.global	__DTOR_LIST__
 __DTOR_LIST__:
 #ifdef __IA16_CMODEL_IS_FAR_TEXT
-	.long	-1
+	.long	0
 #else
-	.hword	-1
+	.hword	0
 #endif
 
 	.section .data.__DTOR_END__,"aw",@progbits

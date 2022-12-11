@@ -17,67 +17,41 @@
 	.arch	i8086, nojumps
 	.code16
 
-	.text
+	.section .init,"ax",@progbits
 
-	.global	__do_global_ctors
-__do_global_ctors:
 	push	%si
 	mov	$__CTOR_END__-2,%si
 0:
 #ifdef __IA16_CMODEL_IS_FAR_TEXT
 	std
 	lodsw
+	xchg	%ax,%cx
 	lodsw
 	cld
-	inc	%ax
+	or	%cx,%ax
 	jz	1f
 	lcallw	*2(%si)
 #else
 	std
 	lodsw
 	cld
-	inc	%ax
-	jz	1f
-	dec	%ax
-	call	*%ax
+	xchg	%ax,%cx
+	jcxz	1f
+	call	*%cx
 #endif
 	jmp	0b
 1:
 	pop	%si
-	mov	$__do_global_dtors,%ax
-#if defined __IA16_CALLCVT_CDECL
-# ifdef __IA16_CMODEL_IS_FAR_TEXT
-	push	%cs
-# endif
-	push	%ax
-	CALL_(atexit)
-	pop	%ax
-# ifdef __IA16_CMODEL_IS_FAR_TEXT
-	pop	%ax
-# endif
-	RET_(0)
-#elif defined __IA16_CALLCVT_STDCALL
-# ifdef __IA16_CMODEL_IS_FAR_TEXT
-	push	%cs
-# endif
-	push	%ax
-	CALL_(atexit)
-	RET_(0)
-#else
-# ifdef __IA16_CMODEL_IS_FAR_TEXT
-	mov	%cs,%dx
-# endif
-	JMP_(atexit)
-#endif
 
 	.section .data.__CTOR_LIST__,"aw",@progbits
 
+	.balign	2
 	.global	__CTOR_LIST__
 __CTOR_LIST__:
 #ifdef __IA16_CMODEL_IS_FAR_TEXT
-	.long	-1
+	.long	0
 #else
-	.hword	-1
+	.hword	0
 #endif
 
 	.section .data.__CTOR_END__,"aw",@progbits

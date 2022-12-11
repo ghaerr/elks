@@ -6,10 +6,16 @@
 	.arch	i8086, nojumps
 	.code16
 
-	.text
+	.section .inithead,"ax",@progbits
 
 	.extern main
 	.extern _exit
+
+// Ensure that constructor & destructor handling is linked in
+// TODO: make these optional
+
+	.reloc .,R_386_NONE,__CTOR_LIST__
+	.reloc .,R_386_NONE,__DTOR_LIST__
 
 // This is the program entry point
 
@@ -28,7 +34,11 @@ _start:
 	mov %di,environ
 	mov (%si),%ax
 	mov %ax,_program_filename
-	CALL_N_(__do_global_ctors)
+
+// ...Code fragments from .init & .init.* sections will go here...
+
+	.section .inittail,"ax",@progbits
+
 #ifndef __IA16_CALLCVT_REGPARMCALL
 	push %di
 	push %si
@@ -48,42 +58,28 @@ _start:
 	CALL_N_(exit)  // no return
 	int $3
 
+	.section .finihead,"ax",@progbits
+
 	.global exit
 
 exit:
-#ifndef __IA16_CALLCVT_REGPARMCALL
-	push %bp
-	mov %sp,%bp
-#else
+#ifdef __IA16_CALLCVT_REGPARMCALL
 	xchg %ax,%di
-#endif
-#ifdef __IA16_CMODEL_IS_FAR_TEXT
-	mov $_cleanup,%si
-	mov (%si),%bx
-	or 2(%si),%bx
-	jz _exit_end
-	lcallw *(%si)
-#else
-	mov _cleanup,%bx
-	or %bx,%bx
-	jz _exit_end
-	call *%bx
 #endif
 
-_exit_end:
-#ifndef __IA16_CALLCVT_REGPARMCALL
-	push 4+FAR_ADJ_(%bp)  // exit code
-#else
+// ...Code fragments from .fini & .fini.* sections will go here...
+
+	.section .finitail,"ax",@progbits
+
+#ifdef __IA16_CALLCVT_REGPARMCALL
 	xchg %ax,%di
 #endif
-	CALL_(_exit)  // kernel one - no return
-	int $3
+	JMP_(_exit)  // kernel one - no return
 
 	.data
 
 	.extern environ
 	.extern _program_filename
-	.extern _cleanup
 
 // Zero data for null pointers (near & far)
 // Will be linked as first section in data segment
