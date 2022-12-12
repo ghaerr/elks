@@ -979,7 +979,8 @@ int main(int argc, char **argv)
 	      case 'q': verbose=0; break;
       }
    }
-   else if (isdigit(argv[ar][0])) mansect = argv[ar];
+   else if (isdigit(argv[ar][0]) 
+		&& !argv[ar][1]) mansect = argv[ar]; /* man page names may start with a number */
    else if (manname == 0)         manname = argv[ar];
    else if (mansect == 0) {
       mansect = manname;
