@@ -1,0 +1,197 @@
+.TH 3C 4
+.SH NAME
+3c0 \- Driver for the 3COM 3C509 ISA Ethernet controller
+.SH SYNOPSIS
+.nf
+3c509
+	/bootopts: 3c0=12,0x320,,0x80
+	/dev/3c0 - major: 9 minor: 2
+.fi
+.SH DESCRIPTION
+The \fB3c0\fP 
+device refers to the ELKS driver for the 3Com 3C509 10Mbps 
+Ethernet interface (aka NIC) running
+on the PC ISA 8 or 16 bit bus. The 
+\fB3C509\fP
+is a 16 bit interface but may also be used in systems with 
+the original PC/XT 8 bit ISA bus. However, this functionality is currently not implemented in 
+the ELKS driver.
+.PP
+The 
+.B 3C509
+is a plug-and-play 
+.I (PnP)
+interface which means that the configuration specified at boot time does not have to match the
+internal settings in the NIC. This driver makes limited use of this
+opportunity - see the CONFIGURATION section below.
+.PP
+The 
+.B 3C509B
+which is the most common variant,
+has a fixed 8K byte internal packet buffer shared by transmit and receive. The earlier model 
+(without the B) has 4k bytes of buffer RAM. Since the buffer is accessed as a FIFO, there is 
+no configuration needed and the driver supports whatever buffer the NIC has.
+.PP
+When hit by heavy incoming traffic, the NIC will experience buffer overruns and the driver will 
+emit frequent error messages to that effect if the verbose flag is set (see below). 
+Packets will be discarded, but in 
+most cases TCP will recover and continue.
+.SH CONFIGURATION
+The default configuration for the interface is set in the
+.I ports.h 
+file in the ELKS source tree, see the FILES section below. These settings may conveniently
+be overridden at boot-time via the
+.I /bootopts
+file using the syntax shown in the SYNOPSIS section above.
+.PP
+The first parameter is the IRQ (decimal), 
+the second is the base I/O port address (in hexadecimal), the third is always omitted for this 
+interface and the fourth is the 
+\fIflag\fP
+field described below. Any of the parameters may be omitted but the commas must be kept, in which 
+case the defaults from
+.I ports.h
+will be used.
+.PP
+Because of its plug-and-play capability, the
+.B 3C509
+will use the configuration specified by ELKS regardless of the internal settings in the interface.
+Those
+settings will be reported for informational purposes in the boot message if verbose mode is set, 
+see below.
+.SH FLAGS
+The 
+.I flags 
+part of the configuration line enables/disables various interface and driver parmeters at boot time.
+These parameters vary from one interface type/vendor to the next, so make sure to 
+look at the correct man page to get correct information.
+.PP
+The defaults are:
+.nf
+	Bus width:	16 bit only
+	Buffer size:	8k
+	Verbose msgs:	Off
+	Network connection: BNC or TP (autoswitching)
+.fi
+.PP
+As distributed, the settings in the 
+.I /bootopts
+file set the verbose flag (0x80) in the flags field to aid debugging.
+.PP
+.nf
+	NAME		VALUE	FUNCTION
+	ETHF_USE_AUI	0x40	Use the AUI network connection
+	ETHF_VERBOSE    0x80    Turn on console error messages
+.fi
+
+.SH TROUBLESHOOTING
+When the \fB3c0\fP
+interface has been configured into the running kernel via
+\fImenuconfig\fP,
+a boot message will indicate whether the configuration works or not. The following 
+message indicates success:
+.PP
+.nf
+eth: 3c0 at 0x300, irq 15, (3c509) MAC 00:a0:24:67:7f:b1 (HWconf: 330/9), flags 0x80
+.fi
+.PP
+The interface was found at the specified I/O address, the displayed MAC (Ethernet) address 
+was found and set. The HWconf values are the default settings in the NIC itself, as
+discussed above.
+.PP
+The interrupt line (IRQ) is reported but not tested or activated at this point. If the interface does 
+not seem to work, the IRQ may be wrong.  
+also, be aware that using the AUI connection requires a special setting in the flags field.
+.PP
+If the interface is reported as 'not found' it is likely that the I/O address is wrong. 
+.PP
+.nf
+eth: 3c0 at 0x300, irq 15 not found
+.fi
+.PP
+Since the NIC has PnP capability, the provided IRQ value will always be used. If this does not work,
+the reason is most likely a collission: The IRQ is already assigned to an ISA interface.
+.PP
+If the interface seems to work but emit error messages while transferring data, make sure you set 
+the
+.I verbose
+flag in the 
+.I /bootopts 
+configuration to get as much detail as possible. Refer to the FLAGS and ERROR MESSAGES sections
+for details.
+.SH DIAGNOSTICS
+The driver will emit the following error messages, some of them only if the verbose flag has been set.
+.PP
+.nf
+\fIel3: no available ID port found\fR
+.fi
+A working PnP port could not be located and the interface cannot be configured. This should not
+happen and may indicate either a bus level hardware problem or a NIC malfunction. It is 
+also possible there is a 'PnP collission' with some nother interface, in particular a SoundBlaster card.
+To diagnose, remove other cards and try again.
+.PP
+.nf
+\fI3c0: Rcv oflow (0x%x), keep %d\fR
+.fi
+The interface was unable to handle the amount of incoming traffic and had to discard packets.
+Since incoming packets are transferred directly from the interface buffer to user space,
+with no buffering by the operating system, this may happen frequently when under heavy load.
+The first number is a status code from the interface, the second is not used for this 
+type of interface and is always 0.
+.PP
+.nf
+\fI3c0: TX-error, status 0x%x\fR
+.fi
+A link level error happened during transmit. This may 
+indicate a physical problem with the network. In rare cases it may be an indication that
+the network is really busy. Remember that these interfaces are 10Mbps, more often than 
+not connected to a switch carrying Fast Ethernet or Gigabit Ethernet traffic. The broadcast
+traffic on such segments may have bursts that the old interfaces have a hard time keeping up with.
+This message is informational.
+.PP
+.nf
+\fIne0: RX-error, status 0x%x\fR
+.fi
+A link level error happened during receive and the packet was discarded.
+This message is informational and will be suppressed if the verbose flag is off.
+.PP
+.nf
+\fI3c0: NIC under-/overrun, status 0x%x\fR
+.fi
+This message indicates and unspecified transmit or receive error which in most 
+cases mean a NIC failure, possibly overheating. An extremely rare situation which will 
+most definitely be of interest to the developers.
+.PP
+.nf
+\fIeth: Infinite loop in interrupt, status %4.4x.\fR
+.fi
+Another very rare occurence, most likely indicating a driver error. If this happens, the NIC will
+be shut down and needs to be restarted either by a
+.I net stop; net start
+command sequence or by rebooting the system.
+.PP
+.nf
+\fI3c509: Error in read (%04x), buffer cleared\fR
+.fi
+Reading data from the NIC FIFO failed and the entire read buffer was cleared. If this problem
+persists, the NIC has severe hardware problems.
+
+.SH IOCTLs
+The driver supports the following IOCTL calls:
+.PP
+.nf
+	NAME		     PARAMETER		PURPOSE
+	IOCTL_ETH_ADDR_GET   char[6]		Get MAC address
+	IOCTL_ETH_GETSTAT    struct netif_stat	Get stats from device
+.fi
+.SH BUGS
+The AUI setting is untested. Also, the driver has not been tested with the older (4K buffer) interface.
+.SH FILES
+/dev/3c0, /bootopts, /etc/net.cfg, elks/include/arch/ports.h
+.SH "SEE ALSO"
+.BR ktcp (8),
+.BR wd0 (4),
+.BR ne0 (4),
+.BR net (1).
+.SH AUTHOR
+Helge Skrivervik, helge@skrivervik.com
