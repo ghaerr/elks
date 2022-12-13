@@ -10,8 +10,8 @@ char *strcpy(char*, const char*);
 char *strcat(char * dest, const char * src);
 int strcmp(const char *s1, const char *s2);
 
-char * strncpy(char*, char*, size_t);
-char * strncat(char*, char*, size_t);
+char * strncpy(char*, const char*, size_t);
+char * strncat(char*, const char*, size_t);
 int strncmp(const char * s1, const char * s2, size_t n);
 
 char * strstr(const char *, const char *);
@@ -22,11 +22,11 @@ char * strdup(const char*);
 
 /* Basic mem functions */
 void * memcpy(void * dest, const void * src, size_t n);
-void * memccpy(void*, void*, int, size_t);
+void * memccpy(void*, const void*, int, size_t);
 void * memchr(const void*, const int, size_t);
 void * memset(void*, int, size_t);
 int memcmp(const void*, const void*, size_t);
-void * memmove(void*, void*, size_t);
+void * memmove(void*, const void*, size_t);
 
 void __far *fmemset(void __far *buf, int c, size_t l);
 
@@ -46,9 +46,9 @@ int strcasecmp(const char *s1, const char *s2);
 int strncasecmp(const char *s1, const char *s2, size_t n);
 char *strtok(char * str, const char * delim);
 char *strpbrk(const char *, const char *);
-char *strsep(char **, char *);
+char *strsep(char **, const char *);
 
-size_t strcspn(char *, char *);
+size_t strcspn(const char *, const char *);
 size_t strspn(const char *, const char *);
 
 /* Linux silly hour */

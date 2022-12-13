@@ -1,8 +1,9 @@
 #include <string.h>
 
-char * strncpy (char * d, char * s, size_t l)
+char * strncpy (char * d, const char * s, size_t l)
 {
-   register char *s1=d, *s2=s;
+   char *s1=d;
+   const char *s2=s;
    while(l > 0)
    {
       l--;

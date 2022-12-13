@@ -10,7 +10,7 @@
  */
 
 /* return ip address in network byte order of host by reading /etc/hosts file*/
-ipaddr_t in_gethostbyname(char *str)
+ipaddr_t in_gethostbyname(const char *str)
 {
 	char *p, *cp;
 	FILE *fp;

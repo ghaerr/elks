@@ -1,9 +1,10 @@
 #include <string.h>
 
 void *
-memmove(void *d, void *s, size_t l)
+memmove(void *d, const void *s, size_t l)
 {
-   register char *s1=d, *s2=s;
+   char *s1=d;
+   const char *s2=s;
    /* This bit of sneakyness c/o Glibc, it assumes the test is unsigned */
    if( s1-s2 >= l ) return memcpy(d,s,l);
 
