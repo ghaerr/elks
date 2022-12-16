@@ -42,16 +42,21 @@ look at the correct man page to get correct information.
 The defaults are:
 .nf
 	Bus width:	Autodetect
-	Buffer size:	16k
+	Buffer size:	16k (16 bit device)
+			8k  (8 bit device)
 	Verbose msgs:	Off
 .fi
+.PP
 As distributed, the settings in the 
 .I /bootopts
 file set the verbose flag (0x80) in the flags field to aid debugging.
 .PP
+The available flags are:
+.PP
 .nf
 	NAME		VALUE	FUNCTION
-	ETHF_16K_BUF    0x02    Force 16k NIC buffer (default, not required)
+	ETHF_8K_BUF     0x01    Force  8k NIC buffer (default if 8bit device)
+	ETHF_16K_BUF    0x02    Force 16k NIC buffer (default if 16 bit device)
 	ETHF_4K_BUF     0x04    Force  4k NIC buffer
 	ETHF_8BIT_BUS   0x10    Force  8 bit bus
 	ETHF_16BIT_BUS  0x20    Force 16 bit bus (currently unused)
@@ -99,30 +104,37 @@ and the
 .B ne2k
 is the bus width. The former supports the original PC/XT ISA 8 bit bus, the latter 
 uses the PC/AT 16 bit ISA bus. Less obvious is the difference
-in buffer space on the interface itself. While the 16 bit card has 16k 
+in buffer space on the interface itself.
+.PP
+While both types of NIC have 16k
 bytes of on board buffer for packet data, the 
 .B ne1k
-has only 4k. This severely affects performance and reliability when running under ELKS. 
-Some recent versions
-of the 
+may use only 8k for technical resons (some really old versions of the
 .B ne1k
-actually has 16k of buffer space available, and the driver is by default set up to use the entire buffer.
-This improves speed of file transfers but decreases reliability and will cause 
-many errors reported on the console. The reliability issue is taken care of by TCP retransmits, 
-so the overall experience is still better with 16k buffer size.
+may actually have only 8k bytes of memory).
 .PP
-However, in some rare cases,
-the forced use of 16k buffer on a
-.B ne1k
-interface may cause the system to hang, requiring a power cycle to recover. if this becomes a problem,
-change the configuration flags to force 4k buffer and also change the MTU in
-.I /etc/net.cfg
-to 1000. With these settings the 
-.B ne1k
-is as reliable as the 16 bit version and still reasonably fast.
+Under heavy load the limited buffer space may affect
+performance (cause lost packets) on ELKS, since the OS does not read and buffer packets imediately 
+as they arrive.
+If this turns out to be a problem, it is advisable to reduce the 
+.i mtu=
+setting in 
+.I /etc/net.cnf.
+Values like 1000 and 800 have been found to work well.
+Such buffer overruns will be reported to the console and may be accompanied by 
+TCP retransmission messages if 
+.I ktcp
+TCP debugging is turned on.
 .PP
-Similarly, if a 16 bit interface is used on a system with only 8 bit ISA bus, the force-8-bit flag 
-must be set to make it work. There is not autodetection of the bus width in the driver.
+While the driver chooses optimal values for both interface types, boot-flags are 
+available to force the NICs
+to use other buffer sizes. Such changes are useful for debugging and should be used with care.
+.PP
+The bus width of the NIC is autodetected by the driver. However, the driver will not notice
+if a 16 bit card
+.B (ne2k)
+is used in a machine with only 8 bit bus width. In such casaes, use the ETHF_8BIT_BUS flag (see 
+the FLAGS section above) to force the driver to use the correct bus width.
 .SH DIAGNOSTICS
 The driver will emit the following error messages, some of them only if the verbose flag has been set.
 .PP
