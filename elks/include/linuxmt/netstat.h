@@ -45,13 +45,13 @@ struct netif_stat {
 /* Config flags for WD */
 /* The first 3 make a number - for coding simplicity (a power of two),
  * the rest are regular flag bits */
-#define ETHF_8K_BUF	0x01	/* Force 8K NIC (default on SMC/WD memory mapped NICs) */
+#define ETHF_8K_BUF	0x01	/* Force  8K NIC (default on SMC/WD memory mapped NICs) */
 #define ETHF_16K_BUF	0x02	/* Force 16k NIC buffer */
 #define ETHF_32K_BUF	0x03	/* Force 32k NIC buffer */
-#define ETHF_4K_BUF	0x04	/* Force 32k NIC buffer */
-#define ETHF_8BIT_BUS	0x10	/* Force 8 bit */
-#define ETHF_16BIT_BUS 	0x20	/* Force 16 bit */
-#define ETHF_USE_AUI	0x40	/* Use AUI interface */
+#define ETHF_4K_BUF	0x04	/* Force  4k NIC buffer */
+#define ETHF_8BIT_BUS	0x10	/* Force  8 bit bus */
+#define ETHF_16BIT_BUS 	0x20	/* Force 16 bit bus */
+#define ETHF_USE_AUI	0x40	/* Use AUI connection */
 #define ETHF_VERBOSE	0x80U	/* turn on verbose console error messages */
 
 #endif
