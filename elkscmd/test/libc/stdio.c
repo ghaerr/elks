@@ -1,8 +1,8 @@
-#include <stdio.h>
-#include <string.h>
-#include <sys/time.h>
+#include "testlib.h"
 
-#include "test.h"
+#include <errno.h>
+#include <stdio.h>
+#include <sys/time.h>
 
 TEST_CASE(stdio_init)
 {
@@ -26,23 +26,20 @@ TEST_CASE(stdio_init)
 	const long iter = 2L * 1024;
 	for (long i = 0; i < iter; ++i) {
 		size_t n = fwrite(sector, sizeof(sector), 1, fp);
-		if (n != 1) {
-			perror("fwrite");
-			tests_fail++;
-			break;
-		}
+		ASSERT_SYS(n, 1, errno);
 	}
 
 	gettimeofday(&end, NULL);
-	timeval_sub(&end, &start, &diff);
+	testlib_tvSub(&end, &start, &diff);
 
 	long bytes = sizeof(sector) * iter;
 	struct timeval per;
 	per.tv_sec = diff.tv_sec / bytes;
 	per.tv_usec = diff.tv_sec % bytes * 1000000L + diff.tv_usec / bytes;
-	timeval_norm(&per);
+	testlib_tvNormalize(&per);
 
-	TEST_INFO("fwrite: %ld bytes, %ld usec\n", bytes, diff.tv_sec * 1000000L + diff.tv_usec);
+	TEST_INFO("fwrite: %ld bytes, %ld usec\n", bytes,
+		diff.tv_sec * 1000000L + diff.tv_usec);
 
 	fclose(fp);
 }
