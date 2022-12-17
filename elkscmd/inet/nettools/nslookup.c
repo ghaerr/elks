@@ -28,6 +28,7 @@ int main(int ac, char **av)
 		msgstr(av[1]);
 		msg(" is ");
 		msgstr(in_ntoa(result));
+		msg("\n");
 	} else perror(av[1]);
 	return (result == 0);
 }

@@ -11,17 +11,17 @@ Append to the files, rather than overwriting
 .TP 5
 .B \-i
 Ignore interrupts
-.SH EXAMPLES
-.TP 20
-.B cat file1 file2 | tee x
-# Save and display two files
-.TP 20
-.B pr file | tee x | lp
-# Save the output of \fIpr\fP on \fIx\fP
 .SH DESCRIPTION
 .PP
 .I Tee
-copies \fIstdin\fR to standard output.
-It also makes copies on all the files listed as arguments.
+copies \fIstdin\fR to to each file listed on the command line, and also to standard output.
+.SH EXAMPLES
+.TP 20
+.B cat file1 file2 | tee x
+# Display two files and also save output to file
+.IR x .
+.TP 20
+.B pr file | tee x | lp
+# Save the output of \fIpr\fP on \fIx\fP
 .SH "SEE ALSO"
 .BR cat (1).

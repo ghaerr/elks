@@ -1,0 +1,120 @@
+.TH BOOTOPTS 5
+.SH NAME
+bootopts \- ELKS boot time configuration file
+.SH SYNOPSIS
+.B /bootopts
+.SH DESCRIPTION
+When ELKS boots, the  partition boot-loader searches for 
+.I /linux 
+on the root filesystem and loads it. It also searches for the file 
+.B /bootopts,
+which contains boot options - configuration settings affecting how ELKS starts and runs. 
+.PP
+A variety of configuration parameters can be set in the /bootopts file, many of which would
+normally require a recompilation of the kernel.
+many of which would
+normally require a recompilation of the kernelwithout requiring kernel recompilation.
+Very useful for debugging and quick configuration changes.
+.PP
+.B bootopts
+allows e.g. setting the console to be serial (or any other device, such as virtual Alt2 /dev/tty2), 
+root mount device (FAT and Minix), read-only/read-write, alternative startup process & args, 
+init run level, network start, and set environment variables for the initial startup process, 
+such as a shell or shell script. 
+Note: if the kernel is compiled with serial console ON, `console=` redirection will have no effect.
+.PP
+ELKS boot options are specified in a Linux 2.0-style format where newlines are optional
+except when it comes to comments: Anything following a hash until the next newline 
+is a comment and ignored. Note however that the 
+.B bootopts
+file may not exceed 511 bytes in length - including comments.
+Also note that the file MUST start with 2 hash characters for validation.
+.PP
+Here's an expanded version of the distribution (default)
+.B /bootopts
+file, with everything commented out:
+.PP
+.nf
+##      
+#console=ttyS0,57600 root=fd0 net=ne0 3 # condensed
+#TZ=MDT7            # timezone
+#QEMU=1             # to use ftp/ftpd in qemu
+#init=/bin/init 3   # multiuser serial
+#init=/bin/sh       # singleuser shell
+#LOCALIP=10.0.2.16
+#HOSTNAME=elks16
+#comirq=,,10,7      # IRQ-settings for COM1-4
+#ne0=9,0x300,,0x80
+#wd0=3,0x280,0xD000,0x80
+#3c0=9,0x330,,0x80
+#bufs=2500          # number of kernel buffers (XMS max 2500, EXT max 256)
+#sync=30            # seconds per auto-sync
+#console=ttyS0,19200 # serial console
+#console=tty2       # alt2 console
+#root=hda1          # First HD, partition 1
+#ro                 # read-only root
+#net=slip
+.fi
+.PP
+Devices can be specified by /dev/ prefix or without, the latter is preferable to save space.
+.PP
+Of particular importance is the
+.I init=
+option which tells the kernel which program to start after initalization. The default is
+.I /bin/init
+which initiates a regular multiuser, multiprocess setting. However, any ELKS program can 
+be specified which opens up vast possibilitied for both debugging and special purposes (IoT).
+In particular, specifying
+.B /bin/sash
+as the 'init-program' provides a very compact environment to development and debugging, which with a 
+compact kernel build may run fine in 256k RAM.
+.PP
+Non-reserved options without '=' inside them are treated as arguments to 
+.I /bin/init or 
+the 'init='-program, while options with '=' are passed as environment variables to that process.
+.PP
+Here are more examples, hopefully self-explanatory:
+.PP
+.nf
+init=/bin/init 3 or just 3
+init=/bin/sh HOME=/ TERM=ansi
+console=ttyS0, console=/dev/tty2, etc
+console=ttyS0,38400
+console=tty1
+root=fd1, root=/dev/fd1, root=hda[1-4], hdb[1-4], hdc[1-4]
+net=eth, net=slip, net=cslip  starts predefined network configurations
+ro, rw		The root filesystem may be mounted rw or read only
+comirq=,7            sets non-standard IRQ (7) on COM2
+.fi
+.PP
+To edit and adapt
+.B bootopts,
+either edit the file 
+.I elkscmd/rootfs_template/bootopts and run "make" to create another image on the development host, 
+or edit 
+.B /bootopts
+on a  running ELKS system and reboot. Note that 
+.B bootopts
+is read only once - any change requires a reboot to have effect.
+Also not that the device configuration parameters such as 
+.I comirq=
+and
+.I wd0=,
+may have empty fields (in which case the defaults form the kernel configuration will be used) but
+the commas may not be omitted.
+.SH FILES
+.nf
+/bin/init
+/bootopts	System configuration file
+.fi
+.SH BUGS
+Not all man pages referenced in the SEE ALSO section below exit yet.
+.PP
+.B bootopts
+and the boot-loader that uses it have severe space contraints and can never be really user friendly.
+.SH "SEE ALSO"
+.BR net.cnf (5),
+.BR setup (8),
+.BR tty (4),
+.BR mount.cnf (5),
+.BR init (8).
