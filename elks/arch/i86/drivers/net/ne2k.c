@@ -78,14 +78,16 @@ static size_t ne2k_read(struct inode *inode, struct file *filp, char *data, size
 		size = ne2k_pack_get(data, len, nhdr);
 
 		//printk("r%04x|%04x/",nhdr[0], nhdr[1]);	// NIC buffer header
-		debug_eth("eth read: req %d, got %d real %d\n", len, size, nhdr[1]);
+		debug_eth("ne0: read: req %d, got %d real %d\n", len, size, nhdr[1]);
 
 		//if ((nhdr[1] > size) || (nhdr[0] == 0)) {
 		if ((nhdr[0]&~0x7f21) || (nhdr[0] == 0)) {	//EXPERIMENTAL: Upper byte = block #, max 7f
 
 			/* Sanity check, should not happen.
+			 * If this happens, we're reading garbage from the NIC, all pointers
+			 * may be invalid, clear device and buffers.
 			 *	
-			 * Most likely: We have a 8 bit interface running with 16k buffer enabled.
+			 * Likely reason: We have a 8 bit interface running with 16k buffer enabled.
 			 * 
 			 * May want to add more tests for nhdr[0]:
 			 * 	Low byte should be 1 or 21	(receive status reg)
@@ -94,13 +96,16 @@ static size_t ne2k_read(struct inode *inode, struct file *filp, char *data, size
 			 */
 
 			netif_stat.rq_errors++;
+			printk("$%04x.%02x$", ne2k_getpage(), _ne2k_next_pk&0xff);
 			if (verbose) printk(EMSG_DMGPKT, dev_name, nhdr[0], nhdr[1]);
 
+#if 0
 			if (nhdr[0] == 0) { 	// When this happens, the NIC has serious trouble,
 						// need to reset as if we had a buffer overflow.
 				res = ne2k_clr_oflow(0); 
 				//printk("<%04x>", res);
 			} else
+#endif
 				ne2k_rx_init();	// Resets the ring buffer pointers to initial values,
 						// effectively purging the buffer.
 			res = -EIO;
@@ -202,6 +207,7 @@ static void ne2k_int(int irq, struct pt_regs *regs)
 		page = ne2k_getpage();
 		printk("$%04x.%02x$", page,_ne2k_next_pk&0xff);
 #endif
+		//printk("&%02x&", _ne2k_next_pk&0xff);
 
         	if (stat & NE2K_STAT_OF) {
 			netif_stat.oflow_errors++;
@@ -216,9 +222,9 @@ static void ne2k_int(int irq, struct pt_regs *regs)
 		}
 
 		if (stat & NE2K_STAT_RX) {
-			outb(NE2K_STAT_RX, net_port + EN0_ISR); // Clear intr bit
 			_ne2k_has_data = 1; 	// data available
 			wake_up(&rxwait);
+			outb(NE2K_STAT_RX, net_port + EN0_ISR); // Clear intr bit
 		}
 
 		if (stat & NE2K_STAT_TX) {
@@ -233,7 +239,7 @@ static void ne2k_int(int irq, struct pt_regs *regs)
 
 		/* These don't happen very often */
 		if (stat & NE2K_STAT_RDC) {
-			//printk("eth: Warning - RDC intr. (0x%02x)\n", stat);
+			//printk("ne0: Warning - RDC intr. (0x%02x)\n", stat);
 			/* RDC interrupts should be masked in the low level driver.
 		 	 * The dma_read, dma_write routines will fail if the RDC intr
 			 * bit is cleared elsewhere.
@@ -259,7 +265,7 @@ static void ne2k_int(int irq, struct pt_regs *regs)
 		 * running in 8 bit mode */
 		if (stat & NE2K_STAT_RXE) { 	
 			/* Receive error detected, may happen when traffic is heavy */
-			/* The 8 bit interface gets lots of these */
+			/* The 8 bit interface gets lots of these, all CRC, packet dropped */
 			/* Don't do anything, just count, report & clr */
 			netif_stat.rx_errors++;
 			if (verbose) printk(EMSG_RXERR, dev_name, inb(net_port + EN0_RSR));
@@ -294,7 +300,7 @@ static int ne2k_ioctl(struct inode *inode, struct file *file, unsigned int cmd, 
 			if ((err = verified_memcpy_fromfs(mac_addr, (byte_t *) arg, 6)) != 0)
 				break;
 			ne2k_addr_set(mac_addr);
-			printk("eth: MAC address changed to %02x", mac_addr[0]);
+			printk("ne0: MAC address changed to %02x", mac_addr[0]);
 			for (i = 1; i < 6; i++) printk(":%02x", mac_addr[i]);
 			printk("\n");
 			break;
@@ -393,7 +399,7 @@ void ne2k_drv_init(void)
 				 */
 	byte_t *cprom, *mac_addr;
 
-	netif_stat.oflow_keep = 1;	/* Default - keep one packet if overflow.
+	netif_stat.oflow_keep = 2;	/* Default - keep one packet if overflow.
 					 * Do not set to 0 - it will cause the NIC to 
 					 * (eventually) hang. 	*/
 	mac_addr = (byte_t *)&netif_stat.mac_addr;
@@ -434,7 +440,7 @@ void ne2k_drv_init(void)
 		for (i = 0; i < 12; i += 2) k += cprom[i];	/* QEMU check */
 
 		if (j && (j!=k)) {	
-			_ne2k_is_8bit = 1;
+			_ne2k_is_8bit = 0x80;
 			model_name[2] = '1';
 			netif_stat.if_status |= NETIF_AUTO_8BIT; 
 		} else {
@@ -454,15 +460,17 @@ void ne2k_drv_init(void)
 		if (net_flags&ETHF_8BIT_BUS) {
 			/* flag that we're forcing 8 bit bus on 16 NIC */
 			if (!_ne2k_is_8bit) printk(" (8bit)");
-			_ne2k_is_8bit = 1; 	/* Forced 8bit */
+			_ne2k_is_8bit = 0x80; 	/* Forced 8bit */
 		}
+		if (!_ne2k_is_8bit)
+			netif_stat.oflow_keep = 3;	// Experimental: use 3 if 16k buffer
 		if (netif_stat.if_status & NETIF_IS_QEMU) 
 			printk(" (QEMU)");
-		if (net_flags&ETHF_4K_BUF) {
-			_ne2k_is_8bit |= 2;		/* asm code uses this */
-			printk(" (4k buffer)");
-		} else
-			netif_stat.oflow_keep = 3;	// Experimental: use 3 if 16k buffer
+		if (net_flags&(ETHF_4K_BUF|ETHF_8K_BUF|ETHF_16K_BUF)) {
+			/* a flag to force the buffer size is set	*/
+			_ne2k_is_8bit |= net_flags&0xf;		/* asm code uses this */
+			printk(" (%dk buffer)", 4<<(net_flags&0x3));
+		}
 		printk(", flags 0x%x\n", net_flags);
 
 #if DEBUG_ETH

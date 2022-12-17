@@ -10,8 +10,7 @@
 // Updated by Santiago Hormazabal on Dec 2021:
 //  . 8 bit access if CONFIG_ETH_BYTE_ACCESS is set, using a ne1k patch from
 //    NCommander.
-// apr-2022 (HS) : Support auto detection of 8bit mode, set 4k or 16k buffer size when in 8bit mode
-//	     depending on configuration, 16k is the default, 4k is 'per spec'.
+// apr-2022 (HS) : Support auto detection of 8bit mode, set 8k buffer size when in 8bit mode.
 //	     Rewrote overflow handler, added direct access to many registers from C code
 //	     Cleaned up initialization code, optimized 8bit I/O
 //
@@ -22,7 +21,7 @@
 // 'BOUNDARY' points to the next block to be read from the NIC
 // The two must not be equal. If the ring buffer is empty, BOUNDARY = CURRENT -1
 // So the next block to read is not BOUNDARY but BOUNDARY + 1. Easy - except at
-// the wrap-around point: BOUNDARY may be 80 or 50, while the next block to read is 46.
+// the wrap-around point: BOUNDARY may be 80 (60 if 8bit), while the next block to read is 46.
 // For simplicity (to avoid the ring wraparound logic on every read)
 // the driver uses a variable to hold the next block to read - _ne2k_next_pk.
 // For debugging, this variable is also available to the C part of the driver.
@@ -79,7 +78,7 @@ io_ne2k_reset      = 0x1F	// Really a port, not a register, force HW reset of th
 tx_first           = 0x40
 rx_first           = 0x46
 rx_last_16	   = 0x80
-rx_last_8	   = 0x50	// For 4k in 8 bit mode - per spec. 
+rx_last_8	   = 0x60	// For 8k in 8 bit mode - per spec. 
 
 //-----------------------------------------------------------------------------
 	.data
@@ -99,7 +98,7 @@ _ne2k_is_8bit:
 	.word 0
 
 _ne2k_rx_last:
-	.byte rx_last_16	// default to the 16 bit value
+	.byte rx_last_16	// default to 16K
 
 	.text
 
@@ -210,7 +209,7 @@ dma_write:
 	mov	current,%bx		// setup for far memory xfer
 	mov	TASK_USER_DS(%bx),%ds
 	cld
-	test	$1,%ax		// checking _ne2k_is_8bit
+	test	$0x80,%ax		// checking _ne2k_is_8bit
 	jz	wr_loop_w
 
 	// Byte loop
@@ -287,7 +286,7 @@ buf_local:
 	//mov	net_port,%dx
 	add	$io_ne2k_data_io,%dx
 	cld			// clear direction flag
-	testw	$1,_ne2k_is_8bit
+	testw	$0x80,_ne2k_is_8bit
 	jz	word_loop0
 
 byte_loop:
@@ -662,7 +661,7 @@ ne2k_base_init:
 	//mov	net_port,%dx
 	add	$io_ne2k_data_conf,%dx
 	mov     $0x49,%al	// set word access
-	testw	$1,_ne2k_is_8bit
+	testw	$0x80,_ne2k_is_8bit
 	jz	1f
 	dec     %al	// if in 8bit mode, 
 			// set byte access, data_conf reg = 0x48
@@ -683,6 +682,7 @@ ne2k_base_init:
 //-----------------------------------------------------------------------------
 // NE2K initialization
 // Called from device open
+// Uses AX, DX only
 //-----------------------------------------------------------------------------
 
 	.global ne2k_init
@@ -703,25 +703,43 @@ ne2k_init:
 
 	mov	net_port,%dx
 	add	$io_ne2k_tx_conf,%dx
-	mov     $2,%al  // 2 for loopback
+	mov     $2,%al		// 2 for loopback
 	out     %al,%dx
 
 	// set RX ring limits - 16KB on-chip memory
-	// except one TX frame at beginning (6 x 256B).
-	// If bit 1 (0x2) in _ne2k_is_8bit is set, use only 4k
-	// buffer.
+	// less one TX frame at the beginning (6 x 256B).
+	// The defaults are 16k if 16 bit NIC, 8k if 8bit NIC.
+	// Flags may force other sizes (up to 32k), no 
+	//  sanity checking is done. See flags in netstat.h
 
 	mov	net_port,%dx
 	add	$io_ne2k_rx_first,%dx
 	mov     $rx_first,%al	// start of ring, usually 0x46
 	out     %al,%dx
 
-	// set page at which the ring buffer ends,
-	// defaults to the 16 bit value (0x80) 
-	movb	$rx_last_16,%al
-	testw	$2,_ne2k_is_8bit
+	// set ending page for the ring buffer,
+	// check for forced buffer size
+	movw	_ne2k_is_8bit,%ax
+	and	$0x7,%al
+	jz	2f
+	movb	$0x10,%ah	// 4k minimum
+	push	%cx		// FIXME: Is this required??
+	and	$3,%al		// remove the 4k bit (0x04)
+	mov	%al,%cl
+	shl	%cl,%ah		// %AL is the block number to add to 
+				// the buffer start address (usually 0x40)
+				// becoming the PSTOP value
+	add	$tx_first,%ah	// NOTE: tx_first is where the buffer starts,
+				// we don't want rx_first here.
+	pop	%cx
+	mov	%ah,%al
+	jmp	1f
+
+	// The normal case, use defaults
+2:	movb	$rx_last_16,%al
+	testw	$0x80,_ne2k_is_8bit
 	jz	1f
-	movb	$rx_last_8,%al	// Force 4K buffer restriction
+	movb	$rx_last_8,%al	// It's an 8 bit NIC, use 8K buffer
 1:	movb	%al,_ne2k_rx_last
 
 	mov	net_port,%dx
@@ -750,7 +768,7 @@ ne2k_init:
 	mov     $0x1f,%al	// 0x53 = RDC, Overflow, RX, TX 
 				// 0x13 = Overflow, RX, TX
 				// 0x1F = Overflow, TXE, RXE, RX, TX
-	testw	$1,_ne2k_is_8bit
+	testw	$0x80,_ne2k_is_8bit
 	jnz	1f
 	and	$0xfb,%al	// RXE is useful (mostly) if 8bit interface, clear
 				// it if 16bit.
@@ -1074,7 +1092,13 @@ of_drop_packets:
 	mov	_ne2k_next_pk,%ah	// The 'real' BOUNDARY ptr
 	and	$0x7,%bx		// limit the drop count and check for ZERO
 	jnz	of_drop_loop1
-	call	ne2k_rx_init		// purge everything
+
+	//call	ne2k_rx_init		// purge everything
+	// EXPERIMENTAL - reset the NIC completely
+	// Need more testing to see if this is useful
+	call	ne2k_reset		// THE HARD WAY
+	call	ne2k_init
+	call	ne2k_start		// enable transmitter
 	jmp	of_drop_ok		// ... and exit
 
 of_drop_loop1:
@@ -1138,9 +1162,8 @@ of_drop_2:
 #endif
 
 of_drop_ok:
-	// check if the ring buffer is empty
-	// may seem moot, but the 8bit interface cannot hold more than 1 full size packet
-	// in the buffer, removing the only packet will leave the buffer effectively empty
+	// insurance: check if the ring buffer is empty.
+	// we may have removed all packets in the buffer (if 4k buffer)
 	call	ne2k_getpage
 	push	%ax			// save for return
 	cmp	_ne2k_next_pk,%ah
