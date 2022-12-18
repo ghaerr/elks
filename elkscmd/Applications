@@ -111,6 +111,7 @@ sh_utils/tr						:shutil				:720k
 #sh_utils/whoami				:shutil					:1200k	:1440k
 sh_utils/xargs					:shutil					:1200k	:1440k
 sh_utils/yes					:shutil				:720k
+test/libc/test_libc				:shutil						:other
 misc_utils/float				:miscutil						:1440k
 misc_utils/compress				:miscutil						:1440k
 misc_utils/miniterm				:miscutil			:720k
