@@ -1,14 +1,15 @@
 #ifndef __LINUXMT_NETSTAT_H
 #define __LINUXMT_NETSTAT_H
 
-#include <linuxmt/types.h>
-
 #define MAX_ETHS	3	/* max NICs */
 
 /* Enumeration for the netif_parms array */
 #define ETH_NE2K	0
 #define ETH_WD		1
 #define ETH_EL3		2
+
+#ifndef __ASSEMBLER__
+#include <linuxmt/types.h>
 
 /* /bootopts parms for each NIC */
 struct netif_parms {
@@ -17,7 +18,8 @@ struct netif_parms {
 	unsigned int ram;
 	unsigned int flags;
 };
-// Should put this into the eths struct 
+
+/* Should put this into the eths struct */
 extern struct netif_parms netif_parms[MAX_ETHS];
 
 struct eth {
@@ -36,13 +38,15 @@ struct netif_stat {
 	char  mac_addr[6];	/* Current MAC address */
 };
 
+#endif	/* __ASSEMBLER__ */
+
 /* status flags for if_status */
 /* The lower nibble has the autodetected buffer memory size,
  * 1=4k, 2=8k, 3=16k etc. */
 #define	NETIF_AUTO_8BIT	0x10	
 #define NETIF_IS_QEMU	0x20
 
-/* Config flags for WD */
+/* Config flags for 8390 based NICs */
 /* The first 3 make a number - for coding simplicity (a power of two),
  * the rest are regular flag bits */
 #define ETHF_8K_BUF	0x01	/* Force  8K NIC (default on SMC/WD memory mapped NICs) */

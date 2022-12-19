@@ -26,13 +26,6 @@
 #define EN0_DCFG	0x0eU	/* Data configuration reg WR */
 #define EN0_IMR		0x0fU	/* Interrupt mask reg WR */
 
-/* Configuration flags */
-#define NE2KF_4K_BUF	0x01	/* Force 4k buffer */
-#define NE2KF_16K_BUF	0x02	/* Force 16k buffer */
-#define NE2KF_8BIT_BUS	0x04	/* Force 8bit mode */
-#define NE2KF_16BIT_BUS	0x08	/* Force 16bit mode */
-#define NE2KF_VERBOSE	0x80U	/* Activate verbose mode */
-
 /* From low level NE2K MAC */
 
 extern word_t ne2k_int_stat();
