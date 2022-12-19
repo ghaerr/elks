@@ -43,9 +43,9 @@ static struct netif_stat netif_stat;
 static byte_t model_name[] = "ne2k";
 static byte_t dev_name[] = "ne0";
 
-extern int _ne2k_next_pk;
-extern word_t _ne2k_is_8bit;	// FIXME: Change to byte_t !!
-extern word_t _ne2k_has_data;
+extern int ne2k_next_pk;
+extern word_t ne2k_flags;
+extern word_t ne2k_has_data;
 extern struct eth eths[];
 
 /*
@@ -62,7 +62,7 @@ static size_t ne2k_read(struct inode *inode, struct file *filp, char *data, size
 
 		//printk("R");
 		prepare_to_wait_interruptible(&rxwait);
-		if (!_ne2k_has_data) {
+		if (!ne2k_has_data) {
 		//if (ne2k_rx_stat() != NE2K_STAT_RX) {
 
 			if (filp->f_flags & O_NONBLOCK) {
@@ -96,7 +96,7 @@ static size_t ne2k_read(struct inode *inode, struct file *filp, char *data, size
 			 */
 
 			netif_stat.rq_errors++;
-			printk("$%04x.%02x$", ne2k_getpage(), _ne2k_next_pk&0xff);
+			printk("$%04x.%02x$", ne2k_getpage(), ne2k_next_pk&0xff);
 			if (verbose) printk(EMSG_DMGPKT, dev_name, nhdr[0], nhdr[1]);
 
 #if 0
@@ -176,7 +176,7 @@ int ne2k_select(struct inode *inode, struct file *filp, int sel_type)
 
 		case SEL_IN:
 			//if (ne2k_rx_stat() != NE2K_STAT_RX) {
-			if (!_ne2k_has_data) {
+			if (!ne2k_has_data) {
 				select_wait(&rxwait);
 				break;
 			}
@@ -199,30 +199,28 @@ static void ne2k_int(int irq, struct pt_regs *regs)
 	word_t stat, page;
 
 	//printk("/");
-	while (1) {	
+	while (1) {
 		stat = ne2k_int_stat();
-		//printk("%x|", stat);
 		if (!stat) break; 	/* If zero, we're done! */
 #if 0	/* debug */
 		page = ne2k_getpage();
-		printk("$%04x.%02x$", page,_ne2k_next_pk&0xff);
+		printk("$%04x.%02x$", page,ne2k_next_pk&0xff);
 #endif
-		//printk("&%02x&", _ne2k_next_pk&0xff);
-
         	if (stat & NE2K_STAT_OF) {
 			netif_stat.oflow_errors++;
 			if (verbose) printk(EMSG_OFLOW, dev_name, stat, netif_stat.oflow_keep);
 			page = ne2k_clr_oflow(netif_stat.oflow_keep); 
 
 			debug_eth("/CB%04x/ ", page);
+			//printk("%04x/ ", page);
 
-			if (_ne2k_has_data)
+			if (ne2k_has_data)
 				wake_up(&rxwait);
-			continue;
+			break; 
 		}
 
 		if (stat & NE2K_STAT_RX) {
-			_ne2k_has_data = 1; 	// data available
+			ne2k_has_data = 1; 	// data available
 			wake_up(&rxwait);
 			outb(NE2K_STAT_RX, net_port + EN0_ISR); // Clear intr bit
 		}
@@ -233,7 +231,7 @@ static void ne2k_int(int irq, struct pt_regs *regs)
 			//ne2k_get_tx_stat();	// clear the TX bit in the ISR 
 			wake_up(&txwait);
 		}
-		debug_eth("%02X/%d/", stat, _ne2k_has_data);
+		debug_eth("%02X/%d/", stat, ne2k_has_data);
 		/* shortcut for speed */
 		if (!(stat&~(NE2K_STAT_TX|NE2K_STAT_RX|NE2K_STAT_OF))) continue;
 
@@ -399,12 +397,12 @@ void ne2k_drv_init(void)
 				 */
 	byte_t *cprom, *mac_addr;
 
-	netif_stat.oflow_keep = 2;	/* Default - keep one packet if overflow.
-					 * Do not set to 0 - it will cause the NIC to 
-					 * (eventually) hang. 	*/
+	netif_stat.oflow_keep = 0;	/* Default - clear buffer if overflow.
+					 * Testing indicates 0 means faster recovery under heavy
+					 * load if buffer < 16k */
 	mac_addr = (byte_t *)&netif_stat.mac_addr;
 
-	net_port = NET_PORT;    // temp kluge for ne2k-asm.S
+	net_port = NET_PORT;    // ne2k-asm.S needs this.
 
 	while (1) {
 		int j, k;
@@ -439,13 +437,15 @@ void ne2k_drv_init(void)
 		for (i = 1; i < 12; i += 2) j += cprom[i];
 		for (i = 0; i < 12; i += 2) k += cprom[i];	/* QEMU check */
 
+		/* ne2k_flags may be used as a simple variable until
+		 * we add in the buffer flags below */
 		if (j && (j!=k)) {	
-			_ne2k_is_8bit = 0x80;
+			ne2k_flags = ETHF_8BIT_BUS;
 			model_name[2] = '1';
 			netif_stat.if_status |= NETIF_AUTO_8BIT; 
 		} else {
 			for (i = 0; i < 16; i++) cprom[i] = (char)prom[i]&0xff;
-			_ne2k_is_8bit = 0;
+			ne2k_flags = 0;
 		}
 		if (j == k && !memcmp(cprom, mac_addr, 5)) netif_stat.if_status |= NETIF_IS_QEMU;
 		//for (i = 0; i < 16; i++) printk("%02x", cprom[i]);
@@ -459,25 +459,26 @@ void ne2k_drv_init(void)
 		while (i < 6) printk(":%02x", mac_addr[i++]);
 		if (net_flags&ETHF_8BIT_BUS) {
 			/* flag that we're forcing 8 bit bus on 16 NIC */
-			if (!_ne2k_is_8bit) printk(" (8bit)");
-			_ne2k_is_8bit = 0x80; 	/* Forced 8bit */
+			if (!ne2k_flags) printk(" (8bit)");
+			ne2k_flags = ETHF_8BIT_BUS; 	/* Forced 8bit */
 		}
-		if (!_ne2k_is_8bit)
+		if (!(ne2k_flags&ETHF_8BIT_BUS))
 			netif_stat.oflow_keep = 3;	// Experimental: use 3 if 16k buffer
 		if (netif_stat.if_status & NETIF_IS_QEMU) 
 			printk(" (QEMU)");
+
+		/* The _BUF flags indicate forced buffer size, ZERO means use defaults */
 		if (net_flags&(ETHF_4K_BUF|ETHF_8K_BUF|ETHF_16K_BUF)) {
-			/* a flag to force the buffer size is set	*/
-			_ne2k_is_8bit |= net_flags&0xf;		/* asm code uses this */
+			ne2k_flags |= net_flags&0xf;		/* asm code uses this */
 			printk(" (%dk buffer)", 4<<(net_flags&0x3));
 		}
-		printk(", flags 0x%x\n", net_flags);
+		printk(", flags 0x%02x\n", net_flags);
 
 #if DEBUG_ETH
 		debug_setcallback(ne2k_display_status);
 #endif
 		break;
 	}
-	_ne2k_has_data = 0;
+	ne2k_has_data = 0;
 	eths[ETH_NE2K].stats = &netif_stat;
 }
