@@ -114,4 +114,8 @@ SECTIONS {
 	.rel.dyn : {
 		*(.rel.*)
 	}
+
+	/DISCARD/ : {
+		*(".discard!*" .discard ".discard&*")
+	}
 }

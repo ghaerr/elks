@@ -3,10 +3,7 @@
 
 #include "_stdio.h"
 
-#ifdef __GNUC__
-__attribute__((destructor(99)))
-#endif
-static void
+__attribute__((destructor(99))) static void
 __stdio_close_all(void)
 {
    FILE *fp;
@@ -22,24 +19,9 @@ __stdio_close_all(void)
    }
 }
 
-#ifdef __GNUC__
-__attribute__((constructor(99)))
-#endif
-void
+__attribute__((constructor(99))) void
 __io_init_vars(void)
 {
-#ifndef __AS386_16__
-#ifndef __AS386_32__
-#ifndef __GNUC__
-   static int first_time = 1;
-   if( !first_time ) return ;
-   first_time = 0;
-#endif
-#endif
-#endif
    if (isatty(1))
       stdout->mode |= _IOLBF;
-#ifndef __GNUC__
-   atexit(__stdio_close_all);
-#endif
 }

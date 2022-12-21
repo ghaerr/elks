@@ -110,6 +110,10 @@ SECTIONS {
 		*(.rel.*)
 	}
 
+	/DISCARD/ : {
+		*(".discard!*" .discard ".discard&*")
+	}
+
 	/* `entry' was the old entry point symbol.  (Unfortunately this
 	   PROVIDE does not seem to work with the ld.gold linker --- it did
 	   work with ld.bfd.  FIXME?)  */
