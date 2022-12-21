@@ -19,7 +19,6 @@
 
 	.section .fini,"ax",@progbits
 
-	push	%si
 	mov	$__DTOR_LIST__+2+FAR_ADJ_,%si
 0:
 #ifdef __IA16_CMODEL_IS_FAR_TEXT
@@ -37,7 +36,6 @@
 #endif
 	jmp	0b
 1:
-	pop	%si
 
 	.section .data.__DTOR_LIST__,"aw",@progbits
 

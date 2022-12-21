@@ -19,7 +19,6 @@
 
 	.section .init,"ax",@progbits
 
-	push	%si
 	mov	$__CTOR_END__-2,%si
 0:
 #ifdef __IA16_CMODEL_IS_FAR_TEXT
@@ -41,7 +40,6 @@
 #endif
 	jmp	0b
 1:
-	pop	%si
 
 	.section .data.__CTOR_LIST__,"aw",@progbits
 

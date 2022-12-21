@@ -26,27 +26,31 @@ _start:
 // C runtime startup
 // Stack is empty and immediately followed by argc, argv and envp
 
-	pop %bp		// argc
-	mov %sp,%si	// argv [0]
-	lea 1(%bp),%di
-	shl $1,%di
-	add %si,%di	// envp [0]
-	mov %di,environ
-	mov (%si),%ax
-	mov %ax,_program_filename
+	pop %cx		// argc
+	mov %sp,%bx	// argv [0]
+	push %cx	// push argc back so that ps can see it
+	push %bp	// bp is zero, push stack trace terminator
+	mov %sp,%bp	// standard function prologue for debugging
+	mov %cx,%ax
+	inc %ax
+	shl $1,%ax
+	add %bx,%ax	// envp [0]
+	mov %ax,environ
+	push %ax
+	push %bx
+	mov (%bx),%bx
+	mov %bx,_program_filename
+	push %cx
 
 // ...Code fragments from .init & .init.* sections will go here...
+//    NOTE: these are allowed to clobber ax, bx, cx, dx, si
 
 	.section .inittail,"ax",@progbits
 
-#ifndef __IA16_CALLCVT_REGPARMCALL
-	push %di
-	push %si
-	push %bp
-#else
-	xchg %ax,%bp	// ax := argc
-	mov %si,%dx	// dx := argv
-	mov %di,%cx	// cx := envp
+#ifdef __IA16_CALLCVT_REGPARMCALL
+	pop %ax		// ax := argc
+	pop %dx		// dx := argv
+	pop %cx		// cx := envp
 #endif
 	CALL_(main)
 #ifndef __IA16_CALLCVT_REGPARMCALL
@@ -64,6 +68,7 @@ exit:
 #endif
 
 // ...Code fragments from .fini & .fini.* sections will go here...
+//    NOTE: these are allowed to clobber ax, bx, cx, dx, si
 
 	.section .finitail,"ax",@progbits
 
