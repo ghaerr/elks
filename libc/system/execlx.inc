@@ -16,6 +16,7 @@
 
 #include <libc-private/call-cvt.h>
 
+	.arch	i8086, nojumps
 	.code16
 
 	.text
@@ -58,7 +59,7 @@ _execlpe:
 	add $6,%di
 	lea 2(%di),%si
 	movsw
-# ifdef __MEDIUM__
+# ifdef __IA16_CMODEL_IS_FAR_TEXT
 	movsw
 # endif
 	mov %di,%ax
@@ -89,7 +90,7 @@ _execlpe:
 # else
 	CALL_(execve)
 # endif
-# ifdef __MEDIUM__
+# ifdef __IA16_CMODEL_IS_FAR_TEXT
 	lret $2
 # else
 	ret $2
@@ -119,7 +120,7 @@ _execlpe:
 	add $6,%di
 	lea 4(%di),%si
 	movsw				/* move caller ip */
-# ifdef __MEDIUM__
+# ifdef __IA16_CMODEL_IS_FAR_TEXT
 	movsw				/* move caller cs */
 # endif
 	movsw				/* move fname */

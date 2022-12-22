@@ -3,6 +3,7 @@
 
 #include <libc-private/call-cvt.h>
 
+	.arch	i8086, nojumps
 	.code16
 
 	.text
@@ -19,8 +20,8 @@ _syscall_0:
 	int    $0x80
 
 _syscall_test:
-	cmp    $0,%ax
-	jge    _syscall_ok
+	test   %ax,%ax
+	jns    _syscall_ok
 	neg    %ax
 	mov    %ax,errno
 	mov    $-1,%ax
@@ -74,7 +75,7 @@ _syscall_5:
 	jmp    _syscall_test
 #elif defined __IA16_CALLCVT_STDCALL
 _syscall_1:
-# if defined __MEDIUM__ || defined __LARGE__ || defined __HUGE__
+# ifdef __IA16_CMODEL_IS_FAR_TEXT
 	pop %dx
 	pop %cx
 	pop %bx
@@ -88,7 +89,7 @@ _syscall_1:
 	jmp _syscall_0
 
 _syscall_2:
-# if defined __MEDIUM__ || defined __LARGE__ || defined __HUGE__
+# ifdef __IA16_CMODEL_IS_FAR_TEXT
 	mov %sp,%bx
 	mov 6(%bx),%cx
 	mov 4(%bx),%bx
@@ -207,7 +208,7 @@ _syscall_signal:
 #else
 	mov %bx,%ax
 #endif
-#if defined __MEDIUM__ || defined __LARGE__ || defined __HUGE__
+#ifdef __IA16_CMODEL_IS_FAR_TEXT
 	add %bx,%bx
 	add %bx,%bx
 	lcallw *_sigtable-4(%bx)  // offset by 4 because no entry for signal 0

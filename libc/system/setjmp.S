@@ -1,5 +1,6 @@
 #include <libc-private/call-cvt.h>
 
+	.arch	i8086, nojumps
 	.code16
 
 	.text
@@ -9,7 +10,7 @@
 _setjmp:
 
 	pop %cx  // PC
-#if defined __MEDIUM__ || defined __LARGE__ || defined __HUGE__
+#ifdef __IA16_CMODEL_IS_FAR_TEXT
 	pop %dx  // CS
 #endif
 #if defined __IA16_CALLCVT_CDECL
@@ -24,7 +25,7 @@ _setjmp:
 #endif
 
 	mov %cx,0(%bx)  // PC
-#if defined __MEDIUM__ || defined __LARGE__ || defined __HUGE__
+#ifdef __IA16_CMODEL_IS_FAR_TEXT
 	mov %dx,2(%bx)  // CS
 #endif
 	mov %sp,2+FAR_ADJ_(%bx) // This registers are all that may be constant.
@@ -34,7 +35,7 @@ _setjmp:
 	mov %es,10+FAR_ADJ_(%bx)
 
 	xor %ax,%ax
-#if defined __MEDIUM__ || defined __LARGE__ || defined __HUGE__
+#ifdef __IA16_CMODEL_IS_FAR_TEXT
 	push %dx
 	push %cx
 	lret
@@ -48,7 +49,7 @@ _setjmp:
 _longjmp:
 
 	pop %cx  // PC
-#if defined __MEDIUM__ || defined __LARGE__ || defined __HUGE__
+#ifdef __IA16_CMODEL_IS_FAR_TEXT
 	pop %dx  // CS
 #endif
 #ifndef __IA16_CALLCVT_REGPARMCALL
@@ -60,7 +61,7 @@ _longjmp:
 #endif
 
 	mov 0(%bx),%cx  // PC
-#if defined __MEDIUM__ || defined __LARGE__ || defined __HUGE__
+#ifdef __IA16_CMODEL_IS_FAR_TEXT
 	mov 2(%bx),%dx  // CS
 #endif
 	mov 2+FAR_ADJ_(%bx),%sp
@@ -69,7 +70,7 @@ _longjmp:
 	mov 8+FAR_ADJ_(%bx),%di
 	mov 10+FAR_ADJ_(%bx),%es
 
-#if defined __MEDIUM__ || defined __LARGE__ || defined __HUGE__
+#ifdef __IA16_CMODEL_IS_FAR_TEXT
 	push %dx
 	push %cx
 	lret

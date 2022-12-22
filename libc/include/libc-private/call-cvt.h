@@ -4,6 +4,11 @@
 #define _LIBC_PRIVATE_CALL_CVT_H
 
 #if defined __MEDIUM__ || defined __LARGE__ || defined __HUGE__
+/* gcc-ia16 should define __IA16_CMODEL_IS_FAR_TEXT if the memory model uses
+ * far code addresses; define it ourselves in case it is missing */
+# ifndef __IA16_CMODEL_IS_FAR_TEXT
+#   define __IA16_CMODEL_IS_FAR_TEXT
+# endif
 /* Adjustment to stack frame offsets to account for far return addresses */
 # define FAR_ADJ_	2
 /* How to return from a subroutine with N bytes of arguments */
@@ -35,7 +40,8 @@
 #   define CALL_(s)	.reloc .+3, R_386_OZSEG16, (s); lcall $0, $(s)
 #   define JMP_(s)	.reloc .+3, R_386_OZSEG16, (s); ljmp $0, $(s)
 # endif
-# else
+#else  /* not medium, large, or huge model */
+# undef __IA16_CMODEL_IS_FAR_TEXT
 # define FAR_ADJ_	0
 # if defined __IA16_CALLCVT_STDCALL
 #   define RET_(n)	.if (n); ret $(n); .else; ret; .endif
@@ -50,6 +56,6 @@
 # define CALL_N_(s)	call s
 # define CALL_(s)	call s
 # define JMP_(s)	jmp s
-#endif
+#endif  /* not medium, large, or huge model */
 
 #endif

@@ -3,7 +3,7 @@
 
 #include "_stdio.h"
 
-static void
+__attribute__((destructor(99))) static void
 __stdio_close_all(void)
 {
    FILE *fp;
@@ -19,17 +19,9 @@ __stdio_close_all(void)
    }
 }
 
-void
+__attribute__((constructor(99))) void
 __io_init_vars(void)
 {
-#ifndef __AS386_16__
-#ifndef __AS386_32__
-   static int first_time = 1;
-   if( !first_time ) return ;
-   first_time = 0;
-#endif
-#endif
    if (isatty(1))
       stdout->mode |= _IOLBF;
-   atexit(__stdio_close_all);
 }

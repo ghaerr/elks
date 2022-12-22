@@ -3,11 +3,20 @@ ENTRY(_start)
 SECTIONS {
 	.text 0x10000 : {
 		/* IA-16 segment start markers. */
+		KEEP (*(".inithead!"))
+		KEEP (*(SORT (".init!*") SORT (".init.*!")))
+		KEEP (*(".inittail!"))
 		*(".text!*" ".text.*!"
 		  ".fartext.*0!" ".fartext.*2!"
 		  ".fartext.*4!" ".fartext.*6!")
+		KEEP (*(".finihead!"))
+		KEEP (*(SORT (".fini!*") SORT (".fini.*!")))
+		KEEP (*(".finitail!"))
 
 		/* Actual segment contents. */
+		KEEP (*(.inithead .inithead$))
+		KEEP (*(.init SORT (.init$*) SORT (".init.*[^&]")))
+		KEEP (*(.inittail .inittail$))
 		*(.text .text$* ".text.*[^&]"
 		  /*
 		   * Place the text segments from about half the input
@@ -17,11 +26,20 @@ SECTIONS {
 		   */
 		  .fartext.*0$ .fartext.*2$
 		  .fartext.*4$ .fartext.*6$)
+		KEEP (*(.finihead .finihead$))
+		KEEP (*(.fini SORT (.fini$*) SORT (".fini.*[^&]")))
+		KEEP (*(.finitail .finitail$))
 
 		/* IA-16 segment end markers. */
+		KEEP (*(".inithead&"))
+		KEEP (*(SORT (".init&*") SORT (".init.*&")))
+		KEEP (*(".inittail&"))
 		*(".text&*" ".text.*&"
 		  ".fartext.*0&" ".fartext.*2&"
 		  ".fartext.*4&" ".fartext.*6&")
+		KEEP (*(".finihead&"))
+		KEEP (*(SORT (".fini&*") SORT (".fini.*&")))
+		KEEP (*(".finitail&"))
 		. = ALIGN(0x10);
 	}
 
@@ -41,12 +59,24 @@ SECTIONS {
 		/* IA-16 segment start markers. */
 		*(".nildata!*" ".nildata.*!")
 		*(".rodata!*" ".rodata.*!")
+		KEEP (*(".data.__CTOR_LIST__!"))
+		KEEP (*(SORT (".ctors!*") SORT (".ctors.*!")))
+		KEEP (*(".data.__CTOR_END__!"))
+		KEEP (*(".data.__DTOR_LIST__!"))
+		KEEP (*(SORT (".dtors!*") SORT (".dtors.*!")))
+		KEEP (*(".data.__DTOR_END__!"))
 		*(".data!*" ".data.*!")
 		*(".bss!*" ".bss.*!")
 
 		/* Actual segment contents. */
 		*(.nildata .nildata$* ".nildata.*[^&]")
 		*(.rodata .rodata$* ".rodata.*[^&]")
+		KEEP (*(.data.__CTOR_LIST__ .data.__CTOR_LIST__$))
+		KEEP (*(.ctors SORT (.ctors$*) SORT (".ctors.*[^&]")))
+		KEEP (*(.data.__CTOR_END__ .data.__CTOR_END__$))
+		KEEP (*(.data.__DTOR_LIST__ .data.__DTOR_LIST__$))
+		KEEP (*(.dtors SORT (.dtors$*) SORT (".dtors.*[^&]")))
+		KEEP (*(.data.__DTOR_END__ .data.__DTOR_END__$))
 		*(.data .data$* ".data.*[^&]")
 		. = ALIGN(0x10);
 	}
@@ -58,6 +88,12 @@ SECTIONS {
 		/* IA-16 segment end markers. */
 		*(".nildata&*" ".nildata.*&")
 		*(".rodata&*" ".rodata.*&")
+		KEEP (*(".data.__CTOR_LIST__&"))
+		KEEP (*(SORT (".ctors&*") SORT (".ctors.*&")))
+		KEEP (*(".data.__CTOR_END__&"))
+		KEEP (*(".data.__DTOR_LIST__&"))
+		KEEP (*(SORT (".dtors&*") SORT (".dtors.*&")))
+		KEEP (*(".data.__DTOR_END__&"))
 		*(".data&*" ".data.*&")
 		*(".bss&*" ".bss.*&")
 		. = ALIGN(0x10);
@@ -77,5 +113,9 @@ SECTIONS {
 
 	.rel.dyn : {
 		*(.rel.*)
+	}
+
+	/DISCARD/ : {
+		*(".discard!*" .discard ".discard&*")
 	}
 }
