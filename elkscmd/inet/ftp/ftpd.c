@@ -16,7 +16,6 @@
 #include	<stdlib.h>
 #include	<ctype.h>
 #include	<netinet/in.h>
-#include	<stdbool.h>
 #include	<netdb.h>
 #include	<errno.h>
 #include	<fcntl.h>

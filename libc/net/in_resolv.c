@@ -64,7 +64,7 @@ static void alarm_cb(int sig)
 }
 
 /* convert e.g. www.google.com (host) to 3www6google3com (dns) */
-static void format_dns(char *dns, char *host)
+static void format_dns(char *dns, const char *host)
 {
 	int i, next = 0;
 
@@ -82,7 +82,7 @@ static void format_dns(char *dns, char *host)
 }
 
 /* resolve a name to an IP address, optionally use DNS 'server' */
-ipaddr_t in_resolv(char *hostname, char *server)
+ipaddr_t in_resolv(const char *hostname, char *server)
 {
 	int fd, rc, len;
 	struct DNS_HEADER *dns;
