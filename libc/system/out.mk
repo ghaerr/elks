@@ -35,6 +35,7 @@ OBJS = \
 	lseek.o \
 	mkfifo.o \
 	opendir.o \
+	program_filename.o \
 	readdir.o \
 	rewinddir.o \
 	seekdir.o \

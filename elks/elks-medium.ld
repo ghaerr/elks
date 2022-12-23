@@ -4,6 +4,7 @@ SECTIONS {
 	.text 0x10000 : {
 		/* IA-16 segment start markers. */
 		KEEP (*(".inithead!"))
+		KEEP (*(SORT (".preinit!*") SORT (".preinit.*!")))
 		KEEP (*(SORT (".init!*") SORT (".init.*!")))
 		KEEP (*(".inittail!"))
 		*(".text!*" ".text.*!"
@@ -15,6 +16,7 @@ SECTIONS {
 
 		/* Actual segment contents. */
 		KEEP (*(.inithead .inithead$))
+		KEEP (*(.preinit SORT (.preinit$*) SORT (".preinit.*[^&]")))
 		KEEP (*(.init SORT (.init$*) SORT (".init.*[^&]")))
 		KEEP (*(.inittail .inittail$))
 		*(.text .text$* ".text.*[^&]"
@@ -32,6 +34,7 @@ SECTIONS {
 
 		/* IA-16 segment end markers. */
 		KEEP (*(".inithead&"))
+		KEEP (*(SORT (".preinit&*") SORT (".preinit.*&")))
 		KEEP (*(SORT (".init&*") SORT (".init.*&")))
 		KEEP (*(".inittail&"))
 		*(".text&*" ".text.*&"
@@ -48,7 +51,7 @@ SECTIONS {
 		*(".fartext!*" ".fartext.*!")
 
 		/* Actual segment contents. */
-		*(.fartext .fartext$ ".fartext.*[^&]")
+		*(.fartext .fartext$* ".fartext.*[^&]")
 
 		/* IA-16 segment end markers. */
 		*(".fartext&*" ".fartext.*&")
