@@ -36,14 +36,14 @@ _start:
 	inc %ax
 	shl $1,%ax
 	add %bx,%ax	// envp [0]
-	mov %ax,environ
 	push %ax
 	push %bx
-	mov (%bx),%bx
-	mov %bx,_program_filename
 	push %cx
 
-// ...Code fragments from .init & .init.* sections will go here...
+// ...Code fragments from .preinit & .preinit.* sections will go here...
+//    NOTE: these assume ax = envp, bx = argv, & may clobber dx
+
+// ...Then code fragments from .init & .init.* sections will go here...
 //    NOTE: these are allowed to clobber ax, bx, cx, dx, si
 
 	.section .inittail,"ax",@progbits
