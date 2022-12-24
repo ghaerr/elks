@@ -5,6 +5,7 @@
 
 #include <libc-private/call-cvt.h>
 
+	.arch	i8086, nojumps
 	.code16
 
 	.text

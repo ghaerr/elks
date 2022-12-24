@@ -11,7 +11,6 @@ endif
 
 OBJS = \
 	abort.o \
-	cleanup.o \
 	closedir.o \
 	dup.o \
 	dup2.o \
@@ -36,6 +35,7 @@ OBJS = \
 	lseek.o \
 	mkfifo.o \
 	opendir.o \
+	program_filename.o \
 	readdir.o \
 	rewinddir.o \
 	seekdir.o \

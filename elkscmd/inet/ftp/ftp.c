@@ -29,7 +29,6 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <netinet/in.h>
-#include <stdbool.h>
 #include <fcntl.h>
 #include <sys/select.h>
 #include <sys/time.h>

@@ -28,6 +28,7 @@ void init_irq(void)
 	clr_irq();
 	enable_irq(2);		/* Cascade slave PIC */
 	restore_flags(flags);
+    }
 #endif
 }
 
@@ -59,7 +60,7 @@ int remap_irq(int irq)
 // Get interrupt vector from IRQ
 
 int irq_vector (int irq)
-	{
+{
 #ifdef CONFIG_ARCH_PC98
 	// IRQ 0-7  are mapped to vectors INT 08h-0Fh
 	// IRQ 8-15 are mapped to vectors INT 10h-17h
@@ -71,7 +72,7 @@ int irq_vector (int irq)
 
 	return irq + ((irq >= 8) ? 0x68 : 0x08);
 #endif
-	}
+}
 
 void disable_irq(unsigned int irq)
 {

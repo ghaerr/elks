@@ -111,6 +111,7 @@ sh_utils/tr						:shutil				:720k
 #sh_utils/whoami				:shutil					:1200k	:1440k
 sh_utils/xargs					:shutil					:1200k	:1440k
 sh_utils/yes					:shutil				:720k
+test/libc/test_libc				:other
 misc_utils/float				:miscutil						:1440k
 misc_utils/compress				:miscutil						:1440k
 misc_utils/miniterm				:miscutil			:720k
@@ -141,8 +142,8 @@ minix1/du						:be-minix1				:1200k	:1440k
 #minix2/env						:minix2					:1200k	:1440k
 #minix2/lp						:minix2					:1200k	:1440k
 #minix2/pwdauth					:minix2							:1440k
-#minix2/remsync					:minix2							:1440k
-#minix2/synctree				:minix2							:1440k
+minix2/remsync					:other
+minix2/synctree					:other
 #minix2/tget					:minix2							:1440k
 #minix2/man						:minix2					:1200k	:1440k
 minix3/sed						:minix3				:720k
@@ -192,7 +193,7 @@ inet/urlget/urlget :::httpget	:net
 #mtools/mtype					:mtools					:1440k
 #mtools/mwrite					:mtools					:1440k
 bc/bc							:other
-#m4/m4							:other					:1440k
+#m4/m4							:other
 #prems/pres/pres				:other
 #nano/nano-2.0.6/src/nano		:other					:1440k
 #nano-X/bin/nxclock				:nanox					:1440k

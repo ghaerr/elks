@@ -47,7 +47,7 @@ typedef struct console Console;
 
 struct console {
     int cx, cy;			/* cursor position */
-    void (*fsm)(register Console *, char);
+    void (*fsm)(Console *, int);
     unsigned char attr;		/* current attribute */
     unsigned char XN;		/* delayed newline on column 80 */
     unsigned char color;	/* fg/bg attr */

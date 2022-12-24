@@ -1,4 +1,4 @@
-#include "test.h"
+#include "testlib.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -15,12 +15,12 @@ struct err_tests {
 	{ 999, "Unknown error 999" },
 };
 
-/* FIXME /etc/perror is generated with trailing spaces */
+/* TODO:BUG: /etc/perror is generated with trailing spaces */
 TEST_CASE(error_strerror)
 {
 	for (int i = 0; i < N_ERR_TESTS; ++i) {
 		const char *msg = strerror(err_map[i].errno);
-		TEST_EQUAL_STR(msg, err_map[i].msg);
+		EXPECT_STREQ(msg, err_map[i].msg);
 	}
 }
 

@@ -183,7 +183,7 @@ CONFIG_APP_TUI=y
 # CONFIG_APP_MTOOLS is not set
 CONFIG_APP_NANOX=y
 CONFIG_APP_BASIC=y
-CONFIG_APP_OTHER=y
+# CONFIG_APP_OTHER is not set
 
 #
 # Commands not compiling
