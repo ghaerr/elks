@@ -291,7 +291,7 @@ static int INITPROC parse_dev(char * line)
 
 static void comirq(char *line)
 {
-#ifdef CONFIG_ARCH_IBMPC
+#if defined(CONFIG_ARCH_IBMPC) && defined(CONFIG_CHAR_DEV_RS)
 	int i;
 	char *l, *m, c;
 
