@@ -1,4 +1,4 @@
-# Makefile for ethernet driver test
+# Makefile for select test
 
 BASEDIR=../..
 
@@ -7,9 +7,7 @@ include $(BASEDIR)/Make.defs
 PGM = test_select
 
 SRCS = $(PGM).c
-
 OBJS = $(SRCS:.c=.o)
-
 
 include $(BASEDIR)/Make.rules
 

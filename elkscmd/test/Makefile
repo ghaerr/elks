@@ -2,7 +2,6 @@
 
 SUBDIRS =  \
 	eth    \
-	fat    \
 	libc   \
 	pty    \
 	socket \
