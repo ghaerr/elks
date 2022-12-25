@@ -3,6 +3,7 @@
 // INT 16h AH=00h, INT 16H AH=01h (keyboard)
 // INT 10h AH=0Eh (write teletype)
 //
+#include <linuxmt/config.h>
 	.arch	i8086, nojumps
 	.code16
 	.text
@@ -22,6 +23,9 @@ conio_init:
 // returns scan code in AH, ASCII char in AL
 
 conio_poll:
+#ifdef CONFIG_HW_MK88
+	int    %0x0b		// interrogate MK-88 keyboard before INT 16h
+#endif
 	mov    $1,%ah		// get kbd status
 	int    $0x16
 	jnz    1f		// key pressed

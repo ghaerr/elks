@@ -18,12 +18,12 @@ void int_vector_set (int vect, int_proc proc, int seg);
 void _irqit (void);
 
 
-/* irq-8259.c*/
-void init_irq(void);
+/* irq-8259.c, irq-8018x.c*/
+void initialize_irq(void);
 void enable_irq(unsigned int);
 void disable_irq(unsigned int irq);
 int remap_irq(int);
-int irq_vector (int irq);
+int irq_vector(int irq);
 
 void idle_halt(void);
 
@@ -55,6 +55,13 @@ void idle_halt(void);
 /* enable interrupts */
 #define set_irq()               \
         asm volatile ("sti\n"   \
+            : /* no output */   \
+            : /* no input */    \
+            :"memory")
+
+/* interrupt 0Fh (irq 7) */
+#define int0F()                 \
+        asm volatile ("int $0x0F\n"   \
             : /* no output */   \
             : /* no input */    \
             :"memory")

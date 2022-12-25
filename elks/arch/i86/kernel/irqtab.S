@@ -8,36 +8,15 @@
 	.code16
 	.text
 
-/*
- *	Easy way to find the kernel DS
- *
- * Define a variable in the code segment whose
- * predefined contents is the kernel data segment
- */
-
-	.align 1
-
-	.global	irqtab_init
-irqtab_init:
-
+	.global	save_timer_irq
+save_timer_irq:
 	xor	%ax,%ax
-	mov	%ax,%ds
-
-// CS points to this kernel code segment
-// DS points to page 0  (interrupt table)
-// ES points to the kernel data segment
-
-	mov	$32,%bx
-	mov	(%bx),%ax		// get the old timer intr
-//	seg	es
-	mov	%ax,%es:_stashed_irq0_l
+	mov	%ax,%ds		// DS -> interrupt table, ES -> kernel data seg
+	mov	$8*4,%bx	// INT 8 (IRQ 0) vector
+	mov	(%bx),%ax	// get the old timer intr
+	mov	%ax,%es:org_irq0
 	mov	2(%bx),%ax
-//	seg	es
-	mov	%ax,%es:_stashed_irq0_l+2
-
-//
-// Tidy up
-//
+	mov	%ax,%es:org_irq0+2
 	push	%ss		// restore DS
 	pop	%ds
 	ret
@@ -46,15 +25,13 @@ irqtab_init:
 // Set interrupt vector
 //------------------------------------------------------------------------------
 
-	.global int_vector_set
-
-// void_vector_set (int vect, int_proc proc, int seg);
+// void int_vector_set (int vect, int_proc proc, int seg);
 // arg1: vector number (byte pushed as word by the C compiler)
 // arg2: function offset (word)
 // arg3: function segment (word)
 
+	.global int_vector_set
 int_vector_set:
-
 	mov %sp,%bx
 	mov 6(%bx),%dx  // arg3
 	mov 4(%bx),%cx  // arg2
@@ -124,7 +101,6 @@ int_vector_set:
 #endif
 
 	.global _irqit
-
 _irqit:
 //
 //	Make room
@@ -306,11 +282,11 @@ updct:
 //
 //	IRQ 0 (timer) has to go on to the bios for some systems
 //
-	decw	_bios_call_cnt_l // Will call bios int?
+	decw	bios_call_cnt	// Will call bios int?
 	jne	do_eoi
-	movw	$5,_bios_call_cnt_l
+	movw	$5,bios_call_cnt
 	pushf
-	lcall	*_stashed_irq0_l
+	lcall	*org_irq0
 	jmp	was_trap	// EOI already sent by bios int
 
 //
@@ -402,7 +378,6 @@ restore_regs:
  */
 
 	.global	tswitch
-
 tswitch:
 	push	%bp		// schedule()'s bp
 	push	%es		// required for gcc-ia16
@@ -419,31 +394,20 @@ tswitch:
 	ret
 
 
-// Halt on idle helper
-// Wait for next interrupt to save CPU power
-
-#ifdef CONFIG_IDLE_HALT
-
+// Halt - wait for next interrupt to save CPU power
 	.global idle_halt
-
 idle_halt:
 	hlt
 	ret
-
-#endif
-
 
 	.data
 	.global	intr_count
 	.extern	current
 	.extern	previous
-	.extern	_kernel_ds
 
-	.align 1
-
-_bios_call_cnt_l:
+bios_call_cnt:                  // call BIOS IRQ 0 handler every 5th interrupt
 	.word	5
-_stashed_irq0_l:
+org_irq0:			// original BIOS IRQ 0 vector
 	.long	0
 intr_count:			// Hardware interrupts count
 	.word	0
@@ -453,6 +417,6 @@ _gint_count:			// General interrupts count. Start with 1
 pmsg:	.ascii "Running unknown code"
 	.byte	0
 #endif
-	.skip 512,0		// (was) 128 byte interrupt stack
+	.skip 512,0		// 512 byte interrupt stack
 _intstack:
 
