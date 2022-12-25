@@ -14,7 +14,8 @@ mainmenu_option next_comment
 
 	if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
 
-		bool 'Switch Compaq DeskPro to fast mode' CONFIG_COMPAQ_FAST n
+		bool 'Compaq DeskPro Hardware (fast mode)' CONFIG_HW_COMPAQFAST n
+		bool 'MK-88 Hardware (IRQ 3 keyboard)' CONFIG_HW_MK88 n
 
 		comment 'Devices'
 
@@ -54,7 +55,8 @@ mainmenu_option next_comment
 	bool 'Real time clock in localtime'       CONFIG_TIME_RTC_LOCALTIME n
 	string 'Compiled-in TZ= timezone string'  CONFIG_TIME_TZ      ''
 	bool 'System Trace'                       CONFIG_STRACE       n
-	bool 'Halt on Idle'                       CONFIG_IDLE_HALT    n
+	bool 'Use INT 0Fh in idle loop for timer' CONFIG_TIMER_INT0F  n
+	bool 'Use INT 1Ch from BIOS for timer'    CONFIG_TIMER_INT1C  n
 
 	if [ "$CONFIG_ARCH_IBMPC" = "y" ] || [ "$CONFIG_ARCH_8018X" = "y" ]; then
 		bool 'Build kernel as ROM-bootable'   CONFIG_ROMCODE      n

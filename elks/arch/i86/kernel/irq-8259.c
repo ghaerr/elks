@@ -20,7 +20,7 @@
  *	Low level interrupt handling for the X86 PC/XT and PC/AT platform
  */
 
-void init_irq(void)
+void initialize_irq(void)
 {
 #if NOTNEEDED
     if (sys_caps & CAP_IRQ2MAP9) {	/* PC/AT or greater */

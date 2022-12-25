@@ -27,22 +27,8 @@
 #include <arch/segment.h>
 #include <arch/irq.h>
 
-
 static irq_handler irq_action [16];
 static void *irq_trampoline [16];
-
-/*
- *	Called by the assembler hooks
- */
-
-void do_IRQ(int i,void *regs)
-{
-    irq_handler ih = irq_action [i];
-    if (!ih)
-        printk("Unexpected interrupt: %u\n", i);
-    else (*ih)(i, regs);
-}
-
 
 // TODO: simplify the whole by replacing IRQ by INT number
 // Would also allow to handle any of the 0..255 interrupts
@@ -57,6 +43,14 @@ struct int_handler {
 
 typedef struct int_handler int_handler_s;
 
+/* called by _irqit assembler hook after saving registers */
+void do_IRQ(int i,void *regs)
+{
+    irq_handler ih = irq_action [i];
+    if (!ih)
+        printk("Unexpected interrupt: %u\n", i);
+    else (*ih)(i, regs);
+}
 
 // Add a dynamically allocated handler
 // that redirects to the static handler
@@ -141,26 +135,34 @@ int free_irq(int irq)
 /*
  *	IRQ setup.
  */
-
 void INITPROC irq_init(void)
 {
-    init_irq();		/* PIC initialization */
+    /* use INT 0x80h for system calls */
+    int_handler_add(0x80, 0x80, _irqit, NULL);
 
-    // TODO: no more need to disable the timer
-    // BEFORE the interrupt initialization
-    // as timer vector is kept as is
+#if defined(CONFIG_TIMER_INT0F) || defined(CONFIG_TIMER_INT1C)
+    /* Use IRQ 7 vector (simulated by INT 0Fh) for timer interrupt handler */
+    if (request_irq(7, timer_tick, INT_GENERIC))
+        panic("Unable to get timer");
 
-    // TODO: move that timer stuff in `timer.c`
-    // to clearly separate the PIC and PIT driving
-    disable_timer_tick();
+#if defined(CONFIG_TIMER_INT1C)
+    /* Also map BIOS INT 1C user timer callout to INT 0Fh */
+    unsigned long __far *vec1C = _MK_FP(0, 0x1C << 2);  /* BIOS user timer callout */
+    unsigned long __far *vec0F = _MK_FP(0, 0x0F << 2);  /* IRQ 7 vector (INT 0Fh) */
+    clr_irq();
+    *vec1C = *vec0F;            /* point INT 1C to INT 0F vector */
+    set_irq();
+#endif
 
-    irqtab_init();	/* now only saves previous vector 08h (timer) */
-    int_handler_add (0x80, 0x80, _irqit, NULL); /* system call */
+#else /* normal IRQ 0 timer */
+    initialize_irq();           /* IRQ and/or PIC initialization */
+    disable_timer_tick();       /* not needed on IBM PC as IRQ 0 vector untouched */
+    save_timer_irq();           /* save original BIOS IRQ 0 vector */
 
-    /* Set off the initial timer interrupt handler */
+    /* Connect timer interrupt handler to hardware IRQ 0 */
     if (request_irq(TIMER_IRQ, timer_tick, INT_GENERIC))
     	panic("Unable to get timer");
 
-    /* Re-start the timer */
-    enable_timer_tick();
+    enable_timer_tick();        /* reprogram timer for 100 HZ */
+#endif
 }

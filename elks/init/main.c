@@ -89,8 +89,10 @@ void start_kernel(void)
      */
     while (1) {
         schedule();
-#ifdef CONFIG_IDLE_HALT
-        idle_halt ();
+#ifdef CONFIG_TIMER_INT0F
+        int0F();        /* simulate timer interrupt hooked on IRQ 7 */
+#else
+        idle_halt();    /* halt until interrupt to save power */
 #endif
     }
 }
