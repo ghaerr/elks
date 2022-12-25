@@ -4,24 +4,20 @@ BASEDIR=../..
 
 include $(BASEDIR)/Make.defs
 
+PGM = test_pty
 
-CFILES		= ptyshell.c
-
-OBJS		= $(CFILES:.c=.o)
+SRCS = $(PGM).c
+OBJS = $(SRCS:.c=.o)
 
 include $(BASEDIR)/Make.rules
 
+all: $(PGM)
 
-all:	ptyshell
+$(PGM):	$(OBJS)
+	$(LD) $(LDFLAGS) -o $(PGM) $(OBJS) $(LDLIBS)
 
-ptyshell: $(OBJS)
-	$(LD) $(LDFLAGS) -o ptyshell ptyshell.o $(LDLIBS)
-
-install: ptyshell
-	$(INSTALL) ptyshell $(DESTDIR)/bin
+install: $(PGM)
+	$(INSTALL) $(PGM) $(DESTDIR)/bin
 
 clean: 
-	rm -f *.o ptyshell
-
-dep:
-	makedepend $(CFILES)
+	rm -f $(OBJS) $(PGM)

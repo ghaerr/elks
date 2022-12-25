@@ -18,6 +18,7 @@ DESTDIR=$(TOPDIR)/target
 TAGS=
 # Old-style installation
 INSTDIRS=
+export INSTALL LN DESTDIR
 
 ifdef CONFIG_APP_TAGS
 	TAGS += "$(CONFIG_APP_TAGS)"

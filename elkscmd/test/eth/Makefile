@@ -4,24 +4,20 @@ BASEDIR=../..
 
 include $(BASEDIR)/Make.defs
 
+PGM = test_eth
 
-CFILES		= eth.c
-
-OBJS		= $(CFILES:.c=.o)
+SRCS = $(PGM).c
+OBJS = $(SRCS:.c=.o)
 
 include $(BASEDIR)/Make.rules
 
+all: $(PGM)
 
-all:	eth
+$(PGM):	$(OBJS)
+	$(LD) $(LDFLAGS) -o $(PGM) $(OBJS) $(LDLIBS)
 
-eth:	$(OBJS)
-	$(LD) $(LDFLAGS) -o eth eth.o $(LDLIBS)
-
-install: eth
-	$(INSTALL) eth $(DESTDIR)/bin
+install: $(PGM)
+	$(INSTALL) $(PGM) $(DESTDIR)/bin
 
 clean: 
-	rm -f *.o eth
-
-dep:
-	makedepend $(CFILES)
+	rm -f $(OBJS) $(PGM)

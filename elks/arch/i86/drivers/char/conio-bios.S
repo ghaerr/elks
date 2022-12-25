@@ -24,7 +24,7 @@ conio_init:
 
 conio_poll:
 #ifdef CONFIG_HW_MK88
-	int    %0x0b		// interrogate MK-88 keyboard before INT 16h
+	int    $0x0b		// interrogate MK-88 keyboard before INT 16h
 #endif
 	mov    $1,%ah		// get kbd status
 	int    $0x16
