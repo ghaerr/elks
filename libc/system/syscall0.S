@@ -16,6 +16,7 @@
 	.global _syscall_4
 	.global _syscall_5
 
+#ifndef __IA16_CALLCVT_REGPARMCALL
 _syscall_0:
 	int    $0x80
 
@@ -28,6 +29,7 @@ _syscall_test:
 
 _syscall_ok:
 	RET_(0)
+#endif
 
 #if defined __IA16_CALLCVT_CDECL
 _syscall_1:
@@ -154,8 +156,21 @@ _syscall_2:
 _syscall_3:
 	xchg %cx,%dx
 _syscall_1:
+_syscall_0:
 	xchg %ax,%bx
-	jmp _syscall_0
+
+_syscall:
+	int    $0x80
+
+_syscall_test:
+	test   %ax,%ax
+	jns    _syscall_ok
+	neg    %ax
+	mov    %ax,errno
+	mov    $-1,%ax
+
+_syscall_ok:
+	RET_(0)
 
 _syscall_4:
 	push %di
@@ -163,7 +178,7 @@ _syscall_4:
 	mov 4+FAR_ADJ_(%di),%di
 	xchg %cx,%dx
 	xchg %ax,%bx
-	CALL_N_(_syscall_0)
+	CALL_N_(_syscall)
 	pop %di
 	RET_(2)
 
@@ -175,7 +190,7 @@ _syscall_5:
 	mov 4+FAR_ADJ_(%di),%di
 	xchg %cx,%dx
 	xchg %ax,%bx
-	CALL_N_(_syscall_0)
+	CALL_N_(_syscall)
 	pop %si
 	pop %di
 	RET_(4)

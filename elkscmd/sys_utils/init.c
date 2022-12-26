@@ -175,9 +175,8 @@ FILE  stderr[1] =
 
 void parseLine(const char* line, void func())
 {
-	char *a[5];
 	int k = 0;
-	char buf[BUFSIZE], *p;
+	char *p, *a[5], buf[BUFSIZE];
 
 	strcpy(buf, line);
 	a[k++] = p = buf;
@@ -186,12 +185,22 @@ void parseLine(const char* line, void func())
 		p++;
 	}
 	if (*p == '#') return;
-	while (k < 4) {
+	while (k < 5) {
 		/* looking for the k-th ':' */
 		while (*p && *p != ':') p++;
+		if (*p == 0) {
+			*p = 0;
+			a[k++] = NULL;
+			continue;
+		}
 		*p = 0;
 		a[k++] = ++p;
 	}
+#if DEBUG
+	for (k=0; k<5; k++) {
+		debug("a[%d]='%s'\n", k, a[k]);
+	}
+#endif
 	func(a);
 }
 
@@ -207,6 +216,7 @@ void scanFile(void func())
 	while (fgets(buf, BUFSIZE, fp)) {
 		if (buf[strlen(buf)-1] == '\n')
 			buf[strlen(buf)-1] = '\0';
+        debug("[buf='%s',%d]\n", buf, strlen(buf));
 		parseLine(buf, func);
 	}
 	fclose(fp);
@@ -261,10 +271,10 @@ pid_t respawn(const char **a)
     int fd;
     char *devtty;
 
-    if (a[3] == NULL) return 1;
+    if (a[3] == NULL || a[3][1] == '\0') return -1;
 
     pid = fork();
-    if (pid == -1) fatalmsg("No fork\r\n");
+    if (pid == -1) fatalmsg("No fork (%d)\r\n", errno);
     if (pid) debug("spawning %d '%s'\r\n", pid, a[3]);
 
     if (0 == pid) {
@@ -329,6 +339,7 @@ int hash(const char *string)
 	const char *p;
 	int result = 0, i=1;
 
+	if (string == NULL) return 0;
 	p = string;
 	while (*p)
 		result += ((*p++)-'a')*(i++);
