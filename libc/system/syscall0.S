@@ -180,7 +180,7 @@ _syscall_4:
 	xchg %ax,%bx
 	CALL_N_(_syscall)
 	pop %di
-	RET_(2)
+	RET_(8)
 
 _syscall_5:
 	push %di
@@ -193,7 +193,7 @@ _syscall_5:
 	CALL_N_(_syscall)
 	pop %si
 	pop %di
-	RET_(4)
+	RET_(10)
 #else
 # error "unknown calling convention"
 #endif

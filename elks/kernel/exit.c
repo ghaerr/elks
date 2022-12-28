@@ -37,7 +37,8 @@ static void reparent_children(void)
 	}
 }
 
-int sys_wait4(pid_t pid, int *status, int options)
+/* note: 'usage' parameter ignored */
+int sys_wait4(pid_t pid, int *status, int options, void *usage)
 {
 	register struct task_struct *p;
 	int waitagain;
