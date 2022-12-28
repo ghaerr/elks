@@ -17,6 +17,7 @@ include $(BASEDIR)/Make.defs
 # TODO: broken command compilations
 # byacc screen m4 xvi nano
 SUBDIRS =       \
+	lib         \
 	ash         \
 	basic       \
 	bc          \
