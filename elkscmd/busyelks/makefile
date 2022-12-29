@@ -117,7 +117,7 @@ all: $(OUT)
 
 $(OUT):	$(OBJS)
 	@echo '[LD]	$@'
-	@$(LD) $(LDFLAGS) -o $@ $^ > busyelks.map
+	@$(LD) $(LDFLAGS) -o $@ $^
 
 $(OBJS): config.mk
 

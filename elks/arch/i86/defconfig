@@ -184,7 +184,6 @@ CONFIG_APP_CRON=y
 # CONFIG_APP_OTHER is not set
 CONFIG_APP_BUSYELKS=n
 # CONFIG_APP_CGATEXT is not set
-# CONFIG_APP_MTOOLS is not set
 
 #
 # Commands not compiling

@@ -36,10 +36,8 @@ static char ScreenVersion[] = "screen 2.0a.2 (ELKS) 30-Apr-2020";
 #include <linuxmt/un.h>
 #include <string.h>
 #include <unistd.h>
-/*FIXME: check or add equivalent to elks libc */
-#define OPEN_MAX	256
-#define	SIGTTOU 27	/* background tty write attempted */
-
+#define OPEN_MAX	20      /* NR_OPEN from include/fs.h */
+#define	SIGTTOU         27	/* background tty write attempted */
 #else
 #include <sgtty.h>
 #include <nlist.h>
@@ -101,7 +99,7 @@ static char PtyProto[] = "/dev/ptyXY";
 static char TtyProto[] = "/dev/ttyXY";
 static int TtyMode = 0622;
 static char SockPath[512];
-static char SockDir[] = ".screen";
+static char SockDir[] = "screen";
 static char *SockNamePtr, *SockName;
 static ServerSocket;
 static char *NewEnv[MAXARGS];
@@ -273,7 +271,7 @@ char **av;
     if ((home = getenv ("HOME")) == 0)
         Msg (0, "$HOME is undefined.");
     
-    sprintf (SockPath, "%s/%s", home, SockDir); /* SockDir = ".screen" */
+    sprintf (SockPath, "%s/%s", home, SockDir); /* SockDir = "screen" */
     if (stat (SockPath, &st) == -1) {
 	  if (errno == ENOENT) {
 	    if (mkdir (SockPath, 0700) == -1)
@@ -970,7 +968,7 @@ static void WriteFile (dump) {   /* dump==0: create .termcap, dump==1: hardcopy 
     if (dump)
 	sprintf (fn, "hardcopy.%d", CurrNum);
     else
-	sprintf (fn, "%s/%s/.termcap", home, SockDir);
+	sprintf (fn, "%s/%s/termcap", home, SockDir);
     switch (pid = fork ()) {
     case -1:
 	Msg (errno, "fork");
@@ -1175,7 +1173,7 @@ static Attach (how) {
 	if (found == 0)
 	    Msg (0, "There is no screen to be resumed.");
 	if (found > 1)
-	    Msg (0, "Type \"screen -r host.tty\" to resume one of them.");
+	    Msg (0, "Type \"screen -r ttyX.scr\" to resume one of them.");
 	closedir (dirp);
 	strcpy (SockNamePtr, last);
 	SockName = SockNamePtr;
@@ -1252,7 +1250,7 @@ static int GetSockName () {
 	setuid (getuid ());
 	setgid (getgid ());
     } else {
-	sprintf (buf, "%s.%s", HostName, Filename (GetTtyName ()));
+	sprintf (buf, "%s.scr", Filename (GetTtyName ()));
 	SockName = buf;
 	client = 0;
     }
@@ -1785,15 +1783,13 @@ bcopy (s1, s2, len) register char *s1, *s2; register len; {
 */
 #endif
 
-#ifndef GETHOSTNAME
 int gethostname (host, size)
 	char *host;
 	int size;
 {
-	strncpy (HostName, "elks", size);
+	strncpy (host, "elks", size);
 	return 0;
 }
-#endif
 
 #ifndef GETPGID
 gid_t getpgid(pid_t pid)
@@ -1867,7 +1863,7 @@ void exit_with_usage(myname)
 char *myname;
 {
   printf("Use: %s [-opts] [cmd [args]]\n", myname);
-  printf(" or: %s -r [host.tty]\n\nOptions:\n", myname);
+  printf(" or: %s -r [ttyX.scr]\n\nOptions:\n", myname);
   printf("-a           Force all capabilities into each window's termcap\n");
   printf("-e xy        Change command characters\n");
   printf("-f           Flow control on\n");
