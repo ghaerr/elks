@@ -60,6 +60,7 @@
 #include <netdb.h>
 #include <signal.h>
 #include <utmp.h>
+#include <termcap.h>
 struct dlist {
     char name[64];
     char mode[64];

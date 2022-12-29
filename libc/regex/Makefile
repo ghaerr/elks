@@ -1,4 +1,4 @@
-# Makefile of /libc/termcap module
+# Makefile of /libc/regex module
 
 include $(TOPDIR)/libc/Makefile.inc
 

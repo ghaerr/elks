@@ -1,4 +1,4 @@
-# Makefile of /libc/misc module
+# Makefile of /libc/ctype module
 
 include $(TOPDIR)/libc/Makefile.inc
 
