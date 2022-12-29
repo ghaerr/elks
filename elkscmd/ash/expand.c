@@ -348,7 +348,7 @@ again: /* jump here after setting a variable with ${var=text} */
 		val = NULL;
 	} else {
 		val = lookupvar(var);
-		if (val == NULL || (flags & VSNUL) && val[0] == '\0') {
+		if (val == NULL || ((flags & VSNUL) && val[0] == '\0')) {
 			val = NULL;
 			set = 0;
 		} else
@@ -890,7 +890,7 @@ expmeta(enddir, name)
 		*endname++ = '\0';
 	}
 	matchdot = 0;
-	if (start[0] == '.' || start[0] == CTLESC && start[1] == '.')
+	if (start[0] == '.' || (start[0] == CTLESC && start[1] == '.'))
 		matchdot++;
 	while (! int_pending() && (dp = readdir(dirp)) != NULL) {
 		if (dp->d_name[0] == '.' && ! matchdot)

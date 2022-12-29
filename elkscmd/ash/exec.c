@@ -339,7 +339,7 @@ hashcmd(argc, argv)  char **argv; {
 	while ((name = *argptr) != NULL) {
 		if ((cmdp = cmdlookup(name, 0)) != NULL
 		 && (cmdp->cmdtype == CMDNORMAL
-		     || cmdp->cmdtype == CMDBUILTIN && builtinloc >= 0))
+		     || (cmdp->cmdtype == CMDBUILTIN && builtinloc >= 0)))
 			delete_cmd_entry();
 		find_command(name, &entry, 1);
 		if (verbose) {
@@ -567,7 +567,7 @@ hashcd() {
 	for (pp = cmdtable ; pp < &cmdtable[CMDTABLESIZE] ; pp++) {
 		for (cmdp = *pp ; cmdp ; cmdp = cmdp->next) {
 			if (cmdp->cmdtype == CMDNORMAL
-			 || cmdp->cmdtype == CMDBUILTIN && builtinloc >= 0)
+			 || (cmdp->cmdtype == CMDBUILTIN && builtinloc >= 0))
 				cmdp->rehash = 1;
 		}
 	}
@@ -599,8 +599,8 @@ changepath(newval)
 	for (;;) {
 		if (*old != *new) {
 			firstchange = index;
-			if (*old == '\0' && *new == ':'
-			 || *old == ':' && *new == '\0')
+			if ((*old == '\0' && *new == ':')
+			 || (*old == ':' && *new == '\0'))
 				firstchange++;
 			old = new;	/* ignore subsequent differences */
 		}
@@ -637,8 +637,8 @@ clearcmdentry(firstchange) {
 	for (tblp = cmdtable ; tblp < &cmdtable[CMDTABLESIZE] ; tblp++) {
 		pp = tblp;
 		while ((cmdp = *pp) != NULL) {
-			if (cmdp->cmdtype == CMDNORMAL && cmdp->param.index >= firstchange
-			 || cmdp->cmdtype == CMDBUILTIN && builtinloc >= firstchange) {
+			if ((cmdp->cmdtype == CMDNORMAL && cmdp->param.index >= firstchange)
+			 || (cmdp->cmdtype == CMDBUILTIN && builtinloc >= firstchange)) {
 				*pp = cmdp->next;
 				ckfree(cmdp);
 			} else {

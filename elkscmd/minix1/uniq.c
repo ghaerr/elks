@@ -125,7 +125,7 @@ static int ourgetline(char *buf, int count)
 int main(int argc, char **argv)
 {
   char *p;
-  int inf = -1, outf;
+  int inf = -1;
 
   setbuf(stdout, buffer);
   for (--argc, ++argv; argc > 0 && (**argv == '-' || **argv == '+');
@@ -161,9 +161,7 @@ int main(int argc, char **argv)
 	xfopen(*argv++, "r");
 	argc--;
   }
-  if (argc == 0)
-	outf = 1;
-  else {
+  if (argc > 0) {
 	fclose(stdout);
 	xfopen(*argv++, "w");
 	argc--;

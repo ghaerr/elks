@@ -1030,7 +1030,7 @@ cmdputs(s)
 			subtype = 0;
 		} else if (c == CTLENDVAR) {
 			*q++ = '}';
-		} else if (c == CTLBACKQ | c == CTLBACKQ+CTLQUOTE)
+		} else if (c == CTLBACKQ || c == CTLBACKQ+CTLQUOTE)
 			cmdnleft++;		/* ignore it */
 		else
 			*q++ = c;
