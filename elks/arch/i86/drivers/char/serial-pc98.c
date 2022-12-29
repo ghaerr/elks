@@ -99,9 +99,12 @@ static int rs_write(struct tty *tty)
     int i = 0;
 
     while (tty->outq.len > 0) {
+	volatile int timeout = 30000;
 	/* Wait until transmitter hold buffer empty */
-	while (!(inb(port->io + UART_LSR) & UART_LSR_THRE))
-		;
+	while (!(inb(port->io + UART_LSR) & UART_LSR_THRE)) {
+	    if (--timeout == 0)
+	        break;
+	}
 	outb((char)tty_outproc(tty), port->io + UART_TX);
 	i++;
     }
@@ -216,9 +219,12 @@ static int rs_open(struct tty *tty)
 void rs_conout(dev_t dev, int c)
 {
     struct serial_info *sp = &ports[MINOR(dev) - RS_MINOR_OFFSET];
+    volatile int timeout = 30000;
 
-    while (!(inb(sp->io + UART_LSR) & UART_LSR_THRE))
-	continue;
+    while (!(inb(sp->io + UART_LSR) & UART_LSR_THRE)) {
+	if (--timeout == 0)
+	    break;
+    }
     outb(c, sp->io + UART_TX);
 }
 
