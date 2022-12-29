@@ -58,6 +58,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <arpa/inet.h>
 #include <signal.h>
 #include <utmp.h>
 #include <termcap.h>
@@ -176,6 +177,8 @@ struct dlist *p;
 }
 
 char encoded[512];
+
+void
 hexascii(s)
 char *s;
 {
@@ -193,6 +196,8 @@ char *s;
     }
     encoded[j] = '\0';
 }
+
+void
 asciihex(s)
 char *s;
 {
@@ -617,7 +622,7 @@ void parseinput()
 	    return;
 	}
 #ifndef AUTOJOIN
-	if (i == DO_JOIN)
+	if (i == DO_JOIN) {
 	    if ((newobj = finditem(TOK[1], olist)) != NULL) {
 		wasdate = 0;
 		obj = newobj;
@@ -629,7 +634,8 @@ void parseinput()
 		wasdate = 0;
 		return;
 	    }
-	if (i == DO_PART && !ischan(TOK[1]))
+	}
+	if (i == DO_PART && !ischan(TOK[1])) {
 	    if ((newobj = finditem(TOK[1], olist)) != NULL) {
 		wasdate = 0;
 		olist = delitem(TOK[1], olist);
@@ -641,6 +647,7 @@ void parseinput()
 		wasdate = 0;
 		return;
 	    }
+	}
 #endif
 	if (i == DO_MSG)
 	    i = DO_PRIVMSG;
@@ -1001,10 +1008,10 @@ For details please see the file COPYING.\n", RELEASE);
 	    *((char *) utmp->ut_host) == ':' /* X connection */ )
 	    tmp = userinfo->pw_gecos;
 	else {
+#ifndef ELKS
 	    struct hostent *h;
 	    struct in_addr a;
 	    a.s_addr = utmp->ut_addr;
-#ifndef ELKS
 	    if (!(h = gethostbyaddr((char *) &a.s_addr,
 				    sizeof(a.s_addr), AF_INET)))
 		tmp = (char *) inet_ntoa(a);

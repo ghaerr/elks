@@ -821,13 +821,14 @@ char *s, *t;
   if (*t == '[') {
 	while (*++t != ']') {
 		if (*t == '\\') ++t;
-		if (*(t + 1) != '-')
+		if (*(t + 1) != '-') {
 			if (*t == *s) {
 				while (*++t != ']')
 					if (*t == '\\') ++t;
 				return smatch(++s, ++t);
 			} else
 				continue;
+		}
 		if (*(t + 2) == ']') return(*s == *t || *s == '-');
 		n = (*(t + 2) == '\\') ? 3 : 2;
 		if (*s >= *t && *s <= *(t + n)) {

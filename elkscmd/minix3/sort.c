@@ -149,10 +149,10 @@ _PROTOTYPE(void sort_table, (int nel));
 _PROTOTYPE(void incr, (int si, int ei));
 _PROTOTYPE(int cmp_fields, (char *el1, char *el2));
 _PROTOTYPE(void build_field, (char *dest, FIELD * field, char *src));
-_PROTOTYPE(char *skip_fields, (char *str, int nf));
+_PROTOTYPE(char *skip_fields, (unsigned char *str, int nf));
 _PROTOTYPE(int compare, (char *el1, char *el2));
 _PROTOTYPE(int cmp, (unsigned char *el1, unsigned char *el2, FIELD * field));
-_PROTOTYPE(int digits, (char *str1, char *str2, BOOL check_sign));
+_PROTOTYPE(int digits, (unsigned char *str1, unsigned char *str2, BOOL check_sign));
 _PROTOTYPE(void files_merge, (int file_cnt));
 _PROTOTYPE(void merge, (int start_file, int limit_file));
 _PROTOTYPE(void put_line, (char *line));
@@ -271,16 +271,16 @@ register FIELD *field;		/* Field to assign */
 int *offset;			/* Offset in argv structure */
 BOOL beg_fl;			/* Assign beg or end of field */
 {
-  register char *ptr;
+  register unsigned char *ptr;
 
-  ptr = argptr[*offset];
+  ptr = (unsigned char *)argptr[*offset];
   *offset += 1;			/* Incr offset to next arg */
   ptr++;
 
   if (beg_fl)
-	field->beg_field = atoi(ptr);	/* Assign int of first field */
+	field->beg_field = atoi((char *)ptr);	/* Assign int of first field */
   else
-	field->end_field = atoi(ptr);
+	field->end_field = atoi((char *)ptr);
 
   while (table[*ptr] & DIGIT)	/* Skip all digits */
 	ptr++;
@@ -288,18 +288,18 @@ BOOL beg_fl;			/* Assign beg or end of field */
   if (*ptr == '.') {		/* Check for offset */
 	ptr++;
 	if (beg_fl)
-		field->beg_pos = atoi(ptr);
+		field->beg_pos = atoi((char *)ptr);
 	else
-		field->end_pos = atoi(ptr);
+		field->end_pos = atoi((char *)ptr);
 	while (table[*ptr] & DIGIT)	/* Skip digits */
 		ptr++;
   }
   if (beg_fl) {
 	while (*ptr != '\0')	/* Check options after field */
-		get_opts(ptr++, field);
+		get_opts((char *)ptr++, field);
   }
   if (beg_fl) {			/* Check for end pos */
-	ptr = argptr[*offset];
+	ptr = (unsigned char *)argptr[*offset];
 	if (ptr && *ptr == '-' && ((table[*(ptr + 1)] & DIGIT) || *(ptr + 1) == '.')) {
 		new_field(field, offset, FALSE);
 		if (field->beg_field > field->end_field)
@@ -700,7 +700,7 @@ register char *src;		/* Source line */
   int i;
 
 /* Skip begin fields */
-  src = skip_fields(src, field->beg_field);
+  src = skip_fields((unsigned char *)src, field->beg_field);
 
 /* Skip begin positions */
   for (i = 0; i < field->beg_pos && *src != '\n'; i++) src++;
@@ -710,7 +710,7 @@ register char *src;		/* Source line */
 
 /* If end field is assigned truncate (perhaps) the part copied */
   if (field->end_field != ERROR) {	/* Find last field */
-	last = skip_fields(begin, field->end_field);
+	last = skip_fields((unsigned char *)begin, field->end_field);
 /* Skip positions as given by end fields description */
 	for (i = 0; i < field->end_pos && *last != '\n'; i++) last++;
 	dest[last - src] = '\n';/* Truncate line */
@@ -719,7 +719,7 @@ register char *src;		/* Source line */
 
 /* Skip_fields () skips nf fields of the line pointed to by str. */
 char *skip_fields(str, nf)
-register char *str;
+register unsigned char *str;
 int nf;
 {
   while (nf-- > 0) {
@@ -731,7 +731,7 @@ int nf;
 		if (*str == separator) str++;
 	}
   }
-  return str;			/* Return pointer to indicated field */
+  return (char *)str;			/* Return pointer to indicated field */
 }
 
 /* Compare is called by all sorting routines. It checks if fields assignments
@@ -763,7 +763,7 @@ FIELD *field;
 	while (table[*el2] & BLANK) el2++;
   }
   if (field->numeric)		/* Compare numeric */
-	return digits((char *) el1, (char *) el2, TRUE);
+	return digits(el1, el2, TRUE);
 
   for (;;) {
 	while (*el1 == *el2) {
@@ -819,7 +819,7 @@ FIELD *field;
  * by an optional decimal point.
  */
 int digits(str1, str2, check_sign)
-register char *str1, *str2;
+register unsigned char *str1, *str2;
 BOOL check_sign;		/* True if sign must be checked */
 {
   BOOL negative = FALSE;	/* True if negative numbers */
