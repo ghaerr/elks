@@ -44,6 +44,7 @@ OBJS = \
 	signal.o \
 	sleep.o \
 	syscall0.o \
+	signalcb.o \
 	telldir.o \
 	time.o \
 	times.o \
