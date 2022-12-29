@@ -13,7 +13,8 @@ include $(BASEDIR)/Make.rules
 ###############################################################################
 
 # TODO: lpd man mt install	# Do not compile.
-PRGS=env lp pwdauth remsync synctree tget
+# compiling but unused: pwdauth
+PRGS=env lp remsync synctree tget
 
 env: env.o $(TINYPRINTF)
 	$(LD) $(LDFLAGS) -o env env.o $(TINYPRINTF) $(LDLIBS)

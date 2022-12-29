@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <string.h>
 #if UNIX
 #include <fcntl.h>
 #include <unistd.h>
@@ -756,10 +757,10 @@ drawbutton(window, label)
 	GR_SIZE		height;
 	GR_SIZE		base;
 
-	GrGetGCTextSize(buttongc, label, strlen(label), &width, &height, &base);
+	GrGetGCTextSize(buttongc, (unsigned char *)label, strlen(label), &width, &height, &base);
 	GrText(window, buttongc, (BUTTONWIDTH - width) / 2,
 		(BUTTONHEIGHT - height) / 2 + height - 1,
-		label, strlen(label));
+		(unsigned char *)label, strlen(label));
 }
 
 
@@ -902,7 +903,7 @@ static void printline(GR_COORD row, char * fmt, ...)
 		}
 		if (width) {
 			GrText(statwid, statgc, charxpos, charypos,
-				cp - cc, cc);
+				(unsigned char *)cp - cc, cc);
 			charxpos += width;
 		}
 

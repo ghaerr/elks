@@ -60,7 +60,7 @@ static char sccsid[] = "@(#)cd.c	5.2 (Berkeley) 3/13/91";
 #ifdef __STDC__
 STATIC int docd(char *, int, int);
 STATIC void updatepwd(char *);
-STATIC void getpwd(void);
+/*STATIC void getpwd(void);*/
 STATIC char *getcomponent(void);
 #else
 STATIC int docd();

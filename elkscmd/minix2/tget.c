@@ -7,9 +7,9 @@
 #include <string.h>
 #include <termcap.h>
 
-void fputchar(int c)
+int fputchar(int c)
 {
-	putchar(c);
+	return putchar(c);
 }
 
 void usage(void)
@@ -20,7 +20,7 @@ void usage(void)
 	exit(-1);
 }
 
-void main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	char termbuf[1024];
 	char string[256], *pstr;

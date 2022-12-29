@@ -666,11 +666,11 @@ evalcommand(cmd, flags, backcmd)
 
 	/* Fork off a child process if necessary. */
 	if (cmd->ncmd.backgnd
-	 || cmdentry.cmdtype == CMDNORMAL && (flags & EV_EXIT) == 0
-	 || (flags & EV_BACKCMD) != 0
+	 || (cmdentry.cmdtype == CMDNORMAL && (flags & EV_EXIT) == 0)
+	 || ((flags & EV_BACKCMD) != 0
 	    && (cmdentry.cmdtype != CMDBUILTIN
 		 || cmdentry.u.index == DOTCMD
-		 || cmdentry.u.index == EVALCMD)) {
+		 || cmdentry.u.index == EVALCMD))) {
 		jp = makejob(cmd, 1);
 		mode = cmd->ncmd.backgnd;
 		if (flags & EV_BACKCMD) {

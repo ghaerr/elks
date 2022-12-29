@@ -314,7 +314,7 @@ bltinlookup(name, doall)
 	for (v = *hashvar(name) ; v ; v = v->next) {
 		if (varequal(v->text, name)) {
 			if (v->flags & VUNSET
-			 || ! doall && (v->flags & VEXPORT) == 0)
+			 || (! doall && (v->flags & VEXPORT) == 0))
 				return NULL;
 			return strchr(v->text, '=') + 1;
 		}

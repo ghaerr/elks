@@ -14,8 +14,8 @@ include $(BASEDIR)/Make.defs
 
 # All subdirectories to build & clean
 
-# TODO: broken command compilations
-# byacc screen m4 xvi nano
+# TODO: broken command compilations: byacc m4 xvi
+# unused commands but working compilations: mtools nano prems
 SUBDIRS =       \
 	lib         \
 	ash         \
@@ -32,9 +32,7 @@ SUBDIRS =       \
 	minix2      \
 	minix3      \
 	misc_utils  \
-	mtools      \
 	nano-X      \
-	prems       \
 	sash        \
 	screen      \
 	cron        \

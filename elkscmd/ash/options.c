@@ -134,7 +134,7 @@ options(cmdline) {
 		argptr++;
 		if ((c = *p++) == '-') {
 			val = 1;
-                        if (p[0] == '\0' || p[0] == '-' && p[1] == '\0') {
+                        if (p[0] == '\0' || (p[0] == '-' && p[1] == '\0')) {
                                 if (!cmdline) {
                                         /* "-" means turn off -x and -v */
                                         if (p[0] == '\0')
