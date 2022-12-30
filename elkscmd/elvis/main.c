@@ -23,7 +23,7 @@
 #include "ex.h"
 #include "tmp.h"
 
-extern		trapint(); /* defined below */
+extern void trapint(int); /* defined below */
 extern char	*getenv();
 jmp_buf		jmpenv;
 
@@ -342,7 +342,7 @@ int main(int argc, REG char *argv[])
 
 
 /*ARGSUSED*/
-int trapint(signo)
+void trapint(signo)
 	int	signo;
 {
 	resume_curses(FALSE);
@@ -356,8 +356,6 @@ int trapint(signo)
 	signal(signo, trapint);
 #endif
 	longjmp(jmpenv, 1);
-
-	return 0;
 }
 
 

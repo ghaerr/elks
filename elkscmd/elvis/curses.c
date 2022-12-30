@@ -559,7 +559,7 @@ static int getWindowSize(int ifd, int ofd, int *rows, int *cols)
  * to this process.
  */
 
-int getsize(int signo)
+void getsize(int signo)
 {
 	int	lines;
 	int	cols;
@@ -620,8 +620,6 @@ int getsize(int signo)
 		*o_columns = COLS;
 		*o_lines = LINES;
 	}
-
-	return 0;
 }
 
 

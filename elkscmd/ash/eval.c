@@ -592,10 +592,10 @@ evalcommand(cmd, flags, backcmd)
 	varflag = 1;
 	for (argp = cmd->ncmd.args ; argp ; argp = argp->narg.next) {
 		p = argp->narg.text;
-		if (varflag && is_name(*p)) {
+		if (varflag && is_name(*p & 255)) {
 			do {
 				p++;
-			} while (is_in_name(*p));
+			} while (is_in_name(*p & 255));
 			if (*p == '=') {
 				expandarg(argp, &varlist, 0);
 				continue;

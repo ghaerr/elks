@@ -15,8 +15,8 @@ int fstat __P((int __fd, struct stat * __statbuf));
 
 int stat (const char * restrict path, struct stat * restrict buf);
 int mkdir(const char *pathm, mode_t mode);
-int mknod(char *path, mode_t mode, dev_t dev);
-int mkfifo(char *path, mode_t mode);
+int mknod(const char *path, mode_t mode, dev_t dev);
+int mkfifo(const char *path, mode_t mode);
 mode_t umask(mode_t mode);
 int chmod(const char *path, mode_t mode);
 

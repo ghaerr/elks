@@ -1129,16 +1129,16 @@ register char *ep;		/* regular expression element ptr */
 		return(FALSE);	/* else return false */
 
 	    case CBRA:		/* start of tagged pattern */
-		brastart[*ep++] = lp;	/* mark it */
+		brastart[*ep++ & 255] = lp;	/* mark it */
 		continue;	/* and go */
 
 	    case CKET:		/* end of tagged pattern */
-		bracend[*ep++] = lp;	/* mark it */
+		bracend[*ep++ & 255] = lp;	/* mark it */
 		continue;	/* and go */
 
 	    case CBACK:
-		bbeg = brastart[*ep];
-		ct = bracend[*ep++] - bbeg;
+		bbeg = brastart[*ep & 255];
+		ct = bracend[*ep++ & 255] - bbeg;
 
 		if (Memcmp(bbeg, lp, ct)) {
 			lp += ct;
@@ -1147,8 +1147,8 @@ register char *ep;		/* regular expression element ptr */
 		return(FALSE);
 
 	    case CBACK | STAR:
-		bbeg = brastart[*ep];
-		ct = bracend[*ep++] - bbeg;
+		bbeg = brastart[*ep & 255];
+		ct = bracend[*ep++ & 255] - bbeg;
 		curlp = lp;
 		while (Memcmp(bbeg, lp, ct)) lp += ct;
 
@@ -1193,7 +1193,7 @@ register char *ep;		/* regular expression element ptr */
 			return(FALSE);
 		}
 		if (*ep == CBACK) {
-			c = *(brastart[ep[1]]);
+			c = *(brastart[ep[1] & 255]);
 			do {
 				if (*lp != c) continue;
 				if (advance(lp, ep)) return (TRUE);
@@ -1519,7 +1519,7 @@ cpcom:				/* so s command can jump here */
       case YCMD:
 	p1 = linebuf;
 	p2 = ipc->u.lhs;
-	while (*p1 = p2[*p1]) p1++;
+	while (*p1 = p2[*p1 & 255]) p1++;
 	break;
   }
 }

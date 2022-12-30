@@ -2,7 +2,7 @@
 #include <sys/stat.h>
 
 int
-mkfifo(char * path, int mode)
+mkfifo(const char * path, int mode)
 {
    return mknod(path, mode | S_IFIFO, 0);
 }
