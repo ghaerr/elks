@@ -56,6 +56,8 @@ INCLUDES=-I$(TOPDIR)/include -I$(TOPDIR)/libc/include -I$(ELKS_DIR)/include
 
 # temporarily turn off typical non-K&R warnings for now
 WARNINGS = -Wno-implicit-int
+# temporarily turn off suggesting parenthesis around assignment used as truth value
+WARNINGS += -Wno-parentheses
 
 ##############################################################################
 #

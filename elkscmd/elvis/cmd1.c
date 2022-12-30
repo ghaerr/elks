@@ -647,8 +647,9 @@ void cmd_args(frommark, tomark, cmd, bang, extra)
 			col+=addcols;
 		}
 		/* write a trailing newline */
-		if ((mode == MODE_EX || mode == MODE_COLON || scrolled) && col)
+		if ((mode == MODE_EX || mode == MODE_COLON || scrolled) && col) {
 			addch('\n');
+		}
 		exrefresh();
 	}
 	else /* new args list given */

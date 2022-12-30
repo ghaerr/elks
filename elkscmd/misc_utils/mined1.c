@@ -1349,13 +1349,14 @@ int get_line(int fd, register char *buffer)
   if (read_chars <= 0) {
   	if (buffer == begin)
   		return ERRORS;
-  	if (*(buffer - 1) != '\n')
+	if (*(buffer - 1) != '\n') {
   		if (loading == TRUE) /* Add '\n' to last line of file */
   			*buffer++ = '\n';
   		else {
   			*buffer = '\0';
   			return NO_LINE;
   		}
+	}
   }
 
   *buffer = '\0';
@@ -1497,7 +1498,7 @@ void (*escfunc(int c))(void)
 	c = getchar();
 	switch (c) {
 	case 'H': return(HO);
-	case 'A': return(UP);
+	case 'A': return(doUP);
 	case 'B': return(DN);
 	case 'C': return(RT);
 	case 'D': return(LF);
@@ -1842,9 +1843,10 @@ void _flush(void)
   (void) fflush(stdout);
 }
 
-void _putchar(int c)
+int _putchar(int c)
 {
-  (void) write_char(STD_OUT, c);
+  write_char(STD_OUT, c);
+  return c;
 }
 
 void get_term(void)

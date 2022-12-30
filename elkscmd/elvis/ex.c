@@ -527,8 +527,8 @@ void doexcmd(cmdbuf)
 			*build = '\0';
 
 			if (cmd == CMD_BANG
-			 || cmd == CMD_READ && tmpblk.c[0] == '!'
-			 || cmd == CMD_WRITE && tmpblk.c[0] == '!')
+			 || (cmd == CMD_READ && tmpblk.c[0] == '!')
+			 || (cmd == CMD_WRITE && tmpblk.c[0] == '!'))
 			{
 				if (didsub)
 				{

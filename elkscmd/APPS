@@ -87,9 +87,6 @@ CONFIG_APP_BUSYELKS		busyelks/		Not selected by default. When selected, B option
 # Other commands
 CONFIG_APP_ELVIS		elvis/			Elvis vi editor, installs as /bin/vi.
 
-CONFIG_APP_MTOOLS		mtools/			Early MSDOS mtools v1.6.2 from 1989, with man pages.
-										Installs into /bin: mcopy, mdel, mdir, mkdfs, mmd, mrd, mread,
-											mren, mtype, mwrite
 CONFIG_APP_NANOX		nano-X/			Nano-X Graphical Window System v0.86 from 1999.
 										Too many programs to fit on 1440k floppy
 										Installs /bin/landmine
@@ -98,6 +95,9 @@ CONFIG_APP_NANOX		nano-X/			Nano-X Graphical Window System v0.86 from 1999.
 
 CONFIG_APP_OTHER		bc/				Calculator
 
+CONFIG_APP_OTHER		mtools/			Early MSDOS mtools v1.6.2 from 1989, with man pages.
+										Installs into /bin: mcopy, mdel, mdir, mkdfs, mmd, mrd, mread,
+											mren, mtype, mwrite
 CONFIG_APP_OTHER		prems/			Compression library and compress/gzip lookalike.
 										Installs /bin/pres. flparc not installed.
 

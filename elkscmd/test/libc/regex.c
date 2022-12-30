@@ -2,11 +2,15 @@
 
 #include <regex.h>
 #include <stdlib.h>
+#include <stdio.h>
+
+void regerror(char *msg)
+{
+    printf("regerror: %s\n", msg);
+}
 
 TEST_CASE(regex_regcomp)
 {
-/* TODO regex is not currently linkable due to missing symbols */
-#if 0
 	struct regexp *r;
 
 	r = regcomp("^literal$");
@@ -72,5 +76,4 @@ TEST_CASE(regex_regcomp)
 	ASSERT_EQ(regexec(r, "i = 42;"), 1);
 	ASSERT_EQ(regexec(r, "key = \"value\";"), 1);
 	free(r);
-#endif
 }

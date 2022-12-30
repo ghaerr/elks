@@ -734,7 +734,7 @@ void cmd_print(frommark, tomark, cmd, bang, extra)
 					col++;
 				} while (col % *o_tabstop != 0);
 			}
-			else if (*scan >= 0 && *scan < ' ' || *scan == '\177')
+			else if ((*scan >= 0 && *scan < ' ') || *scan == '\177')
 			{
 				qaddch('^');
 				qaddch(*scan ^ 0x40);

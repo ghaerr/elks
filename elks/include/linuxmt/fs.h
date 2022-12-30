@@ -40,8 +40,8 @@
 
 #define USE_GETBLK
 
-/*  It's silly to have NR_OPEN bigger than NR_FILE, but I'll fix that later.
- *  Anyway, now the file code is no longer dependent on bitmaps in unsigned
+/*
+ *  Now the file code is no longer dependent on bitmaps in unsigned
  *  longs, but uses the new fd_set structure..
  */
 

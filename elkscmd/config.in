@@ -33,7 +33,6 @@ mainmenu_option next_comment
 		bool 'test'       		CONFIG_APP_TEST         n
 		bool 'busyelks'			CONFIG_APP_BUSYELKS		n
 		bool 'cgatext'			CONFIG_APP_CGATEXT	    n
-		bool 'mtools'			CONFIG_APP_MTOOLS		n
 		string 'Additional TAG string for app selection'  CONFIG_APP_TAGS      ''
 
 		#comment 'Commands not compiling'

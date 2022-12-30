@@ -8,23 +8,27 @@
 	.code16
 	.text
 
+//------------------------------------------------------------------------------
+// Save BIOS IRQ 0 timer vector
+// void save_timer_irq(void)
+//------------------------------------------------------------------------------
+
 	.global	save_timer_irq
 save_timer_irq:
+	push	%es
 	xor	%ax,%ax
-	mov	%ax,%ds		// DS -> interrupt table, ES -> kernel data seg
+	mov	%ax,%es		// ES -> interrupt table
 	mov	$8*4,%bx	// INT 8 (IRQ 0) vector
-	mov	(%bx),%ax	// get the old timer intr
-	mov	%ax,%es:org_irq0
-	mov	2(%bx),%ax
-	mov	%ax,%es:org_irq0+2
-	push	%ss		// restore DS
-	pop	%ds
+	mov	%es:(%bx),%ax	// get the old timer intr
+	mov	%ax,org_irq0
+	mov	%es:2(%bx),%ax
+	mov	%ax,org_irq0+2
+	pop	%es
 	ret
 
 //------------------------------------------------------------------------------
 // Set interrupt vector
 //------------------------------------------------------------------------------
-
 // void int_vector_set (int vect, int_proc proc, int seg);
 // arg1: vector number (byte pushed as word by the C compiler)
 // arg2: function offset (word)
@@ -54,7 +58,7 @@ int_vector_set:
 	ret
 
 //------------------------------------------------------------------------------
-
+//
 //	IRQ and IRQ return paths for Linux 8086
 //
 // The execution thread will not return from the function call.

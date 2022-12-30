@@ -267,6 +267,7 @@ _do_compare (n1, n2, use_sign, ignore_last)
 
   /* They are equal up to the last part of the equal part of the fraction. */
   if (n1->n_scale != n2->n_scale)
+    {
     if (n1->n_scale > n2->n_scale)
       {
 	for (count = n1->n_scale-n2->n_scale; count>0; count--)
@@ -291,6 +292,7 @@ _do_compare (n1, n2, use_sign, ignore_last)
 		return (1);
 	    }
       }
+    }
 
   /* They must be equal! */
   return (0);
@@ -1001,7 +1003,7 @@ bc_raise (num1, num2, result, scale)
    /* Do the calculation. */
    while (exponent != 0)
      {
-       if (exponent & 1 != 0)
+       if ((exponent & 1) != 0)
 	 bc_multiply (temp, power, &temp, rscale);
        bc_multiply (power, power, &power, rscale);
        exponent = exponent >> 1;

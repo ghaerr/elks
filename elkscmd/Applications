@@ -111,7 +111,6 @@ sh_utils/tr						:shutil				:720k
 #sh_utils/whoami				:shutil					:1200k	:1440k
 sh_utils/xargs					:shutil					:1200k	:1440k
 sh_utils/yes					:shutil				:720k
-test/libc/test_libc				:other
 misc_utils/float				:miscutil						:1440k
 misc_utils/compress				:miscutil						:1440k
 misc_utils/miniterm				:miscutil			:720k
@@ -182,20 +181,21 @@ inet/urlget/urlget				:net
 inet/urlget/urlget :::ftpget	:net
 inet/urlget/urlget :::ftpput	:net
 inet/urlget/urlget :::httpget	:net
-#mtools/mcopy					:mtools					:1440k
-#mtools/mdel					:mtools					:1440k
-#mtools/mdir					:mtools					:1440k
-#mtools/mkdfs					:mtools					:1440k
-#mtools/mmd						:mtools					:1440k
-#mtools/mrd						:mtools					:1440k
-#mtools/mread					:mtools					:1440k
-#mtools/mren					:mtools					:1440k
-#mtools/mtype					:mtools					:1440k
-#mtools/mwrite					:mtools					:1440k
 bc/bc							:other
+test/libc/test_libc				:other
+#nano/nano-2.0.6/src/nano		:other					:1440k
+#mtools/mcopy					:other
+#mtools/mdel					:other
+#mtools/mdir					:other
+#mtools/mkdfs					:other
+#mtools/mmd						:other
+#mtools/mrd						:other
+#mtools/mread					:other
+#mtools/mren					:other
+#mtools/mtype					:other
+#mtools/mwrite					:other
 #m4/m4							:other
 #prems/pres/pres				:other
-#nano/nano-2.0.6/src/nano		:other					:1440k
 #nano-X/bin/nxclock				:nanox					:1440k
 #nano-X/bin/nxdemo				:nanox					:1440k
 nano-X/bin/nxlandmine			:nanox				:1200k

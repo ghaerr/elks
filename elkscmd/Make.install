@@ -75,10 +75,6 @@ ifdef CONFIG_APP_MINIX3
 	endif
 endif
 
-ifdef CONFIG_APP_MTOOLS
-	TAGS += :mtools|
-endif
-
 ifdef CONFIG_APP_MISC_UTILS
 	TAGS += :miscutil|
 	ifeq ($(CONFIG_APP_MISC_UTILS), y)

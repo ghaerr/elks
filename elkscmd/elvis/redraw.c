@@ -186,7 +186,7 @@ int idx2col(curs, text, inputting)
 			col += *o_tabstop;
 			col -= col % *o_tabstop;
 		}
-		else if (i >= '\0' && i < ' ' || i == '\177')
+		else if ((i >= '\0' && i < ' ') || i == '\177')
 		{
 			col += 2;
 		}
@@ -301,7 +301,7 @@ static void drawtext(text, clr)
 		{
 			col = col + tabstop - (col % tabstop);
 		}
-		else if (i >= 0 && i < ' ' || i == '\177')
+		else if ((i >= 0 && i < ' ') || i == '\177')
 		{
 			col += 2;
 		}
@@ -390,7 +390,7 @@ static void drawtext(text, clr)
 				}
 			}
 		}
-		else if (i >= 0 && i < ' ' || i == '\177')
+		else if ((i >= 0 && i < ' ') || i == '\177')
 		{
 			col += 2;
 			qaddch('^');
@@ -793,7 +793,7 @@ void redraw(curs, inputting)
 		/* near bottom -- scroll up */
 		if (!mustredraw
 #if 1
-		 || redrawafter == preredraw && preredraw == botline && postredraw == l
+		 || (redrawafter == preredraw && preredraw == botline && postredraw == l)
 #endif
 		)
 		{

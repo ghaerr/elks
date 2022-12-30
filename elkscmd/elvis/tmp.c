@@ -177,7 +177,7 @@ int tmpstart(filename)
 
 	/* generate a checksum from the file's name */
 	for (sum = 0, scan = origname + strlen(origname);
-	     --scan >= origname && (isascii(*scan) && isalnum(*scan) || *scan == '.');
+	     --scan >= origname && ((isascii(*scan) && isalnum(*scan)) || *scan == '.');
 	     sum = sum + *scan)
 	{
 	}
@@ -194,7 +194,7 @@ int tmpstart(filename)
 		tmpname[i++]=SLASH;
 	sprintf(tmpname+i, TMPNAME+3, sum, statb.st_ino, statb.st_dev);
 #else
-	sprintf(tmpname, TMPNAME, o_directory, sum, statb.st_ino, statb.st_dev);
+	sprintf(tmpname, TMPNAME, o_directory, sum, (unsigned int)statb.st_ino, statb.st_dev);
 #endif
 
 #if 0	/* remove tmpfile busy check for ELKS*/
