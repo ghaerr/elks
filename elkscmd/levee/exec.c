@@ -344,7 +344,7 @@ getname()
 #endif
     register char *name;
     if (name = getarg()) {
-	if (strcmp(name,"#") == 0)
+	if (strcmp(name,"#") == 0) {
 	    if (*altnm)
 		name = altnm;
 	    else {
@@ -358,6 +358,7 @@ getname()
 		if (*p == '/')
 		    *p = '\\';
 #endif
+	}
     }
     return name;
 } /* getname */
@@ -958,13 +959,14 @@ exec(cmd, mode, noquit)
 	    break;
 	case EX_XIT:
 	    clrmsg();
-	    if (modified)
+	    if (modified) {
 		if (readonly) {
 		    prints(fisro);
 		    break;
 		}
 		else if (!writefile())
 		    break;
+	    }
 
 	    if (!affirm && (argc-pc > 1)) {	/* any more files to edit? */
 		printch('(');

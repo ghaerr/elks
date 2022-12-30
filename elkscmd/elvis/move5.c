@@ -63,7 +63,7 @@ MARK	m_fword(m, cnt, cmd)
 		}
 
 		/* include trailing whitespace */
-		while (!i || isascii(i) && isspace(i))
+		while (!i || (isascii(i) && isspace(i)))
 		{
 			/* did we hit the end of this line? */
 			if (!i)
@@ -107,7 +107,7 @@ MARK	m_bword(m, cnt, cmd)
 		text--;
 
 		/* include preceding whitespace */
-		while (text < ptext || isascii(*text) && isspace(*text))
+		while (text < ptext || (isascii(*text) && isspace(*text)))
 		{
 			/* did we hit the end of this line? */
 			if (text < ptext)
@@ -179,7 +179,7 @@ MARK	m_eword(m, cnt, cmd)
 		i = *text++;
 
 		/* include preceding whitespace */
-		while (!i || isascii(i) && isspace(i))
+		while (!i || (isascii(i) && isspace(i)))
 		{
 			/* did we hit the end of this line? */
 			if (!i)

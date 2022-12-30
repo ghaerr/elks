@@ -482,7 +482,7 @@ bool down;
     else {
 	curr = bseekeol(max(0,nextline(FALSE, curr, count)));
 	i = bseekeol(max(0,nextline(FALSE, ptop, count)));
-	if (i < ptop)
+	if (i < ptop) {
 	    if (canUPSCROLL)
 		scrollback(i);
 	    else {
@@ -490,6 +490,7 @@ bool down;
 		setend();
 		redisplay(TRUE);
 	    }
+	}
     }
     strput(CURon);
     setpos(skipws(curr));	/* initialize new position - first nonwhite */

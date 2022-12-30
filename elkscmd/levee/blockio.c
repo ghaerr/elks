@@ -45,5 +45,7 @@ putfile(f, start, endd)
 register FILE *f;
 register start, endd;
 {
-    write(fileno(f), core+start, endd-start);
+    int n;
+    n = write(fileno(f), core+start, endd-start);
+    return (n == endd-start);
 }

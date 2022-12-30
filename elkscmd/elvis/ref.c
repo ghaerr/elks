@@ -145,7 +145,7 @@ int desired(char *line, char *word)
 	{
 	}
 	scan -= wlen;
-	if (scan < line - 1 || *scan != ' ' && *scan != '\t' && *scan != '*')
+	if (scan < line - 1 || (*scan != ' ' && *scan != '\t' && *scan != '*'))
 	{
 		return 0;
 	}
