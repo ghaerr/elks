@@ -228,7 +228,7 @@ extern char	*linespec();	/* finds the end of a /regexp/ string */
 #ifndef NO_RECYCLE
 extern long	allocate();	/* allocate a free block of the tmp file */
 #endif
-extern int	trapint();	/* trap handler for SIGINT */
+extern void	trapint(int);/* trap handler for SIGINT */
 extern void	blkdirty();	/* marks a block as being "dirty" */
 extern void	blkflush();	/* writes a single dirty block to the disk */
 extern void	blksync();	/* forces all "dirty" blocks to disk */

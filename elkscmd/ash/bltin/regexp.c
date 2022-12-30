@@ -248,15 +248,15 @@ ccl:
 				goto bad;
 			break;
 		case RE_LP:
-			match_begin[*p++] = q;
+			match_begin[*p++ & 255] = q;
 			break;
 		case RE_RP:
-			match_length[*p] = q - match_begin[*p];
+			match_length[*p & 255] = q - match_begin[*p & 255];
 			p++;
 			break;
 		case RE_MATCHED:
-			r = match_begin[*p];
-			len = match_length[*p++];
+			r = match_begin[*p & 255];
+			len = match_length[*p++ & 255];
 			while (--len >= 0) {
 				if (*q++ != *r++)
 					goto bad;
@@ -288,7 +288,7 @@ bad:
 		return 0;
 	len = 1;
 	if (*curpat == RE_MATCHED) {
-		len = match_length[curpat[1]];
+		len = match_length[curpat[1] & 255];
 	}
 	while (--count >= low) {
 		if (match(p, start_count + count * len))
