@@ -237,7 +237,10 @@ setjobenv(crontab *tab, char *env)
 
     if ( env ) {
 	env = xstrdup(env, "setjobenv");
-	if ( (p=strchr(env,'=')) == 0 ) return;
+	if ( (p=strchr(env,'=')) == 0 ) {
+	    free(env);
+	    return;
+	}
 
 	for (i=0; i < tab->sze; i++)
 	    if (strncmp(tab->env[i], env, (p-env)) == 0) {
