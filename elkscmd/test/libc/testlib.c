@@ -23,6 +23,7 @@ unsigned int testlib_testFails;
 const char *test_name;
 
 static jmp_buf env;
+static void *autoFree = NULL;
 
 int testlib_getErrno()
 {
@@ -103,20 +104,22 @@ void testlib_abort(const char *fmt, ...)
 
 void *testlib_malloc(unsigned int size)
 {
-	void *p = malloc(size);
-	/* TODO auto-free after test */
+	char *p = malloc(sizeof(void*) + size);
 	if (p == NULL)
 		testlib_abort("%s failed: %s\n", "malloc", strerror(errno));
-	return p;
+	*(void **)p = autoFree;
+	autoFree = p;
+	return p + sizeof(void*);
 }
 
 char *testlib_strdup(const char *s)
 {
 	char *p = strdup(s);
-	/* TODO auto-free after test */
 	if (p == NULL)
 		testlib_abort("%s failed: %s\n", "strdup", strerror(errno));
-	return p;
+	*(void **)p = autoFree;
+	autoFree = p;
+	return p + sizeof(void*);
 }
 
 void testlib_showInfo(const char *file, int line, const char *fmt, ...)
@@ -177,8 +180,11 @@ static void testlib_initEnv()
 
 static void testlib_deinitEnv()
 {
-	/* TODO clean up test resources: convenience mallocs, dirs, etc */
-	/* TODO check for leaked file handles? */
+	while (autoFree) {
+		void *p = autoFree;
+		autoFree = *(void **)autoFree;
+		free(p);
+	}
 }
 
 void testlib_runTestCases(testfn_t *start, testfn_t *end)
