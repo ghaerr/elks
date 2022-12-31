@@ -6,7 +6,7 @@
 
 void regerror(char *msg)
 {
-    printf("regerror: %s\n", msg);
+	printf("regerror: %s\n", msg);
 }
 
 TEST_CASE(regex_regcomp)
