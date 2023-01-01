@@ -11,12 +11,11 @@
 
 #else /* Not NDEBUG.  */
 
-extern void __assert __P((const char *, const char *, int));
+void __assert(const char *, const char *, int);
 
 #define	assert(expr)							      \
   ((void) ((expr) ||							      \
-	   (__assert (__STRING(expr),				      \
-			   __FILE__, __LINE__), 0)))
+	   (__assert (__STRING(expr), __FILE__, __LINE__), 0)))
 
 #endif /* NDEBUG.  */
 

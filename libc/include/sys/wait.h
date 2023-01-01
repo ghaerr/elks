@@ -55,8 +55,7 @@ extern pid_t wait (int * stat_loc);
    Return (pid_t) -1 for errors.  If the WUNTRACED bit is
    set in OPTIONS, return status for stopped children; otherwise don't.  */
 
-extern pid_t waitpid __P ((pid_t __pid, int *__stat_loc,
-			     int __options));
+pid_t waitpid(pid_t __pid, int *__stat_loc, int __options);
 
 /* This being here makes the prototypes valid whether or not
    we have already included <sys/resource.h> to define `struct rusage'.  */
@@ -67,11 +66,9 @@ struct rusage;
    nil, store information about the child's resource usage there.  If the
    WUNTRACED bit is set in OPTIONS, return status for stopped children;
    otherwise don't.  */
-extern pid_t wait3 __P ((int * __stat_loc,
-			   int __options, struct rusage * __usage));
+pid_t wait3(int * __stat_loc, int __options, struct rusage * __usage);
 
 /* PID is like waitpid.  Other args are like wait3.  */
-extern pid_t wait4 __P ((pid_t __pid, int * __stat_loc,
-			   int __options, struct rusage *__usage));
+pid_t wait4(pid_t __pid, int * __stat_loc, int __options, struct rusage *__usage);
 
 #endif /* sys/wait.h  */

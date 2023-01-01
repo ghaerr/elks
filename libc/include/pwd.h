@@ -18,23 +18,23 @@ struct passwd
 };
 
 
-extern void setpwent __P ((void));
-extern void endpwent __P ((void));
-extern struct passwd * getpwent __P ((void));
+void setpwent(void);
+void endpwent(void);
+struct passwd * getpwent(void);
 
 int putpwent (const struct passwd * p, FILE * stream);
-extern int getpw __P ((uid_t uid, char *buf));
+int getpw(uid_t uid, char *buf);
 
-extern struct passwd * fgetpwent __P ((FILE * file));
+struct passwd * fgetpwent(FILE * file);
 
-extern struct passwd * getpwuid __P ((__const uid_t));
-extern struct passwd * getpwnam __P ((__const char *));
+struct passwd * getpwuid(const uid_t);
+struct passwd * getpwnam(const char *);
 
 #ifdef __LIBC__
-extern struct passwd * __getpwent __P ((__const int passwd_fd));
+struct passwd * __getpwent(const int passwd_fd);
 #endif
 
-extern char *getpass(char *prompt);
+char *getpass(char *prompt);
 
 #endif /* pwd.h  */
 
