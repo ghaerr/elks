@@ -36,16 +36,16 @@ struct utmp
 
 };
 
-extern void             setutent __P ((void));
-extern void             utmpname __P ((__const char *));
-extern struct utmp *    getutent __P ((void));
-extern struct utmp *    getutid __P ((__const struct utmp *));
-extern struct utmp *    getutline __P ((__const struct utmp *));
-extern struct utmp *    pututline __P ((__const struct utmp *));
-extern void             endutent __P ((void));
+void             setutent(void);
+void             utmpname(const char *);
+struct utmp *    getutent(void);
+struct utmp *    getutid(const struct utmp *);
+struct utmp *    getutline(const struct utmp *);
+struct utmp *    pututline(const struct utmp *);
+void             endutent(void);
 
 #ifdef __LIBC__
-struct utmp *           __getutent __P ((int));
+struct utmp *    __getutent(int);
 #endif
 
 #endif /* __UTMP_H */

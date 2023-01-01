@@ -44,24 +44,21 @@ extern long timezone;
 
 __BEGIN_DECLS
 
-extern int	stime __P ((time_t* __tptr));
+int	stime (time_t* __tptr);
 
-extern clock_t	clock __P ((void));
-extern time_t	time __P ((time_t * __tp));
+clock_t	clock(void);
+time_t	time(time_t * __tp);
 #ifndef __HAS_NO_FLOATS__
-extern __CONSTVALUE double difftime __P ((time_t __time2,
-					  time_t __time1)) __CONSTVALUE2;
+double  difftime(time_t __time2, time_t __time1);
 #endif
-extern time_t	mktime __P ((struct tm * __tp));
+time_t	mktime(struct tm * __tp);
+char *	asctime(const struct tm * __tp);
+char *	ctime(const time_t * __tp);
+size_t	strftime(char * __s, size_t __smax, const char * __fmt, const struct tm * __tp);
+void	tzset(void);
 
-extern char *	asctime __P ((__const struct tm * __tp));
-extern char *	ctime __P ((__const time_t * __tp));
-extern size_t	strftime __P ((char * __s, size_t __smax,
-			__const char * __fmt, __const struct tm * __tp));
-extern void	tzset __P ((void));
-
-extern struct tm*	gmtime __P ((__const time_t *__tp));
-extern struct tm*	localtime __P ((__const time_t * __tp));
+struct tm*	gmtime(const time_t *__tp);
+struct tm*	localtime(const time_t * __tp);
 
 __END_DECLS
 

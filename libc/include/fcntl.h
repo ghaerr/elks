@@ -11,9 +11,9 @@
 
 __BEGIN_DECLS
 
-extern int creat __P ((__const char * __filename, mode_t __mode));
-extern int fcntl __P ((int __fildes,int __cmd, ...));
-extern int open __P ((__const char * __filename, int __flags, ...));
+int creat(const char * __filename, mode_t __mode);
+int fcntl(int __fildes,int __cmd, ...);
+int open(const char * __filename, int __flags, ...);
 
 __END_DECLS
 

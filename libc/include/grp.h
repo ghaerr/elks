@@ -14,21 +14,21 @@ struct group
   char **gr_mem;		/* Member list.	*/
 };
 
-extern void setgrent __P ((void));
-extern void endgrent __P ((void));
-extern struct group * getgrent __P ((void));
+void setgrent(void);
+void endgrent(void);
+struct group * getgrent(void);
 
-extern struct group * getgrgid __P ((__const gid_t gid));
-extern struct group * getgrnam __P ((__const char * name));
+struct group * getgrgid(const gid_t gid);
+struct group * getgrnam(const char * name);
 
-extern struct group * fgetgrent __P ((FILE * file));
+struct group * fgetgrent(FILE * file);
 
-extern int setgroups __P ((size_t n, __const gid_t * groups));
-extern int initgroups __P ((__const char * user, gid_t gid));
+int setgroups(size_t n, const gid_t * groups);
+int initgroups(const char * user, gid_t gid);
 
 
 #ifdef __LIBC__
-extern struct group * __getgrent __P ((int grp_fd));
+struct group * __getgrent(int grp_fd);
 #endif
 
 #endif /* _GRP_H */

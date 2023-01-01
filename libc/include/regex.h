@@ -15,10 +15,9 @@ typedef struct regexp {
 	char program[1];	/* Unwarranted chumminess with compiler. */
 } regexp;
 
-extern regexp *regcomp();
-extern int regexec();
-extern void regsub();
-extern void regerror();
+regexp *regcomp(char *exp);
+int regexec(regexp *prog, char *string);
+void regerror();
 
-extern int expandwildcards(char *name, int maxargc, char **retargv);
-extern void freewildcards(void);
+int expandwildcards(char *name, int maxargc, char **retargv);
+void freewildcards(void);
