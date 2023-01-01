@@ -59,7 +59,6 @@ main(int argc,char **argv)
 	GR_BITMAP	bitmap1bg[7];
 
 	if (GrOpen() < 0) {
-		fprintf(stderr, "cannot open graphics\n");
 		exit(1);
 	}
 	
