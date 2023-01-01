@@ -159,7 +159,6 @@ main(argc, argv)
 		return 1;
 	}
 	if (GrOpen() < 0) {
-		fprintf(stderr, "Cannot open graphics\n");
 		return 1;
 	}
 	GrGetScreenInfo(&si);

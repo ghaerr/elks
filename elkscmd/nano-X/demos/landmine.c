@@ -392,7 +392,6 @@ main(argc,argv)
 	 * Now open the graphics and play the game.
 	 */
 	if (GrOpen() < 0) {
-		fprintf(stderr, "Cannot open graphics\n");
 		exit(1);
 	}
 

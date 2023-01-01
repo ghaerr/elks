@@ -8,7 +8,6 @@ int main()
 	GR_EVENT 	event;
 
 	if (GrOpen() < 0) {
-		fprintf(stderr, "cannot open graphics\n");
 		exit(1);
 	}
 
