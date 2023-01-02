@@ -905,6 +905,7 @@ ne2k_stop:
 // returns:
 // AX: 0=found 1=not found
 
+#if 0
 	.global ne2k_probe
 
 ne2k_probe:
@@ -932,6 +933,7 @@ np_err:
 np_exit:
 
 	ret
+#endif
 
 //-----------------------------------------------------------------------------
 // NE2K reset
