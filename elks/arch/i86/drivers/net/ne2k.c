@@ -378,36 +378,30 @@ void ne2k_display_status(void)
 }
 #endif
 
+#if 0
 /* return 0 if NE2K NIC present */
 word_t ne2k_probe()
 {
-    int reg0 /*, regd*/;
+    int b;
 
-    /* first a basic ISA probe */
-    reg0 = inb(net_port);
-    printk("(%x)", reg0);
-    if (reg0 == 0xFF)
+    /* first a raw ISA probe */
+    b = inb(net_port);
+    printk("(%x)", b);
+    if (b == 0xff || b == 0)
         return 1;   /* not present */
+
+    /* then send 0x20 (NODMA, PAGE 0) to NIC */
+    outb(0x20, net_port);
     printk(",(%x)", inb(net_port));
-    /* then a preliminary verification that we have a 8390. */
-#define ENODMA_PAGE1_STOP   0x61
-#define ENODMA_PAGE0        0x20
-#define NE0_COUNTER0        0x0d    /* counter reg RD */
-    outb(ENODMA_PAGE1_STOP, net_port);
-    printk(",(%x)", inb(net_port));
-    /*regd = */ inb(net_port + NE0_COUNTER0);
-    outb(0xff, net_port + NE0_COUNTER0);
-    outb(ENODMA_PAGE0, net_port);
-    int b = inb(net_port + NE0_COUNTER0);   /* clear the counter by reading */
-    printk(",(%x)", b);
-    if (inb(net_port + NE0_COUNTER0) != 0) {
-        outb(reg0, net_port);       /* restore old value */
-        /*outb(regd, net_port + NE0_COUNTER0);*/
-        return 1;   /* not 8390 */
-    }
+    b = inb(net_port);
+    printk("(%x)", b);
+    if (b == 0xff || b == 0)
+        return 1;   /* not present */
+
     printk(".");
-    return 0;       /* NIC present */
+    return 0;       /* present */
 }
+#endif
 
 /*
  * Ethernet main initialization (during boot)

@@ -905,7 +905,7 @@ ne2k_stop:
 // returns:
 // AX: 0=found 1=not found
 
-#if 0
+#if 1
 	.global ne2k_probe
 
 ne2k_probe:
@@ -917,6 +917,9 @@ ne2k_probe:
 	mov	net_port,%dx	// command register
 	mov	$0x20,%al	// set page 0
 	out	%al,%dx
+	outb    %al,$0x80       // delay for XT systems
+	outb    %al,$0x80
+	outb    %al,$0x80
 	in	%dx,%al
 	cmp	$0xff,%al	// cannot be FF
 	jz	np_err
