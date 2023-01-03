@@ -385,23 +385,27 @@ word_t ne2k_probe()
 
     /* first a basic ISA probe */
     reg0 = inb(net_port);
+    printk("(%x)", reg0);
     if (reg0 == 0xFF)
         return 1;   /* not present */
-
+    printk(",(%x)", inb(net_port));
     /* then a preliminary verification that we have a 8390. */
 #define ENODMA_PAGE1_STOP   0x61
 #define ENODMA_PAGE0        0x20
 #define NE0_COUNTER0        0x0d    /* counter reg RD */
     outb(ENODMA_PAGE1_STOP, net_port);
+    printk(",(%x)", inb(net_port));
     /*regd = */ inb(net_port + NE0_COUNTER0);
     outb(0xff, net_port + NE0_COUNTER0);
-    outb(ENODMA_PAGE0, net_port);   /* page 0 -> cmd */
-    inb(net_port + NE0_COUNTER0);   /* clear the counter by reading */
+    outb(ENODMA_PAGE0, net_port);
+    int b = inb(net_port + NE0_COUNTER0);   /* clear the counter by reading */
+    printk(",(%x)", b);
     if (inb(net_port + NE0_COUNTER0) != 0) {
         outb(reg0, net_port);       /* restore old value */
         /*outb(regd, net_port + NE0_COUNTER0);*/
         return 1;   /* not 8390 */
     }
+    printk(".");
     return 0;       /* NIC present */
 }
 
