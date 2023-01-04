@@ -15,13 +15,13 @@
 #define IDE_DRIVE_ID	0xec	/* IDE command to get access to drive data */
 #define IDE_STATUS	7	/* get drive status */
 #define IDE_ERROR	1
+#define WAIT_READY      (3*HZ/100) /* 3/100 sec = 30msec - should be instantaneous */
 
 #define IDE_DEBUG	0	/* IDE probe debugging */
 
 /* For IDE/ATA access */
 #define STATUS(port)	inb_p(port + IDE_STATUS)
 #define ERROR(port)	inb_p(port + IDE_ERROR)
-#define WAITING(port)	(STATUS(port) & 0x80) == 0x80
 
 #if IDE_DEBUG
 #define debug   printk
@@ -74,13 +74,18 @@ static void INITPROC dump_ide(word_t *buffer, int size) {
 int INITPROC get_ide_data(int drive, struct drive_infot *drive_info) {
 
 	word_t port = io_ports[drive >> 1];
-	int retval = 0;
+	int retval = -1;
 
 	word_t *ide_buffer = (word_t *)heap_alloc(512, 0);
+	if (!ide_buffer) return -1;
 
 	while (1) {
+	    unsigned long timeout = jiffies + WAIT_READY; /* 30 ms */
 	    out_hd(drive, IDE_DRIVE_ID);
-    	    while (WAITING(port));
+	    while ((STATUS(port) & 0x80) == 0x80) {    	/* wait 30ms until not busy */
+		if (time_after(jiffies, timeout))
+		    goto out;				/* timeout */
+	    }
 
 	    if ((STATUS(port) & 1) == 1) {
 		/* Error - drive not found or non-IDE.
@@ -92,8 +97,6 @@ int INITPROC get_ide_data(int drive, struct drive_infot *drive_info) {
 		    continue;
 		}
 		debug("hd%c: drive at port 0x%x not found\n", 'a'+drive, port);
-
-		retval = -1;
 		break;
 	    }
 
@@ -113,13 +116,15 @@ int INITPROC get_ide_data(int drive, struct drive_infot *drive_info) {
 	     * 							HS sep2020
 	     */
 
-	    if ((ide_buffer[54] < 34096) && (*ide_buffer != 0)	/* this is the real sanity check */
-	    	&& (ide_buffer[54] != 0) && (ide_buffer[55] != 0) && (ide_buffer[55] < 256)
+	    /* this is the real sanity check */
+	    if ((ide_buffer[54] < 34096) && (ide_buffer[0] != 0)
+		&& (ide_buffer[54] != 0) && (ide_buffer[55] != 0)
+		&& (ide_buffer[55] < 256)
 	    	&& (ide_buffer[56] != 0) && (ide_buffer[56] < 64)) {
 #if IDE_DEBUG
 	    	ide_buffer[20] = 0; /* String termination */
-	    	printk("IDE default CHS: %d/%d/%d serial %s\n", ide_buffer[1], ide_buffer[3], ide_buffer[6],
-			&ide_buffer[10]);
+		printk("IDE default CHS: %d/%d/%d serial %s\n",
+			ide_buffer[1], ide_buffer[3], ide_buffer[6], &ide_buffer[10]);
 #endif
 	    	drive_info->cylinders = ide_buffer[54];
 	    	drive_info->heads = ide_buffer[55];
@@ -129,8 +134,8 @@ int INITPROC get_ide_data(int drive, struct drive_infot *drive_info) {
 		 * hdd, not hdc here. */
 		debug("hd%c: %d heads, %d cylinders, %d sectors\n", 'a'+drive,
 			drive_info->heads, drive_info->cylinders, drive_info->sectors);
+		retval = 0;
 	    } else {
-		retval = -2;
 #if IDE_DEBUG
 		printk("hd%c: Error in IDE device data.\n", 'a'+drive);
 		dump_ide(ide_buffer, 256);
@@ -138,6 +143,7 @@ int INITPROC get_ide_data(int drive, struct drive_infot *drive_info) {
 	    }
 	    break;
 	}
+out:
 	heap_free(ide_buffer);
 
 	return retval;
