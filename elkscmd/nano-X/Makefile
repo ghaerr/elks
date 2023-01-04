@@ -67,6 +67,9 @@ DEMOLIBS += libnano-X.a
 ALL += libnano-X.a nano-X nxdemos
 endif
 
+# remove any -mregparmcall as ASM files need cdecl calling convention
+CFLAGS := $(filter-out -mregparmcall, $(CFLAGS))
+
 SERVFILES = engine/devdraw.o engine/devmouse.o engine/devkbd.o engine/devclip1.o \
 	engine/devpal1.o engine/devpal2.o engine/devpal4.o
 
