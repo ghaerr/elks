@@ -23,6 +23,7 @@
 #define EN0_RSR		0x0cU	/* rx status reg RD */
 #define EN0_RXCR	0x0cU	/* RX configuration reg WR */
 #define EN0_TXCR	0x0dU	/* TX configuration reg WR */
+#define EN0_CNTR0	0x0dU	/* Counter 0 reg RD */
 #define EN0_DCFG	0x0eU	/* Data configuration reg WR */
 #define EN0_IMR		0x0fU	/* Interrupt mask reg WR */
 

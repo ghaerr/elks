@@ -27,6 +27,8 @@
 
 #include "ne2k.h"
 
+#define CHK8390     1   /* perform 8390 chip detect in NIC probe */
+
 /* runtime configuration set in /bootopts or defaults in ports.h */
 #define net_irq     (netif_parms[ETH_NE2K].irq)
 #define NET_PORT    (netif_parms[ETH_NE2K].port)
@@ -385,8 +387,6 @@ word_t ne2k_probe()
 
 #define ENODMA_PAGE0        0x20
 #define ENODMA_PAGE1_STOP   0x61
-#define NE0_TXC             0x0d    /* TX config WR */
-#define NE0_COUNTER0        0x0d    /* counter reg RD */
 
     /* send 0x20 to NIC and read result (original probe) */
     outb(ENODMA_PAGE0, net_port);
@@ -395,19 +395,22 @@ word_t ne2k_probe()
     if (reg0 == 0xFF || reg0 == 0)
         return 1;   /* NIC not present */
 
-    /* then a preliminary verification that we have an 8390 */
+#if CHK8390
+    /* perform 8390 chip detect */
     outb(ENODMA_PAGE1_STOP, net_port);
     printk(",(%x)", inb(net_port));
-    /*regd = */ inb(net_port + NE0_COUNTER0);
-    outb(0xff, net_port + NE0_TXC);
+    /*int regd = inb(net_port + EN0_CNTR0);*/
+    outb(0xff, net_port + EN0_TXCR);
     outb(ENODMA_PAGE0, net_port);
-    int b = inb(net_port + NE0_COUNTER0);   /* clear the counter by reading */
+    int b = inb(net_port + EN0_CNTR0);   /* clear the counter by reading */
     printk(",(%x)", b);
-    if (inb(net_port + NE0_COUNTER0) != 0) {
+    if (inb(net_port + EN0_CNTR0) != 0) {
         /*outb(reg0, net_port);*/
-        /*outb(regd, net_port + NE0_COUNTER0);*/
+        /*outb(regd, net_port + EN0_CNTR0);*/
         return 1;   /* not 8390 */
     }
+#endif
+
     printk(".");
     return 0;       /* NIC present */
 }
