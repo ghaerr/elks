@@ -148,7 +148,7 @@ void blkflush(this)
 	}
 
 	/* if it's an empty buffer or a clean version is on disk, quit */
-	if (!this->logical || hdr.n[this->logical] && !this->dirty)
+	if (!this->logical || (hdr.n[this->logical] && !this->dirty))
 	{
 		return;
 	}

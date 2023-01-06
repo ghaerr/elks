@@ -48,10 +48,8 @@ int tz_offset;
 
 void tz_init(const char *tzstr)
 {
-    if (strlen(tzstr) > 3) {
+    if (strlen(tzstr) > 3)
         tz_offset = atoi(tzstr+3);
-        printk("TZ=%d\n", tz_offset);
-    }
 }
 
 /* set the time of day */

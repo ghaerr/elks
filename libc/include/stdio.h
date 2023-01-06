@@ -96,36 +96,36 @@ extern FILE stderr[1];
 
 /* These two call malloc */
 #define setlinebuf(__fp)             setvbuf((__fp), (char*)0, _IOLBF, 0)
-extern int setvbuf __P((FILE*, char*, int, size_t));
+int setvbuf(FILE*, char*, int, size_t);
 
 /* These don't */
 #define setbuf(__fp, __buf) setbuffer((__fp), (__buf), BUFSIZ)
-extern void setbuffer __P((FILE*, char*, int));
+void setbuffer(FILE*, char*, int);
 
-extern int fgetc __P((FILE*));
-extern int fputc __P((int, FILE*));
+int fgetc(FILE*);
+int fputc(int, FILE*);
 
-extern int fclose __P((FILE*));
-extern int fflush __P((FILE*));
-extern char *fgets __P((char*, size_t, FILE*));
+int fclose(FILE*);
+int fflush(FILE*);
+char *fgets(char*, size_t, FILE*);
 
 ssize_t getdelim(char **__restrict lineptr, size_t *__restrict n,
 		int delimiter, register FILE *__restrict stream);
 ssize_t getline(char **__restrict lineptr, size_t *__restrict n,
 		FILE *__restrict stream);
 
-extern FILE *fopen __P((const char*, const char*));
-extern FILE *fdopen __P((int, char*));
-extern FILE *freopen  __P((char*, char*, FILE*));
+FILE *fopen(const char*, const char*);
+FILE *fdopen(int, char*);
+FILE *freopen(char*, char*, FILE*);
 
 #ifdef __LIBC__
-extern FILE *__fopen __P((const char*, int, FILE*, const char*));
+FILE *__fopen(const char*, int, FILE*, const char*);
 #endif
 
-extern int fputs __P((const char*, FILE*));
+int fputs(const char*, FILE*);
 int puts (const char * s);
 
-size_t fread __P ((void *, size_t, size_t, FILE *));
+size_t fread(void *, size_t, size_t, FILE *);
 int fseek(FILE *fp, long offset, int ref);
 long ftell(FILE *fp);
 int fwrite(char *buf, int size, int nelm, FILE *fp);
@@ -133,10 +133,10 @@ char * gets(char *str);	/* BAD function; DON'T use it! */
 
 int fscanf(FILE * fp, const char * fmt, ...);
 
-extern int printf __P ((__const char*, ...));
-extern int fprintf __P ((FILE*, __const char*, ...));
-extern int sprintf __P ((char*, __const char*, ...));
-extern int snprintf __P ((char*, size_t, __const char*, ...));
+int printf(const char*, ...);
+int fprintf(FILE*, const char*, ...);
+int sprintf(char*, const char*, ...);
+int snprintf(char*, size_t, const char*, ...);
 
 int vfprintf (FILE * stream, const char * format, va_list ap);
 int vsprintf (char * sp, const char * format, va_list ap);
@@ -161,10 +161,10 @@ int sscanf (const char * str, const char * format, ...);
 
 int ungetc (int c, FILE *stream);
 int vfscanf(register FILE *fp, register char *fmt, va_list ap);
-int vscanf(__const char *fmt, va_list ap);
-int vsscanf(char *sp, __const char *fmt, va_list ap);
+int vscanf(const char *fmt, va_list ap);
+int vsscanf(char *sp, const char *fmt, va_list ap);
 
-extern FILE *popen(char *, char *);
-extern int pclose(FILE *);
+FILE *popen(char *, char *);
+int pclose(FILE *);
 
 #endif /* __STDIO_H */

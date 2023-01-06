@@ -18,6 +18,7 @@ DESTDIR=$(TOPDIR)/target
 TAGS=
 # Old-style installation
 INSTDIRS=
+export INSTALL LN DESTDIR
 
 ifdef CONFIG_APP_TAGS
 	TAGS += "$(CONFIG_APP_TAGS)"
@@ -72,10 +73,6 @@ ifdef CONFIG_APP_MINIX3
 	ifeq ($(CONFIG_APP_MINIX3), y)
 		TAGS += :be-minix3|
 	endif
-endif
-
-ifdef CONFIG_APP_MTOOLS
-	TAGS += :mtools|
 endif
 
 ifdef CONFIG_APP_MISC_UTILS

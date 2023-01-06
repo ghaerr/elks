@@ -7,12 +7,6 @@
 #define __P(x) x
 #define __const const
 
-/* Not really ansi */
-#ifdef __BCC__
-#define const
-#define volatile
-#endif
-
 #else /* K&R */
 
 #define __P(x) ()
@@ -31,10 +25,6 @@
 /* No C++ */
 #define __BEGIN_DECLS
 #define __END_DECLS
-
-/* GNUish things */
-#define __CONSTVALUE
-#define __CONSTVALUE2
 
 #include <sys/cdefs.h>
 

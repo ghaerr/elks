@@ -124,6 +124,9 @@ extern jiff_t xtime_jiffies;
 extern int tz_offset;
 #define CURRENT_TIME (xtime.tv_sec + (jiffies - xtime_jiffies)/HZ)
 
+/* return true if time a is after time b */
+#define time_after(a,b)         (((long)(b) - (long)(a) < 0))
+
 #define for_each_task(p) \
 	for (p = &task[0] ; p!=&task[MAX_TASKS]; p++ )
 

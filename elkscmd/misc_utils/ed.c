@@ -982,7 +982,7 @@ printlines(num1, num2, expandflag)
 		 * Show control characters and characters with the
 		 * high bit set specially.
 		 */
-		cp = lp->data;
+		cp = (unsigned char *)lp->data;
 		count = lp->len;
 		if ((count > 0) && (cp[count - 1] == '\n'))
 			count--;

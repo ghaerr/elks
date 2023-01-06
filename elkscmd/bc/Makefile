@@ -31,7 +31,7 @@ LEX = flex -I -8
 LOCALFLAGS=-D_POSIX_SOURCE
 
 # Try compiling this program using the `stdcall' calling convention...
-CFLBASE += -mrtd
+#CFLBASE += -mrtd
 
 # For ELKS, bc needs more data segment space than the kernel-given default.
 LDFLAGS += -maout-heap=0xb000

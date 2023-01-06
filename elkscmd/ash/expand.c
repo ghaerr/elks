@@ -291,7 +291,7 @@ expbackq(cmd, quoted, full)
 		}
 		lastc = *p++;
 		if (lastc != '\0') {
-			if (full && syntax[lastc] == CCTL)
+			if (full && syntax[lastc & 255] == CCTL)
 				STPUTC(CTLESC, dest);
 			STPUTC(lastc, dest);
 		}
@@ -339,7 +339,7 @@ evalvar(p, full)
 	subtype = flags & VSTYPE;
 	var = p;
 	special = 0;
-	if (! is_name(*p))
+	if (! is_name(*p & 255))
 		special = 1;
 	p = strchr(p, '=') + 1;
 again: /* jump here after setting a variable with ${var=text} */
@@ -348,7 +348,7 @@ again: /* jump here after setting a variable with ${var=text} */
 		val = NULL;
 	} else {
 		val = lookupvar(var);
-		if (val == NULL || (flags & VSNUL) && val[0] == '\0') {
+		if (val == NULL || ((flags & VSNUL) && val[0] == '\0')) {
 			val = NULL;
 			set = 0;
 		} else
@@ -363,7 +363,7 @@ again: /* jump here after setting a variable with ${var=text} */
 			char const *syntax = (flags & VSQUOTE)? DQSYNTAX : BASESYNTAX;
 
 			while (*val) {
-				if (full && syntax[*val] == CCTL)
+				if (full && syntax[*val & 255] == CCTL)
 					STPUTC(CTLESC, expdest);
 				STPUTC(*val++, expdest);
 			}
@@ -511,7 +511,7 @@ allargs:
 		for (ap = shellparam.p ; (p = *ap++) != NULL ; ) {
 			/* should insert CTLESC characters */
 			while (*p) {
-				if (syntax[*p] == CCTL)
+				if (syntax[*p & 255] == CCTL)
 					STPUTC(CTLESC, expdest);
 				STPUTC(*p++, expdest);
 			}
@@ -526,14 +526,14 @@ string:
 		   i.e. if allow_split is set.  */
 		syntax = quoted && allow_split ? DQSYNTAX : BASESYNTAX;
 		while (*p) {
-			if (syntax[*p] == CCTL)
+			if (syntax[*p & 255] == CCTL)
 				STPUTC(CTLESC, expdest);
 			STPUTC(*p++, expdest);
 		}
 		break;
 	default:
 		if ((unsigned)(name -= '1') <= '9' - '1') {
-			p = shellparam.p[name];
+			p = shellparam.p[name & 255];
 			goto string;
 		}
 		break;
@@ -890,7 +890,7 @@ expmeta(enddir, name)
 		*endname++ = '\0';
 	}
 	matchdot = 0;
-	if (start[0] == '.' || start[0] == CTLESC && start[1] == '.')
+	if (start[0] == '.' || (start[0] == CTLESC && start[1] == '.'))
 		matchdot++;
 	while (! int_pending() && (dp = readdir(dirp)) != NULL) {
 		if (dp->d_name[0] == '.' && ! matchdot)

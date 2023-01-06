@@ -13,6 +13,7 @@
 #ifndef YMAX
 #ifdef UNIX
 #include <stdio.h>
+#include <termcap.h>
 #undef putchar
 #undef getchar
 #undef EOF
@@ -302,12 +303,12 @@ int input(char *inbuf, FLAG clearfl );
 int get_file(char *message, char *file );
 int _getchar(void);
 void _flush(void);
-void _putchar(int c );
+int _putchar(int c );
 void get_term(void);
 
 /* mined2.c */
 
-void UP(void);
+void doUP(void);
 void DN(void);
 void LF(void);
 void RT(void);

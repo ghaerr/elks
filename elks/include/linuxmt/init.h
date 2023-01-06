@@ -22,7 +22,7 @@ extern void console_init(void);
 extern void INITPROC fs_init(void);
 extern void INITPROC inode_init(void);
 extern void INITPROC irq_init(void);
-extern void irqtab_init(void);
+extern void save_timer_irq(void);
 extern void INITPROC mm_init(seg_t,seg_t);
 extern void INITPROC sched_init(void);
 extern void INITPROC serial_init(void);

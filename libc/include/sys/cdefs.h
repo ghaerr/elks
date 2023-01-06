@@ -31,8 +31,4 @@ typedef double __long_double_t;
 #define __BEGIN_DECLS
 #define __END_DECLS
 
-/* GNUish things */
-#define __CONSTVALUE
-#define __CONSTVALUE2
-
 #endif

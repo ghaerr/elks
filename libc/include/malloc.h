@@ -11,21 +11,21 @@
  * 
  */
 
-extern void free __P((void *));
-extern void *calloc(unsigned int elm, unsigned int sz);
-extern void *malloc __P((size_t));
-extern void *realloc __P((void *, size_t));
-extern void *alloca __P((size_t));
+void free(void *);
+void *calloc(unsigned int elm, unsigned int sz);
+void *malloc(size_t);
+void *realloc(void *, size_t);
+void *alloca(size_t);
 
 #ifdef __LIBC__
 /* remove __MINI_MALLOC__ and always use real malloc for libc routines*/
 //#define __MINI_MALLOC__
 
-extern void *__mini_malloc(size_t size);
+void *__mini_malloc(size_t size);
 #endif
 
 #ifdef __MINI_MALLOC__
-extern void *(*__alloca_alloc) __P((size_t));
+extern void *(*__alloca_alloc)(size_t);
 #define malloc(x) ((*__alloca_alloc)(x))
 #endif
 

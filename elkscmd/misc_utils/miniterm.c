@@ -368,10 +368,10 @@ int main(int argc, char **argv)
 	speed_t baudrate = 9600;
 	enum terminal_mode mode = MODE_TEXT;
 	bool escape = false, rtscts = false;
-	bool enable_rts = false, enable_dtr = false;
 	bool add_lf = false;
 	const char *device = "/dev/ttyS0";
 	bool no_reset = false;
+	/*bool enable_rts = false, enable_dtr = false;*/
 
 	while ((ch = getopt(argc, argv, "s:SrdRlxh")) != -1) {
 		switch (ch) {
@@ -381,12 +381,14 @@ int main(int argc, char **argv)
 			case 'r':
 				rtscts = true;
 				break;
+#if later
 			case 'd':
 				enable_dtr = true;
 				break;
 			case 'R':
 				enable_rts = true;
 				break;
+#endif
 			case 'l':
 				add_lf = true;
 				break;

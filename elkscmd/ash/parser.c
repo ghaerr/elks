@@ -104,7 +104,7 @@ STATIC void parsefname __P((void));
 STATIC void parseheredoc __P((void));
 STATIC int readtoken __P((void));
 STATIC int readtoken1 __P((int, char const *, char *, int));
-STATIC void attyline __P((void));
+void attyline __P((void));
 STATIC int noexpand __P((char *));
 STATIC void synexpect __P((int));
 STATIC void synerror __P((char *));
@@ -1194,7 +1194,7 @@ STATIC void putprompt(char *s)
  * this routine.
  */
 
-STATIC void
+void
 attyline() {
 	char line[256];
 	struct stackmark smark;
@@ -1263,7 +1263,7 @@ noexpand(text)
 	while ((c = *p++) != '\0') {
 		if (c == CTLESC)
 			p++;
-		else if (BASESYNTAX[c] == CCTL)
+		else if (BASESYNTAX[c & 255] == CCTL)
 			return 0;
 	}
 	return 1;
@@ -1282,10 +1282,10 @@ goodname(name)
 	register char *p;
 
 	p = name;
-	if (! is_name(*p))
+	if (! is_name(*p & 255))
 		return 0;
 	while (*++p) {
-		if (! is_in_name(*p))
+		if (! is_in_name(*p & 255))
 			return 0;
 	}
 	return 1;

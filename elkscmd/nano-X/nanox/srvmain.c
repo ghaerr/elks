@@ -297,7 +297,7 @@ GsInitialize(void)
 	}
 
 	if ((mouse_fd = GdOpenMouse()) == -1) { /* -2 == mou_nul.c */
-		perror("Cannot initialise mouse");
+		/*perror("Cannot initialise mouse");*/
 		/*GsCloseSocket();*/
 		GdCloseKeyboard();
 		free(wp);

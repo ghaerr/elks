@@ -100,6 +100,11 @@ char	tname[] = "/tmp/tarXXXXXX";
 char	*usefile;
 char	magtape[]	= "/dev/mt1";
 
+void putfile();
+int readtape();
+int writetape();
+
+void
 doselect(pairp, st)
 int *pairp;
 struct stat *st;
@@ -137,6 +142,7 @@ int	m9[] = { 2, STXT, 't', XOTH, 'x', '-' };
 
 int	*m[] = { m1, m2, m3, m4, m5, m6, m7, m8, m9};
 
+void
 pmode(st)
 register struct stat *st;
 {
@@ -152,12 +158,14 @@ done(n)
 	exit(n);
 }
 
+void
 usage()
 {
 	fprintf(stderr, "tar: usage  tar -{txu}[cvfblmhop] [tarfile] [blocksize] file1 file2...\n");
 	done(1);
 }
 
+void
 longt(st)
 register struct stat *st;
 {
@@ -217,6 +225,7 @@ char	*arg;
 	}
 }
 
+void
 putempty()
 {
 	char *cp;
@@ -227,11 +236,13 @@ putempty()
 	writetape(buf);
 }
 
+void
 flushtape()
 {
 	write(mt, tbuf, TBLOCK*nblock);
 }
 
+void
 dorep(argv)
 	char *argv[];
 {
@@ -312,6 +323,7 @@ dorep(argv)
 	}
 }
 
+void
 backtape()
 {
 	lseek(mt, (long) -TBLOCK, 1);
@@ -348,6 +360,7 @@ checksum()
 	return(i);
 }
 
+void
 getdir()
 {
 	register struct stat *sp;
@@ -374,6 +387,7 @@ getdir()
 		fprintf(tfile, "%s %s\n", dblock.dbuf.name, dblock.dbuf.mtime);
 }
 
+void
 passtape()
 {
 	long blocks;
@@ -389,6 +403,7 @@ passtape()
 		readtape(buf);
 }
 
+void
 copy(to, from)
 register char *to, *from;
 {
@@ -424,6 +439,7 @@ char *buffer;
 	return(TBLOCK);
 }
 
+void
 tomodes(sp)
 register struct stat *sp;
 {
@@ -438,6 +454,7 @@ register struct stat *sp;
 	sprintf(dblock.dbuf.mtime, "%11lo ", sp->st_mtime);
 }
 
+void
 putfile(longname, shortname, parent)
 	char *longname;
 	char *shortname;
@@ -679,6 +696,7 @@ checkdir(name)
 }
 
 
+void
 doxtract(argv)
 char	*argv[];
 {
@@ -790,6 +808,7 @@ gotit:
 	}
 }
 
+void
 dotable()
 {
 	for (;;) {

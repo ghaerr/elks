@@ -12,7 +12,7 @@
 /*
  * Move one line up.
  */
-void UP(void)
+void doUP(void)
 {
   if (y == 0) {		/* Top line of screen. Scroll one line */
   	(void) reverse_scroll();
@@ -49,7 +49,7 @@ void LF(void)
 {
   if (x == 0 && get_shift(cur_line->shift_count) == 0) {/* Begin of line */
 	if (cur_line->prev != header) {
-		UP();					/* Move one line up */
+		doUP();					/* Move one line up */
 		move_to(LINE_END, y);
 	}
   }
@@ -484,7 +484,7 @@ void CTL(void)
 void LIB(void)
 {
   S('\n');	  		/* Insert the line */
-  UP();				/* Move one line up */
+  doUP();				/* Move one line up */
   move_to(LINE_END, y);		/* Move to end of this line */
 }
 

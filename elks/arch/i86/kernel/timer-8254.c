@@ -70,7 +70,9 @@ void enable_timer_tick(void)
 
 void disable_timer_tick(void)
 {
+#if NOTNEEDED
     outb (TIMER_MODE0, TIMER_CMDS_PORT);
     outb (0, TIMER_DATA_PORT);
     outb (0, TIMER_DATA_PORT);
+#endif
 }

@@ -176,10 +176,10 @@ void setvar(char *name, char *val, int flags)
 
 	isbad = 0;
 	p = name;
-	if (! is_name(*p++))
+	if (! is_name(*p++ & 255))
 		isbad = 1;
 	for (;;) {
-		if (! is_in_name(*p)) {
+		if (! is_in_name(*p & 255)) {
 			if (*p == '\0' || *p == '=')
 				break;
 			isbad = 1;
@@ -314,7 +314,7 @@ bltinlookup(name, doall)
 	for (v = *hashvar(name) ; v ; v = v->next) {
 		if (varequal(v->text, name)) {
 			if (v->flags & VUNSET
-			 || ! doall && (v->flags & VEXPORT) == 0)
+			 || (! doall && (v->flags & VEXPORT) == 0))
 				return NULL;
 			return strchr(v->text, '=') + 1;
 		}

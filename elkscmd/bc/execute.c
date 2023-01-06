@@ -759,10 +759,12 @@ push_b10_const (pc)
   while (inchar != ':')
     {
       if (inchar != '.')
+        {
 	if (inchar > 9)
 	  *ptr++ = 9;
 	else
 	  *ptr++ = inchar;
+        }
       inchar = byte(pc);
     }
   push_num (build);

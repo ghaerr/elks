@@ -175,7 +175,7 @@ struct oper {
 char **ipp;			/* pointer to next argument during parsing       */
 char *prog;			/* program name (== argv [0])                    */
 char *epath;			/* value of PATH environment string              */
-long current_time;		/* for computing age                             */
+time_t current_time;		/* for computing age                             */
 int tty;			/* fd for /dev/tty when using -ok                */
 int xdev_flag = 0;		/* cross device boundaries?                      */
 int devnr;			/* device nr of first inode                      */
@@ -273,7 +273,7 @@ char *path, *last;
 struct node *pred;
 {
   char spath[PATH_MAX];
-  register char *send = spath, *p;
+  register char *send = spath;
   struct stat st;
   DIR *dp;
   struct dirent *de;
@@ -310,7 +310,6 @@ struct node *pred;
 		}
 		send[-1] = '/';
 		while ((de = readdir(dp)) != NULL) {
-			p = de->d_name;
 			if ((de->d_name[0] != '.') || ((de->d_name[1])
 					  && ((de->d_name[1] != '.')
 					      || (de->d_name[2])))) {
@@ -822,13 +821,14 @@ char *s, *t;
   if (*t == '[') {
 	while (*++t != ']') {
 		if (*t == '\\') ++t;
-		if (*(t + 1) != '-')
+		if (*(t + 1) != '-') {
 			if (*t == *s) {
 				while (*++t != ']')
 					if (*t == '\\') ++t;
 				return smatch(++s, ++t);
 			} else
 				continue;
+		}
 		if (*(t + 2) == ']') return(*s == *t || *s == '-');
 		n = (*(t + 2) == '\\') ? 3 : 2;
 		if (*s >= *t && *s <= *(t + n)) {

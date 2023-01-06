@@ -127,7 +127,7 @@ void recover(filename)
 
 	/* generate a checksum from the file's name */
 	for (sum = 0, scan = filename + strlen(filename);
-	     --scan >= filename && (isascii(*scan) && isalnum(*scan) || *scan == '.');
+	     --scan >= filename && ((isascii(*scan) && isalnum(*scan)) || *scan == '.');
 	     sum = sum + *scan)
 	{
 	}
@@ -144,7 +144,7 @@ void recover(filename)
 		tmpname[i++]=SLASH;
 	sprintf(tmpname+i, TMPNAME+3, sum, stbuf.st_ino, stbuf.st_dev);
 #else
-	sprintf(tmpname, TMPNAME, o_directory, sum, stbuf.st_ino, stbuf.st_dev);
+	sprintf(tmpname, TMPNAME, o_directory, sum, (unsigned int)stbuf.st_ino, stbuf.st_dev);
 #endif
 	tmpfd = open(tmpname, O_RDONLY | O_BINARY);
 	if (tmpfd < 0)

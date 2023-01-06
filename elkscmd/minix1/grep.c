@@ -173,7 +173,7 @@ char *filename;
   if (FLAG('s') || FLAG('l')) {
 	while ((line = get_line(input)) != NULL) {
 		testline = FLAG('i') ? map_nocase(line) : line;
-		if (regexec(expression, testline, 1)) {
+		if (regexec(expression, testline)) {
 			status = MATCH;
 			break;
 		}
@@ -188,7 +188,7 @@ char *filename;
   while ((line = get_line(input)) != NULL) {
 	++lineno;
 	testline = FLAG('i') ? map_nocase(line) : line;
-	if (regexec(expression, testline, 1)) {
+	if (regexec(expression, testline)) {
 		status = MATCH;
 		if (!FLAG('v')) {
 			if (label != NULL)

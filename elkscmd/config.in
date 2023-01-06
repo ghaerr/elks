@@ -15,10 +15,6 @@ mainmenu_option next_comment
 
 		comment 'Applications'
 
-		bool 'busyelks'			CONFIG_APP_BUSYELKS		n
-		bool 'cgatext'			CONFIG_APP_CGATEXT	    n
-		bool 'screen'     		CONFIG_APP_SCREEN       y
-		bool 'cron'           	CONFIG_APP_CRON        	y
 		busyelks 'diskutils'	CONFIG_APP_DISK_UTILS	y
 		busyelks 'fileutils'	CONFIG_APP_FILE_UTILS	y
 		busyelks 'shutils'	 	CONFIG_APP_SH_UTILS		y
@@ -29,17 +25,17 @@ mainmenu_option next_comment
 		busyelks 'minix3'		CONFIG_APP_MINIX3		y
 		busyelks 'miscutils'	CONFIG_APP_MISC_UTILS	y
 		bool 'Text UI'			CONFIG_APP_TUI  		y
-		bool 'mtools'			CONFIG_APP_MTOOLS		n
 		bool 'nano-X'			CONFIG_APP_NANOX		y
 		bool 'BASIC'			CONFIG_APP_BASIC		y
+		bool 'screen'     		CONFIG_APP_SCREEN       y
+		bool 'cron'           	CONFIG_APP_CRON        	y
 		bool 'other'         	CONFIG_APP_OTHER        y
+		bool 'test'       		CONFIG_APP_TEST         n
+		bool 'busyelks'			CONFIG_APP_BUSYELKS		n
+		bool 'cgatext'			CONFIG_APP_CGATEXT	    n
 		string 'Additional TAG string for app selection'  CONFIG_APP_TAGS      ''
 
-		comment 'Commands not compiling'
-
-		bool 'byacc'      		CONFIG_APP_BYACC      n
-		bool 'm4'         		CONFIG_APP_M4         n
-		bool 'test'       		CONFIG_APP_TEST       n
+		#comment 'Commands not compiling'
 		#bool 'levee'			CONFIG_APP_LEVEE      n
 		#bool 'xvi'        		CONFIG_APP_XVI        n
 

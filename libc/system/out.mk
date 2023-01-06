@@ -43,7 +43,11 @@ OBJS = \
 	setpgrp.o \
 	signal.o \
 	sleep.o \
-	syscall0.o \
+	syscall01.o \
+	syscall23.o \
+	syscall4.o \
+	syscall5.o \
+	signalcb.o \
 	telldir.o \
 	time.o \
 	times.o \

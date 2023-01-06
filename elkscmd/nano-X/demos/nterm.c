@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <signal.h>
+#include <string.h>
 #include "nano-X.h"
 /*
  * Nano-X terminal emulator
@@ -48,7 +49,6 @@ int main(int argc, char ** argv)
 	GR_BITMAP	bitmap1bg[7];
 
 	if (GrOpen() < 0) {
-		fprintf(stderr, "cannot open graphics\n");
 		exit(1);
 	}
 	
@@ -189,7 +189,7 @@ GR_SIZE		base;		/* height of baseline */
 
 void text_init()
 {
-	GrGetGCTextSize(gc1, "A", 1, &width, &height, &base);
+	GrGetGCTextSize(gc1, (unsigned char *)"A", 1, &width, &height, &base);
 }
 
 void char_del(GR_COORD x, GR_COORD y)

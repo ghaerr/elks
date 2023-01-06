@@ -479,7 +479,7 @@ void vi()
 
 		  case CURSOR_MOVED:
 			/* '&' and uppercase keys always act like doubled */
-			if (key == '&' || isascii(key) && isupper(key))
+			if (key == '&' || (isascii(key) && isupper(key)))
 			{
 				prevkey = key;
 			}

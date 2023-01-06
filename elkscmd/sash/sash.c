@@ -13,195 +13,155 @@
 #include <errno.h>
 
 typedef struct {
-	char	*name;
-	char	*usage;
-	void	(*func)();
-	int	minargs;
-	int	maxargs;
+    char    *name;
+    char    *usage;
+    void    (*func)();
+    int minargs;
+    int maxargs;
 } CMDTAB;
 
 
-static	CMDTAB	cmdtab[] = {
+static  CMDTAB  cmdtab[] = {
 #ifdef CMD_ALIAS
-	"alias",	"[name [command]]", 	do_alias,
-	1,		MAXARGS,
+    { "alias",  "[name [command]]",     do_alias, 1, MAXARGS },
 #endif
 
-	"cd",		"[dirname]",		do_cd,
-	1,		2,
+    { "cd",     "[dirname]",            do_cd,    1, 2 },
 
 #ifdef CMD_CHGRP
-	"chgrp",	"gid filename ...",	do_chgrp,
-	3,		MAXARGS,
+    { "chgrp",  "gid filename ...",     do_chgrp, 3, MAXARGS },
 #endif
 
 #ifdef CMD_CHMOD
-	"chmod",	"mode filename ...",	do_chmod,
-	3,		MAXARGS,
+    { "chmod",  "mode filename ...",    do_chmod, 3, MAXARGS },
 #endif
 
 #ifdef CMD_CHOWN
-	"chown",	"uid filename ...",	do_chown,
-	3,		MAXARGS,
+    { "chown",  "uid filename ...",     do_chown, 3, MAXARGS },
 #endif
 
 #ifdef CMD_CMP
-	"cmp",		"filename1 filename2",	do_cmp,
-	3,		3,
+    { "cmp",    "filename1 filename2", do_cmp,3, 3 },
 #endif
 
 #ifdef CMD_CP
-	"cp",		"srcname ... destname",	do_cp,
-	3,		MAXARGS,
+    { "cp",     "srcname ... destname", do_cp,    3, MAXARGS },
 #endif
 
 #ifdef CMD_DD
-	"dd",		"if=name of=name [bs=n] [count=n] [skip=n] [seek=n]", do_dd,
-	3,		MAXARGS,
+    { "dd",     "if=name of=name [bs=n] [count=n] [skip=n] [seek=n]", do_dd, 3, MAXARGS },
 #endif
 
 #ifdef CMD_ECHO
-	"echo",	"[args] ...",		do_echo,
-	1,		MAXARGS,
+    { "echo",   "[args] ...",           do_echo,  1, MAXARGS },
 #endif
 
 #ifdef CMD_ED
-	"ed",		"[filename]",		do_ed,
-	1,		2,
+    { "ed",     "[filename]",           do_ed,    1, 2 },
 #endif
 
-	"exec",		"filename [args]",	do_exec,
-	2,		MAXARGS,
-
-	"exit",		"",			do_exit,
-	1,		1,
+    { "exec",   "filename [args]",      do_exec,  2, MAXARGS },
+    { "exit",   "",                     do_exit,  1, 1 },
 
 #ifdef CMD_GREP
-	"grep",	"[-in] word filename ...",	do_grep,
-	3,		MAXARGS,
+    { "grep",   "[-in] word filename ...", do_grep, 3, MAXARGS },
 #endif
 
 #ifdef CMD_HELP
-	"help",		"",			do_help,
-	1,		MAXARGS,
+    { "help",       "",                 do_help,  1, MAXARGS },
 #endif
 
 #ifdef CMD_HISTORY
-	"history",	"", 			do_history,
-	1,		1,
+    { "history",    "",                 do_history, 1, 1 },
 #endif
 
 #ifdef CMD_KILL
-	"kill",	"[-sig] pid ...",	do_kill,
-	2,		MAXARGS,
+    { "kill",   "[-sig] pid ...",       do_kill,    2, MAXARGS },
 #endif
 
 #ifdef CMD_LN
-	"ln",		"[-s] srcname ... destname",	do_ln,
-	3,		MAXARGS,
+    { "ln",     "[-s] srcname ... destname", do_ln, 3, MAXARGS },
 #endif
 
 #ifdef CMD_LS
-	"ls",		"[-lid] filename ...",	do_ls,
-	1,		MAXARGS,
+    { "ls",     "[-lid] filename ...",  do_ls,    1, MAXARGS },
 #endif
 
 #ifdef CMD_MKDIR
-	"mkdir",	"dirname ...",		do_mkdir,
-	2,		MAXARGS,
+    { "mkdir",  "dirname ...",          do_mkdir, 2, MAXARGS },
 #endif
 
 #ifdef CMD_MKNOD
-	"mknod",	"filename type major minor",	do_mknod,
-	5,		5,
+    { "mknod",  "filename type major minor", do_mknod, 5, 5 },
 #endif
 
 #ifdef CMD_MORE
-	"more",	"filename ...",		do_more,
-	2,		MAXARGS,
+    { "more",   "filename ...",         do_more,   2, MAXARGS },
 #endif
 
 #ifdef CMD_MOUNT
-	"mount",	"[-t type] devname dirname",	do_mount,
-	3,		MAXARGS,
+    { "mount",  "[-t type] devname dirname", do_mount, 3, MAXARGS },
 #endif
 
 #ifdef CMD_MV
-	"mv",		"srcname ... destname",	do_mv,
-	3,		MAXARGS,
+    { "mv",     "srcname ... destname",  do_mv,    3, MAXARGS },
 #endif
 
 #ifdef CMD_PRINTENV
-	"printenv",	"[name]",		do_printenv,
-	1,		2,
+    { "printenv",   "[name]",           do_printenv, 1, 2 },
 #endif
 
 #ifdef CMD_PROMPT
-	"prompt",	"string",		do_prompt,
-	2,		MAXARGS,
+    { "prompt", "string",               do_prompt, 2, MAXARGS },
 #endif
 
 #ifdef CMD_PWD
-	"pwd",		"",			do_pwd,
-	1,		1,
+    { "pwd",        "",                 do_pwd,    1, 1 },
 #endif
 
-	"quit",		"",			do_exit,
-	1,		1,
+    { "quit",       "",                 do_exit,   1, 1 },
 
 #ifdef CMD_RM
-	"rm",		"filename ...",		do_rm,
-	2,		MAXARGS,
+    { "rm",     "filename ...",         do_rm,     2, MAXARGS },
 #endif
 
 #ifdef CMD_RMDIR
-	"rmdir",	"dirname ...",		do_rmdir,
-	2,		MAXARGS,
+    { "rmdir",  "dirname ...",          do_rmdir,  2, MAXARGS },
 #endif
 
 #ifdef CMD_SETENV
-	"setenv",	"name value",		do_setenv,
-	2,		3,
+    { "setenv", "name value",           do_setenv, 2, 3 },
 #endif
 
 #ifdef CMD_SOURCE
-	"source",	"filename",		do_source,
-	2,		2,
+    { "source", "filename",             do_source, 2, 2 },
 #endif
 
 #ifdef CMD_SYNC
-	"sync",	"",			do_sync,
-	1,		1,
+    { "sync",   "",                     do_sync,   1, 1 },
 #endif
 
 #ifdef CMD_TAR
-	"tar",		"[xtv]f devname filename ...",	do_tar,
-	2,		MAXARGS,
+    { "tar",    "[xtv]f devname filename ...",  do_tar, 2, MAXARGS },
 #endif
 
 #ifdef CMD_TOUCH
-	"touch",	"filename ...",		do_touch,
-	2,		MAXARGS,
+    { "touch",  "filename ...",         do_touch,  2, MAXARGS },
 #endif
 
 #ifdef CMD_UMASK
-	"umask",	"[mask]",		do_umask,
-	1,		2,
+    { "umask",  "[mask]",               do_umask,  1, 2 },
 #endif
 
 #ifdef CMD_MOUNT
-	"umount",	"filename",		do_umount,
-	2,		2,
+    { "umount", "filename",             do_umount, 2, 2 },
 #endif
 
 #ifdef CMD_ALIAS
-	"unalias",	"name",			do_unalias,
-	2,		2,
+    { "unalias",    "name",             do_unalias, 2, 2 },
 #endif
-	NULL,		0,			0,
-	0,		0
+    { NULL,     0,          0,          0,      0 }
 };
-
 
 #ifdef CMD_ALIAS
 typedef struct {

@@ -2,8 +2,10 @@
 #define __LINUXMT_TYPES_H
 
 #include <arch/types.h>
-#include <linuxmt/config.h>
 
+#ifdef __KERNEL__
+#include <linuxmt/config.h>
+#endif
 
 typedef __s32			loff_t;
 typedef __s32			off_t;

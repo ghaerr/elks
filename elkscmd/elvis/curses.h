@@ -12,7 +12,7 @@
 
 #include "tinytcap.h"
 
-extern int getsize(int signo);
+extern void getsize(int signo);
 
 #if MSDOS
 /* BIOS interface used instead of termcap for MS-DOS */

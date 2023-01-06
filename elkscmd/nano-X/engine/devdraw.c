@@ -52,7 +52,7 @@ GdOpenScreen(void)
 	extern RGBENTRY	stdpal1[2];
 	extern RGBENTRY	stdpal2[4];
 	extern RGBENTRY	stdpal4[16];
-	extern RGBENTRY	stdpal8[256];
+	/*extern RGBENTRY	stdpal8[256];*/
 
 	if(scrdev.Open(&scrdev) < 0)
 		return -1;
@@ -588,7 +588,7 @@ GdFillRect(PSD psd, COORD x1, COORD y1, COORD width, COORD height)
 void
 GdGetTextSize(PSD psd, char *str, int cc, COORD *pwidth, COORD *pheight)
 {
-	psd->GetTextSize(psd, str, cc, pwidth, pheight, gr_font);
+	psd->GetTextSize(psd, (unsigned char *)str, cc, pwidth, pheight, gr_font);
 }
 
 /* Draw a text string at a specifed coordinates in the foreground color

@@ -66,8 +66,8 @@ static int		(*parse)();	/* parse routine */
 
 /* local routines*/
 static int  	read_mouse(int *dx, int *dy, int *dz, int *bptr);
-static int  	parsePC(int);		/* routine to interpret PC mouse */
-static int  	parseMS(int);		/* routine to interpret MS mouse */
+int  	        parsePC(int);		/* routine to interpret PC mouse */
+int  	        parseMS(int);		/* routine to interpret MS mouse */
 
 /*
  * Open up the mouse device.

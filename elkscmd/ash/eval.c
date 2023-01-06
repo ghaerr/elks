@@ -592,10 +592,10 @@ evalcommand(cmd, flags, backcmd)
 	varflag = 1;
 	for (argp = cmd->ncmd.args ; argp ; argp = argp->narg.next) {
 		p = argp->narg.text;
-		if (varflag && is_name(*p)) {
+		if (varflag && is_name(*p & 255)) {
 			do {
 				p++;
-			} while (is_in_name(*p));
+			} while (is_in_name(*p & 255));
 			if (*p == '=') {
 				expandarg(argp, &varlist, 0);
 				continue;
@@ -666,11 +666,11 @@ evalcommand(cmd, flags, backcmd)
 
 	/* Fork off a child process if necessary. */
 	if (cmd->ncmd.backgnd
-	 || cmdentry.cmdtype == CMDNORMAL && (flags & EV_EXIT) == 0
-	 || (flags & EV_BACKCMD) != 0
+	 || (cmdentry.cmdtype == CMDNORMAL && (flags & EV_EXIT) == 0)
+	 || ((flags & EV_BACKCMD) != 0
 	    && (cmdentry.cmdtype != CMDBUILTIN
 		 || cmdentry.u.index == DOTCMD
-		 || cmdentry.u.index == EVALCMD)) {
+		 || cmdentry.u.index == EVALCMD))) {
 		jp = makejob(cmd, 1);
 		mode = cmd->ncmd.backgnd;
 		if (flags & EV_BACKCMD) {

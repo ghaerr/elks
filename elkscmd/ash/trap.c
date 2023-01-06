@@ -197,11 +197,12 @@ setsignal(signo) {
 		 * ELKS does not implement signal()
 		 * If signals not supported, set old value to S_HARD_IGN
 		 */
-		if ((sigact = signal(signo, SIG_IGN)) == SIG_ERR)
+		if ((sigact = signal(signo, SIG_IGN)) == SIG_ERR) {
 			if (errno==ENOSYS)	/* HACK: man signal(2) does not mention errno */
 				*t = S_HARD_IGN;
 			else
 				error("Signal system call failed with errno %d", errno);
+		}
 		if (sigact == SIG_IGN) {
 			*t = S_HARD_IGN;
 		} else {

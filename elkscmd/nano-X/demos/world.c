@@ -7,6 +7,8 @@
  */
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <fcntl.h>
 #include <string.h>
 #include "nano-X.h"
 
@@ -157,7 +159,6 @@ main(argc, argv)
 		return 1;
 	}
 	if (GrOpen() < 0) {
-		fprintf(stderr, "Cannot open graphics\n");
 		return 1;
 	}
 	GrGetScreenInfo(&si);
@@ -436,7 +437,7 @@ showcoords(show)
 		mintostr(coordstring + strlen(coordstring), curlat);
 	}
 
-	GrText(mapwid, xorgc, coordx, coordy, coordstring, strlen(coordstring));
+	GrText(mapwid, xorgc, coordx, coordy, (unsigned char *)coordstring, strlen(coordstring));
 	coordvisible = show;
 }
 
@@ -454,7 +455,7 @@ mintostr(buf, min)
 		min = -min;
 		*buf++ = '-';
 	}
-	sprintf(buf, "%d'%02d", min / 60, min % 60);
+	sprintf(buf, "%d'%02d", (int)min / 60, (int)min % 60);
 }
 
 
@@ -512,9 +513,9 @@ load(fn)
 	register DBPOINT	*pp;
 	DBPOINT		*pend;
 	FLOAT		x, y, LonPrv, LatPrv;
-	long		oldlong;
+	long		oldlong = 0;
 	GR_COORD	xnew, ynew;
-	GR_COORD	xold, yold;
+	GR_COORD	xold = 0, yold = 0;
 	GR_BOOL		is_out;
 	GR_BOOL		was_out;
 	GR_BOOL		newseg;

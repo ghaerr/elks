@@ -361,7 +361,7 @@ static int dummy()
 	return 0;
 }
 # else
-static int dummy()
+static void dummy(int sig)
 {
 }
 # endif

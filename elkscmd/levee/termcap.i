@@ -26,6 +26,7 @@
  *   tgoto()   -- put a gotoXY string into a buffer.
  *  * -> internal routine.
  */
+#include <termcap.h>
 
 #if RMX | MSDOS		/* default to ANSI.SYS termcap */
 char termcap[200] = "Ansi subset:CM=\033[%d;%dH,Y,1,1:\

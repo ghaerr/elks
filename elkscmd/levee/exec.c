@@ -211,7 +211,7 @@ int i;
 	exprintln();
 	printch(mbuffer[i].token);
 	mvcur(-1,3);
-	if (movemap[mbuffer[i].token] == INSMACRO)
+	if (movemap[mbuffer[i].token & 255] == INSMACRO)
 	    prints("!= ");
 	else
 	    prints(" = ");
@@ -261,11 +261,11 @@ bool insert;
 	    undefine(lookup(c));
 	    mbuffer[i].token = c;
 	    mbuffer[i].m_text = strdup(execstr);
-	    mbuffer[i].oldmap = movemap[c];
+	    mbuffer[i].oldmap = movemap[c & 255];
 	    if (insert)
-		movemap[c] = INSMACRO;
+		movemap[c & 255] = INSMACRO;
 	    else
-		movemap[c] = SOFTMACRO;
+		movemap[c & 255] = SOFTMACRO;
 	}
     }
 } /* map */
@@ -277,7 +277,7 @@ int i;
 {
     register char *p;
     if (i >= 0) {
-	movemap[mbuffer[i].token] = mbuffer[i].oldmap;
+	movemap[mbuffer[i].token & 255] = mbuffer[i].oldmap;
 	mbuffer[i].token = 0;
 	p = mbuffer[i].m_text;
 	free(p);
@@ -344,7 +344,7 @@ getname()
 #endif
     register char *name;
     if (name = getarg()) {
-	if (strcmp(name,"#") == 0)
+	if (strcmp(name,"#") == 0) {
 	    if (*altnm)
 		name = altnm;
 	    else {
@@ -358,6 +358,7 @@ getname()
 		if (*p == '/')
 		    *p = '\\';
 #endif
+	}
     }
     return name;
 } /* getname */
@@ -958,13 +959,14 @@ exec(cmd, mode, noquit)
 	    break;
 	case EX_XIT:
 	    clrmsg();
-	    if (modified)
+	    if (modified) {
 		if (readonly) {
 		    prints(fisro);
 		    break;
 		}
 		else if (!writefile())
 		    break;
+	    }
 
 	    if (!affirm && (argc-pc > 1)) {	/* any more files to edit? */
 		printch('(');

@@ -67,7 +67,7 @@
 #define BOTTOM_SIX_BITS  	0x3f
 
 /* local data*/
-static int		mouse_fd;	/* file descriptor for mouse */
+static int		mouse_fd = -2;	/* file descriptor for mouse */
 static int		state;		/* IDLE, XSET, ... */
 static BUTTON		buttons;	/* current mouse buttons pressed*/
 static BUTTON		availbuttons;	/* which buttons are available */
@@ -135,15 +135,20 @@ MOU_Open(MOUSEDEVICE *pmd)
 	} else
 		return -1;
 
+	if (!strcmp(port, "none")) {
+		mouse_fd = -2;
+		return -2;		/* no mouse */
+	}
+
 	/* open mouse port*/
 	mouse_fd = open(port, O_EXCL | O_NOCTTY | O_NONBLOCK);
 	if (mouse_fd < 0) {
 		fprintf(stderr,
-			"Error %d opening serial mouse type %s on port %s.\n",
-			errno, type, port);
+			"No serial %s mouse found on port %s (error %d).\n"
+			"Mouse not detected, use export MOUSE_PORT=none.\n",
+			type, port, errno);
  		return -1;
 	}
-
 #if SGTTY
 	/* set rawmode serial port using sgtty*/
 	struct sgttyb sgttyb;
@@ -200,7 +205,7 @@ MOU_Close(void)
 {
 	if (mouse_fd > 0)
 		close(mouse_fd);
-	mouse_fd = 0;
+	mouse_fd = -2;
 }
 
 /*
@@ -233,6 +238,8 @@ static int
 MOU_Read(COORD *dx, COORD *dy, COORD *dz, BUTTON *bptr)
 {
 	int	b;
+
+	if (mouse_fd < 0) return 0;
 
 	/*
 	 * If there are no more bytes left, then read some more,

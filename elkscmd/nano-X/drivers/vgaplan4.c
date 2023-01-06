@@ -58,11 +58,13 @@ ega_init(PSD psd)
 
 #if MSDOS | ELKS
 	/* fill in screendevice struct if not framebuffer driver*/
-	psd->addr = SCREENBASE;		/* long ptr -> short on 16bit sys*/
+	psd->addr = (char *)SCREENBASE;		/* long ptr -> short on 16bit sys*/
 	psd->linelen = BYTESPERLINE;
-#endif
+	psd->size = 65535;
+#else
 	/* framebuffer mmap size*/
 	psd->size = 0x10000;
+#endif
 
 	/* Set up some default values for the VGA Graphics Registers. */
 	set_enable_sr (0x0f);

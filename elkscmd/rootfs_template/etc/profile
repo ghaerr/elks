@@ -1,6 +1,7 @@
 export PATH=/bin
 PS1="$HOSTNAME$PS1"
 umask 022
+#uname -v
 #export MANPATH=/root/man:/lib
 #TZ=GMT0
 # if TZ= set in /bootopts or above it overrides CONFIG_TIME_TZ, so don't set TZ= below

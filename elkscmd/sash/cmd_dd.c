@@ -25,13 +25,13 @@ typedef	struct {
 
 
 static PARAM	params[] = {
-	"if",		PAR_IF,
-	"of",		PAR_OF,
-	"bs",		PAR_BS,
-	"count",	PAR_COUNT,
-	"seek",		PAR_SEEK,
-	"skip",		PAR_SKIP,
-	NULL,		PAR_NONE
+	{ "if",		PAR_IF     },
+	{ "of",		PAR_OF     },
+	{ "bs",		PAR_BS     },
+	{ "count",	PAR_COUNT  },
+	{ "seek",	PAR_SEEK   },
+	{ "skip",	PAR_SKIP   },
+	{ NULL,		PAR_NONE   }
 };
 
 

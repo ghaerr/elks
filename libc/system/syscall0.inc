@@ -8,17 +8,13 @@
 
 	.text
 
+#ifndef __IA16_CALLCVT_REGPARMCALL
+#ifdef L_sys01
 	.global _syscall_0
-	.global _syscall_1
-	.global _syscall_2
-	.global _syscall_2p
-	.global _syscall_3
-	.global _syscall_4
-	.global _syscall_5
-
 _syscall_0:
 	int    $0x80
 
+	.global _syscall_test
 _syscall_test:
 	test   %ax,%ax
 	jns    _syscall_ok
@@ -28,19 +24,28 @@ _syscall_test:
 
 _syscall_ok:
 	RET_(0)
+#endif
+#endif
 
 #if defined __IA16_CALLCVT_CDECL
+#ifdef L_sys01
+	.global _syscall_1
 _syscall_1:
 	mov    %sp,%bx
 	mov    2+FAR_ADJ_(%bx),%bx
 	jmp    _syscall_0
+#endif
 
+#ifdef L_sys23
+	.global _syscall_2
 _syscall_2:
 	mov    %sp,%bx
 	mov    4+FAR_ADJ_(%bx),%cx
 	mov    2+FAR_ADJ_(%bx),%bx
 	jmp    _syscall_0
 
+	.global _syscall_2p
+	.global _syscall_3
 _syscall_3:
 _syscall_2p:
 	mov    %sp,%bx
@@ -48,7 +53,11 @@ _syscall_2p:
 	mov    4+FAR_ADJ_(%bx),%cx
 	mov    2+FAR_ADJ_(%bx),%bx
 	jmp    _syscall_0
+#endif
 
+#ifdef L_sys4
+	.global _syscall_4
+	.global _syscall_test
 _syscall_4:
 	mov    %sp,%bx
 	push   %di
@@ -59,7 +68,11 @@ _syscall_4:
 	int    $0x80
 	pop    %di
 	jmp    _syscall_test
+#endif
 
+#ifdef L_sys5
+	.global _syscall_5
+	.global _syscall_test
 _syscall_5:
 	mov    %sp,%bx
 	push   %si
@@ -73,7 +86,12 @@ _syscall_5:
 	pop    %di
 	pop    %si
 	jmp    _syscall_test
+#endif
+
 #elif defined __IA16_CALLCVT_STDCALL
+
+#ifdef L_sys01
+	.global _syscall_1
 _syscall_1:
 # ifdef __IA16_CMODEL_IS_FAR_TEXT
 	pop %dx
@@ -87,7 +105,10 @@ _syscall_1:
 	push %dx
 # endif
 	jmp _syscall_0
+#endif
 
+#ifdef L_sys23
+	.global _syscall_2
 _syscall_2:
 # ifdef __IA16_CMODEL_IS_FAR_TEXT
 	mov %sp,%bx
@@ -104,6 +125,7 @@ _syscall_2:
 	jmp _syscall_0
 # endif
 
+	.global _syscall_2p
 _syscall_2p:
 	/* variadic function, callee must not pop any arguments */
 	mov %sp,%bx
@@ -112,6 +134,7 @@ _syscall_2p:
 	mov 2+FAR_ADJ_(%bx),%bx
 	jmp _syscall_0
 
+	.global _syscall_3
 _syscall_3:
 	mov %sp,%bx
 	mov 6+FAR_ADJ_(%bx),%dx
@@ -119,7 +142,10 @@ _syscall_3:
 	mov 2+FAR_ADJ_(%bx),%bx
 	CALL_N_(_syscall_0)
 	RET_(6)
+#endif
 
+#ifdef L_sys4
+	.global _syscall_4
 _syscall_4:
 	mov %sp,%bx
 	push %di
@@ -130,7 +156,10 @@ _syscall_4:
 	CALL_N_(_syscall_0)
 	pop %di
 	RET_(8)
+#endif
 
+#ifdef L_sys5
+	.global _syscall_5
 _syscall_5:
 	mov %sp,%bx
 	push %si
@@ -144,29 +173,66 @@ _syscall_5:
 	pop %di
 	pop %si
 	RET_(10)
+#endif
+
 #elif defined __IA16_CALLCVT_REGPARMCALL
+
+#ifdef L_sys23
+	.global _syscall_2p
 _syscall_2p:
 	push %bp
 	mov %sp,%bp
 	mov 4+FAR_ADJ_(%bp),%cx
 	pop %bp
+
+	.global _syscall_2
+	.global _syscall_3
 _syscall_2:
 _syscall_3:
 	xchg %cx,%dx
-_syscall_1:
-	xchg %ax,%bx
 	jmp _syscall_0
+#endif
 
+#ifdef L_sys01
+	.global _syscall_0
+	.global _syscall_1
+_syscall_1:
+_syscall_0:
+	xchg %ax,%bx
+
+	.global _syscall
+_syscall:
+	int    $0x80
+
+	.global _syscall_test
+_syscall_test:
+	test   %ax,%ax
+	jns    _syscall_ok
+	neg    %ax
+	mov    %ax,errno
+	mov    $-1,%ax
+
+_syscall_ok:
+	RET_(0)
+#endif
+
+#ifdef L_sys4
+	.global _syscall_4
+	.global _syscall
 _syscall_4:
 	push %di
 	mov %sp,%di
 	mov 4+FAR_ADJ_(%di),%di
 	xchg %cx,%dx
 	xchg %ax,%bx
-	CALL_N_(_syscall_0)
+	CALL_N_(_syscall)
 	pop %di
-	RET_(2)
+	RET_(8)
+#endif
 
+#ifdef L_sys5
+	.global _syscall_5
+	.global _syscall
 _syscall_5:
 	push %di
 	mov %sp,%di
@@ -175,77 +241,15 @@ _syscall_5:
 	mov 4+FAR_ADJ_(%di),%di
 	xchg %cx,%dx
 	xchg %ax,%bx
-	CALL_N_(_syscall_0)
+	CALL_N_(_syscall)
 	pop %si
 	pop %di
-	RET_(4)
+	RET_(10)
+#endif
+
 #else
 # error "unknown calling convention"
 #endif
 
-//-----------------------------------------------------------------------------
-
-// Signal callback from kernel
-
-	.global _syscall_signal
-
-_syscall_signal:
-	push %bp
-	mov %sp,%bp
-
-	pushf
-	push %ax
-	push %bx
-	push %cx
-	push %dx
-	push %si
-	push %di
-	push %es
-
-	mov 6(%bp),%bx
-#ifndef __IA16_CALLCVT_REGPARMCALL
-	push %bx
-#else
-	mov %bx,%ax
-#endif
-#ifdef __IA16_CMODEL_IS_FAR_TEXT
-	add %bx,%bx
-	add %bx,%bx
-	lcallw *_sigtable-4(%bx)  // offset by 4 because no entry for signal 0
-#else
-	add %bx,%bx
-	mov	_sigtable-2(%bx),%bx  // offset by 2 because no entry for signal 0
-	call *%bx
-#endif
-#ifdef __IA16_CALLCVT_CDECL
-	inc %sp
-	inc %sp
-#endif
-
-	pop %es
-	pop %di
-	pop %si
-	pop %dx
-	pop %cx
-	pop %bx
-	pop %ax
-	popf
-
-	pop %bp
-	lret $2  // get rid of the signum
-
-//------------------------------------------------------------------------------
-
-	.global breakpoint
-
-breakpoint:
-
-	int $3
-	RET_(0)
-
-//------------------------------------------------------------------------------
-
 	.data
-
 	.extern errno
-	.extern _sigtable

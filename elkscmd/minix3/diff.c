@@ -313,13 +313,16 @@ char *name;
 void build_option_string()
 {
   switch (mode) {
-	    case ed_mode:sprintf(options_string, "-e");
+  case ed_mode:
+	sprintf(options_string, "-e");
 	break;
-      case context:
+  case context:
 	if (context_lines == 3)
 		sprintf(options_string, "-c");
 	else
 		sprintf(options_string, "-C %d", context_lines);
+	break;
+  case undefined:
 	break;
   }
 

@@ -15,7 +15,7 @@ unsigned int heapsize;	/* max size of kernel near heap */
 
 void INITPROC setup_arch(seg_t *start, seg_t *end)
 {
-#ifdef CONFIG_COMPAQ_FAST
+#ifdef CONFIG_HW_COMPAQFAST
 	outb_p(1,0xcf);	/* Switch COMPAQ Deskpro to high speed */
 #endif
 

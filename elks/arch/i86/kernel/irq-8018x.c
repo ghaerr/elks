@@ -21,7 +21,7 @@
  *	platforms
  */
 
-void init_irq(void)
+void initialize_irq(void)
 {
     /* Mask all interrupt sources on the IMASK register */
     outw(0xfd, PCB_IMASK);
