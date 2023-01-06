@@ -27,7 +27,8 @@
 
 #include "ne2k.h"
 
-#define CHK8390     1   /* perform 8390 chip detect in NIC probe */
+#define CHK8390_TINY     1  /* perform quick 8390 chip detect in NIC probe */
+#define CHK8390_FULL     0  /* perform more robust 8390 chip detect in NIC probe */
 
 /* runtime configuration set in /bootopts or defaults in ports.h */
 #define net_irq     (netif_parms[ETH_NE2K].irq)
@@ -386,32 +387,33 @@ word_t ne2k_probe()
     int reg0;
 
 #define ENODMA_PAGE0        0x20
+#define ENODMA_PAGE0_STOP   0x21
 #define ENODMA_PAGE1_STOP   0x61
 
-    /* send 0x20 to NIC and read result (original probe) */
-    outb(ENODMA_PAGE0, net_port);
+    /* send 0x21 to NIC and read result */
+    outb(ENODMA_PAGE0_STOP, net_port);
     reg0 = inb(net_port);
-    printk("(%x)", reg0);
+
+#if CHK8390_TINY
+    /* quick 8390 chip detect, from E2100 8390 check by Donald Becker */
+    if (reg0 != 0x21 && reg0 != 0x23)
+        return 1;   /* NIC not present */
+#else
+    /* original probe */
     if (reg0 == 0xFF || reg0 == 0)
         return 1;   /* NIC not present */
-
-#if CHK8390
-    /* perform 8390 chip detect */
-    outb(ENODMA_PAGE1_STOP, net_port);
-    printk(",(%x)", inb(net_port));
-    /*int regd = inb(net_port + EN0_CNTR0);*/
-    outb(0xff, net_port + EN0_TXCR);
-    outb(ENODMA_PAGE0, net_port);
-    int b = inb(net_port + EN0_CNTR0);   /* clear the counter by reading */
-    printk(",(%x)", b);
-    if (inb(net_port + EN0_CNTR0) != 0) {
-        /*outb(reg0, net_port);*/
-        /*outb(regd, net_port + EN0_CNTR0);*/
-        return 1;   /* not 8390 */
-    }
 #endif
 
-    printk(".");
+#if CHK8390_FULL
+    /* more robust 8390 chip detect, from Linux 2.0 NE2K driver */
+    outb(ENODMA_PAGE1_STOP, net_port);  /* send 0x61 */
+    outb(0xff, net_port + EN0_TXCR);
+    outb(ENODMA_PAGE0, net_port);
+    inb(net_port + EN0_CNTR0);          /* clear the counter by reading */
+    if (inb(net_port + EN0_CNTR0) != 0)
+        return 1;   /* not 8390 */
+#endif
+
     return 0;       /* NIC present */
 }
 
