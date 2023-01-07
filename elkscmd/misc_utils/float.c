@@ -3,7 +3,8 @@
 #include <limits.h>
 #include <math.h>
 
-__STDIO_PRINT_FLOATS;	/* force float libc printf/sprintf support */
+#include <asm/yoink.h>
+__YOINK(dtostr);        /* force float libc printf/sprintf float support */
 
 #define FLOAT	float
 #define VOLATILE volatile

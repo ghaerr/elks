@@ -1,9 +1,11 @@
-#define __STDIO_PRINT_FLOATS
-
 #include "testlib.h"
 
 #include <errno.h>
 #include <math.h>
+
+#include <stdlib.h>
+#include <asm/yoink.h>
+__YOINK(dtostr);            // link in libc printf float support
 
 struct PowCase {
 	double x;

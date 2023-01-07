@@ -28,11 +28,12 @@
 #include "_stdio.h"
 
 #ifndef __HAS_NO_FLOATS__
+#include <asm/yoink.h>
 /*
- * Use '__STDIO_PRINT_FLOATS;' in user program to link in libc %e,%f,%g
- * printf/sprintf support (see stdio.h).
+ * Use '#include <asm/yoink.h>` and '__YOINK(dtostr)'
+ * in user program to link in libc %e,%f,%g * printf/sprintf support
+ * (see below, stdlib.h and asm/yoink.h).
  */
-void (*__fp_print)();	/* =0 by default by linker which disables float support */
 #endif
 
 static int
@@ -247,9 +248,9 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
 	 case 'g':
 	 case 'E':
 	 case 'G':
-	    if ( __fp_print )
+	    if (_weaken(dtostr))
 	    {
-	       (*__fp_print)(va_arg(ap, double), *fmt, preci, ptmp);
+	       (_weaken(dtostr))(va_arg(ap, double), *fmt, preci, ptmp);
 	       preci = -1;
 	       goto printit;
 	    }
@@ -274,30 +275,3 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
    if( buffer_mode == _IOLBF ) op->bufwrite = op->bufstart;
    return (cnt);
 }
-
-#if 0
-#ifdef __AS386_16__
-#asm
-  loc   1         ! Make sure the pointer is in the correct segment
-auto_func:        ! Label for bcc -M to work.
-  .word ___xfpcvt ! Pointer to the autorun function
-  .text           ! So the function after is also in the correct seg.
-#endasm
-#endif
-
-#ifdef __AS386_32__
-#asm
-  loc   1         ! Make sure the pointer is in the correct segment
-auto_func:        ! Label for bcc -M to work.
-  .long ___xfpcvt ! Pointer to the autorun function
-  .text           ! So the function after is also in the correct seg.
-#endasm
-#endif
-
-static void
-__xfpcvt(void)
-{
-   extern int (*__fp_print)();
-   __fp_print = __fp_print_func;
-}
-#endif

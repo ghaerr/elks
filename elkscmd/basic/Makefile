@@ -33,7 +33,7 @@ endif
 all: $(PRGS)
 
 basic: $(OBJS) basic.h host.h
-	$(LD) $(LDFLAGS) -o basic $(OBJS) $(LDLIBS)
+	$(LD) $(LDFLAGS) -Wl,-Map=basic.map -o basic $(OBJS) $(LDLIBS)
 
 HOSTSRC = basic.c host.c host-stubs.c
 HOSTSRC += ../../libc/misc/ecvt.c
@@ -45,4 +45,4 @@ install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
-	rm -f $(PRGS) *.o hostbasic
+	rm -f $(PRGS) *.o *.map hostbasic
