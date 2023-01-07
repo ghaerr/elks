@@ -6,36 +6,19 @@
 
 #ifndef __ASSEMBLER__
 
-#ifdef __MEDIUM__
-#define _weakaddr(symbolstr) __extension__ ({   \
-    unsigned int a, d;                          \
-    asm(".weak\t"  symbolstr "\n"               \
-        "\tmov\t$" symbolstr ",%%ax\n"          \
-        "\tmov\t$" symbolstr "@OZSEG16,%%dx\n"  \
-            : "=a" (a), "=d" (d)                \
-            /* no input */ );                   \
-    ((unsigned long)d << 16) | a;               \
-    })
+#define __STRING(x)   #x
 
-#else
-
-#define _weakaddr(symbolstr) __extension__ ({   \
-    unsigned int a;                             \
-    asm(".weak\t"  symbolstr "\n"               \
-        "\tmov\t$" symbolstr ",%%ax\n"          \
-            : "=a" (a)                          \
-            /* no input */ );                   \
-    a;                                          \
-    })
-#endif
-
-#define _weaken(symbol)       ((const typeof(&(symbol)))_weakaddr(#symbol))
+/* generate new external symbol with same name and type as symbol but weak */
+#define _weaken(sym)   ({ \
+                          extern __typeof__(sym) __weak_sym \
+                             __asm(__STRING(sym)) \
+                             __attribute__((__weak__)); \
+                          __weak_sym; \
+                       })
 
 #define __YOINK(sym)	__asm(".pushsection .discard; " \
-                              ".long " __YOINK_STR(#sym) "; " \
+                              ".long " __STRING(#sym) "; " \
                               ".popsection")
-#define __YOINK_STR(sym) #sym
-
 #else  /* __ASSEMBLER__ */
 #define __YOINK(sym)	.pushsection .discard; \
                         .long #sym; \
