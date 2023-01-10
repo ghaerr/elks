@@ -92,7 +92,7 @@ int main(int argc, char **argv)
 	char	*outfile;
 	int	infd;
 	int	outfd;
-	int	incc;
+	int	incc = 0;
 	int	outcc;
 	int	blocksize;
 	long	count = -1;
