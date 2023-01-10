@@ -92,7 +92,7 @@ int main(int argc, char **argv)
 	char	*outfile;
 	int	infd;
 	int	outfd;
-	int	incc;
+	int	incc = 0;
 	int	outcc;
 	int	blocksize;
 	long	count = -1;
@@ -204,8 +204,7 @@ int main(int argc, char **argv)
 		infd = open(infile, 0);
 		if (infd < 0) {
 			perror(infile);
-			if (buf != localbuf) free(buf);
-			goto usage;
+			goto cleanup3;
 		}
 	}
 
@@ -216,8 +215,6 @@ int main(int argc, char **argv)
 		outfd = creat(outfile, 0666);
 		if (outfd < 0) {
 			perror(outfile);
-			close(infd);
-			if (buf != localbuf) free(buf);
 			goto cleanup2;
 		}
 	}
@@ -247,11 +244,11 @@ int main(int argc, char **argv)
 	}
 
 	/* If count is specified, only copy that many blocks */
-	if (count > 0) 
+	if (count > 0)
 		count *= blocksize;
-	else 
+	else
 		if (count < 0) count = 0x7fffffff;
-	else 
+	else
 		goto cleanup;	/* exit immediately if count == 0 */
 
 	while ((count > intotal) && (incc = read(infd, buf, blocksize)) > 0) {
@@ -272,15 +269,16 @@ int main(int argc, char **argv)
 	}
 
 	/* Exit status can only become 0 (no error) at this point */
-	if (incc < 0) 
+	if (incc < 0)
 		perror(infile);
-	else 
+	else
 		retval = 0;
 
 cleanup:
 	if (close(outfd) < 0) perror(outfile);
 cleanup2:
 	close(infd);
+cleanup3:
 	if (buf != localbuf) free(buf);
 
 	/* %ld+%ld records in */
