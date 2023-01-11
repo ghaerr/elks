@@ -3,9 +3,9 @@
 #include <errno.h>
 #include <math.h>
 
-#include <stdlib.h>
-#include <asm/yoink.h>
-__YOINK(dtostr);            // link in libc printf float support
+#include <stdio.h>
+#include <sys/linksym.h>
+__STDIO_PRINT_FLOATS;       // link in libc printf float support
 
 struct PowCase {
 	double x;

@@ -2,7 +2,7 @@
 #define	_STDIO_H
 
 #include <stdio.h>
-#include <asm/yoink.h>
+#include <sys/linksym.h>
 
 #if defined(__STDC__) && !defined(__FIRST_ARG_IN_AX__)
 #	include <stdarg.h>

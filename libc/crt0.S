@@ -1,7 +1,7 @@
 // C runtime bootstrap
 // This must be the first module of the executable
 
-#include <asm/yoink.h>
+#include <sys/linksym.h>
 #include <libc-private/call-cvt.h>
 
 	.arch	i8086, nojumps
@@ -15,8 +15,8 @@
 // Ensure that constructor & destructor handling is linked in
 // TODO: make these optional
 
-	__YOINK(__CTOR_LIST__)
-	__YOINK(__DTOR_LIST__)
+	__LINK_SYMBOL(__CTOR_LIST__)
+	__LINK_SYMBOL(__DTOR_LIST__)
 
 // This is the program entry point
 

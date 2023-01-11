@@ -28,7 +28,6 @@ double strtod(const char *nptr, char **endptr);
 double atof(const char *str);
 char *ecvt(double val, int ndig, int *pdecpt, int *psign);
 char *fcvt(double val, int nfrac, int *pdecpt, int *psign);
-/* use __YOINK(dtostr) to link in libc %e,%f,%g printf/sprintf support */
 void dtostr(double val, int style, int preci, char *buf);
 #endif
 

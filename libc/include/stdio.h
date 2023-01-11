@@ -133,8 +133,6 @@ char * gets(char *str);	/* BAD function; DON'T use it! */
 
 int fscanf(FILE * fp, const char * fmt, ...);
 
-/* use __YOINK(dtostr) to link in libc %e,%f,%g printf/sprintf support */
-
 int printf(const char*, ...);
 int fprintf(FILE*, const char*, ...);
 int sprintf(char*, const char*, ...);
@@ -143,6 +141,12 @@ int snprintf(char*, size_t, const char*, ...);
 int vfprintf (FILE * stream, const char * format, va_list ap);
 int vsprintf (char * sp, const char * format, va_list ap);
 int vsnprintf (char * sp, size_t, const char * format, va_list ap);
+
+#ifndef __HAS_NO_FLOATS
+void dtostr(double val, int style, int preci, char *buf);
+/* use this macro to link in libc %e,%f,%g printf/sprintf support into user program */
+#define __STDIO_PRINT_FLOATS    __LINK_SYMBOL(dtostr)
+#endif
 
 #define stdio_pending(fp) ((fp)->bufread>(fp)->bufpos)
 

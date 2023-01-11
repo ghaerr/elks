@@ -28,11 +28,11 @@
 #include "_stdio.h"
 
 #ifndef __HAS_NO_FLOATS__
-#include <asm/yoink.h>
+#include <sys/weaken.h>
 /*
- * Use '#include <asm/yoink.h>` and '__YOINK(dtostr)'
+ * Use '#include <sys/weaken.h>` and '__STDIO_PRINT_FLOATS'
  * in user program to link in libc %e,%f,%g * printf/sprintf support
- * (see below, stdlib.h and asm/yoink.h).
+ * (see below, stdio.h and sys/weaken.h).
  */
 #endif
 

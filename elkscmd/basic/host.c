@@ -55,8 +55,8 @@ float adjust(float f) {
 // floats have approx 7 sig figs, 15 for double
 
 #if __ia16__
-#include <asm/yoink.h>
-__YOINK(dtostr);        /* link in libc printf float support */
+#include <sys/linksym.h>
+__STDIO_PRINT_FLOATS;       // link in libc printf float support
 
 char *host_floatToStr(float f, char *buf) {
 	sprintf(buf, "%.*g", MATH_PRECISION, (double)f);
