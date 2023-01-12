@@ -55,7 +55,8 @@ float adjust(float f) {
 // floats have approx 7 sig figs, 15 for double
 
 #if __ia16__
-__STDIO_PRINT_FLOATS;		// link in libc printf float support
+#include <sys/linksym.h>
+__STDIO_PRINT_FLOATS;       // link in libc printf float support
 
 char *host_floatToStr(float f, char *buf) {
 	sprintf(buf, "%.*g", MATH_PRECISION, (double)f);
@@ -162,12 +163,12 @@ int host_breakPressed() {
 
 #if __ia16__
 /* replacement fread to fix fgets not returning ferror/errno properly on SIGINT*/
-#include <asm/yoink.h>
+#include <sys/linksym.h>
 size_t fread(void *buf, size_t size, size_t nelm, FILE *fp)
 {
    int len, v;
    size_t bytes, got = 0;
-   __YOINK(__io_init_vars);
+   __LINK_SYMBOL(__io_init_vars);
 
    v = fp->mode;
 
