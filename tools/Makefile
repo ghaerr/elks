@@ -97,7 +97,7 @@ $(DISTDIR)/$(MPC_DIST).tar.gz:
 
 # GCC for IA16
 
-GCC_VER=70c4679fb560cbca27e15cb3dc4cef1b877eae88
+GCC_VER=ae4111f13b5dc6dea6344249f8df5f769607329f
 GCC_DIST=gcc-ia16-$(GCC_VER)
 
 $(DISTDIR)/$(GCC_DIST).tar.gz:

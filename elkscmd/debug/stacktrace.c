@@ -9,10 +9,11 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <assert.h>
 #include "stacktrace.h"
 #include "syms.h"
 
-#define PROFILING   0   /* =1 to include instrumentation functions */
+#define PROFILING   1   /* =1 to include instrumentation functions */
 #define STACKCOLS   8   /* # of stack address columns */
 
 /* ia-16 C function stack layout (hi to low):
@@ -51,7 +52,8 @@ static int noinstrument calc_push_count(int *addr)
         count = (count+1) | SI_PUSHED, opcode = getcsbyte(fp++);
     if (opcode == 0x57)         /* push %di */
         count = (count+1) | DI_PUSHED, opcode = getcsbyte(fp++);
-    if (opcode == 0x55)         /* push %bp */
+    if (opcode == 0x55          /* push %bp */
+        || opcode == 0x59 && (int)fp < 0x40) /* temp kluge for crt0.S 'pop %cx' start */
         count = (count + 1) | BP_PUSHED, opcode = getcsbyte(fp);
     //printf("%s (%x) pushes %x\n", sym_text_symbol(addr, 1), (int)addr, count);
     return count;
@@ -77,10 +79,10 @@ static void noinstrument print_stack_line(int level, int **addr, int *fn, int fl
     printf("\n");
 }
 
-/* display call stack, arg1 ignored */
+/* display call stack, arg1 ignored but displayed for testing */
 void noinstrument print_stack(int arg1)
 {
-    int **bp = (int **) &arg1 - 4;
+    int **bp = __builtin_frame_address(0);  /* address of saved BP in stack */
     int **addr = bp;
     int *fn = (int *)print_stack;
     int i = 0;
@@ -107,15 +109,19 @@ static int **start_sp;
 static unsigned int max_stack;
 
 /* every function this function calls must also be noinstrument!! */
-void noinstrument __cyg_profile_func_enter(void *arg1, void *arg2)
+void noinstrument __cyg_profile_func_enter_simple(void)
 {
+#if 1
+    int **bp = __builtin_frame_address(0);  /* find BP on stack: BP, DI, SI, ret, arg1 */
+    int *calling_fn = __builtin_return_address(0);  /* return address */
+#else
     int **bp = (int **)&arg1 - 4;   /* find BP on stack: BP, DI, SI, ret, arg1 */
     int *calling_fn = bp[3];        /* return address */
+    assert(bp == __builtin_frame_address(0));
+    assert(calling_fn == __builtin_return_address(0));
+#endif
     int i;
     char callsite[32];
-
-    //assert(bp == __builtin_frame_address(0));
-    //assert(calling_fn == __builtin_return_address(0));
 
     /* calc stack used */
     if (count == 0) start_sp = bp;
@@ -143,7 +149,7 @@ void noinstrument __cyg_profile_func_enter(void *arg1, void *arg2)
     ++count;
 }
 
-void noinstrument __cyg_profile_func_exit(void *arg1, void *arg2)
+void noinstrument __cyg_profile_func_exit_simple(void)
 {
     --count;
 }

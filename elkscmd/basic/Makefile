@@ -17,6 +17,7 @@ HOST_CFLAGS = -O3
 
 PRGS = basic
 OBJS = basic.o host.o
+#MAPFILE = -Wl,-Map=basic.map
 
 ifeq ($(CONFIG_ARCH_IBMPC), y)
 OBJS += host-stubs.o
@@ -33,7 +34,7 @@ endif
 all: $(PRGS)
 
 basic: $(OBJS) basic.h host.h
-	$(LD) $(LDFLAGS) -o basic $(OBJS) $(LDLIBS)
+	$(LD) $(LDFLAGS) $(MAPFILE) -o basic $(OBJS) $(LDLIBS)
 
 HOSTSRC = basic.c host.c host-stubs.c
 HOSTSRC += ../../libc/misc/ecvt.c

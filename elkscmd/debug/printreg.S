@@ -48,7 +48,7 @@ print_regs:
 	push %sp
 	push %bp
 	mov  %sp,%bp
-	add  $4,2(%bp)	// adjust SP to before call here
+	addw $4,2(%bp)	// adjust SP to before call here
 
 	push %di
 	push %si

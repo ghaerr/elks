@@ -3,6 +3,7 @@
 
 #include "_stdio.h"
 
+#pragma GCC diagnostic ignored "-Wprio-ctor-dtor"
 __attribute__((destructor(99))) static void
 __stdio_close_all(void)
 {
@@ -19,6 +20,7 @@ __stdio_close_all(void)
    }
 }
 
+#pragma GCC diagnostic ignored "-Wprio-ctor-dtor"
 __attribute__((constructor(99))) void
 __io_init_vars(void)
 {

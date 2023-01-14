@@ -15,10 +15,14 @@ HOSTCFLAGS = -O3
 
 PRGS = testsym disasm opcodes
 LIBOBJS += syms.o stacktrace.o printreg.o
-#OBJS += ulltostr.o
+
+# disable tail call optimization for better stack traces
 CFLAGS += -fno-optimize-sibling-calls
+# always push BP in function prologue for better stack traces
 CFLAGS += -fno-omit-frame-pointer
-#CFLAGS += -finstrument-functions
+# optional instrumentation for function tracing
+CFLAGS += -finstrument-functions-simple
+
 #LDFLAGS += -maout-heap=12000
 
 all: nm86 $(PRGS)
@@ -44,9 +48,6 @@ opcodes: opcodes.o
 	cp $@ $(TOPDIR)/elkscmd/rootfs_template/root
 
 disasm.o: disasm.c
-	$(CC) $(CFLAGS) -fno-instrument-functions -c -o $*.o $<
-
-ulltostr.o: ulltostr.c
 	$(CC) $(CFLAGS) -fno-instrument-functions -c -o $*.o $<
 
 install: $(PRGS)

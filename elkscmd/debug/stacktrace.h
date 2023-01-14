@@ -5,9 +5,9 @@
 /* stacktrace.c */
 void noinstrument print_stack(int arg1);
 
-/* instrumentation functions called when -finstrument-functions set */
-void noinstrument __cyg_profile_func_enter(void *, void *);
-void noinstrument __cyg_profile_func_exit(void *, void *);
+/* instrumentation functions called when -finstrument-functions-simple set */
+void noinstrument __cyg_profile_func_enter_simple(void);
+void noinstrument __cyg_profile_func_exit_simple(void);
 void print_times(void);
 
 /* printreg.S */
