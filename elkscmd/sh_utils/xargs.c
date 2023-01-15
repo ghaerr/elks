@@ -178,14 +178,14 @@ char * next_token()
 				buf[tail++] = inp;
 				break;
 		}
-		if (tail > size) {
+		if (tail >= size) {
 			size += BSIZE;
 			buf = realloc(buf, size);
 			if (buf == NULL) {
 				out_of_mem();
 			}
 		}
-			
+
 	}
 }
 
@@ -204,7 +204,7 @@ char * next_token()
 void run(char * argv0, char ** argv)
 {
 	int pid;
-	
+
 	pid = vfork();
 	switch (pid) {
 		case -1:
