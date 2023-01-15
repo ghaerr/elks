@@ -105,7 +105,7 @@ void noinstrument print_stack(int arg1)
 
 #if PROFILING
 static int count;
-static int **start_sp;
+static unsigned int start_sp;
 static unsigned int max_stack;
 
 /* every function this function calls must also be noinstrument!! */
@@ -124,8 +124,8 @@ void noinstrument __cyg_profile_func_enter_simple(void)
     char callsite[32];
 
     /* calc stack used */
-    if (count == 0) start_sp = bp;
-    unsigned int stack_used = start_sp - bp;
+    if (count == 0) start_sp = (unsigned int)bp;
+    unsigned int stack_used = start_sp - (unsigned int)bp;
     if (stack_used > max_stack) max_stack = stack_used;
 
     //print_times();

@@ -38,7 +38,7 @@ OBJS = \
 	wildcard.o \
 	# end of list
 
-#OBJS += instrument.o
+OBJS += instrument.o
 
 all: $(LIB)
 
