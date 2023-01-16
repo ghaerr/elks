@@ -237,7 +237,15 @@ main:
  cld
  std
  call   *0x9090(%bx)
+ push   0x0000
+ push   0x7fff
+ push   0x8000
+ push   0x8001
 
+ push   $0x0000
+ push   $0x7fff
+ push   $0x8000
+ push   $0x8001
  add    %dx,0x9090(%bx)
  add    0x9090(%bx),%dx
  add    $0x9090,%ax

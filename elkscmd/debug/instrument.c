@@ -4,6 +4,7 @@
  * June 2022 Greg Haerr
  */
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "stacktrace.h"
 #include "syms.h"
@@ -22,7 +23,7 @@ static void checkargs(volatile int ac, char **av)
 {
     char **avp = av + 1;
 
-    if (*avp && !strcmp(*avp, "--ftrace")) {
+    if ((*avp && !strcmp(*avp, "--ftrace")) || getenv("FTRACE")) {
         while (*avp) {
             *avp = *(avp + 1);
             avp++;
