@@ -36,9 +36,9 @@ _start:
 	inc %ax
 	shl $1,%ax
 	add %bx,%ax	// envp [0]
-	push %ax
-	push %bx
-	push %cx
+	push %ax        // push for any cdecl constructors and main
+	push %bx        // argv
+	push %cx        // argc
 
 // ...Code fragments from .preinit & .preinit.* sections will go here...
 //    NOTE: these assume ax = envp, bx = argv, & may clobber dx
@@ -55,9 +55,9 @@ _start:
 #endif
 	CALL_(main)
 #ifndef __IA16_CALLCVT_REGPARMCALL
-	push %ax  // main return value
+	push %ax        // main return value
 #endif
-	CALL_N_(exit)  // no return
+	CALL_N_(exit)   // no return
 
 	.section .finihead,"ax",@progbits
 
@@ -65,7 +65,7 @@ _start:
 
 exit:
 #ifdef __IA16_CALLCVT_REGPARMCALL
-	xchg %ax,%di
+	xchg %ax,%di    // save exit arg in DI
 #endif
 
 // ...Code fragments from .fini & .fini.* sections will go here...
@@ -74,9 +74,9 @@ exit:
 	.section .finitail,"ax",@progbits
 
 #ifdef __IA16_CALLCVT_REGPARMCALL
-	xchg %ax,%di
+	xchg %ax,%di    // retrieve exit arg
 #endif
-	JMP_(_exit)  // kernel one - no return
+	JMP_(_exit)     // no return
 
 	.data
 

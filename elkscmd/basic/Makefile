@@ -18,6 +18,7 @@ HOST_CFLAGS = -O3
 PRGS = basic
 OBJS = basic.o host.o
 #MAPFILE = -Wl,-Map=basic.map
+#CFLAGS += -finstrument-functions-simple
 
 ifeq ($(CONFIG_ARCH_IBMPC), y)
 OBJS += host-stubs.o
