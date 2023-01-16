@@ -14,7 +14,8 @@ HOSTCFLAGS = -O3
 ###############################################################################
 
 PRGS = testsym disasm opcodes
-LIBOBJS += syms.o stacktrace.o printreg.o
+LIBOBJS += instrument.o syms.o
+LIBOBJS += stacktrace.o printreg.o
 
 # disable tail call optimization for better stack traces
 CFLAGS += -fno-optimize-sibling-calls
