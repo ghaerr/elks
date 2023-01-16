@@ -5,6 +5,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include "stacktrace.h"
 #include "syms.h"
@@ -18,10 +19,10 @@ static unsigned int start_sp;
 static unsigned int max_stack;
 
 /* runs before main and rewrites argc/argv on stack if --ftrace found */
-__attribute__((no_instrument_function,cdecl,constructor(101)))
-static void checkargs(volatile int ac, char **av)
+__attribute__((no_instrument_function,constructor(101)))
+static void checkargs(void)
 {
-    char **avp = av + 1;
+    char **avp = __argv + 1;
 
     if ((*avp && !strcmp(*avp, "--ftrace")) || getenv("FTRACE")) {
         while (*avp) {
@@ -29,7 +30,7 @@ static void checkargs(volatile int ac, char **av)
             avp++;
         }
         ftrace = 1;
-        ac--;
+        __argc--;
     }
     get_micro_count();      /* init timer base */
 }

@@ -16,7 +16,6 @@ int noinstrument calc_push_count(int *addr);
 void noinstrument __cyg_profile_func_enter_simple(void);
 void noinstrument __cyg_profile_func_exit_simple(void);
 unsigned long noinstrument get_micro_count(void);
-void noinstrument print_times(void);
 
 /* printreg.S */
 void noinstrument print_regs(void);

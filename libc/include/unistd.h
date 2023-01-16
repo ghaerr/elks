@@ -93,6 +93,8 @@ extern int optind;
 extern int optopt;
 extern int opterr;
 
+extern int __argc;
+extern char ** __argv;
 extern char ** environ;
 extern char * _program_filename;
 
