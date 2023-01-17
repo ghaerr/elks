@@ -22,7 +22,7 @@
 # that are recognized & handled by this specs file.  Any runtime-specific
 # switches that are not covered by this spec string will result in an error.
 *ia16_impl_rt_switches:
-%{maout} %{maout-total=*} %{maout-chmem=*} %{maout-stack=*} %{maout-heap=*}
+%{maout} %{maout-total=*} %{maout-chmem=*} %{maout-stack=*} %{maout-heap=*} %{maout-symtab}
 
 # Transformations and checks to apply to the front-end's own command line
 # (DRIVER_SELF_SPECS).
@@ -93,4 +93,5 @@
   %{maout-chmem=*:--chmem %*} \
   %{maout-stack=*:--stack %*} \
   %{maout-heap=*:--heap %*} \
+  %{maout-symtab:--symtab} \
   %{o*:%*} %{!o*:a.out}}
