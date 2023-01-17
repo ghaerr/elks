@@ -31,8 +31,8 @@ execle:
 	.global	execlp
 execlp:
 #elif defined L_execlpe
-	.global	_execlpe
-_execlpe:
+	.global	execlpe
+execlpe:
 #else
 # error "which function are we assembling?"
 #endif
@@ -86,7 +86,7 @@ _execlpe:
 	pop %si
 	pop %es
 # if defined L_execlp || defined L_execlpe
-	CALL_(_execvpe)
+	CALL_(execvpe)
 # else
 	CALL_(execve)
 # endif
@@ -140,7 +140,7 @@ _execlpe:
 	pop %si
 	pop %es
 # if defined L_execlp || defined L_execlpe
-	JMP_(_execvpe)
+	JMP_(execvpe)
 # else
 	JMP_(execve)
 # endif
@@ -185,7 +185,7 @@ _execlpe:
 	pop %si
 	pop %es
 # if defined L_execlp || defined L_execlpe
-	CALL_(_execvpe)
+	CALL_(execvpe)
 # else
 	CALL_(execve)
 # endif
