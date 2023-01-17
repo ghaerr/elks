@@ -92,7 +92,7 @@ unsigned char * noinstrument sym_read_symbols(char *path)
 static int noinstrument type_text(unsigned char *p)
 {
     return (p[TYPE] == 'T' || p[TYPE] == 't' || p[TYPE] == 'W');
-        }
+}
 
 static int noinstrument type_ftext(unsigned char *p)
 {

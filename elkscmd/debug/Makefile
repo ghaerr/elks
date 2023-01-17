@@ -33,7 +33,6 @@ nm86: nm86.c syms.c
 
 testsym: testsym.o $(LIBOBJS)
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
-	#elf2elks --symtab --heap 12000 $@
 	./nm86 $@ > $@.map
 	cp $@ $(TOPDIR)/elkscmd/rootfs_template/root
 
