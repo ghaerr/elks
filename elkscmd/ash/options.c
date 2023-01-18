@@ -175,10 +175,8 @@ options(cmdline) {
 
 
 STATIC void
-setoption(flag, val)
-	char flag;
-	int val;
-	{
+setoption(int flag, int val)
+{
 	register char *p;
 
 	if ((p = strchr(optchar, flag)) == NULL)

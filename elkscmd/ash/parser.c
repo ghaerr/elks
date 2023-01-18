@@ -104,7 +104,9 @@ STATIC void parsefname __P((void));
 STATIC void parseheredoc __P((void));
 STATIC int readtoken __P((void));
 STATIC int readtoken1 __P((int, char const *, char *, int));
-void attyline __P((void));
+#if ATTY
+STATIC void attyline __P((void));
+#endif
 STATIC int noexpand __P((char *));
 STATIC void synexpect __P((int));
 STATIC void synerror __P((char *));
@@ -682,7 +684,7 @@ STATIC int readtoken(void) {
 #define RETURN(token)	return lasttoken = token
 
 STATIC int xxreadtoken(void) {
-	register c;
+	int c;
 
 	if (tokpushback) {
 		tokpushback = 0;
