@@ -11,7 +11,7 @@ static unsigned int start_sp;
 static unsigned int max_stack;
 
 /* runs before main and rewrites argc/argv on stack if --ftrace found */
-__attribute__((no_instrument_function,constructor(101)))
+__attribute__((no_instrument_function,constructor(120)))
 static void checkargs(void)
 {
     char **avp = __argv + 1;

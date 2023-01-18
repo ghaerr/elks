@@ -93,9 +93,9 @@ extern int optind;
 extern int optopt;
 extern int opterr;
 
-extern int __argc;
+extern int     __argc;
 extern char ** __argv;
+extern char *  __program_filename;  /* process argv[0] */
 extern char ** environ;             /* process global environment */
-extern char * _program_filename;    /* process argv[0] */
 
 #endif

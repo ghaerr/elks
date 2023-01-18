@@ -11,35 +11,32 @@
 
 typedef void (*vfuncp) (void);
 
-static int __on_exit_count = 0;
-static vfuncp __on_exit_table[MAXONEXIT];
+static int on_exit_count;
+static vfuncp on_exit_table[MAXONEXIT];
 
 int atexit (vfuncp ptr)
 {
-   if (__on_exit_count >= MAXONEXIT)
+   if (on_exit_count >= MAXONEXIT)
    {
       errno = ENOMEM;
       return -1;
    }
    if (ptr)
-   {
-      __on_exit_table[__on_exit_count++] = ptr;
-   }
+      on_exit_table[on_exit_count++] = ptr;
    return 0;
 }
 
-/* NOTE: ensure this priority value is higher than stdio's destructor's ---
- * do not destroy stdio streams before running atexit( ) termination
- * functions */
+/* NOTE: ensure this priority value is higher (100) than
+ * stdio's destructor stdio_close_all (90), do not destroy
+ * stdio streams before running atexit( ) termination functions
+ */
 #pragma GCC diagnostic ignored "-Wprio-ctor-dtor"
-__attribute__((destructor(100))) static void
-__do_exit (void)
+__attribute__((destructor(100)))
+static void atexit_exit_all(void)
 {
-   int count = __on_exit_count-1;
+   int count = on_exit_count - 1;
 
    /* In reverse order */
    for (; count >= 0; count--)
-   {
-      __on_exit_table[count]();
-   }
+      on_exit_table[count]();
 }

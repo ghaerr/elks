@@ -19,7 +19,7 @@ static unsigned int start_sp;
 static unsigned int max_stack;
 
 /* runs before main and rewrites argc/argv on stack if --ftrace found */
-__attribute__((no_instrument_function,constructor(101)))
+__attribute__((no_instrument_function,constructor(120)))
 static void checkargs(void)
 {
     char **avp = __argv + 1;
@@ -58,7 +58,7 @@ void noinstrument __cyg_profile_func_enter_simple(void)
     if (stack_used > max_stack) max_stack = stack_used;
 
     //print_regs();
-    //print_stack(0xDEAD);
+    //print_stack(0xC0DE);
 
     /* calc caller address */
     i = calc_push_count(calling_fn);
@@ -72,9 +72,12 @@ void noinstrument __cyg_profile_func_enter_simple(void)
         strcpy(callsite, "<unknown>");
     for (i=0; i<count; i++)
         putchar('|');
-    printf(">%s, from %s, stack %u/%u %lu ucycles\n",
-        sym_text_symbol(calling_fn, 0), callsite, stack_used, max_stack,
-        get_micro_count());
+    printf(">%s, from %s, stack %u/%u", sym_text_symbol(calling_fn, 0), callsite,
+        stack_used, max_stack);
+#if HAS_RDTSC
+    printf(" %lu ucycles", get_micro_count());
+#endif
+    printf("\n");
     ++count;
 }
 

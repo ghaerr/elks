@@ -9,7 +9,7 @@ void z()
 {
     print_regs();
     printf("Stack backtrace of z:\n");
-    print_stack(0xDEAD);
+    print_stack(0xC0DE);
 }
 
 void y(int a)
