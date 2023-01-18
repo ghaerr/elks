@@ -3,5 +3,5 @@
 int
 execvp(char *fname, char **argv)
 {
-   return _execvpe(fname, argv, environ);
+   return execvpe(fname, argv, environ);
 }

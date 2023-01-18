@@ -912,14 +912,14 @@ nomem:
 	NewEnv[2] = MakeTermcap (aflag);
 	sprintf (ebuf, "WINDOW=%d", n);
 	NewEnv[3] = ebuf;
-	execvpe (prog, args, NewEnv);
+	screen_execvpe (prog, args, NewEnv);
 	SendErrorMsg ("Cannot exec %s: %s", prog, strerror(errno));
 	exit (1);
     }
     return n;
 }
 
-static void execvpe (prog, args, env) char *prog, **args, **env; {
+static void screen_execvpe (prog, args, env) char *prog, **args, **env; {
     register char *path, *p;
     char buf[MAXLINE*2];
     char *shargs[MAXARGS+1];
