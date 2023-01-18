@@ -18,7 +18,12 @@ HOST_CFLAGS = -O3
 PRGS = basic
 OBJS = basic.o host.o
 #MAPFILE = -Wl,-Map=basic.map
+
+# uncomment following four lines for --ftrace function tracing
 #CFLAGS += -finstrument-functions-simple
+#CFLAGS += -fno-optimize-sibling-calls -fno-omit-frame-pointer
+#LDFLAGS += -maout-symtab -maout-heap=12000
+#OBJS += ../debug/instrument.o ../debug/syms.o ../debug/stacktrace.o ../debug/printreg.o
 
 ifeq ($(CONFIG_ARCH_IBMPC), y)
 OBJS += host-stubs.o

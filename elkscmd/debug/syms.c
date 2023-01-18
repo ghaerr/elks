@@ -42,10 +42,14 @@ unsigned char * noinstrument sym_read_exe_symbols(char *path)
     int fd;
     unsigned char *s;
     struct minix_exec_hdr hdr;
+    char fullpath[128];
 
     if (syms) return syms;
-    if ((fd = open(path, O_RDONLY)) < 0)
-        return NULL;
+    if ((fd = open(path, O_RDONLY)) < 0) {
+        sprintf(fullpath, "/bin/%s", path);     // FIXME use PATH
+        if ((fd = open(fullpath, O_RDONLY)) < 0)
+                return NULL;
+    }
     errno = 0;
     if (read(fd, &hdr, sizeof(hdr)) != sizeof(hdr)
         || (hdr.syms == 0 || hdr.syms > 32767)
@@ -87,7 +91,7 @@ unsigned char * noinstrument sym_read_symbols(char *path)
 
 static int noinstrument type_text(unsigned char *p)
 {
-    return (p[TYPE] == 'T' || p[TYPE] == 't');
+    return (p[TYPE] == 'T' || p[TYPE] == 't' || p[TYPE] == 'W');
 }
 
 static int noinstrument type_ftext(unsigned char *p)
@@ -98,7 +102,8 @@ static int noinstrument type_ftext(unsigned char *p)
 static int noinstrument type_data(unsigned char *p)
 {
     return (p[TYPE] == 'D' || p[TYPE] == 'd' ||
-            p[TYPE] == 'B' || p[TYPE] == 'b');
+            p[TYPE] == 'B' || p[TYPE] == 'b' ||
+            p[TYPE] == 'V');
 }
 
 /* map .text address to function start address */

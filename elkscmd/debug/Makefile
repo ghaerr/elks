@@ -23,8 +23,8 @@ CFLAGS += -fno-optimize-sibling-calls
 CFLAGS += -fno-omit-frame-pointer
 # optional instrumentation for function tracing
 CFLAGS += -finstrument-functions-simple
-
-#LDFLAGS += -maout-heap=12000
+# include symbol table in executable and heap to read it
+LDFLAGS += -maout-symtab -maout-heap=12000
 
 all: nm86 $(PRGS)
 
@@ -32,14 +32,12 @@ nm86: nm86.c syms.c
 	$(HOSTCC) $(HOSTCFLAGS) -o $@ $^
 
 testsym: testsym.o $(LIBOBJS)
-	$(LD) $(LDFLAGS) -mno-post-link -o $@ $^ $(LDLIBS)
-	elf2elks --symtab --heap 12000 $@
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 	./nm86 $@ > $@.map
 	cp $@ $(TOPDIR)/elkscmd/rootfs_template/root
 
 disasm: dis.o disasm.o $(LIBOBJS)
-	$(LD) $(LDFLAGS) -mno-post-link -o $@ $^ $(LDLIBS)
-	elf2elks --symtab --heap 0xffff $@
+	$(LD) $(LDFLAGS) -maout-heap=0xffff -o $@ $^ $(LDLIBS)
 	cp -p $@ $(TOPDIR)/elkscmd/rootfs_template/root
 	-mkdir $(TOPDIR)/elkscmd/rootfs_template/lib
 	cp -p $(TOPDIR)/elks/arch/i86/boot/system.sym $(TOPDIR)/elkscmd/rootfs_template/lib
@@ -49,7 +47,7 @@ opcodes: opcodes.o
 	cp $@ $(TOPDIR)/elkscmd/rootfs_template/root
 
 disasm.o: disasm.c
-	$(CC) $(CFLAGS) -fno-instrument-functions -c -o $*.o $<
+	$(CC) $(CFLAGS) -fno-instrument-functions -fno-instrument-functions-simple -c -o $*.o $<
 
 install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin

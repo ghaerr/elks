@@ -10,7 +10,7 @@
 #include "syms.h"
 
 /* turn on for microcycle (CPU cycle/1000) timing info */
-#define HAS_RDTSC       1   /* has RDTSC instruction: requires 386+ CPU */
+#define HAS_RDTSC       0   /* has RDTSC instruction: requires 386+ CPU */
 
 static char ftrace;
 static int count;
