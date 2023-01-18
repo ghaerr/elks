@@ -4,7 +4,7 @@ int
 fputc(int ch, FILE *fp)
 {
    register int v;
-   __LINK_SYMBOL(__io_init_vars);
+   __LINK_SYMBOL(__stdio_init);
 
    /* If last op was a read ... note fflush may change fp->mode and ret OK */
    if ((fp->mode & __MODE_READING) && fflush(fp))

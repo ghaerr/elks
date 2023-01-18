@@ -10,14 +10,13 @@ include $(BASEDIR)/Make.rules
 
 CFLAGS += -Wno-maybe-uninitialized
 
-HOSTCC = gcc
-HOST_CFLAGS = -O3
-
 ###############################################################################
 
 PRGS = basic
 OBJS = basic.o host.o
 #MAPFILE = -Wl,-Map=basic.map
+
+#HOSTPRGS = hostbasic
 
 # uncomment following four lines for --ftrace function tracing
 #CFLAGS += -finstrument-functions-simple
@@ -37,7 +36,7 @@ ifeq ($(CONFIG_ARCH_PC98), y)
 OBJS += host-pc98.o intC5-pc98.o
 endif
 
-all: $(PRGS)
+all: $(PRGS) $(HOSTPRGS)
 
 basic: $(OBJS) basic.h host.h
 	$(LD) $(LDFLAGS) $(MAPFILE) -o basic $(OBJS) $(LDLIBS)
@@ -46,10 +45,10 @@ HOSTSRC = basic.c host.c host-stubs.c
 HOSTSRC += ../../libc/misc/ecvt.c
 HOSTSRC += ../../libc/misc/dtostr.c
 hostbasic: $(HOSTSRC) host.h basic.h
-	$(HOSTCC) $(HOST_CFLAGS) $(HOSTSRC) -o $@
+	$(HOSTCC) $(HOSTCFLAGS) $(HOSTSRC) -o $@
 
 install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
-	rm -f $(PRGS) *.o hostbasic
+	rm -f $(PRGS) $(HOSTPRGS) *.o *.map

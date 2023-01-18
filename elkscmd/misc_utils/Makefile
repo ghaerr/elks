@@ -8,8 +8,6 @@ include $(BASEDIR)/Make.defs
 
 include $(BASEDIR)/Make.rules
 
-HOSTCC = gcc
-HOST_CFLAGS = -O2
 KERNEL_LIBS = $(TOPDIR)/elks/arch/i86/lib/lib86.a
 
 ###############################################################################
@@ -18,9 +16,9 @@ KERNEL_LIBS = $(TOPDIR)/elks/arch/i86/lib/lib86.a
 PRGS = tar miniterm ed fdtest od hd time kilo mined sleep tty uuencode uudecode compress
 PRGS += float
 
-#PRGS_HOST=compress.host
+#HOSTPRGS = hostcompress
 
-all: $(PRGS) $(PRGS_HOST)
+all: $(PRGS) $(HOSTPRGS)
 
 float: float.o
 	$(LD) $(LDFLAGS) -o float float.o $(LDLIBS) -lc
@@ -67,8 +65,8 @@ uuencode: uuencode.o
 uudecode: uudecode.o
 	$(LD) $(LDFLAGS) -o uudecode uudecode.o $(LDLIBS)
 
-compress.host: compress.c
-	$(HOSTCC) $(HOST_CFLAGS) -s compress.c -o $@
+hostcompress: compress.c
+	$(HOSTCC) $(HOSTCFLAGS) compress.c -o $@
 
 uncompress: compress
 	ln -sf compress uncompress
@@ -80,4 +78,4 @@ install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
-	rm -f $(PRGS) $(PRGS_HOST) *~ *.o
+	rm -f $(PRGS) $(HOSTPRGS) *~ *.o

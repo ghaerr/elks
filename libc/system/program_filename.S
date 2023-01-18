@@ -1,4 +1,4 @@
-// Define and initialize the _program_filename variable, if needed
+// Define and initialize the __program_filename variable, if needed
 // Assume bx = argv from entry point, from libc/crt0.S
 
 	.arch i8086, nojumps
@@ -7,8 +7,8 @@
 	.section .preinit,"ax",@progbits
 
 	mov (%bx),%dx
-	mov %dx,_program_filename
+	mov %dx,__program_filename
 
 //------------------------------------------------------------------------------
 
-	.comm _program_filename,2
+	.comm __program_filename,2

@@ -19,7 +19,7 @@ static unsigned char *syms;
 #define ALLOC(s,n)    ((int)(s = sbrk(n)) != -1)
 #else
 #define ALLOC(s,n)    ((s = malloc(n)) !=  NULL)
-char * _program_filename;
+char * __program_filename;
 #endif
 
 struct minix_exec_hdr {
@@ -111,7 +111,7 @@ void * noinstrument sym_fn_start_address(void *addr)
 {
     unsigned char *p, *lastp;
 
-    if (!syms && !sym_read_exe_symbols(_program_filename)) return (void *)-1;
+    if (!syms && !sym_read_exe_symbols(__program_filename)) return (void *)-1;
 
     lastp = syms;
     for (p = next(lastp); ; lastp = p, p = next(p)) {
@@ -128,7 +128,7 @@ static char * noinstrument sym_string(void *addr, int exact,
     unsigned char *p, *lastp;
     static char buf[32];
 
-    if (!syms && !sym_read_exe_symbols(_program_filename)) {
+    if (!syms && !sym_read_exe_symbols(__program_filename)) {
 hex:
         sprintf(buf, "%.4x", (unsigned int)addr);
         return buf;
