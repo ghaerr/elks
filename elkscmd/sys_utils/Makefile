@@ -17,6 +17,7 @@ ELKS_LIB=$(ELKS_DIR)/arch/i86/lib
 # exitemu disabled because it calls INT directly to DOSEMU
 PRGS = \
 	init \
+	min_init \
 	getty \
 	login \
 	kill \
@@ -39,8 +40,13 @@ PRGS = \
 	makeboot \
 	# EOL
 
+all: $(PRGS)
+
 init: init.o
 	$(LD) $(LDFLAGS) -maout-heap=4096 -maout-stack=1024 -o init init.o $(LDLIBS)
+
+min_init: min_init.o
+	$(LD) $(LDFLAGS) -maout-heap=256 -maout-stack=256 -o min_init min_init.o $(LDLIBS)
 
 getty: getty.o $(TINYPRINTF)
 	$(LD) $(LDFLAGS) -maout-heap=1024 -maout-stack=1024 -o getty getty.o $(TINYPRINTF) $(LDLIBS)
