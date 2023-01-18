@@ -7,6 +7,16 @@
 	.arch	i8086, nojumps
 	.code16
 
+// Requires the following ordered sections in linker scripts:
+//  .inithead   - _startup: envp, argv and argc computed and pushed
+//  .preinit    - initialize any referenced .comm variables
+//  .init       - run constructor routines
+//  .postinit   - restore stack if __argv, __argc used
+//  .inittail   - main called, converting stack if regparmcall
+//  .finihead   - exit called
+//  .fini       - run atexit routines then other destructors
+//  .finitail   - _exit(retcode) called
+
 	.section .inithead,"ax",@progbits
 
 	.extern main
@@ -36,14 +46,17 @@ _start:
 	inc %ax
 	shl $1,%ax
 	add %bx,%ax	// envp [0]
-	push %ax        // push for any cdecl constructors and main
+	push %ax        // envp
 	push %bx        // argv
 	push %cx        // argc
 
 // ...Code fragments from .preinit & .preinit.* sections will go here...
-//    NOTE: these assume ax = envp, bx = argv, & may clobber dx
+//    NOTE: these assume ax = envp, bx = argv, cx = argc & may clobber dx
 
 // ...Then code fragments from .init & .init.* sections will go here...
+//    NOTE: these are allowed to clobber ax, bx, cx, dx, si
+
+// ...Then code fragments from .postinit & .postinit.* sections will go here...
 //    NOTE: these are allowed to clobber ax, bx, cx, dx, si
 
 	.section .inittail,"ax",@progbits
@@ -79,9 +92,6 @@ exit:
 	JMP_(_exit)     // no return
 
 	.data
-
-	.extern environ
-	.extern _program_filename
 
 // Zero data for null pointers (near & far)
 // Will be linked as first section in data segment
