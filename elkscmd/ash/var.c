@@ -79,9 +79,7 @@ struct var vps1;
 struct var vps2;
 struct var vpse;
 struct var vvers;
-#if ATTY
 struct var vterm;
-#endif
 
 const struct varinit varinit[] = {
 #if ATTY
@@ -96,9 +94,7 @@ const struct varinit varinit[] = {
 	 */
 	{&vps2,	VSTRFIXED|VTEXTFIXED,		"PS2=> "},
 	{&vpse,	VSTRFIXED|VTEXTFIXED|VUNSET,	"PSE="},
-#if ATTY
 	{&vterm,	VSTRFIXED|VTEXTFIXED|VUNSET,	"TERM="},
-#endif
 	{NULL,	0,				NULL}
 };
 

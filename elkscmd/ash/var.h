@@ -76,9 +76,7 @@ extern struct var vpath;
 extern struct var vps1;
 extern struct var vps2;
 extern struct var vpse;
-#if ATTY
 extern struct var vterm;
-#endif
 
 /*
  * The following macros access the values of the above variables.
@@ -93,9 +91,7 @@ extern struct var vterm;
 #define ps1val()	(vps1.text + 4)
 #define ps2val()	(vps2.text + 4)
 #define pseval()	(vpse.text + 4)
-#if ATTY
 #define termval()	(vterm.text + 5)
-#endif
 
 #if ATTY
 #define attyset()	((vatty.flags & VUNSET) == 0)
