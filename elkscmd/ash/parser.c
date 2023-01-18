@@ -684,7 +684,7 @@ STATIC int readtoken(void) {
 #define RETURN(token)	return lasttoken = token
 
 STATIC int xxreadtoken(void) {
-	register c;
+	int c;
 
 	if (tokpushback) {
 		tokpushback = 0;

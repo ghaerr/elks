@@ -89,11 +89,11 @@ do
 	shift
 	for fun
 	do
-		echo "	\"$fun\", $i,"
+		echo "	{ \"$fun\", $i },"
 	done
 	i=`expr $i + 1`
 done < $temp
-echo '	NULL, 0
+echo '	{ NULL, 0 }
 };'
 
 exec > builtins.h

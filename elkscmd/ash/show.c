@@ -268,9 +268,8 @@ trace(fmt, a1, a2, a3, a4, a5, a6, a7, a8)
 }
 
 
-trputs(s)
-	char *s;
-	{
+void trputs(char *s)
+{
 	if (tracefile == NULL)
 		return;
 	fputs(s, tracefile);
@@ -279,10 +278,9 @@ trputs(s)
 }
 
 
-trstring(s)
-	char *s;
-	{
-	register char *p;
+void trstring(char *s)
+{
+	char *p;
 	char c;
 
 	if (tracefile == NULL)
