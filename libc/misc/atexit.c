@@ -11,18 +11,17 @@
 
 typedef void (*vfuncp) (void);
 
-static int on_exit_count;
-static vfuncp on_exit_table[MAXONEXIT];
+static int atexit_count;
+static vfuncp atexit_table[MAXONEXIT];
 
-int atexit (vfuncp ptr)
+int atexit(vfuncp ptr)
 {
-   if (on_exit_count >= MAXONEXIT)
-   {
+   if (atexit_count >= MAXONEXIT) {
       errno = ENOMEM;
       return -1;
    }
    if (ptr)
-      on_exit_table[on_exit_count++] = ptr;
+      atexit_table[atexit_count++] = ptr;
    return 0;
 }
 
@@ -34,9 +33,9 @@ int atexit (vfuncp ptr)
 __attribute__((destructor(100)))
 static void atexit_exit_all(void)
 {
-   int count = on_exit_count - 1;
+   int count = atexit_count - 1;
 
    /* In reverse order */
    for (; count >= 0; count--)
-      on_exit_table[count]();
+      atexit_table[count]();
 }

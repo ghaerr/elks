@@ -5,8 +5,8 @@ include $(TOPDIR)/libc/Makefile.inc
 CFLAGS	+= -DL_ftell
 
 OBJS = \
+	init.o \
 	__fopen.o \
-	__io_init.o \
 	__io_list.o \
 	fclose.o \
 	fdopen.o \

@@ -51,4 +51,4 @@ install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
-	rm -f $(PRGS) $(HOSTPRGS) *.o
+	rm -f $(PRGS) $(HOSTPRGS) *.o *.map

@@ -25,7 +25,7 @@ static void stdio_close_all(void)
 
 #pragma GCC diagnostic ignored "-Wprio-ctor-dtor"
 __attribute__((constructor(90)))
-void __io_init_vars(void)
+void __stdio_init(void)
 {
    if (isatty(1))
       stdout->mode |= _IOLBF;
