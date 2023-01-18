@@ -2,30 +2,16 @@
  * Copyright (c) 1993 by David I. Bell
  * Permission is granted to use, distribute, or modify this source,
  * provided that this copyright notice remains intact.
- *
- * Most simple built-in commands are here.
  */
 
 #include "shutils.h"
-
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <signal.h>
-#include <pwd.h>
-#include <grp.h>
-#include <utime.h>
-#include <errno.h>
 
 int main(int argc, char **argv)
 {
-	char		**env;
+	char		**env = environ;
 	char		*eptr;
-	extern char	**environ;
 	int		len;
-
-	env = environ;
 
 	if (argc == 1) {
 		while (*env) {

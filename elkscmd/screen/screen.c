@@ -72,7 +72,7 @@ struct mode OldMode, NewMode;
 
 #define Ctrl(c) ((c)&037)
 
-extern char *blank, Term[], **environ;
+extern char *blank, Term[];
 extern rows, cols;
 extern ISO2022;
 extern status;

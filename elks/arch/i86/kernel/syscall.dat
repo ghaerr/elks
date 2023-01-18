@@ -66,8 +66,8 @@ profil		44	4	@
 dup2		+45	2
 setgid		+46	1	 
 getgid		+47	1	* this gets both gid and egid
-signal		+48	3	* 1) have put the despatch table in user space.
-#				  2) accepts _far_ pointer to despatching
+signal		+48	3	* 1) have put the dispatch table in user space.
+#				  2) accepts _far_ pointer to dispatching
 #				     signal handler, hence 3 words of args.
 getinfo		49	1	@ possible? gets pid,ppid,uid,euid etc
 fcntl		+50	3	!
