@@ -154,7 +154,7 @@ static void Detach(int suspend);
 static SetTTY(int fd, struct mode *mp);
 static GetTTY(int fd, struct mode *mp);
 static ShowInfo(void);
-static void execvpe(char *prog, char **args, char **env);
+static void screen_execvpe(char *prog, char **args, char **env);
 static void WriteFile(int dump);
 static KillWindow(struct win **pp);
 static Finit(void);

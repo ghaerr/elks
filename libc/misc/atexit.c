@@ -31,6 +31,7 @@ int atexit (vfuncp ptr)
 /* NOTE: ensure this priority value is higher than stdio's destructor's ---
  * do not destroy stdio streams before running atexit( ) termination
  * functions */
+#pragma GCC diagnostic ignored "-Wprio-ctor-dtor"
 __attribute__((destructor(100))) static void
 __do_exit (void)
 {
