@@ -7,7 +7,7 @@
 #ifndef __ASSEMBLER__
 
 #define __LINK_SYMBOL(sym) \
-                        __asm(".pushsection .discard; " \
+                          asm(".pushsection .discard; " \
                               ".long " #sym "; " \
                               ".popsection")
 #else  /* __ASSEMBLER__ */

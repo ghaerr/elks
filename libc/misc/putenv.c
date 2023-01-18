@@ -3,15 +3,12 @@
  * under the GNU Library General Public License.
  */
 #include <string.h>
-#include <stdlib.h>
+#include <unistd.h>
 #include <malloc.h>
 #include <errno.h>
 
 /* macro for matching environment name in string*/
 #define ENVNAME(var,buf,len)    (memcmp(var,buf,len) == 0 && (buf)[len] == '=')
-
-/* external data*/
-extern char **  environ;                /* process global environment*/
 
 /* local data*/
 static char **  putenv_environ = NULL;  /* ptr to any environment we allocated*/
@@ -23,8 +20,7 @@ static char **  putenv_environ = NULL;  /* ptr to any environment we allocated*/
  * 'NAME'	deletes environent variable if exists
  */
 int
-putenv(var)
-char * var;
+putenv(char *var)
 {
 	char **	env;
 	int	envp_count;
@@ -103,4 +99,3 @@ again:
 	environ = putenv_environ = newenv;
 	return 0;
 }
-

@@ -14,7 +14,6 @@ int main(int argc, char **argv)
 	int i;
 	int iflag= 0;
 	int aflag= 0;
-	extern char **environ;
 
 	i= 1;
 	while (i < argc && argv[i][0] == '-') {
