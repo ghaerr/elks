@@ -776,11 +776,8 @@ void
 do_printenv(argc, argv)
 	char	**argv;
 {
-	char		**env;
-	extern char	**environ;
+	char		**env = environ;
 	int		len;
-
-	env = environ;
 
 	if (argc == 1) {
 		while (*env)

@@ -93,7 +93,7 @@ extern int optind;
 extern int optopt;
 extern int opterr;
 
-extern char ** environ;
-extern char * _program_filename;
+extern char ** environ;             /* process global environment */
+extern char * _program_filename;    /* process argv[0] */
 
 #endif
