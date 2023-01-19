@@ -58,8 +58,7 @@ include $(TOPDIR)/Make.defs
 VERSION 	= 0	# (0-255)
 PATCHLEVEL	= 6	# (0-255)
 SUBLEVEL	= 0	# (0-255)
-#PRE		= 0	# (0-255)	If not a pre, comment this line.
-ENDVERSION  =   # required for Make.defs
+PRE		= 0	# (0-255)	pre-0 will be ignored
 
 #########################################################################
 # Specify the architecture we will use.
