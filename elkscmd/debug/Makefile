@@ -8,14 +8,12 @@ include $(BASEDIR)/Make.defs
 
 include $(BASEDIR)/Make.rules
 
-HOSTCC = gcc
-HOSTCFLAGS = -O3
-
 ###############################################################################
 
 PRGS = testsym disasm opcodes
-LIBOBJS += instrument.o syms.o
-LIBOBJS += stacktrace.o printreg.o
+INSTRUMENTOBJS = instrument.o syms.o shared.o shared-asm.o
+DISASMOBJS = dis.o disasm.o $(INSTRUMENTOBJS)
+TESTOBJS   = testsym.o stacktrace.o printreg.o $(INSTRUMENTOBJS)
 
 # disable tail call optimization for better stack traces
 CFLAGS += -fno-optimize-sibling-calls
@@ -26,17 +24,22 @@ CFLAGS += -finstrument-functions-simple
 # include symbol table in executable and heap to read it
 LDFLAGS += -maout-symtab -maout-heap=12000
 
-all: nm86 $(PRGS)
+# added after CFLAGS for non-instrumented .c files in this directory
+NOINSTFLAGS = -fno-instrument-functions -fno-instrument-functions-simple
+
+HOSTPRGS = nm86
+
+all: $(HOSTPRGS) $(PRGS)
 
 nm86: nm86.c syms.c
 	$(HOSTCC) $(HOSTCFLAGS) -o $@ $^
 
-testsym: testsym.o $(LIBOBJS)
+testsym: $(TESTOBJS)
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 	./nm86 $@ > $@.map
 	cp $@ $(TOPDIR)/elkscmd/rootfs_template/root
 
-disasm: dis.o disasm.o $(LIBOBJS)
+disasm: $(DISASMOBJS)
 	$(LD) $(LDFLAGS) -maout-heap=0xffff -o $@ $^ $(LDLIBS)
 	cp -p $@ $(TOPDIR)/elkscmd/rootfs_template/root
 	-mkdir $(TOPDIR)/elkscmd/rootfs_template/lib
@@ -47,10 +50,13 @@ opcodes: opcodes.o
 	cp $@ $(TOPDIR)/elkscmd/rootfs_template/root
 
 disasm.o: disasm.c
-	$(CC) $(CFLAGS) -fno-instrument-functions -fno-instrument-functions-simple -c -o $*.o $<
+	$(CC) $(CFLAGS) $(NOINSTFLAGS) -c -o $*.o $<
+
+dis.o: dis.c
+	$(CC) $(CFLAGS) $(NOINSTFLAGS) -c -o $*.o $<
 
 install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
-	rm -f $(PRGS) *.o nm86 testsym.map
+	rm -f $(PRGS) $(HOSTPRGS) *.o *.map

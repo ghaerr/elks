@@ -22,7 +22,7 @@ OBJS = basic.o host.o
 #CFLAGS += -finstrument-functions-simple
 #CFLAGS += -fno-optimize-sibling-calls -fno-omit-frame-pointer
 #LDFLAGS += -maout-symtab -maout-heap=12000
-#OBJS += ../debug/instrument.o ../debug/syms.o ../debug/stacktrace.o ../debug/printreg.o
+#OBJS += ../debug/instrument.o ../debug/syms.o ../debug/shared.o ../debug/shared-asm.o
 
 ifeq ($(CONFIG_ARCH_IBMPC), y)
 OBJS += host-stubs.o

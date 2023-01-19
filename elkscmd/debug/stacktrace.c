@@ -25,28 +25,6 @@
 +--------------+
 */
 
-/*
- * Return pushed word count and register bitmask by function at passed address,
- * used to traverse BP chain and display registers.
- */
-int noinstrument calc_push_count(int *addr)
-{
-    int *fn = sym_fn_start_address(addr);   /* get fn start from address */
-    char *fp = (char *)fn;
-    int count = 0;
-
-    int opcode = getcsbyte(fp++);
-    if (opcode == 0x56)         /* push %si */
-        count = (count+1) | SI_PUSHED, opcode = getcsbyte(fp++);
-    if (opcode == 0x57)         /* push %di */
-        count = (count+1) | DI_PUSHED, opcode = getcsbyte(fp++);
-    if (opcode == 0x55          /* push %bp */
-        || opcode == 0x59 && (int)fp < 0x40) /* temp kluge for crt0.S 'pop %cx' start */
-        count = (count + 1) | BP_PUSHED, opcode = getcsbyte(fp);
-    //printf("%s (%x) pushes %x\n", sym_text_symbol(addr, 1), (int)addr, count);
-    return count;
-}
-
 /* display stack line and any subsequent lines w/o BP pushed */
 static void noinstrument print_stack_line(int level, int **addr, int *fn, int flag)
 {
