@@ -1,4 +1,4 @@
-BASEDIR=../../..
+BASEDIR=../..
 
 include $(BASEDIR)/Make.defs
 
