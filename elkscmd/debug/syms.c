@@ -14,6 +14,7 @@
 #include "syms.h"
 
 static unsigned char *syms;
+struct minix_exec_hdr sym_hdr;
 
 #if __ia16__
 #define ALLOC(s,n)    ((int)(s = sbrk(n)) != -1)
@@ -22,26 +23,13 @@ static unsigned char *syms;
 char * __program_filename;
 #endif
 
-struct minix_exec_hdr {
-    uint32_t  type;
-    uint8_t   hlen;       // 0x04
-    uint8_t   reserved1;
-    uint16_t  version;
-    uint32_t  tseg;       // 0x08
-    uint32_t  dseg;       // 0x0c
-    uint32_t  bseg;       // 0x10
-    uint32_t  entry;
-    uint16_t  chmem;
-    uint16_t  minstack;
-    uint32_t  syms;
-};
+#define MAGIC       0x0301  /* magic number for executable progs */
 
 /* read symbol table from executable into memory */
 unsigned char * noinstrument sym_read_exe_symbols(char *path)
 {
     int fd;
     unsigned char *s;
-    struct minix_exec_hdr hdr;
     char fullpath[128];
 
     if (syms) return syms;
@@ -51,16 +39,18 @@ unsigned char * noinstrument sym_read_exe_symbols(char *path)
                 return NULL;
     }
     errno = 0;
-    if (read(fd, &hdr, sizeof(hdr)) != sizeof(hdr)
-        || (hdr.syms == 0 || hdr.syms > 32767)
-        || (!ALLOC(s, (int)hdr.syms))
-        || (lseek(fd, -(int)hdr.syms, SEEK_END) < 0)
-        || (read(fd, s, (int)hdr.syms) != (int)hdr.syms)) {
+    if (read(fd, &sym_hdr, sizeof(sym_hdr)) != sizeof(sym_hdr)
+        || ((sym_hdr.type & 0xFFFF) != MAGIC)
+        || (sym_hdr.syms == 0 || sym_hdr.syms > 32767)
+        || (!ALLOC(s, (int)sym_hdr.syms))
+        || (lseek(fd, -(int)sym_hdr.syms, SEEK_END) < 0)
+        || (read(fd, s, (int)sym_hdr.syms) != (int)sym_hdr.syms)) {
                 int e = errno;
                 close(fd);
                 errno = e;
                 return NULL;
     }
+    close(fd);
     syms = s;
     return syms;
 }
@@ -85,6 +75,7 @@ unsigned char * noinstrument sym_read_symbols(char *path)
                 errno = e;
                 return NULL;
     }
+    close(fd);
     syms = s;
     return syms;
 }
@@ -169,3 +160,16 @@ char * noinstrument sym_data_symbol(void *addr, int exact)
 {
     return sym_string(addr, exact, type_data);
 }
+
+#if 0
+static int noinstrument type_any(unsigned char *p)
+{
+    return p[TYPE] != '\0';
+}
+
+/* convert (non-segmented local IP) address to symbol */
+char * noinstrument sym_symbol(void *addr, int exact)
+{
+    return sym_string(addr, exact, type_any);
+}
+#endif

@@ -23,6 +23,7 @@ int f_outcol;
 
 static Word startIP;
 static Word startCS;
+static Word startDS;
 
 static Byte d_modRM;
 //static int segOver;
@@ -42,11 +43,12 @@ static Word d_fetchByte()
     return b;
 }
 
-int disasm(int cs, int ip, int (*nextbyte)(int, int))
+int disasm(int cs, int ip, int (*nextbyte)(int, int), int ds)
 {
 	startCS = cs;
 	startIP = (int)ip;
 	fetchbyte = nextbyte;
+    startDS = ds;
 	f_outcol = 0;
 	//if (!f_asmout) printf("%04hx:%04hx  ", cs, ip);
 	decode();
@@ -78,7 +80,7 @@ static void outRM(Word w) {
     switch (d_modRM & 0xc0) {
         case 0x00:
             if ((d_modRM & 0xc7) == 6)
-				printf("(0x%04x)", w);
+                printf("(%s)", getsymbol(startDS, w));
 			else printf("%s", basemodes[d_modRM & 7]);
             break;
         case 0x40:
@@ -200,11 +202,11 @@ static void outs(const char *str, int flags)
 	if ((flags & ACC) && sourceIsRM == 0)
 		printf("%s,", wordSize? wordregs[0]: byteregs[0]);
 	if ((flags & MEMWORD) && sourceIsRM)
-		printf("(0x%04x),", w2);
+        printf("(%s),", getsymbol(startDS, w2));
 	if ((flags & ACC) && sourceIsRM)
 		printf("%s", wordSize? wordregs[0]: byteregs[0]);
 	if ((flags & MEMWORD) && sourceIsRM == 0)
-		printf("(0x%04x)", w2);
+        printf("(%s)", getsymbol(startDS, w2));
 	if (flags & REGOP) printf("%s", wordSize? wordregs[opcode & 7]: byteregs[opcode & 7]);
 	if ((flags & (JMP|IMM|WORD)) == WORD) printf("%u", w2);
     if (flags & JMP) {
