@@ -59,6 +59,7 @@ VERSION 	= 0	# (0-255)
 PATCHLEVEL	= 6	# (0-255)
 SUBLEVEL	= 0	# (0-255)
 #PRE		= 0	# (0-255)	If not a pre, comment this line.
+ENDVERSION  =   # required for Make.defs
 
 #########################################################################
 # Specify the architecture we will use.
