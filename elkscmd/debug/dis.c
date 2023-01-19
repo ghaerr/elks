@@ -12,6 +12,7 @@
 #include <sys/ioctl.h>
 #include <linuxmt/mem.h>
 #include "syms.h"
+#include "instrument.h"
 #include "disasm.h"
 
 #define KSYMTAB         "/lib/system.sym"

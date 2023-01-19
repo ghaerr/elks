@@ -37,7 +37,7 @@
 #endif
 
 static int
-prtfld(FILE *op, unsigned char *buf,
+printfield(FILE *op, unsigned char *buf,
 	int ljustf, char sign, char pad, int width, int preci, int buffer_mode)
 /*
  * Output the given field in the manner specified by the arguments. Return
@@ -238,7 +238,7 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
 	    sign = '\0';
 	    pad = ' ';
 	  printit:
-	    cnt += prtfld(op, (unsigned char *)ptmp, ljustf,
+	    cnt += printfield(op, (unsigned char *)ptmp, ljustf,
 			   sign, pad, width, preci, buffer_mode);
 	    break;
 

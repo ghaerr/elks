@@ -4,7 +4,7 @@
  * June 2022 Greg Haerr
  */
 #include <stdio.h>
-#include "stacktrace.h"
+#include "instrument.h"
 #include "syms.h"
 
 #define STACKCOLS   8   /* # of stack address columns */
@@ -25,30 +25,8 @@
 +--------------+
 */
 
-/*
- * Return pushed word count and register bitmask by function at passed address,
- * used to traverse BP chain and display registers.
- */
-int noinstrument calc_push_count(int *addr)
-{
-    int *fn = sym_fn_start_address(addr);   /* get fn start from address */
-    char *fp = (char *)fn;
-    int count = 0;
-
-    int opcode = getcsbyte(fp++);
-    if (opcode == 0x56)         /* push %si */
-        count = (count+1) | SI_PUSHED, opcode = getcsbyte(fp++);
-    if (opcode == 0x57)         /* push %di */
-        count = (count+1) | DI_PUSHED, opcode = getcsbyte(fp++);
-    if (opcode == 0x55          /* push %bp */
-        || opcode == 0x59 && (int)fp < 0x40) /* temp kluge for crt0.S 'pop %cx' start */
-        count = (count + 1) | BP_PUSHED, opcode = getcsbyte(fp);
-    //printf("%s (%x) pushes %x\n", sym_text_symbol(addr, 1), (int)addr, count);
-    return count;
-}
-
 /* display stack line and any subsequent lines w/o BP pushed */
-static void noinstrument print_stack_line(int level, int **addr, int *fn, int flag)
+static void noinstrument _print_stack_line(int level, int **addr, int *fn, int flag)
 {
     int j = 0;
 
@@ -68,21 +46,21 @@ static void noinstrument print_stack_line(int level, int **addr, int *fn, int fl
 }
 
 /* display call stack, arg1 ignored but displayed for testing */
-void noinstrument print_stack(int arg1)
+void noinstrument _print_stack(int arg1)
 {
     int **bp = __builtin_frame_address(0);  /* address of saved BP in stack */
     int **addr = bp;
-    int *fn = (int *)print_stack;
+    int *fn = (int *)_print_stack;
     int i = 0;
 
     printf("Level Addr    BP   DI   SI   Ret  Arg  Arg2 Arg3 Arg4\n"
            "~~~~~ ~~~~    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
     do {
-        int flag = calc_push_count(fn);
+        int flag = _get_push_count(fn);
         int prev = flag;
-        print_stack_line(i, addr, fn, flag);
+        _print_stack_line(i, addr, fn, flag);
         fn = addr[flag & COUNT_MASK];
-        flag = calc_push_count(fn);
+        flag = _get_push_count(fn);
         if (flag & BP_PUSHED) {           /* caller pushed BP */
             addr = bp = (int **)bp[0];    /* one level down to get caller BP */
         } else {

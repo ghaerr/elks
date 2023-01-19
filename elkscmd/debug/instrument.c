@@ -7,11 +7,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include "stacktrace.h"
+#include "instrument.h"
 #include "syms.h"
 
 /* turn on for microcycle (CPU cycle/1000) timing info */
-#define HAS_RDTSC       0   /* has RDTSC instruction: requires 386+ CPU */
+#define HAS_RDTSC       1   /* has RDTSC instruction: requires 386+ CPU */
 
 static char ftrace;
 static int count;
@@ -20,7 +20,7 @@ static unsigned int max_stack;
 
 /* runs before main and rewrites argc/argv on stack if --ftrace found */
 __attribute__((no_instrument_function,constructor(120)))
-static void checkargs(void)
+static void ftrace_checkargs(void)
 {
     char **avp = __argv + 1;
 
@@ -32,7 +32,7 @@ static void checkargs(void)
         ftrace = 1;
         __argc--;
     }
-    get_micro_count();      /* init timer base */
+    _get_micro_count();     /* init timer base */
 }
 
 /* every function this function calls must also be noinstrument!! */
@@ -57,11 +57,8 @@ void noinstrument __cyg_profile_func_enter_simple(void)
     unsigned int stack_used = start_sp - (unsigned int)bp;
     if (stack_used > max_stack) max_stack = stack_used;
 
-    //print_regs();
-    //print_stack(0xC0DE);
-
     /* calc caller address */
-    i = calc_push_count(calling_fn);
+    i = _get_push_count(calling_fn);
     if (i & BP_PUSHED) {            /* caller pushed BP */
         bp = (int **)bp[0];         /* one level down to get caller BP */
         i &= COUNT_MASK;
@@ -75,7 +72,7 @@ void noinstrument __cyg_profile_func_enter_simple(void)
     printf(">%s, from %s, stack %u/%u", sym_text_symbol(calling_fn, 0), callsite,
         stack_used, max_stack);
 #if HAS_RDTSC
-    printf(" %lu ucycles", get_micro_count());
+    printf(" %lu ucycles", _get_micro_count());
 #endif
     printf("\n");
     ++count;
@@ -88,12 +85,12 @@ void noinstrument __cyg_profile_func_exit_simple(void)
 }
 
 /* return CPU cycles / 1000 via RDTSC instruction */
-unsigned long noinstrument get_micro_count(void)
+unsigned long noinstrument _get_micro_count(void)
 {
 #if HAS_RDTSC
     static unsigned long long last_ts;
 
-    unsigned long long ts = rdtsc();    /* REQUIRES 386 CPU! */
+    unsigned long long ts = _get_rdtsc();    /* REQUIRES 386 CPU! */
     unsigned long diff = (ts - last_ts) / 1000;
     last_ts = ts;
     return diff;
