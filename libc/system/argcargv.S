@@ -7,15 +7,22 @@
 
 	.section .preinit,"ax",@progbits
 
-	popw __argc	// load __argc, stack will be restored in .postinit
-	popw __argv	// load __argv, ""
+	movw $__argc,%di
+	popw (%di)	// load __argc, stack will be restored in .postinit
+	popw 2(%di)	// load __argv, ""
 
 	.section .postinit,"ax",@progbits
 
-	pushw __argv	// restore stack with possibly modified __argv, __argc
-	pushw __argc
+	pushw 2(%di)	// restore stack with possibly modified __argv, __argc
+	pushw (%di)	// libc/crt0.S and .init routines should not clobber di
 
 //------------------------------------------------------------------------------
 
-	.comm __argc,2
-	.comm __argv,2
+	.bss
+	.balign 2
+	.global __argc
+	.global __argv
+__argc:
+	.skip 2
+__argv:			// place __argv close to __argc, so we can address
+	.skip 2		// both compactly via a single base/index register
