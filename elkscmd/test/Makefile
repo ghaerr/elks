@@ -1,12 +1,9 @@
 .PHONY: all clean
 
 SUBDIRS =  \
-	eth    \
 	libc   \
-	pty    \
-	socket \
-	select \
-	signal \
+	other  \
+	echo   \
 	# EOL
 
 .PHONY: $(SUBDIRS)
