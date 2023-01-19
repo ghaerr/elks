@@ -12,7 +12,7 @@ static unsigned int max_stack;
 
 /* runs before main and rewrites argc/argv on stack if --ftrace found */
 __attribute__((no_instrument_function,constructor(120)))
-static void checkargs(void)
+static void ftrace_checkargs(void)
 {
     char **avp = __argv + 1;
 

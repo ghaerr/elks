@@ -12,7 +12,7 @@ include $(BASEDIR)/Make.rules
 
 PRGS = testsym disasm opcodes
 INSTRUMENTOBJS = instrument.o syms.o shared.o shared-asm.o
-DISASMOBJS = dis.o disasm.o $(INSTRUMENTOBJS)
+DISASMOBJS = dis.o disasm.o syms.o shared-asm.o
 TESTOBJS   = testsym.o stacktrace.o printreg.o $(INSTRUMENTOBJS)
 
 # disable tail call optimization for better stack traces

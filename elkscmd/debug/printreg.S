@@ -3,11 +3,11 @@
 	.code16
 	.text
 
-	.global print_regs
-	.global print_segs
+	.global _print_regs
+	.global _print_segs
 	.extern	printf
 
-print_regs:
+_print_regs:
 	push %ax
 	push %sp
 	push %bp
@@ -36,7 +36,7 @@ print_regs:
 	pop %ax
 	//ret
 
-print_segs:
+_print_segs:
 	push %ax
 	push %bx
 	push %cx

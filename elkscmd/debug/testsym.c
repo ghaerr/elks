@@ -2,14 +2,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include "instrument.h"
 #include "syms.h"
-#include "stacktrace.h"
 
 void z()
 {
-    print_regs();
+    _print_regs();
     printf("Stack backtrace of z:\n");
-    print_stack(0xC0DE);
+    _print_stack(0xC0DE);
 }
 
 void y(int a)
