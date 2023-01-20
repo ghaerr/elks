@@ -12,7 +12,7 @@ include $(BASEDIR)/Make.rules
 
 PRGS = testsym disasm opcodes
 INSTRUMENTOBJS = instrument.o syms.o shared.o shared-asm.o
-DISASMOBJS = dis.o disasm.o syms.o shared-asm.o
+DISASMOBJS = dis.o disasm.o syms.o
 TESTOBJS   = testsym.o stacktrace.o printreg.o $(INSTRUMENTOBJS)
 
 # disable tail call optimization for better stack traces
@@ -27,12 +27,9 @@ LDFLAGS += -maout-symtab -maout-heap=12000
 # added after CFLAGS for non-instrumented .c files in this directory
 NOINSTFLAGS = -fno-instrument-functions -fno-instrument-functions-simple
 
-HOSTPRGS = nm86
+HOSTPRGS = nm86 hostdisasm
 
 all: $(HOSTPRGS) $(PRGS)
-
-nm86: nm86.c syms.c
-	$(HOSTCC) $(HOSTCFLAGS) -o $@ $^
 
 testsym: $(TESTOBJS)
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
@@ -54,6 +51,12 @@ disasm.o: disasm.c
 
 dis.o: dis.c
 	$(CC) $(CFLAGS) $(NOINSTFLAGS) -c -o $*.o $<
+
+nm86: nm86.c syms.c
+	$(HOSTCC) $(HOSTCFLAGS) -o $@ $^
+
+hostdisasm: dis.c disasm.c syms.c
+	$(HOSTCC) $(HOSTCFLAGS) -D__far= -Wno-int-to-void-pointer-cast -Wno-format -o $@ $^
 
 install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin

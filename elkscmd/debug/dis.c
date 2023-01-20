@@ -11,10 +11,12 @@
 #include <getopt.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
-#include <linuxmt/mem.h>
 #include "syms.h"
 #include "instrument.h"
 #include "disasm.h"
+#if __ia16__
+#include <linuxmt/mem.h>
+#endif
 
 #define KSYMTAB         "/lib/system.sym"
 
@@ -170,6 +172,8 @@ int main(int ac, char **av)
         printf("Can't open %s\n", symfile);
         exit(1);
     }
+
+#if __ia16__
     if (f_ksyms) {
         fd = open("/dev/kmem", O_RDONLY);
         if (fd < 0
@@ -181,6 +185,7 @@ int main(int ac, char **av)
         }
         close(fd);
     }
+#endif
 
     if (strchr(*av, ':')) {
         sscanf(*av, "%lx:%lx#%ld", &seg, &off, &count);
