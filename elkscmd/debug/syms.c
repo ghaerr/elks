@@ -117,7 +117,7 @@ static char * noinstrument sym_string(void *addr, int exact,
     int (*istype)(unsigned char *p))
 {
     unsigned char *p, *lastp;
-    static char buf[32];
+    static char buf[64];
 
     if (!syms && !sym_read_exe_symbols(__program_filename)) {
 hex:
