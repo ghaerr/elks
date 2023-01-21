@@ -12,31 +12,23 @@ opendir(const char *dname)
     int fd;
     DIR *p;
 
-    if (stat(dname, &st) < 0)
-        return 0;
-
-    if (!S_ISDIR(st.st_mode))
-    {
-        errno = ENOTDIR;
-        return 0;
-    }
     if ((fd = open(dname, O_RDONLY)) < 0)
-        return 0;
+        return NULL;
 
-    p = malloc(sizeof(DIR));
-    if (p == 0)
-    {
+    if (fstat(fd, &st) < 0 || !S_ISDIR(st.st_mode)) {
         close(fd);
-        return 0;
+        errno = ENOTDIR;
+        return NULL;
     }
 
-    p->dd_buf = malloc(sizeof(struct dirent));
-    if (p->dd_buf == 0)
-    {
-        free(p);
+    p = malloc(sizeof(DIR) + sizeof(struct dirent));
+    if (p == NULL) {
         close(fd);
-        return 0;
+        errno = ENOMEM;
+        return NULL;
     }
+
+    p->dd_buf = (char *)p + sizeof(DIR);
     p->dd_fd = fd;
     p->dd_loc = p->dd_size = 0;
 

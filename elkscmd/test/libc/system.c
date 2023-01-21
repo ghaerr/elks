@@ -56,7 +56,11 @@ TEST_CASE(system_dirent)
     EXPECT_EQ(errno, ENOENT);
     ASSERT_EQ_P(d, NULL);
 
-    d = opendir("/");
+    d = opendir("/bin/sh");
+    EXPECT_EQ(errno, ENOTDIR);
+    ASSERT_EQ_P(d, NULL);
+
+    d = opendir("/bin");
     ASSERT_NE_P(d, NULL);
     for (de = NULL; de; ) {
         errno = 0;
