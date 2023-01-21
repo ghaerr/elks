@@ -49,25 +49,25 @@ TEST_CASE(system_sleep)
 
 TEST_CASE(system_dirent)
 {
-	DIR *d;
-	struct dirent *de;
+    DIR *d;
+    struct dirent *de;
 
-	d = opendir("doesnotexist");
-	EXPECT_EQ(errno, ENOENT);
-	ASSERT_EQ_P(d, NULL);
+    d = opendir("doesnotexist");
+    EXPECT_EQ(errno, ENOENT);
+    ASSERT_EQ_P(d, NULL);
 
-	d = opendir("/");
-	ASSERT_NE_P(d, NULL);
-	for (de = NULL; de; ) {
-		errno = 0;
-		de = readdir(d);
-		if (de == NULL) {
-			ASSERT_NE(errno, 0);
-			break;
-		}
-	}
-	/* TODO rewinddir, seekdir, telldir */
-	ASSERT_SYS(closedir(d), 0, 0);
+    d = opendir("/");
+    ASSERT_NE_P(d, NULL);
+    for (de = NULL; de; ) {
+        errno = 0;
+        de = readdir(d);
+        if (de == NULL) {
+            ASSERT_NE(errno, 0);
+            break;
+        }
+    }
+    /* TODO rewinddir, seekdir, telldir */
+    ASSERT_SYS(closedir(d), 0, 0);
 }
 
 TEST_CASE(system_scandir)
