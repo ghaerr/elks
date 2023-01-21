@@ -60,7 +60,7 @@ or a ROM file image into the `image` folder. The image extension is '.img'
 and will be in either ELKS (MINIX) or MSDOS (FAT) filesystem format.
 Building FAT images requires the 'mtools-4.0.23' package to be installed.
 
-6- Before writting that image on the real medium, you can test it first on QEMU:
+6- Before writing that image on the real medium, you can test it first on QEMU:
 
 `./qemu.sh`
 

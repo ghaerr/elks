@@ -5,7 +5,7 @@
 # Must be executed with top directory /elks as the current one
 
 if [ ! -e "env.sh" ]; then
-	echo "ERROR: You did not sourced this script from the top directory.";
+	echo "ERROR: You did not source this script from the top directory.";
 	echo "       Set the top directory of ELKS as the current one,";
 	echo "       then source this script again.";
 	return 1;
