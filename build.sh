@@ -69,7 +69,7 @@ fi
 
 # Build 8018X kernel and image
 if [ "$1" = "auto" ]; then
-	echo "Building 8018X image..."
+    echo "Building 8018X image..."
     cp 8018x.config .config
     make kclean || clean_exit 7
     rm elkscmd/basic/*.o
@@ -78,7 +78,7 @@ fi
 
 # Build PC-98 kernel, some user land files and image
 if [ "$1" = "auto" ]; then
-	echo "Building PC-98 image..."
+    echo "Building PC-98 image..."
     cp pc98-1232.config .config
     make kclean || clean_exit 9
     rm elkscmd/sys_utils/clock.o
