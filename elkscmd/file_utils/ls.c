@@ -578,7 +578,7 @@ int main(int argc, char **argv)
             if (recursive) recursive--;
         }
     } while (files.size || dirs.size);
-    if (!(flags & (LSF_LONG|LSF_ONEPER)))
+    if (!(flags & (LSF_LONG|LSF_ONEPER)) && col)
         fputc('\n', stdout);
     return EXIT_SUCCESS;
 
