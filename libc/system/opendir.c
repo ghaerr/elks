@@ -5,40 +5,32 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-DIR  *
+DIR *
 opendir(const char *dname)
 {
-   struct stat st;
-   int   fd;
-   DIR  *p;
+    struct stat st;
+    int fd;
+    DIR *p;
 
-   if (stat(dname, &st) < 0)
-      return 0;
+    if ((fd = open(dname, O_RDONLY)) < 0)
+        return NULL;
 
-   if (!S_ISDIR(st.st_mode))
-   {
-      errno = ENOTDIR;
-      return 0;
-   }
-   if ((fd = open(dname, O_RDONLY)) < 0)
-      return 0;
+    if (fstat(fd, &st) < 0 || !S_ISDIR(st.st_mode)) {
+        close(fd);
+        errno = ENOTDIR;
+        return NULL;
+    }
 
-   p = malloc(sizeof(DIR));
-   if (p == 0)
-   {
-      close(fd);
-      return 0;
-   }
+    p = malloc(sizeof(DIR) + sizeof(struct dirent));
+    if (p == NULL) {
+        close(fd);
+        errno = ENOMEM;
+        return NULL;
+    }
 
-   p->dd_buf = malloc(sizeof(struct dirent));
-   if (p->dd_buf == 0)
-   {
-      free(p);
-      close(fd);
-      return 0;
-   }
-   p->dd_fd = fd;
-   p->dd_loc = p->dd_size = 0;
+    p->dd_buf = (char *)p + sizeof(DIR);
+    p->dd_fd = fd;
+    p->dd_loc = p->dd_size = 0;
 
-   return p;
+    return p;
 }
