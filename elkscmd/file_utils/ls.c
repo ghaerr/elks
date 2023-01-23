@@ -139,7 +139,7 @@ static void sortstack(struct stack *pstack)
         qsort(pstack->buf, pstack->size, sizeof(struct sort), namesort);
 }
 
-static void getfiles(char *name, struct stack *pstack, int flags)
+static int getfiles(char *name, struct stack *pstack, int flags)
 {
     int endslash, valid;
     DIR *dirp;
@@ -155,7 +155,7 @@ static void getfiles(char *name, struct stack *pstack, int flags)
     dirp = opendir(name);
     if (dirp == NULL) {
         perror(name);
-        exit(EXIT_FAILURE);
+        return -1;
     }
     while ((dp = readdir(dirp)) != NULL) {
         valid = 0;
@@ -180,6 +180,7 @@ static void getfiles(char *name, struct stack *pstack, int flags)
     }
     closedir(dirp);
     sortstack(pstack);
+    return 0;
 }
 
 
@@ -450,6 +451,7 @@ int main(int argc, char **argv)
 {
     char  *cp;
     char  *name = argv[0];
+    int  status = EXIT_SUCCESS;
     int  flags, recursive, is_dir;
     struct stat statbuf;
     static char *def[] = {".", 0};
@@ -565,8 +567,9 @@ int main(int argc, char **argv)
                 free(name);
         }
         if (dirs.size) {
-            getfiles(name = popstack(&dirs), &files, flags);
-            if (strcmp(name, ".")) {
+            if (getfiles(name = popstack(&dirs), &files, flags) != 0) {
+                status = EXIT_FAILURE;
+            } else if (strcmp(name, ".")) {
                 if (col) {
                     col = 0;
                     fputc('\n', stdout);
@@ -580,7 +583,7 @@ int main(int argc, char **argv)
     } while (files.size || dirs.size);
     if (!(flags & (LSF_LONG|LSF_ONEPER)) && col)
         fputc('\n', stdout);
-    return EXIT_SUCCESS;
+    return status;
 
 usage:
     fprintf(stderr, "usage: %s [-aAFiltSrR1U] [name ...]\n", name);
