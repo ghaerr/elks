@@ -84,12 +84,12 @@ void refresh()
 
 void mvcur(int oy, int ox, int y, int x)
 {
-    printf("\e[%d;%dH", y, x);
+    move(y, x);
 }
 
 int mvaddch(int y, int x, int ch)
 {
-    printf("\e[%d;%dH%c", y, x, ch);
+    printf("\e[%d;%dH%c", y+1, x+1, ch);
     return OK;
 }
 
@@ -107,7 +107,7 @@ void erase()
 
 void move(int y, int x)
 {
-    printf("\e[%d;%dH", y, x);
+    printf("\e[%d;%dH", y+1, x+1);
 }
 
 void clrnl(void)

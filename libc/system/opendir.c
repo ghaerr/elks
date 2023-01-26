@@ -8,9 +8,9 @@
 DIR *
 opendir(const char *dname)
 {
-    struct stat st;
     int fd;
     DIR *p;
+    struct stat st;
 
     if ((fd = open(dname, O_RDONLY)) < 0)
         return NULL;
@@ -28,7 +28,7 @@ opendir(const char *dname)
         return NULL;
     }
 
-    p->dd_buf = (char *)p + sizeof(DIR);
+    p->dd_buf = (struct dirent *)((char *)p + sizeof(DIR));
     p->dd_fd = fd;
     p->dd_loc = p->dd_size = 0;
 
