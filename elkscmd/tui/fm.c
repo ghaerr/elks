@@ -363,7 +363,7 @@ void
 exitcurses(void)
 {
 	endwin(); /* Restore terminal */
-    move(LINES-1, 0);
+    move(LINES - 2, 0);
     clrtoeol();
 }
 
@@ -377,7 +377,7 @@ info(char *fmt, ...)
 	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
-	move(LINES - 1, 0);
+	move(LINES - 2, 0);
     clrtoeol();
 	printw("%s", buf);
 }
@@ -392,7 +392,7 @@ warn(char *fmt, ...)
 	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
-	move(LINES - 1, 0);
+	move(LINES - 2, 0);
 	printw("%s: %s\n", buf, strerror(errno));
 }
 
@@ -414,7 +414,7 @@ fatal(char *fmt, ...)
 void
 clearprompt(void)
 {
-	move(LINES - 1, 0);
+	move(LINES - 2, 0);
     clrtoeol();
 }
 
