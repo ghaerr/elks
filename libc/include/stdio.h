@@ -144,9 +144,8 @@ int vsnprintf (char * sp, size_t, const char * format, va_list ap);
 
 #ifndef __HAS_NO_FLOATS__
 void dtostr(double val, int style, int preci, char *buf);
-extern void  (*__fp_print)();
 /* use this macro to link in libc %e,%f,%g printf/sprintf support into user program */
-#define __STDIO_PRINT_FLOATS	void (*__fp_print)() = dtostr
+#define __STDIO_PRINT_FLOATS    __LINK_SYMBOL(dtostr)
 #endif
 
 #define stdio_pending(fp) ((fp)->bufread>(fp)->bufpos)

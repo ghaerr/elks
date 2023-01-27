@@ -33,18 +33,6 @@ include $(TOPDIR)/Make.defs
 
 ##############################################################################
 #
-# Specify platform to compile for. The following platforms are defined:
-#
-#	i86-ELKS	ELKS on an ix86 processor.
-#
-#	DEFAULT 	Anything not otherwise defined above.
-#
-# Select the relevant option here.
-
-PLATFORM=i86-ELKS
-
-##############################################################################
-#
 # It is not normally necessary to make changes below this line.
 #
 # Specify directories.
@@ -68,31 +56,27 @@ E_V=$(shell if [ -f $(ELKS_DIR)/Makefile-rules ]; then \
 		    | fgrep = | head -4 | tr '\#' = | cut -d = -f 2 ;\
 	    else echo Version not known ; fi)
 
-ELKS_VSN=$(shell printf '%s.%s.%s-pre%s' $(E_V) | sed 's/-pre$$//')
+ELKS_VSN=$(shell printf '%s.%s.%s-pre%s' $(E_V) | sed 's/-pre0$$//')
 
 ##############################################################################
 #
-# Determine compiler variables for this target.
+# Compiler variables for programs to be compiled as host applications.
+HOSTCC = gcc
+HOSTCFLAGS = -O3
 
-ifeq ($(PLATFORM),i86-ELKS)
-	CC=ia16-elf-gcc
-	CFLBASE=-fno-inline -melks-libc -mcmodel=small -mno-segment-relocation-stuff -mtune=i8086 -Wall -Os
-	#CFLBASE += -mregparmcall
-	LD=ia16-elf-gcc
-	LDFLAGS=$(CFLBASE)
-	CHECK=gcc -c -o .null.o -Wall -pedantic
-	AS=ia16-elf-as
-	ASFLAGS=-mtune=i8086 --32-segelf
-endif
+##############################################################################
+#
+# Compiler variables for programs cross-compiled for ELKS.
 
-ifeq ($(PLATFORM),DEFAULT)
-	CC=cc
-	CFLBASE=
-	LD=ld
-	LDFLAGS=
-	CHECK=cc -c -o .null.o
-	AS=as
-endif
+CC=ia16-elf-gcc
+CFLBASE=-fno-inline -melks-libc -mcmodel=small -mno-segment-relocation-stuff -mtune=i8086 -Wall -Os
+#CFLBASE += -mregparmcall
+#CFLBASE += -finstrument-functions-simple
+LD=ia16-elf-gcc
+LDFLAGS=$(CFLBASE)
+CHECK=gcc -c -o .null.o -Wall -pedantic
+AS=ia16-elf-as
+ASFLAGS=-mtune=i8086 --32-segelf
 
 CFLAGS=$(CFLBASE) $(WARNINGS) $(LOCALFLAGS) $(INCLUDES) -D__ELKS__ -DELKS_VERSION=\"$(ELKS_VSN)\"
 
@@ -100,7 +84,6 @@ CFLAGS=$(CFLBASE) $(WARNINGS) $(LOCALFLAGS) $(INCLUDES) -D__ELKS__ -DELKS_VERSIO
 #
 # Special libraries for some programs
 TINYPRINTF=$(ELKSCMD_DIR)/lib/tiny_vfprintf.o
-
 
 ###############################################################################
 #

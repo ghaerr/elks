@@ -5,7 +5,7 @@ Note that inclusion of code in this package does not imply any kind of
 right to distribute the code. Please check the license for each program
 before modifying or distributing it.
 
-More contributions are required under a GPL compitable license. Please see
+More contributions are required under a GPL compatible license. Please see
 the CONTRIBUTING file for more details.
 
 This package has been put together for two main purposes:
@@ -13,7 +13,7 @@ This package has been put together for two main purposes:
 1. To make it as easy as possible to put together a working binary release
    of a complete ELKS system.
 
-2. To make it as easy as possible for other developers to accuratly
+2. To make it as easy as possible for other developers to accurately
    reproduce a release.
 
 The Makefiles contain rules which automatically build disk images for

@@ -18,7 +18,7 @@
 # System
 #
 CONFIG_ARCH_IBMPC=y
-# CONFIG_ARCH_8081X is not set
+# CONFIG_ARCH_8018X is not set
 # CONFIG_ARCH_PC98 is not set
 
 #

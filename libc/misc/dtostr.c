@@ -58,32 +58,4 @@ void dtostr(double val, int style, int preci, char *buf)
    }
 
 }
-
-#if 0
-static void
-__xfpcvt()
-{
-   extern int (*__fp_print)();
-   __fp_print = __fp_print_func;
-}
-
-#ifdef __AS386_16__
-#asm
-  loc   1         ! Make sure the pointer is in the correct segment
-auto_func:        ! Label for bcc -M to work.
-  .word ___xfpcvt ! Pointer to the autorun function
-  .text           ! So the function after is also in the correct seg.
-#endasm
-#endif
-
-#ifdef __AS386_32__
-#asm
-  loc   1         ! Make sure the pointer is in the correct segment
-auto_func:        ! Label for bcc -M to work.
-  .long ___xfpcvt ! Pointer to the autorun function
-  .text           ! So the function after is also in the correct seg.
-#endasm
-#endif
-#endif /* #if 0 */
-
 #endif /* __HAS_NO_FLOATS__ */

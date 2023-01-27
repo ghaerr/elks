@@ -1,9 +1,11 @@
-#define __STDIO_PRINT_FLOATS
-
 #include "testlib.h"
 
 #include <errno.h>
 #include <math.h>
+
+#include <stdio.h>
+#include <sys/linksym.h>
+__STDIO_PRINT_FLOATS;       // link in libc printf float support
 
 struct PowCase {
 	double x;

@@ -43,12 +43,12 @@ int dup2 (int oldfd, int newfd);
 int execl(char *fname, char *arg0, ...);
 int execle(char *fname, char *arg0, ...);
 int execlp(char *fname, char *arg0, ...);
-int _execlpe(char *fname, char *arg0, ...);
+int execlpe(char *fname, char *arg0, ...);
 int execv(char *fname, char **argv);
 int execve(char *fname, char **argv, char **envp);
-int _execve(char *fname, char *stk_ptr, int stack_bytes);
 int execvp(char *fname, char **argv);
-int _execvpe(char *fname, char **argv, char **envp);
+int execvpe(char *fname, char **argv, char **envp);
+int _execve(char *fname, char *stk_ptr, int stack_bytes);
 void _exit(int status);
 int isatty (int fd);
 char *ttyname(int fd);
@@ -93,7 +93,9 @@ extern int optind;
 extern int optopt;
 extern int opterr;
 
-extern char ** environ;
-extern char * _program_filename;
+extern int     __argc;
+extern char ** __argv;
+extern char *  __program_filename;  /* process argv[0] */
+extern char ** environ;             /* process global environment */
 
 #endif

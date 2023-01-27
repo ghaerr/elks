@@ -3,8 +3,12 @@
 
 #include "_stdio.h"
 
-__attribute__((destructor(99))) static void
-__stdio_close_all(void)
+/* NOTE: ensure this destructor is lower priority (90) than
+ * the atexit_do_exit (100) destructor so as to run later.
+ */
+#pragma GCC diagnostic ignored "-Wprio-ctor-dtor"
+__attribute__((destructor(90)))
+static void stdio_close_all(void)
 {
    FILE *fp;
    fflush(stdout);
@@ -19,8 +23,9 @@ __stdio_close_all(void)
    }
 }
 
-__attribute__((constructor(99))) void
-__io_init_vars(void)
+#pragma GCC diagnostic ignored "-Wprio-ctor-dtor"
+__attribute__((constructor(90)))
+void __stdio_init(void)
 {
    if (isatty(1))
       stdout->mode |= _IOLBF;

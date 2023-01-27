@@ -46,6 +46,7 @@
 # 
 # -------------	----------------------------------------------------------
 sys_utils/init			:boot	:sysutil    :128k
+#sys_utils/min_init ::bin/init :boot	:sysutil    :128k
 sys_utils/getty			:boot	:sysutil    :128k
 sys_utils/login			:boot	:sysutil    :128k
 sash/sash	::bin/sh	    	:defsash	# install as /bin/sh

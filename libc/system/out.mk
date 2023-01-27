@@ -11,6 +11,7 @@ endif
 
 OBJS = \
 	abort.o \
+	argcargv.o \
 	closedir.o \
 	dup.o \
 	dup2.o \

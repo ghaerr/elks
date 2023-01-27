@@ -6,6 +6,7 @@ SECTIONS {
 		KEEP (*(".inithead!"))
 		KEEP (*(SORT (".preinit!*") SORT (".preinit.*!")))
 		KEEP (*(SORT (".init!*") SORT (".init.*!")))
+		KEEP (*(SORT (".postinit!*") SORT (".postinit.*!")))
 		KEEP (*(".inittail!"))
 		*(".text!*" ".text.*!"
 		  ".fartext.*0!" ".fartext.*2!"
@@ -18,6 +19,7 @@ SECTIONS {
 		KEEP (*(.inithead .inithead$))
 		KEEP (*(.preinit SORT (.preinit$*) SORT (".preinit.*[^&]")))
 		KEEP (*(.init SORT (.init$*) SORT (".init.*[^&]")))
+		KEEP (*(.postinit SORT (.postinit$*) SORT (".postinit.*[^&]")))
 		KEEP (*(.inittail .inittail$))
 		*(.text .text$* ".text.*[^&]"
 		  /*
@@ -36,6 +38,7 @@ SECTIONS {
 		KEEP (*(".inithead&"))
 		KEEP (*(SORT (".preinit&*") SORT (".preinit.*&")))
 		KEEP (*(SORT (".init&*") SORT (".init.*&")))
+		KEEP (*(SORT (".postinit&*") SORT (".postinit.*&")))
 		KEEP (*(".inittail&"))
 		*(".text&*" ".text.*&"
 		  ".fartext.*0&" ".fartext.*2&"

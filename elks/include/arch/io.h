@@ -5,9 +5,9 @@
 
 #ifdef __ia16__
 
-#define outb(value,port)            \
-        asm ("outb %%al,%%dx"       \
-            : /* no output */       \
+#define outb(value,port)                \
+        asm volatile ("outb %%al,%%dx"  \
+            : /* no output */           \
             :"Ral" ((unsigned char)(value)),"d" (port))
 
 #define inb(port) __extension__ ({      \
@@ -18,7 +18,7 @@
         _v; })
 
 #define outw(value,port)                \
-        asm ("outw %%ax,%%dx"           \
+        asm volatile ("outw %%ax,%%dx"  \
             : /* no output */           \
             :"a" ((unsigned short)(value)),"d" (port))
 

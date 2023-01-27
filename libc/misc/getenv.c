@@ -4,16 +4,13 @@
  */
 
 #include <string.h>
-
-extern char ** environ;
+#include <unistd.h>
 
 char *
-getenv(name)
-char * name;
+getenv(char *name)
 {
-   register int l;
-   register char ** ep = environ;
-   l = strlen(name);
+   int l = strlen(name);
+   char **ep = environ;
 
    if( ep == 0 || l == 0 ) return 0;
 

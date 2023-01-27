@@ -14,49 +14,43 @@
 #include "syms.h"
 
 static unsigned char *syms;
+struct minix_exec_hdr sym_hdr;
 
 #if __ia16__
 #define ALLOC(s,n)    ((int)(s = sbrk(n)) != -1)
 #else
 #define ALLOC(s,n)    ((s = malloc(n)) !=  NULL)
-char * _program_filename;
+char * __program_filename;
 #endif
 
-struct minix_exec_hdr {
-    uint32_t  type;
-    uint8_t   hlen;       // 0x04
-    uint8_t   reserved1;
-    uint16_t  version;
-    uint32_t  tseg;       // 0x08
-    uint32_t  dseg;       // 0x0c
-    uint32_t  bseg;       // 0x10
-    uint32_t  entry;
-    uint16_t  chmem;
-    uint16_t  minstack;
-    uint32_t  syms;
-};
+#define MAGIC       0x0301  /* magic number for executable progs */
 
 /* read symbol table from executable into memory */
 unsigned char * noinstrument sym_read_exe_symbols(char *path)
 {
     int fd;
     unsigned char *s;
-    struct minix_exec_hdr hdr;
+    char fullpath[128];
 
     if (syms) return syms;
-    if ((fd = open(path, O_RDONLY)) < 0)
-        return NULL;
+    if ((fd = open(path, O_RDONLY)) < 0) {
+        sprintf(fullpath, "/bin/%s", path);     // FIXME use PATH
+        if ((fd = open(fullpath, O_RDONLY)) < 0)
+                return NULL;
+    }
     errno = 0;
-    if (read(fd, &hdr, sizeof(hdr)) != sizeof(hdr)
-        || (hdr.syms == 0 || hdr.syms > 32767)
-        || (!ALLOC(s, (int)hdr.syms))
-        || (lseek(fd, -(int)hdr.syms, SEEK_END) < 0)
-        || (read(fd, s, (int)hdr.syms) != (int)hdr.syms)) {
+    if (read(fd, &sym_hdr, sizeof(sym_hdr)) != sizeof(sym_hdr)
+        || ((sym_hdr.type & 0xFFFF) != MAGIC)
+        || (sym_hdr.syms == 0 || sym_hdr.syms > 32767)
+        || (!ALLOC(s, (int)sym_hdr.syms))
+        || (lseek(fd, -(int)sym_hdr.syms, SEEK_END) < 0)
+        || (read(fd, s, (int)sym_hdr.syms) != (int)sym_hdr.syms)) {
                 int e = errno;
                 close(fd);
                 errno = e;
                 return NULL;
     }
+    close(fd);
     syms = s;
     return syms;
 }
@@ -81,13 +75,14 @@ unsigned char * noinstrument sym_read_symbols(char *path)
                 errno = e;
                 return NULL;
     }
+    close(fd);
     syms = s;
     return syms;
 }
 
 static int noinstrument type_text(unsigned char *p)
 {
-    return (p[TYPE] == 'T' || p[TYPE] == 't');
+    return (p[TYPE] == 'T' || p[TYPE] == 't' || p[TYPE] == 'W');
 }
 
 static int noinstrument type_ftext(unsigned char *p)
@@ -98,7 +93,8 @@ static int noinstrument type_ftext(unsigned char *p)
 static int noinstrument type_data(unsigned char *p)
 {
     return (p[TYPE] == 'D' || p[TYPE] == 'd' ||
-            p[TYPE] == 'B' || p[TYPE] == 'b');
+            p[TYPE] == 'B' || p[TYPE] == 'b' ||
+            p[TYPE] == 'V');
 }
 
 /* map .text address to function start address */
@@ -106,7 +102,7 @@ void * noinstrument sym_fn_start_address(void *addr)
 {
     unsigned char *p, *lastp;
 
-    if (!syms && !sym_read_exe_symbols(_program_filename)) return (void *)-1;
+    if (!syms && !sym_read_exe_symbols(__program_filename)) return (void *)-1;
 
     lastp = syms;
     for (p = next(lastp); ; lastp = p, p = next(p)) {
@@ -121,9 +117,9 @@ static char * noinstrument sym_string(void *addr, int exact,
     int (*istype)(unsigned char *p))
 {
     unsigned char *p, *lastp;
-    static char buf[32];
+    static char buf[64];
 
-    if (!syms && !sym_read_exe_symbols(_program_filename)) {
+    if (!syms && !sym_read_exe_symbols(__program_filename)) {
 hex:
         sprintf(buf, "%.4x", (unsigned int)addr);
         return buf;
@@ -164,3 +160,16 @@ char * noinstrument sym_data_symbol(void *addr, int exact)
 {
     return sym_string(addr, exact, type_data);
 }
+
+#if 0
+static int noinstrument type_any(unsigned char *p)
+{
+    return p[TYPE] != '\0';
+}
+
+/* convert (non-segmented local IP) address to symbol */
+char * noinstrument sym_symbol(void *addr, int exact)
+{
+    return sym_string(addr, exact, type_any);
+}
+#endif

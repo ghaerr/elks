@@ -607,6 +607,7 @@ create_symtab (void)
             }
             if (isftext) {
                 if (type == 'T') type = 'F';
+                if (type == 'W') type = 'F';
                 if (type == 't') type = 'f';
             }
             if (istext || isftext || isdata) {

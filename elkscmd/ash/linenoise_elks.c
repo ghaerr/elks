@@ -257,8 +257,7 @@ void linenoiseSetMultiLine(int ml) {
 /* Return true if the terminal name is in the list of terminals we know are
  * not able to understand basic escape sequences. */
 static int isUnsupportedTerm(void) {
-    //char *term = getenv("TERM");
-    char *term = bltinlookup("TERM", 1);    /* getenv won't work here for ELKS*/
+    char *term = termval();
     int j;
 
     if (term == NULL) return 0;

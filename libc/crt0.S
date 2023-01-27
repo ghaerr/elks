@@ -1,11 +1,21 @@
 // C runtime bootstrap
 // This must be the first module of the executable
 
-#include <asm/yoink.h>
+#include <sys/linksym.h>
 #include <libc-private/call-cvt.h>
 
 	.arch	i8086, nojumps
 	.code16
+
+// Requires the following ordered sections in linker scripts:
+//  .inithead   - _startup: envp, argv and argc computed and pushed
+//  .preinit    - initialize any referenced .comm variables
+//  .init       - run constructor routines
+//  .postinit   - restore stack if __argv, __argc used
+//  .inittail   - main called, converting stack if regparmcall
+//  .finihead   - exit called
+//  .fini       - run atexit routines then other destructors
+//  .finitail   - _exit(retcode) called
 
 	.section .inithead,"ax",@progbits
 
@@ -15,8 +25,8 @@
 // Ensure that constructor & destructor handling is linked in
 // TODO: make these optional
 
-	__YOINK(__CTOR_LIST__)
-	__YOINK(__DTOR_LIST__)
+	__LINK_SYMBOL(__CTOR_LIST__)
+	__LINK_SYMBOL(__DTOR_LIST__)
 
 // This is the program entry point
 
@@ -36,14 +46,17 @@ _start:
 	inc %ax
 	shl $1,%ax
 	add %bx,%ax	// envp [0]
-	push %ax
-	push %bx
-	push %cx
+	push %ax        // envp
+	push %bx        // argv
+	push %cx        // argc
 
 // ...Code fragments from .preinit & .preinit.* sections will go here...
-//    NOTE: these assume ax = envp, bx = argv, & may clobber dx
+//    NOTE: these assume ax = envp, bx = argv, cx = argc & may clobber dx
 
 // ...Then code fragments from .init & .init.* sections will go here...
+//    NOTE: these are allowed to clobber ax, bx, cx, dx, si
+
+// ...Then code fragments from .postinit & .postinit.* sections will go here...
 //    NOTE: these are allowed to clobber ax, bx, cx, dx, si
 
 	.section .inittail,"ax",@progbits
@@ -55,9 +68,9 @@ _start:
 #endif
 	CALL_(main)
 #ifndef __IA16_CALLCVT_REGPARMCALL
-	push %ax  // main return value
+	push %ax        // main return value
 #endif
-	CALL_N_(exit)  // no return
+	CALL_N_(exit)   // no return
 
 	.section .finihead,"ax",@progbits
 
@@ -65,7 +78,7 @@ _start:
 
 exit:
 #ifdef __IA16_CALLCVT_REGPARMCALL
-	xchg %ax,%di
+	xchg %ax,%di    // save exit arg in DI
 #endif
 
 // ...Code fragments from .fini & .fini.* sections will go here...
@@ -74,14 +87,11 @@ exit:
 	.section .finitail,"ax",@progbits
 
 #ifdef __IA16_CALLCVT_REGPARMCALL
-	xchg %ax,%di
+	xchg %ax,%di    // retrieve exit arg
 #endif
-	JMP_(_exit)  // kernel one - no return
+	JMP_(_exit)     // no return
 
 	.data
-
-	.extern environ
-	.extern _program_filename
 
 // Zero data for null pointers (near & far)
 // Will be linked as first section in data segment

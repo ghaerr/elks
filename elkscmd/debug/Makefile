@@ -8,33 +8,36 @@ include $(BASEDIR)/Make.defs
 
 include $(BASEDIR)/Make.rules
 
-HOSTCC = gcc
-HOSTCFLAGS = -O3
-
 ###############################################################################
 
 PRGS = testsym disasm opcodes
-LIBOBJS += syms.o stacktrace.o printreg.o
-#OBJS += ulltostr.o
+INSTRUMENTOBJS = instrument.o syms.o shared.o shared-asm.o
+DISASMOBJS = dis.o disasm.o syms.o
+TESTOBJS   = testsym.o stacktrace.o printreg.o $(INSTRUMENTOBJS)
+
+# disable tail call optimization for better stack traces
 CFLAGS += -fno-optimize-sibling-calls
+# always push BP in function prologue for better stack traces
 CFLAGS += -fno-omit-frame-pointer
-#CFLAGS += -finstrument-functions
-#LDFLAGS += -maout-heap=12000
+# optional instrumentation for function tracing
+CFLAGS += -finstrument-functions-simple
+# include symbol table in executable and heap to read it
+LDFLAGS += -maout-symtab -maout-heap=12000
 
-all: nm86 $(PRGS)
+# added after CFLAGS for non-instrumented .c files in this directory
+NOINSTFLAGS = -fno-instrument-functions -fno-instrument-functions-simple
 
-nm86: nm86.c syms.c
-	$(HOSTCC) $(HOSTCFLAGS) -o $@ $^
+HOSTPRGS = nm86 hostdisasm
 
-testsym: testsym.o $(LIBOBJS)
-	$(LD) $(LDFLAGS) -mno-post-link -o $@ $^ $(LDLIBS)
-	elf2elks --symtab --heap 12000 $@
+all: $(HOSTPRGS) $(PRGS)
+
+testsym: $(TESTOBJS)
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 	./nm86 $@ > $@.map
 	cp $@ $(TOPDIR)/elkscmd/rootfs_template/root
 
-disasm: dis.o disasm.o $(LIBOBJS)
-	$(LD) $(LDFLAGS) -mno-post-link -o $@ $^ $(LDLIBS)
-	elf2elks --symtab --heap 0xffff $@
+disasm: $(DISASMOBJS)
+	$(LD) $(LDFLAGS) -maout-heap=0xffff -o $@ $^ $(LDLIBS)
 	cp -p $@ $(TOPDIR)/elkscmd/rootfs_template/root
 	-mkdir $(TOPDIR)/elkscmd/rootfs_template/lib
 	cp -p $(TOPDIR)/elks/arch/i86/boot/system.sym $(TOPDIR)/elkscmd/rootfs_template/lib
@@ -44,13 +47,19 @@ opcodes: opcodes.o
 	cp $@ $(TOPDIR)/elkscmd/rootfs_template/root
 
 disasm.o: disasm.c
-	$(CC) $(CFLAGS) -fno-instrument-functions -c -o $*.o $<
+	$(CC) $(CFLAGS) $(NOINSTFLAGS) -c -o $*.o $<
 
-ulltostr.o: ulltostr.c
-	$(CC) $(CFLAGS) -fno-instrument-functions -c -o $*.o $<
+dis.o: dis.c
+	$(CC) $(CFLAGS) $(NOINSTFLAGS) -c -o $*.o $<
+
+nm86: nm86.c syms.c
+	$(HOSTCC) $(HOSTCFLAGS) -o $@ $^
+
+hostdisasm: dis.c disasm.c syms.c
+	$(HOSTCC) $(HOSTCFLAGS) -D__far= -Wno-int-to-void-pointer-cast -Wno-format -o $@ $^
 
 install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
-	rm -f $(PRGS) *.o nm86 testsym.map
+	rm -f $(PRGS) $(HOSTPRGS) *.o *.map

@@ -58,7 +58,7 @@ include $(TOPDIR)/Make.defs
 VERSION 	= 0	# (0-255)
 PATCHLEVEL	= 6	# (0-255)
 SUBLEVEL	= 0	# (0-255)
-#PRE		= 0	# (0-255)	If not a pre, comment this line.
+PRE		= 0
 
 #########################################################################
 # Specify the architecture we will use.
@@ -77,7 +77,7 @@ TARGET_NB_IMAGE	= $(TOPDIR)/elks/nbImage
 #########################################################################
 # Define variables directly dependant on the current version number.
 
-ifeq (x$(PRE), x)
+ifeq ($(PRE), 0)
 
 DIST		= $(shell printf '%u.%u.%u' \
 			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL))

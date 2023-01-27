@@ -541,7 +541,6 @@ int main(int argc, char **argv)
 		printf("'%s'", *av2++);
 	printf("\n");
 	printf("ENV: ");
-	extern char **environ;
 	char **env = environ;
 	while (*env)
 		printf("'%s'", *env++);

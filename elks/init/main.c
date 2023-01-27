@@ -341,7 +341,7 @@ static int parse_options(void)
 	char *line = (char *)options;
 	char *next;
 
-	/* copy /bootops loaded by boot loader at 0050:0000*/
+	/* copy /bootopts loaded by boot loader at 0050:0000*/
 	fmemcpyb(options, kernel_ds, 0, DEF_OPTSEG, sizeof(options));
 
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"

@@ -9,7 +9,7 @@ be little.
 say, to put an acuted a you have to press Ctrl-Alt-a.
 
 	Other characters not in normal Spanish XT keyboards are been
-implemented like in AT keyboards, it's say, you have the |,@,# whith
+implemented like in AT keyboards, it's say, you have the |,@,# with
 Ctrl-Alt 1,2 and 3 respectively.
 
 	The other problem with the { and }, not in XT keyboards has been

@@ -25,7 +25,7 @@ This section contains some HOWTOs to help using ELKS.
 
 * [Writing applications for ELKS in assembler](https://htmlpreview.github.io/?https://github.com/jbruchon/elks/blob/master/Documentation/html/user/writing_apps_in_assembler.html)
 
-* [Internet links refering to ELKS](https://htmlpreview.github.io/?https://github.com/jbruchon/elks/blob/master/Documentation/html/user/internet_links_for_elks.html)
+* [Internet links referring to ELKS](https://htmlpreview.github.io/?https://github.com/jbruchon/elks/blob/master/Documentation/html/user/internet_links_for_elks.html)
 
 
 ## Technical reference
@@ -81,7 +81,7 @@ This section contains some HOWTOs to help using ELKS.
 
 * [Keymaps for the keyboard driver](https://htmlpreview.github.io/?https://github.com/jbruchon/elks/blob/master/Documentation/html/technical/keymaps.html)
 
-* [Explanations on the spanish keymap](https://raw.githubusercontent.com/jbruchon/elks/master/Documentation/text/keymap.es.txt)
+* [Explanations on the Spanish keymap](https://raw.githubusercontent.com/jbruchon/elks/master/Documentation/text/keymap.es.txt)
 
 * [Implementation of module code](https://raw.githubusercontent.com/jbruchon/elks/master/Documentation/text/modules.txt)
 

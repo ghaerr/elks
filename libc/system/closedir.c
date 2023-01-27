@@ -5,9 +5,8 @@
 int
 closedir(DIR *dirp)
 {
-   int   fd;
-   fd = dirp->dd_fd;
-   free(dirp->dd_buf);
-   free(dirp);
-   return close(fd);
+    int fd;
+    fd = dirp->dd_fd;
+    free(dirp);
+    return close(fd);
 }
