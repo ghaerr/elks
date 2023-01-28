@@ -82,11 +82,11 @@ struct stack
     struct sort *buf;
 };
 
-static int cols = 0, col = 0;
+static int cols, col;
 static int reverse = -1;
-static int sortbytime = 0;
-static int sortbysize = 0;
-static int nosort = 0;
+static int sortbytime;
+static int sortbysize;
+static int nosort;
 static char fmt[16] = "%s";
 
 /* return -1/0/1 based on sign of x */
@@ -226,16 +226,14 @@ static void lsfile(char *name, struct stat *statbuf, int flags)
     }
 
     if (flags & LSF_INODE) {
-        sprintf(cp, "%5lu ", (unsigned long)statbuf->st_ino);
-        cp += strlen(cp);
+        cp += sprintf(cp, "%5lu ", (unsigned long)statbuf->st_ino);
     }
 
     if (flags & LSF_LONG) {
         strcpy(cp, modestring(statbuf->st_mode));
         cp += strlen(cp);
 
-        sprintf(cp, "%3lu ", (unsigned long)statbuf->st_nlink);
-        cp += strlen(cp);
+        cp += sprintf(cp, "%3lu ", (unsigned long)statbuf->st_nlink);
 
         if (!useridknown || (statbuf->st_uid != userid)) {
             pwd = getpwuid(statbuf->st_uid);
@@ -247,8 +245,7 @@ static void lsfile(char *name, struct stat *statbuf, int flags)
             useridknown = 1;
         }
 
-        sprintf(cp, "%-8s ", username);
-        cp += strlen(cp);
+        cp += sprintf(cp, "%-8s ", username);
 
         if (!groupidknown || (statbuf->st_gid != groupid)) {
             grp = getgrgid(statbuf->st_gid);
@@ -260,15 +257,13 @@ static void lsfile(char *name, struct stat *statbuf, int flags)
             groupidknown = 1;
         }
 
-        sprintf(cp, "%-8s ", groupname);
-        cp += strlen(cp);
+        cp += sprintf(cp, "%-8s ", groupname);
 
         if (S_ISBLK(statbuf->st_mode) || S_ISCHR(statbuf->st_mode))
-            sprintf(cp, "%3lu, %3lu ", (unsigned long)(statbuf->st_rdev >> 8),
+            cp += sprintf(cp, "%3lu, %3lu ", (unsigned long)(statbuf->st_rdev >> 8),
                     (unsigned long)(statbuf->st_rdev & 0xff));
         else
-            sprintf(cp, "%8lu ", (unsigned long)statbuf->st_size);
-        cp += strlen(cp);
+            cp += sprintf(cp, "%8lu ", (unsigned long)statbuf->st_size);
 
         sprintf(cp, " %-12s ", timestring(statbuf->st_mtime));
     }
@@ -291,12 +286,13 @@ static void lsfile(char *name, struct stat *statbuf, int flags)
 #endif
     }
 
-    strcpy(buf, name);
+    int buflen = strlen(name);
+    memcpy(buf, name, buflen + 1);
     pp = strrchr(buf, '/');
 
     /* If a class character exists for the file name, add it on */
     if (class != '\0') {
-        classp = &buf[strlen(buf)];
+        classp = &buf[buflen];
         *classp++ = class;
         *classp = '\0';
     }
@@ -340,18 +336,18 @@ static char *modestring(int mode)
 
     if (S_ISDIR(mode))
         buf[0] = 'd';
-    if (S_ISCHR(mode))
+    else if (S_ISCHR(mode))
         buf[0] = 'c';
-    if (S_ISBLK(mode))
+    else if (S_ISBLK(mode))
         buf[0] = 'b';
-    if (S_ISFIFO(mode))
+    else if (S_ISFIFO(mode))
         buf[0] = 'p';
 #ifdef S_ISLNK
-    if (S_ISLNK(mode))
+    else if (S_ISLNK(mode))
         buf[0] = 'l';
 #endif
 #ifdef S_ISSOCK
-    if (S_ISSOCK(mode))
+    else if (S_ISSOCK(mode))
         buf[0] = 's';
 #endif
 
@@ -444,15 +440,8 @@ static void setfmt(struct stack *pstack, int flags)
 
 int not_dotdir(char *name)
 {
-    int len;
-    char *p;
-
-    len = strlen(name);
-    p = name + len - 2;
-    if (strcmp(p, "/.") == 0) return 0;
-    p--;
-    if (strcmp(p, "/..") == 0) return 0;
-    return 1;
+    char *p = strrchr(name, '/');
+    return !(p && p[1] == '.' && (!p[2] || (p[2] == '.' && !p[3])));
 }
 
 
