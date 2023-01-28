@@ -141,12 +141,23 @@ static void sortstack(struct stack *pstack)
 
 static int getfiles(char *name, struct stack *pstack, int flags)
 {
-    int endslash, valid;
+    int addslash;
     DIR *dirp;
     struct dirent *dp;
     char fullname[PATHLEN];
+    int pathlen = strlen(name);
 
-    endslash = name[strlen(name)-1] == '/';
+    addslash = name[pathlen - 1] != '/';
+    if (pathlen + addslash >= sizeof(fullname)) {
+toolong:
+        fputs("Pathname too long\n", stderr);
+        return -1;
+    }
+    memcpy(fullname, name, pathlen + 1);
+    if (addslash) {
+        strcat(fullname + pathlen, "/");
+        pathlen++;
+    }
 
     /*
      * Do all the files in a directory.
@@ -158,20 +169,18 @@ static int getfiles(char *name, struct stack *pstack, int flags)
         return -1;
     }
     while ((dp = readdir(dirp)) != NULL) {
-        valid = 0;
-        if ((flags & LSF_ALL) || (*dp->d_name != '.'))
-            valid = 1;
-        else if ((flags & LSF_ALLX) && (dp->d_name[1])
-                && (dp->d_name[1] != '.' || dp->d_name[2]))
-            valid = 1;
-        if (valid) {
-            *fullname = '\0';
-            strcpy(fullname, name);
-            if (!endslash) strcat(fullname, "/");
-            strcat(fullname, dp->d_name);
-            struct stat statbuf;
+        if ((flags & LSF_ALL) || (*dp->d_name != '.') ||
+            ((flags & LSF_ALLX) && (dp->d_name[1])
+                && (dp->d_name[1] != '.' || dp->d_name[2]))) {
+            int namelen = strlen(dp->d_name);
+            if (pathlen + namelen >= sizeof(fullname)) {
+                closedir(dirp);
+                goto toolong;
+            }
+            memcpy(fullname + pathlen, dp->d_name, namelen + 1);
             long l = 0;
             if (sortbytime || sortbysize) {
+                struct stat statbuf;
                 if (LSTAT(fullname, &statbuf) >= 0)
                     l = sortbytime? statbuf.st_mtime: statbuf.st_size;
             }
