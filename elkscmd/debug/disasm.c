@@ -125,6 +125,7 @@ void out_bw(int flags)
     /* discard register operands */
     if (flags & REGOP)
         return;
+    f_outcol++;
     putchar(wordSize? 'w': 'b');
 }
 static void outs(const char *str, int flags)
@@ -159,9 +160,12 @@ static void outs(const char *str, int flags)
         printf(".byte 0x%02x\n", opcode);
         return;
     }
+    f_outcol = strlen(str);
     printf("%s", str);
     if (flags & BW) out_bw(flags);
-    if (flags != 0) putchar('\t');
+    if (flags != 0) {
+        while (f_outcol++ & 7) putchar(' ');
+    }
 #if 0
     if (segOver != -1) {
         printf("%s", segregs[segOver]);
@@ -286,10 +290,12 @@ nextopcode:
                 goto nextopcode;
 #endif
                 }
-            case 0x27: case 0x2f:  // DA
+            case 0x27:              // DAA
+            case 0x2f:              // DAS
                 outs(opcode == 0x27? "daa": "das", 0);
                 break;
-            case 0x37: case 0x3f:  // AA
+            case 0x37:              // AAA
+            case 0x3f:              // AAS
                 outs(opcode == 0x37? "aaa": "aas", 0);
                 break;
             case 0x40: case 0x41: case 0x42: case 0x43:
