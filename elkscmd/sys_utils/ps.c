@@ -13,6 +13,7 @@
 #include <linuxmt/ntty.h>
 #undef __KERNEL__
 
+#include <autoconf.h>           /* for CONFIG_ options */
 #include <linuxmt/mm.h>
 #include <linuxmt/mem.h>
 #include <linuxmt/major.h>
