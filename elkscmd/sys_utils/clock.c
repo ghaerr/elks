@@ -1,3 +1,4 @@
+#include <autoconf.h>           /* for CONFIG_ options */
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
