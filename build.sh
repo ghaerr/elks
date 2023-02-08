@@ -84,7 +84,7 @@ if [ "$1" = "auto" ]; then
     rm elkscmd/sys_utils/clock.o
     rm elkscmd/basic/*.o
     rm elkscmd/sys_utils/ps.o
-    rm elkscmd/nano-X/*.o
+    rm elkscmd/nano-X/*/*.o
     make -j1 || clean_exit 10
 fi
 
