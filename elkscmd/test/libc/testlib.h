@@ -56,7 +56,7 @@ void testlib_abort(const char *fmt, ...);
 #define SYM_GE "\362"
 #define SYM_LT "<"
 #define SYM_LE "\363"
-#elif defined(UTF8)
+#elif defined(ENABLE_UTF8)
 #define SYM_EQ "≡"
 #define SYM_NE "≠"
 #define SYM_GT ">"
