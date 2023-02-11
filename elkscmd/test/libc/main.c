@@ -23,6 +23,7 @@ void test_misc_getcwd();
 void test_misc_strtol();
 void test_regex_regcomp();
 void test_stdio_init();
+void test_stdio_seek();
 void test_string_memchr();
 void test_string_strcat();
 void test_string_strcmp();
@@ -69,7 +70,7 @@ int main(int argc, char **argv)
 			usage(argv);
 	}
 
-	testfn_t tests[35];
+	testfn_t tests[36];
 	i = 0;
 	tests[i++] = test_error_strerror;
 	tests[i++] = test_inet_aton_ntoa;
@@ -89,6 +90,7 @@ int main(int argc, char **argv)
 	tests[i++] = test_misc_strtol;
 	tests[i++] = test_regex_regcomp;
 	tests[i++] = test_stdio_init;
+	tests[i++] = test_stdio_seek;
 	tests[i++] = test_string_memchr;
 	tests[i++] = test_string_strcat;
 	tests[i++] = test_string_strcmp;

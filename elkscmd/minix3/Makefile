@@ -12,7 +12,7 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-PRGS = file head sed sort tail tee cal diff find
+PRGS = file head sed sort tail tee cal diff find mail
 
 #
 # Rules
@@ -47,6 +47,9 @@ tail: tail.o
 
 tee: tee.o
 	$(LD) $(LDFLAGS) -o tee tee.o $(LDLIBS)
+
+mail: mail.o
+	$(LD) $(LDFLAGS) -o mail mail.o $(LDLIBS)
 
 
 include $(BASEDIR)/Make.rules

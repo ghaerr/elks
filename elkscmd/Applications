@@ -155,6 +155,7 @@ minix3/tee						:minix3					:1200k	:1440k
 minix3/cal						:be-minix3				:1200k	:1440k
 minix3/diff						:be-minix3			:720k
 minix3/find						:be-minix3			:720k
+minix3/mail						:minix3                         :other
 disk_utils/fsck					:diskutil				:1200k	:1440k
 disk_utils/mkfs					:diskutil		:360k
 disk_utils/mkfat				:diskutil		:360k
