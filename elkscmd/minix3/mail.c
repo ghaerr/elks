@@ -91,9 +91,7 @@ char *whoami(void);
 void dohelp(void);
 int filesize(char *name);
 
-int main(argc, argv)
-    int argc;
-    char *argv[];
+int main(int argc, char *argv[])
 {
     int c;
 
@@ -161,9 +159,7 @@ int main(argc, argv)
     return(0);
 }
 
-int deliver(count, vec)
-    int count;
-    char *vec[];
+int deliver(int count, char *vec[])
 {
     int i, j;
     int errs = 0;			/* count of errors */
@@ -387,8 +383,7 @@ done:
     return tempfp;
 }
 
-int copy(fromfp, tofp)
-    FILE *fromfp, *tofp;
+int copy(FILE *fromfp, FILE *tofp)
 {
     int c;			/* character being copied */
     int state;			/* ".\n" and postmark detection state */
@@ -592,15 +587,12 @@ void interact()
     }
 }
 
-void onint(dummy)
-    int dummy;	/* to satisfy ANSI compilers */
+void onint(int dummy)
 {
     longjmp(printjump, 1);
 }
 
-void savelet(let, savefile)
-    struct letter *let;
-    char *savefile;
+void savelet(struct letter *let, char *savefile)
 {
     int waitstat, pid;
     FILE *savefp;
@@ -683,9 +675,7 @@ void updatebox()
     if (usedrop) unlink(lockname);
 }
 
-void printlet(let, tofp)
-    struct letter *let;
-    FILE *tofp;
+void printlet(struct letter *let, FILE *tofp)
 {
     off_t current, limit;
     int c;
@@ -699,8 +689,7 @@ void printlet(let, tofp)
     }
 }
 
-void doshell(command)
-    char *command;
+void doshell(char *command)
 {
     int waitstat, pid;
     char *shell;
@@ -731,8 +720,7 @@ void usage()
     fprintf(stderr, "       mail [-dtv] [-s subject] user [...]\n");
 }
 
-char *basename(name)
-    char *name;
+char *basename(char *name)
 {
     char *p;
 
@@ -768,8 +756,7 @@ void dohelp()
     fclose(fp);
 }
 
-int filesize(name)
-    char *name ;
+int filesize(char *name)
 {
     struct stat buf;
 
