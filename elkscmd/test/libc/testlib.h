@@ -28,6 +28,7 @@ void testlib_setErrno(int e);
 const char* testlib_strerror();
 
 int testlib_strequals(const void *s1, const void *s2);
+int testlib_strnequals(const void *s1, const void *s2, int n);
 
 struct timeval;
 int testlib_tvEq(struct timeval *a, struct timeval *b);
@@ -104,7 +105,7 @@ void testlib_abort(const char *fmt, ...);
 #define ASSERT_STRNE(GOT, NOPE) \
     testStringNotEquals(FILIFU GOT, NOPE, #GOT, 1)
 #define ASSERT_STREQN(GOT, WANT, N) \
-    assertStrnEquals(FILIFU GOT, WANT, N, #GOT, 1)
+    testStrNEquals(FILIFU GOT, WANT, N, #GOT, 1)
 #define ASSERT_STRNEN(GOT, NOPE, N) \
     assertStrnNotEquals(FILIFU GOT, NOPE,  N, #GOT, 1)
 #define ASSERT_STRCASEEQ(GOT, WANT) \
@@ -149,7 +150,7 @@ void testlib_abort(const char *fmt, ...);
 #define EXPECT_STRNE(GOT, NOPE) \
     testStringNotEquals(FILIFU GOT, NOPE, #GOT, 0)
 #define EXPECT_STREQN(GOT, WANT, N) \
-    assertStrnEquals(FILIFU GOT, WANT, N, #GOT, 0)
+    testStrNEquals(FILIFU GOT, WANT, N, #GOT, 0)
 #define EXPECT_STRNEN(GOT, NOPE, N) \
     assertStrnNotEquals(FILIFU GOT, NOPE,  N, #GOT, 0)
 #define EXPECT_STRCASEEQ(GOT, WANT) \
@@ -203,6 +204,17 @@ static inline void testStringNotEquals(FILIFU_ARGS const void *got,
         return;
     testlib_showError(file, line, func, "cstring inequality", gotExpr, got,
             SYM_NE, nope);
+    testlib_onFail(isfatal);
+}
+
+static inline void testStrNEquals(FILIFU_ARGS const void *got,
+    const void *want, int n, const char *gotExpr, int isfatal)
+{
+    ++testlib_assertions;
+    if (testlib_strnequals(got, want, n))
+        return;
+    testlib_showError(file, line, func, "cstring equality", gotExpr, got,
+        SYM_EQ, want);
     testlib_onFail(isfatal);
 }
 

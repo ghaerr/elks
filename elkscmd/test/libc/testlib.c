@@ -49,6 +49,15 @@ int testlib_strequals(const void *s1, const void *s2)
 	return strcmp(s1, s2) == 0;
 }
 
+int testlib_strnequals(const void *s1, const void *s2, int n)
+{
+    if (s1 == s2)
+        return 1;
+    if (!s1 || !s2)
+        return 0;
+    return strncmp(s1, s2, n) == 0;
+}
+
 int testlib_tvEq(struct timeval *a, struct timeval *b)
 {
 	if (a->tv_sec == b->tv_sec && a->tv_usec == b->tv_usec)
