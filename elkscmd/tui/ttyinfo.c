@@ -100,7 +100,7 @@ void onkilled(int sig) {
 
 void getsize(void) {
   if (getttysize(1, &wsize) != -1) {
-    printf("termios says terminal size is %hu×%hu\r\n", wsize.ws_col,
+    printf("termios says terminal size is %hux%hu\r\n", wsize.ws_col,
            wsize.ws_row);
   } else {
     printf("gettysize/ioctl TIOCGWINSZ fail\r\n");
@@ -176,7 +176,7 @@ again:
 #endif
     }
     if (ansi_dsr(code, n, &yn, &xn) > 0) {
-        printf("inband signalling says terminal size is %d×%d\r\n", xn, yn);
+        printf("inband signalling says terminal size is %dx%d\r\n", xn, yn);
     } else {
         n = ansi_to_unimouse(code, n, &x, &y, &k, &e);
         if (n != -1) {
