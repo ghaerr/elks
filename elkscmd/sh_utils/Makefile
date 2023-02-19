@@ -30,6 +30,7 @@ date: date.o
 dirname: dirname.o
 	$(LD) $(LDFLAGS) -o dirname dirname.o $(LDLIBS)
 
+#echo: LDFLAGS += -maout-symtab
 echo: echo.o
 	$(LD) $(LDFLAGS) -o echo echo.o $(LDLIBS)
 

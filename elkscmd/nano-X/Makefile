@@ -6,7 +6,7 @@
 BASEDIR = ..
 include $(BASEDIR)/Make.defs
 
-LOCALFLAGS = -DELKS=1 -DUNIX=1 -DDEBUG=1 -Dconst= -Dvolatile= -I.
+LOCALFLAGS = -DELKS=1 -DUNIX=1 -DDEBUG=1 -I.
 MATHLIB =
 
 # nano-X demo programs
@@ -14,6 +14,8 @@ NANOXDEMOS = bin/nxlandmine
 NANOXDEMOS += bin/nxworld
 NANOXDEMOS += bin/nxclock
 NANOXDEMOS += bin/nxterm			# enable pseudo ttys in ELKS
+NANOXDEMOS += bin/nxtest
+NANOXDEMOS += bin/nxtetris
 NANOXDEMOS += bin/nxdemo
 #NANOXDEMOS += bin/nxdemo2
 #NANOXDEMOS += bin/nxvgatest		# low-level vga routines test
@@ -82,23 +84,29 @@ libnano-X.a: $(CLNTFILES)
 
 salibs: $(SERVFILES) $(NANOXFILES)
 
-bin/nxlandmine: demos/landmine.o
+bin/nxlandmine: demos/landmine.o $(NANOXFILES) $(SERVFILES)
 	$(LD) $(LDFLAGS) $(NANOXFILES) demos/landmine.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nxlandmine $(MATHLIB) $(LDLIBS)
 
-bin/nxworld: demos/world.o
+bin/nxworld: demos/world.o $(NANOXFILES) $(SERVFILES)
 	$(LD) $(LDFLAGS) $(NANOXFILES) demos/world.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nxworld $(MATHLIB) $(LDLIBS)
 	cp demos/nxworld.map bin/nxworld.map
 
-bin/nxclock: demos/nclock.o
+bin/nxclock: demos/nclock.o $(NANOXFILES) $(SERVFILES)
 	$(LD) $(LDFLAGS) $(NANOXFILES) demos/nclock.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nxclock $(MATHLIB) $(LDLIBS)
 
-bin/nxterm: demos/nterm.o
+bin/nxterm: demos/nterm.o $(NANOXFILES) $(SERVFILES)
 	$(LD) $(LDFLAGS) $(NANOXFILES) demos/nterm.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nxterm $(MATHLIB) $(LDLIBS)
 
-bin/nxdemo: demos/demo.o
+bin/nxtetris: demos/ntetris.o $(NANOXFILES) $(SERVFILES)
+	$(LD) $(LDFLAGS) -maout-heap=0xffff $(NANOXFILES) demos/ntetris.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nxtetris $(MATHLIB) $(LDLIBS)
+
+bin/nxtest: demos/nxtest.o $(NANOXFILES) $(SERVFILES)
+	$(LD) $(LDFLAGS) $(NANOXFILES) demos/nxtest.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nxtest $(MATHLIB) $(LDLIBS)
+
+bin/nxdemo: demos/demo.o $(NANOXFILES) $(SERVFILES)
 	$(LD) $(LDFLAGS) $(NANOXFILES) demos/demo.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nxdemo $(MATHLIB) $(LDLIBS)
 
-bin/nxdemo2: demos/demo2.o
+bin/nxdemo2: demos/demo2.o $(NANOXFILES) $(SERVFILES)
 	$(LD) $(LDFLAGS) $(NANOXFILES) demos/demo2.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nxdemo2 $(MATHLIB) $(LDLIBS)
 
 bin/nxvgatest: demos/demo-vga.o

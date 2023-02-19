@@ -105,8 +105,14 @@ int GrRegisterInput(int fd)
  */
 int GrGetNextEvent(GR_EVENT *ep)
 {
-	GsGetNextEvent(ep);
+	GsCheckNextEvent(ep, GR_TIMEOUT_BLOCK);
 	return 0;
+}
+
+int GrGetNextEventTimeout(GR_EVENT *ep, GR_TIMEOUT timeout)
+{
+    GsCheckNextEvent(ep, timeout);
+    return 0;
 }
 
 /*
@@ -117,7 +123,7 @@ int GrGetNextEvent(GR_EVENT *ep)
  */
 int GrCheckNextEvent(GR_EVENT *ep)
 {
-	GsCheckNextEvent(ep);
+	GsCheckNextEvent(ep, GR_TIMEOUT_POLL);
 	return 0;
 }
 
