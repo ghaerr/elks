@@ -54,7 +54,7 @@ GdOpenMouse(void)
 {
 	int fd;
 
-	if ((fd = mousedev.Open(&mousedev)) == 1) /* -2 is mou_nul.c */
+	if ((fd = mousedev.Open(&mousedev)) == -1) /* -2 is mou_nul.c */
 		return -1;
 
 	/* get default acceleration settings*/

@@ -77,41 +77,43 @@ void GsGetGCTextSize(GR_GC_ID gc, GR_CHAR *cp, GR_SIZE len, GR_SIZE *retwidth,
 		*retwidth += fip->widths[*cp++];
 }
 
-#if NONETWORK
+#if 0 // was NONETWORK, now not needed
 /*
  * Return the next waiting event for a client, or wait for one if there
  * is none yet.  The event is copied into the specified structure, and
- * then is moved from the event queue to the free event queue.  If there
- * is an error event waiting, it is delivered before any other events.
+ * then is moved from the event queue to the free event queue.
  */
-void GsGetNextEvent(GR_EVENT *ep)
+void GsGetNextEvent(GR_EVENT *ep, GR_TIMEOUT timeout)
 {
 	/* If no event ready, wait for one*/
 	/* Note: won't work for multiple clients*/
 	/* This is OK, since only static linked apps call this function*/
 	while(curclient->eventhead == NULL)
-		GsSelect();
-	GsCheckNextEvent(ep);
+		GsSelect(timeout);
+	GsCheckNextEvent(ep, timeout);
 }
+
 #endif
 
 /*
  * Return the next event from the event queue if one is ready.
- * If one is not ready, then the type GR_EVENT_TYPE_NONE is returned.
- * If it is an error event, then a user-specified routine is called
- * if it was defined, otherwise we clean up and exit.
+ * If timeout is GR_TIMEOUT_BLOCK, wait until one is ready.
+ * The event is copied into the specified structure, and
+ * then is moved from the event queue to the free event queue.
  */
-void GsCheckNextEvent(GR_EVENT *ep)
+void GsCheckNextEvent(GR_EVENT *ep, GR_TIMEOUT timeout)
 {
 	GR_EVENT_LIST *	elp;
 
 #if NONETWORK
-	/* Since we're bound to server, select() is only called 
-	 * thru here
-	 */
-	GsSelect();
+	/* Since we're bound to server, select() is only called thru here */
+	while (curclient->eventhead == NULL) {
+	    GsSelect(timeout);
+	    if (timeout)    /* only once for polling or timeout */
+		break;
+	}
 #endif
-	/* Copy first event if any*/
+	/* Copy first event if any - no event will return NONE*/
 	if(!GsPeekEvent(ep))
 		return;
 
@@ -130,7 +132,7 @@ void GsCheckNextEvent(GR_EVENT *ep)
 /*
  * Peek at the event queue for the current client to see if there are any
  * outstanding events.  Returns the event at the head of the queue, or
- * else a null event type.  The event is still left in the queue, however.
+ * else GR_EVENT_TYPE_NONE.  Any event is still left in the queue, however.
  */
 int GsPeekEvent(GR_EVENT *ep)
 {

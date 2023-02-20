@@ -67,7 +67,7 @@ main(int argc, char *argv[])
 		exit(1);
 
 	while(1)
-		GsSelect();
+		GsSelect(GR_TIMEOUT_BLOCK);
 	return 0;
 }
 #endif
@@ -151,7 +151,7 @@ GsRegisterInput(int fd)
 
 #if MSDOS
 void
-GsSelect(void)
+GsSelect(GR_TIMEOUT timeout)
 {
 	/* If mouse data present, service it*/
 	if(mousedev.Poll())
@@ -166,7 +166,7 @@ GsSelect(void)
 
 #if UNIX
 void
-GsSelect(void)
+GsSelect(GR_TIMEOUT timeout)
 {
 	fd_set	rfds;
 	int 	e;
@@ -175,7 +175,7 @@ GsSelect(void)
 
 	/* Set up the FDs for use in the main select(): */
 	FD_ZERO(&rfds);
-	FD_SET(mouse_fd, &rfds);
+	if (mouse_fd >= 0) FD_SET(mouse_fd, &rfds);
 	FD_SET(keyb_fd, &rfds);
 	if (mouse_fd > setsize) setsize = mouse_fd;
 	if (keyb_fd > setsize) setsize = keyb_fd;
@@ -203,15 +203,20 @@ GsSelect(void)
 #endif
 	++setsize;
 
-	/* Set up the timeout for the main select(): */
-	to.tv_sec = 0L;
-	to.tv_usec = 100L;
+    /* convert wait timeout to timeval struct*/
+    if (timeout == GR_TIMEOUT_POLL) {
+        to.tv_sec = 0;
+        to.tv_usec = 0;
+    } else {
+        to.tv_sec = timeout / 1000;
+        to.tv_usec = (timeout % 1000) * 1000;
+    }
 
 	/* Wait for some input on any of the fds in the set or a timeout: */
-	if((e = select(setsize, &rfds, NULL, NULL, &to)) > 0) {
+	if((e = select(setsize, &rfds, NULL, NULL, timeout == 0? NULL: &to)) >= 0) {
 		
 		/* If data is present on the mouse fd, service it: */
-		if(FD_ISSET(mouse_fd, &rfds))
+		if(mouse_fd >= 0 && FD_ISSET(mouse_fd, &rfds))
 			GsCheckMouseEvent();
 
 		/* If data is present on the keyboard fd, service it: */
@@ -243,12 +248,15 @@ GsSelect(void)
 #endif
 
 	} 
+#if 0
 	else if(!e) {
 #if FRAMEBUFFER | BOGL
 		if(fb_CheckVtChange())
 			GsRedrawScreen();
 #endif
-	} else
+	}
+#endif
+    else
 		if(errno != EINTR)
 			perror("Select() call in main failed");
 }
@@ -364,7 +372,7 @@ GsInitialize(void)
 	fb_InitVt();
 #endif
 	scrdev.FillRect(&scrdev, 0, 0, sinfo.cols-1, sinfo.rows-1,
-		GdFindColor(BLUE));
+		GdFindColor(BLACK));
 
 	/*
 	 * Finally tell the mouse driver some things.

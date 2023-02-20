@@ -133,7 +133,7 @@ struct gr_pixmap {
  * Graphics server routines.
  */
 int		GsInitialize(void);
-void		GsSelect(void);
+void		GsSelect(GR_TIMEOUT timeout);
 void		GsTerminate(void);
 int		GsOpen(void);
 void		GsRedrawScreen(void);
@@ -198,8 +198,8 @@ void		GsResizeWindow(GR_WINDOW_ID wid, GR_SIZE width, GR_SIZE height);
 void		GsSetFocus(GR_WINDOW_ID wid);
 void		GsSetBorderColor(GR_WINDOW_ID wid, GR_COLOR color);
 void		GsRegisterInput(int fd);
-void		GsGetNextEvent(GR_EVENT *ep);
-void		GsCheckNextEvent(GR_EVENT *ep);
+void		GsGetNextEvent(GR_EVENT *ep, GR_TIMEOUT timeout);
+void		GsCheckNextEvent(GR_EVENT *ep, GR_TIMEOUT timeout);
 int		GsPeekEvent(GR_EVENT *ep);
 void		GsCheckMouseEvent(void);
 void		GsCheckKeyboardEvent(void);
