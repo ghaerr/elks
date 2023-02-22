@@ -16,6 +16,7 @@ PRGS = banner decomp16 fgrep grep proto sum uniq wc cksum cut du
 
 all: $(PRGS)
 
+#banner: LDFLAGS += -maout-symtab
 banner: banner.o
 	$(LD) $(LDFLAGS) -o banner banner.o $(LDLIBS)
 
