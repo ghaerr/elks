@@ -381,6 +381,8 @@ GsInitialize(void)
 	/*GdSetAccelMouse(5, 3);*/
 	GdRestrictMouse(0, 0, sinfo.cols - 1, sinfo.rows - 1);
 	GdMoveMouse(sinfo.cols / 2, sinfo.rows / 2);
+	if (mouse_fd == -2)
+	    GdHideCursor();
 	GsFlush();
 
 	/*
