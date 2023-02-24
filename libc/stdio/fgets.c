@@ -7,6 +7,8 @@ fgets(char *s, size_t count, FILE *f)
     register size_t i;
     register int ch;
 
+    if (count == 0)
+        return 0;
     ret = s;
     for (i = count-1; i > 0; i--) {
         ch = getc(f);
