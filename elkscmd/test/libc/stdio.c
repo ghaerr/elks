@@ -5,6 +5,8 @@
 #include <string.h>
 #include <sys/time.h>
 
+#define CANARY_BYTE 0x55
+
 TEST_CASE(stdio_init)
 {
     char sector[512];
@@ -45,7 +47,8 @@ TEST_CASE(stdio_init)
     fclose(fp);
 }
 
-TEST_CASE(stdio_seek) {
+TEST_CASE(stdio_seek)
+{
     char wbuf[256];
     char rbuf[256];
     size_t n;
@@ -104,6 +107,57 @@ TEST_CASE(stdio_seek) {
     ASSERT_EQ(memcmp(rbuf, wbuf, sizeof(rbuf)), 0);
     n = ftell(fp);
     ASSERT_EQ(n, sizeof(rbuf));
+
+    fclose(fp);
+}
+
+TEST_CASE(stdio_fgets_boundary)
+{
+    const char data[] = "ABC";
+    char buf[4];
+    FILE* fp;
+    char* p;
+
+    fp = fopen("/tmp/test-libc.txt", "w+");
+    fwrite(data, 3, 1, fp);
+    rewind(fp);
+
+    /* size <= 0 is a domain error; returns NULL */
+    buf[0] = CANARY_BYTE;
+    p = fgets(buf, 0, fp);
+    ASSERT_EQ(p, NULL);
+    ASSERT_FALSE(feof(fp));
+    ASSERT_EQ(buf[0], CANARY_BYTE);
+
+    /* no room for data, only terminator */
+    buf[1] = CANARY_BYTE;
+    p = fgets(buf, 1, fp);
+    ASSERT_EQ(p, buf);
+    ASSERT_EQ(buf[0], 0);
+    ASSERT_EQ(buf[1], CANARY_BYTE);
+
+    /* first data byte + terminator */
+    buf[2] = CANARY_BYTE;
+    p = fgets(buf, 2, fp);
+    ASSERT_EQ(p, buf);
+    ASSERT_EQ(buf[0], data[0]);
+    ASSERT_EQ(buf[1], 0);
+    ASSERT_EQ(buf[2], CANARY_BYTE);
+
+    /* 2 remaining bytes + terminator */
+    p = fgets(buf, 4, fp);
+    ASSERT_EQ(p, buf);
+    ASSERT_TRUE(feof(fp));
+    ASSERT_EQ(buf[0], data[1]);
+    ASSERT_EQ(buf[1], data[2]);
+    ASSERT_EQ(buf[2], 0);
+
+    /* EOF after no data */
+    buf[0] = CANARY_BYTE;
+    p = fgets(buf, 4, fp);
+    ASSERT_EQ(p, NULL);
+    ASSERT_TRUE(feof(fp));
+    ASSERT_EQ(buf[0], CANARY_BYTE);
 
     fclose(fp);
 }

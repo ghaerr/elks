@@ -743,16 +743,19 @@ void new_game(nstate *state)
 
 void init_game(nstate *state)
 {
+	GR_SCREEN_INFO si;
 	//GR_WM_PROPERTIES props;
-	GR_COORD x = MAIN_WINDOW_X_POSITION;
 
 	if(GrOpen() < 0) {
 		printf("Can't open graphics\n");
 		exit(1);
 	}
 
-	state->main_window = GrNewWindow(GR_ROOT_WINDOW_ID, x,
-					MAIN_WINDOW_Y_POSITION,
+	GrGetScreenInfo(&si);
+	GrMoveCursor(si.cols - 16, 0);
+	state->main_window = GrNewWindow(GR_ROOT_WINDOW_ID,
+					(si.cols - MAIN_WINDOW_WIDTH) / 2,
+					(si.rows - MAIN_WINDOW_HEIGHT) / 2,
 					MAIN_WINDOW_WIDTH,
 					MAIN_WINDOW_HEIGHT, 0,
 					MAIN_WINDOW_BACKGROUND_COLOUR, 0);
