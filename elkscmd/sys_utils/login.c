@@ -103,20 +103,21 @@ int main(int argc, char **argv)
     struct passwd *pwd;
     struct utmp *entryp = NULL;
     char lbuf[64], *pbuf, salt[3];
-    char *p;
 
     signal(SIGTSTP, SIG_IGN);		/* ignore ^Z stop signal*/
     for (;;) {
         if (argc == 1) {
+            ssize_t n;
             write(STDOUT_FILENO, "login: ", 7);
             errno = 0;
-            if (read(STDIN_FILENO, lbuf, sizeof(lbuf)) < 1) {
+            if ((n = read(STDIN_FILENO, lbuf, sizeof(lbuf) - 1)) < 1) {
                 if (errno == EINTR)
                     continue;
                 exit(1);
             }
-            p = strchr(lbuf, '\n');
-            if (p) *p = '\0';
+            if (lbuf[n - 1] == '\n')
+                n--;
+            lbuf[n] = '\0';
         } else {
             strncpy(lbuf, argv[1], UT_NAMESIZE);
             lbuf[UT_NAMESIZE - 1] = '\0';
