@@ -84,8 +84,10 @@ void login(register struct passwd *pwd, struct utmp *ut_ent)
     *sh_name = '-';
     strncpy(sh_name + 1,pwd->pw_shell, STR_SIZE - 1);
 
-    if (chdir(pwd->pw_dir) < 0)
+    if (chdir(pwd->pw_dir) < 0) {
         write(STDOUT_FILENO, "No home directory. Starting in /\n", 33);
+        chdir("/");
+    }
 
     environ = renv;
     execl(pwd->pw_shell, sh_name, (char*)0);
