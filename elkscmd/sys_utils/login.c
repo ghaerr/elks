@@ -33,138 +33,135 @@
 #define PATHLEN 256
 #define STR_SIZE (PATHLEN + 7)
 
-void login(register struct passwd * pwd, struct utmp * ut_ent)
+void login(register struct passwd *pwd, struct utmp *ut_ent)
 {
-	int envno = 0;
-	char **newenv;
-	char user_env[STR_SIZE];
-	char shell_env[STR_SIZE];
-	char home_env[STR_SIZE];
-	char sh_name[STR_SIZE];
-	char *renv[16];
+    int envno = 0;
+    char **newenv;
+    char user_env[STR_SIZE];
+    char shell_env[STR_SIZE];
+    char home_env[STR_SIZE];
+    char sh_name[STR_SIZE];
+    char *renv[16];
 
-	if (fchown(0,pwd->pw_uid,pwd->pw_gid)<0) perror("login (chown)");
+    if (fchown(0, pwd->pw_uid, pwd->pw_gid) < 0) perror("login (chown)");
 #ifdef USE_UTMP
-	ut_ent->ut_type = USER_PROCESS;
-	strncpy(ut_ent->ut_user, pwd->pw_name, UT_NAMESIZE);
-	ut_ent->ut_user[UT_NAMESIZE-1] = '\0';
-	time(&ut_ent->ut_time);
-	pututline(ut_ent);
-	endutent();
+    ut_ent->ut_type = USER_PROCESS;
+    strncpy(ut_ent->ut_user, pwd->pw_name, UT_NAMESIZE);
+    ut_ent->ut_user[UT_NAMESIZE - 1] = '\0';
+    time(&ut_ent->ut_time);
+    pututline(ut_ent);
+    endutent();
 #endif
-	if (setgid(pwd->pw_gid)<0)
-	{
-		write(STDOUT_FILENO, "setgid failed\n", 14);
-		exit(1);
-	}
-	if (setuid(pwd->pw_uid)<0)
-	{
-		write(STDOUT_FILENO, "setuid failed\n", 14);
-		exit(1);
-	}
+    if (setgid(pwd->pw_gid) < 0) {
+        write(STDOUT_FILENO, "setgid failed\n", 14);
+        exit(1);
+    }
+    if (setuid(pwd->pw_uid) < 0) {
+        write(STDOUT_FILENO, "setuid failed\n", 14);
+        exit(1);
+    }
 
-	/* copy capitalized /bootopts env vars to login environment */
-	newenv = renv;
-	while (*environ) {
-		if (*environ[0] >= 'A' && *environ[0] <= 'Z')
-			newenv[envno++] = *environ;
-		environ++;
-	}
+    /* copy capitalized /bootopts env vars to login environment */
+    newenv = renv;
+    while (*environ) {
+        if (*environ[0] >= 'A' && *environ[0] <= 'Z')
+            newenv[envno++] = *environ;
+        environ++;
+    }
 
-	strcpy(user_env,"USER=");
-	strncpy(user_env+5,pwd->pw_name, STR_SIZE - 6);
-	newenv[envno++] = user_env;
+    strcpy(user_env,"USER=");
+    strncpy(user_env + 5,pwd->pw_name, STR_SIZE - 6);
+    newenv[envno++] = user_env;
 
-	strcpy(home_env,"HOME=");
-	strncpy(home_env+5,pwd->pw_dir, STR_SIZE - 6);
-	newenv[envno++] = home_env;
+    strcpy(home_env,"HOME=");
+    strncpy(home_env + 5,pwd->pw_dir, STR_SIZE - 6);
+    newenv[envno++] = home_env;
 
-	strcpy(shell_env,"SHELL=");
-	strncpy(shell_env+6,pwd->pw_shell, STR_SIZE - 7);
-	newenv[envno++] = shell_env;
-	newenv[envno++] = "TERM=ansi";
-	newenv[envno] = NULL;
+    strcpy(shell_env,"SHELL=");
+    strncpy(shell_env + 6,pwd->pw_shell, STR_SIZE - 7);
+    newenv[envno++] = shell_env;
+    newenv[envno++] = "TERM=ansi";
+    newenv[envno] = NULL;
 
-	*sh_name = '-';
-	strncpy(sh_name+1,pwd->pw_shell, STR_SIZE - 1);
+    *sh_name = '-';
+    strncpy(sh_name + 1,pwd->pw_shell, STR_SIZE - 1);
 
-	if (chdir(pwd->pw_dir)<0)
-		write(STDOUT_FILENO, "No home directory. Starting in /\n", 33);
+    if (chdir(pwd->pw_dir) < 0)
+        write(STDOUT_FILENO, "No home directory. Starting in /\n", 33);
 
-	environ = renv;
-	execl(pwd->pw_shell,sh_name,(char*)0);
+    environ = renv;
+    execl(pwd->pw_shell, sh_name, (char*)0);
 
-	write(STDOUT_FILENO, "No shell (errno ", 16);
-	write(STDOUT_FILENO, itoa(errno), 2);
-	write(STDOUT_FILENO, ")\n", 2);
-	exit(1);
+    write(STDOUT_FILENO, "No shell (errno ", 16);
+    write(STDOUT_FILENO, itoa(errno), 2);
+    write(STDOUT_FILENO, ")\n", 2);
+    exit(1);
 }
 
-int main(int argc, char ** argv)
+int main(int argc, char **argv)
 {
-	struct passwd *pwd;
-	struct utmp *entryp = NULL;
-	char lbuf[64], *pbuf, salt[3];
-	char *p;
+    struct passwd *pwd;
+    struct utmp *entryp = NULL;
+    char lbuf[64], *pbuf, salt[3];
+    char *p;
 
-
-	signal(SIGTSTP, SIG_IGN);		/* ignore ^Z stop signal*/
-	for (;;) {
-		if (argc == 1) {
-			write(STDOUT_FILENO,"login: ",7);
-			errno = 0;
-			if (read(STDIN_FILENO, lbuf, sizeof(lbuf)) < 1) {
-				if (errno == EINTR)
-					continue;
-				exit(1);
-			}
-			p=strchr(lbuf,'\n');
-			if (p) *p='\0';
-		} else {
-			strncpy(lbuf, argv[1], UT_NAMESIZE);
-			lbuf[UT_NAMESIZE - 1] = '\0';
-			argc = 1;
-		}
-		pwd = getpwnam(lbuf);
+    signal(SIGTSTP, SIG_IGN);		/* ignore ^Z stop signal*/
+    for (;;) {
+        if (argc == 1) {
+            write(STDOUT_FILENO, "login: ", 7);
+            errno = 0;
+            if (read(STDIN_FILENO, lbuf, sizeof(lbuf)) < 1) {
+                if (errno == EINTR)
+                    continue;
+                exit(1);
+            }
+            p = strchr(lbuf, '\n');
+            if (p) *p = '\0';
+        } else {
+            strncpy(lbuf, argv[1], UT_NAMESIZE);
+            lbuf[UT_NAMESIZE - 1] = '\0';
+            argc = 1;
+        }
+        pwd = getpwnam(lbuf);
 #ifdef USE_UTMP
-		struct utmp entry;
-		struct utmp newentry;
-		char *tty_name;
+        struct utmp entry;
+        struct utmp newentry;
+        char *tty_name;
 
-		if ((tty_name = ttyname(0)) == NULL) {
-			goto not_tty;
-		}
-		entry.ut_type = INIT_PROCESS;
-		entry.ut_id[0] = *(tty_name + 8);
-		entry.ut_id[1] = *(tty_name + 9);
-		if ((entryp = getutid(&entry)) == NULL) {
-			write(STDERR_FILENO, "utmp file corrupt\n", 18);
-			endutent();
-			exit(1);
-		}
-		newentry = *entryp;
-		entryp = &newentry;
-		entryp->ut_type = LOGIN_PROCESS;
-		strncpy(entryp->ut_user, lbuf, UT_NAMESIZE);
-		entryp->ut_user[UT_NAMESIZE-1] = '\0';
-		time(&entryp->ut_time);
-		pututline(entryp);
-		endutent();
+        if ((tty_name = ttyname(0)) == NULL) {
+            goto not_tty;
+        }
+        entry.ut_type = INIT_PROCESS;
+        entry.ut_id[0] = *(tty_name + 8);
+        entry.ut_id[1] = *(tty_name + 9);
+        if ((entryp = getutid(&entry)) == NULL) {
+            write(STDERR_FILENO, "utmp file corrupt\n", 18);
+            endutent();
+            exit(1);
+        }
+        newentry = *entryp;
+        entryp = &newentry;
+        entryp->ut_type = LOGIN_PROCESS;
+        strncpy(entryp->ut_user, lbuf, UT_NAMESIZE);
+        entryp->ut_user[UT_NAMESIZE - 1] = '\0';
+        time(&entryp->ut_time);
+        pututline(entryp);
+        endutent();
 not_tty:
 #endif
-		if ((pwd != NULL) && (pwd->pw_passwd[0] == 0)) {
-			login(pwd, entryp);
-		}
-		pbuf = getpass("Password:");
-		write(STDOUT_FILENO, "\n", 1);
-		if (pwd != NULL) {
-			salt[0]=pwd->pw_passwd[0];
-			salt[1]=pwd->pw_passwd[1];
-			salt[2]=0;
-			if (!strcmp(crypt(pbuf,salt),pwd->pw_passwd)) {
-				login(pwd, entryp);
-			}
-		}
-		write(STDOUT_FILENO,"Login incorrect\n\n",17);
-	}
+        if ((pwd != NULL) && (pwd->pw_passwd[0] == 0)) {
+            login(pwd, entryp);
+        }
+        pbuf = getpass("Password:");
+        write(STDOUT_FILENO, "\n", 1);
+        if (pwd != NULL) {
+            salt[0] = pwd->pw_passwd[0];
+            salt[1] = pwd->pw_passwd[1];
+            salt[2] = 0;
+            if (!strcmp(crypt(pbuf, salt), pwd->pw_passwd)) {
+                login(pwd, entryp);
+            }
+        }
+        write(STDOUT_FILENO, "Login incorrect\n\n", 17);
+    }
 }

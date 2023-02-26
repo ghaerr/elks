@@ -39,20 +39,20 @@ char *getpass(char *prompt)
 #ifdef WORKING_TERMINAL
     if (isatty(in_fd)) {
         if (tcgetattr(in_fd, &old) == 0) {
-	    new = old;
-	    new.c_lflag &= ~(ISIG|ECHO);
-	    if (tcsetattr(in_fd, TCSAFLUSH, &new) == 0) {
-	        reset_terminal = 1;
-	    }
-	}
+            new = old;
+            new.c_lflag &= ~(ISIG|ECHO);
+            if (tcsetattr(in_fd, TCSAFLUSH, &new) == 0) {
+                reset_terminal = 1;
+            }
+        }
     }
 #else
     if (ioctl(in_fd, TCGETA, &old) == 0) {
         new = old;
-	new.c_lflag &= ~(ISIG|ECHO);
-	if (ioctl(in_fd, TCSETA, &new) == 0) {
-	    reset_terminal = 1;
-	}
+        new.c_lflag &= ~(ISIG|ECHO);
+        if (ioctl(in_fd, TCSETA, &new) == 0) {
+            reset_terminal = 1;
+        }
     }
 #endif /* WORKING_TERMINAL */
 
@@ -63,8 +63,8 @@ char *getpass(char *prompt)
     if (fgets(result, sizeof(result)-1, in) == NULL) {
         result[0] = 0;
     } else {
-	char * p = strchr(result, '\n');
-	if (p) *p = '\0';
+        char * p = strchr(result, '\n');
+        if (p) *p = '\0';
     }
 
     /* reset our terminal, if necessary */
@@ -72,12 +72,12 @@ char *getpass(char *prompt)
 #ifdef WORKING_TERMINAL
         tcsetattr(in_fd, TCSAFLUSH, &old);
 #else
-	ioctl(in_fd, TCSETA, &old);
+        ioctl(in_fd, TCSETA, &old);
 #endif
     }
 
     if (in != stdin)
-	fclose(in);
+        fclose(in);
 
     /* return a pointer to our result string */
     return result;
