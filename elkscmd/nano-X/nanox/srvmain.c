@@ -173,6 +173,13 @@ GsSelect(GR_TIMEOUT timeout)
 	int	setsize = 0;
 	struct timeval to;
 
+#if CONFIG_ARCH_PC98
+	if (mousedev.Poll()) {
+		GsCheckMouseEvent();
+		return;
+	}
+#endif
+
 	/* Set up the FDs for use in the main select(): */
 	FD_ZERO(&rfds);
 	if (mouse_fd >= 0) FD_SET(mouse_fd, &rfds);

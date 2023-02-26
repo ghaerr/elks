@@ -31,8 +31,6 @@ extern void outportb(int port,unsigned char data);
 /* local data*/
 static BUTTON       buttons;    /* current mouse buttons pressed*/
 static BUTTON       availbuttons;   /* which buttons are available */
-static COORD        x_before = 0;
-static COORD        y_before = 0;
 
 static int      left;       /* because the button values change */
 static int      right;      /* between mice, the buttons are redefined */
@@ -41,8 +39,9 @@ static int      right;      /* between mice, the buttons are redefined */
 static int      MOU_Open(MOUSEDEVICE *pmd);
 static void     MOU_Close(void);
 static BUTTON   MOU_GetButtonInfo(void);
-static void MOU_GetDefaultAccel(int *pscale,int *pthresh);
+static void     MOU_GetDefaultAccel(int *pscale,int *pthresh);
 static int      MOU_Read(COORD *dx, COORD *dy, COORD *dz, BUTTON *bptr);
+static int      MOU_Poll(void);
 
 MOUSEDEVICE mousedev = {
     MOU_Open,
@@ -50,7 +49,7 @@ MOUSEDEVICE mousedev = {
     MOU_GetButtonInfo,
     MOU_GetDefaultAccel,
     MOU_Read,
-    NULL
+    MOU_Poll
 };
 
 /*
@@ -80,7 +79,7 @@ MOU_Open(MOUSEDEVICE *pmd)
     availbuttons = left | right;
     buttons = 0;
 
-    return 0;
+    return -3;
 }
 
 /*
@@ -124,10 +123,9 @@ MOU_Read(COORD *dx, COORD *dy, COORD *dz, BUTTON *bptr)
     COORD y_now;
 
     /*
-     * If the X, Y values are smaller than the values read before,
+     * If the X, Y values are greater than 127,
      * then the delta would be negative.
-     * If the delta are greater than 127,
-     * then we assume the counter rolled backward.
+     * The counter is cleared every time.
      */
     outportb(0x7FDD, 0x80); // X LSB 4bits
     x_now = inportb(0x7FD9) & 0xF;
@@ -138,21 +136,18 @@ MOU_Read(COORD *dx, COORD *dy, COORD *dz, BUTTON *bptr)
     outportb(0x7FDD, 0xE0); // Y MSB 4bits
     y_now += (inportb(0x7FD9) & 0xF) << 4;
     buttons = inportb(0x7FD9) & 0xE0;
-
-    if (x_now - x_before > 127)
-        *dx = x_now - x_before - 256;
-    else
-        *dx = x_now - x_before;
     
-    if (y_now - y_before > 127)
-        *dy = y_now - y_before - 256;
+    if (x_now > 127)
+        *dx = x_now - 256;
     else
-        *dy = y_now - y_before;
+        *dx = x_now;
+
+    if (y_now > 127)
+        *dy = y_now - 256;
+    else
+        *dy = y_now;
 
     *dz = 0;
-
-    x_before = x_now;
-    y_before = y_now;
 
     b = 0;
     if(buttons & left)
@@ -161,7 +156,13 @@ MOU_Read(COORD *dx, COORD *dy, COORD *dz, BUTTON *bptr)
         b |= RBUTTON;
     *bptr = b;
 
-    outportb(0x7FDD, 0x00); // Clear HS
+    outportb(0x7FDD, 0x00); // Clear HC
 
+    return 1;
+}
+
+static int
+MOU_Poll(void)
+{
     return 1;
 }
