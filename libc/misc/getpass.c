@@ -60,7 +60,7 @@ char *getpass(char *prompt)
     fputs(prompt, stderr);
 
     /* read the input */
-    if (fgets(result, sizeof(result)-1, in) == NULL) {
+    if (fgets(result, sizeof(result), in) == NULL) {
         result[0] = 0;
     } else {
         char * p = strchr(result, '\n');
