@@ -155,7 +155,8 @@ not_tty:
         }
         pbuf = getpass("Password:");
         write(STDOUT_FILENO, "\n", 1);
-        if (pwd != NULL) {
+        /* Must have 2 bytes of salt, else is locked */
+        if (pwd != NULL && pwd->pw_passwd[1] != 0) {
             salt[0] = pwd->pw_passwd[0];
             salt[1] = pwd->pw_passwd[1];
             salt[2] = 0;
