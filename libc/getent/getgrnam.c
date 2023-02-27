@@ -41,11 +41,10 @@ getgrnam(const char *name)
 
     while ((group = __getgrent(grp_fd)) != NULL) {
         if (!strcmp(group->gr_name, name)) {
-            close(grp_fd);
-            return group;
+            break;
         }
     }
 
     close(grp_fd);
-    return NULL;
+    return group;
 }

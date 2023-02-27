@@ -22,8 +22,11 @@ struct utmp *
 getutent(void)
 {
     static struct utmp utmp;
-    if (ut_fd == -1) setutent();
-    if (ut_fd == -1) return NULL;
+    if (ut_fd == -1) {
+        setutent();
+        if (ut_fd == -1)
+            return NULL;
+    }
 
     if (read(ut_fd, (char *)&utmp, sizeof(struct utmp)) != sizeof(struct utmp))
         return NULL;
@@ -48,9 +51,10 @@ setutent(void)
 void
 endutent(void)
 {
-    if (ut_fd != -1)
+    if (ut_fd != -1) {
         close(ut_fd);
-    ut_fd = -1;
+        ut_fd = -1;
+    }
 }
 
 struct utmp *
@@ -100,7 +104,6 @@ getutline(const struct utmp *utmp_entry)
 struct utmp *
 pututline(const struct utmp *utmp_entry)
 {
-    struct utmp *ut;
     int xerrno = errno;
 
 #if 0
@@ -110,7 +113,7 @@ pututline(const struct utmp *utmp_entry)
         (void) lseek(ut_fd, (off_t) -sizeof(struct utmp), SEEK_CUR);
 #endif
 
-    if ((ut = getutid(utmp_entry)) != NULL)
+    if (getutid(utmp_entry) != NULL)
         lseek(ut_fd, (off_t) -sizeof(struct utmp), SEEK_CUR);
     else if (ut_fd==-1)
         return NULL;

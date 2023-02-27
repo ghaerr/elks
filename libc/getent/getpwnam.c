@@ -41,11 +41,10 @@ getpwnam(const char *name)
 
     while ((passwd = __getpwent(passwd_fd)) != NULL) {
         if (!strcmp(passwd->pw_name, name)) {
-            close(passwd_fd);
-            return passwd;
+            break;
         }
     }
 
     close(passwd_fd);
-    return NULL;
+    return passwd;
 }

@@ -35,11 +35,10 @@ getgrgid(const gid_t gid)
 
     while ((group = __getgrent(grp_fd)) != NULL) {
         if (group->gr_gid == gid) {
-            close(grp_fd);
-            return group;
+            break;
         }
     }
 
     close(grp_fd);
-    return NULL;
+    return group;
 }
