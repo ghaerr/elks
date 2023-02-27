@@ -1,7 +1,7 @@
 /*
  * getgrnam.c - This file is part of the libc-8086/grp package for ELKS,
  * Copyright (C) 1995, 1996 Nat Friedman <ndf@linux.mit.edu>.
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Library General Public
  *  License as published by the Free Software Foundation; either
@@ -26,27 +26,25 @@
 #include <paths.h>
 
 struct group *
-getgrnam(const char * name)
+getgrnam(const char *name)
 {
-  int grp_fd;
-  struct group * group;
+    int grp_fd;
+    struct group *group;
 
-  if (name==NULL)
-    {
-      errno=EINVAL;
-      return NULL;
+    if (name == NULL) {
+        errno = EINVAL;
+        return NULL;
     }
 
-  if ((grp_fd=open(_PATH_GROUP, O_RDONLY))<0)
-    return NULL;
+    if ((grp_fd = open(_PATH_GROUP, O_RDONLY)) < 0)
+        return NULL;
 
-  while ((group=__getgrent(grp_fd))!=NULL)
-    if (!strcmp(group->gr_name, name))
-      {
-	close(grp_fd);
-	return group;
-      }
+    while ((group = __getgrent(grp_fd)) != NULL) {
+        if (!strcmp(group->gr_name, name)) {
+            break;
+        }
+    }
 
-  close(grp_fd);
-  return NULL;
+    close(grp_fd);
+    return group;
 }

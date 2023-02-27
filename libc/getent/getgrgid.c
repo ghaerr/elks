@@ -1,7 +1,7 @@
 /*
  * getgrgid.c - This file is part of the libc-8086/grp package for ELKS,
  * Copyright (C) 1995, 1996 Nat Friedman <ndf@linux.mit.edu>.
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Library General Public
  *  License as published by the Free Software Foundation; either
@@ -27,23 +27,18 @@
 struct group *
 getgrgid(const gid_t gid)
 {
-  struct group * group;
-  int grp_fd;
+    struct group *group;
+    int grp_fd;
 
-  if ((grp_fd=open(_PATH_GROUP, O_RDONLY))<0)
-    return NULL;
+    if ((grp_fd = open(_PATH_GROUP, O_RDONLY)) < 0)
+        return NULL;
 
-  while ((group=__getgrent(grp_fd))!=NULL)
-    if (group->gr_gid==gid)
-      {
-	close(grp_fd);
-	return group;
-      }
+    while ((group = __getgrent(grp_fd)) != NULL) {
+        if (group->gr_gid == gid) {
+            break;
+        }
+    }
 
-  close(grp_fd);
-  return NULL;
+    close(grp_fd);
+    return group;
 }
-
-
-
-
