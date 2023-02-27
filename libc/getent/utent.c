@@ -39,8 +39,6 @@ setutent(void)
 
     if ((ut_fd = open(ut_name, O_RDWR)) < 0) {
         if (errno != EACCES || (ut_fd = open(ut_name, O_RDONLY)) < 0) {
-            /* No, this is a library function, it should not do this! */
-            /* perror("setutent: Can't open utmp file"); */
             ut_fd=-1;
         }
     }

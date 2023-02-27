@@ -10,8 +10,6 @@
  *		 Added utmp handling, and invocation by getty.
  */
 
-/* todo:  use a non-echoing input routine for password (i.e. getpass) */
-/*	  needs a more robust tty first */
 /* todo:  add a timeout for serial and network logins */
 /*	  need a signal mechanism (i.e. alarm() and SIGALRM) */
 
