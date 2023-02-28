@@ -957,8 +957,8 @@ static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *b
 	last_drive = drivep;
 
 	if (out_ax) {
-		printk("bioshd: error: out AX=0x%04X in AX=0x%04X "
-		       "ES:BX=0x%04X:0x%04X\n", out_ax, in_ax, BD_ES, BD_BX);
+		printk("bioshd: error: out AX=%04X in AX=%04X "
+		       "ES:BX=%04X:%04X\n", out_ax, in_ax, BD_ES, BD_BX);
 		return 0;
 	}
 #ifdef CONFIG_FS_XMS_BUFFER
