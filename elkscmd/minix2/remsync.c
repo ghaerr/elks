@@ -189,7 +189,7 @@ char *rdlink(const char *link, off_t size)
 	if (len <= size) {
 		path= allocate(path, (len= size * 2) * sizeof(path[0]));
 	}
-	if ((n= readlink(link, path, len)) == -1) return nil;
+	if ((n= readlink(link, path, len - 1)) == -1) return nil;
 	path[n]= 0;
 	return path;
 }
