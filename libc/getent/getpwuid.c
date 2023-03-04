@@ -1,7 +1,7 @@
 /*
  * getpwuid.c - This file is part of the libc-8086/pwd package for ELKS,
  * Copyright (C) 1995, 1996 Nat Friedman <ndf@linux.mit.edu>.
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Library General Public
  *  License as published by the Free Software Foundation; either
@@ -27,19 +27,18 @@
 struct passwd *
 getpwuid(uid_t uid)
 {
-  int passwd_fd;
-  struct passwd * passwd;
+    int passwd_fd;
+    struct passwd *passwd;
 
-  if ((passwd_fd=open(_PATH_PASSWD, O_RDONLY))<0)
-    return NULL;
+    if ((passwd_fd = open(_PATH_PASSWD, O_RDONLY)) < 0)
+        return NULL;
 
-  while ((passwd=__getpwent(passwd_fd))!=NULL)
-    if (passwd->pw_uid==uid)
-      {
-	close(passwd_fd);
-	return passwd;
-      }
+    while ((passwd = __getpwent(passwd_fd)) != NULL) {
+        if (passwd->pw_uid == uid) {
+            break;
+        }
+    }
 
-  close (passwd_fd);
-  return NULL;
+    close(passwd_fd);
+    return passwd;
 }

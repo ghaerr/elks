@@ -39,7 +39,9 @@ static int resolve_path(char *path,char *result,char *pos)
 	    if (lstat(result,&st) < 0) return -1;
 	    if (S_ISLNK(st.st_mode)) {
 		char buf[PATH_MAX];
-		if (readlink(result,buf,sizeof(buf)) < 0) return -1;
+		int n;
+		if ((n = readlink(result,buf,sizeof(buf) - 1)) < 0) return -1;
+		buf[n] = 0;
 		*pos = 0;
 		if (slash) {
 		    *slash = '/';

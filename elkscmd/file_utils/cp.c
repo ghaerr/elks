@@ -349,7 +349,7 @@ static int do_copies(void)
 		} else if (flags == S_IFLNK) {
 			char lnkname[256];
 
-			int cnt = readlink(inode_build->path, lnkname, sizeof(lnkname));
+			int cnt = readlink(inode_build->path, lnkname, sizeof(lnkname) - 1);
 			if (cnt < 0) {
 				fprintf(stderr, "Can't read symlink "); fflush(stderr);
 				perror(inode_build->path);

@@ -22,7 +22,7 @@ void console_init(void)
     printk("Headless console\n");
 }
 
-void Console_conin(int Key)
+void Console_conin(unsigned char Key)
 {
     register struct tty *ttyp = &ttys[0];	/* /dev/tty1*/
 
