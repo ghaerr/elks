@@ -34,8 +34,6 @@ GdDelay(unsigned long msecs)
 int main(int argc, char ** argv)
 {
     if (GrOpen() < 0) {
-        GrClose();
-        printf("Can't open graphics\n");
         exit(1);
     }
     
