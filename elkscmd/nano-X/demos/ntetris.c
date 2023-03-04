@@ -744,12 +744,9 @@ void new_game(nstate *state)
 void init_game(nstate *state)
 {
 	GR_SCREEN_INFO si;
-	//GR_WM_PROPERTIES props;
 
-	if(GrOpen() < 0) {
-		printf("Can't open graphics\n");
+	if(GrOpen() < 0)
 		exit(1);
-	}
 
 	GrGetScreenInfo(&si);
 	GrMoveCursor(si.cols - 16, 0);
@@ -761,6 +758,7 @@ void init_game(nstate *state)
 					MAIN_WINDOW_BACKGROUND_COLOUR, 0);
 #if 0
 	/* set title */
+	GR_WM_PROPERTIES props;
 	props.flags = GR_WM_FLAGS_TITLE | GR_WM_FLAGS_PROPS;
 	props.props = GR_WM_PROPS_BORDER | GR_WM_PROPS_CAPTION |
 			GR_WM_PROPS_CLOSEBOX;
