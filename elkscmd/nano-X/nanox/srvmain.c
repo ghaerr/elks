@@ -212,6 +212,10 @@ GsSelect(GR_TIMEOUT timeout)
 	++setsize;
 
     /* convert wait timeout to timeval struct*/
+#if CONFIG_ARCH_PC98
+    if (timeout == GR_TIMEOUT_BLOCK)
+        timeout = 10;
+#endif
     if (timeout == GR_TIMEOUT_POLL) {
         to.tv_sec = 0;
         to.tv_usec = 0;
