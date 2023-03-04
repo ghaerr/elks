@@ -17,6 +17,7 @@
 #include <pwd.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 
 /* maximum errors */
@@ -130,7 +131,9 @@ main(int argc, char **argv)
                 perror("Error removing old password file");
                 return 1;
             }
-            if (rename(tmp_fname, "/etc/passwd") == -1) {
+            /* can't use rename() since unimplemented on FAT fs */
+            sprintf(nbuf1, "mv %s /etc/passwd", tmp_fname);
+            if (system(nbuf1) != 0) {
                 perror("Error installing new password file");
                 return 1;
             }
