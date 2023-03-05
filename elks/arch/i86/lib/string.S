@@ -108,7 +108,7 @@ memset:
 	shr     $1,%cx         	// copy words
 	rep			// while (cx) cx--, [es:di++] = al
 	stosw
-	rcl	$1,%cx		// then possibly final byute
+	rcl	$1,%cx		// then possibly final byte
 	rep
 	stosb
 	mov	ARG0(%bx),%ax	// return value = start addr of block
