@@ -105,8 +105,12 @@ memset:
 	mov	ARG1(%bx),%ax	// byte to write
 	mov	ARG2(%bx),%cx	// loop count
 	cld
-	rep			// while (cx)
-	stosb			// 	cx--, [es:di++] = al
+	shr     $1,%cx         	// copy words
+	rep			// while (cx) cx--, [es:di++] = al
+	stosw
+	rcl	$1,%cx		// then possibly final byute
+	rep
+	stosb
 	mov	ARG0(%bx),%ax	// return value = start addr of block
 	pop	%di
 	mov	%dx,%es
