@@ -364,6 +364,7 @@ GsInitialize(void)
 	curcursor = NULL;
 	cursorx = -1;
 	cursory = -1;
+	GdShowCursor();
 	GsMoveCursor(sinfo.cols / 2, sinfo.rows / 2);
 	GsSetCursor(GR_ROOT_WINDOW_ID, 16, 16, 0, 0, WHITE, BLACK,
 		cursorbits, cursormask);
@@ -381,8 +382,6 @@ GsInitialize(void)
 	/*GdSetAccelMouse(5, 3);*/
 	GdRestrictMouse(0, 0, sinfo.cols - 1, sinfo.rows - 1);
 	GdMoveMouse(sinfo.cols / 2, sinfo.rows / 2);
-	if (mouse_fd == -2)
-	    GdHideCursor();
 	GsFlush();
 
 	/*
