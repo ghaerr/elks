@@ -568,6 +568,14 @@ doexposure(ep)
 	}
 }
 
+static void
+doexit(void)
+{
+	if (savefile)
+		writegame(savefile);
+	GrClose();
+	exit(0);
+}
 
 /*
  * Here when we get a button down event.
@@ -584,10 +592,7 @@ dobutton(bp)
 	if (bp->wid == quitwid) {
 		GrFillRect(quitwid, xorgc, 0, 0, BUTTONWIDTH, BUTTONHEIGHT);
 		GrFlush();
-		if (savefile)
-			writegame(savefile);
-		GrClose();
-		exit(0);
+        doexit();
 	}
 
 	if (bp->wid == savewid) {
@@ -630,6 +635,8 @@ dokey(kp)
 		case ' ':			/* remember or forget mine */
 			togglecell(findcell(kp->x, kp->y));
 			break;
+		case 'q':
+			doexit();
 	}
 }
 

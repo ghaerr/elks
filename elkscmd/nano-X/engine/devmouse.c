@@ -30,7 +30,7 @@ static COORD 	curminx;	/* minimum x value of cursor */
 static COORD 	curminy;	/* minimum y value of cursor */
 static COORD 	curmaxx;	/* maximum x value of cursor */
 static COORD 	curmaxy;	/* maximum y value of cursor */
-static BOOL	curvisible;	/* TRUE if cursor is visible*/
+static int	curvisible;	/* TRUE if cursor is visible*/
 static BOOL 	curneedsrestore;/* cursor needs restoration after drawing*/
 static COORD 	cursavx;	/* saved cursor location*/
 static COORD 	cursavy;
@@ -54,7 +54,7 @@ GdOpenMouse(void)
 {
 	int fd;
 
-	if ((fd = mousedev.Open(&mousedev)) == -1) /* -2 is mou_nul.c */
+	if ((fd = mousedev.Open(&mousedev)) == -1) /* -2 is no mouse/mou_nul.c */
 		return -1;
 
 	/* get default acceleration settings*/
@@ -71,12 +71,15 @@ GdOpenMouse(void)
 	changed = TRUE;
 
 	/* init cursor position and size info*/
-	curvisible = FALSE;
+	curvisible = 0;
 	curneedsrestore = FALSE;
 	curminx = minx;
 	curminy = miny;
 	curmaxx = curminx + MAX_CURSOR_SIZE - 1;
 	curmaxy = curminy + MAX_CURSOR_SIZE - 1;
+	/* handle null mouse driver by hiding cursor*/
+	if(fd == -2)
+		GdHideCursor();
 
 	return fd;
 }
@@ -305,9 +308,10 @@ GdShowCursor(void)
 	PIXELVAL 	oldcolor;
 	PIXELVAL 	newcolor;
 	MODE 		oldmode;
+	int		prevcursor = curvisible;
 
-	if(curvisible)
-		return TRUE;
+	if(++curvisible != 1)
+		return prevcursor;
 	oldmode = gr_mode;
 	gr_mode = MODE_SET;
 
@@ -339,9 +343,8 @@ GdShowCursor(void)
 	}
 
 	gr_mode = oldmode;
-	curvisible = TRUE;
 	curneedsrestore = FALSE;
-	return FALSE;
+	return prevcursor;
 }
 
 /*
@@ -353,9 +356,10 @@ GdHideCursor(void)
 	PIXELVAL *	saveptr;
 	COORD 		x, y;
 	MODE 		oldmode;
+	int		prevcursor = curvisible;
 
-	if(!curvisible)
-		return FALSE;
+	if(curvisible-- <= 0)
+		return prevcursor;
 	oldmode = gr_mode;
 	gr_mode = MODE_SET;
 
@@ -369,8 +373,7 @@ GdHideCursor(void)
 		}
 	}
  	gr_mode = oldmode;
-	curvisible = FALSE;
-	return TRUE;
+	return prevcursor;
 }
 
 /* Check to see if the mouse pointer is about to be overwritten.
@@ -383,7 +386,7 @@ GdCheckCursor(COORD x1,COORD y1,COORD x2,COORD y2)
 {
 	COORD temp;
 
-	if(curneedsrestore)
+	if(curvisible <= 0)
 		return;
 
 	if (x1 > x2) {
@@ -400,7 +403,7 @@ GdCheckCursor(COORD x1,COORD y1,COORD x2,COORD y2)
 		return;
 
 	GdHideCursor();
-	curneedsrestore = 1;
+	curneedsrestore = TRUE;
 }
 
 
