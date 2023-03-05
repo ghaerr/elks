@@ -469,7 +469,7 @@ void mount_root(void)
 	retval = open_filp(0, d_inode, &filp);
     }
     if (retval) {
-	printk("VFS: Unable to open root device %s\n", kdevname(ROOT_DEV));
+	printk("VFS: Unable to open root device %s (%d)\n", kdevname(ROOT_DEV), retval);
 	halt();
     }
 

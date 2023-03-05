@@ -293,7 +293,7 @@ void debug_event(void)
     kill_all(SIGURG);
 }
 
-void dprintk(char *fmt, ...)
+void dprintk(const char *fmt, ...)
 {
     va_list p;
 

@@ -44,7 +44,7 @@
 #define DEBUG_WAIT	0		/* wait, exit*/
 
 #if DEBUG_EVENT
-void dprintk(char *, ...);		/* printk when debugging on*/
+void dprintk(const char *, ...);        /* printk when debugging on*/
 void debug_event(void);			/* generate debug event*/
 void debug_setcallback(void (*cbfunc)()); /* callback on debug event*/
 #define PRINTK		dprintk
