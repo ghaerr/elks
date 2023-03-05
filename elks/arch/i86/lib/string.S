@@ -15,6 +15,7 @@
 	.global strcpy
 	.global strcmp
 	.global memset
+	.global memcpy
 
 // int strlen(char *str)
 // returns the length of string
@@ -104,9 +105,44 @@ memset:
 	mov	ARG1(%bx),%ax	// byte to write
 	mov	ARG2(%bx),%cx	// loop count
 	cld
-	rep			// while (cx)
-	stosb			// 	cx--, [es:di++] = al
+	shr     $1,%cx         	// copy words
+	rep			// while (cx) cx--, [es:di++] = al
+	stosw
+	rcl	$1,%cx		// then possibly final byte
+	rep
+	stosb
 	mov	ARG0(%bx),%ax	// return value = start addr of block
 	pop	%di
 	mov	%dx,%es
 	ret
+
+// char *memcpy(void *dest, void *src, size_t count)
+
+memcpy:
+        mov    %si,%ax
+        mov    %es,%bx
+        mov    %ds,%cx
+        mov    %cx,%es
+        mov    %di,%dx
+
+        mov    %sp,%si
+        mov    ARG2(%si),%cx  // byte count
+        mov    ARG0(%si),%di  // destination pointer
+        mov    ARG1(%si),%si  // source pointer
+        push   %di            // save dest return value
+        cld
+        shr    $1,%cx         // copy words
+        rep
+        movsw
+        rcl    $1,%cx         // then possibly final byte
+        rep
+        movsb
+
+        mov    %dx,%di
+        mov    %bx,%es
+        mov    %ax,%si
+        mov    %ss,%ax
+        mov    %ax,%ds
+        pop    %ax            // return dst
+
+        ret
