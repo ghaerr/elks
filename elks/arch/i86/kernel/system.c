@@ -6,6 +6,7 @@
 #include <linuxmt/fs.h> /* for ROOT_DEV */
 #include <linuxmt/heap.h>
 #include <linuxmt/memory.h>
+#include <linuxmt/debug.h>
 
 #include <arch/segment.h>
 
@@ -71,6 +72,7 @@ void INITPROC setup_arch(seg_t *start, seg_t *end)
 	byte_t arch_cpu = SETUP_CPU_TYPE;
 	if (arch_cpu > 5)		/* IBM PC/AT capabilities */
 		sys_caps = CAP_ALL;
+	debug("arch %d sys_caps %02x\n", arch_cpu, sys_caps);
 #endif
 }
 
