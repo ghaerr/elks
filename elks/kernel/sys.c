@@ -23,7 +23,7 @@
 
 static int C_A_D = 1;
 
-extern int sys_kill(sig_t,pid_t);
+extern int sys_kill(pid_t, sig_t);
 
 /*
  * Reboot system call: for obvious reasons only root may call it, and even
