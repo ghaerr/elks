@@ -13,4 +13,4 @@ wd0=10,0x300,0xCC00,0x80
 #init=/bin/init 3 n	# multiuser serial no /etc/rc.sys
 #init=/bin/sh		# singleuser shell
 #root=hda1 ro		# root hd partition 1, read-only
-#console=ttyS0,19200 3	# serial console
+console=ttyS0,19200 3	# serial console

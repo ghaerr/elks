@@ -58,7 +58,7 @@ int do_signal(void)
 		      (SM_SIGQUIT|SM_SIGILL|SM_SIGABRT|SM_SIGFPE|SM_SIGSEGV|SM_SIGTRAP))
 		    dump_core();
 #endif
-		debug_sig("SIGNAL terminating pid %d\n", currentp->pid);
+		printk("SIGNAL terminating pid %d\n", currentp->pid);
 		do_exit(signr);				/* Default Terminate */
 	    }
 	}

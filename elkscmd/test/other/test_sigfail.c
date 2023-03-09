@@ -11,6 +11,8 @@
 #define INT     2
 volatile int status;
 
+static int pid;
+
 void sigabort(int signo)
 {
     status |= ABORT;
@@ -27,17 +29,20 @@ int main(int argc, char **argv)
 {
     signal(SIGINT, sigint);
     signal(SIGABRT, sigabort);
+    pid = getpid();
     if (fork() == 0) {
+        signal(SIGINT, SIG_IGN);
+        signal(SIGABRT, SIG_IGN);
         for (;;) {
             status &= ~ABORT;
-            kill(getpid(), SIGABRT);
+            kill(pid, SIGABRT);
             if (!(status & ABORT)) printf("ABORT failed\n");
             if (getppid() == 1) exit(1);
         }
     }
     for(;;) {
         status &= ~INT;
-        kill(getpid(), SIGINT);
+        kill(pid, SIGINT);
         if (!(status & INT)) printf("INT failed\n");
     }
     return 0;
