@@ -4,3 +4,4 @@ other/test_eth
 other/test_pty
 other/test_select
 other/test_signal
+other/test_sigfail

@@ -65,14 +65,12 @@ int do_signal(void)
 	else if (*sd != SIGDISP_IGN) {			/* Set handler */
 	    debug_sig("SIGNAL setup return stack for handler %x:%x\n",
 		      _FP_SEG(sah), _FP_OFF(sah));
-	    //debug_sig("Stack at %x\n", currentp->t_regs.sp);
 	    arch_setup_sighandler_stack(currentp, sah, signr);
-	    //debug_sig("Stack at %x\n", currentp->t_regs.sp);
 	    *sd = SIGDISP_DFL;
 	    debug_sig("SIGNAL reset pending signals\n");
 	    if (currentp->signal)
-		printk("SIGNAL(%d) ignoring signal (mask=%s)\n",
-		    currentp->pid, currentp->signal);
+		printk("SIGNAL(%d) processing mask %04x, ignoring signal w/mask %04x\n",
+		    currentp->pid, mask, currentp->signal);
 	    currentp->signal = 0;
 
 	    return 1;
