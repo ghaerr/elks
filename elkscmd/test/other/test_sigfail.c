@@ -44,6 +44,7 @@ int main(int argc, char **argv)
         status &= ~INT;
         kill(pid, SIGINT);
         if (!(status & INT)) printf("INT failed\n");
+        if (getppid() == 1) exit(1);
     }
     return 0;
 }
