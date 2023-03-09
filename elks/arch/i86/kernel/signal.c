@@ -68,10 +68,11 @@ int do_signal(void)
 	    arch_setup_sighandler_stack(currentp, sah, signr);
 	    *sd = SIGDISP_DFL;
 	    debug_sig("SIGNAL reset pending signals\n");
+	    clr_irq();		/* stop race between reset signal and return to user */
+	    currentp->signal &= ~mask;
 	    if (currentp->signal)
-		printk("SIGNAL(%d) processing mask %04x, ignoring signal w/mask %04x\n",
+		printk("SIGNAL(%d) processing mask %04x, additional signal w/mask %04x\n",
 		    currentp->pid, mask, currentp->signal);
-	    currentp->signal = 0;
 
 	    return 1;
 	}
