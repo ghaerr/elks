@@ -39,6 +39,7 @@ void testlib_tvNormalize(struct timeval *a);
 void *testlib_malloc(unsigned int size);
 char *testlib_strdup(const char *s);
 
+void testlib_capture(const char *file, int line, const char *key, const char *value);
 void testlib_showInfo(const char *file, int line, const char *fmt, ...);
 void testlist_showErrorFmt(const char *file, int line, const char* func,
     const char *fmt, ...);
@@ -268,6 +269,8 @@ static inline void testStrNEquals(FILIFU_ARGS const void *got,
             testlib_onFail(ISFATAL); \
         } \
     } while (0)
+
+#define CAPTURE(K, V) testlib_capture(__FILE__, __LINE__, K, V);
 
 #define TEST_INFO(FMT, ...) testlib_showInfo(__FILE__, __LINE__, FMT, __VA_ARGS__)
 

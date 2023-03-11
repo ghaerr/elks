@@ -22,6 +22,7 @@ void test_misc_dirname();
 void test_misc_getcwd();
 void test_misc_strtol();
 void test_regex_regcomp();
+void test_regex_expandwildcards();
 void test_stdio_fgets_boundary();
 void test_stdio_init();
 void test_stdio_seek();
@@ -71,7 +72,7 @@ int main(int argc, char **argv)
 			usage(argv);
 	}
 
-	testfn_t tests[37];
+	testfn_t tests[38];
 	i = 0;
 	tests[i++] = test_error_strerror;
 	tests[i++] = test_inet_aton_ntoa;
@@ -90,6 +91,7 @@ int main(int argc, char **argv)
 	tests[i++] = test_misc_getcwd;
 	tests[i++] = test_misc_strtol;
 	tests[i++] = test_regex_regcomp;
+	tests[i++] = test_regex_expandwildcards;
 	tests[i++] = test_stdio_fgets_boundary;
 	tests[i++] = test_stdio_init;
 	tests[i++] = test_stdio_seek;
