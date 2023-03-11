@@ -20,8 +20,8 @@
 typedef	struct	chunk	CHUNK;
 #define	CHUNKINITSIZE	4
 struct	chunk	{
-	CHUNK	*next;
-	char	data[CHUNKINITSIZE];	/* actually of varying length */
+    CHUNK	*next;
+    char	data[CHUNKINITSIZE];	/* actually of varying length */
 };
 
 static int chunkmaxmem = 2048;		/* maximum memory used in wildcard expansion */
@@ -37,23 +37,23 @@ static	CHUNK *	chunklist;
 static char *
 getchunk(int size)
 {
-	CHUNK	*chunk;
+    CHUNK	*chunk;
 
-	if (size < CHUNKINITSIZE)
-		size = CHUNKINITSIZE;
+    if (size < CHUNKINITSIZE)
+        size = CHUNKINITSIZE;
 
-	size += sizeof(CHUNK) - CHUNKINITSIZE;
-	if (chunkmemused + size > chunkmaxmem)
-		return NULL;
-	chunk = (CHUNK *) malloc(size);
-	if (chunk == NULL)
-		return NULL;
+    size += sizeof(CHUNK) - CHUNKINITSIZE;
+    if (chunkmemused + size > chunkmaxmem)
+        return NULL;
+    chunk = (CHUNK *) malloc(size);
+    if (chunk == NULL)
+        return NULL;
 
-	chunkmemused += size;
-	chunk->next = chunklist;
-	chunklist = chunk;
+    chunkmemused += size;
+    chunk->next = chunklist;
+    chunklist = chunk;
 
-	return chunk->data;
+    return chunk->data;
 }
 
 
@@ -64,14 +64,14 @@ getchunk(int size)
 void
 freewildcards(void)
 {
-	CHUNK	*chunk;
+    CHUNK	*chunk;
 
-	while (chunklist) {
-		chunk = chunklist;
-		chunklist = chunk->next;
-		free((char *) chunk);
-	}
-	chunkmemused = 0;
+    while (chunklist) {
+        chunk = chunklist;
+        chunklist = chunk->next;
+        free((char *) chunk);
+    }
+    chunkmemused = 0;
 }
 
 /*
@@ -87,68 +87,68 @@ freewildcards(void)
 static int
 match(char *text, char *pattern)
 {
-	char	*retrypat;
-	char	*retrytxt;
-	int	ch;
-	int	found;
+    char	*retrypat;
+    char	*retrytxt;
+    int	ch;
+    int	found;
 
-	retrypat = NULL;
-	retrytxt = NULL;
+    retrypat = NULL;
+    retrytxt = NULL;
 
-	while (*text || *pattern) {
-		ch = *pattern++;
+    while (*text || *pattern) {
+        ch = *pattern++;
 
-		switch (ch) {
-			case '*':
-				retrypat = pattern;
-				retrytxt = text;
-				break;
+        switch (ch) {
+            case '*':
+                retrypat = pattern;
+                retrytxt = text;
+                break;
 
-			case '[':
-				found = FALSE;
-				while ((ch = *pattern++) != ']') {
-					if (ch == '\\')
-						ch = *pattern++;
-					if (ch == '\0')
-						return FALSE;
-					if (*text == ch)
-						found = TRUE;
-				}
-				if (!found) {
-					pattern = retrypat;
-					text = ++retrytxt;
-				}
-				/* fall into next case */
+            case '[':
+                found = FALSE;
+                while ((ch = *pattern++) != ']') {
+                    if (ch == '\\')
+                        ch = *pattern++;
+                    if (ch == '\0')
+                        return FALSE;
+                    if (*text == ch)
+                        found = TRUE;
+                }
+                if (!found) {
+                    pattern = retrypat;
+                    text = ++retrytxt;
+                }
+                /* fall into next case */
 
-			case '?':
-				if (*text++ == '\0')
-					return FALSE;
-				break;
+            case '?':
+                if (*text++ == '\0')
+                    return FALSE;
+                break;
 
-			case '\\':
-				ch = *pattern++;
-				if (ch == '\0')
-					return FALSE;
-				/* fall into next case */
+            case '\\':
+                ch = *pattern++;
+                if (ch == '\0')
+                    return FALSE;
+                /* fall into next case */
 
-			default:
-				if (*text == ch) {
-					if (*text)
-						text++;
-					break;
-				}
-				if (*text) {
-					pattern = retrypat;
-					text = ++retrytxt;
-					break;
-				}
-				return FALSE;
-		}
+            default:
+                if (*text == ch) {
+                    if (*text)
+                        text++;
+                    break;
+                }
+                if (*text) {
+                    pattern = retrypat;
+                    text = ++retrytxt;
+                    break;
+                }
+                return FALSE;
+        }
 
-		if (pattern == NULL)
-			return FALSE;
-	}
-	return TRUE;
+        if (pattern == NULL)
+            return FALSE;
+    }
+    return TRUE;
 }
 
 /*
@@ -157,7 +157,7 @@ match(char *text, char *pattern)
 static int
 namesort(char **p1, char **p2)
 {
-	return strcmp(*p1, *p2);
+    return strcmp(*p1, *p2);
 }
 
 /*
@@ -173,91 +173,91 @@ namesort(char **p1, char **p2)
 int
 expandwildcards(char *name, int maxargc, char **retargv)
 {
-	char	*last;
-	char	*cp1, *cp2, *cp3;
-	DIR	*dirp;
-	struct	dirent	*dp;
-	int	dirlen;
-	int	matches;
-	char	dirname[256];
+    char	*last;
+    char	*cp1, *cp2, *cp3;
+    DIR	*dirp;
+    struct	dirent	*dp;
+    int	dirlen;
+    int	matches;
+    char	dirname[256];
 
-	last = strrchr(name, '/');
-	if (last)
-		last++;
-	else
-		last = name;
+    last = strrchr(name, '/');
+    if (last)
+        last++;
+    else
+        last = name;
 
-	cp1 = strchr(name, '*');
-	cp2 = strchr(name, '?');
-	cp3 = strchr(name, '[');
+    cp1 = strchr(name, '*');
+    cp2 = strchr(name, '?');
+    cp3 = strchr(name, '[');
 
-	if ((cp1 == NULL) && (cp2 == NULL) && (cp3 == NULL))
-		return 0;
+    if ((cp1 == NULL) && (cp2 == NULL) && (cp3 == NULL))
+        return 0;
 
-	if ((cp1 && (cp1 < last)) || (cp2 && (cp2 < last)) || (cp3 && (cp3 < last)))
-		return -EINVAL; /* Wildcards only implemented for last filename component*/
+    if ((cp1 && (cp1 < last)) || (cp2 && (cp2 < last)) || (cp3 && (cp3 < last)))
+        return -EINVAL; /* Wildcards only implemented for last filename component*/
 
-	dirname[0] = '.';
-	dirname[1] = '\0';
+    dirname[0] = '.';
+    dirname[1] = '\0';
 
-	if (last != name) {
-		memcpy(dirname, name, last - name);
-		dirname[last - name - 1] = '\0';
-		if (dirname[0] == '\0') {
-			dirname[0] = '/';
-			dirname[1] = '\0';
-		}
-	}
+    if (last != name) {
+        memcpy(dirname, name, last - name);
+        dirname[last - name - 1] = '\0';
+        if (dirname[0] == '\0') {
+            dirname[0] = '/';
+            dirname[1] = '\0';
+        }
+    }
 
-	dirp = opendir(dirname);
-	if (dirp == NULL)
-		return -ENOENT;
+    dirp = opendir(dirname);
+    if (dirp == NULL)
+        return -ENOENT;
 
-	dirlen = strlen(dirname);
-	if (last == name) {
-		dirlen = 0;
-		dirname[0] = '\0';
-	} else if (dirname[dirlen - 1] != '/') {
-		dirname[dirlen++] = '/';
-		dirname[dirlen] = '\0';
-	}
+    dirlen = strlen(dirname);
+    if (last == name) {
+        dirlen = 0;
+        dirname[0] = '\0';
+    } else if (dirname[dirlen - 1] != '/') {
+        dirname[dirlen++] = '/';
+        dirname[dirlen] = '\0';
+    }
 
-	matches = 0;
+    matches = 0;
 
-	while ((dp = readdir(dirp)) != NULL) {
-		if ((strcmp(dp->d_name, ".") == 0) ||
-			(strcmp(dp->d_name, "..") == 0))
-				continue;
+    while ((dp = readdir(dirp)) != NULL) {
+        if ((strcmp(dp->d_name, ".") == 0) ||
+                (strcmp(dp->d_name, "..") == 0))
+            continue;
 
-		if (!match(dp->d_name, last))
-			continue;
+        if (!match(dp->d_name, last))
+            continue;
 
-		if (matches >= maxargc) {
-			freewildcards();
-			closedir(dirp);
-			return -ENOBUFS; /* Too many filename matches*/
-		}
+        if (matches >= maxargc) {
+            freewildcards();
+            closedir(dirp);
+            return -ENOBUFS; /* Too many filename matches*/
+        }
 
-		cp1 = getchunk(dirlen + strlen(dp->d_name) + 1);
-		if (cp1 == NULL) {
-			freewildcards();
-			closedir(dirp);
-			return -ENOMEM;	/* No memory for filenames*/
-		}
+        cp1 = getchunk(dirlen + strlen(dp->d_name) + 1);
+        if (cp1 == NULL) {
+            freewildcards();
+            closedir(dirp);
+            return -ENOMEM;	/* No memory for filenames*/
+        }
 
-		if (dirlen)
-			memcpy(cp1, dirname, dirlen);
-		strcpy(cp1 + dirlen, dp->d_name);
+        if (dirlen)
+            memcpy(cp1, dirname, dirlen);
+        strcpy(cp1 + dirlen, dp->d_name);
 
-		retargv[matches++] = cp1;
-	}
+        retargv[matches++] = cp1;
+    }
 
-	closedir(dirp);
+    closedir(dirp);
 
-	if (matches == 0)
-		return -ENOENT;	/* No matches*/
+    if (matches == 0)
+        return -ENOENT;	/* No matches*/
 
-	qsort((char *) retargv, matches, sizeof(char *), namesort);
+    qsort((char *) retargv, matches, sizeof(char *), namesort);
 
-	return matches;
+    return matches;
 }
