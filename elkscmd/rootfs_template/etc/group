@@ -16,10 +16,7 @@ uucp::14:uucp
 man::15:man
 ftp::50:ftp
 nobody::99:nobody
-users::100:root,user0,user1,user2,user3,user4,user5
-user0::500:user0
-user1::501:user1
-user2::502:user2
-user3::503:user3
-user4::504:user4
-user5::505:user5
+users::100:root,user1,user2,user3
+user1::101:user1
+user2::102:user2
+user3::103:user3

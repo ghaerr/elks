@@ -16,6 +16,7 @@ PRGS = \
     test_pty \
     test_select \
     test_signal \
+    test_sigfail \
     # EOL
 
 all: $(PRGS)
@@ -33,6 +34,9 @@ test_select: test_select.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 test_signal: test_signal.o
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+test_sigfail: test_sigfail.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 install: $(PRGS)

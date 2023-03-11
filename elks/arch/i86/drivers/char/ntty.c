@@ -67,6 +67,8 @@ int tty_intcheck(register struct tty *ttyp, unsigned char key)
     if ((ttyp->termios.c_lflag & ISIG) && ttyp->pgrp) {
 	if (key == ttyp->termios.c_cc[VINTR])
 	    sig = SIGINT;
+	if (key == ttyp->termios.c_cc[VQUIT])
+	    sig = SIGQUIT;
 	if (key == ttyp->termios.c_cc[VSUSP])
 	    sig = SIGTSTP;
 #if DEBUG_EVENT

@@ -749,7 +749,6 @@ void init_game(nstate *state)
 		exit(1);
 
 	GrGetScreenInfo(&si);
-	GrMoveCursor(si.cols - 16, 0);
 	state->main_window = GrNewWindow(GR_ROOT_WINDOW_ID,
 					(si.cols - MAIN_WINDOW_WIDTH) / 2,
 					(si.rows - MAIN_WINDOW_HEIGHT) / 2,

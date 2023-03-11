@@ -53,8 +53,12 @@ static char *init_command = bininit;
 static int args = 2;	/* room for argc and av[0] */
 static int envs;
 static int argv_slen;
+#ifdef CONFIG_SYS_NO_BININIT
+static char *argv_init[80] = { NULL, binshell, NULL };
+#else
 /* argv_init doubles as sptr data for sys_execv later*/
 static char *argv_init[80] = { NULL, bininit, NULL };
+#endif
 #if ENV
 static char *envp_init[MAX_INIT_ENVS+1];
 #endif
