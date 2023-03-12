@@ -23,7 +23,9 @@ unsigned int testlib_testFails;
 const char *test_name;
 
 static jmp_buf env;
-static void *autoFree = NULL;
+static void *autoFree;
+static const char *captureKey;
+static const char *captureValue;
 
 int testlib_getErrno()
 {
@@ -131,6 +133,12 @@ char *testlib_strdup(const char *s)
 	return p + sizeof(void*);
 }
 
+void testlib_capture(const char *file, int line, const char *key, const char *value)
+{
+    captureKey = key;
+    captureValue = value;
+}
+
 void testlib_showInfo(const char *file, int line, const char *fmt, ...)
 {
 	if (!testlib_verbose)
@@ -172,19 +180,22 @@ void testlib_debugTrap()
 
 void testlib_onFail(int isFatal)
 {
-	++testlib_assertionFails;
-	if (testlib_debugOnFail)
-		testlib_debugTrap();
-	if (isFatal)
-		longjmp(env, 1);
+    if (captureKey)
+        fprintf(stderr, "\tcapture: %s = \"%s\"\n", captureKey, captureValue);
+    ++testlib_assertionFails;
+    if (testlib_debugOnFail)
+        testlib_debugTrap();
+    if (isFatal)
+        longjmp(env, 1);
 }
 
 static void testlib_initEnv()
 {
-	putenv("TZ");
-	tzset();
-	srand(testlib_seed);
-	errno = 0;
+    putenv("TZ");
+    tzset();
+    srand(testlib_seed);
+    errno = 0;
+    captureKey = captureValue = NULL;
 }
 
 static void testlib_deinitEnv()

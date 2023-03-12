@@ -55,7 +55,7 @@ TEST_CASE(stdio_seek)
     FILE* fp;
     int i;
 
-    fp = fopen("/tmp/test-libc.txt", "w+");
+    fp = fopen("/tmp/libcseek.txt", "w+");
     ASSERT_EQ(!fp, 0);
 
     /* beginning? */
@@ -118,7 +118,7 @@ TEST_CASE(stdio_fgets_boundary)
     FILE* fp;
     char* p;
 
-    fp = fopen("/tmp/test-libc.txt", "w+");
+    fp = fopen("/tmp/libcfgets.txt", "w+");
     fwrite(data, 3, 1, fp);
     rewind(fp);
 

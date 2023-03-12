@@ -451,6 +451,8 @@ match(text, pattern)
 				}
 				if (!found) {
 					pattern = retrypat;
+					if (pattern == NULL)
+						break;
 					text = ++retrytxt;
 				}
 				/* fall into next case */
