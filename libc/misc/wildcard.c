@@ -116,6 +116,8 @@ match(char *text, char *pattern)
                 }
                 if (!found) {
                     pattern = retrypat;
+                    if (pattern == NULL)
+                        break;
                     text = ++retrytxt;
                 }
                 /* fall into next case */
@@ -167,7 +169,7 @@ namesort(char **p1, char **p2)
  * be freed at once.  Returns zero if the name is not a wildcard, or
  * returns the count of matched files if the name is a wildcard and
  * there was at least one match, or returns < 0 if either no filenames
- * matched (-ENOENT), too many filenames matched (-NOBUFS), no memory
+ * matched (-ENOENT), too many filenames matched (-ENOBUFS), no memory
  * available (-ENOMEM), or bad regular expression (-EINVAL).
  */
 int
