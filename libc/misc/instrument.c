@@ -7,8 +7,8 @@
 
 static char ftrace;
 static int count;
-static unsigned int start_sp;
-static unsigned int max_stack;
+static size_t start_sp;
+static size_t max_stack;
 
 /* runs before main and rewrites argc/argv on stack if --ftrace found */
 __attribute__((no_instrument_function,constructor(120)))
@@ -35,8 +35,8 @@ void noinstrument __cyg_profile_func_enter_simple(void)
     int *calling_fn = __builtin_return_address(0);  /* return address */
     int i;
 
-    if (count == 0) start_sp = (unsigned int)bp;
-    unsigned int stack_used = start_sp - (unsigned int)bp;
+    if (count == 0) start_sp = (size_t)bp;
+    size_t stack_used = start_sp - (size_t)bp;
     if (stack_used > max_stack) max_stack = stack_used;
 
     for (i=0; i<count; i++)

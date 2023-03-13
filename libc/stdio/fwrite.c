@@ -15,7 +15,7 @@ int
 fwrite(char *buf, int size, int nelm, FILE *fp)
 {
     register int v;
-    int len;
+    ssize_t len;
     unsigned bytes, put;
 
     /* If last op was a read ... note fflush may change fp->mode and ret OK */
@@ -33,13 +33,13 @@ fwrite(char *buf, int size, int nelm, FILE *fp)
     len = fp->bufend - fp->bufpos;
 
     /* Flush the buffer if not enough room */
-    if (bytes > len)
+    if (bytes > (size_t)len)
         if (fflush(fp))
             return 0;
 
     len = fp->bufend - fp->bufpos;
     /* It'll fit in the buffer ? */
-    if (bytes <= len) {
+    if (bytes <= (size_t)len) {
         register int do_flush=0;
         fp->mode |= __MODE_WRITING;
         memcpy(fp->bufpos, buf, bytes);

@@ -243,7 +243,7 @@ void testlib_runTestCases(testfn_t *start, testfn_t *end)
 
         if (pid != 0 && pid != (pid_t)-1) {
             /* TODO update assertion count in parent process */
-            if (waitpid(pid, &failed, 0) < 0) {
+            if (waitpid(pid, &failed, 0) == (pid_t)-1) {
                 testlib_abort("%s failed: %s\n", "waitpid", strerror(errno));
             }
         }

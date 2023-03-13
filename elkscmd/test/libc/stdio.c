@@ -52,8 +52,7 @@ TEST_CASE(stdio_seek)
     char wbuf[256];
     char rbuf[256];
     size_t n;
-    FILE* fp;
-    int i;
+    FILE *fp;
 
     fp = fopen("/tmp/libcseek.txt", "w+");
     ASSERT_EQ(!fp, 0);
@@ -71,9 +70,9 @@ TEST_CASE(stdio_seek)
     ASSERT_EQ(n, 0);
 
     /* random-access write */
-    for (i = 0; i < sizeof(wbuf); ++i)
+    for (size_t i = 0; i < sizeof(wbuf); ++i)
         wbuf[i] = i;
-    for (i = sizeof(wbuf) - 1; i >= 0; --i) {
+    for (ssize_t i = sizeof(wbuf) - 1; i >= 0; --i) {
         n = fseek(fp, i, SEEK_SET);
         ASSERT_EQ(n, 0);
         n = ftell(fp);

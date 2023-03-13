@@ -142,7 +142,7 @@ static void validateCrypt(const char *s)
     EXPECT_LT(len, 64);
     for (size_t i = 0; i < len; ++i) {
         char c = s[i];
-        if (c < 32 || c > 127 || strpbrk(s, "\\:;*!")) {
+        if (c < 32 || strpbrk(s, "\\:;*!")) {
             ASSERT_FAIL("Invalid character 0x%02x\n", c);
         }
     }

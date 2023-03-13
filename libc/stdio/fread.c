@@ -13,7 +13,8 @@
  */
 size_t fread(void *buf, size_t size, size_t nelm, FILE *fp)
 {
-    int len, v;
+    int v;
+    ssize_t len;
     size_t bytes, got = 0;
     __LINK_SYMBOL(__stdio_init);
 
@@ -31,7 +32,7 @@ size_t fread(void *buf, size_t size, size_t nelm, FILE *fp)
     bytes = size * nelm;
 
     len = fp->bufread - fp->bufpos;
-    if (len >= bytes) {
+    if ((size_t)len >= bytes) {
         /* Enough buffered */
         memcpy(buf, fp->bufpos, bytes);
         fp->bufpos += bytes;
