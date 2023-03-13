@@ -124,28 +124,28 @@ TEST_CASE(stdio_fgets_boundary)
     /* size <= 0 is a domain error; returns NULL */
     buf[0] = CANARY_BYTE;
     p = fgets(buf, 0, fp);
-    ASSERT_EQ(p, NULL);
+    ASSERT_EQ_P(p, NULL);
     ASSERT_FALSE(feof(fp));
     ASSERT_EQ(buf[0], CANARY_BYTE);
 
     /* no room for data, only terminator */
     buf[1] = CANARY_BYTE;
     p = fgets(buf, 1, fp);
-    ASSERT_EQ(p, buf);
+    ASSERT_EQ_P(p, buf);
     ASSERT_EQ(buf[0], 0);
     ASSERT_EQ(buf[1], CANARY_BYTE);
 
     /* first data byte + terminator */
     buf[2] = CANARY_BYTE;
     p = fgets(buf, 2, fp);
-    ASSERT_EQ(p, buf);
+    ASSERT_EQ_P(p, buf);
     ASSERT_EQ(buf[0], data[0]);
     ASSERT_EQ(buf[1], 0);
     ASSERT_EQ(buf[2], CANARY_BYTE);
 
     /* 2 remaining bytes + terminator */
     p = fgets(buf, 4, fp);
-    ASSERT_EQ(p, buf);
+    ASSERT_EQ_P(p, buf);
     ASSERT_TRUE(feof(fp));
     ASSERT_EQ(buf[0], data[1]);
     ASSERT_EQ(buf[1], data[2]);
@@ -154,7 +154,7 @@ TEST_CASE(stdio_fgets_boundary)
     /* EOF after no data */
     buf[0] = CANARY_BYTE;
     p = fgets(buf, 4, fp);
-    ASSERT_EQ(p, NULL);
+    ASSERT_EQ_P(p, NULL);
     ASSERT_TRUE(feof(fp));
     ASSERT_EQ(buf[0], CANARY_BYTE);
 
