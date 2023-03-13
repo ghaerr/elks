@@ -3,7 +3,7 @@
 #include <sys/wait.h>
 #include <paths.h>
 
-FILE *popen(char *command, char *rw)
+FILE *popen(const char *command, const char *rw)
 {
     int pipe_fd[2];
     int pid, reading;

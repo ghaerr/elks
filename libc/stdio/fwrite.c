@@ -12,7 +12,7 @@
  * Again this ignores __MODE__IOTRAN.
  */
 int
-fwrite(char *buf, int size, int nelm, FILE *fp)
+fwrite(const char *buf, int size, int nelm, FILE *fp)
 {
     register int v;
     ssize_t len;
