@@ -52,8 +52,7 @@ TEST_CASE(stdio_seek)
     char wbuf[256];
     char rbuf[256];
     size_t n;
-    FILE* fp;
-    int i;
+    FILE *fp;
 
     fp = fopen("/tmp/libcseek.txt", "w+");
     ASSERT_EQ(!fp, 0);
@@ -71,9 +70,9 @@ TEST_CASE(stdio_seek)
     ASSERT_EQ(n, 0);
 
     /* random-access write */
-    for (i = 0; i < sizeof(wbuf); ++i)
+    for (size_t i = 0; i < sizeof(wbuf); ++i)
         wbuf[i] = i;
-    for (i = sizeof(wbuf) - 1; i >= 0; --i) {
+    for (ssize_t i = sizeof(wbuf) - 1; i >= 0; --i) {
         n = fseek(fp, i, SEEK_SET);
         ASSERT_EQ(n, 0);
         n = ftell(fp);
@@ -125,28 +124,28 @@ TEST_CASE(stdio_fgets_boundary)
     /* size <= 0 is a domain error; returns NULL */
     buf[0] = CANARY_BYTE;
     p = fgets(buf, 0, fp);
-    ASSERT_EQ(p, NULL);
+    ASSERT_EQ_P(p, NULL);
     ASSERT_FALSE(feof(fp));
     ASSERT_EQ(buf[0], CANARY_BYTE);
 
     /* no room for data, only terminator */
     buf[1] = CANARY_BYTE;
     p = fgets(buf, 1, fp);
-    ASSERT_EQ(p, buf);
+    ASSERT_EQ_P(p, buf);
     ASSERT_EQ(buf[0], 0);
     ASSERT_EQ(buf[1], CANARY_BYTE);
 
     /* first data byte + terminator */
     buf[2] = CANARY_BYTE;
     p = fgets(buf, 2, fp);
-    ASSERT_EQ(p, buf);
+    ASSERT_EQ_P(p, buf);
     ASSERT_EQ(buf[0], data[0]);
     ASSERT_EQ(buf[1], 0);
     ASSERT_EQ(buf[2], CANARY_BYTE);
 
     /* 2 remaining bytes + terminator */
     p = fgets(buf, 4, fp);
-    ASSERT_EQ(p, buf);
+    ASSERT_EQ_P(p, buf);
     ASSERT_TRUE(feof(fp));
     ASSERT_EQ(buf[0], data[1]);
     ASSERT_EQ(buf[1], data[2]);
@@ -155,7 +154,7 @@ TEST_CASE(stdio_fgets_boundary)
     /* EOF after no data */
     buf[0] = CANARY_BYTE;
     p = fgets(buf, 4, fp);
-    ASSERT_EQ(p, NULL);
+    ASSERT_EQ_P(p, NULL);
     ASSERT_TRUE(feof(fp));
     ASSERT_EQ(buf[0], CANARY_BYTE);
 
