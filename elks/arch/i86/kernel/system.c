@@ -9,6 +9,7 @@
 #include <linuxmt/debug.h>
 
 #include <arch/segment.h>
+#include <arch/io.h>
 
 
 byte_t sys_caps;		/* system capabilities bits */
