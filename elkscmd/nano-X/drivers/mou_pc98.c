@@ -151,6 +151,10 @@ MOU_Read(COORD *dx, COORD *dy, COORD *dz, BUTTON *bptr)
 
     *dz = 0;
 
+    /* Read button again in case Poll is not called */
+    buttons = (inportb(PC98_MOUSE_I_ADDR) & 0xE0) ^ 0xE0;
+    buttons_before = buttons;
+
     b = 0;
     if (buttons & left)
         b |= LBUTTON;
@@ -181,7 +185,7 @@ MOU_Poll(void)
     outportb(PC98_MOUSE_O_ADDR, (PC98_O_HC | PC98_O_Y_M)); // Y MSB 4bits
     y_now += (inportb(PC98_MOUSE_I_ADDR) & 0xF) << 4;
 
-    buttons = inportb(PC98_MOUSE_I_ADDR) & 0xE0;
+    buttons = (inportb(PC98_MOUSE_I_ADDR) & 0xE0) ^ 0xE0;
 
     outportb(PC98_MOUSE_O_ADDR, 0x00); // Clear HC
 

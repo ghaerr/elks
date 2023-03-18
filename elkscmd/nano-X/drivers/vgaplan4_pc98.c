@@ -46,10 +46,9 @@ static unsigned char mask[8] = {
 int
 ega_init(PSD psd)
 {
-	psd->addr = SCREENBASE0;		/* long ptr -> short on 16bit sys*/
+	psd->addr = (char *)SCREENBASE0;		/* long ptr -> short on 16bit sys*/
 	psd->linelen = BYTESPERLINE;
-	/* framebuffer mmap size*/
-	psd->size = 0x10000;
+	psd->size = 65535;
 
 	return 1;
 }
@@ -114,7 +113,7 @@ ega_drawhorzline(PSD psd, unsigned int x1, unsigned int x2, unsigned int y,
 	assert (c >= 0 && c < psd->ncolors);
 
 	DRAWON;
-	/* XOR/OR/AND mode is not supported for PC-98 for now */
+	/* OR/AND mode is not supported for PC-98 for now */
 	if(gr_mode == MODE_SET) {
 		for(plane=0; plane<4; ++plane) {
 			x1 = x1_ini;
@@ -165,6 +164,45 @@ ega_drawhorzline(PSD psd, unsigned int x1, unsigned int x2, unsigned int y,
 				}
 			}
 		}
+	} else if(gr_mode == MODE_XOR) {
+		for(plane=0; plane<4; ++plane) {
+			x1 = x1_ini;
+			dst = screenbase_table[plane] + x1 / 8 + y * BYTESPERLINE;
+			if (x1 / 8 == x2 / 8) {
+				while(x1 < x2) {
+					if  (c & (1 << plane)) {
+						PUTBYTE_FP(dst,(GETBYTE_FP(dst) ^ mask[x1&7]));
+					}
+					x1++;
+				}
+			} else {
+
+				while (x1 % 8) {
+					if  (c & (1 << plane)) {
+						PUTBYTE_FP(dst,(GETBYTE_FP(dst) ^ mask[x1&7]));
+					}
+					x1++;
+				}
+				if (x1_ini % 8)
+					dst++;
+
+				last = screenbase_table[plane] + x2 / 8 + y * BYTESPERLINE;
+				while (dst < last) {
+					if  (c & (1 << plane)) {
+						PUTBYTE_FP(dst,~GETBYTE_FP(dst));
+						dst++;
+					}
+				}
+
+				x1 = ((x2 >> 3) << 3);
+				while (x1 < x2) {
+					if  (c & (1 << plane)) {
+						PUTBYTE_FP(dst,(GETBYTE_FP(dst) ^ mask[x1&7]));
+					}
+					x1++;
+				}
+			}
+		}
 	} else {
 		/* slower method, draw pixel by pixel*/
 		while(x1 < x2) {
@@ -197,17 +235,30 @@ ega_drawvertline(PSD psd,unsigned int x, unsigned int y1, unsigned int y2,
 	assert (c >= 0 && c < psd->ncolors);
 
 	DRAWON;
-	for(plane=0; plane<4; ++plane) {
-		dst = screenbase_table[plane] + x / 8 + y1 * BYTESPERLINE;
-		last = screenbase_table[plane] + x / 8 + y2 * BYTESPERLINE;
-		while (dst < last) {
-			if  (c & (1 << plane)) {
-				ORBYTE_FP (dst,mask[x&7]);
+	if(gr_mode == MODE_XOR) {
+		for(plane=0; plane<4; ++plane) {
+			dst = screenbase_table[plane] + x / 8 + y1 * BYTESPERLINE;
+			last = screenbase_table[plane] + x / 8 + y2 * BYTESPERLINE;
+			while (dst < last) {
+				if  (c & (1 << plane)) {
+					PUTBYTE_FP(dst,(GETBYTE_FP(dst) ^ mask[x&7]));
+				}
+				dst += BYTESPERLINE;
 			}
-			else {
-				ANDBYTE_FP (dst,~mask[x&7]);
+		}
+	} else {
+		for(plane=0; plane<4; ++plane) {
+			dst = screenbase_table[plane] + x / 8 + y1 * BYTESPERLINE;
+			last = screenbase_table[plane] + x / 8 + y2 * BYTESPERLINE;
+			while (dst < last) {
+				if  (c & (1 << plane)) {
+					ORBYTE_FP (dst,mask[x&7]);
+				}
+				else {
+					ANDBYTE_FP (dst,~mask[x&7]);
+				}
+				dst += BYTESPERLINE;
 			}
-			dst += BYTESPERLINE;
 		}
 	}
 	DRAWOFF;
