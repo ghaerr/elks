@@ -129,7 +129,7 @@ sh_main(argc, argv)
 	char	**argv;
 {
 	char	*cp;
-	char	buf[PATHLEN];
+	char	buf[PATH_MAX];
 
 	printf("Stand-alone shell (version %s)\n", version);
 	fflush(stdout);

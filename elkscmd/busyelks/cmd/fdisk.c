@@ -8,6 +8,7 @@
  */
 
 #include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,7 +25,7 @@
 #define die { printf("Usage %s [-l] <device-name>\n",argv[0]); fflush(stdout); exit(1); }
 #define spc ((unsigned long)(geometry.heads*geometry.sectors))
 
-static char dev[256]; /* FIXME - should be a #define'd number from header file */
+static char dev[PATH_MAX];
 static int pFd;
 static unsigned char partitiontable[512];
 static struct hd_geometry geometry;
@@ -402,7 +403,7 @@ fdisk_main(int argc, char * argv[])
 		printf("Can only specify one device on the command line.\n");
 		return 1;
 	    } else
-		strncpy(dev,argv[i],256); /* FIXME - Should be some value from a header */
+		strncpy(dev,argv[i],sizeof(dev));
 	} else
 	    if (*argv[i]=='-')
 		switch(*(argv[i]+1)) {
@@ -419,7 +420,7 @@ fdisk_main(int argc, char * argv[])
 
     if(argc==1)
 #ifdef DEFAULT_DEV
-	strncpy(dev,DEFAULT_DEV,256);
+	strncpy(dev,DEFAULT_DEV,sizeof(dev));
 #else
 	die;
 #endif

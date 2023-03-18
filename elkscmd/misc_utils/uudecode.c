@@ -11,6 +11,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <limits.h>
 
 /* single character decode */
 #define DEC(c)	(((c) - ' ') & 077)
@@ -95,7 +96,7 @@ char **argv;
 {
 	FILE *in, *out;
 	int mode;
-	char dest[128];
+	char dest[PATH_MAX];
 	char buf[80];
 
 	/* optional input arg */

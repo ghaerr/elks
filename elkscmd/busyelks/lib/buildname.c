@@ -22,7 +22,7 @@
 char *buildname(char *dirname, char *filename)
 {
 	char *cp;
-	static char buf[PATHLEN];
+	static char buf[PATH_MAX];
 
 	if ((dirname == NULL) || (*dirname == '\0')) return filename;
 

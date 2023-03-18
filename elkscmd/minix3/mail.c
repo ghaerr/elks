@@ -64,7 +64,7 @@ int needupdate = 0;		/* need to update mailbox */
 int msgstatus = 0;		/* return the mail status */
 int distlist = 0;		/* include distribution list */
 char mailbox[PATHLEN];		/* user's mailbox/maildrop */
-char tempname[PATHLEN] = "/tmp/mailXXXXXX";	/* temporary file */
+char tempname[] = "/tmp/mailXXXXXX";	/* temporary file */
 char *subject = NULL;
 FILE *boxfp = NULL;		/* mailbox file */
 jmp_buf printjump;		/* for quitting out of letters */

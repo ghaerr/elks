@@ -30,7 +30,7 @@ unsigned char * noinstrument sym_read_exe_symbols(char *path)
 {
     int fd;
     unsigned char *s;
-    char fullpath[128];
+    char fullpath[PATH_MAX];
 
     if (syms) return syms;
     if ((fd = open(path, O_RDONLY)) < 0) {

@@ -35,12 +35,13 @@
 #include <errno.h>
 #include <time.h>
 #include <paths.h>
+#include <limits.h>
 
 #define USE_UTMP	0	/* =1 to use /var/run/utmp*/
 #define DEBUG		0	/* =1 for debug messages*/
 
 /* debug and sysinit/respawn sh -e output goes here*/
-#define CONSOLE       "/dev/console"
+#define CONSOLE       _PATH_CONSOLE
 
 #if !DEBUG
 #define debug(...)
@@ -267,7 +268,7 @@ void removeChild(struct tabentry *pos)
 pid_t respawn(const char **a)
 {
     int pid;
-    char *argv[5], buf[128];
+    char *argv[5], buf[PATH_MAX];
     int fd;
     char *devtty;
 

@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 #include "linenoise.h"
 #include "output.h"
 
@@ -20,7 +21,7 @@ void completion(const char *buf, linenoiseCompletions *lc)
 	DIR *fp;
 	struct dirent *dp;
 	int count;
-	char dir[128];
+	char dir[PATH_MAX];  /* larger than NAME_MAX since this is user-supplied */
 	char line[LINENOISE_MAX_LINE];
 	char result[LINENOISE_MAX_LINE];
 	char lastentry[LINENOISE_MAX_LINE];
@@ -69,7 +70,7 @@ void completion(const char *buf, linenoiseCompletions *lc)
 		return;
 	if (count == 1) {
 		struct stat st;
-		char path[128];
+		char path[PATH_MAX];
 
 		fmtstr(path, sizeof(path), "%s/%s", dir, lastentry);
 		if (!stat(path, &st)) {
@@ -89,7 +90,7 @@ void completion(const char *buf, linenoiseCompletions *lc)
 	while ((dp = readdir(fp)) != NULL) {
 		if (!strncmp(file, dp->d_name, strlen(file))) {
 			struct stat st;
-			char path[128];
+			char path[PATH_MAX];
 
 			if ((file[0] == '.') || (strcmp(dp->d_name, ".") && strcmp(dp->d_name, ".."))) {
 				strcpy(result, buf);

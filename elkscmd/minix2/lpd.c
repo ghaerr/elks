@@ -272,7 +272,7 @@ void work(void) {
 
 /* Print all the jobs in the job list. */
 
-    char file[257], *pf=file;
+    char file[PATH_MAX], *pf=file;
     struct job *job;
     FILE *j, *f;
     int c;

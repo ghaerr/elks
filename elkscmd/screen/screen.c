@@ -30,13 +30,13 @@ static char ScreenVersion[] = "screen 2.0a.2 (ELKS) 30-Apr-2020";
 #include <signal.h>
 #include <errno.h>
 #include <termcap.h>
+#include <limits.h>
 
 #ifdef ELKS 
 #include <termios.h>
 #include <linuxmt/un.h>
 #include <string.h>
 #include <unistd.h>
-#define OPEN_MAX	20      /* NR_OPEN from include/fs.h */
 #define	SIGTTOU         27	/* background tty write attempted */
 #else
 #include <sgtty.h>

@@ -62,7 +62,6 @@ static char sccsid[] = "@(#)redir.c	5.1 (Berkeley) 3/7/91";
 
 
 #define EMPTY -2		/* marks an unused slot in redirtab */
-#define PIPESIZE 4096		/* amount of buffering in a pipe */
 
 
 MKINIT
@@ -232,7 +231,7 @@ openhere(redir)
 		error("Pipe call failed");
 	if (redir->type == NHERE) {
 		len = strlen(redir->nhere.doc->narg.text);
-		if (len <= PIPESIZE) {
+		if (len <= PIPE_BUF) {
 			xwrite(pip[1], redir->nhere.doc->narg.text, len);
 			goto out;
 		}

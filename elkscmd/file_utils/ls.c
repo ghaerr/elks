@@ -46,6 +46,7 @@
 #include <string.h>
 #include <grp.h>
 #include <time.h>
+#include <limits.h>
 
 /* klugde */
 #define COLS 80
@@ -144,7 +145,7 @@ static int getfiles(char *name, struct stack *pstack, int flags)
     int addslash;
     DIR *dirp;
     struct dirent *dp;
-    char fullname[PATHLEN];
+    char fullname[PATH_MAX];
     int pathlen = strlen(name);
 
     addslash = name[pathlen - 1] != '/';
@@ -211,7 +212,7 @@ static void lsfile(char *name, struct stat *statbuf, int flags)
     char		*pp;
     static char		username[12];
     static char		groupname[12];
-    char		buf[PATHLEN];
+    char		buf[PATH_MAX];
     struct stat		sbuf;
 
     cp = buf;
@@ -306,7 +307,7 @@ static void lsfile(char *name, struct stat *statbuf, int flags)
 
 #ifdef S_ISLNK
     if ((flags & LSF_LONG) && S_ISLNK(statbuf->st_mode)) {
-        len = readlink(name, buf, PATHLEN - 1);
+        len = readlink(name, buf, PATH_MAX - 1);
         if (len >= 0) {
             buf[len] = '\0';
             printf(" -> %s", buf);

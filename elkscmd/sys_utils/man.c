@@ -32,9 +32,10 @@
 #endif
 #include <ctype.h>
 #include <string.h>
+#include <limits.h>
 
-#ifdef __ia16__			/* ELKS */
 #include <paths.h>
+#ifdef __ia16__			/* ELKS */
 #define MORE			"more"
 #else					/* Host */
 #define MORE			"less -R"
@@ -86,7 +87,7 @@ char line_header[256] = "";	/* Page header line */
 char line_footer[256] = "";	/* Page footer line */
 char little_header[256] = "";	/* Mini header for tty mode */
 
-char man_file[256] = "";
+char man_file[PATH_MAX] = "";
 
 int flg_w = 0;
 int verbose = 1;
@@ -117,7 +118,7 @@ static char defsect[] = "1:2:3:4:5:6:7:8:9";
 static char defsuff[] = ":.Z";
 static char manorcat[] = "man:cat";
 
-   char fbuf[256];
+   char fbuf[PATH_MAX];
    char *manpath;
    char *mansect = sect;
    char *mansuff;
@@ -194,7 +195,7 @@ void step(char **pcurr, char **pnext)
 int open_page(char * name)
 {
    char *p, *command = 0;
-   char buf[256];
+   char buf[PATH_MAX];
 
    if (access(name, 0) < 0) return -1;
 
