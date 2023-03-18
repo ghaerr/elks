@@ -115,8 +115,8 @@ ssize_t getline(char **__restrict lineptr, size_t *__restrict n,
 		FILE *__restrict stream);
 
 FILE *fopen(const char*, const char*);
-FILE *fdopen(int, char*);
-FILE *freopen(char*, char*, FILE*);
+FILE *fdopen(int, const char*);
+FILE *freopen(const char*, const char*, FILE*);
 
 #ifdef __LIBC__
 FILE *__fopen(const char*, int, FILE*, const char*);
@@ -129,7 +129,7 @@ size_t fread(void *, size_t, size_t, FILE *);
 int fseek(FILE *fp, long offset, int ref);
 long ftell(FILE *fp);
 void rewind(FILE *fp);
-int fwrite(char *buf, int size, int nelm, FILE *fp);
+int fwrite(const char *buf, int size, int nelm, FILE *fp);
 char * gets(char *str);	/* BAD function; DON'T use it! */
 
 int fscanf(FILE * fp, const char * fmt, ...);
@@ -164,7 +164,7 @@ int vfscanf(register FILE *fp, register char *fmt, va_list ap);
 int vscanf(const char *fmt, va_list ap);
 int vsscanf(char *sp, const char *fmt, va_list ap);
 
-FILE *popen(char *, char *);
+FILE *popen(const char *, const char *);
 int pclose(FILE *);
 
 #endif /* __STDIO_H */

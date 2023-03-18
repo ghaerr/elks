@@ -45,7 +45,7 @@ ssize_t getdelim(char **__restrict lineptr, size_t *__restrict n,
 		pos = 1;
 
 		do {
-			if (pos >= *n) {
+			if ((size_t)pos >= *n) {
 				if (!(buf = realloc(buf, *n + GETDELIM_GROWBY))) {
 					pos = -1;
 					break;

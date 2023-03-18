@@ -13,47 +13,45 @@
  */
 size_t fread(void *buf, size_t size, size_t nelm, FILE *fp)
 {
-   int len, v;
-   size_t bytes, got = 0;
-   __LINK_SYMBOL(__stdio_init);
+    int v;
+    ssize_t len;
+    size_t bytes, got = 0;
+    __LINK_SYMBOL(__stdio_init);
 
-   v = fp->mode;
+    v = fp->mode;
 
-   /* Want to do this to bring the file pointer up to date */
-   if (v & __MODE_WRITING)
-      fflush(fp);
+    /* Want to do this to bring the file pointer up to date */
+    if (v & __MODE_WRITING)
+        fflush(fp);
 
-   /* Can't read or there's been an EOF or error then return zero */
-   if ((v & (__MODE_READ | __MODE_EOF | __MODE_ERR)) != __MODE_READ)
-      return 0;
+    /* Can't read or there's been an EOF or error then return zero */
+    if ((v & (__MODE_READ | __MODE_EOF | __MODE_ERR)) != __MODE_READ)
+        return 0;
 
-   /* This could be long, doesn't seem much point tho */
-   bytes = size * nelm;
+    /* This could be long, doesn't seem much point tho */
+    bytes = size * nelm;
 
-   len = fp->bufread - fp->bufpos;
-   if (len >= bytes)		/* Enough buffered */
-   {
-      memcpy(buf, fp->bufpos, bytes);
-      fp->bufpos += bytes;
-      return nelm;
-   }
-   else if (len > 0)		/* Some buffered */
-   {
-      memcpy(buf, fp->bufpos, len);
-      fp->bufpos += len;
-      got = len;
-   }
+    len = fp->bufread - fp->bufpos;
+    if ((size_t)len >= bytes) {
+        /* Enough buffered */
+        memcpy(buf, fp->bufpos, bytes);
+        fp->bufpos += bytes;
+        return nelm;
+    } else if (len > 0) {
+        /* Some buffered */
+        memcpy(buf, fp->bufpos, len);
+        fp->bufpos += len;
+        got = len;
+    }
 
-   /* Need more; do it with a direct read */
-   len = read(fp->fd, (char *)buf + got, bytes - got);
-   /* Possibly for now _or_ later */
-   if (len < 0)
-   {
-      fp->mode |= __MODE_ERR;
-      len = 0;
-   }
-   else if (len == 0)
-      fp->mode |= __MODE_EOF;
+    /* Need more; do it with a direct read */
+    len = read(fp->fd, (char *)buf + got, bytes - got);
+    /* Possibly for now _or_ later */
+    if (len < 0) {
+        fp->mode |= __MODE_ERR;
+        len = 0;
+    } else if (len == 0)
+        fp->mode |= __MODE_EOF;
 
-   return (got + len) / size;
+    return (got + len) / size;
 }
