@@ -17,7 +17,6 @@
 
 
 #define	LISTSIZE	256
-#define PATHLEN		256
 
 
 #ifndef __P
@@ -55,7 +54,7 @@ l_main(argc, argv)
 	int		endslash;
 	char		**newlist;
 	struct	dirent	*dp;
-	char		fullname[PATHLEN];
+	char		fullname[PATH_MAX];
 	struct	stat	statbuf;
 	static		char *def[2] = {"-ls", "."};
 

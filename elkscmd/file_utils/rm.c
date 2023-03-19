@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <fcntl.h>
+#include <limits.h>
 
 static 	int	errcode;
 
@@ -40,7 +41,7 @@ void rm(char *arg, int fflg, int rflg, int iflg, int level) {
         struct stat buf;
         struct dirent *dp;
         DIR *dirp;
-        char name[128];
+        char name[PATH_MAX];
 
         if(lstat(arg, &buf)) {
                 if (fflg==0) {

@@ -114,7 +114,7 @@ static void getfiles(char *name, struct stack *pstack, int flags)
     int endslash, valid;
     DIR *dirp;
     struct dirent *dp;
-    char fullname[PATHLEN];
+    char fullname[PATH_MAX];
 
     endslash = name[strlen(name)-1] == '/';
 
@@ -157,7 +157,7 @@ static void lsfile(char *name, struct stat *statbuf, int flags)
     struct passwd	*pwd;
     struct group	*grp;
     long		len;
-    char		buf[PATHLEN];
+    char		buf[PATH_MAX];
     static char		username[12];
     static int		userid;
     static int		useridknown;
@@ -248,7 +248,7 @@ static void lsfile(char *name, struct stat *statbuf, int flags)
 
 #ifdef S_ISLNK
     if ((flags & LSF_LONG) && S_ISLNK(statbuf->st_mode)) {
-	len = readlink(name, buf, PATHLEN - 1);
+	len = readlink(name, buf, PATH_MAX - 1);
 	if (len >= 0) {
 	    buf[len] = '\0';
 	    printf(" -> %s", buf);

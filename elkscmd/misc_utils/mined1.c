@@ -1808,7 +1808,7 @@ int input(char *inbuf, FLAG clearfl)
 
 /*
  * Get_file() reads a filename from the terminal. Filenames longer than 
- * FILE_LENGHT chars are truncated.
+ * NAME_MAX chars are truncated.
  */
 int get_file(char *message, char *file)
 {

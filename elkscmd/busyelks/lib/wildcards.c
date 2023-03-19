@@ -33,7 +33,7 @@ int expandwildcards(char *name, int maxargc, char **retargv)
 	struct	dirent	*dp;
 	int	dirlen;
 	int	matches;
-	char	dirname[PATHLEN];
+	char	dirname[PATH_MAX];
 
 	last = strrchr(name, '/');
 	if (last) last++;

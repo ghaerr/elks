@@ -3,6 +3,7 @@
 #include <sys/stat.h>
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 #include "futils.h"
 
 static unsigned short newmode;
@@ -10,7 +11,7 @@ static unsigned short newmode;
 static int make_dir(char *name, int f)
 {
 	char *line;
-	char iname[80];
+	char iname[PATH_MAX];
 	
 	strcpy(iname, name);
 	if (((line = rindex(iname,'/')) != NULL) && f) {

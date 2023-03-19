@@ -21,6 +21,7 @@
 #include <utime.h>
 #include <errno.h>
 #include <dirent.h>
+#include <limits.h>
 
 #define BUF_SIZE	BUFSIZ		/* use disk block size for stack limit and efficiency*/
 
@@ -347,7 +348,7 @@ static int do_copies(void)
 			err |= do_mknod(inode_build->path, destdir(inode_build->path), flags,
 				inode_build->dev >> MAJOR_SHIFT, inode_build->dev & 0xff);
 		} else if (flags == S_IFLNK) {
-			char lnkname[256];
+			char lnkname[PATH_MAX];
 
 			int cnt = readlink(inode_build->path, lnkname, sizeof(lnkname) - 1);
 			if (cnt < 0) {
@@ -366,7 +367,7 @@ static int do_copies(void)
 
 char *destdir(char *file)
 {
-	static char dir[256];
+	static char dir[PATH_MAX];
 
 	strcpy(dir, destination_dir);
 	if (file[prefix] != '/')
@@ -499,7 +500,7 @@ int copy_directory(char *source_dir, char *dest_dir)
 char *buildname(char *dirname, char *filename)
 {
 	char		*cp;
-	static	char	buf[256];
+	static	char	buf[PATH_MAX];
 
 	if ((dirname == NULL) || (*dirname == '\0'))
 		return filename;

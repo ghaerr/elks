@@ -25,13 +25,13 @@ The file descriptors returned can
 be used in read and write operations.
 When the pipe is written using the descriptor
 .IR fildes [1]
-up to PIPE_MAX bytes of data are buffered
+up to PIPE_BUF bytes of data are buffered
 before the writing process is suspended.
 A read using the descriptor
 .IR fildes [0]
 will pick up the data.
 .PP
-PIPE_MAX equals 7168 under MINIX 3, but note that most systems use 4096.
+PIPE_BUF equals 80 under ELKS, but note that most systems use 4096.
 .PP
 It is assumed that after the
 pipe has been set up,
@@ -85,5 +85,5 @@ space.
 Writes may return ENOSPC errors if no pipe data can be buffered, because
 the pipe file system is full.
 .SH BUGS
-Should more than PIPE_MAX bytes be necessary in any
+Should more than PIPE_BUF bytes be necessary in any
 pipe among a loop of processes, deadlock will occur.

@@ -326,11 +326,9 @@ pwdcmd(argc, argv)  char **argv; {
  * directory, this routine returns immediately.
  */
 
-#define MAXPWD 256
-
 STATIC void
 getpwd() {
-	char buf[MAXPWD];
+	char buf[PATH_MAX];
 	char *p;
 	int i;
 	int status;
@@ -356,7 +354,7 @@ getpwd() {
 	close(pip[1]);
 	pip[1] = -1;
 	p = buf;
-	while ((i = read(pip[0], p, buf + MAXPWD - p)) > 0
+	while ((i = read(pip[0], p, buf + PATH_MAX - p)) > 0
 	     || i == -1 && errno == EINTR) {
 		if (i > 0)
 			p += i;

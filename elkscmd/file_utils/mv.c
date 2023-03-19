@@ -17,6 +17,7 @@
 #include <utime.h>
 #include <errno.h>
 #include <dirent.h>
+#include <limits.h>
 #include "futils.h"
 
 #define BUF_SIZE 1024 
@@ -44,7 +45,7 @@ int isadir(char *name)
 char *buildname(char *dirname, char *filename)
 {
 	char		*cp;
-	static	char	buf[PATHLEN];
+	static	char	buf[PATH_MAX];
 
 	if ((dirname == NULL) || (*dirname == '\0'))
 		return filename;
@@ -69,7 +70,7 @@ int linkfiles(char *srcdir, char *destdir)
 	DIR *dirp;
 	struct dirent *dp;
 	char *newsrc;
-	char newdest[PATHLEN];
+	char newdest[PATH_MAX];
 
 	dirp = opendir(srcdir);
 	if (!dirp) {
@@ -239,8 +240,8 @@ int main(int argc, char **argv)
 
 		/* handle renaming symlinks*/
 		if (lstat(srcname, &sbuf) >= 0 && S_ISLNK(sbuf.st_mode)) {
-			char buf[PATHLEN];
-			int len = readlink(srcname, buf, PATHLEN - 1);
+			char buf[PATH_MAX];
+			int len = readlink(srcname, buf, PATH_MAX - 1);
 			if (len < 0) {
 				perror(srcname);
 				continue;
@@ -280,7 +281,7 @@ int main(int argc, char **argv)
 
 			/* handle broken kernel directory rename (issue #583)*/
 			/*if (isadir(srcname)) {*/
-			char destdir[PATHLEN];
+			char destdir[PATH_MAX];
 
 			if (mkdir(destname, 0777 & ~umask(0))) {
 				perror(destname);

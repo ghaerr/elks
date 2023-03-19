@@ -29,8 +29,7 @@
 /*#define USE_UTMP*/	/* Disabled until we fix the "utmp file currupt" */
 			/* issue. 17/4/2002 Harry Kalogirou */
 			
-#define PATHLEN 256
-#define STR_SIZE (PATHLEN + 7)
+#define STR_SIZE (PATH_MAX + 7)
 
 char ** environ;
 

@@ -37,7 +37,6 @@ extern char *pos_string;	/* Absolute cursor positioning */
 #define SHIFT_SIZE	25		/* Number of chars to shift */
 #define SHIFT_MARK	'!'		/* Char indicating line continues */
 #define MAX_CHARS	1024		/* Maximum chars on one line */
-#define NAME_MAX	128
 
 /* LINE_START must be rounded up to the lowest SHIFT_SIZE */
 #define LINE_START	(((-MAX_CHARS - 1) / SHIFT_SIZE) * SHIFT_SIZE \

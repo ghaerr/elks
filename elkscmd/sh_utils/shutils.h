@@ -12,7 +12,6 @@
 #include <malloc.h>
 #include <ctype.h>
 
-#define	PATHLEN		256	
 #define	CMDLEN		512	
 #define	MAXARGS		500	
 #define	ALIASALLOC	20
