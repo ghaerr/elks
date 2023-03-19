@@ -233,7 +233,7 @@ would have resulted in a deadlock situation.
 A component of a path name exceeded 
 .Pq Dv NAME_MAX
 characters, or an entire
-path name exceeded 255
+path name exceeded
 .Pq Dv PATH_MAX 
 characters.
 .It Er 37 ENOLCK Em "No locks available" .
@@ -488,7 +488,7 @@ optional slash
 .Ql \&/ ,
 followed by zero or more directory names separated
 by slashes, optionally followed by a file name.
-The total length of a path name must be less than 255
+The total length of a path name must be less than
 .Pq Dv PATH_MAX
 characters.
 .Pp
