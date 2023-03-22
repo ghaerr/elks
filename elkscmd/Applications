@@ -178,7 +178,7 @@ inet/telnetd/telnetd			:net
 inet/httpd/httpd				:net
 inet/ftp/ftp					:net
 inet/ftp/ftpd					:net
-#inet/tinyirc/tinyirc			:net
+inet/tinyirc/tinyirc			:other
 inet/urlget/urlget				:net
 inet/urlget/urlget :::ftpget	:net
 inet/urlget/urlget :::ftpput	:net
