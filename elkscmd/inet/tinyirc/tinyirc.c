@@ -511,7 +511,8 @@ int parsedata()
     int i, found = 0;
 
     if (serverdata[0] == 'P') {
-	sprintf(lineout, "PONG :%s\n", IRCNAME);
+	memcpy(lineout, serverdata, sizeof(serverdata));
+	lineout[1] = 'O';
 	return sendline();
     }
     if (!dumb)
