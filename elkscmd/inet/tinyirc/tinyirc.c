@@ -76,7 +76,7 @@ unsigned short IRCPORT = DEFAULTPORT;
 int my_tcp, sok = 1, my_tty, hline, dumb = 0, CO, LI, column;
 char *tmp, *linein, *CM, *CS, *CE, *SO, *SE, *DC, *ptr, *term, *fromhost,
 *TOK[20], IRCNAME[32], IRCLOGIN[64], IRCGECOS[64], inputbuf[512], ib[IB_SIZE],
- serverdata[512], ch, *bp[1024], lineout[512], *hist[HISTLEN], termcap[1024];
+ serverdata[512], ch, bp[1024], lineout[512], *hist[HISTLEN], termcap[1024];
 int cursd = 0, curli = 0, curx = 0, noinput = 0, reconnect = 1;
 fd_set readfs;
 struct timeval timeout;
@@ -246,8 +246,7 @@ static int doerror()
 }
 static int doinvite()
 {
-    printf("*** %s (%s) invites you to join %s.",
-	   TOK[0], fromhost, &TOK[3]);
+    printf("*** %s (%s) invites you to join %s.", TOK[0], fromhost, TOK[3]);
     return 0;
 }
 static int dojoin()
