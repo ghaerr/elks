@@ -45,7 +45,7 @@ void lp(char *file)
 	if (status != 0) exit(1);
 }
 
-char path[257];
+char path[PATH_MAX];
 int cwdsize;
 
 int main(int argc, char **argp)

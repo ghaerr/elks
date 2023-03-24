@@ -17,7 +17,6 @@
 
 
 #define	LISTSIZE	256
-#define PATHLEN		256
 
 
 #ifndef __P
@@ -59,7 +58,7 @@ void lsfile(char *cp)
 char *buildname(char *dirname, char *filename)
 {
 	char		*cp;
-	static	char	buf[PATHLEN];
+	static	char	buf[PATH_MAX];
 
 	if ((dirname == NULL) || (*dirname == '\0'))
 		return filename;
@@ -95,7 +94,7 @@ int main(int argc, char **argv)
 	int		endslash;
 	char		**newlist;
 	struct	dirent	*dp;
-	char		fullname[PATHLEN];
+	char		fullname[PATH_MAX];
 	struct	stat	statbuf;
 	static		char *def[2] = {"-ls", "."};
 

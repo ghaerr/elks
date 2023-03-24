@@ -557,7 +557,7 @@ static int hnum;		/* start value for column numbering	*/
 static int inpfd = -1;		/* descriptor of the input file		*/
 static int tmpfd = -1;		/* descriptor of the temporary file	*/
 static int auxfd = -1;		/* descriptor of the auxiliary file	*/
-static char inpfname[256];	/* path name of the input file		*/
+static char inpfname[PATH_MAX];	/* path name of the input file		*/
 static char tmpfname[19];	/* path name of the temporary file	*/
 static char auxfname[19];	/* path name of the auxiliary file	*/
 static int x,y;			/* physical cursor coordinates		*/

@@ -18,6 +18,7 @@
 #include <grp.h>
 #include <utime.h>
 #include <errno.h>
+#include <limits.h>
 #include "futils.h"
 
 /*
@@ -42,8 +43,7 @@ int isadir(const char *name)
 char *buildname(const char * const dirname, char *filename)
 {
 	char *cp;
-	static char buf[PATHLEN];
-
+	static char buf[PATH_MAX];
 
 	if ((dirname == NULL) || (*dirname == '\0')) return filename;
 

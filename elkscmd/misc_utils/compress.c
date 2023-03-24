@@ -158,6 +158,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <limits.h>
 #ifdef __GNUC__
 #include <string.h>
 #include <stdlib.h>
@@ -209,8 +210,7 @@ static char ident[] = "(N)compress 4.2.4";
 #  define OBUFSIZ BUFSIZ	/* Default output buffer size	*/
 #endif
 
-/* [ELKS] CM: use PATHLEN from mutils.h */
-#define MAXPATHLEN PATHLEN	/* MAXPATHLEN - maximum length of a	*/
+#define MAXPATHLEN PATH_MAX	/* MAXPATHLEN - maximum length of a	*/
 				/*  pathname we allow 			*/
 #define	SIZE_INNER_LOOP	256	/* Size of the inter (fast) compress loop */
 
