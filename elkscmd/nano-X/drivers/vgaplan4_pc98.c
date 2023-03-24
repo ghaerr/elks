@@ -57,18 +57,29 @@ ega_init(PSD psd)
 void
 ega_drawpixel(PSD psd,unsigned int x, unsigned int y, PIXELVAL c)
 {
+	FARADDR dst;
 	int		plane;
 	assert (x >= 0 && x < psd->xres);
 	assert (y >= 0 && y < psd->yres);
 	assert (c >= 0 && c < psd->ncolors);
 
 	DRAWON;
-	for(plane=0; plane<4; ++plane) {
-		if  (c & (1 << plane)) {
-			ORBYTE_FP (screenbase_table[plane] + x / 8 + y * BYTESPERLINE,mask[x&7]);
+	if(gr_mode == MODE_XOR) {
+		for(plane=0; plane<4; ++plane) {
+			dst = screenbase_table[plane] + x / 8 + y * BYTESPERLINE;
+			if  (c & (1 << plane)) {
+				PUTBYTE_FP(dst,(GETBYTE_FP(dst) ^ mask[x&7]));
+			}
 		}
-		else {
-			ANDBYTE_FP (screenbase_table[plane] + x / 8 + y * BYTESPERLINE,~mask[x&7]);
+	} else {
+		for(plane=0; plane<4; ++plane) {
+			dst = screenbase_table[plane] + x / 8 + y * BYTESPERLINE;
+			if  (c & (1 << plane)) {
+				ORBYTE_FP (dst,mask[x&7]);
+			}
+			else {
+				ANDBYTE_FP (dst,~mask[x&7]);
+			}
 		}
 	}
 	DRAWOFF;
