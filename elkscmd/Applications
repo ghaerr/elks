@@ -206,5 +206,6 @@ nano-X/bin/nxlandmine			:nanox				:1200k
 nano-X/bin/nxterm				:nanox
 nano-X/bin/nxworld				:nanox
 nano-X/bin/nxworld.map	::lib/nxworld.map	:nanox
+basic/basic						:basic              :1200k
 advent/advent					:other
 advent/advent.db	::lib/advent.db	:other
