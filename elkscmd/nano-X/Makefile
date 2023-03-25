@@ -24,7 +24,8 @@ NANOXDEMOS += bin/nxdemo
 # SLOW_CPU discards unprocessed mouse input for slow systems
 LOCALFLAGS += -DSLOW_CPU=1
 ifeq ($(CONFIG_ARCH_PC98), y)
-DRIVERS += drivers/mou_null.o
+#DRIVERS += drivers/mou_null.o
+DRIVERS += drivers/mou_pc98.o
 else
 DRIVERS += drivers/mou_ser.o
 endif
