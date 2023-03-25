@@ -6,6 +6,7 @@
  *
  * Main module of graphics server.
  */
+#include <autoconf.h>           /* for CONFIG_ options */
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -173,6 +174,13 @@ GsSelect(GR_TIMEOUT timeout)
 	int	setsize = 0;
 	struct timeval to;
 
+#if CONFIG_ARCH_PC98
+	if (mousedev.Poll()) {
+		GsCheckMouseEvent();
+		return;
+	}
+#endif
+
 	/* Set up the FDs for use in the main select(): */
 	FD_ZERO(&rfds);
 	if (mouse_fd >= 0) FD_SET(mouse_fd, &rfds);
@@ -204,6 +212,10 @@ GsSelect(GR_TIMEOUT timeout)
 	++setsize;
 
     /* convert wait timeout to timeval struct*/
+#if CONFIG_ARCH_PC98
+    if (timeout == GR_TIMEOUT_BLOCK)
+        timeout = 10;
+#endif
     if (timeout == GR_TIMEOUT_POLL) {
         to.tv_sec = 0;
         to.tv_usec = 0;
