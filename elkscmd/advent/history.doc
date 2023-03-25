@@ -83,3 +83,7 @@ HISTORY FILE FOR ADVENTURE IN C
  This allows us to run it on Fuzix although it is a bit tight at the moment
  and more optimisation is needed as is removing the rigid 80 column formatting
 
+ 24 March 2023		Greg Haerr >greg@censoft.com>
+--------------
+
+ (1)  Ported to ELKS from FUZIX
