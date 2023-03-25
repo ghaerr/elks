@@ -312,7 +312,8 @@ void msdos_read_inode(register struct inode *inode)
 		return;
 	}
 #ifdef CONFIG_FS_DEV
-	else if (inode->i_ino < DEVINO_BASE + DEVDIR_SIZE) {
+	else if (MSDOS_SB(inode->i_sb)->dev_ino
+                 && inode->i_ino < DEVINO_BASE + DEVDIR_SIZE) {
 		inode->i_mode = devnods[(int)inode->i_ino - DEVINO_BASE].mode;
 		inode->i_uid  = 0;
 		inode->i_size = 0;
