@@ -80,6 +80,7 @@ static void squash_stat(struct stat *s, int bx)
 static int elks_exit(int bx,int cx,int dx,int di,int si)
 {
 	dbprintf(("exit(%d)\n",bx));
+	kill(elks_cpu.child, SIGKILL);
 	exit(bx);
 }
 
