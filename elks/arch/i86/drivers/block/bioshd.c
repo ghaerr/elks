@@ -402,16 +402,14 @@ static unsigned short int INITPROC bioshd_getfdinfo(void)
 	}
     }
 #else
-    /* Use INT 13h function 08h normally if PC/AT or higher*/
-    if (sys_caps & CAP_DRIVE_PARMS) {
-	BD_AX = BIOSHD_DRIVE_PARMS;
-	BD_DX = 0;			/* query floppies only*/
-	BD_ES = BD_DI = BD_SI = 0;	/* guard against BIOS bugs*/
-	if (!call_bios(&bdt))
-	    ndrives = BD_DX & 0xff;	/* floppy drive count*/
-	else
-	    debug_bios("bioshd: get_drive_parms fail on fd\n");
-    }
+    /* Floppy query may fail if not PC/AT */
+    BD_AX = BIOSHD_DRIVE_PARMS;
+    BD_DX = 0;                  /* query floppies only*/
+    BD_ES = BD_DI = BD_SI = 0;	/* guard against BIOS bugs*/
+    if (!call_bios(&bdt))
+        ndrives = BD_DX & 0xff;	/* floppy drive count*/
+    else
+        printk("fd: no bios get drives, ndrives %d\n", ndrives);
 
     /* set drive type for floppies*/
     for (drive = 0; drive < ndrives; drive++) {
@@ -419,19 +417,14 @@ static unsigned short int INITPROC bioshd_getfdinfo(void)
 	 * If type cannot be determined using BIOSHD_DRIVE_PARMS,
 	 * set drive type to 1.4MM on AT systems, and 360K for XT.
 	 */
-	*drivep = fd_types[(sys_caps & CAP_PC_AT) ? 3 : 0];
-
-	if (sys_caps & CAP_DRIVE_PARMS) {
-	    BD_AX = BIOSHD_DRIVE_PARMS;
-	    BD_DX = drive;
-	    BD_ES = BD_DI = BD_SI = 0;	/* guard against BIOS bugs*/
-	    if (!call_bios(&bdt)) {
-		/* Drive type in BL */
-		*drivep = fd_types[(BD_BX & 0xFF) - 1];
-	    }
-	}
-
-	drivep++;
+        BD_AX = BIOSHD_DRIVE_PARMS;
+        BD_DX = drive;
+        BD_ES = BD_DI = BD_SI = 0;      /* guard against BIOS bugs*/
+        if (!call_bios(&bdt))           /* returns drive type in BL*/
+            *drivep = fd_types[(BD_BX & 0xFF) - 1];
+        else
+            *drivep = fd_types[(sys_caps & CAP_PC_AT) ? 3 : 0];
+        drivep++;
     }
 #endif
     return ndrives;

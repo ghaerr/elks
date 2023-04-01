@@ -28,7 +28,7 @@
 #define SETUP_PART_OFFSETLO	setupw(0x1e2)	/* partition offset low word */
 #define SETUP_PART_OFFSETHI	setupw(0x1e4)	/* partition offset high word */
 #ifdef CONFIG_ROMCODE
-#define SYS_CAPS	(CAP_PC_AT|CAP_DRIVE_PARMS)
+#define SYS_CAPS	(CAP_PC_AT)
 #endif
 #define UTS_MACHINE		"ibmpc i8086"
 
@@ -82,7 +82,6 @@
  * except when SYS_CAPS is defined for custom installations or emulations.
  */
 #define CAP_PC_AT       (CAP_IRQ8TO15|CAP_IRQ2MAP9)      /* PC/AT capabilities */
-#define CAP_DRIVE_PARMS	0x02      /* has INT 13h fn 8 drive parms */
 #define CAP_KBD_LEDS    0x04      /* has keyboard LEDs */
 #define CAP_HD_IDE      0x08      /* can do hard drive IDE probes */
 #define CAP_IRQ8TO15    0x10      /* has IRQ 8 through 15 */

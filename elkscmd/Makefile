@@ -18,6 +18,7 @@ include $(BASEDIR)/Make.defs
 # unused commands but working compilations: mtools nano prems
 SUBDIRS =       \
 	lib         \
+	advent      \
 	ash         \
 	basic       \
 	bc          \
