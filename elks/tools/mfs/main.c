@@ -121,7 +121,7 @@ void do_cmd(struct minix_fs_dat *fs,int argc,char **argv) {
   if (!strcmp(argv[0],"ls")) {
     cmd_ls(fs,argc,argv);
   } else if (!strcmp(argv[0],"mkdir")) {
-    cmd_mkdir(fs,argc,argv);
+    cmd_mkdir(fs,argc,argv, 0755);
   } else if (!strcmp(argv[0],"rmdir")) {
     cmd_rmdir(fs,argc,argv);
   } else if (!strcmp(argv[0],"rm")) {
