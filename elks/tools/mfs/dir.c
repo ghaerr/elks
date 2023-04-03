@@ -238,9 +238,9 @@ int dostat_inode(struct minix_fs_dat *fs, int inode) {
  * @param fs - filesystem structure
  * @param newdir - directory name
  */
-int domkdir(struct minix_fs_dat *fs,char *newdir) {
+int domkdir(struct minix_fs_dat *fs,char *newdir, int mode) {
   int dinode;
-  int ninode = make_node(fs,newdir,0755|S_IFDIR,dogetuid(),dogetgid(), 0,
+  int ninode = make_node(fs,newdir,mode|S_IFDIR,dogetuid(),dogetgid(), 0,
   			NOW,NOW,NOW,&dinode);
   dname_add(fs,ninode,".",ninode);
   dname_add(fs,ninode,"..",dinode);
@@ -260,10 +260,10 @@ int domkdir(struct minix_fs_dat *fs,char *newdir) {
  * @param argc - from command line
  * @param argv - from command line
  */
-void cmd_mkdir(struct minix_fs_dat *fs,int argc,char **argv) {
+void cmd_mkdir(struct minix_fs_dat *fs,int argc,char **argv, int mode) {
   int i;
   for (i=1;i<argc;i++) {
-    domkdir(fs,argv[i]);
+    domkdir(fs,argv[i], mode);
   }
 }
 

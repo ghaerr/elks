@@ -1,6 +1,8 @@
 export PATH=/bin
 PS1="$HOSTNAME$PS1"
 umask 022
+#FAT permissions fix
+#if test "$USER" = "root"; then chmod 777 /tmp; fi
 #uname -v
 #export MANPATH=/root/man:/lib
 #TZ=GMT0
