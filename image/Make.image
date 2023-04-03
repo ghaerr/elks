@@ -45,6 +45,7 @@ copyrom: romfs
 template:
 	-rm -rf $(DESTDIR)
 	cp -a $(TEMPLATE_DIR) $(DESTDIR)
+	-chmod 777 $(DESTDIR)/tmp
 	find $(DESTDIR) -name .keep -delete
 	$(MAKE) -C $(ELKSCMD_DIR) -f Make.install install "CONFIG=$(CONFIG)"
 ifdef CONFIG_APPS_COMPRESS
