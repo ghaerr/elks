@@ -383,12 +383,14 @@ compile_fs(struct minix_fs_dat *fs)
 			u16_t flags = inode_build->flags;
 
 			if (flags == S_IFDIR) {
+                struct stat sb;
 				if (*(prefix+inode_build->path) == 0) continue; /* skip template dir*/
 				if (opt_verbose) printf("mkdir %s\n", prefix+inode_build->path);
+                if (stat(inode_build->path, &sb)) die("stat(%s)",inode_build->path);
 				av[0] = "mkdir";
 				av[1] = prefix+inode_build->path;
 				av[2] = 0;
-				cmd_mkdir(fs, 2, av);
+				cmd_mkdir(fs, 2, av, sb.st_mode & 0777);
 			} else if (flags == S_IFREG) {
 				if (opt_nocopyzero && !inode_build->blocks) {
 					char *p = strrchr(inode_build->path, '/');
