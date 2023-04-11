@@ -5,7 +5,7 @@
 
 #if defined(CONFIG_KEYMAP_ES)
 
-/* Spanish Keyboard add by Nacho Martin. imartin@cie.uva.es */
+/* Spanish Keyboard add by Nacho Martin. imartin@cie.uva.es and updated by Javier Sedano */
 
 static unsigned char xtkb_scan[84] = {
     0, 033, '1', '2', '3', '4', '5', '6',           /* 00-07*/
