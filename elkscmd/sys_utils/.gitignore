@@ -10,6 +10,7 @@ login
 makeboot
 man
 meminfo
+min_init
 mouse
 mount
 passwd
