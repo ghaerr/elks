@@ -139,28 +139,31 @@ void seg_free (segment_s * seg)
 	//     chance on next allocation of same size
 
 	list_s * i = &_seg_free;
+	seg->flags = SEG_FLAG_FREE;
+	seg->pid = 0;
 
 	// Try to merge with previous segment if free
 	list_s * p = seg->all.prev;
-	segment_s * prev = structof (p, segment_s, all);
-	if ((prev->flags == SEG_FLAG_FREE) && (prev->base + prev->size == seg->base)) {
-		list_remove (&(prev->free));
-		seg_merge (prev, seg);
-		i = _seg_free.prev;
-		seg = prev;
-	} else {
-		seg->flags = SEG_FLAG_FREE;
-		seg->pid = 0;
+	if (&_seg_all != p) {
+		segment_s * prev = structof (p, segment_s, all);
+		if ((prev->flags == SEG_FLAG_FREE) && (prev->base + prev->size == seg->base)) {
+			list_remove (&(prev->free));
+			seg_merge (prev, seg);
+			i = _seg_free.prev;
+			seg = prev;
+		}
 	}
 
 	// Try to merge with next segment if free
 
 	list_s * n = seg->all.next;
-	segment_s * next = structof (n, segment_s, all);
-	if ((next->flags == SEG_FLAG_FREE) && (seg->base + seg->size == next->base)) {
-		list_remove (&(next->free));
-		seg_merge (seg, next);
-		i = _seg_free.prev;
+	if (n != &_seg_all) {
+		segment_s * next = structof (n, segment_s, all);
+		if ((next->flags == SEG_FLAG_FREE) && (seg->base + seg->size == next->base)) {
+			list_remove (&(next->free));
+			seg_merge (seg, next);
+			i = _seg_free.prev;
+		}
 	}
 
 	// Insert to free list head or tail
