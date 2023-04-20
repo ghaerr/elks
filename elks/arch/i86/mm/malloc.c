@@ -141,31 +141,26 @@ void seg_free (segment_s * seg)
 	list_s * i = &_seg_free;
 
 	// Try to merge with previous segment if free
-
 	list_s * p = seg->all.prev;
-	if (&_seg_all != p) {
-		segment_s * prev = structof (p, segment_s, all);
-		if (prev->flags == SEG_FLAG_FREE && prev->base + prev->size == seg->base) {
-			list_remove (&(prev->free));
-			seg_merge (prev, seg);
-			i = _seg_free.prev;
-			seg = prev;
-		} else {
-			seg->flags = SEG_FLAG_FREE;
-			seg->pid = 0;
-		}
+	segment_s * prev = structof (p, segment_s, all);
+	if ((prev->flags == SEG_FLAG_FREE) && (prev->base + prev->size == seg->base)) {
+		list_remove (&(prev->free));
+		seg_merge (prev, seg);
+		i = _seg_free.prev;
+		seg = prev;
+	} else {
+		seg->flags = SEG_FLAG_FREE;
+		seg->pid = 0;
 	}
 
 	// Try to merge with next segment if free
 
 	list_s * n = seg->all.next;
-	if (n != &_seg_all) {
-		segment_s * next = structof (n, segment_s, all);
-		if (next->flags == SEG_FLAG_FREE && seg->base + seg->size == next->base) {
-			list_remove (&(next->free));
-			seg_merge (seg, next);
-			i = _seg_free.prev;
-		}
+	segment_s * next = structof (n, segment_s, all);
+	if ((next->flags == SEG_FLAG_FREE) && (seg->base + seg->size == next->base)) {
+		list_remove (&(next->free));
+		seg_merge (seg, next);
+		i = _seg_free.prev;
 	}
 
 	// Insert to free list head or tail
@@ -343,11 +338,6 @@ void INITPROC mm_init(seg_t start, seg_t end)
 {
 	list_init (&_seg_all);
 	list_init (&_seg_free);
-
-	//temporary
-	seg_add(0xC000, 0xC800);
-	seg_add(0xD000, 0xF000);
-	//!temporary
 
 	seg_add(start, end);
 }

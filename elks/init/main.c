@@ -331,6 +331,25 @@ static void parse_nic(char *line, struct netif_parms *parms)
     }
 }
 
+static void parse_umb(char *line)
+{
+	char *p = line-1; /* because we start reading at p+1 */
+	seg_t base, end;
+	segext_t len;
+
+	do {
+		base = (seg_t)simple_strtol(p+1, 16);
+		if((p = strchr(p+1, ':'))) {
+			len = (segext_t)simple_strtol(p+1, 16);
+			end = base + len;
+#if DEBUG
+			printk("umb segment from %x to %x\n", base, end);
+#endif
+			seg_add(base, end);
+		}
+	}while((p = strchr(p+1, ',')));
+}
+
 /*
  * This is a simple kernel command line parsing function: it parses
  * the command line from /bootopts, and fills in the arguments/environment
@@ -433,6 +452,10 @@ static int parse_options(void)
 		}
 		if (!strncmp(line,"comirq=",7)) {
 			comirq(line+7);
+			continue;
+		}
+		if (!strncmp(line,"umb=",4)) {
+			parse_umb(line+4);
 			continue;
 		}
 		if (!strncmp(line,"TZ=",3)) {
