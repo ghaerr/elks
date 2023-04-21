@@ -24,6 +24,7 @@ extern void INITPROC inode_init(void);
 extern void INITPROC irq_init(void);
 extern void save_timer_irq(void);
 extern void INITPROC mm_init(seg_t,seg_t);
+extern void INITPROC seg_add(seg_t start, seg_t end);
 extern void INITPROC sched_init(void);
 extern void INITPROC serial_init(void);
 extern void INITPROC rs_setbaud(dev_t dev, unsigned long baud);
