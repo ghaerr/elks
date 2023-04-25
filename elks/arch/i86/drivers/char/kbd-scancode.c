@@ -234,7 +234,7 @@ static void keyboard_irq(int irq, struct pt_regs *regs)
 
     /* --------------Process status keys-------------- */
     if (!(mode & 0xC0)) {  		/* Not a simple scancode or fnkey*/
-#if defined(CONFIG_KEYMAP_DE) || defined(CONFIG_KEYMAP_SE) || defined(CONFIG_KEYMAP_FR) /* || defined(CONFIG_KEYMAP_ES) */
+#if defined(CONFIG_KEYMAP_DE) || defined(CONFIG_KEYMAP_SE) || defined(CONFIG_KEYMAP_FR) || defined(CONFIG_KEYMAP_ES)
 	if ((mode == ALT) && E0key)	/* ALT_GR has a E0 prefix*/
 	    mode = ALT_GR;
 #endif

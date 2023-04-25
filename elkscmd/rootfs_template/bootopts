@@ -1,6 +1,6 @@
 ## boot options max 511 bytes
 #console=ttyS0,57600 debug net=ne0 3 # sercons, multiuser, networking
-#QEMU=1			# to use ftp/ftpd in qemu
+#QEMU=1			# QEMU ftp/ftpd
 #TZ=MDT7
 #LOCALIP=10.0.2.16
 #HOSTNAME=elks16
@@ -8,9 +8,10 @@
 wd0=10,0x300,0xCC00,0x80
 #3c0=11,0x330,,0x80
 #comirq=,,7,10
-#bufs=2500		# system buffers
+#bufs=2500		# system bufs
+#umb=0xC000:0x800,0xD000:0x1000
 #sync=30		# autosync secs
 #init=/bin/init 3 n	# multiuser serial no /etc/rc.sys
-#init=/bin/sh		# singleuser shell
-#root=hda1 ro		# root hd partition 1, read-only
-#console=ttyS0,19200 3	# serial console
+#init=/bin/sh		# singleuser sh
+#root=hda1 ro		# root hd partition 1 read-only
+#console=ttyS0,19200 3	# serial cons

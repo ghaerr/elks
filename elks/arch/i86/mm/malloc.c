@@ -139,20 +139,18 @@ void seg_free (segment_s * seg)
 	//     chance on next allocation of same size
 
 	list_s * i = &_seg_free;
+	seg->flags = SEG_FLAG_FREE;
+	seg->pid = 0;
 
 	// Try to merge with previous segment if free
-
 	list_s * p = seg->all.prev;
 	if (&_seg_all != p) {
 		segment_s * prev = structof (p, segment_s, all);
-		if (prev->flags == SEG_FLAG_FREE) {
+		if ((prev->flags == SEG_FLAG_FREE) && (prev->base + prev->size == seg->base)) {
 			list_remove (&(prev->free));
 			seg_merge (prev, seg);
 			i = _seg_free.prev;
 			seg = prev;
-		} else {
-			seg->flags = SEG_FLAG_FREE;
-			seg->pid = 0;
 		}
 	}
 
@@ -161,7 +159,7 @@ void seg_free (segment_s * seg)
 	list_s * n = seg->all.next;
 	if (n != &_seg_all) {
 		segment_s * next = structof (n, segment_s, all);
-		if (next->flags == SEG_FLAG_FREE) {
+		if ((next->flags == SEG_FLAG_FREE) && (seg->base + seg->size == next->base)) {
 			list_remove (&(next->free));
 			seg_merge (seg, next);
 			i = _seg_free.prev;
@@ -322,16 +320,10 @@ again:
 	}
 }
 
-
-// Initialize the memory manager.
-
-void INITPROC mm_init(seg_t start, seg_t end)
+void INITPROC seg_add(seg_t start, seg_t end)
 {
-	list_init (&_seg_all);
-	list_init (&_seg_free);
-
 	segment_s * seg = (segment_s *) heap_alloc (sizeof (segment_s), HEAP_TAG_SEG);
-	if (seg) {
+	if(seg) {
 		seg->base = start;
 		seg->size = end - start;
 		seg->flags = SEG_FLAG_FREE;
@@ -341,4 +333,14 @@ void INITPROC mm_init(seg_t start, seg_t end)
 		list_insert_before (&_seg_all, &(seg->all));  // add tail
 		list_insert_before (&_seg_free, &(seg->free));  // add tail
 	}
+}
+
+// Initialize the memory manager.
+
+void INITPROC mm_init(seg_t start, seg_t end)
+{
+	list_init (&_seg_all);
+	list_init (&_seg_free);
+
+	seg_add(start, end);
 }
