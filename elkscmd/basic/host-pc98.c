@@ -31,6 +31,8 @@ typedef struct {
 } xyc_t;
 
 static xyc_t gxyc = {0, 0, 7, 0, 1};
+static unsigned char cga[16] = {0x0, 0x1, 0x4, 0x5, 0x2, 0x3, 0x6, 0x7,
+                                0x8, 0x9, 0xC, 0xD, 0xA, 0xB, 0xE, 0xF};
 
 void int_A0(unsigned int l_seg)
 {
@@ -262,9 +264,13 @@ void host_cls() {
 
 void host_color(int fgc, int bgc) {
 
-    if (gmode) {
+    if (gmode == 1) {
         gxyc.fgc = fgc;
         gxyc.bgc = bgc;
+    }
+    else if (gmode == 2) {
+        gxyc.fgc = cga[fgc];
+        gxyc.bgc = cga[bgc];
     }
 }
 
