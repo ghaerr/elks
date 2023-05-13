@@ -32,9 +32,9 @@
 #define NR_SECTS(p)	p->nr_sects
 #define START_SECT(p)	p->start_sect
 #ifdef CONFIG_ARCH_PC98
-#define NR_SECTS_PC98(p98)	END_SECT_PC98(p98) - START_SECT_PC98(p98) + 1
-#define START_SECT_PC98(p98)	(sector_t) (p98->cyl * last_drive->heads + p98->head) * last_drive->sectors + p98->sector
-#define END_SECT_PC98(p98)	(sector_t) (p98->end_cyl * last_drive->heads + p98->end_head) * last_drive->sectors + p98->end_sector
+#define NR_SECTS_PC98(p98)	(sector_t) END_SECT_PC98(p98) - START_SECT_PC98(p98) + 1
+#define START_SECT_PC98(p98)	(sector_t) p98->cyl * last_drive->heads * last_drive->sectors + p98->head * last_drive->sectors + p98->sector
+#define END_SECT_PC98(p98)	(sector_t) p98->end_cyl * last_drive->heads * last_drive->sectors + p98->end_head * last_drive->sectors + p98->end_sector
 #endif
 
 struct gendisk *gendisk_head = NULL;
