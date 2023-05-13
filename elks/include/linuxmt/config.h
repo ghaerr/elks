@@ -48,7 +48,7 @@
 #define SETUP_VID_COLS		80	/* video # columns */
 #define SETUP_VID_LINES		25	/* video # lines */
 #define SETUP_CPU_TYPE		1	/* processor type = 8086 */
-#define SETUP_MEM_KBYTES	640	/* base memory in 1K bytes */
+#define SETUP_MEM_KBYTES	setupw(0x2a)	/* base memory in 1K bytes */
 #define SETUP_ROOT_DEV		setupw(0x1fc)	/* root device, kdev_t or BIOS dev */
 #define SETUP_ELKS_FLAGS	setupb(0x1f6)	/* flags for root device type */
 #define SETUP_PART_OFFSETLO	setupw(0x1e2)	/* partition offset low word */
@@ -57,7 +57,11 @@
 #define UTS_MACHINE		"pc-98 i8086"
 
 #define CONFIG_VAR_SECTOR_SIZE	/* sector size may vary across disks */
-#endif
+//#undef SETUP_MEM_KBYTES
+//#define SETUP_MEM_KBYTES        640     /* force available memory in 1K bytes */
+//#define SETUP_MEM_KBYTES_ASM    SETUP_MEM_KBYTES
+
+#endif /* CONFIG_ARCH_PC98 */
 
 #ifdef CONFIG_ARCH_8018X
 #define MAX_SERIAL		2	/* max number of serial tty devices*/
