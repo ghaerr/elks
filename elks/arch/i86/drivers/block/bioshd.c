@@ -294,7 +294,7 @@ static unsigned short int INITPROC bioshd_gethdinfo(void) {
 #endif
 	    drivep->fdtype = -1;
 	    drivep->sector_size = 512;
-	    printk("bioshd: hd%c BIOS CHS %d,%d,%d\n", 'a'+drive, drivep->cylinders,
+	    printk("bioshd: hd%c BIOS CHS %u,%d,%d\n", 'a'+drive, drivep->cylinders,
 		drivep->heads, drivep->sectors);
 	}
 #ifdef CONFIG_IDE_PROBE
@@ -802,7 +802,7 @@ int INITPROC bioshd_init(void)
 		    unit++;
 		}
 		debug("DBG: Size = %lu (%X/%X)\n",size,*unit,unit[1]);
-		printk("/dev/%cd%c: %d cylinders, %d heads, %d sectors = %lu.%u %cb\n",
+		printk("/dev/%cd%c: %u cylinders, %d heads, %d sectors = %lu.%u %cb\n",
 		    (count < 4 ? 'h' : 'f'), (count & 3) + (count < 4 ? 'a' : '0'),
 		    drivep->cylinders, drivep->heads, drivep->sectors,
 		    (size/10), (int) (size%10), *unit);
