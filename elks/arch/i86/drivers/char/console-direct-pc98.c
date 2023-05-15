@@ -77,8 +77,8 @@ static int NumConsoles = MAX_CONSOLES;
 
 int Current_VCminor = 0;
 int kraw = 0;
-unsigned VideoSeg = 0xA000;
-unsigned AttributeSeg = 0xA200;
+unsigned VideoSeg;
+unsigned AttributeSeg;
 
 #ifdef CONFIG_EMUL_ANSI
 #define TERM_TYPE " emulating ANSI "
@@ -213,6 +213,14 @@ void console_init(void)
     Console *C;
     int i;
     unsigned PageSizeW;
+
+    VideoSeg = 0xA000;
+    AttributeSeg = 0xA200;
+
+    if (peekb(0x501,0) & 8) { /* High Resolution PC-98 */
+	VideoSeg = 0xE000;
+	AttributeSeg = 0xE200;
+    }
 
     MaxCol = (Width = 80) - 1;
 
