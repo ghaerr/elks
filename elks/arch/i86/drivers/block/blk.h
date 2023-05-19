@@ -55,7 +55,7 @@ struct blk_dev_struct {
 
 /* For bioshd.c, idequery.c */
 struct drive_infot {            /* CHS per drive*/
-    int cylinders;
+    unsigned int cylinders;
     int sectors;
     int heads;
     int sector_size;

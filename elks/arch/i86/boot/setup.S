@@ -1081,7 +1081,24 @@ putc:	push %bx
 
 // Return total memory in Kbytes
 arch_get_mem:
-	mov $SETUP_MEM_KBYTES,%ax
+#if SETUP_MEM_KBYTES_ASM
+	mov $SETUP_MEM_KBYTES_ASM,%ax  // force available memory (usually for testing)
+#else
+	push %es
+	push %cx
+	push %bx
+	xor %ax,%ax
+	mov %ax,%es
+	mov $0x501,%bx
+	mov %es:(%bx),%cl
+	and $7,%cl
+	inc %cl
+	mov $128,%al
+	mul %cl
+	pop %bx
+	pop %cx
+	pop %es
+#endif
 	ret
 
 // Set INITSEG values for PC98 architecture
