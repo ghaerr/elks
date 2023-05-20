@@ -39,6 +39,11 @@ mainmenu_option next_comment
 		#bool 'levee'			CONFIG_APP_LEVEE      n
 		#bool 'xvi'        		CONFIG_APP_XVI        n
 
+		if [ "$CONFIG_ARCH_8018X" == "y" ]; then
+			comment "8018x tools"
+			bool 'romprg'			CONFIG_APP_ROMPRG       n
+		fi
+
 		comment "Internet stack and utilities"
 
 		if [ "$CONFIG_INET" == "y" ]; then
