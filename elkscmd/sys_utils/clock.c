@@ -159,7 +159,23 @@ int usage(void)
     errmsg("  u: CMOS clock is in universal time\n");
     exit(1);
 }
+#ifdef CONFIG_ARCH_8018X
+unsigned char cmos_read(unsigned char reg)
+{
+  register unsigned char ret;
+  clr_irq ();
+  ret = inb_p (CONFIG_8018X_RTC + reg);
+  set_irq ();
+  return ret;
+}
 
+void cmos_write(unsigned char reg, unsigned char val)
+{
+  clr_irq ();
+  outb_p (val, CONFIG_8018X_RTC + reg);
+  set_irq ();
+}
+#else
 unsigned char cmos_read(unsigned char reg)
 {
   register unsigned char ret;
@@ -177,6 +193,7 @@ void cmos_write(unsigned char reg, unsigned char val)
   outb_p (val, 0x71);
   set_irq ();
 }
+#endif
 
 int cmos_read_bcd (int addr)
 {
