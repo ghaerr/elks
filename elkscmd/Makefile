@@ -56,6 +56,9 @@ all:
 ifdef CONFIG_APP_CGATEXT)
 	$(MAKE) -C cgatext
 endif
+ifdef CONFIG_APP_ROMPRG
+	$(MAKE) -C romprg
+endif
 
 install:
 	$(MAKE) -f Make.install "CONFIG=$(TOPDIR)/.config"

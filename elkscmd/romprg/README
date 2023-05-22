@@ -1,0 +1,46 @@
+romprg is a project by tehKaiN aimed to program ROM/flash chips using an
+inexpensive Arduino board as the programmer.
+Original source code can be obtained from https://github.com/tehKaiN/ROMprg.
+
+This directory contains a port of the original C++ "fw/romprg-fw/src" and
+"sw-cli/src" files.
+
+The code that originally ran on the Atmega MCU is ported to run as an ELKS
+application. As it is right now, it only works on the 80c188 board because
+it has a hardcoded address on where the flash memory is found (see flash.c's
+function "flash_load" and "flash_read"). Not only that, but the main entrypoint
+also contains code that only works on the 80188x CPU.
+It also hijacks the OS completely, that is, it disables the interrupts. This
+is required on these embedded boards because ELKS is running exactly from the
+same memory that this application would interact with (erease/etc). Since the
+application runs from RAM, disabling the interupts is enough for it to continue
+running, granted that it can't use anything that ELKS provides, as these might
+not be available while flashing the main memory.
+A PC is required to run the "client" part of this program, which is built
+as "hostromprg". The "hostromprg" and "romprg" talk to each other using the
+built-in serial port of this CPU.
+
+It could be adapted to flash memory chips on a PC by modifying the actual
+starting address of the memory chip, and how it talks to the UART.
+
+The hostromprg baudrate is hardcoded on the "version.h" file, while the
+8018x baudrate is fixed on the "main.c" file. These should match, and it's
+currently set to 38400bps.
+
+In order to use it, make sure you have your 8018x serial port connected to
+a PC. From the terminal, run "romprg" and exit the console emulator. Now,
+invoke the "hostromprg" program to interact with the memory that's attached
+to the ELKS system.
+
+Examples (assuming the serial port is /dev/ttyUSB0):
+* Erase entire chip: "romprg /dev/ttyUSB0 erase chip"
+* Write a chunk of data: "romprg /dev/ttyUSB0 write 0x5000 binary.file"
+  (where 0x5000 is the offset of the flash)
+* Read a chunk of data: "romprg /dev/ttyUSB0 read 0x5000 0x6000 readback.bin"
+  (it'll read from 0x5000 thru 0x6000 and save it to readback.bin)
+* Erase sectors: "romprg /dev/ttyUSB0 erase 0x5000 0x6000"
+  (it'll erase the sectors from 0x5000 thru 0x6000)
+* Ping the "romprg": "romprg /dev/ttyUSB0 ping"
+  (it'll report the version of the romprg)
+* Read the memory chip ID: "romprg /dev/ttyUSB0 id"
+  (reads the ID of the chip, which needs to be supported in order for this to program the memory chip)
