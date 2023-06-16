@@ -29,6 +29,7 @@ mainmenu_option next_comment
 	elif [ "$CONFIG_ARCH_8018X" = "y" ]; then
 
 		comment 'Devices'
+		hex 'RTC (AT compatible) I/O address' CONFIG_8018X_RTC 0x200
 
 		comment 'INTx pins (0=disabled)'
 		int 'INT0 Logical IRQ' CONFIG_8018X_INT0 0

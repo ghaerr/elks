@@ -214,6 +214,9 @@ endif
 ifdef CONFIG_APP_CGATEXT
 	$(MAKE) -C cgatext install
 endif
+ifdef CONFIG_APP_ROMPRG
+	$(MAKE) -C romprg install
+endif
 ifdef CONFIG_APP_MAN_PAGES
 	mkdir -p $(DESTDIR)/lib/man1
 	cp -rp man/man1 $(DESTDIR)/lib
