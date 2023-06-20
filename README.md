@@ -10,8 +10,14 @@
 ELKS is a project providing a Linux-like OS for systems based on the Intel
 IA16 architecture (16-bit processors: 8086, 8088, 80188, 80186, 80286,
 NEC V20, V30 and compatibles). Such systems are ancient computers (IBM-PC
-XT / AT and clones) as well as more recent SBCs, SoCs, and FPGAs.
+XT / AT and clones) as well as more recent SBCs, SoCs, and FPGAs. ELKS supports networking and installtion to HDD using both MINIX and FAT file systems.
 
+# Memory requirements
+
+* Stock images require 512k RAM
+* ELKS requires 256k RAM to run, 512k to be really useful
+* ROM-based systems can run in 128k RAM
+  
 ## Watch ELKS in action
 
 - [ELKS, a 16-bit no-MMU Linux on Amstrad PC 2086](https://www.youtube.com/watch?v=eooviN1SdQ8) (thanks @pawoswm-arm)
