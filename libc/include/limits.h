@@ -14,6 +14,8 @@
 /* copied from NR_OPEN in linuxmt/fs.h */
 #define OPEN_MAX 20
 
+#ifndef _GCC_NEXT_LIMITS_H
 #include_next <limits.h>
+#endif
 
 #endif
