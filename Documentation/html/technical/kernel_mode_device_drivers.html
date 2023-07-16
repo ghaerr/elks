@@ -44,7 +44,7 @@
 #include &lt;string.h&gt;
 
 #define HELLO_DEVICE_NAME       &quot;hellodev&quot;
-#define HELLO_MAJOR     9
+#define HELLO_MAJOR     11
 
 static char message[256];
 char *msgptr = message;
@@ -126,20 +126,21 @@ void hello_init(void)
 			our demo driver we have included these macros in the code: </FONT>
 			</P>
 			<PRE CLASS="western">#define HELLO_DEVICE_NAME       &quot;hellodev&quot;
-#define HELLO_MAJOR     9</PRE><P STYLE="margin-bottom: 0.5cm">
-			<FONT FACE="Arial, sans-serif">Usually in ELKS these are defined
+#define HELLO_MAJOR     11</PRE><P STYLE="margin-bottom: 0.5cm">
+			<FONT FACE="Arial, sans-serif">Usually in ELKS major numbers are defined
 			in the elks/include/linuxmt/major.h file which the drivers
-			include. However, that file still needs to be changed. Increase
-			the maximum number of char devices to 10:</FONT></P>
+			include. Refer to the major numbers in that file to determine the next
+			available major number. That file also needs to be changed. Increase
+			the maximum number of char devices by 1:</FONT></P>
 			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">#define
-			MAX_CHRDEV 10</FONT></P>
+			MAX_CHRDEV 12</FONT></P>
 			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Put
 			the code above as the hellodev.c file into the
 			elks/arch/i86/drivers/char/ directory and add it to the Makefile
 			in this directory:</FONT></P>
-			<PRE CLASS="western">else
-OBJS  = bioscon.o common.o serial.o lp.o xt_key.o init.o dircon.o mem.o \
-        <B>hellodev.o </B>ntty.o meta.o tcpdev.o pty.o bell.o # clist.o tty.o</PRE><P STYLE="margin-bottom: 0.5cm">
+			<PRE CLASS="western">
+OBJS  = init.o mem.o ntty.o meta.o tcpdev.o pty.o lp.o <B>hellodev.o</B>
+			</PRE><P STYLE="margin-bottom: 0.5cm">
 			<FONT FACE="Arial, sans-serif">Also edit the init.c file:</FONT></P>
 			<PRE CLASS="western">void chr_dev_init(void)
 {
@@ -161,29 +162,32 @@ extern void hello_init(void);
 
 extern void init_console(void);</PRE><P STYLE="margin-bottom: 0.5cm">
 			<FONT FACE="Arial, sans-serif"><FONT SIZE=3>To load the driver
-			simply add it after the tcpdev device in the
-			elkscmd/rootfs_template/dev/MAKEDEV script. In this script there
-			is a macro for the mknod() function called MAKEDEV:</FONT></FONT></P>
-			<PRE CLASS="western"># TCPDEV, used by ktcp
-
-        mknod tcpdev c 8 0
-        $MKDEV hellodev c 9 0</PRE><P STYLE="margin-bottom: 0.5cm">
+			simply add it after the last character device in the
+			image/Make.devices script:</FONT></FONT></P>
+			<PRE CLASS="western">
+# CGATEXT
+ifdef CONFIG_CHAR_DEV_CGATEXT
+	$(MKDEV) /dev/cgatext	c 10 0
+endif
+	$(MKDEV) /dev/hellodev	c 11 0
+        	</PRE><P STYLE="margin-bottom: 0.5cm">
 			<FONT FACE="Arial, sans-serif"><FONT SIZE=3>The letter &bdquo;c&ldquo;
-			stands for character driver while the number 9 is the major number
-			and zero the minor number. </FONT></FONT>
+			stands for character driver while the number 11 is the major number
+			and zero the minor number. Be careful to use the major number we defined
+			above.</FONT></FONT>
 			</P>
 			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif"><FONT SIZE=3>To
 			sum it up, you added hellodev.c into the
 			elks/arch/i86/drivers/char directory and modified init.c and the
 			Makefile in there. Also you modified major.h and init.h in the
-			elks/include/linuxmt directory and the file MAKEDEV in the
-			elkscmd/rootfs_template/dev directory.</FONT></FONT></P>
+			elks/include/linuxmt directory and the file Make.devices in the
+			image directory.</FONT></FONT></P>
 			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Now
 			you can compile ELKS again and it will include the hellodev driver
 			and load it. If you enter &bdquo;ls /dev&ldquo; you will see a
 			device node called hellodev.</FONT></P>
 			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">To
-			test this driver use this program which you may drvtest.c:</FONT></P>
+			test this driver use this program which you may call drvtest.c:</FONT></P>
 			<PRE CLASS="western">#include&lt;stdio.h&gt;
 #include&lt;stdlib.h&gt;
 #include&lt;errno.h&gt;
@@ -226,9 +230,10 @@ int main(){
 
    return 0;
 }</PRE><P STYLE="margin-bottom: 0.5cm">
-			<FONT FACE="Arial, sans-serif">To compile this program enter &bdquo;bcc
-			-ansi -o drvtest drvtest.c&ldquo; and e.g. copy the executable
-			drvtest to the full3 image file using a loop device.</FONT></P>
+			<FONT FACE="Arial, sans-serif">To compile this program enter &bdquo;
+			ia16-elf-gcc drvtest.c -o drvtest -melks-libc -mcmodel=small&ldquo;
+			and e.g. copy the executable drvtest to the image file using a loop
+			device.</FONT></P>
 			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Here
 			are some additional notes how ELKS drivers work describing the
 			concepts used above taken from the fs.txt file:<BR><BR>The
@@ -253,10 +258,6 @@ int main(){
 			caching blocks, part-block reads and writes etc.</FONT></P>
 			<P STYLE="margin-bottom: 0.5cm"><BR><BR>
 			</P>
-			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">Since
-			the ELKS kernel is almost 64k in size now, currently there is only
-			very limited space available for additional device drivers. User
-			mode device drivers should be considered as an alternative.</FONT></P>
 			<P STYLE="margin-bottom: 0.5cm"><FONT FACE="Arial, sans-serif">4<SUP>th</SUP>
 			of March 2017 Georg Potthast</FONT></P>
 			<P><BR>

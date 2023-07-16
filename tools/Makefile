@@ -72,6 +72,8 @@ MPC_DIST=mpc-$(MPC_VER)
 $(DISTDIR)/$(GMP_DIST).tar.bz2:
 	mkdir -p $(DISTDIR)
 	rm -rf $(DISTDIR)/gmp-*.tar.bz2 $(DISTDIR)/gmp-*.tar.bz2.tmp
+	wget -c https://ftp.gnu.org/gnu/gmp/$(GMP_DIST).tar.bz2 \
+		-O $@.tmp || \
 	wget -c https://gmplib.org/download/gmp/$(GMP_DIST).tar.bz2 \
 		-O $@.tmp
 	# Try to force GCC to be rebuilt whenever GNU MP needs to be

@@ -187,7 +187,7 @@ int main(int argc, char **argv)
           perror("meminfo");
         return 1;
     }
-    if (!memread(fd, taskoff, ds, &task_table, MAX_TASKS*sizeof(task_table))) {
+    if (!memread(fd, taskoff, ds, &task_table, sizeof(task_table))) {
         perror("taskinfo");
     }
 	dump_heap(fd);

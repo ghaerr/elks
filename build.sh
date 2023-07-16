@@ -82,8 +82,9 @@ if [ "$1" = "auto" ]; then
     cp pc98-1232.config .config
     make kclean || clean_exit 9
     rm elkscmd/sys_utils/clock.o
-    rm elkscmd/basic/*.o
     rm elkscmd/sys_utils/ps.o
+    rm elkscmd/sys_utils/meminfo.o
+    rm elkscmd/basic/*.o
     rm elkscmd/nano-X/*/*.o
     make -j1 || clean_exit 10
 fi
