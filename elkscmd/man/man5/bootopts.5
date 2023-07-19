@@ -10,11 +10,8 @@ on the root filesystem and loads it. It also searches for the file
 .B /bootopts,
 which contains boot options - configuration settings affecting how ELKS starts and runs. 
 .PP
-A variety of configuration parameters can be set in the /bootopts file, many of which would
-normally require a recompilation of the kernel.
-many of which would
-normally require a recompilation of the kernelwithout requiring kernel recompilation.
-Very useful for debugging and quick configuration changes.
+A variety of configuration parameters can be set in the /bootopts file
+without requiring kernel recompilation.  Very useful for debugging and quick configuration changes.
 .PP
 .B bootopts
 allows e.g. setting the console to be serial (or any other device, such as virtual Alt2 /dev/tty2), 
@@ -60,10 +57,10 @@ Devices can be specified by /dev/ prefix or without, the latter is preferable to
 .PP
 Of particular importance is the
 .I init=
-option which tells the kernel which program to start after initalization. The default is
+option which tells the kernel which program to start after initialization. The default is
 .I /bin/init
 which initiates a regular multiuser, multiprocess setting. However, any ELKS program can 
-be specified which opens up vast possibilitied for both debugging and special purposes (IoT).
+be specified which opens up vast possibilities for both debugging and special purposes (IoT).
 In particular, specifying
 .B /bin/sash
 as the 'init-program' provides a very compact environment to development and debugging, which with a 
@@ -108,10 +105,10 @@ the commas may not be omitted.
 /bootopts	System configuration file
 .fi
 .SH BUGS
-Not all man pages referenced in the SEE ALSO section below exit yet.
+Not all man pages referenced in the SEE ALSO section below exist yet.
 .PP
 .B bootopts
-and the boot-loader that uses it have severe space contraints and can never be really user friendly.
+and the boot-loader that uses it have severe space constraints and can never be really user friendly.
 .SH "SEE ALSO"
 .BR net.cnf (5),
 .BR setup (8),

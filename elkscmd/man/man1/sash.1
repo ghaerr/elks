@@ -1,7 +1,7 @@
 .TH SASH 1
 .SH NAME
 sash \- stand-alone shell with built-in commands
-.SH SYNOPSYS
+.SH SYNOPSIS
 .B sash
 .SH DESCRIPTION
 The
@@ -50,7 +50,7 @@ and are expanded.  However, no other command line processing is performed.
 This includes quoting of arguments, specifying of file redirection, and
 the specifying of a pipeline.
 .PP
-If an external program is non-existant or fails to run correctly, then
+If an external program is non-existent or fails to run correctly, then
 the "alias" built-in command may be used to redefine the standard command
 so that it automatically runs the built-in command instead.  For example,
 the command "alias ls -ls" redefines "ls" to run the built-in command.
@@ -201,7 +201,7 @@ The default links are hard links.  Using -s makes symbolic links.
 For symbolic links, only one srcname can be specified.
 .TP
 .B ls [-lid] filename ...
-Display information about the specified filesnames, which may be
+Display information about the specified filenames, which may be
 directories.  The normal listing is simply a list of filenames,
 one per line.  The options available are -l, -i, and -d.  The -l
 option produces a long listing given the normal 'ls' information.
@@ -292,7 +292,7 @@ only those files starting with the specified filenames are done.
 Leading slashes in the tar archive filenames are removed.
 .TP
 .B touch filename ...
-Updates the modify times of the specifed files.  If a file does not
+Updates the modify times of the specified files.  If a file does not
 exist, then it will be created with the default protection.
 .TP
 .B umask [mask]
