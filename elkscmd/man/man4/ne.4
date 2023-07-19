@@ -35,7 +35,7 @@ field described below. Any of the parameters may be omitted but the commas must 
 .SH FLAGS
 The 
 .I flags 
-part of the configuration line enables/disables various interface and driver parmeters at boot time.
+part of the configuration line enables/disables various interface and driver parameters at boot time.
 These parameters vary slightly from one interface type/vendor to the next, so make sure to 
 look at the correct man page to get correct information.
 .PP
@@ -109,12 +109,12 @@ in buffer space on the interface itself.
 While both types of NIC have 16k
 bytes of on board buffer for packet data, the 
 .B ne1k
-may use only 8k for technical resons (some really old versions of the
+may use only 8k for technical reasons (some really old versions of the
 .B ne1k
 may actually have only 8k bytes of memory).
 .PP
 Under heavy load the limited buffer space may affect
-performance (cause lost packets) on ELKS, since the OS does not read and buffer packets imediately 
+performance (cause lost packets) on ELKS, since the OS does not read and buffer packets immediately 
 as they arrive.
 If this turns out to be a problem, it is advisable to reduce the 
 .i mtu=
@@ -133,7 +133,7 @@ to use other buffer sizes. Such changes are useful for debugging and should be u
 The bus width of the NIC is autodetected by the driver. However, the driver will not notice
 if a 16 bit card
 .B (ne2k)
-is used in a machine with only 8 bit bus width. In such casaes, use the ETHF_8BIT_BUS flag (see 
+is used in a machine with only 8 bit bus width. In such cases, use the ETHF_8BIT_BUS flag (see 
 the FLAGS section above) to force the driver to use the correct bus width.
 .SH DIAGNOSTICS
 The driver will emit the following error messages, some of them only if the verbose flag has been set.
@@ -190,7 +190,7 @@ reassign an IRQ.
 .nf
 \fIne0: No MAC address\fR
 .fi
-A boot time message indicateing that the driver was unable to extract the MAC address from the interface, 
+A boot time message indicating that the driver was unable to extract the MAC address from the interface, 
 and the configuration was aborted. 
 
 .SH IOCTLs

@@ -62,7 +62,7 @@ see below.
 .SH FLAGS
 The 
 .I flags 
-part of the configuration line enables/disables various interface and driver parmeters at boot time.
+part of the configuration line enables/disables various interface and driver parameters at boot time.
 These parameters vary from one interface type/vendor to the next, so make sure to 
 look at the correct man page to get correct information.
 .PP
@@ -110,7 +110,7 @@ eth: 3c0 at 0x300, irq 15 not found
 .fi
 .PP
 Since the NIC has PnP capability, the provided IRQ value will always be used. If this does not work,
-the reason is most likely a collission: The IRQ is already assigned to an ISA interface.
+the reason is most likely a collision: The IRQ is already assigned to an ISA interface.
 .PP
 If the interface seems to work but emit error messages while transferring data, make sure you set 
 the
@@ -127,7 +127,7 @@ The driver will emit the following error messages, some of them only if the verb
 .fi
 A working PnP port could not be located and the interface cannot be configured. This should not
 happen and may indicate either a bus level hardware problem or a NIC malfunction. It is 
-also possible there is a 'PnP collission' with some nother interface, in particular a SoundBlaster card.
+also possible there is a 'PnP collision' with some other interface, in particular a SoundBlaster card.
 To diagnose, remove other cards and try again.
 .PP
 .nf
@@ -165,7 +165,7 @@ most definitely be of interest to the developers.
 .nf
 \fIeth: Infinite loop in interrupt, status %4.4x.\fR
 .fi
-Another very rare occurence, most likely indicating a driver error. If this happens, the NIC will
+Another very rare occurrence, most likely indicating a driver error. If this happens, the NIC will
 be shut down and needs to be restarted either by a
 .I net stop; net start
 command sequence or by rebooting the system.
