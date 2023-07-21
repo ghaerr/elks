@@ -102,6 +102,14 @@ static void PositionCursor(register Console * C)
     cursor_set(Pos * 2);
 }
 
+static void DisplayCursor(int onoff)
+{
+    if (onoff)
+	cursor_on();
+    else
+	cursor_off();
+}
+
 static word_t conv_pcattr(word_t attr)
 {
     static unsigned char grb[8] = {0x00, 0x20, 0x80, 0xA0, 0x40, 0x60, 0xC0, 0xE0};
