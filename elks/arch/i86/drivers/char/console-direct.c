@@ -100,6 +100,10 @@ static void PositionCursor(register Console * C)
     outb(Pos & 255, CCBasep + 1);
 }
 
+static void DisplayCursor(int onoff)
+{
+}
+
 static void VideoWrite(register Console * C, int c)
 {
     pokew((C->cx + C->cy * Width) << 1, (seg_t) C->vseg,

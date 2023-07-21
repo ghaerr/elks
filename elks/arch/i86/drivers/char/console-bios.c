@@ -99,6 +99,10 @@ static void PositionCursorGet (int * x, int * y)
 	*y = row;
 }
 
+static void DisplayCursor(int onoff)
+{
+}
+
 static void VideoWrite(register Console * C, char c)
 {
     int a, p;
