@@ -217,6 +217,23 @@ static void AnsiCmd(register Console * C, int c)
 	    Console_conin('R');
 	}
 	break;
+    case 'h':			/* cursor on */
+    case 'l':			/* cursor off */
+      {
+	char *p = (char *)C->params;
+	if (*p == '?')
+	    p++;
+	else
+	    break;
+	n = atoi(p);
+	if (n == 25) {
+	    if (c == 'h')
+	        DisplayCursor(1);
+	    else
+	        DisplayCursor(0);
+	}
+      }
+      break;
     }
     C->fsm = std_char;
 }
