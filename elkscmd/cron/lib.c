@@ -30,6 +30,28 @@ extern char *pgm;
 
 
 /*
+ * print the (hex) value of an event mask
+ */
+#if DEBUG
+void
+printtrig(Evmask *m)
+{
+    printf("%08lx-%08lx ", m->minutes[0], m->minutes[1]);
+    printf("%08lx ", m->hours);
+    printf("%08lx ", m->mday);
+    printf("%04x ", m->month);
+    printf("%04x ", m->wday);
+}
+#else
+void
+printtrig(Evmask *m)
+{
+    (void)m;
+}
+#endif
+
+
+/*
  * (re)allocate memory or die.
  */
 void *
@@ -59,7 +81,6 @@ _error(int severity, char *fmt, va_list ptr)
         fputc('\n', stderr);
     } else {
         if ((ftmp = fopen(_PATH_CRONLOG, "a+")) == 0) {
-            error("can't create logfile: %s", strerror(errno));
             return;
         }
         vfprintf(ftmp, fmt, ptr);
@@ -123,7 +144,7 @@ fgetlol(FILE *f)
     static char *line = 0;
     static int szl = 0;
     int nrl = 0;
-    register int c;
+    int c;
 
     while ((c = fgetc(f)) != EOF) {
         EXPAND(line, szl, nrl + 1);
@@ -230,7 +251,6 @@ xis_crondir(void)
     DIR *dir = opendir(_PATH_CRONDIR);
     if (dir) {                  /* Directory exists. */
         closedir(dir);
-        return 0;
     } else {                    /* Directory does not exist or opendir
                                  * failed. */
         int result = mkdir(_PATH_CRONDIR, 0777);        /*-1 fail, 0 ok */
@@ -249,6 +269,7 @@ xis_crondir(void)
 #endif
         fclose(ftmp);
     }
+    return 0;
 }
 
 #ifdef ELKS                     /* setregid not defined */

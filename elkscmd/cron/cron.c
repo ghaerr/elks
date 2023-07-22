@@ -38,6 +38,7 @@ static void
 eat(int sig)
 {
     int status;
+    (void)sig;
 
     while (waitpid(-1, &status, 0) != -1)
         continue;
@@ -191,27 +192,6 @@ securepath(char *path)
 
 
 /*
- * print the (hex) value of an event mask
- */
-#if DEBUG
-void
-printtrig(Evmask *m)
-{
-    printf("%08lx-%08lx ", m->minutes[0], m->minutes[1]);
-    printf("%08lx ", m->hours);
-    printf("%08lx ", m->mday);
-    printf("%04x ", m->month);
-    printf("%04x ", m->wday);
-}
-#else
-void
-printtrig(Evmask *m)
-{;
-}
-#endif
-
-
-/*
  * does the current time fall inside a job event mask?
  */
 int
@@ -231,12 +211,12 @@ triggered(Evmask *t, Evmask *m)
  * print the contents of a crontab
  */
 #if DEBUG
-int
+void
 printcrontab(crontab *tab, int nrtab)
 {
     int i, j;
 
-    for (i = 0; i < nrtab; i++)
+    for (i = 0; i < nrtab; i++) {
         if (tabs[i].nrl) {
             struct passwd *pwd = getpwuid(tabs[i].user);
 
@@ -253,12 +233,14 @@ printcrontab(crontab *tab, int nrtab)
                 }
             }
         }
-    return 1;
+    }
 }
 #else
-int
+void
 printcrontab(crontab *tab, int nrtab)
-{;
+{
+    (void)tab;
+    (void)nrtab;
 }
 #endif
 
@@ -387,7 +369,7 @@ main(int argc, char **argv)
         int adjust;
 
 #if TEST
-        int n = 2;
+        unsigned int n = 2;
         do {
             printf("cron: sleep start %d\n", n);
             n = sleep(n);
@@ -402,23 +384,15 @@ main(int argc, char **argv)
          */
         if (adjust < -15 || adjust > 15)
             error("adjust: %d", adjust);
-#if DEBUG
-        printf("run Evmask:");
-        printtrig(&Now);
-        putchar('\n');
-#endif
 
         delay = (60 * interval) + adjust;
         if (delay > 300)
             error("long delay: %d", delay);
 
         while (delay) {
-            int left = sleep(delay);
-            if (left < 0)
-                left = 0;       /* for ELKS */
+            unsigned int left = sleep(delay);
             if (left > delay) {
                 error("sleep(%d) returned %d", delay, left);
-                delay -= left;
                 //--delay;
             } else
                 delay = left;
@@ -430,6 +404,11 @@ main(int argc, char **argv)
         time(&ticks);
         tm = localtime(&ticks);
         tmtoEvmask(tm, interval, &Now);
+#if DEBUG
+        printf("run Evmask:");
+        printtrig(&Now);
+        putchar('\n');
+#endif
 
         for (i = 0; i < nrtabs; i++) {
             for (j = 0; j < tabs[i].nrl; j++) {

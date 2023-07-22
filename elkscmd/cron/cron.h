@@ -73,7 +73,7 @@ void info(char *,...);
 char *jobenv(crontab *, char *);
 void xchdir(char *);
 int xis_crondir(void);
-int printcrontab(crontab *tab, int nrtab);
+void printcrontab(crontab *tab, int nrtab);
 
 
 

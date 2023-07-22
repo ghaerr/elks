@@ -58,7 +58,7 @@ superpowers()
 int
 cat(char *file)
 {
-    register int c;
+    int c;
     FILE *f;
 
     superpowers();
@@ -85,7 +85,7 @@ newcrontab(char *file, char *name)
         0
     };
     int tempfile = 0;
-    register int c;
+    int c;
     FILE *out;
     struct utimbuf touch;
     int save_euid = geteuid();
@@ -104,6 +104,7 @@ newcrontab(char *file, char *name)
         }
         if (ferror(in_tmp) || (fflush(in_tmp) == EOF) || fseek(in_tmp, 0L, SEEK_SET) == -1) {
             fclose(in_tmp);
+            in_tmp = NULL;
             error("can't store crontab in tempfile: %s", strerror(errno));
             return 0;
         }
@@ -124,6 +125,7 @@ newcrontab(char *file, char *name)
     zerocrontab(&tab);
     if (!readcrontab(&tab, in_tmp)) {
         fclose(in_tmp);
+        in_tmp = NULL;
         return 0;
     }
     if (tempfile && (tab.nrl == 0) && (tab.nre == 0)) {
@@ -132,6 +134,7 @@ newcrontab(char *file, char *name)
     }
     if (fseek(in_tmp, 0L, SEEK_SET) == -1) {
         fclose(in_tmp);
+        in_tmp = NULL;
         error("file error: %s", strerror(errno));
         return 0;
     }
@@ -147,6 +150,7 @@ newcrontab(char *file, char *name)
             fatal("can't write to crontab: %s", strerror(errno));
         }
         fclose(in_tmp);
+        in_tmp = NULL;
         time(&touch.modtime);
         time(&touch.actime);
         utime(".", &touch);
@@ -166,7 +170,8 @@ static void
 nomorevitemp()
 {
     unlink(vitemp);
-    fclose(in_tmp);
+    if (in_tmp)
+        fclose(in_tmp);
     unlink(CRONTMP);
 }
 
@@ -215,7 +220,8 @@ visual(struct passwd *pwd)
         seteuid(getuid());
         do {
             fprintf(stderr, "Do you want to retry the same edit? ");
-            fgets(ans, sizeof ans, stdin);
+            if (fgets(ans, sizeof ans, stdin) == NULL)
+                exit(1);
             yn = firstnonblank(ans);
             *yn = toupper(*yn);
             if (*yn == 'N')
