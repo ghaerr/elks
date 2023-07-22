@@ -18,8 +18,8 @@
 #include "cron.h"
 
 #ifdef ELKS
-#define	LOG_ERR		3	/* error conditions */
-#define	LOG_INFO	6	/* informational */
+#define	LOG_ERR		3       /* error conditions */
+#define	LOG_INFO	6       /* informational */
 #endif
 
 int interactive = 0;
@@ -29,50 +29,52 @@ time_t t_now;
 extern char *pgm;
 
 
-/* (re)allocate memory or die.
+/*
+ * (re)allocate memory or die.
  */
-void*
+void *
 xrealloc(void *elp, int nrel, int szel)
 {
     void *ret;
 
-    if (ret = elp ? realloc(elp, nrel*szel) : malloc(nrel*szel))
-	return ret;
+    if (ret = elp ? realloc(elp, nrel * szel) : malloc(nrel * szel))
+        return ret;
 
     fatal("xrealloc: %s", strerror(errno));
     return 0;
 }
 
 
-/* complain about something, sending the message either to stderr or
- * syslog, depending on whether (interactive) is set.
+/*
+ * complain about something, sending the message either to stderr or syslog,
+ * depending on whether (interactive) is set.
  */
 static void
 _error(int severity, char *fmt, va_list ptr)
 {
     FILE *ftmp;
-    
+
     if (interactive) {
-	vfprintf(stderr, fmt, ptr);
-	fputc('\n',stderr);
-    }
-    else {
-    if ( (ftmp = fopen(_PATH_CRONLOG, "a+")) == 0 ) {
-	    error("can't create logfile: %s", strerror(errno));
-	    return;
-	}  
-	vfprintf(ftmp, fmt, ptr);
-   	time(&t_now);
-	fprintf(ftmp,"  -  %s",ctime(&t_now));
+        vfprintf(stderr, fmt, ptr);
+        fputc('\n', stderr);
+    } else {
+        if ((ftmp = fopen(_PATH_CRONLOG, "a+")) == 0) {
+            error("can't create logfile: %s", strerror(errno));
+            return;
+        }
+        vfprintf(ftmp, fmt, ptr);
+        time(&t_now);
+        fprintf(ftmp, "  -  %s", ctime(&t_now));
         fclose(ftmp);
     }
 }
 
 
-/* complain about something
+/*
+ * complain about something
  */
 void
-error(char *fmt, ...)
+error(char *fmt,...)
 {
     va_list ptr;
 
@@ -82,7 +84,8 @@ error(char *fmt, ...)
 }
 
 
-/* complain about something, then die.
+/*
+ * complain about something, then die.
  */
 void
 fatal(char *fmt,...)
@@ -96,10 +99,11 @@ fatal(char *fmt,...)
 }
 
 
-/* log something non-fatal
+/*
+ * log something non-fatal
  */
 void
-info(char *fmt, ...)
+info(char *fmt,...)
 {
     va_list ptr;
 
@@ -109,11 +113,11 @@ info(char *fmt, ...)
 }
 
 
-/* get a logical line of unlimited size.  Convert unescaped
- * %'s into newlines, and concatenate lines together if escaped
- * with \ at eol.
+/*
+ * get a logical line of unlimited size.  Convert unescaped %'s into
+ * newlines, and concatenate lines together if escaped with \ at eol.
  */
-char*
+char *
 fgetlol(FILE *f)
 {
     static char *line = 0;
@@ -121,48 +125,47 @@ fgetlol(FILE *f)
     int nrl = 0;
     register int c;
 
-    while ( (c = fgetc(f)) != EOF ) {
-	EXPAND(line,szl,nrl+1);
+    while ((c = fgetc(f)) != EOF) {
+        EXPAND(line, szl, nrl + 1);
 
-	if ( c == '\\')  {
-	    if ( (c = fgetc(f)) == EOF )
-		break;
-	    if (c == '\n')
-		++lineno;
-	    else if (c != '%')
-		line[nrl++] = '\\';
-	    line[nrl++] = c;
-	    continue;
-	}
-	else if ( c == '%' )
-	    c = '\n';
-	else if ( c == '\n' ) {
-	    ++lineno;
-	    line[nrl] = 0;
-	    return line;
-	}
+        if (c == '\\') {
+            if ((c = fgetc(f)) == EOF)
+                break;
+            if (c == '\n')
+                ++lineno;
+            else if (c != '%')
+                line[nrl++] = '\\';
+            line[nrl++] = c;
+            continue;
+        } else if (c == '%')
+            c = '\n';
+        else if (c == '\n') {
+            ++lineno;
+            line[nrl] = 0;
+            return line;
+        }
 
-	line[nrl++] = c;
+        line[nrl++] = c;
     }
     if (nrl) {
-	line[nrl] = 0;
-	return line;
+        line[nrl] = 0;
+        return line;
     }
     return 0;
 }
 
 
-/* return the mtime of a file (or the current time of day if
- * the stat() failed to work
+/*
+ * return the mtime of a file (or the current time of day if the stat()
+ * failed to work
  */
 time_t
-mtime(char *path)
-{
+mtime(char *path){
     struct stat st;
     time_t now;
 
-    if ( stat(path, &st) == 0 )
-	return st.st_mtime;
+    if (stat(path, &st) == 0)
+        return st.st_mtime;
 
     error("can't stat %s -- returning current time", path);
     time(&now);
@@ -170,105 +173,112 @@ mtime(char *path)
 }
 
 
-/* erase the contents of a crontab, leaving the arrays allocated for
- * later use.
+/*
+ * erase the contents of a crontab, leaving the arrays allocated for later
+ * use.
  */
 void
 zerocrontab(crontab *tab)
 {
     int i;
 
-    if (tab == 0) return;
+    if (tab == 0)
+        return;
 
-    for (i=0; i < tab->nre; ++i)
-	if (tab->env[i])
-	    free(tab->env[i]);
+    for (i = 0; i < tab->nre; ++i)
+        if (tab->env[i])
+            free(tab->env[i]);
     tab->nre = 0;
 
-    for (i=0; i < tab->nrl; ++i) {
-	free(tab->list[i].command);
-	if (tab->list[i].input)
-	    free(tab->list[i].input);
+    for (i = 0; i < tab->nrl; ++i) {
+        free(tab->list[i].command);
+        if (tab->list[i].input)
+            free(tab->list[i].input);
     }
     tab->nrl = 0;
 }
 
 
-/* eat leading blanks on a line
+/*
+ * eat leading blanks on a line
  */
-char*
+char *
 firstnonblank(char *s)
 {
-    while (*s && isspace(*s)) ++s;
+    while (*s && isspace(*s))
+        ++s;
 
     return s;
 }
 
 
-/* change directory or die
+/*
+ * change directory or die
  */
 void
 xchdir(char *path)
 {
     if (chdir(path) == -1)
-	fatal("%s: %s", path, strerror(errno));
+        fatal("%s: %s", path, strerror(errno));
 }
 
 int
-xis_crondir (void)
+xis_crondir(void)
 {
     FILE *ftmp;
-    
-    DIR* dir = opendir(_PATH_CRONDIR);
-    if (dir) { /* Directory exists. */
+
+    DIR *dir = opendir(_PATH_CRONDIR);
+    if (dir) {                  /* Directory exists. */
         closedir(dir);
         return 0;
-    } else { /* Directory does not exist or opendir failed. */
-        int result = mkdir(_PATH_CRONDIR,0777); /*-1 fail, 0 ok */
-        if (result == -1) return -1;
+    } else {                    /* Directory does not exist or opendir
+                                 * failed. */
+        int result = mkdir(_PATH_CRONDIR, 0777);        /*-1 fail, 0 ok */
+        if (result == -1)
+            return -1;
         /* created CRONDIR, generate root crontab file template */
-        if ( (ftmp = fopen(_PATH_CRONTAB, "a+")) == 0 ) {
+        if ((ftmp = fopen(_PATH_CRONTAB, "a+")) == 0) {
             error("can't create crontab template: %s", strerror(errno));
             return -1;
-        }  
+        }
 #if TEST
-        fprintf(ftmp,"0-59 * * * * echo Message 1 by cron >>cron.out\n");
+        fprintf(ftmp, "0-59 * * * * echo Message 1 by cron >>cron.out\n");
 #else
-        fprintf(ftmp,"* * * * * echo Hello! Here is cron >>cron.out\n");
-        fprintf(ftmp,"10,20,30,40,50 * * * * echo Message 10 by cron >>cron.out\n");
+        fprintf(ftmp, "* * * * * echo Hello! Here is cron >>cron.out\n");
+        fprintf(ftmp, "10,20,30,40,50 * * * * echo Message 10 by cron >>cron.out\n");
 #endif
         fclose(ftmp);
     }
 }
 
-#ifdef ELKS /* setregid not defined */
+#ifdef ELKS                     /* setregid not defined */
 
 int
 setregid(gid_t rgid, gid_t egid)
 {
 #ifdef HAVE_SETEGID
-    if ( setegid(egid) != 0 )
-	return -1;
+    if (setegid(egid) != 0)
+        return -1;
 #endif
-    if ( setgid(rgid) != 0 )
-	return -1;
+    if (setgid(rgid) != 0)
+        return -1;
     return 0;
 }
 
 #endif
 
 
-#ifdef ELKS /* setreuid not defined */
+#ifdef ELKS                     /* setreuid not defined */
 
 int
 setreuid(gid_t ruid, gid_t euid)
 {
 #ifdef HAVE_SETEUID
-    if ( seteuid(euid) != 0 )
-	return -1;
+    if (seteuid(euid) != 0)
+        return -1;
 #endif
-    if ( setuid(ruid) != 0 )
-	return -1;
+    if (setuid(ruid) != 0)
+        return -1;
     return 0;
 }
 
@@ -277,25 +287,23 @@ setreuid(gid_t ruid, gid_t euid)
 #define	ptr(base, size, i)	((const void *)(((unsigned char *)(base)) + ((i) * (size))))
 
 void *
-bsearch_c(const void * key, const void * base, size_t nmemb, size_t size,
-	int (* compar)(const void *, const void *))
+bsearch_c(const void *key, const void *base, size_t nmemb, size_t size,
+          int (*compar) (const void *, const void *))
 {
-	if(nmemb)
-	{
-		size_t i = nmemb >> 1;
-		void const * p = ptr(base, size, i);
-		int	k = compar(key, p);
+    if (nmemb) {
+        size_t i = nmemb >> 1;
+        void const *p = ptr(base, size, i);
+        int k = compar(key, p);
 
-		if(k)
-		{
-			if(k < 0)
-				return bsearch_c(key, base, i, size, compar);
-			else
-				return bsearch_c(key, ((unsigned char *)p) + size, nmemb - (i + 1), size, compar);
-		}
+        if (k) {
+            if (k < 0)
+                return bsearch_c(key, base, i, size, compar);
+            else
+                return bsearch_c(key, ((unsigned char *)p) + size, nmemb - (i + 1), size, compar);
+        }
 
-		return (void *)p;
-	}
+        return (void *)p;
+    }
 
-	return NULL;
+    return NULL;
 }
