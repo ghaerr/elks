@@ -39,12 +39,14 @@ sleep(unsigned int seconds)
 unsigned int
 sleep(unsigned int seconds)
 {
- struct timeval timeout;
- time_t start = time((void*)0);
- timeout.tv_sec = seconds;
- timeout.tv_usec = 0;
- select(1, NULL, NULL, NULL, &timeout);
- return seconds - (time((void*)0) - start);
+    struct timeval timeout;
+    timeout.tv_sec = seconds;
+    timeout.tv_usec = 0;
+    time_t start = time((void*)0);
+    select(1, NULL, NULL, NULL, &timeout);
+    time_t stop = time((void*)0);
+    time_t elapsed = stop <= start ? 0 : stop - start;
+    return elapsed > seconds ? 0 : seconds - elapsed;
 }
 #endif
 
