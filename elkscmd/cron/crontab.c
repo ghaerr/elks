@@ -258,7 +258,7 @@ main(int argc, char **argv)
 #endif
 
     if ((pwd = getpwuid(getuid())) == 0)
-        fatal("you don't seem to have a password entry?\n");
+        fatal("you don't seem to have a password entry?");
     strncpy(whoami, pwd->pw_name, sizeof whoami);
 
     if (xis_crondir() != 0) {
@@ -292,12 +292,12 @@ main(int argc, char **argv)
 
     if (user) {
         if ((pwd = getpwnam(user)) == 0)
-            fatal("user %s does not have a password entry.\n", user);
+            fatal("user %s does not have a password entry.", user);
     } else if ((pwd = getpwuid(getuid())) == 0)
-        fatal("you don't seem to have a password entry?\n");
+        fatal("you don't seem to have a password entry?");
 
     if ((getuid() != 0) && (pwd->pw_uid != getuid()))
-        fatal("you may not %s %s's crontab.\n", what, pwd->pw_name);
+        fatal("you may not %s %s's crontab.", what, pwd->pw_name);
 
     argc -= optind;
     argv += optind;
