@@ -65,7 +65,7 @@ struct console {
 static struct wait_queue glock_wait;
 static Console Con[MAX_CONSOLES], *Visible;
 static Console *glock;		/* Which console owns the graphics hardware */
-static char *CCBase;
+static unsigned short CCBase;   /* 6845 CRTC base I/O address */
 static int Width, MaxCol, Height, MaxRow;
 static int NumConsoles = MAX_CONSOLES;
 
@@ -91,17 +91,23 @@ static void SetDisplayPage(register Console * C)
 
 static void PositionCursor(register Console * C)
 {
-    char *CCBasep = CCBase;
-    int Pos = C->cx + Width * C->cy + C->basepage;
+    unsigned int Pos = C->cx + Width * C->cy + C->basepage;
 
-    outb(14, CCBasep);
-    outb((Pos >> 8) & 255, CCBasep + 1);
-    outb(15, CCBasep);
-    outb(Pos & 255, CCBasep + 1);
+    outb(14, CCBase);
+    outb(Pos >> 8, CCBase + 1);
+    outb(15, CCBase);
+    outb(Pos, CCBase + 1);
 }
 
 static void DisplayCursor(int onoff)
 {
+    /* unfortunately, the cursor start/end at BDA 0x0460 can't be relied on! */
+    unsigned int v = onoff? 0x0d0e: 0x2000;
+
+    outb(10, CCBase);
+    outb(v >> 8, CCBase + 1);
+    outb(11, CCBase);
+    outb(v, CCBase + 1);
 }
 
 static void VideoWrite(register Console * C, int c)
@@ -188,7 +194,7 @@ void console_init(void)
 
     /* Trust this. Cga does not support peeking at 0x40:0x84. */
     MaxRow = (Height = 25) - 1;
-    CCBase = (char *)peekw(0x63, 0x40);
+    CCBase = peekw(0x63, 0x40);
     PageSizeW = ((unsigned int)peekw(0x4C, 0x40) >> 1);
 
     VideoSeg = 0xb800;
