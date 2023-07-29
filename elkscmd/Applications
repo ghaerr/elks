@@ -95,6 +95,7 @@ sys_utils/console				:sysutil				:1200k	:1440k
 sys_utils/unreal16				:sysutil
 screen/screen					:screen					:1200k	:1440k
 cron/cron   					:cron					:1200k	:1440k
+cron/crontab   					:cron					:1200k	:1440k
 sh_utils/basename				:be-shutil			:720k
 sh_utils/clear					:shutil					:1200k	:1440k
 sh_utils/dirname				:be-shutil			:720k
