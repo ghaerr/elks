@@ -14,14 +14,10 @@ KERNEL_LIBS = $(TOPDIR)/elks/arch/i86/lib/lib86.a
 
 #TODO: fix uncompress zcat lpfilter disabled
 PRGS = tar miniterm ed fdtest od hd time kilo mined sleep tty uuencode uudecode compress
-PRGS += float
 
 #HOSTPRGS = hostcompress
 
 all: $(PRGS) $(HOSTPRGS)
-
-float: float.o
-	$(LD) $(LDFLAGS) -o float float.o $(LDLIBS) -lc
 
 ed: ed.o
 	$(LD) $(LDFLAGS) -o ed ed.o $(LDLIBS)
