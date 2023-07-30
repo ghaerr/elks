@@ -13,6 +13,7 @@ include $(BASEDIR)/Make.rules
 PRGS = \
     test_exit \
     test_eth \
+    test_float \
     test_pty \
     test_select \
     test_signal \
@@ -25,6 +26,9 @@ test_exit: test_exit.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 test_eth: test_eth.o
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+test_float: test_float.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 test_pty: test_pty.o
