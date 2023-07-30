@@ -191,7 +191,8 @@ void cutswitch(tmpname)
 		unlink(tmpname);
 # else
 	sprintf(cutfname, CUTNAME, o_directory, getpid(), fd);
-	link(tmpname, cutfname) || unlink(tmpname);
+	if (!link(tmpname, cutfname))
+		unlink(tmpname);
 # endif
 #endif
 
