@@ -108,7 +108,6 @@ int main(int argc, char **argv)
         if (argc == 1) {
             ssize_t n;
             write(STDOUT_FILENO, "login: ", 7);
-            errno = 0;
             if ((n = read(STDIN_FILENO, lbuf, sizeof(lbuf) - 1)) < 1) {
                 if (errno == EINTR)
                     continue;

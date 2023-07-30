@@ -20,7 +20,6 @@ typedef unsigned short elks_size_t;
 
 static char *readsection(int fd, int size, char *filename)
 {
-	int n;
 	char *p;
 
 	if (size == 0)
@@ -31,7 +30,7 @@ static char *readsection(int fd, int size, char *filename)
 		printf("Out of memory\n");
 		exit(1);
 	}
-	if ((n = read(fd, p, size)) != size)
+	if (read(fd, p, size) != size)
 	{
 		printf("Error reading section: %s\n", filename);
 		exit(1);

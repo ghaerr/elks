@@ -627,7 +627,6 @@ int main(int argc, char **argv)
 
 			if (mode == MODE_TEXT) {
 				for (wrote = 0; wrote < len; ) {
-					res = -1;
 					if (add_lf && (cr_found = memchr(buf + wrote, 13, len - wrote))) {
 						res = write(1, buf + wrote, cr_found - (buf + wrote) + 1U);
 						if (cr_found && (res > 0)) {
