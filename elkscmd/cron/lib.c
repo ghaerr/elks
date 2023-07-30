@@ -261,12 +261,7 @@ xis_crondir(void)
             error("can't create crontab template: %s", strerror(errno));
             return -1;
         }
-#if TEST
-        fprintf(ftmp, "0-59 * * * * echo Message 1 by cron >>cron.out\n");
-#else
         fprintf(ftmp, "* * * * * echo Hello! Here is cron >>cron.out\n");
-        fprintf(ftmp, "10,20,30,40,50 * * * * echo Message 10 by cron >>cron.out\n");
-#endif
         fclose(ftmp);
     }
     return 0;

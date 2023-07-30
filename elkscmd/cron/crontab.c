@@ -293,8 +293,7 @@ main(int argc, char **argv)
     if (user) {
         if ((pwd = getpwnam(user)) == 0)
             fatal("user %s does not have a password entry.", user);
-    } else if ((pwd = getpwuid(getuid())) == 0)
-        fatal("you don't seem to have a password entry?");
+    } /* else `pwd` is already set from above */
 
     if ((getuid() != 0) && (pwd->pw_uid != getuid()))
         fatal("you may not %s %s's crontab.", what, pwd->pw_name);

@@ -185,7 +185,7 @@ securepath(char *path)
     if (stat(path, &sb) != 0)
         fatal("%s: can't stat", path);
     if (stat(".", &sb1) != 0)
-        fatal(".: can't stat");
+        fatal("%s: can't stat", ".");
     if ((sb.st_dev != sb1.st_dev) || (sb.st_ino != sb1.st_ino))
         fatal("cwd not %s", _PATH_CRONDIR);
 }
@@ -211,12 +211,12 @@ triggered(Evmask *t, Evmask *m)
  * print the contents of a crontab
  */
 #if DEBUG
-void
-printcrontab(crontab *tab, int nrtab)
+static void
+printcrontab()
 {
     int i, j;
 
-    for (i = 0; i < nrtab; i++) {
+    for (i = 0; i < nrtabs; i++) {
         if (tabs[i].nrl) {
             struct passwd *pwd = getpwuid(tabs[i].user);
 
@@ -234,13 +234,6 @@ printcrontab(crontab *tab, int nrtab)
             }
         }
     }
-}
-#else
-void
-printcrontab(crontab *tab, int nrtab)
-{
-    (void)tab;
-    (void)nrtab;
 }
 #endif
 
@@ -318,9 +311,9 @@ checkcrondir()
         printf("                  IS %s", ctime(&newtime));
         printf("total %d, added %d, updated %d, active %d\n",
                nrtabs, ct_add, ct_update, nrtabs - ct_inact);
+        printcrontab();
 #endif
         ct_dirtime = newtime;
-        printcrontab(tabs, nrtabs);
     }
 }
 
