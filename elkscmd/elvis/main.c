@@ -38,7 +38,9 @@ int main(int argc, REG char *argv[])
 	int	i;
 	char	*cmd = (char *)0;
 	REG char	*tag = (char *)0;
+#ifndef NO_ERRLIST
 	char	*err = (char *)0;
+#endif
 	char	*str;
 #if MSDOS || TOS
 	char firstarg[256];

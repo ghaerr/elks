@@ -122,7 +122,7 @@ ifdef CONFIG_APP_SYS_UTILS
 endif
 
 ifdef CONFIG_APP_TEST
-	INSTDIRS += test
+	TAGS += :test|
 endif
 
 #

@@ -50,7 +50,9 @@ void cmd_substitute(frommark, tomark, cmd, bang, extra)
 	long	l;	/* a line number */
 	char	*s;	/* used during subtitutions */
 	char	*d;	/* used during subtitutions */
+#ifndef CRUNCH
 	char	*conf;	/* used during confirmation */
+#endif
 	long	chline;	/* # of lines changed */
 	long	chsub;	/* # of substitutions made */
 	static	optp;	/* boolean option: print when done? */
@@ -567,7 +569,9 @@ void cmd_read(frommark, tomark, cmd, bang, extra)
 	int	addnl;	/* boolean: forced to add newlines? */
 	int	len;	/* number of chars in current line */
 	long	lines;	/* number of lines in current block */
+#ifndef CRUNCH
 	struct stat statb;
+#endif
 
 	/* special case: if ":r !cmd" then let the filter() function do it */
 	if (extra[0] == '!')

@@ -267,7 +267,9 @@ static void drawtext(text, clr)
 	int		i;
 	int		tabstop;	/* *o_tabstop */
 	int		limitcol;	/* leftcol or leftcol + COLS */
+#ifndef NO_CHARATTR
 	int		abnormal;	/* boolean: charattr != A_NORMAL? */
+#endif
 
 #ifndef NO_SENTENCE
 	/* if we're hiding format lines, and this is one of them, then hide it */
@@ -286,7 +288,9 @@ static void drawtext(text, clr)
 	/* move some things into registers... */
 	limitcol = leftcol;
 	tabstop = *o_tabstop;
+#ifndef NO_CHARATTR
 	abnormal = FALSE;
+#endif
 
 #ifndef CRUNCH
 	if (clr)

@@ -95,6 +95,7 @@ sys_utils/console				:sysutil				:1200k	:1440k
 sys_utils/unreal16				:sysutil
 screen/screen					:screen					:1200k	:1440k
 cron/cron   					:cron					:1200k	:1440k
+cron/crontab   					:cron					:1200k	:1440k
 sh_utils/basename				:be-shutil			:720k
 sh_utils/clear					:shutil					:1200k	:1440k
 sh_utils/dirname				:be-shutil			:720k
@@ -112,7 +113,6 @@ sh_utils/tr						:shutil				:720k
 #sh_utils/whoami				:shutil					:1200k	:1440k
 sh_utils/xargs					:shutil					:1200k	:1440k
 sh_utils/yes					:shutil				:720k
-misc_utils/float				:miscutil						:1440k
 misc_utils/compress				:miscutil						:1440k
 misc_utils/miniterm				:miscutil			:720k
 misc_utils/fdtest				:miscutil				:1200k	:1440k
@@ -184,7 +184,8 @@ inet/urlget/urlget :::ftpget	:net
 inet/urlget/urlget :::ftpput	:net
 inet/urlget/urlget :::httpget	:net
 bc/bc							:other
-test/libc/test_libc				:other
+test/libc/test_libc				:test
+test/other/test_float			:test
 #nano/nano-2.0.6/src/nano		:other					:1440k
 #mtools/mcopy					:other
 #mtools/mdel					:other
