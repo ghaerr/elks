@@ -61,7 +61,7 @@ $(PGM): $(OBJS)
 # Write a custom header for curses.
 
 local-curses.h:
-	@x=`find /lib/ /lib64/ /usr/lib/ /usr/lib64/ /usr/local/lib/ /usr/local/lib64/ /Library/Developer/CommandLineTools/SDKs/MacOSX13.3.sdk/usr/lib -maxdepth 2 -name 'libncurses.*'` ;\
+	@x=`find /lib/ /lib64/ /usr/lib/ /usr/lib64/ /usr/local/lib/ /usr/local/lib64/ /Library/Developer/CommandLineTools/SDKs/MacOSX13.3.sdk/usr/lib/ -maxdepth 2 -name 'libncurses.*'` ;\
 	if [ ! "$$x" ]; then \
 		echo -e "\007" ;\
 		echo ">> Unable to find the Ncurses libraries." ;\
