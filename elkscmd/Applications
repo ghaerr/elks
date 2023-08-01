@@ -80,7 +80,7 @@ file_utils/sync					:fileutil		:360k
 file_utils/touch				:fileutil			:720k
 sys_utils/chmem					:sysutil			:720k
 sys_utils/kill					:sysutil			:720k
-sys_utils/ps			:sash	:sysutil		    :720k   :128k
+sys_utils/ps			:sash	:sysutil		:360k   :128k
 sys_utils/ps :::uptime          :sysutil                        :1440k  :128k
 sys_utils/reboot				:sysutil		:360k   :128k
 sys_utils/makeboot				:sysutil		:360k
@@ -121,7 +121,7 @@ misc_utils/od					:miscutil				:1200k	:1440k
 misc_utils/hd					:miscutil				:1200k	:1440k
 misc_utils/time					:miscutil			:720k
 misc_utils/kilo					:miscutil				:1200k	:1440k
-misc_utils/mined ::bin/edit		:miscutil				:1200k	:1440k
+misc_utils/mined ::bin/edit		:miscutil		:360k	:1200k	:1440k
 misc_utils/sleep				:miscutil				:1200k	:1440k
 misc_utils/tty					:miscutil				:1200k	:1440k
 misc_utils/uuencode				:miscutil				:1200k	:1440k
@@ -156,7 +156,7 @@ minix3/cal						:be-minix3				:1200k	:1440k
 minix3/diff						:be-minix3			:720k
 minix3/find						:be-minix3			:720k
 minix3/mail						:minix3                         :other
-disk_utils/fsck					:diskutil				:1200k	:1440k
+disk_utils/fsck					:diskutil		:360k	:1200k	:1440k
 disk_utils/mkfs					:diskutil		:360k
 disk_utils/mkfat				:diskutil		:360k
 disk_utils/partype				:diskutil				:1200k	:1440k
@@ -202,7 +202,7 @@ test/other/test_float			:test
 nano-X/bin/nxclock				:other
 nano-X/bin/nxdemo				:other
 nano-X/bin/nxtest				:other
-nano-X/bin/nxtetris				:other
+nano-X/bin/nxtetris				:nanox
 nano-X/bin/nxlandmine			:nanox				:1200k
 nano-X/bin/nxterm				:nanox
 nano-X/bin/nxworld				:nanox
