@@ -77,11 +77,7 @@ static int lastL1map;
 #endif
 
 #ifdef CHECK_BLOCKIO
-#ifdef CONFIG_FS_NR_XMS_BUFFERS
-static int nr_free_bh = CONFIG_FS_NR_XMS_BUFFERS;
-#else
-static int nr_free_bh = CONFIG_FS_NR_EXT_BUFFERS;
-#endif
+static int nr_free_bh;
 /* debug free buffer_head count */
 #define DCR_COUNT(bh) if(!(--bh->b_count))nr_free_bh++
 #define INR_COUNT(bh) if(!(bh->b_count++))nr_free_bh--
@@ -169,6 +165,10 @@ int INITPROC buffer_init(void)
 		(long)bufs_to_alloc << 10);
 #else
     int bufs_to_alloc = NR_MAPBUFS;
+#endif
+
+#ifdef CHECK_BLOCKIO
+    nr_free_bh = bufs_to_alloc;
 #endif
 
     buffer_heads = heap_alloc(bufs_to_alloc * sizeof(struct buffer_head),
