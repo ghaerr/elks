@@ -7,6 +7,12 @@
 /* tunable parameters*/
 #define PIPE_BUFSIZ	80	/* doesn't have to be power of two */
 
+/* calculate kernel stack usage and overflow on each system call */
+#define CHECK_KSTACK
+
+/* check matched sleep/wait and idle task sleeps when writing/testing drivers */
+#define CHECK_SCHED
+
 /*
  * Compile-time configuration
  */

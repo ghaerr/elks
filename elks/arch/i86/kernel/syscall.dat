@@ -87,7 +87,7 @@ select		+63	5	. 5 paramaters is possible
 readdir		+64	3	*
 insmod		65	1	- Removed support for modules
 fchown		+66	3
-dlload		+67	2	- Removed support for dynamic libraries
+dlload		67	2	- Removed support for dynamic libraries
 setsid		+68	0
 sbrk		+69	2	* Legacy number from Linux
 ustatfs		+70	3

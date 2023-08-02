@@ -91,6 +91,9 @@ void start_kernel(void)
     /*
      * We are now the idle task. We won't run unless no other process can run.
      */
+#ifdef CHECK_KSTACK
+    check_kstack_init();
+#endif
     while (1) {
         schedule();
 #ifdef CONFIG_TIMER_INT0F

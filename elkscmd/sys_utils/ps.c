@@ -189,8 +189,6 @@ int main(int argc, char **argv)
 			return 1;
 		}
 
-		if (task_table.t_kstackm != KSTACK_MAGIC)
-			break;
 		if (task_table.t_regs.ss == 0)
 			continue;
 

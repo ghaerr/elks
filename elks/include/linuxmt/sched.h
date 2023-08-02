@@ -11,10 +11,6 @@
 #include <linuxmt/ntty.h>
 #include <arch/param.h>
 
-#ifdef CONFIG_STRACE
-#include <linuxmt/strace.h>
-#endif
-
 struct file_struct {
     fd_mask_t			close_on_exec;
     struct file 		*fd[NR_OPEN];
@@ -85,11 +81,12 @@ struct task_struct {
     gid_t			groups[NGROUPS];
 #endif
 
-#ifdef CONFIG_STRACE
-    struct syscall_params	sc_info;
+#ifdef CHECK_KSTACK
+    int                         kstack_max;
+    int                         kstack_prevmax;
+    unsigned int		kstack_magic;	/* To detect stack corruption */
 #endif
 
-    __u16			t_kstackm;	/* To detect stack corruption */
     __u8			t_kstack[KSTACK_BYTES];
     __registers 		t_regs;
 };

@@ -54,8 +54,8 @@ void stack_check(void)
     register __ptask currentp = current;
     register char *end = (char *)currentp->t_endbrk;
 
-#if defined(CONFIG_STRACE) && defined(STRACE_KSTACKUSED)
-    memset(current->t_kstack, 0x55, KSTACK_BYTES-16);
+#if defined(CONFIG_STRACE) || defined(CHECK_KSTACK)
+    check_kstack_init();
 #endif
 #ifdef CONFIG_EXEC_LOW_STACK
     if (currentp->t_begstack <= currentp->t_enddata) {	/* stack below heap?*/

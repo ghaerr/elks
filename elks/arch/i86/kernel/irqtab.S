@@ -96,13 +96,10 @@ int_vector_set:
 	.extern	do_IRQ
 	.extern	stack_check
 	.extern	syscall
-#ifdef CHECK_SS
-	.extern	panic
-#endif
-#ifdef CONFIG_STRACE
 	.extern	strace
-	.extern	ret_strace
-#endif
+	.extern	strace_retval
+	.extern	check_kstack
+	.extern	panic
 
 	.global _irqit
 _irqit:
@@ -202,25 +199,21 @@ save_regs:
 //
 	sti
 	call	stack_check	// Check USER stack
-	pop	%ax		// Get syscall function code
+
 #ifdef CONFIG_STRACE
-//
-//	strace(syscall#, params...)
-//
-	push	%ax
 	call	strace		// strace must be compiled with tail function optim off
-	pop     %ax
 #endif
-//
-//	syscall(params...)
-//
+
+	pop	%ax		// get syscall function code in AX
 	call	syscall
-	push	%ax		// syscall returns a value in ax
+	push	%ax		// syscall return value in ax
+
 #ifdef CONFIG_STRACE
-//
-//	ret_strace(retval)
-//
-	call	ret_strace
+	call	strace_retval   // syscall return value is on stack
+#endif
+
+#ifdef CHECK_KSTACK
+	call	check_kstack    // Check KERNEL stack
 #endif
 //
 //	Restore registers
@@ -252,7 +245,9 @@ ret_from_syscall:
 !
 */
 updct:
+#ifdef CHECK_SCHED
 	incw	intr_count	// only needed for schedule during interrupt warning
+#endif
 //
 //	Call the C code
 //
@@ -331,7 +326,9 @@ was_trap:
 //
 //	Restore intr_count
 //
+#ifdef CHECK_SCHED
 	decw	intr_count
+#endif
 //
 //	Now look at rescheduling
 //
@@ -413,10 +410,12 @@ bios_call_cnt:                  // call BIOS IRQ 0 handler every 5th interrupt
 	.word	5
 org_irq0:			// original BIOS IRQ 0 vector
 	.long	0
-intr_count:			// Hardware interrupts count
-	.word	0
 _gint_count:			// General interrupts count. Start with 1
 	.word	1		// because init_task() is in kernel mode
+#ifdef CHECK_SCHED
+intr_count:			// Hardware interrupts count
+	.word	0
+#endif
 #ifdef CHECK_SS
 pmsg:	.ascii "Running unknown code"
 	.byte	0

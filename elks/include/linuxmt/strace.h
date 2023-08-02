@@ -8,25 +8,6 @@
  * tables in strace.c which will let it produce semi-readable output
  */
 
-/* Config parameters */
-
-#define STRACE_PRINTSTACK 	/* This tells strace to print stack params */
-#define STRACE_KSTACKUSED	/* Calculate amount of kernel stack used */
-//#define STRACE_RETWAIT	/* Wait until syscall finished before print */
-
-struct syscall_info
-{
-    char *s_name;		/* Name of syscall (e.g. sys_fork or nosys_voodoo) */
-    __u16 s_params;		/* # and type of parameters */
-};
-
-struct syscall_params
-{
-    unsigned int s_num;
-    unsigned int s_param[3];
-    char *s_name;
-};
-
 /* Values reorganised as follows:
  *
  * Bits  Values  Meaning
@@ -57,19 +38,5 @@ struct syscall_params
 #define P_SLONG 	 13	/* Signed Long Int                      */
 #define P_PULONG 	 14	/* Pointer to Unsigned Long Int         */
 #define P_PSLONG	 15	/* Pointer to Signed Long Int           */
-
-#ifdef NOT_YET
-
-#define P_ULLONG	 16	/* Unsigned Long Long Int               */
-#define P_SLLONG	 17	/* Signed Long Long Int                 */
-#define P_PULLONG 	 18	/* Pointer to Unsigned Long Long Int    */
-#define P_PSLLONG	 19	/* Pointer to Signed Long Long Int      */
-
-#endif
-
-/* Special parameter types go here... eventually we can process things
- * like O_RDONLY and whatnot... */
-
-/* No special return value processing yet... sorry. */
 
 #endif
