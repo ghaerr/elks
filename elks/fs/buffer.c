@@ -76,17 +76,19 @@ static struct wait_queue L1wait;		/* Wait for a free L1 buffer area */
 static int lastL1map;
 #endif
 
-/* Uncomment next line to debug free buffer_head count */
-/*#define DEBUG_FREE_BH_COUNT */
-
-#ifdef DEBUG_FREE_BH_COUNT
-static int nr_free_bh = NR_BUFFERS;
+#ifdef CHECK_BLOCKIO
+#ifdef CONFIG_FS_NR_XMS_BUFFERS
+static int nr_free_bh = CONFIG_FS_NR_XMS_BUFFERS;
+#else
+static int nr_free_bh = CONFIG_FS_NR_EXT_BUFFERS;
+#endif
+/* debug free buffer_head count */
 #define DCR_COUNT(bh) if(!(--bh->b_count))nr_free_bh++
 #define INR_COUNT(bh) if(!(bh->b_count++))nr_free_bh--
 #define CLR_COUNT(bh) if(bh->b_count)nr_free_bh++
 #define SET_COUNT(bh) if(--nr_free_bh < 0) { \
-	printk("VFS: get_free_buffer: bad free buffer head count.\n"); \
-	nr_free_bh = 0; }
+                          panic("get_free_buffer: bad free buffer head count"); \
+                          nr_free_bh = 0; }
 #else
 #define DCR_COUNT(bh) (bh->b_count--)
 #define INR_COUNT(bh) (bh->b_count++)
@@ -218,9 +220,13 @@ void wait_on_buffer(struct buffer_head *bh)
     ext_buffer_head *ebh = EBH(bh);
 
     while (ebh->b_locked) {
+#ifdef CONFIG_ASYNCIO
 	INR_COUNT(ebh);
 	sleep_on((struct wait_queue *)bh);	/* use bh as wait address*/
 	DCR_COUNT(ebh);
+#else
+        panic("wait_on_buffer: block %ld\n", ebh->b_blocknr);
+#endif
     }
 }
 
@@ -233,7 +239,9 @@ void lock_buffer(struct buffer_head *bh)
 void unlock_buffer(struct buffer_head *bh)
 {
     EBH(bh)->b_locked = 0;
+#ifdef CONFIG_ASYNCIO
     wake_up((struct wait_queue *)bh);	/* use bh as wait address*/
+#endif
 }
 
 void invalidate_buffers(kdev_t dev)
@@ -281,6 +289,7 @@ static void sync_buffers(kdev_t dev, int wait)
 	/*
 	 *      Do the stuff
 	 */
+        debug("sync block %ld count %d\n", ebh->b_blocknr, ebh->b_count);
 	INR_COUNT(ebh);
 	ll_rw_blk(WRITE, bh);
 	DCR_COUNT(ebh);
@@ -314,31 +323,28 @@ static struct buffer_head *get_free_buffer(void)
  * Release a buffer head
  */
 
-static void __brelse(struct buffer_head *bh)
+void brelse(struct buffer_head *bh)
 {
-    ext_buffer_head *ebh = EBH(bh);
+    ext_buffer_head *ebh;
+
+    if (!bh) return;
+    ebh = EBH(bh);
 
     wait_on_buffer(bh);
     if (ebh->b_count == 0) panic("brelse");
-#if 0
-    if (!--ebh->b_count)
-	wake_up(&bufwait);
-#else
     DCR_COUNT(ebh);
+#ifdef BLOAT_FS
+    if (!ebh->b_count)
+	wake_up(&bufwait);
 #endif
 }
 
-void brelse(struct buffer_head *bh)
-{
-    if (bh) __brelse(bh);
-}
-
+#ifdef BLOAT_FS
 /*
  * bforget() is like brelse(), except it removes the buffer
  * data validity.
  */
-#if 0
-void __bforget(struct buffer_head *bh)
+void bforget(struct buffer_head *bh)
 {
     ext_buffer_head *ebh = EBH(bh);
 
@@ -478,8 +484,7 @@ struct buffer_head *bread32(kdev_t dev, block32_t block)
     return readbuf(getblk32(dev, block));
 }
 
-#if 0
-
+#ifdef BLOAT_FS
 /* NOTHING is using breada at this point, so I can pull it out... Chad */
 struct buffer_head *breada(kdev_t dev, block_t block, int bufsize,
 			   unsigned int pos, unsigned int filesize)
@@ -513,7 +518,6 @@ struct buffer_head *breada(kdev_t dev, block_t block, int bufsize,
     brelse(bh);
     return NULL;
 }
-
 #endif
 
 void mark_buffer_uptodate(struct buffer_head *bh, int on)
@@ -634,10 +638,8 @@ void unmap_buffer(struct buffer_head *bh)
 
 void unmap_brelse(struct buffer_head *bh)
 {
-    if (bh) {
-	unmap_buffer(bh);
-	__brelse(bh);
-    }
+    unmap_buffer(bh);
+    brelse(bh);
 }
 
 char *buffer_data(struct buffer_head *bh)

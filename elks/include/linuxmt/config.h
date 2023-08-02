@@ -13,6 +13,9 @@
 /* check matched sleep/wait and idle task sleeps when writing/testing drivers */
 #define CHECK_SCHED
 
+/* check buffer and block I/O request system when writing/testing block drivers */
+#define CHECK_BLOCKIO
+
 /*
  * Compile-time configuration
  */
