@@ -15,10 +15,11 @@
 #if defined(CONFIG_STRACE) || defined(CHECK_KSTACK)
 #include "strace.h"
 
+static struct sc_info notimp = { "NOTIMP", 0};
+
 static struct sc_info *syscall_info(unsigned int callno)
 {
     struct sc_info *s;
-    static struct sc_info notimp = { "NOTIMP", 0};
 
     if (callno < sizeof(elks_table1)/sizeof(struct sc_info)) {
         s = &elks_table1[callno];
@@ -110,6 +111,7 @@ void check_kstack(void)
 {
     int n;
     __ptask currentp = current;
+    struct sc_info *s;
     static int max = 0;
 
     /* Check for kernel stack overflow */
@@ -122,13 +124,16 @@ void check_kstack(void)
         if (currentp->t_kstack[n] != 0x55)
             break;
     n = KSTACK_BYTES - n;
+    s = syscall_info(currentp->t_regs.orig_ax);
+    if (s == &notimp)
+        printk("KSTACK(%d) syscall %d NOTIMP\n", currentp->pid, currentp->t_regs.orig_ax);
     if (n > currentp->kstack_max) {
         currentp->kstack_prevmax = currentp->kstack_max;
         currentp->kstack_max = n;
         if (n > max)
             max = n;
         printk("KSTACK(%d) sys_%7s max %3d prevmax %3d sysmax %3d",
-            currentp->pid, syscall_info(currentp->t_regs.orig_ax)->s_name,
+            currentp->pid, s->s_name,
             currentp->kstack_max, currentp->kstack_prevmax, max);
         if (n == max) printk("*");
         printk("\n");

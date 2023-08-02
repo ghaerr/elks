@@ -69,10 +69,6 @@ void schedule(void)
 
     prev = current;
 
-#ifdef CHECK_KSTACK
-    check_kstack();
-#endif
-
 #ifdef CHECK_SCHED
     if (intr_count > 0) {
         /* Taking a timer IRQ during another IRQ or while in kernel space is
