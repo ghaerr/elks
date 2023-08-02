@@ -26,17 +26,15 @@ struct request {
 #define RQ_ACTIVE	1
 
 /*
- * This is used in the elevator algorithm: Note that reads always go before
- * writes. This is natural: reads are much more time-critical than writes.
- *
- * Update: trying with writes being preferred due to test
- * by Alessandro Rubini..
+ * This is used in the elevator algorithm.  We don't prioritise reads
+ * over writes any more --- although reads are more time-critical than
+ * writes, by treating them equally we increase filesystem throughput.
+ * This turns out to give better overall performance.  -- sct
  */
 
 #define IN_ORDER(s1,s2) \
-((s1)->rq_cmd > (s2)->rq_cmd || ((s1)->rq_cmd == (s2)->rq_cmd && \
 ((s1)->rq_dev < (s2)->rq_dev || (((s1)->rq_dev == (s2)->rq_dev && \
-(s1)->rq_blocknr < (s2)->rq_blocknr)))))
+(s1)->rq_blocknr < (s2)->rq_blocknr)))
 
 struct blk_dev_struct {
     void (*request_fn) ();
@@ -89,8 +87,8 @@ extern void resetup_one_dev(struct gendisk *dev, int drive);
 
 #ifdef FLOPPYDISK
 
-static void floppy_on();	/*(unsigned int nr); */
-static void floppy_off();	/*(unsigned int nr); */
+static void floppy_on(unsigned int nr);
+static void floppy_off(unsigned int nr);
 
 #define DEVICE_NAME "fd"
 #define DEVICE_INTR do_floppy
@@ -135,6 +133,8 @@ static void floppy_off();	/*(unsigned int nr); */
 #define CURRENT_DEV	DEVICE_NR(CURRENT->rq_dev)
 
 static void (DEVICE_REQUEST) ();
+
+extern struct wait_queue wait_for_request;
 
 static void end_request(int uptodate)
 {

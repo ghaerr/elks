@@ -16,6 +16,9 @@
 /* check buffer and block I/O request system when writing/testing block drivers */
 #define CHECK_BLOCKIO
 
+/* disable to remove extra code used for asynchronous interrupt-driven I/O */
+//#define CONFIG_ASYNCIO
+
 /*
  * Compile-time configuration
  */

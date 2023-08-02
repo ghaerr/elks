@@ -80,55 +80,57 @@ static struct request *get_request(int n, kdev_t dev)
 {
     static struct request *prev_found = NULL;
     static struct request *prev_limit = NULL;
-    register struct request *req;
-    register struct request *limit;
+    struct request *req;
+    struct request *limit;
 
     limit = all_requests + n;
     if (limit != prev_limit) {
-	prev_limit = limit;
-	prev_found = all_requests;
+        prev_limit = limit;
+        prev_found = all_requests;
     }
     req = prev_found;
-    do {
-	req = ((req > all_requests) ? req : limit) - 1;
-	if (req->rq_status == RQ_INACTIVE) {
-	    prev_found = req;
-	    req->rq_status = RQ_ACTIVE;
-	    req->rq_dev = dev;
-	    return req;
-	}
-#ifndef CONFIG_ASYNCIO
-        else panic("get_request: no inactive requests\n");
+    for (;;) {
+        req = ((req > all_requests) ? req : limit) - 1;
+        if (req < all_requests) panic("BEFORE!");
+        if (req->rq_status == RQ_INACTIVE)
+            break;
+        if (req == prev_found) {
+#ifdef CONFIG_ASYNCIO
+            return NULL;
+#else
+            panic("get_request: no inactive requests\n");
 #endif
-    } while (req != prev_found);
-    return NULL;
+        }
+    }
+    prev_found = req;
+    req->rq_status = RQ_ACTIVE;
+    req->rq_dev = dev;
+    return req;
 }
 
 #ifdef CONFIG_ASYNCIO
-static struct wait_queue wait_for_request;
+struct wait_queue wait_for_request;
 
 /*
  * wait until a free request in the first N entries is available.
  */
 static struct request *__get_request_wait(int n, kdev_t dev)
 {
-    register struct request *req;
+    struct request *req;
+
     printk("Waiting for request...\n");
-
     wait_set(&wait_for_request);
-    current->state = TASK_UNINTERRUPTIBLE;
-    goto startgrw;
-    do {
-	schedule();
-startgrw:
-	//unplug_device(MAJOR(dev) + blk_dev);	/* Device can't be plugged */
-	clr_irq();
-	req = get_request(n, dev);
-	set_irq();
-    } while (req == NULL);
-    current->state = TASK_RUNNING;
+    for (;;) {
+        current->state = TASK_UNINTERRUPTIBLE;
+        clr_irq();
+        req = get_request(n, dev);
+        set_irq();
+        if (req)
+            break;
+        schedule();
+    }
     wait_clear(&wait_for_request);
-
+    current->state = TASK_RUNNING;
     return req;
 }
 #endif
