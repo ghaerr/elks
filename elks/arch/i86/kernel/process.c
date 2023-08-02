@@ -7,7 +7,6 @@
 #include <linuxmt/signal.h>
 #include <linuxmt/types.h>
 #include <linuxmt/memory.h>
-#include <linuxmt/strace.h>
 
 #include <arch/segment.h>
 
