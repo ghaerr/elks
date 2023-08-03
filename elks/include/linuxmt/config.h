@@ -7,6 +7,9 @@
 /* tunable parameters*/
 #define PIPE_BUFSIZ	80	/* doesn't have to be power of two */
 
+/* integrity check application SS on interrupts from user mode */
+#define CHECK_SS
+
 /* calculate kernel stack usage and overflow on each system call */
 #define CHECK_KSTACK
 

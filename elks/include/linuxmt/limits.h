@@ -8,6 +8,7 @@
 #else
 #define KSTACK_BYTES	640	/* Size of kernel stacks */
 #endif
+#define ISTACK_BYTES    512     /* Size of interrupt stack */
 
 #define KSTACK_GUARD    100     /* bytes before CHECK_KSTACK overflow warning */
 

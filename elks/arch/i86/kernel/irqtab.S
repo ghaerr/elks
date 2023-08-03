@@ -1,8 +1,7 @@
 #include <linuxmt/config.h>
+#include <linuxmt/limits.h>
 #include <arch/asm-offsets.h>
 #include <arch/ports.h>
-
-#define CHECK_SS	// integrity check interrupt from user mode
 
 	.arch	i8086, nojumps
 	.code16
@@ -126,14 +125,13 @@ ktask:				// Already using interrupt stack
 //
 //	Already using interrupt stack, keep using it
 //
-	//mov	%sp,%si
 	sub	$8,%si		// 14 offsets less 6 already on stack
 	jmp	save_regs
 //
 //	Using a process's kernel stack, switch to interrupt stack
 //
 itask:
-	mov	$_intstack-14,%si // 14 offsets 0-13 of SI below
+	mov	$istack-14,%si  // 14 offsets 0-13 of SI below
 	jmp	save_regs
 //
 //	User mode case
@@ -403,6 +401,7 @@ idle_halt:
 
 	.data
 	.global	intr_count
+	.global	endistack
 	.extern	current
 	.extern	previous
 
@@ -420,6 +419,6 @@ intr_count:			// Hardware interrupts count
 pmsg:	.ascii "Running unknown code"
 	.byte	0
 #endif
-	.skip 512,0		// 512 byte interrupt stack
-_intstack:
-
+endistack:
+	.skip ISTACK_BYTES,0	// interrupt stack
+istack:

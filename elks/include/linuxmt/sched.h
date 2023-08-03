@@ -86,7 +86,7 @@ struct task_struct {
     int                         kstack_prevmax;
 #endif
     unsigned int		kstack_magic;	/* To detect stack corruption */
-    __u8			t_kstack[KSTACK_BYTES];
+    __u16			t_kstack[KSTACK_BYTES/2];
     __registers 		t_regs;
 };
 

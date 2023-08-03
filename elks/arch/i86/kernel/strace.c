@@ -97,10 +97,11 @@ void strace_retval(unsigned int retval)
     int n;
     static int max = 0;
 
-    for (n=0; n<KSTACK_BYTES; n++)
-        if (currentp->t_kstack[n] != 0x55)
+    for (n=0; n<KSTACK_BYTES/2; n++) {
+        if (currentp->t_kstack[n] != 0x5555)
             break;
-    n = KSTACK_BYTES - n;
+    }
+    n = (KSTACK_BYTES/2 - n) << 1;
     if (n > max) max = n;
     printk("[%d:%s/ret=%d,ks=%d/%d]\n", currentp->pid, s->s_name, retval, n, max);
 }
@@ -118,6 +119,19 @@ void check_kstack(void)
     struct sc_info *s;
     const char *warning = "";
     static int max = 0;
+    static int maxistack = 0;
+    extern __u16 endistack[];
+
+    /* calc interrupt stack usage */
+    for (n=0; n<ISTACK_BYTES/2; n++) {
+        if (endistack[n] != 0)
+            break;
+    }
+    n = (ISTACK_BYTES/2 - n) << 1;
+    if (n > maxistack) {
+        maxistack = n;
+        printk("ISTACK NEW MAX %d\n", maxistack);
+    }
 
     /* Check for kernel stack overflow */
     if (currentp->kstack_magic != KSTACK_MAGIC) {
@@ -125,10 +139,12 @@ void check_kstack(void)
         do_exit(SIGSEGV);
     }
 
-    for (n=0; n<KSTACK_BYTES; n++)
-        if (currentp->t_kstack[n] != 0x55)
+    /* calc kernel stack usage */
+    for (n=0; n<KSTACK_BYTES/2; n++) {
+        if (currentp->t_kstack[n] != 0x5555)
             break;
-    n = KSTACK_BYTES - n;
+    }
+    n = (KSTACK_BYTES/2 - n) << 1;
     s = syscall_info(currentp->t_regs.orig_ax);
     if (s == &notimp)
         printk("KSTACK(%d) syscall %d NOTIMP\n", currentp->pid, currentp->t_regs.orig_ax);
