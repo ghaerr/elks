@@ -106,12 +106,17 @@ void strace_retval(unsigned int retval)
 }
 #endif
 
+/* stringize the result of expansion of a macro argument - used in check_kstack */
+#define str(bytes)  str2(bytes)
+#define str2(bytes) #bytes
+
 #ifdef CHECK_KSTACK
 void check_kstack(void)
 {
     int n;
     __ptask currentp = current;
     struct sc_info *s;
+    const char *warning = "";
     static int max = 0;
 
     /* Check for kernel stack overflow */
@@ -127,14 +132,16 @@ void check_kstack(void)
     s = syscall_info(currentp->t_regs.orig_ax);
     if (s == &notimp)
         printk("KSTACK(%d) syscall %d NOTIMP\n", currentp->pid, currentp->t_regs.orig_ax);
+    if (n >= KSTACK_BYTES - KSTACK_GUARD)
+        warning = " (OVERFLOW AT " str(KSTACK_BYTES) ")";
     if (n > currentp->kstack_max) {
         currentp->kstack_prevmax = currentp->kstack_max;
         currentp->kstack_max = n;
         if (n > max)
             max = n;
-        printk("KSTACK(%d) sys_%7s max %3d prevmax %3d sysmax %3d",
+        printk("KSTACK(%d) sys_%7s max %3d prevmax %3d sysmax %3d%s",
             currentp->pid, s->s_name,
-            currentp->kstack_max, currentp->kstack_prevmax, max);
+            currentp->kstack_max, currentp->kstack_prevmax, max, warning);
         if (n == max) printk("*");
         printk("\n");
     }

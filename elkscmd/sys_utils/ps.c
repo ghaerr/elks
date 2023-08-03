@@ -30,6 +30,7 @@
 #include <dirent.h>
 #include <pwd.h>
 #include <getopt.h>
+#include <errno.h>
 
 #define LINEARADDRESS(off, seg)		((off_t) (((off_t)seg << 4) + off))
 
@@ -189,6 +190,12 @@ int main(int argc, char **argv)
 			return 1;
 		}
 
+        if (task_table.kstack_magic != KSTACK_MAGIC) {
+            if (task_table.kstack_magic == 0) continue;
+            errno = EILSEQ;
+            perror("Recompile ps, mismatched task structure");
+            return 1;
+        }
 		if (task_table.t_regs.ss == 0)
 			continue;
 

@@ -84,9 +84,8 @@ struct task_struct {
 #ifdef CHECK_KSTACK
     int                         kstack_max;
     int                         kstack_prevmax;
-    unsigned int		kstack_magic;	/* To detect stack corruption */
 #endif
-
+    unsigned int		kstack_magic;	/* To detect stack corruption */
     __u8			t_kstack[KSTACK_BYTES];
     __registers 		t_regs;
 };

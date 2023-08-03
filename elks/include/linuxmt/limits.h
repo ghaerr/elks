@@ -9,6 +9,8 @@
 #define KSTACK_BYTES	640	/* Size of kernel stacks */
 #endif
 
+#define KSTACK_GUARD    100     /* bytes before CHECK_KSTACK overflow warning */
+
 #define POLL_MAX	6	/* Maximum number of polled queues per process */
 
 #define NR_ALARMS	5	/* Max number of simultaneous alarms system-wide */

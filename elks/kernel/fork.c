@@ -59,8 +59,8 @@ struct task_struct *find_empty_process(void)
 #ifdef CHECK_KSTACK
     t->kstack_max = 0;
     t->kstack_prevmax = 0;
-    t->kstack_magic = KSTACK_MAGIC;
 #endif
+    t->kstack_magic = KSTACK_MAGIC;
     t->next_run = t->prev_run = NULL;
     return t;
 }
