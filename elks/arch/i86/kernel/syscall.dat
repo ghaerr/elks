@@ -1,7 +1,7 @@
 #
 # WARNING!
 # This file is used to generate the system call lists for Dev86(elks)
-# ELKSemu and elks itself. Changes to this may require changes in
+# elksemu and ELKS itself. Changes to this may require changes in
 # all three of those packages.
 #
 #	'.' = Ok, with comment
@@ -15,7 +15,7 @@
 #	implemented in the kernel.
 #
 # Package versions are matched.
-# Elks version          - 0.3.0
+# ELKS version          - 0.7.0
 #
 # Name		No	Args	Flag, comment
 #
