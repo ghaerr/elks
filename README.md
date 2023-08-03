@@ -29,7 +29,7 @@ XT / AT and clones) as well as more recent SBCs, SoCs, and FPGAs. ELKS supports 
 ## Screenshots
 
 ELKS running on QEMU
-![ss1](https://github.com/jbruchon/elks/blob/master/Screenshots/ELKS_0.5.0.png)
+![ss1](https://github.com/jbruchon/elks/blob/master/Screenshots/ELKS_0.7.0.png)
 
 Olivetti M24 8086 CPU
 ![ss2](https://github.com/jbruchon/elks/blob/master/Screenshots/Olivetti_M24_8086_CPU.png)
@@ -60,8 +60,8 @@ More information is in the Documentation folder: [Index of ELKS Documentation](h
 
 Other projects and resources interesting to ELKS and our programming community:
 
+- [blink16](https://github.com/ghaerr/blink16) A visual 8086 emulator and debugger capable of booting the ELKS kernel for symbolic debugging, as well as an emulator for ELKS executables.
 - [Size Optimization Tricks](https://justine.lol/sizetricks/) A great article from Justine Tunney's blog showing how big things can be done without bloat.
-- [Blinkenlights](https://justine.lol/blinkenlights/) A visual debugger shows 8086 instruction execution starting from a PC boot sector.
 - [gcc-ia16](https://github.com/tkchia/gcc-ia16) TK Chia's gcc compiler targeted for 8086, maintained and used for the ELKS kernel and all its applications.
 
 ## More information
