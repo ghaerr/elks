@@ -1,18 +1,19 @@
 #include <linuxmt/config.h>
-#include <linuxmt/types.h>
 #include <linuxmt/kernel.h>
-#include <linuxmt/debug.h>
-#include <linuxmt/config.h>
-#include <linuxmt/wait.h>
 #include <linuxmt/sched.h>
+#include <linuxmt/trace.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/string.h>
+
+/*
+ * Kernel tracing functions for consistency checking and debugging support
+ */
+
+#ifdef CONFIG_TRACE
 
 /* The table describing the system calls has been moved to a separate
  * header file, and is included by the following include line.
  */
-
-#if defined(CONFIG_STRACE) || defined(CHECK_KSTACK)
 #include "strace.h"
 
 static struct sc_info notimp = { "NOTIMP", 0};
@@ -32,13 +33,7 @@ static struct sc_info *syscall_info(unsigned int callno)
     return &notimp;
 }
 
-void check_kstack_init(void)
-{
-    memset(current->t_kstack, 0x55, KSTACK_BYTES-32);
-}
-#endif
-
-#ifdef CONFIG_STRACE
+#ifdef CHECK_STRACE
 static const char *fmtspec[] = {
     NULL,   "&0x%X", "0x%X",  "0x%X",
     "'%c'", "'%c'",  "\"%t\"","\"%t\"",
@@ -50,7 +45,7 @@ struct sc_args {
     unsigned int args[3];    /* BX, CX, DX */
 };
 
-void strace(void)
+static void strace(void)
 {
     struct sc_info *s = syscall_info(current->t_regs.orig_ax);
     unsigned int info = (s->s_info >> 4);
@@ -90,21 +85,6 @@ pscl:
     printk(")]");
 }
 
-void strace_retval(unsigned int retval)
-{
-    __ptask currentp = current;
-    struct sc_info *s = syscall_info(currentp->t_regs.orig_ax);
-    int n;
-    static int max = 0;
-
-    for (n=0; n<KSTACK_BYTES/2; n++) {
-        if (currentp->t_kstack[n] != 0x5555)
-            break;
-    }
-    n = (KSTACK_BYTES/2 - n) << 1;
-    if (n > max) max = n;
-    printk("[%d:%s/ret=%d,ks=%d/%d]\n", currentp->pid, s->s_name, retval, n, max);
-}
 #endif
 
 /* stringize the result of expansion of a macro argument - used in check_kstack */
@@ -112,39 +92,27 @@ void strace_retval(unsigned int retval)
 #define str2(bytes) #bytes
 
 #ifdef CHECK_KSTACK
-void check_kstack(void)
+static void check_kstack(int n)
 {
-    int n;
+    int i;
     __ptask currentp = current;
     struct sc_info *s;
     const char *warning = "";
-    static int max = 0;
-    static int maxistack = 0;
+    static int max;
+    static int maxistack;
     extern __u16 endistack[];
 
     /* calc interrupt stack usage */
-    for (n=0; n<ISTACK_BYTES/2; n++) {
-        if (endistack[n] != 0)
+    for (i=0; i<ISTACK_BYTES/2; i++) {
+        if (endistack[i] != 0)
             break;
     }
-    n = (ISTACK_BYTES/2 - n) << 1;
-    if (n > maxistack) {
-        maxistack = n;
+    i = (ISTACK_BYTES/2 - i) << 1;
+    if (i > maxistack) {
+        maxistack = i;
         printk("ISTACK NEW MAX %d\n", maxistack);
     }
 
-    /* Check for kernel stack overflow */
-    if (currentp->kstack_magic != KSTACK_MAGIC) {
-        printk("KSTACK(%d) KERNEL STACK OVERFLOW\n", current->pid);
-        do_exit(SIGSEGV);
-    }
-
-    /* calc kernel stack usage */
-    for (n=0; n<KSTACK_BYTES/2; n++) {
-        if (currentp->t_kstack[n] != 0x5555)
-            break;
-    }
-    n = (KSTACK_BYTES/2 - n) << 1;
     s = syscall_info(currentp->t_regs.orig_ax);
     if (s == &notimp)
         printk("KSTACK(%d) syscall %d NOTIMP\n", currentp->pid, currentp->t_regs.orig_ax);
@@ -163,3 +131,61 @@ void check_kstack(void)
     }
 }
 #endif
+
+/*
+ * Called before syscall entry
+ */
+void trace_begin(void)
+{
+#if defined(CONFIG_STRACE) || defined(CHECK_KSTACK)
+    if (tracing & (TRACE_STRACE|TRACE_KSTACK))
+        memset(current->t_kstack, 0x55, KSTACK_BYTES-32);
+#endif
+#ifdef CHECK_STRACE
+    if (tracing & TRACE_STRACE)
+        strace();
+#endif
+#ifdef CHECK_KCHECK
+    if (tracing & TRACE_KSTACK)
+        check_kstack();
+#endif
+}
+
+/*
+ * Called after syscall return
+ * Must be compiled with -fno-optimize-siblings-calls (no tail call optimization)
+ * in order to protect top of stack return value since called from _irqit.
+ */
+void trace_end(unsigned int retval)
+{
+    __ptask currentp = current;
+    int n;
+    static int max;
+
+    /* Check for kernel stack overflow */
+    if (currentp->kstack_magic != KSTACK_MAGIC) {
+        printk("KSTACK(%d) KERNEL STACK OVERFLOW\n", current->pid);
+        do_exit(SIGSEGV);
+    }
+
+    n = 0;
+#if defined(CONFIG_STRACE) || defined(CHECK_KSTACK)
+    if (tracing & (TRACE_STRACE|TRACE_KSTACK)) {
+        for (; n<KSTACK_BYTES/2; n++) {
+        if (currentp->t_kstack[n] != 0x5555)
+                break;
+        }
+        n = (KSTACK_BYTES/2 - n) << 1;
+        if (n > max) max = n;
+    }
+#endif
+
+    if (tracing & TRACE_STRACE) {
+        struct sc_info *s = syscall_info(currentp->t_regs.orig_ax);
+        printk("[%d:%s/ret=%d,ks=%d/%d]\n", currentp->pid, s->s_name, retval, n, max);
+    }
+    if (tracing & TRACE_KSTACK)
+        check_kstack(n);
+}
+
+#endif /* CONFIG_TRACE */

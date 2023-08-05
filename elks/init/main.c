@@ -11,6 +11,7 @@
 #include <linuxmt/fs.h>
 #include <linuxmt/utsname.h>
 #include <linuxmt/netstat.h>
+#include <linuxmt/trace.h>
 #include <arch/system.h>
 #include <arch/segment.h>
 #include <arch/ports.h>
@@ -37,6 +38,7 @@ struct netif_parms netif_parms[MAX_ETHS] = {
     { EL3_IRQ, EL3_PORT, 0, EL3_FLAGS },
 };
 __u16 kernel_cs, kernel_ds;
+int tracing;
 static int boot_console;
 static char bininit[] = "/bin/init";
 static char binshell[] = "/bin/sh";
@@ -76,8 +78,6 @@ static char * INITPROC option(char *s);
 
 static void init_task(void);
 static void INITPROC kernel_banner(seg_t start, seg_t end);
-extern int run_init_process(const char *cmd);
-extern int run_init_process_sptr(const char *cmd, char *sptr, int slen);
 
 
 void start_kernel(void)
@@ -91,9 +91,6 @@ void start_kernel(void)
     /*
      * We are now the idle task. We won't run unless no other process can run.
      */
-#ifdef CHECK_KSTACK
-    check_kstack_init();
-#endif
     while (1) {
         schedule();
 #ifdef CONFIG_TIMER_INT0F
@@ -430,6 +427,14 @@ static int parse_options(void)
 		}
 		if (!strcmp(line,"debug")) {
 			dprintk_on = 1;
+			continue;
+		}
+		if (!strcmp(line,"strace")) {
+			tracing |= TRACE_STRACE;
+			continue;
+		}
+		if (!strcmp(line,"kstack")) {
+			tracing |= TRACE_KSTACK;
 			continue;
 		}
 		if (!strncmp(line,"init=",5)) {

@@ -4,24 +4,6 @@
 #include <autoconf.h>
 #include <linuxmt/major.h>
 
-/* tunable parameters*/
-#define PIPE_BUFSIZ	80	/* doesn't have to be power of two */
-
-/* integrity check application SS on interrupts from user mode */
-#define CHECK_SS
-
-/* calculate kernel stack usage and overflow on each system call */
-#define CHECK_KSTACK
-
-/* check matched sleep/wait and idle task sleeps when writing/testing drivers */
-#define CHECK_SCHED
-
-/* check buffer and block I/O request system when writing/testing block drivers */
-#define CHECK_BLOCKIO
-
-/* disable to remove extra code used for asynchronous interrupt-driven I/O */
-//#define CONFIG_ASYNCIO
-
 /*
  * Compile-time configuration
  */

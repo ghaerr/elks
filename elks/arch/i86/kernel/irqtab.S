@@ -1,5 +1,6 @@
 #include <linuxmt/config.h>
 #include <linuxmt/limits.h>
+#include <linuxmt/trace.h>
 #include <arch/asm-offsets.h>
 #include <arch/ports.h>
 
@@ -93,11 +94,10 @@ int_vector_set:
 	.extern	schedule
 	.extern	do_signal
 	.extern	do_IRQ
-	.extern	stack_check
 	.extern	syscall
-	.extern	strace
-	.extern	strace_retval
-	.extern	check_kstack
+	.extern	stack_check
+	.extern	trace_begin
+	.extern	trace_end
 	.extern	panic
 
 	.global _irqit
@@ -196,23 +196,21 @@ save_regs:
 //	----------PROCESS SYSCALL----------
 //
 	sti
-	call	stack_check	// Check USER stack
+	call	stack_check	// Check user mode stack
 
-#ifdef CONFIG_STRACE
-	call	strace		// strace must be compiled with tail function optim off
+#ifdef CONFIG_TRACE
+	call	trace_begin
 #endif
 
 	pop	%ax		// get syscall function code in AX
 	call	syscall
 	push	%ax		// syscall return value in ax
 
-#ifdef CONFIG_STRACE
-	call	strace_retval   // syscall return value is on stack
+#ifdef CONFIG_TRACE
+	// strace.c must be compiled with tail optimization off to protect top of stack
+	call	trace_end       // syscall return value is top of stack
 #endif
 
-#ifdef CHECK_KSTACK
-	call	check_kstack    // Check KERNEL stack
-#endif
 //
 //	Restore registers
 //

@@ -1,6 +1,7 @@
 #ifndef __LINUXMT_LIMITS_H
 #define __LINUXMT_LIMITS_H
 
+/* tunable parameters */
 #define MAX_TASKS	16	/* Max # processes */
 
 #ifdef CONFIG_ARCH_PC98
@@ -16,6 +17,8 @@
 
 #define NR_ALARMS	5	/* Max number of simultaneous alarms system-wide */
 #define NGROUPS		13	/* Supplementary groups */
+
+#define PIPE_BUFSIZ	80	/* doesn't have to be power of two */
 
 #define MAX_PACKET_ETH 1536	/* Max packet size, 6 blocks of 256 bytes */
 

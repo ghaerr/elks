@@ -28,9 +28,6 @@ extern void panic(const char *, ...);
 extern void printk(const char *, ...);
 extern void early_putchar (int);
 
-extern void check_kstack(void);
-extern void check_kstack_init(void);
-
 extern int wait_for_keypress(void);
 extern int in_group_p(gid_t);
 

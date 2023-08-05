@@ -23,8 +23,6 @@ static char *args[] = {
     NULL		/* 18-19*/
 };
 
-extern void ret_from_syscall(void);
-
 int run_init_process(const char *cmd)
 {
     int num;
@@ -53,9 +51,6 @@ void stack_check(void)
     register __ptask currentp = current;
     register char *end = (char *)currentp->t_endbrk;
 
-#if defined(CONFIG_STRACE) || defined(CHECK_KSTACK)
-    check_kstack_init();
-#endif
 #ifdef CONFIG_EXEC_LOW_STACK
     if (currentp->t_begstack <= currentp->t_enddata) {	/* stack below heap?*/
 	if (currentp->t_regs.sp < (__u16)end)
