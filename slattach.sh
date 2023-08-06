@@ -1,7 +1,13 @@
 # Helper script to setup SLIP connection between Linux and ELKS
 #
-# run "net start slip" on ELKS after running this script
+# run "net start slip" on ELKS after running this script as root
 #
+
+if [[ $(id -u) != 0 ]];
+then
+	echo "Please run me as root."
+	exit 1
+fi
 
 baud=38400
 device=/dev/ttyS0
