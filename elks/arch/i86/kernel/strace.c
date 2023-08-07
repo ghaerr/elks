@@ -1,126 +1,191 @@
 #include <linuxmt/config.h>
-#include <linuxmt/types.h>
 #include <linuxmt/kernel.h>
-#include <linuxmt/debug.h>
-#include <linuxmt/config.h>
-#include <linuxmt/wait.h>
 #include <linuxmt/sched.h>
+#include <linuxmt/trace.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/string.h>
 
-#ifdef CONFIG_STRACE
+/*
+ * Kernel tracing functions for consistency checking and debugging support
+ */
+
+#ifdef CONFIG_TRACE
 
 /* The table describing the system calls has been moved to a separate
  * header file, and is included by the following include line.
  */
-
 #include "strace.h"
 
-static char *fmtspec[] = {
+static struct sc_info notimp = { "NOTIMP", 0};
+
+static struct sc_info *syscall_info(unsigned int callno)
+{
+    struct sc_info *s;
+
+    if (callno < sizeof(elks_table1)/sizeof(struct sc_info)) {
+        s = &elks_table1[callno];
+        if (s) return s;
+    }
+    else if (callno < sizeof(elks_table2)/sizeof(struct sc_info) + START_TABLE2) {
+        s = &elks_table2[callno-START_TABLE2];
+        if (s) return s;
+    }
+    return &notimp;
+}
+
+#ifdef CHECK_STRACE
+static const char *fmtspec[] = {
     NULL,   "&0x%X", "0x%X",  "0x%X",
     "'%c'", "'%c'",  "\"%t\"","\"%t\"",
     "%u",   "%d",    "&%u",   "&%d",
     NULL,    NULL,    NULL,    NULL
 };
 
-void print_syscall(register struct syscall_params *p, int retval)
+struct sc_args {
+    unsigned int args[3];    /* BX, CX, DX */
+};
+
+static void strace(void)
 {
-    register struct syscall_info *s;
-    unsigned int tmpa;
-    int i;
+    struct sc_info *s = syscall_info(current->t_regs.orig_ax);
+    unsigned int info = (s->s_info >> 4);
+    struct sc_args *p = (struct sc_args *)&current->t_regs.bx;
+    int i = 0;
 
-    if (p->s_num >= sizeof(elks_table)/sizeof(struct syscall_info))
-	printk("Syscall not recognised: %u\n", p->s_num);
-    else if ((((s = &elks_table[p->s_num])->s_params) & 0xf) > 5)
-	printk("Syscall not supported: nosys_%s\n", s->s_name);
-    else {
+    printk("[%d: %s(", current->pid, s->s_name);
+    goto pscl;
 
-#ifdef STRACE_PRINTSTACK
+    while (info >>= 4) {
+        printk(", ");
 
-	printk("[%d/%p: %2d %12s(", current->pid, current->t_regs.sp,
-	       p->s_num, s->s_name);
+pscl:
+        if (fmtspec[info & 0xf] != NULL)
+            printk(fmtspec[info & 0xf], p->args[i]);
+        else switch (info & 0xf) {
+        case P_PULONG:
+            printk("%lu", get_user_long((void *)p->args[i]));
+            break;
 
-#else
+        case P_PSLONG:
+            printk("%ld", get_user_long((void *)p->args[i]));
+            break;
+#ifdef LATER
+        case P_SLONG:       /* currently unused*/
+            printk("%ld", *(long *)&p->args[i++]);
+            break;
 
-	printk("[%d: %12s(", current->pid, s->s_name);
-
+        case P_ULONG:       /* currently unused*/
+            printk("%lu", *(unsigned long *)&p->args[i++]);
+            break;
 #endif
-
-	i = 0;
-	tmpa = (s->s_params >> 4);
-	goto pscl;
-	while (tmpa >>= 4) {
-	    printk(", ");
-
-	 pscl:
-	    if (fmtspec[tmpa & 0xf] != NULL)
-		printk(fmtspec[tmpa & 0xf], p->s_param[i]);
-	    else switch (tmpa & 0xf) {
-	    case P_PULONG:
-		printk("%lu", get_user_long((void *)p->s_param[i]));
-		break;
-
-	    case P_PSLONG:
-		printk("%ld", get_user_long((void *)p->s_param[i]));
-		break;
-
-	    case P_SLONG:	/* currently unused*/
-		printk("%ld", *(long *)&p->s_param[i++]);
-		break;
-
-	    case P_ULONG:	/* currently unused*/
-		printk("%lu", *(unsigned long *)&p->s_param[i++]);
-		break;
-	    }
-	    i++;
-
-	}
+        }
+        i++;
 
     }
-#ifdef STRACE_RETWAIT
-    printk(") = %d]\n", retval);
-#else
-    p->s_name = s->s_name;
     printk(")]");
-#endif
 }
 
-/* Funny how syscall_params just happens to match the layout of the system
- * call paramters on the stack, isn't it? :)
+#endif
+
+/* stringize the result of expansion of a macro argument - used in check_kstack */
+#define str(bytes)  str2(bytes)
+#define str2(bytes) #bytes
+
+#ifdef CHECK_KSTACK
+static void check_kstack(int n)
+{
+    int i;
+    __ptask currentp = current;
+    struct sc_info *s;
+    const char *warning = "";
+    static int max;
+    static int maxistack;
+    extern __u16 endistack[];
+
+    /* calc interrupt stack usage */
+    for (i=0; i<ISTACK_BYTES/2; i++) {
+        if (endistack[i] != 0)
+            break;
+    }
+    i = (ISTACK_BYTES/2 - i) << 1;
+    if (i > maxistack) {
+        maxistack = i;
+        printk("ISTACK NEW MAX %d\n", maxistack);
+    }
+
+    s = syscall_info(currentp->t_regs.orig_ax);
+    if (s == &notimp)
+        printk("KSTACK(%d) syscall %d NOTIMP\n", currentp->pid, currentp->t_regs.orig_ax);
+    if (n >= KSTACK_BYTES - KSTACK_GUARD)
+        warning = " (OVERFLOW AT " str(KSTACK_BYTES) ")";
+    if (n > currentp->kstack_max) {
+        currentp->kstack_prevmax = currentp->kstack_max;
+        currentp->kstack_max = n;
+        if (n > max)
+            max = n;
+        printk("KSTACK(%d) sys_%7s max %3d prevmax %3d sysmax %3d%s",
+            currentp->pid, s->s_name,
+            currentp->kstack_max, currentp->kstack_prevmax, max, warning);
+        if (n == max) printk("*");
+        printk("\n");
+    }
+}
+#endif
+
+/*
+ * Called before syscall entry
  */
-
-void strace(struct syscall_params p)
+void trace_begin(void)
 {
-    /* First we check the kernel stack magic */
-    if (current->t_kstackm != KSTACK_MAGIC)
-	panic("Process %d had kernel stack overflow before syscall\n",
-	      current->pid);
-    /* set up cur_sys */
-    current->sc_info = p;
-#ifndef STRACE_RETWAIT
-    print_syscall(&current->sc_info, 0);
+#if defined(CONFIG_STRACE) || defined(CHECK_KSTACK)
+    if (tracing & (TRACE_STRACE|TRACE_KSTACK))
+        memset(current->t_kstack, 0x55, KSTACK_BYTES-32);
+#endif
+#ifdef CHECK_STRACE
+    if (tracing & TRACE_STRACE)
+        strace();
+#endif
+#ifdef CHECK_KCHECK
+    if (tracing & TRACE_KSTACK)
+        check_kstack();
 #endif
 }
 
-void ret_strace(unsigned int retval)
+/*
+ * Called after syscall return
+ * Must be compiled with -fno-optimize-siblings-calls (no tail call optimization)
+ * in order to protect top of stack return value since called from _irqit.
+ */
+void trace_end(unsigned int retval)
 {
-#ifdef STRACE_RETWAIT
-    print_syscall(&current->sc_info, retval);
-#else
-#ifdef STRACE_KSTACKUSED
+    __ptask currentp = current;
     int n;
-    static int max = 0;
+    static int max;
 
-    for (n=0; n<KSTACK_BYTES; n++)
-	if (current->t_kstack[n] != 0x55)
-	    break;
-    n = KSTACK_BYTES - n;
-    if (n > max) max = n;
-    printk("[%d:%s/ret=%d,ks=%d/%d]\n",
-	current->pid, current->sc_info.s_name, retval, n, max);
-#else
-    printk("[%d:%s/ret=%d]\n", current->pid, current->sc_info.s_name, retval);
+    /* Check for kernel stack overflow */
+    if (currentp->kstack_magic != KSTACK_MAGIC) {
+        printk("KSTACK(%d) KERNEL STACK OVERFLOW\n", current->pid);
+        do_exit(SIGSEGV);
+    }
+
+    n = 0;
+#if defined(CONFIG_STRACE) || defined(CHECK_KSTACK)
+    if (tracing & (TRACE_STRACE|TRACE_KSTACK)) {
+        for (; n<KSTACK_BYTES/2; n++) {
+        if (currentp->t_kstack[n] != 0x5555)
+                break;
+        }
+        n = (KSTACK_BYTES/2 - n) << 1;
+        if (n > max) max = n;
+    }
 #endif
-#endif
+
+    if (tracing & TRACE_STRACE) {
+        struct sc_info *s = syscall_info(currentp->t_regs.orig_ax);
+        printk("[%d:%s/ret=%d,ks=%d/%d]\n", currentp->pid, s->s_name, retval, n, max);
+    }
+    if (tracing & TRACE_KSTACK)
+        check_kstack(n);
 }
 
-#endif
+#endif /* CONFIG_TRACE */

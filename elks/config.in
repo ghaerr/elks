@@ -55,7 +55,7 @@ mainmenu_option next_comment
 	bool 'Calculate process CPU usage'        CONFIG_CPU_USAGE    y
 	bool 'Real time clock in localtime'       CONFIG_TIME_RTC_LOCALTIME n
 	string 'Compiled-in TZ= timezone string'  CONFIG_TIME_TZ      ''
-	bool 'System Trace'                       CONFIG_STRACE       n
+	bool 'Enable tracing (set on for development)' CONFIG_TRACE   n
 	bool 'Use INT 0Fh in idle loop for timer' CONFIG_TIMER_INT0F  n
 	bool 'Use INT 1Ch from BIOS for timer'    CONFIG_TIMER_INT1C  n
 

@@ -39,11 +39,11 @@ CONFIG_APM=y
 #
 # Kernel settings
 #
+# CONFIG_TRACE is not set
 
 #
 # Memory manager
 #
-# CONFIG_STRACE is not set
 CONFIG_BOOTOPTS=y
 CONFIG_CPU_USAGE=y
 # CONFIG_TIME_RTC_LOCALTIME is not set

@@ -82,6 +82,7 @@ struct winsize {
     unsigned short ws_ypixel;
 };
 
+#if NOTSUPPORTED
 #define NCC 8
 struct termio {
     unsigned short c_iflag;	/* input mode flags */
@@ -91,6 +92,7 @@ struct termio {
     unsigned char c_line;	/* line discipline */
     unsigned char c_cc[NCC];	/* control characters */
 };
+#endif
 
 #define NCCS 17
 struct termios {

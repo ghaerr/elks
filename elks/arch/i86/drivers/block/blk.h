@@ -7,26 +7,16 @@
 #include <linuxmt/genhd.h>
 #include <linuxmt/config.h>
 
-/*
- * Ok, this is an expanded form so that we can use the same
- * request for paging requests when that is implemented. In
- * paging, 'bh' is NULL, and 'waiting' is used to wait for
- * read/write completion.
- */
-
 struct request {
     kdev_t rq_dev;		/* -1 if no request */
     unsigned char rq_cmd;	/* READ or WRITE */
-    unsigned char rq_status;
+    unsigned char rq_status;    /* RQ_INACTIVE or RQ_ACTIVE */
     block32_t rq_blocknr;
     char *rq_buffer;
     ramdesc_t rq_seg;		/* L2 main/xms buffer segment */
     struct buffer_head *rq_bh;
     struct request *rq_next;
-
 #ifdef BLOAT_FS
-/* This may get used for dealing with waiting for requests later*/
-    struct task_struct *rq_waiting;
     unsigned int rq_nr_sectors;
     unsigned int rq_current_nr_sectors;
 #endif
@@ -36,17 +26,15 @@ struct request {
 #define RQ_ACTIVE	1
 
 /*
- * This is used in the elevator algorithm: Note that reads always go before
- * writes. This is natural: reads are much more time-critical than writes.
- *
- * Update: trying with writes being preferred due to test
- * by Alessandro Rubini..
+ * This is used in the elevator algorithm.  We don't prioritise reads
+ * over writes any more --- although reads are more time-critical than
+ * writes, by treating them equally we increase filesystem throughput.
+ * This turns out to give better overall performance.  -- sct
  */
 
 #define IN_ORDER(s1,s2) \
-((s1)->rq_cmd > (s2)->rq_cmd || ((s1)->rq_cmd == (s2)->rq_cmd && \
 ((s1)->rq_dev < (s2)->rq_dev || (((s1)->rq_dev == (s2)->rq_dev && \
-(s1)->rq_blocknr < (s2)->rq_blocknr)))))
+(s1)->rq_blocknr < (s2)->rq_blocknr)))
 
 struct blk_dev_struct {
     void (*request_fn) ();
@@ -99,8 +87,8 @@ extern void resetup_one_dev(struct gendisk *dev, int drive);
 
 #ifdef FLOPPYDISK
 
-static void floppy_on();	/*(unsigned int nr); */
-static void floppy_off();	/*(unsigned int nr); */
+static void floppy_on(unsigned int nr);
+static void floppy_off(unsigned int nr);
 
 #define DEVICE_NAME "fd"
 #define DEVICE_INTR do_floppy
@@ -146,6 +134,8 @@ static void floppy_off();	/*(unsigned int nr); */
 
 static void (DEVICE_REQUEST) ();
 
+extern struct wait_queue wait_for_request;
+
 static void end_request(int uptodate)
 {
     register struct request *req;
@@ -168,7 +158,6 @@ static void end_request(int uptodate)
     }
 
     bh = req->rq_bh;
-
 #ifdef BLOAT_FS
     req->rq_bh = bh->b_reqnext;
     bh->b_reqnext = NULL;
@@ -191,31 +180,28 @@ static void end_request(int uptodate)
 
     DEVICE_OFF(req->dev);
     CURRENT = req->rq_next;
-#ifdef BLOAT_FS
-    struct task_struct *p;
-    if ((p = req->rq_waiting) != NULL) {
-	req->rq_waiting = NULL;
-	p->state = TASK_RUNNING;
-	/*if (p->counter > current->counter)
-	    need_resched = 1;*/
-    }
-#endif
-
     req->rq_dev = -1;
     req->rq_status = RQ_INACTIVE;
-#ifdef MULTI_BH
+
+#ifdef CONFIG_ASYNCIO
     wake_up(&wait_for_request);
 #endif
 }
 #endif /* MAJOR_NR */
 
-#define INIT_REQUEST(req) \
+#ifdef CHECK_BLOCKIO
+  #define INIT_REQUEST(req) \
 	if (!req || req->rq_dev == -1U) \
 		return; \
 	if (MAJOR(req->rq_dev) != MAJOR_NR) \
-		panic("%s: request list destroyed (%d, %d)", \
+		panic("init_request: %s bad request list (%d, %d)", \
 			DEVICE_NAME, MAJOR(req->rq_dev), MAJOR_NR); \
 	if (req->rq_bh && !EBH(req->rq_bh)->b_locked) \
-		panic("%s:block not locked", DEVICE_NAME); \
-
+		panic("init_request: %s buffer not locked", DEVICE_NAME);
+#else
+  #define INIT_REQUEST(req) \
+	if (!req || req->rq_dev == -1U) \
+		return;
 #endif
+
+#endif /* _BLK_H */

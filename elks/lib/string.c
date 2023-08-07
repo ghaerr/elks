@@ -190,7 +190,7 @@ size_t strnlen(const char *s, size_t max)
 
 #ifndef __HAVE_ARCH_MEMSET
 
-void *memset(void *s, char c, size_t count)
+void *memset(void *s, int c, size_t count)
 {
     register char *xs = s;
 

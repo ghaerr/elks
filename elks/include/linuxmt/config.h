@@ -4,9 +4,6 @@
 #include <autoconf.h>
 #include <linuxmt/major.h>
 
-/* tunable parameters*/
-#define PIPE_BUFSIZ	80	/* doesn't have to be power of two */
-
 /*
  * Compile-time configuration
  */

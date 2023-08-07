@@ -25,10 +25,6 @@
 
 #include "blk.h"
 
-#ifdef CONFIG_ROMFS_FS
-#include "romflash.h"
-#endif
-
 /*
  * The request-struct contains all necessary data
  * to load a number of sectors into memory
@@ -38,16 +34,12 @@
  * take precedence.
  */
 
-#define NR_REQUEST	20
+/* only 1 is required for non-async I/O */
+#define NR_REQUEST	1
 
 static struct request all_requests[NR_REQUEST];
 
-/*
- * blk_dev_struct is:
- *	*request_fn
- *	*current_request
- */
-
+/* current request and function pointer for each block device handler */
 struct blk_dev_struct blk_dev[MAX_BLKDEV];	/* initialized by blk_dev_init() */
 
 /*
@@ -62,15 +54,6 @@ struct blk_dev_struct blk_dev[MAX_BLKDEV];	/* initialized by blk_dev_init() */
 #ifdef BDEV_SIZE_CHK
 int *blk_size[MAX_BLKDEV] = { NULL, NULL, };
 #endif
-
-/*
- * blksize_size contains the size of all block-devices:
- *
- * blksize_size[MAJOR]
- *
- */
-
-/* int blksize_size[MAX_BLKDEV] = {0,}; */
 
 /*
  * hardsect_size contains the size of the hardware sector of a device.
@@ -97,50 +80,85 @@ static struct request *get_request(int n, kdev_t dev)
 {
     static struct request *prev_found = NULL;
     static struct request *prev_limit = NULL;
-    register struct request *req;
-    register struct request *limit;
+    struct request *req;
+    struct request *limit;
 
     limit = all_requests + n;
     if (limit != prev_limit) {
-	prev_limit = limit;
-	prev_found = all_requests;
+        prev_limit = limit;
+        prev_found = all_requests;
     }
     req = prev_found;
-    do {
-	req = ((req > all_requests) ? req : limit) - 1;
-	if (req->rq_status == RQ_INACTIVE) {
-	    prev_found = req;
-	    req->rq_status = RQ_ACTIVE;
-	    req->rq_dev = dev;
-	    return req;
-	}
-    } while (req != prev_found);
-    return NULL;
+    for (;;) {
+        req = ((req > all_requests) ? req : limit) - 1;
+        if (req->rq_status == RQ_INACTIVE)
+            break;
+        if (req == prev_found) {
+#ifdef CONFIG_ASYNCIO
+            return NULL;
+#else
+            panic("get_request: no inactive requests\n");
+#endif
+        }
+    }
+    prev_found = req;
+    req->rq_status = RQ_ACTIVE;
+    req->rq_dev = dev;
+    return req;
 }
 
-#if 0
+#ifdef CONFIG_ASYNCIO
+struct wait_queue wait_for_request;
+
+/*
+ * wait until a free request in the first N entries is available.
+ */
+static struct request *__get_request_wait(int n, kdev_t dev)
+{
+    struct request *req;
+
+    printk("Waiting for request...\n");
+    wait_set(&wait_for_request);
+    for (;;) {
+        current->state = TASK_UNINTERRUPTIBLE;
+        clr_irq();
+        req = get_request(n, dev);
+        set_irq();
+        if (req)
+            break;
+        schedule();
+    }
+    wait_clear(&wait_for_request);
+    current->state = TASK_RUNNING;
+    return req;
+}
+#endif
+
 static struct request *get_request_wait(int n, kdev_t dev)
 {
-    register struct request *req;
+    struct request *req;
 
     clr_irq();
     req = get_request(n, dev);
     set_irq();
-    if (req)
-	return req;
+    if (req) return req;
+#ifdef CONFIG_ASYNCIO
+    /* Try again blocking if no request available */
     return __get_request_wait(n, dev);
-}
+#else
+    panic("get_request: no requests");
+    return NULL;
 #endif
+}
 
 /*
  * add-request adds a request to the linked list.
  * It disables interrupts so that it can muck with the
  * request-lists in peace.
  */
-
 static void add_request(struct blk_dev_struct *dev, struct request *req)
 {
-    register struct request *tmp;
+    struct request *tmp;
 
     clr_irq();
     mark_buffer_clean(req->rq_bh);
@@ -150,6 +168,7 @@ static void add_request(struct blk_dev_struct *dev, struct request *req)
 	(dev->request_fn) ();
     }
     else {
+#ifdef CONFIG_ASYNCIO
 	for (; tmp->rq_next; tmp = tmp->rq_next) {
 	    if ((IN_ORDER(tmp, req) ||
 		!IN_ORDER(tmp, tmp->rq_next)) && IN_ORDER(req, tmp->rq_next))
@@ -158,6 +177,9 @@ static void add_request(struct blk_dev_struct *dev, struct request *req)
 	req->rq_next = tmp->rq_next;
 	tmp->rq_next = req;
 	set_irq();
+#else
+        panic("add_request: non-empty request queue");
+#endif
     }
 }
 
@@ -185,50 +207,37 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
     /* Maybe the above fixes it, and maybe it doesn't boot. Life is interesting */
     lock_buffer(bh);
 
+    max_req = NR_REQUEST;	/* reads take precedence */
     switch (rw) {
-
     case READ:
-	max_req = NR_REQUEST;	/* reads take precedence */
 	break;
 
     case WRITE:
+#if NR_REQUEST != 1             /* protect max_req from being 0 below */
 	/* We don't allow the write-requests to fill up the
 	 * queue completely:  we want some room for reads,
 	 * as they take precedence. The last third of the
 	 * requests are only for reads.
 	 */
 	max_req = (NR_REQUEST * 2) / 3;
+#endif
+#ifdef CHECK_BLOCKIO
+        if (!EBH(bh)->b_dirty)
+                printk("make_request: block %ld not dirty\n", EBH(bh)->b_blocknr);
+#endif
 	break;
 
     default:
-	debug("make_request: bad block dev cmd, must be R/W/RA/WA\n");
+	debug_blk("make_request: bad block dev cmd, must be R/W\n");
 	unlock_buffer(bh);
 	return;
     }
 
     /* find an unused request. */
-    req = get_request(max_req, buffer_dev(bh));
-    set_irq();
-
-	// Try again blocking if no request available
-
-    if (!req) {
-
-/* I suspect we may need to call get_request_wait() but not at the moment
- * For now I will wait until we start getting panics, and then work out
- * what we have to do - Al <ajr@ecs.soton.ac.uk>
- */
-
-#ifdef MULTI_BH
-	req = __get_request_wait(max_req, buffer_dev(bh));
-#else
-	panic("Can't get request.");
-#endif
-
-    }
+    req = get_request_wait(max_req, buffer_dev(bh));
 
     /* fill up the request-info, and add it to the queue */
-    req->rq_cmd = (__u8) rw;
+    req->rq_cmd = rw;
     req->rq_blocknr = buffer_blocknr(bh);
     req->rq_seg = buffer_seg(bh);
     req->rq_buffer = buffer_data(bh);
@@ -243,45 +252,30 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
     add_request(&blk_dev[major], req);
 }
 
-
-#ifdef MULTI_BH
-struct wait_queue wait_for_request = NULL;
-
-/*
- * wait until a free request in the first N entries is available.
- */
-static struct request *__get_request_wait(int n, kdev_t dev)
+/* Read/write a single buffer from a block device */
+void ll_rw_blk(int rw, struct buffer_head *bh)
 {
-    register struct request *req;
-    printk("Waiting for request...\n");
+    struct blk_dev_struct *dev;
+    unsigned int major;
 
-    wait_set(&wait_for_request);
-    current->state = TASK_UNINTERRUPTIBLE;
-    goto startgrw;
-    do {
-	schedule();
-      startgrw:
-#if 0
-	unplug_device(MAJOR(dev) + blk_dev);	/* Device can't be plugged */
-#endif
-	clr_irq();
-	req = get_request(n, dev);
-	set_irq();
-    } while (req == NULL);
-    current->state = TASK_RUNNING;
-    wait_clear(&wait_for_request);
-
-    return req;
+    dev = NULL;
+    if ((major = MAJOR(buffer_dev(bh))) < MAX_BLKDEV)
+	dev = blk_dev + major;
+    if (!dev || !dev->request_fn) {
+	printk("ll_rw_blk: unregistered block-device %s\n", kdevname(buffer_dev(bh)));
+	mark_buffer_clean(bh);
+	mark_buffer_uptodate(bh, 0);
+    } else
+	make_request(major, rw, bh);
 }
 
+#ifdef MULTI_BH
 /*
  * "plug" the device if there are no outstanding requests: this will
  * force the transfer to start only after we have put all the requests
  * on the list.
  */
-
-static void plug_device(register struct blk_dev_struct *dev,
-			struct request *plug)
+static void plug_device(struct blk_dev_struct *dev, struct request *plug)
 {
     flag_t flags;
 
@@ -298,7 +292,6 @@ static void plug_device(register struct blk_dev_struct *dev,
 /*
  * remove the plug and let it rip..
  */
-
 static void unplug_device(struct blk_dev_struct *dev)
 {
     register struct request *req;
@@ -361,28 +354,9 @@ void ll_rw_block(int rw, int nr, register struct buffer_head **bh)
 }
 #endif /* MULTI_BH */
 
-/* This function can be used to request a single buffer from a block device.
- */
-
-void ll_rw_blk(int rw, register struct buffer_head *bh)
-{
-    register struct blk_dev_struct *dev;
-    unsigned short int major;
-
-    dev = NULL;
-    if ((major = MAJOR(buffer_dev(bh))) < MAX_BLKDEV)
-	dev = blk_dev + major;
-    if (!dev || !dev->request_fn) {
-	printk("ll_rw_blk: Trying to read nonexistent block-device %s (%lu)\n",
-	       kdevname(buffer_dev(bh)), buffer_blocknr(bh));
-	mark_buffer_clean(bh);
-	mark_buffer_uptodate(bh, 0);
-    } else
-	make_request(major, rw, bh);
-}
-
 void INITPROC blk_dev_init(void)
 {
+#if NOTNEEDED
     register struct request *req;
     register struct blk_dev_struct *dev;
 
@@ -397,6 +371,7 @@ void INITPROC blk_dev_init(void)
 	req->rq_status = RQ_INACTIVE;
 	req->rq_next = NULL;
     } while (++req < &all_requests[NR_REQUEST]);
+#endif
 
 #ifdef CONFIG_BLK_DEV_RAM
     rd_init();		/* RAMDISK block device*/
@@ -419,6 +394,6 @@ void INITPROC blk_dev_init(void)
 #endif
 
 #ifdef CONFIG_ROMFS_FS
-    romflash_init ();
+    romflash_init();
 #endif
 }
