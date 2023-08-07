@@ -34,8 +34,8 @@
  * take precedence.
  */
 
-/* only 1 is required for non-async I/O, but needs 2 for 2/3 division on reads */
-#define NR_REQUEST	2
+/* only 1 is required for non-async I/O */
+#define NR_REQUEST	1
 
 static struct request all_requests[NR_REQUEST];
 
@@ -91,7 +91,6 @@ static struct request *get_request(int n, kdev_t dev)
     req = prev_found;
     for (;;) {
         req = ((req > all_requests) ? req : limit) - 1;
-        if (req < all_requests) panic("BEFORE!");
         if (req->rq_status == RQ_INACTIVE)
             break;
         if (req == prev_found) {
@@ -208,18 +207,20 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
     /* Maybe the above fixes it, and maybe it doesn't boot. Life is interesting */
     lock_buffer(bh);
 
+    max_req = NR_REQUEST;	/* reads take precedence */
     switch (rw) {
     case READ:
-	max_req = NR_REQUEST;	/* reads take precedence */
 	break;
 
     case WRITE:
+#if NR_REQUEST != 1             /* protect max_req from being 0 below */
 	/* We don't allow the write-requests to fill up the
 	 * queue completely:  we want some room for reads,
 	 * as they take precedence. The last third of the
 	 * requests are only for reads.
 	 */
 	max_req = (NR_REQUEST * 2) / 3;
+#endif
 #ifdef CHECK_BLOCKIO
         if (!EBH(bh)->b_dirty)
                 printk("make_request: block %ld not dirty\n", EBH(bh)->b_blocknr);
