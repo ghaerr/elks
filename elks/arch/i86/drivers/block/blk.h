@@ -6,6 +6,7 @@
 #include <linuxmt/kdev_t.h>
 #include <linuxmt/genhd.h>
 #include <linuxmt/config.h>
+#include <linuxmt/trace.h>
 
 struct request {
     kdev_t rq_dev;		/* -1 if no request */

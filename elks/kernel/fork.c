@@ -1,9 +1,11 @@
 #include <linuxmt/config.h>
-#include <linuxmt/debug.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/sched.h>
+#include <linuxmt/trace.h>
+#include <linuxmt/debug.h>
+
 #include <arch/segment.h>
 
 int task_slots_unused = MAX_TASKS;

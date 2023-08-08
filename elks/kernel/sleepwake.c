@@ -1,12 +1,13 @@
-#include <arch/irq.h>
-#include <arch/segment.h>
-
 #include <linuxmt/kernel.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/types.h>
 #include <linuxmt/wait.h>
+#include <linuxmt/trace.h>
 #include <linuxmt/debug.h>
+
+#include <arch/irq.h>
+#include <arch/segment.h>
 
 /*
  *	Wait queue functionality for Linux ELKS. Taken from sched.c/h of

@@ -7,6 +7,7 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/heap.h>
 #include <linuxmt/errno.h>
+#include <linuxmt/trace.h>
 #include <linuxmt/debug.h>
 
 #include <arch/system.h>
@@ -83,7 +84,7 @@ static int nr_free_bh;
 #define INR_COUNT(bh) if(!(bh->b_count++))nr_free_bh--
 #define CLR_COUNT(bh) if(bh->b_count)nr_free_bh++
 #define SET_COUNT(bh) if(--nr_free_bh < 0) { \
-                          panic("get_free_buffer: bad free buffer head count"); \
+                          panic("get_free_buffer: bad free buffer_head count"); \
                           nr_free_bh = 0; }
 #else
 #define DCR_COUNT(bh) (bh->b_count--)
@@ -218,16 +219,22 @@ int INITPROC buffer_init(void)
 void wait_on_buffer(struct buffer_head *bh)
 {
     ext_buffer_head *ebh = EBH(bh);
-
-    while (ebh->b_locked) {
 #ifdef CONFIG_ASYNCIO
-	INR_COUNT(ebh);
-	sleep_on((struct wait_queue *)bh);	/* use bh as wait address*/
-	DCR_COUNT(ebh);
-#else
-        panic("wait_on_buffer: block %ld\n", ebh->b_blocknr);
-#endif
+    INR_COUNT(ebh);
+    wait_set((struct wait_queue *)bh);       /* use bh as wait address */
+    for (;;) {
+        current->state = TASK_UNINTERRUPTIBLE;
+        if (!ebh->b_locked)
+            break;
+        schedule();
     }
+    wait_clear((struct wait_queue *)bh);
+    current->state = TASK_RUNNING;
+    DCR_COUNT(ebh);
+#elif defined(CHECK_BLOCKIO)
+    if (ebh->b_locked)
+        panic("wait_on_buffer: block %ld locked\n", ebh->b_blocknr);
+#endif
 }
 
 void lock_buffer(struct buffer_head *bh)
@@ -328,10 +335,11 @@ void brelse(struct buffer_head *bh)
     ext_buffer_head *ebh;
 
     if (!bh) return;
-    ebh = EBH(bh);
-
     wait_on_buffer(bh);
-    if (ebh->b_count == 0) panic("brelse");
+    ebh = EBH(bh);
+#ifdef CHECK_BLOCKIO
+    if (ebh->b_count == 0) panic("brelse: count 0");
+#endif
     DCR_COUNT(ebh);
 #ifdef BLOAT_FS
     if (!ebh->b_count)

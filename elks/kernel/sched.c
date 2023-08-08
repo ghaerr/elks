@@ -10,6 +10,7 @@
 #include <linuxmt/init.h>
 #include <linuxmt/timer.h>
 #include <linuxmt/string.h>
+#include <linuxmt/trace.h>
 #include <linuxmt/debug.h>
 
 #include <arch/irq.h>
