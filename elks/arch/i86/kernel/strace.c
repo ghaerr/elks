@@ -123,11 +123,13 @@ static void check_kstack(int n)
         currentp->kstack_max = n;
         if (n > max)
             max = n;
-        printk("KSTACK(%d) sys_%7s max %3d prevmax %3d sysmax %3d%s",
-            currentp->pid, s->s_name,
-            currentp->kstack_max, currentp->kstack_prevmax, max, warning);
-        if (n == max) printk("*");
-        printk("\n");
+        if (currentp->kstack_prevmax != 0) {
+            printk("KSTACK(%d) sys_%7s max %3d prevmax %3d sysmax %3d%s",
+                currentp->pid, s->s_name,
+                currentp->kstack_max, currentp->kstack_prevmax, max, warning);
+            if (n == max) printk("*");
+            printk("\n");
+        }
     }
 }
 #endif

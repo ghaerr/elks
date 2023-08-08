@@ -7,6 +7,7 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/heap.h>
 #include <linuxmt/errno.h>
+#include <linuxmt/trace.h>
 #include <linuxmt/debug.h>
 
 #include <arch/system.h>
@@ -218,16 +219,22 @@ int INITPROC buffer_init(void)
 void wait_on_buffer(struct buffer_head *bh)
 {
     ext_buffer_head *ebh = EBH(bh);
-
-    while (ebh->b_locked) {
 #ifdef CONFIG_ASYNCIO
-	INR_COUNT(ebh);
-	sleep_on((struct wait_queue *)bh);	/* use bh as wait address*/
+    INR_COUNT(ebh);
+    wait_set((struct wait_queue *)bh);       /* use bh as wait address */
+    for (;;) {
+        current->state = TASK_UNINTERRUPTIBLE;
+        if (!ebh->b_locked)
+            break;
+        schedule();
+    }
+    wait_clear((struct wait_queue *)bh);
+    current->state = TASK_RUNNING;
 	DCR_COUNT(ebh);
-#else
+#elif defined(CHECK_BLOCKIO)
+    if (ebh->b_locked)
         panic("wait_on_buffer: block %ld\n", ebh->b_blocknr);
 #endif
-    }
 }
 
 void lock_buffer(struct buffer_head *bh)
@@ -328,9 +335,8 @@ void brelse(struct buffer_head *bh)
     ext_buffer_head *ebh;
 
     if (!bh) return;
-    ebh = EBH(bh);
-
     wait_on_buffer(bh);
+    ebh = EBH(bh);
     if (ebh->b_count == 0) panic("brelse");
     DCR_COUNT(ebh);
 #ifdef BLOAT_FS
