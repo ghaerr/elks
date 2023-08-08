@@ -19,7 +19,7 @@
 #define O_NONBLOCK	 04000
 #define O_NDELAY	O_NONBLOCK
 
-#if 0
+#if UNUSED
 #define O_SYNC		010000	/* Not supported */
 #define FASYNC		020000	/* Not supported */
 #endif

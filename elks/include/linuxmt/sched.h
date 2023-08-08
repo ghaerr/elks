@@ -88,7 +88,7 @@ struct task_struct {
 
     unsigned int		kstack_magic;	/* To detect stack corruption */
     __u16			t_kstack[KSTACK_BYTES/2];
-    __registers 		t_regs;
+    struct pt_regs 		t_regs;         /* registers on stack during syscall */
 };
 
 #define KSTACK_MAGIC 0x5476

@@ -77,8 +77,7 @@ char *strcpy(char *dest, const char *src)
 
 #endif
 
-#if 0
-
+#if UNUSED
 
 #ifndef __HAVE_ARCH_STRNCPY
 
@@ -247,7 +246,7 @@ char *strchr(const char *s, int c)
 
 #endif
 
-#if 0
+#if UNUSED
 
 #ifndef __HAVE_ARCH_ATOI
 

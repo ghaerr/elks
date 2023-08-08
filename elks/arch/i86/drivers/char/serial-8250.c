@@ -396,7 +396,7 @@ errout:
     return 0;
 }
 
-#if 0	// unused, removed for bloat
+#if UNUSED	// removed for bloat
 static int set_serial_info(struct serial_info *info,
 			   struct serial_info *new_info)
 {
@@ -440,7 +440,7 @@ static int rs_ioctl(struct tty *tty, int cmd, char *arg)
 	//FIXME: update_port() only sets baud rate from termios, not parity or wordlen*/
 	update_port(port);	/* ignored return value*/
 	break;
-#if 0
+#if UNUSED
     case TIOCSSERIAL:
 	retval = set_serial_info(port, (struct serial_info *)arg);
 	break;

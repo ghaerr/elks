@@ -69,7 +69,7 @@ pscl:
         case P_PSLONG:
             printk("%ld", get_user_long((void *)p->args[i]));
             break;
-#ifdef LATER
+#if UNUSED
         case P_SLONG:       /* currently unused*/
             printk("%ld", *(long *)&p->args[i++]);
             break;
