@@ -352,6 +352,17 @@ struct file_system_type {
     int				type;
 };
 
+/*
+ * fs/exec.c and the FAT filesystem can save kernel stack space for their
+ * larger stack declarations when block I/O is always synchronous, thus
+ * reducing the required size of each task struct.
+ */
+#ifdef CONFIG_ASYNCIO
+#define ASYNCIO_REENTRANT
+#else
+#define ASYNCIO_REENTRANT     static
+#endif
+
 #ifdef BLOAT_FS
 /*
  * Attribute flags.  These should be or-ed together to figure out what
