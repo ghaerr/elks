@@ -230,7 +230,7 @@ typedef unsigned char __sigdisposition_t;
 
 struct __kern_sigaction_struct {
     __sigdisposition_t sa_dispose;
-#if 0
+#if UNUSED
     sigset_t sa_mask;
     unsigned long sa_flags;
     void (*sa_restorer)();

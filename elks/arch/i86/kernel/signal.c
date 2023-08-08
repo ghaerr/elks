@@ -53,7 +53,7 @@ int do_signal(void)
 		schedule();
 	    }
 	    else {					/* Default Core or Terminate */
-#if 0
+#if UNUSED
 		if (mask &				/* Default Core */
 		      (SM_SIGQUIT|SM_SIGILL|SM_SIGABRT|SM_SIGFPE|SM_SIGSEGV|SM_SIGTRAP))
 		    dump_core();

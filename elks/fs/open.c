@@ -21,7 +21,7 @@
 #include <arch/segment.h>
 #include <arch/system.h>
 
-#if 0
+#ifdef BLOAT_FS
 
 int sys_statfs(char *path, register struct statfs *ubuf)
 {

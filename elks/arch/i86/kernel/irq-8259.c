@@ -22,7 +22,7 @@
 
 void initialize_irq(void)
 {
-#if NOTNEEDED
+#if NOTNEEDED   /* not needed on IBM PC as BIOS initializes IRQ 2 */
     if (sys_caps & CAP_IRQ2MAP9) {	/* PC/AT or greater */
 	save_flags(flags);
 	clr_irq();

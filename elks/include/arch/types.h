@@ -32,12 +32,10 @@ typedef __u32 addr_t;
 /* Then we define registers, etc... */
 
 /* ordering of saved registers on kernel stack after syscall/interrupt entry*/
-struct _registers {
+struct pt_regs {
     /* SI offset                 0   2        4   6   8  10  12*/
     __u16       ax, bx, cx, dx, di, si, orig_ax, es, ds, sp, ss;
 };
-
-typedef struct _registers		__registers,	*__pregisters;
 
 struct xregs {
     __u16       cs;	/* code segment to use in arch_setup_user_stack()*/
@@ -48,15 +46,6 @@ struct xregs {
 struct uregs {
     __u16       bp, ip, cs, f;
 };
-
-/* duplicate of _registers*/
-struct pt_regs {
-    /* SI offset                 0   2        4   6   8  10  12*/
-    __u16       ax, bx, cx, dx, di, si, orig_ax, es, ds, sp, ss;
-};
-
-/* Changed to unsigned short int as that is what it is here.
- */
 
 typedef __u16			__pptr;
 

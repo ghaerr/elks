@@ -179,7 +179,7 @@ static void run_timer_list(void)
 
 /* maybe someday I'll implement these profiling things -PL */
 
-#if 0
+#if UNUSED
 
 static void do_it_prof(struct task_struct *p, jiff_t ticks)
 {

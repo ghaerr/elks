@@ -243,7 +243,7 @@ void halt(void)
     kputs("\nSYSTEM HALTED - Press CTRL-ALT-DEL to reboot:");
 
     while (1)
-	/* Do nothing */;
+	idle_halt();
 }
 
 void panic(const char *error, ...)

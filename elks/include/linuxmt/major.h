@@ -36,23 +36,23 @@
 
 #define MEM_MAJOR         1
 #define PTY_MASTER_MAJOR  2
-#define PTY_SLAVE_MAJOR   3  /* unused*/
+                             /* 3 unused*/
 #define TTY_MAJOR         4
-#define TTYAUX_MAJOR      5  /* unused*/
+                             /* 5 unused*/
 #define LP_MAJOR          6
-#define UDD_MAJOR         7  /* unused*/
+#define UDD_MAJOR         7  /* experimental*/
 #define TCPDEV_MAJOR      8
-#define ETH_MAJOR         9  /* should be rather a network-class driver */
+#define ETH_MAJOR         9
 #define CGATEXT_MAJOR     10
 
 /* These are the block devices */
 
 #define RAM_MAJOR         1
-#define FLOPPY_MAJOR      2  /* unused*/
+#define FLOPPY_MAJOR      2  /* experimental*/
 #define SSD_MAJOR         2
 #define BIOSHD_MAJOR      3
-#define MSCDEX_MAJOR      4  /* unused*/
-#define ATHD_MAJOR        5  /* unused*/
+                             /* 4 unused*/
+#define ATHD_MAJOR        5  /* experimental*/
 #define ROMFLASH_MAJOR    6
 
 
