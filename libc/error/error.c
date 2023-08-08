@@ -11,19 +11,18 @@
 char *
 strerror(int err)
 {
-   int fd = -1;
-   int cc;
+   int i, cc, fd;
+   char *p;
    size_t bufoff = 0;
    char inbuf[256];
    static char retbuf[60];
 
-   if( err <= 0 ) goto unknown;	/* NB the <= allows comments in the file */
-   fd = open(_PATH_ERRSTRING, 0);
-   if( fd < 0 ) goto unknown;
+  /* NB the <= allows comments in the file */
+    if( err <= 0 || (fd = open(_PATH_ERRSTRING, 0)) < 0)
+        goto unknown;
 
    while( (cc=read(fd, inbuf, sizeof(inbuf))) > 0 )
    {
-      int i;
       for(i=0; i<cc; i++)
       {
          if( inbuf[i] == '\n' )
@@ -31,9 +30,9 @@ strerror(int err)
 	    retbuf[bufoff] = '\0';
 	    if( err == atoi(retbuf) )
 	    {
-	       char * p = strchr(retbuf, ' ');
-	       if( p == 0 ) goto done;
-	       while(*++p == ' ') ;
+	       p = retbuf;
+               while (*p < 'A')
+                  if (!*p++) goto done;
 	       close(fd);
 	       return p;
 	    }
