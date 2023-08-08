@@ -84,7 +84,7 @@ static int nr_free_bh;
 #define INR_COUNT(bh) if(!(bh->b_count++))nr_free_bh--
 #define CLR_COUNT(bh) if(bh->b_count)nr_free_bh++
 #define SET_COUNT(bh) if(--nr_free_bh < 0) { \
-                          panic("get_free_buffer: bad free buffer head count"); \
+                          panic("get_free_buffer: bad free buffer_head count"); \
                           nr_free_bh = 0; }
 #else
 #define DCR_COUNT(bh) (bh->b_count--)
@@ -230,10 +230,10 @@ void wait_on_buffer(struct buffer_head *bh)
     }
     wait_clear((struct wait_queue *)bh);
     current->state = TASK_RUNNING;
-	DCR_COUNT(ebh);
+    DCR_COUNT(ebh);
 #elif defined(CHECK_BLOCKIO)
     if (ebh->b_locked)
-        panic("wait_on_buffer: block %ld\n", ebh->b_blocknr);
+        panic("wait_on_buffer: block %ld locked\n", ebh->b_blocknr);
 #endif
 }
 
@@ -337,7 +337,9 @@ void brelse(struct buffer_head *bh)
     if (!bh) return;
     wait_on_buffer(bh);
     ebh = EBH(bh);
-    if (ebh->b_count == 0) panic("brelse");
+#ifdef CHECK_BLOCKIO
+    if (ebh->b_count == 0) panic("brelse: count 0");
+#endif
     DCR_COUNT(ebh);
 #ifdef BLOAT_FS
     if (!ebh->b_count)
