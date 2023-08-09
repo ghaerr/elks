@@ -3,17 +3,14 @@
 char *
 strrchr (const char * s, int c)
 {
-   register const char * prev = 0;
-   register const char * p = s;
-   /* For null it's just like strlen */
-   if( c == '\0' ) return (char *)p+strlen(p);
+    char *save;
+    char ch;
 
-   /* everything else just step along the string. */
-   while( (p=strchr(p, c)) != 0 )
-   {
-      prev = p; p++;
-   }
-   return (char *)prev;
+    for (save = (char *) 0; (ch = *s); s++) {
+        if (ch == c)
+            save = (char *) s;
+    }
+    return save;
 }
 
 #ifdef __GNUC__

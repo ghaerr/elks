@@ -2,14 +2,17 @@
 
 include $(TOPDIR)/libc/Makefile.inc
 
-SRCS= __assert.c error.c perror.c
-OBJS= $(SRCS:.c=.o)
+LIB = out.a
 
-$(OBJS): $(SRCS)
+OBJS= \
+    __assert.o \
+    error.o \
+    perror.o \
+    # end of list
 
-all: out.a
+all: $(LIB)
 
-out.a: $(OBJS)
+$(LIB): $(OBJS)
 	$(RM) $@
 	$(AR) $(ARFLAGS_SUB) $@ $^
 
