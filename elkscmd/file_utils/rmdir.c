@@ -7,16 +7,16 @@
 
 static int remove_dir(char *name, int f)
 {
-	int er, era=2;
+	int ret, once = 1;
 	char *line;
 	
-	while (((er = rmdir(name)) == 0) && ((line = strrchr(name,'/')) != NULL) && f) {
+	while (((ret = rmdir(name)) == 0) && ((line = strrchr(name,'/')) != NULL) && f) {
 		while ((line > name) && (*line == '/'))
 			--line;
 		line[1] = 0;
-		era=0;
+		once = 0;
 	}
-	return(er && era);
+	return (ret && once);
 }
 	
 
@@ -26,18 +26,17 @@ int main(int argc, char **argv)
 	
 	if (argc < 2) goto usage;
 
-        while (argv[1][0] == '-') {
-                switch (argv[1][1]) {
-                case 'p': parent = 1; break;
-                case 'f': force = 1; break;
-                default: goto usage;
-                }
-                argv++;
-                argc--;
+    while (argv[1][0] == '-') {
+        switch (argv[1][1]) {
+        case 'p': parent = 1; break;
+        case 'f': force = 1; break;
+        default: goto usage;
         }
-	
+        argv++;
+        argc--;
+    }
 
-	for (i = parent + 1; i < argc; i++) {
+	for (i = 1; i < argc; i++) {
 			while (argv[i][strlen(argv[i])-1] == '/')
 				argv[i][strlen(argv[i])-1] = '\0';
 			if (remove_dir(argv[i],parent)) {
