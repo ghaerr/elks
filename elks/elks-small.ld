@@ -53,9 +53,9 @@ SECTIONS {
 
 		*(.fartext .fartext.
 		".fartext.[^i]*" ".fartext.i[^n]*" ".fartext.in[^i]*" ".fartext.ini[^t]*")
-		__start_fartext = .;
+		__start_fartext_init = .;
 		*(.fartext .fartext.init ".fartext.init")
-		__end_fartext = .;
+		__end_fartext_init = .;
 
 		/* IA-16 segment end markers. */
 		*(".fartext&*" ".fartext.*&")
