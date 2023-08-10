@@ -7,6 +7,9 @@
 
 #if defined(CONFIG_FARTEXT_KERNEL) && !defined(__STRICT_ANSI__)
 #define INITPROC __far __attribute__ ((far_section, noinline, section (".fartext.init")))
+/* these symbols defined in elks-small.ld linker script */
+extern void INITPROC __start_fartext_init(void);
+extern void INITPROC __end_fartext_init(void);
 #else
 #define INITPROC
 #endif
