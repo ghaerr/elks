@@ -49,7 +49,13 @@ SECTIONS {
 		*(".fartext!*" ".fartext.*!")
 
 		/* Actual segment contents. */
-		*(.fartext .fartext$* ".fartext.*[^&]")
+		/* *(.fartext .fartext$* ".fartext.*[^&]") */
+
+		*(.fartext .fartext.
+		".fartext.[^i]*" ".fartext.i[^n]*" ".fartext.in[^i]*" ".fartext.ini[^t]*")
+		__start_fartext = .;
+		*(.fartext .fartext.init ".fartext.init")
+		__end_fartext = .;
 
 		/* IA-16 segment end markers. */
 		*(".fartext&*" ".fartext.*&")
