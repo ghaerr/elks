@@ -10,6 +10,7 @@
 #include <linuxmt/init.h>
 #include <linuxmt/timer.h>
 #include <linuxmt/string.h>
+#include <linuxmt/trace.h>
 #include <linuxmt/debug.h>
 
 #include <arch/irq.h>
@@ -31,17 +32,13 @@ void add_to_runqueue(register struct task_struct *p)
     idle_task.prev_run = p;
 }
 
-void del_from_runqueue(register struct task_struct *p)
+static void del_from_runqueue(register struct task_struct *p)
 {
-#if 0       /* sanity tests */
-    if (!p->next_run || !p->prev_run) {
-	printk("task %d not on run-queue (state=%d)\n", p->pid, p->state);
-	return;
-    }
-    if (p == &idle_task) {
-        printk("idle task may not sleep\n");
-        return;
-    }
+#ifdef CHECK_SCHED
+    if (!p->next_run || !p->prev_run)
+        panic("SCHED(%d): task not on run-queue, state %d", p->pid, p->state);
+    if (p == &idle_task)
+        panic("SCHED: trying to sleep idle task");
 #endif
     //nr_running--;
     (p->next_run->prev_run = p->prev_run)->next_run = p->next_run;
@@ -73,16 +70,13 @@ void schedule(void)
 
     prev = current;
 
-    if (prev->t_kstackm != KSTACK_MAGIC)
-        panic("Process %d exceeded kernel stack limit! magic %x\n",
-            prev->pid, prev->t_kstackm);
-
+#ifdef CHECK_SCHED
     if (intr_count > 0) {
-    /* Taking a timer IRQ during another IRQ or while in kernel space is
-     * quite legal. We just dont switch then */
-	printk("Aiee: scheduling in interrupt %d - %d\n", intr_count, prev->pid);
-	return;
+        /* Taking a timer IRQ during another IRQ or while in kernel space is
+         * quite legal. We just dont switch then */
+         panic("SCHED: schedule() called from interrupt, intr_count %d", intr_count);
     }
+#endif
 
     /* We have to let a task exit! */
     if (prev->state == TASK_EXITING)
@@ -186,7 +180,7 @@ static void run_timer_list(void)
 
 /* maybe someday I'll implement these profiling things -PL */
 
-#if 0
+#if UNUSED
 
 static void do_it_prof(struct task_struct *p, jiff_t ticks)
 {

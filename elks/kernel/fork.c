@@ -1,9 +1,11 @@
 #include <linuxmt/config.h>
-#include <linuxmt/debug.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/sched.h>
+#include <linuxmt/trace.h>
+#include <linuxmt/debug.h>
+
 #include <arch/segment.h>
 
 int task_slots_unused = MAX_TASKS;
@@ -56,7 +58,11 @@ struct task_struct *find_empty_process(void)
     t->ticks = 0;
     t->average = 0;
 #endif
-    t->t_kstackm = KSTACK_MAGIC;
+#ifdef CHECK_KSTACK
+    t->kstack_max = 0;
+    t->kstack_prevmax = 0;
+#endif
+    t->kstack_magic = KSTACK_MAGIC;
     t->next_run = t->prev_run = NULL;
     return t;
 }

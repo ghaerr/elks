@@ -1,14 +1,13 @@
-#include <arch/irq.h>
-#include <arch/segment.h>
-
 #include <linuxmt/kernel.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/types.h>
 #include <linuxmt/wait.h>
+#include <linuxmt/trace.h>
 #include <linuxmt/debug.h>
 
-//#define CHECK	/* check matched sleep/wakeup when writing/testing drivers */
+#include <arch/irq.h>
+#include <arch/segment.h>
 
 /*
  *	Wait queue functionality for Linux ELKS. Taken from sched.c/h of
@@ -66,9 +65,8 @@ void wait_set(struct wait_queue *p)
 {
     register __ptask pcurrent = current;
 
-#ifdef CHECK
-    if (pcurrent->waitpt)
-	panic("double wait");
+#ifdef CHECK_SCHED
+    if (pcurrent->waitpt) panic("SCHED: wait_set double wait");
 #endif
     pcurrent->waitpt = p;
 }
@@ -77,16 +75,17 @@ void wait_clear(struct wait_queue *p)
 {
     register __ptask pcurrent = current;
 
-#ifdef CHECK
-    if (pcurrent->waitpt != p)
-	panic("wrong waitpt");
+#ifdef CHECK_SCHED
+    if (pcurrent->waitpt != p) panic("SCHED: wait_clear wrong waitpt");
 #endif
     pcurrent->waitpt = NULL;
 }
 
 static void __sleep_on(register struct wait_queue *p, int state)
 {
-    //if (current == &task[0]) panic("task[0] trying to sleep from %x", p);
+#ifdef CHECK_SCHED
+    if (current == &task[0]) panic("SCHED: trying to sleep idle task on %x", p);
+#endif
     debug_sched("sleep: %d waitq %04x\n", current->pid, p);
     current->state = state;
     wait_set(p);

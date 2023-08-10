@@ -173,7 +173,7 @@ static void list_inode_status(void)
 
 static struct inode *get_empty_inode(void)
 {
-    static ino_t ino = 0;
+    static ino_t ino = 0;   /* FIXME may wrap if not 32-bit inodes */
     register struct inode *inode;
 
     inode = inode_lru;

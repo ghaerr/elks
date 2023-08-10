@@ -364,9 +364,6 @@ static int do_remount_sb(register struct super_block *sb, int flags, char *data)
     register struct super_operations *sop = sb->s_op;
 
     debug_sup("REMOUNT sb check %d,%d\n", sb->s_flags, flags);
-#if 0
-    flags |= MS_RDONLY;
-#endif
 
     /* If we are remounting RDONLY, make sure there are no rw files open */
     if ((flags & MS_RDONLY) && !(sb->s_flags & MS_RDONLY))

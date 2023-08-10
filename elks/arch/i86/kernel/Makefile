@@ -25,7 +25,7 @@ DEPEND  	=
 
 DISTFILES	= syscall.dat
 
-NOINDENT	= irq.c irqtab.S process.c strace.h system.c timer.c
+NOINDENT	= irqtab.S process.c strace.h system.c timer.c
 
 #########################################################################
 # Include standard commands.

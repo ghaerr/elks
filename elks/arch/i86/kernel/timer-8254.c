@@ -70,7 +70,7 @@ void enable_timer_tick(void)
 
 void disable_timer_tick(void)
 {
-#if NOTNEEDED
+#if NOTNEEDED   /* not needed on IBM PC as IRQ 0 vector untouched */
     outb (TIMER_MODE0, TIMER_CMDS_PORT);
     outb (0, TIMER_DATA_PORT);
     outb (0, TIMER_DATA_PORT);

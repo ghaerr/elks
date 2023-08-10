@@ -5,48 +5,48 @@
 #include <string.h>
 #include "futils.h"
 
-static unsigned short newmode;
-
 static int remove_dir(char *name, int f)
 {
-	int er, era=2;
+	int ret, once = 1;
 	char *line;
 	
-	while (((er = rmdir(name)) == 0) && ((line = rindex(name,'/')) != NULL) && f) {
+	while (((ret = rmdir(name)) == 0) && ((line = strrchr(name,'/')) != NULL) && f) {
 		while ((line > name) && (*line == '/'))
 			--line;
 		line[1] = 0;
-		era=0;
+		once = 0;
 	}
-	return(er && era);
+	return (ret && once);
 }
 	
 
 int main(int argc, char **argv)
 {
-	int i, parent = 0, er = 0;
+	int i, parent = 0, force = 0, er = 0;
 	
 	if (argc < 2) goto usage;
 
-	if ((argv[1][0] == '-') && (argv[1][1] == 'p'))	
-		parent = 1;
-	
-	newmode = 0666 & ~umask(0);
+    while (argv[1][0] == '-') {
+        switch (argv[1][1]) {
+        case 'p': parent = 1; break;
+        case 'f': force = 1; break;
+        default: goto usage;
+        }
+        argv++;
+        argc--;
+    }
 
-	for (i = parent + 1; i < argc; i++) {
-		if (argv[i][0] != '-') {
+	for (i = 1; i < argc; i++) {
 			while (argv[i][strlen(argv[i])-1] == '/')
 				argv[i][strlen(argv[i])-1] = '\0';
 			if (remove_dir(argv[i],parent)) {
-				errstr(argv[i]);
-				errmsg(": cannot remove directory\n");
+				perror(argv[i]);
 				er = 1;
 			}
-		} else goto usage;
 	}
-	return er;
+	return force? 0: er;
 
 usage:
-	errmsg("usage: rmdir directory [...]\n");
+	errmsg("usage: rmdir [-pf] directory [...]\n");
 	return 1;
 }

@@ -762,23 +762,11 @@ int INITPROC bioshd_init(void)
 
 #ifdef CONFIG_BLK_DEV_BFD
     _fd_count = bioshd_getfdinfo();
-#if NOTNEEDED
-    enable_irq(FLOPPY_IRQ);	/* Floppy */
-#endif
 #endif
 #ifdef CONFIG_BLK_DEV_BHD
     _hd_count = bioshd_gethdinfo();
-#if NOTNEEDED
-    if (sys_caps & CAP_PC_AT) {	/* PC/AT or greater */
-	enable_irq(HD1_AT_IRQ);	/* AT ST506 */
-	enable_irq(HD2_AT_IRQ);	/* AHA1542 */
-    }
-    else {
-	enable_irq(HD_IRQ);	/* XT ST506 */
-    }
-#endif
     bioshd_gendisk.nr_real = _hd_count;
-#endif /* CONFIG_BLK_DEV_BHD */
+#endif
 
 #ifdef PRINT_DRIVE_INFO
     {
@@ -1127,8 +1115,8 @@ static int revalidate_hddisk(int, int);	/* Currently not used*/
  * so the disk capacity will not change
  */
 
-#undef MAYBE_REINIT
 #define GENDISK_STRUCT bioshd_gendisk
+#define MAYBE_REINIT
 
 /* This routine is called to flush all partitions and partition tables
  * for a changed cdrom drive, and then re-read the new partition table.
@@ -1137,10 +1125,6 @@ static int revalidate_hddisk(int, int);	/* Currently not used*/
  * have usage == 1 (we need an open channel to use an ioctl :-), so
  * this is our limit.
  */
-
-#ifndef MAYBE_REINIT
-#define MAYBE_REINIT
-#endif
 
 static int revalidate_hddisk(int dev, int maxusage)
 {
@@ -1194,10 +1178,6 @@ static void bioshd_geninit(void)
 	}
 	hdp++;
     }
-
-#if 0
-    blksize_size[MAJOR_NR] = 1024;	/* Currently unused */
-#endif
 
 }
 

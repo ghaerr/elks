@@ -11,10 +11,6 @@
 #include <linuxmt/ntty.h>
 #include <arch/param.h>
 
-#ifdef CONFIG_STRACE
-#include <linuxmt/strace.h>
-#endif
-
 struct file_struct {
     fd_mask_t			close_on_exec;
     struct file 		*fd[NR_OPEN];
@@ -85,13 +81,14 @@ struct task_struct {
     gid_t			groups[NGROUPS];
 #endif
 
-#ifdef CONFIG_STRACE
-    struct syscall_params	sc_info;
-#endif
+    /* next two words are only used by CONFIG_TRACE but left in to avoid
+     * changing struct task size and having to recompile 'ps' etc when changed */
+    int                         kstack_max;
+    int                         kstack_prevmax;
 
-    __u16			t_kstackm;	/* To detect stack corruption */
-    __u8			t_kstack[KSTACK_BYTES];
-    __registers 		t_regs;
+    unsigned int		kstack_magic;	/* To detect stack corruption */
+    __u16			t_kstack[KSTACK_BYTES/2];
+    struct pt_regs 		t_regs;         /* registers on stack during syscall */
 };
 
 #define KSTACK_MAGIC 0x5476
@@ -175,6 +172,10 @@ extern unsigned int get_ustack(struct task_struct *,int);
 extern void put_ustack(register struct task_struct *,int,int);
 
 extern void tswitch(void);
+extern int run_init_process(const char *cmd);
+extern int run_init_process_sptr(const char *cmd, char *sptr, int slen);
+extern void ret_from_syscall(void);
+extern void check_stack(void);
 
 void select_wait(struct wait_queue *);
 int select_poll(struct task_struct *, struct wait_queue *);

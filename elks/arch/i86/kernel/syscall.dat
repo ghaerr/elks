@@ -1,7 +1,7 @@
 #
 # WARNING!
 # This file is used to generate the system call lists for Dev86(elks)
-# ELKSemu and elks itself. Changes to this may require changes in
+# elksemu and ELKS itself. Changes to this may require changes in
 # all three of those packages.
 #
 #	'.' = Ok, with comment
@@ -15,7 +15,7 @@
 #	implemented in the kernel.
 #
 # Package versions are matched.
-# Elks version          - 0.3.0
+# ELKS version          - 0.7.0
 #
 # Name		No	Args	Flag, comment
 #
@@ -87,7 +87,7 @@ select		+63	5	. 5 paramaters is possible
 readdir		+64	3	*
 insmod		65	1	- Removed support for modules
 fchown		+66	3
-dlload		+67	2	- Removed support for dynamic libraries
+dlload		67	2	- Removed support for dynamic libraries
 setsid		+68	0
 sbrk		+69	2	* Legacy number from Linux
 ustatfs		+70	3

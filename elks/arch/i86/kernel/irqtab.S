@@ -1,8 +1,8 @@
 #include <linuxmt/config.h>
+#include <linuxmt/limits.h>
+#include <linuxmt/trace.h>
 #include <arch/asm-offsets.h>
 #include <arch/ports.h>
-
-#define CHECK_SS	// integrity check interrupt from user mode
 
 	.arch	i8086, nojumps
 	.code16
@@ -94,15 +94,11 @@ int_vector_set:
 	.extern	schedule
 	.extern	do_signal
 	.extern	do_IRQ
-	.extern	stack_check
 	.extern	syscall
-#ifdef CHECK_SS
+	.extern	stack_check
+	.extern	trace_begin
+	.extern	trace_end
 	.extern	panic
-#endif
-#ifdef CONFIG_STRACE
-	.extern	strace
-	.extern	ret_strace
-#endif
 
 	.global _irqit
 _irqit:
@@ -129,14 +125,13 @@ ktask:				// Already using interrupt stack
 //
 //	Already using interrupt stack, keep using it
 //
-	//mov	%sp,%si
 	sub	$8,%si		// 14 offsets less 6 already on stack
 	jmp	save_regs
 //
 //	Using a process's kernel stack, switch to interrupt stack
 //
 itask:
-	mov	$_intstack-14,%si // 14 offsets 0-13 of SI below
+	mov	$istack-14,%si  // 14 offsets 0-13 of SI below
 	jmp	save_regs
 //
 //	User mode case
@@ -201,27 +196,21 @@ save_regs:
 //	----------PROCESS SYSCALL----------
 //
 	sti
-	call	stack_check	// Check USER stack
-	pop	%ax		// Get syscall function code
-#ifdef CONFIG_STRACE
-//
-//	strace(syscall#, params...)
-//
-	push	%ax
-	call	strace		// strace must be compiled with tail function optim off
-	pop     %ax
+	call	stack_check	// Check user mode stack
+
+#ifdef CONFIG_TRACE
+	call	trace_begin
 #endif
-//
-//	syscall(params...)
-//
+
+	pop	%ax		// get syscall function code in AX
 	call	syscall
-	push	%ax		// syscall returns a value in ax
-#ifdef CONFIG_STRACE
-//
-//	ret_strace(retval)
-//
-	call	ret_strace
+	push	%ax		// syscall return value in ax
+
+#ifdef CONFIG_TRACE
+	// strace.c must be compiled with tail optimization off to protect top of stack
+	call	trace_end       // syscall return value is top of stack
 #endif
+
 //
 //	Restore registers
 //
@@ -252,7 +241,9 @@ ret_from_syscall:
 !
 */
 updct:
+#ifdef CHECK_SCHED
 	incw	intr_count	// only needed for schedule during interrupt warning
+#endif
 //
 //	Call the C code
 //
@@ -331,7 +322,9 @@ was_trap:
 //
 //	Restore intr_count
 //
+#ifdef CHECK_SCHED
 	decw	intr_count
+#endif
 //
 //	Now look at rescheduling
 //
@@ -406,6 +399,7 @@ idle_halt:
 
 	.data
 	.global	intr_count
+	.global	endistack
 	.extern	current
 	.extern	previous
 
@@ -413,14 +407,16 @@ bios_call_cnt:                  // call BIOS IRQ 0 handler every 5th interrupt
 	.word	5
 org_irq0:			// original BIOS IRQ 0 vector
 	.long	0
-intr_count:			// Hardware interrupts count
-	.word	0
 _gint_count:			// General interrupts count. Start with 1
 	.word	1		// because init_task() is in kernel mode
+#ifdef CHECK_SCHED
+intr_count:			// Hardware interrupts count
+	.word	0
+#endif
 #ifdef CHECK_SS
 pmsg:	.ascii "Running unknown code"
 	.byte	0
 #endif
-	.skip 512,0		// 512 byte interrupt stack
-_intstack:
-
+endistack:
+	.skip ISTACK_BYTES,0	// interrupt stack
+istack:

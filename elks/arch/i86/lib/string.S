@@ -105,7 +105,8 @@ memset:
 	mov	ARG1(%bx),%ax	// byte to write
 	mov	ARG2(%bx),%cx	// loop count
 	cld
-	shr     $1,%cx         	// copy words
+	shr     $1,%cx         	// store words
+	mov     %al,%ah
 	rep			// while (cx) cx--, [es:di++] = al
 	stosw
 	rcl	$1,%cx		// then possibly final byte

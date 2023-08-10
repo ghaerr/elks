@@ -122,7 +122,7 @@ int chq_peekch(struct ch_queue *q)
     return (q->len != 0);
 }
 
-#if 0
+#if UNUSED
 int chq_full(register struct ch_queue *q)
 {
     return (q->len == q->size);

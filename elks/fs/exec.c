@@ -46,11 +46,6 @@
 
 #include <arch/segment.h>
 
-static struct minix_exec_hdr mh;
-#ifdef CONFIG_EXEC_MMODEL
-static struct elks_supl_hdr esuph;
-#endif
-
 #ifndef __GNUC__
 /* FIXME: evaluates some operands twice */
 #   define add_overflow(a, b, res) \
@@ -74,7 +69,7 @@ static struct elks_supl_hdr esuph;
  * Only IA-16 segment relocations are accepted
  */
 static int relocate(seg_t place_base, lsize_t rsize, segment_s *seg_code,
-		    segment_s *seg_data, struct inode *inode, struct file *filp)
+               segment_s *seg_data, struct inode *inode, struct file *filp, size_t tseg)
 {
     int retval = 0;
     __u16 save_ds = current->t_regs.ds;
@@ -96,7 +91,7 @@ static int relocate(seg_t place_base, lsize_t rsize, segment_s *seg_code,
 	    case S_TEXT:
 		val = seg_code->base; break;
 	    case S_FTEXT:
-		val = seg_code->base + bytes_to_paras((size_t)mh.tseg); break;
+		val = seg_code->base + bytes_to_paras(tseg); break;
 	    case S_DATA:
 		val = seg_data->base; break;
 	    default:
@@ -138,7 +133,9 @@ int sys_execve(const char *filename, char *sptr, size_t slen)
     size_t len, min_len, heap, stack = 0;
     size_t bytes;
     segext_t paras;
+    ASYNCIO_REENTRANT struct minix_exec_hdr mh;         /* 32 bytes */
 #ifdef CONFIG_EXEC_MMODEL
+    ASYNCIO_REENTRANT struct elks_supl_hdr esuph;       /* 24 bytes */
     int need_reloc_code = 1;
 #endif
 
@@ -417,13 +414,13 @@ int sys_execve(const char *filename, char *sptr, size_t slen)
     if (need_reloc_code) {
 	/* Read and apply text segment relocations */
 	retval = relocate(seg_code->base, esuph.msh_trsize, seg_code, seg_data,
-			  inode, filp);
+			  inode, filp, mh.tseg);
 	if (retval != 0)
 	    goto error_exec5;
 	/* Read and apply far text segment relocations */
 	retval = relocate(seg_code->base + bytes_to_paras((size_t)mh.tseg),
 			  esuph.esh_ftrsize, seg_code, seg_data,
-			  inode, filp);
+			  inode, filp, mh.tseg);
 	if (retval != 0)
 	    goto error_exec5;
     } else {
@@ -433,7 +430,7 @@ int sys_execve(const char *filename, char *sptr, size_t slen)
     }
     /* Read and apply data relocations */
     retval = relocate(seg_data->base, esuph.msh_drsize, seg_code, seg_data,
-		      inode, filp);
+		      inode, filp, mh.tseg);
     if (retval != 0)
 	goto error_exec5;
 #endif

@@ -68,8 +68,7 @@ static int FATPROC msdos_find(struct inode *dir,const char *name,int len,
     struct buffer_head **bh,struct msdos_dir_entry **de,ino_t *ino)
 {
 	int res;
-	/* static not reentrant: conserve stack usage*/
-	static char msdos_name[MSDOS_NAME+1];
+	ASYNCIO_REENTRANT char msdos_name[MSDOS_NAME+1];
 
 	if ((res = msdos_format_name(name,len, msdos_name)) < 0) return res;
 	res = msdos_scan(dir,msdos_name,bh,de,ino);
@@ -96,9 +95,8 @@ static int FATPROC msdos_find_long(struct inode *dir, const char *name, int len,
 	int i, entry_len, res;
 	off_t dirpos, pos = 0;
 	int nocase = 0;
-	/* static not reentrant: conserve stack usage*/
-	static char entry_name[14];
-	static char msdos_name[14];
+	ASYNCIO_REENTRANT char entry_name[14];
+	ASYNCIO_REENTRANT char msdos_name[14];
 
 	for (i=0; i<len; i++)
 		msdos_name[i] = get_fs_byte(name++);
@@ -209,8 +207,7 @@ int msdos_create(register struct inode *dir,const char *name,int len,int mode,
 	struct msdos_dir_entry *de;
 	ino_t ino;
 	int res;
-	/* static not reentrant: conserve stack usage*/
-	static char msdos_name[MSDOS_NAME];
+	ASYNCIO_REENTRANT char msdos_name[MSDOS_NAME];
 
 	if ((res = msdos_format_name(name,len, msdos_name)) < 0) {
 		iput(dir);
@@ -238,8 +235,7 @@ int msdos_mkdir(struct inode *dir,const char *name,int len,int mode)
 	struct inode *inode,*dot;
 	ino_t ino;
 	int res;
-	/* static not reentrant: conserve stack usage*/
-	static char msdos_name[MSDOS_NAME];
+	ASYNCIO_REENTRANT char msdos_name[MSDOS_NAME];
 
 	if ((res = msdos_format_name(name,len, msdos_name)) < 0) {
 		iput(dir);

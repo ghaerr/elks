@@ -215,7 +215,7 @@ static int pipe_rdwr_open(register struct inode *inode,
     if (!PIPE_BASE(inode)) {
 	if (!(PIPE_BASE(inode) = get_pipe_mem())) return -ENOMEM;
 	PIPE_SIZE(inode) = PIPE_BUFSIZ;
-#if 0 /* next fields already set to zero by get_empty_inode() */
+#if NOTNEEDED /* next fields already set to zero by get_empty_inode() */
 	PIPE_HEAD(inode) = PIPE_TAIL(inode) = PIPE_LEN(inode) = 0;
 	PIPE_RD_OPENERS(inode) = PIPE_WR_OPENERS(inode) = 0;
 	PIPE_READERS(inode) = PIPE_WRITERS(inode) = 0;
