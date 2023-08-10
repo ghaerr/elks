@@ -47,9 +47,17 @@ SECTIONS {
 		 * IA-16 segment start markers.
 		 */
 		*(".fartext!*" ".fartext.*!")
+		"__start_fartext_init!" = .;
+		"__end_fartext_init!" = .;
 
 		/* Actual segment contents. */
-		*(.fartext .fartext$* ".fartext.*[^&]")
+		/* *(.fartext .fartext$* ".fartext.*[^&]") */
+
+		*(.fartext .fartext.
+		".fartext.[^i]*" ".fartext.i[^n]*" ".fartext.in[^i]*" ".fartext.ini[^t]*")
+		 __start_fartext_init = .;
+		*(.fartext .fartext.init)
+		__end_fartext_init = .;
 
 		/* IA-16 segment end markers. */
 		*(".fartext&*" ".fartext.*&")
