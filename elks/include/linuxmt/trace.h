@@ -35,7 +35,7 @@
 #endif /* CONFIG_TRACE */
 
 /* disable to remove extra code used for asynchronous interrupt-driven I/O */
-//#define CONFIG_ASYNCIO
+#define CONFIG_ASYNCIO
 
 
 /* internal flags for kernel */

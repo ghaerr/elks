@@ -19,6 +19,7 @@
 #include <linuxmt/init.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/debug.h>
+
 #include <arch/system.h>
 #include <arch/io.h>
 #include <arch/irq.h>
@@ -34,8 +35,11 @@
  * take precedence.
  */
 
-/* only 1 is required for non-async I/O */
-#define NR_REQUEST	1
+#ifdef CONFIG_ASYNCIO
+#define NR_REQUEST  4
+#else
+#define NR_REQUEST  1   /* only 1 is required for non-async I/O */
+#endif
 
 static struct request all_requests[NR_REQUEST];
 
@@ -117,7 +121,7 @@ static struct request *__get_request_wait(int n, kdev_t dev)
 {
     struct request *req;
 
-    printk("Waiting for request...\n");
+    debug_blk("Waiting for request...\n");
     wait_set(&wait_for_request);
     for (;;) {
         current->state = TASK_UNINTERRUPTIBLE;
@@ -188,8 +192,8 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
     struct request *req;
     int max_req;
 
-    debug_blk("BLK %lu %s %lx:%x\n", buffer_blocknr(bh), rw==READ? "read": "write",
-	buffer_seg(bh), buffer_data(bh));
+    //debug_blk("BLK %lu %s %lx:%x\n", buffer_blocknr(bh), rw==READ? "read": "write",
+	//buffer_seg(bh), buffer_data(bh));
 
 #ifdef BDEV_SIZE_CHK
     sector_t count = BLOCK_SIZE / SECTOR_SIZE;	/* FIXME must move to lower level*/
@@ -228,7 +232,7 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
 	break;
 
     default:
-	debug_blk("make_request: bad block dev cmd, must be R/W\n");
+	panic("make_request");
 	unlock_buffer(bh);
 	return;
     }

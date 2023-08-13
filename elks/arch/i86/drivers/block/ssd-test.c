@@ -16,8 +16,11 @@
  *	umount /dev/ssd
  *	fsck -lvf /dev/ssd
  */
-//#define DEBUG 1
 #include <linuxmt/config.h>
+#include <linuxmt/debug.h>
+#if DEBUG_BLK
+#define DEBUG 1
+#endif
 #include <linuxmt/rd.h>
 #include <linuxmt/major.h>
 #include <linuxmt/fs.h>
@@ -25,7 +28,6 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/errno.h>
-#include <linuxmt/debug.h>
 #include "ssd.h"
 
 #define NUM_SECTS	192		/* set to max # sectors on SSD device */
@@ -70,7 +72,7 @@ int ssddev_ioctl(struct inode *inode, struct file *file,
 	    ssd_seg = NULL;
 	    return 0;
 	}
-        break;
+        return -ENXIO;          /* return separate error if ramdisk not inited */
     }
     return -EINVAL;
 }
