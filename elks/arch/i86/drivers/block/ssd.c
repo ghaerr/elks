@@ -129,9 +129,11 @@ void ssd_io_complete(void)
             continue;
         }
         end_request(1);             /* success */
+#ifdef CONFIG_ASYNCIO
         if (CURRENT) {
             ssd_timeout = jiffies + IODELAY;    /* schedule next completion callback */
         }
+#endif
     }
 }
 
@@ -141,9 +143,11 @@ static void do_ssd_request(void)
     debug_blk("do_ssd_request\n");
     for (;;) {
         struct request *req = CURRENT;
+        if (!req)
+            return;
 
 #ifdef CHECK_BLOCKIO
-        if (!req || req->rq_dev == -1U) {
+        if (req->rq_dev == -1U) {
             printk("do_ssd_request: no requests\n");
             return;
         }
@@ -154,7 +158,11 @@ static void do_ssd_request(void)
             end_request(0);
             continue;
         }
+#ifdef CONFIG_ASYNCIO
         ssd_timeout = jiffies + IODELAY;    /* schedule completion callback */
         return;
+#else
+        ssd_io_complete();                  /* synchronous I/O */
+#endif
     }
 }
