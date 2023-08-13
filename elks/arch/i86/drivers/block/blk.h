@@ -9,7 +9,7 @@
 #include <linuxmt/trace.h>
 
 struct request {
-    kdev_t rq_dev;		/* -1 if no request */
+    kdev_t rq_dev;
     unsigned char rq_cmd;	/* READ or WRITE */
     unsigned char rq_status;    /* RQ_INACTIVE or RQ_ACTIVE */
     block32_t rq_blocknr;
@@ -139,14 +139,14 @@ extern struct wait_queue wait_for_request;
 
 static void end_request(int uptodate)
 {
-    register struct request *req;
-    register struct buffer_head *bh;
+    struct request *req;
+    struct buffer_head *bh;
 
     req = CURRENT;
 
     if (!uptodate) {
-	printk("%s: I/O error: ", DEVICE_NAME);
-	printk("dev %x, block %lu\n", req->rq_dev, req->rq_blocknr);
+        printk("%s: I/O error: dev %x, block %lu\n",
+            DEVICE_NAME, req->rq_dev, req->rq_blocknr);
 
 #ifdef MULTI_BH
 #ifdef BLOAT_FS
@@ -154,21 +154,15 @@ static void end_request(int uptodate)
 	req->rq_nr_sectors &= ~2;	/* 1K block size, 512 byte sector*/
 #endif
 	req->rq_blocknr++;
-
 #endif
     }
 
     bh = req->rq_bh;
-#ifdef BLOAT_FS
-    req->rq_bh = bh->b_reqnext;
-    bh->b_reqnext = NULL;
-#endif
-
     mark_buffer_uptodate(bh, uptodate);
     unlock_buffer(bh);
 
 #ifdef BLOAT_FS
-    if ((bh = req->rq_bh) != NULL) {
+    if (bh != NULL) {
 	req->rq_current_nr_sectors = bh->b_size >> 9;
 	if (req->rq_nr_sectors < req->rq_current_nr_sectors) {
 	    req->rq_nr_sectors = req->rq_current_nr_sectors;
@@ -181,7 +175,6 @@ static void end_request(int uptodate)
 
     DEVICE_OFF(req->dev);
     CURRENT = req->rq_next;
-    req->rq_dev = -1;
     req->rq_status = RQ_INACTIVE;
 
 #ifdef CONFIG_ASYNCIO
@@ -191,18 +184,13 @@ static void end_request(int uptodate)
 #endif /* MAJOR_NR */
 
 #ifdef CHECK_BLOCKIO
-  #define INIT_REQUEST(req) \
-	if (!req || req->rq_dev == -1U) \
-		return; \
-	if (MAJOR(req->rq_dev) != MAJOR_NR) \
-		panic("init_request: %s bad request list (%d, %d)", \
-			DEVICE_NAME, MAJOR(req->rq_dev), MAJOR_NR); \
-	if (req->rq_bh && !EBH(req->rq_bh)->b_locked) \
-		panic("init_request: %s buffer not locked", DEVICE_NAME);
+#define CHECK_REQUEST(req) \
+    if (MAJOR(req->rq_dev) != MAJOR_NR) \
+        panic("%s: bad request %x", DEVICE_NAME, req->rq_dev); \
+    if (req->rq_bh && !EBH(req->rq_bh)->b_locked) \
+        panic("%s: not locked", DEVICE_NAME);
 #else
-  #define INIT_REQUEST(req) \
-	if (!req || req->rq_dev == -1U) \
-		return;
+#define CHECK_REQUEST(req)
 #endif
 
 #endif /* _BLK_H */

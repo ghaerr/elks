@@ -86,7 +86,7 @@ static void do_meta_request(void)
     }
     while (1) {
 	struct request *req = blk_dev[major].current_request;
-	if (!req || req->rq_dev < 0)
+	if (!req)
 	    return;
 	udr = new_request();
 	udr->udr_type = UDR_BLK + req->rq_cmd;

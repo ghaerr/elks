@@ -1043,10 +1043,9 @@ static void do_bioshd_request(void)
       next_block:
 
 	req = CURRENT;
-	if (!req)	/* break for spin_timer stop before INIT_REQUEST */
+	if (!req)
 	    break;
-
-	INIT_REQUEST(req);
+	CHECK_REQUEST(req);
 
 	if (bioshd_initialized != 1) {
 	    end_request(0);

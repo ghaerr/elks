@@ -461,7 +461,9 @@ void do_directhd_request(void)
 
     while (1) {			/* process HD requests */
 	struct request *req = CURRENT;
-	INIT_REQUEST(req);
+	if (!req)
+	    return;
+	CHECK_REQUEST(req);
 
 	if (directhd_initialized != 1) {
 	    end_request(0);

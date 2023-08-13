@@ -74,7 +74,7 @@ void timer_tick(int irq, struct pt_regs *regs)
     rs_pump();		/* check if received serial chars and call wake_up*/
 #endif
 
-#ifdef CONFIG_ASYNCIO
+#if defined(CONFIG_BLK_DEV_SSD_TEST) && defined(CONFIG_ASYNCIO)
     if (ssd_timeout && jiffies >= ssd_timeout) {
         ssd_io_complete();
     }

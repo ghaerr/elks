@@ -34,9 +34,6 @@
 
 #endif /* CONFIG_TRACE */
 
-/* disable to remove extra code used for asynchronous interrupt-driven I/O */
-//#define CONFIG_ASYNCIO
-
 
 /* internal flags for kernel */
 #define TRACE_STRACE    0x01    /* system call tracing enabled */
