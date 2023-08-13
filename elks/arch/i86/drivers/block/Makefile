@@ -49,7 +49,7 @@ OBJS += romflash.o
 endif
 
 ifeq ($(CONFIG_BLK_DEV_SSD_TEST), y)
-ifeq ($(CONFIG_ASYNCIO), y)
+ifdef CONFIG_ASYNCIO
 	OBJS += ssd.o ssd-test.o
 else
 	OBJS += ssd-blocking.o ssd-test.o

@@ -60,9 +60,9 @@ static void ssd_release(struct inode *inode, struct file *filp)
     debug("SSD: release\n");
 }
 
-#define IODELAY     (5*HZ/100)  /* 10/100 sec = 100msec */
+#define IODELAY     (5*HZ/100)  /* 5/100 sec = 50msec */
 
-extern jiff_t ssd_timeout;
+jiff_t ssd_timeout;
 
 /* called by timer interrupt */
 void ssd_io_complete(void)

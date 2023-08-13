@@ -57,8 +57,8 @@ static void calc_cpu_usage(void)
 }
 #endif
 
-#ifdef CONFIG_ASYNCIO
-jiff_t ssd_timeout;
+#if defined(CONFIG_BLK_DEV_SSD_TEST) && defined(CONFIG_ASYNCIO)
+extern jiff_t ssd_timeout;
 extern void ssd_io_complete();
 #endif
 
