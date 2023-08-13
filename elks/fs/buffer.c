@@ -231,7 +231,8 @@ void wait_on_buffer(struct buffer_head *bh)
     wait_clear((struct wait_queue *)bh);
     current->state = TASK_RUNNING;
     DCR_COUNT(ebh);
-#elif defined(CHECK_BLOCKIO)
+#endif
+#ifdef CHECK_BLOCKIO
     if (ebh->b_locked)
         panic("wait_on_buffer: block %ld locked\n", ebh->b_blocknr);
 #endif
@@ -256,6 +257,7 @@ void invalidate_buffers(kdev_t dev)
     struct buffer_head *bh = bh_llru;
     ext_buffer_head *ebh;
 
+    debug_blk("INVALIDATE dev %x\n", dev);
     do {
 	ebh = EBH(bh);
 
@@ -272,7 +274,9 @@ static void sync_buffers(kdev_t dev, int wait)
 {
     struct buffer_head *bh = bh_llru;
     ext_buffer_head *ebh;
+    int count = 0;
 
+    debug_blk("SYNC_BUFFERS dev %x wait %d\n", dev, wait);
     do {
 	ebh = EBH(bh);
 
@@ -289,6 +293,9 @@ static void sync_buffers(kdev_t dev, int wait)
 	 *      AND pass > 0.
 	 */
 	if (ebh->b_locked) {
+            debug_blk("SYNC: dev %x buf %d block %ld LOCKED mapped %d skipped %d data %04x\n",
+                ebh->b_dev, buf_num(bh), ebh->b_blocknr, ebh->b_mapcount, !wait,
+                bh->b_data);
 	    if (!wait) continue;
 	    wait_on_buffer(bh);
 	}
@@ -296,11 +303,14 @@ static void sync_buffers(kdev_t dev, int wait)
 	/*
 	 *      Do the stuff
 	 */
-        debug("sync block %ld count %d\n", ebh->b_blocknr, ebh->b_count);
+        debug_blk("sync: dev %x write buf %d block %ld count %d\n",
+            ebh->b_dev, buf_num(bh), ebh->b_blocknr, ebh->b_count);
 	INR_COUNT(ebh);
 	ll_rw_blk(WRITE, bh);
 	DCR_COUNT(ebh);
+        count++;
     } while ((bh = ebh->b_prev_lru) != NULL);
+    debug_blk("SYNC_BUFFERS END %d wrote %d\n", wait, count);
 }
 
 static struct buffer_head *get_free_buffer(void)
@@ -319,6 +329,9 @@ static struct buffer_head *get_free_buffer(void)
 	}
 	ebh = EBH(bh);
     }
+#ifdef CHECK_BLOCKIO
+    if (ebh->b_mapcount) panic("get_free_buffer"); /* mapped buffer reallocated */
+#endif
     put_last_lru(bh);
     ebh->b_uptodate = 0;
     ebh->b_count = 1;
@@ -578,6 +591,9 @@ void map_buffer(struct buffer_head *bh)
 	goto end_map_buffer;
     }
 
+    /* wait for any I/O complete before mapping to prevent bh/req buffer unpairing */
+    wait_on_buffer(bh);
+
     i = lastL1map;
     /* search for free L1 buffer or wait until one is available*/
     for (;;) {
@@ -595,7 +611,8 @@ void map_buffer(struct buffer_head *bh)
 	/* L1 with zero count can be unmapped and reused for this request*/
 	if (ebmap->b_mapcount < 0)
 		printk("map_buffer: %d BAD mapcount %d\n", buf_num(bmap), ebmap->b_mapcount);
-	if (!ebmap->b_mapcount) {
+        /* don't remap if I/O in progress to preent bh/req buffer unpairing */
+	if (!ebmap->b_mapcount && !ebmap->b_locked) {
 	    debug("UNMAP: %d <- %d\n", buf_num(bmap), i);
 
 	    /* Unmap/copy L1 to L2 */

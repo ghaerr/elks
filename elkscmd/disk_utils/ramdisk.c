@@ -3,14 +3,13 @@
 #include <string.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <sys/ioctl.h>
 #include <linuxmt/rd.h>
 
 #define MAX_SIZE 640 /* 1 KB blocks */
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 {
 	int fd;
 	int size = 0;
@@ -43,6 +42,8 @@ char **argv;
 	}
 	if (strcmp(argv[2],"kill") == 0) {
 		if (ioctl(fd, RDDESTROY, 0)) {
+			if (errno == ENXIO)	/* ramdisk present but not inited */
+				return 0;
 			perror("ramdisk");
 			return 1;
 		}

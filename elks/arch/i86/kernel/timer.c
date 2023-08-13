@@ -57,6 +57,11 @@ static void calc_cpu_usage(void)
 }
 #endif
 
+#if defined(CONFIG_BLK_DEV_SSD_TEST) && defined(CONFIG_ASYNCIO)
+extern jiff_t ssd_timeout;
+extern void ssd_io_complete();
+#endif
+
 void timer_tick(int irq, struct pt_regs *regs)
 {
     do_timer(regs);
@@ -67,6 +72,12 @@ void timer_tick(int irq, struct pt_regs *regs)
 
 #if defined(CONFIG_CHAR_DEV_RS) && (defined(CONFIG_FAST_IRQ4) || defined(CONFIG_FAST_IRQ3))
     rs_pump();		/* check if received serial chars and call wake_up*/
+#endif
+
+#ifdef CONFIG_ASYNCIO
+    if (ssd_timeout && jiffies >= ssd_timeout) {
+        ssd_io_complete();
+    }
 #endif
 
 #ifdef CONFIG_CONSOLE_DIRECT
