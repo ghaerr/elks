@@ -74,8 +74,8 @@ void ssd_io_complete(void)
 
 #ifdef CHECK_BLOCKIO
     req = CURRENT;
-    if (!req || req->rq_dev == -1U || req->rq_status != RQ_ACTIVE) {
-        printk("ssd_io_complete: NULL request %04x\n", req);
+    if (!req) {
+        printk("ssd_io_complete: NULL request\n");
         return;
     }
 #endif
@@ -90,8 +90,8 @@ void ssd_io_complete(void)
             return;
 
 #ifdef CHECK_BLOCKIO
-        if (req->rq_dev == -1U || req->rq_status != RQ_ACTIVE) {
-            printk("ssd_io_complete: bad request\n");
+        if (req->rq_status != RQ_ACTIVE) {
+            printk("ssd_io_complete: INACTIVE request\n");
             end_request(0);
             continue;
         }
@@ -147,12 +147,12 @@ static void do_ssd_request(void)
             return;
 
 #ifdef CHECK_BLOCKIO
-        if (req->rq_dev == -1U) {
-            printk("do_ssd_request: no requests\n");
+        if (req->rq_status != RQ_ACTIVE) {
+            printk("do_ssd_request: INACTIVE request\n");
             return;
         }
+        CHECK_REQUEST(req);
 #endif
-        INIT_REQUEST(req);
 
         if (!NUM_SECTS) {
             end_request(0);

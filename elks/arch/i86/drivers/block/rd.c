@@ -212,7 +212,9 @@ static void do_rd_request(void)
 
     while (1) {
 	struct request *req = CURRENT;
-	INIT_REQUEST(req);
+	if (!req)
+	    return;
+	CHECK_REQUEST(req);
 
 	if (!rd_initialised) {
 	    end_request(0);
