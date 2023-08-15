@@ -145,8 +145,8 @@ static void end_request(int uptodate)
     req = CURRENT;
 
     if (!uptodate) {
-        printk("%s: I/O %s error: dev %x, block %lu\n",
-            DEVICE_NAME, (req->rq_cmd == WRITE)? "write": "read",
+        printk(DEVICE_NAME ": I/O %s error: dev %x, block %lu\n",
+            (req->rq_cmd == WRITE)? "write": "read",
             req->rq_dev, req->rq_blocknr);
 
 #ifdef MULTI_BH
