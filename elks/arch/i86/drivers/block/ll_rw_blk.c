@@ -226,8 +226,11 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
 	max_req = (NR_REQUEST * 2) / 3;
 #endif
 #ifdef CHECK_BLOCKIO
-        if (!EBH(bh)->b_dirty)
-                printk("make_request: block %ld not dirty\n", EBH(bh)->b_blocknr);
+        if (!EBH(bh)->b_dirty) {
+            printk("make_request: block %ld not dirty\n", EBH(bh)->b_blocknr);
+            unlock_buffer(bh);
+            return;
+        }
 #endif
 	break;
 

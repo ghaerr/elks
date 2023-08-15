@@ -145,8 +145,9 @@ static void end_request(int uptodate)
     req = CURRENT;
 
     if (!uptodate) {
-        printk("%s: I/O error: dev %x, block %lu\n",
-            DEVICE_NAME, req->rq_dev, req->rq_blocknr);
+        printk(DEVICE_NAME ": I/O %s error: dev %x, block %lu\n",
+            (req->rq_cmd == WRITE)? "write": "read",
+            req->rq_dev, req->rq_blocknr);
 
 #ifdef MULTI_BH
 #ifdef BLOAT_FS
@@ -185,10 +186,13 @@ static void end_request(int uptodate)
 
 #ifdef CHECK_BLOCKIO
 #define CHECK_REQUEST(req) \
-    if (MAJOR(req->rq_dev) != MAJOR_NR) \
-        panic("%s: bad request %x", DEVICE_NAME, req->rq_dev); \
+    if (req->rq_status != RQ_ACTIVE \
+        || (req->rq_cmd != READ && req->rq_cmd != WRITE) \
+        || MAJOR(req->rq_dev) != MAJOR_NR) \
+        panic(DEVICE_NAME ": bad request dev %x cmd %d active %d", \
+            req->rq_dev, req->rq_cmd, req->rq_status); \
     if (req->rq_bh && !EBH(req->rq_bh)->b_locked) \
-        panic("%s: not locked", DEVICE_NAME);
+        panic(DEVICE_NAME ": not locked");
 #else
 #define CHECK_REQUEST(req)
 #endif

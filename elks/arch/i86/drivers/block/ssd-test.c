@@ -17,10 +17,6 @@
  *	fsck -lvf /dev/ssd
  */
 #include <linuxmt/config.h>
-#include <linuxmt/debug.h>
-#if DEBUG_BLK
-#define DEBUG 1
-#endif
 #include <linuxmt/rd.h>
 #include <linuxmt/major.h>
 #include <linuxmt/fs.h>
@@ -28,6 +24,7 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/errno.h>
+#include <linuxmt/debug.h>
 #include "ssd.h"
 
 #define NUM_SECTS	192		/* set to max # sectors on SSD device */
@@ -50,7 +47,7 @@ int ssddev_ioctl(struct inode *inode, struct file *file,
 
     switch (cmd) {
     case RDCREATE:
-	debug("SSD: ioctl make %d\n", arg); /* size ignored, always NUM_SECTS */
+	debug_blk("SSD: ioctl make %d\n", arg); /* size ignored, always NUM_SECTS */
 	if (ssd_seg)
 	    return -EBUSY;
 	ssd_seg = seg_alloc((segext_t)NUM_SECTS << 5, SEG_FLAG_RAMDSK);
@@ -64,7 +61,7 @@ int ssddev_ioctl(struct inode *inode, struct file *file,
 	return 0;
 
     case RDDESTROY:
-	debug("SSD: ioctl kill\n");
+	debug_blk("SSD: ioctl kill\n");
 	if (ssd_seg) {
 	    invalidate_inodes(inode->i_rdev);
 	    invalidate_buffers(inode->i_rdev);

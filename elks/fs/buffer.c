@@ -83,9 +83,7 @@ static int nr_free_bh;
 #define DCR_COUNT(bh) if(!(--bh->b_count))nr_free_bh++
 #define INR_COUNT(bh) if(!(bh->b_count++))nr_free_bh--
 #define CLR_COUNT(bh) if(bh->b_count)nr_free_bh++
-#define SET_COUNT(bh) if(--nr_free_bh < 0) { \
-                          panic("get_free_buffer: bad free buffer_head count"); \
-                          nr_free_bh = 0; }
+#define SET_COUNT(bh) if(--nr_free_bh < 0) { panic("get_free_buffer: bad free count"); }
 #else
 #define DCR_COUNT(bh) (bh->b_count--)
 #define INR_COUNT(bh) (bh->b_count++)
@@ -233,8 +231,7 @@ void wait_on_buffer(struct buffer_head *bh)
     DCR_COUNT(ebh);
 #endif
 #ifdef CHECK_BLOCKIO
-    if (ebh->b_locked)
-        panic("wait_on_buffer: block %ld locked\n", ebh->b_blocknr);
+    if (ebh->b_locked) panic("wait_on_buffer");
 #endif
 }
 
@@ -351,7 +348,7 @@ void brelse(struct buffer_head *bh)
     wait_on_buffer(bh);
     ebh = EBH(bh);
 #ifdef CHECK_BLOCKIO
-    if (ebh->b_count == 0) panic("brelse: count 0");
+    if (ebh->b_count == 0) panic("brelse");
 #endif
     DCR_COUNT(ebh);
 #ifdef BLOAT_FS
@@ -584,15 +581,15 @@ void map_buffer(struct buffer_head *bh)
     ext_buffer_head *ebh = EBH(bh);
     int i;
 
+    /* wait for any I/O complete before mapping to prevent bh/req buffer unpairing */
+    wait_on_buffer(bh);
+
     /* If buffer is already mapped, just increase the refcount and return */
     if (bh->b_data /*|| ebh->b_seg != kernel_ds*/) {
 	if (!ebh->b_mapcount)
 	    debug("REMAP: %d\n", buf_num(bh));
 	goto end_map_buffer;
     }
-
-    /* wait for any I/O complete before mapping to prevent bh/req buffer unpairing */
-    wait_on_buffer(bh);
 
     i = lastL1map;
     /* search for free L1 buffer or wait until one is available*/
@@ -611,7 +608,7 @@ void map_buffer(struct buffer_head *bh)
 	/* L1 with zero count can be unmapped and reused for this request*/
 	if (ebmap->b_mapcount < 0)
 		printk("map_buffer: %d BAD mapcount %d\n", buf_num(bmap), ebmap->b_mapcount);
-        /* don't remap if I/O in progress to preent bh/req buffer unpairing */
+        /* don't remap if I/O in progress to prevent bh/req buffer unpairing */
 	if (!ebmap->b_mapcount && !ebmap->b_locked) {
 	    debug("UNMAP: %d <- %d\n", buf_num(bmap), i);
 

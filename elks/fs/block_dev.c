@@ -64,10 +64,11 @@ size_t block_read(struct inode *inode, register struct file *filp,
 	 *      Read the block in
 	 */
 	chars = (filp->f_pos >> BLOCK_SIZE_BITS);
-	if (inode->i_op->getblk)
+	if (inode->i_op->getblk) {
 	    bh = inode->i_op->getblk(inode, (block_t)chars, 0);
-	else
+	} else {
 	    bh = getblk(inode->i_rdev, (block_t)chars);
+	}
 	/* Offset to block/offset */
 	chars = BLOCK_SIZE - (((size_t)(filp->f_pos)) & (BLOCK_SIZE - 1));
 	if (chars > count) chars = count;
@@ -127,10 +128,11 @@ size_t block_write(struct inode *inode, register struct file *filp,
 	register struct buffer_head *bh;
 
 	chars = (filp->f_pos >> BLOCK_SIZE_BITS);
-	if (inode->i_op->getblk)
+	if (inode->i_op->getblk) {
 	    bh = inode->i_op->getblk(inode, (block_t)chars, 1);
-	else
+	} else {
 	    bh = getblk(inode->i_rdev, (block_t)chars);
+	}
 	if (!bh) {
 	    if (!written) written = -ENOSPC;
 	    break;
