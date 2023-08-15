@@ -83,9 +83,7 @@ static int nr_free_bh;
 #define DCR_COUNT(bh) if(!(--bh->b_count))nr_free_bh++
 #define INR_COUNT(bh) if(!(bh->b_count++))nr_free_bh--
 #define CLR_COUNT(bh) if(bh->b_count)nr_free_bh++
-#define SET_COUNT(bh) if(--nr_free_bh < 0) { \
-                          panic("get_free_buffer: bad free count"); \
-                          nr_free_bh = 0; }
+#define SET_COUNT(bh) if(--nr_free_bh < 0) { panic("get_free_buffer: bad free count"); }
 #else
 #define DCR_COUNT(bh) (bh->b_count--)
 #define INR_COUNT(bh) (bh->b_count++)
