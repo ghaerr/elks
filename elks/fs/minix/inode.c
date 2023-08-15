@@ -269,6 +269,7 @@ static unsigned short map_iblock(struct inode *inode, block_t i,
 {
     register struct buffer_head *bh;
     register block_t *b_zone;
+    block_t b;
 
     if (!(bh = bread(inode->i_dev, i))) {
 	return 0;
@@ -280,8 +281,9 @@ static unsigned short map_iblock(struct inode *inode, block_t i,
 	    mark_buffer_dirty(bh);
 	}
     }
+    b = *b_zone;
     unmap_brelse(bh);
-    return *b_zone;
+    return b;
 }
 
 unsigned short _minix_bmap(register struct inode *inode, block_t block, int create)

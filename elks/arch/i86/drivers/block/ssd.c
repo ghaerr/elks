@@ -7,12 +7,9 @@
  * Rewritten for async I/O Aug 2023 Greg Haerr
  */
 #include <linuxmt/config.h>
-#include <linuxmt/debug.h>
-#if DEBUG_BLK
-#define DEBUG 1
-#endif
 #include <linuxmt/kernel.h>
 #include <linuxmt/errno.h>
+#include <linuxmt/debug.h>
 
 #define MAJOR_NR SSD_MAJOR
 #define SSDDISK
@@ -48,7 +45,7 @@ void ssd_init(void)
 
 static int ssd_open(struct inode *inode, struct file *filp)
 {
-    debug("SSD: open\n");
+    debug_blk("SSD: open\n");
     if (!NUM_SECTS)
         return -ENXIO;
     inode->i_size = NUM_SECTS << 9;
@@ -57,14 +54,13 @@ static int ssd_open(struct inode *inode, struct file *filp)
 
 static void ssd_release(struct inode *inode, struct file *filp)
 {
-    debug("SSD: release\n");
+    debug_blk("SSD: release\n");
 }
 
 #define IODELAY     (5*HZ/100)  /* 5/100 sec = 50msec */
 
 jiff_t ssd_timeout;
 
-/* called by timer interrupt */
 void ssd_io_complete(void)
 {
     struct request *req;
@@ -88,14 +84,9 @@ void ssd_io_complete(void)
         req = CURRENT;
         if (!req)
             return;
+        CHECK_REQUEST(req);
 
 #ifdef CHECK_BLOCKIO
-        if (req->rq_status != RQ_ACTIVE) {
-            printk("ssd_io_complete: INACTIVE request\n");
-            end_request(0);
-            continue;
-        }
-
         struct buffer_head *bh = req->rq_bh;
         if (req->rq_buffer != buffer_data(bh) || req->rq_seg != buffer_seg(bh)) {
            printk("SSD: ***ADDR CHANGED*** req seg:buf %04x:%04x bh seg:buf %04x:%04x\n",
@@ -112,16 +103,16 @@ void ssd_io_complete(void)
         start = req->rq_blocknr * (BLOCK_SIZE / SD_FIXED_SECTOR_SIZE);
 
         /* all ELKS requests are 1K blocks = 2 sectors */
-        if (start >= NUM_SECTS-1) {
-            debug("SSD: bad request block %lu\n", start/2);
+        if (start >= NUM_SECTS-1) { // FIXME move to ll_rw_blk level
+            printk("SSD: bad request block %lu cmd %d\n", start/2, req->rq_cmd);
             end_request(0);
             continue;
         }
         if (req->rq_cmd == WRITE) {
-            debug("SSD: writing block %lu\n", start/2);
+            debug_blk("SSD: writing block %lu\n", start/2);
             ret = ssddev_write_blk(start, buf, seg);
         } else {
-            debug("SSD: reading block %lu\n", start/2);
+            debug_blk("SSD: reading block %lu\n", start/2);
             ret = ssddev_read_blk(start, buf, seg);
         }
         if (ret != 2) {
@@ -133,6 +124,7 @@ void ssd_io_complete(void)
         if (CURRENT) {
             ssd_timeout = jiffies + IODELAY;    /* schedule next completion callback */
         }
+        return;
 #endif
     }
 }
@@ -143,16 +135,11 @@ static void do_ssd_request(void)
     debug_blk("do_ssd_request\n");
     for (;;) {
         struct request *req = CURRENT;
-        if (!req)
-            return;
-
-#ifdef CHECK_BLOCKIO
-        if (req->rq_status != RQ_ACTIVE) {
-            printk("do_ssd_request: INACTIVE request\n");
+        if (!req) {
+            printk("do_ssd_request: NULL request\n");
             return;
         }
         CHECK_REQUEST(req);
-#endif
 
         if (!NUM_SECTS) {
             end_request(0);

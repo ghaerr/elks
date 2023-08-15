@@ -133,7 +133,7 @@ int sys_write(unsigned int fd, char *buf, size_t count)
 
 	    }
 	    written = (int) fop->write(inode, file, buf, count);
-	    schedule();
+	    schedule();         // FIXME should this be here?
 	}
     }
     return written;

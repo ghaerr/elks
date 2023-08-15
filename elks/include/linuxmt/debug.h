@@ -27,7 +27,7 @@
 /*
  * Kernel debug options, set =1 to turn on. Works across multiple files.
  */
-#define DEBUG_EVENT	1		/* generate debug events on CTRLP*/
+#define DEBUG_EVENT	0		/* generate debug events on CTRLP*/
 #define DEBUG_STARTDEF	1		/* default startup debug display*/
 #define DEBUG_BIOS	0		/* BIOS driver*/
 #define DEBUG_BLK	0		/* block i/o*/
