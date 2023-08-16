@@ -6,16 +6,17 @@
  *	printf() subset is supported:
  *
  *		%%	literal % sign
- *
  *		%c	char
- *		%d	signed decimal
- *		%i	signed decimal
+ *		%d/%i	signed decimal
+ *		%u	unsigned decimal
  *		%o	octal
- *		%p/%P	pointer - same as %x/%X respectively
  *		%s	string in kernel space
  *		%t	string in user space
- *		%u	unsigned decimal
+ *		%T	string w/specified segment
  *		%x/%X	hexadecimal with lower/upper case letters
+ *		%#x/%#X	hexadecimal using 0x alt prefix
+ *		%p/%P	pointer - same as %04x/%04X respectively
+ *		%D      device name as %#04x
  *
  *	All except %% can be followed by a width specifier 1 -> 31 only
  *	and the h/l length specifiers also work where appropriate.
@@ -70,26 +71,6 @@ void kputchar(int ch)
 
 static void kputs(const char *buf)
 {
-#ifdef CONFIG_EMUL_ANSI_PRINTK
-
-    char *p;
-
-    /* Colourizing */
-
-    static char colour[8] = { 27, '[', '3', '0', ';', '4', '0', 'm' };
-
-    if (++(colour[3]) == '8')
-	colour[3] = '1';
-
-    p = colour;
-    do
-	kputchar(*p);
-    while (*p++ != 'm');
-
-    /* END Colourizing */
-
-#endif
-
     while (*buf)
 	kputchar(*buf++);
 }
@@ -99,10 +80,9 @@ static void kputs(const char *buf)
  *	Output a number
  */
 
-const char *hex_string = "0123456789ABCDEF 0123456789abcdef ";	/* Also used by devices */
+static char hex_string[] = "0123456789ABCDEF 0123456789abcdef ";
 
-static void numout(__u32 v, int width, int base, int useSign,
-		   int Lower, int Zero)
+static void numout(__u32 v, int width, int base, int useSign, int Lower, int Zero, int alt)
 {
     __u32 dvr;
     int c, vch, i;
@@ -126,6 +106,10 @@ static void numout(__u32 v, int width, int base, int useSign,
     if (Lower)
 	Lower = 17;
     vch = 0;
+    if (alt && base == 16) {
+        kputchar('0');
+        kputchar('x');
+    }
     do {
 	c = (int)(v / dvr);
 	v %= dvr;
@@ -152,7 +136,7 @@ static void numout(__u32 v, int width, int base, int useSign,
 
 static void vprintk(const char *fmt, va_list p)
 {
-    int c, n, width, zero;
+    int c, n, width, zero, alt, ptrfmt;
     unsigned long v;
     char *str;
 
@@ -167,7 +151,11 @@ static void vprintk(const char *fmt, va_list p)
 		continue;
 	    }
 
-	    width = 0;
+	    ptrfmt = alt = width = 0;
+            if (c == '#') {
+                alt = 1;
+                c = *fmt++;
+            }
 	    zero = (c == '0');
 	    while ((n = (c - '0')) <= 9) {
 		width = width*10 + n;
@@ -186,21 +174,30 @@ static void vprintk(const char *fmt, va_list p)
 		n -= 2;
 	    case 'u':
 		n -= 6;
-	    case 'P':
-	    case 'p':
-		c += 'X' - 'P';
 	    case 'X':
 	    case 'x':
-		if (*(fmt-2) == 'l')
+            hex:
+		if (*(fmt-2) == 'l') {
+                    if (ptrfmt) width = 8;
 		    v = va_arg(p, unsigned long);
-		else {
+		} else {
 		    if (c == 'd')
 			v = (long)(va_arg(p, int));
 		    else
 			v = (unsigned long)(va_arg(p, unsigned int));
 		}
-		numout(v, width, n, (c == 'd'), (c != 'X'), zero);
+		numout(v, width, n, (c == 'd'), (c != 'X'), zero, alt);
 		break;
+            case 'D':
+                c += 'X' - 'D';
+                alt = 1;
+	    case 'P':
+	    case 'p':
+                c += 'X' - 'P';
+                ptrfmt = 1;
+                zero = 1;
+                width = 4;
+                goto hex;
 	    case 'T':
 		n = va_arg(p, unsigned int);
 		goto str;

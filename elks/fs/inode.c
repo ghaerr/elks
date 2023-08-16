@@ -126,7 +126,7 @@ void invalidate_inodes(kdev_t dev)
         prev = inode->i_prev;	/* clear_inode() changes the queues.. */
 	if (inode->i_dev != dev) continue;
 	if (inode->i_count || inode->i_dirt || inode->i_lock)
-	    printk("VFS: inode busy on removed device %s\n", kdevname(dev));
+	    printk("VFS: inode busy on removed device %D\n", dev);
 	else
 	    clear_inode(inode);
     } while ((inode = prev) != NULL);
@@ -162,13 +162,15 @@ void sync_inodes(kdev_t dev)
 
 static void list_inode_status(void)
 {
+#ifdef DEBUG_FREE_INODES_COUNT
     int i = 0;
     register struct inode *inode = inode_llru;
 
     do {
-        printk("[#%u: c=%u d=%x nr=%lu]", i++,
-			inode->i_count, inode->i_dev, (unsigned long)inode->i_ino);
+        printk("[#%u: dev %D inode %lu count %u]", i++,
+            inode->i_dev, (unsigned long)inode->i_ino, inode->i_count);
     } while ((inode = inode->i_prev) != NULL);
+#endif
 }
 
 static struct inode *get_empty_inode(void)
@@ -220,8 +222,8 @@ void iput(register struct inode *inode)
 	wait_on_inode(inode);
 	if (!inode->i_count) {
 	    printk("VFS: iput: trying to free free inode\n"
-			"VFS: device %s, inode %lu, mode=0%06o\n",
-			kdevname(inode->i_rdev), (unsigned long)inode->i_ino, inode->i_mode);
+			"VFS: device %D, inode %lu, mode=0%06o\n",
+			inode->i_rdev, (unsigned long)inode->i_ino, inode->i_mode);
 	    return;
 	}
 #ifdef NOT_YET
@@ -312,15 +314,13 @@ struct inode *new_inode(register struct inode *dir, __u16 mode)
     return inode;
 }
 
-struct inode *__iget(struct super_block *sb,
-		     ino_t inr /*,int crossmntp */ )
+struct inode *__iget(struct super_block *sb, ino_t inr)
 {
     register struct inode *inode;
     register struct inode *n_ino;
 
-    debug("iget called(%x, %lu, %d)\n", sb, (unsigned long)inr, 0 /* crossmntp */ );
-    if (!sb)
-	panic("VFS: iget with sb==NULL");
+    debug("iget called(%x, %lu)\n", sb, (unsigned long)inr);
+    if (!sb) panic("VFS: iget NULL sb");
 
     n_ino = NULL;
     goto start;
@@ -338,7 +338,7 @@ struct inode *__iget(struct super_block *sb,
 
     inode->i_sb = sb;
     inode->i_dev = sb->s_dev;
-    inode->i_flags = ((unsigned short int) sb->s_flags);
+    inode->i_flags = sb->s_flags;
     inode->i_ino = inr;
     debug("iget: Reading inode\n");
     read_inode(inode);

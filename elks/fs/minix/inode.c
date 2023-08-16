@@ -105,7 +105,7 @@ static struct super_operations minix_sops = {
 static void minix_mount_warning(register struct super_block *sb, const char *prefix)
 {
 	if ((sb->u.minix_sb.s_mount_state & (MINIX_VALID_FS|MINIX_ERROR_FS)) != MINIX_VALID_FS)
-		printk("MINIX-fs: %smounting %s 0x%x, running fsck is recommended.\n", prefix,
+		printk("MINIX-fs: %smounting %s %D, running fsck is recommended.\n", prefix,
 	     !(sb->u.minix_sb.s_mount_state & MINIX_VALID_FS) ?
 		 "unchecked file system" : "file system with errors", sb->s_dev);
 }
@@ -157,7 +157,7 @@ struct super_block *minix_read_super(register struct super_block *s, char *data,
 	ms = (struct minix_super_block *) bh->b_data;
 	if (ms->s_magic != MINIX_SUPER_MAGIC) {
 	    if (!silent)
-		printk("VFS: dev %s is not minixfs.\n", kdevname(dev));
+		printk("VFS: dev %D is not minixfs.\n", dev);
 	    msgerr = err0;
 	    goto err_read_super_1;
 	}
@@ -379,8 +379,8 @@ static struct buffer_head *minix_get_inode(register struct inode *inode,
 
     ino = inode->i_ino;
     if (!ino || ino > inode->i_sb->u.minix_sb.s_ninodes) {
-	printk("Bad inode number on dev %s: %d is out of range\n",
-		kdevname(inode->i_dev), ino);
+	printk("Bad inode number on dev %D: %d is out of range\n",
+		inode->i_dev, ino);
     }
     else {
 	block = inode->i_sb->u.minix_sb.s_imap_blocks + 2 +
@@ -461,8 +461,8 @@ int minix_sync_inode(register struct inode *inode)
 	ll_rw_blk(WRITE, bh);
 	wait_on_buffer(bh);
 	if (!buffer_uptodate(bh)) {
-	    printk("IO error syncing minix inode [%s:%08lx]\n",
-		   kdevname(inode->i_dev), inode->i_ino);
+	    printk("IO error syncing minix inode [%D:%08lx]\n",
+		   inode->i_dev, inode->i_ino);
 	    err = -1;
 	}
     } else if (!bh)
