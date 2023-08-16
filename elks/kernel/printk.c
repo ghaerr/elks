@@ -71,26 +71,6 @@ void kputchar(int ch)
 
 static void kputs(const char *buf)
 {
-#ifdef CONFIG_EMUL_ANSI_PRINTK
-
-    char *p;
-
-    /* Colourizing */
-
-    static char colour[8] = { 27, '[', '3', '0', ';', '4', '0', 'm' };
-
-    if (++(colour[3]) == '8')
-	colour[3] = '1';
-
-    p = colour;
-    do
-	kputchar(*p);
-    while (*p++ != 'm');
-
-    /* END Colourizing */
-
-#endif
-
     while (*buf)
 	kputchar(*buf++);
 }

@@ -19,9 +19,6 @@ mainmenu_option next_comment
 		    "ANSI           CONFIG_EMUL_ANSI	\
 		     VT52           CONFIG_EMUL_VT52	\
 		     None           CONFIG_EMUL_NONE"		ANSI
-	    if [ "$CONFIG_EMUL_ANSI" = "y" ]; then
-		bool 'ANSI Colourized printk'	CONFIG_EMUL_ANSI_PRINTK n
-	    fi
 	fi
 	if [ "$CONFIG_CONSOLE_DIRECT" = "y" ]; then
 	    source elks/arch/i86/drivers/char/KeyMaps/config.in
