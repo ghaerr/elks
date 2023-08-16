@@ -12,18 +12,30 @@
 #include <linuxmt/stat.h>
 #include <linuxmt/debug.h>
 
+struct buffer_head * FATPROC msdos_sread_nomap(struct super_block *s, sector_t sector,
+                                                 size_t *offset)
+{
+    struct buffer_head *bh;
+
+    if (!(bh = bread32(s->s_dev, sector >> (BLOCK_SIZE_BITS - SECTOR_BITS_SB(s)))))
+        return NULL;
+
+    //debug_fat("msread sector %ld block %lu\n", sector, buffer_blocknr(bh));
+    *offset = ((int)sector & (BLOCK_SIZE_BITS - SECTOR_BITS_SB(s))) << SECTOR_BITS_SB(s);
+    return bh;
+}
+
 struct buffer_head * FATPROC msdos_sread(struct super_block *s, sector_t sector, void **start)
 {
-	register struct buffer_head *bh;
+    struct buffer_head *bh;
+    size_t offset;
 
-	if (!(bh = bread32(s->s_dev, sector >> (BLOCK_SIZE_BITS - SECTOR_BITS_SB(s)))))
-		return NULL;
+    if (!(bh = msdos_sread_nomap(s, sector, &offset)))
+        return NULL;
 
-	map_buffer(bh);
-	//debug_fat("msread sector %ld block %lu\n", sector, buffer_blocknr(bh));
-	*start = bh->b_data +
-		(((int)sector & (BLOCK_SIZE_BITS - SECTOR_BITS_SB(s))) << SECTOR_BITS_SB(s));
-	return bh;
+    map_buffer(bh);
+    *start = bh->b_data + offset;
+    return bh;
 }
 
 
@@ -121,7 +133,7 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 				printk("FAT: getblk fail\n");
 			else {
 				map_buffer(bh);
-				memset(bh->b_data,0,BLOCK_SIZE);
+				memset(bh->b_data,0,BLOCK_SIZE);    // FIXME use xms_fmemset
 				mark_buffer_uptodate(bh, 1);
 			}
 			curr++;

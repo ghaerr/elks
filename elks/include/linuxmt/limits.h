@@ -5,10 +5,15 @@
 #define MAX_TASKS	16	/* Max # processes */
 
 #ifdef CONFIG_ARCH_PC98
-#define KSTACK_BYTES	740	/* Size of kernel stacks */
+#define KSTACK_BYTES	740	/* Size of kernel stacks for PC-98 */
 #else
-#define KSTACK_BYTES	640	/* Size of kernel stacks */
+#ifdef CONFIG_ASYNCIO
+#define KSTACK_BYTES	700	/* Size of kernel stacks w/async I/O */
+#else
+#define KSTACK_BYTES	640	/* Size of kernel stacks w/sync I/O */
 #endif
+#endif
+
 #define ISTACK_BYTES    512     /* Size of interrupt stack */
 
 #define KSTACK_GUARD    100     /* bytes before CHECK_KSTACK overflow warning */
