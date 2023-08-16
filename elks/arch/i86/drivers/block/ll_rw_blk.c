@@ -268,12 +268,9 @@ void ll_rw_blk(int rw, struct buffer_head *bh)
     dev = NULL;
     if ((major = MAJOR(buffer_dev(bh))) < MAX_BLKDEV)
 	dev = blk_dev + major;
-    if (!dev || !dev->request_fn) {
-	printk("ll_rw_blk: unregistered block-device %s\n", kdevname(buffer_dev(bh)));
-	mark_buffer_clean(bh);
-	mark_buffer_uptodate(bh, 0);
-    } else
-	make_request(major, rw, bh);
+    if (!dev || !dev->request_fn)
+	panic("ll_rw_blk: unknown device %D", buffer_dev(bh));
+    make_request(major, rw, bh);
 }
 
 #ifdef MULTI_BH

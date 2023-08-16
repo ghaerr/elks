@@ -126,7 +126,7 @@ void invalidate_inodes(kdev_t dev)
         prev = inode->i_prev;	/* clear_inode() changes the queues.. */
 	if (inode->i_dev != dev) continue;
 	if (inode->i_count || inode->i_dirt || inode->i_lock)
-	    printk("VFS: inode busy on removed device %s\n", kdevname(dev));
+	    printk("VFS: inode busy on removed device %D\n", dev);
 	else
 	    clear_inode(inode);
     } while ((inode = prev) != NULL);
@@ -220,8 +220,8 @@ void iput(register struct inode *inode)
 	wait_on_inode(inode);
 	if (!inode->i_count) {
 	    printk("VFS: iput: trying to free free inode\n"
-			"VFS: device %s, inode %lu, mode=0%06o\n",
-			kdevname(inode->i_rdev), (unsigned long)inode->i_ino, inode->i_mode);
+			"VFS: device %D, inode %lu, mode=0%06o\n",
+			inode->i_rdev, (unsigned long)inode->i_ino, inode->i_mode);
 	    return;
 	}
 #ifdef NOT_YET

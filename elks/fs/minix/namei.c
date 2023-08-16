@@ -373,7 +373,7 @@ static int empty_dir(register struct inode *inode)
     goto empt_dir;
   bad_dir:
     unmap_brelse(bh);
-    printk("Bad directory on device %s\n", kdevname(inode->i_dev));
+    printk("Bad directory on device %D\n", inode->i_dev);
   empt_dir:
     return 1;
 }
@@ -459,8 +459,8 @@ int minix_unlink(register struct inode *dir, char *name, size_t len)
 	current->euid != inode->i_uid && current->euid != dir->i_uid)
 	goto end_unlink;
     if (!inode->i_nlink) {
-	printk("Deleting nonexistent file (%s:%lu), %u\n",
-	       kdevname(inode->i_dev), inode->i_ino, inode->i_nlink);
+	printk("Deleting nonexistent file dev %D %lu, %u\n",
+	       inode->i_dev, inode->i_ino, inode->i_nlink);
 	inode->i_nlink = 1;
     }
     de->inode = 0;

@@ -145,7 +145,7 @@ static void end_request(int uptodate)
     req = CURRENT;
 
     if (!uptodate) {
-        printk(DEVICE_NAME ": I/O %s error: dev %x, block %lu\n",
+        printk(DEVICE_NAME ": I/O %s error: dev %D, block %lu\n",
             (req->rq_cmd == WRITE)? "write": "read",
             req->rq_dev, req->rq_blocknr);
 
@@ -189,7 +189,7 @@ static void end_request(int uptodate)
     if (req->rq_status != RQ_ACTIVE \
         || (req->rq_cmd != READ && req->rq_cmd != WRITE) \
         || MAJOR(req->rq_dev) != MAJOR_NR) \
-        panic(DEVICE_NAME ": bad request dev %x cmd %d active %d", \
+        panic(DEVICE_NAME ": bad request dev %D cmd %d active %d", \
             req->rq_dev, req->rq_cmd, req->rq_status); \
     if (req->rq_bh && !EBH(req->rq_bh)->b_locked) \
         panic(DEVICE_NAME ": not locked");
