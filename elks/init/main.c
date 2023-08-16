@@ -405,7 +405,7 @@ static int parse_options(void)
 		if (!strncmp(line,"root=",5)) {
 			int dev = parse_dev(line+5);
 #if DEBUG
-			printk("root %s=0x%04x\n", line+5, dev);
+			printk("root %s=%D\n", line+5, dev);
 #endif
 			ROOT_DEV = (kdev_t)dev;
 			boot_rootdev = dev;    /* stop translation in device_setup*/
@@ -424,7 +424,7 @@ static int parse_options(void)
 
 
 #if DEBUG
-			printk("console %s=0x%04x\n", line+8, dev);
+			printk("console %s=%D\n", line+8, dev);
 #endif
 			boot_console = dev;
 			continue;
