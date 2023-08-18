@@ -168,7 +168,7 @@ static void vprintk(const char *fmt, va_list p)
 	    switch (c) {
 	    case 'i':
 	    case 'd':
-		c = 'd'-('X' - 'P');
+		c = 'd';
 		n = 18;
 	    case 'o':
 		n -= 2;

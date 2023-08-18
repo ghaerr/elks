@@ -125,8 +125,7 @@ int minix_lookup(register struct inode *dir, const char *name, size_t len,
 	if (S_ISDIR(dir->i_mode)) {
 	    debug("minix_lookup: Entering minix_find_entry\n");
 	    bh = minix_find_entry(dir, name, len, &de);
-	    debug("minix_lookup: minix_find_entry returned %x %d\n", bh,
-		   bh->b_mapcount);
+	    debug("minix_lookup: minix_find_entry returned %x %d\n", bh, bh->b_mapcount);
 	    if (bh) {
 		*result = iget(dir->i_sb, (ino_t) de->inode);
 		unmap_brelse(bh);
