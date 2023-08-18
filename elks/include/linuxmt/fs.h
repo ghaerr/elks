@@ -177,8 +177,6 @@ typedef struct buffer_head	ext_buffer_head;
 #define BLOCK_READ	0
 #define BLOCK_WRITE	1
 
-#define iget(_a, _b) __iget(_a, _b)
-
 void brelse(struct buffer_head *);
 void bforget(struct buffer_head *);
 void wait_on_buffer (struct buffer_head *);
@@ -206,7 +204,6 @@ struct inode {
     struct inode		*i_next;
     struct inode		*i_prev;
     struct inode		*i_mount;
-    struct wait_queue		i_wait;
     unsigned short		i_count;
     unsigned short		i_flags;
     unsigned char		i_lock;
@@ -411,7 +408,7 @@ extern int sys_close(unsigned int);	/* yes, it's really unsigned */
 
 extern void _close_allfiles(void);
 
-extern struct inode *__iget(struct super_block *,ino_t);
+extern struct inode *iget(struct super_block *,ino_t);
 
 /*@+namechecks@*/
 

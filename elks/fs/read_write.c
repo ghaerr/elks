@@ -63,8 +63,7 @@ int sys_lseek(unsigned int fd, loff_t * p_offset, unsigned int origin)
  *    EFAULT: buf is outside your accessible address space.
  */
 
-int fd_check(unsigned int fd, char *buf, size_t count, int rw,
-	     struct file **file)
+int fd_check(unsigned int fd, char *buf, size_t count, int rw, struct file **file)
 {
     register struct file *tfil;
 

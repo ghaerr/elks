@@ -112,7 +112,7 @@ static struct socket *sock_alloc(void)
 
     *sock = ini_sock;
 
-    sock->wait = &inode->i_wait;
+    sock->wait = (struct wait_queue *)inode; /* sockets wait on same wq as inodes locks */
     sock->inode = inode;	/* "backlink" use pointer arithmetic instead */
 
     return sock;
