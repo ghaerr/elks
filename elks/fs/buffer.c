@@ -77,19 +77,24 @@ static struct wait_queue L1wait;		/* Wait for a free L1 buffer area */
 static int lastL1map;
 #endif
 
-#ifdef CHECK_BLOCKIO
+/* Uncomment next line to enable ^P buffer list */
+/*#define DEBUG_FREE_BUFFERS_COUNT*/
+
+#ifdef DEBUG_FREE_BUFFERS_COUNT
 static int nr_free_bh;
-/* debug free buffer_head count */
+#if 0
+/* this check doesn't really work, 3+ buffers are always inuse in running kernel */
 #define DCR_COUNT(bh) if(!(--bh->b_count))nr_free_bh++
 #define INR_COUNT(bh) if(!(bh->b_count++))nr_free_bh--
 #define CLR_COUNT(bh) if(bh->b_count)nr_free_bh++
 #define SET_COUNT(bh) if(--nr_free_bh < 0) { panic("get_free_buffer: bad free count"); }
-#else
+#endif
+#endif
+
 #define DCR_COUNT(bh) (bh->b_count--)
 #define INR_COUNT(bh) (bh->b_count++)
 #define CLR_COUNT(bh)
 #define SET_COUNT(bh)
-#endif
 
 #define buf_num(bh)	((bh) - buffer_heads)	/* buffer number, for debugging */
 
@@ -140,6 +145,42 @@ static void add_buffers(int nbufs, char *buf, ramdesc_t seg)
     }
 }
 
+#ifdef DEBUG_FREE_BUFFERS_COUNT
+static void list_buffer_status(void)
+{
+    int i = 1;
+    int inuse = 0;
+    int isinuse, j;
+    struct buffer_head *bh = bh_llru;
+    ext_buffer_head *ebh;
+
+    do {
+        ebh = EBH(bh);
+        isinuse = ebh->b_count || ebh->b_dirty || ebh->b_locked || bh->b_mapcount;
+        if (isinuse || bh->b_data) {
+            j = 0;
+            if (bh->b_data) {
+                for (; j<NR_MAPBUFS; j++) {
+                    if (L1map[j] == bh) {
+                        j++;
+                        break;
+                    }
+                }
+            }
+            printk("#%3d: buf %3d dev %D block %5ld %c%c%c mapped L%02d %d count %d\n",
+                i, buf_num(bh), ebh->b_dev, ebh->b_blocknr,
+                ebh->b_locked?  'L': ' ',
+                ebh->b_dirty?   'D': ' ',
+                ebh->b_uptodate?'U': ' ',
+                j, ebh->b_mapcount, ebh->b_count);
+        }
+        i++;
+        if (isinuse) inuse++;
+    } while ((bh = ebh->b_prev_lru) != NULL);
+    printk("Total buffers inuse %d/%d\n", inuse, nr_free_bh);
+}
+#endif
+
 int INITPROC buffer_init(void)
 {
     /* XMS buffers override EXT buffers override internal buffers*/
@@ -166,8 +207,9 @@ int INITPROC buffer_init(void)
     int bufs_to_alloc = NR_MAPBUFS;
 #endif
 
-#ifdef CHECK_BLOCKIO
+#ifdef DEBUG_FREE_BUFFERS_COUNT
     nr_free_bh = bufs_to_alloc;
+    debug_setcallback(list_buffer_status);  /* ^P will generate inode list */
 #endif
 
     buffer_heads = heap_alloc(bufs_to_alloc * sizeof(struct buffer_head),
