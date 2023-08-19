@@ -151,6 +151,7 @@ static void do_ssd_request(void)
         return;
 #else
         ssd_io_complete();                  /* synchronous I/O */
+        return;
 #endif
     }
 }

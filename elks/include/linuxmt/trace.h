@@ -32,6 +32,9 @@
 /* integrity check application SS on interrupts from user mode */
 #define CHECK_SS
 
+/* check buffer and inode free counts, list inodes w/^N and buffers w/^O */
+#define CHECK_FREECNTS
+
 #endif /* CONFIG_TRACE */
 
 

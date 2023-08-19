@@ -3,31 +3,16 @@
 
 /* linuxmt/include/linuxmt/debug.h for ELKS v. >=0.0.47
  * (C) 1997 Chad Page
+ * Al Riddoch <ajr@ecs.soton.ac.uk> 14th Oct. 1997
  * 
  * This file contains the #defines to turn on and off various printk()-related
  * functions...
  */
 
-/* Found that strings were still included if debugging disabled so
- * re-organised so that each has a different macro depending on the number
- * of paramaters such that the parameters are not compiled in.
- *
- * Al Riddoch <ajr@ecs.soton.ac.uk> 14th Oct. 1997
- */
-
-/* This switches which version of the kstack-tracker gets used */
-
-/* Replaced by the 'true' kernel-strace */
-#ifdef DEBUG
-#define pstrace printk
-#else
-#define pstrace(_a)
-#endif
-
 /*
  * Kernel debug options, set =1 to turn on. Works across multiple files.
  */
-#define DEBUG_EVENT	1		/* generate debug events on CTRLP*/
+#define DEBUG_EVENT     1               /* generate debug events on CTRLN-CTRLP*/
 #define DEBUG_STARTDEF	1		/* default startup debug display*/
 #define DEBUG_BIOS	0		/* BIOS driver*/
 #define DEBUG_BLK	0		/* block i/o*/
@@ -45,14 +30,14 @@
 
 #if DEBUG_EVENT
 void dprintk(const char *, ...);        /* printk when debugging on*/
-void debug_event(void);			/* generate debug event*/
-void debug_setcallback(void (*cbfunc)()); /* callback on debug event*/
+void debug_event(int evnum);            /* generate debug event*/
+void debug_setcallback(int evnum, void (*cbfunc)()); /* callback on debug event*/
 #define PRINTK		dprintk
 #else
 #define PRINTK		printk
 #define dprintk(...)
-#define debug_callback(...)
-#define debug_event(...)
+#define debug_event(evnum)
+#define debug_setcallback(evnum,cbfunc)
 #endif
 
 #if DEBUG_BIOS
