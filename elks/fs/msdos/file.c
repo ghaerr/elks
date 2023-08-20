@@ -51,9 +51,7 @@ struct inode_operations msdos_file_inode_operations_no_bmap = {
 	NULL,			/* mknod */
 	NULL,			/* readlink */
 	NULL,			/* follow_link */
-#ifdef USE_GETBLK
 	NULL,			/* getblk */
-#endif
 	msdos_truncate		/* truncate */
 };
 

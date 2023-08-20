@@ -5,56 +5,23 @@
  */
 
 #include <linuxmt/config.h>
-
 #include <linuxmt/errno.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/fcntl.h>
-#include <linuxmt/fs.h>
-#include <linuxmt/mm.h>
-#include <linuxmt/debug.h>
-#include <linuxmt/stat.h>
 
-#include <arch/segment.h>
-#include <arch/system.h>
-
-#ifdef USE_GETBLK
-#if defined(CONFIG_MINIX_FS) || defined(CONFIG_BLK_DEV_CHAR)
-
-#ifdef DEBUG
-static char inode_equal_NULL[] = "inode = NULL\n";
-static char mode_equal_val[] = "mode = %07o\n";
-#endif
-
-size_t block_read(struct inode *inode, register struct file *filp,
-	       char *buf, size_t count)
+size_t block_read(struct inode *inode, struct file *filp, char *buf, size_t count)
 {
+#if defined(CONFIG_MINIX_FS) || defined(CONFIG_BLK_DEV_CHAR)
     loff_t pos;
     size_t chars;
-    int read = 0;
-
-#ifdef DEBUG
-    {
-	register char *s;
-	if (!inode) {
-	    s = inode_equal_NULL;
-	    goto OUTPUT;
-	} else if (!S_ISREG(inode->i_mode)) {
-	    s = mode_equal_val; /* i_mode */
-	OUTPUT:
-	    printk("generic_block_read: ");
-	    printk(s, inode->i_mode);
-	    return -EINVAL;
-	}
-    }
-#endif
+    size_t read = 0;
 
     /* Amount we can do I/O over */
     pos = ((loff_t)inode->i_size) - filp->f_pos;
-    if (pos <= 0) {
-	debug("GENREAD: EOF reached size %ld pos %ld.\n", inode->i_size, filp->f_pos);
-	goto mfread;		/* EOF */
-    }
+    if (pos <= 0)
+	return 0;       /* EOF */
+
     if ((loff_t)count > pos) count = (size_t)pos;
 
     while (count > 0) {
@@ -74,7 +41,6 @@ size_t block_read(struct inode *inode, register struct file *filp,
 	if (chars > count) chars = count;
 	if (bh) {
 	    if (!readbuf(bh)) {
-		debug("GENREAD: readbuf failed\n");
 		if (!read) read = -EIO;
 		break;
 	    }
@@ -88,39 +54,20 @@ size_t block_read(struct inode *inode, register struct file *filp,
 	read += chars;
 	count -= chars;
     }
-
-#ifdef BLOAT_FS
-    filp->f_reada = 1;
-#endif
 #ifdef FIXME
     if (!IS_RDONLY(inode)) inode->i_atime = CURRENT_TIME;
 #endif
-  mfread:
     return read;
+#else
+    return -EINVAL;
+#endif
 }
 
-size_t block_write(struct inode *inode, register struct file *filp,
-		char *buf, size_t count)
+size_t block_write(struct inode *inode, struct file *filp, char *buf, size_t count)
 {
+#if defined(CONFIG_MINIX_FS) || defined(CONFIG_BLK_DEV_CHAR)
     size_t chars, offset;
-    int written = 0;
-
-#ifdef DEBUG
-    {
-	register char *s;
-	if (!inode) {
-	    s = inode_equal_NULL;
-	    goto OUTPUT;
-	}
-	if (!S_ISREG(inode->i_mode)) {
-	    s = mode_equal_val; /* inode->i_mode */
-	OUTPUT:
-	    printk("generic_block_write: ");
-	    printk(s, inode->i_mode);
-	    return -EINVAL;
-	}
-    }
-#endif
+    size_t written = 0;
 
     if (filp->f_flags & O_APPEND) filp->f_pos = (loff_t)inode->i_size;
 
@@ -172,11 +119,16 @@ size_t block_write(struct inode *inode, register struct file *filp,
 	pinode->i_dirt = 1;
     }
     return written;
-}
-#endif
 #else
-#ifdef CONFIG_BLK_DEV_CHAR
+    return -EINVAL;
+#endif
+}
 
+#if UNUSED
+#define BLOCK_READ	0
+#define BLOCK_WRITE	1
+
+/* could be used for raw char devices, instead block_read/block_write is used */
 static int blk_rw(struct inode *inode, register struct file *filp,
 		  char *buf, size_t count, int wr)
 {
@@ -243,17 +195,13 @@ static int blk_rw(struct inode *inode, register struct file *filp,
     return written;
 }
 
-size_t block_read(struct inode *inode, struct file *filp,
-	       char *buf, size_t count)
+size_t blk_read(struct inode *inode, struct file *filp, char *buf, size_t count)
 {
     return blk_rw(inode, filp, buf, count, BLOCK_READ);
 }
 
-size_t block_write(struct inode *inode, struct file *filp,
-		char *buf, size_t count)
+size_t blk_write(struct inode *inode, struct file *filp, char *buf, size_t count)
 {
     return blk_rw(inode, filp, buf, count, BLOCK_WRITE);
 }
-
-#endif
 #endif

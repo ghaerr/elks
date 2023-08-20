@@ -214,9 +214,7 @@ static struct inode_operations romfs_inode_operations = {
 	NULL,             /* mknod */
 	romfs_readlink,   /* readlink */
 	romfs_followlink, /* followlink */
-#ifdef USE_GETBLK
-	NULL,             /* getblk -- not really */
-#endif
+	NULL,             /* getblk */
 	NULL              /* truncate */
 };
 
