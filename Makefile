@@ -14,7 +14,9 @@ all: .config include/autoconf.h
 	$(MAKE) -C bootblocks all
 	$(MAKE) -C elkscmd all
 	$(MAKE) -C image all
+ifneq ($(shell uname), Darwin)
 	$(MAKE) -C elksemu PREFIX='$(TOPDIR)/cross' elksemu
+endif
 
 kclean:
 	$(MAKE) -C elks kclean
@@ -26,7 +28,9 @@ clean:
 	$(MAKE) -C bootblocks clean
 	$(MAKE) -C elkscmd clean
 	$(MAKE) -C image clean
+ifneq ($(shell uname), Darwin)
 	$(MAKE) -C elksemu clean
+endif
 	@echo
 	@if [ ! -f .config ]; then \
 	    echo ' * This system is not configured. You need to run' ;\
