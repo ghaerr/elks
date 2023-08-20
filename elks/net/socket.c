@@ -359,9 +359,7 @@ struct inode_operations sock_inode_operations = {
     NULL,			/* mknod */
     NULL,			/* readlink */
     NULL,			/* follow_link */
-#ifdef USE_GETBLK
     NULL,			/* getblk */
-#endif
     NULL			/* truncate */
 };
 

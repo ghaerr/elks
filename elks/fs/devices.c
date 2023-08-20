@@ -140,9 +140,7 @@ struct inode_operations blkdev_inode_operations = {
     NULL,			/* mknod */
     NULL,			/* readlink */
     NULL,			/* follow_link */
-#ifdef USE_GETBLK
     NULL,			/* getblk */
-#endif
     NULL			/* truncate */
 };
 
@@ -190,8 +188,6 @@ struct inode_operations chrdev_inode_operations = {
     NULL,			/* mknod */
     NULL,			/* readlink */
     NULL,			/* follow_link */
-#ifdef USE_GETBLK
     NULL,			/* getblk */
-#endif
     NULL			/* truncate */
 };

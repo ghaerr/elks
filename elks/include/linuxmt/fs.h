@@ -38,8 +38,6 @@
 
 #endif /* __KERNEL__ */
 
-#define USE_GETBLK
-
 /*
  *  Now the file code is no longer dependent on bitmaps in unsigned
  *  longs, but uses the new fd_set structure..
@@ -318,13 +316,8 @@ struct inode_operations {
     int 			(*mknod) ();
     int 			(*readlink) (struct inode * i, char * buf, size_t len);
     int 			(*follow_link) ();
-#ifdef USE_GETBLK
     struct buffer_head *	(*getblk) (struct inode *, block_t, int);
-#endif
     void			(*truncate) ();
-#ifdef BLOAT_FS
-    int 			(*permission) ();
-#endif
 };
 
 struct super_operations {

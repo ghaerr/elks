@@ -53,9 +53,7 @@ struct inode_operations minix_dir_inode_operations = {
     minix_mknod,		/* mknod */
     NULL,			/* readlink */
     NULL,			/* follow_link */
-#ifdef USE_GETBLK
     NULL,			/* getblk */
-#endif
     minix_truncate		/* truncate */
 };
 
