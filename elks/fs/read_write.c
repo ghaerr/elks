@@ -86,8 +86,7 @@ int sys_read(unsigned int fd, char *buf, size_t count)
     struct file *file;
     int retval;
 
-    if (((retval = fd_check(fd, buf, count, FMODE_READ, &file)) == 0)
-	&& count) {
+    if (((retval = fd_check(fd, buf, count, FMODE_READ, &file)) == 0) && count) {
 	retval = -EINVAL;
 	fop = file->f_op;
 	if (fop->read) {
@@ -105,8 +104,7 @@ int sys_write(unsigned int fd, char *buf, size_t count)
     register struct inode *inode;
     int written;
 
-    if (((written = fd_check(fd, buf, count, FMODE_WRITE, &file)) == 0)
-	&& (count != 0)) {
+    if (((written = fd_check(fd, buf, count, FMODE_WRITE, &file)) == 0) && count) {
 	written = -EINVAL;
 	fop = file->f_op;
 	if (fop->write) {

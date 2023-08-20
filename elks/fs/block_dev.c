@@ -12,6 +12,7 @@
 
 size_t block_read(struct inode *inode, struct file *filp, char *buf, size_t count)
 {
+#if defined(CONFIG_MINIX_FS) || defined(CONFIG_BLK_DEV_CHAR)
     loff_t pos;
     size_t chars;
     size_t read = 0;
@@ -53,18 +54,18 @@ size_t block_read(struct inode *inode, struct file *filp, char *buf, size_t coun
 	read += chars;
 	count -= chars;
     }
-
-#ifdef BLOAT_FS
-    filp->f_reada = 1;
-#endif
 #ifdef FIXME
     if (!IS_RDONLY(inode)) inode->i_atime = CURRENT_TIME;
 #endif
     return read;
+#else
+    return -EINVAL;
+#endif
 }
 
 size_t block_write(struct inode *inode, struct file *filp, char *buf, size_t count)
 {
+#if defined(CONFIG_MINIX_FS) || defined(CONFIG_BLK_DEV_CHAR)
     size_t chars, offset;
     size_t written = 0;
 
@@ -118,6 +119,9 @@ size_t block_write(struct inode *inode, struct file *filp, char *buf, size_t cou
 	pinode->i_dirt = 1;
     }
     return written;
+#else
+    return -EINVAL;
+#endif
 }
 
 #if UNUSED
