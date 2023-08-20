@@ -275,19 +275,22 @@ void panic(const char *error, ...)
 
 int dprintk_on = DEBUG_STARTDEF;	/* toggled by debug events*/
 #if DEBUG_EVENT
-static void (*dprintk_cb)();		/* debug event callback function*/
+static void (*debug_cbfuncs[3])();  /* debug event callback function*/
 
-void debug_setcallback(void (*cbfunc)())
+void debug_setcallback(int evnum, void (*cbfunc)())
 {
-    dprintk_cb = cbfunc;
+    if ((unsigned)evnum < 3)
+        debug_cbfuncs[evnum] = cbfunc;
 }
 
-void debug_event(void)
+void debug_event(int evnum)
 {
-    dprintk_on = !dprintk_on;
-    if (dprintk_cb)
-	dprintk_cb();
-    kill_all(SIGURG);
+    if (evnum == 2) {           /* CTRLP toggles dprintk*/
+        dprintk_on = !dprintk_on;
+        kill_all(SIGURG);
+    }
+    if (debug_cbfuncs[evnum])
+	debug_cbfuncs[evnum]();
 }
 
 void dprintk(const char *fmt, ...)

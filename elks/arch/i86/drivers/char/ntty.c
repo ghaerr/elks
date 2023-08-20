@@ -72,8 +72,8 @@ int tty_intcheck(register struct tty *ttyp, unsigned char key)
 	if (key == ttyp->termios.c_cc[VSUSP])
 	    sig = SIGTSTP;
 #if DEBUG_EVENT
-	if (key == ('P' & 0x1f)) {	/* ctrl-P*/
-	    debug_event();
+	if (key >= ('N' & 0x1f) && key <= ('P' & 0x1f)) {       /* CTRLN-CTRLP */
+	    debug_event((key - 'N') & 0x1f);
 	    return 1;
 	}
 #endif

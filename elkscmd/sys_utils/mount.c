@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <sys/mount.h>
 #include <linuxmt/fs.h>
+#include <linuxmt/limits.h>
 
 #define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
 

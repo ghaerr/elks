@@ -77,24 +77,18 @@ static struct wait_queue L1wait;		/* Wait for a free L1 buffer area */
 static int lastL1map;
 #endif
 
-/* Uncomment next line to enable ^P buffer list */
-/*#define DEBUG_FREE_BUFFERS_COUNT*/
-
-#ifdef DEBUG_FREE_BUFFERS_COUNT
+#ifdef CHECK_FREECNTS
 static int nr_free_bh;
-#if 0
-/* this check doesn't really work, 3+ buffers are always inuse in running kernel */
 #define DCR_COUNT(bh) if(!(--bh->b_count))nr_free_bh++
 #define INR_COUNT(bh) if(!(bh->b_count++))nr_free_bh--
 #define CLR_COUNT(bh) if(bh->b_count)nr_free_bh++
 #define SET_COUNT(bh) if(--nr_free_bh < 0) { panic("get_free_buffer: bad free count"); }
-#endif
-#endif
-
+#else
 #define DCR_COUNT(bh) (bh->b_count--)
 #define INR_COUNT(bh) (bh->b_count++)
 #define CLR_COUNT(bh)
 #define SET_COUNT(bh)
+#endif
 
 #define buf_num(bh)	((bh) - buffer_heads)	/* buffer number, for debugging */
 
@@ -145,7 +139,7 @@ static void add_buffers(int nbufs, char *buf, ramdesc_t seg)
     }
 }
 
-#ifdef DEBUG_FREE_BUFFERS_COUNT
+#if defined(CHECK_FREECNTS) && DEBUG_EVENT
 static void list_buffer_status(void)
 {
     int i = 1;
@@ -207,9 +201,9 @@ int INITPROC buffer_init(void)
     int bufs_to_alloc = NR_MAPBUFS;
 #endif
 
-#ifdef DEBUG_FREE_BUFFERS_COUNT
+#ifdef CHECK_FREECNTS
     nr_free_bh = bufs_to_alloc;
-    debug_setcallback(list_buffer_status);  /* ^P will generate inode list */
+    debug_setcallback(1, list_buffer_status);   /* ^O will generate buffer list */
 #endif
 
     buffer_heads = heap_alloc(bufs_to_alloc * sizeof(struct buffer_head),
@@ -260,7 +254,7 @@ void wait_on_buffer(struct buffer_head *bh)
 {
     ext_buffer_head *ebh = EBH(bh);
 #ifdef CONFIG_ASYNCIO
-    INR_COUNT(ebh);
+    ebh->b_count++;
     wait_set((struct wait_queue *)bh);       /* use bh as wait address */
     for (;;) {
         current->state = TASK_UNINTERRUPTIBLE;
@@ -270,7 +264,7 @@ void wait_on_buffer(struct buffer_head *bh)
     }
     wait_clear((struct wait_queue *)bh);
     current->state = TASK_RUNNING;
-    DCR_COUNT(ebh);
+    ebh->b_count--;
 #endif
 #ifdef CHECK_BLOCKIO
     if (ebh->b_locked) panic("wait_on_buffer");
@@ -344,9 +338,9 @@ static void sync_buffers(kdev_t dev, int wait)
 	 */
         debug_blk("sync: dev %x write buf %d block %ld count %d\n",
             ebh->b_dev, buf_num(bh), ebh->b_blocknr, ebh->b_count);
-	INR_COUNT(ebh);
+	ebh->b_count++;
 	ll_rw_blk(WRITE, bh);
-	DCR_COUNT(ebh);
+	ebh->b_count--;
         count++;
     } while ((bh = ebh->b_prev_lru) != NULL);
     debug_blk("SYNC_BUFFERS END %d wrote %d\n", wait, count);

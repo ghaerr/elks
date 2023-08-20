@@ -11,7 +11,6 @@
 
 #define MINIX_ROOT_INO 1
 
-/* Not the same as the bogus LINK_MAX in <linux/limits.h>. Oh well. */
 #define MINIX_LINK_MAX	250
 
 /* MINIX V1 buffers for inode and zone bitmaps*/
