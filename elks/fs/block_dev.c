@@ -5,18 +5,10 @@
  */
 
 #include <linuxmt/config.h>
-
 #include <linuxmt/errno.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/fcntl.h>
-#include <linuxmt/fs.h>
-#include <linuxmt/mm.h>
-#include <linuxmt/debug.h>
-#include <linuxmt/stat.h>
-
-#include <arch/segment.h>
-#include <arch/system.h>
 
 size_t block_read(struct inode *inode, struct file *filp, char *buf, size_t count)
 {
@@ -26,10 +18,9 @@ size_t block_read(struct inode *inode, struct file *filp, char *buf, size_t coun
 
     /* Amount we can do I/O over */
     pos = ((loff_t)inode->i_size) - filp->f_pos;
-    if (pos <= 0) {
-	debug("block_read: EOF reached size %ld pos %ld.\n", inode->i_size, filp->f_pos);
+    if (pos <= 0)
 	return 0;       /* EOF */
-    }
+
     if ((loff_t)count > pos) count = (size_t)pos;
 
     while (count > 0) {
