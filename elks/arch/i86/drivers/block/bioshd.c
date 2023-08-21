@@ -835,7 +835,7 @@ int INITPROC bioshd_init(void)
 	}
 	bioshd_initialized = 1;
     } else {
-	printk("bioshd: unable to register %d\n", MAJOR_NR);
+	printk("bioshd: init error\n");
     }
     return count;
 }
@@ -848,7 +848,7 @@ static int bioshd_ioctl(struct inode *inode,
     int dev, err;
 
     /* get sector size called with NULL inode and arg = superblock s_dev */
-    if (cmd == HDIO_GET_SECTOR_SIZE)
+    if (cmd == IOCTL_BLK_GET_SECTOR_SIZE)
 	return drive_info[DEVICE_NR(arg)].sector_size;
 
     if (!inode || !inode->i_rdev)
@@ -1062,9 +1062,9 @@ static void do_bioshd_request(void)
 	    continue;
 	}
 
-	/* all ELKS requests are 1K blocks*/
-	count = BLOCK_SIZE / drivep->sector_size;
-	start = req->rq_blocknr * count;
+	/* get request start sector and sector count */
+	count = req->rq_nr_sectors;
+	start = req->rq_sector;
 
 	if (hd[minor].start_sect == -1U || start >= hd[minor].nr_sects) {
 	    printk("bioshd: bad partition start=%ld sect=%ld nr_sects=%ld.\n",

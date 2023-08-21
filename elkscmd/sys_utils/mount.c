@@ -34,7 +34,8 @@ static struct dev_name_struct {
         { "fd0",     0x0380 },
         { "fd1",     0x03a0 },
         { "ssd",     0x0200 },
-        { "rd",      0x0100 },
+        { "rd0",     0x0100 },
+        { "rd1",     0x0101 },
         { NULL,           0 }
 };
 
