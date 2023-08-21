@@ -6,9 +6,8 @@
 
 #ifdef __KERNEL__
 
-#define MAJOR(dev)	((unsigned short int) ((dev) >> MINORBITS))
-#define MINOR(dev)	((unsigned short int) ((dev) & MINORMASK))
-#define HASHDEV(dev)	(dev)
+#define MAJOR(dev)	((unsigned short) ((dev) >> MINORBITS))
+#define MINOR(dev)	((unsigned short) ((dev) & MINORMASK))
 #define MKDEV(ma,mi)	((kdev_t) (((ma) << MINORBITS) | (mi)))
 #define NODEV		MKDEV(0,0)
 

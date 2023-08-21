@@ -16,9 +16,6 @@
 #include <linuxmt/errno.h>
 
 struct device_struct {
-#ifdef CONFIG_DEV_NAMES
-    char *ds_name;
-#endif
     struct file_operations *ds_fops;
 };
 
@@ -40,11 +37,6 @@ int register_chrdev(unsigned int major, const char *name, struct file_operations
     if (major >= MAX_CHRDEV) return -EINVAL;
     if (dev->ds_fops && (dev->ds_fops != fops)) return -EBUSY;
     dev->ds_fops = fops;
-
-#ifdef CONFIG_DEV_NAMES
-    dev->ds_name = name;
-#endif
-
     return 0;
 }
 
@@ -55,16 +47,10 @@ int register_blkdev(unsigned int major, const char *name, struct file_operations
     if (major >= MAX_BLKDEV) return -EINVAL;
     if (dev->ds_fops && dev->ds_fops != fops) return -EBUSY;
     dev->ds_fops = fops;
-
-#ifdef CONFIG_DEV_NAMES
-    dev->ds_name = name;
-#endif
-
     return 0;
 }
 
 #ifdef BLOAT_FS
-
 /*
  * This routine checks whether a removable media has been changed,
  * and invalidates all buffer-cache-entries in that case. This
@@ -94,7 +80,6 @@ int check_disk_change(kdev_t dev)
 	fops->revalidate(dev);
     return 1;
 }
-
 #endif
 
 /*

@@ -252,8 +252,8 @@ int INITPROC buffer_init(void)
 
 void wait_on_buffer(struct buffer_head *bh)
 {
-    ext_buffer_head *ebh = EBH(bh);
 #ifdef CONFIG_ASYNCIO
+    ext_buffer_head *ebh = EBH(bh);
     ebh->b_count++;
     wait_set((struct wait_queue *)bh);       /* use bh as wait address */
     for (;;) {
@@ -267,7 +267,7 @@ void wait_on_buffer(struct buffer_head *bh)
     ebh->b_count--;
 #endif
 #ifdef CHECK_BLOCKIO
-    if (ebh->b_locked) panic("wait_on_buffer");
+    if (EBH(bh)->b_locked) panic("wait_on_buffer");
 #endif
 }
 

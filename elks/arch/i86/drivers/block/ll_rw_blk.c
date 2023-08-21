@@ -9,15 +9,16 @@
  * This handles all read/write requests to block devices
  */
 
+#include <linuxmt/config.h>
 #include <linuxmt/types.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/string.h>
-#include <linuxmt/config.h>
 #include <linuxmt/init.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/ioctl.h>
 #include <linuxmt/debug.h>
 
 #include <arch/system.h>
@@ -59,21 +60,20 @@ struct blk_dev_struct blk_dev[MAX_BLKDEV];	/* initialized by blk_dev_init() */
 int *blk_size[MAX_BLKDEV] = { NULL, NULL, };
 #endif
 
-/*
- * hardsect_size contains the size of the hardware sector of a device.
- *
- * hardsect_size[MAJOR][MINOR]
- *
- * if (!hardsect_size[MAJOR])
- *		then 512 bytes is assumed.
- * else
- *		sector_size is hardsect_size[MAJOR][MINOR]
- *
- * This is currently set by some scsi device and read by the msdos fs driver
- * This might be a some uses later.
- */
+/* return hardware sector size for passed device */
+int get_sector_size(kdev_t dev)
+{
+    struct file_operations *fops;
+    int size;
 
-/* int * hardsect_size[MAX_BLKDEV] = { NULL, NULL, }; */
+    /* get disk sector size using block device ioctl */
+    fops = get_blkfops(MAJOR(dev));
+    if (!fops || !fops->ioctl ||
+        (size = fops->ioctl(NULL, NULL, IOCTL_BLK_GET_SECTOR_SIZE, dev)) <= 0)
+            size = 512;
+    printk("Sector size %d!!\n", size);
+    return size;
+}
 
 /*
  * look for a free request in the first N entries.

@@ -848,7 +848,7 @@ static int bioshd_ioctl(struct inode *inode,
     int dev, err;
 
     /* get sector size called with NULL inode and arg = superblock s_dev */
-    if (cmd == HDIO_GET_SECTOR_SIZE)
+    if (cmd == IOCTL_BLK_GET_SECTOR_SIZE)
 	return drive_info[DEVICE_NR(arg)].sector_size;
 
     if (!inode || !inode->i_rdev)

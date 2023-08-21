@@ -245,7 +245,7 @@ void iput(register struct inode *inode)
 
 static void set_ops(register struct inode *inode)
 {
-    static unsigned char tabc[] = {     //FIXME change when major nums change
+    static unsigned char tabc[] = {
 	0, 1, 2, 0, 0, 0, 3, 0,
 	0, 0, 0, 0, 4, 0, 0, 0,
     };

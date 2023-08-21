@@ -448,9 +448,7 @@ extern int open_namei(const char *,int,int,struct inode **,struct inode *);
 extern int do_mknod(char *,int,int,dev_t);
 extern void iput(struct inode *);
 
-/*extern struct inode *get_empty_inode(void); */
 extern struct inode *new_inode(struct inode *dir, __u16 mode);
-extern void insert_inode_hash(struct inode *);
 extern void clear_inode(struct inode *);
 extern int open_filp(unsigned short, struct inode *, struct file **);
 extern void close_filp(struct inode *, struct file *);
@@ -461,17 +459,12 @@ extern struct buffer_head *getblk32(kdev_t,block32_t);
 extern struct buffer_head *readbuf(struct buffer_head *);
 
 extern void ll_rw_blk(int,struct buffer_head *);
-extern void ll_rw_page(void);
-
-extern void print_bufmap_status(void);
+extern int get_sector_size(kdev_t dev);
 
 extern void put_super(kdev_t);
 extern kdev_t ROOT_DEV;
 
-extern void show_buffers(void);
 extern void mount_root(void);
-
-extern int char_read(struct inode *,struct file *,char *,int);
 
 extern int fd_check(unsigned int,char *,size_t,int,struct file **);
 
