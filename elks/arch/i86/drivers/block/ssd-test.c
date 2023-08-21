@@ -74,20 +74,22 @@ int ssddev_ioctl(struct inode *inode, struct file *file,
     return -EINVAL;
 }
 
-/* write one 1K block (two sectors) to SSD */
-int ssddev_write_blk(sector_t start, char *buf, ramdesc_t seg)
+/* write one sector to SSD */
+int ssddev_write(sector_t start, char *buf, ramdesc_t seg)
 {
     unsigned long offset = start << 9;
 
-    xms_fmemcpyw(0, ssd_seg->base + (unsigned int)(offset >> 4), buf, seg, 1024/2);
-    return 2;	/* # sectors written */
+    xms_fmemcpyw(0, ssd_seg->base + (unsigned int)(offset >> 4), buf, seg,
+        SD_FIXED_SECTOR_SIZE/2);
+    return 1;	/* # sectors written */
 }
 
-/* read one 1K block (two sectors) from SSD */
-int ssddev_read_blk(sector_t start, char *buf, ramdesc_t seg)
+/* read one sector from SSD */
+int ssddev_read(sector_t start, char *buf, ramdesc_t seg)
 {
     unsigned long offset = start << 9;
 
-    xms_fmemcpyw(buf, seg, 0, ssd_seg->base + (unsigned int)(offset >> 4), 1024/2);
-    return 2;	/* # sectors read */
+    xms_fmemcpyw(buf, seg, 0, ssd_seg->base + (unsigned int)(offset >> 4),
+        SD_FIXED_SECTOR_SIZE/2);
+    return 1;	/* # sectors read */
 }

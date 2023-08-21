@@ -590,51 +590,31 @@ int ssddev_ioctl(struct inode *inode, struct file *file,
 }
 
 /**
- * SSD API: Writes one 1K block (two sectors) to the SD card.
+ * SSD API: Writes one sector to the SD card.
  * 
- * returns: 0 on error, 1 if just one sector was written, 2 on success.
+ * returns: # sectors written.
  */
-int ssddev_write_blk(sector_t start, char *buf, ramdesc_t seg)
+int ssddev_write(sector_t start, char *buf, ramdesc_t seg)
 {
     int ret;
 
     ret = sd_write(buf, seg, start);
-    if (ret != 0) {
-        /* no sectors were written */
+    if (ret != 0)       /* error, no sectors were written */
         return 0;
-    }
-
-    ret = sd_write(buf + SD_FIXED_SECTOR_SIZE, seg, start + 1);
-    if (ret != 0) {
-        /* just one sector was written */
-        return 1;
-    }
-
-    /* both sectors were written */
-    return 2;
+    return 1;
 }
 
 /**
- * SSD API: Reads one 1K block (two sectors) to the SD card.
+ * SSD API: Reads one sector from the SD card.
  * 
- * returns: 0 on error, 1 if just one sector was read, 2 on success.
+ * returns: # sectors read.
  */
-int ssddev_read_blk(sector_t start, char *buf, ramdesc_t seg)
+int ssddev_read(sector_t start, char *buf, ramdesc_t seg)
 {
     int ret;
 
     ret = sd_read(buf, seg, start);
-    if (ret != 0) {
-        /* no sectors were read */
+    if (ret != 0)       /* error, no sectors were read */
         return 0;
-    }
-
-    ret = sd_read(buf + SD_FIXED_SECTOR_SIZE, seg, start + 1);
-    if (ret != 0) {
-        /* just one sector was read */
-        return 1;
-    }
-
-    /* both sectors were read */
-    return 2;
+    return 1;
 }

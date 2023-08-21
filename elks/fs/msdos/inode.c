@@ -121,7 +121,7 @@ static struct super_block *msdos_read_super(struct super_block *s, char *data,
 	}
 
 #ifdef CONFIG_VAR_SECTOR_SIZE
-sb->sector_size = get_sector_size(s->s_dev);
+        sb->sector_size = get_sector_size(s->s_dev);
 	switch (sb->sector_size) {
 	case 512:
 		sb->sector_bits = 9;	/* log2(sector_size) */

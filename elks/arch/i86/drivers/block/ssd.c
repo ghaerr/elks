@@ -79,6 +79,7 @@ void ssd_io_complete(void)
 
     for (;;) {
         char *buf;
+        int count;
         ramdesc_t seg;
         sector_t start;
 
@@ -104,26 +105,27 @@ void ssd_io_complete(void)
         seg = req->rq_seg;
         start = req->rq_sector;
 
-        // FIXME driver can't handle count != 2 sectors
         // FIXME move max sector check to to ll_rw_blk level
-        if (start >= (NUM_SECTS-1) || req->rq_nr_sectors != 2) {
+        if (start >= (NUM_SECTS-1)) {
             printk("SSD: bad request sector %lu count %d cmd %d\n", start,
                 req->rq_nr_sectors, req->rq_cmd);
             end_request(0);
             continue;
         }
-        if (req->rq_cmd == WRITE) {
-            debug_blk("SSD: writing sector %lu\n", start);
-            ret = ssddev_write_blk(start, buf, seg);
-        } else {
-            debug_blk("SSD: reading sector %lu\n", start);
-            ret = ssddev_read_blk(start, buf, seg);
+        for (count = 0; count < req->rq_nr_sectors; count++) {
+            if (req->rq_cmd == WRITE) {
+                debug_blk("SSD: writing sector %lu\n", start);
+                ret = ssddev_write(start, buf, seg);
+            } else {
+                debug_blk("SSD: reading sector %lu\n", start);
+                ret = ssddev_read(start, buf, seg);
+            }
+            if (ret != 1)           /* I/O error */
+                break;
+            start++;
+            buf += SD_FIXED_SECTOR_SIZE;
         }
-        if (ret != req->rq_nr_sectors) {
-            end_request(0);         /* I/O error */
-            continue;
-        }
-        end_request(1);             /* success */
+        end_request(count == req->rq_nr_sectors);
 #ifdef CONFIG_ASYNCIO
         if (CURRENT) {              /* schedule next completion callback */
             ssd_timeout = jiffies + IODELAY;
