@@ -9,15 +9,15 @@
 #include <linuxmt/trace.h>
 
 struct request {
-    kdev_t rq_dev;
+    kdev_t rq_dev;              /* block device */
     unsigned char rq_cmd;       /* READ or WRITE */
     unsigned char rq_status;    /* RQ_INACTIVE or RQ_ACTIVE */
-    sector_t rq_sector;         /* start sector # */
+    sector_t rq_sector;         /* start device logical sector # */
     unsigned int rq_nr_sectors; /* multi-sector I/O # sectors */
-    char *rq_buffer;
-    ramdesc_t rq_seg;           /* L2 main/xms buffer segment */
-    struct buffer_head *rq_bh;
-    struct request *rq_next;
+    char *rq_buffer;            /* I/O buffer address */
+    ramdesc_t rq_seg;           /* L1 or L2 ext/xms buffer segment */
+    struct buffer_head *rq_bh;  /* system buffer head for notifications and locking */
+    struct request *rq_next;    /* next request, used when async I/O */
 };
 
 #define RQ_INACTIVE	0

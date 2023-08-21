@@ -209,7 +209,8 @@ static void do_rd_request(void)
     rd_sector_t offset;		/* sector offset in memory segment*/
     int index;
     int target;
-    byte_t *buff;
+    int count;
+    byte_t *buf;
 
     while (1) {
 	struct request *req = CURRENT;
@@ -223,7 +224,7 @@ static void do_rd_request(void)
 	}
 
 	start = (rd_sector_t) req->rq_sector;
-	buff = (byte_t *) req->rq_buffer;
+	buf = (byte_t *) req->rq_buffer;
 	target = DEVICE_NR(req->rq_dev);
 	debug("RD: %s dev %d sector %d, ", req->rq_cmd == READ? "read": "write",
 		target, start);
@@ -234,24 +235,28 @@ static void do_rd_request(void)
 	    continue;
 	}
 
-	/* find appropriate memory segment and sector offset*/
-	offset = start;
-	index = drive_info[target].start;
-	debug("index %d, ", index);
-	while (offset > rd_segment[index].sectors) {
-	    offset -= rd_segment[index].sectors;
-	    index = rd_segment[index].next;
-	}
-	debug("entry %d, seg %x, offset %d\n", index, rd_segment[index].seg, offset);
+        for (count = 0; count < req->rq_nr_sectors; count++) {
+            /* find appropriate memory segment and sector offset*/
+            offset = start;
+            index = drive_info[target].start;
+            debug("index %d, ", index);
+            while (offset > rd_segment[index].sectors) {
+                offset -= rd_segment[index].sectors;
+                index = rd_segment[index].next;
+            }
+            debug("entry %d, seg %x, offset %d\n", index, rd_segment[index].seg, offset);
 
-	if (req->rq_cmd == WRITE) {
-	    xms_fmemcpyw((char *) (offset * RD_SECTOR_SIZE), rd_segment[index].seg,
-		buff, req->rq_seg, RD_SECTOR_SIZE * (req->rq_nr_sectors / 2));
-	} else {
-	    xms_fmemcpyw(buff, req->rq_seg, (byte_t *) (offset * RD_SECTOR_SIZE),
-                rd_segment[index].seg, RD_SECTOR_SIZE * (req->rq_nr_sectors / 2));
-	}
-	end_request(1);
+            if (req->rq_cmd == WRITE) {
+                xms_fmemcpyw((char *) (offset * RD_SECTOR_SIZE), rd_segment[index].seg,
+                    buf, req->rq_seg, RD_SECTOR_SIZE/2);
+            } else {
+                xms_fmemcpyw(buf, req->rq_seg, (byte_t *) (offset * RD_SECTOR_SIZE),
+                    rd_segment[index].seg, RD_SECTOR_SIZE/2);
+            }
+            start++;
+            buf += RD_SECTOR_SIZE;;
+        }
+        end_request(1);
     }
 }
 

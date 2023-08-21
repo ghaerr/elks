@@ -80,7 +80,6 @@ void ssd_io_complete(void)
     for (;;) {
         char *buf;
         int count;
-        ramdesc_t seg;
         sector_t start;
 
         req = CURRENT;
@@ -102,7 +101,6 @@ void ssd_io_complete(void)
 #endif
 
         buf = req->rq_buffer;
-        seg = req->rq_seg;
         start = req->rq_sector;
 
         // FIXME move max sector check to to ll_rw_blk level
@@ -115,10 +113,10 @@ void ssd_io_complete(void)
         for (count = 0; count < req->rq_nr_sectors; count++) {
             if (req->rq_cmd == WRITE) {
                 debug_blk("SSD: writing sector %lu\n", start);
-                ret = ssddev_write(start, buf, seg);
+                ret = ssddev_write(start, buf, req->rq_seg);
             } else {
                 debug_blk("SSD: reading sector %lu\n", start);
-                ret = ssddev_read(start, buf, seg);
+                ret = ssddev_read(start, buf, req->rq_seg);
             }
             if (ret != 1)           /* I/O error */
                 break;
