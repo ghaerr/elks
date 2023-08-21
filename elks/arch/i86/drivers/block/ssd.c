@@ -44,7 +44,7 @@ void ssd_init(void)
     }
     if (NUM_SECTS)
         printk("ssd: %ldK disk\n", NUM_SECTS/2UL);
-    else printk("ssd: initialization error\n");
+    else printk("ssd: init error\n");
 }
 
 static int ssd_open(struct inode *inode, struct file *filp)
@@ -93,7 +93,6 @@ void ssd_io_complete(void)
            panic("SSD: ADDR CHANGED req seg:buf %04x:%04x bh seg:buf %04x:%04x\n",
                 req->rq_seg, req->rq_buffer, buffer_seg(bh), buffer_data(bh));
         }
-        // FIXME driver can't handle count != 2 sectors nor non-buffer head I/O
         if (req->rq_sector != buffer_blocknr(bh) * (BLOCK_SIZE / SD_FIXED_SECTOR_SIZE)) {
             panic("SSD: SECTOR/BLOCKNR CHANGED req %ld bh %ld\n",
                 req->rq_sector, buffer_blocknr(bh));

@@ -835,7 +835,7 @@ int INITPROC bioshd_init(void)
 	}
 	bioshd_initialized = 1;
     } else {
-	printk("bioshd: unable to register %d\n", MAJOR_NR);
+	printk("bioshd: init error\n");
     }
     return count;
 }

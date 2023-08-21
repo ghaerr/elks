@@ -301,5 +301,5 @@ void rd_init(void)
 #endif
 #endif /* CONFIG_RAMDISK_SEGMENT*/
     } else
-	printk("rd: unable to register %d\n", MAJOR_NR);
+	printk("rd: init error\n");
 }
