@@ -161,8 +161,8 @@ static void list_buffer_status(void)
                     }
                 }
             }
-            printk("#%3d: buf %3d dev %D block %5ld %c%c%c mapped L%02d %d count %d\n",
-                i, buf_num(bh), ebh->b_dev, ebh->b_blocknr,
+            printk("#%3d: buf %3d blk/dev %5ld/%p %c%c%c mapped L%02d %d count %d\n",
+                i, buf_num(bh), ebh->b_blocknr, ebh->b_dev,
                 ebh->b_locked?  'L': ' ',
                 ebh->b_dirty?   'D': ' ',
                 ebh->b_uptodate?'U': ' ',
