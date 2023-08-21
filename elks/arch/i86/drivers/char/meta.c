@@ -90,7 +90,7 @@ static void do_meta_request(void)
 	    return;
 	udr = new_request();
 	udr->udr_type = UDR_BLK + req->rq_cmd;
-	udr->udr_ptr = req->rq_blocknr;
+	udr->udr_ptr = req->rq_sector;
 	udr->udr_minor = MINOR(req->rq_dev);
 	post_request(driver, udr);
 

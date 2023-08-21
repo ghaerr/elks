@@ -10,17 +10,14 @@
 
 struct request {
     kdev_t rq_dev;
-    unsigned char rq_cmd;	/* READ or WRITE */
+    unsigned char rq_cmd;       /* READ or WRITE */
     unsigned char rq_status;    /* RQ_INACTIVE or RQ_ACTIVE */
-    block32_t rq_blocknr;
+    sector_t rq_sector;         /* start sector # */
+    unsigned int rq_nr_sectors; /* multi-sector I/O # sectors */
     char *rq_buffer;
-    ramdesc_t rq_seg;		/* L2 main/xms buffer segment */
+    ramdesc_t rq_seg;           /* L2 main/xms buffer segment */
     struct buffer_head *rq_bh;
     struct request *rq_next;
-#ifdef BLOAT_FS
-    unsigned int rq_nr_sectors;
-    unsigned int rq_current_nr_sectors;
-#endif
 };
 
 #define RQ_INACTIVE	0
@@ -35,7 +32,7 @@ struct request {
 
 #define IN_ORDER(s1,s2) \
 ((s1)->rq_dev < (s2)->rq_dev || (((s1)->rq_dev == (s2)->rq_dev && \
-(s1)->rq_blocknr < (s2)->rq_blocknr)))
+(s1)->rq_sector < (s2)->rq_sector)))
 
 struct blk_dev_struct {
     void (*request_fn) ();
@@ -145,34 +142,20 @@ static void end_request(int uptodate)
     req = CURRENT;
 
     if (!uptodate) {
-        printk(DEVICE_NAME ": I/O %s error: dev %D, block %lu\n",
+        printk(DEVICE_NAME ": I/O %s error dev %D sector %lu\n",
             (req->rq_cmd == WRITE)? "write": "read",
-            req->rq_dev, req->rq_blocknr);
+            req->rq_dev, req->rq_sector);
+    }
 
 #ifdef MULTI_BH
-#ifdef BLOAT_FS
-	req->rq_nr_sectors--;
-	req->rq_nr_sectors &= ~2;	/* 1K block size, 512 byte sector*/
+    int count = BLOCK_SIZE / get_sector_size(req->rq_dev);
+    req->rq_nr_sectors -= count;
+    req->rq_sector += count;
 #endif
-	req->rq_blocknr++;
-#endif
-    }
 
     bh = req->rq_bh;
     mark_buffer_uptodate(bh, uptodate);
     unlock_buffer(bh);
-
-#ifdef BLOAT_FS
-    if (bh != NULL) {
-	req->rq_current_nr_sectors = bh->b_size >> 9;
-	if (req->rq_nr_sectors < req->rq_current_nr_sectors) {
-	    req->rq_nr_sectors = req->rq_current_nr_sectors;
-	    printk("end_request: buffer-list destroyed\n");
-	}
-	req->rq_buffer = bh->b_data;
-	return;
-    }
-#endif
 
     DEVICE_OFF(req->dev);
     CURRENT = req->rq_next;

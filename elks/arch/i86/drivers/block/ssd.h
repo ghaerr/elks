@@ -1,6 +1,7 @@
 #ifndef _SSD_H
 #define _SSD_H
 
+/* if sector size not 512, must implement IOCTL_BLK_GET_SECTOR_SIZE */
 #define SD_FIXED_SECTOR_SIZE 512
 
 sector_t ssddev_init(void);

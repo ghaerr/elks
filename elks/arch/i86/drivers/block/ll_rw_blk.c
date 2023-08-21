@@ -71,7 +71,6 @@ int get_sector_size(kdev_t dev)
     if (!fops || !fops->ioctl ||
         (size = fops->ioctl(NULL, NULL, IOCTL_BLK_GET_SECTOR_SIZE, dev)) <= 0)
             size = 512;
-    printk("Sector size %d!!\n", size);
     return size;
 }
 
@@ -245,7 +244,8 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
 
     /* fill up the request-info, and add it to the queue */
     req->rq_cmd = rw;
-    req->rq_blocknr = buffer_blocknr(bh);
+    req->rq_nr_sectors = BLOCK_SIZE / get_sector_size(req->rq_dev);
+    req->rq_sector = buffer_blocknr(bh) * req->rq_nr_sectors;
     req->rq_seg = buffer_seg(bh);
     req->rq_buffer = buffer_data(bh);
     req->rq_bh = bh;

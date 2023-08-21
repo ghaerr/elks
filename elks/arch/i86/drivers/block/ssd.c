@@ -93,30 +93,33 @@ void ssd_io_complete(void)
            panic("SSD: ADDR CHANGED req seg:buf %04x:%04x bh seg:buf %04x:%04x\n",
                 req->rq_seg, req->rq_buffer, buffer_seg(bh), buffer_data(bh));
         }
-        if (req->rq_blocknr != buffer_blocknr(bh)) {
-            panic("SSD: BLOCKNR CHANGED req %ld bh %ld\n",
-                req->rq_blocknr, buffer_blocknr(bh));
+        // FIXME driver can't handle count != 2 sectors nor non-buffer head I/O
+        if (req->rq_sector != buffer_blocknr(bh) * (BLOCK_SIZE / SD_FIXED_SECTOR_SIZE)) {
+            panic("SSD: SECTOR/BLOCKNR CHANGED req %ld bh %ld\n",
+                req->rq_sector, buffer_blocknr(bh));
         }
 #endif
 
         buf = req->rq_buffer;
         seg = req->rq_seg;
-        start = req->rq_blocknr * (BLOCK_SIZE / SD_FIXED_SECTOR_SIZE);
+        start = req->rq_sector;
 
-        /* all ELKS requests are 1K blocks = 2 sectors */
-        if (start >= NUM_SECTS-1) { // FIXME move to ll_rw_blk level
-            printk("SSD: bad request block %lu cmd %d\n", start/2, req->rq_cmd);
+        // FIXME driver can't handle count != 2 sectors
+        // FIXME move max sector check to to ll_rw_blk level
+        if (start >= (NUM_SECTS-1) || req->rq_nr_sectors != 2) {
+            printk("SSD: bad request sector %lu count %d cmd %d\n", start,
+                req->rq_nr_sectors, req->rq_cmd);
             end_request(0);
             continue;
         }
         if (req->rq_cmd == WRITE) {
-            debug_blk("SSD: writing block %lu\n", start/2);
+            debug_blk("SSD: writing sector %lu\n", start);
             ret = ssddev_write_blk(start, buf, seg);
         } else {
-            debug_blk("SSD: reading block %lu\n", start/2);
+            debug_blk("SSD: reading sector %lu\n", start);
             ret = ssddev_read_blk(start, buf, seg);
         }
-        if (ret != 2) {
+        if (ret != req->rq_nr_sectors) {
             end_request(0);         /* I/O error */
             continue;
         }

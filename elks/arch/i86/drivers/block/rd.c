@@ -33,6 +33,7 @@
 #define ALLOC_SIZE	4096	/* allocation size in paragaphs*/
 #define PARA		16	/* size of paragraph*/
 
+/* if sector size not 512, must implement IOCTL_BLK_GET_SECTOR_SIZE */
 #define RD_SECTOR_SIZE	512
 typedef __u16 rd_sector_t;	/* sector number*/
 
@@ -72,7 +73,7 @@ static int rd_open(struct inode *inode, struct file *filp)
 {
     int target = DEVICE_NR(inode->i_rdev);
 
-    debug("RD: open ram%d\n", target);
+    debug("RD: open /dev/rd%d\n", target);
     if (!rd_initialised || target >= MAX_DRIVES || !drive_info[target].valid)
 	return -ENXIO;
 
@@ -221,7 +222,7 @@ static void do_rd_request(void)
 	    return;
 	}
 
-	start = (rd_sector_t) req->rq_blocknr * (BLOCK_SIZE / RD_SECTOR_SIZE);
+	start = (rd_sector_t) req->rq_sector;
 	buff = (byte_t *) req->rq_buffer;
 	target = DEVICE_NR(req->rq_dev);
 	debug("RD: %s dev %d sector %d, ", req->rq_cmd == READ? "read": "write",
@@ -245,10 +246,10 @@ static void do_rd_request(void)
 
 	if (req->rq_cmd == WRITE) {
 	    xms_fmemcpyw((char *) (offset * RD_SECTOR_SIZE), rd_segment[index].seg,
-		buff, req->rq_seg, 1024/2);
+		buff, req->rq_seg, RD_SECTOR_SIZE * (req->rq_nr_sectors / 2));
 	} else {
-	    xms_fmemcpyw(buff, req->rq_seg,
-		(byte_t *) (offset * RD_SECTOR_SIZE), rd_segment[index].seg, 1024/2);
+	    xms_fmemcpyw(buff, req->rq_seg, (byte_t *) (offset * RD_SECTOR_SIZE),
+                rd_segment[index].seg, RD_SECTOR_SIZE * (req->rq_nr_sectors / 2));
 	}
 	end_request(1);
     }
@@ -289,7 +290,7 @@ void rd_init(void)
 	}
 #endif
 #if DEBUG
-	for (i=0; i < MAX_SEGMENTS; i++)
+	for (int i=0; i < MAX_SEGMENTS; i++)
 		printk("%d: seg %x next %d sectors %d\n",
 			i, rd_segment[i].seg, rd_segment[i].next, rd_segment[i].sectors);
 #endif
