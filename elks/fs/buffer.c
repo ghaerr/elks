@@ -53,7 +53,7 @@ kdev_t buffer_dev(struct buffer_head *bh)          { return EBH(bh)->b_dev; }
 #endif /* CONFIG_FAR_BUFHEADS */
 
 /* Internal L1 buffers, must be kernel DS addressable */
-#define WORD_ALIGNED    __attribute__((aligned(16)))
+#define WORD_ALIGNED    __attribute__((aligned(2)))
 static char L1buf[NR_MAPBUFS][BLOCK_SIZE] WORD_ALIGNED;
 
 /* Buffer cache */
