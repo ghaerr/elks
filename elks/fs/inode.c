@@ -89,7 +89,7 @@ static void list_inode_status(void)
         i++;
         if (inode->i_count) inuse++;
     } while ((inode = inode->i_prev) != NULL);
-    printk("Total inodes inuse %d/%d\n", inuse, NR_INODE);
+    printk("Total inodes inuse %d/%d (%d free)\n", inuse, NR_INODE, nr_free_inodes);
 }
 #endif
 
