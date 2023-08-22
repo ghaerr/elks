@@ -66,7 +66,7 @@ extern void resetup_one_dev(struct gendisk *dev, int drive);
 /* ram disk */
 #define DEVICE_NAME "rd"
 #define DEVICE_REQUEST do_rd_request
-#define DEVICE_NR(device) ((device) & 7)
+#define DEVICE_NR(device) ((device) & 1)
 #define DEVICE_ON(device)
 #define DEVICE_OFF(device)
 
@@ -77,7 +77,7 @@ extern void resetup_one_dev(struct gendisk *dev, int drive);
 /* solid-state disk */
 #define DEVICE_NAME "ssd"
 #define DEVICE_REQUEST do_ssd_request
-#define DEVICE_NR(device) ((device) & 3)
+#define DEVICE_NR(device) ((device) & 0)
 #define DEVICE_ON(device)
 #define DEVICE_OFF(device)
 

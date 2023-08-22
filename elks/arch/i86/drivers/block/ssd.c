@@ -21,6 +21,7 @@
 jiff_t ssd_timeout;
 
 static sector_t NUM_SECTS = 0;  /* max # sectors on SSD device */
+static int access_count;
 
 static int ssd_open(struct inode *, struct file *);
 static void ssd_release(struct inode *, struct file *);
@@ -52,13 +53,21 @@ static int ssd_open(struct inode *inode, struct file *filp)
     debug_blk("SSD: open\n");
     if (!NUM_SECTS)
         return -ENXIO;
-    inode->i_size = NUM_SECTS << 9;
+    if (++access_count == 1)
+        inode->i_size = NUM_SECTS << 9;
     return 0;
 }
 
 static void ssd_release(struct inode *inode, struct file *filp)
 {
+    kdev_t dev = inode->i_rdev;
+
     debug_blk("SSD: release\n");
+    if (--access_count == 0) {
+        fsync_dev(dev);
+        invalidate_inodes(dev);
+        invalidate_buffers(dev);
+    }
 }
 
 /* called by timer interrupt if async operation */

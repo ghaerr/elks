@@ -472,11 +472,15 @@ extern int fd_check(unsigned int,char *,size_t,int,struct file **);
 extern void map_buffer(struct buffer_head *);
 extern void unmap_buffer(struct buffer_head *);
 extern void unmap_brelse(struct buffer_head *);
+extern void brelseL1(struct buffer_head *bh, int copyout);
+extern void brelseL1_index(int i, int copyout);
 extern char *buffer_data(struct buffer_head *);
 #else
 #define map_buffer(bh)
 #define unmap_buffer(bh)
 #define unmap_brelse(bh) brelse(bh)
+#define brelseL1_index(i,copyout)
+#define brelseL1(bh,copyout)
 #define buffer_data(bh)  ((bh)->b_data)	/* for accessing unmapped buffer data*/
 #endif
 

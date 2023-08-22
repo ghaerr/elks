@@ -68,6 +68,7 @@ static struct {			/* memory segments, max size ALLOC_SIZE paras (64k)*/
 };
 
 static int rd_initialised = 0;
+static int access_count[MAX_DRIVES];
 
 static int rd_open(struct inode *inode, struct file *filp)
 {
@@ -77,13 +78,22 @@ static int rd_open(struct inode *inode, struct file *filp)
     if (!rd_initialised || target >= MAX_DRIVES || !drive_info[target].valid)
 	return -ENXIO;
 
-    inode->i_size = (long)drive_info[target].size << 9;
+    if (++access_count[target] == 1)
+        inode->i_size = (long)drive_info[target].size << 9;
     return 0;
 }
 
 static void rd_release(struct inode * inode, struct file * filp)
 {
-    debug("RD: release ram%d\n", DEVICE_NR(inode->i_rdev));
+    kdev_t dev = inode->i_rdev;
+    int target = DEVICE_NR(dev);
+
+    debug("RD: release rd%d\n", target);
+    if (--access_count[target] == 0) {
+        fsync_dev(dev);
+        invalidate_inodes(dev);
+        invalidate_buffers(dev);
+    }
 }
 
 static int find_free_seg(void)
