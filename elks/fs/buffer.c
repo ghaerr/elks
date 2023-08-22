@@ -653,14 +653,8 @@ void map_buffer(struct buffer_head *bh)
         /* don't remap if I/O in progress to prevent bh/req buffer unpairing */
 	if (!ebmap->b_mapcount && !ebmap->b_locked) {
 	    debug("UNMAP: %d <- %d\n", buf_num(bmap), i);
-
-            if (ebmap->b_uptodate) {
-                /* Unmap/copy L1 to L2 */
-                xms_fmemcpyw(ebmap->b_L2data, ebmap->b_ds, bmap->b_data, kernel_ds, BLOCK_SIZE/2);
-            }
-	    bmap->b_data = (char *)0;
-	    ebmap->b_seg = ebmap->b_ds;
-	    break;		/* success */
+	    brelseL1_index(i, 1);       /* Unmap/copy L1 to L2 */
+	    break;
 	}
 	if (i == lastL1map) {
 	    /* no free L1 buffers, must wait for L1 unmap_buffer*/
@@ -708,23 +702,31 @@ void unmap_brelse(struct buffer_head *bh)
     brelse(bh);
 }
 
-/* release L1 buffer with optional copyout */
+/* release L1 buffer by index with optional copyout */
+void brelseL1_index(int i, int copyout)
+{
+    struct buffer_head *bh = L1map[i];
+    ext_buffer_head *ebh;
+
+    if (!bh) return;
+    ebh = EBH(bh);
+    if (copyout && ebh->b_uptodate && bh->b_data) {
+        xms_fmemcpyw(ebh->b_L2data, ebh->b_ds, bh->b_data, kernel_ds, BLOCK_SIZE/2);
+    }
+    bh->b_data = 0;
+    ebh->b_seg = ebh->b_ds;
+    L1map[i] = 0;
+}
+
+/* release L1 buffer by buffer head with optional copyout */
 void brelseL1(struct buffer_head *bh, int copyout)
 {
     int i;
-    ext_buffer_head *ebh;
 
     if (!bh) return;
     for (i = 0; i < NR_MAPBUFS; i++) {
         if (L1map[i] == bh) {
-            ebh = EBH(bh);
-            if (copyout && ebh->b_uptodate && bh->b_data) {
-                xms_fmemcpyw(ebh->b_L2data, ebh->b_ds, ebh->b_data, kernel_ds,
-                    BLOCK_SIZE/2);
-            }
-            L1map[i] = 0;
-            bh->b_data = 0;
-            ebh->b_seg = ebh->b_ds;
+            brelseL1_index(i, copyout);
             break;
         }
     }
