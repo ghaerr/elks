@@ -79,7 +79,7 @@ static int lastL1map;
 #endif
 
 #ifdef CHECK_FREECNTS
-static int nr_free_bh;
+static int nr_free_bh, nr_bh;
 #define DCR_COUNT(bh) if(!(--bh->b_count))nr_free_bh++
 #define INR_COUNT(bh) if(!(bh->b_count++))nr_free_bh--
 #define CLR_COUNT(bh) if(bh->b_count)nr_free_bh++
@@ -172,7 +172,7 @@ static void list_buffer_status(void)
         i++;
         if (isinuse) inuse++;
     } while ((bh = ebh->b_prev_lru) != NULL);
-    printk("Total buffers inuse %d/%d\n", inuse, nr_free_bh);
+    printk("Total buffers inuse %d/%d (%d free)\n", inuse, nr_bh, nr_free_bh);
 }
 #endif
 
@@ -203,7 +203,7 @@ int INITPROC buffer_init(void)
 #endif
 
 #ifdef CHECK_FREECNTS
-    nr_free_bh = bufs_to_alloc;
+    nr_bh = nr_free_bh = bufs_to_alloc;
     debug_setcallback(1, list_buffer_status);   /* ^O will generate buffer list */
 #endif
 
@@ -304,7 +304,7 @@ void invalidate_buffers(kdev_t dev)
         debug_blk("invalidating blk %ld\n", ebh->b_blocknr);
 	ebh->b_uptodate = 0;
 	ebh->b_dirty = 0;
-        brelseL1(bh, 0);        /* discard if L1 buffer */
+        brelseL1(bh, 0);        /* release buffer from L1 if present */
 	unlock_buffer(bh);
     } while ((bh = ebh->b_prev_lru) != NULL);
 }
@@ -356,17 +356,21 @@ static struct buffer_head *get_free_buffer(void)
 {
     struct buffer_head *bh = bh_lru;
     ext_buffer_head *ebh = EBH(bh);
+    int i;
 
     while (ebh->b_count || ebh->b_dirty || ebh->b_locked
 #if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
-		|| bh->b_data
+           || bh->b_data
 #endif
-								) {
-	if ((bh = ebh->b_next_lru) == NULL) {
-	    sync_buffers(0, 0);
-	    bh = bh_lru;
-	}
-	ebh = EBH(bh);
+                                                        ) {
+        if ((bh = ebh->b_next_lru) == NULL) {
+            sync_buffers(0, 0);
+            for (i=0; i<NR_MAPBUFS; i++) {
+                brelseL1_index(i, 1);
+            }
+            bh = bh_lru;
+        }
+        ebh = EBH(bh);
     }
 #ifdef CHECK_BLOCKIO
     if (ebh->b_mapcount) panic("get_free_buffer"); /* mapped buffer reallocated */
@@ -648,8 +652,10 @@ void map_buffer(struct buffer_head *bh)
 	ebmap = EBH(bmap);
 
 	/* L1 with zero count can be unmapped and reused for this request*/
+#ifdef CHECK_BLOCKIO
 	if (ebmap->b_mapcount < 0)
-		printk("map_buffer: %d BAD mapcount %d\n", buf_num(bmap), ebmap->b_mapcount);
+	    printk("map_buffer: %d BAD mapcount %d\n", buf_num(bmap), ebmap->b_mapcount);
+#endif
         /* don't remap if I/O in progress to prevent bh/req buffer unpairing */
 	if (!ebmap->b_mapcount && !ebmap->b_locked) {
 	    debug("UNMAP: %d <- %d\n", buf_num(bmap), i);
@@ -685,10 +691,13 @@ void unmap_buffer(struct buffer_head *bh)
     if (bh) {
 	ext_buffer_head *ebh = EBH(bh);
 
+#ifdef CHECK_BLOCKIO
 	if (ebh->b_mapcount <= 0) {
 	    printk("unmap_buffer: %d BAD mapcount %d\n", buf_num(bh), ebh->b_mapcount);
 	    ebh->b_mapcount = 0;
-	} else if (--ebh->b_mapcount == 0) {
+	} else
+#endif
+        if (--ebh->b_mapcount == 0) {
 	    debug("unmap: %d\n", buf_num(bh));
 	    wake_up(&L1wait);
 	} else
@@ -710,6 +719,8 @@ void brelseL1_index(int i, int copyout)
 
     if (!bh) return;
     ebh = EBH(bh);
+    if (ebh->b_mapcount || ebh->b_locked)
+        return;
     if (copyout && ebh->b_uptodate && bh->b_data) {
         xms_fmemcpyw(ebh->b_L2data, ebh->b_ds, bh->b_data, kernel_ds, BLOCK_SIZE/2);
     }
