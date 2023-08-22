@@ -433,15 +433,13 @@ static unsigned short int INITPROC bioshd_getfdinfo(void)
 
 static void bioshd_release(struct inode *inode, struct file *filp)
 {
-    int target;
     kdev_t dev = inode->i_rdev;
+    int target = DEVICE_NR(dev);
 
-    sync_dev(dev);
-    target = DEVICE_NR(dev);
-    access_count[target]--;
-    if ((target >= DRIVE_FD0) && (access_count[target] == 0)) {
-	invalidate_inodes(dev);
-	invalidate_buffers(dev);
+    if (--access_count[target] == 0) {
+        fsync_dev(dev);
+        invalidate_inodes(dev);
+        invalidate_buffers(dev);
     }
 }
 
@@ -716,28 +714,26 @@ got_geom:
 
 static int bioshd_open(struct inode *inode, struct file *filp)
 {
-    unsigned int target = DEVICE_NR(inode->i_rdev);	/* >> MINOR_SHIFT */
+    int target = DEVICE_NR(inode->i_rdev);      /* >> MINOR_SHIFT */
     struct hd_struct *hdp = &hd[MINOR(inode->i_rdev)];
 
     if (!bioshd_initialized || target >= NUM_DRIVES || hdp->start_sect == -1U)
-	return -ENXIO;
+        return -ENXIO;
 
 #if 0
     while (busy[target])
-	sleep_on(&busy_wait);
+        sleep_on(&busy_wait);
 #endif
 
-    access_count[target]++;	/* Register that we're using the device */
-
+    if (++access_count[target] == 1) {
 #ifdef CONFIG_BLK_DEV_BFD
-    if (access_count[target] == 1)	/* probe only on initial open*/
-	probe_floppy(target, hdp);
+        probe_floppy(target, hdp);      /* probe only on initial open */
 #endif
-
-    inode->i_size = hdp->nr_sects * drive_info[target].sector_size;
-    /* limit inode size to max filesize for CHS >= 4MB (2^22)*/
-    if (hdp->nr_sects >= 0x00400000L)	/* 2^22*/
-	inode->i_size = 0x7ffffffL;	/* 2^31 - 1*/
+        inode->i_size = hdp->nr_sects * drive_info[target].sector_size;
+        /* limit inode size to max filesize for CHS >= 4MB (2^22)*/
+        if (hdp->nr_sects >= 0x00400000L)	/* 2^22*/
+            inode->i_size = 0x7ffffffL;         /* 2^31 - 1*/
+    }
     return 0;
 }
 
