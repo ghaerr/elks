@@ -478,7 +478,7 @@ extern char *buffer_data(struct buffer_head *);
 #define map_buffer(bh)
 #define unmap_buffer(bh)
 #define unmap_brelse(bh) brelse(bh)
-#define brelseL1(bh)
+#define brelseL1(bh,copyout)
 #define buffer_data(bh)  ((bh)->b_data)	/* for accessing unmapped buffer data*/
 #endif
 
