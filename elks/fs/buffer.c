@@ -622,17 +622,17 @@ void zero_buffer(struct buffer_head *bh, size_t offset, int count)
 {
     ext_buffer_head *ebh;
 #if defined(CONFIG_FS_XMS_INT15) || (!defined(CONFIG_FS_EXTERNAL_BUFFER) && !defined(CONFIG_FS_XMS_BUFFER))
-#define DOMAP   1
+#define FORCEMAP 1
 #else
-#define DOMAP   0
+#define FORCEMAP 0
 #endif
     /* xms int15 doesn't support a memset function, so map into L1 */
-    if (bh->b_data || DOMAP) {
+    if (FORCEMAP || bh->b_data) {
         map_buffer(bh);
         memset(bh->b_data + offset, 0, count);
         unmap_buffer(bh);
     }
-#if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
+#if !FORCEMAP
     else {
         ebh = EBH(bh);
         xms_fmemset(ebh->b_L2data + offset, ebh->b_ds, 0, count);

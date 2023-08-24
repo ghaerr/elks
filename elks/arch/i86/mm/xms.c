@@ -153,7 +153,6 @@ void xms_fmemset(void *dst_off, ramdesc_t dst_seg, byte_t val, size_t count)
 
 	if (need_xms_dst) {
 		if (!xms_enabled) panic("xms_fmemset");
-		if (!need_xms_dst) dst_seg <<= 4;
 
 #ifdef CONFIG_FS_XMS_INT15
 		panic("xms_fmemset int15");
