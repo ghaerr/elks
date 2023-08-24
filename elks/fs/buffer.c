@@ -621,20 +621,23 @@ int sys_sync(void)
 void zero_buffer(struct buffer_head *bh, size_t offset, int count)
 {
     ext_buffer_head *ebh;
-#ifdef CONFIG_FS_XMS_INT15
-#define XMSINT15    1
+#if defined(CONFIG_FS_XMS_INT15) || (!defined(CONFIG_FS_EXTERNAL_BUFFER) && !defined(CONFIG_FS_XMS_BUFFER))
+#define DOMAP   1
 #else
-#define XMSINT15    0
+#define DOMAP   0
 #endif
     /* xms int15 doesn't support a memset function, so map into L1 */
-    if (bh->b_data || XMSINT15) {
+    if (bh->b_data || DOMAP) {
         map_buffer(bh);
         memset(bh->b_data + offset, 0, count);
         unmap_buffer(bh);
-    } else {
-        ebh = EBH(bh);
-        xms_fmemset(ebh->b_L2data + offset, ebh->b_seg, 0, count);
     }
+#if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
+    else {
+        ebh = EBH(bh);
+        xms_fmemset(ebh->b_L2data + offset, ebh->b_ds, 0, count);
+    }
+#endif
 }
 
 #if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)

@@ -142,15 +142,14 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 			if (!(bh = msdos_sread_nomap(inode->i_sb, sector, &offset)))
 				printk("FAT: sread fail\n");
 			else {
-                debug_blk("msdos_add_cluster2: block %ld uptodate %d\n",
-                    EBH(bh)->b_blocknr, EBH(bh)->b_uptodate);
-                zero_buffer(bh, offset, SECTOR_SIZE(inode));
-            }
+				debug_blk("msdos_add_cluster2: block %ld uptodate %d\n",
+					EBH(bh)->b_blocknr, EBH(bh)->b_uptodate);
+				zero_buffer(bh, offset, SECTOR_SIZE(inode));
+			}
 		}
 		if (bh) {
 			debug_fat("add_cluster block write %lu\n", buffer_blocknr(bh));
 			mark_buffer_dirty(bh);
-			//unmap_brelse(bh);
 			brelse(bh);
 		}
 	}
