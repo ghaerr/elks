@@ -729,11 +729,11 @@ static int bioshd_open(struct inode *inode, struct file *filp)
 #ifdef CONFIG_BLK_DEV_BFD
         probe_floppy(target, hdp);      /* probe only on initial open */
 #endif
-        inode->i_size = hdp->nr_sects * drive_info[target].sector_size;
-        /* limit inode size to max filesize for CHS >= 4MB (2^22)*/
-        if (hdp->nr_sects >= 0x00400000L)	/* 2^22*/
-            inode->i_size = 0x7ffffffL;         /* 2^31 - 1*/
     }
+    inode->i_size = hdp->nr_sects * drive_info[target].sector_size;
+    /* limit inode size to max filesize for CHS >= 4MB (2^22)*/
+    if (hdp->nr_sects >= 0x00400000L)	/* 2^22*/
+        inode->i_size = 0x7ffffffL;         /* 2^31 - 1*/
     return 0;
 }
 

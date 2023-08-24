@@ -53,8 +53,8 @@ static int ssd_open(struct inode *inode, struct file *filp)
     debug_blk("SSD: open\n");
     if (!NUM_SECTS)
         return -ENXIO;
-    if (++access_count == 1)
-        inode->i_size = NUM_SECTS << 9;
+    ++access_count;
+    inode->i_size = NUM_SECTS << 9;
     return 0;
 }
 
