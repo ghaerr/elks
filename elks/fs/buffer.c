@@ -45,7 +45,6 @@ ext_buffer_head *EBH(struct buffer_head *bh)
 /* functions for buffer_head points called outside of buffer.c */
 void mark_buffer_dirty(struct buffer_head *bh)     { EBH(bh)->b_dirty = 1; }
 void mark_buffer_clean(struct buffer_head *bh)     { EBH(bh)->b_dirty = 0; }
-ramdesc_t buffer_seg(struct buffer_head *bh)       { return EBH(bh)->b_seg; }
 unsigned char buffer_count(struct buffer_head *bh) { return EBH(bh)->b_count; }
 block32_t buffer_blocknr(struct buffer_head *bh)   { return EBH(bh)->b_blocknr; }
 kdev_t buffer_dev(struct buffer_head *bh)          { return EBH(bh)->b_dev; }
@@ -77,6 +76,7 @@ static struct buffer_head *L1map[NR_MAPBUFS];	/* L1 indexed pointer to L2 buffer
 static struct wait_queue L1wait;		/* Wait for a free L1 buffer area */
 static int lastL1map;
 #endif
+static int xms_enabled;
 
 #ifdef CHECK_FREECNTS
 static int nr_free_bh, nr_bh;
@@ -118,6 +118,7 @@ static void add_buffers(int nbufs, char *buf, ramdesc_t seg)
 {
     struct buffer_head *bh;
     int n = 0;
+    size_t offset;
 
     for (bh = bh_next; n < nbufs; n++, bh = ++bh_next) {
 	ext_buffer_head *ebh = EBH(bh);
@@ -128,14 +129,13 @@ static void add_buffers(int nbufs, char *buf, ramdesc_t seg)
 	}
 
 #if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
-	ebh->b_seg = ebh->b_ds = seg;
-	//bh->b_mapcount = 0;
-	//bh->b_data = (char *)0;	/* not in L1 cache*/
-	ebh->b_L2data = (char *)((n & 63) << BLOCK_SIZE_BITS);	/* L2 offset*/
+        /* segment adjusted to require no offset to buffer */
+        offset = xms_enabled? ((n & 63) << BLOCK_SIZE_BITS) :
+                              ((n & 63) << (BLOCK_SIZE_BITS - 4));
+        ebh->b_L2seg = seg + offset;
 #else
 	bh->b_data = buf;
 	buf += BLOCK_SIZE;
-	ebh->b_seg = seg;
 #endif
     }
 }
@@ -181,7 +181,6 @@ int INITPROC buffer_init(void)
     /* XMS buffers override EXT buffers override internal buffers*/
 #if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
     int bufs_to_alloc = CONFIG_FS_NR_EXT_BUFFERS;
-    int xms_enabled = 0;
 
 #ifdef CONFIG_FS_XMS_BUFFER
     xms_enabled = xms_init();	/* try to enable unreal mode and A20 gate*/
@@ -509,9 +508,6 @@ struct buffer_head *getblk32(kdev_t dev, block32_t block)
     ebh = EBH(bh);
     ebh->b_dev = dev;
     ebh->b_blocknr = block;
-#if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
-    ebh->b_seg = bh->b_data? kernel_ds: ebh->b_ds;
-#endif
     goto return_it;
 
   found_it:
@@ -620,7 +616,6 @@ int sys_sync(void)
 /* clear a buffer area to zeros, used to avoid slow map to L1 if possible */
 void zero_buffer(struct buffer_head *bh, size_t offset, int count)
 {
-    ext_buffer_head *ebh;
 #if defined(CONFIG_FS_XMS_INT15) || (!defined(CONFIG_FS_EXTERNAL_BUFFER) && !defined(CONFIG_FS_XMS_BUFFER))
 #define FORCEMAP 1
 #else
@@ -634,8 +629,8 @@ void zero_buffer(struct buffer_head *bh, size_t offset, int count)
     }
 #if !FORCEMAP
     else {
-        ebh = EBH(bh);
-        xms_fmemset(ebh->b_L2data + offset, ebh->b_ds, 0, count);
+        ext_buffer_head *ebh = EBH(bh);
+        xms_fmemset((char *)offset, ebh->b_L2seg, 0, count);
     }
 #endif
 }
@@ -654,7 +649,7 @@ void map_buffer(struct buffer_head *bh)
     wait_on_buffer(bh);
 
     /* If buffer is already mapped, just increase the refcount and return */
-    if (bh->b_data /*|| ebh->b_seg != kernel_ds*/) {
+    if (bh->b_data) {
 	if (!ebh->b_mapcount)
 	    debug("REMAP: %d\n", buf_num(bh));
 	goto end_map_buffer;
@@ -697,12 +692,11 @@ void map_buffer(struct buffer_head *bh)
     L1map[i] = bh;
     bh->b_data = (char *)L1buf + (i << BLOCK_SIZE_BITS);
     if (ebh->b_uptodate)
-	xms_fmemcpyw(bh->b_data, kernel_ds, ebh->b_L2data, ebh->b_ds, BLOCK_SIZE/2);
+	xms_fmemcpyw(bh->b_data, kernel_ds, 0, ebh->b_L2seg, BLOCK_SIZE/2);
     debug("MAP:   %d -> %d\n", buf_num(bh), i);
     if (ebh->b_blocknr >= 5 /*&& ebh->b_dev == 0x200*/)
         debug_blk("map block %ld into L%d\n", ebh->b_blocknr, i+1);
   end_map_buffer:
-    ebh->b_seg = kernel_ds;
     ebh->b_mapcount++;
 }
 
@@ -747,10 +741,9 @@ void brelseL1_index(int i, int copyout)
     if (ebh->b_mapcount || ebh->b_locked)
         return;
     if (copyout && ebh->b_uptodate && bh->b_data) {
-        xms_fmemcpyw(ebh->b_L2data, ebh->b_ds, bh->b_data, kernel_ds, BLOCK_SIZE/2);
+        xms_fmemcpyw(0, ebh->b_L2seg, bh->b_data, kernel_ds, BLOCK_SIZE/2);
     }
     bh->b_data = 0;
-    ebh->b_seg = ebh->b_ds;
     L1map[i] = 0;
 }
 
@@ -768,8 +761,13 @@ void brelseL1(struct buffer_head *bh, int copyout)
     }
 }
 
+ramdesc_t buffer_seg(struct buffer_head *bh)
+{
+    return (bh->b_data? kernel_ds: EBH(bh)->b_L2seg);
+}
+
 char *buffer_data(struct buffer_head *bh)
 {
-    return (bh->b_data? bh->b_data: EBH(bh)->b_L2data);
+    return (bh->b_data? bh->b_data: 0); /* L2 addresses are at offset 0 */
 }
 #endif /* CONFIG_FS_EXTERNAL_BUFFER | CONFIG_FS_XMS_BUFFER*/

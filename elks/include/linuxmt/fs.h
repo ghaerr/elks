@@ -124,7 +124,6 @@ struct buffer_head {
 /* a little tricky here - buffer_head is split into near and far components */
 struct ext_buffer_head_s {
 #endif
-    ramdesc_t			b_seg;		/* Current L1 or L2 (main/xms) buffer segment */
     block32_t			b_blocknr;	/* 32-bit block numbers required for FAT */
     kdev_t			b_dev;
     struct buffer_head		*b_next_lru;
@@ -134,8 +133,7 @@ struct ext_buffer_head_s {
     unsigned char		b_dirty;
     unsigned char		b_uptodate;
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
-    ramdesc_t			b_ds;		/* L2 buffer data segment */
-    char			*b_L2data;	/* Offset into L2 allocation block */
+    ramdesc_t			b_L2seg;	/* L2 buffer addr at segment:0 */
     char			b_mapcount;	/* count of L2 buffer mapped into L1 */
 #endif
 };
@@ -148,7 +146,6 @@ ext_buffer_head *EBH(struct buffer_head *);	/* convert bh to ebh */
 /* functions for buffer_head pointers called outside of buffer.c */
 void mark_buffer_dirty(struct buffer_head *bh);
 void mark_buffer_clean(struct buffer_head *bh);
-ramdesc_t buffer_seg(struct buffer_head *bh);
 unsigned char buffer_count(struct buffer_head *bh);
 block32_t buffer_blocknr(struct buffer_head *bh);
 kdev_t buffer_dev(struct buffer_head *bh);
@@ -161,7 +158,6 @@ typedef struct buffer_head	ext_buffer_head;
 /* macros for buffer_head pointers called outside of buffer.c */
 #define mark_buffer_dirty(bh)	((bh)->b_dirty = 1)
 #define mark_buffer_clean(bh)	((bh)->b_dirty = 0)
-#define buffer_seg(bh)		((bh)->b_seg)
 #define buffer_count(bh)	((bh)->b_count)
 #define buffer_blocknr(bh)	((bh)->b_blocknr)
 #define buffer_dev(bh)		((bh)->b_dev)
@@ -476,6 +472,7 @@ extern void unmap_buffer(struct buffer_head *);
 extern void unmap_brelse(struct buffer_head *);
 extern void brelseL1(struct buffer_head *bh, int copyout);
 extern void brelseL1_index(int i, int copyout);
+ramdesc_t buffer_seg(struct buffer_head *bh);
 extern char *buffer_data(struct buffer_head *);
 #else
 #define map_buffer(bh)
@@ -483,7 +480,8 @@ extern char *buffer_data(struct buffer_head *);
 #define unmap_brelse(bh) brelse(bh)
 #define brelseL1_index(i,copyout)
 #define brelseL1(bh,copyout)
-#define buffer_data(bh)  ((bh)->b_data)	/* for accessing unmapped buffer data*/
+#define buffer_data(bh)  ((bh)->b_data)
+#define buffer_seg(bh)   (kernel_ds)
 #endif
 
 extern size_t block_read(struct inode *,struct file *,char *,size_t);
