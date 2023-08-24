@@ -146,6 +146,24 @@ void xms_fmemcpyb(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src
 	fmemcpyb(dst_off, (seg_t)dst_seg, src_off, (seg_t)src_seg, count);
 }
 
+/* memset XMS or far memory, INT 15 not yet supported */
+void xms_fmemset(void *dst_off, ramdesc_t dst_seg, byte_t val, size_t count)
+{
+	int	need_xms_dst = dst_seg >> 16;
+
+	if (need_xms_dst) {
+		if (!xms_enabled) panic("xms_fmemset");
+
+#ifdef CONFIG_FS_XMS_INT15
+		panic("xms_fmemset int15");
+#else
+		linear32_fmemset(dst_off, dst_seg, val, count);
+#endif
+		return;
+	}
+	fmemsetb(dst_off, (seg_t)dst_seg, val, count);
+}
+
 #ifdef CONFIG_FS_XMS_INT15
 struct gdt_table {
 	word_t	limit_15_0;

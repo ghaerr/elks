@@ -76,10 +76,10 @@ static int rd_open(struct inode *inode, struct file *filp)
 
     debug("RD: open /dev/rd%d\n", target);
     if (!rd_initialised || target >= MAX_DRIVES || !drive_info[target].valid)
-	return -ENXIO;
+        return -ENXIO;
 
-    if (++access_count[target] == 1)
-        inode->i_size = (long)drive_info[target].size << 9;
+    ++access_count[target];
+    inode->i_size = (long)drive_info[target].size << 9;
     return 0;
 }
 
