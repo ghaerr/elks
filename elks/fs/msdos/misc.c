@@ -63,7 +63,7 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 	static int lock = 0;
 	cluster_t count, this, limit, curr, last;
 	sector_t sector;
-	void *data;
+	size_t offset;
 	struct buffer_head *bh;
 	struct msdos_sb_info *sb = MSDOS_SB(inode->i_sb);
 	int fatsz = sb->fat_bits;
@@ -132,20 +132,26 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 			if (!(bh = getblk32(inode->i_dev, sector >> 1)))
 				printk("FAT: getblk fail\n");
 			else {
-				map_buffer(bh);
-				memset(bh->b_data,0,BLOCK_SIZE);    // FIXME use xms_fmemset
+                debug_blk("msdos_add_cluster1: block %ld uptodate %d\n",
+                    EBH(bh)->b_blocknr, EBH(bh)->b_uptodate);
+                zero_buffer(bh, 0, BLOCK_SIZE);
 				mark_buffer_uptodate(bh, 1);
 			}
 			curr++;
 		} else {
-			if (!(bh = msdos_sread(inode->i_sb,sector,&data)))
+			if (!(bh = msdos_sread_nomap(inode->i_sb, sector, &offset)))
 				printk("FAT: sread fail\n");
-			else memset(data,0,SECTOR_SIZE(inode));
+			else {
+                debug_blk("msdos_add_cluster2: block %ld uptodate %d\n",
+                    EBH(bh)->b_blocknr, EBH(bh)->b_uptodate);
+                zero_buffer(bh, offset, SECTOR_SIZE(inode));
+            }
 		}
 		if (bh) {
 			debug_fat("add_cluster block write %lu\n", buffer_blocknr(bh));
 			mark_buffer_dirty(bh);
-			unmap_brelse(bh);
+			//unmap_brelse(bh);
+			brelse(bh);
 		}
 	}
 	if (S_ISDIR(inode->i_mode)) {

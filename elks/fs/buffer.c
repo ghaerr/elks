@@ -151,7 +151,7 @@ static void list_buffer_status(void)
 
     do {
         ebh = EBH(bh);
-        isinuse = ebh->b_count || ebh->b_dirty || ebh->b_locked || bh->b_mapcount;
+        isinuse = ebh->b_count || ebh->b_dirty || ebh->b_locked || ebh->b_mapcount;
         if (isinuse || bh->b_data) {
             j = 0;
             if (bh->b_data) {
@@ -315,7 +315,7 @@ static void sync_buffers(kdev_t dev, int wait)
     ext_buffer_head *ebh;
     int count = 0;
 
-    debug_blk("SYNC_BUFFERS dev %x wait %d\n", dev, wait);
+    debug_blk("sync_buffers dev %p wait %d\n", dev, wait);
     do {
 	ebh = EBH(bh);
 
@@ -366,7 +366,7 @@ static struct buffer_head *get_free_buffer(void)
         if ((bh = ebh->b_next_lru) == NULL) {
             sync_buffers(0, 0);
             for (i=0; i<NR_MAPBUFS; i++) {
-                brelseL1_index(i, 1);
+                brelseL1_index(i, 1);   /* release if not mapcount or locked */
             }
             bh = bh_lru;
         }
@@ -617,6 +617,26 @@ int sys_sync(void)
     return 0;
 }
 
+/* clear a buffer area to zeros, used to avoid slow map to L1 if possible */
+void zero_buffer(struct buffer_head *bh, size_t offset, int count)
+{
+    ext_buffer_head *ebh;
+#ifdef CONFIG_FS_XMS_INT15
+#define XMSINT15    1
+#else
+#define XMSINT15    0
+#endif
+    /* xms int15 doesn't support a memset function, so map into L1 */
+    if (bh->b_data || XMSINT15) {
+        map_buffer(bh);
+        memset(bh->b_data + offset, 0, count);
+        unmap_buffer(bh);
+    } else {
+        ebh = EBH(bh);
+        xms_fmemset(ebh->b_L2data + offset, ebh->b_seg, 0, count);
+    }
+}
+
 #if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
 /* map_buffer copies a buffer into L1 buffer space. It will freeze forever
  * before failing, so it can return void.  This is mostly 8086 dependant,
@@ -676,6 +696,8 @@ void map_buffer(struct buffer_head *bh)
     if (ebh->b_uptodate)
 	xms_fmemcpyw(bh->b_data, kernel_ds, ebh->b_L2data, ebh->b_ds, BLOCK_SIZE/2);
     debug("MAP:   %d -> %d\n", buf_num(bh), i);
+    if (ebh->b_blocknr >= 5 /*&& ebh->b_dev == 0x200*/)
+        debug_blk("map block %ld into L%d\n", ebh->b_blocknr, i+1);
   end_map_buffer:
     ebh->b_seg = kernel_ds;
     ebh->b_mapcount++;

@@ -50,18 +50,21 @@ void xms_fmemcpyw(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src
 		size_t count);
 void xms_fmemcpyb(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src_seg,
 		size_t count);
+void xms_fmemset(void *dst_off, ramdesc_t dst_seg, byte_t val, size_t count);
 
 /* low level copy - must have 386 CPU and xms_enabled before calling! */
 void linear32_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
 		size_t count);
 void linear32_fmemcpyb(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
 		size_t count);
+void linear32_fmemset(void *dst_off, addr_t dst_seg, byte_t val, size_t count);
 
 #else
 
 typedef seg_t ramdesc_t;	/* ramdesc_t is just a regular segment descriptor */
 #define xms_fmemcpyw	fmemcpyw
 #define xms_fmemcpyb	fmemcpyb
+#define xms_fmemset     fmemsetb
 
 #endif /* CONFIG_FS_XMS_BUFFER */
 

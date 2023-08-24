@@ -468,6 +468,8 @@ extern void mount_root(void);
 
 extern int fd_check(unsigned int,char *,size_t,int,struct file **);
 
+extern void zero_buffer(struct buffer_head *bh, size_t offset, int count);
+
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
 extern void map_buffer(struct buffer_head *);
 extern void unmap_buffer(struct buffer_head *);
