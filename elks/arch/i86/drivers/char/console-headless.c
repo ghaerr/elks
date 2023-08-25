@@ -16,7 +16,7 @@
 #include "conio.h"
 
 
-void console_init(void)
+void INITPROC console_init(void)
 {
     kbd_init();
     printk("Headless console\n");

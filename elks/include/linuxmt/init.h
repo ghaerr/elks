@@ -21,7 +21,7 @@ struct drive_infot;
 /* kernel init routines*/
 extern void INITPROC kernel_init(void);
 extern int  INITPROC buffer_init(void);
-extern void console_init(void);
+extern void INITPROC console_init(void);
 extern void INITPROC fs_init(void);
 extern void INITPROC inode_init(void);
 extern void INITPROC irq_init(void);
@@ -37,7 +37,7 @@ extern void INITPROC tty_init(void);
 extern void INITPROC device_init(void);
 extern void INITPROC setup_dev(register struct gendisk *);
 
-extern void tz_init(const char *tzstr);
+extern void INITPROC tz_init(const char *tzstr);
 
 /* block device init routines*/
 extern void INITPROC blk_dev_init(void);
@@ -45,22 +45,22 @@ extern int INITPROC bioshd_init(void);
 extern int INITPROC get_ide_data(int, struct drive_infot *);
 extern int directhd_init(void);
 extern void floppy_init(void);
-extern void rd_init(void);
-extern void ssd_init(void);
+extern void INITPROC rd_init(void);
+extern void INITPROC ssd_init(void);
 extern void romflash_init(void);
 
 /* char device init routines*/
-extern void chr_dev_init(void);
-extern void cgatext_init(void);
-extern void eth_init(void);
-extern void ne2k_drv_init(void);
-extern void el3_drv_init(void);
-extern void wd_drv_init(void);
-extern void lp_init(void);
-extern void mem_dev_init(void);
-extern void meta_init(void);
-extern void pty_init(void);
-extern void tcpdev_init(void);
+extern void INITPROC chr_dev_init(void);
+extern void INITPROC cgatext_init(void);
+extern void INITPROC eth_init(void);
+extern void INITPROC ne2k_drv_init(void);
+extern void INITPROC el3_drv_init(void);
+extern void INITPROC wd_drv_init(void);
+extern void INITPROC lp_init(void);
+extern void INITPROC mem_dev_init(void);
+extern void INITPROC meta_init(void);
+extern void INITPROC pty_init(void);
+extern void INITPROC tcpdev_init(void);
 
 extern void kfork_proc(void (*addr)());
 extern void arch_setup_user_stack(struct task_struct *, word_t entry);

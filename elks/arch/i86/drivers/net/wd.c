@@ -175,7 +175,7 @@ static void wd_get_hw_addr(word_t * data)
  * determine bus width if possible.
  */
 
-static int wd_probe(void) {
+static int INITPROC wd_probe(void) {
 	int i, tmp = 0;
 
 	for (i = 0; i < 8; i++)
@@ -706,7 +706,7 @@ static void wd_int(int irq, struct pt_regs * regs)
  * Ethernet main initialization (during boot)
  */
 
-void wd_drv_init(void)
+void INITPROC wd_drv_init(void)
 {
 	unsigned u;
 	word_t hw_addr[6U];
@@ -734,7 +734,7 @@ void wd_drv_init(void)
 /* Using this wrapper saves 44 bytes of RAM */
 /* Using word transfers when possible improves transfer time ~10%
  * on large packets (measured @ 1200 bytes) */
-void fmemcpy(void *dst_off, seg_t dst_seg, void *src_off, seg_t src_seg, size_t count, int type) {
+static void fmemcpy(void *dst_off, seg_t dst_seg, void *src_off, seg_t src_seg, size_t count, int type) {
 
 	if (type == is_8bit)
 		fmemcpyb(dst_off, dst_seg, src_off, src_seg, count);

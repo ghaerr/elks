@@ -2,7 +2,7 @@
 #include <linuxmt/types.h>
 #include <linuxmt/init.h>
 
-void chr_dev_init(void)
+void INITPROC chr_dev_init(void)
 {
 #ifdef CONFIG_CHAR_DEV_LP
     lp_init();
