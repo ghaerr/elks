@@ -31,7 +31,6 @@
 
 extern word_t ne2k_int_stat();
 
-extern word_t ne2k_probe();
 extern void   ne2k_reset();
 
 extern void   ne2k_init();

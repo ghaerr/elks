@@ -16,9 +16,6 @@
 #include <linuxmt/errno.h>
 
 struct device_struct {
-#ifdef CONFIG_DEV_NAMES
-    char *ds_name;
-#endif
     struct file_operations *ds_fops;
 };
 
@@ -40,11 +37,6 @@ int register_chrdev(unsigned int major, const char *name, struct file_operations
     if (major >= MAX_CHRDEV) return -EINVAL;
     if (dev->ds_fops && (dev->ds_fops != fops)) return -EBUSY;
     dev->ds_fops = fops;
-
-#ifdef CONFIG_DEV_NAMES
-    dev->ds_name = name;
-#endif
-
     return 0;
 }
 
@@ -55,16 +47,10 @@ int register_blkdev(unsigned int major, const char *name, struct file_operations
     if (major >= MAX_BLKDEV) return -EINVAL;
     if (dev->ds_fops && dev->ds_fops != fops) return -EBUSY;
     dev->ds_fops = fops;
-
-#ifdef CONFIG_DEV_NAMES
-    dev->ds_name = name;
-#endif
-
     return 0;
 }
 
 #ifdef BLOAT_FS
-
 /*
  * This routine checks whether a removable media has been changed,
  * and invalidates all buffer-cache-entries in that case. This
@@ -94,7 +80,6 @@ int check_disk_change(kdev_t dev)
 	fops->revalidate(dev);
     return 1;
 }
-
 #endif
 
 /*
@@ -140,9 +125,7 @@ struct inode_operations blkdev_inode_operations = {
     NULL,			/* mknod */
     NULL,			/* readlink */
     NULL,			/* follow_link */
-#ifdef USE_GETBLK
     NULL,			/* getblk */
-#endif
     NULL			/* truncate */
 };
 
@@ -190,43 +173,6 @@ struct inode_operations chrdev_inode_operations = {
     NULL,			/* mknod */
     NULL,			/* readlink */
     NULL,			/* follow_link */
-#ifdef USE_GETBLK
     NULL,			/* getblk */
-#endif
     NULL			/* truncate */
 };
-
-/*
- * Print device name (in decimal, hexadecimal or symbolic) -
- * at present hexadecimal only.
- * Note: returns pointer to static data!
- */
-
-extern char *hex_string;	/* It lives in kernel/printk.c. */
-
-char *kdevname(kdev_t dev)
-{
-#if (MINORBITS == 8) && (MINORMASK == 255)
-    static char buffer[5];
-    register char *bp = buffer + 4;
-    *bp = 0;
-    do {
-	*--bp = hex_string[dev & 0xf];
-	dev >>= 4;
-    } while (bp > buffer);
-#else
-    static char buffer[16];
-/*      register char *hexof = "0123456789ABCDEF"; */
-    register char *hexof = hex_string;
-    register char *bp = buffer;
-    kdev_t b = MAJOR(dev);
-
-    *bp++ = hexof[b >> 4];
-    *bp++ = hexof[b & 15];
-    b = MINOR(dev);
-    *bp++ = hexof[b >> 4];
-    *bp++ = hexof[b & 15];
-    *bp = 0;
-#endif
-    return buffer;
-}

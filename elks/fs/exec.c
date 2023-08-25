@@ -494,25 +494,24 @@ int sys_execve(const char *filename, char *sptr, size_t slen)
 	} while (++i < NR_OPEN);
     }
 
-    {
+    iput(currentp->t_inode);
+    currentp->t_inode = inode;
+
     /* this could be a good place to set the effective user identifier
      * in case the suid bit of the executable had been set */
 
-	currentp->t_inode = inode;
-
     /* can I trust the following fields?  */
-	if (inode->i_mode & S_ISUID)
-	    currentp->euid = inode->i_uid;
-	if (inode->i_mode & S_ISGID)
-	    currentp->egid = inode->i_gid;
-    }
+    if (inode->i_mode & S_ISUID)
+        currentp->euid = inode->i_uid;
+    if (inode->i_mode & S_ISGID)
+        currentp->egid = inode->i_gid;
 
     currentp->t_enddata = (__pptr) ((__u16)mh.dseg + (__u16)mh.bseg + base_data);
     currentp->t_endbrk =  currentp->t_enddata;
 
-	/* ease libc memory allocations by setting even break address*/
-	if ((int)currentp->t_endbrk & 1)
-		currentp->t_endbrk++;
+    /* ease libc memory allocations by setting even break address*/
+    if ((int)currentp->t_endbrk & 1)
+        currentp->t_endbrk++;
 
     /*
      *      Arrange our return to be to CS:entry

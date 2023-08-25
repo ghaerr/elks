@@ -116,17 +116,19 @@ repeat:
     mark_buffer_dirty(bh);
     unmap_buffer(bh);
     j += i*8192 + sb->u.minix_sb.s_firstdatazone - 1;
-    if (j < sb->u.minix_sb.s_firstdatazone || j >= sb->u.minix_sb.s_nzones)
+    if (j < sb->u.minix_sb.s_firstdatazone || j >= sb->u.minix_sb.s_nzones) {
         return 0;
+    }
     if (!(bh = getblk(sb->s_dev, j))) {
         printk("new_block: bad block %u\n", j);
         return 0;
     }
-    map_buffer(bh);
-    memset(bh->b_data, 0, BLOCK_SIZE);
+    debug_blk("minix_new_block: block %ld uptodate %d\n",
+        EBH(bh)->b_blocknr, EBH(bh)->b_uptodate);
+    zero_buffer(bh, 0, BLOCK_SIZE);
     mark_buffer_uptodate(bh, 1);
     mark_buffer_dirty(bh);
-    unmap_brelse(bh);
+    brelse(bh);
     return j;
 }
 

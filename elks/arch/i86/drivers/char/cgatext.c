@@ -1,6 +1,4 @@
-#include <linuxmt/cgatext.h>
 #include <linuxmt/errno.h>
-#include <linuxmt/cgatext.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/sched.h>
 #include <arch/cgatext.h>
@@ -90,12 +88,7 @@ static struct file_operations cgatext_fops =
   NULL	/* release */
 };
 
-void
-cgatext_init(void)
+void INITPROC cgatext_init(void)
 {
-  int i;
-
-  i = register_chrdev(CGATEXT_MAJOR, CGATEXT_DEVICE_NAME, &cgatext_fops);
-  if(i)
-	  printk("cgatext: unable to register: %d\n", i);
+  register_chrdev(CGATEXT_MAJOR, "cgatext", &cgatext_fops);
 }

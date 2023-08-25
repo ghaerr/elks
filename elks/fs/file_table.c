@@ -7,6 +7,7 @@
 #include <linuxmt/types.h>
 #include <linuxmt/config.h>
 #include <linuxmt/fs.h>
+#include <linuxmt/limits.h>
 #include <linuxmt/fcntl.h>
 #include <linuxmt/stat.h>
 #include <linuxmt/string.h>

@@ -117,6 +117,7 @@ struct fat_cache {
 
 /* misc.c */
 
+struct buffer_head * FATPROC msdos_sread_nomap(struct super_block *s, sector_t sector, size_t *offset);
 struct buffer_head * FATPROC msdos_sread(struct super_block *s, sector_t sector, void **start);
 void FATPROC lock_creation(void);
 void FATPROC unlock_creation(void);

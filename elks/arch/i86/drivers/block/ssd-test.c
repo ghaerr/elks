@@ -16,7 +16,6 @@
  *	umount /dev/ssd
  *	fsck -lvf /dev/ssd
  */
-//#define DEBUG 1
 #include <linuxmt/config.h>
 #include <linuxmt/rd.h>
 #include <linuxmt/major.h>
@@ -48,7 +47,7 @@ int ssddev_ioctl(struct inode *inode, struct file *file,
 
     switch (cmd) {
     case RDCREATE:
-	debug("SSD: ioctl make %d\n", arg); /* size ignored, always NUM_SECTS */
+	debug_blk("SSD: ioctl make %d\n", arg); /* size ignored, always NUM_SECTS */
 	if (ssd_seg)
 	    return -EBUSY;
 	ssd_seg = seg_alloc((segext_t)NUM_SECTS << 5, SEG_FLAG_RAMDSK);
@@ -62,7 +61,7 @@ int ssddev_ioctl(struct inode *inode, struct file *file,
 	return 0;
 
     case RDDESTROY:
-	debug("SSD: ioctl kill\n");
+	debug_blk("SSD: ioctl kill\n");
 	if (ssd_seg) {
 	    invalidate_inodes(inode->i_rdev);
 	    invalidate_buffers(inode->i_rdev);
@@ -70,25 +69,27 @@ int ssddev_ioctl(struct inode *inode, struct file *file,
 	    ssd_seg = NULL;
 	    return 0;
 	}
-        break;
+        return -ENXIO;          /* return separate error if ramdisk not inited */
     }
     return -EINVAL;
 }
 
-/* write one 1K block (two sectors) to SSD */
-int ssddev_write_blk(sector_t start, char *buf, ramdesc_t seg)
+/* write one sector to SSD */
+int ssddev_write(sector_t start, char *buf, ramdesc_t seg)
 {
     unsigned long offset = start << 9;
 
-    xms_fmemcpyw(0, ssd_seg->base + (unsigned int)(offset >> 4), buf, seg, 1024/2);
-    return 2;	/* # sectors written */
+    xms_fmemcpyw(0, ssd_seg->base + (unsigned int)(offset >> 4), buf, seg,
+        SD_FIXED_SECTOR_SIZE/2);
+    return 1;	/* # sectors written */
 }
 
-/* read one 1K block (two sectors) from SSD */
-int ssddev_read_blk(sector_t start, char *buf, ramdesc_t seg)
+/* read one sector from SSD */
+int ssddev_read(sector_t start, char *buf, ramdesc_t seg)
 {
     unsigned long offset = start << 9;
 
-    xms_fmemcpyw(buf, seg, 0, ssd_seg->base + (unsigned int)(offset >> 4), 1024/2);
-    return 2;	/* # sectors read */
+    xms_fmemcpyw(buf, seg, 0, ssd_seg->base + (unsigned int)(offset >> 4),
+        SD_FIXED_SECTOR_SIZE/2);
+    return 1;	/* # sectors read */
 }

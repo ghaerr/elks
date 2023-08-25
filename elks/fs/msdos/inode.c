@@ -43,6 +43,7 @@ struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
     { "fd2",    S_IFBLK | 0644, MKDEV(3,192)},
     { "fd3",    S_IFBLK | 0644, MKDEV(3,224)},
     { "rd0",	S_IFBLK | 0644, MKDEV(1, 0) },
+    { "ssd",	S_IFBLK | 0644, MKDEV(2, 0) },
     { "kmem",	S_IFCHR | 0644, MKDEV(1, 2) },
     { "null",	S_IFCHR | 0644, MKDEV(1, 3) },
     { "zero",	S_IFCHR | 0644, MKDEV(1, 5) },
@@ -121,12 +122,7 @@ static struct super_block *msdos_read_super(struct super_block *s, char *data,
 	}
 
 #ifdef CONFIG_VAR_SECTOR_SIZE
-	/* get disk sector size using block device ioctl */
-	struct file_operations *fops = get_blkfops(MAJOR(s->s_dev));
-
-	if (!fops || !fops->ioctl ||
-		(sb->sector_size = fops->ioctl(NULL, NULL, HDIO_GET_SECTOR_SIZE, s->s_dev)) <= 0)
-			sb->sector_size = 512;
+        sb->sector_size = get_sector_size(s->s_dev);
 	switch (sb->sector_size) {
 	case 512:
 		sb->sector_bits = 9;	/* log2(sector_size) */

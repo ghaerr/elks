@@ -9,18 +9,15 @@
 #include <linuxmt/trace.h>
 
 struct request {
-    kdev_t rq_dev;		/* -1 if no request */
-    unsigned char rq_cmd;	/* READ or WRITE */
+    kdev_t rq_dev;              /* block device */
+    unsigned char rq_cmd;       /* READ or WRITE */
     unsigned char rq_status;    /* RQ_INACTIVE or RQ_ACTIVE */
-    block32_t rq_blocknr;
-    char *rq_buffer;
-    ramdesc_t rq_seg;		/* L2 main/xms buffer segment */
-    struct buffer_head *rq_bh;
-    struct request *rq_next;
-#ifdef BLOAT_FS
-    unsigned int rq_nr_sectors;
-    unsigned int rq_current_nr_sectors;
-#endif
+    sector_t rq_sector;         /* start device logical sector # */
+    unsigned int rq_nr_sectors; /* multi-sector I/O # sectors */
+    char *rq_buffer;            /* I/O buffer address */
+    ramdesc_t rq_seg;           /* L1 or L2 ext/xms buffer segment */
+    struct buffer_head *rq_bh;  /* system buffer head for notifications and locking */
+    struct request *rq_next;    /* next request, used when async I/O */
 };
 
 #define RQ_INACTIVE	0
@@ -35,7 +32,7 @@ struct request {
 
 #define IN_ORDER(s1,s2) \
 ((s1)->rq_dev < (s2)->rq_dev || (((s1)->rq_dev == (s2)->rq_dev && \
-(s1)->rq_blocknr < (s2)->rq_blocknr)))
+(s1)->rq_sector < (s2)->rq_sector)))
 
 struct blk_dev_struct {
     void (*request_fn) ();
@@ -69,7 +66,7 @@ extern void resetup_one_dev(struct gendisk *dev, int drive);
 /* ram disk */
 #define DEVICE_NAME "rd"
 #define DEVICE_REQUEST do_rd_request
-#define DEVICE_NR(device) ((device) & 7)
+#define DEVICE_NR(device) ((device) & 1)
 #define DEVICE_ON(device)
 #define DEVICE_OFF(device)
 
@@ -80,7 +77,7 @@ extern void resetup_one_dev(struct gendisk *dev, int drive);
 /* solid-state disk */
 #define DEVICE_NAME "ssd"
 #define DEVICE_REQUEST do_ssd_request
-#define DEVICE_NR(device) ((device) & 3)
+#define DEVICE_NR(device) ((device) & 0)
 #define DEVICE_ON(device)
 #define DEVICE_OFF(device)
 
@@ -139,49 +136,29 @@ extern struct wait_queue wait_for_request;
 
 static void end_request(int uptodate)
 {
-    register struct request *req;
-    register struct buffer_head *bh;
+    struct request *req;
+    struct buffer_head *bh;
 
     req = CURRENT;
 
     if (!uptodate) {
-	printk("%s: I/O error: ", DEVICE_NAME);
-	printk("dev %x, block %lu\n", req->rq_dev, req->rq_blocknr);
-
-#ifdef MULTI_BH
-#ifdef BLOAT_FS
-	req->rq_nr_sectors--;
-	req->rq_nr_sectors &= ~2;	/* 1K block size, 512 byte sector*/
-#endif
-	req->rq_blocknr++;
-
-#endif
+        printk(DEVICE_NAME ": I/O %s error dev %D sector %lu\n",
+            (req->rq_cmd == WRITE)? "write": "read",
+            req->rq_dev, req->rq_sector);
     }
 
-    bh = req->rq_bh;
-#ifdef BLOAT_FS
-    req->rq_bh = bh->b_reqnext;
-    bh->b_reqnext = NULL;
+#ifdef MULTI_BH
+    int count = BLOCK_SIZE / get_sector_size(req->rq_dev);
+    req->rq_nr_sectors -= count;
+    req->rq_sector += count;
 #endif
 
+    bh = req->rq_bh;
     mark_buffer_uptodate(bh, uptodate);
     unlock_buffer(bh);
 
-#ifdef BLOAT_FS
-    if ((bh = req->rq_bh) != NULL) {
-	req->rq_current_nr_sectors = bh->b_size >> 9;
-	if (req->rq_nr_sectors < req->rq_current_nr_sectors) {
-	    req->rq_nr_sectors = req->rq_current_nr_sectors;
-	    printk("end_request: buffer-list destroyed\n");
-	}
-	req->rq_buffer = bh->b_data;
-	return;
-    }
-#endif
-
     DEVICE_OFF(req->dev);
     CURRENT = req->rq_next;
-    req->rq_dev = -1;
     req->rq_status = RQ_INACTIVE;
 
 #ifdef CONFIG_ASYNCIO
@@ -191,18 +168,16 @@ static void end_request(int uptodate)
 #endif /* MAJOR_NR */
 
 #ifdef CHECK_BLOCKIO
-  #define INIT_REQUEST(req) \
-	if (!req || req->rq_dev == -1U) \
-		return; \
-	if (MAJOR(req->rq_dev) != MAJOR_NR) \
-		panic("init_request: %s bad request list (%d, %d)", \
-			DEVICE_NAME, MAJOR(req->rq_dev), MAJOR_NR); \
-	if (req->rq_bh && !EBH(req->rq_bh)->b_locked) \
-		panic("init_request: %s buffer not locked", DEVICE_NAME);
+#define CHECK_REQUEST(req) \
+    if (req->rq_status != RQ_ACTIVE \
+        || (req->rq_cmd != READ && req->rq_cmd != WRITE) \
+        || MAJOR(req->rq_dev) != MAJOR_NR) \
+        panic(DEVICE_NAME ": bad request dev %D cmd %d active %d", \
+            req->rq_dev, req->rq_cmd, req->rq_status); \
+    if (req->rq_bh && !EBH(req->rq_bh)->b_locked) \
+        panic(DEVICE_NAME ": not locked");
 #else
-  #define INIT_REQUEST(req) \
-	if (!req || req->rq_dev == -1U) \
-		return;
+#define CHECK_REQUEST(req)
 #endif
 
 #endif /* _BLK_H */

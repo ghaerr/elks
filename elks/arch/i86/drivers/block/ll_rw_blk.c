@@ -9,16 +9,18 @@
  * This handles all read/write requests to block devices
  */
 
+#include <linuxmt/config.h>
 #include <linuxmt/types.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/string.h>
-#include <linuxmt/config.h>
 #include <linuxmt/init.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/ioctl.h>
 #include <linuxmt/debug.h>
+
 #include <arch/system.h>
 #include <arch/io.h>
 #include <arch/irq.h>
@@ -34,8 +36,11 @@
  * take precedence.
  */
 
-/* only 1 is required for non-async I/O */
-#define NR_REQUEST	1
+#ifdef CONFIG_ASYNCIO
+#define NR_REQUEST  4
+#else
+#define NR_REQUEST  1   /* only 1 is required for non-async I/O */
+#endif
 
 static struct request all_requests[NR_REQUEST];
 
@@ -55,21 +60,19 @@ struct blk_dev_struct blk_dev[MAX_BLKDEV];	/* initialized by blk_dev_init() */
 int *blk_size[MAX_BLKDEV] = { NULL, NULL, };
 #endif
 
-/*
- * hardsect_size contains the size of the hardware sector of a device.
- *
- * hardsect_size[MAJOR][MINOR]
- *
- * if (!hardsect_size[MAJOR])
- *		then 512 bytes is assumed.
- * else
- *		sector_size is hardsect_size[MAJOR][MINOR]
- *
- * This is currently set by some scsi device and read by the msdos fs driver
- * This might be a some uses later.
- */
+/* return hardware sector size for passed device */
+int get_sector_size(kdev_t dev)
+{
+    struct file_operations *fops;
+    int size;
 
-/* int * hardsect_size[MAX_BLKDEV] = { NULL, NULL, }; */
+    /* get disk sector size using block device ioctl */
+    fops = get_blkfops(MAJOR(dev));
+    if (!fops || !fops->ioctl ||
+        (size = fops->ioctl(NULL, NULL, IOCTL_BLK_GET_SECTOR_SIZE, dev)) <= 0)
+            size = 512;
+    return size;
+}
 
 /*
  * look for a free request in the first N entries.
@@ -117,7 +120,7 @@ static struct request *__get_request_wait(int n, kdev_t dev)
 {
     struct request *req;
 
-    printk("Waiting for request...\n");
+    debug_blk("Waiting for request...\n");
     wait_set(&wait_for_request);
     for (;;) {
         current->state = TASK_UNINTERRUPTIBLE;
@@ -188,8 +191,8 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
     struct request *req;
     int max_req;
 
-    debug_blk("BLK %lu %s %lx:%x\n", buffer_blocknr(bh), rw==READ? "read": "write",
-	buffer_seg(bh), buffer_data(bh));
+    //debug_blk("BLK %lu %s %lx:%x\n", buffer_blocknr(bh), rw==READ? "read": "write",
+	//buffer_seg(bh), buffer_data(bh));
 
 #ifdef BDEV_SIZE_CHK
     sector_t count = BLOCK_SIZE / SECTOR_SIZE;	/* FIXME must move to lower level*/
@@ -222,13 +225,16 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
 	max_req = (NR_REQUEST * 2) / 3;
 #endif
 #ifdef CHECK_BLOCKIO
-        if (!EBH(bh)->b_dirty)
-                printk("make_request: block %ld not dirty\n", EBH(bh)->b_blocknr);
+        if (!EBH(bh)->b_dirty) {
+            printk("make_request: block %ld not dirty\n", EBH(bh)->b_blocknr);
+            unlock_buffer(bh);
+            return;
+        }
 #endif
 	break;
 
     default:
-	debug_blk("make_request: bad block dev cmd, must be R/W\n");
+	panic("make_request");
 	unlock_buffer(bh);
 	return;
     }
@@ -238,7 +244,8 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
 
     /* fill up the request-info, and add it to the queue */
     req->rq_cmd = rw;
-    req->rq_blocknr = buffer_blocknr(bh);
+    req->rq_nr_sectors = BLOCK_SIZE / get_sector_size(req->rq_dev);
+    req->rq_sector = buffer_blocknr(bh) * req->rq_nr_sectors;
     req->rq_seg = buffer_seg(bh);
     req->rq_buffer = buffer_data(bh);
     req->rq_bh = bh;
@@ -261,12 +268,9 @@ void ll_rw_blk(int rw, struct buffer_head *bh)
     dev = NULL;
     if ((major = MAJOR(buffer_dev(bh))) < MAX_BLKDEV)
 	dev = blk_dev + major;
-    if (!dev || !dev->request_fn) {
-	printk("ll_rw_blk: unregistered block-device %s\n", kdevname(buffer_dev(bh)));
-	mark_buffer_clean(bh);
-	mark_buffer_uptodate(bh, 0);
-    } else
-	make_request(major, rw, bh);
+    if (!dev || !dev->request_fn)
+	panic("ll_rw_blk: unknown device %D", buffer_dev(bh));
+    make_request(major, rw, bh);
 }
 
 #ifdef MULTI_BH

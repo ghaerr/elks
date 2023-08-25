@@ -40,6 +40,7 @@
 	.global	set_a20
 	.global	linear32_fmemcpyw
 	.global	linear32_fmemcpyb
+	.global	linear32_fmemset
 
 # Check if unreal mode capable. Currently requires 32-bit CPU (386+)
 # Returns 1 if OK, otherwise error code (-1=not 386, -2=in V86 mode).
@@ -402,6 +403,55 @@ linear32_fmemcpyb:
 	mov    %ss,%ax
 	mov    %ax,%ds
 	pop    %es
+	ret
+
+#
+# void linear32_fmemset(void *dst_off, addr_t dst_seg, byte_t val, size_t count)
+# WARNING: Requires 32-bit CPU, with unreal mode and A20 gate enabled!
+#          Trashes EAX, EBX, ECX, ESI and EDI without saving.
+#
+linear32_fmemset:
+	push   %si
+	push   %es
+	mov    %di,%dx
+
+	//pushf               // save interrupt status
+	//cli                 // uncomment if extended registers used in interrupt routines
+	xorl   %esi,%esi
+	mov    %sp,%si
+
+	xorl   %ecx,%ecx
+	mov    14(%si),%cx    // word count -> ECX
+
+	xorl   %ebx,%ebx
+	mov    6(%si),%bx     // word dest offset -> EBX
+	movl   8(%esi),%edi   // long dest address -> EDI
+	addl   %ebx,%edi      // EDI is linear destination
+
+	xorl   %eax,%eax
+	mov    12(%si),%al    // byte val -> EAX
+	mov    %al,%ah
+
+	xor    %bx,%bx        // ES = DS = 0 for 32-bit linear addressing
+	mov    %bx,%es
+	mov    %bx,%ds
+
+	cld
+	shrl   $1,%ecx        // store words
+	addr32 rep stosw      // word [ES:EDI++] <- AX, ECX times
+	addr32 nop            // 80386 B1 step chip bug on address size mixing
+
+	rcll    $1,%ecx       // then possibly final byte
+	addr32 rep stosb      // byte [ES:EDI++] <- AL, ECX times
+	addr32 nop            // 80386 B1 step chip bug on address size mixing
+
+	//popf                // restore interrupt status
+
+	mov    %dx,%di
+	mov    %ss,%ax
+	mov    %ax,%ds
+	pop    %es
+	pop    %si
 	ret
 
 # The GDT contains 8-byte DESCRIPTORS for each protected-mode segment.

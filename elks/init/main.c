@@ -12,6 +12,7 @@
 #include <linuxmt/utsname.h>
 #include <linuxmt/netstat.h>
 #include <linuxmt/trace.h>
+#include <linuxmt/debug.h>
 #include <arch/system.h>
 #include <arch/segment.h>
 #include <arch/ports.h>
@@ -77,7 +78,7 @@ static char * INITPROC option(char *s);
 #endif
 
 static void init_task(void);
-static void INITPROC kernel_banner(seg_t start, seg_t end);
+static void INITPROC kernel_banner(seg_t start, seg_t end, seg_t init, seg_t extra);
 
 
 void start_kernel(void)
@@ -148,10 +149,21 @@ void INITPROC kernel_init(void)
     if (!opts) printk("/bootopts ignored: header not ## or size > %d\n", OPTSEGSZ-1);
 #endif
 
-    kernel_banner(base, end);
+#ifdef CONFIG_FARTEXT_KERNEL
+    /* add .farinit.init section to main memory free list */
+    seg_t     init_seg = ((unsigned long)(void __far *)__start_fartext_init) >> 16;
+    seg_t s = init_seg + (((word_t)(void *)__start_fartext_init + 15) >> 4);
+    seg_t e = init_seg + (((word_t)(void *)  __end_fartext_init + 15) >> 4);
+    debug("extra %04x to %04x size %04x (%d)\n", s, e, (e - s) << 4, (e - s) << 4);
+    seg_add(s, e);
+#else
+    seg_t s = 0, e = 0;
+#endif
+
+    kernel_banner(base, end, s, e - s);
 }
 
-static void INITPROC kernel_banner(seg_t start, seg_t end)
+static void INITPROC kernel_banner(seg_t start, seg_t end, seg_t init, seg_t extra)
 {
 #ifdef CONFIG_ARCH_IBMPC
     printk("PC/%cT class machine, ", (sys_caps & CAP_PC_AT) ? 'A' : 'X');
@@ -170,12 +182,12 @@ static void INITPROC kernel_banner(seg_t start, seg_t end)
            system_utsname.release,
            (unsigned)_endtext, (unsigned)_endftext, (unsigned)_enddata,
            (unsigned)_endbss - (unsigned)_enddata, heapsize);
-    printk("Kernel text at %x:0000, ", kernel_cs);
+    printk("Kernel text %x:0, ", kernel_cs);
 #ifdef CONFIG_FARTEXT_KERNEL
-    printk("ftext %x:0000, ", (unsigned)((long)kernel_init >> 16));
+    printk("ftext %x:0, init %x:0, ", (unsigned)((long)kernel_init >> 16), init);
 #endif
-    printk("data %x:0000, top %x:0, %uK free\n",
-           kernel_ds, end, (int) ((end - start) >> 6));
+    printk("data %x:0, top %x:0, %uK free\n",
+           kernel_ds, end, (int) ((end - start + extra) >> 6));
 }
 
 static void try_exec_process(const char *path)
@@ -393,7 +405,7 @@ static int parse_options(void)
 		if (!strncmp(line,"root=",5)) {
 			int dev = parse_dev(line+5);
 #if DEBUG
-			printk("root %s=0x%04x\n", line+5, dev);
+			printk("root %s=%D\n", line+5, dev);
 #endif
 			ROOT_DEV = (kdev_t)dev;
 			boot_rootdev = dev;    /* stop translation in device_setup*/
@@ -412,7 +424,7 @@ static int parse_options(void)
 
 
 #if DEBUG
-			printk("console %s=0x%04x\n", line+8, dev);
+			printk("console %s=%D\n", line+8, dev);
 #endif
 			boot_console = dev;
 			continue;

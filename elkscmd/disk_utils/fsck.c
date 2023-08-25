@@ -745,7 +745,7 @@ void check_file(struct minix_inode * dir, unsigned long offset)
 	printd("\n");
 	if (ino >= INODES) {
 		print_current_name();
-		printf(" contains a bad inode number %d for file '", ino);
+		printf(" contains a bad inode number %u for file '", ino);
 		printf("%.*s'.",14,name); /* FIXME 14 can be integrated */
 		if (ask(" Remove",1)) {
 			*(unsigned short *)(name-2) = 0;

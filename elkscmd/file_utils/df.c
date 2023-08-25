@@ -25,6 +25,7 @@
 #include <sys/mount.h>
 #include <linuxmt/minix_fs.h>
 #include <linuxmt/fs.h>
+#include <linuxmt/limits.h>
 
 #define BLOCK_SIZE	1024
 

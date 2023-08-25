@@ -51,9 +51,7 @@ struct inode_operations msdos_file_inode_operations_no_bmap = {
 	NULL,			/* mknod */
 	NULL,			/* readlink */
 	NULL,			/* follow_link */
-#ifdef USE_GETBLK
 	NULL,			/* getblk */
-#endif
 	msdos_truncate		/* truncate */
 };
 
@@ -62,10 +60,9 @@ static size_t msdos_file_read(register struct inode *inode,register struct file 
 	char *buf,size_t count)
 {
 	char *start;
-	size_t left,offset,size;
+	size_t left, offset, secoff, size;
 	sector_t sector;
 	struct buffer_head *bh;
-	void *data;
 
 	//debug_fat("file_read cnt %u\n", count);
 	if (!inode) {
@@ -82,11 +79,12 @@ static size_t msdos_file_read(register struct inode *inode,register struct file 
 		if (!(sector = msdos_smap(inode,filp->f_pos >> SECTOR_BITS(inode))))
 			break;
 		offset = (int)filp->f_pos & (SECTOR_SIZE(inode)-1);
-		if (!(bh = msdos_sread(inode->i_sb,sector,&data))) break;
+		if (!(bh = msdos_sread_nomap(inode->i_sb,sector, &secoff))) break;
 		filp->f_pos += (size = MIN(SECTOR_SIZE(inode)-offset,left));
-		memcpy_tofs(buf,(char *)data+offset,size);
+		xms_fmemcpyb(buf, current->t_regs.ds,
+			buffer_data(bh) + offset + secoff, buffer_seg(bh), size);
 		buf += size;
-		unmap_brelse(bh);
+		brelse(bh);
 	}
 	if (start == buf) return -EIO;
 	return buf-start;
@@ -97,11 +95,10 @@ static size_t msdos_file_write(register struct inode *inode,register struct file
     size_t count)
 {
 	sector_t sector;
-	int offset,size,written;
+	size_t offset, secoff, size, written;
 	int error;
 	char *start;
 	struct buffer_head *bh;
-	void *data;
 
 	debug_fat("file_write\n");
 	if (!inode) {
@@ -125,12 +122,12 @@ static size_t msdos_file_write(register struct inode *inode,register struct file
 		if (error) break;
 		offset = (int)filp->f_pos & (SECTOR_SIZE(inode)-1);
 		size = MIN(SECTOR_SIZE(inode)-offset,count);
-		if (!(bh = msdos_sread(inode->i_sb,sector,&data))) {
+		if (!(bh = msdos_sread_nomap(inode->i_sb,sector, &secoff))) {
 			error = -EIO;
 			break;
 		}
-		memcpy_fromfs((char *)data+((int)filp->f_pos & (SECTOR_SIZE(inode)-1)),
-			    buf,written = size);
+		xms_fmemcpyb(buffer_data(bh) + offset + secoff, buffer_seg(bh),
+			buf, current->t_regs.ds, written = size);
 		buf += size;
 		filp->f_pos += written;
 		if (filp->f_pos > inode->i_size) {
@@ -139,7 +136,7 @@ static size_t msdos_file_write(register struct inode *inode,register struct file
 		}
 		debug_fat("file block write %lu\n", buffer_blocknr(bh));
 		mark_buffer_dirty(bh);
-		unmap_brelse(bh);
+		brelse(bh);
 	}
 	inode->i_mtime = CURRENT_TIME;
 	inode->u.msdos_i.i_attrs |= ATTR_ARCH;

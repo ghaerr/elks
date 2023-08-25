@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <sys/mount.h>
 #include <linuxmt/fs.h>
+#include <linuxmt/limits.h>
 
 #define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
 
@@ -33,7 +34,8 @@ static struct dev_name_struct {
         { "fd0",     0x0380 },
         { "fd1",     0x03a0 },
         { "ssd",     0x0200 },
-        { "rd",      0x0100 },
+        { "rd0",     0x0100 },
+        { "rd1",     0x0101 },
         { NULL,           0 }
 };
 
@@ -86,9 +88,10 @@ static void show(void)
 		show_mount(i);
 }
 
-static void usage(void)
+static int usage(void)
 {
 	errmsg("usage: mount [-a][-q][-t type] [-o ro|remount,{rw|ro}] <device> <directory>\n");
+    return 1;
 }
 
 int main(int argc, char **argv)
@@ -131,8 +134,7 @@ int main(int argc, char **argv)
 
 			case 'o':
 				if ((argc <= 0) || (**argv == '-')) {
-					errmsg("mount: missing option string\n");
-					return 1;
+					return usage();
 				}
 
 				option = *argv++;
@@ -143,15 +145,13 @@ int main(int argc, char **argv)
 				else if (!strcmp(option, "remount,ro"))
 					flags |= MS_REMOUNT|MS_RDONLY;
 				else {
-					errmsg("mount: bad option string\n");
-					return 1;
+					return usage();
 				}
 				argc--;
 				break;
 
 			default:
-				errmsg("mount: unknown option\n");
-				return 1;
+				return usage();
 		}
 	}
 
@@ -161,8 +161,7 @@ int main(int argc, char **argv)
 	}
 
 	if (argc != 2) {
-		usage();
-		return 1;
+		return usage();
 	}
 
 	if (flags == 0 && type == 0)

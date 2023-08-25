@@ -433,15 +433,13 @@ static unsigned short int INITPROC bioshd_getfdinfo(void)
 
 static void bioshd_release(struct inode *inode, struct file *filp)
 {
-    int target;
     kdev_t dev = inode->i_rdev;
+    int target = DEVICE_NR(dev);
 
-    sync_dev(dev);
-    target = DEVICE_NR(dev);
-    access_count[target]--;
-    if ((target >= DRIVE_FD0) && (access_count[target] == 0)) {
-	invalidate_inodes(dev);
-	invalidate_buffers(dev);
+    if (--access_count[target] == 0) {
+        fsync_dev(dev);
+        invalidate_inodes(dev);
+        invalidate_buffers(dev);
     }
 }
 
@@ -716,28 +714,26 @@ got_geom:
 
 static int bioshd_open(struct inode *inode, struct file *filp)
 {
-    unsigned int target = DEVICE_NR(inode->i_rdev);	/* >> MINOR_SHIFT */
+    int target = DEVICE_NR(inode->i_rdev);      /* >> MINOR_SHIFT */
     struct hd_struct *hdp = &hd[MINOR(inode->i_rdev)];
 
     if (!bioshd_initialized || target >= NUM_DRIVES || hdp->start_sect == -1U)
-	return -ENXIO;
+        return -ENXIO;
 
 #if 0
     while (busy[target])
-	sleep_on(&busy_wait);
+        sleep_on(&busy_wait);
 #endif
 
-    access_count[target]++;	/* Register that we're using the device */
-
+    if (++access_count[target] == 1) {
 #ifdef CONFIG_BLK_DEV_BFD
-    if (access_count[target] == 1)	/* probe only on initial open*/
-	probe_floppy(target, hdp);
+        probe_floppy(target, hdp);      /* probe only on initial open */
 #endif
-
+    }
     inode->i_size = hdp->nr_sects * drive_info[target].sector_size;
     /* limit inode size to max filesize for CHS >= 4MB (2^22)*/
     if (hdp->nr_sects >= 0x00400000L)	/* 2^22*/
-	inode->i_size = 0x7ffffffL;	/* 2^31 - 1*/
+        inode->i_size = 0x7ffffffL;         /* 2^31 - 1*/
     return 0;
 }
 
@@ -835,7 +831,7 @@ int INITPROC bioshd_init(void)
 	}
 	bioshd_initialized = 1;
     } else {
-	printk("bioshd: unable to register %d\n", MAJOR_NR);
+	printk("bioshd: init error\n");
     }
     return count;
 }
@@ -848,7 +844,7 @@ static int bioshd_ioctl(struct inode *inode,
     int dev, err;
 
     /* get sector size called with NULL inode and arg = superblock s_dev */
-    if (cmd == HDIO_GET_SECTOR_SIZE)
+    if (cmd == IOCTL_BLK_GET_SECTOR_SIZE)
 	return drive_info[DEVICE_NR(arg)].sector_size;
 
     if (!inode || !inode->i_rdev)
@@ -1043,10 +1039,9 @@ static void do_bioshd_request(void)
       next_block:
 
 	req = CURRENT;
-	if (!req)	/* break for spin_timer stop before INIT_REQUEST */
+	if (!req)
 	    break;
-
-	INIT_REQUEST(req);
+	CHECK_REQUEST(req);
 
 	if (bioshd_initialized != 1) {
 	    end_request(0);
@@ -1063,9 +1058,9 @@ static void do_bioshd_request(void)
 	    continue;
 	}
 
-	/* all ELKS requests are 1K blocks*/
-	count = BLOCK_SIZE / drivep->sector_size;
-	start = req->rq_blocknr * count;
+	/* get request start sector and sector count */
+	count = req->rq_nr_sectors;
+	start = req->rq_sector;
 
 	if (hd[minor].start_sect == -1U || start >= hd[minor].nr_sects) {
 	    printk("bioshd: bad partition start=%ld sect=%ld nr_sects=%ld.\n",

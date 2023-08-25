@@ -32,10 +32,10 @@
 /* integrity check application SS on interrupts from user mode */
 #define CHECK_SS
 
-#endif /* CONFIG_TRACE */
+/* check buffer and inode free counts, list inodes w/^N and buffers w/^O */
+#define CHECK_FREECNTS
 
-/* disable to remove extra code used for asynchronous interrupt-driven I/O */
-//#define CONFIG_ASYNCIO
+#endif /* CONFIG_TRACE */
 
 
 /* internal flags for kernel */

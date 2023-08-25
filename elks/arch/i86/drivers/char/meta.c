@@ -15,6 +15,7 @@
 #ifdef CONFIG_DEV_META
 
 #include <linuxmt/major.h>
+#include <linuxmt/init.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/mm.h>
@@ -86,11 +87,11 @@ static void do_meta_request(void)
     }
     while (1) {
 	struct request *req = blk_dev[major].current_request;
-	if (!req || req->rq_dev < 0)
+	if (!req)
 	    return;
 	udr = new_request();
 	udr->udr_type = UDR_BLK + req->rq_cmd;
-	udr->udr_ptr = req->rq_blocknr;
+	udr->udr_ptr = req->rq_sector;
 	udr->udr_minor = MINOR(req->rq_dev);
 	post_request(driver, udr);
 
@@ -345,9 +346,9 @@ static struct file_operations meta_chr_fops = {
     meta_release		/* release */
 };
 
-void meta_init(void)
+void INITPROC meta_init(void)
 {
-    printk("Userspace device driver Copyright (C) 1999 Alistair Riddoch\n");
+    debug("Userspace device driver Copyright (C) 1999 Alistair Riddoch\n");
     if (!register_chrdev(MAJOR_NR, DEVICE_NAME, &meta_chr_fops))
 	meta_initialised = 1;
 }

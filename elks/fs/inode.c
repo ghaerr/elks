@@ -14,6 +14,7 @@
 #include <linuxmt/string.h>
 #include <linuxmt/kdev_t.h>
 #include <linuxmt/wait.h>
+#include <linuxmt/trace.h>
 #include <linuxmt/debug.h>
 
 #include <arch/system.h>
@@ -23,18 +24,12 @@ static struct inode *inode_lru = inode_block;
 static struct inode *inode_llru = inode_block;
 static struct wait_queue inode_wait;
 
-/* Uncomment next line to debug free inodes count */
-/*#define DEBUG_FREE_INODES_COUNT */
-
-#ifdef DEBUG_FREE_INODES_COUNT
+#ifdef CHECK_FREECNTS
 static int nr_free_inodes = NR_INODE;
 #define DCR_COUNT(i) if(!(--i->i_count))nr_free_inodes++
 #define INR_COUNT(i) if(!(i->i_count++))nr_free_inodes--
 #define CLR_COUNT(i) if(i->i_count)nr_free_inodes++
-#define SET_COUNT(i) if(--nr_free_inodes < 0) { \
-	printk("VFS: get_empty_inode: bad free inode count.\n"); \
-	nr_free_inodes = 0; \
-    }
+#define SET_COUNT(i) if(--nr_free_inodes < 0) { panic("get_empty_inode: bad free count"); }
 #else
 #define DCR_COUNT(i) (i->i_count--)
 #define INR_COUNT(i) (i->i_count++)
@@ -74,10 +69,29 @@ void clear_inode(register struct inode *inode) /* and put_first_lru() */
     remove_inode_free(inode);
     CLR_COUNT(inode);
     memset(inode, 0, sizeof(struct inode));
-    inode->i_prev = NULL;
+    //inode->i_prev = NULL;
     (inode->i_next = inode_lru)->i_prev = inode;
     inode_lru = inode;
 }
+
+#if defined(CHECK_FREECNTS) && DEBUG_EVENT
+static void list_inode_status(void)
+{
+    int i = 1;
+    int inuse = 0;
+    struct inode *inode = inode_llru;
+
+    do {
+        if (inode->i_count || inode->i_dev || inode->i_dirt) {
+            printk("#%2d: dev %D inode %5lu dirty %d count %u\n", i, inode->i_dev,
+                (unsigned long)inode->i_ino, inode->i_dirt, inode->i_count);
+        }
+        i++;
+        if (inode->i_count) inuse++;
+    } while ((inode = inode->i_prev) != NULL);
+    printk("Total inodes inuse %d/%d (%d free)\n", inuse, NR_INODE, nr_free_inodes);
+}
+#endif
 
 void INITPROC inode_init(void)
 {
@@ -87,6 +101,9 @@ void INITPROC inode_init(void)
 	inode->i_next = inode->i_prev = inode;
 	put_last_lru(inode);
     } while (++inode < &inode_block[NR_INODE]);
+#ifdef CHECK_FREECNTS
+    debug_setcallback(0, list_inode_status);    /* ^N will generate inode list */
+#endif
 }
 
 /*
@@ -99,9 +116,9 @@ void INITPROC inode_init(void)
 static void wait_on_inode(register struct inode *inode)
 {
     while (inode->i_lock) {
-	INR_COUNT(inode);
-	sleep_on(&inode->i_wait);
-	DCR_COUNT(inode);
+	inode->i_count++;
+	sleep_on((struct wait_queue *)inode);
+	inode->i_count--;
     }
 }
 
@@ -114,7 +131,7 @@ static void lock_inode(register struct inode *inode)
 static void unlock_inode(register struct inode *inode)
 {
     inode->i_lock = 0;
-    wake_up(&inode->i_wait);
+    wake_up((struct wait_queue *)inode);
 }
 
 void invalidate_inodes(kdev_t dev)
@@ -126,7 +143,7 @@ void invalidate_inodes(kdev_t dev)
         prev = inode->i_prev;	/* clear_inode() changes the queues.. */
 	if (inode->i_dev != dev) continue;
 	if (inode->i_count || inode->i_dirt || inode->i_lock)
-	    printk("VFS: inode busy on removed device %s\n", kdevname(dev));
+	    printk("VFS: inode busy on removed device %D\n", dev);
 	else
 	    clear_inode(inode);
     } while ((inode = prev) != NULL);
@@ -160,55 +177,23 @@ void sync_inodes(kdev_t dev)
     } while ((inode = inode->i_prev) != NULL);
 }
 
-static void list_inode_status(void)
-{
-    int i = 0;
-    register struct inode *inode = inode_llru;
-
-    do {
-        printk("[#%u: c=%u d=%x nr=%lu]", i++,
-			inode->i_count, inode->i_dev, (unsigned long)inode->i_ino);
-    } while ((inode = inode->i_prev) != NULL);
-}
-
 static struct inode *get_empty_inode(void)
 {
-    static ino_t ino = 0;   /* FIXME may wrap if not 32-bit inodes */
     register struct inode *inode;
 
     inode = inode_lru;
     while (inode->i_count || inode->i_dirt || inode->i_lock) {
 	if ((inode = inode->i_next) == NULL) {
 	    printk("VFS: No free inodes\n");
-	    list_inode_status();
 	    sleep_on(&inode_wait);
 	    inode = inode_lru;
 	}
     }
-
-/* Here we are doing the same checks again. There cannot be a significant *
- * race condition here - no time has passed */
-#if 0
-    if (inode->i_lock) {	/* This will never happen */
-	wait_on_inode(inode);
-	goto repeat;
-    }
-    if (inode->i_dirt) {
-	write_inode(inode);
-	goto repeat;
-    }
-    if (inode->i_count)
-	goto repeat;
-#endif
     clear_inode(inode);
     put_last_lru(inode);
     inode->i_count = inode->i_nlink = 1;
-    SET_COUNT(inode)
     inode->i_uid = current->euid;
-#ifdef BLOAT_FS
-    inode->i_version = ++event;
-#endif
-    inode->i_ino = ++ino;
+    SET_COUNT(inode)
     return inode;
 }
 
@@ -216,12 +201,13 @@ void iput(register struct inode *inode)
 {
     register struct super_operations *sop;
 
+    debug("iput dev %D ino %lu count %d\n",
+        inode->i_dev, (unsigned long)inode->i_ino, inode->i_count);
     if (inode) {
 	wait_on_inode(inode);
 	if (!inode->i_count) {
-	    printk("VFS: iput: trying to free free inode\n"
-			"VFS: device %s, inode %lu, mode=0%06o\n",
-			kdevname(inode->i_rdev), (unsigned long)inode->i_ino, inode->i_mode);
+	    printk("iput: trying to free free inode dev %D inode %lu mode 0%06o\n",
+	        inode->i_rdev, (unsigned long)inode->i_ino, inode->i_mode);
 	    return;
 	}
 #ifdef NOT_YET
@@ -248,6 +234,12 @@ void iput(register struct inode *inode)
 
 	} while (inode->i_dirt);
 	DCR_COUNT(inode);
+#ifdef CHECK_FREECNTS
+        if (inode->i_count == 0) {
+            inode->i_dev = 0;
+            inode->i_ino = 0;
+        }
+#endif
     }
 }
 
@@ -312,15 +304,13 @@ struct inode *new_inode(register struct inode *dir, __u16 mode)
     return inode;
 }
 
-struct inode *__iget(struct super_block *sb,
-		     ino_t inr /*,int crossmntp */ )
+struct inode *iget(struct super_block *sb, ino_t inr)
 {
     register struct inode *inode;
     register struct inode *n_ino;
 
-    debug("iget called(%x, %lu, %d)\n", sb, (unsigned long)inr, 0 /* crossmntp */ );
-    if (!sb)
-	panic("VFS: iget with sb==NULL");
+    if (!sb) panic("iget sb 0");
+    debug("iget dev %D ino %lu\n", sb->s_dev, (unsigned long)inr);
 
     n_ino = NULL;
     goto start;
@@ -338,24 +328,18 @@ struct inode *__iget(struct super_block *sb,
 
     inode->i_sb = sb;
     inode->i_dev = sb->s_dev;
-    inode->i_flags = ((unsigned short int) sb->s_flags);
+    inode->i_flags = sb->s_flags;
     inode->i_ino = inr;
-    debug("iget: Reading inode\n");
     read_inode(inode);
-    debug("iget: Read it\n");
     goto return_it;
 
   found_it:
     if (n_ino != NULL) iput(n_ino);
     INR_COUNT(inode);
-#if 0
-    /* This will never happen */
-    if (inode->i_dev != sb->s_dev || inode->i_ino != inr) {
-	printk("Whee.. inode changed from under us. Tell _.\n");
-	iput(inode);
-	goto repeat;
-    }
-#endif
+
+    /* This will never happen, FIXME remove */
+    if (inode->i_dev != sb->s_dev || inode->i_ino != inr) panic("iget");
+
     if ( /* crossmntp && */ inode->i_mount) {
 	n_ino = inode;
 	inode = inode->i_mount;

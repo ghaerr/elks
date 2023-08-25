@@ -6,17 +6,14 @@
 
 #ifdef __KERNEL__
 
-#define MAJOR(dev)	((unsigned short int) ((dev) >> MINORBITS))
-#define MINOR(dev)	((unsigned short int) ((dev) & MINORMASK))
-#define HASHDEV(dev)	(dev)
+#define MAJOR(dev)	((unsigned short) ((dev) >> MINORBITS))
+#define MINOR(dev)	((unsigned short) ((dev) & MINORMASK))
 #define MKDEV(ma,mi)	((kdev_t) (((ma) << MINORBITS) | (mi)))
 #define NODEV		MKDEV(0,0)
 
 #include <linuxmt/types.h>
 
 typedef __u16 kdev_t;
-
-extern char *kdevname(kdev_t);	  /* note: returns pointer to static data! */
 
 /* As long as device numbers in the outside world have 16 bits only,
  * we use these conversions.

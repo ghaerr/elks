@@ -90,7 +90,7 @@ static int romfs_readdir (struct inode * i, struct file * f,
 }
 
 
-static int romfs_lookup (struct inode * dir, char * name, size_t len1,
+static int romfs_lookup (struct inode * dir, const char * name, size_t len1,
 	struct inode ** result)
 {
 	int res;
@@ -113,7 +113,7 @@ static int romfs_lookup (struct inode * dir, char * name, size_t len1,
 			/* ELKS trick: the name is in the current task data segment */
 			/* TODO: remove that trick with explicit segment in call */
 			if (len2 == len1) {
-				if (!fmemcmpb ((char *)offset + 3, seg_i, name, current->t_regs.ds, len2)) {
+				if (!fmemcmpb ((char *)offset + 3, seg_i, (void *)name, current->t_regs.ds, len2)) {
 					ino = peekw (offset, seg_i);
 					break;
 				}
@@ -214,9 +214,7 @@ static struct inode_operations romfs_inode_operations = {
 	NULL,             /* mknod */
 	romfs_readlink,   /* readlink */
 	romfs_followlink, /* followlink */
-#ifdef USE_GETBLK
-	NULL,             /* getblk -- not really */
-#endif
+	NULL,             /* getblk */
 	NULL              /* truncate */
 };
 
@@ -325,7 +323,8 @@ static struct super_block * romfs_read_super (struct super_block * s, void * dat
 	while (1) {
 		lock_super (s);
 
-		if (fmemcmpw (ROMFS_MAGIC_STR, kernel_ds, 0, CONFIG_ROMFS_BASE, ROMFS_MAGIC_LEN >> 1)) {
+		if (fmemcmpw ((void *)ROMFS_MAGIC_STR, kernel_ds, 0, CONFIG_ROMFS_BASE,
+          ROMFS_MAGIC_LEN >> 1)) {
 			printk ("romfs: no superblock at %x:0h\n", CONFIG_ROMFS_BASE);
 			res = NULL;
 			break;

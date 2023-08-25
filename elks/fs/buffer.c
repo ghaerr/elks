@@ -45,7 +45,6 @@ ext_buffer_head *EBH(struct buffer_head *bh)
 /* functions for buffer_head points called outside of buffer.c */
 void mark_buffer_dirty(struct buffer_head *bh)     { EBH(bh)->b_dirty = 1; }
 void mark_buffer_clean(struct buffer_head *bh)     { EBH(bh)->b_dirty = 0; }
-ramdesc_t buffer_seg(struct buffer_head *bh)       { return EBH(bh)->b_seg; }
 unsigned char buffer_count(struct buffer_head *bh) { return EBH(bh)->b_count; }
 block32_t buffer_blocknr(struct buffer_head *bh)   { return EBH(bh)->b_blocknr; }
 kdev_t buffer_dev(struct buffer_head *bh)          { return EBH(bh)->b_dev; }
@@ -53,7 +52,8 @@ kdev_t buffer_dev(struct buffer_head *bh)          { return EBH(bh)->b_dev; }
 #endif /* CONFIG_FAR_BUFHEADS */
 
 /* Internal L1 buffers, must be kernel DS addressable */
-static char L1buf[NR_MAPBUFS][BLOCK_SIZE];
+#define WORD_ALIGNED    __attribute__((aligned(2)))
+static char L1buf[NR_MAPBUFS][BLOCK_SIZE] WORD_ALIGNED;
 
 /* Buffer cache */
 static struct buffer_head *bh_lru;
@@ -76,16 +76,14 @@ static struct buffer_head *L1map[NR_MAPBUFS];	/* L1 indexed pointer to L2 buffer
 static struct wait_queue L1wait;		/* Wait for a free L1 buffer area */
 static int lastL1map;
 #endif
+static int xms_enabled;
 
-#ifdef CHECK_BLOCKIO
-static int nr_free_bh;
-/* debug free buffer_head count */
+#ifdef CHECK_FREECNTS
+static int nr_free_bh, nr_bh;
 #define DCR_COUNT(bh) if(!(--bh->b_count))nr_free_bh++
 #define INR_COUNT(bh) if(!(bh->b_count++))nr_free_bh--
 #define CLR_COUNT(bh) if(bh->b_count)nr_free_bh++
-#define SET_COUNT(bh) if(--nr_free_bh < 0) { \
-                          panic("get_free_buffer: bad free buffer_head count"); \
-                          nr_free_bh = 0; }
+#define SET_COUNT(bh) if(--nr_free_bh < 0) { panic("get_free_buffer: bad free count"); }
 #else
 #define DCR_COUNT(bh) (bh->b_count--)
 #define INR_COUNT(bh) (bh->b_count++)
@@ -120,6 +118,7 @@ static void add_buffers(int nbufs, char *buf, ramdesc_t seg)
 {
     struct buffer_head *bh;
     int n = 0;
+    size_t offset;
 
     for (bh = bh_next; n < nbufs; n++, bh = ++bh_next) {
 	ext_buffer_head *ebh = EBH(bh);
@@ -130,24 +129,58 @@ static void add_buffers(int nbufs, char *buf, ramdesc_t seg)
 	}
 
 #if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
-	ebh->b_seg = ebh->b_ds = seg;
-	//bh->b_mapcount = 0;
-	//bh->b_data = (char *)0;	/* not in L1 cache*/
-	ebh->b_L2data = (char *)((n & 63) << BLOCK_SIZE_BITS);	/* L2 offset*/
+        /* segment adjusted to require no offset to buffer */
+        offset = xms_enabled? ((n & 63) << BLOCK_SIZE_BITS) :
+                              ((n & 63) << (BLOCK_SIZE_BITS - 4));
+        ebh->b_L2seg = seg + offset;
 #else
 	bh->b_data = buf;
 	buf += BLOCK_SIZE;
-	ebh->b_seg = seg;
 #endif
     }
 }
+
+#if defined(CHECK_FREECNTS) && DEBUG_EVENT
+static void list_buffer_status(void)
+{
+    int i = 1;
+    int inuse = 0;
+    int isinuse, j;
+    struct buffer_head *bh = bh_llru;
+    ext_buffer_head *ebh;
+
+    do {
+        ebh = EBH(bh);
+        isinuse = ebh->b_count || ebh->b_dirty || ebh->b_locked || ebh->b_mapcount;
+        if (isinuse || bh->b_data) {
+            j = 0;
+            if (bh->b_data) {
+                for (; j<NR_MAPBUFS; j++) {
+                    if (L1map[j] == bh) {
+                        j++;
+                        break;
+                    }
+                }
+            }
+            printk("#%3d: buf %3d blk/dev %5ld/%p %c%c%c mapped L%02d %d count %d\n",
+                i, buf_num(bh), ebh->b_blocknr, ebh->b_dev,
+                ebh->b_locked?  'L': ' ',
+                ebh->b_dirty?   'D': ' ',
+                ebh->b_uptodate?'U': ' ',
+                j, ebh->b_mapcount, ebh->b_count);
+        }
+        i++;
+        if (isinuse) inuse++;
+    } while ((bh = ebh->b_prev_lru) != NULL);
+    printk("Total buffers inuse %d/%d (%d free)\n", inuse, nr_bh, nr_free_bh);
+}
+#endif
 
 int INITPROC buffer_init(void)
 {
     /* XMS buffers override EXT buffers override internal buffers*/
 #if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
     int bufs_to_alloc = CONFIG_FS_NR_EXT_BUFFERS;
-    int xms_enabled = 0;
 
 #ifdef CONFIG_FS_XMS_BUFFER
     xms_enabled = xms_init();	/* try to enable unreal mode and A20 gate*/
@@ -168,8 +201,9 @@ int INITPROC buffer_init(void)
     int bufs_to_alloc = NR_MAPBUFS;
 #endif
 
-#ifdef CHECK_BLOCKIO
-    nr_free_bh = bufs_to_alloc;
+#ifdef CHECK_FREECNTS
+    nr_bh = nr_free_bh = bufs_to_alloc;
+    debug_setcallback(1, list_buffer_status);   /* ^O will generate buffer list */
 #endif
 
     buffer_heads = heap_alloc(bufs_to_alloc * sizeof(struct buffer_head),
@@ -218,9 +252,9 @@ int INITPROC buffer_init(void)
 
 void wait_on_buffer(struct buffer_head *bh)
 {
-    ext_buffer_head *ebh = EBH(bh);
 #ifdef CONFIG_ASYNCIO
-    INR_COUNT(ebh);
+    ext_buffer_head *ebh = EBH(bh);
+    ebh->b_count++;
     wait_set((struct wait_queue *)bh);       /* use bh as wait address */
     for (;;) {
         current->state = TASK_UNINTERRUPTIBLE;
@@ -230,10 +264,10 @@ void wait_on_buffer(struct buffer_head *bh)
     }
     wait_clear((struct wait_queue *)bh);
     current->state = TASK_RUNNING;
-    DCR_COUNT(ebh);
-#elif defined(CHECK_BLOCKIO)
-    if (ebh->b_locked)
-        panic("wait_on_buffer: block %ld locked\n", ebh->b_blocknr);
+    ebh->b_count--;
+#endif
+#ifdef CHECK_BLOCKIO
+    if (EBH(bh)->b_locked) panic("wait_on_buffer");
 #endif
 }
 
@@ -256,14 +290,20 @@ void invalidate_buffers(kdev_t dev)
     struct buffer_head *bh = bh_llru;
     ext_buffer_head *ebh;
 
+    debug_blk("INVALIDATE dev %x\n", dev);
     do {
 	ebh = EBH(bh);
 
 	if (ebh->b_dev != dev) continue;
 	wait_on_buffer(bh);
-	if (ebh->b_count) continue;
+        if (ebh->b_count) {
+            printk("invalidate_buffers: skipping active block %ld\n", ebh->b_blocknr);
+            continue;
+        }
+        debug_blk("invalidating blk %ld\n", ebh->b_blocknr);
 	ebh->b_uptodate = 0;
 	ebh->b_dirty = 0;
+        brelseL1(bh, 0);        /* release buffer from L1 if present */
 	unlock_buffer(bh);
     } while ((bh = ebh->b_prev_lru) != NULL);
 }
@@ -272,7 +312,9 @@ static void sync_buffers(kdev_t dev, int wait)
 {
     struct buffer_head *bh = bh_llru;
     ext_buffer_head *ebh;
+    int count = 0;
 
+    debug_blk("sync_buffers dev %p wait %d\n", dev, wait);
     do {
 	ebh = EBH(bh);
 
@@ -289,6 +331,9 @@ static void sync_buffers(kdev_t dev, int wait)
 	 *      AND pass > 0.
 	 */
 	if (ebh->b_locked) {
+            debug_blk("SYNC: dev %x buf %d block %ld LOCKED mapped %d skipped %d data %04x\n",
+                ebh->b_dev, buf_num(bh), ebh->b_blocknr, ebh->b_mapcount, !wait,
+                bh->b_data);
 	    if (!wait) continue;
 	    wait_on_buffer(bh);
 	}
@@ -296,29 +341,39 @@ static void sync_buffers(kdev_t dev, int wait)
 	/*
 	 *      Do the stuff
 	 */
-        debug("sync block %ld count %d\n", ebh->b_blocknr, ebh->b_count);
-	INR_COUNT(ebh);
+        debug_blk("sync: dev %x write buf %d block %ld count %d\n",
+            ebh->b_dev, buf_num(bh), ebh->b_blocknr, ebh->b_count);
+	ebh->b_count++;
 	ll_rw_blk(WRITE, bh);
-	DCR_COUNT(ebh);
+	ebh->b_count--;
+        count++;
     } while ((bh = ebh->b_prev_lru) != NULL);
+    debug_blk("SYNC_BUFFERS END %d wrote %d\n", wait, count);
 }
 
 static struct buffer_head *get_free_buffer(void)
 {
     struct buffer_head *bh = bh_lru;
     ext_buffer_head *ebh = EBH(bh);
+    int i;
 
     while (ebh->b_count || ebh->b_dirty || ebh->b_locked
 #if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
-		|| bh->b_data
+           || bh->b_data
 #endif
-								) {
-	if ((bh = ebh->b_next_lru) == NULL) {
-	    sync_buffers(0, 0);
-	    bh = bh_lru;
-	}
-	ebh = EBH(bh);
+                                                        ) {
+        if ((bh = ebh->b_next_lru) == NULL) {
+            sync_buffers(0, 0);
+            for (i=0; i<NR_MAPBUFS; i++) {
+                brelseL1_index(i, 1);   /* release if not mapcount or locked */
+            }
+            bh = bh_lru;
+        }
+        ebh = EBH(bh);
     }
+#ifdef CHECK_BLOCKIO
+    if (ebh->b_mapcount) panic("get_free_buffer"); /* mapped buffer reallocated */
+#endif
     put_last_lru(bh);
     ebh->b_uptodate = 0;
     ebh->b_count = 1;
@@ -338,7 +393,7 @@ void brelse(struct buffer_head *bh)
     wait_on_buffer(bh);
     ebh = EBH(bh);
 #ifdef CHECK_BLOCKIO
-    if (ebh->b_count == 0) panic("brelse: count 0");
+    if (ebh->b_count == 0) panic("brelse");
 #endif
     DCR_COUNT(ebh);
 #ifdef BLOAT_FS
@@ -453,9 +508,6 @@ struct buffer_head *getblk32(kdev_t dev, block32_t block)
     ebh = EBH(bh);
     ebh->b_dev = dev;
     ebh->b_blocknr = block;
-#if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
-    ebh->b_seg = bh->b_data? kernel_ds: ebh->b_ds;
-#endif
     goto return_it;
 
   found_it:
@@ -561,6 +613,28 @@ int sys_sync(void)
     return 0;
 }
 
+/* clear a buffer area to zeros, used to avoid slow map to L1 if possible */
+void zero_buffer(struct buffer_head *bh, size_t offset, int count)
+{
+#if defined(CONFIG_FS_XMS_INT15) || (!defined(CONFIG_FS_EXTERNAL_BUFFER) && !defined(CONFIG_FS_XMS_BUFFER))
+#define FORCEMAP 1
+#else
+#define FORCEMAP 0
+#endif
+    /* xms int15 doesn't support a memset function, so map into L1 */
+    if (FORCEMAP || bh->b_data) {
+        map_buffer(bh);
+        memset(bh->b_data + offset, 0, count);
+        unmap_buffer(bh);
+    }
+#if !FORCEMAP
+    else {
+        ext_buffer_head *ebh = EBH(bh);
+        xms_fmemset((char *)offset, ebh->b_L2seg, 0, count);
+    }
+#endif
+}
+
 #if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
 /* map_buffer copies a buffer into L1 buffer space. It will freeze forever
  * before failing, so it can return void.  This is mostly 8086 dependant,
@@ -571,8 +645,11 @@ void map_buffer(struct buffer_head *bh)
     ext_buffer_head *ebh = EBH(bh);
     int i;
 
+    /* wait for any I/O complete before mapping to prevent bh/req buffer unpairing */
+    wait_on_buffer(bh);
+
     /* If buffer is already mapped, just increase the refcount and return */
-    if (bh->b_data /*|| ebh->b_seg != kernel_ds*/) {
+    if (bh->b_data) {
 	if (!ebh->b_mapcount)
 	    debug("REMAP: %d\n", buf_num(bh));
 	goto end_map_buffer;
@@ -593,16 +670,15 @@ void map_buffer(struct buffer_head *bh)
 	ebmap = EBH(bmap);
 
 	/* L1 with zero count can be unmapped and reused for this request*/
+#ifdef CHECK_BLOCKIO
 	if (ebmap->b_mapcount < 0)
-		printk("map_buffer: %d BAD mapcount %d\n", buf_num(bmap), ebmap->b_mapcount);
-	if (!ebmap->b_mapcount) {
+	    printk("map_buffer: %d BAD mapcount %d\n", buf_num(bmap), ebmap->b_mapcount);
+#endif
+        /* don't remap if I/O in progress to prevent bh/req buffer unpairing */
+	if (!ebmap->b_mapcount && !ebmap->b_locked) {
 	    debug("UNMAP: %d <- %d\n", buf_num(bmap), i);
-
-	    /* Unmap/copy L1 to L2 */
-	    xms_fmemcpyw(ebmap->b_L2data, ebmap->b_ds, bmap->b_data, kernel_ds, BLOCK_SIZE/2);
-	    bmap->b_data = (char *)0;
-	    ebmap->b_seg = ebmap->b_ds;
-	    break;		/* success */
+	    brelseL1_index(i, 1);       /* Unmap/copy L1 to L2 */
+	    break;
 	}
 	if (i == lastL1map) {
 	    /* no free L1 buffers, must wait for L1 unmap_buffer*/
@@ -616,10 +692,11 @@ void map_buffer(struct buffer_head *bh)
     L1map[i] = bh;
     bh->b_data = (char *)L1buf + (i << BLOCK_SIZE_BITS);
     if (ebh->b_uptodate)
-	xms_fmemcpyw(bh->b_data, kernel_ds, ebh->b_L2data, ebh->b_ds, BLOCK_SIZE/2);
+	xms_fmemcpyw(bh->b_data, kernel_ds, 0, ebh->b_L2seg, BLOCK_SIZE/2);
     debug("MAP:   %d -> %d\n", buf_num(bh), i);
+    if (ebh->b_blocknr >= 5 /*&& ebh->b_dev == 0x200*/)
+        debug_blk("map block %ld into L%d\n", ebh->b_blocknr, i+1);
   end_map_buffer:
-    ebh->b_seg = kernel_ds;
     ebh->b_mapcount++;
 }
 
@@ -633,10 +710,13 @@ void unmap_buffer(struct buffer_head *bh)
     if (bh) {
 	ext_buffer_head *ebh = EBH(bh);
 
+#ifdef CHECK_BLOCKIO
 	if (ebh->b_mapcount <= 0) {
 	    printk("unmap_buffer: %d BAD mapcount %d\n", buf_num(bh), ebh->b_mapcount);
 	    ebh->b_mapcount = 0;
-	} else if (--ebh->b_mapcount == 0) {
+	} else
+#endif
+        if (--ebh->b_mapcount == 0) {
 	    debug("unmap: %d\n", buf_num(bh));
 	    wake_up(&L1wait);
 	} else
@@ -650,8 +730,44 @@ void unmap_brelse(struct buffer_head *bh)
     brelse(bh);
 }
 
+/* release L1 buffer by index with optional copyout */
+void brelseL1_index(int i, int copyout)
+{
+    struct buffer_head *bh = L1map[i];
+    ext_buffer_head *ebh;
+
+    if (!bh) return;
+    ebh = EBH(bh);
+    if (ebh->b_mapcount || ebh->b_locked)
+        return;
+    if (copyout && ebh->b_uptodate && bh->b_data) {
+        xms_fmemcpyw(0, ebh->b_L2seg, bh->b_data, kernel_ds, BLOCK_SIZE/2);
+    }
+    bh->b_data = 0;
+    L1map[i] = 0;
+}
+
+/* release L1 buffer by buffer head with optional copyout */
+void brelseL1(struct buffer_head *bh, int copyout)
+{
+    int i;
+
+    if (!bh) return;
+    for (i = 0; i < NR_MAPBUFS; i++) {
+        if (L1map[i] == bh) {
+            brelseL1_index(i, copyout);
+            break;
+        }
+    }
+}
+
+ramdesc_t buffer_seg(struct buffer_head *bh)
+{
+    return (bh->b_data? kernel_ds: EBH(bh)->b_L2seg);
+}
+
 char *buffer_data(struct buffer_head *bh)
 {
-    return (bh->b_data? bh->b_data: EBH(bh)->b_L2data);
+    return (bh->b_data? bh->b_data: 0); /* L2 addresses are at offset 0 */
 }
 #endif /* CONFIG_FS_EXTERNAL_BUFFER | CONFIG_FS_XMS_BUFFER*/

@@ -48,6 +48,4 @@
 
 #define MAX_ERRS		5
 
-#define HDIO_GET_SECTOR_SIZE    0x0330  /* ioctl get drive sector size */
-
 #endif

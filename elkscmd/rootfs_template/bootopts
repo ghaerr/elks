@@ -14,6 +14,6 @@ wd0=10,0x300,0xCC00,0x80
 #init=/bin/init 3 n	# multiuser serial no /etc/rc.sys
 #init=/bin/sh		# singleuser sh
 #root=hda1 ro		# root hd partition 1 read-only
-kstack
+#kstack
 #strace
 #console=ttyS0,19200 3

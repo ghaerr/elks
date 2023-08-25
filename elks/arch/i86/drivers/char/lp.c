@@ -266,7 +266,7 @@ static struct file_operations lp_fops = {
 
 /*@+type@*/
 
-void lp_init(void)
+void INITPROC lp_init(void)
 {
     register struct lp_info *lp = &ports[0];
     int i;

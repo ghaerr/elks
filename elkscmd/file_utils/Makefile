@@ -13,7 +13,7 @@ include $(BASEDIR)/Make.rules
 # note: grep doesn't read stdin, replaced with minix1/grep
 # removed: l
 PRGS = ln ls mkdir mkfifo mknod more mv rm rmdir sync touch \
-	cat chgrp chmod chown cmp cp dd df grep split
+	cat chgrp chmod chown cmp cp dd df grep md5sum split
 
 all: $(PRGS)
 
@@ -52,6 +52,9 @@ ln: ln.o
 
 ls: ls.o
 	$(LD) $(LDFLAGS) -maout-heap=20480 -o ls ls.o $(LDLIBS)
+
+md5sum: md5sum.o
+	$(LD) $(LDFLAGS) -o md5sum md5sum.o $(LDLIBS)
 
 mkdir: mkdir.o
 	$(LD) $(LDFLAGS) -o mkdir mkdir.o $(LDLIBS)
