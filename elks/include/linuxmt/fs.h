@@ -17,6 +17,7 @@
 
 #include <arch/bitops.h>
 #include <arch/statfs.h>
+#include <arch/segment.h>
 
 #ifdef CONFIG_PIPE
 #include <linuxmt/pipe_fs_i.h>
@@ -133,7 +134,7 @@ struct ext_buffer_head_s {
     unsigned char		b_dirty;
     unsigned char		b_uptodate;
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
-    ramdesc_t			b_L2seg;	/* L2 buffer addr at segment:0 */
+    ramdesc_t			b_L2seg;	/* EXT seg:0 or XMS linear addr of L2 */
     char			b_mapcount;	/* count of L2 buffer mapped into L1 */
 #endif
 };
