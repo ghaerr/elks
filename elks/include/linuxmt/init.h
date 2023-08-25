@@ -21,7 +21,7 @@ struct drive_infot;
 /* kernel init routines*/
 extern void INITPROC kernel_init(void);
 extern int  INITPROC buffer_init(void);
-extern void console_init(void);
+extern void INITPROC console_init(void);
 extern void INITPROC fs_init(void);
 extern void INITPROC inode_init(void);
 extern void INITPROC irq_init(void);
@@ -53,7 +53,7 @@ extern void romflash_init(void);
 extern void INITPROC chr_dev_init(void);
 extern void INITPROC cgatext_init(void);
 extern void INITPROC eth_init(void);
-extern void ne2k_drv_init(void);
+extern void INITPROC ne2k_drv_init(void);
 extern void INITPROC el3_drv_init(void);
 extern void INITPROC wd_drv_init(void);
 extern void INITPROC lp_init(void);

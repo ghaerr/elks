@@ -140,7 +140,7 @@ static void update_port(struct serial_info *port)
 }
 
 /* Called from main.c! */
-void console_init(void)
+void INITPROC console_init(void)
 {
     struct serial_info *sp = &ports[0]; /* TODO: add support for Serial 1 */
 

@@ -184,7 +184,7 @@ struct tty_ops dircon_ops = {
     Console_conout
 };
 
-void console_init(void)
+void INITPROC console_init(void)
 {
     Console *C;
     int i;

@@ -382,7 +382,7 @@ void ne2k_display_status(void)
 #endif
 
 /* return 0 if NE2K NIC present */
-word_t ne2k_probe()
+static word_t INITPROC ne2k_probe(void)
 {
     int reg0;
 
@@ -422,7 +422,7 @@ word_t ne2k_probe()
  * FIXME: Needs return value to signal that initalization failed.
  */
 
-void ne2k_drv_init(void)
+void INITPROC ne2k_drv_init(void)
 {
 	int err, i;
 	word_t prom[16];	/* PROM containing HW MAC address and more 
