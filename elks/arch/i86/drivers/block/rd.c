@@ -281,7 +281,7 @@ static struct file_operations rd_fops = {
     rd_release			/* release */
 };
 
-void rd_init(void)
+void INITPROC rd_init(void)
 {
     if (register_blkdev(MAJOR_NR, DEVICE_NAME, &rd_fops) == 0) {
 	blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;

@@ -90,7 +90,7 @@ enum RxFilter {
 #define EP_ID_PORT_END 0x200
 #define EP_TAG_MAX		0x7 /* must be 2^n - 1 */
 
-static int el3_isa_probe();
+static int INITPROC el3_isa_probe();
 //static word_t read_eeprom(int, int);
 static word_t id_read_eeprom(int);
 static size_t el3_write(struct inode *, struct file *, char *, size_t);
@@ -141,7 +141,7 @@ struct file_operations el3_fops =
     el3_release
 };
 
-void el3_drv_init(void) {
+void INITPROC el3_drv_init(void) {
 	ioaddr = net_port;		// temporary
 
 	verbose = (net_flags&ETHF_VERBOSE);
@@ -156,7 +156,7 @@ void el3_drv_init(void) {
 
 }
 
-static int el3_find_id_port ( void ) {
+static int INITPROC el3_find_id_port ( void ) {
 
 	for ( el3_id_port = EP_ID_PORT_START ;
 	      el3_id_port < EP_ID_PORT_END ;
@@ -176,7 +176,7 @@ static int el3_find_id_port ( void ) {
 }
 
 /* Return 0 on success, 1 on error */
-static int el3_isa_probe( void )
+static int INITPROC el3_isa_probe( void )
 {
 	short lrs_state = 0xff;
 	int i;

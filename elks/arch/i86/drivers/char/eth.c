@@ -93,7 +93,7 @@ static struct file_operations eth_fops = {
     eth_release
 };
 
-void /*INITPROC*/ eth_init(void)
+void INITPROC eth_init(void)
 {
     register_chrdev(ETH_MAJOR, "eth", &eth_fops);
 

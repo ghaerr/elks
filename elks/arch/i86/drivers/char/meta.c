@@ -15,6 +15,7 @@
 #ifdef CONFIG_DEV_META
 
 #include <linuxmt/major.h>
+#include <linuxmt/init.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/mm.h>
@@ -345,9 +346,9 @@ static struct file_operations meta_chr_fops = {
     meta_release		/* release */
 };
 
-void meta_init(void)
+void INITPROC meta_init(void)
 {
-    printk("Userspace device driver Copyright (C) 1999 Alistair Riddoch\n");
+    debug("Userspace device driver Copyright (C) 1999 Alistair Riddoch\n");
     if (!register_chrdev(MAJOR_NR, DEVICE_NAME, &meta_chr_fops))
 	meta_initialised = 1;
 }

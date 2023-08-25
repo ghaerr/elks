@@ -182,7 +182,7 @@ struct tty_ops ttyp_ops = {
 
 /*@+type@*/
 
-void pty_init(void)
+void INITPROC pty_init(void)
 {
     register_chrdev(PTY_MASTER_MAJOR, "pty", &pty_fops);
 }

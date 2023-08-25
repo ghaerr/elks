@@ -37,7 +37,7 @@ static struct file_operations ssd_fops = {
     ssd_release                 /* release */
 };
 
-void ssd_init(void)
+void INITPROC ssd_init(void)
 {
     if (register_blkdev(MAJOR_NR, DEVICE_NAME, &ssd_fops) == 0) {
         blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;

@@ -414,10 +414,9 @@ static struct file_operations memory_fops = {
 
 /*@+type@*/
 
-void mem_dev_init(void)
+void INITPROC mem_dev_init(void)
 {
-    if (register_chrdev(MEM_MAJOR, "mem", &memory_fops))
-	printk("MEM: Unable to get major %d for memory devices\n", MEM_MAJOR);
+    register_chrdev(MEM_MAJOR, "mem", &memory_fops);
 }
 
 #endif

@@ -176,7 +176,7 @@ static struct file_operations tcpdev_fops = {
 
 /*@+type@*/
 
-void tcpdev_init(void)
+void INITPROC tcpdev_init(void)
 {
     register_chrdev(TCPDEV_MAJOR, "tcpdev", &tcpdev_fops);
     bufin_sem = bufout_sem = 0;
