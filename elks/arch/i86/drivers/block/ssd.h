@@ -10,4 +10,6 @@ int ssddev_ioctl(struct inode *inode, struct file *file,
 int ssddev_write(sector_t start, char *buf, ramdesc_t seg);
 int ssddev_read(sector_t start, char *buf, ramdesc_t seg);
 
+extern char ssd_initialized;
+
 #endif /* !_SSD_H */

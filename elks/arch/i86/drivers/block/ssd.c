@@ -22,6 +22,7 @@ jiff_t ssd_timeout;
 
 static sector_t NUM_SECTS = 0;  /* max # sectors on SSD device */
 static int access_count;
+char ssd_initialized;
 
 static int ssd_open(struct inode *, struct file *);
 static void ssd_release(struct inode *, struct file *);
@@ -52,7 +53,7 @@ static int ssd_open(struct inode *inode, struct file *filp)
 {
     debug_blk("SSD: open\n");
     if (!NUM_SECTS)
-        return -ENXIO;
+        return -ENODATA;
     ++access_count;
     inode->i_size = NUM_SECTS << 9;
     return 0;
@@ -153,9 +154,9 @@ static void do_ssd_request(void)
         }
         CHECK_REQUEST(req);
 
-        if (!NUM_SECTS) {
+        if (!ssd_initialized) {
             end_request(0);
-            continue;
+            return;
         }
 #ifdef CONFIG_ASYNCIO
         ssd_timeout = jiffies + IODELAY;    /* schedule completion callback */

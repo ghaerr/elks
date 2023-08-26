@@ -58,6 +58,7 @@ int ssddev_ioctl(struct inode *inode, struct file *file,
 	    unsigned long offset = (unsigned long)sector << 9;
 	    fmemsetw(0, ssd_seg->base + (unsigned int)(offset >> 4), 0, 256);
 	}
+	ssd_initialized = 1;
 	return 0;
 
     case RDDESTROY:
@@ -67,6 +68,7 @@ int ssddev_ioctl(struct inode *inode, struct file *file,
 	    invalidate_buffers(inode->i_rdev);
 	    seg_put(ssd_seg);
 	    ssd_seg = NULL;
+	    ssd_initialized = 0;
 	    return 0;
 	}
         return -ENXIO;          /* return separate error if ramdisk not inited */
