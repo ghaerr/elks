@@ -37,8 +37,8 @@ mkfat: mkfat.o $(TINYPRINTF)
 partype: partype.o
 	$(LD) $(LDFLAGS) -o partype partype.o $(LDLIBS)
 
-ramdisk: ramdisk.o $(TINYPRINTF)
-	$(LD) $(LDFLAGS) -o ramdisk ramdisk.o $(TINYPRINTF) $(LDLIBS)
+ramdisk: ramdisk.o
+	$(LD) $(LDFLAGS) -o ramdisk ramdisk.o $(LDLIBS)
 
 clean:
 	rm -f *.o $(FORMATMOD) core $(PRGS)
