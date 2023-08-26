@@ -570,6 +570,7 @@ sector_t ssddev_init(void) {
     
     if (!ret) {
         debug("ssdev_init SD card found, type %d, size %ld\n", _sd_type, card_size);
+        ssd_initialized = 1;
         return card_size * 2UL;
     } else {
         debug("ssdev_init error initializing SD card (%d)\n", ret);
