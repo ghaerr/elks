@@ -22,7 +22,13 @@ Prompt user for repairs if inconsistencies are found
 List the superblock of the filesystem
 .TP 5
 .B \-v
-Turn on verbose mode
+Display filesystem summary. When used with -l, displays inode number, mode and link count.
+.TP 5
+.B \-vv
+When used with -l, displays inode size, uid/gid and nonzero Z map blocks.
+.TP 5
+.B \-vvv
+When used with -l, displays inode size, uid/gid and all Z map blocks.
 .TP 5
 .B \-w
 Warn about inodes that can't be cleared

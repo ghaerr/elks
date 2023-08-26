@@ -38,7 +38,8 @@
  *			      program name and version number when program
  *			      is executed.
  *
- * Tue Sep 1 2020 - Greg Haerr fixed fsck to work on ELKS
+ * Tue Sep  1 2020 - Greg Haerr fixed fsck to work on ELKS
+ * Fri Aug 25 2023 - Greg Haerr improved formatting for -lvv and -lvvv output
  *
  * I've had no time to add comments - hopefully the function names
  * are comments enough. As with all file system checkers, this assumes
@@ -238,11 +239,13 @@ void inode_dump(struct minix_inode * ptr)
 {
 	int i;
 
-	printf(" size %ld %06o %d/%d links %d Z",
-		ptr->i_size, ptr->i_mode, ptr->i_uid, ptr->i_gid, ptr->i_nlinks);
-	for (i = 0; i < 9; i++)
-		printf("%d ", ptr->i_zone[i]);
-	printf("\n");
+	printf(" %5ld %d/%d Z", ptr->i_size, ptr->i_uid, ptr->i_gid);
+	for (i = 0; i < 9; i++) {
+		if (ptr->i_zone[i] || verbose > 2)
+			printf(S_ISBLK(ptr->i_mode) || S_ISCHR(ptr->i_mode)? " 0x%04x": " %u",
+				ptr->i_zone[i]);
+		else break;
+	}
 }
 
 
@@ -295,13 +298,13 @@ struct minix_inode * map_inode(unsigned int nr)
  * current file.
  */
 
-void print_current_name(void)
+int print_current_name(void)
 {
-	int i=0;
+	int i, count = 0;
 
-	while (i < name_depth)
-		printf("/%.*s",14,name_list[i++]);
-		/* FIXME 14 can be integrated */
+	for(i = 0; i < name_depth;)
+		count += printf("/%.14s",name_list[i++]);
+	return count;
 }
 
 int ask(const char * string, int def)
@@ -731,7 +734,7 @@ void check_file(struct minix_inode * dir, unsigned long offset)
 {
 	static char blk[BLOCK_SIZE];
 	struct minix_inode * inode;
-	int ino;
+	int ino, width;
 	char * name;
 	unsigned int block;
 
@@ -777,14 +780,15 @@ void check_file(struct minix_inode * dir, unsigned long offset)
 	if (name_depth < MAX_DEPTH)
 		strncpy(name_list[name_depth],name,NAMELEN);
 	name_depth++;
-	if (verbose > 1) {
-		print_current_name();
-		inode_dump(inode);
-	} else if (list) {
+	if (list) {
 		if (verbose)
-			printf("%6d %06o %3d ",ino,inode->i_mode,inode->i_nlinks);
-		print_current_name();
-		if (S_ISDIR(inode->i_mode))
+			printf("%5d %06o %2d ", ino, inode->i_mode, inode->i_nlinks);
+		width = print_current_name();
+		if (verbose > 1) {
+			while (width++ < 24) printf(" ");
+			inode_dump(inode);
+		}
+		if (S_ISDIR(inode->i_mode) && verbose < 2)
 			printf(":\n");
 		else
 			printf("\n");
@@ -891,8 +895,10 @@ void check(void)
 	fmemset(zone_count,0,ZONES*sizeof(*zone_count));
 	check_zones(ROOT_INO);
 	if (verbose > 1) {
-		printf("/");
-		inode_dump(map_inode(ROOT_INO));
+		struct minix_inode *ptr = map_inode(ROOT_INO);
+		printf("%5d %06o %2d /%23s", ROOT_INO, ptr->i_mode, ptr->i_nlinks, " ");
+		inode_dump(ptr);
+		printf("\n");
 	}
 	recursive_check(ROOT_INO);
 	check_counts();
