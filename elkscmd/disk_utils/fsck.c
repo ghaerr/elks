@@ -242,7 +242,8 @@ void inode_dump(struct minix_inode * ptr)
 	printf(" %5ld %d/%d Z", ptr->i_size, ptr->i_uid, ptr->i_gid);
 	for (i = 0; i < 9; i++) {
 		if (ptr->i_zone[i] || verbose > 2)
-			printf(" %u", ptr->i_zone[i]);
+			printf(S_ISBLK(ptr->i_mode) || S_ISCHR(ptr->i_mode)? " 0x%04x": " %u",
+				ptr->i_zone[i]);
 		else break;
 	}
 }
