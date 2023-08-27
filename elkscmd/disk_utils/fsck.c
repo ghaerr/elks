@@ -980,13 +980,13 @@ int main(int argc, char ** argv)
 		for (i=1,free=0 ; i < INODES ; i++)
 			if (!inode_in_use(i))
 				free++;
-		printf("\n%6u inodes used (%d%%)\n",(INODES-free-1),
-			100*(INODES-free-1)/(INODES-1));
+		printf("\n%6u inodes used (%2d%%) %6u total\n",(INODES-free-1),
+			100*(INODES-free-1)/(INODES-1), INODES-1);
 		for (i=FIRSTZONE,free=0 ; i < ZONES ; i++)
 			if (!zone_in_use(i))
 				free++;
-		printf("%6u zones used (%d%%)\n", ZONES - free ,
-			(int)(100*((long)ZONES-free)/ZONES));
+		printf("%6u  zones used (%2d%%) %6u total\n", ZONES - free ,
+			(int)(100*((long)ZONES-free)/ZONES), ZONES);
 		printf("\n%6u regular files\n"
 		"%6u directories\n"
 		"%6d character device files\n"

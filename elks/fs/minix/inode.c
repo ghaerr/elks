@@ -177,9 +177,9 @@ struct super_block *minix_read_super(register struct super_block *s, char *data,
 	s->u.minix_sb.s_log_zone_size = ms->s_log_zone_size;
 	s->u.minix_sb.s_max_size = ms->s_max_size;
 	s->u.minix_sb.s_nzones = ms->s_nzones;
-#ifdef BLOAT_FS
-	s->s_magic = ms->s_magic;
-#endif
+	debug_sup("MINIX: inodes %d imap %d zmap %d, first data %d\n",
+	    ms->s_ninodes, ms->s_imap_blocks, ms->s_zmap_blocks,
+	    ms->s_firstdatazone);
 
 	/*
 	 *      FIXME:: We cant keep these in memory on an 8086, need to change
