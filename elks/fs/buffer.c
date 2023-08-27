@@ -331,7 +331,7 @@ static void sync_buffers(kdev_t dev, int wait)
 	 *      AND pass > 0.
 	 */
 	if (ebh->b_locked) {
-            debug_blk("SYNC: dev %x buf %d block %ld LOCKED mapped %d skipped %d data %04x\n",
+            debug_blk("SYNC: dev %p buf %d block %ld LOCKED mapped %d skipped %d data %04x\n",
                 ebh->b_dev, buf_num(bh), ebh->b_blocknr, ebh->b_mapcount, !wait,
                 bh->b_data);
 	    if (!wait) continue;
@@ -341,8 +341,8 @@ static void sync_buffers(kdev_t dev, int wait)
 	/*
 	 *      Do the stuff
 	 */
-        debug_blk("sync: dev %x write buf %d block %ld count %d\n",
-            ebh->b_dev, buf_num(bh), ebh->b_blocknr, ebh->b_count);
+        debug_blk("sync: dev %p write buf %d block %ld count %d dirty %d\n",
+            ebh->b_dev, buf_num(bh), ebh->b_blocknr, ebh->b_count, ebh->b_dirty);
 	ebh->b_count++;
 	ll_rw_blk(WRITE, bh);
 	ebh->b_count--;
