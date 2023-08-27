@@ -27,7 +27,12 @@
 #define NR_MAPBUFS  8
 #endif
 
-int boot_bufs;		/* /bootopts # buffers override */
+#ifdef CONFIG_FS_EXTERNAL_BUFFER
+int nr_ext_bufs = CONFIG_FS_NR_EXT_BUFFERS;     /* override with /bootopts buf= */
+#endif
+#ifdef CONFIG_FS_XMS_BUFFER
+int nr_xms_bufs = CONFIG_FS_NR_XMS_BUFFERS;     /* override with /bootopts xmsbuf= */
+#endif
 
 /* Buffer heads: local heap allocated */
 static struct buffer_head *buffer_heads;
@@ -180,17 +185,16 @@ int INITPROC buffer_init(void)
 {
     /* XMS buffers override EXT buffers override internal buffers*/
 #if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
-    int bufs_to_alloc = CONFIG_FS_NR_EXT_BUFFERS;
+    int bufs_to_alloc = nr_ext_bufs;
 
 #ifdef CONFIG_FS_XMS_BUFFER
-    xms_enabled = xms_init();	/* try to enable unreal mode and A20 gate*/
+    if (nr_xms_bufs)
+        xms_enabled = xms_init();	/* try to enable unreal mode and A20 gate*/
     if (xms_enabled)
-	bufs_to_alloc = CONFIG_FS_NR_XMS_BUFFERS;
+        bufs_to_alloc = nr_xms_bufs;
 #endif
-    if (boot_bufs)
-	bufs_to_alloc = boot_bufs;
 #ifdef CONFIG_FAR_BUFHEADS
-    if (bufs_to_alloc > 2500) bufs_to_alloc = 2500; /* max 64K far bufheads @26 bytes*/
+    if (bufs_to_alloc > 2975) bufs_to_alloc = 2975; /* max 64K far bufheads @22 bytes*/
 #else
     if (bufs_to_alloc > 256) bufs_to_alloc = 256; /* protect against high XMS value*/
 #endif
