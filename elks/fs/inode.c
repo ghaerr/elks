@@ -83,13 +83,13 @@ static void list_inode_status(void)
 
     do {
         if (inode->i_count || inode->i_dev || inode->i_dirt) {
-            printk("#%2d: dev %D inode %5lu dirty %d count %u\n", i, inode->i_dev,
+            printk("\n#%2d: dev %D inode %5lu dirty %d count %u", i, inode->i_dev,
                 (unsigned long)inode->i_ino, inode->i_dirt, inode->i_count);
         }
         i++;
         if (inode->i_count) inuse++;
     } while ((inode = inode->i_prev) != NULL);
-    printk("Total inodes inuse %d/%d (%d free)\n", inuse, NR_INODE, nr_free_inodes);
+    printk("\nTotal inodes inuse %d/%d (%d free)\n", inuse, NR_INODE, nr_free_inodes);
 }
 #endif
 

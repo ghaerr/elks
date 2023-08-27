@@ -82,6 +82,7 @@ static struct wait_queue L1wait;		/* Wait for a free L1 buffer area */
 static int lastL1map;
 #endif
 static int xms_enabled;
+static int map_count, remap_count, unmap_count;
 
 #ifdef CHECK_FREECNTS
 static int nr_free_bh, nr_bh;
@@ -167,17 +168,18 @@ static void list_buffer_status(void)
                     }
                 }
             }
-            printk("#%3d: buf %3d blk/dev %5ld/%p %c%c%c mapped L%02d %d count %d\n",
+            printk("\n#%3d: buf %3d blk/dev %5ld/%p %c%c%c %smapped L%02d %d count %d",
                 i, buf_num(bh), ebh->b_blocknr, ebh->b_dev,
                 ebh->b_locked?  'L': ' ',
                 ebh->b_dirty?   'D': ' ',
                 ebh->b_uptodate?'U': ' ',
-                j, ebh->b_mapcount, ebh->b_count);
+                j? "  ": "un", j, ebh->b_mapcount, ebh->b_count);
         }
         i++;
         if (isinuse) inuse++;
     } while ((bh = ebh->b_prev_lru) != NULL);
-    printk("Total buffers inuse %d/%d (%d free)\n", inuse, nr_bh, nr_free_bh);
+    printk("\nTotal buffers inuse %d/%d (%d free)", inuse, nr_bh, nr_free_bh);
+    printk(", map %u, unmap %u remap %u\n", map_count, unmap_count, remap_count);
 }
 #endif
 
@@ -656,6 +658,7 @@ void map_buffer(struct buffer_head *bh)
     if (bh->b_data) {
 	if (!ebh->b_mapcount)
 	    debug("REMAP: %d\n", buf_num(bh));
+        remap_count++;
 	goto end_map_buffer;
     }
 
@@ -697,6 +700,7 @@ void map_buffer(struct buffer_head *bh)
     bh->b_data = (char *)L1buf + (i << BLOCK_SIZE_BITS);
     if (ebh->b_uptodate)
 	xms_fmemcpyw(bh->b_data, kernel_ds, 0, ebh->b_L2seg, BLOCK_SIZE/2);
+    map_count++;
     debug("MAP:   %d -> %d\n", buf_num(bh), i);
     if (ebh->b_blocknr >= 5 /*&& ebh->b_dev == 0x200*/)
         debug_blk("map block %ld into L%d\n", ebh->b_blocknr, i+1);
@@ -746,6 +750,7 @@ void brelseL1_index(int i, int copyout)
         return;
     if (copyout && ebh->b_uptodate && bh->b_data) {
         xms_fmemcpyw(0, ebh->b_L2seg, bh->b_data, kernel_ds, BLOCK_SIZE/2);
+        unmap_count++;
     }
     bh->b_data = 0;
     L1map[i] = 0;

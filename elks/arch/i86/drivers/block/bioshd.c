@@ -892,6 +892,9 @@ static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *b
 	unsigned int cylinder, head, sector, this_pass;
 	unsigned int segment, offset;
 	unsigned short in_ax, out_ax;
+    unsigned int physaddr;
+    size_t end;
+    int usedmaseg;
 
 	drive = drivep - drive_info;
 	map_drive(&drive);
@@ -904,16 +907,22 @@ static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *b
 
 	errs = MAX_ERRS;	/* BIOS disk reads should be retried at least three times */
 	do {
-#ifdef CONFIG_FS_XMS_BUFFER
-		if (seg >> 16) {
-			segment = DMASEG;		/* if xms buffer use DMASEG*/
+        usedmaseg = seg >> 16; /* will be nonzero only if XMS configured and XMS buffer */
+        if (!usedmaseg) {
+            /* check for 64k I/O overlap */
+            physaddr = (seg << 4) + (unsigned int)buf;
+            end = this_pass * drivep->sector_size - 1;
+            usedmaseg = (physaddr + end < physaddr);
+            debug_blk("bioshd: %p:%p = %p count %d wrap %d\n",
+                (unsigned int)seg, buf, physaddr, this_pass, usedmaseg);
+        }
+        if (usedmaseg) {
+			segment = DMASEG;	/* if xms buffer use DMASEG*/
 			offset = 0;
 			if (cmd == WRITE)	/* copy xms buffer down before write*/
 				xms_fmemcpyw(0, DMASEG, buf, seg, this_pass*(drivep->sector_size >> 1));
 			set_cache_invalid();
-		} else
-#endif
-		{
+		} else {
 			segment = (seg_t)seg;
 			offset = (unsigned) buf;
 		}
@@ -938,13 +947,11 @@ static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *b
 		       "ES:BX=%04X:%04X\n", out_ax, in_ax, BD_ES, BD_BX);
 		return 0;
 	}
-#ifdef CONFIG_FS_XMS_BUFFER
-	if (seg >> 16) {
+	if (usedmaseg) {
 		if (cmd == READ)	/* copy DMASEG up to xms*/
 			xms_fmemcpyw(buf, seg, 0, DMASEG, this_pass*(drivep->sector_size >> 1));
 		set_cache_invalid();
 	}
-#endif
 	return this_pass;
 }
 
