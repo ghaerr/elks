@@ -40,6 +40,7 @@ struct netif_parms netif_parms[MAX_ETHS] = {
 };
 __u16 kernel_cs, kernel_ds;
 int tracing;
+int nr_ext_bufs, nr_xms_bufs;
 static int boot_console;
 static char bininit[] = "/bin/init";
 static char binshell[] = "/bin/sh";
@@ -68,7 +69,6 @@ static char *envp_init[MAX_INIT_ENVS+1];
 static unsigned char options[OPTSEGSZ];
 
 extern int boot_rootdev;
-extern int boot_bufs;
 extern int dprintk_on;
 static char * INITPROC root_dev_name(int dev);
 static int parse_options(void);
@@ -466,8 +466,12 @@ static int parse_options(void)
 			parse_nic(line+4, &netif_parms[ETH_EL3]);
 			continue;
 		}
-		if (!strncmp(line,"bufs=",5)) {
-			boot_bufs = (int)simple_strtol(line+5, 10);
+		if (!strncmp(line,"buf=",4)) {
+			nr_ext_bufs = (int)simple_strtol(line+4, 10);
+			continue;
+		}
+		if (!strncmp(line,"xmsbuf=",7)) {
+			nr_xms_bufs = (int)simple_strtol(line+7, 10);
 			continue;
 		}
 		if (!strncmp(line,"comirq=",7)) {
