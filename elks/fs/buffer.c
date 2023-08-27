@@ -7,6 +7,7 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/heap.h>
 #include <linuxmt/errno.h>
+#include <linuxmt/limits.h>
 #include <linuxmt/trace.h>
 #include <linuxmt/debug.h>
 
@@ -20,12 +21,8 @@
  */
 
 /* Number of internal L1 buffers, used to map/copy external L2 buffers
-   to/from kernel data segment. Override with /bootopts cache= */
-#ifdef CONFIG_FS_FAT
-int nr_map_bufs = 12;
-#else
-int nr_map_bufs = 8;
-#endif
+   to/from kernel data segment. */
+int nr_map_bufs = NR_MAPBUFS;                   /* override with /bootopts cache= */
 #define MAX_NR_MAPBUFS  20
 
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
@@ -204,8 +201,8 @@ int INITPROC buffer_init(void)
     if (bufs_to_alloc > 256) bufs_to_alloc = 256; /* protect against high XMS value*/
 #endif
 
-    printk("%d %s buffers, %ld ram\n", bufs_to_alloc, xms_enabled? "xms": "ext",
-		(long)bufs_to_alloc << 10);
+    printk("%d %s buffers (%dK ram), %dK cache\n", bufs_to_alloc,
+        xms_enabled? "xms": "ext", bufs_to_alloc, nr_map_bufs);
 #else
     int bufs_to_alloc = nr_map_bufs;
 #endif
