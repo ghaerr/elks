@@ -31,8 +31,9 @@
 
 /* The following can be set for minimal systems or for QEMU emulation testing */
 /* An absolute min heap 24 buffers (@24 = 576), 2 ttyq (@80 = 160), 256 free = ~1328 */
+/* Must now add L1 buffers, +8k MINIX or +12k FAT */
 #if defined(CONFIG_HW_MK88)
-#define SETUP_HEAPSIZE            1328    /* force kernel heap size */
+#define SETUP_HEAPSIZE            13616   /* force kernel heap size */
 #endif
 //#undef SETUP_MEM_KBYTES
 //#define SETUP_MEM_KBYTES        256     /* force available memory in 1K bytes */

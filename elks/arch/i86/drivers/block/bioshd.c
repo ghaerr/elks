@@ -907,6 +907,7 @@ static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *b
 
 	errs = MAX_ERRS;	/* BIOS disk reads should be retried at least three times */
 	do {
+#pragma GCC diagnostic ignored "-Wshift-count-overflow"
         usedmaseg = seg >> 16; /* will be nonzero only if XMS configured and XMS buffer */
         if (!usedmaseg) {
             /* check for 64k I/O overlap */

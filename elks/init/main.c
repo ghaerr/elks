@@ -40,7 +40,7 @@ struct netif_parms netif_parms[MAX_ETHS] = {
 };
 __u16 kernel_cs, kernel_ds;
 int tracing;
-int nr_ext_bufs, nr_xms_bufs;
+int nr_ext_bufs, nr_xms_bufs, nr_map_bufs;
 static int boot_console;
 static char bininit[] = "/bin/init";
 static char binshell[] = "/bin/sh";
@@ -472,6 +472,10 @@ static int parse_options(void)
 		}
 		if (!strncmp(line,"xmsbuf=",7)) {
 			nr_xms_bufs = (int)simple_strtol(line+7, 10);
+			continue;
+		}
+		if (!strncmp(line,"cache=",6)) {
+			nr_map_bufs = (int)simple_strtol(line+6, 10);
 			continue;
 		}
 		if (!strncmp(line,"comirq=",7)) {

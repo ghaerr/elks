@@ -7,6 +7,7 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/heap.h>
 #include <linuxmt/errno.h>
+#include <linuxmt/limits.h>
 #include <linuxmt/trace.h>
 #include <linuxmt/debug.h>
 
@@ -19,13 +20,10 @@
  * Kernel buffer management.
  */
 
-/* Number of internal L1 buffers,
-   used to map/copy external L2 buffers to/from kernel data segment */
-#ifdef CONFIG_FS_FAT
-#define NR_MAPBUFS  12
-#else
-#define NR_MAPBUFS  8
-#endif
+/* Number of internal L1 buffers, used to map/copy external L2 buffers
+   to/from kernel data segment. */
+int nr_map_bufs = NR_MAPBUFS;                   /* override with /bootopts cache= */
+#define MAX_NR_MAPBUFS  20
 
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
 int nr_ext_bufs = CONFIG_FS_NR_EXT_BUFFERS;     /* override with /bootopts buf= */
@@ -56,9 +54,8 @@ kdev_t buffer_dev(struct buffer_head *bh)          { return EBH(bh)->b_dev; }
 
 #endif /* CONFIG_FAR_BUFHEADS */
 
-/* Internal L1 buffers, must be kernel DS addressable */
-#define WORD_ALIGNED    __attribute__((aligned(2)))
-static char L1buf[NR_MAPBUFS][BLOCK_SIZE] WORD_ALIGNED;
+/* Internal L1 buffers, allocated from kernel near heap, must be DS addressable */
+static char *L1buf;
 
 /* Buffer cache */
 static struct buffer_head *bh_lru;
@@ -77,8 +74,8 @@ static struct buffer_head *bh_next;
  * Number of extended/xms  (L2) buffers specified in config by CONFIG_FS_NR_XMS_BUFFERS
  */
 #if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
-static struct buffer_head *L1map[NR_MAPBUFS];	/* L1 indexed pointer to L2 buffer */
-static struct wait_queue L1wait;		/* Wait for a free L1 buffer area */
+static struct buffer_head *L1map[MAX_NR_MAPBUFS]; /* L1 indexed pointer to L2 buffer */
+static struct wait_queue L1wait;		  /* Wait for a free L1 buffer area */
 static int lastL1map;
 #endif
 static int xms_enabled;
@@ -161,7 +158,7 @@ static void list_buffer_status(void)
         if (isinuse || bh->b_data) {
             j = 0;
             if (bh->b_data) {
-                for (; j<NR_MAPBUFS; j++) {
+                for (; j<nr_map_bufs; j++) {
                     if (L1map[j] == bh) {
                         j++;
                         break;
@@ -178,13 +175,16 @@ static void list_buffer_status(void)
         i++;
         if (isinuse) inuse++;
     } while ((bh = ebh->b_prev_lru) != NULL);
-    printk("\nTotal buffers inuse %d/%d (%d free)", inuse, nr_bh, nr_free_bh);
-    printk(", map %u, unmap %u remap %u\n", map_count, unmap_count, remap_count);
+    printk("\nTotal L2 buffers inuse %d/%d (%d free)", inuse, nr_bh, nr_free_bh);
+    printk(", %dk L1 (map %u, unmap %u remap %u)\n",
+        nr_map_bufs, map_count, unmap_count, remap_count);
 }
 #endif
 
 int INITPROC buffer_init(void)
 {
+    if (nr_map_bufs > MAX_NR_MAPBUFS) nr_map_bufs = MAX_NR_MAPBUFS;
+
     /* XMS buffers override EXT buffers override internal buffers*/
 #if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
     int bufs_to_alloc = nr_ext_bufs;
@@ -201,16 +201,19 @@ int INITPROC buffer_init(void)
     if (bufs_to_alloc > 256) bufs_to_alloc = 256; /* protect against high XMS value*/
 #endif
 
-    printk("%d %s buffers, %ld ram\n", bufs_to_alloc, xms_enabled? "xms": "ext",
-		(long)bufs_to_alloc << 10);
+    printk("%d %s buffers (%dK ram), %dK cache\n", bufs_to_alloc,
+        xms_enabled? "xms": "ext", bufs_to_alloc, nr_map_bufs);
 #else
-    int bufs_to_alloc = NR_MAPBUFS;
+    int bufs_to_alloc = nr_map_bufs;
 #endif
 
 #ifdef CHECK_FREECNTS
     nr_bh = nr_free_bh = bufs_to_alloc;
     debug_setcallback(1, list_buffer_status);   /* ^O will generate buffer list */
 #endif
+
+    if (!(L1buf = heap_alloc(nr_map_bufs * BLOCK_SIZE, HEAP_TAG_BUFHEAD|HEAP_TAG_CLEAR)))
+        return 1;
 
     buffer_heads = heap_alloc(bufs_to_alloc * sizeof(struct buffer_head),
 	HEAP_TAG_BUFHEAD|HEAP_TAG_CLEAR);
@@ -247,7 +250,7 @@ int INITPROC buffer_init(void)
     } while (bufs_to_alloc > 0);
 #else
     /* no EXT or XMS buffers, internal L1 only */
-    add_buffers(NR_MAPBUFS, (char *)L1buf, kernel_ds);
+    add_buffers(nr_map_bufs, L1buf, kernel_ds);
 #endif
     return 0;
 }
@@ -370,7 +373,7 @@ static struct buffer_head *get_free_buffer(void)
                                                         ) {
         if ((bh = ebh->b_next_lru) == NULL) {
             sync_buffers(0, 0);
-            for (i=0; i<NR_MAPBUFS; i++) {
+            for (i=0; i<nr_map_bufs; i++) {
                 brelseL1_index(i, 1);   /* release if not mapcount or locked */
             }
             bh = bh_lru;
@@ -668,7 +671,7 @@ void map_buffer(struct buffer_head *bh)
 	struct buffer_head *bmap;
 	ext_buffer_head *ebmap;
 
-	if (++i >= NR_MAPBUFS) i = 0;
+	if (++i >= nr_map_bufs) i = 0;
 	debug("map:   %d try %d\n", buf_num(bh), i);
 
 	/* First check for the trivial case, to avoid dereferencing a null pointer */
@@ -697,7 +700,7 @@ void map_buffer(struct buffer_head *bh)
     /* Map/copy L2 to L1 */
     lastL1map = i;
     L1map[i] = bh;
-    bh->b_data = (char *)L1buf + (i << BLOCK_SIZE_BITS);
+    bh->b_data = L1buf + (i << BLOCK_SIZE_BITS);
     if (ebh->b_uptodate)
 	xms_fmemcpyw(bh->b_data, kernel_ds, 0, ebh->b_L2seg, BLOCK_SIZE/2);
     map_count++;
@@ -762,7 +765,7 @@ void brelseL1(struct buffer_head *bh, int copyout)
     int i;
 
     if (!bh) return;
-    for (i = 0; i < NR_MAPBUFS; i++) {
+    for (i = 0; i < nr_map_bufs; i++) {
         if (L1map[i] == bh) {
             brelseL1_index(i, copyout);
             break;
