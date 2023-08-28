@@ -117,7 +117,7 @@ static void put_last_lru(struct buffer_head *bh)
     }
 }
 
-static void add_buffers(int nbufs, char *buf, ramdesc_t seg)
+static void INITPROC add_buffers(int nbufs, char *buf, ramdesc_t seg)
 {
     struct buffer_head *bh;
     int n = 0;
@@ -428,24 +428,6 @@ void bforget(struct buffer_head *bh)
 }
 #endif
 
-/* Turns out both minix_bread and bread do this, so I made this a function
- * of it's own... */
-
-struct buffer_head *readbuf(struct buffer_head *bh)
-{
-    ext_buffer_head *ebh = EBH(bh);
-
-    if (!ebh->b_uptodate) {
-	ll_rw_blk(READ, bh);
-	wait_on_buffer(bh);
-	if (!ebh->b_uptodate) {
-	    brelse(bh);
-	    bh = NULL;
-	}
-    }
-    return bh;
-}
-
 static struct buffer_head *find_buffer(kdev_t dev, block32_t block)
 {
     struct buffer_head *bh = bh_llru;
@@ -533,6 +515,24 @@ struct buffer_head *getblk32(kdev_t dev, block32_t block)
 	put_last_lru(bh);
 
   return_it:
+    return bh;
+}
+
+/* Turns out both minix_bread and bread do this, so I made this a function
+ * of it's own... */
+
+struct buffer_head *readbuf(struct buffer_head *bh)
+{
+    ext_buffer_head *ebh = EBH(bh);
+
+    if (!ebh->b_uptodate) {
+	ll_rw_blk(READ, bh);
+	wait_on_buffer(bh);
+	if (!ebh->b_uptodate) {
+	    brelse(bh);
+	    bh = NULL;
+	}
+    }
     return bh;
 }
 
