@@ -23,7 +23,6 @@
 static unsigned short map_iblock(register struct inode *,block_t,block_t,int);
 static unsigned short map_izone(register struct inode *,block_t,int);
 static int minix_set_super_state(struct super_block *sb, int notflags, int newstate);
-static void minix_release_bitmaps(struct super_block *sb);
 static void minix_read_inode(register struct inode *);
 static struct buffer_head *minix_update_inode(register struct inode *);
 
@@ -58,22 +57,6 @@ static int minix_set_super_state(struct super_block *sb, int notflags, int newst
 	return oldstate;
 }
 
-/* release inode and zone bitmap buffers*/
-static void minix_release_bitmaps(struct super_block *sb)
-{
-#if 0
-	int i = 0;
-
-	do {
-		brelse(sb->u.minix_sb.s_imap[i]);
-	} while (++i < sb->u.minix_sb.s_imap_blocks);
-	i = 0;
-	do {
-		brelse(sb->u.minix_sb.s_zmap[i]);
-	} while (++i < sb->u.minix_sb.s_zmap_blocks);
-#endif
-}
-
 void minix_write_super(register struct super_block *sb)
 {
 	debug_sup("MINIX write super\n");
@@ -88,7 +71,6 @@ void minix_put_super(register struct super_block *sb)
 	lock_super(sb);
 	if (!(sb->s_flags & MS_RDONLY))
 		minix_set_super_state(sb, 0, sb->u.minix_sb.s_mount_state);	/* set original fs state*/
-	minix_release_bitmaps(sb);
 	brelse(sb->u.minix_sb.s_sbh);
 	unlock_super(sb);
 	sb->s_dev = 0;
@@ -179,7 +161,7 @@ struct super_block *minix_read_super(register struct super_block *s, char *data,
 	s->u.minix_sb.s_log_zone_size = ms->s_log_zone_size;
 	s->u.minix_sb.s_max_size = ms->s_max_size;
 	s->u.minix_sb.s_nzones = ms->s_nzones;
-	printk("MINIX: inodes %d imap %d zmap %d, first data %d\n",
+	debug_sup("MINIX: inodes %d imap %d zmap %d, first data %d\n",
 	    ms->s_ninodes, ms->s_imap_blocks, ms->s_zmap_blocks,
 	    ms->s_firstdatazone);
 
@@ -193,14 +175,9 @@ struct super_block *minix_read_super(register struct super_block *s, char *data,
 	    s->u.minix_sb.s_zmap[i] = block++;
 	} while (++i < s->u.minix_sb.s_zmap_blocks);
 	if (block != 2 + s->u.minix_sb.s_imap_blocks + s->u.minix_sb.s_zmap_blocks) {
-		minix_release_bitmaps(s);
 		msgerr = err2;
 	    goto err_read_super_1;
 	}
-
-    //Bad kernel bug here: b_data is likely NULL: sets bit 0 of DS:0!
-    //set_bit(0, s->u.minix_sb.s_imap[0]->b_data);	/* force don't use inode or zone 0 just in case*/
-    //set_bit(0, s->u.minix_sb.s_zmap[0]->b_data);
 
     unlock_super(s);
     /* set up enough so that it can read an inode */
@@ -474,5 +451,4 @@ struct file_system_type minix_fs_type = {
 int init_minix_fs(void)
 {
     return 1;
-    /*register_filesystem(&minix_fs_type); */
 }

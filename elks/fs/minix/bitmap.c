@@ -28,13 +28,16 @@ static struct buffer_head *get_map_block(kdev_t dev, block_t block)
         bh = readbuf(bh);
     else
         bh = bread(dev, block);
-    if (!EBH(bh)->b_uptodate)
-        printk("get_map_block: I/O error on dev %p map block %u\n", dev, block);
+    if (!EBH(bh)->b_uptodate) {
+        printk("get_map_block: can't read bitmap on %p/%u\n", dev, block);
+        brelse(bh);
+        return NULL;
+    }
     return bh;
 }
 
-static unsigned short count_used(kdev_t dev, unsigned int map[],
-				 unsigned int numblocks, unsigned int numbits)
+static unsigned short count_used(kdev_t dev, block_t map[], unsigned int numblocks,
+        unsigned int numbits)
 {
     unsigned int i, j, end, sum = 0;
     register struct buffer_head *bh;
@@ -183,28 +186,30 @@ void minix_free_inode(register struct inode *inode)
 struct inode *minix_new_inode(struct inode *dir, __u16 mode)
 {
     struct inode *inode;
+    struct super_block *sb;
     struct buffer_head *bh = NULL;
     block_t i, j;
 
     if (!dir || !(inode = new_inode(dir, mode)))
         return NULL;
     minix_set_ops(inode);
+    sb = inode->i_sb;
 
     j = 8192;
-    for (i = 0; i < inode->i_sb->u.minix_sb.s_imap_blocks; i++) {
+    for (i = 0; i < sb->u.minix_sb.s_imap_blocks; i++) {
         if (i > 0)
             unmap_brelse(bh);
-        if ((bh = get_map_block(inode->i_sb->s_dev, inode->i_sb->u.minix_sb.s_imap[i])) != NULL) {
+        if ((bh = get_map_block(sb->s_dev, sb->u.minix_sb.s_imap[i])) != NULL) {
             map_buffer(bh);
             if ((j = find_first_zero_bit((void *)bh->b_data, 8192)) < 8192)
                 break;
         }
     }
-    if (i >= inode->i_sb->u.minix_sb.s_imap_blocks || !bh || j >= 8192)
+    if (i >= sb->u.minix_sb.s_imap_blocks || !bh || j >= 8192)
         goto errout;
 
     j += i*8192;
-    if (!j || j >= inode->i_sb->u.minix_sb.s_ninodes)
+    if (!j || j >= sb->u.minix_sb.s_ninodes)
         goto errout;
 
     if (set_bit(j & 8191, bh->b_data)) {    /* shouldn't happen */

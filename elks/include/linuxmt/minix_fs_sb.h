@@ -14,8 +14,8 @@ struct minix_sb_info {
     unsigned short		s_firstdatazone;
     unsigned short		s_log_zone_size;
     unsigned long		s_max_size;
-    unsigned int                s_imap[MINIX_I_MAP_SLOTS];
-    unsigned int                s_zmap[MINIX_Z_MAP_SLOTS];
+    block_t                     s_imap[MINIX_I_MAP_SLOTS];
+    block_t                     s_zmap[MINIX_Z_MAP_SLOTS];
     unsigned short		s_dirsize;
     unsigned short		s_namelen;
     struct buffer_head *	s_sbh;
