@@ -61,6 +61,7 @@ static int minix_set_super_state(struct super_block *sb, int notflags, int newst
 /* release inode and zone bitmap buffers*/
 static void minix_release_bitmaps(struct super_block *sb)
 {
+#if 0
 	int i = 0;
 
 	do {
@@ -70,6 +71,7 @@ static void minix_release_bitmaps(struct super_block *sb)
 	do {
 		brelse(sb->u.minix_sb.s_zmap[i]);
 	} while (++i < sb->u.minix_sb.s_zmap_blocks);
+#endif
 }
 
 void minix_write_super(register struct super_block *sb)
@@ -177,37 +179,29 @@ struct super_block *minix_read_super(register struct super_block *s, char *data,
 	s->u.minix_sb.s_log_zone_size = ms->s_log_zone_size;
 	s->u.minix_sb.s_max_size = ms->s_max_size;
 	s->u.minix_sb.s_nzones = ms->s_nzones;
-	debug_sup("MINIX: inodes %d imap %d zmap %d, first data %d\n",
+	printk("MINIX: inodes %d imap %d zmap %d, first data %d\n",
 	    ms->s_ninodes, ms->s_imap_blocks, ms->s_zmap_blocks,
 	    ms->s_firstdatazone);
 
-	/*
-	 *      FIXME:: We cant keep these in memory on an 8086, need to change
-	 *      the code to fetch/release each time we get a block.
-	 */
 	block = 2;
 	i = 0;
 	do {
-	    if ((s->u.minix_sb.s_imap[i] = bread(dev, (block_t) block)) == NULL)
-			break;
-	    block++;
+	    s->u.minix_sb.s_imap[i] = block++;
 	} while (++i < s->u.minix_sb.s_imap_blocks);
 	i = 0;
 	do {
-	    if ((s->u.minix_sb.s_zmap[i] = bread(dev, (block_t) block)) == NULL)
-			break;
-	    block++;
+	    s->u.minix_sb.s_zmap[i] = block++;
 	} while (++i < s->u.minix_sb.s_zmap_blocks);
-	debug_sup("minix: %d buffers used, imap %d zmap %d\n", block-2,
-		s->u.minix_sb.s_imap_blocks, s->u.minix_sb.s_zmap_blocks);
 	if (block != 2 + s->u.minix_sb.s_imap_blocks + s->u.minix_sb.s_zmap_blocks) {
 		minix_release_bitmaps(s);
 		msgerr = err2;
 	    goto err_read_super_1;
 	}
 
-    set_bit(0, s->u.minix_sb.s_imap[0]->b_data);	/* force don't use inode or zone 0 just in case*/
-    set_bit(0, s->u.minix_sb.s_zmap[0]->b_data);
+    //Bad kernel bug here: b_data is likely NULL: sets bit 0 of DS:0!
+    //set_bit(0, s->u.minix_sb.s_imap[0]->b_data);	/* force don't use inode or zone 0 just in case*/
+    //set_bit(0, s->u.minix_sb.s_zmap[0]->b_data);
+
     unlock_super(s);
     /* set up enough so that it can read an inode */
     s->s_op = &minix_sops;
