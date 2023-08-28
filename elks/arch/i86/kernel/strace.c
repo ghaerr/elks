@@ -147,10 +147,6 @@ void trace_begin(void)
     if (tracing & TRACE_STRACE)
         strace();
 #endif
-#ifdef CHECK_KCHECK
-    if (tracing & TRACE_KSTACK)
-        check_kstack();
-#endif
 }
 
 /*

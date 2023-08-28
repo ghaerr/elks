@@ -117,7 +117,7 @@ static void put_last_lru(struct buffer_head *bh)
     }
 }
 
-static void add_buffers(int nbufs, char *buf, ramdesc_t seg)
+static void INITPROC add_buffers(int nbufs, char *buf, ramdesc_t seg)
 {
     struct buffer_head *bh;
     int n = 0;
