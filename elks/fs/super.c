@@ -93,6 +93,7 @@ void sync_supers(kdev_t dev)
     register struct super_operations *sop;
     register struct super_block *sb = super_blocks;
 
+    debug_sup("sync_supers\n");
     do {
 	if ((!sb->s_dev) || (dev && sb->s_dev != dev)) continue;
 	wait_on_super(sb);

@@ -18,7 +18,6 @@ struct minix_sb_info {
     block_t                     s_zmap[MINIX_Z_MAP_SLOTS];
     unsigned short		s_dirsize;
     unsigned short		s_namelen;
-    struct buffer_head *	s_sbh;
     unsigned short		s_mount_state;
 };
 
