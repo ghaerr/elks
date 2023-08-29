@@ -45,7 +45,7 @@ strerror(int err)
 done:
    close(fd);
 unknown:
-   strcpy(retbuf, "Unknown error ");
-   strcpy(retbuf+14, itoa(err));
+   strcpy(retbuf, "Error ");
+   strcpy(retbuf+6, uitoa(err));
    return retbuf;
 }
