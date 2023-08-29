@@ -11,6 +11,8 @@
 
 #define MINIX_ROOT_INO 1
 
+#define MINIX_SUPER_BLOCK   1
+
 #define MINIX_LINK_MAX	250
 
 /* MINIX V1 buffers for inode and zone bitmaps*/
@@ -74,6 +76,7 @@ struct minix_dir_entry {
 
 extern unsigned short minix_bmap(register struct inode *,block_t,int);
 extern struct buffer_head *minix_bread(struct inode *,block_t,int);
+extern struct buffer_head *get_map_block(kdev_t dev, block_t block);
 extern unsigned short minix_count_free_blocks(register struct super_block *);
 extern unsigned short minix_count_free_inodes(register struct super_block *);
 extern int minix_create(register struct inode *,char *,size_t,int,

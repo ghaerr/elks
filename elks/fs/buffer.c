@@ -602,6 +602,7 @@ void mark_buffer_uptodate(struct buffer_head *bh, int on)
 
 void fsync_dev(kdev_t dev)
 {
+    debug_sup("fsync\n");
     sync_buffers(dev, 0);
     sync_supers(dev);
     sync_inodes(dev);
@@ -610,6 +611,7 @@ void fsync_dev(kdev_t dev)
 
 void sync_dev(kdev_t dev)
 {
+    debug_sup("sync\n");
     sync_buffers(dev, 0);
     sync_supers(dev);
     sync_inodes(dev);

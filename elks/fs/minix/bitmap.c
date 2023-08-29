@@ -19,7 +19,7 @@
 
 static char nibblemap[] = { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 };
 
-static struct buffer_head *get_map_block(kdev_t dev, block_t block)
+struct buffer_head *get_map_block(kdev_t dev, block_t block)
 {
     struct buffer_head *bh;
 
@@ -29,7 +29,7 @@ static struct buffer_head *get_map_block(kdev_t dev, block_t block)
     else
         bh = bread(dev, block);
     if (!EBH(bh)->b_uptodate) {
-        printk("get_map_block: can't read bitmap on %p/%u\n", dev, block);
+        printk("get_map_block: can't read block %D/%u\n", dev, block);
         brelse(bh);
         return NULL;
     }

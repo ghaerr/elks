@@ -22,7 +22,7 @@
 
 static unsigned short map_iblock(register struct inode *,block_t,block_t,int);
 static unsigned short map_izone(register struct inode *,block_t,int);
-static int minix_set_super_state(struct super_block *sb, int notflags, int newstate);
+static int minix_set_super_state(struct super_block *sb, int notflags, int state);
 static void minix_read_inode(register struct inode *);
 static struct buffer_head *minix_update_inode(register struct inode *);
 
@@ -38,22 +38,24 @@ static void minix_put_inode(register struct inode *inode)
 }
 
 /* set superblock flags state, return old state*/
-static int minix_set_super_state(struct super_block *sb, int notflags, int newstate)
+static int minix_set_super_state(struct super_block *sb, int notflags, int state)
 {
 	struct buffer_head *bh;
 	struct minix_super_block *ms;
 	int oldstate;
 
-	bh = sb->u.minix_sb.s_sbh;
+	bh = get_map_block(sb->s_dev, MINIX_SUPER_BLOCK);
+	if (!bh) return 0;
 	map_buffer(bh);
 	ms = (struct minix_super_block *)bh->b_data;
 	oldstate = ms->s_state;
 	if (notflags)
 		ms->s_state &= notflags;
-	else ms->s_state = newstate;
-	debug_sup("MINIX set super state %d\n", newstate);
-	mark_buffer_dirty(bh);
-	unmap_buffer(bh);
+	else ms->s_state = state;
+	debug_sup("set_super_state: old %d new %d\n", oldstate, ms->s_state);
+	if (ms->s_state != oldstate)
+	    mark_buffer_dirty(bh);
+	unmap_brelse(bh);
 	return oldstate;
 }
 
@@ -71,7 +73,6 @@ void minix_put_super(register struct super_block *sb)
 	lock_super(sb);
 	if (!(sb->s_flags & MS_RDONLY))
 		minix_set_super_state(sb, 0, sb->u.minix_sb.s_mount_state);	/* set original fs state*/
-	brelse(sb->u.minix_sb.s_sbh);
 	unlock_super(sb);
 	sb->s_dev = 0;
 }
@@ -132,7 +133,7 @@ struct super_block *minix_read_super(register struct super_block *s, char *data,
     static const char *err4 = "minix: inode table too large\n";
 
     lock_super(s);
-	if (!(bh = bread(dev, (block_t) 1))) {
+	if (!(bh = bread(dev, MINIX_SUPER_BLOCK))) {
 		msgerr = err1;
 		goto err_read_super_2;
     }
@@ -150,7 +151,6 @@ struct super_block *minix_read_super(register struct super_block *s, char *data,
 	    goto err_read_super_1;
 	}
 
-	s->u.minix_sb.s_sbh = bh;
 	s->u.minix_sb.s_dirsize = 16;
 	s->u.minix_sb.s_namelen = 14;
 	s->u.minix_sb.s_mount_state = ms->s_state;
@@ -189,15 +189,13 @@ struct super_block *minix_read_super(register struct super_block *s, char *data,
 		goto err_read_super_1;
     }
     if (!(s->s_flags & MS_RDONLY)) {
-		ms->s_state &= ~MINIX_VALID_FS;
-		mark_buffer_dirty(bh);
-		s->s_dirt = 1;
-		fsync_dev(s->s_dev);	/* force unchecked flag immediately after mount*/
+		s->s_dirt = 1;      /* will unset MINIX_VALID_FS flag in write_super */
+		sync_dev(s->s_dev);	/* sync but don't wait for I/O */
     }
 
     minix_mount_warning(s, err0);
 
-    unmap_buffer(bh);
+    unmap_brelse(bh);
     return s;
 
   err_read_super_1:
