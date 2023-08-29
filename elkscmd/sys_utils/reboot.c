@@ -22,7 +22,7 @@ int main(int argc, char **argv)
 	if (umount("/") < 0) {
 		/* -f forces reboot even if mount fails */
 		if (argc < 2 || argv[1][0] != '-' || argv[1][1] != 'f')	 {
-			perror("reboot umount");
+			perror("umount");
 			return 1;
 		}
 	}

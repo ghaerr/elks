@@ -33,6 +33,7 @@ OBJS = \
 	strtoul.o \
 	system.o \
 	tmpnam.o \
+	uitoa.o \
 	ultostr.o \
 	ulltostr.o \
 	wildcard.o \

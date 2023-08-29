@@ -11,9 +11,6 @@ kmem::9:
 wheel::10:root
 floppy::11:root
 mail::12:mail,postmaster
-news::13:news
-uucp::14:uucp
-man::15:man
 ftp::50:ftp
 nobody::99:nobody
 users::100:root,user1,user2,user3

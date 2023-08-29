@@ -23,7 +23,7 @@ int main(int argc, char **argv)
 {
 	sync();
 	if (umount("/")) {
-		perror("poweroff umount");
+		perror("umount");
 		return 1;
 	}
 	sleep(3);
