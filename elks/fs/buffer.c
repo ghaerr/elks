@@ -1,4 +1,5 @@
-#include <linuxmt/types.h>
+#include <linuxmt/config.h>
+#include <linuxmt/limits.h>
 #include <linuxmt/init.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/kernel.h>
@@ -7,7 +8,6 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/heap.h>
 #include <linuxmt/errno.h>
-#include <linuxmt/limits.h>
 #include <linuxmt/trace.h>
 #include <linuxmt/debug.h>
 
@@ -18,6 +18,8 @@
 
 /*
  * Kernel buffer management.
+ *
+ * Aug 2023 Greg Haerr - Added dynamic L1 buffers and release L1 mappings during sync.
  */
 
 /* Number of internal L1 buffers, used to map/copy external L2 buffers
@@ -58,8 +60,8 @@ kdev_t buffer_dev(struct buffer_head *bh)          { return EBH(bh)->b_dev; }
 static char *L1buf;
 
 /* Buffer cache */
-static struct buffer_head *bh_lru;
-static struct buffer_head *bh_llru;
+static struct buffer_head *bh_lru;      /* least recently used - reused/flushed first */
+static struct buffer_head *bh_llru;     /* most recently used - for finding a buffer */
 static struct buffer_head *bh_next;
 
 /*
@@ -201,8 +203,8 @@ int INITPROC buffer_init(void)
     if (bufs_to_alloc > 256) bufs_to_alloc = 256; /* protect against high XMS value*/
 #endif
 
-    printk("%d %s buffers (%dK ram), %dK cache\n", bufs_to_alloc,
-        xms_enabled? "xms": "ext", bufs_to_alloc, nr_map_bufs);
+    printk("%d %s buffers (%dK ram), %dK cache, %d req hdrs\n", bufs_to_alloc,
+        xms_enabled? "xms": "ext", bufs_to_alloc, nr_map_bufs, NR_REQUEST);
 #else
     int bufs_to_alloc = nr_map_bufs;
 #endif
@@ -319,7 +321,7 @@ void invalidate_buffers(kdev_t dev)
 
 static void sync_buffers(kdev_t dev, int wait)
 {
-    struct buffer_head *bh = bh_llru;
+    struct buffer_head *bh = bh_lru;
     ext_buffer_head *ebh;
     int count = 0;
 
@@ -356,7 +358,7 @@ static void sync_buffers(kdev_t dev, int wait)
 	ll_rw_blk(WRITE, bh);
 	ebh->b_count--;
         count++;
-    } while ((bh = ebh->b_prev_lru) != NULL);
+    } while ((bh = ebh->b_next_lru) != NULL);
     debug_blk("SYNC_BUFFERS END %d wrote %d\n", wait, count);
 }
 
@@ -661,8 +663,15 @@ void map_buffer(struct buffer_head *bh)
 
     /* If buffer is already mapped, just increase the refcount and return */
     if (bh->b_data) {
-	if (!ebh->b_mapcount)
-	    debug("REMAP: %d\n", buf_num(bh));
+#if DEBUG_MAP
+        if (!ebh->b_mapcount) {
+            for (i=0; i<nr_map_bufs; i++) {
+                if (bh == L1map[i])
+                    break;
+            }
+            debug_map("REMAP: L%02d block %ld\n", i+1, ebh->b_blocknr);
+        }
+#endif
         remap_count++;
 	goto end_map_buffer;
     }
@@ -688,13 +697,13 @@ void map_buffer(struct buffer_head *bh)
 #endif
         /* don't remap if I/O in progress to prevent bh/req buffer unpairing */
 	if (!ebmap->b_mapcount && !ebmap->b_locked) {
-	    debug("UNMAP: %d <- %d\n", buf_num(bmap), i);
+	    debug_map("UNMAP: L%02d block %ld\n", i+1, ebmap->b_blocknr);
 	    brelseL1_index(i, 1);       /* Unmap/copy L1 to L2 */
 	    break;
 	}
 	if (i == lastL1map) {
 	    /* no free L1 buffers, must wait for L1 unmap_buffer*/
-	    debug("MAPWAIT: %d\n", buf_num(bh));
+	    debug_map("MAPWAIT: block %ld\n", ebh->b_blocknr);
 	    sleep_on(&L1wait);
 	}
     }
@@ -706,9 +715,7 @@ void map_buffer(struct buffer_head *bh)
     if (ebh->b_uptodate)
 	xms_fmemcpyw(bh->b_data, kernel_ds, 0, ebh->b_L2seg, BLOCK_SIZE/2);
     map_count++;
-    debug("MAP:   %d -> %d\n", buf_num(bh), i);
-    if (ebh->b_blocknr >= 5 /*&& ebh->b_dev == 0x200*/)
-        debug_blk("map block %ld into L%d\n", ebh->b_blocknr, i+1);
+    debug_map("MAP:   L%02d block %ld\n", i+1, ebh->b_blocknr);
   end_map_buffer:
     ebh->b_mapcount++;
 }

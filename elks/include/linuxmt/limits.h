@@ -22,8 +22,16 @@
 
 #define POLL_MAX        6       /* Maximum number of polled queues per process */
 
+/* buffers */
+#define NR_MAPBUFS      8       /* Number of internal L1 buffers */
+
+#ifdef CONFIG_ASYNCIO
+#define NR_REQUEST      4       /* Number of async I/O request headers */
+#else
+#define NR_REQUEST      1       /* only 1 is required for non-async I/O */
+#endif
+
 /* filesystem */
-#define NR_MAPBUFS      12      /* Number of internal L1 buffers */
 #define NR_INODE        96      /* this should be bigger than NR_FILE */
 #define NR_FILE         64      /* this can well be larger on a larger system */
 #define NR_SUPER        6       /* max mounts */

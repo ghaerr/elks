@@ -10,6 +10,7 @@
  */
 
 #include <linuxmt/config.h>
+#include <linuxmt/limits.h>
 #include <linuxmt/types.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/kernel.h>
@@ -35,13 +36,6 @@
  * NOTE that writes may use only the low 2/3 of these: reads
  * take precedence.
  */
-
-#ifdef CONFIG_ASYNCIO
-#define NR_REQUEST  4
-#else
-#define NR_REQUEST  1   /* only 1 is required for non-async I/O */
-#endif
-
 static struct request all_requests[NR_REQUEST];
 
 /* current request and function pointer for each block device handler */
