@@ -64,7 +64,7 @@ extern void ssd_io_complete();
 
 void timer_tick(int irq, struct pt_regs *regs)
 {
-    do_timer(regs);
+    do_timer();
 
 #ifdef CONFIG_CPU_USAGE
     calc_cpu_usage();

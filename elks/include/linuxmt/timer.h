@@ -27,7 +27,7 @@ struct pt_regs;
 /* sched.c*/
 void add_timer(struct timer_list *);
 int del_timer(struct timer_list *);
-void do_timer(struct pt_regs *);
+void do_timer(void);
 
 /* timer.c*/
 void timer_tick(int, struct pt_regs *);

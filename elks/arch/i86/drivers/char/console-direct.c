@@ -201,14 +201,14 @@ void INITPROC console_init(void)
     MaxRow = (Height = 25) - 1;
     CCBase = peekw(0x63, 0x40);
     PageSizeW = ((unsigned int)peekw(0x4C, 0x40) >> 1);
-    isMDA = (((unsigned int)peekb(0x10, 0x40) >> 4) & 3) == 3;
-    if (!isMDA) isCGA = peekw(0xA8+2, 0x40) == 0;
 
     VideoSeg = 0xb800;
     if (peekb(0x49, 0x40) == 7) {
 	VideoSeg = 0xB000;
 	NumConsoles = 1;
+        isMDA = 1;
     }
+    if (!isMDA) isCGA = peekw(0xA8+2, 0x40) == 0;
 
     C = Con;
     Visible = C;

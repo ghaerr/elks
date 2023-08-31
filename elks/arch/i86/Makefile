@@ -1,4 +1,4 @@
-# Build the Psion specific stuff.
+#
 #
 #########################################################################
 # Relative path to base directory.
@@ -25,19 +25,6 @@ NOINDENT	=
 # Include standard commands.
 
 include $(BASEDIR)/Makefile-rules
-
-#########################################################################
-# SIBO specific options.
-
-ifeq ($(CONFIG_ARCH_SIBO), y)
-
-SIBOFLAGS 	= -D 0xc00 -H 0x480
-
-else
-
-SIBOFLAGS	=
-
-endif
 
 #########################################################################
 # ROM specific options.
@@ -81,17 +68,17 @@ LIBGCC = "`$(CC) $(CFLAGS) -print-libgcc-file-name`"
 .PHONY: toolkit
 
 boot/bootsect:   boot/bootsect.o
-	$(LD) $(LDFLAGS) $(SIBOFLAGS) -M -T $(TOPDIR)/elks/elks-tiny.ld -o boot/bootsect boot/bootsect.o > boot/bootsect.map
+	$(LD) $(LDFLAGS) -M -T $(TOPDIR)/elks/elks-tiny.ld -o boot/bootsect boot/bootsect.o > boot/bootsect.map
 	$(POSTLINK) --tiny boot/bootsect
 
 boot/netbootsect:	boot/netbootsect.o
-	$(LD) $(LDFLAGS) $(SIBOFLAGS) -M $(ARCH_LD) -s -o boot/netbootsect boot/netbootsect.o > boot/netbootsect.map
+	$(LD) $(LDFLAGS) -M $(ARCH_LD) -s -o boot/netbootsect boot/netbootsect.o > boot/netbootsect.map
 	$(POSTLINK) boot/netbootsect
 
 boot/netbootsect.o:	boot/netbootsect.s
 
 boot/setup:   boot/setup.o
-	$(LD) $(LDFLAGS) $(SIBOFLAGS) -M -T $(TOPDIR)/elks/elks-tiny.ld -o boot/setup boot/setup.o > boot/setup.map
+	$(LD) $(LDFLAGS) -M -T $(TOPDIR)/elks/elks-tiny.ld -o boot/setup boot/setup.o > boot/setup.map
 	$(POSTLINK) --tiny boot/setup
 
 toolkit:
@@ -104,26 +91,6 @@ $(BASEDIR)/include/arch/asm-offsets.h: kernel/asm-offsets.c asm-offsets.awk
 
 #########################################################################
 # Image selection.
-
-ifeq ($(CONFIG_ARCH_SIBO), y)
-
-# Begin SIBO image build
-
-boot/system: $(XINCLUDE) $(AARCHIVES) $(ADRIVERS) sibo/crt1.o sibo/crt0.o
-	(cd $(BASEDIR) ; $(LD) $(LDFLAGS) $(SIBOFLAGS) -M $(ARCH_LD) \
-		$(ARCH_DIR)/sibo/crt0.o $(ARCH_DIR)/sibo/crt1.o \
-		init/main.o $(ARCHIVES) $(DRIVERS) $(LIBGCC) \
-		-o $(ARCH_DIR)/boot/system > $(ARCH_DIR)/boot/system.tmp ; \
-		$(POSTLINK) $(ROMPOSTLINKFLAGS) $(ARCH_DIR)/boot/system ; \
-		sort -k3,4 $(ARCH_DIR)/boot/system.tmp > $(ARCH_DIR)/boot/system.map ; \
-		rm -f $(ARCH_DIR)/boot/system.tmp )
-
-Image: boot/system toolkit
-	(cd boot; ../tools/imgconv system system.app -S192 -H72 -V)
-
-# End SIBO image build
-
-else
 
 # Begin PC image build
 
@@ -169,7 +136,6 @@ disk:	boot
 setup:	toolkit boot/setup  
 	tools/mkbootloader $(RVECT) -c $(CONFIG_ROM_SETUP_CODE) $(ROM_MAX_SETUP_SIZE) Image $(CONFIG_ROM_BASE) -a boot/setup $(CONFIG_ROM_SETUP_CODE) -s boot/system $(CONFIG_ROM_KERNEL_CODE) $(CONFIG_ROM_BIOS_MODULE) $(CONFIG_ROM_BIOS_MODULE_ADDR)
 	$(CONFIG_ROM_SIMULATOR_PROGRAM)
-endif
 
 #########################################################################
 # library rules
