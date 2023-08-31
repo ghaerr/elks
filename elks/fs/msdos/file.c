@@ -4,6 +4,8 @@
  *  Written 1992 by Werner Almesberger
  *
  *  MS-DOS regular file handling primitives
+ *
+ * Aug 2023 Greg Haerr - Don't use L1 cache for reading/writing file data.
  */
 
 #include <arch/segment.h>

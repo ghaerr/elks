@@ -3,6 +3,7 @@
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  *
+ * Aug 2023 Greg Haerr - Don't dedicate buffers for Z/I maps or super block.
  */
 
 #include <linuxmt/types.h>

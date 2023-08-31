@@ -2,8 +2,8 @@
 #define __LINUXMT_SCHED_H
 
 #include <linuxmt/config.h>
-#include <linuxmt/types.h>
 #include <linuxmt/limits.h>
+#include <linuxmt/types.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/time.h>
 #include <linuxmt/signal.h>

@@ -85,8 +85,6 @@ size_t block_write(struct inode *inode, struct file *filp, char *buf, size_t cou
 	    if (!written) written = -ENOSPC;
 	    break;
 	}
-        if (/*bh->b_dev == 0x200 &&*/ EBH(bh)->b_blocknr >= 5)
-                debug_blk("block_write: have block %ld\n", EBH(bh)->b_blocknr);
 	/* Offset to block/offset */
 	offset = ((size_t)filp->f_pos) & (BLOCK_SIZE - 1);
 	chars = BLOCK_SIZE - offset;

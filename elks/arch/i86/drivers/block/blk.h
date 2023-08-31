@@ -1,11 +1,12 @@
 #ifndef _BLK_H
 #define _BLK_H
 
+#include <linuxmt/config.h>
+#include <linuxmt/limits.h>
 #include <linuxmt/major.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/kdev_t.h>
 #include <linuxmt/genhd.h>
-#include <linuxmt/config.h>
 #include <linuxmt/trace.h>
 
 struct request {

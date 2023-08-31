@@ -2,6 +2,9 @@
  *  linux/fs/minix/bitmap.c
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
+ *
+ * Aug 2023 Greg Haerr - Don't use L1 cache/memset on new filesystem blocks.
+ * Aug 2023 Greg Haerr - Don't dedicate buffers for Z/I maps.
  */
 
 /* bitmap.c contains the code that handles the inode and block bitmaps */
