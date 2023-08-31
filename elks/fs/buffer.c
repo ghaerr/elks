@@ -367,6 +367,7 @@ static struct buffer_head *get_free_buffer(void)
     struct buffer_head *bh = bh_lru;
     ext_buffer_head *ebh = EBH(bh);
     int i;
+    int pass = 0;
 
     while (ebh->b_count || ebh->b_dirty || ebh->b_locked
 #if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
@@ -375,8 +376,10 @@ static struct buffer_head *get_free_buffer(void)
                                                         ) {
         if ((bh = ebh->b_next_lru) == NULL) {
             sync_buffers(0, 0);
-            for (i=0; i<nr_map_bufs; i++) {
-                brelseL1_index(i, 1);   /* release if not mapcount or locked */
+            if (++pass > 1) {
+                for (i=0; i<nr_map_bufs; i++) {
+                    brelseL1_index(i, 1);   /* release if not mapcount or locked */
+                }
             }
             bh = bh_lru;
         }

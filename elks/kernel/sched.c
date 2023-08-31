@@ -205,7 +205,7 @@ static void update_one_process(struct taks_struct *p,
 
 #endif
 
-void do_timer(struct pt_regs *regs)
+void do_timer(void)
 {
     jiffies++;
 

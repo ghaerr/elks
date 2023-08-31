@@ -79,13 +79,14 @@ Direct Console
 --------------
 	Direct Console using 6845 CRT Controller	console-direct.c
 		hw cursor, display page					console-direct.c
+		BDA:0x49    VID_MODE (7=MDA for video seg, force 1 console)
 		BDA:0x4A    VID_COLS
 		25          VID_LINES
-		BDA:0x63    CRTC_PORT (6845 CRTC)
 		BDA:0x4C    VID_PAGE_SIZE
-		BDA:0x49    VID_MODE (7=MDA for video seg, force 1 console)
 		BDA:0x50    VID_CURSOR_X
 		BDA:0x51    VID_CURSOR_Y
+        BDA:0x63    CRTC_PORT (6845 CRTC)
+        BDA:0xA8+2  VID_VGA_TABLE
 	BIOS IRQ 1 interrupt keyboard				kbd-scancode.c
 		8042 keyboard controller, LEDs			kbd-scancode.c
 	PC speaker timer 2 (bell chime)				elks/arch/i86/drivers/char/bell-8254.c
