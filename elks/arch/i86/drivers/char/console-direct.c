@@ -68,6 +68,7 @@ static Console *glock;		/* Which console owns the graphics hardware */
 static unsigned short CCBase;   /* 6845 CRTC base I/O address */
 static int Width, MaxCol, Height, MaxRow;
 static int NumConsoles = MAX_CONSOLES;
+static unsigned char isMDA, isCGA;
 
 int Current_VCminor = 0;
 int kraw = 0;
@@ -102,7 +103,11 @@ static void PositionCursor(register Console * C)
 static void DisplayCursor(int onoff)
 {
     /* unfortunately, the cursor start/end at BDA 0x0460 can't be relied on! */
-    unsigned int v = onoff? 0x0d0e: 0x2000;
+    unsigned int v;
+
+    if (onoff)
+        v = isMDA? 0x0b0c: (isCGA? 0x0607: 0x0d0e);
+    else v = 0x2000;
 
     outb(10, CCBase);
     outb(v >> 8, CCBase + 1);
@@ -196,6 +201,8 @@ void INITPROC console_init(void)
     MaxRow = (Height = 25) - 1;
     CCBase = peekw(0x63, 0x40);
     PageSizeW = ((unsigned int)peekw(0x4C, 0x40) >> 1);
+    isMDA = (((unsigned int)peekb(0x10, 0x40) >> 4) & 3) == 3;
+    if (!isMDA) isCGA = peekw(0xA8+2, 0x40) == 0;
 
     VideoSeg = 0xb800;
     if (peekb(0x49, 0x40) == 7) {
