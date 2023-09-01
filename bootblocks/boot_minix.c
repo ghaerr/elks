@@ -61,6 +61,7 @@ static void load_file ();
 //------------------------------------------------------------------------------
 
 #define seg_data()	__builtin_ia16_near_data_segment ()
+#define _MK_FP(seg,off)	((void __far *)((((unsigned long)(seg)) << 16) | (off)))
 
 //------------------------------------------------------------------------------
 
@@ -68,34 +69,39 @@ static void load_file ();
 // by specifying -fno-toplevel-reorder in the Makefile, which forces GCC to
 // output all functions, variables, and __asm's in the same order as in the
 // source code.  FIXME: find a better way.
+// REALLY running out of space here [HS] 805/2023
 
 void load_prog ()
 {
-	load_super ();
+	// Avoid reuse of an old copy of /bootopts in memory
+	// if we're rebooting with no /bootopts
+	int __far *optseg = _MK_FP(OPTSEG, 0);
+	*optseg = i_boot = i_now = 0;
 
-	i_boot = i_now = 0;
+	load_super();
 	load_file ();
 
 	for (int d = 0; d < BLOCK_SIZE /*(int)i_data->i_size*/; d += DIRENT_SIZE) {
 		if (!strcmp ((char *)(d_dir + 2 + d), "linux")) {
-			puts ("Linux found ");
 			i_boot = i_now = (*(int *)(d_dir + d)) - 1;
+			if (i_boot == -1) continue;
+			puts ("/linux");
 			loadaddr = LOADSEG << 4;
-			load_file ();
+			load_file();
 			continue;
 		}
 		if (!strcmp ((char *)(d_dir + 2 + d), "bootopts")) {
-			//puts("opts ");
 			i_now = (*(int *)(d_dir + d)) - 1;
 			if (i_now != -1) {
 				loadaddr = OPTSEG << 4;
-				load_file ();
+				//puts("opts ");
+				load_file();
 			}
 			continue;
 		}
 	}
-	if (i_boot)
-		run_prog ();
+	if (i_boot > 0)	// 'linux' may be deleted (i_boot = -1) or non-existent (=0)
+		run_prog();
 }
 
 //------------------------------------------------------------------------------
@@ -169,7 +175,7 @@ static void load_zone (int level, zone_nr * z_start, zone_nr * z_end)
 			if (f_pos >= i_data->i_size) break;
 		} else {
 			int next = level - 1;
-			disk_read (*z << 1, 2, z_block [next], seg_data ());
+			disk_read ((*z) << 1, 2, z_block [next], seg_data ());
 			load_zone (next, (zone_nr *) z_block [next], (zone_nr *) (z_block [next] + BLOCK_SIZE));
 		}
 	}
