@@ -7,6 +7,10 @@
 
 # What is ELKS?
 
+## Try ELKS online
+You can play with ELKS [here](https://copy.sh/v86/?profile=elks). For example, you can cd to the bin folder and try the different commands available. Try nxtetris as well.
+
+## Watch ELKS in action
 ELKS is a project providing a Linux-like OS for systems based on the Intel
 IA16 architecture (16-bit processors: 8086, 8088, 80188, 80186, 80286,
 NEC V20, V30 and compatibles). Such systems are ancient computers (IBM-PC
