@@ -1,7 +1,7 @@
 #ifdef L_vsscanf
 #include <stdio.h>
 
-int vsscanf(char *sp, __const char *fmt, va_list ap)
+int vsscanf(char *sp, const char *fmt, va_list ap)
 {
 	static FILE string[1] =
 	{

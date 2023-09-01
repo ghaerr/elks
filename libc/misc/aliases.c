@@ -36,7 +36,7 @@ int signo;
 #undef bcopy
 void
 bcopy(src, dest, len)
-__const void * src;
+const void * src;
 void *dest;
 int len;
 {
@@ -59,7 +59,7 @@ int len;
 #undef bcmp
 int
 bcmp(dest, src, len)
-__const void * src, *dest;
+const void * src, *dest;
 int len;
 {
    return memcmp(dest, src, len);
@@ -70,7 +70,7 @@ int len;
 #undef index
 char *
 index(src, chr)
-__const char *src;
+const char *src;
 int chr;
 {
    return strchr(src, chr);
@@ -80,7 +80,7 @@ int chr;
 #undef rindex
 char *
 rindex(src, chr)
-__const char *src;
+const char *src;
 int chr;
 {
    return strrchr(src, chr);
@@ -91,7 +91,7 @@ int chr;
 
 int
 remove(src)
-__const char *src;
+const char *src;
 {
    extern int errno;
    int er = errno;
@@ -107,7 +107,7 @@ __const char *src;
 
 int
 creat(file, mode)
-__const char * file;
+const char * file;
 mode_t mode;
 {
    return open(file, O_TRUNC|O_CREAT|O_WRONLY, mode);

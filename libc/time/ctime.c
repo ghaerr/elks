@@ -3,12 +3,11 @@
 #include <sys/time.h>
 
 extern int _tz_is_set;
-extern void __tm_conv();
-extern void __asctime();
+void __tm_conv(struct tm *tmbuf, const time_t *timep, time_t offset);
+extern void __asctime(char *buffer, const struct tm *ptm);
 
 char *
-ctime(timep)
-__const time_t * timep;
+ctime(const time_t *timep)
 {
   static char cbuf[26];
   struct tm tmb;
