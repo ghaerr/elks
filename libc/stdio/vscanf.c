@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 int
-vscanf(__const char *fmt, va_list ap)
+vscanf(const char *fmt, va_list ap)
 {
   return vfscanf(stdin, fmt, ap);
 }

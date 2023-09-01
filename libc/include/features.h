@@ -1,20 +1,7 @@
-
 #ifndef __FEATURES_H
 #define __FEATURES_H
 
-#ifdef __STDC__
-
 #define __P(x) x
-#define __const const
-
-#else /* K&R */
-
-#define __P(x) ()
-#define __const
-#define const
-#define volatile
-
-#endif
 
 /* Pick an OS sysinclude directory */
 /* Use with #include __SYSINC__(errno.h) */

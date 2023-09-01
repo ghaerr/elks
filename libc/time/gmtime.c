@@ -1,11 +1,9 @@
-
 #include <time.h>
 
-extern void __tm_conv();
+void __tm_conv(struct tm *tmbuf, const time_t *t, time_t offset);
 
 struct tm *
-gmtime(timep)
-__const time_t * timep;
+gmtime(const time_t *timep)
 {
    static struct tm tmb;
 

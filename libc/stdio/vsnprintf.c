@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 int
-vsnprintf(char *sp, size_t size, __const char *fmt, va_list ap)
+vsnprintf(char *sp, size_t size, const char *fmt, va_list ap)
 {
 	static FILE string[1] =
 	{
