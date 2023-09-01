@@ -7,10 +7,6 @@
 
 # What is ELKS?
 
-## Try ELKS online
-You can play with ELKS [here](https://copy.sh/v86/?profile=elks). For example, you can cd to the bin folder and try the different commands available. Try nxtetris as well.
-
-## Watch ELKS in action
 ELKS is a project providing a Linux-like OS for systems based on the Intel
 IA16 architecture (16-bit processors: 8086, 8088, 80188, 80186, 80286,
 NEC V20, V30 and compatibles). Such systems are ancient computers (IBM-PC
@@ -22,6 +18,9 @@ XT / AT and clones) as well as more recent SBCs, SoCs, and FPGAs. ELKS supports 
 * ELKS requires 256k RAM to run, 512k to be really useful
 * No hardware MMU required
 * ROM-based systems can run in 128k RAM
+
+## Try ELKS online
+You can play with ELKS [here](https://copy.sh/v86/?profile=elks). Login with "root" and no password. Go to the bin folder and try the different commands available. Try nxtetris.
   
 ## Watch ELKS in action
 
