@@ -20,7 +20,7 @@ XT / AT and clones) as well as more recent SBCs, SoCs, and FPGAs. ELKS supports 
 * ROM-based systems can run in 128k RAM
 
 ## Try ELKS online
-You can play with ELKS [here](https://copy.sh/v86/?profile=elks). Login with "root" and no password. Go to the bin folder and try the different commands available. Try nxtetris.
+You can play with ELKS [here](https://copy.sh/v86/?profile=elks). Login with "root" and no password. Go to the bin folder and try the different commands available. Try nxtetris. Start the game by pressing "n".
   
 ## Watch ELKS in action
 
