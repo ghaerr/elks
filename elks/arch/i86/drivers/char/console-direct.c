@@ -207,8 +207,9 @@ void INITPROC console_init(void)
 	VideoSeg = 0xB000;
 	NumConsoles = 1;
         isMDA = 1;
+    } else {
+        isCGA = peekw(0xA8+2, 0x40) == 0;
     }
-    if (!isMDA) isCGA = peekw(0xA8+2, 0x40) == 0;
 
     C = Con;
     Visible = C;

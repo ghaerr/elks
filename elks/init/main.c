@@ -146,7 +146,7 @@ void INITPROC kernel_init(void)
 
 #ifdef CONFIG_BOOTOPTS
     finalize_options();
-    if (!opts) printk("/bootopts ignored: header not ## or size > %d\n", OPTSEGSZ-1);
+    if (!opts) printk("/bootopts not found or bad format/size\n");
 #endif
 
 #ifdef CONFIG_FARTEXT_KERNEL
