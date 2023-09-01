@@ -18,6 +18,9 @@ XT / AT and clones) as well as more recent SBCs, SoCs, and FPGAs. ELKS supports 
 * ELKS requires 256k RAM to run, 512k to be really useful
 * No hardware MMU required
 * ROM-based systems can run in 128k RAM
+
+## Try ELKS online
+You can [play with ELKS online](https://copy.sh/v86/?profile=elks) thanks to the v86 emulator. Login with "root" and no password. Go to the bin folder and try the different commands available. Try nxtetris. Start the game by pressing "n".
   
 ## Watch ELKS in action
 
