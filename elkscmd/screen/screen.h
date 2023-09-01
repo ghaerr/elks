@@ -121,8 +121,8 @@ static FreeWindow(struct win *wp);
 static ShowWindows(void);
 /* int OpenPTY(int n); */
 
-static void DisplayLine __P((char*, char*, char*, char*, char*, char*, int, int, int));
-static void RedisplayLine __P((char*, char*, char*, int, int, int));
+static void DisplayLine(char*, char*, char*, char*, char*, char*, int, int, int);
+static void RedisplayLine(char*, char*, char*, int, int, int);
 
 static CheckSockName(int client);
 static MakeServerSocket(void);

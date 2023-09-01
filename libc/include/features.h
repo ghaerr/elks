@@ -1,6 +1,8 @@
 #ifndef __FEATURES_H
 #define __FEATURES_H
 
+#define __P(x) x
+
 /* Pick an OS sysinclude directory */
 /* Use with #include __SYSINC__(errno.h) */
 
