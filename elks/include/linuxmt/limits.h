@@ -39,7 +39,6 @@
 #define PIPE_BUFSIZ     80      /* doesn't have to be power of two */
 
 #define NR_ALARMS       5       /* Max number of simultaneous alarms system-wide */
-#define NGROUPS         13      /* Supplementary groups */
 
 #define MAX_PACKET_ETH 1536     /* Max packet size, 6 blocks of 256 bytes */
 

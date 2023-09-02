@@ -78,6 +78,7 @@ struct task_struct {
 #endif
 
 #ifdef CONFIG_SUPPLEMENTARY_GROUPS
+#define NGROUPS     13
     gid_t			groups[NGROUPS];
 #endif
 

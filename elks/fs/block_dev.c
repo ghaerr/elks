@@ -112,13 +112,10 @@ size_t block_write(struct inode *inode, struct file *filp, char *buf, size_t cou
 	written += chars;
 	count -= chars;
     }
-    {
-	register struct inode *pinode = inode;
-	if ((loff_t)pinode->i_size < filp->f_pos)
-	    pinode->i_size = (__u32) filp->f_pos;
-	pinode->i_mtime = pinode->i_ctime = CURRENT_TIME;
-	pinode->i_dirt = 1;
-    }
+    if ((loff_t)inode->i_size < filp->f_pos)
+        inode->i_size = (__u32) filp->f_pos;
+    inode->i_mtime = inode->i_ctime = CURRENT_TIME;
+    inode->i_dirt = 1;
     return written;
 #else
     return -EINVAL;

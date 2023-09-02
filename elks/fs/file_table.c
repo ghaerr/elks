@@ -33,8 +33,8 @@ int open_filp(unsigned short flags, struct inode *inode, struct file **fp)
     register struct file_operations *fop;
 
     while (f->f_count) {
-	if (++f >= &file_array[NR_FILE]) {	/* TODO: is nr_file const? */
-	    printk("\nNo filps\n");
+	if (++f >= &file_array[NR_FILE]) {
+	    printk("open: No files\n");
 	    return -ENFILE;
 	}
     }
@@ -42,20 +42,14 @@ int open_filp(unsigned short flags, struct inode *inode, struct file **fp)
     f->f_flags = flags;
     f->f_mode = (mode_t) ((flags + 1) & O_ACCMODE);
     f->f_count = 1;
-/*    f->f_pos = 0;*/	/* FIXME - should call lseek *//* Set to zero by memset() */
-#ifdef BLOAT_FS
-    f->f_version = ++event;
-#endif
+/*  f->f_pos = 0;*/	/* FIXME - should call lseek */
     f->f_inode = inode;
+
 #ifdef BLOAT_FS
     if (f->f_mode & FMODE_WRITE) {
 	result = get_write_access(inode);
 	if (result) goto cleanup_file;
     }
-#endif
-
-#ifdef BLOAT_FS
-/*    f->f_reada = 0;*/ /* Set to zero by memset() */
 #endif
 
     if (inode->i_op) f->f_op = inode->i_op->default_file_ops;

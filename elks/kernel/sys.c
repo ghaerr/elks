@@ -295,7 +295,7 @@ int sys_setsid(void)
  * Supplementary group ID's
  */
 
-#define NGROUP	0xFFFF
+#define NOGROUP     0xFFFF
 
 int sys_getgroups(int gidsetsize, gid_t * grouplist)
 {
@@ -325,20 +325,11 @@ int sys_setgroups(int gidsetsize, gid_t * grouplist)
     if (!suser())
         return -EPERM;
 
-#if 1
-    /* semantics change.. return EINVAL for gidsetsize < 0. */
     if (((unsigned int)gidsetsize) > NGROUPS)
         return -EINVAL;
 
     pg = current->groups;
     lg = pg + gidsetsize;
-#else
-    if (gidsetsize > NGROUPS)
-        return -EINVAL;
-
-    pg = current->groups;
-    lg = pg + ((gidsetsize >= 0) ? gidsetsize : 0);
-#endif
 
     if (lg > pg) {
 	if (verified_memcpy_fromfs(pg, grouplist, ((char *)lg) - ((char *)pg)))
@@ -354,11 +345,11 @@ int sys_setgroups(int gidsetsize, gid_t * grouplist)
 
 int in_group_p(gid_t grp)
 {
-    register char *p = (char *) current;
+    gid_t *pg;
+    char *p;
 
-    if (grp != ((__ptask) p)->egid) {
-	register gid_t *pg = ((__ptask) p)->groups - 1;
-
+    if (grp != (current->egid) {
+	pg = current->groups - 1;
 	p = (char *)(pg + NGROUPS);
 
 	do {

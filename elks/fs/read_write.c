@@ -41,7 +41,6 @@ int sys_lseek(unsigned int fd, loff_t * p_offset, unsigned int origin)
 #ifdef BLOAT_FS
     if (offset != file->f_pos) {
 	file->f_reada = 0;
-	file->f_version = ++event;
     }
 #endif
 
