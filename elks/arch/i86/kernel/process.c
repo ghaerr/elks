@@ -11,16 +11,16 @@
 #include <arch/segment.h>
 
 static char *args[] = {
-(char *)0x01,	/* 0 argc     */
-(char *)0x08,	/* 2 &argv[0] */
-    NULL,		/* 4 end argv */
-    NULL,		/* 6 envp     */
-    NULL,		/* 8-19 argv[0], 12 chars space for cmd path*/
+(char *)0x01,   /* 0 argc     */
+(char *)0x08,   /* 2 &argv[0] */
+    NULL,       /* 4 end argv */
+    NULL,       /* 6 envp     */
+    NULL,       /* 8-19 argv[0], 12 chars space for cmd path*/
     NULL,
     NULL,
     NULL,
     NULL,
-    NULL		/* 18-19*/
+    NULL        /* 18-19*/
 };
 
 int run_init_process(const char *cmd)
@@ -29,7 +29,7 @@ int run_init_process(const char *cmd)
 
     strcpy((char *)&args[4], cmd);
     if (!(num = sys_execve(cmd, (char *)args, sizeof(args))))
-		ret_from_syscall();		/* no return, returns to user mode*/
+        ret_from_syscall();             /* no return, returns to user mode*/
     return num;
 }
 
@@ -38,7 +38,7 @@ int run_init_process_sptr(const char *cmd, char *sptr, int slen)
     int num;
 
     if (!(num = sys_execve(cmd, sptr, slen)))
-		ret_from_syscall();		/* no return, returns to user mode*/
+        ret_from_syscall();             /* no return, returns to user mode*/
     return num;
 }
 
@@ -52,32 +52,32 @@ void stack_check(void)
     register char *end = (char *)currentp->t_endbrk;
 
 #ifdef CONFIG_EXEC_LOW_STACK
-    if (currentp->t_begstack <= currentp->t_enddata) {	/* stack below heap?*/
-	if (currentp->t_regs.sp < (__u16)end)
-	    return;
-	end = 0;
+    if (currentp->t_begstack <= currentp->t_enddata) {  /* stack below heap?*/
+        if (currentp->t_regs.sp < (__u16)end)
+            return;
+        end = 0;
     } else
 #endif
     {
-	/* optional: check stack over min stack*/
-	if (currentp->t_regs.sp < currentp->t_begstack - currentp->t_minstack) {
-	  if (currentp->t_minstack)	/* display if protected stack*/
-	    printk("(%d)STACK OVER MINSTACK by %u BYTES\n", currentp->pid,
-		currentp->t_begstack - currentp->t_minstack - currentp->t_regs.sp);
-	}
+        /* optional: check stack over min stack*/
+        if (currentp->t_regs.sp < currentp->t_begstack - currentp->t_minstack) {
+          if (currentp->t_minstack)     /* display if protected stack*/
+            printk("(%d)STACK OVER MINSTACK by %u BYTES\n", currentp->pid,
+                currentp->t_begstack - currentp->t_minstack - currentp->t_regs.sp);
+        }
 
-	/* check stack overflow heap*/
-	if (currentp->t_regs.sp > (__u16)end)
-	    return;
+        /* check stack overflow heap*/
+        if (currentp->t_regs.sp > (__u16)end)
+            return;
     }
     printk("(%d)STACK OVERFLOW BY %u BYTES\n",
-	currentp->pid, (__u16)end - currentp->t_regs.sp);
+        currentp->pid, (__u16)end - currentp->t_regs.sp);
     do_exit(SIGSEGV);
 }
 
 /*
- *	Make task t fork into kernel space. We are in kernel mode
- *	so we fork onto our kernel stack.
+ *  Make task t fork into kernel space. We are in kernel mode
+ *  so we fork onto our kernel stack.
  */
 
 void kfork_proc(void (*addr)())
@@ -86,18 +86,18 @@ void kfork_proc(void (*addr)())
 
     t = find_empty_process();
 
-    t->t_xregs.cs = kernel_cs;			/* Run in kernel space */
+    t->t_xregs.cs = kernel_cs;                  /* Run in kernel space */
     t->t_regs.ds = t->t_regs.es = t->t_regs.ss = kernel_ds;
     if (addr)
-	arch_build_stack(t, addr);
+        arch_build_stack(t, addr);
 }
 
 /*
- *	Build a user return stack for exec*(). This is quite easy,
- *	especially as our syscall entry doesnt use the user stack.
+ *  Build a user return stack for exec*(). This is quite easy,
+ *  especially as our syscall entry doesnt use the user stack.
  */
 
-#define USER_FLAGS 0x3200		/* IPL 3, interrupt enabled */
+#define USER_FLAGS 0x3200               /* IPL 3, interrupt enabled */
 
 void put_ustack(register struct task_struct *t,int off,int val)
 {
@@ -114,10 +114,10 @@ unsigned get_ustack(register struct task_struct *t,int off)
  */
 void arch_setup_user_stack (register struct task_struct * t, word_t entry)
 {
-    put_ustack(t, -2, USER_FLAGS);		/* Flags */
-    put_ustack(t, -4, (int) t->t_xregs.cs);	/* user CS */
-    put_ustack(t, -6, entry);			/* user entry point */
-    put_ustack(t, -8, 0);			/* user BP */
+    put_ustack(t, -2, USER_FLAGS);              /* Flags */
+    put_ustack(t, -4, (int) t->t_xregs.cs);     /* user CS */
+    put_ustack(t, -6, entry);                   /* user entry point */
+    put_ustack(t, -8, 0);                       /* user BP */
     t->t_regs.sp -= 8;
 }
 
@@ -138,10 +138,10 @@ void arch_setup_user_stack (register struct task_struct * t, word_t entry)
  */
 
 void arch_setup_sighandler_stack(register struct task_struct *t,
-				 __kern_sighandler_t addr,unsigned signr)
+                                 __kern_sighandler_t addr,unsigned signr)
 {
     debug("Stack %x:%x was %x %x %x %x\n", _FP_SEG(addr), _FP_OFF(addr),
-	   get_ustack(t,0), get_ustack(t,2), get_ustack(t,4), get_ustack(t,6));
+           get_ustack(t,0), get_ustack(t,2), get_ustack(t,4), get_ustack(t,6));
     put_ustack(t, -6, (int)get_ustack(t,0));
     put_ustack(t, -4, _FP_OFF(addr));
     put_ustack(t, -2, _FP_SEG(addr));
@@ -149,12 +149,12 @@ void arch_setup_sighandler_stack(register struct task_struct *t,
     put_ustack(t, 6, (int)signr);
     t->t_regs.sp -= 6;
     debug("Stack is %x %x %x %x %x %x %x\n", get_ustack(t,0), get_ustack(t,2),
-	   get_ustack(t,4), get_ustack(t,6), get_ustack(t,8), get_ustack(t,10),
-	   get_ustack(t,12));
+           get_ustack(t,4), get_ustack(t,6), get_ustack(t,8), get_ustack(t,10),
+           get_ustack(t,12));
 }
 
 /*
- *	arch_build_stack(t, addr);
+ *  arch_build_stack(t, addr);
  *
  * Called by do_fork() and kfork_proc().
  *
@@ -197,13 +197,13 @@ void arch_build_stack(struct task_struct *t, void (*addr)())
     register __u16 *tsp = ((__u16 *)(&(t->t_regs.ax))) - 1;
 
     if (addr == NULL)
-	addr = ret_from_syscall;
-    *tsp = (__u16)addr;			/* Start execution address */
+        addr = ret_from_syscall;
+    *tsp = (__u16)addr;                 /* Start execution address */
 #ifdef __ia16__
-    *(tsp-2) = kernel_ds;		/* Initial value for ES register */
-    t->t_xregs.ksp = (__u16)(tsp - 4);	/* Initial value for SP register */
+    *(tsp-2) = kernel_ds;               /* Initial value for ES register */
+    t->t_xregs.ksp = (__u16)(tsp - 4);  /* Initial value for SP register */
 #else
-    t->t_xregs.ksp = (__u16)(tsp - 3);	/* Initial value for SP register */
+    t->t_xregs.ksp = (__u16)(tsp - 3);  /* Initial value for SP register */
 #endif
 }
 
@@ -217,6 +217,6 @@ int restart_syscall(void)
     struct uregs __far *user_stack;
 
     user_stack = _MK_FP(current->t_regs.ss, current->t_regs.sp);
-    user_stack->ip -= 2;		/* backup to INT 80h*/
-    return current->t_regs.orig_ax;	/* restore syscall # to user mode AX*/
+    user_stack->ip -= 2;                /* backup to INT 80h*/
+    return current->t_regs.orig_ax;     /* restore syscall # to user mode AX*/
 }

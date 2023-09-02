@@ -20,19 +20,19 @@ static pid_t get_pid(void)
     do {
         if (p->state == TASK_UNUSED)
             continue;
-	if (p->pid == last_pid || p->pgrp == last_pid ||
-	    p->session == last_pid) {
-	  startgp:
-	    if ((int)(++last_pid) < 0)
-		last_pid = 1;
-	    p = &task[0];
-	}
+        if (p->pid == last_pid || p->pgrp == last_pid ||
+            p->session == last_pid) {
+          startgp:
+            if ((int)(++last_pid) < 0)
+                last_pid = 1;
+            p = &task[0];
+        }
     } while (++p < &task[MAX_TASKS]);
     return last_pid;
 }
 
 /*
- *	Find a free task slot.
+ *  Find a free task slot.
  */
 struct task_struct *find_empty_process(void)
 {
@@ -68,7 +68,7 @@ struct task_struct *find_empty_process(void)
 }
 
 /*
- *	Clone a process.
+ *  Clone a process.
  */
 
 pid_t do_fork(int virtual)
@@ -89,27 +89,27 @@ pid_t do_fork(int virtual)
     seg_get(currentp->mm.seg_code);
 
     if (virtual) {
-	seg_get(currentp->mm.seg_data);
+        seg_get(currentp->mm.seg_data);
     } else {
-	t->mm.seg_data = seg_dup(currentp->mm.seg_data);
+        t->mm.seg_data = seg_dup(currentp->mm.seg_data);
 
-	if (t->mm.seg_data == 0) {
-	    seg_put (currentp->mm.seg_code);
-	    t->state = TASK_UNUSED;
+        if (t->mm.seg_data == 0) {
+            seg_put (currentp->mm.seg_code);
+            t->state = TASK_UNUSED;
             task_slots_unused++;
             next_task_slot = t;
-	    return -ENOMEM;
-	}
+            return -ENOMEM;
+        }
 
-	t->t_regs.ds = t->t_regs.es = t->t_regs.ss = (t->mm.seg_data)->base;
+        t->t_regs.ds = t->t_regs.es = t->t_regs.ss = (t->mm.seg_data)->base;
     }
 
     /* Increase the reference count to all open files */
 
     j = 0;
     do {
-	if ((filp = t->files.fd[j]))
-	    filp->f_count++;
+        if ((filp = t->files.fd[j]))
+            filp->f_count++;
     } while (++j < NR_OPEN);
 
     /* Increase the reference count for program text inode - tgm */
@@ -150,24 +150,24 @@ pid_t sys_vfork(void)
 
     if ((retval = do_fork(1)) >= 0) {
 
-	/* Parent and child are sharing the user stack at this point.
-	 * The child will go first, coming into life in the middle of
-	 * the tswitch() function, returning to user space, then will
-	 * return from the library code where the actual syscall was
-	 * done and then will issue an exec syscall, destroying the
-	 * first few bytes at the top of the user stack. Save those
-	 * bytes in the parent's kernel stack.
-	 */
-	memcpy_fromfs(sc, (void *)currentp->t_regs.sp, sizeof(sc));
-	/*
-	 * Let the child go on first.
-	 */
-	sleep_on(&currentp->child_wait);
-	/*
-	 * By now, the child should have its own user stack. Restore
-	 * the parent's user stack.
-	 */
-	memcpy_tofs((void *)currentp->t_regs.sp, sc, sizeof(sc));
+        /* Parent and child are sharing the user stack at this point.
+         * The child will go first, coming into life in the middle of
+         * the tswitch() function, returning to user space, then will
+         * return from the library code where the actual syscall was
+         * done and then will issue an exec syscall, destroying the
+         * first few bytes at the top of the user stack. Save those
+         * bytes in the parent's kernel stack.
+         */
+        memcpy_fromfs(sc, (void *)currentp->t_regs.sp, sizeof(sc));
+        /*
+         * Let the child go on first.
+         */
+        sleep_on(&currentp->child_wait);
+        /*
+         * By now, the child should have its own user stack. Restore
+         * the parent's user stack.
+         */
+        memcpy_tofs((void *)currentp->t_regs.sp, sc, sizeof(sc));
     }
     return retval;
 #endif

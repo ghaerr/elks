@@ -35,10 +35,10 @@ static void *irq_trampoline [16];
 // including the 0..7 processor exceptions & traps
 
 struct int_handler {
-	byte_t call;		/* CALLF opcode (9Ah) */
-	int_proc proc;
-	word_t seg;
-	byte_t irq;
+    byte_t call;        /* CALLF opcode (9Ah) */
+    int_proc proc;
+    word_t seg;
+    byte_t irq;
 } __attribute__ ((packed));
 
 typedef struct int_handler int_handler_s;
@@ -57,22 +57,22 @@ void do_IRQ(int i,void *regs)
 
 static int_handler_s *handler_alloc(void)
 {
-	return (int_handler_s *) heap_alloc (sizeof (int_handler_s), HEAP_TAG_INTHAND);
+    return (int_handler_s *) heap_alloc (sizeof (int_handler_s), HEAP_TAG_INTHAND);
 }
 
 static int int_handler_add (int irq, int vect, int_proc proc, int_handler_s *h)
 {
-	if (!h) h = handler_alloc();
-	if (!h) return -ENOMEM;
+    if (!h) h = handler_alloc();
+    if (!h) return -ENOMEM;
 
-	h->call = 0x9A;		/* CALLF opcode */
-	h->proc = proc;
-	h->seg  = kernel_cs;	/* resident kernel code segment */
-	h->irq  = irq;
+    h->call = 0x9A;     /* CALLF opcode */
+    h->proc = proc;
+    h->seg  = kernel_cs;    /* resident kernel code segment */
+    h->irq  = irq;
 
-	int_vector_set (vect, (int_proc) h, kernel_ds);
+    int_vector_set (vect, (int_proc) h, kernel_ds);
 
-	return 0;
+    return 0;
 }
 
 int request_irq(int irq, irq_handler handler, int hflag)
@@ -133,7 +133,7 @@ int free_irq(int irq)
 }
 
 /*
- *	IRQ setup.
+ *  IRQ setup.
  */
 void INITPROC irq_init(void)
 {
@@ -161,7 +161,7 @@ void INITPROC irq_init(void)
 
     /* Connect timer interrupt handler to hardware IRQ 0 */
     if (request_irq(TIMER_IRQ, timer_tick, INT_GENERIC))
-    	panic("Unable to get timer");
+        panic("Unable to get timer");
 
     enable_timer_tick();        /* reprogram timer for 100 HZ */
 #endif
