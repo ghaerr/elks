@@ -27,11 +27,11 @@ int getpw(uid_t uid, char *buf);
 
 struct passwd * fgetpwent(FILE * file);
 
-struct passwd * getpwuid(const uid_t);
+struct passwd * getpwuid(uid_t);
 struct passwd * getpwnam(const char *);
 
 #ifdef __LIBC__
-struct passwd * __getpwent(const int passwd_fd);
+struct passwd * __getpwent(int passwd_fd);
 #endif
 
 char *getpass(char *prompt);

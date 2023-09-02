@@ -40,6 +40,7 @@ void login(register struct passwd *pwd, struct utmp *ut_ent)
     char sh_name[STR_SIZE];
     char *renv[16];
 
+    endpwent();
     if (fchown(0, pwd->pw_uid, pwd->pw_gid) < 0) perror("login (chown)");
 #ifdef USE_UTMP
     ut_ent->ut_type = USER_PROCESS;

@@ -2,14 +2,24 @@
 
 include $(TOPDIR)/libc/Makefile.inc
 
-SRCS= utent.c pwent.c getpwuid.c getpwnam.c __getpwent.c getgrgid.c getgrnam.c __getgrent.c putpwent.c
-OBJS= $(SRCS:.c=.o)
+LIB = out.a
 
-$(OBJS): $(SRCS)
+OBJS = \
+    utent.o \
+    pwent.o \
+    getpwuid.o \
+    getpwnam.o \
+    __getpwent.o \
+    grent.o \
+    getgrgid.o \
+    getgrnam.o \
+    __getgrent.o \
+    putpwent.o \
+    # end of list
 
-all: out.a
+all: $(LIB)
 
-out.a: $(OBJS)
+$(LIB): $(OBJS)
 	$(RM) $@
 	$(AR) $(ARFLAGS_SUB) $@ $^
 

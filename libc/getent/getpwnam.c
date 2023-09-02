@@ -28,23 +28,19 @@
 struct passwd *
 getpwnam(const char *name)
 {
-    int passwd_fd;
     struct passwd *passwd;
 
-    if (name == NULL) {
+    if (!name) {
         errno = EINVAL;
         return NULL;
     }
 
-    if ((passwd_fd = open(_PATH_PASSWD, O_RDONLY)) < 0)
-        return NULL;
-
-    while ((passwd = __getpwent(passwd_fd)) != NULL) {
+    setpwent();
+    while ((passwd = getpwent()) != NULL) {
         if (!strcmp(passwd->pw_name, name)) {
             break;
         }
     }
 
-    close(passwd_fd);
     return passwd;
 }

@@ -28,7 +28,6 @@
 struct group *
 getgrnam(const char *name)
 {
-    int grp_fd;
     struct group *group;
 
     if (name == NULL) {
@@ -36,15 +35,12 @@ getgrnam(const char *name)
         return NULL;
     }
 
-    if ((grp_fd = open(_PATH_GROUP, O_RDONLY)) < 0)
-        return NULL;
-
-    while ((group = __getgrent(grp_fd)) != NULL) {
+    setgrent();
+    while ((group = getgrent()) != NULL) {
         if (!strcmp(group->gr_name, name)) {
             break;
         }
     }
 
-    close(grp_fd);
     return group;
 }

@@ -57,6 +57,7 @@
 
 #define DEBUG_PROBE     0       /* =1 to display more floppy probing information */
 #define FORCE_PROBE     0       /* =1 to force floppy probing */
+//#define IODELAY       5       /* times 10ms, emulated delay for floppy on QEMU */
 
 /* the following must match with /dev minor numbering scheme*/
 #define NUM_MINOR       32      /* max minor devices per drive*/
@@ -210,6 +211,11 @@ static int bios_disk_rw(unsigned cmd, unsigned num_sectors, unsigned drive,
         BD_DX = (head << 8) | drive;
         BD_ES = seg;
         BD_BX = offset;
+#endif
+#ifdef IODELAY
+        /* emulate floppy delay for QEMU */
+        unsigned long timeout = jiffies + IODELAY*HZ/100;
+        while (!time_after(jiffies, timeout)) continue;
 #endif
         return call_bios(&bdt);
 }

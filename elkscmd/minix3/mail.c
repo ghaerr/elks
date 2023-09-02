@@ -606,6 +606,7 @@ void savelet(struct letter *let, char *savefile)
     }
 
     /* Child */
+    endpwent();
     setgid(getgid());
     setuid(getuid());
     if ((savefp = fopen(savefile, "a")) == NULL) {
@@ -705,6 +706,7 @@ void doshell(char *command)
     }
 
     /* Child */
+    endpwent();
     setgid(getgid());
     setuid(getuid());
     umask(oldmask);
