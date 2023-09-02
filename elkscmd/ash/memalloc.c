@@ -151,10 +151,12 @@ void
 stunalloc(p)
 	register pointer p;
 	{
-	if (p == NULL) {		/*DEBUG */
+#if DEBUG
+	if (p == NULL) {
 		write(2, "stunalloc\n", 10);
 		abort();
 	}
+#endif
 	stacknleft += stacknxt - (char *)p;
 	stacknxt = p;
 }
