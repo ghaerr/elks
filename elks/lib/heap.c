@@ -185,6 +185,11 @@ void heap_init ()
 
 #ifdef HEAP_DEBUG
 
+static void heap_cb (heap_s * h)
+{
+        printk ("heap:%Xh:%u:%hxh\n",h, h->size, h->tag);
+}
+
 void heap_iterate (void (* cb) (heap_s *))
 {
 	list_s * n = _heap_all.next;
