@@ -65,12 +65,11 @@ int permission(register struct inode *inode, int mask)
     return error;
 }
 
+#ifdef BLOAT_FS
 /*
  * get_write_access() gets write permission for a file.
  * put_write_access() releases this write permission.
  */
-
-#ifdef BLOAT_FS
 
 int get_write_access(struct inode *inode)
 {
@@ -82,7 +81,6 @@ void put_write_access(struct inode *inode)
 {
     inode->i_wcount--;
 }
-
 #endif
 
 /*
@@ -312,7 +310,7 @@ int open_namei(const char *pathname, int flag, int mode,
 
     dirp = dir;
     if (!namelen) {		/* special case: '/usr/' etc */
-	if (flag & 2) {
+	if (flag & FMODE_WRITE) {
 	    iput(dirp);
 	    error = -EISDIR;
 	} else if ((error = permission(dirp, ACC_MODE(flag))) != 0) {
@@ -351,8 +349,8 @@ int open_namei(const char *pathname, int flag, int mode,
     error = follow_link(dirp, inode, flag, mode, &inode);
     if (error) goto onamei_end;
     dirp = inode;		/* dirp not used anymore */
-#define inode dirp
-    if (S_ISDIR(inode->i_mode) && (flag & 2)) {
+#define inode dirp //FIXME
+    if (S_ISDIR(inode->i_mode) && (flag & FMODE_WRITE)) {
 	error = -EISDIR;
     } else if ((error = permission(inode, ACC_MODE(flag))) == 0) {
 	if (S_ISBLK(inode->i_mode) || S_ISCHR(inode->i_mode)) {
@@ -363,18 +361,14 @@ int open_namei(const char *pathname, int flag, int mode,
     if (!error) {
 	if (flag & O_TRUNC) {
 
-#ifdef USE_NOTIFY_CHANGE
-	    struct iattr newattrs;
-#endif
-
-#ifndef get_write_access
+#ifdef BLOAT_FS
 	    if ((error = get_write_access(inode))) {
 		iput(inode);
 		return error;
 	    }
 #endif
-
 #ifdef USE_NOTIFY_CHANGE
+	    struct iattr newattrs;
 	    newattrs.ia_size = 0;
 	    newattrs.ia_valid = ATTR_SIZE;
 	    if ((error = notify_change(inode, &newattrs))) {

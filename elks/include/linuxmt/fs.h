@@ -236,10 +236,6 @@ struct file {
     unsigned short		f_count;
     struct inode		*f_inode;
     struct file_operations	*f_op;
-#ifdef BLOAT_FS
-    off_t			f_reada;
-    unsigned long		f_version;
-#endif
 };
 
 struct super_block {

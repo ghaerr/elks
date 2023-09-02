@@ -186,7 +186,7 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
     int max_req;
 
     //debug_blk("BLK %lu %s %lx:%x\n", buffer_blocknr(bh), rw==READ? "read": "write",
-	//buffer_seg(bh), buffer_data(bh));
+	//(unsigned long)buffer_seg(bh), buffer_data(bh));
 
 #ifdef BDEV_SIZE_CHK
     sector_t count = BLOCK_SIZE / SECTOR_SIZE;	/* FIXME must move to lower level*/

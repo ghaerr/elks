@@ -151,18 +151,16 @@ int sys_utimes(char *filename, struct timeval *utimes)
 int sys_utime(char *filename, register struct utimbuf *times)
 {
     struct inode *inode;
-    register struct inode *pinode;
     int error;
 
     error = namei(filename, &inode, 0, 0);
     if (!error) {
-	pinode = inode;
 	if (times) {
-	    pinode->i_atime = get_user_long((void *) &times->actime);
-	    pinode->i_mtime = get_user_long((void *) &times->modtime);
-	} else pinode->i_atime = pinode->i_mtime = CURRENT_TIME;
-	pinode->i_dirt = 1;
-	iput(pinode);
+	    inode->i_atime = get_user_long((void *) &times->actime);
+	    inode->i_mtime = get_user_long((void *) &times->modtime);
+	} else inode->i_atime = inode->i_mtime = CURRENT_TIME;
+	inode->i_dirt = 1;
+	iput(inode);
     }
     return error;
 }
@@ -312,15 +310,16 @@ static int do_chown(register struct inode *inode, uid_t user, gid_t group)
 
     if (!suser() && !(current->euid == inode->i_uid)) return -EPERM;
 
-    if (group != (gid_t) -1) {
+    if (group != (gid_t) -1 && inode->i_gid != group) {
 	inode->i_gid = (__u8) group;
 	inode->i_mode &= ~S_ISGID;
+	inode->i_dirt = 1;
     }
-    if (user != (uid_t) -1) {
+    if (user != (uid_t) -1 && inode->i_uid != user) {
 	inode->i_uid = user;
 	inode->i_mode &= ~S_ISUID;
+	inode->i_dirt = 1;
     }
-    inode->i_dirt = 1;
 
     return 0;
 }
@@ -371,7 +370,7 @@ int sys_open(const char *filename, int flags, int mode)
     if ((mode_t)((flags + 1) & O_ACCMODE)) flag++;
     if (flag & (O_TRUNC | O_CREAT)) flag |= FMODE_WRITE;
 
-    debug_file("OPEN '%t' flags 0x%x", filename, flags);
+    debug_file("OPEN '%t' flags %#x", filename, flags);
     error = open_namei(filename, flag, mode, &inode, NULL);
     if (!error) {
 	if ((error = open_fd(flags, inode)) < 0)

@@ -45,8 +45,8 @@
 /*
  * generally useful code...
  */
-int memory_lseek(struct inode *inode, register struct file *filp,
-		    loff_t offset, unsigned int origin)
+int memory_lseek(struct inode *inode, struct file *filp, loff_t offset,
+        unsigned int origin)
 {
     debugmem("mem_lseek()\n");
     switch (origin) {
@@ -60,12 +60,6 @@ int memory_lseek(struct inode *inode, register struct file *filp,
     }
     if (offset != filp->f_pos) {
 	filp->f_pos = offset;
-
-#ifdef BLOAT_FS
-	filp->f_reada = 0;
-	filp->f_version = ++event;
-#endif
-
     }
     return 0;
 }
@@ -89,7 +83,7 @@ size_t null_read(struct inode *inode, struct file *filp, char *data, size_t len)
 size_t null_write(struct inode *inode, struct file *filp, char *data, size_t len)
 {
     debugmem("null write: ignoring %d bytes!\n", len);
-    return (size_t)len;
+    return len;
 }
 
 /*
