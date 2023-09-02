@@ -10,15 +10,15 @@
 #include <arch/segment.h>
 
 /*
- *	Wait queue functionality for Linux ELKS. Taken from sched.c/h of
- *	its big brother..
+ *  Wait queue functionality for Linux ELKS. Taken from sched.c/h of
+ *  its big brother..
  *
- *	Copyright (C) 1991, 1992  Linus Torvalds
- *	Elks tweaks  (C) 1995 Alan Cox.
+ *  Copyright (C) 1991, 1992  Linus Torvalds
+ *  Elks tweaks  (C) 1995 Alan Cox.
  *
- *	Copyright (C) 2000 Alan Cox.
- *	Rewrote the entire queue functionality to reflect ELKS actual needs
- *	not Linux needs
+ *  Copyright (C) 2000 Alan Cox.
+ *  Rewrote the entire queue functionality to reflect ELKS actual needs
+ *  not Linux needs
  */
 
 /*
@@ -26,13 +26,13 @@
  * Only required when wait queue used or condition check changed by hw interrupt.
  *
  * Old:
- *	if (!ready())
- *	    interruptible_sleep_on(&waitq);
+ *      if (!ready())
+ *          interruptible_sleep_on(&waitq);
  * New:
- *	prepare_to_wait_interruptible(&waitq);
- *	if (!ready())
- *	    do_wait();
- *	finish_wait(&waitq);
+ *      prepare_to_wait_interruptible(&waitq);
+ *      if (!ready())
+ *          do_wait();
+ *      finish_wait(&waitq);
  */
 
 void prepare_to_wait_interruptible(struct wait_queue *p)
@@ -114,15 +114,15 @@ void interruptible_sleep_on(struct wait_queue *p)
 
 void wake_up_process(register struct task_struct *p)
 {
-	flag_t flags;
+    flag_t flags;
 
-	debug_sched("wakeup: %d\n", p->pid);
-	save_flags(flags);
-	clr_irq();
-	p->state = TASK_RUNNING;
-	if (!p->next_run)
-	    add_to_runqueue(p);
-	restore_flags(flags);
+    debug_sched("wakeup: %d\n", p->pid);
+    save_flags(flags);
+    clr_irq();
+    p->state = TASK_RUNNING;
+    if (!p->next_run)
+        add_to_runqueue(p);
+    restore_flags(flags);
 }
 
 /*
@@ -139,24 +139,24 @@ void _wake_up(register struct wait_queue *q, int it)
     register struct task_struct *p;
 
     for_each_task(p) {
-	if (p->state == TASK_UNUSED)
-		continue;
-	if ((p->waitpt == q) || ((p->waitpt == &select_queue) && select_poll (p, q)))
-	    if (p->state == TASK_INTERRUPTIBLE ||
-		(it && p->state == TASK_UNINTERRUPTIBLE)) {
-		wake_up_process(p);
-	    }
+        if (p->state == TASK_UNUSED)
+                continue;
+        if ((p->waitpt == q) || ((p->waitpt == &select_queue) && select_poll (p, q)))
+            if (p->state == TASK_INTERRUPTIBLE ||
+                (it && p->state == TASK_UNINTERRUPTIBLE)) {
+                wake_up_process(p);
+            }
     }
 }
 
 /*
- *	Semaphores. These are not IRQ safe nor needed to be so for ELKS
+ *  Semaphores. These are not IRQ safe nor needed to be so for ELKS
  */
 
 void up(register sem_t *s)
 {
-    if (++(*s) == 0)		/* Gone non-negative */
-	wake_up((void *) s);
+    if (++(*s) == 0)            /* Gone non-negative */
+        wake_up((void *) s);
 
     if (*s != 0) debug_net("kernel: sem up %x FAIL %d\n", s, *s);
 }
@@ -165,7 +165,7 @@ void down(register sem_t *s)
 {
     /* Wait for the semaphore */
     while (*s < 0)
-	    sleep_on((void *) s);
+        sleep_on((void *) s);
 
     /* Take it */
     --(*s);
