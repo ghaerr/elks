@@ -97,10 +97,8 @@ static void do_meta_request(void)
 
 	/* Should really check here whether we have a request */
 	if (req->rq_cmd == WRITE) {
-	    /* Can't do this, copies to the wrong task */
-#if 0
+#if UNUSED  /* FIXME Can't do this, copies to the wrong task */
 	    verified_memcpy_tofs(driver->udd_data, buff, BLOCK_SIZE);
-/* FIXME FIXME	*/
 	    fmemcpyw(driver->udd_data, driver->udd_task->mm.dseg,
 	    		buff, kernel_ds, 1024/2);
 #endif
@@ -122,10 +120,8 @@ static void do_meta_request(void)
 	udr->udr_status = 0;
 	buff = req->rq_buffer;
 	if (req->rq_cmd == READ) {
-	    /* Can't do this, copies from the wrong task */
-#if 0
+#if UNUSED  /* FIXME Can't do this, copies to the wrong task */
 	    verified_memcpy_fromfs(buff, driver->udd_data, BLOCK_SIZE);
-/* FIXME FIXME */
 	    fmemcpyw(buff, kernel_ds,
 	    		driver->udd_data, driver->udd_task->mm.dseg, 1024/2);
 #endif

@@ -164,8 +164,20 @@ int sys_setuid(uid_t uid)
     return 0;
 }
 
-#ifdef NOT_YET
+int sys_setsid(void)
+{
+    register __ptask currentp = current;
 
+    if (currentp->session == currentp->pid)
+	return -EPERM;
+    debug_tty("SETSID pgrp %d\n", currentp->pid);
+    currentp->session = currentp->pgrp = currentp->pid;
+    currentp->tty = NULL;
+
+    return currentp->pgrp;
+}
+
+#if UNUSED
 int sys_times(struct tms *tbuf)
 {
     if (tbuf) {
@@ -274,21 +286,7 @@ int sys_getsid(pid_t pid)
     return -ESRCH;
 
 }
-
-#endif /* NOT_YET */
-
-int sys_setsid(void)
-{
-    register __ptask currentp = current;
-
-    if (currentp->session == currentp->pid)
-	return -EPERM;
-    debug_tty("SETSID pgrp %d\n", currentp->pid);
-    currentp->session = currentp->pgrp = currentp->pid;
-    currentp->tty = NULL;
-
-    return currentp->pgrp;
-}
+#endif
 
 #ifdef CONFIG_SUPPLEMENTARY_GROUPS
 /*

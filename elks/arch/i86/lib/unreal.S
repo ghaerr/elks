@@ -274,7 +274,7 @@ sync_8042:
 	ret
 #endif
 
-#if 0
+#if UNUSED
 #
 # word_t linear32_peekw(void *src_off, addr_t src_seg)
 # WARNING: Requires 32-bit CPU, with unreal mode and A20 gate enabled!

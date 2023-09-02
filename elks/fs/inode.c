@@ -210,7 +210,7 @@ void iput(register struct inode *inode)
 	        inode->i_rdev, (unsigned long)inode->i_ino, inode->i_mode);
 	    return;
 	}
-#ifdef NOT_YET
+#if UNUSED
 	if ((inode->i_mode & S_IFMT) == S_IFIFO)
 	    wake_up_interruptible(&PIPE_WAIT(*inode));
 #endif

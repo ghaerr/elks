@@ -296,11 +296,6 @@ int sys_umount(char *name)
 	register struct file_operations *fops;
 	fops = get_blkfops(MAJOR(dev));
 	if (fops && fops->release) fops->release(inodep, NULL);
-
-#ifdef NOT_YET
-	if (MAJOR(dev) == UNNAMED_MAJOR) put_unnamed_dev(dev);
-#endif
-
     }
     iput(inodep);
     if (!retval) {

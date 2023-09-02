@@ -153,7 +153,7 @@ int tty_open(struct inode *inode, struct file *file)
 	return -ENODEV;
 
     debug_tty("TTY open pid %d\n", currentp->pid);
-#if 0
+#if UNUSED
     memcpy(&otty->termios, &def_vals, sizeof(struct termios));
 #endif
 
@@ -240,7 +240,7 @@ int tty_outproc(register struct tty *tty)
 		    tty->ostate = 0x10;
 		}
 		break;
-#if 0
+#if UNUSED
 	    case '\r':
 		if (t_oflag & OCRNL)
 		    ch = '\n';				/* Map CR to NL */

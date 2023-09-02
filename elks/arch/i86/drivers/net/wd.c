@@ -561,7 +561,7 @@ static int wd_ioctl(struct inode * inode, struct file * file,
 		err = verified_memcpy_tofs((char *)arg, &netif_stat.mac_addr, 6U);
 		break;
 
-#if 0 /* unused*/
+#if UNUSED
 	case IOCTL_ETH_ADDR_SET:
 		err = -ENOSYS;
 		break;

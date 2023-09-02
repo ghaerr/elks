@@ -16,11 +16,6 @@
 struct unix_proto_data {
     int refcnt;
     struct socket *socket;
-
-#if BLOAT_NET
-    int protocol;
-#endif
-
     struct sockaddr_un sockaddr_un;
     short sockaddr_len;
     char buf[UN_BUF_SIZE];

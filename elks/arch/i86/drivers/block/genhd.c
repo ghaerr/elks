@@ -74,7 +74,7 @@ static void INITPROC add_partition(struct gendisk *hd, unsigned short int minor,
      * Some BIOS subtract a cylinder, making direct comparison incorrect.
      * A CHS cylinder can have 63 max sectors * 255 heads, so adjust for that.
      */
-#if 0	/* partition skipping disabled as virtual cylinder values sometimes needed for CF cards*/
+#if UNUSED /* partition skipping disabled as virtual cylinder values sometimes needed for CF cards*/
     struct hd_struct *hd0 = &hd->part[0];
     sector_t adj_nr_sects = hd0->nr_sects + 63 * 255;
     if (start > adj_nr_sects || start+size > adj_nr_sects) {
@@ -302,7 +302,7 @@ static void INITPROC check_partition(register struct gendisk *hd, kdev_t dev)
     first_time = 0;
     first_sector = hd->part[MINOR(dev)].start_sect;
 
-#if 0
+#if UNUSED
     /*
      * This is a kludge to allow the partition check to be
      * skipped for specific drives (e.g. IDE cd-rom drives)
@@ -328,7 +328,7 @@ static void INITPROC check_partition(register struct gendisk *hd, kdev_t dev)
    Much of the cleanup from the old partition tables should have already been
    done */
 
-#if 0				/* Currently unused */
+#if UNUSED
 /* This function will re-read the partition tables for a given device, and set
  * things back up again. There are some important caveats, however. You must
  * ensure that no one is using the device, and no one can start using the

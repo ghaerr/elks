@@ -15,6 +15,7 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/stat.h>
 #include <linuxmt/fcntl.h>
+#include <linuxmt/debug.h>
 
 #include <arch/segment.h>
 #include "af_unix.h"
@@ -36,11 +37,6 @@ static struct unix_proto_data *unix_data_alloc(void)
 	    upd->socket = NULL;
 	    upd->sockaddr_len = 0;
 	    upd->sockaddr_un.sun_family = 0;
-
-#if 0
-	    upd->buf = NULL;
-#endif
-
 	    upd->bp_head = upd->bp_tail = 0;
 	    upd->inode = NULL;
 	    upd->peerupd = NULL;
@@ -91,10 +87,6 @@ static int unix_create(struct socket *sock, int protocol)
     if (!(upd = unix_data_alloc()))
 	return -ENOMEM;
 
-#if 0
-    upd->protocol = protocol;	/* I don't think this is necessary */
-#endif
-
     upd->socket = sock;
     sock->data = upd;
     upd->refcnt = 1;
@@ -104,10 +96,6 @@ static int unix_create(struct socket *sock, int protocol)
 
 static int unix_dup(struct socket *newsock, struct socket *oldsock)
 {
-#if 0
-    struct unix_proto_data *upd = oldsock->data;
-#endif
-
     return unix_create(newsock, 0);
 }
 
@@ -170,9 +158,7 @@ static int unix_bind(struct socket *sock,
 
     current->t_regs.ds = old_ds;
     if (i < 0) {
-#if 0
-	printk("UNIX: bind: can't open socket %s\n", upd->sockaddr_un.sun_path);
-#endif
+	debug("UNIX: bind: can't open socket %s\n", upd->sockaddr_un.sun_path);
 	if (i == -EEXIST)
 	    i = -EADDRINUSE;
 	return i;
@@ -290,7 +276,7 @@ static int unix_accept(struct socket *sock, struct socket *newsock, int flags)
     UN_DATA(newsock)->sockaddr_len = UN_DATA(sock)->sockaddr_len;
     wake_up_interruptible(clientsock->wait);
 
-#if 0
+#if UNUSED
     sock_wake_async(clientsock, 0);	/* Don't need */
 #endif
 
@@ -367,7 +353,7 @@ static int unix_read(struct socket *sock, char *ubuf, int size, int nonblock)
 
 	if (sock->state == SS_CONNECTED) {
 	    wake_up_interruptible(sock->conn->wait);
-#if 0
+#if UNUSED
 	    sock_wake_async(sock->conn, 2);
 #endif
 	}
@@ -455,7 +441,7 @@ static int unix_write(struct socket *sock, char *ubuf, int size, int nonblock)
 
 	if (sock->state == SS_CONNECTED) {
 	    wake_up_interruptible(sock->conn->wait);
-#if 0
+#if UNUSED
 	    sock_wake_async(sock->conn, 1);
 #endif
 	}
