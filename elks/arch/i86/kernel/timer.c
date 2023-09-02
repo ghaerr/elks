@@ -11,7 +11,7 @@
 #include <arch/ports.h>
 
 /*
- *	Timer tick routine
+ *  Timer tick routine
  *
  * 9/1999 The 100 Hz system timer 0 can configure for variable input
  *        frequency. Christian Mardm"oller (chm@kdt.de)
@@ -71,7 +71,7 @@ void timer_tick(int irq, struct pt_regs *regs)
 #endif
 
 #if defined(CONFIG_CHAR_DEV_RS) && (defined(CONFIG_FAST_IRQ4) || defined(CONFIG_FAST_IRQ3))
-    rs_pump();		/* check if received serial chars and call wake_up*/
+    rs_pump();          /* check if received serial chars and call wake_up*/
 #endif
 
 #if defined(CONFIG_BLK_DEV_SSD_TEST) && defined(CONFIG_ASYNCIO)
@@ -83,10 +83,10 @@ void timer_tick(int irq, struct pt_regs *regs)
 #ifdef CONFIG_CONSOLE_DIRECT
     /* spin timer wheel in upper right of screen*/
     if (spin_on && !(jiffies & 7)) {
-	static unsigned char wheel[4] = {'-', '\\', '|', '/'};
-	static int c = 0;
+        static unsigned char wheel[4] = {'-', '\\', '|', '/'};
+        static int c = 0;
 
-	pokeb((79 + 0*80) * 2, VideoSeg, wheel[c++ & 0x03]);
+        pokeb((79 + 0*80) * 2, VideoSeg, wheel[c++ & 0x03]);
     }
 #endif
 }
@@ -95,6 +95,6 @@ void spin_timer(int onflag)
 {
 #ifdef CONFIG_CONSOLE_DIRECT
     if ((spin_on = onflag) == 0)
-	pokeb((79 + 0*80) * 2, VideoSeg, ' ');
+        pokeb((79 + 0*80) * 2, VideoSeg, ' ');
 #endif
 }

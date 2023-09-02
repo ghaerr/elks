@@ -39,7 +39,7 @@
 static struct request all_requests[NR_REQUEST];
 
 /* current request and function pointer for each block device handler */
-struct blk_dev_struct blk_dev[MAX_BLKDEV];	/* initialized by blk_dev_init() */
+struct blk_dev_struct blk_dev[MAX_BLKDEV];      /* initialized by blk_dev_init() */
 
 /*
  * blk_size contains the size of all block-devices in units of 1024 byte
@@ -160,20 +160,20 @@ static void add_request(struct blk_dev_struct *dev, struct request *req)
     clr_irq();
     mark_buffer_clean(req->rq_bh);
     if (!(tmp = dev->current_request)) {
-	dev->current_request = req;
-	set_irq();
-	(dev->request_fn) ();
+        dev->current_request = req;
+        set_irq();
+        (dev->request_fn) ();
     }
     else {
 #ifdef CONFIG_ASYNCIO
-	for (; tmp->rq_next; tmp = tmp->rq_next) {
-	    if ((IN_ORDER(tmp, req) ||
-		!IN_ORDER(tmp, tmp->rq_next)) && IN_ORDER(req, tmp->rq_next))
-		break;
-	}
-	req->rq_next = tmp->rq_next;
-	tmp->rq_next = req;
-	set_irq();
+        for (; tmp->rq_next; tmp = tmp->rq_next) {
+            if ((IN_ORDER(tmp, req) ||
+                !IN_ORDER(tmp, tmp->rq_next)) && IN_ORDER(req, tmp->rq_next))
+                break;
+        }
+        req->rq_next = tmp->rq_next;
+        tmp->rq_next = req;
+        set_irq();
 #else
         panic("add_request: non-empty request queue");
 #endif
@@ -186,37 +186,37 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
     int max_req;
 
     //debug_blk("BLK %lu %s %lx:%x\n", buffer_blocknr(bh), rw==READ? "read": "write",
-	//(unsigned long)buffer_seg(bh), buffer_data(bh));
+        //(unsigned long)buffer_seg(bh), buffer_data(bh));
 
 #ifdef BDEV_SIZE_CHK
-    sector_t count = BLOCK_SIZE / SECTOR_SIZE;	/* FIXME must move to lower level*/
+    sector_t count = BLOCK_SIZE / SECTOR_SIZE;  /* FIXME must move to lower level*/
     sector_t sector = buffer_blocknr(bh) * count;
     if (blk_size[major])
-	if (blk_size[major][MINOR(buffer_dev(bh))] < (sector + count) >> 1) {
-	    printk("attempt to access beyond end of device\n");
-	    return;
-	}
+        if (blk_size[major][MINOR(buffer_dev(bh))] < (sector + count) >> 1) {
+            printk("attempt to access beyond end of device\n");
+            return;
+        }
 #endif
 
     /* Uhhuh.. Nasty dead-lock possible here.. */
     if (EBH(bh)->b_locked)
-	return;
+        return;
     /* Maybe the above fixes it, and maybe it doesn't boot. Life is interesting */
     lock_buffer(bh);
 
-    max_req = NR_REQUEST;	/* reads take precedence */
+    max_req = NR_REQUEST;       /* reads take precedence */
     switch (rw) {
     case READ:
-	break;
+        break;
 
     case WRITE:
 #if NR_REQUEST != 1             /* protect max_req from being 0 below */
-	/* We don't allow the write-requests to fill up the
-	 * queue completely:  we want some room for reads,
-	 * as they take precedence. The last third of the
-	 * requests are only for reads.
-	 */
-	max_req = (NR_REQUEST * 2) / 3;
+        /* We don't allow the write-requests to fill up the
+         * queue completely:  we want some room for reads,
+         * as they take precedence. The last third of the
+         * requests are only for reads.
+         */
+        max_req = (NR_REQUEST * 2) / 3;
 #endif
 #ifdef CHECK_BLOCKIO
         if (!EBH(bh)->b_dirty) {
@@ -225,12 +225,12 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
             return;
         }
 #endif
-	break;
+        break;
 
     default:
-	panic("make_request");
-	unlock_buffer(bh);
-	return;
+        panic("make_request");
+        unlock_buffer(bh);
+        return;
     }
 
     /* find an unused request. */
@@ -261,9 +261,9 @@ void ll_rw_blk(int rw, struct buffer_head *bh)
 
     dev = NULL;
     if ((major = MAJOR(buffer_dev(bh))) < MAX_BLKDEV)
-	dev = blk_dev + major;
+        dev = blk_dev + major;
     if (!dev || !dev->request_fn)
-	panic("ll_rw_blk: unknown device %D", buffer_dev(bh));
+        panic("ll_rw_blk: unknown device %D", buffer_dev(bh));
     make_request(major, rw, bh);
 }
 
@@ -283,7 +283,7 @@ static void plug_device(struct blk_dev_struct *dev, struct request *plug)
     save_flags(flags);
     clr_irq();
     if (!dev->current_request)
-	dev->current_request = plug;
+        dev->current_request = plug;
     restore_flags(flags);
 }
 
@@ -299,8 +299,8 @@ static void unplug_device(struct blk_dev_struct *dev)
     clr_irq();
     req = dev->current_request;
     if (req && req->rq_status == RQ_INACTIVE && req->cmd == -1) {
-	dev->current_request = req->next;
-	(dev->request_fn) ();
+        dev->current_request = req->next;
+        (dev->request_fn) ();
     }
     restore_flags(flags);
 }
@@ -318,17 +318,17 @@ void ll_rw_block(int rw, int nr, register struct buffer_head **bh)
 
     /* Make sure the first block contains something reasonable */
     while (!*bh) {
-	bh++;
-	if (--nr <= 0)
-	    return;
+        bh++;
+        if (--nr <= 0)
+            return;
     }
     dev = NULL;
     if ((major = MAJOR(buffer_dev(bh[0])) < MAX_BLKDEV)
-	dev = blk_dev + major;
+        dev = blk_dev + major;
     if (!dev || !dev->request_fn) {
-	printk("ll_rw_block: Trying to read nonexistent block-device %s (%lu)\n",
-	     kdevname(buffer_dev(bh[0])), buffer_blocknr(bh[0]));
-	goto sorry;
+        printk("ll_rw_block: Trying to read nonexistent block-device %s (%lu)\n",
+             kdevname(buffer_dev(bh[0])), buffer_blocknr(bh[0]));
+        goto sorry;
     }
 
     /* If there are no pending requests for this device, then we insert
@@ -336,19 +336,19 @@ void ll_rw_block(int rw, int nr, register struct buffer_head **bh)
      * from starting until we have shoved all of the blocks into the
      * queue, and then we let it rip.  */
     if (nr > 1)
-	plug_device(dev, &plug);
+        plug_device(dev, &plug);
     for (i = 0; i < nr; i++)
-	if (bh[i])
-	    make_request(major, rw, bh[i]);
+        if (bh[i])
+            make_request(major, rw, bh[i]);
     unplug_device(dev);
     return;
 
   sorry:
     for (i = 0; i < nr; i++)
-	if (bh[i]) {
-		mark_buffer_clean(bh[i]);
-		mark_buffer_uptodate(bh[i], 0);
-	}
+        if (bh[i]) {
+                mark_buffer_clean(bh[i]);
+                mark_buffer_uptodate(bh[i], 0);
+        }
 }
 #endif /* MULTI_BH */
 
@@ -360,23 +360,23 @@ void INITPROC blk_dev_init(void)
 
     dev = blk_dev;
     do {
-	dev->request_fn = NULL;
-	dev->current_request = NULL;
+        dev->request_fn = NULL;
+        dev->current_request = NULL;
     } while (++dev < &blk_dev[MAX_BLKDEV]);
 
     req = all_requests;
     do {
-	req->rq_status = RQ_INACTIVE;
-	req->rq_next = NULL;
+        req->rq_status = RQ_INACTIVE;
+        req->rq_next = NULL;
     } while (++req < &all_requests[NR_REQUEST]);
 #endif
 
 #ifdef CONFIG_BLK_DEV_RAM
-    rd_init();		/* RAMDISK block device*/
+    rd_init();          /* RAMDISK block device*/
 #endif
 
 #if defined(CONFIG_BLK_DEV_SSD_TEST) || defined(CONFIG_BLK_DEV_SSD_SD8018X)
-    ssd_init();		/* SSD block device*/
+    ssd_init();         /* SSD block device*/
 #endif
 
 #ifdef CONFIG_BLK_DEV_HD

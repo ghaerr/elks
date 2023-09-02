@@ -21,8 +21,8 @@ struct request {
     struct request *rq_next;    /* next request, used when async I/O */
 };
 
-#define RQ_INACTIVE	0
-#define RQ_ACTIVE	1
+#define RQ_INACTIVE     0
+#define RQ_ACTIVE       1
 
 /*
  * This is used in the elevator algorithm.  We don't prioritise reads
@@ -48,7 +48,7 @@ struct drive_infot {            /* CHS per drive*/
     int sector_size;
     int fdtype;                 /* floppy fd_types[] index  or -1 if hd */
 };
-extern struct drive_infot *last_drive;	/* set to last drivep-> used in read/write */
+extern struct drive_infot *last_drive;  /* set to last drivep-> used in read/write */
 
 extern unsigned char hd_drive_map[];
 
@@ -128,8 +128,8 @@ static void floppy_off(unsigned int nr);
 
 #endif
 
-#define CURRENT		(blk_dev[MAJOR_NR].current_request)
-#define CURRENT_DEV	DEVICE_NR(CURRENT->rq_dev)
+#define CURRENT         (blk_dev[MAJOR_NR].current_request)
+#define CURRENT_DEV     DEVICE_NR(CURRENT->rq_dev)
 
 static void (DEVICE_REQUEST) ();
 

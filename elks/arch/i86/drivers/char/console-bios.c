@@ -25,46 +25,46 @@
 /* Assumes ASCII values. */
 #define isalpha(c) (((unsigned char)(((c) | 0x20) - 'a')) < 26)
 
-#define A_DEFAULT 	0x07
-#define A_BOLD 		0x08
-#define A_UNDERLINE 	0x07	/* only works on MDA, normal video on EGA */
-#define A_BLINK 	0x80
-#define A_REVERSE	0x70
-#define A_BLANK		0x00
+#define A_DEFAULT       0x07
+#define A_BOLD          0x08
+#define A_UNDERLINE     0x07    /* only works on MDA, normal video on EGA */
+#define A_BLINK         0x80
+#define A_REVERSE       0x70
+#define A_BLANK         0x00
 
 /* character definitions*/
-#define BS		'\b'
-#define NL		'\n'
-#define CR		'\r'
-#define TAB		'\t'
-#define ESC		'\x1B'
-#define BEL		'\x07'
+#define BS              '\b'
+#define NL              '\n'
+#define CR              '\r'
+#define TAB             '\t'
+#define ESC             '\x1B'
+#define BEL             '\x07'
 
-#define MAXPARMS	10
+#define MAXPARMS        10
 
 struct console;
 typedef struct console Console;
 
 struct console {
-    int cx, cy;			/* cursor position */
+    int cx, cy;                 /* cursor position */
     void (*fsm)(Console *, int);
-    unsigned char attr;		/* current attribute */
-    unsigned char XN;		/* delayed newline on column 80 */
-    unsigned char color;	/* fg/bg attr */
+    unsigned char attr;         /* current attribute */
+    unsigned char XN;           /* delayed newline on column 80 */
+    unsigned char color;        /* fg/bg attr */
 #ifdef CONFIG_EMUL_VT52
-    unsigned char tmp;		/* ESC Y ch save */
+    unsigned char tmp;          /* ESC Y ch save */
 #endif
 #ifdef CONFIG_EMUL_ANSI
-    int savex, savey;		/* saved cursor position */
-    unsigned char *parmptr;	/* ptr to params */
-    unsigned char params[MAXPARMS];	/* ANSI params */
+    int savex, savey;           /* saved cursor position */
+    unsigned char *parmptr;     /* ptr to params */
+    unsigned char params[MAXPARMS];     /* ANSI params */
 #endif
-    int pageno;			/* video ram page # */
+    int pageno;                 /* video ram page # */
 };
 
 static struct wait_queue glock_wait;
 static Console Con[MAX_CONSOLES], *Visible;
-static Console *glock;		/* Which console owns the graphics hardware */
+static Console *glock;          /* Which console owns the graphics hardware */
 static int Width, MaxCol, Height, MaxRow;
 static int NumConsoles = MAX_CONSOLES;
 static int kraw;
@@ -93,10 +93,10 @@ static void PositionCursor(register Console * C)
 
 static void PositionCursorGet (int * x, int * y)
 {
-	byte_t col, row;
-	bios_getcursor (&col, &row);
-	*x = col;
-	*y = row;
+        byte_t col, row;
+        bios_getcursor (&col, &row);
+        *x = col;
+        *y = row;
 }
 
 static void DisplayCursor(int onoff)
@@ -118,13 +118,13 @@ static void scroll(register Console * C, int n, int x, int y, int xx, int yy)
 
     a = C->attr;
     if (C != Visible) {
-	bios_setpage(C->pageno);
+        bios_setpage(C->pageno);
     }
 
     bios_scroll (a, n, x, y, xx, yy);
 
     if (C != Visible) {
-	bios_setpage(Visible->pageno);
+        bios_setpage(Visible->pageno);
     }
 }
 
@@ -155,7 +155,7 @@ static void ScrollDown(register Console * C, int y)
 void Console_set_vc(int N)
 {
     if ((N >= NumConsoles) || (Visible == &Con[N]) || glock)
-	return;
+        return;
     Visible = &Con[N];
 
     bios_setpage(N);
@@ -183,37 +183,37 @@ void INITPROC console_init(void)
     MaxRow = (Height = SETUP_VID_LINES) - 1;
 
     if (peekb(0x49, 0x40) == 7)  /* BIOS data segment */
-	NumConsoles = 1;
+        NumConsoles = 1;
 
     C = Con;
     Visible = C;
 
     for (i = 0; i < NumConsoles; i++) {
-	C->cx = C->cy = 0;
-	if (!i) {
-		// Get current cursor position
-		// to write after boot messages
-		PositionCursorGet (&C->cx, &C->cy);
-	}
-	C->fsm = std_char;
-	C->pageno = i;
-	C->attr = A_DEFAULT;
-	C->color = A_DEFAULT;
+        C->cx = C->cy = 0;
+        if (!i) {
+                // Get current cursor position
+                // to write after boot messages
+                PositionCursorGet (&C->cx, &C->cy);
+        }
+        C->fsm = std_char;
+        C->pageno = i;
+        C->attr = A_DEFAULT;
+        C->color = A_DEFAULT;
 
 #ifdef CONFIG_EMUL_ANSI
 
-	C->savex = C->savey = 0;
+        C->savex = C->savey = 0;
 
 #endif
 
-	/* Do not erase early printk() */
-	/* ClearRange(C, 0, C->cy, MaxCol, MaxRow); */
+        /* Do not erase early printk() */
+        /* ClearRange(C, 0, C->cy, MaxCol, MaxRow); */
 
-	C++;
+        C++;
     }
 
     kbd_init();
 
     printk("BIOS console %ux%u"TERM_TYPE"(%d virtual consoles)\n",
-	   Width, Height, NumConsoles);
+           Width, Height, NumConsoles);
 }
