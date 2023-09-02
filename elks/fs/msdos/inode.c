@@ -197,7 +197,7 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%
 	}
 
 	total_displayed = total_sectors >> (BLOCK_SIZE_BITS - SECTOR_BITS_SB(s));
-#if UNUSED
+#if UNUSED      /* calculate free count on mount */
 	long free_displayed = 0;
 	cluster_t cluster;
 	for (cluster = 2; cluster < sb->clusters + 2; cluster++)

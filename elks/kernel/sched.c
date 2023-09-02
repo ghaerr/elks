@@ -178,9 +178,8 @@ static void run_timer_list(void)
     set_irq();
 }
 
-/* maybe someday I'll implement these profiling things -PL */
-
 #if UNUSED
+/* maybe someday I'll implement these profiling things -PL */
 
 static void do_it_prof(struct task_struct *p, jiff_t ticks)
 {

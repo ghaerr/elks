@@ -720,7 +720,7 @@ static int bioshd_open(struct inode *inode, struct file *filp)
     if (!bioshd_initialized || target >= NUM_DRIVES || hdp->start_sect == -1U)
         return -ENXIO;
 
-#if 0
+#if UNUSED
     while (busy[target])
         sleep_on(&busy_wait);
 #endif
@@ -1106,7 +1106,7 @@ static void do_bioshd_request(void)
     spin_timer(0);
 }
 
-#if 0			/* Currently not used, removing for size. */
+#if UNUSED
 static struct wait_queue busy_wait;
 static int revalidate_hddisk(int, int);	/* Currently not used*/
 

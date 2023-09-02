@@ -47,7 +47,7 @@ block_move:
 	pop	%es
 	ret
 
-#if 0
+#if UNUSED
 #
 # Test functions
 #

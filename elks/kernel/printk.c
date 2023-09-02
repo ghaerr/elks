@@ -252,7 +252,7 @@ void panic(const char *error, ...)
     vprintk(error, p);
     va_end(p);
 
-#if 0
+#if UNUSED      // FIXME rewrite for ia16 call stack
     int *bp = (int *) &error - 2;
     char *j;
     int i = 0;

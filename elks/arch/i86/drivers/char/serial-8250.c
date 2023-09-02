@@ -292,7 +292,7 @@ void rs_irq(int irq, struct pt_regs *regs)
     if ((status & UART_LSR_DR) == 0)			/* QEMU may interrupt w/no data*/
 	return;
 
-#if 0	// turn on for serial stats
+#if UNUSED      // turn on for serial stats
     if (status & UART_LSR_OE)
 	printk("serial: data overrun\n");
     if (status & (UART_LSR_FE|UART_LSR_PE))
