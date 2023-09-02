@@ -56,7 +56,7 @@ size_t block_read(struct inode *inode, struct file *filp, char *buf, size_t coun
 	count -= chars;
     }
 #ifdef FIXME
-    if (!IS_RDONLY(inode)) inode->i_atime = CURRENT_TIME;
+    if (!IS_RDONLY(inode)) inode->i_atime = current_time();
 #endif
     return read;
 #else
@@ -114,7 +114,7 @@ size_t block_write(struct inode *inode, struct file *filp, char *buf, size_t cou
     }
     if ((loff_t)inode->i_size < filp->f_pos)
         inode->i_size = (__u32) filp->f_pos;
-    inode->i_mtime = inode->i_ctime = CURRENT_TIME;
+    inode->i_mtime = inode->i_ctime = current_time();
     inode->i_dirt = 1;
     return written;
 #else

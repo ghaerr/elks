@@ -294,7 +294,7 @@ struct inode *new_inode(register struct inode *dir, __u16 mode)
     if (S_ISLNK(mode)) mode |= 0777;
     else mode &= ~(current->fs.umask & 0777);
     inode->i_mode = mode;
-    inode->i_mtime = inode->i_atime = inode->i_ctime = CURRENT_TIME;
+    inode->i_mtime = inode->i_atime = inode->i_ctime = current_time();
 
 #ifdef BLOAT_FS
     inode->i_blocks = inode->i_blksize = 0;
@@ -466,7 +466,7 @@ int notify_change(register struct inode *inode, register struct iattr *attr)
 {
     int retval;
 
-    attr->ia_ctime = CURRENT_TIME;
+    attr->ia_ctime = current_time();
     if (attr->ia_valid & (ATTR_ATIME | ATTR_MTIME)) {
 	if (!(attr->ia_valid & ATTR_ATIME_SET)) attr->ia_atime = attr->ia_ctime;
 	if (!(attr->ia_valid & ATTR_MTIME_SET)) attr->ia_mtime = attr->ia_ctime;

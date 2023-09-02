@@ -186,6 +186,6 @@ void minix_truncate(register struct inode *inode)
 	if (!retry) break;
 	schedule();
     }
-    inode->i_mtime = inode->i_ctime = CURRENT_TIME;
+    inode->i_mtime = inode->i_ctime = current_time();
     inode->i_dirt = 1;
 }

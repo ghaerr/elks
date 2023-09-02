@@ -120,7 +120,7 @@ extern __ptask current;
 extern struct timeval xtime;
 extern jiff_t xtime_jiffies;
 extern int tz_offset;
-#define CURRENT_TIME (xtime.tv_sec + (jiffies - xtime_jiffies)/HZ)
+extern time_t current_time(void);
 
 /* return true if time a is after time b */
 #define time_after(a,b)         (((long)(b) - (long)(a) < 0))
