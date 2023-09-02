@@ -313,7 +313,7 @@ void msdos_read_inode(register struct inode *inode)
 		inode->i_mode = devnods[(int)inode->i_ino - DEVINO_BASE].mode;
 		inode->i_uid  = 0;
 		inode->i_size = 0;
-		inode->i_mtime= CURRENT_TIME;
+		inode->i_mtime= current_time();
 		inode->i_gid  = 0;
 		inode->i_nlink= 1;
 		inode->i_rdev = devnods[(int)inode->i_ino - DEVINO_BASE].rdev;

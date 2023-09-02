@@ -158,7 +158,7 @@ int sys_utime(char *filename, register struct utimbuf *times)
 	if (times) {
 	    inode->i_atime = get_user_long((void *) &times->actime);
 	    inode->i_mtime = get_user_long((void *) &times->modtime);
-	} else inode->i_atime = inode->i_mtime = CURRENT_TIME;
+	} else inode->i_atime = inode->i_mtime = current_time();
 	inode->i_dirt = 1;
 	iput(inode);
     }

@@ -106,7 +106,7 @@ static size_t pipe_read(register struct inode *inode, struct file *filp,
     PIPE_LEN(inode) -= count;
     PIPE_LOCK(inode)--;
     wake_up_interruptible(&PIPE_WAIT(inode));
-    if (count) inode->i_atime = CURRENT_TIME;
+    if (count) inode->i_atime = current_time();
     else if (PIPE_WRITERS(inode)) count = -EAGAIN;
     return count;
 }
@@ -151,7 +151,7 @@ static size_t pipe_write(register struct inode *inode, struct file *filp,
 	wake_up_interruptible(&PIPE_WAIT(inode));
 	free = 1;
     }
-    inode->i_ctime = inode->i_mtime = CURRENT_TIME;
+    inode->i_ctime = inode->i_mtime = current_time();
 
     return written;
 }

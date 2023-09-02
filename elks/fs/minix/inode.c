@@ -227,7 +227,7 @@ static unsigned short map_izone(register struct inode *inode, block_t block, int
 
     if (create && !(*i_zone)) {
 	if ((*i_zone = minix_new_block(inode->i_sb))) {
-	    inode->i_ctime = CURRENT_TIME;
+	    inode->i_ctime = current_time();
 	    inode->i_dirt = 1;
 	}
     }

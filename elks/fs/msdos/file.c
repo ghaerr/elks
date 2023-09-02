@@ -140,7 +140,7 @@ static size_t msdos_file_write(register struct inode *inode,register struct file
 		mark_buffer_dirty(bh);
 		brelse(bh);
 	}
-	inode->i_mtime = CURRENT_TIME;
+	inode->i_mtime = current_time();
 	inode->u.msdos_i.i_attrs |= ATTR_ARCH;
 	inode->i_dirt = 1;
 	return start == buf ? error : buf-start;

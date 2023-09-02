@@ -52,6 +52,11 @@ void INITPROC tz_init(const char *tzstr)
         tz_offset = atoi(tzstr+3);
 }
 
+time_t current_time(void)
+{
+    return (xtime.tv_sec + (jiffies - xtime_jiffies)/HZ);
+}
+
 /* set the time of day */
 int sys_settimeofday(register struct timeval *tv, struct timezone *tz)
 {

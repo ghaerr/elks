@@ -187,14 +187,14 @@ static int FATPROC msdos_create_entry(struct inode *dir,const char *name,int is_
 	memcpy(de->name,name,MSDOS_NAME);
 	de->attr = is_dir ? ATTR_DIR : ATTR_ARCH;
 	de->start = 0;
-	date_unix2dos(CURRENT_TIME,&de->time,&de->date);
+	date_unix2dos(current_time(),&de->time,&de->date);
 	de->size = 0;
 	debug_fat("create_entry block write %lu\n", buffer_blocknr(bh));
 	mark_buffer_dirty(bh);
 	if ((*result = iget(dir->i_sb,ino)) != 0) msdos_read_inode(*result);
 	unmap_brelse(bh);
 	if (!*result) return -EIO;
-	(*result)->i_mtime = CURRENT_TIME;
+	(*result)->i_mtime = current_time();
 	(*result)->i_dirt = 1;
 	return 0;
 }
@@ -319,7 +319,7 @@ int msdos_rmdir(register struct inode *dir,const char *name,int len)
 		if (dbh) unmap_brelse(dbh);
 	}
 	inode->i_nlink = 0;
-	dir->i_mtime = CURRENT_TIME;
+	dir->i_mtime = current_time();
 	inode->i_dirt = dir->i_dirt = 1;
 	de->name[0] = (unsigned char)DELETED_FLAG;
 	debug_fat("rmdir block write %lu\n", buffer_blocknr(bh));
