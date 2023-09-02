@@ -66,7 +66,7 @@ __tm_conv(struct tm *tmbuf, const time_t *t, time_t offset)
   tmbuf->tm_isdst = -1;
 }
 
-#if NOTUSED
+#if UNUSED
 #include <time.h>
 
 /* This is a translation from ALGOL in Collected Algorithms of CACM. */

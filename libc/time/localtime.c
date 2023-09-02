@@ -1,9 +1,6 @@
 #include <time.h>
 #include <sys/time.h>
 
-extern int _tz_is_set;
-void __tm_conv(struct tm *tmbuf, const time_t *timep, time_t offset);
-
 struct tm * localtime (const time_t * timep)
 {
    static struct tm tmb;

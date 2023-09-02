@@ -17,18 +17,12 @@ struct passwd
   char *pw_shell;		/* Shell program.  */
 };
 
-
 void setpwent(void);
 void endpwent(void);
 struct passwd * getpwent(void);
-
-int putpwent (const struct passwd * p, FILE * stream);
-int getpw(uid_t uid, char *buf);
-
-struct passwd * fgetpwent(FILE * file);
-
 struct passwd * getpwuid(uid_t);
 struct passwd * getpwnam(const char *);
+int putpwent (const struct passwd * p, FILE * stream);
 
 #ifdef __LIBC__
 struct passwd * __getpwent(int passwd_fd);
@@ -36,7 +30,4 @@ struct passwd * __getpwent(int passwd_fd);
 
 char *getpass(char *prompt);
 
-#endif /* pwd.h  */
-
-
-
+#endif /* __PWD_H */
