@@ -11,6 +11,8 @@
 
 #include <signal.h>
 #include <errno.h>
+#include <pwd.h>
+#include <grp.h>
 
 typedef struct {
     char    *name;
@@ -560,6 +562,8 @@ runcmd(char *cmd, int argc, char **argv)
 {
 	int		pid, status, ret;
 
+	endpwent();
+	endgrent();
 	/*
 	 * If a full shell is required, run 'sh -c cmd' unless we are the only shell.
 	 */

@@ -60,6 +60,12 @@ void	tzset(void);
 struct tm*	gmtime(const time_t *__tp);
 struct tm*	localtime(const time_t * __tp);
 
+#ifdef __LIBC__
+extern int _tz_is_set;
+void __tm_conv(struct tm *tmbuf, const time_t *timep, time_t offset);
+void __asctime(char *buffer, const struct tm *ptm);
+#endif
+
 __END_DECLS
 
 #endif

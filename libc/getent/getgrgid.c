@@ -28,17 +28,13 @@ struct group *
 getgrgid(const gid_t gid)
 {
     struct group *group;
-    int grp_fd;
 
-    if ((grp_fd = open(_PATH_GROUP, O_RDONLY)) < 0)
-        return NULL;
-
-    while ((group = __getgrent(grp_fd)) != NULL) {
+    setgrent();
+    while ((group = getgrent()) != NULL) {
         if (group->gr_gid == gid) {
             break;
         }
     }
 
-    close(grp_fd);
     return group;
 }

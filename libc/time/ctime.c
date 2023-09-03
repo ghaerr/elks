@@ -1,18 +1,13 @@
-
 #include <time.h>
 #include <sys/time.h>
-
-extern int _tz_is_set;
-void __tm_conv(struct tm *tmbuf, const time_t *timep, time_t offset);
-extern void __asctime(char *buffer, const struct tm *ptm);
 
 char *
 ctime(const time_t *timep)
 {
-  static char cbuf[26];
+  time_t offt;
   struct tm tmb;
   struct timezone tz;
-  time_t offt;
+  static char cbuf[26];
   
   gettimeofday((void*)0, &tz);
   

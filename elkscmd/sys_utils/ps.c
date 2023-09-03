@@ -75,13 +75,17 @@ char *devname(unsigned int minor)
 {
 	struct dirent *d;
 	dev_t ttydev = MKDEV(TTY_MAJOR, minor);
+	static dev_t prevdev = -1;
+	static DIR *fp = NULL;
 	struct stat st;
 	static char dev[] = "/dev";
 	static char name[MAXNAMLEN+1];
 
-	DIR *fp = opendir(dev);
-	if (fp == 0)
-		return "??";
+	if (prevdev == ttydev) return name+8;
+	if (!fp) {
+		if (!(fp = opendir(dev)))
+			return "??";
+	} else rewinddir(fp);
 	strcpy(name, dev);
 	strcat(name, "/");
 
@@ -90,13 +94,14 @@ char *devname(unsigned int minor)
 			continue;
 		if (d->d_name[0] == '.')
 			continue;
+		if (strncmp(d->d_name, "tty", 3))
+			continue;
 		strcpy(name + sizeof(dev), d->d_name);
 		if (!stat(name, &st) && st.st_rdev == ttydev) {
-			closedir(fp);
+			prevdev = ttydev;
 			return name+8;
 		}
 	}
-	closedir(fp);
 	return "?";
 }
 

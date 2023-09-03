@@ -17,21 +17,11 @@ struct group
 void setgrent(void);
 void endgrent(void);
 struct group * getgrent(void);
-
 struct group * getgrgid(const gid_t gid);
 struct group * getgrnam(const char * name);
-
-struct group * fgetgrent(FILE * file);
-
-int setgroups(size_t n, const gid_t * groups);
-int initgroups(const char * user, gid_t gid);
-
 
 #ifdef __LIBC__
 struct group * __getgrent(int grp_fd);
 #endif
 
-#endif /* _GRP_H */
-
-
-
+#endif /* __GRP_H */

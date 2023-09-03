@@ -16,6 +16,7 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  * 
+ * Sep 2023 Greg Haerr  - reduced code and data size
  */
 
 #include <stdlib.h>
@@ -24,7 +25,7 @@
 #include <fcntl.h>
 #include <pwd.h>
 
-#define PWD_BUFFER_SIZE 256
+#define PWD_BUFFER_SIZE 64
 
 /*
  * This isn't as flash as my previous version -- it doesn't dynamically scale
@@ -36,14 +37,11 @@
 struct passwd  *
 __getpwent(int pwd_fd)
 {
-    static char     line_buff[PWD_BUFFER_SIZE];
-    static struct passwd passwd;
     char           *field_begin;
-    char           *endptr;
-    char           *gid_ptr;
-    char           *uid_ptr;
     int             line_len;
     int             i;
+    static struct passwd passwd;
+    static char     line_buff[PWD_BUFFER_SIZE];
 
     /* We use the restart label to handle malformatted lines */
 restart:
@@ -80,10 +78,10 @@ restart:
             passwd.pw_passwd = field_begin;
             break;
         case 2:
-            uid_ptr = field_begin;
+            passwd.pw_uid = (uid_t) atoi(field_begin);
             break;
         case 3:
-            gid_ptr = field_begin;
+            passwd.pw_gid = (gid_t) atoi(field_begin);
             break;
         case 4:
             passwd.pw_gecos = field_begin;
@@ -102,14 +100,5 @@ restart:
             *field_begin++ = '\0';
         }
     }
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-    passwd.pw_gid = (gid_t) strtoul(gid_ptr, &endptr, 10);
-    if (*endptr != '\0')
-        goto restart;
-
-    passwd.pw_uid = (uid_t) strtoul(uid_ptr, &endptr, 10);
-    if (*endptr != '\0')
-        goto restart;
-
     return &passwd;
 }

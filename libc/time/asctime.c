@@ -1,7 +1,4 @@
-
 #include <time.h>
-
-extern void __asctime(char *buffer, const struct tm *ptm);
 
 char *
 asctime(const struct tm *timeptr)
