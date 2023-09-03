@@ -12,7 +12,6 @@
 #include <linuxmt/utsname.h>
 #include <linuxmt/netstat.h>
 #include <linuxmt/trace.h>
-#include <linuxmt/debug.h>
 #include <arch/system.h>
 #include <arch/segment.h>
 #include <arch/ports.h>
@@ -22,6 +21,8 @@
  */
 #define ENV             1       /* allow environ variables as bootopts*/
 #define DEBUG           0       /* display parsing at boot*/
+
+#include <linuxmt/debug.h>
 
 #define MAX_INIT_ARGS	8
 #define MAX_INIT_ENVS	8
@@ -71,7 +72,7 @@ static unsigned char options[OPTSEGSZ];
 extern int boot_rootdev;
 extern int dprintk_on;
 static char * INITPROC root_dev_name(int dev);
-static int parse_options(void);
+static int INITPROC parse_options(void);
 static void INITPROC finalize_options(void);
 static char * INITPROC option(char *s);
 
@@ -154,7 +155,7 @@ void INITPROC kernel_init(void)
     seg_t     init_seg = ((unsigned long)(void __far *)__start_fartext_init) >> 16;
     seg_t s = init_seg + (((word_t)(void *)__start_fartext_init + 15) >> 4);
     seg_t e = init_seg + (((word_t)(void *)  __end_fartext_init + 15) >> 4);
-    debug("extra %04x to %04x size %04x (%d)\n", s, e, (e - s) << 4, (e - s) << 4);
+    debug("init: seg %04x to %04x size %04x (%d)\n", s, e, (e - s) << 4, (e - s) << 4);
     seg_add(s, e);
 #else
     seg_t s = 0, e = 0;
@@ -190,7 +191,7 @@ static void INITPROC kernel_banner(seg_t start, seg_t end, seg_t init, seg_t ext
            kernel_ds, end, (int) ((end - start + extra) >> 6));
 }
 
-static void try_exec_process(const char *path)
+static void INITPROC try_exec_process(const char *path)
 {
     int num;
 
@@ -198,8 +199,7 @@ static void try_exec_process(const char *path)
     if (num) printk("Can't run %s, errno %d\n", path, num);
 }
 
-/* this procedure runs in user mode as task 1*/
-static void init_task(void)
+static void INITPROC do_init_task(void)
 {
     int num;
     const char *s;
@@ -239,6 +239,12 @@ static void init_task(void)
     try_exec_process(binshell);
     try_exec_process("/bin/sash");
     panic("No init or sh found");
+}
+
+/* this procedure runs in user mode as task 1*/
+static void init_task(void)
+{
+    do_init_task();
 }
 
 #ifdef CONFIG_BOOTOPTS
@@ -307,7 +313,7 @@ static int INITPROC parse_dev(char * line)
 	return (base + atoi(line));
 }
 
-static void comirq(char *line)
+static void INITPROC comirq(char *line)
 {
 #if defined(CONFIG_ARCH_IBMPC) && defined(CONFIG_CHAR_DEV_RS)
 	int i;
@@ -328,7 +334,7 @@ static void comirq(char *line)
 #endif
 }
 
-static void parse_nic(char *line, struct netif_parms *parms)
+static void INITPROC parse_nic(char *line, struct netif_parms *parms)
 {
     char *p;
 
@@ -343,7 +349,7 @@ static void parse_nic(char *line, struct netif_parms *parms)
     }
 }
 
-static void parse_umb(char *line)
+static void INITPROC parse_umb(char *line)
 {
 	char *p = line-1; /* because we start reading at p+1 */
 	seg_t base, end;
@@ -369,7 +375,7 @@ static void parse_umb(char *line)
  * This routine also checks for options meant for the kernel.
  * These options are not given to init - they are for internal kernel use only.
  */
-static int parse_options(void)
+static int INITPROC parse_options(void)
 {
 	char *line = (char *)options;
 	char *next;
@@ -382,7 +388,6 @@ static int parse_options(void)
 	if (*(unsigned short *)options != 0x2323 || options[OPTSEGSZ-1])
 		return 0;
 
-	debug("/bootopts: %s", &options[3]);
 	next = line;
 	while ((line = next) != NULL && *line) {
 		if ((next = option(line)) != NULL) {
@@ -395,6 +400,7 @@ static int parse_options(void)
 		}
 		if (*line == 0)		/* skip spaces and linefeeds*/
 			continue;
+		debug("'%s',", line);
 		/*
 		 * check for kernel options first..
 		 */
@@ -417,7 +423,7 @@ static int parse_options(void)
 			}
 
 
-			debug("console %s=%D\n", line+8, dev);
+			debug("console %s=%D,", line+8, dev);
 			boot_console = dev;
 			continue;
 		}
@@ -499,6 +505,7 @@ static int parse_options(void)
 		}
 #endif
 	}
+	debug("\n");
 	return 1;	/* success*/
 }
 

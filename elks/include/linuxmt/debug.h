@@ -125,17 +125,15 @@ void debug_setcallback(int evnum, void (*cbfunc)()); /* callback on debug event*
 #define debug_wait(...)
 #endif
 
-/* Old debug mechanism - deprecated.
- * This sets up a standard set of macros that can be used with any of the
- * files that make up the ELKS kernel.
+/* Old debug mechanism - enables debug() macro.
  *
- * To enable debugging for any particular module, just include -DDEBUG
- * on the command line for that module.
+ * To enable debugging for any particular module, just include -DDEBUG=1
+ * on the command line or #define DEBUG 1 in the module.
  *
  * Riley Williams <Riley@Williams.Name> 25 Apr 2002
  */
 
-#ifdef DEBUG
+#if DEBUG
 #       define  debug(...)      PRINTK(__VA_ARGS__)
 #else
 #       define  debug(...)
