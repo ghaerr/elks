@@ -30,7 +30,6 @@
 #include <dirent.h>
 #include <pwd.h>
 #include <getopt.h>
-#include <errno.h>
 
 #define LINEARADDRESS(off, seg)		((off_t) (((off_t)seg << 4) + off))
 
@@ -140,17 +139,17 @@ int main(int argc, char **argv)
             break;
         default:
             printf("Usage: %s: [-lu]\n", progname);
-            exit(1);
+            return 1;
         }
     }
 
 	if ((fd = open("/dev/kmem", O_RDONLY)) < 0) {
-		perror("ps");
-		exit(1);
+		printf("ps: no /dev/kmem\n");
+		return 1;
 	}
 	if (ioctl(fd, MEM_GETDS, &ds) < 0) {
-		perror("ps");
-		exit(1);
+		printf("ps: ioctl mem_getds\n");
+		return 1;
 	}
 
 #ifdef CONFIG_CPU_USAGE
@@ -160,8 +159,8 @@ int main(int argc, char **argv)
 
 	    if (ioctl(fd, MEM_GETUPTIME, &upoff) < 0 ||
                 !memread(fd, upoff, ds, &uptime, sizeof(uptime))) {
-		    perror("ps");
-		    exit(1);
+		    printf("ps: ioctl mem_getuptime\n");
+		    return 1;
 	    }
 
         unsigned long n = uptime / HZ;
@@ -173,13 +172,13 @@ int main(int argc, char **argv)
 
         printf("up for %d days, %d hour%s, and %d minute%s\n",
             days, hours, hours == 1? "": "s", minutes, minutes == 1? "": "s");
-        exit(0);
+        return 0;
     }
 #endif
 
 	if (ioctl(fd, MEM_GETTASK, &off) < 0) {
-		perror("ps");
-		exit(1);
+		printf("ps: ioctl mem_gettask\n");
+		return 1;
 	}
 
 	printf("  PID   GRP  TTY USER STAT ");
@@ -191,14 +190,13 @@ int main(int argc, char **argv)
 	printf(" HEAP  FREE   SIZE COMMAND\n");
 	for (j = 1; j <= MAX_TASKS; j++) {
 		if (!memread(fd, off + j*sizeof(struct task_struct), ds, &task_table, sizeof(task_table))) {
-			perror("ps");
+			printf("ps: memread\n");
 			return 1;
 		}
 
         if (task_table.kstack_magic != KSTACK_MAGIC) {
             if (task_table.kstack_magic == 0) continue;
-            errno = EILSEQ;
-            perror("Recompile ps, mismatched task structure");
+            printf("Recompile ps, mismatched task structure\n");
             return 1;
         }
 		if (task_table.t_regs.ss == 0)
@@ -214,7 +212,7 @@ int main(int argc, char **argv)
 		case TASK_EXITING:			c = 'E'; break;
 		default:					c = '?'; break;
 		}
-		pwent = (getpwuid(task_table.uid));
+		pwent = getpwuid(task_table.uid);
 
 		/* pid grp tty user stat*/
 		printf("%5d %5d %4s %-8s%c ",
