@@ -169,7 +169,7 @@ void FATPROC cache_lookup(struct inode *inode,cluster_t cluster,
 }
 
 
-#ifdef DEBUG
+#if DEBUG
 static void FATPROC list_cache(void)
 {
 	struct fat_cache *walk;
@@ -203,7 +203,7 @@ void FATPROC cache_add(struct inode *inode, cluster_t f_clu, cluster_t d_clu)
 			last->next = walk->next;
 			walk->next = fat_cache;
 			fat_cache = walk;
-#ifdef DEBUG
+#if DEBUG
 			list_cache();
 #endif
 			return;
@@ -215,7 +215,7 @@ void FATPROC cache_add(struct inode *inode, cluster_t f_clu, cluster_t d_clu)
 	last->next = NULL;
 	walk->next = fat_cache;
 	fat_cache = walk;
-#ifdef DEBUG
+#if DEBUG
 	list_cache();
 #endif
 }
