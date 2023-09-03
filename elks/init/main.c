@@ -354,9 +354,7 @@ static void parse_umb(char *line)
 		if((p = strchr(p+1, ':'))) {
 			len = (segext_t)simple_strtol(p+1, 16);
 			end = base + len;
-#if DEBUG
-			printk("umb segment from %x to %x\n", base, end);
-#endif
+			debug("umb segment from %x to %x\n", base, end);
 			seg_add(base, end);
 		}
 	} while((p = strchr(p+1, ',')));
@@ -384,9 +382,7 @@ static int parse_options(void)
 	if (*(unsigned short *)options != 0x2323 || options[OPTSEGSZ-1])
 		return 0;
 
-#if DEBUG
-	printk("/bootopts: %s", &options[3]);
-#endif
+	debug("/bootopts: %s", &options[3]);
 	next = line;
 	while ((line = next) != NULL && *line) {
 		if ((next = option(line)) != NULL) {
@@ -404,9 +400,7 @@ static int parse_options(void)
 		 */
 		if (!strncmp(line,"root=",5)) {
 			int dev = parse_dev(line+5);
-#if DEBUG
-			printk("root %s=%D\n", line+5, dev);
-#endif
+			debug("root %s=%D\n", line+5, dev);
 			ROOT_DEV = (kdev_t)dev;
 			boot_rootdev = dev;    /* stop translation in device_setup*/
 			continue;
@@ -423,9 +417,7 @@ static int parse_options(void)
 			}
 
 
-#if DEBUG
-			printk("console %s=%D\n", line+8, dev);
-#endif
+			debug("console %s=%D\n", line+8, dev);
 			boot_console = dev;
 			continue;
 		}
