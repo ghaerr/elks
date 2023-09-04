@@ -54,7 +54,7 @@ static void INITPROC print_minor_name(register struct gendisk *hd,
     unsigned int part;
     struct hd_struct *hdp = &hd->part[minor];
 
-    printk(" %s%c", hd->major_name, 'a' + (unsigned char)(minor >> hd->minor_shift));
+    printk("%s%c", hd->major_name, 'a' + (unsigned char)(minor >> hd->minor_shift));
     if ((part = (unsigned) (minor & ((1 << hd->minor_shift) - 1))))
 	printk("%d", part);
     printk(":(%lu,%lu) ", hdp->start_sect, hdp->nr_sects);
@@ -216,10 +216,8 @@ static int INITPROC msdos_partition(struct gendisk *hd,
     register struct hd_struct *hdp;
     unsigned short int i, minor = current_minor;
 
-    if (!(bh = bread(dev, (block_t) 0))) {
-	printk(" no MBR");
+    if (!(bh = bread(dev, (block_t) 0)))
 	return 0;
-    }
     map_buffer(bh);
 
     /* In some cases we modify the geometry of the drive (below), so ensure
@@ -227,7 +225,7 @@ static int INITPROC msdos_partition(struct gendisk *hd,
      */
     if (*(unsigned short *) (bh->b_data + 0x1fe) != 0xAA55) {
 out:
-	printk(" no mbr,");
+	printk("no mbr,");
 	unmap_brelse(bh);
 	return 0;
     }
@@ -294,12 +292,8 @@ out:
 
 static void INITPROC check_partition(register struct gendisk *hd, kdev_t dev)
 {
-    static int first_time = 1;
     sector_t first_sector;
 
-    if (first_time)
-	printk("Partitions:");
-    first_time = 0;
     first_sector = hd->part[MINOR(dev)].start_sect;
 
 #if UNUSED
@@ -320,7 +314,7 @@ static void INITPROC check_partition(register struct gendisk *hd, kdev_t dev)
 	return;
 #endif
 
-    printk(" none.\n");
+    printk(" no partitions\n");
 }
 #endif
 

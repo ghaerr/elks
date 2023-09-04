@@ -16,7 +16,7 @@
  *              %x/%X   hexadecimal with lower/upper case letters
  *              %#x/%#X hexadecimal using 0x alt prefix
  *              %p/%P   pointer - same as %04x/%04X respectively
- *              %D      device name as %#04x
+ *              %D      device name as %04x
  *
  *      All except %% can be followed by a width specifier 1 -> 31 only
  *      and the h/l length specifiers also work where appropriate.
@@ -190,7 +190,6 @@ static void vprintk(const char *fmt, va_list p)
                 break;
             case 'D':
                 c += 'X' - 'D';
-                alt = 1;
             case 'P':
             case 'p':
                 c += 'X' - 'P';

@@ -83,7 +83,7 @@ static void list_inode_status(void)
 
     do {
         if (inode->i_count || inode->i_dev || inode->i_dirt) {
-            printk("\n#%2d: dev %D inode %5lu dirty %d count %u", i, inode->i_dev,
+            printk("\n#%2d: dev %p inode %5lu dirty %d count %u", i, inode->i_dev,
                 (unsigned long)inode->i_ino, inode->i_dirt, inode->i_count);
         }
         i++;
@@ -201,7 +201,7 @@ void iput(register struct inode *inode)
 {
     register struct super_operations *sop;
 
-    debug("iput dev %D ino %lu count %d\n",
+    debug("iput dev %p ino %lu count %d\n",
         inode->i_dev, (unsigned long)inode->i_ino, inode->i_count);
     if (inode) {
 	wait_on_inode(inode);
@@ -310,7 +310,7 @@ struct inode *iget(struct super_block *sb, ino_t inr)
     register struct inode *n_ino;
 
     if (!sb) panic("iget sb 0");
-    debug("iget dev %D ino %lu\n", sb->s_dev, (unsigned long)inr);
+    debug("iget dev %p ino %lu\n", sb->s_dev, (unsigned long)inr);
 
     n_ino = NULL;
     goto start;
