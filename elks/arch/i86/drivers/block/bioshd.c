@@ -412,10 +412,17 @@ static unsigned short int INITPROC bioshd_getfdinfo(void)
     BD_AX = BIOSHD_DRIVE_PARMS;
     BD_DX = 0;                  /* query floppies only*/
     BD_ES = BD_DI = BD_SI = 0;  /* guard against BIOS bugs*/
-    if (!call_bios(&bdt))
-        ndrives = BD_DX & 0xff; /* floppy drive count*/
-    else
-        printk("fd: no bios get drives, ndrives %d\n", ndrives);
+    if (!call_bios(&bdt)) {
+        int drives = BD_DX & 0xff;      /* floppy drive count */
+        if (!drives && ndrives) {       /* handle Toshiba T1100 BIOS returning 0 drives */
+            for (drive = 0; drive < ndrives; drive++) {
+                printk("fd%d: default 720k\n", drive);
+                *drivep++ = fd_types[2];
+            }
+            return ndrives;
+        } else ndrives = drives;
+    } else
+        printk("fd: no get drive fn, ndrives %d\n", ndrives);
 
     /* set drive type for floppies*/
     for (drive = 0; drive < ndrives; drive++) {
@@ -428,8 +435,11 @@ static unsigned short int INITPROC bioshd_getfdinfo(void)
         BD_ES = BD_DI = BD_SI = 0;      /* guard against BIOS bugs*/
         if (!call_bios(&bdt))           /* returns drive type in BL*/
             *drivep = fd_types[(BD_BX & 0xFF) - 1];
-        else
-            *drivep = fd_types[(sys_caps & CAP_PC_AT) ? 3 : 0];
+        else {
+            int type = (sys_caps & CAP_PC_AT) ? 3 : 0;
+            *drivep = fd_types[type];
+            printk("fd%d: default %s\n", drive, type? "1440k": "360k");
+        }
         drivep++;
     }
 #endif
