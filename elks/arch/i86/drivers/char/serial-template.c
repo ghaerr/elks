@@ -216,7 +216,7 @@ void INITPROC serial_init(void)
 	    printk("Can't get serial IRQ %d\n", sp->irq);
 	else {
 	    sp->tty = tty;
-	    printk("ttyS%d at 0x%x, irq %d\n", sp-ports, sp->io, sp->irq);
+	    printk("ttyS%d at %x, irq %d\n", sp-ports, sp->io, sp->irq);
 	    update_port(sp);
 	}
     }

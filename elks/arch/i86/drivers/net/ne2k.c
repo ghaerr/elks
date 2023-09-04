@@ -448,7 +448,7 @@ void INITPROC ne2k_drv_init(void)
 
 		err = ne2k_probe();
 		verbose = (net_flags&ETHF_VERBOSE);
-		printk("eth: %s at 0x%x, irq %d", dev_name, net_port, net_irq);
+		printk("eth: %s at %x, irq %d", dev_name, net_port, net_irq);
 		if (err) {
 			printk(" not found\n");
 			break;

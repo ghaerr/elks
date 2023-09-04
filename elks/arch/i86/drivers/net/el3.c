@@ -202,7 +202,7 @@ static int INITPROC el3_isa_probe( void )
 
 	outb(0xd0, el3_id_port);		// select tag (0)
 	outb(0xe0 |(ioaddr >> 4), el3_id_port );// Set IOBASE address, activate
-	printk("eth: %s at 0x%x, irq %d", dev_name, ioaddr, net_irq);
+	printk("eth: %s at %x, irq %d", dev_name, ioaddr, net_irq);
 
 	if (id_read_eeprom(EEPROM_MFG_ID) != 0x6d50) {
 		printk(" not found\n");
