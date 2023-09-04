@@ -262,7 +262,7 @@ int stream_to_rune(unsigned int ch)
 /*-*- mode:c;indent-tabs-mode:nil;c-basic-offset:2;tab-width:8;coding:utf-8 -*-│
 │vi: set net ft=c ts=2 sts=2 sw=2 fenc=utf-8                                :vi│
 ╞══════════════════════════════════════════════════════════════════════════════╡
-│ Copyright 2020 Justine Alexandra Roberts Tunney                              │
+│ Copyright 2022 Justine Alexandra Roberts Tunney                              │
 │                                                                              │
 │ Permission to use, copy, modify, and/or distribute this software for         │
 │ any purpose with or without fee is hereby granted, provided that the         │
@@ -277,10 +277,6 @@ int stream_to_rune(unsigned int ch)
 │ TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR             │
 │ PERFORMANCE OF THIS SOFTWARE.                                                │
 ╚─────────────────────────────────────────────────────────────────────────────*/
-//#include "libc/calls/calls.h"
-//#include "libc/calls/internal.h"
-//#include "libc/str/thompike.h"
-//#include "libc/sysv/errfuns.h"
 
 /**
  * Reads single keystroke or control sequence from character device.
@@ -294,9 +290,10 @@ int stream_to_rune(unsigned int ch)
  *     "\316\261"        ALPHA
  *     "\e[38;5;202m"    ORANGERED
  *     "\e[A"            UP
- *     "\e\e[A"          ALT-UP
+ *     "\ea"             ALT-A
+ *     "\e\e"            ESC ESC
  *     "\001"            CTRL-ALFA
- *     "\e\001"          ALT-CTRL-ALFA
+ *     "\e\001"          ESC CTRL-ALFA
  *     "\eOP"            PF1
  *     "\000"            NUL
  *     "\e]rm -rf /\e\\" OSC
@@ -314,222 +311,115 @@ int stream_to_rune(unsigned int ch)
  *
  * @param p is guaranteed to receive a NUL terminator if n>0
  * @return number of bytes read (helps differentiate "\0" vs. "")
- * @see examples/ttyinfo.c
+ * @see ttyinfo.c
  * @see ANSI X3.64-1979
  * @see ISO/IEC 6429
  * @see FIPS-86
  * @see ECMA-48
  */
-int readansi(int fd, char *p, int n) {
-  //wint_t x = 0;
-  int rc;
-  int e, i, j;
+
+int readansi(int fd, char *buf, int size) {
   unsigned char c;
-  enum { kAscii, kUtf8, kEsc, kCsi1, kCsi2, kSs, kNf, kStr, kStr2, kDone } t;
-  e = errno;
-  t = kAscii;
-  i = j = 0;
-  if (n) p[0] = 0;
-  do {
-    for (;;) {
-      if (n) {
-        /* TODO: possibly allow timeout after single ESC to return ESC */
-        rc = read(fd, &c, 1);
-      } else {
-        errno = EFAULT; //read(fd, 0, 0);
-        rc = -1;
-      }
-      if (rc == -1 && errno == EINTR) {
-        if (!i) {
-          return -1;
-        }
-      } else if (rc == -1) {
-        return -1;
-      } else if (!rc) {
-        if (!i) {
-          errno = e;
-          return 0;
-        } else {
-          errno = EILSEQ;
-          return -1;
-        }
-      } else {
-        break;
-      }
+  int rc, i, j;
+  enum { kAscii, kUtf8, kEsc, kCsi, kSs } t;
+  if (size) buf[0] = 0;
+  for (j = i = 0, t = kAscii;;) {
+    if (i + 2 >= size) {
+      errno = ENOMEM;
+      return -1;
     }
-    if (i + 1 < n) {
-      p[i] = c;
-      p[i + 1] = 0;
-    } else if (i < n) {
-      p[i] = 0;
+    if ((rc = read(fd, &c, 1)) != 1) {
+      if (rc == -1 && errno == EINTR && i) {
+        continue;
+      }
+      if (rc == -1 && errno == EAGAIN) {    /* Linux may return EAGAIN on fn key seq */
+#ifndef __ia16__
+        struct pollfd pfd[1];
+        pfd[0].fd = fd;
+        pfd[0].events = POLLIN;
+        poll(pfd, 1, 0);
+#endif
+        continue;
+      }
+      return rc;
     }
-    ++i;
+    buf[i++] = c;
+    buf[i] = 0;
     switch (t) {
-    Whoopsie:
-      if (n) p[0] = c;
-      t = kAscii;
-      i = 1;
-        /* fallthrough */
       case kAscii:
         if (c < 0200) {
-          if (c == '\e') {
+          if (c == 033) {
             t = kEsc;
           } else {
-            t = kDone;
+            return i;
           }
         } else if (c >= 0300) {
-#if ANSI_UTF8
           t = kUtf8;
-          x = ThomPikeByte(c);
           j = ThomPikeLen(c) - 1;
-#else
-          t = kDone;
-#endif
-        } else {
-          /* ignore overlong sequences */
         }
         break;
-#if ANSI_UTF8
       case kUtf8:
-        if ((c & 0300) == 0200) {
-          x = ThomPikeMerge(x, c);
-          if (!--j) {
-            switch (x) {
-              case '\e':
-                t = kEsc; /* parsed but not canonicalized */
-                break;
-              case 0x9b:
-                t = kCsi1; /* unusual but legal */
-                break;
-              case 0x8e:
-              case 0x8f:
-                t = kSs; /* unusual but legal */
-                break;
-              case 0x90: /* DCS (Device Control String) */
-              case 0x98: /* SOS (Start of String) */
-              case 0x9d: /* OSC (Operating System Command) */
-              case 0x9e: /* PM  (Privacy Message) */
-              case 0x9f: /* APC (Application Program Command) */
-                t = kStr;
-                break;
-              default:
-                t = kDone;
-                break;
-            }
-          }
-        } else {
-          goto Whoopsie; /* ignore underlong sequences if not eof */
+        if (!--j) return i;
+        break;
+      case kEsc:
+        switch (c) {
+          case '[':
+            t = kCsi;
+            break;
+          case 'N':
+          case 'O':
+            t = kSs;
+            break;
+          case 0x20:
+          case 0x21:
+          case 0x22:
+          case 0x23:
+          case 0x24:
+          case 0x25:
+          case 0x26:
+          case 0x27:
+          case 0x28:
+          case 0x29:
+          case 0x2A:
+          case 0x2B:
+          case 0x2C:
+          case 0x2D:
+          case 0x2E:
+          case 0x2F:
+            break;
+          default:
+            return i;
         }
         break;
-#endif
-      case kEsc:
-        if (0x20 <= c && c <= 0x2f) { /* Nf */
-          /*
-           * Almost no one uses ANSI Nf sequences
-           * They overlaps with alt+graphic keystrokes
-           * We care more about being able to type alt-/
-           */
-          if (c == ' ' || c == '#') {
-            t = kNf;
-          } else {
-            t = kDone;
-          }
-        } else if (0x30 <= c && c <= 0x3f) { /* Fp */
-          t = kDone;
-        } else if (0x20 <= c && c <= 0x5F) { /* Fe */
-          switch (c) {
-            case '[':
-              t = kCsi1;
-              break;
-            case 'N': /* SS2 */
-            case 'O': /* SS3 */
-              t = kSs;
-              break;
-            case 'P': /* DCS (Device Control String) */
-            case 'X': /* SOS (Start of String) */
-            case ']': /* DCS (Operating System Command) */
-            case '^': /* PM  (Privacy Message) */
-            case '_': /* DCS (Application Program Command) */
-              t = kStr;
-              break;
-            default:
-              t = kDone;
-              break;
-          }
-        } else if (0x60 <= c && c <= 0x7e) { /* Fs */
-          t = kDone;
-        } else if (c == '\e') {
-          if (i < 3) {
-            t = kEsc; /* alt chording */
-          } else {
-            t = kDone; /* esc mashing */
-            i = 1;
-          }
-        } else {
-          t = kDone;
+      case kCsi:
+        switch (c) {
+          case ':':
+          case ';':
+          case '<':
+          case '=':
+          case '>':
+          case '?':
+          case '0':
+          case '1':
+          case '2':
+          case '3':
+          case '4':
+          case '5':
+          case '6':
+          case '7':
+          case '8':
+          case '9':
+            break;
+          default:
+            return i;
         }
         break;
       case kSs:
-        t = kDone;
-        break;
-      case kNf:
-        if (0x30 <= c && c <= 0x7e) {
-          t = kDone;
-        } else if (!(0x20 <= c && c <= 0x2f)) {
-          goto Whoopsie;
-        }
-        break;
-      case kCsi1:
-        if (0x20 <= c && c <= 0x2f) {
-          t = kCsi2;
-        } else if (c == '[' && (i == 3 || (i == 4 && p[1] == '\e'))) {
-          /* linux function keys */
-        } else if (0x40 <= c && c <= 0x7e) {
-          t = kDone;
-        } else if (!(0x30 <= c && c <= 0x3f)) {
-          goto Whoopsie;
-        }
-        break;
-      case kCsi2:
-        if (0x40 <= c && c <= 0x7e) {
-          t = kDone;
-        } else if (!(0x20 <= c && c <= 0x2f)) {
-          goto Whoopsie;
-        }
-        break;
-      case kStr:
-        switch (c) {
-          case '\a':
-            t = kDone;
-            break;
-          case '\e': /* ESC */
-          case 0302: /* C1 (UTF-8) */
-            t = kStr2;
-            break;
-          default:
-            break;
-        }
-        break;
-      case kStr2:
-        switch (c) {
-          case '\a':
-            t = kDone;
-            break;
-          case '\\': /* ST (ASCII) */
-          case 0234: /* ST (UTF-8) */
-            t = kDone;
-            break;
-          default:
-            t = kStr;
-            break;
-        }
-        break;
+        return i;
       default:
-        unreachable;
+        __builtin_unreachable();
     }
-  } while (t != kDone);
-  errno = e;
-  return i;
+  }
 }
 
 static int startswith(const char *s, const char *prefix) {
@@ -695,13 +585,18 @@ int ansi_to_unimouse(char *buf, int n, int *x, int *y, int *modkeys, int *status
 int ansi_dsr(char *buf, int n, int *cols, int *rows)
 {
     char *p;
+    int r, c;
 
-    if (!startswith(buf, "\e[") || buf[n-1] != 'R')
+    if (n < 6 || !startswith(buf, "\e[") || buf[n-1] != 'R')
         return -1;
     p = buf + 2;
-    *rows = getparm(p, 0);
-    *cols = getparm(p, 1);
-    //printf("DSR terminal size is %dx%d\r\n", *cols, *rows);
+    r = getparm(p, 0);
+    c = getparm(p, 1);
+    //printf("DSR terminal size is %dx%d\r\n", r, c);
+    if (r < 10 || r > 100 || c < 10 || c > 250)
+        return -1;
+    *rows = r;
+    *cols = c;
     return 1;
 }
 
@@ -715,11 +610,10 @@ int tty_getsize(int *cols, int *rows)
     char buf[32];
 
     WRITE(1, PROBE_DISPLAY_SIZE);
-    if ((n = readansi(0, buf, sizeof(buf))) != -1) {
+    if ((n = readansi(0, buf, sizeof(buf))) > 0) {
         if (ansi_dsr(buf, n, &x, &y) > 0) {
             *cols = x;
             *rows = y;
-            //printf("inband signaling says terminal size is %d×%d\r\n", x, y);
             return 1;
         }
     }
