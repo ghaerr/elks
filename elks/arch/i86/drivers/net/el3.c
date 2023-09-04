@@ -360,7 +360,7 @@ static void el3_int(int irq, struct pt_regs *regs)
 					//printk("eth: RX error, status %04x len %d\n", err&0x3800, err&0x7ff);
 					netif_stat.rx_errors++;
 				} else {
-					if (verbose) printk(EMSG_OFLOW, model_name, 0);
+					if (verbose) printk(EMSG_OFLOW, model_name, 0, netif_stat.oflow_keep);
 					netif_stat.oflow_errors++;
 				}
 				outw(RxDiscard, ioaddr + EL3_CMD); /* Discard this packet. */
