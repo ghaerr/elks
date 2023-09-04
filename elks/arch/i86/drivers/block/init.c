@@ -54,8 +54,7 @@ void INITPROC device_init(void)
 
 	kdev_t rootdev = bioshd_conv_bios_drive((unsigned)ROOT_DEV);
 
-	printk("device_setup: BIOS drive 0x%x, root device 0x%x\n",
-		ROOT_DEV, rootdev);
+	printk("boot: BIOS drive %x, root device %04x\n", ROOT_DEV, rootdev);
 	ROOT_DEV = rootdev;
     }
 #endif

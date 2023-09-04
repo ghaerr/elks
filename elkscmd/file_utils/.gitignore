@@ -10,6 +10,7 @@ grep
 l
 ln
 ls
+md5sum
 mkdir
 mkfifo
 mknod

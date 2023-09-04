@@ -1,0 +1,13 @@
+ELKS system calls requires registers set in order of parameters:
+    BX, CX, DX, DI, SI
+
+
+Cdecl calling convention, stack has parms, passed in this order in registers:
+    BX, CX, DX, DI, SI
+    caller pops all args after call
+
+
+Regparmcall calling convention, args passed in following registers in order:
+    AX, DX, CX, DI, SI
+    callee pops args > 3 before return!
+

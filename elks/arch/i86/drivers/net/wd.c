@@ -713,7 +713,7 @@ void INITPROC wd_drv_init(void)
 	byte_t *mac_addr = (byte_t *)&netif_stat.mac_addr;
 
 	u = wd_probe();
-	printk("eth: %s at 0x%x, irq %d, ram 0x%x",
+	printk("eth: %s at %x, irq %d, ram %04x",
 		dev_name, net_port, net_irq, net_ram);
 	if (u) {
 		printk(" not found\n");

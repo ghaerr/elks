@@ -482,7 +482,7 @@ void mount_root(void)
 	    memcpy(sb->s_mntonname, "/", 2);
 /*	    sb->s_flags = (unsigned short int) root_mountflags;*/
 	    current->fs.pwd = current->fs.root = sb->s_mounted;
-	    printk("VFS: Mounted root %D (%s filesystem)%s.\n", ROOT_DEV,
+	    printk("VFS: Mounted root device %04x (%s filesystem)%s.\n", ROOT_DEV,
 		   fsname[fp->type], (sb->s_flags & MS_RDONLY) ? " readonly" : "");
 	    iput(d_inode);
 	    filp->f_count = 0;

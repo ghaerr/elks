@@ -263,7 +263,7 @@ void ll_rw_blk(int rw, struct buffer_head *bh)
     if ((major = MAJOR(buffer_dev(bh))) < MAX_BLKDEV)
         dev = blk_dev + major;
     if (!dev || !dev->request_fn)
-        panic("ll_rw_blk: unknown device %D", buffer_dev(bh));
+        panic("ll_rw_blk: unknown dev %D", buffer_dev(bh));
     make_request(major, rw, bh);
 }
 
