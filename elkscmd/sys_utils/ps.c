@@ -188,19 +188,11 @@ int main(int argc, char **argv)
     printf(" ");
 	if (f_listall) printf("CSEG DSEG ");
 	printf(" HEAP  FREE   SIZE COMMAND\n");
-	for (j = 1; j <= MAX_TASKS; j++) {
+	for (j = 1; j < MAX_TASKS; j++) {
 		if (!memread(fd, off + j*sizeof(struct task_struct), ds, &task_table, sizeof(task_table))) {
 			printf("ps: memread\n");
 			return 1;
 		}
-
-        if (task_table.kstack_magic != KSTACK_MAGIC) {
-            if (task_table.kstack_magic == 0) continue;
-            printf("Recompile ps, mismatched task structure\n");
-            return 1;
-        }
-		if (task_table.t_regs.ss == 0)
-			continue;
 
 		switch (task_table.state) {
 		case TASK_UNUSED:			continue;
@@ -212,6 +204,12 @@ int main(int argc, char **argv)
 		case TASK_EXITING:			c = 'E'; break;
 		default:					c = '?'; break;
 		}
+
+		if (task_table.kstack_magic != KSTACK_MAGIC) {
+			printf("Recompile ps, mismatched task structure\n");
+			return 1;
+		}
+
 		pwent = getpwuid(task_table.uid);
 
 		/* pid grp tty user stat*/
