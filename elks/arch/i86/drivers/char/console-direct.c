@@ -40,7 +40,7 @@
 #define ESC             '\x1B'
 #define BEL             '\x07'
 
-#define MAXPARMS        10
+#define MAXPARMS        28
 
 struct console;
 typedef struct console Console;
