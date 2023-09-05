@@ -2,7 +2,7 @@
  *  elks/fs/pipe.c
  *
  * Copyright (C) 1991, 1992 Linux Torvalds
- * 		 1998 Alistair Riddoch
+ *               1998 Alistair Riddoch
  */
 
 #include <linuxmt/config.h>
@@ -32,12 +32,12 @@ static int get_unused_fd(struct file *f)
     register struct file **cfs = current->files.fd;
 
     do {
-	if (!*cfs) {
-	    *cfs = f;
-	    clear_bit(fd, &(current->files.close_on_exec));
-	    return fd;
-	}
-	cfs++;
+        if (!*cfs) {
+            *cfs = f;
+            clear_bit(fd, &(current->files.close_on_exec));
+            return fd;
+        }
+        cfs++;
     } while (++fd < NR_OPEN);
     return -EMFILE;
 }
@@ -49,21 +49,21 @@ int open_fd(int flags, struct inode *inode)
     register struct file *filp;
 
     if (!(fd = open_filp(flags, inode, &f))) {
-	filp = f;
-	filp->f_flags &= ~(O_CREAT | O_EXCL | O_NOCTTY | O_TRUNC);
+        filp = f;
+        filp->f_flags &= ~(O_CREAT | O_EXCL | O_NOCTTY | O_TRUNC);
     /*
      * We have to do this last, because we mustn't export
      * an incomplete fd to other processes which may share
      * the same file table with us.
      */
-	if ((fd = get_unused_fd(filp)) < 0)
-	    close_filp(inode, filp);
+        if ((fd = get_unused_fd(filp)) < 0)
+            close_filp(inode, filp);
     }
     return fd;
 }
 
 int pipe_lseek(struct inode *inode, struct file *file, loff_t offset,
-		  int orig)
+                  int orig)
 {
     debug("PIPE: lseek called.\n");
     return -ESPIPE;
@@ -83,16 +83,16 @@ static void free_pipe_mem(unsigned char *buf)
 }
 
 static size_t pipe_read(register struct inode *inode, struct file *filp,
-		     char *buf, size_t count)
+                     char *buf, size_t count)
 {
     size_t chars;
 
     debug("PIPE: read called.\n");
     while (PIPE_EMPTY(inode) || PIPE_LOCK(inode)) {
-	if (!PIPE_LOCK(inode) && !PIPE_WRITERS(inode)) return 0;
-	if (filp->f_flags & O_NONBLOCK) return -EAGAIN;
-	if (current->signal) return -ERESTARTSYS;	// FIXME
-	interruptible_sleep_on(&PIPE_WAIT(inode));
+        if (!PIPE_LOCK(inode) && !PIPE_WRITERS(inode)) return 0;
+        if (filp->f_flags & O_NONBLOCK) return -EAGAIN;
+        if (current->signal) return -ERESTARTSYS;       // FIXME
+        interruptible_sleep_on(&PIPE_WAIT(inode));
     }
     PIPE_LOCK(inode)++;
     if (count > PIPE_LEN(inode)) count = PIPE_LEN(inode);
@@ -100,9 +100,9 @@ static size_t pipe_read(register struct inode *inode, struct file *filp,
     if (chars > count) chars = count;
     memcpy_tofs(buf, PIPE_BASE(inode) + PIPE_TAIL(inode), chars);
     if (chars < count)
-	memcpy_tofs(buf + chars, PIPE_BASE(inode), count - chars);
+        memcpy_tofs(buf + chars, PIPE_BASE(inode), count - chars);
     if ((PIPE_TAIL(inode) += count) >= PIPE_SIZE(inode))
-	PIPE_TAIL(inode) -= PIPE_SIZE(inode);
+        PIPE_TAIL(inode) -= PIPE_SIZE(inode);
     PIPE_LEN(inode) -= count;
     PIPE_LOCK(inode)--;
     wake_up_interruptible(&PIPE_WAIT(inode));
@@ -112,7 +112,7 @@ static size_t pipe_read(register struct inode *inode, struct file *filp,
 }
 
 static size_t pipe_write(register struct inode *inode, struct file *filp,
-		      char *buf, size_t count)
+                      char *buf, size_t count)
 {
     size_t free, head, chars, written = 0;
 
@@ -121,35 +121,35 @@ static size_t pipe_write(register struct inode *inode, struct file *filp,
 
     free = (count <= PIPE_SIZE(inode)) ? count : 1;
     while (count > 0) {
-	while (((PIPE_SIZE(inode) - PIPE_LEN(inode)) < free) || PIPE_LOCK(inode)) {
-	    if (!PIPE_READERS(inode)) {
-	      snd_signal:
-		send_sig(SIGPIPE, current, 0);
-		return written ? written : -EPIPE;
-	    }
-	    if (current->signal) return written ? written : -ERESTARTSYS; // FIXME
-	    if (filp->f_flags & O_NONBLOCK)
-		return written ? written : -EAGAIN;
-	    interruptible_sleep_on(&PIPE_WAIT(inode));
-	}
-	PIPE_LOCK(inode)++;
-	while (count > 0 && (free = (PIPE_SIZE(inode) - PIPE_LEN(inode)))) {
-	    head = PIPE_HEAD(inode);
-	    chars = PIPE_SIZE(inode) - head;
-	    if (chars > count) chars = count;
-	    if (chars > free) chars = free;
+        while (((PIPE_SIZE(inode) - PIPE_LEN(inode)) < free) || PIPE_LOCK(inode)) {
+            if (!PIPE_READERS(inode)) {
+              snd_signal:
+                send_sig(SIGPIPE, current, 0);
+                return written ? written : -EPIPE;
+            }
+            if (current->signal) return written ? written : -ERESTARTSYS; // FIXME
+            if (filp->f_flags & O_NONBLOCK)
+                return written ? written : -EAGAIN;
+            interruptible_sleep_on(&PIPE_WAIT(inode));
+        }
+        PIPE_LOCK(inode)++;
+        while (count > 0 && (free = (PIPE_SIZE(inode) - PIPE_LEN(inode)))) {
+            head = PIPE_HEAD(inode);
+            chars = PIPE_SIZE(inode) - head;
+            if (chars > count) chars = count;
+            if (chars > free) chars = free;
 
-	    memcpy_fromfs(PIPE_BASE(inode) + head, buf, chars);
-	    buf += chars;
-	    if ((PIPE_HEAD(inode) += chars) >= PIPE_SIZE(inode))
-		PIPE_HEAD(inode) -= PIPE_SIZE(inode);
-	    PIPE_LEN(inode) += chars;
-	    written += chars;
-	    count -= chars;
-	}
-	PIPE_LOCK(inode)--;
-	wake_up_interruptible(&PIPE_WAIT(inode));
-	free = 1;
+            memcpy_fromfs(PIPE_BASE(inode) + head, buf, chars);
+            buf += chars;
+            if ((PIPE_HEAD(inode) += chars) >= PIPE_SIZE(inode))
+                PIPE_HEAD(inode) -= PIPE_SIZE(inode);
+            PIPE_LEN(inode) += chars;
+            written += chars;
+            count -= chars;
+        }
+        PIPE_LOCK(inode)--;
+        wake_up_interruptible(&PIPE_WAIT(inode));
+        free = 1;
     }
     inode->i_ctime = inode->i_mtime = current_time();
 
@@ -173,7 +173,7 @@ static void pipe_write_release(register struct inode *inode, struct file *filp)
 #endif
 
 static void pipe_rdwr_release(register struct inode *inode,
-			      register struct file *filp)
+                              register struct file *filp)
 {
     debug("PIPE: rdwr_release called.\n");
 
@@ -181,11 +181,11 @@ static void pipe_rdwr_release(register struct inode *inode,
     if (filp->f_mode & FMODE_WRITE) PIPE_WRITERS(inode)--;
 
     if (!(PIPE_READERS(inode) + PIPE_WRITERS(inode))) {
-	if (PIPE_BASE(inode)) {
-	    /* Free up any memory allocated to the pipe */
-	    free_pipe_mem(PIPE_BASE(inode));
-	    PIPE_BASE(inode) = NULL;
-	}
+        if (PIPE_BASE(inode)) {
+            /* Free up any memory allocated to the pipe */
+            free_pipe_mem(PIPE_BASE(inode));
+            PIPE_BASE(inode) = NULL;
+        }
     } else wake_up_interruptible(&PIPE_WAIT(inode));
 }
 
@@ -208,49 +208,49 @@ static int pipe_write_open(struct inode *inode, struct file *filp)
 #endif
 
 static int pipe_rdwr_open(register struct inode *inode,
-			  register struct file *filp)
+                          register struct file *filp)
 {
     debug("PIPE: rdwr called.\n");
 
     if (!PIPE_BASE(inode)) {
-	if (!(PIPE_BASE(inode) = get_pipe_mem())) return -ENOMEM;
-	PIPE_SIZE(inode) = PIPE_BUFSIZ;
+        if (!(PIPE_BASE(inode) = get_pipe_mem())) return -ENOMEM;
+        PIPE_SIZE(inode) = PIPE_BUFSIZ;
 #if NOTNEEDED /* next fields already set to zero by get_empty_inode() */
-	PIPE_HEAD(inode) = PIPE_TAIL(inode) = PIPE_LEN(inode) = 0;
-	PIPE_RD_OPENERS(inode) = PIPE_WR_OPENERS(inode) = 0;
-	PIPE_READERS(inode) = PIPE_WRITERS(inode) = 0;
+        PIPE_HEAD(inode) = PIPE_TAIL(inode) = PIPE_LEN(inode) = 0;
+        PIPE_RD_OPENERS(inode) = PIPE_WR_OPENERS(inode) = 0;
+        PIPE_READERS(inode) = PIPE_WRITERS(inode) = 0;
 #endif
     }
     if (filp->f_mode & FMODE_READ) {
-	PIPE_READERS(inode)++;
-	if (PIPE_WRITERS(inode) > 0) {
-	    if (PIPE_READERS(inode) < 2)
-		wake_up_interruptible(&PIPE_WAIT(inode));
-	}
-	else {
-	    if (!(filp->f_flags & O_NONBLOCK) && (inode->i_sb))
-		while (!PIPE_WRITERS(inode))
-		    interruptible_sleep_on(&PIPE_WAIT(inode));
-	}
+        PIPE_READERS(inode)++;
+        if (PIPE_WRITERS(inode) > 0) {
+            if (PIPE_READERS(inode) < 2)
+                wake_up_interruptible(&PIPE_WAIT(inode));
+        }
+        else {
+            if (!(filp->f_flags & O_NONBLOCK) && (inode->i_sb))
+                while (!PIPE_WRITERS(inode))
+                    interruptible_sleep_on(&PIPE_WAIT(inode));
+        }
     }
 
     if (filp->f_mode & FMODE_WRITE) {
-	PIPE_WRITERS(inode)++;
-	if (PIPE_READERS(inode) > 0) {
-	    if (PIPE_WRITERS(inode) < 2)
-		wake_up_interruptible(&PIPE_WAIT(inode));
-	} else {
-	    if (filp->f_flags & O_NONBLOCK) return -ENXIO;
-	    while (!PIPE_READERS(inode))
-		interruptible_sleep_on(&PIPE_WAIT(inode));
-	}
+        PIPE_WRITERS(inode)++;
+        if (PIPE_READERS(inode) > 0) {
+            if (PIPE_WRITERS(inode) < 2)
+                wake_up_interruptible(&PIPE_WAIT(inode));
+        } else {
+            if (filp->f_flags & O_NONBLOCK) return -ENXIO;
+            while (!PIPE_READERS(inode))
+                interruptible_sleep_on(&PIPE_WAIT(inode));
+        }
     }
     return 0;
 }
 
 #ifdef STRICT_PIPES
 static size_t bad_pipe_rw(struct inode *inode, struct file *filp,
-		       char *buf, int count)
+                       char *buf, int count)
 {
     debug("PIPE: bad rw called.\n");
 
@@ -260,9 +260,9 @@ static size_t bad_pipe_rw(struct inode *inode, struct file *filp,
 /*@-type@*/
 
 struct file_operations read_pipe_fops = {
-    pipe_lseek, pipe_read, bad_pipe_rw, NULL,	/* no readdir */
-    NULL,			/* select */
-    NULL,			/* ioctl */
+    pipe_lseek, pipe_read, bad_pipe_rw, NULL,   /* no readdir */
+    NULL,                       /* select */
+    NULL,                       /* ioctl */
     pipe_read_open, pipe_read_release,
 };
 
@@ -270,9 +270,9 @@ struct file_operations write_pipe_fops = {
     pipe_lseek,
     bad_pipe_rw,
     pipe_write,
-    NULL,			/* no readdir */
-    NULL,			/* select */
-    NULL,			/* ioctl */
+    NULL,                       /* no readdir */
+    NULL,                       /* select */
+    NULL,                       /* ioctl */
     pipe_write_open,
     pipe_write_release,
 };
@@ -282,26 +282,26 @@ struct file_operations rdwr_pipe_fops = {
     pipe_lseek,
     pipe_read,
     pipe_write,
-    NULL,			/* no readdir */
-    NULL,			/* select */
-    NULL,			/* ioctl */
+    NULL,                       /* no readdir */
+    NULL,                       /* select */
+    NULL,                       /* ioctl */
     pipe_rdwr_open,
     pipe_rdwr_release,
 };
 
 struct inode_operations pipe_inode_operations = {
-    &rdwr_pipe_fops, NULL,	/* create */
-    NULL,			/* lookup */
-    NULL,			/* link */
-    NULL,			/* unlink */
-    NULL,			/* symlink */
-    NULL,			/* mkdir */
-    NULL,			/* rmdir */
-    NULL,			/* mknod */
-    NULL,			/* readlink */
-    NULL,			/* follow_link */
-    NULL,			/* getblk */
-    NULL			/* truncate */
+    &rdwr_pipe_fops, NULL,      /* create */
+    NULL,                       /* lookup */
+    NULL,                       /* link */
+    NULL,                       /* unlink */
+    NULL,                       /* symlink */
+    NULL,                       /* mkdir */
+    NULL,                       /* rmdir */
+    NULL,                       /* mknod */
+    NULL,                       /* readlink */
+    NULL,                       /* follow_link */
+    NULL,                       /* getblk */
+    NULL                        /* truncate */
 };
 
 static int do_pipe(register int *fd)
@@ -309,24 +309,24 @@ static int do_pipe(register int *fd)
     register struct inode *inode;
     int error = -ENOMEM;
 
-    if (!(inode = new_inode(NULL, S_IFIFO | S_IRUSR | S_IWUSR)))	/* Create inode */
-	goto no_inodes;
+    if (!(inode = new_inode(NULL, S_IFIFO | S_IRUSR | S_IWUSR)))        /* Create inode */
+        goto no_inodes;
 
     /* read file */
     if ((error = open_fd(O_RDONLY, inode)) < 0) {
-	iput(inode);
-	goto no_inodes;
+        iput(inode);
+        goto no_inodes;
     }
 
     *fd = error;
 
     /* write file */
     if ((error = open_fd(O_WRONLY, inode)) < 0) {
-	sys_close(*fd);
+        sys_close(*fd);
       no_inodes:
-	return error;
+        return error;
     }
-    (inode->i_count)++;		/* Increase inode usage count */
+    (inode->i_count)++;         /* Increase inode usage count */
     fd[1] = error;
 
     return 0;
