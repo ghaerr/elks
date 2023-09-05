@@ -10,7 +10,7 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-PRGS = ramdisk mkfs mkfat fsck partype fdisk
+PRGS = ramdisk mkfs mkfat fsck partype fdisk df
 
 SPRGS=mkfs
 
@@ -21,6 +21,9 @@ install_sibo: all
 
 install: all
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
+
+df: df.o $(TINYPRINTF)
+	$(LD) $(LDFLAGS) -o df df.o $(TINYPRINTF) $(LDLIBS)
 
 fsck: fsck.o
 	$(LD) $(LDFLAGS) -o fsck -maout-heap=0xffff fsck.o $(LDLIBS)

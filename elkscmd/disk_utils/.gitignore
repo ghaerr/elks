@@ -4,3 +4,4 @@ mkfs
 mkfat
 partype
 ramdisk
+df
