@@ -90,7 +90,7 @@ static void show(void)
 
 static int usage(void)
 {
-	errmsg("usage: mount [-a][-q][-t type] [-o ro|remount,{rw|ro}] <device> <directory>\n");
+	errmsg("usage: mount [-a][-q][-t minix|fat][-o ro|remount,{rw|ro}] <device> <directory>\n");
     return 1;
 }
 
@@ -129,6 +129,7 @@ int main(int argc, char **argv)
 					type = FST_MSDOS;
 				else if (!strcmp(option, "romfs"))
 					type = FST_ROMFS;
+				else return usage();
 				argc--;
 				break;
 
