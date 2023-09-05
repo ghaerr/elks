@@ -83,8 +83,8 @@ static int lastL1map;
 static int xms_enabled;
 static int map_count, remap_count, unmap_count;
 
-#ifdef CHECK_FREECNTS
 static int nr_free_bh, nr_bh;
+#ifdef CHECK_FREECNTS
 #define DCR_COUNT(bh) if(!(--bh->b_count))nr_free_bh++
 #define INR_COUNT(bh) if(!(bh->b_count++))nr_free_bh--
 #define CLR_COUNT(bh) if(bh->b_count)nr_free_bh++
@@ -209,8 +209,8 @@ int INITPROC buffer_init(void)
     int bufs_to_alloc = nr_map_bufs;
 #endif
 
-#ifdef CHECK_FREECNTS
     nr_bh = nr_free_bh = bufs_to_alloc;
+#if defined(CHECK_FREECNTS) && DEBUG_EVENT
     debug_setcallback(1, list_buffer_status);   /* ^O will generate buffer list */
 #endif
 
