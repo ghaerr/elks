@@ -387,6 +387,12 @@ int open_namei(const char *pathname, int flag, int mode,
 	    put_write_access(inode);
 	}
 	*res_inode = inode;
+
+#ifdef CHECK_FREECNTS
+        fmemcpyb(inode->i_path, kernel_ds, (void *)pathname, current->t_regs.ds,
+            sizeof(inode->i_path));
+#endif
+
     } else iput(inode);
 #undef inode
 

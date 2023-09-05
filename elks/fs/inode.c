@@ -83,8 +83,10 @@ static void list_inode_status(void)
 
     do {
         if (inode->i_count || inode->i_dev || inode->i_dirt) {
-            printk("\n#%2d: dev %p inode %5lu dirty %d count %u", i, inode->i_dev,
-                (unsigned long)inode->i_ino, inode->i_dirt, inode->i_count);
+            inode->i_path[sizeof(inode->i_path)-1] = '\0';
+            printk("\n#%2d: dev %p inode %5lu dirty %d count %u %s", i, inode->i_dev,
+                (unsigned long)inode->i_ino, inode->i_dirt, inode->i_count,
+                inode->i_path);
         }
         i++;
         if (inode->i_count) inuse++;
