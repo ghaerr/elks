@@ -84,9 +84,9 @@ static void list_inode_status(void)
     do {
         if (inode->i_count || inode->i_dev || inode->i_dirt) {
             inode->i_path[sizeof(inode->i_path)-1] = '\0';
-            printk("\n#%2d: dev %p inode %5lu dirty %d count %u %s", i, inode->i_dev,
-                (unsigned long)inode->i_ino, inode->i_dirt, inode->i_count,
-                inode->i_path);
+            printk("\n#%2d: dev %p inode %5lu cnt %2d %c %06o %s", i, inode->i_dev,
+                (unsigned long)inode->i_ino, inode->i_count, inode->i_dirt? 'D':' ',
+                inode->i_mode, S_ISSOCK(inode->i_mode)? " [socket]": inode->i_path);
         }
         i++;
         if (inode->i_count) inuse++;
@@ -103,7 +103,7 @@ void INITPROC inode_init(void)
 	inode->i_next = inode->i_prev = inode;
 	put_last_lru(inode);
     } while (++inode < &inode_block[NR_INODE]);
-#ifdef CHECK_FREECNTS
+#if defined(CHECK_FREECNTS) && DEBUG_EVENT
     debug_setcallback(0, list_inode_status);    /* ^N will generate inode list */
 #endif
 }

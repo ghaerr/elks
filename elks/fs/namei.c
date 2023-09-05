@@ -212,6 +212,16 @@ static int dir_namei(const char *pathname, size_t * namelen,
     return error;
 }
 
+/* saves path for list_inode_status */
+static void save_path(struct inode *inode, const char *pathname)
+{
+#ifdef CHECK_FREECNTS
+    if (!inode->i_path[0])
+        fmemcpyb(inode->i_path, kernel_ds, (void *)pathname, current->t_regs.ds,
+            sizeof(inode->i_path));
+#endif
+}
+
 /*
  *	_namei()
  *
@@ -244,6 +254,7 @@ int _namei(const char *pathname, register struct inode *base, int follow_links,
 	    } else
 		iput(base);
 	    *res_inode = inode;
+            save_path(inode, pathname);
 	} else
 	    iput(base);
     }
@@ -387,11 +398,7 @@ int open_namei(const char *pathname, int flag, int mode,
 	    put_write_access(inode);
 	}
 	*res_inode = inode;
-
-#ifdef CHECK_FREECNTS
-        fmemcpyb(inode->i_path, kernel_ds, (void *)pathname, current->t_regs.ds,
-            sizeof(inode->i_path));
-#endif
+        save_path(inode, pathname);
 
     } else iput(inode);
 #undef inode
