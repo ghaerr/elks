@@ -52,7 +52,7 @@ int pty_select (struct inode *inode, struct file *file, int sel_type)
 
 	switch (sel_type) {
 	case SEL_IN:
-		debug("pty select(%d) len %d\n", current->pid, tty->outq.len);
+		debug("pty select(%P) len %d\n", tty->outq.len);
 		if (tty->outq.len == 0 && tty->usecount) {
 			select_wait (&tty->outq.wait);
 			break;

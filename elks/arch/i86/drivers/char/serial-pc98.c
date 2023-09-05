@@ -130,7 +130,7 @@ static void rs_release(struct tty *tty)
 {
     struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
 
-    debug_tty("SERIAL close %d\n", current->pid);
+    debug_tty("SERIAL close %P\n");
     if (--tty->usecount == 0) {
 	outb(inb(port->io + UART_IER) & 0xF8, port->io + UART_IER);	/* Disable all interrupts */
 	tty_freeq(tty);
@@ -183,7 +183,7 @@ static int rs_open(struct tty *tty)
     struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
     int err;
 
-    debug_tty("SERIAL open %d\n", current->pid);
+    debug_tty("SERIAL open %P\n");
 
     /* increment use count, don't init if already open*/
     if (tty->usecount++)

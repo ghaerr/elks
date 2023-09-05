@@ -112,14 +112,14 @@ void schedule(void)
 
         previous = prev;
         current = next;
-        debug_sched("sched: %d\n", current->pid);
+        debug_sched("sched: %P\n");
         tswitch();  /* Won't return for a new task */
 
         if (timeout) {
             del_timer(&timer);
         }
     } else if (current->pid)
-        debug_sched("resched: %d prevstate %d\n", current->pid, prev->state);
+        debug_sched("resched: %P prevstate %d\n", prev->state);
 }
 
 static struct timer_list *next_timer;

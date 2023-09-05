@@ -43,7 +43,7 @@ int sys_wait4(pid_t pid, int *status, int options, void *usage)
     register struct task_struct *p;
     int waitagain;
 
-    debug_wait("WAIT(%d) for %d %s\n", current->pid, pid, (options & WNOHANG)? "nohang": "");
+    debug_wait("WAIT(%P) for %d %s\n", pid, (options & WNOHANG)? "nohang": "");
 
  for (;;) {
     waitagain = 0;
@@ -65,12 +65,12 @@ int sys_wait4(pid_t pid, int *status, int options, void *usage)
                 next_task_slot = p;
                 task_slots_unused++;
 
-                debug_wait("WAIT(%d) got %d\n", current->pid, p->pid);
+                debug_wait("WAIT(%P) got %d\n", p->pid);
                 return p->pid;
             }
         } else {
             /* keep waiting while process has non-zombie/stopped children*/
-            debug_wait("WAIT(%d) again for pid %d state %d\n", current->pid, p->pid, p->state);
+            debug_wait("WAIT(%P) again for pid %d state %d\n", p->pid, p->state);
             waitagain = 1;
         }
       }
@@ -81,16 +81,16 @@ int sys_wait4(pid_t pid, int *status, int options, void *usage)
     if (!waitagain)
         break;
 
-    debug_wait("WAIT(%d) sleep\n", current->pid);
+    debug_wait("WAIT(%P) sleep\n");
     interruptible_sleep_on(&current->child_wait);
     if (current->signal) {
-        debug_wait("WAIT(%d) return -EINTR\n", current->pid);
+        debug_wait("WAIT(%P) return -EINTR\n");
         return -EINTR;
     }
-    debug_wait("WAIT(%d) wakeup\n", current->pid);
+    debug_wait("WAIT(%P) wakeup\n");
   }
 
-    debug_wait("WAIT(%d) return -ECHILD\n", current->pid);
+    debug_wait("WAIT(%P) return -ECHILD\n");
     return -ECHILD;
 }
 
@@ -98,7 +98,7 @@ void do_exit(int status)
 {
     struct task_struct *parent;
 
-    debug_wait("EXIT(%d) status %d\n", current->pid, status);
+    debug_wait("EXIT(%P) status %d\n", status);
     _close_allfiles();
 
     /* release process group and TTY*/
