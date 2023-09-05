@@ -129,7 +129,7 @@ int main(int argc, char **argv)
 					type = FST_MSDOS;
 				else if (!strcmp(option, "romfs"))
 					type = FST_ROMFS;
-                else return usage();
+				else return usage();
 				argc--;
 				break;
 
