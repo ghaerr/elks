@@ -8,6 +8,7 @@
 #ifdef __KERNEL__
 
 #include <linuxmt/config.h>
+#include <linuxmt/trace.h>
 #include <linuxmt/types.h>
 #include <linuxmt/wait.h>
 #include <linuxmt/kdev_t.h>
@@ -227,6 +228,9 @@ struct inode {
 #endif
                 void * generic_i;
     } u;
+#ifdef CHECK_FREECNTS
+    char                        i_path[16];
+#endif
 };
 
 struct file {
