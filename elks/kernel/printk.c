@@ -15,8 +15,9 @@
  *              %T      string w/specified segment
  *              %x/%X   hexadecimal with lower/upper case letters
  *              %#x/%#X hexadecimal using 0x alt prefix
- *              %p/%P   pointer - same as %04x/%04X respectively
+ *              %p      pointer - same as %04x
  *              %D      device name as %04x
+ *              %P      process ID
  *
  *      All except %% can be followed by a width specifier 1 -> 31 only
  *      and the h/l length specifiers also work where appropriate.
@@ -186,11 +187,14 @@ static void vprintk(const char *fmt, va_list p)
                     else
                         v = (unsigned long)(va_arg(p, unsigned int));
                 }
+            out:
                 numout(v, width, n, (c == 'd'), (c != 'X'), zero, alt);
                 break;
+            case 'P':
+                v = current->pid;
+                goto out;
             case 'D':
                 c += 'X' - 'D';
-            case 'P':
             case 'p':
                 c += 'X' - 'P';
                 ptrfmt = 1;

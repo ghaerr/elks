@@ -49,7 +49,7 @@ void prepare_to_wait(struct wait_queue *p)
 
 void do_wait(void)
 {
-    debug_sched("sleep: %d waitq %04x\n", current->pid, current->waitpt);
+    debug_sched("sleep: %P waitq %04x\n", current->waitpt);
     schedule();
 }
 
@@ -86,7 +86,7 @@ static void __sleep_on(register struct wait_queue *p, int state)
 #ifdef CHECK_SCHED
     if (current == &task[0]) panic("SCHED: trying to sleep idle task on %x", p);
 #endif
-    debug_sched("sleep: %d waitq %04x\n", current->pid, p);
+    debug_sched("sleep: %P waitq %04x\n", p);
     current->state = state;
     wait_set(p);
     schedule();

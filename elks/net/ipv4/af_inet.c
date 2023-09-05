@@ -42,14 +42,14 @@ int inet_process_tcpdev(register char *buf, int len)
     register struct socket *sock;
 
     sock = ((struct tdb_return_data *)buf)->sock;
-    debug_net("INET(%d) process_tcpdev sock %x type %d wait %x\n",
-	current->pid, sock, ((struct tdb_return_data *)buf)->type, sock->wait);
+    debug_net("INET(%P) process_tcpdev sock %x type %d wait %x\n",
+	sock, ((struct tdb_return_data *)buf)->type, sock->wait);
 
     switch (((struct tdb_return_data *)buf)->type) {
     case TDT_CHG_STATE:
         sock->state = (unsigned char) ((struct tdb_return_data *)buf)->ret_value;
         tcpdev_clear_data_avail();
-	debug_net("INET(%d) chg_state sock %x %d\n", current->pid, sock, sock->state);
+	debug_net("INET(%P) chg_state sock %x %d\n", sock, sock->state);
 	if (sock->state == SS_DISCONNECTING) {
 	    sock->flags |= SF_CLOSING;
 	    wake_up(sock->wait);
@@ -59,8 +59,8 @@ int inet_process_tcpdev(register char *buf, int len)
     case TDT_AVAIL_DATA:
         down(&sock->sem);
         sock->avail_data = ((struct tdb_return_data *)buf)->ret_value;
-	debug_net("INET(%d) sock %x avail %u bufin %d\n",
-	    current->pid, sock, sock->avail_data, bufin_sem);
+	debug_net("INET(%P) sock %x avail %u bufin %d\n",
+	    sock, sock->avail_data, bufin_sem);
         up(&sock->sem);
         tcpdev_clear_data_avail();
         wake_up(sock->wait);
@@ -70,8 +70,8 @@ int inet_process_tcpdev(register char *buf, int len)
 	down(&sock->sem);
 	sock->flags |= SF_CONNECT;
 	sock->retval = ((struct tdb_return_data *)buf)->ret_value;
-	debug_net("INET(%d) sock %x connect %d bufin %d\n",
-	    current->pid, sock, sock->retval, bufin_sem);
+	debug_net("INET(%P) sock %x connect %d bufin %d\n",
+	    sock, sock->retval, bufin_sem);
 	up(&sock->sem);
 	tcpdev_clear_data_avail();
 	wake_up(sock->wait);
@@ -80,8 +80,8 @@ int inet_process_tcpdev(register char *buf, int len)
     case TDT_RETURN:
     case TDT_ACCEPT:
     case TDT_BIND:
-	debug_net("INET(%d) retval %d bufin %d\n",
-	    current->pid, ((struct tdb_return_data *)buf)->ret_value, bufin_sem);
+	debug_net("INET(%P) retval %d bufin %d\n",
+	    ((struct tdb_return_data *)buf)->ret_value, bufin_sem);
 	/* tcpdev_clear_data_avail() called by woken process */
         wake_up(sock->wait);
 	break;
@@ -92,7 +92,7 @@ int inet_process_tcpdev(register char *buf, int len)
 
 static int inet_create(struct socket *sock, int protocol)
 {
-    debug_net("INET(%d) create sock %x\n", current->pid, sock);
+    debug_net("INET(%P) create sock %x\n", sock);
 
     if (protocol != 0)
         return -EINVAL;
@@ -112,7 +112,7 @@ static int inet_release(struct socket *sock, struct socket *peer)
     register struct tdb_release *cmd;
     int ret;
 
-    debug_net("INET(%d) release sock %x\n", current->pid, sock);
+    debug_net("INET(%P) release sock %x\n", sock);
     if (!tcpdev_inuse)
 	return -EINVAL;
     cmd = (struct tdb_release *)get_tdout_buf();
@@ -129,7 +129,7 @@ static int inet_bind(register struct socket *sock, struct sockaddr *addr,
     register struct tdb_bind *cmd;
     int ret;
 
-    debug_net("INET(%d) bind sock %x\n", current->pid, sock);
+    debug_net("INET(%P) bind sock %x\n", sock);
 
     if (!sockaddr_len || sockaddr_len > sizeof(struct sockaddr_in))
         return -EINVAL;
@@ -156,7 +156,7 @@ static int inet_bind(register struct socket *sock, struct sockaddr *addr,
     tcpdev_clear_data_avail();
     up(&rwlock);
 
-    debug_net("INET(%d) bind returns %d\n", current->pid, ret);
+    debug_net("INET(%P) bind returns %d\n", ret);
     return (ret >= 0 ? 0 : ret);
 }
 
@@ -165,7 +165,7 @@ static int inet_connect(struct socket *sock, struct sockaddr *uservaddr,
 {
     register struct tdb_connect *cmd;
 
-    debug_net("INET(%d) connect sock %x\n", current->pid, sock);
+    debug_net("INET(%P) connect sock %x\n", sock);
 
     if (!sockaddr_len || sockaddr_len > sizeof(struct sockaddr_in))
         return -EINVAL;
@@ -226,7 +226,7 @@ static int inet_accept(register struct socket *sock, struct socket *newsock, int
     register struct tdb_accept *cmd;
     int ret;
 
-    debug_tune("INET(%d) accept wait sock %x newsock %x\n", current->pid, sock, newsock);
+    debug_tune("INET(%P) accept wait sock %x newsock %x\n", sock, newsock);
     cmd = (struct tdb_accept *)get_tdout_buf();
     cmd->cmd = TDC_ACCEPT;
     cmd->sock = sock;
@@ -242,12 +242,12 @@ static int inet_accept(register struct socket *sock, struct socket *newsock, int
         //interruptible_sleep_on(newsock->wait);
 
         if (current->signal) {
-	    debug_net("INET(%d) accept RESTARTSYS bufin %d\n", current->pid, bufin_sem);
+	    debug_net("INET(%P) accept RESTARTSYS bufin %d\n", bufin_sem);
             return -ERESTARTSYS;
 	}
     } while (bufin_sem == 0);
 
-    debug_tune("INET(%d) accepted sock %x newsock %x\n", current->pid, sock, newsock);
+    debug_tune("INET(%P) accepted sock %x newsock %x\n", sock, newsock);
     newsock->remaddr = ((struct tdb_accept_ret *)tdin_buf)->addr_ip;
     newsock->remport = ((struct tdb_accept_ret *)tdin_buf)->addr_port;
     ret = ((struct tdb_accept_ret *)tdin_buf)->ret_value;
@@ -264,8 +264,8 @@ static int inet_read(struct socket *sock, char *ubuf, int size, int nonblock)
     register struct tdb_read *cmd;
     int ret;
 
-    debug_net("INET(%d) read sock %x size %d nonblock %d bufin %d\n",
-	   current->pid, sock, size, nonblock, bufin_sem);
+    debug_net("INET(%P) read sock %x size %d nonblock %d bufin %d\n",
+	   sock, size, nonblock, bufin_sem);
 
     if (size > TCPDEV_MAXREAD)
 	size = TCPDEV_MAXREAD;
@@ -276,8 +276,8 @@ static int inet_read(struct socket *sock, char *ubuf, int size, int nonblock)
 	if (sock->flags & SF_CLOSING)
 	    return 0;
 
-	debug_net("INET(%d) read waiting on sock->avail_data sock %x buf_in %d\n",
-	    current->pid, sock, bufin_sem);
+	debug_net("INET(%P) read waiting on sock->avail_data sock %x buf_in %d\n",
+	    sock, bufin_sem);
 
 	interruptible_sleep_on(sock->wait);
 	if (current->signal)
@@ -292,28 +292,28 @@ static int inet_read(struct socket *sock, char *ubuf, int size, int nonblock)
     cmd->nonblock = nonblock;
     tcpdev_inetwrite(cmd, sizeof(struct tdb_read));
 
-    debug_net("INET(%d) read waiting on wait %x, bufin %d\n",
-	current->pid, sock->wait, bufin_sem);
+    debug_net("INET(%P) read waiting on wait %x, bufin %d\n",
+	sock->wait, bufin_sem);
 
     /* Sleep until tcpdev has news and we have a lock on the buffer */
     while (bufin_sem == 0) {
-	debug_net("INET(%d) read WAIT sock %x bufin_sem\n", current->pid, sock);
+	debug_net("INET(%P) read WAIT sock %x bufin_sem\n", sock);
         interruptible_sleep_on(sock->wait);
     }
-    debug_net("INET(%d) read wait done bufin_sem %d\n", current->pid, bufin_sem);
+    debug_net("INET(%P) read wait done bufin_sem %d\n", bufin_sem);
 
     down(&sock->sem);
     ret = ((struct tdb_return_data *)tdin_buf)->ret_value;
 
     if (ret > 0) {
-	debug_net("INET(%d) READ %u ask %u avail %u\n",
-	    current->pid, ret, size, sock->avail_data);
+	debug_net("INET(%P) READ %u ask %u avail %u\n",
+	    ret, size, sock->avail_data);
 
         memcpy_tofs(ubuf, &((struct tdb_return_data *)tdin_buf)->data,
 	    (size_t) ((struct tdb_return_data *)tdin_buf)->size);
         sock->avail_data = 0;
-    } else debug_net("INET(%d) READ %d ask %u avail %u\n",
-	current->pid, ret, size, sock->avail_data);
+    } else debug_net("INET(%P) READ %d ask %u avail %u\n",
+	ret, size, sock->avail_data);
 
     up(&sock->sem);
 
@@ -328,7 +328,7 @@ static int inet_write(register struct socket *sock, char *ubuf, int size,
     register struct tdb_write *cmd;
     int ret, usize, count;
 
-    debug("INET(%d) write sock %x size %d nonblock %d\n", current->pid, sock, size, nonblock);
+    debug("INET(%P) write sock %x size %d nonblock %d\n", sock, size, nonblock);
     if (size <= 0)
         return 0;
 
@@ -347,7 +347,7 @@ static int inet_write(register struct socket *sock, char *ubuf, int size,
 	cmd->nonblock = nonblock;
         cmd->size = count > TDB_WRITE_MAX ? TDB_WRITE_MAX : count;
 
-	debug_net("INET(%d) WRITE %u\n", current->pid, cmd->size);
+	debug_net("INET(%P) WRITE %u\n", cmd->size);
 
         memcpy_fromfs(cmd->data, ubuf, (size_t) cmd->size);
 	usize = cmd->size;
@@ -355,14 +355,14 @@ static int inet_write(register struct socket *sock, char *ubuf, int size,
 
 	/* Sleep until tcpdev has news and we have a lock on the buffer */
         while (bufin_sem == 0) {
-	    debug_net("INET(%d) write WAIT sock %x\n", current->pid, sock);
+	    debug_net("INET(%P) write WAIT sock %x\n", sock);
             interruptible_sleep_on(sock->wait);
 	}
-	debug_net("INET(%d) write WAIT done bufin_sem %d\n", current->pid, bufin_sem);
+	debug_net("INET(%P) write WAIT done bufin_sem %d\n", bufin_sem);
 
 	ret = ((struct tdb_return_data *)tdin_buf)->ret_value;
 
-	debug_net("INET(%d) write retval %d\n", current->pid, ret);
+	debug_net("INET(%P) write retval %d\n", ret);
 	tcpdev_clear_data_avail();
 	up(&rwlock);
 
@@ -387,8 +387,8 @@ static int inet_write(register struct socket *sock, char *ubuf, int size,
 
 static int inet_select(register struct socket *sock, int sel_type)
 {
-    debug_net("INET(%d) select sock %04x wait %04x type %d avail %u\n",
-	current->pid, sock, sock->wait, sel_type, sock->avail_data);
+    debug_net("INET(%P) select sock %04x wait %04x type %d avail %u\n",
+	 sock, sock->wait, sel_type, sock->avail_data);
 
     if (sel_type == SEL_IN) {
         if (sock->avail_data || sock->state != SS_CONNECTED)

@@ -62,7 +62,7 @@ void stack_check(void)
         /* optional: check stack over min stack*/
         if (currentp->t_regs.sp < currentp->t_begstack - currentp->t_minstack) {
           if (currentp->t_minstack)     /* display if protected stack*/
-            printk("(%d)STACK OVER MINSTACK by %u BYTES\n", currentp->pid,
+            printk("(%P)STACK OVER MINSTACK by %u BYTES\n",
                 currentp->t_begstack - currentp->t_minstack - currentp->t_regs.sp);
         }
 
@@ -70,8 +70,7 @@ void stack_check(void)
         if (currentp->t_regs.sp > (__u16)end)
             return;
     }
-    printk("(%d)STACK OVERFLOW BY %u BYTES\n",
-        currentp->pid, (__u16)end - currentp->t_regs.sp);
+    printk("(%P)STACK OVERFLOW BY %u BYTES\n", (__u16)end - currentp->t_regs.sp);
     do_exit(SIGSEGV);
 }
 

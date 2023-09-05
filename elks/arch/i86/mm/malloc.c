@@ -243,8 +243,8 @@ int sys_brk(__pptr newbrk)
 {
     register __ptask currentp = current;
 
-	/*printk("brk(%d): new %x, edat %x, ebrk %x, free %x sp %x, eseg %x, %d/%dK\n",
-		current->pid, newbrk, currentp->t_enddata, currentp->t_endbrk,
+	/*printk("brk(%P): new %x, edat %x, ebrk %x, free %x sp %x, eseg %x, %d/%dK\n",
+		newbrk, currentp->t_enddata, currentp->t_endbrk,
 		currentp->t_regs.sp - currentp->t_endbrk,
 		currentp->t_regs.sp, currentp->t_endseg,
 		mm_get_usage(MM_MEM, SEG_FLAG_USED), mm_get_usage(MM_MEM, 0));*/

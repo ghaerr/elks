@@ -109,7 +109,7 @@ int sys_kill(pid_t pid, sig_t sig)
     register struct task_struct *p;
     int count, err, retval;
 
-    debug_sig("SIGNAL sys_kill %d, %d pid %d\n", pid, sig, current->pid);
+    debug_sig("SIGNAL sys_kill %d, %d pid %P\n", pid, sig);
     if ((unsigned int)(sig - 1) > (NSIG-1))
         return -EINVAL;
 
@@ -130,8 +130,8 @@ int sys_kill(pid_t pid, sig_t sig)
 
 int sys_signal(int signr, __kern_sighandler_t handler)
 {
-    debug_sig("SIGNAL sys_signal %d action %x:%x pid %d\n", signr,
-              _FP_SEG(handler), _FP_OFF(handler), current->pid);
+    debug_sig("SIGNAL sys_signal %d action %x:%x pid %P\n", signr,
+              _FP_SEG(handler), _FP_OFF(handler));
     if (((unsigned int)signr > NSIG) || signr == SIGKILL || signr == SIGSTOP)
         return -EINVAL;
     if (handler == KERN_SIG_DFL)

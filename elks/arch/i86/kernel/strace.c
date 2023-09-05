@@ -52,7 +52,7 @@ static void strace(void)
     struct sc_args *p = (struct sc_args *)&current->t_regs.bx;
     int i = 0;
 
-    printk("[%d: %s(", current->pid, s->s_name);
+    printk("[%P: %s(", s->s_name);
     goto pscl;
 
     while (info >>= 4) {
@@ -115,7 +115,7 @@ static void check_kstack(int n)
 
     s = syscall_info(currentp->t_regs.orig_ax);
     if (s == &notimp)
-        printk("KSTACK(%d) syscall %d NOTIMP\n", currentp->pid, currentp->t_regs.orig_ax);
+        printk("KSTACK(%P) syscall %d NOTIMP\n", currentp->t_regs.orig_ax);
     if (n >= KSTACK_BYTES - KSTACK_GUARD)
         warning = " (OVERFLOW AT " str(KSTACK_BYTES) ")";
     if (n > currentp->kstack_max) {
@@ -124,8 +124,7 @@ static void check_kstack(int n)
         if (n > max)
             max = n;
         if (currentp->kstack_prevmax != 0) {
-            printk("KSTACK(%d) sys_%7s max %3d prevmax %3d sysmax %3d%s",
-                currentp->pid, s->s_name,
+            printk("KSTACK(%P) sys_%7s max %3d prevmax %3d sysmax %3d%s", s->s_name,
                 currentp->kstack_max, currentp->kstack_prevmax, max, warning);
             if (n == max) printk("*");
             printk("\n");
@@ -162,7 +161,7 @@ void trace_end(unsigned int retval)
 
     /* Check for kernel stack overflow */
     if (currentp->kstack_magic != KSTACK_MAGIC) {
-        printk("KSTACK(%d) KERNEL STACK OVERFLOW\n", current->pid);
+        printk("KSTACK(%P) KERNEL STACK OVERFLOW\n");
         do_exit(SIGSEGV);
     }
 
@@ -180,7 +179,7 @@ void trace_end(unsigned int retval)
 
     if (tracing & TRACE_STRACE) {
         struct sc_info *s = syscall_info(currentp->t_regs.orig_ax);
-        printk("[%d:%s/ret=%d,ks=%d/%d]\n", currentp->pid, s->s_name, retval, n, max);
+        printk("[%P:%s/ret=%d,ks=%d/%d]\n", s->s_name, retval, n, max);
     }
     if (tracing & TRACE_KSTACK)
         check_kstack(n);

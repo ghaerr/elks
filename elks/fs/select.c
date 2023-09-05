@@ -155,7 +155,7 @@ static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
 	}
     }
     if (!count && current->timeout && !(current->signal /* & ~currentp->blocked */ )) {
-	debug_sched("select(%d): timeout %lx\n", current->pid, current->timeout);
+	debug_sched("select(%P): timeout %lx\n", current->timeout);
 	schedule();
 	goto repeat;
     }

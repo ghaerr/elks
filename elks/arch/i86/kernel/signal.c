@@ -36,7 +36,7 @@ int do_signal(void)
 	}
 	currentp->signal ^= mask;
 
-	debug_sig("SIGNAL process signal %d pid %d\n", signr, currentp->pid);
+	debug_sig("SIGNAL process signal %d pid %P\n", signr);
 	sah = currentp->sig.handler;
 	sd = &currentp->sig.action[signr - 1].sa_dispose;
 	if (*sd == SIGDISP_DFL) {			/* Default */
@@ -46,7 +46,7 @@ int do_signal(void)
 		continue;
 	    else if (mask &				/* Default Stop */
 			(SM_SIGSTOP | SM_SIGTSTP | SM_SIGTTIN | SM_SIGTTOU)) {
-		debug_sig("SIGNAL pid %d stopped\n", currentp->pid);
+		debug_sig("SIGNAL pid %P stopped\n");
 		currentp->state = TASK_STOPPED;
 		/* Let the parent know */
 		currentp->exit_status = signr;
@@ -58,7 +58,7 @@ int do_signal(void)
 		      (SM_SIGQUIT|SM_SIGILL|SM_SIGABRT|SM_SIGFPE|SM_SIGSEGV|SM_SIGTRAP))
 		    dump_core();
 #endif
-		debug_sig("SIGNAL terminating pid %d\n", currentp->pid);
+		debug_sig("SIGNAL terminating pid %P\n");
 		do_exit(signr);				/* Default Terminate */
 	    }
 	}
@@ -71,13 +71,13 @@ int do_signal(void)
 	    clr_irq();		/* stop race between reset signal and return to user */
 	    currentp->signal &= ~mask;
 	    if (currentp->signal)
-		printk("SIGNAL(%d) processing mask %04x, additional signal w/mask %04x\n",
-		    currentp->pid, mask, currentp->signal);
+		printk("SIGNAL(%P) processing mask %04x, additional signal w/mask %04x\n",
+		    mask, currentp->signal);
 
 	    return 1;
 	}
 	else /* else (*sd == SIGDISP_IGN) Ignore */
-	    debug_sig("SIGNAL signal %d ignored pid %d\n", signr, currentp->pid);
+	    debug_sig("SIGNAL signal %d ignored pid %P\n", signr);
     }
     return 0;
 }

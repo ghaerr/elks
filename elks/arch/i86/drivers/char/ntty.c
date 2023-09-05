@@ -78,7 +78,7 @@ int tty_intcheck(register struct tty *ttyp, unsigned char key)
         }
 #endif
         if (sig) {
-            debug_tty("TTY signal %d to pgrp %d pid %d\n", sig, ttyp->pgrp, current->pid);
+            debug_tty("TTY signal %d to pgrp %d pid %P\n", sig, ttyp->pgrp);
             kill_pg(ttyp->pgrp, sig, 1);
         }
     }
@@ -152,7 +152,7 @@ int tty_open(struct inode *inode, struct file *file)
     if (!(otty = determine_tty(inode->i_rdev)))
         return -ENODEV;
 
-    debug_tty("TTY open pid %d\n", currentp->pid);
+    debug_tty("TTY open pid %P\n");
 #if UNUSED
     memcpy(&otty->termios, &def_vals, sizeof(struct termios));
 #endif
@@ -168,7 +168,7 @@ int tty_open(struct inode *inode, struct file *file)
     if (!err) {
         if (!(file->f_flags & O_NOCTTY) && currentp->session == currentp->pid
                 && currentp->tty == NULL && otty->pgrp == 0) {
-            debug_tty("TTY setting pgrp %d pid %d\n", currentp->pgrp, currentp->pid);
+            debug_tty("TTY setting pgrp %d pid %P\n", currentp->pgrp);
             otty->pgrp = currentp->pgrp;
             currentp->tty = otty;
         }
@@ -185,7 +185,7 @@ void tty_release(struct inode *inode, struct file *file)
     if (!rtty)
         return;
 
-    debug_tty("TTY close pid %d\n", current->pid);
+    debug_tty("TTY close pid %P\n");
 
     /* no action if closing /dev/tty*/
     if (MINOR(inode->i_rdev) == 255)
@@ -193,9 +193,9 @@ void tty_release(struct inode *inode, struct file *file)
 
     /* don't release pgrp for /dev/tty, only real tty*/
     if (current->pid == rtty->pgrp) {
-        debug_tty("TTY release pgrp %d\n", current->pid);
+        debug_tty("TTY release pgrp %P\n");
         if ((int)rtty->termios.c_cflag & HUPCL) {       /* warning truncated to 16 bits*/
-                debug_tty("TTY sending SIGHUP\n", current->pid);
+                debug_tty("TTY sending SIGHUP pid %P\n");
                 kill_pg(rtty->pgrp, SIGHUP, 1);
         }
         rtty->pgrp = 0;
