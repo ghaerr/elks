@@ -57,6 +57,8 @@
 
 #define DEBUG_PROBE     0       /* =1 to display more floppy probing information */
 #define FORCE_PROBE     0       /* =1 to force floppy probing */
+#define FULL_TRACK      0       /* =1 to read full tracks for track caching */
+#define RESET_DISK_CHG  0       /* =1 to reset BIOS on drive change fixes QEMU retry */
 //#define IODELAY       5       /* times 10ms, emulated delay for floppy on QEMU */
 
 /* the following must match with /dev minor numbering scheme*/
@@ -182,6 +184,22 @@ static void set_cache_invalid(void)
         cache_drive = NULL;
 }
 
+/* As far as I can tell this doesn't actually work, but we might
+ * as well try it -- Some XT controllers are happy with it.. [AC]
+ */
+
+static void reset_bioshd(int drive)
+{
+#ifdef CONFIG_ARCH_PC98
+    BD_AX = BIOSHD_RESET | drive;
+#else
+    BD_AX = BIOSHD_RESET;
+    BD_DX = drive;
+#endif
+    call_bios(&bdt);
+    /* ignore errors with carry set*/
+}
+
 static int bios_disk_rw(unsigned cmd, unsigned num_sectors, unsigned drive,
         unsigned cylinder, unsigned head, unsigned sector, unsigned seg, unsigned offset)
 {
@@ -206,12 +224,23 @@ static int bios_disk_rw(unsigned cmd, unsigned num_sectors, unsigned drive,
         BD_ES = seg;
         BD_BP = offset;
 #else
+
+#if RESET_DISK_CHG
+        static unsigned last = 0;
+        if (drive != last) {
+            reset_bioshd(1); /* fixes QEMU retry when switching drive types #1119 */
+            last = drive;
+        }
+#endif
         BD_AX = cmd | num_sectors;
         BD_CX = (unsigned int) ((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
         BD_DX = (head << 8) | drive;
         BD_ES = seg;
         BD_BX = offset;
 #endif
+        debug_bios("BIOSHD(%d): %s CHS %d/%d/%d count %d\n", drive,
+            cmd==BIOSHD_READ? "read": "write",
+            cylinder, head, sector, num_sectors);
 #ifdef IODELAY
         /* emulate floppy delay for QEMU */
         unsigned long timeout = jiffies + IODELAY*HZ/100;
@@ -494,22 +523,6 @@ static void copy_ddpt(void)
         debug_bios("bioshd: DDPT vector %x:%x SPT %d\n", _FP_SEG(oldvec),
             (unsigned)oldvec, DDPT[SPT]);
         *vec1E = (unsigned long)(void __far *)DDPT;
-}
-
-/* As far as I can tell this doesn't actually work, but we might
- * as well try it -- Some XT controllers are happy with it.. [AC]
- */
-
-static void reset_bioshd(int drive)
-{
-#ifdef CONFIG_ARCH_PC98
-    BD_AX = BIOSHD_RESET | drive;
-#else
-    BD_AX = BIOSHD_RESET;
-    BD_DX = drive;
-#endif
-    call_bios(&bdt);
-    /* ignore errors with carry set*/
 }
 
 /* map drives */
@@ -885,9 +898,10 @@ static int bioshd_ioctl(struct inode *inode, struct file *file, unsigned int cmd
 }
 
 /* calculate CHS and sectors remaining for track read */
-static void get_chst(struct drive_infot *drivep, sector_t start, unsigned int *c,
-        unsigned int *h, unsigned int *s, unsigned int *t)
+static void get_chst(struct drive_infot *drivep, sector_t *start_sec, unsigned int *c,
+        unsigned int *h, unsigned int *s, unsigned int *t, int fulltrack)
 {
+    sector_t start = *start_sec;
     sector_t tmp;
 
     *s = (unsigned int) ((start % (sector_t)drivep->sectors) + 1);
@@ -895,6 +909,20 @@ static void get_chst(struct drive_infot *drivep, sector_t start, unsigned int *c
     *h = (unsigned int) (tmp % (sector_t)drivep->heads);
     *c = (unsigned int) (tmp / (sector_t)drivep->heads);
     *t = drivep->sectors - *s + 1;
+#if FULL_TRACK
+    if (fulltrack) {
+        int save = *s;
+        int max_sectors = DMASEGSZ / drivep->sector_size;
+        if (*s - 1 < max_sectors) { /* adjust start sector backwards for full track read*/
+            *s = 1;
+            *t = max_sectors;
+        } else {                    /* likely 2880k: limit to size of DMASEG buffer */
+            *s = max_sectors + 1;
+            *t = drivep->sectors - *s + 1;
+        }
+        *start_sec -= save - *s;
+    }
+#endif
     debug_bios("bioshd: lba %ld is CHS %d/%d/%d remaining sectors %d\n",
         start, *c, *h, *s, *t);
 }
@@ -913,7 +941,7 @@ static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *b
 
     drive = drivep - drive_info;
     map_drive(&drive);
-    get_chst(drivep, start, &cylinder, &head, &sector, &this_pass);
+    get_chst(drivep, &start, &cylinder, &head, &sector, &this_pass, 0);
 
     /* limit I/O to requested sector count*/
     if (this_pass > count) this_pass = count;
@@ -984,7 +1012,7 @@ static void bios_readtrack(struct drive_infot *drivep, sector_t start)
     unsigned short out_ax;
 
     map_drive(&drive);
-    get_chst(drivep, start, &cylinder, &head, &sector, &num_sectors);
+    get_chst(drivep, &start, &cylinder, &head, &sector, &num_sectors, 1);
 
     if (num_sectors > (DMASEGSZ / drivep->sector_size))
         num_sectors = DMASEGSZ / drivep->sector_size;
@@ -1032,13 +1060,19 @@ static int cache_valid(struct drive_infot *drivep, sector_t start, char *buf,
     return 1;
 }
 
+static int cache_tries = 0;
+static int cache_hits = 0;
+
 /* read from cache, return # sectors read*/
 static int do_cache_read(struct drive_infot *drivep, sector_t start, char *buf,
         ramdesc_t seg, int cmd)
 {
     if (cmd == READ) {
-        if (cache_valid(drivep, start, buf, seg))   /* try cache first*/
+        cache_tries++;
+        if (cache_valid(drivep, start, buf, seg)) { /* try cache first*/
+            cache_hits++;
             return 1;
+        }
         bios_readtrack(drivep, start);              /* read whole track*/
         if (cache_valid(drivep, start, buf, seg))   /* try cache again*/
             return 1;
@@ -1114,6 +1148,8 @@ next_block:
             start += num_sectors;
             buf += num_sectors * drivep->sector_size;
         }
+        debug_bios("cache: hits %u total %u %lu%%\n", cache_hits, cache_tries,
+            (long)cache_hits * 100L / cache_tries);
 
         /* satisfied that request */
         end_request(1);
