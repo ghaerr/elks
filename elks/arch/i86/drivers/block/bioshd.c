@@ -233,7 +233,7 @@ static int bios_disk_rw(unsigned cmd, unsigned num_sectors, unsigned drive,
     BD_ES = seg;
     BD_BX = offset;
 #endif
-    debug_bios("BIOSHD(%d): %s CHS %d/%d/%d count %d\n", drive,
+    debug_bios("BIOSHD(%x): %s CHS %d/%d/%d count %d\n", drive,
         cmd==BIOSHD_READ? "read": "write",
         cylinder, head, sector, num_sectors);
 #ifdef IODELAY
@@ -923,10 +923,9 @@ static void get_chst(struct drive_infot *drivep, sector_t *start_sec, unsigned i
 static int do_readwrite(struct drive_infot *drivep, sector_t start, char *buf,
         ramdesc_t seg, int cmd, unsigned int count)
 {
-    int drive, errs;
+    int drive, error, errs;
     unsigned int cylinder, head, sector, this_pass;
     unsigned int segment, offset;
-    unsigned short in_ax, out_ax;
     unsigned int physaddr;
     size_t end;
     int usedmaseg;
@@ -937,7 +936,7 @@ static int do_readwrite(struct drive_infot *drivep, sector_t start, char *buf,
 
     /* limit I/O to requested sector count*/
     if (this_pass > count) this_pass = count;
-    if (cmd == READ) debug_bios("bioshd(%d): read lba %ld count %d\n",
+    if (cmd == READ) debug_bios("bioshd(%x): read lba %ld count %d\n",
                         drive, start, this_pass);
 
     errs = MAX_ERRS;        /* BIOS disk reads should be retried at least three times */
@@ -962,27 +961,22 @@ static int do_readwrite(struct drive_infot *drivep, sector_t start, char *buf,
             segment = (seg_t)seg;
             offset = (unsigned) buf;
         }
-        debug_bios("bioshd(%d): cmd %d CHS %d/%d/%d count %d\n",
+        debug_bios("bioshd(%x): cmd %d CHS %d/%d/%d count %d\n",
             drive, cmd, cylinder, head, sector, this_pass);
-        in_ax = BD_AX;
-        out_ax = 0;
 
         set_ddpt(drivep->sectors);
-        if (bios_disk_rw(cmd == WRITE? BIOSHD_WRITE: BIOSHD_READ, this_pass,
-                                drive, cylinder, head, sector, segment, offset)) {
-            printk("bioshd(%d): cmd %d retry #%d CHS %d/%d/%d count %d\n",
+        error = bios_disk_rw(cmd == WRITE? BIOSHD_WRITE: BIOSHD_READ, this_pass,
+                                drive, cylinder, head, sector, segment, offset);
+        if (error) {
+            printk("bioshd(%x): cmd %d retry #%d CHS %d/%d/%d count %d\n",
                 drive, cmd, MAX_ERRS - errs + 1, cylinder, head, sector, this_pass);
-            out_ax = BD_AX;
             bios_disk_reset(drive);
         }
-    } while (out_ax && --errs);     /* On error, retry up to MAX_ERRS times */
+    } while (error && --errs);      /* On error, retry up to MAX_ERRS times */
     last_drive = drivep;
 
-    if (out_ax) {
-        printk("bioshd: error: out AX=%04X in AX=%04X "
-            "ES:BX=%04X:%04X\n", out_ax, in_ax, BD_ES, BD_BX);
-        return 0;
-    }
+    if (error) return 0;            /* error message in blk.h */
+
     if (usedmaseg) {
         if (cmd == READ)            /* copy DMASEG up to xms*/
             xms_fmemcpyw(buf, seg, 0, DMASEG, this_pass*(drivep->sector_size >> 1));
@@ -1000,8 +994,7 @@ static void do_readtrack(struct drive_infot *drivep, sector_t start)
 {
     unsigned int cylinder, head, sector, num_sectors;
     int drive = drivep - drive_info;
-    int errs = 0;
-    unsigned short out_ax;
+    int error, errs = 0;
 
     map_drive(&drive);
     get_chst(drivep, &start, &cylinder, &head, &sector, &num_sectors, 1);
@@ -1010,22 +1003,21 @@ static void do_readtrack(struct drive_infot *drivep, sector_t start)
         num_sectors = DMASEGSZ / drivep->sector_size;
 
     do {
-        out_ax = 0;
-        debug_bios("bioshd(%d): track read CHS %d/%d/%d count %d\n",
+        debug_bios("bioshd(%x): track read CHS %d/%d/%d count %d\n",
                 drive, cylinder, head, sector, num_sectors);
 
         set_ddpt(drivep->sectors);
-        if (bios_disk_rw(BIOSHD_READ, num_sectors, drive,
-                                        cylinder, head, sector, DMASEG, 0)) {
-            printk("bioshd(%d): track read retry #%d CHS %d/%d/%d count %d\n",
+        error = bios_disk_rw(BIOSHD_READ, num_sectors, drive,
+                                 cylinder, head, sector, DMASEG, 0);
+        if (error) {
+            printk("bioshd(%x): track read retry #%d CHS %d/%d/%d count %d\n",
                 drive, errs + 1, cylinder, head, sector, num_sectors);
-            out_ax = BD_AX;
             bios_disk_reset(drive);
         }
-    } while (out_ax && ++errs < 1); /* no track retries, for testing only*/
+    } while (error && ++errs < 1); /* no track retries, for testing only*/
     last_drive = drivep;
 
-    if (out_ax) {
+    if (error) {
         set_cache_invalid();
         return;
     }
@@ -1033,7 +1025,7 @@ static void do_readtrack(struct drive_infot *drivep, sector_t start)
     cache_drive = drivep;
     cache_startsector = start;
     cache_endsector = start + num_sectors - 1;
-    debug_bios("bioshd(%d): track read lba %ld to %ld count %d\n",
+    debug_bios("bioshd(%x): track read lba %ld to %ld count %d\n",
         drive, cache_startsector, cache_endsector, num_sectors);
 }
 
@@ -1047,7 +1039,7 @@ static int cache_valid(struct drive_infot *drivep, sector_t start, char *buf,
         return 0;
 
     offset = (int)(start - cache_startsector) * drivep->sector_size;
-    debug_bios("bioshd(%d): cache hit lba %ld\n", hd_drive_map[drivep-drive_info], start);
+    debug_bios("bioshd(%x): cache hit lba %ld\n", hd_drive_map[drivep-drive_info], start);
     xms_fmemcpyw(buf, seg, (void *)offset, DMASEG, drivep->sector_size >> 1);
     return 1;
 }

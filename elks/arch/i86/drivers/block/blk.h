@@ -143,7 +143,7 @@ static void end_request(int uptodate)
     req = CURRENT;
 
     if (!uptodate) {
-        printk(DEVICE_NAME ": I/O %s error dev %D sector %lu\n",
+        printk(DEVICE_NAME ": I/O %s error dev %D lba sector %lu\n",
             (req->rq_cmd == WRITE)? "write": "read",
             req->rq_dev, req->rq_sector);
     }
