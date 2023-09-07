@@ -40,13 +40,9 @@
 struct gendisk *gendisk_head = NULL;
 int boot_partition = 0;		/* MBR boot partition, if any*/
 
-#ifdef BDEV_SIZE_CHK
-extern int blk_size[];
-#endif
-
 #ifdef CONFIG_BLK_DEV_BHD
 
-static unsigned short current_minor;
+static unsigned int current_minor;
 
 static void INITPROC print_minor_name(register struct gendisk *hd,
 			     unsigned short int minor)
@@ -346,13 +342,13 @@ void INITPROC setup_dev(register struct gendisk *dev)
 	blk_size[dev->major] = NULL;
 #endif
 
-	memset((void *)dev->part, 0, sizeof(struct hd_struct)*dev->max_nr*dev->max_p);
+	//memset((void *)dev->part, 0, sizeof(struct hd_struct)*dev->max_nr*dev->max_p);
 	dev->init(dev);
 
 #ifdef CONFIG_BLK_DEV_BHD
 	for (int i = 0; i < dev->nr_real; i++) {
-		int first_minor = i << dev->minor_shift;
-		current_minor = (unsigned short) (first_minor + 1);
+		unsigned int first_minor = i << dev->minor_shift;
+		current_minor = first_minor + 1;
 		check_partition(dev, MKDEV(dev->major, first_minor));
 	}
 #endif

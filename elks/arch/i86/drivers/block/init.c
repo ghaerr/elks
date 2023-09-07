@@ -29,7 +29,7 @@
 #include <arch/system.h>
 #include <arch/segment.h>
 
-int boot_rootdev;	/* set by /bootopts options if configured*/
+int boot_rootdev;       /* set by /bootopts options if configured*/
 
 void INITPROC device_init(void)
 {
@@ -41,7 +41,7 @@ void INITPROC device_init(void)
     set_irq();
 
     for (p = gendisk_head; p; p = p->next)
-	setup_dev(p);
+        setup_dev(p);
 
 #ifdef CONFIG_BLK_DEV_BIOS
     /*
@@ -50,12 +50,10 @@ void INITPROC device_init(void)
      * device number.  -- tkchia 20200308
      */
     if (!boot_rootdev && (SETUP_ELKS_FLAGS & EF_BIOS_DEV_NUM) != 0) {
-	extern kdev_t INITPROC bioshd_conv_bios_drive(unsigned int biosdrive);
+        dev_t rootdev = bios_conv_bios_drive((unsigned)ROOT_DEV);
 
-	kdev_t rootdev = bioshd_conv_bios_drive((unsigned)ROOT_DEV);
-
-	printk("boot: BIOS drive %x, root device %04x\n", ROOT_DEV, rootdev);
-	ROOT_DEV = rootdev;
+        printk("boot: BIOS drive %x, root device %04x\n", ROOT_DEV, rootdev);
+        ROOT_DEV = (kdev_t)rootdev;
     }
 #endif
 

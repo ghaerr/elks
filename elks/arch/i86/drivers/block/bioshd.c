@@ -39,7 +39,6 @@
 #include <linuxmt/genhd.h>
 #include <linuxmt/biosparm.h>
 #include <linuxmt/major.h>
-#include <linuxmt/bioshd.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/string.h>
 #include <linuxmt/mm.h>
@@ -60,6 +59,7 @@
 #define FULL_TRACK      0       /* =1 to read full tracks for track caching */
 #define RESET_DISK_CHG  0       /* =1 to reset BIOS on drive change fixes QEMU retry */
 //#define IODELAY       5       /* times 10ms, emulated delay for floppy on QEMU */
+#define MAX_ERRS        5
 
 /* the following must match with /dev minor numbering scheme*/
 #define NUM_MINOR       32      /* max minor devices per drive*/
@@ -112,15 +112,13 @@ static struct biosparms bdt;
 
 static struct drive_infot drive_info[NUM_DRIVES];
 
-/* This makes probing order more logical and
- * avoids a few senseless seeks in some cases
- */
-
 static struct hd_struct hd[NUM_DRIVES << MINOR_SHIFT];  /* partitions start, size*/
+static int hd_sizes[NUM_DRIVES << MINOR_SHIFT];         /* used only with BDEV_SIZE_CHK*/
 
 static int access_count[NUM_DRIVES];    /* for invalidating buffers/inodes*/
 
-static int bioshd_sizes[NUM_DRIVES << MINOR_SHIFT];     /* used only with BDEV_SIZE_CHK*/
+static int fd_count = 0;                /* number of floppy disks */
+static int hd_count = 0;                /* number of hard disks */
 
 struct drive_infot fd_types[] = {       /* AT/PS2 BIOS reported floppy formats*/
     {40,  9, 2, 512, 0},
@@ -149,9 +147,6 @@ unsigned char hd_drive_map[NUM_DRIVES] = {/* BIOS drive mappings*/
 };
 #endif
 
-static int _fd_count = 0;               /* number of floppy disks */
-static int _hd_count = 0;               /* number of hard disks */
-
 #define SPT             4       /* DDPT offset of sectors per track*/
 static unsigned char DDPT[14];  /* our copy of diskette drive parameter table*/
 unsigned long __far *vec1E = _MK_FP(0, 0x1E << 2);
@@ -170,7 +165,7 @@ static struct gendisk bioshd_gendisk = {
     NUM_DRIVES,                 /* maximum number of real */
     bioshd_geninit,             /* init function */
     hd,                         /* hd struct */
-    bioshd_sizes,               /* sizes not blocksizes */
+    hd_sizes,                   /* sizes not blocksizes */
     0,                          /* number */
     (void *) drive_info,        /* internal */
     NULL                        /* next */
@@ -188,7 +183,7 @@ static void set_cache_invalid(void)
  * as well try it -- Some XT controllers are happy with it.. [AC]
  */
 
-static void reset_bioshd(int drive)
+static void bios_disk_reset(int drive)
 {
 #ifdef CONFIG_ARCH_PC98
     BD_AX = BIOSHD_RESET | drive;
@@ -204,7 +199,7 @@ static int bios_disk_rw(unsigned cmd, unsigned num_sectors, unsigned drive,
         unsigned cylinder, unsigned head, unsigned sector, unsigned seg, unsigned offset)
 {
 #ifdef CONFIG_ARCH_PC98
-        BD_AX = cmd | drive;
+    BD_AX = cmd | drive;
     if (((0xF0 & drive) == 0x80) || ((0xF0 & drive) == 0xA0)) {
         BD_BX = (unsigned int) (num_sectors << 9);
         BD_CX = cylinder;
@@ -221,39 +216,39 @@ static int bios_disk_rw(unsigned cmd, unsigned num_sectors, unsigned drive,
         }
         BD_DX = (head << 8) | sector;
     }
-        BD_ES = seg;
-        BD_BP = offset;
+    BD_ES = seg;
+    BD_BP = offset;
 #else
 
 #if RESET_DISK_CHG
-        static unsigned last = 0;
-        if (drive != last) {
-            reset_bioshd(1); /* fixes QEMU retry when switching drive types #1119 */
-            last = drive;
-        }
+    static unsigned last = 0;
+    if (drive != last) {
+        bios_disk_reset(1); /* fixes QEMU retry when switching drive types #1119 */
+        last = drive;
+    }
 #endif
-        BD_AX = cmd | num_sectors;
-        BD_CX = (unsigned int) ((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
-        BD_DX = (head << 8) | drive;
-        BD_ES = seg;
-        BD_BX = offset;
+    BD_AX = cmd | num_sectors;
+    BD_CX = (unsigned int) ((cylinder << 8) | ((cylinder >> 2) & 0xc0) | sector);
+    BD_DX = (head << 8) | drive;
+    BD_ES = seg;
+    BD_BX = offset;
 #endif
-        debug_bios("BIOSHD(%d): %s CHS %d/%d/%d count %d\n", drive,
-            cmd==BIOSHD_READ? "read": "write",
-            cylinder, head, sector, num_sectors);
+    debug_bios("BIOSHD(%d): %s CHS %d/%d/%d count %d\n", drive,
+        cmd==BIOSHD_READ? "read": "write",
+        cylinder, head, sector, num_sectors);
 #ifdef IODELAY
-        /* emulate floppy delay for QEMU */
-        unsigned long timeout = jiffies + IODELAY*HZ/100;
-        while (!time_after(jiffies, timeout)) continue;
+    /* emulate floppy delay for QEMU */
+    unsigned long timeout = jiffies + IODELAY*HZ/100;
+    while (!time_after(jiffies, timeout)) continue;
 #endif
-        return call_bios(&bdt);
+    return call_bios(&bdt);
 }
 
 #ifdef CONFIG_BLK_DEV_BHD
 /* This function checks to see which hard drives are active and sets up the
  * drive_info[] table for them.  Ack this is darned confusing...
  */
-static unsigned short int INITPROC bioshd_gethdinfo(void) {
+static unsigned short int INITPROC bios_gethdinfo(void) {
     int drive, ndrives = 0;
     register struct drive_infot *drivep = &drive_info[0];
 
@@ -349,7 +344,7 @@ static unsigned short int INITPROC bioshd_gethdinfo(void) {
 
 #ifdef CONFIG_BLK_DEV_BFD_HARD
 /* hard-coded floppy configuration*/
-static unsigned short int INITPROC bioshd_getfdinfo(void)
+static unsigned short int INITPROC bios_getfdinfo(void)
 {
 /* Set this to match your system. Currently it's set to a two drive system:
  *
@@ -407,7 +402,7 @@ static unsigned short int INITPROC bioshd_getfdinfo(void)
 #elif defined(CONFIG_BLK_DEV_BFD)
 
 /* use BIOS to query floppy configuration*/
-static unsigned short int INITPROC bioshd_getfdinfo(void)
+static unsigned short int INITPROC bios_getfdinfo(void)
 {
     register struct drive_infot *drivep = &drive_info[DRIVE_FD0];
     int drive, ndrives = 0;
@@ -558,7 +553,7 @@ static int read_sector(int drive, int cylinder, int sector)
         set_ddpt(36);           /* set to large value to avoid BIOS issues*/
         if (!bios_disk_rw(BIOSHD_READ, 1, drive, cylinder, 0, sector, DMASEG, 0))
             return 0;           /* everything is OK */
-        reset_bioshd(drive);
+        bios_disk_reset(drive);
     } while (--count > 0);
     return 1;                   /* error */
 }
@@ -776,7 +771,7 @@ static struct file_operations bioshd_fops = {
     bioshd_release              /* release */
 };
 
-int INITPROC bioshd_init(void)
+void INITPROC bioshd_init(void)
 {
     register struct gendisk *ptr;
     int count;
@@ -785,11 +780,11 @@ int INITPROC bioshd_init(void)
     outb_p(0x0C, FDC_DOR);      /* FD motors off, enable IRQ and DMA*/
 
 #ifdef CONFIG_BLK_DEV_BFD
-    _fd_count = bioshd_getfdinfo();
+    fd_count = bios_getfdinfo();
 #endif
 #ifdef CONFIG_BLK_DEV_BHD
-    _hd_count = bioshd_gethdinfo();
-    bioshd_gendisk.nr_real = _hd_count;
+    hd_count = bios_gethdinfo();
+    bioshd_gendisk.nr_real = hd_count;
 #endif
 
 #ifdef PRINT_DRIVE_INFO
@@ -825,27 +820,25 @@ int INITPROC bioshd_init(void)
 #ifdef CONFIG_BLK_DEV_BFD
 #ifdef CONFIG_BLK_DEV_BHD
     printk("bioshd: %d floppy drive%s and %d hard drive%s\n",
-           _fd_count, _fd_count == 1 ? "" : "s",
-           _hd_count, _hd_count == 1 ? "" : "s");
+           fd_count, fd_count == 1 ? "" : "s",
+           hd_count, hd_count == 1 ? "" : "s");
 #else
     printk("bioshd: %d floppy drive%s\n",
-           _fd_count, _fd_count == 1 ? "" : "s");
+           fd_count, fd_count == 1 ? "" : "s");
 #endif
 #else
 #ifdef CONFIG_BLK_DEV_BHD
     printk("bioshd: %d hard drive%s\n",
-           _hd_count, _hd_count == 1 ? "" : "s");
+           hd_count, hd_count == 1 ? "" : "s");
 #endif
 #endif
 #endif /* PRINT_DRIVE_INFO */
 
-    if (!(_fd_count + _hd_count)) return 0;
+    if (!(fd_count + hd_count)) return;
 
     copy_ddpt();        /* make a RAM copy of the disk drive parameter table*/
 
-    count = register_blkdev(MAJOR_NR, DEVICE_NAME, &bioshd_fops);
-
-    if (count == 0) {
+    if (!register_blkdev(MAJOR_NR, DEVICE_NAME, &bioshd_fops)) {
         blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
 
         if (gendisk_head == NULL) {
@@ -855,13 +848,12 @@ int INITPROC bioshd_init(void)
             for (ptr = gendisk_head; ptr->next != NULL; ptr = ptr->next)
                 /* Do nothing */ ;
             ptr->next = &bioshd_gendisk;
-            bioshd_gendisk.next = NULL;
+            //bioshd_gendisk.next = NULL;
         }
         bioshd_initialized = 1;
     } else {
         printk("bioshd: init error\n");
     }
-    return count;
 }
 
 static int bioshd_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
@@ -879,7 +871,7 @@ static int bioshd_ioctl(struct inode *inode, struct file *file, unsigned int cmd
         return -EINVAL;
 
     dev = DEVICE_NR(inode->i_rdev);
-    if (dev >= ((dev < DRIVE_FD0) ? _hd_count : (DRIVE_FD0 + _fd_count)))
+    if (dev >= ((dev < DRIVE_FD0) ? hd_count : (DRIVE_FD0 + fd_count)))
         return -ENODEV;
 
     drivep = &drive_info[dev];
@@ -904,10 +896,10 @@ static void get_chst(struct drive_infot *drivep, sector_t *start_sec, unsigned i
     sector_t start = *start_sec;
     sector_t tmp;
 
-    *s = (unsigned int) ((start % (sector_t)drivep->sectors) + 1);
-    tmp = start / (sector_t)drivep->sectors;
-    *h = (unsigned int) (tmp % (sector_t)drivep->heads);
-    *c = (unsigned int) (tmp / (sector_t)drivep->heads);
+    *s = (unsigned int) (start % drivep->sectors) + 1;
+    tmp = start / drivep->sectors;
+    *h = (unsigned int) (tmp % drivep->heads);
+    *c = (unsigned int) (tmp / drivep->heads);
     *t = drivep->sectors - *s + 1;
 #if FULL_TRACK
     if (fulltrack) {
@@ -927,8 +919,8 @@ static void get_chst(struct drive_infot *drivep, sector_t *start_sec, unsigned i
         start, *c, *h, *s, *t);
 }
 
-/* do bios I/O, return # sectors read/written */
-static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *buf,
+/* do disk I/O, return # sectors read/written */
+static int do_readwrite(struct drive_infot *drivep, sector_t start, char *buf,
         ramdesc_t seg, int cmd, unsigned int count)
 {
     int drive, errs;
@@ -981,7 +973,7 @@ static int do_bios_readwrite(struct drive_infot *drivep, sector_t start, char *b
             printk("bioshd(%d): cmd %d retry #%d CHS %d/%d/%d count %d\n",
                 drive, cmd, MAX_ERRS - errs + 1, cylinder, head, sector, this_pass);
             out_ax = BD_AX;
-            reset_bioshd(drive);
+            bios_disk_reset(drive);
         }
     } while (out_ax && --errs);     /* On error, retry up to MAX_ERRS times */
     last_drive = drivep;
@@ -1004,7 +996,7 @@ static sector_t cache_startsector;
 static sector_t cache_endsector;
 
 /* read from start sector to end of track into DMASEG track buffer, no retries*/
-static void bios_readtrack(struct drive_infot *drivep, sector_t start)
+static void do_readtrack(struct drive_infot *drivep, sector_t start)
 {
     unsigned int cylinder, head, sector, num_sectors;
     int drive = drivep - drive_info;
@@ -1028,7 +1020,7 @@ static void bios_readtrack(struct drive_infot *drivep, sector_t start)
             printk("bioshd(%d): track read retry #%d CHS %d/%d/%d count %d\n",
                 drive, errs + 1, cylinder, head, sector, num_sectors);
             out_ax = BD_AX;
-            reset_bioshd(drive);
+            bios_disk_reset(drive);
         }
     } while (out_ax && ++errs < 1); /* no track retries, for testing only*/
     last_drive = drivep;
@@ -1073,7 +1065,7 @@ static int do_cache_read(struct drive_infot *drivep, sector_t start, char *buf,
             cache_hits++;
             return 1;
         }
-        bios_readtrack(drivep, start);              /* read whole track*/
+        do_readtrack(drivep, start);                /* read whole track*/
         if (cache_valid(drivep, start, buf, seg))   /* try cache again*/
             return 1;
     }
@@ -1136,7 +1128,7 @@ next_block:
             if (!num_sectors)
 #endif
                 /* then fallback with retries if required*/
-                num_sectors = do_bios_readwrite(drivep, start, buf, req->rq_seg,
+                num_sectors = do_readwrite(drivep, start, buf, req->rq_seg,
                     req->rq_cmd, count);
 
             if (num_sectors == 0) {
@@ -1235,8 +1227,8 @@ static void bioshd_geninit(void)
 
 }
 
-/* convert a bios drive number to a bioshd kdev_t*/
-kdev_t INITPROC bioshd_conv_bios_drive(unsigned int biosdrive)
+/* convert a bios drive number to a bioshd dev_t*/
+dev_t INITPROC bios_conv_bios_drive(unsigned int biosdrive)
 {
     int minor;
     int partition = 0;
