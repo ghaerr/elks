@@ -40,18 +40,6 @@ struct blk_dev_struct {
     struct request *current_request;
 };
 
-/* For bioshd.c, idequery.c */
-struct drive_infot {            /* CHS per drive*/
-    unsigned int cylinders;
-    int sectors;
-    int heads;
-    int sector_size;
-    int fdtype;                 /* floppy fd_types[] index  or -1 if hd */
-};
-extern struct drive_infot *last_drive;  /* set to last drivep-> used in read/write */
-
-extern unsigned char hd_drive_map[];
-
 extern struct blk_dev_struct blk_dev[MAX_BLKDEV];
 extern void resetup_one_dev(struct gendisk *dev, int drive);
 
@@ -143,7 +131,7 @@ static void end_request(int uptodate)
     req = CURRENT;
 
     if (!uptodate) {
-        printk(DEVICE_NAME ": I/O %s error dev %D sector %lu\n",
+        printk(DEVICE_NAME ": I/O %s error dev %D lba sector %lu\n",
             (req->rq_cmd == WRITE)? "write": "read",
             req->rq_dev, req->rq_sector);
     }

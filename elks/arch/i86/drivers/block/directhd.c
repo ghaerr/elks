@@ -77,7 +77,7 @@ static struct gendisk directhd_gendisk = {
     hd,				/* hd struct */
     directhd_sizes,		/* drive sizes */
     0,
-    (void *) drive_info,
+    drive_info,
     NULL
 };
 
@@ -339,7 +339,7 @@ int directhd_init(void)
 	return 0;
     }
 
-    directhd_gendisk.nr_real = hdcount;
+    directhd_gendisk.nr_hd = hdcount;
 
     if (register_blkdev(MAJOR_NR, DEVICE_NAME, &directhd_fops)) {
 	printk("athd: unable to register\n");

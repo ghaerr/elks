@@ -30,20 +30,54 @@
  */
 
 struct biosparms {
-    unsigned short irq;		/* 0 */
-    unsigned short ax;		/* 2 */
-    unsigned short bx;		/* 4 */
-    unsigned short cx;		/* 6 */
-    unsigned short dx;		/* 8 */
-    unsigned short si;		/* 10 */
-    unsigned short di;		/* 12 */
-    unsigned short bp;		/* 14 */
-    unsigned short es;		/* 16 */
-    unsigned short ds;		/* 18 */
-    unsigned short fl;		/* 20 */
+    unsigned short irq;         /* 0 */
+    unsigned short ax;          /* 2 */
+    unsigned short bx;          /* 4 */
+    unsigned short cx;          /* 6 */
+    unsigned short dx;          /* 8 */
+    unsigned short si;          /* 10 */
+    unsigned short di;          /* 12 */
+    unsigned short bp;          /* 14 */
+    unsigned short es;          /* 16 */
+    unsigned short ds;          /* 18 */
+    unsigned short fl;          /* 20 */
 };
 
-/* exported functions */
-extern int call_bios(struct biosparms *);
+/* Useful defines for accessing the above structure. */
+#define BD_AX bdt.ax
+#define BD_BX bdt.bx
+#define BD_CX bdt.cx
+#define BD_DX bdt.dx
+#define BD_SI bdt.si
+#define BD_DI bdt.di
+#define BD_BP bdt.bp
+#define BD_ES bdt.es
+#define BD_FL bdt.fl
+
+#ifdef CONFIG_ARCH_PC98
+#define BIOSHD_INT              0x1B
+#define BIOSHD_RESET            0x0300
+#define BIOSHD_WRITE            0xD500
+#define BIOSHD_READ             0xD600
+#define BIOSHD_DRIVE_PARMS      0x8400
+#define BIOSHD_DEVICE_TYPE      0x1400
+#define BIOSHD_MODESET          0x8E00
+#else
+#define BIOSHD_INT              0x13
+#define BIOSHD_RESET            0x0000
+#define BIOSHD_WRITE            0x0300
+#define BIOSHD_READ             0x0200
+#define BIOSHD_DRIVE_PARMS      0x0800
+#endif
+
+int call_bios(struct biosparms *);
+
+void bios_disk_reset(int drive);
+int bios_disk_rw(unsigned cmd, unsigned num_sectors, unsigned drive,
+        unsigned cylinder, unsigned head, unsigned sector, unsigned seg, unsigned offset);
+void bios_set_ddpt(int max_sectors);
+void bios_copy_ddpt(void);
+struct drive_infot;
+void bios_switch_device98(int target, unsigned int device, struct drive_infot *drivep);
 
 #endif

@@ -7,7 +7,6 @@
 #include <linuxmt/msdos_fs.h>
 #include <linuxmt/msdos_fs_i.h>
 #include <linuxmt/msdos_fs_sb.h>
-#include <linuxmt/bioshd.h>	/* for HDIO_GET_SECTOR_SIZE on bioshd*/
 #include <linuxmt/kernel.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/errno.h>
