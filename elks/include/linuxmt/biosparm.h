@@ -43,6 +43,17 @@ struct biosparms {
     unsigned short fl;          /* 20 */
 };
 
+/* Useful defines for accessing the above structure. */
+#define BD_AX bdt.ax
+#define BD_BX bdt.bx
+#define BD_CX bdt.cx
+#define BD_DX bdt.dx
+#define BD_SI bdt.si
+#define BD_DI bdt.di
+#define BD_BP bdt.bp
+#define BD_ES bdt.es
+#define BD_FL bdt.fl
+
 #ifdef CONFIG_ARCH_PC98
 #define BIOSHD_INT              0x1B
 #define BIOSHD_RESET            0x0300
@@ -59,7 +70,13 @@ struct biosparms {
 #define BIOSHD_DRIVE_PARMS      0x0800
 #endif
 
-/* exported functions */
-extern int call_bios(struct biosparms *);
+int call_bios(struct biosparms *);
+
+void bios_disk_reset(int drive);
+int bios_disk_rw(unsigned cmd, unsigned num_sectors, unsigned drive,
+        unsigned cylinder, unsigned head, unsigned sector, unsigned seg, unsigned offset);
+void bios_set_ddpt(int max_sectors);
+void bios_copy_ddpt(void);
+void bios_switch_device98(int target, unsigned int device, struct drive_infot *drivep);
 
 #endif
