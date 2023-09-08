@@ -77,6 +77,7 @@ int bios_disk_rw(unsigned cmd, unsigned num_sectors, unsigned drive,
         unsigned cylinder, unsigned head, unsigned sector, unsigned seg, unsigned offset);
 void bios_set_ddpt(int max_sectors);
 void bios_copy_ddpt(void);
+struct drive_infot;
 void bios_switch_device98(int target, unsigned int device, struct drive_infot *drivep);
 
 #endif

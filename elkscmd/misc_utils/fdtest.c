@@ -6,23 +6,10 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <linuxmt/bioshd.h>
 #include <linuxmt/biosparm.h>
 #include <linuxmt/memory.h>
 
 struct biosparms bdt;
-
-/* Useful defines for accessing the above structure. */
-#define CARRY_SET (bdt.fl & 0x1)
-#define BD_IRQ bdt.irq
-#define BD_AX bdt.ax
-#define BD_BX bdt.bx
-#define BD_CX bdt.cx
-#define BD_DX bdt.dx
-#define BD_SI bdt.si
-#define BD_DI bdt.di
-#define BD_ES bdt.es
-#define BD_FL bdt.fl
 
 #define MAX		30		/* max # of sectors per read */
 #define SECSIZE		512		/* sector size*/
