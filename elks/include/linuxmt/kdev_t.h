@@ -2,13 +2,13 @@
 #define __LINUXMT_KDEV_T_H
 
 /* Some programs want their definitions of MAJOR and MINOR and MKDEV
- * from the kernel sources.
+ * from the kernel sources. Here we use unsigned short instead of __u16.
  */
 #define MINORBITS           8
 #define MINORMASK           ((1 << MINORBITS) - 1)
-#define MAJOR(dev)          ((__u16) ((dev) >> MINORBITS))
-#define MINOR(dev)          ((__u16) ((dev) & MINORMASK))
-#define MKDEV(major,minor)  ((__u16) (((major) << MINORBITS) | (minor)))
+#define MAJOR(dev)          ((unsigned short) ((dev) >> MINORBITS))
+#define MINOR(dev)          ((unsigned short) ((dev) & MINORMASK))
+#define MKDEV(major,minor)  ((unsigned short) (((major) << MINORBITS) | (minor)))
 #define NODEV               MKDEV(0,0)
 
 #ifdef __KERNEL__
