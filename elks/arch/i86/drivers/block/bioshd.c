@@ -54,18 +54,19 @@
 #include <arch/irq.h>
 #include <arch/ports.h>
 
+#define PER_DRIVE_INFO  1       /* =1 for per-line display of drive info at init */
 #define DEBUG_PROBE     0       /* =1 to display more floppy probing information */
 #define FORCE_PROBE     0       /* =1 to force floppy probing */
-#define FULL_TRACK      0       /* =1 to read full tracks for track caching */
-#define RESET_DISK_CHG  0       /* =1 to reset BIOS on drive change fixes QEMU retry */
+#define FULL_TRACK      0       /* =1 to read full tracks when track caching */
 //#define IODELAY       5       /* times 10ms, emulated delay for floppy on QEMU */
-#define MAX_ERRS        5
+#define MAX_ERRS        5       /* maximum sector read/write error retries */
 
 /* the following must match with /dev minor numbering scheme*/
 #define NUM_MINOR       32      /* max minor devices per drive*/
 #define MINOR_SHIFT     5       /* =log2(NUM_MINOR) shift to get drive num*/
+#define MAX_DRIVES      8       /* =256/NUM_MINOR*/
 #define DRIVE_HD0       0
-#define DRIVE_FD0       4       /* =NUM_DRIVES/2 first floppy drive*/
+#define DRIVE_FD0       4       /* =MAX_DRIVES/2 first floppy drive*/
 
 #define HD_DRIVES       4       /* max hard drives */
 #ifdef CONFIG_ARCH_PC98
@@ -74,9 +75,6 @@
 #define FD_DRIVES       2       /* max floppy drives */
 #endif
 #define NUM_DRIVES      (HD_DRIVES+FD_DRIVES) /* max number of drives (<=256/NUM_MINOR) */
-
-/* comment out following line for single-line drive info summary*/
-#define PRINT_DRIVE_INFO        NUM_DRIVES
 
 #define MAJOR_NR        BIOSHD_MAJOR
 #define BIOSDISK
@@ -388,13 +386,13 @@ void INITPROC bioshd_init(void)
     bioshd_gendisk.nr_hd = hd_count;
 #endif
 
-#ifdef PRINT_DRIVE_INFO
+#ifdef PER_DRIVE_INFO
     {
         register struct drive_infot *drivep;
         static char UNITS[4] = "KMGT";
 
         drivep = drive_info;
-        for (count = 0; count < PRINT_DRIVE_INFO; count++, drivep++) {
+        for (count = 0; count < NUM_DRIVES; count++, drivep++) {
             if (drivep->heads != 0) {
                 char *unit = UNITS;
                 __u32 size = ((__u32) drivep->sectors) * 5;     /* 0.1 kB units */
@@ -433,7 +431,7 @@ void INITPROC bioshd_init(void)
            hd_count, hd_count == 1 ? "" : "s");
 #endif
 #endif
-#endif /* PRINT_DRIVE_INFO */
+#endif /* PER_DRIVE_INFO */
 
     if (!(fd_count + hd_count)) return;
 

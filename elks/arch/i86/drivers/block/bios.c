@@ -14,10 +14,12 @@
 #include <linuxmt/debug.h>
 #include <arch/system.h>
 
+#define RESET_DISK_CHG  0       /* =1 to reset BIOS on drive change fixes QEMU retry */
+
 /* FIXME semi-copied from bioshd.c */
 #define MINOR_SHIFT     5       /* =log2(NUM_MINOR) shift to get drive num*/
-#define NUM_DRIVES      8       /* =256/NUM_MINOR max number of drives*/
-#define DRIVE_FD0       4       /* =NUM_DRIVES/2 first floppy drive*/
+#define MAX_DRIVES      8       /* =256/NUM_MINOR*/
+#define DRIVE_FD0       4       /* =MAX_DRIVES/2 first floppy drive*/
 
 struct drive_infot fd_types[] = {   /* AT/PS2 BIOS reported floppy formats*/
     {40,  9, 2, 512, 0},
@@ -32,7 +34,7 @@ struct drive_infot fd_types[] = {   /* AT/PS2 BIOS reported floppy formats*/
 
 /* BIOS drive mappings */
 #ifdef CONFIG_ARCH_PC98
-unsigned char bios_drive_map[NUM_DRIVES] = {
+unsigned char bios_drive_map[MAX_DRIVES] = {
     0xA0, 0xA1, 0xA2, 0xA3,             /* hda, hdb */
 #ifdef CONFIG_IMG_FD1232
     0x90, 0x91, 0x92, 0x93              /* fd0, fd1 */
@@ -41,7 +43,7 @@ unsigned char bios_drive_map[NUM_DRIVES] = {
 #endif
 };
 #else
-unsigned char bios_drive_map[NUM_DRIVES] = {
+unsigned char bios_drive_map[MAX_DRIVES] = {
     0x80, 0x81, 0x82, 0x83,             /* hda, hdb */
     0x00, 0x01, 0x02, 0x03              /* fd0, fd1 */
 };
@@ -173,8 +175,8 @@ int INITPROC bios_gethdinfo(struct drive_infot *drivep) {
     else
         debug_bios("bioshd: get_drive_parms fail on hd\n");
 #endif
-    if (ndrives > NUM_DRIVES/2)
-        ndrives = NUM_DRIVES/2;
+    if (ndrives > MAX_DRIVES/2)
+        ndrives = MAX_DRIVES/2;
 
     for (drive = 0; drive < ndrives; drive++) {
 #ifdef CONFIG_ARCH_PC98
