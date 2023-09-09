@@ -60,8 +60,10 @@ int my_mvaddstr(int y, int x, char *str)
 {
     for ( ; x < 0; ++x, ++str)
         if (*str == '\0')  return ERR;
-    for ( ; *str != '\0'; ++str, ++x)
+    for ( ; *str != '\0'; ++str, ++x) {
+        if (x >= COLS) break;
         if (mvaddch(y, x, *str) == ERR)  return ERR;
+    }
     return OK;
 }
 
@@ -107,11 +109,10 @@ int main(int argc, char *argv[])
         else {
             if (add_D51(x) == ERR) break;
         }
-        //getch();
         refresh();
-        usleep(40000);
+        //usleep(40000);
     }
-    mvcur(0, COLS - 1, LINES - 1, 0);
+    mvcur(0, COLS - 1, LINES - 2, 0);
     endwin();
 
     return 0;
