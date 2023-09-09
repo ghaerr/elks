@@ -11,7 +11,7 @@
 #define MKDEV(major,minor)  ((unsigned short) (((major) << MINORBITS) | (minor)))
 #define NODEV               MKDEV(0,0)
 
-#ifdef __KERNEL__
+#if defined(__KERNEL__) && !defined(__ASSEMBLER__)
 #include <arch/types.h>
 
 typedef __u16               kdev_t;

@@ -15,6 +15,7 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/kdev_t.h>
+#include <linuxmt/devnum.h>
 #include <linuxmt/debug.h>
 
 #include <arch/system.h>
@@ -491,7 +492,7 @@ void mount_root(void)
     } while (*(++fs_type) && !retval);
 
 #ifdef CONFIG_BLK_DEV_BIOS
-    if (ROOT_DEV == 0x0380) {
+    if (ROOT_DEV == DEV_FD0) {
         if (!filp->f_op->release)
             printk("Release not defined\n");
         close_filp(d_inode, filp);
