@@ -259,7 +259,7 @@ static struct dev_name_struct {
 	{ "hdd",     0x0360 },
 	{ "fd0",     0x0380 },
 	{ "fd1",     0x03a0 },
-	{ "ttyS",    0x0440 },
+	{ "ttyS0",   0x0440 },
 	{ "tty1",    0x0400 },
 	{ "tty2",    0x0401 },
 	{ "tty3",    0x0402 },
