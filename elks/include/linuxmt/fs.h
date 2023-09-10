@@ -40,13 +40,6 @@
 
 #endif /* __KERNEL__ */
 
-/*
- *  Now the file code is no longer dependent on bitmaps in unsigned
- *  longs, but uses the new fd_set structure..
- */
-
-#define NR_OPEN         20
-
 #define BLOCK_SIZE      1024
 #define BLOCK_SIZE_BITS 10
 

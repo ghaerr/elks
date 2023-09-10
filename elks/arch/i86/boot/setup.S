@@ -79,6 +79,7 @@
 */
 
 #include <linuxmt/config.h>
+#include <linuxmt/devnum.h>
 #include <linuxmt/boot.h>
 
 // Relocating loader debug option
@@ -241,9 +242,9 @@ start_os:
 // Check for correct a.out header
 
 #ifdef CONFIG_ROMFS_FS
-	movw $0x0600,root_dev	// ROMFS is device 6,0
+	movw $DEV_ROM,root_dev	// ROMFS
 #else
-	movw $0x0380,root_dev	// floppy is device 3,128
+	movw $DEV_FD0,root_dev	// floppy 0
 #endif
 	mov $CONFIG_ROM_KERNEL_CODE,%ax	// DS = ROM a.out image
    	mov %ax,%ds

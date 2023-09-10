@@ -12,6 +12,7 @@
 #include <linuxmt/utsname.h>
 #include <linuxmt/netstat.h>
 #include <linuxmt/trace.h>
+#include <linuxmt/devnum.h>
 #include <arch/system.h>
 #include <arch/segment.h>
 #include <arch/ports.h>
@@ -252,17 +253,18 @@ static struct dev_name_struct {
 	const char *name;
 	int num;
 } devices[] = {
-	/* root_dev_name needs first 5 in order*/
-	{ "hda",     0x0300 },
-	{ "hdb",     0x0320 },
-	{ "hdc",     0x0340 },
-	{ "hdd",     0x0360 },
-	{ "fd0",     0x0380 },
-	{ "fd1",     0x03a0 },
-	{ "ttyS",    0x0440 },
-	{ "tty1",    0x0400 },
-	{ "tty2",    0x0401 },
-	{ "tty3",    0x0402 },
+	/* the 4 partitionable drives must be first */
+	{ "hda",     DEV_HDA },
+	{ "hdb",     DEV_HDB },
+	{ "hdc",     DEV_HDC },
+	{ "hdd",     DEV_HDD },
+	{ "fd0",     DEV_FD0 },
+	{ "fd1",     DEV_FD1 },
+	{ "ttyS0",   DEV_TTYS0 },
+	{ "ttyS1",   DEV_TTYS1 },
+	{ "tty1",    DEV_TTY1 },
+	{ "tty2",    DEV_TTY2 },
+	{ "tty3",    DEV_TTY3 },
 	{ NULL,           0 }
 };
 
@@ -282,7 +284,7 @@ static char * INITPROC root_dev_name(int dev)
 			if (i < 4) {
 				if (dev & 0x07) {
 					name[NAMEOFF+3] = '0' + (dev & 7);
-					name[NAMEOFF+4] = 0;
+					name[NAMEOFF+4] = '\0';
 				}
 			}
 			return name;

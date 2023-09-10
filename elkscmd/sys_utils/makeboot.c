@@ -77,39 +77,6 @@ char bootblock[1024];				/* 1024 for MINIX, 512 for FAT */
 char *rootdevice;
 char *fsname[3] = { "Unknown", "Minix", "FAT" };
 
-/* return /dev name of device*/
-char *devname(dev_t dev)
-{
-	DIR *dp;
-	struct dirent *d;
-	struct stat st;
-	static char devdir[] = "/dev";
-	static char name[16];
-
-	dp = opendir(devdir);
-	if (dp == 0) {
-		perror(devdir);
-		return NULL;
-	}
-	strcpy(name, devdir);
-	strcat(name, "/");
-
-	while ((d = readdir(dp)) != NULL) {
-		if (d->d_name[0] == '.')
- 			continue;
-		strcpy(name + sizeof(devdir), d->d_name);
-		if (stat(name, &st) == 0) {
-			if (S_ISBLK(st.st_mode) && st.st_rdev == dev) {
-				closedir(dp);
-				return name;
-			}
-		}
-	}
-	closedir(dp);
-	fprintf(stderr, "Can't find device: 0x%x\n", dev);
-	return NULL;
-}
-
 /* determine and return filesystem type*/
 int get_fstype(int fd)
 {
@@ -398,7 +365,9 @@ usage:
 	}
 
 	rootdev = sbuf.st_dev;
-	rootdevice = devname(rootdev);
+	rootdevice = devname(rootdev, S_IFBLK);
+    if (!rootdevice)
+	    fatalmsg("Can't find device: 0x%x\n", rootdev);
 
 	if (opt_writebb == 1) {
 		get_bootblock(bootfile);
@@ -431,7 +400,7 @@ usage:
 	if (opt_writembr) {
 		int ffd;
 
-		char *rawtargetdevice = devname(targetdev & ~BIOS_MINOR_MASK);
+		char *rawtargetdevice = devname(targetdev & ~BIOS_MINOR_MASK, S_IFBLK);
 		if (!rawtargetdevice)
 			fatalmsg("Can't find raw target device\n");
 		ffd = open(rawtargetdevice, O_RDWR);

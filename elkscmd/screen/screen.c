@@ -81,8 +81,8 @@ extern char AnsiVersion[];
 extern flowctl;
 extern errno;
 extern sys_nerr;
-extern char *getenv(), *MakeTermcap();
-extern char *getlogin(), *ttyname();
+extern char *MakeTermcap();
+extern char *getlogin();
 static AttacherFinit(), Finit(), SigHup(), SigChld();
 static char *MakeBellMsg(), *Filename(), **SaveArgs(), *GetTtyName();
 

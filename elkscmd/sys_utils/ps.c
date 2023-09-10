@@ -30,6 +30,7 @@
 #include <dirent.h>
 #include <pwd.h>
 #include <getopt.h>
+#include <paths.h>
 
 #define LINEARADDRESS(off, seg)		((off_t) (((off_t)seg << 4) + off))
 
@@ -69,36 +70,32 @@ void process_name(int fd, unsigned int off, unsigned int seg)
 	}
 }
 
-
-char *devname(unsigned int minor)
+/* fast cached version of devname() */
+char *dev_name(unsigned int minor)
 {
 	struct dirent *d;
 	dev_t ttydev = MKDEV(TTY_MAJOR, minor);
 	static dev_t prevdev = -1;
 	static DIR *fp = NULL;
 	struct stat st;
-	static char dev[] = "/dev";
-	static char name[MAXNAMLEN+1];
+	static char path[MAXNAMLEN+6] = _PATH_DEVSL;    /* /dev/ */
+#define NAMEOFF     (sizeof(_PATH_DEVSL) - 1)
 
-	if (prevdev == ttydev) return name+8;
+	if (prevdev == ttydev) return path+NAMEOFF+3;
 	if (!fp) {
-		if (!(fp = opendir(dev)))
+		if (!(fp = opendir(_PATH_DEV)))
 			return "??";
 	} else rewinddir(fp);
-	strcpy(name, dev);
-	strcat(name, "/");
 
 	while ((d = readdir(fp)) != 0) {
-		if (strlen(d->d_name) > sizeof(name) - sizeof(dev) - 1)
-			continue;
 		if (d->d_name[0] == '.')
 			continue;
 		if (strncmp(d->d_name, "tty", 3))
 			continue;
-		strcpy(name + sizeof(dev), d->d_name);
-		if (!stat(name, &st) && st.st_rdev == ttydev) {
+		strcpy(&path[NAMEOFF], d->d_name);
+		if (!stat(path, &st) && st.st_rdev == ttydev) {
 			prevdev = ttydev;
-			return name+8;
+			return path+NAMEOFF+3;
 		}
 	}
 	return "?";
@@ -115,7 +112,7 @@ char *tty_name(int fd, unsigned int off, unsigned int seg)
 
 	if (read(fd, &tty, sizeof(tty)) != sizeof(tty)) return "?";
 
-	return devname(tty.minor);
+	return dev_name(tty.minor);
 }
 
 int main(int argc, char **argv)
