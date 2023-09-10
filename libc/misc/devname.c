@@ -44,7 +44,7 @@ static char *__fast_devname(dev_t dev, mode_t type)
     unsigned mask;
 
     for (i = 0; i < ARRAYLEN(devices); i++) {
-        mask = (i <= 4)? 0xfff8: 0xffff;
+        mask = (i < 4)? 0xfff8: 0xffff;
         if (devices[i].type == type && devices[i].num == (dev & mask)) {
             strcpy(&path[NAMEOFF], devices[i].name);
             if (i < 4) {
