@@ -78,7 +78,7 @@ char *rootdevice;
 char *fsname[3] = { "Unknown", "Minix", "FAT" };
 
 /* return /dev name of device*/
-char *devname(dev_t dev)
+char *dev_name(dev_t dev)
 {
 	DIR *dp;
 	struct dirent *d;
@@ -398,7 +398,7 @@ usage:
 	}
 
 	rootdev = sbuf.st_dev;
-	rootdevice = devname(rootdev);
+	rootdevice = dev_name(rootdev);
 
 	if (opt_writebb == 1) {
 		get_bootblock(bootfile);
@@ -431,7 +431,7 @@ usage:
 	if (opt_writembr) {
 		int ffd;
 
-		char *rawtargetdevice = devname(targetdev & ~BIOS_MINOR_MASK);
+		char *rawtargetdevice = dev_name(targetdev & ~BIOS_MINOR_MASK);
 		if (!rawtargetdevice)
 			fatalmsg("Can't find raw target device\n");
 		ffd = open(rawtargetdevice, O_RDWR);

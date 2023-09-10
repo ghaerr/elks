@@ -12,6 +12,7 @@ OBJS = \
 	atol.o \
 	basename.o \
 	crypt.o \
+	devname.o \
 	dirname.o \
 	dtostr.o \
 	ecvt.o \

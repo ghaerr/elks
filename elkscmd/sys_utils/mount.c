@@ -13,6 +13,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <sys/mount.h>
+#include <sys/stat.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/limits.h>
 
@@ -21,47 +22,6 @@
 static char *fs_typename[] = {
 	0, "minix", "msdos", "romfs"
 };
-
-static struct dev_name_struct {
-        char *name;
-        dev_t num;
-} devices[] = {
-        /* root_dev_name needs first 5 in order*/
-        { "hda",     0x0300 },
-        { "hdb",     0x0320 },
-        { "hdc",     0x0340 },
-        { "hdd",     0x0360 },
-        { "fd0",     0x0380 },
-        { "fd1",     0x03a0 },
-        { "ssd",     0x0200 },
-        { "rd0",     0x0100 },
-        { "rd1",     0x0101 },
-        { NULL,           0 }
-};
-
-/*
- * Convert a block device number to name.
- */
-static char *dev_name(dev_t dev)
-{
-        int i;
-#define NAMEOFF 5
-        static char name[10] = "/dev/";
-
-        for (i=0; i<sizeof(devices)/sizeof(devices[0])-1; i++) {
-                if (devices[i].num == (dev & 0xfff0)) {
-                        strcpy(&name[NAMEOFF], devices[i].name);
-                        if (i < 4) {
-                                if (dev & 0x07) {
-                                        name[NAMEOFF+3] = '0' + (dev & 7);
-                                        name[NAMEOFF+4] = 0;
-                                }
-                        }
-                        return name;
-                }
-        }
-        return NULL;
-}
 
 static int show_mount(dev_t dev)
 {
@@ -72,11 +32,11 @@ static int show_mount(dev_t dev)
 
 	if (statfs.f_type < FST_MSDOS) 
 		printf("%-9s (%5s) blocks %6lu free %6lu mount %s\n",
-		dev_name(statfs.f_dev), fs_typename[statfs.f_type], statfs.f_blocks,
+		devname(statfs.f_dev, S_IFBLK), fs_typename[statfs.f_type], statfs.f_blocks,
 		statfs.f_bfree, statfs.f_mntonname);
 	else
 		printf("%-9s (%5s)                           mount %s\n",
-		dev_name(statfs.f_dev), fs_typename[statfs.f_type], statfs.f_mntonname);
+		devname(statfs.f_dev, S_IFBLK), fs_typename[statfs.f_type], statfs.f_mntonname);
 	return 0;
 }
 

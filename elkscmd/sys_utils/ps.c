@@ -70,7 +70,7 @@ void process_name(int fd, unsigned int off, unsigned int seg)
 }
 
 
-char *devname(unsigned int minor)
+char *dev_name(unsigned int minor)
 {
 	struct dirent *d;
 	dev_t ttydev = MKDEV(TTY_MAJOR, minor);
@@ -115,7 +115,7 @@ char *tty_name(int fd, unsigned int off, unsigned int seg)
 
 	if (read(fd, &tty, sizeof(tty)) != sizeof(tty)) return "?";
 
-	return devname(tty.minor);
+	return dev_name(tty.minor);
 }
 
 int main(int argc, char **argv)

@@ -253,7 +253,7 @@ static struct dev_name_struct {
 	const char *name;
 	int num;
 } devices[] = {
-	/* root_dev_name needs first 5 in order*/
+	/* the 4 partitionable drives must be first */
 	{ "hda",     DEV_HDA },
 	{ "hdb",     DEV_HDB },
 	{ "hdc",     DEV_HDC },
@@ -284,7 +284,7 @@ static char * INITPROC root_dev_name(int dev)
 			if (i < 4) {
 				if (dev & 0x07) {
 					name[NAMEOFF+3] = '0' + (dev & 7);
-					name[NAMEOFF+4] = 0;
+					name[NAMEOFF+4] = '\0';
 				}
 			}
 			return name;
