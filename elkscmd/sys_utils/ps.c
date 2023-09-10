@@ -70,6 +70,7 @@ void process_name(int fd, unsigned int off, unsigned int seg)
 	}
 }
 
+/* fast cached version of devname() */
 char *dev_name(unsigned int minor)
 {
 	struct dirent *d;

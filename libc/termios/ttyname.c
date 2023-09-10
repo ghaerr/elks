@@ -5,45 +5,36 @@
 #include <unistd.h>
 #include <paths.h>
 
-char * ttyname (int fd)
+char *ttyname(int fd)
 {
-   static char dev[] = _PATH_DEV;
-   struct stat st, dst;
-   DIR  *fp;
-   struct dirent *d;
-   static char name[MAXNAMLEN];
-   int noerr = errno;
+    DIR  *dp;
+    struct dirent *d;
+    struct stat src, dst;
+    static char path[MAXNAMLEN+6] = _PATH_DEVSL;     /* /dev/ */
+#define NAMEOFF     (sizeof(_PATH_DEVSL) - 1)
 
-   if (fstat(fd, &st) < 0)
-      return 0;
-   if (!isatty(fd))
-   {
-      errno = ENOTTY;
-      return 0;
-   }
+    if (fstat(fd, &src) < 0)
+        return NULL;
+    if (!isatty(fd)) {
+        errno = ENOTTY;
+        return NULL;
+    }
 
-   fp = opendir(dev);
-   if (fp == 0)
-      return 0;
-   strcpy(name, dev);
-   strcat(name, "/");
+    dp = opendir(_PATH_DEV);
+    if (!dp)
+        return NULL;
 
-   while ((d = readdir(fp)) != 0)
-   {
-      if (strlen(d->d_name) > sizeof(name) - sizeof(dev) - 1)
-         continue;
-      if (d->d_name[0] == '.')
-         continue;
-      strcpy(name + sizeof(dev), d->d_name);
-      if (stat(name, &dst) == 0
-         && st.st_dev == dst.st_dev && st.st_ino == dst.st_ino)
-      {
-         closedir(fp);
-         errno = noerr;
-         return name;
-      }
-   }
-   closedir(fp);
-   errno = noerr;
-   return 0;
+    while ((d = readdir(dp)) != 0) {
+        if (d->d_name[0] == '.')
+            continue;
+        strcpy(&path[NAMEOFF], d->d_name);
+        if (stat(path, &dst) == 0) {
+            if (src.st_dev == dst.st_dev && src.st_ino == dst.st_ino) {
+                closedir(dp);
+                return path;
+            }
+        }
+    }
+    closedir(dp);
+    return NULL;
 }

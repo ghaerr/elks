@@ -10,8 +10,7 @@ isatty(int fd)
 
 	rv = (ioctl(fd, TCGETS, &term) == 0);
 
-	if(rv == 0
-	&& errno == ENOSYS)
+	if(rv == 0 && errno == ENOSYS)
 		rv = (fd < 3);
 
 	errno = err;
