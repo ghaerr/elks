@@ -13,23 +13,30 @@
 #include <linuxmt/kdev_t.h>
 #include <linuxmt/debug.h>
 #include <arch/system.h>
+#include "bioshd.h"
 
 #define RESET_DISK_CHG  0       /* =1 to reset BIOS on drive change fixes QEMU retry */
 
-/* FIXME semi-copied from bioshd.c */
-#define MINOR_SHIFT     3       /* =log2(NUM_MINOR) shift to get drive num*/
-#define MAX_DRIVES      8       /* <=256/NUM_MINOR*/
-#define DRIVE_FD0       4       /* =MAX_DRIVES/2 first floppy drive*/
+/*
+ * Indices for fd_types array. Note these match the value returned
+ * by the BIOS in BL less 1, for INT 13h AH=8 (Get Disk Parms) for IBM PC.
+ */
+#define FD360           0
+#define FD1200          1
+#define FD720           2
+#define FD1440          3
+#define FD2880          4       /* QEMU returns 5 */
+#define FD2880_DUP      5       /* Dosbox returns 6 */
+#define FD1232          6       /* PC/98 only, not returned */
 
 struct drive_infot fd_types[] = {   /* AT/PS2 BIOS reported floppy formats*/
-    {40,  9, 2, 512, 0},
-    {80, 15, 2, 512, 1},
-    {80,  9, 2, 512, 2},
-    {80, 18, 2, 512, 3},
-    {80, 36, 2, 512, 4},
-#ifdef CONFIG_ARCH_PC98
-    {77,  8, 2, 1024,5},
-#endif
+    {40,  9, 2, 512, 0},            /* 360k */
+    {80, 15, 2, 512, 1},            /* 1.2M */
+    {80,  9, 2, 512, 2},            /* 720k */
+    {80, 18, 2, 512, 3},            /* 1.4M */
+    {80, 36, 2, 512, 5},            /* 2.88M */
+    {80, 36, 2, 512, 6},            /* 2.88M */
+    {77,  8, 2, 1024,7},            /* 1.232M PC/98 only */
 };
 
 /* BIOS drive mappings */
@@ -229,14 +236,13 @@ int INITPROC bios_getfdinfo(struct drive_infot *drivep)
  * ndrives is number of drives in your system (either 0, 1 or 2)
  */
 
-    int ndrives = MAXDRIVES;
+    int ndrives = FD_DRIVES;
 
 /* drive_info[] should be set *only* for existing drives;
  * comment out drive_info lines if you don't need them
  * (e.g. you have less than 2 drives)
  *
- * Enter type 4 in fd_types' brackets for unknown drive type
- * Otherwise use floppy drive type table below:
+ * Use floppy drive type table below:
  *
  *      Type    Format
  *      ~~~~    ~~~~~~
@@ -244,8 +250,8 @@ int INITPROC bios_getfdinfo(struct drive_infot *drivep)
  *        1     1.2 MB
  *        2     720 KB
  *        3     1.44 MB
- *        4     2.88 MB or Unknown
- *        5     1.232 MB (PC98 1K sectors)
+ *        4     1.232 MB (PC/98 1K sectors)
+ *        5     2.88 MB
  *
  * Warning: drive will be reported as 2880 KB at bootup if you've set it
  * as unknown (4). Floppy probe will detect correct floppy format at each
@@ -254,21 +260,21 @@ int INITPROC bios_getfdinfo(struct drive_infot *drivep)
 
 #ifdef CONFIG_ARCH_PC98
 #if defined(CONFIG_IMG_FD1232)
-    drivep[0] = fd_types[5];
-    drivep[1] = fd_types[5];
-    drivep[2] = fd_types[5];
-    drivep[3] = fd_types[5];
+    drivep[0] = fd_types[FD1232];
+    drivep[1] = fd_types[FD1232];
+    drivep[2] = fd_types[FD1232];
+    drivep[3] = fd_types[FD1232];
 #elif defined(CONFIG_IMG_FD1440)
-    drivep[0] = fd_types[3];
-    drivep[1] = fd_types[3];
-    drivep[2] = fd_types[3];
-    drivep[3] = fd_types[3];
+    drivep[0] = fd_types[FD1440];
+    drivep[1] = fd_types[FD1440];
+    drivep[2] = fd_types[FD1440];
+    drivep[FD1440] = fd_types[FD1440];
 #endif
 #endif
 
 #ifdef CONFIG_ARCH_IBMPC
-    drivep[0] = fd_types[2];        /*  /dev/fd0    */
-    drivep[1] = fd_types[2];        /*  /dev/fd1    */
+    drivep[0] = fd_types[FD720];
+    drivep[1] = fd_types[FD720];
 #endif
 
     return ndrives;
@@ -296,10 +302,10 @@ int INITPROC bios_getfdinfo(struct drive_infot *drivep)
         if (peekb(0x55C,0) & (1 << drive)) {
 #ifdef CONFIG_IMG_FD1232
             bios_drive_map[DRIVE_FD0 + drive] = drive + 0x90;
-            *drivep = fd_types[5];
+            *drivep = fd_types[FD1232];
 #else
             bios_drive_map[DRIVE_FD0 + drive] = drive + 0x30;
-            *drivep = fd_types[3];
+            *drivep = fd_types[FD1440];
 #endif
             ndrives++;  /* floppy drive count*/
             drivep++;
@@ -315,7 +321,7 @@ int INITPROC bios_getfdinfo(struct drive_infot *drivep)
         if (!drives && ndrives) {       /* handle Toshiba T1100 BIOS returning 0 drives */
             for (drive = 0; drive < ndrives; drive++) {
                 printk("fd%d: default 720k\n", drive);
-                *drivep++ = fd_types[2];
+                *drivep++ = fd_types[FD720];
             }
             return ndrives;
         } else ndrives = drives;
@@ -331,10 +337,10 @@ int INITPROC bios_getfdinfo(struct drive_infot *drivep)
         BD_AX = BIOSHD_DRIVE_PARMS;
         BD_DX = drive;
         BD_ES = BD_DI = BD_SI = 0;      /* guard against BIOS bugs*/
-        if (!call_bios(&bdt))           /* returns drive type in BL*/
+        if (!call_bios(&bdt)) {         /* returns drive type in BL*/
             *drivep = fd_types[(BD_BX & 0xFF) - 1];
-        else {
-            int type = (sys_caps & CAP_PC_AT) ? 3 : 0;
+        } else {
+            int type = (sys_caps & CAP_PC_AT) ? FD1440 : FD360;
             *drivep = fd_types[type];
             printk("fd%d: default %s\n", drive, type? "1440k": "360k");
         }
@@ -389,9 +395,9 @@ void bios_switch_device98(int target, unsigned int device, struct drive_infot *d
     bios_drive_map[target + DRIVE_FD0] =
         (device | (bios_drive_map[target + DRIVE_FD0] & 0x0F));
     if (device == 0x30)
-        *drivep = fd_types[3];  /* 1.44 MB */
+        *drivep = fd_types[FD1440];
     else if (device == 0x90)
-        *drivep = fd_types[5];  /* 1.232 MB */
+        *drivep = fd_types[FD1232];
 }
 #endif
 
