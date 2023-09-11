@@ -17,8 +17,8 @@
 #define RESET_DISK_CHG  0       /* =1 to reset BIOS on drive change fixes QEMU retry */
 
 /* FIXME semi-copied from bioshd.c */
-#define MINOR_SHIFT     5       /* =log2(NUM_MINOR) shift to get drive num*/
-#define MAX_DRIVES      8       /* =256/NUM_MINOR*/
+#define MINOR_SHIFT     3       /* =log2(NUM_MINOR) shift to get drive num*/
+#define MAX_DRIVES      8       /* <=256/NUM_MINOR*/
 #define DRIVE_FD0       4       /* =MAX_DRIVES/2 first floppy drive*/
 
 struct drive_infot fd_types[] = {   /* AT/PS2 BIOS reported floppy formats*/

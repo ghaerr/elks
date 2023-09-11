@@ -62,9 +62,9 @@
 #define MAX_ERRS        5       /* maximum sector read/write error retries */
 
 /* the following must match with /dev minor numbering scheme*/
-#define NUM_MINOR       32      /* max minor devices per drive*/
-#define MINOR_SHIFT     5       /* =log2(NUM_MINOR) shift to get drive num*/
-#define MAX_DRIVES      8       /* =256/NUM_MINOR*/
+#define NUM_MINOR       8       /* max minor devices per drive*/
+#define MINOR_SHIFT     3       /* =log2(NUM_MINOR) shift to get drive num*/
+#define MAX_DRIVES      8       /* <=256/NUM_MINOR*/
 #define DRIVE_HD0       0
 #define DRIVE_FD0       4       /* =MAX_DRIVES/2 first floppy drive*/
 
