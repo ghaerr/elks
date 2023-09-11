@@ -212,14 +212,14 @@ void tty_release(struct inode *inode, struct file *file)
  *
  * while (tty->outq.len > 0) {
  *      ch = tty_outproc(tty);
- *      write_char_to_device(device, (char)ch);
+ *      write_char_to_device(device, ch);
  *      cnt++;
  * }
  *
  */
 int tty_outproc(register struct tty *tty)
 {
-    int t_oflag;        /* WARNING: highly arch dependent, termios.c_oflag truncated to 16 bits*/
+    int t_oflag;    /* WARNING: termios.c_oflag truncated to 16 bits */
     int ch;
 
     ch = tty->outq.base[tty->outq.tail];
@@ -247,7 +247,7 @@ int tty_outproc(register struct tty *tty)
                 break;
 #endif
             case '\t':
-                if ((t_oflag & TABDLY) == TAB3) {
+                if ((t_oflag & TABDLY) == XTABS) {
                     ch = ' ';                           /* Expand tabs to spaces */
                     tty->ostate = 0x20 + TAB_SPACES - 1;
                 }
@@ -267,7 +267,7 @@ static void tty_echo(register struct tty *tty, unsigned char ch)
     if ((tty->termios.c_lflag & ECHO)
                 || ((tty->termios.c_lflag & ECHONL) && (ch == '\n'))) {
         if ((ch == tty->termios.c_cc[VERASE] || ch == tty->termios.c_cc[VERASE2])
-       && (tty->termios.c_lflag & ECHOE)) {
+                && (tty->termios.c_lflag & ECHOE)) {
             chq_addch(&tty->outq, '\b');
             chq_addch(&tty->outq, ' ');
             chq_addch(&tty->outq, '\b');
@@ -290,10 +290,11 @@ size_t tty_write(struct inode *inode, struct file *file, char *data, size_t len)
 
     i = 0;
     while (i < len) {
-        s = chq_wait_wr(&tty->outq, file->f_flags & O_NONBLOCK);
+        s = chq_wait_wr(&tty->outq, (file->f_flags & O_NONBLOCK) | i);
         if (s < 0) {
             /* FIXME EAGAIN not returned, cycle required on telnet nonblocking terminal */
             if (s == -EINTR || s == -EAGAIN) {
+                tty->ops->write(tty);
                 wake_up(&tty->outq.wait);
                 schedule();
                 continue;
@@ -302,10 +303,10 @@ size_t tty_write(struct inode *inode, struct file *file, char *data, size_t len)
                 i = s;
             break;
         }
-        chq_addch_nowakeup(&tty->outq, get_user_char((void *)data++));
-        tty->ops->write(tty);
+        chq_addch_nowakeup(&tty->outq, get_user_char(data++));
         i++;
     }
+    tty->ops->write(tty);
     wake_up(&tty->outq.wait);
     return i;
 }
