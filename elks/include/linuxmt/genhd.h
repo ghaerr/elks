@@ -73,9 +73,8 @@ struct gendisk
     int minor_shift;            /* number of times minor is shifted to get real minor */
     int max_p;                  /* maximum partitions per device */
     int max_nr;                 /* maximum number of real devices */
-    void (*init) ();            /* Initialization called before we do our thing */
+    void (*init)(void);         /* Initialization called before we do our thing */
     struct hd_struct *part;     /* partition table */
-    int *sizes;                 /* device size in blocks, copied to blk_size[] */
     int nr_hd;                  /* number of hard drives */
     struct drive_infot *drive_info;
     struct gendisk *next;

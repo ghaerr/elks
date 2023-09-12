@@ -254,7 +254,9 @@ out:
              * be able to bread the block containing the extended
              * partition info.
              */
-            hd->sizes[minor] = (int) (hdp->nr_sects >> (BLOCK_SIZE_BITS - 9));
+#if UNUSED
+            hd->sizes[minor] = hdp->nr_sects >> (BLOCK_SIZE_BITS - 9);
+#endif
             extended_partition(hd, MKDEV(hd->major, minor));
             printk(" >");
             /* prevent someone doing mkfs on an
@@ -276,7 +278,8 @@ out:
             if (!START_SECT_PC98(p98))
                 continue;
 
-            add_partition(hd, minor, first_sector + START_SECT_PC98(p98), NR_SECTS_PC98(p98));
+            add_partition(hd, minor, first_sector + START_SECT_PC98(p98),
+                NR_SECTS_PC98(p98));
         }
     }
 #endif
@@ -337,19 +340,15 @@ void resetup_one_dev(struct gendisk *dev, int drive)
 
 void INITPROC setup_dev(register struct gendisk *dev)
 {
-#ifdef BDEV_SIZE_CHK
-        blk_size[dev->major] = NULL;
-#endif
-
-        //memset((void *)dev->part, 0, sizeof(struct hd_struct)*dev->max_nr*dev->max_p);
-        dev->init(dev);
+    //memset((void *)dev->part, 0, sizeof(struct hd_struct)*dev->max_nr*dev->max_p);
+    dev->init();
 
 #ifdef CONFIG_BLK_DEV_BHD
-        for (int i = 0; i < dev->nr_hd; i++) {
-                unsigned int first_minor = i << dev->minor_shift;
-                current_minor = first_minor + 1;
-                check_partition(dev, MKDEV(dev->major, first_minor));
-        }
+    for (int i = 0; i < dev->nr_hd; i++) {
+        unsigned int first_minor = i << dev->minor_shift;
+        current_minor = first_minor + 1;
+        check_partition(dev, MKDEV(dev->major, first_minor));
+    }
 #endif
 
 }

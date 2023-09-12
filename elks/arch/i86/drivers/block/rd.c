@@ -239,8 +239,8 @@ static void do_rd_request(void)
 	debug("RD: %s dev %d sector %d, ", req->rq_cmd == READ? "read": "write",
 		target, start);
 	if (drive_info[target].valid == 0 || start >= drive_info[target].size) {
-	    debug("RD: bad request on ram%d, size %d, sector %d\n",
-		 target, drive_info[target].size, start);
+	    debug("rd%d: sector %d beyond max %d\n",
+		 target, start, drive_info[target].size);
 	    end_request(0);
 	    continue;
 	}

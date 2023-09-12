@@ -112,10 +112,9 @@ void ssd_io_complete(void)
         buf = req->rq_buffer;
         start = req->rq_sector;
 
-        // FIXME move max sector check to to ll_rw_blk level
-        if (start >= (NUM_SECTS-1)) {
-            printk("SSD: bad request sector %lu count %d cmd %d\n", start,
-                req->rq_nr_sectors, req->rq_cmd);
+        if (start + req->rq_nr_sectors >= NUM_SECTS) {
+            printk("ssd: sector %lu+%d beyond max %lu\n", start,
+                req->rq_nr_sectors, NUM_SECTS);
             end_request(0);
             continue;
         }
