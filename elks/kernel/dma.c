@@ -42,7 +42,7 @@
 
 struct dma_chan {
     int lock;
-    char *device_id;
+    const char *device_id;
 };
 
 static struct dma_chan dma_chan_busy[MAX_DMA_CHANNELS] = {
@@ -55,6 +55,14 @@ static struct dma_chan dma_chan_busy[MAX_DMA_CHANNELS] = {
     {0, 0},
     {0, 0}
 };
+
+#define xchg(op, arg) \
+( {			   \
+	typeof(arg) __ret; \
+	__ret = *op;	   \
+	*op = arg;	   \
+	__ret;		   \
+} )
 
 #ifdef ONE_DAY
 
@@ -73,7 +81,7 @@ int get_dma_list(char *buf)
 
 int request_dma(unsigned char dma, void *device)
 {
-    unsigned char *device_id = device;
+    unsigned char *device_id = (unsigned char *)device;
 
     if (dma >= MAX_DMA_CHANNELS)
 	return -EINVAL;
@@ -186,7 +194,7 @@ void set_dma_page(unsigned char dma, unsigned char page)
 
 void set_dma_addr(unsigned char dma, unsigned long addr)
 {
-    set_dma_page(dma, addr >> 16);
+    set_dma_page(dma, (long)addr >> 16);
     if (dma <= 3) {
 	dma_outb(addr & 0xff, (dma << 1) + IO_DMA1_BASE);
 	dma_outb((addr >> 8) & 0xff, (dma << 1) + IO_DMA1_BASE);
