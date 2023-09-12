@@ -232,7 +232,7 @@ int main(int argc, char **argv)
 			}
 
 			putchar(ch);
-#if 0
+#if 1
 			if (col >= 80) {
 				col -= 80;
 				line++;
