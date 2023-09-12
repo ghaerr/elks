@@ -19,6 +19,7 @@ struct request {
     ramdesc_t rq_seg;           /* L1 or L2 ext/xms buffer segment */
     struct buffer_head *rq_bh;  /* system buffer head for notifications and locking */
     struct request *rq_next;    /* next request, used when async I/O */
+    int rq_errors;              /* only used by direct floppy driver */
 };
 
 #define RQ_INACTIVE     0
@@ -74,10 +75,10 @@ extern void resetup_one_dev(struct gendisk *dev, int drive);
 
 #ifdef FLOPPYDISK
 
-static void floppy_on(unsigned int nr);
+static void floppy_on(int nr);
 static void floppy_off(unsigned int nr);
 
-#define DEVICE_NAME "fd"
+#define DEVICE_NAME "df"
 #define DEVICE_INTR do_floppy
 #define DEVICE_REQUEST do_fd_request
 #define DEVICE_NR(device) ((device) & 3)
@@ -146,7 +147,7 @@ static void end_request(int uptodate)
     mark_buffer_uptodate(bh, uptodate);
     unlock_buffer(bh);
 
-    DEVICE_OFF(req->dev);
+    DEVICE_OFF(req->rq_dev);
     CURRENT = req->rq_next;
     req->rq_status = RQ_INACTIVE;
 

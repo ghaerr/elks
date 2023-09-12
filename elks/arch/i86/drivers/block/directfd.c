@@ -94,7 +94,7 @@
 
 #define FLOPPYDISK
 #define MAJOR_NR FLOPPY_MAJOR
-#define MINOR_SHIFT	5	/* shift to get drive num */
+#define MINOR_SHIFT	0	/* shift to get drive num */
 #define FLOPPY_DMA 2		/* hardwired on old PCs */
 
 #include "blk.h"		/* ugly - blk.h contains code */
@@ -114,6 +114,8 @@ void (*DEVICE_INTR) () = NULL;
 
 #define _MK_LINADDR(seg, offs) ((unsigned long)((((unsigned long)(seg)) << 4) + (unsigned)(offs)))
 
+//#define debug_blkdrv    printk
+#define debug_blkdrv(...)
 //#define dfd_debug
 #ifdef dfd_debug
 #define DEBUG printk
@@ -279,7 +281,8 @@ static int fd_device[4] = { 0, 0, 0, 0 }; /* has the i_rdev used in the last acc
 
 /* Synchronization of FDC access. */
 static int format_status = FORMAT_NONE, fdc_busy = 0;
-static struct wait_queue fdc_wait, format_done;
+static struct wait_queue fdc_wait;
+//static struct wait_queue format_done;
 
 /* Errors during formatting are counted here. */
 static int format_errors;
@@ -1183,6 +1186,7 @@ static void floppy_ready(void)
     transfer();
 }
 
+#ifdef INCLUDE_FD_FORMATTING
 static void setup_format_params(void)
 {
     unsigned char *here = (unsigned char *) tmp_floppy_area;
@@ -1204,6 +1208,7 @@ static void setup_format_params(void)
 	*here++ = 2;		/* 512 bytes */
     }
 }
+#endif
 
 static void redo_fd_request(void)
 {
@@ -1255,16 +1260,15 @@ static void redo_fd_request(void)
 	}
     }
     DEBUG("[%u]redo-%c %d(%s) bl %u;", (unsigned int)jiffies, 
-		req->rq_cmd == WRITE? 'W':'R', device, floppy->name, req->rq_blocknr);
-    debug_blkdrv("df[%04x]: %c blk %ld\n", CURRENT_DEVICE, req->rq_cmd==WRITE? 'W' : 'R', req->rq_blocknr);
+		req->rq_cmd == WRITE? 'W':'R', device, floppy->name, req->rq_sector);
+    debug_blkdrv("df%d: %c sector %ld\n", CURRENT_DEVICE & 3, req->rq_cmd==WRITE? 'W' : 'R', req->rq_sector);
     if (format_status != FORMAT_BUSY) {
     	unsigned int tmp;
 	if (current_drive != drive) {
 	    current_track = NO_TRACK;
 	    current_drive = drive;
 	}
-	/* rq_blocknr is ALWAYS sectors */
-	start = (unsigned int) req->rq_blocknr;
+	start = (unsigned int) req->rq_sector;
 	if (start + 2 > floppy->size) {
 	    request_done(0);
 	    goto repeat;	/* FIXME: Should probably exit here */

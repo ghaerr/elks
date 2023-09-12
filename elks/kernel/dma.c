@@ -12,7 +12,7 @@
 
 #include <linuxmt/config.h>
 
-#ifdef CONFIG_DMA
+#ifdef CONFIG_BLK_DEV_FD
 
 #include <linuxmt/types.h>
 #include <linuxmt/kernel.h>
