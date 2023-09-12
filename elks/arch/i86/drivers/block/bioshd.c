@@ -364,7 +364,7 @@ void INITPROC bioshd_init(void)
     /* FIXME perhaps remove for speed on floppy boot*/
     outb_p(0x0C, FDC_DOR);      /* FD motors off, enable IRQ and DMA*/
 
-#ifdef CONFIG_BLK_DEV_BFD
+#if defined(CONFIG_BLK_DEV_BFD) || defined(CONFIG_BLK_DEV_BFD_HARD)
     fd_count = bios_getfdinfo(&drive_info[DRIVE_FD0]);
 #endif
 #ifdef CONFIG_BLK_DEV_BHD

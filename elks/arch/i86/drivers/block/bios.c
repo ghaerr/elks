@@ -225,38 +225,28 @@ int INITPROC bios_gethdinfo(struct drive_infot *drivep) {
 #endif
 
 #ifdef CONFIG_BLK_DEV_BFD_HARD
-/* hard-coded floppy configuration*/
 int INITPROC bios_getfdinfo(struct drive_infot *drivep)
 {
-/* Set this to match your system. Currently it's set to a two drive system:
+/*
+ * Hard-coded floppy configuration
+ * Set below to match your system. For IBM PC, it's set to a two drive system:
  *
  *              720KB as /dev/fd0
  *      and     720KB as /dev/fd1
  *
- * ndrives is number of drives in your system (either 0, 1 or 2)
- */
-
-    int ndrives = FD_DRIVES;
-
-/* drive_info[] should be set *only* for existing drives;
- * comment out drive_info lines if you don't need them
- * (e.g. you have less than 2 drives)
- *
- * Use floppy drive type table below:
- *
- *      Type    Format
- *      ~~~~    ~~~~~~
+ * Drive Type   Format
+ *      ~~~~~   ~~~~~~
  *        0     360 KB
  *        1     1.2 MB
  *        2     720 KB
  *        3     1.44 MB
- *        4     1.232 MB (PC/98 1K sectors)
- *        5     2.88 MB
- *
- * Warning: drive will be reported as 2880 KB at bootup if you've set it
- * as unknown (4). Floppy probe will detect correct floppy format at each
- * change so don't bother with that
+ *        4     2.88 MB (QEMU)
+ *        5     2.88 MB (Dosbox)
+ *        6     1.232 MB (PC/98 1K sectors)
+ * ndrives is number of drives in your system (either 0, 1 or 2)
  */
+
+    int ndrives = FD_DRIVES;
 
 #ifdef CONFIG_ARCH_PC98
 #if defined(CONFIG_IMG_FD1232)
@@ -264,11 +254,11 @@ int INITPROC bios_getfdinfo(struct drive_infot *drivep)
     drivep[1] = fd_types[FD1232];
     drivep[2] = fd_types[FD1232];
     drivep[3] = fd_types[FD1232];
-#elif defined(CONFIG_IMG_FD1440)
+#else
     drivep[0] = fd_types[FD1440];
     drivep[1] = fd_types[FD1440];
     drivep[2] = fd_types[FD1440];
-    drivep[FD1440] = fd_types[FD1440];
+    drivep[3] = fd_types[FD1440];
 #endif
 #endif
 
