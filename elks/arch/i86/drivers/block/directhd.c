@@ -64,7 +64,6 @@ static struct drive_infot {
 } drive_info[4] = { 0, };	/* preset to 0 */
 
 static struct hd_struct hd[4 << 6];
-static int directhd_sizes[4 << 6] = { 0, };
 static void directhd_geninit();
 
 static struct gendisk directhd_gendisk = {
@@ -75,7 +74,6 @@ static struct gendisk directhd_gendisk = {
     4,
     directhd_geninit,		/* init */
     hd,				/* hd struct */
-    directhd_sizes,		/* drive sizes */
     0,
     drive_info,
     NULL

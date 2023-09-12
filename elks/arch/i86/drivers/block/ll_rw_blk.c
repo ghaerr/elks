@@ -41,19 +41,6 @@ static struct request all_requests[NR_REQUEST];
 /* current request and function pointer for each block device handler */
 struct blk_dev_struct blk_dev[MAX_BLKDEV];      /* initialized by blk_dev_init() */
 
-/*
- * blk_size contains the size of all block-devices in units of 1024 byte
- * sectors:
- *
- * blk_size[MAJOR][MINOR]
- *
- * if (!blk_size[MAJOR]) then no minor size checking is done.
- */
-
-#ifdef BDEV_SIZE_CHK
-int *blk_size[MAX_BLKDEV] = { NULL, NULL, };
-#endif
-
 /* return hardware sector size for passed device */
 int get_sector_size(kdev_t dev)
 {
@@ -185,18 +172,8 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
     struct request *req;
     int max_req;
 
-    //debug_blk("BLK %lu %s %lx:%x\n", buffer_blocknr(bh), rw==READ? "read": "write",
-        //(unsigned long)buffer_seg(bh), buffer_data(bh));
-
-#ifdef BDEV_SIZE_CHK
-    sector_t count = BLOCK_SIZE / SECTOR_SIZE;  /* FIXME must move to lower level*/
-    sector_t sector = buffer_blocknr(bh) * count;
-    if (blk_size[major])
-        if (blk_size[major][MINOR(buffer_dev(bh))] < (sector + count) >> 1) {
-            printk("attempt to access beyond end of device\n");
-            return;
-        }
-#endif
+    debug("BLK %lu %s %lx:%x\n", buffer_blocknr(bh), rw==READ? "read": "write",
+        (unsigned long)buffer_seg(bh), buffer_data(bh));
 
     /* Uhhuh.. Nasty dead-lock possible here.. */
     if (EBH(bh)->b_locked)

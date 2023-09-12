@@ -86,7 +86,6 @@ struct drive_infot *last_drive;         /* set to last drivep-> used in read/wri
 extern struct drive_infot fd_types[];   /* BIOS floppy formats */
 
 static struct hd_struct hd[NUM_DRIVES << MINOR_SHIFT];  /* partitions start, size*/
-//static int hd_sizes[NUM_DRIVES << MINOR_SHIFT];       /* used only with BDEV_SIZE_CHK*/
 
 static int bioshd_open(struct inode *, struct file *);
 static void bioshd_release(struct inode *, struct file *);
@@ -101,7 +100,6 @@ static struct gendisk bioshd_gendisk = {
     NUM_DRIVES,                 /* maximum number of drives */
     bioshd_geninit,             /* init function */
     hd,                         /* hd struct */
-    0,//hd_sizes,               /* sizes not blocksizes */
     0,                          /* hd drives found */
     drive_info,
     NULL                        /* next */
@@ -715,7 +713,7 @@ next_block:
         start = req->rq_sector;
 
         if (hd[minor].start_sect == -1U || start >= hd[minor].nr_sects) {
-            printk("bioshd: bad partition start=%ld sect=%ld nr_sects=%ld.\n",
+            printk("bioshd: sector %ld access beyond partition (%ld,%ld)\n",
                 start, hd[minor].start_sect, hd[minor].nr_sects);
             end_request(0);
             continue;
