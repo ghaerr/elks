@@ -60,6 +60,11 @@ devices:
 	$(MKDEV) /dev/fd1  b 3 40
 
 ##############################################################################
+# Direct floppy devices.
+	$(MKDEV) /dev/df0  b 4 0
+	$(MKDEV) /dev/df1  b 4 1
+
+##############################################################################
 # Pseudo-TTY master devices. 
 
 	$(MKDEV) /dev/ptyp0 c 2 8

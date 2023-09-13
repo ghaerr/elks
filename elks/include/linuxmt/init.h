@@ -47,7 +47,7 @@ extern int INITPROC bios_getfdinfo(struct drive_infot *);
 extern dev_t INITPROC bios_conv_bios_drive(unsigned int biosdrive);
 extern int INITPROC get_ide_data(int, struct drive_infot *);
 extern int directhd_init(void);
-extern void floppy_init(void);
+extern void INITPROC floppy_init(void);
 extern void INITPROC rd_init(void);
 extern void INITPROC ssd_init(void);
 extern void romflash_init(void);

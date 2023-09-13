@@ -33,7 +33,7 @@ struct floppy_struct {
 	rate,			/* data rate. |= 0x40 for perpendicular */
 	spec1,			/* stepping rate, head unload time */
 	fmt_gap;		/* gap2 size */
-    char *name; 		/* used only for predefined formats */
+    const char *name; 		/* used only for predefined formats */
 };
 
 struct format_descr {

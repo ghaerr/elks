@@ -32,13 +32,9 @@ mainmenu_option next_comment
 	    bool '  IDE hard drive CHS probe'	CONFIG_IDE_PROBE	y
 	fi
 
-	if [ "$CONFIG_BLK_DEV_FD" = "y" ]; then
-	    define_bool CONFIG_DMA y
-	else
-	    define_bool CONFIG_DMA n
-	fi
-
 	comment 'Additional block devices'
+	bool 'Direct floppy driver (experimental)' CONFIG_BLK_DEV_FD   n
+
 	bool 'RAM disk support'			CONFIG_BLK_DEV_RAM	y
 	if [ "$CONFIG_BLK_DEV_RAM" == "y" ]; then
 		hex 'Preload RAM disk segment address' CONFIG_RAMDISK_SEGMENT 0
