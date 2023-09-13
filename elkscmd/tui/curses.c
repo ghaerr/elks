@@ -22,7 +22,8 @@ void *stdscr;
 void *initscr()
 {
     tty_init(MouseTracking|CatchISig|FullBuffer);
-    tty_getsize(&COLS, &LINES);
+    if (isatty(1))
+        tty_getsize(&COLS, &LINES);
     return stdout;
 }
 
@@ -85,6 +86,12 @@ void refresh()
 void mvcur(int oy, int ox, int y, int x)
 {
     move(y, x);
+}
+
+int addch(int ch)
+{
+    putchar(ch);
+    return OK;
 }
 
 int mvaddch(int y, int x, int ch)

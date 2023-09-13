@@ -55,14 +55,20 @@ int ACCIDENT  = 0;
 int LOGO      = 0;
 int FLY       = 0;
 int C51       = 0;
+int SLOW      = 0;
 
 int my_mvaddstr(int y, int x, char *str)
 {
+    int startx;
+
     for ( ; x < 0; ++x, ++str)
         if (*str == '\0')  return ERR;
+    startx = x;
     for ( ; *str != '\0'; ++str, ++x) {
         if (x >= COLS) break;
-        if (mvaddch(y, x, *str) == ERR)  return ERR;
+        if (!SLOW && x > startx && x < COLS)
+            addch(*str);
+        else mvaddch(y, x, *str);
     }
     return OK;
 }
@@ -77,6 +83,7 @@ void option(char *str)
             case 'F': FLY      = 1; break;
             case 'l': LOGO     = 1; break;
             case 'c': C51      = 1; break;
+            case 's': SLOW     = 1; break;
             default:                break;
         }
     }
