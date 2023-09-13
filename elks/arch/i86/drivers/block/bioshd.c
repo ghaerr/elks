@@ -110,6 +110,7 @@ static void set_cache_invalid(void)
     cache_drive = NULL;
 }
 
+#ifdef CONFIG_BLK_DEV_BFD
 static int read_sector(int drive, int cylinder, int sector)
 {
     int count = 2;              /* one retry on probe or boot sector read */
@@ -129,7 +130,6 @@ static int read_sector(int drive, int cylinder, int sector)
     return 1;                   /* error */
 }
 
-#ifdef CONFIG_BLK_DEV_BFD
 static void probe_floppy(int target, struct hd_struct *hdp)
 {
     /* Check for disk type */

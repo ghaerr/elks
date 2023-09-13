@@ -81,7 +81,7 @@ int get_dma_list(char *buf)
 
 int request_dma(unsigned char dma, void *device)
 {
-    unsigned char *device_id = (unsigned char *)device;
+    char *device_id = device;
 
     if (dma >= MAX_DMA_CHANNELS)
 	return -EINVAL;
