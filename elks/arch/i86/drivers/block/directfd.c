@@ -238,19 +238,6 @@ struct floppy_struct *base_type[4];
 struct floppy_struct user_params[4];
 #endif
 
-#ifdef BDEV_SIZE_CHK
-static int floppy_sizes[] = {
-    MAX_DISK_SIZE, MAX_DISK_SIZE, MAX_DISK_SIZE, MAX_DISK_SIZE,
-    360, 360, 360, 360,
-    1200, 1200, 1200, 1200,
-    360, 360, 360, 360,
-    720, 720, 720, 720,
-    360, 360, 360, 360,
-    720, 720, 720, 720,
-    1440, 1440, 1440, 1440
-};
-#endif
-
 /*
  * The driver is trying to determine the correct media format
  * while probing is set. rw_interrupt() clears it after a
@@ -597,11 +584,7 @@ static void setup_DMA(void)
     } else if (dma_addr >= LAST_DMA_ADDR) {
 	dma_addr = _MK_LINADDR(kernel_ds, tmp_floppy_area); /* use bounce buffer */
 	if (command == FD_WRITE) {
-#ifdef CONFIG_FS_XMS_BUFFER
 	    xms_fmemcpyw(tmp_floppy_area, kernel_ds, CURRENT->rq_buffer, CURRENT->rq_seg, BLOCK_SIZE/2);
-#else
-	    fmemcpyw(tmp_floppy_area, kernel_ds, CURRENT->rq_buffer, CURRENT->rq_seg, BLOCK_SIZE/2);
-#endif
 	}
     }
     DEBUG("%d/%lx;", count, dma_addr);
@@ -842,9 +825,6 @@ static void rw_interrupt(void)
 	    printk("Auto-detected floppy type %s in df%d\n",
 		   floppy->name, drive);
 	current_type[drive] = floppy;
-#ifdef BDEV_SIZE_CHK
-	floppy_sizes[drive] = floppy->size >> 1;
-#endif
 	probing = 0;
     }
     if (read_track) {
@@ -852,13 +832,9 @@ static void rw_interrupt(void)
 							 * save block-start, block-end instead */
 	buffer_drive = current_drive;
 	buffer_area = (unsigned char *)(sector << 9);
-#ifdef CONFIG_FS_XMS_BUFFER
-	DEBUG("rd:%lx:%04x->%lx:%04x;", DMASEG, buffer_area, CURRENT->rq_seg, CURRENT->rq_buffer);
+	DEBUG("rd:%x:%04x->%lx:%04x;", DMASEG, buffer_area,
+            (unsigned long)CURRENT->rq_seg, CURRENT->rq_buffer);
 	xms_fmemcpyw(CURRENT->rq_buffer, CURRENT->rq_seg, buffer_area, DMASEG, BLOCK_SIZE/2);
-#else
-	DEBUG("rd:%04x:%04x->%04x:%04x;", DMASEG, buffer_area, CURRENT->rq_seg, CURRENT->rq_buffer);
-	fmemcpyw(CURRENT->rq_buffer, CURRENT->rq_seg, buffer_area, DMASEG, BLOCK_SIZE/2);
-#endif
     } else if (command == FD_READ 
 #ifndef CONFIG_FS_XMS_BUFFER
 	   && _MK_LINADDR(CURRENT->rq_seg, CURRENT->rq_buffer) >= LAST_DMA_ADDR
@@ -866,16 +842,11 @@ static void rw_interrupt(void)
 	) {
 	/* if the dest buffer is out of reach for DMA (always the case if using
 	 * XMS buffers) we need to read/write via the bounce buffer */
-#ifdef CONFIG_FS_XMS_BUFFER
 	xms_fmemcpyw(CURRENT->rq_buffer, CURRENT->rq_seg, tmp_floppy_area, kernel_ds, BLOCK_SIZE/2);
-#else
-	fmemcpyw(CURRENT->rq_buffer, CURRENT->rq_seg, tmp_floppy_area, kernel_ds, BLOCK_SIZE/2);
-#endif
 	printk("directfd: illegal buffer usage, rq_buffer %04x:%04x\n", 
 		CURRENT->rq_seg, CURRENT->rq_buffer);
     }
     request_done(1);
-    //printk("RQOK;");
     redo_fd_request();
 }
 
@@ -1156,9 +1127,6 @@ static void floppy_ready(void)
 		printk("Disk type is undefined after disk change in df%d\n",
 		       current_drive);
 	    current_type[current_drive] = NULL;
-#ifdef BDEV_SIZE_CHK
-	    floppy_sizes[current_drive] = MAX_DISK_SIZE;
-#endif
 	}
 	/* Forcing the drive to seek makes the "media changed" condition go
 	 * away. There should be a cleaner solution for that ...
@@ -1329,19 +1297,11 @@ static void redo_fd_request(void)
 	DEBUG("bufrd tr/h/s %d/%d/%d\n", seek_track, head, sector);
 	char *buf_ptr = (char *) (sector << 9);
 	if (command == FD_READ) {	/* requested data is in buffer */
-#ifdef CONFIG_FS_XMS_BUFFER
 	    xms_fmemcpyw(req->rq_buffer, req->rq_seg, buf_ptr, DMASEG, BLOCK_SIZE/2);
-#else
-	    fmemcpyw(req->rq_buffer, req->rq_seg, buf_ptr, DMASEG, BLOCK_SIZE/2);
-#endif
 	    request_done(1);
 	    goto repeat;
     	} else if (command == FD_WRITE)	/* update track buffer */
-#ifdef CONFIG_FS_XMS_BUFFER
 	    xms_fmemcpyw(buf_ptr, DMASEG, req->rq_buffer, req->rq_seg, BLOCK_SIZE/2);
-#else
-	    fmemcpyw(buf_ptr, DMASEG, req->rq_buffer, req->rq_seg, BLOCK_SIZE/2);
-#endif
     } 
 
     if (seek_track != current_track)
@@ -1456,9 +1416,6 @@ static int fd_ioctl(struct inode *inode,
     switch (cmd) {
     case FDCLRPRM:
 	current_type[drive] = NULL;
-#ifdef BDEV_SIZE_CHK
-	floppy_sizes[drive] = MAX_DISK_SIZE;
-#endif
 	keep_data[drive] = 0;
 	break;
     case FDSETPRM:
@@ -1466,9 +1423,6 @@ static int fd_ioctl(struct inode *inode,
 	memcpy_fromfs(user_params + drive,
 		      (void *) param, sizeof(struct floppy_struct));
 	current_type[drive] = &user_params[drive];
-#ifdef BDEV_SIZE_CHK
-	floppy_sizes[drive] = user_params[drive].size >> 1;
-#endif
 	if (cmd == FDDEFPRM)
 	    keep_data[drive] = -1;
 	else {
@@ -1646,9 +1600,6 @@ static void floppy_interrupt(int unused, struct pt_regs *unused1)
 
 void INITPROC floppy_init(void)
 {
-#ifdef BDEV_SIZE_CHK
-    extern int *blk_size[];
-#endif
     int err;
 
     outb(current_DOR, FD_DOR);	/* all motors off, DMA, /RST  (0x0c) */
@@ -1656,9 +1607,6 @@ void INITPROC floppy_init(void)
 	printk("Unable to get major %d for floppy\n", MAJOR_NR);
 	return;
     }
-#ifdef BDEV_SIZE_CHK
-    blk_size[MAJOR_NR] = floppy_sizes;
-#endif
     blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
 
     config_types();
