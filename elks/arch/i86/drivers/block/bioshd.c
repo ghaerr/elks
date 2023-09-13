@@ -722,10 +722,12 @@ next_block:
 
         buf = req->rq_buffer;
         while (count > 0) {
-            int num_sectors;
+            int num_sectors = 0;
 #ifdef CONFIG_TRACK_CACHE
-            /* first try reading track cache*/
-            num_sectors = do_cache_read(drivep, start, buf, req->rq_seg, req->rq_cmd);
+            if (drivep - drive_info >= DRIVE_FD0) {
+                /* first try reading track cache*/
+                num_sectors = do_cache_read(drivep, start, buf, req->rq_seg, req->rq_cmd);
+            }
             if (!num_sectors)
 #endif
                 /* then fallback with retries if required*/
