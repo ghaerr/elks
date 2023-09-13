@@ -234,9 +234,7 @@ struct floppy_struct *base_type[4];
  * User-provided type information. current_type points to
  * the respective entry of this array.
  */
-#ifdef HAS_IOCTL
-struct floppy_struct user_params[4];
-#endif
+//struct floppy_struct user_params[4];
 
 /*
  * The driver is trying to determine the correct media format
@@ -259,12 +257,7 @@ static int keep_data[4] = { 0, 0, 0, 0 };
  */
 static int ftd_msg[4] = { 0, 0, 0, 0 };
 
-/* Prevent "aliased" accesses. */
-
 static int fd_ref[4] = { 0, 0, 0, 0 };	/* device reference counter */
-static int fd_device[4] = { 0, 0, 0, 0 }; /* has the i_rdev used in the last access,
-					   * used to detect multiple opens 
-					   * via different devices (minor numbers) */
 
 /* Synchronization of FDC access. */
 static int format_status = FORMAT_NONE, fdc_busy = 0;
@@ -272,21 +265,16 @@ static struct wait_queue fdc_wait;
 //static struct wait_queue format_done;
 
 /* Errors during formatting are counted here. */
-static int format_errors;
+//static int format_errors;
 
 /* Format request descriptor. */
-static struct format_descr format_req;
+//static struct format_descr format_req;
 
-/*
- * Current device number. Taken either from the block header or from the
- * format request descriptor.
- */
-#define CURRENT_DEVICE (format_status == FORMAT_BUSY ? format_req.device : \
-   (CURRENT->rq_dev))
+/* Current device number. */
+#define CURRENT_DEVICE (CURRENT->rq_dev)
 
 /* Current error count. */
-#define CURRENT_ERRORS (format_status == FORMAT_BUSY ? format_errors : \
-    (CURRENT->rq_errors))
+#define CURRENT_ERRORS (CURRENT->rq_errors)
 
 /*
  * Threshold for reporting FDC errors to the console.
@@ -312,7 +300,6 @@ static unsigned short min_report_error_cnt[4] = { 2, 2, 2, 2 };
 static char tmp_floppy_area[BLOCK_SIZE]; /* for now FIXME to be removed */
 
 #ifdef CHECK_DISK_CHANGE
-#define buffer_dirty(b)	((b)->b_dirty)
 int check_disk_change(kdev_t);
 #endif
 
@@ -343,7 +330,6 @@ static unsigned char current_track = NO_TRACK;
 static unsigned char command = 0;
 static unsigned char fdc_version = FDC_TYPE_STD;	/* FDC version code */
 
-void ll_rw_block(int, int, struct buffer_head **);
 static void floppy_ready(void);
 
 static void delay_loop(int cnt)
@@ -444,8 +430,6 @@ static void floppy_on(int nr)
     DEBUG("flpON");
     *fl_timeout = 0;	/* Reset BIOS motor timeout counter, neccessary on some machines */
     			/* Don't ask how I found out. HS */
-    //pokeb(0x40, 0x40, 0);	/* this variant is 10 bytes of code too, but slower than */
-				/* using the far pointer above */
     del_timer(&motor_off_timer[nr]);
 
     if (mask & running) {
@@ -538,12 +522,12 @@ int floppy_change(struct buffer_head *bh)
     }
     if (!bh)
 	return 0;
-    if (buffer_dirty(bh))
-	ll_rw_block(WRITE, 1, &bh);
+    if (EBH(bh)->b_dirty)
+	ll_rw_blk(WRITE, bh);
     else {
 	buffer_track = -1;
 	mark_buffer_uptodate(bh, 0);
-	ll_rw_block(READ, 1, &bh);
+	ll_rw_blk(READ, bh);
     }
     wait_on_buffer(bh);
     if (changed_floppies & mask) {
@@ -1331,11 +1315,6 @@ static int fd_ioctl(struct inode *inode,
     int drive, err = -EINVAL;
     struct hd_geometry *loc = (struct hd_geometry *) param;
 
-#if 0 /* what is this ? */
-    switch (cmd) {
-	RO_IOCTLS(inode->i_rdev, param);
-    }
-#endif
     if (!inode || !inode->i_rdev)
 	return -EINVAL;
     drive = MINOR(inode->i_rdev) >> MINOR_SHIFT;
@@ -1458,18 +1437,11 @@ static int fd_ioctl(struct inode *inode,
     return err;
 }
 
-#ifdef TRP_ASM
-#define CMOS_READ(addr) ({ \
-outb_p(addr,0x70); \
-inb_p(0x71); \
-})
-#else
-int CMOS_READ(int addr)
+static int CMOS_READ(int addr)
 {
     outb_p(addr, 0x70);
     return inb_p(0x71);
 }
-#endif
 
 static struct floppy_struct *find_base(int drive, int code)
 {
@@ -1498,32 +1470,17 @@ static void config_types(void)
     printk("\n");
 }
 
-/*
- * floppy_open check for aliasing (/dev/fd0 can be the same as
- * /dev/PS0 etc), and disallows simultaneous access to the same
- * drive with different device numbers.
- */
 static int floppy_open(struct inode *inode, struct file *filp)
 {
-    int drive, old_dev, dev;
+    int drive, dev;
 
-    drive = MINOR(inode->i_rdev) >> MINOR_SHIFT;
-    dev = drive & 3;
-    old_dev = fd_device[dev];
-    if (old_dev && old_dev != inode->i_rdev)
-	    return -EBUSY;	/* no reopens using differen minor */
+    dev = drive = DEVICE_NR(inode->i_rdev);
     fd_ref[dev]++;
-    fd_device[dev] = inode->i_rdev;
     buffer_drive = buffer_track = -1;	/* FIXME: Don't invalidate buffer if
 					 * this is a reopen of the currently
 					 * bufferd drive. */
 
-    if (fd_ref[dev] == 1) invalidate_buffers(inode->i_rdev);	/* EXPERIMENTAL */
-#if 0
-    if (old_dev && old_dev != inode->i_rdev)	/* FIXME: Delete. This cannot happen */
-						/* same test cause return EBUSY above */
-	invalidate_buffers(old_dev);
-#endif
+    //if (fd_ref[dev] == 1) invalidate_buffers(inode->i_rdev);	/* EXPERIMENTAL */
 #ifdef CHECK_DISK_CHANGE
     if (filp && filp->f_mode)
 	check_disk_change(inode->i_rdev);
