@@ -1480,7 +1480,6 @@ static int floppy_open(struct inode *inode, struct file *filp)
 					 * this is a reopen of the currently
 					 * bufferd drive. */
 
-    //if (fd_ref[dev] == 1) invalidate_buffers(inode->i_rdev);	/* EXPERIMENTAL */
 #ifdef CHECK_DISK_CHANGE
     if (filp && filp->f_mode)
 	check_disk_change(inode->i_rdev);
@@ -1506,15 +1505,14 @@ static int floppy_open(struct inode *inode, struct file *filp)
 
 static void floppy_release(struct inode *inode, struct file *filp)
 {
-    int drive = MINOR(inode->i_rdev) >> MINOR_SHIFT;
+    kdev_t dev = inode->i_rdev;
+    int drive = DEVICE_NR(dev);
 
-    DEBUG("df%d release", drive);
-    sync_dev(inode->i_rdev);
-    DEBUG("\n");
-    invalidate_buffers(inode->i_rdev);
-    if (!fd_ref[drive & 3]--) {
-	printk("floppy_release with fd_ref == 0");
-	fd_ref[drive & 3] = 0;
+    DEBUG("df%d release\n", drive);
+    if (--fd_ref[drive] == 0) {
+        fsync_dev(dev);
+        invalidate_inodes(dev);
+        invalidate_buffers(dev);
     }
 }
 
