@@ -198,6 +198,7 @@ static struct floppy_struct floppy_type[] = {
     {720, 9, 2, 40, 1, 0x23, 0x01, 0xDF, 0x50, NULL},	/* 360kB in 1.2MB drive */
     {1440, 9, 2, 80, 0, 0x23, 0x01, 0xDF, 0x50, NULL},	/* 720kB in 1.2MB drive */
     {2880, 18, 2, 80, 0, 0x1B, 0x00, 0xCF, 0x6C, NULL},	/* 1.44MB diskette */
+    {5760, 36, 2, 80, 0, 0x1B, 0x03, 0xCF, 0x6C, NULL},	/* 2.88MB diskette (UNTESTED) */
     /* totSectors/secPtrack/heads/tracks/stretch/gap/Drate/S&Hrates/fmtGap/nm/  */
 };
 
@@ -216,6 +217,8 @@ static struct floppy_struct floppy_types[] = {
     {1440, 9, 2, 80, 0, 0x2A, 0x02, 0xDF, 0x50, "720k"},	/* 3.5" 720kB diskette */
     {2880, 18, 2, 80, 0, 0x1B, 0x00, 0xCF, 0x6C, "1.44M"},	/* 1.44MB diskette */
     {1440, 9, 2, 80, 0, 0x2A, 0x02, 0xDF, 0x50, "720k/AT"},	/* 3.5" 720kB diskette */
+    {5760, 36, 2, 80, 0, 0x1B, 0x03, 0xCF, 0x6C, "2.88M"},/* 2.88MB diskette (UNTESTED) */
+    {2880, 18, 2, 80, 0, 0x1B, 0x00, 0xCF, 0x6C, "1.44M"},	/* 1.44MB diskette */
 };
 
 /* Auto-detection: Disk type used until the next media change occurs. */
@@ -302,6 +305,7 @@ static void redo_fd_request(void);
 static void recal_interrupt(void);
 static void floppy_shutdown(void);
 static void motor_off_callback(int);
+static void floppy_setup(void);
 
 /*
  * These are global variables, as that's the easiest way to give
@@ -1437,17 +1441,17 @@ static int fd_ioctl(struct inode *inode,
     return err;
 }
 
-static int CMOS_READ(int addr)
+static int INITPROC CMOS_READ(int addr)
 {
     outb_p(addr, 0x70);
     return inb_p(0x71);
 }
 
-static struct floppy_struct *find_base(int drive, int code)
+static struct floppy_struct * INITPROC find_base(int drive, int code)
 {
     struct floppy_struct *base;
 
-    if (code > 0 && code < 5) {
+    if (code > 0 && code < 6) {
 	base = &floppy_types[(code - 1) * 2];
 	printk("df%d is %s (%d)", drive, base->name, code);
 	return base;
@@ -1456,17 +1460,14 @@ static struct floppy_struct *find_base(int drive, int code)
     return NULL;
 }
 
-static void config_types(void)
+static void INITPROC config_types(void)
 {
-    printk("Floppy drive(s) [CMOS]: ");
+    printk("df: CMOS ");
     base_type[0] = find_base(0, (CMOS_READ(0x10) >> 4) & 0xF);
-    if (((CMOS_READ(0x14) >> 6) & 1) == 0)
-	base_type[1] = NULL;
-    else {
+    if (((CMOS_READ(0x14) >> 6) & 1) != 0) {
 	printk(", ");
 	base_type[1] = find_base(1, CMOS_READ(0x10) & 0xF);
     }
-    base_type[2] = base_type[3] = NULL;
     printk("\n");
 }
 
@@ -1474,8 +1475,11 @@ static int floppy_open(struct inode *inode, struct file *filp)
 {
     int drive, dev;
 
-    dev = drive = DEVICE_NR(inode->i_rdev);
-    fd_ref[dev]++;
+    drive = DEVICE_NR(inode->i_rdev);
+    dev = drive & 3;
+    if (++fd_ref[dev] == 1) {
+        floppy_setup();
+    }
     buffer_drive = buffer_track = -1;	/* FIXME: Don't invalidate buffer if
 					 * this is a reopen of the currently
 					 * bufferd drive. */
@@ -1553,18 +1557,14 @@ static void floppy_interrupt(int unused, struct pt_regs *unused1)
     handler();
 }
 
-void INITPROC floppy_init(void)
+static void floppy_setup(void)
 {
     int err;
+    static char once = 0;
 
+    if (once) return;           /* execute this routine only once for now */
+    once = 1;
     outb(current_DOR, FD_DOR);	/* all motors off, DMA, /RST  (0x0c) */
-    if (register_blkdev(MAJOR_NR, DEVICE_NAME, &floppy_fops)) {
-	printk("Unable to get major %d for floppy\n", MAJOR_NR);
-	return;
-    }
-    blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
-
-    config_types();
     err = request_irq(FLOPPY_IRQ, floppy_interrupt, INT_GENERIC);
     if (err) {
 	printk("Unable to grab IRQ%d for the floppy driver\n", FLOPPY_IRQ);
@@ -1599,6 +1599,16 @@ void INITPROC floppy_init(void)
 	reset_floppy();
     }
 #endif
+}
+
+void INITPROC floppy_init(void)
+{
+    if (register_blkdev(MAJOR_NR, DEVICE_NAME, &floppy_fops)) {
+	printk("df: init error\n");
+	return;
+    }
+    blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
+    config_types();
 }
 
 #if 0
