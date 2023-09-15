@@ -17,6 +17,7 @@
 #include <linuxmt/types.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/errno.h>
+#include <linuxmt/debug.h>
 #include <arch/dma.h>
 #include <arch/system.h>
 
@@ -81,7 +82,7 @@ int request_dma(unsigned char dma, const char *device)
 void free_dma(unsigned char dma)
 {
     if (dma >= MAX_DMA_CHANNELS)
-	printk("Trying to free DMA%u\n", dma);
+	debug("Trying to free DMA%u\n", dma);
     else if (!xchg(&dma_chan_busy[dma].lock, 0)) {
 	printk("Trying to free free DMA%u\n", dma);
 } }				/* free_dma */
@@ -91,7 +92,7 @@ void free_dma(unsigned char dma)
 void enable_dma(unsigned char dma)
 {
     if (dma >= MAX_DMA_CHANNELS)
-	printk("Trying to enable DMA%u\n", dma);
+	debug("Trying to enable DMA%u\n", dma);
     else if (dma <= 3)
 	dma_outb(dma, DMA1_MASK_REG);
     else
@@ -101,7 +102,7 @@ void enable_dma(unsigned char dma)
 void disable_dma(unsigned char dma)
 {
     if (dma >= MAX_DMA_CHANNELS)
-	printk("Trying to disable DMA%u\n", dma);
+	debug("Trying to disable DMA%u\n", dma);
     else if (dma <= 3)
 	dma_outb(dma | 4, DMA1_MASK_REG);
     else
@@ -119,7 +120,7 @@ void disable_dma(unsigned char dma)
 void clear_dma_ff(unsigned char dma)
 {
     if (dma >= MAX_DMA_CHANNELS)
-	printk("Trying to disable DMA%u\n", dma);
+	debug("Trying to disable DMA%u\n", dma);
     else if (dma <= 3)
 	dma_outb(0, DMA1_CLEAR_FF_REG);
     else
@@ -131,7 +132,7 @@ void clear_dma_ff(unsigned char dma)
 void set_dma_mode(unsigned char dma, unsigned char mode)
 {
     if (dma >= MAX_DMA_CHANNELS)
-	printk("Trying to disable DMA%u\n", dma);
+	debug("Trying to disable DMA%u\n", dma);
     else if (dma <= 3)
 	dma_outb(mode | dma, DMA1_MODE_REG);
     else
@@ -237,10 +238,9 @@ int get_dma_list(char *buf)
 
     for (i = 0; i < MAX_DMA_CHANNELS; i++)
 	if (dma_chan_busy[i].lock)
-	    len += sprintf(buf + len, "%2d: %s\n",
-			   i, dma_chan_busy[i].device_id);
+	    len += sprintf(buf + len, "%2d: %s\n", i, dma_chan_busy[i].device_id);
     return len;
-}				/* get_dma_list */
+}
 #endif
 
 #endif
