@@ -3,12 +3,10 @@
 
 #include <features.h>
 #include <sys/types.h>
+#include <stdint.h>
 #include <stddef.h>
 
-#ifndef _CLOCK_T
-#define _CLOCK_T
-typedef long clock_t;
-#endif
+typedef int64_t clock_t;
 
 #define CLOCKS_PER_SEC	100
 #define CLK_TCK		100	/* That must be the same as HZ ???? */
@@ -42,11 +40,6 @@ struct timezone {
 //extern int daylight;
 extern long timezone;
 
-__BEGIN_DECLS
-
-int	stime (time_t* __tptr);
-
-clock_t	clock(void);
 time_t	time(time_t * __tp);
 #ifndef __HAS_NO_FLOATS__
 double  difftime(time_t __time2, time_t __time1);
@@ -65,7 +58,5 @@ extern int _tz_is_set;
 void __tm_conv(struct tm *tmbuf, const time_t *timep, time_t offset);
 void __asctime(char *buffer, const struct tm *ptm);
 #endif
-
-__END_DECLS
 
 #endif
