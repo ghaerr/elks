@@ -137,7 +137,7 @@ extern void set_dma_page(unsigned char,unsigned char);
 extern void set_dma_addr(unsigned char,unsigned long);
 extern void set_dma_count(unsigned char,unsigned int);
 extern int get_dma_residue(unsigned char);
-extern int request_dma(unsigned char,void *);
+extern int request_dma(unsigned char,const char *);
 extern void free_dma(unsigned char);
 
 #endif
