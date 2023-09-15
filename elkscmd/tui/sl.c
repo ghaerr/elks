@@ -95,7 +95,7 @@ void option(char *str)
 
 void cycle(unsigned long usecs)
 {
-    long elapsed;
+    unsigned long elapsed;
     struct timeval now;
     static long start;
 
