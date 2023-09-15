@@ -260,6 +260,8 @@ static struct dev_name_struct {
 	{ "hdd",     DEV_HDD },
 	{ "fd0",     DEV_FD0 },
 	{ "fd1",     DEV_FD1 },
+	{ "df0",     DEV_DF0 },
+	{ "df1",     DEV_DF1 },
 	{ "ttyS0",   DEV_TTYS0 },
 	{ "ttyS1",   DEV_TTYS1 },
 	{ "tty1",    DEV_TTY1 },

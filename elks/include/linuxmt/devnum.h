@@ -19,6 +19,8 @@
 #define DEV_FD1     MKDEV(BIOSHD_MAJOR, 40)
 #define DEV_FD2     MKDEV(BIOSHD_MAJOR, 48)
 #define DEV_FD3     MKDEV(BIOSHD_MAJOR, 56)
+#define DEV_DF0     MKDEV(FLOPPY_MAJOR, 0)
+#define DEV_DF1     MKDEV(FLOPPY_MAJOR, 1)
 #define DEV_ROM     MKDEV(ROMFLASH_MAJOR, 0)
 
 /* char devices */
