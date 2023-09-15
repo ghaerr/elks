@@ -64,32 +64,15 @@ static struct dma_chan dma_chan_busy[MAX_DMA_CHANNELS] = {
 	__ret;		   \
 } )
 
-#ifdef ONE_DAY
-
-int get_dma_list(char *buf)
+int request_dma(unsigned char dma, const char *device)
 {
-    int i, len = 0;
-
-    for (i = 0; i < MAX_DMA_CHANNELS; i++)
-	if (dma_chan_busy[i].lock)
-	    len += sprintf(buf + len, "%2d: %s\n",
-			   i, dma_chan_busy[i].device_id);
-    return len;
-}				/* get_dma_list */
-
-#endif
-
-int request_dma(unsigned char dma, void *device)
-{
-    char *device_id = device;
-
     if (dma >= MAX_DMA_CHANNELS)
 	return -EINVAL;
 
     if (xchg(&dma_chan_busy[dma].lock, 1) != 0)
 	return -EBUSY;
 
-    dma_chan_busy[dma].device_id = device_id;
+    dma_chan_busy[dma].device_id = device;
 
     /* old flag was 0, now contains 1 to indicate busy */
     return 0;
@@ -225,6 +208,7 @@ void set_dma_count(unsigned char dma, unsigned int count)
     }
 }
 
+#if UNUSED
 /* Get DMA residue count. After a DMA transfer, this
  * should return zero. Reading this while a DMA transfer is
  * still in progress will return unpredictable results.
@@ -246,5 +230,17 @@ int get_dma_residue(unsigned char dma)
 
     return (dma <= 3) ? count : (count << 1);
 }
+
+int get_dma_list(char *buf)
+{
+    int i, len = 0;
+
+    for (i = 0; i < MAX_DMA_CHANNELS; i++)
+	if (dma_chan_busy[i].lock)
+	    len += sprintf(buf + len, "%2d: %s\n",
+			   i, dma_chan_busy[i].device_id);
+    return len;
+}				/* get_dma_list */
+#endif
 
 #endif

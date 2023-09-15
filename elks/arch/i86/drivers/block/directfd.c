@@ -305,7 +305,8 @@ static void redo_fd_request(void);
 static void recal_interrupt(void);
 static void floppy_shutdown(void);
 static void motor_off_callback(int);
-static void floppy_setup(void);
+static int floppy_register(void);
+static void floppy_deregister(void);
 
 /*
  * These are global variables, as that's the easiest way to give
@@ -1478,7 +1479,7 @@ static int floppy_open(struct inode *inode, struct file *filp)
     drive = DEVICE_NR(inode->i_rdev);
     dev = drive & 3;
     if (++fd_ref[dev] == 1) {
-        floppy_setup();
+        floppy_register();
     }
     buffer_drive = buffer_track = -1;	/* FIXME: Don't invalidate buffer if
 					 * this is a reopen of the currently
@@ -1517,6 +1518,7 @@ static void floppy_release(struct inode *inode, struct file *filp)
         fsync_dev(dev);
         invalidate_inodes(dev);
         invalidate_buffers(dev);
+        floppy_deregister();
     }
 }
 
@@ -1557,22 +1559,38 @@ static void floppy_interrupt(int unused, struct pt_regs *unused1)
     handler();
 }
 
-static void floppy_setup(void)
+/* non-portable, should use int_vector_set and new function get_int_vector */
+#define FLOPPY_VEC      (_MK_FP(0, (FLOPPY_IRQ+8) << 2))
+static __u32 old_floppy_vec;
+
+static void floppy_deregister(void)
+{
+    outb(0x0c, FD_DOR);         /* all motors off, enable IRQ and DMA */
+    free_dma(FLOPPY_DMA);
+    clr_irq();
+    free_irq(FLOPPY_IRQ);
+    *(__u32 __far *)FLOPPY_VEC = old_floppy_vec;
+    enable_irq(FLOPPY_IRQ);
+    set_irq();
+}
+
+static int floppy_register(void)
 {
     int err;
-    static char once = 0;
 
-    if (once) return;           /* execute this routine only once for now */
-    once = 1;
-    outb(current_DOR, FD_DOR);	/* all motors off, DMA, /RST  (0x0c) */
+    current_DOR = 0x0c;
+    outb(0x0c, FD_DOR);         /* all motors off, enable IRQ and DMA */
+
+    old_floppy_vec = *((__u32 __far *)FLOPPY_VEC);
     err = request_irq(FLOPPY_IRQ, floppy_interrupt, INT_GENERIC);
     if (err) {
-	printk("Unable to grab IRQ%d for the floppy driver\n", FLOPPY_IRQ);
-	return;	/* should be able to signal failure back to the caller */
+	printk("df: IRQ %d busy\n", FLOPPY_IRQ);
+	return err;
     }
-
-    if (request_dma(FLOPPY_DMA, (void *)DEVICE_NAME))
-	printk("Unable to grab DMA%d for the floppy driver\n", FLOPPY_DMA);
+    if (request_dma(FLOPPY_DMA, DEVICE_NAME)) {
+	printk("df: DMA %d busy\n", FLOPPY_DMA);
+        return -EBUSY;
+    }
 
     /* Try to determine the floppy controller type */
     DEVICE_INTR = ignore_interrupt;	/* don't ask ... */
@@ -1599,6 +1617,7 @@ static void floppy_setup(void)
 	reset_floppy();
     }
 #endif
+    return 0;
 }
 
 void INITPROC floppy_init(void)
