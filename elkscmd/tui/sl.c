@@ -41,6 +41,8 @@
 #include "curses.h"
 #include <signal.h>
 #include <unistd.h>
+#include <time.h>
+#include <sys/time.h>
 #include "sl.h"
 
 void add_smoke(int y, int x);
@@ -56,6 +58,7 @@ int LOGO      = 0;
 int FLY       = 0;
 int C51       = 0;
 int SLOW      = 0;
+int FAST      = 0;
 
 int my_mvaddstr(int y, int x, char *str)
 {
@@ -84,9 +87,27 @@ void option(char *str)
             case 'l': LOGO     = 1; break;
             case 'c': C51      = 1; break;
             case 's': SLOW     = 1; break;
+            case 'f': FAST     = 1; break;
             default:                break;
         }
     }
+}
+
+void cycle(unsigned long usecs)
+{
+    unsigned long elapsed;
+    struct timeval now;
+    static long start;
+
+    if (usecs == 0) {
+        gettimeofday(&now, NULL);
+        start = now.tv_sec * 1000000L + now.tv_usec;
+        return;
+    }
+    gettimeofday(&now, NULL);
+    elapsed = now.tv_sec * 1000000L + now.tv_usec - start;
+    if (elapsed < usecs)
+        usleep(usecs - elapsed);
 }
 
 int main(int argc, char *argv[])
@@ -107,6 +128,9 @@ int main(int argc, char *argv[])
     scrollok(stdscr, FALSE);
 
     for (x = COLS - 1; ; --x) {
+        if (!FAST && !SLOW) {
+            cycle(0);
+        }
         if (LOGO == 1) {
             if (add_sl(x) == ERR) break;
         }
@@ -117,7 +141,9 @@ int main(int argc, char *argv[])
             if (add_D51(x) == ERR) break;
         }
         refresh();
-        //usleep(40000);
+        if (!FAST && !SLOW) {
+            cycle(40000);
+        }
     }
     mvcur(0, COLS - 1, LINES - 2, 0);
     endwin();
