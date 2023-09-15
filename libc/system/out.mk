@@ -1,7 +1,7 @@
 include $(TOPDIR)/libc/Makefile.inc
 
 DEFINES	+= -DL_execl -DL_execle -DL_execlp -DL_execlpe \
-	   -DL_sleep -DL_usleep -DL_times
+	   -DL_sleep -DL_usleep
 
 ifneq "$(VPATH)" ""
 	dir	= $(VPATH)/
