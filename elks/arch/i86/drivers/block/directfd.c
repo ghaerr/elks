@@ -238,7 +238,7 @@ struct floppy_struct *base_type[4];
  * while probing is set. rw_interrupt() clears it after a
  * successful access.
  */
-static int probing = 0;
+static int probing;
 
 /*
  * (User-provided) media information is _not_ discarded after a media change
@@ -247,7 +247,7 @@ static int probing = 0;
  */
 static int keep_data[4] = { 0, 0, 0, 0 };
 
-static int fd_ref[4] = { 0, 0, 0, 0 };	/* device reference counter */
+static int fd_ref[4];           /* device reference counter */
 
 /* Synchronization of FDC access. */
 static int format_status = FORMAT_NONE, fdc_busy = 0;
@@ -487,7 +487,7 @@ static unsigned int changed_floppies = 0, fake_change = 0;
 
 int floppy_change(struct buffer_head *bh)
 {
-    unsigned int mask = 1 << ((bh->b_dev & 0x03) >> MINOR_SHIFT;
+    unsigned int mask = 1 << (bh->b_dev & 0x03);
 
     if (MAJOR(bh->b_dev) != MAJOR_NR) {
 	printk("floppy_change: not a floppy\n");
@@ -1457,22 +1457,22 @@ static void INITPROC config_types(void)
 
 static int floppy_open(struct inode *inode, struct file *filp)
 {
-    int drive, dev;
+    int drive, dev, err;
 
-    drive = DEVICE_NR(inode->i_rdev);
+    drive = MINOR(inode->i_rdev) >> MINOR_SHIFT;
     dev = drive & 3;
-    if (++fd_ref[dev] == 1) {
-        floppy_register();      //FIXME check return value, decr refcount on error
+    if (fd_ref[dev] == 0) {
+        err = floppy_register();
+        if (err) return err;
+        buffer_drive = buffer_track = -1;
     }
-    buffer_drive = buffer_track = -1;	/* FIXME: Don't invalidate buffer if
-					 * this is a reopen of the currently
-					 * bufferd drive. */
 
 #ifdef CHECK_DISK_CHANGE
     if (filp && filp->f_mode)
 	check_disk_change(inode->i_rdev);
 #endif
 
+    probing = 0;
     if (drive > 3)		/* forced floppy type */
 	floppy = (drive >> 2) + minor_types;
     else {			/* Auto-detection */
@@ -1481,10 +1481,11 @@ static int floppy_open(struct inode *inode, struct file *filp)
 	    probing = 1;
 	    floppy = base_type[dev];
 	    if (!floppy)
-		return -ENXIO;  //FIXME decrement open refcount
+		return -ENXIO;
 	}
     }
-    inode->i_size = ((sector_t)(floppy->size)) << 9;	/* NOTE: assumes sector size 512 */
+    fd_ref[dev]++;
+    inode->i_size = ((sector_t)floppy->size) << 9;  /* NOTE: assumes sector size 512 */
     debug_blkdrv("df%d: open dv %x, sz %lu, %s\n", drive,
 		inode->i_rdev, inode->i_size, floppy->name);
 
