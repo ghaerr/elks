@@ -209,7 +209,7 @@ static struct floppy_struct floppy_type[] = {
  * NOTE: Ignore the duplicates, they're there for a reason.
  */
 static struct floppy_struct floppy_types[] = {
-    {720, 9, 2, 40, 0, 0x2A, 0x02, 0xDF, 0x50, "360k/PC"},	/* 360kB PC diskettes */
+    {720, 9, 2, 40, 0, 0x2A, 0x01, 0xDF, 0x50, "360k/PC"},	/* 360kB PC diskettes */
     {720, 9, 2, 40, 0, 0x2A, 0x02, 0xDF, 0x50, "360k/PC"},	/* 360kB PC diskettes */
     {2400, 15, 2, 80, 0, 0x1B, 0x00, 0xDF, 0x54, "1.2M"},	/* 1.2 MB AT-diskettes */
     {720, 9, 2, 40, 1, 0x23, 0x01, 0xDF, 0x50, "360k/AT"},	/* 360kB in 1.2MB drive */
@@ -764,7 +764,7 @@ static void rw_interrupt(void)
 	    /* could continue from where we stopped, but ... */
 	    bad = 0;
 	} else if (CURRENT_ERRORS > min_report_error_cnt[ST0 & ST0_DS]) {
-	    printk("%s: %d: ", DEVICE_NAME, ST0 & ST0_DS);
+	    printk("df%d: ", ST0 & ST0_DS);
 	    if (ST0 & ST0_ECE) {
 		printk("Recalibrate failed!");
 	    } else if (ST2 & ST2_CRC) {
@@ -778,7 +778,7 @@ static void rw_interrupt(void)
 		    printk("sector not found");
 		    tell_sector(nr);
 		} else
-		    printk("probe failed...");
+		    printk("probe failed on %s (%d)", floppy->name, floppy-floppy_types);
 	    } else if (ST2 & ST2_WC) {	/* seek error */
 		printk("wrong cylinder");
 	    } else if (ST2 & ST2_BC) {	/* cylinder marked as bad */
@@ -1457,7 +1457,7 @@ static struct floppy_struct * INITPROC find_base(int drive, int code)
 	printk("df%d is %s (%d)", drive, base->name, code);
 	return base;
     }
-    printk("df%d is unknown type %d", drive, code);
+    printk("df%d is unknown (%d)", drive, code);
     return NULL;
 }
 
@@ -1465,6 +1465,7 @@ static void INITPROC config_types(void)
 {
     printk("df: CMOS ");
     base_type[0] = find_base(0, (CMOS_READ(0x10) >> 4) & 0xF);
+    base_type[0] = find_base(0, 1);     /* force 360k */
     if (((CMOS_READ(0x14) >> 6) & 1) != 0) {
 	printk(", ");
 	base_type[1] = find_base(1, CMOS_READ(0x10) & 0xF);
@@ -1479,7 +1480,7 @@ static int floppy_open(struct inode *inode, struct file *filp)
     drive = DEVICE_NR(inode->i_rdev);
     dev = drive & 3;
     if (++fd_ref[dev] == 1) {
-        floppy_register();
+        floppy_register();      //FIXME check return value, decr refcount on error
     }
     buffer_drive = buffer_track = -1;	/* FIXME: Don't invalidate buffer if
 					 * this is a reopen of the currently
@@ -1498,7 +1499,7 @@ static int floppy_open(struct inode *inode, struct file *filp)
 	    probing = 1;
 	    floppy = base_type[dev];
 	    if (!floppy)
-		return -ENXIO;
+		return -ENXIO;  //FIXME decrement open refcount
 	}
     }
     inode->i_size = ((sector_t)(floppy->size)) << 9;	/* NOTE: assumes sector size 512 */
@@ -1600,9 +1601,10 @@ static int floppy_register(void)
 	fdc_version = FDC_TYPE_STD;
     } else
 	fdc_version = reply_buffer[0];
-    if (fdc_version != FDC_TYPE_STD)
-	printk("%s: Direct floppy driver, FDC (%s) @ irq %d, DMA %d\n", DEVICE_NAME, 
-		fdc_version == 0x80 ? "8272A" : "82077", FLOPPY_IRQ, FLOPPY_DMA);
+    printk("df: direct floppy FDC %s (0x%x), irq %d, dma %d\n",
+                (fdc_version == FDC_TYPE_STD) ? "8272A" :
+                ((fdc_version == FDC_TYPE_82077)? "82077": "Unknown"),
+                fdc_version, FLOPPY_IRQ, FLOPPY_DMA);
 #ifndef FDC_FIFO_UNTESTED
     fdc_version = FDC_TYPE_STD;	/* force std fdc type; can't test other. */
 #endif
