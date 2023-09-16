@@ -220,6 +220,7 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
     req->rq_seg = buffer_seg(bh);
     req->rq_buffer = buffer_data(bh);
     req->rq_bh = bh;
+    req->rq_errors = 0;
 
 #ifdef BLOAT_FS
     req->rq_nr_sectors = count;

@@ -183,13 +183,13 @@ static unsigned char reply_buffer[MAX_REPLIES];
 #define ST3 (reply_buffer[3])
 
 /*
- * This struct defines the different floppy types.
- *
+ * Minor number based formats. Each drive type is specified starting
+ * from minor number 4 and no auto-probing is used.
  * The 'stretch' tells if the tracks need to be doubled for some
  * types (ie 360kB diskette in 1.2MB drive etc). Others should
  * be self-explanatory.
  */
-static struct floppy_struct floppy_type[] = {
+static struct floppy_struct minor_types[] = {
     {0, 0, 0, 0, 0, 0x00, 0x00, 0x00, 0x00, NULL},	/* no testing */
     {720, 9, 2, 40, 0, 0x2A, 0x02, 0xDF, 0x50, NULL},	/* 360kB PC diskettes */
     {2400, 15, 2, 80, 0, 0x1B, 0x00, 0xDF, 0x54, NULL},	/* 1.2 MB AT-diskettes */
@@ -208,15 +208,15 @@ static struct floppy_struct floppy_type[] = {
  * the disk, the next format is tried. This uses the variable 'probing'.
  * NOTE: Ignore the duplicates, they're there for a reason.
  */
-static struct floppy_struct floppy_types[] = {
-    {720, 9, 2, 40, 0, 0x2A, 0x01, 0xDF, 0x50, "360k/PC"},	/* 360kB PC diskettes */
-    {720, 9, 2, 40, 0, 0x2A, 0x02, 0xDF, 0x50, "360k/PC"},	/* 360kB PC diskettes */
+static struct floppy_struct probe_types[] = {
+    {720, 9, 2, 40, 0, 0x2A, 0x02, 0xDF, 0x50, "360k/slow"},	/* 360kB PC 250k DR */
+    {720, 9, 2, 40, 0, 0x2A, 0x01, 0xDF, 0x50, "360k/fast"},	/* 360kB PC 300k DR */
     {2400, 15, 2, 80, 0, 0x1B, 0x00, 0xDF, 0x54, "1.2M"},	/* 1.2 MB AT-diskettes */
-    {720, 9, 2, 40, 1, 0x23, 0x01, 0xDF, 0x50, "360k/AT"},	/* 360kB in 1.2MB drive */
+    {720, 9, 2, 40, 1, 0x23, 0x01, 0xDF, 0x50, "360k/1.2M"},	/* 360kB in 1.2MB drive */
     {1440, 9, 2, 80, 0, 0x2A, 0x02, 0xDF, 0x50, "720k"},	/* 3.5" 720kB diskette */
     {1440, 9, 2, 80, 0, 0x2A, 0x02, 0xDF, 0x50, "720k"},	/* 3.5" 720kB diskette */
     {2880, 18, 2, 80, 0, 0x1B, 0x00, 0xCF, 0x6C, "1.44M"},	/* 1.44MB diskette */
-    {1440, 9, 2, 80, 0, 0x2A, 0x02, 0xDF, 0x50, "720k/AT"},	/* 3.5" 720kB diskette */
+    {1440, 9, 2, 80, 0, 0x2A, 0x02, 0xDF, 0x50, "720k/1.2M"},	/* 3.5" 720kB diskette */
     {5760, 36, 2, 80, 0, 0x1B, 0x03, 0xCF, 0x6C, "2.88M"},/* 2.88MB diskette (UNTESTED) */
     {2880, 18, 2, 80, 0, 0x1B, 0x00, 0xCF, 0x6C, "1.44M"},	/* 1.44MB diskette */
 };
@@ -247,13 +247,6 @@ static int probing = 0;
  */
 static int keep_data[4] = { 0, 0, 0, 0 };
 
-/*
- * Announce successful media type detection and media information loss after
- * disk changes.
- * Also used to enable/disable printing of overrun warnings.
- */
-static int ftd_msg[4] = { 0, 0, 0, 0 };
-
 static int fd_ref[4] = { 0, 0, 0, 0 };	/* device reference counter */
 
 /* Synchronization of FDC access. */
@@ -267,18 +260,12 @@ static struct wait_queue fdc_wait;
 /* Format request descriptor. */
 //static struct format_descr format_req;
 
-/* Current device number. */
-#define CURRENT_DEVICE (CURRENT->rq_dev)
-
-/* Current error count. */
-#define CURRENT_ERRORS (CURRENT->rq_errors)
-
 /*
  * Threshold for reporting FDC errors to the console.
  * Setting this to zero may flood your screen when using
  * ultra cheap floppies ;-)
  */
-static unsigned short min_report_error_cnt[4] = { 2, 2, 2, 2 };
+#define MIN_ERRORS      0
 
 /*
  * Rate is 0 for 500kb/s, 1 for 300kbps, 2 for 250kbps
@@ -320,7 +307,7 @@ static int buffer_track = -1;
 static int buffer_drive = -1;
 static int cur_spec1 = -1;
 static int cur_rate = -1;
-static struct floppy_struct *floppy = floppy_type;
+static struct floppy_struct *floppy = minor_types;
 static unsigned char current_drive = 255;
 static unsigned char sector = 0;
 static unsigned char head = 0;
@@ -457,7 +444,7 @@ static void floppy_on(int nr)
  * that the motor off timer is slow enough not to affect performance. 3 
  * seconds is a fair compromise.
  */
-static void floppy_off(unsigned int nr)
+static void floppy_off(int nr)
 {
     del_timer(&motor_off_timer[nr]);
     motor_off_timer[nr].tl_expires = jiffies + 3 * HZ;
@@ -663,7 +650,7 @@ static void bad_flp_intr(void)
 
 /* Set perpendicular mode as required, based on data rate, if supported.
  * 82077 Untested! 1Mbps data rate only possible with 82077-1.
- * TODO: increase MAX_BUFFER_SECTORS, add floppy_type entries.
+ * TODO: increase MAX_BUFFER_SECTORS, add minor_types entries.
  */
 static void perpendicular_mode(unsigned char rate)
 {
@@ -753,20 +740,18 @@ static void rw_interrupt(void)
     switch ((ST0 & ST0_INTR) >> 6) {
     case 1:			/* error occured during command execution */
 	bad = 1;
+	printk("df%d: ", ST0 & ST0_DS);
 	if (ST1 & ST1_WP) {
-	    printk("%s: Drive %d is write protected", DEVICE_NAME,
-		   current_drive);
+	    printk(" write protected");
 	    request_done(0);
 	    bad = 0;
 	} else if (ST1 & ST1_OR) {
-	    if (ftd_msg[ST0 & ST0_DS])
-		printk("%s: Over/Under-run - retrying", DEVICE_NAME);
+	    printk("data over/underrun");
 	    /* could continue from where we stopped, but ... */
 	    bad = 0;
-	} else if (CURRENT_ERRORS > min_report_error_cnt[ST0 & ST0_DS]) {
-	    printk("df%d: ", ST0 & ST0_DS);
+	} else if (CURRENT->rq_errors >= MIN_ERRORS) {
 	    if (ST0 & ST0_ECE) {
-		printk("Recalibrate failed!");
+		printk("recalibrate failed");
 	    } else if (ST2 & ST2_CRC) {
 		printk("data CRC error");
 		tell_sector(nr);
@@ -778,7 +763,7 @@ static void rw_interrupt(void)
 		    printk("sector not found");
 		    tell_sector(nr);
 		} else
-		    printk("probe failed on %s (%d)", floppy->name, floppy-floppy_types);
+		    printk("probe failed on %s", floppy->name);
 	    } else if (ST2 & ST2_WC) {	/* seek error */
 		printk("wrong cylinder");
 	    } else if (ST2 & ST2_BC) {	/* cylinder marked as bad */
@@ -787,10 +772,6 @@ static void rw_interrupt(void)
 		printk("unknown error. ST[0-3]: 0x%x 0x%x 0x%x 0x%x",
 		       ST0, ST1, ST2, ST3);
 	    }
-	    CURRENT->rq_errors++; /* may want to increase this even more, doesn't make 
-	    		 * sense to re-try most of these conditions more 
-			 * than the reporting threshold. */
-			/* FIXME: Need smarter retry/error reporting scheme */
 	}
 	printk("\n");
 	if (bad)
@@ -811,11 +792,9 @@ static void rw_interrupt(void)
     }
 
     if (probing) {
-	int drive = (MINOR(CURRENT->rq_dev) >> MINOR_SHIFT) & 3;
+	int drive = DEVICE_NR(CURRENT->rq_dev);
 
-	if (ftd_msg[drive])
-	    printk("Auto-detected floppy type %s in df%d\n",
-		   floppy->name, drive);
+	printk("df%d: Auto-detected floppy type %s\n", drive, floppy->name);
 	current_type[drive] = floppy;
 	probing = 0;
     }
@@ -916,7 +895,7 @@ static void seek_interrupt(void)
 static void transfer(void)
 {
 #ifdef CONFIG_TRACK_CACHE
-    read_track = (command == FD_READ) && (CURRENT_ERRORS < 4) &&
+    read_track = (command == FD_READ) && (CURRENT->rq_errors < 4) &&
 	(floppy->sect <= MAX_BUFFER_SECTORS);
 #endif
     DEBUG("trns%d-", read_track);
@@ -1116,9 +1095,8 @@ static void floppy_ready(void)
 		/* FIXME: this is non sensical: Need to assume that a medium change
 		 * means a new medium of the same format as the prev until it fails.
 		 */
-	    if (ftd_msg[current_drive] && current_type[current_drive] != NULL)
-		printk("Disk type is undefined after disk change in df%d\n",
-		       current_drive);
+	    if (current_type[current_drive] != NULL)
+		printk("df%d: Disk type undefined after disk change\n", current_drive);
 	    current_type[current_drive] = NULL;
 	}
 	/* Forcing the drive to seek makes the "media changed" condition go
@@ -1201,10 +1179,10 @@ static void redo_fd_request(void)
     }
     seek = 0;
     probing = 0;
-    device = MINOR(CURRENT_DEVICE) >> MINOR_SHIFT;
+    device = MINOR(req->rq_dev) >> MINOR_SHIFT;
     drive = device & 3;
     if (device > 3)
-	floppy = (device >> 2) + floppy_type;
+	floppy = (device >> 2) + minor_types;
     else {			/* Auto-detection */
 	floppy = current_type[drive];
 	if (!floppy) {
@@ -1214,13 +1192,18 @@ static void redo_fd_request(void)
 		request_done(0);
 		goto repeat;
 	    }
-	    if (CURRENT_ERRORS & 1)
+	    if (!recalibrate && (req->rq_errors & 1)) {
 		floppy++;
-	}
+            }
+            if (!recalibrate) {
+                printk("df%d: auto-probe #%d %s (%d)\n", drive, req->rq_errors,
+                    floppy->name, floppy-probe_types);
+            }
+        }
     }
     DEBUG("[%u]redo-%c %d(%s) bl %u;", (unsigned int)jiffies, 
 		req->rq_cmd == WRITE? 'W':'R', device, floppy->name, req->rq_sector);
-    debug_blkdrv("df%d: %c sector %ld\n", CURRENT_DEVICE & 3, req->rq_cmd==WRITE? 'W' : 'R', req->rq_sector);
+    debug_blkdrv("df%d: %c sector %ld\n", DEVICE_NR(req->rq_dev), req->rq_cmd==WRITE? 'W' : 'R', req->rq_sector);
     if (format_status != FORMAT_BUSY) {
     	unsigned int tmp;
 	if (current_drive != drive) {
@@ -1304,7 +1287,6 @@ static void redo_fd_request(void)
 void do_fd_request(void)
 {
     DEBUG("fdrq:");
-    if (CURRENT) CURRENT->rq_errors = 0;	// EXPERIMENTAL
     while (fdc_busy)
 	sleep_on(&fdc_wait);
     fdc_busy = 1;
@@ -1324,7 +1306,7 @@ static int fd_ioctl(struct inode *inode,
 	return -EINVAL;
     drive = MINOR(inode->i_rdev) >> MINOR_SHIFT;
     if (drive > 3)
-	this_floppy = &floppy_type[drive >> 2];
+	this_floppy = &minor_types[drive >> 2];
     else if ((this_floppy = current_type[drive & 3]) == NULL)
 	return -ENODEV;
 
@@ -1453,7 +1435,7 @@ static struct floppy_struct * INITPROC find_base(int drive, int code)
     struct floppy_struct *base;
 
     if (code > 0 && code < 6) {
-	base = &floppy_types[(code - 1) * 2];
+	base = &probe_types[(code - 1) * 2];
 	printk("df%d is %s (%d)", drive, base->name, code);
 	return base;
     }
@@ -1492,7 +1474,7 @@ static int floppy_open(struct inode *inode, struct file *filp)
 #endif
 
     if (drive > 3)		/* forced floppy type */
-	floppy = (drive >> 2) + floppy_type;
+	floppy = (drive >> 2) + minor_types;
     else {			/* Auto-detection */
 	floppy = current_type[dev];
 	if (!floppy) {
