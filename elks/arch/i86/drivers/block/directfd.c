@@ -103,6 +103,7 @@
  * the 82077 found on the PS/2 and others can be configured in hardware
  * to emulate the 82072A found on many PC/AT compatibles.
  */
+//FIXME: use fdc_version instead of ifdef
 #define HAS_FD_DIR      0       /* =1 if 82077 and configured for PC/AT compatibility */
 
 //#define debug_blkdrv    printk
@@ -273,14 +274,6 @@ static struct wait_queue fdc_wait;
 #define WORD_ALIGNED    __attribute__((aligned(2)))
 static char tmp_floppy_area[BLOCK_SIZE] WORD_ALIGNED; /* for now FIXME to be removed */
 
-static void floppy_ready(void);
-static void redo_fd_request(void);
-static void recal_interrupt(void);
-static void floppy_shutdown(void);
-static void motor_off_callback(int);
-static int floppy_register(void);
-static void floppy_deregister(void);
-
 /*
  * These are global variables, as that's the easiest way to give
  * information to interrupts. They are the data used for the current
@@ -288,20 +281,28 @@ static void floppy_deregister(void);
  */
 #define NO_TRACK 255
 
-static int read_track = 0;	/* set to read entire track */
+static int read_track;	        /* set to read entire track */
 static int buffer_track = -1;
 static int buffer_drive = -1;
 static int cur_spec1 = -1;
 static int cur_rate = -1;
-static struct floppy_struct *floppy = minor_types;
+static struct floppy_struct *floppy;
 static unsigned char current_drive = 255;
-static unsigned char sector = 0;
-static unsigned char head = 0;
-static unsigned char track = 0;
-static unsigned char seek_track = 0;
+static unsigned char sector;
+static unsigned char head;
+static unsigned char track;
+static unsigned char seek_track;
 static unsigned char current_track = NO_TRACK;
-static unsigned char command = 0;
+static unsigned char command;
 static unsigned char fdc_version;
+
+static void floppy_ready(void);
+static void redo_fd_request(void);
+static void recal_interrupt(void);
+static void floppy_shutdown(void);
+static void motor_off_callback(int);
+static int floppy_register(void);
+static void floppy_deregister(void);
 
 static void delay_loop(int cnt)
 {
@@ -1172,10 +1173,9 @@ static void redo_fd_request(void)
 		request_done(0);
 		goto repeat;
 	    }
-	    if (!recalibrate && (req->rq_errors & 1)) {
-		floppy++;
-            }
             if (!recalibrate) {
+	        if (req->rq_errors & 1)
+		    floppy++;
                 printk("df%d: auto-probe #%d %s (%d)\n", drive, req->rq_errors,
                     floppy->name, floppy-probe_types);
             }
@@ -1417,7 +1417,7 @@ static void INITPROC config_types(void)
 {
     printk("df: CMOS ");
     base_type[0] = find_base(0, (CMOS_READ(0x10) >> 4) & 0xF);
-    base_type[0] = find_base(0, 1);     /* force 360k */
+    base_type[0] = find_base(0, 1);     /* force 360k FIXME add setup table */
     if (((CMOS_READ(0x14) >> 6) & 1) != 0) {
 	printk(", ");
 	base_type[1] = find_base(1, CMOS_READ(0x10) & 0xF);
@@ -1550,7 +1550,7 @@ static int floppy_register(void)
     do_floppy = ignore_interrupt;
     output_byte(FD_VERSION);	/* get FDC version code */
     if (result() != 1) {
-	printk("df: unknown FDC\n");
+	printk("df: can't get FDC version\n");
 	return -EIO;
     }
     fdc_version = reply_buffer[0];

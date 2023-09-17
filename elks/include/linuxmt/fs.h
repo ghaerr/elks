@@ -391,6 +391,7 @@ extern struct file_operations *get_blkfops(unsigned int);
 extern int register_blkdev(unsigned int,const char *,struct file_operations *);
 extern int unregister_blkdev(void);
 extern int blkdev_open(struct inode *,struct file *);
+
 extern struct file_operations def_blk_fops;
 extern struct inode_operations blkdev_inode_operations;
 
