@@ -98,32 +98,28 @@
 
 #include "blk.h"		/* ugly - blk.h contains code */
 
-void (*do_floppy)();            /* interrupt routine to call */
-
-#define _MK_LINADDR(seg, offs) ((unsigned long)((((unsigned long)(seg)) << 4) + (unsigned)(offs)))
+/*
+ * The original 8272A doesn't have FD_DIR or FD_DCR registers, but
+ * the 82077 found on the PS/2 and others can be configured in hardware
+ * to emulate the 82072A found on many PC/AT compatibles.
+ */
+#define HAS_FD_DIR      0       /* =1 if 82077 and configured for PC/AT compatibility */
 
 //#define debug_blkdrv    printk
 #define debug_blkdrv(...)
-//#define dfd_debug
-#ifdef dfd_debug
-#define DEBUG printk
-#else
+//#define DEBUG printk
 #define DEBUG(...)
-#endif
 
 /* Formatting code is currently untested, don't waste the space */
 //#define INCLUDE_FD_FORMATTING
 
+static void (*do_floppy)();     /* interrupt routine to call */
 static int initial_reset_flag = 0;
 static int need_configure = 1;	/* for 82077 */
 static int recalibrate = 0;
 static int reset = 0;
 static int recover = 0;		/* recalibrate immediately after resetting */
 static int seek = 0;
-
-#ifdef CONFIG_BLK_DEV_CHAR
-static int nr_sectors;		/* only when raw access */
-#endif
 
 /* BIOS floppy motor timeout counter - FIXME leave this while BIOS driver present */
 static unsigned char __far *fl_timeout = (void __far *)0x440L;
@@ -160,6 +156,8 @@ static unsigned char running = 0; /* keep track of motors already running */
  * in one 'swoop'.
  */
 #define LAST_DMA_ADDR	(0x100000L - BLOCK_SIZE) /* stick to the 1M limit */
+
+#define _MK_LINADDR(seg, offs) ((unsigned long)((((unsigned long)(seg)) << 4) + (unsigned)(offs)))
 
 /*
  * globals used by 'result()'
@@ -229,12 +227,14 @@ struct floppy_struct *base_type[4];
  */
 static int probing;
 
+#if HAS_FD_DIR
 /*
  * (User-provided) media information is _not_ discarded after a media change
  * if the corresponding keep_data flag is non-zero. Positive values are
  * decremented after each probe.
  */
 static int keep_data[4] = { 0, 0, 0, 0 };
+#endif
 
 static int fd_ref[4];           /* device reference counter */
 
@@ -272,10 +272,6 @@ static struct wait_queue fdc_wait;
  */
 #define WORD_ALIGNED    __attribute__((aligned(2)))
 static char tmp_floppy_area[BLOCK_SIZE] WORD_ALIGNED; /* for now FIXME to be removed */
-
-#ifdef CHECK_DISK_CHANGE
-int check_disk_change(kdev_t);
-#endif
 
 static void floppy_ready(void);
 static void redo_fd_request(void);
@@ -524,12 +520,8 @@ static void setup_DMA(void)
     use_xms = req->rq_seg >> 16; /* will ne nonzero only if XMS configured & XMS buffer */
     physaddr = (req->rq_seg << 4) + (unsigned int)req->rq_buffer;
 
-#ifdef CONFIG_BLK_DEV_CHAR
-    count = nr_sectors ? nr_sectors<<9 : BLOCK_SIZE;
-#else
-    count = BLOCK_SIZE;
-#endif
-    if (use_xms || (physaddr + (unsigned int)count) < physaddr)
+    count = req->rq_nr_sectors? req->rq_nr_sectors * 512: BLOCK_SIZE;
+    if (use_xms || (physaddr + count) < physaddr)
 	dma_addr = LAST_DMA_ADDR + 1;	/* force use of bounce buffer */
     else
 	dma_addr = _MK_LINADDR(req->rq_seg, req->rq_buffer);
@@ -628,6 +620,7 @@ static void bad_flp_intr(void)
     } else
 	errors = ++CURRENT->rq_errors;
     if (errors > MAX_ERRORS) {
+        printk("df: Max retries #%d exceeded\n", errors);
 	request_done(0);
     }
     if (errors > MAX_ERRORS / 2)
@@ -1011,14 +1004,16 @@ static void reset_floppy(void)
 
 static void floppy_shutdown(void)
 {
-    printk("[%u]shtdwn0x%x|%x-", (unsigned int)jiffies, current_DOR, running);
+    DEBUG("[%u]shtdwn0x%x|%x-", (unsigned int)jiffies, current_DOR, running);
     do_floppy = NULL;
+    printk("df%d: FDC timed out\n", current_drive);
     request_done(0);
     recover = 1;
     reset_floppy();
     redo_fd_request();
 }
 
+#if HAS_FD_DIR
 static void shake_done(void)
 {
     /* Need SENSEI to clear the interrupt per spec, required by QEMU, not by
@@ -1027,10 +1022,15 @@ static void shake_done(void)
     result();
     DEBUG("shD0x%x-", ST0);
     current_track = NO_TRACK;
-    if (inb(FD_DIR) & 0x80 || ST0 & 0xC0)
-	request_done(0);	/* still errors: just fail */
-    else
-	redo_fd_request();
+    if (inb(FD_DIR) & 0x80) {
+        printk("df%d: disk changed, aborting\n", current_drive);
+	request_done(0);
+    }
+    if (ST0 & 0xC0) {
+        printk("df%d: error %02x after SENSEI\n", current_drive, ST0 & 0xC0);
+	//request_done(0);
+    }
+    redo_fd_request();
 }
 
 /*
@@ -1065,10 +1065,12 @@ static void shake_one(void)
     output_byte(head << 2 | current_drive);
     output_byte(1);
 }
+#endif
 
 static void floppy_ready(void)
 {
     DEBUG("RDY0x%x,%d,%d-", inb(FD_DIR), reset, recalibrate);
+#if HAS_FD_DIR
     if (inb(FD_DIR) & 0x80) {	/* set if disk changed since last cmd (AT ++) */
 #ifdef CHECK_DISK_CHANGE
 	changed_floppies |= 1 << current_drive;
@@ -1099,6 +1101,7 @@ static void floppy_ready(void)
 	    return;
 	}
     }
+#endif
 
     if (reset) {
 	reset_floppy();
@@ -1141,8 +1144,6 @@ static void redo_fd_request(void)
     struct request *req;
     int device, drive;
 
-    //if (CURRENT && ((int)CURRENT->rq_dev == -1U))
-	//return;
   repeat:
     req = CURRENT;
 	if (!req) {
@@ -1167,6 +1168,7 @@ static void redo_fd_request(void)
 	    probing = 1;
 	    floppy = base_type[drive];
 	    if (!floppy) {
+                printk("df%d: no base drive type, aborting\n", drive);
 		request_done(0);
 		goto repeat;
 	    }
@@ -1190,29 +1192,18 @@ static void redo_fd_request(void)
 	    current_drive = drive;
 	}
 	start = (unsigned int) req->rq_sector;
-	if (start + 2 > floppy->size) {
+	if (start + req->rq_nr_sectors >= floppy->size) {
+            printk("df%d: sector %u beyond max %u\n", start, floppy->size);
 	    request_done(0);
-	    goto repeat;	/* FIXME: Should probably exit here */
-				/* or at least increment an error counter */
+	    goto repeat;
 	}
-#ifdef CONFIG_BLK_DEV_CHAR
-	nr_sectors = req->rq_nr_sectors;	/* non-zero if raw io */
-#endif
 	sector = start % floppy->sect;
 	tmp = start / floppy->sect;
 	head = tmp % floppy->head;
 	track = tmp / floppy->head;
 	seek_track = track << floppy->stretch;
 	DEBUG("%d:%d:%d:%d; ", start, sector, head, track);
-	if (req->rq_cmd == READ)
-	    command = FD_READ;
-	else if (req->rq_cmd == WRITE)
-	    command = FD_WRITE;
-	else {
-	    printk("redo_fd_request: unknown command\n");
-	    request_done(0);
-	    goto repeat;
-	}
+	command = (req->rq_cmd == READ)? FD_READ: FD_WRITE;
     }
 #ifdef INCLUDE_FD_FORMATTING
     else {	/* Format drive */
