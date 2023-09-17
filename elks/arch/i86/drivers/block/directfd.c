@@ -98,18 +98,7 @@
 
 #include "blk.h"		/* ugly - blk.h contains code */
 
-/* This is confusing. DEVICE_INTR is the do_floppy variable.
- * The code is sometimes using the macro, some times the variable.
- * It may seem this is a trick to get GCC to shut up ...
- */
-#ifdef DEVICE_INTR	/* from blk.h */
-void (*DEVICE_INTR) () = NULL;
-
-#define SET_INTR(x) (DEVICE_INTR = (x))
-#define CLEAR_INTR SET_INTR(NULL)
-#else
-#define CLEAR_INTR
-#endif
+void (*do_floppy)();            /* interrupt routine to call */
 
 #define _MK_LINADDR(seg, offs) ((unsigned long)((((unsigned long)(seg)) << 4) + (unsigned)(offs)))
 
@@ -288,6 +277,7 @@ static char tmp_floppy_area[BLOCK_SIZE] WORD_ALIGNED; /* for now FIXME to be rem
 int check_disk_change(kdev_t);
 #endif
 
+static void floppy_ready(void);
 static void redo_fd_request(void);
 static void recal_interrupt(void);
 static void floppy_shutdown(void);
@@ -315,9 +305,7 @@ static unsigned char track = 0;
 static unsigned char seek_track = 0;
 static unsigned char current_track = NO_TRACK;
 static unsigned char command = 0;
-static unsigned char fdc_version = FDC_TYPE_STD;	/* FDC version code */
-
-static void floppy_ready(void);
+static unsigned char fdc_version;
 
 static void delay_loop(int cnt)
 {
@@ -634,7 +622,7 @@ static void bad_flp_intr(void)
     else 
 #endif
     if (!CURRENT) {
-	printk("%s: no current request\n", DEVICE_NAME);
+	printk("df: no current request\n");
 	reset = recalibrate = 1;
 	return;
     } else
@@ -663,16 +651,14 @@ static void perpendicular_mode(unsigned char rate)
 	    else if (r == 3)
 		output_byte(3);	/* perpendicular, 1Mbps */
 	    else {
-		printk("%s: Invalid data rate for perpendicular mode!\n",
-		       DEVICE_NAME);
+		printk("df: Invalid data rate for perpendicular mode!\n");
 		reset = 1;
 	    }
 	} else
 	    output_byte(0);	/* conventional mode */
     } else {
 	if (rate & 0x40) {
-	    printk("%s: perpendicular mode not supported by this FDC.\n",
-		   DEVICE_NAME);
+	    printk("df: perpendicular mode not supported by this FDC.\n");
 	    reset = 1;
 	}
     }
@@ -694,7 +680,7 @@ static void configure_fdc_mode(void)
 	output_byte(0x1A);	/* FIFO on, polling off, 10 byte threshold */
 	output_byte(0);		/* precompensation from track 0 upwards */
 	need_configure = 0;
-	printk("%s: FIFO enabled\n", DEVICE_NAME);
+	printk("df: FIFO enabled\n");
     }
 #endif
     if (cur_spec1 != floppy->spec1) {
@@ -779,11 +765,11 @@ static void rw_interrupt(void)
 	redo_fd_request();
 	return;
     case 2:			/* invalid command given */
-	printk("%s: Invalid FDC command given!\n", DEVICE_NAME);
+	printk("df: Invalid FDC command\n");
 	request_done(0);
 	return;
     case 3:
-	printk("%s: Abnormal termination caused by polling\n", DEVICE_NAME);
+	printk("df: Abnormal cmd termination\n");
 	bad_flp_intr();
 	redo_fd_request();
 	return;
@@ -877,7 +863,7 @@ static void seek_interrupt(void)
     DEBUG("seekI-");
     output_byte(FD_SENSEI);
     if (result() != 2 || (ST0 & 0xF8) != 0x20 || ST1 != seek_track) {
-	printk("%s%d: seek failed\n", DEVICE_NAME, current_drive);
+	printk("df%d: seek failed\n", current_drive);
 	recalibrate = 1;
 	bad_flp_intr();
 	redo_fd_request();
@@ -961,7 +947,7 @@ static void unexpected_floppy_interrupt(void)
 {
     current_track = NO_TRACK;
     output_byte(FD_SENSEI);
-    printk("%s: unexpected interrupt\n", DEVICE_NAME);
+    printk("df: unexpected interrupt\n");
     if (result() != 2 || (ST0 & 0xE0) == 0x60)
 	reset = 1;
     else
@@ -1155,28 +1141,20 @@ static void redo_fd_request(void)
     struct request *req;
     int device, drive;
 
-    /* cannot use the INIT_REQUEST macro since req=NULL is OK */
-
-    if (CURRENT && ((int)CURRENT->rq_dev == -1U))
-	return;
+    //if (CURRENT && ((int)CURRENT->rq_dev == -1U))
+	//return;
   repeat:
     req = CURRENT;
-    if (format_status == FORMAT_WAIT)
-	format_status = FORMAT_BUSY;
-    if (format_status != FORMAT_BUSY) {
 	if (!req) {
 	    if (!fdc_busy)
 		printk("FDC access conflict!");
 	    fdc_busy = 0;
 	    wake_up(&fdc_wait);
-	    CLEAR_INTR;
+	    do_floppy = NULL;
 	    return;
 	}
-	if (MAJOR(req->rq_dev) != MAJOR_NR)
-	    panic("%s: request list destroyed", DEVICE_NAME);
-	if (req->rq_bh && !EBH(req->rq_bh)->b_locked)
-		panic("%s: block not locked", DEVICE_NAME);
-    }
+    CHECK_REQUEST(req);
+
     seek = 0;
     probing = 0;
     device = MINOR(req->rq_dev) >> MINOR_SHIFT;
@@ -1203,7 +1181,8 @@ static void redo_fd_request(void)
     }
     DEBUG("[%u]redo-%c %d(%s) bl %u;", (unsigned int)jiffies, 
 		req->rq_cmd == WRITE? 'W':'R', device, floppy->name, req->rq_sector);
-    debug_blkdrv("df%d: %c sector %ld\n", DEVICE_NR(req->rq_dev), req->rq_cmd==WRITE? 'W' : 'R', req->rq_sector);
+    debug_blkdrv("df%d: %c sector %ld\n", DEVICE_NR(req->rq_dev),
+        req->rq_cmd==WRITE? 'W' : 'R', req->rq_sector);
     if (format_status != FORMAT_BUSY) {
     	unsigned int tmp;
 	if (current_drive != drive) {
@@ -1527,16 +1506,16 @@ static struct file_operations floppy_fops = {
  */
 static void ignore_interrupt(void)
 {
-    printk("%s: weird interrupt ignored (%d)\n", DEVICE_NAME, result());
+    printk("df: interrupt ignored (%d)\n", result());
     reset = 1;
-    CLEAR_INTR;			/* ignore only once */
+    do_floppy = NULL;		/* ignore only once */
 }
 
-static void floppy_interrupt(int unused, struct pt_regs *unused1)
+static void floppy_interrupt(int irq, struct pt_regs *regs)
 {
-    void (*handler) () = DEVICE_INTR;
+    void (*handler) () = do_floppy;
 
-    DEVICE_INTR = NULL;
+    do_floppy = NULL;
     if (!handler)
 	handler = unexpected_floppy_interrupt;
     //printk("$");
@@ -1577,31 +1556,25 @@ static int floppy_register(void)
     }
 
     /* Try to determine the floppy controller type */
-    DEVICE_INTR = ignore_interrupt;	/* don't ask ... */
+    do_floppy = ignore_interrupt;
     output_byte(FD_VERSION);	/* get FDC version code */
     if (result() != 1) {
-	printk("%s: FDC failed to return version byte\n", DEVICE_NAME);
-	fdc_version = FDC_TYPE_STD;
-    } else
-	fdc_version = reply_buffer[0];
+	printk("df: unknown FDC\n");
+	return -EIO;
+    }
+    fdc_version = reply_buffer[0];
     printk("df: direct floppy FDC %s (0x%x), irq %d, dma %d\n",
                 (fdc_version == FDC_TYPE_STD) ? "8272A" :
                 ((fdc_version == FDC_TYPE_82077)? "82077": "Unknown"),
                 fdc_version, FLOPPY_IRQ, FLOPPY_DMA);
-#ifndef FDC_FIFO_UNTESTED
-    fdc_version = FDC_TYPE_STD;	/* force std fdc type; can't test other. */
-#endif
 
     /* Not all FDCs seem to be able to handle the version command
      * properly, so force a reset for the standard FDC clones,
      * to avoid interrupt garbage.
      */
-#if 1	/* testing FIXME --  the FDC has just been reset by the BIOS, do we need this? */
-    if (fdc_version == FDC_TYPE_STD) {
-	initial_reset_flag = 1;
-	reset_floppy();
-    }
-#endif
+    /* testing FIXME --  the FDC has just been reset by the BIOS, do we need this? */
+    initial_reset_flag = 1;
+    reset_floppy();
     return 0;
 }
 
