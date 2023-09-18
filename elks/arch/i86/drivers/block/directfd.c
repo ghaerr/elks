@@ -1538,8 +1538,6 @@ static int get_fdc_version(void)
     default:
         name = "Unknown";
     }
-type = FDC_TYPE_8272A;
-name = "Special";
     printk("df: direct floppy FDC %s (0x%x), irq %d, dma %d\n",
         name, reply_buffer[0], FLOPPY_IRQ, FLOPPY_DMA);
 
