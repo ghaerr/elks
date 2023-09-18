@@ -97,18 +97,6 @@ void ssd_io_complete(void)
             return;
         CHECK_REQUEST(req);
 
-#ifdef CHECK_BLOCKIO
-        struct buffer_head *bh = req->rq_bh;
-        if (req->rq_buffer != buffer_data(bh) || req->rq_seg != buffer_seg(bh)) {
-           panic("SSD: ADDR CHANGED req seg:buf %04x:%04x bh seg:buf %04x:%04x\n",
-                req->rq_seg, req->rq_buffer, buffer_seg(bh), buffer_data(bh));
-        }
-        if (req->rq_sector != buffer_blocknr(bh) * (BLOCK_SIZE / SD_FIXED_SECTOR_SIZE)) {
-            panic("SSD: SECTOR/BLOCKNR CHANGED req %ld bh %ld\n",
-                req->rq_sector, buffer_blocknr(bh));
-        }
-#endif
-
         buf = req->rq_buffer;
         start = req->rq_sector;
 
