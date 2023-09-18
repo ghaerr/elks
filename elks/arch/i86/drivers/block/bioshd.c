@@ -754,16 +754,10 @@ next_block:
 
 #if UNUSED
 static struct wait_queue busy_wait;
-static int revalidate_hddisk(int, int); /* Currently not used*/
 
 #define DEVICE_BUSY busy[target]
 #define USAGE access_count[target]
 #define CAPACITY ((sector_t)drive_info[target].heads*drive_info[target].sectors*drive_info[target].cylinders)
-
-/* We assume that the the bios parameters do not change,
- * so the disk capacity will not change
- */
-
 #define GENDISK_STRUCT bioshd_gendisk
 #define MAYBE_REINIT
 
@@ -773,6 +767,8 @@ static int revalidate_hddisk(int, int); /* Currently not used*/
  * enter with usage == 0.  If we are using an ioctl, we automatically
  * have usage == 1 (we need an open channel to use an ioctl :-), so
  * this is our limit.
+ * We assume that the the bios parameters do not change,
+ * so the disk capacity will not change
  */
 
 static int revalidate_hddisk(int dev, int maxusage)

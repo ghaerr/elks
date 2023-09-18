@@ -11,9 +11,9 @@
 #define	FDFMTTRK 7		/* format the specified track */
 #define FDFMTEND 8		/* end formatting a disk */
 #define FDSETEMSGTRESH	10	/* set fdc error reporting treshold */
-#define FDFLUSH  11		/* flush buffers for media; either for verifying media, or for
-				 * handling a media change without closing the file
-				 * descriptor */
+#define FDFLUSH  11		/* flush buffers for media; either for verifying media,
+				 * or for handling a media change without closing the
+				 * file descriptor */
 
 #define FD_FILL_BYTE 0xF6	/* format fill byte */
 
