@@ -112,7 +112,7 @@ void ssd_io_complete(void)
         buf = req->rq_buffer;
         start = req->rq_sector;
 
-        if (start + req->rq_nr_sectors >= NUM_SECTS) {
+        if (start + req->rq_nr_sectors > NUM_SECTS) {
             printk("ssd: sector %lu+%d beyond max %lu\n", start,
                 req->rq_nr_sectors, NUM_SECTS);
             end_request(0);

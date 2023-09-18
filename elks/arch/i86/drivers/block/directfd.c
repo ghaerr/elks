@@ -55,6 +55,11 @@
  * rewritten for TLVC - imported DMA setup from Minix for simplicity and
  * compactness. Added fix for bioses that do motor timeout on their own.
  * Now compiles - and works.
+ *
+ * Sep 2023 - Greg Haerr
+ * Ported Helge's modifications to ELKS. Lots of original driver cleanup.
+ * Expanded FDC and platform identification to allow running on original
+ * IBM PC and clones with no DIR register. Added lots of info and error msgs.
  */
 
 /*
@@ -98,65 +103,46 @@
 
 #include "blk.h"		/* ugly - blk.h contains code */
 
-/* This is confusing. DEVICE_INTR is the do_floppy variable.
- * The code is sometimes using the macro, some times the variable.
- * It may seem this is a trick to get GCC to shut up ...
+/*
+ * The original 8272A doesn't have FD_DOR, FD_DIR or FD_CCR registers,
+ * but the 82077 found on modern clones can be configured in hardware
+ * to emulate the chip and adaptor found on many PC/AT compatibles.
+ *
+ * History and capabilities of FDC chips on IBM Compatibles (all have MSR,DATA regs)
+ *  Chip         System             Adaptor Regs    Chip Regs    New Commands
+ *  8272A/NEC765 IBM PC, IBM PC/XT  DOR
+ *  8272A/NEC765 IBM PC/AT          DOR,DIR,CCR,DSR
+ *  8272A/NEC765 IBM PS/2 (gen 1)   DOR,DIR,CCR,DSR
+ *  82072        IBM PS/2 (gen 2)                   DSR          CONFIGURE,DUMPREGS
+ *  82077AA      IBM PS/2 (gen 3)                   DOR,DIR,CCR  PERPENDICULAR,LOCK
  */
-#ifdef DEVICE_INTR	/* from blk.h */
-void (*DEVICE_INTR) () = NULL;
 
-#define SET_INTR(x) (DEVICE_INTR = (x))
-#define CLEAR_INTR SET_INTR(NULL)
-#else
-#define CLEAR_INTR
-#endif
-
-#define _MK_LINADDR(seg, offs) ((unsigned long)((((unsigned long)(seg)) << 4) + (unsigned)(offs)))
-
-//#define debug_blkdrv    printk
-#define debug_blkdrv(...)
-//#define dfd_debug
-#ifdef dfd_debug
-#define DEBUG printk
-#else
+//#define DEBUG printk
 #define DEBUG(...)
-#endif
 
-/* Formatting code is currently untested, don't waste the space */
-//#define INCLUDE_FD_FORMATTING
-
-static int initial_reset_flag = 0;
+static void (*do_floppy)();     /* interrupt routine to call */
+static int initial_reset_flag;
 static int need_configure = 1;	/* for 82077 */
-static int recalibrate = 0;
-static int reset = 0;
-static int recover = 0;		/* recalibrate immediately after resetting */
-static int seek = 0;
-
-#ifdef CONFIG_BLK_DEV_CHAR
-static int nr_sectors;		/* only when raw access */
-#endif
+static int recalibrate;
+static int reset;
+static int recover;		        /* recalibrate immediately after resetting */
+static int seek;
 
 /* BIOS floppy motor timeout counter - FIXME leave this while BIOS driver present */
 static unsigned char __far *fl_timeout = (void __far *)0x440L;
 
-static unsigned char current_DOR = 0x0C;
-static unsigned char running = 0; /* keep track of motors already running */
 /* NOTE: current_DOR tells which motor(s) have been commanded to run,
- * 'running' tells which ones are actually running. The difference is subtle - 
- * the spinup time, typical .5 secs */
-
+ * 'running' tells which ones are actually running. The difference is subtle,
+ * with typical spinup time of .5 secs.
+ */
+static unsigned char current_DOR;
+static unsigned char running = 0; /* keep track of motors already running */
 /*
  * Note that MAX_ERRORS=X doesn't imply that we retry every bad read
  * max X times - some types of errors increase the errorcount by 2 or
  * even 3, so we might actually retry only X/2 times before giving up.
  */
 #define MAX_ERRORS 12
-
-/*
- * Maximum disk size (in kilobytes). This default is used whenever the
- * current disk size is unknown.
- */
-#define MAX_DISK_SIZE 1440
 
 /*
  * Maximum number of sectors in a track buffer. Track buffering is disabled
@@ -172,6 +158,8 @@ static unsigned char running = 0; /* keep track of motors already running */
  */
 #define LAST_DMA_ADDR	(0x100000L - BLOCK_SIZE) /* stick to the 1M limit */
 
+#define _MK_LINADDR(seg, offs) ((unsigned long)((((unsigned long)(seg)) << 4) + (unsigned)(offs)))
+
 /*
  * globals used by 'result()'
  */
@@ -183,13 +171,22 @@ static unsigned char reply_buffer[MAX_REPLIES];
 #define ST3 (reply_buffer[3])
 
 /*
- * This struct defines the different floppy types.
+ * Minor number based formats. Each drive type is specified starting
+ * from minor number 4 and no auto-probing is used.
  *
- * The 'stretch' tells if the tracks need to be doubled for some
- * types (ie 360kB diskette in 1.2MB drive etc). Others should
- * be self-explanatory.
+ * Stretch tells if the tracks need to be doubled for some
+ * types (ie 360kB diskette in 1.2MB drive etc).
+ *
+ * Rate is 0 for 500kb/s, 1 for 300kbps, 2 for 250kbps
+ * Spec1 is 0xSH, where S is stepping rate (F=1ms, E=2ms, D=3ms etc),
+ * H is head unload time, time the FDC will wait before unloading
+ * the head after a command that accesses the disk (1=16ms, 2=32ms, etc)
+ *
+ * Spec2 is (HLD<<1 | ND), where HLD is head load time (1=2ms, 2=4 ms etc)
+ * and ND is set means no DMA. Hardcoded to 6 (HLD=6ms, use DMA).
  */
-static struct floppy_struct floppy_type[] = {
+
+static struct floppy_struct minor_types[] = {
     {0, 0, 0, 0, 0, 0x00, 0x00, 0x00, 0x00, NULL},	/* no testing */
     {720, 9, 2, 40, 0, 0x2A, 0x02, 0xDF, 0x50, NULL},	/* 360kB PC diskettes */
     {2400, 15, 2, 80, 0, 0x1B, 0x00, 0xDF, 0x54, NULL},	/* 1.2 MB AT-diskettes */
@@ -198,7 +195,7 @@ static struct floppy_struct floppy_type[] = {
     {720, 9, 2, 40, 1, 0x23, 0x01, 0xDF, 0x50, NULL},	/* 360kB in 1.2MB drive */
     {1440, 9, 2, 80, 0, 0x23, 0x01, 0xDF, 0x50, NULL},	/* 720kB in 1.2MB drive */
     {2880, 18, 2, 80, 0, 0x1B, 0x00, 0xCF, 0x6C, NULL},	/* 1.44MB diskette */
-    {5760, 36, 2, 80, 0, 0x1B, 0x03, 0xCF, 0x6C, NULL},	/* 2.88MB diskette (UNTESTED) */
+    {5760, 36, 2, 80, 0, 0x1B, 0x43, 0xAF, 0x28, NULL},	/* 2.88MB diskette */
     /* totSectors/secPtrack/heads/tracks/stretch/gap/Drate/S&Hrates/fmtGap/nm/  */
 };
 
@@ -208,16 +205,16 @@ static struct floppy_struct floppy_type[] = {
  * the disk, the next format is tried. This uses the variable 'probing'.
  * NOTE: Ignore the duplicates, they're there for a reason.
  */
-static struct floppy_struct floppy_types[] = {
-    {720, 9, 2, 40, 0, 0x2A, 0x02, 0xDF, 0x50, "360k/PC"},	/* 360kB PC diskettes */
-    {720, 9, 2, 40, 0, 0x2A, 0x02, 0xDF, 0x50, "360k/PC"},	/* 360kB PC diskettes */
+static struct floppy_struct probe_types[] = {
+    {720, 9, 2, 40, 0, 0x2A, 0x02, 0xDF, 0x50, "360k/slow"},	/* 360kB PC 250k DR */
+    {720, 9, 2, 40, 0, 0x2A, 0x01, 0xDF, 0x50, "360k/fast"},	/* 360kB PC 300k DR */
     {2400, 15, 2, 80, 0, 0x1B, 0x00, 0xDF, 0x54, "1.2M"},	/* 1.2 MB AT-diskettes */
-    {720, 9, 2, 40, 1, 0x23, 0x01, 0xDF, 0x50, "360k/AT"},	/* 360kB in 1.2MB drive */
+    {720, 9, 2, 40, 1, 0x23, 0x01, 0xDF, 0x50, "360k/1.2M"},	/* 360kB in 1.2MB drive */
     {1440, 9, 2, 80, 0, 0x2A, 0x02, 0xDF, 0x50, "720k"},	/* 3.5" 720kB diskette */
     {1440, 9, 2, 80, 0, 0x2A, 0x02, 0xDF, 0x50, "720k"},	/* 3.5" 720kB diskette */
     {2880, 18, 2, 80, 0, 0x1B, 0x00, 0xCF, 0x6C, "1.44M"},	/* 1.44MB diskette */
-    {1440, 9, 2, 80, 0, 0x2A, 0x02, 0xDF, 0x50, "720k/AT"},	/* 3.5" 720kB diskette */
-    {5760, 36, 2, 80, 0, 0x1B, 0x03, 0xCF, 0x6C, "2.88M"},/* 2.88MB diskette (UNTESTED) */
+    {1440, 9, 2, 80, 0, 0x2A, 0x02, 0xDF, 0x50, "720k/1.2M"},	/* 3.5" 720kB diskette */
+    {5760, 36, 2, 80, 0, 0x1B, 0x43, 0xAF, 0x28, "2.88M"},      /* 2.88MB diskette */
     {2880, 18, 2, 80, 0, 0x1B, 0x00, 0xCF, 0x6C, "1.44M"},	/* 1.44MB diskette */
 };
 
@@ -228,67 +225,32 @@ struct floppy_struct *current_type[4] = { NULL, NULL, NULL, NULL };
 struct floppy_struct *base_type[4];
 
 /*
- * User-provided type information. current_type points to
- * the respective entry of this array.
- */
-//struct floppy_struct user_params[4];
-
-/*
  * The driver is trying to determine the correct media format
  * while probing is set. rw_interrupt() clears it after a
  * successful access.
  */
-static int probing = 0;
+static int probing;
 
 /*
  * (User-provided) media information is _not_ discarded after a media change
  * if the corresponding keep_data flag is non-zero. Positive values are
  * decremented after each probe.
  */
-static int keep_data[4] = { 0, 0, 0, 0 };
+static int keep_data[4];
 
-/*
- * Announce successful media type detection and media information loss after
- * disk changes.
- * Also used to enable/disable printing of overrun warnings.
- */
-static int ftd_msg[4] = { 0, 0, 0, 0 };
-
-static int fd_ref[4] = { 0, 0, 0, 0 };	/* device reference counter */
+/* device reference counters */
+static int fd_ref[4];
 
 /* Synchronization of FDC access. */
-static int format_status = FORMAT_NONE, fdc_busy = 0;
+static int fdc_busy;
 static struct wait_queue fdc_wait;
-//static struct wait_queue format_done;
-
-/* Errors during formatting are counted here. */
-//static int format_errors;
-
-/* Format request descriptor. */
-//static struct format_descr format_req;
-
-/* Current device number. */
-#define CURRENT_DEVICE (CURRENT->rq_dev)
-
-/* Current error count. */
-#define CURRENT_ERRORS (CURRENT->rq_errors)
 
 /*
  * Threshold for reporting FDC errors to the console.
  * Setting this to zero may flood your screen when using
  * ultra cheap floppies ;-)
  */
-static unsigned short min_report_error_cnt[4] = { 2, 2, 2, 2 };
-
-/*
- * Rate is 0 for 500kb/s, 1 for 300kbps, 2 for 250kbps
- * Spec1 is 0xSH, where S is stepping rate (F=1ms, E=2ms, D=3ms etc),
- * H is head unload time, time the FDC will wait before unloading
- * the head after a command that accesses the disk (1=16ms, 2=32ms, etc)
- *
- * Spec2 is (HLD<<1 | ND), where HLD is head load time (1=2ms, 2=4 ms etc)
- * and ND is set means no DMA. Hardcoded to 6 (HLD=6ms, use DMA).
- */
+#define MIN_ERRORS      0
 
 /*
  * The block buffer is used for all writes, for formatting and for reads
@@ -297,17 +259,6 @@ static unsigned short min_report_error_cnt[4] = { 2, 2, 2, 2 };
 #define WORD_ALIGNED    __attribute__((aligned(2)))
 static char tmp_floppy_area[BLOCK_SIZE] WORD_ALIGNED; /* for now FIXME to be removed */
 
-#ifdef CHECK_DISK_CHANGE
-int check_disk_change(kdev_t);
-#endif
-
-static void redo_fd_request(void);
-static void recal_interrupt(void);
-static void floppy_shutdown(void);
-static void motor_off_callback(int);
-static int floppy_register(void);
-static void floppy_deregister(void);
-
 /*
  * These are global variables, as that's the easiest way to give
  * information to interrupts. They are the data used for the current
@@ -315,22 +266,28 @@ static void floppy_deregister(void);
  */
 #define NO_TRACK 255
 
-static int read_track = 0;	/* set to read entire track */
+static int read_track;	        /* set to read entire track */
 static int buffer_track = -1;
 static int buffer_drive = -1;
 static int cur_spec1 = -1;
 static int cur_rate = -1;
-static struct floppy_struct *floppy = floppy_type;
+static struct floppy_struct *floppy;
 static unsigned char current_drive = 255;
-static unsigned char sector = 0;
-static unsigned char head = 0;
-static unsigned char track = 0;
-static unsigned char seek_track = 0;
+static unsigned char sector;
+static unsigned char head;
+static unsigned char track;
+static unsigned char seek_track;
 static unsigned char current_track = NO_TRACK;
-static unsigned char command = 0;
-static unsigned char fdc_version = FDC_TYPE_STD;	/* FDC version code */
+static unsigned char command;
+static unsigned char fdc_version;
 
 static void floppy_ready(void);
+static void redo_fd_request(void);
+static void recal_interrupt(void);
+static void floppy_shutdown(void);
+static void motor_off_callback(int);
+static int floppy_register(void);
+static void floppy_deregister(void);
 
 static void delay_loop(int cnt)
 {
@@ -373,9 +330,7 @@ static void floppy_select(unsigned int nr)
     current_DOR |= current_drive;
     outb(current_DOR, FD_DOR);
 
-    /* It is not obvious why select should take any time at all ... HS */
-    /* The select_callback calls floppy_ready() */
-    /* The callback is NEVER called unless several drives are active concurrently */
+    /* Some FDCs require a delay when changing the current drive */
     del_timer(&select);
     select.tl_expires = jiffies + 2;
     add_timer(&select);
@@ -457,7 +412,7 @@ static void floppy_on(int nr)
  * that the motor off timer is slow enough not to affect performance. 3 
  * seconds is a fair compromise.
  */
-static void floppy_off(unsigned int nr)
+static void floppy_off(int nr)
 {
     del_timer(&motor_off_timer[nr]);
     motor_off_timer[nr].tl_expires = jiffies + 3 * HZ;
@@ -470,16 +425,7 @@ void request_done(int uptodate)
     /* FIXME: Is this the right place to delete this timer? */
     del_timer(&fd_timeout);
 
-#ifdef INCLUDE_FD_FORMATTING
-    if (format_status != FORMAT_BUSY)
-	end_request(uptodate);
-    else {
-	format_status = uptodate ? FORMAT_OKAY : FORMAT_ERROR;
-	wake_up(&format_done);
-    }
-#else
     end_request(uptodate);
-#endif
 }
 
 #ifdef CHECK_DISK_CHANGE
@@ -500,7 +446,7 @@ static unsigned int changed_floppies = 0, fake_change = 0;
 
 int floppy_change(struct buffer_head *bh)
 {
-    unsigned int mask = 1 << ((bh->b_dev & 0x03) >> MINOR_SHIFT;
+    unsigned int mask = 1 << (bh->b_dev & 0x03);
 
     if (MAJOR(bh->b_dev) != MAJOR_NR) {
 	printk("floppy_change: not a floppy\n");
@@ -549,24 +495,14 @@ static void setup_DMA(void)
     use_xms = req->rq_seg >> 16; /* will ne nonzero only if XMS configured & XMS buffer */
     physaddr = (req->rq_seg << 4) + (unsigned int)req->rq_buffer;
 
-#ifdef CONFIG_BLK_DEV_CHAR
-    count = nr_sectors ? nr_sectors<<9 : BLOCK_SIZE;
-#else
-    count = BLOCK_SIZE;
-#endif
-    if (use_xms || (physaddr + (unsigned int)count) < physaddr)
+    count = req->rq_nr_sectors? (unsigned)req->rq_nr_sectors << 9: BLOCK_SIZE;
+    if (use_xms || (physaddr + count) < physaddr)
 	dma_addr = LAST_DMA_ADDR + 1;	/* force use of bounce buffer */
     else
 	dma_addr = _MK_LINADDR(req->rq_seg, req->rq_buffer);
 
     DEBUG("setupDMA ");
 
-#ifdef INCLUDE_FD_FORMATTING
-    if (command == FD_FORMAT) {
-	dma_addr = _MK_LINADDR(kernel_ds, tmp_floppy_area);
-	count = floppy->sect * 4;
-    }
-#endif
     if (read_track) {	/* mark buffer-track bad, in case all this fails.. */
 	buffer_drive = buffer_track = -1;
 	count = floppy->sect << 9;	/* sects/trk (one side) times 512 */
@@ -631,7 +567,7 @@ static int result(void)
     }
     reset = 1;
     current_track = NO_TRACK;
-    printk("Getstatus timed out\n");
+    printk("df: getstatus timeout\n");
     return -1;
 }
 
@@ -641,18 +577,14 @@ static void bad_flp_intr(void)
 
     DEBUG("bad_flpI-");
     current_track = NO_TRACK;
-#ifdef INCLUDE_FD_FORMATTING
-    if (format_status == FORMAT_BUSY)
-	errors = ++format_errors;
-    else 
-#endif
     if (!CURRENT) {
-	printk("%s: no current request\n", DEVICE_NAME);
+	printk("df: no current request\n");
 	reset = recalibrate = 1;
 	return;
     } else
 	errors = ++CURRENT->rq_errors;
     if (errors > MAX_ERRORS) {
+        printk("df: Max retries #%d exceeded\n", errors);
 	request_done(0);
     }
     if (errors > MAX_ERRORS / 2)
@@ -662,12 +594,12 @@ static void bad_flp_intr(void)
 }
 
 /* Set perpendicular mode as required, based on data rate, if supported.
- * 82077 Untested! 1Mbps data rate only possible with 82077-1.
- * TODO: increase MAX_BUFFER_SECTORS, add floppy_type entries.
+ * 1Mbps data rate only possible with 82077-1.
+ * TODO: increase MAX_BUFFER_SECTORS.
  */
 static void perpendicular_mode(unsigned char rate)
 {
-    if (fdc_version == FDC_TYPE_82077) {
+    if (fdc_version >= FDC_TYPE_82077) {
 	output_byte(FD_PERPENDICULAR);
 	if (rate & 0x40) {
 	    unsigned char r = rate & 0x03;
@@ -676,40 +608,30 @@ static void perpendicular_mode(unsigned char rate)
 	    else if (r == 3)
 		output_byte(3);	/* perpendicular, 1Mbps */
 	    else {
-		printk("%s: Invalid data rate for perpendicular mode!\n",
-		       DEVICE_NAME);
+		printk("df: Invalid data rate for perpendicular mode!\n");
 		reset = 1;
 	    }
 	} else
 	    output_byte(0);	/* conventional mode */
     } else {
 	if (rate & 0x40) {
-	    printk("%s: perpendicular mode not supported by this FDC.\n",
-		   DEVICE_NAME);
+	    printk("df: need 82077 FDC for disc\n");
 	    reset = 1;
 	}
     }
 }				/* perpendicular_mode */
 
-/*
- * This has only been tested for the case fdc_version == FDC_TYPE_STD.
- * In case you have a 82077 and want to test it, you'll have to compile
- * with `FDC_FIFO_UNTESTED' defined. You may also want to add support for
- * recognizing drives with vertical recording support.
- */
 static void configure_fdc_mode(void)
 {
-#ifdef FDC_FIFO_UNTESTED
-    if (need_configure && (fdc_version == FDC_TYPE_82077)) {
-	/* Enhanced version with FIFO & vertical recording. */
+    if (need_configure && (fdc_version >= FDC_TYPE_82072)) {
+	/* Enhanced version with FIFO & write precompensation */
 	output_byte(FD_CONFIGURE);
 	output_byte(0);
 	output_byte(0x1A);	/* FIFO on, polling off, 10 byte threshold */
 	output_byte(0);		/* precompensation from track 0 upwards */
 	need_configure = 0;
-	printk("%s: FIFO enabled\n", DEVICE_NAME);
+	printk("df: FIFO enabled\n");
     }
-#endif
     if (cur_spec1 != floppy->spec1) {
 	cur_spec1 = floppy->spec1;
 	output_byte(FD_SPECIFY);
@@ -719,7 +641,7 @@ static void configure_fdc_mode(void)
     if (cur_rate != floppy->rate) {
 	/* use bit 6 of floppy->rate to indicate perpendicular mode */
 	perpendicular_mode(floppy->rate);
-	outb_p((cur_rate = (floppy->rate)) & ~0x40, FD_DCR);
+	outb_p((cur_rate = (floppy->rate)) & ~0x40, FD_CCR);
     }
 }				/* configure_fdc_mode */
 
@@ -753,20 +675,18 @@ static void rw_interrupt(void)
     switch ((ST0 & ST0_INTR) >> 6) {
     case 1:			/* error occured during command execution */
 	bad = 1;
+	printk("df%d: ", ST0 & ST0_DS);
 	if (ST1 & ST1_WP) {
-	    printk("%s: Drive %d is write protected", DEVICE_NAME,
-		   current_drive);
+	    printk(" write protected");
 	    request_done(0);
 	    bad = 0;
 	} else if (ST1 & ST1_OR) {
-	    if (ftd_msg[ST0 & ST0_DS])
-		printk("%s: Over/Under-run - retrying", DEVICE_NAME);
+	    printk("data over/underrun");
 	    /* could continue from where we stopped, but ... */
 	    bad = 0;
-	} else if (CURRENT_ERRORS > min_report_error_cnt[ST0 & ST0_DS]) {
-	    printk("%s: %d: ", DEVICE_NAME, ST0 & ST0_DS);
+	} else if (CURRENT->rq_errors >= MIN_ERRORS) {
 	    if (ST0 & ST0_ECE) {
-		printk("Recalibrate failed!");
+		printk("recalibrate failed");
 	    } else if (ST2 & ST2_CRC) {
 		printk("data CRC error");
 		tell_sector(nr);
@@ -778,7 +698,7 @@ static void rw_interrupt(void)
 		    printk("sector not found");
 		    tell_sector(nr);
 		} else
-		    printk("probe failed...");
+		    printk("probe failed on %s", floppy->name);
 	    } else if (ST2 & ST2_WC) {	/* seek error */
 		printk("wrong cylinder");
 	    } else if (ST2 & ST2_BC) {	/* cylinder marked as bad */
@@ -787,10 +707,6 @@ static void rw_interrupt(void)
 		printk("unknown error. ST[0-3]: 0x%x 0x%x 0x%x 0x%x",
 		       ST0, ST1, ST2, ST3);
 	    }
-	    CURRENT->rq_errors++; /* may want to increase this even more, doesn't make 
-	    		 * sense to re-try most of these conditions more 
-			 * than the reporting threshold. */
-			/* FIXME: Need smarter retry/error reporting scheme */
 	}
 	printk("\n");
 	if (bad)
@@ -798,11 +714,11 @@ static void rw_interrupt(void)
 	redo_fd_request();
 	return;
     case 2:			/* invalid command given */
-	printk("%s: Invalid FDC command given!\n", DEVICE_NAME);
+	printk("df: Invalid FDC command\n");
 	request_done(0);
 	return;
     case 3:
-	printk("%s: Abnormal termination caused by polling\n", DEVICE_NAME);
+	printk("df: Abnormal cmd termination\n");
 	bad_flp_intr();
 	redo_fd_request();
 	return;
@@ -811,11 +727,9 @@ static void rw_interrupt(void)
     }
 
     if (probing) {
-	int drive = (MINOR(CURRENT->rq_dev) >> MINOR_SHIFT) & 3;
+	int drive = DEVICE_NR(CURRENT->rq_dev);
 
-	if (ftd_msg[drive])
-	    printk("Auto-detected floppy type %s in df%d\n",
-		   floppy->name, drive);
+	printk("df%d: Auto-detected floppy type %s\n", drive, floppy->name);
 	current_type[drive] = floppy;
 	probing = 0;
     }
@@ -835,7 +749,7 @@ static void rw_interrupt(void)
 	/* if the dest buffer is out of reach for DMA (always the case if using
 	 * XMS buffers) we need to read/write via the bounce buffer */
 	xms_fmemcpyw(CURRENT->rq_buffer, CURRENT->rq_seg, tmp_floppy_area, kernel_ds, BLOCK_SIZE/2);
-	printk("directfd: illegal buffer usage, rq_buffer %04x:%04x\n", 
+	printk("fd: illegal buffer usage, rq_buffer %04x:%04x\n",
 		CURRENT->rq_seg, CURRENT->rq_buffer);
     }
     request_done(1);
@@ -864,27 +778,18 @@ void setup_rw_floppy(void)
     do_floppy = rw_interrupt;
     output_byte(command);
     output_byte(head << 2 | current_drive);
-
-    if (command != FD_FORMAT) {
-	output_byte(track);
-	output_byte(head);
-	if (read_track)
-	    output_byte(1);	/* always start at 1 */
-	else
-	    output_byte(sector+1); 
-
-	output_byte(2);		/* sector size = 512 */
-	output_byte(floppy->sect);
-	output_byte(floppy->gap);
-	output_byte(0xFF);	/* sector size, 0xff unless sector size==0 (128b) */
-    } else {
-	output_byte(2);		/* sector size = 512 */
-	output_byte(floppy->sect * 2); /* sectors per cyl */
-	output_byte(floppy->fmt_gap);
-	output_byte(FD_FILL_BYTE);
-    }
+    output_byte(track);
+    output_byte(head);
+    if (read_track)
+        output_byte(1);	        /* always start at 1 */
+    else
+        output_byte(sector+1);
+    output_byte(2);		/* sector size = 512 */
+    output_byte(floppy->sect);
+    output_byte(floppy->gap);
+    output_byte(0xFF);	/* sector size, 0xff unless sector size==0 (128b) */
     if (reset)
-	redo_fd_request();
+        redo_fd_request();
 }
 
 /*
@@ -898,7 +803,7 @@ static void seek_interrupt(void)
     DEBUG("seekI-");
     output_byte(FD_SENSEI);
     if (result() != 2 || (ST0 & 0xF8) != 0x20 || ST1 != seek_track) {
-	printk("%s%d: seek failed\n", DEVICE_NAME, current_drive);
+	printk("df%d: seek failed\n", current_drive);
 	recalibrate = 1;
 	bad_flp_intr();
 	redo_fd_request();
@@ -916,7 +821,7 @@ static void seek_interrupt(void)
 static void transfer(void)
 {
 #ifdef CONFIG_TRACK_CACHE
-    read_track = (command == FD_READ) && (CURRENT_ERRORS < 4) &&
+    read_track = (command == FD_READ) && (CURRENT->rq_errors < 4) &&
 	(floppy->sect <= MAX_BUFFER_SECTORS);
 #endif
     DEBUG("trns%d-", read_track);
@@ -982,7 +887,7 @@ static void unexpected_floppy_interrupt(void)
 {
     current_track = NO_TRACK;
     output_byte(FD_SENSEI);
-    printk("%s: unexpected interrupt\n", DEVICE_NAME);
+    printk("df: unexpected interrupt\n");
     if (result() != 2 || (ST0 & 0xE0) == 0x60)
 	reset = 1;
     else
@@ -1046,8 +951,9 @@ static void reset_floppy(void)
 
 static void floppy_shutdown(void)
 {
-    printk("[%u]shtdwn0x%x|%x-", (unsigned int)jiffies, current_DOR, running);
+    DEBUG("[%u]shtdwn0x%x|%x-", (unsigned int)jiffies, current_DOR, running);
     do_floppy = NULL;
+    printk("df%d: FDC cmd timeout\n", current_drive);
     request_done(0);
     recover = 1;
     reset_floppy();
@@ -1062,10 +968,15 @@ static void shake_done(void)
     result();
     DEBUG("shD0x%x-", ST0);
     current_track = NO_TRACK;
-    if (inb(FD_DIR) & 0x80 || ST0 & 0xC0)
-	request_done(0);	/* still errors: just fail */
-    else
-	redo_fd_request();
+    if (inb(FD_DIR) & 0x80) {
+        printk("df%d: disk changed, aborting\n", current_drive);
+	request_done(0);
+    }
+    if (ST0 & 0xC0) {
+        printk("df%d: error %02x after SENSEI\n", current_drive, ST0 & 0xC0);
+	//request_done(0);
+    }
+    redo_fd_request();
 }
 
 /*
@@ -1104,7 +1015,8 @@ static void shake_one(void)
 static void floppy_ready(void)
 {
     DEBUG("RDY0x%x,%d,%d-", inb(FD_DIR), reset, recalibrate);
-    if (inb(FD_DIR) & 0x80) {	/* set if disk changed since last cmd (AT ++) */
+    /* check if disk changed since last cmd (PC/AT+) */
+    if (fdc_version >= FDC_TYPE_8272PC_AT && (inb(FD_DIR) & 0x80)) {
 #ifdef CHECK_DISK_CHANGE
 	changed_floppies |= 1 << current_drive;
 #endif
@@ -1116,9 +1028,8 @@ static void floppy_ready(void)
 		/* FIXME: this is non sensical: Need to assume that a medium change
 		 * means a new medium of the same format as the prev until it fails.
 		 */
-	    if (ftd_msg[current_drive] && current_type[current_drive] != NULL)
-		printk("Disk type is undefined after disk change in df%d\n",
-		       current_drive);
+	    if (current_type[current_drive] != NULL)
+		printk("df%d: Disk type undefined after disk change\n", current_drive);
 	    current_type[current_drive] = NULL;
 	}
 	/* Forcing the drive to seek makes the "media changed" condition go
@@ -1147,130 +1058,71 @@ static void floppy_ready(void)
     transfer();
 }
 
-#ifdef INCLUDE_FD_FORMATTING
-static void setup_format_params(void)
-{
-    unsigned char *here = (unsigned char *) tmp_floppy_area;
-    int count, head_shift, track_shift, total_shift;
-
-    /* allow for about 30ms for data transport per track */
-    head_shift = floppy->sect / 6;
-    /* a ``cylinder'' is two tracks plus a little stepping time */
-    track_shift = 2 * head_shift + 1;
-    /* count backwards */
-    total_shift = floppy->sect -
-	((track_shift * track + head_shift * head) % floppy->sect);
-
-    /* XXX: should do a check to see this fits in tmp_floppy_area!! */
-    for (count = 0; count < floppy->sect; count++) {
-	*here++ = track;
-	*here++ = head;
-	*here++ = 1 + ((count + total_shift) % floppy->sect);
-	*here++ = 2;		/* 512 bytes */
-    }
-}
-#endif
-
 static void redo_fd_request(void)
 {
     unsigned int start;
     struct request *req;
     int device, drive;
+    unsigned int tmp;
 
-    /* cannot use the INIT_REQUEST macro since req=NULL is OK */
-
-    if (CURRENT && ((int)CURRENT->rq_dev == -1U))
-	return;
   repeat:
     req = CURRENT;
-    if (format_status == FORMAT_WAIT)
-	format_status = FORMAT_BUSY;
-    if (format_status != FORMAT_BUSY) {
-	if (!req) {
-	    if (!fdc_busy)
-		printk("FDC access conflict!");
-	    fdc_busy = 0;
-	    wake_up(&fdc_wait);
-	    CLEAR_INTR;
-	    return;
-	}
-	if (MAJOR(req->rq_dev) != MAJOR_NR)
-	    panic("%s: request list destroyed", DEVICE_NAME);
-	if (req->rq_bh && !EBH(req->rq_bh)->b_locked)
-		panic("%s: block not locked", DEVICE_NAME);
+    if (!req) {
+        if (!fdc_busy)
+            printk("FDC access conflict!");
+        fdc_busy = 0;
+        wake_up(&fdc_wait);
+        do_floppy = NULL;
+        return;
     }
+    CHECK_REQUEST(req);
+
     seek = 0;
     probing = 0;
-    device = MINOR(CURRENT_DEVICE) >> MINOR_SHIFT;
+    device = MINOR(req->rq_dev) >> MINOR_SHIFT;
     drive = device & 3;
     if (device > 3)
-	floppy = (device >> 2) + floppy_type;
+	floppy = (device >> 2) + minor_types;
     else {			/* Auto-detection */
 	floppy = current_type[drive];
 	if (!floppy) {
 	    probing = 1;
 	    floppy = base_type[drive];
 	    if (!floppy) {
+                printk("df%d: no base drive type, aborting\n", drive);
 		request_done(0);
 		goto repeat;
 	    }
-	    if (CURRENT_ERRORS & 1)
-		floppy++;
-	}
+            if (!recalibrate) {
+	        if (req->rq_errors & 1)
+		    floppy++;
+                printk("df%d: auto-probe #%d %s (%d)\n", drive, req->rq_errors,
+                    floppy->name, floppy-probe_types);
+            }
+        }
     }
     DEBUG("[%u]redo-%c %d(%s) bl %u;", (unsigned int)jiffies, 
 		req->rq_cmd == WRITE? 'W':'R', device, floppy->name, req->rq_sector);
-    debug_blkdrv("df%d: %c sector %ld\n", CURRENT_DEVICE & 3, req->rq_cmd==WRITE? 'W' : 'R', req->rq_sector);
-    if (format_status != FORMAT_BUSY) {
-    	unsigned int tmp;
-	if (current_drive != drive) {
-	    current_track = NO_TRACK;
-	    current_drive = drive;
-	}
-	start = (unsigned int) req->rq_sector;
-	if (start + 2 > floppy->size) {
-	    request_done(0);
-	    goto repeat;	/* FIXME: Should probably exit here */
-				/* or at least increment an error counter */
-	}
-#ifdef CONFIG_BLK_DEV_CHAR
-	nr_sectors = req->rq_nr_sectors;	/* non-zero if raw io */
-#endif
-	sector = start % floppy->sect;
-	tmp = start / floppy->sect;
-	head = tmp % floppy->head;
-	track = tmp / floppy->head;
-	seek_track = track << floppy->stretch;
-	DEBUG("%d:%d:%d:%d; ", start, sector, head, track);
-	if (req->rq_cmd == READ)
-	    command = FD_READ;
-	else if (req->rq_cmd == WRITE)
-	    command = FD_WRITE;
-	else {
-	    printk("redo_fd_request: unknown command\n");
-	    request_done(0);
-	    goto repeat;
-	}
+    DEBUG("df%d: %c sector %ld\n", DEVICE_NR(req->rq_dev),
+
+    req->rq_cmd==WRITE? 'W' : 'R', req->rq_sector);
+    if (current_drive != drive) {
+        current_track = NO_TRACK;
+        current_drive = drive;
     }
-#ifdef INCLUDE_FD_FORMATTING
-    else {	/* Format drive */
-	if (current_drive != (format_req.device & 3))
-	    current_track = NO_TRACK;
-	current_drive = format_req.device & 3;
-	if (((unsigned) format_req.track) >= floppy->track ||
-	    (format_req.head & 0xfffe) || probing) {
-	    request_done(0);
-	    goto repeat;
-	}
-	head = format_req.head;
-	track = format_req.track;
-	seek_track = track << floppy->stretch;
-	if ((seek_track << 1) + head == buffer_track)
-	    buffer_track = -1;
-	command = FD_FORMAT;
-	setup_format_params();
+    start = (unsigned int) req->rq_sector;
+    if (start + req->rq_nr_sectors > floppy->size) {
+        printk("df%d: sector %u beyond max %u\n", drive, start, floppy->size);
+        request_done(0);
+        goto repeat;
     }
-#endif
+    sector = start % floppy->sect;
+    tmp = start / floppy->sect;
+    head = tmp % floppy->head;
+    track = tmp / floppy->head;
+    seek_track = track << floppy->stretch;
+    DEBUG("%d:%d:%d:%d; ", start, sector, head, track);
+        command = (req->rq_cmd == READ)? FD_READ: FD_WRITE;
 
     /* timer for hung operations, 6 secs probably too long ... */
     del_timer(&fd_timeout);
@@ -1304,7 +1156,6 @@ static void redo_fd_request(void)
 void do_fd_request(void)
 {
     DEBUG("fdrq:");
-    if (CURRENT) CURRENT->rq_errors = 0;	// EXPERIMENTAL
     while (fdc_busy)
 	sleep_on(&fdc_wait);
     fdc_busy = 1;
@@ -1324,7 +1175,7 @@ static int fd_ioctl(struct inode *inode,
 	return -EINVAL;
     drive = MINOR(inode->i_rdev) >> MINOR_SHIFT;
     if (drive > 3)
-	this_floppy = &floppy_type[drive >> 2];
+	this_floppy = &minor_types[drive >> 2];
     else if ((this_floppy = current_type[drive & 3]) == NULL)
 	return -ENODEV;
 
@@ -1338,10 +1189,8 @@ static int fd_ioctl(struct inode *inode,
 	    put_user(this_floppy->track, &loc->cylinders);
 	    put_user_long(0L, &loc->start);
 	}
-	//return verified_memcpy_tofs((char *)param,
-	//	    (char *)this_floppy, sizeof(struct floppy_struct));
 	return err;
-#ifdef INCLUDE_FD_FORMATTING
+#ifdef UNUSED
     case FDFMTBEG:
 	if (!suser())
 	    return -EPERM;
@@ -1453,11 +1302,11 @@ static struct floppy_struct * INITPROC find_base(int drive, int code)
     struct floppy_struct *base;
 
     if (code > 0 && code < 6) {
-	base = &floppy_types[(code - 1) * 2];
+	base = &probe_types[(code - 1) * 2];
 	printk("df%d is %s (%d)", drive, base->name, code);
 	return base;
     }
-    printk("df%d is unknown type %d", drive, code);
+    printk("df%d is unknown (%d)", drive, code);
     return NULL;
 }
 
@@ -1465,6 +1314,7 @@ static void INITPROC config_types(void)
 {
     printk("df: CMOS ");
     base_type[0] = find_base(0, (CMOS_READ(0x10) >> 4) & 0xF);
+    //base_type[0] = find_base(0, 1);     /* force 360k FIXME add setup table */
     if (((CMOS_READ(0x14) >> 6) & 1) != 0) {
 	printk(", ");
 	base_type[1] = find_base(1, CMOS_READ(0x10) & 0xF);
@@ -1474,24 +1324,19 @@ static void INITPROC config_types(void)
 
 static int floppy_open(struct inode *inode, struct file *filp)
 {
-    int drive, dev;
+    int drive, dev, err;
 
-    drive = DEVICE_NR(inode->i_rdev);
+    drive = MINOR(inode->i_rdev) >> MINOR_SHIFT;
     dev = drive & 3;
-    if (++fd_ref[dev] == 1) {
-        floppy_register();
-    }
-    buffer_drive = buffer_track = -1;	/* FIXME: Don't invalidate buffer if
-					 * this is a reopen of the currently
-					 * bufferd drive. */
 
 #ifdef CHECK_DISK_CHANGE
     if (filp && filp->f_mode)
 	check_disk_change(inode->i_rdev);
 #endif
 
+    probing = 0;
     if (drive > 3)		/* forced floppy type */
-	floppy = (drive >> 2) + floppy_type;
+	floppy = (drive >> 2) + minor_types;
     else {			/* Auto-detection */
 	floppy = current_type[dev];
 	if (!floppy) {
@@ -1501,8 +1346,16 @@ static int floppy_open(struct inode *inode, struct file *filp)
 		return -ENXIO;
 	}
     }
-    inode->i_size = ((sector_t)(floppy->size)) << 9;	/* NOTE: assumes sector size 512 */
-    debug_blkdrv("df%d: open dv %x, sz %lu, %s\n", drive,
+
+    if (fd_ref[dev] == 0) {
+        err = floppy_register();
+        if (err) return err;
+        buffer_drive = buffer_track = -1;
+    }
+
+    fd_ref[dev]++;
+    inode->i_size = ((sector_t)floppy->size) << 9;  /* NOTE: assumes sector size 512 */
+    DEBUG("df%d: open dv %x, sz %lu, %s\n", drive,
 		inode->i_rdev, inode->i_size, floppy->name);
 
     return 0;
@@ -1543,16 +1396,16 @@ static struct file_operations floppy_fops = {
  */
 static void ignore_interrupt(void)
 {
-    printk("%s: weird interrupt ignored (%d)\n", DEVICE_NAME, result());
+    printk("df: interrupt ignored (%d)\n", result());
     reset = 1;
-    CLEAR_INTR;			/* ignore only once */
+    do_floppy = NULL;		/* ignore only once */
 }
 
-static void floppy_interrupt(int unused, struct pt_regs *unused1)
+static void floppy_interrupt(int irq, struct pt_regs *regs)
 {
-    void (*handler) () = DEVICE_INTR;
+    void (*handler) () = do_floppy;
 
-    DEVICE_INTR = NULL;
+    do_floppy = NULL;
     if (!handler)
 	handler = unexpected_floppy_interrupt;
     //printk("$");
@@ -1574,6 +1427,49 @@ static void floppy_deregister(void)
     set_irq();
 }
 
+/* Try to determine the floppy controller type */
+static int get_fdc_version(void)
+{
+    int type = FDC_TYPE_8272A;
+    const char *name;
+
+    do_floppy = ignore_interrupt;
+    output_byte(FD_VERSION);	/* get FDC version code */
+    if (result() != 1) {
+        printk("df: can't get FDC version\n");
+        return 0;
+    }
+    switch (reply_buffer[0]) {
+    case 0x80:
+        if (SETUP_CPU_TYPE > 5) {       /* 80286 CPU PC/AT or better */
+            type = FDC_TYPE_8272PC_AT;
+            name = "8272A (PC/AT)";
+        } else {
+            name = "8272A";
+        }
+        break;
+    case 0x90:
+        type = FDC_TYPE_82077;
+        name = "82077";
+        break;
+    default:
+        name = "Unknown";
+    }
+    printk("df: direct floppy FDC %s (0x%x), irq %d, dma %d\n",
+        name, reply_buffer[0], FLOPPY_IRQ, FLOPPY_DMA);
+
+    /* Not all FDCs seem to be able to handle the version command
+     * properly, so force a reset for the standard FDC clones,
+     * to avoid interrupt garbage.
+     */
+    /* testing FIXME --  the FDC has just been reset by the BIOS, do we need this? */
+    if (type < FDC_TYPE_82077) {
+        initial_reset_flag = 1;
+        reset_floppy();
+    }
+    return type;
+}
+
 static int floppy_register(void)
 {
     int err;
@@ -1592,31 +1488,8 @@ static int floppy_register(void)
         return -EBUSY;
     }
 
-    /* Try to determine the floppy controller type */
-    DEVICE_INTR = ignore_interrupt;	/* don't ask ... */
-    output_byte(FD_VERSION);	/* get FDC version code */
-    if (result() != 1) {
-	printk("%s: FDC failed to return version byte\n", DEVICE_NAME);
-	fdc_version = FDC_TYPE_STD;
-    } else
-	fdc_version = reply_buffer[0];
-    if (fdc_version != FDC_TYPE_STD)
-	printk("%s: Direct floppy driver, FDC (%s) @ irq %d, DMA %d\n", DEVICE_NAME, 
-		fdc_version == 0x80 ? "8272A" : "82077", FLOPPY_IRQ, FLOPPY_DMA);
-#ifndef FDC_FIFO_UNTESTED
-    fdc_version = FDC_TYPE_STD;	/* force std fdc type; can't test other. */
-#endif
-
-    /* Not all FDCs seem to be able to handle the version command
-     * properly, so force a reset for the standard FDC clones,
-     * to avoid interrupt garbage.
-     */
-#if 1	/* testing FIXME --  the FDC has just been reset by the BIOS, do we need this? */
-    if (fdc_version == FDC_TYPE_STD) {
-	initial_reset_flag = 1;
-	reset_floppy();
-    }
-#endif
+    fdc_version = get_fdc_version();
+    if (!fdc_version) return -EIO;
     return 0;
 }
 

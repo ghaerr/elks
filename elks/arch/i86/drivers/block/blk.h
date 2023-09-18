@@ -76,10 +76,9 @@ extern void resetup_one_dev(struct gendisk *dev, int drive);
 #ifdef FLOPPYDISK
 
 static void floppy_on(int nr);
-static void floppy_off(unsigned int nr);
+static void floppy_off(int nr);
 
 #define DEVICE_NAME "df"
-#define DEVICE_INTR do_floppy
 #define DEVICE_REQUEST do_fd_request
 #define DEVICE_NR(device) ((device) & 3)
 #define DEVICE_ON(device) floppy_on(DEVICE_NR(device))

@@ -238,7 +238,8 @@ static void do_rd_request(void)
 	target = DEVICE_NR(req->rq_dev);
 	debug("RD: %s dev %d sector %d, ", req->rq_cmd == READ? "read": "write",
 		target, start);
-	if (drive_info[target].valid == 0 || start >= drive_info[target].size) {
+	if (drive_info[target].valid == 0 ||
+                start + req->rq_nr_sectors > drive_info[target].size) {
 	    debug("rd%d: sector %d beyond max %d\n",
 		 target, start, drive_info[target].size);
 	    end_request(0);

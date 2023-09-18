@@ -484,6 +484,7 @@ extern size_t decompress(char *buf, seg_t seg, size_t orig_size, size_t compr_si
 #ifdef BLOAT_FS
 extern int get_write_access(struct inode *);
 extern void put_write_access(struct inode *);
+extern int check_disk_change(kdev_t);
 #else
 #define get_write_access(_a)
 #define put_write_access(_a)
