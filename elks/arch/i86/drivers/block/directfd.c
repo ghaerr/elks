@@ -55,6 +55,11 @@
  * rewritten for TLVC - imported DMA setup from Minix for simplicity and
  * compactness. Added fix for bioses that do motor timeout on their own.
  * Now compiles - and works.
+ *
+ * Sep 2023 - Greg Haerr
+ * Ported Helge's modifications to ELKS. Lots of original driver cleanup.
+ * Expanded FDC and platform identification to allow running on original
+ * IBM PC and clones with no DIR register. Added lots of info and error msgs.
  */
 
 /*
@@ -99,39 +104,39 @@
 #include "blk.h"		/* ugly - blk.h contains code */
 
 /*
- * The original 8272A doesn't have FD_DIR or FD_CCR registers, but
- * the 82077 found on the PS/2 and modern clones can be configured in
- * hardware to emulate the chip and adaptor found on many PC/AT compatibles.
+ * The original 8272A doesn't have FD_DOR, FD_DIR or FD_CCR registers,
+ * but the 82077 found on modern clones can be configured in hardware
+ * to emulate the chip and adaptor found on many PC/AT compatibles.
  *
- * History and capabilities of FDC chips (all have MSR,DATA regs):
+ * History and capabilities of FDC chips on IBM Compatibles (all have MSR,DATA regs)
  *  Chip         System             Adaptor Regs    Chip Regs    New Commands
  *  8272A/NEC765 IBM PC, IBM PC/XT  DOR
  *  8272A/NEC765 IBM PC/AT          DOR,DIR,CCR,DSR
- *  82072                                           DSR          CONFIGURE,DUMPREGS
- *  82077AA      IBM PS/2                           DOR,DIR,CCR  PERPENDICULAR,LOCK
+ *  8272A/NEC765 IBM PS/2 (gen 1)   DOR,DIR,CCR,DSR
+ *  82072        IBM PS/2 (gen 2)                   DSR          CONFIGURE,DUMPREGS
+ *  82077AA      IBM PS/2 (gen 3)                   DOR,DIR,CCR  PERPENDICULAR,LOCK
  */
 
 //#define DEBUG printk
 #define DEBUG(...)
-//#define INCLUDE_FD_FORMATTING
 
 static void (*do_floppy)();     /* interrupt routine to call */
-static int initial_reset_flag = 0;
+static int initial_reset_flag;
 static int need_configure = 1;	/* for 82077 */
-static int recalibrate = 0;
-static int reset = 0;
-static int recover = 0;		/* recalibrate immediately after resetting */
-static int seek = 0;
+static int recalibrate;
+static int reset;
+static int recover;		        /* recalibrate immediately after resetting */
+static int seek;
 
 /* BIOS floppy motor timeout counter - FIXME leave this while BIOS driver present */
 static unsigned char __far *fl_timeout = (void __far *)0x440L;
 
+/* NOTE: current_DOR tells which motor(s) have been commanded to run,
+ * 'running' tells which ones are actually running. The difference is subtle,
+ * with typical spinup time of .5 secs.
+ */
 static unsigned char current_DOR;
 static unsigned char running = 0; /* keep track of motors already running */
-/* NOTE: current_DOR tells which motor(s) have been commanded to run,
- * 'running' tells which ones are actually running. The difference is subtle - 
- * the spinup time, typical .5 secs */
-
 /*
  * Note that MAX_ERRORS=X doesn't imply that we retry every bad read
  * max X times - some types of errors increase the errorcount by 2 or
@@ -168,10 +173,19 @@ static unsigned char reply_buffer[MAX_REPLIES];
 /*
  * Minor number based formats. Each drive type is specified starting
  * from minor number 4 and no auto-probing is used.
- * The 'stretch' tells if the tracks need to be doubled for some
- * types (ie 360kB diskette in 1.2MB drive etc). Others should
- * be self-explanatory.
+ *
+ * Stretch tells if the tracks need to be doubled for some
+ * types (ie 360kB diskette in 1.2MB drive etc).
+ *
+ * Rate is 0 for 500kb/s, 1 for 300kbps, 2 for 250kbps
+ * Spec1 is 0xSH, where S is stepping rate (F=1ms, E=2ms, D=3ms etc),
+ * H is head unload time, time the FDC will wait before unloading
+ * the head after a command that accesses the disk (1=16ms, 2=32ms, etc)
+ *
+ * Spec2 is (HLD<<1 | ND), where HLD is head load time (1=2ms, 2=4 ms etc)
+ * and ND is set means no DMA. Hardcoded to 6 (HLD=6ms, use DMA).
  */
+
 static struct floppy_struct minor_types[] = {
     {0, 0, 0, 0, 0, 0x00, 0x00, 0x00, 0x00, NULL},	/* no testing */
     {720, 9, 2, 40, 0, 0x2A, 0x02, 0xDF, 0x50, NULL},	/* 360kB PC diskettes */
@@ -211,12 +225,6 @@ struct floppy_struct *current_type[4] = { NULL, NULL, NULL, NULL };
 struct floppy_struct *base_type[4];
 
 /*
- * User-provided type information. current_type points to
- * the respective entry of this array.
- */
-//struct floppy_struct user_params[4];
-
-/*
  * The driver is trying to determine the correct media format
  * while probing is set. rw_interrupt() clears it after a
  * successful access.
@@ -228,20 +236,14 @@ static int probing;
  * if the corresponding keep_data flag is non-zero. Positive values are
  * decremented after each probe.
  */
-static int keep_data[4] = { 0, 0, 0, 0 };
+static int keep_data[4];
 
-static int fd_ref[4];           /* device reference counter */
+/* device reference counters */
+static int fd_ref[4];
 
 /* Synchronization of FDC access. */
-static int format_status = FORMAT_NONE, fdc_busy = 0;
+static int fdc_busy;
 static struct wait_queue fdc_wait;
-//static struct wait_queue format_done;
-
-/* Errors during formatting are counted here. */
-//static int format_errors;
-
-/* Format request descriptor. */
-//static struct format_descr format_req;
 
 /*
  * Threshold for reporting FDC errors to the console.
@@ -249,16 +251,6 @@ static struct wait_queue fdc_wait;
  * ultra cheap floppies ;-)
  */
 #define MIN_ERRORS      0
-
-/*
- * Rate is 0 for 500kb/s, 1 for 300kbps, 2 for 250kbps
- * Spec1 is 0xSH, where S is stepping rate (F=1ms, E=2ms, D=3ms etc),
- * H is head unload time, time the FDC will wait before unloading
- * the head after a command that accesses the disk (1=16ms, 2=32ms, etc)
- *
- * Spec2 is (HLD<<1 | ND), where HLD is head load time (1=2ms, 2=4 ms etc)
- * and ND is set means no DMA. Hardcoded to 6 (HLD=6ms, use DMA).
- */
 
 /*
  * The block buffer is used for all writes, for formatting and for reads
@@ -433,16 +425,7 @@ void request_done(int uptodate)
     /* FIXME: Is this the right place to delete this timer? */
     del_timer(&fd_timeout);
 
-#ifdef INCLUDE_FD_FORMATTING
-    if (format_status != FORMAT_BUSY)
-	end_request(uptodate);
-    else {
-	format_status = uptodate ? FORMAT_OKAY : FORMAT_ERROR;
-	wake_up(&format_done);
-    }
-#else
     end_request(uptodate);
-#endif
 }
 
 #ifdef CHECK_DISK_CHANGE
@@ -520,12 +503,6 @@ static void setup_DMA(void)
 
     DEBUG("setupDMA ");
 
-#ifdef INCLUDE_FD_FORMATTING
-    if (command == FD_FORMAT) {
-	dma_addr = _MK_LINADDR(kernel_ds, tmp_floppy_area);
-	count = floppy->sect * 4;
-    }
-#endif
     if (read_track) {	/* mark buffer-track bad, in case all this fails.. */
 	buffer_drive = buffer_track = -1;
 	count = floppy->sect << 9;	/* sects/trk (one side) times 512 */
@@ -600,11 +577,6 @@ static void bad_flp_intr(void)
 
     DEBUG("bad_flpI-");
     current_track = NO_TRACK;
-#ifdef INCLUDE_FD_FORMATTING
-    if (format_status == FORMAT_BUSY)
-	errors = ++format_errors;
-    else 
-#endif
     if (!CURRENT) {
 	printk("df: no current request\n");
 	reset = recalibrate = 1;
@@ -806,27 +778,18 @@ void setup_rw_floppy(void)
     do_floppy = rw_interrupt;
     output_byte(command);
     output_byte(head << 2 | current_drive);
-
-    if (command != FD_FORMAT) {
-	output_byte(track);
-	output_byte(head);
-	if (read_track)
-	    output_byte(1);	/* always start at 1 */
-	else
-	    output_byte(sector+1); 
-
-	output_byte(2);		/* sector size = 512 */
-	output_byte(floppy->sect);
-	output_byte(floppy->gap);
-	output_byte(0xFF);	/* sector size, 0xff unless sector size==0 (128b) */
-    } else {
-	output_byte(2);		/* sector size = 512 */
-	output_byte(floppy->sect * 2); /* sectors per cyl */
-	output_byte(floppy->fmt_gap);
-	output_byte(FD_FILL_BYTE);
-    }
+    output_byte(track);
+    output_byte(head);
+    if (read_track)
+        output_byte(1);	        /* always start at 1 */
+    else
+        output_byte(sector+1);
+    output_byte(2);		/* sector size = 512 */
+    output_byte(floppy->sect);
+    output_byte(floppy->gap);
+    output_byte(0xFF);	/* sector size, 0xff unless sector size==0 (128b) */
     if (reset)
-	redo_fd_request();
+        redo_fd_request();
 }
 
 /*
@@ -1095,46 +1058,23 @@ static void floppy_ready(void)
     transfer();
 }
 
-#ifdef INCLUDE_FD_FORMATTING
-static void setup_format_params(void)
-{
-    unsigned char *here = (unsigned char *) tmp_floppy_area;
-    int count, head_shift, track_shift, total_shift;
-
-    /* allow for about 30ms for data transport per track */
-    head_shift = floppy->sect / 6;
-    /* a ``cylinder'' is two tracks plus a little stepping time */
-    track_shift = 2 * head_shift + 1;
-    /* count backwards */
-    total_shift = floppy->sect -
-	((track_shift * track + head_shift * head) % floppy->sect);
-
-    /* XXX: should do a check to see this fits in tmp_floppy_area!! */
-    for (count = 0; count < floppy->sect; count++) {
-	*here++ = track;
-	*here++ = head;
-	*here++ = 1 + ((count + total_shift) % floppy->sect);
-	*here++ = 2;		/* 512 bytes */
-    }
-}
-#endif
-
 static void redo_fd_request(void)
 {
     unsigned int start;
     struct request *req;
     int device, drive;
+    unsigned int tmp;
 
   repeat:
     req = CURRENT;
-	if (!req) {
-	    if (!fdc_busy)
-		printk("FDC access conflict!");
-	    fdc_busy = 0;
-	    wake_up(&fdc_wait);
-	    do_floppy = NULL;
-	    return;
-	}
+    if (!req) {
+        if (!fdc_busy)
+            printk("FDC access conflict!");
+        fdc_busy = 0;
+        wake_up(&fdc_wait);
+        do_floppy = NULL;
+        return;
+    }
     CHECK_REQUEST(req);
 
     seek = 0;
@@ -1164,46 +1104,25 @@ static void redo_fd_request(void)
     DEBUG("[%u]redo-%c %d(%s) bl %u;", (unsigned int)jiffies, 
 		req->rq_cmd == WRITE? 'W':'R', device, floppy->name, req->rq_sector);
     DEBUG("df%d: %c sector %ld\n", DEVICE_NR(req->rq_dev),
-        req->rq_cmd==WRITE? 'W' : 'R', req->rq_sector);
-    if (format_status != FORMAT_BUSY) {
-    	unsigned int tmp;
-	if (current_drive != drive) {
-	    current_track = NO_TRACK;
-	    current_drive = drive;
-	}
-	start = (unsigned int) req->rq_sector;
-	if (start + req->rq_nr_sectors > floppy->size) {
-            printk("df%d: sector %u beyond max %u\n", drive, start, floppy->size);
-	    request_done(0);
-	    goto repeat;
-	}
-	sector = start % floppy->sect;
-	tmp = start / floppy->sect;
-	head = tmp % floppy->head;
-	track = tmp / floppy->head;
-	seek_track = track << floppy->stretch;
-	DEBUG("%d:%d:%d:%d; ", start, sector, head, track);
-	command = (req->rq_cmd == READ)? FD_READ: FD_WRITE;
+
+    req->rq_cmd==WRITE? 'W' : 'R', req->rq_sector);
+    if (current_drive != drive) {
+        current_track = NO_TRACK;
+        current_drive = drive;
     }
-#ifdef INCLUDE_FD_FORMATTING
-    else {	/* Format drive */
-	if (current_drive != (format_req.device & 3))
-	    current_track = NO_TRACK;
-	current_drive = format_req.device & 3;
-	if (((unsigned) format_req.track) >= floppy->track ||
-	    (format_req.head & 0xfffe) || probing) {
-	    request_done(0);
-	    goto repeat;
-	}
-	head = format_req.head;
-	track = format_req.track;
-	seek_track = track << floppy->stretch;
-	if ((seek_track << 1) + head == buffer_track)
-	    buffer_track = -1;
-	command = FD_FORMAT;
-	setup_format_params();
+    start = (unsigned int) req->rq_sector;
+    if (start + req->rq_nr_sectors > floppy->size) {
+        printk("df%d: sector %u beyond max %u\n", drive, start, floppy->size);
+        request_done(0);
+        goto repeat;
     }
-#endif
+    sector = start % floppy->sect;
+    tmp = start / floppy->sect;
+    head = tmp % floppy->head;
+    track = tmp / floppy->head;
+    seek_track = track << floppy->stretch;
+    DEBUG("%d:%d:%d:%d; ", start, sector, head, track);
+        command = (req->rq_cmd == READ)? FD_READ: FD_WRITE;
 
     /* timer for hung operations, 6 secs probably too long ... */
     del_timer(&fd_timeout);
@@ -1270,10 +1189,8 @@ static int fd_ioctl(struct inode *inode,
 	    put_user(this_floppy->track, &loc->cylinders);
 	    put_user_long(0L, &loc->start);
 	}
-	//return verified_memcpy_tofs((char *)param,
-	//	    (char *)this_floppy, sizeof(struct floppy_struct));
 	return err;
-#ifdef INCLUDE_FD_FORMATTING
+#ifdef UNUSED
     case FDFMTBEG:
 	if (!suser())
 	    return -EPERM;
