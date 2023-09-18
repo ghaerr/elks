@@ -99,12 +99,18 @@
 #include "blk.h"		/* ugly - blk.h contains code */
 
 /*
- * The original 8272A doesn't have FD_DIR or FD_DCR registers, but
- * the 82077 found on the PS/2 and others can be configured in hardware
- * to emulate the 82072A found on many PC/AT compatibles.
+ * The original 8272A doesn't have FD_DIR or FD_CCR registers, but
+ * the 82077 found on the PS/2 and modern clones can be configured in
+ * hardware to emulate the 82072 found on many PC/AT compatibles.
+ *
+ * History and capabilities of FDC chips     Registers       New Commands
+ *  8272A   IBM PC and clones (also NEC 765) no DSR,DIR,CCR
+ *  82072   IBM PC/AT and clones             DSR             CONFIGURE,DUMPREGS
+ *  82077AA IBM PS/2 and modern systems      DIR,CCR         PERPENDICULAR,LOCK
  */
 //FIXME: use fdc_version instead of ifdef
 #define HAS_FD_DIR      0       /* =1 if 82077 and configured for PC/AT compatibility */
+//#define FDC_FIFO_UNTESTED
 
 //#define debug_blkdrv    printk
 #define debug_blkdrv(...)
@@ -125,7 +131,7 @@ static int seek = 0;
 /* BIOS floppy motor timeout counter - FIXME leave this while BIOS driver present */
 static unsigned char __far *fl_timeout = (void __far *)0x440L;
 
-static unsigned char current_DOR = 0x0C;
+static unsigned char current_DOR;
 static unsigned char running = 0; /* keep track of motors already running */
 /* NOTE: current_DOR tells which motor(s) have been commanded to run,
  * 'running' tells which ones are actually running. The difference is subtle - 
@@ -137,12 +143,6 @@ static unsigned char running = 0; /* keep track of motors already running */
  * even 3, so we might actually retry only X/2 times before giving up.
  */
 #define MAX_ERRORS 12
-
-/*
- * Maximum disk size (in kilobytes). This default is used whenever the
- * current disk size is unknown.
- */
-#define MAX_DISK_SIZE 1440
 
 /*
  * Maximum number of sectors in a track buffer. Track buffering is disabled
@@ -345,9 +345,7 @@ static void floppy_select(unsigned int nr)
     current_DOR |= current_drive;
     outb(current_DOR, FD_DOR);
 
-    /* It is not obvious why select should take any time at all ... HS */
-    /* The select_callback calls floppy_ready() */
-    /* The callback is NEVER called unless several drives are active concurrently */
+    /* Some FDCs require a delay when changing the current drive */
     del_timer(&select);
     select.tl_expires = jiffies + 2;
     add_timer(&select);
@@ -599,7 +597,7 @@ static int result(void)
     }
     reset = 1;
     current_track = NO_TRACK;
-    printk("Getstatus timed out\n");
+    printk("df: getstatus timeout\n");
     return -1;
 }
 
@@ -686,7 +684,7 @@ static void configure_fdc_mode(void)
     if (cur_rate != floppy->rate) {
 	/* use bit 6 of floppy->rate to indicate perpendicular mode */
 	perpendicular_mode(floppy->rate);
-	outb_p((cur_rate = (floppy->rate)) & ~0x40, FD_DCR);
+	outb_p((cur_rate = (floppy->rate)) & ~0x40, FD_CCR);
     }
 }				/* configure_fdc_mode */
 
@@ -794,7 +792,7 @@ static void rw_interrupt(void)
 	/* if the dest buffer is out of reach for DMA (always the case if using
 	 * XMS buffers) we need to read/write via the bounce buffer */
 	xms_fmemcpyw(CURRENT->rq_buffer, CURRENT->rq_seg, tmp_floppy_area, kernel_ds, BLOCK_SIZE/2);
-	printk("directfd: illegal buffer usage, rq_buffer %04x:%04x\n", 
+	printk("fd: illegal buffer usage, rq_buffer %04x:%04x\n",
 		CURRENT->rq_seg, CURRENT->rq_buffer);
     }
     request_done(1);
@@ -1007,7 +1005,7 @@ static void floppy_shutdown(void)
 {
     DEBUG("[%u]shtdwn0x%x|%x-", (unsigned int)jiffies, current_DOR, running);
     do_floppy = NULL;
-    printk("df%d: FDC timed out\n", current_drive);
+    printk("df%d: FDC cmd timeout\n", current_drive);
     request_done(0);
     recover = 1;
     reset_floppy();
@@ -1564,8 +1562,10 @@ static int floppy_register(void)
      * to avoid interrupt garbage.
      */
     /* testing FIXME --  the FDC has just been reset by the BIOS, do we need this? */
-    initial_reset_flag = 1;
-    reset_floppy();
+    if (fdc_version == FDC_TYPE_STD) {
+        initial_reset_flag = 1;
+        reset_floppy();
+    }
     return 0;
 }
 

@@ -7,11 +7,12 @@
  */
 
 /* Fd controller regs. S&C, about page 340 */
-#define FD_STATUS	0x3f4
-#define FD_DATA		0x3f5
+#define FD_STATUS	0x3f4   /* (MSR) Main Status Register */
+#define FD_DSR          0x3f4   /* Data Rate Select Register (write) (82072 only) */
+#define FD_DATA		0x3f5   /* Data Register (FIFO) */
 #define FD_DOR		0x3f2	/* Digital Output Register */
-#define FD_DIR		0x3f7	/* Digital Input Register (read) PC/AT only */
-#define FD_DCR		0x3f7	/* Diskette Control Register (write) PC/AT only */
+#define FD_DIR		0x3f7	/* Digital Input Register (read) (82077) */
+#define FD_CCR		0x3f7	/* Configuration Control Register (write) (82077) */
 
 /* Bits of main status register */
 #define STATUS_BUSYMASK	0x0F	/* drive busy mask */
@@ -59,8 +60,9 @@
 #define FD_SPECIFY		0x03	/* specify HUT etc */
 #define FD_FORMAT		0x4D	/* format one track */
 #define FD_VERSION		0x10	/* get version code */
-#define FD_CONFIGURE		0x13	/* configure FIFO operation */
-#define FD_PERPENDICULAR	0x12	/* perpendicular r/w mode */
+#define FD_CONFIGURE		0x13	/* configure FIFO operation (82072) */
+#define FD_PERPENDICULAR	0x12	/* perpendicular r/w mode (82077) */
+#define FD_DUMPREGS             0x0E    /* dump the contents of the fdc regs (82072) */
 
 /* DMA commands */
 #define DMA_READ	0x46
