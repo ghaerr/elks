@@ -18,5 +18,5 @@ wd0=10,0x300,0xCC00,0x80
 #root=hda1 ro		# root hd partition 1 read-only
 #kstack
 #strace
-root=df0
+#root=df0
 #console=ttyS0,19200 3
