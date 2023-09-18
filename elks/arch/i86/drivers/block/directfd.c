@@ -1314,7 +1314,7 @@ static void INITPROC config_types(void)
 {
     printk("df: CMOS ");
     base_type[0] = find_base(0, (CMOS_READ(0x10) >> 4) & 0xF);
-    base_type[0] = find_base(0, 1);     /* force 360k FIXME add setup table */
+    //base_type[0] = find_base(0, 1);     /* force 360k FIXME add setup table */
     if (((CMOS_READ(0x14) >> 6) & 1) != 0) {
 	printk(", ");
 	base_type[1] = find_base(1, CMOS_READ(0x10) & 0xF);
