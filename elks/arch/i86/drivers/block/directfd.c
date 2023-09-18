@@ -1172,8 +1172,8 @@ static void redo_fd_request(void)
 	    current_drive = drive;
 	}
 	start = (unsigned int) req->rq_sector;
-	if (start + req->rq_nr_sectors >= floppy->size) {
-            printk("df%d: sector %u beyond max %u\n", start, floppy->size);
+	if (start + req->rq_nr_sectors > floppy->size) {
+            printk("df%d: sector %u beyond max %u\n", drive, start, floppy->size);
 	    request_done(0);
 	    goto repeat;
 	}

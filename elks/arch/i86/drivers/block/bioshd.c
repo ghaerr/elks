@@ -712,7 +712,7 @@ next_block:
         count = req->rq_nr_sectors;
         start = req->rq_sector;
 
-        if (hd[minor].start_sect == -1U || start >= hd[minor].nr_sects) {
+        if (hd[minor].start_sect == -1U || start + count > hd[minor].nr_sects) {
             printk("bioshd: sector %ld access beyond partition (%ld,%ld)\n",
                 start, hd[minor].start_sect, hd[minor].nr_sects);
             end_request(0);
