@@ -8,7 +8,6 @@
 
 /* Fd controller regs. S&C, about page 340 */
 #define FD_STATUS	0x3f4   /* (MSR) Main Status Register */
-#define FD_DSR          0x3f4   /* Data Rate Select Register (write) (82072 only) */
 #define FD_DATA		0x3f5   /* Data Register (FIFO) */
 #define FD_DOR		0x3f2	/* Digital Output Register */
 #define FD_DIR		0x3f7	/* Digital Input Register (read) (82077) */
@@ -61,15 +60,17 @@
 #define FD_FORMAT		0x4D	/* format one track */
 #define FD_VERSION		0x10	/* get version code */
 #define FD_CONFIGURE		0x13	/* configure FIFO operation (82072) */
-#define FD_PERPENDICULAR	0x12	/* perpendicular r/w mode (82077) */
 #define FD_DUMPREGS             0x0E    /* dump the contents of the fdc regs (82072) */
+#define FD_PERPENDICULAR	0x12	/* perpendicular r/w mode (82077) */
 
 /* DMA commands */
 #define DMA_READ	0x46
 #define DMA_WRITE	0x4A
 
-/* FDC version return types */
-#define FDC_TYPE_STD	0x80	/* normal 8272A clone FDC */
-#define FDC_TYPE_82077	0x90	/* FIFO + perpendicular support */
+/* FDC chip/adapter types */
+#define FDC_TYPE_8272A      1   /* IBM PC or PC/XT clone w/8272A (or NEC 765) */
+#define FDC_TYPE_8272PC_AT  2   /* IBM PC/AT w/8272A has DIR/CCR on adaptor */
+#define FDC_TYPE_82072      3   /* FDC accepts CONFIGURE, DUMPREGS */
+#define FDC_TYPE_82077      4   /* FDC accepts PERPENDICULAR, LOCK */
 
 #endif

@@ -101,23 +101,18 @@
 /*
  * The original 8272A doesn't have FD_DIR or FD_CCR registers, but
  * the 82077 found on the PS/2 and modern clones can be configured in
- * hardware to emulate the 82072 found on many PC/AT compatibles.
+ * hardware to emulate the chip and adaptor found on many PC/AT compatibles.
  *
- * History and capabilities of FDC chips     Registers       New Commands
- *  8272A   IBM PC and clones (also NEC 765) no DSR,DIR,CCR
- *  82072   IBM PC/AT and clones             DSR             CONFIGURE,DUMPREGS
- *  82077AA IBM PS/2 and modern systems      DIR,CCR         PERPENDICULAR,LOCK
+ * History and capabilities of FDC chips (all have MSR,DATA regs):
+ *  Chip         System             Adaptor Regs    Chip Regs    New Commands
+ *  8272A/NEC765 IBM PC, IBM PC/XT  DOR
+ *  8272A/NEC765 IBM PC/AT          DOR,DIR,CCR,DSR
+ *  82072                                           DSR          CONFIGURE,DUMPREGS
+ *  82077AA      IBM PS/2                           DOR,DIR,CCR  PERPENDICULAR,LOCK
  */
-//FIXME: use fdc_version instead of ifdef
-#define HAS_FD_DIR      0       /* =1 if 82077 and configured for PC/AT compatibility */
-//#define FDC_FIFO_UNTESTED
 
-//#define debug_blkdrv    printk
-#define debug_blkdrv(...)
 //#define DEBUG printk
 #define DEBUG(...)
-
-/* Formatting code is currently untested, don't waste the space */
 //#define INCLUDE_FD_FORMATTING
 
 static void (*do_floppy)();     /* interrupt routine to call */
@@ -186,7 +181,7 @@ static struct floppy_struct minor_types[] = {
     {720, 9, 2, 40, 1, 0x23, 0x01, 0xDF, 0x50, NULL},	/* 360kB in 1.2MB drive */
     {1440, 9, 2, 80, 0, 0x23, 0x01, 0xDF, 0x50, NULL},	/* 720kB in 1.2MB drive */
     {2880, 18, 2, 80, 0, 0x1B, 0x00, 0xCF, 0x6C, NULL},	/* 1.44MB diskette */
-    {5760, 36, 2, 80, 0, 0x1B, 0x03, 0xCF, 0x6C, NULL},	/* 2.88MB diskette (UNTESTED) */
+    {5760, 36, 2, 80, 0, 0x1B, 0x43, 0xAF, 0x28, NULL},	/* 2.88MB diskette */
     /* totSectors/secPtrack/heads/tracks/stretch/gap/Drate/S&Hrates/fmtGap/nm/  */
 };
 
@@ -205,7 +200,7 @@ static struct floppy_struct probe_types[] = {
     {1440, 9, 2, 80, 0, 0x2A, 0x02, 0xDF, 0x50, "720k"},	/* 3.5" 720kB diskette */
     {2880, 18, 2, 80, 0, 0x1B, 0x00, 0xCF, 0x6C, "1.44M"},	/* 1.44MB diskette */
     {1440, 9, 2, 80, 0, 0x2A, 0x02, 0xDF, 0x50, "720k/1.2M"},	/* 3.5" 720kB diskette */
-    {5760, 36, 2, 80, 0, 0x1B, 0x03, 0xCF, 0x6C, "2.88M"},/* 2.88MB diskette (UNTESTED) */
+    {5760, 36, 2, 80, 0, 0x1B, 0x43, 0xAF, 0x28, "2.88M"},      /* 2.88MB diskette */
     {2880, 18, 2, 80, 0, 0x1B, 0x00, 0xCF, 0x6C, "1.44M"},	/* 1.44MB diskette */
 };
 
@@ -228,14 +223,12 @@ struct floppy_struct *base_type[4];
  */
 static int probing;
 
-#if HAS_FD_DIR
 /*
  * (User-provided) media information is _not_ discarded after a media change
  * if the corresponding keep_data flag is non-zero. Positive values are
  * decremented after each probe.
  */
 static int keep_data[4] = { 0, 0, 0, 0 };
-#endif
 
 static int fd_ref[4];           /* device reference counter */
 
@@ -519,7 +512,7 @@ static void setup_DMA(void)
     use_xms = req->rq_seg >> 16; /* will ne nonzero only if XMS configured & XMS buffer */
     physaddr = (req->rq_seg << 4) + (unsigned int)req->rq_buffer;
 
-    count = req->rq_nr_sectors? req->rq_nr_sectors * 512: BLOCK_SIZE;
+    count = req->rq_nr_sectors? (unsigned)req->rq_nr_sectors << 9: BLOCK_SIZE;
     if (use_xms || (physaddr + count) < physaddr)
 	dma_addr = LAST_DMA_ADDR + 1;	/* force use of bounce buffer */
     else
@@ -629,12 +622,12 @@ static void bad_flp_intr(void)
 }
 
 /* Set perpendicular mode as required, based on data rate, if supported.
- * 82077 Untested! 1Mbps data rate only possible with 82077-1.
- * TODO: increase MAX_BUFFER_SECTORS, add minor_types entries.
+ * 1Mbps data rate only possible with 82077-1.
+ * TODO: increase MAX_BUFFER_SECTORS.
  */
 static void perpendicular_mode(unsigned char rate)
 {
-    if (fdc_version == FDC_TYPE_82077) {
+    if (fdc_version >= FDC_TYPE_82077) {
 	output_byte(FD_PERPENDICULAR);
 	if (rate & 0x40) {
 	    unsigned char r = rate & 0x03;
@@ -650,23 +643,16 @@ static void perpendicular_mode(unsigned char rate)
 	    output_byte(0);	/* conventional mode */
     } else {
 	if (rate & 0x40) {
-	    printk("df: perpendicular mode not supported by this FDC.\n");
+	    printk("df: need 82077 FDC for disc\n");
 	    reset = 1;
 	}
     }
 }				/* perpendicular_mode */
 
-/*
- * This has only been tested for the case fdc_version == FDC_TYPE_STD.
- * In case you have a 82077 and want to test it, you'll have to compile
- * with `FDC_FIFO_UNTESTED' defined. You may also want to add support for
- * recognizing drives with vertical recording support.
- */
 static void configure_fdc_mode(void)
 {
-#ifdef FDC_FIFO_UNTESTED
-    if (need_configure && (fdc_version == FDC_TYPE_82077)) {
-	/* Enhanced version with FIFO & vertical recording. */
+    if (need_configure && (fdc_version >= FDC_TYPE_82072)) {
+	/* Enhanced version with FIFO & write precompensation */
 	output_byte(FD_CONFIGURE);
 	output_byte(0);
 	output_byte(0x1A);	/* FIFO on, polling off, 10 byte threshold */
@@ -674,7 +660,6 @@ static void configure_fdc_mode(void)
 	need_configure = 0;
 	printk("df: FIFO enabled\n");
     }
-#endif
     if (cur_spec1 != floppy->spec1) {
 	cur_spec1 = floppy->spec1;
 	output_byte(FD_SPECIFY);
@@ -1012,7 +997,6 @@ static void floppy_shutdown(void)
     redo_fd_request();
 }
 
-#if HAS_FD_DIR
 static void shake_done(void)
 {
     /* Need SENSEI to clear the interrupt per spec, required by QEMU, not by
@@ -1064,13 +1048,12 @@ static void shake_one(void)
     output_byte(head << 2 | current_drive);
     output_byte(1);
 }
-#endif
 
 static void floppy_ready(void)
 {
     DEBUG("RDY0x%x,%d,%d-", inb(FD_DIR), reset, recalibrate);
-#if HAS_FD_DIR
-    if (inb(FD_DIR) & 0x80) {	/* set if disk changed since last cmd (AT ++) */
+    /* check if disk changed since last cmd (PC/AT+) */
+    if (fdc_version >= FDC_TYPE_8272PC_AT && (inb(FD_DIR) & 0x80)) {
 #ifdef CHECK_DISK_CHANGE
 	changed_floppies |= 1 << current_drive;
 #endif
@@ -1100,7 +1083,6 @@ static void floppy_ready(void)
 	    return;
 	}
     }
-#endif
 
     if (reset) {
 	reset_floppy();
@@ -1181,7 +1163,7 @@ static void redo_fd_request(void)
     }
     DEBUG("[%u]redo-%c %d(%s) bl %u;", (unsigned int)jiffies, 
 		req->rq_cmd == WRITE? 'W':'R', device, floppy->name, req->rq_sector);
-    debug_blkdrv("df%d: %c sector %ld\n", DEVICE_NR(req->rq_dev),
+    DEBUG("df%d: %c sector %ld\n", DEVICE_NR(req->rq_dev),
         req->rq_cmd==WRITE? 'W' : 'R', req->rq_sector);
     if (format_status != FORMAT_BUSY) {
     	unsigned int tmp;
@@ -1429,11 +1411,6 @@ static int floppy_open(struct inode *inode, struct file *filp)
 
     drive = MINOR(inode->i_rdev) >> MINOR_SHIFT;
     dev = drive & 3;
-    if (fd_ref[dev] == 0) {
-        err = floppy_register();
-        if (err) return err;
-        buffer_drive = buffer_track = -1;
-    }
 
 #ifdef CHECK_DISK_CHANGE
     if (filp && filp->f_mode)
@@ -1452,9 +1429,16 @@ static int floppy_open(struct inode *inode, struct file *filp)
 		return -ENXIO;
 	}
     }
+
+    if (fd_ref[dev] == 0) {
+        err = floppy_register();
+        if (err) return err;
+        buffer_drive = buffer_track = -1;
+    }
+
     fd_ref[dev]++;
     inode->i_size = ((sector_t)floppy->size) << 9;  /* NOTE: assumes sector size 512 */
-    debug_blkdrv("df%d: open dv %x, sz %lu, %s\n", drive,
+    DEBUG("df%d: open dv %x, sz %lu, %s\n", drive,
 		inode->i_rdev, inode->i_size, floppy->name);
 
     return 0;
@@ -1526,6 +1510,51 @@ static void floppy_deregister(void)
     set_irq();
 }
 
+/* Try to determine the floppy controller type */
+static int get_fdc_version(void)
+{
+    int type = FDC_TYPE_8272A;
+    const char *name;
+
+    do_floppy = ignore_interrupt;
+    output_byte(FD_VERSION);	/* get FDC version code */
+    if (result() != 1) {
+        printk("df: can't get FDC version\n");
+        return 0;
+    }
+    switch (reply_buffer[0]) {
+    case 0x80:
+        if (SETUP_CPU_TYPE > 5) {       /* 80286 CPU PC/AT or better */
+            type = FDC_TYPE_8272PC_AT;
+            name = "8272A (PC/AT)";
+        } else {
+            name = "8272A";
+        }
+        break;
+    case 0x90:
+        type = FDC_TYPE_82077;
+        name = "82077";
+        break;
+    default:
+        name = "Unknown";
+    }
+type = FDC_TYPE_8272A;
+name = "Special";
+    printk("df: direct floppy FDC %s (0x%x), irq %d, dma %d\n",
+        name, reply_buffer[0], FLOPPY_IRQ, FLOPPY_DMA);
+
+    /* Not all FDCs seem to be able to handle the version command
+     * properly, so force a reset for the standard FDC clones,
+     * to avoid interrupt garbage.
+     */
+    /* testing FIXME --  the FDC has just been reset by the BIOS, do we need this? */
+    if (type < FDC_TYPE_82077) {
+        initial_reset_flag = 1;
+        reset_floppy();
+    }
+    return type;
+}
+
 static int floppy_register(void)
 {
     int err;
@@ -1544,28 +1573,8 @@ static int floppy_register(void)
         return -EBUSY;
     }
 
-    /* Try to determine the floppy controller type */
-    do_floppy = ignore_interrupt;
-    output_byte(FD_VERSION);	/* get FDC version code */
-    if (result() != 1) {
-	printk("df: can't get FDC version\n");
-	return -EIO;
-    }
-    fdc_version = reply_buffer[0];
-    printk("df: direct floppy FDC %s (0x%x), irq %d, dma %d\n",
-                (fdc_version == FDC_TYPE_STD) ? "8272A" :
-                ((fdc_version == FDC_TYPE_82077)? "82077": "Unknown"),
-                fdc_version, FLOPPY_IRQ, FLOPPY_DMA);
-
-    /* Not all FDCs seem to be able to handle the version command
-     * properly, so force a reset for the standard FDC clones,
-     * to avoid interrupt garbage.
-     */
-    /* testing FIXME --  the FDC has just been reset by the BIOS, do we need this? */
-    if (fdc_version == FDC_TYPE_STD) {
-        initial_reset_flag = 1;
-        reset_floppy();
-    }
+    fdc_version = get_fdc_version();
+    if (!fdc_version) return -EIO;
     return 0;
 }
 
