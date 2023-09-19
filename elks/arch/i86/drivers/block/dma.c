@@ -18,6 +18,7 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/debug.h>
+#include <linuxmt/fd.h>     /* for DFPROC */
 #include <arch/dma.h>
 #include <arch/system.h>
 
@@ -65,7 +66,7 @@ static struct dma_chan dma_chan_busy[MAX_DMA_CHANNELS] = {
 	__ret;		   \
 } )
 
-int request_dma(unsigned char dma, const char *device)
+int DFPROC request_dma(unsigned char dma, const char *device)
 {
     if (dma >= MAX_DMA_CHANNELS)
 	return -EINVAL;
@@ -79,7 +80,7 @@ int request_dma(unsigned char dma, const char *device)
     return 0;
 }				/* request_dma */
 
-void free_dma(unsigned char dma)
+void DFPROC free_dma(unsigned char dma)
 {
     if (dma >= MAX_DMA_CHANNELS)
 	debug("Trying to free DMA%u\n", dma);
@@ -89,7 +90,7 @@ void free_dma(unsigned char dma)
 
 /* enable/disable a specific DMA channel */
 
-void enable_dma(unsigned char dma)
+void DFPROC enable_dma(unsigned char dma)
 {
     if (dma >= MAX_DMA_CHANNELS)
 	debug("Trying to enable DMA%u\n", dma);
@@ -99,7 +100,7 @@ void enable_dma(unsigned char dma)
 	dma_outb(dma & 3, DMA2_MASK_REG);
 }
 
-void disable_dma(unsigned char dma)
+void DFPROC disable_dma(unsigned char dma)
 {
     if (dma >= MAX_DMA_CHANNELS)
 	debug("Trying to disable DMA%u\n", dma);
@@ -117,7 +118,7 @@ void disable_dma(unsigned char dma)
  * --- only be used while interrupts are disabled! ---
  */
 
-void clear_dma_ff(unsigned char dma)
+void DFPROC clear_dma_ff(unsigned char dma)
 {
     if (dma >= MAX_DMA_CHANNELS)
 	debug("Trying to disable DMA%u\n", dma);
@@ -129,7 +130,7 @@ void clear_dma_ff(unsigned char dma)
 
 /* set mode (above) for a specific DMA channel */
 
-void set_dma_mode(unsigned char dma, unsigned char mode)
+void DFPROC set_dma_mode(unsigned char dma, unsigned char mode)
 {
     if (dma >= MAX_DMA_CHANNELS)
 	debug("Trying to disable DMA%u\n", dma);
@@ -145,7 +146,7 @@ void set_dma_mode(unsigned char dma, unsigned char mode)
  * boundary may have been crossed.
  */
 
-void set_dma_page(unsigned char dma, unsigned char page)
+void DFPROC set_dma_page(unsigned char dma, unsigned char page)
 {
     switch (dma) {
     case 0:
@@ -176,7 +177,7 @@ void set_dma_page(unsigned char dma, unsigned char page)
  * Assumes dma flipflop is clear.
  */
 
-void set_dma_addr(unsigned char dma, unsigned long addr)
+void DFPROC set_dma_addr(unsigned char dma, unsigned long addr)
 {
     set_dma_page(dma, (long)addr >> 16);
     if (dma <= 3) {
@@ -197,7 +198,7 @@ void set_dma_addr(unsigned char dma, unsigned long addr)
  * NOTE 2: "count" represents _bytes_ and must be even for channels 5-7.
  */
 
-void set_dma_count(unsigned char dma, unsigned int count)
+void DFPROC set_dma_count(unsigned char dma, unsigned int count)
 {
     count--;
     if (dma <= 3) {
@@ -219,7 +220,7 @@ void set_dma_count(unsigned char dma, unsigned int count)
  * Assumes DMA flip-flop is clear.
  */
 
-int get_dma_residue(unsigned char dma)
+int DFPROC get_dma_residue(unsigned char dma)
 {
     unsigned int io_port = (dma <= 3) ? (dma << 1) + 1 + IO_DMA1_BASE
 				      : ((dma & 3) << 2) + 2 + IO_DMA2_BASE;
@@ -232,7 +233,7 @@ int get_dma_residue(unsigned char dma)
     return (dma <= 3) ? count : (count << 1);
 }
 
-int get_dma_list(char *buf)
+int DFPROC get_dma_list(char *buf)
 {
     int i, len = 0;
 

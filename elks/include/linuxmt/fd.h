@@ -1,6 +1,17 @@
 #ifndef __LINUXMT_FD_H
 #define __LINUXMT_FD_H
 
+/*
+ * Direct floppy (DF) driver header file
+ */
+
+/* place most of this driver in the far text section if possible */
+#if defined(CONFIG_FARTEXT_KERNEL) && !defined(__STRICT_ANSI__)
+#define DFPROC __far __attribute__ ((far_section, noinline, section (".fartext.df")))
+#else
+#define DFPROC
+#endif
+
 #define FDCLRPRM 0		/* clear user-defined parameters */
 #define FDSETPRM 1		/* set user-defined parameters for current media */
 #define FDDEFPRM 2		/* set user-defined parameters until explicitly cleared */
