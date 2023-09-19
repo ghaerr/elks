@@ -125,7 +125,7 @@ static int initial_reset_flag;
 static int need_configure = 1;	/* for 82077 */
 static int recalibrate;
 static int reset;
-static int recover;		        /* recalibrate immediately after resetting */
+static int recover;		/* recalibrate immediately after resetting */
 static int seek;
 
 /* BIOS floppy motor timeout counter - FIXME leave this while BIOS driver present */
@@ -281,15 +281,15 @@ static unsigned char current_track = NO_TRACK;
 static unsigned char command;
 static unsigned char fdc_version;
 
-static void floppy_ready(void);
-static void redo_fd_request(void);
+static void DFPROC floppy_ready(void);
+static void DFPROC redo_fd_request(void);
 static void recal_interrupt(void);
 static void floppy_shutdown(void);
 static void motor_off_callback(int);
-static int floppy_register(void);
-static void floppy_deregister(void);
+static int DFPROC floppy_register(void);
+static void DFPROC floppy_deregister(void);
 
-static void delay_loop(int cnt)
+static void DFPROC delay_loop(int cnt)
 {
     while (cnt-- > 0) asm("nop");
 }
@@ -310,7 +310,7 @@ static struct timer_list select = { NULL, 0, 0, select_callback };
  * FIXME: The argument (nr) is silently ignored, current_drive being used instead.
  * is this OK?
  */
-static void floppy_select(unsigned int nr)
+static void DFPROC floppy_select(unsigned int nr)
 {
     DEBUG("sel0x%x-", current_DOR);
     if (current_drive == (current_DOR & 3)) {
@@ -378,7 +378,7 @@ static void motor_off_callback(int nr)
  *
  * DOR (Data Output Register) is |MOTD|MOTC|MOTB|MOTA|DMA|/RST|DR1|DR0|
  */
-static void floppy_on(int nr)
+static void DFPROC floppy_on(int nr)
 {
     unsigned char mask = 0x10 << nr;	/* motor on select */
 
@@ -482,7 +482,7 @@ int floppy_change(struct buffer_head *bh)
 }
 #endif
 
-static void setup_DMA(void)
+static void DFPROC setup_DMA(void)
 {
     unsigned long dma_addr;
     unsigned int count, physaddr;
@@ -526,7 +526,7 @@ static void setup_DMA(void)
     set_irq();
 }
 
-static void output_byte(char byte)
+static void DFPROC output_byte(char byte)
 {
     int counter;
     unsigned char status;
@@ -545,7 +545,7 @@ static void output_byte(char byte)
     printk("fd: can't send to FDC\n");
 }
 
-static int result(void)
+static int DFPROC result(void)
 {
     int i = 0, counter, status;
 
@@ -570,7 +570,7 @@ static int result(void)
     return -1;
 }
 
-static void bad_flp_intr(void)
+static void DFPROC bad_flp_intr(void)
 {
     int errors;
 
@@ -596,7 +596,7 @@ static void bad_flp_intr(void)
  * 1Mbps data rate only possible with 82077-1.
  * TODO: increase MAX_BUFFER_SECTORS.
  */
-static void perpendicular_mode(unsigned char rate)
+static void DFPROC perpendicular_mode(unsigned char rate)
 {
     if (fdc_version >= FDC_TYPE_82077) {
 	output_byte(FD_PERPENDICULAR);
@@ -620,7 +620,7 @@ static void perpendicular_mode(unsigned char rate)
     }
 }				/* perpendicular_mode */
 
-static void configure_fdc_mode(void)
+static void DFPROC configure_fdc_mode(void)
 {
     if (need_configure && (fdc_version >= FDC_TYPE_82072)) {
 	/* Enhanced version with FIFO & write precompensation */
@@ -644,7 +644,7 @@ static void configure_fdc_mode(void)
     }
 }				/* configure_fdc_mode */
 
-static void tell_sector(int nr)
+static void DFPROC tell_sector(int nr)
 {
     if (nr != 7) {
 	printk(" -- FDC reply error");
@@ -771,7 +771,7 @@ static void rw_interrupt(void)
  * transfer mode. It continues to transfer data until the TC input is active."
  * IOW: We tell the FDC where to start, and the DMA controller where to stop.
  */
-void setup_rw_floppy(void)
+static void DFPROC setup_rw_floppy(void)
 {
     DEBUG("setup_rw-");
     setup_DMA();
@@ -818,7 +818,7 @@ static void seek_interrupt(void)
  * for the transfer (ie floppy motor is on and the correct floppy is
  * selected, error conditions cleared).
  */
-static void transfer(void)
+static void DFPROC transfer(void)
 {
 #ifdef CONFIG_TRACK_CACHE
     read_track = (command == FD_READ) && (CURRENT->rq_errors < 4) &&
@@ -848,7 +848,7 @@ static void transfer(void)
 	redo_fd_request();
 }
 
-static void recalibrate_floppy(void)
+static void DFPROC recalibrate_floppy(void)
 {
     DEBUG("recal-");
     recalibrate = 0;
@@ -929,7 +929,7 @@ static void reset_interrupt(void)
 /*
  * reset is done by pulling bit 2 of DOR low for a while.
  */
-static void reset_floppy(void)
+static void DFPROC reset_floppy(void)
 {
     DEBUG("[%u]rst-", (unsigned int)jiffies);
     do_floppy = reset_interrupt;
@@ -981,7 +981,7 @@ static void shake_done(void)
 /*
  * The result byte after the SENSEI cmd is ST3, not ST0
  */
-static int retry_recal(void (*proc)())
+static int DFPROC retry_recal(void (*proc)())
 {
     DEBUG("rrecal-");
     output_byte(FD_SENSEI);
@@ -1011,7 +1011,7 @@ static void shake_one(void)
     output_byte(1);
 }
 
-static void floppy_ready(void)
+static void DFPROC floppy_ready(void)
 {
     DEBUG("RDY0x%x,%d,%d-", inb(FD_DIR), reset, recalibrate);
     /* check if disk changed since last cmd (PC/AT+) */
@@ -1057,7 +1057,7 @@ static void floppy_ready(void)
     transfer();
 }
 
-static void redo_fd_request(void)
+static void DFPROC redo_fd_request(void)
 {
     unsigned int start;
     struct request *req;
@@ -1405,7 +1405,7 @@ static void floppy_interrupt(int irq, struct pt_regs *regs)
 #define FLOPPY_VEC      (_MK_FP(0, (FLOPPY_IRQ+8) << 2))
 static __u32 old_floppy_vec;
 
-static void floppy_deregister(void)
+static void DFPROC floppy_deregister(void)
 {
     outb(0x0c, FD_DOR);         /* all motors off, enable IRQ and DMA */
     free_dma(FLOPPY_DMA);
@@ -1417,7 +1417,7 @@ static void floppy_deregister(void)
 }
 
 /* Try to determine the floppy controller type */
-static int get_fdc_version(void)
+static int DFPROC get_fdc_version(void)
 {
     int type = FDC_TYPE_8272A;
     const char *name;
@@ -1459,7 +1459,7 @@ static int get_fdc_version(void)
     return type;
 }
 
-static int floppy_register(void)
+static int DFPROC floppy_register(void)
 {
     int err;
 
