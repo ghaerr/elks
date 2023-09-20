@@ -484,13 +484,13 @@ int floppy_change(struct buffer_head *bh)
 
 static void DFPROC setup_DMA(void)
 {
-    unsigned long dma_addr;
-    unsigned int count, physaddr;
-    int use_xms;
     struct request *req = CURRENT;
+    unsigned int count, physaddr;
+    unsigned long dma_addr;
+    int use_xms;
 
 #pragma GCC diagnostic ignored "-Wshift-count-overflow"
-    use_xms = req->rq_seg >> 16; /* will ne nonzero only if XMS configured & XMS buffer */
+    use_xms = req->rq_seg >> 16; /* will be nonzero only if XMS configured & XMS buffer */
     physaddr = (req->rq_seg << 4) + (unsigned int)req->rq_buffer;
 
     count = req->rq_nr_sectors? (unsigned)req->rq_nr_sectors << 9: BLOCK_SIZE;
@@ -515,14 +515,32 @@ static void DFPROC setup_DMA(void)
 	}
     }
     DEBUG("%d/%lx;", count, dma_addr);
+
+   /* The IBM PC can perform DMA operations by using the DMA chip.  To use it,
+    * the DMA (Direct Memory Access) chip is loaded with the 20-bit memory address
+    * to be read from or written to, the byte count minus 1, and a read or write
+    * opcode.  This routine sets up the DMA chip.  Note that the chip is not
+    * capable of doing a DMA across a 64K boundary (e.g., you can't read a
+    * 512-byte block starting at physical address 65520).
+    */
+#define DMA_INIT        DMA1_MASK_REG
+#define DMA_FLIPFLOP    DMA1_CLEAR_FF_REG
+#define DMA_MODE        DMA1_MODE_REG
+#define DMA_TOP         DMA_PAGE_2
+#define DMA_ADDR        ((FLOPPY_DMA << 1) + 0 + IO_DMA1_BASE)
+#define DMA_COUNT       ((FLOPPY_DMA << 1) + 1 + IO_DMA1_BASE)
+
     clr_irq();
-    disable_dma(FLOPPY_DMA);
-    clear_dma_ff(FLOPPY_DMA);
-    set_dma_mode(FLOPPY_DMA,
-		 (command == FD_READ) ? DMA_MODE_READ : DMA_MODE_WRITE);
-    set_dma_addr(FLOPPY_DMA, dma_addr);
-    set_dma_count(FLOPPY_DMA, count);
-    enable_dma(FLOPPY_DMA);
+    outb(FLOPPY_DMA | 4, DMA_INIT);    /* disable floppy dma channel */
+    outb(0, DMA_FLIPFLOP);             /* reset flip flop */
+    outb(FLOPPY_DMA | (command==FD_READ? DMA_MODE_READ : DMA_MODE_WRITE), DMA_MODE);
+    outb((unsigned) dma_addr >> 0,   DMA_ADDR);
+    outb((unsigned) dma_addr >> 8,   DMA_ADDR);
+    outb((unsigned)(dma_addr >> 16), DMA_TOP);
+    count--;
+    outb(count >> 0, DMA_COUNT);
+    outb(count >> 8, DMA_COUNT);
+    outb(FLOPPY_DMA, DMA_INIT);        /* enable channel */
     set_irq();
 }
 
@@ -1408,7 +1426,6 @@ static __u32 old_floppy_vec;
 static void DFPROC floppy_deregister(void)
 {
     outb(0x0c, FD_DOR);         /* all motors off, enable IRQ and DMA */
-    free_dma(FLOPPY_DMA);
     clr_irq();
     free_irq(FLOPPY_IRQ);
     *(__u32 __far *)FLOPPY_VEC = old_floppy_vec;
@@ -1472,10 +1489,6 @@ static int DFPROC floppy_register(void)
 	printk("df: IRQ %d busy\n", FLOPPY_IRQ);
 	return err;
     }
-    if (request_dma(FLOPPY_DMA, DEVICE_NAME)) {
-	printk("df: DMA %d busy\n", FLOPPY_DMA);
-        return -EBUSY;
-    }
 
     fdc_version = get_fdc_version();
     if (!fdc_version) return -EIO;
@@ -1491,34 +1504,3 @@ void INITPROC floppy_init(void)
     blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
     config_types();
 }
-
-#if UNUSED
-/* replace separate DMA handler later - this is much more compact and efficient */
-
-/*===========================================================================*
- *				dma_setup (from minix driver)		     *
- *===========================================================================*/
-static void dma_setup(int opcode)
-{
-/* The IBM PC can perform DMA operations by using the DMA chip.  To use it,
- * the DMA (Direct Memory Access) chip is loaded with the 20-bit memory address
- * to be read from or written to, the byte count minus 1, and a read or write
- * opcode.  This routine sets up the DMA chip.  Note that the chip is not
- * capable of doing a DMA across a 64K boundary (e.g., you can't read a
- * 512-byte block starting at physical address 65520).
- */
-
-  /* Set up the DMA registers.  (The comment on the reset is a bit strong,
-   * it probably only resets the floppy channel.)
-   */
-  outb(DMA_INIT, DMA_RESET_VAL);	/* reset the dma controller */
-  outb(DMA_FLIPFLOP, 0);		/* write anything to reset it */
-  outb(DMA_MODE, opcode == DEV_SCATTER ? DMA_WRITE : DMA_READ);
-  outb(DMA_ADDR, (unsigned) tmp_phys >>  0);
-  outb(DMA_ADDR, (unsigned) tmp_phys >>  8);
-  outb(DMA_TOP, (unsigned) (tmp_phys >> 16));
-  outb(DMA_COUNT, (SECTOR_SIZE - 1) >> 0);
-  outb(DMA_COUNT, (SECTOR_SIZE - 1) >> 8);
-  outb(DMA_INIT, 2);			/* some sort of enable */
-}
-#endif

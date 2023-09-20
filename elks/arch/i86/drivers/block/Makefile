@@ -58,7 +58,7 @@ endif
 
 # experimental direct fd support
 ifeq ($(CONFIG_BLK_DEV_FD), y)
-OBJS += directfd.o dma.o
+OBJS += directfd.o
 endif
 
 # experimental (and not working) direct hd support
