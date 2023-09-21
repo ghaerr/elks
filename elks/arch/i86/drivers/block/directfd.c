@@ -482,6 +482,20 @@ int floppy_change(struct buffer_head *bh)
 }
 #endif
 
+/* The IBM PC can perform DMA operations by using the DMA chip.  To use it,
+ * the DMA (Direct Memory Access) chip is loaded with the 20-bit memory address
+ * to be read from or written to, the byte count minus 1, and a read or write
+ * opcode.  This routine sets up the DMA chip.  Note that the chip is not
+ * capable of doing a DMA across a 64K boundary (e.g., you can't read a
+ * 512-byte block starting at physical address 65520).
+ */
+#define DMA_INIT        DMA1_MASK_REG
+#define DMA_FLIPFLOP    DMA1_CLEAR_FF_REG
+#define DMA_MODE        DMA1_MODE_REG
+#define DMA_TOP         DMA_PAGE_2
+#define DMA_ADDR        ((FLOPPY_DMA << 1) + 0 + IO_DMA1_BASE)
+#define DMA_COUNT       ((FLOPPY_DMA << 1) + 1 + IO_DMA1_BASE)
+
 static void DFPROC setup_DMA(void)
 {
     struct request *req = CURRENT;
@@ -516,23 +530,9 @@ static void DFPROC setup_DMA(void)
     }
     DEBUG("%d/%lx;", count, dma_addr);
 
-   /* The IBM PC can perform DMA operations by using the DMA chip.  To use it,
-    * the DMA (Direct Memory Access) chip is loaded with the 20-bit memory address
-    * to be read from or written to, the byte count minus 1, and a read or write
-    * opcode.  This routine sets up the DMA chip.  Note that the chip is not
-    * capable of doing a DMA across a 64K boundary (e.g., you can't read a
-    * 512-byte block starting at physical address 65520).
-    */
-#define DMA_INIT        DMA1_MASK_REG
-#define DMA_FLIPFLOP    DMA1_CLEAR_FF_REG
-#define DMA_MODE        DMA1_MODE_REG
-#define DMA_TOP         DMA_PAGE_2
-#define DMA_ADDR        ((FLOPPY_DMA << 1) + 0 + IO_DMA1_BASE)
-#define DMA_COUNT       ((FLOPPY_DMA << 1) + 1 + IO_DMA1_BASE)
-
-    clr_irq();
-    outb(FLOPPY_DMA | 4, DMA_INIT);    /* disable floppy dma channel */
-    outb(0, DMA_FLIPFLOP);             /* reset flip flop */
+    clr_irq();                          /* FIXME unclear interrupts need to be disabled */
+    outb(FLOPPY_DMA | 4, DMA_INIT);     /* disable floppy dma channel */
+    outb(0, DMA_FLIPFLOP);              /* reset flip flop */
     outb(FLOPPY_DMA | (command==FD_READ? DMA_MODE_READ : DMA_MODE_WRITE), DMA_MODE);
     outb((unsigned) dma_addr >> 0,   DMA_ADDR);
     outb((unsigned) dma_addr >> 8,   DMA_ADDR);
@@ -540,7 +540,7 @@ static void DFPROC setup_DMA(void)
     count--;
     outb(count >> 0, DMA_COUNT);
     outb(count >> 8, DMA_COUNT);
-    outb(FLOPPY_DMA, DMA_INIT);        /* enable channel */
+    outb(FLOPPY_DMA, DMA_INIT);         /* enable channel */
     set_irq();
 }
 
