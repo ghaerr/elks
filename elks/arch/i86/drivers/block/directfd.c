@@ -71,7 +71,6 @@
  *   that we're using BIOS HD + DIRECT FD + XMS buffers + TRACK cache, 
  *   which really should not happen. IOW - use either BIOS block IO or DIRECT block IO,
  *   don't mix!!
- * - Update DMA code
  * - Test density detection logic & floppy change detection
  * - Clean up debug output
  */
@@ -116,6 +115,9 @@
  *  82072        IBM PS/2 (gen 2)                   DSR          CONFIGURE,DUMPREGS
  *  82077AA      IBM PS/2 (gen 3)                   DOR,DIR,CCR  PERPENDICULAR,LOCK
  */
+
+#define CHECK_DISK_CHANGE   0   /* =1 to add driver media changed code */
+#define CLEAR_DIR_REG       0   /* =1 to clear DIR DSKCHG when set (for media change) */
 
 //#define DEBUG printk
 #define DEBUG(...)
@@ -230,13 +232,6 @@ struct floppy_struct *base_type[4];
  * successful access.
  */
 static int probing;
-
-/*
- * (User-provided) media information is _not_ discarded after a media change
- * if the corresponding keep_data flag is non-zero. Positive values are
- * decremented after each probe.
- */
-static int keep_data[4];
 
 /* device reference counters */
 static int fd_ref[4];
@@ -426,15 +421,13 @@ void request_done(int uptodate)
     end_request(uptodate);
 }
 
-#ifdef CHECK_DISK_CHANGE
+#if CHECK_DISK_CHANGE
 /*
  * The check_media_change entry in struct file_operations (fs.h) is not
  * part of the 'normal' setup (only BLOAT_FS), so we're ignoring it for now,
  * assuming the user is smart enough to umount before media changes - or
  * ready for the consequences.
- */ 
-
-/*
+ *
  * floppy-change is never called from an interrupt, so we can relax a bit
  * here, sleep etc. Note that floppy-on tries to set current_DOR to point
  * to the desired drive, but it will probably not survive the sleep if
@@ -924,11 +917,9 @@ static void reset_interrupt(void)
 	output_byte(FD_SENSEI);
 	(void) result();
     }
-    //DEBUG("1-");
     output_byte(FD_SPECIFY);
     output_byte(cur_spec1);	/* hut etc */
     output_byte(6);		/* Head load time =6ms, DMA */
-    //DEBUG("2-");
     configure_fdc_mode();	/* reprogram fdc */
     if (initial_reset_flag) {
 	initial_reset_flag = 0;
@@ -959,7 +950,7 @@ static void DFPROC reset_floppy(void)
     need_configure = 1;
     if (!initial_reset_flag)
 	printk("df: reset_floppy called\n");
-    clr_irq();
+    clr_irq();              /* FIXME don't busyloop with interrupts off, use timer */
     outb_p(current_DOR & ~0x04, FD_DOR);
     delay_loop(1000);
     outb(current_DOR, FD_DOR);
@@ -977,6 +968,7 @@ static void floppy_shutdown(void)
     redo_fd_request();
 }
 
+#if CLEAR_DIR_REG
 static void shake_done(void)
 {
     /* Need SENSEI to clear the interrupt per spec, required by QEMU, not by
@@ -1029,12 +1021,23 @@ static void shake_one(void)
     output_byte(1);
 }
 
+/*
+ * (User-provided) media information is _not_ discarded after a media change
+ * if the corresponding keep_data flag is non-zero. Positive values are
+ * decremented after each probe.
+ */
+static int keep_data[4];
+#endif /* CLEAR_DIR_REG */
+
 static void DFPROC floppy_ready(void)
 {
     DEBUG("RDY0x%x,%d,%d-", inb(FD_DIR), reset, recalibrate);
+
+#if CLEAR_DIR_REG
     /* check if disk changed since last cmd (PC/AT+) */
     if (fdc_version >= FDC_TYPE_8272PC_AT && (inb(FD_DIR) & 0x80)) {
-#ifdef CHECK_DISK_CHANGE
+
+#if CHECK_DISK_CHANGE
 	changed_floppies |= 1 << current_drive;
 #endif
 	buffer_track = -1;
@@ -1063,6 +1066,7 @@ static void DFPROC floppy_ready(void)
 	    return;
 	}
     }
+#endif
 
     if (reset) {
 	reset_floppy();
@@ -1119,7 +1123,7 @@ static void DFPROC redo_fd_request(void)
         }
     }
     DEBUG("[%u]redo-%c %d(%s) bl %u;", (unsigned int)jiffies, 
-		req->rq_cmd == WRITE? 'W':'R', device, floppy->name, req->rq_sector);
+	req->rq_cmd == WRITE? 'W':'R', device, floppy->name, req->rq_sector);
     DEBUG("df%d: %c sector %ld\n", DEVICE_NR(req->rq_dev),
 
     req->rq_cmd==WRITE? 'W' : 'R', req->rq_sector);
@@ -1336,7 +1340,7 @@ static int floppy_open(struct inode *inode, struct file *filp)
     drive = MINOR(inode->i_rdev) >> MINOR_SHIFT;
     dev = drive & 3;
 
-#ifdef CHECK_DISK_CHANGE
+#if CHECK_DISK_CHANGE
     if (filp && filp->f_mode)
 	check_disk_change(inode->i_rdev);
 #endif
