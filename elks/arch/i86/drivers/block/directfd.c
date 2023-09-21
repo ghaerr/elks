@@ -174,7 +174,7 @@ static unsigned char reply_buffer[MAX_REPLIES];
 
 /*
  * Minor number based formats. Each drive type is specified starting
- * from minor number 4 and no auto-probing is used.
+ * from minor number 4 plus the table index, and no auto-probing is used.
  *
  * Stretch tells if the tracks need to be doubled for some
  * types (ie 360kB diskette in 1.2MB drive etc).
@@ -189,15 +189,15 @@ static unsigned char reply_buffer[MAX_REPLIES];
  */
 
 static struct floppy_struct minor_types[] = {
-    {  0,   0, 0,  0, 0, 0x00, 0x00, 0x00, 0x00, NULL},
-    { 720,  9, 2, 40, 0, 0x2A, 0x02, 0xDF, 0x50, NULL},	/* 360kB PC diskettes */
-    {2400, 15, 2, 80, 0, 0x1B, 0x00, 0xDF, 0x54, NULL},	/* 1.2 MB AT-diskettes */
-    { 720,  9, 2, 40, 1, 0x2A, 0x02, 0xDF, 0x50, NULL},	/* 360kB in 720kB drive */
-    {1440,  9, 2, 80, 0, 0x2A, 0x02, 0xDF, 0x50, NULL},	/* 3.5" 720kB diskette */
-    { 720,  9, 2, 40, 1, 0x23, 0x01, 0xDF, 0x50, NULL},	/* 360kB in 1.2MB drive */
-    {1440,  9, 2, 80, 0, 0x23, 0x01, 0xDF, 0x50, NULL},	/* 720kB in 1.2MB drive */
-    {2880, 18, 2, 80, 0, 0x1B, 0x00, 0xCF, 0x6C, NULL},	/* 1.44MB diskette */
-    {5760, 36, 2, 80, 0, 0x1B, 0x43, 0xAF, 0x28, NULL},	/* 2.88MB diskette */
+      {  0,   0, 0,  0, 0, 0x00, 0x00, 0x00, 0x00, NULL},
+/*1*/ { 720,  9, 2, 40, 0, 0x2A, 0x02, 0xDF, 0x50, "360k/PC"},  /* 360kB PC diskettes */
+/*2*/ {2400, 15, 2, 80, 0, 0x1B, 0x00, 0xDF, 0x54, "1.2M"},     /* 1.2 MB AT-diskettes */
+/*3*/ { 720,  9, 2, 40, 1, 0x2A, 0x02, 0xDF, 0x50, "360k/AT"},  /* 360kB in 720kB drive */
+/*4*/ {1440,  9, 2, 80, 0, 0x2A, 0x02, 0xDF, 0x50, "720k"},     /* 3.5" 720kB diskette */
+/*5*/ { 720,  9, 2, 40, 1, 0x23, 0x01, 0xDF, 0x50, "360k/AT"},	/* 360kB in 1.2MB drive */
+/*6*/ {1440,  9, 2, 80, 0, 0x23, 0x01, 0xDF, 0x50, "720k/1.2M"},/* 720kB in 1.2MB drive */
+/*7*/ {2880, 18, 2, 80, 0, 0x1B, 0x00, 0xCF, 0x6C, "1.44M"},    /* 3.5" 1.44MB diskette */
+/*8*/ {5760, 36, 2, 80, 0, 0x1B, 0x43, 0xAF, 0x28, "2.88M"},    /* 3.5" 2.88MB diskette */
     /* totSectors/sectors/heads/tracks/stretch/gap/rate/spec1/fmtgap/name */
 };
 
@@ -205,19 +205,18 @@ static struct floppy_struct minor_types[] = {
  * Auto-detection. Each drive type has a pair of formats which are
  * used in succession to try to read the disk. If the FDC cannot lock onto
  * the disk, the next format is tried. This uses the variable 'probing'.
- * NOTE: Ignore the duplicates, they're there for a reason.
  */
 static struct floppy_struct probe_types[] = {
-    { 720,  9, 2, 40, 0, 0x2A, 0x02, 0xDF, 0x50, "360k/slow"},	/* 360kB PC 250k DR */
-    { 720,  9, 2, 40, 0, 0x2A, 0x01, 0xDF, 0x50, "360k/fast"},	/* 360kB PC 300k DR */
-    {2400, 15, 2, 80, 0, 0x1B, 0x00, 0xDF, 0x54, "1.2M"},	/* 1.2 MB AT-diskettes */
-    { 720,  9, 2, 40, 1, 0x23, 0x01, 0xDF, 0x50, "360k/1.2M"},	/* 360kB in 1.2MB drive */
-    {1440,  9, 2, 80, 0, 0x2A, 0x02, 0xDF, 0x50, "720k"},	/* 3.5" 720kB diskette */
-    {1440,  9, 2, 80, 0, 0x2A, 0x02, 0xDF, 0x50, "720k"},	/* 3.5" 720kB diskette */
-    {2880, 18, 2, 80, 0, 0x1B, 0x00, 0xCF, 0x6C, "1.44M"},	/* 1.44MB diskette */
-    {1440,  9, 2, 80, 0, 0x2A, 0x02, 0xDF, 0x50, "720k/1.2M"},	/* 3.5" 720kB diskette */
-    {5760, 36, 2, 80, 0, 0x1B, 0x43, 0xAF, 0x28, "2.88M"},      /* 2.88MB diskette */
-    {2880, 18, 2, 80, 0, 0x1B, 0x00, 0xCF, 0x6C, "1.44M"},	/* 1.44MB diskette */
+    { 720,  9, 2, 40, 0, 0x2A, 0x02, 0xDF, 0x50, "360k/PC"},    /* 360kB PC diskettes */
+    { 720,  9, 2, 40, 1, 0x23, 0x01, 0xDF, 0x50, "360k/AT"},	/* 360kB in 1.2MB drive */
+    {2400, 15, 2, 80, 0, 0x1B, 0x00, 0xDF, 0x54, "1.2M"},       /* 1.2 MB AT-diskettes */
+    { 720,  9, 2, 40, 1, 0x23, 0x01, 0xDF, 0x50, "360k/AT"},	/* 360kB in 1.2MB drive */
+    {1440,  9, 2, 80, 0, 0x2A, 0x02, 0xDF, 0x50, "720k"},       /* 3.5" 720kB diskette */
+    { 720,  9, 2, 40, 1, 0x2A, 0x02, 0xDF, 0x50, "360k/AT"},	/* 360kB in 720kB drive */
+    {2880, 18, 2, 80, 0, 0x1B, 0x00, 0xCF, 0x6C, "1.44M"},      /* 3.5" 1.44MB diskette */
+    {1440,  9, 2, 80, 0, 0x2A, 0x02, 0xDF, 0x50, "720k"},       /* 3.5" 720kB diskette */
+    {5760, 36, 2, 80, 0, 0x1B, 0x43, 0xAF, 0x28, "2.88M"},      /* 3.5" 2.88MB diskette */
+    {2880, 18, 2, 80, 0, 0x1B, 0x00, 0xCF, 0x6C, "1.44M"},      /* 3.5" 1.44MB diskette */
 };
 
 /* Auto-detection: Disk type used until the next media change occurs. */
