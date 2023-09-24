@@ -116,6 +116,7 @@
  *  82077AA      IBM PS/2 (gen 3)                   DOR,DIR,CCR  PERPENDICULAR,LOCK
  */
 
+#define QEMU_STRETCH_FIX    0   /* =1 to ignore floppy stretch for QEMU */
 #define CHECK_DISK_CHANGE   0   /* =1 to add driver media changed code */
 #define CLEAR_DIR_REG       0   /* =1 to clear DIR DSKCHG when set (for media change) */
 
@@ -144,7 +145,7 @@ static unsigned char running = 0; /* keep track of motors already running */
  * max X times - some types of errors increase the errorcount by 2 or
  * even 3, so we might actually retry only X/2 times before giving up.
  */
-#define MAX_ERRORS 12
+#define MAX_ERRORS 6
 
 /*
  * Maximum number of sectors in a track buffer. Track buffering is disabled
@@ -586,17 +587,17 @@ static void DFPROC bad_flp_intr(void)
 
     DEBUG("bad_flpI-");
     current_track = NO_TRACK;
-    if (!CURRENT) {
-	printk("df: no current request\n");
-	reset = recalibrate = 1;
-	return;
-    } else
-	errors = ++CURRENT->rq_errors;
-    if (errors > MAX_ERRORS) {
+    if (!CURRENT) return;
+    errors = ++CURRENT->rq_errors;
+    if (errors >= MAX_ERRORS) {
         printk("df: Max retries #%d exceeded\n", errors);
-	request_done(0);
+        request_done(0);
+        /* don't reset/recalibrate now as extra interrupt
+         * confuses redo_fd_request if no more I/O scheduled.
+         */
+        return;
     }
-    if (errors > MAX_ERRORS / 2)
+    if (errors >= MAX_ERRORS / 2)
 	reset = 1;
     else
 	recalibrate = 1;
@@ -813,7 +814,7 @@ static void seek_interrupt(void)
     DEBUG("seekI-");
     output_byte(FD_SENSEI);
     if (result() != 2 || (ST0 & 0xF8) != 0x20 || ST1 != seek_track) {
-	printk("df%d: seek failed\n", current_drive);
+	printk("df%d: seek failed %x %x %x\n", current_drive, ST0, ST1, seek_track);
 	recalibrate = 1;
 	bad_flp_intr();
 	redo_fd_request();
@@ -948,7 +949,7 @@ static void DFPROC reset_floppy(void)
     recalibrate = 1;
     need_configure = 1;
     if (!initial_reset_flag)
-	printk("df: reset_floppy called\n");
+	printk("df: reset_floppy\n");
     clr_irq();              /* FIXME don't busyloop with interrupts off, use timer */
     outb_p(current_DOR & ~0x04, FD_DOR);
     delay_loop(1000);
@@ -1123,9 +1124,7 @@ static void DFPROC redo_fd_request(void)
     }
     DEBUG("[%u]redo-%c %d(%s) bl %u;", (unsigned int)jiffies, 
 	req->rq_cmd == WRITE? 'W':'R', device, floppy->name, req->rq_sector);
-    DEBUG("df%d: %c sector %ld\n", DEVICE_NR(req->rq_dev),
 
-    req->rq_cmd==WRITE? 'W' : 'R', req->rq_sector);
     if (current_drive != drive) {
         current_track = NO_TRACK;
         current_drive = drive;
@@ -1140,9 +1139,15 @@ static void DFPROC redo_fd_request(void)
     tmp = start / floppy->sect;
     head = tmp % floppy->head;
     track = tmp / floppy->head;
+#if QEMU_STRETCH_FIX
+    seek_track = track;         /* QEMU doesn't seem to support track doubling */
+#else
     seek_track = track << floppy->stretch;
+#endif
     command = (req->rq_cmd == READ)? FD_READ: FD_WRITE;
-    DEBUG("%d:%d:%d:%d; ", start, sector, head, track);
+    DEBUG("df%d: %s sector %d CHS %d/%d/%d max %d stretch %d seek %d\n",
+        DEVICE_NR(req->rq_dev), req->rq_cmd==READ? "read": "write",
+        start, track, head, sector, floppy->sect, floppy->stretch, seek_track);
 
     /* timer for hung operations, 6 secs probably too long ... */
     del_timer(&fd_timeout);
@@ -1176,8 +1181,10 @@ static void DFPROC redo_fd_request(void)
 void do_fd_request(void)
 {
     DEBUG("fdrq:");
-    while (fdc_busy)
+    while (fdc_busy) {
+        printk("df: add_request error!\n");
 	sleep_on(&fdc_wait);
+    }
     fdc_busy = 1;
     redo_fd_request();
 }
