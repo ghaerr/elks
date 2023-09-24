@@ -275,6 +275,7 @@ static unsigned char seek_track;
 static unsigned char current_track = NO_TRACK;
 static unsigned char command;
 static unsigned char fdc_version;
+static struct inode *open_inode;        /* to reset inode->i_size after probe */
 
 static void DFPROC floppy_ready(void);
 static void DFPROC redo_fd_request(void);
@@ -500,6 +501,7 @@ static void DFPROC setup_DMA(void)
     use_xms = req->rq_seg >> 16; /* will be nonzero only if XMS configured & XMS buffer */
     physaddr = (req->rq_seg << 4) + (unsigned int)req->rq_buffer;
 
+    /* FIXME req->rq_nr_sectors will be 0 for TLVC only */
     count = req->rq_nr_sectors? (unsigned)req->rq_nr_sectors << 9: BLOCK_SIZE;
     if (use_xms || (physaddr + count) < physaddr)
 	dma_addr = LAST_DMA_ADDR + 1;	/* force use of bounce buffer */
@@ -738,6 +740,7 @@ static void rw_interrupt(void)
     if (probing) {
 	int drive = DEVICE_NR(CURRENT->rq_dev);
 
+	open_inode->i_size = (sector_t)floppy->size << 9;
 	printk("df%d: Auto-detected floppy type %s\n", drive, floppy->name);
 	current_type[drive] = floppy;
 	probing = 0;
@@ -1371,7 +1374,8 @@ static int floppy_open(struct inode *inode, struct file *filp)
     }
 
     fd_ref[dev]++;
-    inode->i_size = ((sector_t)floppy->size) << 9;  /* NOTE: assumes sector size 512 */
+    inode->i_size = (sector_t)floppy->size << 9;    /* NOTE: assumes sector size 512 */
+    open_inode = inode;
     DEBUG("df%d: open dv %x, sz %lu, %s\n", drive, inode->i_rdev, inode->i_size,
         floppy->name);
 
