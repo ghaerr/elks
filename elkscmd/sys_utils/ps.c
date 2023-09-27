@@ -30,7 +30,7 @@
 #include <dirent.h>
 #include <pwd.h>
 #include <getopt.h>
-#include <errno.h>
+#include <paths.h>
 
 #define LINEARADDRESS(off, seg)		((off_t) (((off_t)seg << 4) + off))
 
@@ -70,33 +70,34 @@ void process_name(int fd, unsigned int off, unsigned int seg)
 	}
 }
 
-
-char *devname(unsigned int minor)
+/* fast cached version of devname() */
+char *dev_name(unsigned int minor)
 {
 	struct dirent *d;
 	dev_t ttydev = MKDEV(TTY_MAJOR, minor);
+	static dev_t prevdev = -1;
+	static DIR *fp = NULL;
 	struct stat st;
-	static char dev[] = "/dev";
-	static char name[MAXNAMLEN+1];
+	static char path[MAXNAMLEN+6] = _PATH_DEVSL;    /* /dev/ */
+#define NAMEOFF     (sizeof(_PATH_DEVSL) - 1)
 
-	DIR *fp = opendir(dev);
-	if (fp == 0)
-		return "??";
-	strcpy(name, dev);
-	strcat(name, "/");
+	if (prevdev == ttydev) return path+NAMEOFF+3;
+	if (!fp) {
+		if (!(fp = opendir(_PATH_DEV)))
+			return "??";
+	} else rewinddir(fp);
 
 	while ((d = readdir(fp)) != 0) {
-		if (strlen(d->d_name) > sizeof(name) - sizeof(dev) - 1)
-			continue;
 		if (d->d_name[0] == '.')
 			continue;
-		strcpy(name + sizeof(dev), d->d_name);
-		if (!stat(name, &st) && st.st_rdev == ttydev) {
-			closedir(fp);
-			return name+8;
+		if (strncmp(d->d_name, "tty", 3))
+			continue;
+		strcpy(&path[NAMEOFF], d->d_name);
+		if (!stat(path, &st) && st.st_rdev == ttydev) {
+			prevdev = ttydev;
+			return path+NAMEOFF+3;
 		}
 	}
-	closedir(fp);
 	return "?";
 }
 
@@ -111,7 +112,7 @@ char *tty_name(int fd, unsigned int off, unsigned int seg)
 
 	if (read(fd, &tty, sizeof(tty)) != sizeof(tty)) return "?";
 
-	return devname(tty.minor);
+	return dev_name(tty.minor);
 }
 
 int main(int argc, char **argv)
@@ -135,17 +136,17 @@ int main(int argc, char **argv)
             break;
         default:
             printf("Usage: %s: [-lu]\n", progname);
-            exit(1);
+            return 1;
         }
     }
 
 	if ((fd = open("/dev/kmem", O_RDONLY)) < 0) {
-		perror("ps");
-		exit(1);
+		printf("ps: no /dev/kmem\n");
+		return 1;
 	}
 	if (ioctl(fd, MEM_GETDS, &ds) < 0) {
-		perror("ps");
-		exit(1);
+		printf("ps: ioctl mem_getds\n");
+		return 1;
 	}
 
 #ifdef CONFIG_CPU_USAGE
@@ -155,8 +156,8 @@ int main(int argc, char **argv)
 
 	    if (ioctl(fd, MEM_GETUPTIME, &upoff) < 0 ||
                 !memread(fd, upoff, ds, &uptime, sizeof(uptime))) {
-		    perror("ps");
-		    exit(1);
+		    printf("ps: ioctl mem_getuptime\n");
+		    return 1;
 	    }
 
         unsigned long n = uptime / HZ;
@@ -168,13 +169,13 @@ int main(int argc, char **argv)
 
         printf("up for %d days, %d hour%s, and %d minute%s\n",
             days, hours, hours == 1? "": "s", minutes, minutes == 1? "": "s");
-        exit(0);
+        return 0;
     }
 #endif
 
 	if (ioctl(fd, MEM_GETTASK, &off) < 0) {
-		perror("ps");
-		exit(1);
+		printf("ps: ioctl mem_gettask\n");
+		return 1;
 	}
 
 	printf("  PID   GRP  TTY USER STAT ");
@@ -184,20 +185,11 @@ int main(int argc, char **argv)
     printf(" ");
 	if (f_listall) printf("CSEG DSEG ");
 	printf(" HEAP  FREE   SIZE COMMAND\n");
-	for (j = 1; j <= MAX_TASKS; j++) {
+	for (j = 1; j < MAX_TASKS; j++) {
 		if (!memread(fd, off + j*sizeof(struct task_struct), ds, &task_table, sizeof(task_table))) {
-			perror("ps");
+			printf("ps: memread\n");
 			return 1;
 		}
-
-        if (task_table.kstack_magic != KSTACK_MAGIC) {
-            if (task_table.kstack_magic == 0) continue;
-            errno = EILSEQ;
-            perror("Recompile ps, mismatched task structure");
-            return 1;
-        }
-		if (task_table.t_regs.ss == 0)
-			continue;
 
 		switch (task_table.state) {
 		case TASK_UNUSED:			continue;
@@ -209,7 +201,13 @@ int main(int argc, char **argv)
 		case TASK_EXITING:			c = 'E'; break;
 		default:					c = '?'; break;
 		}
-		pwent = (getpwuid(task_table.uid));
+
+		if (task_table.kstack_magic != KSTACK_MAGIC) {
+			printf("Recompile ps, mismatched task structure\n");
+			return 1;
+		}
+
+		pwent = getpwuid(task_table.uid);
 
 		/* pid grp tty user stat*/
 		printf("%5d %5d %4s %-8s%c ",

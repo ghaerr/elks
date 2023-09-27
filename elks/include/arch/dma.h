@@ -128,7 +128,7 @@
 #define DMA_MODE_WRITE	0x48	/* memory to I/O, no autoinit, increment, single mode */
 #define DMA_MODE_CASCADE 0xC0	/* pass thru DREQ->HRQ, DACK<-HLDA only */
 
-/* These are in kernel/dma.c: */
+/* These are in dma.c */
 extern void enable_dma(unsigned char);
 extern void disable_dma(unsigned char);
 extern void clear_dma_ff(unsigned char);
@@ -137,7 +137,7 @@ extern void set_dma_page(unsigned char,unsigned char);
 extern void set_dma_addr(unsigned char,unsigned long);
 extern void set_dma_count(unsigned char,unsigned int);
 extern int get_dma_residue(unsigned char);
-extern int request_dma(unsigned char,void *);
+extern int request_dma(unsigned char,const char *);
 extern void free_dma(unsigned char);
 
 #endif

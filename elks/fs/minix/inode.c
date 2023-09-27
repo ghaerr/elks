@@ -3,6 +3,7 @@
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  *
+ * Aug 2023 Greg Haerr - Don't dedicate buffers for Z/I maps or super block.
  */
 
 #include <linuxmt/types.h>
@@ -22,8 +23,7 @@
 
 static unsigned short map_iblock(register struct inode *,block_t,block_t,int);
 static unsigned short map_izone(register struct inode *,block_t,int);
-static int minix_set_super_state(struct super_block *sb, int notflags, int newstate);
-static void minix_release_bitmaps(struct super_block *sb);
+static int minix_set_super_state(struct super_block *sb, int notflags, int state);
 static void minix_read_inode(register struct inode *);
 static struct buffer_head *minix_update_inode(register struct inode *);
 
@@ -39,37 +39,25 @@ static void minix_put_inode(register struct inode *inode)
 }
 
 /* set superblock flags state, return old state*/
-static int minix_set_super_state(struct super_block *sb, int notflags, int newstate)
+static int minix_set_super_state(struct super_block *sb, int notflags, int state)
 {
 	struct buffer_head *bh;
 	struct minix_super_block *ms;
 	int oldstate;
 
-	bh = sb->u.minix_sb.s_sbh;
+	bh = get_map_block(sb->s_dev, MINIX_SUPER_BLOCK);
+	if (!bh) return 0;
 	map_buffer(bh);
 	ms = (struct minix_super_block *)bh->b_data;
 	oldstate = ms->s_state;
 	if (notflags)
 		ms->s_state &= notflags;
-	else ms->s_state = newstate;
-	debug_sup("MINIX set super state %d\n", newstate);
-	mark_buffer_dirty(bh);
-	unmap_buffer(bh);
+	else ms->s_state = state;
+	debug_sup("set_super_state: old %d new %d\n", oldstate, ms->s_state);
+	if (ms->s_state != oldstate)
+	    mark_buffer_dirty(bh);
+	unmap_brelse(bh);
 	return oldstate;
-}
-
-/* release inode and zone bitmap buffers*/
-static void minix_release_bitmaps(struct super_block *sb)
-{
-	int i = 0;
-
-	do {
-		brelse(sb->u.minix_sb.s_imap[i]);
-	} while (++i < sb->u.minix_sb.s_imap_blocks);
-	i = 0;
-	do {
-		brelse(sb->u.minix_sb.s_zmap[i]);
-	} while (++i < sb->u.minix_sb.s_zmap_blocks);
 }
 
 void minix_write_super(register struct super_block *sb)
@@ -86,8 +74,6 @@ void minix_put_super(register struct super_block *sb)
 	lock_super(sb);
 	if (!(sb->s_flags & MS_RDONLY))
 		minix_set_super_state(sb, 0, sb->u.minix_sb.s_mount_state);	/* set original fs state*/
-	minix_release_bitmaps(sb);
-	brelse(sb->u.minix_sb.s_sbh);
 	unlock_super(sb);
 	sb->s_dev = 0;
 }
@@ -105,9 +91,9 @@ static struct super_operations minix_sops = {
 static void minix_mount_warning(register struct super_block *sb, const char *prefix)
 {
 	if ((sb->u.minix_sb.s_mount_state & (MINIX_VALID_FS|MINIX_ERROR_FS)) != MINIX_VALID_FS)
-		printk("MINIX-fs: %smounting %s %D, running fsck is recommended.\n", prefix,
+		printk("MINIX-fs: %smounting %s %D, running fsck is recommended\n", prefix,
 	     !(sb->u.minix_sb.s_mount_state & MINIX_VALID_FS) ?
-		 "unchecked file system" : "file system with errors", sb->s_dev);
+		 "unchecked filesystem" : "filesystem with errors", sb->s_dev);
 }
 
 
@@ -148,7 +134,7 @@ struct super_block *minix_read_super(register struct super_block *s, char *data,
     static const char *err4 = "minix: inode table too large\n";
 
     lock_super(s);
-	if (!(bh = bread(dev, (block_t) 1))) {
+	if (!(bh = bread(dev, MINIX_SUPER_BLOCK))) {
 		msgerr = err1;
 		goto err_read_super_2;
     }
@@ -157,7 +143,7 @@ struct super_block *minix_read_super(register struct super_block *s, char *data,
 	ms = (struct minix_super_block *) bh->b_data;
 	if (ms->s_magic != MINIX_SUPER_MAGIC) {
 	    if (!silent)
-		printk("VFS: dev %D is not minixfs.\n", dev);
+		printk("VFS: device %D is not minixfs\n", dev);
 	    msgerr = err0;
 	    goto err_read_super_1;
 	}
@@ -166,7 +152,6 @@ struct super_block *minix_read_super(register struct super_block *s, char *data,
 	    goto err_read_super_1;
 	}
 
-	s->u.minix_sb.s_sbh = bh;
 	s->u.minix_sb.s_dirsize = 16;
 	s->u.minix_sb.s_namelen = 14;
 	s->u.minix_sb.s_mount_state = ms->s_state;
@@ -177,37 +162,24 @@ struct super_block *minix_read_super(register struct super_block *s, char *data,
 	s->u.minix_sb.s_log_zone_size = ms->s_log_zone_size;
 	s->u.minix_sb.s_max_size = ms->s_max_size;
 	s->u.minix_sb.s_nzones = ms->s_nzones;
-#ifdef BLOAT_FS
-	s->s_magic = ms->s_magic;
-#endif
+	debug_sup("MINIX: inodes %d imap %d zmap %d, first data %d\n",
+	    ms->s_ninodes, ms->s_imap_blocks, ms->s_zmap_blocks,
+	    ms->s_firstdatazone);
 
-	/*
-	 *      FIXME:: We cant keep these in memory on an 8086, need to change
-	 *      the code to fetch/release each time we get a block.
-	 */
 	block = 2;
 	i = 0;
 	do {
-	    if ((s->u.minix_sb.s_imap[i] = bread(dev, (block_t) block)) == NULL)
-			break;
-	    block++;
+	    s->u.minix_sb.s_imap[i] = block++;
 	} while (++i < s->u.minix_sb.s_imap_blocks);
 	i = 0;
 	do {
-	    if ((s->u.minix_sb.s_zmap[i] = bread(dev, (block_t) block)) == NULL)
-			break;
-	    block++;
+	    s->u.minix_sb.s_zmap[i] = block++;
 	} while (++i < s->u.minix_sb.s_zmap_blocks);
-	debug_sup("minix: %d buffers used, imap %d zmap %d\n", block-2,
-		s->u.minix_sb.s_imap_blocks, s->u.minix_sb.s_zmap_blocks);
 	if (block != 2 + s->u.minix_sb.s_imap_blocks + s->u.minix_sb.s_zmap_blocks) {
-		minix_release_bitmaps(s);
 		msgerr = err2;
 	    goto err_read_super_1;
 	}
 
-    set_bit(0, s->u.minix_sb.s_imap[0]->b_data);	/* force don't use inode or zone 0 just in case*/
-    set_bit(0, s->u.minix_sb.s_zmap[0]->b_data);
     unlock_super(s);
     /* set up enough so that it can read an inode */
     s->s_op = &minix_sops;
@@ -218,15 +190,13 @@ struct super_block *minix_read_super(register struct super_block *s, char *data,
 		goto err_read_super_1;
     }
     if (!(s->s_flags & MS_RDONLY)) {
-		ms->s_state &= ~MINIX_VALID_FS;
-		mark_buffer_dirty(bh);
-		s->s_dirt = 1;
-		fsync_dev(s->s_dev);	/* force unchecked flag immediately after mount*/
+		s->s_dirt = 1;      /* will unset MINIX_VALID_FS flag in write_super */
+		sync_dev(s->s_dev);	/* sync but don't wait for I/O */
     }
 
     minix_mount_warning(s, err0);
 
-    unmap_buffer(bh);
+    unmap_brelse(bh);
     return s;
 
   err_read_super_1:
@@ -257,7 +227,7 @@ static unsigned short map_izone(register struct inode *inode, block_t block, int
 
     if (create && !(*i_zone)) {
 	if ((*i_zone = minix_new_block(inode->i_sb))) {
-	    inode->i_ctime = CURRENT_TIME;
+	    inode->i_ctime = current_time();
 	    inode->i_dirt = 1;
 	}
     }
@@ -290,11 +260,7 @@ unsigned short _minix_bmap(register struct inode *inode, block_t block, int crea
 {
     int i;
 
-#if 0
-/* I do not understand what this bit means, it cannot be this big,
- * it is a short. If this was a long it would make sense. We need to
- * check for overruns in the block num elsewhere.. FIXME
- */
+#if UNUSED  /* block always less than 65536 */
     if (block > (7 + 512 + 512 * 512))
 	panic("_minix_bmap: block (%d) >big", block);
 #endif
@@ -480,5 +446,4 @@ struct file_system_type minix_fs_type = {
 int init_minix_fs(void)
 {
     return 1;
-    /*register_filesystem(&minix_fs_type); */
 }

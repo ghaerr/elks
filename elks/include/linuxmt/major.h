@@ -21,7 +21,7 @@
  *  1 - /dev/mem               /dev/rd[01]            char mem, block ramdisk
  *  2 - /dev/ptyp*             /dev/ssd               char pty master, block ssd
  *  3 -                        /dev/{fd*,hd*}         block BIOS fd/hd
- *  4 - /dev/tty*,ttyp*,ttyS*                         char tty, pty slave, serial
+ *  4 - /dev/tty*,ttyp*,ttyS*  /dev/f{0,1}            char tty, pty slave, serial, block fd
  *  5 -
  *  6 - /dev/lp                /dev/rom               char lp, block romflash
  *  7 - /dev/ucd               /dev/ubd               meta UDD user device drivers
@@ -48,10 +48,9 @@
 /* These are the block devices */
 
 #define RAM_MAJOR         1
-#define FLOPPY_MAJOR      2  /* experimental*/
 #define SSD_MAJOR         2
 #define BIOSHD_MAJOR      3
-                             /* 4 unused*/
+#define FLOPPY_MAJOR      4  /* experimental*/
 #define ATHD_MAJOR        5  /* experimental*/
 #define ROMFLASH_MAJOR    6
 

@@ -116,7 +116,7 @@ hd32-minix:
 hd64-minix:
 	echo CONFIG_APPS_2880K=y	> Config
 	echo CONFIG_IMG_HD=y		>> Config
-	echo CONFIG_IMG_BLOCKS=64008 >> Config
+	echo CONFIG_IMG_BLOCKS=65535 >> Config
 	echo CONFIG_IMG_SECT=63		>> Config
 	echo CONFIG_IMG_HEAD=16		>> Config
 	echo CONFIG_IMG_CYL=127		>> Config

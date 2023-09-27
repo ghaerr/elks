@@ -7,24 +7,20 @@
 #include <stdlib.h>
 #include <string.h>
 
-static void errput(str)
-const char * str;
+static void errput(const char *str)
 {
    write(2, str, strlen(str));
 }
 
 void
-__assert(assertion, filename, linenumber)
-const char * assertion;
-const char * filename;
-int linenumber;
+__assert(const char *assertion, const char *filename, int linenumber)
 {
    errput("Failed assertion '");
    errput(assertion);
    errput("' in file ");
    errput(filename);
    errput(" at line ");
-   errput(itoa(linenumber));
+   errput(uitoa(linenumber));
    errput(".\n");
    abort();
 }

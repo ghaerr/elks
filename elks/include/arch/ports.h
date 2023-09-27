@@ -121,5 +121,5 @@
 #define HD1_AT_IRQ	14		/* missing request_irq call*/
 #define HD2_AT_IRQ	15		/* missing request_irq call*/
 
-/* obsolete - experimental floppy drive, floppy.c (won't compile)*/
-#define FLOPPY_IRQ	6		/* missing request_irq call*/
+/* direct floppy driver, directfd.c */
+#define FLOPPY_IRQ	6

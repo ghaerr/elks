@@ -1,4 +1,3 @@
-
 #include <time.h>
 #include <string.h>
 /*
@@ -12,7 +11,7 @@ static void hit(char *buf, int val)
 }
 
 void
-__asctime(char *buffer, struct tm *ptm)
+__asctime(char *buffer, const struct tm *ptm)
 {
    static char days[] = "SunMonTueWedThuFriSat";
    static char mons[] = "JanFebMarAprMayJunJulAugSepOctNovDec";

@@ -75,3 +75,4 @@ void nodelay(void *,int);
 void refresh();
 void mvcur(int,int,int,int);
 int mvaddch(int,int,int);
+int addch(int);

@@ -55,10 +55,10 @@ include $(TOPDIR)/Make.defs
 #########################################################################
 # State the current version of this system.
 
-VERSION 	= 0	# (0-255)
-PATCHLEVEL	= 7	# (0-255)
-SUBLEVEL	= 0	# (0-255)
-PRE		= 0
+VERSION     = 0	# (0-255)
+PATCHLEVEL  = 8	# (0-255)
+SUBLEVEL    = 0	# (0-255)
+PRE         = -dev
 
 #########################################################################
 # Specify the architecture we will use.
@@ -77,14 +77,14 @@ TARGET_NB_IMAGE	= $(TOPDIR)/elks/nbImage
 #########################################################################
 # Define variables directly dependant on the current version number.
 
-ifeq ($(PRE), 0)
+ifeq ($(PRE), )
 
 DIST		= $(shell printf '%u.%u.%u' \
 			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL))
 
 else
 
-DIST		= $(shell printf '%u.%u.%u-pre%u' \
+DIST		= $(shell printf '%u.%u.%u%s' \
 			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL) $(PRE))
 
 endif

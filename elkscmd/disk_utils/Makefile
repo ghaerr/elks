@@ -10,7 +10,7 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-PRGS = ramdisk mkfs mkfat fsck partype fdisk
+PRGS = ramdisk mkfs mkfat fsck partype fdisk df
 
 SPRGS=mkfs
 
@@ -22,8 +22,11 @@ install_sibo: all
 install: all
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
+df: df.o $(TINYPRINTF)
+	$(LD) $(LDFLAGS) -o df df.o $(TINYPRINTF) $(LDLIBS)
+
 fsck: fsck.o
-	$(LD) $(LDFLAGS) -o fsck -maout-heap=23000 fsck.o $(LDLIBS)
+	$(LD) $(LDFLAGS) -o fsck -maout-heap=0xffff fsck.o $(LDLIBS)
 
 fdisk: fdisk.o
 	$(LD) $(LDFLAGS) -o fdisk fdisk.o $(LDLIBS)
@@ -37,8 +40,8 @@ mkfat: mkfat.o $(TINYPRINTF)
 partype: partype.o
 	$(LD) $(LDFLAGS) -o partype partype.o $(LDLIBS)
 
-ramdisk: ramdisk.o $(TINYPRINTF)
-	$(LD) $(LDFLAGS) -o ramdisk ramdisk.o $(TINYPRINTF) $(LDLIBS)
+ramdisk: ramdisk.o
+	$(LD) $(LDFLAGS) -o ramdisk ramdisk.o $(LDLIBS)
 
 clean:
 	rm -f *.o $(FORMATMOD) core $(PRGS)

@@ -37,8 +37,7 @@ struct dnames {
 	char *name;
 	char *mpoint;
 };
-struct dnames *devname(char *);
-static char *dev_name(dev_t);
+struct dnames *device_path(char *);
 int df_fat(char *, int);
 
 int iflag= 0;	/* Focus on inodes instead of blocks. */
@@ -85,7 +84,7 @@ int main(int argc, char *argv[])
   if (argc > 1)
 	device = argv[1];
 
-  dname = devname(device);
+  dname = device_path(device);
   if (!(blockdev = dname->name)) {
 	fprintf(stderr, "Can't find /dev/ device for %s\n", device);
 	exit(1);
@@ -105,7 +104,7 @@ int main(int argc, char *argv[])
 	int i;
   	for (i = 0; i < NR_SUPER; i++) {
 		if (ustatfs(i, &statfs, UF_NOFREESPACE) >= 0) {
-			char *nm = dev_name(statfs.f_dev);
+			char *nm = devname(statfs.f_dev, S_IFBLK);
 			char *filler = "  ";		/* Text alignment */
 			if (Pflag) filler = "";
 			if (statfs.f_type > FST_MSDOS || (statfs.f_type == FST_MSDOS && (Pflag||iflag))) 
@@ -277,7 +276,7 @@ bit_t bit_count(unsigned blocks, bit_t bits, int fd)
  */
 
 /* return /dev/ device from dirname */
-struct dnames *devname(char *dirname)
+struct dnames *device_path(char *dirname)
 {
    static char dev[] = "/dev";
    struct stat st, dst;
@@ -321,45 +320,4 @@ struct dnames *devname(char *dirname)
    }
    closedir(fp);
    return NULL;
-}
-
-/*
- * Convert a block device number to name.
- * From mount.c
- */
-static struct dev_name_struct {
-        char *name;
-        dev_t num;
-} devices[] = {
-        /* root_dev_name needs first 5 in order*/
-        { "hda",     0x0300 },
-        { "hdb",     0x0320 },
-        { "hdc",     0x0340 },
-        { "hdd",     0x0360 },
-        { "fd0",     0x0380 },
-        { "fd1",     0x03a0 },
-        { "ssd",     0x0200 },
-        { "rd",      0x0100 },
-        { NULL,           0 }
-};
-
-static char *dev_name(dev_t dev)
-{
-	int i;
-#define NAMEOFF 5
-	static char name[10] = "/dev/";
-
-	for (i=0; i<sizeof(devices)/sizeof(devices[0])-1; i++) {
-		if (devices[i].num == (dev & 0xfff0)) {
-			strcpy(&name[NAMEOFF], devices[i].name);
-			if (i < 4) {
-				if (dev & 0x07) {
-					name[NAMEOFF+3] = '0' + (dev & 7);
-					name[NAMEOFF+4] = 0;
-				}
-			}
-			return name;
-		}
-	}
-	return NULL;
 }

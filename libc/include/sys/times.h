@@ -12,10 +12,6 @@ struct tms {
 	clock_t tms_cstime;
 };
 
-__BEGIN_DECLS
-
 clock_t times (struct tms *tp);
-
-__END_DECLS
 
 #endif

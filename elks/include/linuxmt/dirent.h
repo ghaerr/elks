@@ -2,8 +2,7 @@
 #define __LINUXMT_DIRENT_H
 
 #include <linuxmt/types.h>
-
-#define MAXNAMLEN       26      /* 14 for MINIX, 26 for FAT */
+#include <linuxmt/limits.h>
 
 struct dirent {
     u_ino_t         d_ino;

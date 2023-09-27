@@ -1,16 +1,13 @@
 /*
  * ELKS implmentation of memory devices
- * /dev/null, /dev/ports, /dev/zero, /dev/mem, /dev/kmem, etc...
+ * /dev/null, /dev/port, /dev/zero, /dev/kmem
  *
  * Heavily inspired by linux/drivers/char/mem.c
  */
 
 /* for reference
- * /dev/mem refers to physical memory
- * /dev/kmem refers to _virtual_ address space
- * /dev/port	refers to hardware ports <Marcin.Laszewski@gmail.com>
- * Currently these will be the same, but eventually, once ELKS has
- * EMS, etc, we'll want to change these.
+ * /dev/kmem refers to physical memory
+ * /dev/port refers to hardware ports <Marcin.Laszewski@gmail.com>
  */
 
 #include <linuxmt/config.h>
@@ -32,21 +29,18 @@
 #include <arch/io.h>
 #include <arch/segment.h>
 
-#define DEV_MEM_MINOR		1
+#define DEV_MEM_MINOR		1       /* unused */
 #define DEV_KMEM_MINOR		2
 #define DEV_NULL_MINOR		3
 #define DEV_PORT_MINOR		4
 #define DEV_ZERO_MINOR		5
-
-#define DEV_FULL_MINOR		7
-#define DEV_RANDOM_MINOR	8
-#define DEV_URANDOM_MINOR	9
+#define DEV_FULL_MINOR		6       /* unused */
 
 /*
  * generally useful code...
  */
-int memory_lseek(struct inode *inode, register struct file *filp,
-		    loff_t offset, unsigned int origin)
+static int memory_lseek(struct inode *inode, struct file *filp, loff_t offset,
+        unsigned int origin)
 {
     debugmem("mem_lseek()\n");
     switch (origin) {
@@ -60,12 +54,6 @@ int memory_lseek(struct inode *inode, register struct file *filp,
     }
     if (offset != filp->f_pos) {
 	filp->f_pos = offset;
-
-#ifdef BLOAT_FS
-	filp->f_reada = 0;
-	filp->f_version = ++event;
-#endif
-
     }
     return 0;
 }
@@ -89,7 +77,7 @@ size_t null_read(struct inode *inode, struct file *filp, char *data, size_t len)
 size_t null_write(struct inode *inode, struct file *filp, char *data, size_t len)
 {
     debugmem("null write: ignoring %d bytes!\n", len);
-    return (size_t)len;
+    return len;
 }
 
 /*
@@ -127,8 +115,6 @@ int port_lseek(struct inode *inode, struct file *filp, off_t offset, int origin)
 
     return 0;
 }
-#else
-#	define	port_lseek	NULL
 #endif
 
 #if defined(CONFIG_CHAR_DEV_MEM_PORT_READ)
@@ -173,6 +159,7 @@ size_t port_write(struct inode *inode, struct file *filp, char *data, size_t len
 #	define	port_write	NULL
 #endif
 
+#if UNUSED
 /*
  * /dev/full code
  */
@@ -188,6 +175,7 @@ size_t full_write(struct inode *inode, struct file *filp, char *data, size_t len
     debugmem("full_write: objecting to %d bytes!\n", len);
     return -ENOSPC;
 }
+#endif
 
 /*
  * /dev/zero code
@@ -207,14 +195,13 @@ static unsigned short int split_seg_off(unsigned short int *offset, long int pos
 }
 
 /*
- * /dev/kmem (and currently also mem) code
+ * /dev/kmem code
  */
-size_t kmem_read(struct inode *inode, register struct file *filp,
-	      char *data, size_t len)
+size_t kmem_read(struct inode *inode, register struct file *filp, char *data, size_t len)
 {
     unsigned short int sseg, soff;
 
-    debugmem("[k]mem_read()\n");
+    debugmem("kmem_read()\n");
     sseg = split_seg_off(&soff, filp->f_pos);
     debugmem("Reading %u %p %p.\n", len, sseg, soff);
     fmemcpyb((byte_t *)data, current->t_regs.ds, (byte_t *)soff, sseg, (word_t) len);
@@ -222,31 +209,17 @@ size_t kmem_read(struct inode *inode, register struct file *filp,
     return (size_t) len;
 }
 
-size_t kmem_write(struct inode *inode, register struct file *filp,
-	       char *data, size_t len)
+size_t kmem_write(struct inode *inode, register struct file *filp, char *data, size_t len)
 {
     unsigned short int dseg, doff;
 
-    debugmem("[k]mem_write()\n");
-
+    debugmem("kmem_write()\n");
     dseg = split_seg_off(&doff, filp->f_pos);
     debugmem("Writing to %d:%d\n", dseg, doff);
     fmemcpyb((byte_t *)doff, dseg, (byte_t *)data, current->t_regs.ds, (word_t) len);
     filp->f_pos += len;
     return len;
 }
-
-// Heap iterator callback
-
-#ifdef HEAP_DEBUG
-
-void heap_cb (heap_s * h)
-{
-	printk ("heap:%Xh:%u:%hxh\n",h, h->size, h->tag);
-}
-
-#endif /* HEAP_DEBUG */
-
 
 int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
 {
@@ -269,9 +242,6 @@ int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
     case MEM_GETUSAGE:
 	mm_get_usage (&(mu.free_memory), &(mu.used_memory));
 	memcpy_tofs(arg, &mu, sizeof(struct mem_usage));
-#ifdef HEAP_DEBUG
-	heap_iterate (heap_cb);
-#endif
 	return 0;
     case MEM_GETHEAP:
 	retword = (unsigned short) &_heap_all;
@@ -287,8 +257,6 @@ int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
     put_user(retword, arg);
     return 0;
 }
-
-/*@-type@*/
 
 static struct file_operations null_fops = {
     null_lseek,			/* lseek */
@@ -314,17 +282,6 @@ static struct file_operations port_fops = {
 };
 #endif
 
-static struct file_operations full_fops = {
-    memory_lseek,		/* lseek */
-    full_read,			/* read */
-    full_write,			/* write */
-    NULL,			/* readdir */
-    NULL,			/* select */
-    NULL,			/* ioctl */
-    NULL,			/* open */
-    NULL			/* release */
-};
-
 static struct file_operations zero_fops = {
     memory_lseek,		/* lseek */
     zero_read,			/* read */
@@ -347,35 +304,26 @@ static struct file_operations kmem_fops = {
     NULL			/* release */
 };
 
+#if UNUSED
+static struct file_operations full_fops = {
+    memory_lseek,		/* lseek */
+    full_read,			/* read */
+    full_write,			/* write */
+    NULL,			/* readdir */
+    NULL,			/* select */
+    NULL,			/* ioctl */
+    NULL,			/* open */
+    NULL			/* release */
+};
+#endif
+
 /*
  * memory device open multiplexor
  */
 int memory_open(register struct inode *inode, struct file *filp)
 {
-#ifdef DEBUG
-    static char *mdev_nam[] = {
-
-    /*  Unimplemented minors will print out the correct device name
-     *  with a warning note.
-     */
-
-	"???",
-	"mem",
-	"kmem",
-	"null",
-	"port",
-	"zero",
-	"???",  /* OBSOLETE core */
-	"full"
-    };
-#endif
     static struct file_operations *mdev_fops[] = {
-	NULL,		/*  */
-
-    /*  The following two entries assume that virtual memory is identical
-     *  to physical memory.
-     */
-
+	NULL,
 	&kmem_fops,	/* DEV_MEM_MINOR */
 	&kmem_fops,	/* DEV_KMEM_MINOR */
 	&null_fops,	/* DEV_NULL_MINOR */
@@ -385,18 +333,15 @@ int memory_open(register struct inode *inode, struct file *filp)
         NULL,
 #endif
 	&zero_fops,	/* DEV_ZERO_MINOR */
-	NULL,		/* OBSOLETE core */
+#if UNUSED
 	&full_fops	/* DEV_FULL_MINOR */
+#endif
     };
     unsigned int minor;
 
     minor = MINOR(inode->i_rdev);
-    if ((minor > 7) || !mdev_fops[minor]) {
-	printk("Device minor %d not supported.\n", minor);
+    if (minor > 5 || !mdev_fops[minor])
 	return -ENXIO;
-    }
-    debugmem("memory_open: minor = %u; it's /dev/%s\n",
-		minor, mdev_nam[minor]);
     filp->f_op = mdev_fops[minor];
     return 0;
 }
@@ -412,11 +357,8 @@ static struct file_operations memory_fops = {
     NULL			/* release */
 };
 
-/*@+type@*/
-
 void INITPROC mem_dev_init(void)
 {
     register_chrdev(MEM_MAJOR, "mem", &memory_fops);
 }
-
 #endif

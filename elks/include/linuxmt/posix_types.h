@@ -20,17 +20,13 @@
  * use the ones here. 
  */
 
-/*@-namechecks@*/
-
 #undef __NFDBITS
-#define __NFDBITS	(8 * sizeof(unsigned long))
+#define __NFDBITS       (8 * sizeof(unsigned long))
 
 #undef __FD_SETSIZE
-#define __FD_SETSIZE	20
+#define __FD_SETSIZE    20
 
 typedef __u32 __kernel_fd_set;
-
-/*@+namechecks@*/
 
 #include <arch/posix_types.h>
 #include <linuxmt/time.h>

@@ -14,91 +14,91 @@ extern struct task_struct *next_task_slot;
 
 static void reparent_children(void)
 {
-	register struct task_struct *p;
+    register struct task_struct *p;
 
-	for_each_task(p) {
-		if (p->p_parent == current) {
-			/* remove orphaned zombies, no need to reparent them to init*/
-			if (p->state == TASK_ZOMBIE) {
-				debug_wait("Zombie orphan pid %d ppid %d removed\n", p->pid, p->ppid);
-				p->state = TASK_UNUSED;		/* unassign task entry*/
-				next_task_slot = p;
-				task_slots_unused++;
-			}
+    for_each_task(p) {
+        if (p->p_parent == current) {
+            /* remove orphaned zombies, no need to reparent them to init*/
+            if (p->state == TASK_ZOMBIE) {
+                debug_wait("Zombie orphan pid %d ppid %d removed\n", p->pid, p->ppid);
+                p->state = TASK_UNUSED;     /* unassign task entry*/
+                next_task_slot = p;
+                task_slots_unused++;
+            }
 
-			/* reparent orphans to init*/
-			if (p->state != TASK_UNUSED) {
-				debug_wait("Reparenting orphan pid %d ppid %d to init\n",
-					p->pid, p->p_parent->pid);
-				p->p_parent = &task[1];
-				p->ppid = task[1].pid;
-			}
-		}
-	}
+            /* reparent orphans to init*/
+            if (p->state != TASK_UNUSED) {
+                debug_wait("Reparenting orphan pid %d ppid %d to init\n",
+                    p->pid, p->p_parent->pid);
+                p->p_parent = &task[1];
+                p->ppid = task[1].pid;
+            }
+        }
+    }
 }
 
 /* note: 'usage' parameter ignored */
 int sys_wait4(pid_t pid, int *status, int options, void *usage)
 {
-	register struct task_struct *p;
-	int waitagain;
+    register struct task_struct *p;
+    int waitagain;
 
-	debug_wait("WAIT(%d) for %d %s\n", current->pid, pid, (options & WNOHANG)? "nohang": "");
+    debug_wait("WAIT(%P) for %d %s\n", pid, (options & WNOHANG)? "nohang": "");
 
  for (;;) {
-	waitagain = 0;
+    waitagain = 0;
 
-	for_each_task(p) {
-		if (p->p_parent == current && p->state != TASK_UNUSED) {
-		  if (p->state == TASK_ZOMBIE || p->state == TASK_STOPPED) {
-			if (pid == (pid_t)-1 || p->pid == pid || (!pid && p->pgrp == current->pgrp)) {
-				if (status) {
-					if (verified_memcpy_tofs(status, &p->exit_status, sizeof(int)))
-						return -EFAULT;
-				}
+    for_each_task(p) {
+        if (p->p_parent == current && p->state != TASK_UNUSED) {
+          if (p->state == TASK_ZOMBIE || p->state == TASK_STOPPED) {
+            if (pid == (pid_t)-1 || p->pid == pid || (!pid && p->pgrp == current->pgrp)) {
+                if (status) {
+                    if (verified_memcpy_tofs(status, &p->exit_status, sizeof(int)))
+                        return -EFAULT;
+                }
 
-				/* just return status on stopped state, don't release task*/
-				if (p->state == TASK_STOPPED)
-					return p->pid;
+                /* just return status on stopped state, don't release task*/
+                if (p->state == TASK_STOPPED)
+                    return p->pid;
 
-				p->state = TASK_UNUSED;		/* unassign task entry*/
-				next_task_slot = p;
-				task_slots_unused++;
+                p->state = TASK_UNUSED;     /* unassign task entry*/
+                next_task_slot = p;
+                task_slots_unused++;
 
-				debug_wait("WAIT(%d) got %d\n", current->pid, p->pid);
-				return p->pid;
-			}
-		} else {
-			/* keep waiting while process has non-zombie/stopped children*/
-			debug_wait("WAIT(%d) again for pid %d state %d\n", current->pid, p->pid, p->state);
-			waitagain = 1;
-		}
-	  }
-	}
+                debug_wait("WAIT(%P) got %d\n", p->pid);
+                return p->pid;
+            }
+        } else {
+            /* keep waiting while process has non-zombie/stopped children*/
+            debug_wait("WAIT(%P) again for pid %d state %d\n", p->pid, p->state);
+            waitagain = 1;
+        }
+      }
+    }
 
-	if (options & WNOHANG)
-		return 0;
-	if (!waitagain)
-		break;
+    if (options & WNOHANG)
+        return 0;
+    if (!waitagain)
+        break;
 
-	debug_wait("WAIT(%d) sleep\n", current->pid);
-	interruptible_sleep_on(&current->child_wait);
-	if (current->signal) {
-		debug_wait("WAIT(%d) return -EINTR\n", current->pid);
-		return -EINTR;
-	}
-	debug_wait("WAIT(%d) wakeup\n", current->pid);
+    debug_wait("WAIT(%P) sleep\n");
+    interruptible_sleep_on(&current->child_wait);
+    if (current->signal) {
+        debug_wait("WAIT(%P) return -EINTR\n");
+        return -EINTR;
+    }
+    debug_wait("WAIT(%P) wakeup\n");
   }
 
-    debug_wait("WAIT(%d) return -ECHILD\n", current->pid);
-	return -ECHILD;
+    debug_wait("WAIT(%P) return -ECHILD\n");
+    return -ECHILD;
 }
 
 void do_exit(int status)
 {
     struct task_struct *parent;
 
-    debug_wait("EXIT(%d) status %d\n", current->pid, status);
+    debug_wait("EXIT(%P) status %d\n", status);
     _close_allfiles();
 
     /* release process group and TTY*/
@@ -108,9 +108,9 @@ void do_exit(int status)
     /* Let go of the process */
     current->state = TASK_EXITING;
     if (current->mm.seg_code)
-	seg_put(current->mm.seg_code);
+        seg_put(current->mm.seg_code);
     if (current->mm.seg_data)
-	seg_put(current->mm.seg_data);
+        seg_put(current->mm.seg_data);
     current->mm.seg_code = current->mm.seg_data = 0;
 
     /* free program allocated memory */
@@ -120,16 +120,16 @@ void do_exit(int status)
     /* Keep all of the family stuff straight */
     struct task_struct *task;
     if ((task = current->p_prevsib)) {
-	task->p_nextsib = current->p_nextsib;
+        task->p_nextsib = current->p_nextsib;
     }
     if ((task = current->p_nextsib)) {
-	task->p_prevsib = current->p_prevsib;
+        task->p_prevsib = current->p_prevsib;
     }
 
     /* Ack. I hate repeating code like this */
     if ((parent = current->p_parent)->p_child == current) {
-	if ((task = current->p_prevsib) || (task = current->p_nextsib))
-	    parent->p_child = task;
+        if ((task = current->p_prevsib) || (task = current->p_nextsib))
+            parent->p_child = task;
     }
 #else
     parent = current->p_parent;

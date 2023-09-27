@@ -136,6 +136,7 @@ runjob(crontab *tab, cron *job)
     if ((pid = fork()) == -1)
         error("fork() in runjob: %s", strerror(errno));
     else if (pid == 0) {
+        endpwent();
         runjobprocess(tab, job, pwd);
         exit(0);
     }

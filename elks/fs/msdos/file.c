@@ -4,6 +4,8 @@
  *  Written 1992 by Werner Almesberger
  *
  *  MS-DOS regular file handling primitives
+ *
+ * Aug 2023 Greg Haerr - Don't use L1 cache for reading/writing file data.
  */
 
 #include <arch/segment.h>
@@ -138,7 +140,7 @@ static size_t msdos_file_write(register struct inode *inode,register struct file
 		mark_buffer_dirty(bh);
 		brelse(bh);
 	}
-	inode->i_mtime = CURRENT_TIME;
+	inode->i_mtime = current_time();
 	inode->u.msdos_i.i_attrs |= ATTR_ARCH;
 	inode->i_dirt = 1;
 	return start == buf ? error : buf-start;

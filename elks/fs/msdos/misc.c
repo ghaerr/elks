@@ -2,6 +2,8 @@
  *  linux-0.97/fs/msdos/misc.c
  *
  *  Written 1992 by Werner Almesberger
+ *
+ * Aug 2023 Greg Haerr - Don't use L1 cache/memset on new filesystem clusters.
  */
 
 #include <linuxmt/msdos_fs.h>

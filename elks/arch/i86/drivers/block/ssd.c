@@ -22,6 +22,7 @@ jiff_t ssd_timeout;
 
 static sector_t NUM_SECTS = 0;  /* max # sectors on SSD device */
 static int access_count;
+char ssd_initialized;
 
 static int ssd_open(struct inode *, struct file *);
 static void ssd_release(struct inode *, struct file *);
@@ -52,7 +53,7 @@ static int ssd_open(struct inode *inode, struct file *filp)
 {
     debug_blk("SSD: open\n");
     if (!NUM_SECTS)
-        return -ENXIO;
+        return -ENODATA;
     ++access_count;
     inode->i_size = NUM_SECTS << 9;
     return 0;
@@ -96,25 +97,12 @@ void ssd_io_complete(void)
             return;
         CHECK_REQUEST(req);
 
-#ifdef CHECK_BLOCKIO
-        struct buffer_head *bh = req->rq_bh;
-        if (req->rq_buffer != buffer_data(bh) || req->rq_seg != buffer_seg(bh)) {
-           panic("SSD: ADDR CHANGED req seg:buf %04x:%04x bh seg:buf %04x:%04x\n",
-                req->rq_seg, req->rq_buffer, buffer_seg(bh), buffer_data(bh));
-        }
-        if (req->rq_sector != buffer_blocknr(bh) * (BLOCK_SIZE / SD_FIXED_SECTOR_SIZE)) {
-            panic("SSD: SECTOR/BLOCKNR CHANGED req %ld bh %ld\n",
-                req->rq_sector, buffer_blocknr(bh));
-        }
-#endif
-
         buf = req->rq_buffer;
         start = req->rq_sector;
 
-        // FIXME move max sector check to to ll_rw_blk level
-        if (start >= (NUM_SECTS-1)) {
-            printk("SSD: bad request sector %lu count %d cmd %d\n", start,
-                req->rq_nr_sectors, req->rq_cmd);
+        if (start + req->rq_nr_sectors > NUM_SECTS) {
+            printk("ssd: sector %lu+%d beyond max %lu\n", start,
+                req->rq_nr_sectors, NUM_SECTS);
             end_request(0);
             continue;
         }
@@ -153,9 +141,9 @@ static void do_ssd_request(void)
         }
         CHECK_REQUEST(req);
 
-        if (!NUM_SECTS) {
+        if (!ssd_initialized) {
             end_request(0);
-            continue;
+            return;
         }
 #ifdef CONFIG_ASYNCIO
         ssd_timeout = jiffies + IODELAY;    /* schedule completion callback */

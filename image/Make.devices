@@ -16,16 +16,14 @@ devices:
 ##############################################################################
 # Create memory devices.
 
-	$(MKDEV) /dev/mem	c 1 1
+#	$(MKDEV) /dev/mem	c 1 1
 	$(MKDEV) /dev/kmem	c 1 2
 	$(MKDEV) /dev/null	c 1 3
-	$(MKDEV) /dev/port	c 1 4
+#	$(MKDEV) /dev/port	c 1 4
 	$(MKDEV) /dev/zero	c 1 5
-#	$(MKDEV) /dev/core	c 1 6
-#	$(MKDEV) /dev/full	c 1 7
-#	$(MKDEV) /dev/random	c 1 8
-#	$(MKDEV) /dev/urandom	c 1 9
-#	$(MKDEV) /dev/kmsg      c 1 11
+#	$(MKDEV) /dev/full	c 1 6
+#	$(MKDEV) /dev/random	c 1 7
+#	$(MKDEV) /dev/kmsg      c 1 8
 
 ##############################################################################
 # RAM disks.
@@ -40,7 +38,7 @@ devices:
 
 ##############################################################################
 # BIOS devices, hard and floppy disks.
-# Limit to 4 primary partitions per disk (MBR).
+# Limit to 4 primary partitions and 3 extended per disk (MBR).
 
 	$(MKDEV) /dev/hda  b 3 0
 	$(MKDEV) /dev/hda1 b 3 1
@@ -50,17 +48,21 @@ devices:
 	$(MKDEV) /dev/hda5 b 3 5
 	$(MKDEV) /dev/hda6 b 3 6
 	$(MKDEV) /dev/hda7 b 3 7
-	$(MKDEV) /dev/hda8 b 3 8
-	$(MKDEV) /dev/hdb  b 3 32
-	$(MKDEV) /dev/hdb1 b 3 33
-	$(MKDEV) /dev/hdb2 b 3 34
-	$(MKDEV) /dev/hdb3 b 3 35
-	$(MKDEV) /dev/hdb4 b 3 36
-	$(MKDEV) /dev/hdc  b 3 64
-	$(MKDEV) /dev/hdc1 b 3 65
-	$(MKDEV) /dev/hdd  b 3 96
-	$(MKDEV) /dev/fd0  b 3 128
-	$(MKDEV) /dev/fd1  b 3 160
+	$(MKDEV) /dev/hdb  b 3 8
+	$(MKDEV) /dev/hdb1 b 3 9
+	$(MKDEV) /dev/hdb2 b 3 10
+	$(MKDEV) /dev/hdb3 b 3 11
+	$(MKDEV) /dev/hdb4 b 3 12
+	$(MKDEV) /dev/hdc  b 3 16
+	$(MKDEV) /dev/hdc1 b 3 17
+	$(MKDEV) /dev/hdd  b 3 24
+	$(MKDEV) /dev/fd0  b 3 32
+	$(MKDEV) /dev/fd1  b 3 40
+
+##############################################################################
+# Direct floppy devices.
+	$(MKDEV) /dev/df0  b 4 0
+	$(MKDEV) /dev/df1  b 4 1
 
 ##############################################################################
 # Pseudo-TTY master devices. 

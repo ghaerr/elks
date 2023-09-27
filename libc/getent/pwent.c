@@ -16,49 +16,41 @@
  *  License along with this library; if not, write to the Free
  *  Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
+ * Sep 2023 Greg Haerr  - rewritten for speed, don't close passwd file
  */
 
 #include <unistd.h>
 #include <stdlib.h>
-#include <errno.h>
 #include <pwd.h>
 #include <fcntl.h>
 #include <paths.h>
 
-/*
- * setpwent(), endpwent(), and getpwent() are included in the same object
- * file, since one cannot be used without the other two, so it makes sense to
- * link them all in together.
- */
-
-/* file descriptor for the password file currently open */
-static int pw_fd = -1;
+static int __pwfd = -1;     /* file descriptor for passwd file */
 
 void
 setpwent(void)
 {
-    if (pw_fd != -1)
-        close(pw_fd);
-
-    pw_fd = open(_PATH_PASSWD, O_RDONLY);
+    if (__pwfd < 0)
+        __pwfd = open(_PATH_PASSWD, O_RDONLY);
+    lseek(__pwfd, 0L, SEEK_SET);
 }
 
 void
 endpwent(void)
 {
-    if (pw_fd != -1) {
-        close(pw_fd);
-        pw_fd = -1;
+    if (__pwfd >= 0) {
+        close(__pwfd);
+        __pwfd = -1;
     }
 }
 
 struct passwd *
 getpwent(void)
 {
-    if (pw_fd == -1) {
+    if (__pwfd < 0) {
         setpwent();
-        if (pw_fd == -1)
+        if (__pwfd < 0)
             return NULL;
     }
-    return __getpwent(pw_fd);
+    return __getpwent(__pwfd);
 }

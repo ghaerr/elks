@@ -224,6 +224,9 @@ ifdef CONFIG_APP_MAN_PAGES
 	mkdir -p $(DESTDIR)/lib/man2
 	cp -rp man/man2 $(DESTDIR)/lib
 	-compress -b 12 $(DESTDIR)/lib/man2/*
+	mkdir -p $(DESTDIR)/lib/man4
+	cp -rp man/man4 $(DESTDIR)/lib
+	-compress -b 12 $(DESTDIR)/lib/man4/*
 	mkdir -p $(DESTDIR)/lib/man5
 	cp -rp man/man5 $(DESTDIR)/lib
 	-compress -b 12 $(DESTDIR)/lib/man5/*

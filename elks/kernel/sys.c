@@ -164,8 +164,20 @@ int sys_setuid(uid_t uid)
     return 0;
 }
 
-#ifdef NOT_YET
+int sys_setsid(void)
+{
+    register __ptask currentp = current;
 
+    if (currentp->session == currentp->pid)
+	return -EPERM;
+    debug_tty("SETSID pgrp %P\n");
+    currentp->session = currentp->pgrp = currentp->pid;
+    currentp->tty = NULL;
+
+    return currentp->pgrp;
+}
+
+#if UNUSED
 int sys_times(struct tms *tbuf)
 {
     if (tbuf) {
@@ -274,28 +286,14 @@ int sys_getsid(pid_t pid)
     return -ESRCH;
 
 }
-
-#endif /* NOT_YET */
-
-int sys_setsid(void)
-{
-    register __ptask currentp = current;
-
-    if (currentp->session == currentp->pid)
-	return -EPERM;
-    debug_tty("SETSID pgrp %d\n", currentp->pid);
-    currentp->session = currentp->pgrp = currentp->pid;
-    currentp->tty = NULL;
-
-    return currentp->pgrp;
-}
+#endif
 
 #ifdef CONFIG_SUPPLEMENTARY_GROUPS
 /*
  * Supplementary group ID's
  */
 
-#define NGROUP	0xFFFF
+#define NOGROUP     0xFFFF
 
 int sys_getgroups(int gidsetsize, gid_t * grouplist)
 {
@@ -325,20 +323,11 @@ int sys_setgroups(int gidsetsize, gid_t * grouplist)
     if (!suser())
         return -EPERM;
 
-#if 1
-    /* semantics change.. return EINVAL for gidsetsize < 0. */
     if (((unsigned int)gidsetsize) > NGROUPS)
         return -EINVAL;
 
     pg = current->groups;
     lg = pg + gidsetsize;
-#else
-    if (gidsetsize > NGROUPS)
-        return -EINVAL;
-
-    pg = current->groups;
-    lg = pg + ((gidsetsize >= 0) ? gidsetsize : 0);
-#endif
 
     if (lg > pg) {
 	if (verified_memcpy_fromfs(pg, grouplist, ((char *)lg) - ((char *)pg)))
@@ -354,11 +343,11 @@ int sys_setgroups(int gidsetsize, gid_t * grouplist)
 
 int in_group_p(gid_t grp)
 {
-    register char *p = (char *) current;
+    gid_t *pg;
+    char *p;
 
-    if (grp != ((__ptask) p)->egid) {
-	register gid_t *pg = ((__ptask) p)->groups - 1;
-
+    if (grp != (current->egid) {
+	pg = current->groups - 1;
 	p = (char *)(pg + NGROUPS);
 
 	do {

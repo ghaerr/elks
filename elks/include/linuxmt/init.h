@@ -41,10 +41,13 @@ extern void INITPROC tz_init(const char *tzstr);
 
 /* block device init routines*/
 extern void INITPROC blk_dev_init(void);
-extern int INITPROC bioshd_init(void);
+extern void INITPROC bioshd_init(void);
+extern int INITPROC bios_gethdinfo(struct drive_infot *);
+extern int INITPROC bios_getfdinfo(struct drive_infot *);
+extern dev_t INITPROC bios_conv_bios_drive(unsigned int biosdrive);
 extern int INITPROC get_ide_data(int, struct drive_infot *);
 extern int directhd_init(void);
-extern void floppy_init(void);
+extern void INITPROC floppy_init(void);
 extern void INITPROC rd_init(void);
 extern void INITPROC ssd_init(void);
 extern void romflash_init(void);

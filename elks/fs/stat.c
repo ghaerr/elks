@@ -33,6 +33,7 @@ static int cp_stat(register struct inode *inode, struct stat *statbuf)
     tmp.st_atime	= inode->i_atime;
     tmp.st_ctime	= inode->i_ctime;
 
+#if UNUSED
 /*
  * st_blocks and st_blksize are approximated with a simple algorithm if
  * they aren't supported directly by the filesystem. The minix and msdos
@@ -40,24 +41,18 @@ static int cp_stat(register struct inode *inode, struct stat *statbuf)
  * be counted explicitly (by delving into the file itself), or by using
  * this simple algorithm to get a reasonable (although not 100% accurate)
  * value.
- */
-
-/*
+ *
  * Use minix fs values for the number of direct and indirect blocks.  The
  * count is now exact for the minix fs except that it counts zero blocks.
  * Everything is in BLOCK_SIZE'd units until the assignment to
  * tmp.st_blksize.
- */
-
-#if 0
-
-#define D_B   7
-#define I_B   (BLOCK_SIZE / sizeof(unsigned short))
-
-/* This code does nothing useful. The results of the calculations below
+ *
+ * This code does nothing useful. The results of the calculations below
  * are stored in local variables and nothing is done with them.
  * Al
  */
+#define D_B   7
+#define I_B   (BLOCK_SIZE / sizeof(unsigned short))
 
     if (!inode->i_blksize) {
 	unsigned int blocks, indirect;

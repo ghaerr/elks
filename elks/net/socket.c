@@ -143,7 +143,7 @@ static size_t sock_read(struct inode *inode, struct file *file,
     int err;
 
     if (!(sock = socki_lookup(inode))) {
-	debug_net("NET(%d) can't find sock_read socket\n", current->pid);
+	debug_net("NET(%P) can't find sock_read socket\n");
 	return -EBADF;
     }
 
@@ -166,7 +166,7 @@ static size_t sock_write(struct inode *inode, struct file *file,
     int err;
 
     if (!(sock = socki_lookup(inode))) {
-	debug_net("NET(%d) can't find sock_write socket\n", current->pid);
+	debug_net("NET(%P) can't find sock_write socket\n");
 	return -EBADF;
     }
 
@@ -383,7 +383,7 @@ int sys_listen(int fd, int backlog)
     if (sock->state != SS_UNCONNECTED)
 	return -EINVAL;
 
-    debug_net("NET(%d) sys_listen sock %x\n", current->pid, sock);
+    debug_net("NET(%P) sys_listen sock %x\n", sock);
     ops = sock->ops;
     if (ops && ops->listen)
 	ops->listen(sock, backlog);
@@ -410,7 +410,7 @@ int sys_accept(int fd, struct sockaddr *upeer_sockaddr, int *upeer_addrlen)
 	return -EINVAL;
 
     if (!(newsock = sock_alloc())) {
-	debug_net("NET(%d) sys_accept: no more sockets\n", current->pid);
+	debug_net("NET(%P) sys_accept: no more sockets\n");
 	return -ENOSR;		/* Was EAGAIN, but we are out of system resources! */
     }
 
@@ -421,13 +421,13 @@ int sys_accept(int fd, struct sockaddr *upeer_sockaddr, int *upeer_addrlen)
 	return i;
     }
 
-    debug_tune("(%d) before accept sock %x newsock %x\n", current->pid, sock,newsock);
+    debug_tune("(%P) before accept sock %x newsock %x\n", sock, newsock);
     i = newsock->ops->accept(sock, newsock, file->f_flags);
     if (i < 0) {
 	sock_release(newsock);
 	return i;
     }
-    debug_tune("(%d) after accept sock %x newsock %x\n", current->pid, sock,newsock);
+    debug_tune("(%P) after accept sock %x newsock %x\n", sock, newsock);
 
     if ((fd = get_fd(SOCK_INODE(newsock))) < 0) {
 	sock_release(newsock);
@@ -529,7 +529,7 @@ int sys_socket(int family, int type, int protocol)
 	sock_release(sock);
 	return fd;
     }
-    debug_net("NET(%d) new socket\n", current->pid);
+    debug_net("NET(%P) new socket\n");
 
     if ((fd = get_fd(SOCK_INODE(sock))) < 0) {
 	sock_release(sock);

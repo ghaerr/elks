@@ -146,7 +146,8 @@ static char manorcat[] = "man:cat";
       for (ms=nms=mansect,step(&ms,&nms); ms; step(&ms, &nms))
 	 for (mp=nmp=manpath,step(&mp,&nmp); mp; step(&mp, &nmp))
 	    for (su=nsu=mansuff,step(&su,&nsu); su; step(&su, &nsu)) {
-	       sprintf(fbuf, "%s/%s%s/%s.%s%s", mp, mc, ms, name, ms, su);
+	       /* max manpage name is 10, allows .1.Z for 14 MINIX max */
+	       sprintf(fbuf, "%s/%s%s/%.10s.%s%s", mp, mc, ms, name, ms, su);
 	       /* Got it ? */
 	       if (access(fbuf, 0) < 0) continue;
 	       if (flg_w)

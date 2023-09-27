@@ -12,7 +12,7 @@
 #include <linuxmt/utsname.h>
 #include <linuxmt/netstat.h>
 #include <linuxmt/trace.h>
-#include <linuxmt/debug.h>
+#include <linuxmt/devnum.h>
 #include <arch/system.h>
 #include <arch/segment.h>
 #include <arch/ports.h>
@@ -20,8 +20,10 @@
 /*
  *	System variable setups
  */
-#define ENV		1		/* allow environ variables as bootopts*/
-#define DEBUG		0		/* display parsing at boot*/
+#define ENV             1       /* allow environ variables as bootopts*/
+#define DEBUG           0       /* display parsing at boot*/
+
+#include <linuxmt/debug.h>
 
 #define MAX_INIT_ARGS	8
 #define MAX_INIT_ENVS	8
@@ -33,13 +35,14 @@ int root_mountflags = 0;
 #endif
 struct netif_parms netif_parms[MAX_ETHS] = {
     /* NOTE:  The order must match the defines in netstat.h:
-     * ETH_NE2K, ETH_WD, ETH_EL3	*/
+     * ETH_NE2K, ETH_WD, ETH_EL3    */
     { NE2K_IRQ, NE2K_PORT, 0, NE2K_FLAGS },
     { WD_IRQ, WD_PORT, WD_RAM, WD_FLAGS },
     { EL3_IRQ, EL3_PORT, 0, EL3_FLAGS },
 };
 __u16 kernel_cs, kernel_ds;
 int tracing;
+int nr_ext_bufs, nr_xms_bufs, nr_map_bufs;
 static int boot_console;
 static char bininit[] = "/bin/init";
 static char binshell[] = "/bin/sh";
@@ -68,10 +71,9 @@ static char *envp_init[MAX_INIT_ENVS+1];
 static unsigned char options[OPTSEGSZ];
 
 extern int boot_rootdev;
-extern int boot_bufs;
 extern int dprintk_on;
 static char * INITPROC root_dev_name(int dev);
-static int parse_options(void);
+static int INITPROC parse_options(void);
 static void INITPROC finalize_options(void);
 static char * INITPROC option(char *s);
 
@@ -134,7 +136,7 @@ void INITPROC kernel_init(void)
 
     inode_init();
     if (buffer_init())	/* also enables xms and unreal mode if configured and possible*/
-	panic("No buf mem");
+        panic("No buf mem");
 
     device_init();
 
@@ -146,7 +148,7 @@ void INITPROC kernel_init(void)
 
 #ifdef CONFIG_BOOTOPTS
     finalize_options();
-    if (!opts) printk("/bootopts ignored: header not ## or size > %d\n", OPTSEGSZ-1);
+    if (!opts) printk("/bootopts not found or bad format/size\n");
 #endif
 
 #ifdef CONFIG_FARTEXT_KERNEL
@@ -154,7 +156,7 @@ void INITPROC kernel_init(void)
     seg_t     init_seg = ((unsigned long)(void __far *)__start_fartext_init) >> 16;
     seg_t s = init_seg + (((word_t)(void *)__start_fartext_init + 15) >> 4);
     seg_t e = init_seg + (((word_t)(void *)  __end_fartext_init + 15) >> 4);
-    debug("extra %04x to %04x size %04x (%d)\n", s, e, (e - s) << 4, (e - s) << 4);
+    debug("init: seg %04x to %04x size %04x (%d)\n", s, e, (e - s) << 4, (e - s) << 4);
     seg_add(s, e);
 #else
     seg_t s = 0, e = 0;
@@ -177,8 +179,8 @@ static void INITPROC kernel_banner(seg_t start, seg_t end, seg_t init, seg_t ext
     printk("8018X machine, ");
 #endif
 
-    printk("syscaps 0x%x, %uK base ram.\n", sys_caps, SETUP_MEM_KBYTES);
-    printk("ELKS kernel %s (%u text, %u ftext, %u data, %u bss, %u heap)\n",
+    printk("syscaps %x, %uK base ram\n", sys_caps, SETUP_MEM_KBYTES);
+    printk("ELKS %s (%u text, %u ftext, %u data, %u bss, %u heap)\n",
            system_utsname.release,
            (unsigned)_endtext, (unsigned)_endftext, (unsigned)_enddata,
            (unsigned)_endbss - (unsigned)_enddata, heapsize);
@@ -190,7 +192,7 @@ static void INITPROC kernel_banner(seg_t start, seg_t end, seg_t init, seg_t ext
            kernel_ds, end, (int) ((end - start + extra) >> 6));
 }
 
-static void try_exec_process(const char *path)
+static void INITPROC try_exec_process(const char *path)
 {
     int num;
 
@@ -198,8 +200,7 @@ static void try_exec_process(const char *path)
     if (num) printk("Can't run %s, errno %d\n", path, num);
 }
 
-/* this procedure runs in user mode as task 1*/
-static void init_task(void)
+static void INITPROC do_init_task(void)
 {
     int num;
     const char *s;
@@ -213,12 +214,12 @@ static void init_task(void)
 
     /* Don't open /dev/console for /bin/init, 0-2 closed immediately and fragments heap*/
     //if (strcmp(init_command, bininit) != 0) {
-	/* Set stdin/stdout/stderr to /dev/console if not running /bin/init*/
-	num = sys_open(s="/dev/console", O_RDWR, 0);
-	if (num < 0)
-	    printk("Unable to open %s (error %d)\n", s, num);
-	sys_dup(num);		/* open stdout*/
-	sys_dup(num);		/* open stderr*/
+        /* Set stdin/stdout/stderr to /dev/console if not running /bin/init*/
+        num = sys_open(s="/dev/console", O_RDWR, 0);
+        if (num < 0)
+            printk("Unable to open %s (error %d)\n", s, num);
+        sys_dup(num);		/* open stdout*/
+        sys_dup(num);		/* open stderr*/
     //}
 
 #ifdef CONFIG_BOOTOPTS
@@ -241,22 +242,31 @@ static void init_task(void)
     panic("No init or sh found");
 }
 
+/* this procedure runs in user mode as task 1*/
+static void init_task(void)
+{
+    do_init_task();
+}
+
 #ifdef CONFIG_BOOTOPTS
 static struct dev_name_struct {
 	const char *name;
 	int num;
 } devices[] = {
-	/* root_dev_name needs first 5 in order*/
-	{ "hda",     0x0300 },
-	{ "hdb",     0x0320 },
-	{ "hdc",     0x0340 },
-	{ "hdd",     0x0360 },
-	{ "fd0",     0x0380 },
-	{ "fd1",     0x03a0 },
-	{ "ttyS",    0x0440 },
-	{ "tty1",    0x0400 },
-	{ "tty2",    0x0401 },
-	{ "tty3",    0x0402 },
+	/* the 4 partitionable drives must be first */
+	{ "hda",     DEV_HDA },
+	{ "hdb",     DEV_HDB },
+	{ "hdc",     DEV_HDC },
+	{ "hdd",     DEV_HDD },
+	{ "fd0",     DEV_FD0 },
+	{ "fd1",     DEV_FD1 },
+	{ "df0",     DEV_DF0 },
+	{ "df1",     DEV_DF1 },
+	{ "ttyS0",   DEV_TTYS0 },
+	{ "ttyS1",   DEV_TTYS1 },
+	{ "tty1",    DEV_TTY1 },
+	{ "tty2",    DEV_TTY2 },
+	{ "tty3",    DEV_TTY3 },
 	{ NULL,           0 }
 };
 
@@ -276,7 +286,7 @@ static char * INITPROC root_dev_name(int dev)
 			if (i < 4) {
 				if (dev & 0x07) {
 					name[NAMEOFF+3] = '0' + (dev & 7);
-					name[NAMEOFF+4] = 0;
+					name[NAMEOFF+4] = '\0';
 				}
 			}
 			return name;
@@ -307,7 +317,7 @@ static int INITPROC parse_dev(char * line)
 	return (base + atoi(line));
 }
 
-static void comirq(char *line)
+static void INITPROC comirq(char *line)
 {
 #if defined(CONFIG_ARCH_IBMPC) && defined(CONFIG_CHAR_DEV_RS)
 	int i;
@@ -328,7 +338,7 @@ static void comirq(char *line)
 #endif
 }
 
-static void parse_nic(char *line, struct netif_parms *parms)
+static void INITPROC parse_nic(char *line, struct netif_parms *parms)
 {
     char *p;
 
@@ -343,7 +353,7 @@ static void parse_nic(char *line, struct netif_parms *parms)
     }
 }
 
-static void parse_umb(char *line)
+static void INITPROC parse_umb(char *line)
 {
 	char *p = line-1; /* because we start reading at p+1 */
 	seg_t base, end;
@@ -354,12 +364,10 @@ static void parse_umb(char *line)
 		if((p = strchr(p+1, ':'))) {
 			len = (segext_t)simple_strtol(p+1, 16);
 			end = base + len;
-#if DEBUG
-			printk("umb segment from %x to %x\n", base, end);
-#endif
+			debug("umb segment from %x to %x\n", base, end);
 			seg_add(base, end);
 		}
-	}while((p = strchr(p+1, ',')));
+	} while((p = strchr(p+1, ',')));
 }
 
 /*
@@ -371,7 +379,7 @@ static void parse_umb(char *line)
  * This routine also checks for options meant for the kernel.
  * These options are not given to init - they are for internal kernel use only.
  */
-static int parse_options(void)
+static int INITPROC parse_options(void)
 {
 	char *line = (char *)options;
 	char *next;
@@ -384,9 +392,6 @@ static int parse_options(void)
 	if (*(unsigned short *)options != 0x2323 || options[OPTSEGSZ-1])
 		return 0;
 
-#if DEBUG
-	printk("/bootopts: %s", &options[3]);
-#endif
 	next = line;
 	while ((line = next) != NULL && *line) {
 		if ((next = option(line)) != NULL) {
@@ -399,14 +404,13 @@ static int parse_options(void)
 		}
 		if (*line == 0)		/* skip spaces and linefeeds*/
 			continue;
+		debug("'%s',", line);
 		/*
 		 * check for kernel options first..
 		 */
 		if (!strncmp(line,"root=",5)) {
 			int dev = parse_dev(line+5);
-#if DEBUG
-			printk("root %s=%D\n", line+5, dev);
-#endif
+			debug("root %s=%D\n", line+5, dev);
 			ROOT_DEV = (kdev_t)dev;
 			boot_rootdev = dev;    /* stop translation in device_setup*/
 			continue;
@@ -423,9 +427,7 @@ static int parse_options(void)
 			}
 
 
-#if DEBUG
-			printk("console %s=%D\n", line+8, dev);
-#endif
+			debug("console %s=%D,", line+8, dev);
 			boot_console = dev;
 			continue;
 		}
@@ -466,8 +468,16 @@ static int parse_options(void)
 			parse_nic(line+4, &netif_parms[ETH_EL3]);
 			continue;
 		}
-		if (!strncmp(line,"bufs=",5)) {
-			boot_bufs = (int)simple_strtol(line+5, 10);
+		if (!strncmp(line,"buf=",4)) {
+			nr_ext_bufs = (int)simple_strtol(line+4, 10);
+			continue;
+		}
+		if (!strncmp(line,"xmsbuf=",7)) {
+			nr_xms_bufs = (int)simple_strtol(line+7, 10);
+			continue;
+		}
+		if (!strncmp(line,"cache=",6)) {
+			nr_map_bufs = (int)simple_strtol(line+6, 10);
 			continue;
 		}
 		if (!strncmp(line,"comirq=",7)) {
@@ -499,6 +509,7 @@ static int parse_options(void)
 		}
 #endif
 	}
+	debug("\n");
 	return 1;	/* success*/
 }
 

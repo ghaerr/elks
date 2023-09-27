@@ -41,7 +41,6 @@ int sys_lseek(unsigned int fd, loff_t * p_offset, unsigned int origin)
 #ifdef BLOAT_FS
     if (offset != file->f_pos) {
 	file->f_reada = 0;
-	file->f_version = ++event;
     }
 #endif
 
@@ -91,7 +90,7 @@ int sys_read(unsigned int fd, char *buf, size_t count)
 	fop = file->f_op;
 	if (fop->read) {
 	    retval = (int) fop->read(file->f_inode, file, buf, count);
-	    schedule();
+	    schedule();         // FIXME removing these slows down localhost networking
 	}
     }
     return retval;
@@ -130,7 +129,7 @@ int sys_write(unsigned int fd, char *buf, size_t count)
 
 	    }
 	    written = (int) fop->write(inode, file, buf, count);
-	    schedule();         // FIXME should this be here?
+	    schedule();         // FIXME removing these slows down localhost networking
 	}
     }
     return written;

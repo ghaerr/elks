@@ -71,7 +71,7 @@ void schedule(void)
     prev = current;
 
 #ifdef CHECK_SCHED
-    if (intr_count > 0) {
+    if (intr_count) {
         /* Taking a timer IRQ during another IRQ or while in kernel space is
          * quite legal. We just dont switch then */
          panic("SCHED: schedule() called from interrupt, intr_count %d", intr_count);
@@ -80,7 +80,7 @@ void schedule(void)
 
     /* We have to let a task exit! */
     if (prev->state == TASK_EXITING)
-	return;
+        return;
 
     clr_irq();
     if (prev->state == TASK_INTERRUPTIBLE) {
@@ -89,14 +89,14 @@ void schedule(void)
             prev->state = TASK_RUNNING;
         }
         else {
-	    timeout = prev->timeout;
-	}
+            timeout = prev->timeout;
+        }
     }
 
     /* Choose a task to run next */
     next = prev->next_run;
     if (prev->state != TASK_RUNNING)
-	del_from_runqueue(prev);
+        del_from_runqueue(prev);
     if (next == &idle_task)
         next = next->next_run;
     set_irq();
@@ -112,14 +112,14 @@ void schedule(void)
 
         previous = prev;
         current = next;
-	debug_sched("sched: %d\n", current->pid);
+        debug_sched("sched: %P\n");
         tswitch();  /* Won't return for a new task */
 
         if (timeout) {
             del_timer(&timer);
         }
     } else if (current->pid)
-	debug_sched("resched: %d prevstate %d\n", current->pid, prev->state);
+        debug_sched("resched: %P prevstate %d\n", prev->state);
 }
 
 static struct timer_list *next_timer;
@@ -178,9 +178,8 @@ static void run_timer_list(void)
     set_irq();
 }
 
-/* maybe someday I'll implement these profiling things -PL */
-
 #if UNUSED
+/* maybe someday I'll implement these profiling things -PL */
 
 static void do_it_prof(struct task_struct *p, jiff_t ticks)
 {
@@ -205,13 +204,13 @@ static void update_one_process(struct taks_struct *p,
 
 #endif
 
-void do_timer(struct pt_regs *regs)
+void do_timer(void)
 {
     jiffies++;
 
-#ifdef NEED_RESCHED		/* need_resched is not checked anywhere */
+#ifdef NEED_RESCHED             /* need_resched is not checked anywhere */
     if (!((int) jiffies & 7))
-	need_resched = 1;	/* how primitive can you get? */
+        need_resched = 1;       /* how primitive can you get? */
 #endif
 
     run_timer_list();
@@ -223,14 +222,14 @@ void INITPROC sched_init(void)
     register struct task_struct *t = &task[MAX_TASKS];
 
 /*
- *	Mark tasks 0-(MAX_TASKS-1) as not in use.
+ *  Mark tasks 0-(MAX_TASKS-1) as not in use.
  */
     do {
-	(--t)->state = TASK_UNUSED;
+        (--t)->state = TASK_UNUSED;
     } while (t > task);
 
 /*
- *	Now create task 0 to be ourself.
+ *  Now create task 0 to be ourself.
  */
     kfork_proc(NULL);
 

@@ -41,6 +41,8 @@
 #include "curses.h"
 #include <signal.h>
 #include <unistd.h>
+#include <time.h>
+#include <sys/time.h>
 #include "sl.h"
 
 void add_smoke(int y, int x);
@@ -55,13 +57,22 @@ int ACCIDENT  = 0;
 int LOGO      = 0;
 int FLY       = 0;
 int C51       = 0;
+int SLOW      = 0;
+int FAST      = 0;
 
 int my_mvaddstr(int y, int x, char *str)
 {
+    int startx;
+
     for ( ; x < 0; ++x, ++str)
         if (*str == '\0')  return ERR;
-    for ( ; *str != '\0'; ++str, ++x)
-        if (mvaddch(y, x, *str) == ERR)  return ERR;
+    startx = x;
+    for ( ; *str != '\0'; ++str, ++x) {
+        if (x >= COLS) break;
+        if (!SLOW && x > startx && x < COLS)
+            addch(*str);
+        else mvaddch(y, x, *str);
+    }
     return OK;
 }
 
@@ -75,9 +86,28 @@ void option(char *str)
             case 'F': FLY      = 1; break;
             case 'l': LOGO     = 1; break;
             case 'c': C51      = 1; break;
+            case 's': SLOW     = 1; break;
+            case 'f': FAST     = 1; break;
             default:                break;
         }
     }
+}
+
+void cycle(unsigned long usecs)
+{
+    unsigned long elapsed;
+    struct timeval now;
+    static long start;
+
+    if (usecs == 0) {
+        gettimeofday(&now, NULL);
+        start = now.tv_sec * 1000000L + now.tv_usec;
+        return;
+    }
+    gettimeofday(&now, NULL);
+    elapsed = now.tv_sec * 1000000L + now.tv_usec - start;
+    if (elapsed < usecs)
+        usleep(usecs - elapsed);
 }
 
 int main(int argc, char *argv[])
@@ -98,6 +128,9 @@ int main(int argc, char *argv[])
     scrollok(stdscr, FALSE);
 
     for (x = COLS - 1; ; --x) {
+        if (!FAST && !SLOW) {
+            cycle(0);
+        }
         if (LOGO == 1) {
             if (add_sl(x) == ERR) break;
         }
@@ -107,11 +140,12 @@ int main(int argc, char *argv[])
         else {
             if (add_D51(x) == ERR) break;
         }
-        //getch();
         refresh();
-        usleep(40000);
+        if (!FAST && !SLOW) {
+            cycle(40000);
+        }
     }
-    mvcur(0, COLS - 1, LINES - 1, 0);
+    mvcur(0, COLS - 1, LINES - 2, 0);
     endwin();
 
     return 0;

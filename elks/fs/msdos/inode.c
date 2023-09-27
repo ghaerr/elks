@@ -7,61 +7,61 @@
 #include <linuxmt/msdos_fs.h>
 #include <linuxmt/msdos_fs_i.h>
 #include <linuxmt/msdos_fs_sb.h>
-#include <linuxmt/bioshd.h>	/* for HDIO_GET_SECTOR_SIZE on bioshd*/
 #include <linuxmt/kernel.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/string.h>
 #include <linuxmt/stat.h>
+#include <linuxmt/devnum.h>
 #include <linuxmt/debug.h>
 
 #ifdef CONFIG_FS_DEV
 /* FAT device table, increase DEVDIR_SIZE and DEVINO_BASE to add entries*/
 struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
-    { "hda",	S_IFBLK | 0644, MKDEV(3, 0) },
-    { "hda1",	S_IFBLK | 0644, MKDEV(3, 1) },
-    { "hda2",	S_IFBLK | 0644, MKDEV(3, 2) },
-    { "hda3",	S_IFBLK | 0644, MKDEV(3, 3) },
-    { "hda4",	S_IFBLK | 0644, MKDEV(3, 4) },
-    { "hdb",	S_IFBLK | 0644, MKDEV(3, 32)},
-    { "hdb1",	S_IFBLK | 0644, MKDEV(3, 33)},
-    { "hdb2",	S_IFBLK | 0644, MKDEV(3, 34)},
-    { "hdb3",	S_IFBLK | 0644, MKDEV(3, 35)},
-    { "hdb4",	S_IFBLK | 0644, MKDEV(3, 36)},
-    { "hdc",	S_IFBLK | 0644, MKDEV(3, 64)},
-    { "hdc1",	S_IFBLK | 0644, MKDEV(3, 65)},
-    { "hdc2",	S_IFBLK | 0644, MKDEV(3, 66)},
-    { "hdc3",	S_IFBLK | 0644, MKDEV(3, 67)},
-    { "hdb4",	S_IFBLK | 0644, MKDEV(3, 68)},
-    { "hdd",	S_IFBLK | 0644, MKDEV(3, 96)},
-    { "hdd1",	S_IFBLK | 0644, MKDEV(3, 97)},
-    { "hdd2",	S_IFBLK | 0644, MKDEV(3, 98)},
-    { "hdd3",	S_IFBLK | 0644, MKDEV(3, 99)},
-    { "hdd4",	S_IFBLK | 0644, MKDEV(3,100)},
-    { "fd0",	S_IFBLK | 0644, MKDEV(3,128)},
-    { "fd1",	S_IFBLK | 0644, MKDEV(3,160)},
-    { "fd2",    S_IFBLK | 0644, MKDEV(3,192)},
-    { "fd3",    S_IFBLK | 0644, MKDEV(3,224)},
-    { "rd0",	S_IFBLK | 0644, MKDEV(1, 0) },
-    { "ssd",	S_IFBLK | 0644, MKDEV(2, 0) },
-    { "kmem",	S_IFCHR | 0644, MKDEV(1, 2) },
-    { "null",	S_IFCHR | 0644, MKDEV(1, 3) },
-    { "zero",	S_IFCHR | 0644, MKDEV(1, 5) },
-    { "tty1",	S_IFCHR | 0644, MKDEV(4, 0) },
-    { "tty2",	S_IFCHR | 0644, MKDEV(4, 1) },
-    { "tty3",	S_IFCHR | 0644, MKDEV(4, 2) },
-    { "ttyS0",	S_IFCHR | 0644, MKDEV(4, 64)},
-    { "ttyS1",	S_IFCHR | 0644, MKDEV(4, 65)},
-    { "console",S_IFCHR | 0600, MKDEV(4, 254)},
-    { "tty",	S_IFCHR | 0666, MKDEV(4, 255)},
-    { "ttyp0",	S_IFCHR | 0644, MKDEV(4, 8) },
-    { "ptyp0",	S_IFCHR | 0644, MKDEV(2, 8) },
-    { "ttyp1",	S_IFCHR | 0644, MKDEV(4, 9) },
-    { "ptyp1",	S_IFCHR | 0644, MKDEV(2, 9) },
-    { "tcpdev",	S_IFCHR | 0644, MKDEV(8, 0) },
-    { "ne0",	S_IFCHR | 0644, MKDEV(9, 0) },
-    { "wd0",	S_IFCHR | 0644, MKDEV(9, 1) },
-    { "3c0",	S_IFCHR | 0644, MKDEV(9, 2) },
+    { "hda",	S_IFBLK | 0644, DEV_HDA                     },
+    { "hda1",	S_IFBLK | 0644, DEV_HDA+1                   },
+    { "hda2",	S_IFBLK | 0644, DEV_HDA+2                   },
+    { "hda3",	S_IFBLK | 0644, DEV_HDA+3                   },
+    { "hda4",	S_IFBLK | 0644, DEV_HDA+4                   },
+    { "hdb",	S_IFBLK | 0644, DEV_HDB                     },
+    { "hdb1",	S_IFBLK | 0644, DEV_HDB+1                   },
+    { "hdb2",	S_IFBLK | 0644, DEV_HDB+2                   },
+    { "hdb3",	S_IFBLK | 0644, DEV_HDB+3                   },
+    { "hdb4",	S_IFBLK | 0644, DEV_HDB+4                   },
+    { "hdc",	S_IFBLK | 0644, DEV_HDC                     },
+    { "hdc1",	S_IFBLK | 0644, DEV_HDC+1                   },
+    { "hdc2",	S_IFBLK | 0644, DEV_HDC+2                   },
+    { "hdc3",	S_IFBLK | 0644, DEV_HDC+3                   },
+    { "hdc4",	S_IFBLK | 0644, DEV_HDC+4                   },
+    { "hdd",	S_IFBLK | 0644, DEV_HDD                     },
+    { "hdd1",	S_IFBLK | 0644, DEV_HDD+1                   },
+    { "hdd2",	S_IFBLK | 0644, DEV_HDD+2                   },
+    { "hdd3",	S_IFBLK | 0644, DEV_HDD+3                   },
+    { "hdd4",	S_IFBLK | 0644, DEV_HDD+4                   },
+    { "fd0",	S_IFBLK | 0644, DEV_FD0                     },
+    { "fd1",	S_IFBLK | 0644, DEV_FD1                     },
+    { "fd2",    S_IFBLK | 0644, DEV_FD2                     },
+    { "fd3",    S_IFBLK | 0644, DEV_FD3                     },
+    { "rd0",	S_IFBLK | 0644, MKDEV(RAM_MAJOR, 0)         },
+    { "ssd",	S_IFBLK | 0644, MKDEV(SSD_MAJOR, 0)         },
+    { "kmem",	S_IFCHR | 0644, MKDEV(MEM_MAJOR, 2)         },
+    { "null",	S_IFCHR | 0644, MKDEV(MEM_MAJOR, 3)         },
+    { "zero",	S_IFCHR | 0644, MKDEV(MEM_MAJOR, 5)         },
+    { "tty1",	S_IFCHR | 0644, MKDEV(TTY_MAJOR, 0)         },
+    { "tty2",	S_IFCHR | 0644, MKDEV(TTY_MAJOR, 1)         },
+    { "tty3",	S_IFCHR | 0644, MKDEV(TTY_MAJOR, 2)         },
+    { "ttyS0",	S_IFCHR | 0644, MKDEV(TTY_MAJOR, 64)        },
+    { "ttyS1",	S_IFCHR | 0644, MKDEV(TTY_MAJOR, 65)        },
+    { "console",S_IFCHR | 0600, MKDEV(TTY_MAJOR, 254)       },
+    { "tty",	S_IFCHR | 0666, MKDEV(TTY_MAJOR, 255)       },
+    { "ttyp0",	S_IFCHR | 0644, MKDEV(TTY_MAJOR, 8)         },
+    { "ttyp1",	S_IFCHR | 0644, MKDEV(TTY_MAJOR, 9)         },
+    { "ptyp0",	S_IFCHR | 0644, MKDEV(PTY_MASTER_MAJOR, 8)  },
+    { "ptyp1",	S_IFCHR | 0644, MKDEV(PTY_MASTER_MAJOR, 9)  },
+    { "tcpdev",	S_IFCHR | 0644, MKDEV(TCPDEV_MAJOR, 0)      },
+    { "ne0",	S_IFCHR | 0644, MKDEV(ETH_MAJOR, 0)         },
+    { "wd0",	S_IFCHR | 0644, MKDEV(ETH_MAJOR, 1)         },
+    { "3c0",	S_IFCHR | 0644, MKDEV(ETH_MAJOR, 2)         },
 };
 #endif
 
@@ -197,7 +197,7 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%
 	}
 
 	total_displayed = total_sectors >> (BLOCK_SIZE_BITS - SECTOR_BITS_SB(s));
-#if UNUSED
+#if UNUSED      /* calculate free count on mount */
 	long free_displayed = 0;
 	cluster_t cluster;
 	for (cluster = 2; cluster < sb->clusters + 2; cluster++)
@@ -313,7 +313,7 @@ void msdos_read_inode(register struct inode *inode)
 		inode->i_mode = devnods[(int)inode->i_ino - DEVINO_BASE].mode;
 		inode->i_uid  = 0;
 		inode->i_size = 0;
-		inode->i_mtime= CURRENT_TIME;
+		inode->i_mtime= current_time();
 		inode->i_gid  = 0;
 		inode->i_nlink= 1;
 		inode->i_rdev = devnods[(int)inode->i_ino - DEVINO_BASE].rdev;

@@ -1,11 +1,12 @@
 #ifndef _BLK_H
 #define _BLK_H
 
+#include <linuxmt/config.h>
+#include <linuxmt/limits.h>
 #include <linuxmt/major.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/kdev_t.h>
 #include <linuxmt/genhd.h>
-#include <linuxmt/config.h>
 #include <linuxmt/trace.h>
 
 struct request {
@@ -18,10 +19,11 @@ struct request {
     ramdesc_t rq_seg;           /* L1 or L2 ext/xms buffer segment */
     struct buffer_head *rq_bh;  /* system buffer head for notifications and locking */
     struct request *rq_next;    /* next request, used when async I/O */
+    int rq_errors;              /* only used by direct floppy driver */
 };
 
-#define RQ_INACTIVE	0
-#define RQ_ACTIVE	1
+#define RQ_INACTIVE     0
+#define RQ_ACTIVE       1
 
 /*
  * This is used in the elevator algorithm.  We don't prioritise reads
@@ -39,18 +41,6 @@ struct blk_dev_struct {
     struct request *current_request;
 };
 
-/* For bioshd.c, idequery.c */
-struct drive_infot {            /* CHS per drive*/
-    unsigned int cylinders;
-    int sectors;
-    int heads;
-    int sector_size;
-    int fdtype;                 /* floppy fd_types[] index  or -1 if hd */
-};
-extern struct drive_infot *last_drive;	/* set to last drivep-> used in read/write */
-
-extern unsigned char hd_drive_map[];
-
 extern struct blk_dev_struct blk_dev[MAX_BLKDEV];
 extern void resetup_one_dev(struct gendisk *dev, int drive);
 
@@ -67,7 +57,6 @@ extern void resetup_one_dev(struct gendisk *dev, int drive);
 #define DEVICE_NAME "rd"
 #define DEVICE_REQUEST do_rd_request
 #define DEVICE_NR(device) ((device) & 1)
-#define DEVICE_ON(device)
 #define DEVICE_OFF(device)
 
 #endif
@@ -78,21 +67,17 @@ extern void resetup_one_dev(struct gendisk *dev, int drive);
 #define DEVICE_NAME "ssd"
 #define DEVICE_REQUEST do_ssd_request
 #define DEVICE_NR(device) ((device) & 0)
-#define DEVICE_ON(device)
 #define DEVICE_OFF(device)
 
 #endif
 
 #ifdef FLOPPYDISK
 
-static void floppy_on(unsigned int nr);
-static void floppy_off(unsigned int nr);
+static void floppy_off(int nr);
 
-#define DEVICE_NAME "fd"
-#define DEVICE_INTR do_floppy
+#define DEVICE_NAME "df"
 #define DEVICE_REQUEST do_fd_request
 #define DEVICE_NR(device) ((device) & 3)
-#define DEVICE_ON(device) floppy_on(DEVICE_NR(device))
 #define DEVICE_OFF(device) floppy_off(DEVICE_NR(device))
 
 #endif
@@ -102,7 +87,6 @@ static void floppy_off(unsigned int nr);
 #define DEVICE_NAME "hd"
 #define DEVICE_REQUEST do_directhd_request
 #define DEVICE_NR(device) (MINOR(device)>>6)
-#define DEVICE_ON(device)
 #define DEVICE_OFF(device)
 
 #endif
@@ -112,7 +96,6 @@ static void floppy_off(unsigned int nr);
 #define DEVICE_NAME "bioshd"
 #define DEVICE_REQUEST do_bioshd_request
 #define DEVICE_NR(device) (MINOR(device)>>MINOR_SHIFT)
-#define DEVICE_ON(device)
 #define DEVICE_OFF(device)
 
 #endif
@@ -122,13 +105,12 @@ static void floppy_off(unsigned int nr);
 #define DEVICE_NAME "udd"
 #define DEVICE_REQUEST do_meta_request
 #define DEVICE_NR(device) (MINOR(device))
-#define DEVICE_ON(device)
 #define DEVICE_OFF(device)
 
 #endif
 
-#define CURRENT		(blk_dev[MAJOR_NR].current_request)
-#define CURRENT_DEV	DEVICE_NR(CURRENT->rq_dev)
+#define CURRENT         (blk_dev[MAJOR_NR].current_request)
+#define CURRENT_DEV     DEVICE_NR(CURRENT->rq_dev)
 
 static void (DEVICE_REQUEST) ();
 
@@ -142,7 +124,7 @@ static void end_request(int uptodate)
     req = CURRENT;
 
     if (!uptodate) {
-        printk(DEVICE_NAME ": I/O %s error dev %D sector %lu\n",
+        printk(DEVICE_NAME ": I/O %s error dev %D lba sector %lu\n",
             (req->rq_cmd == WRITE)? "write": "read",
             req->rq_dev, req->rq_sector);
     }
@@ -157,7 +139,7 @@ static void end_request(int uptodate)
     mark_buffer_uptodate(bh, uptodate);
     unlock_buffer(bh);
 
-    DEVICE_OFF(req->dev);
+    DEVICE_OFF(req->rq_dev);
     CURRENT = req->rq_next;
     req->rq_status = RQ_INACTIVE;
 

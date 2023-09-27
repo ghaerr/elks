@@ -102,7 +102,7 @@ static int lp_char_polled(int c, unsigned int target)
 	    return 0;
 	}
 
-#if 0
+#if UNUSED
 
 	if (!(status & LP_SELECTED)) { /* printer offline */
 	    printk("lp%d: printer offline\n", target);

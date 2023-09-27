@@ -1,6 +1,17 @@
 #ifndef __LINUXMT_FD_H
 #define __LINUXMT_FD_H
 
+/*
+ * Direct floppy (DF) driver header file
+ */
+
+/* place most of this driver in the far text section if possible */
+#if defined(CONFIG_FARTEXT_KERNEL) && !defined(__STRICT_ANSI__)
+#define DFPROC __far __attribute__ ((far_section, noinline, section (".fartext.df")))
+#else
+#define DFPROC
+#endif
+
 #define FDCLRPRM 0		/* clear user-defined parameters */
 #define FDSETPRM 1		/* set user-defined parameters for current media */
 #define FDDEFPRM 2		/* set user-defined parameters until explicitly cleared */
@@ -11,9 +22,9 @@
 #define	FDFMTTRK 7		/* format the specified track */
 #define FDFMTEND 8		/* end formatting a disk */
 #define FDSETEMSGTRESH	10	/* set fdc error reporting treshold */
-#define FDFLUSH  11		/* flush buffers for media; either for verifying media, or for
-				 * handling a media change without closing the file
-				 * descriptor */
+#define FDFLUSH  11		/* flush buffers for media; either for verifying media,
+				 * or for handling a media change without closing the
+				 * file descriptor */
 
 #define FD_FILL_BYTE 0xF6	/* format fill byte */
 
@@ -33,7 +44,7 @@ struct floppy_struct {
 	rate,			/* data rate. |= 0x40 for perpendicular */
 	spec1,			/* stepping rate, head unload time */
 	fmt_gap;		/* gap2 size */
-    char *name; 		/* used only for predefined formats */
+    const char *name; 		/* used only for predefined formats */
 };
 
 struct format_descr {

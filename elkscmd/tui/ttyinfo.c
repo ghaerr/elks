@@ -1,4 +1,3 @@
-#if 0
 /*─────────────────────────────────────────────────────────────────╗
 │ To the extent possible under law, Justine Tunney has waived      │
 │ all copyright and related or neighboring rights to this file,    │
@@ -6,25 +5,6 @@
 │   • http://unlicense.org/                                        │
 │   • http://creativecommons.org/publicdomain/zero/1.0/            │
 ╚─────────────────────────────────────────────────────────────────*/
-#endif
-//#include "dsp/tty/tty.h"
-//#include "libc/calls/calls.h"
-//#include "libc/calls/ioctl.h"
-//#include "libc/calls/struct/sigaction.h"
-//#include "libc/calls/termios.h"
-//#include "libc/errno.h"
-//#include "libc/fmt/fmt.h"
-//#include "libc/log/check.h"
-//#include "libc/log/log.h"
-//#include "libc/runtime/runtime.h"
-//#include "libc/stdio/stdio.h"
-//#include "libc/str/str.h"
-//#include "libc/sysv/consts/exit.h"
-//#include "libc/sysv/consts/fileno.h"
-//#include "libc/sysv/consts/o.h"
-//#include "libc/sysv/consts/sig.h"
-//#include "libc/sysv/consts/termios.h"
-//#include "libc/x/x.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -32,9 +12,7 @@
 #include <termios.h>
 #include <sys/ioctl.h>
 #include <errno.h>
-//#include <ctype.h>
 #include <signal.h>
-//#include <locale.h>
 #include "runes.h"
 #include "unikey.h"
 
@@ -47,22 +25,6 @@ typedef int bool;
 
 #define WRITE(FD, SLIT)             write(FD, SLIT, strlen(SLIT))
 #define PROBE_DISPLAY_SIZE          "\e7\e[9979;9979H\e[6n\e8"
-
-bool startswith(const char *s, const char *prefix) {
-  for (;;) {
-    if (!*prefix) return true;
-    if (!*s) return false;
-    if (*s++ != *prefix++) return false;
-  }
-}
-
-bool endswith(const char *s, const char *suffix) {
-  size_t n, m;
-  n = strlen(s);
-  m = strlen(suffix);
-  if (m > n) return false;
-  return !memcmp(s + n - m, suffix, m);
-}
 
 /**
  * Returns dimensions of controlling terminal.
@@ -95,13 +57,11 @@ void onresize(int sig) {
 
 void onkilled(int sig) {
   killed = true;
-  exit(1);
 }
 
 void getsize(void) {
   if (getttysize(1, &wsize) != -1) {
-    printf("termios says terminal size is %hux%hu\r\n", wsize.ws_col,
-           wsize.ws_row);
+    printf("termios says terminal size is %ux%u\r\n", wsize.ws_col, wsize.ws_row);
   } else {
     printf("gettysize/ioctl TIOCGWINSZ fail\r\n");
   }
@@ -176,12 +136,11 @@ again:
 #endif
     }
     if (ansi_dsr(code, n, &yn, &xn) > 0) {
-        printf("inband signalling says terminal size is %dx%d\r\n", xn, yn);
+        printf("terminal size is %dx%d\r\n", xn, yn);
     } else {
         n = ansi_to_unimouse(code, n, &x, &y, &k, &e);
         if (n != -1) {
-            printf("mouse %s at %dx%d, %s", describemouseevent(e), x, y,
-                unikeyname(n));
+            printf("mouse %s at %dx%d, %s", describemouseevent(e), x, y, unikeyname(n));
             if (e) {
                 if (k & kCtrl)  printf("+kCtrl");
                 if (k & kAlt)   printf("+kAlt");
@@ -191,5 +150,6 @@ again:
         printf("\r\n");
     }
   }
+  tty_restore();
   return 0;
 }

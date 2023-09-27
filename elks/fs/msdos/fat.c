@@ -99,13 +99,13 @@ cluster_t FATPROC fat_access(struct super_block *sb,cluster_t this,cluster_t new
 #endif
 		debug_fat("fat_access block bh dirty %lu\n", buffer_blocknr(bh));
 		mark_buffer_dirty(bh);
-#if 0000 //FIXME
+#if UNUSED  /* FIXME update 2nd FAT table? */
 		/* update extra FAT table copies*/
 		//FIXME does not look like multiple fat table update is working
-		//FIXME should use copy=2 and <= #fats below
-		//FIXME temp removed because of useless slow memcpy below w/each file write
-		//FIXME needs rewrite for speed using operations above then mark dirty
-		//FIXME or perhaps just make a complete FAT table copy on unmount!
+		// should use copy=2 and <= #fats below
+		// temp removed because of useless slow memcpy below w/each file write
+		// needs rewrite for speed using operations above then mark dirty
+		// or perhaps just make a complete FAT table copy on unmount!
 		for (copy = 1; copy < MSDOS_SB(sb)->fats; copy++) {
 			if (!(c_bh = msdos_sread(sb,
 				(sector_t)(MSDOS_SB(sb)->fat_start+(first >> SECTOR_BITS_SB(sb)) +
@@ -169,7 +169,7 @@ void FATPROC cache_lookup(struct inode *inode,cluster_t cluster,
 }
 
 
-#ifdef DEBUG
+#if DEBUG
 static void FATPROC list_cache(void)
 {
 	struct fat_cache *walk;
@@ -203,7 +203,7 @@ void FATPROC cache_add(struct inode *inode, cluster_t f_clu, cluster_t d_clu)
 			last->next = walk->next;
 			walk->next = fat_cache;
 			fat_cache = walk;
-#ifdef DEBUG
+#if DEBUG
 			list_cache();
 #endif
 			return;
@@ -215,7 +215,7 @@ void FATPROC cache_add(struct inode *inode, cluster_t f_clu, cluster_t d_clu)
 	last->next = NULL;
 	walk->next = fat_cache;
 	fat_cache = walk;
-#ifdef DEBUG
+#if DEBUG
 	list_cache();
 #endif
 }

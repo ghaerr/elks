@@ -18,7 +18,7 @@ static void alarm_callback(int data)
 {
 	struct task_struct *p = (struct task_struct *)data;
 
-	debug("kernel ALARM pid %d for %d\n", current->pid, p->pid);
+	debug("kernel ALARM pid %P for %d\n", p->pid);
 	send_sig(SIGALRM, p, 1);
 }
 

@@ -377,7 +377,7 @@ void ne2k_display_status(void)
 	printk("Receive overflows %d\n", netif_stat.oflow_errors);
 	printk("Receive errors %d\n", netif_stat.rx_errors);
 	printk("NIC buffer errors %d\n", netif_stat.rq_errors);
-	printf("Transmit errors %d\n", netif_stat.tx_errors);
+	printk("Transmit errors %d\n", netif_stat.tx_errors);
 }
 #endif
 
@@ -448,7 +448,7 @@ void INITPROC ne2k_drv_init(void)
 
 		err = ne2k_probe();
 		verbose = (net_flags&ETHF_VERBOSE);
-		printk("eth: %s at 0x%x, irq %d", dev_name, net_port, net_irq);
+		printk("eth: %s at %x, irq %d", dev_name, net_port, net_irq);
 		if (err) {
 			printk(" not found\n");
 			break;
@@ -514,7 +514,7 @@ void INITPROC ne2k_drv_init(void)
 		printk(", flags 0x%02x\n", net_flags);
 
 #if DEBUG_ETH
-		debug_setcallback(ne2k_display_status);
+		debug_setcallback(2, ne2k_display_status);
 #endif
 		break;
 	}

@@ -40,11 +40,11 @@ void login(register struct passwd *pwd, struct utmp *ut_ent)
     char sh_name[STR_SIZE];
     char *renv[16];
 
+    endpwent();
     if (fchown(0, pwd->pw_uid, pwd->pw_gid) < 0) perror("login (chown)");
 #ifdef USE_UTMP
     ut_ent->ut_type = USER_PROCESS;
     strncpy(ut_ent->ut_user, pwd->pw_name, UT_NAMESIZE);
-    ut_ent->ut_user[UT_NAMESIZE - 1] = '\0';
     time(&ut_ent->ut_time);
     pututline(ut_ent);
     endutent();
@@ -119,7 +119,7 @@ int main(int argc, char **argv)
             lbuf[n] = '\0';
         } else {
             strncpy(lbuf, argv[1], UT_NAMESIZE);
-            lbuf[UT_NAMESIZE - 1] = '\0';
+            lbuf[UT_NAMESIZE] = '\0';
             argc = 1;
         }
         pwd = getpwnam(lbuf);
@@ -143,7 +143,6 @@ int main(int argc, char **argv)
         entryp = &newentry;
         entryp->ut_type = LOGIN_PROCESS;
         strncpy(entryp->ut_user, lbuf, UT_NAMESIZE);
-        entryp->ut_user[UT_NAMESIZE - 1] = '\0';
         time(&entryp->ut_time);
         pututline(entryp);
         endutent();
