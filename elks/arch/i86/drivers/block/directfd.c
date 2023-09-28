@@ -116,7 +116,7 @@
  *  82077AA      IBM PS/2 (gen 3)                   DOR,DIR,CCR  PERPENDICULAR,LOCK
  */
 
-#define QEMU_STRETCH_FIX    0   /* =1 to ignore floppy stretch for QEMU */
+#define QEMU_STRETCH_FIX    0   /* =1 to ignore floppy stretch for QEMU 360k/AT */
 #define CHECK_DISK_CHANGE   0   /* =1 to add driver media changed code */
 #define CLEAR_DIR_REG       0   /* =1 to clear DIR DSKCHG when set (for media change) */
 
@@ -173,6 +173,15 @@ static unsigned char reply_buffer[MAX_REPLIES];
 #define ST2 (reply_buffer[2])
 #define ST3 (reply_buffer[3])
 
+/* CMOS drive types, from CMOS location 0x10 */
+#define CMOS_NONE   0
+#define CMOS_360k   1
+#define CMOS_1200k  2
+#define CMOS_720k   3
+#define CMOS_1400k  4
+#define CMOS_2880k  5
+#define CMOS_MAX    5
+
 /*
  * Minor number based formats. Each drive type is specified starting
  * from minor number 4 plus the table index, and no auto-probing is used.
@@ -189,11 +198,21 @@ static unsigned char reply_buffer[MAX_REPLIES];
  * and ND is set means no DMA. Hardcoded to 6 (HLD=6ms, use DMA).
  */
 
+/* indices into minor_types[], used for floppy format probes */
+#define FT_360k_PC  1           /* 360kB PC diskettes */
+#define FT_1200k    2           /* 1.2 MB AT-diskettes */
+#define FT_360k_AT3 3           /* 360kB in 720kB drive */
+#define FT_720k     4           /* 3.5" 720kB diskette */
+#define FT_360k_AT5 5           /* 360kB in 1.2MB drive */
+#define FT_720k_AT5 6           /* 720kB in 1.2MB drive */
+#define FT_1440k    7           /* 3.5" 1.44MB diskette */
+#define FT_2880k    8           /* 3.5" 2.88MB diskette */
+
 static struct floppy_struct minor_types[] = {
       {  0,   0, 0,  0, 0, 0x00, 0x00, 0x00, 0x00, NULL},
 /*1*/ { 720,  9, 2, 40, 0, 0x2A, 0x02, 0xDF, 0x50, "360k/PC"},  /* 360kB PC diskettes */
 /*2*/ {2400, 15, 2, 80, 0, 0x1B, 0x00, 0xDF, 0x54, "1.2M"},     /* 1.2 MB AT-diskettes */
-/*3*/ { 720,  9, 2, 40, 1, 0x2A, 0x02, 0xDF, 0x50, "360k/AT"},  /* 360kB in 720kB drive */
+/*3*/ { 720,  9, 2, 40, 1, 0x2A, 0x02, 0xDF, 0x50, "360k/AT3"}, /* 360kB in 720kB drive */
 /*4*/ {1440,  9, 2, 80, 0, 0x2A, 0x02, 0xDF, 0x50, "720k"},     /* 3.5" 720kB diskette */
 /*5*/ { 720,  9, 2, 40, 1, 0x23, 0x01, 0xDF, 0x50, "360k/AT"},	/* 360kB in 1.2MB drive */
 /*6*/ {1440,  9, 2, 80, 0, 0x23, 0x01, 0xDF, 0x50, "720k/1.2M"},/* 720kB in 1.2MB drive */
@@ -202,29 +221,25 @@ static struct floppy_struct minor_types[] = {
     /* totSectors/sectors/heads/tracks/stretch/gap/rate/spec1/fmtgap/name */
 };
 
+/* floppy probes to try per CMOS floppy type */
+static unsigned char p360k[] =  { FT_360k_PC, FT_360k_AT5, 0 };
+static unsigned char p1200k[] = { FT_1200k,   FT_360k_AT5, 0 };
+static unsigned char p720k[] =  { FT_720k,    FT_360k_AT3, 0 };
+static unsigned char p1440k[] = { FT_1440k,   FT_720k,     0 };
+static unsigned char p2880k[] = { FT_2880k,   FT_1440k,    0 };
+
 /*
- * Auto-detection. Each drive type has a pair of formats which are
- * used in succession to try to read the disk. If the FDC cannot lock onto
+ * Auto-detection. Each drive type has a zero-terminated list of formats which
+ * are used in succession to try to read the disk. If the FDC cannot lock onto
  * the disk, the next format is tried. This uses the variable 'probing'.
  */
-static struct floppy_struct probe_types[] = {
-    { 720,  9, 2, 40, 0, 0x2A, 0x02, 0xDF, 0x50, "360k/PC"},    /* 360kB PC diskettes */
-    { 720,  9, 2, 40, 1, 0x23, 0x01, 0xDF, 0x50, "360k/AT"},	/* 360kB in 1.2MB drive */
-    {2400, 15, 2, 80, 0, 0x1B, 0x00, 0xDF, 0x54, "1.2M"},       /* 1.2 MB AT-diskettes */
-    { 720,  9, 2, 40, 1, 0x23, 0x01, 0xDF, 0x50, "360k/AT"},	/* 360kB in 1.2MB drive */
-    {1440,  9, 2, 80, 0, 0x2A, 0x02, 0xDF, 0x50, "720k"},       /* 3.5" 720kB diskette */
-    { 720,  9, 2, 40, 1, 0x2A, 0x02, 0xDF, 0x50, "360k/AT"},	/* 360kB in 720kB drive */
-    {2880, 18, 2, 80, 0, 0x1B, 0x00, 0xCF, 0x6C, "1.44M"},      /* 3.5" 1.44MB diskette */
-    {1440,  9, 2, 80, 0, 0x2A, 0x02, 0xDF, 0x50, "720k"},       /* 3.5" 720kB diskette */
-    {5760, 36, 2, 80, 0, 0x1B, 0x43, 0xAF, 0x28, "2.88M"},      /* 3.5" 2.88MB diskette */
-    {2880, 18, 2, 80, 0, 0x1B, 0x00, 0xCF, 0x6C, "1.44M"},      /* 3.5" 1.44MB diskette */
-};
+static unsigned char *probe_list[CMOS_MAX] = { p360k, p1200k, p720k, p1440k, p2880k };
 
-/* Auto-detection: Disk type used until the next media change occurs. */
-struct floppy_struct *current_type[4];
+/* Auto-detection: disk type determined from CMOS and probing */
+static struct floppy_struct *current_type[4];
 
-/* This type is tried first. */
-struct floppy_struct *base_type[4];
+/* initial probe per drive */
+static unsigned char * base_type[4];
 
 /*
  * The driver is trying to determine the correct media format
@@ -1111,17 +1126,19 @@ static void DFPROC redo_fd_request(void)
 	floppy = current_type[drive];
 	if (!floppy) {
 	    probing = 1;
-	    floppy = base_type[drive];
-	    if (!floppy) {
-                printk("df%d: no base drive type, aborting\n", drive);
-		request_done(0);
-		goto repeat;
-	    }
+	    floppy = &minor_types[base_type[drive][0]];
             if (!recalibrate) {
-	        if (req->rq_errors & 1)
-		    floppy++;
-                printk("df%d: auto-probe #%d %s (%d)\n", drive, req->rq_errors,
-                    floppy->name, floppy-probe_types);
+	        if (req->rq_errors & 1) {
+                    probing++;
+                    tmp = base_type[drive][probing-1];
+                    if (!tmp) {
+                        printk("df%d: unable to probe drive type, aborting\n", drive);
+                        request_done(0);
+                        goto repeat;
+                    }
+                    floppy = &minor_types[tmp];
+                }
+                printk("df%d: auto-probe #%d %s\n", drive, req->rq_errors, floppy->name);
             }
         }
     }
@@ -1317,16 +1334,16 @@ static int INITPROC CMOS_READ(int addr)
     return inb_p(0x71);
 }
 
-static struct floppy_struct * INITPROC find_base(int drive, int code)
+static unsigned char * INITPROC find_base(int drive, int type)
 {
-    struct floppy_struct *base;
+    unsigned char *base;
 
-    if (code > 0 && code < 6) {
-	base = &probe_types[(code - 1) * 2];
-	printk("df%d is %s (%d)", drive, base->name, code);
+    if (type > 0 && type <= CMOS_MAX) {
+	base = probe_list[type - 1];
+	printk("df%d is %s (%d)", drive, minor_types[*base].name, type);
 	return base;
     }
-    printk("df%d is unknown (%d)", drive, code);
+    printk("df%d is unknown (%d)", drive, type);
     return NULL;
 }
 
@@ -1334,7 +1351,7 @@ static void INITPROC config_types(void)
 {
     printk("df: CMOS ");
     base_type[0] = find_base(0, (CMOS_READ(0x10) >> 4) & 0xF);
-    //base_type[0] = find_base(0, 1);     /* force 360k FIXME add setup table */
+    //base_type[0] = find_base(0, CMOS_360k);   /* force 360k FIXME add setup table */
     if (((CMOS_READ(0x14) >> 6) & 1) != 0) {
 	printk(", ");
 	base_type[1] = find_base(1, CMOS_READ(0x10) & 0xF);
@@ -1361,7 +1378,7 @@ static int floppy_open(struct inode *inode, struct file *filp)
 	floppy = current_type[dev];
 	if (!floppy) {
 	    probing = 1;
-	    floppy = base_type[dev];
+	    floppy = &minor_types[base_type[dev][0]];
 	    if (!floppy)
 		return -ENXIO;
 	}
