@@ -223,6 +223,7 @@ static struct floppy_struct minor_types[] = {
 
 /* floppy probes to try per CMOS floppy type */
 static unsigned char p360k[] =  { FT_360k_PC, FT_360k_AT5, 0 };
+//static unsigned char p1200k[] = { FT_1200k,   FT_1440k, FT_360k_PC, FT_360k_AT5, 0 };
 static unsigned char p1200k[] = { FT_1200k,   FT_360k_AT5, 0 };
 static unsigned char p720k[] =  { FT_720k,    FT_360k_AT3, 0 };
 static unsigned char p1440k[] = { FT_1440k,   FT_720k,     0 };
@@ -605,6 +606,10 @@ static void DFPROC bad_flp_intr(void)
     DEBUG("bad_flpI-");
     current_track = NO_TRACK;
     if (!CURRENT) return;
+    if (probing) {
+        probing++;
+        return;
+    }
     errors = ++CURRENT->rq_errors;
     if (errors >= MAX_ERRORS) {
         printk("df: Max retries #%d exceeded\n", errors);
@@ -690,8 +695,7 @@ static void DFPROC tell_sector(int nr)
 static void rw_interrupt(void)
 {
     unsigned char *buffer_area;
-    int nr;
-    char bad;
+    int nr, bad;
 
     nr = result();
     /* NOTE: If read_track is active and sector count is uneven, ST0 will
@@ -753,11 +757,10 @@ static void rw_interrupt(void)
     }
 
     if (probing) {
-	int drive = DEVICE_NR(CURRENT->rq_dev);
-
 	open_inode->i_size = (sector_t)floppy->size << 9;
-	printk("df%d: Auto-detected floppy type %s\n", drive, floppy->name);
-	current_type[drive] = floppy;
+	nr = DEVICE_NR(CURRENT->rq_dev);
+	printk("df%d: Auto-detected floppy type %s\n", nr, floppy->name);
+	current_type[nr] = floppy;
 	probing = 0;
     }
     if (read_track) {
@@ -1099,10 +1102,9 @@ static void DFPROC floppy_ready(void)
 
 static void DFPROC redo_fd_request(void)
 {
-    unsigned int start;
     struct request *req;
-    int device, drive;
-    unsigned int tmp;
+    int type, drive;
+    unsigned int start, tmp;
 
   repeat:
     req = CURRENT;
@@ -1117,29 +1119,23 @@ static void DFPROC redo_fd_request(void)
     CHECK_REQUEST(req);
 
     seek = 0;
-    probing = 0;
-    device = MINOR(req->rq_dev) >> MINOR_SHIFT;
-    drive = device & 3;
-    if (device > 3)
-	floppy = (device >> 2) + minor_types;
+    type = MINOR(req->rq_dev) >> MINOR_SHIFT;
+    drive = DEVICE_NR(req->rq_dev);
+    if (type > 3)
+	floppy = &minor_types[type >> 2];
     else {			/* Auto-detection */
 	floppy = current_type[drive];
 	if (!floppy) {
-	    probing = 1;
-	    floppy = &minor_types[base_type[drive][0]];
-            if (!recalibrate) {
-	        if (req->rq_errors & 1) {
-                    probing++;
-                    tmp = base_type[drive][probing-1];
-                    if (!tmp) {
-                        printk("df%d: unable to probe drive type, aborting\n", drive);
-                        request_done(0);
-                        goto repeat;
-                    }
-                    floppy = &minor_types[tmp];
-                }
-                printk("df%d: auto-probe #%d %s\n", drive, req->rq_errors, floppy->name);
+            tmp = probing? base_type[drive][probing-1]: base_type[drive][0];
+            if (!tmp) {
+                printk("df%d: Unable to determine drive type\n", drive);
+                request_done(0);
+                probing = 1;
+                goto repeat;
             }
+            floppy = &minor_types[tmp];
+            if (!recalibrate)
+                printk("df%d: auto-probe #%d %s\n", drive, probing, floppy->name);
         }
     }
     DEBUG("[%u]redo-%c %d(%s) bl %u;", (unsigned int)jiffies, 
@@ -1209,38 +1205,35 @@ void do_fd_request(void)
     redo_fd_request();
 }
 
-static int fd_ioctl(struct inode *inode,
-		    struct file *filp, unsigned int cmd, unsigned int param)
+static int fd_ioctl(struct inode *inode, struct file *filp, unsigned int cmd,
+    unsigned int param)
 {
-/* FIXME: Get this back in when everything else is working */
-    struct floppy_struct *this_floppy;
-    int drive, err = -EINVAL;
-    struct hd_geometry *loc = (struct hd_geometry *) param;
+    int type, drive, err;
+    struct floppy_struct *fp;
+    struct hd_geometry *loc;
 
     if (!inode || !inode->i_rdev)
 	return -EINVAL;
-    drive = MINOR(inode->i_rdev) >> MINOR_SHIFT;
-    if (drive > 3)
-	this_floppy = &minor_types[drive >> 2];
-    else if ((this_floppy = current_type[drive & 3]) == NULL)
+    type = MINOR(inode->i_rdev) >> MINOR_SHIFT;
+    drive = DEVICE_NR(inode->i_rdev);
+    if (type > 3)
+	fp = &minor_types[type >> 2];
+    else if ((fp = current_type[drive]) == NULL)
 	return -ENODEV;
 
     switch (cmd) {
     case HDIO_GETGEO:	/* need this one for the sys/makeboot command */
     case FDGETPRM:
-	err = verify_area(VERIFY_WRITE, (void *) param, sizeof(struct hd_geometry));
+        loc = (struct hd_geometry *)param;
+	err = verify_area(VERIFY_WRITE, (void *)loc, sizeof(struct hd_geometry));
 	if (!err) {
-	    put_user_char(this_floppy->head, &loc->heads);
-	    put_user_char(this_floppy->sect, &loc->sectors);
-	    put_user(this_floppy->track, &loc->cylinders);
+	    put_user_char(fp->head, &loc->heads);
+	    put_user_char(fp->sect, &loc->sectors);
+	    put_user(fp->track, &loc->cylinders);
 	    put_user_long(0L, &loc->start);
 	}
 	return err;
 #ifdef UNUSED
-    case FDFMTBEG:
-	if (!suser())
-	    return -EPERM;
-	return 0;
     case FDFMTEND:
 	if (!suser())
 	    return -EPERM;
@@ -1290,8 +1283,6 @@ static int fd_ioctl(struct inode *inode,
     }
     if (!suser())
 	return -EPERM;
-    if (drive < 0 || drive > 3)
-	return -EINVAL;
     switch (cmd) {
     case FDCLRPRM:
 	current_type[drive] = NULL;
@@ -1325,7 +1316,6 @@ static int fd_ioctl(struct inode *inode,
     default:
 	return -EINVAL;
     }
-    return err;
 }
 
 static int INITPROC CMOS_READ(int addr)
@@ -1361,10 +1351,10 @@ static void INITPROC config_types(void)
 
 static int floppy_open(struct inode *inode, struct file *filp)
 {
-    int drive, dev, err;
+    int type, drive, err;
 
-    drive = MINOR(inode->i_rdev) >> MINOR_SHIFT;
-    dev = drive & 3;
+    type = MINOR(inode->i_rdev) >> MINOR_SHIFT;
+    drive = DEVICE_NR(inode->i_rdev);
 
 #if CHECK_DISK_CHANGE
     if (filp && filp->f_mode)
@@ -1372,25 +1362,25 @@ static int floppy_open(struct inode *inode, struct file *filp)
 #endif
 
     probing = 0;
-    if (drive > 3)		/* forced floppy type */
-	floppy = (drive >> 2) + minor_types;
+    if (type > 3)		/* forced floppy type */
+	floppy = &minor_types[type >> 2];
     else {			/* Auto-detection */
-	floppy = current_type[dev];
+	floppy = current_type[drive];
 	if (!floppy) {
+            if (!base_type[drive])
+                return -ENXIO;
 	    probing = 1;
-	    floppy = &minor_types[base_type[dev][0]];
-	    if (!floppy)
-		return -ENXIO;
+	    floppy = &minor_types[base_type[drive][0]];
 	}
     }
 
-    if (fd_ref[dev] == 0) {
+    if (fd_ref[drive] == 0) {
         err = floppy_register();
         if (err) return err;
         buffer_drive = buffer_track = -1;
     }
 
-    fd_ref[dev]++;
+    fd_ref[drive]++;
     inode->i_size = (sector_t)floppy->size << 9;    /* NOTE: assumes sector size 512 */
     open_inode = inode;
     DEBUG("df%d: open dv %x, sz %lu, %s\n", drive, inode->i_rdev, inode->i_size,
