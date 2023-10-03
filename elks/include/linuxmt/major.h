@@ -50,7 +50,7 @@
 #define RAM_MAJOR         1
 #define SSD_MAJOR         2
 #define BIOSHD_MAJOR      3
-#define FLOPPY_MAJOR      4  /* experimental*/
+#define FLOPPY_MAJOR      4
 #define ATHD_MAJOR        5  /* experimental*/
 #define ROMFLASH_MAJOR    6
 

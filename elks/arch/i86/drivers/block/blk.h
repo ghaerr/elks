@@ -51,7 +51,7 @@ extern void resetup_one_dev(struct gendisk *dev, int drive);
  * hard-disks, floppies, SSD and ramdisk.
  */
 
-#ifdef RAMDISK
+#if (MAJOR_NR == RAM_MAJOR)
 
 /* ram disk */
 #define DEVICE_NAME "rd"
@@ -59,9 +59,7 @@ extern void resetup_one_dev(struct gendisk *dev, int drive);
 #define DEVICE_NR(device) ((device) & 1)
 #define DEVICE_OFF(device)
 
-#endif
-
-#ifdef SSDDISK
+#elif (MAJOR_NR == SSD_MAJOR)
 
 /* solid-state disk */
 #define DEVICE_NAME "ssd"
@@ -69,9 +67,7 @@ extern void resetup_one_dev(struct gendisk *dev, int drive);
 #define DEVICE_NR(device) ((device) & 0)
 #define DEVICE_OFF(device)
 
-#endif
-
-#ifdef FLOPPYDISK
+#elif (MAJOR_NR == FLOPPY_MAJOR)
 
 static void floppy_off(int nr);
 
@@ -80,27 +76,21 @@ static void floppy_off(int nr);
 #define DEVICE_NR(device) ((device) & 3)
 #define DEVICE_OFF(device) floppy_off(DEVICE_NR(device))
 
-#endif
-
-#ifdef ATDISK
+#elif (MAJOR_NR == ATHD_MAJOR)
 
 #define DEVICE_NAME "hd"
 #define DEVICE_REQUEST do_directhd_request
 #define DEVICE_NR(device) (MINOR(device)>>6)
 #define DEVICE_OFF(device)
 
-#endif
-
-#ifdef BIOSDISK
+#elif (MAJOR_NR == BIOSHD_MAJOR)
 
 #define DEVICE_NAME "bioshd"
 #define DEVICE_REQUEST do_bioshd_request
 #define DEVICE_NR(device) (MINOR(device)>>MINOR_SHIFT)
 #define DEVICE_OFF(device)
 
-#endif
-
-#ifdef METADISK
+#elif (MAJOR_NR == UDD_MAJOR)
 
 #define DEVICE_NAME "udd"
 #define DEVICE_REQUEST do_meta_request

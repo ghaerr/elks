@@ -11,8 +11,7 @@
 #include <linuxmt/errno.h>
 #include <linuxmt/debug.h>
 
-#define MAJOR_NR SSD_MAJOR
-#define SSDDISK
+#define MAJOR_NR    SSD_MAJOR
 #include "blk.h"
 #include "ssd.h"
 
