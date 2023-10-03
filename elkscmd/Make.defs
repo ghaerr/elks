@@ -56,7 +56,7 @@ E_V=$(shell if [ -f $(ELKS_DIR)/Makefile-rules ]; then \
 		    | fgrep = | head -4 | tr '\#' = | cut -d = -f 2 ;\
 	    else echo Version not known ; fi)
 
-ELKS_VSN=$(shell printf '%s.%s.%s-pre%s' $(E_V) | sed 's/-pre0$$//')
+ELKS_VSN=$(shell printf '%s.%s.%s%s' $(E_V))
 
 ##############################################################################
 #
