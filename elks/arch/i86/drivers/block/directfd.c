@@ -115,7 +115,7 @@
  *  82077AA      IBM PS/2 (gen 3)                   DOR,DIR,CCR  PERPENDICULAR,LOCK
  */
 
-#define QEMU_STRETCH_FIX    0   /* =1 to ignore floppy stretch for QEMU 360k/AT */
+#define USE_IMPLIED_SEEK    0   /* =1 for QEMU with 360k/AT stretch floppies (not real hw) */
 #define CHECK_DISK_CHANGE   0   /* =1 to add driver media changed code */
 #define CLEAR_DIR_REG       0   /* =1 to clear DIR DSKCHG when set (for media change) */
 
@@ -654,14 +654,19 @@ static void DFPROC perpendicular_mode(unsigned char rate)
 
 static void DFPROC configure_fdc_mode(void)
 {
-    if (need_configure && (fdc_version >= FDC_TYPE_82072)) {
-        /* Enhanced version with FIFO & write precompensation */
+    if (fdc_version >= FDC_TYPE_82072 && (need_configure || USE_IMPLIED_SEEK)) {
+        /* implied seek required for QEMU to work with 360k floppies in 1.2M drives */
+        int implied_seek = USE_IMPLIED_SEEK && floppy->stretch;
         output_byte(FD_CONFIGURE);
         output_byte(0);
-        output_byte(0x1A);      /* FIFO on, polling off, 10 byte threshold */
-        output_byte(0);         /* precompensation from track 0 upwards */
+        if (implied_seek)
+            output_byte(0x4A);      /* FIFO on, polling on, 10 byte threshold, implied seek */
+        else
+            output_byte(0x0A);      /* FIFO on, polling on, 10 byte threshold */
+        output_byte(0);             /* precompensation from track 0 upwards */
+        if (need_configure)
+            printk("df: implied seek %s\n", implied_seek? "enabled": "disabled");
         need_configure = 0;
-        printk("df: FIFO enabled\n");
     }
     if (cur_spec1 != floppy->spec1) {
         cur_spec1 = floppy->spec1;
@@ -864,7 +869,8 @@ static void DFPROC transfer(void)
         redo_fd_request();
         return;
     }
-    if (!seek) {
+    if (!seek || (USE_IMPLIED_SEEK && floppy->stretch && fdc_version >= FDC_TYPE_82072)) {
+        current_track = seek_track;
         setup_rw_floppy();
         return;
     }
@@ -1154,11 +1160,7 @@ static void DFPROC redo_fd_request(void)
     tmp = start / floppy->sect;
     head = tmp % floppy->head;
     track = tmp / floppy->head;
-#if QEMU_STRETCH_FIX
-    seek_track = track;         /* QEMU doesn't seem to support track doubling */
-#else
     seek_track = track << floppy->stretch;
-#endif
     command = (req->rq_cmd == READ)? FD_READ: FD_WRITE;
     DEBUG("df%d: %s sector %d CHS %d/%d/%d max %d stretch %d seek %d\n",
         DEVICE_NR(req->rq_dev), req->rq_cmd==READ? "read": "write",
