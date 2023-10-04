@@ -24,8 +24,7 @@
 #include <linuxmt/fs.h>
 #include <linuxmt/debug.h>
 
-#define MAJOR_NR RAM_MAJOR
-#define RAMDISK
+#define MAJOR_NR    RAM_MAJOR
 #include "blk.h"
 
 #define MAX_DRIVES	2	/* # ram drives*/

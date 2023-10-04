@@ -95,12 +95,11 @@
 #include <arch/ports.h>
 #include <arch/hdreg.h>         /* for ioctl GETGEO */
 
-#define FLOPPYDISK
-#define MAJOR_NR FLOPPY_MAJOR
-#define MINOR_SHIFT     0       /* shift to get drive num */
-#define FLOPPY_DMA 2            /* hardwired on old PCs */
+#define MAJOR_NR        FLOPPY_MAJOR
+#include "blk.h"
 
-#include "blk.h"                /* ugly - blk.h contains code */
+#define MINOR_SHIFT     0       /* shift to get drive num */
+#define FLOPPY_DMA      2       /* hardwired on old PCs */
 
 /*
  * The original 8272A doesn't have FD_DOR, FD_DIR or FD_CCR registers,
