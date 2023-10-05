@@ -82,6 +82,7 @@ int tty_intcheck(register struct tty *ttyp, unsigned char key)
             kill_pg(ttyp->pgrp, sig, 1);
         }
     }
+    (void) check_disk_change(0);    /* check any floppy media changed */
     return sig;
 }
 

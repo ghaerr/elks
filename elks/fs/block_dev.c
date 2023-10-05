@@ -23,6 +23,9 @@ size_t block_read(struct inode *inode, struct file *filp, char *buf, size_t coun
     if (pos <= 0)
 	return 0;       /* EOF */
 
+    if (check_disk_change(inode->i_rdev))
+        return -ENXIO;
+
     if ((loff_t)count > pos) count = (size_t)pos;
 
     while (count > 0) {
@@ -69,6 +72,9 @@ size_t block_write(struct inode *inode, struct file *filp, char *buf, size_t cou
 #if defined(CONFIG_MINIX_FS) || defined(CONFIG_BLK_DEV_CHAR)
     size_t chars, offset;
     size_t written = 0;
+
+    if (check_disk_change(inode->i_rdev))
+        return -ENXIO;
 
     if (filp->f_flags & O_APPEND) filp->f_pos = (loff_t)inode->i_size;
 

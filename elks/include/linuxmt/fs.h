@@ -447,7 +447,9 @@ extern struct buffer_head *readbuf(struct buffer_head *);
 extern void ll_rw_blk(int,struct buffer_head *);
 extern int get_sector_size(kdev_t dev);
 
+extern struct super_block *get_super(kdev_t);
 extern void put_super(kdev_t);
+extern int do_umount(kdev_t);
 extern kdev_t ROOT_DEV;
 
 extern void mount_root(void);
