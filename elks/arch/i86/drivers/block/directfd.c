@@ -116,8 +116,8 @@
  */
 
 #define USE_IMPLIED_SEEK    0   /* =1 for QEMU with 360k/AT stretch floppies (not real hw) */
-#define CHECK_DISK_CHANGE   0   /* =1 to add driver media changed code */
-#define CLEAR_DIR_REG       0   /* =1 to clear DIR DSKCHG when set (for media change) */
+#define CHECK_DIR_REG       0   /* =1 to read and clear DIR DSKCHG when media changed */
+#define CHECK_DISK_CHANGE   1   /* =1 to inform kernel of media changed */
 
 //#define DEBUG printk
 #define DEBUG(...)
@@ -250,6 +250,7 @@ static int probing;
 
 /* device reference counters */
 static int fd_ref[4];
+static int access_count;
 
 /* Synchronization of FDC access. */
 static int fdc_busy;
@@ -436,60 +437,6 @@ void request_done(int uptodate)
     del_timer(&fd_timeout);
     end_request(uptodate);
 }
-
-#if CHECK_DISK_CHANGE
-/*
- * The check_media_change entry in struct file_operations (fs.h) is not
- * part of the 'normal' setup (only BLOAT_FS), so we're ignoring it for now,
- * assuming the user is smart enough to umount before media changes - or
- * ready for the consequences.
- *
- * floppy_change is never called from an interrupt, so we can relax a bit
- * here, sleep etc. Note that floppy_on tries to set current_DOR to point
- * to the desired drive, but it will probably not survive the sleep if
- * several floppies are used at the same time: thus the loop.
- */
-static unsigned int changed_floppies = 0, fake_change = 0;
-
-int floppy_change(struct buffer_head *bh)
-{
-    unsigned int mask = 1 << (bh->b_dev & 0x03);
-
-    if (MAJOR(bh->b_dev) != MAJOR_NR) {
-        printk("floppy_change: not a floppy\n");
-        return 0;
-    }
-    if (fake_change & mask) {
-        buffer_track = -1;
-        fake_change &= ~mask;
-        /* omitting the next line breaks formatting in a horrible way ... */
-        changed_floppies &= ~mask;
-        return 1;
-    }
-    if (changed_floppies & mask) {
-        buffer_track = -1;
-        changed_floppies &= ~mask;
-        recalibrate = 1;
-        return 1;
-    }
-    if (!bh)
-        return 0;
-    if (EBH(bh)->b_dirty)
-        ll_rw_blk(WRITE, bh);
-    else {
-        buffer_track = -1;
-        mark_buffer_uptodate(bh, 0);
-        ll_rw_blk(READ, bh);
-    }
-    wait_on_buffer(bh);
-    if (changed_floppies & mask) {
-        changed_floppies &= ~mask;
-        recalibrate = 1;
-        return 1;
-    }
-    return 0;
-}
-#endif
 
 /* The IBM PC can perform DMA operations by using the DMA chip.  To use it,
  * the DMA (Direct Memory Access) chip is loaded with the 20-bit memory address
@@ -1001,7 +948,7 @@ static void floppy_shutdown(void)
     redo_fd_request();
 }
 
-#if CLEAR_DIR_REG
+#if CHECK_DIR_REG
 static void shake_done(void)
 {
     /* Need SENSEI to clear the interrupt */
@@ -1049,39 +996,94 @@ static void shake_one(void)
     output_byte(head << 2 | current_drive);
     output_byte(1);             /* resetting media change bit requires head movement */
 }
+#endif /* CHECK_DIR_REG */
 
+#if CHECK_DISK_CHANGE
 /*
- * (User-provided) media information is _not_ discarded after a media change
- * if the corresponding keep_data flag is non-zero. Positive values are
- * decremented after each probe.
+ * This routine checks whether a removable media has been changed,
+ * and invalidates all inode and buffer-cache-entries in that case.
+ * It is called from device open, mount and file read/write code.
+ *
+ * Since this driver is the only driver implementing media change,
+ * the entire routine has been moved here for simplicity.
  */
-static int keep_data[4];
-#endif /* CLEAR_DIR_REG */
+static unsigned int changed_floppies;
+
+static int debug_changed;
+void fake_disk_change(void)
+{
+    printk("X");
+    debug_changed = 1;
+}
+
+int check_disk_change(kdev_t dev)
+{
+    int drive;
+    unsigned int mask;
+    struct super_block *s;
+
+    debug_setcallback(2, fake_disk_change);
+    if (MAJOR(dev) != MAJOR_NR)
+        return 0;
+    printk("C%d", dev&3);
+    drive = DEVICE_NR(dev);
+    mask = 1 << drive;
+    if (!(changed_floppies & mask)) {
+        printk("N");
+        return 0;
+    }
+    printk("Y");
+    changed_floppies &= ~mask;
+    debug_changed = 0;
+
+    printk("VFS: Disk change detected on dev %D\n", dev);
+    if (dev == ROOT_DEV) panic("Root media changed");
+
+    /* Can't call put_super since media changed, just clear and unmount for now */
+    for (s = super_blocks; s < &super_blocks[NR_SUPER]; s++) {
+        if (s->s_dev == dev) {
+            printk("Clearing super block on %D\n", dev);
+            if (s->s_mounted) {
+                printk("VFS: '%s' force unmounted\n", s->s_mntonname);
+                //iput(s->s_mounted);
+                s->s_mounted = NULL;
+                //s->s_covered->i_mount = NULL;
+                //iput(s->s_covered);
+                s->s_covered = NULL;
+            }
+            s->s_dev = 0;
+        }
+    }
+
+    /* inuse, locked, or dirty inodes aren't cleared... */
+    invalidate_inodes(dev);
+    invalidate_buffers(dev);
+
+    if (drive == buffer_drive)
+        buffer_track = -1;
+    recalibrate = 1;
+
+    return 1;
+}
+#endif /* CHECK_DISK_CHANGE */
 
 static void DFPROC floppy_ready(void)
 {
     DEBUG("RDY0x%x,%d,%d-", inb(FD_DIR), reset, recalibrate);
 
-#if CLEAR_DIR_REG
-    /* check if disk changed since last cmd (PC/AT+) */
-    if (fdc_version >= FDC_TYPE_8272PC_AT && (inb(FD_DIR) & 0x80)) {
-
 #if CHECK_DISK_CHANGE
-        changed_floppies |= 1 << current_drive;
+    /* check if disk changed since last cmd (PC/AT+) */
+    if ((debug_changed && current_drive == 1)
+#if CHECK_DIR_REG
+        || (fdc_version >= FDC_TYPE_8272PC_AT && (inb(FD_DIR) & 0x80))
 #endif
-        buffer_track = -1;
-        if (keep_data[current_drive]) {
-            if (keep_data[current_drive] > 0)
-                keep_data[current_drive]--;
-        } else {
-                /* FIXME: this is nonsensical: Should assume that a medium change
-                 * means a new medium of the same format as the prev until it fails.
-                 */
-            if (current_type[current_drive] != NULL)
-                printk("df%d: Disk type undefined after disk change\n", current_drive);
-            current_type[current_drive] = NULL;
-        }
+                                                ) {
+        changed_floppies |= 1 << current_drive;
 
+        printk("df%d: Disk type undefined after disk change\n", current_drive);
+        current_type[current_drive] = NULL;     /* comment out to keep last media format */
+
+#if CHECK_DIR_REG
         if (!reset && !recalibrate) {
             if (current_track && current_track != NO_TRACK)
                 do_floppy = shake_zero;
@@ -1091,8 +1093,9 @@ static void DFPROC floppy_ready(void)
             output_byte(current_drive);
             return;
         }
-    }
 #endif
+    }
+#endif /* CHECK_DISK_CHANGE */
 
     if (reset) {
         reset_floppy();
@@ -1358,8 +1361,10 @@ static int floppy_open(struct inode *inode, struct file *filp)
     drive = DEVICE_NR(inode->i_rdev);
 
 #if CHECK_DISK_CHANGE
-    if (filp && filp->f_mode)
-        check_disk_change(inode->i_rdev);
+    if (filp && filp->f_mode) {
+        if (check_disk_change(inode->i_rdev))
+            return -ENXIO;
+    }
 #endif
 
     probing = 0;
@@ -1375,12 +1380,13 @@ static int floppy_open(struct inode *inode, struct file *filp)
         }
     }
 
-    if (fd_ref[drive] == 0) {
+    if (access_count == 0) {
         err = floppy_register();
         if (err) return err;
         buffer_drive = buffer_track = -1;
     }
 
+    access_count++;
     fd_ref[drive]++;
     inode->i_size = (sector_t)floppy->size << 9;    /* NOTE: assumes sector size 512 */
     open_inode = inode;
@@ -1400,8 +1406,9 @@ static void floppy_release(struct inode *inode, struct file *filp)
         fsync_dev(dev);
         invalidate_inodes(dev);
         invalidate_buffers(dev);
-        floppy_deregister();
     }
+    if (--access_count == 0)
+        floppy_deregister();
 }
 
 static struct file_operations floppy_fops = {
@@ -1437,7 +1444,6 @@ static void floppy_interrupt(int irq, struct pt_regs *regs)
     do_floppy = NULL;
     if (!handler)
         handler = unexpected_floppy_interrupt;
-    //printk("$");
     handler();
 }
 

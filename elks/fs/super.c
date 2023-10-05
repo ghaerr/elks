@@ -170,9 +170,7 @@ static struct super_block *read_super(kdev_t dev, int t, int flags,
     register struct file_system_type *type;
 
     if (!dev) return NULL;
-#ifdef BLOAT_FS
     check_disk_change(dev);
-#endif
     s = get_super(dev);
     if (s) return s;
 
