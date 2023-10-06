@@ -117,7 +117,7 @@
  */
 
 #define USE_IMPLIED_SEEK    0   /* =1 for QEMU with 360k/AT stretch floppies (not real hw) */
-#define CHECK_DIR_REG       0   /* =1 to read and clear DIR DSKCHG when media changed */
+#define CHECK_DIR_REG       1   /* =1 to read and clear DIR DSKCHG when media changed */
 #define CHECK_DISK_CHANGE   1   /* =1 to inform kernel of media changed */
 
 //#define DEBUG printk
@@ -1084,11 +1084,14 @@ static void DFPROC floppy_ready(void)
         || (fdc_version >= FDC_TYPE_8272PC_AT && (inb(FD_DIR) & 0x80))
 #endif
                                                 ) {
-        /* this will discard any queued I/O immediately */
-        changed_floppies |= 1 << current_drive;
-
-        printk("df%d: Disk media change detected, suspending I/O\n", current_drive);
-        current_type[current_drive] = NULL;     /* comment out to keep last media format */
+        /* first time through the FDC requires recalibrate in order to clear DIR,
+         * so just recalibrate instead of starting to discard I/O in that case.
+         */
+        if (current_type[current_drive]) {
+            changed_floppies |= 1 << current_drive; /* this will discard any queued I/O */
+            printk("df%d: Disk media change detected, suspending I/O\n", current_drive);
+            current_type[current_drive] = NULL;     /* comment out to keep last media format */
+        }
 
         if (current_drive == buffer_drive)
             buffer_track = -1;
