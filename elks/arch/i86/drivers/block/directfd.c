@@ -1005,11 +1005,12 @@ static void shake_one(void)
 #if CHECK_DISK_CHANGE
 /*
  * This routine checks whether a removable media has been changed,
- * and invalidates all inode and buffer-cache-entries in that case.
+ * invalidates all inode and buffer-cache-entries, unmounts
+ * any mounted filesystem and closes the driver.
  * It is called from device open, mount and file read/write code.
  * Because the FDC is interrupt driven and can't sleep, this routine
  * must be called by a non-interrupt routine, as invalidate_buffers
- * may sleep, and otherwise all accessed kernel variables would need
+ * may sleep. Even without that, all accessed kernel variables would need
  * protection via interrupt disabling.
  *
  * Since this driver is the only driver implementing media change,
@@ -1032,10 +1033,8 @@ int check_disk_change(kdev_t dev)
 
     if (!dev && changed_floppies) {
         dev = (changed_floppies & 1)? MKDEV(MAJOR_NR, 0): MKDEV(MAJOR_NR, 1);
-    } else {
-        if (MAJOR(dev) != MAJOR_NR)
-            return 0;
-    }
+    } else if (MAJOR(dev) != MAJOR_NR)
+        return 0;
     debug("C%d", dev&3);
     mask = 1 << DEVICE_NR(dev);
     if (!(changed_floppies & mask)) {
@@ -1051,7 +1050,7 @@ int check_disk_change(kdev_t dev)
     if (s && s->s_mounted) {
         do_umount(dev);
         printk("VFS: Unmounting %s, media changed\n", s->s_mntonname);
-        /* fake up inode to enable device release */
+        /* fake up inode to enable device close */
         inodep = new_inode(NULL, S_IFBLK);
         inodep->i_rdev = dev;
         floppy_release(inodep, NULL);
@@ -1063,7 +1062,6 @@ int check_disk_change(kdev_t dev)
 
     changed_floppies &= ~mask;
     debug_changed = 0;
-    //recalibrate = 1;
     printk("VFS: Disk media change completed on dev %D\n", dev);
 
     return 1;
@@ -1262,15 +1260,6 @@ static int fd_ioctl(struct inode *inode, struct file *filp, unsigned int cmd,
         }
         return err;
 #ifdef UNUSED
-    case FDFMTEND:
-        if (!suser())
-            return -EPERM;
-        clr_irq();
-        fake_change |= 1 << (drive & 3);
-        set_irq();
-        drive &= 3;
-        cmd = FDCLRPRM;
-        break;
     case FDFMTTRK:
         if (!suser())
             return -EPERM;
@@ -1300,22 +1289,10 @@ static int fd_ioctl(struct inode *inode, struct file *filp, unsigned int cmd,
         floppy_off(drive & 3);
         wake_up(&format_done);
         return err ? 0 : -EIO;
-    case FDFLUSH:
-        if (!permission(inode, 2))
-            return -EPERM;
-        clr_irq();
-        fake_change |= 1 << (drive & 3);
-        set_irq();
-        check_disk_change(inode->i_rdev);
-        return 0;
     }
     if (!suser())
         return -EPERM;
     switch (cmd) {
-    case FDCLRPRM:
-        current_type[drive] = NULL;
-        keep_data[drive] = 0;
-        break;
     case FDSETPRM:
     case FDDEFPRM:
         memcpy_fromfs(user_params + drive,
