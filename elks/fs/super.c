@@ -104,7 +104,7 @@ void sync_supers(kdev_t dev)
     } while (++sb < super_blocks + NR_SUPER);
 }
 
-static struct super_block *get_super(kdev_t dev)
+struct super_block *get_super(kdev_t dev)
 {
     register struct super_block *s;
 
@@ -170,9 +170,7 @@ static struct super_block *read_super(kdev_t dev, int t, int flags,
     register struct file_system_type *type;
 
     if (!dev) return NULL;
-#ifdef BLOAT_FS
-    check_disk_change(dev);
-#endif
+    (void) check_disk_change(dev);
     s = get_super(dev);
     if (s) return s;
 
@@ -210,7 +208,7 @@ static struct super_block *read_super(kdev_t dev, int t, int flags,
     return s;
 }
 
-static int do_umount(kdev_t dev)
+int do_umount(kdev_t dev)
 {
     register struct super_block *sb;
     register struct super_operations *sop;
@@ -491,10 +489,8 @@ void mount_root(void)
         }
     } while (*(++fs_type) && !retval);
 
-#ifdef CONFIG_BLK_DEV_BIOS
-    if (ROOT_DEV == DEV_FD0) {
-        if (!filp->f_op->release)
-            printk("Release not defined\n");
+#if defined(CONFIG_BLK_DEV_BFD) || defined(CONFIG_BLK_DEV_FD)
+    if (ROOT_DEV == DEV_FD0 || ROOT_DEV == DEV_DF0) {
         close_filp(d_inode, filp);
         printk("VFS: Insert root floppy and press ENTER\n");
         wait_for_keypress();
