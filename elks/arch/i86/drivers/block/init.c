@@ -25,6 +25,7 @@
 #include <linuxmt/init.h>
 #include <linuxmt/string.h>
 #include <linuxmt/memory.h>
+#include <linuxmt/devnum.h>
 
 #include <arch/system.h>
 #include <arch/segment.h>
@@ -43,18 +44,24 @@ void INITPROC device_init(void)
     for (p = gendisk_head; p; p = p->next)
         setup_dev(p);
 
-#ifdef CONFIG_BLK_DEV_BIOS
+#if defined(CONFIG_BLK_DEV_BIOS) || defined(CONFIG_BLK_DEV_FD)
     /*
      * The bootloader may have passed us a ROOT_DEV which is actually a BIOS
      * drive number.  If so, convert it into a proper <major, minor> block
      * device number.  -- tkchia 20200308
      */
     if (!boot_rootdev && (SETUP_ELKS_FLAGS & EF_BIOS_DEV_NUM) != 0) {
-        dev_t rootdev = bios_conv_bios_drive((unsigned)ROOT_DEV);
-
+        dev_t rootdev = 0;
+#ifdef CONFIG_BLK_DEV_FD
+        if (ROOT_DEV == 0) rootdev = DEV_DF0;
+        else if (ROOT_DEV == 1) rootdev = DEV_DF1;
+#endif
+#ifdef CONFIG_BLK_DEV_BIOS
+        if (!rootdev)
+            rootdev = bios_conv_bios_drive((unsigned)ROOT_DEV);
+#endif
         printk("boot: BIOS drive %x, root device %04x\n", ROOT_DEV, rootdev);
         ROOT_DEV = (kdev_t)rootdev;
     }
 #endif
-
 }

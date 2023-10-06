@@ -63,7 +63,6 @@
 #define MAX_ERRS        5       /* maximum sector read/write error retries */
 
 #define MAJOR_NR        BIOSHD_MAJOR
-#define BIOSDISK
 #include "blk.h"
 
 struct elks_disk_parms {
