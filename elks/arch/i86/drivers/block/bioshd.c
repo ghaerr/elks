@@ -313,11 +313,6 @@ static int bioshd_open(struct inode *inode, struct file *filp)
     if (!bioshd_initialized || target >= NUM_DRIVES || hdp->start_sect == -1U)
         return -ENXIO;
 
-#if UNUSED
-    while (busy[target])
-        sleep_on(&busy_wait);
-#endif
-
     if (++access_count[target] == 1) {
 #ifdef CONFIG_BLK_DEV_BFD
         probe_floppy(target, hdp);      /* probe only on initial open */
@@ -486,7 +481,7 @@ static int bioshd_ioctl(struct inode *inode, struct file *file, unsigned int cmd
     err = -EINVAL;
     switch (cmd) {
     case HDIO_GETGEO:
-        err = verify_area(VERIFY_WRITE, (void *) arg, sizeof(struct hd_geometry));
+        err = verify_area(VERIFY_WRITE, (void *)loc, sizeof(struct hd_geometry));
         if (!err) {
             put_user_char(drivep->heads, &loc->heads);
             put_user_char(drivep->sectors, &loc->sectors);
@@ -750,55 +745,3 @@ next_block:
     }
     spin_timer(0);
 }
-
-#if UNUSED
-static struct wait_queue busy_wait;
-
-#define DEVICE_BUSY busy[target]
-#define USAGE access_count[target]
-#define CAPACITY ((sector_t)drive_info[target].heads*drive_info[target].sectors*drive_info[target].cylinders)
-#define GENDISK_STRUCT bioshd_gendisk
-#define MAYBE_REINIT
-
-/* This routine is called to flush all partitions and partition tables
- * for a changed cdrom drive, and then re-read the new partition table.
- * If we are revalidating a disk because of a media change, then we
- * enter with usage == 0.  If we are using an ioctl, we automatically
- * have usage == 1 (we need an open channel to use an ioctl :-), so
- * this is our limit.
- * We assume that the the bios parameters do not change,
- * so the disk capacity will not change
- */
-
-static int revalidate_hddisk(int dev, int maxusage)
-{
-    register struct gendisk *gdev;
-    int i, major, max_p, start, target;
-
-    target = DEVICE_NR(dev);
-    gdev = &GENDISK_STRUCT;
-    clr_irq();
-    if (DEVICE_BUSY || USAGE > maxusage) {
-        set_irq();
-        return -EBUSY;
-    }
-    DEVICE_BUSY = 1;
-    set_irq();
-    max_p = gdev->max_p;
-    start = target << gdev->minor_shift;
-    major = MAJOR_NR << 8;
-    for (i = max_p - 1; i >= 0; i--) {
-        sync_dev(major | start | i);
-        invalidate_inodes(major | start | i);
-        invalidate_buffers(major | start | i);
-        gdev->part[start + i].start_sect = 0;
-        gdev->part[start + i].nr_sects = 0;
-    };
-    MAYBE_REINIT;
-    gdev->part[start].nr_sects = CAPACITY;
-    resetup_one_dev(gdev, target);
-    DEVICE_BUSY = 0;
-    wake_up(&busy_wait);
-    return 0;
-}
-#endif
