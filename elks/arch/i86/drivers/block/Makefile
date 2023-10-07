@@ -35,9 +35,23 @@ include $(BASEDIR)/Makefile-rules
 
 OBJS  = init.o genhd.o ll_rw_blk.o
 
-# BIOS floppy and hard drive support
-ifeq ($(CONFIG_BLK_DEV_BIOS), y)
-OBJS += bioshd.o bios.o idequery.o
+# BIOS floppy and/or hard drive support
+ifeq ($(CONFIG_BLK_DEV_BFD), y)
+OBJS += bioshd.o bios.o
+endif
+
+ifeq ($(CONFIG_BLK_DEV_BHD), y)
+  ifneq ($(CONFIG_BLK_DEV_BFD), y)
+  OBJS += bioshd.o bios.o
+  endif
+  ifeq ($(CONFIG_IDE_PROBE), y)
+  OBJS += idequery.o
+  endif
+endif
+
+# direct fd support
+ifeq ($(CONFIG_BLK_DEV_FD), y)
+OBJS += directfd.o
 endif
 
 ifeq ($(CONFIG_BLK_DEV_RAM), y)
@@ -54,11 +68,6 @@ endif
 
 ifeq ($(CONFIG_BLK_DEV_SSD_SD8018X), y)
 	OBJS += ssd.o ssd-sd.o spi-8018x.o
-endif
-
-# experimental direct fd support
-ifeq ($(CONFIG_BLK_DEV_FD), y)
-OBJS += directfd.o
 endif
 
 # experimental (and not working) direct hd support

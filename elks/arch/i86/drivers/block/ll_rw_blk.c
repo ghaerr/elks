@@ -365,7 +365,7 @@ void INITPROC blk_dev_init(void)
     floppy_init();
 #endif
 
-#ifdef CONFIG_BLK_DEV_BIOS
+#if defined(CONFIG_BLK_DEV_BFD) || defined(CONFIG_BLK_DEV_BHD)
     bioshd_init();
 #endif
 
