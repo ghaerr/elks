@@ -120,6 +120,11 @@
 #define CHECK_DIR_REG       1   /* =1 to read and clear DIR DSKCHG when media changed */
 #define CHECK_DISK_CHANGE   1   /* =1 to inform kernel of media changed */
 
+/* adjustable timeouts */
+#define TIMEOUT_MOTOR_ON   (HZ/2)      /* 500 ms wait for floppy motor on before I/O */
+#define TIMEOUT_MOTOR_OFF  (3 * HZ)    /* 3 secs wait for floppy motor off after I/O */
+#define TIMEOUT_CMD_COMPL  (6 * HZ)    /* 6 secs wait for FDC command complete */
+
 //#define DEBUG printk
 #define DEBUG(...)
 
@@ -412,7 +417,7 @@ static void DFPROC floppy_on(int nr)
     if (!(mask & current_DOR)) {        /* motor not running yet */
         del_timer(&motor_on_timer[nr]);
         /* TEAC 1.44M says 'waiting time' 505ms, may be too little for 5.25in drives. */
-        motor_on_timer[nr].tl_expires = jiffies + HZ/2;
+        motor_on_timer[nr].tl_expires = jiffies + TIMEOUT_MOTOR_ON;
         add_timer(&motor_on_timer[nr]);
 
         current_DOR &= 0xFC;            /* remove drive select */
@@ -432,7 +437,7 @@ static void DFPROC floppy_on(int nr)
 static void floppy_off(int nr)
 {
     del_timer(&motor_off_timer[nr]);
-    motor_off_timer[nr].tl_expires = jiffies + 3 * HZ;
+    motor_off_timer[nr].tl_expires = jiffies + TIMEOUT_MOTOR_OFF;
     add_timer(&motor_off_timer[nr]);
     DEBUG("flpOFF-\n");
 }
@@ -1193,7 +1198,7 @@ static void DFPROC redo_fd_request(void)
 
     /* restart timer for hung operations, 6 secs probably too long ... */
     del_timer(&fd_timeout);
-    fd_timeout.tl_expires = jiffies + 6 * HZ;
+    fd_timeout.tl_expires = jiffies + TIMEOUT_CMD_COMPL;
     add_timer(&fd_timeout);
 
     DEBUG("prep %d|%d,%d|%d-", buffer_track, seek_track, buffer_drive, current_drive);
