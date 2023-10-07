@@ -189,7 +189,7 @@ static unsigned char reply_buffer[MAX_REPLIES];
 
 /*
  * Minor number based formats. Each drive type is specified starting
- * from minor number 4 plus the table index, and no auto-probing is used.
+ * from minor number 2 plus the table index, and no auto-probing is used.
  *
  * Stretch tells if the tracks need to be doubled for some
  * types (ie 360kB diskette in 1.2MB drive etc).
@@ -242,10 +242,10 @@ static unsigned char p2880k[] = { FT_2880k,   FT_1440k,    0 };
 static unsigned char *probe_list[CMOS_MAX] = { p360k, p1200k, p720k, p1440k, p2880k };
 
 /* Auto-detection: disk type determined from CMOS and probing */
-static struct floppy_struct *current_type[4];
+static struct floppy_struct *current_type[2];
 
 /* initial probe per drive */
-static unsigned char * base_type[4];
+static unsigned char *base_type[2];
 
 /*
  * The driver is trying to determine the correct media format
@@ -255,7 +255,7 @@ static unsigned char * base_type[4];
 static int probing;
 
 /* device reference counters */
-static int fd_ref[4];
+static int fd_ref[2];
 static int access_count;
 
 /* Synchronization of FDC access. */
@@ -367,17 +367,13 @@ static void motor_on_callback(int nr)
     floppy_select(nr);
 }
 
-static struct timer_list motor_on_timer[4] = {
+static struct timer_list motor_on_timer[2] = {
     {NULL, 0, 0, motor_on_callback},
-    {NULL, 0, 1, motor_on_callback},
-    {NULL, 0, 2, motor_on_callback},
-    {NULL, 0, 3, motor_on_callback}
+    {NULL, 0, 1, motor_on_callback}
 };
-static struct timer_list motor_off_timer[4] = {
+static struct timer_list motor_off_timer[2] = {
     {NULL, 0, 0, motor_off_callback},
-    {NULL, 0, 1, motor_off_callback},
-    {NULL, 0, 2, motor_off_callback},
-    {NULL, 0, 3, motor_off_callback}
+    {NULL, 0, 1, motor_off_callback}
 };
 static struct timer_list fd_timeout = {NULL, 0, 0, floppy_shutdown};
 
@@ -1156,8 +1152,8 @@ static void DFPROC redo_fd_request(void)
     }
 #endif
 
-    if (type > 3)
-        floppy = &minor_types[type >> 2];
+    if (type > 1)
+        floppy = &minor_types[type >> 1];
     else {                      /* Auto-detection */
         floppy = current_type[drive];
         if (!floppy) {
@@ -1247,8 +1243,8 @@ static int fd_ioctl(struct inode *inode, struct file *filp, unsigned int cmd,
         return -EINVAL;
     type = MINOR(inode->i_rdev) >> MINOR_SHIFT;
     drive = DEVICE_NR(inode->i_rdev);
-    if (type > 3)
-        fp = &minor_types[type >> 2];
+    if (type > 1)
+        fp = &minor_types[type >> 1];
     else if ((fp = current_type[drive]) == NULL)
         return -ENODEV;
 
@@ -1375,8 +1371,8 @@ static int floppy_open(struct inode *inode, struct file *filp)
 #endif
 
     probing = 0;
-    if (type > 3)               /* forced floppy type */
-        floppy = &minor_types[type >> 2];
+    if (type > 1)               /* forced floppy type */
+        floppy = &minor_types[type >> 1];
     else {                      /* Auto-detection */
         floppy = current_type[drive];
         if (!floppy) {

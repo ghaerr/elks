@@ -73,7 +73,7 @@ static void floppy_off(int nr);
 
 #define DEVICE_NAME "df"
 #define DEVICE_REQUEST do_fd_request
-#define DEVICE_NR(device) ((device) & 3)
+#define DEVICE_NR(device) ((device) & 1)
 #define DEVICE_OFF(device) floppy_off(DEVICE_NR(device))
 
 #elif (MAJOR_NR == ATHD_MAJOR)
