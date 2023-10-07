@@ -316,28 +316,6 @@ static void INITPROC check_partition(register struct gendisk *hd, kdev_t dev)
 }
 #endif
 
-/* This function is used to re-read partition tables for removable disks.
-   Much of the cleanup from the old partition tables should have already been
-   done */
-
-#if UNUSED
-/* This function will re-read the partition tables for a given device, and set
- * things back up again. There are some important caveats, however. You must
- * ensure that no one is using the device, and no one can start using the
- * device while this function is being executed.
- */
-void resetup_one_dev(struct gendisk *dev, int drive)
-{
-    int i;
-    int first_minor = drive << dev->minor_shift;
-    int end_minor = first_minor + dev->max_p;
-
-    blk_size[dev->major] = NULL;
-    current_minor = 1 + first_minor;
-    check_partition(dev, MKDEV(dev->major, first_minor));
-}
-#endif
-
 void INITPROC setup_dev(register struct gendisk *dev)
 {
     //memset((void *)dev->part, 0, sizeof(struct hd_struct)*dev->max_nr*dev->max_p);

@@ -26,7 +26,7 @@
 #define NR_MAPBUFS      8       /* Number of internal L1 buffers */
 
 #ifdef CONFIG_ASYNCIO
-#define NR_REQUEST      12      /* Number of async I/O request headers */
+#define NR_REQUEST      15      /* Number of async I/O request headers */
 #else
 #define NR_REQUEST      1       /* only 1 is required for non-async I/O */
 #endif
