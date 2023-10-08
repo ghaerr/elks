@@ -7,7 +7,8 @@
 #include <fcntl.h>
 #include <limits.h>
 
-static 	int	errcode;
+int fflg, rflg, iflg;
+int errcode;
 
 int usage(void)
 {
@@ -37,24 +38,24 @@ int dotname(char *s) {
 	return(0);
 }
 
-void rm(char *arg, int fflg, int rflg, int iflg, int level) {
-        struct stat buf;
+void rm(char *arg, int level)
+{
         struct dirent *dp;
         DIR *dirp;
+        struct stat buf;
         char name[PATH_MAX];
 
         if(lstat(arg, &buf)) {
-                if (fflg==0) {
-                        printf("rm: %s nonexistent\n", arg);
-                        ++errcode;
-                }
+                if (!fflg)
+                    perror(arg);
+                errcode++;
                 return;
         }
         if ((buf.st_mode&S_IFMT) == S_IFDIR) {
                 if(rflg) {
                         if (access(arg, O_WRONLY) < 0) {
-                                if (fflg==0)
-                                        printf("rm: %s not changed\n", arg);
+                                if (!fflg)
+                                    fprintf(stderr, "rm: %s not changed\n", arg);
                                 errcode++;
                                 return;
                         }
@@ -64,13 +65,14 @@ void rm(char *arg, int fflg, int rflg, int iflg, int level) {
                                         return;
                         }
                         if((dirp = opendir(arg)) == NULL) {
-                                printf("rm: cannot read %s?\n", arg);
+                                perror(arg);
+                                errcode++;
                                 return;
                         }
                         while((dp = readdir(dirp)) != NULL) {
                                 if(dp->d_ino != 0 && !dotname(dp->d_name)) {
                                         sprintf(name, "%s/%s", arg, dp->d_name);
-                                        rm(name, fflg, rflg, iflg, level+1);
+                                        rm(name, level+1);
                                 }
                         }
                         closedir(dirp);
@@ -84,7 +86,7 @@ void rm(char *arg, int fflg, int rflg, int iflg, int level) {
                         return;
                 }
                 fprintf(stderr, "rm: %s is a directory\n", arg);
-                ++errcode;
+                errcode++;
                 return;
         }
 
@@ -99,20 +101,19 @@ void rm(char *arg, int fflg, int rflg, int iflg, int level) {
                                 return;
                 }
         }
-        if (unlink(arg) && (fflg==0 || iflg)) {
+        if (unlink(arg) && (!fflg || iflg)) {
                 fprintf(stderr, "rm: %s not removed\n", arg);
-                ++errcode;
+                errcode++;
         }
 	return;
 }
 
-int main(int argc, char **argv) {
-	int force=0, recurse = 0, interact =0 ;
+int main(int argc, char **argv)
+{
 	char *arg;
 
 	if (argc < 2)
 		return usage();
-	errcode = 0;
 
         while(argc>1 && argv[1][0]=='-') {
                 arg = *++argv;
@@ -126,13 +127,13 @@ int main(int argc, char **argv) {
                 while(*++arg != '\0')
                         switch(*arg) {
                         case 'f':
-                                force++;
+                                fflg = 1;
                                 break;
                         case 'i':
-                                interact++;
+                                iflg = 1;
                                 break;
                         case 'r':
-                                recurse++;
+                                rflg = 1;
                                 break;
                         default:
                                 return usage();
@@ -143,7 +144,7 @@ int main(int argc, char **argv) {
                         fprintf(stderr, "rm: cannot remove `..'\n");
                         continue;
                 }
-                rm(*argv, force, recurse, interact, 0);
+                rm(*argv, 0);
         }
-        return(errcode);
+        return fflg? 0: errcode;
 }
