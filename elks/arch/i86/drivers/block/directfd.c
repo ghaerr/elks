@@ -1276,8 +1276,8 @@ static unsigned char * INITPROC find_base(int drive, int type)
 static void INITPROC config_types(void)
 {
     printk("df: CMOS ");
-    base_type[0] = find_base(0, (CMOS_READ(0x10) >> 4) & 0xF);
-    //base_type[0] = find_base(0, CMOS_360k);   /* force 360k FIXME add setup table */
+    if (!(base_type[0] = find_base(0, (CMOS_READ(0x10) >> 4) & 0xF)))
+        base_type[0] = find_base(0, CMOS_360k);   /* use 360k if no CMOS */
     if (((CMOS_READ(0x14) >> 6) & 1) != 0) {
         printk(", ");
         base_type[1] = find_base(1, CMOS_READ(0x10) & 0xF);
