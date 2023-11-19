@@ -40,10 +40,11 @@ extern int elks_signal(int bx, int cx, int dx, int di, int si);
 static int elks_termios(int bx, int cx, int dx, int di, int si);
 static int elks_enosys(int bx, int cx, int dx, int di, int si);
 
+#define DIRBASE 10000
 #define DIRCOUNT 20
 DIR *dirtab[DIRCOUNT];
 int diropen = 0;
-static int elks_opendir(char *dname);
+static int elks_opendir(const char *dname);
 static int elks_readdir(int bx, int cx, int dx, int di, int si);
 static int elks_closedir(int bx);
 
@@ -101,7 +102,7 @@ elks_read(int bx, int cx, int dx, int di, int si)
 {
     dbprintf(("read(%d, %d, %d)\n",
               bx, cx, dx));
-    if (bx >= 10000 && bx < 10000 + DIRCOUNT)
+    if (bx >= DIRBASE && bx < DIRBASE + DIRCOUNT)
         return elks_readdir(bx, cx, dx, di, si);
     if (dx < 0 || dx > 1024)
         dx = 1024;
@@ -163,7 +164,7 @@ static int
 elks_close(int bx, int cx, int dx, int di, int si)
 {
     dbprintf(("close(%d)\n", bx));
-    if (bx >= 10000 && bx < 10000 + DIRCOUNT)
+    if (bx >= DIRBASE && bx < DIRBASE + DIRCOUNT)
         return elks_closedir(bx);
     return close(bx);
 }
@@ -214,7 +215,9 @@ elks_chdir(int bx, int cx, int dx, int di, int si)
 static int
 elks_fchdir(int bx, int cx, int dx, int di, int si)
 {
-    dbprintf(("fchdir(%s)\n", bx));
+    dbprintf(("fchdir(%d)\n", bx));
+    if (bx >= DIRBASE && bx < DIRBASE + DIRCOUNT)
+        bx = dirfd(dirtab[bx - DIRBASE]);
     return fchdir(bx);
 }
 
@@ -329,11 +332,13 @@ static int
 elks_fstat(int bx, int cx, int dx, int di, int si)
 {
     struct stat s;
-    int err;
     dbprintf(("fstat(%d,%d)\n", bx, cx));
-    err = fstat(bx, &s);
+    if (bx >= DIRBASE && bx < DIRBASE + DIRCOUNT)
+        bx = dirfd(dirtab[bx - DIRBASE]);
+    if (fstat(bx, &s) == -1)
+        return -1;
     squash_stat(&s, cx);
-    return err;
+    return 0;
 }
 
 #define sys_pause elks_pause
@@ -348,11 +353,15 @@ elks_pause(int bx, int cx, int dx, int di, int si)
 static int
 elks_utime(int bx, int cx, int dx, int di, int si)
 {
-    uint32_t *up = ELKS_PTR(uint32_t, cx);
-    struct utimbuf u;
-    u.actime = *up++;
-    u.modtime = *up;
-    return utime(ELKS_PTR(char, bx), &u);
+    if (cx == 0) {
+        return utime(ELKS_PTR(char, bx), 0);
+    } else {
+        uint32_t *up = ELKS_PTR(uint32_t, cx);
+        struct utimbuf u;
+        u.actime = *up++;
+        u.modtime = *up;
+        return utime(ELKS_PTR(char, bx), &u);
+    }
 }
 
 #define sys_access elks_access
@@ -401,13 +410,11 @@ elks_times(int bx, int cx, int dx, int di, int si)
     struct tms t;
     clock_t clock_ticks = times(&t);
     int32_t *tp = ELKS_PTR(int32_t, bx);
-    int32_t *clkt = ELKS_PTR(int32_t, cx);
     *tp++ = t.tms_utime;
     *tp++ = t.tms_stime;
     *tp++ = t.tms_cutime;
     *tp = t.tms_cstime;
-    *clkt = clock_ticks;
-    return 0;                   /* Should be clock_ticks */
+    return clock_ticks;
 }
 
 #define sys_setgid elks_setgid
@@ -702,7 +709,7 @@ elks_reboot(int bx, int cx, int dx, int di, int si)
 /****************************************************************************/
 
 static int
-elks_opendir(char *dname)
+elks_opendir(const char *dname)
 {
     DIR *d;
     int rv;
@@ -717,7 +724,7 @@ elks_opendir(char *dname)
     if (d == 0)
         return -1;
     dirtab[rv] = d;
-    return 10000 + rv;
+    return DIRBASE + rv;
 }
 
 #define sys_readdir elks_readdir
@@ -727,12 +734,12 @@ elks_readdir(int bx, int cx, int dx, int di, int si)
     struct dirent *ent;
 
     /* Only read _ONE_ _WHOLE_ dirent at a time */
-    if (dx != 266 && dx != 1) {
+    if (dx != sizeof(*ent) && dx != 1) {
         errno = EINVAL;
         return -1;
     }
     errno = 0;
-    ent = readdir(dirtab[bx - 10000]);
+    ent = readdir(dirtab[bx - DIRBASE]);
     if (ent == 0) {
         if (errno) {
             return -1;
@@ -740,19 +747,21 @@ elks_readdir(int bx, int cx, int dx, int di, int si)
             return 0;
     }
 
-    memcpy(ELKS_PTR(char, cx + 10), ent->d_name, ent->d_reclen + 1);
     ELKS_POKE(int32_t, cx, ent->d_ino);
+    ELKS_POKE(int32_t, cx + 4, ent->d_off);
     ELKS_POKE(int16_t, cx + 8, ent->d_reclen);
+    memcpy(ELKS_PTR(char, cx + 10), ent->d_name, ent->d_reclen + 1);
     return dx;
 }
 
 static int
 elks_closedir(int bx)
 {
-    bx -= 10000;
-    if (dirtab[bx])
-        closedir(dirtab[bx]);
+    bx -= DIRBASE;
+    DIR *dp = dirtab[bx];
     dirtab[bx] = 0;
+    if (dp)
+        return closedir(dp);
     return 0;
 }
 

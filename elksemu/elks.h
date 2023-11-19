@@ -34,9 +34,9 @@ struct elks_stat
 	uint16_t est_gid;
 	uint16_t est_rdev;
 	int32_t est_size;
-	int32_t est_atime;
-	int32_t est_mtime;
-	int32_t est_ctime;
+	uint32_t est_atime;
+	uint32_t est_mtime;
+	uint32_t est_ctime;
 } __attribute__((packed));
 
 
@@ -169,7 +169,8 @@ extern unsigned char * elks_base, *elks_data_base;
 extern uint16_t brk_at;
 extern volatile struct elks_cpu_s elks_cpu;
 
-void db_printf(const char *, ...);
+void db_printf(const char *, ...)
+    __attribute__((format(printf,1,2)));
 int elks_syscall(void);
 void minix_syscall(void);
 void elks_pid_init(void);
