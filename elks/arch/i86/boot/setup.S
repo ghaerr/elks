@@ -772,7 +772,7 @@ arch_set_initseg:
 	movb	$1,15		// we've detected a VGA
 #else
         movb  $0,15		// no VGA in system
-        mov   $25,%al		// height of display in rows
+        mov   $CONFIG_DEF_SCREEN_HEIGHT,%al		// height of display in rows
 #endif /* CONFIG_HW_VGA*/
 
 novga:	mov	%al,14		// CGA 25 rows

@@ -148,6 +148,10 @@
 #define SETUP_DATA      REL_INITSEG
 #endif /* CONFIG_ARCH_PC98 && !CONFIG_ROMCODE */
 
+/* Assume the following screen height if VGA is not configured. */
+#if !defined(CONFIG_DEF_SCREEN_HEIGHT)
+#define CONFIG_DEF_SCREEN_HEIGHT 25
+#endif
 
 // DMASEG is a bouncing buffer of 1K (= BLOCKSIZE)
 // below the first 64K boundary (= 0x1000:0)

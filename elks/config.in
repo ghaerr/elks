@@ -20,6 +20,11 @@ mainmenu_option next_comment
 		comment 'Devices'
 
 		bool 'VGA adapter'      CONFIG_HW_VGA       y
+
+		if [ "$CONFIG_HW_VGA" = "n" ]; then
+			int 'Default screen height' CONFIG_DEF_SCREEN_HEIGHT 25
+		fi
+
 		bool 'Serial port FIFO' CONFIG_HW_SERIAL_FIFO y
 
 		comment 'BIOS support'
