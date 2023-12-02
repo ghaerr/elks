@@ -113,14 +113,22 @@ CCDEFS = -D__KERNEL__
 #########################################################################
 # Set the target environment and the compiler to use.
 
+ifndef MK_ARCH
 ifeq ($(wildcard $(TOPDIR)/.config),)
     MK_ARCH	= ibmpc
-    MK_CPU	= 8086
 else
     MK_ARCH	= $(shell grep '^CONFIG_ARCH_' $(TOPDIR)/.config \
 			| cut -d = -f 1 | cut -d _ -f 3- | tr A-Z a-z)
+endif
+endif
+
+ifndef MK_CPU
+ifeq ($(wildcard $(TOPDIR)/.config),)
+    MK_CPU	= 8086
+else
     MK_CPU	= $(shell grep '^CONFIG_CPU_' $(TOPDIR)/.config \
 			| cut -d = -f 1 | cut -d _ -f 3- | tr A-Z a-z)
+endif
 endif
 
 # Use GCC-IA16 compiler
