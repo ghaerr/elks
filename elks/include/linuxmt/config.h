@@ -16,8 +16,13 @@
  * be overridden for embedded systems with less overhead.
  * See setup.S for more details.
  */
+#if defined(CONFIG_HW_HOMEBREW)
+#define SETUP_VID_COLS          int88(0)        /* BIOS video # columns */
+#define SETUP_VID_LINES         int88(1)        /* BIOS video # lines */
+#else
 #define SETUP_VID_COLS          setupb(7)       /* BIOS video # columns */
 #define SETUP_VID_LINES         setupb(14)      /* BIOS video # lines */
+#endif /* CONFIG_HW_HOMEBREW */
 #define SETUP_CPU_TYPE          setupb(0x20)    /* processor type */
 #define SETUP_MEM_KBYTES        setupw(0x2a)    /* base memory in 1K bytes */
 #define SETUP_ROOT_DEV          setupw(0x1fc)   /* root device, kdev_t or BIOS dev */

@@ -16,6 +16,7 @@ mainmenu_option next_comment
 
 		bool 'Compaq DeskPro Hardware (fast mode)' CONFIG_HW_COMPAQFAST n
 		bool 'MK-88 Hardware (IRQ 3 keyboard)' CONFIG_HW_MK88 n
+		bool 'Homebrew extensions (INT 0x88)' CONFIG_HW_HOMEBREW n
 
 		comment 'Devices'
 

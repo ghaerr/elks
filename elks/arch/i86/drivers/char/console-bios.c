@@ -19,6 +19,7 @@
 #include <linuxmt/chqueue.h>
 #include <linuxmt/ntty.h>
 #include <linuxmt/kd.h>
+#include <linuxmt/homebrew.h>
 #include "console.h"
 #include "console-bios.h"
 

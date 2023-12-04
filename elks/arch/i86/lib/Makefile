@@ -35,6 +35,7 @@ include $(BASEDIR)/Makefile-rules
 SRCS1 = \
 	fmemory.S \
 	peekpoke.S \
+	homebrew.S \
 	string.S \
 	printreg.S \
 	# end of list

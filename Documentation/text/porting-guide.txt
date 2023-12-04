@@ -25,6 +25,12 @@ IBM PC/XT/AT Personal Computer (CONFIG_ARCH_IBMPC)
 		NE2K
 		WD8003
 
+    Homebrew modifications of IBM PC:
+        Homebrew extensions can be enabled with CONFIG_HW_HOMEBREW.
+        This replaces some hard-coded values with INT 0x88 calls:
+        - AH=0 - get display columns
+        - AH=1 - get display rows
+
 8018X Architecture (CONFIG_ARCH_8018X)
 Advantech SNMP-1000B (advtech)
 	System
