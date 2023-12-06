@@ -621,7 +621,7 @@ create_symtab (void)
         }
     }
     putc(0x00, outfp);     /* TYPE (mapfile terminator) */
-    fclose(infp);
+    pclose(infp);
     fclose(outfp);
 }
 
