@@ -1,4 +1,5 @@
 #if defined(VERBOSE)
+#include <errno.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -18,6 +19,7 @@ phex(int val)
 void
 __noise(char *y, mem * x)
 {
+    int saved_errno = errno;
     write(2, "Malloc ", 7);
     phex((int)x);
     write(2, " sz ", 4);
@@ -33,5 +35,6 @@ __noise(char *y, mem * x)
     write(2, " is ", 4);
     write(2, y, strlen(y));
     write(2, "\n", 1);
+    errno = saved_errno;
 }
 #endif

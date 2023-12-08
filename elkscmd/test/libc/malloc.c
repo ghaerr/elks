@@ -35,7 +35,11 @@ TEST_CASE(malloc_malloc_free) {
         EXPECT_EQ(errno, 0);
         ASSERT_NE_P(p, NULL);
         memset(p, 0xff, i);
+
+        /* free must not change errno */
+        errno = 123;
         free(p);
+        EXPECT_EQ(errno, 123);
     }
 }
 
