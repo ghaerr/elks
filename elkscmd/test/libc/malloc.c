@@ -53,7 +53,9 @@ TEST_CASE(malloc_calloc) {
         free(p);
     }
 
-    /* TODO check for mult overflow */
+    p = calloc(((unsigned)-1)>>2, 5);
+    EXPECT_EQ(errno, ENOMEM);
+    EXPECT_EQ_P(p, NULL);
 }
 
 TEST_CASE(malloc_realloc) {
