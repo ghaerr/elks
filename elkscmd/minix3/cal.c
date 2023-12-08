@@ -47,13 +47,10 @@ _PROTOTYPE(int getdate, (int week, int wday));
 _PROTOTYPE(static int Jan1, (int year));
 
 int
-main(argc, argv)
-    int argc;
-    char *argv[];
+main(int argc, char *argv[])
 {
-    register int year;
-
-    register int arg1val;
+    int year;
+    int arg1val;
     int arg1len;
     int arg2val;
 
@@ -84,12 +81,11 @@ main(argc, argv)
     return (IO_SUCCESS);
 }
 
-void
-doyear(year)
-    int year;
 /* Print the calendar for an entire year. */
+void
+doyear(int year)
 {
-    register int month;
+    int month;
 
     if (year < 1 || year > 9999)
         usage(badarg);
@@ -114,11 +110,9 @@ doyear(year)
     printf("\n\n\n");
 }
 
-void
-domonth(year, month)
-    int year;
-    int month;
 /* Do one specific month -- note: no longer used */
+void
+domonth(int year, int month)
 {
     if (year < 1 || year > 9999)
         usage(badarg);
@@ -130,14 +124,13 @@ domonth(year, month)
     printf("\n\n");
 }
 
-void
-output(nmonths)
-    int nmonths;                /* Number of months to do	 */
 /* Clean up and output the text. */
+void
+output(int nmonths)
 {
-    register int week;
-    register int month;
-    register char *outp;
+    int week;
+    int month;
+    char *outp;
     int i;
     char tmpbuf[21], *p;
 
@@ -162,17 +155,14 @@ output(nmonths)
     }
 }
 
-void
-calendar(year, month, indx)
-    int year;
-    int month;
-    int indx;                   /* Which of the three months		 */
 /* Actually build the calendar for this month. */
+void
+calendar(int year, int month, int indx)
 {
-    register char *tp;
+    char *tp;
     int week;
-    register int wday;
-    register int today;
+    int wday;
+    int today;
 
     setmonth(year, month);
     for (week = 0; week < WEEKS_PER_MONTH; week++) {
@@ -195,8 +185,7 @@ calendar(year, month, indx)
 }
 
 void
-usage(s)
-    char *s;
+usage(char *s)
 {
     /* Fatal parameter error. */
 
@@ -235,31 +224,30 @@ static int day_month[] = {      /* 30 days hath September...		 */
     0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
 };
 
-int
-date(year, month, week, wday)
-    int year;                   /* Calendar date being computed		 */
-    int month;                  /* January == 1				 */
-    int week;                   /* Week in the month 0..5 inclusive	 */
-    int wday;                   /* Weekday, Sunday == 0			 */
 /*
  * Return the date of the month that fell on this week and weekday. Return
  * zero if it's out of range.
+ *
+ * year:  Calendar date being computed
+ * month: January == 1
+ * week:  Week in the month 0..5 inclusive
+ * wday:  Weekday, Sunday == 0
  */
+int
+date(int year, int month, int week, int wday)
 {
     setmonth(year, month);
     return (getdate(week, wday));
 }
 
-void
-setmonth(year, month)
-    int year;                   /* Year to compute		 */
-    int month;                  /* Month, January is month 1	 */
 /*
  * Setup the parameters needed to compute this month (stored in the info
  * structure).
  */
+void
+setmonth(int year, int month)
 {
-    register int i;
+    int i;
 
     if (month < 1 || month > 12) {      /* Verify caller's parameters	 */
         info.days_in_month = 0; /* Garbage flag			 */
@@ -306,11 +294,9 @@ setmonth(year, month)
 }
 
 int
-getdate(week, wday)
-    int week;
-    int wday;
+getdate(int week, int wday)
 {
-    register int today;
+    int today;
 
     /* Get a first guess at today's date and make sure it's in range. */
     today = (week * 7) + wday - info.dow_first + 1;
@@ -323,12 +309,11 @@ getdate(week, wday)
         return (today);         /* Return the date		 */
 }
 
-static int
-Jan1(year)
-    int year;
 /* Return day of the week for Jan 1 of the specified year. */
+static int
+Jan1(int year)
 {
-    register int day;
+    int day;
 
     day = year + 4 + ((year + 3) / 4);  /* Julian Calendar	 */
     if (year > 1800) {          /* If it's recent, do	 */
