@@ -16,8 +16,8 @@
 #define	MONTHS_PER_LINE	3       /* Three months across		 */
 #define	MONTH_SPACE	3       /* Between each month		 */
 
-char *badarg = {"Bad argument\n"};
-char *how = {"Usage: cal [month] year\n"};
+char badarg[] = "Bad argument\n";
+char how[] = "Usage: cal [month] year\n";
 
 /*
  * Calendar() stuffs data into layout[], output() copies from layout[] to
@@ -28,7 +28,7 @@ char outline[(MONTHS_PER_LINE * DAYS_PER_WEEK * ENTRY_SIZE)
              + (MONTHS_PER_LINE * MONTH_SPACE)
              + 1];
 
-char *weekday = " S  M Tu  W Th  F  S";
+char weekday[] = " S  M Tu  W Th  F  S";
 char *monthname[] = {
     "???",                      /* No month 0	 */
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -89,10 +89,7 @@ doyear(int year)
 
     if (year < 1 || year > 9999)
         usage(badarg);
-    if (year < 100)
-        printf("\n\n\n                                 00%2d\n\n", year);
-    else
-        printf("\n\n\n%35d\n\n", year);
+    printf("\n\n\n%33s%04d\n\n", "", year);
     for (month = 1; month <= 12; month += MONTHS_PER_LINE) {
         printf("%12s%23s%23s\n",
                monthname[month],
@@ -132,7 +129,7 @@ output(int nmonths)
     int month;
     char *outp;
     int i;
-    char tmpbuf[21], *p;
+    char *p;
 
     for (week = 0; week < WEEKS_PER_MONTH; week++) {
         outp = outline;
@@ -143,15 +140,15 @@ output(int nmonths)
              */
             p = &layout[month][week][0][1];
             for (i = 0; i < 20; i++)
-                tmpbuf[i] = *p++;
-            tmpbuf[20] = 0;
-            sprintf(outp, "%s   ", tmpbuf);
+                outp[i] = *p++;
+            while (i < 23)
+                outp[i++] = ' ';
             outp += (DAYS_PER_WEEK * ENTRY_SIZE) + MONTH_SPACE - 1;
         }
         while (outp > outline && outp[-1] == ' ')
             outp--;
         *outp = EOS;
-        printf("%s\n", outline);
+        puts(outline);
     }
 }
 
@@ -189,7 +186,7 @@ usage(char *s)
 {
     /* Fatal parameter error. */
 
-    fprintf(stderr, "%s", s);
+    fputs(s, stderr);
     exit(IO_ERROR);
 }
 
