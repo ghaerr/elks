@@ -2,6 +2,7 @@
 #define __SETJMP_H
 
 #include <features.h>
+#include <stdnoreturn.h>
 
 /* 
  * I know most systems use an array of ints here, but I prefer this   - RDB
@@ -21,7 +22,7 @@ typedef struct
 } jmp_buf[1];
 
 int _setjmp(jmp_buf env);
-void _longjmp(jmp_buf env, int rv);
+noreturn void _longjmp(jmp_buf env, int rv);
 
 /* LATER: Seems GNU beat me to it, must be OK then :-)
  *        Humm, what's this about setjmp being a macro !?

@@ -2,6 +2,7 @@
 #define __UNISTD_H
 
 #include <features.h>
+#include <stdnoreturn.h>
 #include <sys/types.h>
 #include <sys/select.h>
 
@@ -49,7 +50,7 @@ int execve(char *fname, char **argv, char **envp);
 int execvp(char *fname, char **argv);
 int execvpe(char *fname, char **argv, char **envp);
 int _execve(char *fname, char *stk_ptr, int stack_bytes);
-void _exit(int status);
+noreturn void _exit(int status);
 int isatty (int fd);
 char *ttyname(int fd);
 off_t lseek (int fildes, off_t offset, int whence);

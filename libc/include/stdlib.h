@@ -3,6 +3,7 @@
 
 /* stdlib.h  <ndf@linux.mit.edu> */
 #include <features.h>
+#include <stdnoreturn.h>
 #include <sys/types.h>
 #include <malloc.h>
 
@@ -52,9 +53,9 @@ char *getenv(const char *name);
 int putenv(char *string);
 char *mktemp(char *template);
 
-void abort (void);
+noreturn void abort (void);
 int atexit (void (* function) ());
-void exit (int status);
+noreturn void exit (int status);
 int system(const char *command);
 void qsort(void *base, size_t nel, size_t width,
 	int (*compar)(/*const void *, const void * */));
