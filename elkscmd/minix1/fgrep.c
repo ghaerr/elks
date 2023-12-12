@@ -86,14 +86,6 @@ char **argv;
   unsigned count;		/* number of matching lines in current file */
   unsigned found_one = 0;	/* was there any match in any file at all ? */
 
-#ifdef noperprintf
-  noperprintf(stdout);
-#else
-  static char outbuf[BUFSIZ];
-
-  setvbuf(stdout, outbuf, _IOFBF, sizeof outbuf);
-#endif
-
   prog_name = argv[0];
   if (argc == 1) usage();
   while ((c = getopt(argc, argv, "ce:f:hlnsv")) != EOF) {

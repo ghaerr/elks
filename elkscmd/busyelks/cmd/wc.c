@@ -86,7 +86,6 @@ char *argv[];
 	if (wflag) printf(" %6ld", wcount);
 	if (cflag) printf(" %6ld", ccount);
 	printf(" \n");
-	fflush(stdout);
 	exit(0);
   }
 
