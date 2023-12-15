@@ -7,19 +7,18 @@
 #include <unistd.h>
 
 char *
-getenv(char *name)
+getenv(const char *name)
 {
-   int l = strlen(name);
-   char **ep = environ;
+    size_t l = strlen(name);
+    char **ep = environ;
 
-   if( ep == 0 || l == 0 ) return 0;
+    if (ep == 0 || l == 0)
+        return 0;
 
-   while(*ep)
-   {
-      if( **ep == *name && memcmp(name, *ep, l) == 0 && (*ep)[l] == '=' )
-         return *ep+l+1;
-      ep++;
-   }
-   return 0;
+    while (*ep) {
+        if (memcmp(name, *ep, l) == 0 && (*ep)[l] == '=')
+            return *ep + l + 1;
+        ep++;
+    }
+    return 0;
 }
-
