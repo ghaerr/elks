@@ -255,7 +255,7 @@ char *argv[];
   if (argc != 0) {		/* If there is anything to parse,        */
 	pred = expr(lex(*ipp));	/* then do so                            */
 	if (lex(*++ipp) != EOI)	/* Make sure there's nothing left        */
-		fatal("syntax error: garbage at end of predicate", "");
+		fatal("syntax error: ", "garbage at end of predicate");
   } else			/* No predicate list                     */
 	pred = (struct node *) NULL;
 
@@ -478,7 +478,7 @@ int *ps;
 
   *ps = ((*str == '-' || *str == '+') ? ((*str++ == '-') ? -1 : 1) : 0);
   while (*str >= '0' && *str <= up) val = base * val + *str++ - '0';
-  if (*str) fatal("syntax error: illegal numeric value", "");
+  if (*str) fatal("syntax error: ", "illegal numeric value");
   *pl = val;
 }
 
@@ -620,7 +620,7 @@ int t;
 
   if (t == LPAR) {
 	n = expr(lex(*++ipp));
-	if (lex(*++ipp) != RPAR) fatal("syntax error, ) expected", "");
+	if (lex(*++ipp) != RPAR) fatal("syntax error: ", ") expected");
 	return n;
   }
   if (t == NOT) {
@@ -635,7 +635,7 @@ int t;
 void checkarg(arg)
 char *arg;
 {
-  if (arg == 0) fatal("syntax error, argument expected", "");
+  if (arg == 0) fatal("syntax error: ", "argument expected");
 }
 
 struct node *
@@ -777,7 +777,7 @@ int t;
     case OP_PRINT0:
     case OP_NOUSER:	case OP_NOGROUP:	break;
           default:
-	fatal("syntax error, operator expected", "");
+	fatal("syntax error, ", "operator expected");
   }
   if ((t == OP_PRINT) || (t == OP_PRINT0) || (t == OP_EXEC) || (t == OP_OK))
 	needprint = 0;

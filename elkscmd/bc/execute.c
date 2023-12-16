@@ -449,7 +449,7 @@ execute ()
 	    bc_raise (ex_stack->s_next->s_num,
 		      ex_stack->s_num, &temp_num, scale);
 	    if (is_zero (ex_stack->s_next->s_num) && is_neg (ex_stack->s_num))
-	      rt_error ("divide by zero");
+	      rt_error ("Divide by zero");
 	    pop();
 	    pop();
 	    push_num (temp_num);

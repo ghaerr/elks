@@ -131,7 +131,7 @@ struct cmd_tab cmdtab[] = {
 	{"cd", CMD_CWD, "Change (remote) working directory"},
 	{"pwd", CMD_PWD, "Show (remote) working directory"},
 	{"bin", CMD_BIN, "Set file transfer type to BINARY"},
-	{"ascii", CMD_ASCII, "Set file transer type to ASCII"},
+	{"ascii", CMD_ASCII, "Set file transfer type to ASCII"},
 	{"quit", CMD_QUIT, "Quit program"},
 	{"type", CMD_TYPE, "Show file transfer type."},
 	{"prompt", CMD_PROMPT, "Toggle interactive multifile transfers"},
