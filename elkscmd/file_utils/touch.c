@@ -11,7 +11,7 @@
 int
 main(int argc, char **argv)
 {
-    int i, ncreate = 0;
+    int ncreate = 0;
     int err = 0;
     struct stat sbuf;
 
@@ -19,23 +19,25 @@ main(int argc, char **argv)
         errmsg("usage: touch file [...]\n");
         return 1;
     }
-    if ((argv[1][0] == '-') && (argv[1][1] == 'c'))
+    if ((argv[1][0] == '-') && (argv[1][1] == 'c')) {
         ncreate = 1;
+        argv++;
+    }
 
-    for (i = ncreate + 1; i < argc; i++) {
-        if (argv[i][0] != '-') {
-            if (stat(argv[i], &sbuf)) {
+    for (argv++; *argv; argv++) {
+        if (**argv != '-') {
+            if (stat(*argv, &sbuf)) {
                 if (!ncreate) {
-                    int fd = creat(argv[i], 0666);
+                    int fd = creat(*argv, 0666);
                     if (fd < 0) {
-                        errstr(argv[i]);
+                        errstr(*argv);
                         errmsg(": cannot create file\n");
                         err = 1;
                     } else
                         close(fd);
                 }
             } else
-                err |= utime(argv[i], NULL);
+                err |= utime(*argv, NULL);
         }
     }
     return (err ? 1 : 0);
