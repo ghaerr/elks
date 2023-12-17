@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <getopt.h>
 #include <libgen.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -117,21 +118,18 @@ TEST_CASE(misc_getopt)
 
 TEST_CASE(misc_getcwd)
 {
-    char buf[256];
+    char buf[PATH_MAX];
     char *p;
 
     p = getcwd(buf, 1);
     EXPECT_EQ(errno, ERANGE);
     EXPECT_EQ_P(p, NULL);
 
-    /* TODO:BUG hangs or crashes elksemu but not real ELKS */
-#if 0
     memset(buf, 'X', sizeof(buf));
     p = getcwd(buf, sizeof(buf));
     EXPECT_EQ_P(p, buf);
     EXPECT_EQ(buf[0], '/');
     EXPECT_LT(strlen(buf), sizeof(buf)); /* is NULL terminated */
-#endif
 }
 
 static void validateCrypt(const char *s)

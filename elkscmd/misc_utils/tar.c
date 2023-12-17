@@ -36,6 +36,7 @@
  * All rights reserved.  The Berkeley software License Agreement
  * specifies the terms and conditions for redistribution.
  */
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -49,8 +50,6 @@
 #include <sys/stat.h>
 #include <sys/dir.h>
 #include <sys/time.h>
-
-#define MAXPATHLEN 128
 
 #define ELKS            1
 #define DO_REPLACE      0   /* =1 for tar 'r' option, requires awk */
@@ -247,7 +246,7 @@ dorep(argv)
 	char *argv[];
 {
 	register char *cp, *cp2;
-	char wdir[MAXPATHLEN], tempdir[MAXPATHLEN], *parent;
+	char wdir[PATH_MAX], tempdir[PATH_MAX], *parent;
 
 	if (!cflag) {
 #if DO_REPLACE
