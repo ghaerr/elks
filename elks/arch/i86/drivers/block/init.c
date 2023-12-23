@@ -44,7 +44,7 @@ void INITPROC device_init(void)
     for (p = gendisk_head; p; p = p->next)
         setup_dev(p);
 
-#if defined(CONFIG_BLK_DEV_BIOS) || defined(CONFIG_BLK_DEV_FD)
+#if defined(CONFIG_BLK_DEV_BFD) || defined(CONFIG_BLK_DEV_BHD) || defined(CONFIG_BLK_DEV_FD)
     /*
      * The bootloader may have passed us a ROOT_DEV which is actually a BIOS
      * drive number.  If so, convert it into a proper <major, minor> block
@@ -56,7 +56,7 @@ void INITPROC device_init(void)
         if (ROOT_DEV == 0) rootdev = DEV_DF0;
         else if (ROOT_DEV == 1) rootdev = DEV_DF1;
 #endif
-#ifdef CONFIG_BLK_DEV_BIOS
+#if defined(CONFIG_BLK_DEV_BFD) || defined(CONFIG_BLK_DEV_BHD)
         if (!rootdev)
             rootdev = bios_conv_bios_drive((unsigned)ROOT_DEV);
 #endif

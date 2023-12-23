@@ -79,12 +79,12 @@ TARGET_NB_IMAGE	= $(TOPDIR)/elks/nbImage
 
 ifeq ($(PRE), )
 
-DIST		= $(shell printf '%u.%u.%u' \
+DIST		?= $(shell printf '%u.%u.%u' \
 			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL))
 
 else
 
-DIST		= $(shell printf '%u.%u.%u%s' \
+DIST		?= $(shell printf '%u.%u.%u%s' \
 			$(VERSION) $(PATCHLEVEL) $(SUBLEVEL) $(PRE))
 
 endif
@@ -96,34 +96,13 @@ ARCH_DIR	= arch/$(ARCH)
 
 INCLUDES = -I$(TOPDIR)/include -I$(TOPDIR)/elks/include
 
-MYDIR		= $(shell pwd | sed 's:^$(TOPDIR):.:')
-
-#########################################################################
-# Specify the directory we are to create the distribution copy of this
-# directory in, in such a way that no . or .. directories occur. This
-# also makes this an absolute path, but that fact is not important.
-
-DISTDIR 	= $(shell $(BASEDIR)/scripts/setdir $(TOPDIR)/elks-$(DIST)/$(MYDIR))
-
 #########################################################################
 # Specify the standard definitions to be given to system programs.
 
 CCDEFS = -D__KERNEL__
 
 #########################################################################
-# Set the target environment and the compiler to use.
-
-ifeq ($(wildcard $(TOPDIR)/.config),)
-    MK_ARCH	= ibmpc
-    MK_CPU	= 8086
-else
-    MK_ARCH	= $(shell grep '^CONFIG_ARCH_' $(TOPDIR)/.config \
-			| cut -d = -f 1 | cut -d _ -f 3- | tr A-Z a-z)
-    MK_CPU	= $(shell grep '^CONFIG_CPU_' $(TOPDIR)/.config \
-			| cut -d = -f 1 | cut -d _ -f 3- | tr A-Z a-z)
-endif
-
-# Use GCC-IA16 compiler
+# Set the target environment and the compiler to use
 
 # Not linked to any target C library ('freestanding')
 # Use ES only for segment ('elks')
@@ -136,38 +115,36 @@ CROSS_CFLAGS = -ffreestanding -fno-inline -melks -mcmodel=small -msegment-reloca
 #########################################################################
 # Define architecture-specific flags.
 
-ifeq ($(MK_ARCH), ibmpc)
+#MK_ARCH	= $(shell grep '^CONFIG_ARCH_' $(TOPDIR)/.config \
+			| cut -d = -f 1 | cut -d _ -f 3- | tr A-Z a-z)
+#ifeq ($(MK_ARCH), ibmpc)
     ARCH_AS	=
     ARCH_CC	=
     ARCH_LD	=
-endif
-
-ifeq ($(MK_ARCH), sibo)
-    ARCH_AS	=
-    ARCH_CC	=
-    ARCH_LD	= -D 0xC00 -H 0x480
-endif
+#endif
 
 #########################################################################
 # Define CPU-specific flags.
 
-ifeq ($(MK_CPU), 8086)
+#MK_CPU		= $(shell grep '^CONFIG_CPU_' $(TOPDIR)/.config \
+			| cut -d = -f 1 | cut -d _ -f 3- | tr A-Z a-z)
+#ifeq ($(MK_CPU), 8086)
     CPU_AS	= -mtune=i8086
     CPU_CC	= -mtune=i8086
     CPU_LD	=
-endif
+#endif
 
-ifeq ($(MK_CPU), 80186)
-    CPU_AS	= -mtune=i186
-    CPU_CC	= -mtune=i186
-    CPU_LD	=
-endif
+#ifeq ($(MK_CPU), 80186)
+#    CPU_AS	= -mtune=i186
+#    CPU_CC	= -mtune=i186
+#    CPU_LD	=
+#endif
 
-ifeq ($(MK_CPU), 80286)
-    CPU_AS	= -mtune=i286
-    CPU_CC	= -mtune=i286
-    CPU_LD	=
-endif
+#ifeq ($(MK_CPU), 80286)
+#    CPU_AS	= -mtune=i286
+#    CPU_CC	= -mtune=i286
+#    CPU_LD	=
+#endif
 
 #########################################################################
 # Export all variables.
@@ -417,12 +394,21 @@ nodep:
 	done
 
 #########################################################################
-# Sub-command used by the `make dist` command in the toplevel Makefile.
+# Specify the directory we are to create the distribution copy of this
+# directory in, in such a way that no . or .. directories occur. This
+# also makes this an absolute path, but that fact is not important.
 
-MKDIST	= $(shell export allow_null_glob_expansion=Y ; \
+#MYDIR		= $(shell pwd | sed 's:^$(TOPDIR):.:')
+#DISTDIR 	= $(shell $(BASEDIR)/scripts/setdir $(TOPDIR)/elks-$(DIST)/$(MYDIR))
+#MKDIST	= $(shell export allow_null_glob_expansion=Y ; \
 	  echo *.? *.cc *.html *.in *.png *.sh *.tk *.txt Makefile* README*)
 
+# Sub-command used by the `make dist` command in the toplevel Makefile.
+# NOTE: disabled as slows general make times greatly
+
 mkdist:
+	echo "make dist not supported"
+	exit
 	mkdir -m 755 -p $(DISTDIR)
 	cp -pf $(MKDIST) $(DISTFILES) $(DISTDIR)
 	@for DIR in */ ; do \

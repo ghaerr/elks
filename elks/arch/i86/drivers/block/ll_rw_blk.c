@@ -221,12 +221,6 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
     req->rq_buffer = buffer_data(bh);
     req->rq_bh = bh;
     req->rq_errors = 0;
-
-#ifdef BLOAT_FS
-    req->rq_nr_sectors = count;
-    req->rq_current_nr_sectors = count;
-#endif
-
     req->rq_next = NULL;
     add_request(&blk_dev[major], req);
 }
@@ -291,7 +285,7 @@ void ll_rw_block(int rw, int nr, register struct buffer_head **bh)
 {
     struct blk_dev_struct *dev;
     struct request plug;
-    unsigned short int major;
+    unsigned int major;
     int i;
 
     /* Make sure the first block contains something reasonable */
@@ -324,8 +318,8 @@ void ll_rw_block(int rw, int nr, register struct buffer_head **bh)
   sorry:
     for (i = 0; i < nr; i++)
         if (bh[i]) {
-                mark_buffer_clean(bh[i]);
-                mark_buffer_uptodate(bh[i], 0);
+            mark_buffer_clean(bh[i]);
+            mark_buffer_uptodate(bh[i], 0);
         }
 }
 #endif /* MULTI_BH */
@@ -365,7 +359,7 @@ void INITPROC blk_dev_init(void)
     floppy_init();
 #endif
 
-#ifdef CONFIG_BLK_DEV_BIOS
+#if defined(CONFIG_BLK_DEV_BFD) || defined(CONFIG_BLK_DEV_BHD)
     bioshd_init();
 #endif
 

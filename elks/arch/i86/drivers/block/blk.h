@@ -73,7 +73,7 @@ static void floppy_off(int nr);
 
 #define DEVICE_NAME "df"
 #define DEVICE_REQUEST do_fd_request
-#define DEVICE_NR(device) ((device) & 3)
+#define DEVICE_NR(device) ((device) & 1)
 #define DEVICE_OFF(device) floppy_off(DEVICE_NR(device))
 
 #elif (MAJOR_NR == ATHD_MAJOR)
@@ -114,6 +114,7 @@ static void end_request(int uptodate)
     req = CURRENT;
 
     if (!uptodate) {
+        /*if (req->rq_errors >= 0)*/
         printk(DEVICE_NAME ": I/O %s error dev %D lba sector %lu\n",
             (req->rq_cmd == WRITE)? "write": "read",
             req->rq_dev, req->rq_sector);

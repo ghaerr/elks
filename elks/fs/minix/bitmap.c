@@ -32,7 +32,7 @@ struct buffer_head *get_map_block(kdev_t dev, block_t block)
     else
         bh = bread(dev, block);
     if (!EBH(bh)->b_uptodate) {
-        printk("get_map_block: can't read block %D/%u\n", dev, block);
+        debug_blk("get_map_block: can't read block %D/%u\n", dev, block);
         brelse(bh);
         return NULL;
     }

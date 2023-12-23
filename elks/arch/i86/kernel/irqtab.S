@@ -267,12 +267,10 @@ updct:
 //
 	cmp	$16,%ax
 	jge	was_trap	// Traps need no reset
-#ifdef CONFIG_ARCH_PC98
-	jmp	do_eoi
-#else
+
+#if defined(CONFIG_BLK_DEV_BFD) && !defined(CONFIG_ARCH_PC98)
 	or	%ax,%ax		// Is int #0?
 	jnz	do_eoi
-#endif
 
 //
 //	IRQ 0 (timer) has to go on to the bios for some systems
@@ -283,6 +281,7 @@ updct:
 	pushf
 	lcall	*org_irq0
 	jmp	was_trap	// EOI already sent by bios int
+#endif
 
 //
 //	Send EOI to interrupt controller

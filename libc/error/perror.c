@@ -7,7 +7,7 @@ perror(const char *str)
 {
     char *ptr;
 
-    if (!str) {
+    if (str) {
         write(2, str, strlen(str));
         write(2, ": ", 2);
     }

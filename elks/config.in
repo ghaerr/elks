@@ -51,12 +51,12 @@ endmenu
 mainmenu_option next_comment
 	comment 'Kernel settings'
 
-	bool 'Boot Options in /bootopts'          CONFIG_BOOTOPTS     y
-	bool 'Use Async I/O in kernel (experimental)' CONFIG_ASYNCIO  n
+	bool 'Boot options in /bootopts'          CONFIG_BOOTOPTS     y
+	bool 'Use Async I/O in kernel'            CONFIG_ASYNCIO      n
 	bool 'Calculate process CPU usage'        CONFIG_CPU_USAGE    y
 	bool 'Real time clock in localtime'       CONFIG_TIME_RTC_LOCALTIME n
 	string 'Compiled-in TZ= timezone string'  CONFIG_TIME_TZ      ''
-	bool 'Enable tracing (set on for development)' CONFIG_TRACE   n
+	bool 'System tracing (set on for development)' CONFIG_TRACE   n
 	bool 'Use INT 0Fh in idle loop for timer' CONFIG_TIMER_INT0F  n
 	bool 'Use INT 1Ch from BIOS for timer'    CONFIG_TIMER_INT1C  n
 

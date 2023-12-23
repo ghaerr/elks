@@ -680,7 +680,7 @@ void editorQueryString(char* prompt, char *buffer){
 		} else if(c == ENTER) {
             editorSetStatusMessage("");
 			return;
-		} else if(isprint(c)) {
+		} else if(isprint(c & 255)) {
 			buffer[len++] = c;
 			buffer[len] = '\0';
 		}
@@ -870,7 +870,7 @@ int editorUpdateSyntax(erow *row) {
         }
 
         /* Handle non printable chars. */
-        if (!isprint(*p)) {
+        if (!isprint(*p & 255)) {
             row->hl[i] = HL_NONPRINT;
             p++; i++;
             prev_sep = 0;
@@ -987,7 +987,7 @@ int editorUpdateRow(erow *row) {
         if (row->chars[j] == TAB) {
             row->render[idx++] = ' ';
             while((idx+1) % TABSPACE != 0) row->render[idx++] = ' ';
-        } else if (!isprint(row->chars[j])) {
+        } else if (!isprint(row->chars[j] & 255)) {
             row->render[idx++] = '?';
         } else {
             row->render[idx++] = row->chars[j];
@@ -1715,7 +1715,7 @@ void editorFind(int fd, int mode) {
 			  find_next = 1;
             }
 
-        } else if (isprint(c)) {
+        } else if (isprint(c & 255)) {
             if (qlen < KILO_QUERY_LEN) {
                 query[qlen++] = c;
                 query[qlen] = '\0';

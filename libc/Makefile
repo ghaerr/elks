@@ -112,16 +112,22 @@ all: $(LIBC) $(CRT0)
 SUBDIRSINMULTILIB = $(SUBDIRS:%=$(TOPDIR)/libc/build-ml/$(MULTISUBDIR)/%)
 SUBLIBSINMULTILIB = $(SUBDIRSINMULTILIB:%=%/out.a)
 
+# `ia16-elf-ar -M' errors out if the path argument to `CREATE' contains any
+# weird characters such as `~'.  This caused problems when building elks-libc
+# pre-releases on launchpad.net.  To work around this, make all paths in the
+# `ia16-elf-ar -M' MRI script relative to $(TOPDIR).
 $(LIBC): $(SUBLIBSINMULTILIB)
 	mkdir -p $(@D)
+	$(RM) -r $@.tmp
 	set -e; \
+	cd $(TOPDIR); \
 	( \
-		echo CREATE $(LIBC).tmp; \
-		for s in $^; \
+		echo CREATE $(patsubst $(TOPDIR)/%,%,$(abspath $@.tmp)); \
+		for s in $(patsubst $(TOPDIR)/%,%,$(abspath $^)); \
 			do echo ADDLIB "$$s"; done; \
 		echo SAVE \
 	) | $(AR) -M
-	mv $(LIBC).tmp $(LIBC)
+	mv $@.tmp $@
 
 $(CRT0): crt0.S
 

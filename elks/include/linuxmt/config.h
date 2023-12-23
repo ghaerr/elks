@@ -98,7 +98,7 @@
 #define DEF_SYSSIZE     0x2F00
 
 #ifdef CONFIG_ROMCODE
-#ifdef CONFIG_BLK_DEV_BIOS    /* BIOS disk driver*/
+#if defined(CONFIG_BLK_DEV_BFD) || defined(CONFIG_BLK_DEV_BHD)  /* BIOS disk driver*/
 #define DMASEG          0x80  /* 0x400 bytes floppy sector buffer */
 #ifdef CONFIG_TRACK_CACHE     /* floppy track buffer in low mem */
 #define DMASEGSZ 0x2400       /* SECTOR_SIZE * 18 (9216) */

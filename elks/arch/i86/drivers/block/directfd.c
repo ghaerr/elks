@@ -78,6 +78,7 @@
 #include <linuxmt/config.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/fs.h>
+#include <linuxmt/stat.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/timer.h>
 #include <linuxmt/mm.h>
@@ -98,9 +99,6 @@
 #define MAJOR_NR        FLOPPY_MAJOR
 #include "blk.h"
 
-#define MINOR_SHIFT     0       /* shift to get drive num */
-#define FLOPPY_DMA      2       /* hardwired on old PCs */
-
 /*
  * The original 8272A doesn't have FD_DOR, FD_DIR or FD_CCR registers,
  * but the 82077 found on modern clones can be configured in hardware
@@ -116,8 +114,15 @@
  */
 
 #define USE_IMPLIED_SEEK    0   /* =1 for QEMU with 360k/AT stretch floppies (not real hw) */
-#define CHECK_DISK_CHANGE   0   /* =1 to add driver media changed code */
-#define CLEAR_DIR_REG       0   /* =1 to clear DIR DSKCHG when set (for media change) */
+#define CHECK_DIR_REG       1   /* =1 to read and clear DIR DSKCHG when media changed */
+#define CHECK_DISK_CHANGE   1   /* =1 to inform kernel of media changed */
+
+/* adjustable timeouts */
+#define TIMEOUT_MOTOR_ON   (HZ/2)      /* 500 ms wait for floppy motor on before I/O */
+#define TIMEOUT_MOTOR_OFF  (3 * HZ)    /* 3 secs wait for floppy motor off after I/O */
+#define TIMEOUT_CMD_COMPL  (6 * HZ)    /* 6 secs wait for FDC command complete */
+
+#define FLOPPY_DMA      2       /* hardwired on old PCs */
 
 //#define DEBUG printk
 #define DEBUG(...)
@@ -183,7 +188,7 @@ static unsigned char reply_buffer[MAX_REPLIES];
 
 /*
  * Minor number based formats. Each drive type is specified starting
- * from minor number 4 plus the table index, and no auto-probing is used.
+ * from minor number 2 plus the table index, and no auto-probing is used.
  *
  * Stretch tells if the tracks need to be doubled for some
  * types (ie 360kB diskette in 1.2MB drive etc).
@@ -220,6 +225,9 @@ static struct floppy_struct minor_types[] = {
     /* totSectors/sectors/heads/tracks/stretch/gap/rate/spec1/fmtgap/name */
 };
 
+#define ARRAYLEN(a)     (sizeof(a)/sizeof(a[0]))
+#define MAX_MINOR       (ARRAYLEN(minor_types) * 2) /* max forced type minor number */
+
 /* floppy probes to try per CMOS floppy type */
 static unsigned char p360k[] =  { FT_360k_PC, FT_360k_AT5, 0 };
 //static unsigned char p1200k[] = { FT_1200k,   FT_1440k, FT_360k_PC, FT_360k_AT5, 0 };
@@ -236,10 +244,10 @@ static unsigned char p2880k[] = { FT_2880k,   FT_1440k,    0 };
 static unsigned char *probe_list[CMOS_MAX] = { p360k, p1200k, p720k, p1440k, p2880k };
 
 /* Auto-detection: disk type determined from CMOS and probing */
-static struct floppy_struct *current_type[4];
+static struct floppy_struct *current_type[2];
 
 /* initial probe per drive */
-static unsigned char * base_type[4];
+static unsigned char *base_type[2];
 
 /*
  * The driver is trying to determine the correct media format
@@ -249,11 +257,11 @@ static unsigned char * base_type[4];
 static int probing;
 
 /* device reference counters */
-static int fd_ref[4];
+static int fd_ref[2];
+static int access_count;
 
-/* Synchronization of FDC access. */
-static int fdc_busy;
-static struct wait_queue fdc_wait;
+/* bit vector set when media changed - causes I/O to be discarded until unset */
+static unsigned int changed_floppies;
 
 /*
  * Threshold for reporting FDC errors to the console.
@@ -299,6 +307,7 @@ static void floppy_shutdown(void);
 static void motor_off_callback(int);
 static int DFPROC floppy_register(void);
 static void DFPROC floppy_deregister(void);
+static void floppy_release(struct inode *inode, struct file *filp);
 
 static void DFPROC delay_loop(int cnt)
 {
@@ -356,17 +365,13 @@ static void motor_on_callback(int nr)
     floppy_select(nr);
 }
 
-static struct timer_list motor_on_timer[4] = {
+static struct timer_list motor_on_timer[2] = {
     {NULL, 0, 0, motor_on_callback},
-    {NULL, 0, 1, motor_on_callback},
-    {NULL, 0, 2, motor_on_callback},
-    {NULL, 0, 3, motor_on_callback}
+    {NULL, 0, 1, motor_on_callback}
 };
-static struct timer_list motor_off_timer[4] = {
+static struct timer_list motor_off_timer[2] = {
     {NULL, 0, 0, motor_off_callback},
-    {NULL, 0, 1, motor_off_callback},
-    {NULL, 0, 2, motor_off_callback},
-    {NULL, 0, 3, motor_off_callback}
+    {NULL, 0, 1, motor_off_callback}
 };
 static struct timer_list fd_timeout = {NULL, 0, 0, floppy_shutdown};
 
@@ -406,7 +411,7 @@ static void DFPROC floppy_on(int nr)
     if (!(mask & current_DOR)) {        /* motor not running yet */
         del_timer(&motor_on_timer[nr]);
         /* TEAC 1.44M says 'waiting time' 505ms, may be too little for 5.25in drives. */
-        motor_on_timer[nr].tl_expires = jiffies + HZ/2;
+        motor_on_timer[nr].tl_expires = jiffies + TIMEOUT_MOTOR_ON;
         add_timer(&motor_on_timer[nr]);
 
         current_DOR &= 0xFC;            /* remove drive select */
@@ -426,7 +431,7 @@ static void DFPROC floppy_on(int nr)
 static void floppy_off(int nr)
 {
     del_timer(&motor_off_timer[nr]);
-    motor_off_timer[nr].tl_expires = jiffies + 3 * HZ;
+    motor_off_timer[nr].tl_expires = jiffies + TIMEOUT_MOTOR_OFF;
     add_timer(&motor_off_timer[nr]);
     DEBUG("flpOFF-\n");
 }
@@ -436,60 +441,6 @@ void request_done(int uptodate)
     del_timer(&fd_timeout);
     end_request(uptodate);
 }
-
-#if CHECK_DISK_CHANGE
-/*
- * The check_media_change entry in struct file_operations (fs.h) is not
- * part of the 'normal' setup (only BLOAT_FS), so we're ignoring it for now,
- * assuming the user is smart enough to umount before media changes - or
- * ready for the consequences.
- *
- * floppy_change is never called from an interrupt, so we can relax a bit
- * here, sleep etc. Note that floppy_on tries to set current_DOR to point
- * to the desired drive, but it will probably not survive the sleep if
- * several floppies are used at the same time: thus the loop.
- */
-static unsigned int changed_floppies = 0, fake_change = 0;
-
-int floppy_change(struct buffer_head *bh)
-{
-    unsigned int mask = 1 << (bh->b_dev & 0x03);
-
-    if (MAJOR(bh->b_dev) != MAJOR_NR) {
-        printk("floppy_change: not a floppy\n");
-        return 0;
-    }
-    if (fake_change & mask) {
-        buffer_track = -1;
-        fake_change &= ~mask;
-        /* omitting the next line breaks formatting in a horrible way ... */
-        changed_floppies &= ~mask;
-        return 1;
-    }
-    if (changed_floppies & mask) {
-        buffer_track = -1;
-        changed_floppies &= ~mask;
-        recalibrate = 1;
-        return 1;
-    }
-    if (!bh)
-        return 0;
-    if (EBH(bh)->b_dirty)
-        ll_rw_blk(WRITE, bh);
-    else {
-        buffer_track = -1;
-        mark_buffer_uptodate(bh, 0);
-        ll_rw_blk(READ, bh);
-    }
-    wait_on_buffer(bh);
-    if (changed_floppies & mask) {
-        changed_floppies &= ~mask;
-        recalibrate = 1;
-        return 1;
-    }
-    return 0;
-}
-#endif
 
 /* The IBM PC can perform DMA operations by using the DMA chip.  To use it,
  * the DMA (Direct Memory Access) chip is loaded with the 20-bit memory address
@@ -995,13 +946,12 @@ static void floppy_shutdown(void)
     DEBUG("[%u]shtdwn0x%x|%x-", (unsigned int)jiffies, current_DOR, running);
     do_floppy = NULL;
     printk("df%d: FDC cmd timeout\n", current_drive);
-    request_done(0);
     recover = 1;
     reset_floppy();
     redo_fd_request();
 }
 
-#if CLEAR_DIR_REG
+#if CHECK_DIR_REG
 static void shake_done(void)
 {
     /* Need SENSEI to clear the interrupt */
@@ -1049,39 +999,101 @@ static void shake_one(void)
     output_byte(head << 2 | current_drive);
     output_byte(1);             /* resetting media change bit requires head movement */
 }
+#endif /* CHECK_DIR_REG */
 
+#if CHECK_DISK_CHANGE
 /*
- * (User-provided) media information is _not_ discarded after a media change
- * if the corresponding keep_data flag is non-zero. Positive values are
- * decremented after each probe.
+ * This routine checks whether a removable media has been changed,
+ * invalidates all inode and buffer-cache-entries, unmounts
+ * any mounted filesystem and closes the driver.
+ * It is called from device open, mount and file read/write code.
+ * Because the FDC is interrupt driven and can't sleep, this routine
+ * must be called by a non-interrupt routine, as invalidate_buffers
+ * may sleep. Even without that, all accessed kernel variables would need
+ * protection via interrupt disabling.
+ *
+ * Since this driver is the only driver implementing media change,
+ * the entire routine has been moved here for simplicity.
  */
-static int keep_data[4];
-#endif /* CLEAR_DIR_REG */
+#if DEBUG_EVENT
+static int debug_changed;
+void fake_disk_change(void)
+{
+    debug("X");
+    debug_changed = 1;
+}
+#endif
+
+int check_disk_change(kdev_t dev)
+{
+    unsigned int mask;
+    struct super_block *s;
+    struct inode *inodep;
+
+    if (!dev && changed_floppies) {
+        dev = (changed_floppies & 1)? MKDEV(MAJOR_NR, 0): MKDEV(MAJOR_NR, 1);
+    } else if (MAJOR(dev) != MAJOR_NR)
+        return 0;
+    debug("C%d", dev&3);
+    mask = 1 << DEVICE_NR(dev);
+    if (!(changed_floppies & mask)) {
+        debug("N");
+        return 0;
+    }
+    debug("Y");
+
+    if (dev == ROOT_DEV) panic("Root media changed");
+
+    /* I/O is ignored but inuse, locked, or dirty inodes may not be cleared... */
+    s = get_super(dev);
+    if (s && s->s_mounted) {
+        do_umount(dev);
+        printk("VFS: Unmounting %s, media changed\n", s->s_mntonname);
+        /* fake up inode to enable device close */
+        inodep = new_inode(NULL, S_IFBLK);
+        inodep->i_rdev = dev;
+        floppy_release(inodep, NULL);
+        iput(inodep);
+    }
+    fsync_dev(dev);
+    invalidate_inodes(dev);
+    invalidate_buffers(dev);
+
+    changed_floppies &= ~mask;
+    debug_changed = 0;
+    printk("VFS: Disk media change completed on dev %D\n", dev);
+
+    return 1;
+}
+#endif /* CHECK_DISK_CHANGE */
 
 static void DFPROC floppy_ready(void)
 {
-    DEBUG("RDY0x%x,%d,%d-", inb(FD_DIR), reset, recalibrate);
-
-#if CLEAR_DIR_REG
-    /* check if disk changed since last cmd (PC/AT+) */
-    if (fdc_version >= FDC_TYPE_8272PC_AT && (inb(FD_DIR) & 0x80)) {
+    DEBUG("RDY%d,%d-", reset, recalibrate);
 
 #if CHECK_DISK_CHANGE
-        changed_floppies |= 1 << current_drive;
+    /* check if disk changed since last cmd (PC/AT+) */
+    if (0
+#if DEBUG_EVENT
+        || (debug_changed && current_drive == 1)
 #endif
-        buffer_track = -1;
-        if (keep_data[current_drive]) {
-            if (keep_data[current_drive] > 0)
-                keep_data[current_drive]--;
-        } else {
-                /* FIXME: this is nonsensical: Should assume that a medium change
-                 * means a new medium of the same format as the prev until it fails.
-                 */
-            if (current_type[current_drive] != NULL)
-                printk("df%d: Disk type undefined after disk change\n", current_drive);
-            current_type[current_drive] = NULL;
+#if CHECK_DIR_REG
+        || (fdc_version >= FDC_TYPE_8272PC_AT && (inb(FD_DIR) & 0x80))
+#endif
+                                                ) {
+        /* first time through the FDC requires recalibrate in order to clear DIR,
+         * so just recalibrate instead of starting to discard I/O in that case.
+         */
+        if (current_type[current_drive]) {
+            changed_floppies |= 1 << current_drive; /* this will discard any queued I/O */
+            printk("df%d: Disk media change detected, suspending I/O\n", current_drive);
+            current_type[current_drive] = NULL;     /* comment out to keep last media format */
         }
 
+        if (current_drive == buffer_drive)
+            buffer_track = -1;
+
+#if CHECK_DIR_REG
         if (!reset && !recalibrate) {
             if (current_track && current_track != NO_TRACK)
                 do_floppy = shake_zero;
@@ -1091,8 +1103,11 @@ static void DFPROC floppy_ready(void)
             output_byte(current_drive);
             return;
         }
-    }
 #endif
+        redo_fd_request();
+        return;
+    }
+#endif /* CHECK_DISK_CHANGE */
 
     if (reset) {
         reset_floppy();
@@ -1114,20 +1129,25 @@ static void DFPROC redo_fd_request(void)
   repeat:
     req = CURRENT;
     if (!req) {
-        if (!fdc_busy)
-            printk("FDC access conflict!");
-        fdc_busy = 0;
-        wake_up(&fdc_wait);
         do_floppy = NULL;
         return;
     }
     CHECK_REQUEST(req);
 
     seek = 0;
-    type = MINOR(req->rq_dev) >> MINOR_SHIFT;
-    drive = DEVICE_NR(req->rq_dev);
-    if (type > 3)
-        floppy = &minor_types[type >> 2];
+    type = MINOR(req->rq_dev);
+    drive = DEVICE_NR(type);
+
+#if CHECK_DISK_CHANGE
+    if (changed_floppies & (1 << drive)) {
+        req->rq_errors = -1;    /* stop error display */
+        request_done(0);
+        goto repeat;
+    }
+#endif
+
+    if (type > 1 && type < MAX_MINOR)
+        floppy = &minor_types[type >> 1];
     else {                      /* Auto-detection */
         floppy = current_type[drive];
         if (!floppy) {
@@ -1168,7 +1188,7 @@ static void DFPROC redo_fd_request(void)
 
     /* restart timer for hung operations, 6 secs probably too long ... */
     del_timer(&fd_timeout);
-    fd_timeout.tl_expires = jiffies + 6 * HZ;
+    fd_timeout.tl_expires = jiffies + TIMEOUT_CMD_COMPL;
     add_timer(&fd_timeout);
 
     DEBUG("prep %d|%d,%d|%d-", buffer_track, seek_track, buffer_drive, current_drive);
@@ -1197,17 +1217,11 @@ static void DFPROC redo_fd_request(void)
 
 void do_fd_request(void)
 {
-    DEBUG("fdrq:");
-    while (fdc_busy) {
-        printk("df: add_request error!\n");
-        sleep_on(&fdc_wait);
-    }
-    fdc_busy = 1;
     redo_fd_request();
 }
 
 static int fd_ioctl(struct inode *inode, struct file *filp, unsigned int cmd,
-    unsigned int param)
+    unsigned int arg)
 {
     int type, drive, err;
     struct floppy_struct *fp;
@@ -1215,17 +1229,18 @@ static int fd_ioctl(struct inode *inode, struct file *filp, unsigned int cmd,
 
     if (!inode || !inode->i_rdev)
         return -EINVAL;
-    type = MINOR(inode->i_rdev) >> MINOR_SHIFT;
-    drive = DEVICE_NR(inode->i_rdev);
-    if (type > 3)
-        fp = &minor_types[type >> 2];
-    else if ((fp = current_type[drive]) == NULL)
+    type = MINOR(inode->i_rdev);
+    drive = DEVICE_NR(type);
+    if (type > 1 && type < MAX_MINOR)
+        fp = &minor_types[type >> 1];
+    else
+        fp = current_type[drive];
+    if (!fp)
         return -ENODEV;
 
     switch (cmd) {
     case HDIO_GETGEO:   /* need this one for the sys/makeboot command */
-    case FDGETPRM:
-        loc = (struct hd_geometry *)param;
+        loc = (struct hd_geometry *)arg;
         err = verify_area(VERIFY_WRITE, (void *)loc, sizeof(struct hd_geometry));
         if (!err) {
             put_user_char(fp->head, &loc->heads);
@@ -1234,86 +1249,6 @@ static int fd_ioctl(struct inode *inode, struct file *filp, unsigned int cmd,
             put_user_long(0L, &loc->start);
         }
         return err;
-#ifdef UNUSED
-    case FDFMTEND:
-        if (!suser())
-            return -EPERM;
-        clr_irq();
-        fake_change |= 1 << (drive & 3);
-        set_irq();
-        drive &= 3;
-        cmd = FDCLRPRM;
-        break;
-    case FDFMTTRK:
-        if (!suser())
-            return -EPERM;
-        if (fd_ref[drive & 3] != 1)
-            return -EBUSY;
-        clr_irq();
-        while (format_status != FORMAT_NONE)
-            sleep_on(&format_done);
-        memcpy_fromfs((char *)(&format_req),
-                    (char *)param, sizeof(struct format_descr));
-        format_req.device = drive;      /* Should this be a full device ID? */
-        format_status = FORMAT_WAIT;
-        format_errors = 0;
-        while (format_status != FORMAT_OKAY && format_status != FORMAT_ERROR) {
-            if (fdc_busy)
-                sleep_on(&fdc_wait);
-            else {
-                fdc_busy = 1;
-                redo_fd_request();
-            }
-        }
-        while (format_status != FORMAT_OKAY && format_status != FORMAT_ERROR)
-            sleep_on(&format_done);
-        set_irq();
-        err = format_status == FORMAT_OKAY;
-        format_status = FORMAT_NONE;
-        floppy_off(drive & 3);
-        wake_up(&format_done);
-        return err ? 0 : -EIO;
-    case FDFLUSH:
-        if (!permission(inode, 2))
-            return -EPERM;
-        clr_irq();
-        fake_change |= 1 << (drive & 3);
-        set_irq();
-        check_disk_change(inode->i_rdev);
-        return 0;
-    }
-    if (!suser())
-        return -EPERM;
-    switch (cmd) {
-    case FDCLRPRM:
-        current_type[drive] = NULL;
-        keep_data[drive] = 0;
-        break;
-    case FDSETPRM:
-    case FDDEFPRM:
-        memcpy_fromfs(user_params + drive,
-                      (void *) param, sizeof(struct floppy_struct));
-        current_type[drive] = &user_params[drive];
-        if (cmd == FDDEFPRM)
-            keep_data[drive] = -1;
-        else {
-            clr_irq();
-            while (fdc_busy)
-                sleep_on(&fdc_wait);
-            fdc_busy = 1;
-            set_irq();
-            outb_p((current_DOR & 0xfc) | drive | (0x10 << drive), FD_DOR);
-            delay_loop(1000);
-            if (inb(FD_DIR) & 0x80)
-                keep_data[drive] = 1;
-            else
-                keep_data[drive] = 0;
-            outb_p(current_DOR, FD_DOR);
-            fdc_busy = 0;
-            wake_up(&fdc_wait);
-        }
-        break;
-#endif
     default:
         return -EINVAL;
     }
@@ -1341,8 +1276,8 @@ static unsigned char * INITPROC find_base(int drive, int type)
 static void INITPROC config_types(void)
 {
     printk("df: CMOS ");
-    base_type[0] = find_base(0, (CMOS_READ(0x10) >> 4) & 0xF);
-    //base_type[0] = find_base(0, CMOS_360k);   /* force 360k FIXME add setup table */
+    if (!(base_type[0] = find_base(0, (CMOS_READ(0x10) >> 4) & 0xF)))
+        base_type[0] = find_base(0, CMOS_360k);   /* use 360k if no CMOS */
     if (((CMOS_READ(0x14) >> 6) & 1) != 0) {
         printk(", ");
         base_type[1] = find_base(1, CMOS_READ(0x10) & 0xF);
@@ -1354,17 +1289,20 @@ static int floppy_open(struct inode *inode, struct file *filp)
 {
     int type, drive, err;
 
-    type = MINOR(inode->i_rdev) >> MINOR_SHIFT;
-    drive = DEVICE_NR(inode->i_rdev);
+    type = MINOR(inode->i_rdev);
+    drive = DEVICE_NR(type);
 
 #if CHECK_DISK_CHANGE
-    if (filp && filp->f_mode)
-        check_disk_change(inode->i_rdev);
+    debug_setcallback(2, fake_disk_change);     /* debug trigger ^P */
+    if (filp && filp->f_mode) {
+        if (check_disk_change(inode->i_rdev))
+            return -ENXIO;
+    }
 #endif
 
     probing = 0;
-    if (type > 3)               /* forced floppy type */
-        floppy = &minor_types[type >> 2];
+    if (type > 1 && type < MAX_MINOR)           /* forced floppy type */
+        floppy = &minor_types[type >> 1];
     else {                      /* Auto-detection */
         floppy = current_type[drive];
         if (!floppy) {
@@ -1375,17 +1313,17 @@ static int floppy_open(struct inode *inode, struct file *filp)
         }
     }
 
-    if (fd_ref[drive] == 0) {
+    if (access_count == 0) {
         err = floppy_register();
         if (err) return err;
         buffer_drive = buffer_track = -1;
     }
 
+    access_count++;
     fd_ref[drive]++;
     inode->i_size = (sector_t)floppy->size << 9;    /* NOTE: assumes sector size 512 */
     open_inode = inode;
-    DEBUG("df%d: open dv %x, sz %lu, %s\n", drive, inode->i_rdev, inode->i_size,
-        floppy->name);
+    DEBUG("df%d: open %s, size %lu\n", drive, floppy->name, inode->i_size);
 
     return 0;
 }
@@ -1400,8 +1338,9 @@ static void floppy_release(struct inode *inode, struct file *filp)
         fsync_dev(dev);
         invalidate_inodes(dev);
         invalidate_buffers(dev);
-        floppy_deregister();
     }
+    if (--access_count == 0)
+        floppy_deregister();
 }
 
 static struct file_operations floppy_fops = {
@@ -1437,7 +1376,6 @@ static void floppy_interrupt(int irq, struct pt_regs *regs)
     do_floppy = NULL;
     if (!handler)
         handler = unexpected_floppy_interrupt;
-    //printk("$");
     handler();
 }
 

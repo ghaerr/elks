@@ -5,6 +5,8 @@
 [ -x /usr/bin/qemu-system-x86_64 ] && QEMU="qemu-system-x86_64"
 [ -x /usr/local/bin/qemu-system-i386 ] && QEMU="qemu-system-i386"
 [ -x /usr/local/bin/qemu-system-x86_64 ] && QEMU="qemu-system-x86_64"
+[ -x /opt/homebrew/bin/qemu-system-i386 ] && QEMU="qemu-system-i386"
+[ -x /opt/homebrew/bin/qemu-system-x86_64 ] && QEMU="qemu-system-x86_64"
 [ -z $QEMU ] && { echo 'QEMU system emulator not found!'; exit 1; }
 echo "Using QEMU: $QEMU"
 
