@@ -86,9 +86,7 @@ int tty_iselksconsole(int fd)
     char *p = ttyname(fd);
 
     if (!p) return 0;
-    return !strcmp(p, "/dev/tty1") ||
-           !strcmp(p, "/dev/tty2") ||
-           !strcmp(p, "/dev/tty3");
+    return !strncmp(p, "/dev/tty", 8) && p[8] >= '1' && p[8] <= '3';
 #else
     return 0;
 #endif

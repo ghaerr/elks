@@ -60,6 +60,10 @@ static char *attr_to_ansi(char *buf, unsigned int attr)
 #if ELKS
 static int elks_displayable(int c)
 {
+    /* switch kept as documentation;
+     * bit tests below are smaller and faster
+     */
+#if 0
     switch (c) {
     case '\0':
     case '\007':
@@ -71,6 +75,22 @@ static int elks_displayable(int c)
         return 0;
     }
     return 1;
+#else
+    /* Not displayable:
+     * \0    0x00  0001
+     * \007  0x07  0080
+     * \b    0x08  0100
+     * \t    0x09  0200
+     * \n    0x0a  0400
+     * \r    0x0d  2000
+     * \033  0x1d
+     */
+    if (c == '\033')
+        return 0;
+    if (c & 0xFFF0)
+        return 1;
+    return ~0x2781 & (1U << c);
+#endif
 }
 #endif
 
@@ -109,7 +129,7 @@ void tty_output_screen(int flush)
     unsigned short *chattr = (unsigned short *)video_ram;
     char buf[16];
 
-    printf("\e[?25l\e[H");      /* cursor off, home */
+    fputs("\e[?25l\e[H", stdout);      /* cursor off, home */
     for (r=0; r<LINES; r++) {
         a = -1;
         for (c=0; c<COLS; c++) {
@@ -121,11 +141,9 @@ void tty_output_screen(int flush)
             if (cp437tostr(buf, b & 255))
                 fputs(buf, stdout);
         }
-        if (r == LINES - 1)
-            printf("\r");
-        else printf("\n");
+        putc(r == LINES - 1 ? '\r' : '\n', stdout);
     }
-    printf("\e[1;0;0m");           /* reset attrs, cursor left off */
+    fputs("\e[1;0;0m", stdout);        /* reset attrs, cursor left off */
     if (flush)
         fflush(stdout);
 }
