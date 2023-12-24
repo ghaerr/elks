@@ -1,3 +1,4 @@
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,44 +7,43 @@
 int
 main(int argc, char **argv)
 {
-	char *envpath;
-	char *path, *cp;
-	char buf[200];
-	char patbuf[512];
-	int quit, found;
+    const char *envpath;
+    char path[PATH_MAX];
+    int r = 1;
 
-	if (argc < 2) {
-		printf("Usage: which cmd [...]\n");
-		return 1;
-	}
-	if ((envpath = getenv("PATH")) == 0)
-		envpath = ".";
+    if (argc < 2) {
+        puts("Usage: which cmd [...]");
+        return 1;
+    }
+    if ((envpath = getenv("PATH")) == 0)
+        envpath = ".";
 
-	argv[argc] = 0;
-	for (argv++ ; *argv; argv++) {
+    argv[argc] = 0;
+    for (argv++; *argv; argv++) {
+        const size_t file_len = strlen(*argv);
+        const char *start = envpath;
+        const char *end = start;
 
-		strcpy(patbuf, envpath);
-		cp = path = patbuf;
-		quit = found = 0;
+        while (1) {
+            while (*end && *end != ':')
+                ++end;
+            size_t path_len = end - start;
+            if (path_len + 1 + file_len + 1 <= sizeof(path)) {
+                memcpy(path, start, path_len);
+                path[path_len] = '/';
+                strcpy(path + path_len + 1, *argv);
 
-		while (!quit) {
-			cp = index(path, ':');
-			if (cp == NULL) {
-				quit++;
-			} else {
-				*cp = '\0'; 
-			}
-			sprintf(buf, "%s/%s", (*path ? path:"."), *argv);
-			path = ++cp;
+                if (access(path, F_OK) == 0) {
+                    puts(path);
+                    r = 0;
+                    break;
+                }
+            }
 
-			if (access(buf, 1) == 0) {
-				printf("%s\n", buf);
-				found++;
-			}
-		}
-		if (!found) {
-			printf("No %s in %s\n", *argv, envpath);
-		}
-	}
-	return 0;
+            if (!*end)
+                break;
+            start = end = end + 1;
+        }
+    }
+    return r;
 }
