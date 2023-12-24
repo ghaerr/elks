@@ -386,6 +386,8 @@ void bios_switch_device98(int target, unsigned int device, struct drive_infot *d
         (device | (bios_drive_map[target + DRIVE_FD0] & 0x0F));
     if (device == 0x30)
         *drivep = fd_types[FD1440];
+    else if (device == 0x10)
+        *drivep = fd_types[FD720];
     else if (device == 0x90)
         *drivep = fd_types[FD1232];
 }
