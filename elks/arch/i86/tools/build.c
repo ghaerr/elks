@@ -23,8 +23,8 @@
 
 #include <stdio.h>			/* fprintf */
 
-#if !defined(__APPLE__)
-#include <sys/sysmacros.h>		/* We NEED these macros */
+#ifdef __linux__
+#include <sys/sysmacros.h>		/* for major/minor macros */
 #endif
 #include <sys/stat.h>
 #include <sys/types.h>			/* unistd.h needs this */

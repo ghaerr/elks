@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 #Get the version from the kernel makefile
 
 while (<>) {
