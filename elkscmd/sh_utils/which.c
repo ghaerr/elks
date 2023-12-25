@@ -1,49 +1,52 @@
-#include <stdio.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
+#define errstr(str) write(STDERR_FILENO, str, strlen(str))
+
 int
 main(int argc, char **argv)
 {
-	char *envpath;
-	char *path, *cp;
-	char buf[200];
-	char patbuf[512];
-	int quit, found;
+    const char *envpath;
+    char path[PATH_MAX];
+    int r = 1;
 
-	if (argc < 2) {
-		printf("Usage: which cmd [...]\n");
-		return 1;
-	}
-	if ((envpath = getenv("PATH")) == 0)
-		envpath = ".";
+    if (argc < 2) {
+        errstr("Usage: which cmd [...]\n");
+        return 1;
+    }
+    if ((envpath = getenv("PATH")) == 0)
+        envpath = ".";
 
-	argv[argc] = 0;
-	for (argv++ ; *argv; argv++) {
+    argv[argc] = 0;
+    for (argv++; *argv; argv++) {
+        const size_t file_len = strlen(*argv) + 1;
+        const char *start = envpath;
+        const char *end = start;
 
-		strcpy(patbuf, envpath);
-		cp = path = patbuf;
-		quit = found = 0;
+        while (1) {
+            while (*end && *end != ':')
+                ++end;
+            size_t path_len = end - start;
+            if (path_len + 1 + file_len <= sizeof(path)) {
+                memcpy(path, start, path_len);
+                path[path_len++] = '/';
+                memcpy(path + path_len, *argv, file_len);
+                path_len += file_len;
 
-		while (!quit) {
-			cp = index(path, ':');
-			if (cp == NULL) {
-				quit++;
-			} else {
-				*cp = '\0'; 
-			}
-			sprintf(buf, "%s/%s", (*path ? path:"."), *argv);
-			path = ++cp;
+                if (access(path, F_OK) == 0) {
+                    write(STDOUT_FILENO, path, path_len);
+                    write(STDOUT_FILENO, "\n", 1);
+                    r = 0;
+                    break;
+                }
+            }
 
-			if (access(buf, 1) == 0) {
-				printf("%s\n", buf);
-				found++;
-			}
-		}
-		if (!found) {
-			printf("No %s in %s\n", *argv, envpath);
-		}
-	}
-	return 0;
+            if (!*end)
+                break;
+            start = end = end + 1;
+        }
+    }
+    return r;
 }

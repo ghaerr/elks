@@ -195,11 +195,10 @@ static void probe_floppy(int target, struct hd_struct *hdp)
                 unsigned char media = boot[21];         /* bpb_media_byte */
                 drivep->cylinders =
                         (media == 0xFD)? 40:
-#ifdef CONFIG_IMG_FD1232
+#ifdef CONFIG_ARCH_PC98
                         (media == 0xFE)? 77:            /* FD1232 is 77 tracks */
 #endif
                                          80;
-                drivep->cylinders = (media == 0xFD)? 40: 80;
                 found_PB = 2;
 #if DEBUG_PROBE
                 printk("fd: found valid FAT CHS %d,%d,%d disk parameters on /dev/fd%d "
