@@ -46,7 +46,7 @@ int dialog_inputbox(const char *title, const char *prompt, int height,
     WINDOW *dialog;
     char *instr = dialog_input_result;
     int i, x, y, box_y, box_x, box_width;
-    int input_x = 0, scroll = 0, key = 0, button = -1;
+    int input_x = 0, nscroll = 0, key = 0, button = -1;
 
     /* center dialog box on screen */
     x = (COLS - width) / 2;
@@ -97,10 +97,10 @@ int dialog_inputbox(const char *title, const char *prompt, int height,
     input_x = strlen(instr);
 
     if (input_x >= box_width) {
-	scroll = input_x - box_width + 1;
+	nscroll = input_x - box_width + 1;
 	input_x = box_width - 1;
 	for (i = 0; i < box_width - 1; i++)
-	    waddch(dialog, instr[scroll + i]);
+	    waddch(dialog, instr[nscroll + i]);
     } else
 	waddstr(dialog, instr);
 
@@ -123,19 +123,19 @@ int dialog_inputbox(const char *title, const char *prompt, int height,
 		continue;
 	    case KEY_BACKSPACE:
 	    case 127:
-		if (input_x || scroll) {
+		if (input_x || nscroll) {
 		    wattrset(dialog, inputbox_attr);
 		    if (!input_x) {
-			scroll = scroll < box_width - 1 ?
-			    0 : scroll - (box_width - 1);
+			nscroll = nscroll < box_width - 1 ?
+			    0 : nscroll - (box_width - 1);
 			wmove(dialog, box_y, box_x);
 			for (i = 0; i < box_width; i++)
-			    waddch(dialog, instr[scroll + input_x + i] ?
-				   instr[scroll + input_x + i] : ' ');
-			input_x = strlen(instr) - scroll;
+			    waddch(dialog, instr[nscroll + input_x + i] ?
+				   instr[nscroll + input_x + i] : ' ');
+			input_x = strlen(instr) - nscroll;
 		    } else
 			input_x--;
-		    instr[scroll + input_x] = '\0';
+		    instr[nscroll + input_x] = '\0';
 		    mvwaddch(dialog, box_y, input_x + box_x, ' ');
 		    wmove(dialog, box_y, input_x + box_x);
 		    wrefresh(dialog);
@@ -143,15 +143,15 @@ int dialog_inputbox(const char *title, const char *prompt, int height,
 		continue;
 	    default:
 		if (key < 0x100 && isprint(key)) {
-		    if (scroll + input_x < MAX_LEN) {
+		    if (nscroll + input_x < MAX_LEN) {
 			wattrset(dialog, inputbox_attr);
-			instr[scroll + input_x] = key;
-			instr[scroll + input_x + 1] = '\0';
+			instr[nscroll + input_x] = key;
+			instr[nscroll + input_x + 1] = '\0';
 			if (input_x == box_width - 1) {
-			    scroll++;
+			    nscroll++;
 			    wmove(dialog, box_y, box_x);
 			    for (i = 0; i < box_width - 1; i++)
-				waddch(dialog, instr[scroll + i]);
+				waddch(dialog, instr[nscroll + i]);
 			} else {
 			    wmove(dialog, box_y, input_x++ + box_x);
 			    waddch(dialog, key);

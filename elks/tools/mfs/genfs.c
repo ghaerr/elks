@@ -19,6 +19,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+#if __linux__
+#include <sys/sysmacros.h>
+#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
@@ -30,12 +33,6 @@
 #include <fcntl.h>
 #include "minix_fs.h"
 #include "protos.h"
-
-#if __APPLE__
-#define MAJOR_SHIFT		24	/* OSX: right shift dev_t to get major device # */
-#else
-#define MAJOR_SHIFT		8
-#endif
 
 typedef unsigned short u16_t;
 typedef unsigned long u32_t;
@@ -407,22 +404,22 @@ compile_fs(struct minix_fs_dat *fs)
 				cmd_cp(fs, 3, av);
 			} else if (flags == S_IFCHR) {
 				if (opt_verbose) printf("mknod %s c %d %d\n", prefix+inode_build->path,
-					inode_build->dev >> MAJOR_SHIFT, inode_build->dev & 0xff);
+					major(inode_build->dev), minor(inode_build->dev));
 				av[0] = "mknod";
 				av[1] = prefix+inode_build->path;
 				av[2] = "c";
-				av[3] = major; sprintf(major, "%d", inode_build->dev >> MAJOR_SHIFT);
-				av[4] = minor; sprintf(minor, "%d", inode_build->dev & 0xff);
+				av[3] = major; sprintf(major, "%d", major(inode_build->dev));
+				av[4] = minor; sprintf(minor, "%d", minor(inode_build->dev));
 				av[5] = 0;
 				cmd_mknode(fs, 5, av);
 			} else if (flags == S_IFBLK) {
 				if (opt_verbose) printf("mknod %s b %d %d\n", prefix+inode_build->path,
-					inode_build->dev >> MAJOR_SHIFT, inode_build->dev & 0xff);
+					major(inode_build->dev), minor(inode_build->dev));
 				av[0] = "mknod";
 				av[1] = prefix+inode_build->path;
 				av[2] = "b";
-				av[3] = major; sprintf(major, "%d", inode_build->dev >> MAJOR_SHIFT);
-				av[4] = minor; sprintf(minor, "%d", inode_build->dev & 0xff);
+				av[3] = major; sprintf(major, "%d", major(inode_build->dev));
+				av[4] = minor; sprintf(minor, "%d", minor(inode_build->dev));
 				av[5] = 0;
 				cmd_mknode(fs, 5, av);
 			} else if (flags == S_IFLNK) {
