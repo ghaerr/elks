@@ -227,18 +227,18 @@ static void probe_floppy(int target, struct hd_struct *hdp)
 
         count = 0;
 #ifdef CONFIG_ARCH_PC98
+        int pc98_720KB = 0;
         do {
             if (count)
                 bios_switch_device98(target, 0x30, drivep);  /* 1.44 MB */
             /* skip probing first entry */
             if (count && read_sector(target, track_probe[count] - 1, 1)) {
                 bios_switch_device98(target, 0x10, drivep);  /* 720 KB */
-                if (read_sector(target, track_probe[count] - 1, 1)) {
+                if (read_sector(target, track_probe[count] - 1, 1))
                     bios_switch_device98(target, 0x90, drivep);  /* 1.232 MB */
-                    break;
-                }
+                else
+                    pc98_720KB = 1;
             }
-            drivep->cylinders = track_probe[count];
         } while (++count < sizeof(track_probe)/sizeof(track_probe[0]));
 #else
         do {
@@ -264,20 +264,15 @@ static void probe_floppy(int target, struct hd_struct *hdp)
         count = 0;
 #ifdef CONFIG_ARCH_PC98
         do {
-            if (count == 1)
-                bios_switch_device98(target, 0x10, drivep);  /* 720 KB */
-            else if (count == 2)
+            if (count == 2)
                 bios_switch_device98(target, 0x30, drivep);  /* 1.44 MB */
-            /* skip reading first entry */
-            if ((count == 1) && read_sector(target, 0, sector_probe[count])) {
-                bios_switch_device98(target, 0x90, drivep);  /* 1.232 MB */
-                break;
+            /* skip reading first and second entry */
+            if ((count == 2) && read_sector(target, 0, sector_probe[count])) {
+                if (pc98_720KB)
+                    bios_switch_device98(target, 0x10, drivep);  /* 720 KB */
+                else
+                    bios_switch_device98(target, 0x90, drivep);  /* 1.232 MB */
             }
-            else if ((count == 2) && read_sector(target, 0, sector_probe[count])) {
-                bios_switch_device98(target, 0x10, drivep);  /* 720 KB */
-                break;
-            }
-            drivep->sectors = sector_probe[count];
         } while (++count < sizeof(sector_probe)/sizeof(sector_probe[0]));
 #else
         do {
