@@ -266,10 +266,15 @@ static void probe_floppy(int target, struct hd_struct *hdp)
         do {
             if (count == 2)
                 bios_switch_device98(target, 0x30, drivep);  /* 1.44 MB */
-            /* skip reading first and second entry */
+            /* skip reading first entry */
             if ((count == 2) && read_sector(target, 0, sector_probe[count])) {
-                if (pc98_720KB)
+                if (pc98_720KB) {
                     bios_switch_device98(target, 0x10, drivep);  /* 720 KB */
+                    /* Read BPB to find 8 sectors, 640KB format. Currently, it is not supported */
+                    unsigned char __far *boot = _MK_FP(DMASEG, 0);
+                    if (!read_sector(target, 0, 1) && (boot[24] == 8))
+                        bios_switch_device98(target, 0x90, drivep);
+                }
                 else
                     bios_switch_device98(target, 0x90, drivep);  /* 1.232 MB */
             }
