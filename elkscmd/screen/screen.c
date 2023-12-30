@@ -94,7 +94,7 @@ static inlen;
 static ESCseen;
 static GotSignal;
 static char DefaultShell[] = "/bin/sh";
-static char DefaultPath[] = ":/usr/ucb:/bin:/usr/bin";
+static char DefaultPath[] = ":/bin:/usr/bin";
 static char PtyProto[] = "/dev/ptyXY";
 static char TtyProto[] = "/dev/ttyXY";
 static int TtyMode = 0622;
