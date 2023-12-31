@@ -28,8 +28,6 @@ static char ScreenVersion[] = "screen 2.0a.2 (ELKS) 30-Apr-2020";
 #include <sys/wait.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-#include <signal.h>
-#include <errno.h>
 #include <termcap.h>
 #include <limits.h>
 
@@ -74,26 +72,27 @@ static char ttys[] = "/etc/ttys";
 #define Ctrl(c) ((c)&037)
 
 extern char *blank, Term[];
-extern rows, cols;
-extern ISO2022;
-extern status;
+extern int rows, cols;
+extern int ISO2022;
+extern int status;
 extern time_t TimeDisplayed;
 extern char AnsiVersion[];
-extern flowctl;
-extern errno;
-extern sys_nerr;
+extern int flowctl;
+extern int errno;
+extern int sys_nerr;
 extern char *MakeTermcap();
 extern char *getlogin();
-static AttacherFinit(), Finit(), SigHup(), SigChld();
-static char *MakeBellMsg(), *Filename(), **SaveArgs(), *GetTtyName();
-
+static int AttacherFinit();
+static int SigHup();
+static char *MakeBellMsg(int n);
+static char *GetTtyName();
 static char PtyName[32], TtyName[32];
 static char *ShellProg;
 static char *ShellArgs[2];
 static char inbuf[IOSIZE];
-static inlen;
-static ESCseen;
-static GotSignal;
+static int inlen;
+static int ESCseen;
+static int GotSignal;
 static char DefaultShell[] = "/bin/sh";
 static char DefaultPath[] = ":/bin:/usr/bin";
 static char PtyProto[] = "/dev/ptyXY";
@@ -190,17 +189,16 @@ char *KeyNames[] = {
     0
 };
 
-static SetMode(struct mode *op, struct mode *np);
+static int SetMode(struct mode *op, struct mode *np);
 
 static int rawmode = 0;
 static struct termios orig_termios;
 
 int
-main(ac, av)
-    char **av;
+main(int ac, char **av)
 {
-    register n, len;
-    register struct win **pp, *p;
+    int n, len;
+    struct win **pp, *p;
     char *ap;
     int s, x = 0;
     fd_set r_readfd, w_writefd, e_errfd;
@@ -283,7 +281,7 @@ main(ac, av)
         if (errno == ENOENT) {
             if (mkdir(SockPath, 0700) == -1)
                 Msg(errno, "Cannot make directory %s", SockPath);
-            (void)chown(SockPath, getuid(), getgid());
+            chown(SockPath, getuid(), getgid());
         } else {
             Msg(errno, "Cannot get status of %s", SockPath);
         }
@@ -406,7 +404,7 @@ main(ac, av)
         }
         FD_SET(s, &r_readfd);
 
-        (void)fflush(stdout);
+        fflush(stdout);
         if (GotSignal && !status) {
             SigHandler();
             continue;
@@ -496,7 +494,9 @@ main(ac, av)
     /* NOTREACHED */
 }                               /* main */
 
-static SigHandler() {
+static int
+SigHandler()
+{
     while (GotSignal) {
         GotSignal = 0;
         DoWait();
@@ -504,25 +504,33 @@ static SigHandler() {
     return 0;
 }
 
-static SigChld() {
+static int
+SigChld()
+{
     GotSignal = 1;
     return 0;
 }
 
-static SigHup() {
+static int
+SigHup()
+{
     Detach(0);
     return 0;
 }
 
-static DoWait() {
-    register pid;
-    register struct win **pp;
+static int
+DoWait()
+{
+    int pid;
+    struct win **pp;
     int wstat;
     /* removed stuff ELKS does not support */
     return 0;
 }
 
-static KillWindow(struct win **pp){
+static void
+KillWindow(struct win **pp)
+{
     if (*pp == curr)
         curr = 0;
     if (*pp == other)
@@ -534,7 +542,7 @@ static KillWindow(struct win **pp){
 static void
 CheckWindows()
 {
-    register struct win **pp;
+    struct win **pp;
 
     /*
      * If the current window disappeared and the "other" window is still
@@ -561,8 +569,10 @@ CheckWindows()
     Finit();
 }
 
-static Finit() {
-    register struct win *p, **pp;
+static int
+Finit()
+{
+    struct win *p, **pp;
 
     for (pp = wtab; pp < wtab + MAXWIN; ++pp) {
         if ((p = *pp))
@@ -576,8 +586,10 @@ static Finit() {
     exit(0);
 }
 
-static InitKeytab() {
-    register i;
+static int
+InitKeytab()
+{
+    int i;
 
     ktab['h'].type = ktab[Ctrl('h')].type = KEY_HARDCOPY;
     ktab['z'].type = ktab[Ctrl('z')].type = KEY_SUSPEND;
@@ -602,11 +614,12 @@ static InitKeytab() {
     return 0;
 }
 
-static ProcessInput(buf, len)
-char *buf; {
-    register n, k;
-    register char *s, *p;
-    register struct win **pp;
+static int
+ProcessInput(char *buf, int len)
+{
+    int n, k;
+    char *s, *p;
+    struct win **pp;
 
     for (s = p = buf; len > 0; len--, s++) {
         if (*s == Esc) {
@@ -720,7 +733,7 @@ char *buf; {
 }
 
 static void
-SwitchWindow(n)
+SwitchWindow(int n)
 {
     if (!wtab[n])
         return;
@@ -728,7 +741,9 @@ SwitchWindow(n)
     Activate(wtab[n]);
 }
 
-static SetCurrWindow(n) {
+static int
+SetCurrWindow(int n)
+{
     /*
      * If we come from another window, this window becomes the "other"
      * window:
@@ -756,7 +771,7 @@ static SetCurrWindow(n) {
 int
 NextWindow()
 {
-    register struct win **pp;
+    struct win **pp;
 
     for (pp = wtab + CurrNum + 1; pp != wtab + CurrNum; ++pp) {
         if (pp == wtab + MAXWIN)
@@ -767,8 +782,10 @@ NextWindow()
     return pp - wtab;
 }
 
-static PreviousWindow() {
-    register struct win **pp;
+static int
+PreviousWindow()
+{
+    struct win **pp;
 
     for (pp = wtab + CurrNum - 1; pp != wtab + CurrNum; --pp) {
         if (pp < wtab)
@@ -779,9 +796,11 @@ static PreviousWindow() {
     return pp - wtab;
 }
 
-static MoreWindows() {
-    register struct win **pp;
-    register n;
+static int
+MoreWindows()
+{
+    struct win **pp;
+    int n;
 
     for (n = 0, pp = wtab; pp < wtab + MAXWIN; ++pp)
         if (*pp)
@@ -791,13 +810,14 @@ static MoreWindows() {
     return n > 1;
 }
 
-static FreeWindow(wp)
-struct win *wp; {
-    register i;
+static int
+FreeWindow(struct win *wp)
+{
+    int i;
 
     RemoveUtmp(wp->slot);
-    (void)chmod(wp->tty, 0666);
-    (void)chown(wp->tty, 0, 0);
+    chmod(wp->tty, 0666);
+    chown(wp->tty, 0, 0);
     close(wp->ptyfd);
     for (i = 0; i < rows; ++i) {
         free(wp->image[i]);
@@ -812,11 +832,10 @@ struct win *wp; {
 }
 
 int
-MakeWindow(prog, args, aflag, StartAt, dir)
-    char *prog, **args, *dir;
+MakeWindow(char *prog, char **args, int aflag, int StartAt, char *dir)
 {
-    register struct win **pp, *p;
-    register char **cp;
+    struct win **pp, *p;
+    char **cp;
     int n, f;
     int tf;
     //int mypid;
@@ -834,7 +853,6 @@ MakeWindow(prog, args, aflag, StartAt, dir)
         return -1;
     }
     n = pp - wtab;
-    //f = OpenPTY(n);
     sprintf(PtyName, "/dev/ptyp%d", n);
     f = open(PtyName, O_RDWR);
     sprintf(TtyName, "/dev/ttyp%d", n);
@@ -842,7 +860,7 @@ MakeWindow(prog, args, aflag, StartAt, dir)
         Msg(0, "No more PTYs.");
         return -1;
     }
-    (void)fcntl(f, F_SETFL, FNDELAY);
+    fcntl(f, F_SETFL, FNDELAY);
     if ((p = *pp = (struct win *)malloc(sizeof(struct win))) == 0) {
 
 nomem:
@@ -893,8 +911,8 @@ nomem:
     strncpy(p->cmd, Filename(args[0]), MAXSTR - 1);
     p->cmd[MAXSTR - 1] = '\0';
     strncpy(p->tty, TtyName, MAXSTR - 1);
-    (void)chown(TtyName, getuid(), getgid());
-    (void)chmod(TtyName, TtyMode);
+    chown(TtyName, getuid(), getgid());
+    chmod(TtyName, TtyMode);
     p->slot = SetUtmp(TtyName);
     switch (p->wpid = fork()) {
     case -1:
@@ -921,9 +939,9 @@ nomem:
             SendErrorMsg("Cannot open %s: %s", TtyName, strerror(errno));
             exit(1);
         }
-        (void)dup2(tf, 0);
-        (void)dup2(tf, 1);
-        (void)dup2(tf, 2);
+        dup2(tf, 0);
+        dup2(tf, 1);
+        dup2(tf, 2);
         for (f = OPEN_MAX - 1; f > 2; f--)
             close(f);
         //ioctl(0, TIOCSPGRP, &mypid);
@@ -942,13 +960,12 @@ nomem:
 }
 
 static void
-screen_execvpe(prog, args, env)
-    char *prog, **args, **env;
+screen_execvpe(char *prog, char **args, char **env)
 {
-    register char *path, *p;
+    char *path, *p;
     char buf[MAXLINE * 2];
     char *shargs[MAXARGS + 1];
-    register i, eaccess = 0;
+    int i, eaccess = 0;
 
     if (prog[0] == '/')
         path = "";
@@ -986,14 +1003,14 @@ screen_execvpe(prog, args, env)
 }
 
 static void
-WriteFile(dump)
+WriteFile(int dump)
 {
     /*
      * dump==0: create .termcap, dump==1: hardcopy
      */
-    register i, j, k;
-    register char *p;
-    register FILE * f;
+    int i, j, k;
+    char *p;
+    FILE *f;
     char fn[1024];
     int pid, s;
 
@@ -1026,7 +1043,7 @@ WriteFile(dump)
             }
             Msg(0, "Termcap file \"%s\" written to disk.\n\r", fn);
         }
-        (void)fclose(f);
+        fclose(f);
         exit(0);
 
     default:
@@ -1041,10 +1058,12 @@ WriteFile(dump)
     }
 }
 
-static ShowWindows() {
+static int
+ShowWindows()
+{
     char buf[1024];
-    register char *s;
-    register struct win **pp, *p;
+    char *s;
+    struct win **pp, *p;
 
     for (s = buf, pp = wtab; pp < wtab + MAXWIN; ++pp) {
         if ((p = *pp) == 0)
@@ -1072,10 +1091,12 @@ static ShowWindows() {
     return 0;
 }
 
-static ShowInfo() {
+static int
+ShowInfo()
+{
     char buf[1024], *p;
-    register struct win *wp = curr;
-    register i;
+    struct win *wp = curr;
+    int i;
     struct tm *tp;
     time_t now;
 
@@ -1117,8 +1138,9 @@ static ShowInfo() {
     return 0;
 }
 
-static SetTTY(fd, mp)
-struct mode *mp; {
+static int
+SetTTY(int fd, struct mode *mp)
+{
 #ifdef BSD_TTY
     ioctl(fd, TIOCSETP, &mp->m_ttyb);
     ioctl(fd, TIOCSETC, &mp->m_tchars);
@@ -1129,8 +1151,9 @@ struct mode *mp; {
     return 0;
 }
 
-static GetTTY(fd, mp)
-struct mode *mp; {
+static int
+GetTTY(int fd, struct mode *mp)
+{
 #ifdef BSD_TTY
     ioctl(fd, TIOCGETP, &mp->m_ttyb);
     ioctl(fd, TIOCGETC, &mp->m_tchars);
@@ -1141,8 +1164,9 @@ struct mode *mp; {
     return 0;
 }
 
-static SetMode(op, np)
-struct mode *op, *np; {
+static int
+SetMode(struct mode *op, struct mode *np)
+{
     *np = *op;
 #ifdef BSD_TTY
     np->m_ttyb.sg_flags &= ~(CRMOD | ECHO);
@@ -1164,8 +1188,8 @@ struct mode *op, *np; {
 static char *
 GetTtyName()
 {
-    register char *p;
-    register n;
+    char *p;
+    int n;
 
     for (p = 0, n = 0; n <= 2 && !(p = ttyname(n)); n++)
         ;
@@ -1174,10 +1198,12 @@ GetTtyName()
     return p;
 }
 
-static Attach(how) {
-    register s, lasts = 0, found = 0;
-    register DIR * dirp;
-    register struct dirent *dp;
+static int
+Attach(int how)
+{
+    int s, lasts = 0, found = 0;
+    DIR *dirp;
+    struct dirent *dp;
     struct msg m;
     char last[MAXNAMLEN + 1];
     if (SockName) {
@@ -1227,16 +1253,22 @@ static Attach(how) {
     return 0;
 }
 
-static AttacherFinit() {
+static int
+AttacherFinit()
+{
     exit(0);
 }
 
-static ReAttach() {
+static int
+ReAttach()
+{
     Attach(MSG_CONT);
     return 0;
 }
 
-static Attacher() {
+static void
+Attacher()
+{
     signal(SIGHUP, AttacherFinit);
     signal(SIGCONT, ReAttach);
     while (1)
@@ -1244,9 +1276,9 @@ static Attacher() {
 }
 
 static void
-Detach(suspend)
+Detach(int suspend)
 {
-    register struct win **pp;
+    struct win **pp;
 
     if (Detached)
         return;
@@ -1280,9 +1312,11 @@ Detach(suspend)
     signal(SIGHUP, SigHup);
 }
 
-static Kill(pid, sig) {
+static int
+Kill(int pid, int sig)
+{
     if (pid != 0)
-        (void)kill(pid, sig);
+        kill(pid, sig);
     return 0;
 }
 
@@ -1304,8 +1338,10 @@ GetSockName()
     return client;
 }
 
-static MakeServerSocket() {
-    register s;
+static int
+MakeServerSocket()
+{
+    int s;
     struct sockaddr_un a;
     char *p;
 
@@ -1320,17 +1356,19 @@ static MakeServerSocket() {
 If it has been detached, try \"screen -r\".", p);
         /* NOTREACHED */
     }
-    (void)unlink(SockPath);
+    unlink(SockPath);
     if (bind(s, (struct sockaddr *)&a, strlen(SockPath) + 2) == -1)
         Msg(errno, "bind");
-    (void)chown(SockPath, getuid(), getgid());
+    chown(SockPath, getuid(), getgid());
     if (listen(s, 5) == -1)
         Msg(errno, "listen");
     return s;
 }
 
-static MakeClientSocket(err) {
-    register s;
+static int
+MakeClientSocket(int err)
+{
+    int s;
     struct sockaddr_un a;
 
     if ((s = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
@@ -1349,11 +1387,12 @@ static MakeClientSocket(err) {
     return s;
 }
 
-static SendCreateMsg(s, ac, av, aflag)
-char **av; {
+static int
+SendCreateMsg(int s, int ac, char **av, int aflag)
+{
     struct msg m;
-    register char *p;
-    register len, n;
+    char *p;
+    int len, n;
 
     m.type = MSG_CREATE;
     p = m.m.create.line;
@@ -1373,27 +1412,28 @@ char **av; {
     return 0;
 }
 
-/* VARARGS1 */
-static SendErrorMsg(char *fmt,...){
-    register s;
+static int
+SendErrorMsg(char *fmt,...)
+{
+    int s;
     struct msg m;
     s = MakeClientSocket(1);
     m.type = MSG_ERROR;
 
     static va_list ap;
     va_start(ap, fmt);
-    (void)vsprintf(m.m.message, fmt, ap);
+    vsprintf(m.m.message, fmt, ap);
     va_end(ap);
-    (void)write(s, (char *)&m, sizeof(m));
+    write(s, (char *)&m, sizeof(m));
     close(s);
     sleep(1);
     return 0;
 }
 
 static void
-ReceiveMsg(s)
+ReceiveMsg(int s)
 {
-    register ns;
+    int ns;
     struct sockaddr_un a;
     int left, len = sizeof(a);
     struct msg m;
@@ -1427,8 +1467,8 @@ ReceiveMsg(s)
         if (Detached) {
             if (kill(m.m.attach.apid, 0) == 0 &&
                 open(m.m.attach.tty, O_RDWR) == 0) {
-                (void)dup(0);
-                (void)dup(0);
+                dup(0);
+                dup(0);
                 AttacherPid = m.m.attach.apid;
                 Detached = 0;
                 GetTTY(0, &OldMode);
@@ -1449,11 +1489,12 @@ ReceiveMsg(s)
     }
 }
 
-static ExecCreate(mp)
-struct msg *mp; {
+static int
+ExecCreate(struct msg *mp)
+{
     char *args[MAXARGS];
-    register n;
-    register char **pp = args, *p = mp->m.create.line;
+    int n;
+    char **pp = args, *p = mp->m.create.line;
 
     for (n = mp->m.create.nargs; n > 0; --n) {
         *pp++ = p;
@@ -1467,12 +1508,11 @@ struct msg *mp; {
 }
 
 static void
-ReadRc(fn)
-    char *fn;
+ReadRc(char *fn)
 {
     FILE *f;
-    register char *p, **pp, **ap;
-    register argc, num, c;
+    char *p, **pp, **ap;
+    int argc, num, c;
     char buf[256];
     char *args[MAXARGS];
     int key;
@@ -1504,7 +1544,7 @@ ReadRc(fn)
             } else if (!IsNum(ap[1], 7)) {
                 Msg(0, "%s: mode: octal number expected.", fn);
             } else
-                (void)sscanf(ap[1], "%o", &TtyMode);
+                sscanf(ap[1], "%o", &TtyMode);
         } else if (strcmp(ap[0], "bell") == 0) {
             if (argc != 2) {
                 Msg(0, "%s: bell: one argument required.", fn);
@@ -1527,7 +1567,7 @@ ReadRc(fn)
                 argc = 2;
             }
             ap[argc] = 0;
-            (void)MakeWindow(ap[1], ap + 1, 0, num, (char *)0);
+            MakeWindow(ap[1], ap + 1, 0, num, (char *)0);
         } else if (strcmp(ap[0], "bind") == 0) {
             p = ap[1];
             if (argc < 2 || *p == '\0')
@@ -1540,7 +1580,7 @@ ReadRc(fn)
                     p[1] = tolower(c);
                 key = Ctrl(c);
             } else if (IsNum(p, 7)) {
-                (void)sscanf(p, "%o", &key);
+                sscanf(p, "%o", &key);
             } else {
                 Msg(0,
                   "%s: bind: character, ^x, or octal number expected.", fn);
@@ -1561,13 +1601,14 @@ ReadRc(fn)
         } else
             Msg(0, "%s: unknown keyword \"%s\".", fn, ap[0]);
     }
-    (void)fclose(f);
+    fclose(f);
 }
 
-static Parse(fn, buf, args)
-char *fn, *buf, **args; {
-    register char *p = buf, **ap = args;
-    register delim, argc = 0;
+static int
+Parse(char *fn, char *buf, char **args)
+{
+    char *p = buf, **ap = args;
+    int delim, argc = 0;
 
     argc = 0;
     for (;;) {
@@ -1599,10 +1640,9 @@ char *fn, *buf, **args; {
 }
 
 static char **
-SaveArgs(argc, argv) register argc;
-    register char **argv;
+SaveArgs(int argc, char **argv)
 {
-    register char **ap, **pp;
+    char **ap, **pp;
 
     if ((pp = ap = (char **)malloc((argc + 1) * sizeof(char **))) == 0)
         Msg(0, "Out of memory.");
@@ -1617,8 +1657,10 @@ SaveArgs(argc, argv) register argc;
     return ap;
 }
 
-static MakeNewEnv() {
-    register char **op, **np = NewEnv;
+static int
+MakeNewEnv()
+{
+    char **op, **np = NewEnv;
     static char buf[MAXSTR];
 
     if (strlen(SockName) > MAXSTR - 5)
@@ -1638,9 +1680,11 @@ static MakeNewEnv() {
     return 0;
 }
 
-static IsSymbol(e, s) register char *e, *s; {
-    register char *p;
-    register n;
+static int
+IsSymbol(char *e, char *s)
+{
+    char *p;
+    int n;
 
     for (p = e; *p && *p != '='; ++p);
     if (*p) {
@@ -1652,7 +1696,6 @@ static IsSymbol(e, s) register char *e, *s; {
     return 0;
 }
 
-/* VARARGS2 */
 void
 Msg(int err, char *fmt,...)
 {
@@ -1660,7 +1703,7 @@ Msg(int err, char *fmt,...)
     char buf[1024];
     char *p = buf;
     va_start(ap, fmt);
-    (void)vsprintf(p, fmt, ap);
+    vsprintf(p, fmt, ap);
     va_end(ap);
     if (err) {
         p += strlen(p);
@@ -1673,21 +1716,17 @@ Msg(int err, char *fmt,...)
     }
 }
 
-
-
 int
-bclear(p, n)
-    char *p;
+bclear(char *p, int n)
 {
     bcopy(blank, p, n);
     return 0;
 }
 
 static char *
-Filename(s)
-    char *s;
+Filename(char *s)
 {
-    register char *p;
+    char *p;
 
     p = s + strlen(s) - 1;
     while (p >= s && *p != '/')
@@ -1695,8 +1734,9 @@ Filename(s)
     return ++p;
 }
 
-static IsNum(s, base) register char *s;
-register base; {
+static int
+IsNum(char *s, int base)
+{
     for (base += '0'; *s; ++s)
         if (*s < '0' || *s > base)
             return 0;
@@ -1704,10 +1744,10 @@ register base; {
 }
 
 static char *
-MakeBellMsg(n)
+MakeBellMsg(int n)
 {
     static char buf[MAXSTR];
-    register char *p = buf, *s = BellString;
+    char *p = buf, *s = BellString;
 
     for (s = BellString; *s && p < buf + MAXSTR - 1; s++)
         *p++ = (*s == '%') ? n + '0' : *s;
@@ -1716,7 +1756,9 @@ MakeBellMsg(n)
 }
 
 #ifdef UTMP
-static InitUtmp() {
+static int
+InitUtmp()
+{
     struct passwd *p;
 
     if ((utmpf = open(UtmpName, O_WRONLY)) == -1) {
@@ -1732,11 +1774,12 @@ static InitUtmp() {
     utmp = 1;
 }
 
-static SetUtmp(name)
-char *name; {
-    register char *p;
-    register struct ttyent *tp;
-    register slot = 1;
+static int
+SetUtmp(char *name)
+{
+    char *p;
+    struct ttyent *tp;
+    int slot = 1;
     struct utmp u;
 
     if (!utmp)
@@ -1754,33 +1797,39 @@ char *name; {
     strncpy(u.ut_user, LoginName, 8);
     u.ut_host[0] = '\0';
     time(&u.ut_time);
-    (void)lseek(utmpf, (long)(slot * sizeof(u)), 0);
-    (void)write(utmpf, (char *)&u, sizeof(u));
+    lseek(utmpf, (long)(slot * sizeof(u)), 0);
+    write(utmpf, (char *)&u, sizeof(u));
     return slot;
 }
 
-static RemoveUtmp(slot) {
+static int
+RemoveUtmp(int slot)
+{
     struct utmp u;
 
     if (slot) {
         bzero((char *)&u, sizeof(u));
-        (void)lseek(utmpf, (long)(slot * sizeof(u)), 0);
-        (void)write(utmpf, (char *)&u, sizeof(u));
+        lseek(utmpf, (long)(slot * sizeof(u)), 0);
+        write(utmpf, (char *)&u, sizeof(u));
     }
 }
 
 #else
-static InitUtmp() {
-    return 0;
-}
-
-static SetUtmp(name)
-char *name;
+static int
+InitUtmp()
 {
     return 0;
 }
 
-static RemoveUtmp(slot) {
+static int
+SetUtmp(char *name)
+{
+    return 0;
+}
+
+static int
+RemoveUtmp(int slot)
+{
     return 0;
 }
 
@@ -1789,11 +1838,11 @@ static RemoveUtmp(slot) {
 #ifndef GETTTYENT
 
 static void
-setttyent(void)
+setttyent()
 {
     struct stat s;
-    register f;
-    register char *p, *ep;
+    int f;
+    char *p, *ep;
 
     if (ttnext) {
         ttnext = tt;
@@ -1814,7 +1863,7 @@ setttyent(void)
 }
 
 static struct ttyent *
-getttyent(void)
+getttyent()
 {
     static struct ttyent t;
 
@@ -1829,7 +1878,9 @@ getttyent(void)
 
 #ifdef LOADAV
 
-static InitKmem() {
+static int
+InitKmem()
+{
     if ((kmemf = open(KmemName, O_RDONLY)) == -1)
         return;
     nl[0].n_name = AvenrunSym;
@@ -1839,7 +1890,9 @@ static InitKmem() {
     avenrun = 1;
 }
 
-static GetAvenrun() {
+static int
+GetAvenrun()
+{
     if (lseek(kmemf, nl[0].n_value, 0) == -1)
         return 0;
     if (read(kmemf, loadav, sizeof(loadav)) != sizeof(loadav))
@@ -1870,9 +1923,7 @@ register len; {
 #endif
 
 int
-gethostname(host, size)
-    char *host;
-    int size;
+gethostname(char *host, int size)
 {
     strncpy(host, "elks", size);
     return 0;
@@ -1891,7 +1942,6 @@ setpgid(pid_t pid)
 {
 }
 #endif
-
 
 static int
 enableRawMode(int fd)
@@ -1966,8 +2016,7 @@ freetty()
 }
 
 void
-exit_with_usage(myname)
-    char *myname;
+exit_with_usage(char *myname)
 {
     printf("Use: %s [-opts] [cmd [args]]\n", myname);
     printf(" or: %s -r [ttyX.scr]\n\nOptions:\n", myname);
