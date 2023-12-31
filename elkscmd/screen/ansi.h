@@ -1,8 +1,9 @@
-/* Header file for ansi.c
- * 
- *  with function declarations
- * 
-*/
+/*
+ * Header file for ansi.c
+ *
+ * with function declarations
+ *
+ */
 
 int InitTerm(void);
 int FinitTerm(void);
@@ -69,4 +70,3 @@ static Redisplay(void);
 static MakeBlankLine(register char *p, register n);
 int MakeStatus(char *msg, struct win *wp);
 void RemoveStatus(struct win *p);
-
