@@ -24,18 +24,18 @@ static char ScreenVersion[] = "screen 2.0a.2 (ELKS) 30-Apr-2020";
 #include <ctype.h>
 #include <pwd.h>
 #include <fcntl.h>
+#include <string.h>
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <termcap.h>
+#include <unistd.h>
 #include <limits.h>
 
 #ifdef ELKS
 #include <termios.h>
 #include <linuxmt/un.h>
-#include <string.h>
-#include <unistd.h>
 #define	SIGTTOU         27      /* background tty write attempted */
 #else
 #include <sgtty.h>
@@ -101,21 +101,21 @@ static int TtyMode = 0622;
 static char SockPath[512];
 static char SockDir[] = "screen";
 static char *SockNamePtr, *SockName;
-static ServerSocket;
+static int ServerSocket;
 static char *NewEnv[MAXARGS];
 static char Esc = Ctrl('a');
 static char MetaEsc = 'a';
 static char *home;
-static HasWindow;
-static utmp, utmpf;
+static int HasWindow;
+static int utmp, utmpf;
 static char UtmpName[] = "/etc/utmp";
 static char *LoginName;
 static char *BellString = "Bell in window %";
-static mflag, nflag, fflag, rflag;
+static int mflag, nflag, fflag, rflag;
 static char HostName[MAXSTR];
-static Detached;
-static AttacherPid;             /* Non-Zero in child if we have an attacher */
-static DevTty;
+static int Detached;
+static int AttacherPid;             /* Non-Zero in child if we have an attacher */
+static int DevTty;
 #ifdef LOADAV
 static char KmemName[] = "/dev/kmem";
 #ifdef sequent
@@ -129,7 +129,7 @@ static char AvenrunSym[] = "_Loadavg";
 static char AvenrunSym[] = "_avenrun";
 #endif
 static struct nlist nl[2];
-static avenrun, kmemf;
+static int avenrun, kmemf;
 #ifdef SUNLOADAV
 long loadav[3];
 #else
@@ -143,7 +143,7 @@ double loadav[3];
 #endif
 
 static struct win *curr, *other;
-static CurrNum, OtherNum;
+static int CurrNum, OtherNum;
 static struct win *wtab[MAXWIN];
 
 #define KEY_IGNORE         0

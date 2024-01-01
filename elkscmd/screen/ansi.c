@@ -68,19 +68,19 @@ static char *US, *UE, *SO, *SE, *CE, *CD, *DO, *SR, *SF, *AL;
 char *CS, *DL, *DC, *IC, *IM, *EI, *UP, *ND, *KS, *KE;
 static char *MB, *MD, *MH, *MR, *ME, *PO, *PF;
 static char *CDC, *CDL, *CAL;
-static AM;
+static int AM;
 static char GlobalAttr, TmpAttr, GlobalCharset, TmpCharset;
 static char *OldImage, *OldAttr, *OldFont;
-static last_x, last_y;
+static int last_x, last_y;
 static struct win *curr;
-static display = 1;
-static StrCost;
-static UPcost, DOcost, LEcost, NDcost, CRcost, IMcost, EIcost;
-static tcLineLen = 100;
+static int display = 1;
+static int StrCost;
+static int UPcost, DOcost, LEcost, NDcost, CRcost, IMcost, EIcost;
+static int tcLineLen = 100;
 static char *null;
-static StatLen;
-static insert;
-static keypad;
+static int StatLen;
+static int insert;
+static int keypad;
 
 static char *KeyCaps[] = {
     "k0", "k1", "k2", "k3", "k4", "k5", "k6", "k7", "k8", "k9",
