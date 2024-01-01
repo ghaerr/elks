@@ -13,7 +13,6 @@
 #include <sys/wait.h>
 
 char LPD1[] = "/bin/lpd";			/* Proper place of lpd */
-char LPD2[] = "/usr/bin/lpd";		/* Minix has no sbin directories. */
 
 void report(char *mess)
 {
@@ -33,9 +32,7 @@ void lp(char *file)
 
 	if (file[0] != '/' || (pid= vfork()) == 0) {
 		execl(LPD1, LPD1, file, (char *) nil);
-		if (errno != ENOENT) fatal(LPD1);
-		execl(LPD2, LPD2, file, (char *) nil);
-		fatal(LPD2);
+		fatal(LPD1);
 	}
 
 	if (pid < 0) fatal("can't fork");

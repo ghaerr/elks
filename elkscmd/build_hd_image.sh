@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # BROKEN SCRIPT
 # DEV86 is no more linked to this project

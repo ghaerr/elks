@@ -3,6 +3,7 @@
 
 /* 2003-07-18: added -s option - ASW */
 
+#include <limits.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -35,7 +36,6 @@
 
 #define HELPFILE	"/usr/lib/mail.help"
 #define PROMPT		"? "
-#define PATHLEN		80
 #define MAXRCPT		100	/* maximum number of recipients */
 #define LINELEN		512
 
@@ -63,7 +63,7 @@ int verbose = 0;		/* pass "-v" flag on to mailer */
 int needupdate = 0;		/* need to update mailbox */
 int msgstatus = 0;		/* return the mail status */
 int distlist = 0;		/* include distribution list */
-char mailbox[PATHLEN];		/* user's mailbox/maildrop */
+char mailbox[PATH_MAX];		/* user's mailbox/maildrop */
 char tempname[] = "/tmp/mailXXXXXX";	/* temporary file */
 char *subject = NULL;
 FILE *boxfp = NULL;		/* mailbox file */
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
         case 'f':
                         setuid(getuid());	/* won't need to lock */
                         usedrop = 0;
-                        strncpy(mailbox, optarg, (size_t)(PATHLEN - 1));
+                        strncpy(mailbox, optarg, (size_t)(PATH_MAX - 1));
                         break;
 
         case 'd':	usemailer = 0;	break;
@@ -174,7 +174,7 @@ int deliver(int count, char *vec[])
 #endif
     time_t now;			/* for datestamping the postmark */
     char sender[32];		/* sender's login name */
-    char lockname[PATHLEN];	/* maildrop lock */
+    char lockname[PATH_MAX];	/* maildrop lock */
     int locktries;		/* tries when box is locked */
     struct passwd *pw;		/* sender and recipent */
     int to_console;		/* deliver to console if everything fails */
@@ -624,7 +624,7 @@ void savelet(struct letter *let, char *savefile)
 void updatebox()
 {
     FILE *tempfp;			/* fp for tempfile */
-    char lockname[PATHLEN];	/* maildrop lock */
+    char lockname[PATH_MAX];	/* maildrop lock */
     int locktries = 0;		/* tries when box is locked */
     struct letter *let;		/* current letter */
     int c;

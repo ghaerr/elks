@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Run ELKS in EMU86 (basic IA16 emulator)
 # EMU86 is part of the cross tools

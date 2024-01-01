@@ -19,6 +19,7 @@
 
 #include <sys/param.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,9 +32,6 @@
 #define OK	0			/* okay exit */
 #define YES	1			/* yes/true */
 
-#ifndef MAXPATHLEN
-#define MAXPATHLEN      256
-#endif
 #define MAXBSIZE        2048
 #define	isdecimal(ch)	(((ch) >= '0') && ((ch) <= '9'))
 
@@ -43,7 +41,7 @@ static int	ifd = ERR,		/* input file descriptor */
 		ofd = ERR;		/* output file descriptor */
 static short	file_open;		/* if a file open */
 static char	bfr[MAXBSIZE],		/* I/O buffer */
-		fname[MAXPATHLEN];	/* file name */
+		fname[PATH_MAX];	/* file name */
 
 void split1(void);
 void split2(void);

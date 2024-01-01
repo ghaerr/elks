@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # This build script is called in main.yml by GitHub Continuous Integration
 # Full build (including the cross tool chain)

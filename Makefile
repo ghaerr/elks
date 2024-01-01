@@ -14,7 +14,7 @@ all: .config include/autoconf.h
 	$(MAKE) -C bootblocks all
 	$(MAKE) -C elkscmd all
 	$(MAKE) -C image all
-ifneq ($(shell uname), Darwin)
+ifeq ($(shell uname), Linux)
 	$(MAKE) -C elksemu PREFIX='$(TOPDIR)/cross' elksemu
 endif
 
@@ -28,7 +28,7 @@ clean:
 	$(MAKE) -C bootblocks clean
 	$(MAKE) -C elkscmd clean
 	$(MAKE) -C image clean
-ifneq ($(shell uname), Darwin)
+ifeq ($(shell uname), Linux)
 	$(MAKE) -C elksemu clean
 endif
 	@echo

@@ -1,22 +1,25 @@
 #########################################################################
 # Where are the curses libraries?
 
-ifeq (/usr/include/ncurses/ncurses.h, $(wildcard /usr/include/ncurses/ncurses.h))
+ifeq ($(shell pkg-config --exists ncurses ; echo $$?), 0)
+	CURSES_INC := $(shell pkg-config --cflags-only-I ncurses)
+	CURSES_LOC := "<ncurses.h>"
+	CURSES_LIBS := $(shell pkg-config --libs ncurses)
+else ifeq (/usr/include/ncurses/ncurses.h, $(wildcard /usr/include/ncurses/ncurses.h))
 	CURSES_INC = -I/usr/include/ncurses
 	CURSES_LOC = "<ncurses.h>"
-else
-ifeq (/usr/include/ncurses/curses.h, $(wildcard /usr/include/ncurses/curses.h))
+else ifeq (/usr/include/ncurses/curses.h, $(wildcard /usr/include/ncurses/curses.h))
 	CURSES_INC = -I/usr/include/ncurses
 	CURSES_LOC = "<ncurses/curses.h>"
-else
-ifeq (/usr/include/ncurses.h, $(wildcard /usr/include/ncurses.h))
+else ifeq (/usr/include/ncurses.h, $(wildcard /usr/include/ncurses.h))
 	CURSES_INC =
 	CURSES_LOC = "<ncurses.h>"
 else
 	CURSES_INC =
 	CURSES_LOC = "<curses.h>"
 endif
-endif
+ifeq ($(CURSES_LIBS), )
+	CURSES_LIBS = -lncurses
 endif
 
 #########################################################################
@@ -26,11 +29,7 @@ CC = gcc
 CFLAGS = -std=c99 -O2 -Wall -pedantic -DLOCALE $(CURSES_INC)
 
 LDFLAGS = -s
-LDLIBS = $(shell pkg-config ncurses --libs)
-ifeq ($(LDLIBS), )
-	LDLIBS = -lncurses
-endif
-#LDLIBS = /usr/local/opt/ncurses/lib/libncurses.a
+LDLIBS = $(CURSES_LIBS)
 
 #########################################################################
 # What do we compile?
@@ -61,8 +60,8 @@ $(PGM): $(OBJS)
 # Write a custom header for curses.
 
 local-curses.h:
-	@x=`find /lib/ /lib64/ /usr/lib/ /usr/lib64/ /usr/local/lib/ /usr/local/lib64/ /Library/Developer/CommandLineTools/SDKs/MacOSX13.3.sdk/usr/lib/ -maxdepth 2 -name 'libncurses.*'` ;\
-	if [ ! "$$x" ]; then \
+	@if ! pkg-config --exists ncurses && \
+		! find /lib/ /lib64/ /usr/lib/ /usr/lib64/ /usr/local/lib/ /usr/local/lib64/ /Library/Developer/CommandLineTools/SDKs/MacOSX13.3.sdk/usr/lib/ -maxdepth 2 -name 'libncurses.*' | grep . ; then \
 		echo -e "\007" ;\
 		echo ">> Unable to find the Ncurses libraries." ;\
 		echo ">>" ;\
