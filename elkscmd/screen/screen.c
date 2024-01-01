@@ -80,7 +80,7 @@ extern char AnsiVersion[];
 extern int flowctl;
 extern int errno;
 extern int sys_nerr;
-extern char *MakeTermcap(void);
+extern char *MakeTermcap(int aflag);
 extern char *getlogin(void);
 static int AttacherFinit(void);
 static int SigHup(void);
