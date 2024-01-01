@@ -28,7 +28,7 @@ static int MapCharset(int n);
 static void NewCharset(int old, int new);
 static int SaveCursor(void);
 static int RestoreCursor(void);
-static void CountChars(int c);
+static int CountChars(int c);
 static int CalcCost(char *s);
 static void Goto(int y1, int x1, int y2, int x2);
 static int RewriteCost(int y, int x1, int x2);

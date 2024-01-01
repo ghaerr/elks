@@ -1092,10 +1092,11 @@ RestoreCursor(void)
     return 0;
 }
 
-static void
+static int
 CountChars(int c)
 {
     StrCost++;
+    return 0;
 }
 
 static int
