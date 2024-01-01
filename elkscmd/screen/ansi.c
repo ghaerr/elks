@@ -96,7 +96,7 @@ SC|screen|VT 100/ANSI X3.64 virtual terminal|\\\n\
 
 
 int
-InitTerm()
+InitTerm(void)
 {
     char *s;
 
@@ -218,7 +218,7 @@ InitTerm()
 }
 
 int
-FinitTerm()
+FinitTerm(void)
 {
     PutStr(TE);
     PutStr(IS);
@@ -976,7 +976,7 @@ PrintChar(int c)
 }
 
 static int
-PrintFlush()
+PrintFlush(void)
 {
     if (curr->stringp > curr->string) {
         tputs(PO, 1, PutChar);
@@ -1061,7 +1061,7 @@ NewCharset(int old, int new)
 }
 
 static int
-SaveCursor()
+SaveCursor(void)
 {
     curr->saved = 1;
     curr->Saved_x = curr->x;
@@ -1074,7 +1074,7 @@ SaveCursor()
 }
 
 static int
-RestoreCursor()
+RestoreCursor(void)
 {
     if (curr->saved) {
         curr->LocalAttr = curr->SavedLocalAttr;
@@ -1218,7 +1218,7 @@ RewriteCost(int y, int x1, int x2)
 }
 
 static int
-BackSpace()
+BackSpace(void)
 {
     if (curr->x > 0) {
         if (curr->x < cols) {
@@ -1233,7 +1233,7 @@ BackSpace()
 }
 
 static int
-Return()
+Return(void)
 {
     if (curr->x > 0) {
         curr->x = 0;
@@ -1243,7 +1243,7 @@ Return()
 }
 
 static int
-LineFeed()
+LineFeed(void)
 {
     if (curr->y == curr->bot) {
         ScrollUpMap(curr->image);
@@ -1257,7 +1257,7 @@ LineFeed()
 }
 
 static int
-ReverseLineFeed()
+ReverseLineFeed(void)
 {
     if (curr->y == curr->top) {
         ScrollDownMap(curr->image);
@@ -1471,7 +1471,7 @@ ScrollDownMap(char **pp)
 }
 
 static int
-ForwardTab()
+ForwardTab(void)
 {
     int x = curr->x;
 
@@ -1485,7 +1485,7 @@ ForwardTab()
 }
 
 static int
-BackwardTab()
+BackwardTab(void)
 {
     int x = curr->x;
 
@@ -1499,7 +1499,7 @@ BackwardTab()
 }
 
 static int
-ClearScreen()
+ClearScreen(void)
 {
     int i;
 
@@ -1513,7 +1513,7 @@ ClearScreen()
 }
 
 static int
-ClearFromBOS()
+ClearFromBOS(void)
 {
     int n, y = curr->y, x = curr->x;
 
@@ -1527,7 +1527,7 @@ ClearFromBOS()
 }
 
 static int
-ClearToEOS()
+ClearToEOS(void)
 {
     int n, y = curr->y, x = curr->x;
 
@@ -1543,7 +1543,7 @@ ClearToEOS()
 }
 
 static int
-ClearLine()
+ClearLine(void)
 {
     int y = curr->y, x = curr->x;
 
@@ -1555,7 +1555,7 @@ ClearLine()
 }
 
 static int
-ClearToEOL()
+ClearToEOL(void)
 {
     int y = curr->y, x = curr->x;
 
@@ -1567,7 +1567,7 @@ ClearToEOL()
 }
 
 static void
-ClearFromBOL()
+ClearFromBOL(void)
 {
     int y = curr->y, x = curr->x;
 
@@ -1672,7 +1672,7 @@ SetMode(int on)
 }
 
 static int
-SelectRendition()
+SelectRendition(void)
 {
     int i, old = GlobalAttr;
 
@@ -1792,7 +1792,7 @@ RestoreAttr(int oldattr)
 }
 
 static int
-FillWithEs()
+FillWithEs(void)
 {
     int i;
     char *p, *ep;
@@ -1813,7 +1813,7 @@ FillWithEs()
 }
 
 static int
-Redisplay()
+Redisplay(void)
 {
     int i;
 

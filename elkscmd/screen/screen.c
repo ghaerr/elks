@@ -80,12 +80,12 @@ extern char AnsiVersion[];
 extern int flowctl;
 extern int errno;
 extern int sys_nerr;
-extern char *MakeTermcap();
-extern char *getlogin();
-static int AttacherFinit();
-static int SigHup();
+extern char *MakeTermcap(void);
+extern char *getlogin(void);
+static int AttacherFinit(void);
+static int SigHup(void);
 static char *MakeBellMsg(int n);
-static char *GetTtyName();
+static char *GetTtyName(void);
 static char PtyName[32], TtyName[32];
 static char *ShellProg;
 static char *ShellArgs[2];
@@ -495,7 +495,7 @@ main(int ac, char **av)
 }                               /* main */
 
 static int
-SigHandler()
+SigHandler(void)
 {
     while (GotSignal) {
         GotSignal = 0;
@@ -505,21 +505,21 @@ SigHandler()
 }
 
 static int
-SigChld()
+SigChld(void)
 {
     GotSignal = 1;
     return 0;
 }
 
 static int
-SigHup()
+SigHup(void)
 {
     Detach(0);
     return 0;
 }
 
 static int
-DoWait()
+DoWait(void)
 {
     int pid;
     struct win **pp;
@@ -540,7 +540,7 @@ KillWindow(struct win **pp)
 }
 
 static void
-CheckWindows()
+CheckWindows(void)
 {
     struct win **pp;
 
@@ -570,7 +570,7 @@ CheckWindows()
 }
 
 static int
-Finit()
+Finit(void)
 {
     struct win *p, **pp;
 
@@ -587,7 +587,7 @@ Finit()
 }
 
 static int
-InitKeytab()
+InitKeytab(void)
 {
     int i;
 
@@ -769,7 +769,7 @@ SetCurrWindow(int n)
 }
 
 int
-NextWindow()
+NextWindow(void)
 {
     struct win **pp;
 
@@ -783,7 +783,7 @@ NextWindow()
 }
 
 static int
-PreviousWindow()
+PreviousWindow(void)
 {
     struct win **pp;
 
@@ -797,7 +797,7 @@ PreviousWindow()
 }
 
 static int
-MoreWindows()
+MoreWindows(void)
 {
     struct win **pp;
     int n;
@@ -1059,7 +1059,7 @@ WriteFile(int dump)
 }
 
 static int
-ShowWindows()
+ShowWindows(void)
 {
     char buf[1024];
     char *s;
@@ -1092,7 +1092,7 @@ ShowWindows()
 }
 
 static int
-ShowInfo()
+ShowInfo(void)
 {
     char buf[1024], *p;
     struct win *wp = curr;
@@ -1186,7 +1186,7 @@ SetMode(struct mode *op, struct mode *np)
 }
 
 static char *
-GetTtyName()
+GetTtyName(void)
 {
     char *p;
     int n;
@@ -1254,20 +1254,20 @@ Attach(int how)
 }
 
 static int
-AttacherFinit()
+AttacherFinit(void)
 {
     exit(0);
 }
 
 static int
-ReAttach()
+ReAttach(void)
 {
     Attach(MSG_CONT);
     return 0;
 }
 
 static void
-Attacher()
+Attacher(void)
 {
     signal(SIGHUP, AttacherFinit);
     signal(SIGCONT, ReAttach);
@@ -1321,7 +1321,7 @@ Kill(int pid, int sig)
 }
 
 static int
-GetSockName()
+GetSockName(void)
 {
     int client;
     static char buf[2 * MAXSTR];
@@ -1339,7 +1339,7 @@ GetSockName()
 }
 
 static int
-MakeServerSocket()
+MakeServerSocket(void)
 {
     int s;
     struct sockaddr_un a;
@@ -1658,7 +1658,7 @@ SaveArgs(int argc, char **argv)
 }
 
 static int
-MakeNewEnv()
+MakeNewEnv(void)
 {
     char **op, **np = NewEnv;
     static char buf[MAXSTR];
@@ -1757,7 +1757,7 @@ MakeBellMsg(int n)
 
 #ifdef UTMP
 static int
-InitUtmp()
+InitUtmp(void)
 {
     struct passwd *p;
 
@@ -1816,7 +1816,7 @@ RemoveUtmp(int slot)
 
 #else
 static int
-InitUtmp()
+InitUtmp(void)
 {
     return 0;
 }
@@ -1838,7 +1838,7 @@ RemoveUtmp(int slot)
 #ifndef GETTTYENT
 
 static void
-setttyent()
+setttyent(void)
 {
     struct stat s;
     int f;
@@ -1863,7 +1863,7 @@ setttyent()
 }
 
 static struct ttyent *
-getttyent()
+getttyent(void)
 {
     static struct ttyent t;
 
@@ -1879,7 +1879,7 @@ getttyent()
 #ifdef LOADAV
 
 static int
-InitKmem()
+InitKmem(void)
 {
     if ((kmemf = open(KmemName, O_RDONLY)) == -1)
         return;
@@ -1891,7 +1891,7 @@ InitKmem()
 }
 
 static int
-GetAvenrun()
+GetAvenrun(void)
 {
     if (lseek(kmemf, nl[0].n_value, 0) == -1)
         return 0;
@@ -2001,13 +2001,13 @@ disableRawMode(int fd)
 }
 
 static void
-brktty()
+brktty(void)
 {
     setsid();                   /* will break terminal affiliation */
 }
 
 static void
-freetty()
+freetty(void)
 {
     brktty();
     close(0);
@@ -2030,7 +2030,7 @@ exit_with_usage(char *myname)
 }
 
 int
-display_help()
+display_help(void)
 {
     /*
      * Ctrl+a d   Detach from the current screen session, and leave it

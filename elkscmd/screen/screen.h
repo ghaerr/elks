@@ -110,22 +110,22 @@ struct mode {
 #endif
 };
 
-static int SigHandler();
-static int SigChld();
-static int DoWait();
-static void CheckWindows();
+static int SigHandler(void);
+static int SigChld(void);
+static int DoWait(void);
+static void CheckWindows(void);
 static int ProcessInput(char *buf, int len);
 static void SwitchWindow(int n);
 static int SetCurrWindow(int n);
-int NextWindow();
-static int PreviousWindow();
+int NextWindow(void);
+static int PreviousWindow(void);
 static int FreeWindow(struct win *wp);
-static int ShowWindows();
+static int ShowWindows(void);
 static void DisplayLine(char *, char *, char *, char *, char *, char *, int, int, int);
 static void RedisplayLine(char *, char *, char *, int, int, int);
 
 static int CheckSockName(int client);
-static int MakeServerSocket();
+static int MakeServerSocket(void);
 static int MakeClientSocket(int err);
 static int SendCreateMsg(int s, int ac, char **av, int aflag);
 static int SendErrorMsg(char *fmt,...);
@@ -134,7 +134,7 @@ static int ExecCreate(struct msg *mp);
 static void ReadRc(char *fn);
 static int Parse(char *fn, char *buf, char **args);
 static char **SaveArgs(int argc, char **argv);
-static int MakeNewEnv();
+static int MakeNewEnv(void);
 static int IsSymbol(char *e, char *s);
 void Msg(int err, char *fmt,...);
 int bclear(char *p, int n);
@@ -143,24 +143,24 @@ static int IsNum(char *s, int base);
 
 static int RemoveUtmp(int slot);
 static int SetUtmp(char *name);
-static int InitUtmp();
-static int MoreWindows();
+static int InitUtmp(void);
+static int MoreWindows(void);
 int MakeWindow(char *prog, char **args, int aflag, int StartAt, char *dir);
-static int GetSockName();
+static int GetSockName(void);
 static int Kill(int pid, int sig);
-static void Attacher();
+static void Attacher(void);
 static int Attach(int how);
 static void Detach(int suspend);
 static int SetTTY(int fd, struct mode *mp);
 static int GetTTY(int fd, struct mode *mp);
-static int ShowInfo();
+static int ShowInfo(void);
 static void screen_execvpe(char *prog, char **args, char **env);
 static void WriteFile(int dump);
 static void KillWindow(struct win **pp);
-static int Finit();
-static int InitKeytab();
-int InitTerm();
-int FinitTerm();
+static int Finit(void);
+static int InitKeytab(void);
+int InitTerm(void);
+int FinitTerm(void);
 void WriteString(struct win *wp, char *buf, int len);
 int Activate(struct win *wp);
 void DoESC(int c, int intermediate);
@@ -172,10 +172,10 @@ int gethostname(char *host, int size);
 static int enableRawMode(int fd);
 static void disableRawMode(int fd);
 
-static void brktty();
-static void freetty();
+static void brktty(void);
+static void freetty(void);
 
 void exit_with_usage(char *myname);
-int display_help();
+int display_help(void);
 
 void dbgmsg(int n);
