@@ -7,7 +7,7 @@
 int
 system(char *command)
 {
-   int status, ret, pid;
+   int status, pid;
    sighandler_t save_quit;
    sighandler_t save_int;
 
@@ -35,7 +35,7 @@ system(char *command)
    signal(SIGINT,  SIG_IGN);
 
    /* wait for child termination*/
-   while ((ret = waitpid(pid, &status, 0)) != pid)
+   while (waitpid(pid, &status, 0) != pid)
 		continue;
 
    signal(SIGQUIT, save_quit);

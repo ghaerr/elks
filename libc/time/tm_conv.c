@@ -20,6 +20,7 @@ __tm_conv(struct tm *tmbuf, const time_t *t, time_t offset)
 {
   long days, rem;
   int yday;
+  int leap;
   register int y;
   register const char *ip;
 
@@ -45,20 +46,23 @@ __tm_conv(struct tm *tmbuf, const time_t *t, time_t offset)
   if (tmbuf->tm_wday < 0)
     tmbuf->tm_wday += 7;
   y = 1970;
-  while (days >= (rem = __isleap(y) ? 366 : 365))
+  leap = 0;
+  while (days >= (rem = leap ? 366 : 365))
     {
       ++y;
+      leap = __isleap(y);
       days -= rem;
     }
   while (days < 0)
     {
       --y;
-      days += __isleap(y) ? 366 : 365;
+      leap = __isleap(y);
+      days += leap ? 366 : 365;
     }
   yday = days;
   tmbuf->tm_year = y - 1900;
   tmbuf->tm_yday = yday;
-  ip = __mon_lengths[__isleap(y)];
+  ip = __mon_lengths[leap];
   for (y = 0; yday >= ip[y]; ++y)
     yday -= ip[y];
   tmbuf->tm_mon = y;

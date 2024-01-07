@@ -782,10 +782,8 @@ check_root2 (void) {
 
 static int
 add_zone(unsigned short * znr, int * corrected) {
-	int result;
 	int block;
 
-	result = 0;
 	block = check_zone_nr(znr, corrected);
 	if (!block)
 		return 0;
@@ -815,10 +813,8 @@ add_zone(unsigned short * znr, int * corrected) {
 
 static int
 add_zone2 (unsigned int *znr, int *corrected) {
-	int result;
 	int block;
 
-	result = 0;
 	block = check_zone_nr2 (znr, corrected);
 	if (!block)
 		return 0;

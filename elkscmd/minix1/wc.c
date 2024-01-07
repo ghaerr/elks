@@ -108,7 +108,6 @@ int main(int argc, char **argv)
 	if (wflag) printf(" %6ld", wcount);
 	if (cflag) printf(" %6ld", ccount);
 	printf(" \n");
-	fflush(stdout);
 	exit(0);
   }
 
@@ -135,7 +134,6 @@ int main(int argc, char **argv)
 	if (cflag) printf(" %6ld", ctotal);
 	printf(" total\n");
   }
-  fflush(stdout);
   exit(0);
 
 usage:

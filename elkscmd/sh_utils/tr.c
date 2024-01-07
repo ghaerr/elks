@@ -250,7 +250,7 @@ int main(int argc, char ** argv)
 	printf("String 2 = %s\n", set2); */
 	while ((i = getchar()) != EOF) {
 		if (delete) {
-			if ((ip = strchr(set1, i)) != NULL) {
+			if (strchr(set1, i) != NULL) {
 				i = 0;
 			}
 		} else if (set2) {
@@ -261,8 +261,8 @@ int main(int argc, char ** argv)
 			}
 		}
 		if (squeeze) {
-			if ((set2 && ((ip = strchr(set2, i)) != NULL)) ||
-			   (!set2 && ((ip = strchr(set1, i)) != NULL))) {
+			if ((set2 && (strchr(set2, i) != NULL)) ||
+			   (!set2 && (strchr(set1, i) != NULL))) {
 				if (i == lchar) i = 0;
 			}
 		}

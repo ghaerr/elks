@@ -943,7 +943,7 @@ process_params (pc, func)
 	    else
 	      {
 		if (params->av_name < 0)
-		  rt_error ("Parameter type mismatch parameter %s.",
+		  rt_error ("Parameter type mismatch, parameter %s.",
 			    a_names[-params->av_name]);
 		else
 		  rt_error ("Parameter type mismatch, parameter %s.",

@@ -760,7 +760,7 @@ void print_word(char *pword)
  */
 
    char *s;
-   int *d, ch=0;
+   int *d;
    int length=0;
    int wword[256];
    int sp_font = cur_font;
@@ -768,9 +768,8 @@ void print_word(char *pword)
    /* Eat and translate characters. */
    for (s=pword,d=wword; *s; s++)
    {
-      ch=0;
       if (*s == '\n') continue;
-      if (*s != '\\') { *d++ = (ch= *s) + cur_font; length++; }
+      if (*s != '\\') { *d++ = *s + cur_font; length++; }
       else
       {
          if (s[1] == 0) break;

@@ -519,7 +519,7 @@ lookup (name, namekind)
 	  return (-id->a_name);
 	}
       yyerror ("Too many array variables");
-      exit (1);
+      break;
 
     case FUNCT:
       if (id->f_name != 0)
@@ -536,7 +536,7 @@ lookup (name, namekind)
 	  return (id->f_name);
 	}
       yyerror ("Too many functions");
-      exit (1);
+      break;
 
     case SIMPLE:
       if (id->v_name != 0)
@@ -553,8 +553,8 @@ lookup (name, namekind)
 	  return (id->v_name);
 	}
       yyerror ("Too many variables");
-      exit (1);
     }
+  exit (1);
 }
 
 

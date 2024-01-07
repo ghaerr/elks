@@ -41,7 +41,7 @@ static void display(void)
     unsigned short __far *chattr = MK_FP(0xb800, 0);
     char buf[16];
 
-    printf("\e[H");
+    fputs("\e[H", stdout);
     for (r=0; r<LINES; r++) {
         a = -1;
         for (c=0; c<COLS; c++) {
@@ -55,11 +55,9 @@ static void display(void)
                 fputs(buf, stdout);
             }
         }
-        if (r == LINES - 1)
-            printf("\r");
-        else printf("\n");
+        putc(r == LINES - 1 ? '\r' : '\n', stdout);
     }
-    printf("\e[1;0;0m");
+    fputs("\e[1;0;0m", stdout);
     fflush(stdout);
 }
 

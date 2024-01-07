@@ -21,7 +21,7 @@
 
 #define structof(p,t,m) ((t *) ((char *) (p) - offsetof (t,m)))
 
-extern void do_exit(int);
+extern void do_exit(int) wontreturn;
 
 extern int kill_pg(pid_t,sig_t,int);
 extern int kill_sl(void);

@@ -568,7 +568,7 @@ forkshell(jp, n, mode)
 			    && ! fd0_redirected_p ()) {
 				close(0);
 				if (open("/dev/null", O_RDONLY) != 0)
-					error("Can't open /dev/null");
+					error("Can't open %s", "/dev/null");
 			}
 		}
 #else
@@ -579,7 +579,7 @@ forkshell(jp, n, mode)
 			    && ! fd0_redirected_p ()) {
 				close(0);
 				if (open("/dev/null", O_RDONLY) != 0)
-					error("Can't open /dev/null");
+					error("Can't open %s", "/dev/null");
 			}
 		}
 #endif

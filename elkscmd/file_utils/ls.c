@@ -124,8 +124,7 @@ static void pushstack(struct stack *pstack, char *entry, long l)
         pstack->allocd += 64;
         allocbuf = (struct sort*)realloc(pstack->buf, sizeof(struct sort)*pstack->allocd);
         if (!allocbuf) {
-            free(pstack->buf);
-            fprintf(stderr, "ls: error: out of memory (realloc pstack failed)\n");
+            fprintf(stderr, "ls: error: out of memory\n");
             exit(EXIT_FAILURE);
         }
         pstack->buf = allocbuf;

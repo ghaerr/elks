@@ -17,7 +17,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-char buffer[BUFSIZ];
 int uflag = 1;			/* default is union of -d and -u outputs */
 int dflag = 1;			/* flags are mutually exclusive */
 int cflag = 0;
@@ -40,7 +39,6 @@ char *fn, *mode;
 
   if ((p = fopen(fn, mode)) == NULL) {
 	perror("uniq");
-	fflush(stdout);
 	exit(1);
   }
   return(p);
@@ -53,7 +51,6 @@ char *argv[];
   char *p;
   int inf = -1, outf;
 
-  setbuf(stdout, buffer);
   for (--argc, ++argv; argc > 0 && (**argv == '-' || **argv == '+');
        --argc, ++argv) {
 	if (**argv == '+')
