@@ -176,7 +176,7 @@ int do_chmem(char *filename, int changeheap, int changestack,
 int
 main(int argc, char **argv)
 {
-	int 			ch, err;
+	int 			ch, err = 0;
 	int				changeheap = 0, changestack = 0;
 	unsigned long	heap = 0, stack = 0;
 
