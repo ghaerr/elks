@@ -50,7 +50,6 @@
 /* #include	<sgtty.h>                                           tjp*/
 #include	<ctype.h>
 #include	<stdio.h>
-#include	<sys/file.h>
 #include	<sys/stat.h>
 #include	<signal.h>
 #include	<setjmp.h>
