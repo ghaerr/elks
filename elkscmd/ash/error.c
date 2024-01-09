@@ -67,7 +67,6 @@ struct jmploc *handler;
 int exception;
 volatile int suppressint;
 volatile int intpending;
-char *commandname;
 
 
 /*
