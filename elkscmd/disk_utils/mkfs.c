@@ -57,10 +57,7 @@
 #include <linuxmt/fs.h>
 #include <linuxmt/minix_fs.h>
 
-/* Check for gcc removed from here. */
-
-#ifndef __linux__
-#define volatile
+#ifdef __GNUC__
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif
 
@@ -152,12 +149,7 @@ unsigned char test_bit(unsigned int nr, void * add)
 #define mark_zone(x) (setbit(zone_map,(x)-FIRSTZONE+1))
 #define unmark_zone(x) (clrbit(zone_map,(x)-FIRSTZONE+1))
 
-/*
- * Volatile to let gcc know that this doesn't return. When trying
- * to compile this under minix, volatile gives a warning, as
- * exit() isn't defined as volatile under minix.
- */
-volatile void fatal_error(const char * fmt_string,int status)
+void fatal_error(const char * fmt_string,int status)
 {
 	printf(fmt_string);
 	exit(status);
