@@ -80,6 +80,7 @@ struct var vps2;
 struct var vpse;
 struct var vvers;
 struct var vterm;
+struct localvar *localvars;
 
 const struct varinit varinit[] = {
 #if ATTY
