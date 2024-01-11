@@ -2,6 +2,7 @@
  * lpd 1.5 - Printer daemon
  * Author: Kees J. Bot 3 Dec 1989
  */
+#define SYSLOG 0
 #define nil 0
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,18 +16,20 @@
 #include <unistd.h>
 #include <termcap.h>
 
-char PRINTER[] = "/dev/lp";
-char SPOOL[] = "/var/spool";
-char LOG[] = "/dev/log";
+const char PRINTER[] = "/dev/lp";
+const char SPOOL[] = "/var/spool";
+#if SYSLOG
+const char LOG[] = "/dev/log";
+#endif
 
 void
-report(char *mess)
+report(const char *mess)
 {
     fprintf(stderr, "lpd: %s: %s\n", mess, strerror(errno));
 }
 
 void
-fatal(char *mess)
+fatal(const char *mess)
 {
     report(mess);
     exit(1);
@@ -38,8 +41,6 @@ char tmpX[] = "tmpXXXXXX";
 void
 spoolerr(char *file)
 {
-    int e = errno;
-
     unlink(jobX);
     unlink(tmpX);
     fatal(file);
@@ -162,7 +163,7 @@ int lp;
 char buf[BUFSIZ];
 int count, column, line, ncols = 80, nlines = 66;
 
-int
+void
 flush(void)
 {
     /*
@@ -192,7 +193,7 @@ flush(void)
     count = 0;
 }
 
-int
+void
 put(int c)
 {
     /*
@@ -302,6 +303,7 @@ work(void)
 
     if ((j = fopen(job->name, "r")) == nil) {
         joberr(job->name);
+        /* TODO leak of job */
         return;
     }
 
@@ -370,11 +372,13 @@ haunt(void)
             fatal("/dev/null");
         dup2(fd, 0);
         close(fd);
+#if SYSLOG
         if ((fd = open(LOG, O_WRONLY)) < 0)
             fatal(LOG);
         dup2(fd, 1);
         dup2(fd, 2);
         close(fd);
+#endif
         setsid();
     }
 

@@ -13,16 +13,16 @@
 #include <errno.h>
 #include <sys/wait.h>
 
-char LPD1[] = "/bin/lpd";       /* Proper place of lpd */
+const char LPD1[] = "/bin/lpd"; /* Proper place of lpd */
 
 void
-report(char *mess)
+report(const char *mess)
 {
     fprintf(stderr, "lp: %s: %s\n", mess, strerror(errno));
 }
 
 void
-fatal(char *mess)
+fatal(const char *mess)
 {
     report(mess);
     exit(1);
