@@ -3,7 +3,7 @@
 #include <unistd.h>
 
 int
-execve(char *fname, char **argv, char **envp)
+execve(const char *fname, char **argv, char **envp)
 {
 	char **p;
 	int argv_len=0, argv_count=0;
