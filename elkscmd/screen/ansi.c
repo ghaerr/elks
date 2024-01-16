@@ -51,6 +51,9 @@ enum move_t {
 
 extern char *getenv(), *tgetstr(), *tgoto();
 
+static void RedisplayLine(char *os, char *oa, char *of, int y, int from, int to);
+static void DisplayLine(char *os, char *oa, char *of, char *s, char *as, char *fs, int y, int from, int to);
+
 int rows, cols;
 int status;
 int flowctl;

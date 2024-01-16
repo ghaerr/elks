@@ -9,7 +9,6 @@ int InitTerm(void);
 int FinitTerm(void);
 static int AddCap(char *s);
 char *MakeTermcap(int aflag);
-static void DisplayLine(char *os, char *oa, char *of, char *s, char *as, char *fs, int y, int from, int to);
 static int MakeString(char *cap, char *buf, char *s);
 static int Special(int c);
 static int DoCSI(int c, int intermediate);
@@ -64,7 +63,6 @@ static int SaveAttr(int newattr);
 static int RestoreAttr(int oldattr);
 static int FillWithEs(void);
 static int Redisplay(void);
-static void RedisplayLine(char *os, char *oa, char *of, int y, int from, int to);
 static int MakeBlankLine(char *p, int n);
 
 int Activate(struct win *wp);

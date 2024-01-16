@@ -70,6 +70,52 @@ static char ttys[] = "/etc/ttys";
 
 #define Ctrl(c) ((c)&037)
 
+static int SigHandler(void);
+static int DoWait(void);
+static void CheckWindows(void);
+static int ProcessInput(char *buf, int len);
+static void SwitchWindow(int n);
+static int SetCurrWindow(int n);
+static int NextWindow(void);
+static int PreviousWindow(void);
+static int FreeWindow(struct win *wp);
+static int ShowWindows(void);
+static int MakeServerSocket(void);
+static int MakeClientSocket(int err);
+static int SendCreateMsg(int s, int ac, char **av, int aflag);
+static int SendErrorMsg(char *fmt,...);
+static void ReceiveMsg(int s);
+static int ExecCreate(struct msg *mp);
+static void ReadRc(char *fn);
+static int Parse(char *fn, char *buf, char **args);
+static char **SaveArgs(int argc, char **argv);
+static int MakeNewEnv(void);
+static int IsSymbol(char *e, char *s);
+static char *Filename(char *s);
+static int IsNum(char *s, int base);
+static int RemoveUtmp(int slot);
+static int SetUtmp(char *name);
+static int InitUtmp(void);
+static int MoreWindows(void);
+static int MakeWindow(char *prog, char **args, int aflag, int StartAt, char *dir);
+static int GetSockName(void);
+static int Kill(int pid, int sig);
+static void Attacher(void);
+static int Attach(int how);
+static void Detach(int suspend);
+static int SetTTY(int fd, struct mode *mp);
+static int GetTTY(int fd, struct mode *mp);
+static int ShowInfo(void);
+static void screen_execvpe(char *prog, char **args, char **env);
+static void WriteFile(int dump);
+static void KillWindow(struct win **pp);
+static void Finit(int signum);
+static int InitKeytab(void);
+static int enableRawMode(int fd);
+static void disableRawMode(int fd);
+static void brktty(void);
+static void freetty(void);
+
 extern char *blank, Term[];
 extern int rows, cols;
 extern int ISO2022;
@@ -77,7 +123,6 @@ extern int status;
 extern time_t TimeDisplayed;
 extern char AnsiVersion[];
 extern int flowctl;
-extern int sys_nerr;
 extern char *MakeTermcap(int aflag);
 extern char *getlogin(void);
 static void AttacherFinit(int signum);
@@ -94,8 +139,6 @@ static int ESCseen;
 static int GotSignal;
 static char DefaultShell[] = "/bin/sh";
 static char DefaultPath[] = ":/bin:/usr/bin";
-static char PtyProto[] = "/dev/ptyXY";
-static char TtyProto[] = "/dev/ttyXY";
 static int TtyMode = 0622;
 static char SockPath[PATH_MAX];
 static char SockDir[] = "screen";
@@ -106,9 +149,11 @@ static char Esc = Ctrl('a');
 static char MetaEsc = 'a';
 static char *home;
 static int HasWindow;
+#ifdef UTMP
 static int utmp, utmpf;
 static char UtmpName[] = "/etc/utmp";
 static char *LoginName;
+#endif
 static char *BellString = "Bell in window %";
 static int mflag, nflag, fflag, rflag;
 static char HostName[MAXSTR];
@@ -199,7 +244,7 @@ main(int ac, char **av)
     int n, len;
     struct win **pp, *p;
     char *ap;
-    int s, x = 0;
+    int s;
     fd_set r_readfd, w_writefd, e_errfd;
     int aflag = 0;
     int lflag = 0;
@@ -766,7 +811,7 @@ SetCurrWindow(int n)
     return 0;
 }
 
-int
+static int
 NextWindow(void)
 {
     struct win **pp;
@@ -1746,7 +1791,7 @@ static char *
 MakeBellMsg(int n)
 {
     static char buf[MAXSTR];
-    char *p = buf, *s = BellString;
+    char *p = buf, *s;
 
     for (s = BellString; *s && p < buf + MAXSTR - 1; s++)
         *p++ = (*s == '%') ? n + '0' : *s;
