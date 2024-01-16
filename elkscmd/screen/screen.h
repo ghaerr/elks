@@ -111,7 +111,6 @@ struct mode {
 };
 
 static int SigHandler(void);
-static int SigChld(void);
 static int DoWait(void);
 static void CheckWindows(void);
 static int ProcessInput(char *buf, int len);
@@ -157,7 +156,7 @@ static int ShowInfo(void);
 static void screen_execvpe(char *prog, char **args, char **env);
 static void WriteFile(int dump);
 static void KillWindow(struct win **pp);
-static int Finit(void);
+static void Finit(int signum);
 static int InitKeytab(void);
 int InitTerm(void);
 int FinitTerm(void);
@@ -167,7 +166,7 @@ void DoESC(int c, int intermediate);
 int ResetScreen(struct win *p);
 void RemoveStatus(struct win *p);
 int MakeStatus(char *msg, struct win *wp);
-int gethostname(char *host, int size);
+int gethostname(char *host, size_t size);
 
 static int enableRawMode(int fd);
 static void disableRawMode(int fd);

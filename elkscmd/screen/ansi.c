@@ -15,7 +15,7 @@ char AnsiVersion[] = "ansi 2.0a (ELKS) 25-Apr-2020";
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <sys/time.h>
+#include <time.h>
 #include <string.h>
 #include <termcap.h>
 #include "screen.h"
