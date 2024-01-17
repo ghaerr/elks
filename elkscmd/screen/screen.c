@@ -16,32 +16,31 @@
 
 static char ScreenVersion[] = "screen 2.0a.2 (ELKS) 30-Apr-2020";
 
+#include <ctype.h>
+#include <dirent.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <pwd.h>
+#include <signal.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <dirent.h>
-#include <signal.h>
-#include <errno.h>
-#include <ctype.h>
-#include <pwd.h>
-#include <fcntl.h>
 #include <string.h>
-#include <sys/time.h>
-#include <sys/wait.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <termcap.h>
+#include <termios.h>
+#include <time.h>
 #include <unistd.h>
-#include <limits.h>
 
 #ifdef ELKS
-#include <termios.h>
 #include <linuxmt/un.h>
-#define	SIGTTOU         27      /* background tty write attempted */
 #else
-#include <sgtty.h>
-#include <nlist.h>
-#include <sys/un.h>
-#include <sys/dir.h>
+#include <linux/un.h>
+#define OPEN_MAX 1024
+extern char **environ;
 #endif
 
 #ifdef UTMP
@@ -71,6 +70,52 @@ static char ttys[] = "/etc/ttys";
 
 #define Ctrl(c) ((c)&037)
 
+static int SigHandler(void);
+static int DoWait(void);
+static void CheckWindows(void);
+static int ProcessInput(char *buf, int len);
+static void SwitchWindow(int n);
+static int SetCurrWindow(int n);
+static int NextWindow(void);
+static int PreviousWindow(void);
+static int FreeWindow(struct win *wp);
+static int ShowWindows(void);
+static int MakeServerSocket(void);
+static int MakeClientSocket(int err);
+static int SendCreateMsg(int s, int ac, char **av, int aflag);
+static int SendErrorMsg(char *fmt,...);
+static void ReceiveMsg(int s);
+static int ExecCreate(struct msg *mp);
+static void ReadRc(char *fn);
+static int Parse(char *fn, char *buf, char **args);
+static char **SaveArgs(int argc, char **argv);
+static int MakeNewEnv(void);
+static int IsSymbol(char *e, char *s);
+static char *Filename(char *s);
+static int IsNum(char *s, int base);
+static int RemoveUtmp(int slot);
+static int SetUtmp(char *name);
+static int InitUtmp(void);
+static int MoreWindows(void);
+static int MakeWindow(char *prog, char **args, int aflag, int StartAt, char *dir);
+static int GetSockName(void);
+static int Kill(int pid, int sig);
+static void Attacher(void);
+static int Attach(int how);
+static void Detach(int suspend);
+static int SetTTY(int fd, struct mode *mp);
+static int GetTTY(int fd, struct mode *mp);
+static int ShowInfo(void);
+static void screen_execvpe(char *prog, char **args, char **env);
+static void WriteFile(int dump);
+static void KillWindow(struct win **pp);
+static void Finit(int signum);
+static int InitKeytab(void);
+static int enableRawMode(int fd);
+static void disableRawMode(int fd);
+static void brktty(void);
+static void freetty(void);
+
 extern char *blank, Term[];
 extern int rows, cols;
 extern int ISO2022;
@@ -78,12 +123,11 @@ extern int status;
 extern time_t TimeDisplayed;
 extern char AnsiVersion[];
 extern int flowctl;
-extern int errno;
-extern int sys_nerr;
 extern char *MakeTermcap(int aflag);
 extern char *getlogin(void);
-static int AttacherFinit(void);
-static int SigHup(void);
+static void AttacherFinit(int signum);
+static void SigChld(int signum);
+static void SigHup(int signum);
 static char *MakeBellMsg(int n);
 static char *GetTtyName(void);
 static char PtyName[32], TtyName[32];
@@ -95,10 +139,8 @@ static int ESCseen;
 static int GotSignal;
 static char DefaultShell[] = "/bin/sh";
 static char DefaultPath[] = ":/bin:/usr/bin";
-static char PtyProto[] = "/dev/ptyXY";
-static char TtyProto[] = "/dev/ttyXY";
 static int TtyMode = 0622;
-static char SockPath[512];
+static char SockPath[PATH_MAX];
 static char SockDir[] = "screen";
 static char *SockNamePtr, *SockName;
 static int ServerSocket;
@@ -107,9 +149,11 @@ static char Esc = Ctrl('a');
 static char MetaEsc = 'a';
 static char *home;
 static int HasWindow;
+#ifdef UTMP
 static int utmp, utmpf;
 static char UtmpName[] = "/etc/utmp";
 static char *LoginName;
+#endif
 static char *BellString = "Bell in window %";
 static int mflag, nflag, fflag, rflag;
 static char HostName[MAXSTR];
@@ -200,14 +244,14 @@ main(int ac, char **av)
     int n, len;
     struct win **pp, *p;
     char *ap;
-    int s, x = 0;
+    int s;
     fd_set r_readfd, w_writefd, e_errfd;
     int aflag = 0;
     int lflag = 0;
     struct timeval tv;
     time_t now;
     char buf[IOSIZE], *myname = (ac == 0) ? "screen" : av[0];
-    char rc[256];
+    char rc[PATH_MAX];
     struct stat st;
 
     while (ac > 0) {
@@ -295,7 +339,6 @@ main(int ac, char **av)
     }
 
     gethostname(HostName, MAXSTR);
-    HostName[MAXSTR - 1] = '\0';
     if ((ap = strchr(HostName, '.')))
         *ap = '\0';
     strcat(SockPath, "/");
@@ -354,7 +397,9 @@ main(int ac, char **av)
     signal(SIGTERM, Finit);
 #ifdef BSDJOBS
     signal(SIGTTIN, SIG_IGN);
+#ifdef SIGTTOU
     signal(SIGTTOU, SIG_IGN);
+#endif
 #endif
     InitKeytab();
     if ((n = MakeWindow(*av, av, aflag, 0, (char *)0)) == -1) {
@@ -365,7 +410,7 @@ main(int ac, char **av)
         Msg(0, "MakeWindow failed");
         exit(1);
     }
-    sprintf(rc, "%.*s/.screenrc", 245, home);
+    sprintf(rc, "%.*s/.screenrc", PATH_MAX - 11, home); /* TODO better limit for PATH_MAX */
     ReadRc(rc);                 /* need to allocate memory for win0 first */
     SetCurrWindow(n);
     HasWindow = 1;
@@ -504,18 +549,16 @@ SigHandler(void)
     return 0;
 }
 
-static int
-SigChld(void)
+static void
+SigChld(int signum)
 {
     GotSignal = 1;
-    return 0;
 }
 
-static int
-SigHup(void)
+static void
+SigHup(int signum)
 {
     Detach(0);
-    return 0;
 }
 
 static int
@@ -566,11 +609,11 @@ CheckWindows(void)
             return;
         }
     }
-    Finit();
+    Finit(0);
 }
 
-static int
-Finit(void)
+static void
+Finit(int signum)
 {
     struct win *p, **pp;
 
@@ -679,7 +722,7 @@ ProcessInput(char *buf, int len)
                         for (pp = wtab; pp < wtab + MAXWIN; ++pp)
                             if (*pp)
                                 FreeWindow(*pp);
-                        Finit();
+                        Finit(0);
                         /* NOTREACHED */
                     case KEY_DETACH:
                         p = buf;
@@ -768,7 +811,7 @@ SetCurrWindow(int n)
     return 0;
 }
 
-int
+static int
 NextWindow(void)
 {
     struct win **pp;
@@ -860,7 +903,7 @@ MakeWindow(char *prog, char **args, int aflag, int StartAt, char *dir)
         Msg(0, "No more PTYs.");
         return -1;
     }
-    fcntl(f, F_SETFL, FNDELAY);
+    fcntl(f, F_SETFL, O_NDELAY);
     if ((p = *pp = (struct win *)malloc(sizeof(struct win))) == 0) {
 
 nomem:
@@ -925,7 +968,9 @@ nomem:
         signal(SIGQUIT, SIG_DFL);
         signal(SIGTERM, SIG_DFL);
         signal(SIGTTIN, SIG_DFL);
+#ifdef SIGTTOU
         signal(SIGTTOU, SIG_DFL);
+#endif
         setuid(getuid());
         setgid(getgid());
         if (dir && chdir(dir) == -1) {
@@ -1011,7 +1056,7 @@ WriteFile(int dump)
     int i, j, k;
     char *p;
     FILE *f;
-    char fn[1024];
+    char fn[PATH_MAX];
     int pid, s;
 
     if (dump)
@@ -1253,17 +1298,16 @@ Attach(int how)
     return 0;
 }
 
-static int
-AttacherFinit(void)
+static void
+AttacherFinit(int signum)
 {
     exit(0);
 }
 
-static int
-ReAttach(void)
+static void
+ReAttach(int signum)
 {
     Attach(MSG_CONT);
-    return 0;
 }
 
 static void
@@ -1747,7 +1791,7 @@ static char *
 MakeBellMsg(int n)
 {
     static char buf[MAXSTR];
-    char *p = buf, *s = BellString;
+    char *p = buf, *s;
 
     for (s = BellString; *s && p < buf + MAXSTR - 1; s++)
         *p++ = (*s == '%') ? n + '0' : *s;
@@ -1923,25 +1967,12 @@ register len; {
 #endif
 
 int
-gethostname(char *host, int size)
+gethostname(char *host, size_t size)
 {
     strncpy(host, "elks", size);
+    host[size - 1] = '\0';
     return 0;
 }
-
-#ifndef GETPGID
-gid_t
-getpgid(pid_t pid){
-    return pid;
-}
-#endif
-
-#ifndef SETPGID
-void
-setpgid(pid_t pid)
-{
-}
-#endif
 
 static int
 enableRawMode(int fd)

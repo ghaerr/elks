@@ -15,7 +15,7 @@ char AnsiVersion[] = "ansi 2.0a (ELKS) 25-Apr-2020";
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <sys/time.h>
+#include <time.h>
 #include <string.h>
 #include <termcap.h>
 #include "screen.h"
@@ -50,6 +50,9 @@ enum move_t {
 #define ASCII        0
 
 extern char *getenv(), *tgetstr(), *tgoto();
+
+static void RedisplayLine(char *os, char *oa, char *of, int y, int from, int to);
+static void DisplayLine(char *os, char *oa, char *of, char *s, char *as, char *fs, int y, int from, int to);
 
 int rows, cols;
 int status;
