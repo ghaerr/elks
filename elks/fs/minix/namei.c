@@ -92,7 +92,7 @@ static struct buffer_head *minix_find_entry(register struct inode *dir,
     goto minix_find;
     do {
 	offset = (__u16)bo & (BLOCK_SIZE - 1);
-	if (!offset) {
+	if (!offset || !bh) {
 	    unmap_brelse(bh);
       minix_find:
 	    bh = minix_bread(dir, (__u16)(bo >> BLOCK_SIZE_BITS), 0);
@@ -351,7 +351,7 @@ static int empty_dir(register struct inode *inode)
     bo = (__u32)dirsize;
     while ((bo += dirsize) < inode->i_size) {
 	offset = (__u16)bo & (BLOCK_SIZE - 1);
-	if (!offset) {
+	if (!offset || !bh) {
 	    unmap_brelse(bh);
 	    bh = minix_bread(inode, (__u16)(bo >> BLOCK_SIZE_BITS), 0);
 	    if (!bh)
