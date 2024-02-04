@@ -14,9 +14,6 @@ CFLAGS += -Wno-maybe-uninitialized
 
 PRGS = beep
 OBJS = beep.o
-#MAPFILE = -Wl,-Map=romprWg.map
-
-#HOSTPRGS = hostromprg
 
 all: $(PRGS) $(HOSTPRGS)
 

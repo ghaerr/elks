@@ -17,7 +17,7 @@ void outb(unsigned short port, unsigned char val)
 unsigned char inb(unsigned short port)
 {
     unsigned char ret;
-    asm volatile ( "inb %1, %0" : "=a"(ret) : "Nd"(port) );
+    asm volatile( "inb %1, %0" : "=a"(ret) : "Nd"(port) );
     return ret;
 }
 #else
@@ -63,6 +63,7 @@ int main(int ac, char **av)
         duration = atoi(av[1]);
     }
 
+    signal(SIGKILL, beep_signal);
     signal(SIGINT,  beep_signal);
     signal(SIGTERM, beep_signal);
 
