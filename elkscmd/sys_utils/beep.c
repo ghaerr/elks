@@ -7,42 +7,27 @@
 #include "stdlib.h"
 #include "unistd.h"
 #include "signal.h"
-
-#if 1
-void outb(unsigned short port, unsigned char val)
-{
-    asm volatile("outb %0, %1" : : "a"(val), "Nd"(port) );
-}
-
-unsigned char inb(unsigned short port)
-{
-    unsigned char ret;
-    asm volatile( "inb %1, %0" : "=a"(ret) : "Nd"(port) );
-    return ret;
-}
-#else
 #include "arch/io.h"
-#endif
 
 static void beep(int freq)
 {
     //Set the PIT to the desired frequency
     unsigned int d = 1193180 / freq;
-    outb(0x43, 0xb6);
-    outb(0x42, (unsigned int)(d));
-    outb(0x42, (unsigned int)(d >> 8));
+    outb(0xb6, 0x43);
+    outb((unsigned int)(d), 0x42);
+    outb((unsigned int)(d >> 8), 0x42);
 
     //And play the sound using the PC speaker
     unsigned int tmp = inb(0x61);
     if (tmp != (tmp | 3)) {
-        outb(0x61, tmp | 3);
+        outb(tmp | 3, 0x61);
     }
 }
 
 static void silent()
 {
     unsigned int tmp = inb(0x61) & 0xFC;
-    outb(0x61, tmp);
+    outb(tmp, 0x61);
 }
 
 void beep_signal(int sig)
