@@ -1,5 +1,5 @@
 The ELKS kernel is licensed under the GNU General Public License version 2.
 
-Software incldued beside the ELKS kernel (i.e. elkscmd) may be under different licensing terms, but all licenses are free software licenses that are legally permissible to distribute with the GPLv2 kernel code. If you are interested in the license information for a particular component, check its subdirectory or the top of its source code file(s) for its individual licensing details.
+Software included beside the ELKS kernel (i.e. elkscmd) may be under different licensing terms, but all licenses are free software licenses that are legally permissible to distribute with the GPLv2 kernel code. If you are interested in the license information for a particular component, check its subdirectory or the top of its source code file(s) for its individual licensing details.
 
 In the unlikely event that you discover a component with unclear, contradictory, or missing license information, please email Jody Bruchon <jody@jodybruchon.com> to resolve the issue.
