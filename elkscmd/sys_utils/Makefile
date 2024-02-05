@@ -34,6 +34,7 @@ PRGS = \
 	chmem \
 	clock \
 	unreal16 \
+	beep \
 	mouse \
 	sercat \
 	console \
@@ -113,6 +114,9 @@ makeboot: makeboot.o $(TINYPRINTF)
 
 unreal.o: $(ELKS_LIB)/unreal.S
 	$(LD) -melks-libc -mcmodel=small -c $(ELKS_LIB)/unreal.S -o unreal.o
+
+beep: beep.o
+	$(LD) $(LDFLAGS) -o beep beep.o $(LDLIBS)
 
 unreal16: unreal16.o unreal.o
 	$(LD) -melks-libc -mcmodel=small -c unreal16.S -o unreal16.o

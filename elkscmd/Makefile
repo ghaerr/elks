@@ -22,7 +22,6 @@ SUBDIRS =       \
 	ash         \
 	basic       \
 	bc          \
-	beep        \
 	busyelks    \
 	disk_utils  \
 	elvis	    \
