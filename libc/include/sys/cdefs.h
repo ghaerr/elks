@@ -1,30 +1,28 @@
-
 #ifndef __SYS_CDEFS_H
 #define __SYS_CDEFS_H
-#include <features.h>
+/* compiler-specific definitions */
 
 #if __STDC__
 
 #define	__CONCAT(x,y)	x ## y
-#define	__STRING(x)	#x
-
-/* This is not a typedef so `const __ptr_t' does the right thing.  */
-#define __ptr_t void *
-#ifndef __HAS_NO_FLOATS__
-typedef long double __long_double_t;
-#endif
+#define	__STRING(x)     #x
+#define __ptr_t         void *
 
 #else
 
 #define	__CONCAT(x,y)	x/**/y
-#define	__STRING(x)	"x"
+#define	__STRING(x)     "x"
+#define __ptr_t         char *
 
-#define __ptr_t char *
-
-#ifndef __HAS_NO_FLOATS__
-typedef double __long_double_t;
 #endif
 
+#define __P(x) x        /* always ANSI C */
+
+/* don't require <stdnoreturn.h> */
+#if defined(__GNUC__)
+#define noreturn        __attribute__((__noreturn__))
+#else
+#define noreturn
 #endif
 
 /* No C++ */

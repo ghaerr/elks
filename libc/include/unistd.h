@@ -2,7 +2,6 @@
 #define __UNISTD_H
 
 #include <features.h>
-#include <stdnoreturn.h>
 #include <sys/types.h>
 #include <sys/select.h>
 
