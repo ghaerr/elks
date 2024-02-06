@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-To build ELKS, you need a GNU development environment, including:
+To build ELKS, you need a development environment on Linux or macOS, including:
 - flex
 - bison
 - texinfo
