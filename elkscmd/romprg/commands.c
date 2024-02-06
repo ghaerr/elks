@@ -6,8 +6,6 @@
 #include "common/replies.h"
 #include "version.h"
 #include "crc.h"
-#include <stdbool.h>
-
 
 void command_generate_error_reply(uint8_t err) {
   protocol_write_packet(1, &err);

@@ -15,19 +15,20 @@
 #define LONG_MAX	((long)(~0UL>>1))
 #define ULONG_MAX	(~0UL)
 
-#define wontreturn          __attribute__((__noreturn__))
+/* FIXME move compiler-specific attributes to new header file */
+#define noreturn            __attribute__((__noreturn__))
 //#define printfesque(n)    __attribute__((__format__(__gnu_printf__, n, n + 1)))
 #define printfesque(n)
 
 #define structof(p,t,m) ((t *) ((char *) (p) - offsetof (t,m)))
 
-extern void do_exit(int) wontreturn;
+extern void do_exit(int) noreturn;
 
 extern int kill_pg(pid_t,sig_t,int);
 extern int kill_sl(void);
 
-extern void halt(void) wontreturn;
-extern void panic(const char *, ...) wontreturn;
+extern void halt(void) noreturn;
+extern void panic(const char *, ...) noreturn;
 extern void printk(const char *, ...) printfesque(1);
 extern void early_putchar(int);
 

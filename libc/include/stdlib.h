@@ -3,7 +3,6 @@
 
 /* stdlib.h  <ndf@linux.mit.edu> */
 #include <features.h>
-#include <stdnoreturn.h>
 #include <sys/types.h>
 #include <malloc.h>
 
