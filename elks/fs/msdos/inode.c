@@ -167,7 +167,7 @@ static struct super_block *msdos_read_super(struct super_block *s, char *data,
 	sb->previous_cluster = 0;
 	unmap_brelse(bh);
 
-printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%ld\n",
+printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%lu,ts=%lu\n",
 	b->media, sb->cluster_size, sb->fats, sb->fat_start,
 	sb->fat_length, sb->dir_start, sb->dir_entries,
 	sb->data_start, total_sectors, b->total_sect);
