@@ -99,6 +99,10 @@
 #define MAJOR_NR        FLOPPY_MAJOR
 #include "blk.h"
 
+#ifndef CONFIG_ASYNCIO
+#error  Direct FD driver requires CONFIG_ASYNCIO
+#endif
+
 /*
  * The original 8272A doesn't have FD_DOR, FD_DIR or FD_CCR registers,
  * but the 82077 found on modern clones can be configured in hardware
@@ -127,13 +131,15 @@
 //#define DEBUG printk
 #define DEBUG(...)
 
+#define bool unsigned char      /* don't require stdbool.h yet */
+
 static void (*do_floppy)();     /* interrupt routine to call */
-static int initial_reset_flag;
-static int need_configure = 1;  /* for 82077 */
-static int reset;               /* something went wrong, reset FDC, start over */
-static int recalibrate;         /* seek errors, etc, eventually triggers recalibrate_floppy */
-static int recover;             /* recovering from hang, awakened by watchdog timer */
-static int seek;                /* set if current op needs a track change (seek) */
+static bool initial_reset_flag;
+static bool need_configure = 1; /* for 82077 */
+static bool reset;              /* something went wrong, reset FDC, start over */
+static bool recalibrate;        /* seek errors, etc, eventually triggers recalibrate_floppy */
+static bool recover;            /* recovering from hang, awakened by watchdog timer */
+static bool seek;               /* set if current op needs a track change (seek) */
 
 /* BIOS floppy motor timeout counter - FIXME leave this while BIOS driver present */
 static unsigned char __far *fl_timeout = (void __far *)0x440L;
@@ -143,7 +149,7 @@ static unsigned char __far *fl_timeout = (void __far *)0x440L;
  * with typical spinup time of .5 secs.
  */
 static unsigned char current_DOR;
-static unsigned char running = 0; /* keep track of motors already running */
+static unsigned char running;   /* keep track of motors already running */
 /*
  * Note that MAX_ERRORS=X doesn't imply that we retry every bad read
  * max X times - some types of errors increase the errorcount by 2 or
