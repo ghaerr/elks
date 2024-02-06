@@ -467,8 +467,7 @@ static void DFPROC setup_DMA(void)
     use_xms = req->rq_seg >> 16; /* will be nonzero only if XMS configured & XMS buffer */
     physaddr = (req->rq_seg << 4) + (unsigned int)req->rq_buffer;
 
-    /* FIXME req->rq_nr_sectors will be 0 for TLVC only */
-    count = req->rq_nr_sectors? (unsigned)req->rq_nr_sectors << 9: BLOCK_SIZE;
+    count = (unsigned)req->rq_nr_sectors << 9;
     if (use_xms || (physaddr + count) < physaddr)
         dma_addr = LAST_DMA_ADDR + 1;   /* force use of bounce buffer */
     else

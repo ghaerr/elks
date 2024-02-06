@@ -188,7 +188,7 @@ void rs_conout(dev_t dev, int c)
 {
     struct serial_info *sp = &ports[MINOR(dev) - RS_MINOR_OFFSET];
 
-    while (!(inb(sp->io + UART_LSR) & UART_LSR_TEMT))
+    while (!(inb(sp->io + UART_LSR) & UART_LSR_THRE))
 	continue;
     outb(c, sp->io + UART_TX);
 }
