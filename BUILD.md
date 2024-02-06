@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-To build ELKS, you need a GNU development environment, including:
+To build ELKS, you need a development environment on Linux or macOS, including:
 - flex
 - bison
 - texinfo
@@ -10,42 +10,23 @@ To build ELKS, you need a GNU development environment, including:
 - mtools-4.0.23 (for MSDOS/FAT images)
 - compress (for compressed man pages; use `sudo apt-get install ncompress`)
 
-## Quickstart
-
-A script is provided to automate the whole build process
-(cross tool chain, configuration, kernel, user land and target image),
-and make it easier for ELKS newbies:
-
-`./build.sh`
-
-Note: all the scripts must be executed within the top folder of
-the ELKS repository as the current one (= TOPDIR).
-
-If you want to clean everything up afterwards (except the cross tool chain):
-
-`./clean.sh`
-
 ## Build steps
 
 1- Create a `cross` subfolder:
 
 `mkdir cross`
 
-2- Build the cross tool chain, mainly based on a recent GCC-IA16
-(DEV86 including BCC was used for previous versions, but has been
-dropped because it was obsolete and no longer maintained):
+2- Build the cross tool chain, mainly based on GCC-IA16. This
+step is quite long, but only needs to be done once:
 
 `tools/build.sh`
 
-Ubuntu 18.04 LTS users: as this step is quite long,
-you can download an already built cross folder from here:
-https://github.com/elks-org/elks/actions?query=workflow%3Across
-
 3- Set up your environment (PATH, TOPDIR and CROSSDIR):
 
-`. ./env.sh` (note the '.' before the script)
+`. ./env.sh` (note the '.' before the script, or use `source ./env.sh` for csh)
 
-4- Configure the kernel, the user land and the target image format:
+4- Configure the kernel, the user land and the target image format. This
+creates the configuration file .config:
 
 `make menuconfig`
 
@@ -69,8 +50,21 @@ step 4 after cleaning only the kernel, the user land and the image:
 
 `make clean`
 
+To clean the kernel build objects only, `make kclean` can be used.
+
 8- One can also build ELKS distribution images for the entire suite of
 supported floppy formats and hard disks (with and without MBRs) for both
 MINIX and MSDOS FAT format. To create these images, use the following:
 
 `cd image; make images`
+
+## GitHub Continuous Integration
+
+A script is provided to automate the whole build process
+(cross tool chain, configuration, kernel, user land and target image),
+which is run by GitHub on PRs and pushes:
+
+`./build.sh`
+
+Note: all the scripts must be executed within the top folder of
+the ELKS repository as the current one (= TOPDIR).
