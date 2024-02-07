@@ -1,12 +1,10 @@
+#ifndef __LINUXMT_ERRNO_H
+#define __LINUXMT_ERRNO_H
+
 /* errno.h here is taken from the one in the Linux 2.5.5 kernel release.
  * It consists of the include/linux/errno.h and include/asm/errno.h files
  * combined into a single file.
  */
-
-#ifndef __LINUXMT_ERRNO_H
-#define __LINUXMT_ERRNO_H
-
-/*@-namechecks@*/
 
 /*****************************************************************************/
 
@@ -182,7 +180,5 @@
 #endif
 
 /*****************************************************************************/
-
-/*@+namechecks@*/
 
 #endif

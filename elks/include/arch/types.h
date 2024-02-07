@@ -1,7 +1,7 @@
-/* arch/i86/include/asm/types.h - Basic Linux/MT data types. */
-
 #ifndef __ARCH_8086_TYPES_H
 #define __ARCH_8086_TYPES_H
+
+/* arch/i86/include/asm/types.h - Basic Linux/MT data types. */
 
 /* First we define all of the __u and __s types...*/
 
@@ -49,4 +49,4 @@ struct uregs {
 #define NULL        ((void *) 0)
 #endif
 
-#endif /* !__ARCH_8086_TYPES_H */
+#endif

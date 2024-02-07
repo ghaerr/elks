@@ -30,5 +30,4 @@
 #define DEV_TTYS0   MKDEV(TTY_MAJOR, 64)
 #define DEV_TTYS1   MKDEV(TTY_MAJOR, 65)
 
-
-#endif /* !__LINUXMT_DEVNUM_H */
+#endif

@@ -52,6 +52,6 @@ void heap_init ();
 
 #ifdef HEAP_DEBUG
 void heap_iterate (void (* cb) (heap_s * h));
-#endif /* HEAP_DEBUG */
+#endif
 
 #endif
