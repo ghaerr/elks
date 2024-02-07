@@ -54,5 +54,4 @@
 #define ATHD_MAJOR        5  /* experimental*/
 #define ROMFLASH_MAJOR    6
 
-
-#endif  /* !__LINUXMT_MAJOR_H */
+#endif

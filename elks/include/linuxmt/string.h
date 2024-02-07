@@ -4,8 +4,6 @@
 #include <linuxmt/types.h>
 #include <stddef.h>
 
-/*@-namechecks@*/
-
 /* The following prototypes all match the current GNU manpage prototypes.
  * It is still to be confirmed whether these also match the declarations
  * and the usage made thereof.
@@ -38,8 +36,6 @@ extern char *strstr(char *,char *);
 extern void *memscan(void *,int,size_t);
 extern long simple_strtol(const char *,int);
 extern int atoi(const char *);
-
-/*@+namechecks@*/
 
 /*
  * Include machine specific routines

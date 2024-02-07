@@ -116,7 +116,6 @@ sh_utils/xargs                  :shutil                 :1200k
 sh_utils/yes                    :shutil             :720k
 misc_utils/compress             :miscutil                       :1440k
 misc_utils/miniterm             :miscutil           :720k
-misc_utils/fdtest               :miscutil               :1200k
 misc_utils/tar                  :miscutil               :1200k
 misc_utils/od                   :miscutil               :1200k
 misc_utils/hd                   :miscutil               :1200k
@@ -187,6 +186,7 @@ inet/urlget/urlget :::ftpput    :net
 inet/urlget/urlget :::httpget   :net
 bc/bc                           :other
 test/libc/test_libc             :test
+test/other/test_fd              :test
 test/other/test_float           :test
 #nano/nano-2.0.6/src/nano       :other                  :1440k
 #mtools/mcopy                   :other

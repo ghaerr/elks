@@ -31,13 +31,9 @@ typedef struct segment segment_s;
 
 #include <linuxmt/kernel.h>
 
-/*@-namechecks@*/
-
 void memcpy_fromfs(void *,void *,size_t);
 void memcpy_tofs(void *,void *,size_t);
 int strlen_fromfs(void *,size_t);
-
-/*@+namechecks@*/
 
 #define VERIFY_READ 0
 #define VERIFY_WRITE 1
@@ -68,5 +64,6 @@ void seg_free_pid(pid_t pid);
 
 void mm_get_usage (unsigned int * free, unsigned int * used);
 
-#endif // __KERNEL__
-#endif // !__LINUXMT_MM_H
+#endif /* __KERNEL__ */
+
+#endif

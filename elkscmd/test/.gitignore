@@ -1,6 +1,7 @@
 libc/test_libc
 other/test_exit
 other/test_eth
+other/test_fd
 other/test_float
 other/test_pty
 other/test_select

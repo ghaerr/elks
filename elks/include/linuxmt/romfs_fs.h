@@ -1,7 +1,7 @@
-/* ROMFS - A tiny read-only filesystem in memory */
-
 #ifndef _LINUXMT_ROMFS_FS_H
 #define _LINUXMT_ROMFS_FS_H
+
+/* ROMFS - A tiny read-only filesystem in memory */
 
 #define ROMFS_MAGIC 0x7275
 #define ROMFS_MAGIC_STR "ROMFS"
@@ -48,4 +48,4 @@ struct romfs_inode_info {
        word_t seg;     /* inode segment */
 };
 
-#endif  /* !_LINUXMT_ROMFS_FS_H */
+#endif

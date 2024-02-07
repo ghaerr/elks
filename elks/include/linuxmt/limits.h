@@ -45,4 +45,4 @@
 
 #define MAX_PACKET_ETH 1536     /* Max packet size, 6 blocks of 256 bytes */
 
-#endif /* !__LINUXMT_LIMITS_H */
+#endif
