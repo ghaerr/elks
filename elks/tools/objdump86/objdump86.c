@@ -13,11 +13,7 @@
  */
 
 #include <stdio.h>
-#ifdef __STDC__
 #include <stdlib.h>
-#else
-#include <malloc.h>
-#endif
 #include <string.h>
 
 /* config.h - configuration for linker */
