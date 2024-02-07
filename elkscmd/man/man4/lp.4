@@ -1,0 +1,27 @@
+.TH LP 4
+.SH NAME
+lp \- Driver for the IEEE 1284 parallel port
+.SH SYNOPSIS
+The
+.B lp
+device refers to the ELKS driver for the IEEE 1284 parallel port.  The driver
+currently implements SPP in polling mode, which can support a line printer. Any
+byte written to this device is printed.  Only one process may have the device
+open.
+.PP
+The
+.B write (2)
+call may return with a smaller count then the number of bytes requested to
+write.  The next write call is then likely to fail with the error code
+.B ENOSPC
+if the printer is out of paper, or
+.B EIO
+if the printer is offline, or
+.B EFAULT
+if some other error with the printer.
+.SH FILES
+.TP 10
+/dev/lp
+Parallel port device.
+.SH "SEE ALSO"
+.BR lp (1).
