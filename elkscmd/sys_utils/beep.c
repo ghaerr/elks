@@ -3,31 +3,56 @@
  * Free software "as-is"
  * Takes one optional parameter: the beep duration
  */
+#include <autoconf.h>           /* for CONFIG_ options */
 #include "stdio.h"
 #include "stdlib.h"
 #include "unistd.h"
 #include "signal.h"
 #include "arch/io.h"
+#include "arch/ports.h"
 
 static void beep(int freq)
 {
-    //Set the PIT to the desired frequency
-    unsigned int d = 1193180 / freq;
-    outb(0xb6, 0x43);
-    outb((unsigned int)(d), 0x42);
-    outb((unsigned int)(d >> 8), 0x42);
+#ifdef CONFIG_ARCH_PC98
+    unsigned int d;
+    unsigned char __far *sysc;
+    sysc = (unsigned char __far *) 0x501;
+    if (*sysc & 0x80) {
+        //Set the PIT to the desired frequency for 8MHz system
+        d = 1996800 / freq;
+    } else {
+        //Set the PIT to the desired frequency for 5MHz system
+        d = 2457600 / freq;
+    }
+    outb(0x76, TIMER_CMDS_PORT);
+    outb((unsigned int)(d), TIMER1_PORT);
+    outb((unsigned int)(d >> 8), TIMER1_PORT);
 
     //And play the sound using the PC speaker
-    unsigned int tmp = inb(0x61);
+    outb(0x06, PORTC_CONTROL);
+#else
+    //Set the PIT to the desired frequency
+    unsigned int d = 1193180 / freq;
+    outb(0xb6, TIMER_CMDS_PORT);
+    outb((unsigned int)(d), TIMER2_PORT);
+    outb((unsigned int)(d >> 8), TIMER2_PORT);
+
+    //And play the sound using the PC speaker
+    unsigned int tmp = inb(SPEAKER_PORT);
     if (tmp != (tmp | 3)) {
-        outb(tmp | 3, 0x61);
+        outb(tmp | 3, SPEAKER_PORT);
     }
+#endif
 }
 
 static void silent()
 {
-    unsigned int tmp = inb(0x61) & 0xFC;
-    outb(tmp, 0x61);
+#ifdef CONFIG_ARCH_PC98
+    outb(0x07, PORTC_CONTROL);
+#else
+    unsigned int tmp = inb(SPEAKER_PORT) & 0xFC;
+    outb(tmp, SPEAKER_PORT);
+#endif
 }
 
 void beep_signal(int sig)
