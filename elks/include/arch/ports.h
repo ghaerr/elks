@@ -56,6 +56,10 @@
 #define TIMER_DATA_PORT 0x71		/* data port    */
 #define TIMER_IRQ	0		/* can't change*/
 
+/* bell*/
+#define TIMER1_PORT 0x3FDB		/* timer 1 data port for speaker frequency*/
+#define PORTC_CONTROL 0x37		/* 8255A Port C control*/
+
 /* serial, serial-pc98.c*/
 #define TIMER2_PORT	0x75		/* timer 2 data port for serial port*/
 
