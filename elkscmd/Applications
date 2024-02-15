@@ -140,7 +140,8 @@ minix1/cut                      :be-minix1          :720k
 #minix1/cksum                   :be-minix1              :1200k
 minix1/du                       :be-minix1              :1200k
 #minix2/env                     :minix2                 :1200k
-#minix2/lp                      :minix2                 :1200k
+minix2/lp                       :minix2                 :1200k
+minix2/lpd                      :minix2                 :1200k
 #minix2/pwdauth                 :minix2                         :1440k
 minix2/remsync                  :other
 minix2/synctree                 :other

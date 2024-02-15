@@ -6,7 +6,7 @@
 #include <paths.h>
 
 static void
-tryrun(char *pname, char **argv, char **envp)
+tryrun(const char *pname, char **argv, char **envp)
 {
    struct stat st;
 
@@ -17,7 +17,7 @@ tryrun(char *pname, char **argv, char **envp)
 }
 
 int
-execvpe(char *fname, char **argv, char **envp)
+execvpe(const char *fname, char **argv, char **envp)
 {
    char *pname = fname, *path;
    int besterr = ENOENT;
