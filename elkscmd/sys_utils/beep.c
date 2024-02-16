@@ -69,15 +69,28 @@ void beep_signal(int sig)
 int main(int ac, char **av)
 {
     long duration = 333L;
+    int freq = 1000;
+    int i;
     if(ac >= 2) {
-        duration = atoi(av[1]);
+         for(i = 1; i < ac; i++) {
+              if(av[i][0] = '-') {
+                   switch(av[i][1]) {
+                   case 'f':                    /* Frequency */
+                       freq = atoi(&av[i][2]);
+                       break;
+                   case 'l':                    /* Duration in millisecond */
+                       duration = atoi(&av[i][2]);
+                       break;
+                   }
+              }
+         }
     }
 
     signal(SIGKILL, beep_signal);
     signal(SIGINT,  beep_signal);
     signal(SIGTERM, beep_signal);
 
-    beep(1000);
+    beep(freq);
     usleep(duration * 1000L);
     silent();
 
