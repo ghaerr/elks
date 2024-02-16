@@ -11,7 +11,7 @@
 #include "arch/io.h"
 #include "arch/ports.h"
 
-static void beep(int freq)
+static void beep(unsigned int freq)
 {
 #ifdef CONFIG_ARCH_PC98
     unsigned int d;
@@ -76,10 +76,10 @@ int main(int ac, char **av)
               if(av[i][0] == '-') {
                    switch(av[i][1]) {
                    case 'f':                    /* Frequency */
-                       freq = atoi(&av[i][2]);
+                       freq = atol(&av[i][2]);
                        break;
                    case 'l':                    /* Duration in millisecond */
-                       duration = atoi(&av[i][2]);
+                       duration = atol(&av[i][2]);
                        break;
                    }
               }
