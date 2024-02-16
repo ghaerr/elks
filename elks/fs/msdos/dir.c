@@ -97,7 +97,7 @@ int FATPROC msdos_get_entry_long(
 	if ((int)*pos & (sizeof(struct msdos_dir_entry) - 1)) return -ENOENT;
 	is_long = 0;
 	*ino = msdos_get_entry(dir,pos,bh,&de);
-	debug_fat("get_entry_long block %lu\n", (*bh)->b_blocknr);
+	debug_fat("get_entry_long block %lu\n", EBH(*bh)->b_blocknr);
 	while (*ino != (ino_t)-1L) {
 		if (de->name[0] == 0) {		/* empty  entry and stop reading*/
 			break;
