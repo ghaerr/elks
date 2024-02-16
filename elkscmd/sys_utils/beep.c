@@ -73,7 +73,7 @@ int main(int ac, char **av)
     int i;
     if(ac >= 2) {
          for(i = 1; i < ac; i++) {
-              if(av[i][0] = '-') {
+              if(av[i][0] == '-') {
                    switch(av[i][1]) {
                    case 'f':                    /* Frequency */
                        freq = atoi(&av[i][2]);
