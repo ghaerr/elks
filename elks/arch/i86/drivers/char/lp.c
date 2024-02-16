@@ -20,7 +20,7 @@
 #include <arch/io.h>
 
 struct lp_info {
-    char *io;
+    unsigned short io;
     char flags;
 };
 
@@ -33,9 +33,9 @@ static struct lp_info ports[LP_PORTS];
 
 /* Probe the standard ports. */
 static struct lp_info ports[LP_PORTS] = {
-    {(char*)0x3BC, 0},
-    {(char*)0x378, 0},
-    {(char*)0x278, 0},
+    {0x3BC, 0},
+    {0x378, 0},
+    {0x278, 0},
 };
 
 #endif
@@ -213,7 +213,7 @@ lp_init(void)
     /* only ports 0, 1, 2 and 3 may exist according to RB's intlist */
     for (i = 0; i < LP_PORTS; i++) {
         /* 8 is offset for LPT info, 2 bytes for each entry */
-        lp->io = (char *)peekw(2 * i + 8, 0x40);
+        lp->io = peekw(2 * i + 8, 0x40);
         /* returns 0 if port wasn't detected by BIOS at bootup */
         if (!lp->io)
             break;              /* there can be no more ports */
