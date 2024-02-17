@@ -11,7 +11,7 @@
 #include "arch/io.h"
 #include "arch/ports.h"
 
-static void beep(unsigned int freq)
+static void beep(long freq)
 {
 #ifdef CONFIG_ARCH_PC98
     unsigned int d;
@@ -19,10 +19,10 @@ static void beep(unsigned int freq)
     sysc = (unsigned char __far *) 0x501;
     if (*sysc & 0x80) {
         //Set the PIT to the desired frequency for 8MHz system
-        d = 1996800 / freq;
+        d = 1996800L / freq;
     } else {
         //Set the PIT to the desired frequency for 5MHz system
-        d = 2457600 / freq;
+        d = 2457600L / freq;
     }
     outb(0x76, TIMER_CMDS_PORT);
     outb((unsigned int)(d), TIMER1_PORT);
@@ -32,7 +32,7 @@ static void beep(unsigned int freq)
     outb(0x06, PORTC_CONTROL);
 #else
     //Set the PIT to the desired frequency
-    unsigned int d = 1193180 / freq;
+    unsigned int d = 1193180L / freq;
     outb(0xb6, TIMER_CMDS_PORT);
     outb((unsigned int)(d), TIMER2_PORT);
     outb((unsigned int)(d >> 8), TIMER2_PORT);
@@ -69,7 +69,7 @@ void beep_signal(int sig)
 int main(int ac, char **av)
 {
     long duration = 333L;
-    int freq = 1000;
+    long freq = 1000L;
     int i;
     if(ac >= 2) {
          for(i = 1; i < ac; i++) {
