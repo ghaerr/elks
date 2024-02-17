@@ -70,29 +70,37 @@ int main(int ac, char **av)
 {
     long duration = 333L;
     long freq = 1000L;
-    int i;
-    if(ac >= 2) {
-         for(i = 1; i < ac; i++) {
-              if(av[i][0] == '-') {
-                   switch(av[i][1]) {
-                   case 'f':                    /* Frequency */
-                       freq = atol(&av[i][2]);
-                       break;
-                   case 'l':                    /* Duration in millisecond */
-                       duration = atol(&av[i][2]);
-                       break;
-                   }
-              }
-         }
-    }
+    int nbeep;
+    int i = 1;
 
-    signal(SIGKILL, beep_signal);
-    signal(SIGINT,  beep_signal);
-    signal(SIGTERM, beep_signal);
+    do {
+        nbeep = 0;
+        while (ac >= 2 && !nbeep) {
+            if(av[i][0] == '-') {
+                switch(av[i][1]) {
+                case 'f':                    /* Frequency */
+                    freq = atol(&av[i][2]);
+                    break;
+                case 'l':                    /* Duration in millisecond */
+                    duration = atol(&av[i][2]);
+                    break;
+                case 'n':
+                    nbeep = 1;
+                    break;
+                }
+            }
+            i++;
+            ac--;
+        }
 
-    beep(freq);
-    usleep(duration * 1000L);
-    silent();
+        signal(SIGKILL, beep_signal);
+        signal(SIGINT,  beep_signal);
+        signal(SIGTERM, beep_signal);
+
+        beep(freq);
+        usleep(duration * 1000L);
+        silent();
+    } while (nbeep);
 
     return 0;
 }
