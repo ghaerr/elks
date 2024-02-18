@@ -1,7 +1,14 @@
 /* beep - This file is part of the ELKS project
- * authors: Florian Zimmermann et al.
+ * authors: Florian Zimmermann, Takahiro Yamada et al.
  * Free software "as-is"
- * Takes one optional parameter: the beep duration
+ *
+ * By default (no parameters) one beep is output, 
+ * this can be adjusted by using parameters that can be consecutives of each:
+ * -f frequency as digit
+ * -l length as digit in milliseconds
+ * -n (to indicate the next beep)
+ *
+ * Happy Birthday example: beep -f1059 -l300 -n -f1059 -l200 -n -f1188 -l500 -n -f1059 -l500 -n -f1413 -l500 -n -f1334 -l950 -n -f1059 -l300 -n -f1059 -l200 -n -f1188 -l500 -n -f1059 -l500 -n -f1587 -l500 -n -f1413 -l950 -n -f1059 -l300 -n -f1059 -l200 -n -f2118 -l500 -n -f1781 -l500 -n -f1413 -l500 -n -f1334 -l500 -n -f1188 -l500 -n -f1887 -l300 -n -f1887 -l200 -n -f1781 -l500 -n -f1413 -l500 -n -f1587 -l500 -n -f1413 -l900
  */
 #include <autoconf.h>           /* for CONFIG_ options */
 #include "stdio.h"
@@ -58,7 +65,6 @@ static void silent()
 void beep_signal(int sig)
 {
     switch(sig) {
-	case SIGKILL: /* I'm falling */
 	case SIGTERM: /* I'm falling */
         case SIGINT:
             silent();
@@ -93,7 +99,6 @@ int main(int ac, char **av)
             ac--;
         }
 
-        signal(SIGKILL, beep_signal);
         signal(SIGINT,  beep_signal);
         signal(SIGTERM, beep_signal);
 
