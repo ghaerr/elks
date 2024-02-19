@@ -101,7 +101,7 @@ struct minix_fs_dat *new_fs(const char *fn,int magic,unsigned long fsize,int ino
   ZMAPS(fs)=UPPER(fsize-(1+IMAPS(fs)), BITS_PER_BLOCK);
   FIRSTZONE(fs) = NORM_FIRSTZONE(fs);
   debug("IMAPS %u, ZMAPS %u, FIRST %u\n", IMAPS(fs), ZMAPS(fs), FIRSTZONE(fs));
-  if (IMAPS(fs) > MINIX_I_MAP_SLOTS)
+  if (!VERSION_2(fs) && IMAPS(fs) > MINIX_I_MAP_SLOTS)
     fatalmsg("Too many inodes requested: max is 32736\n");
 
   fs->inode_bmap = domalloc(IMAPS(fs) * BLOCK_SIZE,0xff);
