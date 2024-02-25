@@ -150,6 +150,9 @@ CONFIG_PSEUDO_TTY=y
 # Network device drivers
 #
 CONFIG_ETH=y
+CONFIG_ETH_NE2K=y
+CONFIG_ETH_WD=y
+CONFIG_ETH_EL3=y
 
 #
 # Userland
