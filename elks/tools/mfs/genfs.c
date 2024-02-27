@@ -466,8 +466,11 @@ void cmd_genfs(char *filename, int argc,char **argv) {
   if (p)
 	  p++;
   else p = dirname;
-  prefix = p - dirname + strlen(p);		/* skip template dir*/
-  if (opt_verbose) printf("Generating filesystem from %s\n", dirname);
+  prefix = p - dirname;                         /* keep template dir if starts with ./ */
+  if (prefix != 2 || dirname[0] != '.')
+        prefix = p - dirname + strlen(p);       /* skip template dir*/
+  if (opt_verbose) printf("Generating filesystem from %s to /%s\n",
+        dirname, dirname+prefix);
   numblocks = 2;			/* root inode and first mkdir*/
   list_init(&inodes);
   inode_build_t  *root_node = inode_alloc(NULL, dirname);
@@ -505,20 +508,15 @@ void cmd_genfs(char *filename, int argc,char **argv) {
  */
 void cmd_addfs(char *filename, int argc,char **argv) {
   struct minix_fs_dat *fs;
-  char *p;
   int err;
-  char dirname[256];
+  char *dirname;
 
   argv++; argc--;
   if (argc != 2) fatalmsg("Usage: addfs <file_of_filenames> <root_template>");
 
-  strcpy(dirname, argv[1]);
-  p = strrchr(dirname, '/');
-  if (p)
-	  p++;
-  else p = dirname;
-  prefix = p - dirname + strlen(p);		/* skip template dir*/
-  if (opt_verbose) printf("Adding files from %s\n", dirname);
+  dirname = argv[1];
+  prefix = 0;
+  if (opt_verbose) printf("Adding files from %s to %s\n", argv[0], dirname);
   numblocks = 2;			/* root inode and first mkdir*/
   list_init(&inodes);
   inode_build_t  *root_node = inode_alloc(NULL, dirname);
