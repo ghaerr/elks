@@ -532,8 +532,6 @@ readDosDirSection(int f, struct bootblock *boot, struct fatEntry *fat,
 	u_int lidx = 0;
 	int shortSum;
 	int mod = FSOK;
-	int n_count=0;
-	int rc=0;
 #define	THISMOD	0x8000			/* Only used within this routine */
 
 	cl = dir->head;
@@ -545,8 +543,6 @@ readDosDirSection(int f, struct bootblock *boot, struct fatEntry *fat,
 	}
 	shortSum = -1;
 	vallfn = invlfn = empty = NULL;
-	int dot,dotdot;
-	dot = dotdot = 0;
 
 	do {
 		if (!(boot->flags & FAT32) && !dir->parent) {
