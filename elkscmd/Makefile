@@ -24,6 +24,7 @@ SUBDIRS =       \
 	bc          \
 	busyelks    \
 	disk_utils  \
+	fsck_dos    \
 	elvis	    \
 	file_utils  \
 	inet        \
