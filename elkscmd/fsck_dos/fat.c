@@ -44,8 +44,8 @@ static const char rcsid[] =
 #include <stdio.h>
 #include <unistd.h>
 
-#include "ext.h"
 #include "fsutil.h"
+#include "ext.h"
 
 static int checkclnum(struct bootblock *, int, cl_t, cl_t *);
 static int clustdiffer(cl_t, cl_t *, cl_t *, int);
@@ -85,7 +85,7 @@ checkdirty(int fs, struct bootblock *boot)
 
 	buffer = malloc(boot->BytesPerSec);
 	if (buffer == NULL) {
-		perror("No space for FAT");
+		perror("No space for FAT (1)");
 		return 1;
 	}
 
@@ -175,7 +175,7 @@ _readfat(int fs, struct bootblock *boot, int no, u_char **buffer)
 
 	*buffer = malloc(boot->FATsecs * boot->BytesPerSec);
 	if (*buffer == NULL) {
-		perror("No space for FAT");
+		perror("No space for FAT (2)");
 		return 0;
 	}
 
@@ -218,7 +218,7 @@ readfat(int fs, struct bootblock *boot, int no, struct fatEntry **fp)
 		
 	fat = calloc(boot->NumClusters, sizeof(struct fatEntry));
 	if (fat == NULL) {
-		perror("No space for FAT");
+		perror("No space for FAT (3)");
 		free(buffer);
 		return FSFATAL;
 	}
@@ -287,7 +287,7 @@ readfat(int fs, struct bootblock *boot, int no, struct fatEntry **fp)
 		switch (boot->ClustMask) {
 		case CLUST32_MASK:
 			fat[cl].next = p[0] + (p[1] << 8)
-				       + (p[2] << 16) + (p[3] << 24);
+				       + ((U32)p[2] << 16) + ((U32)p[3] << 24);
 			fat[cl].next &= boot->ClustMask;
 			ret |= checkclnum(boot, no, cl, &fat[cl].next);
 			cl++;
@@ -561,7 +561,7 @@ writefat(int fs, struct bootblock *boot, struct fatEntry *fat, int correct_fat)
 
 	buffer = malloc(fatsz = boot->FATsecs * boot->BytesPerSec);
 	if (buffer == NULL) {
-		perror("No space for FAT");
+		perror("No space for FAT (4)");
 		return FSFATAL;
 	}
 	memset(buffer, 0, fatsz);

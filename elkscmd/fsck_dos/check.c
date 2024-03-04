@@ -45,8 +45,8 @@ static const char rcsid[] =
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "ext.h"
 #include "fsutil.h"
+#include "ext.h"
 
 /*
  * If the FAT > this size then skip comparing, lest we risk
@@ -100,7 +100,9 @@ checkfilesys(const char *fname)
 		goto out;
 	}
 
+#ifndef ELKS
         if (((boot.FATsecs * boot.BytesPerSec) / 1024) > FAT_COMPARE_MAX_KB)
+#endif
             skip_fat_compare = 1;
 
 	if (!quiet)  {

@@ -50,8 +50,8 @@ static const char rcsid[] =
 
 #include <sys/param.h>
 
-#include "ext.h"
 #include "fsutil.h"
+#include "ext.h"
 
 #define	SLOT_EMPTY	0x00		/* slot has never been used */
 #define	SLOT_E5		0x05		/* the real value is 0xe5 */
@@ -736,8 +736,8 @@ readDosDirSection(int f, struct bootblock *boot, struct fatEntry *fat,
 			}
 			dirent.head = p[26] | (p[27] << 8);
 			if (boot->ClustMask == CLUST32_MASK)
-				dirent.head |= (p[20] << 16) | (p[21] << 24);
-			dirent.size = p[28] | (p[29] << 8) | (p[30] << 16) | (p[31] << 24);
+				dirent.head |= ((U32)p[20] << 16) | ((U32)p[21] << 24);
+			dirent.size = p[28] | (p[29] << 8) | ((U32)p[30] << 16) | ((U32)p[31] << 24);
 			if (vallfn) {
 				strcpy(dirent.lname, longName);
 				longName[0] = '\0';
