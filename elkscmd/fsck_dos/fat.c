@@ -149,7 +149,7 @@ checkclnum(struct bootblock *boot, int fat, cl_t cl, cl_t *next)
 	}
 	if (*next < CLUST_FIRST
 	    || (*next >= boot->NumClusters && *next < CLUST_EOFS)) {
-		pwarn("Cluster %u in FAT %d continues with %s cluster number %u\n",
+		pwarn("Cluster %lu in FAT %d continues with %s cluster number %lu\n",
 		      cl, fat,
 		      *next < CLUST_RSRVD ? "out of range" : "reserved",
 		      *next&boot->ClustMask);
@@ -170,7 +170,7 @@ _readfat(int fs, struct bootblock *boot, int no, u_char **buffer)
 {
 	off_t off;
 
-        printf("Attempting to allocate %u KB for FAT\n",
+        printf("Attempting to allocate %lu KB for FAT\n",
                 (boot->FATsecs * boot->BytesPerSec) / 1024);
 
 	*buffer = malloc(boot->FATsecs * boot->BytesPerSec);
@@ -341,7 +341,7 @@ clustdiffer(cl_t cl, cl_t *cp1, cl_t *cp2, int fatnum)
 			if ((*cp1 != CLUST_FREE && *cp1 < CLUST_BAD
 			     && *cp2 != CLUST_FREE && *cp2 < CLUST_BAD)
 			    || (*cp1 > CLUST_BAD && *cp2 > CLUST_BAD)) {
-				pwarn("Cluster %u is marked %s with different indicators\n",
+				pwarn("Cluster %lu is marked %s with different indicators\n",
 				      cl, rsrvdcltype(*cp1));
 				if (ask(1, "Fix")) {
 					*cp2 = *cp1;
@@ -349,7 +349,7 @@ clustdiffer(cl_t cl, cl_t *cp1, cl_t *cp2, int fatnum)
 				}
 				return FSFATAL;
 			}
-			pwarn("Cluster %u is marked %s in FAT 0, %s in FAT %d\n",
+			pwarn("Cluster %lu is marked %s in FAT 0, %s in FAT %d\n",
 			      cl, rsrvdcltype(*cp1), rsrvdcltype(*cp2), fatnum);
 			if (ask(1, "Use FAT 0's entry")) {
 				*cp2 = *cp1;
@@ -361,7 +361,7 @@ clustdiffer(cl_t cl, cl_t *cp1, cl_t *cp2, int fatnum)
 			}
 			return FSFATAL;
 		}
-		pwarn("Cluster %u is marked %s in FAT 0, but continues with cluster %u in FAT %d\n",
+		pwarn("Cluster %lu is marked %s in FAT 0, but continues with cluster %lu in FAT %d\n",
 		      cl, rsrvdcltype(*cp1), *cp2, fatnum);
 		if (ask(1, "Use continuation from FAT %d", fatnum)) {
 			*cp1 = *cp2;
@@ -374,7 +374,7 @@ clustdiffer(cl_t cl, cl_t *cp1, cl_t *cp2, int fatnum)
 		return FSFATAL;
 	}
 	if (*cp2 == CLUST_FREE || *cp2 >= CLUST_RSRVD) {
-		pwarn("Cluster %u continues with cluster %u in FAT 0, but is marked %s in FAT %d\n",
+		pwarn("Cluster %lu continues with cluster %lu in FAT 0, but is marked %s in FAT %d\n",
 		      cl, *cp1, rsrvdcltype(*cp2), fatnum);
 		if (ask(1, "Use continuation from FAT 0")) {
 			*cp2 = *cp1;
@@ -386,7 +386,7 @@ clustdiffer(cl_t cl, cl_t *cp1, cl_t *cp2, int fatnum)
 		}
 		return FSERROR;
 	}
-	pwarn("Cluster %u continues with cluster %u in FAT 0, but with cluster %u in FAT %d\n",
+	pwarn("Cluster %lu continues with cluster %lu in FAT 0, but with cluster %lu in FAT %d\n",
 	      cl, *cp1, *cp2, fatnum);
 	if (ask(1, "Use continuation from FAT 0")) {
 		*cp2 = *cp1;
@@ -433,7 +433,7 @@ clearchain(struct bootblock *boot, struct fatEntry *fat, cl_t head)
 int
 tryclear(struct bootblock *boot, struct fatEntry *fat, cl_t head, cl_t *trunc)
 {
-	if (ask(1, "Clear chain starting at %u", head)) {
+	if (ask(1, "Clear chain starting at %lu", head)) {
 		clearchain(boot, fat, head);
 		return FSFATMOD;
 	} else if (ask(1, "Truncate")) {
@@ -470,7 +470,7 @@ checkfat(struct bootblock *boot, struct fatEntry *fat)
 			 p = fat[p].next) {
 				/* we have to check the len, to avoid infinite loop */
 				if (len > boot->NumClusters) {
-					printf("detect cluster chain loop: head %u for p %u\n", head, p);
+					printf("detect cluster chain loop: head %lu for p %lu\n", head, p);
 					break;
 			}
 
@@ -505,21 +505,21 @@ checkfat(struct bootblock *boot, struct fatEntry *fat)
 			continue;
 
 		if (n == CLUST_FREE || n >= CLUST_RSRVD) {
-			pwarn("Cluster chain starting at %u ends with cluster marked %s\n",
+			pwarn("Cluster chain starting at %lu ends with cluster marked %s\n",
 			      head, rsrvdcltype(n));
 			ret |= tryclear(boot, fat, head, &fat[p].next);
 			continue;
 		}
 		if (n < CLUST_FIRST || n >= boot->NumClusters) {
-			pwarn("Cluster chain starting at %u ends with cluster out of range (%u)\n",
+			pwarn("Cluster chain starting at %lu ends with cluster out of range (%lu)\n",
 			      head, n);
 			ret |= tryclear(boot, fat, head, &fat[p].next);
 			continue;
 		}
-		pwarn("Cluster chains starting at %u and %u are linked at cluster %u\n",
+		pwarn("Cluster chains starting at %lu and %lu are linked at cluster %lu\n",
 		      head, fat[n].head, n);
 		conf = tryclear(boot, fat, head, &fat[p].next);
-		if (ask(1, "Clear chain starting at %u", h = fat[n].head)) {
+		if (ask(1, "Clear chain starting at %lu", h = fat[n].head)) {
 			if (conf == FSERROR) {
 				/*
 				 * Transfer the common chain to the one not cleared above.
@@ -673,7 +673,7 @@ checklost(int dosfs, struct bootblock *boot, struct fatEntry *fat)
 		    || (fat[head].flags & FAT_USED))
 			continue;
 
-		pwarn("Lost cluster chain at cluster %u\n%d Cluster(s) lost\n",
+		pwarn("Lost cluster chain at cluster %lu\n%ld Cluster(s) lost\n",
 		      head, fat[head].length);
 		mod |= ret = reconnect(dosfs, boot, fat, head);
 		if (mod & FSFATAL) {
@@ -694,7 +694,7 @@ checklost(int dosfs, struct bootblock *boot, struct fatEntry *fat)
 	if (boot->FSInfo) {
 		ret = 0;
 		if (boot->FSFree != boot->NumFree) {
-			pwarn("Free space in FSInfo block (%d) not correct (%d)\n",
+			pwarn("Free space in FSInfo block (%ld) not correct (%d)\n",
 			      boot->FSFree, boot->NumFree);
 			if (ask(1, "Fix")) {
 				boot->FSFree = boot->NumFree;
@@ -704,7 +704,7 @@ checklost(int dosfs, struct bootblock *boot, struct fatEntry *fat)
 
 		if (boot->NumFree) {
 			if ((boot->FSNext >= boot->NumClusters) || (fat[boot->FSNext].next != CLUST_FREE)) {
-				pwarn("Next free cluster in FSInfo block (%u) not free\n",
+				pwarn("Next free cluster in FSInfo block (%lu) not free\n",
 				      boot->FSNext);
 				if (ask(1, "Fix"))
 					for (head = CLUST_FIRST; head < boot->NumClusters; head++)
@@ -717,13 +717,13 @@ checklost(int dosfs, struct bootblock *boot, struct fatEntry *fat)
         }
 
 		if (boot->FSNext > boot->NumClusters  ) {
-			pwarn("FSNext block (%d) not correct NumClusters (%d)\n",
+			pwarn("FSNext block (%ld) not correct NumClusters (%ld)\n",
 					boot->FSNext, boot->NumClusters);
 			boot->FSNext=CLUST_FIRST; // boot->FSNext can have -1 value.
 	    }
 
 		if (boot->NumFree && fat[boot->FSNext].next != CLUST_FREE) {
-			pwarn("Next free cluster in FSInfo block (%u) not free\n",
+			pwarn("Next free cluster in FSInfo block (%lu) not free\n",
 					boot->FSNext);
 			if (ask(1, "Fix"))
 				for (head = CLUST_FIRST; head < boot->NumClusters; head++)

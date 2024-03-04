@@ -226,7 +226,7 @@ readboot(dosfs, boot)
 	else if (boot->NumClusters < (CLUST_RSRVD&CLUST16_MASK))
 		boot->ClustMask = CLUST16_MASK;
 	else {
-		pfatal("Filesystem too big (%u clusters) for non-FAT32 partition",
+		pfatal("Filesystem too big (%lu clusters) for non-FAT32 partition",
 		       boot->NumClusters);
 		return FSFATAL;
 	}
@@ -244,7 +244,7 @@ readboot(dosfs, boot)
 	}
 
 	if (boot->NumFatEntries < boot->NumClusters) {
-		pfatal("FAT size too small, %u entries won't fit into %u sectors\n",
+		pfatal("FAT size too small, %lu entries won't fit into %lu sectors\n",
 		       boot->NumClusters, boot->FATsecs);
 		return FSFATAL;
 	}

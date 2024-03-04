@@ -239,7 +239,7 @@ resetDosDirSection(struct bootblock *boot, struct fatEntry *fat)
 	memset(rootDir, 0, sizeof *rootDir);
 	if (boot->flags & FAT32) {
 		if (boot->RootCl < CLUST_FIRST || boot->RootCl >= boot->NumClusters) {
-			pfatal("Root directory starts with cluster out of range(%u)",
+			pfatal("Root directory starts with cluster out of range(%lu)",
 			       boot->RootCl);
 			return FSFATAL;
 		}
@@ -322,7 +322,7 @@ delete(int f, struct bootblock *boot, struct fatEntry *fat, cl_t startcl,
 		off = startcl * boot->SecPerClust + boot->ClusterOffset;
 		off *= boot->BytesPerSec;
 		if (lseek64(f, off, SEEK_SET) != off) {
-			printf("off = %llu\n", off);
+			printf("off = %lu\n", off);
 			perror("Unable to lseek64");
 			return FSFATAL;
 		}
@@ -335,7 +335,7 @@ delete(int f, struct bootblock *boot, struct fatEntry *fat, cl_t startcl,
 			s += 32;
 		}
 		if (lseek64(f, off, SEEK_SET) != off) {
-			printf("off = %llu\n", off);
+			printf("off = %lu\n", off);
 			perror("Unable to lseek64");
 			return FSFATAL;
 		}
@@ -403,7 +403,7 @@ checksize(struct bootblock *boot, struct fatEntry *fat, u_char *p,
 		physicalSize = fat[dir->head].length * boot->ClusterSize;
 	}
 	if (physicalSize < dir->size) {
-		pwarn("size of %s is %u, should at most be %u\n",
+		pwarn("size of %s is %lu, should at most be %lu\n",
 		      fullpath(dir), dir->size, physicalSize);
 		if (ask(1, "Truncate")) {
 			dir->size = physicalSize;
@@ -472,7 +472,7 @@ check_dot_dot(int f, struct bootblock *boot, struct fatEntry *fat,struct dosDirE
 			return FSFATAL;
 		}
 		if (lseek64(f, off, SEEK_SET) != off) {
-			printf("off = %llu\n", off);
+			printf("off = %lu\n", off);
 			perror("Unable to lseek64");
 			return FSFATAL;
 		}
@@ -559,7 +559,7 @@ readDosDirSection(int f, struct bootblock *boot, struct fatEntry *fat,
 
 		off *= boot->BytesPerSec;
 		if (lseek64(f, off, SEEK_SET) != off) {
-                        printf("off = %llu\n", off);
+                        printf("off = %lu\n", off);
 			perror("Unable to lseek64");
 			return FSFATAL;
                 }
@@ -796,7 +796,7 @@ readDosDirSection(int f, struct bootblock *boot, struct fatEntry *fat,
 					      fullpath(&dirent));
 				else if (dirent.head < CLUST_FIRST
 					 || dirent.head >= boot->NumClusters)
-					pwarn("%s starts with cluster out of range(%u)\n",
+					pwarn("%s starts with cluster out of range(%lu)\n",
 					      fullpath(&dirent),
 					      dirent.head);
 				else if (fat[dirent.head].next == CLUST_FREE)
@@ -1069,7 +1069,7 @@ reconnect(int dosfs, struct bootblock *boot, struct fatEntry *fat, cl_t head)
 	boot->NumFiles++;
 	/* Ensure uniqueness of entry here!				XXX */
 	memset(&d, 0, sizeof d);
-	(void)snprintf(d.name, sizeof(d.name), "%u", head);
+	(void)snprintf(d.name, sizeof(d.name), "%lu", head);
 	d.flags = 0;
 	d.head = head;
 	d.size = fat[head].length * boot->ClusterSize;

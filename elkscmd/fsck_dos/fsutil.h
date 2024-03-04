@@ -4,7 +4,7 @@
 #define pwarn printf
 #define pfatal printf
 
-typedef unsigned int    u_int;
+typedef unsigned int    u_int;      /* FIXME possibly change to 32-bit for ELKS */
 typedef unsigned char   u_char;
 typedef unsigned int    uint;
 typedef unsigned long   u_int32_t;
