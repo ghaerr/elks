@@ -286,7 +286,7 @@ readfat(int fs, struct bootblock *boot, int no, struct fatEntry **fp)
 	for (cl = CLUST_FIRST; cl < boot->NumClusters;) {
 		switch (boot->ClustMask) {
 		case CLUST32_MASK:
-			fat[cl].next = p[0] + (p[1] << 8)
+			fat[cl].next = p[0] + ((U32)p[1] << 8)
 				       + ((U32)p[2] << 16) + ((U32)p[3] << 24);
 			fat[cl].next &= boot->ClustMask;
 			ret |= checkclnum(boot, no, cl, &fat[cl].next);
@@ -294,13 +294,13 @@ readfat(int fs, struct bootblock *boot, int no, struct fatEntry **fp)
 			p += 4;
 			break;
 		case CLUST16_MASK:
-			fat[cl].next = p[0] + (p[1] << 8);
+			fat[cl].next = p[0] + ((U32)p[1] << 8);
 			ret |= checkclnum(boot, no, cl, &fat[cl].next);
 			cl++;
 			p += 2;
 			break;
 		default:
-			fat[cl].next = (p[0] + (p[1] << 8)) & 0x0fff;
+			fat[cl].next = (p[0] + ((U32)p[1] << 8)) & 0x0fff;
 			ret |= checkclnum(boot, no, cl, &fat[cl].next);
 			cl++;
 			if (cl >= boot->NumClusters)

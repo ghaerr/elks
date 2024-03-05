@@ -71,18 +71,18 @@ readboot(dosfs, boot)
 	boot->ValidFat = -1;
 
 	/* decode bios parameter block */
-	boot->BytesPerSec = block[11] + (block[12] << 8);
+	boot->BytesPerSec = block[11] + ((U32)block[12] << 8);
 	boot->SecPerClust = block[13];
-	boot->ResSectors = block[14] + (block[15] << 8);
+	boot->ResSectors = block[14] + ((U32)block[15] << 8);
 	boot->FATs = block[16];
-	boot->RootDirEnts = block[17] + (block[18] << 8);
-	boot->Sectors = block[19] + (block[20] << 8);
+	boot->RootDirEnts = block[17] + ((U32)block[18] << 8);
+	boot->Sectors = block[19] + ((U32)block[20] << 8);
 	boot->Media = block[21];
-	boot->FATsmall = block[22] + (block[23] << 8);
-	boot->SecPerTrack = block[24] + (block[25] << 8);
-	boot->Heads = block[26] + (block[27] << 8);
-	boot->HiddenSecs = block[28] + (block[29] << 8) + ((U32)block[30] << 16) + ((U32)block[31] << 24);
-	boot->HugeSectors = block[32] + (block[33] << 8) + ((U32)block[34] << 16) + ((U32)block[35] << 24);
+	boot->FATsmall = block[22] + ((U32)block[23] << 8);
+	boot->SecPerTrack = block[24] + ((U32)block[25] << 8);
+	boot->Heads = block[26] + ((U32)block[27] << 8);
+	boot->HiddenSecs = block[28] + ((U32)block[29] << 8) + ((U32)block[30] << 16) + ((U32)block[31] << 24);
+	boot->HugeSectors = block[32] + ((U32)block[33] << 8) + ((U32)block[34] << 16) + ((U32)block[35] << 24);
 
 	boot->FATsecs = boot->FATsmall;
 
@@ -94,7 +94,7 @@ readboot(dosfs, boot)
 	if (!boot->RootDirEnts)
 		boot->flags |= FAT32;
 	if (boot->flags & FAT32) {
-		boot->FATsecs = block[36] + (block[37] << 8)
+		boot->FATsecs = block[36] + ((U32)block[37] << 8)
 				+ ((U32)block[38] << 16) + ((U32)block[39] << 24);
 		if (block[40] & 0x80)
 			boot->ValidFat = block[40] & 0x0f;
@@ -106,10 +106,10 @@ readboot(dosfs, boot)
 			       block[43], block[42]);
                         exit(2);
 		}
-		boot->RootCl = block[44] + (block[45] << 8)
+		boot->RootCl = block[44] + ((U32)block[45] << 8)
 			       + ((U32)block[46] << 16) + ((U32)block[47] << 24);
-		boot->FSInfo = block[48] + (block[49] << 8);
-		boot->Backup = block[50] + (block[51] << 8);
+		boot->FSInfo = block[48] + ((U32)block[49] << 8);
+		boot->Backup = block[50] + ((U32)block[51] << 8);
 
 		if (lseek(dosfs, boot->FSInfo * boot->BytesPerSec, SEEK_SET)
 		    != boot->FSInfo * boot->BytesPerSec
@@ -150,10 +150,10 @@ readboot(dosfs, boot)
 				boot->FSInfo = 0;
 		}
 		if (boot->FSInfo) {
-			boot->FSFree = fsinfo[0x1e8] + (fsinfo[0x1e9] << 8)
+			boot->FSFree = fsinfo[0x1e8] + ((U32)fsinfo[0x1e9] << 8)
 				       + ((U32)fsinfo[0x1ea] << 16)
 				       + ((U32)fsinfo[0x1eb] << 24);
-			boot->FSNext = fsinfo[0x1ec] + (fsinfo[0x1ed] << 8)
+			boot->FSNext = fsinfo[0x1ec] + ((U32)fsinfo[0x1ed] << 8)
 				       + ((U32)fsinfo[0x1ee] << 16)
 				       + ((U32)fsinfo[0x1ef] << 24);
 		}
@@ -205,7 +205,7 @@ readboot(dosfs, boot)
 	    - CLUST_FIRST * boot->SecPerClust;
 
 	if (boot->BytesPerSec % DOSBOOTBLOCKSIZE != 0) {
-		pfatal("Invalid sector size: %u", boot->BytesPerSec);
+		pfatal("Invalid sector size: %u, check if DOS disk?", boot->BytesPerSec);
 		return FSFATAL;
 	}
 	if (boot->SecPerClust == 0) {
