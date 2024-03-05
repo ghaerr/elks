@@ -95,21 +95,25 @@ struct fatEntry {
 
 #define	CLUST_FREE	0		/* 0 means cluster is free */
 #define	CLUST_FIRST	2		/* 2 is the minimum valid cluster number */
-#define	CLUST_RSRVD	0xfffffff6	/* start of reserved clusters */
-#define	CLUST_BAD	0xfffffff7	/* a cluster with a defect */
-#define	CLUST_EOFS	0xfffffff8	/* start of EOF indicators */
-#define	CLUST_EOF	0xffffffff	/* standard value for last cluster */
+#define	CLUST_RSRVD	0xfffffff6UL	/* start of reserved clusters */
+#define	CLUST_BAD	0xfffffff7UL	/* a cluster with a defect */
+#define	CLUST_EOFS	0xfffffff8UL	/* start of EOF indicators */
+#define	CLUST_EOF	0xffffffffUL	/* standard value for last cluster */
 
 /*
  * Masks for cluster values
  */
 #define	CLUST12_MASK	0xfff
 #define	CLUST16_MASK	0xffff
-#define	CLUST32_MASK	0xfffffff
+#define	CLUST32_MASK	0xfffffffUL
 
 #define	FAT_USED	1		/* This fat chain is used in a file */
 
+#ifdef ELKS
+#define	DOSLONGNAMELEN	26		/* long name maximal length */
+#else
 #define	DOSLONGNAMELEN	256		/* long name maximal length */
+#endif
 #define LRFIRST		0x40		/* first long name record */
 #define	LRNOMASK	0x1f		/* mask to extract long record
 					 * sequence number */

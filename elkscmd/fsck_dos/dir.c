@@ -730,10 +730,10 @@ readDosDirSection(int f, struct bootblock *boot, struct fatEntry *fat,
 				}
 				vallfn = NULL;
 			}
-			dirent.head = p[26] | (p[27] << 8);
+			dirent.head = p[26] | ((U32)p[27] << 8);
 			if (boot->ClustMask == CLUST32_MASK)
 				dirent.head |= ((U32)p[20] << 16) | ((U32)p[21] << 24);
-			dirent.size = p[28] | (p[29] << 8) | ((U32)p[30] << 16) | ((U32)p[31] << 24);
+			dirent.size = p[28] | ((U32)p[29] << 8) | ((U32)p[30] << 16) | ((U32)p[31] << 24);
 			if (vallfn) {
 				strcpy(dirent.lname, longName);
 				longName[0] = '\0';
