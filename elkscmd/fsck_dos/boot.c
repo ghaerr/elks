@@ -94,6 +94,10 @@ readboot(dosfs, boot)
 	if (!boot->RootDirEnts)
 		boot->flags |= FAT32;
 	if (boot->flags & FAT32) {
+#ifdef ELKS
+		printf("Sorry, FAT32 checking not supported on ELKS\n");
+		exit(2);
+#else
 		boot->FATsecs = block[36] + ((U32)block[37] << 8)
 				+ ((U32)block[38] << 16) + ((U32)block[39] << 24);
 		if (block[40] & 0x80)
@@ -196,6 +200,7 @@ readboot(dosfs, boot)
                         pwarn("%s\n", tmp);
 		}
 		/* Check backup FSInfo?					XXX */
+#endif /* !ELKS */
 	}
 
 	boot->ClusterOffset = (boot->RootDirEnts * 32 + boot->BytesPerSec - 1)

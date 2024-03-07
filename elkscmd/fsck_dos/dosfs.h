@@ -39,7 +39,11 @@
 
 #define DOSBOOTBLOCKSIZE 512
 
+#ifdef ELKS
+typedef	unsigned short	cl_t;	/* type holding a cluster number */
+#else
 typedef	u_int32_t	cl_t;	/* type holding a cluster number */
+#endif
 
 /*
  * architecture independent description of all the info stored in a
@@ -95,17 +99,25 @@ struct fatEntry {
 
 #define	CLUST_FREE	0		/* 0 means cluster is free */
 #define	CLUST_FIRST	2		/* 2 is the minimum valid cluster number */
+#ifdef ELKS
+#define	CLUST_RSRVD	0xfff6UL	/* start of reserved clusters */
+#define	CLUST_BAD	0xfff7UL	/* a cluster with a defect */
+#define	CLUST_EOFS	0xfff8UL	/* start of EOF indicators */
+#define	CLUST_EOF	0xffffUL	/* standard value for last cluster */
+#define	CLUST32_MASK	0x0000UL        /* BAD VALUE, not supported on ELKS */
+#else
 #define	CLUST_RSRVD	0xfffffff6UL	/* start of reserved clusters */
 #define	CLUST_BAD	0xfffffff7UL	/* a cluster with a defect */
 #define	CLUST_EOFS	0xfffffff8UL	/* start of EOF indicators */
 #define	CLUST_EOF	0xffffffffUL	/* standard value for last cluster */
+#define	CLUST32_MASK	0x0fffffffUL
+#endif
 
 /*
  * Masks for cluster values
  */
 #define	CLUST12_MASK	0xfff
 #define	CLUST16_MASK	0xffff
-#define	CLUST32_MASK	0xfffffffUL
 
 #define	FAT_USED	1		/* This fat chain is used in a file */
 
