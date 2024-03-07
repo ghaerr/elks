@@ -93,7 +93,7 @@ struct bootblock {
 struct fatEntry {
 	cl_t	next;			/* pointer to next cluster */
 	cl_t	head;			/* pointer to start of chain */
-	u_int32_t length;		/* number of clusters on chain */
+	cl_t	length;			/* number of clusters on chain */
 	int	flags;			/* see below */
 };
 

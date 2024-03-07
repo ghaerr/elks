@@ -450,7 +450,7 @@ int
 checkfat(struct bootblock *boot, struct fatEntry *fat)
 {
 	cl_t head, p, h, n, wdk;
-	u_int len;
+	cl_t len;
 	int ret = 0;
 	int conf;
 
@@ -675,7 +675,7 @@ checklost(int dosfs, struct bootblock *boot, struct fatEntry *fat)
 			continue;
 
 		pwarn("Lost cluster chain at cluster %lu\n%ld Cluster(s) lost\n",
-		      (U32)head, fat[head].length);
+		      (U32)head, (U32)fat[head].length);
 		mod |= ret = reconnect(dosfs, boot, fat, head);
 		if (mod & FSFATAL) {
 			/* If the reconnect failed, then just clear the chain */

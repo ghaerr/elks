@@ -400,7 +400,7 @@ checksize(struct bootblock *boot, struct fatEntry *fat, u_char *p,
 	else {
 		if (dir->head < CLUST_FIRST || dir->head >= boot->NumClusters)
 			return FSERROR;
-		physicalSize = fat[dir->head].length * boot->ClusterSize;
+		physicalSize = (U32)fat[dir->head].length * boot->ClusterSize;
 	}
 	if (physicalSize < dir->size) {
 		pwarn("size of %s is %lu, should at most be %lu\n",
@@ -1068,7 +1068,7 @@ reconnect(int dosfs, struct bootblock *boot, struct fatEntry *fat, cl_t head)
 	snprintf(d.name, sizeof(d.name), "%lu", (U32)head);
 	d.flags = 0;
 	d.head = head;
-	d.size = fat[head].length * boot->ClusterSize;
+	d.size = (U32)fat[head].length * boot->ClusterSize;
 
 	memset(p, 0, 32);
 	memset(p, ' ', 11);
