@@ -53,8 +53,6 @@ readboot(dosfs, boot)
 	struct bootblock *boot;
 {
 	u_char block[DOSBOOTBLOCKSIZE];
-	u_char fsinfo[2 * DOSBOOTBLOCKSIZE];
-	u_char backup[DOSBOOTBLOCKSIZE];
 	int ret = FSOK;
 	
 	if (read(dosfs, block, sizeof block) < sizeof block) {
@@ -94,6 +92,13 @@ readboot(dosfs, boot)
 	if (!boot->RootDirEnts)
 		boot->flags |= FAT32;
 	if (boot->flags & FAT32) {
+#ifdef ELKS
+		printf("Sorry, FAT32 checking not supported on ELKS\n");
+		exit(2);
+#else
+		u_char fsinfo[2 * DOSBOOTBLOCKSIZE];
+		u_char backup[DOSBOOTBLOCKSIZE];
+
 		boot->FATsecs = block[36] + ((U32)block[37] << 8)
 				+ ((U32)block[38] << 16) + ((U32)block[39] << 24);
 		if (block[40] & 0x80)
@@ -196,6 +201,7 @@ readboot(dosfs, boot)
                         pwarn("%s\n", tmp);
 		}
 		/* Check backup FSInfo?					XXX */
+#endif /* !ELKS */
 	}
 
 	boot->ClusterOffset = (boot->RootDirEnts * 32 + boot->BytesPerSec - 1)
@@ -227,7 +233,7 @@ readboot(dosfs, boot)
 		boot->ClustMask = CLUST16_MASK;
 	else {
 		pfatal("Filesystem too big (%lu clusters) for non-FAT32 partition",
-		       boot->NumClusters);
+		       (U32)boot->NumClusters);
 		return FSFATAL;
 	}
 
@@ -245,7 +251,7 @@ readboot(dosfs, boot)
 
 	if (boot->NumFatEntries < boot->NumClusters) {
 		pfatal("FAT size too small, %lu entries won't fit into %lu sectors\n",
-		       boot->NumClusters, boot->FATsecs);
+		       (U32)boot->NumClusters, (U32)boot->FATsecs);
 		return FSFATAL;
 	}
 	boot->ClusterSize = boot->BytesPerSec * boot->SecPerClust;

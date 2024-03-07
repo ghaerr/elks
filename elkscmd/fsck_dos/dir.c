@@ -240,7 +240,7 @@ resetDosDirSection(struct bootblock *boot, struct fatEntry *fat)
 	if (boot->flags & FAT32) {
 		if (boot->RootCl < CLUST_FIRST || boot->RootCl >= boot->NumClusters) {
 			pfatal("Root directory starts with cluster out of range(%lu)",
-			       boot->RootCl);
+			       (U32)boot->RootCl);
 			return FSFATAL;
 		}
 		cl = fat[boot->RootCl].next;
@@ -400,7 +400,7 @@ checksize(struct bootblock *boot, struct fatEntry *fat, u_char *p,
 	else {
 		if (dir->head < CLUST_FIRST || dir->head >= boot->NumClusters)
 			return FSERROR;
-		physicalSize = fat[dir->head].length * boot->ClusterSize;
+		physicalSize = (U32)fat[dir->head].length * boot->ClusterSize;
 	}
 	if (physicalSize < dir->size) {
 		pwarn("size of %s is %lu, should at most be %lu\n",
@@ -794,7 +794,7 @@ readDosDirSection(int f, struct bootblock *boot, struct fatEntry *fat,
 					 || dirent.head >= boot->NumClusters)
 					pwarn("%s starts with cluster out of range(%lu)\n",
 					      fullpath(&dirent),
-					      dirent.head);
+					      (U32)dirent.head);
 				else if (fat[dirent.head].next == CLUST_FREE)
 					pwarn("%s starts with free cluster\n",
 					      fullpath(&dirent));
@@ -1065,10 +1065,10 @@ reconnect(int dosfs, struct bootblock *boot, struct fatEntry *fat, cl_t head)
 	boot->NumFiles++;
 	/* Ensure uniqueness of entry here!				XXX */
 	memset(&d, 0, sizeof d);
-	(void)snprintf(d.name, sizeof(d.name), "%lu", head);
+	snprintf(d.name, sizeof(d.name), "%lu", (U32)head);
 	d.flags = 0;
 	d.head = head;
-	d.size = fat[head].length * boot->ClusterSize;
+	d.size = (U32)fat[head].length * boot->ClusterSize;
 
 	memset(p, 0, 32);
 	memset(p, ' ', 11);

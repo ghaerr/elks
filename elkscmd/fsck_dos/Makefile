@@ -11,6 +11,8 @@ include $(BASEDIR)/Make.rules
 ###############################################################################
 
 LOCALCFLAGS = -Dlint -DELKS=1
+# remove next line when FAT32 supported
+LOCALCFLAGS += -Wno-shift-count-overflow
 
 PRGS = fsck-dos
 
