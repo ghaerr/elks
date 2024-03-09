@@ -138,12 +138,12 @@ struct dosDirEntry {
 		*parent,		/* previous tree level */
 		*next,			/* next brother */
 		*child;			/* if this is a directory */
-	char name[8+1+3+1];		/* alias name first part */
-	char lname[DOSLONGNAMELEN];	/* real name */
-	uint flags;			/* attributes */
 	cl_t head;			/* cluster no */
 	u_int32_t size;			/* filesize in bytes */
-	uint fsckflags;			/* flags during fsck */
+	char lname[DOSLONGNAMELEN+1];	/* real name */
+	u_char flags;			/* attributes */
+	char name[8+1+3+1];		/* alias name first part */
+	u_char fsckflags;		/* flags during fsck */
 };
 /* Flags in fsckflags: */
 #define	DIREMPTY	1

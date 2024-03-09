@@ -45,7 +45,6 @@ static const char rcsid[] =
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "fsutil.h"
 #include "ext.h"
 
 /*
@@ -174,6 +173,7 @@ checkfilesys(const char *fname)
 
 	/* now write the FATs */
 	if (mod & FSFATMOD) {
+        printf("Rewriting FAT table\n");
 		if (ask(1, "Update FATs")) {
 			mod |= writefat(dosfs, &boot, fat, mod & FSFIXFAT);
 			if (mod & FSFATAL) {

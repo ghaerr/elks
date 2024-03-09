@@ -46,7 +46,6 @@ static const char rcsid[] =
 #include <errno.h>
 #include <stdarg.h>
 
-#include "fsutil.h"
 #include "ext.h"
 
 int alwaysno;		/* assume "no" for all questions */
@@ -60,10 +59,7 @@ static void usage(void);
 static void
 usage(void)
 {
-
-	fprintf(stderr, "%s\n%s\n",
-	    "usage: fsck_msdosfs -p [-f] filesystem ...",
-	    "       fsck_msdosfs [-ny] filesystem ...");
+	fprintf(stderr, "usage: fsck-dos [-fpny] filesystem ...\n");
 	exit(1);
 }
 

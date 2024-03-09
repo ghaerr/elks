@@ -47,10 +47,8 @@ static const char rcsid[] =
 #include <stdio.h>
 #include <unistd.h>
 #include <time.h>
-
 #include <sys/param.h>
 
-#include "fsutil.h"
 #include "ext.h"
 
 #define	SLOT_EMPTY	0x00		/* slot has never been used */
@@ -210,7 +208,7 @@ calcShortSum(u_char *p)
 /*
  * Global variables temporarily used during a directory scan
  */
-static char longName[DOSLONGNAMELEN] = "";
+static char longName[DOSLONGNAMELEN+1] = "";
 static u_char *buffer = NULL;
 static u_char *delbuf = NULL;
 
@@ -659,7 +657,7 @@ readDosDirSection(int f, struct bootblock *boot, struct fatEntry *fat,
 						if (p[k + 1])
 							t[-1] = '?';
 					}
-				if (t >= longName + sizeof(longName)) {
+				if (t >= longName + sizeof(longName) - 1) {
 					pwarn("long filename too long\n");
 					if (!invlfn) {
 						invlfn = vallfn;
