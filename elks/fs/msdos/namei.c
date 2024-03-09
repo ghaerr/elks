@@ -366,9 +366,9 @@ int msdos_unlink(register struct inode *dir,const char *name,int len)
 	mark_buffer_dirty(bh);
 unlink_done:
 	unmap_brelse(bh);
-	if (inode) debug_fat("unlink iput inode %u dirt %d count %d\n",
-		inode->i_ino, inode->i_dirt, inode->i_count);
-	if (dir) debug_fat("unlink iput dir %u dirt %d count %d\n", dir->i_ino, dir->i_dirt, dir->i_count);
+	if (inode) debug_fat("unlink iput inode %lu dirt %d count %d\n",
+		(unsigned long)inode->i_ino, inode->i_dirt, inode->i_count);
+	if (dir) debug_fat("unlink iput dir %lu dirt %d count %d\n", (unsigned long)dir->i_ino, dir->i_dirt, dir->i_count);
 	iput(inode);
 	iput(dir);
 	return res;

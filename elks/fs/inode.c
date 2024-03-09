@@ -203,7 +203,7 @@ void iput(register struct inode *inode)
 {
     register struct super_operations *sop;
 
-    debug("iput dev %p ino %lu count %d\n",
+    debug("iput dev %D ino %lu count %d\n",
         inode->i_dev, (unsigned long)inode->i_ino, inode->i_count);
     if (inode) {
         wait_on_inode(inode);

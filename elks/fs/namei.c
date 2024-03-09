@@ -550,8 +550,11 @@ int sys_link(char *oldname, char *pathname)
 
     debug_file("LINK '%t' '%t'\n", oldname, pathname);
     error = namei(oldname, &oldinode, 0, 0);
-    if (!error)
+    if (!error) {
         error = do_mknod(pathname, offsetof(struct inode_operations,link), (int)oldinode, 0);
+        if (error)
+            iput(oldinode);
+    }
     return error;
 #endif
 }
