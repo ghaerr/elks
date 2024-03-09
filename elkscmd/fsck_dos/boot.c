@@ -44,7 +44,6 @@ static const char rcsid[] =
 #include <stdio.h>
 #include <unistd.h>
 
-#include "fsutil.h"
 #include "ext.h"
 
 int

@@ -44,7 +44,6 @@ static const char rcsid[] =
 #include <stdio.h>
 #include <unistd.h>
 
-#include "fsutil.h"
 #include "ext.h"
 
 static int checkclnum(struct bootblock *, int, cl_t, cl_t *);
@@ -85,7 +84,7 @@ checkdirty(int fs, struct bootblock *boot)
 
 	buffer = malloc(boot->BytesPerSec);
 	if (buffer == NULL) {
-		perror("No space for FAT (1)");
+		perror("No space for FAT dirty check");
 		return 1;
 	}
 
@@ -170,12 +169,10 @@ _readfat(int fs, struct bootblock *boot, int no, u_char **buffer)
 {
 	off_t off;
 
-        printf("Attempting to allocate %lu KB for FAT\n",
-                (boot->FATsecs * boot->BytesPerSec) / 1024);
-
 	*buffer = malloc(boot->FATsecs * boot->BytesPerSec);
 	if (*buffer == NULL) {
-		perror("No space for FAT (2)");
+		printf("Can't allocate %lu KB for FAT\n",
+			(boot->FATsecs * boot->BytesPerSec) / 1024);
 		return 0;
 	}
 
@@ -218,7 +215,7 @@ readfat(int fs, struct bootblock *boot, int no, struct fatEntry **fp)
 		
 	fat = calloc(boot->NumClusters, sizeof(struct fatEntry));
 	if (fat == NULL) {
-		perror("No space for FAT (3)");
+		perror("No space for FAT entries");
 		free(buffer);
 		return FSFATAL;
 	}
@@ -562,7 +559,7 @@ writefat(int fs, struct bootblock *boot, struct fatEntry *fat, int correct_fat)
 
 	buffer = malloc(fatsz = boot->FATsecs * boot->BytesPerSec);
 	if (buffer == NULL) {
-		perror("No space for FAT (4)");
+		perror("No space for FAT write");
 		return FSFATAL;
 	}
 	memset(buffer, 0, fatsz);
@@ -685,7 +682,7 @@ checklost(int dosfs, struct bootblock *boot, struct fatEntry *fat)
 			mod |= FSFATMOD;
 			continue;
 		}
-		if (ret == FSERROR && ask(1, "Clear")) {
+		if (ret == FSERROR && ask(1, "Clear lost chains")) {
 			clearchain(boot, fat, head);
 			mod |= FSFATMOD;
 		}

@@ -1,3 +1,5 @@
+#ifndef EXT_H
+#define EXT_H
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
  * Copyright (c) 1995 Martin Husemann
@@ -32,14 +34,24 @@
  * $FreeBSD: src/sbin/fsck_msdosfs/ext.h,v 1.10.20.1 2009/04/15 03:14:26 kensmith Exp $
  */
 
-#ifndef EXT_H
-#define EXT_H
-
 #include <sys/types.h>
+#include <limits.h>
+
+#define MAXPATHLEN  PATH_MAX
+#define	LOSTDIR     "LOST.DIR"
+
+typedef unsigned int    u_int;      /* FIXME possibly change to 32-bit for ELKS */
+typedef unsigned char   u_char;
+typedef unsigned long   u_int32_t;
+typedef unsigned long   U32;
+
+typedef off_t           loff_t;
+#define lseek64         lseek
+
+#define pwarn printf
+#define pfatal printf
 
 #include "dosfs.h"
-
-#define	LOSTDIR	"LOST.DIR"
 
 /*
  * Options:
