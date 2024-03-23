@@ -22,8 +22,6 @@ mainmenu_option next_comment
 
 	bool 'Mount root partition read-only by default' CONFIG_ROOT_READONLY n
 
-	bool '32-bit Inode number'             CONFIG_32BIT_INODES        y
-
 	bool 'External buffer cache'           CONFIG_FS_EXTERNAL_BUFFER  y
 	if [ "$CONFIG_FS_EXTERNAL_BUFFER" == "y" ]; then
 	    int 'Number of external buffers'   CONFIG_FS_NR_EXT_BUFFERS   64

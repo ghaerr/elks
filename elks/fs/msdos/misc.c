@@ -273,13 +273,6 @@ ino_t FATPROC msdos_get_entry(struct inode *dir,loff_t *pos,struct buffer_head *
 			continue;
 		*de = (struct msdos_dir_entry *) ((char *)data+(offset & (SECTOR_SIZE(dir)-1)));
 
-		/* return value will overfow for FAT16/32 if sector is beyond 2MB boundary */
-#ifndef CONFIG_32BIT_INODES
-		if (sector > 4095) {
-			printk("FAT: disk too large, set CONFIG_32BIT_INODES\n");
-			return -1;
-		}
-#endif
 		//debug_fat("get entry %lu\n", sector);
 		return (sector << MSDOS_DPS_BITS(dir))+((offset & (SECTOR_SIZE(dir)-1)) >> MSDOS_DIR_BITS);
 	}
