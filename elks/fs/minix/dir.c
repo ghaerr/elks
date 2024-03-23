@@ -25,8 +25,6 @@ static int minix_readdir(struct inode *inode,
 			 register struct file *filp,
 			 char *dirent, filldir_t filldir);
 
-/*@-type@*/
-
 static struct file_operations minix_dir_operations = {
     NULL,			/* lseek - default */
     minix_dir_read,		/* read */

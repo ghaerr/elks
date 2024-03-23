@@ -27,8 +27,6 @@ static size_t msdos_dir_read(struct inode *dir, struct file *filp, char *buf, si
 static int msdos_readdir(struct inode *dir, struct file *filp,
 			 char *dirbuf, filldir_t filldir);
 
-/*@-type@*/
-
 static struct file_operations msdos_dir_operations = {
 	NULL,			/* lseek - default */
 	msdos_dir_read,		/* read */

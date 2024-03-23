@@ -247,7 +247,6 @@ struct super_block {
     struct wait_queue           s_wait;
     char                        s_mntonname[MNAMELEN];
 #ifdef BLOAT_FS
-    unsigned char               s_rd_only;
     __u32                       s_magic;
     time_t                      s_time;
 #endif

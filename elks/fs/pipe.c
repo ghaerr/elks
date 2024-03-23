@@ -257,8 +257,6 @@ static size_t bad_pipe_rw(struct inode *inode, struct file *filp,
     return -EBADF;
 }
 
-/*@-type@*/
-
 struct file_operations read_pipe_fops = {
     pipe_lseek, pipe_read, bad_pipe_rw, NULL,   /* no readdir */
     NULL,                       /* select */
