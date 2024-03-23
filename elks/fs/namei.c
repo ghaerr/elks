@@ -409,9 +409,6 @@ int open_namei(const char *pathname, int flag, int mode,
 
 int do_mknod(char *pathname, int offst, int mode, dev_t dev)
 {
-#ifdef CONFIG_FS_RO
-    return -EROFS;
-#else
     register struct inode *dirp;
     register struct inode_operations *iop;
     struct inode *dir;
@@ -450,14 +447,10 @@ int do_mknod(char *pathname, int offst, int mode, dev_t dev)
         iput(dirp);
     }
     return error;
-#endif
 }
 
 int sys_mknod(char *pathname, int mode, dev_t dev)
 {
-#ifdef CONFIG_FS_RO
-    return -EROFS;
-#else
     if (S_ISDIR(mode) || (!S_ISFIFO(mode) && !suser())) return -EPERM;
 
     switch (mode & S_IFMT) {
@@ -474,16 +467,11 @@ int sys_mknod(char *pathname, int mode, dev_t dev)
     }
 
     return do_mknod(pathname, offsetof(struct inode_operations,mknod), mode, dev);
-#endif
 }
 
 int sys_mkdir(char *pathname, int mode)
 {
-#ifdef CONFIG_FS_RO
-    return -EROFS;
-#else
     return do_mknod(pathname, offsetof(struct inode_operations,mkdir), (mode & 0777)|S_IFDIR, 0);
-#endif
 }
 
 int do_rmthing(char *pathname, size_t offst)
@@ -533,18 +521,11 @@ int sys_unlink(char *pathname)
 
 int sys_symlink(char *oldname, char *pathname)
 {
-#ifdef CONFIG_FS_RO
-    return -EROFS;
-#else
     return do_mknod(pathname, offsetof(struct inode_operations,symlink), (int)oldname, 0);
-#endif
 }
 
 int sys_link(char *oldname, char *pathname)
 {
-#ifdef CONFIG_FS_RO
-    return -EROFS;
-#else
     struct inode *oldinode;
     int error;
 
@@ -556,7 +537,6 @@ int sys_link(char *oldname, char *pathname)
             iput(oldinode);
     }
     return error;
-#endif
 }
 
 /*  This probably isn't a proper implementation of sys_rename, but we
