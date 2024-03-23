@@ -69,8 +69,6 @@ int pipe_lseek(struct inode *inode, struct file *file, loff_t offset,
     return -ESPIPE;
 }
 
-#ifdef CONFIG_PIPE
-
 /* pipes are allocated from kernel local heap */
 static unsigned char *get_pipe_mem(void)
 {
@@ -343,5 +341,3 @@ int sys_pipe(unsigned int *filedes)
 
     return verified_memcpy_tofs(filedes, fd, 2 * sizeof(int));
 }
-
-#endif

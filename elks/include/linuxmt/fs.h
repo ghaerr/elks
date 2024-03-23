@@ -20,9 +20,7 @@
 #include <arch/statfs.h>
 #include <arch/segment.h>
 
-#ifdef CONFIG_PIPE
 #include <linuxmt/pipe_fs_i.h>
-#endif
 
 #ifdef CONFIG_MINIX_FS
 #include <linuxmt/minix_fs.h>
@@ -204,9 +202,7 @@ struct inode {
 #endif
 
     union {
-#ifdef CONFIG_PIPE
                 struct pipe_inode_info pipe_i;
-#endif
 #ifdef CONFIG_MINIX_FS
                 struct minix_inode_info minix_i;
 #endif
