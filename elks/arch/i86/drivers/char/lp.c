@@ -186,8 +186,6 @@ lp_probe(struct lp_info *lp)
 
 #endif
 
-/*@-type@*/
-
 static struct file_operations lp_fops = {
     NULL,                       /* lseek */
     NULL,                       /* read */
@@ -198,8 +196,6 @@ static struct file_operations lp_fops = {
     lp_open,                    /* open */
     lp_release                  /* release */
 };
-
-/*@+type@*/
 
 void INITPROC
 lp_init(void)

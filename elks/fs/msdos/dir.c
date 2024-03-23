@@ -57,8 +57,6 @@ struct inode_operations msdos_dir_inode_operations = {
 	NULL			/* truncate */
 };
 
-/*@+type@*/
-
 static int FATPROC
 unicode_to_ascii(char *ascii, unsigned char *uni)
 {

@@ -55,8 +55,6 @@ struct inode_operations minix_dir_inode_operations = {
     minix_truncate		/* truncate */
 };
 
-/*@+type@*/
-
 static int minix_readdir(struct inode *inode,
 			 register struct file *filp,
 			 char *dirent, filldir_t filldir)
