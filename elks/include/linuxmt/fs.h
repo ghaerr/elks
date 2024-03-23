@@ -71,15 +71,17 @@
  * These are the fs-independent mount-flags: up to 16 flags are supported
  */
 #define MS_RDONLY           1   /* mount read-only */
-#define MS_NOSUID           2   /* ignore suid and sgid bits */
 #define MS_NODEV            4   /* disallow access to device special files */
-#define MS_NOEXEC           8   /* disallow program execution */
-#define MS_SYNCHRONOUS     16   /* writes are synced at once */
 #define MS_REMOUNT         32   /* alter flags of a mounted FS */
 #define MS_AUTOMOUNT       64   /* auto mount based on superblock */
-
 #define S_APPEND          256   /* append-only file */
+
+#if UNUSED
+#define MS_NOSUID           2   /* ignore suid and sgid bits */
+#define MS_NOEXEC           8   /* disallow program execution */
+#define MS_SYNCHRONOUS     16   /* writes are synced at once */
 #define S_IMMUTABLE       512   /* immutable file */
+#endif
 
 /*
  * Flags that can be altered by MS_REMOUNT
@@ -98,13 +100,16 @@
  */
 
 #define IS_RDONLY(inode) (((inode)->i_sb) && ((inode)->i_sb->s_flags & MS_RDONLY))
-#define IS_NOSUID(inode) ((inode)->i_flags & MS_NOSUID)
 #define IS_NODEV(inode) ((inode)->i_flags & MS_NODEV)
-#define IS_NOEXEC(inode) ((inode)->i_flags & MS_NOEXEC)
-#define IS_SYNC(inode) ((inode)->i_flags & MS_SYNCHRONOUS)
 
 #define IS_APPEND(inode) ((inode)->i_flags & S_APPEND)
+
+#if UNUSED
+#define IS_NOSUID(inode) ((inode)->i_flags & MS_NOSUID)
+#define IS_NOEXEC(inode) ((inode)->i_flags & MS_NOEXEC)
+#define IS_SYNC(inode) ((inode)->i_flags & MS_SYNCHRONOUS)
 #define IS_IMMUTABLE(inode) ((inode)->i_flags & S_IMMUTABLE)
+#endif
 
 #ifdef CONFIG_FS_XMS_BUFFER
 #define CONFIG_FAR_BUFHEADS     /* split buffer_head and move to far memory */

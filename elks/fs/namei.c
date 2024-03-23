@@ -48,7 +48,7 @@ int permission(register struct inode *inode, int mask)
         !S_ISCHR(inode->i_mode) && !S_ISBLK(inode->i_mode)) /* allow writable devices*/
         error = -EROFS;
 
-#ifdef HAVE_IMMUTABLE
+#ifdef IS_IMMUTABLE
     else if ((mask & S_IWOTH) && IS_IMMUTABLE(inode))
         /* Nobody gets write access to an immutable file */
         ;
