@@ -298,10 +298,6 @@ struct inode *new_inode(register struct inode *dir, __u16 mode)
     inode->i_mode = mode;
     inode->i_mtime = inode->i_atime = inode->i_ctime = current_time();
 
-#ifdef BLOAT_FS
-    inode->i_blocks = inode->i_blksize = 0;
-#endif
-
     set_ops(inode);
     return inode;
 }

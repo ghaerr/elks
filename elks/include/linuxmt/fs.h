@@ -192,13 +192,6 @@ struct inode {
     unsigned char               i_lock;
     unsigned char               i_dirt;
     sem_t                       i_sem;
-#ifdef BLOAT_FS
-    unsigned long int           i_blksize;
-    unsigned long int           i_blocks;
-    unsigned long int           i_version;
-    unsigned char int           i_seek;
-    unsigned char int           i_update;
-#endif
 
     union {
                 struct pipe_inode_info pipe_i;
