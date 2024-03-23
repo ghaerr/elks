@@ -80,15 +80,7 @@ int sys_truncate(char *path, loff_t length)
         iput(inodep);
         return -EROFS;
     }
-#ifdef BLOAT_FS
-    error = get_write_access(inodep);
-    if (error) {
-        iput(inodep);
-        return error;
-    }
-#endif
     error = do_truncate(inodep, length);
-    put_write_access(inodep);
     iput(inodep);
     return error;
 }

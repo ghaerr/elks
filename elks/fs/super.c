@@ -451,10 +451,6 @@ void mount_root(void)
     do {
         fp = *fs_type;
 
-#ifdef BLOAT_FS
-        if (!fp->requires_dev) continue;
-#endif
-
         sb = read_super(ROOT_DEV, fp->type, root_mountflags, NULL, 1);
         if (sb) {
             /* NOTE! it is logically used 4 times, not 1 */

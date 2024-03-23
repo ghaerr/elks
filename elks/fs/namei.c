@@ -65,24 +65,6 @@ int permission(register struct inode *inode, int mask)
     return error;
 }
 
-#ifdef BLOAT_FS
-/*
- * get_write_access() gets write permission for a file.
- * put_write_access() releases this write permission.
- */
-
-int get_write_access(struct inode *inode)
-{
-    inode->i_wcount++;
-    return 0;
-}
-
-void put_write_access(struct inode *inode)
-{
-    inode->i_wcount--;
-}
-#endif
-
 /*
  * lookup() looks up one part of a pathname, using the fs-dependent
  * routines for it. It also checks for fathers (pseudo-roots, mount-points)
@@ -372,18 +354,11 @@ int open_namei(const char *pathname, int flag, int mode,
     if (!error) {
         if (flag & O_TRUNC) {
 
-#ifdef BLOAT_FS
-            if ((error = get_write_access(inode))) {
-                iput(inode);
-                return error;
-            }
-#endif
 #ifdef USE_NOTIFY_CHANGE
             struct iattr newattrs;
             newattrs.ia_size = 0;
             newattrs.ia_valid = ATTR_SIZE;
             if ((error = notify_change(inode, &newattrs))) {
-                put_write_access(inode);
                 iput(inode);
                 return error;
             }
@@ -395,7 +370,6 @@ int open_namei(const char *pathname, int flag, int mode,
             if ((iop = inode->i_op) && iop->truncate) iop->truncate(inode);
             up(&inode->i_sem);
             inode->i_dirt = 1;
-            put_write_access(inode);
         }
         *res_inode = inode;
         save_path(inode, pathname);

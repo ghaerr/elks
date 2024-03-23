@@ -196,7 +196,6 @@ struct inode {
     unsigned long int           i_blksize;
     unsigned long int           i_blocks;
     unsigned long int           i_version;
-    unsigned short int          i_wcount;
     unsigned char int           i_seek;
     unsigned char int           i_update;
 #endif
@@ -482,14 +481,6 @@ extern size_t decompress(char *buf, seg_t seg, size_t orig_size, size_t compr_si
 extern int check_disk_change(kdev_t);
 #else
 #define check_disk_change(dev)      0
-#endif
-
-#ifdef BLOAT_FS
-extern int get_write_access(struct inode *);
-extern void put_write_access(struct inode *);
-#else
-#define get_write_access(_a)
-#define put_write_access(_a)
 #endif
 
 extern int _namei(const char *,struct inode *,int,struct inode **);
