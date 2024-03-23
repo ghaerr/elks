@@ -234,10 +234,6 @@ struct super_block {
     struct inode                *s_mounted;
     struct wait_queue           s_wait;
     char                        s_mntonname[MNAMELEN];
-#ifdef BLOAT_FS
-    __u32                       s_magic;
-    time_t                      s_time;
-#endif
     union {
 #ifdef CONFIG_MINIX_FS
                 struct minix_sb_info minix_sb;
@@ -274,11 +270,6 @@ struct file_operations {
     int                         (*ioctl) ();
     int                         (*open) ();
     void                        (*release) (struct inode *, struct file *);
-#ifdef BLOAT_FS
-    int                         (*fsync) ();
-    int                         (*check_media_change) ();
-    int                         (*revalidate) ();
-#endif
 };
 
 struct inode_operations {
@@ -305,9 +296,6 @@ struct super_operations {
     void                        (*write_super) ();
     int                         (*remount_fs) ();
     void                        (*statfs_kern) ();
-#ifdef BLOAT_FS
-    int                         (*notify_change) ();
-#endif
 };
 
 struct file_system_type {
@@ -326,7 +314,7 @@ struct file_system_type {
 #define ASYNCIO_REENTRANT     static
 #endif
 
-#ifdef BLOAT_FS
+#if USE_NOTIFY_CHANGE
 /*
  * Attribute flags.  These should be or-ed together to figure out what
  * has been changed!

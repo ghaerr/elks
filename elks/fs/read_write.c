@@ -38,12 +38,6 @@ int sys_lseek(unsigned int fd, loff_t * p_offset, unsigned int origin)
 
     if (offset < 0) return -EINVAL;
 
-#ifdef BLOAT_FS
-    if (offset != file->f_pos) {
-	file->f_reada = 0;
-    }
-#endif
-
     file->f_pos = offset;
     put_user_long((unsigned long int)offset, (void *)p_offset);
 

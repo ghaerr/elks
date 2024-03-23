@@ -21,125 +21,6 @@
 #include <arch/segment.h>
 #include <arch/system.h>
 
-#ifdef BLOAT_FS
-
-int sys_statfs(char *path, register struct statfs *ubuf)
-{
-    struct super_block *s;
-    struct inode *inode;
-    int error;
-    struct statfs sbuf;
-
-    error = namei(path, &inode, 0, 0);
-    if (error)
-        return error;
-    if (!inode->i_sb->s_op->statfs_kern) {
-        iput(inode);
-        return -ENOSYS;
-    }
-    s = inode->i_sb;
-    s->s_op->statfs_kern(inode->i_sb, &sbuf, 0);
-    sbuf.f_type = s->s_type->type;
-    sbuf.f_flags = s->s_flags;
-    sbuf.f_dev = s->s_dev;
-    memcpy(sbuf.f_mntonname, s->s_mntonname, MNAMELEN);
-
-    iput(inode);
-
-    return verified_memcpy_tofs(ubuf, &sbuf, sizeof(sbuf));
-}
-
-int do_truncate(register struct inode *inode, loff_t length)
-{
-    int error;
-    struct iattr newattrs;
-    register struct inode_operations *iop = inode->i_op;
-
-    down(&inode->i_sem);
-    newattrs.ia_size = length;
-    newattrs.ia_valid = ATTR_SIZE | ATTR_CTIME;
-    error = notify_change(inode, &newattrs);
-    if (!error)
-        if (iop && iop->truncate)
-            iop->truncate(inode);
-    up(&inode->i_sem);
-    return error;
-}
-
-int sys_truncate(char *path, loff_t length)
-{
-    struct inode *inode;
-    register struct inode *inodep;
-    int error;
-
-    error = namei(path, &inode, NOT_DIR, MAY_WRITE);
-    inodep = inode;
-    if (error)
-        return error;
-    if (IS_RDONLY(inodep)) {
-        iput(inodep);
-        return -EROFS;
-    }
-    error = do_truncate(inodep, length);
-    iput(inodep);
-    return error;
-}
-
-int sys_ftruncate(unsigned int fd, loff_t length)
-{
-    register struct inode *inode;
-    register struct file *file;
-
-    if (fd >= NR_OPEN || !(file = current->files.fd[fd]))
-        return -EBADF;
-    if (!(inode = file->f_inode))
-        return -ENOENT;
-    if (S_ISDIR(inode->i_mode) || !(file->f_mode & FMODE_WRITE))
-        return -EACCES;
-    return do_truncate(inode, length);
-}
-
-/* If times==NULL, set access and modification to current time,
- * must be owner or have write permission.
- * Else, update from *times, must be owner or super user.
- */
-
-int sys_utimes(char *filename, struct timeval *utimes)
-{
-    int error;
-    struct inode *inode;
-    register struct inode *inodep;
-    struct iattr newattrs;
-
-    error = namei(filename, &inode, 0, 0);
-    inodep = inode;
-    if (error)
-        return error;
-    if (IS_RDONLY(inodep)) {
-        iput(inodep);
-        return -EROFS;
-    }
-    /* Don't worry, the checks are done in inode_change_ok() */
-    newattrs.ia_valid = ATTR_CTIME | ATTR_MTIME | ATTR_ATIME;
-    if (utimes) {
-        struct timeval times[2];
-        if (error = verified_memcpy_fromfs(&times, utimes, sizeof(times))) {
-            iput(inodep);
-            return error;
-        }
-        newattrs.ia_atime = times[0].tv_sec;
-        newattrs.ia_mtime = times[1].tv_sec;
-        newattrs.ia_valid |= ATTR_ATIME_SET | ATTR_MTIME_SET;
-    } else if ((error = permission(inodep, MAY_WRITE)) != 0) {
-        iput(inodep);
-        return error;
-    }
-    error = notify_change(inodep, &newattrs);
-    iput(inodep);
-    return error;
-}
-#endif
-
 int sys_utime(char *filename, register struct utimbuf *times)
 {
     struct inode *inode;
@@ -419,3 +300,121 @@ int sys_close(unsigned int fd)
     }
     return -EBADF;
 }
+
+#ifdef BLOAT_FS
+int sys_statfs(char *path, register struct statfs *ubuf)
+{
+    struct super_block *s;
+    struct inode *inode;
+    int error;
+    struct statfs sbuf;
+
+    error = namei(path, &inode, 0, 0);
+    if (error)
+        return error;
+    if (!inode->i_sb->s_op->statfs_kern) {
+        iput(inode);
+        return -ENOSYS;
+    }
+    s = inode->i_sb;
+    s->s_op->statfs_kern(inode->i_sb, &sbuf, 0);
+    sbuf.f_type = s->s_type->type;
+    sbuf.f_flags = s->s_flags;
+    sbuf.f_dev = s->s_dev;
+    memcpy(sbuf.f_mntonname, s->s_mntonname, MNAMELEN);
+
+    iput(inode);
+
+    return verified_memcpy_tofs(ubuf, &sbuf, sizeof(sbuf));
+}
+
+int do_truncate(register struct inode *inode, loff_t length)
+{
+    int error;
+    struct iattr newattrs;
+    register struct inode_operations *iop = inode->i_op;
+
+    down(&inode->i_sem);
+    newattrs.ia_size = length;
+    newattrs.ia_valid = ATTR_SIZE | ATTR_CTIME;
+    error = notify_change(inode, &newattrs);
+    if (!error)
+        if (iop && iop->truncate)
+            iop->truncate(inode);
+    up(&inode->i_sem);
+    return error;
+}
+
+int sys_truncate(char *path, loff_t length)
+{
+    struct inode *inode;
+    register struct inode *inodep;
+    int error;
+
+    error = namei(path, &inode, NOT_DIR, MAY_WRITE);
+    inodep = inode;
+    if (error)
+        return error;
+    if (IS_RDONLY(inodep)) {
+        iput(inodep);
+        return -EROFS;
+    }
+    error = do_truncate(inodep, length);
+    iput(inodep);
+    return error;
+}
+
+int sys_ftruncate(unsigned int fd, loff_t length)
+{
+    register struct inode *inode;
+    register struct file *file;
+
+    if (fd >= NR_OPEN || !(file = current->files.fd[fd]))
+        return -EBADF;
+    if (!(inode = file->f_inode))
+        return -ENOENT;
+    if (S_ISDIR(inode->i_mode) || !(file->f_mode & FMODE_WRITE))
+        return -EACCES;
+    return do_truncate(inode, length);
+}
+
+/* If times==NULL, set access and modification to current time,
+ * must be owner or have write permission.
+ * Else, update from *times, must be owner or super user.
+ */
+
+int sys_utimes(char *filename, struct timeval *utimes)
+{
+    int error;
+    struct inode *inode;
+    register struct inode *inodep;
+    struct iattr newattrs;
+
+    error = namei(filename, &inode, 0, 0);
+    inodep = inode;
+    if (error)
+        return error;
+    if (IS_RDONLY(inodep)) {
+        iput(inodep);
+        return -EROFS;
+    }
+    /* Don't worry, the checks are done in inode_change_ok() */
+    newattrs.ia_valid = ATTR_CTIME | ATTR_MTIME | ATTR_ATIME;
+    if (utimes) {
+        struct timeval times[2];
+        if (error = verified_memcpy_fromfs(&times, utimes, sizeof(times))) {
+            iput(inodep);
+            return error;
+        }
+        newattrs.ia_atime = times[0].tv_sec;
+        newattrs.ia_mtime = times[1].tv_sec;
+        newattrs.ia_valid |= ATTR_ATIME_SET | ATTR_MTIME_SET;
+    } else if ((error = permission(inodep, MAY_WRITE)) != 0) {
+        iput(inodep);
+        return error;
+    }
+    error = notify_change(inodep, &newattrs);
+    iput(inodep);
+    return error;
+}
+#endif

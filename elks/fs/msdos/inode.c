@@ -209,9 +209,8 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%lu,ts=%
 	//printk(", free ");     print_formatted(free_displayed);
 	printk(", fat%d format\n", sb->fat_bits);
 
-#ifdef BLOAT_FS
-	s->s_magic = MSDOS_SUPER_MAGIC;
-#endif
+	/*s->s_magic = MSDOS_SUPER_MAGIC;*/
+
 	/* set up enough so that it can read an inode */
 	s->s_op = &msdos_sops;
 	if (!(s->s_mounted = iget(s,(ino_t)MSDOS_ROOT_INO))) {

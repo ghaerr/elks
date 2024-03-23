@@ -469,11 +469,6 @@ int notify_change(register struct inode *inode, register struct iattr *attr)
         if (!(attr->ia_valid & ATTR_ATIME_SET)) attr->ia_atime = attr->ia_ctime;
         if (!(attr->ia_valid & ATTR_MTIME_SET)) attr->ia_mtime = attr->ia_ctime;
     }
-#ifdef BLOAT_FS
-    if (inode->i_sb && inode->i_sb->s_op && inode->i_sb->s_op->notify_change)
-        return inode->i_sb->s_op->notify_change(inode, attr);
-#endif
-
     if ((retval = inode_change_ok(inode, attr)) != 0) return retval;
 
     inode_setattr(inode, attr);
