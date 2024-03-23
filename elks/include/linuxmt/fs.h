@@ -20,9 +20,7 @@
 #include <arch/statfs.h>
 #include <arch/segment.h>
 
-#ifdef CONFIG_PIPE
 #include <linuxmt/pipe_fs_i.h>
-#endif
 
 #ifdef CONFIG_MINIX_FS
 #include <linuxmt/minix_fs.h>
@@ -204,9 +202,7 @@ struct inode {
 #endif
 
     union {
-#ifdef CONFIG_PIPE
                 struct pipe_inode_info pipe_i;
-#endif
 #ifdef CONFIG_MINIX_FS
                 struct minix_inode_info minix_i;
 #endif
@@ -247,7 +243,6 @@ struct super_block {
     struct wait_queue           s_wait;
     char                        s_mntonname[MNAMELEN];
 #ifdef BLOAT_FS
-    unsigned char               s_rd_only;
     __u32                       s_magic;
     time_t                      s_time;
 #endif

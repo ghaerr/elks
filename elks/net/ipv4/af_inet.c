@@ -445,8 +445,6 @@ int not_implemented(void)
     return 0;
 }
 
-/*@-type@*/
-
 static struct proto_ops inet_proto_ops = {
     AF_INET,
     inet_create,
@@ -471,8 +469,6 @@ static struct proto_ops inet_proto_ops = {
     not_implemented,    /* inet_getsockopt */
     not_implemented,    /* inet_fcntl */
 };
-
-/*@+type@*/
 
 void inet_proto_init(struct net_proto *pro)
 {

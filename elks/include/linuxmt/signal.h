@@ -78,8 +78,6 @@ typedef unsigned long sigset_t;	/* at least 32 bits */
 
 #define _NSIG		32
 
-/*@+naamechecks@*/
-
 #endif
 
 #define NSIG		_NSIG

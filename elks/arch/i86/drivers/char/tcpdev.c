@@ -159,8 +159,6 @@ static void tcpdev_release(struct inode *inode, struct file *file)
     tcpdev_inuse = 0;
 }
 
-/*@-type@*/
-
 static struct file_operations tcpdev_fops = {
     NULL,                       /* lseek */
     tcpdev_read,                /* read */
@@ -171,8 +169,6 @@ static struct file_operations tcpdev_fops = {
     tcpdev_open,                /* open */
     tcpdev_release              /* release */
 };
-
-/*@+type@*/
 
 void INITPROC tcpdev_init(void)
 {
