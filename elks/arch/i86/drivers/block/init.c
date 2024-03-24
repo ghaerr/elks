@@ -52,7 +52,7 @@ void INITPROC device_init(void)
      */
     if (!boot_rootdev && (SETUP_ELKS_FLAGS & EF_BIOS_DEV_NUM) != 0) {
         dev_t rootdev = 0;
-#ifdef CONFIG_BLK_DEV_FD
+#if defined(CONFIG_BLK_DEV_FD) && !defined(CONFIG_BLK_DEV_BFD)
         if (ROOT_DEV == 0) rootdev = DEV_DF0;
         else if (ROOT_DEV == 1) rootdev = DEV_DF1;
 #endif
