@@ -179,40 +179,12 @@ static void run_timer_list(void)
     set_irq();
 }
 
-#if UNUSED
-/* maybe someday I'll implement these profiling things -PL */
-
-static void do_it_prof(struct task_struct *p, jiff_t ticks)
-{
-    jiff_t it_prof = p->it_prof_value;
-
-    if (it_prof) {
-    if (it_prof <= ticks) {
-        it_prof = ticks + p->it_prof_incr;
-        send_sig(SIGPROF, p, 1);
-    }
-    p->it_prof_value = it_prof - ticks;
-    }
-}
-
-static void update_one_process(struct taks_struct *p,
-                   jiff_t ticks, jiff_t user, jiff_t system)
-{
-    do_process_times(p, user, system);
-    do_it_virt(p, user);
-    do_it_prof(p, ticks);
-}
-
-#endif
-
 void do_timer(void)
 {
     jiffies++;
 
-#ifdef NEED_RESCHED             /* need_resched is not checked anywhere */
-    if (!((int) jiffies & 7))
-        need_resched = 1;       /* how primitive can you get? */
-#endif
+    /***if (!((int) jiffies & 7))
+        need_resched = 1;***/       /* how primitive can you get? */
 
     run_timer_list();
 
