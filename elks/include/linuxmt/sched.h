@@ -114,6 +114,7 @@ extern __task task[MAX_TASKS];
 
 extern volatile jiff_t jiffies; /* ticks updated by the timer interrupt*/
 extern __ptask current;
+extern pid_t last_pid;
 
 extern struct timeval xtime;
 extern jiff_t xtime_jiffies;

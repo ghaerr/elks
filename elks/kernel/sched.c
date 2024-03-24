@@ -21,12 +21,10 @@ __task task[MAX_TASKS];
 __ptask current = task;
 __ptask previous;
 
-//static unsigned char nr_running;
 extern int intr_count;
 
 void add_to_runqueue(register struct task_struct *p)
 {
-    //nr_running++;
     (p->prev_run = idle_task.prev_run)->next_run = p;
     p->next_run = &idle_task;
     idle_task.prev_run = p;
@@ -40,7 +38,6 @@ static void del_from_runqueue(register struct task_struct *p)
     if (p == &idle_task)
         panic("SCHED: trying to sleep idle task");
 #endif
-    //nr_running--;
     (p->next_run->prev_run = p->prev_run)->next_run = p->next_run;
     p->next_run = p->prev_run = NULL;
 
@@ -77,6 +74,10 @@ void schedule(void)
          panic("SCHED: schedule() called from interrupt, intr_count %d", intr_count);
     }
 #endif
+
+    /* Don't reschedule waiting for async I/O complete during kernel startup */
+    if ((int)last_pid <= 0)
+        return;
 
     /* We have to let a task exit! */
     if (prev->state == TASK_EXITING)
