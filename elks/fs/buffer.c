@@ -410,26 +410,23 @@ void brelse(struct buffer_head *bh)
     if (ebh->b_count == 0) panic("brelse");
 #endif
     DCR_COUNT(ebh);
-#ifdef BLOAT_FS
-    if (!ebh->b_count)
-        wake_up(&bufwait);
-#endif
 }
 
-#ifdef BLOAT_FS
+#if UNUSED
 /*
  * bforget() is like brelse(), except it removes the buffer
  * data validity.
  */
 void bforget(struct buffer_head *bh)
 {
-    ext_buffer_head *ebh = EBH(bh);
+    ext_buffer_head *ebh;
 
+    if (!bh) return;
     wait_on_buffer(bh);
+    ebh = EBH(bh);
     ebh->b_dirty = 0;
     DCR_COUNT(ebh);
     ebh->b_dev = NODEV;
-    wake_up(&bufwait);
 }
 #endif
 
@@ -558,7 +555,7 @@ struct buffer_head *bread32(kdev_t dev, block32_t block)
     return readbuf(getblk32(dev, block));
 }
 
-#ifdef BLOAT_FS
+#if UNUSED
 /* NOTHING is using breada at this point, so I can pull it out... Chad */
 struct buffer_head *breada(kdev_t dev, block_t block, int bufsize,
                            unsigned int pos, unsigned int filesize)
