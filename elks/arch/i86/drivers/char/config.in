@@ -17,7 +17,6 @@ mainmenu_option next_comment
 	if [[ "$CONFIG_CONSOLE_DIRECT" = "y" || "$CONFIG_CONSOLE_BIOS" = "y" ]]; then
 	    choice 'Console terminal emulation'		\
 		    "ANSI           CONFIG_EMUL_ANSI	\
-		     VT52           CONFIG_EMUL_VT52	\
 		     None           CONFIG_EMUL_NONE"		ANSI
 	fi
 	if [ "$CONFIG_CONSOLE_DIRECT" = "y" ]; then
