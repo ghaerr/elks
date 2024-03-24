@@ -75,7 +75,7 @@ void schedule(void)
     }
 #endif
 
-    /* Don't reschedule waiting for async I/O complete during kernel startup */
+    /* Disallow rescheduling during startup when idle task is the only task */
     if ((int)last_pid <= 0)
         return;
 
