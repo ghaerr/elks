@@ -4,7 +4,6 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/heap.h>
 #include <linuxmt/string.h>
-//#include <linuxmt/lock.h>
 
 // Minimal block size to hold heap header
 // plus enough space in body to be useful
@@ -13,11 +12,6 @@
 #define HEAP_MIN_SIZE (sizeof (heap_s) + 16)
 
 // Heap root
-
-// locks not needed unless SMP or reentrant kernel
-//static lock_t _heap_lock;
-#define WAIT_LOCK(lockp)
-#define EVENT_UNLOCK(lockp)
 
 list_s _heap_all;
 static list_s _heap_free;
@@ -90,7 +84,6 @@ static void heap_merge (heap_s * h1, heap_s * h2)
 
 void * heap_alloc (word_t size, byte_t tag)
 {
-	WAIT_LOCK (&_heap_lock);
 	heap_s * h = free_get (size, tag);
 	if (h) {
 		h++;						// skip header
@@ -98,7 +91,6 @@ void * heap_alloc (word_t size, byte_t tag)
 			memset(h, 0, size);
 	}
 	if (!h) printk("HEAP: no memory (%u bytes)\n", size);
-	EVENT_UNLOCK (&_heap_lock);
 	return h;
 }
 
@@ -107,8 +99,6 @@ void * heap_alloc (word_t size, byte_t tag)
 
 void heap_free (void * data)
 {
-	WAIT_LOCK (&_heap_lock);
-
 	heap_s * h = ((heap_s *) (data)) - 1;  // back to header
 
 	// Free block will be inserted to free list:
@@ -148,8 +138,6 @@ void heap_free (void * data)
 	// Insert to free list head or tail
 
 	list_insert_after (i, &(h->free));
-
-	EVENT_UNLOCK (&_heap_lock);
 }
 
 
@@ -158,7 +146,6 @@ void heap_free (void * data)
 void heap_add (void * data, word_t size)
 {
 	if (size >= HEAP_MIN_SIZE) {
-		WAIT_LOCK (&_heap_lock);
 		heap_s * h = (heap_s *) data;
 		h->size = size - sizeof (heap_s);
 		h->tag = HEAP_TAG_FREE;
@@ -168,8 +155,6 @@ void heap_add (void * data, word_t size)
 
 		list_insert_before (&_heap_all, &(h->all));
 		list_insert_before (&_heap_free, &(h->free));
-
-		EVENT_UNLOCK (&_heap_lock);
 	}
 }
 
@@ -181,10 +166,7 @@ void heap_init ()
 	list_init (&_heap_free);
 }
 
-// Dump heap
-
-#ifdef HEAP_DEBUG
-
+#if UNUSED
 static void heap_cb (heap_s * h)
 {
         printk ("heap:%Xh:%u:%hxh\n",h, h->size, h->tag);
@@ -200,6 +182,4 @@ void heap_iterate (void (* cb) (heap_s *))
 		n = h->all.next;
 	}
 }
-
-#endif /* HEAP_DEBUG */
-
+#endif

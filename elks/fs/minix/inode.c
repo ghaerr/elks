@@ -412,7 +412,7 @@ void minix_write_inode(struct inode *inode)
     brelse(minix_update_inode(inode));
 }
 
-#ifdef BLOAT_FS
+#if UNUSED
 int minix_sync_inode(register struct inode *inode)
 {
     int err = 0;

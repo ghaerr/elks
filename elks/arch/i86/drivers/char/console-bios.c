@@ -51,15 +51,12 @@ struct console {
     unsigned char attr;         /* current attribute */
     unsigned char XN;           /* delayed newline on column 80 */
     unsigned char color;        /* fg/bg attr */
-#ifdef CONFIG_EMUL_VT52
-    unsigned char tmp;          /* ESC Y ch save */
-#endif
+    int pageno;                 /* video ram page # */
 #ifdef CONFIG_EMUL_ANSI
     int savex, savey;           /* saved cursor position */
     unsigned char *parmptr;     /* ptr to params */
     unsigned char params[MAXPARMS];     /* ANSI params */
 #endif
-    int pageno;                 /* video ram page # */
 };
 
 static struct wait_queue glock_wait;
@@ -72,8 +69,6 @@ static int Current_VCminor = 0;
 
 #ifdef CONFIG_EMUL_ANSI
 #define TERM_TYPE " emulating ANSI "
-#elif CONFIG_EMUL_VT52
-#define TERM_TYPE " emulating vt52 "
 #else
 #define TERM_TYPE " dumb "
 #endif
@@ -138,7 +133,7 @@ static void ScrollUp(register Console * C, int y)
     scroll(C, 1, 0, y, MaxCol, MaxRow);
 }
 
-#if defined (CONFIG_EMUL_VT52) || defined (CONFIG_EMUL_ANSI)
+#ifdef CONFIG_EMUL_ANSI
 static void ScrollDown(register Console * C, int y)
 {
     scroll(C, -1, 0, y, MaxCol, MaxRow);

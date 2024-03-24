@@ -7,8 +7,6 @@
 #include <linuxmt/types.h>
 #include <linuxmt/list.h>
 
-/*#define HEAP_DEBUG*/
-
 // Heap block header
 
 // Tag bits 0-6 help for statistics
@@ -49,9 +47,6 @@ void heap_free (void * data);
 
 void heap_add (void * data, word_t size);
 void heap_init ();
-
-#ifdef HEAP_DEBUG
 void heap_iterate (void (* cb) (heap_s * h));
-#endif
 
 #endif

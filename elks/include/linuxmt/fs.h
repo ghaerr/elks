@@ -166,7 +166,6 @@ typedef struct buffer_head      ext_buffer_head;
 #define BLOCK_WRITE     1
 
 void brelse(struct buffer_head *);
-void bforget(struct buffer_head *);
 void wait_on_buffer (struct buffer_head *);
 void lock_buffer (struct buffer_head *);
 void unlock_buffer (struct buffer_head *);

@@ -301,7 +301,7 @@ int sys_close(unsigned int fd)
     return -EBADF;
 }
 
-#ifdef BLOAT_FS
+#if UNUSED
 int sys_statfs(char *path, register struct statfs *ubuf)
 {
     struct super_block *s;
