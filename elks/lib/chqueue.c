@@ -26,6 +26,7 @@
 #include <linuxmt/types.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/debug.h>
+#include <arch/irq.h>
 
 void chq_init(register struct ch_queue *q, unsigned char *buf, int size)
 {

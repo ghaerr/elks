@@ -28,7 +28,7 @@
  *			for details.
  */
 
-#include <linuxmt/types.h>
+#include <linuxmt/config.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/fcntl.h>
 #include <linuxmt/stat.h>

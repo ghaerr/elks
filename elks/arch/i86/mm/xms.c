@@ -4,7 +4,7 @@
  * Nov 2021 Greg Haerr
  */
 
-#include <linuxmt/types.h>
+#include <linuxmt/config.h>
 #include <linuxmt/memory.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/init.h>

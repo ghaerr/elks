@@ -3,7 +3,6 @@
  */
 
 #include <linuxmt/config.h>
-#include <linuxmt/types.h>
 #include <linuxmt/net.h>
 #include <linuxmt/fs.h>
 

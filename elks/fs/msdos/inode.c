@@ -4,6 +4,7 @@
  *  Written 1992 by Werner Almesberger
  */
 
+#include <linuxmt/config.h>
 #include <linuxmt/msdos_fs.h>
 #include <linuxmt/msdos_fs_i.h>
 #include <linuxmt/msdos_fs_sb.h>

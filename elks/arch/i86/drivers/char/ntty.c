@@ -12,7 +12,6 @@
  * VFS interface to the character drivers (what a mouthful! :)  
  */
 
-#include <linuxmt/types.h>
 #include <linuxmt/config.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/fs.h>
@@ -28,6 +27,7 @@
 #include <linuxmt/init.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/heap.h>
+#include <arch/irq.h>
 
 /* default termios, set at init time, not reset at open*/
 struct termios def_vals = {

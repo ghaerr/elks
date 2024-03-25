@@ -8,14 +8,15 @@
  * 07 Nov 21 Santiago Hormazabal
  */
 
-#include <linuxmt/types.h>
-#include <arch/io.h>
-#include <arch/8018x.h>
+#include <linuxmt/config.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/chqueue.h>
 #include <linuxmt/ntty.h>
+#include <arch/io.h>
+#include <arch/irq.h>
+#include <arch/8018x.h>
 #include "console.h"
 
 struct serial_info {

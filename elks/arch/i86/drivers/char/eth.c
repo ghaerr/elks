@@ -3,6 +3,7 @@
  * June 2022 Greg Haerr
  */
 
+#include <linuxmt/config.h>
 #include <linuxmt/init.h>
 #include <linuxmt/major.h>
 #include <linuxmt/errno.h>

@@ -28,7 +28,6 @@
  */
 
 #include <linuxmt/config.h>
-#include <arch/segment.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/sched.h>
@@ -37,6 +36,8 @@
 #include <linuxmt/ntty.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/signal.h>
+#include <arch/segment.h>
+#include <arch/irq.h>
 #include <stdarg.h>
 
 dev_t dev_console;

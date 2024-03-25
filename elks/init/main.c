@@ -16,6 +16,7 @@
 #include <arch/system.h>
 #include <arch/segment.h>
 #include <arch/ports.h>
+#include <arch/irq.h>
 
 /*
  *	System variable setups

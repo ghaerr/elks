@@ -32,7 +32,7 @@
  * Enhanced by Greg Haerr Oct 2020: add track cache, XT fixes, custom DDPT
  */
 
-#include <linuxmt/types.h>
+#include <linuxmt/config.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/errno.h>
@@ -43,7 +43,6 @@
 #include <linuxmt/string.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/memory.h>
-#include <linuxmt/config.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/timer.h>
 

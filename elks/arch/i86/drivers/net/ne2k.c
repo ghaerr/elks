@@ -9,7 +9,6 @@
  *
  */
 
-#include <arch/io.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/major.h>
 #include <linuxmt/ioctl.h>
@@ -21,6 +20,8 @@
 #include <linuxmt/string.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/netstat.h>
+#include <arch/io.h>
+#include <arch/irq.h>
 #include "eth-msgs.h"
 
 // Shared declarations between low and high parts

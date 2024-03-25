@@ -6,6 +6,7 @@
  * Aug 2023 Greg Haerr - Don't use L1 cache/memset on new filesystem clusters.
  */
 
+#include <linuxmt/config.h>
 #include <linuxmt/msdos_fs.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/kernel.h>

@@ -10,7 +10,6 @@
  * added enough ansi escape sequences for visual editing
  */
 
-#include <linuxmt/types.h>
 #include <linuxmt/config.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/sched.h>
