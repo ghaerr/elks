@@ -1,6 +1,4 @@
-
-#include <arch/types.h>
-*
+/*
  * 8018X's Integrated Timer/Counter Unit
  *
  * This file contains code used for the embedded 8018X family only.
