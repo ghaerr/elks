@@ -32,11 +32,6 @@ CONFIG_HW_VGA=y
 CONFIG_HW_SERIAL_FIFO=y
 
 #
-# BIOS support
-#
-CONFIG_APM=y
-
-#
 # Kernel settings
 #
 # CONFIG_TRACE is not set
