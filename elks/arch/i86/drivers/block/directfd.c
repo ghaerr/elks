@@ -60,6 +60,9 @@
  * Ported Helge's modifications to ELKS. Lots of original driver cleanup.
  * Expanded FDC and platform identification to allow running on original
  * IBM PC and clones with no DIR register. Added lots of info and error msgs.
+ *
+ * Mar 2024 - Greg Haerr
+ * Added dynamic floppy bounce buffer
  */
 
 /*
@@ -87,6 +90,7 @@
 #include <linuxmt/fd.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/string.h>
+#include <linuxmt/heap.h>
 #include <linuxmt/debug.h>
 
 #include <arch/dma.h>
@@ -280,8 +284,7 @@ static unsigned int changed_floppies;
  * The block buffer is used for all writes, for formatting and for reads
  * in case track buffering doesn't work or has been turned off.
  */
-#define WORD_ALIGNED    __attribute__((aligned(2)))
-static char tmp_floppy_area[BLOCK_SIZE] WORD_ALIGNED; /* for now FIXME to be removed */
+static char *floppy_buffer;
 
 /*
  * These are global variables, as that's the easiest way to give
@@ -488,9 +491,9 @@ static void DFPROC setup_DMA(void)
             count += 512; /* add one if head=0 && sector count is odd */
         dma_addr = _MK_LINADDR(DMASEG, 0);
     } else if (dma_addr >= LAST_DMA_ADDR) {
-        dma_addr = _MK_LINADDR(kernel_ds, tmp_floppy_area); /* use bounce buffer */
+        dma_addr = _MK_LINADDR(kernel_ds, floppy_buffer); /* use bounce buffer */
         if (command == FD_WRITE) {
-            xms_fmemcpyw(tmp_floppy_area, kernel_ds, CURRENT->rq_buffer,
+            xms_fmemcpyw(floppy_buffer, kernel_ds, CURRENT->rq_buffer,
                 CURRENT->rq_seg, BLOCK_SIZE/2);
         }
     }
@@ -740,7 +743,7 @@ static void rw_interrupt(void)
                                     ) {
         /* if the dest buffer is out of reach for DMA (always the case if using
          * XMS buffers) we need to read/write via the bounce buffer */
-        xms_fmemcpyw(CURRENT->rq_buffer, CURRENT->rq_seg, tmp_floppy_area,
+        xms_fmemcpyw(CURRENT->rq_buffer, CURRENT->rq_seg, floppy_buffer,
             kernel_ds, BLOCK_SIZE/2);
         printk("fd: illegal buffer usage, rq_buffer %04x:%04x\n",
             CURRENT->rq_seg, CURRENT->rq_buffer);
@@ -1396,6 +1399,7 @@ static void DFPROC floppy_deregister(void)
     *(__u32 __far *)FLOPPY_VEC = old_floppy_vec;
     enable_irq(FLOPPY_IRQ);
     set_irq();
+    heap_free(floppy_buffer);
 }
 
 /* Try to determine the floppy controller type */
@@ -1446,10 +1450,14 @@ static int DFPROC floppy_register(void)
     current_DOR = 0x0c;
     outb(0x0c, FD_DOR);         /* all motors off, enable IRQ and DMA */
 
+    floppy_buffer = heap_alloc(BLOCK_SIZE, HEAP_TAG_BUF);
+    if (!floppy_buffer)
+        return -ENOMEM;
     old_floppy_vec = *((__u32 __far *)FLOPPY_VEC);
     err = request_irq(FLOPPY_IRQ, floppy_interrupt, INT_GENERIC);
     if (err) {
         printk("df: IRQ %d busy\n", FLOPPY_IRQ);
+        heap_free(floppy_buffer);
         return err;
     }
 
