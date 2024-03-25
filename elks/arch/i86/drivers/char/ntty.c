@@ -28,6 +28,7 @@
 #include <linuxmt/init.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/heap.h>
+#include <arch/irq.h>
 
 /* default termios, set at init time, not reset at open*/
 struct termios def_vals = {

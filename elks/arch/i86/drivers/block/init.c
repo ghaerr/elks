@@ -27,6 +27,7 @@
 #include <linuxmt/memory.h>
 #include <linuxmt/devnum.h>
 
+#include <arch/irq.h>
 #include <arch/system.h>
 #include <arch/segment.h>
 

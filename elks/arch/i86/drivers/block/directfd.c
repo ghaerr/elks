@@ -96,6 +96,7 @@
 #include <arch/dma.h>
 #include <arch/system.h>
 #include <arch/io.h>
+#include <arch/irq.h>
 #include <arch/segment.h>
 #include <arch/ports.h>
 #include <arch/hdreg.h>         /* for ioctl GETGEO */

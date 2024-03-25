@@ -16,6 +16,7 @@
 #include <linuxmt/termios.h>
 #include <linuxmt/debug.h>
 #include <arch/io.h>
+#include <arch/irq.h>
 #include <arch/serial-8250.h>
 #include <arch/ports.h>
 

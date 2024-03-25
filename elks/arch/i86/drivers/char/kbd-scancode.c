@@ -34,6 +34,7 @@
 #include <linuxmt/signal.h>
 #include <linuxmt/ntty.h>
 #include <arch/io.h>
+#include <arch/irq.h>
 #include <arch/ports.h>
 #include <arch/system.h>
 #include "console.h"
