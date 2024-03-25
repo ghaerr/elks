@@ -15,6 +15,7 @@
 #include <linuxmt/chqueue.h>
 #include <linuxmt/ntty.h>
 #include <arch/io.h>
+#include <arch/irq.h>
 #include <arch/8018x.h>
 #include "console.h"
 
