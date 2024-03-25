@@ -7,8 +7,8 @@
  * no more, no less.
  */
 
-#include <linuxmt/errno.h>
 #include <linuxmt/config.h>
+#include <linuxmt/errno.h>
 #include <linuxmt/socket.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/sched.h>

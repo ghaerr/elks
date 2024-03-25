@@ -16,8 +16,8 @@
  *  More flexible handling of extended partitions - aeb, 950831
  */
 
-#include <linuxmt/boot.h>
 #include <linuxmt/config.h>
+#include <linuxmt/boot.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/genhd.h>
 #include <linuxmt/kernel.h>

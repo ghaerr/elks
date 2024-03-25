@@ -12,7 +12,6 @@
  * VFS interface to the character drivers (what a mouthful! :)  
  */
 
-#include <linuxmt/types.h>
 #include <linuxmt/config.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/fs.h>

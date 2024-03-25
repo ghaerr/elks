@@ -3,7 +3,6 @@
  *
  * Calls conio_poll to get kbd input
  */
-#include <linuxmt/types.h>
 #include <linuxmt/config.h>
 #include <linuxmt/timer.h>
 #include <linuxmt/sched.h>

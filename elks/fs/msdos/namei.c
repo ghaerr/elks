@@ -4,6 +4,7 @@
  *  Written 1992 by Werner Almesberger
  */
 
+#include <linuxmt/config.h>
 #include <features.h>
 #include <arch/segment.h>
 

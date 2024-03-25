@@ -2,7 +2,7 @@
  *	Memory management support.
  */
 
-#include <linuxmt/types.h>
+#include <linuxmt/config.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/errno.h>

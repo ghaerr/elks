@@ -3,7 +3,6 @@
  * (C) 1999 Alistair Riddoch
  */
 
-#include <linuxmt/types.h>
 #include <linuxmt/config.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/fs.h>

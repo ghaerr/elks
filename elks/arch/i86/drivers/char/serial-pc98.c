@@ -6,7 +6,7 @@
  * 1 serial port.
  *
  */
-#include <linuxmt/types.h>
+#include <linuxmt/config.h>
 #include <linuxmt/wait.h>
 #include <linuxmt/chqueue.h>
 #include <linuxmt/config.h>
