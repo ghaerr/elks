@@ -20,7 +20,7 @@ typedef __u32                   block32_t;
 typedef __u32                   sector_t;
 typedef __u16                   dev_t;
 typedef __u16                   flag_t;
-typedef long                    cluster_t;
+typedef __s32                   cluster_t;
 
 typedef __u32                   u_ino_t;
 typedef __u32                   ino_t;
