@@ -1,6 +1,7 @@
 #ifndef __SIGNAL_H
 #define __SIGNAL_H
 
+#include <features.h>
 #include <sys/types.h>
 
 #undef __KERNEL__

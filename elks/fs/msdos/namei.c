@@ -5,9 +5,6 @@
  */
 
 #include <linuxmt/config.h>
-#include <features.h>
-#include <arch/segment.h>
-
 #include <linuxmt/sched.h>
 #include <linuxmt/msdos_fs.h>
 #include <linuxmt/kernel.h>
@@ -16,6 +13,8 @@
 #include <linuxmt/stat.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/debug.h>
+
+#include <arch/segment.h>
 
 unsigned char FATPROC get_fs_byte(const void *dv)
 {

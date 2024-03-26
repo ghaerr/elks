@@ -1,8 +1,5 @@
-
 #ifndef	_SYS_WAIT_H
 #define	_SYS_WAIT_H
-
-#include <features.h>
 
 /* Bits in the third argument to `waitpid'.  */
 #define	WNOHANG		1	/* Don't block waiting.  */

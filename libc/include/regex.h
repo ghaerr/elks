@@ -1,3 +1,6 @@
+#ifndef	__REGEX_H
+#define	__REGEX_H
+
 /*
  * Definitions etc. for regexp(3) routines.
  *
@@ -21,3 +24,5 @@ void regerror();
 
 int expandwildcards(char *name, int maxargc, char **retargv);
 void freewildcards(void);
+
+#endif

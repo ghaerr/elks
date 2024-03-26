@@ -1,9 +1,6 @@
-/* utmp.h */
-
 #ifndef __UTMP_H
 #define __UTMP_H
 
-#include <features.h>
 #include <sys/types.h>
 #include <paths.h>
 #include <time.h>

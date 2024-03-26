@@ -1,6 +1,6 @@
 #ifndef __MALLOC_H
 #define __MALLOC_H
-#include <features.h>
+
 #include <sys/types.h>
 
 /*
