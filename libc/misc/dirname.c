@@ -5,7 +5,7 @@
 /* POSIX implementation of dirname(3) */
 
 char *
-dirname (char *path)
+dirname(char *path)
 {
   char *dir;
   int last;
@@ -18,7 +18,7 @@ dirname (char *path)
   while (last > 0 && path[last] == '/')
     path[last--] = '\0';
 
-  dir = rindex (path, '/');
+  dir = strrchr (path, '/');
 
   if (dir == NULL)
   {
