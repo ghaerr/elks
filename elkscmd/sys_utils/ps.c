@@ -10,7 +10,7 @@
  * Enhanced by Greg Haerr 17 Apr 2020
  */
 #define __KERNEL__
-#include <linuxmt/ntty.h>
+#include <linuxmt/ntty.h>       /* for struct tty */
 #undef __KERNEL__
 
 #include <autoconf.h>           /* for CONFIG_ options */
