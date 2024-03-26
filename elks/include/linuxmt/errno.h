@@ -145,6 +145,9 @@
 #define EQUERYREFUSED	128	/* Query refused */
 #define ESERVERERR	129	/* Server error */
 
+/* added here for userland ktcp compile */
+#define ERESTARTSYS	512	/* Restart system call*/
+
 /*****************************************************************************/
 
 /* These are comedy ones inserted for fun, and are never used.
@@ -162,7 +165,6 @@
 
 /* Should never be seen by user programs */
 
-#define ERESTARTSYS	512	/* Restart system call*/
 #define ERESTARTNOINTR	513	/* Restart without interrupts */
 #define ENOIOCTLCMD	515	/* No ioctl command */
 
