@@ -1,8 +1,6 @@
 #ifndef _SYS_TIMES_H
 #define _SYS_TIMES_H
 
-#include <features.h>
-#include <sys/types.h>
 #include <time.h>
 
 struct tms {

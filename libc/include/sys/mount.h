@@ -1,4 +1,5 @@
-/* sys/mount.h*/
+#ifndef __SYS_MOUNT_H
+#define __SYS_MOUNT_H
 
 #include <features.h>
 #include <sys/types.h>
@@ -24,3 +25,5 @@ int umount(const char *dir);
 int ustatfs(dev_t dev, struct statfs *statfs, int flags);
 
 int reboot(int magic1, int magic2, int magic3);
+
+#endif

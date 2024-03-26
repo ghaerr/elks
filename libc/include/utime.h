@@ -1,7 +1,6 @@
 #ifndef __UTIME_H
 #define __UTIME_H
 
-#include <features.h>
 #include <sys/types.h>
 
 struct utimbuf {

@@ -1,3 +1,6 @@
+#ifndef _INTTYPES_H
+#define _INTTYPES_H
+
 /* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
@@ -22,10 +25,6 @@
  *	ISO C99: 7.8 Format conversion of integer types	<inttypes.h>
  */
 
-#ifndef _INTTYPES_H
-#define _INTTYPES_H	1
-
-#include <features.h>
 /* Get the type definitions.  */
 #include <stdint.h>
 
@@ -211,4 +210,4 @@
 # define SCNxPTR	"x"
 
 
-#endif /* inttypes.h */
+#endif

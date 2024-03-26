@@ -8,9 +8,6 @@
 /* ported from linx-0.97 by zouys, Oct 21st, 2010 */
 /* neated from linx-2.0.34 fangzs, Nov 23rd, 2010 */
 
-#include <features.h>
-#include <arch/segment.h>
-
 #include <linuxmt/fs.h>
 #include <linuxmt/msdos_fs.h>
 #include <linuxmt/errno.h>
@@ -18,6 +15,8 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/string.h>
 #include <linuxmt/debug.h>
+
+#include <arch/segment.h>
 
 static size_t msdos_dir_read(struct inode *dir, struct file *filp, char *buf, size_t count)
 {

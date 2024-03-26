@@ -1,6 +1,5 @@
 #ifndef	__ASSERT_H
 #define	__ASSERT_H
-#include <features.h>
 
 /* If NDEBUG is defined, do nothing.
    If not, and EXPRESSION is zero, print an error message and abort.  */
