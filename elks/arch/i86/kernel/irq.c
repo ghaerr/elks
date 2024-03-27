@@ -27,9 +27,6 @@
 #include <arch/segment.h>
 #include <arch/irq.h>
 
-static irq_handler irq_action [16];
-static void *irq_trampoline [16];
-
 // TODO: simplify the whole by replacing IRQ by INT number
 // Would also allow to handle any of the 0..255 interrupts
 // including the 0..7 processor exceptions & traps
@@ -41,7 +38,10 @@ struct int_handler {
     byte_t irq;
 } __attribute__ ((packed));
 
-typedef struct int_handler int_handler_s;
+#define NR_TRAMPOLINES  12
+static struct int_handler trampoline [NR_TRAMPOLINES];
+static struct int_handler *irq_trampoline [16];
+static irq_handler irq_action [16];
 
 /* called by _irqit assembler hook after saving registers */
 void do_IRQ(int i,void *regs)
@@ -52,20 +52,29 @@ void do_IRQ(int i,void *regs)
     else (*ih)(i, regs);
 }
 
-// Add a dynamically allocated handler
-// that redirects to the static handler
-
-static int_handler_s *handler_alloc(void)
+static struct int_handler *handler_alloc(void)
 {
-    return (int_handler_s *) heap_alloc (sizeof (int_handler_s), HEAP_TAG_INTHAND);
+    struct int_handler *h;
+
+    for (h = trampoline; h < &trampoline[NR_TRAMPOLINES]; h++) {
+        if (h->call == 0)
+            return h;
+    }
+    return NULL;
 }
 
-static int int_handler_add (int irq, int vect, int_proc proc, int_handler_s *h)
+static void handler_free(struct int_handler *h)
+{
+    h->call = 0;
+}
+
+/* install interrupt vector to point to allocated handler trampoline */
+static int int_handler_add (int irq, int vect, int_proc proc, struct int_handler *h)
 {
     if (!h) h = handler_alloc();
     if (!h) return -ENOMEM;
 
-    h->call = 0x9A;     /* CALLF opcode */
+    h->call = 0x9A;         /* CALLF opcode */
     h->proc = proc;
     h->seg  = kernel_cs;    /* resident kernel code segment */
     h->irq  = irq;
@@ -77,7 +86,7 @@ static int int_handler_add (int irq, int vect, int_proc proc, int_handler_s *h)
 
 int request_irq(int irq, irq_handler handler, int hflag)
 {
-    int_handler_s *h;
+    struct int_handler *h;
     int_proc proc;
     flag_t flags;
 
@@ -128,7 +137,7 @@ int free_irq(int irq)
     irq_action[irq] = NULL;
     restore_flags(flags);
 
-    heap_free(irq_trampoline[irq]);
+    handler_free(irq_trampoline[irq]);
     return 0;
 }
 
