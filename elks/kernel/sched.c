@@ -22,8 +22,6 @@ __ptask current;
 __ptask previous;
 int max_tasks = MAX_TASKS;
 
-extern int intr_count;
-
 void add_to_runqueue(register struct task_struct *p)
 {
     (p->prev_run = idle_task.prev_run)->next_run = p;
