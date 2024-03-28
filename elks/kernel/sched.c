@@ -17,8 +17,8 @@
 
 #define idle_task task[0]
 
-__task task[MAX_TASKS];
-__ptask current = task;
+__task *task;           /* dynamically allocated task array */
+__ptask current;
 __ptask previous;
 
 extern int intr_count;
@@ -201,6 +201,8 @@ void INITPROC sched_init(void)
         (--t)->state = TASK_UNUSED;
     } while (t > task);
 
+    current = task;
+    next_task_slot = task;
 /*
  *  Now create task 0 to be ourself.
  */
