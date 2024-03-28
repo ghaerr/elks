@@ -95,8 +95,10 @@ void dump_heap(int fd)
 	word_t total_size = 0;
 	word_t total_free = 0;
 	long total_segsize = 0;
-	static char *heaptype[] = { "free", "SEG ", "BUF ", "TTY ", "TASK", "BUFH", "PIPE" };
-	static char *segtype[] = { "free", "CSEG", "DSEG", "BUF ", "RDSK", "PROG" };
+	static char *heaptype[] =
+        { "free", "SEG ", "BUF ", "TTY ", "TASK", "BUFH", "PIPE", "INOD", "FILE" };
+	static char *segtype[] =
+        { "free", "CSEG", "DSEG", "BUF ", "RDSK", "PROG" };
 
 	printf("  HEAP   TYPE  SIZE    SEG   TYPE    SIZE  CNT  NAME\n");
 
