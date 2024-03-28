@@ -493,6 +493,14 @@ static int INITPROC parse_options(void)
 			max_tasks = (int)simple_strtol(line+5, 10);
 			continue;
 		}
+		if (!strncmp(line,"inode=",6)) {
+			nr_inode = (int)simple_strtol(line+6, 10);
+			continue;
+		}
+		if (!strncmp(line,"file=",5)) {
+			nr_file = (int)simple_strtol(line+5, 10);
+			continue;
+		}
 		if (!strncmp(line,"comirq=",7)) {
 			comirq(line+7);
 			continue;

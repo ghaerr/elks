@@ -18,7 +18,7 @@
  *            the system.
  */
 
-struct file file_array[NR_FILE];
+struct file *file_array;    /* dynamically allocated */
 
 /*
  * Find an unused file structure and return a pointer to it.
@@ -33,7 +33,7 @@ int open_filp(unsigned short flags, struct inode *inode, struct file **fp)
     register struct file_operations *fop;
 
     while (f->f_count) {
-	if (++f >= &file_array[NR_FILE]) {
+	if (++f >= &file_array[nr_file]) {
 	    printk("open: No files\n");
 	    return -ENFILE;
 	}
