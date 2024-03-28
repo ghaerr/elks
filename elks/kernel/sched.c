@@ -20,6 +20,7 @@
 __task *task;           /* dynamically allocated task array */
 __ptask current;
 __ptask previous;
+int max_tasks = MAX_TASKS;
 
 extern int intr_count;
 
@@ -192,10 +193,10 @@ void do_timer(void)
 
 void INITPROC sched_init(void)
 {
-    register struct task_struct *t = &task[MAX_TASKS];
+    struct task_struct *t = &task[max_tasks];
 
 /*
- *  Mark tasks 0-(MAX_TASKS-1) as not in use.
+ *  Mark tasks 0-(max_tasks-1) as not in use.
  */
     do {
         (--t)->state = TASK_UNUSED;
@@ -203,6 +204,7 @@ void INITPROC sched_init(void)
 
     current = task;
     next_task_slot = task;
+    task_slots_unused = max_tasks;
 /*
  *  Now create task 0 to be ourself.
  */

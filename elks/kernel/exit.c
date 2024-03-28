@@ -9,9 +9,6 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/debug.h>
 
-extern int task_slots_unused;
-extern struct task_struct *next_task_slot;
-
 static void reparent_children(void)
 {
     register struct task_struct *p;

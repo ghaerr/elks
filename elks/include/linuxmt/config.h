@@ -30,11 +30,12 @@
 #define UTS_MACHINE             "ibmpc i8086"
 
 /* The following can be set for minimal systems or for QEMU emulation testing:
- * 10 buffers (@20 = 200), 2 ttyq (@80 = 160), 4k L1 cache, 512 heap free = ~4968.
- * Use buf=10 cache=4 in /bootopts
+ * 10 buffers (@20 = 200), 2 ttyq (@80 = 160), 4k L1 cache, 512 heap free,
+ * 10 tasks (@876 = 8760) = ~13728.
+ * Use buf=10 cache=4 task=10 in /bootopts
  */
 #if defined(CONFIG_HW_MK88)
-#define SETUP_HEAPSIZE            4968    /* force kernel heap size */
+#define SETUP_HEAPSIZE            13728         /* force kernel heap size */
 #endif
 //#undef SETUP_MEM_KBYTES
 //#define SETUP_MEM_KBYTES        256     /* force available memory in 1K bytes */

@@ -91,9 +91,9 @@ static void INITPROC early_kernel_init(void);
 void start_kernel(void)
 {
     early_kernel_init();        /* read bootopts using kernel interrupt stack */
-    task = heap_alloc(MAX_TASKS * sizeof(struct task_struct),
-        HEAP_TAG_INTHAND|HEAP_TAG_CLEAR);
-    if (!task) for(;;) ;
+    task = heap_alloc(max_tasks * sizeof(struct task_struct),
+        HEAP_TAG_TASK|HEAP_TAG_CLEAR);
+    if (!task) panic("No task mem");
     setsp(&task->t_regs.ax);    /* change to idle task stack */
     kernel_init();              /* continue init running on idle task stack */
 
@@ -487,6 +487,10 @@ static int INITPROC parse_options(void)
 		}
 		if (!strncmp(line,"cache=",6)) {
 			nr_map_bufs = (int)simple_strtol(line+6, 10);
+			continue;
+		}
+		if (!strncmp(line,"task=",5)) {
+			max_tasks = (int)simple_strtol(line+5, 10);
 			continue;
 		}
 		if (!strncmp(line,"comirq=",7)) {

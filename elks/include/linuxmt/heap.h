@@ -18,7 +18,7 @@
 #define HEAP_TAG_SEG     0x01
 #define HEAP_TAG_BUF     0x02
 #define HEAP_TAG_TTY     0x03
-#define HEAP_TAG_INTHAND 0x04   /* unused */
+#define HEAP_TAG_TASK    0x04
 #define HEAP_TAG_BUFHEAD 0x05
 #define HEAP_TAG_PIPE    0x06
 
