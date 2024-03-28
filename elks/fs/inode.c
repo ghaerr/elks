@@ -14,18 +14,21 @@
 #include <linuxmt/string.h>
 #include <linuxmt/kdev_t.h>
 #include <linuxmt/wait.h>
+#include <linuxmt/heap.h>
 #include <linuxmt/trace.h>
 #include <linuxmt/debug.h>
 
 #include <arch/system.h>
 
-static struct inode inode_block[NR_INODE];
-static struct inode *inode_lru = inode_block;
-static struct inode *inode_llru = inode_block;
+int nr_inode = NR_INODE;
+int nr_file = NR_FILE;
+static struct inode *inode_block;   /* dynamically allocated */
+static struct inode *inode_lru;
+static struct inode *inode_llru;
 static struct wait_queue inode_wait;
 
 #ifdef CHECK_FREECNTS
-static int nr_free_inodes = NR_INODE;
+static int nr_free_inodes;
 #define DCR_COUNT(i) if(!(--i->i_count))nr_free_inodes++
 #define INR_COUNT(i) if(!(i->i_count++))nr_free_inodes--
 #define CLR_COUNT(i) if(i->i_count)nr_free_inodes++
@@ -97,14 +100,27 @@ static void list_inode_status(void)
 
 void INITPROC inode_init(void)
 {
-    register struct inode *inode = inode_block + 1;
+    struct inode *inode;
 
+    inode_block = heap_alloc(nr_inode * sizeof(struct inode),
+        HEAP_TAG_INODE|HEAP_TAG_CLEAR);
+    if (!inode_block) panic("No inode mem");
+    file_array = heap_alloc(nr_file * sizeof(struct file),
+        HEAP_TAG_FILE|HEAP_TAG_CLEAR);
+    if (!file_array) panic("No file mem");
+
+    inode = inode_block + 1;
+    inode_lru = inode_block;
+    inode_llru = inode_block;
     do {
         inode->i_next = inode->i_prev = inode;
         put_last_lru(inode);
-    } while (++inode < &inode_block[NR_INODE]);
-#if defined(CHECK_FREECNTS) && DEBUG_EVENT
+    } while (++inode < &inode_block[nr_inode]);
+#ifdef CHECK_FREECNTS
+    nr_free_inodes = nr_inode;
+#if DEBUG_EVENT
     debug_setcallback(0, list_inode_status);    /* ^N will generate inode list */
+#endif
 #endif
 }
 
@@ -389,7 +405,7 @@ int fs_may_remount_ro(kdev_t dev)
                 debug_sup("REMOUNT RO fail: open file\n");
                 return 0;
         }
-    } while (++file < &file_array[NR_FILE]);
+    } while (++file < &file_array[nr_file]);
     debug_sup("REMOUNT RO ok\n");
     return 1;
 }

@@ -390,11 +390,14 @@ extern struct inode_operations pipe_inode_operations;
 extern struct inode_operations sock_inode_operations;
 #endif
 
+extern int nr_inode;
+extern int nr_file;
+
 extern int fs_may_mount(kdev_t);
 extern int fs_may_umount(kdev_t,struct inode *);
 extern int fs_may_remount_ro(kdev_t);
 
-extern struct file file_array[];
+extern struct file *file_array;
 extern struct super_block super_blocks[];
 
 extern void invalidate_inodes(kdev_t);
