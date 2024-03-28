@@ -230,6 +230,9 @@ int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
     case MEM_GETTASK:
 	retword = (unsigned short)task;
 	break;
+    case MEM_GETMAXTASKS:
+	retword = max_tasks;
+	break;
     case MEM_GETCS:
 	retword = kernel_cs;
 	break;

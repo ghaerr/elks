@@ -161,7 +161,7 @@ int sys_execve(const char *filename, char *sptr, size_t slen)
 	    seg_code = currentp->mm.seg_code;
 	    break;
 	}
-    } while (++currentp < &task[MAX_TASKS]);
+    } while (++currentp < &task[max_tasks]);
 
     /* Read the header */
     currentp = current;

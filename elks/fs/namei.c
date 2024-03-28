@@ -42,7 +42,7 @@ int permission(register struct inode *inode, int mask)
         do {
             if (p->state <= TASK_STOPPED && (p->t_inode == inode))
                 return -EBUSY;
-        } while (++p < &task[MAX_TASKS]);
+        } while (++p < &task[max_tasks]);
     }
     if ((mask & MAY_WRITE) && IS_RDONLY(inode) &&
         !S_ISCHR(inode->i_mode) && !S_ISBLK(inode->i_mode)) /* allow writable devices*/

@@ -1,5 +1,4 @@
 #include <linuxmt/config.h>
-#include <arch/asm-offsets.h>
 
 //	Assembler boot strap hooks. This is called by setup
 
@@ -42,11 +41,11 @@ _start:
 	mov	%cs,kernel_cs
 	mov	%ds,kernel_ds
 
-// Set SS:SP to task[0] kernel stack area
+// Set SS:SP to kernel interrupt stack for temporary use
 
 	mov	%ds,%ax
 	mov	%ax,%ss		// SS=ES=DS
-	mov	$task + TASK_USER_AX,%sp
+	mov	$istack,%sp
 
 	call	start_kernel	// fall through into breakpoint if returns
 
@@ -81,7 +80,7 @@ early_putchar:
 	.global _endbss
 	.extern	kernel_cs
 	.extern	kernel_ds
-	.extern task
+	.extern	istack
 
 _endtext:
 	.word	0

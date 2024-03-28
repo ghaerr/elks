@@ -8,8 +8,8 @@
 
 #include <arch/segment.h>
 
-int task_slots_unused = MAX_TASKS;
-struct task_struct *next_task_slot = task;
+int task_slots_unused;
+__task *next_task_slot;
 pid_t last_pid = -1;
 
 static pid_t get_pid(void)
@@ -27,7 +27,7 @@ static pid_t get_pid(void)
                 last_pid = 1;
             p = &task[0];
         }
-    } while (++p < &task[MAX_TASKS]);
+    } while (++p < &task[max_tasks]);
     return last_pid;
 }
 
@@ -46,7 +46,7 @@ struct task_struct *find_empty_process(void)
     }
     t = next_task_slot;
     while (t->state != TASK_UNUSED) {
-        if (++t >= &task[MAX_TASKS])
+        if (++t >= &task[max_tasks])
             t = &task[1];
     }
     next_task_slot = t;
