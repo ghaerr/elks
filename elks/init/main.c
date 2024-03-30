@@ -590,7 +590,7 @@ static char * INITPROC option(char *s)
 	char *t = s;
 	if (*s == '#')
 		return s;
-	for(; *s != ' ' && *s != '\t' && *s != '\n'; ++s, ++t) {
+	for(; *s != ' ' && *s != '\t' && *s != '\r' && *s != '\n'; ++s, ++t) {
 		if (*s == '\0')
 			return NULL;
 		if (*s == '"') {
