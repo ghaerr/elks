@@ -17,7 +17,6 @@
 #init=/bin/init 3 n	# muser serial no rc.sys
 #init=/bin/sh		# singleuser sh
 #root=hda1 ro		# root hd partition 1 readonly
-#QEMU=1			# ftp/ftpd
 #kstack
 #strace
 #root=df0

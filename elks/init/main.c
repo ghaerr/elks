@@ -18,6 +18,7 @@
 #include <arch/segment.h>
 #include <arch/ports.h>
 #include <arch/irq.h>
+#include <arch/io.h>
 
 /*
  *	System variable setups
@@ -45,6 +46,7 @@ struct netif_parms netif_parms[MAX_ETHS] = {
 __u16 kernel_cs, kernel_ds;
 int tracing;
 int nr_ext_bufs, nr_xms_bufs, nr_map_bufs;
+char running_qemu;
 static int boot_console;
 static seg_t membase, memend;
 static char bininit[] = "/bin/init";
@@ -147,6 +149,9 @@ void INITPROC kernel_init(void)
     if (buffer_init())	/* also enables xms and unreal mode if configured and possible*/
         panic("No buf mem");
 
+    outw(0, 0x510);
+    if (inb(0x511) == 'Q' && inb(0x511) == 'E')
+        running_qemu = 1;
     device_init();
 
 #ifdef CONFIG_SOCKET
@@ -541,6 +546,8 @@ static void INITPROC finalize_options(void)
 	/* set ROOTDEV environment variable for rc.sys fsck*/
 	if (envs < MAX_INIT_ENVS)
 		envp_init[envs++] = root_dev_name(ROOT_DEV);
+	if (running_qemu && envs < MAX_INIT_ENVS)
+		envp_init[envs++] = (char *)"QEMU=1";
 
 #if DEBUG
 	printk("args: ");
