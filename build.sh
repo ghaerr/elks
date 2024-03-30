@@ -35,6 +35,8 @@ fi
 if [ "$1" = "auto" ]; then
 	echo "Invoking 'make defconfig'..."
 	make defconfig || clean_exit 2
+	echo "Building IBM PC image..."
+	cp ibmpc-1440.config .config
 else
 	echo
 	echo "Now invoking 'make menuconfig' for you to configure the system."

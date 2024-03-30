@@ -13,13 +13,13 @@
 #task=16
 #inode=96
 #file=64
-#sync=30		# autosync secs
+#sync=30		# secs
 #init=/bin/init 3 n	# muser serial no rc.sys
 #init=/bin/sh		# singleuser sh
-#root=hda1 ro		# root hd partition 1 read-only
+#root=hda1 ro		# root hd partition 1 readonly
 #QEMU=1			# ftp/ftpd
 #kstack
 #strace
 #root=df0
-#console=ttyS0,57600 debug net=ne0 3
+#debug net=ne0
 #console=ttyS0,19200 3

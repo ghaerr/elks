@@ -35,7 +35,7 @@ CONFIG_HW_SERIAL_FIFO=y
 # Kernel settings
 #
 # CONFIG_TRACE is not set
-# CONFIG_ASYNCIO is not set
+CONFIG_ASYNCIO=y
 
 #
 # Memory manager
@@ -90,7 +90,7 @@ CONFIG_TRACK_CACHE=y
 # CONFIG_BLK_DEV_BFD_HARD is not set
 CONFIG_BLK_DEV_BHD=y
 CONFIG_IDE_PROBE=y
-# CONFIG_BLK_DEV_FD is not set
+CONFIG_BLK_DEV_FD=y
 # CONFIG_BLK_DEV_HD is not set
 
 #
