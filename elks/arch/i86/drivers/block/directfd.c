@@ -122,7 +122,7 @@
  *  82077AA      IBM PS/2 (gen 3)                   DOR,DIR,CCR  PERPENDICULAR,LOCK
  */
 
-#define USE_IMPLIED_SEEK    0   /* =1 for QEMU with 360k/AT stretch floppies (not real hw) */
+char USE_IMPLIED_SEEK = 0; /* =1 for QEMU with 360k/AT stretch floppies (not real hw) */
 #define CHECK_DIR_REG       1   /* =1 to read and clear DIR DSKCHG when media changed */
 #define CHECK_DISK_CHANGE   1   /* =1 to inform kernel of media changed */
 
@@ -1474,5 +1474,7 @@ void INITPROC floppy_init(void)
         return;
     }
     blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
+    if (!USE_IMPLIED_SEEK)
+        USE_IMPLIED_SEEK = running_qemu;
     config_types();
 }
