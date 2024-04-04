@@ -32,16 +32,16 @@ char * noinstrument getsymbol(int seg, int offset)
 
     if (f_ksyms) {
         if (seg == textseg)
-            return sym_text_symbol((void *)offset, 1);
+            return sym_text_symbol((void *)offset, -1);
         if (seg == ftextseg)
-            return sym_ftext_symbol((void *)offset, 1);
+            return sym_ftext_symbol((void *)offset, -1);
         if (seg == dataseg)
-            return sym_data_symbol((void *)offset, 1);
+            return sym_data_symbol((void *)offset, -1);
     }
     if (f_syms) {
         if (seg == dataseg)
-            return sym_data_symbol((void *)offset, 1);
-        return sym_text_symbol((void *)offset, 1);
+            return sym_data_symbol((void *)offset, -1);
+        return sym_text_symbol((void *)offset, -1);
     }
     sprintf(buf, f_asmout? "0x%04x": "%04x", offset);
     return buf;

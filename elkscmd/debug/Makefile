@@ -11,7 +11,8 @@ include $(BASEDIR)/Make.rules
 ###############################################################################
 
 PRGS = testsym disasm opcodes
-INSTRUMENTOBJS = instrument.o syms.o shared.o shared-asm.o
+INSTRUMENTOBJS = instrument.o readprologue.o syms.o
+#INSTRUMENTOBJS += rdtsc.o
 DISASMOBJS = dis.o disasm.o syms.o
 TESTOBJS   = testsym.o stacktrace.o printreg.o $(INSTRUMENTOBJS)
 
@@ -29,22 +30,21 @@ NOINSTFLAGS = -fno-instrument-functions -fno-instrument-functions-simple
 
 HOSTPRGS = nm86 hostdisasm
 
-all: $(HOSTPRGS) $(PRGS)
+all: $(HOSTPRGS) $(PRGS) system.sym
 
 testsym: $(TESTOBJS)
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 	./nm86 $@ > $@.map
-	cp $@ $(TOPDIR)/elkscmd/rootfs_template/root
 
 disasm: $(DISASMOBJS)
 	$(LD) $(LDFLAGS) -maout-heap=0xffff -o $@ $^ $(LDLIBS)
-	cp -p $@ $(TOPDIR)/elkscmd/rootfs_template/root
-	-mkdir $(TOPDIR)/elkscmd/rootfs_template/lib
-	cp -p $(TOPDIR)/elks/arch/i86/boot/system.sym $(TOPDIR)/elkscmd/rootfs_template/lib
+
+system.sym:
+	cp -p $(TOPDIR)/elks/arch/i86/boot/system.sym $(TOPDIR)/elkscmd/debug
 
 opcodes: opcodes.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
-	cp $@ $(TOPDIR)/elkscmd/rootfs_template/root
+#	cp $@ $(TOPDIR)/elkscmd/rootfs_template/root
 
 disasm.o: disasm.c
 	$(CC) $(CFLAGS) $(NOINSTFLAGS) -c -o $*.o $<
@@ -62,4 +62,4 @@ install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
-	rm -f $(PRGS) $(HOSTPRGS) *.o *.map
+	rm -f $(PRGS) $(HOSTPRGS) *.o *.map system.sym

@@ -22,8 +22,8 @@ void noinstrument _print_regs(void);
 void noinstrument _print_segs(void);
 
 /* shared.c */
-int noinstrument _get_push_count(int *addr);
+int * noinstrument _get_fn_start_address(int *addr);
+int noinstrument _get_push_count(int *fnstart);
 
-/* shared-asm.S */
-int noinstrument _get_csbyte(char *addr);
+/* rdtsc.S */
 unsigned long long noinstrument _get_rdtsc(void);
