@@ -1,0 +1,50 @@
+Possible ia16-elf-gcc function prologues
+----------------------------------------
+
+SI only
+ 193:   56                      push   %si
+
+SI & DI only
+   0:   56                      push   %si
+   1:   57                      push   %di
+
+BASIC
+   0:   55                      push   %bp
+   1:   89 e5                   mov    %sp,%bp
+
+BASIC w/SI
+  3d:   56                      push   %si
+  3e:   55                      push   %bp
+  3f:   89 e5                   mov    %sp,%bp
+
+BASIC w/SI & DI
+ 13e:   56                      push   %si
+ 13f:   57                      push   %di
+ 140:   55                      push   %bp
+ 141:   89 e5                   mov    %sp,%bp
+
+BASIC w/SI & DI and small locals
+ 1c4:   56                      push   %si
+ 1c5:   57                      push   %di
+ 1c6:   55                      push   %bp
+ 1c7:   89 e5                   mov    %sp,%bp
+ 1c9:   83 ec 24                sub    $0x24,%sp
+
+BASIC w/SI & DI and large locals
+  6d:   56                      push   %si
+  6e:   57                      push   %di
+  6f:   55                      push   %bp
+  70:   89 e5                   mov    %sp,%bp
+  72:   81 ec 84 00             sub    $0x84,%sp
+
+Suggested algorithm:
+Search for 55 89 e5 in reverse order at IP-3 (BASIC), IP-6 (BASIC w/small locals)
+and IP-6 (BASIC w/large locals).
+If found, BP_PUSHED, IP=matched IP;
+Then search for 57 DI_PUSHED, --IP;
+then search for 56 SI_PUSHED, --IP;
+Last location (IP) is then function start.
+
+Use -finstrument-functions-simple.          # function profiling
+Possibly use -fno-omit-frame-pointer.       # alwaus push BP in prologue
+Possibly use -fno-optimize-sibling-calls.   # disable tail call optimization

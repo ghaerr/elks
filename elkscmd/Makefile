@@ -23,6 +23,7 @@ SUBDIRS =       \
 	basic       \
 	bc          \
 	busyelks    \
+	debug       \
 	disk_utils  \
 	fsck_dos    \
 	elvis	    \

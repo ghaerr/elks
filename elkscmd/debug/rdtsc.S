@@ -4,26 +4,6 @@
         .code16
         .text
 
-        .global _get_csbyte
-// int _get_csbyte(char *addr)
-// return byte at CS:addr
-_get_csbyte:
-        push %bp
-        mov  %sp,%bp
-        mov  4(%bp),%bx
-        mov  %cs:(%bx),%al
-        xor  %ah,%ah
-        pop  %bp
-        ret
-
-        .global _get_cs
-// int _get_cs(void)
-// return CS
-_get_cs:
-        push %cs
-        pop  %ax
-        ret
-
         .global _get_rdtsc
 // unsigned long long _get_rdtsc(void)
 // 386+ only, reads CPU time stamp counter

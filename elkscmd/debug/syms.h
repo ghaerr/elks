@@ -21,10 +21,10 @@
 
 unsigned char * noinstrument sym_read_exe_symbols(char *path);
 unsigned char * noinstrument sym_read_symbols(char *path);
-char * noinstrument sym_text_symbol(void *addr, int exact);
-char * noinstrument sym_ftext_symbol(void *addr, int exact);
-char * noinstrument sym_data_symbol(void *addr, int exact);
-char * noinstrument sym_symbol(void *addr, int exact);
+char * noinstrument sym_text_symbol(void *addr, int offset);
+char * noinstrument sym_ftext_symbol(void *addr, int offset);
+char * noinstrument sym_data_symbol(void *addr, int offset);
+char * noinstrument sym_symbol(void *addr, int offset);
 void * noinstrument sym_fn_start_address(void *addr);
 
 /* a.out header */

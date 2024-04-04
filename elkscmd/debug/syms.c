@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <limits.h>
 #include <sys/stat.h>
 #include <stdint.h>
 #include "syms.h"
@@ -97,12 +98,14 @@ static int noinstrument type_data(unsigned char *p)
             p[TYPE] == 'V');
 }
 
+#if UNUSED
 /* map .text address to function start address */
 void * noinstrument sym_fn_start_address(void *addr) 
 {
     unsigned char *p, *lastp;
 
-    if (!syms && !sym_read_exe_symbols(__program_filename)) return (void *)-1;
+    if (!syms && !sym_read_exe_symbols(__program_filename))
+        return 0;
 
     lastp = syms;
     for (p = next(lastp); ; lastp = p, p = next(p)) {
@@ -111,9 +114,13 @@ void * noinstrument sym_fn_start_address(void *addr)
     }
     return (void *) (intptr_t) *(unsigned short *)(&lastp[ADDR]);
 }
+#endif
 
-/* convert address to symbol string */
-static char * noinstrument sym_string(void *addr, int exact,
+/*
+ * Convert address to symbol string+offset,
+ * offset = 0 don't show offset, offset = -1 no offset specified.
+ */
+static char * noinstrument sym_string(void *addr, int offset,
     int (*istype)(unsigned char *p))
 {
     unsigned char *p, *lastp;
@@ -121,7 +128,10 @@ static char * noinstrument sym_string(void *addr, int exact,
 
     if (!syms && !sym_read_exe_symbols(__program_filename)) {
 hex:
-        sprintf(buf, "%.4x", (unsigned int)addr);
+        if (!offset || offset == -1)
+            sprintf(buf, "%04x", (unsigned int)addr);
+        else
+            sprintf(buf, "%04x+%x", (unsigned int)addr-offset, offset);
         return buf;
     }
 
@@ -136,40 +146,40 @@ hex:
             break;
     }
     int lastaddr = *(unsigned short *)(&lastp[ADDR]);
-    if (exact && addr - lastaddr) {
-        sprintf(buf, "%.*s+%xh", lastp[SYMLEN], lastp+SYMBOL,
+    if (offset && addr - lastaddr) {
+        sprintf(buf, "%.*s+%x", lastp[SYMLEN], lastp+SYMBOL,
                                 (unsigned int)addr - lastaddr);
     } else sprintf(buf, "%.*s", lastp[SYMLEN], lastp+SYMBOL);
     return buf;
 }
 
 /* convert .text address to symbol */
-char * noinstrument sym_text_symbol(void *addr, int exact)
+char * noinstrument sym_text_symbol(void *addr, int offset)
 {
-    return sym_string(addr, exact, type_text);
+    return sym_string(addr, offset, type_text);
 }
 
 /* convert .fartext address to symbol */
-char * noinstrument sym_ftext_symbol(void *addr, int exact)
+char * noinstrument sym_ftext_symbol(void *addr, int offset)
 {
-    return sym_string(addr, exact, type_ftext);
+    return sym_string(addr, offset, type_ftext);
 }
 
 /* convert .data address to symbol */
-char * noinstrument sym_data_symbol(void *addr, int exact)
+char * noinstrument sym_data_symbol(void *addr, int offset)
 {
-    return sym_string(addr, exact, type_data);
+    return sym_string(addr, offset, type_data);
 }
 
-#if 0
+#if UNUSED
 static int noinstrument type_any(unsigned char *p)
 {
     return p[TYPE] != '\0';
 }
 
 /* convert (non-segmented local IP) address to symbol */
-char * noinstrument sym_symbol(void *addr, int exact)
+char * noinstrument sym_symbol(void *addr, int offset)
 {
-    return sym_string(addr, exact, type_any);
+    return sym_string(addr, offset, type_any);
 }
 #endif
