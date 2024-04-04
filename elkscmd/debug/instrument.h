@@ -21,7 +21,7 @@ void noinstrument _print_stack(int arg1);
 void noinstrument _print_regs(void);
 void noinstrument _print_segs(void);
 
-/* shared.c */
+/* readprologue.c */
 int * noinstrument _get_fn_start_address(int *addr);
 int noinstrument _get_push_count(int *fnstart);
 
