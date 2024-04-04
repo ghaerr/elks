@@ -5,7 +5,7 @@
 
 struct stat {
     dev_t	st_dev;
-    u_ino_t	st_ino;
+    ino_t	st_ino;
     mode_t	st_mode;
     nlink_t	st_nlink;
     uid_t	st_uid;
