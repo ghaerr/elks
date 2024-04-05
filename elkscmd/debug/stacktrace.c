@@ -4,6 +4,7 @@
  * June 2022 Greg Haerr
  */
 #include <stdio.h>
+#include <unistd.h>
 #include "instrument.h"
 #include "syms.h"
 
@@ -54,6 +55,7 @@ void noinstrument _print_stack(int arg1)
     int *fn = (int *)_print_stack;
     int i = 0;
 
+    sym_read_exe_symbols(__program_filename);
     printf("Level Addr    BP   DI   SI   Ret  Arg  Arg2 Arg3 Arg4\n"
            "~~~~~ ~~~~    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
     do {
