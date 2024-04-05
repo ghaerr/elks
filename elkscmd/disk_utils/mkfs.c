@@ -49,7 +49,6 @@
 #include <string.h>
 #include <signal.h>
 #include <fcntl.h>
-/*#include <ctype.h>*/
 #include <stdlib.h>
 #include <termios.h>
 #include <sys/stat.h>
@@ -301,9 +300,13 @@ int main(int argc, char ** argv)
 		die("unable to open device");
 	if (fstat(DEV,&statbuf)<0)
 		die("unable to stat %s");
-	//else if (statbuf.st_rdev == 0x0300 || statbuf.st_rdev == 0x0340)
-		//die("Will not try to make filesystem on '%s'");
-
+	/***if (statbuf.st_rdev == DEV_FD0 || statbuf.st_rdev == DEV_HDA)
+		die("Will not try to make filesystem on '%s'");***/
+	if ((BLOCKS << 10) > statbuf.st_size) {
+		printf("Requested block count %luK exceeds device size %luK\n",
+			BLOCKS, statbuf.st_size >> 10);
+		exit(8);
+	}
 	setup_tables();
 	make_root_inode();
 	write_tables();

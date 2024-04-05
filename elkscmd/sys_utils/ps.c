@@ -31,6 +31,7 @@
 #include <pwd.h>
 #include <getopt.h>
 #include <paths.h>
+#include <libgen.h>
 
 #define LINEARADDRESS(off, seg)		((off_t) (((off_t)seg << 4) + off))
 
@@ -125,7 +126,7 @@ int main(int argc, char **argv)
 	struct passwd * pwent;
     int f_listall = 0;
     char *progname = argv[0];
-    int f_uptime = !strcmp(progname, "uptime");
+    int f_uptime = !strcmp(basename(progname), "uptime");
     struct task_struct task_table;
 
     while ((c = getopt(argc, argv, "lu")) != -1) {

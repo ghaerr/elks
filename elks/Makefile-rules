@@ -170,7 +170,7 @@ LHFLAGS 	= $(LCFLAGS) -exportfcn -declundef -fcnuse -fielduse \
 ifneq ($(USEBCC), N)
 
 ################################
-# Definitions using ia16-unknown-elks-gcc compiler
+# Definitions using ia16-elf-gcc compiler
 
 AS      = ia16-elf-as
 ASFLAGS = $(CPU_AS) $(ARCH_AS) --32-segelf

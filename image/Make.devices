@@ -1,4 +1,4 @@
-# Make.devices - make character and block special devies on MINIX image
+# Make.devices - make character and block special devices on MINIX image
 #
 # Devices MAJOR are defined in /include/linuxmt/major.h
 
@@ -61,8 +61,16 @@ devices:
 
 ##############################################################################
 # Direct floppy devices.
-	$(MKDEV) /dev/df0  b 4 0
-	$(MKDEV) /dev/df1  b 4 1
+	$(MKDEV) /dev/df0        b 4 0
+	$(MKDEV) /dev/df1        b 4 1
+#	$(MKDEV) /dev/df0-360    b 4 2
+#	$(MKDEV) /dev/df0-1200   b 4 4
+#	$(MKDEV) /dev/df0-360at3 b 4 6
+#	$(MKDEV) /dev/df0-720    b 4 8
+#	$(MKDEV) /dev/df0-360at5 b 4 10
+#	$(MKDEV) /dev/df0-720at5 b 4 12
+#	$(MKDEV) /dev/df0-1440   b 4 14
+#	$(MKDEV) /dev/df0-2880   b 4 16
 
 ##############################################################################
 # Pseudo-TTY master devices. 

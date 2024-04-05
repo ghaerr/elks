@@ -74,7 +74,11 @@ static int rd_open(struct inode *inode, struct file *filp)
     int target = DEVICE_NR(inode->i_rdev);
 
     debug("RD: open /dev/rd%d\n", target);
-    if (!rd_initialised || target >= MAX_DRIVES || !drive_info[target].valid)
+    if (!rd_initialised || target >= MAX_DRIVES
+#if CONFIG_RAMDISK_SEGMENT
+        || !drive_info[target].valid
+#endif
+                                                )
         return -ENXIO;
 
     ++access_count[target];
@@ -286,6 +290,7 @@ void INITPROC rd_init(void)
     if (register_blkdev(MAJOR_NR, DEVICE_NAME, &rd_fops) == 0) {
 	blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
 	rd_initialised = 1;
+
 #if CONFIG_RAMDISK_SEGMENT
 	printk("rd: %dK ramdisk at %x:0000\n",
 	    drive_info[0].size >> 1, rd_segment[0].seg);

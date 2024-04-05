@@ -8,6 +8,8 @@
  * Compile-time configuration
  */
 
+#define CONFIG_MSDOS_PARTITION  1               /* support DOS HD partitions */
+
 #ifdef CONFIG_ARCH_IBMPC
 #define MAX_SERIAL              4               /* max number of serial tty devices*/
 

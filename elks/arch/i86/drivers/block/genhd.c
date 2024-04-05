@@ -200,6 +200,7 @@ static void INITPROC extended_partition(register struct gendisk *hd, kdev_t dev)
     unmap_brelse(bh);
 }
 
+#ifdef CONFIG_MSDOS_PARTITION
 static int INITPROC msdos_partition(struct gendisk *hd,
                            kdev_t dev, sector_t first_sector)
 {
@@ -287,6 +288,7 @@ out:
     unmap_brelse(bh);
     return 1;
 }
+#endif
 
 static void INITPROC check_partition(register struct gendisk *hd, kdev_t dev)
 {
