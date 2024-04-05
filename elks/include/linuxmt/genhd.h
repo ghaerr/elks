@@ -11,8 +11,6 @@
  *              <drew@colorado.edu>
  */
 
-#define CONFIG_MSDOS_PARTITION 1
-
 /* These two have identical behaviour; use the second one if DOS fdisk gets
    confused about extended/logical partitions starting past cylinder 1023. */
 
