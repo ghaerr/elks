@@ -22,8 +22,8 @@ CFLAGS += -fno-optimize-sibling-calls
 CFLAGS += -fno-omit-frame-pointer
 # optional instrumentation for function tracing
 CFLAGS += -finstrument-functions-simple
-# include symbol table in executable and heap to read it
-LDFLAGS += -maout-symtab -maout-heap=12000
+# include symbol table in executable
+LDFLAGS += -maout-symtab
 
 # added after CFLAGS for non-instrumented .c files in this directory
 NOINSTFLAGS = -fno-instrument-functions -fno-instrument-functions-simple
@@ -37,7 +37,7 @@ testsym: $(TESTOBJS)
 	./nm86 $@ > $@.map
 
 disasm: $(DISASMOBJS)
-	$(LD) $(LDFLAGS) -maout-heap=0xffff -o $@ $^ $(LDLIBS)
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 system.sym:
 	cp -p $(TOPDIR)/elks/arch/i86/boot/system.sym $(TOPDIR)/elkscmd/debug
@@ -53,7 +53,7 @@ dis.o: dis.c
 	$(CC) $(CFLAGS) $(NOINSTFLAGS) -c -o $*.o $<
 
 nm86: nm86.c syms.c
-	$(HOSTCC) $(HOSTCFLAGS) -o $@ $^
+	$(HOSTCC) $(HOSTCFLAGS) -D__far= -o $@ $^
 
 hostdisasm: dis.c disasm.c syms.c
 	$(HOSTCC) $(HOSTCFLAGS) -D__far= -Wno-int-to-void-pointer-cast -Wno-format -o $@ $^

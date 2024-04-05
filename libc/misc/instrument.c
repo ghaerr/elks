@@ -5,10 +5,10 @@
 #include <string.h>
 #define noinstrument    __attribute__((no_instrument_function))
 
-static char ftrace;
-static int count;
+static size_t ftrace;
 static size_t start_sp;
 static size_t max_stack;
+static int count;
 
 /* runs before main and rewrites argc/argv on stack if --ftrace found */
 __attribute__((no_instrument_function,constructor(120)))
@@ -16,13 +16,14 @@ static void ftrace_checkargs(void)
 {
     char **avp = __argv + 1;
 
-    if ((*avp && !strcmp(*avp, "--ftrace")) || getenv("FTRACE")) {
+    ftrace = (size_t)getenv("FTRACE");
+    if ((*avp && !strcmp(*avp, "--ftrace"))) {
         while (*avp) {
             *avp = *(avp + 1);
             avp++;
         }
-        ftrace = 1;
         __argc--;
+        ftrace = 1;
     }
 }
 
@@ -41,7 +42,7 @@ void noinstrument __cyg_profile_func_enter_simple(void)
 
     for (i=0; i<count; i++)
         putchar('|');
-    printf("@%04x stack %u/%u\n", (int)calling_fn, stack_used, max_stack);
+    printf("@%04x stack %u/%u\n", (size_t)calling_fn, stack_used, max_stack);
     ++count;
 }
 

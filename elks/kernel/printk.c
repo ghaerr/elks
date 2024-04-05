@@ -193,6 +193,8 @@ static void vprintk(const char *fmt, va_list p)
                 break;
             case 'P':
                 v = current->pid;
+                c = 'd';
+                n = 10;
                 goto out;
             case 'D':
                 c += 'X' - 'D';

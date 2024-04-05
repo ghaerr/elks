@@ -13,10 +13,10 @@
 /* turn on for microcycle (CPU cycle/1000) timing info */
 #define HAS_RDTSC       0   /* has RDTSC instruction: requires 386+ CPU */
 
-static char ftrace;
-static int count;
+static size_t ftrace;
 static size_t start_sp;
 static size_t max_stack;
+static int count;
 
 /* runs before main and rewrites argc/argv on stack if --ftrace found */
 __attribute__((no_instrument_function,constructor(120)))
@@ -24,14 +24,17 @@ static void ftrace_checkargs(void)
 {
     char **avp = __argv + 1;
 
-    if ((*avp && !strcmp(*avp, "--ftrace")) || getenv("FTRACE")) {
+    ftrace = (size_t)getenv("FTRACE");
+    if ((*avp && !strcmp(*avp, "--ftrace"))) {
         while (*avp) {
             *avp = *(avp + 1);
             avp++;
         }
-        ftrace = 1;
         __argc--;
+        ftrace = 1;
     }
+    if (ftrace)
+        sym_read_exe_symbols(__program_filename);
 #if HAS_RDTSC
     _get_micro_count();     /* init timer base */
 #endif

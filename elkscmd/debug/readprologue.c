@@ -8,6 +8,8 @@
 #include "instrument.h"
 #include "syms.h"
 
+#define ADDR_CRT0  0x35     /* address within crt0.S (=_start) */
+
 #define _get_csbyte(ip) __extension__ ({        \
         unsigned char _v;                       \
         asm volatile ("mov %%cs:(%%bx),%%al"    \
@@ -34,8 +36,8 @@ int * noinstrument _get_fn_start_address(int *addr)
 
     /* look backwards for prologue: push %bp/mov %sp,%bp (55 89 e5) */
     for(;;) {
-        /* main called at 0x37 from crt0.S which has no prologue at _start */
-        if ((unsigned int)ip-i <= 0x37)
+        /* main called at ADDR_CRT0 from crt0.S which has no prologue at _start */
+        if ((size_t)ip-i < ADDR_CRT0)
             return 0;                   /* _start address or start address not found */
 
         if (_get_csbyte(ip-i+0) == 0x55 &&          /* push %bp */
@@ -68,8 +70,7 @@ int noinstrument _get_push_count(int *fnstart)
     if (opcode == 0x57)         /* push %di */
         count = (count+1) | DI_PUSHED, opcode = _get_csbyte(fp++);
     if (opcode == 0x55 ||       /* push %bp */
-       (opcode == 0x59 && (unsigned int)fp < 0x40)) /* hack for crt0.S 'pop %cx' start */
+       (opcode == 0x59 && (size_t)fp < ADDR_CRT0)) /* hack for crt0.S 'pop %cx' start */
         count = (count + 1) | BP_PUSHED, opcode = _get_csbyte(fp);
-    //printf("%s (%x) pushes %x\n", sym_text_symbol(addr, 1), (int)addr, count);
     return count;
 }
