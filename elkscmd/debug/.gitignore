@@ -1,5 +1,6 @@
 *.o
 nm86
+nm
 testsym
 disasm
 hostdisasm

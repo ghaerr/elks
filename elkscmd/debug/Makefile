@@ -10,7 +10,7 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-PRGS = testsym disasm opcodes
+PRGS = testsym disasm nm opcodes
 INSTRUMENTOBJS = instrument.o readprologue.o syms.o
 #INSTRUMENTOBJS += rdtsc.o
 DISASMOBJS = dis.o disasm.o syms.o
@@ -37,6 +37,9 @@ testsym: $(TESTOBJS)
 	./nm86 $@ > $@.map
 
 disasm: $(DISASMOBJS)
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+nm: nm86.o syms.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 system.sym:
