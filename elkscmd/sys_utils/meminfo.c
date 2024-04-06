@@ -24,8 +24,9 @@
 
 int aflag;		/* show application memory*/
 int fflag;		/* show free memory*/
-int tflag;		/* show tty memory*/
+int tflag;		/* show tty and driver memory*/
 int bflag;		/* show buffer memory*/
+int sflag;		/* show system memory*/
 int allflag;	/* show all memory*/
 
 unsigned int ds;
@@ -96,7 +97,7 @@ void dump_heap(int fd)
 	word_t total_free = 0;
 	long total_segsize = 0;
 	static char *heaptype[] =
-        { "free", "SEG ", "BUF ", "TTY ", "TASK", "BUFH", "PIPE", "INOD", "FILE" };
+        { "free", "SEG ", "DRVR", "TTY ", "TASK", "BUFH", "PIPE", "INOD", "FILE" };
 	static char *segtype[] =
         { "free", "CSEG", "DSEG", "BUF ", "RDSK", "PROG" };
 
@@ -112,7 +113,7 @@ void dump_heap(int fd)
 		segext_t segsize;
 		word_t segflags;
 		byte_t ref_count;
-		int free, used, tty, buffer;
+		int free, used, tty, buffer, system;
 		struct task_struct *t;
 
 		if (tag == HEAP_TAG_SEG)
@@ -122,13 +123,14 @@ void dump_heap(int fd)
 		used = ((tag == HEAP_TAG_SEG)
             && (segflags == SEG_FLAG_CSEG || segflags == SEG_FLAG_DSEG
                                           || segflags == SEG_FLAG_PROG));
-		tty = (tag == HEAP_TAG_TTY);
+		tty = (tag == HEAP_TAG_TTY || tag == HEAP_TAG_DRVR);
 		buffer = (tag == HEAP_TAG_SEG && segflags == SEG_FLAG_EXTBUF)
-            || (tag == HEAP_TAG_BUFHEAD) || (tag == HEAP_TAG_BUF)
-            || (tag == HEAP_TAG_PIPE);
+            || tag == HEAP_TAG_BUFHEAD || tag == HEAP_TAG_PIPE;
+		system = (tag == HEAP_TAG_TASK || tag == HEAP_TAG_INODE || tag == HEAP_TAG_FILE);
 
 		if (allflag ||
-		   (fflag && free) || (aflag && used) || (tflag && tty) || (bflag && buffer)) {
+		   (fflag && free) || (aflag && used) || (tflag && tty) || (bflag && buffer)
+				|| (sflag && system)) {
 			printf("  %4x   %s %5d", mem, heaptype[tag], size);
 			total_size += size + sizeof(heap_s);
 			if (tag == HEAP_TAG_FREE)
@@ -172,7 +174,7 @@ int main(int argc, char **argv)
 
 	if (argc < 2)
 		allflag = 1;
-	else while ((c = getopt(argc, argv, "aftbh")) != -1) {
+	else while ((c = getopt(argc, argv, "aftbsh")) != -1) {
 		switch (c) {
 			case 'a':
 				aflag = 1;
@@ -185,6 +187,9 @@ int main(int argc, char **argv)
 				break;
 			case 'b':
 				bflag = 1;
+				break;
+			case 's':
+				sflag = 1;
 				break;
 			case 'h':
 				usage();

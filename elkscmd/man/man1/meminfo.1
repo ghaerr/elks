@@ -18,10 +18,13 @@ Show application memory
 Show free memory
 .TP 5
 .B -t
-Show tty memory
+Show tty and driver memory
 .TP 5
 .B -b
-Show buffer memory
+Show system buffer and pipe memory
+.TP 5
+.B -s
+Show system task, inode and file memory.
 .SH DESCRIPTION
 .B meminfo
 traverses the kernel local heap and displays a line for each in-use or free entry. 
@@ -76,7 +79,7 @@ External (main) memory segment.
 TTY
 TTY input or output buffer.
 .TP 10
-BUF
+DRVR
 Direct Floppy or other driver buffers.
 .TP 10
 BUFH

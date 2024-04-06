@@ -16,7 +16,7 @@
 #define HEAP_TAG_CLEAR   0x40	/* return cleared memory*/
 #define HEAP_TAG_TYPE    0x0F
 #define HEAP_TAG_SEG     0x01   /* main memory segment */
-#define HEAP_TAG_BUF     0x02   /* DF floppy or driver buffers */
+#define HEAP_TAG_DRVR    0x02   /* DF floppy or driver buffers */
 #define HEAP_TAG_TTY     0x03   /* open tty in/out queues */
 #define HEAP_TAG_TASK    0x04   /* task array */
 #define HEAP_TAG_BUFHEAD 0x05   /* buffer heads */

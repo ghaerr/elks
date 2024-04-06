@@ -55,6 +55,9 @@ disasm.o: disasm.c
 dis.o: dis.c
 	$(CC) $(CFLAGS) $(NOINSTFLAGS) -c -o $*.o $<
 
+nm86.o: nm86.c
+	$(CC) $(CFLAGS) $(NOINSTFLAGS) -c -o $*.o $<
+
 nm86: nm86.c syms.c
 	$(HOSTCC) $(HOSTCFLAGS) -D__far= -o $@ $^
 
