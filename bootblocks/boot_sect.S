@@ -591,6 +591,11 @@ tvram_x:
 end_of_code:
 //------------------------------------------------------------------------------
 
+#if defined(CONFIG_IMG_FD1232)
+	.org SECTOR_SIZE/2-2
+	.word 0xAA55 // boot signature need to be at 0x1FE and 0x1FF
+#endif
+
 // ELKS disk parameter structure
 // For future expansion, fields should be added at the _front_ of structure
 
