@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include "instrument.h"
-#include "syms.h"
+#include "debug/instrument.h"
+#include "debug/syms.h"
 
 void z()
 {
