@@ -1451,7 +1451,7 @@ static int DFPROC floppy_register(void)
     current_DOR = 0x0c;
     outb(0x0c, FD_DOR);         /* all motors off, enable IRQ and DMA */
 
-    floppy_buffer = heap_alloc(BLOCK_SIZE, HEAP_TAG_BUF);
+    floppy_buffer = heap_alloc(BLOCK_SIZE, HEAP_TAG_DRVR);
     if (!floppy_buffer)
         return -ENOMEM;
     old_floppy_vec = *((__u32 __far *)FLOPPY_VEC);

@@ -171,6 +171,7 @@ int vfprintf(FILE *op, const char *fmt, va_list ap)
 
 	 case 'l':		/* long data */
 	    lval = 1;
+	 case 'h':      /* short data */
 	    goto fmtnxt;
 
 	 case 'd':		/* Signed decimal */
