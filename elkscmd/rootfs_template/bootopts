@@ -19,6 +19,6 @@
 #root=hda1 ro		# root hd partition 1 readonly
 #kstack
 #strace
-root=df0
+#root=df0
 #debug net=ne0
 #console=ttyS0,19200 3
