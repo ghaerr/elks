@@ -11,10 +11,6 @@ include $(BASEDIR)/Make.rules
 ###############################################################################
 
 PRGS = testsym disasm nm opcodes
-INSTRUMENTOBJS = instrument.o readprologue.o syms.o
-#INSTRUMENTOBJS += rdtsc.o
-DISASMOBJS = dis.o disasm.o syms.o
-TESTOBJS   = testsym.o stacktrace.o printreg.o $(INSTRUMENTOBJS)
 
 # disable tail call optimization for better stack traces
 CFLAGS += -fno-optimize-sibling-calls
@@ -29,17 +25,19 @@ LDFLAGS += -maout-symtab
 NOINSTFLAGS = -fno-instrument-functions -fno-instrument-functions-simple
 
 HOSTPRGS = nm86 hostdisasm
+HOSTCFLAGS += -I.
+SYMS_C = $(TOPDIR)/libc/debug/syms.c
 
 all: $(HOSTPRGS) $(PRGS) system.sym
 
-testsym: $(TESTOBJS)
+testsym: testsym.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 	./nm86 $@ > $@.map
 
-disasm: $(DISASMOBJS)
+disasm: dis.o disasm.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
-nm: nm86.o syms.o
+nm: nm86.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 system.sym:
@@ -58,10 +56,10 @@ dis.o: dis.c
 nm86.o: nm86.c
 	$(CC) $(CFLAGS) $(NOINSTFLAGS) -c -o $*.o $<
 
-nm86: nm86.c syms.c
+nm86: nm86.c $(SYMS_C)
 	$(HOSTCC) $(HOSTCFLAGS) -D__far= -o $@ $^
 
-hostdisasm: dis.c disasm.c syms.c
+hostdisasm: dis.c disasm.c $(SYMS_C)
 	$(HOSTCC) $(HOSTCFLAGS) -D__far= -Wno-int-to-void-pointer-cast -Wno-format -o $@ $^
 
 install: $(PRGS)

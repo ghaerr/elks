@@ -11,8 +11,8 @@
 #include <getopt.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
-#include "syms.h"
-#include "instrument.h"
+#include "debug/syms.h"
+#include "debug/instrument.h"
 #include "disasm.h"
 #if __ia16__
 #include <linuxmt/mem.h>

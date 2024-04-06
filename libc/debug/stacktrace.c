@@ -5,8 +5,8 @@
  */
 #include <stdio.h>
 #include <unistd.h>
-#include "instrument.h"
-#include "syms.h"
+#include "debug/instrument.h"
+#include "debug/syms.h"
 
 #define STACKCOLS   8   /* # of stack address columns */
 

@@ -5,8 +5,8 @@
  * Mar  2024 Added backwards scan w/o symbol table using _get_fn_start_address
  */
 #include <stdio.h>
-#include "instrument.h"
-#include "syms.h"
+#include "debug/instrument.h"
+#include "debug/syms.h"
 
 #define ADDR_CRT0  0x35     /* address within crt0.S (=_start) */
 

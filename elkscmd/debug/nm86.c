@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include "syms.h"
+#include "debug/syms.h"
 
 static char * fstrncpy(char *dst, unsigned char __far *src, int n)
 {
