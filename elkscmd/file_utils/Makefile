@@ -69,7 +69,7 @@ mv: mv.o
 	$(LD) $(LDFLAGS) -o mv mv.o $(LDLIBS)
 
 rm: rm.o $(TINYPRINTF)
-	$(LD) $(LDFLAGS) -maout-stack=12228 -o rm rm.o $(TINYPRINTF) $(LDLIBS)
+	$(LD) $(LDFLAGS) -maout-stack=12288 -o rm rm.o $(TINYPRINTF) $(LDLIBS)
 
 rmdir: rmdir.o
 	$(LD) $(LDFLAGS) -o rmdir rmdir.o $(LDLIBS)

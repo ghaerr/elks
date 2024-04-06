@@ -22,7 +22,7 @@ CFLAGS += -finstrument-functions-simple
 LDFLAGS += -maout-symtab
 
 # added after CFLAGS for non-instrumented .c files in this directory
-NOINSTFLAGS = -fno-instrument-functions -fno-instrument-functions-simple
+#NOINSTFLAGS = -fno-instrument-functions -fno-instrument-functions-simple
 
 HOSTPRGS = nm86 hostdisasm
 HOSTCFLAGS += -I.
