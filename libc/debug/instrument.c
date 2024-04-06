@@ -7,8 +7,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include "instrument.h"
-#include "syms.h"
+#include "debug/instrument.h"
+#include "debug/syms.h"
 
 /* turn on for microcycle (CPU cycle/1000) timing info */
 #define HAS_RDTSC       0   /* has RDTSC instruction: requires 386+ CPU */

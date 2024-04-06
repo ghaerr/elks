@@ -12,7 +12,7 @@
 #include <limits.h>
 #include <sys/stat.h>
 #include <stdint.h>
-#include "syms.h"
+#include "debug/syms.h"
 
 static unsigned char __far *syms;
 struct minix_exec_hdr sym_hdr;
