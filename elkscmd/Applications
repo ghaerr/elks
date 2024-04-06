@@ -215,5 +215,6 @@ basic/basic                     :basic              :1200k
 advent/advent                   :other
 advent/advent.db ::lib/advent.db :other
 debug/disasm                    :other
+debug/nm                        :other
 debug/system.sym ::lib/system.sym :other
 debug/testsym                   :other
