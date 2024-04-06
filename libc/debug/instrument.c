@@ -74,13 +74,13 @@ void noinstrument __cyg_profile_func_enter_simple(void)
         strcpy(callsite, "<unknown>");
     }
     for (i=0; i<count; i++)
-        putchar('|');
-    printf(">%s, from %s, stack %u/%u", sym_text_symbol(calling_fn, 0), callsite,
+        fprintf(stderr, "|");
+    fprintf(stderr, ">%s, from %s, stack %u/%u", sym_text_symbol(calling_fn, 0), callsite,
         stack_used, max_stack);
 #if HAS_RDTSC
-    printf(" %lu ucycles", _get_micro_count());
+    fprintf(stderr, " %lu ucycles", _get_micro_count());
 #endif
-    printf("\n");
+    fprintf(stderr, "\n");
     ++count;
 }
 
