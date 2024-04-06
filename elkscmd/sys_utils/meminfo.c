@@ -110,17 +110,22 @@ void dump_heap(int fd)
 		word_t mem = h + sizeof(heap_s);
 		seg_t segbase;
 		segext_t segsize;
-		word_t segflags, ref_count;
+		word_t segflags;
+		byte_t ref_count;
 		int free, used, tty, buffer;
-        struct task_struct *t;
+		struct task_struct *t;
 
 		if (tag == HEAP_TAG_SEG)
 			segflags = getword(fd, mem + offsetof(segment_s, flags), ds) & SEG_FLAG_TYPE;
 		else segflags = -1;
 		free = (tag == HEAP_TAG_FREE || segflags == SEG_FLAG_FREE);
-		used = ((tag == HEAP_TAG_SEG) && (segflags == SEG_FLAG_CSEG || segflags == SEG_FLAG_DSEG));
+		used = ((tag == HEAP_TAG_SEG)
+            && (segflags == SEG_FLAG_CSEG || segflags == SEG_FLAG_DSEG
+                                          || segflags == SEG_FLAG_PROG));
 		tty = (tag == HEAP_TAG_TTY);
-		buffer = ((tag == HEAP_TAG_SEG) && (segflags == SEG_FLAG_EXTBUF));
+		buffer = (tag == HEAP_TAG_SEG && segflags == SEG_FLAG_EXTBUF)
+            || (tag == HEAP_TAG_BUFHEAD) || (tag == HEAP_TAG_BUF)
+            || (tag == HEAP_TAG_PIPE);
 
 		if (allflag ||
 		   (fflag && free) || (aflag && used) || (tflag && tty) || (bflag && buffer)) {
