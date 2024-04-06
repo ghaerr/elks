@@ -65,7 +65,7 @@ file_utils/chown                :be-fileutil            :1200k
 file_utils/cmp                  :be-fileutil            :1200k
 file_utils/cp                   :be-fileutil    :360k
 file_utils/dd                   :be-fileutil            :1200k
-file_utils/md5sum               :fileutil
+#file_utils/md5sum               :fileutil
 file_utils/mkdir                :fileutil       :360k
 file_utils/mknod                :fileutil       :360k
 #file_utils/mkfifo              :fileutil               :1200k
@@ -92,7 +92,7 @@ sys_utils/poweroff              :sysutil            :720k
 sys_utils/sercat                :sysutil                :1200k
 sys_utils/console               :sysutil                :1200k
 #sys_utils/who                  :sysutil                :1200k
-sys_utils/unreal16              :sysutil
+sys_utils/unreal16              :sysutil                        :1440k
 sys_utils/beep                  :sysutil                        :1440k
 screen/screen                   :screen                 :1200k
 cron/cron                       :cron                   :1200k
@@ -114,7 +114,7 @@ sh_utils/tr                     :shutil             :720k
 #sh_utils/whoami                :shutil                 :1200k
 sh_utils/xargs                  :shutil                 :1200k
 sh_utils/yes                    :shutil             :720k
-misc_utils/compress             :miscutil                       :1440k
+misc_utils/compress             :miscutil               :1200k
 misc_utils/miniterm             :miscutil           :720k
 misc_utils/tar                  :miscutil               :1200k
 misc_utils/od                   :miscutil               :1200k
@@ -142,7 +142,7 @@ minix1/du                       :be-minix1              :1200k
 #minix2/env                     :minix2                 :1200k
 minix2/lp                       :minix2                 :1200k
 minix2/lpd                      :minix2                 :1200k
-#minix2/pwdauth                 :minix2                         :1440k
+#minix2/pwdauth                 :minix2
 minix2/remsync                  :other
 minix2/synctree                 :other
 #minix2/tget                    :minix2                         :1440k
@@ -164,33 +164,33 @@ disk_utils/mkfat                :diskutil       :360k
 disk_utils/partype              :diskutil               :1200k
 disk_utils/ramdisk              :diskutil               :1200k
 disk_utils/fdisk                :be-diskutil    :360k
-fsck_dos/fsck-dos               :diskutil                       :1440k
+fsck_dos/fsck-dos               :diskutil               :1200k
 tui/fm                          :tui                            :1440k
 tui/matrix                      :tui                            :1440k
 tui/cons                        :tui                            :1440k
 tui/ttyinfo                     :tui                            :1440k
-tui/sl                          :tui
+tui/sl                          :tui                    :1200k
 busyelks/busyelks               :busyelks
-inet/httpd/sample_index.html ::var/www/index.html :net
-ktcp/ktcp                       :net
-inet/nettools/netstat           :net
-inet/nettools/nslookup          :net
-inet/nettools/arp               :net
-inet/telnet/telnet              :net
-inet/telnetd/telnetd            :net
-inet/httpd/httpd                :net
-inet/ftp/ftp                    :net
-inet/ftp/ftpd                   :net
+inet/httpd/sample_index.html ::var/www/index.html :net  :1200k
+ktcp/ktcp                       :net                    :1200k
+inet/nettools/netstat           :net                    :1200k
+inet/nettools/nslookup          :net                    :1200k
+inet/nettools/arp               :net                    :1200k
+inet/telnet/telnet              :net                    :1200k
+inet/telnetd/telnetd            :net                    :1200k
+inet/httpd/httpd                :net                    :1200k
+inet/ftp/ftp                    :net                    :1200k
+inet/ftp/ftpd                   :net                    :1200k
 inet/tinyirc/tinyirc            :other
-inet/urlget/urlget              :net
-inet/urlget/urlget :::ftpget    :net
-inet/urlget/urlget :::ftpput    :net
-inet/urlget/urlget :::httpget   :net
+inet/urlget/urlget              :net                    :1200k
+inet/urlget/urlget :::ftpget    :net                    :1200k
+inet/urlget/urlget :::ftpput    :net                    :1200k
+inet/urlget/urlget :::httpget   :net                    :1200k
 bc/bc                           :other
 test/libc/test_libc             :test
 test/other/test_fd              :test
 test/other/test_float           :test
-#nano/nano-2.0.6/src/nano       :other                  :1440k
+#nano/nano-2.0.6/src/nano       :other
 #mtools/mcopy                   :other
 #mtools/mdel                    :other
 #mtools/mdir                    :other
@@ -206,15 +206,15 @@ test/other/test_float           :test
 nano-X/bin/nxclock              :other
 nano-X/bin/nxdemo               :other
 nano-X/bin/nxtest               :other
-nano-X/bin/nxtetris             :nanox              :1200k
-nano-X/bin/nxlandmine           :nanox
-nano-X/bin/nxterm               :nanox
-nano-X/bin/nxworld              :nanox
-nano-X/bin/nxworld.map ::lib/nxworld.map :nanox
-basic/basic                     :basic              :1200k
-advent/advent                   :other
-advent/advent.db ::lib/advent.db :other
-debug/disasm                    :other
-debug/nm                        :other
+nano-X/bin/nxtetris             :nanox                  :1200k
+nano-X/bin/nxlandmine           :nanox                          :1440k
+nano-X/bin/nxterm               :nanox                          :1440k
+nano-X/bin/nxworld              :nanox                          :1440k
+nano-X/bin/nxworld.map ::lib/nxworld.map :nanox                 :1440k
+basic/basic                     :basic                  :1200k
+advent/advent                     :other
+advent/advent.db ::lib/advent.db  :other
+debug/disasm                      :other
+debug/nm                          :other
 debug/system.sym ::lib/system.sym :other
-debug/testsym                   :other
+debug/testsym                     :other
