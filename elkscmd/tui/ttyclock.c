@@ -282,9 +282,10 @@ draw_clock(void)
 
      if (ttyclock.option.date)
      {
+          int x = ttyclock.option.second? DATEWINX: DATEWINX - 10;
           wbkgdset(ttyclock.datewin, (COLOR_PAIR(2)));
           //mvwprintw(ttyclock.datewin, (DATEWINH / 2), 1, "%s", ttyclock.date.datestr);
-          mvwprintw(ttyclock.datewin, DATEWINY, DATEWINX, "%s", ttyclock.date.datestr);
+          mvwprintw(ttyclock.datewin, DATEWINY, x, "%s", ttyclock.date.datestr);
           wrefresh(ttyclock.datewin);
      }
 
@@ -584,7 +585,7 @@ main(int argc, char **argv)
           {
           case 'h':
           default:
-               printf("usage : tty-clock [-iuvsScbtrahDBxn] [-C [0-7]] [-f format] [-d delay] [-a nsdelay] [-T tty] \n"
+               printf("usage: ttyclock [-iuvsScbtrahDBxn] [-C [0-7]] [-f format] [-d delay] [-a nsdelay] [-T tty] \n"
                       "    -s            Show seconds                                   \n"
                       "    -S            Screensaver mode                               \n"
                       "    -x            Show box                                       \n"

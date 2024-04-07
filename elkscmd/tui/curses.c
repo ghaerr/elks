@@ -74,6 +74,10 @@ void leaveok(void *win, int flag)
 
 void nodelay(void *win, int flag)
 {
+    if (flag) {
+        _tty_flags |= NoWait;
+        tty_enable_unikey();
+    }
 }
 
 void scrollok(void *win, int flag)
