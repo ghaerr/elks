@@ -171,7 +171,7 @@ tui/cons                        :tui                            :1440k
 tui/ttyinfo                     :tui                            :1440k
 tui/sl                          :tui                    :1200k
 tui/ttyclock                    :tui                    :1200k
-tui/ttytetris                   :tui                    :1200k
+tui/ttytetris                   :tui            :360k
 busyelks/busyelks               :busyelks
 inet/httpd/sample_index.html ::var/www/index.html :net  :1200k
 ktcp/ktcp                       :net                    :1200k
