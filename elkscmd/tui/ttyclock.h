@@ -38,21 +38,25 @@
 #include <errno.h>
 #include <getopt.h>
 #include <signal.h>
+#include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/select.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <locale.h>
 #include <time.h>
 #include <unistd.h>
-#include <ncurses.h>
+
+#include "unikey.h"
+#include "curses.h"
 
 /* Macro */
 #define NORMFRAMEW 35
 #define SECFRAMEW  54
 #define DATEWINH   3
+#define DATEWINY   7
+#define DATEWINX   19
 #define AMSIGN     " [AM]"
 #define PMSIGN     " [PM]"
 

@@ -36,9 +36,6 @@
 void
 init(void)
 {
-     struct sigaction sig;
-     setlocale(LC_TIME,"");
-
      ttyclock.bg = COLOR_BLACK;
 
      /* Init ncurses */
@@ -50,7 +47,7 @@ init(void)
                exit(EXIT_FAILURE);
           }
           ttyclock.ttyscr = newterm(NULL, ftty, ftty);
-          assert(ttyclock.ttyscr != NULL);
+          //assert(ttyclock.ttyscr != NULL);
           set_term(ttyclock.ttyscr);
      } else
           initscr();
@@ -76,11 +73,9 @@ init(void)
      refresh();
 
      /* Init signal handler */
-     sig.sa_handler = signal_handler;
-     sig.sa_flags   = 0;
-     sigaction(SIGTERM,  &sig, NULL);
-     sigaction(SIGINT,   &sig, NULL);
-     sigaction(SIGSEGV,  &sig, NULL);
+     signal(SIGTERM,  signal_handler);
+     signal(SIGINT,   signal_handler);
+     signal(SIGSEGV,  signal_handler);
 
      /* Init global struct */
      ttyclock.running = true;
@@ -201,10 +196,14 @@ update_hour(void)
 
      /* Set date string */
      strcpy(ttyclock.date.old_datestr, ttyclock.date.datestr);
-     strftime(tmpstr,
+     /*strftime(tmpstr,
               sizeof(tmpstr),
               ttyclock.option.format,
-              ttyclock.tm);
+              ttyclock.tm);*/
+     time_t now = time(NULL);
+     strcpy(tmpstr, ctime(&now));
+     tmpstr[11] = '\0';
+     strcpy(tmpstr+11, tmpstr+19);
      sprintf(ttyclock.date.datestr, "%s%s", tmpstr, ttyclock.meridiem);
 
      /* Set seconds */
@@ -233,7 +232,11 @@ draw_number(int n, int x, int y)
                wattroff(ttyclock.framewin, A_BLINK);
 
           wbkgdset(ttyclock.framewin, COLOR_PAIR(number[n][i/2]));
-          mvwaddch(ttyclock.framewin, x, sy, ' ');
+          if (number[n][i/2])
+               //mvwaddch(ttyclock.framewin, x, sy, ' ');
+               mvwaddstr(ttyclock.framewin, x, sy, "\e[7m \e[m");
+          else
+               mvwaddch(ttyclock.framewin, x, sy, ' ');
      }
      wrefresh(ttyclock.framewin);
 
@@ -261,8 +264,8 @@ draw_clock(void)
 
      /* 2 dot for number separation */
      wbkgdset(ttyclock.framewin, dotcolor);
-     mvwaddstr(ttyclock.framewin, 2, 16, "  ");
-     mvwaddstr(ttyclock.framewin, 4, 16, "  ");
+     mvwaddstr(ttyclock.framewin, 2, 16, "\e[7m  \e[m");
+     mvwaddstr(ttyclock.framewin, 4, 16, "\e[7m  \e[m");
 
      /* Draw minute numbers */
      draw_number(ttyclock.date.minute[0], 1, 20);
@@ -277,7 +280,8 @@ draw_clock(void)
      if (ttyclock.option.date)
      {
           wbkgdset(ttyclock.datewin, (COLOR_PAIR(2)));
-          mvwprintw(ttyclock.datewin, (DATEWINH / 2), 1, "%s", ttyclock.date.datestr);
+          //mvwprintw(ttyclock.datewin, (DATEWINH / 2), 1, "%s", ttyclock.date.datestr);
+          mvwprintw(ttyclock.datewin, DATEWINY, DATEWINX, "%s", ttyclock.date.datestr);
           wrefresh(ttyclock.datewin);
      }
 
@@ -286,8 +290,8 @@ draw_clock(void)
      {
           /* Again 2 dot for number separation */
           wbkgdset(ttyclock.framewin, dotcolor);
-          mvwaddstr(ttyclock.framewin, 2, NORMFRAMEW, "  ");
-          mvwaddstr(ttyclock.framewin, 4, NORMFRAMEW, "  ");
+          mvwaddstr(ttyclock.framewin, 2, NORMFRAMEW, "\e[7m  \e[m");
+          mvwaddstr(ttyclock.framewin, 4, NORMFRAMEW, "\e[7m  \e[m");
 
           /* Draw second numbers */
           draw_number(ttyclock.date.second[0], 1, 39);
@@ -322,10 +326,10 @@ clock_move(int x, int y, int w, int h)
      /* Date win move */
      if (ttyclock.option.date)
      {
-          mvwin(ttyclock.datewin,
+          /*mvwin(ttyclock.datewin,
                 ttyclock.geo.x + ttyclock.geo.h - 1,
                 ttyclock.geo.y + (ttyclock.geo.w / 2) - (strlen(ttyclock.date.datestr) / 2) - 1);
-          wresize(ttyclock.datewin, DATEWINH, strlen(ttyclock.date.datestr) + 2);
+          wresize(ttyclock.datewin, DATEWINH, strlen(ttyclock.date.datestr) + 2);*/
 
           if (ttyclock.option.box) {
                box(ttyclock.datewin,  0, 0);
@@ -425,7 +429,7 @@ key_event(void)
 {
      int i, c;
 
-     struct timespec length = { ttyclock.option.delay, ttyclock.option.nsdelay };
+     struct timeval length = { ttyclock.option.delay, ttyclock.option.nsdelay };
      
      fd_set rfds;
      FD_ZERO(&rfds);
@@ -440,7 +444,7 @@ key_event(void)
           }
           else
           {
-               nanosleep(&length, NULL);
+               select(1, NULL, NULL, NULL, &length);
                for(i = 0; i < 8; ++i)
                     if(c == (i + '0'))
                     {
@@ -542,7 +546,7 @@ key_event(void)
           break;
 
      default:
-          pselect(1, &rfds, NULL, NULL, &length, NULL);
+          select(1, &rfds, NULL, NULL, &length);
      }
 
      return;
@@ -557,6 +561,8 @@ main(int argc, char **argv)
      memset(&ttyclock, 0, sizeof(ttyclock_t));
 
      ttyclock.option.date = true;
+     ttyclock.option.second = true;
+     ttyclock.option.center = true;
 
      /* Default date format */
      strncpy(ttyclock.option.format, "%F", sizeof (ttyclock.option.format));

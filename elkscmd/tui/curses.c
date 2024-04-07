@@ -19,6 +19,8 @@ int LINES = 25;
 int COLS = 80;
 void *stdscr;
 
+//static int xoff, yoff;
+
 void *initscr()
 {
     tty_init(MouseTracking|CatchISig|FullBuffer);
@@ -114,6 +116,8 @@ void erase()
 
 void move(int y, int x)
 {
+    //y += yoff;
+    //x += xoff;
     printf("\e[%d;%dH", y+1, x+1);
 }
 
@@ -140,3 +144,60 @@ void printw(char *fmt, ...)
     vfprintf(stdout,fmt,ptr);
     va_end(ptr);
 }
+
+/*** for ttyclock *****************************/
+
+SCREEN *newterm()
+{
+    return NULL;
+}
+
+WINDOW *newwin()
+{
+    return NULL;
+}
+
+void clear()
+{
+    erase();
+}
+
+void werase()
+{
+    erase();
+}
+
+void mvwaddch(WINDOW *w, int y, int x, int ch)
+{
+    mvaddch(y, x, ch);
+}
+
+void mvwaddstr(WINDOW *w, int y, int x, char *str)
+{
+    move(y, x);
+    printw(str);
+}
+
+void mvwprintw(WINDOW *w, int y, int x, char *fmt, ...)
+{
+    va_list ptr;
+
+    move(y, x);
+    va_start(ptr, fmt);
+    vfprintf(stdout,fmt,ptr);
+    va_end(ptr);
+}
+
+void mvwin(WINDOW *w, int y, int x)
+{
+    //yoff = y;
+    //xoff = x;
+}
+
+void delscreen()    {}
+void set_term()     {}
+void clearok()      {}
+void wrefresh()     {}
+void box()          {}
+void wborder()      {}
+void wresize()      {}

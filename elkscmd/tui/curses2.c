@@ -75,8 +75,9 @@ void start_color()
 {
 }
 
-void use_default_colors()
+int use_default_colors()
 {
+    return OK;
 }
 
 struct cp {
@@ -117,3 +118,25 @@ void attroff(int a)
 {
     printf("\e[1;0;0m");
 }
+
+/*** for ttyclock *****************************/
+
+void wattron(WINDOW *w, int a)
+{
+    //if (a & A_BLINK) printf("\e[7m");
+    attron(a);
+}
+
+void wattroff(WINDOW *w, int a)
+{
+    //if (!(a & A_BLINK)) printf("\e[m");
+    attroff(a);
+}
+
+int wgetch(void)
+{
+    fflush(stdout);
+    return 0;       // FIXME
+}
+
+void wbkgdset()         {}
