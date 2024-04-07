@@ -133,10 +133,9 @@ void wattroff(WINDOW *w, int a)
     attroff(a);
 }
 
-int wgetch(void)
+int wgetch()
 {
-    fflush(stdout);
-    return 0;       // FIXME
+    return getch();
 }
 
 void wbkgdset()         {}

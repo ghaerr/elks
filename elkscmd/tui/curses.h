@@ -87,3 +87,24 @@ typedef struct window {
 } WINDOW;
 
 typedef int chtype;
+
+/* partially implemented functions for ttyclock */
+SCREEN *newterm();
+WINDOW *newwin();
+void clear();
+void werase();
+void mvwaddch(WINDOW *w, int y, int x, int ch);
+void mvwaddstr(WINDOW *w, int y, int x, char *str);
+void mvwprintw(WINDOW *w, int y, int x, char *fmt, ...);
+void mvwin(WINDOW *w, int y, int x);
+void delscreen();
+void set_term();
+void clearok();
+void wrefresh();
+void box();
+void wborder();
+void wresize();
+void wattron(WINDOW *w, int a);
+void wattroff(WINDOW *w, int a);
+int wgetch();
+void wbkgdset();
