@@ -10,7 +10,7 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-PRGS = fm matrix cons ttyinfo sl ttyclock
+PRGS = fm matrix cons ttyinfo sl ttyclock ttytetris
 
 #PRGS_HOST =
 

@@ -38,12 +38,40 @@
 #include <termios.h>
 #include <sys/time.h>
 
+/* Configuration of tty-tetris
+ * Need to re-compile to set the change.
+ */
+
+/* Move the shape */
+#define KEY_MOVE_LEFT  'h'
+#define KEY_MOVE_RIGHT 'l'
+
+/* Change the shape position */
+#define KEY_CHANGE_POSITION_NEXT 'k'
+#define KEY_CHANGE_POSITION_PREV 'j'
+
+/* ' ' for space key */
+#define KEY_DROP_SHAPE ' '
+
+/* Other key */
+#define KEY_PAUSE 'p'
+#define KEY_QUIT  'q'
+#define KEY_SPEED 's'
+
+/* Timing in milisecond */
+#define TIMING 300000
+
 /* Expension factor of shapes */
 #define EXP_FACT 2
 
 /* Frame dimension */
+#if __ia16__
+#define FRAMEW 23
+#define FRAMEH 20
+#else
 #define FRAMEW (int)(10*2.3)
 #define FRAMEH (int)(9*2.3)
+#endif
 #define FRAMEW_NB 15
 #define FRAMEH_NB 5
 
@@ -106,7 +134,7 @@ void get_key_event(void);
 /* Variables */
 
 const int shapes[7][4][4][2];
-struct itimerval tv;
+//struct itimerval tv;
 struct termios back_attr;
 shape_t current;
 int frame[FRAMEH + 1][FRAMEW + 1];

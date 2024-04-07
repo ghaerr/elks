@@ -30,7 +30,7 @@
  *      OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "tetris.h"
+#include "ttytetris.h"
 
 
 /* Shape attribute for draw it in the next box (center etc..)

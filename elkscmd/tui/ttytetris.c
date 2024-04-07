@@ -30,8 +30,7 @@
  *      OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "tetris.h"
-#include "config.h"
+#include "ttytetris.h"
 
 /* Functions */
 void
@@ -45,7 +44,7 @@ init(void)
      set_cursor(False);
 
      /* Make rand() really random :) */
-     srand(getpid());
+     srand(time(0)&0xFFFF);
 
      /* Init variables */
      score = lines = 0;
@@ -69,22 +68,29 @@ init(void)
      sigaction(SIGSEGV, &siga, NULL);
 
      /* Init timer */
-     tv.it_value.tv_usec = TIMING;
+     //tv.it_value.tv_usec = TIMING;
      sig_handler(SIGALRM);
 
      /* Init terminal (for non blocking & noecho getchar(); */
      tcgetattr(STDIN_FILENO, &term);
      tcgetattr(STDIN_FILENO, &back_attr);
      term.c_lflag &= ~(ICANON|ECHO);
-     tcsetattr(0, TCSANOW, &term);
+     tcsetattr(STDIN_FILENO, TCSANOW, &term);
 
      return;
+}
+
+int xgetchar()
+{
+    int c = getchar();
+    clearerr(stdin);    /* ELKS permanently returns EOF after SIGALRM read */
+    return c;
 }
 
 void
 get_key_event(void)
 {
-     int c = getchar();
+     int c = xgetchar();
 
      if(c > 0)
           --current.x;
@@ -97,7 +103,7 @@ get_key_event(void)
      case KEY_CHANGE_POSITION_PREV: shape_set_position(P_POS);          break;
      case KEY_DROP_SHAPE:           shape_drop();                       break;
      case KEY_SPEED:                ++current.x; ++score; DRAW_SCORE(); break;
-     case KEY_PAUSE:                while(getchar() != KEY_PAUSE);      break;
+     case KEY_PAUSE:                while(xgetchar() != KEY_PAUSE);     break;
      case KEY_QUIT:                 running = False;                    break;
      }
 

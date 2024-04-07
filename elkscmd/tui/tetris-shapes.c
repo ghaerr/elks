@@ -30,7 +30,7 @@
  *      OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "tetris.h"
+#include "ttytetris.h"
 
 /* Shapes data */
 const int shapes[7][4][4][2] =
