@@ -36,6 +36,7 @@
 void
 init(void)
 {
+     struct sigaction sig;
      ttyclock.bg = COLOR_BLACK;
 
      /* Init ncurses */
@@ -73,9 +74,11 @@ init(void)
      refresh();
 
      /* Init signal handler */
-     signal(SIGTERM,  signal_handler);
-     signal(SIGINT,   signal_handler);
-     signal(SIGSEGV,  signal_handler);
+     sig.sa_handler = signal_handler;
+     sig.sa_flags   = 0;
+     sigaction(SIGTERM,  &sig, NULL);
+     sigaction(SIGINT,   &sig, NULL);
+     sigaction(SIGSEGV,  &sig, NULL);
 
      /* Init global struct */
      ttyclock.running = true;
