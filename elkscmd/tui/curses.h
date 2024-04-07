@@ -10,8 +10,11 @@
 #define KEY_END         kEnd
 #define KEY_NPAGE       kPageDown
 #define KEY_PPAGE       kPageUp
+#define KEY_RESIZE      kHome       /* dup */
 
 #define A_NORMAL        0x0700
+#define A_BOLD          0x0700
+#define A_BLINK         0x8700
 
 #define COLOR_BLACK         0
 #define COLOR_BLUE          1
@@ -43,7 +46,7 @@ extern int COLS;
 extern void *stdscr;
 
 void start_color();
-void use_default_colors();
+int use_default_colors();
 void init_pair(int ndx, int fg, int bg);
 void *initscr();
 void endwin();
@@ -76,3 +79,11 @@ void refresh();
 void mvcur(int,int,int,int);
 int mvaddch(int,int,int);
 int addch(int);
+
+typedef struct screen {
+} SCREEN;
+
+typedef struct window {
+} WINDOW;
+
+typedef int chtype;
