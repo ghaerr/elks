@@ -37,6 +37,9 @@ sl: sl.o curses.o tty.o unikey.o
 ttyclock: ttyclock.o curses.o curses2.o tty.o unikey.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
+ttytetris: ttytetris.o tetris-frame.o tetris-shapes.o tetris-util.o
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
 install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
