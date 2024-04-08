@@ -101,10 +101,9 @@ sig_handler(int sig)
           running = False;
           break;
      case SIGALRM:
-          //tv.it_value.tv_usec -= tv.it_value.tv_usec / 3000;
-          //setitimer(0, &tv, NULL);
           signal(SIGALRM, sig_handler); /* ELKS requires signal() every signal */
-          alarm(1);
+          tv.it_value.tv_usec -= tv.it_value.tv_usec / 3000;
+          setitimer(ITIMER_REAL, &tv, NULL);
           break;
      }
 

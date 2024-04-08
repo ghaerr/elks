@@ -68,7 +68,7 @@ init(void)
      sigaction(SIGSEGV, &siga, NULL);
 
      /* Init timer */
-     //tv.it_value.tv_usec = TIMING;
+     tv.it_value.tv_usec = TIMING;
      sig_handler(SIGALRM);
 
      /* Init terminal (for non blocking & noecho getchar(); */

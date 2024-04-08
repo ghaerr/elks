@@ -12,9 +12,11 @@
 ssize_t read(int __fd, void * __buf, size_t __nbytes);
 ssize_t write(int __fd, const void * __buf, size_t __n);
 int     pipe(int __pipedes[2]);
-unsigned int alarm(unsigned int __seconds);
-unsigned int sleep(unsigned int __seconds);
 char*   crypt(const char *__key, const char *__salt);
+
+unsigned int alarm(unsigned int seconds);
+unsigned int sleep(unsigned int seconds);
+int          usleep(unsigned long useconds);
 
 #ifndef SEEK_SET
 #define SEEK_SET 0
@@ -83,8 +85,6 @@ uid_t geteuid(void);
 
 char * getcwd (char * buf, size_t size);
 void sync(void);
-int usleep(unsigned long useconds);
-unsigned alarm(unsigned seconds);
 
 int getopt(int argc, char * const argv[], const char *opts);
 extern char *optarg;

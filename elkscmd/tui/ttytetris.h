@@ -134,7 +134,7 @@ void get_key_event(void);
 /* Variables */
 
 const int shapes[7][4][4][2];
-//struct itimerval tv;
+struct itimerval tv;
 struct termios back_attr;
 shape_t current;
 int frame[FRAMEH + 1][FRAMEW + 1];
