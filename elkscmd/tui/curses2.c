@@ -123,13 +123,13 @@ void attroff(int a)
 
 void wattron(WINDOW *w, int a)
 {
-    //if (a & A_BLINK) printf("\e[7m");
+    if (a & (A_BLINK|A_BOLD)) attroff(-1);
     attron(a);
 }
 
 void wattroff(WINDOW *w, int a)
 {
-    //if (!(a & A_BLINK)) printf("\e[m");
+    if (a & (A_BLINK|A_BOLD)) attroff(-1);
     attroff(a);
 }
 
@@ -138,4 +138,13 @@ int wgetch()
     return getch();
 }
 
-void wbkgdset()         {}
+void wbkgdset(WINDOW *w, int a)
+{
+    printf("\e[7m");
+    attron(a);
+}
+
+void wrefresh()
+{
+    printf("\e[m");
+}

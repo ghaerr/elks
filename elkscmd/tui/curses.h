@@ -12,9 +12,9 @@
 #define KEY_PPAGE       kPageUp
 #define KEY_RESIZE      kHome       /* dup */
 
-#define A_NORMAL        0x0700
-#define A_BOLD          0x0700
-#define A_BLINK         0x8700
+#define A_NORMAL        0x0000
+#define A_BLINK         0x0100
+#define A_BOLD          0x0200
 
 #define COLOR_BLACK         0
 #define COLOR_BLUE          1

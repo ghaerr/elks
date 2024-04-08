@@ -235,11 +235,7 @@ draw_number(int n, int x, int y)
                wattroff(ttyclock.framewin, A_BLINK);
 
           wbkgdset(ttyclock.framewin, COLOR_PAIR(number[n][i/2]));
-          if (number[n][i/2])
-               //mvwaddch(ttyclock.framewin, x, sy, ' ');
-               mvwaddstr(ttyclock.framewin, x, sy, "\e[7m \e[m");
-          else
-               mvwaddch(ttyclock.framewin, x, sy, ' ');
+          mvwaddch(ttyclock.framewin, x, sy, ' ');
      }
      wrefresh(ttyclock.framewin);
 
@@ -267,8 +263,8 @@ draw_clock(void)
 
      /* 2 dot for number separation */
      wbkgdset(ttyclock.framewin, dotcolor);
-     mvwaddstr(ttyclock.framewin, 2, 16, "\e[7m  \e[m");
-     mvwaddstr(ttyclock.framewin, 4, 16, "\e[7m  \e[m");
+     mvwaddstr(ttyclock.framewin, 2, 16, "  ");
+     mvwaddstr(ttyclock.framewin, 4, 16, "  ");
 
      /* Draw minute numbers */
      draw_number(ttyclock.date.minute[0], 1, 20);
@@ -284,7 +280,8 @@ draw_clock(void)
      {
           int x = ttyclock.option.second? SECFRAMEW: NORMFRAMEW;
           x = (x - strlen(ttyclock.date.datestr)) / 2;
-          wbkgdset(ttyclock.datewin, (COLOR_PAIR(2)));
+          //wbkgdset(ttyclock.datewin, (COLOR_PAIR(2)));
+          wattron(ttyclock.datewin, (COLOR_PAIR(2)));
           mvwprintw(ttyclock.datewin, DATEWINY, x, "%s", ttyclock.date.datestr);
           wrefresh(ttyclock.datewin);
      }
@@ -294,8 +291,8 @@ draw_clock(void)
      {
           /* Again 2 dot for number separation */
           wbkgdset(ttyclock.framewin, dotcolor);
-          mvwaddstr(ttyclock.framewin, 2, NORMFRAMEW, "\e[7m  \e[m");
-          mvwaddstr(ttyclock.framewin, 4, NORMFRAMEW, "\e[7m  \e[m");
+          mvwaddstr(ttyclock.framewin, 2, NORMFRAMEW, "  ");
+          mvwaddstr(ttyclock.framewin, 4, NORMFRAMEW, "  ");
 
           /* Draw second numbers */
           draw_number(ttyclock.date.second[0], 1, 39);
@@ -654,7 +651,7 @@ main(int argc, char **argv)
                ttyclock.option.blink = true;
                break;
           case 'a':
-               if(atol(optarg) >= 0 && atol(optarg) < 1000000000)
+               if(atol(optarg) >= 0 && atol(optarg) < 1000000000L)
                     ttyclock.option.nsdelay = atol(optarg);
                break;
           case 'x':
