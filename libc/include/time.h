@@ -46,7 +46,7 @@ double  difftime(time_t __time2, time_t __time1);
 time_t	mktime(struct tm * __tp);
 char *	asctime(const struct tm * __tp);
 char *	ctime(const time_t * __tp);
-size_t	strftime(char * __s, size_t __smax, const char * __fmt, const struct tm * __tp);
+size_t	strftime(char *s, size_t maxsize, const char *format, const struct tm *tm);
 void	tzset(void);
 
 struct tm*	gmtime(const time_t *__tp);

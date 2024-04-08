@@ -199,14 +199,14 @@ update_hour(void)
 
      /* Set date string */
      strcpy(ttyclock.date.old_datestr, ttyclock.date.datestr);
-     /*strftime(tmpstr,
+     strftime(tmpstr,
               sizeof(tmpstr),
               ttyclock.option.format,
-              ttyclock.tm);*/
-     time_t now = time(NULL);
+              ttyclock.tm);
+     /*time_t now = time(NULL);
      strcpy(tmpstr, ctime(&now));
      tmpstr[11] = '\0';
-     strcpy(tmpstr+11, tmpstr+19);
+     strcpy(tmpstr+11, tmpstr+19);*/
      sprintf(ttyclock.date.datestr, "%s%s", tmpstr, ttyclock.meridiem);
 
      /* Set seconds */
@@ -282,9 +282,9 @@ draw_clock(void)
 
      if (ttyclock.option.date)
      {
-          int x = ttyclock.option.second? DATEWINX: DATEWINX - 10;
+          int x = ttyclock.option.second? SECFRAMEW: NORMFRAMEW;
+          x = (x - strlen(ttyclock.date.datestr)) / 2;
           wbkgdset(ttyclock.datewin, (COLOR_PAIR(2)));
-          //mvwprintw(ttyclock.datewin, (DATEWINH / 2), 1, "%s", ttyclock.date.datestr);
           mvwprintw(ttyclock.datewin, DATEWINY, x, "%s", ttyclock.date.datestr);
           wrefresh(ttyclock.datewin);
      }
@@ -569,7 +569,7 @@ main(int argc, char **argv)
      ttyclock.option.center = true;
 
      /* Default date format */
-     strncpy(ttyclock.option.format, "%F", sizeof (ttyclock.option.format));
+     strncpy(ttyclock.option.format, "%a %b %e %Y", sizeof (ttyclock.option.format));
      /* Default color */
      ttyclock.option.color = COLOR_GREEN; /* COLOR_GREEN = 2 */
      /* Default delay */
