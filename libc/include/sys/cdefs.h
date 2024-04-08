@@ -19,7 +19,7 @@
 #define __P(x) x        /* always ANSI C */
 
 /* don't require <stdnoreturn.h> */
-#if defined(__GNUC__)
+#ifdef __GNUC__
 #define noreturn        __attribute__((__noreturn__))
 #else
 #define noreturn

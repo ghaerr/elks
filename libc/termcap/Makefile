@@ -1,7 +1,6 @@
 # Makefile of /libc/termcap module
-include $(TOPDIR)/libc/Makefile.inc
 
-#EMACS	= yes
+include $(TOPDIR)/libc/Makefile.inc
 
 LIB	= out.a
 
@@ -15,16 +14,11 @@ OBJS = \
 	tgetst1.o \
 	tgetstr.o \
 	tgoto.o \
-	tp-main.o \
 	tparam.o \
 	tparam1.o \
 	tputs.o \
 	xmalloc.o \
 	xrealloc.o \
-
-ifeq "$(EMACS)" "yes"
-	CFLAGS += -Demcas
-endif
 
 #CFLAGS	+= -DDEBUG
 #CFLAGS	+= -DTIOCGWINSZ
