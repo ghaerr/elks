@@ -152,8 +152,8 @@ struct sc_info elks_table1[] = {
     ENTRY(0,                packinfo(0, P_NONE,   P_NONE,    P_NONE   )),   // 67 dlload
     ENTRY("setsid",         packinfo(0, P_NONE,   P_NONE,    P_NONE   )),
     ENTRY("sbrk",           packinfo(1, P_SSHORT, P_NONE,    P_NONE   )),
-    ENTRY("ustatfs",        packinfo(2, P_USHORT, P_PDATA,   P_NONE   )),   // 70
-    ENTRY(0,                packinfo(0, P_NONE,   P_NONE,    P_NONE   )),
+    ENTRY("ustatfs",        packinfo(3, P_USHORT, P_PDATA,   P_SSHORT )),   // 70
+    ENTRY("setitimer",      packinfo(3, P_SSHORT, P_PDATA,   P_PDATA  )),
     ENTRY(0,                packinfo(0, P_NONE,   P_NONE,    P_NONE   )),
     ENTRY(0,                packinfo(0, P_NONE,   P_NONE,    P_NONE   )),
     ENTRY("uname",          packinfo(1, P_PDATA,  P_NONE,    P_NONE   )),   // 74
