@@ -12,7 +12,6 @@
 ssize_t read(int __fd, void * __buf, size_t __nbytes);
 ssize_t write(int __fd, const void * __buf, size_t __n);
 int     pipe(int __pipedes[2]);
-int     pause(void);
 char*   crypt(const char *__key, const char *__salt);
 
 unsigned int alarm(unsigned int seconds);
