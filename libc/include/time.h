@@ -8,7 +8,7 @@
 typedef int64_t clock_t;
 
 #define CLOCKS_PER_SEC	100
-#define CLK_TCK		100	/* That must be the same as HZ ???? */
+#define CLK_TCK         100     /* That must be the same as HZ ???? */
 
 struct timeval {
 	long tv_sec;
@@ -32,25 +32,20 @@ struct timezone {
 	int	tz_dsttime;	/* type of dst correction */
 };
 
-#define	__isleap(year)	\
-  ((year) % 4 == 0 && ((year) % 100 != 0 || (year) % 400 == 0))
+#define	__isleap(year)	((year) % 4 == 0 && ((year) % 100 != 0 || (year) % 400 == 0))
 
-//extern char *tzname[2];
-//extern int daylight;
+/*extern char *tzname[2];
+extern int daylight;*/
 extern long timezone;
 
-time_t	time(time_t * __tp);
-#ifndef __HAS_NO_FLOATS__
-double  difftime(time_t __time2, time_t __time1);
-#endif
-time_t	mktime(struct tm * __tp);
-char *	asctime(const struct tm * __tp);
-char *	ctime(const time_t * __tp);
-size_t	strftime(char * __s, size_t __smax, const char * __fmt, const struct tm * __tp);
+time_t time(time_t *tloc);
+time_t mktime(struct tm *timeptr);
+char * asctime(const struct tm *timeptr);
+char * ctime(const time_t *clock);
+struct tm *gmtime(const time_t *clock);
+struct tm *localtime(const time_t *clock);
+size_t	strftime(char *s, size_t maxsize, const char *format, const struct tm *tm);
 void	tzset(void);
-
-struct tm*	gmtime(const time_t *__tp);
-struct tm*	localtime(const time_t * __tp);
 
 #ifdef __LIBC__
 extern int _tz_is_set;

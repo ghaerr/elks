@@ -201,7 +201,6 @@ void mvwin(WINDOW *w, int y, int x)
 void delscreen()    {}
 void set_term()     {}
 void clearok()      {}
-void wrefresh()     {}
 void box()          {}
 void wborder()      {}
 void wresize()      {}
