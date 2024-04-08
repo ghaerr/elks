@@ -144,7 +144,7 @@ void wbkgdset(WINDOW *w, int a)
     attron(a);
 }
 
-void wrefresh()
+void wrefresh(WINDOW *w)
 {
     printf("\e[m");
 }

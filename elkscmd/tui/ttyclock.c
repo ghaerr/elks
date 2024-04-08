@@ -327,10 +327,10 @@ clock_move(int x, int y, int w, int h)
      /* Date win move */
      if (ttyclock.option.date)
      {
-          /*mvwin(ttyclock.datewin,
+          mvwin(ttyclock.datewin,
                 ttyclock.geo.x + ttyclock.geo.h - 1,
                 ttyclock.geo.y + (ttyclock.geo.w / 2) - (strlen(ttyclock.date.datestr) / 2) - 1);
-          wresize(ttyclock.datewin, DATEWINH, strlen(ttyclock.date.datestr) + 2);*/
+          wresize(ttyclock.datewin, DATEWINH, strlen(ttyclock.date.datestr) + 2);
 
           if (ttyclock.option.box) {
                box(ttyclock.datewin,  0, 0);
