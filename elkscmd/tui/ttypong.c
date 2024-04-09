@@ -1,5 +1,7 @@
 #include "ttypong.h"
 
+unsigned long speed = 40000L;
+
 void
 init_curses(void)
 {
@@ -10,6 +12,7 @@ init_curses(void)
     nodelay(stdscr, TRUE);
     keypad(stdscr, TRUE);
     curs_set(FALSE);
+    clear();
 
     /* On check la taille du terminal */
     if(COLS < FW || LINES < FH)
@@ -53,15 +56,21 @@ void
 draw_frame(void)
 {
     int i, j;
+    int c, v, lastv = -1;
 
     for(i = 0; i <= FH; ++i)
         for(j = 0; j <= FW; ++j)
         {
-            COL(pong->frame[i][j]);
-            mvaddch(i, j + GX, ((pong->frame[i][j] == BALL) ? 'O' : ' '));
-            UNCOL(pong->frame[i][j]);
+            v = pong->frame[i][j];
+            if (v != lastv) {
+                COL(v);
+                lastv = v;
+            }
+            c = (v == BALL) ? 'O' : ' ';
+            if (j == 0)
+                mvaddch(i, j + GX, c);
+            else addch(c);
         }
-
     return;
 }
 
@@ -73,10 +82,12 @@ key_event(void)
     switch((c = getch()))
     {
         case KEY_UP:
+        case 'k':
             racket_move(pong->racket.y - 1);
             break;
 
         case KEY_DOWN:
+        case 'j':
             racket_move(pong->racket.y + 1);
             break;
 
@@ -186,6 +197,9 @@ main(int argc, char **argv)
 {
     int time;
 
+    if (argc > 1)
+        speed = atol(argv[1]);
+
     pong = malloc(sizeof(Pong));
 
     pong->running = 1;
@@ -203,17 +217,17 @@ main(int argc, char **argv)
     {
         key_event();
 
-        if(time > TIMEDELAY)
-        {
+        /*if(time > TIMEDELAY) {*/
             ia_racket();
             manage_ball();
             time = 0;
-        }
+        /*}*/
 
         draw_frame();
-        usleep(1000);
+        usleep(speed);
     }
 
+    move(LINES-2, 0);
     endwin();
     free(pong);
 

@@ -1,6 +1,8 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <ncurses.h>
+#include "unikey.h"
+#include "curses.h"
 
 /* Options */
 #define FH 20
