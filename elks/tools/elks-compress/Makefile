@@ -43,7 +43,7 @@ OBJS=$(SRCS:.c=.o)
 
 all:	../bin/elks-compress ../bin/exomizer
 
-../bin/elks-compress: minix.h $(OBJS)
+../bin/elks-compress: $(OBJS)
 	$(CC) -o ../bin/elks-compress $(CFLAGS) $(OBJS)
 
 ../bin/exomizer:

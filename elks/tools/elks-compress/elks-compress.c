@@ -10,7 +10,7 @@
 #include <string.h>
 #include <getopt.h>
 #include <sys/stat.h>
-#include "minix.h"
+#include <linuxmt/minix.h>
 
 int keep_infile = 0;
 int verbose = 0;

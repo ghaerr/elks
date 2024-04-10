@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdint.h>
-#include "minix.h"
+#include <linuxmt/minix.h>
 
 static struct minix_exec_hdr mh;
 static struct elks_supl_hdr  eh;

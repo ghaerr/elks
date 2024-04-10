@@ -43,6 +43,7 @@ PRGS = \
 	# EOL
 
 HOSTPRGS = hostdecomp
+HOSTCFLAGS += -I$(TOPDIR)/elks/include
 
 all: $(PRGS) $(HOSTPRGS)
 

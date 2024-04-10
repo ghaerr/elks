@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <sys/stat.h>
+#include <linuxmt/minix.h>
 #include <stdint.h>
 #include "debug/syms.h"
 

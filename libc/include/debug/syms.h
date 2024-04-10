@@ -27,21 +27,4 @@ char * noinstrument sym_data_symbol(void *addr, int offset);
 char * noinstrument sym_symbol(void *addr, int offset);
 void * noinstrument sym_fn_start_address(void *addr);
 
-/* a.out header */
-#include <stdint.h>
-
-struct minix_exec_hdr {
-    uint32_t  type;
-    uint8_t   hlen;       // 0x04
-    uint8_t   reserved1;
-    uint16_t  version;
-    uint32_t  tseg;       // 0x08
-    uint32_t  dseg;       // 0x0c
-    uint32_t  bseg;       // 0x10
-    uint32_t  entry;
-    uint16_t  chmem;
-    uint16_t  minstack;
-    uint32_t  syms;
-};
-
 extern struct minix_exec_hdr sym_hdr;
