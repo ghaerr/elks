@@ -13,10 +13,6 @@
 static struct minix_exec_hdr mh;
 static struct elks_supl_hdr  eh;
 
-/* exodecr.c - shared with kernel */
-extern unsigned int decompress(char *buf, unsigned int orig_size, unsigned int compr_size,
-    int safety);
-
 static int decomp_section(int ifd, int ofd, unsigned int outsz, unsigned int insz)
 {
     char *buf;
@@ -33,7 +29,7 @@ static int decomp_section(int ifd, int ofd, unsigned int outsz, unsigned int ins
         perror("read");
         return -1;
     }
-    if (!decompress(buf, outsz, insz, 16))
+    if (!decompress(buf, 0, outsz, insz, 16))
         return -1;
     if (write(ofd, buf, outsz) != outsz) {
         perror("write");

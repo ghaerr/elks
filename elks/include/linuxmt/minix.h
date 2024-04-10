@@ -79,4 +79,8 @@ struct minix_reloc {
 #define SUPL_FARTEXT_HDR_SIZE	sizeof(struct elks_supl_hdr)
 #define EXEC_FARTEXT_HDR_SIZE	(EXEC_MINIX_HDR_SIZE + SUPL_FARTEXT_HDR_SIZE)
 
+/* elks/fs/exodecr.c - minix binary decompressor */
+extern unsigned int decompress(char *buf, unsigned int seg, unsigned int orig_size,
+    unsigned int compr_size, int safety);
+
 #endif

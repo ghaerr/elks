@@ -44,6 +44,7 @@ PRGS = \
 
 HOSTPRGS = hostdecomp
 HOSTCFLAGS += -I$(TOPDIR)/elks/include
+EXODECR_C = $(TOPDIR)/elks/fs/exodecr.c
 
 all: $(PRGS) $(HOSTPRGS)
 
@@ -126,10 +127,10 @@ unreal16: unreal16.o unreal.o
 	$(LD) -melks-libc -mcmodel=small -c unreal16.S -o unreal16.o
 	$(LD) -melks-libc -mcmodel=small -nostdlib -o unreal16 unreal16.o unreal.o
 
-decomp: decomp.o exodecr.o $(TINYPRINTF)
+decomp: decomp.o $(EXODECR_C) $(TINYPRINTF)
 	$(LD) $(LDFLAGS) -maout-heap=0xffff -o $@ $^ $(LDLIBS)
 
-hostdecomp: decomp.c exodecr.c
+hostdecomp: decomp.c $(EXODECR_C)
 	$(HOSTCC) $(HOSTCFLAGS) -o $@ $^
 
 all: $(PRGS)

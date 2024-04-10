@@ -26,7 +26,6 @@ LDFLAGS += -maout-symtab
 
 HOSTPRGS = nm86 hostdisasm
 HOSTCFLAGS += -I. -I$(TOPDIR)/elks/include
-
 SYMS_C = $(TOPDIR)/libc/debug/syms.c
 
 all: $(HOSTPRGS) $(PRGS) system.sym
