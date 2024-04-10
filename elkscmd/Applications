@@ -94,6 +94,7 @@ sys_utils/console               :sysutil                :1200k
 #sys_utils/who                  :sysutil                :1200k
 sys_utils/unreal16              :sysutil                        :1440k
 sys_utils/beep                  :sysutil                        :1440k
+sys_utils/decomp                :sysutil                        :1440k
 screen/screen                   :screen                 :1200k
 cron/cron                       :cron                   :1200k
 cron/crontab                    :cron                   :1200k

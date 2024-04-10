@@ -39,9 +39,12 @@ PRGS = \
 	sercat \
 	console \
 	makeboot \
+	decomp \
 	# EOL
 
-all: $(PRGS)
+HOSTPRGS = hostdecomp
+
+all: $(PRGS) $(HOSTPRGS)
 
 init: init.o
 	$(LD) $(LDFLAGS) -maout-heap=4096 -maout-stack=1024 -o init init.o $(LDLIBS)
@@ -121,6 +124,12 @@ beep: beep.o
 unreal16: unreal16.o unreal.o
 	$(LD) -melks-libc -mcmodel=small -c unreal16.S -o unreal16.o
 	$(LD) -melks-libc -mcmodel=small -nostdlib -o unreal16 unreal16.o unreal.o
+
+decomp: decomp.o exodecr.o $(TINYPRINTF)
+	$(LD) $(LDFLAGS) -maout-heap=0xffff -o $@ $^ $(LDLIBS)
+
+hostdecomp: decomp.c exodecr.c
+	$(HOSTCC) $(HOSTCFLAGS) -o $@ $^
 
 all: $(PRGS)
 
