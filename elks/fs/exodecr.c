@@ -224,7 +224,7 @@ unsigned int decompress(char *buf, unsigned int seg, unsigned int orig_size,
 	out = exo_decrunch(in, out);
 	if (out - buf != safety)
 	{
-		ERR("Decompress error\n");
+		ERR("Error decompressing executable\n");
 		return 0;
 	}
 #ifdef __KERNEL__

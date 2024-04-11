@@ -19,10 +19,10 @@ static int decomp_section(int ifd, int ofd, unsigned int outsz, unsigned int ins
 
     if (insz == 0)              /* nothing to decompress */
         return 0;
-    printf("Decompressing %u bytes to %u\n", insz, outsz);
+    /*printf("Decompressing %u bytes to %u\n", insz, outsz);*/
     buf = malloc(outsz+16);     /* will fail above 32K on ELKS */
     if (!buf) {
-        fprintf(stderr, "No memory for %u bytes\n", outsz+16);
+        fprintf(stderr, "Memory alloc fail: %u bytes\n", outsz+16);
         return -1;
     }
     if (read(ifd, buf, insz) != insz) {
@@ -54,7 +54,7 @@ static int decomp_file(char *path, char *outfile)
             return -1;
     }
     if ((mh.type != MINIX_SPLITID_AHISTORICAL && mh.type != MINIX_SPLITID) || !mh.tseg) {
-        fprintf(stderr, "%s: not an executable program\n", path);
+        fprintf(stderr, "%s: not an executable\n", path);
         return -1;
     }
     if ((mh.hlen != sizeof(mh) + sizeof(eh)) ||
@@ -64,13 +64,15 @@ static int decomp_file(char *path, char *outfile)
     }
     needs_ehdr = (uint16_t)eh.esh_ftseg || eh.msh_trsize || eh.msh_drsize;
 
-    printf("%s:\n", path);
-    printf(" text: %5u %5u\n", (uint16_t)mh.tseg, eh.esh_compr_tseg);
+    /*printf(" text: %5u %5u\n", (uint16_t)mh.tseg, eh.esh_compr_tseg);
     printf(" data: %5u %5u\n", (uint16_t)mh.dseg, eh.esh_compr_dseg);
     printf("ftext: %5u %5u\n", (uint16_t)eh.esh_ftseg, eh.esh_compr_ftseg);
     printf(" size: %5u %5u\n",
         (uint16_t)mh.tseg + (uint16_t)mh.dseg + (uint16_t)eh.esh_ftseg,
-        eh.esh_compr_tseg + eh.esh_compr_dseg + eh.esh_compr_ftseg);
+        eh.esh_compr_tseg + eh.esh_compr_dseg + eh.esh_compr_ftseg);*/
+    printf("%u -> %u bytes\n",
+        eh.esh_compr_tseg + eh.esh_compr_dseg + eh.esh_compr_ftseg,
+        (uint16_t)mh.tseg + (uint16_t)mh.dseg + (uint16_t)eh.esh_ftseg);
 
     needs_tmpfile = !outfile;
     if (needs_tmpfile)
@@ -85,17 +87,10 @@ static int decomp_file(char *path, char *outfile)
             perror("write");
             return -1;
     }
-    if (decomp_section(ifd, ofd, (uint16_t)mh.tseg, eh.esh_compr_tseg) < 0) {
-        fprintf(stderr, "%s: error decompressing text section\n", path);
-        return -1;
-    }
-    if (decomp_section(ifd, ofd, (uint16_t)eh.esh_ftseg, eh.esh_compr_ftseg) < 0) {
-        fprintf(stderr, "%s: error decompressing ftext section\n", path);
-        return -1;
-    }
-    if (decomp_section(ifd, ofd, (uint16_t)mh.dseg, eh.esh_compr_dseg) < 0) {
-        fprintf(stderr, "%s: error decompressing data section\n", path);
-        return -1;
+    if (decomp_section(ifd, ofd, (uint16_t)mh.tseg, eh.esh_compr_tseg) < 0 ||
+        decomp_section(ifd, ofd, (uint16_t)eh.esh_ftseg, eh.esh_compr_ftseg) < 0 ||
+        decomp_section(ifd, ofd, (uint16_t)mh.dseg, eh.esh_compr_dseg) < 0) {
+            return -1;
     }
     if (lseek(ofd, 0L, SEEK_SET) != 0) {
         perror("lseek");
