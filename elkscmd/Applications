@@ -22,9 +22,11 @@
 #   :128k       Minimal set of apps to fit on 128k rom image
 #   :192k       Additional apps to fit on 192k rom image
 #   :360k       Minimal set of apps to fit on 360k disks
+#   :360c       Extra apps to add to 360k disks if CONFIG_APPS_COMPRESS set
 #   :720k       Set of apps to fit on 720k disks (includes :net)
 #   :1200k      Set of apps to fit on 1200 disks (almost all of 1440k)
 #   :1440k      Set of apps to fit on 1440k disks
+#   :1440c      Extra apps to add to 1440k disks if CONFIG_APPS_COMPRESS set
 #   :ash        Ash (bash) shell                            ash
 #   :sash       Sash (standalone very small) shell          sash
 #   :defsash    Use sash as default shell                   sash
@@ -50,7 +52,7 @@ sys_utils/init          :boot   :sysutil    :128k
 sys_utils/getty         :boot   :sysutil    :128k
 sys_utils/login         :boot   :sysutil    :128k
 sash/sash   ::bin/sh            :defsash    # install as /bin/sh
-ash/ash     ::bin/sh    :boot   :ash        # install as /bin/sh (must follow :defsash)
+ash/ash     ::bin/sh    :boot   :ash :nocomp # install as /bin/sh (must follow :defsash)
 sash/sash                       :sash                   :1200k
 sys_utils/mount         :boot   :sysutil    :128k
 sys_utils/umount        :boot   :sysutil    :128k
@@ -65,14 +67,14 @@ file_utils/chown                :be-fileutil            :1200k
 file_utils/cmp                  :be-fileutil            :1200k
 file_utils/cp                   :be-fileutil    :360k
 file_utils/dd                   :be-fileutil            :1200k
-#file_utils/md5sum               :fileutil
+file_utils/md5sum               :fileutil                               :1440c
 file_utils/mkdir                :fileutil       :360k
 file_utils/mknod                :fileutil       :360k
 #file_utils/mkfifo              :fileutil               :1200k
 file_utils/more                 :fileutil       :360k           :128k
 file_utils/mv                   :fileutil       :360k
 file_utils/ln                   :fileutil           :720k
-file_utils/ls                   :fileutil       :360k           :128k
+file_utils/ls                   :fileutil       :360k           :128k       :nocomp
 file_utils/rm                   :fileutil       :360k
 file_utils/rmdir                :fileutil       :360k
 file_utils/split                :fileutil                :1200k
@@ -80,7 +82,7 @@ file_utils/sync                 :fileutil       :360k
 file_utils/touch                :fileutil           :720k
 sys_utils/chmem                 :sysutil            :720k
 sys_utils/kill                  :sysutil            :720k
-sys_utils/ps            :sash   :sysutil        :360k           :128k
+sys_utils/ps            :sash   :sysutil        :360k           :128k       :nocomp
 sys_utils/ps :::uptime          :sysutil                        :128k   :1440k
 sys_utils/reboot                :sysutil        :360k           :128k
 sys_utils/makeboot              :sysutil        :360k
@@ -92,9 +94,9 @@ sys_utils/poweroff              :sysutil            :720k
 sys_utils/sercat                :sysutil                :1200k
 sys_utils/console               :sysutil                :1200k
 #sys_utils/who                  :sysutil                :1200k
-sys_utils/unreal16              :sysutil                        :1440k
+sys_utils/unreal16              :sysutil                            :1440c
 sys_utils/beep                  :sysutil                        :1440k
-sys_utils/decomp                :sysutil                        :1440k
+sys_utils/decomp                :sysutil         :360c          :1440k
 screen/screen                   :screen                 :1200k
 cron/cron                       :cron                   :1200k
 cron/crontab                    :cron                   :1200k
@@ -122,7 +124,7 @@ misc_utils/od                   :miscutil               :1200k
 misc_utils/hd                   :miscutil               :1200k
 misc_utils/time                 :miscutil           :720k
 misc_utils/kilo                 :miscutil               :1200k
-misc_utils/mined ::bin/edit     :miscutil       :360k   :1200k
+misc_utils/mined ::bin/edit     :miscutil       :360k
 misc_utils/sleep                :miscutil               :1200k
 misc_utils/tty                  :miscutil               :1200k
 misc_utils/uuencode             :miscutil               :1200k
@@ -157,9 +159,9 @@ minix3/tee                      :minix3                 :1200k
 minix3/cal                      :be-minix3              :1200k
 minix3/diff                     :be-minix3          :720k
 minix3/find                     :be-minix3          :720k
-minix3/mail                     :minix3                         :other
+minix3/mail                     :minix3                         :other  :1440c
 disk_utils/df                   :diskutil       :360k
-disk_utils/fsck                 :diskutil       :360k   :1200k
+disk_utils/fsck                 :diskutil       :360k
 disk_utils/mkfs                 :diskutil       :360k
 disk_utils/mkfat                :diskutil       :360k
 disk_utils/partype              :diskutil               :1200k
@@ -167,12 +169,12 @@ disk_utils/ramdisk              :diskutil               :1200k
 disk_utils/fdisk                :be-diskutil    :360k
 fsck_dos/fsck-dos               :diskutil               :1200k
 tui/fm                          :tui                            :1440k
-tui/matrix                      :tui                            :1440k
+tui/matrix                      :tui            :360c           :1440k
 tui/cons                        :tui                            :1440k
 tui/ttyinfo                     :tui                            :1440k
 tui/sl                          :tui                    :1200k
-tui/ttyclock                    :tui                    :1200k
-tui/ttypong                     :tui
+tui/ttyclock                    :tui            :360c   :1200k
+tui/ttypong                     :tui            :360c
 tui/ttytetris                   :tui            :360k
 busyelks/busyelks               :busyelks
 inet/httpd/sample_index.html ::var/www/index.html :net  :1200k
@@ -185,13 +187,13 @@ inet/telnetd/telnetd            :net                    :1200k
 inet/httpd/httpd                :net                    :1200k
 inet/ftp/ftp                    :net                    :1200k
 inet/ftp/ftpd                   :net                    :1200k
-inet/tinyirc/tinyirc            :other
+inet/tinyirc/tinyirc            :other                          :1440c
 inet/urlget/urlget              :net                    :1200k
 inet/urlget/urlget :::ftpget    :net                    :1200k
 inet/urlget/urlget :::ftpput    :net                    :1200k
 inet/urlget/urlget :::httpget   :net                    :1200k
-bc/bc                           :other
-test/libc/test_libc             :test
+bc/bc                           :other                          :1440c
+test/libc/test_libc             :test                           :1440c
 test/other/test_fd              :test
 test/other/test_float           :test
 #nano/nano-2.0.6/src/nano       :other
@@ -207,7 +209,7 @@ test/other/test_float           :test
 #mtools/mwrite                  :other
 #m4/m4                          :other
 #prems/pres/pres                :other
-nano-X/bin/nxclock              :other
+nano-X/bin/nxclock              :other                              :1440c
 nano-X/bin/nxdemo               :other
 nano-X/bin/nxtest               :other
 nano-X/bin/nxtetris             :nanox                  :1200k
@@ -216,9 +218,9 @@ nano-X/bin/nxterm               :nanox                          :1440k
 nano-X/bin/nxworld              :nanox                          :1440k
 nano-X/bin/nxworld.map ::lib/nxworld.map :nanox                 :1440k
 basic/basic                     :basic                  :1200k
-advent/advent                     :other
-advent/advent.db ::lib/advent.db  :other
-debug/disasm                      :other
-debug/nm                          :other
-debug/system.sym ::lib/system.sym :other
-debug/testsym                     :other
+advent/advent                     :other                            :1440c
+advent/advent.db ::lib/advent.db  :other                            :1440c
+debug/disasm                      :other                            :1440c
+debug/nm                          :other                            :1440c
+debug/system.sym ::lib/system.sym :other                            :1440c
+debug/testsym                     :other                            :1440c
