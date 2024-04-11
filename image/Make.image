@@ -49,7 +49,10 @@ template:
 	find $(DESTDIR) -name .keep -delete
 	$(MAKE) -C $(ELKSCMD_DIR) -f Make.install install "CONFIG=$(CONFIG)"
 ifdef CONFIG_APPS_COMPRESS
-	cd $(TOPDIR)/target/bin; elks-compress *
+	awk /`echo ":nocomp" | tr -d ' '`/{print} $(TOPDIR)/elkscmd/Applications | sed '/^#/d' | sed 's#.*/##g' | cut -d" " -f 1 | sed 's#\(^.*\)#/\1/d#' > Nocomp
+	ls $(DESTDIR)/bin | sed -f Nocomp > Filelist
+	cd $(DESTDIR)/bin; elks-compress `cat $(TOPDIR)/image/Filelist`
+	rm -f Nocomp Filelist
 endif
 	$(MAKE) -C $(BOOTBLOCKS_DIR)
 	bash -c "./ver.pl $(ELKS_DIR)/Makefile-rules > $(DESTDIR)/etc/issue"
