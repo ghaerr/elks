@@ -5,7 +5,7 @@
  *	Minix binary formats
  */
 
-#define RUNNABLE_HEADER_SIZE	32
+#include <stdint.h>             /* this file included by host, kernel & libc */
 
 /* Values for the type field of minix_exec_header */
 
@@ -23,39 +23,39 @@
 #define INIT_STACK 4096		/* Default stack*/
 
 struct minix_exec_hdr {
-    unsigned long	type;
-    unsigned char	hlen;		// 0x04
-    unsigned char	reserved1;
-    unsigned short	version;
-    unsigned long	tseg;		// 0x08
-    unsigned long	dseg;		// 0x0c
-    unsigned long	bseg;		// 0x10
-    unsigned long	entry;
-    unsigned short	chmem;
-    unsigned short	minstack;
-    unsigned long	syms;
+    uint32_t	type;
+    uint8_t	hlen;		// 0x04
+    uint8_t	reserved1;
+    uint8_t	version;
+    uint32_t	tseg;		// 0x08
+    uint32_t	dseg;		// 0x0c
+    uint32_t	bseg;		// 0x10
+    uint32_t	entry;
+    uint16_t	chmem;
+    uint16_t	minstack;
+    uint32_t	syms;
 };
 
 struct elks_supl_hdr {
     /* optional fields */
-    unsigned long	msh_trsize;	/* text relocation size */	// 0x20
-    unsigned long	msh_drsize;	/* data relocation size */	// 0x24
-    unsigned long	msh_tbase;	/* text relocation base */
-    unsigned long	msh_dbase;	/* data relocation base */
+    uint32_t	msh_trsize;	/* text relocation size */	// 0x20
+    uint32_t	msh_drsize;	/* data relocation size */	// 0x24
+    uint32_t	msh_tbase;	/* text relocation base */
+    uint32_t	msh_dbase;	/* data relocation base */
     /* even more optional fields --- for ELKS medium memory model support */
-    unsigned long	esh_ftseg;	/* far text size */		// 0x30
-    unsigned long	esh_ftrsize;	/* far text relocation size */	// 0x34
+    uint32_t	esh_ftseg;	/* far text size */		// 0x30
+    uint32_t	esh_ftrsize;	/* far text relocation size */	// 0x34
     /* optional fields for compressed binaries */
-    unsigned short	esh_compr_tseg;	/* compressed tseg size */
-    unsigned short	esh_compr_dseg;	/* compressed dseg size* */
-    unsigned short	esh_compr_ftseg;/* compressed ftseg size*/
-    unsigned short	esh_reserved;
+    uint16_t	esh_compr_tseg;	/* compressed tseg size */
+    uint16_t	esh_compr_dseg;	/* compressed dseg size* */
+    uint16_t	esh_compr_ftseg;/* compressed ftseg size*/
+    uint16_t	esh_reserved;
 };
 
 struct minix_reloc {
-    unsigned long	r_vaddr;	/* address of place within section */
-    unsigned short	r_symndx;	/* index into symbol table */	// 0x04
-    unsigned short	r_type;		/* relocation type */		// 0x06
+    uint32_t	r_vaddr;	/* address of place within section */
+    uint16_t	r_symndx;	/* index into symbol table */	// 0x04
+    uint16_t	r_type;		/* relocation type */		// 0x06
 };
 
 /* r_type values */
@@ -78,5 +78,9 @@ struct minix_reloc {
 /* executable with far text, and optionally relocations */
 #define SUPL_FARTEXT_HDR_SIZE	sizeof(struct elks_supl_hdr)
 #define EXEC_FARTEXT_HDR_SIZE	(EXEC_MINIX_HDR_SIZE + SUPL_FARTEXT_HDR_SIZE)
+
+/* elks/fs/exodecr.c - minix binary decompressor */
+extern unsigned int decompress(char *buf, unsigned int seg, unsigned int orig_size,
+    unsigned int compr_size, int safety);
 
 #endif

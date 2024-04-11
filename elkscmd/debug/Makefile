@@ -25,7 +25,7 @@ LDFLAGS += -maout-symtab
 #NOINSTFLAGS = -fno-instrument-functions -fno-instrument-functions-simple
 
 HOSTPRGS = nm86 hostdisasm
-HOSTCFLAGS += -I.
+HOSTCFLAGS += -I. -I$(TOPDIR)/elks/include
 SYMS_C = $(TOPDIR)/libc/debug/syms.c
 
 all: $(HOSTPRGS) $(PRGS) system.sym

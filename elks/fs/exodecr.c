@@ -1,7 +1,3 @@
-#include <linuxmt/types.h>
-#include <linuxmt/memory.h>
-#include <linuxmt/kernel.h>
-#include <linuxmt/debug.h>
 /*
  * Exomizer decruncher ported to ELKS by Greg Haerr, Apr 2021
  * Copyright (c) 2005-2017 Magnus Lind.
@@ -27,21 +23,33 @@
  *   4. The names of this software and/or it's copyright holders may not be
  *   used to endorse or promote products derived from this software without
  *   specific prior written permission.
- */
-
-/**
+ *
  * This decompressor decompresses files that have been compressed
  * using the raw sub-sub command with the -b (not default) and -P39
  * (default) setting of the raw command.
+ *
+ * This file is shared by the kernel and sys_utils/decomp application binary.
  */
+
+#ifdef __KERNEL__
+#include <linuxmt/types.h>
+#include <linuxmt/memory.h>
+#include <linuxmt/kernel.h>
+#include <linuxmt/debug.h>
+#define read_byte()     peekb((word_t)--inp, segp)
+#define ERR(...)        debug(__VA_ARGS__)
+#else
+#include <stdio.h>
+#include <string.h>
+#define read_byte()     (*--inp & 255)
+#define ERR(...)        fprintf(stderr, __VA_ARGS__)
+#endif
 
 static unsigned short int base[52];
 static char bits[52];
 static unsigned char bit_buffer;
 static const char *inp;
-static seg_t segp = 0;
-
-#define read_byte()	peekb((word_t)--inp, segp)
+static unsigned int segp;
 
 static int bitbuffer_rotate(int carry)
 {
@@ -180,12 +188,20 @@ exo_decrunch(const char *in, char *out)
             }
             else
             {
-                c = peekb((word_t)out+offset, segp); /* c = out[offset]; */
+#ifdef __KERNEL__
+                c = peekb((word_t)out+offset, segp);
+#else
+                c = out[offset];
+#endif
             }
-			pokeb((word_t)out, segp, c);			/* *out = c; */
+#ifdef __KERNEL__
+            pokeb((word_t)out, segp, c);
+#else
+            *out = c;
+#endif
 			if ((int)(out - inp) < 0)
 			{
-				debug("EXEC: decompress output overflow by %d\n", (int)(out - inp));
+				ERR("Decompress output overflow by %d\n", (int)(out - inp));
 				return 0;
 			}
         }
@@ -196,20 +212,25 @@ exo_decrunch(const char *in, char *out)
     return out;
 }
 
-size_t decompress(char *buf, seg_t seg, size_t orig_size, size_t compr_size, int safety)
+unsigned int decompress(char *buf, unsigned int seg, unsigned int orig_size,
+	unsigned int compr_size, int safety)
 {
 	char *in = buf + compr_size;
 	char *out = buf + orig_size + safety;
 
-	debug("decompress: seg %x orig %u compr %u safety %d\n",
-		seg, orig_size, compr_size, safety);
+	/*ERR("decompress: seg %x orig %u compr %u safety %d\n",
+		seg, orig_size, compr_size, safety);*/
 	segp = seg;
 	out = exo_decrunch(in, out);
 	if (out - buf != safety)
 	{
-		debug("EXEC: decompress error\n");
+		ERR("Error decompressing executable\n");
 		return 0;
 	}
+#ifdef __KERNEL__
 	fmemcpyb(buf, seg, out, seg, orig_size);
+#else
+	memcpy(buf, out, orig_size);
+#endif
 	return orig_size;
 }

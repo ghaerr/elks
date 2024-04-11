@@ -461,10 +461,6 @@ extern char *buffer_data(struct buffer_head *);
 extern size_t block_read(struct inode *,struct file *,char *,size_t);
 extern size_t block_write(struct inode *,struct file *,char *,size_t);
 
-#ifdef CONFIG_EXEC_COMPRESS
-extern size_t decompress(char *buf, seg_t seg, size_t orig_size, size_t compr_size, int safety);
-#endif
-
 #ifdef CONFIG_BLK_DEV_FD
 extern int check_disk_change(kdev_t);
 #else

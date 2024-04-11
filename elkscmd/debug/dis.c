@@ -11,6 +11,7 @@
 #include <getopt.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <linuxmt/minix.h>
 #include "debug/syms.h"
 #include "debug/instrument.h"
 #include "disasm.h"
