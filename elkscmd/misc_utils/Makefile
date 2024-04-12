@@ -13,9 +13,11 @@ include $(BASEDIR)/Make.rules
 #TODO: fix uncompress zcat lpfilter disabled
 PRGS = tar miniterm ed od hd time kilo mined sleep tty uuencode uudecode compress
 
-#HOSTPRGS = hostcompress
+HOSTPRGS = hostcompress
 
-all: $(PRGS) $(HOSTPRGS)
+all: $(PRGS)
+
+host: $(HOSTPRGS)
 
 ed: ed.o
 	$(LD) $(LDFLAGS) -o ed ed.o $(LDLIBS)
