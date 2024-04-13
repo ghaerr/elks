@@ -46,7 +46,9 @@ HOSTPRGS = hostdecomp
 HOSTCFLAGS += -I$(TOPDIR)/elks/include
 EXODECR_C = $(TOPDIR)/elks/fs/exodecr.c
 
-all: $(PRGS) $(HOSTPRGS)
+all: $(PRGS)
+
+host: $(HOSTPRGS)
 
 init: init.o
 	$(LD) $(LDFLAGS) -maout-heap=4096 -maout-stack=1024 -o init init.o $(LDLIBS)
@@ -139,4 +141,4 @@ install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
-	rm -f *.o core $(PRGS)
+	rm -f *.o core $(PRGS) $(HOSTPRGS)

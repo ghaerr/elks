@@ -28,11 +28,13 @@ HOSTPRGS = nm86 hostdisasm
 HOSTCFLAGS += -I. -I$(TOPDIR)/elks/include
 SYMS_C = $(TOPDIR)/libc/debug/syms.c
 
-all: $(HOSTPRGS) $(PRGS) system.sym
+all: $(PRGS) system.sym
+
+host: $(HOSTPRGS)
 
 testsym: testsym.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
-	./nm86 $@ > $@.map
+#	./nm86 $@ > $@.map
 
 disasm: dis.o disasm.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)

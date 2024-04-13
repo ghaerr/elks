@@ -16,15 +16,17 @@ PRGS = romprg
 OBJS = main.o flash.o commands.o crc.o protocol.o serial.o
 #MAPFILE = -Wl,-Map=romprWg.map
 
-#HOSTPRGS = hostromprg
+HOSTPRGS = hostromprg
+HOSTSRC = pc-main.c protocol.c pc-serial.c pc-commands.c crc.c
 
-all: $(PRGS) $(HOSTPRGS)
+all: $(PRGS)
+
+host: $(HOSTPRGS)
 
 romprg: $(OBJS) commands.h crc.h serial.h version.h
 	$(LD) $(LDFLAGS) $(MAPFILE) -o romprg $(OBJS) $(LDLIBS)
 
-HOSTSRC = pc-main.c protocol.c pc-serial.c pc-commands.c crc.c
-hostromprg: $(HOSTSRC) pc-serial.h pc-commands.h crc.h
+hostromprg: $(HOSTSRC)
 	$(HOSTCC) $(HOSTCFLAGS) $(HOSTSRC) -o $@
 
 install: $(PRGS)

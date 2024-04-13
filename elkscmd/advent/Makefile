@@ -19,10 +19,12 @@ SRCS = advent.c adventdb.c database.c english.c itverb.c lib.c saveadv.c \
 
 OBJS = $(SRCS:.c=.o)
 
-#HOSTPRGS = hostadvent hostadvgen
-#DBFILE = advent.db
+HOSTPRGS = hostadvent hostadvgen
+#HOSTPRGS += advent.db
 
-all: $(PRGS) $(HOSTPRGS) $(DBFILE)
+all: $(PRGS)
+
+host: $(HOSTPRGS)
 
 advent: $(OBJS) advent.h
 	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
