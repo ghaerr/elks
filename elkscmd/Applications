@@ -25,7 +25,10 @@
 #   :360c       Extra apps to add to 360k disks if CONFIG_APPS_COMPRESS set
 #   :720k       Set of apps to fit on 720k disks (includes :net)
 #   :1200k      Set of apps to fit on 1200 disks (almost all of 1440k)
-#   :1440k      Set of apps to fit on 1440k disks
+#   :1200c      Extra apps to add to 1200k disks if CONFIG_APPS_COMPRESS set
+#   :1232k      Set of apps to fit on PC-98 1232k disks
+#   :1232c      Extra apps to add to 1232k disks if CONFIG_APPS_COMPRESS set
+#   :1440k      Set of apps to fit on 1440k disks (and 1200k if compressed)
 #   :1440c      Extra apps to add to 1440k disks if CONFIG_APPS_COMPRESS set
 #   :ash        Ash (bash) shell                            ash
 #   :sash       Sash (standalone very small) shell          sash
@@ -174,7 +177,7 @@ tui/cons                        :tui                            :1440k
 tui/ttyinfo                     :tui                            :1440k
 tui/sl                          :tui                    :1200k
 tui/ttyclock                    :tui            :360c   :1200k
-tui/ttypong                     :tui            :360c
+tui/ttypong                     :tui            :360c           :1440k
 tui/ttytetris                   :tui            :360k
 busyelks/busyelks               :busyelks
 inet/httpd/sample_index.html ::var/www/index.html :net  :1200k

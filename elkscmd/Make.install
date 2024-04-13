@@ -141,10 +141,16 @@ endif
 
 ifdef CONFIG_APPS_1200K
 	TAGS = :boot|:360k|:net|:720k|:1200k|
+ifdef CONFIG_APPS_COMPRESS
+	TAGS += :360c|:1200c|:1440k|
+endif
 endif
 
 ifdef CONFIG_APPS_1232K
-	TAGS = :boot|:360k|:net|:720k|:1200k|
+	TAGS = :boot|:360k|:net|:720k|:1200k|:1232k|
+ifdef CONFIG_APPS_COMPRESS
+	TAGS += :360c|:1232c|:1440k|
+endif
 endif
 
 ifdef CONFIG_APPS_1440K
