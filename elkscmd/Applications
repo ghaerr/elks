@@ -42,7 +42,7 @@
 #   :tui        Text user interface library programs        tui
 #   :mtools     MSDOS utilities                             mtools
 #   :elvis      Elvis vi editor                             elvis
-#   :net        Networking apps (inc. on 720k,1200k/1440k)  ktcp,inet
+#   :net        Networking apps (inc. on 720k,1200k,1440k)  ktcp,inet
 #   :nanox      Nano-X graphical apps                       nano-X
 #   :other      Other apps
 #   :busyelks   Busyelks                                    busyelks
@@ -171,8 +171,8 @@ disk_utils/partype              :diskutil               :1200k
 disk_utils/ramdisk              :diskutil               :1200k
 disk_utils/fdisk                :be-diskutil    :360k
 fsck_dos/fsck-dos               :diskutil               :1200k
-tui/fm                          :tui                            :1440k
-tui/matrix                      :tui            :360c           :1440k
+tui/fm                          :tui                    :1200k
+tui/matrix                      :tui            :360c   :1200k
 tui/cons                        :tui                            :1440k
 tui/ttyinfo                     :tui                            :1440k
 tui/sl                          :tui                    :1200k
@@ -217,7 +217,7 @@ nano-X/bin/nxdemo               :other
 nano-X/bin/nxtest               :other
 nano-X/bin/nxtetris             :nanox                  :1200k
 nano-X/bin/nxlandmine           :nanox                   :1232k :1440k
-nano-X/bin/nxterm               :nanox                   :1232k :1440k
+nano-X/bin/nxterm               :nanox                   :1232k     :1440c
 nano-X/bin/nxworld              :nanox                          :1440k
 nano-X/bin/nxworld.map ::lib/nxworld.map :nanox                 :1440k
 basic/basic                     :basic                  :1200k
