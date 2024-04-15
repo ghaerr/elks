@@ -23,8 +23,8 @@
 #   :192k       Additional apps to fit on 192k rom image
 #   :360k       Minimal set of apps to fit on 360k disks
 #   :360c       Extra apps to add to 360k disks if CONFIG_APPS_COMPRESS set
-#   :720k       Set of apps to fit on 720k disks (includes :net)
-#   :1200k      Set of apps to fit on 1200 disks (includes :net)
+#   :720k       Set of apps to fit on 720k disks
+#   :1200k      Set of apps to fit on 1200k disks
 #   :1200c      Extra apps to add to 1200k disks if CONFIG_APPS_COMPRESS set
 #   :1232k      Set of apps to fit on PC-98 1232k disks
 #   :1232c      Extra apps to add to 1232k disks if CONFIG_APPS_COMPRESS set
@@ -42,7 +42,7 @@
 #   :tui        Text user interface library programs        tui
 #   :mtools     MSDOS utilities                             mtools
 #   :elvis      Elvis vi editor                             elvis
-#   :net        Networking apps                             ktcp,inet
+#   :net        Networking apps (inc. on 720k,1200k/1440k)  ktcp,inet
 #   :nanox      Nano-X graphical apps                       nano-X
 #   :other      Other apps
 #   :busyelks   Busyelks                                    busyelks
