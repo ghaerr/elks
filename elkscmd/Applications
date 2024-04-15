@@ -24,7 +24,7 @@
 #   :360k       Minimal set of apps to fit on 360k disks
 #   :360c       Extra apps to add to 360k disks if CONFIG_APPS_COMPRESS set
 #   :720k       Set of apps to fit on 720k disks (includes :net)
-#   :1200k      Set of apps to fit on 1200 disks (almost all of 1440k)
+#   :1200k      Set of apps to fit on 1200 disks (includes :net)
 #   :1200c      Extra apps to add to 1200k disks if CONFIG_APPS_COMPRESS set
 #   :1232k      Set of apps to fit on PC-98 1232k disks
 #   :1232c      Extra apps to add to 1232k disks if CONFIG_APPS_COMPRESS set
@@ -98,7 +98,7 @@ sys_utils/sercat                :sysutil                :1200k
 sys_utils/console               :sysutil                :1200k
 #sys_utils/who                  :sysutil                :1200k
 sys_utils/unreal16              :sysutil                            :1440c
-sys_utils/beep                  :sysutil                        :1440k
+sys_utils/beep                  :sysutil                :1200k
 sys_utils/decomp                :sysutil         :360c          :1440k
 screen/screen                   :screen                 :1200k
 cron/cron                       :cron                   :1200k
@@ -180,21 +180,21 @@ tui/ttyclock                    :tui            :360c   :1200k
 tui/ttypong                     :tui            :360c           :1440k
 tui/ttytetris                   :tui            :360k
 busyelks/busyelks               :busyelks
-inet/httpd/sample_index.html ::var/www/index.html :net  :1200k
-ktcp/ktcp                       :net                    :1200k
-inet/nettools/netstat           :net                    :1200k
-inet/nettools/nslookup          :net                    :1200k
-inet/nettools/arp               :net                    :1200k
-inet/telnet/telnet              :net                    :1200k
-inet/telnetd/telnetd            :net                    :1200k
-inet/httpd/httpd                :net                    :1200k
-inet/ftp/ftp                    :net                    :1200k
-inet/ftp/ftpd                   :net                    :1200k
+inet/httpd/sample_index.html ::var/www/index.html :net
+ktcp/ktcp                       :net
+inet/nettools/netstat           :net
+inet/nettools/nslookup          :net
+inet/nettools/arp               :net
+inet/telnet/telnet              :net
+inet/telnetd/telnetd            :net
+inet/httpd/httpd                :net
+inet/ftp/ftp                    :net
+inet/ftp/ftpd                   :net
+inet/urlget/urlget              :net
+inet/urlget/urlget :::ftpget    :net
+inet/urlget/urlget :::ftpput    :net
+inet/urlget/urlget :::httpget   :net
 inet/tinyirc/tinyirc            :other                          :1440c
-inet/urlget/urlget              :net                    :1200k
-inet/urlget/urlget :::ftpget    :net                    :1200k
-inet/urlget/urlget :::ftpput    :net                    :1200k
-inet/urlget/urlget :::httpget   :net                    :1200k
 bc/bc                           :other                          :1440c
 test/libc/test_libc             :test                           :1440c
 test/other/test_fd              :test
@@ -212,12 +212,12 @@ test/other/test_float           :test
 #mtools/mwrite                  :other
 #m4/m4                          :other
 #prems/pres/pres                :other
-nano-X/bin/nxclock              :other                              :1440c
+nano-X/bin/nxclock              :other                   :1232k     :1440c
 nano-X/bin/nxdemo               :other
 nano-X/bin/nxtest               :other
 nano-X/bin/nxtetris             :nanox                  :1200k
-nano-X/bin/nxlandmine           :nanox                          :1440k
-nano-X/bin/nxterm               :nanox                          :1440k
+nano-X/bin/nxlandmine           :nanox                   :1232k :1440k
+nano-X/bin/nxterm               :nanox                   :1232k :1440k
 nano-X/bin/nxworld              :nanox                          :1440k
 nano-X/bin/nxworld.map ::lib/nxworld.map :nanox                 :1440k
 basic/basic                     :basic                  :1200k
