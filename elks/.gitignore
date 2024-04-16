@@ -5,19 +5,10 @@
 # Generated files
 arch/i86/boot/Image
 arch/i86/boot/bootsect
-arch/i86/boot/bootsect.s
-arch/i86/boot/crt0.s
 arch/i86/boot/setup
-arch/i86/boot/setup.s
 arch/i86/boot/system
 arch/i86/drivers/char/KeyMaps/keymaps.h
-arch/i86/kernel/bios16.s
-arch/i86/kernel/entry.c
-arch/i86/kernel/entry.s
 arch/i86/kernel/entry.S
-arch/i86/kernel/irqtab.s
-arch/i86/kernel/printreg.s
-arch/i86/mm/segment.s
 arch/i86/tools/build
 arch/i86/tools/mkbootloader
 include/arch/asm-offsets.h

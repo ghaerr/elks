@@ -200,18 +200,6 @@ test/libc/test_libc             :test                           :1440c
 test/other/test_fd              :test
 test/other/test_float           :test
 #nano/nano-2.0.6/src/nano       :other
-#mtools/mcopy                   :other
-#mtools/mdel                    :other
-#mtools/mdir                    :other
-#mtools/mkdfs                   :other
-#mtools/mmd                     :other
-#mtools/mrd                     :other
-#mtools/mread                   :other
-#mtools/mren                    :other
-#mtools/mtype                   :other
-#mtools/mwrite                  :other
-#m4/m4                          :other
-#prems/pres/pres                :other
 nano-X/bin/nxclock              :other                   :1232k     :1440c
 nano-X/bin/nxdemo               :other
 nano-X/bin/nxtest               :other
