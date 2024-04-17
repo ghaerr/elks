@@ -84,7 +84,7 @@ file_utils/split                :fileutil                 :1200c    :1440k
 file_utils/sync                 :fileutil       :360k
 file_utils/touch                :fileutil           :720k
 sys_utils/chmem                 :sysutil            :720k
-sys_utils/kill                  :sysutil            :720k
+sys_utils/kill                  :sysutil        :360c :720k
 sys_utils/ps            :sash   :sysutil        :360k           :128k       :nocomp
 sys_utils/ps :::uptime          :sysutil                        :128k   :1440k
 sys_utils/reboot                :sysutil        :360k           :128k
@@ -103,9 +103,9 @@ sys_utils/decomp                :sysutil         :360c          :1440k
 screen/screen                   :screen                 :1200k
 cron/cron                       :cron                   :1200k
 cron/crontab                    :cron                   :1200k
-sh_utils/basename               :be-shutil          :720k
+sh_utils/basename               :be-shutil               :1200c
 sh_utils/clear                  :shutil                 :1200k
-sh_utils/dirname                :be-shutil          :720k
+sh_utils/dirname                :be-shutil               :1200c
 sh_utils/echo                   :be-shutil              :1200k
 #sh_utils/test                  :shutil                 :1200k
 #sh_utils/false                 :be-shutil              :1200k
@@ -168,7 +168,7 @@ disk_utils/fsck                 :diskutil       :360k
 disk_utils/mkfs                 :diskutil       :360k
 disk_utils/mkfat                :diskutil       :360k
 disk_utils/partype              :diskutil               :1200k
-disk_utils/ramdisk              :diskutil               :1200k
+disk_utils/ramdisk              :diskutil       :360c   :1200k
 disk_utils/fdisk                :be-diskutil    :360k
 fsck_dos/fsck-dos               :diskutil               :1200k
 tui/fm                          :tui                    :1200k
@@ -177,7 +177,7 @@ tui/cons                        :tui                            :1440k
 tui/ttyinfo                     :tui                            :1440k
 tui/sl                          :tui                    :1200k
 tui/ttyclock                    :tui            :360c   :1200k
-tui/ttypong                     :tui            :360c           :1440k
+tui/ttypong                     :tui                            :1440k
 tui/ttytetris                   :tui            :360k
 busyelks/busyelks               :busyelks
 inet/httpd/sample_index.html ::var/www/index.html :net

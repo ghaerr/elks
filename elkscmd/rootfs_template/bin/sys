@@ -66,7 +66,7 @@ create_dev_dir()
 
 create_directories()
 {
-	echo "Creating directories..."
+	echo "Creating directories"
 	mkdir $MNT/bin
 	mkdir $MNT/etc
 	mkdir $MNT/mnt
