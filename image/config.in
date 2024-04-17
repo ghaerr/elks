@@ -8,7 +8,6 @@ mainmenu_option next_comment
 	choice 'Filesystem' \
 	"MINIX  CONFIG_IMG_MINIX   \
 	 FAT    CONFIG_IMG_FAT     \
-	 RAW    CONFIG_IMG_RAW     \
 	 ROM    CONFIG_IMG_ROM" MINIX
 
 	if [ "$CONFIG_IMG_ROM" != "y" ]; then

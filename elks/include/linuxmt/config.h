@@ -9,6 +9,7 @@
  */
 
 #define CONFIG_MSDOS_PARTITION  1               /* support DOS HD partitions */
+#define CONFIG_FS_DEV           1               /* support FAT /dev folder */
 
 #ifdef CONFIG_ARCH_IBMPC
 #define MAX_SERIAL              4               /* max number of serial tty devices*/

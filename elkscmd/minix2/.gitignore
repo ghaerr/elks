@@ -1,6 +1,7 @@
 env
 install
 lp
+lpd
 man
 pwdauth
 remsync

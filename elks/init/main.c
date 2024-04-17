@@ -31,11 +31,7 @@
 #define MAX_INIT_ARGS	8
 #define MAX_INIT_ENVS	8
 
-#ifdef CONFIG_ROOT_READONLY
-int root_mountflags = MS_RDONLY;
-#else
-int root_mountflags = 0;
-#endif
+int root_mountflags;
 struct netif_parms netif_parms[MAX_ETHS] = {
     /* NOTE:  The order must match the defines in netstat.h:
      * ETH_NE2K, ETH_WD, ETH_EL3    */
