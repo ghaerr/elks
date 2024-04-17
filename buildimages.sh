@@ -8,6 +8,7 @@ cleanup()
     rm -f elkscmd/sys_utils/clock.o
     rm -f elkscmd/sys_utils/ps.o
     rm -f elkscmd/sys_utils/meminfo.o
+    rm -f elkscmd/sys_utils/beep.o
     rm -f elkscmd/basic/*.o
     rm -f elkscmd/nano-X/*/*.o
 }

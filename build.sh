@@ -84,6 +84,7 @@ if [ "$1" = "auto" ]; then
     echo "Building PC-98 image..."
     cp pc98-1232.config .config
     make kclean || clean_exit 9
+    rm bootblocks/*.o
     rm elkscmd/sys_utils/clock.o
     rm elkscmd/sys_utils/ps.o
     rm elkscmd/sys_utils/meminfo.o

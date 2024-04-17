@@ -61,3 +61,7 @@ config: elks/arch/i86/drivers/char/KeyMaps/config.in kconfig
 
 menuconfig: elks/arch/i86/drivers/char/KeyMaps/config.in kconfig
 	config/Menuconfig config.in
+
+.PHONY: tags
+tags:
+	ctags -R --exclude=cross --exclude=elkscmd .
