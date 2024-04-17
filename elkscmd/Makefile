@@ -14,7 +14,7 @@ include $(BASEDIR)/Make.defs
 
 # All subdirectories to build & clean
 
-# unused commands but working compilations: nano
+# unused commands but working compilations: nano levee
 SUBDIRS =       \
 	lib         \
 	advent      \
@@ -29,7 +29,6 @@ SUBDIRS =       \
 	file_utils  \
 	inet        \
 	ktcp        \
-	levee       \
 	minix1      \
 	minix2      \
 	minix3      \
