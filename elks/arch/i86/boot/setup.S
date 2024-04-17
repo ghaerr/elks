@@ -868,11 +868,11 @@ bootopts:
 	mov	$512,%bx
 	test	$0x10,%al		// Check Floppy Disk or Hard Disk
 	jz	pc98_int1b
-#if defined(CONFIG_IMG_FD1232)
+#ifdef CONFIG_IMG_FD1232
 	mov	$1024,%bx
 	mov	$0x03,%ch		// 1024 Bytes per sector
 	inc	%dl				// sector number for PC_98 Floppy Disk
-#elif defined(CONFIG_IMG_FD1440)
+#else
 	mov	$0x02,%ch		// 512 Bytes per sector
 	inc	%dl				// sector number for PC_98 Floppy Disk
 #endif
