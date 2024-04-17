@@ -120,10 +120,6 @@ FAT_MKFSOPTS = -s $(CONFIG_IMG_SECT) -h $(CONFIG_IMG_HEAD) -t $(CONFIG_IMG_CYL) 
 					-M 512 -d 2 -k -N 0 -c 2
 endif
 
-ifdef CONFIG_IMG_RAW
-TARGET_FILE = $(IMG_DIR)/fd.img
-endif
-
 # override default image name if NAME specified
 ifdef NAME
 TARGET_FILE = $(IMG_DIR)/$(NAME).img
