@@ -1310,6 +1310,11 @@ ReAttach(int signum)
     Attach(MSG_CONT);
 }
 
+static void pause(void)
+{
+    select(1, NULL, NULL, NULL, NULL);
+}
+
 static void
 Attacher(void)
 {
