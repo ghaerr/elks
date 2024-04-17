@@ -24,8 +24,8 @@
 
 #define GETDELIM_GROWBY		64
 
-ssize_t getdelim(char **__restrict lineptr, size_t *__restrict n,
-				   int delimiter, register FILE *__restrict stream)
+ssize_t getdelim(char ** restrict lineptr, size_t * restrict n,
+				   int delimiter, register FILE * restrict stream)
 {
 	register char *buf;
 	ssize_t pos = -1;
