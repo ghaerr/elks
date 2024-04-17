@@ -19,7 +19,8 @@ tryrun(const char *pname, char **argv, char **envp)
 int
 execvpe(const char *fname, char **argv, char **envp)
 {
-   char *pname = fname, *path;
+   char *path;
+   char *pname = (char *)fname;
    int besterr = ENOENT;
    int flen, plen;
    char * bp = sbrk(0);
@@ -56,8 +57,8 @@ execvpe(const char *fname, char **argv, char **envp)
 	    if( errno == EACCES ) besterr = EACCES;
 	    if( errno == ENOMEM || errno == E2BIG || errno == ENOEXEC ) goto out;
 
-	    brk(pname);
-	    pname = fname;
+	    brk((char *)pname);
+	    pname = (char *)fname;
 	    if(p) *p++ = ':';
 	    path=p;
 	 }
