@@ -8,9 +8,6 @@
 /* ported from linx-0.97 by zouys, Oct 21st, 2010 */
 /* neated from linx-2.0.34 fangzs, Nov 23rd, 2010 */
 
-#include <features.h>
-#include <arch/segment.h>
-
 #include <linuxmt/fs.h>
 #include <linuxmt/msdos_fs.h>
 #include <linuxmt/errno.h>
@@ -19,6 +16,8 @@
 #include <linuxmt/string.h>
 #include <linuxmt/debug.h>
 
+#include <arch/segment.h>
+
 static size_t msdos_dir_read(struct inode *dir, struct file *filp, char *buf, size_t count)
 {
     return -EISDIR;
@@ -26,8 +25,6 @@ static size_t msdos_dir_read(struct inode *dir, struct file *filp, char *buf, si
 
 static int msdos_readdir(struct inode *dir, struct file *filp,
 			 char *dirbuf, filldir_t filldir);
-
-/*@-type@*/
 
 static struct file_operations msdos_dir_operations = {
 	NULL,			/* lseek - default */
@@ -58,8 +55,6 @@ struct inode_operations msdos_dir_inode_operations = {
 	NULL,			/* getblk */
 	NULL			/* truncate */
 };
-
-/*@+type@*/
 
 static int FATPROC
 unicode_to_ascii(char *ascii, unsigned char *uni)
@@ -97,7 +92,7 @@ int FATPROC msdos_get_entry_long(
 	if ((int)*pos & (sizeof(struct msdos_dir_entry) - 1)) return -ENOENT;
 	is_long = 0;
 	*ino = msdos_get_entry(dir,pos,bh,&de);
-	debug_fat("get_entry_long block %lu\n", (*bh)->b_blocknr);
+	debug_fat("get_entry_long block %lu\n", EBH(*bh)->b_blocknr);
 	while (*ino != (ino_t)-1L) {
 		if (de->name[0] == 0) {		/* empty  entry and stop reading*/
 			break;

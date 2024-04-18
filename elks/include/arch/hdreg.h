@@ -24,8 +24,6 @@
 
 /* remainder is shared between hd.c, ide.c, ide-cd.c, and the hdparm utility */
 
-/*@-namechecks@*/
-
 /* Bits of HD_STATUS */
 #define ERR_STAT	0x01
 #define INDEX_STAT	0x02
@@ -35,8 +33,6 @@
 #define WRERR_STAT	0x20
 #define READY_STAT	0x40
 #define BUSY_STAT	0x80
-
-/*@+namechecks@*/
 
 /* Values for HD_COMMAND */
 #define WIN_RESTORE		0x10
@@ -67,8 +63,6 @@
 #define WIN_SRST		0x08	/* ATAPI soft reset command */
 #define WIN_PACKETCMD		0xa0	/* Send a packet command. */
 
-/*@-namechecks@*/
-
 /* Bits for HD_ERROR */
 #define MARK_ERR	0x01	/* Bad address mark */
 #define TRK0_ERR	0x02	/* couldn't find track 0 */
@@ -76,8 +70,6 @@
 #define ID_ERR		0x10	/* ID field not found */
 #define ECC_ERR		0x40	/* Uncorrectable ECC error */
 #define	BBD_ERR		0x80	/* block marked bad */
-
-/*@+namechecks@*/
 
 struct hd_geometry {
     unsigned char heads;

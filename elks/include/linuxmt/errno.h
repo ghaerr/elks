@@ -1,12 +1,10 @@
+#ifndef __LINUXMT_ERRNO_H
+#define __LINUXMT_ERRNO_H
+
 /* errno.h here is taken from the one in the Linux 2.5.5 kernel release.
  * It consists of the include/linux/errno.h and include/asm/errno.h files
  * combined into a single file.
  */
-
-#ifndef __LINUXMT_ERRNO_H
-#define __LINUXMT_ERRNO_H
-
-/*@-namechecks@*/
 
 /*****************************************************************************/
 
@@ -147,6 +145,9 @@
 #define EQUERYREFUSED	128	/* Query refused */
 #define ESERVERERR	129	/* Server error */
 
+/* added here for userland ktcp compile */
+#define ERESTARTSYS	512	/* Restart system call*/
+
 /*****************************************************************************/
 
 /* These are comedy ones inserted for fun, and are never used.
@@ -164,7 +165,6 @@
 
 /* Should never be seen by user programs */
 
-#define ERESTARTSYS	512	/* Restart system call*/
 #define ERESTARTNOINTR	513	/* Restart without interrupts */
 #define ENOIOCTLCMD	515	/* No ioctl command */
 
@@ -182,7 +182,5 @@
 #endif
 
 /*****************************************************************************/
-
-/*@+namechecks@*/
 
 #endif

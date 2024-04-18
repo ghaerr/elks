@@ -1,5 +1,5 @@
 #include "flash.h"
-#include <memory.h>
+#include <string.h>
 
 #define _MK_FP(seg,off)	((void __far *)((((unsigned long)(seg)) << 16) | (off)))
 #define LINEAR(addr32)  _MK_FP(addr32 >> 4, addr32 & 0x0F)

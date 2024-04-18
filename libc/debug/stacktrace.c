@@ -4,8 +4,9 @@
  * June 2022 Greg Haerr
  */
 #include <stdio.h>
-#include "instrument.h"
-#include "syms.h"
+#include <unistd.h>
+#include "debug/instrument.h"
+#include "debug/syms.h"
 
 #define STACKCOLS   8   /* # of stack address columns */
 
@@ -26,7 +27,8 @@
 */
 
 /* display stack line and any subsequent lines w/o BP pushed */
-static void noinstrument _print_stack_line(int level, int **addr, int *fn, int flag)
+static void noinstrument _print_stack_line(int level, int **addr, int *fn,
+    int *fnstart, int flag)
 {
     int j = 0;
 
@@ -38,10 +40,10 @@ static void noinstrument _print_stack_line(int level, int **addr, int *fn, int f
             printf("     ");
         else printf(" %04x", (int)*addr++);
     } while (++j < STACKCOLS);
-    printf(" %s", sym_text_symbol(fn, 1));
+    printf(" (%04x)", (int)fn);
+    printf(" %s", sym_text_symbol(fn, (size_t)fn - (size_t)fnstart));
     if (!(flag & BP_PUSHED))
         printf("*");
-    printf(" (%04x)", (int)fn);
     printf("\n");
 }
 
@@ -53,14 +55,17 @@ void noinstrument _print_stack(int arg1)
     int *fn = (int *)_print_stack;
     int i = 0;
 
+    sym_read_exe_symbols(__program_filename);
     printf("Level Addr    BP   DI   SI   Ret  Arg  Arg2 Arg3 Arg4\n"
            "~~~~~ ~~~~    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
     do {
-        int flag = _get_push_count(fn);
+        int *fnstart = _get_fn_start_address(fn);
+        int flag = _get_push_count(fnstart);
         int prev = flag;
-        _print_stack_line(i, addr, fn, flag);
+        _print_stack_line(i, addr, fn, fnstart, flag);
         fn = addr[flag & COUNT_MASK];
-        flag = _get_push_count(fn);
+        fnstart = _get_fn_start_address(fn);
+        flag = _get_push_count(fnstart);
         if (flag & BP_PUSHED) {           /* caller pushed BP */
             addr = bp = (int **)bp[0];    /* one level down to get caller BP */
         } else {

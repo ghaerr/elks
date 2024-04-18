@@ -17,12 +17,6 @@
 
 #include <arch/segment.h>
 
-/*
- * comment out this line if you want names > info->s_namelen chars to be
- * truncated. Else they will be disallowed (ENAMETOOLONG).
- */
-/* #define NO_TRUNCATE */
-
 static int namecompare(size_t len, size_t max, const char *name, register char *buf)
 {
     return ((len < max) && (buf[len] != 0))
@@ -78,15 +72,8 @@ static struct buffer_head *minix_find_entry(register struct inode *dir,
     if (!dir || !dir->i_sb)
 	return NULL;
     info = &dir->i_sb->u.minix_sb;
-    if (namelen > info->s_namelen) {
-
-#ifdef NO_TRUNCATE
-	return NULL;
-#else
-	namelen = info->s_namelen;
-#endif
-
-    }
+    if (namelen > info->s_namelen)
+	namelen = info->s_namelen;      /* truncate name */
     bo = 0L;
     offset = 0;
     goto minix_find;
@@ -158,13 +145,8 @@ static int minix_add_entry(register struct inode *dir,
 
     if (!dir || !dir->i_sb) return -ENOENT;
     info = &dir->i_sb->u.minix_sb;
-    if (namelen > info->s_namelen) {
-#ifdef NO_TRUNCATE
-	return -ENAMETOOLONG;
-#else
+    if (namelen > info->s_namelen)
 	namelen = info->s_namelen;
-#endif
-    }
     if (!namelen)
 	return -ENOENT;
     bo = 0L;

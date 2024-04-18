@@ -6,6 +6,7 @@
  * 14.04.1998 Bugfixes by Alastair Bridgewater nyef@sudval.org
  */
 
+#include <linuxmt/config.h>
 #include <linuxmt/major.h>
 #include <linuxmt/genhd.h>
 #include <linuxmt/fs.h>

@@ -7,16 +7,16 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include "instrument.h"
-#include "syms.h"
+#include "debug/instrument.h"
+#include "debug/syms.h"
 
 /* turn on for microcycle (CPU cycle/1000) timing info */
 #define HAS_RDTSC       0   /* has RDTSC instruction: requires 386+ CPU */
 
-static char ftrace;
+static size_t ftrace;
+static size_t start_sp;
+static size_t max_stack;
 static int count;
-static unsigned int start_sp;
-static unsigned int max_stack;
 
 /* runs before main and rewrites argc/argv on stack if --ftrace found */
 __attribute__((no_instrument_function,constructor(120)))
@@ -24,15 +24,20 @@ static void ftrace_checkargs(void)
 {
     char **avp = __argv + 1;
 
-    if ((*avp && !strcmp(*avp, "--ftrace")) || getenv("FTRACE")) {
+    ftrace = (size_t)getenv("FTRACE");
+    if ((*avp && !strcmp(*avp, "--ftrace"))) {
         while (*avp) {
             *avp = *(avp + 1);
             avp++;
         }
-        ftrace = 1;
         __argc--;
+        ftrace = 1;
     }
+    if (ftrace)
+        sym_read_exe_symbols(__program_filename);
+#if HAS_RDTSC
     _get_micro_count();     /* init timer base */
+#endif
 }
 
 /* every function this function calls must also be noinstrument!! */
@@ -49,32 +54,33 @@ void noinstrument __cyg_profile_func_enter_simple(void)
     assert(bp == __builtin_frame_address(0));
     assert(calling_fn == __builtin_return_address(0));
 #endif
-    int i;
+    int i, offset;
     char callsite[32];
 
     /* calc stack used */
-    if (count == 0) start_sp = (unsigned int)bp;
-    unsigned int stack_used = start_sp - (unsigned int)bp;
+    if (count == 0) start_sp = (size_t)bp;
+    size_t stack_used = start_sp - (size_t)bp;
     if (stack_used > max_stack) max_stack = stack_used;
 
     /* calc caller address */
-    i = _get_push_count(calling_fn);
+    i = _get_push_count(_get_fn_start_address(calling_fn));
     if (i & BP_PUSHED) {            /* caller pushed BP */
-        bp = (int **)bp[0];         /* one level down to get caller BP */
+        bp = (int **)bp[0];         /* one level up to get caller BP */
         i &= COUNT_MASK;
-    } else bp += 4;                 /* caller didn't push BP, skip past our ret addr */
-    if (i >= 0)
-        strcpy(callsite, sym_text_symbol(bp[i], 1));   /* return address of caller */
-    else
+                                    /* return address of caller */
+        offset = (size_t)bp[i] - (size_t)_get_fn_start_address(bp[i]);
+        strcpy(callsite, sym_text_symbol(bp[i], offset));
+    } else {                        /* caller didn't push BP */
         strcpy(callsite, "<unknown>");
+    }
     for (i=0; i<count; i++)
-        putchar('|');
-    printf(">%s, from %s, stack %u/%u", sym_text_symbol(calling_fn, 0), callsite,
+        fprintf(stderr, "|");
+    fprintf(stderr, ">%s, from %s, stack %u/%u", sym_text_symbol(calling_fn, 0), callsite,
         stack_used, max_stack);
 #if HAS_RDTSC
-    printf(" %lu ucycles", _get_micro_count());
+    fprintf(stderr, " %lu ucycles", _get_micro_count());
 #endif
-    printf("\n");
+    fprintf(stderr, "\n");
     ++count;
 }
 
@@ -84,20 +90,18 @@ void noinstrument __cyg_profile_func_exit_simple(void)
         --count;
 }
 
+#if HAS_RDTSC
 /* return CPU cycles / 1000 via RDTSC instruction */
 unsigned long noinstrument _get_micro_count(void)
 {
-#if HAS_RDTSC
     static unsigned long long last_ts;
 
     unsigned long long ts = _get_rdtsc();    /* REQUIRES 386 CPU! */
     unsigned long diff = (ts - last_ts) / 1000;
     last_ts = ts;
     return diff;
-#else
-    return 0;
-#endif
 }
+#endif
 
 /***static char * noinstrument lltohexstr(unsigned long long val)
 {

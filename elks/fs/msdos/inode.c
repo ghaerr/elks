@@ -4,6 +4,7 @@
  *  Written 1992 by Werner Almesberger
  */
 
+#include <linuxmt/config.h>
 #include <linuxmt/msdos_fs.h>
 #include <linuxmt/msdos_fs_i.h>
 #include <linuxmt/msdos_fs_sb.h>
@@ -167,7 +168,7 @@ static struct super_block *msdos_read_super(struct super_block *s, char *data,
 	sb->previous_cluster = 0;
 	unmap_brelse(bh);
 
-printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%ld\n",
+printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%lu,ts=%lu\n",
 	b->media, sb->cluster_size, sb->fats, sb->fat_start,
 	sb->fat_length, sb->dir_start, sb->dir_entries,
 	sb->data_start, total_sectors, b->total_sect);
@@ -209,9 +210,8 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%ld,ts=%
 	//printk(", free ");     print_formatted(free_displayed);
 	printk(", fat%d format\n", sb->fat_bits);
 
-#ifdef BLOAT_FS
-	s->s_magic = MSDOS_SUPER_MAGIC;
-#endif
+	/*s->s_magic = MSDOS_SUPER_MAGIC;*/
+
 	/* set up enough so that it can read an inode */
 	s->s_op = &msdos_sops;
 	if (!(s->s_mounted = iget(s,(ino_t)MSDOS_ROOT_INO))) {

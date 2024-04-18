@@ -6,7 +6,7 @@
  * 1 serial port.
  *
  */
-#include <linuxmt/types.h>
+#include <linuxmt/config.h>
 #include <linuxmt/wait.h>
 #include <linuxmt/chqueue.h>
 #include <linuxmt/config.h>
@@ -18,6 +18,7 @@
 #include <linuxmt/termios.h>
 #include <linuxmt/debug.h>
 #include <arch/io.h>
+#include <arch/irq.h>
 #include <arch/serial-pc98.h>	/* UART-specific header*/
 #include <arch/ports.h>		/* definitions of COM1_PORT/COM1_IRQ*/
 

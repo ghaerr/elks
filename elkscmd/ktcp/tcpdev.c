@@ -17,7 +17,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <arpa/inet.h>
-#define __KERNEL__
 #include <errno.h>
 #include "ip.h"
 #include "tcp.h"

@@ -335,8 +335,6 @@ int sys_bind(int fd, struct sockaddr *umyaddr, int addrlen)
     return 0;
 }
 
-/*@-type@*/
-
 static struct file_operations socket_file_ops = {
     NULL,			/* lseek */
     sock_read,			/* read */

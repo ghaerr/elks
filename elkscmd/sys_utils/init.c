@@ -31,7 +31,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <signal.h>
-#include <memory.h>
 #include <errno.h>
 #include <time.h>
 #include <paths.h>

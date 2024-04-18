@@ -399,11 +399,11 @@ FoundEOF:
 	/* any other messages? */
 	if (tstflag(file, HADNUL))
 	{
-		msg("This file contained NULs.  They've been changed to \\x80 chars");
+		msg("NULs were converted to 0x80");
 	}
 	if (tstflag(file, ADDEDNL))
 	{
-		msg("Newline characters have been inserted to break up long lines");
+		msg("Newlines were added to break up long lines");
 	}
 
 #ifndef NO_MODELINE

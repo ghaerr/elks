@@ -59,7 +59,6 @@ static struct file_system_type *file_systems[] = {
 };
 static const char *fsname[] = { NULL, "minix", "msdos", "romfs" };
 
-#ifdef CONFIG_FULL_VFS
 static struct file_system_type *get_fs_type(int type)
 {
     int ct = -1;
@@ -69,7 +68,6 @@ static struct file_system_type *get_fs_type(int type)
         if (file_systems[ct]->type == type) break;
     return file_systems[ct];
 }
-#endif
 
 void wait_on_super(register struct super_block *sb)
 {
@@ -174,14 +172,10 @@ static struct super_block *read_super(kdev_t dev, int t, int flags,
     s = get_super(dev);
     if (s) return s;
 
-#if CONFIG_FULL_VFS
     if (!(type = get_fs_type(t))) {
         printk("VFS: device %D unknown fs type %d\n", dev, t);
         return NULL;
     }
-#else
-    type = file_systems[0];
-#endif
 
     for (s = super_blocks; ; s++) {
         if (s >= super_blocks + NR_SUPER)
@@ -200,10 +194,6 @@ static struct super_block *read_super(kdev_t dev, int t, int flags,
     s->s_covered = NULL;
     s->s_dirt = 0;
     s->s_type = type;
-
-#ifdef BLOAT_FS
-    s->s_rd_only = 0;
-#endif
 
     return s;
 }
@@ -405,34 +395,26 @@ int sys_mount(char *dev_name, char *dir_name, int type, int flags)
     if (flags & MS_REMOUNT)
         return do_remount(dir_name, flags & ~MS_REMOUNT, NULL);
 
-#ifdef CONFIG_FULL_VFS
-    debug("MOUNT: performing type check\n");
-
     fstype = get_fs_type(type);
     if (!fstype) return -ENODEV;
-    debug("MOUNT: type check okay\n");
-#else
-    fstype = file_systems[0];
-#endif
+
+    retval = namei(dev_name, &inode, 0, 0);
+    if (retval) return retval;
 
     filp = NULL;
-
-        retval = namei(dev_name, &inode, 0, 0);
-        if (retval) return retval;
-        inodep = inode;
-        debug("MOUNT: made it through namei\n");
-        if (!S_ISBLK(inodep->i_mode))
-            retval = -ENOTBLK;
-        else if (IS_NODEV(inodep))
-            retval = -EACCES;
-        else if (MAJOR(inodep->i_rdev) >= MAX_BLKDEV)
-            retval = -ENXIO;
-        else
-            retval = open_filp((mode_t)((flags & MS_RDONLY) ? 1 : 3), inodep, &filp);
-        if (retval) {
-            iput(inodep);
-            return retval;
-        }
+    inodep = inode;
+    if (!S_ISBLK(inodep->i_mode))
+        retval = -ENOTBLK;
+    else if (IS_NODEV(inodep))
+        retval = -EACCES;
+    else if (MAJOR(inodep->i_rdev) >= MAX_BLKDEV)
+        retval = -ENXIO;
+    else
+        retval = open_filp((mode_t)((flags & MS_RDONLY) ? 1 : 3), inodep, &filp);
+    if (retval) {
+        iput(inodep);
+        return retval;
+    }
 
     retval = do_mount(inodep->i_rdev, dir_name, fstype->type, flags, NULL);
     if (retval && filp)
@@ -468,10 +450,6 @@ void mount_root(void)
     fs_type = &file_systems[0];
     do {
         fp = *fs_type;
-
-#ifdef BLOAT_FS
-        if (!fp->requires_dev) continue;
-#endif
 
         sb = read_super(ROOT_DEV, fp->type, root_mountflags, NULL, 1);
         if (sb) {

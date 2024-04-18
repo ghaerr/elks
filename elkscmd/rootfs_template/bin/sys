@@ -20,8 +20,10 @@ create_dev_dir()
 	mknod $MNT/dev/hda2	b 3 2
 	mknod $MNT/dev/hda3	b 3 3
 	mknod $MNT/dev/hda4	b 3 4
-	mknod $MNT/dev/fd0	b 3 128
-	mknod $MNT/dev/fd1	b 3 160
+	mknod $MNT/dev/fd0	b 3 32
+	mknod $MNT/dev/fd1	b 3 40
+	mknod $MNT/dev/df0	b 4 0
+	mknod $MNT/dev/df1	b 4 1
 	mknod $MNT/dev/kmem	c 1 2
 	mknod $MNT/dev/null	c 1 3
 	mknod $MNT/dev/zero	c 1 5
@@ -40,17 +42,16 @@ create_dev_dir()
 	chmod 0666 $MNT/dev/tty
 	if test "$small" = "1"; then return; fi
 
-	mknod $MNT/dev/hdb	b 3 32
-	mknod $MNT/dev/hdb1	b 3 33
-	mknod $MNT/dev/hdb2	b 3 34
-	mknod $MNT/dev/hdb3	b 3 35
-	mknod $MNT/dev/hdb4	b 3 36
-	mknod $MNT/dev/hdc	b 3 64
-	mknod $MNT/dev/hdc1	b 3 65
-	mknod $MNT/dev/hdd	b 3 96
-	mknod $MNT/dev/hdd1	b 3 97
-	mknod $MNT/dev/rd0	b 2 0
-	mknod $MNT/dev/rd1	b 2 1
+	mknod $MNT/dev/hdb	b 3 8
+	mknod $MNT/dev/hdb1	b 3 9
+	mknod $MNT/dev/hdb2	b 3 10
+	mknod $MNT/dev/hdb3	b 3 11
+	mknod $MNT/dev/hdb4	b 3 12
+	mknod $MNT/dev/hdc	b 3 16
+	mknod $MNT/dev/hdc1	b 3 17
+	mknod $MNT/dev/hdd	b 3 24
+	mknod $MNT/dev/rd0	b 1 0
+	mknod $MNT/dev/rd1	b 1 1
 	mknod $MNT/dev/tty2	c 4 1
 	mknod $MNT/dev/tty3	c 4 2
 	mknod $MNT/dev/ttyS2	c 4 66
@@ -65,7 +66,7 @@ create_dev_dir()
 
 create_directories()
 {
-	echo "Creating directories..."
+	echo "Creating directories"
 	mkdir $MNT/bin
 	mkdir $MNT/etc
 	mkdir $MNT/mnt

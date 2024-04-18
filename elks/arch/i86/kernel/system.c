@@ -11,7 +11,6 @@
 #include <arch/segment.h>
 #include <arch/io.h>
 
-
 byte_t sys_caps;		/* system capabilities bits */
 unsigned int heapsize;	/* max size of kernel near heap */
 
@@ -99,7 +98,7 @@ void hard_reset_now(void)
  */
 void apm_shutdown_now(void)
 {
-#if defined(CONFIG_APM) && defined(CONFIG_ARCH_IBMPC)
+#ifdef CONFIG_ARCH_IBMPC
     asm("movw $0x5301,%ax\n\t"
 	"xorw %bx,%bx\n\t"
 	"int $0x15\n\t"

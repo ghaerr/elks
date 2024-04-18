@@ -60,7 +60,7 @@ rename		+38	2
 mkdir		+39	2	 
 rmdir		+40	1	 
 dup		+41	1	. There is a fcntl lib function too.
-pipe		+42	1	= CONFIG_PIPE
+pipe		+42	1	 
 times		43	2	- use gettimeofday and libc times instead
 profil		44	4	@
 dup2		+45	2
@@ -91,6 +91,7 @@ dlload		67	2	- Removed support for dynamic libraries
 setsid		+68	0
 sbrk		+69	2	* Legacy number from Linux
 ustatfs		+70	3
+setitimer	+71	3
 uname		+74	1	. was knlvsn
 #
 # From /usr/include/asm-generic/unistd.h

@@ -60,6 +60,9 @@
  * Ported Helge's modifications to ELKS. Lots of original driver cleanup.
  * Expanded FDC and platform identification to allow running on original
  * IBM PC and clones with no DIR register. Added lots of info and error msgs.
+ *
+ * Mar 2024 - Greg Haerr
+ * Added dynamic floppy bounce buffer
  */
 
 /*
@@ -87,17 +90,23 @@
 #include <linuxmt/fd.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/string.h>
+#include <linuxmt/heap.h>
 #include <linuxmt/debug.h>
 
 #include <arch/dma.h>
 #include <arch/system.h>
 #include <arch/io.h>
+#include <arch/irq.h>
 #include <arch/segment.h>
 #include <arch/ports.h>
 #include <arch/hdreg.h>         /* for ioctl GETGEO */
 
 #define MAJOR_NR        FLOPPY_MAJOR
 #include "blk.h"
+
+#ifndef CONFIG_ASYNCIO
+#error  Direct FD driver requires CONFIG_ASYNCIO
+#endif
 
 /*
  * The original 8272A doesn't have FD_DOR, FD_DIR or FD_CCR registers,
@@ -113,7 +122,7 @@
  *  82077AA      IBM PS/2 (gen 3)                   DOR,DIR,CCR  PERPENDICULAR,LOCK
  */
 
-#define USE_IMPLIED_SEEK    0   /* =1 for QEMU with 360k/AT stretch floppies (not real hw) */
+char USE_IMPLIED_SEEK = 0; /* =1 for QEMU with 360k/AT stretch floppies (not real hw) */
 #define CHECK_DIR_REG       1   /* =1 to read and clear DIR DSKCHG when media changed */
 #define CHECK_DISK_CHANGE   1   /* =1 to inform kernel of media changed */
 
@@ -127,13 +136,15 @@
 //#define DEBUG printk
 #define DEBUG(...)
 
+#define bool unsigned char      /* don't require stdbool.h yet */
+
 static void (*do_floppy)();     /* interrupt routine to call */
-static int initial_reset_flag;
-static int need_configure = 1;  /* for 82077 */
-static int reset;               /* something went wrong, reset FDC, start over */
-static int recalibrate;         /* seek errors, etc, eventually triggers recalibrate_floppy */
-static int recover;             /* recovering from hang, awakened by watchdog timer */
-static int seek;                /* set if current op needs a track change (seek) */
+static bool initial_reset_flag;
+static bool need_configure = 1; /* for 82077 */
+static bool reset;              /* something went wrong, reset FDC, start over */
+static bool recalibrate;        /* seek errors, etc, eventually triggers recalibrate_floppy */
+static bool recover;            /* recovering from hang, awakened by watchdog timer */
+static bool seek;               /* set if current op needs a track change (seek) */
 
 /* BIOS floppy motor timeout counter - FIXME leave this while BIOS driver present */
 static unsigned char __far *fl_timeout = (void __far *)0x440L;
@@ -143,7 +154,7 @@ static unsigned char __far *fl_timeout = (void __far *)0x440L;
  * with typical spinup time of .5 secs.
  */
 static unsigned char current_DOR;
-static unsigned char running = 0; /* keep track of motors already running */
+static unsigned char running;   /* keep track of motors already running */
 /*
  * Note that MAX_ERRORS=X doesn't imply that we retry every bad read
  * max X times - some types of errors increase the errorcount by 2 or
@@ -274,8 +285,7 @@ static unsigned int changed_floppies;
  * The block buffer is used for all writes, for formatting and for reads
  * in case track buffering doesn't work or has been turned off.
  */
-#define WORD_ALIGNED    __attribute__((aligned(2)))
-static char tmp_floppy_area[BLOCK_SIZE] WORD_ALIGNED; /* for now FIXME to be removed */
+static char *floppy_buffer;
 
 /*
  * These are global variables, as that's the easiest way to give
@@ -467,8 +477,7 @@ static void DFPROC setup_DMA(void)
     use_xms = req->rq_seg >> 16; /* will be nonzero only if XMS configured & XMS buffer */
     physaddr = (req->rq_seg << 4) + (unsigned int)req->rq_buffer;
 
-    /* FIXME req->rq_nr_sectors will be 0 for TLVC only */
-    count = req->rq_nr_sectors? (unsigned)req->rq_nr_sectors << 9: BLOCK_SIZE;
+    count = (unsigned)req->rq_nr_sectors << 9;
     if (use_xms || (physaddr + count) < physaddr)
         dma_addr = LAST_DMA_ADDR + 1;   /* force use of bounce buffer */
     else
@@ -483,9 +492,9 @@ static void DFPROC setup_DMA(void)
             count += 512; /* add one if head=0 && sector count is odd */
         dma_addr = _MK_LINADDR(DMASEG, 0);
     } else if (dma_addr >= LAST_DMA_ADDR) {
-        dma_addr = _MK_LINADDR(kernel_ds, tmp_floppy_area); /* use bounce buffer */
+        dma_addr = _MK_LINADDR(kernel_ds, floppy_buffer); /* use bounce buffer */
         if (command == FD_WRITE) {
-            xms_fmemcpyw(tmp_floppy_area, kernel_ds, CURRENT->rq_buffer,
+            xms_fmemcpyw(floppy_buffer, kernel_ds, CURRENT->rq_buffer,
                 CURRENT->rq_seg, BLOCK_SIZE/2);
         }
     }
@@ -735,7 +744,7 @@ static void rw_interrupt(void)
                                     ) {
         /* if the dest buffer is out of reach for DMA (always the case if using
          * XMS buffers) we need to read/write via the bounce buffer */
-        xms_fmemcpyw(CURRENT->rq_buffer, CURRENT->rq_seg, tmp_floppy_area,
+        xms_fmemcpyw(CURRENT->rq_buffer, CURRENT->rq_seg, floppy_buffer,
             kernel_ds, BLOCK_SIZE/2);
         printk("fd: illegal buffer usage, rq_buffer %04x:%04x\n",
             CURRENT->rq_seg, CURRENT->rq_buffer);
@@ -1391,6 +1400,7 @@ static void DFPROC floppy_deregister(void)
     *(__u32 __far *)FLOPPY_VEC = old_floppy_vec;
     enable_irq(FLOPPY_IRQ);
     set_irq();
+    heap_free(floppy_buffer);
 }
 
 /* Try to determine the floppy controller type */
@@ -1441,10 +1451,14 @@ static int DFPROC floppy_register(void)
     current_DOR = 0x0c;
     outb(0x0c, FD_DOR);         /* all motors off, enable IRQ and DMA */
 
+    floppy_buffer = heap_alloc(BLOCK_SIZE, HEAP_TAG_DRVR);
+    if (!floppy_buffer)
+        return -ENOMEM;
     old_floppy_vec = *((__u32 __far *)FLOPPY_VEC);
     err = request_irq(FLOPPY_IRQ, floppy_interrupt, INT_GENERIC);
     if (err) {
         printk("df: IRQ %d busy\n", FLOPPY_IRQ);
+        heap_free(floppy_buffer);
         return err;
     }
 
@@ -1460,5 +1474,7 @@ void INITPROC floppy_init(void)
         return;
     }
     blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
+    if (!USE_IMPLIED_SEEK)
+        USE_IMPLIED_SEEK = running_qemu;
     config_types();
 }

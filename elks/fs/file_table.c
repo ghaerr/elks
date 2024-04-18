@@ -18,7 +18,7 @@
  *            the system.
  */
 
-struct file file_array[NR_FILE];
+struct file *file_array;    /* dynamically allocated */
 
 /*
  * Find an unused file structure and return a pointer to it.
@@ -33,7 +33,7 @@ int open_filp(unsigned short flags, struct inode *inode, struct file **fp)
     register struct file_operations *fop;
 
     while (f->f_count) {
-	if (++f >= &file_array[NR_FILE]) {
+	if (++f >= &file_array[nr_file]) {
 	    printk("open: No files\n");
 	    return -ENFILE;
 	}
@@ -45,22 +45,10 @@ int open_filp(unsigned short flags, struct inode *inode, struct file **fp)
 /*  f->f_pos = 0;*/	/* FIXME - should call lseek */
     f->f_inode = inode;
 
-#ifdef BLOAT_FS
-    if (f->f_mode & FMODE_WRITE) {
-	result = get_write_access(inode);
-	if (result) goto cleanup_file;
-    }
-#endif
-
     if (inode->i_op) f->f_op = inode->i_op->default_file_ops;
     fop = f->f_op;
-    if (fop && fop->open && (result = fop->open(inode, f))) {
-#ifdef BLOAT_FS
-	if (f->f_mode & FMODE_WRITE) put_write_access(inode);
-      cleanup_file:
-#endif
+    if (fop && fop->open && (result = fop->open(inode, f)))
 	f->f_count--;
-    }
     *fp = f;
 
     return result;
@@ -72,9 +60,5 @@ void close_filp(struct inode *inode, register struct file *f)
 
     fop = f->f_op;
     if (fop && fop->release) fop->release(inode, f);
-
-#ifdef BLOAT_FS
-    if (f->f_mode & FMODE_WRITE) put_write_access(inode);
-#endif
     f->f_count--;
 }

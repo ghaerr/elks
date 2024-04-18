@@ -2,7 +2,6 @@
 #define __SETJMP_H
 
 #include <features.h>
-#include <stdnoreturn.h>
 
 /* 
  * I know most systems use an array of ints here, but I prefer this   - RDB

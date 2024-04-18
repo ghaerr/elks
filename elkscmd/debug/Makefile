@@ -10,10 +10,7 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-PRGS = testsym disasm opcodes
-INSTRUMENTOBJS = instrument.o syms.o shared.o shared-asm.o
-DISASMOBJS = dis.o disasm.o syms.o
-TESTOBJS   = testsym.o stacktrace.o printreg.o $(INSTRUMENTOBJS)
+PRGS = testsym disasm nm opcodes
 
 # disable tail call optimization for better stack traces
 CFLAGS += -fno-optimize-sibling-calls
@@ -21,30 +18,36 @@ CFLAGS += -fno-optimize-sibling-calls
 CFLAGS += -fno-omit-frame-pointer
 # optional instrumentation for function tracing
 CFLAGS += -finstrument-functions-simple
-# include symbol table in executable and heap to read it
-LDFLAGS += -maout-symtab -maout-heap=12000
+# include symbol table in executable
+LDFLAGS += -maout-symtab
 
 # added after CFLAGS for non-instrumented .c files in this directory
-NOINSTFLAGS = -fno-instrument-functions -fno-instrument-functions-simple
+#NOINSTFLAGS = -fno-instrument-functions -fno-instrument-functions-simple
 
 HOSTPRGS = nm86 hostdisasm
+HOSTCFLAGS += -I. -I$(TOPDIR)/elks/include
+SYMS_C = $(TOPDIR)/libc/debug/syms.c
 
-all: $(HOSTPRGS) $(PRGS)
+all: $(PRGS) system.sym
 
-testsym: $(TESTOBJS)
+host: $(HOSTPRGS)
+
+testsym: testsym.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
-	./nm86 $@ > $@.map
-	cp $@ $(TOPDIR)/elkscmd/rootfs_template/root
+#	./nm86 $@ > $@.map
 
-disasm: $(DISASMOBJS)
-	$(LD) $(LDFLAGS) -maout-heap=0xffff -o $@ $^ $(LDLIBS)
-	cp -p $@ $(TOPDIR)/elkscmd/rootfs_template/root
-	-mkdir $(TOPDIR)/elkscmd/rootfs_template/lib
-	cp -p $(TOPDIR)/elks/arch/i86/boot/system.sym $(TOPDIR)/elkscmd/rootfs_template/lib
+disasm: dis.o disasm.o
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+nm: nm86.o
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+system.sym:
+	cp -p $(TOPDIR)/elks/arch/i86/boot/system.sym $(TOPDIR)/elkscmd/debug
 
 opcodes: opcodes.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
-	cp $@ $(TOPDIR)/elkscmd/rootfs_template/root
+#	cp $@ $(TOPDIR)/elkscmd/rootfs_template/root
 
 disasm.o: disasm.c
 	$(CC) $(CFLAGS) $(NOINSTFLAGS) -c -o $*.o $<
@@ -52,14 +55,17 @@ disasm.o: disasm.c
 dis.o: dis.c
 	$(CC) $(CFLAGS) $(NOINSTFLAGS) -c -o $*.o $<
 
-nm86: nm86.c syms.c
-	$(HOSTCC) $(HOSTCFLAGS) -o $@ $^
+nm86.o: nm86.c
+	$(CC) $(CFLAGS) $(NOINSTFLAGS) -c -o $*.o $<
 
-hostdisasm: dis.c disasm.c syms.c
+nm86: nm86.c $(SYMS_C)
+	$(HOSTCC) $(HOSTCFLAGS) -D__far= -o $@ $^
+
+hostdisasm: dis.c disasm.c $(SYMS_C)
 	$(HOSTCC) $(HOSTCFLAGS) -D__far= -Wno-int-to-void-pointer-cast -Wno-format -o $@ $^
 
 install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
-	rm -f $(PRGS) $(HOSTPRGS) *.o *.map
+	rm -f $(PRGS) $(HOSTPRGS) *.o *.map system.sym

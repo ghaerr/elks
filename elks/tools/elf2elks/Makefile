@@ -57,10 +57,10 @@ elf2elks.o: elf2elks.c $(LIBELF)
 # make.  To avoid roping in BSD make as yet another dependency, we directly
 # run the commands to generate and compile the libelf sources here.  This
 # still requires m4 as a dependency though.
-$(LIBELF): $(ELFTOOLCHAIN).tar.bz2 lib/elftoolchain.patch
+$(LIBELF): $(ELFTOOLCHAIN).tar.bz2 lib/elftoolchain.patch lib/elftoolchain2.patch
 	rm -rf $(ELFTOOLCHAIN)
 	cd lib && tar -xvjf elftoolchain-0.7.1.tar.bz2
-	cd $(ELFTOOLCHAIN) && patch -p1 <'$(abspath lib/elftoolchain.patch)'
+	cd $(ELFTOOLCHAIN) && patch -p1 <'$(abspath lib/elftoolchain.patch)' && patch -p1 <'$(abspath lib/elftoolchain2.patch)'
 ifeq "Linux" "$(shell uname -s)"
 	set -e; \
 	cd $(ELFTOOLCHAIN)/common; \

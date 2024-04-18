@@ -1,8 +1,7 @@
 #ifndef _TERMCAP_H
 #define _TERMCAP_H
 
-#include <features.h>
-#include <sys/types.h>
+#include <stdio.h>
 
 extern char PC;
 extern char *UP;

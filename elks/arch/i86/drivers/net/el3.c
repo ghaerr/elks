@@ -14,6 +14,7 @@
 #define ELKS
 
 #include <arch/io.h>
+#include <arch/irq.h>
 #include <arch/ports.h>
 #include <arch/segment.h>
 #include <linuxmt/errno.h>

@@ -2,8 +2,6 @@
 #define	__GRP_H
 
 #include <sys/types.h>
-#include <features.h>
-#include <stdio.h>
 
 /* The group structure */
 struct group

@@ -4,7 +4,7 @@
  * Probes for specific UART at boot.
  * Supports 8250, 16450, 16550, 16550A and 16750 variants.
  */
-#include <linuxmt/types.h>
+#include <linuxmt/config.h>
 #include <linuxmt/wait.h>
 #include <linuxmt/chqueue.h>
 #include <linuxmt/config.h>
@@ -16,6 +16,7 @@
 #include <linuxmt/termios.h>
 #include <linuxmt/debug.h>
 #include <arch/io.h>
+#include <arch/irq.h>
 #include <arch/serial-8250.h>
 #include <arch/ports.h>
 
@@ -475,7 +476,7 @@ void rs_conout(dev_t dev, int Ch)
 {
     register struct serial_info *sp = &ports[MINOR(dev) - RS_MINOR_OFFSET];
 
-    while (!(INB(sp->io + UART_LSR) & UART_LSR_TEMT))
+    while (!(INB(sp->io + UART_LSR) & UART_LSR_THRE))
         continue;
     outb(Ch, sp->io + UART_TX);
 }

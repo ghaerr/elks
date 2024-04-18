@@ -6,9 +6,9 @@
  * 16 May 21 Santiago Hormazabal
  */
 
-#include <linuxmt/types.h>
 #include <linuxmt/config.h>
 #include <arch/io.h>
+#include <arch/irq.h>
 #include "conio.h"
 
 

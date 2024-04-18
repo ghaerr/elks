@@ -42,13 +42,13 @@ int permission(register struct inode *inode, int mask)
         do {
             if (p->state <= TASK_STOPPED && (p->t_inode == inode))
                 return -EBUSY;
-        } while (++p < &task[MAX_TASKS]);
+        } while (++p < &task[max_tasks]);
     }
     if ((mask & MAY_WRITE) && IS_RDONLY(inode) &&
         !S_ISCHR(inode->i_mode) && !S_ISBLK(inode->i_mode)) /* allow writable devices*/
         error = -EROFS;
 
-#ifdef HAVE_IMMUTABLE
+#ifdef IS_IMMUTABLE
     else if ((mask & S_IWOTH) && IS_IMMUTABLE(inode))
         /* Nobody gets write access to an immutable file */
         ;
@@ -64,24 +64,6 @@ int permission(register struct inode *inode, int mask)
     }
     return error;
 }
-
-#ifdef BLOAT_FS
-/*
- * get_write_access() gets write permission for a file.
- * put_write_access() releases this write permission.
- */
-
-int get_write_access(struct inode *inode)
-{
-    inode->i_wcount++;
-    return 0;
-}
-
-void put_write_access(struct inode *inode)
-{
-    inode->i_wcount--;
-}
-#endif
 
 /*
  * lookup() looks up one part of a pathname, using the fs-dependent
@@ -372,18 +354,11 @@ int open_namei(const char *pathname, int flag, int mode,
     if (!error) {
         if (flag & O_TRUNC) {
 
-#ifdef BLOAT_FS
-            if ((error = get_write_access(inode))) {
-                iput(inode);
-                return error;
-            }
-#endif
 #ifdef USE_NOTIFY_CHANGE
             struct iattr newattrs;
             newattrs.ia_size = 0;
             newattrs.ia_valid = ATTR_SIZE;
             if ((error = notify_change(inode, &newattrs))) {
-                put_write_access(inode);
                 iput(inode);
                 return error;
             }
@@ -395,7 +370,6 @@ int open_namei(const char *pathname, int flag, int mode,
             if ((iop = inode->i_op) && iop->truncate) iop->truncate(inode);
             up(&inode->i_sem);
             inode->i_dirt = 1;
-            put_write_access(inode);
         }
         *res_inode = inode;
         save_path(inode, pathname);
@@ -409,9 +383,6 @@ int open_namei(const char *pathname, int flag, int mode,
 
 int do_mknod(char *pathname, int offst, int mode, dev_t dev)
 {
-#ifdef CONFIG_FS_RO
-    return -EROFS;
-#else
     register struct inode *dirp;
     register struct inode_operations *iop;
     struct inode *dir;
@@ -450,14 +421,10 @@ int do_mknod(char *pathname, int offst, int mode, dev_t dev)
         iput(dirp);
     }
     return error;
-#endif
 }
 
 int sys_mknod(char *pathname, int mode, dev_t dev)
 {
-#ifdef CONFIG_FS_RO
-    return -EROFS;
-#else
     if (S_ISDIR(mode) || (!S_ISFIFO(mode) && !suser())) return -EPERM;
 
     switch (mode & S_IFMT) {
@@ -474,16 +441,11 @@ int sys_mknod(char *pathname, int mode, dev_t dev)
     }
 
     return do_mknod(pathname, offsetof(struct inode_operations,mknod), mode, dev);
-#endif
 }
 
 int sys_mkdir(char *pathname, int mode)
 {
-#ifdef CONFIG_FS_RO
-    return -EROFS;
-#else
     return do_mknod(pathname, offsetof(struct inode_operations,mkdir), (mode & 0777)|S_IFDIR, 0);
-#endif
 }
 
 int do_rmthing(char *pathname, size_t offst)
@@ -533,27 +495,22 @@ int sys_unlink(char *pathname)
 
 int sys_symlink(char *oldname, char *pathname)
 {
-#ifdef CONFIG_FS_RO
-    return -EROFS;
-#else
     return do_mknod(pathname, offsetof(struct inode_operations,symlink), (int)oldname, 0);
-#endif
 }
 
 int sys_link(char *oldname, char *pathname)
 {
-#ifdef CONFIG_FS_RO
-    return -EROFS;
-#else
     struct inode *oldinode;
     int error;
 
     debug_file("LINK '%t' '%t'\n", oldname, pathname);
     error = namei(oldname, &oldinode, 0, 0);
-    if (!error)
+    if (!error) {
         error = do_mknod(pathname, offsetof(struct inode_operations,link), (int)oldinode, 0);
+        if (error)
+            iput(oldinode);
+    }
     return error;
-#endif
 }
 
 /*  This probably isn't a proper implementation of sys_rename, but we

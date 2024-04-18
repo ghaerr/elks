@@ -15,10 +15,7 @@ mainmenu_option next_comment
 	fi
 	bool 'Serial Console'	CONFIG_CONSOLE_SERIAL		n
 	if [[ "$CONFIG_CONSOLE_DIRECT" = "y" || "$CONFIG_CONSOLE_BIOS" = "y" ]]; then
-	    choice 'Console terminal emulation'		\
-		    "ANSI           CONFIG_EMUL_ANSI	\
-		     VT52           CONFIG_EMUL_VT52	\
-		     None           CONFIG_EMUL_NONE"		ANSI
+	        bool 'Console ANSI terminal emulation'  CONFIG_EMUL_ANSI  y
 	fi
 	if [ "$CONFIG_CONSOLE_DIRECT" = "y" ]; then
 	    source elks/arch/i86/drivers/char/KeyMaps/config.in
@@ -31,13 +28,13 @@ mainmenu_option next_comment
 	    define_bool CONFIG_CHAR_DEV_RS y
 	fi
 	bool 'Parallel device driver'		CONFIG_CHAR_DEV_LP	  y
-	bool 'CGA text mode videobuffer'	CONFIG_CHAR_DEV_CGATEXT	  n
+	#bool 'CGA text mode videobuffer'	CONFIG_CHAR_DEV_CGATEXT	  n
 	bool 'Memory character devices'		CONFIG_CHAR_DEV_MEM	  y
-	if [ "$CONFIG_CHAR_DEV_MEM" = "y" ]; then
-		bool '  Port read'	CONFIG_CHAR_DEV_MEM_PORT_READ	n
-		bool '  Port write'	CONFIG_CHAR_DEV_MEM_PORT_WRITE	n
-	fi
+	#if [ "$CONFIG_CHAR_DEV_MEM" = "y" ]; then
+		#bool '  Port read'	CONFIG_CHAR_DEV_MEM_PORT_READ	n
+		#bool '  Port write'	CONFIG_CHAR_DEV_MEM_PORT_WRITE	n
+	#fi
 
 	bool 'Pseudo tty device driver'		CONFIG_PSEUDO_TTY	  y
-	bool 'Meta device driver'		CONFIG_DEV_META		  n
+	#bool 'Meta device driver'		CONFIG_DEV_META		  n
 endmenu

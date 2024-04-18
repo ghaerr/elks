@@ -1,72 +1,73 @@
-/* Header file for ansi.c
- * 
- *  with function declarations
- * 
-*/
+/*
+ * Header file for ansi.c
+ *
+ * with function declarations
+ *
+ */
 
 int InitTerm(void);
 int FinitTerm(void);
-static AddCap(char *s);
+static int AddCap(char *s);
 char *MakeTermcap(int aflag);
-static MakeString(char *cap, char *buf, register char *s);
-int Activate(struct win *wp);
-int ResetScreen(register struct win *p);
-void WriteString(struct win *wp, register char *buf, int len);
-static Special(register c);
-void DoESC(int c, int intermediate);
-static DoCSI(int c, int intermediate);
-static PutChar(int c);
-static PutStr(char *s);
-static CPutStr(char *s, int c);
-static SetChar(register c);
-static StartString(enum string_t type);
-static AddChar(int c);
-static PrintChar(int c);
-static PrintFlush(void);
-static InsertMode(int on);
-static KeypadMode(int on);
-static DesignateCharset(int c, int n);
-static MapCharset(int n);
+static int MakeString(char *cap, char *buf, char *s);
+static int Special(int c);
+static int DoCSI(int c, int intermediate);
+static int PutChar(int c);
+static int PutStr(char *s);
+static int CPutStr(char *s, int c);
+static int SetChar(int c);
+static int StartString(enum string_t type);
+static int AddChar(int c);
+static int PrintChar(int c);
+static int PrintFlush(void);
+static int InsertMode(int on);
+static int KeypadMode(int on);
+static int DesignateCharset(int c, int n);
+static int MapCharset(int n);
 static void NewCharset(int old, int new);
-static SaveCursor(void);
-static RestoreCursor(void);
-static void CountChars(int c);
-static CalcCost(register char *s);
+static int SaveCursor(void);
+static int RestoreCursor(void);
+static int CountChars(int c);
+static int CalcCost(char *s);
 static void Goto(int y1, int x1, int y2, int x2);
-static RewriteCost(int y, int x1, int x2);
-static BackSpace(void);
-static Return(void);
-static LineFeed(void);
-static ReverseLineFeed(void);
+static int RewriteCost(int y, int x1, int x2);
+static int BackSpace(void);
+static int Return(void);
+static int LineFeed(void);
+static int ReverseLineFeed(void);
 static void InsertAChar(int c);
 static void InsertChar(int n);
 static void DeleteChar(int n);
-static DeleteLine(int n);
-static InsertLine(int n);
-static ScrollUpMap(char **pp);
-static ScrollDownMap(char **pp);
-static ForwardTab(void);
-static BackwardTab(void);
-static ClearScreen(void);
-static ClearFromBOS(void);
-static ClearToEOS(void);
-static ClearLine(void);
-static ClearToEOL(void);
+static int DeleteLine(int n);
+static int InsertLine(int n);
+static int ScrollUpMap(char **pp);
+static int ScrollDownMap(char **pp);
+static int ForwardTab(void);
+static int BackwardTab(void);
+static int ClearScreen(void);
+static int ClearFromBOS(void);
+static int ClearToEOS(void);
+static int ClearLine(void);
+static int ClearToEOL(void);
 static void ClearFromBOL(void);
 static void ClearInLine(int displ, int y, int x1, int x2);
-static void CursorRight(register n);
-static void CursorUp(register n);
-static void CursorDown(register n);
-static void CursorLeft(register n);
-static SetMode(int on);
-static SelectRendition(void);
-static SetRendition(register n);
-static void NewRendition(register old, register new);
-static SaveAttr(int newattr);
-static RestoreAttr(int oldattr);
-static FillWithEs(void);
-static Redisplay(void);
-static MakeBlankLine(register char *p, register n);
+static void CursorRight(int n);
+static void CursorUp(int n);
+static void CursorDown(int n);
+static void CursorLeft(int n);
+static int SetMode(int on);
+static int SelectRendition(void);
+static int SetRendition(int n);
+static void NewRendition(int old, int new);
+static int SaveAttr(int newattr);
+static int RestoreAttr(int oldattr);
+static int FillWithEs(void);
+static int Redisplay(void);
+static int MakeBlankLine(char *p, int n);
+
+int Activate(struct win *wp);
+int ResetScreen(struct win *p);
+void WriteString(struct win *wp, char *buf, int len);
+void DoESC(int c, int intermediate);
 int MakeStatus(char *msg, struct win *wp);
 void RemoveStatus(struct win *p);
-

@@ -14,23 +14,8 @@ mainmenu_option next_comment
 		fi
 
 	bool 'FAT filesystem' CONFIG_FS_FAT 'n'
-	if [ "$CONFIG_FS_FAT" == "y" ]; then
-		bool 'Fake FAT /dev folder' CONFIG_FS_DEV                 y
-	fi
 
 	comment 'Filesystem settings'
-
-	bool 'Mount root partition read-only by default' CONFIG_ROOT_READONLY n
-
-	bool 'All file systems are READ-ONLY'  CONFIG_FS_RO               n
-
-	if [ "$CONFIG_FS_FAT" != "y" ]; then
-		bool 'Full VFS support'            CONFIG_FULL_VFS            n
-	else
-		define_bool                        CONFIG_FULL_VFS            y
-	fi
-
-	bool '32-bit Inode number'             CONFIG_32BIT_INODES        y
 
 	bool 'External buffer cache'           CONFIG_FS_EXTERNAL_BUFFER  y
 	if [ "$CONFIG_FS_EXTERNAL_BUFFER" == "y" ]; then
@@ -42,8 +27,6 @@ mainmenu_option next_comment
 	    int 'Number of XMS buffers'        CONFIG_FS_NR_XMS_BUFFERS   1024
 	    bool 'Use BIOS INT 15h/1Fh instead of unreal mode' CONFIG_FS_XMS_INT15 n
 	fi
-
-	bool 'Pipe support'                    CONFIG_PIPE                y
 
 	comment 'Executable file formats'
 

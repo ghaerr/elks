@@ -13,7 +13,7 @@ following structure defined in <dirent.h>:
 .ta +5n +15n +15n
 #define MAXNAMLEN	26		   /* 14 for MINIX, 26 for FAT */
 struct dirent {
-	u_ino_t	d_ino;	        /* I-node number */
+	ino_t	d_ino;	        /* I-node number */
 	unsigned short d_namlen;
 	char	d_name[MAXNAMLEN+1];   /* File name */
 };

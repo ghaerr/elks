@@ -50,7 +50,7 @@ unsigned char test_bit(unsigned int bit,void *addr)
  * - Chad
  */
 
-#ifdef BLOAT_FS
+#if UNUSED
 /* Use the old faithful version */
 unsigned int find_first_non_zero_bit(int *addr, unsigned int len)
 {

@@ -24,14 +24,13 @@
  * todo: adjtime() and/or adjtimex()
  */
 
-#include <arch/types.h>
+#include <linuxmt/config.h>
 #include <linuxmt/time.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/string.h>
 
-#include <linuxmt/config.h>
 #include <arch/system.h>
 #include <arch/segment.h>
 

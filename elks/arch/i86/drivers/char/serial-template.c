@@ -6,7 +6,7 @@
  *
  * May 2021 Greg Haerr
  */
-#include <linuxmt/types.h>
+#include <linuxmt/config.h>
 #include <linuxmt/wait.h>
 #include <linuxmt/chqueue.h>
 #include <linuxmt/config.h>
@@ -188,7 +188,7 @@ void rs_conout(dev_t dev, int c)
 {
     struct serial_info *sp = &ports[MINOR(dev) - RS_MINOR_OFFSET];
 
-    while (!(inb(sp->io + UART_LSR) & UART_LSR_TEMT))
+    while (!(inb(sp->io + UART_LSR) & UART_LSR_THRE))
 	continue;
     outb(c, sp->io + UART_TX);
 }

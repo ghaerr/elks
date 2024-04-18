@@ -2,7 +2,6 @@
 #define __ARCH_8086_POSIX_TYPES_H
 
 #ifdef __KERNEL__
-#include <arch/irq.h>
 #include <arch/bitops.h>
 #endif
 

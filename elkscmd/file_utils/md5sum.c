@@ -271,7 +271,6 @@ main(int argc, char **argv)
     } else {
         for (int i = 1; i < argc; i++) {
             int fd;
-            errno = 0;
             if (argv[i][0] == '-' && argv[i][1] == '\0')
                 fd = STDIN_FILENO;
             else if ((fd = open(argv[i], O_RDONLY)) < 0) {

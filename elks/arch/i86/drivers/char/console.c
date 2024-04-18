@@ -29,7 +29,7 @@ void Console_conin(unsigned char Key)
         chq_addch(&ttyp->inq, Key);
 }
 
-#if defined (CONFIG_EMUL_VT52) || defined (CONFIG_EMUL_ANSI)
+#ifdef CONFIG_EMUL_ANSI
 static void Console_gotoxy(register Console * C, int x, int y)
 {
     register int xp = x;
@@ -39,9 +39,7 @@ static void Console_gotoxy(register Console * C, int x, int y)
     C->cy = (xp >= MaxRow) ? MaxRow : (xp < 0) ? 0 : xp;
     C->XN = 0;
 }
-#endif
 
-#ifdef CONFIG_EMUL_ANSI
 static int parm1(register unsigned char *buf)
 {
     int n;
@@ -249,82 +247,6 @@ static void esc_char(register Console * C, int c)
 }
 #endif
 
-#ifdef CONFIG_EMUL_VT52
-static void esc_Y2(register Console * C, int c)
-{
-    Console_gotoxy(C, c - ' ', C->tmp);
-    C->fsm = std_char;
-}
-
-static void esc_YS(register Console * C, int c)
-{
-    switch(C->tmp) {
-    case 'Y':
-        C->tmp = (unsigned char) (c - ' ');
-        C->fsm = esc_Y2;
-        break;
-    case '/':
-        C->tmp = 'Z';           /* Discard next char */
-        break;
-    case 'Z':
-        C->fsm = std_char;
-    }
-}
-
-/* Escape character processing */
-static void esc_char(register Console * C, int c)
-{
-    /* process single ESC char sequences */
-    C->fsm = std_char;
-    switch (c) {
-    case 'I':                   /* linefeed reverse */
-        if (!C->cy) {
-            ScrollDown(C, 0);
-            break;
-        }
-    case 'A':                   /* up */
-        if (C->cy)
-            --C->cy;
-        break;
-    case 'B':                   /* down */
-        if (C->cy < MaxRow)
-            ++C->cy;
-        break;
-    case 'C':                   /* right */
-        if (C->cx < MaxCol)
-            ++C->cx;
-        break;
-    case 'D':                   /* left */
-        if (C->cx)
-            --C->cx;
-        break;
-    case 'H':                   /* home */
-        C->cx = C->cy = 0;
-        break;
-    case 'J':                   /* clear to eoscreen */
-        ClearRange(C, 0, C->cy+1, MaxCol, MaxRow);
-    case 'K':                   /* clear to eol */
-        ClearRange(C, C->cx, C->cy, MaxCol, C->cy);
-        break;
-    case 'L':                   /* insert line */
-        ScrollDown(C, C->cy);
-        break;
-    case 'M':                   /* remove line */
-        ScrollUp(C, C->cy);
-        break;
-    case '/':                   /* Remove echo for identify response */
-    case 'Y':                   /* cursor move */
-        C->tmp = c;
-        C->fsm = esc_YS;
-        break;
-    case 'Z':                   /* identify as VT52 */
-        Console_conin(ESC);
-        Console_conin('/');
-        Console_conin('K');
-    }
-}
-#endif
-
 /* Normal character processing */
 static void std_char(register Console * C, int c)
 {
@@ -354,7 +276,7 @@ static void std_char(register Console * C, int c)
         C->cx = 0;
         break;
 
-#if defined (CONFIG_EMUL_VT52) || defined (CONFIG_EMUL_ANSI)
+#ifdef CONFIG_EMUL_ANSI
     case ESC:
         C->fsm = esc_char;
         break;
@@ -379,14 +301,8 @@ static void std_char(register Console * C, int c)
         }
       linewrap:
         if (C->cx > MaxCol) {
-
-#ifdef CONFIG_EMUL_VT52
-            C->cx = MaxCol;
-#else
             C->XN = 1;
             C->cx = MaxCol;
-#endif
-
         }
     }
     if (C->cy > MaxRow) {

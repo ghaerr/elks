@@ -14,9 +14,9 @@ include $(BASEDIR)/Make.rules
 PRGS=basename clear date dirname echo false printenv pwd true which whoami \
 	yes logname tr xargs mesg stty test uname
 
-write: write.o ../sys_utils/utent.o
-
 all: $(PRGS)
+
+write: write.o ../sys_utils/utent.o
 
 basename: basename.o
 	$(LD) $(LDFLAGS) -o basename basename.o $(LDLIBS)

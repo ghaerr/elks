@@ -2,13 +2,24 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include "syms.h"
+#include "debug/syms.h"
+
+static char * fstrncpy(char *dst, unsigned char __far *src, int n)
+{
+    do {
+        *dst++ = *src++;
+    } while (--n);
+    *dst = '\0';
+    return dst;
+}
 
 void nm(char *path)
 {
-    unsigned char *syms = sym_read_exe_symbols(path);
-    unsigned char *p;
+    unsigned char __far *syms;
+    unsigned char __far *p;
+    static char name[64];
 
+    syms = sym_read_exe_symbols(path);
     if (!syms) {
         if (errno)
             perror(path);
@@ -16,14 +27,14 @@ void nm(char *path)
         return;
     }
     for (p = syms; p[TYPE] != '\0'; p = next(p)) {
-        printf("0x%.4x %c %.*s\n", *(unsigned short *)(p + ADDR), p[TYPE],
-            p[SYMLEN], p+SYMBOL);
+        fstrncpy(name, p+SYMBOL, p[SYMLEN]);
+        printf("0x%04x %c %s\n", *(unsigned short __far *)(p + ADDR), p[TYPE], name);
     }
 }
 
 int main(int ac, char **av)
 {
     if (ac != 2)
-        fprintf(stderr, "Usage: nm86 <a.out executable>\n");
+        fprintf(stderr, "Usage: %s <a.out executable>\n", av[0]);
     else nm(av[1]);
 }

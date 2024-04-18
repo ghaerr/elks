@@ -1,7 +1,7 @@
 #include "testlib.h"
 
 #include <errno.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <string.h>
 
 TEST_CASE(malloc_malloc_free) {

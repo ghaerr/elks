@@ -10,8 +10,11 @@
 #define KEY_END         kEnd
 #define KEY_NPAGE       kPageDown
 #define KEY_PPAGE       kPageUp
+#define KEY_RESIZE      kHome       /* dup */
 
-#define A_NORMAL        0x0700
+#define A_NORMAL        0x0000
+#define A_BLINK         0x0100
+#define A_BOLD          0x0200
 
 #define COLOR_BLACK         0
 #define COLOR_BLUE          1
@@ -43,7 +46,7 @@ extern int COLS;
 extern void *stdscr;
 
 void start_color();
-void use_default_colors();
+int use_default_colors();
 void init_pair(int ndx, int fg, int bg);
 void *initscr();
 void endwin();
@@ -76,3 +79,32 @@ void refresh();
 void mvcur(int,int,int,int);
 int mvaddch(int,int,int);
 int addch(int);
+
+typedef struct screen {
+} SCREEN;
+
+typedef struct window {
+} WINDOW;
+
+typedef int chtype;
+
+/* partially implemented functions for ttyclock */
+SCREEN *newterm();
+WINDOW *newwin();
+void clear();
+void werase();
+void mvwaddch(WINDOW *w, int y, int x, int ch);
+void mvwaddstr(WINDOW *w, int y, int x, char *str);
+void mvwprintw(WINDOW *w, int y, int x, char *fmt, ...);
+void mvwin(WINDOW *w, int y, int x);
+void wrefresh(WINDOW *w);
+void delscreen();
+void set_term();
+void clearok();
+void box();
+void wborder();
+void wresize();
+void wattron(WINDOW *w, int a);
+void wattroff(WINDOW *w, int a);
+int wgetch();
+void wbkgdset(WINDOW *w, int a);

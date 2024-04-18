@@ -14,8 +14,7 @@ include $(BASEDIR)/Make.defs
 
 # All subdirectories to build & clean
 
-# TODO: broken command compilations: byacc m4 xvi
-# unused commands but working compilations: mtools nano prems
+# unused commands but working compilations: nano levee
 SUBDIRS =       \
 	lib         \
 	advent      \
@@ -23,12 +22,13 @@ SUBDIRS =       \
 	basic       \
 	bc          \
 	busyelks    \
+	debug       \
 	disk_utils  \
+	fsck_dos    \
 	elvis	    \
 	file_utils  \
 	inet        \
 	ktcp        \
-	levee       \
 	minix1      \
 	minix2      \
 	minix3      \
@@ -53,9 +53,6 @@ all:
 	@if [ ! -e $(TOPDIR)/include/autoconf.h ]; \
 	then echo -e "\n*** ERROR: You must configure ELKS first ***\n" >&2; exit 1; fi
 	for DIR in $(SUBDIRS); do $(MAKE) -C $$DIR all || exit 1; done
-ifdef CONFIG_APP_CGATEXT)
-	$(MAKE) -C cgatext
-endif
 ifdef CONFIG_APP_ROMPRG
 	$(MAKE) -C romprg
 endif

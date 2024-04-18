@@ -18,10 +18,13 @@ Show application memory
 Show free memory
 .TP 5
 .B -t
-Show tty memory
+Show tty and driver memory
 .TP 5
 .B -b
-Show buffer memory
+Show system buffer and pipe memory
+.TP 5
+.B -s
+Show system task, inode and file memory.
 .SH DESCRIPTION
 .B meminfo
 traverses the kernel local heap and displays a line for each in-use or free entry. 
@@ -76,14 +79,23 @@ External (main) memory segment.
 TTY
 TTY input or output buffer.
 .TP 10
-INT
-Interrupt handler trampoline.
+DRVR
+Direct Floppy or other driver buffers.
 .TP 10
 BUFH
-System buffer headers. The buffer data contents may be in extended (main) or XMS memory.
+System buffer headers. The buffer data contents may be in main or XMS memory.
 .TP 10
 PIPE
-Pipe buffer.
+Open pipe buffer.
+.TP 10
+TASK
+Kernel per process data structure.
+.TP 10
+INOD
+System inodes.
+.TP 10
+FILE
+System open files.
 .TP 10
 free
 Unallocated memory in the local heap.
@@ -97,7 +109,7 @@ DSEG
 Running application data segment.
 .TP 10
 BUF
-System buffer data, 1024 bytes per buffer.
+Block subsystem buffer data, 1024 bytes per buffer.
 .TP 10
 RDSK
 Ramdisk data.

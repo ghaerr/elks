@@ -34,13 +34,21 @@ PRGS = \
 	chmem \
 	clock \
 	unreal16 \
+	beep \
 	mouse \
 	sercat \
 	console \
 	makeboot \
+	decomp \
 	# EOL
 
+HOSTPRGS = hostdecomp
+HOSTCFLAGS += -I$(TOPDIR)/elks/include
+EXODECR_C = $(TOPDIR)/elks/fs/exodecr.c
+
 all: $(PRGS)
+
+host: $(HOSTPRGS)
 
 init: init.o
 	$(LD) $(LDFLAGS) -maout-heap=4096 -maout-stack=1024 -o init init.o $(LDLIBS)
@@ -114,9 +122,18 @@ makeboot: makeboot.o $(TINYPRINTF)
 unreal.o: $(ELKS_LIB)/unreal.S
 	$(LD) -melks-libc -mcmodel=small -c $(ELKS_LIB)/unreal.S -o unreal.o
 
+beep: beep.o
+	$(LD) $(LDFLAGS) -o beep beep.o $(LDLIBS)
+
 unreal16: unreal16.o unreal.o
 	$(LD) -melks-libc -mcmodel=small -c unreal16.S -o unreal16.o
 	$(LD) -melks-libc -mcmodel=small -nostdlib -o unreal16 unreal16.o unreal.o
+
+decomp: decomp.o $(EXODECR_C) $(TINYPRINTF)
+	$(LD) $(LDFLAGS) -maout-heap=0xffff -o $@ $^ $(LDLIBS)
+
+hostdecomp: decomp.c $(EXODECR_C)
+	$(HOSTCC) $(HOSTCFLAGS) -o $@ $^
 
 all: $(PRGS)
 
@@ -124,4 +141,4 @@ install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
-	rm -f *.o core $(PRGS)
+	rm -f *.o core $(PRGS) $(HOSTPRGS)

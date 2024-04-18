@@ -28,7 +28,6 @@
  */
 
 #include <linuxmt/config.h>
-#include <arch/segment.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/sched.h>
@@ -37,6 +36,8 @@
 #include <linuxmt/ntty.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/signal.h>
+#include <arch/segment.h>
+#include <arch/irq.h>
 #include <stdarg.h>
 
 dev_t dev_console;
@@ -192,6 +193,8 @@ static void vprintk(const char *fmt, va_list p)
                 break;
             case 'P':
                 v = current->pid;
+                c = 'd';
+                n = 10;
                 goto out;
             case 'D':
                 c += 'X' - 'D';

@@ -11,6 +11,7 @@ enum ttyflags {
     CatchISig = 4,                  /* catch SIGINT and exit by default */
     Utf8 = 8,                       /* set termios IUTF8 */
     ExitLastLine = 16,              /* on exit, cursor position to bottom */
+    NoWait = 32,                    /* don't hang in getch */
     FullBuffer                      /* fully buffered output */
 };
 
@@ -22,6 +23,7 @@ void tty_fullbuffer(void);
 void tty_linebuffer(void);
 int tty_getsize(int *cols, int *rows);
 extern int iselksconsole;
+extern int _tty_flags;
 
 /* tty-cp437.c - display cp437 characters */
 char *tty_allocate_screen(int cols, int lines);

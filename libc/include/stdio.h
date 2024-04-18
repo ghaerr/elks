@@ -1,8 +1,6 @@
-
 #ifndef __STDIO_H
 #define __STDIO_H
 
-#include <features.h>
 #include <sys/types.h>
 #include <stdarg.h>
 
@@ -109,10 +107,10 @@ int fclose(FILE*);
 int fflush(FILE*);
 char *fgets(char*, size_t, FILE*);
 
-ssize_t getdelim(char **__restrict lineptr, size_t *__restrict n,
-		int delimiter, register FILE *__restrict stream);
-ssize_t getline(char **__restrict lineptr, size_t *__restrict n,
-		FILE *__restrict stream);
+ssize_t getdelim(char ** restrict lineptr, size_t * restrict n,
+		int delimiter, register FILE * restrict stream);
+ssize_t getline(char ** restrict lineptr, size_t * restrict n,
+		FILE * restrict stream);
 
 FILE *fopen(const char*, const char*);
 FILE *fdopen(int, const char*);

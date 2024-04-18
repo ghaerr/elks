@@ -17,16 +17,13 @@
 
 #define idle_task task[0]
 
-__task task[MAX_TASKS];
-__ptask current = task;
+__task *task;           /* dynamically allocated task array */
+__ptask current;
 __ptask previous;
-
-//static unsigned char nr_running;
-extern int intr_count;
+int max_tasks = MAX_TASKS;
 
 void add_to_runqueue(register struct task_struct *p)
 {
-    //nr_running++;
     (p->prev_run = idle_task.prev_run)->next_run = p;
     p->next_run = &idle_task;
     idle_task.prev_run = p;
@@ -40,7 +37,6 @@ static void del_from_runqueue(register struct task_struct *p)
     if (p == &idle_task)
         panic("SCHED: trying to sleep idle task");
 #endif
-    //nr_running--;
     (p->next_run->prev_run = p->prev_run)->next_run = p->next_run;
     p->next_run = p->prev_run = NULL;
 
@@ -77,6 +73,10 @@ void schedule(void)
          panic("SCHED: schedule() called from interrupt, intr_count %d", intr_count);
     }
 #endif
+
+    /* Disallow rescheduling during startup when idle task is the only task */
+    if ((int)last_pid <= 0)
+        return;
 
     /* We have to let a task exit! */
     if (prev->state == TASK_EXITING)
@@ -178,40 +178,12 @@ static void run_timer_list(void)
     set_irq();
 }
 
-#if UNUSED
-/* maybe someday I'll implement these profiling things -PL */
-
-static void do_it_prof(struct task_struct *p, jiff_t ticks)
-{
-    jiff_t it_prof = p->it_prof_value;
-
-    if (it_prof) {
-    if (it_prof <= ticks) {
-        it_prof = ticks + p->it_prof_incr;
-        send_sig(SIGPROF, p, 1);
-    }
-    p->it_prof_value = it_prof - ticks;
-    }
-}
-
-static void update_one_process(struct taks_struct *p,
-                   jiff_t ticks, jiff_t user, jiff_t system)
-{
-    do_process_times(p, user, system);
-    do_it_virt(p, user);
-    do_it_prof(p, ticks);
-}
-
-#endif
-
 void do_timer(void)
 {
     jiffies++;
 
-#ifdef NEED_RESCHED             /* need_resched is not checked anywhere */
-    if (!((int) jiffies & 7))
-        need_resched = 1;       /* how primitive can you get? */
-#endif
+    /***if (!((int) jiffies & 7))
+        need_resched = 1;***/       /* how primitive can you get? */
 
     run_timer_list();
 
@@ -219,15 +191,18 @@ void do_timer(void)
 
 void INITPROC sched_init(void)
 {
-    register struct task_struct *t = &task[MAX_TASKS];
+    struct task_struct *t = &task[max_tasks];
 
 /*
- *  Mark tasks 0-(MAX_TASKS-1) as not in use.
+ *  Mark tasks 0-(max_tasks-1) as not in use.
  */
     do {
         (--t)->state = TASK_UNUSED;
     } while (t > task);
 
+    current = task;
+    next_task_slot = task;
+    task_slots_unused = max_tasks;
 /*
  *  Now create task 0 to be ourself.
  */

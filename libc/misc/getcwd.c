@@ -13,12 +13,12 @@
 static char * path_buf;
 static size_t path_size;
 static dev_t root_dev;
-static u_ino_t root_ino;
+static ino_t root_ino;
 static struct stat st;
 
 /* routine to find the step back down */
 static char *
-search_dir(dev_t this_dev, u_ino_t this_ino)
+search_dir(dev_t this_dev, ino_t this_ino)
 {
    DIR * dp;
    struct dirent * d;
@@ -76,7 +76,7 @@ static char *
 recurser(void)
 {
    dev_t this_dev;
-   u_ino_t this_ino;
+   ino_t this_ino;
 
    if( stat(path_buf, &st) < 0 ) return NULL;
    this_dev = st.st_dev;

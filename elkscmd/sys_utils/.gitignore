@@ -1,8 +1,11 @@
+beep
 chmem
 clock
 console
+decomp
 exitemu
 getty
+hostdecomp
 init
 kill
 knl

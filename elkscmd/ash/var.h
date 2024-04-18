@@ -64,7 +64,7 @@ struct localvar {
 };
 
 
-struct localvar *localvars;
+extern struct localvar *localvars;
 
 #if ATTY
 extern struct var vatty;

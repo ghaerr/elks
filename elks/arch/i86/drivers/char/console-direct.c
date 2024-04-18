@@ -10,7 +10,6 @@
  * added enough ansi escape sequences for visual editing
  */
 
-#include <linuxmt/types.h>
 #include <linuxmt/config.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/sched.h>
@@ -57,9 +56,6 @@ struct console {
     unsigned char *parmptr;     /* ptr to params */
     unsigned char params[MAXPARMS];     /* ANSI params */
 #endif
-#ifdef CONFIG_EMUL_VT52
-    unsigned char tmp;          /* ESC Y ch save */
-#endif
 };
 
 static struct wait_queue glock_wait;
@@ -76,8 +72,6 @@ unsigned VideoSeg = 0xB800;
 
 #ifdef CONFIG_EMUL_ANSI
 #define TERM_TYPE " emulating ANSI "
-#elif CONFIG_EMUL_VT52
-#define TERM_TYPE " emulating vt52 "
 #else
 #define TERM_TYPE " dumb "
 #endif
@@ -147,7 +141,7 @@ static void ScrollUp(register Console * C, int y)
     ClearRange(C, 0, MaxRow, MaxCol, MaxRow);
 }
 
-#if defined (CONFIG_EMUL_VT52) || defined (CONFIG_EMUL_ANSI)
+#ifdef CONFIG_EMUL_ANSI
 static void ScrollDown(register Console * C, int y)
 {
     register int vp;

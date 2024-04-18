@@ -2,7 +2,6 @@
 #define	__PWD_H
 
 #include <sys/types.h>
-#include <features.h>
 #include <stdio.h>
 
 /* The passwd structure.  */

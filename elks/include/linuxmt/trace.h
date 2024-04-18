@@ -49,4 +49,4 @@ extern void trace_begin(void);
 extern void trace_end(unsigned int retval);
 #endif
 
-#endif /* __LINUXMT_TRACE_H */
+#endif

@@ -13,9 +13,12 @@
 #include <linuxmt/netstat.h>
 #include <linuxmt/trace.h>
 #include <linuxmt/devnum.h>
+#include <linuxmt/heap.h>
 #include <arch/system.h>
 #include <arch/segment.h>
 #include <arch/ports.h>
+#include <arch/irq.h>
+#include <arch/io.h>
 
 /*
  *	System variable setups
@@ -28,11 +31,7 @@
 #define MAX_INIT_ARGS	8
 #define MAX_INIT_ENVS	8
 
-#if defined(CONFIG_FS_RO) || defined(CONFIG_ROOT_READONLY)
-int root_mountflags = MS_RDONLY;
-#else
-int root_mountflags = 0;
-#endif
+int root_mountflags;
 struct netif_parms netif_parms[MAX_ETHS] = {
     /* NOTE:  The order must match the defines in netstat.h:
      * ETH_NE2K, ETH_WD, ETH_EL3    */
@@ -43,7 +42,9 @@ struct netif_parms netif_parms[MAX_ETHS] = {
 __u16 kernel_cs, kernel_ds;
 int tracing;
 int nr_ext_bufs, nr_xms_bufs, nr_map_bufs;
+char running_qemu;
 static int boot_console;
+static seg_t membase, memend;
 static char bininit[] = "/bin/init";
 static char binshell[] = "/bin/sh";
 #ifdef CONFIG_SYS_NO_BININIT
@@ -56,6 +57,7 @@ static char *init_command = bininit;
 /*
  * Parse /bootopts startup options
  */
+static char opts;
 static int args = 2;	/* room for argc and av[0] */
 static int envs;
 static int argv_slen;
@@ -81,11 +83,17 @@ static char * INITPROC option(char *s);
 
 static void init_task(void);
 static void INITPROC kernel_banner(seg_t start, seg_t end, seg_t init, seg_t extra);
+static void INITPROC early_kernel_init(void);
 
-
+/* this procedure called using temp stack then switched, no temp vars allowed */
 void start_kernel(void)
 {
-    kernel_init();
+    early_kernel_init();        /* read bootopts using kernel interrupt stack */
+    task = heap_alloc(max_tasks * sizeof(struct task_struct),
+        HEAP_TAG_TASK|HEAP_TAG_CLEAR);
+    if (!task) panic("No task mem");
+    setsp(&task->t_regs.ax);    /* change to idle task stack */
+    kernel_init();              /* continue init running on idle task stack */
 
     /* fork and run procedure init_task() as task #1*/
     kfork_proc(init_task);
@@ -104,25 +112,24 @@ void start_kernel(void)
     }
 }
 
+static void INITPROC early_kernel_init(void)
+{
+    setup_arch(&membase, &memend);  /* initializes kernel heap */
+    mm_init(membase, memend);       /* parse_options may call seg_add */
+    tty_init();                     /* parse_options may call rs_setbaud */
+#ifdef CONFIG_TIME_TZ
+    tz_init(CONFIG_TIME_TZ);        /* parse_options may call tz_init */
+#endif
+#ifdef CONFIG_BOOTOPTS
+    opts = parse_options();         /* parse options found in /bootops */
+#endif
+}
+
 void INITPROC kernel_init(void)
 {
-    seg_t base, end;
-
-    /* sched_init sets us (the current stack) to be idle task #0*/
+    /* set us (the current stack) to be idle task #0*/
     sched_init();
-    setup_arch(&base, &end);
-    mm_init(base, end);
     irq_init();
-    tty_init();
-
-#ifdef CONFIG_TIME_TZ
-    tz_init(CONFIG_TIME_TZ);
-#endif
-
-#ifdef CONFIG_BOOTOPTS
-    /* parse options found in /bootops */
-    int opts = parse_options();
-#endif
 
     /* set console from /bootopts console= or 0=default*/
     set_console(boot_console);
@@ -138,6 +145,9 @@ void INITPROC kernel_init(void)
     if (buffer_init())	/* also enables xms and unreal mode if configured and possible*/
         panic("No buf mem");
 
+    outw(0, 0x510);
+    if (inb(0x511) == 'Q' && inb(0x511) == 'E')
+        running_qemu = 1;
     device_init();
 
 #ifdef CONFIG_SOCKET
@@ -162,7 +172,7 @@ void INITPROC kernel_init(void)
     seg_t s = 0, e = 0;
 #endif
 
-    kernel_banner(base, end, s, e - s);
+    kernel_banner(membase, memend, s, e - s);
 }
 
 static void INITPROC kernel_banner(seg_t start, seg_t end, seg_t init, seg_t extra)
@@ -480,6 +490,18 @@ static int INITPROC parse_options(void)
 			nr_map_bufs = (int)simple_strtol(line+6, 10);
 			continue;
 		}
+		if (!strncmp(line,"task=",5)) {
+			max_tasks = (int)simple_strtol(line+5, 10);
+			continue;
+		}
+		if (!strncmp(line,"inode=",6)) {
+			nr_inode = (int)simple_strtol(line+6, 10);
+			continue;
+		}
+		if (!strncmp(line,"file=",5)) {
+			nr_file = (int)simple_strtol(line+5, 10);
+			continue;
+		}
 		if (!strncmp(line,"comirq=",7)) {
 			comirq(line+7);
 			continue;
@@ -520,6 +542,8 @@ static void INITPROC finalize_options(void)
 	/* set ROOTDEV environment variable for rc.sys fsck*/
 	if (envs < MAX_INIT_ENVS)
 		envp_init[envs++] = root_dev_name(ROOT_DEV);
+	if (running_qemu && envs < MAX_INIT_ENVS)
+		envp_init[envs++] = (char *)"QEMU=1";
 
 #if DEBUG
 	printk("args: ");
@@ -569,7 +593,7 @@ static char * INITPROC option(char *s)
 	char *t = s;
 	if (*s == '#')
 		return s;
-	for(; *s != ' ' && *s != '\t' && *s != '\n'; ++s, ++t) {
+	for(; *s != ' ' && *s != '\t' && *s != '\r' && *s != '\n'; ++s, ++t) {
 		if (*s == '\0')
 			return NULL;
 		if (*s == '"') {

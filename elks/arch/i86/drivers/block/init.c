@@ -16,8 +16,8 @@
  *  More flexible handling of extended partitions - aeb, 950831
  */
 
-#include <linuxmt/boot.h>
 #include <linuxmt/config.h>
+#include <linuxmt/boot.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/genhd.h>
 #include <linuxmt/kernel.h>
@@ -27,6 +27,7 @@
 #include <linuxmt/memory.h>
 #include <linuxmt/devnum.h>
 
+#include <arch/irq.h>
 #include <arch/system.h>
 #include <arch/segment.h>
 
@@ -52,7 +53,7 @@ void INITPROC device_init(void)
      */
     if (!boot_rootdev && (SETUP_ELKS_FLAGS & EF_BIOS_DEV_NUM) != 0) {
         dev_t rootdev = 0;
-#ifdef CONFIG_BLK_DEV_FD
+#if defined(CONFIG_BLK_DEV_FD) && !defined(CONFIG_BLK_DEV_BFD)
         if (ROOT_DEV == 0) rootdev = DEV_DF0;
         else if (ROOT_DEV == 1) rootdev = DEV_DF1;
 #endif

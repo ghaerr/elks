@@ -32,7 +32,6 @@ mainmenu_option next_comment
 		bool 'other'         	CONFIG_APP_OTHER        y
 		bool 'test'       		CONFIG_APP_TEST         n
 		bool 'busyelks'			CONFIG_APP_BUSYELKS		n
-		bool 'cgatext'			CONFIG_APP_CGATEXT	    n
 		string 'Additional TAG string for app selection'  CONFIG_APP_TAGS      ''
 
 		#comment 'Commands not compiling'
@@ -48,22 +47,6 @@ mainmenu_option next_comment
 
 		if [ "$CONFIG_INET" == "y" ]; then
 			bool 'ktcp' CONFIG_APP_KTCP y
-
-			#if [ "$CONFIG_APP_KTCP" == "y" ]; then
-
-				#comment "Internet applets"
-
-				#bool 'telnet'     CONFIG_APP_TELNET     y
-				#bool 'telnetd'    CONFIG_APP_TELNETD    y
-				#bool 'ftp'        CONFIG_APP_FTP        y
-				#bool 'httpd'      CONFIG_APP_HTTPD      y
-				#bool 'nettools'   CONFIG_APP_NET_TOOLS  y
-				#bool 'tinyirc'    CONFIG_APP_TINYIRC    y
-				#bool 'urlget'     CONFIG_APP_URLGET     y
-
-			#else
-				#comment "(internet applets need ktcp)"
-			#fi
 		else
 			comment '(ktcp needs TCP/IP sockets)'
 		fi
@@ -77,6 +60,7 @@ mainmenu_option next_comment
 		choice 'Apps and Image Size' \
 		"All-2880k/HD	CONFIG_APPS_2880K	\
 		 Large-1440k	CONFIG_APPS_1440K	\
+		 PC98-1232k     CONFIG_APPS_1232K	\
 		 Medium-1200k	CONFIG_APPS_1200K	\
 		 Medium-720k	CONFIG_APPS_720K	\
 		 Small-360k		CONFIG_APPS_360K" Large-1440k

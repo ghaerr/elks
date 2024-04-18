@@ -4,3 +4,6 @@ matrix
 cons
 ttyinfo
 sl
+ttyclock
+ttytetris
+ttypong

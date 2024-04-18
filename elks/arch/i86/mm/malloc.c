@@ -2,7 +2,7 @@
  *	Memory management support.
  */
 
-#include <linuxmt/types.h>
+#include <linuxmt/config.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/errno.h>
@@ -118,11 +118,9 @@ static void seg_merge (segment_s * s1, segment_s * s2)
 segment_s * seg_alloc (segext_t size, word_t type)
 {
 	segment_s * seg = 0;
-	//lock_wait (&_seg_lock);
 	seg = seg_free_get (size, type);
 	if (seg && (type & SEG_FLAG_ALIGN1K))
 		seg->base += ((~seg->base + 1) & ((1024 >> 4) - 1));
-	//unlock_event (&_seg_lock);
 	return seg;
 }
 
@@ -131,8 +129,6 @@ segment_s * seg_alloc (segext_t size, word_t type)
 
 void seg_free (segment_s * seg)
 {
-	//lock_wait (&_seg_lock);
-
 	// Free segment will be inserted to free list:
 	//   - tail if merged to previous or next free segment
 	//   - head if still alone to increase 'exact hit'
@@ -169,8 +165,6 @@ void seg_free (segment_s * seg)
 	// Insert to free list head or tail
 
 	list_insert_after (i, &(seg->free));
-
-	//unlock_event (&_seg_lock);
 }
 
 
@@ -201,7 +195,6 @@ segment_s * seg_dup (segment_s * src)
 	segment_s * dst = seg_free_get (src->size, src->flags);
 	if (dst)
 		fmemcpyw(0, dst->base, 0, src->base, src->size << 3);
-
 	return dst;
 }
 

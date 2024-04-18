@@ -56,8 +56,9 @@ char *strfry(char *);
 
 void bzero(void * s, size_t n);
 
-// TODO: this is removed in POSIX-1.2008
-// TODO: replace by memcpy or memmove
+/* TODO: this is removed in POSIX-1.2008
+ * TODO: replace by memcpy or memmove
+ */
 #define bcopy(s, d, n) memcpy((d), (s), (n))
 
 #endif

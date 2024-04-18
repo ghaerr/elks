@@ -41,11 +41,10 @@
 
 
 
-static char	*previous;	/* the previous regexp, used when null regexp is given */
-
-
 #ifndef NO_MAGIC
 /* THE REAL REGEXP PACKAGE IS USED UNLESS "NO_MAGIC" IS DEFINED */
+
+static char	*previous;	/* the previous regexp, used when null regexp is given */
 
 /* These are used to classify or recognize meta-characters */
 #define META		'\0'
@@ -777,7 +776,6 @@ static int reghelp(prog, string, bolflag)
 	int		bolflag;
 {
 	REG char		*scan;
-	char		*str;
 
 	/* if ^, then require bolflag */
 	if ((prog->bol & 1) && !bolflag)

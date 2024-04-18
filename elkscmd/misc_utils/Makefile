@@ -8,22 +8,19 @@ include $(BASEDIR)/Make.defs
 
 include $(BASEDIR)/Make.rules
 
-KERNEL_LIBS = $(TOPDIR)/elks/arch/i86/lib/lib86.a
-
 ###############################################################################
 
 #TODO: fix uncompress zcat lpfilter disabled
-PRGS = tar miniterm ed fdtest od hd time kilo mined sleep tty uuencode uudecode compress
+PRGS = tar miniterm ed od hd time kilo mined sleep tty uuencode uudecode compress
 
-#HOSTPRGS = hostcompress
+HOSTPRGS = hostcompress
 
-all: $(PRGS) $(HOSTPRGS)
+all: $(PRGS)
+
+host: $(HOSTPRGS)
 
 ed: ed.o
 	$(LD) $(LDFLAGS) -o ed ed.o $(LDLIBS)
-
-fdtest: fdtest.o $(TINYPRINTF)
-	$(LD) $(LDFLAGS) -o fdtest fdtest.o $(TINYPRINTF) $(KERNEL_LIBS) $(LDLIBS)
 
 tar: tar.o
 	$(LD) $(LDFLAGS) -o tar tar.o $(LDLIBS)

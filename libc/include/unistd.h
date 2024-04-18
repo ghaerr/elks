@@ -2,7 +2,6 @@
 #define __UNISTD_H
 
 #include <features.h>
-#include <stdnoreturn.h>
 #include <sys/types.h>
 #include <sys/select.h>
 
@@ -13,10 +12,11 @@
 ssize_t read(int __fd, void * __buf, size_t __nbytes);
 ssize_t write(int __fd, const void * __buf, size_t __n);
 int     pipe(int __pipedes[2]);
-unsigned int alarm(unsigned int __seconds);
-unsigned int sleep(unsigned int __seconds);
-int     pause(void);
 char*   crypt(const char *__key, const char *__salt);
+
+unsigned int alarm(unsigned int seconds);
+unsigned int sleep(unsigned int seconds);
+int          usleep(unsigned long useconds);
 
 #ifndef SEEK_SET
 #define SEEK_SET 0
@@ -41,15 +41,15 @@ void * sbrk (intptr_t increment);
 int close (int fildes);
 int dup (int fildes);
 int dup2 (int oldfd, int newfd);
-int execl(char *fname, char *arg0, ...);
-int execle(char *fname, char *arg0, ...);
-int execlp(char *fname, char *arg0, ...);
-int execlpe(char *fname, char *arg0, ...);
-int execv(char *fname, char **argv);
-int execve(char *fname, char **argv, char **envp);
-int execvp(char *fname, char **argv);
-int execvpe(char *fname, char **argv, char **envp);
-int _execve(char *fname, char *stk_ptr, int stack_bytes);
+int execl(const char *fname, const char *arg1, ...);
+int execle(const char *fname, const char *arg0, ...);
+int execlp(const char *fname, const char *arg0, ...);
+int execlpe(const char *fname, const char *arg0, ...);
+int execv(const char *fname, char **argv);
+int execve(const char *fname, char **argv, char **envp);
+int execvp(const char *fname, char **argv);
+int execvpe(const char *fname, char **argv, char **envp);
+int _execve(const char *fname, char *stk_ptr, int stack_bytes);
 noreturn void _exit(int status);
 int isatty (int fd);
 char *ttyname(int fd);
@@ -85,8 +85,6 @@ uid_t geteuid(void);
 
 char * getcwd (char * buf, size_t size);
 void sync(void);
-int usleep(unsigned long useconds);
-unsigned alarm(unsigned seconds);
 
 int getopt(int argc, char * const argv[], const char *opts);
 extern char *optarg;

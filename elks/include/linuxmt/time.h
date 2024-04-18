@@ -20,6 +20,13 @@ struct timeval {
     long tv_usec;		/* microseconds */
 };
 
+#define ITIMER_REAL     0
+
+struct  itimerval {
+    struct  timeval it_interval;/* timer interval */
+    struct  timeval it_value;   /* current value */
+};
+
 struct timezone {
     int tz_minuteswest;		/* minutes west of Greenwich */
     int tz_dsttime;		/* type of dst correction */

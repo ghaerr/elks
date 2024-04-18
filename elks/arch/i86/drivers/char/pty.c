@@ -3,7 +3,6 @@
  * (C) 1999 Alistair Riddoch
  */
 
-#include <linuxmt/types.h>
 #include <linuxmt/config.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/fs.h>
@@ -156,8 +155,6 @@ static int ttyp_write(register struct tty *tty)
     return 0;
 }
 
-/*@-type@*/
-
 /* /dev/ptyp0 master side is character special file */
 static struct file_operations pty_fops = {
     pipe_lseek,			/* Same behavoir, return -ESPIPE */
@@ -179,8 +176,6 @@ struct tty_ops ttyp_ops = {
     NULL,			/* ioctl*/
     NULL                        /* conout */
 };
-
-/*@+type@*/
 
 void INITPROC pty_init(void)
 {

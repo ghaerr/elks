@@ -12,9 +12,9 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-# TODO: lpd man mt install	# Do not compile.
+# TODO: man mt install	# Do not compile.
 # compiling but unused: pwdauth
-PRGS=env lp remsync synctree tget
+PRGS=env lp lpd remsync synctree tget
 
 env: env.o $(TINYPRINTF)
 	$(LD) $(LDFLAGS) -o env env.o $(TINYPRINTF) $(LDLIBS)
@@ -24,6 +24,9 @@ pwdauth: pwdauth.o
 
 lp: lp.o $(TINYPRINTF)
 	$(LD) $(LDFLAGS) -o lp lp.o $(TINYPRINTF) $(LDLIBS)
+
+lpd: lpd.o
+	$(LD) $(LDFLAGS) -o lpd lpd.o $(LDLIBS)
 
 man: man.o
 	$(LD) $(LDFLAGS) -o man man.o $(LDLIBS)
@@ -39,9 +42,6 @@ tget: tget.o
 
 
 all: $(PRGS)
-
-lpd: lpd.o
-	$(LD) $(LDFLAGS) -o lpd lpd.o $(LDLIBS)
 
 install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin

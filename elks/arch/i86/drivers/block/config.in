@@ -10,6 +10,9 @@ mainmenu_option next_comment
 	bool '  BIOS preset floppy types'	CONFIG_BLK_DEV_BFD_HARD n
 	bool '  BIOS hard drive support'	CONFIG_BLK_DEV_BHD	y
 	bool '  IDE hard drive CHS probe'	CONFIG_IDE_PROBE	y
+	if [ "$CONFIG_BLK_DEV_FD" == "y" ]; then
+		define_bool CONFIG_ASYNCIO y
+	fi
 
 	comment 'Additional block devices'
 

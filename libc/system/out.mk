@@ -43,6 +43,7 @@ OBJS = \
 	setjmp.o \
 	setpgrp.o \
 	signal.o \
+	sigaction.o \
 	sleep.o \
 	syscall01.o \
 	syscall23.o \

@@ -1,9 +1,8 @@
+#ifndef __CTYPE_H
+#define __CTYPE_H
 /*
  *	ctype.h		Character classification and conversion
  */
-
-#ifndef __CTYPE_H
-#define __CTYPE_H
 
 extern	unsigned char	__ctype[];
 
@@ -38,4 +37,4 @@ extern	unsigned char	__ctype[];
 #define	isupper(c)	(!!(__CT(c)&__CT_u))
 #define	isxdigit(c)	(!!(__CT(c)&__CT_x))
 
-#endif /* __CTYPE_H */
+#endif

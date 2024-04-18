@@ -19,6 +19,7 @@
 #define DEBUG_ETH       0               /* ethernet*/
 #define DEBUG_FAT       0               /* FAT filesystem*/
 #define DEBUG_FILE      0               /* sys open and file i/o*/
+#define DEBUG_LP        0               /* parallel port */
 #define DEBUG_MAP       0               /* L1 mapping */
 #define DEBUG_MM        0               /* mem char device*/
 #define DEBUG_NET       0               /* networking*/
@@ -69,6 +70,12 @@ void debug_setcallback(int evnum, void (*cbfunc)()); /* callback on debug event*
 #define debug_file      PRINTK
 #else
 #define debug_file(...)
+#endif
+
+#if DEBUG_LP
+#define debug_lp      PRINTK
+#else
+#define debug_lp(...)
 #endif
 
 #if DEBUG_MM

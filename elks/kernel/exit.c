@@ -9,9 +9,6 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/debug.h>
 
-extern int task_slots_unused;
-extern struct task_struct *next_task_slot;
-
 static void reparent_children(void)
 {
     register struct task_struct *p;
@@ -116,24 +113,7 @@ void do_exit(int status)
     /* free program allocated memory */
     seg_free_pid(current->pid);
 
-#if BLOAT
-    /* Keep all of the family stuff straight */
-    struct task_struct *task;
-    if ((task = current->p_prevsib)) {
-        task->p_nextsib = current->p_nextsib;
-    }
-    if ((task = current->p_nextsib)) {
-        task->p_prevsib = current->p_prevsib;
-    }
-
-    /* Ack. I hate repeating code like this */
-    if ((parent = current->p_parent)->p_child == current) {
-        if ((task = current->p_prevsib) || (task = current->p_nextsib))
-            parent->p_child = task;
-    }
-#else
     parent = current->p_parent;
-#endif
 
     /* UN*X process take their children out with them...
      * I'm not going to implement that for 0.0.51 because we don't

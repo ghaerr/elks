@@ -21,23 +21,19 @@ typedef struct segment segment_s;
 #define SEG_FLAG_USED	 0x80
 #define SEG_FLAG_ALIGN1K 0x40
 #define SEG_FLAG_TYPE	 0x0F
-#define SEG_FLAG_CSEG	 0x01
-#define SEG_FLAG_DSEG	 0x02
-#define SEG_FLAG_EXTBUF	 0x03
-#define SEG_FLAG_RAMDSK	 0x04
-#define SEG_FLAG_PROG	 0x05
+#define SEG_FLAG_CSEG	 0x01   /* application code segment */
+#define SEG_FLAG_DSEG	 0x02   /* application data segment */
+#define SEG_FLAG_EXTBUF	 0x03   /* ext/main memory buffers */
+#define SEG_FLAG_RAMDSK	 0x04   /* ram disk buffers */
+#define SEG_FLAG_PROG	 0x05   /* application fmemalloc buffers */
 
 #ifdef __KERNEL__
 
 #include <linuxmt/kernel.h>
 
-/*@-namechecks@*/
-
 void memcpy_fromfs(void *,void *,size_t);
 void memcpy_tofs(void *,void *,size_t);
 int strlen_fromfs(void *,size_t);
-
-/*@+namechecks@*/
 
 #define VERIFY_READ 0
 #define VERIFY_WRITE 1
@@ -68,5 +64,6 @@ void seg_free_pid(pid_t pid);
 
 void mm_get_usage (unsigned int * free, unsigned int * used);
 
-#endif // __KERNEL__
-#endif // !__LINUXMT_MM_H
+#endif /* __KERNEL__ */
+
+#endif

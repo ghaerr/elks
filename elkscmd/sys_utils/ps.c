@@ -10,7 +10,7 @@
  * Enhanced by Greg Haerr 17 Apr 2020
  */
 #define __KERNEL__
-#include <linuxmt/ntty.h>
+#include <linuxmt/ntty.h>       /* for struct tty */
 #undef __KERNEL__
 
 #include <autoconf.h>           /* for CONFIG_ options */
@@ -31,8 +31,11 @@
 #include <pwd.h>
 #include <getopt.h>
 #include <paths.h>
+#include <libgen.h>
 
 #define LINEARADDRESS(off, seg)		((off_t) (((off_t)seg << 4) + off))
+
+static int maxtasks;
 
 int memread(int fd, word_t off, word_t seg, void *buf, int size)
 {
@@ -120,12 +123,16 @@ int main(int argc, char **argv)
 	int c, fd;
 	unsigned int j, ds, off;
 	word_t cseg, dseg;
-	struct task_struct task_table;
 	struct passwd * pwent;
     int f_listall = 0;
-    char *progname = argv[0];
-    int f_uptime = !strcmp(progname, "uptime");
+    char *progname;
+    int f_uptime;
+    struct task_struct task_table;
 
+    if ((progname = strrchr(argv[0], '/')) != NULL)
+        progname++;
+    else progname = argv[0];
+    f_uptime = !strcmp(progname, "uptime");
     while ((c = getopt(argc, argv, "lu")) != -1) {
         switch (c) {
         case 'l':       /* list all - CSEG/DSEG */
@@ -144,7 +151,8 @@ int main(int argc, char **argv)
 		printf("ps: no /dev/kmem\n");
 		return 1;
 	}
-	if (ioctl(fd, MEM_GETDS, &ds) < 0) {
+	if (ioctl(fd, MEM_GETDS, &ds) < 0 ||
+		ioctl(fd, MEM_GETMAXTASKS, &maxtasks) < 0) {
 		printf("ps: ioctl mem_getds\n");
 		return 1;
 	}
@@ -185,7 +193,7 @@ int main(int argc, char **argv)
     printf(" ");
 	if (f_listall) printf("CSEG DSEG ");
 	printf(" HEAP  FREE   SIZE COMMAND\n");
-	for (j = 1; j < MAX_TASKS; j++) {
+	for (j = 1; j < maxtasks; j++) {
 		if (!memread(fd, off + j*sizeof(struct task_struct), ds, &task_table, sizeof(task_table))) {
 			printf("ps: memread\n");
 			return 1;

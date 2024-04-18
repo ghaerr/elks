@@ -22,10 +22,6 @@ mainmenu_option next_comment
 		bool 'VGA adapter'      CONFIG_HW_VGA       y
 		bool 'Serial port FIFO' CONFIG_HW_SERIAL_FIFO y
 
-		comment 'BIOS support'
-
-		bool 'Advanced Power Management support'         CONFIG_APM y
-
 	elif [ "$CONFIG_ARCH_8018X" = "y" ]; then
 
 		comment 'Devices'
@@ -38,11 +34,12 @@ mainmenu_option next_comment
 		int 'INT0 Logical IRQ' CONFIG_8018X_INT3 0
 		int 'INT0 Logical IRQ' CONFIG_8018X_INT4 0
 
+		define_bool CONFIG_CONSOLE_DIRECT   n
+		define_bool CONFIG_CONSOLE_8018X    y
+
 	elif [ "$CONFIG_ARCH_PC98" = "y" ]; then
 
 		comment 'Devices'
-
-		define_bool CONFIG_APM n
 
 	fi
 

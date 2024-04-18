@@ -43,8 +43,9 @@ MINIX_MKFSOPTS=
 # -k		only update offsets 11 through 61 in boot block, all else unchanged
 # -N 0		serial number 0
 # -v label	volume label (don't use with first format as uses two directory entries)
+# -m 0xfe   media descriptor
 ifdef CONFIG_IMG_FD1232
-FAT_MKFSOPTS = -s 8 -h 2 -t 77 -M 1024 -d 2 -L 2 -r 6 -k -N 0 -c 1
+FAT_MKFSOPTS = -s 8 -h 2 -t 77 -M 1024 -d 2 -L 2 -r 6 -k -N 0 -c 1 -m 0xfe
 else
 FAT_MKFSOPTS = -f $(TARGET_BLKS) -M 512 -d 2 -L 9 -r 14 -k -N 0 -c 1
 endif
@@ -117,10 +118,6 @@ endif
 # FAT16 HD, cluster size 2, autocalc num root directory sectors
 FAT_MKFSOPTS = -s $(CONFIG_IMG_SECT) -h $(CONFIG_IMG_HEAD) -t $(CONFIG_IMG_CYL) \
 					-M 512 -d 2 -k -N 0 -c 2
-endif
-
-ifdef CONFIG_IMG_RAW
-TARGET_FILE = $(IMG_DIR)/fd.img
 endif
 
 # override default image name if NAME specified

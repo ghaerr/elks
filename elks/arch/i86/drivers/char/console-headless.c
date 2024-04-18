@@ -5,7 +5,6 @@
  *
  * Oct 2020 Greg Haerr
  */
-#include <linuxmt/types.h>
 #include <linuxmt/config.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/kernel.h>

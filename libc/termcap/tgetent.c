@@ -290,7 +290,7 @@ int li, co;
 int
 tgetent(char *bp, const char *name)
 {
-  register char *termcap_name;
+  char *termcap_name, *term_name;
   register int fd;
   struct termcap_buffer buf;
   register char *bp1;
@@ -320,7 +320,7 @@ tgetent(char *bp, const char *name)
      it is the entry itself, but only if
      the name the caller requested matches the TERM variable.  */
 
-  if (termcap_name && !filep && !strcmp (name, getenv ("TERM")))
+  if (termcap_name && !filep && (term_name = getenv("TERM")) && !strcmp (name, term_name))
     {
       indirect = termcap_tgetst1 (termcap_find_capability (termcap_name, "tc"), (char **) 0);
       if (!indirect)

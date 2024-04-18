@@ -12,7 +12,6 @@
  * VFS interface to the character drivers (what a mouthful! :)  
  */
 
-#include <linuxmt/types.h>
 #include <linuxmt/config.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/fs.h>
@@ -28,6 +27,7 @@
 #include <linuxmt/init.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/heap.h>
+#include <arch/irq.h>
 
 /* default termios, set at init time, not reset at open*/
 struct termios def_vals = {
@@ -433,9 +433,6 @@ int tty_select(struct inode *inode, struct file *file, int sel_type)
         ret = (tty->outq.len != tty->outq.size);
         if (!ret)
             select_wait(&tty->outq.wait);
-            /*@fallthrough@*/
-/*      case SEL_EX: */
-/*      break; */
     }
     return ret;
 }
@@ -449,8 +446,6 @@ int wait_for_keypress(void)
     set_irq();
     return chq_wait_rd(&ttys[0].inq, 0);
 }
-
-/*@-type@*/
 
 static struct file_operations tty_fops = {
     pipe_lseek,                 /* Same behavoir, return -ESPIPE */

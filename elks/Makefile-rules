@@ -58,7 +58,7 @@ include $(TOPDIR)/Make.defs
 VERSION     = 0	# (0-255)
 PATCHLEVEL  = 8	# (0-255)
 SUBLEVEL    = 0	# (0-255)
-PRE         = -dev
+PRE         = -pre1
 
 #########################################################################
 # Specify the architecture we will use.
@@ -170,7 +170,7 @@ LHFLAGS 	= $(LCFLAGS) -exportfcn -declundef -fcnuse -fielduse \
 ifneq ($(USEBCC), N)
 
 ################################
-# Definitions using ia16-unknown-elks-gcc compiler
+# Definitions using ia16-elf-gcc compiler
 
 AS      = ia16-elf-as
 ASFLAGS = $(CPU_AS) $(ARCH_AS) --32-segelf

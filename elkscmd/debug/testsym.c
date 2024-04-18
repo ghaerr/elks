@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include "instrument.h"
-#include "syms.h"
+#include "debug/instrument.h"
+#include "debug/syms.h"
 
 void z()
 {
@@ -21,12 +21,12 @@ void x()
 {
     extern long lseek();
 
-    //printf("x = %s\n", sym_text_symbol(x, 1));
-    //printf("strlen+3 = %s\n", sym_text_symbol(strlen+3, 1));
-    //printf("strlen = %s\n", sym_text_symbol(sym_fn_start_address(strlen+3), 1));
-    //printf("lseek+20 = %s\n", sym_text_symbol(lseek+32, 1));
-    //printf(".shift_loop = %s\n", sym_text_symbol((void *)0x0C71, 1));
-    //printf("errno = %s\n", sym_data_symbol(&errno, 1));
+    //printf("x = %s\n", sym_text_symbol(x, -1));
+    //printf("strlen+3 = %s\n", sym_text_symbol(strlen+3, 3));
+    //printf("strlen = %s\n", sym_text_symbol(sym_fn_start_address(strlen+3), 3));
+    //printf("lseek+20 = %s\n", sym_text_symbol(lseek+32, 32));
+    //printf(".shift_loop = %s\n", sym_text_symbol((void *)0x110b, -1));
+    //printf("errno = %s\n", sym_data_symbol(&errno, -1));
     y(1);
 }
 

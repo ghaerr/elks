@@ -378,10 +378,6 @@ static void minix_read_inode(register struct inode *inode)
 	memcpy(inode->u.minix_i.i_zone, raw_inode->i_zone, 18);
 	inode->i_ctime = inode->i_atime = inode->i_mtime;
 
-#ifdef BLOAT_FS
-	inode->i_blocks = inode->i_blksize = 0;
-#endif
-
 	if (S_ISCHR(inode->i_mode) || S_ISBLK(inode->i_mode))
 	    inode->i_rdev = to_kdev_t(inode->u.minix_i.i_zone[0]);
 	unmap_brelse(bh);
@@ -416,7 +412,7 @@ void minix_write_inode(struct inode *inode)
     brelse(minix_update_inode(inode));
 }
 
-#ifdef BLOAT_FS
+#if UNUSED
 int minix_sync_inode(register struct inode *inode)
 {
     int err = 0;

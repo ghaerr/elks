@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdint.h>
-#include <memory.h>
+#include <string.h>
 
 #include "arch/io.h"
 #include "arch/8018x.h"

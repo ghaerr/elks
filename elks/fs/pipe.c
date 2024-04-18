@@ -69,8 +69,6 @@ int pipe_lseek(struct inode *inode, struct file *file, loff_t offset,
     return -ESPIPE;
 }
 
-#ifdef CONFIG_PIPE
-
 /* pipes are allocated from kernel local heap */
 static unsigned char *get_pipe_mem(void)
 {
@@ -214,12 +212,8 @@ static int pipe_rdwr_open(register struct inode *inode,
 
     if (!PIPE_BASE(inode)) {
         if (!(PIPE_BASE(inode) = get_pipe_mem())) return -ENOMEM;
+        /* PIPE_ fields set to zero by new_inode() */
         PIPE_SIZE(inode) = PIPE_BUFSIZ;
-#if NOTNEEDED /* next fields already set to zero by get_empty_inode() */
-        PIPE_HEAD(inode) = PIPE_TAIL(inode) = PIPE_LEN(inode) = 0;
-        PIPE_RD_OPENERS(inode) = PIPE_WR_OPENERS(inode) = 0;
-        PIPE_READERS(inode) = PIPE_WRITERS(inode) = 0;
-#endif
     }
     if (filp->f_mode & FMODE_READ) {
         PIPE_READERS(inode)++;
@@ -256,8 +250,6 @@ static size_t bad_pipe_rw(struct inode *inode, struct file *filp,
 
     return -EBADF;
 }
-
-/*@-type@*/
 
 struct file_operations read_pipe_fops = {
     pipe_lseek, pipe_read, bad_pipe_rw, NULL,   /* no readdir */
@@ -345,5 +337,3 @@ int sys_pipe(unsigned int *filedes)
 
     return verified_memcpy_tofs(filedes, fd, 2 * sizeof(int));
 }
-
-#endif

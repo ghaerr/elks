@@ -10,7 +10,7 @@ include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
-PRGS = fm matrix cons ttyinfo sl
+PRGS = fm matrix cons ttyinfo sl ttyclock ttypong ttytetris
 
 #PRGS_HOST =
 
@@ -32,6 +32,15 @@ ttyinfo: ttyinfo.o $(TUILIB)
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 sl: sl.o curses.o tty.o unikey.o
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+ttyclock: ttyclock.o curses.o curses2.o tty.o unikey.o
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+ttypong: ttypong.o curses.o curses2.o tty.o unikey.o
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+ttytetris: ttytetris.o tetris-frame.o tetris-shapes.o tetris-util.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 install: $(PRGS)

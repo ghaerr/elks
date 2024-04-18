@@ -209,7 +209,7 @@ int dostat_inode(struct minix_fs_dat *fs, int inode) {
     struct minix2_inode *ino = INODE2(fs,inode);
 	symlink = S_ISLNK(ino->i_mode);
     outmode(ino->i_mode);
-    printf(" %2d %3d ",ino->i_nlinks, inode);
+    printf(" %2d %5d ",ino->i_nlinks, inode);
     printf("%3d,%3d ",ino->i_uid,ino->i_gid);
     if (S_ISCHR(ino->i_mode) || S_ISBLK(ino->i_mode))
       printf("%2d, %3d ", (ino->i_zone[0]>>8) & 0xff, ino->i_zone[0] & 0xff);

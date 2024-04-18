@@ -1,0 +1,40 @@
+.TH fsck-dos 8
+.SH NAME
+fsck-dos \- DOS (FAT) file system consistency checker
+.SH SYNOPSIS
+.B fsck-dos
+.B [\-pfny]
+.I filesystem
+.SH DESCRIPTION
+The
+.BR fsck-dos
+utility verifies and repairs FAT file systems (more commonly known as DOS file systems). It checks the specified filesystem and tries to repair all detected inconsistencies, requesting confirmation before making any changes.
+
+If the 
+.B -p
+flag is given, fsck-dos preens the specified filesystem. It may be normally started this way when run from /etc/mount.cfg during automatic reboot, when a FAT file system is detected. When preening file systems, fsck-dos will fix common inconsistencies non-interactively. If more serious problems are found, fsck-dos does not try to fix them, indicates that it was not successful, and exits.
+.SH OPTIONS
+.TP
+.B "-p"
+Preen the specified filesystem.
+.TP
+.B "-f"
+Don't skip cleaning file systems if preening; that is, perform all filesystem checks.
+.TP
+.B "-n"
+Assume a “no” response to all questions asked by fsck-dos. The filesystem will not be opened for writing. This is the default for file systems to be checked that are concurrently mounted writable.
+.TP
+.B "-y"
+Causes fsck-dos to assume “yes” as the answer to all operator questions.
+.SH EXAMPLES
+.TP 30
+.B fsck-dos \-fp fsck-dos /dev/fd0
+# Check integrity of DOS filesystem on first floppy drive.
+.TP 30
+.B fsck-dos \-y /dev/fd1
+# Check and automatically repair DOS filesystem on second floppy.
+.SH SEE ALSO
+.BR fsck (8),
+.BR mkfs (8),
+.BR mount (2),
+.BR umount (8).

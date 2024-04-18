@@ -16,8 +16,6 @@ PRGS = basic
 OBJS = basic.o host.o
 #MAPFILE = -Wl,-Map=basic.map
 
-#HOSTPRGS = hostbasic
-
 # uncomment following four lines for --ftrace function tracing
 #CFLAGS += -finstrument-functions-simple
 #CFLAGS += -fno-optimize-sibling-calls -fno-omit-frame-pointer
@@ -36,7 +34,12 @@ ifeq ($(CONFIG_ARCH_PC98), y)
 OBJS += host-pc98.o intC5-pc98.o
 endif
 
-all: $(PRGS) $(HOSTPRGS)
+HOSTPRGS = hostbasic
+
+all: $(PRGS)
+
+.PHONY: host
+host: $(HOSTPRGS)
 
 basic: $(OBJS) basic.h host.h
 	$(LD) $(LDFLAGS) $(MAPFILE) -o basic $(OBJS) $(LDLIBS)
@@ -44,7 +47,8 @@ basic: $(OBJS) basic.h host.h
 HOSTSRC = basic.c host.c host-stubs.c
 HOSTSRC += ../../libc/misc/ecvt.c
 HOSTSRC += ../../libc/misc/dtostr.c
-hostbasic: $(HOSTSRC) host.h basic.h
+
+hostbasic: $(HOSTSRC)
 	$(HOSTCC) $(HOSTCFLAGS) $(HOSTSRC) -o $@
 
 install: $(PRGS)

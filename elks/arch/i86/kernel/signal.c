@@ -18,6 +18,7 @@
 #include <linuxmt/memory.h>
 
 #include <arch/segment.h>
+#include <arch/irq.h>
 
 int do_signal(void)
 {

@@ -17,7 +17,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-static char buffer[BUFSIZ];
 static int uflag = 1;			/* default is union of -d and -u outputs */
 static int dflag = 1;			/* flags are mutually exclusive */
 static int cflag = 0;
@@ -35,7 +34,6 @@ static FILE *xfopen(const char *fn, const char *mode)
 
   if ((p = fopen(fn, mode)) == NULL) {
 	perror("uniq");
-	fflush(stdout);
 	exit(1);
   }
   return(p);
@@ -127,7 +125,6 @@ int main(int argc, char **argv)
   char *p;
   int inf = -1;
 
-  setbuf(stdout, buffer);
   for (--argc, ++argv; argc > 0 && (**argv == '-' || **argv == '+');
        --argc, ++argv) {
 	if (**argv == '+')
@@ -168,7 +165,6 @@ int main(int argc, char **argv)
   }
 
   uniq();
-  fflush(stdout);
   exit(0);
 
 usage:

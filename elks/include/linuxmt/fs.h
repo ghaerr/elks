@@ -20,9 +20,7 @@
 #include <arch/statfs.h>
 #include <arch/segment.h>
 
-#ifdef CONFIG_PIPE
 #include <linuxmt/pipe_fs_i.h>
-#endif
 
 #ifdef CONFIG_MINIX_FS
 #include <linuxmt/minix_fs.h>
@@ -73,15 +71,17 @@
  * These are the fs-independent mount-flags: up to 16 flags are supported
  */
 #define MS_RDONLY           1   /* mount read-only */
-#define MS_NOSUID           2   /* ignore suid and sgid bits */
 #define MS_NODEV            4   /* disallow access to device special files */
-#define MS_NOEXEC           8   /* disallow program execution */
-#define MS_SYNCHRONOUS     16   /* writes are synced at once */
 #define MS_REMOUNT         32   /* alter flags of a mounted FS */
 #define MS_AUTOMOUNT       64   /* auto mount based on superblock */
-
 #define S_APPEND          256   /* append-only file */
+
+#if UNUSED
+#define MS_NOSUID           2   /* ignore suid and sgid bits */
+#define MS_NOEXEC           8   /* disallow program execution */
+#define MS_SYNCHRONOUS     16   /* writes are synced at once */
 #define S_IMMUTABLE       512   /* immutable file */
+#endif
 
 /*
  * Flags that can be altered by MS_REMOUNT
@@ -100,13 +100,16 @@
  */
 
 #define IS_RDONLY(inode) (((inode)->i_sb) && ((inode)->i_sb->s_flags & MS_RDONLY))
-#define IS_NOSUID(inode) ((inode)->i_flags & MS_NOSUID)
 #define IS_NODEV(inode) ((inode)->i_flags & MS_NODEV)
-#define IS_NOEXEC(inode) ((inode)->i_flags & MS_NOEXEC)
-#define IS_SYNC(inode) ((inode)->i_flags & MS_SYNCHRONOUS)
 
 #define IS_APPEND(inode) ((inode)->i_flags & S_APPEND)
+
+#if UNUSED
+#define IS_NOSUID(inode) ((inode)->i_flags & MS_NOSUID)
+#define IS_NOEXEC(inode) ((inode)->i_flags & MS_NOEXEC)
+#define IS_SYNC(inode) ((inode)->i_flags & MS_SYNCHRONOUS)
 #define IS_IMMUTABLE(inode) ((inode)->i_flags & S_IMMUTABLE)
+#endif
 
 #ifdef CONFIG_FS_XMS_BUFFER
 #define CONFIG_FAR_BUFHEADS     /* split buffer_head and move to far memory */
@@ -163,7 +166,6 @@ typedef struct buffer_head      ext_buffer_head;
 #define BLOCK_WRITE     1
 
 void brelse(struct buffer_head *);
-void bforget(struct buffer_head *);
 void wait_on_buffer (struct buffer_head *);
 void lock_buffer (struct buffer_head *);
 void unlock_buffer (struct buffer_head *);
@@ -194,19 +196,9 @@ struct inode {
     unsigned char               i_lock;
     unsigned char               i_dirt;
     sem_t                       i_sem;
-#ifdef BLOAT_FS
-    unsigned long int           i_blksize;
-    unsigned long int           i_blocks;
-    unsigned long int           i_version;
-    unsigned short int          i_wcount;
-    unsigned char int           i_seek;
-    unsigned char int           i_update;
-#endif
 
     union {
-#ifdef CONFIG_PIPE
                 struct pipe_inode_info pipe_i;
-#endif
 #ifdef CONFIG_MINIX_FS
                 struct minix_inode_info minix_i;
 #endif
@@ -246,11 +238,6 @@ struct super_block {
     struct inode                *s_mounted;
     struct wait_queue           s_wait;
     char                        s_mntonname[MNAMELEN];
-#ifdef BLOAT_FS
-    unsigned char               s_rd_only;
-    __u32                       s_magic;
-    time_t                      s_time;
-#endif
     union {
 #ifdef CONFIG_MINIX_FS
                 struct minix_sb_info minix_sb;
@@ -287,11 +274,6 @@ struct file_operations {
     int                         (*ioctl) ();
     int                         (*open) ();
     void                        (*release) (struct inode *, struct file *);
-#ifdef BLOAT_FS
-    int                         (*fsync) ();
-    int                         (*check_media_change) ();
-    int                         (*revalidate) ();
-#endif
 };
 
 struct inode_operations {
@@ -318,9 +300,6 @@ struct super_operations {
     void                        (*write_super) ();
     int                         (*remount_fs) ();
     void                        (*statfs_kern) ();
-#ifdef BLOAT_FS
-    int                         (*notify_change) ();
-#endif
 };
 
 struct file_system_type {
@@ -339,7 +318,7 @@ struct file_system_type {
 #define ASYNCIO_REENTRANT     static
 #endif
 
-#ifdef BLOAT_FS
+#if USE_NOTIFY_CHANGE
 /*
  * Attribute flags.  These should be or-ed together to figure out what
  * has been changed!
@@ -411,11 +390,14 @@ extern struct inode_operations pipe_inode_operations;
 extern struct inode_operations sock_inode_operations;
 #endif
 
+extern int nr_inode;
+extern int nr_file;
+
 extern int fs_may_mount(kdev_t);
 extern int fs_may_umount(kdev_t,struct inode *);
 extern int fs_may_remount_ro(kdev_t);
 
-extern struct file file_array[];
+extern struct file *file_array;
 extern struct super_block super_blocks[];
 
 extern void invalidate_inodes(kdev_t);
@@ -479,22 +461,10 @@ extern char *buffer_data(struct buffer_head *);
 extern size_t block_read(struct inode *,struct file *,char *,size_t);
 extern size_t block_write(struct inode *,struct file *,char *,size_t);
 
-#ifdef CONFIG_EXEC_COMPRESS
-extern size_t decompress(char *buf, seg_t seg, size_t orig_size, size_t compr_size, int safety);
-#endif
-
 #ifdef CONFIG_BLK_DEV_FD
 extern int check_disk_change(kdev_t);
 #else
 #define check_disk_change(dev)      0
-#endif
-
-#ifdef BLOAT_FS
-extern int get_write_access(struct inode *);
-extern void put_write_access(struct inode *);
-#else
-#define get_write_access(_a)
-#define put_write_access(_a)
 #endif
 
 extern int _namei(const char *,struct inode *,int,struct inode **);

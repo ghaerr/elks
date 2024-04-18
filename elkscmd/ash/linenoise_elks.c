@@ -579,7 +579,6 @@ static void abFree(struct abuf *ab) {
 /* Helper of refreshSingleLine() and refreshMultiLine() to show hints
  * to the right of the prompt. */
 void refreshShowHints(struct abuf *ab, struct linenoiseState *l, int plen) {
-    char seq[64];
     if (hintsCallback && plen+l->len < l->cols) {
         int color = -1, bold = 0;
         char *hint = hintsCallback(l->buf,&color,&bold);
@@ -589,10 +588,11 @@ void refreshShowHints(struct abuf *ab, struct linenoiseState *l, int plen) {
             if (hintlen > hintmaxlen) hintlen = hintmaxlen;
             if (bold == 1 && color == -1) color = 37;
             if (color != -1 || bold != 0)
+            {
+                char seq[64];
                 fmtstr(seq, sizeof(seq), "\033[%d;%d;49m",bold,color);
-            else
-                seq[0] = '\0';
-            abAppend(ab,seq,strlen(seq));
+                abAppend(ab, seq, strlen(seq));
+            }
             abAppend(ab,hint,hintlen);
             if (color != -1 || bold != 0)
                 abAppend(ab,"\033[0m",4);
@@ -627,8 +627,7 @@ static void refreshSingleLine(struct linenoiseState *l) {
 
     abInit(&ab);
     /* Cursor to left edge */
-    strcpy(seq, "\r");
-    abAppend(&ab,seq,strlen(seq));
+    abAppend(&ab,"\r",1);
     /* Write the prompt and the current buffer content */
     abAppend(&ab,l->prompt,strlen(l->prompt));
     if (maskmode == 1) {
@@ -712,8 +711,7 @@ static void refreshMultiLine(struct linenoiseState *l) {
     {
         lndebug("<newline>");
         abAppend(&ab,"\n",1);
-        strcpy(seq, "\r");
-        abAppend(&ab,seq,strlen(seq));
+        abAppend(&ab,"\r",1);
         rows++;
         if (rows > (int)l->maxrows) l->maxrows = rows;
     }

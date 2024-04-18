@@ -1,8 +1,7 @@
 miniterm
 compress
-compress.host
+hostcompress
 ed
-fdtest
 float
 tar
 od

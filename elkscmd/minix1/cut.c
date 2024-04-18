@@ -36,7 +36,6 @@
 #define MAX_ARGS	32	/* Maximum number of fields following -f or
 				 * -c switches */
 int args[MAX_ARGS * 2];
-int num_args;
 
 /* Lots of new defines, should ease maintainance */
 #define DUMP_STDIN	0	/* define for mode: no options	 */
@@ -63,7 +62,6 @@ int num_args;
 #define MAX_ARGS_EXEEDED_ERROR		107
 
 
-static int mode;		/* 0 = dump stdin to stdout, 1=-f, 2=-c   */
 static int flag_i;		/* SET = -i set on command line	 */
 static int flag_s;		/* SET = -s set on command line	 */
 static char delim = '\t';	/* default delimiting character	  */
@@ -107,13 +105,13 @@ int err;
 }
 
 
-void get_args()
+int get_args()
 {
   int i = 0;
   int arg_ptr = 0;
   int flag;
+  int num_args = 0;
 
-  num_args = 0;
   do {
 	if (num_args == MAX_ARGS) cuterror(MAX_ARGS_EXEEDED_ERROR);
 	if (!isdigit(line[i]) && line[i] != '-') cuterror(SYNTAX_ERROR);
@@ -143,10 +141,11 @@ void get_args()
 	arg_ptr = num_args * 2;
   }
   while (line[i++]);
+  return num_args;
 }
 
 
-void cut()
+void cut(int mode, int num_args)
 {
   int i, j, length, maxcol = 0;
   char *columns[MAX_FIELD];
@@ -201,6 +200,8 @@ void cut()
 
 int main(int argc, char **argv)
 {
+  int mode;		/* 0 = dump stdin to stdout, 1=-f, 2=-c   */
+  int num_args;
   int i = 1;
   int numberFilenames = 0;
   name = argv[0];
@@ -216,19 +217,19 @@ int main(int argc, char **argv)
 			delim = argv[i++][0];
 			break;
 		    case 'f':
-			sprintf(line, "%s", argv[i++]);
+			strcpy(line, argv[i++]);
 			if (mode == OPTIONC || mode == OPTIONB)
 				warn(OVERRIDING_PREVIOUS_MODE, "f");
 			mode = OPTIONF;
 			break;
 		    case 'b':
-			sprintf(line, "%s", argv[i++]);
+			strcpy(line, argv[i++]);
 			if (mode == OPTIONF || mode == OPTIONC)
 				warn(OVERRIDING_PREVIOUS_MODE, "b");
 			mode = OPTIONB;
 			break;
 		    case 'c':
-			sprintf(line, "%s", argv[i++]);
+			strcpy(line, argv[i++]);
 			if (mode == OPTIONF || mode == OPTIONB)
 				warn(OVERRIDING_PREVIOUS_MODE, "c");
 			mode = OPTIONC;
@@ -265,7 +266,7 @@ int main(int argc, char **argv)
 	warn(OPTION_NOT_APPLICABLE, "s");
 	flag_i = NOTSET;
   }
-  get_args();
+  num_args = get_args();
   if (numberFilenames != 0) {
 	i = 1;
 	while (i < argc) {
@@ -279,9 +280,9 @@ int main(int argc, char **argv)
 			    case 'i':
 			    case 's':	i++;	break;
 			    case '\0':
-				fd = stdin;
 				i++;
-				cut();
+				fd = stdin;
+				cut(mode, num_args);
 				break;
 			    default:	i++;
 			}
@@ -289,14 +290,14 @@ int main(int argc, char **argv)
 			if ((fd = fopen(argv[i++], "r")) == NULL) {
 				warn(FILE_NOT_READABLE, argv[i - 1]);
 			} else {
-				cut();
+				cut(mode, num_args);
 				fclose(fd);
 			}
 		}
 	}
   } else {
 	fd = stdin;
-	cut();
+	cut(mode, num_args);
   }
 
   exit(exit_status);

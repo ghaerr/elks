@@ -130,26 +130,40 @@ endif
 #
 ifdef CONFIG_APPS_360K
 	TAGS = :boot|:360k|
+ifdef CONFIG_APPS_COMPRESS
+	TAGS += :360c|
+endif
 endif
 
 ifdef CONFIG_APPS_720K
-	TAGS = :boot|:360k|:net|:720k|
+	TAGS = :boot|:360k|:720k|:net|
 endif
 
 ifdef CONFIG_APPS_1200K
-	TAGS = :boot|:360k|:net|:720k|:1200k|
+	TAGS = :boot|:360k|:720k|:1200k|:net|
+ifdef CONFIG_APPS_COMPRESS
+	TAGS += :360c|:1200c|:1440k|
+endif
 endif
 
 ifdef CONFIG_APPS_1232K
-	TAGS = :boot|:360k|:net|:720k|:1200k|
+	TAGS = :boot|:360k|:720k|:1200k|:1232k|
+ifdef CONFIG_APPS_COMPRESS
+	# does not include :1200c
+	TAGS += :360c|:1232c|
+endif
 endif
 
 ifdef CONFIG_APPS_1440K
-	TAGS = :boot|:360k|:net|:720k|:1200k|:1440k|
+	TAGS = :boot|:360k|:720k|:1200k|:1440k|:net|
+ifdef CONFIG_APPS_COMPRESS
+	# does not include :1232c
+	TAGS += :360c|:1200c|:1440c|
+endif
 endif
 
 ifdef CONFIG_APPS_2880K
-    # below TAGS relies on :ash rule following :defsash rule in Applications
+	# below TAGS relies on :ash rule following :defsash rule in Applications
 	TAGS = :*|
 	CONFIG_APP_MAN_PAGES=y
 endif
@@ -211,9 +225,6 @@ ifdef CONFIG_APP_BUSYELKS
 	$(MAKE) -C busyelks links
 endif
 	for DIR in $(INSTDIRS); do $(MAKE) -C $$DIR install || exit 1; done
-ifdef CONFIG_APP_CGATEXT
-	$(MAKE) -C cgatext install
-endif
 ifdef CONFIG_APP_ROMPRG
 	$(MAKE) -C romprg install
 endif

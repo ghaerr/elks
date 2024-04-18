@@ -342,14 +342,10 @@ static struct super_block * romfs_read_super (struct super_block * s, void * dat
 		s->u.romfs.icount = rsm.icount;
 
 		/*s->s_flags |= MS_RDONLY;*/
+		/*s->s_magic = ROMFS_MAGIC;*/
 		s->s_op = &romfs_super_ops;
 
-#ifdef BLOAT_FS
-		s->s_magic = ROMFS_MAGIC;
-#endif
-
 		/* Get the root inode */
-
 		i = iget (s, 1);
 		if (!i) {
 			printk ("romfs: cannot get root inode\n");

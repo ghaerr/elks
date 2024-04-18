@@ -1,7 +1,7 @@
 #include <unistd.h>
 
 int
-execvp(char *fname, char **argv)
+execvp(const char *fname, char **argv)
 {
    return execvpe(fname, argv, environ);
 }
