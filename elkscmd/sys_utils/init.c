@@ -216,7 +216,7 @@ void scanFile(void func())
 	while (fgets(buf, BUFSIZE, fp)) {
 		if (buf[strlen(buf)-1] == '\n')
 			buf[strlen(buf)-1] = '\0';
-        debug("[buf='%s',%d]\n", buf, strlen(buf));
+		debug("[buf='%s',%d]\n", buf, strlen(buf));
 		parseLine(buf, func);
 	}
 	fclose(fp);
@@ -305,7 +305,9 @@ pid_t respawn(const char **a)
 	    dup2(fd ,STDOUT_FILENO);
 	    dup2(fd ,STDERR_FILENO);
 	    if (fd > STDERR_FILENO)
-		close(fd);
+			close(fd);
+	    for (fd = 3; fd < NR_OPEN; fd++)
+			close(fd);
 	    execv(argv[0], argv);
 	}
 	else
@@ -323,7 +325,9 @@ pid_t respawn(const char **a)
 	    dup2(fd ,STDOUT_FILENO);
 	    dup2(fd ,STDERR_FILENO);
 	    if (fd > STDERR_FILENO)
-		close(fd);
+			close(fd);
+	    for (fd = 3; fd < NR_OPEN; fd++)
+			close(fd);
 	    execv(argv[0], argv);
 	}
 
