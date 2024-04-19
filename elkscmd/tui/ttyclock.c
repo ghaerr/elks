@@ -55,7 +55,7 @@ init(void)
 
      cbreak();
      noecho();
-     keypad(stdscr, TRUE);
+     keypad(stdscr, true);
      start_color();
      curs_set(false);
      clear();
