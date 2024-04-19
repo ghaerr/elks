@@ -117,7 +117,7 @@ static word_t conv_pcattr(word_t attr)
 
     if (fg_grb == bg_grb)
 	attr98 = fg_grb;        /* No display */
-    else if (fg_grb == 0)
+    else if (bg_grb != 0)
 	attr98 = 0x05 | bg_grb; /* Use bg color and invert */
     else
 	attr98 = 0x01 | fg_grb; /* Use fg color */
