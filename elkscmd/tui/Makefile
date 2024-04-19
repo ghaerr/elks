@@ -34,7 +34,7 @@ ttyinfo: ttyinfo.o $(TUILIB)
 sl: sl.o curses.o tty.o unikey.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
-ttyclock: ttyclock.o curses.o curses2.o tty.o unikey.o
+ttyclock: ttyclock.o curses.o curses2.o curses3.o tty.o unikey.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 ttypong: ttypong.o curses.o curses2.o tty.o unikey.o

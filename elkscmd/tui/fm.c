@@ -577,8 +577,11 @@ printent(struct entry *ent, int active)
 
 	attron(attr);
 	name[NAME_COLS] = '\0';
-	printw("%s%*s %9lu  %s", active ? CURSR : EMPTY, -NAME_COLS, name, ent->size,
-        timestring(ent->t));
+	printw("%s%*s ", active ? CURSR : EMPTY, -NAME_COLS, name);
+	if (S_ISBLK(ent->mode) || S_ISCHR(ent->mode))
+		printw("%3u, %3u", ent->size >> 8, ent->size & 0xff);
+	else printw("%9lu", ent->size);
+	printw(" %s", timestring(ent->t));
 	attroff(attr);
 	clrnl();
 }
@@ -611,9 +614,10 @@ dentfill(char *path, struct entry **dents,
 		r = lstat(newpath, &sb);
 		if (r == -1)
 			fatal("lstat");
-		(*dents)[n].mode = sb.st_mode;
 		(*dents)[n].t = sb.st_mtime;
-		(*dents)[n].size = sb.st_size;
+		(*dents)[n].mode = sb.st_mode;
+		r = S_ISBLK(sb.st_mode) || S_ISCHR(sb.st_mode);
+		(*dents)[n].size = r? sb.st_rdev: sb.st_size;
 		n++;
 	}
 

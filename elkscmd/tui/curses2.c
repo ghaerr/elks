@@ -118,33 +118,3 @@ void attroff(int a)
 {
     printf("\e[1;0;0m");
 }
-
-/*** for ttyclock *****************************/
-
-void wattron(WINDOW *w, int a)
-{
-    if (a & (A_BLINK|A_BOLD)) attroff(-1);
-    attron(a);
-}
-
-void wattroff(WINDOW *w, int a)
-{
-    if (a & (A_BLINK|A_BOLD)) attroff(-1);
-    attroff(a);
-}
-
-int wgetch()
-{
-    return getch();
-}
-
-void wbkgdset(WINDOW *w, int a)
-{
-    printf("\e[7m");
-    attron(a);
-}
-
-void wrefresh(WINDOW *w)
-{
-    printf("\e[m");
-}
