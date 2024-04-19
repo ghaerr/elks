@@ -51,16 +51,22 @@ void init_pair(int ndx, int fg, int bg);
 void *initscr();
 void endwin();
 int has_colors();
-void cbreak();
-void noecho();
-void nonl();
-void intrflush(void *, int);
-void keypad(void *, int);
-void echo();
 void erase();
+void nodelay();
+#define cbreak()
+#define noecho()
+#define echo()
+#define nonl()
+#define intrflush(w,flag)
+#define keypad(scr,flag)
+#define timeout(t)
+#define leaveok(w,f)
+#define scrollok(w,f)
+#define clear()             erase()
+#define werase(w)           erase()
+#define wgetch(w)           getch()
 
 void curs_set(int cursoron);
-void timeout(int t);
 void move(int y, int x);
 void clrnl(void);
 void clrtoeos(void);
@@ -72,9 +78,6 @@ void wgetnstr(void *, char *, int);
 void attron(int a);
 void attroff(int a);
 
-void scrollok(void *,int);
-void leaveok(void *,int);
-void nodelay(void *,int);
 void refresh();
 void mvcur(int,int,int,int);
 int mvaddch(int,int,int);
@@ -89,22 +92,19 @@ typedef struct window {
 typedef int chtype;
 
 /* partially implemented functions for ttyclock */
-SCREEN *newterm();
-WINDOW *newwin();
-void clear();
-void werase();
 void mvwaddch(WINDOW *w, int y, int x, int ch);
 void mvwaddstr(WINDOW *w, int y, int x, char *str);
 void mvwprintw(WINDOW *w, int y, int x, char *fmt, ...);
 void mvwin(WINDOW *w, int y, int x);
 void wrefresh(WINDOW *w);
-void delscreen();
-void set_term();
-void clearok();
-void box();
-void wborder();
-void wresize();
+#define newterm(type,ofd,ifd)   NULL
+#define newwin(l,c,y,x)         NULL
+#define delscreen(s)
+#define set_term(s)
+#define clearok(w,flag)
+#define box(w,y,x)
+#define wborder(w,a,b,c,d,e,f,g,h)
+#define wresize(win,h,w)
 void wattron(WINDOW *w, int a);
 void wattroff(WINDOW *w, int a);
-int wgetch();
 void wbkgdset(WINDOW *w, int a);
