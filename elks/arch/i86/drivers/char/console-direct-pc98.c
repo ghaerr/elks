@@ -115,7 +115,7 @@ static word_t conv_pcattr(word_t attr)
     fg_grb = grb[attr & 0x7];
     bg_grb = grb[(attr & 0x70) >> 4];
 
-    if (fg_grb == bg_grb)
+    if ((fg_grb == 0) && (bg_grb == 0))
 	attr98 = fg_grb;        /* No display */
     else if (bg_grb != 0)
 	attr98 = 0x05 | bg_grb; /* Use bg color and invert */
