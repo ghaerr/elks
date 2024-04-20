@@ -601,7 +601,7 @@ main(int argc, char **argv)
                       "    -D            Hide date                                      \n"
                       "    -B            Enable blinking colon                          \n"
                       "    -d delay      Set the delay between two redraws of the clock. Default 1s. \n"
-                      "    -a nsdelay    Additional delay between two redraws in nanoseconds. Default 0ns.\n");
+                      "    -a nsdelay    Delay between two redraws in nanoseconds.\n");
                exit(EXIT_SUCCESS);
                break;
           case 'i':
@@ -651,8 +651,7 @@ main(int argc, char **argv)
                ttyclock.option.blink = true;
                break;
           case 'a':
-               if(atol(optarg) >= 0 && atol(optarg) < 1000000000L)
-                    ttyclock.option.nsdelay = atol(optarg);
+               ttyclock.option.nsdelay = atol(optarg);
                break;
           case 'x':
                ttyclock.option.box = true;

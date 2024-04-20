@@ -40,48 +40,12 @@ int has_colors()
     return 1;
 }
 
-void cbreak()
-{
-}
-
-void noecho()
-{
-}
-
-void nonl()
-{
-}
-
-void intrflush(void *win, int bf)
-{
-}
-
-void keypad(void *win, int bf)
-{
-}
-
-void echo()
-{
-}
-
-void timeout(int t)
-{
-}
-
-void leaveok(void *win, int flag)
-{
-}
-
 void nodelay(void *win, int flag)
 {
     if (flag) {
         _tty_flags |= NoWait;
         tty_enable_unikey();
     }
-}
-
-void scrollok(void *win, int flag)
-{
 }
 
 void refresh()
@@ -148,59 +112,3 @@ void printw(char *fmt, ...)
     vfprintf(stdout,fmt,ptr);
     va_end(ptr);
 }
-
-/*** for ttyclock *****************************/
-
-SCREEN *newterm()
-{
-    return NULL;
-}
-
-WINDOW *newwin()
-{
-    return NULL;
-}
-
-void clear()
-{
-    erase();
-}
-
-void werase()
-{
-    erase();
-}
-
-void mvwaddch(WINDOW *w, int y, int x, int ch)
-{
-    mvaddch(y, x, ch);
-}
-
-void mvwaddstr(WINDOW *w, int y, int x, char *str)
-{
-    move(y, x);
-    printw(str);
-}
-
-void mvwprintw(WINDOW *w, int y, int x, char *fmt, ...)
-{
-    va_list ptr;
-
-    move(y, x);
-    va_start(ptr, fmt);
-    vfprintf(stdout,fmt,ptr);
-    va_end(ptr);
-}
-
-void mvwin(WINDOW *w, int y, int x)
-{
-    //yoff = y;
-    //xoff = x;
-}
-
-void delscreen()    {}
-void set_term()     {}
-void clearok()      {}
-void box()          {}
-void wborder()      {}
-void wresize()      {}

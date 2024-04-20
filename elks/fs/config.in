@@ -33,7 +33,8 @@ mainmenu_option next_comment
 	bool 'Support compressed executables'  CONFIG_EXEC_COMPRESS       y
 	if [ "$CONFIG_EXEC_COMPRESS" == "y" ]; then
 	    define_bool CONFIG_EXEC_MMODEL y
+	else
+	    bool 'Support medium memory model'     CONFIG_EXEC_MMODEL     y
 	fi
-	bool 'Support medium memory model'     CONFIG_EXEC_MMODEL         y
 
 endmenu

@@ -48,6 +48,7 @@
 #define BOTTOM_SIX_BITS  	0x3f
 
 /* local data*/
+static int		rawmode;    /* show raw mouse data */
 static int		mouse_fd;	/* file descriptor for mouse */
 static int		state;		/* IDLE, XSET, ... */
 static int		buttons;	/* current mouse buttons pressed*/
@@ -160,6 +161,11 @@ read_mouse(int *dx, int *dy, int *dz, int *bptr)
 				return 0;
 			return -1;
 		}
+	}
+	if (rawmode) {
+		while (nbytes-- > 0)
+			printf("%02x ", *bp++);
+		return 0;
 	}
 
 	/*
@@ -288,6 +294,8 @@ parseMS(int byte)
 int main(int argc, char **argv)
 {
 	int x, y, z, b;
+
+	rawmode = (argc > 1);
 
 	if(open_mouse() < 0)
 		return 1;
