@@ -39,9 +39,10 @@ getoptX(int argc, char *const *argv, const char *optstring)
 /* allowed args, e.g. "ab:c" */
 {
    static int sp = 1;		/* position within argument */
-   register int osp;		/* saved `sp' for param test */
 #ifndef STRICT
    register int oind;		/* saved `optind' for param test */
+#else
+   register int osp;		/* saved `sp' for param test */
 #endif
    register int c;		/* option letter */
    register char *cp;		/* -> option in `optstring' */
@@ -61,9 +62,9 @@ getoptX(int argc, char *const *argv, const char *optstring)
       }
    }
    c = argv[optind][sp];	/* option letter */
+#ifdef STRICT
    osp = sp++;			/* get ready for next letter */
-
-#ifndef STRICT
+#else
    oind = optind;		/* save optind for param test */
 #endif
    if (argv[optind][sp] == '\0')/* end of argument */
@@ -96,11 +97,13 @@ getoptX(int argc, char *const *argv, const char *optstring)
       else
 #endif
       if (optind >= argc)
+      {
 	 return Err(argv[0], "option requires an argument", c);
-
+      }
       else			/* argument w/ whitespace */
+      {
 	 optarg = argv[optind];
-
+      }
       ++optind;			/* skip over parameter */
    }
 
