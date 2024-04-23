@@ -63,8 +63,11 @@ getoptX(int argc, char *const *argv, const char *optstring)
    }
    c = argv[optind][sp];	/* option letter */
 #ifdef STRICT
-   osp = sp++;			/* get ready for next letter */
-#else
+   osp = sp;
+#endif
+   sp++;			/* get ready for next letter */
+
+#ifndef STRICT
    oind = optind;		/* save optind for param test */
 #endif
    if (argv[optind][sp] == '\0')/* end of argument */
