@@ -1,3 +1,4 @@
+#include <autoconf.h>       /* for CONFIG_ options */
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
@@ -18,7 +19,6 @@
  * clock [-u] -a  - set system time from cmos clock, adjust the time to
  *                  correct for systematic error, and put it back to the cmos.
  *  -u indicates cmos clock is kept in universal time
- *  [check the usage() function for an updated list of options]
  *
  * The program is designed to run setuid, since we need to be able to
  * write the CMOS port.
@@ -145,6 +145,8 @@
 
 #define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
 #define errstr(str) write(STDERR_FILENO, str, strlen(str))
+#define outmsg(str) write(STDOUT_FILENO, str, sizeof(str) - 1)
+#define outstr(str) write(STDOUT_FILENO, str, strlen(str))
 
 #define CMOS_CMDREG     0x70
 #define CMOS_IOREG      0x71
@@ -260,8 +262,6 @@ int cmos_probe(void)
     cmos_write(0xd, 0);
     if (((cmos_read(0xa) & 0x7f) == 0x26) && cmos_read(0xd))
         return 1;
-    //printf("CMOS status A %x, B %x, C %x, D %x\n", cmos_read(0xa), cmos_read(0xb),
-             //cmos_read(0xc), cmos_read(0xd));
     return 0;
 }
 
@@ -428,11 +428,11 @@ int main(int argc, char **argv)
 
     if (!cmos_probe()) {
         if (ast_chiptype() < 0) {
-            printf("No RTC found on system, not setting date and time\n");
+            errmsg("No RTC found on system, not setting date and time\n");
             exit(1);
         } else {
             if (verbose)
-                printf("No CMOS clock found, assuming AST\n");
+                outmsg("No CMOS clock found, assuming AST\n");
             astclock = 1;
             show_astclock();
         }
@@ -503,11 +503,8 @@ int main(int argc, char **argv)
     }
 
     if (readit) {
-        char   *p = ctime(&systime);
-        if (verbose)
-            printf("From %s: ", astclock ? "ASTclock" : "CMOS");
-        printf("%s", p);
-        //write(STDOUT_FILENO, p, strlen(p));
+        char *p = ctime(&systime);
+        outstr(p);
     }
 
     if (setit) {
