@@ -143,45 +143,16 @@
  * systems. Supports both NS and Ricoh chips.
  */
 
+#ifdef CONFIG_ARCH_IBMPC
 #define AST_SUPPORT     0       /* =1 to compile in AST hardware support */
+#else
+#define AST_SUPPORT     0
+#endif
 
 #define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
 #define errstr(str) write(STDERR_FILENO, str, strlen(str))
 #define outmsg(str) write(STDOUT_FILENO, str, sizeof(str) - 1)
 #define outstr(str) write(STDOUT_FILENO, str, strlen(str))
-
-#define CMOS_CMDREG     0x70
-#define CMOS_IOREG      0x71
-
-#define AST_CMDREG      0x2C0
-#define AST_IOREG       0x2C1
-
-#define AST_RETRY       1000
-
-/* for Nat Semi chip */
-#define AST_NS_MSEC     0x01
-#define AST_NS_SEC      0x02
-#define AST_NS_MIN      0x03    /* get minute cntr */
-#define AST_NS_HRS      0x04    /* get hour cntr */
-#define AST_NS_DOW      0x05    /* day of week */
-#define AST_NS_DOM      0x06    /* day of month */
-#define AST_NS_MON      0x07    /* month of year */
-#define AST_NS_YEAR     0x0A    /* year, counts from 1980 */
-#define AST_NS_STAT     0x14    /* get status bit */
-#define AST_NS_CRST     0x12    /* clear counters */
-#define AST_NS_GO       0x15    /* clear subsec counters */
-
-/* for Ricoh chip */
-#define AST_RI_SEC      0
-#define AST_RI_MIN      2
-#define AST_RI_HRS      4
-#define AST_RI_DOW      6       /* one reg, the others are two (BCD) */
-#define AST_RI_DOM      7
-#define AST_RI_MON      9
-#define AST_RI_YEAR     11
-
-#define AST_CHIPTYPE    0x0D    /* Distinguish between Ricoh and NS chip via
-                                 * this register */
 
 /* Globals */
 int readit;
@@ -191,174 +162,31 @@ int universal;
 int astclock;
 int verbose;
 
+#if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_8018X)
+void cmos_settime(struct tm *);
+void cmos_gettime(struct tm *);
+#endif
+
 #ifdef CONFIG_ARCH_PC98
-void    pc98_settime(struct tm *, unsigned char *);
-void    pc98_gettime(struct tm *, unsigned char *);
-void    pc98_write_calendar(unsigned int, unsigned int);
-void    pc98_read_calendar(unsigned int, unsigned int);
-#else
-void    cmos_settime(struct tm *);
-void    cmos_gettime(struct tm *);
+void pc98_settime(struct tm *, unsigned char *);
+void pc98_gettime(struct tm *, unsigned char *);
+void pc98_write_calendar(unsigned int, unsigned int);
+void pc98_read_calendar(unsigned int, unsigned int);
 #endif
 
 #if AST_SUPPORT
-void    ast_settime(struct tm *);
-void    ast_gettime(struct tm *);
+void ast_settime(struct tm *);
+void ast_gettime(struct tm *);
+int  ast_chiptype(void);
+int  cmos_probe(void);
 #endif
 
 int usage(void)
 {
-    errmsg("clock [-u] {-r,-w,-s,-v,-A}\n");
+    errmsg("clock [-u] {-r,-w,-s,-A}\n");
     exit(1);
 }
 
-#ifdef CONFIG_ARCH_8018X
-unsigned char cmos_read(unsigned char reg)
-{
-  register unsigned char ret;
-  clr_irq ();
-  ret = inb_p (CONFIG_8018X_RTC + reg);
-  set_irq ();
-  return ret;
-}
-
-void cmos_write(unsigned char reg, unsigned char val)
-{
-  clr_irq ();
-  outb_p (val, CONFIG_8018X_RTC + reg);
-  set_irq ();
-}
-
-#else
-
-unsigned char cmos_read(unsigned char reg)
-{
-    register unsigned char ret;
-
-    clr_irq();
-    outb_p(reg | 0x80, 0x70);
-    ret = inb_p(0x71);
-    set_irq();
-    return ret;
-}
-
-void cmos_write(unsigned char reg, unsigned char val)
-{
-    clr_irq();
-    outb_p(reg | 0x80, 0x70);
-    outb_p(val, 0x71);
-    set_irq();
-}
-#endif
-
-int cmos_read_bcd(int addr)
-{
-    int b;
-
-    b = cmos_read(addr);
-    return (b & 15) + (b >> 4) * 10;
-}
-
-void cmos_write_bcd(int addr, int value)
-{
-    cmos_write(addr, ((value / 10) << 4) + value % 10);
-}
-
-/* PROBE to verify existence: Read CMOS status register A, check
- * for sanity (0x26), ignore the UpdateInProgress flag (bit 7, comes and goes).
- * Then write 0 to status reg D, which is read only, and read it back.
- * Should always return 0x80. Bit 7 indicates RAM/TIME/battery OK, the
- * other bits are always zero. Return true if found.
- *
- * [Alternative method: Read all 4 status regs. If they're all the same
- *  there's nothing there. For reference, on physical systems the readback is 0x48,
- *  on emulators 0xff]
- */
-int cmos_probe(void)
-{
-    cmos_write(0xd, 0);
-    if (((cmos_read(0xa) & 0x7f) == 0x26) && cmos_read(0xd))
-        return 1;
-    return 0;
-}
-
-#if AST_SUPPORT
-void ast_putreg(unsigned char reg, unsigned char val)
-{
-    clr_irq();
-    outb_p(reg, AST_CMDREG);
-    outb_p(val, AST_IOREG);
-    set_irq();
-}
-
-void ast_putbcd(int addr, int value)
-{
-    ast_putreg(addr, ((value / 10) << 4) + value % 10);
-}
-
-/* The Ricoh has 4 bit addressing only, BCD values are in adjacent addresses */
-void ast_put_rbcd(int addr, int value)
-{
-    ast_putreg(addr, value % 10);
-    ast_putreg(addr + 1, value / 10);
-}
-
-int ast_getreg(int reg)
-{
-    outb(reg, AST_CMDREG);
-    return (inb(AST_IOREG));
-}
-
-int ast_getbcd(int reg)
-{
-    int val = ast_getreg(reg);
-
-    return ((val & 15) + (val >> 4) * 10);
-}
-
-int ast_get_rbcd(int reg)
-{
-    return ((ast_getreg(reg) & 0xf) + (ast_getreg(reg + 1) & 0xf) * 10);
-}
-
-/*
- * Per the AST app note, bit 1 in reg D may be used to determine which chip we're using.
- * This bit will always return 0 on the Ricoh, on the NS it's RAM and we'll read back what we write.
- * Returns 0 if Ricoh chip, 2 if NS chip, -1 if neither.
- */
-int ast_chiptype(void)
-{
-    int tmp = (ast_getreg(AST_CHIPTYPE) & 0xf) | 2;
-
-    /* 86box - when told to emulate ASTCLOCK, returns 2 from all registers */
-    /* Otherwise (all hw) returns 0xff */
-
-    if ((ast_getreg(1) + ast_getreg(2) + ast_getreg(3) + ast_getreg(4)) / 4 == ast_getreg(1))
-        return -1;
-
-    ast_putreg(AST_CHIPTYPE, tmp);
-    return (ast_getreg(AST_CHIPTYPE) & 0x2);
-}
-
-#if DEBUG
-void show_astclock(void)
-{
-    if (ast_chiptype()) {
-        printf("AST clock (NS): %d/%d/%d - %02d:%02d:%02d.%d\n", ast_getbcd(AST_NS_DOM), ast_getbcd(AST_NS_MON),
-               ast_getreg(AST_NS_YEAR) + 1980, ast_getbcd(AST_NS_HRS), ast_getbcd(AST_NS_MIN),
-               ast_getbcd(AST_NS_SEC), ast_getbcd(AST_NS_MSEC));
-        printf("Other regs 00:%d, 01:%d, 05:%d, 08:%d, 09:%d\n", ast_getreg(0), ast_getreg(1), ast_getreg(5),
-               ast_getreg(8), ast_getreg(9));
-    } else {
-        printf("AST clock (Ricoh): %d/%d/%d - %02d:%02d:%02d\n", ast_get_rbcd(AST_RI_DOM),
-               ast_get_rbcd(AST_RI_MON), ast_get_rbcd(AST_RI_YEAR) + 1980, ast_get_rbcd(AST_RI_HRS),
-               ast_get_rbcd(AST_RI_MIN), ast_get_rbcd(AST_RI_SEC));
-    }
-}
-#else
-#define show_astclock(x)
-#endif
-#endif
 
 /* our own happy mktime() replacement, with the following drawbacks: */
 /*    doesn't check boundary conditions */
@@ -437,9 +265,6 @@ int main(int argc, char **argv)
         case 'A':
             astclock = 1;
             break;
-        case 'v':
-            verbose = 1;
-            break;
         default:
             usage();
         }
@@ -451,10 +276,8 @@ int main(int argc, char **argv)
             errmsg("No RTC found on system, not setting date and time\n");
             exit(1);
         } else {
-            if (verbose)
-                outmsg("No CMOS clock found, assuming AST\n");
+            outmsg("No CMOS clock found, assuming AST\n");
             astclock = 1;
-            show_astclock();
         }
     }
 #endif
@@ -493,12 +316,12 @@ int main(int argc, char **argv)
             systime += timezone;
         }
 #if 0
-/*
- * mktime() assumes we're giving it local time.  If the CMOS clock
- * is in GMT, we have to set up TZ so mktime knows it.  tzset() gets
- * called implicitly by the time code, but only the first time.  When
- * changing the environment variable, better call tzset() explicitly.
- */
+        /*
+         * mktime() assumes we're giving it local time.  If the CMOS clock
+         * is in GMT, we have to set up TZ so mktime knows it.  tzset() gets
+         * called implicitly by the time code, but only the first time.  When
+         * changing the environment variable, better call tzset() explicitly.
+         */
         if (universal) {
             char *zone = (char *)getenv("TZ");  /* save original time zone */
             putenv("TZ=");
@@ -574,65 +397,64 @@ int main(int argc, char **argv)
     return 0;
 }
 
-#if AST_SUPPORT
-/* set time from AST SixPakPlus type RTC */
-void ast_gettime(struct tm *tm)
+/****************************************************************************/
+#if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_8018X)
+#define CMOS_CMDREG     0x70
+#define CMOS_IOREG      0x71
+
+#ifdef CONFIG_ARCH_IBMPC
+unsigned char cmos_read(unsigned char reg)
 {
-    int wait = AST_RETRY;
+    register unsigned char ret;
 
-    if (ast_chiptype()) {
-
-        do {                    /* NS clock chip */
-            tm->tm_sec = ast_getbcd(AST_NS_SEC);
-            tm->tm_min = ast_getbcd(AST_NS_MIN);
-            tm->tm_hour = ast_getbcd(AST_NS_HRS);
-            tm->tm_wday = ast_getbcd(AST_NS_DOW);
-            tm->tm_mday = ast_getbcd(AST_NS_DOM);
-            tm->tm_mon = ast_getbcd(AST_NS_MON);
-            tm->tm_year = ast_getreg(AST_NS_YEAR);
-        } while (ast_getreg(AST_NS_STAT) && wait--);
-
-    } else {                    /* Ricoh clock chip */
-
-        tm->tm_sec = ast_get_rbcd(AST_RI_SEC);
-        tm->tm_min = ast_get_rbcd(AST_RI_MIN);
-        tm->tm_hour = ast_get_rbcd(AST_RI_HRS);
-        tm->tm_wday = ast_getreg(AST_RI_DOW);
-        tm->tm_mday = ast_get_rbcd(AST_RI_DOM);
-        tm->tm_mon = ast_get_rbcd(AST_RI_MON);
-        tm->tm_year = ast_get_rbcd(AST_RI_YEAR);
-    }
-    tm->tm_year += 80 /* AST clock starts @ 1980 */ ;
+    clr_irq();
+    outb_p(reg | 0x80, 0x70);
+    ret = inb_p(0x71);
+    set_irq();
+    return ret;
 }
 
-void ast_settime(struct tm *tmp)
+void cmos_write(unsigned char reg, unsigned char val)
 {
-    if (ast_chiptype()) {
-        ast_putreg(AST_NS_CRST, 0xff);  /* clear counters */
-        ast_putbcd(AST_NS_SEC, tmp->tm_sec);
-        ast_putbcd(AST_NS_MIN, tmp->tm_min);
-        ast_putbcd(AST_NS_HRS, tmp->tm_hour);
-        ast_putbcd(AST_NS_DOW, tmp->tm_wday);
-        ast_putbcd(AST_NS_DOM, tmp->tm_mday);
-        ast_putbcd(AST_NS_MON, tmp->tm_mon + 1);
-        ast_putreg(AST_NS_YEAR, tmp->tm_year - 80);
-    } else {
-        /*
-         * no precautions (the Ricoh has 1 sec visible resolution, very DOS
-         * oriented. The ADJ bit does not do what you might think it does.
-         */
-        ast_put_rbcd(AST_RI_SEC, tmp->tm_sec);
-        ast_put_rbcd(AST_RI_MIN, tmp->tm_min);
-        ast_put_rbcd(AST_RI_HRS, tmp->tm_hour);
-        ast_putreg(AST_RI_DOW, tmp->tm_wday);
-        ast_put_rbcd(AST_RI_DOM, tmp->tm_mday);
-        ast_put_rbcd(AST_RI_MON, tmp->tm_mon + 1);
-        ast_put_rbcd(AST_RI_YEAR, tmp->tm_year - 80);
-    }
+    clr_irq();
+    outb_p(reg | 0x80, 0x70);
+    outb_p(val, 0x71);
+    set_irq();
 }
 #endif
 
-#ifndef CONFIG_ARCH_PC98
+#ifdef CONFIG_ARCH_8018X
+unsigned char cmos_read(unsigned char reg)
+{
+    register unsigned char ret;
+
+    clr_irq ();
+    ret = inb_p (CONFIG_8018X_RTC + reg);
+    set_irq ();
+    return ret;
+}
+
+void cmos_write(unsigned char reg, unsigned char val)
+{
+    clr_irq ();
+    outb_p (val, CONFIG_8018X_RTC + reg);
+    set_irq ();
+}
+#endif
+
+static int cmos_read_bcd(int addr)
+{
+    int b;
+
+    b = cmos_read(addr);
+    return (b & 15) + (b >> 4) * 10;
+}
+
+static void cmos_write_bcd(int addr, int value)
+{
+    cmos_write(addr, ((value / 10) << 4) + value % 10);
+}
+
 /*  set time from AT style CMOS RTC (mc146818) */
 void cmos_gettime(struct tm *tm)
 {
@@ -670,8 +492,10 @@ void cmos_settime(struct tm *tmp)
     cmos_write(10, save_freq_select);
     cmos_write(11, save_control);
 }
+#endif
 
-#else
+/****************************************************************************/
+#ifdef CONFIG_ARCH_PC98
 void pc98_read_calendar(unsigned int tm_seg, unsigned int tm_offset)
 {
     __asm__ volatile ("mov %0,%%es;"
@@ -730,3 +554,183 @@ void pc98_settime(struct tm *tmp, unsigned char *timebuf)
             timebuf[0] = hex_bcd(tmp->tm_year);
 }
 #endif
+
+/****************************************************************************/
+#if AST_SUPPORT
+#define AST_CMDREG      0x2C0
+#define AST_IOREG       0x2C1
+
+#define AST_RETRY       1000
+
+/* for Nat Semi chip */
+#define AST_NS_MSEC     0x01
+#define AST_NS_SEC      0x02
+#define AST_NS_MIN      0x03    /* get minute cntr */
+#define AST_NS_HRS      0x04    /* get hour cntr */
+#define AST_NS_DOW      0x05    /* day of week */
+#define AST_NS_DOM      0x06    /* day of month */
+#define AST_NS_MON      0x07    /* month of year */
+#define AST_NS_YEAR     0x0A    /* year, counts from 1980 */
+#define AST_NS_STAT     0x14    /* get status bit */
+#define AST_NS_CRST     0x12    /* clear counters */
+#define AST_NS_GO       0x15    /* clear subsec counters */
+
+/* for Ricoh chip */
+#define AST_RI_SEC      0
+#define AST_RI_MIN      2
+#define AST_RI_HRS      4
+#define AST_RI_DOW      6       /* one reg, the others are two (BCD) */
+#define AST_RI_DOM      7
+#define AST_RI_MON      9
+#define AST_RI_YEAR     11
+
+#define AST_CHIPTYPE    0x0D    /* Distinguish between Ricoh and NS chip via
+                                 * this register */
+static void ast_putreg(unsigned char reg, unsigned char val)
+{
+    clr_irq();
+    outb_p(reg, AST_CMDREG);
+    outb_p(val, AST_IOREG);
+    set_irq();
+}
+
+static void ast_putbcd(int addr, int value)
+{
+    ast_putreg(addr, ((value / 10) << 4) + value % 10);
+}
+
+/* The Ricoh has 4 bit addressing only, BCD values are in adjacent addresses */
+static void ast_put_rbcd(int addr, int value)
+{
+    ast_putreg(addr, value % 10);
+    ast_putreg(addr + 1, value / 10);
+}
+
+static int ast_getreg(int reg)
+{
+    outb(reg, AST_CMDREG);
+    return (inb(AST_IOREG));
+}
+
+static int ast_getbcd(int reg)
+{
+    int val = ast_getreg(reg);
+
+    return ((val & 15) + (val >> 4) * 10);
+}
+
+static int ast_get_rbcd(int reg)
+{
+    return ((ast_getreg(reg) & 0xf) + (ast_getreg(reg + 1) & 0xf) * 10);
+}
+
+/*
+ * Per the AST app note, bit 1 in reg D may be used to determine which chip we're using.
+ * This bit will always return 0 on the Ricoh, on the NS it's RAM and we'll read back what we write.
+ * Returns 0 if Ricoh chip, 2 if NS chip, -1 if neither.
+ */
+int ast_chiptype(void)
+{
+    int tmp = (ast_getreg(AST_CHIPTYPE) & 0xf) | 2;
+
+    /* 86box - when told to emulate ASTCLOCK, returns 2 from all registers */
+    /* Otherwise (all hw) returns 0xff */
+
+    if ((ast_getreg(1) + ast_getreg(2) + ast_getreg(3) + ast_getreg(4)) / 4 == ast_getreg(1))
+        return -1;
+
+    ast_putreg(AST_CHIPTYPE, tmp);
+    return (ast_getreg(AST_CHIPTYPE) & 0x2);
+}
+
+#if DEBUG
+void show_astclock(void)
+{
+    if (ast_chiptype()) {
+        printf("AST clock (NS): %d/%d/%d - %02d:%02d:%02d.%d\n", ast_getbcd(AST_NS_DOM), ast_getbcd(AST_NS_MON),
+               ast_getreg(AST_NS_YEAR) + 1980, ast_getbcd(AST_NS_HRS), ast_getbcd(AST_NS_MIN),
+               ast_getbcd(AST_NS_SEC), ast_getbcd(AST_NS_MSEC));
+        printf("Other regs 00:%d, 01:%d, 05:%d, 08:%d, 09:%d\n", ast_getreg(0), ast_getreg(1), ast_getreg(5),
+               ast_getreg(8), ast_getreg(9));
+    } else {
+        printf("AST clock (Ricoh): %d/%d/%d - %02d:%02d:%02d\n", ast_get_rbcd(AST_RI_DOM),
+               ast_get_rbcd(AST_RI_MON), ast_get_rbcd(AST_RI_YEAR) + 1980, ast_get_rbcd(AST_RI_HRS),
+               ast_get_rbcd(AST_RI_MIN), ast_get_rbcd(AST_RI_SEC));
+    }
+}
+#endif
+
+/* set time from AST SixPakPlus type RTC */
+void ast_gettime(struct tm *tm)
+{
+    int wait = AST_RETRY;
+
+    if (ast_chiptype()) {
+
+        do {                    /* NS clock chip */
+            tm->tm_sec = ast_getbcd(AST_NS_SEC);
+            tm->tm_min = ast_getbcd(AST_NS_MIN);
+            tm->tm_hour = ast_getbcd(AST_NS_HRS);
+            tm->tm_wday = ast_getbcd(AST_NS_DOW);
+            tm->tm_mday = ast_getbcd(AST_NS_DOM);
+            tm->tm_mon = ast_getbcd(AST_NS_MON);
+            tm->tm_year = ast_getreg(AST_NS_YEAR);
+        } while (ast_getreg(AST_NS_STAT) && wait--);
+
+    } else {                    /* Ricoh clock chip */
+
+        tm->tm_sec = ast_get_rbcd(AST_RI_SEC);
+        tm->tm_min = ast_get_rbcd(AST_RI_MIN);
+        tm->tm_hour = ast_get_rbcd(AST_RI_HRS);
+        tm->tm_wday = ast_getreg(AST_RI_DOW);
+        tm->tm_mday = ast_get_rbcd(AST_RI_DOM);
+        tm->tm_mon = ast_get_rbcd(AST_RI_MON);
+        tm->tm_year = ast_get_rbcd(AST_RI_YEAR);
+    }
+    tm->tm_year += 80 /* AST clock starts @ 1980 */ ;
+}
+
+void ast_settime(struct tm *tmp)
+{
+    if (ast_chiptype()) {
+        ast_putreg(AST_NS_CRST, 0xff);  /* clear counters */
+        ast_putbcd(AST_NS_SEC, tmp->tm_sec);
+        ast_putbcd(AST_NS_MIN, tmp->tm_min);
+        ast_putbcd(AST_NS_HRS, tmp->tm_hour);
+        ast_putbcd(AST_NS_DOW, tmp->tm_wday);
+        ast_putbcd(AST_NS_DOM, tmp->tm_mday);
+        ast_putbcd(AST_NS_MON, tmp->tm_mon + 1);
+        ast_putreg(AST_NS_YEAR, tmp->tm_year - 80);
+    } else {
+        /*
+         * no precautions (the Ricoh has 1 sec visible resolution, very DOS
+         * oriented. The ADJ bit does not do what you might think it does.
+         */
+        ast_put_rbcd(AST_RI_SEC, tmp->tm_sec);
+        ast_put_rbcd(AST_RI_MIN, tmp->tm_min);
+        ast_put_rbcd(AST_RI_HRS, tmp->tm_hour);
+        ast_putreg(AST_RI_DOW, tmp->tm_wday);
+        ast_put_rbcd(AST_RI_DOM, tmp->tm_mday);
+        ast_put_rbcd(AST_RI_MON, tmp->tm_mon + 1);
+        ast_put_rbcd(AST_RI_YEAR, tmp->tm_year - 80);
+    }
+}
+
+/* PROBE to verify existence: Read CMOS status register A, check
+ * for sanity (0x26), ignore the UpdateInProgress flag (bit 7, comes and goes).
+ * Then write 0 to status reg D, which is read only, and read it back.
+ * Should always return 0x80. Bit 7 indicates RAM/TIME/battery OK, the
+ * other bits are always zero. Return true if found.
+ *
+ * [Alternative method: Read all 4 status regs. If they're all the same
+ *  there's nothing there. For reference, on physical systems the readback is 0x48,
+ *  on emulators 0xff]
+ */
+int cmos_probe(void)
+{
+    cmos_write(0xd, 0);
+    if (((cmos_read(0xa) & 0x7f) == 0x26) && cmos_read(0xd))
+        return 1;
+    return 0;
+}
+#endif /* AST_SUPPORT */
