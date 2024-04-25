@@ -146,57 +146,57 @@
 #define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
 #define errstr(str) write(STDERR_FILENO, str, strlen(str))
 
-#define CMOS_CMDREG	0x70
-#define CMOS_IOREG	0x71
+#define CMOS_CMDREG     0x70
+#define CMOS_IOREG      0x71
 
-#define AST_CMDREG	0x2C0
-#define AST_IOREG	0x2C1
+#define AST_CMDREG      0x2C0
+#define AST_IOREG       0x2C1
 
-#define AST_RETRY	1000
+#define AST_RETRY       1000
 
 /* for Nat Semi chip */
-#define AST_NS_MSEC	0x01
-#define AST_NS_SEC	0x02
-#define AST_NS_MIN	0x03	/* get minute cntr */
-#define AST_NS_HRS	0x04	/* get hour cntr */
-#define AST_NS_DOW	0x05	/* day of week */
-#define AST_NS_DOM	0x06	/* day of month */
-#define AST_NS_MON	0x07	/* month of year */
-#define AST_NS_YEAR	0x0A	/* year, counts from 1980 */
-#define AST_NS_STAT	0x14	/* get status bit */
-#define AST_NS_CRST	0x12	/* clear counters */
-#define AST_NS_GO	0x15	/* clear subsec counters */
+#define AST_NS_MSEC     0x01
+#define AST_NS_SEC      0x02
+#define AST_NS_MIN      0x03    /* get minute cntr */
+#define AST_NS_HRS      0x04    /* get hour cntr */
+#define AST_NS_DOW      0x05    /* day of week */
+#define AST_NS_DOM      0x06    /* day of month */
+#define AST_NS_MON      0x07    /* month of year */
+#define AST_NS_YEAR     0x0A    /* year, counts from 1980 */
+#define AST_NS_STAT     0x14    /* get status bit */
+#define AST_NS_CRST     0x12    /* clear counters */
+#define AST_NS_GO       0x15    /* clear subsec counters */
 
 /* for Ricoh chip */
-#define AST_RI_SEC	0
-#define AST_RI_MIN	2
-#define AST_RI_HRS	4
-#define AST_RI_DOW	6	/* one reg, the others are two (BCD) */
-#define AST_RI_DOM	7
-#define AST_RI_MON	9
-#define AST_RI_YEAR	11
+#define AST_RI_SEC      0
+#define AST_RI_MIN      2
+#define AST_RI_HRS      4
+#define AST_RI_DOW      6       /* one reg, the others are two (BCD) */
+#define AST_RI_DOM      7
+#define AST_RI_MON      9
+#define AST_RI_YEAR     11
 
-#define AST_CHIPTYPE	0x0D	/* Distinguish between Ricoh and NS chip via
-				 * this register */
+#define AST_CHIPTYPE    0x0D    /* Distinguish between Ricoh and NS chip via
+                                 * this register */
 
 /* Globals */
-int	readit = 0;
-int	writeit = 0;
-int	setit = 0;
-int	universal = 0;
-int	astclock = 0;
-int	verbose = 0;
+int     readit = 0;
+int     writeit = 0;
+int     setit = 0;
+int     universal = 0;
+int     astclock = 0;
+int     verbose = 0;
 
 #ifdef CONFIG_ARCH_PC98
-void	pc98_settime(struct tm *, unsigned char *);
-void	pc98_gettime(struct tm *, unsigned char *);
-void	pc98_write_calendar(unsigned int, unsigned int);
-void	pc98_read_calendar(unsigned int, unsigned int);
+void    pc98_settime(struct tm *, unsigned char *);
+void    pc98_gettime(struct tm *, unsigned char *);
+void    pc98_write_calendar(unsigned int, unsigned int);
+void    pc98_read_calendar(unsigned int, unsigned int);
 #else
-void	ast_settime(struct tm *);
-void	ast_gettime(struct tm *);
-void	cmos_settime(struct tm *);
-void	cmos_gettime(struct tm *);
+void    ast_settime(struct tm *);
+void    ast_gettime(struct tm *);
+void    cmos_settime(struct tm *);
+void    cmos_gettime(struct tm *);
 #endif
 
 /* #define AST_TEST */
@@ -234,7 +234,7 @@ void cmos_write(unsigned char reg, unsigned char val)
 
 int cmos_read_bcd(int addr)
 {
-    int	b;
+    int b;
 
     b = cmos_read(addr);
     return (b & 15) + (b >> 4) * 10;
@@ -248,7 +248,7 @@ void cmos_write_bcd(int addr, int value)
 /* PROBE to verify existence: Read CMOS status register A, check
  * for sanity (0x26), ignore the UpdateInProgress flag (bit 7, comes and goes).
  * Then write 0 to status reg D, which is read only, and read it back.
- * Should always return 0x80. Bit 7 indicates RAM/TIME/battery OK, the 
+ * Should always return 0x80. Bit 7 indicates RAM/TIME/battery OK, the
  * other bits are always zero. Return true if found.
  *
  * [Alternative method: Read all 4 status regs. If they're all the same
@@ -259,9 +259,9 @@ int cmos_probe(void)
 {
     cmos_write(0xd, 0);
     if (((cmos_read(0xa) & 0x7f) == 0x26) && cmos_read(0xd))
-	return 1;
+        return 1;
     //printf("CMOS status A %x, B %x, C %x, D %x\n", cmos_read(0xa), cmos_read(0xb),
-	     //cmos_read(0xc), cmos_read(0xd));
+             //cmos_read(0xc), cmos_read(0xd));
     return 0;
 }
 
@@ -293,7 +293,7 @@ int ast_getreg(int reg)
 
 int ast_getbcd(int reg)
 {
-    int	val = ast_getreg(reg);
+    int val = ast_getreg(reg);
 
     return ((val & 15) + (val >> 4) * 10);
 }
@@ -310,13 +310,13 @@ int ast_get_rbcd(int reg)
  */
 int ast_chiptype(void)
 {
-    int	tmp = (ast_getreg(AST_CHIPTYPE) & 0xf) | 2;
+    int tmp = (ast_getreg(AST_CHIPTYPE) & 0xf) | 2;
 
     /* 86box - when told to emulate ASTCLOCK, returns 2 from all registers */
     /* Otherwise (all hw) returns 0xff */
 
     if ((ast_getreg(1) + ast_getreg(2) + ast_getreg(3) + ast_getreg(4)) / 4 == ast_getreg(1))
-	return -1;
+        return -1;
 
     ast_putreg(AST_CHIPTYPE, tmp);
     return (ast_getreg(AST_CHIPTYPE) & 0x2);
@@ -326,15 +326,15 @@ int ast_chiptype(void)
 void show_astclock(void)
 {
     if (ast_chiptype()) {
-	printf("AST clock (NS): %d/%d/%d - %02d:%02d:%02d.%d\n", ast_getbcd(AST_NS_DOM), ast_getbcd(AST_NS_MON),
-	       ast_getreg(AST_NS_YEAR) + 1980, ast_getbcd(AST_NS_HRS), ast_getbcd(AST_NS_MIN),
-	       ast_getbcd(AST_NS_SEC), ast_getbcd(AST_NS_MSEC));
-	printf("Other regs 00:%d, 01:%d, 05:%d, 08:%d, 09:%d\n", ast_getreg(0), ast_getreg(1), ast_getreg(5),
-	       ast_getreg(8), ast_getreg(9));
+        printf("AST clock (NS): %d/%d/%d - %02d:%02d:%02d.%d\n", ast_getbcd(AST_NS_DOM), ast_getbcd(AST_NS_MON),
+               ast_getreg(AST_NS_YEAR) + 1980, ast_getbcd(AST_NS_HRS), ast_getbcd(AST_NS_MIN),
+               ast_getbcd(AST_NS_SEC), ast_getbcd(AST_NS_MSEC));
+        printf("Other regs 00:%d, 01:%d, 05:%d, 08:%d, 09:%d\n", ast_getreg(0), ast_getreg(1), ast_getreg(5),
+               ast_getreg(8), ast_getreg(9));
     } else {
-	printf("AST clock (Ricoh): %d/%d/%d - %02d:%02d:%02d\n", ast_get_rbcd(AST_RI_DOM),
-	       ast_get_rbcd(AST_RI_MON), ast_get_rbcd(AST_RI_YEAR) + 1980, ast_get_rbcd(AST_RI_HRS),
-	       ast_get_rbcd(AST_RI_MIN), ast_get_rbcd(AST_RI_SEC));
+        printf("AST clock (Ricoh): %d/%d/%d - %02d:%02d:%02d\n", ast_get_rbcd(AST_RI_DOM),
+               ast_get_rbcd(AST_RI_MON), ast_get_rbcd(AST_RI_YEAR) + 1980, ast_get_rbcd(AST_RI_HRS),
+               ast_get_rbcd(AST_RI_MIN), ast_get_rbcd(AST_RI_SEC));
     }
 }
 #else
@@ -360,12 +360,12 @@ time_t utc_mktime(struct tm *t)
 
     /* caluclate seconds from months */
     for (i = 0; i < t->tm_mon; i++) {
-	ret += mday[i] * (24L * 60L * 60L);
+        ret += mday[i] * (24L * 60L * 60L);
     }
 
     /* add in this year's leap day, if any */
     if (((t->tm_year & 3) == 0) && (t->tm_mon > 1)) {
-	ret += (24L * 60L * 60L);
+        ret += (24L * 60L * 60L);
     }
 
     /* calculate seconds from days in this month */
@@ -388,7 +388,7 @@ int main(int argc, char **argv)
 {
     struct tm tm;
     time_t systime;
-    int	   arg;
+    int    arg;
 
 #ifdef CONFIG_ARCH_PC98
     unsigned char timebuf[6];
@@ -402,62 +402,62 @@ int main(int argc, char **argv)
 #endif
 
     while ((arg = getopt(argc, argv, "rwsuvA")) != -1) {
-	switch (arg) {
-	case 'r':
-	    readit = 1;
-	    break;
-	case 'w':
-	    writeit = 1;
-	    break;
-	case 's':
-	    setit = 1;
-	    break;
-	case 'u':
-	    universal = 1;
-	    break;
-	case 'A':
-	    astclock = 1;
-	    break;
-	case 'v':
-	    verbose = 1;
-	    break;
-	default:
-	    usage();
-	}
+        switch (arg) {
+        case 'r':
+            readit = 1;
+            break;
+        case 'w':
+            writeit = 1;
+            break;
+        case 's':
+            setit = 1;
+            break;
+        case 'u':
+            universal = 1;
+            break;
+        case 'A':
+            astclock = 1;
+            break;
+        case 'v':
+            verbose = 1;
+            break;
+        default:
+            usage();
+        }
     }
 
     if (!cmos_probe()) {
-	if (ast_chiptype() < 0) {
-	    printf("No RTC found on system, not setting date and time\n");
-	    exit(1);
-	} else {
-	    if (verbose)
-		printf("No CMOS clock found, assuming AST\n");
-	    astclock = 1;
-	    show_astclock();
-	}
+        if (ast_chiptype() < 0) {
+            printf("No RTC found on system, not setting date and time\n");
+            exit(1);
+        } else {
+            if (verbose)
+                printf("No CMOS clock found, assuming AST\n");
+            astclock = 1;
+            show_astclock();
+        }
     }
 
     if (readit + writeit + setit > 1)
-	usage();		/* only allow one of these */
+        usage();                /* only allow one of these */
 
-    if (!(readit | writeit | setit))	/* default to read */
-	readit = 1;
+    if (!(readit | writeit | setit))    /* default to read */
+        readit = 1;
 
     if (readit || setit) {
 
 #ifdef CONFIG_ARCH_PC98
-	pc98_read_calendar(tm_seg, tm_offset);
-	pc98_gettime(&tm, timebuf);
+        pc98_read_calendar(tm_seg, tm_offset);
+        pc98_gettime(&tm, timebuf);
 #else
 
-	if (astclock)
-	    ast_gettime(&tm);
-	else
-	    cmos_gettime(&tm);
+        if (astclock)
+            ast_gettime(&tm);
+        else
+            cmos_gettime(&tm);
 #endif
-	tm.tm_mon--;		/* DOS uses 1 base */
-	tm.tm_isdst = -1;	/* don't know whether it's daylight */
+        tm.tm_mon--;            /* DOS uses 1 base */
+        tm.tm_isdst = -1;       /* don't know whether it's daylight */
     }
 
     if (readit || setit) {
@@ -465,11 +465,11 @@ int main(int argc, char **argv)
  * utc_mktime() assumes we're in Greenwich, England.  If the CMOS
  * clock isn't in GMT, we need to adjust.
  */
-	systime = utc_mktime(&tm);
-	if (!universal) {
-	    tzset();		/* read TZ= env string and set timezone var */
-	    systime += timezone;
-	}
+        systime = utc_mktime(&tm);
+        if (!universal) {
+            tzset();            /* read TZ= env string and set timezone var */
+            systime += timezone;
+        }
 #if 0
 /*
  * mktime() assumes we're giving it local time.  If the CMOS clock
@@ -477,83 +477,83 @@ int main(int argc, char **argv)
  * called implicitly by the time code, but only the first time.  When
  * changing the environment variable, better call tzset() explicitly.
  */
-	if (universal) {
-	    char   *zone;
+        if (universal) {
+            char   *zone;
 
-	    zone = (char *)getenv("TZ");	/* save original time zone */
-	    (void)putenv("TZ=");
-	    tzset();
-	    systime = mktime(&tm);
-	    /* now put back the original zone */
-	    if (zone) {
-		char   *zonebuf;
+            zone = (char *)getenv("TZ");        /* save original time zone */
+            (void)putenv("TZ=");
+            tzset();
+            systime = mktime(&tm);
+            /* now put back the original zone */
+            if (zone) {
+                char   *zonebuf;
 
-		zonebuf = malloc(strlen(zone) + 4);
-		strcpy(zonebuf, "TZ=");
-		strcpy(zonebuf + 3, zone);
-		putenv(zonebuf);
-		free(zonebuf);
-	    } else {		/* wasn't one, so clear it */
-		putenv("TZ");
-	    }
-	    tzset();
-	} else
-	    systime = mktime(&tm);
-#endif				/* 0 */
+                zonebuf = malloc(strlen(zone) + 4);
+                strcpy(zonebuf, "TZ=");
+                strcpy(zonebuf + 3, zone);
+                putenv(zonebuf);
+                free(zonebuf);
+            } else {            /* wasn't one, so clear it */
+                putenv("TZ");
+            }
+            tzset();
+        } else
+            systime = mktime(&tm);
+#endif                          /* 0 */
     }
 
     if (readit) {
-	char   *p = ctime(&systime);
-	if (verbose)
-	    printf("From %s: ", astclock ? "ASTclock" : "CMOS");
-	printf("%s", p);
-	//write(STDOUT_FILENO, p, strlen(p));
+        char   *p = ctime(&systime);
+        if (verbose)
+            printf("From %s: ", astclock ? "ASTclock" : "CMOS");
+        printf("%s", p);
+        //write(STDOUT_FILENO, p, strlen(p));
     }
 
     if (setit) {
-	struct timeval tv;
-	struct timezone tz;
+        struct timeval tv;
+        struct timezone tz;
 
-	/* program is designed to run setuid, be secure! */
+        /* program is designed to run setuid, be secure! */
 
-	if (getuid() != 0) {
-	    errmsg("Sorry, must be root to set time\n");
-	    exit(2);
-	}
+        if (getuid() != 0) {
+            errmsg("Sorry, must be root to set time\n");
+            exit(2);
+        }
 
-	tv.tv_sec = systime;
-	tv.tv_usec = 0;
+        tv.tv_sec = systime;
+        tv.tv_usec = 0;
 
-	/*
-	 * system time is offset by TZ variable for now, localtime handled in
-	 * C library
-	 */
-	tz.tz_minuteswest = 0;
-	tz.tz_dsttime = DST_NONE;
+        /*
+         * system time is offset by TZ variable for now, localtime handled in
+         * C library
+         */
+        tz.tz_minuteswest = 0;
+        tz.tz_dsttime = DST_NONE;
 
-	if (settimeofday(&tv, &tz) != 0) {
-	    errmsg("Unable to set time -- probably you are not root\n");
-	    exit(1);
-	}
+        if (settimeofday(&tv, &tz) != 0) {
+            errmsg("Unable to set time -- probably you are not root\n");
+            exit(1);
+        }
 
     }
 
     if (writeit) {
-	struct tm *tmp;
-	systime = time(NULL);
-	if (universal)
-	    tmp = gmtime(&systime);
-	else
-	    tmp = localtime(&systime);
+        struct tm *tmp;
+        systime = time(NULL);
+        if (universal)
+            tmp = gmtime(&systime);
+        else
+            tmp = localtime(&systime);
 
 #ifdef CONFIG_ARCH_PC98
-	pc98_settime(tmp, timebuf);
-	pc98_write_calendar(tm_seg, tm_offset);
+        pc98_settime(tmp, timebuf);
+        pc98_write_calendar(tm_seg, tm_offset);
 #else
-	if (astclock)
-	    ast_settime(tmp);
-	else
-	    cmos_settime(tmp);
+        if (astclock)
+            ast_settime(tmp);
+        else
+            cmos_settime(tmp);
 #endif
     }
     return 0;
@@ -568,25 +568,25 @@ void ast_gettime(struct tm *tm)
 
     if (ast_chiptype()) {
 
-	do {			/* NS clock chip */
-	    tm->tm_sec = ast_getbcd(AST_NS_SEC);
-	    tm->tm_min = ast_getbcd(AST_NS_MIN);
-	    tm->tm_hour = ast_getbcd(AST_NS_HRS);
-	    tm->tm_wday = ast_getbcd(AST_NS_DOW);
-	    tm->tm_mday = ast_getbcd(AST_NS_DOM);
-	    tm->tm_mon = ast_getbcd(AST_NS_MON);
-	    tm->tm_year = ast_getreg(AST_NS_YEAR);
-	} while (ast_getreg(AST_NS_STAT) && wait--);
+        do {                    /* NS clock chip */
+            tm->tm_sec = ast_getbcd(AST_NS_SEC);
+            tm->tm_min = ast_getbcd(AST_NS_MIN);
+            tm->tm_hour = ast_getbcd(AST_NS_HRS);
+            tm->tm_wday = ast_getbcd(AST_NS_DOW);
+            tm->tm_mday = ast_getbcd(AST_NS_DOM);
+            tm->tm_mon = ast_getbcd(AST_NS_MON);
+            tm->tm_year = ast_getreg(AST_NS_YEAR);
+        } while (ast_getreg(AST_NS_STAT) && wait--);
 
-    } else {			/* Ricoh clock chip */
+    } else {                    /* Ricoh clock chip */
 
-	tm->tm_sec = ast_get_rbcd(AST_RI_SEC);
-	tm->tm_min = ast_get_rbcd(AST_RI_MIN);
-	tm->tm_hour = ast_get_rbcd(AST_RI_HRS);
-	tm->tm_wday = ast_getreg(AST_RI_DOW);
-	tm->tm_mday = ast_get_rbcd(AST_RI_DOM);
-	tm->tm_mon = ast_get_rbcd(AST_RI_MON);
-	tm->tm_year = ast_get_rbcd(AST_RI_YEAR);
+        tm->tm_sec = ast_get_rbcd(AST_RI_SEC);
+        tm->tm_min = ast_get_rbcd(AST_RI_MIN);
+        tm->tm_hour = ast_get_rbcd(AST_RI_HRS);
+        tm->tm_wday = ast_getreg(AST_RI_DOW);
+        tm->tm_mday = ast_get_rbcd(AST_RI_DOM);
+        tm->tm_mon = ast_get_rbcd(AST_RI_MON);
+        tm->tm_year = ast_get_rbcd(AST_RI_YEAR);
     }
     tm->tm_year += 80 /* AST clock starts @ 1980 */ ;
 }
@@ -595,42 +595,42 @@ void ast_gettime(struct tm *tm)
 void cmos_gettime(struct tm *tm)
 {
     do {
-	tm->tm_sec = cmos_read_bcd(0);
-	tm->tm_min = cmos_read_bcd(2);
-	tm->tm_hour = cmos_read_bcd(4);
-	tm->tm_wday = cmos_read_bcd(6);
-	tm->tm_mday = cmos_read_bcd(7);
-	tm->tm_mon = cmos_read_bcd(8);
-	tm->tm_year = cmos_read_bcd(9);
+        tm->tm_sec = cmos_read_bcd(0);
+        tm->tm_min = cmos_read_bcd(2);
+        tm->tm_hour = cmos_read_bcd(4);
+        tm->tm_wday = cmos_read_bcd(6);
+        tm->tm_mday = cmos_read_bcd(7);
+        tm->tm_mon = cmos_read_bcd(8);
+        tm->tm_year = cmos_read_bcd(9);
     } while (tm->tm_sec != cmos_read_bcd(0));
 
     if (tm->tm_year < 70)
-	tm->tm_year += 100;	/* 70..99 => 1970..1999, 0..69 => 2000..2069 */
+        tm->tm_year += 100;     /* 70..99 => 1970..1999, 0..69 => 2000..2069 */
 }
 
 void ast_settime(struct tm *tmp)
 {
     if (ast_chiptype()) {
-	ast_putreg(AST_NS_CRST, 0xff);	/* clear counters */
-	ast_putbcd(AST_NS_SEC, tmp->tm_sec);
-	ast_putbcd(AST_NS_MIN, tmp->tm_min);
-	ast_putbcd(AST_NS_HRS, tmp->tm_hour);
-	ast_putbcd(AST_NS_DOW, tmp->tm_wday);
-	ast_putbcd(AST_NS_DOM, tmp->tm_mday);
-	ast_putbcd(AST_NS_MON, tmp->tm_mon + 1);
-	ast_putreg(AST_NS_YEAR, tmp->tm_year - 80);
+        ast_putreg(AST_NS_CRST, 0xff);  /* clear counters */
+        ast_putbcd(AST_NS_SEC, tmp->tm_sec);
+        ast_putbcd(AST_NS_MIN, tmp->tm_min);
+        ast_putbcd(AST_NS_HRS, tmp->tm_hour);
+        ast_putbcd(AST_NS_DOW, tmp->tm_wday);
+        ast_putbcd(AST_NS_DOM, tmp->tm_mday);
+        ast_putbcd(AST_NS_MON, tmp->tm_mon + 1);
+        ast_putreg(AST_NS_YEAR, tmp->tm_year - 80);
     } else {
-	/*
-	 * no precautions (the Ricoh has 1 sec visible resolution, very DOS
-	 * oriented. The ADJ bit does not do what you might think it does.
-	 */
-	ast_put_rbcd(AST_RI_SEC, tmp->tm_sec);
-	ast_put_rbcd(AST_RI_MIN, tmp->tm_min);
-	ast_put_rbcd(AST_RI_HRS, tmp->tm_hour);
-	ast_putreg(AST_RI_DOW, tmp->tm_wday);
-	ast_put_rbcd(AST_RI_DOM, tmp->tm_mday);
-	ast_put_rbcd(AST_RI_MON, tmp->tm_mon + 1);
-	ast_put_rbcd(AST_RI_YEAR, tmp->tm_year - 80);
+        /*
+         * no precautions (the Ricoh has 1 sec visible resolution, very DOS
+         * oriented. The ADJ bit does not do what you might think it does.
+         */
+        ast_put_rbcd(AST_RI_SEC, tmp->tm_sec);
+        ast_put_rbcd(AST_RI_MIN, tmp->tm_min);
+        ast_put_rbcd(AST_RI_HRS, tmp->tm_hour);
+        ast_putreg(AST_RI_DOW, tmp->tm_wday);
+        ast_put_rbcd(AST_RI_DOM, tmp->tm_mday);
+        ast_put_rbcd(AST_RI_MON, tmp->tm_mon + 1);
+        ast_put_rbcd(AST_RI_YEAR, tmp->tm_year - 80);
     }
 }
 
@@ -638,9 +638,9 @@ void cmos_settime(struct tm *tmp)
 {
     unsigned char save_control, save_freq_select;
 
-    save_control = cmos_read(11);	/* tell the clock it's being set */
+    save_control = cmos_read(11);       /* tell the clock it's being set */
     cmos_write(11, (save_control | 0x80));
-    save_freq_select = cmos_read(10);	/* stop and reset prescaler */
+    save_freq_select = cmos_read(10);   /* stop and reset prescaler */
     cmos_write(10, (save_freq_select | 0x70));
 
     cmos_write_bcd(0, tmp->tm_sec);
@@ -655,27 +655,27 @@ void cmos_settime(struct tm *tmp)
     cmos_write(11, save_control);
 }
 
-#else 
+#else
 
 void pc98_read_calendar(unsigned int tm_seg, unsigned int tm_offset)
 {
     __asm__ volatile ("mov %0,%%es;"
-		      "mov $0,%%ah;"
-		      "int $0x1C;"
-		      :
-		      :"a" (tm_seg), "b"(tm_offset)
-		      :"%es", "memory", "cc");
+                      "mov $0,%%ah;"
+                      "int $0x1C;"
+                      :
+                      :"a" (tm_seg), "b"(tm_offset)
+                      :"%es", "memory", "cc");
 
 }
 
 void pc98_write_calendar(unsigned int tm_seg, unsigned int tm_offset)
 {
     __asm__ volatile ("mov %0,%%es;"
-		      "mov $1,%%ah;"
-		      "int $0x1C;"
-		      :
-		      :"a" (tm_seg), "b"(tm_offset)
-		      :"%es", "memory", "cc");
+                      "mov $1,%%ah;"
+                      "int $0x1C;"
+                      :
+                      :"a" (tm_seg), "b"(tm_offset)
+                      :"%es", "memory", "cc");
 
 }
 
@@ -698,20 +698,20 @@ void pc98_gettime(struct tm *tm, unsigned char *timebuf)
     tm->tm_mday = bcd_hex(timebuf[2]);
     tm->tm_mon = timebuf[1] >> 4;
     tm->tm_year = bcd_hex(timebuf[0]);
-    tm->tm_wday -= 3;	/* DOS uses 3 - 9 for week days */
+    tm->tm_wday -= 3;   /* DOS uses 3 - 9 for week days */
 }
 
 void pc98_settime(struct tm *tmp, unsigned char *timebuf)
 {
-	timebuf[5] = hex_bcd(tmp->tm_sec);
-	timebuf[4] = hex_bcd(tmp->tm_min);
-	timebuf[3] = hex_bcd(tmp->tm_hour);
-	timebuf[1] = hex_bcd(tmp->tm_wday);
-	timebuf[2] = hex_bcd(tmp->tm_mday);
-	timebuf[1] = (timebuf[1] & 0xF) + ((tmp->tm_mon + 1) << 4);
-	if (tmp->tm_year >= 100)
-	    timebuf[0] = hex_bcd(tmp->tm_year - 100);
-	else
-	    timebuf[0] = hex_bcd(tmp->tm_year);
+        timebuf[5] = hex_bcd(tmp->tm_sec);
+        timebuf[4] = hex_bcd(tmp->tm_min);
+        timebuf[3] = hex_bcd(tmp->tm_hour);
+        timebuf[1] = hex_bcd(tmp->tm_wday);
+        timebuf[2] = hex_bcd(tmp->tm_mday);
+        timebuf[1] = (timebuf[1] & 0xF) + ((tmp->tm_mon + 1) << 4);
+        if (tmp->tm_year >= 100)
+            timebuf[0] = hex_bcd(tmp->tm_year - 100);
+        else
+            timebuf[0] = hex_bcd(tmp->tm_year);
 }
 #endif
