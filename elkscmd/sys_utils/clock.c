@@ -143,6 +143,8 @@
  * systems. Supports both NS and Ricoh chips.
  */
 
+#define AST_SUPPORT     0       /* =1 to compile in AST hardware support */
+
 #define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
 #define errstr(str) write(STDERR_FILENO, str, strlen(str))
 #define outmsg(str) write(STDOUT_FILENO, str, sizeof(str) - 1)
@@ -182,12 +184,12 @@
                                  * this register */
 
 /* Globals */
-int     readit = 0;
-int     writeit = 0;
-int     setit = 0;
-int     universal = 0;
-int     astclock = 0;
-int     verbose = 0;
+int readit;
+int writeit;
+int setit;
+int universal;
+int astclock;
+int verbose;
 
 #ifdef CONFIG_ARCH_PC98
 void    pc98_settime(struct tm *, unsigned char *);
@@ -195,25 +197,39 @@ void    pc98_gettime(struct tm *, unsigned char *);
 void    pc98_write_calendar(unsigned int, unsigned int);
 void    pc98_read_calendar(unsigned int, unsigned int);
 #else
-void    ast_settime(struct tm *);
-void    ast_gettime(struct tm *);
 void    cmos_settime(struct tm *);
 void    cmos_gettime(struct tm *);
 #endif
 
-/* #define AST_TEST */
+#if AST_SUPPORT
+void    ast_settime(struct tm *);
+void    ast_gettime(struct tm *);
+#endif
 
 int usage(void)
 {
-    errmsg("clock [-u] -r|w|s|v|A\n");
-    errmsg("  r: read and print CMOS clock\n");
-    errmsg("  w: write CMOS clock from system time\n");
-    errmsg("  s: set system time from CMOS clock\n");
-    errmsg("  u: CMOS clock is in universal time\n");
-    errmsg("  v: verbose mode\n");
-    errmsg("  A: assume ASTCLOCK type RTC, increase verbosity\n");
+    errmsg("clock [-u] {-r,-w,-s,-v,-A}\n");
     exit(1);
 }
+
+#ifdef CONFIG_ARCH_8018X
+unsigned char cmos_read(unsigned char reg)
+{
+  register unsigned char ret;
+  clr_irq ();
+  ret = inb_p (CONFIG_8018X_RTC + reg);
+  set_irq ();
+  return ret;
+}
+
+void cmos_write(unsigned char reg, unsigned char val)
+{
+  clr_irq ();
+  outb_p (val, CONFIG_8018X_RTC + reg);
+  set_irq ();
+}
+
+#else
 
 unsigned char cmos_read(unsigned char reg)
 {
@@ -233,6 +249,7 @@ void cmos_write(unsigned char reg, unsigned char val)
     outb_p(val, 0x71);
     set_irq();
 }
+#endif
 
 int cmos_read_bcd(int addr)
 {
@@ -265,6 +282,7 @@ int cmos_probe(void)
     return 0;
 }
 
+#if AST_SUPPORT
 void ast_putreg(unsigned char reg, unsigned char val)
 {
     clr_irq();
@@ -322,7 +340,7 @@ int ast_chiptype(void)
     return (ast_getreg(AST_CHIPTYPE) & 0x2);
 }
 
-#ifdef AST_TEST
+#if DEBUG
 void show_astclock(void)
 {
     if (ast_chiptype()) {
@@ -339,6 +357,7 @@ void show_astclock(void)
 }
 #else
 #define show_astclock(x)
+#endif
 #endif
 
 /* our own happy mktime() replacement, with the following drawbacks: */
@@ -426,6 +445,7 @@ int main(int argc, char **argv)
         }
     }
 
+#if AST_SUPPORT
     if (!cmos_probe()) {
         if (ast_chiptype() < 0) {
             errmsg("No RTC found on system, not setting date and time\n");
@@ -437,6 +457,7 @@ int main(int argc, char **argv)
             show_astclock();
         }
     }
+#endif
 
     if (readit + writeit + setit > 1)
         usage();                /* only allow one of these */
@@ -450,10 +471,11 @@ int main(int argc, char **argv)
         pc98_read_calendar(tm_seg, tm_offset);
         pc98_gettime(&tm, timebuf);
 #else
-
+#if AST_SUPPORT
         if (astclock)
             ast_gettime(&tm);
         else
+#endif
             cmos_gettime(&tm);
 #endif
         tm.tm_mon--;            /* DOS uses 1 base */
@@ -461,10 +483,10 @@ int main(int argc, char **argv)
     }
 
     if (readit || setit) {
-/*
- * utc_mktime() assumes we're in Greenwich, England.  If the CMOS
- * clock isn't in GMT, we need to adjust.
- */
+        /*
+         * utc_mktime() assumes we're in Greenwich, England.  If the CMOS
+         * clock isn't in GMT, we need to adjust.
+         */
         systime = utc_mktime(&tm);
         if (!universal) {
             tzset();            /* read TZ= env string and set timezone var */
@@ -478,23 +500,18 @@ int main(int argc, char **argv)
  * changing the environment variable, better call tzset() explicitly.
  */
         if (universal) {
-            char   *zone;
-
-            zone = (char *)getenv("TZ");        /* save original time zone */
-            (void)putenv("TZ=");
+            char *zone = (char *)getenv("TZ");  /* save original time zone */
+            putenv("TZ=");
             tzset();
             systime = mktime(&tm);
             /* now put back the original zone */
             if (zone) {
-                char   *zonebuf;
-
-                zonebuf = malloc(strlen(zone) + 4);
+                char zonebuf[256];
                 strcpy(zonebuf, "TZ=");
                 strcpy(zonebuf + 3, zone);
                 putenv(zonebuf);
-                free(zonebuf);
             } else {            /* wasn't one, so clear it */
-                putenv("TZ");
+                putenv("TZ=");
             }
             tzset();
         } else
@@ -512,7 +529,6 @@ int main(int argc, char **argv)
         struct timezone tz;
 
         /* program is designed to run setuid, be secure! */
-
         if (getuid() != 0) {
             errmsg("Sorry, must be root to set time\n");
             exit(2);
@@ -547,17 +563,18 @@ int main(int argc, char **argv)
         pc98_settime(tmp, timebuf);
         pc98_write_calendar(tm_seg, tm_offset);
 #else
+#if AST_SUPPORT
         if (astclock)
             ast_settime(tmp);
         else
+#endif
             cmos_settime(tmp);
 #endif
     }
     return 0;
 }
 
-#ifndef CONFIG_ARCH_PC98
-
+#if AST_SUPPORT
 /* set time from AST SixPakPlus type RTC */
 void ast_gettime(struct tm *tm)
 {
@@ -588,23 +605,6 @@ void ast_gettime(struct tm *tm)
     tm->tm_year += 80 /* AST clock starts @ 1980 */ ;
 }
 
-/*  set time from AT style CMOS RTC (mc146818) */
-void cmos_gettime(struct tm *tm)
-{
-    do {
-        tm->tm_sec = cmos_read_bcd(0);
-        tm->tm_min = cmos_read_bcd(2);
-        tm->tm_hour = cmos_read_bcd(4);
-        tm->tm_wday = cmos_read_bcd(6);
-        tm->tm_mday = cmos_read_bcd(7);
-        tm->tm_mon = cmos_read_bcd(8);
-        tm->tm_year = cmos_read_bcd(9);
-    } while (tm->tm_sec != cmos_read_bcd(0));
-
-    if (tm->tm_year < 70)
-        tm->tm_year += 100;     /* 70..99 => 1970..1999, 0..69 => 2000..2069 */
-}
-
 void ast_settime(struct tm *tmp)
 {
     if (ast_chiptype()) {
@@ -630,6 +630,25 @@ void ast_settime(struct tm *tmp)
         ast_put_rbcd(AST_RI_YEAR, tmp->tm_year - 80);
     }
 }
+#endif
+
+#ifndef CONFIG_ARCH_PC98
+/*  set time from AT style CMOS RTC (mc146818) */
+void cmos_gettime(struct tm *tm)
+{
+    do {
+        tm->tm_sec = cmos_read_bcd(0);
+        tm->tm_min = cmos_read_bcd(2);
+        tm->tm_hour = cmos_read_bcd(4);
+        tm->tm_wday = cmos_read_bcd(6);
+        tm->tm_mday = cmos_read_bcd(7);
+        tm->tm_mon = cmos_read_bcd(8);
+        tm->tm_year = cmos_read_bcd(9);
+    } while (tm->tm_sec != cmos_read_bcd(0));
+
+    if (tm->tm_year < 70)
+        tm->tm_year += 100;     /* 70..99 => 1970..1999, 0..69 => 2000..2069 */
+}
 
 void cmos_settime(struct tm *tmp)
 {
@@ -653,7 +672,6 @@ void cmos_settime(struct tm *tmp)
 }
 
 #else
-
 void pc98_read_calendar(unsigned int tm_seg, unsigned int tm_offset)
 {
     __asm__ volatile ("mov %0,%%es;"
@@ -676,12 +694,12 @@ void pc98_write_calendar(unsigned int tm_seg, unsigned int tm_offset)
 
 }
 
-int bcd_hex(unsigned char bcd_data)
+static int bcd_hex(unsigned char bcd_data)
 {
     return (bcd_data & 15) + (bcd_data >> 4) * 10;
 }
 
-int hex_bcd(int hex_data)
+static int hex_bcd(int hex_data)
 {
     return ((hex_data / 10) << 4) + hex_data % 10;
 }
