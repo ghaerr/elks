@@ -26,6 +26,7 @@
 #include <linuxmt/debug.h>
 
 #include <arch/segment.h>
+#include <arch/irq.h>
 
 #define socki_lookup(inode)	(&inode->u.socket_i)
 

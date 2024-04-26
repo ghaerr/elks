@@ -15,6 +15,8 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/stat.h>
 #include <linuxmt/fcntl.h>
+
+#include <arch/irq.h>
 #include "af_nano.h"
 
 #ifdef CONFIG_NANO
