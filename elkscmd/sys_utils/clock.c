@@ -162,6 +162,9 @@ int universal;
 int astclock;
 int verbose;
 
+void do_gettime(struct tm *);
+void do_settime(struct tm *);
+
 #if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_8018X)
 void cmos_settime(struct tm *);
 void cmos_gettime(struct tm *);
@@ -237,17 +240,6 @@ int main(int argc, char **argv)
     time_t systime;
     int    arg;
 
-#ifdef CONFIG_ARCH_PC98
-    unsigned char timebuf[6];
-    unsigned char __far *timeaddr;
-    unsigned int tm_seg;
-    unsigned int tm_offset;
-
-    timeaddr = (unsigned char __far *)timebuf;
-    tm_seg = ((long)timeaddr) >> 16;
-    tm_offset = ((long)timeaddr) & 0xFFFF;
-#endif
-
     while ((arg = getopt(argc, argv, "rwsuvA")) != -1) {
         switch (arg) {
         case 'r':
@@ -289,18 +281,7 @@ int main(int argc, char **argv)
         readit = 1;
 
     if (readit || setit) {
-
-#ifdef CONFIG_ARCH_PC98
-        pc98_read_calendar(tm_seg, tm_offset);
-        pc98_gettime(&tm, timebuf);
-#else
-#if AST_SUPPORT
-        if (astclock)
-            ast_gettime(&tm);
-        else
-#endif
-            cmos_gettime(&tm);
-#endif
+        do_gettime(&tm);
         tm.tm_mon--;            /* DOS uses 1 base */
         tm.tm_isdst = -1;       /* don't know whether it's daylight */
     }
@@ -381,18 +362,7 @@ int main(int argc, char **argv)
             tmp = gmtime(&systime);
         else
             tmp = localtime(&systime);
-
-#ifdef CONFIG_ARCH_PC98
-        pc98_settime(tmp, timebuf);
-        pc98_write_calendar(tm_seg, tm_offset);
-#else
-#if AST_SUPPORT
-        if (astclock)
-            ast_settime(tmp);
-        else
-#endif
-            cmos_settime(tmp);
-#endif
+        do_settime(tmp);
     }
     return 0;
 }
@@ -401,6 +371,26 @@ int main(int argc, char **argv)
 #if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_8018X)
 #define CMOS_CMDREG     0x70
 #define CMOS_IOREG      0x71
+
+void do_gettime(struct tm *tm)
+{
+#if AST_SUPPORT
+        if (astclock)
+            ast_gettime(tm);
+        else
+#endif
+            cmos_gettime(tm);
+}
+
+void do_settime(struct tm *tm)
+{
+#if AST_SUPPORT
+        if (astclock)
+            ast_settime(tm);
+        else
+#endif
+            cmos_settime(tm);
+}
 
 #ifdef CONFIG_ARCH_IBMPC
 unsigned char cmos_read(unsigned char reg)
@@ -467,9 +457,9 @@ void cmos_gettime(struct tm *tm)
         tm->tm_mon = cmos_read_bcd(8);
         tm->tm_year = cmos_read_bcd(9);
     } while (tm->tm_sec != cmos_read_bcd(0));
-
     if (tm->tm_year < 70)
-        tm->tm_year += 100;     /* 70..99 => 1970..1999, 0..69 => 2000..2069 */
+        tm->tm_year += 100;  /* 70..99 => 1970..1999, 0..69 => 2000..2069 */
+    tm->tm_wday -= 3;        /* DOS uses 3 - 9 for week days */
 }
 
 void cmos_settime(struct tm *tmp)
@@ -496,6 +486,28 @@ void cmos_settime(struct tm *tmp)
 
 /****************************************************************************/
 #ifdef CONFIG_ARCH_PC98
+void do_gettime(struct tm *tm)
+{
+    unsigned char timebuf[6];
+    unsigned char __far *timeaddr = (unsigned char __far *)timebuf;
+    unsigned int tm_seg = ((long)timeaddr) >> 16;
+    unsigned int tm_offset = ((long)timeaddr) & 0xFFFF;
+
+    pc98_read_calendar(tm_seg, tm_offset);
+    pc98_gettime(tm, timebuf);
+}
+
+void do_settime(struct tm *tm)
+{
+    unsigned char timebuf[6];
+    unsigned char __far *timeaddr = (unsigned char __far *)timebuf;
+    unsigned int tm_seg = ((long)timeaddr) >> 16;
+    unsigned int tm_offset = ((long)timeaddr) & 0xFFFF;
+
+    pc98_settime(tm, timebuf);
+    pc98_write_calendar(tm_seg, tm_offset);
+}
+
 void pc98_read_calendar(unsigned int tm_seg, unsigned int tm_offset)
 {
     __asm__ volatile ("mov %0,%%es;"
@@ -537,7 +549,8 @@ void pc98_gettime(struct tm *tm, unsigned char *timebuf)
     tm->tm_mday = bcd_hex(timebuf[2]);
     tm->tm_mon = timebuf[1] >> 4;
     tm->tm_year = bcd_hex(timebuf[0]);
-    tm->tm_wday -= 3;   /* DOS uses 3 - 9 for week days */
+    if (tm->tm_year < 70)
+        tm->tm_year += 100;  /* 70..99 => 1970..1999, 0..69 => 2000..2069 */
 }
 
 void pc98_settime(struct tm *tmp, unsigned char *timebuf)
