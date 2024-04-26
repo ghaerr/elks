@@ -3,7 +3,7 @@
 clock \- Read or modify the hardware clock
 .SH SYNOPSIS
 .B clock
-.B [\-u] {\-r,\-w,\-s,\-a,\-v}
+.B [\-u] {\-r,\-w,\-s,\-A}
 .SH DESCRIPTION
 .BR clock
 is used to read from or write to the hardware clock, and to
@@ -22,12 +22,8 @@ Write the system time to the hardware clock.
 .B "\-s"
 Set the system time from the hardware clock.
 .TP
-.B "\-s"
-Set the system time from the hardware clock, adjust for systematic errors,
-and then write the system time to the hardware clock.
-.TP
-.B "\-v"
-Print version information and exit.
+.B "\-A"
+Assume AST clock hardware.
 .SH EXIT STATUS
 .TP
 .I 0

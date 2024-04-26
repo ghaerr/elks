@@ -1,5 +1,5 @@
 ## max 511 bytes
-#TZ=MDT8
+#TZ=MDT6
 #LOCALIP=10.0.2.16
 #HOSTNAME=elks16
 #ne0=12,0x300,,0x80
