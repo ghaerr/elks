@@ -92,6 +92,7 @@ setsid		+68	0
 sbrk		+69	2	* Legacy number from Linux
 ustatfs		+70	3
 setitimer	+71	3
+sysctl		+72	3	. ELKS
 uname		+74	1	. was knlvsn
 #
 # From /usr/include/asm-generic/unistd.h
