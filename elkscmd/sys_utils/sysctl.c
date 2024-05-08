@@ -13,7 +13,46 @@
 
 #define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
 
-void msg(int fd, const char *s, ...)
+static int digit(char c, int base)
+{
+    int d;
+    if (c <= '9') {
+        d = c - '0';
+    } else if (c < 'A') {   /* NEATLIBC bugfix */
+        return -1;
+    } else if (c <= 'Z') {
+        d = 10 + c - 'A';
+    } else {
+        d = 10 + c - 'a';
+    }
+    return d < base ? d : -1;
+}
+
+static int strtoi(const char *s)
+{
+    int num;
+    int dig;
+    int base;
+    int sgn = 1;
+
+    if (*s == '-')
+        sgn = ',' - *s++;
+    if (*s == '0') {
+        if (s[1] == 'x' || s[1] == 'X') {
+            base = 16;
+            s += 2;
+        } else
+            base = 8;
+    } else {
+        base = 10;
+    }
+    for (num = 0; (dig = digit(*s, base)) >= 0; s++)
+        num = num*base + dig;
+    num *= sgn;
+    return num;
+}
+
+static void msg(int fd, const char *s, ...)
 {
     va_list va;
 
@@ -38,7 +77,7 @@ int main(int ac, char **av)
         char *p = strchr(av[i], '=');
         if (p) {
             *p = '\0';
-            new = atoi(p+1);
+            new = strtoi(p+1);
             ret = sysctl(av[i], 0, &new);
             if (ret) {
                 msg(STDOUT_FILENO, "Failed to set option: ", av[i], "\n", 0);
