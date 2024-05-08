@@ -24,6 +24,7 @@
 
 extern char running_qemu;
 extern dev_t dev_console;
+extern int dprintk_on;
 
 extern void do_exit(int) noreturn;
 

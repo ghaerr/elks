@@ -3,20 +3,26 @@
 #include <linuxmt/string.h>
 #include <linuxmt/sysctl.h>
 
-static char ctlname[CTL_MAXNAMESZ];
+#include <linuxmt/trace.h>
+#include <linuxmt/kernel.h>
 
 struct sysctl {
     const char *name;
     int *value;
 };
 
-int debug_malloc = 1;
-int debug_tcp = 200;
+static int malloc_debug;
+static int net_debug;
 
 struct sysctl sysctl[] = {
-    { "debug.malloc",       &debug_malloc,  },
-    { "debug.tcp",          &debug_tcp,     },
+    { "kern.debug",         &dprintk_on         },  /* debug (^P) on/off */
+    { "kern.strace",        &tracing            },  /* strace=1, kstack=2 */
+    { "kern.console",       (int *)&dev_console },  /* console */
+    { "malloc.debug",       &malloc_debug       },
+    { "net.debug",          &net_debug          },
 };
+
+static char ctlname[CTL_MAXNAMESZ];
 
 #define ARRAYLEN(a)     (sizeof(a)/sizeof(a[0]))
 

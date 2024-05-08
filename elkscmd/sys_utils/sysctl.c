@@ -90,7 +90,7 @@ int main(int ac, char **av)
             val = strtoi(p+1);
             ret = sysctl(CTL_SET, av[i], &val);
             if (ret) {
-                msg(STDOUT_FILENO, "Failed to set option: ", av[i], "\n", 0);
+                msg(STDOUT_FILENO, "Unknown option: ", av[i], "\n", 0);
                 continue;
             }
         }
