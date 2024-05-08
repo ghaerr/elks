@@ -140,7 +140,7 @@ int sys_execve(const char *filename, char *sptr, size_t slen)
 #endif
 
     /* Open the image */
-    debug_file("EXEC: '%t' env %d\n", filename, slen);
+    debug_file("EXEC(%P): '%t' env %d\n", filename, slen);
 
     retval = open_namei(filename, 0, 0, &inode, NULL);
 
@@ -548,6 +548,6 @@ int sys_execve(const char *filename, char *sptr, size_t slen)
   error_exec2:
 	iput(inode);
   error_exec1:
-    debug("EXEC: Returning %d\n", retval);
+    debug("EXEC(%P): return %d\n", retval);
     return retval;
 }

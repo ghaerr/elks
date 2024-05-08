@@ -23,6 +23,7 @@
 #define structof(p,t,m) ((t *) ((char *) (p) - offsetof (t,m)))
 
 extern char running_qemu;
+extern dev_t dev_console;
 
 extern void do_exit(int) noreturn;
 

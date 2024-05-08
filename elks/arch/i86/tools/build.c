@@ -33,7 +33,6 @@
 #include <stdlib.h>			/* contains exit */
 #include <unistd.h>			/* contains read/write */
 #include <fcntl.h>
-#include <stdint.h>
 
 #include <linuxmt/config.h>
 #include <linuxmt/errno.h>
