@@ -145,9 +145,12 @@ void INITPROC kernel_init(void)
     if (buffer_init())	/* also enables xms and unreal mode if configured and possible*/
         panic("No buf mem");
 
+#ifdef CONFIG_ARCH_IBMPC
     outw(0, 0x510);
     if (inb(0x511) == 'Q' && inb(0x511) == 'E')
         running_qemu = 1;
+#endif
+
     device_init();
 
 #ifdef CONFIG_SOCKET

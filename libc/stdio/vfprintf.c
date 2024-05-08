@@ -204,7 +204,7 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
 	 case 'p':		/* Pointer */
 	    lval = (sizeof(char*) == sizeof(long));
 	    pad = '0';
-	    width = 6;
+	    width = 4;
 	    preci = 8;
 	    /* fall thru */
 
