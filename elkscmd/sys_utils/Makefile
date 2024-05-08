@@ -40,6 +40,7 @@ PRGS = \
 	console \
 	makeboot \
 	decomp \
+	sysctl \
 	# EOL
 
 HOSTPRGS = hostdecomp
@@ -124,6 +125,9 @@ unreal.o: $(ELKS_LIB)/unreal.S
 
 beep: beep.o
 	$(LD) $(LDFLAGS) -o beep beep.o $(LDLIBS)
+
+sysctl: sysctl.o
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 unreal16: unreal16.o unreal.o
 	$(LD) -melks-libc -mcmodel=small -c unreal16.S -o unreal16.o

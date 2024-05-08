@@ -73,7 +73,6 @@ static char *envp_init[MAX_INIT_ENVS+1];
 static unsigned char options[OPTSEGSZ];
 
 extern int boot_rootdev;
-extern int dprintk_on;
 static char * INITPROC root_dev_name(int dev);
 static int INITPROC parse_options(void);
 static void INITPROC finalize_options(void);
