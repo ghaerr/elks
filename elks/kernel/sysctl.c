@@ -1,9 +1,9 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/string.h>
+#include <linuxmt/sysctl.h>
 
-#define MAXCTLNAME      32
-static char ctlname[MAXCTLNAME];
+static char ctlname[CTL_MAXNAMESZ];
 
 struct sysctl {
     const char *name;
@@ -20,14 +20,25 @@ struct sysctl sysctl[] = {
 
 #define ARRAYLEN(a)     (sizeof(a)/sizeof(a[0]))
 
-int sys_sysctl(int *name, int *oldval, int *newval)
+int sys_sysctl(int op, char *name, int *value)
 {
     int error, n;
     struct sysctl *sc;
 
-    n = strlen_fromfs(name, MAXCTLNAME) + 1;
-    if (n >= MAXCTLNAME) return -EFAULT;
+    if (op >= CTL_LIST) {
+        if (!name)
+            return -EFAULT;
+        if (op >= ARRAYLEN(sysctl))
+            return -ENOTDIR;
+        sc = &sysctl[op];
+        return verified_memcpy_tofs(name, (void *)sc->name, strlen(sc->name)+1);
+    }
+
+    n = strlen_fromfs(name, CTL_MAXNAMESZ) + 1;
+    if (n >= CTL_MAXNAMESZ) return -EFAULT;
     error = verified_memcpy_fromfs(ctlname, name, n);
+    if (error) return error;
+    error = verfy_area(value, sizeof(int));
     if (error) return error;
 
     for (sc = sysctl;; sc++) {
@@ -36,15 +47,11 @@ int sys_sysctl(int *name, int *oldval, int *newval)
             break;
     }
 
-    if (oldval) {
-            error = verify_area(VERIFY_WRITE, oldval, sizeof(int));
-            if (error) return error;
-            put_user(*sc->value, oldval);
-    }
-    if (newval) {
-            error = verify_area(VERIFY_READ, newval, sizeof(int));
-            if (error) return error;
-            *sc->value = get_user(newval);
-    }
+    if (op == CTL_GET)
+            put_user(*sc->value, value);
+    else if (op == CTL_SET)
+            *sc->value = get_user(value);
+    else
+        return -EINVAL;
     return 0;
 }

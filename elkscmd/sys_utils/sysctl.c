@@ -66,29 +66,39 @@ static void msg(int fd, const char *s, ...)
 
 int main(int ac, char **av)
 {
-    int i, ret, old, new;
+    int i, ret, val;
+    char name[CTL_MAXNAMESZ];
 
     if (ac < 2) {
-        errmsg("usage: sysctl name[=value]\n");
+        errmsg("usage: sysctl [-a] [name[=value]]\n");
         exit(-1);
+    }
+
+    if (av[1][0] == '-' && av[1][1] == 'a') {
+        for (i = 0;; i++) {
+            ret = sysctl(CTL_LIST+i, name, 0);
+            if (ret) exit(0);
+            ret = sysctl(CTL_GET, name, &val);
+            msg(STDOUT_FILENO, name, "=", itoa(val), "\n", 0);
+        }
     }
 
     for (i = 1; i < ac; i++) {
         char *p = strchr(av[i], '=');
         if (p) {
             *p = '\0';
-            new = strtoi(p+1);
-            ret = sysctl(av[i], 0, &new);
+            val = strtoi(p+1);
+            ret = sysctl(CTL_SET, av[i], &val);
             if (ret) {
                 msg(STDOUT_FILENO, "Failed to set option: ", av[i], "\n", 0);
                 continue;
             }
         }
-        ret = sysctl(av[i], &old, 0);
+        ret = sysctl(CTL_GET, av[i], &val);
         if (ret)
             msg(STDERR_FILENO, "Invalid option: ", av[i], "\n", 0);
         else {
-            msg(STDOUT_FILENO, av[i], "=", itoa(old), "\n", 0);
+            msg(STDOUT_FILENO, av[i], "=", itoa(val), "\n", 0);
         }
     }
     return ret;
