@@ -1,9 +1,10 @@
 #include <stdlib.h>
+#define MAX_LONG_CHARS 34
 
-/* small unsigned int to ascii */
-char *uitoa(unsigned int i)
+/* small unsigned long to ascii */
+char *ultoa(unsigned long i)
 {
-    static char buf[6];
+    static char buf[MAX_LONG_CHARS];
     char *b = buf + sizeof(buf) - 1;
 
     *b = '\0';

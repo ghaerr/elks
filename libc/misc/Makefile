@@ -35,6 +35,7 @@ OBJS = \
 	system.o \
 	tmpnam.o \
 	uitoa.o \
+	ultoa.o \
 	ultostr.o \
 	ulltostr.o \
 	wildcard.o \
