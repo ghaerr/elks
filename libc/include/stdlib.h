@@ -65,6 +65,7 @@ void breakpoint();
 char *itoa(int val);
 char *uitoa(unsigned int val);
 char *ltoa(long val);
+char *ultoa(unsigned long val);
 char *ltostr(long val, int radix);
 char *lltostr(long long val, int radix);
 char *ultostr(unsigned long val, int radix);
