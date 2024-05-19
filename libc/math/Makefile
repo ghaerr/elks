@@ -49,6 +49,8 @@ FLOAT = \
 	e_acosf.o \
 	e_asinf.o \
 	s_atanf.o \
+	s_fminf.o \
+	s_fmaxf.o \
 	# end of list
 
 OBJS = $(DOUBLE) $(FLOAT)
