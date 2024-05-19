@@ -64,4 +64,7 @@ float asinf(float x);
 
 double atan(double x);		/* arc tangent of one variable */
 float atanf(float x);
+
+float fminf(float x, float y);
+float fmaxf(float x, float y);
 #endif
