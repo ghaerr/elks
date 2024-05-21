@@ -1,5 +1,6 @@
 ELKS system calls requires registers set in order of parameters:
     BX, CX, DX, DI, SI
+AX is set to the systen call number defined in elks/arch/i86/kernel/syscall.dat
 
 
 Cdecl calling convention, stack has parms, passed in this order in registers:
