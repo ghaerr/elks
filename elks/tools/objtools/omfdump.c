@@ -1,3 +1,4 @@
+/* 24 May 2024 from https://github.com/boeckmann/omfdump */
 /*
  * omfdump.c
  *
@@ -812,8 +813,8 @@ int main(int argc, char *argv[])
     progname = argv[0];
 
     if (argc < 2) {
-        puts("OMFDUMP - dump contents of object module files to stdout\n");
-        puts("Usage: OMFDUMP.EXE file...");
+        puts("omfdump - dump contents of OMF object module files\n");
+        puts("Usage: omfdump file.obj ...");
         return 0;
     }
 

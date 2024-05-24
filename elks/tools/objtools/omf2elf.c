@@ -1,3 +1,4 @@
+/* 24 May 2024 from https://github.com/pts/minilibc686 */
 /*
  * omf2elf.c: convert i386 OMF .obj object file to i386 ELF relocatable .o object file
  * by pts@fazekas.hu at Thu Jun  1 14:22:39 CEST 2023
@@ -14,6 +15,8 @@
  * correct struct alignment for <elf.h>. It has been tested with GCC (both C
  * and C++), Clang (both C and C++), TinyCC (C) and OpenWatcom (C)
  * compilers.
+ *
+ * 24 May 2024 Greg Haerr - Added 16-bit conversion capabilities for ELKS
  */
 
 #include <fcntl.h>
@@ -146,6 +149,8 @@ typedef struct {
 
 #define R_386_32	   1		/* Direct 32 bit  */
 #define R_386_PC32	   2		/* PC relative 32 bit */
+#define R_386_16	  20		/* Direct 16 bit */
+#define R_386_PC16	  21		/* PC relative 16 bit */
 
 /* --- OMF file format.
  *
@@ -199,6 +204,16 @@ static void add32(unsigned char *p, uint32_t v) {
   *p++ = v; v >>= 8;
   *p++ = v; v >>= 8;
   *p++ = v;
+#endif
+}
+
+static void add16(unsigned char *p, uint32_t v) {
+#if IS_X86  /* Unaligned write. */
+  *(uint16_t*)p += v;
+#else
+  v += g16(p);
+  *p++ = v; v >>= 8;
+  *p++ = v; v >>= 8;
 #endif
 }
 
@@ -318,7 +333,13 @@ static char is_openwatcom_libc_symbol(const char *name) {
          strcmp(name, "FSU87") == 0 ||
          strcmp(name, "FDU87") == 0 ||
          strcmp(name, "U8FD7") == 0 ||
-         strcmp(name, "U8FS7") == 0;
+         strcmp(name, "U8FS7") == 0 ||
+         strcmp(name, "FSFD") == 0 ||
+         strcmp(name, "FSI4") == 0 ||
+         strcmp(name, "I4FS") == 0 ||
+         strcmp(name, "FDC") == 0 ||
+         strcmp(name, "FSC") == 0 ||
+         strcmp(name, "I4M") == 0;
 }
 
 static unsigned char unflushed_ledata_data[0x10000], *unflushed_ledata_up;  /* OMF record data for ledata* records. */
@@ -347,6 +368,7 @@ int main(int argc, char **argv) {
   FILE *f;
   int fdo = -1;
   char verbose_level = 0, do_strip_one_leading_underscore = 0;
+  char do_strip_one_trailing_underscore = 0;
   char is_pass2;
   char is_fpc;
   const char *omfname;
@@ -376,7 +398,7 @@ int main(int argc, char **argv) {
   unsigned char *up, *rdata, *rdata_end;
   char *lnames[0x20], *lname;
   unsigned lname_count;
-  unsigned char seg_a, seg_combine, seg_big, seg_use32, seg_align, seg_idx, seg_count;
+  unsigned char seg_a, seg_combine, seg_big, seg_use32 = 0, seg_align, seg_idx, seg_count;
   unsigned seg_name_idx, seg_class_idx, seg_overlay_idx;
   uint32_t seg_size;
   unsigned grp_name_idx, grp_count, grp_dgroup, grp_flat, grp_idx;
@@ -430,6 +452,7 @@ int main(int argc, char **argv) {
     fprintf(stderr, "Usage: %s [<flag>...] <omfobj.obj>\nFlags:\n"
             "-v: verbose operation, write info to stderr\n"
             "-h: strip one leading _ from non-.text symbol names\n"
+            "-H: strip one trailing _ from symbol names\n"
             "-os0: never optimize strings\n"
             "-os1: always optimize strings\n"
             "-oss: optimize strings if it's safe\n"
@@ -459,6 +482,8 @@ int main(int argc, char **argv) {
       ++verbose_level;
     } else if (arg[1] == 'h') {
       do_strip_one_leading_underscore = 1;
+    } else if (arg[1] == 'H') {
+      do_strip_one_trailing_underscore = 1;
     } else if (arg[1] == 'o' && argp[1]) {
       elfoname = *++argp;
     } else {
@@ -668,10 +693,10 @@ int main(int argc, char **argv) {
           return 29;
         }
       } else {
-        if (seg_use32 == 0) {
+        /***if (seg_use32 == 0) {
           fprintf(stderr, "fatal: expected 32-bit segment in OMF: %s\n", omfname);
           return 30;
-        }
+        }***/
         if (seg_combine != 2 /* public */) {
           fprintf(stderr, "fatal: bad segment combine for normal segment in OMF: %s: %d: %s\n", lname, seg_combine, omfname);
           return 31;
@@ -890,6 +915,11 @@ int main(int argc, char **argv) {
           allnamep[up[0]] = '\0';
           if (do_strip_one_leading_underscore && allnamep[0] == '_' && !is_openwatcom_libc_symbol(allnamep)) ++extsymbolp->name;
           allnamep += up[0] + 1;
+          if (do_strip_one_trailing_underscore) {
+            if (up[0] > 1 && allnamep[-2] == '_') {
+              allnamep[-2] = '\0';
+            }
+          }
           ++extsymbolp;
         } else {
           if (extsymbol_count >= 0x3fffffff / sizeof(struct Symbol)) {  /* To avoid overflows. */
@@ -973,6 +1003,11 @@ int main(int argc, char **argv) {
           allnamep[up[0]] = '\0';
           if (do_strip_one_leading_underscore && allnamep[0] == '_' && !is_openwatcom_libc_symbol(allnamep)) ++pubsymbolp->name;
           allnamep += up[0] + 1;
+          if (do_strip_one_trailing_underscore) {
+            if (up[0] > 1 && allnamep[-2] == '_') {
+              allnamep[-2] = '\0';
+            }
+          }
         } else {
           if (pubsymbol_count >= 0x3fffffff / sizeof(struct Symbol)) {  /* To avoid overflows. */
             fprintf(stderr, "fatal: too many pub symbols in OMF: %s\n", omfname);
@@ -1040,8 +1075,8 @@ int main(int argc, char **argv) {
         fix_ofs += unflushed_ledata_ofs;
         fix_is_segrel = (fix_low >> 6) & 1;
         fix_location = (fix_low >> 2) & 0xf;
-        if (0 - 0 && verbose_level > 1) fprintf(stderr, "info: fixupp is_segrel=%d ofs=0x%x loc=%d\n", fix_is_segrel, fix_ofs, fix_location);
-        if (fix_location != 9) {  /* 32-bit offset. */
+        if (1 - 0 && verbose_level > 1) fprintf(stderr, "info: fixupp is_segrel=%d ofs=0x%x loc=%d\n", fix_is_segrel, fix_ofs, fix_location);
+        if (fix_location != 9 && fix_location != 1) {  /* 32- or 16-bit offset. */
           fprintf(stderr, "info: bad fixupp location type in OMF: %d: %s\n", fix_location, omfname);
           return 65;
         }
@@ -1051,7 +1086,7 @@ int main(int argc, char **argv) {
         fix_t = (fix_target >> 3) & 1;
         fix_p = (fix_target >> 2) & 1;
         fix_target &= 3;
-        if (0 - 0 && verbose_level > 1) fprintf(stderr, "info: fixupp is_segrel=%d ofs=0x%x f=%d frame=%d t=%d p=%d target=%d\n", fix_is_segrel, fix_ofs, fix_f, fix_frame, fix_t, fix_p, fix_target);
+        if (1 - 0 && verbose_level > 1) fprintf(stderr, "info: fixupp is_segrel=%d ofs=0x%x f=%d frame=%d t=%d p=%d target=%d\n", fix_is_segrel, fix_ofs, fix_f, fix_frame, fix_t, fix_p, fix_target);
         if (fix_f != 0) {
           fprintf(stderr, "info: bad fixupp f in OMF: %s\n", omfname);
           return 66;
@@ -1060,7 +1095,7 @@ int main(int argc, char **argv) {
           fprintf(stderr, "info: bad fixupp t in OMF: %s\n", omfname);
           return 67;
         }
-        if (fix_frame != 1) {  /* Only F0, F1 and F2 need a frame datum. F1(GRPDEF) does. */
+        if (fix_frame != 1 && fix_frame != 5) {  /* Only F0, F1 and F2 need a frame datum. F1(GRPDEF) does. Add F5 for 16-bit */
           fprintf(stderr, "info: bad fixupp frame in OMF: %d: %s\n", fix_frame, omfname);
           return 68;
         }
@@ -1069,11 +1104,13 @@ int main(int argc, char **argv) {
           return 69;
         }
         if (up == rdata_end) goto fixupp_subrecord_too_long;
-        fix_fd = *up++;
-        if (fix_fd >= 0x80) {
-          if (up == rdata_end) goto fixupp_subrecord_too_long;
-          fix_fd = (fix_fd & 0x7f) << 8 | *up++;
-        }
+        if (fix_frame == 1) {
+          fix_fd = *up++;
+          if (fix_fd >= 0x80) {
+            if (up == rdata_end) goto fixupp_subrecord_too_long;
+            fix_fd = (fix_fd & 0x7f) << 8 | *up++;
+          }
+        } else fix_fd = grp_dgroup;
         if (up == rdata_end) goto fixupp_subrecord_too_long;
         fix_td = *up++;
         if (fix_td >= 0x80) {
@@ -1111,7 +1148,13 @@ int main(int argc, char **argv) {
             if (u == SECTION_SDATA) {
               ++u;
             } else if (u == SECTION_RODATA) {
-              add32(unflushed_ledata_up + fix_ofs - unflushed_ledata_ofs, orig_sdata_size);
+              if (seg_use32) {
+                if (verbose_level > 1) fprintf(stderr, "info: ADD32 %d,%d\n", fix_ofs, orig_sdata_size);
+                add32(unflushed_ledata_up + fix_ofs - unflushed_ledata_ofs, orig_sdata_size);
+              } else {
+                if (verbose_level > 1) fprintf(stderr, "info: ADD16 %d,%d\n", fix_ofs, orig_sdata_size);
+                add16(unflushed_ledata_up + fix_ofs - unflushed_ledata_ofs, orig_sdata_size);
+              }
             }
           }
           if (is_pass2 && orig_yib_size != (uint32_t)-1) {
@@ -1137,7 +1180,13 @@ int main(int argc, char **argv) {
           section->relocp->is_segrel = fix_is_segrel;
           section->relocp->is_extdef = fix_target != 0;
           if (!fix_is_segrel) {  /* OMF and ELF have a different idea about PC-based relocation. We fix it for R_386_PC32 relocations by subtracting 4 from each value. */
-            add32(unflushed_ledata_up + fix_ofs - unflushed_ledata_ofs, -4);
+            if (seg_use32) {
+              if (verbose_level > 1) fprintf(stderr, "info: ADD32 %d,-4\n", fix_ofs);
+              add32(unflushed_ledata_up + fix_ofs - unflushed_ledata_ofs, -4);
+            } else {
+              if (verbose_level > 1) fprintf(stderr, "info: ADD16 %d,-2\n", fix_ofs);
+              add16(unflushed_ledata_up + fix_ofs - unflushed_ledata_ofs, -2);
+            }
           }
           ++section->relocp;
         } else {
@@ -1190,6 +1239,7 @@ int main(int argc, char **argv) {
     shdr_count = 1;  /* NULL. */
     sym_count = 1;  /* NULL. */
     for (u = 0, section = sections; u < SECTION_COUNT; ++u, ++section) {
+      if (section->info)
       if (verbose_level > 1) fprintf(stderr, "info: after pass1 segment name=%s section=%s size=0x%x rel_count=%u sym_count=%u is_rel_target=%u\n", section->info->seg_name, section->info->rel_section_name + 4, section->size, section->rel_count, section->sym_count, section->is_rel_target);
       if (u == SECTION_SDATA && !may_optimize_strings &&
           (section->size != 0 || section->rel_count != 0 || section->sym_count != 0 || section->is_rel_target)) {
@@ -1456,7 +1506,10 @@ int main(int argc, char **argv) {
     for (relp = rels, rels_end = rels + section->rel_count, relocp = section->relocs; relp != rels_end; ++relp, ++relocp) {
       rel_sym = relocp->is_extdef ? extsymbols[relocp->idx].prev_idx : sections[relocp->idx].symndx;
       relp->r_offset = relocp->ofs;
-      relp->r_info = ELF32_R_INFO(rel_sym, relocp->is_segrel ? R_386_32 : R_386_PC32);
+      if (seg_use32)
+        relp->r_info = ELF32_R_INFO(rel_sym, relocp->is_segrel ? R_386_32 : R_386_PC32);
+      else
+        relp->r_info = ELF32_R_INFO(rel_sym, relocp->is_segrel ? R_386_16: R_386_PC16);
     }
     elf_file_ofs = section->rel_file_ofs;  /* .rel.* */
     if ((uint32_t)lseek(fdo, elf_file_ofs, SEEK_SET) != elf_file_ofs) {  /* Usually this succeeds, and then the write fails. */

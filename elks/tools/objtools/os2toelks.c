@@ -1,9 +1,12 @@
+/* 24 May 2024 from https://github.com/pts/owtarget16/progcv16.c */
 /*
- * prog16cv: converter for 16-bit x86 executables formats
+ * os2toelks: converter from  16-bit OS/2 to a.out x86 executable format
  * by pts@fazekas.hu at Thu Jan 19 20:41:19 CET 2023
  *
  * Right now the input must be an OS/2 1.x .exe program (output of `owcc
- * -bos2'), and the output must be an ELKS executable program.
+ * -bos2'), and the output will be an ELKS a.out v1 executable program.
+ *
+ * 24 May 2024 Greg Haerr - Renamed to os2toelks, use default 4K/4K heap/stack for ELKS
  */
 
 #include <fcntl.h>
@@ -82,7 +85,7 @@ static int copy_fd(int infd, int outfd, uint32_t size) {
 }
 
 #define HDR_SIZE 0x200  /* <= sizeof(buf). */
-typedef hdr_size_assert[HDR_SIZE <= sizeof(buf)];
+typedef int hdr_size_assert[HDR_SIZE <= sizeof(buf)];
 #define hdr buf  /* Reuse array. */
 
 /* NE header in the input file:
@@ -206,14 +209,15 @@ int main(int argc, char **argv) {
 
   /*memset(hdr, '\0', 0x20);*/  /* ELKS a.out executable header. Not needed to clear. */
   set_u16_le(hdr, 0x0301);  /* a_magic = A_MAGIC. */
-  set_u16_le(hdr + 2, 0x420);  /* a_flags = A_SEP; a_cpu = A_I8086. ELKS 0.2.0 fails if |A_FLAG.A_EXEC (as in ELKS 0.6.0) is also specified. */
+  set_u16_le(hdr + 2, 0x430);  /* a_flags = A_SEP; a_cpu = A_I8086. ELKS 0.2.0 fails if |A_FLAG.A_EXEC (as in ELKS 0.6.0) is also specified. */
   set_u16_le(hdr + 4, 0x20);  /* a_hdrlen = 0x20. */
   set_u16_le(hdr + 6, 1);  /* a_version = 1. 1 for ELKS 0.6.0 yes(1), 0 for ELKS 0.2.0 yes(1). Ignored. */
   set_u32_le(hdr + 8, code_size);  /* a_text = code_size. */
   set_u32_le(hdr + 12, data_size);  /* a_data = data_size. */
   set_u32_le(hdr + 16, bss_size);  /* a_bss = bss_size. */
   set_u32_le(hdr + 20, entry);  /* a_entry = entry. */
-  set_u32_le(hdr + 24, (uint32_t)data_size + bss_size + stack_size);  /* a_total = .... */
+  /* ignore OS/2 stack_size for now and use ELKS 4K default */
+  set_u32_le(hdr + 24, 0);  /* a_chmem default 4K stack and 4K heap */
   set_u32_le(hdr + 28, 0);  /* a_syms = 0. Unused. */
 
   if (write(outfd, hdr, 0x20) != 0x20) fail1("fatal: error writing header: ", outfn);
