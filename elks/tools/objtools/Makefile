@@ -1,4 +1,4 @@
-# Objdump a.out header dump tool
+# Object file manipulation, conversion and display utilities
 #
 #########################################################################
 #
@@ -19,7 +19,7 @@ USEBCC 		= N
 
 CLEANDEP	=
 
-CLEANME 	= ../bin/objdump86
+CLEANME 	= ../bin/objdump86 ../bin/omfdump ../bin/omf2elf ../bin/os2toelks
 
 DEPEND  	=
 
@@ -35,15 +35,24 @@ include $(BASEDIR)/Makefile-rules
 #########################################################################
 # Objects to be compiled.
 
-OBJS=objdump86.o
-
 #########################################################################
 # Commands.
 
-all:	../bin/objdump86
+CFLAGS += -Wall -Wextra -O3
 
-../bin/objdump86: $(OBJS)
-	$(CC) -o ../bin/objdump86 $(CFLAGS) $(OBJS)
+all: ../bin/objdump86 ../bin/omf2elf ../bin/omfdump ../bin/os2toelks
+
+../bin/objdump86: objdump86.o
+	$(CC) -o ../bin/objdump86 $(CFLAGS) $^
+
+../bin/omfdump: omfdump.o
+	$(CC) -o ../bin/omfdump $(CFLAGS) $^
+
+../bin/omf2elf: omf2elf.o
+	$(CC) -o ../bin/omf2elf $(CFLAGS) $^
+
+../bin/os2toelks: os2toelks.o
+	$(CC) -o ../bin/os2toelks $(CFLAGS) $^
 
 #########################################################################
 ### Dependencies:

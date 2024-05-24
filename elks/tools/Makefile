@@ -31,7 +31,7 @@ all:
 	$(MAKE) -C mfsck all
 	$(MAKE) -C mkromfs all
 	$(MAKE) -C setboot all
-	$(MAKE) -C objdump86 all
+	$(MAKE) -C objtools all
 	$(MAKE) -C elf2elks all
 	$(MAKE) -C elks-compress all
 	$(MAKE) -C eman all
