@@ -12,7 +12,7 @@ enum ttyflags {
     Utf8 = 8,                       /* set termios IUTF8 */
     ExitLastLine = 16,              /* on exit, cursor position to bottom */
     NoWait = 32,                    /* don't hang in getch */
-    FullBuffer                      /* fully buffered output */
+    FullBuffer = 64                 /* fully buffered output */
 };
 
 /* tty.c - tty termios and mouse management */

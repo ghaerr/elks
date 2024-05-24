@@ -91,7 +91,6 @@ struct tty *determine_tty(dev_t dev)
 {
     register struct tty *ttyp = &ttys[0];
     unsigned short minor = MINOR(dev);
-    extern dev_t dev_console;
 
     /* handle /dev/tty*/
     if (minor == 255 && current->pgrp && (current->pgrp == ttyp->pgrp))

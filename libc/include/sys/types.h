@@ -5,7 +5,15 @@
 #include <stddef.h>
 #include __SYSINC__(types.h)
 
-typedef int intptr_t;
-typedef intptr_t ssize_t;
+#ifdef __WATCOMC__
+#include <stdint.h>
+#endif
+
+#ifdef __GNUC__
+/* ia16-elf-gcc only supports small and medium models */
+typedef int         intptr_t;
+#endif
+
+typedef intptr_t    ssize_t;
 
 #endif

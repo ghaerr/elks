@@ -1,4 +1,5 @@
 /* ELKS symbol table support */
+#include <sys/cdefs.h>
 
 /* symbol table format
  *  | byte type | word address | byte symbol length | symbol |
@@ -16,8 +17,6 @@
 #define ADDR        1
 #define SYMLEN      3
 #define SYMBOL      4
-
-#define noinstrument    __attribute__((no_instrument_function))
 
 unsigned char __far * noinstrument sym_read_exe_symbols(char *path);
 unsigned char __far * noinstrument sym_read_symbols(char *path);

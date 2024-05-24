@@ -1,0 +1,36 @@
+#ifndef __ARCH_8086_CDEFS_H
+#define __ARCH_8086_CDEFS_H
+/* compiler-specific definitions for kernel and userspace */
+
+#if __STDC__
+#define	__CONCAT(x,y)	x ## y
+#define	__STRING(x)     #x
+#define __ptr_t         void *
+#else
+#define	__CONCAT(x,y)	x/**/y
+#define	__STRING(x)     "x"
+#define __ptr_t         char *
+#endif
+
+#define __P(x) x        /* always ANSI C */
+
+/* don't require <stdnoreturn.h> */
+#ifdef __GNUC__
+#define noreturn        __attribute__((__noreturn__))
+#define stdcall         __attribute__((__stdcall__))
+#define printfesque(n)  __attribute__((__format__(__gnu_printf__, n, n + 1)))
+#define noinstrument    __attribute__((no_instrument_function))
+#endif
+
+#ifdef __WATCOMC__
+#define noreturn        /* FIXME add something */
+#define stdcall         __stdcall
+#define restrict        __restrict
+#define printfesque(n)
+#define noinstrument
+/* force __cdecl calling convention and no register saves in main() arc/argv */
+#pragma aux main "*" modify [ bx cx dx si di ]
+#endif
+
+
+#endif

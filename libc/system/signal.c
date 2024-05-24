@@ -3,18 +3,18 @@
 
 typedef sighandler_t Sig;
 
-extern int _signal (int, __kern_sighandler_t);
-#if defined __TINY__ || defined __SMALL__ || defined __COMPACT__
+extern int _signal(int, __kern_sighandler_t);
+
+#if defined(__GNUC__) && (defined __TINY__ || defined __SMALL__ || defined __COMPACT__)
 /*
  * If we are building libc for a near-code memory model (tiny, small, or
  * compact), then we will arrange for _syscall_signal( ) to be within the
  * same near code section as this module.
  */
-extern __attribute__((near_section, stdcall))
+extern __attribute__((near_section, __stdcall__))   __far void _syscall_signal(int);
 #else
-extern __attribute__((stdcall))
+extern stdcall                                      __far void _syscall_signal(int);
 #endif
-    __far void _syscall_signal (int);
 
 Sig _sigtable[_NSIG];
 
