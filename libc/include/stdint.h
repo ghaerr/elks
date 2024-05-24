@@ -1,5 +1,5 @@
 #ifdef __WATCOMC__
-#include <stdint-watcom.h>
+#include <watcom/stdint.h>
 #endif
 
 #ifdef __GNUC__
