@@ -1,7 +1,7 @@
 #ifndef __ARCH_8086_TYPES_H
 #define __ARCH_8086_TYPES_H
 
-/* arch/i86/include/asm/types.h - Basic ELKS data types. */
+/* Basic ELKS data types. */
 
 /* First we define all of the __u and __s types...*/
 

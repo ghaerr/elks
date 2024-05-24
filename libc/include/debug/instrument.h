@@ -1,7 +1,6 @@
 /* ELKS stack trace and instrumentation functions library */
 /* Jan 2023 Greg Haerr */
-
-#define noinstrument    __attribute__((no_instrument_function))
+#include <sys/cdefs.h>
 
 /* calc_push_count returns */
 #define BP_PUSHED   0x0100

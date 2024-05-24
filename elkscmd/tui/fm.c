@@ -997,8 +997,6 @@ main(int argc, char *argv[])
 			ipath = "/";
 	}
 
-	signal(SIGINT, SIG_IGN);
-
 	/* Test initial path */
 	if (canopendir(ipath) == 0) {
 		fprintf(stderr, "%s: %s\n", ipath, strerror(errno));
@@ -1010,6 +1008,7 @@ main(int argc, char *argv[])
 	setlocale(LC_ALL, "");
 #endif
 	initcurses();
+	signal(SIGINT, SIG_IGN);
 	browse(ipath, ifilter);
 	exitcurses();
 	exit(0);
