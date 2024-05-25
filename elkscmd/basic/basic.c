@@ -1613,8 +1613,8 @@ int parse_RUN(int isRestore) {
         if (val) return val;	// error
         if (executeMode) {
             startLine = (uint16_t)stackPopNum();
-            if (startLine <= 0)
-                return ERROR_BAD_LINE_NUM;
+            /*if (startLine <= 0)
+                return ERROR_BAD_LINE_NUM;*/
         }
     }
     if (executeMode) {
@@ -1638,8 +1638,8 @@ int parse_GOTO() {
     if (val) return val;	// error
     if (executeMode) {
         uint16_t startLine = (uint16_t)stackPopNum();
-        if (startLine <= 0)
-            return ERROR_BAD_LINE_NUM;
+        /*if (startLine <= 0)
+            return ERROR_BAD_LINE_NUM;*/
         jumpLineNumber = startLine;
     }
     return 0;
@@ -1724,12 +1724,13 @@ int parse_PRINT() {
     return 0;
 }
 
-// parse a stmt that takes N int parameters
+// parse a stmt that takes N int parameters (max 3)
 // e.g. POSITION 3,2
 int parseNIntCmd(int n) {
-    int para[n];
     int i;
     int op = curToken;
+    int para[3];
+    if (n > 3) return ERROR_LEXER_TOO_LONG;
     getNextToken();
     int val = expectNumber();
     if (val) return val;	// error
@@ -1988,8 +1989,8 @@ int parse_GOSUB() {
     if (val) return val;	// error
     if (executeMode) {
         uint16_t startLine = (uint16_t)stackPopNum();
-        if (startLine <= 0)
-            return ERROR_BAD_LINE_NUM;
+        /*if (startLine <= 0)
+            return ERROR_BAD_LINE_NUM;*/
         jumpLineNumber = startLine;
         if (!gosubStackPush(lineNumber,stmtNumber))
             return ERROR_OUT_OF_MEMORY;
