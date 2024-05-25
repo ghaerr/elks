@@ -23,7 +23,7 @@
 #endif
 
 #ifdef __WATCOMC__
-#define noreturn        /* FIXME add something */
+#define noreturn        __declspec(noreturn)
 #define stdcall         __stdcall
 #define restrict        __restrict
 #define printfesque(n)
