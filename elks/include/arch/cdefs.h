@@ -5,11 +5,9 @@
 #if __STDC__
 #define	__CONCAT(x,y)	x ## y
 #define	__STRING(x)     #x
-#define __ptr_t         void *
 #else
 #define	__CONCAT(x,y)	x/**/y
 #define	__STRING(x)     "x"
-#define __ptr_t         char *
 #endif
 
 #define __P(x) x        /* always ANSI C */

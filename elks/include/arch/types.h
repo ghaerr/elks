@@ -18,7 +18,11 @@ typedef signed long int         __s32;
 typedef __u8                    byte_t;
 typedef __u16                   word_t;
 typedef __u32                   long_t;
+
 typedef __u16                   seg_t;
+typedef __u16                   segext_t;
+typedef __u16                   flag_t;
+
 typedef __u16                   __pptr;
 typedef __u32                   addr_t;
 
