@@ -46,6 +46,9 @@
 
 #include <arch/segment.h>
 
+/* for relocation debugging change to printk */
+#define debug_reloc     debug
+
 #ifndef __GNUC__
 /* FIXME: evaluates some operands twice */
 #   define add_overflow(a, b, res) \
@@ -73,15 +76,15 @@ static int relocate(seg_t place_base, lsize_t rsize, segment_s *seg_code,
 {
     int retval = 0;
     __u16 save_ds = current->t_regs.ds;
+    struct minix_reloc reloc;   //FIXME too large
+    word_t val;
 
     if ((int)rsize % sizeof(struct minix_reloc))
 	return -EINVAL;
     current->t_regs.ds = kernel_ds;
-    debug("EXEC: applying 0x%lx bytes of relocations to segment 0x%x\n",
+    debug_reloc("EXEC: applying %04lx bytes of relocations to segment %x\n",
 	   (unsigned long)rsize, place_base);
     while (rsize >= sizeof(struct minix_reloc)) {
-	struct minix_reloc reloc;
-	word_t val;
 	retval = filp->f_op->read(inode, filp, (char *)&reloc, sizeof(reloc));
 	if (retval != (int)sizeof(reloc))
 	    goto error;
@@ -95,16 +98,16 @@ static int relocate(seg_t place_base, lsize_t rsize, segment_s *seg_code,
 	    case S_DATA:
 		val = seg_data->base; break;
 	    default:
-		debug("EXEC: bad relocation symbol index 0x%x\n",
-		       reloc.r_symndx);
+		debug_reloc("EXEC: bad relocation symbol index 0x%x\n", reloc.r_symndx);
 		goto error;
 	    }
-	    debug("EXEC: reloc %d,%d: %04x, %x, %x\n", reloc.r_type,
-		reloc.r_symndx, (word_t)reloc.r_vaddr, place_base, val);
+	    debug_reloc("EXEC: reloc %d,%d,%04x:%04x %04x -> %04x\n",
+	        reloc.r_type, reloc.r_symndx, place_base, (word_t)reloc.r_vaddr,
+		peekw((word_t)reloc.r_vaddr, place_base), val);
 	    pokew((word_t)reloc.r_vaddr, place_base, val);
 	    break;
 	default:
-	    debug("EXEC: bad relocation type 0x%x\n", reloc.r_type);
+	    debug_reloc("EXEC: bad relocation type 0x%x\n", reloc.r_type);
 	    goto error;
 	}
 	rsize -= sizeof(struct minix_reloc);
@@ -112,7 +115,7 @@ static int relocate(seg_t place_base, lsize_t rsize, segment_s *seg_code,
     current->t_regs.ds = save_ds;
     return 0;
   error:
-    debug("EXEC: error in relocations\n");
+    debug_reloc("EXEC: error in relocations\n");
     current->t_regs.ds = save_ds;
     if (retval >= 0)
 	retval = -EINVAL;
@@ -205,10 +208,12 @@ int sys_execve(const char *filename, char *sptr, size_t slen)
 	    debug("EXEC: Bad secondary header, result %u\n", retval);
 	    goto error_exec3;
 	}
-	debug("EXEC: text reloc size 0x%lx, data reloc size 0x%lx, "
-	       "far text reloc size 0x%x, text base 0x%lx\n",
-	       esuph.msh_trsize, esuph.msh_drsize, esuph.esh_ftrsize,
-	       esuph.msh_tbase);
+	debug_reloc("EXEC: text rels %d, data rels %d, "
+	       "ftext rels %d, text/data base %x,%x\n",
+	       (int)esuph.msh_trsize/sizeof(struct minix_reloc),
+	       (int)esuph.msh_drsize/sizeof(struct minix_reloc),
+	       (int)esuph.esh_ftrsize/sizeof(struct minix_reloc),
+	       (int)esuph.msh_tbase, (int)esuph.msh_dbase);
 #ifndef CONFIG_EXEC_COMPRESS
 	if (esuph.esh_compr_tseg || esuph.esh_compr_ftseg || esuph.esh_compr_dseg)
 	    goto error_exec3;
@@ -335,7 +340,8 @@ int sys_execve(const char *filename, char *sptr, size_t slen)
 #ifdef CONFIG_EXEC_MMODEL
 	paras += bytes_to_paras((size_t)esuph.esh_ftseg);
 #endif
-	debug("EXEC: Allocating 0x%x paragraphs for text segment(s)\n", paras);
+	debug_reloc("EXEC: allocating %04x paras (%04x bytes) for text segment(s)\n", paras,
+	    bytes);
 	seg_code = seg_alloc(paras, SEG_FLAG_CSEG);
 	if (!seg_code) goto error_exec3;
 	currentp->t_regs.ds = seg_code->base;  // segment used by read()
@@ -385,7 +391,7 @@ int sys_execve(const char *filename, char *sptr, size_t slen)
 
     paras = len >> 4;
     retval = -ENOMEM;
-    debug("EXEC: Allocating 0x%x paragraphs for data segment\n", paras);
+    debug_reloc("EXEC: allocating %04x paras (%04x bytes) for data segment\n", paras, len);
     seg_data = seg_alloc (paras, SEG_FLAG_DSEG);
     if (!seg_data) goto error_exec4;
     debug("EXEC: Malloc succeeded - cs=%x ds=%x\n", seg_code->base, seg_data->base);

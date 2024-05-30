@@ -40,8 +40,8 @@ struct elks_supl_hdr {
     /* optional fields */
     uint32_t	msh_trsize;	/* text relocation size */	// 0x20
     uint32_t	msh_drsize;	/* data relocation size */	// 0x24
-    uint32_t	msh_tbase;	/* text relocation base */
-    uint32_t	msh_dbase;	/* data relocation base */
+    uint32_t	msh_tbase;	/* text base address (low stack only) */
+    uint32_t	msh_dbase;	/* data base address (low stack only) */
     /* even more optional fields --- for ELKS medium memory model support */
     uint32_t	esh_ftseg;	/* far text size */		// 0x30
     uint32_t	esh_ftrsize;	/* far text relocation size */	// 0x34
