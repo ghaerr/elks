@@ -515,7 +515,7 @@ read_syms()
       symtab[i].symtype = get_word();
       symtype = (symtab[i].symtype & 0x3FFF);
 
-      if (symtab[i].nameoff == -1 || symtab[i].symtype == -1) {
+      if (symtab[i].nameoff == -1U || symtab[i].symtype == -1U) {
 	 printf("!!! EOF in symbol table\n");
 	 break;
       }
