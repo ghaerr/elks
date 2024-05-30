@@ -6,6 +6,7 @@ bin/objdump86
 bin/omfdump
 bin/omf2elf
 bin/os2toelks
+bin/os2dump
 bin/elf2elks
 bin/elks-compress
 bin/exomizer

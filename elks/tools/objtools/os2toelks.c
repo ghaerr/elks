@@ -7,12 +7,14 @@
  * -bos2'), and the output will be an ELKS a.out v1 executable program.
  *
  * 24 May 2024 Greg Haerr - Renamed to os2toelks, use default 4K/4K heap/stack for ELKS
+ * 29 May 2024 Added code and data relocation conversions for medium, compact and large
  */
 
 #include <fcntl.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -73,6 +75,11 @@ static void set_u32_le(char *p, uint32_t v) {
 }
 
 static char buf[0x1000];
+static char dataseg[65536];
+static char trelocs[1024*8];
+static char drelocs[1024*8];
+int trelocsz;
+int drelocsz;
 
 static int copy_fd(int infd, int outfd, uint32_t size) {
   int got;
@@ -152,6 +159,8 @@ int main(int argc, char **argv) {
   uint16_t bss_size;
   uint16_t data_idx, code_idx, stack_idx;
   uint32_t code_fofs, data_fofs;
+  int code_reloc = 0, data_reloc = 0;
+  int hdr_size;
   (void)argc; (void)argv;
   if (!argv[0] || !argv[1] || strcmp(argv[1], "-f") != 0) fail0("fatal: missing arg: -f");
   if (!argv[2] || strcmp(argv[2], "elks") != 0) fail0("fatal: missing arg: elks");
@@ -191,8 +200,8 @@ int main(int argc, char **argv) {
   if ((get_u8_le(data_st + 4) & 1) == 0) fail1("fatal: data data segment expected: ", infn);
   if ((get_u8_le(code_st + 4 + 1) & 0xc) != 0xc) fail1("fatal: DPL3 code segment expected: ", infn);
   if ((get_u8_le(data_st + 4 + 1) & 0xc) != 0xc) fail1("fatal: DPL3 data segment expected: ", infn);
-  if ((get_u8_le(code_st + 4 + 1) & 1) != 0) fail1("fatal: no-reloc code segment expected: ", infn);
-  if ((get_u8_le(data_st + 4 + 1) & 1) != 0) fail1("fatal: no-reloc data segment expected: ", infn);
+  if ((get_u8_le(code_st + 4 + 1) & 1) != 0) code_reloc = 1;
+  if ((get_u8_le(data_st + 4 + 1) & 1) != 0) data_reloc = 1;
   code_size = get_u16_le(code_st + 2);
   code_minalloc = get_u16_le(code_st + 6);
   data_size = get_u16_le(data_st + 2);
@@ -207,10 +216,60 @@ int main(int argc, char **argv) {
   code_fofs = (uint32_t)get_u16_le(code_st) << sas;
   data_fofs = (uint32_t)get_u16_le(data_st) << sas;
 
-  /*memset(hdr, '\0', 0x20);*/  /* ELKS a.out executable header. Not needed to clear. */
+  if (code_reloc) {
+    uint16_t i, nrelocs;
+    char relbuf[8];
+    if (lseek(infd, code_fofs+code_size, SEEK_SET) - (code_fofs+code_size) != 0) fail1("fatal: error seeking to code relocs: ", infn);
+    if (read(infd, &nrelocs, 2) != 2) fail1("fatal: can't read # code relocs: ", infn);
+    printf("info: text has %d relocs\n", nrelocs);
+    for (i=0; i<nrelocs; i++) {
+      if (trelocsz >= 1024*8) fail1("fatal: too many code relocations: ", infn);
+      if (read(infd, relbuf, 8) != 8) fail1("fatal: can't read reloc: ", infn);
+      printf("%02x %02x %02x %02x\n", relbuf[0], relbuf[1], relbuf[2], relbuf[3]);
+      if ((relbuf[0] & 0x0f) != 2) fail1("fatal: unhandled code reloc source type: ", infn);
+      if ((relbuf[1] & 0x03) != 0) fail1("fatal: unhandled code reloc target type: ", infn);
+      printf("info: code source %04x segment %04x offset %04x\n",
+        get_u16_le(relbuf + 2), get_u8_le(relbuf + 5), get_u16_le(relbuf + 6));
+      set_u32_le(trelocs + trelocsz + 0, get_u16_le(relbuf + 2)); /* vaddr = src chain */
+      set_u16_le(trelocs + trelocsz + 4, -2); /* symndx = S_TEXT */
+      set_u16_le(trelocs + trelocsz + 6, 80); /* type = R_SEGWORD */
+      trelocsz += 8;
+    }
+  }
+  if (data_reloc) {
+    uint16_t i, nrelocs;
+    int additive;
+    uint16_t src_chain;
+    char relbuf[8];
+    if (lseek(infd, data_fofs, SEEK_SET) - data_fofs != 0) fail1("fatal: error seeking to data: ", infn);
+    if (read(infd, dataseg, data_size) != data_size) fail1("fatal: can't read data segment: ", infn);
+    if (read(infd, &nrelocs, 2) != 2) fail1("fatal: can't read # data relocs: ", infn);
+    printf("info: data has %d relocs\n", nrelocs);
+    for (i=0; i<nrelocs; i++) {
+      if (drelocsz >= 1024*8) fail1("fatal: too many code relocations: ", infn);
+      if (read(infd, relbuf, 8) != 8) fail1("fatal: can't read reloc: ", infn);
+      printf("%02x %02x %02x %02x\n", relbuf[0], relbuf[1], relbuf[2], relbuf[3]);
+      if ((relbuf[0] & 0x0f) != 3) fail1("fatal: unhandled data reloc source type: ", infn);
+      if ((relbuf[1] & 0x03) != 0) fail1("fatal: unhandled data reloc target type: ", infn);
+      additive = ((relbuf[1] & 0x04) != 0);
+      src_chain = get_u16_le(relbuf+2);
+      printf("info: data source %04x segment %04x offset %04x\n",
+        get_u16_le(relbuf + 2), get_u8_le(relbuf + 5), get_u16_le(relbuf + 6));
+      if (!additive) {
+        set_u16_le(dataseg + src_chain, 0); /* remove 0xFFFF end of chain */
+      }
+      src_chain += 2; /* move to segment portion of far_addr */
+      set_u32_le(drelocs + drelocsz + 0, src_chain); /* vaddr = src chain */
+      set_u16_le(drelocs + drelocsz + 4, -3); /* symndx = S_DATA */
+      set_u16_le(drelocs + drelocsz + 6, 80); /* type = R_SEGWORD */
+      drelocsz += 8;
+    }
+  }
+  hdr_size = (code_reloc || data_reloc)? 0x30: 0x20;
+  /*memset(hdr, '\0', hdr_size);*/ /* ELKS a.out executable header. Not needed to clear */
   set_u16_le(hdr, 0x0301);  /* a_magic = A_MAGIC. */
   set_u16_le(hdr + 2, 0x430);  /* a_flags = A_SEP; a_cpu = A_I8086. ELKS 0.2.0 fails if |A_FLAG.A_EXEC (as in ELKS 0.6.0) is also specified. */
-  set_u16_le(hdr + 4, 0x20);  /* a_hdrlen = 0x20. */
+  set_u16_le(hdr + 4, hdr_size);  /* a_hdrlen */
   set_u16_le(hdr + 6, 1);  /* a_version = 1. 1 for ELKS 0.6.0 yes(1), 0 for ELKS 0.2.0 yes(1). Ignored. */
   set_u32_le(hdr + 8, code_size);  /* a_text = code_size. */
   set_u32_le(hdr + 12, data_size);  /* a_data = data_size. */
@@ -220,7 +279,15 @@ int main(int argc, char **argv) {
   set_u32_le(hdr + 24, 0);  /* a_chmem default 4K stack and 4K heap */
   set_u32_le(hdr + 28, 0);  /* a_syms = 0. Unused. */
 
-  if (write(outfd, hdr, 0x20) != 0x20) fail1("fatal: error writing header: ", outfn);
+  if (hdr_size == 0x30) {
+    /* reloc supplemental header */
+    set_u32_le(hdr + 32, trelocsz);  /* text reloc size */
+    set_u32_le(hdr + 36, drelocsz);  /* data reloc size */
+    set_u32_le(hdr + 40, 0);  /* text base address */
+    set_u32_le(hdr + 44, 0);  /* data base address */
+  }
+
+  if (write(outfd, hdr, hdr_size) != hdr_size) fail1("fatal: error writing header: ", outfn);
   if (lseek(infd, code_fofs, SEEK_SET) - code_fofs != 0) fail1("fatal: error seeking to code: ", infn);
   if ((got = copy_fd(infd, outfd, code_size)) == 0) {
   } else if (got == 1) {
@@ -230,14 +297,31 @@ int main(int argc, char **argv) {
   }
 
   if (lseek(infd, data_fofs, SEEK_SET) - data_fofs != 0) fail1("fatal: error seeking to data: ", infn);
-  if ((got = copy_fd(infd, outfd, data_size)) == 0) {
+  if (data_reloc) {
+    if (write(outfd, dataseg, data_size) != data_size) fail1("fatal: error writing data segment: ", infn);
+  }
+  else if ((got = copy_fd(infd, outfd, data_size)) == 0) {
   } else if (got == 1) {
     fail1("fatal: error reading data (file too short?): ", infn);
   } else {
     fail1("fatal: error writing data: ", outfn);
   }
+  if (trelocsz) {
+    char *p = trelocs;
+    do {
+      if (write(outfd, p , 8) != 8) fail1("fatal: error write output file: ", outfn);
+      p += 8;
+    } while (trelocsz -= 8);
+  }
+  if (drelocsz) {
+    char *p = drelocs;
+    do {
+      if (write(outfd, p , 8) != 8) fail1("fatal: error write output file: ", outfn);
+      p += 8;
+    } while (drelocsz -= 8);
+  }
 
-  /*close(outfd);*/  /* Not needed. */
-  /*close(infd);*/  /* Not needed. */
+  close(outfd);
+  close(infd);
   return 0;
 }
