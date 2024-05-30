@@ -71,7 +71,7 @@
  * Read relocations for a particular segment and apply them
  * Only IA-16 segment relocations are accepted
  */
-static int relocate(seg_t place_base, lsize_t rsize, segment_s *seg_code,
+static int relocate(seg_t place_base, unsigned long rsize, segment_s *seg_code,
                segment_s *seg_data, struct inode *inode, struct file *filp, size_t tseg)
 {
     int retval = 0;
