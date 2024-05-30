@@ -1,9 +1,26 @@
+/* 28 May 24 from https://github.com/icculus/2ine */
 /**
  * 2ine; an OS/2 emulator for Linux.
  *
- * Please see the file LICENSE.txt in the source's root directory.
- *
  *  This file written by Ryan C. Gordon.
+ *
+ * Copyright (c) 2016-2022 Ryan C. Gordon <icculus@icculus.org>.
+ *
+ * This software is provided 'as-is', without any express or implied
+ * warranty.  In no event will the authors be held liable for any damages
+ * arising from the use of this software.
+ *
+ * Permission is granted to anyone to use this software for any purpose,
+ * including commercial applications, and to alter it and redistribute it
+ * freely, subject to the following restrictions:
+ *
+ * 1. The origin of this software must not be misrepresented; you must not
+ * claim that you wrote the original software. If you use this software
+ * in a product, an acknowledgment in the product documentation would be
+ * appreciated but is not required.
+ * 2. Altered source versions must be plainly marked as such, and must not be
+ * misrepresented as being the original software.
+ * 3. This notice may not be removed or altered from any source distribution.
  */
 
 #include <stdio.h>
@@ -11,7 +28,7 @@
 #include <stdlib.h>
 #include <errno.h>
 
-#include "lib2ine.h"
+#include "os2dump.h"
 
 // !!! FIXME: some cut-and-paste with lx_loader.c ...
 
@@ -606,11 +623,11 @@ static int parseNeExe(const uint8 *origexe, const uint8 *exe)
         const NeSegmentTableEntry *seg = (const NeSegmentTableEntry *) (exe + ne->segment_table_offset);
         for (uint32 i = 0; i < total; i++, seg++) {
             printf(" %u:\n", (uint) (i+1));
-            printf("  Logical-sector offset: %u", (uint) seg->offset);
+            printf("  Logical-sector offset: %04x", (uint) seg->offset);
             if (seg->offset == 0) {
                 printf(" (no file data)\n");
             } else {
-                printf(" (byte position %u)\n", (uint) (((uint32) seg->offset) << sector_shift));
+                printf(" (byte position %04x)\n", (uint) (((uint32) seg->offset) << sector_shift));
             }
             printf("  Size: %u\n", (seg->size == 0) ? (uint) 0x10000 : (uint) seg->size);
             printf("  Segment flags:");
@@ -635,8 +652,15 @@ static int parseNeExe(const uint8 *origexe, const uint8 *exe)
 
             if (seg->segment_flags & 0x100) {  // has relocations (fixups)
                 const uint8 *segptr = origexe + (((uint32) seg->offset) << sector_shift);
-                const uint8 *fixupptr = segptr + (seg->size ? seg->size : 0xFFFF);
+                const uint8 *fixupptr = segptr + (seg->size ? seg->size : 0xFFFF);//FIXME
                 const uint32 num_fixups = (uint32) *((const uint16 *) fixupptr); fixupptr += 2;
+                printf("HEX:\n");
+                for (int i=0; i<seg->size; i++) {
+                    if (!(i & 15)) printf("%04x ", i);
+                    printf("%02x ", segptr[i]);
+                    if ((i & 15) == 15) printf("\n");
+                }
+                printf("\n");
                 printf("  Fixup records (%u entries):\n", (uint) num_fixups);
                 for (uint32 j = 0; j < num_fixups; j++) {
                     const uint8 srctype = *(fixupptr++);
@@ -665,7 +689,7 @@ static int parseNeExe(const uint8 *origexe, const uint8 *exe)
                             if (segment == 0xFF)
                                 printf("movable segment, ordinal %u)", (uint) offset);
                             else
-                                printf("segment %u, offset %u)", (uint) segment, (uint) offset);
+                                printf("segment %04x, offset %04x)", (uint) segment, (uint) offset);
                         }
                         break;
 
@@ -692,11 +716,11 @@ static int parseNeExe(const uint8 *origexe, const uint8 *exe)
                     printf("\n");
 
                     if (additive) {
-                        printf("    Additive source: %u", (uint) srcchain_offset);
+                        printf("    Additive source: %04x", (uint) srcchain_offset);
                     } else {
                         printf("    Source chain:");
                         do {
-                            printf(" %X", (uint) srcchain_offset);
+                            printf(" %04X", (uint) srcchain_offset);
                             srcchain_offset = *((const uint16 *) (segptr + srcchain_offset));
                         } while (srcchain_offset < seg->size);
                     }
@@ -873,7 +897,7 @@ static void parseExe(const char *exefname, uint8 *exe, uint32 exelen)
 {
     int is_lx = 0;
 
-    printf("%s\n", exefname);
+    printf("os2dump: %s\n", exefname);
 
     const uint8 *origexe = exe;
     if (!sanityCheckExe(&exe, &exelen, &is_lx))
