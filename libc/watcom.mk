@@ -2,8 +2,9 @@
 
 include watcom.inc
 
-# \
+#NOTBUILT = \
 	asm	    \
+	debug	\
 	gcc	    \
 	math	\
 	crt0.S	\
