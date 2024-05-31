@@ -1,15 +1,26 @@
 # Makefile of /libc/time module
 
-include $(TOPDIR)/libc/Makefile.inc
+COMPILER ?= ia16
+LIB ?= out.a
 
-OBJS= gmtime.o localtime.o ctime.o tm_conv.o asctime.o asc_conv.o tzset.o mktime.o \
-    strftime.o
+include $(TOPDIR)/libc/$(COMPILER).inc
 
-all: out.a
+OBJS = \
+    gmtime.o \
+    localtime.o \
+    ctime.o \
+    tm_conv.o \
+    asctime.o \
+    asc_conv.o \
+    tzset.o \
+    mktime.o \
+    strftime.o \
 
-out.a: $(OBJS)
+all: $(LIB)
+
+$(LIB): $(LIBOBJS)
 	$(RM) $@
-	$(AR) $(ARFLAGS_SUB) $@ $^
+	$(AR) $(ARFLAGS_SUB) $@ $(LIBOBJS)
 
 clean:
 	$(RM) *.[aod]

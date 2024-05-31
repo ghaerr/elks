@@ -32,17 +32,20 @@
 # to link programs with the real libgcc, so these routines are no longer
 # needed.)	-- tkchia 20221204
 
-include $(TOPDIR)/libc/Makefile.inc
+COMPILER ?= ia16
+LIB ?= out.a
+
+include $(TOPDIR)/libc/$(COMPILER).inc
 
 # SRCS = divmodsi3.s ldivmod.s ashlsi3.s
 SRCS = do-global-ctors.S do-global-dtors.S
 OBJS = $(SRCS:.S=.o)
 
-all: out.a
+all: $(LIB)
 
-out.a: $(OBJS)
+$(LIB): $(OBJS)
 	$(RM) $@
-	$(AR) $(ARFLAGS_SUB) $@ $^
+	$(AR) $(ARFLAGS_SUB) $@ $(OBJS)
 
 clean:
 	$(RM) *.[aod]

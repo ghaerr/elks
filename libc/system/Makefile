@@ -1,3 +1,5 @@
+# Makefile for ia16-elf-gcc build of ELKS system calls
+
 SYSCALLDAT=${TOPDIR}/elks/arch/i86/kernel/syscall.dat
 
 ifeq "$(VPATH)" ""

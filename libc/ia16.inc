@@ -1,6 +1,8 @@
+# Makefile include for ia16-elf-gcc build
 
 INCLUDES=-I$(TOPDIR)/include -I$(TOPDIR)/libc/include -I$(TOPDIR)/elks/include
 DEFINES=-D__LIBC__
+LIBOBJS=$(OBJS)
 
 INCS=$(INCLUDES)
 SDEFS=$(DEFINES)
@@ -19,8 +21,7 @@ LD=ia16-elf-ld
 CFLAGS=$(ARCH) $(INCLUDES) $(CDEFS) -Wall -Os $(MULTILIB)
 ASFLAGS=--32-segelf -mtune=i8086
 LDFLAGS=-mtune=i8086
-# This is used in subdirectories to quickly create a library archive without
-# a symbol index
+# Used in subdirs to quickly create a library archive without a symbol index
 ARFLAGS_SUB=cqS
 
 ifdef MULTISUBDIR

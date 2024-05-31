@@ -49,8 +49,8 @@ int execv(const char *fname, char **argv);
 int execve(const char *fname, char **argv, char **envp);
 int execvp(const char *fname, char **argv);
 int execvpe(const char *fname, char **argv, char **envp);
-int _execve(const char *fname, char *stk_ptr, int stack_bytes);
-noreturn void _exit(int status);
+int _execve(const char *fname, char *stk_ptr, int stack_bytes); /* syscall */
+noreturn void _exit(int status); /* syscall */
 int isatty (int fd);
 char *ttyname(int fd);
 off_t lseek (int fildes, off_t offset, int whence);

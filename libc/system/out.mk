@@ -1,4 +1,9 @@
-include $(TOPDIR)/libc/Makefile.inc
+# Sub-Makefile of /libc/system module
+
+COMPILER ?= ia16
+LIB ?= out.a
+
+include $(TOPDIR)/libc/$(COMPILER).inc
 
 DEFINES	+= -DL_execl -DL_execle -DL_execlp -DL_execlpe \
 	   -DL_sleep -DL_usleep
@@ -11,16 +16,10 @@ endif
 
 OBJS = \
 	abort.o \
-	argcargv.o \
 	closedir.o \
 	dup.o \
 	dup2.o \
-	environ.o \
 	errno.o \
-	execl.o \
-	execle.o \
-	execlp.o \
-	execlpe.o \
 	execv.o \
 	execve.o \
 	execvp.o \
@@ -36,20 +35,12 @@ OBJS = \
 	lseek.o \
 	mkfifo.o \
 	opendir.o \
-	program_filename.o \
 	readdir.o \
 	rewinddir.o \
 	seekdir.o \
-	setjmp.o \
 	setpgrp.o \
-	signal.o \
 	sigaction.o \
 	sleep.o \
-	syscall01.o \
-	syscall23.o \
-	syscall4.o \
-	syscall5.o \
-	signalcb.o \
 	telldir.o \
 	time.o \
 	times.o \
@@ -58,14 +49,34 @@ OBJS = \
 	wait3.o \
 	waitpid.o \
 
-include syscall.mk
+# these files written in assembly language
+IA16OBJS = \
+	argcargv.o \
+	environ.o \
+	execl.o \
+	execle.o \
+	execlp.o \
+	execlpe.o \
+	program_filename.o \
+	setjmp.o \
+	signal.o \
+	syscall01.o \
+	syscall23.o \
+	syscall4.o \
+	syscall5.o \
+	signalcb.o \
 
-all: out.a
+ifeq "$(COMPILER)" "ia16"
+OBJS += $(IA16OBJS)
+include syscall.mk
+endif
+
+all: $(LIB)
 .PHONY: all
 
-out.a: $(OBJS)
+$(LIB): $(LIBOBJS)
 	$(RM) $@
-	$(AR) $(ARFLAGS_SUB) $@ $^
+	$(AR) $(ARFLAGS_SUB) $@ $(LIBOBJS)
 
 clean:
 	$(RM) *.[aod]

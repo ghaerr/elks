@@ -26,6 +26,7 @@
 #define restrict        __restrict
 #define printfesque(n)
 #define noinstrument
+#define __attribute__(n)
 /* force __cdecl calling convention and no register saves in main() arc/argv */
 #pragma aux main "*" modify [ bx cx dx si di ]
 #endif
