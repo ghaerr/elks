@@ -1,9 +1,7 @@
 # Makefile of /libc/error module
 
-COMPILER ?= watcom
-LIB ?= out.lib
-#COMPILER ?= ia16
-#LIB ?= out.a
+COMPILER ?= ia16
+LIB ?= out.a
 
 include $(TOPDIR)/libc/$(COMPILER).inc
 
