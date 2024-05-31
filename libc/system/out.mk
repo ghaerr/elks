@@ -20,6 +20,10 @@ OBJS = \
 	dup.o \
 	dup2.o \
 	errno.o \
+	execv.o \
+	execve.o \
+	execvp.o \
+	execvpe.o \
 	getegid.o \
 	geteuid.o \
 	getgid.o \
@@ -45,6 +49,7 @@ OBJS = \
 	wait3.o \
 	waitpid.o \
 
+# these files written in assembly language
 IA16OBJS = \
 	argcargv.o \
 	environ.o \
@@ -52,10 +57,6 @@ IA16OBJS = \
 	execle.o \
 	execlp.o \
 	execlpe.o \
-	execv.o \
-	execve.o \
-	execvp.o \
-	execvpe.o \
 	program_filename.o \
 	setjmp.o \
 	signal.o \
