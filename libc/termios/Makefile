@@ -1,7 +1,10 @@
 # Makefile of /libc/termios module
 
-include $(TOPDIR)/libc/Makefile.inc
 
+COMPILER ?= ia16
+LIB ?= out.a
+
+include $(TOPDIR)/libc/$(COMPILER).inc
 OBJS = \
 	cfgetispeed.o \
 	cfgetospeed.o \
@@ -19,11 +22,11 @@ OBJS = \
 	tcsetpgrp.o \
 	ttyname.o \
 
-all: out.a
+all: $(LIB)
 
-out.a: $(OBJS)
+$(LIB): $(LIBOBJS)
 	$(RM) $@
-	$(AR) $(ARFLAGS_SUB) $@ $^
+	$(AR) $(ARFLAGS_SUB) $@ $(LIBOBJS)
 
 clean::
 	$(RM) *.[aod]

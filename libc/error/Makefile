@@ -1,8 +1,11 @@
 # Makefile of /libc/error module
 
-include $(TOPDIR)/libc/Makefile.inc
+COMPILER ?= watcom
+LIB ?= out.lib
+#COMPILER ?= ia16
+#LIB ?= out.a
 
-LIB = out.a
+include $(TOPDIR)/libc/$(COMPILER).inc
 
 OBJS= \
     __assert.o \
@@ -12,9 +15,9 @@ OBJS= \
 
 all: $(LIB)
 
-$(LIB): $(OBJS)
+$(LIB): $(LIBOBJS)
 	$(RM) $@
-	$(AR) $(ARFLAGS_SUB) $@ $^
+	$(AR) $(ARFLAGS_SUB) $@ $(LIBOBJS)
 
 clean:
 	$(RM) *.[aod]

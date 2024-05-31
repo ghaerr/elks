@@ -7,14 +7,13 @@
 char *
 basename(char *path)
 {
-  static char *def = ".";
   char *base;
   int last;
 
   last = strlen (path) - 1;
 
   if (last == -1)
-    return def;
+    return ".";
 
   while (last > 0 && path[last] == '/')
     path[last--] = '\0';

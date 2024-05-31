@@ -1,3 +1,5 @@
 crt0.o
 libc.a
 build-ml/
+*.obj
+*.lib

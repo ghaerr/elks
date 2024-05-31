@@ -1,17 +1,16 @@
 # Makefile of /libc/regex module
 
-include $(TOPDIR)/libc/Makefile.inc
+COMPILER ?= ia16
+LIB ?= out.a
 
-SRCS= regex.c
-OBJS= $(SRCS:.c=.o)
+include $(TOPDIR)/libc/$(COMPILER).inc
+OBJS = regex.o
 
-$(OBJS): $(SRCS)
+all: $(LIB)
 
-all: out.a
-
-out.a: $(OBJS)
+$(LIB): $(LIBOBJS)
 	$(RM) $@
-	$(AR) $(ARFLAGS_SUB) $@ $^
+	$(AR) $(ARFLAGS_SUB) $@ $(LIBOBJS)
 
 clean:
 	$(RM) *.[aod]

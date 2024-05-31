@@ -1,4 +1,4 @@
-# Makefile of ELKS C Library
+# ia16-elf-gcc Makefile for ELKS C Library
 
 ifndef TOPDIR
 $(error TOPDIR is not defined)
@@ -6,7 +6,7 @@ endif
 
 include $(TOPDIR)/Make.defs
 
-include Makefile.inc
+include ia16.inc
 
 # Defines
 
@@ -239,3 +239,4 @@ endif
 clean:
 	for DIR in $(SUBDIRS); do $(MAKE) -C $$DIR clean || exit 1; done
 	rm -rf build-ml *.o libc.a
+	$(MAKE) -f Watcom clean

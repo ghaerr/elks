@@ -1,17 +1,17 @@
 # Makefile of /libc/net module
 
-include $(TOPDIR)/libc/Makefile.inc
+COMPILER ?= ia16
+LIB ?= out.a
 
-SRCS= in_aton.c in_ntoa.c in_gethostbyname.c getsocknam.c in_connect.c in_resolv.c
-OBJS= $(SRCS:.c=.o)
+include $(TOPDIR)/libc/$(COMPILER).inc
 
-$(OBJS): $(SRCS)
+OBJS= in_aton.o in_ntoa.o in_gethostbyname.o getsocknam.o in_connect.o in_resolv.o
 
-all: out.a
+all: $(LIB)
 
-out.a: $(OBJS)
+$(LIB): $(LIBOBJS)
 	$(RM) $@
-	$(AR) $(ARFLAGS_SUB) $@ $^
+	$(AR) $(ARFLAGS_SUB) $@ $(LIBOBJS)
 
 clean:
 	$(RM) *.[aod]

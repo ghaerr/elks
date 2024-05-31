@@ -1,6 +1,9 @@
 # Makefile of /libc/asm module
 
-include $(TOPDIR)/libc/Makefile.inc
+COMPILER ?= ia16
+LIB ?= out.a
+
+include $(TOPDIR)/libc/$(COMPILER).inc
 
 SRCS = \
     memcpy-s.S \
@@ -16,11 +19,11 @@ LEFTOUT = \
 
 OBJS = $(SRCS:.S=.o)
 
-all: out.a
+all: $(LIB)
 
-out.a: $(OBJS)
+$(LIB): $(LIBOBJS)
 	$(RM) $@
-	$(AR) $(ARFLAGS_SUB) $@ $^
+	$(AR) $(ARFLAGS_SUB) $@ $(LIBOBJS)
 
 clean:
 	$(RM) *.[aod]
