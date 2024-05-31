@@ -4,6 +4,7 @@ COMPILER ?= ia16
 LIB ?= out.a
 
 include $(TOPDIR)/libc/$(COMPILER).inc
+
 OBJS = regex.o
 
 all: $(LIB)

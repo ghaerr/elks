@@ -5,7 +5,7 @@ LIB ?= out.a
 
 include $(TOPDIR)/libc/$(COMPILER).inc
 
-OBJS= in_aton.o in_ntoa.o in_gethostbyname.o getsocknam.o in_connect.o in_resolv.o
+OBJS = in_aton.o in_ntoa.o in_gethostbyname.o getsocknam.o in_connect.o in_resolv.o
 
 all: $(LIB)
 

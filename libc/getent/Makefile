@@ -5,8 +5,6 @@ LIB ?= out.a
 
 include $(TOPDIR)/libc/$(COMPILER).inc
 
-# \
-
 OBJS = \
     utent.o \
     pwent.o \

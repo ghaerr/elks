@@ -5,7 +5,7 @@ LIB ?= out.a
 
 include $(TOPDIR)/libc/$(COMPILER).inc
 
-OBJS= \
+OBJS = \
     gmtime.o \
     localtime.o \
     ctime.o \
