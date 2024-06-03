@@ -11,8 +11,8 @@
 #include <errno.h>
 #include <limits.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <linuxmt/minix.h>
-#include <stdint.h>
 #include "debug/syms.h"
 
 static unsigned char __far *syms;

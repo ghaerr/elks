@@ -2,7 +2,6 @@
 #define _ARPA_INET_H_
 
 #include <features.h>
-#include <stddef.h>
 #include <sys/types.h>
 #include __SYSINC__(in.h)
 #include __SYSINC__(un.h)

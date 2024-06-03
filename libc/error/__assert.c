@@ -3,6 +3,7 @@
  * under the GNU Library General Public License.
  */
 
+#include <assert.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>

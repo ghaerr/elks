@@ -6,13 +6,12 @@ endif
 
 INCLUDES = -I$(TOPDIR)/libc/include -I$(TOPDIR)/elks/include
 INCLUDES += -I$(WATDIR)/bld/hdr/dos/h
-DEFINES = -D__LIBC__ -D__HAS_NO_FLOATS__
+DEFINES = -D__LIBC__
 LIBOBJS=$(OBJS:.o=.obj)
 
 ARCH =\
     -bos2                           \
     -mcmodel=c                      \
-    -mabi=cdecl                     \
     -march=i86                      \
     -std=c99                        \
     -fno-stack-check                \

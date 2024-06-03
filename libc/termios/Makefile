@@ -1,10 +1,13 @@
 # Makefile of /libc/termios module
 
-
 COMPILER ?= ia16
 LIB ?= out.a
 
 include $(TOPDIR)/libc/$(COMPILER).inc
+
+# the following are unimplemented
+#CFLAGS += -DL_tcdrain -DL_tcflow -DL_tcgetpgrp -DL_cfmakeraw
+
 OBJS = \
 	cfgetispeed.o \
 	cfgetospeed.o \

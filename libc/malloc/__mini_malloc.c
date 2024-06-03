@@ -15,7 +15,7 @@ __mini_malloc(size_t size)
 	if(sz & (sizeof(mem) - 1))
 		sbrk(4 - (sz & (sizeof(mem) - 1)));
 
-	if (size <= 0)
+	if ((int)size <= 0)
 		return 0;
 
 	/* Minor oops here, sbrk has a signed argument */
@@ -29,7 +29,7 @@ __mini_malloc(size_t size)
 	size /= sizeof(mem);
 
 	ptr = (mem *) sbrk(size * sizeof(mem));
-	if((intptr_t)ptr == -1)
+	if((uintptr_t)ptr == (intptr_t)-1)
 		return 0;
 
 	m_size(ptr) = size;

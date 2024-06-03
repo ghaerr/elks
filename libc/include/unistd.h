@@ -35,8 +35,10 @@ int          usleep(unsigned long useconds);
 
 // Functions
 
-int brk (void * addr);
-void * sbrk (intptr_t increment);
+int brk(const void *addr);
+int _brk (unsigned int newbrk);                 /* syscall */
+void *sbrk(int increment);
+int _sbrk(int increment, void **pnewbrk);       /* syscall */
 
 int close (int fildes);
 int dup (int fildes);
@@ -54,6 +56,7 @@ noreturn void _exit(int status); /* syscall */
 int isatty (int fd);
 char *ttyname(int fd);
 off_t lseek (int fildes, off_t offset, int whence);
+int _lseek (int fd, off_t *posn, int where);    /* syscall */
 int link(const char *path1, const char *path2);
 int symlink(const char *path1, const char *path2);
 int unlink(const char *fname);
@@ -92,9 +95,14 @@ extern int optind;
 extern int optopt;
 extern int opterr;
 
+#ifdef __WATCOMC__
+//extern char __near * __far * environ; /* process global environment */
+extern char ** environ;             /* process global environment */
+#else
 extern int     __argc;
 extern char ** __argv;
 extern char *  __program_filename;  /* process argv[0] */
 extern char ** environ;             /* process global environment */
+#endif
 
 #endif

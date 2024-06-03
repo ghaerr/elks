@@ -5,8 +5,6 @@
 
 /* First we define all of the __u and __s types...*/
 
-#define signed
-
 typedef unsigned char           __u8;
 typedef signed char             __s8;
 typedef unsigned short int      __u16;
@@ -46,6 +44,36 @@ struct uregs {
 
 #ifndef NULL
 #define NULL        ((void *) 0)
+#endif
+
+/*
+ * We define various special typedefs here rather than
+ * including the compiler vendor's headers, which may
+ * drag in other conflicting definitions.
+ */
+
+/* <stddefs.h> */
+typedef unsigned    size_t;
+#define offsetof(__typ,__id) ((size_t)((char *)&(((__typ*)0)->__id) - (char *)0))
+
+/* <sys/types.h> */
+typedef signed int  ssize_t;
+typedef long long   int64_t;
+
+/* <stdint.h> */
+#ifdef __GNUC__
+typedef int             intptr_t;   /* ia16-elf-gcc supports small/medium models only */
+typedef unsigned int    uintptr_t;
+#endif
+
+#ifdef __WATCOMC__
+#if defined(__COMPACT__) || defined(__LARGE__)
+typedef long            intptr_t;
+typedef unsigned long   uintptr_t;
+#else
+typedef int             intptr_t;
+typedef unsigned int    uintptr_t;
+#endif
 #endif
 
 #endif

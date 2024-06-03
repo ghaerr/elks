@@ -7,7 +7,6 @@
  * Stub routines for direct client linking with nanoX
  */
 #include <stdio.h>
-#include <stddef.h>
 #include "serv.h"
 
 /*

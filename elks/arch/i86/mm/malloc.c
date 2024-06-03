@@ -236,11 +236,12 @@ int sys_brk(__pptr newbrk)
 {
     register __ptask currentp = current;
 
-	/*printk("brk(%P): new %x, edat %x, ebrk %x, free %x sp %x, eseg %x, %d/%dK\n",
+	/***unsigned int memfree, memused;
+	mm_get_usage(&memfree, &memused);
+	printk("brk(%P): new %x, edat %x, ebrk %x, free %x sp %x, eseg %x, %d/%dK\n",
 		newbrk, currentp->t_enddata, currentp->t_endbrk,
 		currentp->t_regs.sp - currentp->t_endbrk,
-		currentp->t_regs.sp, currentp->t_endseg,
-		mm_get_usage(MM_MEM, SEG_FLAG_USED), mm_get_usage(MM_MEM, 0));*/
+		currentp->t_regs.sp, currentp->t_endseg, memfree, memused);***/
 
     if (newbrk < currentp->t_enddata)
         return -ENOMEM;
@@ -267,6 +268,7 @@ int sys_sbrk (int increment, __u16 * pbrk)
 	__pptr brk = current->t_endbrk;		/* always return start of old break*/
 	int err;
 
+	debug("sbrk incr %u pointer %04x curbreak %04x\n", increment, pbrk, brk);
 	err = verify_area(VERIFY_WRITE, pbrk, sizeof(*pbrk));
 	if (err)
 		return err;

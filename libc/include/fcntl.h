@@ -9,12 +9,8 @@
 #define FNDELAY	O_NDELAY
 #endif
 
-__BEGIN_DECLS
-
 int creat(const char * __filename, mode_t __mode);
 int fcntl(int __fildes,int __cmd, ...);
-int open(const char * __filename, int __flags, ...);
-
-__END_DECLS
+int open(const char * __filename, int __flags, ...);         /* syscall */
 
 #endif

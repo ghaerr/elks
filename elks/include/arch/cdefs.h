@@ -18,6 +18,8 @@
 #define stdcall         __attribute__((__stdcall__))
 #define printfesque(n)  __attribute__((__format__(__gnu_printf__, n, n + 1)))
 #define noinstrument    __attribute__((no_instrument_function))
+#define __wcfar
+#define __wcnear
 #endif
 
 #ifdef __WATCOMC__
@@ -29,6 +31,8 @@
 #define __attribute__(n)
 /* force __cdecl calling convention and no register saves in main() arc/argv */
 #pragma aux main "*" modify [ bx cx dx si di ]
+#define __wcfar         __far
+#define __wcnear        __near
 #endif
 
 

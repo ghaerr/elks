@@ -1,3 +1,4 @@
+#ifdef L_tcsendbreak
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <termios.h>
@@ -22,3 +23,4 @@ tcsendbreak(int fd, int duration)
 	errno = EINVAL;
 	return -1;
 }
+#endif
