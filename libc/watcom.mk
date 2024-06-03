@@ -30,7 +30,7 @@ all:
 	$(MAKE) -C system -f out.mk COMPILER=watcom LIB=out.lib
 	for DIR in $(SUBDIRS); do $(MAKE) -C $$DIR COMPILER=watcom LIB=out.lib || exit 1; done
 	wlib -c -n -b -fo libc.lib */*.lib
-	-cp libc.lib /Users/greg/net/owtarget16
+	#-cp libc.lib /Users/greg/net/owtarget16
 
 .PHONY: clean
 clean:

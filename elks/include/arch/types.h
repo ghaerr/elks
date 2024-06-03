@@ -52,7 +52,7 @@ struct uregs {
  * drag in other conflicting definitions.
  */
 
-/* <stddefs.h> */
+/* <stddef.h> */
 typedef unsigned    size_t;
 #define offsetof(__typ,__id) ((size_t)((char *)&(((__typ*)0)->__id) - (char *)0))
 

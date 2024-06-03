@@ -175,7 +175,7 @@ __search_chunk(unsigned int mem_size)
    if (chunk_list == p1)
       chunk_list = p2;
 #ifdef VERBOSE
-   p1[1].size = (unsigned int )0xAAAAAAAA;
+   p1[1].size = (unsigned int)0xAAAAAAAA;
 #endif
    __noise("INSERT CHUNK", p2);
    __noise("FOUND CHUNK", p1);
