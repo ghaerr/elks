@@ -52,9 +52,10 @@ char *getenv(const char *name);
 int putenv(char *string);
 char *mktemp(char *template);
 
-noreturn void abort (void);
+noreturn void abort(void);
 int atexit (void (* function) ());
-noreturn void exit (int status);
+noreturn void exit(int status);
+noreturn void _exit(int status); /* syscall */
 int system(const char *command);
 void qsort(void *base, size_t nel, size_t width,
 	int (*compar)(/*const void *, const void * */));
