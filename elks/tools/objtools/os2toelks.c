@@ -227,7 +227,7 @@ int main(int argc, char **argv) {
     for (i=0; i<nrelocs; i++) {
       if (trelocsz >= 1024*8) fail1("fatal: too many code relocations: ", infn);
       if (read(infd, relbuf, 8) != 8) fail1("fatal: can't read reloc: ", infn);
-      printf("%02x %02x %02x %02x\n", relbuf[0], relbuf[1], relbuf[2] & 255, relbuf[3]);
+      /*printf("%02x %02x %02x %02x\n", relbuf[0], relbuf[1], relbuf[2] & 255, relbuf[3]);*/
       /* 2 = SEGMENT reloc */
       if ((relbuf[0] & 0x0f) != 2) fail1("fatal: unhandled code reloc source type: ", infn);
       /* 0 = INTERNALREF */
@@ -240,15 +240,11 @@ int main(int argc, char **argv) {
       if (additive) fail1("fatal: ADDITIVE not supported in code segment: ", infn);
       uint16_t src_chain = get_u16_le(relbuf+2);
       uint8_t segment = get_u8_le(relbuf+4);
-      uint16_t offset = get_u16_le(relbuf+6);
       if (segment != 1 && segment != 2) fail1("fatal: bad segment number in code reloc target: ", infn);
       int symndx = (segment == 1)? S_TEXT: S_DATA;
+      /*uint16_t offset = get_u16_le(relbuf+6);
       printf("info: code source %04x segment %04x offset %04x\n",
-        src_chain, segment, offset);
-      //if (!additive) {
-        //set_u16_le(codeseg + src_chain, 0); /* remove 0xFFFF end of chain */
-      //}
-      //src_chain += 2; /* move to segment portion of far_addr */
+        src_chain, segment, offset);*/
       set_u32_le(trelocs + trelocsz + 0, src_chain); /* vaddr = src chain */
       set_u16_le(trelocs + trelocsz + 4, symndx);    /* segment */
       set_u16_le(trelocs + trelocsz + 6, R_SEGWORD); /* relocation type */
@@ -265,7 +261,7 @@ int main(int argc, char **argv) {
     for (i=0; i<nrelocs; i++) {
       if (drelocsz >= 1024*8) fail1("fatal: too many data relocations: ", infn);
       if (read(infd, relbuf, 8) != 8) fail1("fatal: can't read reloc: ", infn);
-      printf("%02x %02x %02x %02x\n", relbuf[0], relbuf[1], relbuf[2] & 255, relbuf[3]);
+      /*printf("%02x %02x %02x %02x\n", relbuf[0], relbuf[1], relbuf[2] & 255, relbuf[3]);*/
       /* 3 = FAR_ADDR reloc */
       if ((relbuf[0] & 0x0f) != 3) fail1("fatal: unhandled data reloc source type: ", infn);
       /* 0 = INTERNALREF */
@@ -276,18 +272,22 @@ int main(int argc, char **argv) {
       uint16_t offset = get_u16_le(relbuf+6);
       if (segment != 1 && segment != 2) fail1("fatal: bad segment number in data reloc target: ", infn);
       int symndx = (segment == 1)? S_TEXT: S_DATA;
-      printf("info: data source %04x segment %04x offset %04x\n",
-        src_chain, segment, offset);
+      /*printf("info: data source %04x segment %04x offset %04x\n",
+        src_chain, segment, offset);*/
       if (!additive) {
-        set_u16_le(dataseg + src_chain, 0); /* remove 0xFFFF end of chain */
+        /*printf("info: data segment far_addr reloc: seg %d value %04x:%04x\n", segment,
+            get_u16_le(dataseg + src_chain + 2), get_u16_le(dataseg + src_chain));*/
+        set_u16_le(dataseg + src_chain, offset); /* set far address offset */
       } else {
-        printf("info: ADDITIVE unhandled in data segment: seg %d value %04x\n",
-            segment, get_u16_le(dataseg + src_chain));
+        /*printf("info: data segment additive far_addr reloc: seg %d value %04x:%04x\n",
+            segment,
+            get_u16_le(dataseg + src_chain + 2), get_u16_le(dataseg + src_chain));*/
+        uint16_t prev = get_u16_le(dataseg + src_chain);
+        set_u16_le(dataseg + src_chain, prev + offset);  /* add to previous offset */
       }
-      src_chain += 2; /* move to segment portion of far_addr */
-      set_u32_le(drelocs + drelocsz + 0, src_chain); /* vaddr = src chain */
-      set_u16_le(drelocs + drelocsz + 4, symndx);    /* segment */
-      set_u16_le(drelocs + drelocsz + 6, R_SEGWORD); /* relocation type */
+      set_u32_le(drelocs + drelocsz + 0, src_chain + 2); /* vaddr = segment of srcchain*/
+      set_u16_le(drelocs + drelocsz + 4, symndx);        /* segment */
+      set_u16_le(drelocs + drelocsz + 6, R_SEGWORD);     /* relocation type */
       drelocsz += 8;
     }
   }
