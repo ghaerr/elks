@@ -5,6 +5,10 @@ LIB ?= out.a
 
 include $(TOPDIR)/libc/$(COMPILER).inc
 
+ifeq "$(COMPILER)" "ia16"
+CFLAGS += -DL_putenv
+endif
+
 OBJS = \
 	aliases.o \
 	atexit.o \

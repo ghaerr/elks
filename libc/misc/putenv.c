@@ -1,3 +1,4 @@
+#ifdef L_putenv
 /* 
  * Written by Gregory Haerr for the ELKS project, published
  * under the GNU Library General Public License.
@@ -99,3 +100,4 @@ again:
 	environ = putenv_environ = newenv;
 	return 0;
 }
+#endif

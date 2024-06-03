@@ -10,7 +10,7 @@ char *
 getenv(const char *name)
 {
     size_t l = strlen(name);
-    char **ep = environ;
+    char __wcnear * __wcfar *ep = environ;
 
     if (ep == 0 || l == 0)
         return 0;

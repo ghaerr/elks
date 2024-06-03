@@ -48,9 +48,9 @@ int execle(const char *fname, const char *arg0, ...);
 int execlp(const char *fname, const char *arg0, ...);
 int execlpe(const char *fname, const char *arg0, ...);
 int execv(const char *fname, char **argv);
-int execve(const char *fname, char **argv, char **envp);
+int execve(const char *fname, char **argv, char __wcnear * __wcfar *envp);
 int execvp(const char *fname, char **argv);
-int execvpe(const char *fname, char **argv, char **envp);
+int execvpe(const char *fname, char **argv, char __wcnear * __wcfar *envp);
 int _execve(const char *fname, char *stk_ptr, int stack_bytes); /* syscall */
 noreturn void _exit(int status); /* syscall */
 int isatty (int fd);
@@ -95,14 +95,11 @@ extern int optind;
 extern int optopt;
 extern int opterr;
 
-#ifdef __WATCOMC__
-//extern char __near * __far * environ; /* process global environment */
-extern char ** environ;             /* process global environment */
-#else
+#ifndef __WATCOMC__
 extern int     __argc;
 extern char ** __argv;
-extern char *  __program_filename;  /* process argv[0] */
-extern char ** environ;             /* process global environment */
+extern char *  __program_filename;          /* process argv[0] */
 #endif
+extern char __wcnear * __wcfar * environ;   /* process global environment */
 
 #endif
