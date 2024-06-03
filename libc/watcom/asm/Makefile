@@ -1,11 +1,11 @@
-# Makefile of libc/watcom module
+# Makefile of libc/watcoms/asm module
 
 COMPILER ?= watcom
 LIB ?= out.lib
 
 include $(TOPDIR)/libc/$(COMPILER).inc
 
-OBJS = $(patsubst %.c,%.o,$(wildcard *.c))
+OBJS = $(patsubst %.asm,%.obj,$(wildcard *.asm))
 
 all: $(LIB)
 
@@ -14,4 +14,4 @@ $(LIB): $(LIBOBJS)
 	$(AR) $(ARFLAGS_SUB) $@ $(LIBOBJS)
 
 clean:
-	$(RM) *.[aod]
+	$(RM) *.obj *.lib

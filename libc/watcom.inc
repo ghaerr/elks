@@ -9,7 +9,7 @@ INCLUDES += -I$(WATDIR)/bld/hdr/dos/h
 DEFINES = -D__LIBC__
 LIBOBJS=$(OBJS:.o=.obj)
 
-ARCH =\
+CARCH =\
     -bos2                           \
     -mcmodel=c                      \
     -march=i86                      \
@@ -20,11 +20,23 @@ ARCH =\
     -fnostdlib                      \
     -v                              \
 
+AARCH=\
+	-mc								\
+	-0								\
+	-fp0							\
+	-fpi87							\
+
 CC=owcc
 AR=wlib
-ARFLAGS_SUB=-n -b -fo
+AS=wasm
 
-CFLAGS=$(ARCH) $(INCLUDES) $(DEFINES) -Wall -Os
+CFLAGS=$(CARCH) $(INCLUDES) $(DEFINES) -Wall -Os
+ASFLAGS=$(AARCH)
+ARFLAGS_SUB=-n -b -fo
 
 %.obj: %.c
 	$(CC) $(CFLAGS) -c -o $*.obj $<
+
+%.obj: %.asm
+	$(AS) $(ASFLAGS) $*.asm
+	mv $*.o $*.obj

@@ -29,11 +29,13 @@ SUBDIRS =	\
 all:
 	$(MAKE) -C system -f out.mk COMPILER=watcom LIB=out.lib
 	for DIR in $(SUBDIRS); do $(MAKE) -C $$DIR COMPILER=watcom LIB=out.lib || exit 1; done
-	wlib -c -n -b -fo libc.lib */*.lib
-	#-cp libc.lib /Users/greg/net/owtarget16
+	wlib -l=libc.lst -c -n -b -fo libc.lib */*.lib watcom/*/*.lib
+	-cp libc.lib /Users/greg/net/owtarget16
 
 .PHONY: clean
 clean:
 	rm -f system/*.obj system/*.lib
+	$(MAKE) -C watcom/syscall clean
+	$(MAKE) -C watcom/asm clean
 	for DIR in $(SUBDIRS); do rm -f $$DIR/*.obj $$DIR/*.lib || exit 1; done
 	rm -f libc.lib
