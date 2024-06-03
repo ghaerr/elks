@@ -219,8 +219,6 @@ int main(int argc, char **argv) {
 
   if (code_reloc) {
     uint16_t i, nrelocs;
-    int additive;
-    uint16_t src_chain;
     char relbuf[8];
     if (lseek(infd, code_fofs, SEEK_SET) - code_fofs != 0) fail1("fatal: error seeking to code : ", infn);
     if (read(infd, codeseg, code_size) != code_size) fail1("fatal: can't read code segment: ", infn);
@@ -232,26 +230,33 @@ int main(int argc, char **argv) {
       printf("%02x %02x %02x %02x\n", relbuf[0], relbuf[1], relbuf[2] & 255, relbuf[3]);
       /* 2 = SEGMENT reloc */
       if ((relbuf[0] & 0x0f) != 2) fail1("fatal: unhandled code reloc source type: ", infn);
+      /* 0 = INTERNALREF */
       if ((relbuf[1] & 0x03) != 0) fail1("fatal: unhandled code reloc target type: ", infn);
-      additive = ((relbuf[1] & 0x04) != 0);
-      src_chain = get_u16_le(relbuf+2);
+#define S_TEXT      (-2)        /* ELKS loader text segment index */
+#define S_DATA      (-3)        /* ELKS loader data segment index */
+#define R_SEGWORD   80          /* ELKS loader segment fixup */
+
+      int additive = ((relbuf[1] & 0x04) != 0);
+      if (additive) fail1("fatal: ADDITIVE not supported in code segment: ", infn);
+      uint16_t src_chain = get_u16_le(relbuf+2);
+      uint8_t segment = get_u8_le(relbuf+4);
+      uint16_t offset = get_u16_le(relbuf+6);
+      if (segment != 1 && segment != 2) fail1("fatal: bad segment number in code reloc target: ", infn);
+      int symndx = (segment == 1)? S_TEXT: S_DATA;
       printf("info: code source %04x segment %04x offset %04x\n",
-        get_u16_le(relbuf + 2), get_u8_le(relbuf + 5), get_u16_le(relbuf + 6));
-      if (!additive) {
+        src_chain, segment, offset);
+      //if (!additive) {
         //set_u16_le(codeseg + src_chain, 0); /* remove 0xFFFF end of chain */
-      } else printf("^(ADDITIVE)\n");
-      //FIXME!!!
+      //}
       //src_chain += 2; /* move to segment portion of far_addr */
       set_u32_le(trelocs + trelocsz + 0, src_chain); /* vaddr = src chain */
-      set_u16_le(trelocs + trelocsz + 4, -2); /* symndx = S_TEXT */
-      set_u16_le(trelocs + trelocsz + 6, 80); /* type = R_SEGWORD */
+      set_u16_le(trelocs + trelocsz + 4, symndx);    /* segment */
+      set_u16_le(trelocs + trelocsz + 6, R_SEGWORD); /* relocation type */
       trelocsz += 8;
     }
   }
   if (data_reloc) {
     uint16_t i, nrelocs;
-    int additive;
-    uint16_t src_chain;
     char relbuf[8];
     if (lseek(infd, data_fofs, SEEK_SET) - data_fofs != 0) fail1("fatal: error seeking to data: ", infn);
     if (read(infd, dataseg, data_size) != data_size) fail1("fatal: can't read data segment: ", infn);
@@ -261,20 +266,28 @@ int main(int argc, char **argv) {
       if (drelocsz >= 1024*8) fail1("fatal: too many data relocations: ", infn);
       if (read(infd, relbuf, 8) != 8) fail1("fatal: can't read reloc: ", infn);
       printf("%02x %02x %02x %02x\n", relbuf[0], relbuf[1], relbuf[2] & 255, relbuf[3]);
-      if ((relbuf[0] & 0x0f) != 3) fail1("fatal: unhandled data reloc source type: ", infn);
       /* 3 = FAR_ADDR reloc */
+      if ((relbuf[0] & 0x0f) != 3) fail1("fatal: unhandled data reloc source type: ", infn);
+      /* 0 = INTERNALREF */
       if ((relbuf[1] & 0x03) != 0) fail1("fatal: unhandled data reloc target type: ", infn);
-      additive = ((relbuf[1] & 0x04) != 0);
-      src_chain = get_u16_le(relbuf+2);
+      int additive = ((relbuf[1] & 0x04) != 0);
+      uint16_t src_chain = get_u16_le(relbuf+2);
+      uint8_t segment = get_u8_le(relbuf+4);
+      uint16_t offset = get_u16_le(relbuf+6);
+      if (segment != 1 && segment != 2) fail1("fatal: bad segment number in data reloc target: ", infn);
+      int symndx = (segment == 1)? S_TEXT: S_DATA;
       printf("info: data source %04x segment %04x offset %04x\n",
-        get_u16_le(relbuf + 2), get_u8_le(relbuf + 5), get_u16_le(relbuf + 6));
+        src_chain, segment, offset);
       if (!additive) {
         set_u16_le(dataseg + src_chain, 0); /* remove 0xFFFF end of chain */
+      } else {
+        printf("info: ADDITIVE unhandled in data segment: seg %d value %04x\n",
+            segment, get_u16_le(dataseg + src_chain));
       }
       src_chain += 2; /* move to segment portion of far_addr */
       set_u32_le(drelocs + drelocsz + 0, src_chain); /* vaddr = src chain */
-      set_u16_le(drelocs + drelocsz + 4, -3); /* symndx = S_DATA */
-      set_u16_le(drelocs + drelocsz + 6, 80); /* type = R_SEGWORD */
+      set_u16_le(drelocs + drelocsz + 4, symndx);    /* segment */
+      set_u16_le(drelocs + drelocsz + 6, R_SEGWORD); /* relocation type */
       drelocsz += 8;
     }
   }
