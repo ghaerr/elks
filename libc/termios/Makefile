@@ -8,6 +8,8 @@ include $(TOPDIR)/libc/$(COMPILER).inc
 # the following are unimplemented
 #CFLAGS += -DL_tcdrain -DL_tcflow -DL_tcgetpgrp -DL_cfmakeraw
 
+CFLAGS += -DL_tcsendbreak
+
 OBJS = \
 	cfgetispeed.o \
 	cfgetospeed.o \

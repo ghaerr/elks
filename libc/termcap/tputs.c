@@ -25,10 +25,7 @@ static short speeds[] =
   };
 
 void
-tputs (str, nlines, outfun)
-     register char *str;
-     int nlines;
-     register int (*outfun) ();
+tputs (char *str, int nlines, int (*outfun)(int))
 {
   register int padcount = 0;
 
