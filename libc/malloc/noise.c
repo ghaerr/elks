@@ -7,12 +7,12 @@
 
 /* NB: Careful here, stdio may use malloc - so we can't */
 static void
-phex(int val)
+phex(unsigned int val)
 {
     static char hex[] = "0123456789ABCDEF";
     int i;
 
-    for (i = sizeof(int) * 8 - 4; i >= 0; i -= 4)
+    for (i = sizeof(unsigned int) * 8 - 4; i >= 0; i -= 4)
         write(2, hex + ((val >> i) & 0xF), 1);
 }
 
@@ -24,12 +24,12 @@ __noise(char *y, mem * x)
     phex((int)x);
     write(2, " sz ", 4);
     if (x)
-        phex(m_size(x));
+        phex((unsigned int)m_size(x));
     else
         phex(0);
     write(2, " nxt ", 5);
     if (x)
-        phex((int)m_next(x));
+        phex((unsigned int)m_next(x));
     else
         phex(0);
     write(2, " is ", 4);

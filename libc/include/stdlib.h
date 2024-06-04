@@ -52,16 +52,16 @@ char *getenv(const char *name);
 int putenv(char *string);
 char *mktemp(char *template);
 
-noreturn void abort (void);
+noreturn void abort(void);
 int atexit (void (* function) ());
-noreturn void exit (int status);
+noreturn void exit(int status);
+noreturn void _exit(int status); /* syscall */
 int system(const char *command);
 void qsort(void *base, size_t nel, size_t width,
 	int (*compar)(/*const void *, const void * */));
 char *devname(dev_t dev, mode_t type);
 
 #ifndef __STRICT_ANSI__
-void breakpoint();
 char *itoa(int val);
 char *uitoa(unsigned int val);
 char *ltoa(long val);

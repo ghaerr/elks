@@ -5,7 +5,7 @@ endif
 
 include $(TOPDIR)/Make.defs
 
-.PHONY: all clean libc kconfig defconfig config menuconfig
+.PHONY: all clean libc kconfig defconfig config menuconfig image images kclean
 
 all: .config include/autoconf.h
 	$(MAKE) -C libc all
@@ -17,6 +17,12 @@ all: .config include/autoconf.h
 ifeq ($(shell uname), Linux)
 	$(MAKE) -C elksemu PREFIX='$(TOPDIR)/cross' elksemu
 endif
+
+image:
+	$(MAKE) -C image
+
+images:
+	$(MAKE) -C image images
 
 kclean:
 	$(MAKE) -C elks kclean

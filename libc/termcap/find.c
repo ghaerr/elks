@@ -1,4 +1,4 @@
-#include <stddef.h>
+#include <sys/types.h>
 #include "t.h"
 
 /* Search entry BP for capability CAP.

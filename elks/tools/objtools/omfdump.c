@@ -14,10 +14,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <inttypes.h>
-#include <ctype.h>
+#include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
+#include <ctype.h>
 
 typedef struct {
     uint16_t name_idx;

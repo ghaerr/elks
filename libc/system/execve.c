@@ -3,9 +3,10 @@
 #include <unistd.h>
 
 int
-execve(const char *fname, char **argv, char **envp)
+execve(const char *fname, char **argv, char __wcnear * __wcfar *envp)
 {
-	char **p;
+    char **p;
+	char __wcnear * __wcfar *q;
 	int argv_len=0, argv_count=0;
 	int envp_len=0, envp_count=0;
 	int stack_bytes;
@@ -20,9 +21,9 @@ execve(const char *fname, char **argv, char **envp)
 	}
 
 	/* How much space for envp */
-	for(p=envp; p && *p && envp_len >= 0; p++)
+	for(q=envp; q && *q && envp_len >= 0; q++)
 	{
-	   envp_count++; envp_len += strlen(*p)+1;
+	   envp_count++; envp_len += strlen(*q)+1;
 	}
 
 	/* tot it all up */
@@ -62,12 +63,12 @@ execve(const char *fname, char **argv, char **envp)
 	}
 	*pip++ = 0;
 
-	for(p=envp; p && *p; p++)
+	for(q=envp; q && *q; q++)
 	{
 	   int l;
 	   *pip++ = pcp-baseoff;
-	   l = strlen(*p)+1;
-	   memcpy(pcp, *p, l);
+	   l = strlen(*q)+1;
+	   memcpy(pcp, *q, l);
 	   pcp += l;
 	}
 	*pip++ = 0;

@@ -76,6 +76,7 @@ static void set_u32_le(char *p, uint32_t v) {
 
 static char buf[0x1000];
 static char dataseg[65536];
+static char codeseg[65536];
 static char trelocs[1024*8];
 static char drelocs[1024*8];
 int trelocsz;
@@ -219,49 +220,74 @@ int main(int argc, char **argv) {
   if (code_reloc) {
     uint16_t i, nrelocs;
     char relbuf[8];
-    if (lseek(infd, code_fofs+code_size, SEEK_SET) - (code_fofs+code_size) != 0) fail1("fatal: error seeking to code relocs: ", infn);
+    if (lseek(infd, code_fofs, SEEK_SET) - code_fofs != 0) fail1("fatal: error seeking to code : ", infn);
+    if (read(infd, codeseg, code_size) != code_size) fail1("fatal: can't read code segment: ", infn);
     if (read(infd, &nrelocs, 2) != 2) fail1("fatal: can't read # code relocs: ", infn);
     printf("info: text has %d relocs\n", nrelocs);
     for (i=0; i<nrelocs; i++) {
       if (trelocsz >= 1024*8) fail1("fatal: too many code relocations: ", infn);
       if (read(infd, relbuf, 8) != 8) fail1("fatal: can't read reloc: ", infn);
-      printf("%02x %02x %02x %02x\n", relbuf[0], relbuf[1], relbuf[2], relbuf[3]);
+      /*printf("%02x %02x %02x %02x\n", relbuf[0], relbuf[1], relbuf[2] & 255, relbuf[3]);*/
+      /* 2 = SEGMENT reloc */
       if ((relbuf[0] & 0x0f) != 2) fail1("fatal: unhandled code reloc source type: ", infn);
+      /* 0 = INTERNALREF */
       if ((relbuf[1] & 0x03) != 0) fail1("fatal: unhandled code reloc target type: ", infn);
+#define S_TEXT      (-2)        /* ELKS loader text segment index */
+#define S_DATA      (-3)        /* ELKS loader data segment index */
+#define R_SEGWORD   80          /* ELKS loader segment fixup */
+
+      int additive = ((relbuf[1] & 0x04) != 0);
+      if (additive) fail1("fatal: ADDITIVE not supported in code segment: ", infn);
+      uint16_t src_chain = get_u16_le(relbuf+2);
+      uint8_t segment = get_u8_le(relbuf+4);
+      if (segment != 1 && segment != 2) fail1("fatal: bad segment number in code reloc target: ", infn);
+      int symndx = (segment == 1)? S_TEXT: S_DATA;
+      /*uint16_t offset = get_u16_le(relbuf+6);
       printf("info: code source %04x segment %04x offset %04x\n",
-        get_u16_le(relbuf + 2), get_u8_le(relbuf + 5), get_u16_le(relbuf + 6));
-      set_u32_le(trelocs + trelocsz + 0, get_u16_le(relbuf + 2)); /* vaddr = src chain */
-      set_u16_le(trelocs + trelocsz + 4, -2); /* symndx = S_TEXT */
-      set_u16_le(trelocs + trelocsz + 6, 80); /* type = R_SEGWORD */
+        src_chain, segment, offset);*/
+      set_u32_le(trelocs + trelocsz + 0, src_chain); /* vaddr = src chain */
+      set_u16_le(trelocs + trelocsz + 4, symndx);    /* segment */
+      set_u16_le(trelocs + trelocsz + 6, R_SEGWORD); /* relocation type */
       trelocsz += 8;
     }
   }
   if (data_reloc) {
     uint16_t i, nrelocs;
-    int additive;
-    uint16_t src_chain;
     char relbuf[8];
     if (lseek(infd, data_fofs, SEEK_SET) - data_fofs != 0) fail1("fatal: error seeking to data: ", infn);
     if (read(infd, dataseg, data_size) != data_size) fail1("fatal: can't read data segment: ", infn);
     if (read(infd, &nrelocs, 2) != 2) fail1("fatal: can't read # data relocs: ", infn);
     printf("info: data has %d relocs\n", nrelocs);
     for (i=0; i<nrelocs; i++) {
-      if (drelocsz >= 1024*8) fail1("fatal: too many code relocations: ", infn);
+      if (drelocsz >= 1024*8) fail1("fatal: too many data relocations: ", infn);
       if (read(infd, relbuf, 8) != 8) fail1("fatal: can't read reloc: ", infn);
-      printf("%02x %02x %02x %02x\n", relbuf[0], relbuf[1], relbuf[2], relbuf[3]);
+      /*printf("%02x %02x %02x %02x\n", relbuf[0], relbuf[1], relbuf[2] & 255, relbuf[3]);*/
+      /* 3 = FAR_ADDR reloc */
       if ((relbuf[0] & 0x0f) != 3) fail1("fatal: unhandled data reloc source type: ", infn);
+      /* 0 = INTERNALREF */
       if ((relbuf[1] & 0x03) != 0) fail1("fatal: unhandled data reloc target type: ", infn);
-      additive = ((relbuf[1] & 0x04) != 0);
-      src_chain = get_u16_le(relbuf+2);
-      printf("info: data source %04x segment %04x offset %04x\n",
-        get_u16_le(relbuf + 2), get_u8_le(relbuf + 5), get_u16_le(relbuf + 6));
+      int additive = ((relbuf[1] & 0x04) != 0);
+      uint16_t src_chain = get_u16_le(relbuf+2);
+      uint8_t segment = get_u8_le(relbuf+4);
+      uint16_t offset = get_u16_le(relbuf+6);
+      if (segment != 1 && segment != 2) fail1("fatal: bad segment number in data reloc target: ", infn);
+      int symndx = (segment == 1)? S_TEXT: S_DATA;
+      /*printf("info: data source %04x segment %04x offset %04x\n",
+        src_chain, segment, offset);*/
       if (!additive) {
-        set_u16_le(dataseg + src_chain, 0); /* remove 0xFFFF end of chain */
+        /*printf("info: data segment far_addr reloc: seg %d value %04x:%04x\n", segment,
+            get_u16_le(dataseg + src_chain + 2), get_u16_le(dataseg + src_chain));*/
+        set_u16_le(dataseg + src_chain, offset); /* set far address offset */
+      } else {
+        /*printf("info: data segment additive far_addr reloc: seg %d value %04x:%04x\n",
+            segment,
+            get_u16_le(dataseg + src_chain + 2), get_u16_le(dataseg + src_chain));*/
+        uint16_t prev = get_u16_le(dataseg + src_chain);
+        set_u16_le(dataseg + src_chain, prev + offset);  /* add to previous offset */
       }
-      src_chain += 2; /* move to segment portion of far_addr */
-      set_u32_le(drelocs + drelocsz + 0, src_chain); /* vaddr = src chain */
-      set_u16_le(drelocs + drelocsz + 4, -3); /* symndx = S_DATA */
-      set_u16_le(drelocs + drelocsz + 6, 80); /* type = R_SEGWORD */
+      set_u32_le(drelocs + drelocsz + 0, src_chain + 2); /* vaddr = segment of srcchain*/
+      set_u16_le(drelocs + drelocsz + 4, symndx);        /* segment */
+      set_u16_le(drelocs + drelocsz + 6, R_SEGWORD);     /* relocation type */
       drelocsz += 8;
     }
   }
@@ -289,22 +315,27 @@ int main(int argc, char **argv) {
 
   if (write(outfd, hdr, hdr_size) != hdr_size) fail1("fatal: error writing header: ", outfn);
   if (lseek(infd, code_fofs, SEEK_SET) - code_fofs != 0) fail1("fatal: error seeking to code: ", infn);
-  if ((got = copy_fd(infd, outfd, code_size)) == 0) {
-  } else if (got == 1) {
-    fail1("fatal: error reading code (file too short?): ", infn);
+  if (code_reloc) {
+    if (write(outfd, codeseg, code_size) != code_size) fail1("fatal: error writing code segment: ", infn);
   } else {
-    fail1("fatal: error writing code: ", outfn);
+    if ((got = copy_fd(infd, outfd, code_size)) == 0) {
+    } else if (got == 1) {
+      fail1("fatal: error reading code (file too short?): ", infn);
+    } else {
+      fail1("fatal: error writing code: ", outfn);
+    }
   }
 
   if (lseek(infd, data_fofs, SEEK_SET) - data_fofs != 0) fail1("fatal: error seeking to data: ", infn);
   if (data_reloc) {
     if (write(outfd, dataseg, data_size) != data_size) fail1("fatal: error writing data segment: ", infn);
-  }
-  else if ((got = copy_fd(infd, outfd, data_size)) == 0) {
-  } else if (got == 1) {
-    fail1("fatal: error reading data (file too short?): ", infn);
   } else {
-    fail1("fatal: error writing data: ", outfn);
+    if ((got = copy_fd(infd, outfd, data_size)) == 0) {
+    } else if (got == 1) {
+      fail1("fatal: error reading data (file too short?): ", infn);
+    } else {
+      fail1("fatal: error writing data: ", outfn);
+    }
   }
   if (trelocsz) {
     char *p = trelocs;

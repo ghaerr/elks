@@ -2,7 +2,6 @@
 #define	__DIRENT_H
 
 #include <features.h>
-#include <stddef.h>
 #include <sys/types.h>
 #include __SYSINC__(dirent.h)
 
@@ -17,7 +16,7 @@ typedef struct {
 DIR *opendir (const char *dname);
 int closedir(DIR * dirp);
 struct dirent *readdir(DIR * dirp);
-int _readdir(int fd, struct dirent *buf, int count);
+int _readdir(int fd, struct dirent *buf, int count);    /* syscall */
 void rewinddir(DIR * dirp);
 void seekdir(DIR * dirp, off_t pos);
 off_t telldir(DIR * dirp);

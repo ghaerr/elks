@@ -11,4 +11,6 @@ bin/elf2elks
 bin/elks-compress
 bin/exomizer
 bin/eman
+bin/ewcc
+bin/ewlink
 elftoolchain-0.7.1

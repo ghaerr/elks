@@ -4,7 +4,6 @@
 /* memory primitives */
 
 #include <linuxmt/types.h>
-#include <stddef.h>
 
 byte_t peekb (word_t off, seg_t seg);
 word_t peekw (word_t off, seg_t seg);

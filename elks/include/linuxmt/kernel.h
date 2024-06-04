@@ -3,7 +3,6 @@
 
 #include <linuxmt/types.h>
 #include <arch/cdefs.h>
-#include <stddef.h>
 
 /*
  * 'kernel.h' contains some often-used function prototypes etc

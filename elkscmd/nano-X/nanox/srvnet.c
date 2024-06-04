@@ -10,7 +10,6 @@
  * events to them.
  */
 #include <stdio.h>
-#include <stddef.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>

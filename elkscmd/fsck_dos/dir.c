@@ -42,10 +42,10 @@ static const char rcsid[] =
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <unistd.h>
 #include <string.h>
 #include <ctype.h>
-#include <stdio.h>
-#include <unistd.h>
 #include <time.h>
 #include <sys/param.h>
 
