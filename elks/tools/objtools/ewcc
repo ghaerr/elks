@@ -72,4 +72,9 @@ LDFLAGS="\
     "
 
 owcc -v -c -Wall -Wextra -Os $CCFLAGS -o ${PROG%.c}.obj $PROG
+
+# dump OBJ file
 #omfdump ${PROG%.c}.obj
+
+# disassemble OBJ file
+#wdis -p -e ${PROG%.c}.obj

@@ -245,7 +245,9 @@ float host_floor(float x)
 }
 
 void host_sleep(long ms) {
+#ifndef __WATCOMC__
     usleep(ms * 1000);
+#endif
 }
 
 #if DISK_FUNCTIONS
@@ -389,7 +391,7 @@ void host_pokeb(int offset, int segment, int value) {
 #endif
 }
 
-int main(int ac, char **av) {
+int main(int ac, char __wcnear * __wcfar *av) {
 	outfile = stdout;
 
 	tcgetattr(0, &def_termios);

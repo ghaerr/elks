@@ -1,10 +1,18 @@
 /* host dependent definitions */
 
 #define DISK_FUNCTIONS			1	/* compile in DELETE/DIR/LIST/SAVE */
+
+#ifdef __WATCOMC__
+#define MATH_FUNCTIONS			0	/* compile in COS, SIN, TAN, etc */
+#define MATH_INCLUDE_POW		0	/* compile in large POW function */
+#define MATH_DBL_PRECISION		0	/* 0=use 4-byte floats vs 8-byte double */
+#define MATH_CORRECT_NEAR_ZERO	0	/* adjust trig routines returning -0, +/-EPSILON */
+#else
 #define MATH_FUNCTIONS			1	/* compile in COS, SIN, TAN, etc */
 #define MATH_INCLUDE_POW		1	/* compile in large POW function */
 #define MATH_DBL_PRECISION		0	/* 0=use 4-byte floats vs 8-byte double */
 #define MATH_CORRECT_NEAR_ZERO	1	/* adjust trig routines returning -0, +/-EPSILON */
+#endif
 
 #if MATH_DBL_PRECISION
 #define MATH_PRECISION	14

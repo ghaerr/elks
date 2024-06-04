@@ -76,5 +76,9 @@ OUT=${PROG%.obj}
 
 owcc -v -bos2 $CCFLAGS $LDFLAGS -o $OUT.os2 $@ $ELKSLIBC/libc.lib
 os2toelks -f elks -o $OUT $OUT.os2
+
+# dump OS/2 binary
 #os2dump $OUT.os2
+
+# copy to ELKS filesystem root user directory
 #cp $OUT $TOPDIR/elkscmd/rootfs_template/root
