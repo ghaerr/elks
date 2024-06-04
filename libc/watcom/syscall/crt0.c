@@ -1,17 +1,20 @@
 /*
- * Watcom C startup functions
+ * Watcom C startup and exit.
+ *
+ * 2 Jun 2024 Greg Haerr
  */
 
 #include <sys/cdefs.h>
 #include <unistd.h>
 #include <errno.h>
 
-int cstart_;            /* extern ref created with declaration of main() */
-int _argc;              /* extern ref created with declaration of main() */
-int _8087;
+/* external references created by Watcom C compilation - unused */
+int cstart_;            /* with declaration of main() */
+int _argc;              /* with declaration of main() */
+int _8087;              /* when floating point seen */
 
-/* NOTE near/far declaration of environ!!! */
-char __near * __far *environ;
+/* FIXME near/far declaration of environ works only in compact/large models */
+char __wcnear * __wcfar *environ;
 
 noreturn void _exit(int status);
 #pragma aux _exit =         \

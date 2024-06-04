@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+#
+# ewcc - OpenWatcom wcc script for ELKS
+#
+# Usage: ewcc filename.c
+#   produces filename.obj
+#
+# 3 Jun 2024 Compact model only for now
+#
+set -e
+
+if [ -z "$TOPDIR" ]
+  then
+    echo "ELKS TOPDIR= environment variable not set"
+    exit
+fi
+
+if [ -z "$WATCOM" ]
+  then
+    echo "WATCOM= environment variable not set to compiler path"
+    exit
+fi
+
+if [ -z "$WATDIR" ]
+  then
+    echo "WATDIR= environment variable not set to Watcom source directory"
+    exit
+fi
+
+if [ $# -eq 0 ]
+  then
+    echo "Usage: ewcc <filename>.c"
+    exit
+fi
+
+PROG=$1
+ELKSLIBCINCLUDE=$TOPDIR/libc/include
+ELKSINCLUDE=$TOPDIR/elks/include
+WATCINCLUDE=$WATDIR/bld/hdr/dos/h
+
+# -mregparm=0
+# -fpmath
+# -mabi=cdecl               # push all args
+# -msoft-float              # -Wc,-fpc
+# -Wc,-fpc                  # soft fp
+# -mhard-emu-float          # -Wc,-fpi
+# -Wc,-fpi87                # inline 8087 fp
+# -Wc,-zev                  # enable void arithmetic
+# -std=c99                  # -Wc,-za99
+# -fnonconst-initializers   # -Wc,aa
+
+CCFLAGS="\
+    -bos2                           \
+    -mcmodel=c                      \
+    -march=i86                      \
+    -std=c99                        \
+    -fno-stack-check                \
+    -Wc,-fpi87                      \
+    -Wc,-zev                        \
+    -fnostdlib                      \
+    -I$ELKSLIBCINCLUDE              \
+    -I$ELKSINCLUDE                  \
+    -I$WATCINCLUDE                  \
+    "
+
+LDFLAGS="\
+    -bos2 -s                        \
+    -Wl,disable -Wl,1014            \
+    -Wl,option -Wl,start=_start_    \
+    -Wl,option -Wl,dosseg           \
+    -Wl,option -Wl,stack=0x400      \
+    "
+
+owcc -v -c -Wall -Wextra -Os $CCFLAGS -o ${PROG%.c}.obj $PROG
+#omfdump ${PROG%.c}.obj
