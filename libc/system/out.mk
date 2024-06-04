@@ -40,6 +40,7 @@ OBJS = \
 	seekdir.o \
 	setpgrp.o \
 	sigaction.o \
+	signal.o \
 	sleep.o \
 	telldir.o \
 	time.o \
@@ -59,7 +60,6 @@ IA16OBJS = \
 	execlpe.o \
 	program_filename.o \
 	setjmp.o \
-	signal.o \
 	syscall01.o \
 	syscall23.o \
 	syscall4.o \

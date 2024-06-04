@@ -7,6 +7,7 @@
 #include __SYSINC__(signal.h)
 
 sighandler_t signal(int number, sighandler_t pointer);
+int _signal(int __sig, __kern_sighandler_t __cbfunc);   /* syscall */
 
 typedef struct siginfo_t siginfo_t;
 

@@ -1,11 +1,15 @@
 #include <errno.h>
 #include <signal.h>
+/*
+ * Signal handler.
+ */
 
 typedef sighandler_t Sig;
 
-extern int _signal(int, __kern_sighandler_t);
+Sig _sigtable[_NSIG];
 
-#if defined(__GNUC__) && (defined __TINY__ || defined __SMALL__ || defined __COMPACT__)
+#ifdef __GNUC__
+#if defined __TINY__ || defined __SMALL__ || defined __COMPACT__
 /*
  * If we are building libc for a near-code memory model (tiny, small, or
  * compact), then we will arrange for _syscall_signal( ) to be within the
@@ -15,13 +19,15 @@ extern __attribute__((near_section, __stdcall__))   __far void _syscall_signal(i
 #else
 extern stdcall                                      __far void _syscall_signal(int);
 #endif
+#endif
 
-Sig _sigtable[_NSIG];
-
-/*
- * Signal handler.
- *
- */
+#ifdef __WATCOMC__
+extern stdcall __far _syscall_signal(int);
+void __far _syscall_cb(int sig)
+{
+    _sigtable[sig-1](sig);
+}
+#endif
 
 /*
  * KERNEL INTERFACE:
