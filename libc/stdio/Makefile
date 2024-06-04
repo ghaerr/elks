@@ -42,7 +42,6 @@ OBJS = \
 	stderr.o \
 	stdin.o \
 	stdout.o \
-	putchar.o \
 	ungetc.o \
 	vfprintf.o \
 	vfscanf.o \

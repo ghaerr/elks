@@ -34,7 +34,8 @@ __insert_chunk(mem *mem_chunk)
    register mem *p1, *p2;
    if (chunk_list == 0)		/* Simple case first */
    {
-      m_next(mem_chunk) = chunk_list = mem_chunk;
+      chunk_list = mem_chunk;
+      m_next(mem_chunk) = (union mem_cell __wcnear *)mem_chunk;
       __noise("FIRST CHUNK", mem_chunk);
       return;
    }
@@ -58,7 +59,7 @@ __insert_chunk(mem *mem_chunk)
 	    else
 	    {
 	       m_next(p1) = m_next(p2);
-	       m_next(p2) = p1;
+	       m_next(p2) = (union mem_cell __wcnear *)p1;
 	       __noise("INSERT CHUNK", mem_chunk);
 	       __noise("FROM", p2);
 	    }
@@ -69,7 +70,7 @@ __insert_chunk(mem *mem_chunk)
 	    /* In chain, p1 between p2 and next */
 
 	    m_next(p1) = m_next(p2);
-	    m_next(p2) = p1;
+	    m_next(p2) = (union mem_cell __wcnear *)p1;
 	    __noise("INSERT CHUNK", mem_chunk);
 	    __noise("FROM", p2);
 
@@ -98,7 +99,7 @@ __insert_chunk(mem *mem_chunk)
 	    /* At top of chain, next is bottom of chain, p1 is below next */
 
 	    m_next(p1) = m_next(p2);
-	    m_next(p2) = p1;
+	    m_next(p2) = (union mem_cell __wcnear *)p1;
 	    __noise("INSERT CHUNK", mem_chunk);
 	    __noise("FROM", p2);
 	    chunk_list = p2;
@@ -165,7 +166,7 @@ __search_chunk(unsigned int mem_size)
 
    __noise("SPLIT", p1);
    /* Otherwise split it */
-   m_next(p2) = p1 + mem_size;
+   m_next(p2) = (union mem_cell __wcnear *)(p1 + mem_size);
    chunk_list = p2;
 
    p2 = m_next(p2);

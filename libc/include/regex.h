@@ -20,7 +20,7 @@ typedef struct regexp {
 
 regexp *regcomp(char *exp);
 int regexec(regexp *prog, char *string);
-void regerror();
+void regerror(const char *);
 
 int expandwildcards(char *name, int maxargc, char **retargv);
 void freewildcards(void);
