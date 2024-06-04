@@ -1,13 +1,13 @@
 ;
 ; signalcb.asm - signal callback from ELKS kernel
 ;
+; 3 Jun 2024 Greg Haerr
 
 _TEXT   segment use16 word public 'CODE'
-      ;assume  cs:_TEXT
 
-    extrn _syscall_cb_ :far
-    public __syscall_signal
-__syscall_signal proc far
+        extrn   _signal_wchandler_ :far
+        public  __signal_cbhandler
+__signal_cbhandler proc far
         push bp
         mov bp,sp
 
@@ -21,8 +21,9 @@ __syscall_signal proc far
         push ds
         push es
 
-        mov ax,6[bp]    ; get signal #
-        callf _syscall_cb_
+        mov ax,6[bp]                ; get signal #
+        callf _signal_wchandler_    ; call user function from C
+
         pop es
         pop ds
         pop di
@@ -34,9 +35,8 @@ __syscall_signal proc far
         popf
 
         pop bp
-        retf 2          ; get rid of the signum
-
-__syscall_signal endp
+        retf 2                      ; get rid of the signum
+__signal_cbhandler endp
 
 _TEXT   ends
         end

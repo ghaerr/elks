@@ -7,9 +7,9 @@
 
 	.text
 
-	.global _syscall_signal
+	.global _signal_cbhandler
 
-_syscall_signal:
+_signal_cbhandler:
 	push %bp
 	mov %sp,%bp
 
@@ -53,17 +53,6 @@ _syscall_signal:
 
 	pop %bp
 	lret $2  // get rid of the signum
-
-//------------------------------------------------------------------------------
-
-	.global breakpoint
-
-breakpoint:
-
-	int $3
-	RET_(0)
-
-//------------------------------------------------------------------------------
 
 	.data
 	.extern _sigtable

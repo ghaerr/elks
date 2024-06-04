@@ -124,7 +124,7 @@ void arch_setup_user_stack (register struct task_struct * t, word_t entry)
  *
  * We need to make the program return to another point - to the signal
  * handler. The user stack currently looks like this:-
- *
+ *  [low address <---> high address ]
  *              bp  ip  cs  f
  *
  * and will look like this
