@@ -246,7 +246,6 @@ float host_floor(float x)
 
 void host_sleep(long ms) {
     usleep(ms * 1000);
-    printf("BACK!\n");
 }
 
 #if DISK_FUNCTIONS
