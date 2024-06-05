@@ -1,14 +1,35 @@
-ELKS system calls requires registers set in order of parameters:
-    BX, CX, DX, DI, SI
-AX is set to the systen call number defined in elks/arch/i86/kernel/syscall.dat
+ELKS kernel
+    System call calling convention requires registers set in order of parameters:
+        BX, CX, DX, DI, SI
+    AX is set to the system call number defined in elks/arch/i86/kernel/syscall.dat
+    Then execute INT 0x80.  Return value is in AX.
+    Error are indicated by negative errno (-errno) return values.
 
 
-Cdecl calling convention, stack has parms, passed in this order in registers:
-    BX, CX, DX, DI, SI
-    caller pops all args after call
+ia16-elf-gcc C compiler
+    Cdecl calling convention, stack has parms, passed in this order in registers:
+        BX, CX, DX, DI, SI
+        caller pops all args after call
+
+    Regparmcall calling convention, args passed in following registers in order:
+        AX, DX, CX, DI, SI
+        callee pops args > 3 before return!
 
 
-Regparmcall calling convention, args passed in following registers in order:
-    AX, DX, CX, DI, SI
-    callee pops args > 3 before return!
+OpenWatcom C compiler
+    Register calling convention by default, picked from the following registers,
+    according to the compilation model and function argument signature:
+        AX, DX, BX, CX, then use stack for arguments
 
+    Cdecl calling convention (push onto stack) always used for varargs functions.
+
+    Can be overridden using a variation of:
+        #pragram aux func __parm [__ax] [__bx] [__cx] [__dx] [__di] [__si] __value [__ax]
+
+    Examples of register allocation in small model:
+        main(int ac, char __far **av)  uses AX, CX:BX
+        main(int ac, char **av)        uses AX, DX
+        strlen(char __far *)           uses DX:AX
+        write(int, char __far *, int)  uses AX, CX:BX, DX
+
+    Compiler also supports __stdcall like __cdecl except callee pops args on return.
