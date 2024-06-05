@@ -9,9 +9,11 @@ INCLUDES += -I$(WATDIR)/bld/hdr/dos/h
 DEFINES = -D__LIBC__
 LIBOBJS=$(OBJS:.o=.obj)
 
+include $(TOPDIR)/libc/watcom.model
+
 CARCH =\
     -bos2                           \
-    -mcmodel=c                      \
+    -mcmodel=$(MODEL)               \
     -march=i86                      \
     -std=c99                        \
     -fno-stack-check                \
@@ -22,10 +24,10 @@ CARCH =\
     -v                              \
 
 AARCH=\
-	-mc								\
-	-0								\
-	-fp0							\
-	-fpi87							\
+    -m$(MODEL)                      \
+    -0                              \
+    -fp0                            \
+    -fpi87                          \
 
 CC=owcc
 AR=wlib
