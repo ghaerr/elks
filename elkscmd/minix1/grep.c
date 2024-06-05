@@ -61,12 +61,10 @@ extern int optind;
 extern char *optarg;
 
 /* Internal interfaces */
-int main();
 static int match();
 static char *get_line();
 static char *map_nocase();
 static void error_exit();
-void regerror();
 
 
 int main(argc, argv)
