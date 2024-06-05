@@ -245,9 +245,8 @@ float host_floor(float x)
 }
 
 void host_sleep(long ms) {
-#ifndef __WATCOMC__
     usleep(ms * 1000);
-#endif
+    printf("BACK!\n");
 }
 
 #if DISK_FUNCTIONS
