@@ -37,8 +37,8 @@ noreturn void exit(int status)
 #pragma aux main "*" modify [ bx cx dx si di ]
 int main(int argc, char __wcnear * __wcfar *argv);
 
-#if defined(__SMALL__) || defined(__MEDIUM__)
 noreturn static void _crt0(void);
+#if defined(__SMALL__) || defined(__MEDIUM__)
 #pragma aux _crt0 =         \
     "pop ax"                \
     "mov dx, sp"            \

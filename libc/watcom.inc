@@ -11,10 +11,11 @@ LIBOBJS=$(OBJS:.o=.obj)
 
 CARCH =\
     -bos2                           \
-    -mcmodel=c                      \
+    -mcmodel=l                      \
     -march=i86                      \
     -std=c99                        \
     -fno-stack-check                \
+    -Wc,-wcd=303                    \
     -Wc,-fpi87                      \
     -Wc,-zev                        \
     -fnostdlib                      \

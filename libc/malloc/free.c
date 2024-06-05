@@ -46,7 +46,7 @@ free(void * ptr)
 			m_next(prev) = chk;
 		}
 #else
-		m_next(chk) = __freed_list;
+		m_next(chk) = (union mem_cell __wcnear *)__freed_list;
 		__freed_list = chk;
 #endif
 		__noise("ADD LIST", chk);
