@@ -1,4 +1,4 @@
-/* 24 May 2024 from https://github.com/pts/minilibc686 */
+/* 24 May 2024 from https://github.com/pts/minilibc686, licensed under GPL v2.0 */
 /*
  * omf2elf.c: convert i386 OMF .obj object file to i386 ELF relocatable .o object file
  * by pts@fazekas.hu at Thu Jun  1 14:22:39 CEST 2023
