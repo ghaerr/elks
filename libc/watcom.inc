@@ -11,7 +11,7 @@ LIBOBJS=$(OBJS:.o=.obj)
 
 CARCH =\
     -bos2                           \
-    -mcmodel=l                      \
+    -mcmodel=c                      \
     -march=i86                      \
     -std=c99                        \
     -fno-stack-check                \

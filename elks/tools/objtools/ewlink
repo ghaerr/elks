@@ -38,7 +38,6 @@ ELKSLIBCINCLUDE=$TOPDIR/libc/include
 ELKSINCLUDE=$TOPDIR/elks/include
 WATCINCLUDE=$WATDIR/bld/hdr/dos/h
 
-# -mregparm=0
 # -fpmath
 # -mabi=cdecl               # push all args
 # -msoft-float              # -Wc,-fpc
@@ -51,7 +50,7 @@ WATCINCLUDE=$WATDIR/bld/hdr/dos/h
 
 CCFLAGS="\
     -bos2                           \
-    -mcmodel=l                      \
+    -mcmodel=c                      \
     -march=i86                      \
     -std=c99                        \
     -fno-stack-check                \
@@ -64,8 +63,11 @@ CCFLAGS="\
     -I$WATCINCLUDE                  \
     "
 
+# Warning 1014: stack segment not found
+
 LDFLAGS="\
     -bos2 -s                        \
+    -Wl,disable -Wl,1014            \
     -Wl,option -Wl,start=_start_    \
     -Wl,option -Wl,dosseg           \
     -Wl,option -Wl,stack=0x1000     \

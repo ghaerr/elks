@@ -187,16 +187,16 @@ syscall_res sys_call3( unsigned func, unsigned r_bx, unsigned r_cx, unsigned r_d
     __parm [__ax] [__bx] [__cx] [__dx]  \
     __value [__ax]
 
-syscall_res sys_call4( unsigned func, unsigned r_bx, unsigned r_cx, unsigned r_dx, unsigned r_si );
+syscall_res sys_call4( unsigned func, unsigned r_bx, unsigned r_cx, unsigned r_dx, unsigned r_di );
 #pragma aux sys_call4 =                         \
     "int    0x80"                               \
-    __parm [__ax] [__bx] [__cx] [__dx] [__si]   \
+    __parm [__ax] [__bx] [__cx] [__dx] [__di]   \
     __value [__ax]
 
-syscall_res sys_call5( unsigned func, unsigned r_bx, unsigned r_cx, unsigned r_dx, unsigned r_si, unsigned r_di );
+syscall_res sys_call5( unsigned func, unsigned r_bx, unsigned r_cx, unsigned r_dx, unsigned r_di, unsigned r_si );
 #pragma aux sys_call5 =                              \
     "int    0x80"                                    \
-    __parm [__ax] [__bx] [__cx] [__dx] [__si] [__di] \
+    __parm [__ax] [__bx] [__cx] [__dx] [__di] [__si] \
     __value [__ax]
 
 /* Set the DS register from passed far address before system call */
