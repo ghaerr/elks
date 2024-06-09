@@ -29,6 +29,9 @@ extern void *(*__alloca_alloc)(size_t);
 #define malloc(x) ((*__alloca_alloc)(x))
 #endif
 
+/* request paras from main memory, returns segment */
+int _fmemalloc(int paras, unsigned short *pseg);
+
 /* alloc from main memory */
 void __far *fmemalloc(unsigned long size);
 
