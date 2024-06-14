@@ -31,5 +31,6 @@ extern void *(*__alloca_alloc)(size_t);
 
 /* alloc from main memory */
 void __far *fmemalloc(unsigned long size);
+int _fmemalloc(int paras, seg_t *pseg);
 
 #endif
