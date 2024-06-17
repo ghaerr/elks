@@ -1,4 +1,4 @@
-# Makefile of libc/watcoms/asm module
+# Makefile of libc/watcom/asm module
 
 COMPILER ?= watcom
 LIB ?= out.lib
