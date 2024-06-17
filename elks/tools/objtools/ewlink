@@ -65,10 +65,12 @@ CCFLAGS="\
     -I$WATCINCLUDE                  \
     "
 
+# Warning 1008: cannot open os2.lib: No such file or directory
 # Warning 1014: stack segment not found
 
 LDFLAGS="\
     -bos2 -s                        \
+    -Wl,disable -Wl,1008            \
     -Wl,disable -Wl,1014            \
     -Wl,option -Wl,start=_start_    \
     -Wl,option -Wl,dosseg           \

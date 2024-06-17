@@ -1,4 +1,4 @@
-# Makefile of libc/watcoms/syscall module
+# Makefile of libc/watcom/syscall module
 
 COMPILER ?= watcom
 LIB ?= out.lib
