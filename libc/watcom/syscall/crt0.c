@@ -53,12 +53,12 @@ noreturn void cstart_(void)
 /* rewrite argv and environ arrays in compact and large models */
 noreturn void cstart_(char __near *newsp, char __near *oldsp, int bx, int n)
 {
-    char __far * __far *nap = newsp;
-    char __near * __near *oap = oldsp;
+    char __far  * __far  *nap = (char __far  * __far  *)newsp;
+    char __near * __near *oap = (char __near * __near *)oldsp;
     unsigned int v;
-    __argv = newsp;
+    __argv = (char **)newsp;
     do {
-        if (v = *oap) {
+        if (v = (unsigned)*oap) {
             *nap = *oap;
         } else {
             *nap = 0;
