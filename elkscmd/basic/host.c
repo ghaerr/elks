@@ -389,7 +389,7 @@ void host_pokeb(int offset, int segment, int value) {
 #endif
 }
 
-int main(int ac, char __wcnear * __wcfar *av) {
+int main(int ac, char **av) {
 	outfile = stdout;
 
 	tcgetattr(0, &def_termios);

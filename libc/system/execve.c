@@ -3,10 +3,10 @@
 #include <unistd.h>
 
 int
-execve(const char *fname, char **argv, char __wcnear * __wcfar *envp)
+execve(const char *fname, char **argv, char **envp)
 {
-    char **p;
-	char __wcnear * __wcfar *q;
+	char **p;
+	char **q;
 	int argv_len=0, argv_count=0;
 	int envp_len=0, envp_count=0;
 	int stack_bytes;
