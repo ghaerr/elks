@@ -52,7 +52,7 @@ sighandler_t signal(int number, sighandler_t pointer)
     if (number < 1 || number > _NSIG) { errno = EINVAL; return SIG_ERR; }
 
     if (pointer == SIG_DFL || pointer == SIG_IGN)
-        rv = _signal(number, (__kern_sighandler_t) (unsigned long) (unsigned)pointer);
+        rv = _signal(number, (__kern_sighandler_t) (unsigned long)pointer);
     else
         rv = _signal(number, (__kern_sighandler_t) _signal_cbhandler);
     if (rv < 0) return SIG_ERR;
