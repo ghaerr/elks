@@ -6,7 +6,7 @@
 #include <paths.h>
 
 static void
-tryrun(const char *pname, char **argv, char __wcnear * __wcfar *envp)
+tryrun(const char *pname, char **argv, char **envp)
 {
    struct stat st;
 
@@ -17,7 +17,7 @@ tryrun(const char *pname, char **argv, char __wcnear * __wcfar *envp)
 }
 
 int
-execvpe(const char *fname, char **argv, char __wcnear * __wcfar *envp)
+execvpe(const char *fname, char **argv, char **envp)
 {
    char *path;
    char *pname = (char *)fname;

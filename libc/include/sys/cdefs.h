@@ -12,10 +12,8 @@
 #ifdef __WATCOMC__
 /*
  * Force no register saves in main(), saves space.
- * For now, argv array is left unmodified requiring special main declaration.
  */
 #pragma aux main "*" modify [ bx cx dx si di ]
-int main(int argc, char __wcnear * __wcfar *argv);
 #endif
 
 #endif
