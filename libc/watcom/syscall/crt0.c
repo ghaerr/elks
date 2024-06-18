@@ -13,6 +13,10 @@
 int _argc;              /* with declaration of main() */
 int _8087;              /* when floating point seen */
 
+/* cstart_ is an external reference created by Watcom C, pulls in asm/segments.asm */
+#pragma aux cstart_ "_*" modify [ bx cx dx si di ]
+extern void cstart_(void);
+
 noreturn void _exit(int status);
 #pragma aux _exit =         \
     "xchg ax, bx"           \
@@ -41,17 +45,15 @@ char **__argv;
 char *__program_filename;
 char **environ;
 
-/* cstart_ is an external reference created by Watcom C compilation, used here */
-#pragma aux cstart_ "_*" modify [ bx cx dx si di ]
-
+#pragma aux premain "*" modify [ bx cx dx si di ]
 #if defined(__SMALL__) || defined(__MEDIUM__)
-noreturn void cstart_(void)
+static noreturn void premain(void)
 {
     exit(main(__argc, __argv));
 }
 #else
 /* rewrite argv and environ arrays in compact and large models */
-noreturn void cstart_(char __near *newsp, char __near *oldsp, int bx, int n)
+static noreturn void premain(char __near *newsp, char __near *oldsp, int bx, int n)
 {
     char __far  * __far  *nap = (char __far  * __far  *)newsp;
     char __near * __near *oap = (char __near * __near *)oldsp;
@@ -88,7 +90,7 @@ noreturn static void _crt0(void);
     "mov bx, sp"            \
     "mov bx,word ptr [bx]"  \
     "mov word ptr __program_filename, bx"       \
-    "call cstart_";
+    "call premain";
 #else
 #pragma aux _crt0 =         \
     "pop ax"                \
@@ -117,7 +119,7 @@ noreturn static void _crt0(void);
     "mov bx, cx"            \
     "sub sp, bx"            \
     "mov ax, sp"            \
-    "call cstart_";
+    "call premain";
 #endif
 
 /* actual program entry point */
