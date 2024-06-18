@@ -31,7 +31,6 @@
 #define __attribute__(n)
 /* force __cdecl calling convention and no register saves in main() arc/argv */
 #pragma aux main "*" modify [ bx cx dx si di ]
-extern int main(int, char **);
 #define __wcfar         __far
 #define __wcnear        __near
 #endif
