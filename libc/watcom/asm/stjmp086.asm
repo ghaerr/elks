@@ -42,7 +42,7 @@ include struct.inc
 ifndef __OS2__
   ifndef __WINDOWS__
     ifndef __QNX__
-      __DOING_DOS__ = 1
+      ;;;__DOING_DOS__ = 1      ; no doing DOS for ELKS
     endif
   endif
 endif
@@ -53,7 +53,7 @@ ifdef __DOING_DOS__
         extrn           __restore_ovl_stack : dword
         enddata
 endif
-        codeptr         "C",__longjmp_handler
+        ;;;codeptr         "C",__longjmp_handler
 
         modstart        setjmp
 
@@ -137,6 +137,7 @@ endif
         mov     cx, 12[ si ]    ; setup old ss:sp as a parm
         mov     dx, 24[ si ]
 
+if 0                            ;;; no additional longjmp handler for ELKS
 if _MODEL and (_BIG_DATA or _HUGE_DATA)
         push    ds
     ifdef __WINDOWS__
@@ -151,6 +152,7 @@ endif
 
 if _MODEL and (_BIG_DATA or _HUGE_DATA)
         pop     ds
+endif
 endif
 
         mov     ss, 24[ si ]    ; load ss
