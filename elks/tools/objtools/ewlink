@@ -75,6 +75,7 @@ LDFLAGS="\
     -Wl,option -Wl,start=_start_    \
     -Wl,option -Wl,dosseg           \
     -Wl,option -Wl,stack=0x1000     \
+    -Wl,option -Wl,heapsize=0x1000  \
     "
 
 PROG=$1
