@@ -22,7 +22,7 @@ cal: cal.o $(TINYPRINTF)
 	$(LD) $(LDFLAGS) -o cal cal.o $(TINYPRINTF) $(LDLIBS)
 
 diff: diff.o
-	$(LD) $(LDFLAGS) -o diff diff.o $(LDLIBS)
+	$(LD) $(LDFLAGS) -maout-heap=0xffff -o diff diff.o $(LDLIBS)
 
 file: file.o $(TINYPRINTF)
 	$(LD) $(LDFLAGS) -o file file.o $(TINYPRINTF) $(LDLIBS)

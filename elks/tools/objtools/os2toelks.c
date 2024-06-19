@@ -133,6 +133,7 @@ typedef int hdr_size_assert[HDR_SIZE <= sizeof(buf)];
 64
 */
 #define GET_NE_SAS(ne) get_u16_le((ne) + 50)
+#define GET_NE_HEAP_SIZE(ne) get_u16_le((ne) + 16)
 #define GET_NE_STACK_SIZE(ne) get_u16_le((ne) + 18)
 #define GET_NE_INIT_IP(ne) get_u16_le((ne) + 20)
 #define GET_NE_SEG_TAB_OFS(ne) get_u16_le((ne) + 34)
@@ -153,7 +154,7 @@ int main(int argc, char **argv) {
   uint32_t ne_ofs;
   const char *infn, *outfn, *ne, *data_st, *code_st, *segs;
   uint16_t sas;  /* SegAlignShift, FILE_ALIGNMENT_SHIFT */
-  uint16_t stack_size;
+  uint16_t stack_size, heap_size;
   uint16_t entry;
   uint16_t code_size, code_minalloc;
   uint16_t data_size, data_minalloc;
@@ -180,7 +181,6 @@ int main(int argc, char **argv) {
   sas = GET_NE_SAS(ne);
   if (sas > 31) fail1("fatal: bad SegAlignShift: ", infn);
   if (get_u16_le(ne + 30) != 0) fail1("fatal: found module imports: ", infn);
-  if (get_u16_le(ne + 16) != 0) fail1("fatal: bad HeapInitSize: ", infn);
   if (get_u16_le(ne + 28) != 2) fail1("fatal: bad SegCnt: ", infn);
   if (get_u16_le(ne + 48) != 0) fail1("fatal: bad MovableEntryCnt: ", infn);
   if (get_u16_le(ne + 52) != 0) fail1("fatal: bad ResourceSegCnt: ", infn);
@@ -193,6 +193,7 @@ int main(int argc, char **argv) {
   if (stack_idx != 0 && stack_idx != data_idx) fail1("fatal: bad InitSsSegNo: ", infn);
   if (GET_NE_SEG_TAB_OFS(ne) > HDR_SIZE - ne_ofs - 0x10) fail1("fatal: SegTabOfs too large: ", infn);
   stack_size = GET_NE_STACK_SIZE(ne);
+  heap_size = GET_NE_HEAP_SIZE(ne);
   entry = GET_NE_INIT_IP(ne);
   segs = ne + GET_NE_SEG_TAB_OFS(ne) - 8;
   data_st = segs + (data_idx << 3);
@@ -292,25 +293,27 @@ int main(int argc, char **argv) {
     }
   }
   hdr_size = (code_reloc || data_reloc)? 0x30: 0x20;
+  if (heap_size == 0x1000) heap_size = 0;
+  if (stack_size == 0x1000) stack_size = 0;
   /*memset(hdr, '\0', hdr_size);*/ /* ELKS a.out executable header. Not needed to clear */
   set_u16_le(hdr, 0x0301);  /* a_magic = A_MAGIC. */
   set_u16_le(hdr + 2, 0x430);  /* a_flags = A_SEP; a_cpu = A_I8086. ELKS 0.2.0 fails if |A_FLAG.A_EXEC (as in ELKS 0.6.0) is also specified. */
-  set_u16_le(hdr + 4, hdr_size);  /* a_hdrlen */
-  set_u16_le(hdr + 6, 1);  /* a_version = 1. 1 for ELKS 0.6.0 yes(1), 0 for ELKS 0.2.0 yes(1). Ignored. */
-  set_u32_le(hdr + 8, code_size);  /* a_text = code_size. */
-  set_u32_le(hdr + 12, data_size);  /* a_data = data_size. */
-  set_u32_le(hdr + 16, bss_size);  /* a_bss = bss_size. */
-  set_u32_le(hdr + 20, entry);  /* a_entry = entry. */
-  /* ignore OS/2 stack_size for now and use ELKS 4K default */
-  set_u32_le(hdr + 24, 0);  /* a_chmem default 4K stack and 4K heap */
-  set_u32_le(hdr + 28, 0);  /* a_syms = 0. Unused. */
+  set_u16_le(hdr + 4, hdr_size);        /* a_hdrlen */
+  set_u16_le(hdr + 6, 1);  /* a_version = 1. 1 for ELKS 0.6.0+, 0 for ELKS 0.2.0 */
+  set_u32_le(hdr + 8, code_size);       /* a_text = code_size. */
+  set_u32_le(hdr + 12, data_size);      /* a_data = data_size. */
+  set_u32_le(hdr + 16, bss_size);       /* a_bss = bss_size. */
+  set_u32_le(hdr + 20, entry);          /* a_entry = entry. */
+  set_u16_le(hdr + 24, heap_size);      /* a_chmem heap size, 0 = 4K default */
+  set_u16_le(hdr + 26, stack_size);     /* a_chmem stack size, 0 = 4K default */
+  set_u32_le(hdr + 28, 0);              /* a_syms = 0. Unused. */
 
   if (hdr_size == 0x30) {
     /* reloc supplemental header */
-    set_u32_le(hdr + 32, trelocsz);  /* text reloc size */
-    set_u32_le(hdr + 36, drelocsz);  /* data reloc size */
-    set_u32_le(hdr + 40, 0);  /* text base address */
-    set_u32_le(hdr + 44, 0);  /* data base address */
+    set_u32_le(hdr + 32, trelocsz);     /* text reloc size */
+    set_u32_le(hdr + 36, drelocsz);     /* data reloc size */
+    set_u32_le(hdr + 40, 0);            /* text base address */
+    set_u32_le(hdr + 44, 0);            /* data base address */
   }
 
   if (write(outfd, hdr, hdr_size) != hdr_size) fail1("fatal: error writing header: ", outfn);

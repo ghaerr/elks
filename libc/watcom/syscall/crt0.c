@@ -9,6 +9,8 @@
 #include <unistd.h>
 #include <errno.h>
 
+/* Watcom extern code refs are sym_, extern data refs are _sym */
+
 /* external references created by Watcom C compilation - unused */
 int _argc;              /* with declaration of main() */
 int _8087;              /* when floating point seen */
