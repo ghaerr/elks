@@ -99,7 +99,7 @@ _BSS    ends
         assume  cs:_TEXT
 
 _cstart_ proc near
-        dw      ___begtext              ; make sure dead code elimination
+        dw      __begtext               ; make sure dead code elimination
                                         ; doesn't kill BEGTEXT segment
 _cstart_ endp
 
