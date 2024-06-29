@@ -8,7 +8,7 @@
 
 #include <stdint.h>
 
-#define MZMAGIC     0x5a4d      /* magic number for DOS MZ executables */
+#define MZMAGIC     0x5a4d      /* "MZ" magic number for DOS MZ executables */
 
 struct dos_exec_hdr {           /* DOS MZ Executable header */
     uint16_t magic;             /* Magic number                     0x00 */
@@ -37,7 +37,14 @@ struct dos_reloc {              /* DOS relocation table entry */
     uint16_t r_seg;             /* Segment relative to load segment */
 };
 
-#define NEMAGIC    0x454e       /* magic number for OS/2 NE executables */
+#define NEMAGIC    0x454e       /* "NE" magic number for OS/2 NE executables */
+
+/* Program flags */
+#define NEPRG_FLG_MULTIPLEDATA  0x02    /* Instanced auto data segment */
+#define NEPRG_FLG_PROTMODE      0x80    /* Protected mode only */
+
+/* Target OS */
+#define NETARGET_OS2            0x01    /* OS/2 target */
 
 struct os2_exec_hdr {           /* OS/2 New Executable header */       
     uint16_t magic;             /* NE signature                     0x00 */
@@ -114,7 +121,7 @@ struct ne_reloc_num {           /* NE number relocation records */
 #define NEFIXFLG_IMPORDINAL  0x0001
 #define NEFIXFLG_IMPNAME     0x0002
 #define NEFIXFLG_OSFIXUP     0x0003
-#define NEFIXFLAG_ADDITIVE   0x0004 /* Add target value to source */
+#define NEFIXFLG_ADDITIVE    0x0004 /* Add target value to source */
 
 struct ne_reloc {               /* NE segment relocation entry */
     uint8_t src_type;           /* Source type */

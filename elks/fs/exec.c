@@ -123,6 +123,50 @@ static int relocate(seg_t place_base, unsigned long rsize, segment_s *seg_code,
 }
 #endif
 
+#ifdef CONFIG_EXEC_OS2
+#define debug_os2   printk
+
+static struct dos_exec_hdr doshdr;
+static struct os2_exec_hdr os2hdr;
+
+static int execve_os2(struct inode *inode, struct file *filp, char *sptr, size_t slen)
+{
+    int retval;
+    seg_t ds = current->t_regs.ds;
+
+    /* read MZ header, then OS/2 header */
+    current->t_regs.ds = kernel_ds;
+    filp->f_pos = 0;
+    retval = filp->f_op->read(inode, filp, (char *)&doshdr, sizeof(doshdr));
+    if (retval != sizeof(doshdr)) goto errout;
+
+    filp->f_pos = doshdr.ext_hdr_offset;
+    retval = filp->f_op->read(inode, filp, (char *)&os2hdr, sizeof(os2hdr));
+    if (retval != sizeof(os2hdr)) goto errout;
+    if (os2hdr.magic != NEMAGIC || os2hdr.target_os != NETARGET_OS2 ||
+            (os2hdr.program_flags & 0x1F) != NEPRG_FLG_MULTIPLEDATA ||
+            os2hdr.num_modules || os2hdr.num_movable_entries ||
+            os2hdr.num_resource_entries) {
+        debug_os2("EXEC: Unsupported OS/2 format\n");
+        goto errout;
+    }
+    printk("Segments: %d\n", os2hdr.num_segments);
+    printk("Data Segment: %d\n", os2hdr.auto_data_segment);
+    printk("Heap: %d\n", os2hdr.heap_size);
+    printk("Stack: %d\n", os2hdr.stack_size);
+
+errout:
+    printk("errout %d\n", retval);
+    if (retval >= 0)
+        retval = -EINVAL;
+    current->t_regs.ds = ds;
+    close_filp(inode, filp);
+    if (retval)
+        iput(inode);
+    return retval;
+}
+#endif
+
 int sys_execve(const char *filename, char *sptr, size_t slen)
 {
     register __ptask currentp;
@@ -158,13 +202,13 @@ int sys_execve(const char *filename, char *sptr, size_t slen)
     current->t_regs.ds = kernel_ds;
     retval = filp->f_op->read(inode, filp, (char *) &mh, sizeof(mh));
 
-    /* Sanity check it.  */
-    if (retval != (int)sizeof(mh)) goto error_exec3;
+    /* Sanity check it */
+    if (retval != sizeof(mh)) goto error_exec3;
 
 #ifdef CONFIG_EXEC_OS2
     if (((struct dos_exec_hdr *)&mh)->magic == MZMAGIC) {
-        printk("MZ header found!\n");
-        goto error_exec3;
+        current->t_regs.ds = ds;
+        return execve_os2(inode, filp, sptr, slen);
     }
 #endif
 
