@@ -92,8 +92,8 @@ struct os2_exec_hdr {           /* OS/2 New Executable header */
 #define NESEG_RELOCINFO 0x0100  /* Segment has relocation records */
 #define NESEG_DISCARD   0xF000  /* Discard priority */
 
-struct ne_segment_entry {       /* NE executable segment table entry */
-    uint16_t offset;            /* Logical sector offset to segment data */
+struct ne_segment {             /* NE executable segment table entry */
+    uint16_t offset;            /* Logical (shifted) sector offset to segment data */
     uint16_t size;              /* Length of segment in file, 0=64K */
     uint16_t flags;             /* Flag word */
     uint16_t min_alloc;         /* Min allocation size of segment in bytes, 0=64K */

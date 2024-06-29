@@ -126,12 +126,16 @@ static int relocate(seg_t place_base, unsigned long rsize, segment_s *seg_code,
 #ifdef CONFIG_EXEC_OS2
 #define debug_os2   printk
 
+#define NEMAXSEGS       10
+
 static struct dos_exec_hdr doshdr;
 static struct os2_exec_hdr os2hdr;
+static struct ne_segment os2segs[NEMAXSEGS];
 
 static int execve_os2(struct inode *inode, struct file *filp, char *sptr, size_t slen)
 {
-    int retval;
+    int retval, seg;
+    struct ne_segment *segp;
     seg_t ds = current->t_regs.ds;
 
     /* read MZ header, then OS/2 header */
@@ -151,14 +155,27 @@ static int execve_os2(struct inode *inode, struct file *filp, char *sptr, size_t
         goto errout;
     }
     printk("Segments: %d\n", os2hdr.num_segments);
-    printk("Data Segment: %d\n", os2hdr.auto_data_segment);
+    printk("Auto data segment: %d\n", os2hdr.auto_data_segment);
     printk("Heap: %d\n", os2hdr.heap_size);
     printk("Stack: %d\n", os2hdr.stack_size);
 
+    /* read in code and data segments */
+    filp->f_pos = os2hdr.segment_table_offset + doshdr.ext_hdr_offset;
+    retval = filp->f_op->read(inode, filp, (char *)os2segs,
+        os2hdr.num_segments * sizeof(struct ne_segment));
+    if (retval != os2hdr.num_segments * sizeof(struct ne_segment)) goto errout;
+    for(seg = 1; seg <= os2hdr.num_segments; seg++) {
+       segp = &os2segs[seg-1];
+       printk("Segment %d: offset %04x size %u flags %04x minalloc %u\n",
+        seg, segp->offset << os2hdr.file_alignment_shift_count, segp->size,
+        segp->flags, segp->min_alloc);
+    }
+    goto normal_out;
+
 errout:
-    printk("errout %d\n", retval);
-    if (retval >= 0)
-        retval = -EINVAL;
+    retval = -EINVAL;
+normal_out:
+    if (retval >= 0) retval = -EINVAL;
     current->t_regs.ds = ds;
     close_filp(inode, filp);
     if (retval)
