@@ -39,7 +39,7 @@
 #include <linuxmt/time.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/minix.h>
-#include <linuxmt/msdos.h>
+#include <linuxmt/os2.h>
 #include <linuxmt/init.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/memory.h>
@@ -75,7 +75,7 @@ static int relocate(seg_t place_base, unsigned long rsize, segment_s *seg_code,
                segment_s *seg_data, struct inode *inode, struct file *filp, size_t tseg)
 {
     int retval = 0;
-    __u16 save_ds = current->t_regs.ds;
+    seg_t save_ds = current->t_regs.ds;
     struct minix_reloc reloc;   //FIXME too large
     word_t val;
 
@@ -129,7 +129,7 @@ int sys_execve(const char *filename, char *sptr, size_t slen)
     struct inode *inode;
     struct file *filp;
     int retval;
-    __u16 ds;
+    seg_t ds;
     seg_t base_data = 0;
     segment_s * seg_code;
     segment_s * seg_data;
@@ -146,14 +146,33 @@ int sys_execve(const char *filename, char *sptr, size_t slen)
     debug_file("EXEC(%P): '%t' env %d\n", filename, slen);
 
     retval = open_namei(filename, 0, 0, &inode, NULL);
-
     debug("EXEC: open returned %d\n", -retval);
     if (retval) goto error_exec1;
 
-    debug("EXEC: start building a file handle\n");
-
     /* Get a reading file handle */
     if ((retval = open_filp(O_RDONLY, inode, &filp))) goto error_exec2;
+    if (!(filp->f_op) || !(filp->f_op->read)) goto error_exec2_5;
+
+    /* Read the header */
+    ds = current->t_regs.ds;
+    current->t_regs.ds = kernel_ds;
+    retval = filp->f_op->read(inode, filp, (char *) &mh, sizeof(mh));
+
+    /* Sanity check it.  */
+    if (retval != (int)sizeof(mh)) goto error_exec3;
+
+#ifdef CONFIG_EXEC_OS2
+    if (((struct dos_exec_hdr *)&mh)->magic == MZMAGIC) {
+        printk("MZ header found!\n");
+        goto error_exec3;
+    }
+#endif
+
+    if ((mh.type != MINIX_SPLITID_AHISTORICAL && mh.type != MINIX_SPLITID) ||
+        (size_t)mh.tseg == 0) {
+        debug("EXEC: bad header, result %d\n", retval);
+        goto error_exec3;
+    }
 
     /* Look for the binary in memory */
     seg_code = 0;
@@ -165,25 +184,7 @@ int sys_execve(const char *filename, char *sptr, size_t slen)
             break;
         }
     } while (++currentp < &task[max_tasks]);
-
-    /* Read the header */
     currentp = current;
-    ds = currentp->t_regs.ds;
-
-    if (!(filp->f_op) || !(filp->f_op->read)) goto error_exec2_5;
-
-    debug("EXEC: Inode dev = 0x%x opened OK.\n", inode->i_dev);
-
-    currentp->t_regs.ds = kernel_ds;
-    retval = filp->f_op->read(inode, filp, (char *) &mh, sizeof(mh));
-
-    /* Sanity check it.  */
-    if (retval != (int)sizeof(mh) ||
-        (mh.type != MINIX_SPLITID_AHISTORICAL && mh.type != MINIX_SPLITID) ||
-        (size_t)mh.tseg == 0) {
-        debug("EXEC: bad header, result %d\n", retval);
-        goto error_exec3;
-    }
 
     min_len = (size_t)mh.dseg;
     if (add_overflow(min_len, (size_t)mh.bseg, &min_len)) {
@@ -512,7 +513,7 @@ int sys_execve(const char *filename, char *sptr, size_t slen)
     if (inode->i_mode & S_ISGID)
         currentp->egid = inode->i_gid;
 
-    currentp->t_enddata = (__pptr) ((__u16)mh.dseg + (__u16)mh.bseg + base_data);
+    currentp->t_enddata = (__pptr) ((size_t)mh.dseg + (size_t)mh.bseg + base_data);
     currentp->t_endbrk =  currentp->t_enddata;
 
     /* ease libc memory allocations by setting even break address*/
@@ -543,7 +544,7 @@ int sys_execve(const char *filename, char *sptr, size_t slen)
     seg_put (seg_code);
 
   error_exec3:
-    currentp->t_regs.ds = ds;
+    current->t_regs.ds = ds;
   error_exec2_5:
     if (retval >= 0)
         retval = -ENOEXEC;
