@@ -135,8 +135,9 @@ static segment_s *seg_mem[NEMAXSEGS];
 static int execve_os2(struct inode *inode, struct file *filp, char *sptr, size_t slen)
 {
     int retval, seg;
-    size_t s;
+    size_t s, heap;
     struct ne_segment *segp;
+    //TODO: eliminate excess stack vars
     seg_t ds = current->t_regs.ds;
 
     /* read MZ header, then OS/2 header */
@@ -150,18 +151,24 @@ static int execve_os2(struct inode *inode, struct file *filp, char *sptr, size_t
     if (retval != sizeof(os2hdr)) goto errout;
     if (os2hdr.magic != NEMAGIC || os2hdr.target_os != NETARGET_OS2 ||
             (os2hdr.program_flags & 0x1F) != NEPRG_FLG_MULTIPLEDATA ||
+            !os2hdr.auto_data_segment || os2hdr.auto_data_segment > os2hdr.num_segments ||
             os2hdr.num_modules || os2hdr.num_movable_entries ||
             os2hdr.num_resource_entries) {
         debug_os2("EXEC: Unsupported OS/2 format\n");
         goto errout;
     }
+
     printk("Segments: %d\n", os2hdr.num_segments);
     printk("Auto data segment: %d\n", os2hdr.auto_data_segment);
-    printk("Heap: %d\n", os2hdr.heap_size);
-    printk("Stack: %d\n", os2hdr.stack_size);
+    printk("Heap: %u\n", os2hdr.heap_size);
+    printk("Stack: %u\n", os2hdr.stack_size);
+    if (!os2hdr.heap_size)
+        os2hdr.heap_size = INIT_HEAP;
+    if (!os2hdr.stack_size)
+        os2hdr.stack_size = INIT_STACK;
 
     if (os2hdr.num_segments > NEMAXSEGS) {
-        printk("EXEC: %d segments exceeds %d max\n", os2hdr.num_segments, NEMAXSEGS);
+        printk("EXEC: %d segments, exceeds %d max\n", os2hdr.num_segments, NEMAXSEGS);
         retval = -E2BIG;
         goto errout;
     }
@@ -172,16 +179,24 @@ static int execve_os2(struct inode *inode, struct file *filp, char *sptr, size_t
         os2hdr.num_segments * sizeof(struct ne_segment));
     if (retval != os2hdr.num_segments * sizeof(struct ne_segment)) goto errout;
     retval = -ENOMEM;
+    s = 0;  /* for compiler */
     for(seg = 0; seg < os2hdr.num_segments; seg++) {
         segp = &os2segs[seg];
         s = ((segp->min_alloc + 15) & ~15) >> 4;
         if (!s) s = 0x1000;         /* 0 = 64K */
         seg_paras[seg] = s;
         if (seg+1 == os2hdr.auto_data_segment) {
-            s += ((os2hdr.stack_size+15) >> 4) + ((os2hdr.heap_size + 15) >> 4);
-            if (s > 0x1000) {
+            if ((heap = os2hdr.heap_size) == 0xffff)
+                heap = 1;
+            s += ((os2hdr.stack_size+slen+15) >> 4) + ((heap + 15) >> 4);
+            if (s >= 0x1000) {
                 retval = -E2BIG;
                 goto errout2;
+            }
+            if (os2hdr.heap_size == 0xffff) {
+                heap = (0x0FFF - s) << 4;
+                s = 0x0FFF;
+                printk("Auto max heap: %u\n", heap);
             }
             seg_paras[seg] = s;
         }
@@ -192,16 +207,42 @@ static int execve_os2(struct inode *inode, struct file *filp, char *sptr, size_t
         if (!(seg_mem[seg] = seg_alloc(s, (segp->flags & NESEG_DATA)?
                 SEG_FLAG_DSEG: SEG_FLAG_CSEG)))
             goto errout2;
+
+        /* clear BSS */
+        if (segp->min_alloc != segp->size) {
+            printk("Clear bss at %04x:%04x for %u bytes\n",
+                seg_mem[seg]->base, segp->size, segp->min_alloc - segp->size);
+            fmemsetb((char *)segp->size, seg_mem[seg]->base, 0,
+                segp->min_alloc - segp->size);
+        } else if (segp->min_alloc == 0) {
+            printk("Clear bss at %04x:%04x for 64K bytes\n",    //TODO: test
+                seg_mem[seg]->base, segp->size);
+            fmemsetb((char *)0, seg_mem[seg]->base, 0, 0x8000);
+            fmemsetb((char *)0x8000, seg_mem[seg]->base, 0, 0x8000);
+        }
     }
-    retval = -EACCES;
+
+    /* set data/stack limits and copy argc/argv */
+    size_t t_endseg, t_begstack, t_minstack;                    //TODO: add current->
+    t_endseg = s << 4;;
+    t_begstack = (t_endseg - slen) & ~1;
+    //current->t_regs.sp = current->t_begstack;
+    printk("t_endseg %04x, t_begstack %04x\n", t_endseg, t_begstack);
+    t_minstack = os2hdr.stack_size;
+    printk("fmemcpy %04x:%04x <- %d\n", seg_mem[os2hdr.auto_data_segment-1]->base, t_begstack, slen);
+    fmemcpyb((char *)t_begstack, seg_mem[os2hdr.auto_data_segment-1]->base,
+        sptr, ds, slen);
+    //TODO: rewrite argv/envp pointers
+
+    retval = -EPERM;
     goto normal_out;
 
 errout2:
-    do {
+    for (seg = 0; seg < NEMAXSEGS; seg++) {
         if (seg_mem[seg])
             seg_put(seg_mem[seg]);
         seg_mem[seg] = 0;
-    } while (--seg >= 0);
+    }
 errout:
     if (retval >= 0)
         retval = -EINVAL;
@@ -568,7 +609,7 @@ int sys_execve(const char *filename, char *sptr, size_t slen)
          * right after argc.  This fixes them up so that the loaded program
          * gets the right strings. */
 
-        slen = 0;       /* Start skiping argc */
+        slen = 0;       /* Start skipping argc */
         do {
             i += sizeof(__u16);
             if ((retval = get_ustack(currentp, i)) != 0)
