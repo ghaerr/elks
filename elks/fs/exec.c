@@ -26,6 +26,8 @@
  *                      for allocating blocks of memory which do not start
  *                      at the bottom of the segment. See arch/i86/mm/malloc.c
  *                      for details.
+ *
+ *      30 Jun 2024     Greg Haerr. Added support for loading OS/2 v1.x binaries.
  */
 
 #include <linuxmt/config.h>
@@ -48,6 +50,63 @@
 
 /* for relocation debugging change to printk */
 #define debug_reloc     debug
+#define debug_reloc2    debug
+#define debug_os2       debug
+
+static int execve_aout(struct inode *inode, struct file *filp, char *sptr, size_t slen);
+static int execve_os2 (struct inode *inode, struct file *filp, char *sptr, size_t slen);
+static void finalize_exec(struct inode *inode, segment_s *seg_code, segment_s *seg_data,
+    word_t entry);
+
+int sys_execve(const char *filename, char *sptr, size_t slen)
+{
+    int retval;
+    struct file *filp;
+    seg_t ds;
+    struct inode *inode;
+    word_t magic;
+
+    /* Open the image */
+    debug_file("EXEC(%P): '%t' env %d\n", filename, slen);
+
+    retval = open_namei(filename, 0, 0, &inode, NULL);
+    debug("EXEC: open returned %d\n", -retval);
+    if (retval) goto error_exec1;
+
+    /* Get a reading file handle */
+    if ((retval = open_filp(O_RDONLY, inode, &filp))) goto error_exec2;
+    if (!(filp->f_op) || !(filp->f_op->read)) goto error_exec2_5;
+
+    /* Read the header */
+    ds = current->t_regs.ds;
+    current->t_regs.ds = kernel_ds;
+    retval = filp->f_op->read(inode, filp, (char *)&magic, sizeof(magic));
+    current->t_regs.ds = ds;
+    if (retval != sizeof(magic)) goto error_exec2_5;
+
+#ifdef CONFIG_EXEC_OS2
+    if (magic == MZMAGIC)
+        retval = execve_os2(inode, filp, sptr, slen);
+    else
+#endif
+    if (magic == AOUTMAGIC)
+        retval = execve_aout(inode, filp, sptr, slen);
+    else retval = -ENOEXEC;
+    goto normal_out;
+
+  error_exec2_5:
+    if (retval >= 0)
+        retval = -ENOEXEC;
+  normal_out:
+    close_filp(inode, filp);
+
+    if (retval)
+  error_exec2:
+        iput(inode);
+  error_exec1:
+    debug("EXEC(%P): return %d\n", retval);
+    return retval;
+}
 
 #ifndef __GNUC__
 /* FIXME: evaluates some operands twice */
@@ -65,9 +124,6 @@
               : "cc"); \
         __w >> 3; })
 #endif
-
-static void finalize_exec(struct inode *inode, segment_s *seg_code, segment_s *seg_data,
-    word_t entry);
 
 #ifdef CONFIG_EXEC_MMODEL
 /*
@@ -126,229 +182,11 @@ static int relocate(seg_t place_base, unsigned long rsize, segment_s *seg_code,
 }
 #endif
 
-#ifdef CONFIG_EXEC_OS2
-#define debug_os2   printk
-
-static struct dos_exec_hdr doshdr;
-static struct os2_exec_hdr os2hdr;
-static struct ne_segment os2segs[NEMAXSEGS];
-static size_t seg_paras[NEMAXSEGS];
-static segment_s *seg_mem[NEMAXSEGS];
-static struct ne_reloc_num reloc_num;
-static struct ne_reloc reloc;
-
-static int execve_os2(struct inode *inode, struct file *filp, char *sptr, size_t slen)
-{
-    int retval, seg, n;
-    size_t s, heap;
-    struct ne_segment *segp;
-    segment_s *seg_code, *seg_data;
-    //TODO: eliminate excess stack vars
-    seg_t ds = current->t_regs.ds;
-
-    /* read MZ header, then OS/2 header */
-    current->t_regs.ds = kernel_ds;
-    filp->f_pos = 0;
-    retval = filp->f_op->read(inode, filp, (char *)&doshdr, sizeof(doshdr));
-    if (retval != sizeof(doshdr)) goto errout;
-
-    filp->f_pos = doshdr.ext_hdr_offset;
-    retval = filp->f_op->read(inode, filp, (char *)&os2hdr, sizeof(os2hdr));
-    if (retval != sizeof(os2hdr)) goto errout;
-    if (os2hdr.magic != NEMAGIC || os2hdr.target_os != NETARGET_OS2 ||
-            (os2hdr.program_flags & 0x1F) != NEPRG_FLG_MULTIPLEDATA ||
-            !os2hdr.auto_data_segment || os2hdr.auto_data_segment > os2hdr.num_segments ||
-            os2hdr.num_modules || os2hdr.num_movable_entries ||
-            os2hdr.num_resource_entries) {
-        debug_os2("EXEC: Unsupported OS/2 format\n");
-        goto errout;
-    }
-
-    printk("Segments: %d\n", os2hdr.num_segments);
-    printk("Auto data segment: %d\n", os2hdr.auto_data_segment);
-    printk("Heap: %u\n", os2hdr.heap_size);
-    printk("Stack: %u\n", os2hdr.stack_size);
-    if (!os2hdr.heap_size)
-        os2hdr.heap_size = INIT_HEAP;
-    if (!os2hdr.stack_size)
-        os2hdr.stack_size = INIT_STACK;
-
-    if (os2hdr.num_segments > NEMAXSEGS) {
-        printk("EXEC: %d segments, exceeds %d max\n", os2hdr.num_segments, NEMAXSEGS);
-        retval = -E2BIG;
-        goto errout;
-    }
-
-    /* read segment table and allocate memory for segments */
-    filp->f_pos = os2hdr.segment_table_offset + doshdr.ext_hdr_offset;
-    retval = filp->f_op->read(inode, filp, (char *)os2segs,
-        os2hdr.num_segments * sizeof(struct ne_segment));
-    if (retval != os2hdr.num_segments * sizeof(struct ne_segment)) goto errout;
-    retval = -ENOMEM;
-    s = 0;  /* for compiler */
-    seg_code = seg_data = 0;
-    for(seg = 0; seg < os2hdr.num_segments; seg++) {
-        segp = &os2segs[seg];
-        s = ((segp->min_alloc + 15) & ~15) >> 4;
-        if (!s) s = 0x1000;         /* 0 = 64K */
-        seg_paras[seg] = s;
-        if (seg+1 == os2hdr.auto_data_segment) {
-            if ((heap = os2hdr.heap_size) == 0xffff)
-                heap = 1;
-            s += ((os2hdr.stack_size+slen+15) >> 4) + ((heap + 15) >> 4);
-            if (s >= 0x1000) {
-                retval = -E2BIG;
-                goto errout2;
-            }
-            if (os2hdr.heap_size == 0xffff) {
-                heap = (0x0FFF - s) << 4;
-                s = 0x0FFF;
-                printk("Auto max heap: %u\n", heap);
-            }
-            seg_paras[seg] = s;
-        }
-        printk("Segment %d: offset %04x size %5u/%6lu flags %04x minalloc %u\n",
-            seg+1, segp->offset << os2hdr.file_alignment_shift_count, segp->size,
-            (unsigned long)seg_paras[seg]<<4, segp->flags, segp->min_alloc);
-
-        if (!(seg_mem[seg] = seg_alloc(s, (segp->flags & NESEG_DATA)?
-                SEG_FLAG_DSEG: SEG_FLAG_CSEG)))
-            goto errout2;
-        if (seg+1 == os2hdr.reg_cs)
-            seg_code = seg_mem[seg];
-        if (seg+1 == os2hdr.auto_data_segment)
-            seg_data = seg_mem[seg];
-
-        /* clear BSS */
-        if (segp->min_alloc != segp->size) {
-            printk("Clear bss at %04x:%04x for %u bytes\n",
-                seg_mem[seg]->base, segp->size, segp->min_alloc - segp->size);
-            fmemsetb((char *)segp->size, seg_mem[seg]->base, 0,
-                segp->min_alloc - segp->size);
-        } else if (segp->min_alloc == 0) {
-            printk("Clear bss at %04x:%04x for 64K bytes\n",    //TODO: test or remove
-                seg_mem[seg]->base, segp->size);
-            fmemsetb((char *)0, seg_mem[seg]->base, 0, 0x8000);
-            fmemsetb((char *)0x8000, seg_mem[seg]->base, 0, 0x8000);
-        }
-    }
-    if (!seg_code || !seg_data) {
-        printk("Missing code and data segments\n");
-        goto errout2;
-    }
-
-    /* read in segments and perform relocations */
-    for(seg = 0; seg < os2hdr.num_segments; seg++) {
-        segp = &os2segs[seg];
-        if (!segp->size) {                                      //FIXME 64k read
-            printk("EXEC: can't read 64K segment!\n");
-            goto errout2;
-        }
-        filp->f_pos = (unsigned long)segp->offset << os2hdr.file_alignment_shift_count;
-        current->t_regs.ds = seg_mem[seg]->base;
-        printk("Reading seg %d %04x:0000 %u bytes offset %04lx\n", seg+1,
-            current->t_regs.ds, segp->size,
-            filp->f_pos);
-        retval = filp->f_op->read(inode, filp, 0, segp->size);
-        if (retval != segp->size) goto errout2;
-
-        current->t_regs.ds = kernel_ds;
-        if (segp->flags & NESEG_RELOCINFO) {
-            retval = filp->f_op->read(inode, filp, (char *)&reloc_num, sizeof(reloc_num));
-            if (retval != sizeof(reloc_num)) goto errout2;
-            printk("%d relocation records\n", reloc_num.num_records);
-
-            for (n = 0; n < reloc_num.num_records; n++) {
-                retval = filp->f_op->read(inode, filp, (char *)&reloc, sizeof(reloc));
-                if (retval != sizeof(reloc)) goto errout2;
-                printk("Reloc %d: type %d flags %d, "
-                    "source chain %04x (segment %d offset %04x)\n",
-                    n+1, reloc.src_type, reloc.flags, reloc.src_chain, reloc.segment,
-                    reloc.offset);
-
-                if ((reloc.flags & NEFIXFLG_TARGET_MASK) != NEFIXFLG_INTERNALREF ||
-                    (reloc.src_type != NEFIXSRC_SEGMENT &&
-                     reloc.src_type != NEFIXSRC_FARADDR)) {
-                        printk("Unsupported fixup type %d flags %d\n", reloc.src_type,
-                            reloc.flags);
-                            goto errout2;
-                }
-                heap = reloc.flags & NEFIXFLG_ADDITIVE;
-                switch (reloc.src_type) {
-                case NEFIXSRC_SEGMENT:
-                    printk("pokew %04x:%04x <- seg %d %04x\n",
-                        seg_mem[seg]->base, reloc.src_chain,
-                        reloc.segment, seg_mem[reloc.segment-1]->base);
-                    pokew(reloc.src_chain, seg_mem[seg]->base,
-                        seg_mem[reloc.segment-1]->base);
-                    break;
-                case NEFIXSRC_FARADDR:
-                    if (heap) {     /* additive */
-                        printk("pokew %04x:%04x += offset %04x\n",
-                            seg_mem[seg]->base, reloc.src_chain, reloc.offset);
-                        word_t prev = peekw(reloc.src_chain, seg_mem[seg]->base);
-                        pokew(reloc.src_chain, seg_mem[seg]->base, prev+reloc.offset);
-                    } else {
-                        printk("pokew %04x:%04x = offset %04x\n",
-                            seg_mem[seg]->base, reloc.src_chain, reloc.offset);
-                        pokew(reloc.src_chain, seg_mem[seg]->base, reloc.offset);
-                    }
-                    printk("pokew %04x:%04x <- seg %d %04x\n",
-                        seg_mem[seg]->base, reloc.src_chain+2,
-                        reloc.segment, seg_mem[reloc.segment-1]->base);
-                    pokew(reloc.src_chain+2, seg_mem[seg]->base,
-                        seg_mem[reloc.segment-1]->base);
-                    break;
-                }
-            }
-        }
-    }
-
-    /* From this point, exec() will surely succeed */
-
-    /* set data/stack limits and copy argc/argv */
-    current->t_endseg = s << 4;;
-    current->t_enddata = os2segs[os2hdr.auto_data_segment-1].min_alloc;
-    current->t_begstack = (current->t_endseg - slen) & ~1;
-    printk("t_endseg %04x, t_begstack %04x\n", current->t_endseg, current->t_begstack);
-    current->t_minstack = os2hdr.stack_size;
-    if (seg_data != seg_mem[os2hdr.auto_data_segment-1]) panic("BAD");
-    printk("fmemcpy %04x:%04x <- %d\n", seg_mem[os2hdr.auto_data_segment-1]->base,
-        current->t_begstack, slen);
-    fmemcpyb((char *)current->t_begstack, seg_mem[os2hdr.auto_data_segment-1]->base,
-        sptr, ds, slen);
-
-    current->t_regs.ds = seg_data->base;
-    finalize_exec(inode, seg_code, seg_data, os2hdr.reg_ip);
-
-    retval = 0;
-    goto normal_out;
-
-errout2:
-    for (seg = 0; seg < NEMAXSEGS; seg++) {
-        if (seg_mem[seg])
-            seg_put(seg_mem[seg]);
-        seg_mem[seg] = 0;
-    }
-errout:
-    if (retval >= 0)
-        retval = -EINVAL;
-    current->t_regs.ds = ds;
-normal_out:
-    close_filp(inode, filp);
-    if (retval)
-        iput(inode);
-    return retval;
-}
-#endif
-
-int sys_execve(const char *filename, char *sptr, size_t slen)
+static int execve_aout(struct inode *inode, struct file *filp, char *sptr, size_t slen)
 {
     register __ptask currentp;
-    struct inode *inode;
-    struct file *filp;
     int retval;
-    seg_t ds;
+    seg_t ds = current->t_regs.ds;
     seg_t base_data = 0;
     segment_s * seg_code;
     segment_s * seg_data;
@@ -361,31 +199,13 @@ int sys_execve(const char *filename, char *sptr, size_t slen)
     int need_reloc_code = 1;
 #endif
 
-    /* Open the image */
-    debug_file("EXEC(%P): '%t' env %d\n", filename, slen);
-
-    retval = open_namei(filename, 0, 0, &inode, NULL);
-    debug("EXEC: open returned %d\n", -retval);
-    if (retval) goto error_exec1;
-
-    /* Get a reading file handle */
-    if ((retval = open_filp(O_RDONLY, inode, &filp))) goto error_exec2;
-    if (!(filp->f_op) || !(filp->f_op->read)) goto error_exec2_5;
-
-    /* Read the header */
-    ds = current->t_regs.ds;
+    /* (Re)read the header */
     current->t_regs.ds = kernel_ds;
+    filp->f_pos = 0;
     retval = filp->f_op->read(inode, filp, (char *) &mh, sizeof(mh));
 
     /* Sanity check it */
     if (retval != sizeof(mh)) goto error_exec3;
-
-#ifdef CONFIG_EXEC_OS2
-    if (((struct dos_exec_hdr *)&mh)->magic == MZMAGIC) {
-        current->t_regs.ds = ds;
-        return execve_os2(inode, filp, sptr, slen);
-    }
-#endif
 
     if ((mh.type != MINIX_SPLITID_AHISTORICAL && mh.type != MINIX_SPLITID) ||
         (size_t)mh.tseg == 0) {
@@ -683,12 +503,11 @@ int sys_execve(const char *filename, char *sptr, size_t slen)
 
     finalize_exec(inode, seg_code, seg_data, (word_t)mh.entry);
 
-    /*      Done.
-     *      This will return onto the new user stack and to cs:entry of
-     *      the user process.
+    /*
+     *      Done. This will return onto the new user stack
+     *      and to cs:entry of the user process.
      */
-    retval = 0;
-    goto normal_out;
+    return 0;           /* success */
 
   error_exec5:
     seg_put (seg_data);
@@ -698,17 +517,8 @@ int sys_execve(const char *filename, char *sptr, size_t slen)
 
   error_exec3:
     current->t_regs.ds = ds;
-  error_exec2_5:
     if (retval >= 0)
         retval = -ENOEXEC;
-  normal_out:
-    close_filp(inode, filp);
-
-    if (retval)
-  error_exec2:
-        iput(inode);
-  error_exec1:
-    debug("EXEC(%P): return %d\n", retval);
     return retval;
 }
 
@@ -726,7 +536,6 @@ static void finalize_exec(struct inode *inode, segment_s *seg_code, segment_s *s
 
     currentp->mm.seg_code = seg_code;
     currentp->t_xregs.cs = seg_code->base;
-    printk("ENTRY %04x:%04x\n", seg_code->base, entry);
 
     currentp->mm.seg_data = seg_data;
     currentp->t_regs.ss = currentp->t_regs.es = seg_data->base;
@@ -785,3 +594,210 @@ static void finalize_exec(struct inode *inode, segment_s *seg_code, segment_s *s
     wake_up(&currentp->p_parent->child_wait);
 #endif
 }
+
+#ifdef CONFIG_EXEC_OS2
+static struct dos_exec_hdr doshdr;
+static struct os2_exec_hdr os2hdr;
+static struct ne_segment os2segs[NEMAXSEGS];
+static size_t seg_paras[NEMAXSEGS];
+static segment_s *seg_mem[NEMAXSEGS];
+static struct ne_reloc_num reloc_num;
+static struct ne_reloc reloc;
+
+static int execve_os2(struct inode *inode, struct file *filp, char *sptr, size_t slen)
+{
+    int retval, seg, n;
+    size_t s, heap;
+    struct ne_segment *segp;
+    segment_s *seg_code, *seg_data;
+    //TODO: eliminate excess stack vars
+    seg_t ds = current->t_regs.ds;
+
+    /* read MZ header, then OS/2 header */
+    current->t_regs.ds = kernel_ds;
+    filp->f_pos = 0;
+    retval = filp->f_op->read(inode, filp, (char *)&doshdr, sizeof(doshdr));
+    if (retval != sizeof(doshdr)) goto errout;
+
+    filp->f_pos = doshdr.ext_hdr_offset;
+    retval = filp->f_op->read(inode, filp, (char *)&os2hdr, sizeof(os2hdr));
+    if (retval != sizeof(os2hdr)) goto errout;
+    if (os2hdr.magic != NEMAGIC || os2hdr.target_os != NETARGET_OS2 ||
+            (os2hdr.program_flags & 0x1F) != NEPRG_FLG_MULTIPLEDATA ||
+            !os2hdr.auto_data_segment || os2hdr.auto_data_segment > os2hdr.num_segments ||
+            os2hdr.num_modules || os2hdr.num_movable_entries ||
+            os2hdr.num_resource_entries) {
+        debug_os2("EXEC: Unsupported OS/2 format\n");
+        goto errout;
+    }
+
+    printk("Segments: %d\n", os2hdr.num_segments);
+    printk("Auto data segment: %d\n", os2hdr.auto_data_segment);
+    printk("Heap: %u\n", os2hdr.heap_size);
+    printk("Stack: %u\n", os2hdr.stack_size);
+    if (!os2hdr.heap_size)
+        os2hdr.heap_size = INIT_HEAP;
+    if (!os2hdr.stack_size)
+        os2hdr.stack_size = INIT_STACK;
+
+    if (os2hdr.num_segments > NEMAXSEGS) {
+        printk("EXEC: %d segments, exceeds %d max\n", os2hdr.num_segments, NEMAXSEGS);
+        retval = -E2BIG;
+        goto errout;
+    }
+
+    /* read segment table and allocate memory for segments */
+    filp->f_pos = os2hdr.segment_table_offset + doshdr.ext_hdr_offset;
+    retval = filp->f_op->read(inode, filp, (char *)os2segs,
+        os2hdr.num_segments * sizeof(struct ne_segment));
+    if (retval != os2hdr.num_segments * sizeof(struct ne_segment)) goto errout;
+    retval = -ENOMEM;
+    s = 0;  /* for compiler */
+    seg_code = seg_data = 0;
+    for(seg = 0; seg < os2hdr.num_segments; seg++) {
+        segp = &os2segs[seg];
+        s = ((segp->min_alloc + 15) & ~15) >> 4;
+        if (!s) s = 0x1000;         /* 0 = 64K */
+        seg_paras[seg] = s;
+        if (seg+1 == os2hdr.auto_data_segment) {
+            if ((heap = os2hdr.heap_size) == 0xffff)
+                heap = 1;
+            s += ((os2hdr.stack_size+slen+15) >> 4) + ((heap + 15) >> 4);
+            if (s >= 0x1000) {
+                retval = -E2BIG;
+                goto errout2;
+            }
+            if (os2hdr.heap_size == 0xffff) {
+                heap = (0x0FFF - s) << 4;
+                s = 0x0FFF;
+                printk("Auto max heap: %u\n", heap);
+            }
+            seg_paras[seg] = s;
+        }
+        printk("Segment %d: offset %04x size %5u/%6lu flags %04x minalloc %u\n",
+            seg+1, segp->offset << os2hdr.file_alignment_shift_count, segp->size,
+            (unsigned long)seg_paras[seg]<<4, segp->flags, segp->min_alloc);
+
+        if (!(seg_mem[seg] = seg_alloc(s, (segp->flags & NESEG_DATA)?
+                SEG_FLAG_DSEG: SEG_FLAG_CSEG)))
+            goto errout2;
+        if (seg+1 == os2hdr.reg_cs)
+            seg_code = seg_mem[seg];
+        if (seg+1 == os2hdr.auto_data_segment)
+            seg_data = seg_mem[seg];
+
+        /* clear BSS */
+        if (segp->min_alloc != segp->size) {
+            debug_os2("Clear bss at %04x:%04x for %u bytes\n",
+                seg_mem[seg]->base, segp->size, segp->min_alloc - segp->size);
+            fmemsetb((char *)segp->size, seg_mem[seg]->base, 0,
+                segp->min_alloc - segp->size);
+        } else if (segp->min_alloc == 0) {
+            printk("Clear bss at %04x:%04x for 64K bytes\n",    //TODO: test or remove
+                seg_mem[seg]->base, segp->size);
+            fmemsetb((char *)0, seg_mem[seg]->base, 0, 0x8000);
+            fmemsetb((char *)0x8000, seg_mem[seg]->base, 0, 0x8000);
+        }
+    }
+    if (!seg_code || !seg_data) {
+        printk("Missing code and data segments\n");
+        goto errout2;
+    }
+
+    /* read in segments and perform relocations */
+    for(seg = 0; seg < os2hdr.num_segments; seg++) {
+        segp = &os2segs[seg];
+        if (!segp->size) {                                      //FIXME 64k read
+            printk("EXEC: can't read 64K segment!\n");
+            goto errout2;
+        }
+        filp->f_pos = (unsigned long)segp->offset << os2hdr.file_alignment_shift_count;
+        current->t_regs.ds = seg_mem[seg]->base;
+        printk("Reading seg %d %04x:0000 %u bytes offset %04lx\n", seg+1,
+            current->t_regs.ds, segp->size,
+            filp->f_pos);
+        retval = filp->f_op->read(inode, filp, 0, segp->size);
+        if (retval != segp->size) goto errout2;
+
+        current->t_regs.ds = kernel_ds;
+        if (segp->flags & NESEG_RELOCINFO) {
+            retval = filp->f_op->read(inode, filp, (char *)&reloc_num, sizeof(reloc_num));
+            if (retval != sizeof(reloc_num)) goto errout2;
+            debug_reloc2("%d relocation records\n", reloc_num.num_records);
+
+            for (n = 0; n < reloc_num.num_records; n++) {
+                retval = filp->f_op->read(inode, filp, (char *)&reloc, sizeof(reloc));
+                if (retval != sizeof(reloc)) goto errout2;
+                debug_reloc2("Reloc %d: type %d flags %d, "
+                    "source chain %04x (segment %d offset %04x)\n",
+                    n+1, reloc.src_type, reloc.flags, reloc.src_chain, reloc.segment,
+                    reloc.offset);
+
+                if ((reloc.flags & NEFIXFLG_TARGET_MASK) != NEFIXFLG_INTERNALREF ||
+                    (reloc.src_type != NEFIXSRC_SEGMENT &&
+                     reloc.src_type != NEFIXSRC_FARADDR)) {
+                    unsupported:
+                        printk("Unsupported fixup type %d flags %d\n", reloc.src_type,
+                            reloc.flags);
+                            goto errout2;
+                }
+                switch (reloc.src_type) {
+                case NEFIXSRC_SEGMENT:
+                    if (reloc.flags & NEFIXFLG_ADDITIVE) goto unsupported;
+                    debug_reloc2("pokew %04x:%04x <- seg %d %04x\n",
+                        seg_mem[seg]->base, reloc.src_chain,
+                        reloc.segment, seg_mem[reloc.segment-1]->base);
+                    pokew(reloc.src_chain, seg_mem[seg]->base,
+                        seg_mem[reloc.segment-1]->base);
+                    break;
+                case NEFIXSRC_FARADDR:
+                    if (reloc.flags & NEFIXFLG_ADDITIVE) {
+                        debug_reloc2("pokew %04x:%04x += offset %04x\n",
+                            seg_mem[seg]->base, reloc.src_chain, reloc.offset);
+                        word_t prev = peekw(reloc.src_chain, seg_mem[seg]->base);
+                        pokew(reloc.src_chain, seg_mem[seg]->base, prev+reloc.offset);
+                    } else {
+                        debug_reloc2("pokew %04x:%04x = offset %04x\n",
+                            seg_mem[seg]->base, reloc.src_chain, reloc.offset);
+                        pokew(reloc.src_chain, seg_mem[seg]->base, reloc.offset);
+                    }
+                    debug_reloc2("pokew %04x:%04x <- seg %d %04x\n",
+                        seg_mem[seg]->base, reloc.src_chain+2,
+                        reloc.segment, seg_mem[reloc.segment-1]->base);
+                    pokew(reloc.src_chain+2, seg_mem[seg]->base,
+                        seg_mem[reloc.segment-1]->base);
+                    break;
+                }
+            }
+        }
+    }
+
+    /* From this point, exec() will surely succeed */
+
+    /* set data/stack limits and copy argc/argv */
+    current->t_endseg = s << 4;;
+    current->t_enddata = os2segs[os2hdr.auto_data_segment-1].min_alloc;
+    current->t_begstack = (current->t_endseg - slen) & ~1;
+    debug_os2("t_endseg %04x, t_begstack %04x\n", current->t_endseg, current->t_begstack);
+    current->t_minstack = os2hdr.stack_size;
+    debug_os2("fmemcpy %04x:%04x <- %d\n", seg_data->base, current->t_begstack, slen);
+    fmemcpyb((char *)current->t_begstack, seg_data->base, sptr, ds, slen);
+
+    current->t_regs.ds = seg_data->base;
+    finalize_exec(inode, seg_code, seg_data, os2hdr.reg_ip);
+
+    return 0;       /* success */
+
+errout2:
+    for (seg = 0; seg < NEMAXSEGS; seg++) {
+        if (seg_mem[seg])
+            seg_put(seg_mem[seg]);
+        seg_mem[seg] = 0;
+    }
+errout:
+    current->t_regs.ds = ds;
+    if (retval >= 0)
+        retval = -EINVAL;
+    return retval;
+}
+#endif

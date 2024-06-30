@@ -9,6 +9,8 @@
 
 /* Values for the type field of minix_exec_header */
 
+#define AOUTMAGIC       0x0301
+
 #define MINIX_COMBID    0x04100301UL
 /* Separate I/D (0x20), not marked executable, but actually executable ---
    this was the header value used in actual Minix 1 and 2 a.out's */
