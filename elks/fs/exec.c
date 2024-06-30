@@ -131,10 +131,12 @@ static struct os2_exec_hdr os2hdr;
 static struct ne_segment os2segs[NEMAXSEGS];
 static size_t seg_paras[NEMAXSEGS];
 static segment_s *seg_mem[NEMAXSEGS];
+static struct ne_reloc_num reloc_num;
+static struct ne_reloc reloc;
 
 static int execve_os2(struct inode *inode, struct file *filp, char *sptr, size_t slen)
 {
-    int retval, seg;
+    int retval, seg, n;
     size_t s, heap;
     struct ne_segment *segp;
     //TODO: eliminate excess stack vars
@@ -173,7 +175,7 @@ static int execve_os2(struct inode *inode, struct file *filp, char *sptr, size_t
         goto errout;
     }
 
-    /* read in code and data segments */
+    /* read segment table and allocate memory for segments */
     filp->f_pos = os2hdr.segment_table_offset + doshdr.ext_hdr_offset;
     retval = filp->f_op->read(inode, filp, (char *)os2segs,
         os2hdr.num_segments * sizeof(struct ne_segment));
@@ -215,20 +217,52 @@ static int execve_os2(struct inode *inode, struct file *filp, char *sptr, size_t
             fmemsetb((char *)segp->size, seg_mem[seg]->base, 0,
                 segp->min_alloc - segp->size);
         } else if (segp->min_alloc == 0) {
-            printk("Clear bss at %04x:%04x for 64K bytes\n",    //TODO: test
+            printk("Clear bss at %04x:%04x for 64K bytes\n",    //TODO: test or remove
                 seg_mem[seg]->base, segp->size);
             fmemsetb((char *)0, seg_mem[seg]->base, 0, 0x8000);
             fmemsetb((char *)0x8000, seg_mem[seg]->base, 0, 0x8000);
         }
     }
 
+    /* read in segments and perform relocations */
+    for(seg = 0; seg < os2hdr.num_segments; seg++) {
+        segp = &os2segs[seg];
+        if (!segp->size) {                                      //FIXME 64k read
+            printk("EXEC: can't read 64K segment!\n");
+            goto errout2;
+        }
+        filp->f_pos = segp->offset << os2hdr.file_alignment_shift_count;
+        current->t_regs.ds = seg_mem[seg]->base;
+        printk("Reading seg %d %04x:0000 %u bytes offset %04x\n", seg+1,
+            current->t_regs.ds, segp->size,
+            (unsigned int)filp->f_pos);
+        retval = filp->f_op->read(inode, filp, 0, segp->size);
+        if (retval != segp->size) goto errout2;
+
+        current->t_regs.ds = kernel_ds;
+        if (segp->flags & NESEG_RELOCINFO) {
+            retval = filp->f_op->read(inode, filp, (char *)&reloc_num, sizeof(reloc_num));
+            if (retval != sizeof(reloc_num)) goto errout2;
+            printk("%d relocation records\n", reloc_num.num_records);
+
+            for (n = 0; n < reloc_num.num_records; n++) {
+                retval = filp->f_op->read(inode, filp, (char *)&reloc, sizeof(reloc));
+                if (retval != sizeof(reloc)) goto errout2;
+                printk("Reloc %d: type %d flags %d, "
+                    "source chain %04x (segment %d offset %04x)\n",
+                    n+1, reloc.src_type, reloc.flags, reloc.src_chain, reloc.segment,
+                    reloc.offset);
+            }
+        }
+    }
+
     /* set data/stack limits and copy argc/argv */
-    size_t t_endseg, t_begstack, t_minstack;                    //TODO: add current->
+    size_t t_endseg, t_begstack;                            //TODO: add current->
     t_endseg = s << 4;;
     t_begstack = (t_endseg - slen) & ~1;
     //current->t_regs.sp = current->t_begstack;
     printk("t_endseg %04x, t_begstack %04x\n", t_endseg, t_begstack);
-    t_minstack = os2hdr.stack_size;
+    //t_minstack = os2hdr.stack_size;
     printk("fmemcpy %04x:%04x <- %d\n", seg_mem[os2hdr.auto_data_segment-1]->base, t_begstack, slen);
     fmemcpyb((char *)t_begstack, seg_mem[os2hdr.auto_data_segment-1]->base,
         sptr, ds, slen);
