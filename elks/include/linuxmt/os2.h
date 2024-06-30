@@ -116,7 +116,7 @@ struct ne_reloc_num {           /* NE number relocation records */
 #define NEFIXSRC_OFFSET     0x0005  /* 16-bit pointer fixup */
 
 /* flags */
-#define NEFIXFLG_TARGET_MASK 0x000F /* "target" type field */
+#define NEFIXFLG_TARGET_MASK 0x0003 /* "target" type field */
 #define NEFIXFLG_INTERNALREF 0x0000 /* Internal reference (standard fixup) */
 #define NEFIXFLG_IMPORDINAL  0x0001
 #define NEFIXFLG_IMPNAME     0x0002

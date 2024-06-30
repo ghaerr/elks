@@ -252,6 +252,41 @@ static int execve_os2(struct inode *inode, struct file *filp, char *sptr, size_t
                     "source chain %04x (segment %d offset %04x)\n",
                     n+1, reloc.src_type, reloc.flags, reloc.src_chain, reloc.segment,
                     reloc.offset);
+
+                if ((reloc.flags & NEFIXFLG_TARGET_MASK) != NEFIXFLG_INTERNALREF ||
+                    (reloc.src_type != NEFIXSRC_SEGMENT &&
+                     reloc.src_type != NEFIXSRC_FARADDR)) {
+                        printk("Unsupported fixup type %d flags %d\n", reloc.src_type,
+                            reloc.flags);
+                            goto errout2;
+                }
+                heap = reloc.flags & NEFIXFLG_ADDITIVE;
+                switch (reloc.src_type) {
+                case NEFIXSRC_SEGMENT:
+                    printk("pokew %04x:%04x <- seg %d %04x\n",
+                        seg_mem[seg]->base, reloc.src_chain,
+                        reloc.segment, seg_mem[seg]->base);
+                    pokew(reloc.src_chain, seg_mem[seg]->base,
+                        seg_mem[reloc.segment-1]->base);
+                    break;
+                case NEFIXSRC_FARADDR:
+                    if (heap) {     /* additive */
+                        printk("pokew %04x:%04x += offset %04x\n",
+                            seg_mem[seg]->base, reloc.src_chain, reloc.offset);
+                        word_t prev = peekw(reloc.src_chain, seg_mem[seg]->base);
+                        pokew(reloc.src_chain, seg_mem[seg]->base, prev+reloc.offset);
+                    } else {
+                        printk("pokew %04x:%04x = offset %04x\n",
+                            seg_mem[seg]->base, reloc.src_chain, reloc.offset);
+                        pokew(reloc.src_chain, seg_mem[seg]->base, reloc.offset);
+                    }
+                    printk("pokew %04x:%04x <- seg %d %04x\n",
+                        seg_mem[seg]->base, reloc.src_chain+2,
+                        reloc.segment, seg_mem[reloc.segment-1]->base);
+                    pokew(reloc.src_chain+2, seg_mem[seg]->base,
+                        seg_mem[reloc.segment-1]->base);
+                    break;
+                }
             }
         }
     }
