@@ -54,13 +54,14 @@ static noreturn void premain(void)
     exit(main(__argc, __argv));
 }
 #else
-/* rewrite argv and environ arrays in compact and large models */
+/* rewrite argv and environ arrays in compact and large models, args in AX DX BX CX */
 static noreturn void premain(char __near *newsp, char __near *oldsp, int bx, int n)
 {
     char __far  * __far  *nap = (char __far  * __far  *)newsp;
     char __near * __near *oap = (char __near * __near *)oldsp;
     unsigned int v;
     __argv = (char **)newsp;
+    n >>= 1;    /* length doubled so new argv array doesn't overwrite old one for 'ps' */
     do {
         if (v = (unsigned)*oap) {
             *nap = *oap;
@@ -92,6 +93,7 @@ noreturn static void _crt0(void);
     "mov bx, sp"            \
     "mov bx,word ptr [bx]"  \
     "mov word ptr __program_filename, bx"       \
+    "push ax"               \
     "call premain";
 #else
 #pragma aux _crt0 =         \
@@ -114,11 +116,13 @@ noreturn static void _crt0(void);
     "jnc next_env2"         \
     "sub bx, sp"            \
     "mov cx, bx"            \
+    "shl cx,1"              \
     "mov dx, sp"            \
     "mov bx, sp"            \
     "mov bx,word ptr [bx]"  \
     "mov word ptr __program_filename, bx"       \
     "mov bx, cx"            \
+    "push ax"               \
     "sub sp, bx"            \
     "mov ax, sp"            \
     "call premain";
