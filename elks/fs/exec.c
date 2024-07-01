@@ -56,7 +56,11 @@
 static int execve_aout(struct inode *inode, struct file *filp, char *sptr, size_t slen);
 static int execve_os2 (struct inode *inode, struct file *filp, char *sptr, size_t slen);
 static void finalize_exec(struct inode *inode, segment_s *seg_code, segment_s *seg_data,
-    word_t entry);
+    word_t entry, int multisegment);
+
+#ifdef CONFIG_EXEC_OS2
+static segment_s *seg_mem[MAX_SEGS];
+#endif
 
 int sys_execve(const char *filename, char *sptr, size_t slen)
 {
@@ -219,7 +223,7 @@ static int execve_aout(struct inode *inode, struct file *filp, char *sptr, size_
     do {
         if ((currentp->state <= TASK_STOPPED) && (currentp->t_inode == inode)) {
             debug("EXEC found copy\n");
-            seg_code = currentp->mm.seg_code;
+            seg_code = currentp->mm[SEG_CODE];
             break;
         }
     } while (++currentp < &task[max_tasks]);
@@ -384,7 +388,7 @@ static int execve_aout(struct inode *inode, struct file *filp, char *sptr, size_
             bytes);
         seg_code = seg_alloc(paras, SEG_FLAG_CSEG);
         if (!seg_code) goto error_exec3;
-        currentp->t_regs.ds = seg_code->base;  // segment used by read()
+        currentp->t_regs.ds = seg_code->base;
         retval = filp->f_op->read(inode, filp, 0, bytes);
         if (retval != bytes) {
             debug("EXEC(tseg read): bad result %u, expected %u\n", retval, bytes);
@@ -501,7 +505,7 @@ static int execve_aout(struct inode *inode, struct file *filp, char *sptr, size_
     fmemcpyb((char *)currentp->t_begstack, seg_data->base, sptr, ds, slen);
     currentp->t_minstack = stack;
 
-    finalize_exec(inode, seg_code, seg_data, (word_t)mh.entry);
+    finalize_exec(inode, seg_code, seg_data, (word_t)mh.entry, 0);
 
     /*
      *      Done. This will return onto the new user stack
@@ -522,22 +526,32 @@ static int execve_aout(struct inode *inode, struct file *filp, char *sptr, size_
     return retval;
 }
 
+/* seg_code is entry code segment, seg_data is main data segment */
 static void finalize_exec(struct inode *inode, segment_s *seg_code, segment_s *seg_data,
-    word_t entry)
+    word_t entry, int multisegment)
 {
     __ptask currentp = current;
     int i, n, v;
 
     /* From this point, the old code and data segments are not needed anymore */
+    for (i = 0; i < MAX_SEGS; i++) {
+        if (currentp->mm[i])
+            seg_put(currentp->mm[i]);
+    }
 
-    /* Flush the old binary out.  */
-    if (currentp->mm.seg_code) seg_put(currentp->mm.seg_code);
-    if (currentp->mm.seg_data) seg_put(currentp->mm.seg_data);
+    if (multisegment) {
+#ifdef CONFIG_EXEC_OS2
+        for (i = 0; i < MAX_SEGS; i++) {
+            currentp->mm[i] = seg_mem[i];
+            seg_mem[i] = 0;
+        }
+#endif
+    } else {
+        currentp->mm[SEG_CODE] = seg_code;
+        currentp->mm[SEG_DATA] = seg_data;
+    }
 
-    currentp->mm.seg_code = seg_code;
     currentp->t_xregs.cs = seg_code->base;
-
-    currentp->mm.seg_data = seg_data;
     currentp->t_regs.ss = currentp->t_regs.es = currentp->t_regs.ds = seg_data->base;
     currentp->t_regs.sp = (__u16)currentp->t_begstack;
 
@@ -598,9 +612,8 @@ static void finalize_exec(struct inode *inode, segment_s *seg_code, segment_s *s
 #ifdef CONFIG_EXEC_OS2
 static struct dos_exec_hdr doshdr;
 static struct os2_exec_hdr os2hdr;
-static struct ne_segment os2segs[NEMAXSEGS];
-static size_t seg_paras[NEMAXSEGS];
-static segment_s *seg_mem[NEMAXSEGS];
+static struct ne_segment os2segs[MAX_SEGS];
+static size_t seg_paras[MAX_SEGS];
 static struct ne_reloc_num reloc_num;
 static struct ne_reloc reloc;
 
@@ -641,9 +654,9 @@ static int execve_os2(struct inode *inode, struct file *filp, char *sptr, size_t
     if (!os2hdr.stack_size)
         os2hdr.stack_size = INIT_STACK;
 
-    if (os2hdr.num_segments > NEMAXSEGS) {
+    if (os2hdr.num_segments > MAX_SEGS) {
         printk("Too many segments: %d (configured for %d)\n",
-            os2hdr.num_segments, NEMAXSEGS);
+            os2hdr.num_segments, MAX_SEGS);
         retval = -E2BIG;
         goto errout;
     }
@@ -682,14 +695,15 @@ static int execve_os2(struct inode *inode, struct file *filp, char *sptr, size_t
             seg+1, segp->offset << os2hdr.file_alignment_shift_count, segp->size,
             (unsigned long)seg_paras[seg]<<4, segp->flags, segp->min_alloc);
 
-        if (!(seg_mem[seg] = seg_alloc(paras, (segp->flags & NESEG_DATA)?
-                                            SEG_FLAG_DSEG: SEG_FLAG_CSEG))) {
+        if (!(seg_mem[seg] = seg_alloc(paras, (segp->flags & NESEG_DATA)
+                ? ((seg+1 == os2hdr.auto_data_segment)? SEG_FLAG_DSEG: SEG_FLAG_DDAT)
+                : SEG_FLAG_CSEG))) {
             retval = -ENOMEM;
             goto errout2;
         }
-        if (seg+1 == os2hdr.reg_cs)
+        if (seg+1 == os2hdr.reg_cs)             /* save entry code segment */
             seg_code = seg_mem[seg];
-        if (seg+1 == os2hdr.auto_data_segment)
+        if (seg+1 == os2hdr.auto_data_segment)  /* save auto data segment */
             seg_data = seg_mem[seg];
 
         /* clear bss */
@@ -779,13 +793,13 @@ static int execve_os2(struct inode *inode, struct file *filp, char *sptr, size_t
     debug_os2("fmemcpy %04x:%04x <- %d\n", seg_data->base, current->t_begstack, slen);
     fmemcpyb((char *)current->t_begstack, seg_data->base, sptr, ds, slen);
 
-    finalize_exec(inode, seg_code, seg_data, os2hdr.reg_ip);
+    finalize_exec(inode, seg_code, seg_data, os2hdr.reg_ip, 1);
     return 0;       /* success */
 
 errout3:
     retval = -EINVAL;
 errout2:
-    for (seg = 0; seg < NEMAXSEGS; seg++) {
+    for (seg = 0; seg < MAX_SEGS; seg++) {
         if (seg_mem[seg])
             seg_put(seg_mem[seg]);
         seg_mem[seg] = 0;

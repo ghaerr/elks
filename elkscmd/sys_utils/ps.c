@@ -233,12 +233,12 @@ int main(int argc, char **argv)
         }
 #endif
 		/* CSEG*/
-		cseg = (word_t)task_table.mm.seg_code;
+		cseg = (word_t)task_table.mm[SEG_CODE];
 		if (f_listall) printf(" %4x ",
             cseg? getword(fd, (word_t)cseg+offsetof(struct segment, base), ds): 0);
 
 		/* DSEG*/
-		dseg = (word_t)task_table.mm.seg_data;
+		dseg = (word_t)task_table.mm[SEG_DATA];
 		if (f_listall) printf("%4x",
             dseg? getword(fd, (word_t)dseg+offsetof(struct segment, base), ds): 0);
 

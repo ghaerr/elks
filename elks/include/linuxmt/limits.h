@@ -22,7 +22,7 @@
 
 #define POLL_MAX        6       /* Maximum number of polled queues per process */
 
-#define NEMAXSEGS       10      /* Maximum segment count for OS/2 executables */
+#define MAX_SEGS        5       /* Maximum number of application code/data segments */
 
 /* buffers */
 #define NR_MAPBUFS      8       /* Number of internal L1 buffers */

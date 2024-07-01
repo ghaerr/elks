@@ -290,7 +290,7 @@ int sys_fmemalloc(int paras, unsigned short *pseg)
 	err = verify_area(VERIFY_WRITE, pseg, sizeof(*pseg));
 	if (err)
 		return err;
-	seg = seg_alloc((segext_t)paras, SEG_FLAG_PROG);
+	seg = seg_alloc((segext_t)paras, SEG_FLAG_FDAT);
 	if (!seg)
 		return -ENOMEM;
 	seg->pid = current->pid;

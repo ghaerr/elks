@@ -22,15 +22,14 @@ struct fs_struct {
     struct inode                *pwd;
 };
 
-struct mm_struct {
-    struct segment              *seg_code;
-    struct segment              *seg_data;
-};
-
 struct signal_struct {
     __kern_sighandler_t         handler;
     struct __kern_sigaction_struct action[NSIG];
 };
+
+/* Standard segment entry indices for a.out executables */
+#define SEG_CODE        0
+#define SEG_DATA        1
 
 struct task_struct {
 
@@ -64,7 +63,7 @@ struct task_struct {
     struct task_struct          *prev_run;
     struct file_struct          files;          /* File system structure */
     struct fs_struct            fs;             /* File roots */
-    struct mm_struct            mm;             /* Memory blocks */
+    struct segment              *mm[MAX_SEGS];  /* App code/data segments */
     struct tty                  *tty;
     struct task_struct          *p_parent;
     int                         exit_status;    /* process exit status*/
