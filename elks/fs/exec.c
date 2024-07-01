@@ -149,7 +149,7 @@ static int relocate(seg_t place_base, unsigned long rsize, segment_s *seg_code,
            (unsigned long)rsize, place_base);
     while (rsize >= sizeof(struct minix_reloc)) {
         retval = filp->f_op->read(inode, filp, (char *)&reloc, sizeof(reloc));
-        if (retval != (int)sizeof(reloc))
+        if (retval != sizeof(reloc))
             goto error;
         switch (reloc.r_type) {
         case R_SEGWORD:
@@ -487,7 +487,7 @@ static int execve_aout(struct inode *inode, struct file *filp, char *sptr, size_
 
     /* From this point, exec() will surely succeed */
 
-    /* Wipe the BSS */
+    /* clear bss */
     fmemsetb((char *)(size_t)mh.dseg + base_data, seg_data->base, 0, (size_t)mh.bseg);
 
     currentp->t_endseg = (__pptr)len;   /* Needed for sys_brk() */
@@ -559,35 +559,31 @@ static void finalize_exec(struct inode *inode, segment_s *seg_code, segment_s *s
     if ((int)currentp->t_endbrk & 1)    /* help libc malloc with even break address */
         currentp->t_endbrk++;
 
-    {
-        i = 0;
+    /* argv and envp are two NULL-terminated arrays of pointers, located
+     * right after argc.  This fixes them up so that the loaded program
+     * gets the right strings. */
 
-        /* argv and envp are two NULL-terminated arrays of pointers, located
-         * right after argc.  This fixes them up so that the loaded program
-         * gets the right strings. */
+    i = n = 0;          /* Start by skipping argc */
+    do {
+        i += sizeof(__u16);
+        if ((v = get_ustack(currentp, i)) != 0)
+            put_ustack(currentp, i, (currentp->t_begstack + v));
+        else n++;       /* increments for each array traversed */
+    } while (n < 2);
 
-        n = 0;              /* Start by skipping argc */
-        do {
-            i += sizeof(__u16);
-            if ((v = get_ustack(currentp, i)) != 0)
-                put_ustack(currentp, i, (currentp->t_begstack + v));
-            else n++;       /* increments for each array traversed */
-        } while (n < 2);
+    /* Clear signal handlers */
+    i = 0;
+    do {
+        currentp->sig.action[i].sa_dispose = SIGDISP_DFL;
+    } while (++i < NSIG);
+    currentp->sig.handler = (__kern_sighandler_t)NULL;
 
-        /* Clear signal handlers */
-        i = 0;
-        do {
-            currentp->sig.action[i].sa_dispose = SIGDISP_DFL;
-        } while (++i < NSIG);
-        currentp->sig.handler = (__kern_sighandler_t)NULL;
-
-        /* Close required files */
-        i = 0;
-        do {
-            if (FD_ISSET(i, &currentp->files.close_on_exec))
-                sys_close(i);
-        } while (++i < NR_OPEN);
-    }
+    /* Close required files */
+    i = 0;
+    do {
+        if (FD_ISSET(i, &currentp->files.close_on_exec))
+            sys_close(i);
+    } while (++i < NR_OPEN);
 
     iput(currentp->t_inode);
     currentp->t_inode = inode;
@@ -610,22 +606,19 @@ static void finalize_exec(struct inode *inode, segment_s *seg_code, segment_s *s
 }
 
 #ifdef CONFIG_EXEC_OS2
-static struct dos_exec_hdr doshdr;
-static struct os2_exec_hdr os2hdr;
-static struct ne_segment os2segs[MAX_SEGS];
-static size_t seg_paras[MAX_SEGS];
-static struct ne_reloc_num reloc_num;
-static struct ne_reloc reloc;
-
 static int execve_os2(struct inode *inode, struct file *filp, char *sptr, size_t slen)
 {
     int retval;
     unsigned int n, seg;
-    segext_t paras;
+    segext_t paras, auto_paras;
     struct ne_segment *segp;
     segment_s *seg_code, *seg_data;
-    //TODO: eliminate excess stack vars
     seg_t ds = current->t_regs.ds;
+    static struct dos_exec_hdr doshdr;          //FIXME needs mutex
+    static struct ne_exec_hdr os2hdr;
+    static struct ne_segment os2segs[MAX_SEGS];
+    static struct ne_reloc_num reloc_num;
+    static struct ne_reloc reloc;
 
     /* read MZ header, then OS/2 header */
     current->t_regs.ds = kernel_ds;
@@ -667,7 +660,7 @@ static int execve_os2(struct inode *inode, struct file *filp, char *sptr, size_t
     retval = filp->f_op->read(inode, filp, (char *)os2segs, n);
     if (retval != n) goto errout;
 
-    paras = 0;  /* for compiler */
+    auto_paras = 0;
     seg_code = seg_data = 0;
     for(seg = 0; seg < os2hdr.num_segments; seg++) {
         segp = &os2segs[seg];
@@ -676,7 +669,6 @@ static int execve_os2(struct inode *inode, struct file *filp, char *sptr, size_t
             printk("64K segments not supported\n");
             goto errout3;
         }
-        seg_paras[seg] = paras;
         if (seg+1 == os2hdr.auto_data_segment) {    /* main data segment w/stack & heap */
             if ((n = os2hdr.heap_size) == 0xffff)   /* calc max heap */
                 n = 1;
@@ -689,11 +681,11 @@ static int execve_os2(struct inode *inode, struct file *filp, char *sptr, size_t
                 debug_os2("Auto max heap: %u\n", (0x0FFF - paras) << 4);
                 paras = 0x0FFF;
             }
-            seg_paras[seg] = paras;
+            auto_paras = paras;
         }
         debug_os2("Segment %d: offset %04x size %5u/%6lu flags %04x minalloc %u\n",
             seg+1, segp->offset << os2hdr.file_alignment_shift_count, segp->size,
-            (unsigned long)seg_paras[seg]<<4, segp->flags, segp->min_alloc);
+            (unsigned long)paras<<4, segp->flags, segp->min_alloc);
 
         if (!(seg_mem[seg] = seg_alloc(paras, (segp->flags & NESEG_DATA)
                 ? ((seg+1 == os2hdr.auto_data_segment)? SEG_FLAG_DSEG: SEG_FLAG_DDAT)
@@ -784,8 +776,8 @@ static int execve_os2(struct inode *inode, struct file *filp, char *sptr, size_t
     /* From this point, exec() will surely succeed */
 
     /* set data/stack limits and copy argc/argv */
-    current->t_endseg = paras << 4;;
     current->t_enddata = os2segs[os2hdr.auto_data_segment-1].min_alloc;
+    current->t_endseg = auto_paras << 4;;
     current->t_begstack = (current->t_endseg - slen) & ~1;
     current->t_minstack = os2hdr.stack_size;
 

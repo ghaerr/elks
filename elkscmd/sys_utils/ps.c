@@ -63,6 +63,7 @@ void process_name(int fd, unsigned int off, unsigned int seg)
 	char buf[80];
 
 	argc = getword(fd, off, seg);
+	if (argc > 10) argc = 10;	//FIXME temp fix for argv/envp rewritten on OS/2
 
 	while (argc-- > 0) {
 		off += 2;

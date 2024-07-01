@@ -46,7 +46,7 @@ struct dos_reloc {              /* DOS relocation table entry */
 /* Target OS */
 #define NETARGET_OS2            0x01    /* OS/2 target */
 
-struct os2_exec_hdr {           /* OS/2 New Executable header */       
+struct ne_exec_hdr {            /* OS/2 New Executable header */
     uint16_t magic;             /* NE signature                     0x00 */
     uint8_t linker_version;     /* Linker major version */
     uint8_t linker_revision;    /* Linker minor version */
