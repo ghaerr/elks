@@ -35,11 +35,11 @@ struct task_struct {
 
 /* Executive stuff */
     struct xregs                t_xregs;    /* CS and kernel SP */
-    __pptr                      t_enddata;  /* start of heap = end of data+bss */
-    __pptr                      t_endbrk;   /* current break (end of heap) */
-    __pptr                      t_begstack; /* start SP, argc/argv strings above */
-    __pptr                      t_endseg;   /* end of data seg (data+bss+heap+stack) */
-    int                         t_minstack; /* min stack size */
+    segoff_t                    t_enddata;  /* start of heap = end of data+bss */
+    segoff_t                    t_endbrk;   /* current break (end of heap) */
+    segoff_t                    t_begstack; /* start SP, argc/argv strings above */
+    segoff_t                    t_endseg;   /* end of data seg (data+bss+heap+stack) */
+    segoff_t                    t_minstack; /* min stack size */
 
 /* Kernel info */
     pid_t                       pid;
@@ -107,15 +107,15 @@ struct task_struct {
 //#define DEPRECATED    __attribute__ ((deprecated))
 
 /* We use typedefs to avoid using struct foobar (*) */
-typedef struct task_struct __task, *__ptask;
+typedef struct task_struct *__ptask;
 
-extern __task *task;
-extern __task *next_task_slot;
+extern __ptask task;
+extern __ptask current;
+extern __ptask next_task_slot;
 extern int max_tasks;
 extern int task_slots_unused;
 
 extern volatile jiff_t jiffies; /* ticks updated by the timer interrupt*/
-extern __ptask current;
 extern pid_t last_pid;
 extern int intr_count;
 

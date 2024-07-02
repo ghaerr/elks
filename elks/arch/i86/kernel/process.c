@@ -49,11 +49,11 @@ int run_init_process_sptr(const char *cmd, char *sptr, int slen)
 void stack_check(void)
 {
     register __ptask currentp = current;
-    register char *end = (char *)currentp->t_endbrk;
+    segoff_t end = currentp->t_endbrk;
 
 #ifdef CONFIG_EXEC_LOW_STACK
     if (currentp->t_begstack <= currentp->t_enddata) {  /* stack below heap?*/
-        if (currentp->t_regs.sp < (__u16)end)
+        if (currentp->t_regs.sp < end)
             return;
         end = 0;
     } else
@@ -67,10 +67,10 @@ void stack_check(void)
         }
 
         /* check stack overflow heap*/
-        if (currentp->t_regs.sp > (__u16)end)
+        if (currentp->t_regs.sp > end)
             return;
     }
-    printk("(%P)STACK OVERFLOW BY %u BYTES\n", (__u16)end - currentp->t_regs.sp);
+    printk("(%P)STACK OVERFLOW BY %u BYTES\n", end - currentp->t_regs.sp);
     do_exit(SIGSEGV);
 }
 

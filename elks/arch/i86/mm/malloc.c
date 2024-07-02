@@ -232,7 +232,7 @@ void mm_get_usage (unsigned int * pfree, unsigned int * pused)
 
 // User data segment functions
 
-int sys_brk(__pptr newbrk)
+int sys_brk(segoff_t newbrk)
 {
     register __ptask currentp = current;
 
@@ -263,9 +263,9 @@ int sys_brk(__pptr newbrk)
 }
 
 
-int sys_sbrk (int increment, __u16 * pbrk)
+int sys_sbrk (int increment, segoff_t *pbrk)
 {
-	__pptr brk = current->t_endbrk;		/* always return start of old break*/
+	segoff_t brk = current->t_endbrk;   /* always return start of old break*/
 	int err;
 
 	debug("sbrk incr %u pointer %04x curbreak %04x\n", increment, pbrk, brk);

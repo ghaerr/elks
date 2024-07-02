@@ -17,12 +17,12 @@ typedef __u8                    byte_t;
 typedef __u16                   word_t;
 typedef __u32                   long_t;
 
-typedef __u16                   seg_t;
-typedef __u16                   segext_t;
-typedef __u16                   flag_t;
+typedef __u16                   seg_t;      /* segment value */
+typedef __u16                   segext_t;   /* paragraph count */
+typedef __u16                   segoff_t;   /* offset in segment */
+typedef __u16                   flag_t;     /* CPU flag word */
 
-typedef __u16                   __pptr;
-typedef __u32                   addr_t;
+typedef __u32                   addr_t;     /* linear 32-bit address */
 
 /* Then we define registers, etc... */
 

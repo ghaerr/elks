@@ -4,6 +4,7 @@
 #include <linuxmt/trace.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/string.h>
+#include <arch/segment.h>
 
 /*
  * Kernel tracing functions for consistency checking and debugging support
@@ -100,7 +101,6 @@ static void check_kstack(int n)
     const char *warning = "";
     static int max;
     static int maxistack;
-    extern __u16 endistack[];
 
     /* calc interrupt stack usage */
     for (i=0; i<ISTACK_BYTES/2; i++) {

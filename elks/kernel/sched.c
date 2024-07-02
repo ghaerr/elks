@@ -17,7 +17,7 @@
 
 #define idle_task task[0]
 
-__task *task;           /* dynamically allocated task array */
+__ptask task;           /* dynamically allocated task array */
 __ptask current;
 __ptask previous;
 int max_tasks = MAX_TASKS;
