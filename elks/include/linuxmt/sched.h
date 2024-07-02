@@ -34,12 +34,12 @@ struct signal_struct {
 struct task_struct {
 
 /* Executive stuff */
-    struct xregs                t_xregs;
-    __pptr                      t_enddata;
-    __pptr                      t_begstack;
-    __pptr                      t_endbrk;
-    __pptr                      t_endseg;
-    int                         t_minstack;
+    struct xregs                t_xregs;    /* CS and kernel SP */
+    __pptr                      t_enddata;  /* start of heap = end of data+bss */
+    __pptr                      t_endbrk;   /* current break (end of heap) */
+    __pptr                      t_begstack; /* start SP, argc/argv strings above */
+    __pptr                      t_endseg;   /* end of data seg (data+bss+heap+stack) */
+    int                         t_minstack; /* min stack size */
 
 /* Kernel info */
     pid_t                       pid;
