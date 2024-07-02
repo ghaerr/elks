@@ -39,7 +39,7 @@ struct netif_parms netif_parms[MAX_ETHS] = {
     { WD_IRQ, WD_PORT, WD_RAM, WD_FLAGS },
     { EL3_IRQ, EL3_PORT, 0, EL3_FLAGS },
 };
-__u16 kernel_cs, kernel_ds;
+seg_t kernel_cs, kernel_ds;
 int tracing;
 int nr_ext_bufs, nr_xms_bufs, nr_map_bufs;
 char running_qemu;

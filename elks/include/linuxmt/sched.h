@@ -39,7 +39,7 @@ struct task_struct {
     segoff_t                    t_endbrk;   /* current break (end of heap) */
     segoff_t                    t_begstack; /* start SP, argc/argv strings above */
     segoff_t                    t_endseg;   /* end of data seg (data+bss+heap+stack) */
-    int                         t_minstack; /* min stack size */
+    segoff_t                    t_minstack; /* min stack size */
 
 /* Kernel info */
     pid_t                       pid;
