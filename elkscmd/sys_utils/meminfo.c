@@ -82,8 +82,8 @@ struct task_struct *find_process(int fd, unsigned int seg)
             perror("taskinfo");
             exit(1);
         }
-        if ((unsigned)task_table.mm.seg_code == seg ||
-            (unsigned)task_table.mm.seg_data == seg) {
+        if ((unsigned)task_table.mm[SEG_CODE] == seg ||
+            (unsigned)task_table.mm[SEG_DATA] == seg) {
             return &task_table;
         }
         off += sizeof(struct task_struct);
@@ -99,7 +99,7 @@ void dump_heap(int fd)
 	static char *heaptype[] =
         { "free", "SEG ", "DRVR", "TTY ", "TASK", "BUFH", "PIPE", "INOD", "FILE" };
 	static char *segtype[] =
-        { "free", "CSEG", "DSEG", "BUF ", "RDSK", "PROG" };
+        { "free", "CSEG", "DSEG", "DDAT", "FDAT", "BUF ", "RDSK" };
 
 	printf("  HEAP   TYPE  SIZE    SEG   TYPE    SIZE  CNT  NAME\n");
 
@@ -121,8 +121,8 @@ void dump_heap(int fd)
 		else segflags = -1;
 		free = (tag == HEAP_TAG_FREE || segflags == SEG_FLAG_FREE);
 		used = ((tag == HEAP_TAG_SEG)
-            && (segflags == SEG_FLAG_CSEG || segflags == SEG_FLAG_DSEG
-                                          || segflags == SEG_FLAG_PROG));
+            && (segflags == SEG_FLAG_CSEG || segflags == SEG_FLAG_DSEG ||
+                segflags == SEG_FLAG_DDAT || segflags == SEG_FLAG_FDAT));
 		tty = (tag == HEAP_TAG_TTY || tag == HEAP_TAG_DRVR);
 		buffer = (tag == HEAP_TAG_SEG && segflags == SEG_FLAG_EXTBUF)
             || tag == HEAP_TAG_BUFHEAD || tag == HEAP_TAG_PIPE;

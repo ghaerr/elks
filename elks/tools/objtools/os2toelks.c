@@ -208,11 +208,11 @@ int main(int argc, char **argv) {
   code_minalloc = get_u16_le(code_st + 6);
   data_size = get_u16_le(data_st + 2);
   data_minalloc = get_u16_le(data_st + 6);
-  if (code_size != code_minalloc) fail1("datal: mismatch in code size and minalloc: ", infn);
-  if (data_minalloc < data_size) fail1("datal: data minalloc too small: ", infn);
+  if (code_size != code_minalloc) fail1("fatal: mismatch in code size and minalloc: ", infn);
+  if (data_minalloc < data_size) fail1("fatal: data minalloc too small: ", infn);
   bss_size = data_minalloc - data_size;
   if (stack_idx != 0) {
-    if (bss_size < stack_size) fail1("datal: bss size too small: ", infn);
+    if (bss_size < stack_size) fail1("fatal: bss size too small: ", infn);
     bss_size -= stack_size;
   }
   code_fofs = (uint32_t)get_u16_le(code_st) << sas;

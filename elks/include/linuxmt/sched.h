@@ -22,25 +22,24 @@ struct fs_struct {
     struct inode                *pwd;
 };
 
-struct mm_struct {
-    struct segment              *seg_code;
-    struct segment              *seg_data;
-};
-
 struct signal_struct {
     __kern_sighandler_t         handler;
     struct __kern_sigaction_struct action[NSIG];
 };
 
+/* Standard segment entry indices for a.out executables */
+#define SEG_CODE        0
+#define SEG_DATA        1
+
 struct task_struct {
 
 /* Executive stuff */
-    struct xregs                t_xregs;
-    __pptr                      t_enddata;
-    __pptr                      t_begstack;
-    __pptr                      t_endbrk;
-    __pptr                      t_endseg;
-    int                         t_minstack;
+    struct xregs                t_xregs;    /* CS and kernel SP */
+    __pptr                      t_enddata;  /* start of heap = end of data+bss */
+    __pptr                      t_endbrk;   /* current break (end of heap) */
+    __pptr                      t_begstack; /* start SP, argc/argv strings above */
+    __pptr                      t_endseg;   /* end of data seg (data+bss+heap+stack) */
+    int                         t_minstack; /* min stack size */
 
 /* Kernel info */
     pid_t                       pid;
@@ -64,7 +63,7 @@ struct task_struct {
     struct task_struct          *prev_run;
     struct file_struct          files;          /* File system structure */
     struct fs_struct            fs;             /* File roots */
-    struct mm_struct            mm;             /* Memory blocks */
+    struct segment              *mm[MAX_SEGS];  /* App code/data segments */
     struct tty                  *tty;
     struct task_struct          *p_parent;
     int                         exit_status;    /* process exit status*/

@@ -130,6 +130,9 @@ int sys_kill(pid_t pid, sig_t sig)
 
 int sys_signal(int signr, __kern_sighandler_t handler)
 {
+    int i;
+    struct segment *s;
+
     debug_sig("SIGNAL sys_signal %d action %x:%x pid %P\n", signr,
               _FP_SEG(handler), _FP_OFF(handler));
     if (((unsigned int)signr > NSIG) || signr == SIGKILL || signr == SIGSTOP)
@@ -139,14 +142,16 @@ int sys_signal(int signr, __kern_sighandler_t handler)
     else if (handler == KERN_SIG_IGN)
         current->sig.action[signr - 1].sa_dispose = SIGDISP_IGN;
     else {
-        if (_FP_SEG(handler) < current->mm.seg_code->base ||
-            _FP_SEG(handler) >= current->mm.seg_code->base
-                                + current->mm.seg_code->size) {
-            debug_sig("SIGNAL sys_signal supplied handler is bogus!\n");
-            debug_sig("SIGNAL sys_signal cs not in [%x, %x)\n",
-                      current->mm.seg_code->base,
-                      current->mm.seg_code->base + current->mm.seg_code->size);
-            return -EINVAL;
+        for (i = 0; i < MAX_SEGS; i++) {
+            s = current->mm[i];
+            if (!s || (s->flags & SEG_FLAG_TYPE) != SEG_FLAG_CSEG)
+                continue;
+            if (_FP_SEG(handler) < s->base || _FP_SEG(handler) >= s->base + s->size) {
+                printk("SIGNAL sys_signal supplied handler is bad\n");
+                debug_sig("SIGNAL sys_signal cs not in [%x, %x)\n",
+                    s->base, s->base + s->size);
+                return -EINVAL;
+            }
         }
         current->sig.handler = handler;
         current->sig.action[signr - 1].sa_dispose = SIGDISP_CUSTOM;

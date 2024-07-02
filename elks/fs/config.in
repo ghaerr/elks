@@ -31,6 +31,7 @@ mainmenu_option next_comment
 	comment 'Executable file formats'
 
 	bool 'Support compressed executables'  CONFIG_EXEC_COMPRESS       y
+	bool 'Support OS/2 executables'        CONFIG_EXEC_OS2            n
 	if [ "$CONFIG_EXEC_COMPRESS" == "y" ]; then
 	    define_bool CONFIG_EXEC_MMODEL y
 	else
