@@ -54,11 +54,11 @@
 #define debug_os2       debug
 
 static int execve_aout(struct inode *inode, struct file *filp, char *sptr, size_t slen);
-static int execve_os2 (struct inode *inode, struct file *filp, char *sptr, size_t slen);
 static void finalize_exec(struct inode *inode, segment_s *seg_code, segment_s *seg_data,
     word_t entry, int multisegment);
 
 #ifdef CONFIG_EXEC_OS2
+static int execve_os2(struct inode *inode, struct file *filp, char *sptr, size_t slen);
 static segment_s *mm_table[MAX_SEGS]; /* holds process segments until exec guaranteed */
 #endif
 
@@ -490,27 +490,21 @@ static int execve_aout(struct inode *inode, struct file *filp, char *sptr, size_
     /* clear bss */
     fmemsetb((char *)(size_t)mh.dseg + base_data, seg_data->base, 0, (size_t)mh.bseg);
 
-    currentp->t_endseg = (__pptr)len;   /* Needed for sys_brk() */
-    currentp->t_enddata = (__pptr) ((size_t)mh.dseg + (size_t)mh.bseg + base_data);
-
-    /* Copy the command line and environment */
-#ifdef CONFIG_EXEC_LOW_STACK
-    currentp->t_begstack = (base_data   /* Just above the top of stack */
-        ? (__pptr)base_data
-        : currentp->t_endseg) - slen;
-#else
-    currentp->t_begstack = currentp->t_endseg - slen;
-#endif
-    currentp->t_begstack &= ~1;         /* force even stack pointer and argv/envp*/
-    fmemcpyb((char *)currentp->t_begstack, seg_data->base, sptr, ds, slen);
+    /* set data/stack limits and copy argc/argv */
+    currentp->t_enddata = (size_t)mh.dseg + (size_t)mh.bseg + base_data;
+    currentp->t_endseg = len;
     currentp->t_minstack = stack;
 
-    finalize_exec(inode, seg_code, seg_data, (word_t)mh.entry, 0);
+#ifdef CONFIG_EXEC_LOW_STACK
+    currentp->t_begstack = ((base_data   /* Just above the top of stack */
+        ? base_data
+        : currentp->t_endseg) - slen) & ~1;
+#else
+    currentp->t_begstack = (currentp->t_endseg - slen) & ~1; /* force even SP and argv */
+#endif
+    fmemcpyb((char *)currentp->t_begstack, seg_data->base, sptr, ds, slen);
 
-    /*
-     *      Done. This will return onto the new user stack
-     *      and to cs:entry of the user process.
-     */
+    finalize_exec(inode, seg_code, seg_data, (word_t)mh.entry, 0);
     return 0;           /* success */
 
   error_exec5:
@@ -553,10 +547,10 @@ static void finalize_exec(struct inode *inode, segment_s *seg_code, segment_s *s
 
     currentp->t_xregs.cs = seg_code->base;
     currentp->t_regs.ss = currentp->t_regs.es = currentp->t_regs.ds = seg_data->base;
-    currentp->t_regs.sp = (__u16)currentp->t_begstack;
+    currentp->t_regs.sp = currentp->t_begstack;
 
     /* help libc malloc with even start break address */
-    currentp->t_endbrk =  (__pptr)(((__u16)currentp->t_enddata + 1) & ~1);
+    currentp->t_endbrk =  (currentp->t_enddata + 1) & ~1;
 
     /* argv and envp are two NULL-terminated arrays of pointers, located
      * right after argc.  This fixes them up so that the loaded program
@@ -596,12 +590,15 @@ static void finalize_exec(struct inode *inode, segment_s *seg_code, segment_s *s
     if (inode->i_mode & S_ISGID)
         currentp->egid = inode->i_gid;
 
-    /* arrange our return to be to CS:entry */
-    arch_setup_user_stack(currentp, entry);
-
 #if UNUSED      /* used only for vfork()*/
     wake_up(&currentp->p_parent->child_wait);
 #endif
+
+    /*
+     * Arrange for our return from sys_execve onto the new
+     * user stack and to CS:entry of the user process.
+     */
+    arch_setup_user_stack(currentp, entry);
 }
 
 #ifdef CONFIG_EXEC_OS2

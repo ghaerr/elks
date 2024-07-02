@@ -144,7 +144,7 @@ int sys_signal(int signr, __kern_sighandler_t handler)
     else {
         for (i = 0; i < MAX_SEGS; i++) {
             s = current->mm[i];
-            if ((s->flags & SEG_FLAG_TYPE) != SEG_FLAG_CSEG)
+            if (!s || (s->flags & SEG_FLAG_TYPE) != SEG_FLAG_CSEG)
                 continue;
             if (_FP_SEG(handler) < s->base || _FP_SEG(handler) >= s->base + s->size) {
                 printk("SIGNAL sys_signal supplied handler is bad\n");

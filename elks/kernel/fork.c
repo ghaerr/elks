@@ -89,10 +89,10 @@ pid_t do_fork(int virtual)
         s = t->mm[j];
         if (s) {
             if ((s->flags & SEG_FLAG_TYPE) == SEG_FLAG_CSEG)
-                seg_get(s);             /* share text */
+                seg_get(s);         /* share text */
             else {
                 if (virtual) {
-                        seg_get(s);     /* share data for vfork */
+                    seg_get(s);     /* share data for vfork */
                 } else {
                     t->mm[j] = seg_dup(s);
                     if (t->mm[j] == 0) {
