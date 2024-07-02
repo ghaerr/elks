@@ -1,5 +1,5 @@
 /*
- *	User access routines for the kernel.
+ *      User access routines for the kernel.
  */
 
 #include <linuxmt/types.h>
@@ -10,14 +10,12 @@
 
 int verfy_area(void *p, size_t len)
 {
-    register __ptask currentp = current;
-
     /*
-     *	Kernel tasks can always access
+     * Kernel tasks can always access user process boundaries
      */
-    if ((kernel_ds == currentp->t_regs.ds) /* Kernel tasks can always access */
-	  || ((__pptr)((char *)p + len) <= currentp->t_endseg)) /* User process boundaries */
-	return 0;
+    if ((kernel_ds == current->t_regs.ds) ||
+          ((segoff_t)((char *)p + len) <= current->t_endseg))
+        return 0;
 
     return -EFAULT;
 }
@@ -27,7 +25,7 @@ int verified_memcpy_fromfs(void *daddr, void *saddr, size_t len)
     int err = verify_area(VERIFY_READ, saddr, len);
 
     if (!err)
-	memcpy_fromfs(daddr, saddr, len);
+        memcpy_fromfs(daddr, saddr, len);
     return err;
 }
 
@@ -36,7 +34,7 @@ int verified_memcpy_tofs(void *daddr, void *saddr, size_t len)
     int err = verify_area(VERIFY_WRITE, daddr, len);
 
     if (!err)
-	memcpy_tofs(daddr, saddr, len);
+        memcpy_tofs(daddr, saddr, len);
     return err;
 }
 
@@ -77,7 +75,7 @@ int fs_memcmp(const void *s, const void *d, size_t len)
     int c = 0;
 
     while (len-- && !c)
-	c = get_user_char(p1++) - *p2++;
+        c = get_user_char(p1++) - *p2++;
 
     return c;
 }
