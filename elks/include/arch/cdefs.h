@@ -16,6 +16,7 @@
 #ifdef __GNUC__
 #define noreturn        __attribute__((__noreturn__))
 #define stdcall         __attribute__((__stdcall__))
+#define restrict        __restrict
 #define printfesque(n)  __attribute__((__format__(__gnu_printf__, n, n + 1)))
 #define noinstrument    __attribute__((no_instrument_function))
 #define __wcfar

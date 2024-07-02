@@ -34,7 +34,7 @@
 
 int permission(register struct inode *inode, int mask)
 {
-    __u16 mode = inode->i_mode;
+    mode_t mode = inode->i_mode;
     int error = -EACCES;
 
     if (mask & MAY_WRITE) {     /* disallow writing over running programs */
@@ -59,7 +59,7 @@ int permission(register struct inode *inode, int mask)
             mode >>= 6;
         else if (in_group_p(inode->i_gid))
             mode >>= 3;
-        if (((mode & mask & 0007) == (__u16) mask) || suser())
+        if (((mode & mask & 0007) == (unsigned)mask) || suser())
             error = 0;
     }
     return error;

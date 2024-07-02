@@ -186,7 +186,7 @@ void minix_free_inode(register struct inode *inode)
     }
 }
 
-struct inode *minix_new_inode(struct inode *dir, __u16 mode)
+struct inode *minix_new_inode(struct inode *dir, mode_t mode)
 {
     struct inode *inode;
     struct super_block *sb;

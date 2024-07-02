@@ -293,7 +293,7 @@ static void read_inode(register struct inode *inode)
     unlock_inode(inode);
 }
 
-struct inode *new_inode(register struct inode *dir, __u16 mode)
+struct inode *new_inode(register struct inode *dir, mode_t mode)
 {
     register struct inode *inode;
 

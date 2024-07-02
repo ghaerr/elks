@@ -132,10 +132,8 @@ int minix_lookup(register struct inode *dir, const char *name, size_t len,
  *
  */
 
-static int minix_add_entry(register struct inode *dir,
-			   char *name,
-			   size_t namelen,
-			   ino_t ino)
+static int minix_add_entry(register struct inode *dir, char *name,
+			   size_t namelen, ino_t ino)
 {
     unsigned short offset;
     register struct buffer_head *bh;
@@ -196,7 +194,7 @@ int minix_create(register struct inode *dir, char *name, size_t len,
 
 /*    dir != NULL always, because reached this function dereferencing dir */
     /*if (!dir) error = -ENOENT;
-    else */if (!(inode = minix_new_inode(dir, (__u16)mode))) error = -ENOSPC;
+    else */if (!(inode = minix_new_inode(dir, mode))) error = -ENOSPC;
     else {
 /*----------------------------------------------------------------------*/
 /*----------------------------------------------------------------------*/
@@ -231,7 +229,7 @@ int minix_mknod(register struct inode *dir, char *name, size_t len,
 	goto mknod2;
     }
     error = -ENOSPC;
-    inode = minix_new_inode(dir, (__u16)mode);
+    inode = minix_new_inode(dir, mode);
     if (!inode) goto mknod2;
 /*----------------------------------------------------------------------*/
     if (S_ISBLK(mode) || S_ISCHR(mode)) inode->i_rdev = to_kdev_t(rdev);
@@ -268,7 +266,7 @@ int minix_mkdir(register struct inode *dir, char *name, size_t len, int mode)
 	goto mkdir2;
     }
     error = -ENOSPC;
-    inode = minix_new_inode(dir, (__u16)mode);
+    inode = minix_new_inode(dir, mode);
     if (!inode) goto mkdir2;
 /*--------------------------------------------------------------------------------*/
     debug("m_mkdir: new_inode succeeded\n");
