@@ -107,15 +107,15 @@ struct task_struct {
 //#define DEPRECATED    __attribute__ ((deprecated))
 
 /* We use typedefs to avoid using struct foobar (*) */
-typedef struct task_struct __task, *__ptask;
+typedef struct task_struct *__ptask;
 
-extern __task *task;
-extern __task *next_task_slot;
+extern __ptask task;
+extern __ptask current;
+extern __ptask next_task_slot;
 extern int max_tasks;
 extern int task_slots_unused;
 
 extern volatile jiff_t jiffies; /* ticks updated by the timer interrupt*/
-extern __ptask current;
 extern pid_t last_pid;
 extern int intr_count;
 
