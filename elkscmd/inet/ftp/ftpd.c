@@ -617,12 +617,13 @@ int main(int argc, char **argv) {
 		} else 
 			myport = atoi(argv[0]);
 	}
+#if 0 /* FIXME temporarily remove as ftpd hangs on start with QEMU=1 */
 	if ((cp = getenv("QEMU")) != NULL) {
 		qemu = atoi(cp);
 		//printf("QEMU set to %d\n", qemu);
 		if (qemu) debug++;	//FIXME: Temporary - for debugging
 	}
-		
+#endif
 	if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		perror("socket error");
 		exit(1);
