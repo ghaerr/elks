@@ -533,14 +533,15 @@ static void finalize_exec(struct inode *inode, segment_s *seg_code, segment_s *s
             seg_put(currentp->mm[i]);
     }
 
-    if (multisegment) {
 #ifdef CONFIG_EXEC_OS2
+    if (multisegment) {
         for (i = 0; i < MAX_SEGS; i++) {
             currentp->mm[i] = mm_table[i];
             mm_table[i] = 0;
         }
+    } else
 #endif
-    } else {
+    {
         currentp->mm[SEG_CODE] = seg_code;
         currentp->mm[SEG_DATA] = seg_data;
     }
@@ -549,7 +550,7 @@ static void finalize_exec(struct inode *inode, segment_s *seg_code, segment_s *s
     currentp->t_regs.ss = currentp->t_regs.es = currentp->t_regs.ds = seg_data->base;
     currentp->t_regs.sp = currentp->t_begstack;
 
-    /* help libc malloc with even start break address */
+    /* An even start break address speeds up libc malloc/sbrk */
     currentp->t_endbrk =  (currentp->t_enddata + 1) & ~1;
 
     /* argv and envp are two NULL-terminated arrays of pointers, located
