@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 #
-# ewcc - OpenWatcom wcc script for ELKS
+# ewcc - OpenWatcom owcc/wcc script for ELKS
 #
-# Usage: ewcc filename.c
+# Usage: ewcc [-{owcc option}] [--{option}(wcc -Wc,option)] file.c
 #   produces filename.obj
 #
-# 3 Jun 2024 Compact model only for now
+# 3 Jun 2024 Initial version
+# 3 Jul 2024 Added -options for owcc and --options for wcc
 #
 set -e
 
@@ -27,13 +28,6 @@ if [ -z "$WATDIR" ]
     exit
 fi
 
-if [ $# -eq 0 ]
-  then
-    echo "Usage: ewcc <filename>.c"
-    exit
-fi
-
-PROG=$1
 ELKSLIBCINCLUDE=$TOPDIR/libc/include
 ELKSINCLUDE=$TOPDIR/elks/include
 WATCINCLUDE=$WATDIR/bld/hdr/dos/h
@@ -64,6 +58,29 @@ CCFLAGS="\
     -I$ELKSINCLUDE                  \
     -I$WATCINCLUDE                  \
     "
+
+while true; do
+  case "$1" in
+    --*)
+        a=${1:1}
+        echo "Adding -Wc,$a"
+        CCFLAGS="$CCFLAGS -Wc,$a"
+        shift ;;
+    -*)
+        echo "Adding $1"
+        CCFLAGS="$CCFLAGS $1"
+        shift ;;
+    *)  break ;;
+  esac
+done
+
+if [ $# -eq 0 ]
+  then
+    echo "Usage: ewcc [-{owcc option}] [--{option}(wcc -Wc,option)] file.c"
+    exit
+fi
+
+PROG=$1
 
 owcc -v -c -Wall -Wextra -Os $CCFLAGS -o ${PROG%.c}.obj $PROG
 

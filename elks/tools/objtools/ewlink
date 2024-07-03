@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 #
-# ewlink - OpenWatcom wlink script for ELKS
+# ewlink - OpenWatcom owcc/wlink script for ELKS
 #
-# Usage: ewlink file1.obj file2.obj ...
+# Usage: ewlink [--heap N] [--stack N] [-{owcc option}] file1.obj file2.obj ...
 #   produces file1.os2 (for OS/2) and file1 (for ELKS)
 #
-# 3 Jun 2024 Compact model only for now
+# 3 Jun 2024 Initial version
+# 3 Jul 2024 Added -options for owcc and --options for wlink
 #
 set -e
 
@@ -24,12 +25,6 @@ fi
 if [ -z "$WATDIR" ]
   then
     echo "WATDIR= environment variable not set to Watcom source directory"
-    exit
-fi
-
-if [ $# -eq 0 ]
-  then
-    echo "Usage: ewcc <filename>.c"
     exit
 fi
 
@@ -77,6 +72,29 @@ LDFLAGS="\
     -Wl,option -Wl,stack=0x1000     \
     -Wl,option -Wl,heapsize=0x1000  \
     "
+
+while true; do
+  case "$1" in
+    --stack)
+        LDFLAGS="$LDFLAGS -Wl,option -Wl,stack=$2"
+        shift
+        shift ;;
+    --heap)
+        LDFLAGS="$LDFLAGS -Wl,option -Wl,heapsize=$2"
+        shift
+        shift ;;
+    -*)
+        LDFLAGS="$LDFLAGS $1"
+        shift ;;
+    *)  break ;;
+  esac
+done
+
+if [ $# -eq 0 ]
+  then
+    echo "Usage: ewlink [--heap N] [--stack N] [-{owcc option}] file1.obj file2.obj ..."
+    exit
+fi
 
 PROG=$1
 OUT=${PROG%.obj}
