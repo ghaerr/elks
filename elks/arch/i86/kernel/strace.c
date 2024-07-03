@@ -96,7 +96,6 @@ pscl:
 static void check_kstack(int n)
 {
     int i;
-    __ptask currentp = current;
     struct sc_info *s;
     const char *warning = "";
     static int max;
@@ -113,19 +112,19 @@ static void check_kstack(int n)
         printk("ISTACK NEW MAX %d\n", maxistack);
     }
 
-    s = syscall_info(currentp->t_regs.orig_ax);
+    s = syscall_info(current->t_regs.orig_ax);
     if (s == &notimp)
-        printk("KSTACK(%P) syscall %d NOTIMP\n", currentp->t_regs.orig_ax);
+        printk("KSTACK(%P) syscall %d NOTIMP\n", current->t_regs.orig_ax);
     if (n >= KSTACK_BYTES - KSTACK_GUARD)
         warning = " (OVERFLOW AT " str(KSTACK_BYTES) ")";
-    if (n > currentp->kstack_max) {
-        currentp->kstack_prevmax = currentp->kstack_max;
-        currentp->kstack_max = n;
+    if (n > current->kstack_max) {
+        current->kstack_prevmax = current->kstack_max;
+        current->kstack_max = n;
         if (n > max)
             max = n;
-        if (currentp->kstack_prevmax != 0) {
+        if (current->kstack_prevmax != 0) {
             printk("KSTACK(%P) sys_%7s max %3d prevmax %3d sysmax %3d%s", s->s_name,
-                currentp->kstack_max, currentp->kstack_prevmax, max, warning);
+                current->kstack_max, current->kstack_prevmax, max, warning);
             if (n == max) printk("*");
             printk("\n");
         }
@@ -155,12 +154,11 @@ void trace_begin(void)
  */
 void trace_end(unsigned int retval)
 {
-    __ptask currentp = current;
     int n;
     static int max;
 
     /* Check for kernel stack overflow */
-    if (currentp->kstack_magic != KSTACK_MAGIC) {
+    if (current->kstack_magic != KSTACK_MAGIC) {
         printk("KSTACK(%P) KERNEL STACK OVERFLOW\n");
         do_exit(SIGSEGV);
     }
@@ -169,7 +167,7 @@ void trace_end(unsigned int retval)
 #if defined(CONFIG_STRACE) || defined(CHECK_KSTACK)
     if (tracing & (TRACE_STRACE|TRACE_KSTACK)) {
         for (; n<KSTACK_BYTES/2; n++) {
-        if (currentp->t_kstack[n] != 0x5555)
+        if (current->t_kstack[n] != 0x5555)
                 break;
         }
         n = (KSTACK_BYTES/2 - n) << 1;
@@ -178,7 +176,7 @@ void trace_end(unsigned int retval)
 #endif
 
     if (tracing & TRACE_STRACE) {
-        struct sc_info *s = syscall_info(currentp->t_regs.orig_ax);
+        struct sc_info *s = syscall_info(current->t_regs.orig_ax);
         printk("[%P:%s/ret=%d,ks=%d/%d]\n", s->s_name, retval, n, max);
     }
     if (tracing & TRACE_KSTACK)

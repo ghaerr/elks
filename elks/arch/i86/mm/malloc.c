@@ -234,30 +234,28 @@ void mm_get_usage (unsigned int * pfree, unsigned int * pused)
 
 int sys_brk(segoff_t newbrk)
 {
-    register __ptask currentp = current;
-
 	/***unsigned int memfree, memused;
 	mm_get_usage(&memfree, &memused);
 	printk("brk(%P): new %x, edat %x, ebrk %x, free %x sp %x, eseg %x, %d/%dK\n",
-		newbrk, currentp->t_enddata, currentp->t_endbrk,
-		currentp->t_regs.sp - currentp->t_endbrk,
-		currentp->t_regs.sp, currentp->t_endseg, memfree, memused);***/
+		newbrk, current->t_enddata, current->t_endbrk,
+		current->t_regs.sp - current->t_endbrk,
+		current->t_regs.sp, current->t_endseg, memfree, memused);***/
 
-    if (newbrk < currentp->t_enddata)
+    if (newbrk < current->t_enddata)
         return -ENOMEM;
 
-    if (currentp->t_begstack > currentp->t_endbrk) {				/* stack above heap?*/
-        if (newbrk > currentp->t_begstack - currentp->t_minstack) {
+    if (current->t_begstack > current->t_endbrk) {				/* stack above heap?*/
+        if (newbrk > current->t_begstack - current->t_minstack) {
 			printk("sys_brk(%d) fail: brk %x over by %u bytes\n",
-				currentp->pid, newbrk, newbrk - (currentp->t_begstack - currentp->t_minstack));
+				current->pid, newbrk, newbrk - (current->t_begstack - current->t_minstack));
             return -ENOMEM;
 		}
     }
 #ifdef CONFIG_EXEC_LOW_STACK
-    if (newbrk > currentp->t_endseg)
+    if (newbrk > current->t_endseg)
         return -ENOMEM;
 #endif
-    currentp->t_endbrk = newbrk;
+    current->t_endbrk = newbrk;
 
     return 0;
 }

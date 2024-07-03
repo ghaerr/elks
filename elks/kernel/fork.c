@@ -37,11 +37,10 @@ static pid_t get_pid(void)
 struct task_struct *find_empty_process(void)
 {
     register struct task_struct *t;
-    register struct task_struct *currentp = current;
 
     if (task_slots_unused <= 1) {
         printk("Only %d task slots\n", task_slots_unused);
-        if (!task_slots_unused || currentp->uid)
+        if (!task_slots_unused || current->uid)
             return NULL;
     }
     t = next_task_slot;
@@ -51,7 +50,7 @@ struct task_struct *find_empty_process(void)
     }
     next_task_slot = t;
     task_slots_unused--;
-    *t = *currentp;
+    *t = *current;
     t->state = TASK_UNINTERRUPTIBLE;
     t->pid = get_pid();
 #ifdef CONFIG_CPU_USAGE
@@ -151,7 +150,6 @@ pid_t sys_vfork(void)
 #if 1
     return do_fork(0);
 #else
-    register __ptask currentp = current;
     int retval, sc[5];
 
     if ((retval = do_fork(1)) >= 0) {
@@ -164,16 +162,16 @@ pid_t sys_vfork(void)
          * first few bytes at the top of the user stack. Save those
          * bytes in the parent's kernel stack.
          */
-        memcpy_fromfs(sc, (void *)currentp->t_regs.sp, sizeof(sc));
+        memcpy_fromfs(sc, (void *)current->t_regs.sp, sizeof(sc));
         /*
          * Let the child go on first.
          */
-        sleep_on(&currentp->child_wait);
+        sleep_on(&current->child_wait);
         /*
          * By now, the child should have its own user stack. Restore
          * the parent's user stack.
          */
-        memcpy_tofs((void *)currentp->t_regs.sp, sc, sizeof(sc));
+        memcpy_tofs((void *)current->t_regs.sp, sc, sizeof(sc));
     }
     return retval;
 #endif

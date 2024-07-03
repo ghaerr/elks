@@ -36,9 +36,10 @@ int permission(register struct inode *inode, int mask)
 {
     mode_t mode = inode->i_mode;
     int error = -EACCES;
+    struct task_struct *p;
 
     if (mask & MAY_WRITE) {     /* disallow writing over running programs */
-        __ptask p = &task[0];
+        p = &task[0];
         do {
             if (p->state <= TASK_STOPPED && (p->t_inode == inode))
                 return -EBUSY;

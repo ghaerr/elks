@@ -61,8 +61,8 @@ void schedule(void)
 {
     register __ptask prev;
     register __ptask next;
-    struct timer_list timer;
     jiff_t timeout = 0UL;
+    struct timer_list timer;
 
     prev = current;
 
