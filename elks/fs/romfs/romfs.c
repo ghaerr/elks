@@ -158,7 +158,7 @@ static int romfs_readlink (struct inode * inode, char * buf, size_t len)
 
 
 static int romfs_followlink (struct inode * dir, register struct inode * inode,
-	int flag, int mode, struct inode ** res_inode)
+	int flag, mode_t mode, struct inode ** res_inode)
 {
 	int err;
 

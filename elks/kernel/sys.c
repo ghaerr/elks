@@ -97,12 +97,10 @@ int sys_uname(struct utsname *utsname)
 
 int sys_setgid(gid_t gid)
 {
-    register __ptask currentp = current;
-
     if (suser())
-	currentp->gid = currentp->egid = currentp->sgid = gid;
-    else if ((gid == currentp->gid) || (gid == currentp->sgid))
-	currentp->egid = gid;
+	current->gid = current->egid = current->sgid = gid;
+    else if ((gid == current->gid) || (gid == current->sgid))
+	current->egid = gid;
     else
 	return -EPERM;
     return 0;
@@ -130,13 +128,12 @@ pid_t sys_getpid(int *ppid)
     return twovalues(current->pid, (int *)&current->ppid, ppid);
 }
 
-unsigned short int sys_umask(unsigned short int mask)
+unsigned short int sys_umask(mode_t mask)
 {
-    register __ptask currentp = current;
-    unsigned short int old;
+    mode_t old;
 
-    old = currentp->fs.umask;
-    currentp->fs.umask = mask & ((unsigned short int) S_IRWXUGO);
+    old = current->fs.umask;
+    current->fs.umask = mask & S_IRWXUGO;
     return old;
 }
 
@@ -154,12 +151,10 @@ unsigned short int sys_umask(unsigned short int mask)
 
 int sys_setuid(uid_t uid)
 {
-    register __ptask currentp = current;
-
     if (suser())
-	currentp->uid = currentp->euid = currentp->suid = uid;
-    else if ((uid == currentp->uid) || (uid == currentp->suid))
-	currentp->euid = uid;
+	current->uid = current->euid = current->suid = uid;
+    else if ((uid == current->uid) || (uid == current->suid))
+	current->euid = uid;
     else
 	return -EPERM;
     return 0;
@@ -167,15 +162,13 @@ int sys_setuid(uid_t uid)
 
 int sys_setsid(void)
 {
-    register __ptask currentp = current;
-
-    if (currentp->session == currentp->pid)
+    if (current->session == current->pid)
 	return -EPERM;
     debug_tty("SETSID pgrp %P\n");
-    currentp->session = currentp->pgrp = currentp->pid;
-    currentp->tty = NULL;
+    current->session = current->pgrp = current->pid;
+    current->tty = NULL;
 
-    return currentp->pgrp;
+    return current->pgrp;
 }
 
 #if UNUSED

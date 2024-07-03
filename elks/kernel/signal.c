@@ -39,13 +39,12 @@ static void generate(sig_t sig, sigset_t msksig, register struct task_struct *p)
 
 int send_sig(sig_t sig, register struct task_struct *p, int priv)
 {
-    register __ptask currentp = current;
     sigset_t msksig;
 
     if (sig != SIGCHLD) debug_sig("SIGNAL send_sig %d pid %d\n", sig, p->pid);
-    if (!priv && ((sig != SIGCONT) || (currentp->session != p->session)) &&
-        (currentp->euid ^ p->suid) && (currentp->euid ^ p->uid) &&
-        (currentp->uid ^ p->suid) && (currentp->uid ^ p->uid) && !suser())
+    if (!priv && ((sig != SIGCONT) || (current->session != p->session)) &&
+        (current->euid ^ p->suid) && (current->euid ^ p->uid) &&
+        (current->uid ^ p->suid) && (current->uid ^ p->uid) && !suser())
         return -EPERM;
     msksig = (((sigset_t)1) << (sig - 1));
     if (msksig & (SM_SIGKILL | SM_SIGCONT)) {
@@ -105,7 +104,6 @@ void kill_all(sig_t sig)
 
 int sys_kill(pid_t pid, sig_t sig)
 {
-    register __ptask pcurrent = current;
     register struct task_struct *p;
     int count, err, retval;
 
@@ -116,7 +114,7 @@ int sys_kill(pid_t pid, sig_t sig)
     count = retval = 0;
     if (pid == (pid_t)-1) {
         for_each_task(p)
-            if (p->pid > 1 && p != pcurrent && p->state < TASK_ZOMBIE) {
+            if (p->pid > 1 && p != current && p->state < TASK_ZOMBIE) {
                 count++;
                 if ((err = send_sig(sig, p, 0)) != -EPERM)
                     retval = err;
@@ -124,7 +122,7 @@ int sys_kill(pid_t pid, sig_t sig)
         return (count ? retval : -ESRCH);
     }
     if (pid < 1)
-        return kill_pg((!pid ? pcurrent->pgrp : -pid), sig, 0);
+        return kill_pg((!pid ? current->pgrp : -pid), sig, 0);
     return kill_process(pid, sig, 0);
 }
 

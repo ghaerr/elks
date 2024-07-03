@@ -188,7 +188,7 @@ static int relocate(seg_t place_base, unsigned long rsize, segment_s *seg_code,
 
 static int execve_aout(struct inode *inode, struct file *filp, char *sptr, size_t slen)
 {
-    register __ptask currentp;
+    register struct task_struct *currentp;
     int retval;
     seg_t ds = current->t_regs.ds;
     seg_t base_data = 0;
@@ -524,7 +524,7 @@ static int execve_aout(struct inode *inode, struct file *filp, char *sptr, size_
 static void finalize_exec(struct inode *inode, segment_s *seg_code, segment_s *seg_data,
     word_t entry, int multisegment)
 {
-    __ptask currentp = current;
+    struct task_struct *currentp = current;
     int i, n, v;
 
     /* From this point, the old code and data segments are not needed anymore */

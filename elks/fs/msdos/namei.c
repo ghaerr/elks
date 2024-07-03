@@ -200,7 +200,7 @@ static int FATPROC msdos_create_entry(struct inode *dir,const char *name,int is_
 }
 
 
-int msdos_create(register struct inode *dir,const char *name,int len,int mode,
+int msdos_create(register struct inode *dir,const char *name,size_t len,mode_t mode,
 	struct inode **result)
 {
 	struct buffer_head *bh;
@@ -228,7 +228,7 @@ int msdos_create(register struct inode *dir,const char *name,int len,int mode,
 }
 
 
-int msdos_mkdir(struct inode *dir,const char *name,int len,int mode)
+int msdos_mkdir(struct inode *dir,const const char *name,size_t len,mode_t mode)
 {
 	struct buffer_head *bh;
 	struct msdos_dir_entry *de;

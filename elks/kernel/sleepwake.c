@@ -63,22 +63,18 @@ void finish_wait(struct wait_queue *p)
 
 void wait_set(struct wait_queue *p)
 {
-    register __ptask pcurrent = current;
-
 #ifdef CHECK_SCHED
-    if (pcurrent->waitpt) panic("SCHED: wait_set double wait");
+    if (current->waitpt) panic("SCHED: wait_set double wait");
 #endif
-    pcurrent->waitpt = p;
+    current->waitpt = p;
 }
 
 void wait_clear(struct wait_queue *p)
 {
-    register __ptask pcurrent = current;
-
 #ifdef CHECK_SCHED
-    if (pcurrent->waitpt != p) panic("SCHED: wait_clear wrong waitpt");
+    if (current->waitpt != p) panic("SCHED: wait_clear wrong waitpt");
 #endif
-    pcurrent->waitpt = NULL;
+    current->waitpt = NULL;
 }
 
 static void __sleep_on(register struct wait_queue *p, int state)

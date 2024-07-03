@@ -106,12 +106,9 @@ struct task_struct {
 #define DEPRECATED
 //#define DEPRECATED    __attribute__ ((deprecated))
 
-/* We use typedefs to avoid using struct foobar (*) */
-typedef struct task_struct *__ptask;
-
-extern __ptask task;
-extern __ptask current;
-extern __ptask next_task_slot;
+extern struct task_struct *task;
+extern struct task_struct *current;
+extern struct task_struct *next_task_slot;
 extern int max_tasks;
 extern int task_slots_unused;
 

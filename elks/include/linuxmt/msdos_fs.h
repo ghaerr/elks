@@ -147,9 +147,9 @@ cluster_t FATPROC get_cluster(struct inode *inode, cluster_t cluster);
 
 extern int msdos_lookup(struct inode *dir,const char *name,size_t len,
 	struct inode **result);
-extern int msdos_create(struct inode *dir,const char *name,int len,int mode,
+extern int msdos_create(struct inode *dir,const char *name,size_t len,mode_t mode,
 	struct inode **result);
-extern int msdos_mkdir(struct inode *dir,const char *name,int len,int mode);
+extern int msdos_mkdir(struct inode *dir,const char *name,size_t len,mode_t mode);
 extern int msdos_rmdir(struct inode *dir,const char *name,int len);
 extern int msdos_unlink(struct inode *dir,const char *name,int len);
 extern int msdos_rename(struct inode *old_dir,const char *old_name,int old_len,

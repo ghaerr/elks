@@ -17,9 +17,9 @@
 
 #define idle_task task[0]
 
-__ptask task;           /* dynamically allocated task array */
-__ptask current;
-__ptask previous;
+struct task_struct *task;           /* dynamically allocated task array */
+struct task_struct *current;
+struct task_struct *previous;
 int max_tasks = MAX_TASKS;
 
 void add_to_runqueue(register struct task_struct *p)
@@ -44,7 +44,7 @@ static void del_from_runqueue(register struct task_struct *p)
 
 static void process_timeout(int __data)
 {
-    register struct task_struct *p = (struct task_struct *) __data;
+    struct task_struct *p = (struct task_struct *) __data;
 
     debug_sched("sched: timeout %d\n", p->pid);
     p->timeout = 0UL;
@@ -59,10 +59,10 @@ static void process_timeout(int __data)
 
 void schedule(void)
 {
-    register __ptask prev;
-    register __ptask next;
-    struct timer_list timer;
+    struct task_struct *prev;
+    struct task_struct *next;
     jiff_t timeout = 0UL;
+    struct timer_list timer;
 
     prev = current;
 

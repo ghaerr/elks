@@ -410,7 +410,7 @@ int sys_mount(char *dev_name, char *dir_name, int type, int flags)
     else if (MAJOR(inodep->i_rdev) >= MAX_BLKDEV)
         retval = -ENXIO;
     else
-        retval = open_filp((mode_t)((flags & MS_RDONLY) ? 1 : 3), inodep, &filp);
+        retval = open_filp((flags & MS_RDONLY) ? 1 : 3, inodep, &filp);
     if (retval) {
         iput(inodep);
         return retval;
