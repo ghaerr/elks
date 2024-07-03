@@ -9,7 +9,7 @@
 #include <arch/segment.h>
 
 int task_slots_unused;
-__ptask next_task_slot;
+struct task_struct *next_task_slot;
 pid_t last_pid = -1;
 
 static pid_t get_pid(void)
