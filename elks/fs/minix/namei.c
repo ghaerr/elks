@@ -132,7 +132,7 @@ int minix_lookup(register struct inode *dir, const char *name, size_t len,
  *
  */
 
-static int minix_add_entry(register struct inode *dir, char *name,
+static int minix_add_entry(register struct inode *dir, const char *name,
 			   size_t namelen, ino_t ino)
 {
     unsigned short offset;
@@ -176,7 +176,7 @@ static int minix_add_entry(register struct inode *dir, char *name,
     }
     dir->i_mtime = dir->i_ctime = current_time();
     dir->i_dirt = 1;
-    memcpy_fromfs(de->name, name, namelen);
+    memcpy_fromfs(de->name, (char *)name, namelen);
     if (info->s_namelen > namelen)
 	memset(de->name + namelen, 0, info->s_namelen - namelen);
 
@@ -186,8 +186,8 @@ static int minix_add_entry(register struct inode *dir, char *name,
     return 0;
 }
 
-int minix_create(register struct inode *dir, char *name, size_t len,
-		 int mode, struct inode **result)
+int minix_create(register struct inode *dir, const char *name, size_t len,
+		 mode_t mode, struct inode **result)
 {
     register struct inode *inode = NULL;
     int error;
@@ -211,8 +211,8 @@ int minix_create(register struct inode *dir, char *name, size_t len,
     return error;
 }
 
-int minix_mknod(register struct inode *dir, char *name, size_t len,
-		int mode, int rdev)
+int minix_mknod(register struct inode *dir, const char *name, size_t len,
+		mode_t mode, int rdev)
 {
     int error;
     register struct inode *inode;
@@ -246,7 +246,7 @@ int minix_mknod(register struct inode *dir, char *name, size_t len,
     return error;
 }
 
-int minix_mkdir(register struct inode *dir, char *name, size_t len, int mode)
+int minix_mkdir(register struct inode *dir, const char *name, size_t len, mode_t mode)
 {
     int error;
     register struct inode *inode;

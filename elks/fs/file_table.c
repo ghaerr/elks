@@ -26,7 +26,7 @@ struct file *file_array;    /* dynamically allocated */
  * we run out of memory.
  */
 
-int open_filp(unsigned short flags, struct inode *inode, struct file **fp)
+int open_filp(mode_t flags, struct inode *inode, struct file **fp)
 {
     int result = 0;
     register struct file *f = file_array;
@@ -40,7 +40,7 @@ int open_filp(unsigned short flags, struct inode *inode, struct file **fp)
     }
     memset(f, 0, sizeof(struct file));
     f->f_flags = flags;
-    f->f_mode = (mode_t) ((flags + 1) & O_ACCMODE);
+    f->f_mode = (flags + 1) & O_ACCMODE;
     f->f_count = 1;
 /*  f->f_pos = 0;*/	/* FIXME - should call lseek */
     f->f_inode = inode;
