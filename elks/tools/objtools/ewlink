@@ -22,49 +22,15 @@ if [ -z "$WATCOM" ]
     exit
 fi
 
-if [ -z "$WATDIR" ]
-  then
-    echo "WATDIR= environment variable not set to Watcom source directory"
-    exit
-fi
-
 ELKSLIBC=$TOPDIR/libc
-ELKSLIBCINCLUDE=$TOPDIR/libc/include
-ELKSINCLUDE=$TOPDIR/elks/include
-WATCINCLUDE=$WATDIR/bld/hdr/dos/h
-
-# -fpmath
-# -mabi=cdecl               # push all args
-# -msoft-float              # -Wc,-fpc
-# -Wc,-fpc                  # soft fp
-# -mhard-emu-float          # -Wc,-fpi
-# -Wc,-fpi87                # inline 8087 fp
-# -Wc,-zev                  # enable void arithmetic
-# -std=c99                  # -Wc,-za99
-# -fnonconst-initializers   # -Wc,aa
-
-source $TOPDIR/libc/watcom.model
-
-CCFLAGS="\
-    -bos2                           \
-    -mcmodel=$MODEL                 \
-    -march=i86                      \
-    -std=c99                        \
-    -fno-stack-check                \
-    -Wc,-wcd=303                    \
-    -Wc,-fpi87                      \
-    -Wc,-zev                        \
-    -fnostdlib                      \
-    -I$ELKSLIBCINCLUDE              \
-    -I$ELKSINCLUDE                  \
-    -I$WATCINCLUDE                  \
-    "
 
 # Warning 1008: cannot open os2.lib: No such file or directory
 # Warning 1014: stack segment not found
 
 LDFLAGS="\
-    -bos2 -s                        \
+    -bos2                           \
+    -s                              \
+    -fnostdlib                      \
     -Wl,disable -Wl,1008            \
     -Wl,disable -Wl,1014            \
     -Wl,option -Wl,start=_start_    \
@@ -99,7 +65,7 @@ fi
 PROG=$1
 OUT=${PROG%.obj}
 
-owcc -v -bos2 $CCFLAGS $LDFLAGS -o $OUT.os2 $@ $ELKSLIBC/libc.lib
+owcc -v $LDFLAGS -o $OUT.os2 $@ $ELKSLIBC/libc.lib
 
 # convert to ELKS a.out format
 #os2toelks -f elks -o $OUT $OUT.os2
