@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 #
-# ewlink - OpenWatcom wlink script for ELKS
+# ewlink - OpenWatcom owcc/wlink script for ELKS
 #
-# Usage: ewlink file1.obj file2.obj ...
+# Usage: ewlink [--heap N] [--stack N] [-{owcc option}] file1.obj file2.obj ...
 #   produces file1.os2 (for OS/2) and file1 (for ELKS)
 #
-# 3 Jun 2024 Compact model only for now
+# 3 Jun 2024 Initial version
+# 3 Jul 2024 Added -options for owcc and --options for wlink
 #
 set -e
 
@@ -21,55 +22,15 @@ if [ -z "$WATCOM" ]
     exit
 fi
 
-if [ -z "$WATDIR" ]
-  then
-    echo "WATDIR= environment variable not set to Watcom source directory"
-    exit
-fi
-
-if [ $# -eq 0 ]
-  then
-    echo "Usage: ewcc <filename>.c"
-    exit
-fi
-
 ELKSLIBC=$TOPDIR/libc
-ELKSLIBCINCLUDE=$TOPDIR/libc/include
-ELKSINCLUDE=$TOPDIR/elks/include
-WATCINCLUDE=$WATDIR/bld/hdr/dos/h
-
-# -fpmath
-# -mabi=cdecl               # push all args
-# -msoft-float              # -Wc,-fpc
-# -Wc,-fpc                  # soft fp
-# -mhard-emu-float          # -Wc,-fpi
-# -Wc,-fpi87                # inline 8087 fp
-# -Wc,-zev                  # enable void arithmetic
-# -std=c99                  # -Wc,-za99
-# -fnonconst-initializers   # -Wc,aa
-
-source $TOPDIR/libc/watcom.model
-
-CCFLAGS="\
-    -bos2                           \
-    -mcmodel=$MODEL                 \
-    -march=i86                      \
-    -std=c99                        \
-    -fno-stack-check                \
-    -Wc,-wcd=303                    \
-    -Wc,-fpi87                      \
-    -Wc,-zev                        \
-    -fnostdlib                      \
-    -I$ELKSLIBCINCLUDE              \
-    -I$ELKSINCLUDE                  \
-    -I$WATCINCLUDE                  \
-    "
 
 # Warning 1008: cannot open os2.lib: No such file or directory
 # Warning 1014: stack segment not found
 
 LDFLAGS="\
-    -bos2 -s                        \
+    -bos2                           \
+    -s                              \
+    -fnostdlib                      \
     -Wl,disable -Wl,1008            \
     -Wl,disable -Wl,1014            \
     -Wl,option -Wl,start=_start_    \
@@ -78,10 +39,33 @@ LDFLAGS="\
     -Wl,option -Wl,heapsize=0x1000  \
     "
 
+while true; do
+  case "$1" in
+    --stack)
+        LDFLAGS="$LDFLAGS -Wl,option -Wl,stack=$2"
+        shift
+        shift ;;
+    --heap)
+        LDFLAGS="$LDFLAGS -Wl,option -Wl,heapsize=$2"
+        shift
+        shift ;;
+    -*)
+        LDFLAGS="$LDFLAGS $1"
+        shift ;;
+    *)  break ;;
+  esac
+done
+
+if [ $# -eq 0 ]
+  then
+    echo "Usage: ewlink [--heap N] [--stack N] [-{owcc option}] file1.obj file2.obj ..."
+    exit
+fi
+
 PROG=$1
 OUT=${PROG%.obj}
 
-owcc -v -bos2 $CCFLAGS $LDFLAGS -o $OUT.os2 $@ $ELKSLIBC/libc.lib
+owcc -v $LDFLAGS -o $OUT.os2 $@ $ELKSLIBC/libc.lib
 
 # convert to ELKS a.out format
 #os2toelks -f elks -o $OUT $OUT.os2
