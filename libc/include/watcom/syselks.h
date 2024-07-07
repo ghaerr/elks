@@ -72,7 +72,7 @@ typedef int syscall_res;
 #define SYS_write                 4
 #define SYS_open                  5
 #define SYS_close                 6
-#define SYS_waitpid               7
+#define SYS_wait4                 7
 //#define SYS_creat               8
 #define SYS_link                  9
 #define SYS_unlink               10
