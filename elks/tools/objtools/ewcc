@@ -2,7 +2,7 @@
 #
 # ewcc - OpenWatcom owcc/wcc script for ELKS
 #
-# Usage: ewcc [-{owcc option}] [--{option}(wcc -Wc,option)] file.c
+# Usage: ewcc [-{owcc option}] [--{option}(wcc -Wc,option)] file.c ...
 #   produces filename.obj
 #
 # 3 Jun 2024 Initial version
@@ -29,7 +29,8 @@ if [ -z "$WATDIR" ]
 fi
 
 ELKSLIBCINCLUDE=$TOPDIR/libc/include
-ELKSINCLUDE=$TOPDIR/elks/include
+ELKSINCLUDE1=$TOPDIR/include
+ELKSINCLUDE2=$TOPDIR/elks/include
 WATCINCLUDE=$WATDIR/bld/hdr/dos/h
 
 # owcc options:
@@ -63,7 +64,8 @@ CCFLAGS="\
     -Wall -Wextra                   \
     -Wc,-wcd=303                    \
     -I$ELKSLIBCINCLUDE              \
-    -I$ELKSINCLUDE                  \
+    -I$ELKSINCLUDE1                 \
+    -I$ELKSINCLUDE2                 \
     -I$WATCINCLUDE                  \
     "
 
@@ -84,13 +86,15 @@ done
 
 if [ $# -eq 0 ]
   then
-    echo "Usage: ewcc [-{owcc option}] [--{option}(wcc -Wc,option)] file.c"
+    echo "Usage: ewcc [-{owcc option}] [--{option}(wcc -Wc,option)] file.c ..."
     exit
 fi
 
-PROG=$1
-
-owcc -v -c $CCFLAGS -o ${PROG%.c}.obj $PROG
+for PROG in $@
+do
+    echo owcc -v -c $CCFLAGS -o ${PROG%.c}.obj $PROG
+    owcc -v -c $CCFLAGS -o ${PROG%.c}.obj $PROG
+done
 
 # dump OBJ file
 #omfdump ${PROG%.c}.obj
