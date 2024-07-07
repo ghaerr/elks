@@ -19,13 +19,18 @@ int _8087;              /* when floating point seen */
 #pragma aux cstart_ "_*" modify [ bx cx dx si di ]
 extern void cstart_(void);
 
-noreturn void _exit(int status);
-#pragma aux _exit =         \
+static noreturn void sys_exit(int status);
+#pragma aux sys_exit =         \
     "xchg ax, bx"           \
     "xor ax, ax"            \
     "inc ax"                \
     "int 80h"               \
     __parm [ __ax ];
+
+noreturn void _exit(int status)
+{
+    sys_exit(status);
+}
 
 noreturn void exit(int status)
 {
