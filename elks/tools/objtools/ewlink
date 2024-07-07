@@ -2,7 +2,7 @@
 #
 # ewlink - OpenWatcom owcc/wlink script for ELKS
 #
-# Usage: ewlink [--heap N] [--stack N] [-{owcc option}] file1.obj file2.obj ...
+# Usage: ewlink [-o binary] [--heap N] [--stack N] [-{owcc option}] file1.obj ...
 #   produces file1.os2 (for OS/2) and file1 (for ELKS)
 #
 # 3 Jun 2024 Initial version
@@ -49,6 +49,10 @@ while true; do
         LDFLAGS="$LDFLAGS -Wl,option -Wl,heapsize=$2"
         shift
         shift ;;
+    -o)
+        OUT=$2
+        shift
+        shift ;;
     -*)
         LDFLAGS="$LDFLAGS $1"
         shift ;;
@@ -58,14 +62,18 @@ done
 
 if [ $# -eq 0 ]
   then
-    echo "Usage: ewlink [--heap N] [--stack N] [-{owcc option}] file1.obj file2.obj ..."
+    echo "Usage: ewlink [-o binary] [--heap N] [--stack N] [-{owcc option}] file1.obj ..."
     exit
 fi
 
-PROG=$1
-OUT=${PROG%.obj}
+if [ "$OUT" == "" ]
+  then
+    PROG=$1
+    OUT=${PROG%.obj}.os2
+fi
 
-owcc -v $LDFLAGS -o $OUT.os2 $@ $ELKSLIBC/libc.lib
+echo owcc -v $LDFLAGS -o $OUT $@ $ELKSLIBC/libc.lib
+owcc -v $LDFLAGS -o $OUT $@ $ELKSLIBC/libc.lib
 
 # convert to ELKS a.out format
 #os2toelks -f elks -o $OUT $OUT.os2
