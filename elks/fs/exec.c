@@ -777,7 +777,7 @@ static int execve_os2(struct inode *inode, struct file *filp, char *sptr, size_t
     current->t_enddata = ne_segment_table[os2hdr.auto_data_segment-1].min_alloc;
     current->t_endseg = auto_paras << 4;;
     current->t_begstack = (current->t_endseg - slen) & ~1;
-    current->t_minstack = os2hdr.stack_size;
+    current->t_regs.dx = current->t_minstack = os2hdr.stack_size;
 
     debug_os2("t_endseg %04x, t_begstack %04x\n", current->t_endseg, current->t_begstack);
     debug_os2("fmemcpy %04x:%04x <- %d\n", seg_data->base, current->t_begstack, slen);

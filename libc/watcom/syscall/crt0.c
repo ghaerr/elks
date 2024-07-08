@@ -51,6 +51,16 @@ int __argc;
 char **__argv;
 char *__program_filename;
 char **environ;
+unsigned int __stacklow;
+
+static unsigned int _SP(void);
+#pragma aux _SP = __value [__sp]
+
+/* called by alloca() to check stack available */
+unsigned int stackavail(void)
+{
+    return (_SP() - __stacklow);
+}
 
 #pragma aux premain "*" modify [ bx cx dx si di ]
 #if defined(__SMALL__) || defined(__MEDIUM__)
@@ -83,9 +93,13 @@ static noreturn void premain(char __near *newsp, char __near *oldsp, int bx, int
 }
 #endif
 
+/* DX contains program stack size at startup */
 noreturn static void _crt0(void);
 #if defined(__SMALL__) || defined(__MEDIUM__)
 #pragma aux _crt0 =         \
+    "mov ax,sp"             \
+    "sub ax,dx"             \
+    "mov word ptr __stacklow, ax"   \
     "pop ax"                \
     "mov word ptr __argc, ax"       \
     "mov bx, sp"            \
@@ -102,6 +116,9 @@ noreturn static void _crt0(void);
     "call premain";
 #else
 #pragma aux _crt0 =         \
+    "mov ax,sp"             \
+    "sub ax,dx"             \
+    "mov word ptr __stacklow, ax"   \
     "pop ax"                \
     "mov word ptr __argc, ax"       \
     "mov bx, sp"            \
