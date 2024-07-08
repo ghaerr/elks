@@ -35,5 +35,5 @@
 pid_t setsid( void )
 {
     syscall_res res = sys_call0( SYS_setsid );
-    __syscall_return( int, res );
+    __syscall_return( pid_t, res );
 }
