@@ -43,10 +43,10 @@ int _sbrk(int increment, void **pnewbrk);       /* syscall */
 int close (int fildes);
 int dup (int fildes);
 int dup2 (int oldfd, int newfd);
-int execl(const char *fname, const char *arg1, ...);
-int execle(const char *fname, const char *arg0, ...);
-int execlp(const char *fname, const char *arg0, ...);
-int execlpe(const char *fname, const char *arg0, ...);
+int execl(const char *fname, const char *arg0, ... /*, (char *)0 */);
+int execle(const char *fname, const char *arg0, ... /*, (char *)0, char *envp[] */);
+int execlp(const char *fname, const char *arg0, ... /*, (char *)0 */);
+int execlpe(const char *fname, const char *arg0, ... /*, (char *)0, char *envp[] */);
 int execv(const char *fname, char **argv);
 int execve(const char *fname, char **argv, char **envp);
 int execvp(const char *fname, char **argv);

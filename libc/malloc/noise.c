@@ -17,7 +17,7 @@ phex(unsigned int val)
 }
 
 void
-__noise(char *y, mem * x)
+__noise(char *y, mem __wcnear *x)
 {
     int saved_errno = errno;
     write(2, "Malloc ", 7);
