@@ -22,16 +22,16 @@
  * circular list of all the free blocks in memory
  */
 
-static mem *chunk_list = 0;
+static mem __wcnear *chunk_list = 0;
 
 /*
  * This function takes a pointer to a block of memory and inserts it into
  * the chain of memory chunks
  */
 static void
-__insert_chunk(mem *mem_chunk)
+__insert_chunk(mem __wcnear *mem_chunk)
 {
-   register mem *p1, *p2;
+   register mem __wcnear *p1, __wcnear *p2;
    if (chunk_list == 0)		/* Simple case first */
    {
       chunk_list = mem_chunk;
@@ -129,10 +129,10 @@ __insert_chunk(mem *mem_chunk)
  * when found, if the chunk is too big it'll be split, and pointer to the
  * chunk returned. If none is found NULL is returned.
  */
-static mem *
+static mem __wcnear *
 __search_chunk(unsigned int mem_size)
 {
-   register mem *p1, *p2;
+   register mem __wcnear *p1, __wcnear *p2;
    if (chunk_list == 0)		/* Simple case first */
       return 0;
 
@@ -187,7 +187,7 @@ __search_chunk(unsigned int mem_size)
 void *
 malloc(size_t size)
 {
-   register mem *ptr = 0;
+   register mem __wcnear *ptr = 0;
    register unsigned int sz;
 
    if (size == 0)

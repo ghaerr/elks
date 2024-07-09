@@ -21,11 +21,11 @@ void *alloca(size_t);
 /* remove __MINI_MALLOC__ and always use real malloc for libc routines*/
 //#define __MINI_MALLOC__
 
-void *__mini_malloc(size_t size);
+void __wcnear *__mini_malloc(size_t size);
 #endif
 
 #ifdef __MINI_MALLOC__
-extern void *(*__alloca_alloc)(size_t);
+extern void __wcnear *(*__alloca_alloc)(size_t);
 #define malloc(x) ((*__alloca_alloc)(x))
 #endif
 
