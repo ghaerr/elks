@@ -4,7 +4,7 @@
 
 #include "_malloc.h"
 
-void *
+void __wcnear *
 __mini_malloc(size_t size)
 {
 	mem *ptr;
@@ -34,5 +34,5 @@ __mini_malloc(size_t size)
 
 	m_size(ptr) = size;
 	__noise("CREATE", ptr);
-	return ptr + 1;
+	return (void __wcnear *)(ptr + 1);
 }

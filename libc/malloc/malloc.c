@@ -129,7 +129,7 @@ __insert_chunk(mem __wcnear *mem_chunk)
  * when found, if the chunk is too big it'll be split, and pointer to the
  * chunk returned. If none is found NULL is returned.
  */
-static mem *
+static mem __wcnear *
 __search_chunk(unsigned int mem_size)
 {
    register mem __wcnear *p1, __wcnear *p2;
