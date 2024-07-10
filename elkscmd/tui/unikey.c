@@ -16,7 +16,6 @@
 #define CHECK_MOUSE     1       /* =1 to validate ANSI mouse sequences */
 #define DEBUG           1       /* =1 for keyname() */
 #define ESC             27
-#define unreachable
 
 static char scroll_reverse = 0; /* report reversed scroll wheel direction */
 int kDoubleClickTime = 200;
@@ -333,7 +332,7 @@ int readansi(int fd, char *buf, int size) {
         continue;
       }
       if (rc == -1 && errno == EAGAIN) {    /* Linux may return EAGAIN on fn key seq */
-#ifndef __ia16__
+#if !ELKS
         struct pollfd pfd[1];
         pfd[0].fd = fd;
         pfd[0].events = POLLIN;

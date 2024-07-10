@@ -84,9 +84,11 @@ int mvaddch(int,int,int);
 int addch(int);
 
 typedef struct screen {
+    int owc;    /* not used, non-null struct required for Watcom */
 } SCREEN;
 
 typedef struct window {
+    int owc;    /* not used, non-null struct required for Watcom */
 } WINDOW;
 
 typedef int chtype;

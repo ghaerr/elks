@@ -56,24 +56,24 @@ void showheap(void);
 #define NULL 0
 #endif
 #define testbusy(p) ((INT)(p)&BUSY)
-#define setbusy(p) (union store *)((INT)(p)|BUSY)
-#define clearbusy(p) (union store *)((INT)(p)&~BUSY)
+#define setbusy(p) (union store __wcnear *)((INT)(p)|BUSY)
+#define clearbusy(p) (union store __wcnear *)((INT)(p)&~BUSY)
 
 union store {
-	union store *ptr;
+	union store __wcnear *ptr;
 	ALIGN dummy[NALIGN];
 	int calloc;	/*calloc clears an array of integers*/
 };
 
-static	union store allocs[2];	/*initial arena*/
-static	union store *allocp;	/*search ptr*/
-static	union store *alloct;	/*arena top*/
-static	union store *allocx;	/*for benefit of realloc*/
+static	union store allocs[2];	        /*initial arena*/
+static	union store __wcnear *allocp;	/*search ptr*/
+static	union store __wcnear *alloct;	/*arena top*/
+static	union store __wcnear *allocx;	/*for benefit of realloc*/
 
 void *
 malloc(size_t nbytes)
 {
-	register union store *p, *q;
+	register union store __wcnear *p, __wcnear *q;
 	int nw, temp;
 
 debug("malloc(%d) %d ", getpid(), nbytes);
@@ -81,10 +81,10 @@ debug("malloc(%d) %d ", getpid(), nbytes);
 		return NULL;	/* ANSI std */
 
 	if(allocs[0].ptr==0) {	/*first time*/
-		allocs[0].ptr = setbusy(&allocs[1]);
-		allocs[1].ptr = setbusy(&allocs[0]);
-		alloct = &allocs[1];
-		allocp = &allocs[0];
+		allocs[0].ptr = setbusy((union store __wcnear *)&allocs[1]);
+		allocs[1].ptr = setbusy((union store __wcnear *)&allocs[0]);
+		alloct = (union store __wcnear *)&allocs[1];
+		allocp = (union store __wcnear *)&allocs[0];
 	}
 	nw = (nbytes+WORD+WORD-1)/WORD;			/* extra word for link ptr/size*/
 	ASSERT(allocp>=allocs && allocp<=alloct);
@@ -118,7 +118,7 @@ debug("malloc(%d) %d ", getpid(), nbytes);
 			temp = nw;
 
 		/* ensure next sbrk returns even address*/
-		q = (union store *)sbrk(0);
+		q = (union store __wcnear *)sbrk(0);
 		if((INT)q & (sizeof(union store) - 1))
 			sbrk(4 - ((INT)q & (sizeof(union store) - 1)));
 
@@ -128,7 +128,7 @@ debug("malloc(%d) %d ", getpid(), nbytes);
 			return(NULL);
 		}
 
-		q = (union store *)sbrk(temp*WORD);
+		q = (union store __wcnear *)sbrk(temp*WORD);
 		if((INT)q == -1) {
 			showheap();
 			return(NULL);
@@ -159,7 +159,7 @@ debug("= %x\n", p);
 void
 free(void *ptr)
 {
-	register union store *p = (union store *)ptr;
+	register union store __wcnear *p = (union store __wcnear *)ptr;
 
 	if (p == NULL)
 		return;
@@ -180,9 +180,9 @@ debug("free(%d) %x\n", getpid(), p-1);
 void *
 realloc(void *ptr, size_t nbytes)
 {
-	register union store *p = ptr;
-	register union store *q;
-	union store *s, *t;
+	register union store __wcnear *p = (union store __wcnear *)ptr;
+	register union store __wcnear *q;
+	union store __wcnear *s, __wcnear *t;
 	register unsigned nw;
 	unsigned onw;
 
@@ -194,7 +194,7 @@ debug("realloc(%d) %x %d ", getpid(), p-1, nbytes);
 	if(testbusy(p[-1].ptr))
 		free(p);
 	onw = p[-1].ptr - p;
-	q = (union store *)malloc(nbytes);
+	q = (union store __wcnear *)malloc(nbytes);
 	if(q==NULL || q==p)
 		return((void *)q);
 
@@ -244,13 +244,13 @@ allock(void)
 void
 showheap(void)
 {
-	register union store *p;
+	register union store __wcnear *p;
 	int n = 1;
 	int size, alloc = 0, free = 0;
 
 	printf("HEAP LIST\n");
 	allock();
-	for(p=&allocs[0]; clearbusy(p->ptr) > p; p=clearbusy(p->ptr)) {
+	for(p = (union store __wcnear *)&allocs[0]; clearbusy(p->ptr) > p; p=clearbusy(p->ptr)) {
 		size = (int)clearbusy(p->ptr) - (int)clearbusy(p) - 2;
 		printf("%d: %04x size %d", n, (int)p+2, size);
 		if (!testbusy(p->ptr)) {
