@@ -83,12 +83,13 @@ void mvcur(int,int,int,int);
 int mvaddch(int,int,int);
 int addch(int);
 
+/* structure contents unused, only typedefs needed */
 typedef struct screen {
-    int owc;    /* not used, non-null struct required for Watcom */
+    int unused;
 } SCREEN;
 
 typedef struct window {
-    int owc;    /* not used, non-null struct required for Watcom */
+    int unused;
 } WINDOW;
 
 typedef int chtype;

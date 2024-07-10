@@ -31,15 +31,29 @@
  *     0x08000000       27       27       28       27        4
  *     0xffffffff        0        0        1       31        0
  *
- * @param x is a 32-bit integer
+ * @param x is a 32-bit integer (16-bit for ELKS)
  * @return number in range 0..31 or undefined if 𝑥 is 0
  */
-int bsr(int x) {
+
+#ifdef __GNUC__
+int bsr(int x)
+{
+    if (x == 0) return 0;   /* avoid incorrect result of 31 returned! */
+    return (__builtin_clz(x) ^ ((sizeof(int) * 8) - 1));
+}
+
+#else
+
+int bsr(int x)
+{
   int r = 0;
-  /*if(x & 0xFFFF0000u) { x >>= 16; r |= 16; } */
+#if !ELKS
+  if(x & 0xFFFF0000u) { x >>= 16; r |= 16; }
+#endif
   if(x & 0xFF00) { x >>= 8; r |= 8; }
   if(x & 0xF0) { x >>= 4; r |= 4; }
   if(x & 0xC) { x >>= 2; r |= 2; }
   if(x & 0x2) { r |= 1; }
   return r;
 }
+#endif
