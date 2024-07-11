@@ -83,10 +83,13 @@ void mvcur(int,int,int,int);
 int mvaddch(int,int,int);
 int addch(int);
 
+/* structure contents unused, only typedefs needed */
 typedef struct screen {
+    int unused;
 } SCREEN;
 
 typedef struct window {
+    int unused;
 } WINDOW;
 
 typedef int chtype;

@@ -25,14 +25,14 @@
 *
 *  ========================================================================
 *
-* Description:  ELKS getuid() implementation.
+* Description:  ELKS _getuid() implementation.
 *
 ****************************************************************************/
 
 #include <unistd.h>
 #include "watcom/syselks.h"
 
-gid_t _getuid( int *euid)
+gid_t _getuid( int *euid )
 {
     sys_setseg(euid);
     syscall_res res = sys_call1( SYS_getuid, (unsigned)euid );

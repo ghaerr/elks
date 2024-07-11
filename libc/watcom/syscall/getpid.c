@@ -25,16 +25,16 @@
 *
 *  ========================================================================
 *
-* Description:  ELKS _getgid() implementation.
+* Description:  ELKS _getpid() implementation.
 *
 ****************************************************************************/
 
 #include <unistd.h>
 #include "watcom/syselks.h"
 
-gid_t _getgid( int *egid )
+pid_t _getpid( int *ppid )
 {
-    sys_setseg(egid);
-    syscall_res res = sys_call1( SYS_getgid, (unsigned)egid );
-    __syscall_return( gid_t, res );
+    sys_setseg(ppid);
+    syscall_res res = sys_call1( SYS_getpid, (unsigned)ppid );
+    __syscall_return( pid_t, res );
 }

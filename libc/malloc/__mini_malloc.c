@@ -7,7 +7,7 @@
 void __wcnear *
 __mini_malloc(size_t size)
 {
-	mem *ptr;
+	mem __wcnear *ptr;
 	size_t sz;
 
 	/* First time round this _might_ be odd, But we won't do that! */
@@ -15,11 +15,8 @@ __mini_malloc(size_t size)
 	if(sz & (sizeof(mem) - 1))
 		sbrk(4 - (sz & (sizeof(mem) - 1)));
 
-	if ((int)size <= 0)
-		return 0;
-
 	/* Minor oops here, sbrk has a signed argument */
-	if(size > (((unsigned)-1) >> 1) - sizeof(mem) * 3)
+	if((int)size <= 0 || size > (((unsigned)-1) >> 1) - sizeof(mem) * 3)
 	{
 		errno = ENOMEM;
 		return 0;
@@ -28,11 +25,12 @@ __mini_malloc(size_t size)
 	size += sizeof(mem) * 2 - 1;	/* Round up and leave space for size field */
 	size /= sizeof(mem);
 
-	ptr = (mem *) sbrk(size * sizeof(mem));
-	if((uintptr_t)ptr == (intptr_t)-1)
+	ptr = (mem __wcnear *) sbrk(size * sizeof(mem));
+	/*if((uintptr_t)ptr == (intptr_t)-1)*/  /* this is better only when not __wcnear */
+    if ((int)ptr == -1)
 		return 0;
 
 	m_size(ptr) = size;
 	__noise("CREATE", ptr);
-	return (void __wcnear *)(ptr + 1);
+	return ptr + 1;
 }

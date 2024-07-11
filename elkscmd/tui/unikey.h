@@ -52,16 +52,13 @@ int stream_to_rune(unsigned int ch);
 /* Reads single keystroke or control sequence from character device */
 int readansi(int fd, char *p, int n);
 
+#ifdef __GNUC__
 #define bsr(x)  ((x)? (__builtin_clz(x) ^ ((sizeof(int) * 8) -1)): 0)
-#if 0
-int bsr(int n)
-{
-    if (n == 0) return 0;   /* avoid incorrect result of 31 returned! */
-    return (__builtin_clz(n) ^ ((sizeof(int) * 8) - 1));
-}
+#else
+extern int bsr(int x);
+#define __builtin_unreachable()
 #endif
 
-/* defines from Cosmopolitan - see copyright in unikey.c */
 #define ThomPikeCont(x)     (0200 == (0300 & (x)))
 #define ThomPikeByte(x)     ((x) & (((1 << ThomPikeMsb(x)) - 1) | 3))
 #define ThomPikeLen(x)      (7 - ThomPikeMsb(x))
