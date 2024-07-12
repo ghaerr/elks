@@ -66,42 +66,42 @@ int addch(int ch)
 
 int mvaddch(int y, int x, int ch)
 {
-    printf("\e[%d;%dH%c", y+1, x+1, ch);
+    printf("\033[%d;%dH%c", y+1, x+1, ch);
     return OK;
 }
 
 /* cursor on/off */
 void curs_set(int visibility)
 {
-    printf("\e[?25%c", visibility? 'h': 'l');
+    printf("\033[?25%c", visibility? 'h': 'l');
 }
 
 /* clear screen */
 void erase()
 {
-    printf("\e[H\e[2J");
+    printf("\033[H\033[2J");
 }
 
 void move(int y, int x)
 {
     //y += yoff;
     //x += xoff;
-    printf("\e[%d;%dH", y+1, x+1);
+    printf("\033[%d;%dH", y+1, x+1);
 }
 
 void clrnl(void)
 {
-    printf("\e[0K\n");
+    printf("\033[0K\n");
 }
 
 void clrtoeos(void)
 {
-    printf("\e[0J");
+    printf("\033[0J");
 }
 
 void clrtoeol(void)
 {
-    printf("\e[0K");
+    printf("\033[0K");
 }
 
 void printw(char *fmt, ...)

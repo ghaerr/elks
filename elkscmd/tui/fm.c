@@ -28,8 +28,8 @@
 
 #define ISODD(x) ((x) & 1)
 
-#define REV     "\e[7m"
-#define OFF     "\e[0m"
+#define REV     "\033[7m"
+#define OFF     "\033[0m"
 #define SP      OFF " " REV
 #define HELP    REV \
     "Z quit" SP "C cd" SP "D dir first" SP "S size sort" SP "T time sort" SP \
@@ -750,7 +750,7 @@ begin:
 	for (;;) {
 		redraw(path);
         if (once) {
-            info("\e[7m? for help\e[0m");
+            info("\033[7m? for help\033[0m");
             once = 0;
         }
 nochange:

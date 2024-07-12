@@ -24,7 +24,7 @@ typedef int bool;
 #define CTRL(C)                ((C) ^ 0b01000000)
 
 #define WRITE(FD, SLIT)             write(FD, SLIT, strlen(SLIT))
-#define PROBE_DISPLAY_SIZE          "\e7\e[9979;9979H\e[6n\e8"
+#define PROBE_DISPLAY_SIZE          "\0337\033[9979;9979H\033[6n\0338"
 
 /**
  * Returns dimensions of controlling terminal.

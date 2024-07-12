@@ -542,7 +542,7 @@ int ansi_to_unimouse(char *buf, int n, int *x, int *y, int *modkeys, int *status
     static long lasttick;
     static int lastkey;
 
-    if (!startswith(buf, "\e[<") || (buf[n-1] != 'm' && buf[n-1] != 'M'))
+    if (!startswith(buf, "\033[<") || (buf[n-1] != 'm' && buf[n-1] != 'M'))
         return -1;
     p = buf + 3;
     if (!isdigit(*p)) return -1;
@@ -586,7 +586,7 @@ int ansi_dsr(char *buf, int n, int *cols, int *rows)
     char *p;
     int r, c;
 
-    if (n < 6 || !startswith(buf, "\e[") || buf[n-1] != 'R')
+    if (n < 6 || !startswith(buf, "\033[") || buf[n-1] != 'R')
         return -1;
     p = buf + 2;
     r = getparm(p, 0);
@@ -600,7 +600,7 @@ int ansi_dsr(char *buf, int n, int *cols, int *rows)
 }
 
 #define WRITE(FD, SLIT)             write(FD, SLIT, strlen(SLIT))
-#define PROBE_DISPLAY_SIZE          "\e7\e[9979;9979H\e[6n\e8"
+#define PROBE_DISPLAY_SIZE          "\0337\033[9979;9979H\033[6n\0338"
 
 /* probe display size - only uses DSR for now, for ELKS/UNIX compatibility */
 int tty_getsize(int *cols, int *rows)

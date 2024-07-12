@@ -14,13 +14,13 @@ int _tty_flags;
 int iselksconsole;
 
 #define WRITE(FD, SLIT)             write(FD, SLIT, strlen(SLIT))
-#define ENABLE_SAFE_PASTE           "\e[?2004h"
-#define ENABLE_MOUSE_TRACKING       "\e[?1000;1002;1015;1006h"
-#define ENABLE_ALL_MOUSE_TRACKING   "\e[?1000;1003;1015;1006h"
-#define DISABLE_MOUSE_TRACKING      "\e[?1000;1002;1003;1015;1006l"
-#define RESET_VIDEO                 "\e[1;0;0m\e[?25h\n"
-#define PROBE_DISPLAY_SIZE          "\e7\e[9979;9979H\e[6n\e8"
-#define GOTO_LASTLINE               "\e[26;0H\e[0J"
+#define ENABLE_SAFE_PASTE           "\033[?2004h"
+#define ENABLE_MOUSE_TRACKING       "\033[?1000;1002;1015;1006h"
+#define ENABLE_ALL_MOUSE_TRACKING   "\033[?1000;1003;1015;1006h"
+#define DISABLE_MOUSE_TRACKING      "\033[?1000;1002;1003;1015;1006l"
+#define RESET_VIDEO                 "\033[1;0;0m\033[?25h\n"
+#define PROBE_DISPLAY_SIZE          "\0337\033[9979;9979H\033[6n\0338"
+#define GOTO_LASTLINE               "\033[26;0H\033[0J"
 
 static void onkilled(int sig)
 {

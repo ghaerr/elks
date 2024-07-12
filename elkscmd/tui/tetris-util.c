@@ -36,7 +36,7 @@
 void
 clear_term(void)
 {
-     puts("\e[2J");
+     puts("\033[2J");
 
      return;
 }
@@ -44,7 +44,7 @@ clear_term(void)
 void
 set_cursor(Bool b)
 {
-     printf("\e[?25%c", ((b) ? 'h' : 'l'));
+     printf("\033[?25%c", ((b) ? 'h' : 'l'));
 
      return;
 }
@@ -69,7 +69,7 @@ set_color(int color)
      case Score:   fg = 37; bg = 49; break;
      }
 
-     printf("\e[%d;%dm", fg, bg);
+     printf("\033[%d;%dm", fg, bg);
 
      return;
 }
@@ -78,7 +78,7 @@ void
 printxy(int color, int x, int y, char *str)
 {
      set_color(color);
-     printf("\e[%d;%dH%s", ++x, ++y, str);
+     printf("\033[%d;%dH%s", ++x, ++y, str);
      set_color(0);
 
      return;

@@ -45,11 +45,11 @@
 #define DEFAULT_EXTRA1	"ELKS Embeddable Linux Kernel Subset"
 
 /* font translations to ANSI sequences (\fB -> bold, \fI -> underline) */
-#define ANSI_NORMAL	 "\e[0m"	/* no attribute */
-#define ANSI_BOLD	 "\e[1m"	/* bold */
-#define ANSI_UNDERLINE   "\e[4m"	/* underline (normal on console for now) */
-//#define ANSI_UNDERLINE "\e[7m"	/* reverse video */
-//#define ANSI_UNDERLINE "\e[32m"	/* green */
+#define ANSI_NORMAL	 "\033[0m"	/* no attribute */
+#define ANSI_BOLD	 "\033[1m"	/* bold */
+#define ANSI_UNDERLINE   "\033[4m"	/* underline (normal on console for now) */
+//#define ANSI_UNDERLINE "\033[7m"	/* reverse video */
+//#define ANSI_UNDERLINE "\033[32m"	/* green */
 
 FILE * ofd;
 FILE * ifd;

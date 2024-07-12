@@ -48,11 +48,11 @@ void wattroff(WINDOW *w, int a)
 
 void wbkgdset(WINDOW *w, int a)
 {
-    printf("\e[7m");
+    printf("\033[7m");
     attron(a);
 }
 
 void wrefresh(WINDOW *w)
 {
-    printf("\e[m");
+    printf("\033[m");
 }

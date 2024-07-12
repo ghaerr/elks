@@ -110,11 +110,11 @@ void attron(int a)
     if (fg == -1) fg = 39; else fg = ansi_colors[fg];
     if (bg == -1) bg = 39; else bg = ansi_colors[bg];
     if (bg == 39)
-        printf("\e[%dm", fg);
-    else printf("\e[%d;%dm", fg, bg+10);
+        printf("\033[%dm", fg);
+    else printf("\033[%d;%dm", fg, bg+10);
 }
 
 void attroff(int a)
 {
-    printf("\e[1;0;0m");
+    printf("\033[1;0;0m");
 }
