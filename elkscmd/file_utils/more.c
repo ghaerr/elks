@@ -11,9 +11,9 @@
 #include <termios.h>
 #include "futils.h"
 
-#define MORE_STRING  "\e[7m--More--\e[0m"
-#define END_STRING   "\e[7m(END)\e[0m"
-#define CLEAR_SCREEN "\e[H\e[2J"
+#define MORE_STRING  "\033[7m--More--\033[0m"
+#define END_STRING   "\033[7m(END)\033[0m"
+#define CLEAR_SCREEN "\033[H\033[2J"
 
 #define WRITE(fd,str)   write(fd, str, strlen(str))
 
