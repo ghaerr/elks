@@ -55,7 +55,6 @@ int readansi(int fd, char *p, int n);
 #ifdef __GNUC__
 #define bsr(x)  ((x)? (__builtin_clz(x) ^ ((sizeof(int) * 8) -1)): 0)
 #else
-extern int bsr(int x);
 #define __builtin_unreachable()
 #endif
 

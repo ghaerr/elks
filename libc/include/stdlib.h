@@ -62,6 +62,7 @@ void qsort(void *base, size_t nel, size_t width,
 char *devname(dev_t dev, mode_t type);
 
 #ifndef __STRICT_ANSI__
+int (bsr)(int x);
 char *itoa(int val);
 char *uitoa(unsigned int val);
 char *ltoa(long val);
