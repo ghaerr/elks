@@ -73,8 +73,12 @@ pid_t setsid(void);
 pid_t getpid(void);
 pid_t getppid(void);
 uid_t _getpid(int *ppid);
-int getpgrp(void);
-int setpgrp(void);
+
+/*int setpgid(pid_t pid,pid_t pgid);*/  /* NYI */
+/*int getpgid(pid_t pid);*/             /* NYI */
+/*int getpgrp(void);*/                  /* NYI */
+/*int setpgrp(void);*/                  /* not compiled */
+/*int getsid(void);*/                   /* NYI */
 
 uid_t getuid (void);
 int setuid(uid_t uid);
