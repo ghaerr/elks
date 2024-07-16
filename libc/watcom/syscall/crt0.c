@@ -9,6 +9,11 @@
 #include <unistd.h>
 #include <errno.h>
 
+#pragma aux __InitRtns modify exact [ bx cx dx si di ]
+#pragma aux __FiniRtns modify exact [ bx cx dx si di ]
+extern void __InitRtns(void);
+extern void __FiniRtns(void);
+
 /* Watcom extern code refs are sym_, extern data refs are _sym */
 
 /* external references created by Watcom C compilation - unused */
@@ -29,6 +34,7 @@ static noreturn void sys_exit(int status);
 
 noreturn void _exit(int status)
 {
+    __FiniRtns();
     sys_exit(status);
 }
 
@@ -66,6 +72,7 @@ unsigned int stackavail(void)
 #if defined(__SMALL__) || defined(__MEDIUM__)
 static noreturn void premain(void)
 {
+    __InitRtns();
     exit(main(__argc, __argv));
 }
 #else
@@ -89,6 +96,7 @@ static noreturn void premain(char __near *newsp, char __near *oldsp, int bx, int
         if (n && !v)
             environ = nap;
     } while (n > 0);
+    __InitRtns();
     exit(main(__argc, __argv));
 }
 #endif

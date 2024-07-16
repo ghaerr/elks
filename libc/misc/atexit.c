@@ -7,6 +7,7 @@
 
 #include <stdlib.h>
 #include <errno.h>
+#include <sys/rtinit.h>
 
 #define MAXONEXIT 32            /* C90 requires 32 */
 

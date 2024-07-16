@@ -30,8 +30,12 @@
 #define restrict        __restrict
 #define printfesque(n)
 #define noinstrument
-#define CONSTRUCTOR(fn,pri)
-#define DESTRUCTOR(fn,pri)
+#define CONSTRUCTOR(fn,pri) void fn(void);                                  \
+                            static struct _rt_init __based(__segname("XI")) \
+                                __CONCAT(_ctor,fn) = { fn, pri, 0}
+#define DESTRUCTOR(fn,pri)  void fn(void);                                  \
+                            static struct _rt_init __based(__segname("YI")) \
+                                __CONCAT(_dtor,fn) = { fn, pri, 0}
 #define __attribute__(n)
 /* force __cdecl calling convention and no register saves in main() arc/argv */
 #pragma aux main "*" modify [ bx cx dx si di ]

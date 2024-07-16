@@ -83,6 +83,26 @@ _DATA   ends
 DATA    segment word public 'DATA'
 DATA    ends
 
+XIB     segment word public 'DATA'
+_Start_XI label byte
+        public  "C",_Start_XI
+XIB     ends
+
+XIE     segment word public 'DATA'
+_End_XI label byte
+        public  "C",_End_XI
+XIE     ends
+
+YIB     segment word public 'DATA'
+_Start_YI label byte
+        public  "C",_Start_YI
+YIB     ends
+
+YIE     segment word public 'DATA'
+_End_YI label byte
+        public  "C",_End_YI
+YIE     ends
+
 _BSS    segment word public 'BSS'
         ;extrn   _edata                  : byte  ; end of DATA (start of BSS)
         ;extrn   _end                    : byte  ; end of BSS (start of STACK)
