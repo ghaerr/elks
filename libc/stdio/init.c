@@ -18,7 +18,7 @@ static void __stdio_fini(void)
 {
    FILE *fp;
 
-   errmsg("__stdio_fini\n");
+   //errmsg("__stdio_fini\n");
    fflush(stdout);
    fflush(stderr);
    for (fp = __IO_list; fp; fp = fp->next)
@@ -35,7 +35,7 @@ static void __stdio_fini(void)
 CONSTRUCTOR(__stdio_init, 90);
 void __stdio_init(void)
 {
-   errmsg("__stdio_init\n");
+   //errmsg("__stdio_init\n");
    if (isatty(1))
       stdout->mode |= _IOLBF;
 }
