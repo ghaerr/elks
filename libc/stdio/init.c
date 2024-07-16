@@ -6,9 +6,10 @@
 /* NOTE: ensure this destructor is lower priority (90) than
  * the atexit_do_exit (100) destructor so as to run later.
  */
+
 #pragma GCC diagnostic ignored "-Wprio-ctor-dtor"
-__attribute__((destructor(90)))
-static void stdio_close_all(void)
+static DESTRUCTOR(__stdio_fini, 90);
+static void __stdio_fini(void)
 {
    FILE *fp;
    fflush(stdout);
@@ -24,7 +25,7 @@ static void stdio_close_all(void)
 }
 
 #pragma GCC diagnostic ignored "-Wprio-ctor-dtor"
-__attribute__((constructor(90)))
+CONSTRUCTOR(__stdio_init, 90);
 void __stdio_init(void)
 {
    if (isatty(1))

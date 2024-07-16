@@ -12,13 +12,14 @@
 
 #define __P(x) x        /* always ANSI C */
 
-/* don't require <stdnoreturn.h> */
 #ifdef __GNUC__
-#define noreturn        __attribute__((__noreturn__))
+#define noreturn        __attribute__((__noreturn__)) /* don't require <stdnoreturn.h> */
 #define stdcall         __attribute__((__stdcall__))
 #define restrict        __restrict
 #define printfesque(n)  __attribute__((__format__(__gnu_printf__, n, n + 1)))
 #define noinstrument    __attribute__((no_instrument_function))
+#define CONSTRUCTOR(fn,pri) void fn(void) __attribute__((constructor(pri)))
+#define DESTRUCTOR(fn,pri)  void fn(void) __attribute__((destructor(pri)))
 #define __wcfar
 #define __wcnear
 #endif
@@ -29,6 +30,8 @@
 #define restrict        __restrict
 #define printfesque(n)
 #define noinstrument
+#define CONSTRUCTOR(fn,pri)
+#define DESTRUCTOR(fn,pri)
 #define __attribute__(n)
 /* force __cdecl calling convention and no register saves in main() arc/argv */
 #pragma aux main "*" modify [ bx cx dx si di ]

@@ -5,6 +5,7 @@
  * Copyright (C) 2022 TK Chia <@tkchia@mastodon.social>
  */
 
+#include <stdlib.h>
 #include <errno.h>
 
 #define MAXONEXIT 32            /* C90 requires 32 */
@@ -14,14 +15,14 @@ typedef void (*vfuncp) (void);
 static int atexit_count;
 static vfuncp atexit_table[MAXONEXIT];
 
-int atexit(vfuncp ptr)
+int atexit (void (*function)(void))
 {
    if (atexit_count >= MAXONEXIT) {
       errno = ENOMEM;
       return -1;
    }
-   if (ptr)
-      atexit_table[atexit_count++] = ptr;
+   if (function)
+      atexit_table[atexit_count++] = function;
    return 0;
 }
 
@@ -30,8 +31,8 @@ int atexit(vfuncp ptr)
  * stdio streams before running atexit( ) termination functions
  */
 #pragma GCC diagnostic ignored "-Wprio-ctor-dtor"
-__attribute__((destructor(100)))
-static void atexit_exit_all(void)
+static DESTRUCTOR(__atexit_fini, 100);
+static void __atexit_fini(void)
 {
    int count = atexit_count - 1;
 

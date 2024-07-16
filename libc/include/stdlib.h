@@ -53,7 +53,7 @@ int putenv(char *string);
 char *mktemp(char *template);
 
 noreturn void abort(void);
-int atexit (void (* function) ());
+int atexit (void (*function)(void));
 noreturn void exit(int status);
 noreturn void _exit(int status); /* syscall */
 int system(const char *command);

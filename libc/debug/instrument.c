@@ -19,8 +19,8 @@ static size_t max_stack;
 static int count;
 
 /* runs before main and rewrites argc/argv on stack if --ftrace found */
-__attribute__((no_instrument_function,constructor(120)))
-static void ftrace_checkargs(void)
+static noinstrument CONSTRUCTOR(ftrace_checkargs, 120);
+static noinstrument void ftrace_checkargs(void)
 {
     char **avp = __argv + 1;
 
