@@ -14,10 +14,8 @@
 #endif
 
 #ifdef __WATCOMC__
-//#define __LINK_SYMBOL(sym)  static void __based(__segname("DISCARD")) (*__sym)() = { sym }
-//#define __LINK_SYMBOL(sym)  static void (* __CONCAT(__linksym,sym))() = { sym }
-extern unsigned int __linksym;
-#define __LINK_SYMBOL(sym)    __linksym = (unsigned)sym     /* FIXME use better method */
+extern void __LINK_SYMBOL(void (*sym)());
+#pragma aux __LINK_SYMBOL = __parm [ __ax];
 #endif
 
 #else  /* __ASSEMBLER__ */

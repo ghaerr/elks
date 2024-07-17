@@ -46,9 +46,8 @@
 
 BEGTEXT  segment word public 'CODE'
         assume  cs:BEGTEXT
-        int     3h
+        int     3
         nop
-        public __begtext
 __begtext label byte
         assume  cs:nothing
 BEGTEXT  ends
