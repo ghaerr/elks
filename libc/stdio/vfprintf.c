@@ -21,11 +21,11 @@
  * -RDB
  */
 
-#include <sys/types.h>
+#include <stdio.h>
 #include <fcntl.h>
 #include <string.h>
 #include <stdlib.h>
-#include "_stdio.h"
+#include <sys/types.h>
 
 #ifndef __HAS_NO_FLOATS__
 #include <sys/weaken.h>

@@ -1,9 +1,8 @@
+#include <stdio.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
-
-#include "_stdio.h"
 
 FILE *
 __fopen(const char * fname, int fd, FILE * fp, const char * mode)

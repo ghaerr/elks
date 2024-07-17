@@ -1,4 +1,4 @@
-#include "_stdio.h"
+#include <stdio.h>
 
 int
 scanf(const char * fmt, ...)

@@ -1,4 +1,4 @@
-#include "_stdio.h"
+#include <stdio.h>
 
 int
 fscanf(FILE * fp, const char * fmt, ...)

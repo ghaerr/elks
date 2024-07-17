@@ -1,8 +1,7 @@
+#include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
 #include <sys/linksym.h>
-
-#include "_stdio.h"
 
 int
 fflush(FILE *fp)
