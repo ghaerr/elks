@@ -1,8 +1,6 @@
 #include <stdlib.h>
 #include <unistd.h>
-
 #include <sys/rtinit.h>
-#include <sys/cdefs.h>
 #include "_stdio.h"
 
 #pragma GCC diagnostic ignored "-Wprio-ctor-dtor"
