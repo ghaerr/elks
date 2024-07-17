@@ -66,10 +66,6 @@ extern FILE stdin[1];
 extern FILE stdout[1];
 extern FILE stderr[1];
 
-#ifdef __MSDOS__
-#define putc(c, fp) fputc(c, fp)
-#define getc(fp) fgetc(fp)
-#else
 #define putc(c, stream)	\
     (((stream)->bufpos >= (stream)->bufwrite) ? fputc((c), (stream))	\
                           : (unsigned char) (*(stream)->bufpos++ = (c))	)
@@ -77,7 +73,6 @@ extern FILE stderr[1];
 #define getc(stream)	\
   (((stream)->bufpos >= (stream)->bufread) ? fgetc(stream):		\
     (*(stream)->bufpos++))
-#endif
 
 #define putchar(c) putc((c), stdout)  
 #define getchar() getc(stdin)
@@ -119,6 +114,7 @@ FILE *freopen(const char*, const char*, FILE*);
 #ifdef __LIBC__
 FILE *__fopen(const char*, int, FILE*, const char*);
 void __stdio_init(void);        /* fwd decl for OWC __LINK_SYMBOL() */
+extern FILE *__IO_list;
 #endif
 
 int fputs(const char*, FILE*);

@@ -1,4 +1,4 @@
-#include "_stdio.h"
+#include <stdio.h>
 
 int
 fputc(int ch, FILE *fp)

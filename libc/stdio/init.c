@@ -1,7 +1,9 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/rtinit.h>
-#include "_stdio.h"
+
+FILE *__IO_list = 0;
 
 #pragma GCC diagnostic ignored "-Wprio-ctor-dtor"
 DESTRUCTOR(__stdio_fini, _INIT_PRI_STDIO);

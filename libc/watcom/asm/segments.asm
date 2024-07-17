@@ -33,7 +33,6 @@
         name    cstart
         assume  nothing
 
- ;DGROUP group _NULL,_AFTERNULL,CONST,STRINGS,_DATA,DATA,XIB,XI,XIE,YIB,YI,YIE,_BSS,STACK
  DGROUP group _NULL,_AFTERNULL,CONST,STRINGS,_DATA,DATA,XIB,XI,XIE,YIB,YI,YIE,_BSS
 
 ; this guarantees that no function pointer will equal NULL

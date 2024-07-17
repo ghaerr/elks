@@ -10,7 +10,6 @@ CFLAGS	+= -DL_ftell
 OBJS = \
 	init.o \
 	__fopen.o \
-	__io_list.o \
 	fclose.o \
 	fdopen.o \
 	fflush.o \

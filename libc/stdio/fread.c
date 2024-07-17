@@ -1,7 +1,6 @@
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-
-#include "_stdio.h"
 
 /*
  * fread will often be used to read in large chunks of data calling read()
