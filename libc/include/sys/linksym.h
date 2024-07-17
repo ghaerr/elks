@@ -14,7 +14,8 @@
 #endif
 
 #ifdef __WATCOMC__
-#define __LINK_SYMBOL(sym)      /* FIXME symbol yoink not yet implemented */
+extern void __LINK_SYMBOL(void (*sym)());
+#pragma aux __LINK_SYMBOL = __parm [ __ax];
 #endif
 
 #else  /* __ASSEMBLER__ */

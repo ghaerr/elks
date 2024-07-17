@@ -6,6 +6,7 @@
  */
 
 #include <sys/cdefs.h>
+#include <sys/rtinit.h>
 #include <unistd.h>
 #include <errno.h>
 
@@ -32,8 +33,10 @@ noreturn void _exit(int status)
     sys_exit(status);
 }
 
+#pragma aux exit modify [ bx cx dx si di ]
 noreturn void exit(int status)
 {
+    __FiniRtns();
     _exit(status);
 }
 
@@ -66,6 +69,7 @@ unsigned int stackavail(void)
 #if defined(__SMALL__) || defined(__MEDIUM__)
 static noreturn void premain(void)
 {
+    __InitRtns();
     exit(main(__argc, __argv));
 }
 #else
@@ -89,6 +93,7 @@ static noreturn void premain(char __near *newsp, char __near *oldsp, int bx, int
         if (n && !v)
             environ = nap;
     } while (n > 0);
+    __InitRtns();
     exit(main(__argc, __argv));
 }
 #endif

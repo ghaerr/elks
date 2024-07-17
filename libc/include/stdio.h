@@ -118,6 +118,7 @@ FILE *freopen(const char*, const char*, FILE*);
 
 #ifdef __LIBC__
 FILE *__fopen(const char*, int, FILE*, const char*);
+void __stdio_init(void);        /* fwd decl for OWC __LINK_SYMBOL() */
 #endif
 
 int fputs(const char*, FILE*);

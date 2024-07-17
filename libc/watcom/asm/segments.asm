@@ -34,7 +34,7 @@
         assume  nothing
 
  ;DGROUP group _NULL,_AFTERNULL,CONST,STRINGS,_DATA,DATA,XIB,XI,XIE,YIB,YI,YIE,_BSS,STACK
- DGROUP group _NULL,_AFTERNULL,CONST,STRINGS,_DATA,DATA,_BSS
+ DGROUP group _NULL,_AFTERNULL,CONST,STRINGS,_DATA,DATA,XIB,XI,XIE,YIB,YI,YIE,_BSS
 
 ; this guarantees that no function pointer will equal NULL
 ; (WLINK will keep segment 'BEGTEXT' in front)
@@ -46,9 +46,8 @@
 
 BEGTEXT  segment word public 'CODE'
         assume  cs:BEGTEXT
-        int     3h
+        int     3
         nop
-        public __begtext
 __begtext label byte
         assume  cs:nothing
 BEGTEXT  ends
@@ -82,6 +81,32 @@ _DATA   ends
 
 DATA    segment word public 'DATA'
 DATA    ends
+
+XIB     segment word public 'DATA'
+_Start_XI label byte
+        public  "C",_Start_XI
+XIB     ends
+
+XI      segment word public 'DATA'
+XI      ends
+
+XIE     segment word public 'DATA'
+_End_XI label byte
+        public  "C",_End_XI
+XIE     ends
+
+YIB     segment word public 'DATA'
+_Start_YI label byte
+        public  "C",_Start_YI
+YIB     ends
+
+YI      segment word public 'DATA'
+YI      ends
+
+YIE     segment word public 'DATA'
+_End_YI label byte
+        public  "C",_End_YI
+YIE     ends
 
 _BSS    segment word public 'BSS'
         ;extrn   _edata                  : byte  ; end of DATA (start of BSS)

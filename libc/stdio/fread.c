@@ -16,7 +16,6 @@ size_t fread(void *buf, size_t size, size_t nelm, FILE *fp)
     int v;
     ssize_t len;
     size_t bytes, got = 0;
-    __LINK_SYMBOL(__stdio_init);
 
     v = fp->mode;
 

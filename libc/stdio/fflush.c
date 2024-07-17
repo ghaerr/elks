@@ -1,5 +1,6 @@
-#include <errno.h>
 #include <unistd.h>
+#include <errno.h>
+#include <sys/linksym.h>
 
 #include "_stdio.h"
 
@@ -8,6 +9,8 @@ fflush(FILE *fp)
 {
    int   len, cc, rv=0;
    unsigned char * bstart;
+
+   __LINK_SYMBOL(__stdio_init);
    if (fp == NULL)		/* On NULL flush the lot. */
    {
       if (fflush(stdin))
