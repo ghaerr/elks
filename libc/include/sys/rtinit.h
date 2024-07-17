@@ -24,6 +24,19 @@ struct _rt_init {                   /* stored in XI/YI segments */
     unsigned char priority;
     unsigned char done;
 };
+
+/* XI/YI section start/end for constructor/destructors */
+extern struct _rt_init _Start_XI;
+extern struct _rt_init _End_XI;
+extern struct _rt_init _Start_YI;
+extern struct _rt_init _End_YI;
+
+/* constructor/destructor functions called before main and after exit */
+#pragma aux __InitRtns modify [ bx cx dx si di ]
+#pragma aux __FiniRtns modify [ bx cx dx si di ]
+extern void __InitRtns(void);
+extern void __FiniRtns(void);
+
 #endif
 
 #endif

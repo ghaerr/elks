@@ -34,11 +34,6 @@
 
 #define FAR2NEAR(t,f)   ((t __wcnear *)(long)(f))
 
-extern struct _rt_init _Start_XI;
-extern struct _rt_init _End_XI;
-extern struct _rt_init _Start_YI;
-extern struct _rt_init _End_YI;
-
 typedef void (__wcfar * __wcnear fpfn)(void);
 typedef void (__wcnear * __wcnear npfn)(void);
 typedef struct _rt_init __wcnear *struct_rt_init_ptr;

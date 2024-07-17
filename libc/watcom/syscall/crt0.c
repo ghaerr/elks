@@ -6,13 +6,9 @@
  */
 
 #include <sys/cdefs.h>
+#include <sys/rtinit.h>
 #include <unistd.h>
 #include <errno.h>
-
-#pragma aux __InitRtns modify exact [ bx cx dx si di ]
-#pragma aux __FiniRtns modify exact [ bx cx dx si di ]
-extern void __InitRtns(void);
-extern void __FiniRtns(void);
 
 /* Watcom extern code refs are sym_, extern data refs are _sym */
 
@@ -34,12 +30,13 @@ static noreturn void sys_exit(int status);
 
 noreturn void _exit(int status)
 {
-    __FiniRtns();
     sys_exit(status);
 }
 
+#pragma aux exit modify [ bx cx dx si di ]
 noreturn void exit(int status)
 {
+    __FiniRtns();
     _exit(status);
 }
 
