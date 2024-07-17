@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/rtinit.h>
 #include "debug/instrument.h"
 #include "debug/syms.h"
 
@@ -19,7 +20,8 @@ static size_t max_stack;
 static int count;
 
 /* runs before main and rewrites argc/argv on stack if --ftrace found */
-static noinstrument CONSTRUCTOR(ftrace_checkargs, 120);
+#pragma GCC diagnostic ignored "-Wprio-ctor-dtor"
+static noinstrument CONSTRUCTOR(ftrace_checkargs, _INIT_PRI_FTRACE);
 static noinstrument void ftrace_checkargs(void)
 {
     char **avp = __argv + 1;

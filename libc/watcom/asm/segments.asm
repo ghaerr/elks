@@ -34,7 +34,7 @@
         assume  nothing
 
  ;DGROUP group _NULL,_AFTERNULL,CONST,STRINGS,_DATA,DATA,XIB,XI,XIE,YIB,YI,YIE,_BSS,STACK
- DGROUP group _NULL,_AFTERNULL,CONST,STRINGS,_DATA,DATA,_BSS
+ DGROUP group _NULL,_AFTERNULL,CONST,STRINGS,_DATA,DATA,XIB,XI,XIE,YIB,YI,YIE,_BSS
 
 ; this guarantees that no function pointer will equal NULL
 ; (WLINK will keep segment 'BEGTEXT' in front)
@@ -88,6 +88,9 @@ _Start_XI label byte
         public  "C",_Start_XI
 XIB     ends
 
+XI      segment word public 'DATA'
+XI      ends
+
 XIE     segment word public 'DATA'
 _End_XI label byte
         public  "C",_End_XI
@@ -97,6 +100,9 @@ YIB     segment word public 'DATA'
 _Start_YI label byte
         public  "C",_Start_YI
 YIB     ends
+
+YI      segment word public 'DATA'
+YI      ends
 
 YIE     segment word public 'DATA'
 _End_YI label byte

@@ -8,6 +8,8 @@ fflush(FILE *fp)
 {
    int   len, cc, rv=0;
    unsigned char * bstart;
+
+   __LINK_SYMBOL(__stdio_init);
    if (fp == NULL)		/* On NULL flush the lot. */
    {
       if (fflush(stdin))
