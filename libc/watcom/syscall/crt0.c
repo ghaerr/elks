@@ -10,6 +10,16 @@
 #include <unistd.h>
 #include <errno.h>
 
+/*
+ * create STACK segment which is required for applications
+ * size is setup by linker to default size 4096 bytes
+ * or to explicitly defined size by linker directive "OPTION STACK=..."
+ */
+#pragma data_seg("STACK","STACK")
+
+/* return back to default data segment */
+#pragma data_seg()
+
 /* Watcom extern code refs are sym_, extern data refs are _sym */
 
 /* external references created by Watcom C compilation - unused */

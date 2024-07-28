@@ -24,17 +24,13 @@ fi
 
 ELKSLIBC=$TOPDIR/libc
 
-# Warning 1014: stack segment not found
-
 LDFLAGS="\
     -bos2                           \
     -s                              \
     -fnostdlib                      \
-    -Wl,disable -Wl,1014            \
     -Wl,option -Wl,start=_start_    \
     -Wl,option -Wl,dosseg           \
     -Wl,option -Wl,nodefaultlibs    \
-    -Wl,option -Wl,stack=0x1000     \
     -Wl,option -Wl,heapsize=0x1000  \
     "
 
