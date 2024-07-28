@@ -4,12 +4,9 @@
 #
 # Usage: . ./wcenv.sh
 
-# change to OpenWatcom source tree top
-export WATDIR=/Users/greg/net/open-watcom-v2
-
-#export WATCOM=$WATDIR/rel/binl     # for Linux-32
-#export WATCOM=$WATDIR/rel/binl64   # for Linux-64
-export WATCOM=$WATDIR/rel/bino64    # for macOS
+# change to OpenWatcom installation root it is full path to OpenWatcom location
+# if you use your own OpenWatcom build than it is located in rel subdirectory
+export WATCOM=/Users/greg/net/open-watcom-v2/rel
 
 add_path () {
 	if [[ ":$PATH:" != *":$1:"* ]]; then
@@ -17,6 +14,8 @@ add_path () {
 	fi
 }
 
-add_path "$WATCOM"
+#add_path "$WATCOM/binl"    # for Linux-32
+#add_path "$WATCOM/binl64"  # for Linux-64
+add_path "$WATCOM/bino64"   # for macOS
 
 echo PATH set to $PATH

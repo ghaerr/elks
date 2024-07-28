@@ -29,7 +29,7 @@ SUBDIRS =	\
 all:
 	$(MAKE) -C system -f out.mk COMPILER=watcom LIB=out.lib
 	for DIR in $(SUBDIRS); do $(MAKE) -C $$DIR COMPILER=watcom LIB=out.lib || exit 1; done
-	wlib -l=libc.lst -c -n -b -fo libc.lib */*.lib watcom/*/*.lib
+	wlib -l=libc.lst -c -n -q -b -fo libc.lib */*.lib watcom/*/*.lib
 
 .PHONY: clean
 clean:
