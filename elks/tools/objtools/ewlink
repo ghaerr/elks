@@ -18,23 +18,22 @@ fi
 
 if [ -z "$WATCOM" ]
   then
-    echo "WATCOM= environment variable not set to compiler path"
+    echo "WATCOM= environment variable not set"
     exit
 fi
 
 ELKSLIBC=$TOPDIR/libc
 
-# Warning 1008: cannot open os2.lib: No such file or directory
 # Warning 1014: stack segment not found
 
 LDFLAGS="\
     -bos2                           \
     -s                              \
     -fnostdlib                      \
-    -Wl,disable -Wl,1008            \
     -Wl,disable -Wl,1014            \
     -Wl,option -Wl,start=_start_    \
     -Wl,option -Wl,dosseg           \
+    -Wl,option -Wl,nodefaultlibs    \
     -Wl,option -Wl,stack=0x1000     \
     -Wl,option -Wl,heapsize=0x1000  \
     "
@@ -72,8 +71,8 @@ if [ "$OUT" == "" ]
     OUT=${PROG%.obj}.os2
 fi
 
-echo owcc -v $LDFLAGS -o $OUT $@ $ELKSLIBC/libc.lib
-owcc -v $LDFLAGS -o $OUT $@ $ELKSLIBC/libc.lib
+echo owcc $LDFLAGS -o $OUT $@ $ELKSLIBC/libc.lib
+owcc $LDFLAGS -o $OUT $@ $ELKSLIBC/libc.lib
 
 # convert to ELKS a.out format
 #os2toelks -f elks -o $OUT $OUT.os2
