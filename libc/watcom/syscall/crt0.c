@@ -10,15 +10,18 @@
 #include <unistd.h>
 #include <errno.h>
 
-/* Watcom extern code refs are sym_, extern data refs are _sym */
+/*
+ * create STACK segment which is required for applications
+ * size is setup by linker to default size 4096 bytes
+ * or to explicitly defined size by linker directive "OPTION STACK=..."
+ */
+#pragma data_seg("STACK","STACK")
 
-/* external references created by Watcom C compilation - unused */
-int _argc;              /* with declaration of main() */
-int _8087;              /* when floating point seen */
+/* return back to default data segment */
+#pragma data_seg()
 
-/* cstart_ is an external reference created by Watcom C, pulls in asm/segments.asm */
-#pragma aux cstart_ "_*" modify [ bx cx dx si di ]
-extern void cstart_(void);
+/* ELKS modified calling convention */
+#pragma aux elkscall __modify [ __bx __cx __dx __si __di ]
 
 static noreturn void sys_exit(int status);
 #pragma aux sys_exit =         \
@@ -33,7 +36,7 @@ noreturn void _exit(int status)
     sys_exit(status);
 }
 
-#pragma aux exit modify [ bx cx dx si di ]
+#pragma aux (elkscall) exit
 noreturn void exit(int status)
 {
     __FiniRtns();
@@ -46,7 +49,7 @@ noreturn void exit(int status)
  *
  * main(ac, av) called by AX, DX (small/medium) or AX, CX:BX (compact/large) model
  */
-#pragma aux main "*" modify [ bx cx dx si di ]
+#pragma aux (elkscall) main "*"
 extern int main(int argc, char **argv);
 
 /* global variables initialized at C startup */
@@ -65,7 +68,7 @@ unsigned int stackavail(void)
     return (_SP() - __stacklow);
 }
 
-#pragma aux premain "*" modify [ bx cx dx si di ]
+#pragma aux (elkscall) premain "*"
 #if defined(__SMALL__) || defined(__MEDIUM__)
 static noreturn void premain(void)
 {
@@ -156,4 +159,5 @@ noreturn static void _crt0(void);
 #endif
 
 /* actual program entry point */
+#pragma aux _start "*"
 noreturn void _start(void) { _crt0(); }

@@ -24,18 +24,15 @@ fi
 
 ELKSLIBC=$TOPDIR/libc
 
-# Warning 1014: stack segment not found
-
 LDFLAGS="\
     -bos2                           \
     -s                              \
     -fnostdlib                      \
-    -Wl,disable -Wl,1014            \
-    -Wl,option -Wl,start=_start_    \
+    -Wl,option -Wl,start=_start     \
     -Wl,option -Wl,dosseg           \
     -Wl,option -Wl,nodefaultlibs    \
-    -Wl,option -Wl,stack=0x1000     \
     -Wl,option -Wl,heapsize=0x1000  \
+    -Wl,library -Wl,$TOPDIR/libc/libc.lib \
     "
 
 while true; do
@@ -71,8 +68,8 @@ if [ "$OUT" == "" ]
     OUT=${PROG%.obj}.os2
 fi
 
-echo owcc $LDFLAGS -o $OUT $@ $ELKSLIBC/libc.lib
-owcc $LDFLAGS -o $OUT $@ $ELKSLIBC/libc.lib
+echo owcc $LDFLAGS -o $OUT $@
+owcc $LDFLAGS -o $OUT $@
 
 # convert to ELKS a.out format
 #os2toelks -f elks -o $OUT $OUT.os2

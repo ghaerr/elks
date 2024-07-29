@@ -33,6 +33,7 @@ WATCINCLUDE=$WATCOM/h
 # -march=i86                # 8086 codegen
 # -std=c99                  # -Wc,-za99
 # -Wc,-zev                  # enable void arithmetic
+# -Wc,-zls                  # remove automatically inserted symbols
 # -Wc,-wcd=N                # disable warning N
 # -Wc,-fpi87                # inline 8087 fp
 # -Wc,-x                    # ignore INCLUDE environment variable
@@ -57,6 +58,7 @@ CCFLAGS="\
     -std=c99                        \
     -Wc,-fpi87                      \
     -Wc,-zev                        \
+    -Wc,-zls                        \
     -Wc,-x                          \
     -fno-stack-check                \
     -fnostdlib                      \
