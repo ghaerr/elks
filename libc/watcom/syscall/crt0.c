@@ -16,11 +16,7 @@
 int _argc;              /* with declaration of main() */
 int _8087;              /* when floating point seen */
 
-/* cstart_ is an external reference created by Watcom C, pulls in asm/segments.asm */
-#pragma aux cstart_ "_*" modify [ bx cx dx si di ]
-extern void cstart_(void);
-
-static noreturn void sys_exit(int status);
+extern void sys_exit(int status);
 #pragma aux sys_exit =         \
     "xchg ax, bx"           \
     "xor ax, ax"            \
@@ -33,7 +29,6 @@ noreturn void _exit(int status)
     sys_exit(status);
 }
 
-#pragma aux exit modify [ bx cx dx si di ]
 noreturn void exit(int status)
 {
     __FiniRtns();
@@ -46,7 +41,6 @@ noreturn void exit(int status)
  *
  * main(ac, av) called by AX, DX (small/medium) or AX, CX:BX (compact/large) model
  */
-#pragma aux main "*" modify [ bx cx dx si di ]
 extern int main(int argc, char **argv);
 
 /* global variables initialized at C startup */
@@ -65,7 +59,6 @@ unsigned int stackavail(void)
     return (_SP() - __stacklow);
 }
 
-#pragma aux premain "*" modify [ bx cx dx si di ]
 #if defined(__SMALL__) || defined(__MEDIUM__)
 static noreturn void premain(void)
 {
