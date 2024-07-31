@@ -25,7 +25,7 @@
 #endif
 
 #ifdef __WATCOMC__
-#define noreturn        __declspec(noreturn)
+#define noreturn        __declspec(aborts)
 #define stdcall         __stdcall
 #define restrict        __restrict
 #define printfesque(n)
@@ -37,8 +37,6 @@
                             static struct _rt_init __based(__segname("YI")) \
                                 __CONCAT(_dtor,fn) = { fn, pri, 0}
 #define __attribute__(n)
-/* force __cdecl calling convention and no register saves in main() arc/argv */
-#pragma aux main "*" modify [ bx cx dx si di ]
 #define __wcfar         __far
 #define __wcnear        __near
 #endif

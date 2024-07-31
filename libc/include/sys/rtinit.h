@@ -32,8 +32,6 @@ extern struct _rt_init _Start_YI;
 extern struct _rt_init _End_YI;
 
 /* constructor/destructor functions called before main and after exit */
-#pragma aux __InitRtns modify [ bx cx dx si di ]
-#pragma aux __FiniRtns modify [ bx cx dx si di ]
 extern void __InitRtns(void);
 extern void __FiniRtns(void);
 
