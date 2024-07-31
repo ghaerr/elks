@@ -33,7 +33,7 @@
         name    cstart
         assume  nothing
 
- DGROUP group _NULL,_AFTERNULL,CONST,STRINGS,_DATA,DATA,XIB,XI,XIE,YIB,YI,YIE,_BSS
+DGROUP group _NULL,_AFTERNULL,CONST,STRINGS,_DATA,DATA,XIB,XI,XIE,YIB,YI,YIE,_BSS,STACK
 
 ; this guarantees that no function pointer will equal NULL
 ; (WLINK will keep segment 'BEGTEXT' in front)
@@ -113,9 +113,9 @@ _BSS    segment word public 'BSS'
 _BSS    ends
 
 ;STACK_SIZE      equ     1000h
-;STACK   segment para stack 'STACK'
+STACK   segment para stack 'STACK'
         ;db      (STACK_SIZE) dup(?)
-;STACK   ends
+STACK   ends
 
         assume  nothing
         public  _cstart_
