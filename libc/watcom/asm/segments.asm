@@ -25,12 +25,14 @@
 ;*
 ;*  ========================================================================
 ;*
-;* Description:  Watcom C segment ordering and null pointer section offsets
+;* Description:  Watcom C segment ordering and null pointer and init/fini libc
 ;*
 ;*****************************************************************************
 
 
-        name    cstart
+include mdef.inc
+
+        name    segments
         assume  nothing
 
 DGROUP group _NULL,_AFTERNULL,CONST,STRINGS,_DATA,DATA,XIB,XI,XIE,YIB,YI,YIE,_BSS,STACK
@@ -46,8 +48,16 @@ DGROUP group _NULL,_AFTERNULL,CONST,STRINGS,_DATA,DATA,XIB,XI,XIE,YIB,YI,YIE,_BS
 BEGTEXT  segment word public 'CODE'
         assume  cs:BEGTEXT
         int     3
-        nop
-__begtext label byte
+        int     3
+        public _start
+_start:
+if _BIG_CODE
+        extrn _start_crt0:far
+        jmpf _start_crt0
+else
+        extrn _start_crt0:near
+        jmp _start_crt0
+endif
         assume  cs:nothing
 BEGTEXT  ends
 
@@ -118,16 +128,9 @@ STACK   segment para stack 'STACK'
 STACK   ends
 
         assume  nothing
-        public  _cstart_
-
-        assume  cs:_TEXT
-
-_cstart_ proc near
-        dw      __begtext               ; make sure dead code elimination
-                                        ; doesn't kill BEGTEXT segment
-_cstart_ endp
 
 if 0
+        assume  cs:_TEXT
         INIT_VAL        equ 0101h
         NUM_VAL         equ 16
 NullAssign      db      '*** NULL assignment detected',0
@@ -160,4 +163,4 @@ endif
 
 _TEXT   ends
 
-        end     _cstart_
+        end

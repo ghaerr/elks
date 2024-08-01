@@ -19,12 +19,14 @@ CARCH =\
     -fno-stack-check                \
     -Wc,-fpi87                      \
     -Wc,-zev                        \
+    -Wc,-zls                        \
     -Wc,-x                          \
     -Wc,-wcd=303                    \
     -fnostdlib                      \
 
 AARCH=\
     -m$(MODEL)                      \
+    -zq                             \
     -0                              \
     -fp0                            \
     -fpi87                          \
@@ -35,7 +37,7 @@ AS=wasm
 
 CFLAGS=$(CARCH) $(INCLUDES) $(DEFINES) -Wall -Os
 ASFLAGS=$(AARCH)
-ARFLAGS_SUB=-n -b -fo
+ARFLAGS_SUB=-n -q -b -fo
 
 %.obj: %.c
 	$(CC) -c $(CFLAGS) -o $*.obj $<

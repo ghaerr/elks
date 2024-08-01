@@ -12,10 +12,6 @@
 
 /* Watcom extern code refs are sym_, extern data refs are _sym */
 
-/* external references created by Watcom C compilation - unused */
-int _argc;              /* with declaration of main() */
-int _8087;              /* when floating point seen */
-
 extern void sys_exit(int status);
 #pragma aux sys_exit =         \
     "xchg ax, bx"           \
@@ -148,5 +144,6 @@ noreturn static void _crt0(void);
     "call premain";
 #endif
 
-/* actual program entry point */
-noreturn void _start(void) { _crt0(); }
+/* program entry point from _start */
+#pragma aux _start_crt0 "*"
+noreturn void _start_crt0(void) { _crt0(); }
