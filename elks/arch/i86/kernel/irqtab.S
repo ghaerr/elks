@@ -424,6 +424,7 @@ intr_count:			// Hardware interrupts count
 pmsg:	.ascii "Running unknown code"
 	.byte	0
 #endif
+	.p2align 1
 endistack:
 	.skip ISTACK_BYTES,0	// interrupt stack
 istack:
