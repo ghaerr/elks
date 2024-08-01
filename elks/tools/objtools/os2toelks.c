@@ -18,10 +18,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#if defined(__WATCOMC__) && defined(__LINUX__)
-#undef O_BINARY  /* Work around OpenWatcom libc bug. */
-#endif
-
 #ifndef O_BINARY
 #define O_BINARY 0
 #endif
