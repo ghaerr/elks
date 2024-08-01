@@ -93,6 +93,7 @@ _enddata:
 
 _endbss:
 	.word	0
-	.bss
 
+	.bss
+	.p2align 1
 _sbss:

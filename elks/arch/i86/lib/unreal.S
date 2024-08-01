@@ -541,6 +541,7 @@ linear32_fmemset:
 #
 
         .data
+        .p2align 1
 # Global Descriptor Table
 # NULL descriptor (required):
 gdt:    .word 0         # limit 15:0
