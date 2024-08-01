@@ -51,7 +51,7 @@ BEGTEXT  segment word public 'CODE'
         int     3
         public _start
 _start:
-if _BIG_CODE
+if _MODEL and _BIG_CODE
         extrn _start_crt0:far
         jmpf _start_crt0
 else
@@ -130,7 +130,6 @@ STACK   ends
         assume  nothing
 
 if 0
-        assume  cs:_TEXT
         INIT_VAL        equ 0101h
         NUM_VAL         equ 16
 NullAssign      db      '*** NULL assignment detected',0
