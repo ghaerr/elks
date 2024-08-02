@@ -49,15 +49,10 @@ BEGTEXT  segment word public 'CODE'
         assume  cs:BEGTEXT
         int     3
         int     3
-        public _start
-_start:
-if _MODEL and _BIG_CODE
-        extrn _start_crt0:far
-        jmpf _start_crt0
-else
-        extrn _start_crt0:near
-        jmp _start_crt0
-endif
+_start  label   byte
+        public  _start
+        xrefp   _start_crt0
+        dojmp   _start_crt0
         assume  cs:nothing
 BEGTEXT  ends
 
@@ -69,10 +64,10 @@ FAR_DATA ends
         assume  ds:DGROUP
 
 _NULL   segment para public 'BEGDATA'
-__nullarea label word
+;       public  __nullarea
+;__nullarea label word
         db      'nul'
         db      0
-        public  __nullarea
 _NULL   ends
 
 _AFTERNULL segment word public 'BEGDATA'
@@ -119,7 +114,7 @@ YIE     ends
 
 _BSS    segment word public 'BSS'
         ;extrn   _edata                  : byte  ; end of DATA (start of BSS)
-        ;extrn   _end                    : byte  ; end of BSS (start of STACK)
+        ;extrn   _end                    : byte  ; end of BSS  (start of HEAP/STACK)
 _BSS    ends
 
 ;STACK_SIZE      equ     1000h
