@@ -1,5 +1,9 @@
 # Makefile include for OpenWatcom build
 
+ifeq "$(TOPDIR)" ""
+$(error TOPDIR environment variable not set)
+endif
+
 ifeq "$(WATCOM)" ""
 $(error WATCOM environment variable not set)
 endif
