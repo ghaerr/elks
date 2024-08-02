@@ -24,6 +24,12 @@ fi
 
 ELKSLIBC=$TOPDIR/libc
 
+# wlink options for debugging:
+# -Wl,option -Wl,map              # produce mapfile (or use -fm=file.map)
+# -Wl,option -Wl,verbose          # more detail in mapfile
+# -Wl,option -Wl,static           # show static variables in mapfile
+# -Wl,option -Wl,eliminate        # enable dead code elimination
+
 LDFLAGS="\
     -bos2                           \
     -s                              \

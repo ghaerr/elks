@@ -154,7 +154,7 @@ noreturn void _start_crt0(void) { _crt0(); }
 
 #else
 
-/* program entry point for far code models */
+/* actual program entry point for far code (medium and large) models */
 #pragma aux _start "*"
 noreturn void _start(void) { _crt0(); }
 #endif
