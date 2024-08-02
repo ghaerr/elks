@@ -55,7 +55,8 @@ unsigned int stackavail(void)
     return (_SP() - __stacklow);
 }
 
-#if defined(__SMALL__) || defined(__MEDIUM__)
+#if defined(__SMALL__) || defined(__MEDIUM__)   /* near data models */
+/* no argv/environ rewrite */
 static noreturn void premain(void)
 {
     __InitRtns();
@@ -89,7 +90,7 @@ static noreturn void premain(char __near *newsp, char __near *oldsp, int bx, int
 
 /* DX contains program stack size at startup */
 noreturn static void _crt0(void);
-#if defined(__SMALL__) || defined(__MEDIUM__)
+#if defined(__SMALL__) || defined(__MEDIUM__)   /* near data models */
 #pragma aux _crt0 =         \
     "mov ax,sp"             \
     "sub ax,dx"             \
@@ -108,7 +109,9 @@ noreturn static void _crt0(void);
     "mov word ptr __program_filename, bx"       \
     "push ax"               \
     "call premain";
+
 #else
+
 #pragma aux _crt0 =         \
     "mov ax,sp"             \
     "sub ax,dx"             \
@@ -144,6 +147,14 @@ noreturn static void _crt0(void);
     "call premain";
 #endif
 
-/* program entry point from _start */
+#if defined(__SMALL__) || defined(__COMPACT__)  /* near code models */
+/* jumped from _start for prevention of zero near function address */
 #pragma aux _start_crt0 "*"
 noreturn void _start_crt0(void) { _crt0(); }
+
+#else
+
+/* program entry point for far code models */
+#pragma aux _start "*"
+noreturn void _start(void) { _crt0(); }
+#endif

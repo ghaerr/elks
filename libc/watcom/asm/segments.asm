@@ -37,6 +37,9 @@ include mdef.inc
 
 DGROUP group _NULL,_AFTERNULL,CONST,STRINGS,_DATA,DATA,XIB,XI,XIE,YIB,YI,YIE,_BSS,STACK
 
+if (_MODEL and _BIG_CODE) eq 0
+
+; BEGTEXT section used in near code (small and compact) models only
 ; this guarantees that no function pointer will equal NULL
 ; (WLINK will keep segment 'BEGTEXT' in front)
 ; This segment must be at least 2 bytes in size to avoid confusing the
@@ -55,6 +58,8 @@ _start  label   byte
         dojmp   _start_crt0
         assume  cs:nothing
 BEGTEXT  ends
+
+endif
 
 _TEXT   segment word public 'CODE'
 
