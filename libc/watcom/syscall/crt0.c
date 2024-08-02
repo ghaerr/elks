@@ -12,10 +12,6 @@
 
 /* Watcom extern code refs are sym_, extern data refs are _sym */
 
-/* external references created by Watcom C compilation - unused */
-int _argc;              /* with declaration of main() */
-int _8087;              /* when floating point seen */
-
 extern void sys_exit(int status);
 #pragma aux sys_exit =         \
     "xchg ax, bx"           \
@@ -59,7 +55,8 @@ unsigned int stackavail(void)
     return (_SP() - __stacklow);
 }
 
-#if defined(__SMALL__) || defined(__MEDIUM__)
+#if defined(__SMALL__) || defined(__MEDIUM__)   /* near data models */
+/* no argv/environ rewrite */
 static noreturn void premain(void)
 {
     __InitRtns();
@@ -93,7 +90,7 @@ static noreturn void premain(char __near *newsp, char __near *oldsp, int bx, int
 
 /* DX contains program stack size at startup */
 noreturn static void _crt0(void);
-#if defined(__SMALL__) || defined(__MEDIUM__)
+#if defined(__SMALL__) || defined(__MEDIUM__)   /* near data models */
 #pragma aux _crt0 =         \
     "mov ax,sp"             \
     "sub ax,dx"             \
@@ -112,7 +109,9 @@ noreturn static void _crt0(void);
     "mov word ptr __program_filename, bx"       \
     "push ax"               \
     "call premain";
+
 #else
+
 #pragma aux _crt0 =         \
     "mov ax,sp"             \
     "sub ax,dx"             \
@@ -148,5 +147,14 @@ noreturn static void _crt0(void);
     "call premain";
 #endif
 
-/* actual program entry point */
+#if defined(__SMALL__) || defined(__COMPACT__)  /* near code models */
+/* jumped from _start for prevention of zero near function address */
+#pragma aux _start_crt0 "*"
+noreturn void _start_crt0(void) { _crt0(); }
+
+#else
+
+/* actual program entry point for far code (medium and large) models */
+#pragma aux _start "*"
 noreturn void _start(void) { _crt0(); }
+#endif

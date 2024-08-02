@@ -48,7 +48,7 @@ extern void restore_ds( void );
 #define restore_es()
 #define __GETDS()
 
-#if defined(__SMALL__) || defined(__MEDIUM__)
+#if defined(__SMALL__) || defined(__COMPACT__)  /* near code models */
 static void callit_near( npfn *f )
 {
     if( *f ) {
@@ -114,7 +114,7 @@ void __InitRtns(void)
                 break;
             }
         }
-#if defined(__SMALL__) || defined(__MEDIUM__)
+#if defined(__SMALL__) || defined(__COMPACT__)  /* near code models */
         callit_near( (npfn *)&pnext->func );
 #else
         callit_far( (fpfn *)&pnext->func );
@@ -174,7 +174,7 @@ void __FiniRtns(void)
             }
         }
         if( pnext->priority <= local_max_limit ) {
-#if defined(__SMALL__) || defined(__MEDIUM__)
+#if defined(__SMALL__) || defined(__COMPACT__)  /* near code models */
             callit_near( (npfn *)&pnext->func );
 #else
             callit_far( (fpfn *)&pnext->func );

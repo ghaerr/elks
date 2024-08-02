@@ -25,16 +25,21 @@
 ;*
 ;*  ========================================================================
 ;*
-;* Description:  Watcom C segment ordering and null pointer section offsets
+;* Description:  Watcom C segment ordering and null pointer and init/fini libc
 ;*
 ;*****************************************************************************
 
 
-        name    cstart
+include mdef.inc
+
+        name    segments
         assume  nothing
 
 DGROUP group _NULL,_AFTERNULL,CONST,STRINGS,_DATA,DATA,XIB,XI,XIE,YIB,YI,YIE,_BSS,STACK
 
+if (_MODEL and _BIG_CODE) eq 0
+
+; BEGTEXT section used in near code (small and compact) models only
 ; this guarantees that no function pointer will equal NULL
 ; (WLINK will keep segment 'BEGTEXT' in front)
 ; This segment must be at least 2 bytes in size to avoid confusing the
@@ -46,10 +51,15 @@ DGROUP group _NULL,_AFTERNULL,CONST,STRINGS,_DATA,DATA,XIB,XI,XIE,YIB,YI,YIE,_BS
 BEGTEXT  segment word public 'CODE'
         assume  cs:BEGTEXT
         int     3
-        nop
-__begtext label byte
+        int     3
+_start  label   byte
+        public  _start
+        xrefp   _start_crt0
+        dojmp   _start_crt0
         assume  cs:nothing
 BEGTEXT  ends
+
+endif
 
 _TEXT   segment word public 'CODE'
 
@@ -59,10 +69,10 @@ FAR_DATA ends
         assume  ds:DGROUP
 
 _NULL   segment para public 'BEGDATA'
-__nullarea label word
+;       public  __nullarea
+;__nullarea label word
         db      'nul'
         db      0
-        public  __nullarea
 _NULL   ends
 
 _AFTERNULL segment word public 'BEGDATA'
@@ -109,7 +119,7 @@ YIE     ends
 
 _BSS    segment word public 'BSS'
         ;extrn   _edata                  : byte  ; end of DATA (start of BSS)
-        ;extrn   _end                    : byte  ; end of BSS (start of STACK)
+        ;extrn   _end                    : byte  ; end of BSS  (start of HEAP/STACK)
 _BSS    ends
 
 ;STACK_SIZE      equ     1000h
@@ -118,14 +128,6 @@ STACK   segment para stack 'STACK'
 STACK   ends
 
         assume  nothing
-        public  _cstart_
-
-        assume  cs:_TEXT
-
-_cstart_ proc near
-        dw      __begtext               ; make sure dead code elimination
-                                        ; doesn't kill BEGTEXT segment
-_cstart_ endp
 
 if 0
         INIT_VAL        equ 0101h
@@ -160,4 +162,4 @@ endif
 
 _TEXT   ends
 
-        end     _cstart_
+        end
