@@ -61,7 +61,7 @@ unsigned int get_time_10ms(void)
     return pdiff;
 }
 
-/* count up to 5 jiffies in pticks, returns < 59960 pticks (50ms), w/overflow check */
+/* count up to 5 jiffies in pticks, returns < 59660 pticks (50ms), w/overflow check */
 unsigned int get_time_50ms(void)
 {
     int jdiff;
@@ -141,18 +141,18 @@ void timer_test(void)
     printk("1193 = %k\n", 1193);
     printk("1194 = %k\n", 1194);
     printk("10000 = %k\n", 10000);
-    printk("59959 = %k\n", 59959U);
-    printk("59960 = %k\n", 59960U);
-    printk("59961 = %k\n", 59961U);
+    printk("59659 = %k\n", 59659U);
+    printk("59660 = %k\n", 59660U);
+    printk("59661 = %k\n", 59661U);
     printk("100000 = %lk\n", 100000L);
-    printk("5*59960 = %lk\n", 5*59960L);
+    printk("5*59660 = %lk\n", 5*59660L);
     printk("359953 = %lk\n", 359953L);
-    printk("19*59960 = %lk\n", 19*59960L);
-    printk("20*59960 = %lk\n", 20*59960L);
-    printk("21*59960 = %lk\n", 21*59960L);
-    printk("60*59960 = %lk\n", 60*59960L);
-    printk("84*59960 = %lk\n", 84*59960L);
-    printk("600*59960 = %lk\n", 600*59960L);
+    printk("19*59660 = %lk\n", 19*59660L);
+    printk("20*59660 = %lk\n", 20*59660L);
+    printk("21*59660 = %lk\n", 21*59660L);
+    printk("60*59660 = %lk\n", 60*59660L);
+    printk("84*59660 = %lk\n", 84*59660L);
+    printk("600*59660 = %lk\n", 600*59660L);
     printk("3000000 = %lk\n", 3000000L);
     printk("30000000 = %lk\n", 30000000UL);
     printk("35995300 = %lk\n", 35995300UL);
