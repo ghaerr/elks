@@ -57,6 +57,7 @@ OBJS2 = $(SRCS2:.s=.o)
 
 SRCS3 = \
 	bitops.c \
+	prectimer.c \
 	# end of list
 
 OBJS3 = $(SRCS3:.c=.o)
