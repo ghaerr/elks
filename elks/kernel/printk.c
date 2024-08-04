@@ -18,6 +18,7 @@
  *              %p      pointer - same as %04x
  *              %D      device name as %04x
  *              %P      process ID
+ *              %k      pticks (0.838usec intervals auto displayed as us, ms or s)
  *
  *      All except %% can be followed by a width specifier 1 -> 31 only
  *      and the h/l length specifiers also work where appropriate.
@@ -39,6 +40,8 @@
 #include <arch/segment.h>
 #include <arch/irq.h>
 #include <stdarg.h>
+
+#define CONFIG_PREC_TIMER   0   /* =1 to include %k precision timer printk format */
 
 dev_t dev_console;
 
@@ -84,10 +87,12 @@ static void kputs(const char *buf)
 
 static char hex_string[] = "0123456789ABCDEF 0123456789abcdef ";
 
-static void numout(__u32 v, int width, int base, int useSign, int Lower, int Zero, int alt)
+static void numout(unsigned long v, int width, unsigned int base, int type,
+    int Zero, int alt)
 {
-    __u32 dvr;
+    unsigned long dvr;
     int c, vch, i;
+    int useSign, Lower, Decimal;
 
     i = 10;
     dvr = 1000000000L;
@@ -100,11 +105,37 @@ static void numout(__u32 v, int width, int base, int useSign, int Lower, int Zer
         dvr = 0x40000000L;
     }
 
+    Decimal = 0;
+#if CONFIG_PREC_TIMER
+    int Msecs = 0;
+    /* display 1/1193182s get_time*() pticks in range 0.838usec through 42.94sec */
+    if (type == 'k') {                  /* format works w/limited ranges only */
+        Decimal = 3;
+        if (v > 51130563UL)             /* = 2^32 / 84 high max range ~42.94s */
+            v = 0;                      /* ... displays 0us */
+        if (v > 5125259UL) {            /* = 2^32 / 838 */
+            v = v * 84UL;
+            Decimal = 2;                /* display xx.xx secs */
+        } else
+            v = v * 838UL;              /* convert to nanosecs w/o 32-bit overflow */
+        if (v > 1000000000UL) {         /* display x.xxx secs */
+            v /= 1000000UL;             /* divide using _udivsi3 for speed */
+        } else if (v > 1000000UL) {
+            v /= 1000UL;                /* display xx.xxx msecs */
+            Msecs = 1;
+        } else {
+            Msecs = 2;                  /* display xx.xxx usecs */
+        }
+    }
+#endif
+
+    useSign = (type == 'd');
     if (useSign && ((long)v < 0L))
         v = (-(long)v);
     else
         useSign = 0;
 
+    Lower = (type != 'X');
     if (Lower)
         Lower = 17;
     vch = 0;
@@ -115,10 +146,10 @@ static void numout(__u32 v, int width, int base, int useSign, int Lower, int Zer
     do {
         c = (int)(v / dvr);
         v %= dvr;
-        dvr /= (unsigned int)base;
+        dvr /= base;
         if (c || (i <= width) || (i < 2)) {
             if (i > width)
-                width = (int)i;
+                width = i;
             if (!Zero && !c && (i > 1))
                 c = 16;
             else {
@@ -131,9 +162,17 @@ static void numout(__u32 v, int width, int base, int useSign, int Lower, int Zer
             if (vch)
                 kputchar(vch);
             vch = *(hex_string + Lower + c);
+            if (type == 'k' && i == Decimal) kputchar('.');
         }
     } while (--i);
     kputchar(vch);
+#if CONFIG_PREC_TIMER
+    if (type == 'k') {
+        if (Msecs)
+            kputchar(Msecs == 1? 'm': 'u');
+        kputchar('s');
+    }
+#endif
 }
 
 static void vprintk(const char *fmt, va_list p)
@@ -175,6 +214,7 @@ static void vprintk(const char *fmt, va_list p)
             case 'o':
                 n -= 2;
             case 'u':
+            case 'k':
                 n -= 6;
             case 'X':
             case 'x':
@@ -189,7 +229,7 @@ static void vprintk(const char *fmt, va_list p)
                         v = (unsigned long)(va_arg(p, unsigned int));
                 }
             out:
-                numout(v, width, n, (c == 'd'), (c != 'X'), zero, alt);
+                numout(v, width, n, c, zero, alt);
                 break;
             case 'P':
                 v = current->pid;

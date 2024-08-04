@@ -14,6 +14,7 @@
 #include <linuxmt/trace.h>
 #include <linuxmt/devnum.h>
 #include <linuxmt/heap.h>
+#include <linuxmt/prectimer.h>
 #include <arch/system.h>
 #include <arch/segment.h>
 #include <arch/ports.h>
@@ -102,6 +103,9 @@ void start_kernel(void)
      * We are now the idle task. We won't run unless no other process can run.
      */
     while (1) {
+        /***unsigned int pticks = get_time_10ms();
+        printk("%u,%u = %k\n", pticks, (unsigned)jiffies, pticks);***/
+
         schedule();
 #ifdef CONFIG_TIMER_INT0F
         int0F();        /* simulate timer interrupt hooked on IRQ 7 */

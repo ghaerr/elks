@@ -24,6 +24,11 @@ image:
 images:
 	$(MAKE) -C image images
 
+kimage: kernel image
+
+kernel:
+	$(MAKE) -C elks
+
 kclean:
 	$(MAKE) -C elks kclean
 
