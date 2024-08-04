@@ -53,6 +53,9 @@ SCREENDEVICE	scrdev = {
 	ega_blit
 };
 
+/* operating mode*/
+static BOOL MONOMODE = FALSE;	/* monochrome mode*/
+
 /* int10 functions*/
 #define FNGR640x200	0x0006	/* function for graphics mode 640x200x2*/
 #define FNTEXT		0x0003	/* function for 80x25 text mode*/
@@ -60,17 +63,27 @@ SCREENDEVICE	scrdev = {
 static int
 CGA_open(PSD psd)
 {
+	/* setup operating mode from environment variable*/
+	if(getenv("MONOMODE"))
+		MONOMODE = TRUE;
+	else MONOMODE = FALSE;
+
 	int10(FNGR640x200, 0);
 
 	/* init driver variables depending on cga mode*/
 	psd->xres = 640;
 	psd->yres = 200;
 	psd->planes = 1;
-	//psd->bpp = 1;
-	//psd->ncolors = 2;
-    // To run colored applications
-	psd->bpp = 4;
-	psd->ncolors = 16;
+
+	if (MONOMODE) {
+		psd->bpp = 1;
+		psd->ncolors = 2;
+	} else {
+		// To run colored applications
+		psd->bpp = 4;
+		psd->ncolors = 16;
+	}
+
 	psd->pixtype = PF_PALETTE;
 #if HAVEBLIT
 	psd->flags = PSF_SCREEN | PSF_HAVEBLIT;
