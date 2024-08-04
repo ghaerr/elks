@@ -3,6 +3,7 @@
 
 /* Assorted initializers */
 
+#include <linuxmt/config.h>
 #include <linuxmt/types.h>
 
 #if defined(CONFIG_FARTEXT_KERNEL) && !defined(__STRICT_ANSI__)
