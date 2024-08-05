@@ -103,13 +103,13 @@ static struct gendisk bioshd_gendisk = {
     NULL                        /* next */
 };
 
-static void set_cache_invalid(void)
+static void BFPROC set_cache_invalid(void)
 {
     cache_drive = NULL;
 }
 
 #ifdef CONFIG_BLK_DEV_BFD
-static int read_sector(int drive, int cylinder, int sector)
+static int BFPROC read_sector(int drive, int cylinder, int sector)
 {
     int count = 2;              /* one retry on probe or boot sector read */
 
@@ -128,7 +128,7 @@ static int read_sector(int drive, int cylinder, int sector)
     return 1;                   /* error */
 }
 
-static void probe_floppy(int target, struct hd_struct *hdp)
+static void BFPROC probe_floppy(int target, struct hd_struct *hdp)
 {
     /* Check for disk type */
 
@@ -500,7 +500,7 @@ static int bioshd_ioctl(struct inode *inode, struct file *file, unsigned int cmd
 }
 
 /* calculate CHS and sectors remaining for track read */
-static void get_chst(struct drive_infot *drivep, sector_t *start_sec, unsigned int *c,
+static void BFPROC get_chst(struct drive_infot *drivep, sector_t *start_sec, unsigned int *c,
         unsigned int *h, unsigned int *s, unsigned int *t, int fulltrack)
 {
     sector_t start = *start_sec;
@@ -530,7 +530,7 @@ static void get_chst(struct drive_infot *drivep, sector_t *start_sec, unsigned i
 }
 
 /* do disk I/O, return # sectors read/written */
-static int do_readwrite(struct drive_infot *drivep, sector_t start, char *buf,
+static int BFPROC do_readwrite(struct drive_infot *drivep, sector_t start, char *buf,
         ramdesc_t seg, int cmd, unsigned int count)
 {
     int drive, error, errs;
@@ -599,7 +599,7 @@ static sector_t cache_startsector;
 static sector_t cache_endsector;
 
 /* read from start sector to end of track into DMASEG track buffer, no retries*/
-static void do_readtrack(struct drive_infot *drivep, sector_t start)
+static void BFPROC do_readtrack(struct drive_infot *drivep, sector_t start)
 {
     unsigned int cylinder, head, sector, num_sectors;
     int drive = drivep - drive_info;
@@ -639,7 +639,7 @@ static void do_readtrack(struct drive_infot *drivep, sector_t start)
 }
 
 /* check whether cache is valid for one sector*/
-static int cache_valid(struct drive_infot *drivep, sector_t start, char *buf,
+static int BFPROC cache_valid(struct drive_infot *drivep, sector_t start, char *buf,
         ramdesc_t seg)
 {
     unsigned int offset;
@@ -658,7 +658,7 @@ static int cache_tries;
 static int cache_hits;
 
 /* read from cache, return # sectors read*/
-static int do_cache_read(struct drive_infot *drivep, sector_t start, char *buf,
+static int BFPROC do_cache_read(struct drive_infot *drivep, sector_t start, char *buf,
         ramdesc_t seg, int cmd)
 {
     if (cmd == READ) {
@@ -676,7 +676,7 @@ static int do_cache_read(struct drive_infot *drivep, sector_t start, char *buf,
 }
 #endif
 
-static void do_bioshd_request(void)
+static void BFPROC do_bioshd_request2(void)
 {
     struct drive_infot *drivep;
     struct request *req;
@@ -751,4 +751,9 @@ next_block:
         end_request(1);
     }
     spin_timer(0);
+}
+
+static void do_bioshd_request(void)
+{
+    do_bioshd_request2();
 }

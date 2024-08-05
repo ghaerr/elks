@@ -66,7 +66,7 @@ static unsigned long __far *vec1E = _MK_FP(0, 0x1E << 2);
  * as well try it -- Some XT controllers are happy with it.. [AC]
  */
 
-void bios_disk_reset(int drive)
+void BFPROC bios_disk_reset(int drive)
 {
 #ifdef CONFIG_ARCH_PC98
     BD_AX = BIOSHD_RESET | drive;
@@ -78,7 +78,7 @@ void bios_disk_reset(int drive)
     /* ignore errors with carry set*/
 }
 
-int bios_disk_rw(unsigned cmd, unsigned num_sectors, unsigned drive,
+int BFPROC bios_disk_rw(unsigned cmd, unsigned num_sectors, unsigned drive,
         unsigned cylinder, unsigned head, unsigned sector, unsigned seg, unsigned offset)
 {
 #ifdef CONFIG_ARCH_PC98
@@ -342,13 +342,13 @@ int INITPROC bios_getfdinfo(struct drive_infot *drivep)
 #endif
 
 /* set our DDPT sectors per track value*/
-void bios_set_ddpt(int max_sectors)
+void BFPROC bios_set_ddpt(int max_sectors)
 {
         DDPT[SPT] = (unsigned char) max_sectors;
 }
 
 /* get the diskette drive parameter table from INT 1E and point to our RAM copy of it*/
-void bios_copy_ddpt(void)
+void BFPROC bios_copy_ddpt(void)
 {
         unsigned long oldvec = *vec1E;
 
@@ -380,7 +380,8 @@ void bios_copy_ddpt(void)
 
 #ifdef CONFIG_ARCH_PC98
 /* switch device */
-void bios_switch_device98(int target, unsigned int device, struct drive_infot *drivep)
+void BFPROC bios_switch_device98(int target, unsigned int device,
+    struct drive_infot *drivep)
 {
     bios_drive_map[target + DRIVE_FD0] =
         (device | (bios_drive_map[target + DRIVE_FD0] & 0x0F));
