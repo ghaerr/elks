@@ -20,8 +20,8 @@ typedef enum {
 
 struct socket {
     unsigned char state;
-    struct wait_queue *wait;
     unsigned char flags;
+    struct wait_queue *wait;
     unsigned int rcv_bufsiz;
     struct proto_ops *ops;
     struct inode *inode;

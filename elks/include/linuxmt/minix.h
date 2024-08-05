@@ -28,7 +28,7 @@ struct minix_exec_hdr {
     uint32_t    type;
     uint8_t     hlen;           // 0x04
     uint8_t     reserved1;
-    uint8_t     version;
+    uint16_t    version;
     uint32_t    tseg;           // 0x08
     uint32_t    dseg;           // 0x0c
     uint32_t    bseg;           // 0x10

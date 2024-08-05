@@ -22,8 +22,6 @@ struct timer_list {
     void (*tl_function) ();
 };
 
-struct pt_regs;
-
 /* sched.c*/
 void add_timer(struct timer_list *);
 int del_timer(struct timer_list *);

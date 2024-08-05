@@ -55,7 +55,7 @@ void select_wait (struct wait_queue *q)
 	int n;
 	struct wait_queue **p;
 
-	for (n = 0; n < POLL_MAX; n++) {
+	for (n = 0; n < MAX_POLLFD; n++) {
 		p = &(current->poll [n]);
 		if (!*p) {
 			*p = q;
@@ -73,7 +73,7 @@ int select_poll (struct task_struct * t, struct wait_queue *q)
 	int n;
 	struct wait_queue *p;
 
-	for (n = 0; n < POLL_MAX; n++) {
+	for (n = 0; n < MAX_POLLFD; n++) {
 		p = t->poll [n];
 		if (!p) return 0;
 		if (p == q) return 1;
@@ -136,7 +136,7 @@ static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
      * reschedule current task since current->state == TASK_RUNNING by wake_up.
      */
     current->state = TASK_INTERRUPTIBLE;
-    memset (current->poll, 0, sizeof (struct wait_queue *) * POLL_MAX);
+    memset (current->poll, 0, sizeof (struct wait_queue *) * MAX_POLLFD);
     filp = current->files.fd;
     for (i = 0; i < n; i++, filp++) {
 	if (*filp) {
@@ -160,7 +160,7 @@ static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
 	goto repeat;
     }
 
-    memset (current->poll, 0, sizeof (struct wait_queue *) * POLL_MAX);
+    memset (current->poll, 0, sizeof (struct wait_queue *) * MAX_POLLFD);
     current->state = TASK_RUNNING;
     wait_clear(&select_queue);
     return count;
