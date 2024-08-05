@@ -80,8 +80,8 @@ static struct socket *sock_alloc(void)
 {
     static struct socket ini_sock = {	/* order dependent on net.h! */
 	SS_UNCONNECTED, /* state */
-	NULL,		/* wait */
 	0,		/* flags */
+	NULL,		/* wait */
 	0,		/* rcv_bufsiz */
 	NULL,		/* ops */
 	NULL,		/* inode */

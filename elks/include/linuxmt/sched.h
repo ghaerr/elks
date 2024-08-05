@@ -58,7 +58,7 @@ struct task_struct {
     struct wait_queue           child_wait;
     jiff_t                      timeout;        /* for select() */
     struct wait_queue           *waitpt;        /* Wait pointer */
-    struct wait_queue           *poll[POLL_MAX];  /* polled queues */
+    struct wait_queue           *poll[MAX_POLLFD]; /* polled queues */
     struct task_struct          *next_run;
     struct task_struct          *prev_run;
     struct file_struct          files;          /* File system structure */

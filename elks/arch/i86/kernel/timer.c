@@ -57,11 +57,6 @@ static void calc_cpu_usage(void)
 }
 #endif
 
-#if defined(CONFIG_BLK_DEV_SSD_TEST) && defined(CONFIG_ASYNCIO)
-extern jiff_t ssd_timeout;
-extern void ssd_io_complete();
-#endif
-
 void timer_tick(int irq, struct pt_regs *regs)
 {
     do_timer();
@@ -75,8 +70,12 @@ void timer_tick(int irq, struct pt_regs *regs)
 #endif
 
 #if defined(CONFIG_BLK_DEV_SSD_TEST) && defined(CONFIG_ASYNCIO)
-    if (ssd_timeout && jiffies >= ssd_timeout) {
-        ssd_io_complete();
+    {
+        extern jiff_t ssd_timeout;
+        extern void ssd_io_complete(void);
+        if (ssd_timeout && jiffies >= ssd_timeout) {
+            ssd_io_complete();
+        }
     }
 #endif
 

@@ -31,7 +31,6 @@ struct partition
     sector_t nr_sects;          /* nr of sectors in partition */
 };
 
-#ifdef CONFIG_ARCH_PC98
 struct partition_pc98
 {
     unsigned char boot_ind;     /* bootable */
@@ -48,7 +47,6 @@ struct partition_pc98
     unsigned int end_cyl;       /* end cylinder */
     char name[16];
 };
-#endif
 
 struct hd_struct
 {
