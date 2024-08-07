@@ -85,7 +85,7 @@ static void init_task(void);
 static void INITPROC kernel_banner(seg_t start, seg_t end, seg_t init, seg_t extra);
 static void INITPROC early_kernel_init(void);
 
-#ifdef TIMER_TEST
+#if TIMER_TEST
 void testloop(unsigned timer)
 {
         unsigned pticks, x = timer;
