@@ -72,6 +72,7 @@
  * what (it's pretty obvious).
  */
 
+#include <autoconf.h>       /* for CONFIG_ options */
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -325,7 +326,7 @@ void draw_anticlockwise_button(nstate *state)
 	GrFillRect(state->anticlockwise_button, state->buttongcb, 0, 0,
 		ANTICLOCKWISE_BUTTON_WIDTH, ANTICLOCKWISE_BUTTON_HEIGHT);
 	GrText(state->anticlockwise_button, state->buttongcf, TEXT_X_POSITION,
-					TEXT_Y_POSITION, (GR_CHAR *)"s  \\", 4);
+					TEXT_Y_POSITION, (GR_CHAR *)"d  \\", 4);
 }
 
 void draw_clockwise_button(nstate *state)
@@ -334,7 +335,7 @@ void draw_clockwise_button(nstate *state)
 	GrFillRect(state->clockwise_button, state->buttongcb, 0, 0,
 			CLOCKWISE_BUTTON_WIDTH, CLOCKWISE_BUTTON_HEIGHT);
 	GrText(state->clockwise_button, state->buttongcf, TEXT_X_POSITION,
-					TEXT_Y_POSITION, (GR_CHAR *)"d  /", 4);
+					TEXT_Y_POSITION, (GR_CHAR *)"f  /", 4);
 }
 
 void draw_left_button(nstate *state)

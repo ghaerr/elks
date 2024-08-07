@@ -36,7 +36,11 @@ ifeq ($(CONFIG_ARCH_PC98), y)
 DRIVERS += drivers/scr_pc98.o drivers/vgaplan4_pc98.o drivers/mempl4.o
 LDFLAGS += -maout-heap=0xffff
 else
+ifeq ($(CONFIG_HW_VGA), y)
 DRIVERS += drivers/scr_bios.o drivers/vgaplan4.o drivers/mempl4.o
+else
+DRIVERS += drivers/scr_cga.o drivers/vgaplan4_cga.o drivers/mempl4.o
+endif
 endif
 
 # higher speed asm VGA driver
@@ -48,7 +52,11 @@ endif
 ifeq ($(CONFIG_ARCH_PC98), y)
 DRIVERS += drivers/ramfont.o drivers/X6x13.o drivers/elksutilasm.o
 else
+ifeq ($(CONFIG_HW_VGA), y)
 DRIVERS += drivers/romfont.o drivers/elksutilasm.o
+else
+DRIVERS += drivers/ramfont.o drivers/X6x13.o drivers/elksutilasm.o
+endif
 endif
 
 # The following line links the nano-X application with the server.
