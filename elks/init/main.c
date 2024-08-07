@@ -114,14 +114,14 @@ void start_kernel(void)
     /*
      * We are now the idle task. We won't run unless no other process can run.
      */
-#ifdef TIMER_TEST
+#if TIMER_TEST
     timer_test();
     testloop(10000);
     testloop(3000);
     testloop(500);
 #endif
     while (1) {
-#ifdef TIMER_TEST
+#if TIMER_TEST
         timer_50ms();
 #else
         schedule();
