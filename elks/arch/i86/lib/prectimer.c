@@ -11,8 +11,6 @@
  * 2 Aug 2024 Greg Haerr
  */
 
-#define TIMER_TEST      0   /* =1 to include timer_*() test routines */
-
 /*
  * Each ptick corresponds to the elapsed time for a countdown in the 8254 PIT.
  * The PC master oscillator frequency is 14.31818 MHz, and is divided
@@ -34,7 +32,7 @@ static unsigned long lastjiffies;
 /*
  * Each PIT count (ptick) is 0.8381 usecs each for 10ms jiffies timer (= 1/11932)
  *
- * To display a ptick in usecs use ptick * 838 / 1000 (= 1 mul, 1 div )
+ * To display a ptick in usecs use ptick * 838 / 1000U (= 1 mul, 1 div )
  *
  * Return type   Name           Resolution  Max
  * unsigned int  get_time_10ms  pticks      10ms  (< 11932 pticks)
@@ -77,9 +75,9 @@ unsigned int get_time_50ms(void)
     if (jdiff < 0)                  /* lower half wrapped */
         jdiff = -jdiff;             /* = 0x10000000 - lastjiffies + jiffies */
     if (jdiff >= 2) {
-        if (jdiff >= 5)
-            return 0xffff;          /* overflow */
-        return jdiff * 11932U + pticks;
+        if (jdiff >= 6)
+            return 0;               /* overflow displays 0s */
+        return (jdiff - 1) * 11932U + pticks;
     }
     return pticks;
 }
@@ -93,7 +91,7 @@ unsigned long get_time(void)
     clr_irq();                  /* for saving lasttime below */
     lasttime = lastjiffies;
     pticks = get_time_50ms();
-    if (pticks != 0xffff)
+    if (pticks != 0)
         return pticks;          /* < 50ms */
     /* current jiffies is in lastjiffies, last jiffies is in lasttime */
     return (lastjiffies - lasttime) * MAX_PTICK;
@@ -111,11 +109,12 @@ void timer_10ms(void)
 
 void timer_50ms(void)
 {
-    unsigned long timeout = jiffies + 4;
+    static int v;
+    unsigned long timeout = jiffies + v;            /* > 5 will fail */
     unsigned int pticks = get_time_50ms();
     unsigned int usecs = pticks * 838UL / 1000;     /* use unsigned _udivsi3 for speed */
-    unsigned int usecs2 = pticks * 8381UL / 10000;  /* use unsigned _udivsi3 for speed */
-    printk("%u %u = %u,%u usecs = %k\n", pticks, (unsigned)lastjiffies, usecs, usecs2, pticks);
+    printk("%u %u = %u usecs = %k\n", pticks, (unsigned)lastjiffies, usecs, pticks);
+    if (++v > 5) v = 0;
     while (jiffies < timeout)
         ;
 }

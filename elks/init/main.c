@@ -85,6 +85,18 @@ static void init_task(void);
 static void INITPROC kernel_banner(seg_t start, seg_t end, seg_t init, seg_t extra);
 static void INITPROC early_kernel_init(void);
 
+#if TIMER_TEST
+void testloop(unsigned timer)
+{
+        unsigned pticks, x = timer;
+
+        get_time_10ms();
+        while (x--) outb(x, 0x80);
+        pticks = get_time_10ms();
+        printk("hptimer %u: %k (%u)\n", timer, pticks, pticks);
+}
+#endif
+
 /* this procedure called using temp stack then switched, no temp vars allowed */
 void start_kernel(void)
 {
@@ -102,16 +114,23 @@ void start_kernel(void)
     /*
      * We are now the idle task. We won't run unless no other process can run.
      */
+#if TIMER_TEST
+    timer_test();
+    testloop(10000);
+    testloop(3000);
+    testloop(500);
+#endif
     while (1) {
-        /***unsigned int pticks = get_time_10ms();
-        printk("%u,%u = %k\n", pticks, (unsigned)jiffies, pticks);***/
-
+#if TIMER_TEST
+        timer_50ms();
+#else
         schedule();
 #ifdef CONFIG_TIMER_INT0F
         int0F();        /* simulate timer interrupt hooked on IRQ 7 */
 #else
         idle_halt();    /* halt until interrupt to save power */
 #endif
+#endif /* TIMER_TEST */
     }
 }
 

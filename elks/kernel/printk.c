@@ -37,11 +37,10 @@
 #include <linuxmt/ntty.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/signal.h>
+#include <linuxmt/prectimer.h>
 #include <arch/segment.h>
 #include <arch/irq.h>
 #include <stdarg.h>
-
-#define CONFIG_PREC_TIMER   0   /* =1 to include %k precision timer printk format */
 
 dev_t dev_console;
 
