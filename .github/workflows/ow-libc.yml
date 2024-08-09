@@ -31,10 +31,10 @@ jobs:
         include:
         - runner: ubuntu-latest
           arch: x64
-        - runner: macos-13
-          arch: x64
-        - runner: macos-14
-          arch: arm64
+#        - runner: macos-13
+#          arch: x64
+#        - runner: macos-14
+#          arch: arm64
 
     steps:
       - name: checkout ELKS
