@@ -70,11 +70,11 @@ unsigned int get_time_50ms(void)
     static unsigned int lastcount;
 
     save_flags(flags);
-    clr_irq();
+    clr_irq();                      /* synchronize countdown and jiffies */
+    outb(0, TIMER_CMDS_PORT);       /* latch timer value */
     /* ia16-elf-gcc won't generate 32-bit subtract so use 16-bit and check wrap */
     jdiff = (unsigned)jiffies - (unsigned)lastjiffies;
     lastjiffies = jiffies;          /* 32 bit save required after ~10.9 mins */
-    outb(0, TIMER_CMDS_PORT);       /* latch timer value */
     restore_flags(flags);
 
     lo = inb(TIMER_DATA_PORT);
@@ -84,6 +84,7 @@ unsigned int get_time_50ms(void)
     if (pticks < 0)                 /* wrapped */
         pticks += MAX_PTICK;        /* = MAX_PTICK - count + lastcount */
     lastcount = count;
+
     if (jdiff < 0)                  /* lower half wrapped */
         jdiff = -jdiff;             /* = 0x10000000 - lastjiffies + jiffies */
     if (jdiff >= 2) {
