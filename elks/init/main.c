@@ -88,11 +88,21 @@ static void INITPROC early_kernel_init(void);
 #if TIMER_TEST
 void testloop(unsigned timer)
 {
-        unsigned pticks, x = timer;
+        unsigned int pticks, x = timer;
+        int i;
+        static unsigned int a[10];
 
-        get_time_10ms();
-        while (x--) outb(x, 0x80);
-        pticks = get_time_10ms();
+#if 1
+        get_time_50ms();
+        for (i=0; i<10; i++)
+            a[i] = get_time_50ms();
+        for (i=0; i<10; i++)
+            printk("%d,", a[i]);
+        printk("\n");
+#endif
+        get_time_50ms();
+        while (x--) asm("nop");
+        pticks = get_time_50ms();
         printk("hptimer %u: %k (%u)\n", timer, pticks, pticks);
 }
 #endif
@@ -107,6 +117,14 @@ void start_kernel(void)
     setsp(&task->t_regs.ax);    /* change to idle task stack */
     kernel_init();              /* continue init running on idle task stack */
 
+#if TIMER_TEST
+    /* run tests before 2nd process created for stability */
+    testloop(30000);
+    testloop(3000);
+    testloop(300);
+    printk("\n");
+#endif
+
     /* fork and run procedure init_task() as task #1*/
     kfork_proc(init_task);
     wake_up_process(&task[1]);
@@ -114,23 +132,13 @@ void start_kernel(void)
     /*
      * We are now the idle task. We won't run unless no other process can run.
      */
-#if TIMER_TEST
-    timer_test();
-    testloop(10000);
-    testloop(3000);
-    testloop(500);
-#endif
     while (1) {
-#if TIMER_TEST
-        timer_50ms();
-#else
         schedule();
 #ifdef CONFIG_TIMER_INT0F
         int0F();        /* simulate timer interrupt hooked on IRQ 7 */
 #else
         idle_halt();    /* halt until interrupt to save power */
 #endif
-#endif /* TIMER_TEST */
     }
 }
 
