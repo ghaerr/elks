@@ -118,6 +118,9 @@ AUDIO="-audiodev pa,id=speaker -machine pcspk-audiodev=speaker"
 
 # Configure QEMU as pure ISA system
 
-exec $QEMU $AUDIO $CONSOLE -nodefaults -name ELKS -machine isapc -cpu 486,tsc -m 4M \
+# uncomment to run native speed if x86 macOS
+#MACOS="-accel hvf"
+
+exec $QEMU $MACOS $AUDIO $CONSOLE -nodefaults -name ELKS -machine isapc -cpu 486,tsc -m 4M \
 $KEYBOARD $QDISPLAY -vga std -rtc base=utc $SERIAL \
 $NET $NETDUMP $IMAGE $DISK2 $@
