@@ -7,8 +7,10 @@
 #include <arch/io.h>
 
 /*
- * Precision timer routines
+ * Precision timer routines for IBM PC and compatibles
  * 2 Aug 2024 Greg Haerr
+ *
+ * Use 8254 PIT to measure elapsed time in pticks = 0.8381 usecs.
  */
 
 /*
@@ -18,7 +20,7 @@
  * that by 1000 and you get 11932 for the PIT countdown start value;
  * 1/11932 = 0.8381 usecs per PIT 'ptick'.
  */
-#define MAX_PTICK        11932      /* PIT reload value for 10ms (100 HZ) */
+#define MAX_PTICK        11932U     /* PIT reload value for 10ms (100 HZ) */
 
 /* error check with master PIT frequency */
 #define PITFREQ         11931818L   /* PIT input frequency * 10 */
@@ -27,7 +29,7 @@
 #error Incorrect MAX_PTICK!
 #endif
 
-static unsigned long lastjiffies;
+static unsigned int lastjiffies;    /* only 16 bits required within ~10.9s */
 
 /*
  * Each PIT count (ptick) is 0.8381 usecs each for 10ms jiffies timer (= 1/11932)
@@ -35,36 +37,14 @@ static unsigned long lastjiffies;
  * To display a ptick in usecs use ptick * 838 / 1000U (= 1 mul, 1 div )
  *
  * Return type   Name           Resolution  Max
- * unsigned int  get_time_10ms  pticks      10ms  (< 11932 pticks)
- * unsigned int  get_time_50ms  pticks      50ms  (< 5 jiffies = 59660 pticks)
- * unsigned long get_time       pticks      1 hr  (< 359953 jiffies = 2^32 / 11932)
- * unsigned long jiffies        jiffies   497 days(< 2^32 jiffies)
+ * unsigned long get_ptime      0.838us     42.85s (uncaught overflow at ~10.9s)
+ * unsigned long jiffies        10m        497 days(=2^32 jiffies)
  */
 
-#if 0   /* don't use - too unreliable with no overflow check */
-/* read PIT diff count, returns < 11932 pticks (10ms), no overflow checking */
-unsigned int get_time_10ms(void)
+/* return up to 42.85 seconds in pticks, return 0 if overflow, no check > ~10.9 mins */
+unsigned long get_ptime(void)
 {
-    unsigned int lo, hi, count;
-    int pdiff;
-    static unsigned int lastcount;
-
-    outb(0, TIMER_CMDS_PORT);       /* latch timer value */
-    lo = inb(TIMER_DATA_PORT);
-    hi = inb(TIMER_DATA_PORT) << 8;
-    count = lo | hi;
-    pdiff = lastcount - count;
-    if (pdiff < 0)                  /* wrapped */
-        pdiff += MAX_PTICK;         /* = MAX_PTICK - count + lastcount */
-    lastcount = count;
-    return pdiff;
-}
-#endif
-
-/* count up to 5 jiffies in pticks, returns < 59660 pticks (50ms), w/overflow check */
-unsigned int get_time_50ms(void)
-{
-    int pticks, jdiff;
+    unsigned int pticks, jdiff;
     unsigned int lo, hi, count;
     flag_t flags;
     static unsigned int lastcount;
@@ -72,77 +52,40 @@ unsigned int get_time_50ms(void)
     save_flags(flags);
     clr_irq();                      /* synchronize countdown and jiffies */
     outb(0, TIMER_CMDS_PORT);       /* latch timer value */
-    /* ia16-elf-gcc won't generate 32-bit subtract so use 16-bit and check wrap */
+    /* 16-bit subtract handles low word wrap automatically */
     jdiff = (unsigned)jiffies - (unsigned)lastjiffies;
-    lastjiffies = jiffies;          /* 32 bit save required after ~10.9 mins */
+    lastjiffies = (unsigned)jiffies; /* 16 bit save works for ~10.9 mins */
     restore_flags(flags);
 
     lo = inb(TIMER_DATA_PORT);
     hi = inb(TIMER_DATA_PORT) << 8;
     count = lo | hi;
     pticks = lastcount - count;
-    if (pticks < 0)                 /* wrapped */
+    if ((int)pticks < 0)            /* wrapped */
         pticks += MAX_PTICK;        /* = MAX_PTICK - count + lastcount */
     lastcount = count;
 
-    if (jdiff < 0)                  /* lower half wrapped */
-        jdiff = -jdiff;             /* = 0x10000000 - lastjiffies + jiffies */
-    if (jdiff >= 2) {
-        if (jdiff >= 6)
-            return 0;               /* overflow displays 0s */
-        return (jdiff - 1) * 11932U + pticks;
-    }
-    return pticks;
-}
-
-/* return unknown elapsed time in pticks, precision < 50ms then ~10ms accuracy */
-unsigned long get_time(void)
-{
-    unsigned int pticks;
-    static unsigned long lasttime;
-
-    lasttime = lastjiffies;     /* race condition here before clr_irq in get_time_50ms */
-    pticks = get_time_50ms();
-    if (pticks != 0)
-        return pticks;          /* < 50ms */
-    /* current jiffies is in lastjiffies, last jiffies is in lasttime */
-    return (lastjiffies - lasttime) * MAX_PTICK;
+    if (jdiff < 2)                  /* < 10ms: 1..11931 */
+        return pticks;
+    if (jdiff < 4286)               /* < ~42.86s */
+        return (jdiff - 1) * (unsigned long)MAX_PTICK + pticks;
+    return 0;                       /* overflow displays 0s */
 }
 
 #if TIMER_TEST
-/* sample timer routines */
-#if 0
-void timer_10ms(void)
-{
-    unsigned int pticks;
-
-    pticks = get_time_10ms();
-    printk("%u %u = %k\n", pticks, (unsigned)jiffies, pticks);
-}
-#endif
-
-void timer_50ms(void)
+void test_ptime_idle_loop(void)
 {
     static int v;
-    unsigned long timeout = jiffies + v;            /* > 5 will fail */
-    unsigned int pticks = get_time_50ms();
-    unsigned int usecs = pticks * 838UL / 1000;     /* use unsigned _udivsi3 for speed */
-    printk("%u %u = %u usecs = %k\n", pticks, (unsigned)lastjiffies, usecs, pticks);
-    if (++v > 5) v = 0;
-    while (jiffies < timeout)
-        ;
-}
-
-void timer_4s(void)
-{
-    unsigned long timeout = jiffies + 400;
-    unsigned long pticks = get_time();
+    unsigned long timeout = jiffies + v;
+    unsigned long pticks = get_ptime();
     printk("%lu %u = %lk\n", pticks, (unsigned)lastjiffies, pticks);
+    if (++v > 5) v = 0;
+    /* idle_halt() must be commented out to vary timings */
     while (jiffies < timeout)
         ;
 }
 
-void timer_test(void)
+void test_ptime_print(void)
 {
     printk("1 = %k\n", 1);
     printk("2 = %k\n", 2);
@@ -165,6 +108,11 @@ void timer_test(void)
     printk("21*59660 = %lk\n", 21*59660L);
     printk("60*59660 = %lk\n", 60*59660L);
     printk("84*59660 = %lk\n", 84*59660L);
+    printk("400*11932 = %lk\n", 400*11932L);
+    printk("500*11932 = %lk\n", 500*11932L);
+    printk("600*11932 = %lk\n", 600*11932L);
+    printk("900*11932 = %lk\n", 900*11932L);
+    printk("1000*11932 = %lk\n", 1000*11932L);
     printk("600*59660 = %lk\n", 600*59660L);
     printk("3000000 = %lk\n", 3000000L);
     printk("30000000 = %lk\n", 30000000UL);

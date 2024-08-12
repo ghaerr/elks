@@ -6,13 +6,9 @@
 #define CONFIG_PREC_TIMER   0   /* =1 to include %k precision timer printk format */
 #define TIMER_TEST          0   /* =1 to include timer_*() test routines */
 
-/* all routines return pticks = 0.8381 usecs */
-unsigned int get_time_10ms(void);   /* < 10ms measurements */
-unsigned int get_time_50ms(void);   /* < 50ms measurements */
-unsigned long get_time(void);       /* < 1 hr measurements */
+/* returns pticks in 0.838us resolution, 0.838 microseconds to 42.85 seconds  */
+unsigned long get_ptime(void);
 
-/* timer test routines */
-void timer_10ms(void);
-void timer_50ms(void);
-void timer_4s(void);
-void timer_test(void);
+/* internal test routines */
+void test_ptime_idle_loop(void);
+void test_ptime_print(void);
