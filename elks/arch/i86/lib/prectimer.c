@@ -37,8 +37,8 @@ static unsigned int lastjiffies;    /* only 16 bits required within ~10.9 mins *
  * To display a ptick in usecs use ptick * 838 / 1000U (= 1 mul, 1 div )
  *
  * Return type   Name           Resolution  Max
- * unsigned long get_ptime      0.838us     42.85s (uncaught overflow at ~10.9s)
- * unsigned long jiffies        10m        497 days(=2^32 jiffies)
+ * unsigned long get_ptime      0.838us     42.85s (uncaught overflow at ~10.9 mins)
+ * unsigned long jiffies        10ms        497 days (=2^32 jiffies)
  */
 
 /* return up to 42.85 seconds in pticks, return 0 if overflow, no check > ~10.9 mins */
