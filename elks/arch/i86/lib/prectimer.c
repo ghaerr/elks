@@ -29,7 +29,7 @@
 #error Incorrect MAX_PTICK!
 #endif
 
-static unsigned int lastjiffies;    /* only 16 bits required within ~10.9s */
+static unsigned int lastjiffies;    /* only 16 bits required within ~10.9 mins */
 
 /*
  * Each PIT count (ptick) is 0.8381 usecs each for 10ms jiffies timer (= 1/11932)
