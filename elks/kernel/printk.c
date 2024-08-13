@@ -107,10 +107,10 @@ static void numout(unsigned long v, int width, unsigned int base, int type,
     Decimal = 0;
 #if CONFIG_PREC_TIMER
     int Msecs = 0;
-    /* display 1/1193182s get_time*() pticks in range 0.838usec through 42.94sec */
+    /* display 1/1193182s get_time*() pticks in range 0.838usec through 42.85sec */
     if (type == 'k') {                  /* format works w/limited ranges only */
         Decimal = 3;
-        if (v > 51130563UL)             /* = 2^32 / 84 high max range ~42.94s */
+        if (v > 51130563UL)             /* = 2^32 / 84 high max range = ~42.85s */
             v = 0;                      /* ... displays 0us */
         if (v > 5125259UL) {            /* = 2^32 / 838 */
             v = v * 84UL;
