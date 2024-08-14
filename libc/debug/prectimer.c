@@ -52,6 +52,8 @@ static unsigned int lastjiffies;    /* only 16 bits required within ~10.9 mins *
 #ifndef __KERNEL__
 static unsigned short __far *pjiffies;  /* only access low order jiffies word */
 
+#define errmsg(str)     write(STDERR_FILENO, str, sizeof(str) - 1)
+
 void init_ptime(void)
 {
     int fd, offset, kds;
@@ -59,12 +61,12 @@ void init_ptime(void)
     __LINK_SYMBOL(ptostr);
     fd = open("/dev/kmem", O_RDONLY);
     if (fd < 0) {
-        printf("No /dev/kmem\n");
+        errmsg("No kmem\n");
         return;
     }
     if (ioctl(fd, MEM_GETDS, &kds) < 0 ||
         ioctl(fd, MEM_GETJIFFADDR, &offset) < 0) {
-        printf("No ioctl mem_getds\n");
+        errmsg("No mem ioctl\n");
     } else {
         pjiffies = _MK_FP(kds, offset);
     }
@@ -101,10 +103,10 @@ unsigned long get_ptime(void)
     jdiff = (unsigned)jiffies - (unsigned)lastjiffies;
     lastjiffies = (unsigned)jiffies; /* 16 bit save works for ~10.9 mins */
 #endif
-    restore_flags(flags);
-
     lo = inb(TIMER_DATA_PORT);
     hi = inb(TIMER_DATA_PORT) << 8;
+    restore_flags(flags);
+
     count = lo | hi;
     pticks = lastcount - count;
     if ((int)pticks < 0)            /* wrapped */

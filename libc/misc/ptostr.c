@@ -1,19 +1,19 @@
 /*
  * Convert precision timing pticks (=0.838us) to string for printf %k format.
+ * This routine is normally weak linked into vfprintf by a get_ptime reference.
  */
 
 static char dec_string[] = "0123456789 ";
 
 void ptostr(unsigned long v, char *buf)
 {
-    unsigned long dvr;
     int c, vch, i;
-    int Msecs, Decimal, Zero;
-    int width = 0;
+    int Msecs, Decimal, Zero, width;
+    unsigned long dvr;
 
     i = 10;
     dvr = 1000000000L;
-    Zero = 0;
+    width = Zero = 0;
     Msecs = 0;
     /* display 1/1193182s get_time*() pticks in range 0.838usec through 42.85sec */
     Decimal = 3;

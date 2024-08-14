@@ -55,10 +55,10 @@ unsigned long get_ptime(void)
     /* 16-bit subtract handles low word wrap automatically */
     jdiff = (unsigned)jiffies - (unsigned)lastjiffies;
     lastjiffies = (unsigned)jiffies; /* 16 bit save works for ~10.9 mins */
-    restore_flags(flags);
-
     lo = inb(TIMER_DATA_PORT);
     hi = inb(TIMER_DATA_PORT) << 8;
+    restore_flags(flags);
+
     count = lo | hi;
     pticks = lastcount - count;
     if ((int)pticks < 0)            /* wrapped */
