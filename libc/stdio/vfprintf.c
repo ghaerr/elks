@@ -218,6 +218,7 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
 	 case 'k':		/* Pticks */
 	  usproc:
 	    l = lval? va_arg(ap, unsigned long) : (unsigned long)va_arg(ap, unsigned int);
+#ifndef __WATCOMC__
 	    if (*fmt == 'k') {
 		if (_weaken(ptostr)) {
 		    (_weaken(ptostr))(l, ptmp);
@@ -226,6 +227,7 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
 		}
 		/* if precision timing not linked in, display as unsigned */
 	    }
+#endif
 	    ptmp = ultostr(l, radix);
 	    if( hash && radix == 8 ) { width = strlen(ptmp)+1; pad='0'; }
 	    goto printit;
