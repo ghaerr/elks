@@ -22,6 +22,13 @@
 #include <unistd.h>
 #include <fcntl.h>
 #define printk printf
+
+/* FIXME values for IBM PC only, included for non-ifdef'd libc multi-arch compilation */
+#ifndef TIMER_CMDS_PORT
+#define TIMER_CMDS_PORT 0x43
+#define TIMER_DATA_PORT 0x40
+#endif
+
 #endif
 
 /*

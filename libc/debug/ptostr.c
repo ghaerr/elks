@@ -1,8 +1,8 @@
 /*
- * Precision timing pticks (=0.838us) output from 'k' format.
+ * Convert precision timing pticks (=0.838us) to string for printf %k format.
  */
 
-static char hex_string[] = "0123456789ABCDEF 0123456789abcdef ";
+static char dec_string[] = "0123456789 ";
 
 void ptostr(unsigned long v, char *buf)
 {
@@ -42,12 +42,12 @@ void ptostr(unsigned long v, char *buf)
             if (i > width)
                 width = i;
             if (!Zero && !c && (i > 1))
-                c = 16;
+                c = 10;
             else
                 Zero = 1;
             if (vch)
                 *buf++ = vch;
-            vch = *(hex_string + c);
+            vch = *(dec_string + c);
             if (i == Decimal) *buf++ = '.';
         }
     } while (--i);
@@ -55,5 +55,5 @@ void ptostr(unsigned long v, char *buf)
     if (Msecs)
         *buf++ = (Msecs == 1? 'm': 'u');
     *buf++ = 's';
-        *buf = '\0';
+    *buf = '\0';
 }

@@ -11,14 +11,11 @@ OBJS = \
 	syms.o \
 	stacktrace.o \
 	printreg.o \
+	prectimer.o \
 	ptostr.o \
 	# end of list
 
 #OBJS += rdtsc.o
-
-ifeq ($(CONFIG_ARCH_IBMPC), y)
-OBJS += prectimer.o
-endif
 
 all: $(LIB)
 
