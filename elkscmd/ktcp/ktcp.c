@@ -33,6 +33,7 @@
 #include "netconf.h"
 #include "deveth.h"
 #include "arp.h"
+#include <linuxmt/prectimer.h>
 
 ipaddr_t local_ip;
 ipaddr_t gateway_ip;
@@ -72,6 +73,7 @@ void ktcp_run(void)
     int count;
     int loopagain = 0;
 
+    //init_ptime();
     while (1) {
 	if (tcp_timeruse > 0 || tcpcb_need_push > 0 || loopagain ||
 	    cbs_in_time_wait > 0 || cbs_in_user_timeout > 0) {
@@ -103,6 +105,7 @@ void ktcp_run(void)
 		return;
 	}
 
+	//printf("pticks %lk\n", get_ptime());
 	Now = timer_get_time();
 
 	/* expire timeouts*/

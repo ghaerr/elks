@@ -143,6 +143,7 @@ void dtostr(double val, int style, int preci, char *buf);
 /* use this macro to link in libc %e,%f,%g printf/sprintf support into user program */
 #define __STDIO_PRINT_FLOATS    __LINK_SYMBOL(dtostr)
 #endif
+void ptostr(unsigned long pticks, char *buf);
 
 #define stdio_pending(fp) ((fp)->bufread>(fp)->bufpos)
 

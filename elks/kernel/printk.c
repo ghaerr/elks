@@ -42,6 +42,8 @@
 #include <arch/irq.h>
 #include <stdarg.h>
 
+#define CONFIG_PREC_TIMER   1   /* =1 to include %k precision timer printk format */
+
 dev_t dev_console;
 
 #ifdef CONFIG_CONSOLE_SERIAL
