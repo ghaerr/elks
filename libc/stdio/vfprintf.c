@@ -106,8 +106,9 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
    int   preci, dpoint, width;
    char  pad, sign, radix, hash;
    register char *ptmp;
-   char  tmp[64];
+   unsigned long l;
    int buffer_mode;
+   char  tmp[64];
 
    /* This speeds things up a bit for unbuffered */
    buffer_mode = (op->mode&__MODE_BUF);
@@ -127,7 +128,7 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
 	 radix = 10;		/* number base */
 	 ptmp = tmp;		/* pointer to area to print */
 	 hash = 0;
-	 lval = (sizeof(int)==sizeof(long));	/* long value flaged */
+	 lval = (sizeof(int)==sizeof(long));	/* long value flag */
        fmtnxt:
 	 i = 0;
 	 for(;;)
@@ -214,11 +215,18 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
 	    /* fall thru */
 
 	 case 'u':		/* Unsigned decimal */
+	 case 'k':		/* Pticks */
 	  usproc:
-	    ptmp = ultostr((unsigned long) ((lval)
-				   ? va_arg(ap, unsigned long)
-				   : va_arg(ap, unsigned int)),
-		  radix);
+	    l = lval? va_arg(ap, unsigned long) : (unsigned long)va_arg(ap, unsigned int);
+	    if (*fmt == 'k') {
+		if (_weaken(ptostr)) {
+		    (_weaken(ptostr))(l, ptmp);
+		    preci = -1;
+		    goto printit;
+		}
+		/* if precision timing not linked in, display as unsigned */
+	    }
+	    ptmp = ultostr(l, radix);
 	    if( hash && radix == 8 ) { width = strlen(ptmp)+1; pad='0'; }
 	    goto printit;
 

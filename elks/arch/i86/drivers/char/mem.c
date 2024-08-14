@@ -249,6 +249,9 @@ int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
     case MEM_GETHEAP:
 	retword = (unsigned short) &_heap_all;
 	break;
+    case MEM_GETJIFFADDR:
+	retword = (unsigned short) &jiffies;
+        break;
     case MEM_GETUPTIME:
 #ifdef CONFIG_CPU_USAGE
 	retword = (unsigned short) &uptime;
