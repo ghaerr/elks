@@ -55,6 +55,9 @@ all: $(LIB)
 
 $(LIB): $(LIBOBJS)
 	$(RM) $@
+ifeq "$(COMPILER)" "watcom"
+	fixomf -w dtostr_,ptostr_ vfprintf.obj
+endif
 	$(AR) $(ARFLAGS_SUB) $@ $(LIBOBJS)
 
 clean:

@@ -54,11 +54,12 @@ float adjust(float f) {
 // for float testing compatibility, use same FP formatting routines on host for now
 // floats have approx 7 sig figs, 15 for double
 
-#if __ia16__
+#if __ia16__ || defined(__WATCOMC__)
 #include <sys/linksym.h>
-__STDIO_PRINT_FLOATS;       // link in libc printf float support
 
 char *host_floatToStr(float f, char *buf) {
+    __STDIO_PRINT_FLOATS;       // link in libc printf float support
+
 	sprintf(buf, "%.*g", MATH_PRECISION, (double)f);
     return buf;
 }
