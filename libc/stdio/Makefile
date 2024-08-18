@@ -55,6 +55,7 @@ all: $(LIB)
 
 $(LIB): $(LIBOBJS)
 	$(RM) $@
+	fixomf -w dtostr_,ptostr_ vfprintf.obj
 	$(AR) $(ARFLAGS_SUB) $@ $(LIBOBJS)
 
 clean:
