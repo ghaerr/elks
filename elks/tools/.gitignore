@@ -13,4 +13,5 @@ bin/exomizer
 bin/eman
 bin/ewcc
 bin/ewlink
+bin/fixomf
 elftoolchain-0.7.1

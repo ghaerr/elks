@@ -116,9 +116,10 @@ typedef struct {
 #define         LIBNAM          0xa6
 #define         LIBLOC          0xa8
 #define         LIBDIC          0xaa
-#define         WEIRDEF         0xb0
-#define         NEW_DBG_1       0xb4
-#define         NEW_DBG_2       0xb6
+#define         COMDEF          0xb0
+#define         LEXTDEF         0xb4
+#define         LPUBDEF         0xb6
+#define         LCOMDEF         0xb8
 
 long            PageLen;
 
@@ -127,6 +128,7 @@ static bool         Easy32;
 static bool         MakeUnsafe;
 static omf_index    NameIndex;
 static omf_index    SegIndex;
+static omf_index    ExtNameIndex;
 static byte         SubTotal = 0;
 static byte         *OutputBuffer;
 static size_t       InBuffer = 0;
@@ -161,9 +163,11 @@ void CleanRecStuff( void )
 {
     ZeroIndicies( ClassList );
     ZeroIndicies( SegList );
+    ZeroIndicies( WeakList );
     Easy32 = false;
     NameIndex = 0;
     SegIndex = 0;
+    ExtNameIndex = 0;
 }
 
 void FinalCleanup( void )
@@ -173,6 +177,7 @@ void FinalCleanup( void )
     MemFree( OutputBuffer );
     FreeList( ClassList );
     FreeList( SegList );
+    FreeList( WeakList );
     FreeList( ExcludeList );
 }
 
@@ -201,9 +206,11 @@ static void proccoment( void )
 static bool FindName( name_list *list, const char *name, size_t name_len )
 /************************************************************************/
 {
+    omf_index index = (list == WeakList)? ExtNameIndex: NameIndex;
+
     for( ; list != NULL; list = list->next ) {
         if( strnicmp( list->name, name, name_len ) == 0 ) {
-            list->lnameidx = NameIndex;
+            list->lnameidx = index;
             return( true );
         }
     }
@@ -264,6 +271,61 @@ static void CheckSum( void )
     SubTotal = 0;
 }
 
+void SetWeak(omf_index idx)
+/**************************/
+{
+    byte            onebyte;
+    unsigned long   threebytes;
+
+printf("SetWeak %d\n", idx);
+    onebyte = COMENT;
+    BuildRecord( &onebyte, 1 );
+    if( idx >= 128 ) {             // then indicies are 2 bytes.
+        onebyte = 7;               // includes checksum
+    } else {
+        onebyte = 5;
+    }
+    BuildRecord( &onebyte, 1 );
+    threebytes = 0x00A88000;       // 00 80 A8
+    BuildRecord( &threebytes, 3 ); //  |  |  |
+    IndexRecord( idx );            //  |  |  +----- comment class WKEXT
+    IndexRecord( idx);             //  |  +-------- attribute (nopurge)
+    CheckSum();                    //  +----------- high-order length
+}
+
+static void procextdef( void )
+/****************************/
+{
+    size_t          rec_len;
+    size_t          name_len;
+    const char      *buff;
+    name_list       *list;
+
+    WriteRecord();
+    ZeroIndicies( WeakList );
+    buff = (char *)Rec1->u.anyobj.rest;
+    for( rec_len = Rec1->head.length; rec_len > 1; rec_len -= name_len + 1 ) {
+        name_len = *(unsigned char *)buff;
+        buff++;
+        if (name_len) {
+            char name[32];
+
+            ExtNameIndex++;
+            strncpy(name, buff, name_len);
+            name[name_len] = 0;
+            printf("Extdef %d, '%s'\n",  ExtNameIndex, name);
+            FindName(WeakList, buff, name_len);
+        }
+        buff += name_len;
+    }
+
+    for( list = WeakList; list != NULL; list = list->next ) {
+        if( list->lnameidx ) {
+            SetWeak(list->lnameidx);
+        }
+    }
+}
+
 static void procsegdef( bool is386 )
 /**********************************/
 {
@@ -276,6 +338,7 @@ static void procsegdef( bool is386 )
     exclude_list *  exclude;
 
     WriteRecord();
+    if (!EnableFarCallOpt) return;
     ++SegIndex;
     dataloc = Rec1->u.anyobj.rest;
     acbp = *dataloc;
@@ -322,6 +385,7 @@ static void ProcDataRec( bool is386 )
     unsigned long   endoffset;
 
     WriteRecord();
+    if (!EnableFarCallOpt) return;
     MakeUnsafe = false;
     dataloc = Rec1->u.anyobj.rest;
     segidx = GetIndex( &dataloc );
@@ -378,6 +442,10 @@ void ProcessRec( void )
     case COMENT:
         proccoment();
         break;
+    case EXTDEF:
+    case LEXTDEF:
+        procextdef();
+        break;
     case LNAMES:
         proclnames();
         break;
@@ -391,7 +459,9 @@ void ProcessRec( void )
         break;
     case FIXU32:
     case FIXUPP:
-        procfixupp();
+        if (EnableFarCallOpt)
+            procfixupp();
+        else WriteRecord();
         break;
     default:
         WriteRecord();

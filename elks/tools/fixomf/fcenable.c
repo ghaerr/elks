@@ -36,11 +36,14 @@
 #include <ctype.h>
 #include <setjmp.h>
 #include <errno.h>
+
 #if defined( __WATCOMC__ ) || !defined( __UNIX__ )
     #include <process.h>
 #endif
 #if defined( __UNIX__ ) || defined( __WATCOMC__ )
     #include <utime.h>
+    #include <unistd.h>
+    #include <sys/wait.h>
 #else
     #include <sys/utime.h>
 #endif
@@ -48,7 +51,6 @@
 #include "walloca.h"
 #include "fcenable.h"
 #include "banner.h"
-#include "pathgrp2.h"
 
 #include "clibext.h"
 
@@ -70,19 +72,23 @@ FILE                *InFile;
 FILE                *OutFile;
 name_list           *ClassList = NULL;
 name_list           *SegList = NULL;
+name_list           *WeakList = NULL;
 exclude_list        *ExcludeList = NULL;
 
-static bool         MakeBackup = true;
+static bool         MakeBackup = false;
 static bool         NewOption;
 static EX_STATE     ExcludeState;
 static exclude_list *ExEntry;
 static void         *InputBuffer = NULL;
+bool                EnableFarCallOpt = false;
 
 static char         *HelpMsg =
-"Usage: FCENABLE { [options] [files] }\n"
-"This allows WLINK to do far call optimization on non-WATCOM object files\n"
+"Usage: fixomf { [options] [files] }\n"
+"Adds OMF Weak Reference or Far Call Optimization to OBJ file for WLINK processing\n"
 "Options are:\n"
-"-b                don't produce a backup file\n"
+"-w <weak_list>    mark symbol weak for specified symbols\n"
+"-f                enable far call optimization\n"
+"-b                do produce a backup file\n"
 "-c <class_list>   allow optimization for specified classes (default CODE)\n"
 "-s <seg_list>     allow optimization for specified segments\n"
 "-x <exclude_list> exclude specified area when optimizing\n"
@@ -221,6 +227,18 @@ static bool ProcSeg( const char *item, size_t len )
     return( true );     // true == check for a list separator
 }
 
+static bool ProcWeak( const char *item, size_t len )
+/*************************************************/
+{
+    if( NewOption ) {
+        FreeList( WeakList );
+        NewOption = false;
+        WeakList = NULL;
+    }
+    MakeListItem( &WeakList, item, len );
+    return( true );     // true == check for a list separator
+}
+
 static bool ProcExclude( const char *item, size_t len )
 /*****************************************************/
 {
@@ -287,11 +305,18 @@ static void ProcessOption( const char ***argv )
     case 's':
         ProcList( ProcSeg, argv );
         break;
+    case 'w':
+        ProcList( ProcWeak, argv );
+        break;
     case 'x':
         ProcList( ProcExclude, argv );
         break;
     case 'b':
-        MakeBackup = false;
+        MakeBackup = true;
+        (*argv)++;
+        break;
+    case 'f':
+        EnableFarCallOpt = true;
         (*argv)++;
         break;
     default:
@@ -335,14 +360,22 @@ static void DoReplace( void )
 /***************************/
 // this supports concatenated object decks and libraries (PageLen != 0)
 {
+    int pid, status;
+
     FlushBuffer();
     if( PageLen != 0 ) {        // NYI - spawning WLIB every time is
         fclose( OutFile );      // rather slow. Replace this somehow??
         OutFile = NULL;
-        if( spawnlp( P_WAIT, WLIB_EXE, WLIB_EXE, TEMP_LIB_NAME, "-b", "+" TEMP_OBJ_NAME, NULL ) != 0 ) {
-            Error( "problem with temporary library" );
+        pid = fork();
+        if (pid) {
+            waitpid(pid, &status, 0);
+            if (WEXITSTATUS(status))
+                Error( "problem with temporary library" );
+            QRemove( TEMP_OBJ_NAME );
+            return;
         }
-        QRemove( TEMP_OBJ_NAME );
+        execlp( WLIB_EXE, WLIB_EXE, "-b", TEMP_LIB_NAME, "+" TEMP_OBJ_NAME, NULL );
+        _exit(1);
     }
 }
 
@@ -553,7 +586,7 @@ int main(int argc, char **argv )
 
     MemInit();
 #if defined( _BETAVER )
-    printf( banner1t( "Far Call Optimization Enabling Utility" ) );
+    printf( banner1t( "Weak Reference and Far Call Optimization Enabling Utility" ) );
     printf( banner1v( _FCENABLE_VERSION_ ) );
 #else
     printf( banner1w( "Far Call Optimization Enabling Utility", _FCENABLE_VERSION_ ) );

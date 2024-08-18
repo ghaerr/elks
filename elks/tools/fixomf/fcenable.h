@@ -79,7 +79,9 @@ extern FILE         *InFile;
 extern FILE         *OutFile;
 extern name_list    *ClassList;
 extern name_list    *SegList;
+extern name_list    *WeakList;
 extern exclude_list *ExcludeList;
+extern bool         EnableFarCallOpt;
 
 // fcenable.c
 extern void         LinkList( void **, void * );

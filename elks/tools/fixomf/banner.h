@@ -29,6 +29,8 @@
 *
 ****************************************************************************/
 
+#define _BLDVER             1300
+#define _CYEAR              2024
 
 #define _BETAVER            1
 #define _OWURL              "https://github.com/open-watcom/open-watcom-v2#readme"
@@ -52,8 +54,8 @@
 #define _BANEXTRA           __DATE__ STR_BITNESS
 #endif
 
-#define banner1t(p)         "Open Watcom " p
-#define banner1v(v)         "Version " v " " _BANEXTRA
+#define banner1t(p)         "Open Watcom " p "\n"
+#define banner1v(v)         "Version " v " " _BANEXTRA "\n"
 
 #define banner1(p,v)        p " " banner1v(v)
 #define banner1w(p,v)       banner1t(p) " " banner1v(v)
@@ -61,11 +63,11 @@
 #define banner21            "Copyright (c) 2002-" _MACROSTR( _CYEAR ) " The Open Watcom Contributors."
 #define banner21a(year)     "Portions Copyright (c) " _DOSTR( year ) "-2002 Sybase, Inc."
 
-#define banner2             banner21 " All Rights Reserved."
-#define banner2a(year)      banner21a(year) " All Rights Reserved."
+#define banner2             banner21 " All Rights Reserved." "\n"
+#define banner2a(year)      banner21a(year) " All Rights Reserved." "\n"
 
-#define banner3             "Source code is available under the Sybase Open Watcom Public License."
-#define banner3a            "See " _OWURL " for details."
+#define banner3             "Source code is available under the Sybase Open Watcom Public License." "\n"
+#define banner3a            "See " _OWURL " for details." "\n"
 
 #define banner1ps(p,v)      "Powersoft " p " " banner1v(v)
 #define banner2ps           banner21a( 1984 )
