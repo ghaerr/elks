@@ -286,6 +286,7 @@ void halt(void)
     /* Lock up with infinite loop */
     kputs("\nSYSTEM HALTED - Press CTRL-ALT-DEL to reboot:");
 
+    /*clr_irq();*/  /* uncomment to halt interrupt handlers, but then CAD won't work */
     while (1)
         idle_halt();
 }
