@@ -3,6 +3,7 @@
 #include <linuxmt/trace.h>
 #include <arch/asm-offsets.h>
 #include <arch/ports.h>
+#include <arch/irq.h>
 
 	.arch	i8086, nojumps
 	.code16
@@ -71,7 +72,7 @@ int_vector_set:
 !
 !	There are three possible cases to cope with
 !
-!	Interrupted user mode or syscall (_gint_count == 0)
+!	Syscall or Interrupted user mode (_gint_count == 0)
 !		Switch to process's kernel stack
 !		Optionally, check (SS == current->t_regs.ss)
 !		and panic on failure
@@ -190,7 +191,7 @@ save_regs:
 //	ds:[di] has IRQ number
 //
 	movb	(%di),%al
-	cmpb	$0x80,%al
+	cmpb	$IDX_SYSCALL,%al
 	jne	updct
 //
 //	----------PROCESS SYSCALL----------
@@ -236,14 +237,8 @@ ret_from_syscall:
 /*
 !
 !	----------PROCESS INTERRUPT----------
-!
-!	Update intr_count
-!
 */
 updct:
-#ifdef CHECK_SCHED
-	incw	intr_count	// only needed for schedule during interrupt warning
-#endif
 //
 //	Call the C code
 //
@@ -319,13 +314,7 @@ a6:	out	%al,$PIC1_CMD		// Ack on primary controller
 //
 was_trap:
 //
-//	Restore intr_count
-//
-#ifdef CHECK_SCHED
-	decw	intr_count
-#endif
-//
-//	Now look at rescheduling
+//	Look at rescheduling
 //
 	cmpw	$1,_gint_count
 	jne	restore_regs	// No
@@ -404,7 +393,7 @@ idle_halt:
 	ret
 
 	.data
-	.global	intr_count
+	.global	_gint_count
 	.global	endistack
 	.global	istack
 	.extern	current
@@ -416,10 +405,6 @@ org_irq0:			// original BIOS IRQ 0 vector
 	.long	0
 _gint_count:			// General interrupts count. Start with 1
 	.word	1		// because init_task() is in kernel mode
-#ifdef CHECK_SCHED
-intr_count:			// Hardware interrupts count
-	.word	0
-#endif
 #ifdef CHECK_SS
 pmsg:	.ascii "Running unknown code"
 	.byte	0

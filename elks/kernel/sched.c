@@ -67,10 +67,10 @@ void schedule(void)
     prev = current;
 
 #ifdef CHECK_SCHED
-    if (intr_count) {
+    if (_gint_count > 1) {      /* neither user nor idle task was running */
         /* Taking a timer IRQ during another IRQ or while in kernel space is
          * quite legal. We just dont switch then */
-         panic("SCHED: schedule() called from interrupt, intr_count %d", intr_count);
+         panic("schedule from interrupt\n");
     }
 #endif
 

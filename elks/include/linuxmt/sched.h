@@ -114,7 +114,7 @@ extern int task_slots_unused;
 
 extern volatile jiff_t jiffies; /* ticks updated by the timer interrupt*/
 extern pid_t last_pid;
-extern int intr_count;
+extern int _gint_count;
 
 extern struct timeval xtime;
 extern jiff_t xtime_jiffies;
