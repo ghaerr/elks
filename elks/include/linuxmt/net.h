@@ -1,7 +1,6 @@
 #ifndef __LINUXMT_NET_H
 #define __LINUXMT_NET_H
 
-#include <linuxmt/types.h>
 #include <linuxmt/config.h>
 #include <linuxmt/socket.h>
 
@@ -18,6 +17,7 @@ typedef enum {
     SS_DISCONNECTING
 } socket_state;
 
+#ifdef __KERNEL__
 struct socket {
     unsigned char state;
     unsigned char flags;
@@ -70,6 +70,7 @@ struct proto_ops {
     int (*getsocketopt) ();
     int (*fcntl) ();
 };
+#endif
 
 /* careful: option names are close to public SO_ options in socket.h */
 #define SF_CLOSING	(1 << 0) /* inet */

@@ -12,6 +12,7 @@ typedef signed short int        __s16;
 typedef unsigned long int       __u32;
 typedef signed long int         __s32;
 
+#if defined(__KERNEL__) || defined(__LIBC__)
 /* 8086 types */
 typedef __u8                    byte_t;
 typedef __u16                   word_t;
@@ -41,6 +42,7 @@ struct xregs {
 struct uregs {
     __u16       bp, ip, cs, f;
 };
+#endif
 
 #ifndef NULL
 #define NULL        ((void *) 0)
