@@ -9,6 +9,7 @@
  * This file may be distributed under the terms of the GNU General Public
  * License v2, or at your option any later version.
  */
+#define __LIBC__            /* get all typedefs */
 #include <linuxmt/types.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/mem.h>

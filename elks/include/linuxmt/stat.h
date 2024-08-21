@@ -1,7 +1,6 @@
 #ifndef __LINUXMT_STAT_H
 #define __LINUXMT_STAT_H
 
-#include "types.h"
 #include <arch/stat.h>
 
 #define S_IFMT  00170000
