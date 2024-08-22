@@ -62,20 +62,18 @@
 !	0x50:	cpu_id		byte[13] cpuid string UNUSED
 !	...
 !	0x1e2:	part_offset	long Sector offset of booted MBR partition
-!	0x1e6:	elks_magic	long "ELKS"
+!	0x1e6:	elks_magic	long "ELKS", written by build tool
 !	0x1ea-0x1ee:		5 bytes UNUSED
 !	0x1ef:	SETUPSEG	word UNUSED
 !	0x1f1:	setup_sects	byte in 512-byte sectors, written by build tool
 !	0x1f2:	ROOTFLAGS	word UNUSED
-!	0x1f4:	syssize		word in paragraphs, written by build tool
-!	0x1f6:	elks_flags	byte EF_xxx
+!	0x1f4:	syssize		word kernel size in paragraphs, written by build tool
+!	0x1f6:	elks_flags	byte EF_AS_BLOB|EF_BIOS_DEV_NUM
 !	0x1f7:			byte UNUSED
 !	0x1f8:	RAMDISK		word UNUSED
 !	0x1fa:	SVGA_MODE	word UNUSED
 !	0x1fc:	root_dev	word Either BIOS boot device or actual kdev_t ROOT_DEV
-!	0x1fe:	boot_flag	word = 0xAA55
-!
-! NOTE! These had better be the same as in bootsect.s!
+!	0x1fe:	boot_flag	word UNUSED (0xAA55 in real boot sector)
 */
 
 #include <linuxmt/config.h>

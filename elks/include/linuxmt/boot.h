@@ -30,6 +30,15 @@
    {bootsect.S, netbootsect.S}) at the start of /linux, then define
    constants giving the offsets of various fields within /linux.
 
+   The "dummy" boot sector is no longer built or executed. Instead, the values
+   below correspond to offsets in the 512-byte setup.S data segment, known as INITSEG.
+   These values are initialized then shared with Linux kernel at startup through the
+   same segment. The tools/build utility writes a 512-byte sector of zeros
+   prepended to the setup and kernel images, with the elks_magic, setup_sects,
+   and syssize fields filled in, which are then either checked by the real
+   boot sector (elks_magic) or shared with setup.S for relocating the kernel
+   (setup_sects and syssize) at boot.
+
    The fields in /linux are mainly based on an old version of the Linux/x86
    Boot Protocol (https://www.kernel.org/doc/html/latest/x86/boot.html).
    Fields which are specific to ELKS are indicated below.  */
@@ -42,12 +51,12 @@
 #define proc_name	0x30		/* 16 bytes processor name string*/
 #define cpu_id		0x50		/* 13 bytes cpu id string*/
 #define part_offset	0x1e2		/* long sector offset of booted partition*/
-#define elks_magic	0x1e6		/* long "ELKS" (45 4c 4b 53) checked by bootsect.S*/
+#define elks_magic	0x1e6		/* long "ELKS" (45 4c 4b 53) checked by boot sector*/
 #define setup_sects	0x1f1		/* byte 512-byte sectors used by setup.S*/
 #define syssize		0x1f4		/* word paragraph kernel size used by setup.S*/
 #define elks_flags	0x1f6		/* byte ELKS flags, BLOB and BIOS_DRV*/
 #define root_dev	0x1fc		/* word BIOS drive or kdev_t ROOT_DEV*/
-#define boot_flag	0x1fe		/* word constant AA55h*/
+#define boot_flag	0x1fe		/* word constant AA55h checked by boot sector*/
 #endif
 
 #endif
