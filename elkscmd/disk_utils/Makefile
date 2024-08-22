@@ -12,12 +12,7 @@ include $(BASEDIR)/Make.rules
 
 PRGS = ramdisk mkfs mkfat fsck partype fdisk df
 
-SPRGS=mkfs
-
 all: $(PRGS)
-
-install_sibo: all
-	$(INSTALL) $(SPRGS) $(DESTDIR)/bin
 
 install: all
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
@@ -44,4 +39,4 @@ ramdisk: ramdisk.o
 	$(LD) $(LDFLAGS) -o ramdisk ramdisk.o $(LDLIBS)
 
 clean:
-	rm -f *.o $(FORMATMOD) core $(PRGS)
+	rm -f *.o $(PRGS)

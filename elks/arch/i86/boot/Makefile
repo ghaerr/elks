@@ -11,7 +11,7 @@ USEBCC 		= Y
 
 CLEANDEP	= 
 
-CLEANME 	= Image bootsect nbImage netbootsect setup system
+CLEANME 	= Image setup system system.sym
 
 DEPEND  	= 
 
