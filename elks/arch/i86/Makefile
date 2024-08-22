@@ -106,7 +106,7 @@ boot/system:	$(XINCLUDE) $(AARCHIVES) $(ADRIVERS) boot/crt0.o
 ifneq ($(CONFIG_ROMCODE), y)
 
 Image:	toolkit boot/bootsect boot/setup boot/system
-	tools/build boot/bootsect boot/setup boot/system > boot/Image
+	tools/build arg_ignored boot/setup boot/system > boot/Image
 
 nbImage:	Image boot/netbootsect
 	tools/mknbi-elks boot/netbootsect boot/Image boot/nbImage
