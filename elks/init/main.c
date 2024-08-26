@@ -70,13 +70,13 @@ static int args = 2;	/* room for argc and av[0] */
 static int envs;
 static int argv_slen;
 #ifdef CONFIG_SYS_NO_BININIT
-static char *argv_init[80] = { NULL, binshell, NULL };
+static char *argv_init[MAX_INIT_SLEN] = { NULL, binshell, NULL };
 #else
 /* argv_init doubles as sptr data for sys_execv later*/
-static char *argv_init[80] = { NULL, bininit, NULL };
+static char *argv_init[MAX_INIT_SLEN] = { NULL, bininit, NULL };
 #endif
 #if ENV
-static char *envp_init[MAX_INIT_ENVS+1];
+static char *envp_init[MAX_INIT_ENVS];
 #endif
 static unsigned char options[OPTSEGSZ];
 
