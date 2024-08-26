@@ -78,6 +78,7 @@ struct gendisk
 
 extern struct drive_infot *last_drive;  /* set to last drivep-> used in read/write */
 extern unsigned char bios_drive_map[];  /* map drive to BIOS drivenum */
+extern struct drive_infot drive_info[];
 
 extern struct gendisk *gendisk_head;    /* linked list of disks */
 

@@ -4,6 +4,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <linuxmt/biosparm.h>
 #include <linuxmt/config.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/sched.h>
@@ -48,16 +49,25 @@ int sys_reboot(unsigned int magic, unsigned int magic_too, int flag)
 		C_A_D = flag;
 		return 0;
 	    case 0x0123:		/* reboot*/
+#ifdef CONFIG_BLK_DEV_BHD
+		bios_disk_park_all();
+#endif
 		hard_reset_now();
 		printk("Reboot failed\n");
 		/* fall through*/
 	    case 0x6789:		/* shutdown*/
 		sys_kill(1, SIGKILL);
 		sys_kill(-1, SIGKILL);
+#ifdef CONFIG_BLK_DEV_BHD
+		bios_disk_park_all();
+#endif
 		printk("System halted\n");
 		do_exit(0);
 		/* no return*/
 	    case 0xDEAD:		/* poweroff*/
+#ifdef CONFIG_BLK_DEV_BHD
+		bios_disk_park_all();
+#endif
 		apm_shutdown_now();
 		printk("APM shutdown failed\n");
 	}

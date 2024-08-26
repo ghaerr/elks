@@ -78,7 +78,7 @@ static int fd_count = 0;                /* number of floppy disks */
 static int hd_count = 0;                /* number of hard disks */
 
 static int access_count[NUM_DRIVES];    /* device open count */
-static struct drive_infot drive_info[NUM_DRIVES];   /* operating drive info */
+struct drive_infot drive_info[NUM_DRIVES];   /* operating drive info */
 static struct drive_infot *cache_drive;
 struct drive_infot *last_drive;         /* set to last drivep-> used in read/write */
 extern struct drive_infot fd_types[];   /* BIOS floppy formats */
