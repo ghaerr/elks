@@ -587,12 +587,11 @@ static void INITPROC finalize_options(void)
 
 #if ENV
 	/* set ROOTDEV environment variable for rc.sys fsck*/
-	if (envs < MAX_INIT_ENVS)
-		envp_init[envs++] = root_dev_name(ROOT_DEV);
-	if (running_qemu && envs < MAX_INIT_ENVS)
-		envp_init[envs++] = (char *)"QEMU=1";
-	if (envs >= MAX_INIT_ENVS)
+	if (envs + running_qemu >= MAX_INIT_ENVS)
 		panic(errmsg_initenvs);
+	envp_init[envs++] = root_dev_name(ROOT_DEV);
+	if (running_qemu)
+		envp_init[envs++] = (char *)"QEMU=1";
 #endif
 
 #if DEBUG
