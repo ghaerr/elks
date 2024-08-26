@@ -29,8 +29,15 @@
 
 #include <linuxmt/debug.h>
 
-#define MAX_INIT_ARGS	8
-#define MAX_INIT_ENVS	8
+#define MAX_INIT_ARGS	6       /* max # arguments to /bin/init or init= program */
+#define MAX_INIT_ENVS	12      /* max # environ variables passed to /bin/init */
+#define MAX_INIT_SLEN   80      /* max # words of args + environ passed to /bin/init */
+
+#define STR(x)          __STRING(x)
+/* bootopts error message are duplicated below so static here for space */
+char errmsg_initargs[] = "init args > " STR(MAX_INIT_ARGS);
+char errmsg_initenvs[] = "init envs > " STR(MAX_INIT_ENVS);
+char errmsg_initslen[] = "init words > " STR(MAX_INIT_SLEN);
 
 int root_mountflags;
 struct netif_parms netif_parms[MAX_ETHS] = {
@@ -108,7 +115,7 @@ void testloop(unsigned timer)
 }
 #endif
 
-/* this procedure called using temp stack then switched, no temp vars allowed */
+/* this procedure called using temp stack then switched, no local vars allowed */
 void start_kernel(void)
 {
     early_kernel_init();        /* read bootopts using kernel interrupt stack */
@@ -559,13 +566,13 @@ static int INITPROC parse_options(void)
 		 */
 		if (!strchr(line,'=')) {    /* no '=' means init argument*/
 			if (args >= MAX_INIT_ARGS)
-				break;
+				panic(errmsg_initargs);
 			argv_init[args++] = line;
 		}
 #if ENV
 		else {
 			if (envs >= MAX_INIT_ENVS)
-				break;
+				panic(errmsg_initenvs);
 			envp_init[envs++] = line;
 		}
 #endif
@@ -578,11 +585,15 @@ static void INITPROC finalize_options(void)
 {
 	int i;
 
+#if ENV
 	/* set ROOTDEV environment variable for rc.sys fsck*/
 	if (envs < MAX_INIT_ENVS)
 		envp_init[envs++] = root_dev_name(ROOT_DEV);
 	if (running_qemu && envs < MAX_INIT_ENVS)
 		envp_init[envs++] = (char *)"QEMU=1";
+	if (envs >= MAX_INIT_ENVS)
+		panic(errmsg_initenvs);
+#endif
 
 #if DEBUG
 	printk("args: ");
@@ -624,6 +635,8 @@ static void INITPROC finalize_options(void)
 #endif
 	/*argv_init[args+2+envs] = NULL;*/
 	argv_slen = q - (char *)argv_init;
+	if (argv_slen > sizeof(argv_init))
+		panic(errmsg_initslen);
 }
 
 /* return whitespace-delimited string*/
