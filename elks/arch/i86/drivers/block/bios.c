@@ -222,6 +222,24 @@ int INITPROC bios_gethdinfo(struct drive_infot *drivep) {
     }
     return ndrives;
 }
+
+static void BFPROC bios_disk_park(struct drive_infot *drive)
+{
+    /* int 13 AH=0xC supports only 10 bits for cyl */
+    if (drive->cylinders > 1024 || drive->fdtype != -1) return;
+    BD_AX = 0x0C << 8;
+    BD_CX = ((drive->cylinders & 0xFF) << 8) | ((drive->cylinders & 0x300) >> 2) | 0x1; /* 0x1 = sector */
+    BD_DX = bios_drive_map[drive - drive_info];
+    call_bios(&bdt);
+}
+
+void bios_disk_park_all(void)
+{
+    int i;
+    for (i = 0; i < NUM_DRIVES; ++i)
+        bios_disk_park(&drive_info[i]);
+}
+
 #endif
 
 #ifdef CONFIG_BLK_DEV_BFD_HARD
