@@ -105,7 +105,7 @@ static struct hw_params params[N_DEVICETYPES] = {
             0x1F, 0x06, 0x19, 0x1C,
             0x02, 0x07, 0x06, 0x07,
             0x00, 0x00, 0x00, 0x00,
-        }, 16, 2, 2000
+        }, 16, 3, 2000
     }, /* CGA */
     // TODO
     //{ 0 },                             /* EGA */

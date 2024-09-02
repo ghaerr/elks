@@ -23,7 +23,7 @@
 
 /* Predefined maximum number of tty character devices */
 
-#define MAX_CONSOLES 3
+#define MAX_CONSOLES 4
 #define MAX_PTYS     4
 
 #define TTY_MINOR_OFFSET 0

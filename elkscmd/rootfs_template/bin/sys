@@ -54,6 +54,7 @@ create_dev_dir()
 	mknod $MNT/dev/rd1	b 1 1
 	mknod $MNT/dev/tty2	c 4 1
 	mknod $MNT/dev/tty3	c 4 2
+	mknod $MNT/dev/tty4	c 4 3
 	mknod $MNT/dev/ttyS2	c 4 66
 	mknod $MNT/dev/ttyS3	c 4 67
 	mknod $MNT/dev/ttyp1	c 4 9

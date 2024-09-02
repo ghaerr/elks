@@ -86,6 +86,7 @@ devices:
 	$(MKDEV) /dev/tty1	c 4 0
 	$(MKDEV) /dev/tty2	c 4 1
 	$(MKDEV) /dev/tty3	c 4 2
+	$(MKDEV) /dev/tty4	c 4 3
 
 # Pseudo-TTY slave devices.
 
