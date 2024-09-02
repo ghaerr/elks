@@ -119,7 +119,7 @@ void testloop(unsigned timer)
 /* this procedure called using temp stack then switched, no local vars allowed */
 void start_kernel(void)
 {
-    printk("START");
+    printk("START\n");
     early_kernel_init();        /* read bootopts using kernel interrupt stack */
     task = heap_alloc(max_tasks * sizeof(struct task_struct),
         HEAP_TAG_TASK|HEAP_TAG_CLEAR);

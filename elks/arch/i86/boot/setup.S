@@ -666,10 +666,10 @@ data_reloc:
 	jmp data_reloc
 3:
 
-	mov $'\r',%ax
-	call putc
-	mov $'\n',%ax
-	call putc
+//	mov $'\r',%ax
+//	call putc
+//	mov $'\n',%ax
+//	call putc
 
 // Load registers as kernel expects
 
@@ -688,7 +688,7 @@ data_reloc:
 	push %ax
 	push %cx
 
-	.hex4sp	%ss,"Done SS:"
+	.hex4sp	%ss,"\nDone SS:"
 	.hex4sp	%ds,"DS/ES:"
 	.hex4sp	%bx,".text size:"
 	.hex4sp	%di,".fartext size:"
