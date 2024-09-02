@@ -9,14 +9,14 @@ on:
       - 'include/**'
       - 'libc/**'
       - '.github/workflows/ow-libc.yml'
-  pull_request:
-    paths:
-      - 'elks/include/**'
-      - 'elks/tools/objtools/**'
-      - 'elkscmd/basic/**'
-      - 'include/**'
-      - 'libc/**'
-      - '.github/workflows/ow-libc.yml'
+# pull_request:
+#   paths:
+#     - 'elks/include/**'
+#     - 'elks/tools/objtools/**'
+#     - 'elkscmd/basic/**'
+#     - 'include/**'
+#     - 'libc/**'
+#     - '.github/workflows/ow-libc.yml'
 env: 
   TOPDIR: ${{ github.workspace }}
   TOOLDIR: ${{ github.workspace }}/elks/tools/objtools
