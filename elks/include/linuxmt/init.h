@@ -20,7 +20,6 @@ struct gendisk;
 struct drive_infot;
 
 /* kernel init routines*/
-extern void INITPROC kernel_init(void);
 extern int  INITPROC buffer_init(void);
 extern void INITPROC console_init(void);
 extern void INITPROC fs_init(void);
