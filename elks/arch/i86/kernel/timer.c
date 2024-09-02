@@ -81,19 +81,20 @@ void timer_tick(int irq, struct pt_regs *regs)
 
 #ifdef CONFIG_CONSOLE_DIRECT
     /* spin timer wheel in upper right of screen*/
-    if (spin_on && !(jiffies & 7)) {
-        static unsigned char wheel[4] = {'-', '\\', '|', '/'};
-        static int c = 0;
+    // FIXME
+    // if (spin_on && !(jiffies & 7)) {
+    //     static unsigned char wheel[4] = {'-', '\\', '|', '/'};
+    //     static int c = 0;
 
-        pokeb((79 + 0*80) * 2, VideoSeg, wheel[c++ & 0x03]);
-    }
+    //     pokeb((79 + 0*80) * 2, VideoSeg, wheel[c++ & 0x03]);
+    // }
 #endif
 }
 
 void spin_timer(int onflag)
 {
 #ifdef CONFIG_CONSOLE_DIRECT
-    if ((spin_on = onflag) == 0)
-        pokeb((79 + 0*80) * 2, VideoSeg, ' ');
+    // if ((spin_on = onflag) == 0)
+    //     pokeb((79 + 0*80) * 2, VideoSeg, ' ');
 #endif
 }

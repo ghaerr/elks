@@ -41,10 +41,15 @@
 
 #define MAXPARMS        28
 
+#define MAX_DISPLAYS    1
+
+struct output;
+typedef struct output Output;
 struct console;
 typedef struct console Console;
 
 struct console {
+    Output *display;
     int cx, cy;                 /* cursor position */
     void (*fsm)(Console *, int);
     unsigned char attr;         /* current attribute */
@@ -58,10 +63,18 @@ struct console {
 #endif
 };
 
-static struct wait_queue glock_wait;
-static Console Con[MAX_CONSOLES], *Visible;
-static Console *glock;          /* Which console owns the graphics hardware */
-static int Width, MaxCol, Height, MaxRow;
+struct output {
+    unsigned short Width;
+    unsigned short MaxCol;
+    unsigned short Height;
+    unsigned short MaxRow;
+    Console *visible;
+    Console *glock;          /* Which console owns the graphics hardware */
+    struct wait_queue glock_wait;
+};
+
+static Output Outputs[MAX_DISPLAYS];
+static Console Con[MAX_CONSOLES];
 static int NumConsoles = MAX_CONSOLES;
 static int kraw;
 static int Current_VCminor = 0;
@@ -93,7 +106,7 @@ static void PositionCursorGet (int * x, int * y)
         *y = row;
 }
 
-static void DisplayCursor(int onoff)
+static void DisplayCursor(Console * C, int onoff)
 {
 }
 
@@ -111,14 +124,14 @@ static void scroll(register Console * C, int n, int x, int y, int xx, int yy)
     int a;
 
     a = C->attr;
-    if (C != Visible) {
+    if (C != C->display->visible) {
         bios_setpage(C->pageno);
     }
 
     bios_scroll (a, n, x, y, xx, yy);
 
-    if (C != Visible) {
-        bios_setpage(Visible->pageno);
+    if (C != C->display->visible) {
+        bios_setpage(C->display->visible->pageno);
     }
 }
 
@@ -129,13 +142,13 @@ static void ClearRange(register Console * C, int x, int y, int xx, int yy)
 
 static void ScrollUp(register Console * C, int y)
 {
-    scroll(C, 1, 0, y, MaxCol, MaxRow);
+    scroll(C, 1, 0, y, C->display->MaxCol, C->display->MaxRow);
 }
 
 #ifdef CONFIG_EMUL_ANSI
 static void ScrollDown(register Console * C, int y)
 {
-    scroll(C, -1, 0, y, MaxCol, MaxRow);
+    scroll(C, -1, 0, y, C->display->MaxCol, C->display->MaxRow);
 }
 #endif
 
@@ -148,12 +161,12 @@ static void ScrollDown(register Console * C, int y)
 
 void Console_set_vc(int N)
 {
-    if ((N >= NumConsoles) || (Visible == &Con[N]) || glock)
+    if ((N >= NumConsoles) || (Con[N].display->visible == &Con[N]) || Con[N].display->glock)
         return;
-    Visible = &Con[N];
+    Con[N].display->visible = &Con[N];
 
     bios_setpage(N);
-    PositionCursor(Visible);
+    PositionCursor(Con[N].display->visible);
     Current_VCminor = N;
 }
 
@@ -169,25 +182,26 @@ struct tty_ops bioscon_ops = {
 void INITPROC console_init(void)
 {
     Console *C;
+    Output *O;
     int i;
 
-    MaxCol = (Width = SETUP_VID_COLS) - 1;
-
-    /* Trust this. Cga does not support peeking at 0x40:0x84. */
-    MaxRow = (Height = SETUP_VID_LINES) - 1;
+    O = &Outputs[0];
+    O->MaxCol = (O->Width = SETUP_VID_COLS) - 1;
+    O->MaxRow = (O->Height = SETUP_VID_LINES) - 1;
 
     if (peekb(0x49, 0x40) == 7)  /* BIOS data segment */
         NumConsoles = 1;
 
     C = Con;
-    Visible = C;
 
     for (i = 0; i < NumConsoles; i++) {
+        C->display = O;
         C->cx = C->cy = 0;
         if (!i) {
-                // Get current cursor position
-                // to write after boot messages
-                PositionCursorGet (&C->cx, &C->cy);
+            O->visible = C;
+            // Get current cursor position
+            // to write after boot messages
+            PositionCursorGet (&C->cx, &C->cy);
         }
         C->fsm = std_char;
         C->pageno = i;
@@ -201,7 +215,7 @@ void INITPROC console_init(void)
 #endif
 
         /* Do not erase early printk() */
-        /* ClearRange(C, 0, C->cy, MaxCol, MaxRow); */
+        /* ClearRange(C, 0, C->cy, C->display->MaxCol, C->display->MaxRow); */
 
         C++;
     }
@@ -209,5 +223,5 @@ void INITPROC console_init(void)
     kbd_init();
 
     printk("BIOS console %ux%u"TERM_TYPE"(%d virtual consoles)\n",
-           Width, Height, NumConsoles);
+           O->Width, O->Height, NumConsoles);
 }
