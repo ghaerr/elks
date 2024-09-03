@@ -4,8 +4,8 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
-#include <linuxmt/biosparm.h>
 #include <linuxmt/config.h>
+#include <linuxmt/biosparm.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/kernel.h>
