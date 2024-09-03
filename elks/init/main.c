@@ -85,36 +85,12 @@ static char * INITPROC root_dev_name(int dev);
 static int INITPROC parse_options(void);
 static void INITPROC finalize_options(void);
 static char * INITPROC option(char *s);
+#endif /* CONFIG_BOOTOPTS */
 
-#endif
-
-static void init_task(void);
 static void INITPROC early_kernel_init(void);
 static void INITPROC kernel_init(void);
 static void INITPROC kernel_banner(seg_t start, seg_t end, seg_t init, seg_t extra);
-
-#if TIMER_TEST
-void testloop(unsigned timer)
-{
-        unsigned long pticks;
-        unsigned int x = timer;
-        int i;
-        static unsigned long a[10];
-
-#if 1
-        get_ptime();
-        for (i=0; i<10; i++)
-            a[i] = get_ptime();
-        for (i=0; i<10; i++)
-            printk("%ld,", a[i]);
-        printk("\n");
-#endif
-        get_ptime();
-        while (x--) asm("nop");
-        pticks = get_ptime();
-        printk("ptime %u: %lk (%lu)\n", timer, pticks, pticks);
-}
-#endif
+static void init_task(void);
 
 /* this procedure called using temp stack then switched, no local vars allowed */
 void start_kernel(void)
@@ -124,18 +100,10 @@ void start_kernel(void)
     task = heap_alloc(max_tasks * sizeof(struct task_struct),
         HEAP_TAG_TASK|HEAP_TAG_CLEAR);
     if (!task) panic("No task mem");
+
     sched_init();               /* set us (the current stack) to be idle task #0*/
     setsp(&task->t_regs.ax);    /* change to idle task stack */
     kernel_init();              /* continue init running on idle task stack */
-
-#if TIMER_TEST
-    /* run tests before 2nd process created for stability */
-    test_ptime_print();
-    testloop(30000);
-    testloop(3000);
-    testloop(300);
-    printk("\n");
-#endif
 
     /* fork and run procedure init_task() as task #1*/
     kfork_proc(init_task);
@@ -146,9 +114,6 @@ void start_kernel(void)
      * The idle task always runs with _gint_count == 1 (switched from user mode syscall)
      */
     while (1) {
-#if TIMER_TEST
-        test_ptime_idle_loop();
-#endif
         schedule();
 #ifdef CONFIG_TIMER_INT0F
         int0F();        /* simulate timer interrupt hooked on IRQ 7 */

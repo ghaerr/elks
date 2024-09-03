@@ -35,7 +35,7 @@ static void del_from_runqueue(register struct task_struct *p)
     if (!p->next_run || !p->prev_run)
         panic("SCHED(%d): task not on run-queue, state %d", p->pid, p->state);
     if (p == &idle_task)
-        panic("SCHED: trying to sleep idle task");
+        panic("trying to sleep idle task");
 #endif
     (p->next_run->prev_run = p->prev_run)->next_run = p->next_run;
     p->next_run = p->prev_run = NULL;
