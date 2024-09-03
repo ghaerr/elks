@@ -40,6 +40,7 @@ WATCINCLUDE=$WATCOM/h
 # -fno-stack-check          # don't generate stack check code
 # -fnostdlib                # don't refere standard libraries
 # unused:
+# -ztNum                    # specify far data threshold (default 32767, or 256 if no Num)
 # -mhard-emu-float          # -Wc,-fpi (inline 8087 w/emulation)
 # -msoft-float              # -Wc,-fpc
 # -Wc,-fpc                  # non-IEEE soft fp

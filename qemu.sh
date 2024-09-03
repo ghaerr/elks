@@ -111,16 +111,22 @@ NET="-netdev user,id=mynet,$FWD -device ne2k_isa,irq=12,netdev=mynet"
 # NETDUMP="-net dump"
 
 # Enable PC-Speaker here:
-AUDIO="-audiodev pa,id=speaker -machine pcspk-audiodev=speaker"
+#AUDIO="-audiodev pa,id=speaker -machine pcspk-audiodev=speaker"
 
 # Determine display type ("Darwin" = OSX)
 [ `uname` != 'Darwin' ] && QDISPLAY="-display sdl"
 
 # Configure QEMU as pure ISA system
 
-# uncomment to run native speed if x86 macOS
+# For macOS x86, HVF can be used to increase emulation speed
+# Otherwise, translation block caching of multiple instructions must be turned off
+MACOS="-accel tcg,one-insn-per-tb=on"
 #MACOS="-accel hvf"
+#MACOS="-icount 1"
+#DEBUG="-D logfile -d in_asm,int,unimp,guest_errors"
+#DEBUG="-D logfile -d cpu,in_asm,int,unimp,guest_errors"
+#DEBUG="-D logfile -d out_asm,in_asm,int,unimp,guest_errors"
 
-exec $QEMU $MACOS $AUDIO $CONSOLE -nodefaults -name ELKS -machine isapc -cpu 486,tsc -m 4M \
+exec $QEMU $MACOS $DEBUG $AUDIO $CONSOLE -nodefaults -name ELKS -machine isapc -cpu 486,tsc -m 4M \
 $KEYBOARD $QDISPLAY -vga std -rtc base=utc $SERIAL \
 $NET $NETDUMP $IMAGE $DISK2 $@
