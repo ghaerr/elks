@@ -8,7 +8,6 @@
 [ -x /opt/homebrew/bin/qemu-system-i386 ] && QEMU="qemu-system-i386"
 [ -x /opt/homebrew/bin/qemu-system-x86_64 ] && QEMU="qemu-system-x86_64"
 [ -z $QEMU ] && { echo 'QEMU system emulator not found!'; exit 1; }
-echo "Using QEMU: $QEMU"
 
 # Select disk image to use
 # MINIX or FAT .config build
@@ -113,20 +112,34 @@ NET="-netdev user,id=mynet,$FWD -device ne2k_isa,irq=12,netdev=mynet"
 # Enable PC-Speaker here:
 #AUDIO="-audiodev pa,id=speaker -machine pcspk-audiodev=speaker"
 
+UNAME=`uname -a`
+
 # Determine display type ("Darwin" = OSX)
-[ `uname` != 'Darwin' ] && QDISPLAY="-display sdl"
+[ $UNAME != 'Darwin' ] && QDISPLAY="-display sdl"
 
 # Configure QEMU as pure ISA system
 
 # For macOS x86, HVF can be used to increase emulation speed
 # Otherwise, translation block caching of multiple instructions must be turned off
-MACOS="-accel tcg,one-insn-per-tb=on"
-#MACOS="-accel hvf"
-#MACOS="-icount 1"
+
+# Autoselect accelerator
+ACCEL_SSTP="-singlestep"
+ACCEL_V9="-accel tcg,one-insn-per-tb=on"
+ACCEL_HVF="-accel hvf"
+
+ACCEL=$ACCEL_SSTP
+if [[ `$QEMU -version` =~ "version 9" ]]; then
+     ACCEL=$ACCEL_V9
+fi
+if [[ $QEMU =~ "x86_64" && $UNAME =~ "Darwin" && $UNAME =~ "x86_64" ]]; then
+     ACCEL=$ACCEL_HVF
+fi
+
 #DEBUG="-D logfile -d in_asm,int,unimp,guest_errors"
 #DEBUG="-D logfile -d cpu,in_asm,int,unimp,guest_errors"
 #DEBUG="-D logfile -d out_asm,in_asm,int,unimp,guest_errors"
 
-exec $QEMU $MACOS $DEBUG $AUDIO $CONSOLE -nodefaults -name ELKS -machine isapc -cpu 486,tsc -m 4M \
+echo "Using QEMU: $QEMU $ACCEL"
+exec $QEMU $ACCEL $DEBUG $AUDIO $CONSOLE -nodefaults -name ELKS -machine isapc -cpu 486,tsc -m 4M \
 $KEYBOARD $QDISPLAY -vga std -rtc base=utc $SERIAL \
 $NET $NETDUMP $IMAGE $DISK2 $@
