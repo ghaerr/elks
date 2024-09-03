@@ -235,7 +235,8 @@ static void INITPROC kernel_banner(seg_t start, seg_t end, seg_t init, seg_t ext
     printk("8018X machine, ");
 #endif
 
-    printk("syscaps %x, %uK base ram\n", sys_caps, SETUP_MEM_KBYTES);
+    printk("syscaps %x, %uK base ram, %d tasks, %d files, %d inodes\n",
+        sys_caps, SETUP_MEM_KBYTES, max_tasks, nr_file, nr_inode);
     printk("ELKS %s (%u text, %u ftext, %u data, %u bss, %u heap)\n",
            system_utsname.release,
            (unsigned)_endtext, (unsigned)_endftext, (unsigned)_enddata,
