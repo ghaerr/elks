@@ -33,8 +33,6 @@
 #define MINIX_HEADER 0x20
 #define SUPL_HEADER  0x40
 
-#define SYS_SIZE DEF_SYSSIZE
-
 #define DEFAULT_MAJOR_ROOT 0x03         /* BIOS floppy 0 */
 #define DEFAULT_MINOR_ROOT 0x80
 
@@ -161,7 +159,7 @@ int main(int argc, char **argv)
     /* for compatibility with LILO */
     if (setup_sectors < SETUP_SECTS)
 	setup_sectors = SETUP_SECTS;
-    fprintf(stderr, "Setup is %d bytes.\n", i);
+    fprintf(stderr, "Setup is %d bytes (%d sectors).\n", i, setup_sectors);
     for (c = 0; c < sizeof(buf); c++)
 	buf[c] = '\0';
     while (i < setup_sectors * 512) {
@@ -204,18 +202,20 @@ int main(int argc, char **argv)
     lseek(id, 0, 0);
 
     sys_size = (sz + 15) / 16;
-    fprintf(stderr, "System is %d (%xh paras)\n", sz, sys_size);
-    if (sys_size > SYS_SIZE)
+    fprintf(stderr, "System is %d B (0x%x paras)\n", sz, sys_size);
+    if (sys_size > DEF_SYSMAX)
 	die("System is too big");
-#if 0 && !defined(CONFIG_ROMCODE)       /* no longer correct */
-    /* compute boot load address to avoid overwriting image at boot relocation time*/
-    fsz = (ex->a_hdrlen + (intel_long(ex->a_text) + intel_long(ex->a_data)) + 15) / 16
-	+ REL_SYSSEG;
-    fprintf(stderr, "Text/Data load ending segment is %x, limit %x\n", fsz, DEF_SYSSEG);
-    if (fsz > DEF_SYSSEG + REL_SYSSEG) {	/* start of reloc entry table at boot */
-	fprintf(stderr, "System too large for DEF_SYSSEG at %x, increase DEF_SYSSEG\n",
-	    DEF_SYSSEG);
-	exit(1);
+#ifndef CONFIG_ROMCODE
+    /* display start and end setup.S copy address for informational purposes */
+    fsz = (ex->a_hdrlen + (intel_long(ex->a_text) + intel_long(ex->a_data)) + 15) / 16;
+    if (ex->a_hdrlen == SUPL_HEADER) {
+        fsz += (intel_long(ex->a_trsize) + intel_long(ex->a_drsize)
+            + intel_long(ex->esh_ftrsize) + intel_long(ex->esh_ftseg) + 15) / 16;
+    }
+    fsz += REL_SYSSEG;
+    fprintf(stderr, "Load segment start 0x%x end 0x%x\n", DEF_SYSSEG, fsz);
+    if (DEF_SYSSEG < REL_SYSSEG + 0x1000) {
+	fprintf(stderr, "Warning: Load segment too low for REL_SYSSEG at %x, increase DEF_SYSSEG\n", REL_SYSSEG);
     }
 #endif
     while (sz > 0) {
