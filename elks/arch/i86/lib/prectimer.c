@@ -1,3 +1,10 @@
+/*
+ * Precision timer routines for IBM PC and compatibles
+ * 2 Aug 2024 Greg Haerr
+ *
+ * Use 8254 PIT to measure elapsed time in pticks = 0.8381 usecs.
+ */
+
 #include <linuxmt/prectimer.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/kernel.h>
@@ -6,12 +13,23 @@
 #include <arch/irq.h>
 #include <arch/io.h>
 
-/*
- * Precision timer routines for IBM PC and compatibles
- * 2 Aug 2024 Greg Haerr
- *
- * Use 8254 PIT to measure elapsed time in pticks = 0.8381 usecs.
- */
+#ifndef __KERNEL__
+#include <linuxmt/mem.h>
+#include <linuxmt/memory.h>
+#include <sys/linksym.h>
+#include <sys/ioctl.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#define printk printf
+
+/* FIXME values for IBM PC only, included for non-ifdef'd libc multi-arch compilation */
+#ifndef TIMER_CMDS_PORT
+#define TIMER_CMDS_PORT 0x43
+#define TIMER_DATA_PORT 0x40
+#endif
+
+#endif
 
 /*
  * Each ptick corresponds to the elapsed time for a countdown in the 8254 PIT.
@@ -30,6 +48,31 @@
 #endif
 
 static unsigned int lastjiffies;    /* only 16 bits required within ~10.9 mins */
+
+#ifndef __KERNEL__
+static unsigned short __far *pjiffies;  /* only access low order jiffies word */
+
+#define errmsg(str)     write(STDERR_FILENO, str, sizeof(str) - 1)
+
+void init_ptime(void)
+{
+    int fd, offset, kds;
+
+    __LINK_SYMBOL(ptostr);
+    fd = open("/dev/kmem", O_RDONLY);
+    if (fd < 0) {
+        errmsg("No kmem\n");
+        return;
+    }
+    if (ioctl(fd, MEM_GETDS, &kds) < 0 ||
+        ioctl(fd, MEM_GETJIFFADDR, &offset) < 0) {
+        errmsg("No mem ioctl\n");
+    } else {
+        pjiffies = _MK_FP(kds, offset);
+    }
+    close(fd);
+}
+#endif
 
 /*
  * Each PIT count (ptick) is 0.8381 usecs each for 10ms jiffies timer (= 1/11932)
@@ -53,8 +96,13 @@ unsigned long get_ptime(void)
     clr_irq();                      /* synchronize countdown and jiffies */
     outb(0, TIMER_CMDS_PORT);       /* latch timer value */
     /* 16-bit subtract handles low word wrap automatically */
+#ifndef __KERNEL__
+    jdiff = *pjiffies - (unsigned)lastjiffies;
+    lastjiffies = *pjiffies;        /* 16 bit save works for ~10.9 mins */
+#else
     jdiff = (unsigned)jiffies - (unsigned)lastjiffies;
     lastjiffies = (unsigned)jiffies; /* 16 bit save works for ~10.9 mins */
+#endif
     lo = inb(TIMER_DATA_PORT);
     hi = inb(TIMER_DATA_PORT) << 8;
     restore_flags(flags);
@@ -73,6 +121,8 @@ unsigned long get_ptime(void)
 }
 
 #if TIMER_TEST
+
+#ifdef __KERNEL__
 void test_ptime_idle_loop(void)
 {
     static int v;
@@ -84,6 +134,7 @@ void test_ptime_idle_loop(void)
     while (jiffies < timeout)
         ;
 }
+#endif
 
 void test_ptime_print(void)
 {
