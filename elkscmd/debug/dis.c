@@ -69,7 +69,7 @@ char * noinstrument getsegsymbol(int seg)
     return buf;
 }
 
-#define peekb(cs,ip)  (*(unsigned char __far *)(((unsigned long)(cs) << 16) | (int)(ip)))
+#define peekb(cs,ip)  (*(unsigned char __far *)(((unsigned long)(cs) << 16) | (unsigned int)(ip)))
 
 static int nextbyte_mem(int cs, int ip)
 {
