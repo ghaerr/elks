@@ -97,9 +97,9 @@
 
 /* Don't touch these, unless you really know what you are doing. */
 #define DEF_INITSEG     0x0100  /* initial Image load address by boot code */
-#define DEF_SYSSEG      0x1300  /* kernel copied here by setup.S code */
+#define DEF_SYSSEG      0x1300  /* address setup then copies kernel to, then REL_SYSSEG */
 #define DEF_SETUPSEG    DEF_INITSEG + 0x20
-#define DEF_SYSSIZE     0x2F00
+#define DEF_SYSMAX      0x2F00  /* maximum system size (=.text+.fartext+.data) */
 
 /* DMASEG is a bounce buffer of 1K (=BLOCKSIZE) below the first 64K boundary (=0x1000:0)
  * for use with the old 8237 DMA controller OR a disk track buffer of 9K (18 ectors).

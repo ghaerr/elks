@@ -94,8 +94,8 @@ debug_loader    =       0       // display relocations
 #define KERNEL_MAGICNUMBER MINIX_SPLITID_LOW
 
 #ifndef CONFIG_ROMCODE
-  INITSEG  = DEF_INITSEG	// initial setup data seg, we move boot here - out of the way
-  SYSSEG   = DEF_SYSSEG 	// first kernel blob load point before relocation
+  INITSEG  = DEF_INITSEG	// initial setup data seg and initial Image load address
+  SYSSEG   = DEF_SYSSEG 	// first kernel blob copy load point before relocation
   SETUPSEG = DEF_SETUPSEG	// this is the current code segment
 #else
   INITSEG  = CONFIG_ROM_SETUP_DATA
@@ -245,8 +245,7 @@ done_move_kernel:
 	cld
 	mov	$INITSEG,%ax
 	mov	%ax,%ss
-	//mov	$0x4000-12,%sp
-	mov	$0x1000,%sp	// 2K stack: 0x0800 setup size + 0x0800 stack
+	mov	$0x1000,%sp	// 4k gives 7 setup sectors and 512 byte stack above
 	.hex4sp	%ss,"\nNew INIT SS:"
 	.hex4sp	%sp,"SP:"
 
