@@ -250,7 +250,9 @@ int do_umount(kdev_t dev)
 int sys_umount(char *name)
 {
     struct inode *inode;
-    register struct inode *inodep;
+    struct inode *inodep;
+    struct file_operations *fops;
+    struct super_block *sb;
     kdev_t dev;
     int retval;
 
@@ -267,7 +269,7 @@ int sys_umount(char *name)
             return -EACCES;
         }
     } else {
-        register struct super_block *sb = inodep->i_sb;
+        sb = inodep->i_sb;
         if (!sb || inodep != sb->s_mounted) {
             iput(inodep);
             return -EINVAL;
@@ -282,7 +284,6 @@ int sys_umount(char *name)
         return -ENXIO;
     }
     if (!(retval = do_umount(dev)) && dev != ROOT_DEV) {
-        register struct file_operations *fops;
         fops = get_blkfops(MAJOR(dev));
         if (fops && fops->release) fops->release(inodep, NULL);
     }
