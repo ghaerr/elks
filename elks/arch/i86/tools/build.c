@@ -205,6 +205,7 @@ int main(int argc, char **argv)
     fprintf(stderr, "System is %d B (0x%x paras)\n", sz, sys_size);
     if (sys_size > DEF_SYSMAX)
 	die("System is too big");
+#ifndef CONFIG_ROMCODE
     /* display start and end setup.S copy address for informational purposes */
     fsz = (ex->a_hdrlen + (intel_long(ex->a_text) + intel_long(ex->a_data)) + 15) / 16;
     if (ex->a_hdrlen == SUPL_HEADER) {
@@ -216,6 +217,7 @@ int main(int argc, char **argv)
     if (DEF_SYSSEG < REL_SYSSEG + 0x1000) {
 	fprintf(stderr, "Warning: Load segment too low for REL_SYSSEG at %x, increase DEF_SYSSEG\n", REL_SYSSEG);
     }
+#endif
     while (sz > 0) {
 	int32_t l, n;
 
