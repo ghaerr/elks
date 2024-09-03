@@ -45,7 +45,7 @@ _start:
 
 	mov	%ds,%ax
 	mov	%ax,%ss		// SS=ES=DS
-	mov	$istack,%sp
+	mov	$tstack,%sp     // can't use kernel interrupt stack, must have temp stack
 
 	call	start_kernel	// fall through into breakpoint if returns
 
@@ -80,7 +80,7 @@ early_putchar:
 	.global _endbss
 	.extern	kernel_cs
 	.extern	kernel_ds
-	.extern	istack
+	.extern	tstack
 
 _endtext:
 	.word	0

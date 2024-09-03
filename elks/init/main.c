@@ -89,8 +89,9 @@ static char * INITPROC option(char *s);
 #endif
 
 static void init_task(void);
-static void INITPROC kernel_banner(seg_t start, seg_t end, seg_t init, seg_t extra);
 static void INITPROC early_kernel_init(void);
+static void INITPROC kernel_init(void);
+static void INITPROC kernel_banner(seg_t start, seg_t end, seg_t init, seg_t extra);
 
 #if TIMER_TEST
 void testloop(unsigned timer)
@@ -118,10 +119,12 @@ void testloop(unsigned timer)
 /* this procedure called using temp stack then switched, no local vars allowed */
 void start_kernel(void)
 {
+    printk("START\n");
     early_kernel_init();        /* read bootopts using kernel interrupt stack */
     task = heap_alloc(max_tasks * sizeof(struct task_struct),
         HEAP_TAG_TASK|HEAP_TAG_CLEAR);
     if (!task) panic("No task mem");
+    sched_init();               /* set us (the current stack) to be idle task #0*/
     setsp(&task->t_regs.ax);    /* change to idle task stack */
     kernel_init();              /* continue init running on idle task stack */
 
@@ -168,17 +171,14 @@ static void INITPROC early_kernel_init(void)
 #endif
 }
 
-void INITPROC kernel_init(void)
+static void INITPROC kernel_init(void)
 {
-    /* set us (the current stack) to be idle task #0*/
-    sched_init();
-    irq_init();
+    irq_init();                     /* installs timer and div fault handlers */
 
     /* set console from /bootopts console= or 0=default*/
     set_console(boot_console);
 
-    /* init direct, bios or headless console*/
-    console_init();
+    console_init();                 /* init direct, bios or headless console*/
 
 #ifdef CONFIG_CHAR_DEV_RS
     serial_init();

@@ -39,7 +39,8 @@ OBJS  = strace.o system.o irq.o irqtab.o process.o \
 		entry.o signal.o timer.o
 
 ifeq ($(CONFIG_ARCH_IBMPC), y)
-OBJS += irq-8259.o timer-8254.o divzero.o
+OBJS += irq-8259.o timer-8254.o
+#OBJS += divzero.o
 endif
 
 ifeq ($(CONFIG_ARCH_PC98), y)

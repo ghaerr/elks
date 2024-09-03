@@ -392,10 +392,40 @@ idle_halt:
 	hlt
 	ret
 
+        .global div0_handler_panic
+// Divide Fault hander - just panic for now
+div0_handler_panic:
+        push    %ax                     // save regs, uses 4+4+10 bytes of current stack
+        push    %bx
+        push    %cx
+        push    %dx
+        push    %ds
+
+        // Recover kernel data segment
+        // Was pushed by the CALLF of the dynamic handler
+        mov     %sp,%bx
+        mov     %ss:12(%bx),%ds
+
+	mov	$dmsg,%ax
+	push	%ax
+	call    panic
+	pop	%ax
+1:	hlt
+	jmp	1b
+
+//      pop     %ds                     // restore regs
+//      pop     %dx
+//      pop     %cx
+//      pop     %bx
+//      pop     %ax
+//      add     $4,%sp          	// skip the trampoline lcall
+//      iret
+
 	.data
 	.global	_gint_count
 	.global	endistack
 	.global	istack
+	.global	tstack
 	.extern	current
 	.extern	previous
 
@@ -406,10 +436,14 @@ org_irq0:			// original BIOS IRQ 0 vector
 _gint_count:			// General interrupts count. Start with 1
 	.word	1		// because init_task() is in kernel mode
 #ifdef CHECK_SS
-pmsg:	.ascii "Running unknown code"
-	.byte	0
+pmsg:	.ascii "Running unknown code\0"
 #endif
+dmsg:	.ascii 	"DIVIDE FAULT\0"
+
 	.p2align 1
 endistack:
 	.skip ISTACK_BYTES,0	// interrupt stack
 istack:
+
+	.skip 256,0		// startup temp stack
+tstack:

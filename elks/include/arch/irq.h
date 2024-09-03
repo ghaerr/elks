@@ -23,8 +23,9 @@ int request_irq(int,irq_handler,int hflag);
 int free_irq(int irq);
 
 /* irqtab.S */
-void int_vector_set (int vect, word_t proc, word_t seg);
 void _irqit (void);
+void int_vector_set (int vect, word_t proc, word_t seg);
+void div0_handler_panic(void);
 
 /* irq-8259.c, irq-8018x.c*/
 void initialize_irq(void);
