@@ -35,9 +35,9 @@
 
 #define STR(x)          __STRING(x)
 /* bootopts error message are duplicated below so static here for space */
-char errmsg_initargs[] = "init args > " STR(MAX_INIT_ARGS);
-char errmsg_initenvs[] = "init envs > " STR(MAX_INIT_ENVS);
-char errmsg_initslen[] = "init words > " STR(MAX_INIT_SLEN);
+char errmsg_initargs[] = "init args > " STR(MAX_INIT_ARGS) "\n";
+char errmsg_initenvs[] = "init envs > " STR(MAX_INIT_ENVS) "\n";
+char errmsg_initslen[] = "init words > " STR(MAX_INIT_SLEN) "\n";
 
 int root_mountflags;
 struct netif_parms netif_parms[MAX_ETHS] = {
@@ -565,15 +565,15 @@ static int INITPROC parse_options(void)
 		 * Then check if it's an environment variable or an init argument.
 		 */
 		if (!strchr(line,'=')) {    /* no '=' means init argument*/
-			if (args >= MAX_INIT_ARGS)
-				panic(errmsg_initargs);
-			argv_init[args++] = line;
+			if (args < MAX_INIT_ARGS)
+			    argv_init[args++] = line;
+			else printk(errmsg_initargs);
 		}
 #if ENV
 		else {
-			if (envs >= MAX_INIT_ENVS)
-				panic(errmsg_initenvs);
-			envp_init[envs++] = line;
+			if (envs < MAX_INIT_ENVS)
+			    envp_init[envs++] = line;
+			else printk(errmsg_initenvs);
 		}
 #endif
 	}
@@ -587,11 +587,11 @@ static void INITPROC finalize_options(void)
 
 #if ENV
 	/* set ROOTDEV environment variable for rc.sys fsck*/
-	if (envs + running_qemu >= MAX_INIT_ENVS)
-		panic(errmsg_initenvs);
-	envp_init[envs++] = root_dev_name(ROOT_DEV);
-	if (running_qemu)
-		envp_init[envs++] = (char *)"QEMU=1";
+	if (envs + running_qemu < MAX_INIT_ENVS) {
+	    envp_init[envs++] = root_dev_name(ROOT_DEV);
+	    if (running_qemu)
+		    envp_init[envs++] = (char *)"QEMU=1";
+    } else printk(errmsg_initenvs);
 #endif
 
 #if DEBUG
