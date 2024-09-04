@@ -17,6 +17,7 @@
 #endif
 
 #define ISTACK_BYTES    512     /* Size of interrupt stack */
+#define TSTACK_BYTES    128     /* Size of temp startup stack */
 
 #define KSTACK_GUARD    100     /* bytes before CHECK_KSTACK overflow warning */
 
