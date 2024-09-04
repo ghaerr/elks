@@ -8,7 +8,7 @@
  * 19 Aug 24 Greg Haerr
  */
 
-static char div0msg[] = { "Divide by zero\n" };
+static char div0msg[] = { "Divide fault\n" };
 
 void div0_handler(int i, struct pt_regs *regs)
 {

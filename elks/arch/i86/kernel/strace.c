@@ -183,4 +183,19 @@ void trace_end(unsigned int retval)
         check_kstack(n);
 }
 
+#if UNUSED
+void check_tstack(void)
+{
+    int i;
+
+    /* calc temp stack usage */
+    for (i=0; i<TSTACK_BYTES/2; i++) {
+        if (endtstack[i] != 0)
+            break;
+    }
+    i = (TSTACK_BYTES/2 - i) << 1;
+    printk("tstack usage %d\n", i);
+}
+#endif
+
 #endif /* CONFIG_TRACE */

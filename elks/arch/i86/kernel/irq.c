@@ -125,12 +125,15 @@ void INITPROC irq_init(void)
 
 #ifdef CONFIG_ARCH_IBMPC
     /* catch INT 0 divide by zero/divide overflow hardware fault */
-    /*irq_action[IDX_DIVZERO] = div0_handler;
-      int_handler_add(IDX_DIVZERO, 0x00, _irqit);*/
+#if 1
     /* install direct panic-only DIV fault handler until known that
      * the _irqit version doesn't overwrite the stack
      */
     int_handler_add(IDX_DIVZERO, 0x00, div0_handler_panic);
+#else
+    irq_action[IDX_DIVZERO] = div0_handler;
+    int_handler_add(IDX_DIVZERO, 0x00, _irqit);
+#endif
 #endif
 
 #if defined(CONFIG_TIMER_INT0F) || defined(CONFIG_TIMER_INT1C)

@@ -45,8 +45,9 @@
 #ifndef __ASSEMBLER__
 extern int tracing;
 
-extern void trace_begin(void);
-extern void trace_end(unsigned int retval);
+void trace_begin(void);
+void trace_end(unsigned int retval);
+void check_tstack(void);
 #endif
 
 #endif

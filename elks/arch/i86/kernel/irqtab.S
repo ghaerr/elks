@@ -424,6 +424,7 @@ div0_handler_panic:
 	.data
 	.global	_gint_count
 	.global	endistack
+	.global	endtstack
 	.global	istack
 	.global	tstack
 	.extern	current
@@ -445,5 +446,6 @@ endistack:
 	.skip ISTACK_BYTES,0	// interrupt stack
 istack:
 
-	.skip 256,0		// startup temp stack
+endtstack:
+	.skip TSTACK_BYTES,0	// startup temp stack
 tstack:
