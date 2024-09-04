@@ -214,7 +214,7 @@ int INITPROC buffer_init(void)
     debug_setcallback(1, list_buffer_status);   /* ^O will generate buffer list */
 #endif
 
-    if (!(L1buf = heap_alloc(nr_map_bufs * BLOCK_SIZE, HEAP_TAG_BUFHEAD|HEAP_TAG_CLEAR)))
+    if (!(L1buf = heap_alloc(nr_map_bufs * BLOCK_SIZE, HEAP_TAG_CACHE|HEAP_TAG_CLEAR)))
         return 1;
 
     buffer_heads = heap_alloc(bufs_to_alloc * sizeof(struct buffer_head),
