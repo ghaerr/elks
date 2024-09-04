@@ -131,7 +131,6 @@ void start_kernel(void)
 static void INITPROC early_kernel_init(void)
 {
     unsigned int endbss;
-    struct umbseg *p;
 
     /* Note: no memory allocation available until after heap_init */
     tty_init();                     /* parse_options may call rs_setbaud */
@@ -148,6 +147,8 @@ static void INITPROC early_kernel_init(void)
     heap_add((void *)endbss, heapsize);
     mm_init(membase, memend);       /* init far/main memory allocator */
 
+#ifdef CONFIG_BOOTOPTS
+    struct umbseg *p;
     /* now able to add umb memory segments */
     for (p = umbseg; p < &umbseg[MAX_UMB]; p++) {
         if (p->base) {
@@ -156,6 +157,7 @@ static void INITPROC early_kernel_init(void)
             umbtotal += p->len;
         }
     }
+#endif
 }
 
 static void INITPROC kernel_init(void)
@@ -417,15 +419,18 @@ static void INITPROC parse_umb(char *line)
 }
 
 /*
- * This is a simple kernel command line parsing function: it parses
- * the command line from /bootopts, and fills in the arguments/environment
- * to init as appropriate. Any cmd-line option is taken to be an environment
- * variable if it contains the character '='.
+ * Boot-time kernel and /bin/init configuration - /bootopts options parser,
+ * read early in kernel startup.
  *
- * This routine also checks for options meant for the kernel.
- * These options are not given to init - they are for internal kernel use only.
+ * Known options of the form option=value are handled during kernel init.
  *
- * Note: no memory allocations allowed from this routine!
+ * Unknown options of the same form are saved as var=value and
+ * passed as /bin/init's envp array when it runs.
+ *
+ * Remaining option strings without the character '=' are passed in the order seen
+ * as /bin/init's argv array.
+ *
+ * Note: no memory allocations allowed from this routine.
  */
 static int INITPROC parse_options(void)
 {
