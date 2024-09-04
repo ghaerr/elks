@@ -6,19 +6,16 @@
 #wd0=10,0x300,0xCC00,0x80
 #3c0=11,0x330,,0x80
 #comirq=,,7,10
-#buf=8			# L2
-#cache=4
 #xmsbuf=2975
 #umb=0xC000:0x800,0xD000:0x1000
-#task=16
-#inode=96
-#file=64
-#sync=30		# secs
+#task=16 buf=64 cache=8 file=64 inode=96 heap=44000 # std
+#task=6 buf=8 cache=4 file=20 inode=24 heap=15000 n # min w/no rc.sys
+#sync=30
 #init=/bin/init 3 n	# muser serial no rc.sys
-#init=/bin/sh		# singleuser sh
-#root=hda1 ro		# root hd partition 1 readonly
+#init=/bin/sash		# singleuser sh
+#root=df0
+#root=hda1 ro
 #kstack
 #strace
-#root=df0
 #debug net=ne0
 #console=ttyS0,19200 3

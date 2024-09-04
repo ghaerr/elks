@@ -98,7 +98,7 @@ void dump_heap(int fd)
 	word_t total_free = 0;
 	long total_segsize = 0;
 	static char *heaptype[] =
-        { "free", "SEG ", "DRVR", "TTY ", "TASK", "BUFH", "PIPE", "INOD", "FILE" };
+        { "free", "MEM ", "DRVR", "TTY ", "TASK", "BUFH", "PIPE", "INOD", "FILE", "CACH"};
 	static char *segtype[] =
         { "free", "CSEG", "DSEG", "DDAT", "FDAT", "BUF ", "RDSK" };
 
@@ -126,7 +126,7 @@ void dump_heap(int fd)
                 segflags == SEG_FLAG_DDAT || segflags == SEG_FLAG_FDAT));
 		tty = (tag == HEAP_TAG_TTY || tag == HEAP_TAG_DRVR);
 		buffer = (tag == HEAP_TAG_SEG && segflags == SEG_FLAG_EXTBUF)
-            || tag == HEAP_TAG_BUFHEAD || tag == HEAP_TAG_PIPE;
+            || tag == HEAP_TAG_BUFHEAD || tag == HEAP_TAG_CACHE || tag == HEAP_TAG_PIPE;
 		system = (tag == HEAP_TAG_TASK || tag == HEAP_TAG_INODE || tag == HEAP_TAG_FILE);
 
 		if (allflag ||

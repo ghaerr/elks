@@ -32,6 +32,7 @@
 #define MAX_INIT_ARGS	6       /* max # arguments to /bin/init or init= program */
 #define MAX_INIT_ENVS	12      /* max # environ variables passed to /bin/init */
 #define MAX_INIT_SLEN   80      /* max # words of args + environ passed to /bin/init */
+#define MAX_UMB         3       /* max umb= segments in /bootopts */
 
 #define STR(x)          __STRING(x)
 /* bootopts error message are duplicated below so static here for space */
@@ -52,7 +53,7 @@ int tracing;
 int nr_ext_bufs, nr_xms_bufs, nr_map_bufs;
 char running_qemu;
 static int boot_console;
-static seg_t membase, memend;
+static segext_t umbtotal;
 static char bininit[] = "/bin/init";
 static char binshell[] = "/bin/sh";
 #ifdef CONFIG_SYS_NO_BININIT
@@ -78,6 +79,10 @@ static char *argv_init[MAX_INIT_SLEN] = { NULL, bininit, NULL };
 #if ENV
 static char *envp_init[MAX_INIT_ENVS];
 #endif
+static struct umbseg {  /* saves umb= lines during /bootopts parse */
+    seg_t base;
+    segext_t len;
+} umbseg[MAX_UMB], *nextumb = umbseg;
 static unsigned char options[OPTSEGSZ];
 
 extern int boot_rootdev;
@@ -89,14 +94,14 @@ static char * INITPROC option(char *s);
 
 static void INITPROC early_kernel_init(void);
 static void INITPROC kernel_init(void);
-static void INITPROC kernel_banner(seg_t start, seg_t end, seg_t init, seg_t extra);
+static void INITPROC kernel_banner(seg_t init, seg_t extra);
 static void init_task(void);
 
 /* this procedure called using temp stack then switched, no local vars allowed */
 void start_kernel(void)
 {
     printk("START\n");
-    early_kernel_init();        /* read bootopts using kernel interrupt stack */
+    early_kernel_init();        /* read bootopts using kernel temp stack */
     task = heap_alloc(max_tasks * sizeof(struct task_struct),
         HEAP_TAG_TASK|HEAP_TAG_CLEAR);
     if (!task) panic("No task mem");
@@ -125,14 +130,33 @@ void start_kernel(void)
 
 static void INITPROC early_kernel_init(void)
 {
-    setup_arch(&membase, &memend);  /* initializes kernel heap */
-    mm_init(membase, memend);       /* parse_options may call seg_add */
+    unsigned int endbss;
+
+    /* Note: no memory allocation available until after heap_init */
     tty_init();                     /* parse_options may call rs_setbaud */
 #ifdef CONFIG_TIME_TZ
     tz_init(CONFIG_TIME_TZ);        /* parse_options may call tz_init */
 #endif
 #ifdef CONFIG_BOOTOPTS
     opts = parse_options();         /* parse options found in /bootops */
+#endif
+
+    /* create near heap at end of kernel bss */
+    heap_init();                    /* init near memory allocator */
+    endbss = setup_arch();          /* sets membase and memend globals */
+    heap_add((void *)endbss, heapsize);
+    mm_init(membase, memend);       /* init far/main memory allocator */
+
+#ifdef CONFIG_BOOTOPTS
+    struct umbseg *p;
+    /* now able to add umb memory segments */
+    for (p = umbseg; p < &umbseg[MAX_UMB]; p++) {
+        if (p->base) {
+            debug("umb segment from %x to %x\n", p->base, p->base + p->len);
+            seg_add(p->base, p->base + p->len);
+            umbtotal += p->len;
+        }
+    }
 #endif
 }
 
@@ -183,10 +207,10 @@ static void INITPROC kernel_init(void)
     seg_t s = 0, e = 0;
 #endif
 
-    kernel_banner(membase, memend, s, e - s);
+    kernel_banner(s, e - s);
 }
 
-static void INITPROC kernel_banner(seg_t start, seg_t end, seg_t init, seg_t extra)
+static void INITPROC kernel_banner(seg_t init, seg_t extra)
 {
 #ifdef CONFIG_ARCH_IBMPC
     printk("PC/%cT class machine, ", (sys_caps & CAP_PC_AT) ? 'A' : 'X');
@@ -206,12 +230,13 @@ static void INITPROC kernel_banner(seg_t start, seg_t end, seg_t init, seg_t ext
            system_utsname.release,
            (unsigned)_endtext, (unsigned)_endftext, (unsigned)_enddata,
            (unsigned)_endbss - (unsigned)_enddata, heapsize);
-    printk("Kernel text %x:0, ", kernel_cs);
+    printk("Kernel text %x ", kernel_cs);
 #ifdef CONFIG_FARTEXT_KERNEL
-    printk("ftext %x:0, init %x:0, ", (unsigned)((long)kernel_init >> 16), init);
+    printk("ftext %x init %x ", (unsigned)((long)kernel_init >> 16), init);
 #endif
-    printk("data %x:0, top %x:0, %uK free\n",
-           kernel_ds, end, (int) ((end - start + extra) >> 6));
+    printk("data %x end %x top %x %u+%u+%uK free\n",
+           kernel_ds, membase, memend, (int) ((memend - membase) >> 6),
+           extra >> 6, umbtotal >> 6);
 }
 
 static void INITPROC try_exec_process(const char *path)
@@ -375,31 +400,37 @@ static void INITPROC parse_nic(char *line, struct netif_parms *parms)
     }
 }
 
+/* umb= settings have to be saved and processed after parse_options */
 static void INITPROC parse_umb(char *line)
 {
 	char *p = line-1; /* because we start reading at p+1 */
-	seg_t base, end;
-	segext_t len;
+	seg_t base;
 
 	do {
 		base = (seg_t)simple_strtol(p+1, 16);
 		if((p = strchr(p+1, ':'))) {
-			len = (segext_t)simple_strtol(p+1, 16);
-			end = base + len;
-			debug("umb segment from %x to %x\n", base, end);
-			seg_add(base, end);
+			if (nextumb < &umbseg[MAX_UMB]) {
+				nextumb->len = (segext_t)simple_strtol(p+1, 16);
+				nextumb->base = base;
+				nextumb++;
+			}
 		}
 	} while((p = strchr(p+1, ',')));
 }
 
 /*
- * This is a simple kernel command line parsing function: it parses
- * the command line from /bootopts, and fills in the arguments/environment
- * to init as appropriate. Any cmd-line option is taken to be an environment
- * variable if it contains the character '='.
+ * Boot-time kernel and /bin/init configuration - /bootopts options parser,
+ * read early in kernel startup.
  *
- * This routine also checks for options meant for the kernel.
- * These options are not given to init - they are for internal kernel use only.
+ * Known options of the form option=value are handled during kernel init.
+ *
+ * Unknown options of the same form are saved as var=value and
+ * passed as /bin/init's envp array when it runs.
+ *
+ * Remaining option strings without the character '=' are passed in the order seen
+ * as /bin/init's argv array.
+ *
+ * Note: no memory allocations allowed from this routine.
  */
 static int INITPROC parse_options(void)
 {
@@ -500,6 +531,10 @@ static int INITPROC parse_options(void)
 		}
 		if (!strncmp(line,"cache=",6)) {
 			nr_map_bufs = (int)simple_strtol(line+6, 10);
+			continue;
+		}
+		if (!strncmp(line,"heap=",5)) {
+			heapsize = (unsigned int)simple_strtol(line+5, 10);
 			continue;
 		}
 		if (!strncmp(line,"task=",5)) {
