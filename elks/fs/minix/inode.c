@@ -262,7 +262,7 @@ unsigned short _minix_bmap(register struct inode *inode, block_t block, int crea
 
 #if UNUSED  /* block always less than 65536 */
     if (block > (7 + 512 + 512 * 512))
-	panic("_minix_bmap: block (%d) >big", block);
+	panic("minix_bmap block %d", block);    /* block # too big */
 #endif
 
     if (block < 7)

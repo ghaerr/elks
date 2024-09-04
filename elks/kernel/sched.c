@@ -33,9 +33,9 @@ static void del_from_runqueue(register struct task_struct *p)
 {
 #ifdef CHECK_SCHED
     if (!p->next_run || !p->prev_run)
-        panic("SCHED(%d): task not on run-queue, state %d", p->pid, p->state);
+        panic("delrunq %d,%d", p->pid, p->state);   /* task not on run queue */
     if (p == &idle_task)
-        panic("trying to sleep idle task");
+        panic("delrunq idle");                      /* trying to sleep idle task */
 #endif
     (p->next_run->prev_run = p->prev_run)->next_run = p->next_run;
     p->next_run = p->prev_run = NULL;
@@ -70,7 +70,7 @@ void schedule(void)
     if (_gint_count > 1) {      /* neither user nor idle task was running */
         /* Taking a timer IRQ during another IRQ or while in kernel space is
          * quite legal. We just dont switch then */
-         panic("schedule from interrupt\n");
+         panic("schedule from int\n");
     }
 #endif
 

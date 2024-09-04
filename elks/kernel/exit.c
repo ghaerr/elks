@@ -138,7 +138,7 @@ void do_exit(int status)
     current->state = TASK_ZOMBIE;
     wake_up(&parent->child_wait);
     schedule();
-    panic("sys_exit\n");
+    panic("sys_exit");
 }
 
 void sys_exit(int status)

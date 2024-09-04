@@ -126,7 +126,7 @@ void put_super(kdev_t dev)
     register struct super_operations *sop;
 
     if (dev == ROOT_DEV)
-        panic("put_super: root\n");
+        panic("put_super");
 
     if (!(sb = get_super(dev))) return;
     if (sb->s_covered)
@@ -218,7 +218,7 @@ int do_umount(kdev_t dev)
             }
         }
         else if (sb->s_covered) {
-            if (!sb->s_covered->i_mount) panic("umount: i_mount=NULL\n");
+            if (!sb->s_covered->i_mount) panic("umount");
             if (!fs_may_umount(dev, sb->s_mounted)) retval = -EBUSY;
             else {
                 retval = 0;

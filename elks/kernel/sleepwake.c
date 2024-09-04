@@ -64,7 +64,7 @@ void finish_wait(struct wait_queue *p)
 void wait_set(struct wait_queue *p)
 {
 #ifdef CHECK_SCHED
-    if (current->waitpt) panic("SCHED: wait_set double wait");
+    if (current->waitpt) panic("wait_set");         /* double wait */
 #endif
     current->waitpt = p;
 }
@@ -72,7 +72,7 @@ void wait_set(struct wait_queue *p)
 void wait_clear(struct wait_queue *p)
 {
 #ifdef CHECK_SCHED
-    if (current->waitpt != p) panic("SCHED: wait_clear wrong waitpt");
+    if (current->waitpt != p) panic("wait_clear");  /* bad wait_queue */
 #endif
     current->waitpt = NULL;
 }
@@ -80,7 +80,7 @@ void wait_clear(struct wait_queue *p)
 static void __sleep_on(register struct wait_queue *p, int state)
 {
 #ifdef CHECK_SCHED
-    if (current == &task[0]) panic("SCHED: trying to sleep idle task on %x", p);
+    if (current == &task[0]) panic("idle task sleep_on %x", p);
 #endif
     debug_sched("sleep: %P waitq %04x\n", p);
     current->state = state;

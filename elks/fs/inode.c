@@ -32,7 +32,7 @@ static int nr_free_inodes;
 #define DCR_COUNT(i) if(!(--i->i_count))nr_free_inodes++
 #define INR_COUNT(i) if(!(i->i_count++))nr_free_inodes--
 #define CLR_COUNT(i) if(i->i_count)nr_free_inodes++
-#define SET_COUNT(i) if(--nr_free_inodes < 0) { panic("get_empty_inode: bad free count"); }
+#define SET_COUNT(i) if(--nr_free_inodes < 0) { panic("inode free count"); }
 #else
 #define DCR_COUNT(i) (i->i_count--)
 #define INR_COUNT(i) (i->i_count++)
@@ -323,7 +323,7 @@ struct inode *iget(struct super_block *sb, ino_t inr)
     register struct inode *inode;
     register struct inode *n_ino;
 
-    if (!sb) panic("iget sb 0");
+    if (!sb) panic("iget0");
     debug("iget dev %p ino %lu\n", sb->s_dev, (unsigned long)inr);
 
     n_ino = NULL;
