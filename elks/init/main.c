@@ -53,6 +53,7 @@ int tracing;
 int nr_ext_bufs, nr_xms_bufs, nr_map_bufs;
 char running_qemu;
 static int boot_console;
+static segext_t umbtotal;
 static char bininit[] = "/bin/init";
 static char binshell[] = "/bin/sh";
 #ifdef CONFIG_SYS_NO_BININIT
@@ -82,7 +83,6 @@ static struct umbseg {  /* saves umb= lines during /bootopts parse */
     seg_t base;
     segext_t len;
 } umbseg[MAX_UMB], *nextumb = umbseg;
-static segext_t umbtotal;
 static unsigned char options[OPTSEGSZ];
 
 extern int boot_rootdev;
