@@ -145,10 +145,10 @@ static void end_request(int uptodate)
     if (req->rq_status != RQ_ACTIVE \
         || (req->rq_cmd != READ && req->rq_cmd != WRITE) \
         || MAJOR(req->rq_dev) != MAJOR_NR) \
-        panic(DEVICE_NAME ": bad request dev %D cmd %d active %d", \
+        panic("I/O req %D,%d,%d", \
             req->rq_dev, req->rq_cmd, req->rq_status); \
     if (req->rq_bh && !EBH(req->rq_bh)->b_locked) \
-        panic(DEVICE_NAME ": not locked");
+        panic("I/O lck %D", req->rq_dev);
 #else
 #define CHECK_REQUEST(req)
 #endif

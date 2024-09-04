@@ -81,7 +81,7 @@ static struct request *get_request(int n, kdev_t dev)
 #ifdef CONFIG_ASYNCIO
             return NULL;
 #else
-            panic("get_request: no inactive requests\n");
+            panic("get_request");   /* no inactive requests */
 #endif
         }
     }
@@ -130,7 +130,7 @@ static struct request *get_request_wait(int n, kdev_t dev)
     /* Try again blocking if no request available */
     return __get_request_wait(n, dev);
 #else
-    panic("get_request: no requests");
+    panic("no reqs");
     return NULL;
 #endif
 }
@@ -162,7 +162,7 @@ static void add_request(struct blk_dev_struct *dev, struct request *req)
         tmp->rq_next = req;
         set_irq();
 #else
-        panic("add_request: non-empty request queue");
+        panic("add_request");   /* non-empty request queue */
 #endif
     }
 }
@@ -235,7 +235,7 @@ void ll_rw_blk(int rw, struct buffer_head *bh)
     if ((major = MAJOR(buffer_dev(bh))) < MAX_BLKDEV)
         dev = blk_dev + major;
     if (!dev || !dev->request_fn)
-        panic("ll_rw_blk: unknown dev %D", buffer_dev(bh));
+        panic("bad blkdev %D", buffer_dev(bh));
     make_request(major, rw, bh);
 }
 

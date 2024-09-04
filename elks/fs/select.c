@@ -63,7 +63,7 @@ void select_wait (struct wait_queue *q)
 		}
 	}
 
-	panic ("select_wait:no slot left");
+	panic ("select_wait");      /* no slot left */
 }
 
 /* Return true if queue is polled */
@@ -79,8 +79,7 @@ int select_poll (struct task_struct * t, struct wait_queue *q)
 		if (p == q) return 1;
 	}
 
-	panic ("select_poll:no slot found\n");
-	return 0;
+	panic ("select_poll");      /* no slot found */
 }
 
 /*
