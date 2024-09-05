@@ -221,8 +221,6 @@ typedef unsigned char __sigdisposition_t;
 #define SIGDISP_CUSTOM	((__sigdisposition_t) 2)
 #endif
 
-/*@end@*/
-
 struct __kern_sigaction_struct {
     __sigdisposition_t sa_dispose;
 #if UNUSED
@@ -234,11 +232,9 @@ struct __kern_sigaction_struct {
 
 #ifdef __KERNEL__
 struct task_struct;
-extern int send_sig(sig_t,struct task_struct *,int);
-extern void arch_setup_sighandler_stack(register struct task_struct *,
-					__kern_sighandler_t,unsigned);
-extern void ctrl_alt_del(void);
-extern int sys_kill(pid_t, sig_t);
+int send_sig(sig_t,struct task_struct *,int);
+void arch_setup_sighandler_stack(struct task_struct *, __kern_sighandler_t,unsigned);
+int sys_kill(pid_t, sig_t);
 #endif /* __KERNEL__*/
 
 #endif

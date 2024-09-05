@@ -9,6 +9,7 @@
 #include <linuxmt/debug.h>
 
 #include <arch/segment.h>
+#include <arch/system.h>
 #include <arch/io.h>
 
 seg_t membase, memend;  /* start and end segment of available main memory */
@@ -82,6 +83,15 @@ unsigned int INITPROC setup_arch(void)
 /*
  * The following routines may need porting on non-IBM PC architectures
  */
+
+/*
+ * This function gets called by the keyboard interrupt handler.
+ * As it's called within an interrupt, it may NOT sync.
+ */
+void ctrl_alt_del(void)
+{
+    hard_reset_now();
+}
 
 void hard_reset_now(void)
 {

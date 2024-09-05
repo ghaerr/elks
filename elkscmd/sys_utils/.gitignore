@@ -17,9 +17,7 @@ min_init
 mouse
 mount
 passwd
-poweroff
 ps
-reboot
 sercat
 shutdown
 sysctl
