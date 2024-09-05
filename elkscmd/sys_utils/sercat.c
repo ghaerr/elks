@@ -51,17 +51,31 @@ void copyfile(int ifd, int ofd)
 
 int main(int argc, char **argv)
 {
+    char *port = NULL;
+    char *tty;
+
 	if (argc > 1 && !strcmp(argv[1], "-v")) {
 		verbose = 1;
 		argc--;
 		argv++;
 	}
-	if (argc > 1) {
-		if ((fd = open(argv[1], O_RDONLY|O_EXCL)) < 0) {
-			perror(argv[1]);
+	if (argc > 1)
+        port = argv[1];
+    else {
+        /* default to /dev/ttyS0 if not run from serial port and no argument */
+        if (strncmp(ttyname(STDIN_FILENO), "/dev/ttyS", 9) != 0)
+            port = "/dev/ttyS0";
+    }
+    if (port) {
+		if ((fd = open(port, O_RDONLY|O_EXCL)) < 0) {
+			perror(port);
 			return 1;
 		}
 	} else fd = STDIN_FILENO;
+    tty = ttyname(fd);
+    errmsg("Reading from ");
+    errstr(tty);
+    errmsg("\n");
 
 	if (tcgetattr(fd, &org) >= 0) {
 		new = org;
