@@ -335,6 +335,8 @@ again:
                 break;
             ch = chq_wait_rd(&tty->inq, nonblock);
             if (ch < 0) {
+                if (current->signal)
+                    return -EINTR;
                 if (!icanon && vtime) {
                     if (jiffies < timeout) {
                         schedule();
