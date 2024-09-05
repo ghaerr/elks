@@ -92,7 +92,7 @@ sys_utils/man                   :sysutil                :1200k
 sys_utils/meminfo       :sash   :sysutil        :360k           :128k
 sys_utils/mouse                 :sysutil                 :1200c     :1440k
 sys_utils/passwd                :sysutil                :1200k
-sys_utils/shutdown :::reboot    :sysutil        :360k           :128k
+sys_utils/shutdown :::reboot    :sysutil            :720k       :128k
 sys_utils/shutdown :::poweroff  :sysutil            :720k
 sys_utils/sercat                :sysutil                            :1400c
 sys_utils/console               :sysutil                :1200k
