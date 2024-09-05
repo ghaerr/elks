@@ -24,13 +24,11 @@ PRGS = \
 	mount \
 	umount \
 	passwd \
-	reboot \
 	shutdown \
 	ps \
 	meminfo \
 	who \
 	man \
-	poweroff \
 	chmem \
 	clock \
 	unreal16 \
@@ -75,9 +73,6 @@ umount: umount.o
 passwd: passwd.o
 	$(LD) $(LDFLAGS) -o passwd passwd.o $(LDLIBS)
 
-reboot: reboot.o
-	$(LD) $(LDFLAGS) -o reboot reboot.o $(LDLIBS)
-
 shutdown: shutdown.o
 	$(LD) $(LDFLAGS) -o shutdown shutdown.o $(LDLIBS)
 
@@ -101,9 +96,6 @@ knl: knl.o
 
 man: man.o
 	$(LD) $(LDFLAGS) -o man man.o $(LDLIBS)
-
-poweroff: poweroff.o
-	$(LD) $(LDFLAGS) -o poweroff poweroff.o $(LDLIBS)
 
 chmem: chmem.o $(TINYPRINTF)
 	$(LD) $(LDFLAGS) -o chmem chmem.o $(TINYPRINTF) $(LDLIBS)
