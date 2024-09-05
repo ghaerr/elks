@@ -4,12 +4,18 @@
 #include <linuxmt/types.h>
 #include <linuxmt/init.h>
 
+/* sys_reboot flag parameter */
+#define RB_REBOOT      0x0123           /* hard reset */
+#define RB_SHUTDOWN    0x6789           /* halt system */
+#define RB_POWEROFF    0xDEAD           /* call BIOS APM */
+
 extern byte_t sys_caps;     /* system capabilities bits*/
 extern seg_t membase;       /* start and end segment of available main memory */
 extern seg_t memend;
 
-extern unsigned int INITPROC setup_arch(void);
-extern void hard_reset_now(void);
-extern void apm_shutdown_now(void);
+unsigned int INITPROC setup_arch(void);
+void ctrl_alt_del(void);
+void hard_reset_now(void);
+void apm_shutdown_now(void);
 
 #endif

@@ -17,77 +17,40 @@
 #include <linuxmt/debug.h>
 
 #include <arch/segment.h>
+#include <arch/system.h>
 #include <arch/io.h>
 
 /*
- * Indicates whether you can reboot with ctrl-alt-del: the default is yes
- */
-
-static int C_A_D = 1;
-
-/*
- * Reboot system call: for obvious reasons only root may call it, and even
- * root needs to set up some magic numbers in the registers so that some
- * mistake won't make this reboot the whole machine.
- *
- * You can also set the meaning of the ctrl-alt-del-key here.
- *
  * reboot doesn't sync: do that yourself before calling this.
  */
-
 int sys_reboot(unsigned int magic, unsigned int magic_too, int flag)
 {
     if (!suser())
-	return -EPERM;
+        return -EPERM;
 
-    if (magic == 0x1D1E && magic_too == 0xC0DE) {
-	switch(flag) {
-	    case 0x4567:
-		flag = 1;
-		/* fall through*/
-	    case 0:
-		C_A_D = flag;
-		return 0;
-	    case 0x0123:		/* reboot*/
 #ifdef CONFIG_BLK_DEV_BHD
-		bios_disk_park_all();
+    bios_disk_park_all();
 #endif
-		hard_reset_now();
-		printk("Reboot failed\n");
-		/* fall through*/
-	    case 0x6789:		/* shutdown*/
-		sys_kill(1, SIGKILL);
-		sys_kill(-1, SIGKILL);
-#ifdef CONFIG_BLK_DEV_BHD
-		bios_disk_park_all();
-#endif
-		printk("System halted\n");
-		do_exit(0);
-		/* no return*/
-	    case 0xDEAD:		/* poweroff*/
-#ifdef CONFIG_BLK_DEV_BHD
-		bios_disk_park_all();
-#endif
-		apm_shutdown_now();
-		printk("APM shutdown failed\n");
-	}
+    switch(flag) {
+    case RB_REBOOT:
+        hard_reset_now();
+        printk("Reboot failed\n");
+        /* fall through */
+
+    case RB_SHUTDOWN:
+shutdown:
+        sys_kill(1, SIGKILL);
+        sys_kill(-1, SIGKILL);
+        printk("System halted\n");
+        do_exit(0);
+        /* no return*/
+
+    case RB_POWEROFF:
+        apm_shutdown_now();
+        printk("Poweroff failed\n");
+        goto shutdown;
     }
-
     return -EINVAL;
-}
-
-/*
- * This function gets called by ctrl-alt-del - ie the keyboard interrupt.
- * As it's called within an interrupt, it may NOT sync: the only choice
- * is whether to reboot at once, or just ignore the ctrl-alt-del.
- */
-
-void ctrl_alt_del(void)
-{
-    if (C_A_D)
-	hard_reset_now();
-
-    kill_process(1, (sig_t) SIGINT, 1);
 }
 
 /*
