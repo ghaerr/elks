@@ -16,10 +16,6 @@ void INITPROC chr_dev_init(void)
     mem_dev_init();
 #endif
 
-#ifdef CONFIG_DEV_META
-    meta_init();
-#endif
-
 #ifdef CONFIG_INET
     tcpdev_init();
 #endif
