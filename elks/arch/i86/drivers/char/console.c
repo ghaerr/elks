@@ -3,10 +3,10 @@
 static void WriteChar(register Console * C, int c)
 {
     /* check for graphics lock */
-    while (C->display->glock) {
-        if (C->display->glock == C)
+    while (glock[C->display]) {
+        if (glock[C->display] == C)
             return;
-        sleep_on(&C->display->glock_wait);
+        sleep_on(&glock_wait[C->display]);
     }
     C->fsm(C, c);
 }
@@ -34,9 +34,9 @@ static void Console_gotoxy(register Console * C, int x, int y)
 {
     register int xp = x;
 
-    C->cx = (xp >= C->display->MaxCol) ? C->display->MaxCol : (xp < 0) ? 0 : xp;
+    C->cx = (xp >= C->MaxCol) ? C->MaxCol : (xp < 0) ? 0 : xp;
     xp = y;
-    C->cy = (xp >= C->display->MaxRow) ? C->display->MaxRow : (xp < 0) ? 0 : xp;
+    C->cy = (xp >= C->MaxRow) ? C->MaxRow : (xp < 0) ? 0 : xp;
     C->XN = 0;
 }
 
@@ -105,23 +105,23 @@ static void AnsiCmd(register Console * C, int c)
         break;
     case 'B':                   /* Move down n lines */
         C->cy += parm1(C->params);
-        if (C->cy > C->display->MaxRow)
-            C->cy = C->display->MaxRow;
+        if (C->cy > C->MaxRow)
+            C->cy = C->MaxRow;
         break;
     case 'd':                   /* Vertical position absolute */
         C->cy = parm1(C->params) - 1;
-        if (C->cy > C->display->MaxRow)
-            C->cy = C->display->MaxRow;
+        if (C->cy > C->MaxRow)
+            C->cy = C->MaxRow;
         break;
     case 'C':                   /* Move right n characters */
         C->cx += parm1(C->params);
-        if (C->cx > C->display->MaxCol)
-            C->cx = C->display->MaxCol;
+        if (C->cx > C->MaxCol)
+            C->cx = C->MaxCol;
         break;
     case 'G':                   /* Horizontal position absolute */
         C->cx = parm1(C->params) - 1;
-        if (C->cx > C->display->MaxCol)
-            C->cx = C->display->MaxCol;
+        if (C->cx > C->MaxCol)
+            C->cx = C->MaxCol;
         break;
     case 'D':                   /* Move left n characters */
         C->cx -= parm1(C->params);
@@ -134,20 +134,20 @@ static void AnsiCmd(register Console * C, int c)
     case 'J':                   /* clear screen */
         n = atoi((char *)C->params);
         if (n == 0) {           /* to bottom */
-            ClearRange(C, C->cx, C->cy, C->display->MaxCol, C->cy);
-            if (C->cy < C->display->MaxRow)
-                ClearRange(C, 0, C->cy, C->display->MaxCol, C->display->MaxRow);
+            ClearRange(C, C->cx, C->cy, C->MaxCol, C->cy);
+            if (C->cy < C->MaxRow)
+                ClearRange(C, 0, C->cy, C->MaxCol, C->MaxRow);
         } else if (n == 2)      /* all*/
-            ClearRange(C, 0, 0, C->display->MaxCol, C->display->MaxRow);
+            ClearRange(C, 0, 0, C->MaxCol, C->MaxRow);
         break;
     case 'K':                   /* clear line */
         n = atoi((char *)C->params);
         if (n == 0)             /* to EOL */
-            ClearRange(C, C->cx, C->cy, C->display->MaxCol, C->cy);
+            ClearRange(C, C->cx, C->cy, C->MaxCol, C->cy);
         else if (n == 1)        /* to BOL */
             ClearRange(C, 0, C->cy, C->cx, C->cy);
         else if (n == 2)        /* all */
-            ClearRange(C, 0, C->cy, C->display->MaxCol, C->cy);
+            ClearRange(C, 0, C->cy, C->MaxCol, C->cy);
         break;
     case 'L':                   /* insert line */
         ScrollDown(C, C->cy);
@@ -287,9 +287,9 @@ static void std_char(register Console * C, int c)
             C->XN = 0;
             C->cx = 0;
             C->cy++;
-            if (C->cy > C->display->MaxRow) {
+            if (C->cy > C->MaxRow) {
                 ScrollUp(C, 0);
-                C->cy = C->display->MaxRow;
+                C->cy = C->MaxRow;
             }
         }
 #ifdef CONFIG_CONSOLE_BIOS
@@ -300,14 +300,14 @@ static void std_char(register Console * C, int c)
                 C->cx++;
         }
       linewrap:
-        if (C->cx > C->display->MaxCol) {
+        if (C->cx > C->MaxCol) {
             C->XN = 1;
-            C->cx = C->display->MaxCol;
+            C->cx = C->MaxCol;
         }
     }
-    if (C->cy > C->display->MaxRow) {
+    if (C->cy > C->MaxRow) {
         ScrollUp(C, 0);
-        C->cy = C->display->MaxRow;
+        C->cy = C->MaxRow;
     }
 }
 
@@ -317,26 +317,26 @@ static int Console_ioctl(struct tty *tty, int cmd, char *arg)
 
     switch (cmd) {
     case DCGET_GRAPH:
-        if (!C->display->glock) {
-            C->display->glock = C;
+        if (!glock[C->display]) {
+            glock[C->display] = C;
             return 0;
         }
         return -EBUSY;
     case DCREL_GRAPH:
-        if (C->display->glock == C) {
-            C->display->glock = NULL;
-            wake_up(&C->display->glock_wait);
+        if (glock[C->display] == C) {
+            glock[C->display] = NULL;
+            wake_up(&glock_wait[C->display]);
             return 0;
         }
         break;
     case DCSET_KRAW:
-        if (C->display->glock == C) {
+        if (glock[C->display] == C) {
             kraw = 1;
             return 0;
         }
         break;
     case DCREL_KRAW:
-        if ((C->display->glock == C) && (kraw == 1)) {
+        if ((glock[C->display] == C) && (kraw == 1)) {
             kraw = 0;
             return 1;
         }
@@ -364,11 +364,11 @@ static int Console_write(register struct tty *tty)
     register Console *C = &Con[tty->minor];
     int cnt = 0;
 
-    while ((tty->outq.len > 0) && !C->display->glock) {
+    while ((tty->outq.len > 0) && !glock[C->display]) {
         WriteChar(C, tty_outproc(tty));
         cnt++;
     }
-    if (C == C->display->visible)
+    if (C == Visible[C->display])
         PositionCursor(C);
     return cnt;
 }

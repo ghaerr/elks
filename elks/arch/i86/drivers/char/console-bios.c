@@ -43,15 +43,13 @@
 
 #define MAX_DISPLAYS    1
 
-struct output;
-typedef struct output Output;
 struct console;
 typedef struct console Console;
 
 struct console {
-    Output *display;
     int cx, cy;                 /* cursor position */
     void (*fsm)(Console *, int);
+    unsigned char display;
     unsigned char attr;         /* current attribute */
     unsigned char XN;           /* delayed newline on column 80 */
     unsigned char color;        /* fg/bg attr */
@@ -61,19 +59,15 @@ struct console {
     unsigned char *parmptr;     /* ptr to params */
     unsigned char params[MAXPARMS];     /* ANSI params */
 #endif
-};
-
-struct output {
     unsigned short Width;
     unsigned short MaxCol;
     unsigned short Height;
     unsigned short MaxRow;
-    Console *visible;
-    Console *glock;          /* Which console owns the graphics hardware */
-    struct wait_queue glock_wait;
 };
 
-static Output Outputs[MAX_DISPLAYS];
+static Console *glock[MAX_DISPLAYS];
+static struct wait_queue glock_wait[MAX_DISPLAYS];
+static Console *Visible[MAX_DISPLAYS];
 static Console Con[MAX_CONSOLES];
 static int NumConsoles = MAX_CONSOLES;
 static int kraw;
@@ -124,14 +118,14 @@ static void scroll(register Console * C, int n, int x, int y, int xx, int yy)
     int a;
 
     a = C->attr;
-    if (C != C->display->visible) {
+    if (C != Visible[C->display]) {
         bios_setpage(C->pageno);
     }
 
     bios_scroll (a, n, x, y, xx, yy);
 
-    if (C != C->display->visible) {
-        bios_setpage(C->display->visible->pageno);
+    if (C != Visible[C->display]) {
+        bios_setpage(Visible[C->display]->pageno);
     }
 }
 
@@ -142,13 +136,13 @@ static void ClearRange(register Console * C, int x, int y, int xx, int yy)
 
 static void ScrollUp(register Console * C, int y)
 {
-    scroll(C, 1, 0, y, C->display->MaxCol, C->display->MaxRow);
+    scroll(C, 1, 0, y, C->MaxCol, C->MaxRow);
 }
 
 #ifdef CONFIG_EMUL_ANSI
 static void ScrollDown(register Console * C, int y)
 {
-    scroll(C, -1, 0, y, C->display->MaxCol, C->display->MaxRow);
+    scroll(C, -1, 0, y, C->MaxCol, C->MaxRow);
 }
 #endif
 
@@ -161,12 +155,13 @@ static void ScrollDown(register Console * C, int y)
 
 void Console_set_vc(int N)
 {
-    if ((N >= NumConsoles) || (Con[N].display->visible == &Con[N]) || Con[N].display->glock)
+    Console *C = &Con[N];
+    if ((N >= NumConsoles) || (Visible[C->display] == C) || glock[C->display])
         return;
-    Con[N].display->visible = &Con[N];
+    Visible[C->display] = C;
 
     bios_setpage(N);
-    PositionCursor(Con[N].display->visible);
+    PositionCursor(Visible[C->display]);
     Current_VCminor = N;
 }
 
@@ -182,23 +177,20 @@ struct tty_ops bioscon_ops = {
 void INITPROC console_init(void)
 {
     Console *C;
-    Output *O;
     int i;
 
-    O = &Outputs[0];
-    O->MaxCol = (O->Width = SETUP_VID_COLS) - 1;
-    O->MaxRow = (O->Height = SETUP_VID_LINES) - 1;
+    C = Con;
+    C->MaxCol = (C->Width = SETUP_VID_COLS) - 1;
+    C->MaxRow = (C->Height = SETUP_VID_LINES) - 1;
 
     if (peekb(0x49, 0x40) == 7)  /* BIOS data segment */
         NumConsoles = 1;
 
-    C = Con;
-
     for (i = 0; i < NumConsoles; i++) {
-        C->display = O;
+        C->display = 0;
         C->cx = C->cy = 0;
         if (!i) {
-            O->visible = C;
+            Visible[C->display] = C;
             // Get current cursor position
             // to write after boot messages
             PositionCursorGet (&C->cx, &C->cy);
@@ -215,7 +207,7 @@ void INITPROC console_init(void)
 #endif
 
         /* Do not erase early printk() */
-        /* ClearRange(C, 0, C->cy, C->display->MaxCol, C->display->MaxRow); */
+        /* ClearRange(C, 0, C->cy, C->MaxCol, C->MaxRow); */
 
         C++;
     }
@@ -223,5 +215,5 @@ void INITPROC console_init(void)
     kbd_init();
 
     printk("BIOS console %ux%u"TERM_TYPE"(%d virtual consoles)\n",
-           O->Width, O->Height, NumConsoles);
+           Con[0].Width, Con[0].Height, NumConsoles);
 }

@@ -31,6 +31,8 @@
 #define A_REVERSE       0x70
 #define A_BLANK         0x00
 
+#define CONFIG_CONSOLE_DUAL
+
 #define CRTC_INDX 0x0
 #define CRTC_DATA 0x1
 #define CRTC_MODE 0x4
@@ -63,18 +65,24 @@ enum OutputType {
 };
 
 struct console {
-    Output *display;
+    unsigned char display;
     int cx, cy;                 /* cursor position */
     void (*fsm)(Console *, int);
     unsigned char attr;         /* current attribute */
     unsigned char XN;           /* delayed newline on column 80 */
-    unsigned int vseg;          /* video segment for page TODO: Could we compute this from vseg_base + vseg_offset? */
-    int vseg_offset;               /* start of vram for this console */
+    unsigned int vseg;          /* vram for this console page */
+    int vseg_offset;            /* vram offset of vseg for this console page */
 #ifdef CONFIG_EMUL_ANSI
     int savex, savey;           /* saved cursor position */
     unsigned char *parmptr;     /* ptr to params */
     unsigned char params[MAXPARMS];     /* ANSI params */
 #endif
+    enum OutputType type;
+    unsigned short Width;
+    unsigned short MaxCol;
+    unsigned short Height;
+    unsigned short MaxRow;
+    unsigned short crtc_base;   /* 6845 CRTC base I/O address */
 };
 
 struct hw_params {
@@ -87,6 +95,7 @@ struct hw_params {
     unsigned char n_init_bytes;
     unsigned char max_pages;
     unsigned short page_words;
+    unsigned char is_present;
 };
 
 static struct hw_params params[N_DEVICETYPES] = {
@@ -96,7 +105,7 @@ static struct hw_params params[N_DEVICETYPES] = {
             0x19, 0x06, 0x19, 0x19,
             0x02, 0x0D, 0x0B, 0x0C,
             0x00, 0x00, 0x00, 0x00,
-        }, 16, 1, 2000
+        }, 16, 1, 2000, 0
     }, /* MDA */
     { 80, 25, 0x3D4, 0xB800, 0x4000,
         {
@@ -105,31 +114,17 @@ static struct hw_params params[N_DEVICETYPES] = {
             0x1F, 0x06, 0x19, 0x1C,
             0x02, 0x07, 0x06, 0x07,
             0x00, 0x00, 0x00, 0x00,
-        }, 16, 3, 2000
+        }, 16, 3, 2000, 0
     }, /* CGA */
     // TODO
     //{ 0 },                             /* EGA */
     //{ 0 },                             /* VGA */
 };
 
-struct output {
-    enum OutputType type;
-    unsigned short Width;
-    unsigned short MaxCol;
-    unsigned short Height;
-    unsigned short MaxRow;
-    unsigned short crtc_base;   /* 6845 CRTC base I/O address */
-    unsigned vseg_base;         /* Start of vram for this card */
-    Console *consoles[MAX_CONSOLES];
-    Console *visible;
-    Console *glock;          /* Which console owns the graphics hardware */
-    struct wait_queue glock_wait;
-    unsigned char n_consoles;
-};
-
-static Output Outputs[MAX_DISPLAYS];
+static Console *glock[MAX_DISPLAYS];
+static struct wait_queue glock_wait[MAX_DISPLAYS];
+static Console *Visible[MAX_DISPLAYS];
 static Console Con[MAX_CONSOLES];
-// FIXME: We probably need to rework glock logic for multi-console mode
 static int NumConsoles = 0;
 
 int Current_VCminor = 0;
@@ -145,18 +140,18 @@ static void std_char(register Console *, int);
 
 static void SetDisplayPage(register Console * C)
 {
-    outw((C->vseg_offset & 0xff00) | 0x0c, C->display->crtc_base);
-    outw((C->vseg_offset << 8) | 0x0d, C->display->crtc_base);
+    outw((C->vseg_offset & 0xff00) | 0x0c, C->crtc_base);
+    outw((C->vseg_offset << 8) | 0x0d, C->crtc_base);
 }
 
 static void PositionCursor(register Console * C)
 {
-    unsigned int Pos = C->cx + C->display->Width * C->cy + C->vseg_offset;
+    unsigned int Pos = C->cx + C->Width * C->cy + C->vseg_offset;
 
-    outb(14, C->display->crtc_base);
-    outb(Pos >> 8, C->display->crtc_base + 1);
-    outb(15, C->display->crtc_base);
-    outb(Pos, C->display->crtc_base + 1);
+    outb(14, C->crtc_base);
+    outb(Pos >> 8, C->crtc_base + 1);
+    outb(15, C->crtc_base);
+    outb(Pos, C->crtc_base + 1);
 }
 
 static void DisplayCursor(Console * C, int onoff)
@@ -165,18 +160,18 @@ static void DisplayCursor(Console * C, int onoff)
     unsigned int v;
 
     if (onoff)
-        v = C->display->type == OT_MDA ? 0x0b0c : (C->display->type == OT_CGA ? 0x0607: 0x0d0e);
+        v = C->type == OT_MDA ? 0x0b0c : (C->type == OT_CGA ? 0x0607: 0x0d0e);
     else v = 0x2000;
 
-    outb(10, C->display->crtc_base);
-    outb(v >> 8, C->display->crtc_base + 1);
-    outb(11, C->display->crtc_base);
-    outb(v, C->display->crtc_base + 1);
+    outb(10, C->crtc_base);
+    outb(v >> 8, C->crtc_base + 1);
+    outb(11, C->crtc_base);
+    outb(v, C->crtc_base + 1);
 }
 
 static void VideoWrite(register Console * C, int c)
 {
-    pokew((C->cx + C->cy * C->display->Width) << 1, (seg_t) C->vseg,
+    pokew((C->cx + C->cy * C->Width) << 1, (seg_t) C->vseg,
           (C->attr << 8) | (c & 255));
 }
 
@@ -185,41 +180,39 @@ static void ClearRange(register Console * C, int x, int y, int x2, int y2)
     register int vp;
 
     x2 = x2 - x + 1;
-    vp = (x + y * C->display->Width) << 1;
+    vp = (x + y * C->Width) << 1;
     do {
         for (x = 0; x < x2; x++) {
             pokew(vp, (seg_t) C->vseg, (C->attr << 8) | ' ');
             vp += 2;
         }
-        vp += (C->display->Width - x2) << 1;
+        vp += (C->Width - x2) << 1;
     } while (++y <= y2);
 }
 
 static void ScrollUp(register Console * C, int y)
 {
     register int vp;
-    int max_row = C->display->Height - 1;
-    int max_col = C->display->Width - 1;
 
-    vp = y * (C->display->Width << 1);
-    if ((unsigned int)y < max_row)
+    vp = y * (C->Width << 1);
+    if ((unsigned int)y < C->MaxRow)
         fmemcpyw((void *)vp, C->vseg,
-                 (void *)(vp + (C->display->Width << 1)), C->vseg, (max_row - y) * C->display->Width);
-    ClearRange(C, 0, max_row, max_col, max_row);
+                 (void *)(vp + (C->Width << 1)), C->vseg, (C->MaxRow - y) * C->Width);
+    ClearRange(C, 0, C->MaxRow, C->MaxCol, C->MaxRow);
 }
 
 #ifdef CONFIG_EMUL_ANSI
 static void ScrollDown(register Console * C, int y)
 {
     register int vp;
-    int yy = C->display->Height - 1;
+    int yy = C->Height - 1;
 
-    vp = yy * (C->display->Width << 1);
+    vp = yy * (C->Width << 1);
     while (--yy >= y) {
-        fmemcpyw((void *)vp, C->vseg, (void *)(vp - (C->display->Width << 1)), C->vseg, C->display->Width);
-        vp -= C->display->Width << 1;
+        fmemcpyw((void *)vp, C->vseg, (void *)(vp - (C->Width << 1)), C->vseg, C->Width);
+        vp -= C->Width << 1;
     }
-    ClearRange(C, 0, y, C->display->Width - 1, y);
+    ClearRange(C, 0, y, C->Width - 1, y);
 }
 #endif
 
@@ -232,12 +225,13 @@ static void ScrollDown(register Console * C, int y)
 
 void Console_set_vc(int N)
 {
-    if ((N >= NumConsoles) || Con[N].display->glock)
+    Console *C = &Con[N];
+    if ((N >= NumConsoles) || glock[N])
         return;
-    Con[N].display->visible = &Con[N];
 
-    SetDisplayPage(Con[N].display->visible);
-    PositionCursor(Con[N].display->visible);
+    Visible[C->display] = C;
+    SetDisplayPage(C);
+    PositionCursor(C);
     DisplayCursor(&Con[Current_VCminor], 0);
     Current_VCminor = N;
     DisplayCursor(&Con[Current_VCminor], 1);
@@ -274,29 +268,29 @@ static char probe_crtc(unsigned short crtc_base)
     return 1;
 }
 
-static void init_output(Output *o)
+static int init_output(enum OutputType t)
 {
     int i;
-    struct hw_params *p = &params[o->type];
-    o->Width = p->w;
-    o->MaxCol = o->Width - 1;
-    o->Height = p->h;
-    o->MaxRow = o->Height - 1;
-    o->vseg_base = p->vseg_base;
+    struct hw_params *p = &params[t];
     /* Set 80x25 mode, video off */
-    outb(0x01, o->crtc_base + CRTC_MODE);
+    outb(0x01, p->crtc_base + CRTC_MODE);
     /* Program CRTC regs */
     for (i = 0; i < p->n_init_bytes; ++i) {
-        outb(i, o->crtc_base + CRTC_INDX);
-        outb(p->init_bytes[i], o->crtc_base + CRTC_DATA);
+        outb(i, p->crtc_base + CRTC_INDX);
+        outb(p->init_bytes[i], p->crtc_base + CRTC_DATA);
     }
 
-    /* Clear vram */
+    /* Check & clear vram */
     for (i = 0; i < p->vseg_bytes; i += 2)
-        pokew(i, o->vseg_base, 0x7 << 8 | ' ');
+        pokew(i, p->vseg_base, 0x5555);
+    for (i = 0; i < p->vseg_bytes; i += 2)
+        if (peekw(i, p->vseg_base) != 0x5555) return 1;
+    for (i = 0; i < p->vseg_bytes; i += 2)
+        pokew(i, p->vseg_base, 0x7 << 8 | ' ');
 
     /* Enable video */
-    outb(0x09, o->crtc_base + CRTC_MODE);
+    outb(0x09, p->crtc_base + CRTC_MODE);
+    return 0;
 }
 
 static const char *type_string(enum OutputType t)
@@ -312,84 +306,54 @@ static const char *type_string(enum OutputType t)
 void INITPROC console_init(void)
 {
     Console *C;
-    Output *O;
-    int i;
-    int screens;
+    int i, j, dev;
     unsigned short boot_crtc;
-    // 1. Map out hardware
-    for (i = 0; i < N_DEVICETYPES; ++i)
-        if (probe_crtc(params[i].crtc_base)) {
-            Outputs[i].type = i;
-            Outputs[i].crtc_base = params[i].crtc_base;
-        }
-    /* Ask the BIOS which adapter is selected as the primary one */
+    enum OutputType boot_type;
+    unsigned char screens = 0;
+    unsigned char cur_display = 0;
     boot_crtc = peekw(0x63, 0x40);
     for (i = 0; i < N_DEVICETYPES; ++i)
-        if (boot_crtc == params[i].crtc_base && !Outputs[i].crtc_base)
-            panic("boot_crtc not found");
-    // 2. Set up hardware
-    /* boot_crtc was already set up by bios, but reprogramming it should be fine */
-    for (i = 0; i < N_DEVICETYPES; ++i)
-        init_output(&Outputs[i]);
-    // 3. Map consoles to hardware
+        if (params[i].crtc_base == boot_crtc) boot_type = i;
+
     C = &Con[0];
-    /* Start with boot crtc */
-    for (i = 0; i < N_DEVICETYPES; ++i)
-        if (Outputs[i].crtc_base == boot_crtc) O = &Outputs[i];
-
-    for (i = 0; i < params[O->type].max_pages; ++i) {
-        C->cx = C->cy = 0;
-        if (!i) {
-            O->visible = C;
-            C->cx = peekb(0x50, 0x40);
-            C->cy = peekb(0x51, 0x40);
-        }
-        C->fsm = std_char;
-        C->vseg_offset = i * params[O->type].page_words;
-        C->vseg = params[O->type].vseg_base + (C->vseg_offset >> 3);
-        C->attr = A_DEFAULT;
-        C->display = O;
-#ifdef CONFIG_EMUL_ANSI
-        C->savex = C->savey = 0;
-#endif
-
-        NumConsoles++;
-        O->consoles[O->n_consoles++] = C++;
-    }
-    // FIXME: Remove dumb duplication
-
-    /* Now connect the rest up */
     for (i = 0; i < N_DEVICETYPES; ++i) {
-        if (Outputs[i].crtc_base == boot_crtc) continue;
-        O = &Outputs[i];
-        for (i = 0; i < params[O->type].max_pages; ++i) {
+        dev = (i + boot_type) % N_DEVICETYPES;
+        if (!probe_crtc(params[dev].crtc_base)) continue;
+        params[dev].is_present = 1;
+        screens++;
+        init_output(dev);
+        for (j = 0; j < params[dev].max_pages; ++j) {
             C->cx = C->cy = 0;
-            if (!i) {
-                O->visible = C;
+            C->display = cur_display;
+            if (!j) Visible[C->display] = C;
+            if (!j && !i) {
+                C->cx = peekb(0x50, 0x40);
+                C->cy = peekb(0x51, 0x40);
             }
             C->fsm = std_char;
-            C->vseg_offset = i * params[O->type].page_words;
-            C->vseg = params[O->type].vseg_base + (C->vseg_offset >> 3);
+            C->vseg_offset = j * params[dev].page_words;
+            C->vseg = params[dev].vseg_base + (C->vseg_offset >> 3);
             C->attr = A_DEFAULT;
-            C->display = O;
-    #ifdef CONFIG_EMUL_ANSI
+            C->type = dev;
+            C->Width = params[dev].w;
+            C->MaxCol = C->Width - 1;
+            C->Height = params[dev].h;
+            C->MaxRow = C->Height - 1;
+            C->crtc_base = params[dev].crtc_base;
+#ifdef CONFIG_EMUL_ANSI
             C->savex = C->savey = 0;
-    #endif
-
-            DisplayCursor(C, 0);
+#endif
             NumConsoles++;
-            O->consoles[O->n_consoles++] = C++;
+            if (i) DisplayCursor(C, 0);
+            C++;
         }
+        cur_display++;
     }
-    screens = 0;
-    for (i = 0; i < N_DEVICETYPES; ++i)
-        if (Outputs[i].crtc_base) screens++;
+
     kbd_init();
-    printk("boot_crtc: %x\n", Con[0].display->crtc_base);
+    printk("boot_crtc: %x\n", Con[0].crtc_base);
     printk("Direct console %s kbd"TERM_TYPE"(%d screens):\n", kbd_name, screens);
-    for (i = 0; i < N_DEVICETYPES; ++i) {
-        if (!Outputs[i].crtc_base) continue;
-        printk("Screen %d, %d consoles, %s, %ux%u\n", i, Outputs[i].n_consoles,
-                type_string(Outputs[i].type), Outputs[i].Width, Outputs[i].Height);
+    for (i = 0; i < NumConsoles; ++i) {
+        printk("/dev/tty%i, %s, %ux%u\n", i + 1, type_string(Con[i].type), Con[i].Width, Con[i].Height);
     }
 }
