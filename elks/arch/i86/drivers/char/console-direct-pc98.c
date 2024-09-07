@@ -54,26 +54,26 @@ struct console;
 typedef struct console Console;
 
 struct console {
-    unsigned char display;
     int cx, cy;			/* cursor position */
     void (*fsm)(Console *, int);
+    unsigned char display;
     unsigned char attr;		/* current attribute */
     unsigned char XN;		/* delayed newline on column 80 */
     unsigned int vseg;		/* vram for this console page */
     int vseg_offset;		/* vram offset of vseg for this console page */
+    unsigned short Width;
+    unsigned short MaxCol;
+    unsigned short Height;
+    unsigned short MaxRow;
 #ifdef CONFIG_EMUL_ANSI
     int savex, savey;		/* saved cursor position */
     unsigned char *parmptr;	/* ptr to params */
     unsigned char params[MAXPARMS];	/* ANSI params */
 #endif
-    unsigned short Width;
-    unsigned short MaxCol;
-    unsigned short Height;
-    unsigned short MaxRow;
 };
 
-static Console *glock[MAX_DISPLAYS];
-static struct wait_queue glock_wait[MAX_DISPLAYS];
+static Console *glock;
+static struct wait_queue glock_wait;
 static Console *Visible[MAX_DISPLAYS];
 static Console Con[MAX_CONSOLES];
 static int NumConsoles = MAX_CONSOLES;
@@ -200,7 +200,7 @@ static void ScrollDown(register Console * C, int y)
 void Console_set_vc(int N)
 {
     Console *C = &Con[N];
-    if ((N >= NumConsoles) || (Visible[C->display] == C) || glock[C->display])
+    if ((N >= NumConsoles) || (Visible[C->display] == C) || glock)
         return;
     Visible[C->display] = C;
     SetDisplayPage(Visible[C->display]);

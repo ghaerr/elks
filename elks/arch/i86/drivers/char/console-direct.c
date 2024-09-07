@@ -50,39 +50,47 @@
 #define MAXPARMS        28
 
 #define N_DEVICETYPES   2
-#define MAX_DISPLAYS    2
 
-struct output;
-typedef struct output Output;
+#ifdef CONFIG_CONSOLE_DUAL
+#define MAX_DISPLAYS    2
+#else
+#define MAX_DISPLAYS    1
+#endif
+
 struct console;
 typedef struct console Console;
 
-enum OutputType {
-    OT_MDA = 0,
-    OT_CGA,
-    OT_EGA,
-    OT_VGA,
+#define OT_MDA 0
+#define OT_CGA 1
+#define OT_EGA 2
+#define OT_VGA 3
+
+static const char *type_string[] = {
+    "MDA",
+    "CGA",
+    "EGA",
+    "VGA",
 };
 
 struct console {
-    unsigned char display;
     int cx, cy;                 /* cursor position */
     void (*fsm)(Console *, int);
+    unsigned char display;
+    unsigned char type;
     unsigned char attr;         /* current attribute */
     unsigned char XN;           /* delayed newline on column 80 */
     unsigned int vseg;          /* vram for this console page */
     int vseg_offset;            /* vram offset of vseg for this console page */
-#ifdef CONFIG_EMUL_ANSI
-    int savex, savey;           /* saved cursor position */
-    unsigned char *parmptr;     /* ptr to params */
-    unsigned char params[MAXPARMS];     /* ANSI params */
-#endif
-    enum OutputType type;
     unsigned short Width;
     unsigned short MaxCol;
     unsigned short Height;
     unsigned short MaxRow;
     unsigned short crtc_base;   /* 6845 CRTC base I/O address */
+#ifdef CONFIG_EMUL_ANSI
+    int savex, savey;           /* saved cursor position */
+    unsigned char *parmptr;     /* ptr to params */
+    unsigned char params[MAXPARMS];     /* ANSI params */
+#endif
 };
 
 struct hw_params {
@@ -121,8 +129,8 @@ static struct hw_params params[N_DEVICETYPES] = {
     //{ 0 },                             /* VGA */
 };
 
-static Console *glock[MAX_DISPLAYS];
-static struct wait_queue glock_wait[MAX_DISPLAYS];
+static Console *glock;
+static struct wait_queue glock_wait;
 static Console *Visible[MAX_DISPLAYS];
 static Console Con[MAX_CONSOLES];
 static int NumConsoles = 0;
@@ -226,7 +234,7 @@ static void ScrollDown(register Console * C, int y)
 void Console_set_vc(int N)
 {
     Console *C = &Con[N];
-    if ((N >= NumConsoles) || glock[N])
+    if ((N >= NumConsoles) || glock)
         return;
 
     Visible[C->display] = C;
@@ -268,7 +276,7 @@ static char probe_crtc(unsigned short crtc_base)
     return 1;
 }
 
-static int init_output(enum OutputType t)
+static int init_output(unsigned char t)
 {
     int i;
     struct hw_params *p = &params[t];
@@ -293,22 +301,12 @@ static int init_output(enum OutputType t)
     return 0;
 }
 
-static const char *type_string(enum OutputType t)
-{
-    switch (t) {
-    case OT_MDA: return "MDA";
-    case OT_CGA: return "CGA";
-    case OT_EGA: return "EGA";
-    case OT_VGA: return "VGA";
-    }
-}
-
 void INITPROC console_init(void)
 {
     Console *C;
     int i, j, dev;
     unsigned short boot_crtc;
-    enum OutputType boot_type;
+    unsigned char boot_type;
     unsigned char screens = 0;
     unsigned char cur_display = 0;
     boot_crtc = peekw(0x63, 0x40);
@@ -354,6 +352,6 @@ void INITPROC console_init(void)
     printk("boot_crtc: %x\n", Con[0].crtc_base);
     printk("Direct console %s kbd"TERM_TYPE"(%d screens):\n", kbd_name, screens);
     for (i = 0; i < NumConsoles; ++i) {
-        printk("/dev/tty%i, %s, %ux%u\n", i + 1, type_string(Con[i].type), Con[i].Width, Con[i].Height);
+        printk("/dev/tty%i, %s, %ux%u\n", i + 1, type_string[Con[i].type], Con[i].Width, Con[i].Height);
     }
 }

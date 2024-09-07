@@ -3,10 +3,10 @@
 static void WriteChar(register Console * C, int c)
 {
     /* check for graphics lock */
-    while (glock[C->display]) {
-        if (glock[C->display] == C)
+    while (glock) {
+        if (glock == C)
             return;
-        sleep_on(&glock_wait[C->display]);
+        sleep_on(&glock_wait);
     }
     C->fsm(C, c);
 }
@@ -317,26 +317,26 @@ static int Console_ioctl(struct tty *tty, int cmd, char *arg)
 
     switch (cmd) {
     case DCGET_GRAPH:
-        if (!glock[C->display]) {
-            glock[C->display] = C;
+        if (!glock) {
+            glock = C;
             return 0;
         }
         return -EBUSY;
     case DCREL_GRAPH:
-        if (glock[C->display] == C) {
-            glock[C->display] = NULL;
-            wake_up(&glock_wait[C->display]);
+        if (glock == C) {
+            glock = NULL;
+            wake_up(&glock_wait);
             return 0;
         }
         break;
     case DCSET_KRAW:
-        if (glock[C->display] == C) {
+        if (glock == C) {
             kraw = 1;
             return 0;
         }
         break;
     case DCREL_KRAW:
-        if ((glock[C->display] == C) && (kraw == 1)) {
+        if ((glock == C) && (kraw == 1)) {
             kraw = 0;
             return 1;
         }
@@ -364,7 +364,7 @@ static int Console_write(register struct tty *tty)
     register Console *C = &Con[tty->minor];
     int cnt = 0;
 
-    while ((tty->outq.len > 0) && !glock[C->display]) {
+    while ((tty->outq.len > 0) && !glock) {
         WriteChar(C, tty_outproc(tty));
         cnt++;
     }

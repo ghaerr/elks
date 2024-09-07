@@ -54,19 +54,19 @@ struct console {
     unsigned char XN;           /* delayed newline on column 80 */
     unsigned char color;        /* fg/bg attr */
     int pageno;                 /* video ram page # */
+    unsigned short Width;
+    unsigned short MaxCol;
+    unsigned short Height;
+    unsigned short MaxRow;
 #ifdef CONFIG_EMUL_ANSI
     int savex, savey;           /* saved cursor position */
     unsigned char *parmptr;     /* ptr to params */
     unsigned char params[MAXPARMS];     /* ANSI params */
 #endif
-    unsigned short Width;
-    unsigned short MaxCol;
-    unsigned short Height;
-    unsigned short MaxRow;
 };
 
-static Console *glock[MAX_DISPLAYS];
-static struct wait_queue glock_wait[MAX_DISPLAYS];
+static Console *glock;
+static struct wait_queue glock_wait;
 static Console *Visible[MAX_DISPLAYS];
 static Console Con[MAX_CONSOLES];
 static int NumConsoles = MAX_CONSOLES;
@@ -156,7 +156,7 @@ static void ScrollDown(register Console * C, int y)
 void Console_set_vc(int N)
 {
     Console *C = &Con[N];
-    if ((N >= NumConsoles) || (Visible[C->display] == C) || glock[C->display])
+    if ((N >= NumConsoles) || (Visible[C->display] == C) || glock)
         return;
     Visible[C->display] = C;
 
