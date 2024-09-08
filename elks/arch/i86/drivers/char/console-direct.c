@@ -11,6 +11,7 @@
  */
 
 #include <linuxmt/config.h>
+#include <linuxmt/debug.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/string.h>
@@ -20,6 +21,7 @@
 #include <linuxmt/kd.h>
 #include <arch/io.h>
 #include "console.h"
+#include "crtc-6845.h"
 
 /* Assumes ASCII values. */
 #define isalpha(c) (((unsigned char)(((c) | 0x20) - 'a')) < 26)
@@ -31,14 +33,6 @@
 #define A_REVERSE       0x70
 #define A_BLANK         0x00
 
-#define CONFIG_CONSOLE_DUAL
-
-#define CRTC_INDX 0x0
-#define CRTC_DATA 0x1
-#define CRTC_MODE 0x4
-#define CRTC_CSEL 0x5
-#define CRTC_STAT 0x6
-
 /* character definitions*/
 #define BS              '\b'
 #define NL              '\n'
@@ -49,8 +43,6 @@
 
 #define MAXPARMS        28
 
-#define N_DEVICETYPES   2
-
 #ifdef CONFIG_CONSOLE_DUAL
 #define MAX_DISPLAYS    2
 #else
@@ -59,18 +51,6 @@
 
 struct console;
 typedef struct console Console;
-
-#define OT_MDA 0
-#define OT_CGA 1
-#define OT_EGA 2
-#define OT_VGA 3
-
-static const char *type_string[] = {
-    "MDA",
-    "CGA",
-    "EGA",
-    "VGA",
-};
 
 struct console {
     int cx, cy;                 /* cursor position */
@@ -93,42 +73,6 @@ struct console {
 #endif
 };
 
-struct hw_params {
-    unsigned short w;
-    unsigned short h;
-    unsigned short crtc_base;
-    unsigned vseg_base;
-    int vseg_bytes;
-    unsigned char init_bytes[16];
-    unsigned char n_init_bytes;
-    unsigned char max_pages;
-    unsigned short page_words;
-    unsigned char is_present;
-};
-
-static struct hw_params params[N_DEVICETYPES] = {
-    { 80, 25, 0x3B4, 0xB000, 0x1000,
-        {
-            0x61, 0x50, 0x52, 0x0F,
-            0x19, 0x06, 0x19, 0x19,
-            0x02, 0x0D, 0x0B, 0x0C,
-            0x00, 0x00, 0x00, 0x00,
-        }, 16, 1, 2000, 0
-    }, /* MDA */
-    { 80, 25, 0x3D4, 0xB800, 0x4000,
-        {
-            /* CO80 */
-            0x71, 0x50, 0x5A, 0x0A,
-            0x1F, 0x06, 0x19, 0x1C,
-            0x02, 0x07, 0x06, 0x07,
-            0x00, 0x00, 0x00, 0x00,
-        }, 16, 3, 2000, 0
-    }, /* CGA */
-    // TODO
-    //{ 0 },                             /* EGA */
-    //{ 0 },                             /* VGA */
-};
-
 static Console *glock;
 static struct wait_queue glock_wait;
 static Console *Visible[MAX_DISPLAYS];
@@ -136,6 +80,7 @@ static Console Con[MAX_CONSOLES];
 static int NumConsoles = 0;
 
 int Current_VCminor = 0;
+unsigned VideoSeg;
 int kraw = 0;
 
 #ifdef CONFIG_EMUL_ANSI
@@ -254,53 +199,73 @@ struct tty_ops dircon_ops = {
     Console_conout
 };
 
-
-/* Check to see if this CRTC is present */
-static char probe_crtc(unsigned short crtc_base)
+#ifndef CONFIG_CONSOLE_DUAL
+void INITPROC console_init(void)
 {
+    Console *C;
+    unsigned char output_type;
+    unsigned short boot_crtc;
     int i;
-    unsigned char test = 0x55;
-    /* We'll try writing a value to cursor address LSB reg (0x0F), then reading it back */
-    outb(0x0F, crtc_base + CRTC_INDX);
-    unsigned char original = inb(crtc_base + CRTC_DATA);
-    if (original == test) test += 0x10;
-    outb(0x0F, crtc_base + CRTC_INDX);
-    outb(test, crtc_base + CRTC_DATA);
-    /* Now wait a bit */
-    for (i = 0; i < 100; ++i) {} // TODO: Verify this doesn't get optimized out
-    outb(0x0F, crtc_base + CRTC_INDX);
-    unsigned char value = inb(crtc_base + CRTC_DATA);
-    if (value != test) return 0;
-    outb(0x0F, crtc_base + CRTC_INDX);
-    outb(original, crtc_base + CRTC_DATA);
-    return 1;
-}
+    int Width, MaxCol, Height, MaxRow;
+    unsigned int PageSizeW;
 
-static int init_output(unsigned char t)
-{
-    int i;
-    struct hw_params *p = &params[t];
-    /* Set 80x25 mode, video off */
-    outb(0x01, p->crtc_base + CRTC_MODE);
-    /* Program CRTC regs */
-    for (i = 0; i < p->n_init_bytes; ++i) {
-        outb(i, p->crtc_base + CRTC_INDX);
-        outb(p->init_bytes[i], p->crtc_base + CRTC_DATA);
+    output_type = OT_EGA;
+    C = &Con[0];
+
+    MaxCol = (Width = peekb(0x4a, 0x40)) - 1;  /* BIOS data segment */
+
+    /* Trust this. Cga does not support peeking at 0x40:0x84. */
+    MaxRow = (Height = 25) - 1;
+    boot_crtc = peekw(0x63, 0x40);
+    PageSizeW = ((unsigned int)peekw(0x4C, 0x40) >> 1);
+
+    VideoSeg = 0xb800;
+    NumConsoles = MAX_CONSOLES - 1;
+    if (peekb(0x49, 0x40) == 7) {
+        VideoSeg = 0xB000;
+        NumConsoles = 1;
+        output_type = OT_MDA;
+    } else {
+        if (peekw(0xA8+2, 0x40) == 0)
+            output_type = OT_CGA;
     }
 
-    /* Check & clear vram */
-    for (i = 0; i < p->vseg_bytes; i += 2)
-        pokew(i, p->vseg_base, 0x5555);
-    for (i = 0; i < p->vseg_bytes; i += 2)
-        if (peekw(i, p->vseg_base) != 0x5555) return 1;
-    for (i = 0; i < p->vseg_bytes; i += 2)
-        pokew(i, p->vseg_base, 0x7 << 8 | ' ');
+    Visible[0] = C;
 
-    /* Enable video */
-    outb(0x09, p->crtc_base + CRTC_MODE);
-    return 0;
+    for (i = 0; i < NumConsoles; i++) {
+        C->cx = C->cy = 0;
+        C->display = 0;
+        if (!i) {
+            C->cx = peekb(0x50, 0x40);
+            C->cy = peekb(0x51, 0x40);
+        }
+        C->fsm = std_char;
+        C->vseg_offset = i * PageSizeW;
+        C->vseg = VideoSeg + (C->vseg_offset >> 3);
+        C->attr = A_DEFAULT;
+        C->type = output_type;
+        C->Width = Width;
+        C->MaxCol = MaxCol;
+        C->Height = Height;
+        C->MaxRow = MaxRow;
+        C->crtc_base = boot_crtc;
+
+#ifdef CONFIG_EMUL_ANSI
+        C->savex = C->savey = 0;
+#endif
+
+        /* Do not erase early printk() */
+        /* ClearRange(C, 0, C->cy, MaxCol, MaxRow); */
+
+        C++;
+    }
+
+    kbd_init();
+
+    printk("Direct console, %s kbd %ux%u"TERM_TYPE"(%d virtual consoles)\n",
+           kbd_name, Width, Height, NumConsoles);
 }
-
+#else
 void INITPROC console_init(void)
 {
     Console *C;
@@ -311,16 +276,15 @@ void INITPROC console_init(void)
     unsigned char cur_display = 0;
     boot_crtc = peekw(0x63, 0x40);
     for (i = 0; i < N_DEVICETYPES; ++i)
-        if (params[i].crtc_base == boot_crtc) boot_type = i;
+        if (crtc_params[i].crtc_base == boot_crtc) boot_type = i;
 
     C = &Con[0];
     for (i = 0; i < N_DEVICETYPES; ++i) {
         dev = (i + boot_type) % N_DEVICETYPES;
-        if (!probe_crtc(params[dev].crtc_base)) continue;
-        params[dev].is_present = 1;
+        if (!crtc_probe(crtc_params[dev].crtc_base)) continue;
         screens++;
-        init_output(dev);
-        for (j = 0; j < params[dev].max_pages; ++j) {
+        crtc_init(dev);
+        for (j = 0; j < crtc_params[dev].max_pages; ++j) {
             C->cx = C->cy = 0;
             C->display = cur_display;
             if (!j) Visible[C->display] = C;
@@ -329,15 +293,15 @@ void INITPROC console_init(void)
                 C->cy = peekb(0x51, 0x40);
             }
             C->fsm = std_char;
-            C->vseg_offset = j * params[dev].page_words;
-            C->vseg = params[dev].vseg_base + (C->vseg_offset >> 3);
+            C->vseg_offset = j * crtc_params[dev].page_words;
+            C->vseg = crtc_params[dev].vseg_base + (C->vseg_offset >> 3);
             C->attr = A_DEFAULT;
             C->type = dev;
-            C->Width = params[dev].w;
+            C->Width = crtc_params[dev].w;
             C->MaxCol = C->Width - 1;
-            C->Height = params[dev].h;
+            C->Height = crtc_params[dev].h;
             C->MaxRow = C->Height - 1;
-            C->crtc_base = params[dev].crtc_base;
+            C->crtc_base = crtc_params[dev].crtc_base;
 #ifdef CONFIG_EMUL_ANSI
             C->savex = C->savey = 0;
 #endif
@@ -348,10 +312,13 @@ void INITPROC console_init(void)
         cur_display++;
     }
 
+    /* For kernel/timer.c */
+    VideoSeg = Visible[0]->vseg;
+
     kbd_init();
-    printk("boot_crtc: %x\n", Con[0].crtc_base);
-    printk("Direct console %s kbd"TERM_TYPE"(%d screens):\n", kbd_name, screens);
+    printk("Direct console %s kbd"TERM_TYPE"(%d screens, %i consoles)\n", kbd_name, screens, NumConsoles);
     for (i = 0; i < NumConsoles; ++i) {
-        printk("/dev/tty%i, %s, %ux%u\n", i + 1, type_string[Con[i].type], Con[i].Width, Con[i].Height);
+        debug("/dev/tty%i, %s, %ux%u\n", i + 1, type_string[Con[i].type], Con[i].Width, Con[i].Height);
     }
 }
+#endif
