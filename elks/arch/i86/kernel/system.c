@@ -65,9 +65,6 @@ unsigned int INITPROC setup_arch(void)
 	}
 #endif
 
-	/* Misc */
-	ROOT_DEV = SETUP_ROOT_DEV;
-
 #ifdef SYS_CAPS
 	sys_caps = SYS_CAPS;	/* custom system capabilities */
 #else

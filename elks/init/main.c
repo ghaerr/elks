@@ -137,6 +137,7 @@ static void INITPROC early_kernel_init(void)
 #ifdef CONFIG_TIME_TZ
     tz_init(CONFIG_TIME_TZ);        /* parse_options may call tz_init */
 #endif
+    ROOT_DEV = SETUP_ROOT_DEV;      /* default root device from boot loader */
 #ifdef CONFIG_BOOTOPTS
     opts = parse_options();         /* parse options found in /bootops */
 #endif
