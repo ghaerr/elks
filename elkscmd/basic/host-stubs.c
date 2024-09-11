@@ -64,3 +64,6 @@ int host_inpb(int port) {
 int host_inpw(int port) {
     return inw(port);
 }
+
+void host_exit() {
+}

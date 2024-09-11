@@ -58,10 +58,10 @@ SAVE "filename" saves filename.bas
 SAVE+ "filename" saves filename.bas, sets auto-run on load
 DELETE "filename" deletes filename.bas
 DIR
-MODE number (set graphics mode, PC-98 only for now, e.g MODE 1 to use PLOT/DRAW/CIRCLE)
-COLOR fg,bg (PC-98 only for now)
-PLOT x,y (PC-98 only for now)
-DRAW x,y (PC-98 only for now)
+MODE number (set graphics mode, e.g MODE 1 to use PLOT/DRAW/CIRCLE)
+COLOR fg,bg
+PLOT x,y
+DRAW x,y
 CIRCLE x,y,r (PC-98 only for now)
 INPB(port) (IO read byte from `port`)
 INPW(port) (IO read word from `port`)

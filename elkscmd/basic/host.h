@@ -97,3 +97,5 @@ int host_inpw(int port);
 
 int host_peekb(int offset, int segment);
 void host_pokeb(int offset, int segment, int value);
+
+void host_exit();

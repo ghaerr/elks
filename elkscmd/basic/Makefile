@@ -23,7 +23,8 @@ OBJS = basic.o host.o
 #OBJS += ../debug/instrument.o ../debug/syms.o ../debug/shared.o ../debug/shared-asm.o
 
 ifeq ($(CONFIG_ARCH_IBMPC), y)
-OBJS += host-stubs.o
+#OBJS += host-stubs.o
+OBJS += host-ibmpc.o
 endif
 
 ifeq ($(CONFIG_ARCH_8018X), y)
