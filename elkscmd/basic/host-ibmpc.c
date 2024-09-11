@@ -11,8 +11,6 @@
 #define VIDEO_05_G320x200   0x0005
 #define VIDEO_03_T80x25     0x0003
 
-extern FILE *outfile;
-
 static int gmode = 0;
 static int exit_on = 0;
 
@@ -93,11 +91,16 @@ int host_analogRead(int pin) {
 void host_pinMode(int pin,int mode) {
 }
 
+static void mode_reset() {
+    if (gmode)
+        int_10(VIDEO_03_T80x25, 0, 0, 0);
+}
+
 void host_mode(int mode) {
     gmode = mode;
 
     if (gmode && !exit_on) {
-        atexit(host_exit);
+        atexit(mode_reset);
         exit_on = 1;
     }
 
@@ -344,9 +347,4 @@ int host_inpb(int port) {
 
 int host_inpw(int port) {
     return inw(port);
-}
-
-void host_exit() {
-    if (gmode)
-        int_10(VIDEO_03_T80x25, 0, 0, 0);
 }

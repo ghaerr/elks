@@ -55,6 +55,8 @@ float adjust(float f);
 
 #define _MK_FP(seg,off) ((void __far *)((((unsigned long)(seg)) << 16) | (off)))
 
+extern FILE *outfile;
+
 void host_cls();
 void host_showBuffer();
 void host_moveCursor(int x, int y);
@@ -97,5 +99,3 @@ int host_inpw(int port);
 
 int host_peekb(int offset, int segment);
 void host_pokeb(int offset, int segment, int value);
-
-void host_exit();
