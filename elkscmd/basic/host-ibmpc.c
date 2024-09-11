@@ -53,7 +53,7 @@ void int_10(unsigned int ax, unsigned int bx,
                       "pop %ds;");
 }
 
-void memclrw(unsigned int offset, seg_t seg, unsigned int count)
+void memclrw(unsigned int offset, unsigned int seg, unsigned int count)
 {
     __asm__ volatile ("push %ds;"
                       "push %es;"
