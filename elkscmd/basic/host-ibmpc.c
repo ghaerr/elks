@@ -24,58 +24,10 @@ typedef struct {
 
 static xyc_t gxyc = {0, 0, 7, 0, 1};
 
-#if __ia16__
-void int_10(unsigned int ax, unsigned int bx,
-            unsigned int cx, unsigned int dx)
-{
-    __asm__ volatile ("push %ds;"
-                      "push %es;"
-                      "push %bp;"
-                      "push %si;"
-                      "push %di;");
-    __asm__ volatile ("int $0x10;"
-                      :
-                      :"a" (ax), "b" (bx), "c" (cx), "d" (dx)
-                      :"memory", "cc");
-    __asm__ volatile ("pop %di;"
-                      "pop %si;"
-                      "pop %bp;"
-                      "pop %es;"
-                      "pop %ds;");
-}
+extern void fmemsetw(void * off, unsigned int seg, unsigned int val, size_t count);
 
-void memclrw(unsigned int offset, unsigned int seg, unsigned int count)
-{
-    __asm__ volatile ("push %ds;"
-                      "push %es;"
-                      "push %bp;"
-                      "push %si;"
-                      "push %di;");
-    __asm__ volatile ("mov %%ax,%%di;"
-                      "mov %%bx,%%es;"
-                      "xor %%ax,%%ax;"
-                      "cld;"
-                      "rep;"
-                      "stosw;"
-                      :
-                      :"a" (offset), "b" (seg), "c" (count)
-                      :"memory", "cc");
-    __asm__ volatile ("pop %di;"
-                      "pop %si;"
-                      "pop %bp;"
-                      "pop %es;"
-                      "pop %ds;");
-}
-#else
-void int_10(unsigned int ax, unsigned int bx,
-            unsigned int cx, unsigned int dx)
-{
-}
-
-void memclrw(unsigned int offset, seg_t seg, unsigned int count)
-{
-}
-#endif
+extern void int_10(unsigned int ax, unsigned int bx,
+                   unsigned int cx, unsigned int dx);
 
 void host_digitalWrite(int pin,int state) {
 }
@@ -113,8 +65,8 @@ void host_mode(int mode) {
 void host_cls() {
 
     if (gmode) {
-        memclrw(0, 0xB800, 4000);
-        memclrw(0, 0xBA00, 4000);
+        fmemsetw(0, 0xB800, 0, 4000);
+        fmemsetw(0, 0xBA00, 0, 4000);
     }
     else
         fprintf(outfile, "\033[H\033[2J");
