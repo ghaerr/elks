@@ -14,8 +14,6 @@
 #include "host.h"
 #include "basic.h"
 
-extern FILE *outfile;
-
 void host_digitalWrite(int pin,int state) {
 }
 

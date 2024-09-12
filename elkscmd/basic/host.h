@@ -55,6 +55,8 @@ float adjust(float f);
 
 #define _MK_FP(seg,off) ((void __far *)((((unsigned long)(seg)) << 16) | (off)))
 
+extern FILE *outfile;
+
 void host_cls();
 void host_showBuffer();
 void host_moveCursor(int x, int y);
