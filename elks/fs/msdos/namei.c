@@ -95,10 +95,10 @@ static int FATPROC msdos_find_long(struct inode *dir, const char *name, int len,
 	int i, entry_len, res;
 	off_t dirpos, pos = 0;
 	int nocase = 0;
-	ASYNCIO_REENTRANT char entry_name[14];
-	ASYNCIO_REENTRANT char msdos_name[14];
+	ASYNCIO_REENTRANT char entry_name[MAXNAMLEN];   /* FIXME large stack usage */
+	ASYNCIO_REENTRANT char msdos_name[MAXNAMLEN];   /* FIXME large stack usage */
 
-	if (len > 14)
+	if (len > MAXNAMLEN)
 		return -ENOENT;
 	for (i=0; i<len; i++)
 		msdos_name[i] = get_fs_byte(name++);
