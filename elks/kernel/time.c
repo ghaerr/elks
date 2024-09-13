@@ -64,23 +64,23 @@ int sys_settimeofday(register struct timeval *tv, struct timezone *tz)
 
     /* only user running as root can set the time */
     if (current->euid != 0)
-	return -EPERM;
+        return -EPERM;
 
     /* verify we have valid addresses to read from */
     if (tv != NULL) {
-	if (verified_memcpy_fromfs(&tmp_tv, tv, sizeof(struct timeval)))
-	    return -EFAULT;
-	if (((unsigned long) tmp_tv.tv_usec) >= 1000000L)
-	    return -EINVAL;
+        if (verified_memcpy_fromfs(&tmp_tv, tv, sizeof(struct timeval)))
+            return -EFAULT;
+        if (((unsigned long) tmp_tv.tv_usec) >= 1000000L)
+            return -EINVAL;
     }
 
     if (tz != NULL) {
-	if (verified_memcpy_fromfs(&tmp_tz, tz, sizeof(struct timezone)))
-	    return -EFAULT;
-	if (((unsigned int)(tmp_tz.tz_dsttime - DST_NONE)) > (DST_AUSTALT - DST_NONE))
-	    return -EINVAL;
-	/* Setting the timezone is easy, just a straight copy */
-	xzone = tmp_tz;
+        if (verified_memcpy_fromfs(&tmp_tz, tz, sizeof(struct timezone)))
+            return -EFAULT;
+        if (((unsigned int)(tmp_tz.tz_dsttime - DST_NONE)) > (DST_AUSTALT - DST_NONE))
+            return -EINVAL;
+        /* Setting the timezone is easy, just a straight copy */
+        xzone = tmp_tz;
     }
 
     /* Setting time is a bit tricky, since we don't really keep the time in the xtime
@@ -90,9 +90,9 @@ int sys_settimeofday(register struct timeval *tv, struct timezone *tz)
      * current jiffies for later use as offset - ghaerr.
      */
     if (tv != NULL) {
-	xtime_jiffies = jiffies;
-	xtime.tv_sec = tmp_tv.tv_sec;
-	xtime.tv_usec = tmp_tv.tv_usec;
+        xtime_jiffies = jiffies;
+        xtime.tv_sec = tmp_tv.tv_sec;
+        xtime.tv_usec = tmp_tv.tv_usec;
     }
 
     /* success */
@@ -107,17 +107,17 @@ int sys_gettimeofday(register struct timeval *tv, struct timezone *tz)
 
     /* load the current time into the structures passed */
     if (tv != NULL) {
-	now = jiffies;
-	tmp_tv.tv_sec = xtime.tv_sec + (now - xtime_jiffies) / HZ;
-	tmp_tv.tv_usec = xtime.tv_usec + ((now - xtime_jiffies) % HZ) * (1000000L / HZ);
-	if (tmp_tv.tv_usec >= 10000000L)
-	    tmp_tv.tv_usec -= 10000000L;
-	if (verified_memcpy_tofs(tv, &tmp_tv, sizeof(struct timeval)))
-	    return -EFAULT;
+        now = jiffies;
+        tmp_tv.tv_sec = xtime.tv_sec + (now - xtime_jiffies) / HZ;
+        tmp_tv.tv_usec = xtime.tv_usec + ((now - xtime_jiffies) % HZ) * (1000000L / HZ);
+        if (tmp_tv.tv_usec >= 10000000L)
+            tmp_tv.tv_usec -= 10000000L;
+        if (verified_memcpy_tofs(tv, &tmp_tv, sizeof(struct timeval)))
+            return -EFAULT;
     }
     if (tz != NULL)
-	if (verified_memcpy_tofs(tz, &xzone, sizeof(struct timezone)))
-	    return -EFAULT;
+        if (verified_memcpy_tofs(tz, &xzone, sizeof(struct timezone)))
+            return -EFAULT;
 
     /* success */
     return 0;

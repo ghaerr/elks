@@ -22,15 +22,15 @@
 #include <arch/io.h>
 
 /*
- *	System variable setups
+ *  System variable setups
  */
 #define ENV             1       /* allow environ variables as bootopts*/
 #define DEBUG           0       /* display parsing at boot*/
 
 #include <linuxmt/debug.h>
 
-#define MAX_INIT_ARGS	6       /* max # arguments to /bin/init or init= program */
-#define MAX_INIT_ENVS	12      /* max # environ variables passed to /bin/init */
+#define MAX_INIT_ARGS   6       /* max # arguments to /bin/init or init= program */
+#define MAX_INIT_ENVS   12      /* max # environ variables passed to /bin/init */
 #define MAX_INIT_SLEN   80      /* max # words of args + environ passed to /bin/init */
 #define MAX_UMB         3       /* max umb= segments in /bootopts */
 
@@ -67,7 +67,7 @@ static char *init_command = bininit;
  * Parse /bootopts startup options
  */
 static char opts;
-static int args = 2;	/* room for argc and av[0] */
+static int args = 2;    /* room for argc and av[0] */
 static int envs;
 static int argv_slen;
 #ifdef CONFIG_SYS_NO_BININIT
@@ -175,7 +175,7 @@ static void INITPROC kernel_init(void)
 #endif
 
     inode_init();
-    if (buffer_init())	/* also enables xms and unreal mode if configured and possible*/
+    if (buffer_init())  /* also enables xms and unreal mode if configured and possible*/
         panic("No buf mem");
 
 #ifdef CONFIG_ARCH_IBMPC
@@ -266,8 +266,8 @@ static void INITPROC do_init_task(void)
         num = sys_open(s="/dev/console", O_RDWR, 0);
         if (num < 0)
             printk("Unable to open %s (error %d)\n", s, num);
-        sys_dup(num);		/* open stdout*/
-        sys_dup(num);		/* open stderr*/
+        sys_dup(num);       /* open stdout*/
+        sys_dup(num);       /* open stderr*/
     //}
 
 #ifdef CONFIG_BOOTOPTS
@@ -284,7 +284,7 @@ static void INITPROC do_init_task(void)
 #endif /* CONFIG_BOOTOPTS */
 
     printk("No init - running %s\n", binshell);
-    current->ppid = 1;			/* turns off auto-child reaping*/
+    current->ppid = 1;          /* turns off auto-child reaping*/
     try_exec_process(binshell);
     try_exec_process("/bin/sash");
     panic("No init or sh found");
@@ -298,8 +298,8 @@ static void init_task(void)
 
 #ifdef CONFIG_BOOTOPTS
 static struct dev_name_struct {
-	const char *name;
-	int num;
+    const char *name;
+    int num;
 } devices[] = {
 	/* the 4 partitionable drives must be first */
 	{ "hda",     DEV_HDA },
@@ -324,23 +324,23 @@ static struct dev_name_struct {
  */
 static char * INITPROC root_dev_name(int dev)
 {
-	int i;
-#define NAMEOFF	13
-	static char name[18] = "ROOTDEV=/dev/";
+    int i;
+#define NAMEOFF 13
+    static char name[18] = "ROOTDEV=/dev/";
 
-	for (i=0; i<5; i++) {
-		if (devices[i].num == (dev & 0xfff0)) {
-			strcpy(&name[NAMEOFF], devices[i].name);
-			if (i < 4) {
-				if (dev & 0x07) {
-					name[NAMEOFF+3] = '0' + (dev & 7);
-					name[NAMEOFF+4] = '\0';
-				}
-			}
-			return name;
-		}
-	}
-	return NULL;
+    for (i=0; i<5; i++) {
+        if (devices[i].num == (dev & 0xfff0)) {
+            strcpy(&name[NAMEOFF], devices[i].name);
+            if (i < 4) {
+                if (dev & 0x07) {
+                    name[NAMEOFF+3] = '0' + (dev & 7);
+                    name[NAMEOFF+4] = '\0';
+                }
+            }
+            return name;
+        }
+    }
+    return NULL;
 }
 
 /*
@@ -348,41 +348,41 @@ static char * INITPROC root_dev_name(int dev)
  */
 static int INITPROC parse_dev(char * line)
 {
-	int base = 0;
-	struct dev_name_struct *dev = devices;
+    int base = 0;
+    struct dev_name_struct *dev = devices;
 
-	if (strncmp(line,"/dev/",5) == 0)
-		line += 5;
-	do {
-		int len = strlen(dev->name);
-		if (strncmp(line,dev->name,len) == 0) {
-			line += len;
-			base = dev->num;
-			break;
-		}
-		dev++;
-	} while (dev->name);
-	return (base + atoi(line));
+    if (strncmp(line,"/dev/",5) == 0)
+        line += 5;
+    do {
+        int len = strlen(dev->name);
+        if (strncmp(line,dev->name,len) == 0) {
+            line += len;
+            base = dev->num;
+            break;
+        }
+        dev++;
+    } while (dev->name);
+    return (base + atoi(line));
 }
 
 static void INITPROC comirq(char *line)
 {
 #if defined(CONFIG_ARCH_IBMPC) && defined(CONFIG_CHAR_DEV_RS)
-	int i;
-	char *l, *m, c;
+    int i;
+    char *l, *m, c;
 
-	l = line;
-	for (i = 0; i < MAX_SERIAL; i++) {	/* assume decimal digits only */
-		m = l;
-		while ((*l) && (*l != ',')) l++;
-		c = *l;		/* ensure robust eol handling */
-		if (l > m) {
-			*l = '\0';
-			set_serial_irq(i, (int)simple_strtol(m, 0));
-		}
-		if (!c) break;
-		l++;
-	}
+    l = line;
+    for (i = 0; i < MAX_SERIAL; i++) {  /* assume decimal digits only */
+        m = l;
+        while ((*l) && (*l != ',')) l++;
+        c = *l;     /* ensure robust eol handling */
+        if (l > m) {
+            *l = '\0';
+            set_serial_irq(i, (int)simple_strtol(m, 0));
+        }
+        if (!c) break;
+        l++;
+    }
 #endif
 }
 
@@ -404,19 +404,19 @@ static void INITPROC parse_nic(char *line, struct netif_parms *parms)
 /* umb= settings have to be saved and processed after parse_options */
 static void INITPROC parse_umb(char *line)
 {
-	char *p = line-1; /* because we start reading at p+1 */
-	seg_t base;
+    char *p = line-1; /* because we start reading at p+1 */
+    seg_t base;
 
-	do {
-		base = (seg_t)simple_strtol(p+1, 16);
-		if((p = strchr(p+1, ':'))) {
-			if (nextumb < &umbseg[MAX_UMB]) {
-				nextumb->len = (segext_t)simple_strtol(p+1, 16);
-				nextumb->base = base;
-				nextumb++;
-			}
-		}
-	} while((p = strchr(p+1, ',')));
+    do {
+        base = (seg_t)simple_strtol(p+1, 16);
+        if((p = strchr(p+1, ':'))) {
+            if (nextumb < &umbseg[MAX_UMB]) {
+                nextumb->len = (segext_t)simple_strtol(p+1, 16);
+                nextumb->base = base;
+                nextumb++;
+            }
+        }
+    } while((p = strchr(p+1, ',')));
 }
 
 /*
@@ -435,231 +435,231 @@ static void INITPROC parse_umb(char *line)
  */
 static int INITPROC parse_options(void)
 {
-	char *line = (char *)options;
-	char *next;
+    char *line = (char *)options;
+    char *next;
 
-	/* copy /bootopts loaded by boot loader at 0050:0000*/
-	fmemcpyb(options, kernel_ds, 0, DEF_OPTSEG, sizeof(options));
+    /* copy /bootopts loaded by boot loader at 0050:0000*/
+    fmemcpyb(options, kernel_ds, 0, DEF_OPTSEG, sizeof(options));
 
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
-	/* check file starts with ## and max len 511 bytes*/
-	if (*(unsigned short *)options != 0x2323 || options[OPTSEGSZ-1])
-		return 0;
+    /* check file starts with ## and max len 511 bytes*/
+    if (*(unsigned short *)options != 0x2323 || options[OPTSEGSZ-1])
+        return 0;
 
-	next = line;
-	while ((line = next) != NULL && *line) {
-		if ((next = option(line)) != NULL) {
-			if (*line == '#') {	/* skip line after comment char*/
-				next = line;
-				while (*next != '\n' && *next != '\0')
-					next++;
-				continue;
-			} else *next++ = 0;
-		}
-		if (*line == 0)		/* skip spaces and linefeeds*/
-			continue;
-		debug("'%s',", line);
-		/*
-		 * check for kernel options first..
-		 */
-		if (!strncmp(line,"root=",5)) {
-			int dev = parse_dev(line+5);
-			debug("root %s=%D\n", line+5, dev);
-			ROOT_DEV = (kdev_t)dev;
-			boot_rootdev = dev;    /* stop translation in device_setup*/
-			continue;
-		}
-		if (!strncmp(line,"console=",8)) {
-			int dev = parse_dev(line+8);
-			char *p = strchr(line+8, ',');
-			if (p) {
-				*p++ = 0;
+    next = line;
+    while ((line = next) != NULL && *line) {
+        if ((next = option(line)) != NULL) {
+            if (*line == '#') { /* skip line after comment char*/
+                next = line;
+                while (*next != '\n' && *next != '\0')
+                    next++;
+                continue;
+            } else *next++ = 0;
+        }
+        if (*line == 0)     /* skip spaces and linefeeds*/
+            continue;
+        debug("'%s',", line);
+        /*
+         * check for kernel options first..
+         */
+        if (!strncmp(line,"root=",5)) {
+            int dev = parse_dev(line+5);
+            debug("root %s=%D\n", line+5, dev);
+            ROOT_DEV = (kdev_t)dev;
+            boot_rootdev = dev;    /* stop translation in device_setup*/
+            continue;
+        }
+        if (!strncmp(line,"console=",8)) {
+            int dev = parse_dev(line+8);
+            char *p = strchr(line+8, ',');
+            if (p) {
+                *p++ = 0;
 #ifdef CONFIG_CHAR_DEV_RS
-				/* set serial console baud rate*/
-				rs_setbaud(dev, simple_strtol(p, 10));
+                /* set serial console baud rate*/
+                rs_setbaud(dev, simple_strtol(p, 10));
 #endif
-			}
+            }
 
 
-			debug("console %s=%D,", line+8, dev);
-			boot_console = dev;
-			continue;
-		}
-		if (!strcmp(line,"ro")) {
-			root_mountflags |= MS_RDONLY;
-			continue;
-		}
-		if (!strcmp(line,"rw")) {
-			root_mountflags &= ~MS_RDONLY;
-			continue;
-		}
-		if (!strcmp(line,"debug")) {
-			dprintk_on = 1;
-			continue;
-		}
-		if (!strcmp(line,"strace")) {
-			tracing |= TRACE_STRACE;
-			continue;
-		}
-		if (!strcmp(line,"kstack")) {
-			tracing |= TRACE_KSTACK;
-			continue;
-		}
-		if (!strncmp(line,"init=",5)) {
-			line += 5;
-			init_command = argv_init[1] = line;
-			continue;
-		}
-		if (!strncmp(line,"ne0=",4)) {
-			parse_nic(line+4, &netif_parms[ETH_NE2K]);
-			continue;
-		}
-		if (!strncmp(line,"wd0=",4)) {
-			parse_nic(line+4, &netif_parms[ETH_WD]);
-			continue;
-		}
-		if (!strncmp(line,"3c0=",4)) {
-			parse_nic(line+4, &netif_parms[ETH_EL3]);
-			continue;
-		}
-		if (!strncmp(line,"buf=",4)) {
-			nr_ext_bufs = (int)simple_strtol(line+4, 10);
-			continue;
-		}
-		if (!strncmp(line,"xmsbuf=",7)) {
-			nr_xms_bufs = (int)simple_strtol(line+7, 10);
-			continue;
-		}
-		if (!strncmp(line,"cache=",6)) {
-			nr_map_bufs = (int)simple_strtol(line+6, 10);
-			continue;
-		}
-		if (!strncmp(line,"heap=",5)) {
-			heapsize = (unsigned int)simple_strtol(line+5, 10);
-			continue;
-		}
-		if (!strncmp(line,"task=",5)) {
-			max_tasks = (int)simple_strtol(line+5, 10);
-			continue;
-		}
-		if (!strncmp(line,"inode=",6)) {
-			nr_inode = (int)simple_strtol(line+6, 10);
-			continue;
-		}
-		if (!strncmp(line,"file=",5)) {
-			nr_file = (int)simple_strtol(line+5, 10);
-			continue;
-		}
-		if (!strncmp(line,"comirq=",7)) {
-			comirq(line+7);
-			continue;
-		}
-		if (!strncmp(line,"umb=",4)) {
-			parse_umb(line+4);
-			continue;
-		}
-		if (!strncmp(line,"TZ=",3)) {
-			tz_init(line+3);
-			/* fall through and add line to environment */
-		}
-		
-		/*
-		 * Then check if it's an environment variable or an init argument.
-		 */
-		if (!strchr(line,'=')) {    /* no '=' means init argument*/
-			if (args < MAX_INIT_ARGS)
-			    argv_init[args++] = line;
-			else printk(errmsg_initargs);
-		}
+            debug("console %s=%D,", line+8, dev);
+            boot_console = dev;
+            continue;
+        }
+        if (!strcmp(line,"ro")) {
+            root_mountflags |= MS_RDONLY;
+            continue;
+        }
+        if (!strcmp(line,"rw")) {
+            root_mountflags &= ~MS_RDONLY;
+            continue;
+        }
+        if (!strcmp(line,"debug")) {
+            dprintk_on = 1;
+            continue;
+        }
+        if (!strcmp(line,"strace")) {
+            tracing |= TRACE_STRACE;
+            continue;
+        }
+        if (!strcmp(line,"kstack")) {
+            tracing |= TRACE_KSTACK;
+            continue;
+        }
+        if (!strncmp(line,"init=",5)) {
+            line += 5;
+            init_command = argv_init[1] = line;
+            continue;
+        }
+        if (!strncmp(line,"ne0=",4)) {
+            parse_nic(line+4, &netif_parms[ETH_NE2K]);
+            continue;
+        }
+        if (!strncmp(line,"wd0=",4)) {
+            parse_nic(line+4, &netif_parms[ETH_WD]);
+            continue;
+        }
+        if (!strncmp(line,"3c0=",4)) {
+            parse_nic(line+4, &netif_parms[ETH_EL3]);
+            continue;
+        }
+        if (!strncmp(line,"buf=",4)) {
+            nr_ext_bufs = (int)simple_strtol(line+4, 10);
+            continue;
+        }
+        if (!strncmp(line,"xmsbuf=",7)) {
+            nr_xms_bufs = (int)simple_strtol(line+7, 10);
+            continue;
+        }
+        if (!strncmp(line,"cache=",6)) {
+            nr_map_bufs = (int)simple_strtol(line+6, 10);
+            continue;
+        }
+        if (!strncmp(line,"heap=",5)) {
+            heapsize = (unsigned int)simple_strtol(line+5, 10);
+            continue;
+        }
+        if (!strncmp(line,"task=",5)) {
+            max_tasks = (int)simple_strtol(line+5, 10);
+            continue;
+        }
+        if (!strncmp(line,"inode=",6)) {
+            nr_inode = (int)simple_strtol(line+6, 10);
+            continue;
+        }
+        if (!strncmp(line,"file=",5)) {
+            nr_file = (int)simple_strtol(line+5, 10);
+            continue;
+        }
+        if (!strncmp(line,"comirq=",7)) {
+            comirq(line+7);
+            continue;
+        }
+        if (!strncmp(line,"umb=",4)) {
+            parse_umb(line+4);
+            continue;
+        }
+        if (!strncmp(line,"TZ=",3)) {
+            tz_init(line+3);
+            /* fall through and add line to environment */
+        }
+
+        /*
+         * Then check if it's an environment variable or an init argument.
+         */
+        if (!strchr(line,'=')) {    /* no '=' means init argument*/
+            if (args < MAX_INIT_ARGS)
+                argv_init[args++] = line;
+            else printk(errmsg_initargs);
+        }
 #if ENV
-		else {
-			if (envs < MAX_INIT_ENVS)
-			    envp_init[envs++] = line;
-			else printk(errmsg_initenvs);
-		}
+        else {
+            if (envs < MAX_INIT_ENVS)
+                envp_init[envs++] = line;
+            else printk(errmsg_initenvs);
+        }
 #endif
-	}
-	debug("\n");
-	return 1;	/* success*/
+    }
+    debug("\n");
+    return 1;   /* success*/
 }
 
 static void INITPROC finalize_options(void)
 {
-	int i;
+    int i;
 
 #if ENV
-	/* set ROOTDEV environment variable for rc.sys fsck*/
-	if (envs + running_qemu < MAX_INIT_ENVS) {
-	    envp_init[envs++] = root_dev_name(ROOT_DEV);
-	    if (running_qemu)
-		    envp_init[envs++] = (char *)"QEMU=1";
+    /* set ROOTDEV environment variable for rc.sys fsck*/
+    if (envs + running_qemu < MAX_INIT_ENVS) {
+        envp_init[envs++] = root_dev_name(ROOT_DEV);
+        if (running_qemu)
+            envp_init[envs++] = (char *)"QEMU=1";
     } else printk(errmsg_initenvs);
 #endif
 
 #if DEBUG
-	printk("args: ");
-	for (i=1; i<args; i++)
-		printk("'%s'", argv_init[i]);
-	printk("\n");
+    printk("args: ");
+    for (i=1; i<args; i++)
+        printk("'%s'", argv_init[i]);
+    printk("\n");
 
 #if ENV
-	printk("envp: ");
-	for (i=0; i<envs; i++)
-		printk("'%s'", envp_init[i]);
-	printk("\n");
+    printk("envp: ");
+    for (i=0; i<envs; i++)
+        printk("'%s'", envp_init[i]);
+    printk("\n");
 #endif
 #endif
 
-	/* convert argv array to stack array for sys_execv*/
-	args--;
-	argv_init[0] = (char *)args;        	/* 0 = argc*/
-	char *q = (char *)&argv_init[args+2+envs+1];
-	for (i=1; i<=args; i++) {                   /* 1..argc = av*/
-		char *p = argv_init[i];
-		char *savq = q;
-		while ((*q++ = *p++) != 0)
-			;
-		argv_init[i] = (char *)(savq - (char *)argv_init);
-	}
-	/*argv_init[args+1] = NULL;*/               /* argc+1 = 0*/
+    /* convert argv array to stack array for sys_execv*/
+    args--;
+    argv_init[0] = (char *)args;            /* 0 = argc*/
+    char *q = (char *)&argv_init[args+2+envs+1];
+    for (i=1; i<=args; i++) {                   /* 1..argc = av*/
+        char *p = argv_init[i];
+        char *savq = q;
+        while ((*q++ = *p++) != 0)
+            ;
+        argv_init[i] = (char *)(savq - (char *)argv_init);
+    }
+    /*argv_init[args+1] = NULL;*/               /* argc+1 = 0*/
 #if ENV
-	if (envs) {
-		for (i=0; i<envs; i++) {
-			char *p = envp_init[i];
-			char *savq = q;
-			while ((*q++ = *p++) != 0)
-				;
-			argv_init[args+2+i] = (char *)(savq - (char *)argv_init);
-		}
+    if (envs) {
+        for (i=0; i<envs; i++) {
+            char *p = envp_init[i];
+            char *savq = q;
+            while ((*q++ = *p++) != 0)
+                ;
+            argv_init[args+2+i] = (char *)(savq - (char *)argv_init);
+        }
 
-	}
+    }
 #endif
-	/*argv_init[args+2+envs] = NULL;*/
-	argv_slen = q - (char *)argv_init;
-	if (argv_slen > sizeof(argv_init))
-		panic(errmsg_initslen);
+    /*argv_init[args+2+envs] = NULL;*/
+    argv_slen = q - (char *)argv_init;
+    if (argv_slen > sizeof(argv_init))
+        panic(errmsg_initslen);
 }
 
 /* return whitespace-delimited string*/
 static char * INITPROC option(char *s)
 {
-	char *t = s;
-	if (*s == '#')
-		return s;
-	for(; *s != ' ' && *s != '\t' && *s != '\r' && *s != '\n'; ++s, ++t) {
-		if (*s == '\0')
-			return NULL;
-		if (*s == '"') {
-			s++;
-			while (*s != '"') {
-				if (*s == '\0')
-					return NULL;
-				*t++ = *s++;
-			}
-			*t++ = 0;
-			break;
-		}
-	}
-	return s;
+    char *t = s;
+    if (*s == '#')
+        return s;
+    for(; *s != ' ' && *s != '\t' && *s != '\r' && *s != '\n'; ++s, ++t) {
+        if (*s == '\0')
+            return NULL;
+        if (*s == '"') {
+            s++;
+            while (*s != '"') {
+                if (*s == '\0')
+                    return NULL;
+                *t++ = *s++;
+            }
+            *t++ = 0;
+            break;
+        }
+    }
+    return s;
 }
 #endif /* CONFIG_BOOTOPTS*/

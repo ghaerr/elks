@@ -51,19 +51,19 @@ void enable_timer_tick(void)
     outb (TIMER_MODE2, TIMER_CMDS_PORT);
 
 #ifdef CONFIG_ARCH_IBMPC
-    outb (TIMER_LO_BYTE, TIMER_DATA_PORT);	/* LSB */
-    outb (TIMER_HI_BYTE, TIMER_DATA_PORT);	/* MSB */
+    outb (TIMER_LO_BYTE, TIMER_DATA_PORT);      /* LSB */
+    outb (TIMER_HI_BYTE, TIMER_DATA_PORT);      /* MSB */
 #endif
 
 #ifdef CONFIG_ARCH_PC98
     if (peekb(0x501, 0) & 0x80) {
-	printk("Timer clock frequncy for 8MHz system is set.\n");
-	outb (TIMER_LO_BYTE_8M, TIMER_DATA_PORT);   /* LSB */
-	outb (TIMER_HI_BYTE_8M, TIMER_DATA_PORT);   /* MSB */
+        printk("Timer clock frequncy for 8MHz system is set.\n");
+        outb (TIMER_LO_BYTE_8M, TIMER_DATA_PORT);   /* LSB */
+        outb (TIMER_HI_BYTE_8M, TIMER_DATA_PORT);   /* MSB */
     } else {
-	printk("Timer clock frequncy for 5MHz system is set.\n");
-	outb (TIMER_LO_BYTE_5M, TIMER_DATA_PORT);   /* LSB */
-	outb (TIMER_HI_BYTE_5M, TIMER_DATA_PORT);   /* MSB */
+        printk("Timer clock frequncy for 5MHz system is set.\n");
+        outb (TIMER_LO_BYTE_5M, TIMER_DATA_PORT);   /* LSB */
+        outb (TIMER_HI_BYTE_5M, TIMER_DATA_PORT);   /* MSB */
     }
 #endif
 }
