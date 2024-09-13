@@ -6,13 +6,13 @@ on:
       - '**'
       - '!.github/workflows/cross.yml'
       - '!.github/workflows/ow-libc.yml'
-      - '!tools/**'
- pull_request:
-   paths:
+      - '!tools/*'
+  pull_request:
+    paths:
      - '**'
      - '!.github/workflows/cross.yml'
      - '!.github/workflows/ow-libc.yml'
-     - '!tools/**'
+     - '!tools/*'
 
 jobs:
   build:
