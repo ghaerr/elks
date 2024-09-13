@@ -17,8 +17,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <string.h>
 #include <fcntl.h>
+#include <string.h>
 #include <sys/types.h>
 
 static unsigned char bufout[80];
@@ -79,7 +79,7 @@ static void __fputc(int ch, FILE *fp)
  * the number of characters output.
  */
 static int
-prtfld(FILE *op, unsigned char *buf, int ljustf, char pad, int width, int preci)
+__fmt(FILE *op, unsigned char *buf, int ljustf, int width, int preci, char pad)
 {
    int cnt = 0, len;
    unsigned char ch;
@@ -107,7 +107,7 @@ prtfld(FILE *op, unsigned char *buf, int ljustf, char pad, int width, int preci)
       }
       else if (len)
       {
-         ch = *buf++;        /* main field */
+         ch = *buf++;           /* main field */
          --len;
       }
       else
@@ -121,13 +121,14 @@ prtfld(FILE *op, unsigned char *buf, int ljustf, char pad, int width, int preci)
    return cnt;
 }
 
-int vfprintf(FILE *op, const char *fmt, va_list ap)
+int
+vfprintf(FILE *op, const char *fmt, va_list ap)
 {
-   int cnt = 0;
-   int i, width, preci, radix;
-   int ljustf, lval, pad, dpoint;
+   int i, cnt = 0, ljustf, lval;
+   int preci, width, radix;
+   char pad, dpoint;
    char *ptmp;
-   char  tmp[64];
+   char tmp[64];
 
    while (*fmt)
    {
@@ -136,9 +137,9 @@ int vfprintf(FILE *op, const char *fmt, va_list ap)
          ljustf = 0;            /* left justify flag */
          dpoint = 0;            /* found decimal point */
          lval = 0;
+         pad = ' ';             /* justification padding char */
          width = -1;            /* min field width */
          preci = -1;            /* max data width */
-         pad = ' ';             /* justification padding char */
          radix = 10;            /* number base */
          ptmp = tmp;            /* pointer to area to print */
        fmtnxt:
@@ -146,7 +147,8 @@ int vfprintf(FILE *op, const char *fmt, va_list ap)
          for(;;)
          {
             ++fmt;
-            if(*fmt < '0' || *fmt > '9' ) break;
+            if(*fmt < '0' || *fmt > '9' )
+                break;
             i = (i * 10) + (*fmt - '0');
             if (dpoint)
                preci = i;
@@ -171,20 +173,18 @@ int vfprintf(FILE *op, const char *fmt, va_list ap)
 
          case 'l':              /* long data */
             lval = 1;
-         case 'h':      /* short data */
+         case 'h':              /* short data */
             goto fmtnxt;
 
          case 'd':              /* Signed decimal */
-            ptmp = ltostr((long) ((lval)
-                         ? va_arg(ap, long)
-                         : va_arg(ap, int)), 10);
+            ptmp = ltostr((long) ((lval) ? va_arg(ap, long) : va_arg(ap, int)), 10);
             goto printit;
 
          case 'o':              /* Unsigned octal */
             radix = 8;
             goto usproc;
 
-         case 'x':      /* Unsigned hexadecimal */
+         case 'x':              /* Unsigned hexadecimal */
             radix = 16;
             /* fall thru */
 
@@ -204,7 +204,7 @@ int vfprintf(FILE *op, const char *fmt, va_list ap)
             ptmp = va_arg(ap, char*);
           nopad:
           printit:
-            cnt += prtfld(op, (unsigned char *)ptmp, ljustf, pad, width, preci);
+            cnt += __fmt(op, (unsigned char *)ptmp, ljustf, width, preci, pad);
             break;
 
          default:               /* unknown character */

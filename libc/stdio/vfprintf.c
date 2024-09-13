@@ -22,9 +22,9 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <string.h>
-#include <stdlib.h>
 #include <sys/types.h>
 
 #ifndef __HAS_NO_FLOATS__
@@ -36,16 +36,16 @@
  */
 #endif
 
-static int
-printfield(FILE *op, unsigned char *buf, int ljustf, char sign, char pad, int width,
-    int preci, int buffer_mode)
 /*
  * Output the given field in the manner specified by the arguments. Return
  * the number of characters output.
  */
+static int
+__fmt(FILE *op, unsigned char *buf, int ljustf, int width, int preci, char pad,
+    char sign, int buffer_mode)
 {
-   register int cnt = 0, len;
-   register unsigned char ch;
+   int cnt = 0, len;
+   unsigned char ch;
 
    len = strlen((char *)buf);
 
@@ -80,7 +80,8 @@ printfield(FILE *op, unsigned char *buf, int ljustf, char sign, char pad, int wi
       {
          if (sign)
          {
-          showsign:ch = sign;   /* sign */
+      showsign:
+            ch = sign;          /* sign */
             sign = '\0';
          }
          else
@@ -96,19 +97,20 @@ printfield(FILE *op, unsigned char *buf, int ljustf, char sign, char pad, int wi
       if( ch == '\n' && buffer_mode == _IOLBF ) fflush(op);
    }
 
-   return (cnt);
+   return cnt;
 }
 
 int
 vfprintf(FILE *op, const char *fmt, va_list ap)
 {
-   register int i, cnt = 0, ljustf, lval;
-   int   preci, dpoint, width;
-   char  pad, sign, radix, hash;
-   register char *ptmp;
+   int i, cnt = 0, ljustf, lval;
+   int preci, width, radix;
+   char pad, dpoint;
+   char sign, hash;
    unsigned long l;
    int buffer_mode;
-   char  tmp[64];
+   char *ptmp;
+   char tmp[64];
 
    /* This speeds things up a bit for unbuffered */
    buffer_mode = (op->mode&__MODE_BUF);
@@ -120,21 +122,22 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
       {
          if( buffer_mode == _IONBF ) fflush(op);
          ljustf = 0;            /* left justify flag */
+         hash = 0;
+         dpoint = 0;            /* found decimal point */
          sign = '\0';           /* sign char & status */
          pad = ' ';             /* justification padding char */
          width = -1;            /* min field width */
-         dpoint = 0;            /* found decimal point */
          preci = -1;            /* max data width */
          radix = 10;            /* number base */
          ptmp = tmp;            /* pointer to area to print */
-         hash = 0;
          lval = (sizeof(int)==sizeof(long));    /* long value flag */
        fmtnxt:
          i = 0;
          for(;;)
          {
             ++fmt;
-            if(*fmt < '0' || *fmt > '9' ) break;
+            if(*fmt < '0' || *fmt > '9' )
+                break;
             i = (i * 10) + (*fmt - '0');
             if (dpoint)
                preci = i;
@@ -188,10 +191,7 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
 
          case 'd':              /* Signed decimal */
          case 'i':
-            ptmp = ltostr((long) ((lval)
-                         ? va_arg(ap, long)
-                         : va_arg(ap, int)),
-                 10);
+            ptmp = ltostr((long) ((lval) ? va_arg(ap, long) : va_arg(ap, int)), 10);
             goto printit;
 
          case 'b':              /* Unsigned binary */
@@ -227,11 +227,14 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
                 /* if precision timing not linked in, display as unsigned */
             }
             ptmp = ultostr(l, radix);
-            if( hash && radix == 8 ) { width = strlen(ptmp)+1; pad='0'; }
+            if( hash && radix == 8 ) {
+                width = strlen(ptmp)+1;
+                pad = '0';
+            }
             goto printit;
 
          case '#':
-            hash=1;
+            hash = 1;
             goto fmtnxt;
 
          case 'c':              /* Character */
@@ -246,8 +249,8 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
             sign = '\0';
             pad = ' ';
           printit:
-            cnt += printfield(op, (unsigned char *)ptmp, ljustf,
-                           sign, pad, width, preci, buffer_mode);
+            cnt += __fmt(op, (unsigned char *)ptmp, ljustf, width, preci, pad,
+                        sign, buffer_mode);
             break;
 
 #ifndef __HAS_NO_FLOATS__
@@ -256,8 +259,7 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
          case 'g':
          case 'E':
          case 'G':
-            if (_weakaddr(dtostr))
-            {
+            if (_weakaddr(dtostr)) {
                (_weakfn(dtostr))(va_arg(ap, double), *fmt, preci, ptmp);
                preci = -1;
                goto printit;
@@ -281,5 +283,5 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
    op->mode |= buffer_mode;
    if( buffer_mode == _IONBF ) fflush(op);
    if( buffer_mode == _IOLBF ) op->bufwrite = op->bufstart;
-   return (cnt);
+   return cnt;
 }
