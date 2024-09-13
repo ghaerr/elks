@@ -2020,7 +2020,7 @@ int parseLoadSaveCmd() {
     if (executeMode) {
         if (gotFileName) {
             char fileName[MAX_PATH_LEN];
-            if (strlen(stackGetStr()) >= MAX_IDENT_LEN)
+            if (strlen(stackGetStr()) > MAX_PATH_LEN-1)
                 return ERROR_BAD_PARAMETER;
             strcpy(fileName, stackPopStr());
 #if DISK_FUNCTIONS
