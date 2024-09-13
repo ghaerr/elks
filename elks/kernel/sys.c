@@ -69,18 +69,18 @@ int sys_uname(struct utsname *utsname)
 int sys_setgid(gid_t gid)
 {
     if (suser())
-	current->gid = current->egid = current->sgid = gid;
+        current->gid = current->egid = current->sgid = gid;
     else if ((gid == current->gid) || (gid == current->sgid))
-	current->egid = gid;
+        current->egid = gid;
     else
-	return -EPERM;
+        return -EPERM;
     return 0;
 }
 
 static int twovalues(int retval, int *copyval, int *copyaddr)
 {
     if (verified_memcpy_tofs(copyaddr, copyval, sizeof(int)) != 0)
-	return -EFAULT;
+        return -EFAULT;
     return retval;
 }
 
@@ -123,18 +123,18 @@ unsigned short int sys_umask(mode_t mask)
 int sys_setuid(uid_t uid)
 {
     if (suser())
-	current->uid = current->euid = current->suid = uid;
+        current->uid = current->euid = current->suid = uid;
     else if ((uid == current->uid) || (uid == current->suid))
-	current->euid = uid;
+        current->euid = uid;
     else
-	return -EPERM;
+        return -EPERM;
     return 0;
 }
 
 int sys_setsid(void)
 {
     if (current->session == current->pid)
-	return -EPERM;
+        return -EPERM;
     debug_tty("SETSID pgrp %P\n");
     current->session = current->pgrp = current->pid;
     current->tty = NULL;
@@ -146,14 +146,14 @@ int sys_setsid(void)
 int sys_times(struct tms *tbuf)
 {
     if (tbuf) {
-	int error = verify_area(VERIFY_WRITE, tbuf, sizeof *tbuf);
+        int error = verify_area(VERIFY_WRITE, tbuf, sizeof *tbuf);
 
-	if (error)
-	    return error;
-	put_user_long(current->utime, &tbuf->tms_utime);
-	put_user_long(current->stime, &tbuf->tms_stime);
-	put_user_long(current->cutime, &tbuf->tms_cutime);
-	put_user_long(current->cstime, &tbuf->tms_cstime);
+        if (error)
+            return error;
+        put_user_long(current->utime, &tbuf->tms_utime);
+        put_user_long(current->stime, &tbuf->tms_stime);
+        put_user_long(current->cutime, &tbuf->tms_cutime);
+        put_user_long(current->cstime, &tbuf->tms_cstime);
     }
     return jiffies;
 }
@@ -176,48 +176,48 @@ int sys_setpgid(pid_t pid, pid_t pgid)
     register struct task_struct *p;
 
     if (!pid)
-	pid = current->pid;
+        pid = current->pid;
 
     if (!pgid)
-	pgid = pid;
+        pgid = pid;
 
     if (pgid < 0)
-	return -EINVAL;
+        return -EINVAL;
 
     for_each_task(p) {
-	if (p->pid == pid && p->state != TASK_UNUSED) {
+        if (p->pid == pid && p->state != TASK_UNUSED) {
 
-	    if (p->p_pptr == current || p->p_opptr == current) {
+            if (p->p_pptr == current || p->p_opptr == current) {
 
-		if (p->session != current->session)
-		    return -EPERM;
+                if (p->session != current->session)
+                    return -EPERM;
 
-		if (p->did_exec)
-		    return -EACCES;
+                if (p->did_exec)
+                    return -EACCES;
 
-	    } else if (p != current)
-		return -ESRCH;
+            } else if (p != current)
+                return -ESRCH;
 
-	    if (p->leader)
-		return -EPERM;
+            if (p->leader)
+                return -EPERM;
 
-	    if (pgid != pid) {
-		struct task_struct *tmp;
+            if (pgid != pid) {
+                struct task_struct *tmp;
 
-		for_each_task(tmp) {
-		    if ((tmp->pgrp == pgid && tmp->state != TASK_UNUSED)
-			&& (tmp->session == current->session)) {
-			goto ok_pgid:
-		    }
-		}
-		return -EPERM;
-	    }
+                for_each_task(tmp) {
+                    if ((tmp->pgrp == pgid && tmp->state != TASK_UNUSED)
+                        && (tmp->session == current->session)) {
+                        goto ok_pgid:
+                    }
+                }
+                return -EPERM;
+            }
 
-	ok_pgid:
-	    p->pgrp = pgid;
+        ok_pgid:
+            p->pgrp = pgid;
 
-	    return 0;
-	}
+            return 0;
+        }
     }
     return -ESRCH;
 }
@@ -227,10 +227,10 @@ int sys_getpgid(pid_t pid)
     register struct task_struct *p;
 
     if (!pid)
-	return current->pgrp;
+        return current->pgrp;
     for_each_task(p)
-	if (p->pid == pid && p->state != TASK_UNUSED)
-	    return p->pgrp;
+        if (p->pid == pid && p->state != TASK_UNUSED)
+            return p->pgrp;
     return -ESRCH;
 }
 
@@ -244,10 +244,10 @@ int sys_getsid(pid_t pid)
     register struct task_struct *p;
 
     if (!pid)
-	return current->session;
+        return current->session;
     for_each_task(p)
-	if (p->pid == pid && p->state != TASK_UNUSED)
-	    return p->session;
+        if (p->pid == pid && p->state != TASK_UNUSED)
+            return p->session;
     return -ESRCH;
 
 }
@@ -266,14 +266,14 @@ int sys_getgroups(int gidsetsize, gid_t * grouplist)
     int i = 0;
 
     while ((pg[i] != NOGROUP) && (++i < NGROUPS))
-	continue;
+        continue;
 
     if (i && gidsetsize) {
-	if (i > gidsetsize) {
-	    return -EINVAL;
-	}
-	if (verified_memcpy_tofs(grouplist, pg, i * sizeof(gid_t)) != 0)
-	    return -EFAULT;
+        if (i > gidsetsize) {
+            return -EINVAL;
+        }
+        if (verified_memcpy_tofs(grouplist, pg, i * sizeof(gid_t)) != 0)
+            return -EFAULT;
 
     }
 
@@ -295,12 +295,12 @@ int sys_setgroups(int gidsetsize, gid_t * grouplist)
     lg = pg + gidsetsize;
 
     if (lg > pg) {
-	if (verified_memcpy_fromfs(pg, grouplist, ((char *)lg) - ((char *)pg)))
-	    return -EFAULT;
+        if (verified_memcpy_fromfs(pg, grouplist, ((char *)lg) - ((char *)pg)))
+            return -EFAULT;
     }
 
     if (gidsetsize < NGROUPS) {
-	*lg = NOGROUP;
+        *lg = NOGROUP;
     }
 
     return 0;
@@ -312,14 +312,14 @@ int in_group_p(gid_t grp)
     char *p;
 
     if (grp != (current->egid) {
-	pg = current->groups - 1;
-	p = (char *)(pg + NGROUPS);
+        pg = current->groups - 1;
+        p = (char *)(pg + NGROUPS);
 
-	do {
-	    if ((++pg > ((gid_t *) p)) || (*pg == NOGROUP)) {
-		return 0;
-	    }
-	} while (*pg != grp);
+        do {
+            if ((++pg > ((gid_t *) p)) || (*pg == NOGROUP)) {
+                return 0;
+            }
+        } while (*pg != grp);
     }
 
     return 1;

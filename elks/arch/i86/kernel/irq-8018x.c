@@ -17,8 +17,7 @@
 #include <arch/irq.h>
 
 /*
- *	Low level interrupt handling for the X86 8018X
- *	platforms
+ *  Low level interrupt handling for the X86 8018X platforms
  */
 
 void initialize_irq(void)

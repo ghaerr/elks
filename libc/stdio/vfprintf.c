@@ -37,8 +37,8 @@
 #endif
 
 static int
-printfield(FILE *op, unsigned char *buf,
-	int ljustf, char sign, char pad, int width, int preci, int buffer_mode)
+printfield(FILE *op, unsigned char *buf, int ljustf, char sign, char pad, int width,
+    int preci, int buffer_mode)
 /*
  * Output the given field in the manner specified by the arguments. Return
  * the number of characters output.
@@ -54,10 +54,10 @@ printfield(FILE *op, unsigned char *buf,
    else if (sign)
       len++;
 
-   if ((preci != -1) && (len > preci))	/* limit max data width */
+   if ((preci != -1) && (len > preci))  /* limit max data width */
       len = preci;
 
-   if (width < len)		/* flexible field width or width overflow */
+   if (width < len)             /* flexible field width or width overflow */
       width = len;
 
    /*
@@ -69,28 +69,28 @@ printfield(FILE *op, unsigned char *buf,
 
    while (width || len)
    {
-      if (!ljustf && width)	/* left padding */
+      if (!ljustf && width)     /* left padding */
       {
-	 if (len && sign && (pad == '0'))
-	    goto showsign;
-	 ch = pad;
-	 --width;
+         if (len && sign && (pad == '0'))
+            goto showsign;
+         ch = pad;
+         --width;
       }
       else if (len)
       {
-	 if (sign)
-	 {
-	  showsign:ch = sign;	/* sign */
-	    sign = '\0';
-	 }
-	 else
-	    ch = *buf++;	/* main field */
-	 --len;
+         if (sign)
+         {
+          showsign:ch = sign;   /* sign */
+            sign = '\0';
+         }
+         else
+            ch = *buf++;        /* main field */
+         --len;
       }
       else
       {
-	 ch = pad;		/* right padding */
-	 --width;
+         ch = pad;              /* right padding */
+         --width;
       }
       putc(ch, op);
       if( ch == '\n' && buffer_mode == _IOLBF ) fflush(op);
@@ -119,161 +119,161 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
       if (*fmt == '%')
       {
          if( buffer_mode == _IONBF ) fflush(op);
-	 ljustf = 0;		/* left justify flag */
-	 sign = '\0';		/* sign char & status */
-	 pad = ' ';		/* justification padding char */
-	 width = -1;		/* min field width */
-	 dpoint = 0;		/* found decimal point */
-	 preci = -1;		/* max data width */
-	 radix = 10;		/* number base */
-	 ptmp = tmp;		/* pointer to area to print */
-	 hash = 0;
-	 lval = (sizeof(int)==sizeof(long));	/* long value flag */
+         ljustf = 0;            /* left justify flag */
+         sign = '\0';           /* sign char & status */
+         pad = ' ';             /* justification padding char */
+         width = -1;            /* min field width */
+         dpoint = 0;            /* found decimal point */
+         preci = -1;            /* max data width */
+         radix = 10;            /* number base */
+         ptmp = tmp;            /* pointer to area to print */
+         hash = 0;
+         lval = (sizeof(int)==sizeof(long));    /* long value flag */
        fmtnxt:
-	 i = 0;
-	 for(;;)
-	 {
-	    ++fmt;
-	    if(*fmt < '0' || *fmt > '9' ) break;
-	    i = (i * 10) + (*fmt - '0');
-	    if (dpoint)
-	       preci = i;
-	    else if (!i && (pad == ' '))
-	    {
-	       pad = '0';
-	       goto fmtnxt;
-	    }
-	    else
-	       width = i;
-	 }
-
-	 switch (*fmt)
-	 {
-	 case '\0':		/* early EOS */
-	    --fmt;
-	    goto charout;
-
-	 case '-':		/* left justification */
-	    ljustf = 1;
-	    goto fmtnxt;
-
-	 case ' ':
-	 case '+':		/* leading sign flag */
-	    sign = *fmt;
-	    goto fmtnxt;
-
-	 case '*':		/* parameter width value */
-	    i = va_arg(ap, int);
-	    if (dpoint)
-	       preci = i;
-	    else {
-		if (i < 0) {
-		    width = -i;
-		    ljustf = 1;
-		} else width = i;
+         i = 0;
+         for(;;)
+         {
+            ++fmt;
+            if(*fmt < '0' || *fmt > '9' ) break;
+            i = (i * 10) + (*fmt - '0');
+            if (dpoint)
+               preci = i;
+            else if (!i && (pad == ' '))
+            {
+               pad = '0';
+               goto fmtnxt;
             }
-	    goto fmtnxt;
+            else
+               width = i;
+         }
 
-	 case '.':		/* secondary width field */
-	    dpoint = 1;
-	    goto fmtnxt;
+         switch (*fmt)
+         {
+         case '\0':             /* early EOS */
+            --fmt;
+            goto charout;
 
-	 case 'l':		/* long data */
-	    lval = 1;
-	    goto fmtnxt;
+         case '-':              /* left justification */
+            ljustf = 1;
+            goto fmtnxt;
 
-	 case 'h':		/* short data */
-	    lval = 0;
-	    goto fmtnxt;
+         case ' ':
+         case '+':              /* leading sign flag */
+            sign = *fmt;
+            goto fmtnxt;
 
-	 case 'd':		/* Signed decimal */
-	 case 'i':
-	    ptmp = ltostr((long) ((lval)
-			 ? va_arg(ap, long)
-			 : va_arg(ap, int)),
-		 10);
-	    goto printit;
+         case '*':              /* parameter width value */
+            i = va_arg(ap, int);
+            if (dpoint)
+               preci = i;
+            else {
+                if (i < 0) {
+                    width = -i;
+                    ljustf = 1;
+                } else width = i;
+            }
+            goto fmtnxt;
 
-	 case 'b':		/* Unsigned binary */
-	    radix = 2;
-	    goto usproc;
+         case '.':              /* secondary width field */
+            dpoint = 1;
+            goto fmtnxt;
 
-	 case 'o':		/* Unsigned octal */
-	    radix = 8;
-	    goto usproc;
+         case 'l':              /* long data */
+            lval = 1;
+            goto fmtnxt;
 
-	 case 'p':		/* Pointer */
-	    lval = (sizeof(char*) == sizeof(long));
-	    pad = '0';
-	    width = 4;
-	    preci = 8;
-	    /* fall thru */
+         case 'h':              /* short data */
+            lval = 0;
+            goto fmtnxt;
 
-	 case 'x':		/* Unsigned hexadecimal */
-	 case 'X':
-	    radix = 16;
-	    /* fall thru */
+         case 'd':              /* Signed decimal */
+         case 'i':
+            ptmp = ltostr((long) ((lval)
+                         ? va_arg(ap, long)
+                         : va_arg(ap, int)),
+                 10);
+            goto printit;
 
-	 case 'u':		/* Unsigned decimal */
-	 case 'k':		/* Pticks */
-	  usproc:
-	    l = lval? va_arg(ap, unsigned long) : (unsigned long)va_arg(ap, unsigned int);
-	    if (*fmt == 'k') {
-		if (_weakaddr(ptostr)) {
-		    (_weakfn(ptostr))(l, ptmp);
-		    preci = -1;
-		    goto printit;
-		}
-		/* if precision timing not linked in, display as unsigned */
-	    }
-	    ptmp = ultostr(l, radix);
-	    if( hash && radix == 8 ) { width = strlen(ptmp)+1; pad='0'; }
-	    goto printit;
+         case 'b':              /* Unsigned binary */
+            radix = 2;
+            goto usproc;
 
-	 case '#':
-	    hash=1;
-	    goto fmtnxt;
+         case 'o':              /* Unsigned octal */
+            radix = 8;
+            goto usproc;
 
-	 case 'c':		/* Character */
-	    ptmp[0] = va_arg(ap, int);
-	    ptmp[1] = '\0';
-	    goto nopad;
+         case 'p':              /* Pointer */
+            lval = (sizeof(char*) == sizeof(long));
+            pad = '0';
+            width = 4;
+            preci = 8;
+            /* fall thru */
 
-	 case 's':		/* String */
-	    ptmp = va_arg(ap, char*);
-	    if (!ptmp) ptmp = "(null)";
-	  nopad:
-	    sign = '\0';
-	    pad = ' ';
-	  printit:
-	    cnt += printfield(op, (unsigned char *)ptmp, ljustf,
-			   sign, pad, width, preci, buffer_mode);
-	    break;
+         case 'x':              /* Unsigned hexadecimal */
+         case 'X':
+            radix = 16;
+            /* fall thru */
+
+         case 'u':              /* Unsigned decimal */
+         case 'k':              /* Pticks */
+          usproc:
+            l = lval? va_arg(ap, unsigned long) : (unsigned long)va_arg(ap, unsigned int);
+            if (*fmt == 'k') {
+                if (_weakaddr(ptostr)) {
+                    (_weakfn(ptostr))(l, ptmp);
+                    preci = -1;
+                    goto printit;
+                }
+                /* if precision timing not linked in, display as unsigned */
+            }
+            ptmp = ultostr(l, radix);
+            if( hash && radix == 8 ) { width = strlen(ptmp)+1; pad='0'; }
+            goto printit;
+
+         case '#':
+            hash=1;
+            goto fmtnxt;
+
+         case 'c':              /* Character */
+            ptmp[0] = va_arg(ap, int);
+            ptmp[1] = '\0';
+            goto nopad;
+
+         case 's':              /* String */
+            ptmp = va_arg(ap, char*);
+            if (!ptmp) ptmp = "(null)";
+          nopad:
+            sign = '\0';
+            pad = ' ';
+          printit:
+            cnt += printfield(op, (unsigned char *)ptmp, ljustf,
+                           sign, pad, width, preci, buffer_mode);
+            break;
 
 #ifndef __HAS_NO_FLOATS__
-	 case 'e':		/* float */
-	 case 'f':
-	 case 'g':
-	 case 'E':
-	 case 'G':
-	    if (_weakaddr(dtostr))
-	    {
-	       (_weakfn(dtostr))(va_arg(ap, double), *fmt, preci, ptmp);
-	       preci = -1;
-	       goto printit;
-	    }
-	    /* FALLTHROUGH if no floating printf available */
+         case 'e':              /* float */
+         case 'f':
+         case 'g':
+         case 'E':
+         case 'G':
+            if (_weakaddr(dtostr))
+            {
+               (_weakfn(dtostr))(va_arg(ap, double), *fmt, preci, ptmp);
+               preci = -1;
+               goto printit;
+            }
+            /* FALLTHROUGH if no floating printf available */
 #endif
 
-	 default:		/* unknown character */
-	    goto charout;
-	 }
+         default:               /* unknown character */
+            goto charout;
+         }
       }
       else
       {
        charout:
-	 putc(*fmt, op);	/* normal char out */
-	 ++cnt;
+         putc(*fmt, op);        /* normal char out */
+         ++cnt;
          if( *fmt == '\n' && buffer_mode == _IOLBF ) fflush(op);
       }
       ++fmt;
