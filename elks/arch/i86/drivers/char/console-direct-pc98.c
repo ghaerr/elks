@@ -78,8 +78,8 @@ static Console *Visible[MAX_DISPLAYS];
 static Console Con[MAX_CONSOLES];
 static int NumConsoles = MAX_CONSOLES;
 
-int Current_VCminor = 0;
-int kraw = 0;
+int Current_VCminor;
+int kraw;
 unsigned VideoSeg;
 unsigned AttributeSeg;
 

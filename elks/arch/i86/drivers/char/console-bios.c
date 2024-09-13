@@ -71,7 +71,7 @@ static Console *Visible[MAX_DISPLAYS];
 static Console Con[MAX_CONSOLES];
 static int NumConsoles = MAX_CONSOLES;
 static int kraw;
-static int Current_VCminor = 0;
+static int Current_VCminor;
 
 #ifdef CONFIG_EMUL_ANSI
 #define TERM_TYPE " emulating ANSI "

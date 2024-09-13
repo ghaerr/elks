@@ -77,11 +77,11 @@ static Console *glock;
 static struct wait_queue glock_wait;
 static Console *Visible[MAX_DISPLAYS];
 static Console Con[MAX_CONSOLES];
-static int NumConsoles = 0;
+static int NumConsoles;
 
-int Current_VCminor = 0;
+int Current_VCminor;
 unsigned VideoSeg;
-int kraw = 0;
+int kraw;
 
 #ifdef CONFIG_EMUL_ANSI
 #define TERM_TYPE " emulating ANSI "
