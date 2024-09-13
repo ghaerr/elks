@@ -40,7 +40,7 @@ static struct {			/* ramdrive information*/
     int start;			/* starting memory segment*/
     int valid;			/* ramdisk data valid flag*/
     rd_sector_t size;		/* ramdisk size in 512 byte sectors*/
-} drive_info[MAX_DRIVES] = {
+} rd_info[MAX_DRIVES] = {
 #if CONFIG_RAMDISK_SEGMENT
     {0, 1, CONFIG_RAMDISK_SECTORS}
 #endif
@@ -76,13 +76,13 @@ static int rd_open(struct inode *inode, struct file *filp)
     debug("RD: open /dev/rd%d\n", target);
     if (!rd_initialised || target >= MAX_DRIVES
 #if CONFIG_RAMDISK_SEGMENT
-        || !drive_info[target].valid
+        || !rd_info[target].valid
 #endif
                                                 )
         return -ENXIO;
 
     ++access_count[target];
-    inode->i_size = (long)drive_info[target].size << 9;
+    inode->i_size = (long)rd_info[target].size << 9;
     return 0;
 }
 
@@ -115,9 +115,9 @@ static int dealloc(int target)
 {
     int i, j;
 
-    i = drive_info[target].start;
+    i = rd_info[target].start;
     debug("RD: dealloc target %d, index %d, size %d sectors\n",
-	   target, i, drive_info[target].size);
+	   target, i, rd_info[target].size);
     while (i != -1 && rd_segment[i].sectors != 0) {
 	j = i;
 	debug("RD: dealloc purging rd_segment[%d].seg = 0x%x, next index %d, size = %d\n",
@@ -132,8 +132,8 @@ static int dealloc(int target)
 	debug("RD: dealloc status rd_segment[%d].seg = 0x%x, next index %d, size = %d\n",
 	     j, rd_segment[j].seg, rd_segment[j].next, rd_segment[j].sectors);
     }
-    drive_info[target].valid = 0;
-    drive_info[target].size = 0;
+    rd_info[target].valid = 0;
+    rd_info[target].size = 0;
     return 0;
 }
 
@@ -150,10 +150,10 @@ static int rd_ioctl(register struct inode *inode, struct file *file,
     debug("RD: ioctl %d %s\n", target, (cmd ? "kill" : "make"));
     switch (cmd) {
     case RDCREATE:
-	if (drive_info[target].valid)
+	if (rd_info[target].valid)
 	    return -EBUSY;
 
-	drive_info[target].size = 0;
+	rd_info[target].size = 0;
 	k = -1;
 	for (i = 0; i <= (arg - 1) / ((ALLOC_SIZE / 1024) * PARA); i++) {
 		j = find_free_seg();	/* find free place in queue */
@@ -163,7 +163,7 @@ static int rd_ioctl(register struct inode *inode, struct file *file,
 		    return -ENOMEM;
 		}
 		if (i == 0)
-		    drive_info[target].start = j;
+		    rd_info[target].start = j;
 
 		if (i == (arg / ((ALLOC_SIZE / 1024) * PARA)))
 		    /* size in 16 byte pages = (arg % 64) * 64 */
@@ -185,7 +185,7 @@ static int rd_ioctl(register struct inode *inode, struct file *file,
 		/* recalculate size to reflect size in sectors, not pages */
 		size = size / (RD_SECTOR_SIZE / PARA);
 		rd_segment[j].sectors = size;
-		drive_info[target].size += rd_segment[j].sectors;
+		rd_info[target].size += rd_segment[j].sectors;
 		size = (long) rd_segment[j].sectors * RD_SECTOR_SIZE;
 		debug("RD: index %d set to %d sectors, %ld bytes\n",
 		       j, rd_segment[j].sectors, size);
@@ -198,14 +198,14 @@ static int rd_ioctl(register struct inode *inode, struct file *file,
 		    rd_segment[k].next = j;	/* set link to next index */
 		k = j;
 	}
-	drive_info[target].valid = 1;
+	rd_info[target].valid = 1;
 	debug("RD: ramdisk %d created sectors %d index %d bytes %ld\n",
-		target, drive_info[target].size, drive_info[target].start,
-		(long)drive_info[target].size * RD_SECTOR_SIZE);
+		target, rd_info[target].size, rd_info[target].start,
+		(long)rd_info[target].size * RD_SECTOR_SIZE);
 	return 0;
 
     case RDDESTROY:
-	if (drive_info[target].valid) {
+	if (rd_info[target].valid) {
 	    invalidate_inodes(inode->i_rdev);
 	    invalidate_buffers(inode->i_rdev);
 	    dealloc(target);
@@ -241,10 +241,10 @@ static void do_rd_request(void)
 	target = DEVICE_NR(req->rq_dev);
 	debug("RD: %s dev %d sector %d, ", req->rq_cmd == READ? "read": "write",
 		target, start);
-	if (drive_info[target].valid == 0 ||
-                start + req->rq_nr_sectors > drive_info[target].size) {
+	if (rd_info[target].valid == 0 ||
+                start + req->rq_nr_sectors > rd_info[target].size) {
 	    debug("rd%d: sector %d beyond max %d\n",
-		 target, start, drive_info[target].size);
+		 target, start, rd_info[target].size);
 	    end_request(0);
 	    continue;
 	}
@@ -252,7 +252,7 @@ static void do_rd_request(void)
         for (count = 0; count < req->rq_nr_sectors; count++) {
             /* find appropriate memory segment and sector offset*/
             offset = start;
-            index = drive_info[target].start;
+            index = rd_info[target].start;
             debug("index %d, ", index);
             while (offset > rd_segment[index].sectors) {
                 offset -= rd_segment[index].sectors;
@@ -293,7 +293,7 @@ void INITPROC rd_init(void)
 
 #if CONFIG_RAMDISK_SEGMENT
 	printk("rd: %dK ramdisk at %x:0000\n",
-	    drive_info[0].size >> 1, rd_segment[0].seg);
+	    rd_info[0].size >> 1, rd_segment[0].seg);
 
 #if (CONFIG_RAMDISK_SECTORS > 128)
 	/* build segment array for preloaded ramdisks > 64k*/

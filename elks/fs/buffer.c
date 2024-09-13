@@ -88,7 +88,7 @@ static int nr_free_bh, nr_bh;
 #define DCR_COUNT(bh) if(!(--bh->b_count))nr_free_bh++
 #define INR_COUNT(bh) if(!(bh->b_count++))nr_free_bh--
 #define CLR_COUNT(bh) if(bh->b_count)nr_free_bh++
-#define SET_COUNT(bh) if(--nr_free_bh < 0) { panic("get_free_buffer: bad free count"); }
+#define SET_COUNT(bh) if(--nr_free_bh < 0) { panic("buffer free count"); }
 #else
 #define DCR_COUNT(bh) (bh->b_count--)
 #define INR_COUNT(bh) (bh->b_count++)
@@ -214,7 +214,7 @@ int INITPROC buffer_init(void)
     debug_setcallback(1, list_buffer_status);   /* ^O will generate buffer list */
 #endif
 
-    if (!(L1buf = heap_alloc(nr_map_bufs * BLOCK_SIZE, HEAP_TAG_BUFHEAD|HEAP_TAG_CLEAR)))
+    if (!(L1buf = heap_alloc(nr_map_bufs * BLOCK_SIZE, HEAP_TAG_CACHE|HEAP_TAG_CLEAR)))
         return 1;
 
     buffer_heads = heap_alloc(bufs_to_alloc * sizeof(struct buffer_head),

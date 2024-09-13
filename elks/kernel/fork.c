@@ -9,7 +9,7 @@
 #include <arch/segment.h>
 
 int task_slots_unused;
-__task *next_task_slot;
+struct task_struct *next_task_slot;
 pid_t last_pid = -1;
 
 static pid_t get_pid(void)
@@ -37,11 +37,10 @@ static pid_t get_pid(void)
 struct task_struct *find_empty_process(void)
 {
     register struct task_struct *t;
-    register struct task_struct *currentp = current;
 
     if (task_slots_unused <= 1) {
         printk("Only %d task slots\n", task_slots_unused);
-        if (!task_slots_unused || currentp->uid)
+        if (!task_slots_unused || current->uid)
             return NULL;
     }
     t = next_task_slot;
@@ -51,7 +50,7 @@ struct task_struct *find_empty_process(void)
     }
     next_task_slot = t;
     task_slots_unused--;
-    *t = *currentp;
+    *t = *current;
     t->state = TASK_UNINTERRUPTIBLE;
     t->pid = get_pid();
 #ifdef CONFIG_CPU_USAGE
@@ -74,38 +73,44 @@ struct task_struct *find_empty_process(void)
 pid_t do_fork(int virtual)
 {
     register struct task_struct *t;
-    int j;
+    int j, k;
     struct file *filp;
-    register __ptask currentp = current;
+    struct segment *s;
 
     if ((t = find_empty_process()) == NULL)
         return -EAGAIN;
+    debug_wait("FORK(%P): -> %d\n", t->pid);
 
     /* Fix up what's different */
 
-    /*
-     * We do shared text.
-     */
-    seg_get(currentp->mm.seg_code);
+    /* t->mm[] is a duplicate of current->mm[] by find_empty_process */
+    for (j = 0; j < MAX_SEGS; j++) {
+        s = t->mm[j];
+        if (s) {
+            if ((s->flags & SEG_FLAG_TYPE) == SEG_FLAG_CSEG)
+                seg_get(s);         /* share text */
+            else {
+                if (virtual) {
+                    seg_get(s);     /* share data for vfork */
+                } else {
+                    t->mm[j] = seg_dup(s);
+                    if (t->mm[j] == 0) {
+                        for (k = 0; k < j; k++)
+                            seg_put(t->mm[k]);
+                        t->state = TASK_UNUSED;
+                        task_slots_unused++;
+                        next_task_slot = t;
+                        return -ENOMEM;
+                    }
 
-    if (virtual) {
-        seg_get(currentp->mm.seg_data);
-    } else {
-        t->mm.seg_data = seg_dup(currentp->mm.seg_data);
-
-        if (t->mm.seg_data == 0) {
-            seg_put (currentp->mm.seg_code);
-            t->state = TASK_UNUSED;
-            task_slots_unused++;
-            next_task_slot = t;
-            return -ENOMEM;
+                    if ((t->mm[j]->flags & SEG_FLAG_TYPE) == SEG_FLAG_DSEG)
+                        t->t_regs.ds = t->t_regs.es = t->t_regs.ss = t->mm[j]->base;
+                }
+            }
         }
-
-        t->t_regs.ds = t->t_regs.es = t->t_regs.ss = (t->mm.seg_data)->base;
     }
 
     /* Increase the reference count to all open files */
-
     j = 0;
     do {
         if ((filp = t->files.fd[j]))
@@ -119,8 +124,8 @@ pid_t do_fork(int virtual)
 
     t->exit_status = 0;
 
-    t->ppid = currentp->pid;
-    t->p_parent = currentp;
+    t->ppid = current->pid;
+    t->p_parent = current;
 
     /*
      *      Build a return stack for t.
@@ -145,7 +150,6 @@ pid_t sys_vfork(void)
 #if 1
     return do_fork(0);
 #else
-    register __ptask currentp = current;
     int retval, sc[5];
 
     if ((retval = do_fork(1)) >= 0) {
@@ -158,16 +162,16 @@ pid_t sys_vfork(void)
          * first few bytes at the top of the user stack. Save those
          * bytes in the parent's kernel stack.
          */
-        memcpy_fromfs(sc, (void *)currentp->t_regs.sp, sizeof(sc));
+        memcpy_fromfs(sc, (void *)current->t_regs.sp, sizeof(sc));
         /*
          * Let the child go on first.
          */
-        sleep_on(&currentp->child_wait);
+        sleep_on(&current->child_wait);
         /*
          * By now, the child should have its own user stack. Restore
          * the parent's user stack.
          */
-        memcpy_tofs((void *)currentp->t_regs.sp, sc, sizeof(sc));
+        memcpy_tofs((void *)current->t_regs.sp, sc, sizeof(sc));
     }
     return retval;
 #endif

@@ -36,5 +36,4 @@ mainmenu_option next_comment
 	#fi
 
 	bool 'Pseudo tty device driver'		CONFIG_PSEUDO_TTY	  y
-	#bool 'Meta device driver'		CONFIG_DEV_META		  n
 endmenu

@@ -16,13 +16,6 @@ all:	ktcp
 ktcp:	$(OBJS)
 	$(LD) $(LDFLAGS) -maout-heap=32768 -maout-stack=3072  -o ktcp $(OBJS) $(LDLIBS)
 
-lint:
-	@for FILE in *.c ; do \
-		echo '===>' "$${FILE}" ; \
-		splint -weak -D__KERNEL__ $(LOCALFLAGS) "$${FILE}" \
-			2>&1 > "$${FILE}.lint" ; \
-	done
-
 install: ktcp
 	$(INSTALL) ktcp $(DESTDIR)/bin
 

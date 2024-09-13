@@ -71,7 +71,7 @@ static void INITPROC dump_ide(word_t *buffer, int size) {
  * Could detect ATAPI drives here (extreme head count).
  */
 
-int INITPROC get_ide_data(int drive, struct drive_infot *drive_info) {
+int INITPROC get_ide_data(int drive, struct drive_infot *drivep) {
 
 	word_t port = io_ports[drive >> 1];
 	int retval = -1;
@@ -126,14 +126,14 @@ int INITPROC get_ide_data(int drive, struct drive_infot *drive_info) {
 		printk("IDE default CHS: %d/%d/%d serial %s\n",
 			ide_buffer[1], ide_buffer[3], ide_buffer[6], &ide_buffer[10]);
 #endif
-	    	drive_info->cylinders = ide_buffer[54];
-	    	drive_info->heads = ide_buffer[55];
-	    	drive_info->sectors = ide_buffer[56];
+	    	drivep->cylinders = ide_buffer[54];
+	    	drivep->heads = ide_buffer[55];
+	    	drivep->sectors = ide_buffer[56];
 
 		/* Note: If the 3rd drive is slave, not master, it will be reported as
 		 * hdd, not hdc here. */
 		debug("hd%c: %d heads, %d cylinders, %d sectors\n", 'a'+drive,
-			drive_info->heads, drive_info->cylinders, drive_info->sectors);
+			drivep->heads, drivep->cylinders, drivep->sectors);
 		retval = 0;
 	    } else {
 #if IDE_DEBUG

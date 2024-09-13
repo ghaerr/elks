@@ -5,5 +5,5 @@ umask 022
 #if test "$USER" = "root"; then chmod 777 /tmp; fi
 #uname -v
 #export MANPATH=/root/man:/lib
-#TZ=GMT0
+#export TZ=GMT0
 # if TZ= set in /bootopts or above it overrides CONFIG_TIME_TZ, so don't set TZ= below

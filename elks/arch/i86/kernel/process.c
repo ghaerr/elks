@@ -48,29 +48,28 @@ int run_init_process_sptr(const char *cmd, char *sptr, int slen)
  */
 void stack_check(void)
 {
-    register __ptask currentp = current;
-    register char *end = (char *)currentp->t_endbrk;
+    segoff_t end = current->t_endbrk;
 
 #ifdef CONFIG_EXEC_LOW_STACK
-    if (currentp->t_begstack <= currentp->t_enddata) {  /* stack below heap?*/
-        if (currentp->t_regs.sp < (__u16)end)
+    if (current->t_begstack <= current->t_enddata) {  /* stack below heap?*/
+        if (current->t_regs.sp < end)
             return;
         end = 0;
     } else
 #endif
     {
         /* optional: check stack over min stack*/
-        if (currentp->t_regs.sp < currentp->t_begstack - currentp->t_minstack) {
-          if (currentp->t_minstack)     /* display if protected stack*/
+        if (current->t_regs.sp < current->t_begstack - current->t_minstack) {
+          if (current->t_minstack)     /* display if protected stack*/
             printk("(%P)STACK OVER MINSTACK by %u BYTES\n",
-                currentp->t_begstack - currentp->t_minstack - currentp->t_regs.sp);
+                current->t_begstack - current->t_minstack - current->t_regs.sp);
         }
 
         /* check stack overflow heap*/
-        if (currentp->t_regs.sp > (__u16)end)
+        if (current->t_regs.sp > end)
             return;
     }
-    printk("(%P)STACK OVERFLOW BY %u BYTES\n", (__u16)end - currentp->t_regs.sp);
+    printk("(%P)STACK OVERFLOW BY %u BYTES\n", end - current->t_regs.sp);
     do_exit(SIGSEGV);
 }
 
@@ -86,6 +85,7 @@ void kfork_proc(void (*addr)())
     t = find_empty_process();
 
     t->t_xregs.cs = kernel_cs;                  /* Run in kernel space */
+    /* All other t_regs values invalid for idle task or handlers interrupting idle task */
     t->t_regs.ds = t->t_regs.es = t->t_regs.ss = kernel_ds;
     if (addr)
         arch_build_stack(t, addr);
@@ -124,7 +124,7 @@ void arch_setup_user_stack (register struct task_struct * t, word_t entry)
  *
  * We need to make the program return to another point - to the signal
  * handler. The user stack currently looks like this:-
- *
+ *  [low address <---> high address ]
  *              bp  ip  cs  f
  *
  * and will look like this
@@ -187,7 +187,7 @@ void arch_setup_sighandler_stack(register struct task_struct *t,
  * with IP pointing to ret_from_syscall, and current->t_xregs.ksp pointing
  * to si on the kernel stack. Values for the child stack si, di and bp can
  * be anything because their final value will be taken from the task structure
- * in the case of fork(), or will be initialized at the begining of the target
+ * in the case of fork(), or will be initialized at the beginning of the target
  * function in the case of kfork_proc().
  */
 

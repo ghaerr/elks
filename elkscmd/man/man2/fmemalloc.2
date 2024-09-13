@@ -1,0 +1,33 @@
+.TH FMEMALLOC 2
+.SH NAME
+_fmemalloc \- allocate far memory outside process
+.SH SYNOPSIS
+.nf
+.ft B
+_fmemalloc(int \fIparas\fP, unsigned short *\fIpseg\fP)
+.ft R
+.fi
+.SH DESCRIPTION
+.PP
+.B _fmemalloc 
+allocates 
+.IR paras
+paragraphs of main memory
+from outside the process for use using a __far pointer within the application.
+The segment address of the memory is stored in the pointer
+.IR pseg .
+.SH "RETURN VALUE
+The value 0 is returned if no error occurs.  Otherwise,
+the call returns a negative error number.
+.SH ERRORS
+.I _fmemalloc
+will fail if one of the following occur:
+.TP 15
+[EFFAULT]
+.I pseg
+points outside the process's allocated address space.
+.TP 15
+[NOMEM]
+The requested amount of memory is not available.
+.SH "SEE ALSO"
+.BR fmemalloc (3).

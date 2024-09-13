@@ -1,0 +1,28 @@
+.TH FMEMALLOC 3
+.SH NAME
+fmemalloc \- allocate far memory outside process
+.SH SYNOPSIS
+.nf
+.ft B
+#include <stdlib.h>
+
+void __far *fmemalloc(unsigned long \fIsize\fP)
+.ft R
+.fi
+.SH DESCRIPTION
+.PP
+.B fmemalloc
+allocates 
+.IR size
+bytes of main memory from outside the process for use using a __far pointer
+within the application.
+The
+.IR size
+parameter will be rounded up to the next paragraph boundary.
+
+Any allocated memory will be automatically freed on exit from the application.
+.SH "RETURN VALUE
+The value 0 is returned if no error occurs.  Otherwise,
+the call returns a __far pointer to the memory allocated.
+.SH "SEE ALSO"
+.BR fmemalloc (2).

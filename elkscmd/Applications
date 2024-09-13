@@ -87,19 +87,20 @@ sys_utils/chmem                 :sysutil            :720k
 sys_utils/kill                  :sysutil        :360c :720k
 sys_utils/ps            :sash   :sysutil        :360k           :128k       :nocomp
 sys_utils/ps :::uptime          :sysutil                        :128k   :1440k
-sys_utils/reboot                :sysutil        :360k           :128k
 sys_utils/makeboot              :sysutil        :360k
 sys_utils/man                   :sysutil                :1200k
 sys_utils/meminfo       :sash   :sysutil        :360k           :128k
 sys_utils/mouse                 :sysutil                 :1200c     :1440k
 sys_utils/passwd                :sysutil                :1200k
-sys_utils/poweroff              :sysutil            :720k
+#sys_utils/shutdown :::reboot    :sysutil            :720k       :128k
+#sys_utils/shutdown :::poweroff  :sysutil            :720k
 sys_utils/sercat                :sysutil                            :1400c
 sys_utils/console               :sysutil                :1200k
 #sys_utils/who                  :sysutil                :1200k
 sys_utils/unreal16              :sysutil                            :1440c
 sys_utils/beep                  :sysutil                :1200k
 sys_utils/decomp                :sysutil         :360c          :1440k
+sys_utils/sysctl                :sysutil                :1200k
 screen/screen                   :screen                 :1200k
 cron/cron                       :cron                   :1200k
 cron/crontab                    :cron                   :1200k
@@ -178,7 +179,7 @@ tui/ttyinfo                     :tui                            :1440k
 tui/sl                          :tui                    :1200k
 tui/ttyclock                    :tui            :360c   :1200k
 tui/ttypong                     :tui                            :1440k
-tui/ttytetris                   :tui            :360k
+tui/ttytetris                   :tui            :360c
 busyelks/busyelks               :busyelks
 inet/httpd/sample_index.html ::var/www/index.html :net
 ktcp/ktcp                       :net

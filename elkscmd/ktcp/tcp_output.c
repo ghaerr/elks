@@ -317,7 +317,7 @@ void tcp_retrans_expire(void)
     n = retrans_list;
     while (n != NULL) {
 	datalen = n->len - TCP_DATAOFF(&n->tcphdr[0]);
-	if (n->tcphdr[0].flags & TF_FIN) datalen++;
+	if (n->tcphdr[0].flags & (TF_SYN|TF_FIN)) datalen++;
 
 	/* calc RTT and remove if seqno was acked*/
 	if (SEQ_LEQ(ntohl(n->tcphdr[0].seqnum) + datalen, n->cb->send_una)) {

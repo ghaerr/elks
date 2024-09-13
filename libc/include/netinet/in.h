@@ -2,14 +2,13 @@
 #define _ARPA_INET_H_
 
 #include <features.h>
-#include <stddef.h>
 #include <sys/types.h>
 #include __SYSINC__(in.h)
 #include __SYSINC__(un.h)
 
 typedef __u32 ipaddr_t;		/* ip address in network byte order*/
 
-#ifdef __ia16__
+#ifdef __GNUC__
 #define ntohs(x)	__builtin_bswap16(x)
 #define ntohl(x)	__builtin_bswap32(x)
 

@@ -14,7 +14,7 @@ setvbuf(FILE * fp, char * buf, int mode, size_t size)
 
    if( mode == _IOFBF || mode == _IOLBF )
    {
-      if( size <= 0  ) size = BUFSIZ;
+      if( (int)size <= 0  ) size = BUFSIZ;
       if( buf == 0 )
       {
          if( (buf = malloc(size)) != 0 )

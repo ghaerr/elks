@@ -1,10 +1,9 @@
-#include "_stdio.h"
+#include <stdio.h>
 
 int
 fputc(int ch, FILE *fp)
 {
    register int v;
-   __LINK_SYMBOL(__stdio_init);
 
    /* If last op was a read ... note fflush may change fp->mode and ret OK */
    if ((fp->mode & __MODE_READING) && fflush(fp))
@@ -30,8 +29,7 @@ fputc(int ch, FILE *fp)
    fp->mode |= __MODE_WRITING;
 
    /* Unbuffered or Line buffered and end of line */
-   if (((ch == '\n' && (v & _IOLBF)) || (v & _IONBF))
-       && fflush(fp))
+   if (((ch == '\n' && (v & _IOLBF)) || (v & _IONBF)) && fflush(fp))
       return EOF;
 
    /* Can the macro handle this by itself ? */

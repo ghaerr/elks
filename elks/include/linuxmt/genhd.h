@@ -31,7 +31,6 @@ struct partition
     sector_t nr_sects;          /* nr of sectors in partition */
 };
 
-#ifdef CONFIG_ARCH_PC98
 struct partition_pc98
 {
     unsigned char boot_ind;     /* bootable */
@@ -48,7 +47,6 @@ struct partition_pc98
     unsigned int end_cyl;       /* end cylinder */
     char name[16];
 };
-#endif
 
 struct hd_struct
 {
@@ -80,6 +78,7 @@ struct gendisk
 
 extern struct drive_infot *last_drive;  /* set to last drivep-> used in read/write */
 extern unsigned char bios_drive_map[];  /* map drive to BIOS drivenum */
+extern struct drive_infot drive_info[];
 
 extern struct gendisk *gendisk_head;    /* linked list of disks */
 

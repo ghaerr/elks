@@ -52,19 +52,21 @@ char *getenv(const char *name);
 int putenv(char *string);
 char *mktemp(char *template);
 
-noreturn void abort (void);
-int atexit (void (* function) ());
-noreturn void exit (int status);
+noreturn void abort(void);
+int atexit (void (*function)(void));
+noreturn void exit(int status);
+noreturn void _exit(int status); /* syscall */
 int system(const char *command);
 void qsort(void *base, size_t nel, size_t width,
 	int (*compar)(/*const void *, const void * */));
 char *devname(dev_t dev, mode_t type);
 
 #ifndef __STRICT_ANSI__
-void breakpoint();
+int (bsr)(int x);
 char *itoa(int val);
 char *uitoa(unsigned int val);
 char *ltoa(long val);
+char *ultoa(unsigned long val);
 char *ltostr(long val, int radix);
 char *lltostr(long long val, int radix);
 char *ultostr(unsigned long val, int radix);

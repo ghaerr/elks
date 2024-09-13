@@ -1,19 +1,57 @@
-26th January 2000
- Al Riddoch <ajr@ecs.soton.ac.uk>
+--- ELKS process layout in memory ---
 
- Up until now the only binary format supported by ELKS has been the basic
+ The binary format supported by ELKS is the basic
  minix format which locates data bss and heap at address 0 in the data
  segment, locates the stack at the top of the data segment, and effectively
- hard sets the limit on the total memory used by the program at load time,
- and wastes this memory most of the time.
+ hard sets the limit on the total memory used by the program at load time.
 
- Here is the diagram from memory.txt
+ This can waste the memory some of the time, but is useful since
+ it cannot be guaranteed that the heap portion can be extended later
+ when a process needs it because real mode lacks an MMU.
 
- +------------+--------------------------------------------------+
- | data + bss |  heap ---> |                          <--- stack |
- +------------+--------------------------------------------------+
- ^            ^            ^                                     ^
- 0x0  current->t_enddata  current->t_endbrk                  current->t_endstack
+
+Here is the ELKS/minix process layout and kernel variables maintaining it:
+
+                                            current->t_begstack
+                                                     v
+ +------------+--------------------------------------------+
+ | data + bss |  heap ----> |            |<--- stack | env |
+ +------------+--------------------------------------------+
+ ^            ^             ^                              ^
+ 0x0  current->t_enddata  current->t_endbrk       current->t_endseg
+
+The .data and .bss sections are fixed in size and start at DS
+offset zero. The beginning of heap follows at t_enddata and the
+current top of heap is at t_endbrk, which is allowed to grow
+up until t_begstack - t_minstack. The program's passed argv/envp
+array is above the highest (start) stack address at t_begstack,
+and the total data segment allocated to the process is offset t_endseg.
+
+ The ELKS header format is derived from Minix and is as follows:-
+
+ struct minix_exec_hdr
+ {
+         unsigned long type;            /* magic, flags and cpu type */
+ #define MINIX_COMBID    0x04100301L
+ #define MINIX_SPLITID   0x04200301L
+ #define MINIX_S_SPLITID 0x04600301L
+ #define MINIX_DLLID     0x04A00301L
+         unsigned char hlen;            /* size of executable header */
+         unsigned char reserved1;
+         unsigned short version;        /* =1 to use minstack */
+         unsigned long tseg;            /* .text segment size */
+         unsigned long dseg;            /* .data data size */
+         unsigned long bseg;            /* .bss data size */
+         unsigned long entry;           /* program IP entry point */
+         unsigned short chmem;          /* heap size, 0 = 4K default*/
+         unsigned short minstack;       /* stack sizes, 0 = 4K default */
+         unsigned long syms;            /* optional symbol table length at EOF */
+ };
+
+
+ --- Following is deprecated and guarded with CONFIG_EXEC_LOW_STACK in code ---
+26th January 2000
+ Al Riddoch <ajr@ecs.soton.ac.uk>
 
  As of now I have implemented a new format which locates the stack below
  the data and bss in reserved space at the bottom of the data segment,
@@ -35,35 +73,9 @@
 
  and here is how the new labels apply to the old format
 
-                                            current->t_begstack
-                                                     v
- +------------+--------------------------------------------+
- | data + bss |  heap ----> |            |<--- stack | env |
- +------------+--------------------------------------------+
- ^            ^             ^                              ^
- 0x0  current->t_enddata  current->t_endbrk       current->t_endseg
-
  A check for what type a binary is can be done by checking if t_begstack
  (stack pointer at the start of the process is) is greater than t_enddata.
  If it is, this is old format, otherwise it is new format.
-
- The basic minix header format is as follows:-
-
- struct minix_exec_hdr
- {
-         unsigned long type;
- #define MINIX_COMBID    0x04100301L
- #define MINIX_SPLITID   0x04200301L     
- #define MINIX_S_SPLITID 0x04600301L     
- #define MINIX_DLLID     0x04A00301L     
-         unsigned long hlen;
-         unsigned long tseg;
-         unsigned long dseg;
-         unsigned long bseg;
-         unsigned long unused;
-         unsigned long chmem;
-         unsigned long unused2; 
- };
 
  Header file a.out.h in the Dev86 package describe some optional extra fields
  at the end of this structure, which can be described as a supplementary

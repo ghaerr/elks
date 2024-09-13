@@ -24,7 +24,7 @@
  *  4 - /dev/tty*,ttyp*,ttyS*  /dev/f{0,1}            char tty, pty slave, serial, block fd
  *  5 -
  *  6 - /dev/lp                /dev/rom               char lp, block romflash
- *  7 - /dev/ucd               /dev/ubd               meta UDD user device drivers
+ *  7 -
  *  8 - /dev/tcpdev                                   kernel <-> ktcp comm
  *  9 - /dev/eth                                      NIC driver
  * 10 - /dev/cgatext
@@ -40,7 +40,7 @@
 #define TTY_MAJOR         4
                              /* 5 unused*/
 #define LP_MAJOR          6
-#define UDD_MAJOR         7  /* experimental*/
+                             /* 7 unused*/
 #define TCPDEV_MAJOR      8
 #define ETH_MAJOR         9
 #define CGATEXT_MAJOR     10

@@ -3,6 +3,7 @@
 
 /* Assorted initializers */
 
+#include <linuxmt/config.h>
 #include <linuxmt/types.h>
 
 #if defined(CONFIG_FARTEXT_KERNEL) && !defined(__STRICT_ANSI__)
@@ -19,7 +20,6 @@ struct gendisk;
 struct drive_infot;
 
 /* kernel init routines*/
-extern void INITPROC kernel_init(void);
 extern int  INITPROC buffer_init(void);
 extern void INITPROC console_init(void);
 extern void INITPROC fs_init(void);

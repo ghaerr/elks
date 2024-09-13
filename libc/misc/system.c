@@ -1,11 +1,11 @@
-#include <stddef.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <paths.h>
 
 int
-system(char *command)
+system(const char *command)
 {
    int status, pid;
    sighandler_t save_quit;

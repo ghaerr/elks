@@ -1,29 +1,9 @@
 #ifndef __SYS_CDEFS_H
 #define __SYS_CDEFS_H
-/* compiler-specific definitions */
+/* compiler-specific definitions for userspace */
 
-#if __STDC__
-
-#define	__CONCAT(x,y)	x ## y
-#define	__STRING(x)     #x
-#define __ptr_t         void *
-
-#else
-
-#define	__CONCAT(x,y)	x/**/y
-#define	__STRING(x)     "x"
-#define __ptr_t         char *
-
-#endif
-
-#define __P(x) x        /* always ANSI C */
-
-/* don't require <stdnoreturn.h> */
-#ifdef __GNUC__
-#define noreturn        __attribute__((__noreturn__))
-#else
-#define noreturn
-#endif
+#include <features.h>
+#include __SYSARCHINC__(cdefs.h)
 
 /* No C++ */
 #define __BEGIN_DECLS

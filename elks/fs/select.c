@@ -52,35 +52,34 @@ struct wait_queue select_queue;  /* magic queue - see sleepwake.c */
 
 void select_wait (struct wait_queue *q)
 {
-	int n;
-	struct wait_queue **p;
+    int n;
+    struct wait_queue **p;
 
-	for (n = 0; n < POLL_MAX; n++) {
-		p = &(current->poll [n]);
-		if (!*p) {
-			*p = q;
-			return;
-		}
-	}
+    for (n = 0; n < MAX_POLLFD; n++) {
+        p = &(current->poll [n]);
+        if (!*p) {
+            *p = q;
+            return;
+        }
+    }
 
-	panic ("select_wait:no slot left");
+    panic ("select_wait");      /* no slot left */
 }
 
 /* Return true if queue is polled */
 
 int select_poll (struct task_struct * t, struct wait_queue *q)
 {
-	int n;
-	struct wait_queue *p;
+    int n;
+    struct wait_queue *p;
 
-	for (n = 0; n < POLL_MAX; n++) {
-		p = t->poll [n];
-		if (!p) return 0;
-		if (p == q) return 1;
-	}
+    for (n = 0; n < MAX_POLLFD; n++) {
+        p = t->poll [n];
+        if (!p) return 0;
+        if (p == q) return 1;
+    }
 
-	panic ("select_poll:no slot found\n");
-	return 0;
+    panic ("select_poll");      /* no slot found */
 }
 
 /*
@@ -105,13 +104,13 @@ static int check(int flag, register struct file *file)
     register struct file_operations *fops;
 
     if ((fops = file->f_op) && fops->select)
-	return (fops->select(file->f_inode, file, flag));
+        return (fops->select(file->f_inode, file, flag));
 
     return (flag != SEL_EX);
 }
 
 static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
-		     fd_set * res_in, fd_set * res_out, fd_set * res_ex)
+                     fd_set * res_in, fd_set * res_out, fd_set * res_ex)
 {
     fd_set set;
     int count = -1;
@@ -121,11 +120,11 @@ static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
     set = *in | *out | *ex;
     filp = current->files.fd;
     for (i = 0; set && (i < n); i++, set >>= 1) {
-	if ((int)set & 1) {
-	    if ((*filp == NULL) || ((*filp)->f_inode == NULL)) return -EBADF;
-	    count = i;
-	}
-	filp++;
+        if ((int)set & 1) {
+            if ((*filp == NULL) || ((*filp)->f_inode == NULL)) return -EBADF;
+            count = i;
+        }
+        filp++;
     }
     n = count + 1;
     count = 0;
@@ -136,31 +135,31 @@ static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
      * reschedule current task since current->state == TASK_RUNNING by wake_up.
      */
     current->state = TASK_INTERRUPTIBLE;
-    memset (current->poll, 0, sizeof (struct wait_queue *) * POLL_MAX);
+    memset (current->poll, 0, sizeof (struct wait_queue *) * MAX_POLLFD);
     filp = current->files.fd;
     for (i = 0; i < n; i++, filp++) {
-	if (*filp) {
-	    if (FD_ISSET(i, in) && check(SEL_IN, *filp)) {
-		FD_SET(i, res_in);
-		count++;
-	    }
-	    if (FD_ISSET(i, out) && check(SEL_OUT, *filp)) {
-		FD_SET(i, res_out);
-		count++;
-	    }
-	    if (FD_ISSET(i, ex) && check(SEL_EX, *filp)) {
-		FD_SET(i, res_ex);
-		count++;
-	    }
-	}
+        if (*filp) {
+            if (FD_ISSET(i, in) && check(SEL_IN, *filp)) {
+                FD_SET(i, res_in);
+                count++;
+            }
+            if (FD_ISSET(i, out) && check(SEL_OUT, *filp)) {
+                FD_SET(i, res_out);
+                count++;
+            }
+            if (FD_ISSET(i, ex) && check(SEL_EX, *filp)) {
+                FD_SET(i, res_ex);
+                count++;
+            }
+        }
     }
     if (!count && current->timeout && !(current->signal /* & ~currentp->blocked */ )) {
-	debug_sched("select(%P): timeout %lx\n", current->timeout);
-	schedule();
-	goto repeat;
+        debug_sched("select(%P): timeout %lx\n", current->timeout);
+        schedule();
+        goto repeat;
     }
 
-    memset (current->poll, 0, sizeof (struct wait_queue *) * POLL_MAX);
+    memset (current->poll, 0, sizeof (struct wait_queue *) * MAX_POLLFD);
     current->state = TASK_RUNNING;
     wait_clear(&select_queue);
     return count;
@@ -174,8 +173,8 @@ static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
 static int get_fd_set(register fd_set * fs_pointer, register fd_set * fdset)
 {
     if (fs_pointer)
-	return verified_memcpy_fromfs((char *) fdset, fs_pointer,
-				      sizeof(fd_set));
+        return verified_memcpy_fromfs((char *) fdset, fs_pointer,
+                                      sizeof(fd_set));
 
     memset(fdset, 0, sizeof(fd_set));
     return 0;
@@ -193,7 +192,7 @@ static void zero_fd_set(fd_set * fdset)
 
 
 int sys_select(int n, fd_set * inp, fd_set * outp, fd_set * exp,
-	       register struct timeval *tvp)
+               register struct timeval *tvp)
 {
     int error;
     fd_set res_in, in;
@@ -204,16 +203,16 @@ int sys_select(int n, fd_set * inp, fd_set * outp, fd_set * exp,
     if (n > NR_OPEN) n = NR_OPEN;
     error = -EINVAL;
     if ((n < 0) || (error = get_fd_set(inp, &in)) ||
-	(error = get_fd_set(outp, &out)) || (error = get_fd_set(exp, &ex)))
-	goto outl;
+        (error = get_fd_set(outp, &out)) || (error = get_fd_set(exp, &ex)))
+        goto outl;
     timeout = ~0UL;
     if (tvp) {
-	error = verify_area(VERIFY_WRITE, tvp, sizeof(*tvp));
-	if (error) goto outl;
+        error = verify_area(VERIFY_WRITE, tvp, sizeof(*tvp));
+        if (error) goto outl;
 
-	timeout = ROUND_UP(get_user_long(&tvp->tv_usec), (1000000 / HZ));
-	timeout += get_user_long(&tvp->tv_sec) * (jiff_t) HZ;
-	if (timeout) timeout += jiffies + 1UL;
+        timeout = ROUND_UP(get_user_long(&tvp->tv_usec), (1000000 / HZ));
+        timeout += get_user_long(&tvp->tv_sec) * (jiff_t) HZ;
+        if (timeout) timeout += jiffies + 1UL;
     }
     zero_fd_set(&res_in);
     zero_fd_set(&res_out);
@@ -223,13 +222,13 @@ int sys_select(int n, fd_set * inp, fd_set * outp, fd_set * exp,
 
     current->timeout = 0UL;
     if (!error && (current->signal /* & ~current->blocked */ ))
-	error = -EINTR;
-	else {
-		/* update arrays even after timeout - see issue #213 */
-		set_fd_set(inp, &res_in);
-		set_fd_set(outp, &res_out);
-		set_fd_set(exp, &res_ex);
-	}
+        error = -EINTR;
+        else {
+                /* update arrays even after timeout - see issue #213 */
+                set_fd_set(inp, &res_in);
+                set_fd_set(outp, &res_out);
+                set_fd_set(exp, &res_ex);
+        }
 
   outl:
     return error;

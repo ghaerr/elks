@@ -1,5 +1,5 @@
 /* Apr 2020 Greg Haerr - handles LONG_MIN */
-#include <stdio.h>
+#include <stdlib.h>
 #define MAX_LONG_CHARS 34
 
 char *ltoa(long val)

@@ -2,8 +2,6 @@
 #define __TIME_H
 
 #include <sys/types.h>
-#include <stdint.h>
-#include <stddef.h>
 
 typedef int64_t clock_t;
 

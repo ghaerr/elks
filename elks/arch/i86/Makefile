@@ -66,23 +66,12 @@ LIBGCC = "`$(CC) $(CFLAGS) -print-libgcc-file-name`"
 # Things to make.
 
 .PHONY: toolkit
-
-boot/bootsect:   boot/bootsect.o
-	$(LD) $(LDFLAGS) -M -T $(TOPDIR)/elks/elks-tiny.ld -o boot/bootsect boot/bootsect.o > boot/bootsect.map
-	$(POSTLINK) --tiny boot/bootsect
-
-boot/netbootsect:	boot/netbootsect.o
-	$(LD) $(LDFLAGS) -M $(ARCH_LD) -s -o boot/netbootsect boot/netbootsect.o > boot/netbootsect.map
-	$(POSTLINK) boot/netbootsect
-
-boot/netbootsect.o:	boot/netbootsect.s
+toolkit:
+	${MAKE} -C tools all
 
 boot/setup:   boot/setup.o
 	$(LD) $(LDFLAGS) -M -T $(TOPDIR)/elks/elks-tiny.ld -o boot/setup boot/setup.o > boot/setup.map
 	$(POSTLINK) --tiny boot/setup
-
-toolkit:
-	${MAKE} -C tools all
 
 $(BASEDIR)/include/arch/asm-offsets.h: kernel/asm-offsets.c asm-offsets.awk
 	$(CC) $(CFLAGS) -S -o asm-offsets.s kernel/asm-offsets.c
@@ -105,11 +94,8 @@ boot/system:	$(XINCLUDE) $(AARCHIVES) $(ADRIVERS) boot/crt0.o
 
 ifneq ($(CONFIG_ROMCODE), y)
 
-Image:	toolkit boot/bootsect boot/setup boot/system
-	tools/build boot/bootsect boot/setup boot/system > boot/Image
-
-nbImage:	Image boot/netbootsect
-	tools/mknbi-elks boot/netbootsect boot/Image boot/nbImage
+Image:	toolkit boot/setup boot/system
+	tools/build arg_ignored boot/setup boot/system > boot/Image
 
 else
 
@@ -127,11 +113,6 @@ endif
 
 #########################################################################
 # Other commands.
-
-boot:	Image
-	dd if=boot/Image of=/dev/fd0 bs=8192
-
-disk:	boot
 
 setup:	toolkit boot/setup  
 	tools/mkbootloader $(RVECT) -c $(CONFIG_ROM_SETUP_CODE) $(ROM_MAX_SETUP_SIZE) Image $(CONFIG_ROM_BASE) -a boot/setup $(CONFIG_ROM_SETUP_CODE) -s boot/system $(CONFIG_ROM_KERNEL_CODE) $(CONFIG_ROM_BIOS_MODULE) $(CONFIG_ROM_BIOS_MODULE_ADDR)

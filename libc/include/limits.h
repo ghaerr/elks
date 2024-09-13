@@ -14,7 +14,11 @@
 
 #define OPEN_MAX        NR_OPEN
 
-#ifndef _GCC_NEXT_LIMITS_H
+#ifdef __WATCOMC__
+#include <watcom/limits.h>
+#endif
+
+#if defined(__GNUC__) && !defined(_GCC_NEXT_LIMITS_H)
 #include_next <limits.h>
 #endif
 

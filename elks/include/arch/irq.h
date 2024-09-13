@@ -1,22 +1,31 @@
 #ifndef __ARCH_8086_IRQ_H
 #define __ARCH_8086_IRQ_H
 
-#include <linuxmt/types.h>
-
-/* irq.c*/
+#ifdef __KERNEL__
+/* irq numbers >= 16 are hardware exceptions/traps or syscall */
+#define IDX_SYSCALL     16
+#define IDX_DIVZERO     17
+#define NR_IRQS         18      /* = # IRQs plus special indexes above */
 
 #define INT_GENERIC  0  // use the generic interrupt handler (aka '_irqit')
 #define INT_SPECIFIC 1  // use a specific interrupt handler
 
+#ifndef __ASSEMBLER__
+#include <linuxmt/types.h>
+
+/* irq.c*/
 typedef void (* int_proc) (void);  // any INT handler
 typedef void (* irq_handler) (int,struct pt_regs *);   // IRQ handler
 
-void do_IRQ(int,void *);
+void do_IRQ(int,struct pt_regs *);
+void div0_handler(int, struct pt_regs *);
 int request_irq(int,irq_handler,int hflag);
 int free_irq(int irq);
-void int_vector_set (int vect, int_proc proc, int seg);
-void _irqit (void);
 
+/* irqtab.S */
+void _irqit (void);
+void int_vector_set (int vect, word_t proc, word_t seg);
+void div0_handler_panic(void);
 
 /* irq-8259.c, irq-8018x.c*/
 void initialize_irq(void);
@@ -26,6 +35,8 @@ int remap_irq(int);
 int irq_vector(int irq);
 
 void idle_halt(void);
+#endif /* __ASSEMBLER__ */
+#endif /* __KERNEL__ */
 
 #ifdef __ia16__
 #define save_flags(x)                   \

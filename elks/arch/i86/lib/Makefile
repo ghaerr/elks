@@ -59,6 +59,10 @@ SRCS3 = \
 	bitops.c \
 	# end of list
 
+ifeq ($(CONFIG_ARCH_IBMPC), y)
+SRCS3 += prectimer.c
+endif
+
 OBJS3 = $(SRCS3:.c=.o)
 
 OBJS		= $(OBJS1) $(OBJS2) $(OBJS3)

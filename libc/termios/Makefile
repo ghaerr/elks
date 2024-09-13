@@ -1,6 +1,15 @@
 # Makefile of /libc/termios module
 
-include $(TOPDIR)/libc/Makefile.inc
+COMPILER ?= ia16
+LIB ?= out.a
+
+include $(TOPDIR)/libc/$(COMPILER).inc
+
+# these are unimplemented
+#CFLAGS += -DL_tcdrain -DL_tcflow -DL_tcgetpgrp -DL_cfmakeraw
+
+# TCSBRK is unimplemented except for with elksemu
+CFLAGS += -DL_tcsendbreak
 
 OBJS = \
 	cfgetispeed.o \
@@ -19,11 +28,11 @@ OBJS = \
 	tcsetpgrp.o \
 	ttyname.o \
 
-all: out.a
+all: $(LIB)
 
-out.a: $(OBJS)
+$(LIB): $(LIBOBJS)
 	$(RM) $@
-	$(AR) $(ARFLAGS_SUB) $@ $^
+	$(AR) $(ARFLAGS_SUB) $@ $(LIBOBJS)
 
 clean::
 	$(RM) *.[aod]

@@ -17,9 +17,9 @@
 
 #define idle_task task[0]
 
-__task *task;           /* dynamically allocated task array */
-__ptask current;
-__ptask previous;
+struct task_struct *task;           /* dynamically allocated task array */
+struct task_struct *current;
+struct task_struct *previous;
 int max_tasks = MAX_TASKS;
 
 void add_to_runqueue(register struct task_struct *p)
@@ -33,9 +33,9 @@ static void del_from_runqueue(register struct task_struct *p)
 {
 #ifdef CHECK_SCHED
     if (!p->next_run || !p->prev_run)
-        panic("SCHED(%d): task not on run-queue, state %d", p->pid, p->state);
+        panic("delrunq %d,%d", p->pid, p->state);   /* task not on run queue */
     if (p == &idle_task)
-        panic("SCHED: trying to sleep idle task");
+        panic("delrunq idle");                      /* trying to sleep idle task */
 #endif
     (p->next_run->prev_run = p->prev_run)->next_run = p->next_run;
     p->next_run = p->prev_run = NULL;
@@ -44,7 +44,7 @@ static void del_from_runqueue(register struct task_struct *p)
 
 static void process_timeout(int __data)
 {
-    register struct task_struct *p = (struct task_struct *) __data;
+    struct task_struct *p = (struct task_struct *) __data;
 
     debug_sched("sched: timeout %d\n", p->pid);
     p->timeout = 0UL;
@@ -59,18 +59,18 @@ static void process_timeout(int __data)
 
 void schedule(void)
 {
-    register __ptask prev;
-    register __ptask next;
-    struct timer_list timer;
+    struct task_struct *prev;
+    struct task_struct *next;
     jiff_t timeout = 0UL;
+    struct timer_list timer;
 
     prev = current;
 
 #ifdef CHECK_SCHED
-    if (intr_count) {
+    if (_gint_count > 1) {      /* neither user nor idle task was running */
         /* Taking a timer IRQ during another IRQ or while in kernel space is
          * quite legal. We just dont switch then */
-         panic("SCHED: schedule() called from interrupt, intr_count %d", intr_count);
+         panic("schedule from int\n");
     }
 #endif
 

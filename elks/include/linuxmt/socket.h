@@ -1,7 +1,6 @@
 #ifndef __LINUXMT_SOCKET_H
 #define __LINUXMT_SOCKET_H
 
-#include <stddef.h>
 #include <linuxmt/types.h>
 #include <linuxmt/uio.h>
 

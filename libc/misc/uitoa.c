@@ -10,5 +10,5 @@ char *uitoa(unsigned int i)
     do {
         *--b = '0' + (i % 10);
     } while ((i /= 10) != 0);
-   return b;
+    return b;
 }

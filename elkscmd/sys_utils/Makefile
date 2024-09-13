@@ -24,13 +24,11 @@ PRGS = \
 	mount \
 	umount \
 	passwd \
-	reboot \
 	shutdown \
 	ps \
 	meminfo \
 	who \
 	man \
-	poweroff \
 	chmem \
 	clock \
 	unreal16 \
@@ -40,6 +38,7 @@ PRGS = \
 	console \
 	makeboot \
 	decomp \
+	sysctl \
 	# EOL
 
 HOSTPRGS = hostdecomp
@@ -74,9 +73,6 @@ umount: umount.o
 passwd: passwd.o
 	$(LD) $(LDFLAGS) -o passwd passwd.o $(LDLIBS)
 
-reboot: reboot.o
-	$(LD) $(LDFLAGS) -o reboot reboot.o $(LDLIBS)
-
 shutdown: shutdown.o
 	$(LD) $(LDFLAGS) -o shutdown shutdown.o $(LDLIBS)
 
@@ -101,9 +97,6 @@ knl: knl.o
 man: man.o
 	$(LD) $(LDFLAGS) -o man man.o $(LDLIBS)
 
-poweroff: poweroff.o
-	$(LD) $(LDFLAGS) -o poweroff poweroff.o $(LDLIBS)
-
 chmem: chmem.o $(TINYPRINTF)
 	$(LD) $(LDFLAGS) -o chmem chmem.o $(TINYPRINTF) $(LDLIBS)
 
@@ -124,6 +117,9 @@ unreal.o: $(ELKS_LIB)/unreal.S
 
 beep: beep.o
 	$(LD) $(LDFLAGS) -o beep beep.o $(LDLIBS)
+
+sysctl: sysctl.o
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 unreal16: unreal16.o unreal.o
 	$(LD) -melks-libc -mcmodel=small -c unreal16.S -o unreal16.o

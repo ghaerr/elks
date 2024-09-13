@@ -39,13 +39,12 @@ static void generate(sig_t sig, sigset_t msksig, register struct task_struct *p)
 
 int send_sig(sig_t sig, register struct task_struct *p, int priv)
 {
-    register __ptask currentp = current;
     sigset_t msksig;
 
     if (sig != SIGCHLD) debug_sig("SIGNAL send_sig %d pid %d\n", sig, p->pid);
-    if (!priv && ((sig != SIGCONT) || (currentp->session != p->session)) &&
-        (currentp->euid ^ p->suid) && (currentp->euid ^ p->uid) &&
-        (currentp->uid ^ p->suid) && (currentp->uid ^ p->uid) && !suser())
+    if (!priv && ((sig != SIGCONT) || (current->session != p->session)) &&
+        (current->euid ^ p->suid) && (current->euid ^ p->uid) &&
+        (current->uid ^ p->suid) && (current->uid ^ p->uid) && !suser())
         return -EPERM;
     msksig = (((sigset_t)1) << (sig - 1));
     if (msksig & (SM_SIGKILL | SM_SIGCONT)) {
@@ -105,7 +104,6 @@ void kill_all(sig_t sig)
 
 int sys_kill(pid_t pid, sig_t sig)
 {
-    register __ptask pcurrent = current;
     register struct task_struct *p;
     int count, err, retval;
 
@@ -116,7 +114,7 @@ int sys_kill(pid_t pid, sig_t sig)
     count = retval = 0;
     if (pid == (pid_t)-1) {
         for_each_task(p)
-            if (p->pid > 1 && p != pcurrent && p->state < TASK_ZOMBIE) {
+            if (p->pid > 1 && p != current && p->state < TASK_ZOMBIE) {
                 count++;
                 if ((err = send_sig(sig, p, 0)) != -EPERM)
                     retval = err;
@@ -124,12 +122,15 @@ int sys_kill(pid_t pid, sig_t sig)
         return (count ? retval : -ESRCH);
     }
     if (pid < 1)
-        return kill_pg((!pid ? pcurrent->pgrp : -pid), sig, 0);
+        return kill_pg((!pid ? current->pgrp : -pid), sig, 0);
     return kill_process(pid, sig, 0);
 }
 
 int sys_signal(int signr, __kern_sighandler_t handler)
 {
+    int i;
+    struct segment *s;
+
     debug_sig("SIGNAL sys_signal %d action %x:%x pid %P\n", signr,
               _FP_SEG(handler), _FP_OFF(handler));
     if (((unsigned int)signr > NSIG) || signr == SIGKILL || signr == SIGSTOP)
@@ -139,14 +140,16 @@ int sys_signal(int signr, __kern_sighandler_t handler)
     else if (handler == KERN_SIG_IGN)
         current->sig.action[signr - 1].sa_dispose = SIGDISP_IGN;
     else {
-        if (_FP_SEG(handler) < current->mm.seg_code->base ||
-            _FP_SEG(handler) >= current->mm.seg_code->base
-                                + current->mm.seg_code->size) {
-            debug_sig("SIGNAL sys_signal supplied handler is bogus!\n");
-            debug_sig("SIGNAL sys_signal cs not in [%x, %x)\n",
-                      current->mm.seg_code->base,
-                      current->mm.seg_code->base + current->mm.seg_code->size);
-            return -EINVAL;
+        for (i = 0; i < MAX_SEGS; i++) {
+            s = current->mm[i];
+            if (!s || (s->flags & SEG_FLAG_TYPE) != SEG_FLAG_CSEG)
+                continue;
+            if (_FP_SEG(handler) < s->base || _FP_SEG(handler) >= s->base + s->size) {
+                printk("SIGNAL sys_signal supplied handler is bad\n");
+                debug_sig("SIGNAL sys_signal cs not in [%x, %x)\n",
+                    s->base, s->base + s->size);
+                return -EINVAL;
+            }
         }
         current->sig.handler = handler;
         current->sig.action[signr - 1].sa_dispose = SIGDISP_CUSTOM;

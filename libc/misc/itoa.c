@@ -1,5 +1,5 @@
 /* Apr 2020 Greg Haerr - handles INT_MIN */
-#include <stdio.h>
+#include <stdlib.h>
 #define MAX_INT_CHARS 7
 
 char *itoa(int val)

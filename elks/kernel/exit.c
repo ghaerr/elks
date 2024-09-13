@@ -93,6 +93,7 @@ int sys_wait4(pid_t pid, int *status, int options, void *usage)
 
 void do_exit(int status)
 {
+    int i;
     struct task_struct *parent;
 
     debug_wait("EXIT(%P) status %d\n", status);
@@ -104,11 +105,11 @@ void do_exit(int status)
 
     /* Let go of the process */
     current->state = TASK_EXITING;
-    if (current->mm.seg_code)
-        seg_put(current->mm.seg_code);
-    if (current->mm.seg_data)
-        seg_put(current->mm.seg_data);
-    current->mm.seg_code = current->mm.seg_data = 0;
+    for (i = 0; i < MAX_SEGS; i++) {
+        if (current->mm[i])
+            seg_put(current->mm[i]);
+        current->mm[i] = 0;
+    }
 
     /* free program allocated memory */
     seg_free_pid(current->pid);
@@ -137,7 +138,7 @@ void do_exit(int status)
     current->state = TASK_ZOMBIE;
     wake_up(&parent->child_wait);
     schedule();
-    panic("sys_exit\n");
+    panic("sys_exit");
 }
 
 void sys_exit(int status)

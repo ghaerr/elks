@@ -22,7 +22,6 @@
 
 int do_signal(void)
 {
-    register __ptask currentp = current;
     register __sigdisposition_t *sd;
     register __kern_sighandler_t sah;
     unsigned int signr;
@@ -30,27 +29,27 @@ int do_signal(void)
 
     signr = 1;
     mask = (sigset_t)1;
-    while (currentp->signal) {
-	while(!(currentp->signal & mask)) {
+    while (current->signal) {
+	while(!(current->signal & mask)) {
 	    signr++;
 	    mask <<= 1;
 	}
-	currentp->signal ^= mask;
+	current->signal ^= mask;
 
 	debug_sig("SIGNAL process signal %d pid %P\n", signr);
-	sah = currentp->sig.handler;
-	sd = &currentp->sig.action[signr - 1].sa_dispose;
+	sah = current->sig.handler;
+	sd = &current->sig.action[signr - 1].sa_dispose;
 	if (*sd == SIGDISP_DFL) {			/* Default */
 	    if ((mask &					/* Default Ignore */
 			(SM_SIGCONT | SM_SIGCHLD | SM_SIGWINCH | SM_SIGURG))
-		|| (currentp->pid == 1 && signr != SIGKILL))
+		|| (current->pid == 1 && signr != SIGKILL))
 		continue;
 	    else if (mask &				/* Default Stop */
 			(SM_SIGSTOP | SM_SIGTSTP | SM_SIGTTIN | SM_SIGTTOU)) {
 		debug_sig("SIGNAL pid %P stopped\n");
-		currentp->state = TASK_STOPPED;
+		current->state = TASK_STOPPED;
 		/* Let the parent know */
-		currentp->exit_status = signr;
+		current->exit_status = signr;
 		schedule();
 	    }
 	    else {					/* Default Core or Terminate */
@@ -66,14 +65,14 @@ int do_signal(void)
 	else if (*sd != SIGDISP_IGN) {			/* Set handler */
 	    debug_sig("SIGNAL setup return stack for handler %x:%x\n",
 		      _FP_SEG(sah), _FP_OFF(sah));
-	    arch_setup_sighandler_stack(currentp, sah, signr);
+	    arch_setup_sighandler_stack(current, sah, signr);
 	    *sd = SIGDISP_DFL;
 	    debug_sig("SIGNAL reset pending signals\n");
 	    clr_irq();		/* stop race between reset signal and return to user */
-	    currentp->signal &= ~mask;
-	    if (currentp->signal)
+	    current->signal &= ~mask;
+	    if (current->signal)
 		printk("SIGNAL(%P) processing mask %04x, additional signal w/mask %04x\n",
-		    mask, currentp->signal);
+		    mask, current->signal);
 
 	    return 1;
 	}

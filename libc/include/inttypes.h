@@ -1,5 +1,6 @@
 #ifndef _INTTYPES_H
 #define _INTTYPES_H
+/* For application compatibility, not used in ELKS C Library */
 
 /* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.

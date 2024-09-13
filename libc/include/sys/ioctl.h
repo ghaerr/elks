@@ -4,6 +4,6 @@
 #include <features.h>
 #include __SYSINC__(ioctl.h)
 
-int ioctl(int __fildes, int __cmd, ...);
+int ioctl(int __fildes, int __cmd, ...);         /* syscall */
 
 #endif

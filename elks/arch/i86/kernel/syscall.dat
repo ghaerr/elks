@@ -83,7 +83,7 @@ readlink	+59	3
 umask		+60	1	 
 settimeofday	+61	2
 gettimeofday	+62	2
-select		+63	5	. 5 paramaters is possible
+select		+63	5	. 5 parameters is possible
 readdir		+64	3	*
 insmod		65	1	- Removed support for modules
 fchown		+66	3
@@ -92,6 +92,7 @@ setsid		+68	0
 sbrk		+69	2	* Legacy number from Linux
 ustatfs		+70	3
 setitimer	+71	3
+sysctl		+72	3	. ELKS
 uname		+74	1	. was knlvsn
 #
 # From /usr/include/asm-generic/unistd.h

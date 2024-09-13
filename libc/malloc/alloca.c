@@ -6,14 +6,13 @@
 /* This alloca is based on the same concept as the EMACS fallback alloca.
  * It should probably be considered Copyright the FSF under the GPL.
  */
-static mem *alloca_stack = 0;
+static mem __wcnear *alloca_stack = 0;
 
 void *
-alloca(size)
-size_t size;
+alloca(size_t size)
 {
    auto char probe;		/* Probes stack depth: */
-   register mem *hp;
+   register mem __wcnear *hp;
 
    /*
     * Reclaim garbage, defined as all alloca'd storage that was allocated
@@ -23,7 +22,7 @@ size_t size;
    for (hp = alloca_stack; hp != 0;)
       if (m_deep(hp) < &probe)
       {
-	 register mem *np = m_next(hp);
+	 register mem __wcnear *np = m_next(hp);
 	 free((void *) hp);	/* Collect garbage.  */
 	 hp = np;		/* -> next header.  */
       }
@@ -34,7 +33,7 @@ size_t size;
    if (size == 0)
       return 0;			/* No allocation required.  */
 
-   hp = (mem *) (*__alloca_alloc) (sizeof(mem)*2 + size);
+   hp = (mem __wcnear *) (*__alloca_alloc) (sizeof(mem)*2 + size);
    if (hp == 0)
       return hp;
 

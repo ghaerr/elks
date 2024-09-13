@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdarg.h>
 
 #define	PAR_NONE	0
 #define	PAR_IF		1
@@ -82,6 +83,27 @@ static long getnum(const char *cp)
 	return value;
 }
 
+char *ultoa_r(char *buf, unsigned long i)
+{
+    char *b = buf + 34 - 1;
+
+    *b = '\0';
+    do {
+        *--b = '0' + (i % 10);
+    } while ((i /= 10) != 0);
+    return b;
+}
+static void eprintf(const char *s, ...)
+{
+    va_list va;
+
+    va_start(va, s);
+    do {
+        write(2, s, strlen(s));
+        s = va_arg(va, const char *);
+    } while (s);
+    va_end(va);
+}
 
 int main(int argc, char **argv)
 {
@@ -102,6 +124,7 @@ int main(int argc, char **argv)
 	long	outtotal = 0;
 	char	*buf;
 	int	retval = 1;
+	char	b1[34], b2[34];
 
 	infile = NULL;
 	outfile = NULL;
@@ -282,27 +305,15 @@ cleanup3:
 	if (buf != localbuf) free(buf);
 
 	/* %ld+%ld records in */
-	cp = ltoa(intotal / blocksize);
-	errstr(cp);
-	errmsg("+");
-	cp = ltoa((intotal % blocksize) != 0);
-	errstr(cp);
-	errmsg(" records in\n");
+	eprintf(ultoa_r(b1, intotal / blocksize), "+",
+		ultoa_r(b2, (intotal % blocksize) != 0), " records in\n", 0);
 
 	/* %ld+%ld records out */
-	cp = ltoa(outtotal / blocksize);
-	errstr(cp);
-	errmsg("+");
-	cp = ltoa((outtotal % blocksize) != 0);
-	errstr(cp);
-	errmsg(" records out\n");
+	eprintf(ultoa_r(b1, outtotal / blocksize), "+",
+		ultoa_r(b2, (outtotal % blocksize) != 0), " records out\n", 0);
 
 	/* %ld butes (%ld%c KiB) copied */
-	cp = ltoa(outtotal);
-	errstr(cp);
-	errmsg(" bytes (");
-	cp = ltoa(outtotal >> 10);
-	errstr(cp);
+	eprintf(ultoa_r(b1, outtotal), " bytes (", ultoa_r(b2, outtotal >> 10), 0);
 	if (outtotal & 0x3ff)
 		errmsg("+");
 	errmsg(" KiB) copied\n");

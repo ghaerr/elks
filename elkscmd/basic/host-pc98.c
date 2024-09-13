@@ -13,7 +13,6 @@
 
 #define LIO_M_SIZE 5200
 
-extern FILE *outfile;
 extern void intc5_handler(void);
 
 static unsigned char __far *lio_m;

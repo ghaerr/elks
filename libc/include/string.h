@@ -1,7 +1,7 @@
 #ifndef __STRING_H
 #define __STRING_H
 
-#include <stddef.h>
+#include <sys/types.h>
 
 /* Basic string functions */
 

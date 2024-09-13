@@ -3,8 +3,15 @@ bin/mfsck
 bin/mfs
 bin/setboot
 bin/objdump86
+bin/omfdump
+bin/omf2elf
+bin/os2toelks
+bin/os2dump
 bin/elf2elks
 bin/elks-compress
 bin/exomizer
 bin/eman
+bin/ewcc
+bin/ewlink
+bin/fixomf
 elftoolchain-0.7.1

@@ -43,10 +43,9 @@ int sys_utime(char *filename, register struct utimbuf *times)
  * We do this by temporarily setting fsuid/fsgid to the wanted values
  */
 
-int sys_access(char *filename, int mode)
+int sys_access(char *filename, mode_t mode)
 {
     struct inode *inode;
-    register __ptask currentp = current;
     uid_t old_euid;
     gid_t old_egid;
     int error;
@@ -54,42 +53,40 @@ int sys_access(char *filename, int mode)
     if (mode != (mode & S_IRWXO))       /* where's F_OK, X_OK, W_OK, R_OK? */
         error = -EINVAL;
     else {
-        old_euid = currentp->euid;
-        old_egid = currentp->egid;
-        currentp->euid = currentp->uid;
-        currentp->egid = currentp->gid;
+        old_euid = current->euid;
+        old_egid = current->egid;
+        current->euid = current->uid;
+        current->egid = current->gid;
         error = namei(filename, &inode, 0, mode);
         if (!error) iput(inode);
-        currentp->euid = old_euid;
-        currentp->egid = old_egid;
+        current->euid = old_euid;
+        current->egid = old_egid;
     }
     return error;
 }
 
 int sys_chdir(char *filename)
 {
-    register __ptask currentp = current;
     struct inode *inode;
     int error;
 
     error = namei(filename, &inode, IS_DIR, MAY_EXEC);
     if (!error) {
-        iput(currentp->fs.pwd);
-        currentp->fs.pwd = inode;
+        iput(current->fs.pwd);
+        current->fs.pwd = inode;
     }
     return error;
 }
 
 int sys_chroot(char *filename)
 {
-    register __ptask currentp = current;
     struct inode *inode;
     int error;
 
     error = (suser() ? namei(filename, &inode, IS_DIR, 0) : -EPERM);
     if (!error) {
-        iput(currentp->fs.root);
-        currentp->fs.root = inode;
+        iput(current->fs.root);
+        current->fs.root = inode;
     }
     return error;
 }
@@ -110,7 +107,7 @@ int sys_chmod(char *filename, mode_t mode)
         iput(inodep);
         return -EROFS;
     }
-    if (mode == (mode_t) - 1)
+    if (mode == (mode_t) -1)
         mode = inodep->i_mode;
     nap->ia_mode = (mode & S_IALLUGO) | (inodep->i_mode & ~S_IALLUGO);
     nap->ia_valid = ATTR_MODE | ATTR_CTIME;
@@ -234,13 +231,13 @@ int sys_fchown(unsigned int fd, uid_t user, gid_t group)
  * used by symlinks.
  */
 
-int sys_open(const char *filename, int flags, int mode)
+int sys_open(const char *filename, int flags, mode_t mode)
 {
     struct inode *inode;
     int error, flag;
 
     flag = flags;
-    if ((mode_t)((flags + 1) & O_ACCMODE)) flag++;
+    if ((flags + 1) & O_ACCMODE) flag++;
     if (flag & (O_TRUNC | O_CREAT)) flag |= FMODE_WRITE;
 
     debug_file("OPEN '%t' flags %#x", filename, flags);

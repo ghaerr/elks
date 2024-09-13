@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+#
+# ewcc - OpenWatcom owcc/wcc script for ELKS
+#
+# Usage: ewcc [-{owcc option}] [--{option}(wcc -Wc,option)] file.c ...
+#   produces filename.obj
+#
+# 3 Jun 2024 Initial version
+# 3 Jul 2024 Added -options for owcc and --options for wcc
+#
+set -e
+
+if [ -z "$TOPDIR" ]
+  then
+    echo "ELKS TOPDIR= environment variable not set"
+    exit
+fi
+
+if [ -z "$WATCOM" ]
+  then
+    echo "WATCOM= environment variable not set"
+    exit
+fi
+
+ELKSLIBCINCLUDE=$TOPDIR/libc/include
+ELKSINCLUDE1=$TOPDIR/include
+ELKSINCLUDE2=$TOPDIR/elks/include
+WATCINCLUDE=$WATCOM/h
+
+# owcc options:
+# -bnone                    # no target specific setup
+# -mcmodel={s,m,c,l}        # memory model
+# -march=i86                # 8086 codegen
+# -std=c99                  # -Wc,-za99
+# -Wc,-zev                  # enable void arithmetic
+# -Wc,-zls                  # remove automatically inserted symbols
+# -Wc,-wcd=N                # disable warning N
+# -Wc,-fpi87                # inline 8087 fp
+# -Wc,-x                    # ignore INCLUDE environment variable
+# -fno-stack-check          # don't generate stack check code
+# -fnostdlib                # don't refere standard libraries
+# unused:
+# -ztNum                    # specify far data threshold (default 32767, or 256 if no Num)
+# -mhard-emu-float          # -Wc,-fpi (inline 8087 w/emulation)
+# -msoft-float              # -Wc,-fpc
+# -Wc,-fpc                  # non-IEEE soft fp
+# -fpmath
+# -mabi=cdecl               # push all args
+# -fnonconst-initializers   # -Wc,aa
+# -fsigned-char             # plain char is signed (as gcc)
+
+source $TOPDIR/libc/watcom.model
+
+CCFLAGS="\
+    -bnone                          \
+    -mcmodel=$MODEL                 \
+    -march=i86                      \
+    -Os                             \
+    -std=c99                        \
+    -Wc,-fpi87                      \
+    -Wc,-zev                        \
+    -Wc,-zls                        \
+    -Wc,-x                          \
+    -fno-stack-check                \
+    -fnostdlib                      \
+    -Wall -Wextra                   \
+    -Wc,-wcd=303                    \
+    -I$ELKSLIBCINCLUDE              \
+    -I$ELKSINCLUDE1                 \
+    -I$ELKSINCLUDE2                 \
+    -I$WATCINCLUDE                  \
+    "
+
+while true; do
+  case "$1" in
+    --*)
+        a=${1:1}
+        echo "Adding -Wc,$a"
+        CCFLAGS="$CCFLAGS -Wc,$a"
+        shift ;;
+    -*)
+        echo "Adding $1"
+        CCFLAGS="$CCFLAGS $1"
+        shift ;;
+    *)  break ;;
+  esac
+done
+
+if [ $# -eq 0 ]
+  then
+    echo "Usage: ewcc [-{owcc option}] [--{option}(wcc -Wc,option)] file.c ..."
+    exit
+fi
+
+for PROG in $@
+do
+    echo owcc -c $CCFLAGS -o ${PROG%.c}.obj $PROG
+    owcc -c $CCFLAGS -o ${PROG%.c}.obj $PROG
+done
+
+# dump OBJ file
+#omfdump ${PROG%.c}.obj
+
+# disassemble OBJ file
+#wdis -p -e ${PROG%.c}.obj

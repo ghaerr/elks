@@ -278,16 +278,16 @@ struct file_operations {
 
 struct inode_operations {
     struct file_operations      *default_file_ops;
-    int                         (*create) ();
+    int                         (*create) (struct inode *, const char *, size_t, mode_t, struct inode **);
     int                         (*lookup) (struct inode * dir, const char * name, size_t len, struct inode ** res);
     int                         (*link) ();
     int                         (*unlink) ();
     int                         (*symlink) ();
-    int                         (*mkdir) ();
+    int                         (*mkdir) (struct inode *, const char *, size_t, mode_t);
     int                         (*rmdir) ();
-    int                         (*mknod) ();
+    int                         (*mknod) (struct inode *, const char *, size_t, mode_t, int);
     int                         (*readlink) (struct inode * i, char * buf, size_t len);
-    int                         (*follow_link) ();
+    int                         (*follow_link) (struct inode *, struct inode *, int, mode_t, struct inode **);
     struct buffer_head *        (*getblk) (struct inode *, block_t, int);
     void                        (*truncate) ();
 };
@@ -359,7 +359,7 @@ struct iattr {
 extern int notify_change(struct inode *,struct iattr *);
 #endif
 
-extern int sys_open(const char *,int,int);
+extern int sys_open(const char *,int,mode_t);
 extern int sys_close(unsigned int);     /* yes, it's really unsigned */
 
 extern void _close_allfiles(void);
@@ -412,11 +412,11 @@ extern int namei(const char *,struct inode **,int,int);
 
 extern int permission(struct inode *,int);
 
-extern int open_namei(const char *,int,int,struct inode **,struct inode *);
-extern int do_mknod(char *,int,int,dev_t);
+extern int open_namei(const char *,int,mode_t,struct inode **,struct inode *);
+extern int do_mknod(char *,int,mode_t,dev_t);
 extern void iput(struct inode *);
 
-extern struct inode *new_inode(struct inode *dir, __u16 mode);
+extern struct inode *new_inode(struct inode *dir, mode_t mode);
 extern void clear_inode(struct inode *);
 extern int open_filp(unsigned short, struct inode *, struct file **);
 extern void close_filp(struct inode *, struct file *);

@@ -6,8 +6,8 @@
 void
 free(void * ptr)
 {
-	register mem *top;
-	register mem *chk = (mem *) ptr;
+	register mem __wcnear *top;
+	register mem __wcnear *chk = (mem __wcnear *) ptr;
 
 	if (chk == 0)
 		return;		/* free(NULL) - be nice */
@@ -16,7 +16,7 @@ free(void * ptr)
 #ifdef __MINI_MALLOC__
  try_this:;
 #endif
-	top = (mem *) sbrk(0);
+	top = (mem __wcnear *) sbrk(0);
 	if (chk + m_size(chk) == top) {
 		__noise("FREE brk", chk);
 		brk(top - m_size(chk));
@@ -38,7 +38,7 @@ free(void * ptr)
 			m_next(chk) = __freed_list;
 			__freed_list = chk;
 		} else {
-			register mem *prev;
+			register mem __wcnear *prev;
 			prev = __freed_list;
 			for (top = __freed_list; top && top > chk;
 			     prev = top, top = m_next(top)) ;
@@ -46,7 +46,7 @@ free(void * ptr)
 			m_next(prev) = chk;
 		}
 #else
-		m_next(chk) = __freed_list;
+		m_next(chk) = (union mem_cell __wcnear *)__freed_list;
 		__freed_list = chk;
 #endif
 		__noise("ADD LIST", chk);

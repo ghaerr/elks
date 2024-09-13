@@ -126,7 +126,7 @@ void put_super(kdev_t dev)
     register struct super_operations *sop;
 
     if (dev == ROOT_DEV)
-        panic("put_super: root\n");
+        panic("put_super");
 
     if (!(sb = get_super(dev))) return;
     if (sb->s_covered)
@@ -218,7 +218,7 @@ int do_umount(kdev_t dev)
             }
         }
         else if (sb->s_covered) {
-            if (!sb->s_covered->i_mount) panic("umount: i_mount=NULL\n");
+            if (!sb->s_covered->i_mount) panic("umount");
             if (!fs_may_umount(dev, sb->s_mounted)) retval = -EBUSY;
             else {
                 retval = 0;
@@ -250,7 +250,9 @@ int do_umount(kdev_t dev)
 int sys_umount(char *name)
 {
     struct inode *inode;
-    register struct inode *inodep;
+    struct inode *inodep;
+    struct file_operations *fops;
+    struct super_block *sb;
     kdev_t dev;
     int retval;
 
@@ -267,7 +269,7 @@ int sys_umount(char *name)
             return -EACCES;
         }
     } else {
-        register struct super_block *sb = inodep->i_sb;
+        sb = inodep->i_sb;
         if (!sb || inodep != sb->s_mounted) {
             iput(inodep);
             return -EINVAL;
@@ -282,7 +284,6 @@ int sys_umount(char *name)
         return -ENXIO;
     }
     if (!(retval = do_umount(dev)) && dev != ROOT_DEV) {
-        register struct file_operations *fops;
         fops = get_blkfops(MAJOR(dev));
         if (fops && fops->release) fops->release(inodep, NULL);
     }
@@ -410,7 +411,7 @@ int sys_mount(char *dev_name, char *dir_name, int type, int flags)
     else if (MAJOR(inodep->i_rdev) >= MAX_BLKDEV)
         retval = -ENXIO;
     else
-        retval = open_filp((mode_t)((flags & MS_RDONLY) ? 1 : 3), inodep, &filp);
+        retval = open_filp((flags & MS_RDONLY) ? 1 : 3, inodep, &filp);
     if (retval) {
         iput(inodep);
         return retval;

@@ -689,7 +689,7 @@ void editorQueryString(char* prompt, char *buffer){
 
 void clearScreen() //function to clear the screen
 {
-  const char *CLEAR_SCREEN_ANSI = "\e[1;1H\e[2J";
+  const char *CLEAR_SCREEN_ANSI = "\033[1;1H\033[2J";
   write(STDOUT_FILENO, CLEAR_SCREEN_ANSI, 10);
 }
 

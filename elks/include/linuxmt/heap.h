@@ -23,7 +23,7 @@
 #define HEAP_TAG_PIPE    0x06   /* open pipe buffers */
 #define HEAP_TAG_INODE   0x07   /* system inodes */
 #define HEAP_TAG_FILE    0x08   /* system open files */
-
+#define HEAP_TAG_CACHE   0x09   /* L1 cache buffer */
 
 // TODO: move free list node from header to body
 // to reduce overhead for allocated block

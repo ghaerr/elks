@@ -23,28 +23,27 @@
 #include <linuxmt/types.h>
 #include <linuxmt/heap.h>
 
+#include <arch/irq.h>
 #include <arch/ports.h>
 #include <arch/segment.h>
-#include <arch/irq.h>
 
-// TODO: simplify the whole by replacing IRQ by INT number
-// Would also allow to handle any of the 0..255 interrupts
-// including the 0..7 processor exceptions & traps
-
+/*
+ * Irq index numbers >= 16 are used for hardware exceptions or syscall.
+ * This allows handling of any of the 0..255 interrupts
+ * including the 0..7 processor exceptions & traps.
+ */
 struct int_handler {
     byte_t call;        /* CALLF opcode (9Ah) */
-    int_proc proc;
+    word_t proc;
     word_t seg;
-    byte_t irq;
+    byte_t irq;         /* actually irq index number */
 } __attribute__ ((packed));
 
-#define NR_TRAMPOLINES  12
-static struct int_handler trampoline [NR_TRAMPOLINES];
-static struct int_handler *irq_trampoline [16];
-static irq_handler irq_action [16];
+static struct int_handler trampoline[NR_IRQS];
+static irq_handler irq_action[NR_IRQS];
 
 /* called by _irqit assembler hook after saving registers */
-void do_IRQ(int i,void *regs)
+void do_IRQ(int i, struct pt_regs *regs)
 {
     irq_handler ih = irq_action [i];
     if (!ih)
@@ -52,41 +51,22 @@ void do_IRQ(int i,void *regs)
     else (*ih)(i, regs);
 }
 
-static struct int_handler *handler_alloc(void)
+/* install interrupt vector to point to handler trampoline */
+static void int_handler_add(int irq, int vect, int_proc proc)
 {
     struct int_handler *h;
 
-    for (h = trampoline; h < &trampoline[NR_TRAMPOLINES]; h++) {
-        if (h->call == 0)
-            return h;
-    }
-    return NULL;
-}
-
-static void handler_free(struct int_handler *h)
-{
-    h->call = 0;
-}
-
-/* install interrupt vector to point to allocated handler trampoline */
-static int int_handler_add (int irq, int vect, int_proc proc, struct int_handler *h)
-{
-    if (!h) h = handler_alloc();
-    if (!h) return -ENOMEM;
-
+    h = &trampoline[irq];
     h->call = 0x9A;         /* CALLF opcode */
-    h->proc = proc;
+    h->proc = (word_t)proc;
     h->seg  = kernel_cs;    /* resident kernel code segment */
     h->irq  = irq;
-
-    int_vector_set (vect, (int_proc) h, kernel_ds);
-
-    return 0;
+    int_vector_set(vect, (word_t)h, kernel_ds);
 }
 
+/* request an IRQ from 0 to 15 */
 int request_irq(int irq, irq_handler handler, int hflag)
 {
-    struct int_handler *h;
     int_proc proc;
     flag_t flags;
 
@@ -94,23 +74,17 @@ int request_irq(int irq, irq_handler handler, int hflag)
     if (irq < 0 || !handler) return -EINVAL;
 
     if (irq_action [irq]) return -EBUSY;
-    h = handler_alloc();
-    if (!h) return -ENOMEM;
 
     save_flags(flags);
     clr_irq();
 
     irq_action [irq] = handler;
-    irq_trampoline [irq] = h;
 
     if (hflag == INT_SPECIFIC)
         proc = (int_proc) handler;
     else
         proc = _irqit;
-
-    // TODO: IRQ number has no meaning for an INT handler
-    // see above simplification TODO
-    int_handler_add (irq, irq_vector (irq), proc, h);
+    int_handler_add(irq, irq_vector(irq), proc);
 
     enable_irq(irq);
     restore_flags(flags);
@@ -133,11 +107,11 @@ int free_irq(int irq)
     clr_irq();
 
     disable_irq(irq);
-    int_vector_set(irq_vector(irq), 0, 0);  /* reset vector to 0:0 */
+    /* don't reset vector to 0:0, instead allow "unexpected interrupt" above */
+    /*int_vector_set(irq_vector(irq), 0, 0);*/
     irq_action[irq] = NULL;
     restore_flags(flags);
 
-    handler_free(irq_trampoline[irq]);
     return 0;
 }
 
@@ -147,7 +121,20 @@ int free_irq(int irq)
 void INITPROC irq_init(void)
 {
     /* use INT 0x80h for system calls */
-    int_handler_add(0x80, 0x80, _irqit, NULL);
+    int_handler_add(IDX_SYSCALL, 0x80, _irqit);
+
+#ifdef CONFIG_ARCH_IBMPC
+    /* catch INT 0 divide by zero/divide overflow hardware fault */
+#if 1
+    /* install direct panic-only DIV fault handler until known that
+     * the _irqit version doesn't overwrite the stack
+     */
+    int_handler_add(IDX_DIVZERO, 0x00, div0_handler_panic);
+#else
+    irq_action[IDX_DIVZERO] = div0_handler;
+    int_handler_add(IDX_DIVZERO, 0x00, _irqit);
+#endif
+#endif
 
 #if defined(CONFIG_TIMER_INT0F) || defined(CONFIG_TIMER_INT1C)
     /* Use IRQ 7 vector (simulated by INT 0Fh) for timer interrupt handler */

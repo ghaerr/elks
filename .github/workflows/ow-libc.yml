@@ -1,0 +1,60 @@
+name: ow-libc
+
+on:
+  push:
+    paths:
+      - 'elks/include/**'
+      - 'elks/tools/objtools/**'
+      - 'elkscmd/basic/**'
+      - 'include/**'
+      - 'libc/**'
+      - '.github/workflows/ow-libc.yml'
+# pull_request:
+#   paths:
+#     - 'elks/include/**'
+#     - 'elks/tools/objtools/**'
+#     - 'elkscmd/basic/**'
+#     - 'include/**'
+#     - 'libc/**'
+#     - '.github/workflows/ow-libc.yml'
+env: 
+  TOPDIR: ${{ github.workspace }}
+  TOOLDIR: ${{ github.workspace }}/elks/tools/objtools
+  SAMPLEDIR: ${{ github.workspace }}/elkscmd/rootfs_template/root
+
+jobs:
+  build:
+    name: OW LIBC build
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+        - runner: ubuntu-latest
+          arch: x64
+#        - runner: macos-13
+#          arch: x64
+#        - runner: macos-14
+#          arch: arm64
+
+    steps:
+      - name: checkout ELKS
+        uses: actions/checkout@v4
+      - name: Open Watcom setup
+        uses: open-watcom/setup-watcom@v0
+        with:
+          version: "2.0-64"
+      - name: LIBC build on ${{ matrix.runner }}-${{ matrix.arch }}
+        working-directory: libc
+        run: |
+          make -f watcom.mk clean
+          make -f watcom.mk
+      - name: build ELKS sample
+        working-directory: elkscmd/basic
+        run: |
+          rm -f basic.obj host.obj host-stubs.obj basic.os2
+          $TOOLDIR/ewcc basic.c
+          $TOOLDIR/ewcc host.c
+          $TOOLDIR/ewcc host-stubs.c
+          $TOOLDIR/ewlink basic.obj host.obj host-stubs.obj
+          cp basic.os2 $SAMPLEDIR
+

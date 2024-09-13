@@ -1,8 +1,7 @@
 #include <unistd.h>
 
-int _brk (void *);
-
-int brk (void * addr)
+int brk (const void *addr)
 {
-   return _brk (addr);
+   /* NB compact/large model must pass addr residing within app data segment */
+   return _brk ((unsigned)addr);
 }

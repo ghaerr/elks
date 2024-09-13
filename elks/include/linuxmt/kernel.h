@@ -2,7 +2,7 @@
 #define __LINUXMT_KERNEL_H
 
 #include <linuxmt/types.h>
-#include <stddef.h>
+#include <arch/cdefs.h>
 
 /*
  * 'kernel.h' contains some often-used function prototypes etc
@@ -15,14 +15,11 @@
 #define LONG_MAX	((long)(~0UL>>1))
 #define ULONG_MAX	(~0UL)
 
-/* FIXME move compiler-specific attributes to new header file */
-#define noreturn            __attribute__((__noreturn__))
-//#define printfesque(n)    __attribute__((__format__(__gnu_printf__, n, n + 1)))
-#define printfesque(n)
-
 #define structof(p,t,m) ((t *) ((char *) (p) - offsetof (t,m)))
 
 extern char running_qemu;
+extern dev_t dev_console;
+extern int dprintk_on;
 
 extern void do_exit(int) noreturn;
 
@@ -31,7 +28,7 @@ extern int kill_sl(void);
 
 extern void halt(void) noreturn;
 extern void panic(const char *, ...) noreturn;
-extern void printk(const char *, ...) printfesque(1);
+extern void printk(const char *, ...);
 extern void early_putchar(int);
 
 extern int wait_for_keypress(void);

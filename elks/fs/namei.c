@@ -34,11 +34,12 @@
 
 int permission(register struct inode *inode, int mask)
 {
-    __u16 mode = inode->i_mode;
+    mode_t mode = inode->i_mode;
     int error = -EACCES;
+    struct task_struct *p;
 
     if (mask & MAY_WRITE) {     /* disallow writing over running programs */
-        __ptask p = &task[0];
+        p = &task[0];
         do {
             if (p->state <= TASK_STOPPED && (p->t_inode == inode))
                 return -EBUSY;
@@ -59,7 +60,7 @@ int permission(register struct inode *inode, int mask)
             mode >>= 6;
         else if (in_group_p(inode->i_gid))
             mode >>= 3;
-        if (((mode & mask & 0007) == (__u16) mask) || suser())
+        if (((mode & mask & 0007) == (unsigned)mask) || suser())
             error = 0;
     }
     return error;
@@ -115,7 +116,7 @@ static int lookup(register struct inode *dir, const char *name, size_t len,
 }
 
 static int follow_link(struct inode *dir, register struct inode *inode,
-                int flag, int mode, struct inode **res_inode)
+                int flag, mode_t mode, struct inode **res_inode)
 {
     struct inode_operations *iop;
     int error = 0;
@@ -285,7 +286,7 @@ int namei(const char *pathname, register struct inode **res_inode, int dir, int 
  * for symlinks (where the permissions are checked later).
  */
 
-int open_namei(const char *pathname, int flag, int mode,
+int open_namei(const char *pathname, int flag, mode_t mode,
                struct inode **res_inode, struct inode *base)
 {
     register struct inode *dirp;
@@ -381,7 +382,7 @@ int open_namei(const char *pathname, int flag, int mode,
     return error;
 }
 
-int do_mknod(char *pathname, int offst, int mode, dev_t dev)
+int do_mknod(char *pathname, int offst, mode_t mode, dev_t dev)
 {
     register struct inode *dirp;
     register struct inode_operations *iop;
@@ -423,7 +424,7 @@ int do_mknod(char *pathname, int offst, int mode, dev_t dev)
     return error;
 }
 
-int sys_mknod(char *pathname, int mode, dev_t dev)
+int sys_mknod(char *pathname, mode_t mode, dev_t dev)
 {
     if (S_ISDIR(mode) || (!S_ISFIFO(mode) && !suser())) return -EPERM;
 
@@ -443,7 +444,7 @@ int sys_mknod(char *pathname, int mode, dev_t dev)
     return do_mknod(pathname, offsetof(struct inode_operations,mknod), mode, dev);
 }
 
-int sys_mkdir(char *pathname, int mode)
+int sys_mkdir(char *pathname, mode_t mode)
 {
     return do_mknod(pathname, offsetof(struct inode_operations,mkdir), (mode & 0777)|S_IFDIR, 0);
 }

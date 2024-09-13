@@ -1,4 +1,4 @@
-#include "_stdio.h"
+#include <stdio.h>
 
 int
 fscanf(FILE * fp, const char * fmt, ...)
@@ -6,7 +6,7 @@ fscanf(FILE * fp, const char * fmt, ...)
   va_list ptr;
   int rv;
 
-  va_strt(ptr, fmt);
+  va_start(ptr, fmt);
   rv = vfscanf(fp, (char *)fmt, ptr);
   va_end(ptr);
 

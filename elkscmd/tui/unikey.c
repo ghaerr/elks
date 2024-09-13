@@ -16,7 +16,6 @@
 #define CHECK_MOUSE     1       /* =1 to validate ANSI mouse sequences */
 #define DEBUG           1       /* =1 for keyname() */
 #define ESC             27
-#define unreachable
 
 static char scroll_reverse = 0; /* report reversed scroll wheel direction */
 int kDoubleClickTime = 200;
@@ -333,7 +332,7 @@ int readansi(int fd, char *buf, int size) {
         continue;
       }
       if (rc == -1 && errno == EAGAIN) {    /* Linux may return EAGAIN on fn key seq */
-#ifndef __ia16__
+#if !ELKS
         struct pollfd pfd[1];
         pfd[0].fd = fd;
         pfd[0].events = POLLIN;
@@ -543,7 +542,7 @@ int ansi_to_unimouse(char *buf, int n, int *x, int *y, int *modkeys, int *status
     static long lasttick;
     static int lastkey;
 
-    if (!startswith(buf, "\e[<") || (buf[n-1] != 'm' && buf[n-1] != 'M'))
+    if (!startswith(buf, "\033[<") || (buf[n-1] != 'm' && buf[n-1] != 'M'))
         return -1;
     p = buf + 3;
     if (!isdigit(*p)) return -1;
@@ -587,7 +586,7 @@ int ansi_dsr(char *buf, int n, int *cols, int *rows)
     char *p;
     int r, c;
 
-    if (n < 6 || !startswith(buf, "\e[") || buf[n-1] != 'R')
+    if (n < 6 || !startswith(buf, "\033[") || buf[n-1] != 'R')
         return -1;
     p = buf + 2;
     r = getparm(p, 0);
@@ -601,7 +600,7 @@ int ansi_dsr(char *buf, int n, int *cols, int *rows)
 }
 
 #define WRITE(FD, SLIT)             write(FD, SLIT, strlen(SLIT))
-#define PROBE_DISPLAY_SIZE          "\e7\e[9979;9979H\e[6n\e8"
+#define PROBE_DISPLAY_SIZE          "\0337\033[9979;9979H\033[6n\0338"
 
 /* probe display size - only uses DSR for now, for ELKS/UNIX compatibility */
 int tty_getsize(int *cols, int *rows)

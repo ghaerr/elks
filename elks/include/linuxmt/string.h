@@ -2,7 +2,6 @@
 #define __LINUXMT_STRING_H
 
 #include <linuxmt/types.h>
-#include <stddef.h>
 
 /* The following prototypes all match the current GNU manpage prototypes.
  * It is still to be confirmed whether these also match the declarations

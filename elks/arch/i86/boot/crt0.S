@@ -1,14 +1,14 @@
 #include <linuxmt/config.h>
 
-//	Assembler boot strap hooks. This is called by setup
+//      Assembler boot strap hooks. This is called by setup
 
-	.arch i8086, nojumps
-	.code16
-	.text
+        .arch i8086, nojumps
+        .code16
+        .text
 
-	.global _start
-	.extern	start_kernel
-	.global early_putchar
+        .global _start
+        .extern start_kernel
+        .global early_putchar
 
 _start:
 
@@ -20,79 +20,80 @@ _start:
 !   SI, Data size
 !   DX, BSS size
 */
-	mov	%bx,_endtext
-	mov	%di,_endftext
-	mov	%si,_enddata
-	add	%dx,%si
-	mov	%si,_endbss
+        mov     %bx,_endtext
+        mov     %di,_endftext
+        mov     %si,_enddata
+        add     %dx,%si
+        mov     %si,_endbss
 
 // Start cleaning BSS. Still using setup.S stack
 
-	mov	_enddata,%di	// start of BSS
-	mov	%dx,%cx		// CX = BSS size
-	xor	%ax,%ax
-	shr	$1,%cx
-	cld
-	rep
-	stosw
+        mov     _enddata,%di    // start of BSS
+        mov     %dx,%cx         // CX = BSS size
+        xor     %ax,%ax
+        shr     $1,%cx
+        cld
+        rep
+        stosw
 
 // End cleaning BSS
 
-	mov	%cs,kernel_cs
-	mov	%ds,kernel_ds
+        mov     %cs,kernel_cs
+        mov     %ds,kernel_ds
 
 // Set SS:SP to kernel interrupt stack for temporary use
 
-	mov	%ds,%ax
-	mov	%ax,%ss		// SS=ES=DS
-	mov	$istack,%sp
+        mov     %ds,%ax
+        mov     %ax,%ss         // SS=ES=DS
+        mov     $tstack,%sp     // can't use kernel interrupt stack, must have temp stack
 
-	call	start_kernel	// fall through into breakpoint if returns
+        call    start_kernel    // fall through into breakpoint if returns
 
-	.global int3
-int3:	int	$3		// C breakpoint for emu86
-	ret
+        .global int3
+int3:   int     $3              // C breakpoint for emu86
+        ret
 
 #ifndef CONFIG_ARCH_PC98
 early_putchar:
-	mov   %sp,%bx
-	mov   2(%bx),%al
-	mov   $0x0E,%ah
-	mov   $0x0007,%bx
-	push  %bp               // some BIOS may destroy BP
-	int   $0x10
-	pop   %bp
-	ret
+        mov   %sp,%bx
+        mov   2(%bx),%al
+        mov   $0x0E,%ah
+        mov   $0x0007,%bx
+        push  %bp               // some BIOS may destroy BP
+        int   $0x10
+        pop   %bp
+        ret
 #endif
 
-//	Segment beginnings
+//      Segment beginnings
 
 // Zero for NULL pointers (near and far)
 // Will be linked as first section in data segment
-	.section .nildata
-	.word 	0
-	.word	0
+        .section .nildata
+        .word   0
+        .word   0
 
-	.data
-	.global _endtext
-	.global _endftext
-	.global _enddata
-	.global _endbss
-	.extern	kernel_cs
-	.extern	kernel_ds
-	.extern	istack
+        .data
+        .global _endtext
+        .global _endftext
+        .global _enddata
+        .global _endbss
+        .extern kernel_cs
+        .extern kernel_ds
+        .extern tstack
 
 _endtext:
-	.word	0
+        .word   0
 
 _endftext:
-	.word	0
+        .word   0
 
 _enddata:
-	.word	0
+        .word   0
 
 _endbss:
-	.word	0
-	.bss
+        .word   0
 
+        .bss
+        .p2align 1
 _sbss:

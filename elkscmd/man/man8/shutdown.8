@@ -1,18 +1,33 @@
 .TH SHUTDOWN 8
 .SH NAME
-shutdown \- shut down the system quickly
+shutdown \- shut down, power off or reboot the system quickly
 .SH SYNOPSIS
 .B shutdown
+.RB [ -s ][ -r ][ -p ][ -f ]
+.SS OPTIONS
+.TP 5
+.B \-s
+Perform shut down operation and halt the system (default action).
+.TP 5
+.B \-r
+Reboot the system.
+.TP 5
+.B \-p
+Power off the system.
+.TP 5
+.B \-f
+Continue even if root volume cannot be remounted read-only.
 .SH DESCRIPTION
 .B Shutdown
 is a program that allows the superuser to shut down the system immediately.
 A
 .B sync
-and unmount of the root filesystem are performed, and after 3 seconds
-have elapsed, the system is halted.
+and unmount of the root filesystem and all other mounted filesystems
+are performed, and after 3 seconds have elapsed, the system is halted.
+.SH BUGS
+Not all systems support powering off, in which case the system
+will remain on but halted.
 .SH "SEE ALSO"
 .BR sync (1),
 .BR unmount (1),
-.BR reboot (1),
-.BR poweroff (1),
 .BR reboot (2).

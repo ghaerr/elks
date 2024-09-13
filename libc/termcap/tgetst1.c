@@ -1,4 +1,4 @@
-#include <stddef.h>
+#include <sys/types.h>
 #include "t.h"
 
 /* Table, indexed by a character in range 0100 to 0140 with 0100 subtracted,

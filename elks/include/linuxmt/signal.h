@@ -10,6 +10,7 @@
  * mask by losing all these unused signals.
  */
 #include <linuxmt/types.h>
+#include <arch/cdefs.h>
 
 #define __SMALLSIG		/* 16-bit sigset_t*/
 
@@ -179,10 +180,16 @@ typedef void (*sighandler_t)(int);
 /* Type of a signal handler which interfaces with the kernel.  This is always
    a far function that uses the `stdcall' calling convention, even for a
    user program that is being compiled for a different calling convention.  */
+#ifdef __GNUC__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
-typedef __attribute__((__stdcall__)) __far void (*__kern_sighandler_t)(int);
+typedef stdcall __far void (*__kern_sighandler_t)(int);
 #pragma GCC diagnostic pop
+#endif
+
+#ifdef __WATCOMC__
+typedef void stdcall (__far *__kern_sighandler_t)(int);
+#endif
 
 /*
  * Because this stuff can get pretty confusing:
@@ -214,8 +221,6 @@ typedef unsigned char __sigdisposition_t;
 #define SIGDISP_CUSTOM	((__sigdisposition_t) 2)
 #endif
 
-/*@end@*/
-
 struct __kern_sigaction_struct {
     __sigdisposition_t sa_dispose;
 #if UNUSED
@@ -227,10 +232,9 @@ struct __kern_sigaction_struct {
 
 #ifdef __KERNEL__
 struct task_struct;
-extern int send_sig(sig_t,struct task_struct *,int);
-extern void arch_setup_sighandler_stack(register struct task_struct *,
-					__kern_sighandler_t,unsigned);
-extern void ctrl_alt_del(void);
+int send_sig(sig_t,struct task_struct *,int);
+void arch_setup_sighandler_stack(struct task_struct *, __kern_sighandler_t,unsigned);
+int sys_kill(pid_t, sig_t);
 #endif /* __KERNEL__*/
 
 #endif

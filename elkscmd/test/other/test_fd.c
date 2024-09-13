@@ -1,6 +1,7 @@
 /*
  * fdtest - A program to test floppy disk I/O speed in user space
  */
+#define __LIBC__            /* get all typedefs */
 #include <stdio.h>
 #include <time.h>
 #include <signal.h>

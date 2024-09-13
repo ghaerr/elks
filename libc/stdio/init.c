@@ -1,16 +1,16 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/rtinit.h>
 
-#include "_stdio.h"
+FILE *__IO_list = 0;
 
-/* NOTE: ensure this destructor is lower priority (90) than
- * the atexit_do_exit (100) destructor so as to run later.
- */
 #pragma GCC diagnostic ignored "-Wprio-ctor-dtor"
-__attribute__((destructor(90)))
-static void stdio_close_all(void)
+DESTRUCTOR(__stdio_fini, _INIT_PRI_STDIO);
+void __stdio_fini(void)
 {
    FILE *fp;
+
    fflush(stdout);
    fflush(stderr);
    for (fp = __IO_list; fp; fp = fp->next)
@@ -22,9 +22,8 @@ static void stdio_close_all(void)
       fp->fd = -1;
    }
 }
-
 #pragma GCC diagnostic ignored "-Wprio-ctor-dtor"
-__attribute__((constructor(90)))
+CONSTRUCTOR(__stdio_init, _INIT_PRI_STDIO);
 void __stdio_init(void)
 {
    if (isatty(1))

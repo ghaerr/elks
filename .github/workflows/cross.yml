@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - '.github/workflows/cross.yml'
+      - '!.github/workflows/ow-libc.yml'
       - 'tools/*'
 
 jobs:

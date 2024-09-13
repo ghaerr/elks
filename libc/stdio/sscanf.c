@@ -1,4 +1,4 @@
-#include "_stdio.h"
+#include <stdio.h>
 
 int
 sscanf(const char *str, const char *format, ...)
@@ -19,7 +19,7 @@ sscanf(const char *str, const char *format, ...)
 	va_list ptr;
 	int rv;
 
-	va_strt(ptr, format);
+	va_start(ptr, format);
 	string->bufpos = (unsigned char *)str;
 	rv = vfscanf(string, (char *)format, ptr);
 	va_end(ptr);

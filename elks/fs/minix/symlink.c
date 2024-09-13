@@ -19,7 +19,7 @@
 
 static int minix_follow_link(struct inode *dir,
 			     register struct inode *inode,
-			     int flag, int mode, struct inode **res_inode)
+			     int flag, mode_t mode, struct inode **res_inode)
 {
     /*
      *      FIXME: #1 Stack use is too high
@@ -29,7 +29,7 @@ static int minix_follow_link(struct inode *dir,
     int error;
     register struct buffer_head *bh;
     static int link_count = 0;
-    __u16 ds, *pds;
+    seg_t ds, *pds;
 
     *res_inode = NULL;
     if (!dir) {

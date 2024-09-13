@@ -29,6 +29,13 @@
  * Hacked up for Linux/8086 Alan Cox Feb 1996
  */
 
+/* places some of this driver in the far text section */
+#if defined(CONFIG_FARTEXT_KERNEL) && !defined(__STRICT_ANSI__)
+#define BFPROC __far __attribute__ ((far_section, noinline, section (".fartext.bf")))
+#else
+#define BFPROC
+#endif
+
 struct biosparms {
     unsigned short irq;         /* 0 */
     unsigned short ax;          /* 2 */
@@ -72,12 +79,14 @@ struct biosparms {
 
 int call_bios(struct biosparms *);
 
-void bios_disk_reset(int drive);
-int bios_disk_rw(unsigned cmd, unsigned num_sectors, unsigned drive,
+void BFPROC bios_disk_reset(int drive);
+int BFPROC bios_disk_rw(unsigned cmd, unsigned num_sectors, unsigned drive,
         unsigned cylinder, unsigned head, unsigned sector, unsigned seg, unsigned offset);
-void bios_set_ddpt(int max_sectors);
-void bios_copy_ddpt(void);
+void BFPROC bios_set_ddpt(int max_sectors);
+void BFPROC bios_copy_ddpt(void);
 struct drive_infot;
-void bios_switch_device98(int target, unsigned int device, struct drive_infot *drivep);
+void BFPROC bios_switch_device98(int target, unsigned int device,
+        struct drive_infot *drivep);
+void BFPROC bios_disk_park_all(void);
 
 #endif

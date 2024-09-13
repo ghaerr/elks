@@ -1,10 +1,11 @@
 # Makefile of /libc/math module
 
-include $(TOPDIR)/libc/Makefile.inc
+COMPILER ?= ia16
+LIB ?= out.a
+
+include $(TOPDIR)/libc/$(COMPILER).inc
 
 CFLAGS += -I$(TOPDIR)/libc/math -D__BSD_VISIBLE
-
-LIB = out.a
 
 DOUBLE = \
 	s_floor.o \
@@ -49,15 +50,17 @@ FLOAT = \
 	e_acosf.o \
 	e_asinf.o \
 	s_atanf.o \
+	s_fminf.o \
+	s_fmaxf.o \
 	# end of list
 
 OBJS = $(DOUBLE) $(FLOAT)
 
 all: $(LIB)
 
-$(LIB): $(OBJS)
+$(LIB): $(LIBOBJS)
 	$(RM) $@
-	$(AR) $(ARFLAGS_SUB) $@ $^
+	$(AR) $(ARFLAGS_SUB) $@ $(LIBOBJS)
 
 clean:
 	$(RM) *.[aod]

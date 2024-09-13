@@ -1,8 +1,8 @@
+#include <stdio.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-#include "_stdio.h"
+#include <errno.h>
 
 FILE *
 __fopen(const char * fname, int fd, FILE * fp, const char * mode)
@@ -74,6 +74,11 @@ __fopen(const char * fname, int fd, FILE * fp, const char * mode)
       break;
    }
 
+   if (!fname) {
+        errno = EINVAL;
+        return 0;
+   }
+
    /* Allocate the (FILE) before we do anything irreversable */
    if (fp == 0)
    {
@@ -83,8 +88,7 @@ __fopen(const char * fname, int fd, FILE * fp, const char * mode)
    }
 
    /* Open the file itself */
-   if (fname)
-      fd = open(fname, open_mode, 0666);
+   fd = open(fname, open_mode, 0666);
    if (fd < 0)			/* Grrrr */
    {
       if (nfp)

@@ -21,11 +21,12 @@ typedef struct segment segment_s;
 #define SEG_FLAG_USED	 0x80
 #define SEG_FLAG_ALIGN1K 0x40
 #define SEG_FLAG_TYPE	 0x0F
-#define SEG_FLAG_CSEG	 0x01   /* application code segment */
-#define SEG_FLAG_DSEG	 0x02   /* application data segment */
-#define SEG_FLAG_EXTBUF	 0x03   /* ext/main memory buffers */
-#define SEG_FLAG_RAMDSK	 0x04   /* ram disk buffers */
-#define SEG_FLAG_PROG	 0x05   /* application fmemalloc buffers */
+#define SEG_FLAG_CSEG	 0x01   /* app code segment */
+#define SEG_FLAG_DSEG	 0x02   /* app auto (stack/heap) data segment */
+#define SEG_FLAG_DDAT	 0x03   /* app data segment */
+#define SEG_FLAG_FDAT	 0x04   /* app fmemalloc far data */
+#define SEG_FLAG_EXTBUF	 0x05   /* ext/main memory buffers */
+#define SEG_FLAG_RAMDSK	 0x06   /* ram disk buffers */
 
 #ifdef __KERNEL__
 

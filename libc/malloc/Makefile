@@ -1,7 +1,9 @@
 # Makefile of /libc/malloc module
 
-include $(TOPDIR)/libc/Makefile.inc
+COMPILER ?= ia16
+LIB ?= out.a
 
+include $(TOPDIR)/libc/$(COMPILER).inc
 #CFLAGS	+= -DL_alloca
 #CFLAGS	+= -DLAZY_FREE
 # MCHUNK is word not byte min allocation size
@@ -28,11 +30,11 @@ OBJS = \
 
 .PHONY: all
 
-all: out.a
+all: $(LIB)
 
-out.a: $(OBJS)
+$(LIB): $(LIBOBJS)
 	$(RM) $@
-	$(AR) $(ARFLAGS_SUB) $@ $^
+	$(AR) $(ARFLAGS_SUB) $@ $(LIBOBJS)
 
 clean:
 	$(RM) *.[aod]

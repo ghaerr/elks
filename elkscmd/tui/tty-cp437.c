@@ -50,9 +50,9 @@ static char *attr_to_ansi(char *buf, unsigned int attr)
     int bg = (attr & 0x70) >> 4;        /*  8 bg colors */
 
     if (fg_pal256 && !iselksconsole) {
-        sprintf(buf, "\e[38;5;%dm\e[%dm", fg_pal256[fg], ansi_colors[bg] + 10);
+        sprintf(buf, "\033[38;5;%dm\033[%dm", fg_pal256[fg], ansi_colors[bg] + 10);
     } else {
-        sprintf(buf, "\e[%d;%dm", fg_pal16[fg], ansi_colors[bg] + 10);
+        sprintf(buf, "\033[%d;%dm", fg_pal16[fg], ansi_colors[bg] + 10);
     }
     return buf;
 }
@@ -129,7 +129,7 @@ void tty_output_screen(int flush)
     unsigned short *chattr = (unsigned short *)video_ram;
     char buf[16];
 
-    fputs("\e[?25l\e[H", stdout);      /* cursor off, home */
+    fputs("\033[?25l\033[H", stdout);   /* cursor off, home */
     for (r=0; r<LINES; r++) {
         a = -1;
         for (c=0; c<COLS; c++) {
@@ -143,7 +143,7 @@ void tty_output_screen(int flush)
         }
         putc(r == LINES - 1 ? '\r' : '\n', stdout);
     }
-    fputs("\e[1;0;0m", stdout);        /* reset attrs, cursor left off */
+    fputs("\033[1;0;0m", stdout);       /* reset attrs, cursor left off */
     if (flush)
         fflush(stdout);
 }

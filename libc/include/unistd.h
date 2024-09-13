@@ -35,25 +35,27 @@ int          usleep(unsigned long useconds);
 
 // Functions
 
-int brk (void * addr);
-void * sbrk (intptr_t increment);
+int brk(const void *addr);
+int _brk (unsigned int newbrk);                 /* syscall */
+void *sbrk(int increment);
+int _sbrk(int increment, void **pnewbrk);       /* syscall */
 
 int close (int fildes);
 int dup (int fildes);
 int dup2 (int oldfd, int newfd);
-int execl(const char *fname, const char *arg1, ...);
-int execle(const char *fname, const char *arg0, ...);
-int execlp(const char *fname, const char *arg0, ...);
-int execlpe(const char *fname, const char *arg0, ...);
+int execl(const char *fname, const char *arg0, ... /*, (char *)0 */);
+int execle(const char *fname, const char *arg0, ... /*, (char *)0, char *envp[] */);
+int execlp(const char *fname, const char *arg0, ... /*, (char *)0 */);
+int execlpe(const char *fname, const char *arg0, ... /*, (char *)0, char *envp[] */);
 int execv(const char *fname, char **argv);
 int execve(const char *fname, char **argv, char **envp);
 int execvp(const char *fname, char **argv);
 int execvpe(const char *fname, char **argv, char **envp);
-int _execve(const char *fname, char *stk_ptr, int stack_bytes);
-noreturn void _exit(int status);
+int _execve(const char *fname, char *stk_ptr, int stack_bytes); /* syscall */
 int isatty (int fd);
 char *ttyname(int fd);
 off_t lseek (int fildes, off_t offset, int whence);
+int _lseek (int fd, off_t *posn, int where);    /* syscall */
 int link(const char *path1, const char *path2);
 int symlink(const char *path1, const char *path2);
 int unlink(const char *fname);
@@ -71,8 +73,12 @@ pid_t setsid(void);
 pid_t getpid(void);
 pid_t getppid(void);
 uid_t _getpid(int *ppid);
-int getpgrp(void);
-int setpgrp(void);
+
+/*int setpgid(pid_t pid,pid_t pgid);*/  /* NYI */
+/*int getpgid(pid_t pid);*/             /* NYI */
+/*int getpgrp(void);*/                  /* NYI */
+/*int setpgrp(void);*/                  /* not compiled */
+/*int getsid(void);*/                   /* NYI */
 
 uid_t getuid (void);
 int setuid(uid_t uid);
@@ -94,7 +100,7 @@ extern int opterr;
 
 extern int     __argc;
 extern char ** __argv;
-extern char *  __program_filename;  /* process argv[0] */
-extern char ** environ;             /* process global environment */
+extern char *  __program_filename;          /* process argv[0] */
+extern char ** environ;                     /* process global environment */
 
 #endif

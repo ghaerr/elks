@@ -54,11 +54,12 @@ float adjust(float f) {
 // for float testing compatibility, use same FP formatting routines on host for now
 // floats have approx 7 sig figs, 15 for double
 
-#if __ia16__
+#if __ia16__ || defined(__WATCOMC__)
 #include <sys/linksym.h>
-__STDIO_PRINT_FLOATS;       // link in libc printf float support
 
 char *host_floatToStr(float f, char *buf) {
+    __STDIO_PRINT_FLOATS;       // link in libc printf float support
+
 	sprintf(buf, "%.*g", MATH_PRECISION, (double)f);
     return buf;
 }
@@ -163,12 +164,10 @@ int host_breakPressed() {
 
 #if __ia16__
 /* replacement fread to fix fgets not returning ferror/errno properly on SIGINT*/
-#include <sys/linksym.h>
 size_t fread(void *buf, size_t size, size_t nelm, FILE *fp)
 {
    int len, v;
    size_t bytes, got = 0;
-   __LINK_SYMBOL(__stdio_init);
 
    v = fp->mode;
 

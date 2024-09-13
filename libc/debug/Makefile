@@ -1,8 +1,9 @@
 # Makefile of /libc/debug module
 
-include $(TOPDIR)/libc/Makefile.inc
+COMPILER ?= ia16
+LIB ?= out.a
 
-LIB = out.a
+include $(TOPDIR)/libc/$(COMPILER).inc
 
 OBJS = \
 	instrument.o \
@@ -10,15 +11,16 @@ OBJS = \
 	syms.o \
 	stacktrace.o \
 	printreg.o \
+	prectimer.o \
 	# end of list
 
 #OBJS += rdtsc.o
 
 all: $(LIB)
 
-$(LIB): $(OBJS)
+$(LIB): $(LIBOBJS)
 	$(RM) $@
-	$(AR) $(ARFLAGS_SUB) $@ $^
+	$(AR) $(ARFLAGS_SUB) $@ $(LIBOBJS)
 
 clean:
 	$(RM) *.[aod]

@@ -2,103 +2,102 @@ The finished Image file consists of the boot sector, setup code, and kernel
 concatenated together. Each is rounded up to a multiple of 512 bytes (i.e.
 starts on a fresh sector)
 
-	Sector 1:	dummy boot sector and setup data (1 512-byte sector)
-	Sector 2..n:	setup	(setup_sects 512-byte sectors in size)
-	Sector n+1..m:	kernel	(sys_size paragraphs in size)
+    Sector 1:       dummy boot sector and setup data (1 512-byte sector)
+    Sector 2..n:    setup   (setup_sects 512-byte sectors in size)
+    Sector n+1..m:  kernel  (sys_size paragraphs in size)
 
 Note that sectors are counted from 1 but tracks from 0, just to be
 confusing :-)
 
 REAL BOOT SECTOR:
 
-elkscmd/boot/
-boot_sect.S	first sector on floppy disk, or first sector of HD boot partition
-		loaded by the PC's BIOS at BOOTSEG:0 (0x07C0:0))
+elkscmd/boot/boot_sect.S
+        first sector on floppy disk, or first sector of HD boot partition
+        loaded by the PC's BIOS at BOOTSEG:0 (0x07C0:0))
 
-		if MINIX FS, boot loads second 512-byte sector from boot disk.
-		That second boot sector then loads second inode which is the /linux
-		Image (boot,setup,kernel) at DEF_INITSEG (0x0100:0).
-		if boot options is configured, up to a single sector of boot
-		options is read from /bootopts into DEF_OPTSEG (0x0050:0)
-		for later processing by the kernel.
+        if MINIX FS, boot loads second 512-byte sector from boot disk.
+        That second boot sector then loads second inode which is the /linux
+        Image (boot,setup,kernel) at DEF_INITSEG (0x0100:0).
+        if boot options is configured, up to a single sector of boot
+        options is read from /bootopts into DEF_OPTSEG (0x0050:0)
+        for later processing by the kernel.
 
-		if FAT FS, reads root directory entries looking for LINUX,
-		and loads its image (boot,setup,kernel) at DEF_INITSEG (0x0100:0).
+        if FAT FS, reads root directory entries looking for LINUX,
+        and loads its image (boot,setup,kernel) at DEF_INITSEG (0x0100:0).
 
-		Boot then jumps to setup.S at DEF_INITSEG+20 (0x120:0), which is
-		the start of setup.S code segment, 0x200 (512) bytes after
-		the setup.S data segment (which is the dummy boot sector).
+        Boot then jumps to setup.S at DEF_INITSEG+20 (0x120:0), which is
+        the start of setup.S code segment, 0x200 (512) bytes after
+        the setup.S data segment (which is the dummy boot sector).
 
 
 DUMMY BOOT SECTOR:
 
-arch/i86/boot/
-bootsect.S	first 512 bytes on disk Image; contains preset values
-		of INITSEG (setup data segment) variables.
+arch/i86/boot/bootsect.S
+        first 512 bytes on disk Image; contains preset values
+        of INITSEG (setup data segment) variables.
 
 SETUP CODE:
 
-setup.S		Setup gains control from the boot sector at DEF_INITSEG+20 (0x0120:0)
-		which is DEF_SETUPSEG, its code segment.
+arch/i86/boot/setup.S
+        Setup gains control from the boot sector at DEF_INITSEG+20 (0x0120:0)
+        which is DEF_SETUPSEG, its code segment.
 
-		Setup first copies the kernel image including header and relocation data
-		to DEF_SYSSEG (0x1300:0).
+        Setup first copies the kernel image including header and relocation data
+        to DEF_SYSSEG (0x1300:0).
 
-		Setup gets some system/hardware params, and stores them in the
-		dummy boot block which was loaded at DEF_INITSEG (0x0100:0).
+        Setup gets some system/hardware params, and stores them in the
+        dummy boot block which was loaded at DEF_INITSEG (0x0100:0).
 
-		Setup then copies its code segment (itself) up to high memory.
+        Setup then copies its code segment (itself) up to high memory.
 
-		Setup then copies its data segment with the various updated
-		system parameters (DEF_INITSEG) to REL_INITSEG (normally 0x0070:0).
-		This final segment will be used by the kernel to access them (=INITSEG).
+        Setup then copies its data segment with the various updated
+        system parameters (DEF_INITSEG) to REL_INITSEG (normally 0x0070:0).
+        This final segment will be used by the kernel to access them (=INITSEG).
 
-		Setup then copies the saved kernel image at DEF_SYSSEG to
-		REL_SYSSEG (0x00D0:0 or 0x02D0:0) depending on whether disk track
-		caching is used, as DMASEG and track caching are just after INITSEG.
-		The kernel text, fartext and data sections are relocated using
-		the a.out header entries in this final location.
+        Setup then copies the saved kernel image at DEF_SYSSEG to
+        REL_SYSSEG (0x00D0:0 or 0x02D0:0) depending on whether disk track
+        caching is used, as DMASEG and track caching are just after INITSEG.
+        The kernel text, fartext and data sections are relocated using
+        the a.out header entries in this final location.
 
-		Finally, setup jumps to REL_SYSSEG:_start (the kernel entry point).
+        Finally, setup jumps to REL_SYSSEG:_start (the kernel entry point).
 
 
 (Note: .S files are preprocessed to .s before being assembled)
 
 KERNEL:
 
-crt0.s		Kernel startup code, entry point _start.
-		puts parameters passed in registers from setup into global
-		storage, zeros bss and calls start_kernel
-init/main.c	start_kernel, immediately calls kernel_init,
-		which starts kernel initialization. If boot options
-		is configured, reads boot options from DEF_OPTSEG (0x0050:0).
-arch/i86/kernel/
-system.c	setup_arch. Allocates kernel data segment, which follows
-		the kernel code segment. The kernel local heap is also
-		initialized, and the root device global is set from
-		the INITSEG data location.
+arch/i86/boot/crt0.S
+        Kernel startup code, entry point _start.
+        puts parameters passed in registers from setup into global
+        storage, zeros bss and calls start_kernel
 
-arch/i86/mm/
-malloc.c	init memory manager.
+init/main.c
+        start_kernel, immediately calls kernel_init,
+        which starts kernel initialization. If boot options
+        is configured, reads boot options from DEF_OPTSEG (0x0050:0).
 
-fs/
-buffer.c	init buffers, may allocate from main memory or extended memory.
+arch/i86/kernel/system.c
+        setup_arch. Allocates kernel data segment, which follows
+        the kernel code segment. The kernel local heap is also
+        initialized, and the root device global is set from
+        the INITSEG data location.
+
+arch/i86/mm/malloc.c
+        init memory manager.
+
+fs/buffer.c
+        init buffers, may allocate from main memory or extended memory.
 
 ----------------------------------------------------------------------------
-The dummy boot sector contains some parameters at the end:
+The dummy boot sector is all zeros except for the following, which
+are patched by arch/i86/tools/build when the kernel is being built:
 
-(0x1ef)495,496   Segment for setup.S			(SETUPSEG)
-(0x1f1)497      *number of sectors in setup.S		(setup_secs)
-(0x1f2)498,499   root_flags				(ROOTFLAGS)
-(0x1f4)500,501  *size of kernel in 16-byte chunks	(syssize)
-(0x1f6)502,503   swap device				(SWAP_DEV) now elks_flags
-(0x1f8)504,505   ramdisk size				(RAMDISK)
-(0x1fa)506,507   video mode				(SVGA_MODE)
-(0x1fc)508,509  *root device				(root_dev)
-(0x1fe)510,511   constant flag 0xAA55
+(0x1e6)486-489  'ELKS' signature                        (elks_magic)
+(0x1f1)497      number of sectors in setup.S            (setup_secs)
+(0x1f4)500,501  size of kernel in paragraphs            (syssize)
+(0x1fc)508,509  root device                             (root_dev)
 
-*patched by arch/i86/tools/build when the kernel is being built.
-Only 497, 500,501 and 508,509 are used at present.
 
 Setup and INITSEG Variables
 ---------------------------
@@ -110,19 +109,21 @@ Setup is ASM code that executes immediately after the boot loader, and
 prior to the kernel. It is located in the 2nd 512 bytes of the kernel image
 on disk (/linux).
 
-The first 512 bytes of the kernel disk image is a dummy boot sector that
-contains preset values for certain setup variable locations. Following that
-is the a.out kernel executable header and then the kernel text, fartext,
+The first 512 bytes of the kernel disk image is a mostly zero sector that
+contains preset values for certain kernel or setup.S variables. This sector
+gets loaded by the boot loader and ends up as the INITSEG data segment for
+setup.S. Following that is the setup.S code for a minimum of 4 sectors, and
+after that the a.out kernel executable header and the kernel text, fartext,
 data and relocation table sections.
 
 When building the kernel image Image, a special tool called build is used to
-concatenate the dummy boot loader, the setup code and the kernel executable
+concatenate the setup data sector, the setup code and the kernel executable
 together. build also writes the sizes of setup and the kernel into INITSEG,
-which at the time is the dummy boot sector.
+the first 512 bytes of the kernel image.
 
 Setup's data segment is at a fixed location and is called INITSEG, and is
-initially the contents of the dummy boot sector. Setup is required to
-perform the relocations from the a.out relocation table on the kernel
+initially the contents of the just loaded first kernel 512 bytes. Setup is
+required to perform the relocations from the a.out relocation table on the kernel
 executable, and also to determine certain hardware configurations easier done
 in assembly, which are saved in it's data segment (INITSEG), which is also
 known to the kernel, since it's at a fixed segment address.
@@ -137,13 +138,13 @@ ELKS "INITSEG" (setup data segment) offsets:
 +------+-----+------+-------------------+--------------------------+------------
 | 0007 |   7 | byte | screen_cols       | screen width             | setup.S
 | 000E |  14 | byte | screen_lines      | screen height            | setup.S
-| 0020 |  32 | byte | cpu_type          | deprecated               | setup.S
+| 0020 |  32 | byte | cpu_type          | UNUSED                   |
 | 002A |  42 | word | mem_kbytes        | base memory size in K    | setup.S
-| 0030 |  48 |16byte| proc_name         | processor name           | setup.S
-| 0050 |  80 |13byte| cpu_id            | cpu id                   | setup.S
+| 0030 |  48 |16byte| proc_name         | UNUSED                   |
+| 0050 |  80 |13byte| cpu_id            | UNUSED                   |
 | 01E2 | 482 | long | part_offset       | partition offset in sects| boot_sect.S
 | 01E2 | 482 | long | part_offset       | partition offset in sects| boot_sect.S
-| 01E6 | 486 | long | elks_magic        | "ELKS"                   | bootsect.S
+| 01E6 | 486 | long | elks_magic        | "ELKS"                   | build.c
 | 01EF | 495 | word | SETUPSEG          | UNUSED                   |
 | 01F1 | 497 | byte | setup_sects       | size in 512-byte sects   | build.c
 | 01F2 | 498 | word | ROOTFLAGS         | UNUSED                   |
@@ -153,7 +154,7 @@ ELKS "INITSEG" (setup data segment) offsets:
 | 01F8 | 504 | word | RAMDISK           | UNUSED                   |
 | 01FA | 506 | word | SVGAMODE          | UNUSED                   |
 | 01FC | 508 | word | root_dev          | BIOS drive or kdev_t     | build.c,boot_sect.S
-| 01FE | 510 | word | boot_flag         | AA55h                    | boot_sect.S
+| 01FE | 510 | word | boot_flag         | UNUSED                   |
 +------+-----+------+-------------------+--------------------------+------------
 
 
@@ -182,45 +183,45 @@ ELKS memory at boot and detailed boot description
  |  top of 640k ram      A000:0000 A0000 A0000        @640K
  +-------------------------------------------------------------------------------------------+
 
-1	BIOS loads disk sector 1 (bios_sect.S) to 07C0:0000
-2	bios_sect.S copies itself to high memory 9000:0000 (8000:0000 on QEMU)
-	bios_sect stack grows down from 9000:0000
+1   BIOS loads disk sector 1 (bios_sect.S) to 07C0:0000
+2   bios_sect.S copies itself to high memory 9000:0000 (8000:0000 on QEMU)
+    bios_sect stack grows down from 9000:0000
 
-	MINIX bios_sect calls payload at 9000:0200 (minix_boot.S, tiny model CS=DS=SS)
-	bios_sect .text and .data is ~03F6, linked with minix_boot.o is 1K boot sector
-	payload .data (offset after .text and .rodata) starts around 9000:03F6 to 9000:1406
-3	payload reads MINIX superblock/fs and loads /linux as blob to 0100:0000 (DEF_INIT)
-4	payload reads MINIX superblock/fs and loads /bootopts sector to 0050:0000 (DEF_OPTSEG)
-	boot_sect saves elks_flags (and other?) to 0100:0000 (DEF_INIT, which is SETUP data seg)
-		set by boot_sect: elks_flags
-		set by build: setup_sect, syssize
-5	boot_sect checks ELKS setup signature and jumps to setup code seg 0120:0000 (DEF_INIT+20)
+    MINIX bios_sect calls payload at 9000:0200 (minix_boot.S, tiny model CS=DS=SS)
+    bios_sect .text and .data is ~03F6, linked with minix_boot.o is 1K boot sector
+    payload .data (offset after .text and .rodata) starts around 9000:03F6 to 9000:1406
+3   payload reads MINIX superblock/fs and loads /linux as blob to 0100:0000 (DEF_INIT)
+4   payload reads MINIX superblock/fs and loads /bootopts sector to 0050:0000 (DEF_OPTSEG)
+    boot_sect saves elks_flags (and other?) to 0100:0000 (DEF_INIT, which is SETUP data seg)
+        set by boot_sect: elks_flags
+        set by build: setup_sect, syssize
+5   boot_sect checks ELKS setup signature and jumps to setup code seg 0120:0000 (DEF_INIT+20)
 
-	FAT bios_sect reads FAT BPB within itself at 9000:0000 and loads FAT root dir at 9000:0200
-	boot_sect .text is ~01E2, .data starts at ~01f7, standalone size is 512 byte boot sector
-3	boot_sect reads FAT root dir to load LINUX as blob to 0100:0000 (DEF_INIT)
-(4)		no room to load BOOTOPTS sector to 0050:0000 (DEF_OPTSEG)
-	boot_sect saves elks_flags (and other?) to 0100:0000 (DEF_INIT, which is SETUP data seg)
-5	boot_sect checks ELKS setup signature and jumps to setup code seg 0120:0000 (DEF_INIT+20)
-	setup uses root dir at 9000:0200 and BPB at 9000:0000 to load BOOTOPTS sector to 0050:0000
+    FAT bios_sect reads FAT BPB within itself at 9000:0000 and loads FAT root dir at 9000:0200
+    boot_sect .text is ~01E2, .data starts at ~01f7, standalone size is 512 byte boot sector
+3   boot_sect reads FAT root dir to load LINUX as blob to 0100:0000 (DEF_INIT)
+(4)     no room to load BOOTOPTS sector to 0050:0000 (DEF_OPTSEG)
+    boot_sect saves elks_flags (and other?) to 0100:0000 (DEF_INIT, which is SETUP data seg)
+5   boot_sect checks ELKS setup signature and jumps to setup code seg 0120:0000 (DEF_INIT+20)
+    setup uses root dir at 9000:0200 and BPB at 9000:0000 to load BOOTOPTS sector to 0050:0000
 
-6	setup CS at 0120:0000 (DEF_INIT+20) checks ELKS sig and copies kernel to 1300:0 (DEF_SYSSEG)
-6+	FAT only - setup reads high mem root dir 9000:0200 to get BOOTOPTS cluster
-		uses high mem BPB at 9000:0000 for secs_per_cluster, etc
-7	setup copies its code segment from 0120:0000 (DEF_INIT+2) to high memory 9000:0 (8000 qemu)
-8	setup now at 9000:0000 copies its data seg from 0100:0 (DEF_INIT) to 0700:0 (REL_INITSEG)
-9	setup copies&relocates kernel from 1300:0000 (DEF_SYSSEG) to 02D0:0000 (REL_SYSSEG)
-	DMASEG starts after 0700:0000 (REL_INITSEG) at 0900:0000 to 02D0:0000 (REL_SYSSEG)
-9+	finally, setup jumps to kernel at 02D0:0000 (REL_SYSSEG)
+6   setup CS at 0120:0000 (DEF_INIT+20) checks ELKS sig and copies kernel to 1300:0 (DEF_SYSSEG)
+6+  FAT only - setup reads high mem root dir 9000:0200 to get BOOTOPTS cluster
+        uses high mem BPB at 9000:0000 for secs_per_cluster, etc
+7   setup copies its code segment from 0120:0000 (DEF_INIT+2) to high memory 9000:0 (8000 qemu)
+8   setup now at 9000:0000 copies its data seg from 0100:0 (DEF_INIT) to 0700:0 (REL_INITSEG)
+9   setup copies&relocates kernel from 1300:0000 (DEF_SYSSEG) to 02D0:0000 (REL_SYSSEG)
+    DMASEG starts after 0700:0000 (REL_INITSEG) at 0900:0000 to 02D0:0000 (REL_SYSSEG)
+9+  finally, setup jumps to kernel at 02D0:0000 (REL_SYSSEG)
 
 Current kernel is 80K in size (=14000h)
 Boot loader:
-	0100:0000 DEF_INIT @4K
-		+ 1400:0000 size of kernel (80K)
-	1500:0000 end of 80K kernel
-	3000:0000 max end of 188K kernel @192K
+    0100:0000 DEF_INIT @4K
+        + 1400:0000 size of kernel (80K)
+    1500:0000 end of 80K kernel
+    3000:0000 max end of 188K kernel @192K
 Setup.S:
-	1300:0000 DEF_SYSSEG @76K
-		+ 1400:0000 size of kernel (80K)
-	2700:0000 end of 80K kernel
-	4200:0000 max end of 188K kernel @264K
+    1300:0000 DEF_SYSSEG @76K
+        + 1400:0000 size of kernel (80K)
+    2700:0000 end of 80K kernel
+    4200:0000 max end of 188K kernel @264K

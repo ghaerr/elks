@@ -6,10 +6,18 @@
 
 #ifndef __ASSEMBLER__
 
+#ifdef __GNUC__
 #define __LINK_SYMBOL(sym) \
                           asm(".pushsection .discard; " \
                               ".long " #sym "; " \
                               ".popsection")
+#endif
+
+#ifdef __WATCOMC__
+extern void __LINK_SYMBOL(void (*sym)());
+#pragma aux __LINK_SYMBOL = __parm [ __ax];
+#endif
+
 #else  /* __ASSEMBLER__ */
 
 #define __LINK_SYMBOL(sym) \
