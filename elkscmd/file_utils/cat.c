@@ -15,7 +15,8 @@ static char readbuf[BUFSIZ];    /* use disk block size for stack limit and effic
 #if TEST
 void test(void)
 {
-    printf("#04X: '%#04X'\n", 0x2ab);
+    printf("   p: '%p'\n", 0x18AF);
+    printf("  lp: '%lp'\n", 0x02d018AFL);
     printf("04X: '%04X'\n", 0x2ab);
     printf("04x: '%04x'\n", 0x2ab);
     printf(" 4x: '%4x'\n", 0x2ab);
@@ -25,7 +26,7 @@ void test(void)
     printf(" 5d: '%5d'\n", -20);
     printf("+5d: '%5d'\n", -20);
     printf("+5d: '%5d'\n", 20);
-    printf(" ld: '%ld'\n", -123456789L);
+    printf(",ld: '%,ld'\n", -123456789L);
     printf(" lx: '%lx'\n", 0x87654321L);
     printf(" lo: '%lo'\n", 0xFFFFFFFFL);
     printf("  s: '%s'\n", "thisisatest");
