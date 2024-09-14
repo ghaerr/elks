@@ -108,7 +108,7 @@ __fmt(FILE *op, unsigned char *buf, int ljustf, int width, int preci, char pad, 
    {
       if (!ljustf && width)     /* left padding */
       {
-         if (len && sign && (pad == '0'))
+         if (len && sign && pad == '0')
             goto showsign;
          ch = pad;
          --width;

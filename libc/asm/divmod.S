@@ -16,9 +16,11 @@
 //  inspired by OpenWatcom ltoa.c __uldiv routine
 //  13 Sep 2024 Greg Haerr
 
-#define NUMLO   2
-#define NUMHI   4
-#define ADDR    6
+#include <libc-private/call-cvt.h>
+
+#define NUMLO   2+FAR_ADJ_
+#define NUMHI   4+FAR_ADJ_
+#define ADDR    6+FAR_ADJ_
 
         .arch   i8086, nojumps
         .code16
@@ -44,4 +46,4 @@ __divmod:
 1:      divw    (%bx)               // AX = lower numerator / base, DX = remainder
         mov     %dx,(%bx)           // store remainder
         mov     %cx,%dx             // DX = high quotient, AX = low quotient
-        ret
+        RET_(6)

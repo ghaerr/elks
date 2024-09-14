@@ -71,7 +71,7 @@ __fmt(FILE *op, unsigned char *buf, int ljustf, int width, int preci, char pad, 
    {
       if (!ljustf && width)     /* left padding */
       {
-         if (len && sign && (pad == '0'))
+         if (len && sign && pad == '0')
             goto showsign;
          ch = pad;
          --width;
@@ -190,7 +190,7 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
             goto usproc;
 
          case 'p':              /* Pointer */
-            lval = sizeof(char*) == sizeof(long);
+            lval = sizeof(char *) == sizeof(long);
             pad = '0';
             width = 4;
             preci = 8;
@@ -227,7 +227,7 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
             p = buf + sizeof(buf) - 1;
             *p = '\0';
             do {
-#if __WATCOMC__
+#ifdef __WATCOMC__
                 c = v % radix;
                 v = v / radix;
 #else
