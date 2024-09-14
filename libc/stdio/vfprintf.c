@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <string.h>
-#include <sys/types.h>
+#include <arch/divmod.h>
 
 #ifndef __HAS_NO_FLOATS__
 #include <sys/weaken.h>
@@ -41,8 +41,8 @@
  * the number of characters output.
  */
 static int
-__fmt(FILE *op, unsigned char *buf, int ljustf, int width, int preci, char pad,
-    char sign, int buffer_mode)
+__fmt(FILE *op, unsigned char *buf, int ljustf, int width, int preci, char pad, char sign,
+    int buffer_mode)
 {
    int cnt = 0, len;
    unsigned char ch;
@@ -54,14 +54,14 @@ __fmt(FILE *op, unsigned char *buf, int ljustf, int width, int preci, char pad,
    else if (sign)
       len++;
 
-   if ((preci != -1) && (len > preci))  /* limit max data width */
+   if (preci != -1 && len > preci)  /* limit max data width */
       len = preci;
 
    if (width < len)             /* flexible field width or width overflow */
       width = len;
 
    /*
-    * at this point: width = total field width len   = actual data width
+    * at this point: width = total field width, len = actual data width
     * (including possible sign character)
     */
    cnt = width;
@@ -71,7 +71,7 @@ __fmt(FILE *op, unsigned char *buf, int ljustf, int width, int preci, char pad,
    {
       if (!ljustf && width)     /* left padding */
       {
-         if (len && sign && (pad == '0'))
+         if (len && sign && pad == '0')
             goto showsign;
          ch = pad;
          --width;
@@ -105,21 +105,20 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
 {
    int i, cnt = 0, ljustf, lval;
    int preci, width, radix;
+   unsigned int c;
    char pad, dpoint;
    char sign, hash;
-   unsigned long l;
+   unsigned long v;
    int buffer_mode;
-   char *ptmp;
-   char tmp[64];
+   char *p;
+   char buf[64];
 
    /* This speeds things up a bit for unbuffered */
-   buffer_mode = (op->mode&__MODE_BUF);
-   op->mode &= (~__MODE_BUF);
+   buffer_mode = op->mode & __MODE_BUF;
+   op->mode &= ~__MODE_BUF;
 
-   while (*fmt)
-   {
-      if (*fmt == '%')
-      {
+   while (*fmt) {
+      if (*fmt == '%') {
          if( buffer_mode == _IONBF ) fflush(op);
          ljustf = 0;            /* left justify flag */
          hash = 0;
@@ -129,20 +128,18 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
          width = -1;            /* min field width */
          preci = -1;            /* max data width */
          radix = 10;            /* number base */
-         ptmp = tmp;            /* pointer to area to print */
-         lval = (sizeof(int)==sizeof(long));    /* long value flag */
+         p = buf;               /* pointer to area to print */
+         lval = sizeof(int) == sizeof(long);
        fmtnxt:
          i = 0;
-         for(;;)
-         {
+         for (;;) {
             ++fmt;
-            if(*fmt < '0' || *fmt > '9' )
+            if (*fmt < '0' || *fmt > '9')
                 break;
-            i = (i * 10) + (*fmt - '0');
+            i = i * 10 + *fmt - '0';
             if (dpoint)
                preci = i;
-            else if (!i && (pad == ' '))
-            {
+            else if (!i && pad == ' ') {
                pad = '0';
                goto fmtnxt;
             }
@@ -150,12 +147,7 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
                width = i;
          }
 
-         switch (*fmt)
-         {
-         case '\0':             /* early EOS */
-            --fmt;
-            goto charout;
-
+         switch (*fmt) {
          case '-':              /* left justification */
             ljustf = 1;
             goto fmtnxt;
@@ -189,11 +181,6 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
             lval = 0;
             goto fmtnxt;
 
-         case 'd':              /* Signed decimal */
-         case 'i':
-            ptmp = ltostr((long) ((lval) ? va_arg(ap, long) : va_arg(ap, int)), 10);
-            goto printit;
-
          case 'b':              /* Unsigned binary */
             radix = 2;
             goto usproc;
@@ -203,7 +190,7 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
             goto usproc;
 
          case 'p':              /* Pointer */
-            lval = (sizeof(char*) == sizeof(long));
+            lval = sizeof(char *) == sizeof(long);
             pad = '0';
             width = 4;
             preci = 8;
@@ -212,23 +199,49 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
          case 'x':              /* Unsigned hexadecimal */
          case 'X':
             radix = 16;
-            /* fall thru */
+            goto usproc;
+
+         case 'd':              /* Signed decimal */
+         case 'i':
+            v = lval? va_arg(ap, long) : (long)va_arg(ap, int);
+            if ((long)v < 0) {
+                v = -(long)v;
+                sign = '-';
+            }
+            goto convert;
 
          case 'u':              /* Unsigned decimal */
          case 'k':              /* Pticks */
           usproc:
-            l = lval? va_arg(ap, unsigned long) : (unsigned long)va_arg(ap, unsigned int);
+            v = lval? va_arg(ap, unsigned long) : (unsigned long)va_arg(ap, unsigned int);
             if (*fmt == 'k') {
                 if (_weakaddr(ptostr)) {
-                    (_weakfn(ptostr))(l, ptmp);
+                    (_weakfn(ptostr))(v, p);
                     preci = -1;
                     goto printit;
                 }
                 /* if precision timing not linked in, display as unsigned */
             }
-            ptmp = ultostr(l, radix);
-            if( hash && radix == 8 ) {
-                width = strlen(ptmp)+1;
+
+        convert:
+            p = buf + sizeof(buf) - 1;
+            *p = '\0';
+            do {
+#ifdef __WATCOMC__
+                c = v % radix;
+                v = v / radix;
+#else
+                c = radix;
+                v = __divmod(v, &c);    /* remainder returned in c */
+#endif
+                if (c > 9)
+                    *--p = ((*fmt == 'X')? 'A': 'a') - 10 + c;
+                else
+                    *--p = '0' + c;
+            } while (v != 0);
+
+            if (hash && radix == 8) {
+                width = strlen(p)+1;
                 pad = '0';
             }
             goto printit;
@@ -238,19 +251,19 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
             goto fmtnxt;
 
          case 'c':              /* Character */
-            ptmp[0] = va_arg(ap, int);
-            ptmp[1] = '\0';
+            p[0] = va_arg(ap, int);
+            p[1] = '\0';
             goto nopad;
 
          case 's':              /* String */
-            ptmp = va_arg(ap, char*);
-            if (!ptmp) ptmp = "(null)";
+            p = va_arg(ap, char *);
+            if (!p) p = "(null)";
           nopad:
             sign = '\0';
             pad = ' ';
           printit:
-            cnt += __fmt(op, (unsigned char *)ptmp, ljustf, width, preci, pad,
-                        sign, buffer_mode);
+            cnt += __fmt(op, (unsigned char *)p, ljustf, width, preci, pad, sign,
+                        buffer_mode);
             break;
 
 #ifndef __HAS_NO_FLOATS__
@@ -260,19 +273,20 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
          case 'E':
          case 'G':
             if (_weakaddr(dtostr)) {
-               (_weakfn(dtostr))(va_arg(ap, double), *fmt, preci, ptmp);
+               (_weakfn(dtostr))(va_arg(ap, double), *fmt, preci, p);
                preci = -1;
                goto printit;
             }
-            /* FALLTHROUGH if no floating printf available */
+            /* fall thru if dotostr not linked in */
 #endif
 
+         case '\0':             /* early EOS */
+            --fmt;
+            /* fall thru */
          default:               /* unknown character */
             goto charout;
          }
-      }
-      else
-      {
+      } else {
        charout:
          putc(*fmt, op);        /* normal char out */
          ++cnt;

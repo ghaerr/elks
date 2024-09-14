@@ -10,6 +10,7 @@ SRCS = \
     memset-s.S \
     strcpy-s.S \
     strlen-s.S \
+    divmod.S \
     # end of list
 
 LEFTOUT = \
