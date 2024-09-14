@@ -227,12 +227,12 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
             p = buf + sizeof(buf) - 1;
             *p = '\0';
             do {
-#ifdef __WATCOMC__
-                c = v % radix;
-                v = v / radix;
-#else
+#if 1
                 c = radix;
                 v = __divmod(v, &c);    /* remainder returned in c */
+#else
+                c = v % radix;
+                v = v / radix;
 #endif
                 if (c > 9)
                     *--p = ((*fmt == 'X')? 'A': 'a') - 10 + c;
