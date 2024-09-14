@@ -7,8 +7,32 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <stdlib.h>
 
 static char readbuf[BUFSIZ];    /* use disk block size for stack limit and efficiency*/
+
+#define TEST    0
+#if TEST
+void test(void)
+{
+    printf("#04X: '%#04X'\n", 0x2ab);
+    printf("04X: '%04X'\n", 0x2ab);
+    printf("04x: '%04x'\n", 0x2ab);
+    printf(" 4x: '%4x'\n", 0x2ab);
+    printf("04d: '%04d'\n", 0x200);
+    printf(" 4d: '%4d'\n", 0x200);
+    printf("05d: '%05d'\n", -20);
+    printf(" 5d: '%5d'\n", -20);
+    printf("+5d: '%5d'\n", -20);
+    printf("+5d: '%5d'\n", 20);
+    printf(" ld: '%ld'\n", -123456789L);
+    printf(" lx: '%lx'\n", 0x87654321L);
+    printf(" lo: '%lo'\n", 0xFFFFFFFFL);
+    printf("  s: '%s'\n", "thisisatest");
+    printf(" 6s: '%6s'\n", "thisisatest");
+    printf("20s: '%20s'\n", "thisisatest");
+}
+#endif
 
 static int copyfd(int fd)
 {
@@ -25,6 +49,10 @@ int main(int argc, char **argv)
 {
 	int i, fd;
 
+#if TEST
+    test();
+    exit(0);
+#endif
 	if (argc <= 1) {
 		if (copyfd(STDIN_FILENO)) {
 			perror("stdin");

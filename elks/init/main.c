@@ -122,8 +122,10 @@ void start_kernel(void)
     printk(" 4x: '%4x'\n", 0x2ab);
     printk("04d: '%04d'\n", 0x200);
     printk(" 4d: '%4d'\n", 0x200);
-    printk("05d: '%05d'\n", -200);
-    printk(" 5d: '%5d'\n", -200);
+    printk("05d: '%05d'\n", -20);
+    printk(" 5d: '%5d'\n", -20);
+    printk("+5d: '%5d'\n", -20);
+    printk("+5d: '%5d'\n", 20);
     printk(" ld: '%ld'\n", -123456789L);
     printk(" lx: '%lx'\n", 0x87654321L);
     printk(" lo: '%lo'\n", 0xFFFFFFFFL);
