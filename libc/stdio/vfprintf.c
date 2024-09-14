@@ -1,5 +1,30 @@
 /*
- * This file based on printf.c from 'Dlibs' on the atari ST  (RdeBath)
+ *  vfprintf - A small implementation of printf-style format string processor
+ *
+ *          Only the following basic types are supported:
+ *              %%      literal % sign
+ *              %c      char
+ *              %d/%i   signed decimal
+ *              %u      unsigned decimal
+ *              %o      octal
+ *              %b      binary
+ *              %s      string
+ *              %x/%X   hexadecimal with lower/upper case letters
+ *              %p      pointer - same as %04x
+ *              %k      pticks (0.838usec intervals auto displayed as us, ms or s)
+ *              %efgEG  optional floating point formatting using dtostr
+ *          The following flags preceding the format type are supported:
+ *              0       fill with leading zeros
+ *              1-9     minimum field width
+ *              .       precision followed by 0-9 (strings only)
+ *              -       left justifiy
+ *              +       begin signed conversion with + or -
+ *              SP      (space) replace + with space if not negative
+ *              ,       thousands separator (can also use ' and _)
+ *              l       long data
+ *              h       short data
+ *
+ * This file originally based on printf.c from 'Dlibs' on the atari ST  (RdeBath)
  *
  * 19-OCT-88: Dale Schumacher
  * > John Stanley has again been a great help in debugging, particularly
@@ -10,19 +35,13 @@
  *    dal@syntel.UUCP                         United States of America
  *  "It's not reality that's important, but how you perceive things."
  *
- */
-
-/* Altered to use stdarg, made the core function vfprintf.
- * Hooked into the stdio package using 'inside information'
- * Altered sizeof() assumptions, now assumes all integers except chars
- * will be either
- *  sizeof(xxx) == sizeof(long) or sizeof(xxx) == sizeof(short)
+ * Altered to use stdarg, made the core function vfprintf.
+ * Hooked into the stdio package using 'inside information' -RDB
  *
- * -RDB
+ * Greg Haerr enhanced for speed, new features
  */
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <fcntl.h>
 #include <string.h>
 #include <arch/divmod.h>
@@ -107,21 +126,22 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
    int preci, width, radix;
    unsigned int c;
    char pad, dpoint;
-   char sign, hash;
+   char sign, quot;
    unsigned long v;
    int buffer_mode;
    char *p;
+   //char hash;
    char buf[64];
 
-   /* This speeds things up a bit for unbuffered */
+   /* turn off putc calling fputc every time for non or line buffered */
    buffer_mode = op->mode & __MODE_BUF;
    op->mode &= ~__MODE_BUF;
 
    while (*fmt) {
       if (*fmt == '%') {
-         if( buffer_mode == _IONBF ) fflush(op);
          ljustf = 0;            /* left justify flag */
-         hash = 0;
+         //hash = 0;            /* alternate output */
+         quot = 0;              /* thousands grouping */
          dpoint = 0;            /* found decimal point */
          sign = '\0';           /* sign char & status */
          pad = ' ';             /* justification padding char */
@@ -157,6 +177,19 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
             sign = *fmt;
             goto fmtnxt;
 
+         case '\'':             /* thousands grouping */
+         case ',':
+         case '_':
+            quot = *fmt;
+            goto fmtnxt;
+
+         //case '#':
+            //hash = 1;
+            //goto fmtnxt;
+
+         case '\0':             /* early EOS */
+            continue;
+
          case '*':              /* parameter width value */
             i = va_arg(ap, int);
             if (dpoint)
@@ -190,10 +223,10 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
             goto usproc;
 
          case 'p':              /* Pointer */
-            lval = sizeof(char *) == sizeof(long);
+            if (sizeof(char *) == sizeof(long))
+                lval = 1;
+            width = lval? 8: 4;
             pad = '0';
-            width = 4;
-            preci = 8;
             /* fall thru */
 
          case 'x':              /* Unsigned hexadecimal */
@@ -226,7 +259,7 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
         convert:
             p = buf + sizeof(buf) - 1;
             *p = '\0';
-            do {
+            for (i = 0;;) {
 #if 1
                 c = radix;
                 v = __divmod(v, &c);    /* remainder returned in c */
@@ -238,17 +271,20 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
                     *--p = ((*fmt == 'X')? 'A': 'a') - 10 + c;
                 else
                     *--p = '0' + c;
-            } while (v != 0);
-
+                if (!v)
+                    break;
+                if (quot && ++i == 3) {
+                    *--p = quot;
+                    i = 0;
+                }
+            }
+#if 0
             if (hash && radix == 8) {
-                width = strlen(p)+1;
+                width = strlen(p) + 1;
                 pad = '0';
             }
+#endif
             goto printit;
-
-         case '#':
-            hash = 1;
-            goto fmtnxt;
 
          case 'c':              /* Character */
             p[0] = va_arg(ap, int);
@@ -280,17 +316,14 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
             /* fall thru if dotostr not linked in */
 #endif
 
-         case '\0':             /* early EOS */
-            --fmt;
-            /* fall thru */
          default:               /* unknown character */
             goto charout;
          }
       } else {
        charout:
          putc(*fmt, op);        /* normal char out */
-         ++cnt;
          if( *fmt == '\n' && buffer_mode == _IOLBF ) fflush(op);
+         ++cnt;
       }
       ++fmt;
    }
