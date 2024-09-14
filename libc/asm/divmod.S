@@ -28,10 +28,14 @@
 
         .global __divmod
 __divmod:
+#ifndef __IA16_CALLCVT_REGPARMCALL
         mov     %sp,%bx
         mov     NUMLO(%bx),%ax
         mov     NUMHI(%bx),%dx
         mov     ADDR(%bx),%bx
+#else
+        mov     %cx,%bx             // AX:DX = val, BX = &rem
+#endif
 
 //  divides DX:AX / [BX]
 //  returns DX:AX with remainder in [BX]
