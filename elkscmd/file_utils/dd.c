@@ -88,9 +88,18 @@ char *ultoa_r(char *buf, unsigned long i)
     char *b = buf + 34 - 1;
 
     *b = '\0';
+#ifdef _M_I86
+    do {
+        unsigned int c;
+        c = 10;
+        i = __divmod(i, &c);
+        *--b = '0' + c;
+    } while (i);
+#else
     do {
         *--b = '0' + (i % 10);
     } while ((i /= 10) != 0);
+#endif
     return b;
 }
 static void eprintf(const char *s, ...)

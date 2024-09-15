@@ -271,5 +271,30 @@ int main(int argc, char **argv) {
     printf("%s\n", ultostr(-0x7fffffff, 10));
     printf("%s\n", ultostr(0x80000000, 10));
     printf("%s\n", ultostr(0xffffffff, 10));
+
+    printf("-25     %s\n", itoa(-25));
+    printf("32767   %s\n", uitoa(32767));
+    printf(" 100000  %s\n", ultoa(100000L));
+    printf("-100000 %s\n", ltoa(-100000L));
+    printf(" 300000  %s\n", ultostr(300000L, 10));
+    printf("-300000 %s\n", ltostr(-300000L, 10));
+    printf("   p: '%p'\n", 0x18AF);
+    printf("  lp: '%lp'\n", 0x02d018AFL);
+    printf("04X: '%04X'\n", 0x2ab);
+    printf("04x: '%04x'\n", 0x2ab);
+    printf(" 4x: '%4x'\n", 0x2ab);
+    printf("04d: '%04d'\n", 0x200);
+    printf(" 4d: '%4d'\n", 0x200);
+    printf("05d: '%05d'\n", -20);
+    printf(" 5d: '%5d'\n", -20);
+    printf("+5d: '%5d'\n", -20);
+    printf("+5d: '%5d'\n", 20);
+    printf(",ld: '%,ld'\n", -123456789L);
+    printf(" lx: '%lx'\n", 0x87654321L);
+    printf(" lo: '%lo'\n", 0xFFFFFFFFL);
+    printf("  s: '%s'\n", "thisisatest");
+    printf(" 6s: '%6s'\n", "thisisatest");
+    printf("20s: '%20s'\n", "thisisatest");
+
 	return 0;
 }
