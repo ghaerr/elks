@@ -7,7 +7,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <stdlib.h>
 
 static char readbuf[BUFSIZ];    /* use disk block size for stack limit and efficiency*/
 

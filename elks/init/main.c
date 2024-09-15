@@ -126,7 +126,7 @@ void start_kernel(void)
     printk(" 5d: '%5d'\n", -20);
     printk("+5d: '%5d'\n", -20);
     printk("+5d: '%5d'\n", 20);
-    printk(" ld: '%ld'\n", -123456789L);
+    printk(",ld: '%,ld'\n", -123456789L);
     printk(" lx: '%lx'\n", 0x87654321L);
     printk(" lo: '%lo'\n", 0xFFFFFFFFL);
     printk("  s: '%s'\n", "thisisatest");
