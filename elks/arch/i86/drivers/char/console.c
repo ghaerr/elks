@@ -33,10 +33,12 @@ void Console_conin(unsigned char Key)
 static void Console_gotoxy(register Console * C, int x, int y)
 {
     register int xp = x;
+    unsigned short MaxRow = C->Height - 1;
+    unsigned short MaxCol = C->Width - 1;
 
-    C->cx = (xp >= C->MaxCol) ? C->MaxCol : (xp < 0) ? 0 : xp;
+    C->cx = (xp >= MaxCol) ? MaxCol : (xp < 0) ? 0 : xp;
     xp = y;
-    C->cy = (xp >= C->MaxRow) ? C->MaxRow : (xp < 0) ? 0 : xp;
+    C->cy = (xp >= MaxRow) ? MaxRow : (xp < 0) ? 0 : xp;
     C->XN = 0;
 }
 
@@ -80,6 +82,8 @@ static unsigned char ega_color[16] = {  0,  4,  2,  6,  1,  5,  3,  7,
 static void AnsiCmd(register Console * C, int c)
 {
     int n;
+    unsigned short MaxRow = C->Height - 1;
+    unsigned short MaxCol = C->Width - 1;
 
     /* ANSI param gathering and processing */
     if (C->parmptr < &C->params[MAXPARMS - 1])
@@ -105,23 +109,23 @@ static void AnsiCmd(register Console * C, int c)
         break;
     case 'B':                   /* Move down n lines */
         C->cy += parm1(C->params);
-        if (C->cy > C->MaxRow)
-            C->cy = C->MaxRow;
+        if (C->cy > MaxRow)
+            C->cy = MaxRow;
         break;
     case 'd':                   /* Vertical position absolute */
         C->cy = parm1(C->params) - 1;
-        if (C->cy > C->MaxRow)
-            C->cy = C->MaxRow;
+        if (C->cy > MaxRow)
+            C->cy = MaxRow;
         break;
     case 'C':                   /* Move right n characters */
         C->cx += parm1(C->params);
-        if (C->cx > C->MaxCol)
-            C->cx = C->MaxCol;
+        if (C->cx > MaxCol)
+            C->cx = MaxCol;
         break;
     case 'G':                   /* Horizontal position absolute */
         C->cx = parm1(C->params) - 1;
-        if (C->cx > C->MaxCol)
-            C->cx = C->MaxCol;
+        if (C->cx > MaxCol)
+            C->cx = MaxCol;
         break;
     case 'D':                   /* Move left n characters */
         C->cx -= parm1(C->params);
@@ -134,20 +138,20 @@ static void AnsiCmd(register Console * C, int c)
     case 'J':                   /* clear screen */
         n = atoi((char *)C->params);
         if (n == 0) {           /* to bottom */
-            ClearRange(C, C->cx, C->cy, C->MaxCol, C->cy);
-            if (C->cy < C->MaxRow)
-                ClearRange(C, 0, C->cy, C->MaxCol, C->MaxRow);
+            ClearRange(C, C->cx, C->cy, MaxCol, C->cy);
+            if (C->cy < MaxRow)
+                ClearRange(C, 0, C->cy, MaxCol, MaxRow);
         } else if (n == 2)      /* all*/
-            ClearRange(C, 0, 0, C->MaxCol, C->MaxRow);
+            ClearRange(C, 0, 0, MaxCol, MaxRow);
         break;
     case 'K':                   /* clear line */
         n = atoi((char *)C->params);
         if (n == 0)             /* to EOL */
-            ClearRange(C, C->cx, C->cy, C->MaxCol, C->cy);
+            ClearRange(C, C->cx, C->cy, MaxCol, C->cy);
         else if (n == 1)        /* to BOL */
             ClearRange(C, 0, C->cy, C->cx, C->cy);
         else if (n == 2)        /* all */
-            ClearRange(C, 0, C->cy, C->MaxCol, C->cy);
+            ClearRange(C, 0, C->cy, MaxCol, C->cy);
         break;
     case 'L':                   /* insert line */
         ScrollDown(C, C->cy);
@@ -250,6 +254,8 @@ static void esc_char(register Console * C, int c)
 /* Normal character processing */
 static void std_char(register Console * C, int c)
 {
+    unsigned short MaxRow = C->Height - 1;
+    unsigned short MaxCol = C->Width - 1;
     switch(c) {
     case BEL:
         bell();
@@ -287,9 +293,9 @@ static void std_char(register Console * C, int c)
             C->XN = 0;
             C->cx = 0;
             C->cy++;
-            if (C->cy > C->MaxRow) {
+            if (C->cy > MaxRow) {
                 ScrollUp(C, 0);
-                C->cy = C->MaxRow;
+                C->cy = MaxRow;
             }
         }
 #ifdef CONFIG_CONSOLE_BIOS
@@ -300,14 +306,14 @@ static void std_char(register Console * C, int c)
                 C->cx++;
         }
       linewrap:
-        if (C->cx > C->MaxCol) {
+        if (C->cx > MaxCol) {
             C->XN = 1;
-            C->cx = C->MaxCol;
+            C->cx = MaxCol;
         }
     }
-    if (C->cy > C->MaxRow) {
+    if (C->cy > MaxRow) {
         ScrollUp(C, 0);
-        C->cy = C->MaxRow;
+        C->cy = MaxRow;
     }
 }
 

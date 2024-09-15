@@ -55,9 +55,7 @@ struct console {
     unsigned char color;        /* fg/bg attr */
     int pageno;                 /* video ram page # */
     unsigned short Width;
-    unsigned short MaxCol;
     unsigned short Height;
-    unsigned short MaxRow;
 #ifdef CONFIG_EMUL_ANSI
     int savex, savey;           /* saved cursor position */
     unsigned char *parmptr;     /* ptr to params */
@@ -136,13 +134,13 @@ static void ClearRange(register Console * C, int x, int y, int xx, int yy)
 
 static void ScrollUp(register Console * C, int y)
 {
-    scroll(C, 1, 0, y, C->MaxCol, C->MaxRow);
+    scroll(C, 1, 0, y, C->Width - 1, C->Height - 1);
 }
 
 #ifdef CONFIG_EMUL_ANSI
 static void ScrollDown(register Console * C, int y)
 {
-    scroll(C, -1, 0, y, C->MaxCol, C->MaxRow);
+    scroll(C, -1, 0, y, C->Width - 1, C->Height - 1);
 }
 #endif
 
@@ -180,8 +178,8 @@ void INITPROC console_init(void)
     int i;
 
     C = Con;
-    C->MaxCol = (C->Width = SETUP_VID_COLS) - 1;
-    C->MaxRow = (C->Height = SETUP_VID_LINES) - 1;
+    C->Width = SETUP_VID_COLS;
+    C->Height = SETUP_VID_LINES;
 
     if (peekb(0x49, 0x40) == 7)  /* BIOS data segment */
         NumConsoles = 1;

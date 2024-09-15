@@ -62,9 +62,7 @@ struct console {
     unsigned int vseg;		/* vram for this console page */
     int vseg_offset;		/* vram offset of vseg for this console page */
     unsigned short Width;
-    unsigned short MaxCol;
     unsigned short Height;
-    unsigned short MaxRow;
 #ifdef CONFIG_EMUL_ANSI
     int savex, savey;		/* saved cursor position */
     unsigned char *parmptr;	/* ptr to params */
@@ -164,21 +162,25 @@ static void ClearRange(register Console * C, int x, int y, int xx, int yy)
 
 static void ScrollUp(register Console * C, int y)
 {
-    register __u16 *vp;
+    __u16 *vp;
+    unsigned short MaxRow = C->Height - 1;
+    unsigned short MaxCol = C->Width - 1;
 
     vp = (__u16 *)((__u16)(y * C->Width) << 1);
-    if ((unsigned int)y < C->MaxRow) {
-	fmemcpyb(vp, AttributeSeg, vp + C->Width, AttributeSeg, (C->MaxRow - y) * (C->Width << 1));
-	fmemcpyb(vp, C->vseg, vp + C->Width, C->vseg, (C->MaxRow - y) * (C->Width << 1));
+    if ((unsigned int)y < MaxRow) {
+	fmemcpyb(vp, AttributeSeg, vp + C->Width, AttributeSeg, (MaxRow - y) * (C->Width << 1));
+	fmemcpyb(vp, C->vseg, vp + C->Width, C->vseg, (MaxRow - y) * (C->Width << 1));
     }
-    ClearRange(C, 0, C->MaxRow, C->MaxCol, C->MaxRow);
+    ClearRange(C, 0, MaxRow, MaxCol, MaxRow);
 }
 
 #ifdef CONFIG_EMUL_ANSI
 static void ScrollDown(register Console * C, int y)
 {
-    register __u16 *vp;
-    int yy = C->MaxRow;
+    __u16 *vp;
+    unsigned short MaxRow = C->Height - 1;
+    unsigned short MaxCol = C->Width - 1;
+    int yy = MaxRow;
 
     vp = (__u16 *)((__u16)(yy * C->Width) << 1);
     while (--yy >= y) {
@@ -186,7 +188,7 @@ static void ScrollDown(register Console * C, int y)
 	fmemcpyb(vp, C->vseg, vp - C->Width, C->vseg, C->Width << 1);
 	vp -= C->Width;
     }
-    ClearRange(C, 0, y, C->MaxCol, y);
+    ClearRange(C, 0, y, MaxCol, y);
 }
 #endif
 
@@ -232,8 +234,8 @@ void INITPROC console_init(void)
     }
 
     C = Con;
-    C->MaxCol = (C->Width = 80) - 1;
-    C->MaxRow = (C->Height = 25) - 1;
+    C->Width = 80;
+    C->Height = 25;
 
     PageSizeW = 2000;
 

@@ -62,9 +62,7 @@ struct console {
     unsigned int vseg;          /* vram for this console page */
     int vseg_offset;            /* vram offset of vseg for this console page */
     unsigned short Width;
-    unsigned short MaxCol;
     unsigned short Height;
-    unsigned short MaxRow;
     unsigned short crtc_base;   /* 6845 CRTC base I/O address */
 #ifdef CONFIG_EMUL_ANSI
     int savex, savey;           /* saved cursor position */
@@ -146,12 +144,14 @@ static void ClearRange(register Console * C, int x, int y, int x2, int y2)
 static void ScrollUp(register Console * C, int y)
 {
     register int vp;
+    unsigned short MaxRow = C->Height - 1;
+    unsigned short MaxCol = C->Width - 1;
 
     vp = y * (C->Width << 1);
-    if ((unsigned int)y < C->MaxRow)
+    if ((unsigned int)y < MaxRow)
         fmemcpyw((void *)vp, C->vseg,
-                 (void *)(vp + (C->Width << 1)), C->vseg, (C->MaxRow - y) * C->Width);
-    ClearRange(C, 0, C->MaxRow, C->MaxCol, C->MaxRow);
+                 (void *)(vp + (C->Width << 1)), C->vseg, (MaxRow - y) * C->Width);
+    ClearRange(C, 0, MaxRow, MaxCol, MaxRow);
 }
 
 #ifdef CONFIG_EMUL_ANSI
@@ -206,16 +206,16 @@ void INITPROC console_init(void)
     unsigned char output_type;
     unsigned short boot_crtc;
     int i;
-    int Width, MaxCol, Height, MaxRow;
+    int Width, Height;
     unsigned int PageSizeW;
 
     output_type = OT_EGA;
     C = &Con[0];
 
-    MaxCol = (Width = peekb(0x4a, 0x40)) - 1;  /* BIOS data segment */
+    Width = peekb(0x4a, 0x40);  /* BIOS data segment */
 
     /* Trust this. Cga does not support peeking at 0x40:0x84. */
-    MaxRow = (Height = 25) - 1;
+    Height = 25;
     boot_crtc = peekw(0x63, 0x40);
     PageSizeW = ((unsigned int)peekw(0x4C, 0x40) >> 1);
 
@@ -245,9 +245,7 @@ void INITPROC console_init(void)
         C->attr = A_DEFAULT;
         C->type = output_type;
         C->Width = Width;
-        C->MaxCol = MaxCol;
         C->Height = Height;
-        C->MaxRow = MaxRow;
         C->crtc_base = boot_crtc;
 
 #ifdef CONFIG_EMUL_ANSI
@@ -298,9 +296,7 @@ void INITPROC console_init(void)
             C->attr = A_DEFAULT;
             C->type = dev;
             C->Width = crtc_params[dev].w;
-            C->MaxCol = C->Width - 1;
             C->Height = crtc_params[dev].h;
-            C->MaxRow = C->Height - 1;
             C->crtc_base = crtc_params[dev].crtc_base;
 #ifdef CONFIG_EMUL_ANSI
             C->savex = C->savey = 0;
