@@ -52,7 +52,7 @@ static void INITPROC print_minor_name(register struct gendisk *hd, unsigned int 
     printk("%s%c", hd->major_name, 'a' + (unsigned char)(minor >> hd->minor_shift));
     if ((part = (unsigned) (minor & ((1 << hd->minor_shift) - 1))))
         printk("%d", part);
-    printk(":(%lu,%lu) ", hdp->start_sect, hdp->nr_sects);
+    printk(":(%,lu;%,lu) ", hdp->start_sect, hdp->nr_sects);
 }
 
 static void INITPROC add_partition(struct gendisk *hd, unsigned int minor,

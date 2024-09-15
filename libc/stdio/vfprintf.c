@@ -278,12 +278,10 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
                     i = 0;
                 }
             }
-#if 0
-            if (hash && radix == 8) {
-                width = strlen(p) + 1;
-                pad = '0';
-            }
-#endif
+            //if (hash && radix == 8) {
+                //width = strlen(p) + 1;
+                //pad = '0';
+            //}
             goto printit;
 
          case 'c':              /* Character */
