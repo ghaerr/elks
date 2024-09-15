@@ -5,6 +5,7 @@
 #include <features.h>
 #include <sys/types.h>
 #include <malloc.h>
+#include <arch/divmod.h>
 
 /* Don't overwrite user definitions of NULL */
 #ifndef NULL

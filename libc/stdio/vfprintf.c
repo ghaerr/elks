@@ -42,9 +42,9 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <string.h>
-#include <arch/divmod.h>
 
 #ifndef __HAS_NO_FLOATS__
 #include <sys/weaken.h>
@@ -260,7 +260,7 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
             p = buf + sizeof(buf) - 1;
             *p = '\0';
             for (i = 0;;) {
-#if 1
+#ifdef _M_I86
                 c = radix;
                 v = __divmod(v, &c);    /* remainder returned in c */
 #else
