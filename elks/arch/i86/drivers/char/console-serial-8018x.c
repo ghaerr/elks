@@ -196,7 +196,7 @@ static int sercon_ioctl(struct tty *tty, int cmd, char *arg)
     return 0;
 }
 
-static int sercon_write(register struct tty *tty)
+static int sercon_write(struct tty *tty)
 {
     struct serial_info *port = &ports[0]; /* TODO: add support for Serial 1 */
     int cnt = 0;
@@ -213,7 +213,7 @@ static void sercon_release(struct tty *tty)
     ttystd_release(tty);
 }
 
-static int sercon_open(register struct tty *tty)
+static int sercon_open(struct tty *tty)
 {
     return ttystd_open(tty);
 }

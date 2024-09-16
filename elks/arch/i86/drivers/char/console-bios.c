@@ -76,9 +76,9 @@ static int Current_VCminor;
 #define TERM_TYPE " dumb "
 #endif
 
-static void std_char(register Console *, int);
+static void std_char(Console *, int);
 
-static void PositionCursor(register Console * C)
+static void PositionCursor(Console * C)
 {
     int x, y, p;
 
@@ -102,7 +102,7 @@ static void DisplayCursor(Console * C, int onoff)
 {
 }
 
-static void VideoWrite(register Console * C, char c)
+static void VideoWrite(Console * C, char c)
 {
     int a, p;
 
@@ -111,7 +111,7 @@ static void VideoWrite(register Console * C, char c)
     bios_writecharattr (c, a, p);
 }
 
-static void scroll(register Console * C, int n, int x, int y, int xx, int yy)
+static void scroll(Console * C, int n, int x, int y, int xx, int yy)
 {
     int a;
 
@@ -127,18 +127,18 @@ static void scroll(register Console * C, int n, int x, int y, int xx, int yy)
     }
 }
 
-static void ClearRange(register Console * C, int x, int y, int xx, int yy)
+static void ClearRange(Console * C, int x, int y, int xx, int yy)
 {
     scroll(C, 26, x, y, xx, yy);
 }
 
-static void ScrollUp(register Console * C, int y)
+static void ScrollUp(Console * C, int y)
 {
     scroll(C, 1, 0, y, C->Width - 1, C->Height - 1);
 }
 
 #ifdef CONFIG_EMUL_ANSI
-static void ScrollDown(register Console * C, int y)
+static void ScrollDown(Console * C, int y)
 {
     scroll(C, -1, 0, y, C->Width - 1, C->Height - 1);
 }

@@ -280,6 +280,7 @@ int main(int argc, char **argv) {
     printf("-300000 %s\n", ltostr(-300000L, 10));
     printf("   p: '%p'\n", 0x18AF);
     printf("  lp: '%lp'\n", 0x02d018AFL);
+    /*printk("#04X: '%#04X'\n", 0x2ab);*/       /* kernel only */
     printf("04X: '%04X'\n", 0x2ab);
     printf("04x: '%04x'\n", 0x2ab);
     printf(" 4x: '%4x'\n", 0x2ab);

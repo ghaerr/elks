@@ -114,27 +114,6 @@ void start_kernel(void)
     kfork_proc(init_task);
     wake_up_process(&task[1]);
 
-#if TIMER_TEST
-    /* printk rewrite debug statements */
-    printk("#04X: '%#04X'\n", 0x2ab);
-    printk("04X: '%04X'\n", 0x2ab);
-    printk("04x: '%04x'\n", 0x2ab);
-    printk(" 4x: '%4x'\n", 0x2ab);
-    printk("04d: '%04d'\n", 0x200);
-    printk(" 4d: '%4d'\n", 0x200);
-    printk("05d: '%05d'\n", -20);
-    printk(" 5d: '%5d'\n", -20);
-    printk("+5d: '%5d'\n", -20);
-    printk("+5d: '%5d'\n", 20);
-    printk(",ld: '%,ld'\n", -123456789L);
-    printk(" lx: '%lx'\n", 0x87654321L);
-    printk(" lo: '%lo'\n", 0xFFFFFFFFL);
-    printk("  s: '%s'\n", "thisisatest");
-    printk(" 6s: '%6s'\n", "thisisatest");
-    printk("20s: '%20s'\n", "thisisatest");
-    test_ptime_print();
-#endif
-
     /*
      * We are now the idle task. We won't run unless no other process can run.
      * The idle task always runs with _gint_count == 1 (switched from user mode syscall)

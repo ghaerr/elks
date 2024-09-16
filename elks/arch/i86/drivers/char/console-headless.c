@@ -23,7 +23,7 @@ void INITPROC console_init(void)
 
 void Console_conin(unsigned char Key)
 {
-    register struct tty *ttyp = &ttys[0];	/* /dev/tty1*/
+    struct tty *ttyp = &ttys[0];	/* /dev/tty1*/
 
     if (!tty_intcheck(ttyp, Key))
 	chq_addch(&ttyp->inq, Key);
@@ -55,7 +55,7 @@ static int Console_ioctl(struct tty *tty, int cmd, char *arg)
     return -EINVAL;
 }
 
-static int Console_write(register struct tty *tty)
+static int Console_write(struct tty *tty)
 {
     int cnt = 0;
 
@@ -71,7 +71,7 @@ static void Console_release(struct tty *tty)
     ttystd_release(tty);
 }
 
-static int Console_open(register struct tty *tty)
+static int Console_open(struct tty *tty)
 {
     return ttystd_open(tty);
 }

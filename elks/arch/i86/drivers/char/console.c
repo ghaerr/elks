@@ -1,6 +1,6 @@
 /* shared console routines for Direct and BIOS consoles - #include in console drivers*/
 
-static void WriteChar(register Console * C, int c)
+static void WriteChar(Console * C, int c)
 {
     /* check for graphics lock */
     while (glock) {
@@ -30,7 +30,7 @@ void Console_conin(unsigned char Key)
 }
 
 #ifdef CONFIG_EMUL_ANSI
-static void Console_gotoxy(register Console * C, int x, int y)
+static void Console_gotoxy(Console * C, int x, int y)
 {
     int xp = x;
     int MaxRow = C->Height - 1;
@@ -42,7 +42,7 @@ static void Console_gotoxy(register Console * C, int x, int y)
     C->XN = 0;
 }
 
-static int parm1(register unsigned char *buf)
+static int parm1(unsigned char *buf)
 {
     int n;
 
@@ -51,7 +51,7 @@ static int parm1(register unsigned char *buf)
     return n;
 }
 
-static int parm2(register unsigned char *buf)
+static int parm2(unsigned char *buf)
 {
     while (*buf != ';' && *buf)
         buf++;
@@ -79,7 +79,7 @@ static unsigned char ega_color[16] = {  0,  4,  2,  6,  1,  5,  3,  7,
                                         8, 12, 10, 14,  9, 13, 11, 15 };
 
 /* ESC [ processing */
-static void AnsiCmd(register Console * C, int c)
+static void AnsiCmd(Console * C, int c)
 {
     int n;
     int MaxRow = C->Height - 1;
@@ -230,7 +230,7 @@ static void AnsiCmd(register Console * C, int c)
 }
 
 /* ANSI emulator - ESC seen */
-static void esc_char(register Console * C, int c)
+static void esc_char(Console * C, int c)
 {
     /* Parse CSI sequence */
     C->parmptr = C->params;
@@ -252,7 +252,7 @@ static void esc_char(register Console * C, int c)
 #endif
 
 /* Normal character processing */
-static void std_char(register Console * C, int c)
+static void std_char(Console * C, int c)
 {
     int MaxRow = C->Height - 1;
     int MaxCol = C->Width - 1;
@@ -366,7 +366,7 @@ static int Console_ioctl(struct tty *tty, int cmd, char *arg)
     return -EINVAL;
 }
 
-static int Console_write(register struct tty *tty)
+static int Console_write(struct tty *tty)
 {
     Console *C = &Con[tty->minor];
     int cnt = 0;
@@ -385,7 +385,7 @@ static void Console_release(struct tty *tty)
     ttystd_release(tty);
 }
 
-static int Console_open(register struct tty *tty)
+static int Console_open(struct tty *tty)
 {
     if ((int)tty->minor >= NumConsoles)
         return -ENODEV;
