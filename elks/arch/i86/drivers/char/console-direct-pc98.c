@@ -89,11 +89,11 @@ unsigned AttributeSeg;
 
 static void std_char(Console *, int);
 
-static void SetDisplayPage(register Console * C)
+static void SetDisplayPage(Console * C)
 {
 }
 
-static void PositionCursor(register Console * C)
+static void PositionCursor(Console * C)
 {
     unsigned int Pos;
 
@@ -130,7 +130,7 @@ static word_t conv_pcattr(word_t attr)
     return attr98;
 }
 
-static void VideoWrite(register Console * C, int c)
+static void VideoWrite(Console * C, int c)
 {
     word_t addr;
     word_t attr;
@@ -142,7 +142,7 @@ static void VideoWrite(register Console * C, int c)
     pokew(addr, (seg_t) C->vseg, c & 255);
 }
 
-static void ClearRange(register Console * C, int x, int y, int xx, int yy)
+static void ClearRange(Console * C, int x, int y, int xx, int yy)
 {
     __u16 *vp;
     word_t attr;
@@ -160,7 +160,7 @@ static void ClearRange(register Console * C, int x, int y, int xx, int yy)
     } while (++y <= yy);
 }
 
-static void ScrollUp(register Console * C, int y)
+static void ScrollUp(Console * C, int y)
 {
     __u16 *vp;
     int MaxRow = C->Height - 1;
@@ -175,7 +175,7 @@ static void ScrollUp(register Console * C, int y)
 }
 
 #ifdef CONFIG_EMUL_ANSI
-static void ScrollDown(register Console * C, int y)
+static void ScrollDown(Console * C, int y)
 {
     __u16 *vp;
     int MaxRow = C->Height - 1;

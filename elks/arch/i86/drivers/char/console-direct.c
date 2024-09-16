@@ -86,15 +86,15 @@ int kraw;
 #define TERM_TYPE " dumb "
 #endif
 
-static void std_char(register Console *, int);
+static void std_char(Console *, int);
 
-static void SetDisplayPage(register Console * C)
+static void SetDisplayPage(Console * C)
 {
     outw((C->vseg_offset & 0xff00) | 0x0c, C->crtc_base);
     outw((C->vseg_offset << 8) | 0x0d, C->crtc_base);
 }
 
-static void PositionCursor(register Console * C)
+static void PositionCursor(Console * C)
 {
     unsigned int Pos = C->cx + C->Width * C->cy + C->vseg_offset;
 
@@ -119,13 +119,13 @@ static void DisplayCursor(Console * C, int onoff)
     outb(v, C->crtc_base + 1);
 }
 
-static void VideoWrite(register Console * C, int c)
+static void VideoWrite(Console * C, int c)
 {
     pokew((C->cx + C->cy * C->Width) << 1, (seg_t) C->vseg,
           (C->attr << 8) | (c & 255));
 }
 
-static void ClearRange(register Console * C, int x, int y, int x2, int y2)
+static void ClearRange(Console * C, int x, int y, int x2, int y2)
 {
     int vp;
 
@@ -140,7 +140,7 @@ static void ClearRange(register Console * C, int x, int y, int x2, int y2)
     } while (++y <= y2);
 }
 
-static void ScrollUp(register Console * C, int y)
+static void ScrollUp(Console * C, int y)
 {
     int vp;
     int MaxRow = C->Height - 1;
@@ -154,7 +154,7 @@ static void ScrollUp(register Console * C, int y)
 }
 
 #ifdef CONFIG_EMUL_ANSI
-static void ScrollDown(register Console * C, int y)
+static void ScrollDown(Console * C, int y)
 {
     int vp;
     int yy = C->Height - 1;
