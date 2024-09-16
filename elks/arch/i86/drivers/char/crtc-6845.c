@@ -47,17 +47,19 @@ int INITPROC crtc_probe(unsigned short crtc_base)
 {
     int i;
     unsigned char test = 0x55;
+    unsigned char original, value;
+
     /* We'll try writing a value to cursor address LSB reg (0x0F), then reading it back */
     outb(0x0F, crtc_base + CRTC_INDX);
-    unsigned char original = inb(crtc_base + CRTC_DATA);
-    if (original == test) test += 0x10;
+    original = inb(crtc_base + CRTC_DATA);
+    if (original == test)
+        test += 0x10;
     outb(0x0F, crtc_base + CRTC_INDX);
-    outb(test, crtc_base + CRTC_DATA);
-    /* Now wait a bit */
-    for (i = 0; i < 100; ++i) {} // TODO: Verify this doesn't get optimized out
+    outb_p(test, crtc_base + CRTC_DATA);
     outb(0x0F, crtc_base + CRTC_INDX);
-    unsigned char value = inb(crtc_base + CRTC_DATA);
-    if (value != test) return 0;
+    value = inb(crtc_base + CRTC_DATA);
+    if (value != test)
+        return 0;
     outb(0x0F, crtc_base + CRTC_INDX);
     outb(original, crtc_base + CRTC_DATA);
     return 1;
@@ -76,11 +78,13 @@ void INITPROC crtc_init(int dev)
         outb(p->init_bytes[i], p->crtc_base + CRTC_DATA);
     }
 
-    /* Check & clear vram */
+    /* Clear vram */
+#if 0   //FIXME remove: return value never checked, useless code
     for (i = 0; i < p->vseg_bytes; i += 2)
         pokew(i, p->vseg_base, 0x5555);
     for (i = 0; i < p->vseg_bytes; i += 2)
         if (peekw(i, p->vseg_base) != 0x5555) return 1;
+#endif
     for (i = 0; i < p->vseg_bytes; i += 2)
         pokew(i, p->vseg_base, 0x07 << 8 | ' ');
 

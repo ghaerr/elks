@@ -278,12 +278,14 @@ void INITPROC console_init(void)
     unsigned char cur_display = 0;
 
     boot_crtc = peekw(0x63, 0x40);
-    for (i = 0; i < N_DEVICETYPES; ++i)
-        if (crtc_params[i].crtc_base == boot_crtc) boot_type = i;
-
+    for (i = 0; i < N_DEVICETYPES; ++i) {
+        if (crtc_params[i].crtc_base == boot_crtc)
+            boot_type = i;
+    }
     for (i = 0; i < N_DEVICETYPES; ++i) {
         dev = (i + boot_type) % N_DEVICETYPES;
-        if (!crtc_probe(crtc_params[dev].crtc_base)) continue;
+        if (!crtc_probe(crtc_params[dev].crtc_base))
+            continue;
         screens++;
         crtc_init(dev);
         for (j = 0; j < crtc_params[dev].max_pages; ++j) {
