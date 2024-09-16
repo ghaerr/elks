@@ -23,7 +23,11 @@
 
 /* Predefined maximum number of tty character devices */
 
+#ifdef CONFIG_CONSOLE_DUAL
 #define MAX_CONSOLES 4
+#else
+#define MAX_CONSOLES 3
+#endif
 #define MAX_PTYS     4
 
 #define TTY_MINOR_OFFSET 0
