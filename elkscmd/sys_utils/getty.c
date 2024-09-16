@@ -138,7 +138,7 @@ void when(void) {
 
 	Result[2]  = Result[6]	 = '-';
 
-	for (n=20; n>12; n--)
+	for (n=20; n>11; n--)
 	    Result[n] = Result[n-1];
 
 	Result[11] = Result[20] = '\0';
