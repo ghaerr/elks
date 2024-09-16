@@ -53,4 +53,4 @@ install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
-	rm -f $(PRGS) *.o
+	$(RM) $(PRGS) *.o

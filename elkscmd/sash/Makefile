@@ -23,7 +23,7 @@ sash:	$(OBJS)
 	$(LD) $(LDFLAGS) -o sash $(OBJS) $(LDLIBS)
 
 clean:
-	rm -f core sash $(OBJS)
+	$(RM) core sash $(OBJS)
 
 install: sash
 ifdef CONFIG_APP_ASH

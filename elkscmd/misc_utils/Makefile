@@ -71,4 +71,4 @@ install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
-	rm -f $(PRGS) $(HOSTPRGS) *~ *.o
+	$(RM) $(PRGS) $(HOSTPRGS) *~ *.o

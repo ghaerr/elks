@@ -84,7 +84,7 @@ install: elksemu
 	install -s -o root -g root -m 4555 elksemu $(DIST)/lib/elksemu
 
 clean realclean:
-	rm -f $(OBJ) binfmt_elks.o elksemu call_tab.v defn_tab.v efile.h
+	$(RM) $(OBJ) binfmt_elks.o elksemu call_tab.v defn_tab.v efile.h
 
 module: binfmt_elks.o
 

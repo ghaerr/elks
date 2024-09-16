@@ -10,7 +10,7 @@ install:	$(PROGS)
 	cd $(BINDIR); strip $(PROGS); chmod 755 $(PROGS)
 
 clean:
-	rm -f $(PROGS) *.o core
+	$(RM) $(PROGS) *.o core
 
 demo:	demo.c
 	$(CC) $(CFLAGS) -o demo demo.c $(LDFLAGS)

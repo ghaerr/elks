@@ -34,5 +34,5 @@ test: m4
 	diff -u test_host_m4.txt test_elks_m4.txt
 
 clean:
-	rm -f core m4 $(CLEANFILES)
+	$(RM) core m4 $(CLEANFILES)
 

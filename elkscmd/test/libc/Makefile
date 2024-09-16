@@ -33,4 +33,4 @@ install: $(PGM)
 	$(INSTALL) $(PGM) $(DESTDIR)/bin
 
 clean:
-	rm -f $(OBJS) $(PGM)
+	$(RM) $(OBJS) $(PGM)

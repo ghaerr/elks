@@ -24,4 +24,4 @@ install: telnet
 	$(INSTALL) telnet $(DESTDIR)/bin
 
 clean:
-	rm -f $(OBJS) telnet
+	$(RM) $(OBJS) telnet

@@ -24,5 +24,5 @@ install: urlget
 	$(INSTALL) urlget $(DESTDIR)/bin
 
 clean:
-	rm -f urlget *.o
+	$(RM) urlget *.o
 

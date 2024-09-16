@@ -19,4 +19,4 @@ install: xvi
 	$(INSTALL) xvi $(DESTDIR)/bin
 
 clean:
-	rm -f core xvi *.o
+	$(RM) core xvi *.o

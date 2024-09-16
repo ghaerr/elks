@@ -24,4 +24,4 @@ install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
-	rm -f *.o $(PRGS)
+	$(RM) *.o $(PRGS)

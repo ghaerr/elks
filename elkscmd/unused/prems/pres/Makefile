@@ -43,7 +43,7 @@ flparc:         $(FOBJS) $(LIBS)
 		@$(LD) $(LDFLAGS) $(FOBJS) $(LIBS) -o flparc $(LDLIBS)
 		@echo "done"
 
-clean:;         @rm -f $(OBJS) pres flparc
+clean:;         @$(RM) $(OBJS) pres flparc
 
 depend:;        @mkmf -f $(MAKEFILE) PROGRAM=$(PROGRAM) DEST=$(DEST)
 

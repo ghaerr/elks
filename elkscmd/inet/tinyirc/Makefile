@@ -31,4 +31,4 @@ install: tinyirc
 	$(INSTALL) tinyirc $(DESTDIR)/bin
 
 clean:
-	rm -f *.o tinyirc
+	$(RM) *.o tinyirc

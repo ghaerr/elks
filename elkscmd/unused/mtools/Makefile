@@ -67,7 +67,7 @@ install-man:
 	done
 
 clean:
-	rm -f $(PROGS) *.o
+	$(RM) $(PROGS) *.o
 
 lint:
 	$(LINT) mdir.c getfat.c init.c search.c match.c convdate.c subdir.c \

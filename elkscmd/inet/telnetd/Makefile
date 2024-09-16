@@ -25,5 +25,5 @@ install: telnetd
 	$(INSTALL) telnetd $(DESTDIR)/bin
 
 clean:
-	rm -f $(OBJS) telnetd
+	$(RM) $(OBJS) telnetd
 

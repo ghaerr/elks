@@ -28,7 +28,7 @@ BINUTILS_DIST=binutils-ia16-$(BINUTILS_VER)
 
 $(DISTDIR)/$(BINUTILS_DIST).tar.gz:
 	mkdir -p $(DISTDIR)
-	rm -rf $(DISTDIR)/binutils-ia16-*.tar.gz \
+	$(RM) -r $(DISTDIR)/binutils-ia16-*.tar.gz \
 	       $(DISTDIR)/binutils-ia16-*.tmp \
 	       $(DISTDIR)/binutils-ia16-*.zip
 	set -e; \
@@ -41,14 +41,14 @@ $(DISTDIR)/$(BINUTILS_DIST).tar.gz:
 
 $(BUILDDIR)/.binutils.src: $(DISTDIR)/$(BINUTILS_DIST).tar.gz
 	mkdir -p $(BUILDDIR)
-	rm -rf $(BUILDDIR)/$(BINUTILS_DIST)
+	$(RM) -r $(BUILDDIR)/$(BINUTILS_DIST)
 	cd $(BUILDDIR) && tar -xzf $(DISTDIR)/$(BINUTILS_DIST).tar.gz
-	rm -rf $(BUILDDIR)/binutils-src
+	$(RM) -r $(BUILDDIR)/binutils-src
 	cd $(BUILDDIR) && mv $(BINUTILS_DIST) binutils-src
 	touch $(BUILDDIR)/.binutils.src
 
 $(BUILDDIR)/.binutils.build: $(BUILDDIR)/.binutils.src
-	cd $(BUILDDIR) && rm -rf binutils-build
+	cd $(BUILDDIR) && $(RM) -r binutils-build
 	mkdir -p $(BUILDDIR)/binutils-build
 	cd $(BUILDDIR)/binutils-build && ../binutils-src/configure --target=ia16-elf --prefix="$(CROSSDIR)" --enable-ld=default --enable-gold=yes --enable-targets=ia16-elf --enable-x86-hpa-segelf=yes --disable-gdb --disable-libdecnumber --disable-readline --disable-sim --disable-nls
 	$(MAKE) -C $(BUILDDIR)/binutils-build $(PARALLEL)
@@ -71,7 +71,7 @@ MPC_DIST=mpc-$(MPC_VER)
 
 $(DISTDIR)/$(GMP_DIST).tar.bz2:
 	mkdir -p $(DISTDIR)
-	rm -rf $(DISTDIR)/gmp-*.tar.bz2 $(DISTDIR)/gmp-*.tar.bz2.tmp
+	$(RM) -r $(DISTDIR)/gmp-*.tar.bz2 $(DISTDIR)/gmp-*.tar.bz2.tmp
 	wget -c https://ftp.gnu.org/gnu/gmp/$(GMP_DIST).tar.bz2 \
 		-O $@.tmp || \
 	wget -c https://gmplib.org/download/gmp/$(GMP_DIST).tar.bz2 \
@@ -84,7 +84,7 @@ $(DISTDIR)/$(GMP_DIST).tar.bz2:
 
 $(DISTDIR)/$(MPFR_DIST).tar.bz2:
 	mkdir -p $(DISTDIR)
-	rm -rf $(DISTDIR)/mpfr-*.tar.bz2 $(DISTDIR)/mpfr-*.tar.bz2.tmp
+	$(RM) -r $(DISTDIR)/mpfr-*.tar.bz2 $(DISTDIR)/mpfr-*.tar.bz2.tmp
 	wget -c https://www.mpfr.org/$(MPFR_DIST)/$(MPFR_DIST).tar.bz2 \
 		-O $@.tmp
 	touch $@.tmp
@@ -92,7 +92,7 @@ $(DISTDIR)/$(MPFR_DIST).tar.bz2:
 
 $(DISTDIR)/$(MPC_DIST).tar.gz:
 	mkdir -p $(DISTDIR)
-	rm -rf $(DISTDIR)/mpc-*.tar.gz $(DISTDIR)/mpc-*.tar.gz.tmp
+	$(RM) -r $(DISTDIR)/mpc-*.tar.gz $(DISTDIR)/mpc-*.tar.gz.tmp
 	wget -c https://ftp.gnu.org/gnu/mpc/$(MPC_DIST).tar.gz -O $@.tmp
 	touch $@.tmp
 	mv $@.tmp $@
@@ -104,7 +104,7 @@ GCC_DIST=gcc-ia16-$(GCC_VER)
 
 $(DISTDIR)/$(GCC_DIST).tar.gz:
 	mkdir -p $(DISTDIR)
-	rm -rf $(DISTDIR)/gcc-ia16-*.tar.gz \
+	$(RM) -r $(DISTDIR)/gcc-ia16-*.tar.gz \
 	       $(DISTDIR)/gcc-ia16-*.tmp \
 	       $(DISTDIR)/gcc-ia16-*.zip
 	set -e; \
@@ -120,9 +120,9 @@ $(BUILDDIR)/.gcc.src: $(DISTDIR)/$(GCC_DIST).tar.gz \
 		      $(DISTDIR)/$(MPFR_DIST).tar.bz2 \
 		      $(DISTDIR)/$(MPC_DIST).tar.gz
 	mkdir -p $(BUILDDIR)
-	rm -rf $(BUILDDIR)/$(GCC_DIST)
+	$(RM) -r $(BUILDDIR)/$(GCC_DIST)
 	cd $(BUILDDIR) && tar -xzf $(DISTDIR)/$(GCC_DIST).tar.gz
-	rm -rf $(BUILDDIR)/gcc-src
+	$(RM) -r $(BUILDDIR)/gcc-src
 	cd $(BUILDDIR) && mv $(GCC_DIST) gcc-src
 	cd $(BUILDDIR)/gcc-src && tar -xjf $(DISTDIR)/$(GMP_DIST).tar.bz2
 	cd $(BUILDDIR)/gcc-src && ln -s $(GMP_DIST) gmp
@@ -133,14 +133,14 @@ $(BUILDDIR)/.gcc.src: $(DISTDIR)/$(GCC_DIST).tar.gz \
 	touch $(BUILDDIR)/.gcc.src
 
 $(BUILDDIR)/.gcc.build: $(BUILDDIR)/.gcc.src $(BUILDDIR)/.binutils.build
-	cd $(BUILDDIR) && rm -rf gcc-build
+	cd $(BUILDDIR) && $(RM) -r gcc-build
 	mkdir $(BUILDDIR)/gcc-build
 	cd $(BUILDDIR)/gcc-build && ../gcc-src/configure --target=ia16-elf --prefix="$(CROSSDIR)" --without-headers --enable-languages=c --disable-libssp --without-isl
 	# If there are any obsolete multilib directories (which are no longer
 	# used) in the installation directory, remove them, so that they do
 	# not clutter up the installation directory.  This is a bit of a hack.
 	#	-- tkchia 20201128
-	rm -rf $(CROSSDIR)/lib/gcc/ia16-elf/6.3.0/size \
+	$(RM) -r $(CROSSDIR)/lib/gcc/ia16-elf/6.3.0/size \
 	       $(CROSSDIR)/lib/gcc/ia16-elf/6.3.0/rtd/size \
 	       $(CROSSDIR)/lib/gcc/ia16-elf/6.3.0/regparmcall/size \
 	       $(CROSSDIR)/lib/gcc/ia16-elf/6.3.0/regparmcall/any_186/size
@@ -161,7 +161,7 @@ EMU86_DIST=emu86-$(EMU86_VER)
 
 $(DISTDIR)/$(EMU86_DIST).tar.gz:
 	mkdir -p $(DISTDIR)
-	rm -rf $(DISTDIR)/emu86-*.tar.gz \
+	$(RM) -r $(DISTDIR)/emu86-*.tar.gz \
 	       $(DISTDIR)/emu86-*.tmp \
 	       $(DISTDIR)/emu86-*.zip
 	set -e; \
@@ -174,9 +174,9 @@ $(DISTDIR)/$(EMU86_DIST).tar.gz:
 
 $(BUILDDIR)/.emu86.src: $(DISTDIR)/$(EMU86_DIST).tar.gz
 	mkdir -p $(BUILDDIR)
-	rm -rf $(BUILDDIR)/$(EMU86_DIST)
+	$(RM) -r $(BUILDDIR)/$(EMU86_DIST)
 	cd $(BUILDDIR) && tar -xzf $(DISTDIR)/$(EMU86_DIST).tar.gz
-	rm -rf $(BUILDDIR)/emu86
+	$(RM) -r $(BUILDDIR)/emu86
 	cd $(BUILDDIR) && mv $(EMU86_DIST) emu86
 	touch $(BUILDDIR)/.emu86.src
 
@@ -195,5 +195,5 @@ all:: $(CROSSDIR)/.emu86.install
 # Tools pruning (to save disk space)
 
 prune:
-	-rm -rf $(DISTDIR)
-	-rm -rf $(BUILDDIR)
+	-$(RM) -r $(DISTDIR)
+	-$(RM) -r $(BUILDDIR)

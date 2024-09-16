@@ -33,7 +33,7 @@ install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
-	rm -f $(PRGS) $(HOSTPRGS) *.o *.map
+	$(RM) $(PRGS) $(HOSTPRGS) *.o *.map
 
 
 

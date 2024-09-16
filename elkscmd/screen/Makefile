@@ -58,7 +58,7 @@ ansi.o: ansi.c screen.h
 	$(CC) $(CFLAGS) -c ansi.c
 
 clean:
-	rm -f screen *.o core *~
+	$(RM) screen *.o core *~
 
 install: screen
 	$(INSTALL) screen $(DESTDIR)/bin/screen

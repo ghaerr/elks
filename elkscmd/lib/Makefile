@@ -19,4 +19,4 @@ CFLAGS += -fno-instrument-functions -fno-instrument-functions-simple
 all: $(OBJS)
 
 clean:
-	rm -f *.o
+	$(RM) *.o

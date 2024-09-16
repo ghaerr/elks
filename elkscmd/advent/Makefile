@@ -43,4 +43,4 @@ install: $(PRGS)
 	$(INSTALL) advent.db $(DESTDIR)/lib
 
 clean:
-	rm -f $(PRGS) $(HOSTPRGS) *.o *.map
+	$(RM) $(PRGS) $(HOSTPRGS) *.o *.map
