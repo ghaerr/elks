@@ -58,9 +58,14 @@ long simple_strtol(const char *s, int base)
 	return (neg == '-') ? -result: result;
 }
 
-int atoi(const char *number)
+/* no leading space or -/+ handling, needs to be fast */
+int atoi(const char *s)
 {
-	return (int)simple_strtol(number, 10);
+    int n = 0;
+
+    while ((unsigned) (*s - '0') <= 9u)
+        n = n * 10 + *s++ - '0';
+    return n;
 }
 
 #ifndef __HAVE_ARCH_STRCPY
