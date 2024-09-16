@@ -60,14 +60,14 @@ static int parm2(register unsigned char *buf)
     return parm1(buf);
 }
 
-static void itoaQueue(int i)
+static void itoaQueue(unsigned int i)
 {
    unsigned char a[6];
    unsigned char *b = a + sizeof(a) - 1;
 
    *b = 0;
    do {
-      *--b = '0' + (i % 10);
+      *--b = (i % 10) + '0';
       i /= 10;
    } while (i);
    while (*b)
