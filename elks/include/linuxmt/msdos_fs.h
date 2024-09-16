@@ -158,7 +158,6 @@ extern int msdos_rename(struct inode *old_dir,const char *old_name,int old_len,
 /* inode.c */
 
 extern void msdos_read_inode(struct inode *inode);
-extern int init_msdos_fs(void);
 
 /* dir.c */
 

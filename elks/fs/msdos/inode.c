@@ -408,8 +408,3 @@ struct file_system_type msdos_fs_type = {
 	msdos_read_super,
 	FST_MSDOS
 };
-
-int init_msdos_fs(void)
-{
-	return 1;
-}

@@ -225,6 +225,7 @@ int INITPROC bios_gethdinfo(struct drive_infot *drivep) {
 
 void BFPROC bios_disk_park_all(void)
 {
+#ifdef CONFIG_ARCH_IBMPC
     struct drive_infot *drivep;
     unsigned int cyl;
 
@@ -232,11 +233,12 @@ void BFPROC bios_disk_park_all(void)
         if (drivep->fdtype != -1)       /* hard drives only */
             continue;
         cyl = drivep->cylinders - 1;    /* expects zero-based cylinder */
-        BD_AX = 0x0C << 8;
+        BD_AX = BIOSHD_SEEK;
         BD_CX = ((cyl & 0xFF) << 8) | ((cyl & 0x300) >> 2) | 1; /* 1 = sector */
         BD_DX = bios_drive_map[drivep - drive_info];
         call_bios(&bdt);
     }
+#endif
 }
 
 #endif

@@ -108,8 +108,6 @@ extern int minix_unlink(struct inode *,char *,size_t);
 extern void minix_write_inode(register struct inode *);
 extern void minix_write_super(register struct super_block *);
 
-extern int init_minix_fs(void);
-
 extern struct inode_operations minix_file_inode_operations;
 extern struct inode_operations minix_dir_inode_operations;
 extern struct inode_operations minix_symlink_inode_operations;

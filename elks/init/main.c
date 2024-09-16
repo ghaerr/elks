@@ -190,8 +190,6 @@ static void INITPROC kernel_init(void)
     sock_init();
 #endif
 
-    fs_init();
-
 #ifdef CONFIG_BOOTOPTS
     finalize_options();
     if (!opts) printk("/bootopts not found or bad format/size\n");
