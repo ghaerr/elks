@@ -40,6 +40,8 @@ void INITPROC device_init(void)
     chr_dev_init();
     blk_dev_init();
 
+    set_irq();          /* interrupts enabled for possible disk I/O */
+
     for (p = gendisk_head; p; p = p->next)
         setup_dev(p);
 
