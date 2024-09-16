@@ -53,16 +53,15 @@ struct console;
 typedef struct console Console;
 
 struct console {
+    int Width, Height;
     int cx, cy;                 /* cursor position */
-    void (*fsm)(Console *, int);
     unsigned char display;
     unsigned char type;
     unsigned char attr;         /* current attribute */
     unsigned char XN;           /* delayed newline on column 80 */
+    void (*fsm)(Console *, int);
     unsigned int vseg;          /* vram for this console page */
-    int vseg_offset;            /* vram offset of vseg for this console page */
-    unsigned short Width;
-    unsigned short Height;
+    unsigned int vseg_offset;   /* vram offset of vseg for this console page */
     unsigned short crtc_base;   /* 6845 CRTC base I/O address */
 #ifdef CONFIG_EMUL_ANSI
     int savex, savey;           /* saved cursor position */
@@ -77,8 +76,8 @@ static Console *Visible[MAX_DISPLAYS];
 static Console Con[MAX_CONSOLES];
 static int NumConsoles;
 
+unsigned int VideoSeg = 0xb800;
 int Current_VCminor;
-unsigned VideoSeg;
 int kraw;
 
 #ifdef CONFIG_EMUL_ANSI
@@ -128,7 +127,7 @@ static void VideoWrite(register Console * C, int c)
 
 static void ClearRange(register Console * C, int x, int y, int x2, int y2)
 {
-    register int vp;
+    int vp;
 
     x2 = x2 - x + 1;
     vp = (x + y * C->Width) << 1;
@@ -143,9 +142,9 @@ static void ClearRange(register Console * C, int x, int y, int x2, int y2)
 
 static void ScrollUp(register Console * C, int y)
 {
-    register int vp;
-    unsigned short MaxRow = C->Height - 1;
-    unsigned short MaxCol = C->Width - 1;
+    int vp;
+    int MaxRow = C->Height - 1;
+    int MaxCol = C->Width - 1;
 
     vp = y * (C->Width << 1);
     if ((unsigned int)y < MaxRow)
@@ -157,7 +156,7 @@ static void ScrollUp(register Console * C, int y)
 #ifdef CONFIG_EMUL_ANSI
 static void ScrollDown(register Console * C, int y)
 {
-    register int vp;
+    int vp;
     int yy = C->Height - 1;
 
     vp = yy * (C->Width << 1);
@@ -202,24 +201,19 @@ struct tty_ops dircon_ops = {
 #ifndef CONFIG_CONSOLE_DUAL
 void INITPROC console_init(void)
 {
-    Console *C;
-    unsigned char output_type;
-    unsigned short boot_crtc;
+    Console *C = &Con[0];
     int i;
     int Width, Height;
     unsigned int PageSizeW;
-
-    output_type = OT_EGA;
-    C = &Con[0];
+    unsigned short boot_crtc;
+    unsigned char output_type = OT_EGA;
 
     Width = peekb(0x4a, 0x40);  /* BIOS data segment */
-
     /* Trust this. Cga does not support peeking at 0x40:0x84. */
     Height = 25;
     boot_crtc = peekw(0x63, 0x40);
     PageSizeW = ((unsigned int)peekw(0x4C, 0x40) >> 1);
 
-    VideoSeg = 0xb800;
     NumConsoles = MAX_CONSOLES - 1;
     if (peekb(0x49, 0x40) == 7) {
         VideoSeg = 0xB000;
@@ -264,22 +258,34 @@ void INITPROC console_init(void)
            kbd_name, Width, Height, NumConsoles);
 }
 #else
+
+#ifdef DEBUG
+static const char *type_string[] = {
+    "MDA",
+    "CGA",
+    "EGA",
+    "VGA",
+};
+#endif
+
 void INITPROC console_init(void)
 {
-    Console *C;
+    Console *C = &Con[0];
     int i, j, dev;
+    int screens = 0;
     unsigned short boot_crtc;
-    unsigned char boot_type;
-    unsigned char screens = 0;
     unsigned char cur_display = 0;
-    boot_crtc = peekw(0x63, 0x40);
-    for (i = 0; i < N_DEVICETYPES; ++i)
-        if (crtc_params[i].crtc_base == boot_crtc) boot_type = i;
+    unsigned char boot_type;
 
-    C = &Con[0];
+    boot_crtc = peekw(0x63, 0x40);
+    for (i = 0; i < N_DEVICETYPES; ++i) {
+        if (crtc_params[i].crtc_base == boot_crtc)
+            boot_type = i;
+    }
     for (i = 0; i < N_DEVICETYPES; ++i) {
         dev = (i + boot_type) % N_DEVICETYPES;
-        if (!crtc_probe(crtc_params[dev].crtc_base)) continue;
+        if (!crtc_probe(crtc_params[dev].crtc_base))
+            continue;
         screens++;
         crtc_init(dev);
         for (j = 0; j < crtc_params[dev].max_pages; ++j) {
@@ -312,9 +318,10 @@ void INITPROC console_init(void)
     VideoSeg = Visible[0]->vseg;
 
     kbd_init();
-    printk("Direct console %s kbd"TERM_TYPE"(%d screens, %i consoles)\n", kbd_name, screens, NumConsoles);
+    printk("Direct console %s kbd"TERM_TYPE"(%d screens, %d consoles)\n",
+        kbd_name, screens, NumConsoles);
     for (i = 0; i < NumConsoles; ++i) {
-        debug("/dev/tty%i, %s, %ux%u\n", i + 1, type_string[Con[i].type], Con[i].Width, Con[i].Height);
+        debug("/dev/tty%d, %s, %ux%u\n", i + 1, type_string[Con[i].type], Con[i].Width, Con[i].Height);
     }
 }
 #endif

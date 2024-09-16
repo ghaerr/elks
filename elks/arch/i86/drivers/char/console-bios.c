@@ -47,15 +47,14 @@ struct console;
 typedef struct console Console;
 
 struct console {
+    int Width, Height;
     int cx, cy;                 /* cursor position */
-    void (*fsm)(Console *, int);
     unsigned char display;
     unsigned char attr;         /* current attribute */
     unsigned char XN;           /* delayed newline on column 80 */
     unsigned char color;        /* fg/bg attr */
+    void (*fsm)(Console *, int);
     int pageno;                 /* video ram page # */
-    unsigned short Width;
-    unsigned short Height;
 #ifdef CONFIG_EMUL_ANSI
     int savex, savey;           /* saved cursor position */
     unsigned char *parmptr;     /* ptr to params */
@@ -90,9 +89,10 @@ static void PositionCursor(register Console * C)
     bios_setcursor (x, y, p);
 }
 
-static void PositionCursorGet (int * x, int * y)
+static void PositionCursorGet(int * x, int * y)
 {
         byte_t col, row;
+
         bios_getcursor (&col, &row);
         *x = col;
         *y = row;
@@ -174,10 +174,9 @@ struct tty_ops bioscon_ops = {
 
 void INITPROC console_init(void)
 {
-    Console *C;
+    Console *C = &Con[0];
     int i;
 
-    C = Con;
     C->Width = SETUP_VID_COLS;
     C->Height = SETUP_VID_LINES;
 

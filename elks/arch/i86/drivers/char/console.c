@@ -23,7 +23,7 @@ void Console_conout(dev_t dev, int Ch)
 
 void Console_conin(unsigned char Key)
 {
-    register struct tty *ttyp = &ttys[Current_VCminor];
+    struct tty *ttyp = &ttys[Current_VCminor];
 
     if (!tty_intcheck(ttyp, Key))
         chq_addch(&ttyp->inq, Key);
@@ -32,9 +32,9 @@ void Console_conin(unsigned char Key)
 #ifdef CONFIG_EMUL_ANSI
 static void Console_gotoxy(register Console * C, int x, int y)
 {
-    register int xp = x;
-    unsigned short MaxRow = C->Height - 1;
-    unsigned short MaxCol = C->Width - 1;
+    int xp = x;
+    int MaxRow = C->Height - 1;
+    int MaxCol = C->Width - 1;
 
     C->cx = (xp >= MaxCol) ? MaxCol : (xp < 0) ? 0 : xp;
     xp = y;
@@ -82,8 +82,8 @@ static unsigned char ega_color[16] = {  0,  4,  2,  6,  1,  5,  3,  7,
 static void AnsiCmd(register Console * C, int c)
 {
     int n;
-    unsigned short MaxRow = C->Height - 1;
-    unsigned short MaxCol = C->Width - 1;
+    int MaxRow = C->Height - 1;
+    int MaxCol = C->Width - 1;
 
     /* ANSI param gathering and processing */
     if (C->parmptr < &C->params[MAXPARMS - 1])
@@ -254,8 +254,9 @@ static void esc_char(register Console * C, int c)
 /* Normal character processing */
 static void std_char(register Console * C, int c)
 {
-    unsigned short MaxRow = C->Height - 1;
-    unsigned short MaxCol = C->Width - 1;
+    int MaxRow = C->Height - 1;
+    int MaxCol = C->Width - 1;
+
     switch(c) {
     case BEL:
         bell();
@@ -319,7 +320,7 @@ static void std_char(register Console * C, int c)
 
 static int Console_ioctl(struct tty *tty, int cmd, char *arg)
 {
-    register Console *C = &Con[tty->minor];
+    Console *C = &Con[tty->minor];
 
     switch (cmd) {
     case DCGET_GRAPH:
@@ -367,7 +368,7 @@ static int Console_ioctl(struct tty *tty, int cmd, char *arg)
 
 static int Console_write(register struct tty *tty)
 {
-    register Console *C = &Con[tty->minor];
+    Console *C = &Con[tty->minor];
     int cnt = 0;
 
     while ((tty->outq.len > 0) && !glock) {

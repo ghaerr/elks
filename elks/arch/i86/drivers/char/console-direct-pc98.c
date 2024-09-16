@@ -54,15 +54,15 @@ struct console;
 typedef struct console Console;
 
 struct console {
+    int Width, Height;
     int cx, cy;			/* cursor position */
-    void (*fsm)(Console *, int);
     unsigned char display;
+    unsigned char unused;
     unsigned char attr;		/* current attribute */
     unsigned char XN;		/* delayed newline on column 80 */
+    void (*fsm)(Console *, int);
     unsigned int vseg;		/* vram for this console page */
-    int vseg_offset;		/* vram offset of vseg for this console page */
-    unsigned short Width;
-    unsigned short Height;
+    unsigned int vseg_offset;	/* vram offset of vseg for this console page */
 #ifdef CONFIG_EMUL_ANSI
     int savex, savey;		/* saved cursor position */
     unsigned char *parmptr;	/* ptr to params */
@@ -95,7 +95,7 @@ static void SetDisplayPage(register Console * C)
 
 static void PositionCursor(register Console * C)
 {
-    int Pos;
+    unsigned int Pos;
 
     Pos = C->cx + C->Width * C->cy + C->vseg_offset;
     cursor_set(Pos * 2);
@@ -144,7 +144,7 @@ static void VideoWrite(register Console * C, int c)
 
 static void ClearRange(register Console * C, int x, int y, int xx, int yy)
 {
-    register __u16 *vp;
+    __u16 *vp;
     word_t attr;
 
     attr = (C->attr == A_DEFAULT) ? A98_DEFAULT : conv_pcattr(C->attr);
@@ -163,8 +163,8 @@ static void ClearRange(register Console * C, int x, int y, int xx, int yy)
 static void ScrollUp(register Console * C, int y)
 {
     __u16 *vp;
-    unsigned short MaxRow = C->Height - 1;
-    unsigned short MaxCol = C->Width - 1;
+    int MaxRow = C->Height - 1;
+    int MaxCol = C->Width - 1;
 
     vp = (__u16 *)((__u16)(y * C->Width) << 1);
     if ((unsigned int)y < MaxRow) {
@@ -178,8 +178,8 @@ static void ScrollUp(register Console * C, int y)
 static void ScrollDown(register Console * C, int y)
 {
     __u16 *vp;
-    unsigned short MaxRow = C->Height - 1;
-    unsigned short MaxCol = C->Width - 1;
+    int MaxRow = C->Height - 1;
+    int MaxCol = C->Width - 1;
     int yy = MaxRow;
 
     vp = (__u16 *)((__u16)(yy * C->Width) << 1);
@@ -221,7 +221,7 @@ struct tty_ops dircon_ops = {
 
 void INITPROC console_init(void)
 {
-    Console *C;
+    Console *C = &Con[0];
     int i;
     unsigned PageSizeW;
 
@@ -233,7 +233,6 @@ void INITPROC console_init(void)
 	AttributeSeg = 0xE200;
     }
 
-    C = Con;
     C->Width = 80;
     C->Height = 25;
 
