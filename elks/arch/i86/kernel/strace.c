@@ -63,14 +63,14 @@ pscl:
         if (fmtspec[info & 0xf] != NULL)
             printk(fmtspec[info & 0xf], p->args[i]);
         else switch (info & 0xf) {
-        case P_PULONG:
-            printk("%lu", get_user_long((void *)p->args[i]));
-            break;
-
         case P_PSLONG:
             printk("%ld", get_user_long((void *)p->args[i]));
             break;
 #if UNUSED
+        case P_PULONG:      /* currently unused */
+            printk("%lu", get_user_long((void *)p->args[i]));
+            break;
+
         case P_SLONG:       /* currently unused*/
             printk("%ld", *(long *)&p->args[i++]);
             break;
