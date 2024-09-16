@@ -61,7 +61,7 @@ struct console {
     unsigned char XN;           /* delayed newline on column 80 */
     void (*fsm)(Console *, int);
     unsigned int vseg;          /* vram for this console page */
-    int vseg_offset;            /* vram offset of vseg for this console page */
+    unsigned int vseg_offset;   /* vram offset of vseg for this console page */
     unsigned short crtc_base;   /* 6845 CRTC base I/O address */
 #ifdef CONFIG_EMUL_ANSI
     int savex, savey;           /* saved cursor position */

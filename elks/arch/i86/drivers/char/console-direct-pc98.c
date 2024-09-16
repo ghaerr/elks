@@ -95,7 +95,7 @@ static void SetDisplayPage(register Console * C)
 
 static void PositionCursor(register Console * C)
 {
-    int Pos;
+    unsigned int Pos;
 
     Pos = C->cx + C->Width * C->cy + C->vseg_offset;
     cursor_set(Pos * 2);
