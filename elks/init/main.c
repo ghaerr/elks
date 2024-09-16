@@ -336,6 +336,7 @@ static struct dev_name_struct {
 	{ "tty1",    DEV_TTY1 },
 	{ "tty2",    DEV_TTY2 },
 	{ "tty3",    DEV_TTY3 },
+	{ "tty4",    DEV_TTY4 },
 	{ NULL,           0 }
 };
 

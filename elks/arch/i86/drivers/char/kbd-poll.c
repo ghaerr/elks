@@ -28,11 +28,11 @@ static void kbd_timer(int data)
 	else {
 	    dav = (dav >> 8) & 0xFF;
 #ifndef CONFIG_CONSOLE_HEADLESS
-	    if (dav >= 0x3B && dav <= 0x3D) {	/* temp console switch on F1-F3*/
+	    if (dav >= 0x3B && dav <= 0x3E) {	/* temp console switch on F1-F4*/
 		Console_set_vc(dav - 0x3B);
 		dav = 0;
 	    }
-	    else if ((dav >= 0x68) && (dav < 0x6B)) {	/* Change VC */
+	    else if ((dav >= 0x68) && (dav < 0x6C)) {	/* Change VC */
 		Console_set_vc(dav - 0x68);
 		dav = 0;
 	    }

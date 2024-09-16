@@ -51,6 +51,7 @@ struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
     { "tty1",	S_IFCHR | 0644, MKDEV(TTY_MAJOR, 0)         },
     { "tty2",	S_IFCHR | 0644, MKDEV(TTY_MAJOR, 1)         },
     { "tty3",	S_IFCHR | 0644, MKDEV(TTY_MAJOR, 2)         },
+    { "tty4",	S_IFCHR | 0644, MKDEV(TTY_MAJOR, 3)         },
     { "ttyS0",	S_IFCHR | 0644, MKDEV(TTY_MAJOR, 64)        },
     { "ttyS1",	S_IFCHR | 0644, MKDEV(TTY_MAJOR, 65)        },
     { "console",S_IFCHR | 0600, MKDEV(TTY_MAJOR, 254)       },

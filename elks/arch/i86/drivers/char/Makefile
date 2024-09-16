@@ -62,6 +62,9 @@ endif
 else
 ifdef CONFIG_CONSOLE_DIRECT
 OBJS += console-direct.o bell-8254.o
+ifdef CONFIG_CONSOLE_DUAL
+OBJS += crtc-6845.o
+endif
 endif
 endif
 

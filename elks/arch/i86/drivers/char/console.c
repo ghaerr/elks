@@ -33,6 +33,8 @@ void Console_conin(unsigned char Key)
 static void Console_gotoxy(register Console * C, int x, int y)
 {
     register int xp = x;
+    unsigned short MaxRow = C->Height - 1;
+    unsigned short MaxCol = C->Width - 1;
 
     C->cx = (xp >= MaxCol) ? MaxCol : (xp < 0) ? 0 : xp;
     xp = y;
@@ -80,6 +82,8 @@ static unsigned char ega_color[16] = {  0,  4,  2,  6,  1,  5,  3,  7,
 static void AnsiCmd(register Console * C, int c)
 {
     int n;
+    unsigned short MaxRow = C->Height - 1;
+    unsigned short MaxCol = C->Width - 1;
 
     /* ANSI param gathering and processing */
     if (C->parmptr < &C->params[MAXPARMS - 1])
@@ -218,7 +222,7 @@ static void AnsiCmd(register Console * C, int c)
     case 'h':                   /* cursor on */
     case 'l':                   /* cursor off */
         if (C->params[0] == '?' && atoi((const char *)C->params+1) == 25) {
-            DisplayCursor(c == 'h');
+            DisplayCursor(C, c == 'h');
         }
         break;
     }
@@ -250,6 +254,8 @@ static void esc_char(register Console * C, int c)
 /* Normal character processing */
 static void std_char(register Console * C, int c)
 {
+    unsigned short MaxRow = C->Height - 1;
+    unsigned short MaxCol = C->Width - 1;
     switch(c) {
     case BEL:
         bell();
@@ -368,7 +374,7 @@ static int Console_write(register struct tty *tty)
         WriteChar(C, tty_outproc(tty));
         cnt++;
     }
-    if (C == Visible)
+    if (C == Visible[C->display])
         PositionCursor(C);
     return cnt;
 }
