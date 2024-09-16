@@ -199,16 +199,6 @@ struct tty_ops dircon_ops = {
 };
 
 #ifndef CONFIG_CONSOLE_DUAL
-
-#ifdef DEBUG
-static const char *type_string[] = {
-    "MDA",
-    "CGA",
-    "EGA",
-    "VGA",
-};
-#endif
-
 void INITPROC console_init(void)
 {
     Console *C = &Con[0];
@@ -268,14 +258,24 @@ void INITPROC console_init(void)
            kbd_name, Width, Height, NumConsoles);
 }
 #else
+
+#ifdef DEBUG
+static const char *type_string[] = {
+    "MDA",
+    "CGA",
+    "EGA",
+    "VGA",
+};
+#endif
+
 void INITPROC console_init(void)
 {
     Console *C = &Con[0];
     int i, j, dev;
+    int screens = 0;
     unsigned short boot_crtc;
-    unsigned char boot_type;
-    unsigned char screens = 0;
     unsigned char cur_display = 0;
+    unsigned char boot_type;
 
     boot_crtc = peekw(0x63, 0x40);
     for (i = 0; i < N_DEVICETYPES; ++i) {
@@ -318,10 +318,10 @@ void INITPROC console_init(void)
     VideoSeg = Visible[0]->vseg;
 
     kbd_init();
-    printk("Direct console %s kbd"TERM_TYPE"(%d screens, %i consoles)\n",
+    printk("Direct console %s kbd"TERM_TYPE"(%d screens, %d consoles)\n",
         kbd_name, screens, NumConsoles);
     for (i = 0; i < NumConsoles; ++i) {
-        debug("/dev/tty%i, %s, %ux%u\n", i + 1, type_string[Con[i].type], Con[i].Width, Con[i].Height);
+        debug("/dev/tty%d, %s, %ux%u\n", i + 1, type_string[Con[i].type], Con[i].Width, Con[i].Height);
     }
 }
 #endif
