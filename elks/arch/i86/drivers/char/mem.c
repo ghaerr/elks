@@ -29,12 +29,12 @@
 #include <arch/io.h>
 #include <arch/segment.h>
 
-#define DEV_MEM_MINOR		1       /* unused */
-#define DEV_KMEM_MINOR		2
-#define DEV_NULL_MINOR		3
-#define DEV_PORT_MINOR		4
-#define DEV_ZERO_MINOR		5
-#define DEV_FULL_MINOR		6       /* unused */
+#define DEV_MEM_MINOR           1       /* unused */
+#define DEV_KMEM_MINOR          2
+#define DEV_NULL_MINOR          3
+#define DEV_PORT_MINOR          4
+#define DEV_ZERO_MINOR          5
+#define DEV_FULL_MINOR          6       /* unused */
 
 /*
  * generally useful code...
@@ -45,15 +45,15 @@ static int memory_lseek(struct inode *inode, struct file *filp, loff_t offset,
     debugmem("mem_lseek()\n");
     switch (origin) {
     case 1:
-	offset += filp->f_pos;
+        offset += filp->f_pos;
     case 0:
-	if (offset >= 0)
-	    break;
+        if (offset >= 0)
+            break;
     default:
-	return -EINVAL;
+        return -EINVAL;
     }
     if (offset != filp->f_pos) {
-	filp->f_pos = offset;
+        filp->f_pos = offset;
     }
     return 0;
 }
@@ -135,7 +135,7 @@ size_t port_read(struct inode *inode, struct file *filp, char *data, size_t len)
     return i;
 }
 #else
-#	define	port_read	NULL
+#       define  port_read       NULL
 #endif
 
 #if defined(CONFIG_CHAR_DEV_MEM_PORT_WRITE)
@@ -156,7 +156,7 @@ size_t port_write(struct inode *inode, struct file *filp, char *data, size_t len
     return i;
 }
 #else
-#	define	port_write	NULL
+#       define  port_write      NULL
 #endif
 
 #if UNUSED
@@ -228,98 +228,98 @@ int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
 
     switch (cmd) {
     case MEM_GETTASK:
-	retword = (unsigned short)task;
-	break;
+        retword = (unsigned short)task;
+        break;
     case MEM_GETMAXTASKS:
-	retword = max_tasks;
-	break;
+        retword = max_tasks;
+        break;
     case MEM_GETCS:
-	retword = kernel_cs;
-	break;
+        retword = kernel_cs;
+        break;
     case MEM_GETDS:
-	retword = kernel_ds;
-	break;
+        retword = kernel_ds;
+        break;
     case MEM_GETFARTEXT:
         retword = (unsigned)((long)buffer_init >> 16);
         break;
     case MEM_GETUSAGE:
-	mm_get_usage (&(mu.free_memory), &(mu.used_memory));
-	memcpy_tofs(arg, &mu, sizeof(struct mem_usage));
-	return 0;
+        mm_get_usage (&(mu.free_memory), &(mu.used_memory));
+        memcpy_tofs(arg, &mu, sizeof(struct mem_usage));
+        return 0;
     case MEM_GETHEAP:
-	retword = (unsigned short) &_heap_all;
-	break;
+        retword = (unsigned short) &_heap_all;
+        break;
     case MEM_GETJIFFADDR:
-	retword = (unsigned short) &jiffies;
+        retword = (unsigned short) &jiffies;
         break;
     case MEM_GETUPTIME:
 #ifdef CONFIG_CPU_USAGE
-	retword = (unsigned short) &uptime;
-	break;
+        retword = (unsigned short) &uptime;
+        break;
 #endif
     default:
-	return -EINVAL;
+        return -EINVAL;
     }
     put_user(retword, arg);
     return 0;
 }
 
 static struct file_operations null_fops = {
-    null_lseek,			/* lseek */
-    null_read,			/* read */
-    null_write,			/* write */
-    NULL,			/* readdir */
-    NULL,			/* select */
-    NULL,			/* ioctl */
-    NULL,			/* open */
-    NULL			/* release */
+    null_lseek,                 /* lseek */
+    null_read,                  /* read */
+    null_write,                 /* write */
+    NULL,                       /* readdir */
+    NULL,                       /* select */
+    NULL,                       /* ioctl */
+    NULL,                       /* open */
+    NULL                        /* release */
 };
 
 #if defined(CONFIG_CHAR_DEV_MEM_PORT_READ) || defined(CONFIG_CHAR_DEV_MEM_PORT_WRITE)
 static struct file_operations port_fops = {
-    port_lseek,			/* lseek */
-    port_read,			/* read */
-    port_write,			/* write */
-    NULL,			/* readdir */
-    NULL,			/* select */
-    NULL,			/* ioctl */
-    NULL,			/* open */
-    NULL			/* release */
+    port_lseek,                 /* lseek */
+    port_read,                  /* read */
+    port_write,                 /* write */
+    NULL,                       /* readdir */
+    NULL,                       /* select */
+    NULL,                       /* ioctl */
+    NULL,                       /* open */
+    NULL                        /* release */
 };
 #endif
 
 static struct file_operations zero_fops = {
-    memory_lseek,		/* lseek */
-    zero_read,			/* read */
-    null_write,			/* write */
-    NULL,			/* readdir */
-    NULL,			/* select */
-    NULL,			/* ioctl */
-    NULL,			/* open */
-    NULL			/* release */
+    memory_lseek,               /* lseek */
+    zero_read,                  /* read */
+    null_write,                 /* write */
+    NULL,                       /* readdir */
+    NULL,                       /* select */
+    NULL,                       /* ioctl */
+    NULL,                       /* open */
+    NULL                        /* release */
 };
 
 static struct file_operations kmem_fops = {
-    memory_lseek,		/* lseek */
-    kmem_read,			/* read */
-    kmem_write,			/* write */
-    NULL,			/* readdir */
-    NULL,			/* select */
-    kmem_ioctl,			/* ioctl */
-    NULL,			/* open */
-    NULL			/* release */
+    memory_lseek,               /* lseek */
+    kmem_read,                  /* read */
+    kmem_write,                 /* write */
+    NULL,                       /* readdir */
+    NULL,                       /* select */
+    kmem_ioctl,                 /* ioctl */
+    NULL,                       /* open */
+    NULL                        /* release */
 };
 
 #if UNUSED
 static struct file_operations full_fops = {
-    memory_lseek,		/* lseek */
-    full_read,			/* read */
-    full_write,			/* write */
-    NULL,			/* readdir */
-    NULL,			/* select */
-    NULL,			/* ioctl */
-    NULL,			/* open */
-    NULL			/* release */
+    memory_lseek,               /* lseek */
+    full_read,                  /* read */
+    full_write,                 /* write */
+    NULL,                       /* readdir */
+    NULL,                       /* select */
+    NULL,                       /* ioctl */
+    NULL,                       /* open */
+    NULL                        /* release */
 };
 #endif
 
@@ -329,38 +329,38 @@ static struct file_operations full_fops = {
 int memory_open(register struct inode *inode, struct file *filp)
 {
     static struct file_operations *mdev_fops[] = {
-	NULL,
-	&kmem_fops,	/* DEV_MEM_MINOR */
-	&kmem_fops,	/* DEV_KMEM_MINOR */
-	&null_fops,	/* DEV_NULL_MINOR */
+        NULL,
+        &kmem_fops,     /* DEV_MEM_MINOR */
+        &kmem_fops,     /* DEV_KMEM_MINOR */
+        &null_fops,     /* DEV_NULL_MINOR */
 #if defined(CONFIG_CHAR_DEV_MEM_PORT_READ) || defined(CONFIG_CHAR_DEV_MEM_PORT_WRITE)
-	&port_fops,	/* DEV_PORT_MINOR */
+        &port_fops,     /* DEV_PORT_MINOR */
 #else
         NULL,
 #endif
-	&zero_fops,	/* DEV_ZERO_MINOR */
+        &zero_fops,     /* DEV_ZERO_MINOR */
 #if UNUSED
-	&full_fops	/* DEV_FULL_MINOR */
+        &full_fops      /* DEV_FULL_MINOR */
 #endif
     };
     unsigned int minor;
 
     minor = MINOR(inode->i_rdev);
     if (minor > 5 || !mdev_fops[minor])
-	return -ENXIO;
+        return -ENXIO;
     filp->f_op = mdev_fops[minor];
     return 0;
 }
 
 static struct file_operations memory_fops = {
-    NULL,			/* lseek */
-    NULL,			/* read */
-    NULL,			/* write */
-    NULL,			/* readdir */
-    NULL,			/* select */
-    NULL,			/* ioctl */
-    memory_open,		/* open */
-    NULL			/* release */
+    NULL,                       /* lseek */
+    NULL,                       /* read */
+    NULL,                       /* write */
+    NULL,                       /* readdir */
+    NULL,                       /* select */
+    NULL,                       /* ioctl */
+    memory_open,                /* open */
+    NULL                        /* release */
 };
 
 void INITPROC mem_dev_init(void)
