@@ -191,7 +191,7 @@ void dump_heap(int fd)
 
 void usage(void)
 {
-    printf("usage: meminfo [-maftbsh]\n");
+    printf("usage: meminfo [-amftbsh]\n");
 }
 
 int main(int argc, char **argv)
@@ -201,10 +201,13 @@ int main(int argc, char **argv)
 
     if (argc < 2)
         allflag = 1;
-    else while ((c = getopt(argc, argv, "aftbsmh")) != -1) {
+    else while ((c = getopt(argc, argv, "amftbsh")) != -1) {
         switch (c) {
             case 'a':
                 aflag = 1;
+                break;
+            case 'm':
+                mflag = 1;
                 break;
             case 'f':
                 fflag = 1;
@@ -217,9 +220,6 @@ int main(int argc, char **argv)
                 break;
             case 's':
                 sflag = 1;
-                break;
-            case 'm':
-                mflag = 1;
                 break;
             case 'h':
                 usage();
