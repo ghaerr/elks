@@ -28,10 +28,12 @@ int fflag;      /* show free memory*/
 int tflag;      /* show tty and driver memory*/
 int bflag;      /* show buffer memory*/
 int sflag;      /* show system memory*/
+int mflag;      /* show main memory*/
 int allflag;    /* show all memory*/
 
 unsigned int ds;
 unsigned int heap_all;
+unsigned int seg_all;
 unsigned int taskoff;
 int maxtasks;
 struct task_struct task_table;
@@ -92,15 +94,55 @@ struct task_struct *find_process(int fd, unsigned int seg)
     return NULL;
 }
 
+static long total_segsize = 0;
+static char *segtype[] =
+    { "free", "CSEG", "DSEG", "DDAT", "FDAT", "BUF ", "RDSK" };
+
+void display_seg(int fd, word_t mem)
+{
+    seg_t segbase = getword(fd, mem + offsetof(segment_s, base), ds);
+    segext_t segsize = getword(fd, mem + offsetof(segment_s, size), ds);
+    word_t segflags = getword(fd, mem + offsetof(segment_s, flags), ds) & SEG_FLAG_TYPE;
+    byte_t ref_count = getword(fd, mem + offsetof(segment_s, ref_count), ds);
+    struct task_struct *t;
+
+    printf("   %4x   %s %7ld %4d  ",
+        segbase, segtype[segflags], (long)segsize << 4, ref_count);
+    if (segflags == SEG_FLAG_CSEG || segflags == SEG_FLAG_DSEG) {
+        if ((t = find_process(fd, mem)) != NULL) {
+            process_name(fd, t->t_begstack, t->t_regs.ss);
+        }
+    }
+
+    total_segsize += (long)segsize << 4;
+}
+
+void dump_segs(int fd)
+{
+    word_t n, mem;
+    seg_t segbase, oldbase = 0;
+
+    printf("    SEG   TYPE    SIZE  CNT  NAME\n");
+    n = getword (fd, seg_all + offsetof(list_s, next), ds);
+    while (n != seg_all) {
+        mem = n - offsetof(segment_s, all);
+        segbase = getword(fd, mem + offsetof(segment_s, base), ds);
+        if (segbase < oldbase) printf("\n");
+        oldbase = segbase;
+        display_seg(fd, mem);
+        printf("\n");
+
+        /* next in list */
+        n = getword(fd, n + offsetof(list_s, next), ds);
+    }
+}
+
 void dump_heap(int fd)
 {
     word_t total_size = 0;
     word_t total_free = 0;
-    long total_segsize = 0;
     static char *heaptype[] =
         { "free", "MEM ", "DRVR", "TTY ", "TASK", "BUFH", "PIPE", "INOD", "FILE", "CACH"};
-    static char *segtype[] =
-        { "free", "CSEG", "DSEG", "DDAT", "FDAT", "BUF ", "RDSK" };
 
     printf("  HEAP   TYPE  SIZE    SEG   TYPE    SIZE  CNT  NAME\n");
 
@@ -110,18 +152,14 @@ void dump_heap(int fd)
         word_t size = getword(fd, h + offsetof(heap_s, size), ds);
         byte_t tag = getword(fd, h + offsetof(heap_s, tag), ds) & HEAP_TAG_TYPE;
         word_t mem = h + sizeof(heap_s);
-        seg_t segbase;
-        segext_t segsize;
         word_t segflags;
-        byte_t ref_count;
-        int free, used, tty, buffer, system;
-        struct task_struct *t;
+        int free, app, tty, buffer, system;
 
         if (tag == HEAP_TAG_SEG)
             segflags = getword(fd, mem + offsetof(segment_s, flags), ds) & SEG_FLAG_TYPE;
         else segflags = -1;
         free = (tag == HEAP_TAG_FREE || segflags == SEG_FLAG_FREE);
-        used = ((tag == HEAP_TAG_SEG)
+        app = ((tag == HEAP_TAG_SEG)
             && (segflags == SEG_FLAG_CSEG || segflags == SEG_FLAG_DSEG ||
                 segflags == SEG_FLAG_DDAT || segflags == SEG_FLAG_FDAT));
         tty = (tag == HEAP_TAG_TTY || tag == HEAP_TAG_DRVR);
@@ -129,9 +167,8 @@ void dump_heap(int fd)
             || tag == HEAP_TAG_BUFHEAD || tag == HEAP_TAG_CACHE || tag == HEAP_TAG_PIPE;
         system = (tag == HEAP_TAG_TASK || tag == HEAP_TAG_INODE || tag == HEAP_TAG_FILE);
 
-        if (allflag ||
-           (fflag && free) || (aflag && used) || (tflag && tty) || (bflag && buffer)
-                || (sflag && system)) {
+        if (allflag || (fflag && free) || (aflag && app) || (tflag && tty)
+                    || (bflag && buffer) || (sflag && system)) {
             printf("  %4x   %s %5d", mem, heaptype[tag], size);
             total_size += size + sizeof(heap_s);
             if (tag == HEAP_TAG_FREE)
@@ -139,18 +176,7 @@ void dump_heap(int fd)
 
             switch (tag) {
             case HEAP_TAG_SEG:
-                segbase = getword(fd, mem + offsetof(segment_s, base), ds);
-                segsize = getword(fd, mem + offsetof(segment_s, size), ds);
-                ref_count = getword(fd, mem + offsetof(segment_s, ref_count), ds);
-                printf("   %4x   %s %7ld %4d  ",
-                    segbase, segtype[segflags], (long)segsize << 4, ref_count);
-                if (segflags == SEG_FLAG_CSEG || segflags == SEG_FLAG_DSEG) {
-                    if ((t = find_process(fd, mem)) != NULL) {
-                        process_name(fd, t->t_begstack, t->t_regs.ss);
-                    }
-                }
-
-                total_segsize += (long)segsize << 4;
+                display_seg(fd, mem);
                 break;
             }
             printf("\n");
@@ -165,7 +191,7 @@ void dump_heap(int fd)
 
 void usage(void)
 {
-    printf("usage: meminfo [-a][-f][-t][-b]\n");
+    printf("usage: meminfo [-amftbsh]\n");
 }
 
 int main(int argc, char **argv)
@@ -175,10 +201,13 @@ int main(int argc, char **argv)
 
     if (argc < 2)
         allflag = 1;
-    else while ((c = getopt(argc, argv, "aftbsh")) != -1) {
+    else while ((c = getopt(argc, argv, "amftbsh")) != -1) {
         switch (c) {
             case 'a':
                 aflag = 1;
+                break;
+            case 'm':
+                mflag = 1;
                 break;
             case 'f':
                 fflag = 1;
@@ -207,15 +236,18 @@ int main(int argc, char **argv)
     }
     if (ioctl(fd, MEM_GETDS, &ds) ||
         ioctl(fd, MEM_GETHEAP, &heap_all) ||
+        ioctl(fd, MEM_GETSEGALL, &seg_all) ||
         ioctl(fd, MEM_GETTASK, &taskoff) ||
         ioctl(fd, MEM_GETMAXTASKS, &maxtasks)) {
           perror("meminfo");
-        return 1;
+          return 1;
     }
     if (!memread(fd, taskoff, ds, &task_table, sizeof(task_table))) {
         perror("taskinfo");
     }
-    dump_heap(fd);
+    if (mflag)
+        dump_segs(fd);
+    else dump_heap(fd);
 
     if (!ioctl(fd, MEM_GETUSAGE, &mu)) {
         /* note MEM_GETUSAGE amounts are floors, so total may display less by 1k than actual*/
