@@ -167,7 +167,6 @@ static void INITPROC kernel_init(void)
 
     /* set console from /bootopts console= or 0=default*/
     set_console(boot_console);
-
     console_init();                 /* init direct, bios or headless console*/
 
 #ifdef CONFIG_CHAR_DEV_RS
@@ -184,13 +183,11 @@ static void INITPROC kernel_init(void)
         running_qemu = 1;
 #endif
 
-    device_init();
-
 #ifdef CONFIG_SOCKET
     sock_init();
 #endif
 
-    fs_init();
+    device_init();                  /* interrupts enabled here for possible disk I/O */
 
 #ifdef CONFIG_BOOTOPTS
     finalize_options();

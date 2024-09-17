@@ -438,8 +438,3 @@ struct file_system_type minix_fs_type = {
     minix_read_super,
 	FST_MINIX
 };
-
-int init_minix_fs(void)
-{
-    return 1;
-}

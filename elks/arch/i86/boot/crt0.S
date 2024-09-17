@@ -47,7 +47,7 @@ _start:
         mov     %ax,%ss         // SS=ES=DS
         mov     $tstack,%sp     // can't use kernel interrupt stack, must have temp stack
 
-        call    start_kernel    // fall through into breakpoint if returns
+        call    start_kernel    // no return
 
         .global int3
 int3:   int     $3              // C breakpoint for emu86
