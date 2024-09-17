@@ -56,12 +56,12 @@ int fs_memcmp(const void *,const void *,size_t);
 
 segment_s * seg_alloc (segext_t, word_t);
 void seg_free (segment_s *);
-
 segment_s * seg_get (segment_s *);
 void seg_put (segment_s *);
 segment_s * seg_dup (segment_s *);
-
 void seg_free_pid(pid_t pid);
+
+extern list_s _seg_all;
 
 void mm_get_usage (unsigned int * free, unsigned int * used);
 

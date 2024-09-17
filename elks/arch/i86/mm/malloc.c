@@ -22,7 +22,7 @@
 // and to ease the 286 protected mode
 // whenever that mode comes back one day
 
-static list_s _seg_all;
+list_s _seg_all;
 static list_s _seg_free;
 
 

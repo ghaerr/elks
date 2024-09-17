@@ -34,194 +34,62 @@
 #define DEV_NULL_MINOR          3
 #define DEV_PORT_MINOR          4
 #define DEV_ZERO_MINOR          5
-#define DEV_FULL_MINOR          6       /* unused */
-
-/*
- * generally useful code...
- */
-static int memory_lseek(struct inode *inode, struct file *filp, loff_t offset,
-        unsigned int origin)
-{
-    debugmem("mem_lseek()\n");
-    switch (origin) {
-    case 1:
-        offset += filp->f_pos;
-    case 0:
-        if (offset >= 0)
-            break;
-    default:
-        return -EINVAL;
-    }
-    if (offset != filp->f_pos) {
-        filp->f_pos = offset;
-    }
-    return 0;
-}
+#define DEV_MAX_MINOR           5
 
 /*
  * /dev/null code
  */
-int null_lseek(struct inode *inode, struct file *filp, off_t offset, int origin)
+static int null_lseek(struct inode *inode, struct file *filp, loff_t offset, int origin)
 {
-    debugmem("null_lseek()\n");
     filp->f_pos = 0;
     return 0;
 }
 
-size_t null_read(struct inode *inode, struct file *filp, char *data, size_t len)
+static size_t null_read(struct inode *inode, struct file *filp, char *data, size_t len)
 {
-    debugmem("null_read()\n");
     return 0;
 }
 
-size_t null_write(struct inode *inode, struct file *filp, char *data, size_t len)
+static size_t null_write(struct inode *inode, struct file *filp, char *data, size_t len)
 {
-    debugmem("null write: ignoring %d bytes!\n", len);
     return len;
 }
-
-/*
- * /dev/port code
- */
-#if defined(CONFIG_CHAR_DEV_MEM_PORT_READ) || defined(CONFIG_CHAR_DEV_MEM_PORT_WRITE)
-int port_lseek(struct inode *inode, struct file *filp, off_t offset, int origin)
-{
-    debugmem("port_lseek()\n");
-
-    switch (origin)
-    {
-        case 0: /* SEEK_SET */
-            break;
-
-        case 1: /* SEEK_CUR */
-            offset += filp->f_pos;
-            break;
-
-        case 2: /* SEEK_END */
-            offset = port_MAX + offset;
-            break;
-
-        default:
-            return -EINVAL;
-    }
-
-    if(offset < 0)
-        offset = 0;
-    else if(offset > port_MAX)
-        offset = port_MAX;
-
-    filp->f_pos = offset;
-    debugmem("port_lseek: 0x%02X\n", (unsigned)filp->f_pos);
-
-    return 0;
-}
-#endif
-
-#if defined(CONFIG_CHAR_DEV_MEM_PORT_READ)
-size_t port_read(struct inode *inode, struct file *filp, char *data, size_t len)
-{
-    size_t i;
-
-    debugmem("port_read()\n");
-
-    for (i = 0; i < len && filp->f_pos < port_MAX; i++)
-    {
-        put_user_char(inb((unsigned)filp->f_pos++), (void *)(data++));
-        debugmem("port_read(0x%02X) = %02X\n",
-            (unsigned)filp->f_pos - 1,
-            (unsigned)(((unsigned char *)data)[-1]));
-    }
-
-    return i;
-}
-#else
-#       define  port_read       NULL
-#endif
-
-#if defined(CONFIG_CHAR_DEV_MEM_PORT_WRITE)
-size_t port_write(struct inode *inode, struct file *filp, char *data, size_t len)
-{
-    size_t i;
-
-    debugmem("port_write\n");
-
-    for (i = 0; i < len && filp->f_pos < port_MAX; i++)
-    {
-        debugmem("port: write(0x%02X) = %02X\n",
-            (unsigned)filp->f_pos,
-            (unsigned)get_user_char((void *)data));
-        outb(get_user_char((void *)data++), (unsigned)filp->f_pos++);
-    }
-
-    return i;
-}
-#else
-#       define  port_write      NULL
-#endif
-
-#if UNUSED
-/*
- * /dev/full code
- */
-size_t full_read(struct inode *inode, struct file *filp, char *data, size_t len)
-{
-    debugmem("full_read()\n");
-    filp->f_pos += len;
-    return len;
-}
-
-size_t full_write(struct inode *inode, struct file *filp, char *data, size_t len)
-{
-    debugmem("full_write: objecting to %d bytes!\n", len);
-    return -ENOSPC;
-}
-#endif
 
 /*
  * /dev/zero code
  */
-size_t zero_read(struct inode *inode, struct file *filp, char *data, size_t len)
+static size_t zero_read(struct inode *inode, struct file *filp, char *data, size_t len)
 {
-    debugmem("zero_read()\n");
     fmemsetb(data, current->t_regs.ds, 0, len);
     filp->f_pos += len;
-    return (size_t)len;
-}
-
-static unsigned short int split_seg_off(unsigned short int *offset, long int posn)
-{
-    *offset = (unsigned short int) (((unsigned long int) posn) & 0xF);
-    return (unsigned short int) (((unsigned long int) posn) >> 4);
+    return len;
 }
 
 /*
  * /dev/kmem code
  */
-size_t kmem_read(struct inode *inode, register struct file *filp, char *data, size_t len)
+static size_t kmem_read(struct inode *inode, struct file *filp, char *data, size_t len)
 {
-    unsigned short int sseg, soff;
+    seg_t sseg = (unsigned long)filp->f_pos >> 4;
+    segext_t soff = filp->f_pos & 0x0F;
 
-    debugmem("kmem_read()\n");
-    sseg = split_seg_off(&soff, filp->f_pos);
-    debugmem("Reading %u %p %p.\n", len, sseg, soff);
     fmemcpyb((byte_t *)data, current->t_regs.ds, (byte_t *)soff, sseg, (word_t) len);
     filp->f_pos += len;
-    return (size_t) len;
+    return len;
 }
 
-size_t kmem_write(struct inode *inode, register struct file *filp, char *data, size_t len)
+static size_t kmem_write(struct inode *inode, struct file *filp, char *data, size_t len)
 {
-    unsigned short int dseg, doff;
+    seg_t dseg = (unsigned long)filp->f_pos >> 4;
+    segext_t doff = filp->f_pos & 0x0F;
 
-    debugmem("kmem_write()\n");
-    dseg = split_seg_off(&doff, filp->f_pos);
-    debugmem("Writing to %d:%d\n", dseg, doff);
+    /* FIXME: very dangerous! */
     fmemcpyb((byte_t *)doff, dseg, (byte_t *)data, current->t_regs.ds, (word_t) len);
     filp->f_pos += len;
     return len;
 }
 
-int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
+static int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
 {
     unsigned short retword;
     struct mem_usage mu;
@@ -252,11 +120,15 @@ int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
     case MEM_GETJIFFADDR:
         retword = (unsigned short) &jiffies;
         break;
+    case MEM_GETSEGALL:
+        retword = (unsigned short) &_seg_all;
+        break;
     case MEM_GETUPTIME:
 #ifdef CONFIG_CPU_USAGE
         retword = (unsigned short) &uptime;
         break;
 #endif
+        /* fall thru */
     default:
         return -EINVAL;
     }
@@ -264,18 +136,100 @@ int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg)
     return 0;
 }
 
-static struct file_operations null_fops = {
-    null_lseek,                 /* lseek */
-    null_read,                  /* read */
-    null_write,                 /* write */
-    NULL,                       /* readdir */
-    NULL,                       /* select */
-    NULL,                       /* ioctl */
-    NULL,                       /* open */
-    NULL                        /* release */
-};
+static int memory_lseek(struct inode *inode, struct file *filp, loff_t offset, int origin)
+{
+    switch (origin) {
+    case 1:
+        offset += filp->f_pos;
+        /* fall thru */
+    case 0:
+        if (offset >= 0)
+            break;
+    default:
+        return -EINVAL;
+    }
+    filp->f_pos = offset;
+    return 0;
+}
+
+/*
+ * /dev/port code
+ */
+#if defined(CONFIG_CHAR_DEV_MEM_PORT_READ)
+static size_t port_read(struct inode *inode, struct file *filp, char *data, size_t len)
+{
+    size_t i;
+
+    debugmem("port_read()\n");
+
+    for (i = 0; i < len && filp->f_pos < port_MAX; i++)
+    {
+        put_user_char(inb((unsigned)filp->f_pos++), (void *)(data++));
+        debugmem("port_read(0x%02X) = %02X\n",
+            (unsigned)filp->f_pos - 1,
+            (unsigned)(((unsigned char *)data)[-1]));
+    }
+
+    return i;
+}
+#else
+#       define  port_read       NULL
+#endif
+
+#if defined(CONFIG_CHAR_DEV_MEM_PORT_WRITE)
+static size_t port_write(struct inode *inode, struct file *filp, char *data, size_t len)
+{
+    size_t i;
+
+    debugmem("port_write\n");
+
+    for (i = 0; i < len && filp->f_pos < port_MAX; i++)
+    {
+        debugmem("port: write(0x%02X) = %02X\n",
+            (unsigned)filp->f_pos,
+            (unsigned)get_user_char((void *)data));
+        outb(get_user_char((void *)data++), (unsigned)filp->f_pos++);
+    }
+
+    return i;
+}
+#else
+#       define  port_write      NULL
+#endif
 
 #if defined(CONFIG_CHAR_DEV_MEM_PORT_READ) || defined(CONFIG_CHAR_DEV_MEM_PORT_WRITE)
+static int port_lseek(struct inode *inode, struct file *filp, loff_t offset, int origin)
+{
+    debugmem("port_lseek()\n");
+
+    switch (origin)
+    {
+        case 0: /* SEEK_SET */
+            break;
+
+        case 1: /* SEEK_CUR */
+            offset += filp->f_pos;
+            break;
+
+        case 2: /* SEEK_END */
+            offset = port_MAX + offset;
+            break;
+
+        default:
+            return -EINVAL;
+    }
+
+    if(offset < 0)
+        offset = 0;
+    else if(offset > port_MAX)
+        offset = port_MAX;
+
+    filp->f_pos = offset;
+    debugmem("port_lseek: 0x%02X\n", (unsigned)filp->f_pos);
+
+    return 0;
+}
+
 static struct file_operations port_fops = {
     port_lseek,                 /* lseek */
     port_read,                  /* read */
@@ -287,6 +241,17 @@ static struct file_operations port_fops = {
     NULL                        /* release */
 };
 #endif
+
+static struct file_operations null_fops = {
+    null_lseek,                 /* lseek */
+    null_read,                  /* read */
+    null_write,                 /* write */
+    NULL,                       /* readdir */
+    NULL,                       /* select */
+    NULL,                       /* ioctl */
+    NULL,                       /* open */
+    NULL                        /* release */
+};
 
 static struct file_operations zero_fops = {
     memory_lseek,               /* lseek */
@@ -310,43 +275,28 @@ static struct file_operations kmem_fops = {
     NULL                        /* release */
 };
 
-#if UNUSED
-static struct file_operations full_fops = {
-    memory_lseek,               /* lseek */
-    full_read,                  /* read */
-    full_write,                 /* write */
-    NULL,                       /* readdir */
-    NULL,                       /* select */
-    NULL,                       /* ioctl */
-    NULL,                       /* open */
-    NULL                        /* release */
-};
+static struct file_operations *mdev_fops[] = {
+    NULL,
+    &kmem_fops,                 /* DEV_MEM_MINOR */
+    &kmem_fops,                 /* DEV_KMEM_MINOR */
+    &null_fops,                 /* DEV_NULL_MINOR */
+#if defined(CONFIG_CHAR_DEV_MEM_PORT_READ) || defined(CONFIG_CHAR_DEV_MEM_PORT_WRITE)
+    &port_fops,                 /* DEV_PORT_MINOR */
+#else
+    NULL,
 #endif
+    &zero_fops,                 /* DEV_ZERO_MINOR */
+};
 
 /*
  * memory device open multiplexor
  */
-int memory_open(register struct inode *inode, struct file *filp)
+static int memory_open(struct inode *inode, struct file *filp)
 {
-    static struct file_operations *mdev_fops[] = {
-        NULL,
-        &kmem_fops,     /* DEV_MEM_MINOR */
-        &kmem_fops,     /* DEV_KMEM_MINOR */
-        &null_fops,     /* DEV_NULL_MINOR */
-#if defined(CONFIG_CHAR_DEV_MEM_PORT_READ) || defined(CONFIG_CHAR_DEV_MEM_PORT_WRITE)
-        &port_fops,     /* DEV_PORT_MINOR */
-#else
-        NULL,
-#endif
-        &zero_fops,     /* DEV_ZERO_MINOR */
-#if UNUSED
-        &full_fops      /* DEV_FULL_MINOR */
-#endif
-    };
     unsigned int minor;
 
     minor = MINOR(inode->i_rdev);
-    if (minor > 5 || !mdev_fops[minor])
+    if (minor > DEV_MAX_MINOR || !mdev_fops[minor])
         return -ENXIO;
     filp->f_op = mdev_fops[minor];
     return 0;
