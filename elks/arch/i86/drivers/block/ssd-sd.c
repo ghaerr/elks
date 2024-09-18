@@ -172,7 +172,7 @@ static int sd_cmd_go_idle(void) {
  * Gets the SD version following the advised algorithm
  * on the phyisical layer specification of the SD alliance.
  * 
- * returns: 1 for SDv1, 2 for SDv2 and SDHC, -ENAVAIL when
+ * returns: 1 for SDv1, 2 for SDv2 and SDHC, -ENODATA when
  * the card can't be used (out of spec).
  */
 static int sd_check_version(void) {
@@ -197,7 +197,7 @@ static int sd_check_version(void) {
     if ((cmd8_voltage != 0x01)
         || (cmd8_check_pattern != 0xaa)) {
         /* card shouldn't be used */
-        return -ENAVAIL;
+        return -ENODATA;
     }
 
     return 2;
@@ -271,7 +271,7 @@ static int sd_set_block_length(uint16_t n) {
  * 
  * token: expected data-start token.
  * 
- * returns: 0 if found, -ENAVAIL if another token was found,
+ * returns: 0 if found, -ENODATA if another token was found,
  * -ETIMEDOUT if it times out waiting.
  */
 static int sd_wait_for_token(uint8_t token) {
@@ -285,7 +285,7 @@ static int sd_wait_for_token(uint8_t token) {
         } else if (rx == 0xff) {
             continue;
         } else {
-            return -ENAVAIL;
+            return -ENODATA;
         }
     } while (--counter);
 
@@ -298,7 +298,7 @@ static int sd_wait_for_token(uint8_t token) {
  * *csd: pointer to the CSD buffer. Must be 16 bytes.
  * 
  * returns: 0 on succes, -EIO if SEND_CSD is not supported,
- * -ENAVAIL if data token wasn't found, -ETIMEDOUT if it
+ * -ENODATA if data token wasn't found, -ETIMEDOUT if it
  * times out waiting for the data token.
  */
 static int sd_read_csd(char * csd) {

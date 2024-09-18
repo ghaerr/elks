@@ -55,6 +55,7 @@
 #define ELOOP           40      /* Too many symbolic links encountered */
 
 /* these are used, pulled out of the below unused list */
+#define ENODATA         61      /* No data available */
 #define ENOSR           63      /* Out of streams resources */
 #define ENOTSOCK        88      /* Socket operation on non-socket */
 #define EADDRINUSE      98      /* Address already in use */
@@ -95,7 +96,7 @@
 #define EDEADLOCK       58      /* File locking deadlock error */
 #define EBFONT          59      /* Bad font file format */
 #define ENOSTR          60      /* Device not a stream */
-#define ENODATA         61      /* No data available */
+
 #define ETIME           62      /* Timer expired */
 
 #define ENONET          64      /* Machine is not on the network */
