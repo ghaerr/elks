@@ -6,8 +6,6 @@
  * combined into a single file.
  */
 
-/*****************************************************************************/
-
 /* These were in Linux's include/asm/errno.h file.
  */
 
@@ -22,6 +20,7 @@
 #define EBADF            9      /* Bad file number */
 #define ECHILD          10      /* No child processes */
 #define EAGAIN          11      /* Try again */
+#define EWOULDBLOCK     EAGAIN  /* Operation would block */
 #define ENOMEM          12      /* Out of memory */
 #define EACCES          13      /* Permission denied */
 #define EFAULT          14      /* Bad address */
@@ -35,8 +34,8 @@
 #define EINVAL          22      /* Invalid argument */
 #define ENFILE          23      /* File table overflow */
 #define EMFILE          24      /* Too many open files */
-#define ENOTTY          25      /* Not a typewriter */
-#define ETXTBSY         26      /* Text file busy */
+#define ENOTTY          25      /* Not a typewriter */  //linenoise
+#define ETXTBSY         26      /* Text file busy */    //ash
 #define EFBIG           27      /* File too large */
 #define ENOSPC          28      /* No space left on device */
 #define ESPIPE          29      /* Illegal seek */
@@ -45,15 +44,38 @@
 #define EPIPE           32      /* Broken pipe */
 #define EDOM            33      /* Math argument out of domain of func */
 #define ERANGE          34      /* Math result not representable */
+#if UNUSED
 #define EDEADLK         35      /* Resource deadlock would occur */
-#define ENAMETOOLONG    36      /* File name too long */
 #define ENOLCK          37      /* No record locks available */
+#endif
+#define ENAMETOOLONG    36      /* File name too long */
+
 #define ENOSYS          38      /* Function not implemented */
 #define ENOTEMPTY       39      /* Directory not empty */
 #define ELOOP           40      /* Too many symbolic links encountered */
 
-#define EWOULDBLOCK     EAGAIN  /* Operation would block */
+/* these are used, pulled out of the below unused list */
+#define ENOSR           63      /* Out of streams resources */
+#define ENOTSOCK        88      /* Socket operation on non-socket */
+#define EADDRINUSE      98      /* Address already in use */
+#define ENETDOWN        100     /* Network is down */
+#define ENETUNREACH     101     /* Network is unreachable */
+#define ENOBUFS         105     /* No buffer space available */ //regex
+#define EISCONN         106     /* Transport endpoint is already connected */
+#define ETIMEDOUT       110     /* Connection timed out */
+#define ECONNREFUSED    111     /* Connection refused */
+#define EHOSTUNREACH    113     /* Host not reachable */
+#define EINPROGRESS     115     /* Operation now in progress */
+#define ENONAMESERVER   125     /* Nameserver not found */
+#define ENONAME         126     /* Name not found */
+#define EBADQUERY       127     /* Bad query format */
+#define EQUERYREFUSED   128     /* Query refused */
+#define ESERVERERR      129     /* Server error */
+#define ERESTARTSYS     512     /* Restart system call*/
 
+#if UNUSED
+/* when any of these added in, add string to etc/perror as well */
+#define EWOULDBLOCK     41      /* Operation would block */
 #define ENOMSG          42      /* No message of desired type */
 #define EIDRM           43      /* Identifier removed */
 #define ECHRNG          44      /* Channel number out of range */
@@ -70,14 +92,12 @@
 #define ENOANO          55      /* No anode */
 #define EBADRQC         56      /* Invalid request code */
 #define EBADSLT         57      /* Invalid slot */
-
-#define EDEADLOCK       EDEADLK
-
+#define EDEADLOCK       58      /* File locking deadlock error */
 #define EBFONT          59      /* Bad font file format */
 #define ENOSTR          60      /* Device not a stream */
 #define ENODATA         61      /* No data available */
 #define ETIME           62      /* Timer expired */
-#define ENOSR           63      /* Out of streams resources */
+
 #define ENONET          64      /* Machine is not on the network */
 #define ENOPKG          65      /* Package not installed */
 #define EREMOTE         66      /* Object is remote */
@@ -102,7 +122,7 @@
 #define ERESTART        85      /* Interrupted system call should be restarted */
 #define ESTRPIPE        86      /* Streams pipe error */
 #define EUSERS          87      /* Too many users */
-#define ENOTSOCK        88      /* Socket operation on non-socket */
+
 #define EDESTADDRREQ    89      /* Destination address required */
 #define EMSGSIZE        90      /* Message too long */
 #define EPROTOTYPE      91      /* Protocol wrong type for socket */
@@ -112,24 +132,21 @@
 #define EOPNOTSUPP      95      /* Operation not supported on transport endpoint */
 #define EPFNOSUPPORT    96      /* Protocol family not supported */
 #define EAFNOSUPPORT    97      /* Address family not supported by protocol */
-#define EADDRINUSE      98      /* Address already in use */
+
 #define EADDRNOTAVAIL   99      /* Cannot assign requested address */
-#define ENETDOWN        100     /* Network is down */
-#define ENETUNREACH     101     /* Network is unreachable */
+
 #define ENETRESET       102     /* Network dropped connection because of reset */
 #define ECONNABORTED    103     /* Software caused connection abort */
 #define ECONNRESET      104     /* Connection reset by peer */
-#define ENOBUFS         105     /* No buffer space available */
-#define EISCONN         106     /* Transport endpoint is already connected */
+
 #define ENOTCONN        107     /* Transport endpoint is not connected */
 #define ESHUTDOWN       108     /* Cannot send after transport endpoint shutdown */
 #define ETOOMANYREFS    109     /* Too many references: cannot splice */
-#define ETIMEDOUT       110     /* Connection timed out */
-#define ECONNREFUSED    111     /* Connection refused */
+
 #define EHOSTDOWN       112     /* Host is down */
-#define EHOSTUNREACH    113     /* Host not reachable */
+
 #define EALREADY        114     /* Operation already in progress */
-#define EINPROGRESS     115     /* Operation now in progress */
+
 #define ESTALE          116     /* Stale NFS file handle */
 #define EUCLEAN         117     /* Structure needs cleaning */
 #define ENOTNAM         118     /* Not a XENIX named type file */
@@ -139,37 +156,16 @@
 #define EDQUOT          122     /* Quota exceeded */
 #define ENOMEDIUM       123     /* No medium found */
 #define EMEDIUMTYPE     124     /* Wrong medium type */
-#define ENONAMESERVER   125     /* Nameserver not found */
-#define ENONAME         126     /* Name not found */
-#define EBADQUERY       127     /* Bad query format */
-#define EQUERYREFUSED   128     /* Query refused */
-#define ESERVERERR      129     /* Server error */
 
-/* added here for userland ktcp compile */
-#define ERESTARTSYS     512     /* Restart system call*/
-
-/*****************************************************************************/
-
-/* These are comedy ones inserted for fun, and are never used.
- */
-
+/* These are comedy ones inserted for fun, and are never used.  */
 #define EEEEEEEEEEEEK   510     /* cat /dev/mouse */
 #define EIEIO           511     /* Old McDonald is on the rampage */
 
-/*****************************************************************************/
-
-/* These were in Linux's include/linux/errno.h file.
- */
-
-#ifdef __KERNEL__
-
-/* Should never be seen by user programs */
-
+/* Should never be seen by user programs (including 512) */
 #define ERESTARTNOINTR  513     /* Restart without interrupts */
 #define ENOIOCTLCMD     515     /* No ioctl command */
 
 /* Defined for the NFSv3 protocol */
-
 #define EBADHANDLE      521     /* Illegal NFS file handle */
 #define ENOTSYNC        522     /* Update synchronization mismatch */
 #define EBADCOOKIE      523     /* Cookie is stale */
@@ -179,8 +175,6 @@
 #define EBADTYPE        527     /* Type not supported by server */
 #define EJUKEBOX        528     /* Request initiated, but will timeout */
 
-#endif
-
-/*****************************************************************************/
+#endif /* UNUSED */
 
 #endif
