@@ -1,3 +1,0 @@
-# Images common rules
-
-.PHONY: all clean install

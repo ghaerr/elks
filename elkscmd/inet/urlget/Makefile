@@ -2,13 +2,9 @@
 
 BASEDIR=../..
 
-include $(BASEDIR)/Make.defs
+include $(BASEDIR)/Makefile-rules
 
 ###############################################################################
-#
-# Include standard packaging commands.
-
-include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
@@ -24,5 +20,5 @@ install: urlget
 	$(INSTALL) urlget $(DESTDIR)/bin
 
 clean:
-	rm -f urlget *.o
+	$(RM) urlget *.o
 

@@ -1,12 +1,8 @@
 BASEDIR=../..
 
-include $(BASEDIR)/Make.defs
+include $(BASEDIR)/Makefile-rules
 
 ###############################################################################
-#
-# Include standard packaging commands.
-
-include $(BASEDIR)/Make.rules
 
 KERNEL_LIBS = $(TOPDIR)/elks/arch/i86/lib/lib86.a
 
@@ -53,4 +49,4 @@ install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
-	rm -f $(PRGS) *.o
+	$(RM) $(PRGS) *.o

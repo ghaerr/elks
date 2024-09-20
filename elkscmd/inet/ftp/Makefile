@@ -2,13 +2,9 @@
 
 BASEDIR=../..
 
-include $(BASEDIR)/Make.defs
+include $(BASEDIR)/Makefile-rules
 
 ###############################################################################
-#
-# Include standard packaging commands.
-
-include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
@@ -28,5 +24,5 @@ install: ftpd ftp
 	$(INSTALL) $(BINS)  $(DESTDIR)/bin
 
 clean:
-	rm -f $(BINS) $(OBJS)
+	$(RM) $(BINS) $(OBJS)
 

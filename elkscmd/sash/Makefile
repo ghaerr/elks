@@ -2,15 +2,11 @@
 
 BASEDIR=..
 
-include $(BASEDIR)/Make.defs
-
-LOCALFLAGS = -Wno-implicit-int
+include $(BASEDIR)/Makefile-rules
 
 ###############################################################################
-#
-# Include standard packaging commands.
 
-include $(BASEDIR)/Make.rules
+LOCALFLAGS = -Wno-implicit-int
 
 ###############################################################################
 
@@ -23,7 +19,7 @@ sash:	$(OBJS)
 	$(LD) $(LDFLAGS) -o sash $(OBJS) $(LDLIBS)
 
 clean:
-	rm -f core sash $(OBJS)
+	$(RM) sash $(OBJS)
 
 install: sash
 ifdef CONFIG_APP_ASH

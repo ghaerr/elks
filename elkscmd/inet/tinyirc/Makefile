@@ -2,13 +2,7 @@
 
 BASEDIR=../..
 
-include $(BASEDIR)/Make.defs
-
-###############################################################################
-#
-# Include standard packaging commands.
-
-include $(BASEDIR)/Make.rules
+include $(BASEDIR)/Makefile-rules
 
 ###############################################################################
 
@@ -16,6 +10,8 @@ include $(BASEDIR)/Make.rules
 # chat.freenode.net=
 SERVER = 162.213.39.42
 PORT = 8000
+
+###############################################################################
 
 all: tinyirc
 
@@ -31,4 +27,4 @@ install: tinyirc
 	$(INSTALL) tinyirc $(DESTDIR)/bin
 
 clean:
-	rm -f *.o tinyirc
+	$(RM) *.o tinyirc

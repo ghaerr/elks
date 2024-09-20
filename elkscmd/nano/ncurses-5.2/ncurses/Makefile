@@ -80,7 +80,7 @@ LN_S		= ln -s
 #CFLAGS		= -O3 
 #RANLIB		= ranlib
 
-include ../../Make.defs
+include ../../Makefile-rules
 CFLAGS += -fno-inline
 
 INCDIR		= $(srcdir)/../include

@@ -1,12 +1,10 @@
 BASEDIR=..
 
-include $(BASEDIR)/Make.defs
+include $(BASEDIR)/Makefile-rules
 
 ###############################################################################
-#
-# Include standard packaging commands.
 
-include $(BASEDIR)/Make.rules
+CFLAGS += -DELKS=1
 
 ###############################################################################
 
@@ -14,7 +12,6 @@ PRGS = fm matrix cons ttyinfo sl ttyclock ttypong ttytetris
 
 #PRGS_HOST =
 
-CFLAGS += -DELKS=1
 TUILIB = tty.o runes.o unikey.o
 
 all: $(PRGS) $(PRGS_HOST)
@@ -47,4 +44,4 @@ install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
-	rm -f $(PRGS) $(PRGS_HOST) *~ *.o
+	$(RM) $(PRGS) $(PRGS_HOST) *.o

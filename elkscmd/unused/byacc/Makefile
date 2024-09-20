@@ -2,21 +2,17 @@
 
 BASEDIR = ..
     
-include ../Make.defs
+include $(BASEDIR)/Make.defs
 
 ###############################################################################
-#
-# Include standard packaging commands.
 
-include $(BASEDIR)/Make.rules
+LOCALFLAGS    = -DNDEBUG -D_POSIX_SOURCE
 
 ###############################################################################
 
 BINDIR	      = /bin
 
 HDRS	      = defs.h
-
-LOCALFLAGS    = -DNDEBUG -D_POSIX_SOURCE
 
 LIBS	      =
 
@@ -63,7 +59,7 @@ install: $(PROGRAM)
 	$(INSTALL) $(PROGRAM) $(DESTDIR)/bin
 
 clean:
-	rm -f $(OBJS) $(PROGRAM) core
+	$(RM) $(OBJS) $(PROGRAM)
 
 #depend:;	@mkmf -f $(MAKEFILE) PROGRAM=$(PROGRAM) DEST=$(DEST)
 #

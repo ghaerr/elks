@@ -6,7 +6,7 @@
 
 BASEDIR = .
 
-include $(BASEDIR)/Make.defs
+include $(BASEDIR)/Makefile-rules
 
 ###############################################################################
 #
@@ -46,8 +46,6 @@ SUBDIRS =       \
 ###############################################################################
 #
 # Compile everything.
-
-include $(BASEDIR)/Make.rules
 
 all:
 	@if [ ! -e $(TOPDIR)/include/autoconf.h ]; \

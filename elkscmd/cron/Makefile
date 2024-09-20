@@ -1,18 +1,12 @@
-##################################################################################
-
 # Makefile for cron
 
 BASEDIR=..
 
-include $(BASEDIR)/Make.defs
-
-LOCALFLAGS = -Wno-implicit-int -Wno-return-type $(OPTIONS)
+include $(BASEDIR)/Makefile-rules
 
 ###############################################################################
-#
-# Include standard packaging commands.
 
-include $(BASEDIR)/Make.rules
+LOCALFLAGS = -Wno-implicit-int -Wno-return-type $(OPTIONS)
 
 ###############################################################################
 
@@ -31,7 +25,7 @@ crontab: crontab.o $(common)
 	$(CC) $(CFLAGS) -maout-heap=14336 -o $@ crontab.o $(common)
 
 clean:
-	rm -f $(progs) *.o
+	$(RM) $(progs) *.o
 	
 install: cron
 	$(INSTALL) cron $(DESTDIR)/bin/cron

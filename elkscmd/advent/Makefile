@@ -1,12 +1,8 @@
 BASEDIR=..
 
-include $(BASEDIR)/Make.defs
+include $(BASEDIR)/Makefile-rules
 
 ###############################################################################
-#
-# Include standard packaging commands.
-
-include $(BASEDIR)/Make.rules
 
 CFLAGS += -DELKS=1
 #CFLAGS += -Wno-parentheses
@@ -43,4 +39,4 @@ install: $(PRGS)
 	$(INSTALL) advent.db $(DESTDIR)/lib
 
 clean:
-	rm -f $(PRGS) $(HOSTPRGS) *.o *.map
+	$(RM) $(PRGS) $(HOSTPRGS) *.o *.map
