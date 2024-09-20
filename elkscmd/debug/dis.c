@@ -15,7 +15,7 @@
 #include "debug/syms.h"
 #include "debug/instrument.h"
 #include "disasm.h"
-#if __ia16__
+#ifdef _M_I86
 #include <linuxmt/mem.h>
 #endif
 
@@ -174,7 +174,7 @@ int main(int ac, char **av)
         exit(1);
     }
 
-#if __ia16__
+#ifdef _M_I86
     if (f_ksyms) {
         fd = open("/dev/kmem", O_RDONLY);
         if (fd < 0

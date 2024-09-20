@@ -79,12 +79,6 @@ void INITPROC crtc_init(int dev)
     }
 
     /* Clear vram */
-#if 0   //FIXME remove: return value never checked, useless code
-    for (i = 0; i < p->vseg_bytes; i += 2)
-        pokew(i, p->vseg_base, 0x5555);
-    for (i = 0; i < p->vseg_bytes; i += 2)
-        if (peekw(i, p->vseg_base) != 0x5555) return 1;
-#endif
     for (i = 0; i < p->vseg_bytes; i += 2)
         pokew(i, p->vseg_base, 0x07 << 8 | ' ');
 

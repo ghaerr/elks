@@ -65,7 +65,7 @@
 #define EXP_FACT 2
 
 /* Frame dimension */
-#if __ia16__
+#ifdef _M_I86
 #define FRAMEW 23
 #define FRAMEH 20
 #else

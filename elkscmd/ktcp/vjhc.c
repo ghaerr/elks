@@ -71,7 +71,7 @@ static int rcv_toss;
 static rcv_state_ut *rcv_state;
 static rcv_state_ut *rcv_last;
 
-#ifndef __ia16__
+#ifndef _M_I86
 /* Encode/decode ops - used to be macros, changed to functions
  * for reduced code size
  */
