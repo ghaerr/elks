@@ -68,20 +68,24 @@ HOSTCFLAGS = -O3
 #
 # Compiler variables for programs cross-compiled for ELKS.
 
-CC=ia16-elf-gcc
-CFLBASE=-fno-inline -melks-libc -mcmodel=small -mno-segment-relocation-stuff -mtune=i8086 -Wall -Os
+CLBASE =  -mcmodel=small -melks-libc -mtune=i8086 -Wall -Os
+CLBASE += -mno-segment-relocation-stuff
+CLBASE += -fno-inline -fno-builtin-printf
+#CLBASE += -mregparmcall
 ifeq ($(CONFIG_APPS_FTRACE), y)
-  CFLBASE += -fno-optimize-sibling-calls -fno-omit-frame-pointer
-  CFLBASE += -finstrument-functions-simple -maout-symtab
+    CLBASE += -fno-omit-frame-pointer -fno-optimize-sibling-calls
+    CLBASE += -finstrument-functions-simple -maout-symtab
 endif
-#CFLBASE += -mregparmcall
-LD=ia16-elf-gcc
-LDFLAGS=$(CFLBASE)
-CHECK=gcc -c -o .null.o -Wall -pedantic
-AS=ia16-elf-as
-ASFLAGS=-mtune=i8086 --32-segelf
 
-CFLAGS=$(CFLBASE) $(WARNINGS) $(LOCALFLAGS) $(INCLUDES) -D__ELKS__ -DELKS_VERSION=\"$(ELKS_VSN)\"
+CC=ia16-elf-gcc
+AS=ia16-elf-as
+LD=ia16-elf-gcc
+
+CFLAGS =  $(CLBASE) $(WARNINGS) $(LOCALFLAGS) $(INCLUDES)
+CFLAGS += -D__ELKS__ -DELKS_VERSION=\"$(ELKS_VSN)\"
+ASFLAGS = -mtune=i8086 --32-segelf
+LDFLAGS = $(CLBASE)
+
 
 ###############################################################################
 #

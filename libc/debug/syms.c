@@ -35,7 +35,8 @@ static unsigned char __far * noinstrument alloc_read(int fd, size_t size)
 #if __ia16__
     unsigned char __far *s;
     size_t n, t = 0;
-    unsigned char buf[512];
+    static unsigned char buf[512];  /* don't use application stack */
+
     if (!(s = fmemalloc(size)))
         return NULL;
     do {
