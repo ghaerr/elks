@@ -35,7 +35,7 @@
 #include <limits.h>
 
 #include <paths.h>
-#ifdef __ia16__			/* ELKS */
+#ifdef _M_I86			/* ELKS */
 #define MORE			"more"
 #else					/* Host */
 #define MORE			"less -R"
