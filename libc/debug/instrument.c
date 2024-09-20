@@ -10,11 +10,9 @@
 #include <fcntl.h>
 #include <paths.h>
 #include <sys/rtinit.h>
+#include <linuxmt/prectimer.h>
 #include "debug/instrument.h"
 #include "debug/syms.h"
-
-/* turn on for microcycle (CPU cycle/1000) timing info */
-#define HAS_RDTSC       0   /* has RDTSC instruction: requires 386+ CPU */
 
 static size_t ftrace;
 static size_t start_sp;
@@ -46,9 +44,8 @@ static noinstrument void ftrace_checkargs(void)
         }
         sym_read_exe_symbols(__program_filename);
     }
-#if HAS_RDTSC
-    _get_micro_count();     /* init timer base */
-#endif
+    init_ptime();                   /* init precision time routine */
+    get_ptime();
 }
 
 /* every function this function calls must also be noinstrument!! */
@@ -92,11 +89,8 @@ void noinstrument __cyg_profile_func_enter_simple(void)
     fprintf(stderr, "(%d)", getpid());
     for (i=0; i<count; i++)
        fputc('|', stderr);
-    fprintf(stderr, ">%s, from %s, stack %d/%u", sym_text_symbol(calling_fn, 0),
-        callsite, stack_used, max_stack);
-#if HAS_RDTSC
-    fprintf(stderr, " %lu ucycles", _get_micro_count());
-#endif
+    fprintf(stderr, ">%s, from %s %d/%u %lk", sym_text_symbol(calling_fn, 0),
+        callsite, stack_used, max_stack, get_ptime());
     fputc('\n', stderr);
     ++count;
 }
@@ -107,23 +101,15 @@ void noinstrument __cyg_profile_func_exit_simple(void)
         --count;
 }
 
-#if HAS_RDTSC
+#if UNUSED
 /* return CPU cycles / 1000 via RDTSC instruction */
 unsigned long noinstrument _get_micro_count(void)
 {
     static unsigned long long last_ts;
 
     unsigned long long ts = _get_rdtsc();    /* REQUIRES 386 CPU! */
-    unsigned long diff = (ts - last_ts) / 1000;
+    unsigned long diff = (ts - last_ts) >> 10;
     last_ts = ts;
     return diff;
 }
 #endif
-
-/***static char * noinstrument lltohexstr(unsigned long long val)
-{
-    static char buf[17];
-
-    sprintf(buf,"%08lx%08lx", (long)(val >> 32), (long)val);
-    return buf;
-}***/
