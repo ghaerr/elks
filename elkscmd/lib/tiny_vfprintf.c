@@ -19,6 +19,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
+#include <sys/rtinit.h>
 
 static unsigned char bufout[80];
 static unsigned char buferr[80];
@@ -48,6 +49,15 @@ FILE  stderr[1] =
     _IOLBF | __MODE_WRITE | __MODE_IOTRAN
    }
 };
+
+/* name clash with stdio/init.c if __stdio_fini name used */
+#pragma GCC diagnostic ignored "-Wprio-ctor-dtor"
+DESTRUCTOR(__exit_flush, _INIT_PRI_STDIO);
+void __exit_flush(void)
+{
+   fflush(stdout);
+   fflush(stderr);
+}
 
 int fflush(FILE *fp)
 {
