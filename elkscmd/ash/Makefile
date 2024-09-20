@@ -29,6 +29,8 @@ OBJS=	builtins.o cd.o dirent.o error.o eval.o exec.o expand.o input.o \
 	output.o var.o init.o \
 	linenoise_elks.o autocomplete.o
 
+#OBJS += v7malloc.o
+
 # builtins must be manually added
 OBJS += bltin/echo.o
 OBJS += bltin/expr.o bltin/regexp.o bltin/operators.o

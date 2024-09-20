@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <fcntl.h>
+#include <paths.h>
 #include <sys/rtinit.h>
 #include "debug/instrument.h"
 #include "debug/syms.h"
@@ -25,6 +27,7 @@ static noinstrument CONSTRUCTOR(ftrace_checkargs, _INIT_PRI_FTRACE);
 static noinstrument void ftrace_checkargs(void)
 {
     char **avp = __argv + 1;
+    int fd;
 
     ftrace = (size_t)getenv("FTRACE");
     if ((*avp && !strcmp(*avp, "--ftrace"))) {
@@ -35,8 +38,14 @@ static noinstrument void ftrace_checkargs(void)
         __argc--;
         ftrace = 1;
     }
-    if (ftrace)
+    if (ftrace) {
+        fd = open(_PATH_CONSOLE, O_WRONLY);
+        if (fd >= 0) {
+            dup2(fd, 2);
+            close(fd);
+        }
         sym_read_exe_symbols(__program_filename);
+    }
 #if HAS_RDTSC
     _get_micro_count();     /* init timer base */
 #endif
@@ -57,12 +66,16 @@ void noinstrument __cyg_profile_func_enter_simple(void)
     assert(calling_fn == __builtin_return_address(0));
 #endif
     int i, offset;
-    char callsite[32];
+    size_t stack_used;
+    static char callsite[32];       /* stack usage can be very deep */
 
     /* calc stack used */
     if (count == 0) start_sp = (size_t)bp;
-    size_t stack_used = start_sp - (size_t)bp;
-    if (stack_used > max_stack) max_stack = stack_used;
+    stack_used = start_sp - (size_t)bp;
+    if ((int)stack_used < 0)        /* handle setjmp */
+        start_sp = (size_t)bp;
+    else if (stack_used > max_stack)
+        max_stack = stack_used;
 
     /* calc caller address */
     i = _get_push_count(_get_fn_start_address(calling_fn));
@@ -75,14 +88,16 @@ void noinstrument __cyg_profile_func_enter_simple(void)
     } else {                        /* caller didn't push BP */
         strcpy(callsite, "<unknown>");
     }
+    stderr[0].mode = (stderr[0].mode & ~__MODE_BUF) | _IOLBF;
+    fprintf(stderr, "(%d)", getpid());
     for (i=0; i<count; i++)
-        fprintf(stderr, "|");
-    fprintf(stderr, ">%s, from %s, stack %u/%u", sym_text_symbol(calling_fn, 0), callsite,
-        stack_used, max_stack);
+       fputc('|', stderr);
+    fprintf(stderr, ">%s, from %s, stack %d/%u", sym_text_symbol(calling_fn, 0),
+        callsite, stack_used, max_stack);
 #if HAS_RDTSC
     fprintf(stderr, " %lu ucycles", _get_micro_count());
 #endif
-    fprintf(stderr, "\n");
+    fputc('\n', stderr);
     ++count;
 }
 

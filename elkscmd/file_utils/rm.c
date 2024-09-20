@@ -12,16 +12,16 @@ int errcode;
 
 int usage(void)
 {
-	fprintf(stderr, "usage: rm [-rfi] file [...]\n");
-	return 1;
+        fprintf(stderr, "usage: rm [-rfi] file [...]\n");
+        return 1;
 }
 
 int yes(void) {
         int i, b;
 
-        i = b = getchar();
+        i = b = fgetc(stdin);
         while(b != '\n' && b != EOF)
-                b = getchar();
+                b = fgetc(stdin);
         return(i == 'y');
 }
 
@@ -35,7 +35,7 @@ int dotname(char *s) {
                 else if(s[1] == '\0')
                         return(1);
         }
-	return(0);
+        return(0);
 }
 
 void rm(char *arg, int level)
@@ -105,15 +105,15 @@ void rm(char *arg, int level)
                 fprintf(stderr, "rm: %s not removed\n", arg);
                 errcode++;
         }
-	return;
+        return;
 }
 
 int main(int argc, char **argv)
 {
-	char *arg;
+        char *arg;
 
-	if (argc < 2)
-		return usage();
+        if (argc < 2)
+                return usage();
 
         while(argc>1 && argv[1][0]=='-') {
                 arg = *++argv;
