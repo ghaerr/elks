@@ -1,18 +1,14 @@
 BASEDIR=../..
 
-include $(BASEDIR)/Make.defs
+include $(BASEDIR)/Makefile-rules
 
 ###############################################################################
-#
-# Include standard packaging commands.
 
-include $(BASEDIR)/Make.rules
+LOCALFLAGS=-I$(ELKSCMD_DIR)
 
 ###############################################################################
 
 PRGS=netstat nslookup arp
-
-LOCALFLAGS=-I$(ELKSCMD_DIR)
 
 all: $(PRGS)
 
@@ -30,4 +26,4 @@ arp: arp.o $(TINYPRINTF)
 	$(LD) $(LDFLAGS) arp.o $(TINYPRINTF) -o arp $(LDLIBS)
 
 clean:
-	rm -f core *.o $(PRGS)
+	$(RM) *.o $(PRGS)

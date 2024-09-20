@@ -5,16 +5,12 @@
 
 BASEDIR = ..
 
-include $(BASEDIR)/Make.defs
+include $(BASEDIR)/Makefile-rules
+
+###############################################################################
 
 LOCALFLAGS = -DSHELL -I. -D_MINIX -D_POSIX_SOURCE -Dlint
 LOCALFLAGS += -Wno-implicit-int
-
-###############################################################################
-#
-# Include standard packaging commands.
-
-include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
@@ -57,7 +53,7 @@ install: ash
 	$(INSTALL) ash $(DESTDIR)/bin/sh
 
 clean:
-	rm -f core ash $(CLEANFILES)
+	$(RM) ash $(CLEANFILES)
 
 parser.o: token.def
 

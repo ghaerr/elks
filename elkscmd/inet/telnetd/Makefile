@@ -2,13 +2,9 @@
 
 BASEDIR=../..
 
-include $(BASEDIR)/Make.defs
+include $(BASEDIR)/Makefile-rules
 
 ###############################################################################
-#
-# Include standard packaging commands.
-
-include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
@@ -25,5 +21,5 @@ install: telnetd
 	$(INSTALL) telnetd $(DESTDIR)/bin
 
 clean:
-	rm -f $(OBJS) telnetd
+	$(RM) $(OBJS) telnetd
 

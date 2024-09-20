@@ -295,7 +295,7 @@ int stream_to_rune(unsigned int ch)
  *     "\e\001"          ESC CTRL-ALFA
  *     "\eOP"            PF1
  *     "\000"            NUL
- *     "\e]rm -rf /\e\\" OSC
+ *     "\e]ls -lR /\e\\" OSC
  *     "\302\233A"       UP
  *     "\300\200"        NUL
  *

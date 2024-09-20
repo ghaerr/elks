@@ -2,17 +2,13 @@
 
 BASEDIR=..
 
-include $(BASEDIR)/Make.defs
-
-###############################################################################
-#
-# Include standard packaging commands.
-
-include $(BASEDIR)/Make.rules
+include $(BASEDIR)/Makefile-rules
 
 ###############################################################################
 
 LOCALFLAGS=-DSIZE=16000L
+
+###############################################################################
 
 OBJS = blockio.o display.o editcor.o exec.o find.o \
     unixcall.o globals.o insert.o main.o misc.o \
@@ -27,7 +23,7 @@ install: lev
 	$(INSTALL) lev $(DESTDIR)/bin/vi
 
 clean:
-	rm -f *.o lev
+	$(RM) *.o lev
 
 # Dependencies
 

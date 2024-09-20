@@ -96,13 +96,15 @@ TINYPRINTF=$(ELKSCMD_DIR)/lib/tiny_vfprintf.o
 #
 # Standard compilation rules.
 
+.PHONY: all clean install
+
 .S.s:
 	$(CC) -E -traditional $(INCLUDES) $(CCDEFS) -o $*.s $<
 
 .S.o:
 	$(CC) -E -traditional $(INCLUDES) $(CCDEFS) -o $*.tmp $<
 	$(AS) $(ASFLAGS) -o $*.o $*.tmp
-	rm -f $*.tmp
+	$(RM) $*.tmp
 
 .s.o:
 	$(AS) $(ASFLAGS) -o $*.o $<
