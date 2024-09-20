@@ -15,7 +15,7 @@
 #define END_STRING   "\033[7m(END)\033[0m"
 #define CLEAR_SCREEN "\033[H\033[2J"
 
-#define WRITE(fd,str)   write(fd, str, strlen(str))
+#define WRITE(fd,str)   write(fd, str, sizeof(str))
 
 static int fd;
 static int LINES = 25;
@@ -151,7 +151,7 @@ static int more_wait(int fout, char *msg)
 		break;
 	}
 	write(fout, "\r          \r", 12);
-	tcsetattr(1, TCSAFLUSH, &termios);
+	/*tcsetattr(1, TCSAFLUSH, &termios);*/  /* removed for size, no effect on ELKS */
 	return ret;
 }
 
@@ -171,8 +171,8 @@ static int cat_file(int ifd, int ofd)
 int main(int argc, char **argv)
 {
 	int	multi, mw;
-	int	line;
-	int	col;
+	int	line, col;
+	int	sawesc;
 	char	*name, ch, next[80];
 	char 	*divider = "\n::::::::::::::\n";
 
@@ -182,6 +182,7 @@ int main(int argc, char **argv)
 	do {
 		line = 1;
 		col = 0;
+		sawesc = 0;
 
 		if (argc >= 2) {
 			name = *(++argv);
@@ -227,17 +228,20 @@ int main(int argc, char **argv)
 						col--;
 					break;
 
+				case 033:
+					sawesc = 1;
+					break;
+
 				default:
 					col++;
 			}
 
 			putchar(ch);
-#if 1
-			if (col >= 80) {
+
+			if (!sawesc && col >= 80) {
 				col -= 80;
 				line++;
 			}
-#endif
 			if (line < LINES)
 				continue;
 
@@ -252,6 +256,7 @@ int main(int argc, char **argv)
 				return 0;
 			col = 0;
 			line = 1; 
+			sawesc = 0;
 		}
 		if (multi && line > 1 && argc > 2) {
 			strcpy(&next[0], "--Next file: "); 
