@@ -22,7 +22,7 @@
 // and to ease the 286 protected mode
 // whenever that mode comes back one day
 
-static list_s _seg_all;
+list_s _seg_all;
 static list_s _seg_free;
 
 
@@ -36,10 +36,8 @@ static segment_s * seg_split (segment_s * s1, segext_t size0)
 
 		// TODO: use pool_alloc
 		segment_s * s2 = (segment_s *) heap_alloc (sizeof (segment_s), HEAP_TAG_SEG);
-		if (!s2) {
-			printk ("seg:cannot split:heap full\n");
-			return 0;
-		}
+		if (!s2)
+			return 0;   // heap_alloc gives heap full message
 
 		s2->base = s1->base + size0;
 		s2->size = size2;
@@ -323,7 +321,7 @@ void INITPROC seg_add(seg_t start, seg_t end)
 		seg->ref_count = 0;
 		seg->pid = 0;
 
-		list_insert_before (&_seg_all, &(seg->all));  // add tail
+		list_insert_before (&_seg_all, &(seg->all));    // add tail
 		list_insert_before (&_seg_free, &(seg->free));  // add tail
 	}
 }

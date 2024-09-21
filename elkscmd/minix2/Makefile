@@ -1,14 +1,10 @@
 BASEDIR=..
 
-LOCALFLAGS=-D_POSIX_SOURCE
-
-include $(BASEDIR)/Make.defs
+include $(BASEDIR)/Makefile-rules
 
 ###############################################################################
-#
-# Include standard packaging commands.
 
-include $(BASEDIR)/Make.rules
+LOCALFLAGS=-D_POSIX_SOURCE
 
 ###############################################################################
 
@@ -47,4 +43,4 @@ install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
-	rm -f core *.o $(PRGS)
+	$(RM) *.o $(PRGS)

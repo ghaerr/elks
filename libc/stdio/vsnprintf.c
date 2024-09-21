@@ -18,14 +18,8 @@ vsnprintf(char *sp, size_t size, const char *fmt, va_list ap)
 
 	int rv;
 
-	char bogo[1];
-
 	if (size == 0)
-	{
-		sp = bogo;
-		size = 1;
-	}
-
+		return 0;
 	string->bufpos = (unsigned char *)sp;
 	string->bufwrite = string->bufend = (unsigned char *)(sp + size - 1);
 	rv = vfprintf(string, fmt, ap);

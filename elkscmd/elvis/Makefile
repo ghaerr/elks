@@ -1,10 +1,10 @@
 # combined Makefile for ELVIS - a clone of `vi`
 #
-###############################################################################
 
 BASEDIR = ..
+include $(BASEDIR)/Makefile-rules
 
-include $(BASEDIR)/Make.defs
+###############################################################################
 
 LOCALFLAGS=-DM_SYSV -DCRUNCH -DNO_MKEXRC -DNO_CURSORSHAPE -DNO_CHARATTR \
 	-DNO_SHOWMODE -DNO_MODELINE -DNO_OPTCOLS -DNO_DIGRAPH -DNO_ABBR \
@@ -377,7 +377,7 @@ inst.os9: $(DUMMY)
 
 ##############################################################################
 clean: $(DUMMY)
-	$(RM) *.o $(DOC)*.1 elvis?.uue elvis?.sh core elvis ctags ref virec refont
+	$(RM) *.o $(DOC)*.1 elvis?.uue elvis?.sh elvis ctags ref virec refont
 
 
 clobber: clean

@@ -2,7 +2,7 @@
 
 BASEDIR=../..
 
-include $(BASEDIR)/Make.defs
+include $(BASEDIR)/Makefile-rules
 
 PGM = test_libc
 
@@ -22,8 +22,6 @@ SRCS = \
 
 OBJS = $(SRCS:.c=.o)
 
-include $(BASEDIR)/Make.rules
-
 all: $(PGM)
 
 $(PGM): $(OBJS)
@@ -33,4 +31,4 @@ install: $(PGM)
 	$(INSTALL) $(PGM) $(DESTDIR)/bin
 
 clean:
-	rm -f $(OBJS) $(PGM)
+	$(RM) $(OBJS) $(PGM)

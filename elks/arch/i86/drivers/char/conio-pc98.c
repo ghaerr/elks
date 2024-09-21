@@ -3,7 +3,7 @@
  */
 
 #include <linuxmt/config.h>
-#include <linuxmt/types.h>
+#include <linuxmt/kernel.h>
 #include "conio-pc98-asm.h"
 
 void conio_init()

@@ -15,7 +15,7 @@
 #include <string.h>
 #include <sys/ioctl.h>
 
-#ifdef __ia16__
+#ifdef _M_I86
 #include <arch/hdreg.h>
 #endif
 
@@ -439,7 +439,7 @@ int main(int argc, char **argv)
 	}
 
 	{
-#ifdef __ia16__
+#ifdef _M_I86
 	struct hd_geometry hdgeometry;
 	if (ioctl(pFd, HDIO_GETGEO, &hdgeometry)) {
 	    printf("Error reading geometry for %s\n", dev);

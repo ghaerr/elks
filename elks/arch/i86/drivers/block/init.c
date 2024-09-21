@@ -35,12 +35,12 @@ int boot_rootdev;       /* set by /bootopts options if configured*/
 
 void INITPROC device_init(void)
 {
-    register struct gendisk *p;
+    struct gendisk *p;
 
     chr_dev_init();
     blk_dev_init();
 
-    set_irq();
+    set_irq();          /* interrupts enabled for possible disk I/O */
 
     for (p = gendisk_head; p; p = p->next)
         setup_dev(p);

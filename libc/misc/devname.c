@@ -38,6 +38,7 @@ static struct dev_name_struct {
     { "tty1",    S_IFCHR,   DEV_TTY1            },
     { "tty2",    S_IFCHR,   DEV_TTY2            },
     { "tty3",    S_IFCHR,   DEV_TTY3            },
+    { "tty4",    S_IFCHR,   DEV_TTY4            },
 };
 
 static char *__fast_devname(dev_t dev, mode_t type)

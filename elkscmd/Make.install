@@ -165,7 +165,9 @@ endif
 ifdef CONFIG_APPS_2880K
 	# below TAGS relies on :ash rule following :defsash rule in Applications
 	TAGS = :*|
+ifndef CONFIG_APPS_FTRACE
 	CONFIG_APP_MAN_PAGES=y
+endif
 endif
 
 #

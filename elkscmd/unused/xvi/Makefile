@@ -1,12 +1,8 @@
 BASEDIR=..
 
-include $(BASEDIR)/Make.defs
+include $(BASEDIR)/Makefile-rules
 
 ###############################################################################
-#
-# Include standard packaging commands.
-
-include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
@@ -19,4 +15,4 @@ install: xvi
 	$(INSTALL) xvi $(DESTDIR)/bin
 
 clean:
-	rm -f core xvi *.o
+	$(RM) xvi *.o

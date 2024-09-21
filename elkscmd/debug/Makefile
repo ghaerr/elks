@@ -1,16 +1,8 @@
 BASEDIR=..
 
-include $(BASEDIR)/Make.defs
+include $(BASEDIR)/Makefile-rules
 
 ###############################################################################
-#
-# Include standard packaging commands.
-
-include $(BASEDIR)/Make.rules
-
-###############################################################################
-
-PRGS = testsym disasm nm opcodes
 
 # disable tail call optimization for better stack traces
 CFLAGS += -fno-optimize-sibling-calls
@@ -23,6 +15,10 @@ LDFLAGS += -maout-symtab
 
 # added after CFLAGS for non-instrumented .c files in this directory
 #NOINSTFLAGS = -fno-instrument-functions -fno-instrument-functions-simple
+
+###############################################################################
+
+PRGS = testsym disasm nm opcodes
 
 HOSTPRGS = nm86 hostdisasm
 HOSTCFLAGS += -I. -I$(TOPDIR)/elks/include
@@ -68,4 +64,4 @@ install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
-	rm -f $(PRGS) $(HOSTPRGS) *.o *.map system.sym
+	$(RM) $(PRGS) $(HOSTPRGS) *.o *.map system.sym

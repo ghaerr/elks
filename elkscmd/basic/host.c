@@ -54,7 +54,7 @@ float adjust(float f) {
 // for float testing compatibility, use same FP formatting routines on host for now
 // floats have approx 7 sig figs, 15 for double
 
-#if __ia16__ || defined(__WATCOMC__)
+#ifdef _M_I86
 #include <sys/linksym.h>
 
 char *host_floatToStr(float f, char *buf) {
@@ -162,7 +162,7 @@ int host_breakPressed() {
     return intflag;
 }
 
-#if __ia16__
+#ifdef _M_I86
 /* replacement fread to fix fgets not returning ferror/errno properly on SIGINT*/
 size_t fread(void *buf, size_t size, size_t nelm, FILE *fp)
 {
@@ -371,7 +371,7 @@ int host_loadProgramFromFile(char *fileName) {
 }
 
 int host_peekb(int offset, int segment) {
-#if __ia16__
+#ifdef _M_I86
     unsigned char __far *peek;
     peek = _MK_FP(segment,offset);
     return (int) *peek;
@@ -381,7 +381,7 @@ int host_peekb(int offset, int segment) {
 }
 
 void host_pokeb(int offset, int segment, int value) {
-#if __ia16__
+#ifdef _M_I86
     unsigned char __far *poke;
     poke = _MK_FP(segment,offset);
     *poke = (unsigned char) value;

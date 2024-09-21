@@ -51,6 +51,7 @@ struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
     { "tty1",	S_IFCHR | 0644, MKDEV(TTY_MAJOR, 0)         },
     { "tty2",	S_IFCHR | 0644, MKDEV(TTY_MAJOR, 1)         },
     { "tty3",	S_IFCHR | 0644, MKDEV(TTY_MAJOR, 2)         },
+    { "tty4",	S_IFCHR | 0644, MKDEV(TTY_MAJOR, 3)         },
     { "ttyS0",	S_IFCHR | 0644, MKDEV(TTY_MAJOR, 64)        },
     { "ttyS1",	S_IFCHR | 0644, MKDEV(TTY_MAJOR, 65)        },
     { "console",S_IFCHR | 0600, MKDEV(TTY_MAJOR, 254)       },
@@ -168,7 +169,7 @@ static struct super_block *msdos_read_super(struct super_block *s, char *data,
 	sb->previous_cluster = 0;
 	unmap_brelse(bh);
 
-printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%lu,ts=%lu\n",
+printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%,lu,ts=%,lu\n",
 	b->media, sb->cluster_size, sb->fats, sb->fat_start,
 	sb->fat_length, sb->dir_start, sb->dir_entries,
 	sb->data_start, total_sectors, b->total_sect);
@@ -183,7 +184,7 @@ printk("FAT: me=%x,csz=%d,#f=%d,floc=%d,fsz=%d,rloc=%d,#d=%d,dloc=%d,#s=%lu,ts=%
 	 * Disk free space will be shown incorrectly between ELKS and MSDOS in this case.
 	 */
 	if (sb->clusters > max_clusters) {
-	    printk("FAT: #clus=%ld > max=%ld, limiting free space\n",
+	    printk("FAT: #clus=%,ld > max=%,ld, limiting free space\n",
 		    sb->clusters, max_clusters);
 	    sb->clusters = max_clusters;
 	}
@@ -407,8 +408,3 @@ struct file_system_type msdos_fs_type = {
 	msdos_read_super,
 	FST_MSDOS
 };
-
-int init_msdos_fs(void)
-{
-	return 1;
-}

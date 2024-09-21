@@ -2,15 +2,11 @@
 
 BASEDIR = ..
 
-include $(BASEDIR)/Make.defs
-
-LOCALFLAGS =
+include $(BASEDIR)/Makefile-rules
 
 ###############################################################################
-#
-# Include standard packaging commands.
 
-include $(BASEDIR)/Make.rules
+LOCALFLAGS =
 
 ###############################################################################
 
@@ -34,5 +30,5 @@ test: m4
 	diff -u test_host_m4.txt test_elks_m4.txt
 
 clean:
-	rm -f core m4 $(CLEANFILES)
+	$(RM) m4 $(CLEANFILES)
 

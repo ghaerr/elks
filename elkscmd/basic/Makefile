@@ -1,12 +1,8 @@
 BASEDIR=..
 
-include $(BASEDIR)/Make.defs
+include $(BASEDIR)/Makefile-rules
 
 ###############################################################################
-#
-# Include standard packaging commands.
-
-include $(BASEDIR)/Make.rules
 
 CFLAGS += -Wno-maybe-uninitialized
 
@@ -31,7 +27,7 @@ OBJS += host-8018x.o
 endif
 
 ifeq ($(CONFIG_ARCH_PC98), y)
-OBJS += host-pc98.o intC5-pc98.o
+OBJS += host-pc98.o asm-pc98.o
 endif
 
 HOSTPRGS = hostbasic
@@ -55,4 +51,4 @@ install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
-	rm -f $(PRGS) $(HOSTPRGS) *.o *.map
+	$(RM) $(PRGS) $(HOSTPRGS) *.o *.map

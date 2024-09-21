@@ -1,22 +1,16 @@
 BASEDIR=..
 
-LOCALFLAGS=
-
-include $(BASEDIR)/Make.defs
+include $(BASEDIR)/Makefile-rules
 
 ###############################################################################
-#
-# Include standard packaging commands.
 
-include $(BASEDIR)/Make.rules
+LOCALFLAGS=
 
 ###############################################################################
 
 PRGS = file head sed sort tail tee cal diff find mail
 
-#
-# Rules
-#
+all: $(PRGS)
 
 cal: cal.o $(TINYPRINTF)
 	$(LD) $(LDFLAGS) -o cal cal.o $(TINYPRINTF) $(LDLIBS)
@@ -51,14 +45,8 @@ tee: tee.o
 mail: mail.o
 	$(LD) $(LDFLAGS) -o mail mail.o $(LDLIBS)
 
-
-include $(BASEDIR)/Make.rules
-
-all: $(PRGS)
-
-
 install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
-	rm -f core *.o $(PRGS)
+	$(RM) *.o $(PRGS)

@@ -1,12 +1,8 @@
 BASEDIR=..
 
-include $(BASEDIR)/Make.defs
+include $(BASEDIR)/Makefile-rules
 
 ###############################################################################
-#
-# Include standard packaging commands.
-
-include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
@@ -137,4 +133,4 @@ install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
-	rm -f *.o core $(PRGS) $(HOSTPRGS)
+	$(RM) *.o $(PRGS) $(HOSTPRGS)

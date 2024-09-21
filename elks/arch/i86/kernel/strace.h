@@ -68,10 +68,12 @@
 #define P_PUSHORT        10     /* Pointer to Unsigned Short Int        */
 #define P_PSSHORT        11     /* Pointer to Signed Short Int          */
 
-#define P_ULONG          12     /* Unsigned Long Int                    */
-#define P_SLONG          13     /* Signed Long Int                      */
-#define P_PULONG         14     /* Pointer to Unsigned Long Int         */
-#define P_PSLONG         15     /* Pointer to Signed Long Int           */
+#define P_PSLONG         12     /* Pointer to Signed Long Int           */
+#if UNUSED
+#define P_PULONG         13     /* Pointer to Unsigned Long Int         */
+#define P_SLONG          14     /* Signed Long Int                      */
+#define P_ULONG          15     /* Unsigned Long Int                    */
+#endif
 
 #define ENTRY(name, info)   { name, info }
 #define packinfo(n, a, b, c) (unsigned)(n | (a << 4) | (b << 8) | (c << 12))

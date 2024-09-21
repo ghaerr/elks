@@ -1,6 +1,5 @@
 BASEDIR	= ..
-include $(BASEDIR)/Make.defs
-include $(BASEDIR)/Make.rules
+include $(BASEDIR)/Makefile-rules
 
 # Install destination
 DESTDIR=$(TOPDIR)/target

@@ -1,12 +1,8 @@
 BASEDIR=..
 
-include $(BASEDIR)/Make.defs
+include $(BASEDIR)/Makefile-rules
 
 ###############################################################################
-#
-# Include standard packaging commands.
-
-include $(BASEDIR)/Make.rules
 
 ###############################################################################
 

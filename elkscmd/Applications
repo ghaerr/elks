@@ -88,7 +88,7 @@ sys_utils/kill                  :sysutil        :360c :720k
 sys_utils/ps            :sash   :sysutil        :360k           :128k       :nocomp
 sys_utils/ps :::uptime          :sysutil                        :128k   :1440k
 sys_utils/makeboot              :sysutil        :360k
-sys_utils/man                   :sysutil                :1200k
+sys_utils/man                   :sysutil
 sys_utils/meminfo       :sash   :sysutil        :360k           :128k
 sys_utils/mouse                 :sysutil                 :1200c     :1440k
 sys_utils/passwd                :sysutil                :1200k
@@ -212,7 +212,7 @@ nano-X/bin/nxworld.map ::lib/nxworld.map :nanox          :1232c :1440k
 basic/basic                     :basic                  :1200k
 advent/advent                     :other                            :1440c
 advent/advent.db ::lib/advent.db  :other                            :1440c
-debug/disasm                      :other                            :1440c
+debug/disasm                      :other                        :1440k
 debug/nm                          :other                            :1440c
 debug/system.sym ::lib/system.sym :other                            :1440c
 debug/testsym                     :other                            :1440c

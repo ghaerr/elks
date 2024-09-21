@@ -9,9 +9,18 @@ char *ltoa(long val)
    unsigned long u = (val < 0)? 0u - val: val;
 
    *b = '\0';
+#ifdef _M_I86
+    do {
+        unsigned int c;
+        c = 10;
+        u = __divmod(u, &c);
+        *--b = '0' + c;
+    } while (u);
+#else
    do {
       *--b = '0' + (u % 10);
    } while ((u /= 10) != 0);
+#endif
    if (val < 0)
       *--b = '-';
    return b;

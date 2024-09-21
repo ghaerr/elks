@@ -1,6 +1,6 @@
 /* shared console routines for Direct and BIOS consoles - #include in console drivers*/
 
-static void WriteChar(register Console * C, int c)
+static void WriteChar(Console * C, int c)
 {
     /* check for graphics lock */
     while (glock) {
@@ -23,16 +23,18 @@ void Console_conout(dev_t dev, int Ch)
 
 void Console_conin(unsigned char Key)
 {
-    register struct tty *ttyp = &ttys[Current_VCminor];
+    struct tty *ttyp = &ttys[Current_VCminor];
 
     if (!tty_intcheck(ttyp, Key))
         chq_addch(&ttyp->inq, Key);
 }
 
 #ifdef CONFIG_EMUL_ANSI
-static void Console_gotoxy(register Console * C, int x, int y)
+static void Console_gotoxy(Console * C, int x, int y)
 {
-    register int xp = x;
+    int xp = x;
+    int MaxRow = C->Height - 1;
+    int MaxCol = C->Width - 1;
 
     C->cx = (xp >= MaxCol) ? MaxCol : (xp < 0) ? 0 : xp;
     xp = y;
@@ -40,7 +42,7 @@ static void Console_gotoxy(register Console * C, int x, int y)
     C->XN = 0;
 }
 
-static int parm1(register unsigned char *buf)
+static int parm1(unsigned char *buf)
 {
     int n;
 
@@ -49,7 +51,7 @@ static int parm1(register unsigned char *buf)
     return n;
 }
 
-static int parm2(register unsigned char *buf)
+static int parm2(unsigned char *buf)
 {
     while (*buf != ';' && *buf)
         buf++;
@@ -58,14 +60,14 @@ static int parm2(register unsigned char *buf)
     return parm1(buf);
 }
 
-static void itoaQueue(int i)
+static void itoaQueue(unsigned int i)
 {
    unsigned char a[6];
    unsigned char *b = a + sizeof(a) - 1;
 
    *b = 0;
    do {
-      *--b = '0' + (i % 10);
+      *--b = (i % 10) + '0';
       i /= 10;
    } while (i);
    while (*b)
@@ -77,9 +79,11 @@ static unsigned char ega_color[16] = {  0,  4,  2,  6,  1,  5,  3,  7,
                                         8, 12, 10, 14,  9, 13, 11, 15 };
 
 /* ESC [ processing */
-static void AnsiCmd(register Console * C, int c)
+static void AnsiCmd(Console * C, int c)
 {
     int n;
+    int MaxRow = C->Height - 1;
+    int MaxCol = C->Width - 1;
 
     /* ANSI param gathering and processing */
     if (C->parmptr < &C->params[MAXPARMS - 1])
@@ -218,7 +222,7 @@ static void AnsiCmd(register Console * C, int c)
     case 'h':                   /* cursor on */
     case 'l':                   /* cursor off */
         if (C->params[0] == '?' && atoi((const char *)C->params+1) == 25) {
-            DisplayCursor(c == 'h');
+            DisplayCursor(C, c == 'h');
         }
         break;
     }
@@ -226,7 +230,7 @@ static void AnsiCmd(register Console * C, int c)
 }
 
 /* ANSI emulator - ESC seen */
-static void esc_char(register Console * C, int c)
+static void esc_char(Console * C, int c)
 {
     /* Parse CSI sequence */
     C->parmptr = C->params;
@@ -248,8 +252,11 @@ static void esc_char(register Console * C, int c)
 #endif
 
 /* Normal character processing */
-static void std_char(register Console * C, int c)
+static void std_char(Console * C, int c)
 {
+    int MaxRow = C->Height - 1;
+    int MaxCol = C->Width - 1;
+
     switch(c) {
     case BEL:
         bell();
@@ -313,7 +320,7 @@ static void std_char(register Console * C, int c)
 
 static int Console_ioctl(struct tty *tty, int cmd, char *arg)
 {
-    register Console *C = &Con[tty->minor];
+    Console *C = &Con[tty->minor];
 
     switch (cmd) {
     case DCGET_GRAPH:
@@ -359,16 +366,16 @@ static int Console_ioctl(struct tty *tty, int cmd, char *arg)
     return -EINVAL;
 }
 
-static int Console_write(register struct tty *tty)
+static int Console_write(struct tty *tty)
 {
-    register Console *C = &Con[tty->minor];
+    Console *C = &Con[tty->minor];
     int cnt = 0;
 
     while ((tty->outq.len > 0) && !glock) {
         WriteChar(C, tty_outproc(tty));
         cnt++;
     }
-    if (C == Visible)
+    if (C == Visible[C->display])
         PositionCursor(C);
     return cnt;
 }
@@ -378,7 +385,7 @@ static void Console_release(struct tty *tty)
     ttystd_release(tty);
 }
 
-static int Console_open(register struct tty *tty)
+static int Console_open(struct tty *tty)
 {
     if ((int)tty->minor >= NumConsoles)
         return -ENODEV;

@@ -24,7 +24,9 @@
 
 BASEDIR=..
 
-include $(BASEDIR)/Make.defs
+include $(BASEDIR)/Makefile-rules
+
+###############################################################################
 
 OPTIONS	= -DELKS # -DUSEBCOPY # -DLOADAV -DSUNLOADAV -DGETTTYENT -DUSEBCOPY
 
@@ -36,13 +38,6 @@ LOCALFLAGS = -Wno-implicit-int \
 		$(OPTIONS)
 		
 LOCALFLAGS += -maout-heap=0x7000
-
-
-###############################################################################
-#
-# Include standard packaging commands.
-
-include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
@@ -58,7 +53,7 @@ ansi.o: ansi.c screen.h
 	$(CC) $(CFLAGS) -c ansi.c
 
 clean:
-	rm -f screen *.o core *~
+	$(RM) screen *.o
 
 install: screen
 	$(INSTALL) screen $(DESTDIR)/bin/screen

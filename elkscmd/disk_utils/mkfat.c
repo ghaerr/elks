@@ -22,7 +22,7 @@
 
 typedef unsigned char uint8;
 typedef unsigned short uint16;
-#ifdef __ia16__
+#ifdef _M_I86
 typedef unsigned long uint32;
 #else
 typedef unsigned int uint32;

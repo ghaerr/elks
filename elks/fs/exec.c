@@ -71,7 +71,7 @@ int sys_execve(const char *filename, char *sptr, size_t slen)
     word_t magic;
 
     /* Open the image */
-    debug_file("EXEC(%P): '%t' env %d\n", filename, slen);
+    dprintk("EXEC(%P): '%t' env %d\n", filename, slen);
 
     retval = open_namei(filename, 0, 0, &inode, NULL);
     debug("EXEC: open returned %d\n", -retval);

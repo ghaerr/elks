@@ -5,16 +5,12 @@
 
 BASEDIR = ..
 
-include $(BASEDIR)/Make.defs
+include $(BASEDIR)/Makefile-rules
+
+###############################################################################
 
 LOCALFLAGS = -DSHELL -I. -D_MINIX -D_POSIX_SOURCE -Dlint
 LOCALFLAGS += -Wno-implicit-int
-
-###############################################################################
-#
-# Include standard packaging commands.
-
-include $(BASEDIR)/Make.rules
 
 ###############################################################################
 
@@ -28,6 +24,8 @@ OBJS=	builtins.o cd.o dirent.o error.o eval.o exec.o expand.o input.o \
 	options.o parser.o redir.o show.o signames.o syntax.o trap.o \
 	output.o var.o init.o \
 	linenoise_elks.o autocomplete.o
+
+#OBJS += v7malloc.o
 
 # builtins must be manually added
 OBJS += bltin/echo.o
@@ -55,7 +53,7 @@ install: ash
 	$(INSTALL) ash $(DESTDIR)/bin/sh
 
 clean:
-	rm -f core ash $(CLEANFILES)
+	$(RM) ash $(CLEANFILES)
 
 parser.o: token.def
 

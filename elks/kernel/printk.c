@@ -9,6 +9,7 @@
  *              %c      char
  *              %d/%i   signed decimal
  *              %u      unsigned decimal
+ *              %,d/,u  thousands separator
  *              %o      octal
  *              %s      string in kernel space
  *              %t      string in user space
@@ -26,6 +27,7 @@
  *              Alan Cox.
  *
  *      MTK:    Sep 97 - Misc hacks to shrink generated code
+ *      GRH:    Sep 24 - Rewritten for speed
  */
 
 #include <linuxmt/config.h>
@@ -40,6 +42,7 @@
 #include <linuxmt/prectimer.h>
 #include <arch/segment.h>
 #include <arch/irq.h>
+#include <arch/divmod.h>
 #include <stdarg.h>
 
 #define CONFIG_PREC_TIMER   1   /* =1 to include %k precision timer printk format */
@@ -56,7 +59,7 @@ static void (*kputc)(dev_t, int) = 0;
 
 void set_console(dev_t dev)
 {
-    register struct tty *ttyp;
+    struct tty *ttyp;
 
     if (dev == 0)
             dev = DEVCONSOLE;
@@ -81,99 +84,101 @@ static void kputs(const char *buf)
         kputchar(*buf++);
 }
 
+/* convert 1/1193182s get_ptime() pticks (0.838usec through 42.85sec) for display */
+static unsigned long conv_ptick(unsigned long v, int *pDecimal, int *pSuffix)
+{
+#ifdef CONFIG_PREC_TIMER
+    unsigned int c;
+    int Suffix = 0;
+
+    /* format works w/limited ranges only */
+    if (v > 5125259UL) {            /* = 2^32 / 838  = ~4.3s */
+        if (v > 51130563UL)         /* = 2^32 / 84 high max range = ~42.85s */
+            v = 0;                  /* ... displays 0us */
+        v *= 84;
+        *pDecimal = 2;              /* display xx.xx secs */
+    } else {
+        v *= 838;                   /* convert to nanosecs w/o 32-bit overflow */
+        *pDecimal = 3;              /* display xx.xxx */
+    }
+    while (v > 1000000L) {          /* quick divides for readability */
+        c = 1000;
+        v = __divmod(v, &c);
+        Suffix++;
+    }
+    if (Suffix == 0)      *pSuffix = ('s' << 8) | 'u';
+    else if (Suffix == 1) *pSuffix = ('s' << 8) | 'm';
+    else                  *pSuffix = 's';
+#endif
+    return v;
+}
+
 /************************************************************************
  *
  *      Output a number
  */
 
-static char hex_string[] = "0123456789ABCDEF 0123456789abcdef ";
-
 static void numout(unsigned long v, int width, unsigned int base, int type,
     int Zero, int alt)
 {
-    unsigned long dvr;
-    int c, vch, i;
-    int useSign, Lower, Decimal;
+    int n, i;
+    unsigned int c;
+    char *p;
+    int Sign, Suffix, Decimal;
+    char buf[12];                       /* small stack: good up to max long octal v */
 
-    i = 10;
-    dvr = 1000000000L;
-    if (base > 10) {
-        i = 8;
-        dvr = 0x10000000L;
+    Decimal = -1;
+    Sign = Suffix = 0;
+
+    if (type == 'd'  && (long)v < 0L) {
+        v = -(long)v;
+        Sign = 1;
     }
-    if (base < 10) {
-        i = 11;
-        dvr = 0x40000000L;
-    }
 
-    Decimal = 0;
-#if CONFIG_PREC_TIMER
-    int Msecs = 0;
-    /* display 1/1193182s get_time*() pticks in range 0.838usec through 42.85sec */
-    if (type == 'k') {                  /* format works w/limited ranges only */
-        Decimal = 3;
-        if (v > 51130563UL)             /* = 2^32 / 84 high max range = ~42.85s */
-            v = 0;                      /* ... displays 0us */
-        if (v > 5125259UL) {            /* = 2^32 / 838 */
-            v = v * 84UL;
-            Decimal = 2;                /* display xx.xx secs */
-        } else
-            v = v * 838UL;              /* convert to nanosecs w/o 32-bit overflow */
-        if (v > 1000000000UL) {         /* display x.xxx secs */
-            v /= 1000000UL;             /* divide using _udivsi3 for speed */
-        } else if (v > 1000000UL) {
-            v /= 1000UL;                /* display xx.xxx msecs */
-            Msecs = 1;
-        } else {
-            Msecs = 2;                  /* display xx.xxx usecs */
-        }
-    }
-#endif
-
-    useSign = (type == 'd');
-    if (useSign && ((long)v < 0L))
-        v = (-(long)v);
-    else
-        useSign = 0;
-
-    Lower = (type != 'X');
-    if (Lower)
-        Lower = 17;
-    vch = 0;
     if (alt && base == 16) {
         kputchar('0');
         kputchar('x');
     }
-    do {
-        c = (int)(v / dvr);
-        v %= dvr;
-        dvr /= base;
-        if (c || (i <= width) || (i < 2)) {
-            if (i > width)
-                width = i;
-            if (!Zero && !c && (i > 1))
-                c = 16;
-            else {
-                Zero = 1;
-                if (useSign) {
-                    useSign = 0;
-                    vch = '-';
-                }
-            }
-            if (vch)
-                kputchar(vch);
-            vch = *(hex_string + Lower + c);
-            if (type == 'k' && i == Decimal) kputchar('.');
+
+    if (type == 'k')
+        v = conv_ptick(v, &Decimal, &Suffix);
+
+    p = buf + sizeof(buf) - 1;
+    *p = '\0';
+    for (i = 0;;) {
+        c = base;
+        v = __divmod(v, &c);                /* remainder returned in c */
+        if (c > 9)
+            *--p = ((type == 'X')? 'A': 'a') - 10 + c;
+        else
+            *--p = '0' + c;
+        if (!v)
+            break;
+        if (alt == ',' && ++i == 3) {
+            *--p = ',';
+            i = 0;
         }
-    } while (--i);
-    kputchar(vch);
-#if CONFIG_PREC_TIMER
-    if (type == 'k') {
-        if (Msecs)
-            kputchar(Msecs == 1? 'm': 'u');
-        kputchar('s');
     }
-#endif
+    n = buf + sizeof(buf) - 1 - p + Sign;   /* string length */
+    if (n > width)                          /* expand field width */
+        width = n;
+    if (Zero && Sign) {
+        kputchar('-');
+        Sign = 0;
+    }
+    for (i = n; i++ < width; )
+        kputchar(Zero? '0': ' ');
+    if (Sign)
+        kputchar('-');
+    while (*p) {
+        if (n-- == Decimal)                 /* only for %k pticks */
+            kputchar('.');
+        kputchar(*p++);
+    }
+    while (Suffix) {
+        kputchar(Suffix & 255);
+        Suffix >>= 8;
+    }
 }
 
 static void vprintk(const char *fmt, va_list p)
@@ -194,8 +199,8 @@ static void vprintk(const char *fmt, va_list p)
             }
 
             ptrfmt = alt = width = 0;
-            if (c == '#') {
-                alt = 1;
+            if (c == '#' || c == ',') {
+                alt = c;
                 c = *fmt++;
             }
             zero = (c == '0');

@@ -1,7 +1,7 @@
 /* conio functions for PC-98 */
 
 /* put character on text vram */
-void early_putchar(int c);
+/*void early_putchar(int c);*/
 
 /* get character data from keyboard */
 int bios_getchar(void);

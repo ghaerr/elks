@@ -9,11 +9,18 @@ char *ultostr(unsigned long val, int radix)
 
   *p = '\0';
   do {
-      int c = val % radix;
+#ifdef _M_I86
+      unsigned int c;
+      c = radix;
+      val = __divmod(val, &c);
+#else
+      unsigned int c = val % radix;
+      val = val / radix;
+#endif
       if (c > 9)
         *--p = 'a' - 10 + c;
       else
         *--p = '0' + c;
-  } while ((val /= radix) != 0);
+  } while (val);
   return p;
 }

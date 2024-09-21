@@ -1,18 +1,14 @@
 BASEDIR=..
 
-include $(BASEDIR)/Make.defs
-
-###############################################################################
-#
-# Include standard packaging commands.
-
-include $(BASEDIR)/Make.rules
+include $(BASEDIR)/Makefile-rules
 
 ###############################################################################
 
 LOCALCFLAGS = -Dlint -DELKS=1
 # remove next line when FAT32 supported
 LOCALCFLAGS += -Wno-shift-count-overflow
+
+###############################################################################
 
 PRGS = fsck-dos
 
@@ -40,4 +36,4 @@ fsck-dos: main.o boot.o check.o dir.o fat.o
 	$(LD) $(LDFLAGS) -maout-heap=0xffff -o $@ $^ $(LDLIBS)
 
 clean:
-	rm -f *.o $(PRGS)
+	$(RM) *.o $(PRGS)

@@ -37,6 +37,7 @@ SRCS1 = \
 	peekpoke.S \
 	string.S \
 	printreg.S \
+	divmod.S \
 	# end of list
 
 ifeq ($(CONFIG_ARCH_PC98), y)

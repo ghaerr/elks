@@ -75,6 +75,7 @@ struct biosparms {
 #define BIOSHD_WRITE            0x0300
 #define BIOSHD_READ             0x0200
 #define BIOSHD_DRIVE_PARMS      0x0800
+#define BIOSHD_SEEK             0x0C00
 #endif
 
 int call_bios(struct biosparms *);

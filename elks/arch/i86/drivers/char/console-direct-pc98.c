@@ -48,16 +48,21 @@
 
 #define MAXPARMS	28
 
+#define MAX_DISPLAYS 1
+
 struct console;
 typedef struct console Console;
 
 struct console {
+    int Width, Height;
     int cx, cy;			/* cursor position */
-    void (*fsm)(Console *, int);
+    unsigned char display;
+    unsigned char unused;
     unsigned char attr;		/* current attribute */
     unsigned char XN;		/* delayed newline on column 80 */
-    unsigned int vseg;		/* video segment for page */
-    int basepage;		/* start of video ram */
+    void (*fsm)(Console *, int);
+    unsigned int vseg;		/* vram for this console page */
+    unsigned int vseg_offset;	/* vram offset of vseg for this console page */
 #ifdef CONFIG_EMUL_ANSI
     int savex, savey;		/* saved cursor position */
     unsigned char *parmptr;	/* ptr to params */
@@ -65,14 +70,14 @@ struct console {
 #endif
 };
 
+static Console *glock;
 static struct wait_queue glock_wait;
-static Console Con[MAX_CONSOLES], *Visible;
-static Console *glock;		/* Which console owns the graphics hardware */
-static int Width, MaxCol, Height, MaxRow;
+static Console *Visible[MAX_DISPLAYS];
+static Console Con[MAX_CONSOLES];
 static int NumConsoles = MAX_CONSOLES;
 
-int Current_VCminor = 0;
-int kraw = 0;
+int Current_VCminor;
+int kraw;
 unsigned VideoSeg;
 unsigned AttributeSeg;
 
@@ -84,19 +89,19 @@ unsigned AttributeSeg;
 
 static void std_char(Console *, int);
 
-static void SetDisplayPage(register Console * C)
+static void SetDisplayPage(Console * C)
 {
 }
 
-static void PositionCursor(register Console * C)
+static void PositionCursor(Console * C)
 {
-    int Pos;
+    unsigned int Pos;
 
-    Pos = C->cx + Width * C->cy + C->basepage;
+    Pos = C->cx + C->Width * C->cy + C->vseg_offset;
     cursor_set(Pos * 2);
 }
 
-static void DisplayCursor(int onoff)
+static void DisplayCursor(Console * C, int onoff)
 {
     if (onoff)
 	cursor_on();
@@ -125,59 +130,63 @@ static word_t conv_pcattr(word_t attr)
     return attr98;
 }
 
-static void VideoWrite(register Console * C, int c)
+static void VideoWrite(Console * C, int c)
 {
     word_t addr;
     word_t attr;
 
-    addr = (C->cx + C->cy * Width) << 1;
+    addr = (C->cx + C->cy * C->Width) << 1;
     attr = (C->attr == A_DEFAULT) ? A98_DEFAULT : conv_pcattr(C->attr);
 
     pokew(addr, (seg_t) AttributeSeg, attr);
     pokew(addr, (seg_t) C->vseg, c & 255);
 }
 
-static void ClearRange(register Console * C, int x, int y, int xx, int yy)
+static void ClearRange(Console * C, int x, int y, int xx, int yy)
 {
-    register __u16 *vp;
+    __u16 *vp;
     word_t attr;
 
     attr = (C->attr == A_DEFAULT) ? A98_DEFAULT : conv_pcattr(C->attr);
 
     xx = xx - x + 1;
-    vp = (__u16 *)((__u16)(x + y * Width) << 1);
+    vp = (__u16 *)((__u16)(x + y * C->Width) << 1);
     do {
 	for (x = 0; x < xx; x++) {
 	    pokew((word_t) vp, AttributeSeg, attr);
 	    pokew((word_t) (vp++), (seg_t) C->vseg, (word_t) ' ');
 	}
-	vp += (Width - xx);
+	vp += (C->Width - xx);
     } while (++y <= yy);
 }
 
-static void ScrollUp(register Console * C, int y)
+static void ScrollUp(Console * C, int y)
 {
-    register __u16 *vp;
+    __u16 *vp;
+    int MaxRow = C->Height - 1;
+    int MaxCol = C->Width - 1;
 
-    vp = (__u16 *)((__u16)(y * Width) << 1);
+    vp = (__u16 *)((__u16)(y * C->Width) << 1);
     if ((unsigned int)y < MaxRow) {
-	fmemcpyb(vp, AttributeSeg, vp + Width, AttributeSeg, (MaxRow - y) * (Width << 1));
-	fmemcpyb(vp, C->vseg, vp + Width, C->vseg, (MaxRow - y) * (Width << 1));
+	fmemcpyb(vp, AttributeSeg, vp + C->Width, AttributeSeg, (MaxRow - y) * (C->Width << 1));
+	fmemcpyb(vp, C->vseg, vp + C->Width, C->vseg, (MaxRow - y) * (C->Width << 1));
     }
     ClearRange(C, 0, MaxRow, MaxCol, MaxRow);
 }
 
 #ifdef CONFIG_EMUL_ANSI
-static void ScrollDown(register Console * C, int y)
+static void ScrollDown(Console * C, int y)
 {
-    register __u16 *vp;
+    __u16 *vp;
+    int MaxRow = C->Height - 1;
+    int MaxCol = C->Width - 1;
     int yy = MaxRow;
 
-    vp = (__u16 *)((__u16)(yy * Width) << 1);
+    vp = (__u16 *)((__u16)(yy * C->Width) << 1);
     while (--yy >= y) {
-	fmemcpyb(vp, AttributeSeg, vp - Width, AttributeSeg, Width << 1);
-	fmemcpyb(vp, C->vseg, vp - Width, C->vseg, Width << 1);
-	vp -= Width;
+	fmemcpyb(vp, AttributeSeg, vp - C->Width, AttributeSeg, C->Width << 1);
+	fmemcpyb(vp, C->vseg, vp - C->Width, C->vseg, C->Width << 1);
+	vp -= C->Width;
     }
     ClearRange(C, 0, y, MaxCol, y);
 }
@@ -192,12 +201,12 @@ static void ScrollDown(register Console * C, int y)
 
 void Console_set_vc(int N)
 {
-    if ((N >= NumConsoles) || (Visible == &Con[N]) || glock)
-	return;
-    Visible = &Con[N];
-
-    SetDisplayPage(Visible);
-    PositionCursor(Visible);
+    Console *C = &Con[N];
+    if ((N >= NumConsoles) || (Visible[C->display] == C) || glock)
+        return;
+    Visible[C->display] = C;
+    SetDisplayPage(Visible[C->display]);
+    PositionCursor(Visible[C->display]);
     Current_VCminor = N;
 }
 
@@ -212,7 +221,7 @@ struct tty_ops dircon_ops = {
 
 void INITPROC console_init(void)
 {
-    Console *C;
+    Console *C = &Con[0];
     int i;
     unsigned PageSizeW;
 
@@ -224,26 +233,24 @@ void INITPROC console_init(void)
 	AttributeSeg = 0xE200;
     }
 
-    MaxCol = (Width = 80) - 1;
-
-    MaxRow = (Height = 25) - 1;
+    C->Width = 80;
+    C->Height = 25;
 
     PageSizeW = 2000;
 
     NumConsoles = 1;
 
-    C = Con;
-    Visible = C;
-
     for (i = 0; i < NumConsoles; i++) {
+    C->display = 0;
 	C->cx = C->cy = 0;
 	if (!i) {
+	    Visible[C->display] = C;
 	    C->cx = read_tvram_x() % 160;
 	    C->cy = read_tvram_x() / 160;
 	}
 	C->fsm = std_char;
-	C->basepage = i * PageSizeW;
-	C->vseg = VideoSeg + (C->basepage >> 3);
+	C->vseg_offset = i * PageSizeW;
+	C->vseg = VideoSeg + (C->vseg_offset >> 3);
 	C->attr = A_DEFAULT;
 
 #ifdef CONFIG_EMUL_ANSI
@@ -261,5 +268,5 @@ void INITPROC console_init(void)
     kbd_init();
 
     printk("Direct console, %s kbd %ux%u"TERM_TYPE"(du virtual consoles)\n",
-	   kbd_name, Width, Height, NumConsoles);
+	   kbd_name, Con[0].Width, Con[0].Height, NumConsoles);
 }

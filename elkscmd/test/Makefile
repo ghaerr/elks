@@ -1,4 +1,6 @@
-.PHONY: all clean
+BASEDIR=..
+
+include $(BASEDIR)/Makefile-rules
 
 SUBDIRS =  \
 	libc   \

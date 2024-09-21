@@ -1,28 +1,11 @@
-# ***** IMPORTANT NOTE *****
-#
-# This file has been revised to remove the requirement that the elkscmd
-# and elks trees are located under /usr/src on the developer's system.
-# This requires that the variable BASEDIR be defined in every Makefile
-# that includes this header file, prior to including it, and the value
-# given to BASEDIR is required to be the relative path from the directory
-# containing that Makefile to the directory containing this file.
-#
-# In addition, if there are any local definitions that need including in
-# the CFLAGS value, those should be assigned to LOCALFLAGS before including
-# this file.
-#
-# So as to ensure this, it is recommended that the following three lines
-# be used as the first three lines of each Makefile including this file:
-#
-#	BASEDIR = ...
-#
-#	LOCALFLAGS = ...
-#
-#	include $(BASEDIR)/Make.defs
-#
-# This ensures that the correct value is assigned by using it to include
-# this file.
-#
+##############################################################################
+#                                                                            #
+# Standard rulesets for use when compiling ELKS applications.                #
+#                                                                            #
+# This file should be included in every Makefile below elkscmd/ via e.g.:    #
+#   BASEDIR=..                                                               #
+#   include $(BASEDIR)/Makefile-rules                                        #
+#                                                                            #
 ##############################################################################
 
 ifndef TOPDIR
@@ -41,11 +24,6 @@ ELKS_DIR=$(TOPDIR)/elks
 ELKSCMD_DIR=$(TOPDIR)/elkscmd
 
 INCLUDES=-I$(TOPDIR)/include -I$(TOPDIR)/libc/include -I$(ELKS_DIR)/include
-
-# temporarily turn off typical non-K&R warnings for now
-WARNINGS = -Wno-implicit-int
-# temporarily turn off suggesting parenthesis around assignment used as truth value
-WARNINGS += -Wno-parentheses
 
 ##############################################################################
 #
@@ -68,20 +46,29 @@ HOSTCFLAGS = -O3
 #
 # Compiler variables for programs cross-compiled for ELKS.
 
-CC=ia16-elf-gcc
-CFLBASE=-fno-inline -melks-libc -mcmodel=small -mno-segment-relocation-stuff -mtune=i8086 -Wall -Os
+CLBASE =  -mcmodel=small -melks-libc -mtune=i8086 -Wall -Os
+CLBASE += -mno-segment-relocation-stuff
+CLBASE += -fno-inline -fno-builtin-printf
+#CLBASE += -mregparmcall
 ifeq ($(CONFIG_APPS_FTRACE), y)
-  CFLBASE += -fno-optimize-sibling-calls -fno-omit-frame-pointer
-  CFLBASE += -finstrument-functions-simple -maout-symtab
+    CLBASE += -fno-omit-frame-pointer -fno-optimize-sibling-calls
+    CLBASE += -finstrument-functions-simple -maout-symtab
 endif
-#CFLBASE += -mregparmcall
-LD=ia16-elf-gcc
-LDFLAGS=$(CFLBASE)
-CHECK=gcc -c -o .null.o -Wall -pedantic
-AS=ia16-elf-as
-ASFLAGS=-mtune=i8086 --32-segelf
 
-CFLAGS=$(CFLBASE) $(WARNINGS) $(LOCALFLAGS) $(INCLUDES) -D__ELKS__ -DELKS_VERSION=\"$(ELKS_VSN)\"
+# temporarily turn off typical non-K&R warnings for now
+WARNINGS = -Wno-implicit-int
+# temporarily turn off suggesting parenthesis around assignment used as truth value
+WARNINGS += -Wno-parentheses
+
+CC=ia16-elf-gcc
+AS=ia16-elf-as
+LD=ia16-elf-gcc
+
+CFLAGS =  $(CLBASE) $(WARNINGS) $(LOCALFLAGS) $(INCLUDES)
+CFLAGS += -D__ELKS__ -DELKS_VERSION=\"$(ELKS_VSN)\"
+ASFLAGS = -mtune=i8086 --32-segelf
+LDFLAGS = $(CLBASE)
+
 
 ###############################################################################
 #
@@ -92,13 +79,15 @@ TINYPRINTF=$(ELKSCMD_DIR)/lib/tiny_vfprintf.o
 #
 # Standard compilation rules.
 
+.PHONY: all clean install
+
 .S.s:
 	$(CC) -E -traditional $(INCLUDES) $(CCDEFS) -o $*.s $<
 
 .S.o:
 	$(CC) -E -traditional $(INCLUDES) $(CCDEFS) -o $*.tmp $<
 	$(AS) $(ASFLAGS) -o $*.o $*.tmp
-	rm -f $*.tmp
+	$(RM) $*.tmp
 
 .s.o:
 	$(AS) $(ASFLAGS) -o $*.o $<
