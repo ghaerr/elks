@@ -47,7 +47,7 @@ Running Matrix and vi on multiple consoles
 ![ss5](https://github.com/ghaerr/elks/blob/master/Screenshots/ELKS_Matrix.jpg)
 
 Of course Doom
-![ss6](https://github.com/ghaerr/elks/blob/master/Screenshots/ELKS_Doom.jpg)
+![ss6](https://github.com/ghaerr/elks/blob/master/Screenshots/ELKS_Doom.png)
 
 Telnet to an old BBS
 ![ss7](https://github.com/ghaerr/elks/blob/master/Screenshots/ELKS_telnet_BBS.jpg)
