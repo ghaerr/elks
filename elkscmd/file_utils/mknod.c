@@ -28,13 +28,13 @@ int main(int argc, char **argv)
 		major = atoi(argv[3]);
 		minor = atoi(argv[4]);
 		
-		if (major > 0 && minor > 0) {
+		if (major > 0 && minor >= 0) {
 			if (mknod (argv[1], newmode | filetype, MKDEV(major, minor))) {
 				errstr(argv[1]);
 				errmsg(": cannot make device\n");
 				return 1;
 			}
-		}
+		} else goto usage;
 	} else if ((argc == 3) && (argv[2][0] == 'p')) {
 		if (mknod (argv[1],newmode | S_IFIFO, 0)) {
 			errstr(argv[1]);
