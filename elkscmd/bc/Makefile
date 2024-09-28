@@ -36,7 +36,7 @@ OFILES = scan.o util.o main.o number.o storage.o load.o execute.o
 
 SUBDIRS = Examples Test
 
-all: fbc bc
+all: bc
 
 bc: $& config.h bc.o $(OFILES) global.o
 	$(LD) -o bc $(LDFLAGS) bc.o $(OFILES) global.o $(LDLIBS)
@@ -44,6 +44,17 @@ bc: $& config.h bc.o $(OFILES) global.o
 sbc: sbc.o $(OFILES) global.o
 	$(LD) -o sbc $(LDFLAGS) sbc.o $(OFILES) global.o $(LDLIBS)
 
+install: bc fbc
+	$(INSTALL) bc $(DESTDIR)/bin
+#	$(INSTALL) fbc $(DESTDIR)/bin
+
+clean:
+	$(RM) *.o *.bak math.h bc fbc sbc
+
+realclean: clean
+	$(RM) sbc.c bc.c scan.c y.tab.h
+
+ifdef UNUSED
 math.h: libmath.b
 	$(MAKE) -$(MAKEFLAGS) fbc
 	elksemu ./fbc -c libmath.b </dev/null >math.h
@@ -54,13 +65,6 @@ fbc: $(OFILES) bc.o
 	echo \"\" > math.h
 	$(CC) -c $(CFLAGS) global.c
 	$(LD) -o fbc $(LDFLAGS) bc.o $(OFILES) global.o $(LDLIBS)
-
-install: bc fbc
-	$(INSTALL) bc $(DESTDIR)/bin
-#	$(INSTALL) fbc $(DESTDIR)/bin
-
-clean:
-	$(RM) *.o *.bak math.h bc fbc sbc bc.c sbc.c scan.c y.tab.h
 
 scan.c: scan.l
 	$(LEX) scan.l
@@ -74,8 +78,9 @@ y.tab.h bc.c: bc.y
 sbc.c: sbc.y
 	$(YACC) -d sbc.y
 	mv y.tab.c sbc.c
+endif
 
-global.o: bcdefs.h global.h math.h
+global.o: bcdefs.h global.h
 bc.o:	bcdefs.h global.h 
 execute.o: bcdefs.h global.h
 load.o: bcdefs.h global.h 
