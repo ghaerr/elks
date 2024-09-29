@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-To build ELKS, you need a development environment on Linux or macOS, including:
+To build ELKS, you need a development environment on Linux or macOS or Windows with [WSL](https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux), including:
 - flex
 - bison
 - texinfo
