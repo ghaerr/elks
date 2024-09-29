@@ -54,7 +54,7 @@
 #define TEXT_Y_POSITION 15
 #define TEXT2_Y_POSITION 30
 #define WELL_WIDTH 12
-#ifdef CONFIG_HW_VGA
+#if defined(CONFIG_HW_VGA) || defined(CONFIG_ARCH_PC98)
 #define WELL_HEIGHT 28
 #define WELL_VISIBLE_HEIGHT 24
 #else
