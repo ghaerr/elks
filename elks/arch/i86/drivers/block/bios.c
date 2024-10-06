@@ -12,10 +12,13 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/kdev_t.h>
 #include <linuxmt/debug.h>
+#include <linuxmt/sched.h>
 #include <arch/system.h>
+#include <arch/param.h>
 #include "bioshd.h"
 
-#define RESET_DISK_CHG  0       /* =1 to reset BIOS on drive change fixes QEMU retry */
+#define RESET_DISK_CHG  1       /* =1 to reset BIOS on drive change fixes QEMU retry */
+#define IODELAY         0       /* emulate delay for floppy on QEMU */
 
 /*
  * Indices for fd_types array. Note these match the value returned
@@ -105,7 +108,7 @@ int BFPROC bios_disk_rw(unsigned cmd, unsigned num_sectors, unsigned drive,
 
 #if RESET_DISK_CHG
     static unsigned last = 0;
-    if (drive != last) {
+    if (running_qemu && drive != last) {
         bios_disk_reset(1); /* fixes QEMU retry when switching drive types #1119 */
         last = drive;
     }
@@ -119,10 +122,15 @@ int BFPROC bios_disk_rw(unsigned cmd, unsigned num_sectors, unsigned drive,
     debug_bios("BIOSHD(%x): %s CHS %d/%d/%d count %d\n", drive,
         cmd==BIOSHD_READ? "read": "write",
         cylinder, head, sector, num_sectors);
-#ifdef IODELAY
-    /* emulate floppy delay for QEMU */
-    unsigned long timeout = jiffies + IODELAY*HZ/100;
-    while (!time_after(jiffies, timeout)) continue;
+#if IODELAY
+    debug_bios("[%ur%u]", drive, num_sectors);
+    if (drive < 2) {        /* emulate floppy delay for QEMU */
+        unsigned int ms = 10 + num_sectors; /* 1440k @ 300rpm = 100ms + ~10ms/sector */
+        if (drive == 1)
+            ms = 8 + (num_sectors<<1);      /* 360k @ 360rpm = 83ms + ~20ms/sector */
+        unsigned long timeout = jiffies + ms*HZ/100;
+        while (!time_after(jiffies, timeout)) continue;
+    }
 #endif
     return call_bios(&bdt);
 }
