@@ -33,8 +33,6 @@
  * from the compile-time kernel rather than querying the current kernel.
  * These are all works in progress.
  */
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <ctype.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -47,8 +45,12 @@
 #include <stdarg.h>
 #include <errno.h>
 #include <paths.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <linuxmt/mem.h>
 
 #define DEBUG		0	/* set =1 for debug messages*/
+#define SHOW_STARTUP	0	/* set =1 to display system startup time */
 
 /* debug messages go here*/
 #define CONSOLE		_PATH_CONSOLE
@@ -64,9 +66,11 @@
 #define debug(...)
 #endif
 
+#define _MK_FP(seg,off) ((void __far *)((((unsigned long)(seg)) << 16) | ((unsigned int)(off))))
+
 char *	progname;
 char	Buffer[64];
-int	ch, col = 0;
+int	ch, col;
 
 void consolemsg(const char *str, ...)
 {
@@ -206,6 +210,22 @@ static speed_t convert_baudrate(speed_t baudrate)
 	return 0;
 }
 
+void show_startup(void)
+{
+#if SHOW_STARTUP
+    int fd;
+    unsigned offset, kds;
+    unsigned short __far *pjiffies;  /* only access low order jiffies word */
+
+    fd = open("/dev/kmem", O_RDONLY);
+    if (fd >= 0 && !ioctl(fd, MEM_GETDS, &kds) && !ioctl(fd, MEM_GETJIFFADDR, &offset)) {
+        pjiffies = _MK_FP(kds, offset);
+        printf("[%u.%02u secs] ", *pjiffies / 100, *pjiffies % 100);
+        fflush(stdout);
+        close(fd);
+    }
+#endif
+}
 
 int main(int argc, char **argv)
 {
@@ -380,6 +400,7 @@ int main(int argc, char **argv)
     }
 
 
+    show_startup();
     for (;;) {
 	state("login: ");
 	errno = 0;
