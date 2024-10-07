@@ -9,11 +9,13 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <fcntl.h>
 #include <unistd.h>
-#include <ctype.h>
 #include <string.h>
+#include <fcntl.h>
+#include <ctype.h>
+#include <errno.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 
 #ifdef _M_I86
 #include <arch/hdreg.h>
@@ -45,8 +47,9 @@ struct geometry {
     unsigned long start;
 };
 
-#define DEFAULT_DEV			"/dev/hda"
-#define PARTITION_TYPE		0x80	/* ELKS, Old Minix*/
+#define DEFAULT_DEV         "/dev/hda"
+#define PARTITION_MINORS    0x07    /* minor device number range of valid partitions */
+#define PARTITION_TYPE      0x80    /* ELKS, Old Minix*/
 
 #define PARTITION_START		0x01be	/* offset of partition table in MBR*/
 #define PARTITION_END		0x01fd	/* end of partition 4 in MBR*/
@@ -328,7 +331,7 @@ void write_out()
         MBR[510] = 0x55;
         MBR[511] = 0xAA;
 	if ((i=write(pFd,MBR,512))!=512) {
-	    printf("error: wrote %d of 512 bytes to the partition table.\n", i);
+	    printf("Error writing partition table to %s (%d)\n", errno);
 	} else
 	    printf("Partition table written to %s\n",dev);
     }
@@ -396,6 +399,7 @@ int main(int argc, char **argv)
 {
 	int i;
 	int mode = MODE_EDIT;
+        struct stat stat;
 
 	dev[0] = 0;
 	for (i = 1; i < argc; i++) {
@@ -421,21 +425,25 @@ int main(int argc, char **argv)
 	if (*dev == 0)
 	    strcpy(dev,DEFAULT_DEV);
 	list_partition(dev);
-	exit(0);
+	return 0;
     }
 
     if (mode == MODE_EDIT) {
 	char buf[CMDLEN];
 	Funcs *tmp;
 
-	if ((pFd = open(dev, O_RDWR)) == -1) {
-	    printf("Error opening %s (%d)\n", dev, -pFd);
-	    exit(1);
+	if ((pFd = open(dev, O_RDWR)) < 0) {
+	    printf("Error opening %s (%d)\n", dev, errno);
+	    return 1;
 	}
-
+	if (fstat(pFd, &stat) < 0 || !S_ISBLK(stat.st_mode) ||
+            (stat.st_rdev & PARTITION_MINORS)) {
+	    printf("Bad block device: %s, use non-partitioned device\n", dev);
+	    return 1;
+	}
 	if ((i=read(pFd,MBR,512)) != 512) {
 	    printf("Unable to read boot sector from %s\n", dev);
-	    exit(1);
+	    return 1;
 	}
 
 	{
@@ -443,7 +451,7 @@ int main(int argc, char **argv)
 	struct hd_geometry hdgeometry;
 	if (ioctl(pFd, HDIO_GETGEO, &hdgeometry)) {
 	    printf("Error reading geometry for %s\n", dev);
-	    exit(1);
+	    return 1;
 	}
 	geometry.sectors = hdgeometry.sectors;
 	geometry.heads = hdgeometry.heads;
@@ -458,14 +466,13 @@ int main(int argc, char **argv)
 #endif
 	}
 
-	printf("Geometry: %d cylinders, %d heads, %d sectors.\n",
-		geometry.cylinders,geometry.heads,geometry.sectors);
+	printf("Using %s\nGeometry: %d cylinders, %d heads, %d sectors.\n",
+		dev, geometry.cylinders,geometry.heads,geometry.sectors);
 
 	/* Don't proceed if any geometry component is bad */
-	if (geometry.heads == 0 || geometry.cylinders == 0
-			|| geometry.sectors == 0) {
-	    printf("Error: geometry is invalid, aborting.\n");
-	    exit(1);
+	if (geometry.heads == 0 || geometry.cylinders == 0 || geometry.sectors == 0) {
+	    printf("Error: invalid geometry for %s\n", dev);
+	    return 1;
 	}
 
 	while (!feof(stdin)) {
@@ -482,9 +489,9 @@ int main(int argc, char **argv)
 	    }
 	}
     }
-    exit(0);
+    return 0;
 
 usage:
-    fprintf(stderr, "Usage: %s [-l] device_or_image\n", argv[0]);
-    exit(1);
+    fprintf(stderr, "Usage: fdisk [-l] [/dev/{hda,hdb}]\n");
+    return 1;
 }
