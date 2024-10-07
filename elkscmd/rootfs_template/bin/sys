@@ -1,19 +1,17 @@
 # sys - create bootable system
-#
-#set -x
 
 usage()
 {
-	echo "Usage: sys [-3][-M][-F] /dev/{fd0,fd1,hda1,hda2,etc}"
+	echo "Usage: sys [-3][-M][-F] /dev/{fd0,fd1,hda1,hda2}"
 	echo "	-3  Build minimal (360k) system"
 	echo "	-M  add MBR to target device"
-	echo "	-F  required for flat non-MBR /dev/hd[a-d]"
+	echo "	-F  create flat non-MBR /dev/hd[a-d]"
 	exit 1
 }
 
 create_dev_dir()
 {
-	echo "Creating /dev entries..."
+	echo "Create /dev"
 	mkdir $MNT/dev
 	mknod $MNT/dev/hda	b 3 0
 	mknod $MNT/dev/hda1	b 3 1
@@ -41,7 +39,6 @@ create_dev_dir()
 	mknod $MNT/dev/tty	c 4 255
 	chmod 0666 $MNT/dev/tty
 	if test "$small" = "1"; then return; fi
-
 	mknod $MNT/dev/hdb	b 3 8
 	mknod $MNT/dev/hdb1	b 3 9
 	mknod $MNT/dev/hdb2	b 3 10
@@ -66,7 +63,6 @@ create_dev_dir()
 
 create_directories()
 {
-	echo "Creating directories"
 	mkdir $MNT/bin
 	mkdir $MNT/etc
 	mkdir $MNT/mnt
@@ -76,11 +72,14 @@ create_directories()
 
 copy_bin_files()
 {
-	echo "Copying files from /bin..."
+	echo "Copy /bin"
 	if test "$small" = "1"; then
 	cp /bin/sh	$MNT/bin
+	cp /bin/cat	$MNT/bin
+	cp /bin/clock	$MNT/bin
 	cp /bin/chmod	$MNT/bin
 	cp /bin/cp	$MNT/bin
+	cp /bin/date	$MNT/bin
 	cp /bin/df	$MNT/bin
 	cp /bin/echo	$MNT/bin
 	cp /bin/fdisk	$MNT/bin
@@ -99,11 +98,12 @@ copy_bin_files()
 	cp /bin/printenv $MNT/bin
 	cp /bin/ps	$MNT/bin
 	cp /bin/pwd	$MNT/bin
-	cp /bin/reboot	$MNT/bin
+	cp /bin/shutdown $MNT/bin
 	cp /bin/rm	$MNT/bin
 	cp /bin/sync	$MNT/bin
 	cp /bin/sys	$MNT/bin
 	cp /bin/umount	$MNT/bin
+	cp /bin/uname	$MNT/bin
 	else
 	cp -fR /bin $MNT/bin
 	fi
@@ -111,7 +111,7 @@ copy_bin_files()
 
 copy_etc_files()
 {
-	echo "Copy files from /etc..."
+	echo "Copy /etc"
 	cp /etc/*	$MNT/etc
 }
 
@@ -134,11 +134,8 @@ mount $1 $MNT
 
 # if MINIX, create /dev entries
 if test "$FSTYPE" = "1"; then create_dev_dir; fi
-
 create_directories
-
 copy_bin_files
-
 copy_etc_files
 
 sync
