@@ -2,7 +2,7 @@
 .SH NAME
 fdisk \- create or update a partition table on a hard disk or SSD device
 .SH SYNOPSIS
-\fBfdisk\fR [\fB\-l\fR] [\fIfile\fR]
+\fBfdisk\fR [\fB\-l\fR] [\fIblock_device\fR]
 .br
 .SH OPTIONS
 .TP 5
@@ -11,16 +11,21 @@ list the partition table and exit.
 .SH DESCRIPTION
 .PP
 When \fBfdisk\fR starts up, it reads in the partition table from 
-.BR file ,
-or - if no 
-.B file
-was specified, from the currently booted drive. If the boot drive is a floppy,
-.B fdisk
-will fail and exit.
+.IR block_device ,
+or if no
+.I block_device
+was specified, from
+.BR /dev/hda .
+.I block_device
+must be a non-partitioned, MBR-capable block device name, such as
+.B /dev/hda
+or
+.BR /dev/hdb ,
+etc.
 .PP
-Unless the 
+If the
 .B -l
-option is present, 
+option is not specified,
 .B fdisk
 will enter interactive mode and allow the user to manipulate the partition
 table using the following commands:
@@ -51,7 +56,7 @@ elks17# \fBfdisk\fP
 Geometry: 7818 cylinders, 16 heads, 63 sectors.
 Command (? for help):
 .fi
-.R Fdisk 
+.B fdisk
 enters interactive mode.
 .TP 10
 elks17# \fBfdisk -l\fP
@@ -72,5 +77,3 @@ partition.
 .PP
 .B Fdisk
 does minimal sanity checking on input, it is possible to create a totaly bogus partition table.
-.SH "SEE ALSO"
-.BR part (8).

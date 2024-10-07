@@ -19,8 +19,8 @@ df: df.o $(TINYPRINTF)
 fsck: fsck.o
 	$(LD) $(LDFLAGS) -o fsck -maout-heap=0xffff fsck.o $(LDLIBS)
 
-fdisk: fdisk.o
-	$(LD) $(LDFLAGS) -o fdisk fdisk.o $(LDLIBS)
+fdisk: fdisk.o $(TINYPRINTF)
+	$(LD) $(LDFLAGS) -o fdisk fdisk.o $(TINYPRINTF) $(LDLIBS)
 
 mkfs: mkfs.o $(TINYPRINTF)
 	$(LD) $(LDFLAGS) -o mkfs mkfs.o $(TINYPRINTF) $(LDLIBS)
