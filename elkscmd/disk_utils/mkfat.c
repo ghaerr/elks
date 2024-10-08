@@ -451,6 +451,17 @@ static int fatfs_create_fsinfo_sector(uint32 sector_lba)
     return 1;
 }
 //-----------------------------------------------------------------------------
+// fatfs_zero_reserved_sector: Clear reserved sector corresponding to MINIX superblock
+//-----------------------------------------------------------------------------
+static int fatfs_zero_reserved_sector(uint32 sector_lba)
+{
+    memset(sector, 0, FAT_SECTOR_SIZE);
+    lseek(ofd, sector_lba * FAT_SECTOR_SIZE, SEEK_SET);
+    if (write(ofd, sector, FAT_SECTOR_SIZE) != FAT_SECTOR_SIZE)
+        return 0;
+    return 1;
+}
+//-----------------------------------------------------------------------------
 // fatfs_erase_fat: Erase FAT table using fs details in fs struct
 //-----------------------------------------------------------------------------
 static int fatfs_erase_fat(int is_fat32)
@@ -550,6 +561,12 @@ int fatfs_format_fat32(uint32 volume_sectors, const char *name)
     lba_begin = 0;
     if (!fatfs_create_boot_sector(lba_begin, volume_sectors, name, 1))
         return 0;
+
+    // zero "block 1/superblock" if reserved in case previous filesystem was MINIX
+    if (reserved_sectors >= 2) {
+        if (!fatfs_zero_reserved_sector(lba_begin+2))
+            return 0;
+    }
 
     // First FAT LBA address
     fat_begin_lba = lba_begin + reserved_sectors;

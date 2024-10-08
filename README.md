@@ -1,6 +1,6 @@
 Now it is started merging to the original ELKS repository.  
 New features will be added there.  
-https://github.com/jbruchon/elks  
+https://github.com/ghaerr/elks  
 
 # ELKS/pc98  
   
@@ -55,7 +55,7 @@ The following text is the original README of ELKS.
 
 --------------------------------------------------
 
-![logo](https://github.com/jbruchon/elks/blob/master/Documentation/img/ELKS-Logo.png)
+![logo](https://github.com/ghaerr/elks/blob/master/Documentation/img/ELKS-Logo.png)
 
 
 ![cross](https://github.com/jbruchon/elks/workflows/cross/badge.svg)
@@ -89,32 +89,41 @@ You can [play with ELKS online](https://copy.sh/v86/?profile=elks) thanks to the
 ## Screenshots
 
 ELKS running on QEMU
-![ss1](https://github.com/jbruchon/elks/blob/master/Screenshots/ELKS_0.7.0.png)
+![ss1](https://github.com/ghaerr/elks/blob/master/Screenshots/ELKS_0.7.0.png)
 
 Olivetti M24 8086 CPU
-![ss2](https://github.com/jbruchon/elks/blob/master/Screenshots/Olivetti_M24_8086_CPU.png)
+![ss2](https://github.com/ghaerr/elks/blob/master/Screenshots/Olivetti_M24_8086_CPU.png)
 
 ELKS Networking showing netstat and process list
-![ss3](https://github.com/jbruchon/elks/blob/master/Screenshots/ELKS_Networking.png)
+![ss3](https://github.com/ghaerr/elks/blob/master/Screenshots/ELKS_Networking.png)
 
 Running ELKS Basic on PC-9801UV21 (NEC V30 CPU)
-![ss4](https://github.com/jbruchon/elks/blob/master/Screenshots/PC-9801UV21_V30_CPU.png)
+![ss4](https://github.com/ghaerr/elks/blob/master/Screenshots/PC-9801UV21_V30_CPU.png)
+
+Running Matrix and vi on multiple consoles
+![ss5](https://github.com/ghaerr/elks/blob/master/Screenshots/ELKS_Matrix.jpg)
+
+Of course Doom
+![ss6](https://github.com/ghaerr/elks/blob/master/Screenshots/ELKS_Doom.png)
+
+Telnet to an old BBS
+![ss7](https://github.com/ghaerr/elks/blob/master/Screenshots/ELKS_telnet_BBS.jpg)
 
 ## Downloads
 
-A full set of disk images are available for download, for you to try out ELKS: [Downloads](https://github.com/jbruchon/elks/releases).
+A full set of disk images are available for download, for you to try out ELKS: [Downloads](https://github.com/ghaerr/elks/releases).
 
 ## How to build
 
-Full build instructions are [here](https://github.com/jbruchon/elks/blob/master/BUILD.md).
+Full build instructions are [here](https://github.com/ghaerr/elks/blob/master/BUILD.md).
 
 ## Wiki
 
-Help on how to use ELKS, as well as technical tutorials, are available on our [Wiki](https://github.com/jbruchon/elks/wiki).
+Help on how to use ELKS, as well as technical tutorials, are available on our [Wiki](https://github.com/ghaerr/elks/wiki).
 
 ## Documentation
 
-More information is in the Documentation folder: [Index of ELKS Documentation](https://htmlpreview.github.io/?https://github.com/jbruchon/elks/blob/master/Documentation/index.html).
+More information is in the Documentation folder: [Index of ELKS Documentation](https://htmlpreview.github.io/?https://github.com/ghaerr/elks/blob/master/Documentation/index.html).
 
 ## Resources
 

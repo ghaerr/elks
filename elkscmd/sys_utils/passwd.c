@@ -113,6 +113,7 @@ main(int argc, char **argv)
             uid = pwd->pw_uid;
 
             /* save entries to the new file */
+            setpwent();
             pwd = getpwent();
             while (pwd != NULL) {
                 if (pwd->pw_uid == uid) {

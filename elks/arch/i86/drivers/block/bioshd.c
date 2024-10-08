@@ -58,7 +58,6 @@
 #define DEBUG_PROBE     0       /* =1 to display more floppy probing information */
 #define FORCE_PROBE     0       /* =1 to force floppy probing */
 #define FULL_TRACK      0       /* =1 to read full tracks when track caching */
-//#define IODELAY       5       /* times 10ms, emulated delay for floppy on QEMU */
 #define MAX_ERRS        5       /* maximum sector read/write error retries */
 
 #define MAJOR_NR        BIOSHD_MAJOR
