@@ -17,6 +17,7 @@
 #root=hda1 ro
 #kstack
 #strace
+#FTRACE=1
 #net=ne0
-#debug FTRACE=1
+#debug
 #console=ttyS0,19200 3

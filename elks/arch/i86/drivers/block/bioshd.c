@@ -57,6 +57,8 @@
 #define PER_DRIVE_INFO  1       /* =1 for per-line display of drive info at init */
 #define DEBUG_PROBE     0       /* =1 to display more floppy probing information */
 #define FORCE_PROBE     0       /* =1 to force floppy probing */
+#define TRACK_SPLIT_BLK 0       /* =1 to read extra sector on track split block */
+#define SPLIT_BLK       0       /* =1 to read extra sector on single split block */
 #define FULL_TRACK      0       /* =1 to read full tracks when track caching */
 #define MAX_ERRS        5       /* maximum sector read/write error retries */
 
@@ -499,17 +501,26 @@ static int bioshd_ioctl(struct inode *inode, struct file *file, unsigned int cmd
 }
 
 /* calculate CHS and sectors remaining for track read */
-static void BFPROC get_chst(struct drive_infot *drivep, sector_t *start_sec, unsigned int *c,
-        unsigned int *h, unsigned int *s, unsigned int *t, int fulltrack)
+static void BFPROC get_chst(struct drive_infot *drivep, sector_t *start_sec,
+    unsigned int *c, unsigned int *h, unsigned int *s, unsigned int *t, int fulltrack)
 {
     sector_t start = *start_sec;
     sector_t tmp;
+    int extra = 0;
 
     *s = (unsigned int) (start % drivep->sectors) + 1;
     tmp = start / drivep->sectors;
     *h = (unsigned int) (tmp % drivep->heads);
     *c = (unsigned int) (tmp / drivep->heads);
     *t = drivep->sectors - *s + 1;
+
+#if TRACK_SPLIT_BLK
+    extra = (drivep->sectors & 1) && *h == 0;
+    if (extra) (*t)++;
+#elif SPLIT_BLK
+    extra = (drivep->sectors & 1) && *h == 0 && *s == drivep->sectors;
+    if (extra) (*t)++;
+#endif
 #if FULL_TRACK
     if (fulltrack) {
         int save = *s;
@@ -524,7 +535,7 @@ static void BFPROC get_chst(struct drive_infot *drivep, sector_t *start_sec, uns
         *start_sec -= save - *s;
     }
 #endif
-    debug_bios("bioshd: lba %ld is CHS %d/%d/%d remaining sectors %d\n",
+    if (extra) debug_cache("bioshd: lba %ld is CHS %d/%d/%d remaining sectors %d\n",
         start, *c, *h, *s, *t);
 }
 
@@ -547,7 +558,7 @@ static int BFPROC do_readwrite(struct drive_infot *drivep, sector_t start, char 
     if (cmd == READ) debug_bios("bioshd(%x): read lba %ld count %d\n",
                         drive, start, this_pass);
 
-    errs = MAX_ERRS;        /* BIOS disk reads should be retried at least three times */
+    errs = MAX_ERRS;        /* BIOS disk reads should be retried at least five times */
     do {
 #pragma GCC diagnostic ignored "-Wshift-count-overflow"
         usedmaseg = seg >> 16; /* will be nonzero only if XMS configured and XMS buffer */
@@ -611,6 +622,8 @@ static void BFPROC do_readtrack(struct drive_infot *drivep, sector_t start)
         num_sectors = DMASEGSZ / drivep->sector_size;
 
     do {
+        debug_cache("\nTR %lu(CHS %u,%u,%u-%u) ", start>>1, cylinder, head, sector,
+            sector+num_sectors-1);
         debug_bios("bioshd(%x): track read CHS %d/%d/%d count %d\n",
                 drive, cylinder, head, sector, num_sectors);
 
@@ -663,6 +676,7 @@ static int BFPROC do_cache_read(struct drive_infot *drivep, sector_t start, char
     if (cmd == READ) {
         cache_tries++;
         if (cache_valid(drivep, start, buf, seg)) { /* try cache first*/
+            debug_cache("CH %lu ", start>>1);
             cache_hits++;
             return 1;
         }

@@ -501,6 +501,7 @@ struct buffer_head *getblk32(kdev_t dev, block32_t block)
     ebh = EBH(bh);
     ebh->b_dev = dev;
     ebh->b_blocknr = block;
+    debug_cache("BM %lu ", block);
     goto return_it;
 
   found_it:
@@ -510,6 +511,7 @@ struct buffer_head *getblk32(kdev_t dev, block32_t block)
         CLR_COUNT(en_bh);
         en_bh->b_count = 0;     /* Release previously created buffer head */
     }
+    if (bh->b_data) debug_cache("L1 %lu ", block); else debug_cache("L2 %lu ", block);
     ebh = EBH(bh);
     INR_COUNT(ebh);
     wait_on_buffer(bh);
