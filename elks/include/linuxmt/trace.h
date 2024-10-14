@@ -37,6 +37,16 @@
 
 #endif /* CONFIG_TRACE */
 
+/*
+ * Additional options not requiring CONFIG_TRACE:
+ *
+ * DEBUG_CACHE      - floppy track cache tracing
+ * IODELAY          - emulate floppy disk I/O delays in QEMU (set in bios.c)
+ * TRACK_SPLIT_BLK  - read extra sector on track split block (set in bioshd.c)
+ * SPLIT_BLK        - read extra sector on single split block (set in bioshd.c)
+ * FULL_TRACK       - read full track on cache refill (set in bioshd.c)
+ * SHOW_STARTUP     - show startup time on boot (set in getty.c)
+ */
 
 /* internal flags for kernel */
 #define TRACE_STRACE    0x01    /* system call tracing enabled */

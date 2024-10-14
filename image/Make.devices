@@ -13,6 +13,10 @@
 
 devices:
 
+#	$(MKDEV) /dev/console	c 4 254 1 1 0600
+#	$(MKDEV) /dev/tty1	c 4 0
+#	$(MKDEV) /dev/ttyS0     c 4 64
+
 ##############################################################################
 # Create memory devices.
 

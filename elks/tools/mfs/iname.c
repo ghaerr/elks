@@ -181,7 +181,7 @@ int make_node(struct minix_fs_dat *fs,char *fpath, int mode,
   char *fname = strrchr(fpath,'/');
   int dinode,ninode;
 
-  if (find_inode(fs,fpath) != -1) fatalmsg("%s: already exists",fpath); 
+  if (find_inode(fs,fpath) != -1) printf("%s: already exists\n",fpath);
   if (fname) {
     *fname++ = 0;
   } else {

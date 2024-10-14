@@ -29,6 +29,7 @@
 #include <stdlib.h>
 
 int opt_nocopyzero = 0;		/* don't copy zero-length files starting with . */
+int opt_appendifexists = 0; /* don't create new fs on genfs if exists */
 
 /**
  * Parse mkfs/genfs command line arguments
@@ -54,7 +55,7 @@ void parse_mkfs(int argc,char **argv,int *magic_p,int *nblks_p,int *inodes_p) {
     
   optind = 1;
   while (1) {
-    c = getoptX(argc,argv,"12vi:n:s:k");
+    c = getoptX(argc,argv,"12vi:n:s:ka");
     if (c == -1) break;
     switch (c) {
     case '1':
@@ -77,6 +78,9 @@ void parse_mkfs(int argc,char **argv,int *magic_p,int *nblks_p,int *inodes_p) {
       break;
 	case 'k':
 		opt_nocopyzero = 1;
+		break;
+	case 'a':
+		opt_appendifexists = 1;
 		break;
     default:
       usage(argv[0]);

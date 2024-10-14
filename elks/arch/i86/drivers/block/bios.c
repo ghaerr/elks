@@ -20,6 +20,7 @@
 #define RESET_DISK_CHG  1       /* =1 to reset BIOS on drive change fixes QEMU retry */
 #define IODELAY         0       /* emulate delay for floppy on QEMU */
 
+#define abs(v)          (((int)(v) >= 0)? (v): -(v))
 /*
  * Indices for fd_types array. Note these match the value returned
  * by the BIOS in BL less 1, for INT 13h AH=8 (Get Disk Parms) for IBM PC.
@@ -125,9 +126,12 @@ int BFPROC bios_disk_rw(unsigned cmd, unsigned num_sectors, unsigned drive,
 #if IODELAY
     debug_bios("[%ur%u]", drive, num_sectors);
     if (drive < 2) {        /* emulate floppy delay for QEMU */
-        unsigned int ms = 10 + num_sectors; /* 1440k @ 300rpm = 100ms + ~10ms/sector */
+        static unsigned lastcyl;
+        unsigned ms = abs(cylinder - lastcyl) * 4 / 10;
+        lastcyl = cylinder;
+        ms += 10 + num_sectors;        /* 1440k @300rpm = 100ms + ~10ms/sector + 4ms/tr */
         if (drive == 1)
-            ms = 8 + (num_sectors<<1);      /* 360k @ 360rpm = 83ms + ~20ms/sector */
+            ms += 8 + (num_sectors<<1); /* 360k @360rpm = 83ms + ~20ms/sector + 3ms/tr */
         unsigned long timeout = jiffies + ms*HZ/100;
         while (!time_after(jiffies, timeout)) continue;
     }

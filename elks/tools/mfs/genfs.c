@@ -310,7 +310,7 @@ parse_filelist(char *filelist, inode_build_t *parent_inode, char *parent_path)
 		{
 			char *name = filename;
 
-			if (name[0] == '#')
+			if (name[0] == '#' || name[0] == '\n')
 				continue;
 			name[strlen(name)-1] = '\0';	/* remove lf*/
 			char *child_path = domalloc(strlen(parent_path) + 1 + strlen(name) + 1, -1);
@@ -488,7 +488,10 @@ void cmd_genfs(char *filename, int argc,char **argv) {
   if (numblocks > req_blks)
   	fatalmsg("Blocks required %d, available %d\n", numblocks, req_blks);
 
-  fs = new_fs(filename,magic,req_blks,req_inos);
+  if (opt_appendifexists && access(filename, 0) == 0)
+    fs = open_fs(filename,opt_fsbad_fatal);
+  else
+    fs = new_fs(filename,magic,req_blks,req_inos);
   err = compile_fs(fs);
   if (opt_verbose) cmd_sysinfo(fs);
   close_fs(fs);
@@ -515,7 +518,7 @@ void cmd_addfs(char *filename, int argc,char **argv) {
   if (argc != 2) fatalmsg("Usage: addfs <file_of_filenames> <root_template>");
 
   dirname = argv[1];
-  prefix = 0;
+  prefix = strlen(argv[1]);
   if (opt_verbose) printf("Adding files from %s to %s\n", argv[0], dirname);
   numblocks = 2;			/* root inode and first mkdir*/
   list_init(&inodes);
