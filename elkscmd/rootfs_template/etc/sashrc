@@ -1,4 +1,8 @@
 # init file for sash
+setenv TERM ansi
+setenv USER root
+setenv HOME /root
+setenv SHELL /bin/sash
 setenv TZ GMT0
 setenv HISTORY 30
 setenv HISTPAGE 20

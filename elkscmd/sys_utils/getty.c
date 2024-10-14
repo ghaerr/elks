@@ -90,9 +90,8 @@ void consolemsg(const char *str, ...)
 }
 
 
-#ifndef SUPER_SMALL
-char	Host[256], *Date = 0, *Time = 0;
-
+#if UNUSED
+char	Host[256];
 void host(void) {
     char *ptr;
     int fp = open(_PATH_HOSTNAME,O_RDONLY), sz;
@@ -113,6 +112,10 @@ void host(void) {
     if (!*Host)
 	strcpy( Host, "LocalHost" );
 }
+#endif
+
+#ifndef SUPER_SMALL
+char	*Date, *Time;
 
 /*	Before  = "Sun Dec 25 12:34:56 7890"
  *	Columns = "0....:....1....:....2..."
@@ -296,7 +299,6 @@ int main(int argc, char **argv)
 	    write(1,Buffer,n);
 #else
 	when();
-	host();
 	*Buffer = '\0';
 	while (read(fd,Buffer,1) > 0) {
 	    ch = *Buffer;
@@ -359,7 +361,9 @@ int main(int argc, char **argv)
 			    state(Date);
 			    break;
 			case 'H':			/* Host */
-			    state(Host);
+                            if (!(ptr = getenv("HOSTNAME")))
+                                ptr = "LocalHost";
+                            state(ptr);
 			    break;
 			case 'L':			/* Line used */
 			    ptr = rindex(argv[1],'/');
