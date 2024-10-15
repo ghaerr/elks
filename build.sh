@@ -5,6 +5,7 @@
 
 # Arguments:
 #   - 'auto' : continuous integration context
+set -e
 
 SCRIPTDIR="$(dirname "$0")"
 
