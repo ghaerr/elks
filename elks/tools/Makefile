@@ -36,7 +36,7 @@ all:
 	$(MAKE) -C elf2elks all
 	$(MAKE) -C elks-compress all
 	$(MAKE) -C eman all
-	$(MAKE) -C mtools-4.0.23 -f Make.elks all
+	$(MAKE) -C mtools all
 
 
 #########################################################################
