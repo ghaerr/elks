@@ -18,7 +18,7 @@ mtools.conf - mtools configuration files
 .SH Description
 .PP
 This manual page describes the configuration files for mtools. They 
-are called \fR\&\f(CW\(if/etc/mtools.conf\(is\fR and \fR\&\f(CW\(if~/.mtoolsrc\(is\fR. If
+are called \fR\&\f(CW\(if/usr/local/etc/mtools.conf\(is\fR and \fR\&\f(CW\(if~/.mtoolsrc\(is\fR. If
 the environmental variable \fR\&\f(CWMTOOLSRC\fR is set, its contents is used
 as the filename for a third configuration file. These configuration
 files describe the following items:
@@ -30,7 +30,7 @@ files describe the following items:
 .SS Location\ of\ the\ configuration\ files
 .PP
 .PP
-\&\fR\&\f(CW\(if/etc/mtools.conf\(is\fR is the system-wide configuration file,
+\&\fR\&\f(CW\(if/usr/local/etc/mtools.conf\(is\fR is the system-wide configuration file,
 and \fR\&\f(CW\(if~/.mtoolsrc\(is\fR is the user's private configuration file.
 .PP
 On some systems, the system-wide configuration file is called
@@ -388,14 +388,14 @@ implied, unless explicitly disabled by \fR\&\f(CWprivileged=0\fR
 Mtools uses its root privileges to open the device, and to issue the
 actual SCSI I/O calls.  Moreover, root privileges are only used for
 drives described in a system-wide configuration file such as
-\&\fR\&\f(CW\(if/etc/mtools.conf\(is\fR, and not for those described in
+\&\fR\&\f(CW\(if/usr/local/etc/mtools.conf\(is\fR, and not for those described in
 \&\fR\&\f(CW\(if~/.mtoolsrc\(is\fR or \fR\&\f(CW\(if$MTOOLSRC\(is\fR.  
 .TP
 \&\fR\&\f(CWprivileged\fR\ 
 When set to 1, this instructs mtools to use its setuid and setgid
 privileges for opening the given drive.  This option is only valid for
 drives described in the system-wide configuration files (such as
-\&\fR\&\f(CW\(if/etc/mtools.conf\(is\fR, not \fR\&\f(CW\(if~/.mtoolsrc\(is\fR or
+\&\fR\&\f(CW\(if/usr/local/etc/mtools.conf\(is\fR, not \fR\&\f(CW\(if~/.mtoolsrc\(is\fR or
 \&\fR\&\f(CW\(if$MTOOLSRC\(is\fR).  Obviously, this option is also a no op if mtools is
 not installed setuid or setgid.  This option is implied by 'scsi=1', but
 again only for drives defined in system-wide configuration files.
@@ -507,7 +507,7 @@ The configuration files are parsed in the following order:
 compiled-in defaults
 .TP
 2.\ 
-\&\fR\&\f(CW\(if/etc/mtools.conf\(is\fR
+\&\fR\&\f(CW\(if/usr/local/etc/mtools.conf\(is\fR
 .TP
 3.\ 
 \&\fR\&\f(CW\(if~/.mtoolsrc\(is\fR.
@@ -519,10 +519,10 @@ variable)
 Options described in the later files override those described in the
 earlier files. Drives defined in earlier files persist if they are not
 overridden in the later files. For instance, drives A and B may be
-defined in \fR\&\f(CW\(if/etc/mtools.conf\(is\fR and drives C and D may be
+defined in \fR\&\f(CW\(if/usr/local/etc/mtools.conf\(is\fR and drives C and D may be
 defined in \fR\&\f(CW\(if~/.mtoolsrc\(is\fR However, if \fR\&\f(CW\(if~/.mtoolsrc\(is\fR also
 defines drive A, this new description would override the description of
-drive A in \fR\&\f(CW\(if/etc/mtools.conf\(is\fR instead of adding to it. If
+drive A in \fR\&\f(CW\(if/usr/local/etc/mtools.conf\(is\fR instead of adding to it. If
 you want to add a new description to a drive already described in an
 earlier file, you need to use either the \fR\&\f(CW+drive\fR or \fR\&\f(CWdrive+\fR
 keyword.

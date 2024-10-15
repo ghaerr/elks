@@ -4536,7 +4536,7 @@ for ac_header in getopt.h sys/stat.h stdlib.h unistd.h linux/unistd.h \
 libc.h fcntl.h limits.h sys/file.h sys/ioctl.h sys/time.h strings.h string.h \
 sys/param.h memory.h malloc.h io.h signal.h sys/signal.h utime.h sgtty.h \
 sys/floppy.h mntent.h sys/sysmacros.h netinet/in.h netinet/tcp.h assert.h \
-iconv.h wctype.h wchar.h locale.h linux/fs.h
+wctype.h wchar.h locale.h linux/fs.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
