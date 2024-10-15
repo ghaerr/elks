@@ -1,0 +1,147 @@
+'\" t
+.TH mzip 1 "10Dec18" mtools-4.0.23
+.SH Name
+mzip - change protection mode and eject disk on Zip/Jaz drive
+'\" t
+.de TQ
+.br
+.ns
+.TP \\$1
+..
+
+.tr \(is'
+.tr \(if`
+.tr \(pd"
+
+.SH Note\ of\ warning
+This manpage has been automatically generated from mtools's texinfo
+documentation, and may not be entirely accurate or complete.  See the
+end of this man page for details.
+.PP
+.SH Description
+.PP
+The \fR\&\f(CWmzip\fR command is used to issue ZIP disk specific commands on
+Linux, Solaris or HP-UX. Its syntax is:
+.PP
+.ft I
+.nf
+\&\fR\&\f(CWmzip\fR [\fR\&\f(CW-epqrwx\fR]
+.fi
+.ft R
+ 
+.PP
+\&\fR\&\f(CWMzip\fR allows the following
+command line options:
+.TP
+\&\fR\&\f(CWe\fR\ 
+Ejects the disk.
+.TP
+\&\fR\&\f(CWf\fR\ 
+Force eject even if the disk is mounted (must be given in addition to
+\&\fR\&\f(CW-e\fR).
+.TP
+\&\fR\&\f(CWr\fR\ 
+Write protect the disk.
+.TP
+\&\fR\&\f(CWw\fR\ 
+Remove write protection.
+.TP
+\&\fR\&\f(CWp\fR\ 
+Password write protect.
+.TP
+\&\fR\&\f(CWx\fR\ 
+Password protect
+.TP
+\&\fR\&\f(CWu\fR\ 
+Temporarily unprotect the disk until it is ejected.  The disk becomes
+writable, and reverts back to its old state when ejected.
+.TP
+\&\fR\&\f(CWq\fR\ 
+Queries the status
+.PP
+To remove the password, set it to one of the password-less modes
+\&\fR\&\f(CW-r\fR or \fR\&\f(CW-w\fR: mzip will then ask you for the password, and
+unlock the disk.  If you have forgotten the password, you can get rid of
+it by low-level formatting the disk (using your SCSI adapter's BIOS
+setup).
+.PP
+The ZipTools disk shipped with the drive is also password protected.  On
+MS-DOS or on a Mac, this password is automatically removed once the
+ZipTools have been installed.  From various articles posted to Usenet, I
+learned that the password for the tools disk is
+\&\fR\&\f(CWAPlaceForYourStuff\fR\fR.  Mzip knows about this
+password, and tries it first, before prompting you for a password.  Thus
+\&\fR\&\f(CWmzip -w z:\fR unlocks the tools disk.  The tools disk is
+formatted in a special way so as to be usable both in a PC and in a Mac.
+On a PC, the Mac file system appears as a hidden file named
+\&\fR\&\f(CW\(ifpartishn.mac\(is\fR.  You may erase it to reclaim the 50 Megs of space
+taken up by the Mac file system.
+.PP
+.SH Bugs
+.PP
+This command is a big kludge.  A proper implementation would take a
+rework of significant parts of mtools, but unfortunately I don't have
+the time for this right now. The main downside of this implementation is
+that it is inefficient on some architectures (several successive calls
+to mtools, which defeats mtools' caching).
+.PP
+.SH See\ Also
+Mtools' texinfo doc
+.SH Viewing\ the\ texi\ doc
+This manpage has been automatically generated from mtools's texinfo
+documentation. However, this process is only approximative, and some
+items, such as crossreferences, footnotes and indices are lost in this
+translation process.  Indeed, these items have no appropriate
+representation in the manpage format.  Moreover, not all information has
+been translated into the manpage version.  Thus I strongly advise you to
+use the original texinfo doc.  See the end of this manpage for
+instructions how to view the texinfo doc.
+.TP
+* \ \ 
+To generate a printable copy from the texinfo doc, run the following
+commands:
+ 
+.nf
+.ft 3
+.in +0.3i
+    ./configure; make dvi; dvips mtools.dvi
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.TP
+* \ \ 
+To generate a html copy,  run:
+ 
+.nf
+.ft 3
+.in +0.3i
+    ./configure; make html
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fRA premade html can be found at
+\&\fR\&\f(CW\(ifhttp://www.gnu.org/software/mtools/manual/mtools.html\(is\fR
+.TP
+* \ \ 
+To generate an info copy (browsable using emacs' info mode), run:
+ 
+.nf
+.ft 3
+.in +0.3i
+    ./configure; make info
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.PP
+The texinfo doc looks most pretty when printed or as html.  Indeed, in
+the info version certain examples are difficult to read due to the
+quoting conventions used in info.
+.PP

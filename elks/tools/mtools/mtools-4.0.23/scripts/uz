@@ -1,0 +1,105 @@
+#!/bin/sh
+# Copyright 1994,2002 David C. Niemi.
+# Copyright 1996,1997,2001-2003,2010 Alain Knaff.
+# This file is part of mtools.
+#
+# Mtools is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Mtools is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Mtools.  If not, see <http://www.gnu.org/licenses/>.
+# uz [file...]
+# lz [file...]
+#
+# If called "uz", gunzips and extracts a gzip'd tar'd archive.
+# If called "lz", gunzips and shows a listing of a gzip'd tar'd archive.
+#
+# Requires: gzip and tar in the user's path.  Should work with most tars.
+# "-" is now used for backwards compatibility with antique tars, e.g. SCO.
+#
+# 1994/02/19	DCN	Created (as a trivial, but useful script)
+# 1994/12/01	DCN	Combined uz and lz, added suffix handling
+# 2002/09/11	DCN	Added bzip2 support
+# 2010/10/16	AKN	Added lzip support
+#
+# Copyright (C) 1994, 2002 David C. Niemi (niemi at tuxers dot net)
+# The author requires that any copies or derived works include this
+# copyright notice; no other restrictions are placed on its use.
+#
+
+set -e
+set -u
+
+## Default unzipping command
+uzcmd='gzip -cd'
+
+case $0 in
+*uz)
+	tarparam="-pxvf"
+	zipparam=""
+	action="Extracting from "
+	;;
+*lz)
+	tarparam="-tvf"
+	zipparam="-l"
+	action="Reading directory of "
+	;;
+*)
+	echo "$0: expect to be named either \"uz\" or \"lz\"." >&2
+	exit 1
+	;;
+esac
+
+if [ $# = 0 ]; then
+	echo "$action standard input." >&2
+	$uzcmd - | tar "$tarparam" -
+	exit 0
+fi
+
+while [ $# -ge 1 ]; do
+	echo >&2
+	found=
+
+	for suffix in "" .gz .tgz .tar.gz .z .tar.z .taz .tpz .Z .tar.Z .tar.bz2 tar.lz .zip .jar .war .ear .aar .tar.xz; do
+		if [ -r "${1}$suffix" ]; then
+			found=$1$suffix
+			break
+		fi
+	done
+
+	unzip=0
+	case $found in
+		*.tar.bz2 | *.tb2)
+			uzcmd='bzip2 -cd'
+			;;
+		*.zip | *.jar | *.war | *.ear | *.aar)
+			unzip=1
+			;;
+		*.tar.lz)
+			uzcmd='lzip -cd'
+			;;
+		*.tar.xz)
+			uzcmd='xz -cd'
+			;;	
+	esac
+	if [ -z "$found" ]; then
+		echo "$0: could not read \"$1\"." >&2
+	else
+		echo "$action \"$found\"." >&2
+		if [ $unzip = 1 ]; then
+			unzip $zipparam -- "$found"
+		else
+			$uzcmd -- "$found" | tar "$tarparam" -
+		fi
+	fi
+	shift
+done
+
+exit 0

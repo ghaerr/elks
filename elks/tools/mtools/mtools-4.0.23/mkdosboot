@@ -1,0 +1,34 @@
+#!/bin/sh
+
+# Copyright 2002 Alain Knaff.
+# This file is part of mtools.
+#
+# Mtools is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Mtools is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Mtools.  If not, see <http://www.gnu.org/licenses/>.
+
+# Example of a script making a Doc boot disk. Image will be t.img, a
+# FreeDos boot sector is expected in bootsect.dos, and diag contains
+# the system files
+
+IMAGE=t.img
+if [ $# = 1 ] ; then
+   IMAGE=$1
+fi
+
+./mformat -i $IMAGE -C -t 80 -s 18 -h 2 -B bootsect.dos ::
+./mcopy -i $IMAGE diag/io.sys ::IO.SYS
+./mcopy -i $IMAGE diag/msdos.sys ::MSDOS.SYS
+./mcopy -i $IMAGE diag/command.com ::COMMAND.COM
+./mcopy -i $IMAGE diag/drvspace.bin ::DRVSPACE.BIN
+
+./mattrib -i $IMAGE +s +h +r ::io.sys ::msdos.sys ::drvspace.bin

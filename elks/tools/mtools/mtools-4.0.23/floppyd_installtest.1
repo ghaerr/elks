@@ -1,0 +1,94 @@
+'\" t
+.TH floppyd_installtest 1 "10Dec18" mtools-4.0.23
+.SH Name
+floppyd_installtest - tests whether floppyd is installed and running
+'\" t
+.de TQ
+.br
+.ns
+.TP \\$1
+..
+
+.tr \(is'
+.tr \(if`
+.tr \(pd"
+
+.SH Note\ of\ warning
+This manpage has been automatically generated from mtools's texinfo
+documentation, and may not be entirely accurate or complete.  See the
+end of this man page for details.
+.PP
+.SH Description
+.PP
+\&\fR\&\f(CWFloppyd_installtest\fR is used to check for the presence of a running
+floppyd daemon. This is useful, if you have a small front-end script to
+mtools, which decides whether to use floppyd or not.
+.PP
+\&\fR\&\f(CWfloppyd_installtest\fR [\fR\&\f(CW-f\fR]  Connect-String
+.PP
+If the \fR\&\f(CW-f\fR option is specified, \fR\&\f(CWfloppyd_installtest\fR does a
+full X-Cookie authentication and complains if this does not work.
+.PP
+The connect-String has the format described in the floppyd-section:
+\&\fIhostname\fR\fR\&\f(CW:\fR\fIdisplaynumber\fR[\fR\&\f(CW/\fR\fIbaseport\fR]
+.PP
+.SH See\ Also
+Mtools' texinfo doc
+.SH Viewing\ the\ texi\ doc
+This manpage has been automatically generated from mtools's texinfo
+documentation. However, this process is only approximative, and some
+items, such as crossreferences, footnotes and indices are lost in this
+translation process.  Indeed, these items have no appropriate
+representation in the manpage format.  Moreover, not all information has
+been translated into the manpage version.  Thus I strongly advise you to
+use the original texinfo doc.  See the end of this manpage for
+instructions how to view the texinfo doc.
+.TP
+* \ \ 
+To generate a printable copy from the texinfo doc, run the following
+commands:
+ 
+.nf
+.ft 3
+.in +0.3i
+    ./configure; make dvi; dvips mtools.dvi
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.TP
+* \ \ 
+To generate a html copy,  run:
+ 
+.nf
+.ft 3
+.in +0.3i
+    ./configure; make html
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fRA premade html can be found at
+\&\fR\&\f(CW\(ifhttp://www.gnu.org/software/mtools/manual/mtools.html\(is\fR
+.TP
+* \ \ 
+To generate an info copy (browsable using emacs' info mode), run:
+ 
+.nf
+.ft 3
+.in +0.3i
+    ./configure; make info
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.PP
+The texinfo doc looks most pretty when printed or as html.  Indeed, in
+the info version certain examples are difficult to read due to the
+quoting conventions used in info.
+.PP

@@ -1,0 +1,61 @@
+#!/bin/sh
+# Copyright 1994 David C. Niemi
+# Copyright 1994,1997,2001,2002 Alain Knaff.
+# This file is part of mtools.
+#
+# Mtools is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Mtools is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Mtools.  If not, see <http://www.gnu.org/licenses/>.
+#
+# mcheck [ <DOS drive letter> ]
+#
+# Read every file on an MS-DOS formatted disk to make sure they're good.
+#
+# Requires: mdir and mread utilities from mtools in user's path.
+#
+# 1994/02/19	DCN	Created
+# 1994/??/??	ALK	Added case statement for results of mdir
+# 1994/09/24	DCN	Cleanup (5 minutes on top of the 30 seconds creating it)
+# 1994/12/01	DCN	Better comments, notices to stderr
+#
+# Copyright (C) 1994 David C. Niemi (niemi@tuxers.net)
+# The author requires that any copies or derived works include this
+# copyright notice; no other restrictions are placed on its use.
+#
+
+set -e
+set -u
+
+DRIVE=${1:-'A:'}
+mdir ${DRIVE}'*'
+case $? in
+2)
+	echo "No files on disk." >&2
+	exit 0
+	;;
+1)
+	exit 1
+	;;
+0)
+	;;
+esac
+
+echo >&2; echo "Verifying files on drive ${DRIVE}..." >&2
+if mtype -/ ${DRIVE}\* > /dev/null; then
+	echo "Disk in drive ${DRIVE} is OK." >&2
+	exit 0
+else
+	echo "Disk in drive ${DRIVE} has errors." >&2
+	exit 1
+fi
+
+## NOTREACHED ##

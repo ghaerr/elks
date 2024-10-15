@@ -1,0 +1,30 @@
+% Copyright 1996,1997,1999,2001,2002 Alain Knaff.
+
+% This documentation is for Mtools which is a collection of tools to
+% allow Unix systems to manipulate MS-DOS files.
+
+% Permission is granted to copy, distribute and/or modify this document
+% under the terms of the GNU Free Documentation License, Version 1.3 or
+% any later version published by the Free Software Foundation; with no
+% Invariant Sections, with no Front-Cover Texts, and with no Back-Cover
+% Texts.  A copy of the license is included in the section entitled
+% ``GNU Free Documentation License''.
+
+Installation of mtools is now pretty straightforward:
+
+  1. Run ./configure
+  2. Run make
+
+ Configuration options:
+
+  * Use ./configure --enable-vold to compile mtools to use Solaris'
+vold instead of directly accessing the floppy disk
+  * Use ./configure --disable-xdf to disable support for Xdf disks on Linux
+  * Use ./configure --enable-new-vold to compile mtools to use the *new* 
+vold for Solaris. With this, you no longer need precmd=volcheck, and
+users don't need to type "eject" before pushing the button.
+
+Further doc can be found in the manpages, and in the texinfo doc. The
+texinfo doc contains the same info as the manpages, but is more up to
+date. To generate a printable doc, make dvi. To generate an info file,
+make info.

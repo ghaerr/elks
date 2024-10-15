@@ -1,0 +1,177 @@
+'\" t
+.TH mcopy 1 "10Dec18" mtools-4.0.23
+.SH Name
+mcopy - copy MSDOS files to/from Unix
+'\" t
+.de TQ
+.br
+.ns
+.TP \\$1
+..
+
+.tr \(is'
+.tr \(if`
+.tr \(pd"
+
+.SH Note\ of\ warning
+This manpage has been automatically generated from mtools's texinfo
+documentation, and may not be entirely accurate or complete.  See the
+end of this man page for details.
+.PP
+.SH Description
+.PP
+The \fR\&\f(CWmcopy\fR command is used to copy MS-DOS files to and from
+Unix. It uses the following syntax:
+.PP
+ 
+.nf
+.ft 3
+.in +0.3i
+\&\fR\&\f(CWmcopy [\fR\&\f(CW-bspanvmQT] [\fR\&\f(CW-D \fIclash_option\fR\&\f(CW] \fIsourcefile\fR\&\f(CW \fItargetfile\fR\&\f(CW
+\&\fR\&\f(CWmcopy [\fR\&\f(CW-bspanvmQT] [\fR\&\f(CW-D \fIclash_option\fR\&\f(CW] \fIsourcefile\fR\&\f(CW [ \fIsourcefiles\fR\&\f(CW\&... ] \fItargetdirectory\fR\&\f(CW
+\&\fR\&\f(CWmcopy [\fR\&\f(CW-tnvm] \fIMSDOSsourcefile\fR\&\f(CW
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.PP
+\&\fR\&\f(CWMcopy\fR copies the specified file to the named file, or copies
+multiple files to the named directory.  The source and target can be
+either MS-DOS or Unix files.
+.PP
+The use of a drive letter designation on the MS-DOS files, 'a:' for
+example, determines the direction of the transfer.  A missing drive
+designation implies a Unix file whose path starts in the current
+directory.  If a source drive letter is specified with no attached file
+name (e.g. \fR\&\f(CWmcopy a: .\fR), all files are copied from that drive.
+.PP
+If only a single, MS-DOS source parameter is provided (e.g. "mcopy
+a:foo.exe"), an implied destination of the current directory
+(`\fR\&\f(CW.\fR') is assumed.
+.PP
+A filename of `\fR\&\f(CW-\fR' means standard input or standard output, depending
+on its position on the command line.
+.PP
+\&\fR\&\f(CWMcopy\fR accepts the following command line options:
+.TP
+\&\fR\&\f(CWt\fR\ 
+Text file transfer.  Mcopy translates incoming carriage return/line
+feeds to line feeds when copying from MS-DOS to Unix, and vice-versa when
+copying from Unix to MS-DOS.
+.TP
+\&\fR\&\f(CWb\fR\ 
+Batch mode. Optimized for huge recursive copies, but less secure if a
+crash happens during the copy.
+.TP
+\&\fR\&\f(CWs\fR\ 
+Recursive copy.  Also copies directories and their contents
+.TP
+\&\fR\&\f(CWp\fR\ 
+Preserves the attributes of the copied files
+.TP
+\&\fR\&\f(CWQ\fR\ 
+When mcopying multiple files, quits as soon as one copy fails (for
+example due to lacking storage space on the target disk)
+.TP
+\&\fR\&\f(CWa\fR\ 
+Text (ASCII) file transfer.  \fR\&\f(CWASCII\fR translates incoming carriage
+return/line feeds to line feeds.
+.TP
+\&\fR\&\f(CWT\fR\ 
+Text (ASCII) file transfer with character set conversion.  Differs from
+\&\fR\&\f(CW-a\fR in the \fR\&\f(CWASCII\fR also translates incoming PC-8 characters
+to ISO-8859-1 equivalents as far as possible.  When reading DOS files,
+untranslatable characters are replaced by '\fR\&\f(CW#\fR'; when writing DOS files,
+untranslatable characters are replaced by '\fR\&\f(CW.\fR'.
+.TP
+\&\fR\&\f(CWn\fR\ 
+No confirmation when overwriting Unix files.  \fR\&\f(CWASCII\fR doesn't warn
+the user when overwriting an existing Unix file. If the target file already exists,
+and the \fR\&\f(CW-n\fR option is not in effect, \fR\&\f(CWmcopy\fR asks whether to
+overwrite the file or to rename the new file (\(ifname clashes\(is) for
+details).  In order to switch off confirmation for DOS files, use \fR\&\f(CW-o\fR.
+.TP
+\&\fR\&\f(CWm\fR\ 
+Preserve the file modification time.
+.TP
+\&\fR\&\f(CWv\fR\ 
+Verbose. Displays the name of each file as it is copied.
+.PP
+.SH Bugs
+Unlike MS-DOS, the '+' operator (append) from MS-DOS is not
+supported. However, you may use \fR\&\f(CWmtype\fR to produce the same effect:
+ 
+.nf
+.ft 3
+.in +0.3i
+mtype a:file1 a:file2 a:file3 >unixfile
+mtype a:file1 a:file2 a:file3 | mcopy - a:msdosfile
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.PP
+.SH See\ Also
+Mtools' texinfo doc
+.SH Viewing\ the\ texi\ doc
+This manpage has been automatically generated from mtools's texinfo
+documentation. However, this process is only approximative, and some
+items, such as crossreferences, footnotes and indices are lost in this
+translation process.  Indeed, these items have no appropriate
+representation in the manpage format.  Moreover, not all information has
+been translated into the manpage version.  Thus I strongly advise you to
+use the original texinfo doc.  See the end of this manpage for
+instructions how to view the texinfo doc.
+.TP
+* \ \ 
+To generate a printable copy from the texinfo doc, run the following
+commands:
+ 
+.nf
+.ft 3
+.in +0.3i
+    ./configure; make dvi; dvips mtools.dvi
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.TP
+* \ \ 
+To generate a html copy,  run:
+ 
+.nf
+.ft 3
+.in +0.3i
+    ./configure; make html
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fRA premade html can be found at
+\&\fR\&\f(CW\(ifhttp://www.gnu.org/software/mtools/manual/mtools.html\(is\fR
+.TP
+* \ \ 
+To generate an info copy (browsable using emacs' info mode), run:
+ 
+.nf
+.ft 3
+.in +0.3i
+    ./configure; make info
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.PP
+The texinfo doc looks most pretty when printed or as html.  Indeed, in
+the info version certain examples are difficult to read due to the
+quoting conventions used in info.
+.PP

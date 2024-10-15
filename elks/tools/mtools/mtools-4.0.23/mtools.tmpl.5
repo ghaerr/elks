@@ -1,0 +1,541 @@
+'\" t
+.TH mtools 5 "10Dec18" MTOOLS MTOOLS
+.SH Name
+mtools.conf - mtools configuration files
+'\" t
+.de TQ
+.br
+.ns
+.TP \\$1
+..
+
+.tr \(is'
+.tr \(if`
+.tr \(pd"
+
+.ds St Mtools\ 4.0.23
+.PP
+.SH Description
+.PP
+This manual page describes the configuration files for mtools. They 
+are called \fR\&\f(CW\(ifSYSCONFDIRmtools.conf\(is\fR and \fR\&\f(CW\(if~/.mtoolsrc\(is\fR. If
+the environmental variable \fR\&\f(CWMTOOLSRC\fR is set, its contents is used
+as the filename for a third configuration file. These configuration
+files describe the following items:
+.TP
+* \ Global\ configuration\ flags\ and\ variables\ 
+.TP
+* \ Per\ drive\ flags\ and\ variables\ 
+.PP
+.SS Location\ of\ the\ configuration\ files
+.PP
+.PP
+\&\fR\&\f(CW\(ifSYSCONFDIRmtools.conf\(is\fR is the system-wide configuration file,
+and \fR\&\f(CW\(if~/.mtoolsrc\(is\fR is the user's private configuration file.
+.PP
+On some systems, the system-wide configuration file is called
+\&\fR\&\f(CW\(if/etc/default/mtools.conf\(is\fR instead.
+.PP
+.SS \ \ General\ configuration\ file\ syntax
+.PP
+The configuration files is made up of sections. Each section starts
+with a keyword identifying the section followed by a colon.
+Then follow variable assignments and flags. Variable assignments take
+the following form:
+.ft I
+.nf
+name=value
+.fi
+.ft R
+ 
+Flags are lone keywords without an equal sign and value following
+them.  A section either ends at the end of the file or where the next
+section begins.
+.PP
+Lines starting with a hash (\fR\&\f(CW#\fR) are comments. Newline characters
+are equivalent to whitespace (except where ending a comment). The
+configuration file is case insensitive, except for item enclosed in
+quotes (such as filenames).
+.PP
+.SS Default\ values
+For most platforms, mtools contains reasonable compiled-in defaults for
+physical floppy drives.  Thus, you usually don't need to bother with the
+configuration file, if all you want to do with mtools is to access your
+floppy drives. On the other hand, the configuration file is needed if
+you also want to use mtools to access your hard disk partitions and
+DOSEMU image files.
+.PP
+.SS Global\ variables
+.PP
+Global flags may be set to 1 or to 0.
+.PP
+The following global flags are recognized:
+.TP
+\&\fR\&\f(CWMTOOLS_SKIP_CHECK\fR\ 
+If this is set to 1, mtools skips most of its sanity checks. This is
+needed to read some Atari disks which have been made with the earlier
+ROMs, and which would not be recognized otherwise.
+.TP
+\&\fR\&\f(CWMTOOLS_FAT_COMPATIBILITY\fR\ 
+If this is set to 1, mtools skips the fat size checks. Some disks have
+a bigger FAT than they really need to. These are rejected if this
+option is not set.
+.TP
+\&\fR\&\f(CWMTOOLS_LOWER_CASE\fR\ 
+If this is set to 1, mtools displays all-upper-case short filenames as
+lowercase. This has been done to allow a behavior which is consistent
+with older versions of mtools which didn't know about the case bits.
+.TP
+\&\fR\&\f(CWMTOOLS_NO_VFAT\fR\ 
+If this is set to 1, mtools won't generate VFAT entries for filenames
+which are mixed-case, but otherwise legal dos filenames.  This is useful
+when working with DOS versions which can't grok VFAT long names, such as
+FreeDOS.
+.TP
+\&\fR\&\f(CWMTOOLS_DOTTED_DIR\fR\ 
+In a wide directory, prints the short name with a dot instead of spaces
+separating the basename and the extension.
+.TP
+\&\fR\&\f(CWMTOOLS_NAME_NUMERIC_TAIL\fR\ 
+If this is set to one (default), generate numeric tails for all long
+names (~1).  If set to zero, only generate numeric tails if otherwise a
+clash would have happened.
+.TP
+\&\fR\&\f(CWMTOOLS_TWENTY_FOUR_HOUR_CLOCK\fR\ 
+If 1, uses the European notation for times (twenty four hour clock),
+else uses the UK/US notation (am/pm)
+.TP
+\&\fR\&\f(CWMTOOLS_LOCK_TIMEOUT\fR\ 
+How long, in seconds, to wait for a locked device to become free.
+Defaults to 30.
+.PP
+Example:
+Inserting the following line into your configuration file instructs
+mtools to skip the sanity checks:
+ 
+.nf
+.ft 3
+.in +0.3i
+  MTOOLS_SKIP_CHECK=1
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.PP
+Global variables may also be set via the environment:
+ 
+.nf
+.ft 3
+.in +0.3i
+  export MTOOLS_SKIP_CHECK=1
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.PP
+Global string variables may be set to any value:
+.TP
+\&\fR\&\f(CWMTOOLS_DATE_STRING\fR\ 
+The format used for printing dates of files.  By default, is dd-mm-yyyy.
+.PP
+.SS Per\ drive\ flags\ and\ variables
+.PP
+.SS \ \ General\ information
+.PP
+Per drive flags and values may be described in a drive section. A
+drive section starts with
+\&\fR\&\f(CWdrive\fR "\fIdriveletter\fR" :
+.PP
+Then follow variable-value pairs and flags.
+.PP
+This is a sample drive description:
+ 
+.nf
+.ft 3
+.in +0.3i
+  drive a:
+    file="/dev/fd0" use_xdf=1
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.PP
+.SS \ \ Location\ information
+.PP
+For each drive, you need to describe where its data is physically
+stored (image file, physical device, partition, offset).
+.TP
+\&\fR\&\f(CWfile\fR\ 
+The name of the file or device holding the disk image. This is
+mandatory. The file name should be enclosed in quotes.
+.TP
+\&\fR\&\f(CWpartition\fR\ 
+Tells mtools to treat the drive as a partitioned device, and to use the
+given partition. Only primary partitions are accessible using this
+method, and they are numbered from 1 to 4. For logical partitions, use
+the more general \fR\&\f(CWoffset\fR variable. The \fR\&\f(CWpartition\fR variable
+is intended for removable media such as Syquest disks, ZIP drives, and
+magneto-optical disks. Although traditional DOS sees Syquest disks and
+magneto-optical disks as \fR\&\f(CW\(ifgiant floppy disks\(is\fR which are
+unpartitioned, OS/2 and Windows NT treat them like hard disks,
+i.e. partitioned devices. The \fR\&\f(CWpartition\fR flag is also useful DOSEMU
+hdimages. It is not recommended for hard disks for which direct access
+to partitions is available through mounting.
+.TP
+\&\fR\&\f(CWoffset\fR\ 
+Describes where in the file the MS-DOS file system starts. This is useful
+for logical partitions in DOSEMU hdimages, and for ATARI ram disks. By
+default, this is zero, meaning that the file system starts right at the
+beginning of the device or file.
+.PP
+.SS \ \ Disk\ Geometry\ Configuration
+.PP
+Geometry information describes the physical characteristics about the
+disk. Its has three purposes:
+.TP
+formatting\ 
+The geometry information is written into the boot sector of the newly
+made disk. However, you may also describe the geometry information on
+the command line. See section mformat, for details.
+.TP
+filtering\ 
+On some Unixes there are device nodes which only support one physical
+geometry. For instance, you might need a different node to access a disk
+as high density or as low density. The geometry is compared to the
+actual geometry stored on the boot sector to make sure that this device
+node is able to correctly read the disk. If the geometry doesn't match,
+this drive entry fails, and the next drive entry bearing the same drive
+letter is tried. See section multiple descriptions, for more details on
+supplying several descriptions for one drive letter.
+.IP
+If no geometry information is supplied in the configuration file, all
+disks are accepted. On Linux (and on SPARC) there exist device nodes
+with configurable geometry (\fR\&\f(CW\(if/dev/fd0\(is\fR, \fR\&\f(CW\(if/dev/fd1\(is\fR etc),
+and thus filtering is not needed (and ignored) for disk drives.  (Mtools
+still does do filtering on plain files (disk images) in Linux: this is
+mainly intended for test purposes, as I don't have access to a Unix
+which would actually need filtering).
+.IP
+If you do not need filtering, but want still a default geometry for
+mformatting, you may switch off filtering using the \fR\&\f(CWmformat_only\fR
+flag.
+.IP
+If you want filtering, you should supply the \fR\&\f(CWfilter\fR flag.  If you 
+supply a geometry, you must supply one of both flags.
+.TP
+initial\ geometry\ 
+On devices that support it (usually floppy devices), the geometry
+information is also used to set the initial geometry. This initial
+geometry is applied while reading the boot sector, which contains the
+real geometry.  If no geometry information is supplied in the
+configuration file, or if the \fR\&\f(CWmformat_only\fR flag is supplied, no
+initial configuration is done.
+.IP
+On Linux, initial geometry is not really needed, as the configurable
+devices are able to auto-detect the disk type accurately enough (for
+most common formats) to read the boot sector.
+.PP
+Wrong geometry information may lead to very bizarre errors. That's why I
+strongly recommend that you add the \fR\&\f(CWmformat_only\fR flag to your
+drive description, unless you really need filtering or initial geometry.
+.PP
+The following geometry related variables are available:
+.TP
+\&\fR\&\f(CWcylinders\fR\ 
+.TQ
+\&\fR\&\f(CWtracks\fR
+The number of cylinders. (\fR\&\f(CWcylinders\fR is the preferred form,
+\&\fR\&\f(CWtracks\fR is considered obsolete)
+.TP
+\&\fR\&\f(CWheads\fR\ 
+The number of heads (sides).
+.TP
+\&\fR\&\f(CWsectors\fR\ 
+The number of sectors per track.
+.PP
+Example: the following drive section describes a 1.44M drive:
+.PP
+ 
+.nf
+.ft 3
+.in +0.3i
+  drive a:
+      file="/dev/fd0H1440"
+      fat_bits=12
+      cylinders=80 heads=2 sectors=18
+      mformat_only
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.PP
+The following shorthand geometry descriptions are available:
+.TP
+\&\fR\&\f(CW1.44m\fR\ 
+high density 3 1/2 disk. Equivalent to:
+\&\fR\&\f(CWfat_bits=12 cylinders=80 heads=2 sectors=18\fR
+.TP
+\&\fR\&\f(CW1.2m\fR\ 
+high density 5 1/4 disk. Equivalent to:
+\&\fR\&\f(CWfat_bits=12 cylinders=80 heads=2 sectors=15\fR
+.TP
+\&\fR\&\f(CW720k\fR\ 
+double density 3 1/2 disk. Equivalent to:
+\&\fR\&\f(CWfat_bits=12 cylinders=80 heads=2 sectors=9\fR
+.TP
+\&\fR\&\f(CW360k\fR\ 
+double density 5 1/4 disk. Equivalent to:
+\&\fR\&\f(CWfat_bits=12 cylinders=40 heads=2 sectors=9\fR
+.PP
+The shorthand format descriptions may be amended. For example,
+\&\fR\&\f(CW360k sectors=8\fR
+describes a 320k disk and is equivalent to:
+\&\fR\&\f(CWfat_bits=12 cylinders=40 heads=2 sectors=8\fR
+.PP
+.SS \ \ Open\ Flags
+.PP
+Moreover, the following flags are available:
+.TP
+\&\fR\&\f(CWsync\fR\ 
+All i/o operations are done synchronously
+.TP
+\&\fR\&\f(CWnodelay\fR\ 
+The device or file is opened with the O_NDELAY flag. This is needed on
+some non-Linux architectures.
+.TP
+\&\fR\&\f(CWexclusive\fR\ 
+The device or file is opened with the O_EXCL flag. On Linux, this
+ensures exclusive access to the floppy drive. On most other
+architectures, and for plain files it has no effect at all.
+.PP
+.SS \ \ General\ Purpose\ Drive\ Variables
+.PP
+The following general purpose drive variables are available.  Depending
+to their type, these variables can be set to a string (precmd) or
+an integer (all others)
+.TP
+\&\fR\&\f(CWfat_bits\fR\ 
+The number of FAT bits. This may be 12 or 16. This is very rarely
+needed, as it can almost always be deduced from information in the
+boot sector. On the contrary, describing the number of fat bits may
+actually be harmful if you get it wrong. You should only use it if
+mtools gets the auto-detected number of fat bits wrong, or if you want
+to mformat a disk with a weird number of fat bits.
+.TP
+\&\fR\&\f(CWcodepage\fR\ 
+Describes the DOS code page used for short filenames. This is a number
+between 1 and 999. By default, code page 850 is used. The reason for
+this is because this code page contains most of the characters that are
+also available in ISO-Latin-1. You may also specify a global code page
+for all drives by using the global \fR\&\f(CWdefault_codepage\fR parameter
+(outside of any drive description). This parameters exists starting at
+version 4.0.0
+.TP
+\&\fR\&\f(CWprecmd\fR\ 
+On some variants of Solaris, it is necessary to call 'volcheck -v'
+before opening a floppy device, in order for the system to notice that
+there is indeed a disk in the drive. \fR\&\f(CWprecmd="volcheck -v"\fR in the
+drive clause establishes the desired behavior.
+.TP
+\&\fR\&\f(CWblocksize\fR\ 
+This parameter represents a default block size to be always used on this
+device.  All I/O is done with multiples of this block size,
+independently of the sector size registered in the file system's boot
+sector.  This is useful for character devices whose sector size is not
+512, such as for example CD-ROM drives on Solaris.
+.PP
+Only the \fR\&\f(CWfile\fR variable is mandatory. The other parameters may
+be left out. In that case a default value or an auto-detected value is
+used.
+.PP
+.SS \ \ General\ Purpose\ Drive\ Flags
+.PP
+A flag can either be set to 1 (enabled) or 0 (disabled). If the value is
+omitted, it is enabled.  For example, \fR\&\f(CWscsi\fR is equivalent to
+\&\fR\&\f(CWscsi=1\fR
+.TP
+\&\fR\&\f(CWnolock\fR\ 
+Instruct mtools to not use locking on this drive.  This is needed on
+systems with buggy locking semantics.  However, enabling this makes
+operation less safe in cases where several users may access the same
+drive at the same time.
+.TP
+\&\fR\&\f(CWscsi\fR\ 
+When set to 1, this option tells mtools to use raw SCSI I/O instead of
+the standard read/write calls to access the device. Currently, this is
+supported on HP-UX, Solaris and SunOS.  This is needed because on some
+architectures, such as SunOS or Solaris, PC media can't be accessed
+using the \fR\&\f(CWread\fR and \fR\&\f(CWwrite\fR system calls, because the OS expects
+them to contain a Sun specific "disk label".
+.IP
+As raw SCSI access always uses the whole device, you need to specify the
+"partition" flag in addition
+.IP
+On some architectures, such as Solaris, mtools needs root privileges to
+be able to use the \fR\&\f(CWscsi\fR option.  Thus mtools should be installed
+setuid root on Solaris if you want to access Zip/Jaz drives.  Thus, if
+the \fR\&\f(CWscsi\fR flag is given, \fR\&\f(CWprivileged\fR is automatically
+implied, unless explicitly disabled by \fR\&\f(CWprivileged=0\fR
+.IP
+Mtools uses its root privileges to open the device, and to issue the
+actual SCSI I/O calls.  Moreover, root privileges are only used for
+drives described in a system-wide configuration file such as
+\&\fR\&\f(CW\(ifSYSCONFDIRmtools.conf\(is\fR, and not for those described in
+\&\fR\&\f(CW\(if~/.mtoolsrc\(is\fR or \fR\&\f(CW\(if$MTOOLSRC\(is\fR.  
+.TP
+\&\fR\&\f(CWprivileged\fR\ 
+When set to 1, this instructs mtools to use its setuid and setgid
+privileges for opening the given drive.  This option is only valid for
+drives described in the system-wide configuration files (such as
+\&\fR\&\f(CW\(ifSYSCONFDIRmtools.conf\(is\fR, not \fR\&\f(CW\(if~/.mtoolsrc\(is\fR or
+\&\fR\&\f(CW\(if$MTOOLSRC\(is\fR).  Obviously, this option is also a no op if mtools is
+not installed setuid or setgid.  This option is implied by 'scsi=1', but
+again only for drives defined in system-wide configuration files.
+Privileged may also be set explicitly to 0, in order to tell mtools not
+to use its privileges for a given drive even if \fR\&\f(CWscsi=1\fR is set.
+.IP
+Mtools only needs to be installed setuid if you use the
+\&\fR\&\f(CWprivileged\fR or \fR\&\f(CWscsi\fR drive variables.  If you do not use
+these options, mtools works perfectly well even when not installed
+setuid root.
+.TP
+\&\fR\&\f(CWvold\fR\ 
+.IP
+Instructs mtools to interpret the device name as a vold identifier
+rather than as a filename.  The vold identifier is translated into a
+real filename using the \fR\&\f(CWmedia_findname()\fR and
+\&\fR\&\f(CWmedia_oldaliases()\fR functions of the \fR\&\f(CWvolmgt\fR library.  This
+flag is only available if you configured mtools with the
+\&\fR\&\f(CW--enable-new-vold\fR option before compilation.
+.TP
+\&\fR\&\f(CWswap\fR\ 
+.IP
+Consider the media as a word-swapped Atari disk.
+.TP
+\&\fR\&\f(CWuse_xdf\fR\ 
+If this is set to a non-zero value, mtools also tries to access this
+disk as an XDF disk. XDF is a high capacity format used by OS/2. This
+is off by default. See section XDF, for more details.
+.TP
+\&\fR\&\f(CWmformat_only\fR\ 
+Tells mtools to use the geometry for this drive only for mformatting and 
+not for filtering.
+.TP
+\&\fR\&\f(CWfilter\fR\ 
+Tells mtools to use the geometry for this drive both for mformatting and 
+filtering.
+.TP
+\&\fR\&\f(CWremote\fR\ 
+Tells mtools to connect to floppyd (see section  floppyd).
+.PP
+.SS \ \ Supplying\ multiple\ descriptions\ for\ a\ drive
+.PP
+It is possible to supply multiple descriptions for a drive. In that
+case, the descriptions are tried in order until one is found that
+fits. Descriptions may fail for several reasons:
+.TP
+1.\ 
+because the geometry is not appropriate,
+.TP
+2.\ 
+because there is no disk in the drive,
+.TP
+3.\ 
+or because of other problems.
+.PP
+Multiple definitions are useful when using physical devices which are
+only able to support one single disk geometry.
+Example:
+ 
+.nf
+.ft 3
+.in +0.3i
+  drive a: file="/dev/fd0H1440" 1.44m
+  drive a: file="/dev/fd0H720" 720k
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.PP
+This instructs mtools to use /dev/fd0H1440 for 1.44m (high density)
+disks and /dev/fd0H720 for 720k (double density) disks. On Linux, this
+feature is not really needed, as the /dev/fd0 device is able to handle
+any geometry.
+.PP
+You may also use multiple drive descriptions to access both of your
+physical drives through one drive letter:
+.PP
+ 
+.nf
+.ft 3
+.in +0.3i
+  drive z: file="/dev/fd0"
+  drive z: file="/dev/fd1"
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.PP
+With this description, \fR\&\f(CWmdir z:\fR accesses your first physical
+drive if it contains a disk. If the first drive doesn't contain a disk,
+mtools checks the second drive.
+.PP
+When using multiple configuration files, drive descriptions in the files
+parsed last override descriptions for the same drive in earlier
+files. In order to avoid this, use the \fR\&\f(CWdrive+\fR or \fR\&\f(CW+drive\fR
+keywords instead of \fR\&\f(CWdrive\fR. The first adds a description to the
+end of the list (i.e. it will be tried last), and the first adds it to
+the start of the list.
+.PP
+.SS Location\ of\ configuration\ files\ and\ parsing\ order
+.PP
+The configuration files are parsed in the following order:
+.TP
+1.\ 
+compiled-in defaults
+.TP
+2.\ 
+\&\fR\&\f(CW\(ifSYSCONFDIRmtools.conf\(is\fR
+.TP
+3.\ 
+\&\fR\&\f(CW\(if~/.mtoolsrc\(is\fR.
+.TP
+4.\ 
+\&\fR\&\f(CW\(if$MTOOLSRC\(is\fR (file pointed by the \fR\&\f(CWMTOOLSRC\fR environmental
+variable)
+.PP
+Options described in the later files override those described in the
+earlier files. Drives defined in earlier files persist if they are not
+overridden in the later files. For instance, drives A and B may be
+defined in \fR\&\f(CW\(ifSYSCONFDIRmtools.conf\(is\fR and drives C and D may be
+defined in \fR\&\f(CW\(if~/.mtoolsrc\(is\fR However, if \fR\&\f(CW\(if~/.mtoolsrc\(is\fR also
+defines drive A, this new description would override the description of
+drive A in \fR\&\f(CW\(ifSYSCONFDIRmtools.conf\(is\fR instead of adding to it. If
+you want to add a new description to a drive already described in an
+earlier file, you need to use either the \fR\&\f(CW+drive\fR or \fR\&\f(CWdrive+\fR
+keyword.
+.PP
+.SS Backwards\ compatibility\ with\ old\ configuration\ file\ syntax
+.PP
+The syntax described herein is new for version \fR\&\f(CWmtools-3.0\fR. The
+old line-oriented syntax is still supported. Each line beginning with a
+single letter is considered to be a drive description using the old
+syntax. Old style and new style drive sections may be mixed within the
+same configuration file, in order to make upgrading easier. Support for
+the old syntax will be phased out eventually, and in order to discourage
+its use, I purposefully omit its description here.
+.PP
+.SH See also
+mtools

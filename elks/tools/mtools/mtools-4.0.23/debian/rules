@@ -1,0 +1,64 @@
+#!/usr/bin/make -f
+# rules for mtools package
+# by Luis Bustamante (luferbu@fluidsignal.com)
+
+export DH_VERBOSE=1
+DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+
+configure: configure-stamp
+configure-stamp:
+	dh_testdir
+	cp -f /usr/share/misc/config.sub /usr/share/misc/config.guess .
+	./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr \
+	    --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info --sysconfdir=/etc
+	touch configure-stamp
+
+build: patch build-stamp
+build-stamp: configure-stamp
+	dh_testdir
+	$(MAKE)
+	touch build-stamp
+
+clean: unpatch
+	dh_testdir
+	dh_testroot
+	rm -rf build-stamp configure-stamp
+	rm -rf config.sub config.guess
+	[ ! -f Makefile ] || $(MAKE) distclean
+	dh_clean config.cache config.log config.status .#patchlevel.c.1.18 .#mtools.spec.1.4 .#mtools.texi.1.11 .#fat_size_calculation.tex.1.1
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_prep
+	dh_installdirs
+	$(MAKE) install prefix=$$( pwd )/debian/tmp/usr
+	[ -d debian/mtools/etc/ ] || mkdir -p debian/mtools/etc
+	install -m 644 debian/mtools.conf debian/mtools/etc/
+	dh_movefiles
+
+binary-indep:
+binary-arch: mtools
+binary: binary-indep binary-arch
+
+mtools: build install
+	dh_testdir
+	dh_testroot
+	dh_installdocs
+	dh_installexamples -pmtools mtools.conf
+	dh_installman
+	dh_installinfo -pmtools mtools.info
+	dh_installchangelogs
+	dh_strip
+	dh_link -pmtools /usr/share/man/man5/mtools.5 /usr/share/man/man5/mtools.conf.5
+	dh_compress
+	dh_fixperms
+	dh_installdeb
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+.PHONY: build clean binary-indep binary-arch binary install \
+	mtools patch clean-build unpatch configure

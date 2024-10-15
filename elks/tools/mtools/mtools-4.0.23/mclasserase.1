@@ -1,0 +1,112 @@
+'\" t
+.TH mclasserase 1 "10Dec18" mtools-4.0.23
+.SH Name
+mclasserase - erase memory cards
+'\" t
+.de TQ
+.br
+.ns
+.TP \\$1
+..
+
+.tr \(is'
+.tr \(if`
+.tr \(pd"
+
+.SH Note\ of\ warning
+This manpage has been automatically generated from mtools's texinfo
+documentation, and may not be entirely accurate or complete.  See the
+end of this man page for details.
+.PP
+.SH Description
+.PP
+The \fR\&\f(CWmclasserase\fR command is used to wipe memory cards by
+overwriting it three times: first with \fR\&\f(CW0xff\fR, then with
+\&\fR\&\f(CW0x00\fR, then with \fR\&\f(CW0xff\fR again. The command uses the following
+syntax:
+.PP
+ 
+.nf
+.ft 3
+.in +0.3i
+\&\fR\&\f(CWmclasserase [\fR\&\f(CW-d] \fImsdosdrive\fR\&\f(CW
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.PP
+MS-DOS drive is optional, if none is specified, use \fR\&\f(CWA:\fR. If more than
+one drive are specified, all but the last are ignored.
+.PP
+\&\fR\&\f(CWMclasserase\fR accepts the following command line options:
+.TP
+\&\fR\&\f(CWd\fR\ 
+Stop after each erase cycle, for testing purposes
+.TP
+\&\fR\&\f(CWp\fR\ 
+Not yet implemented
+.PP
+\&\fR\&\f(CWMclasserase\fR returns 0 on success or -1 on failure.
+.PP
+.SH See\ Also
+Mtools' texinfo doc
+.SH Viewing\ the\ texi\ doc
+This manpage has been automatically generated from mtools's texinfo
+documentation. However, this process is only approximative, and some
+items, such as crossreferences, footnotes and indices are lost in this
+translation process.  Indeed, these items have no appropriate
+representation in the manpage format.  Moreover, not all information has
+been translated into the manpage version.  Thus I strongly advise you to
+use the original texinfo doc.  See the end of this manpage for
+instructions how to view the texinfo doc.
+.TP
+* \ \ 
+To generate a printable copy from the texinfo doc, run the following
+commands:
+ 
+.nf
+.ft 3
+.in +0.3i
+    ./configure; make dvi; dvips mtools.dvi
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.TP
+* \ \ 
+To generate a html copy,  run:
+ 
+.nf
+.ft 3
+.in +0.3i
+    ./configure; make html
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fRA premade html can be found at
+\&\fR\&\f(CW\(ifhttp://www.gnu.org/software/mtools/manual/mtools.html\(is\fR
+.TP
+* \ \ 
+To generate an info copy (browsable using emacs' info mode), run:
+ 
+.nf
+.ft 3
+.in +0.3i
+    ./configure; make info
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.PP
+The texinfo doc looks most pretty when printed or as html.  Indeed, in
+the info version certain examples are difficult to read due to the
+quoting conventions used in info.
+.PP

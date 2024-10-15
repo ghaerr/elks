@@ -1,0 +1,230 @@
+[See Changelog for more recent changes]
+
+2.5.1	29 Aug 1995
+
+Bug fixes to allow compiling and running on SINIX-D 5.41, thanks to
+Martin Kraemer <Martin.Kraemer@mch.sni.de>.
+
+-----------------------------------------------------------------------------
+2.5	21 Aug 1995
+
+First public Alpha Test release of the newly rewritten Mtools.
+Summary of the many major changes:
+
+XDF support, ANSIfication, major restructuring, and debugging (Alain Knaff)
+VFAT support, new prompts for overwrites, and debugging (David Niemi)
+
+-----------------------------------------------------------------------------
+Patch #7alk ... 4 Dec 94
+
+This patch adds the following features:
+
+	1) mbadblocks program to mark bad blocks
+	2) uses fat_type field of boot block to find out the number
+	of fat bits.
+	3) is able to format hard disk partitions (untested)
+	4) sets _all_ standard fields in boot sector, even without 2m mode.
+	5) adds boot code to the boot sector (which transfers booting to
+	the hard drive. In most cases, that's what the user wants.)
+
+-----------------------------------------------------------------------------
+Patch #7alk ... 4 Nov 94
+
+This patch adds the following features:
+
+	1) Use even disk buffer size whenever possible to workaround a
+	bug in Linux blockdev code [???]
+	2) Clearer error message on failed sanity check
+	3) Removal of BOGUS Notes file
+
+-----------------------------------------------------------------------------
+Patch #7alk quinter, 2 Nov 94
+
+This patch adds the following features:
+
+	1) O_EXCL flag when opening the device to ensure it is not mounted
+	2) Sanity checks to avoid accessing non msdos disks
+Both features were suggested by Karl Eichwalder (ke@pertron.central.de)
+
+-----------------------------------------------------------------------------
+Patch #7alk quater, 1 Oct 94
+
+This patch adds the following features:
+
+	1) disk serial number support.
+	2) mcheck works for every drive.
+
+-----------------------------------------------------------------------------
+Patch #7alk ter, 10 Sep 94
+
+This patch adds the following features:
+
+	1) mformat works again.
+	2) mmount allows the user to pass arbitrary arguments to mount.
+	Floppy disks are no longer mounted by default on /mount/A /mount/B 
+	etc.
+
+-----------------------------------------------------------------------------
+Patch #7alk bis, 18 jul 94
+
+This patch adds the following features:
+
+	1) Support for variable sector sizes.
+	2) Support for "2m" formats.
+	3) Support for formatting 16-bit fat disks.
+	4) Support for formatting ED disks (Their capacity is too big to
+	   use a 12 bit FAT and 1 sector clusters. Either use bigger
+	   clusters or a 16 bit FAT)
+        5) Mcopying from one DOS drive to another works now. (It used to
+	   call mktemp on a non-writable string)
+
+-----------------------------------------------------------------------------
+Patch #7alk, 16 feb 94
+
+This patch adds the following features:
+
+	1) Mtools can now set the disk geometry on Linux. (Useful for
+	reading 1.72 Mb disks. This was already possible on unixpc and
+	SPARC )
+	2) New mmount command. Reads the boot sector, sets the geometry
+	and finally mounts the disk. Only available for Linux.
+	3) Mwrite can now write stdout to a DOS file: mwrite - a:test
+	4) Mread now also acts as mtype: mread a:test -
+	5) Mtools now tries 3 sources to get its drive geometry.
+	configuration: first ~/.mtoolsrc, then /etc/mtools, and finally 
+	compiled-in. ( The two first are conditional on LOADDEVS being
+	defined ). LOADDEVS is now compatibles with the various geometry
+	setting routines (init_linux, init_sparc and init_unixpc).
+	6) Bug fixes for -t mode of mwrite and mread. ( For certain file sizes
+	the trailing DOS end-of-file character wasn't correctly written.)
+	7) Bug fixes for "drive probing code." (Now failure to lock onto a disk
+	causes always trial of the next configuration. Before, mtools used
+	to abort on certain cases). Similar fixes in mformat.
+	8) Optimization/bug fix of cluster/fat repartition in mformat.c
+	9) Made fat checking code optional. (1.72mb disks mformatted with old 
+        mtools were almost always rejected) To bypass fat-checking set the
+	environment variable MTOOLS_FAT_COMPATIBILITY
+	10) Mtools now opens /dev/tty to ask for confirmation messages. This
+        way, it doesn't interfere with mreading/mwriting from/to stdin/stdout.
+
+
+CAUTION: I only tested this with Sparc and Linux. Although I left #ifdefs
+for other OS's in devices.c, that doesn't mean that it works on these OS's.
+
+-----------------------------------------------------------------------------
+Patch #7+, 19 sep 93
+
+This patch merges in the mods against 2.05 under Linux. Two are the main
+changes: that all commands are linked as a single executable, which can
+be linked as different name, and that the device specs are no longer
+hardcompiled but are read dynamically from /etc/mtools (the latter change
+is conditional on LOADDEVS being defined).
+
+-----------------------------------------------------------------------------
+Patch #7, 6 Sep 92
+
+This patch will change the method of determining if the FAT encoding
+scheme in the devices.c file is correct.  The method introduced by patch
+#6 was naive and easily fooled.
+
+A pre-processor variable called CHK_FAT has been added to the fat_read.c
+file just in case this new method isn't appropriate for all disks.
+
+-----------------------------------------------------------------------------
+Patch #6, 21 Aug 92
+
+This patch will add the following features:
+
+	1) Mtools commands now use advisory locks to preclude two
+	processes from writing to the same DOS filesystem.  You must
+	edit the Makefile to choose one of the 3 lock methods:
+		-DLOCKF, -DFLOCK, or -DFCNTL.
+	See the Configure file for more details.
+
+	2) An error detection routine has been added to determine if the
+	FAT encoding scheme in the devices.c file is correct.
+
+	3) Mtools commands now return exit codes with the following
+	meaning:
+		0 = success
+		1 = utter failure
+		2 = partial success/failure.  (at least one successful
+		    operation, but at least one failure)
+
+It also corrects a bug when Mtools is used on machines that have 16 bit
+integers.  However, machines with 16 bit integers are limited to FAT
+tables that are less than 64k in length.
+-------------------------------------------------------------------------------
+Patch #5, 25 Aug 91
+
+This patch will add a few new features:
+
+	1) Mtools will now work properly on MSDOS partitions that are
+	greater than 32M.
+
+	2) If the "current working directory" information (contained in
+	the $HOME/.mcwd file) is more than 6 hours old, Mtools will
+	issue a warning and ignore the old information.
+
+	3) The mcopy command will now copy files between 2 MS-DOS file
+	systems (such as mcopy "a:*" b:).
+
+-------------------------------------------------------------------------------
+Patch #4, 11 Apr 91
+
+	This patch will fix a bug in the mmd command where directories
+	inherited the file name extension of the parent directory.  It
+	also adds a feature that will allow the copying of zero length
+	files.
+
+-------------------------------------------------------------------------------
+Patch #3, 28 Nov 90
+
+	This patch will fix a bug where Mtools sometimes bypasses the
+	disk "cache" and reads/writes to the disk directly.
+
+-------------------------------------------------------------------------------
+Patch #2, 21 Nov 90
+
+	This patch will fix a bug in the folding of MS-DOS filenames to
+	lower case, and will fix a bug that could prevent the detection
+	of a full disk.
+
+-------------------------------------------------------------------------------
+Patch #1, 12 Oct 90
+
+	This patch will fix a few problems on Berkeley flavors of Unix,
+	and will fix the floating point exception bug when Mtools is
+	used with diskettes that have been formatted under very old DOS
+	(or formatted by some other non-DOS system).
+
+-------------------------------------------------------------------------------
+New in the v2.0 release....
+
+	1) Support for multiple devices.  Mtools now supports:
+		multiple floppy disks (A:, B:, etc)
+		DOS partitions on a hard disk
+		DOS "images" such as those VP/ix uses.
+
+	2) Wildcards are supported anywhere in a pathname (not just
+	in the "filename" part as before)
+
+	3) Reads and writes to slow devices are now "cylinder buffered"
+	when appropriate.
+
+	4) Versions of CD, FORMAT, LABEL, and ATTRIB have been added.
+
+	5) A Mtools.1 manual page has been added for an overview of Mtools.
+
+	6) The mkmanifest command has been added.  Although not an 'mtool'
+	command, it makes life easier when fixing up Unix filenames that
+	get clobbered by MS-DOS file name restrictions.
+
+	7) The mkdfs program of the "fast-mtools" release for the Sun
+	SparcStation can be replaced with mformat.
+
+	8) The Configure file has been included to help those who must add
+	devices to the devices.c file.
+
+	Many thanks to Viktor Dukhovni (viktor@math.princeton.edu) for
+	many of the ideas in the new release.

@@ -1,0 +1,226 @@
+'\" t
+.TH mpartition 1 "10Dec18" mtools-4.0.23
+.SH Name
+mpartition - partition an MSDOS hard disk
+'\" t
+.de TQ
+.br
+.ns
+.TP \\$1
+..
+
+.tr \(is'
+.tr \(if`
+.tr \(pd"
+
+.SH Note\ of\ warning
+This manpage has been automatically generated from mtools's texinfo
+documentation, and may not be entirely accurate or complete.  See the
+end of this man page for details.
+.PP
+.SH Description
+.PP
+The \fR\&\f(CWmpartition\fR command is used to create MS-DOS file systems as
+partitions.  This is intended to be used on non-Linux systems,
+i.e. systems where fdisk and easy access to SCSI devices are not
+available.  This command only works on drives whose partition variable
+is set.
+.PP
+.ft I
+.nf
+\&\fR\&\f(CWmpartition\fR \fR\&\f(CW-p\fR \fIdrive\fR
+\&\fR\&\f(CWmpartition\fR \fR\&\f(CW-r\fR \fIdrive\fR
+\&\fR\&\f(CWmpartition\fR \fR\&\f(CW-I\fR [\fR\&\f(CW-B\fR \fIbootSector\fR] \fIdrive\fR 
+\&\fR\&\f(CWmpartition\fR \fR\&\f(CW-a\fR \fIdrive\fR
+\&\fR\&\f(CWmpartition\fR \fR\&\f(CW-d\fR \fIdrive\fR
+\&\fR\&\f(CWmpartition\fR \fR\&\f(CW-c\fR [\fR\&\f(CW-s\fR \fIsectors\fR] [\fR\&\f(CW-h\fR \fIheads\fR]
+[\fR\&\f(CW-t\fR \fIcylinders\fR] [\fR\&\f(CW-v\fR [\fR\&\f(CW-T\fR \fItype\fR] [\fR\&\f(CW-b\fR
+\&\fIbegin\fR] [\fR\&\f(CW-l\fR length] [\fR\&\f(CW-f\fR]
+\&\&
+.fi
+.ft R
+ 
+.PP
+Mpartition supports the following operations:
+.TP
+\&\fR\&\f(CWp\fR\ 
+Prints a command line to recreate the partition for the drive.  Nothing
+is printed if the partition for the drive is not defined, or an
+inconsistency has been detected.  If verbose (\fR\&\f(CW-v\fR) is also set,
+prints the current partition table.
+.TP
+\&\fR\&\f(CWr\fR\ 
+Removes the partition described by \fIdrive\fR.
+.TP
+\&\fR\&\f(CWI\fR\ 
+Initializes the partition table, and removes all partitions.
+.TP
+\&\fR\&\f(CWc\fR\ 
+Creates the partition described by \fIdrive\fR.
+.TP
+\&\fR\&\f(CWa\fR\ 
+"Activates" the partition, i.e. makes it bootable.  Only one partition
+can be bootable at a time.
+.TP
+\&\fR\&\f(CWd\fR\ 
+"Deactivates" the partition, i.e. makes it unbootable.
+.PP
+If no operation is given, the current settings are printed.
+.PP
+For partition creations, the following options are available:
+.TP
+\&\fR\&\f(CWs\ \fIsectors\fR\&\f(CW\fR\ 
+The number of sectors per track of the partition (which is also the
+number of sectors per track for the whole drive).
+.TP
+\&\fR\&\f(CWh\ \fIheads\fR\&\f(CW\fR\ 
+The number of heads of the partition (which is also the number of heads
+for the whole drive).  By default, the geometry information (number of
+sectors and heads) is figured out from neighboring partition table
+entries, or guessed from the size.
+.TP
+\&\fR\&\f(CWt\ \fIcylinders\fR\&\f(CW\fR\ 
+The number of cylinders of the partition (not the number of cylinders of
+the whole drive.
+.TP
+\&\fR\&\f(CWb\ \fIbegin\fR\&\f(CW\fR\ 
+The starting offset of the partition, expressed in sectors. If begin is
+not given, mpartition lets the partition begin at the start of the disk
+(partition number 1), or immediately after the end of the previous
+partition.
+.TP
+\&\fR\&\f(CWl\ \fIlength\fR\&\f(CW\fR\ 
+The size (length) of the partition, expressed in sectors.  If end is not
+given, mpartition figures out the size from the number of sectors, heads
+and cylinders.  If these are not given either, it gives the partition
+the biggest possible size, considering disk size and start of the next
+partition.
+.PP
+The following option is available for all operation which modify the
+partition table:
+.TP
+\&\fR\&\f(CWf\fR\ 
+Usually, before writing back any changes to the partition, mpartition
+performs certain consistency checks, such as checking for overlaps and
+proper alignment of the partitions.  If any of these checks fails, the
+partition table is not changes.  The \fR\&\f(CW-f\fR allows you to override
+these safeguards.
+.PP
+The following options are available for all operations:
+.TP
+\&\fR\&\f(CWv\fR\ 
+Together with \fR\&\f(CW-p\fR prints the partition table as it is now (no
+change operation), or as it is after it is modified.
+.TP
+\&\fR\&\f(CWvv\fR\ 
+If the verbosity flag is given twice, mpartition will print out a
+hexdump of the partition table when reading it from and writing it to
+the device.
+.PP
+The following option is available for partition table initialization:
+.TP
+\&\fR\&\f(CWB\ \fIbootSector\fR\&\f(CW\fR\ 
+Reads the template master boot record from file \fIbootSector\fR.
+.PP
+.SH Choice\ of\ partition\ type
+.PP
+Mpartition proceeds as follows to pick a type for the partition:
+.TP
+-\ \ 
+FAT32 partitions are assigned type 0x0C (``\fR\&\f(CWWin95 FAT32, LBA\fR'')
+.TP
+-\ \ 
+For all others, if the partition fits entirely within the 65536 sector of the disk, assign 0x01 (``\fR\&\f(CWDOS FAT12, CHS\fR'') for FAT12 partition and 0x04 (``\fR\&\f(CWDOS FAT16, CHS\fR'') for FAT16 partitions
+.TP
+-\ \ 
+If not covered by the above, assign 0x06 (``\fR\&\f(CWDOS BIG FAT16 CHS\fR'') if partition fits entirely within the first 1024 cylinders (CHS mode)
+.TP
+-\ \ 
+All remaining cases get 0x0E (``\fR\&\f(CWWin95 BIG FAT16, LBA\fR'')
+.PP
+If number of fat bits is not known (not specified in drive's
+definition), then FAT12 is assumed for all drives with less than 4096
+sectors, and FAT16 for those with more than 4096 sectors.
+.PP
+This corresponds more or less to the definitions outlined at \fR\&\f(CWhttps://en.wikipedia.org/wiki/Partition_type#List_of_partition_IDs\fR
+and
+\&\fR\&\f(CWhttps://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-2000-server/cc977219(v=technet.10)\fR,
+with two notable differences:
+.TP
+-\ \ 
+If fat bits are unknown, the reference documents consider drives with
+less than 32680 sectors to be FAT12. Mtools uses 4096 sectors as the
+cutoff point, as older versions of DOS only support FAT12 on disks
+with less than 4096 sectors (and these older versions are the ones
+which would be most likely to use FAT12 in the first place).
+.TP
+-\ \ 
+The reference documents use a 8GB (wikipedia) or a 4GB (Microsoft)
+cutoff between 0x06 (\fR\&\f(CWDOS BIG FAT16 CHS\fR) and 0x0E. Mtools uses
+1024 cylinders. This is because any partition beyond 1024 cylinders
+must be LBA and cannot be CHS. 8GB works out to be the biggest
+capacity which can be represented as CHS (63 sectors, 255 heads and
+1024 cylinders). 4GB is the capacity limit for windows 2000, so it
+makes sense that a documentation for windows 2000 would specify this
+as the upper limit for any partition type.
+.PP
+.SH See\ Also
+Mtools' texinfo doc
+.SH Viewing\ the\ texi\ doc
+This manpage has been automatically generated from mtools's texinfo
+documentation. However, this process is only approximative, and some
+items, such as crossreferences, footnotes and indices are lost in this
+translation process.  Indeed, these items have no appropriate
+representation in the manpage format.  Moreover, not all information has
+been translated into the manpage version.  Thus I strongly advise you to
+use the original texinfo doc.  See the end of this manpage for
+instructions how to view the texinfo doc.
+.TP
+* \ \ 
+To generate a printable copy from the texinfo doc, run the following
+commands:
+ 
+.nf
+.ft 3
+.in +0.3i
+    ./configure; make dvi; dvips mtools.dvi
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.TP
+* \ \ 
+To generate a html copy,  run:
+ 
+.nf
+.ft 3
+.in +0.3i
+    ./configure; make html
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fRA premade html can be found at
+\&\fR\&\f(CW\(ifhttp://www.gnu.org/software/mtools/manual/mtools.html\(is\fR
+.TP
+* \ \ 
+To generate an info copy (browsable using emacs' info mode), run:
+ 
+.nf
+.ft 3
+.in +0.3i
+    ./configure; make info
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.PP
+The texinfo doc looks most pretty when printed or as html.  Indeed, in
+the info version certain examples are difficult to read due to the
+quoting conventions used in info.
+.PP

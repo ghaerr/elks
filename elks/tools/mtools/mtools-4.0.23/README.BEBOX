@@ -1,0 +1,126 @@
+% Copyright 1997 Marco Nelissen.
+% Copyright 1996-1998,2001,2002,2009 Alain Knaff.
+% This documentation is for Mtools which is a collection of tools to
+% allow Unix systems to manipulate MS-DOS files.
+
+% Permission is granted to copy, distribute and/or modify this document
+% under the terms of the GNU Free Documentation License, Version 1.3 or
+% any later version published by the Free Software Foundation; with no
+% Invariant Sections, with no Front-Cover Texts, and with no Back-Cover
+% Texts.  A copy of the license is included in the section entitled
+% ``GNU Free Documentation License''.
+
+
+
+NOTE: THIS FILE ONLY REFERS TO THE BEBOX.  IF YOU ARE USING UNIX,
+REFER TO README.
+
+
+This is mtools 3.6 for BeOS DR9. This release will no longer work on
+DR8, which should be no problem since everybody should have upgraded
+to DR9 by now.  mtools 3.6 can be used as a replacement for the
+version 2.0.7 mtools supplied with BeOS.  mtools 3.6 supports the VFAT
+filesystem (long filenames), which the Be-supplied tools do not.
+
+To install:
+
+- build the executables: type "make -f Makefile.Be" in the mtools
+  directory. Again, this instruction is only for the Bebox, not for any
+  kind of Unix. They should compile without any warnings or errors.
+
+  WARNING: do NOT rerun the configure script. Although DR9 bash will
+no longer lock up when running the configure script, the resulting
+files are not entirely correct, and mtools will fail to compile.  I
+have hand-crafted a config.h that can be used to compile mtools. This
+will be used if you just type "make -f Makefile.Be"
+
+- copy the "mtools" executable (and perhaps also "mkmanifest") to /bin,
+  or to another directory in your path.
+
+Since all of the mtools-commands are contained within a single
+executable, you must either define aliases for each command, or create
+links for them.
+
+To create aliases, add the following lines to the file /boot/.profile
+
+alias mattrib="mtools -c mattrib"
+alias mbadblocks="mtools -c mbadblocks"
+alias mcd="mtools -c mcd"
+alias mcopy="mtools -c mcopy"
+alias mdel="mtools -c mdel"
+alias mdeltree="mtools -c mdeltree"
+alias mdir="mtools -c mdir"
+alias mformat="mtools -c mformat"
+alias minfo="mtools -c minfo"
+alias mlabel="mtools -c mlabel"
+alias mmd="mtools -c mmd"
+alias mmount="mtools -c mmount"
+alias mrd="mtools -c mrd"
+alias mmove="mtools -c mmove"
+alias mpartition="mtools -c mpartition"
+alias mren="mtools -c mren"
+alias mtoolstest="mtools -c mtoolstest"
+alias mtest="mtools -c  mtest"
+alias mtype="mtools -c mtype"
+alias mzip="mtools -c mzip"
+
+ (then close and re-open all terminals and shells, or type
+". /boot/.profile" in each open terminal to activate the
+aliases. Optional: remove the old mtools from the /bin directory)
+
+
+To create links, open a shell, and type the following commands
+(assuming you copied the mtools executable to /bin):
+
+cd /bin
+rm mattrib mcd mcopy mdel mdir mformat mkmanifest mlabel mmd mrd mread mren mtype mwrite
+ln -s mtools mattrib
+ln -s mtools mbadblocks
+ln -s mtools mcd
+ln -s mtools mcopy
+ln -s mtools mdel
+ln -s mtools mdeltree
+ln -s mtools mdir
+ln -s mtools mformat
+ln -s mtools minfo
+ln -s mtools mlabel
+ln -s mtools mmd
+ln -s mtools mmount
+ln -s mtools mrd
+ln -s mtools mread
+ln -s mtools mmove
+ln -s mtools mpartition
+ln -s mtools mren
+ln -s mtools mtoolstest
+ln -s mtools mtest
+ln -s mtools mtype
+ln -s mtools mwrite
+ln -s mtools mzip
+
+
+Alternatively, make multiple copies of the "mtools" executable and use
+the names mdir, mdel etcetera.
+
+- if you want more than just floppy support, you need to make a configuration
+  file. An example mtools.conf.be is included in the distribution.
+  mtools looks in a number of standard places for its config file, such as:
+  /boot/.mtoolsrc
+  /boot/mtools.conf
+  /boot/system/mtools.conf
+  By defining the variable MTOOLSRC you can give the config file any name you
+  like and put it at any location.
+
+  You need to add something like "export MTOOLSRC=/conf/mtools.cfg" to
+  your .profile file.
+
+  Take care to remove or change the entries that you don't need. The provided
+  mtools.conf is for unix systems, with some BeOS settings at the end.
+  The sample entry for a ZIP disk on the BeOS has been provided by
+  Chris Herborth
+  (chrish@qnx.com). 
+
+
+- enjoy!
+
+Marco Nelissen <marcone@xs4all.nl>
+Alain Knaff <alain@knaff.lu>
