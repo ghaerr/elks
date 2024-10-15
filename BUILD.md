@@ -3,12 +3,9 @@
 ## Prerequisites
 
 To build ELKS, you need a development environment on Linux or macOS or Windows with [WSL](https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux), including:
-- flex
-- bison
-- texinfo
 - libncurses5-dev
-- mtools-4.0.23 (for MSDOS/FAT images)
 - compress (for compressed man pages; use `sudo apt-get install ncompress`)
+- texinfo
 
 ## Build steps
 
@@ -39,7 +36,6 @@ configuration, that folder is used to create either a floppy disk image
 (fd360, fd720, fd1200, fd1440, fd2880), a flat 32MB hard disk image (without MBR),
 or a ROM file image into the `image` folder. The image extension is '.img'
 and will be in either ELKS (MINIX) or MSDOS (FAT) filesystem format.
-Building FAT images requires the 'mtools-4.0.23' package to be installed.
 
 6- Before writing that image on the real medium, you can test it first on QEMU:
 
