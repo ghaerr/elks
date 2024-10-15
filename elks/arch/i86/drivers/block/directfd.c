@@ -775,9 +775,8 @@ static void DFPROC setup_rw_floppy(void)
 {
     DEBUG("setup_rw-");
 #if IODELAY
-    int num_sectors = read_track?
-        floppy->sect + (read_track && (floppy->sect & 1) && !head)
-        : CURRENT->rq_nr_sectors;
+    int num_sectors = read_track? floppy->sect + (floppy->sect & 1 && !head);
+                                : CURRENT->rq_nr_sectors;
     DEBUG("[%ur%u]", current_drive, num_sectors);
     static unsigned lasttrack;
     unsigned ms = abs(track - lasttrack) * 4 / 10;
