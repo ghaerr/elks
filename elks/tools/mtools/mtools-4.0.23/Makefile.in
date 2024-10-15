@@ -183,7 +183,7 @@ dokclean:
 
 clean:
 
-xclean:	mostlyclean
+clean:	mostlyclean
 	-rm -f mtools $(LINKS) floppyd floppyd_installtest mkmanifest *.info* *.dvi *.html 2>/dev/null
 
 

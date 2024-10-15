@@ -41,18 +41,20 @@ include $(BASEDIR)/Makefile-rules
 
 all: mtools-4.0.23/Makefile
 	make -C mtools-4.0.23
-	cp mtools-4.0.23/mattrib ../bin
-	cp mtools-4.0.23/mcopy ../bin
-	cp mtools-4.0.23/mdir ../bin
-	cp mtools-4.0.23/mformat ../bin
-	cp mtools-4.0.23/minfo ../bin
-	cp mtools-4.0.23/mmd ../bin
-	cp mtools-4.0.23/mshowfat ../bin
+	cp -p mtools-4.0.23/mattrib ../bin
+	cp -p mtools-4.0.23/mcopy ../bin
+	cp -p mtools-4.0.23/mdir ../bin
+	cp -p mtools-4.0.23/mformat ../bin
+	cp -p mtools-4.0.23/minfo ../bin
+	cp -p mtools-4.0.23/mmd ../bin
+	cp -p mtools-4.0.23/mshowfat ../bin
 
 mtools-4.0.23/Makefile:
 	cd mtools-4.0.23; ./configure --disable-floppyd; cd ..
 
-dokclean: doclean
+dokclean:
 
 doclean:
+
+clean:
 	make -C mtools-4.0.23 clean
