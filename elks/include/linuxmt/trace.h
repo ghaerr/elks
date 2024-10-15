@@ -45,7 +45,7 @@
  * TRACK_SPLIT_BLK  - read extra sector on track split block (set in bioshd.c)
  * SPLIT_BLK        - read extra sector on single split block (set in bioshd.c)
  * FULL_TRACK       - read full track on cache refill (set in bioshd.c)
- * SHOW_STARTUP     - show startup time on boot (set in getty.c)
+ * BOOT_TIMER       - show startup time on boot (set in getty.c)
  */
 
 /* internal flags for kernel */

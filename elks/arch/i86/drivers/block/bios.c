@@ -18,7 +18,7 @@
 #include "bioshd.h"
 
 #define RESET_DISK_CHG  1       /* =1 to reset BIOS on drive change fixes QEMU retry */
-#define IODELAY         0       /* emulate delay for floppy on QEMU */
+#define IODELAY         1       /* emulate delay for floppy on QEMU */
 
 #define abs(v)          (((int)(v) >= 0)? (v): -(v))
 /*
