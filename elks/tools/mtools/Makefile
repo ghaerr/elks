@@ -50,7 +50,7 @@ all: mtools-4.0.23/Makefile
 	cp mtools-4.0.23/mshowfat ../bin
 
 mtools-4.0.23/Makefile:
-	cd mtools-4.0.23; ./configure --disable-floppyd; cd ..`
+	cd mtools-4.0.23; ./configure --disable-floppyd; cd ..
 
 dokclean: doclean
 
