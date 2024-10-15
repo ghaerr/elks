@@ -33,7 +33,6 @@
  * from the compile-time kernel rather than querying the current kernel.
  * These are all works in progress.
  */
-#include <ctype.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,16 +48,10 @@
 #include <sys/ioctl.h>
 #include <linuxmt/mem.h>
 
-#define DEBUG		0	/* set =1 for debug messages*/
-#define SHOW_STARTUP	0	/* set =1 to display system startup time */
-
-/* debug messages go here*/
-#define CONSOLE		_PATH_CONSOLE
-
-/* For those requiring a super-small getty, the following define cuts out
- * all of the extra functionality regarding the /etc/issue code sequences.
- */
-//#define SUPER_SMALL		/* Disable for super-small binary */
+#define PARSE_ETC_ISSUE 0       /* set =1 to process /etc/issue @ sequences */
+#define BOOT_TIMER  	1       /* set =1 to display system startup time */
+#define DEBUG           0       /* set =1 for debug messages */
+#define CONSOLE	_PATH_CONSOLE   /* debug messages go here */
 
 #if DEBUG
 #define debug		consolemsg
@@ -89,32 +82,7 @@ void consolemsg(const char *str, ...)
 	va_end(args);
 }
 
-
-#if UNUSED
-char	Host[256];
-void host(void) {
-    char *ptr;
-    int fp = open(_PATH_HOSTNAME,O_RDONLY), sz;
-
-    if (fp) {
-	sz = read( fp, Host, 255);
-	if (sz >= 0)
-	    Host[sz] = '\0';
-	else
-	    *Host = '\0';
-	close(fp);
-    }
-    for (ptr = Host; isprint(*ptr); ptr++)
-	continue;
-    while (ptr >= &Host[1] && ptr[-1] == ' ')
-	ptr--;
-    *ptr = '\0';
-    if (!*Host)
-	strcpy( Host, "LocalHost" );
-}
-#endif
-
-#ifndef SUPER_SMALL
+#if PARSE_ETC_ISSUE
 char	*Date, *Time;
 
 /*	Before  = "Sun Dec 25 12:34:56 7890"
@@ -191,24 +159,7 @@ static speed_t convert_baudrate(speed_t baudrate)
 	case 38400: return B38400;
 	case 57600: return B57600;
 	case 115200: return B115200;
-#ifdef B230400
 	case 230400: return B230400;
-#endif
-#ifdef B460800
-	case 460800: return B460800;
-#endif
-#ifdef B500000
-	case 500000: return B500000;
-#endif
-#ifdef B576000
-	case 576000: return B576000;
-#endif
-#ifdef B921600
-	case 921600: return B921600;
-#endif
-#ifdef B1000000
-	case 1000000: return B1000000;
-#endif
 	}
 	return 0;
 }
@@ -232,7 +183,6 @@ void show_startup(void)
 
 int main(int argc, char **argv)
 {
-    char *ptr;
     int n, fd;
     speed_t baud = 0;
     struct termios termios;
@@ -294,10 +244,11 @@ int main(int argc, char **argv)
     fd = open(_PATH_ISSUE, O_RDONLY);
     if (fd >= 0) {
 	put('\n');
-#ifdef SUPER_SMALL
+#if !PARSE_ETC_ISSUE
 	while ((n=read(fd,Buffer,sizeof(Buffer))) > 0)
 	    write(1,Buffer,n);
 #else
+	char *ptr;
 	when();
 	*Buffer = '\0';
 	while (read(fd,Buffer,1) > 0) {
@@ -361,9 +312,9 @@ int main(int argc, char **argv)
 			    state(Date);
 			    break;
 			case 'H':			/* Host */
-                            if (!(ptr = getenv("HOSTNAME")))
-                                ptr = "LocalHost";
-                            state(ptr);
+			    if (!(ptr = getenv("HOSTNAME")))
+				ptr = "LocalHost";
+			    state(ptr);
 			    break;
 			case 'L':			/* Line used */
 			    ptr = rindex(argv[1],'/');
@@ -377,16 +328,9 @@ int main(int argc, char **argv)
 			case 'T':			/* Time */
 			    state(Time);
 			    break;
-#if 0
-			case 'U':			/* Users */
-			    state("1 user");
-			    break;
-#endif
-#ifdef ELKS_VERSION
 			case 'V':			/* Version */
 			    state(ELKS_VERSION);
 			    break;
-#endif
 			default:
 			    put('@');
 			    put(ch);
@@ -402,7 +346,6 @@ int main(int argc, char **argv)
 #endif
 	close(fd);
     }
-
 
     show_startup();
     for (;;) {
