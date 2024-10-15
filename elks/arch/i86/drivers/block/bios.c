@@ -129,8 +129,9 @@ int BFPROC bios_disk_rw(unsigned cmd, unsigned num_sectors, unsigned drive,
         static unsigned lastcyl;
         unsigned ms = abs(cylinder - lastcyl) * 4 / 10;
         lastcyl = cylinder;
-        ms += 10 + num_sectors;        /* 1440k @300rpm = 100ms + ~10ms/sector + 4ms/tr */
-        if (drive == 1)
+        if (drive == 0)
+            ms += 10 + num_sectors;   /* 1440k @300rpm = 100ms + ~10ms/sector + 4ms/tr */
+        else
             ms += 8 + (num_sectors<<1); /* 360k @360rpm = 83ms + ~20ms/sector + 3ms/tr */
         unsigned long timeout = jiffies + ms*HZ/100;
         while (!time_after(jiffies, timeout)) continue;
