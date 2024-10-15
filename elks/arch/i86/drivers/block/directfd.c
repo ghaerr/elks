@@ -125,6 +125,7 @@
 char USE_IMPLIED_SEEK = 0; /* =1 for QEMU with 360k/AT stretch floppies (not real hw) */
 #define CHECK_DIR_REG       1   /* =1 to read and clear DIR DSKCHG when media changed */
 #define CHECK_DISK_CHANGE   1   /* =1 to inform kernel of media changed */
+#define IODELAY             0   /* =1 to emulate delay for floppy on QEMU */
 
 /* adjustable timeouts */
 #define TIMEOUT_MOTOR_ON   (HZ/2)      /* 500 ms wait for floppy motor on before I/O */
@@ -135,6 +136,8 @@ char USE_IMPLIED_SEEK = 0; /* =1 for QEMU with 360k/AT stretch floppies (not rea
 
 //#define DEBUG printk
 #define DEBUG(...)
+
+#define abs(v)          (((int)(v) >= 0)? (v): -(v))
 
 #define bool unsigned char      /* don't require stdbool.h yet */
 
@@ -771,8 +774,23 @@ static void rw_interrupt(void)
 static void DFPROC setup_rw_floppy(void)
 {
     DEBUG("setup_rw-");
-    setup_DMA();
+#if IODELAY
+    int num_sectors = read_track?
+        floppy->sect + (read_track && (floppy->sect & 1) && !head)
+        : CURRENT->rq_nr_sectors;
+    DEBUG("[%ur%u]", current_drive, num_sectors);
+    static unsigned lasttrack;
+    unsigned ms = abs(track - lasttrack) * 4 / 10;
+    lasttrack = track;
+    if (current_drive == 0)
+        ms += 10 + num_sectors;     /* 1440k @300rpm = 100ms + ~10ms/sector + 4ms/tr */
+    else
+        ms += 8 + (num_sectors<<1); /* 360k @360rpm = 83ms + ~20ms/sector + 3ms/tr */
+    unsigned long timeout = jiffies + ms*HZ/100;
+    while (!time_after(jiffies, timeout)) continue;
+#endif
     do_floppy = rw_interrupt;
+    setup_DMA();
     output_byte(command);
     output_byte(head << 2 | current_drive);
     output_byte(track);
