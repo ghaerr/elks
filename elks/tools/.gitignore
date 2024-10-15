@@ -15,3 +15,10 @@ bin/ewcc
 bin/ewlink
 bin/fixomf
 elftoolchain-0.7.1
+bin/mattrib
+bin/mcopy
+bin/mdir
+bin/mformat
+bin/minfo
+bin/mmd
+bin/mshowfat
