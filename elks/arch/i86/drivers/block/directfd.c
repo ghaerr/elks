@@ -179,7 +179,7 @@ static unsigned char running;   /* keep track of motors already running */
  */
 #define LAST_DMA_ADDR   (0x100000L - BLOCK_SIZE)    /* enforce the 1M limit */
 
-#define _MK_LINADDR(seg, offs) ((unsigned long)((((unsigned long)(seg)) << 4) + (unsigned)(offs)))
+#define LINADDR(seg, offs) ((unsigned long)((((unsigned long)(seg)) << 4) + (unsigned)(offs)))
 
 /*
  * globals used by 'result()'
@@ -480,11 +480,11 @@ static void DFPROC setup_DMA(void)
     use_xms = req->rq_seg >> 16; /* will be nonzero only if XMS configured & XMS buffer */
     physaddr = (req->rq_seg << 4) + (unsigned int)req->rq_buffer;
 
-    count = (unsigned)req->rq_nr_sectors << 9;
+    count = req->rq_nr_sectors << 9;
     if (use_xms || (physaddr + count) < physaddr)
         dma_addr = LAST_DMA_ADDR + 1;   /* force use of bounce buffer */
     else
-        dma_addr = _MK_LINADDR(req->rq_seg, req->rq_buffer);
+        dma_addr = LINADDR(req->rq_seg, req->rq_buffer);
 
     DEBUG("setupDMA ");
 
@@ -492,13 +492,13 @@ static void DFPROC setup_DMA(void)
         buffer_drive = buffer_track = -1;
         count = floppy->sect << 9;      /* sects/trk (one side) times 512 */
         if (floppy->sect & 1 && !head)
-            count += 512; /* add one if head=0 && sector count is odd */
-        dma_addr = _MK_LINADDR(DMASEG, 0);
+            count += 512;               /* handle split block */
+        dma_addr = LINADDR(DMASEG, 0);
     } else if (dma_addr >= LAST_DMA_ADDR) {
-        dma_addr = _MK_LINADDR(kernel_ds, floppy_buffer); /* use bounce buffer */
+        dma_addr = LINADDR(kernel_ds, floppy_buffer); /* use bounce buffer */
         if (command == FD_WRITE) {
-            xms_fmemcpyw(floppy_buffer, kernel_ds, CURRENT->rq_buffer,
-                CURRENT->rq_seg, BLOCK_SIZE/2);
+            xms_fmemcpyw(floppy_buffer, kernel_ds, req->rq_buffer,
+                req->rq_seg, BLOCK_SIZE/2);
         }
     }
     DEBUG("%d/%lx;", count, dma_addr);
@@ -533,13 +533,12 @@ static void DFPROC output_byte(char byte)
     }
     current_track = NO_TRACK;
     reset = 1;
-    printk("fd: can't send to FDC\n");
+    printk("df: can't send to FDC\n");
 }
 
 static int DFPROC result(void)
 {
     int i = 0, counter, status;
-
     if (reset)
         return -1;
     for (counter = 0; counter < 10000; counter++) {
@@ -662,6 +661,7 @@ static void DFPROC tell_sector(int nr)
  */
 static void rw_interrupt(void)
 {
+    struct request *req = CURRENT;
     unsigned char *buffer_area;
     int nr, bad;
 
@@ -683,7 +683,7 @@ static void rw_interrupt(void)
             printk("data overrun");
             /* could continue from where we stopped, but ... */
             bad = 0;
-        } else if (CURRENT->rq_errors >= MIN_ERRORS) {
+        } else if (req->rq_errors >= MIN_ERRORS) {
             if (ST0 & ST0_ECE) {
                 printk("recalibrate failed");
             } else if (ST2 & ST2_CRC) {
@@ -726,7 +726,7 @@ static void rw_interrupt(void)
 
     if (probing) {
         open_inode->i_size = (sector_t)floppy->size << 9;
-        nr = DEVICE_NR(CURRENT->rq_dev);
+        nr = DEVICE_NR(req->rq_dev);
         printk("df%d: Auto-detected floppy type %s\n", nr, floppy->name);
         current_type[nr] = floppy;
         probing = 0;
@@ -737,23 +737,22 @@ static void rw_interrupt(void)
         buffer_drive = current_drive;
         buffer_area = (unsigned char *)(sector << 9);
         DEBUG("rd:%04x:%08lx->%04x:%04x;", DMASEG, buffer_area,
-                (unsigned long)CURRENT->rq_seg, CURRENT->rq_buffer);
-        xms_fmemcpyw(CURRENT->rq_buffer, CURRENT->rq_seg, buffer_area,
-            DMASEG, BLOCK_SIZE/2);
+                (unsigned long)req->rq_seg, req->rq_buffer);
+        xms_fmemcpyw(req->rq_buffer, req->rq_seg, buffer_area, DMASEG, BLOCK_SIZE/2);
     } else if (command == FD_READ 
 #ifndef CONFIG_FS_XMS_BUFFER
-           && _MK_LINADDR(CURRENT->rq_seg, CURRENT->rq_buffer) >= LAST_DMA_ADDR
+           && LINADDR(req->rq_seg, req->rq_buffer) >= LAST_DMA_ADDR
 #endif
                                     ) {
         /* if the dest buffer is out of reach for DMA (always the case if using
          * XMS buffers) we need to read/write via the bounce buffer */
-        xms_fmemcpyw(CURRENT->rq_buffer, CURRENT->rq_seg, floppy_buffer,
+        xms_fmemcpyw(req->rq_buffer, req->rq_seg, floppy_buffer,
             kernel_ds, BLOCK_SIZE/2);
-        printk("fd: illegal buffer usage, rq_buffer %04x:%04x\n",
-            CURRENT->rq_seg, CURRENT->rq_buffer);
+        printk("df: illegal buffer usage, rq_buffer %04x:%04x\n",
+            req->rq_seg, req->rq_buffer);
     }
     request_done(1);
-    //printk("RQOK;");
+    DEBUG("RQOK;");
     redo_fd_request();  /* Continue with the next request - if any */
 }
 
@@ -919,7 +918,7 @@ static void reset_interrupt(void)
     DEBUG("rstI-");
     for (i = 0; i < 4; i++) {
         output_byte(FD_SENSEI);
-        (void) result();
+        result();
     }
     output_byte(FD_SPECIFY);
     output_byte(cur_spec1);     /* hut etc */
@@ -982,7 +981,7 @@ static void shake_done(void)
 {
     /* Need SENSEI to clear the interrupt */
     output_byte(FD_SENSEI);
-    (void) result();
+    result();
     DEBUG("shD0x%x-", ST0);
     current_track = NO_TRACK;
     if (inb(FD_DIR) & 0x80) {
