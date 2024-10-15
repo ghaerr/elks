@@ -179,7 +179,11 @@ $(LINKS): mtools
 mostlyclean:
 	-rm -f *~ *.orig *.o a.out core 2>/dev/null
 
-clean:	mostlyclean
+dokclean:
+
+clean:
+
+xclean:	mostlyclean
 	-rm -f mtools $(LINKS) floppyd floppyd_installtest mkmanifest *.info* *.dvi *.html 2>/dev/null
 
 
