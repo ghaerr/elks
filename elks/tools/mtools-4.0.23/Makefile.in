@@ -1,0 +1,336 @@
+#  Copyright 1996-2004,2006-2010 Alain Knaff.
+#  This file is part of mtools.
+#
+#  Mtools is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  Mtools is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with Mtools.  If not, see <http://www.gnu.org/licenses/>.
+#
+#       Makefile for Mtools
+#
+# check the Configure file for some examples of device-specific setups
+# Berkeley flavors of Unix should include -DBSD in the CFLAGS.  Pick
+# a lock method... either -DLOCKF, -DFLOCK, or -DFCNTL and put that
+# string in the CFLAGS line below.
+
+# User specified flags
+USERCFLAGS = 
+USERLDFLAGS =
+USERLDLIBS =
+
+MAKEINFO = makeinfo
+TEXI2DVI = texi2dvi
+TEXI2PDF = texi2pdf
+TEXI2HTML = texi2html
+
+
+# do not edit below this line
+# =============================================================================
+
+SHELL = /bin/sh
+
+top_srcdir=@top_srcdir@
+srcdir=@srcdir@
+VPATH=@srcdir@
+
+prefix      = @prefix@
+exec_prefix = @exec_prefix@
+bindir      = @bindir@
+infodir     = @infodir@
+mandir      = @mandir@
+sysconfdir  = @sysconfdir@
+datarootdir = @datarootdir@
+
+CC         = @CC@
+CXX        = @CXX@
+MYCFLAGS   = @CFLAGS@
+MYCXXFLAGS = @CXXFLAGS@
+CPPFLAGS   = @CPPFLAGS@
+HOST_ID    = @HOST_ID@
+DEFS       = @DEFS@ -DSYSCONFDIR=\"$(sysconfdir)\" $(HOST_ID)
+
+LDFLAGS     = @LDFLAGS@
+LIBS        = @LIBS@
+SHLIB       = @SHLIB@
+MACHDEPLIBS = @MACHDEPLIBS@	
+LN_S        = @LN_S@
+
+INSTALL         = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA    = @INSTALL_DATA@
+INSTALL_INFO	= @INSTALL_INFO@
+
+.SUFFIXES:
+.SUFFIXES: .o .c
+.SUFFIXES: .o .c
+
+MAN1 = floppyd.1 floppyd_installtest.1 mattrib.1 mbadblocks.1 mcat.1 mcd.1 \
+mclasserase.1 mcopy.1 mdel.1 mdeltree.1 mdir.1 mdu.1 mformat.1  minfo.1 \
+mkmanifest.1 mlabel.1 mmd.1 mmount.1 mmove.1 mpartition.1 \
+mrd.1 mren.1 mshortname.1 mshowfat.1 mtoolstest.1 mtools.1 mtype.1 mzip.1
+MAN1EXT	= 1
+MAN1DIR	= $(DESTDIR)$(mandir)/man${MAN1EXT}
+MAN5	= mtools.5
+MAN5EXT	= 5
+MAN5DIR	= $(DESTDIR)$(mandir)/man${MAN5EXT}
+
+# all files in this directory included in the distribution
+DIST = \
+COPYING Changelog INSTALL Makefile Makefile.in README Release.notes \
+buffer.c buffer.h charsetConv.c codepage.h codepages.c config.c \
+config.guess config.h.in config.log config.sub configure configure.in \
+copyfile.c devices.c devices.h dirCache.c dirCache.h directory.c direntry.c \
+expand.c fat.c \
+fat_free.c file.c file.h file_name.h file_name.c files filter.c floppyd.1 \
+floppyd.c floppyd_io.c floppyd_io.h force_io.c fs.h fsP.h \
+getopt.h hash.c htable.h init.c llong.c mainloop.c match.c mattrib.1 \
+mattrib.c mbadblocks.1 mbadblocks.c mcat.1 mcat.c mcd.1 mcd.c mclasserase.c \
+mcopy.1 \
+mcopy.c mdel.1 mdel.c mdeltree.1 mdir.1 mdir.c mdu.c mdu.1 mformat.1 \
+mformat.c minfo.c \
+misc.c tty.c scsi.c missFuncs.c mk_direntry.c mkmanifest.1 mkmanifest.c \
+mlabel.1 mlabel.c mmd.1 mmd.c mmount.1 mmount.c mmove.1 mmove.c \
+mpartition.1 mpartition.c mrd.1 \
+mren.1 msdos.h mshortname.1 mshowfat.1 mtoolstest.1 mtools.1 mtools.5 mtools.c \
+mtools.conf mtools.h mtype.1 nameclash.h patchlevel.c \
+plain_io.c plain_io.h precmd.c privileges.c scripts signal.c stream.c stream.h \
+streamcache.c streamcache.h subdir.c strtonum.c sysincludes.h unixdir.c todo \
+vfat.c vfat.h xdf_io.c xdf_io.h
+
+OBJS1 = buffer.o charsetConv.o codepages.o config.o copyfile.o \
+devices.o dirCache.o directory.o direntry.o expand.o fat.o fat_free.o file.o  \
+file_name.o filter.o floppyd_io.o force_io.o hash.o init.o llong.o lockdev.o \
+match.o mainloop.o mattrib.o mbadblocks.o mcat.o mcd.o mclasserase.o mcopy.o \
+mdel.o mdir.o mdoctorfat.o mdu.o \
+mformat.o minfo.o misc.o missFuncs.o mk_direntry.o mlabel.o mmd.o mmount.o \
+mmove.o mpartition.o mshortname.o mshowfat.o mzip.o mtools.o old_dos.o \
+patchlevel.o plain_io.o precmd.o privileges.o scsi.o signal.o stream.o \
+streamcache.o subdir.o unixdir.o tty.o vfat.o xdf_io.o strtonum.o
+
+OBJS2 = missFuncs.o mkmanifest.o misc.o patchlevel.o
+
+OBJS3 = floppyd.o llong.o lockdev.o
+
+OBJS4 = floppyd_installtest.o misc.o expand.o privileges.o strtonum.o
+
+SRCS = buffer.c codepages.c config.c copyfile.c devices.c \
+dirCache.c directory.c direntry.c expand.c fat.c fat_free.c file.c file_name.c \
+file_read.c filter.c floppyd_io.c force_io.c hash.c init.c lockdev.c match.c \
+mainloop.c mattrib.c mbadblocks.c mcat.c mcd.c mclasserase.c mcopy.c mdel.c \
+mdir.c mdu.c mdoctorfat.c mformat.c minfo.c misc.c \
+missFuncs.c mk_direntry.c mlabel.c mmd.c mmount.c mmove.c mpartition.c \
+mshortname.c mshowfat.c mzip.c mtools.c old_dos.c plain_io.c precmd.c \
+privileges.c \
+scsi.c signal.c stream.c streamcache.c subdir.c unixdir.c tty.o vfat.c \
+xdf_io.c mkmanifest.c
+
+
+SCRIPTS = mcheck mxtar uz tgz mcomp amuFormat.sh
+
+LINKS=mattrib mcat mcd mclasserase mcopy mdel mdeltree mdir mdu mformat minfo \
+mlabel mmd mmount mmove mpartition mrd mren mtype mtoolstest mshortname \
+mshowfat mbadblocks mzip
+
+X_CFLAGS = @X_CFLAGS@
+X_LIBS = @X_LIBS@
+X_EXTRA_LIBS = @X_EXTRA_LIBS@
+X_PRE_LIBS = @X_PRE_LIBS@
+CFLAGS = $(CPPFLAGS) $(DEFS) $(MYCFLAGS) -fno-strict-aliasing -I. @extraincludedir@ -I@srcdir@ $(USERCFLAGS)
+CXXFLAGS  = $(CPPFLAGS) $(DEFS) $(MYCXXFLAGS) -I. @extraincludedir@ -I@srcdir@ $(USERCFLAGS)
+LINK      = $(CC) $(LDFLAGS) $(USERLDFLAGS) @extralibdir@
+ALLLIBS   = $(USERLDLIBS) $(MACHDEPLIBS) $(SHLIB) $(LIBS)
+X_LDFLAGS = $(X_EXTRA_LIBS) $(X_LIBS) -lXau -lX11 $(LIBS)
+X_CCFLAGS = $(X_CFLAGS) $(CFLAGS)
+
+all:    mtools $(LINKS) mkmanifest @FLOPPYD@ mtools.1 mtools.5
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $<
+
+#%.o: %.cpp
+#	$(CXX) $(CXXFLAGS) -c $<
+
+mtools: $(OBJS1)
+	$(LINK) $(OBJS1) -o $@ $(ALLLIBS)
+
+mkmanifest: $(OBJS2)
+	$(LINK) $(OBJS2) -o $@ $(ALLLIBS)
+
+floppyd.o: floppyd.c
+	$(CC) $(X_CCFLAGS) -c $?
+
+floppyd: $(OBJS3)
+	$(LINK) $(OBJS3) -o $@ $(X_LDFLAGS)
+floppyd_installtest: $(OBJS4)
+	$(LINK) $(OBJS4) -o $@ $(ALLLIBS)
+
+
+$(LINKS): mtools
+	rm -f $@ && $(LN_S) mtools $@
+
+mostlyclean:
+	-rm -f *~ *.orig *.o a.out core 2>/dev/null
+
+clean:	mostlyclean
+	-rm -f mtools $(LINKS) floppyd floppyd_installtest mkmanifest *.info* *.dvi *.html 2>/dev/null
+
+
+texclean:
+	-rm -f mtools.aux mtools.toc mtools.log
+	-rm -f mtools.cps mtools.pgs mtools.vrs
+	-rm -f mtools.cp mtools.fn mtools.ky
+	-rm -f mtools.pg mtools.tp mtools.vr
+
+info: mtools.info
+%.info: %.texi sysconfdir.texi
+	$(MAKEINFO) -I$(srcdir) $< --no-split --output=$@
+
+dvi: mtools.dvi
+%.dvi: %.texi sysconfdir.texi
+	$(TEXI2DVI) $<
+
+ps: mtools.ps
+%.ps: %.dvi
+	dvips -f < $< > $@
+
+pdf: mtools.pdf
+%.pdf: %.texi sysconfdir.texi
+	$(TEXI2PDF) $<
+
+mtools.1: mtools.tmpl.1 Makefile
+	sed "s%SYSCONFDIR%$(sysconfdir)/%g" $(srcdir)/mtools.tmpl.1 >mtools.1
+
+mtools.5: mtools.tmpl.5 Makefile
+	sed "s%SYSCONFDIR%$(sysconfdir)/%g" $(srcdir)/mtools.tmpl.5 >mtools.5
+
+sysconfdir.texi:
+	echo "@set SYSCONFDIR $(sysconfdir)/" >sysconfdir.texi
+
+html: mtools.html mtools_toc.html
+%.html %_toc.html: %.texi  sysconfdir.texi
+	$(TEXI2HTML) $<
+
+# Don't cd, to avoid breaking install-sh references.
+install-info: info
+	$(top_srcdir)/mkinstalldirs $(DESTDIR)$(infodir)
+	if test -f mtools.info; then \
+	  for i in mtools.info*; do \
+	    $(INSTALL_DATA) $$i $(DESTDIR)$(infodir)/$$i; \
+	  done; \
+	else \
+	  for i in $(srcdir)/mtools.info*; do \
+	    $(INSTALL_DATA) $$i $(DESTDIR)$(infodir)/`echo $$i | sed 's|^$(srcdir)/||'`; \
+	  done; \
+	fi; \
+	if [ -n "$(INSTALL_INFO)" ] ; then \
+		$(INSTALL_INFO) --info-dir=$(DESTDIR)$(infodir) $(DESTDIR)$(infodir)/mtools.info; \
+	fi
+
+uninstall-info:
+	cd $(DESTDIR)$(infodir) && rm -f mtools.info*
+
+install:	$(DESTDIR)$(bindir)/mtools @BINFLOPPYD@ install-man install-links \
+		$(DESTDIR)$(bindir)/mkmanifest install-scripts install-info
+
+uninstall:	uninstall-bin uninstall-man uninstall-links \
+		uninstall-scripts
+
+distclean: clean texclean
+	rm -f config.cache config.h config.status config.log Makefile
+maintainer-clean: distclean
+
+
+$(DESTDIR)$(bindir)/floppyd: floppyd
+	$(top_srcdir)/mkinstalldirs $(DESTDIR)$(bindir)
+	$(INSTALL_PROGRAM) floppyd $(DESTDIR)$(bindir)/floppyd
+
+$(DESTDIR)$(bindir)/floppyd_installtest: floppyd_installtest
+	$(top_srcdir)/mkinstalldirs $(DESTDIR)$(bindir)
+	$(INSTALL_PROGRAM) floppyd_installtest $(DESTDIR)$(bindir)/floppyd_installtest
+
+$(DESTDIR)$(bindir)/mtools: mtools
+	$(top_srcdir)/mkinstalldirs $(DESTDIR)$(bindir)
+	$(INSTALL_PROGRAM) mtools $(DESTDIR)$(bindir)/mtools
+
+$(DESTDIR)$(bindir)/mkmanifest: mkmanifest
+	$(top_srcdir)/mkinstalldirs $(DESTDIR)$(bindir)
+	$(INSTALL_PROGRAM) mkmanifest $(DESTDIR)$(bindir)/mkmanifest
+
+#$(ETCDIR)/mtools: mtools.etc
+#	cp mtools.etc $(ETCDIR)/mtools
+
+install-links: $(DESTDIR)$(bindir)/mtools
+	@for j in $(LINKS); do \
+		rm -f $(DESTDIR)$(bindir)/$$j ; \
+		$(LN_S) mtools $(DESTDIR)$(bindir)/$$j ; \
+		echo $(DESTDIR)$(bindir)/$$j ; \
+	done
+
+## "z" is the older version of "gz"; the name is just *too* short
+install-scripts: $(DESTDIR)$(bindir)/mtools
+	@$(top_srcdir)/mkinstalldirs $(DESTDIR)$(bindir)
+	@for j in $(SCRIPTS) ; do \
+		$(INSTALL_PROGRAM) $(srcdir)/scripts/$$j $(DESTDIR)$(bindir)/$$j ; \
+		echo $(DESTDIR)$(bindir)/$$j ; \
+	done
+	rm -f $(DESTDIR)$(bindir)/lz
+	cd $(DESTDIR)$(bindir) && $(LN_S) uz lz
+
+install-man:
+	@$(top_srcdir)/mkinstalldirs $(MAN1DIR)
+	@for j in $(MAN1); do \
+		$(INSTALL_DATA) $(srcdir)/$$j $(MAN1DIR)/$$j ; \
+		echo $(MAN1DIR)/$$j ; \
+	done
+	@$(top_srcdir)/mkinstalldirs $(MAN5DIR)
+	@for j in $(MAN5); do \
+		$(INSTALL_DATA) $(srcdir)/$$j $(MAN5DIR)/$$j ; \
+		echo $(MAN5DIR)/$$j ; \
+	done
+
+uninstall-bin:
+	@for j in mtools mkmanifest; do \
+		rm -f $(DESTDIR)$(bindir)/$$j ; \
+		echo $(DESTDIR)$(bindir)/$$j ; \
+	done
+
+uninstall-scripts:
+	@for j in $(SCRIPTS); do \
+		rm -f $(DESTDIR)$(bindir)/$$j ; \
+		echo $(DESTDIR)$(bindir)/$$j ; \
+	done
+
+uninstall-man:
+	@for j in $(MAN1); do \
+		rm -f $(MAN1DIR)/$$j ; \
+		echo $(MAN1DIR)/$$j ; \
+	done
+	@for j in $(MAN5); do \
+		rm -f $(MAN5DIR)/$$j ; \
+		echo $(MAN5DIR)/$$j ; \
+	done
+
+uninstall-links:
+	@for j in $(LINKS); \
+		do rm -f $(DESTDIR)$(bindir)/$$j ; \
+		echo $(DESTDIR)$(bindir)/$$j ; \
+	done
+
+depend: $(SRCS)
+	makedepend -- $(CFLAGS) -- $^
+
+check:
+	echo No self tests included
+# check target needed even if empty, in order to make life easier for
+# automatic tools to install GNU soft
+
+
+# DO NOT DELETE THIS LINE -- make depend depends on it.

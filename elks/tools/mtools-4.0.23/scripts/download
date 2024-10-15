@@ -1,0 +1,81 @@
+#!/bin/sh - 
+
+# Copyright 1996 Carlos Duarte
+# Copyright 1997,2001,2002 Alain Knaff.
+# This file is part of mtools.
+#
+# Mtools is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Mtools is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Mtools.  If not, see <http://www.gnu.org/licenses/>.
+
+
+## (c) Carlos Duarte ## Created: 18-Dec-96 ## Updated: 18-Dec-96 ##
+
+# main
+
+FAKE=
+DRIVE=a
+TOGGLE=0
+MDEL=:
+while [ "$1" ]
+do
+	case `echo z$1|cut -c2-` in 
+	-n) 	FAKE=echo ;; 
+	-d)	DRIVE=`echo $1|cut -c3-`
+		[ "$DRIVE" = "" ] && {
+			shift
+			DRIVE=$1
+			[ "$DRIVE" = "" ] && break
+		} ;; 
+	-t)	TOGGLE=1 ;;
+	-rm)	MDEL=mdel ;;
+	*)	break ;;
+	esac
+	shift
+done
+
+if [ $# -ne 1 ] ; then
+	echo "usage: $0 [-n] [-d drive] [-rm] [-t] <ndisks>"
+	exit 1
+fi
+
+ndisks=$1
+n=0
+dir=1
+
+while test $n -lt $ndisks
+do
+
+	while [ -d $dir ]
+	do
+		dir=`expr $dir + 1`
+	done
+
+	$FAKE mkdir $dir
+	$FAKE mcopy $DRIVE:\* $dir && $FAKE $MDEL $DRIVE:\*
+
+	if [ "$TOGGLE" = "1" ] ; then
+		if [ "$DRIVE" = "a" ] ; then
+			DRIVE=b
+		else
+			DRIVE=a
+		fi
+	else
+		echo Replace disk and press return
+		read ans
+	fi
+
+	n=`expr $n + 1`
+	dir=`expr $dir + 1`
+done
+
+exit 0

@@ -1,0 +1,118 @@
+'\" t
+.TH mdir 1 "10Dec18" mtools-4.0.23
+.SH Name
+mdir - display an MSDOS directory
+'\" t
+.de TQ
+.br
+.ns
+.TP \\$1
+..
+
+.tr \(is'
+.tr \(if`
+.tr \(pd"
+
+.SH Note\ of\ warning
+This manpage has been automatically generated from mtools's texinfo
+documentation, and may not be entirely accurate or complete.  See the
+end of this man page for details.
+.PP
+.SH Description
+.PP
+The \fR\&\f(CWmdir\fR command is used to display an MS-DOS directory. Its
+syntax is:
+.PP
+\&\fR\&\f(CWmdir\fR [\fR\&\f(CW-/\fR] [\fR\&\f(CW-f\fR] [\fR\&\f(CW-w\fR] [\fR\&\f(CW-a\fR] [\fR\&\f(CW-b\fR] \fImsdosfile\fR [ \fImsdosfiles\fR\&...] 
+.PP
+\&\fR\&\f(CWMdir\fR
+displays the contents of MS-DOS directories, or the entries for some
+MS-DOS files.
+.PP
+\&\fR\&\f(CWMdir\fR supports the following command line options:
+.TP
+\&\fR\&\f(CW/\fR\ 
+Recursive output, just like MS-DOS' \fR\&\f(CW-s\fR option
+.TP
+\&\fR\&\f(CWw\fR\ 
+Wide output.  With this option, \fR\&\f(CWmdir\fR prints the filenames across
+the page without displaying the file size or creation date.
+.TP
+\&\fR\&\f(CWa\fR\ 
+Also list hidden files.
+.TP
+\&\fR\&\f(CWf\fR\ 
+Fast.  Do not try to find out free space.  On larger disks, finding out
+the amount of free space takes up some non trivial amount of time, as
+the whole FAT must be read in and scanned.  The \fR\&\f(CW-f\fR flag bypasses
+this step.  This flag is not needed on FAT32 file systems, which store
+the size explicitly.
+.TP
+\&\fR\&\f(CWb\fR\ 
+Concise listing. Lists each directory name or filename, one per line
+(including the filename extension). This switch displays no heading
+information and no summary. Only a newline separated list of pathnames
+is displayed.
+.PP
+An error occurs if a component of the path is not a directory.
+.PP
+.SH See\ Also
+Mtools' texinfo doc
+.SH Viewing\ the\ texi\ doc
+This manpage has been automatically generated from mtools's texinfo
+documentation. However, this process is only approximative, and some
+items, such as crossreferences, footnotes and indices are lost in this
+translation process.  Indeed, these items have no appropriate
+representation in the manpage format.  Moreover, not all information has
+been translated into the manpage version.  Thus I strongly advise you to
+use the original texinfo doc.  See the end of this manpage for
+instructions how to view the texinfo doc.
+.TP
+* \ \ 
+To generate a printable copy from the texinfo doc, run the following
+commands:
+ 
+.nf
+.ft 3
+.in +0.3i
+    ./configure; make dvi; dvips mtools.dvi
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.TP
+* \ \ 
+To generate a html copy,  run:
+ 
+.nf
+.ft 3
+.in +0.3i
+    ./configure; make html
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fRA premade html can be found at
+\&\fR\&\f(CW\(ifhttp://www.gnu.org/software/mtools/manual/mtools.html\(is\fR
+.TP
+* \ \ 
+To generate an info copy (browsable using emacs' info mode), run:
+ 
+.nf
+.ft 3
+.in +0.3i
+    ./configure; make info
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.PP
+The texinfo doc looks most pretty when printed or as html.  Indeed, in
+the info version certain examples are difficult to read due to the
+quoting conventions used in info.
+.PP

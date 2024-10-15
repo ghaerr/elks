@@ -1,0 +1,56 @@
+.\" tgz.1
+.\"		(c) 2001 Filip Van Raemdonck <mechanix@debian.org>
+.\"
+.\" This manpage is free documentation.
+.\" Permission is granted to copy, distribute and/or modify this document
+.\" under the terms of the GNU Free Documentation License, Version 1.1 or any
+.\" later version published by the Free Software Foundation; with no Invariant
+.\" Sections, no Front-Cover Texts, and no Back Cover Texts.
+.\"
+.\" This  is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+.\"
+.\" You should have received a copy of the GNU Free Documentation License
+.\" along with this program; if not, write to: 
+.\"		Free Software Foundation, Inc.
+.\"		59 Temple Place - Suite 330
+.\"		Boston, MA  02111-1307, USA.
+.\"
+.\"
+.ig
+A copy of the GNU Free Documentation License is available in the
+Debian package in the file /usr/share/doc/mtools/copyright.
+..
+.ig
+A copy of the GNU Free Documentation License is available in the 
+Debian source package in the file debian/copyright.
+..
+.TH TGZ "1" "May 2002" "mtools 3.9.8" "Mtools Users Manual"
+.SH NAME
+tgz \- makes a gzip'd tar archive
+.SH SYNOPSIS
+.B tgz
+[
+.I destination
+[
+.I source ...
+] ]
+.SH DESCRIPTION
+Make a gzip'd tar archive with the name of the first parameter out of specified
+files or, if no source files are specified, from everything in the current
+directory.
+If the first parameter is omitted as well, the archive will be written to
+stdout.
+.SH BUGS
+.B tgz
+requires gzip in the user's path.
+It also needs gnu tar or something close due to use of --exclude, --totals
+and -S.
+.SH AUTHOR
+Filip Van Raemdonck (mechanix@debian.org) wrote this page for the
+.I Debian/GNU
+mtools package.
+.SH "SEE ALSO"
+.BR gzip (1),
+.BR tar (1)

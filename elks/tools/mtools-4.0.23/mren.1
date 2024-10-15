@@ -1,0 +1,105 @@
+'\" t
+.TH mren 1 "10Dec18" mtools-4.0.23
+.SH Name
+mren - rename an existing MSDOS file
+'\" t
+.de TQ
+.br
+.ns
+.TP \\$1
+..
+
+.tr \(is'
+.tr \(if`
+.tr \(pd"
+
+.SH Note\ of\ warning
+This manpage has been automatically generated from mtools's texinfo
+documentation, and may not be entirely accurate or complete.  See the
+end of this man page for details.
+.PP
+.SH Description
+.PP
+The \fR\&\f(CWmren\fR command is used to rename or move an existing MS-DOS
+file or subdirectory. Its syntax is:
+.PP
+.ft I
+.nf
+\&\fR\&\f(CWmren\fR [\fR\&\f(CW-voOsSrRA\fR] \fIsourcefile\fR \fItargetfile\fR
+.fi
+.ft R
+ 
+.PP
+\&\fR\&\f(CWMren\fR
+renames an existing file on an MS-DOS file system.
+.PP
+In verbose mode, \fR\&\f(CWMren\fR displays the new filename if the name
+supplied is invalid.
+.PP
+If the first syntax is used (only one source file), and if the target
+name doesn't contain any slashes or colons, the file (or subdirectory)
+is renamed in the same directory, instead of being moved to the current
+\&\fR\&\f(CWmcd\fR directory as would be the case with \fR\&\f(CWmmove\fR. Unlike the
+MS-DOS version of \fR\&\f(CWREN\fR, \fR\&\f(CWmren\fR can be used to rename
+directories.
+.PP
+.SH See\ Also
+Mtools' texinfo doc
+.SH Viewing\ the\ texi\ doc
+This manpage has been automatically generated from mtools's texinfo
+documentation. However, this process is only approximative, and some
+items, such as crossreferences, footnotes and indices are lost in this
+translation process.  Indeed, these items have no appropriate
+representation in the manpage format.  Moreover, not all information has
+been translated into the manpage version.  Thus I strongly advise you to
+use the original texinfo doc.  See the end of this manpage for
+instructions how to view the texinfo doc.
+.TP
+* \ \ 
+To generate a printable copy from the texinfo doc, run the following
+commands:
+ 
+.nf
+.ft 3
+.in +0.3i
+    ./configure; make dvi; dvips mtools.dvi
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.TP
+* \ \ 
+To generate a html copy,  run:
+ 
+.nf
+.ft 3
+.in +0.3i
+    ./configure; make html
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fRA premade html can be found at
+\&\fR\&\f(CW\(ifhttp://www.gnu.org/software/mtools/manual/mtools.html\(is\fR
+.TP
+* \ \ 
+To generate an info copy (browsable using emacs' info mode), run:
+ 
+.nf
+.ft 3
+.in +0.3i
+    ./configure; make info
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.PP
+The texinfo doc looks most pretty when printed or as html.  Indeed, in
+the info version certain examples are difficult to read due to the
+quoting conventions used in info.
+.PP
