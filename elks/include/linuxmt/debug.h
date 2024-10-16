@@ -13,10 +13,10 @@
  * Kernel debug options, set =1 to turn on. Works across multiple files.
  */
 #define DEBUG_EVENT     1               /* generate debug events on CTRLN-CTRLP*/
-#define DEBUG_STARTDEF  0               /* default startup debug display*/
+#define DEBUG_LEVEL     0               /* default startup debug level*/
 #define DEBUG_BIOS      0               /* BIOS driver*/
 #define DEBUG_BLK       0               /* block i/o*/
-#define DEBUG_CACHE     0               /* floppy track cache*/
+#define DEBUG_CACHE     1               /* floppy track cache*/
 #define DEBUG_ETH       0               /* ethernet*/
 #define DEBUG_FAT       0               /* FAT filesystem*/
 #define DEBUG_FILE      0               /* sys open and file i/o*/
@@ -57,8 +57,10 @@ void debug_setcallback(int evnum, void (*cbfunc)()); /* callback on debug event*
 
 #if DEBUG_CACHE
 #define debug_cache     PRINTK
+#define debug_cache2    if (debug_level > 1) PRINTK
 #else
 #define debug_cache(...)
+#define debug_cache2(...)
 #endif
 
 #if DEBUG_ETH

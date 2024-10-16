@@ -19,5 +19,5 @@
 #strace
 #FTRACE=1
 #net=ne0
-#debug
+#debug=1
 #console=ttyS0,19200 3

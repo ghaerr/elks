@@ -326,7 +326,7 @@ void panic(const char *error, ...)
     halt();
 }
 
-int dprintk_on = DEBUG_STARTDEF;        /* toggled by debug events*/
+int debug_level = DEBUG_LEVEL;      /* set with debug= or toggled by debug events */
 #if DEBUG_EVENT
 static void (*debug_cbfuncs[3])();  /* debug event callback function*/
 
@@ -338,8 +338,8 @@ void debug_setcallback(int evnum, void (*cbfunc)())
 
 void debug_event(int evnum)
 {
-    if (evnum == 2) {           /* CTRLP toggles dprintk*/
-        dprintk_on = !dprintk_on;
+    if (evnum == 2) {               /* CTRLP toggles debug */
+        debug_level = !debug_level;
         kill_all(SIGURG);
     }
     if (debug_cbfuncs[evnum])
@@ -350,7 +350,7 @@ void dprintk(const char *fmt, ...)
 {
     va_list p;
 
-    if (!dprintk_on)
+    if (!debug_level)
         return;
     va_start(p, fmt);
     vprintk(fmt, p);
