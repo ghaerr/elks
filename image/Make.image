@@ -77,7 +77,7 @@ endif
 
 minixfs:
 	rm -f $(TARGET_FILE)
-	mfs $(VERBOSE) $(TARGET_FILE) mkfs $(MINIX_MKFSOPTS)
+#	mfs $(VERBOSE) $(TARGET_FILE) mkfs $(MINIX_MKFSOPTS)
 #	mfs -v $(VERBOSE) $(TARGET_FILE) addfs Image.all $(DESTDIR)
 #	rm -f Filelist
 #	for f in $$(cd $(DESTDIR); find * -name '*'); do \
