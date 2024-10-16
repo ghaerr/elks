@@ -15,11 +15,11 @@ devices:
 
 ##############################################################################
 # Create frequently accessed /dev files first
-#	$(MKDEV) /dev/console	c 4 254 1 1 0600
-#	$(MKDEV) /dev/tty1      c 4 0
-#	$(MKDEV) /dev/ttyS0     c 4 64
-#	$(MKDEV) /dev/fd0       b 3 32
-#	$(MKDEV) /dev/fd1       b 3 40
+	$(MKDEV) /dev/console	c 4 254 1 1 0600
+	$(MKDEV) /dev/tty1      c 4 0
+	$(MKDEV) /dev/ttyS0     c 4 64
+	$(MKDEV) /dev/fd0       b 3 32
+	$(MKDEV) /dev/fd1       b 3 40
 
 ##############################################################################
 # Create memory devices.

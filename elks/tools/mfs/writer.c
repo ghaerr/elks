@@ -89,6 +89,7 @@ void writedata(struct minix_fs_dat *fs,u8 *blk,u32 cnt,int inode) {
 void dosymlink(struct minix_fs_dat *fs,char *source,char *lnkpath) {
   int len = strlen(source);
   int inode = make_node(fs,lnkpath,0777|S_IFLNK,0,0,len,NOW,NOW,NOW,NULL);
+  if (inode == 0) return;   /* already exists, must remove to recreate */
   writedata(fs,(unsigned char *)source,len,inode);
 }
 

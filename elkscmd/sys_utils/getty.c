@@ -49,7 +49,7 @@
 #include <linuxmt/mem.h>
 
 #define PARSE_ETC_ISSUE 0       /* set =1 to process /etc/issue @ sequences */
-#define BOOT_TIMER      0       /* set =1 to display system startup time */
+#define BOOT_TIMER      1       /* set =1 to display system startup time */
 #define DEBUG           0       /* set =1 for debug messages */
 #define CONSOLE _PATH_CONSOLE   /* debug messages go here */
 

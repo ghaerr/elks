@@ -40,6 +40,7 @@
  *	use ELKS defaults of -1 -n14 -i360 -s1440 for mkfs/genfs
  *	add genfs -k option to not copy 0 length (hidden) files starting with .
  *	add addfs option to add files/dirs specified in file from directory
+ *  allow existing inode/dir in make_node for boot optimization of mknod and mkdir
  *
  * Bug fixes by ghaerr:
  * fix mkfs -1, -n overwriting -i, -n14
