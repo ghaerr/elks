@@ -84,7 +84,8 @@ minixfs:
 #		echo $$f >> FileList; \
 #	done
 #	mfs -v $(VERBOSE) $(TARGET_FILE) addfs Filelist $(DESTDIR)
-	mfs $(VERBOSE) $(TARGET_FILE) genfs -a $(MINIX_MKFSOPTS) $(DESTDIR)
+#	mfs $(VERBOSE) $(TARGET_FILE) genfs -a $(MINIX_MKFSOPTS) $(DESTDIR)
+	mfs $(VERBOSE) $(TARGET_FILE) genfs $(MINIX_MKFSOPTS) $(DESTDIR)
 ifdef CONFIG_IMG_DEV
 	# command to make char/block devices in image (no sudo required)
 	$(MAKE) -f Make.devices "MKDEV=mfs $(TARGET_FILE) mknod"

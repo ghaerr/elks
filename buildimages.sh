@@ -1,5 +1,7 @@
 #
 # This script is used to build all ELKS images outside Github CI
+set -x
+set -e
 
 cleanup()
 {
@@ -41,6 +43,7 @@ build_ibm()
 {
     cleanup
     cp ibmpc-1440.config .config
+    #cp ibmpc-1440-nc.config .config
     make
 
     cd image
@@ -54,5 +57,6 @@ build_pc98
 build_8018x
 
 cp ibmpc-1440.config .config
+#cp ibmpc-1440-nc.config .config
 cleanup
 make
