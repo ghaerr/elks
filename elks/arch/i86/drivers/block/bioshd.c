@@ -679,7 +679,7 @@ static int BFPROC do_cache_read(struct drive_infot *drivep, sector_t start, char
     if (cmd == READ) {
         cache_tries++;
         if (cache_valid(drivep, start, buf, seg)) { /* try cache first*/
-            debug_cache2("CH %lu ", start>>1);
+            debug_cache2("CH %lu ", start >> 1);
             cache_hits++;
             return 1;
         }

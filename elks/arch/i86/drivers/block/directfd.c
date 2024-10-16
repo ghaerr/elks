@@ -1229,7 +1229,8 @@ static void DFPROC redo_fd_request(void)
          * number of sectors (full blocks). When head=1 we read the entire track
          * and ignore the first sector.
          */
-        DEBUG("bufrd chs %d/%d/%d\n", seek_track, head, sector);
+        DEBUG("cache CHS %d/%d/%d\n", seek_track, head, sector);
+        debug_cache2("CH %d ", start >> 1);
         char *buf_ptr = (char *) (sector << 9);
         if (command == FD_READ) {       /* requested data is in buffer */
             xms_fmemcpyw(req->rq_buffer, req->rq_seg, buf_ptr, DMASEG, BLOCK_SIZE/2);
