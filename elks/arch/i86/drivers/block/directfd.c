@@ -773,10 +773,11 @@ static void rw_interrupt(void)
 static void DFPROC setup_rw_floppy(void)
 {
     DEBUG("setup_rw-");
+#if IODELAY || DEBUG_CACHE
+    int num_sectors = read_track
+        ? floppy->sect + (floppy->sect & 1 && !head) - sector
+        : CURRENT->rq_nr_sectors;
 #if IODELAY
-    int num_sectors = read_track? floppy->sect + (floppy->sect & 1 && !head)
-                                : CURRENT->rq_nr_sectors;
-    DEBUG("[%ur%u]", current_drive, num_sectors);
     static unsigned lasttrack;
     unsigned ms = abs(track - lasttrack) * 4 / 10;
     lasttrack = track;
@@ -786,6 +787,10 @@ static void DFPROC setup_rw_floppy(void)
         ms += 8 + (num_sectors<<1); /* 360k @360rpm = 83ms + ~20ms/sector + 3ms/tr */
     unsigned long timeout = jiffies + ms*HZ/100;
     while (!time_after(jiffies, timeout)) continue;
+#endif
+    debug_cache("%s%d %lu(CHS %u,%u,%u-%u)\n",
+        read_track? "TR": (command == FD_WRITE? "WR": "RD"),
+        current_drive, CURRENT->rq_sector>>1, track, head, sector+1, sector+num_sectors);
 #endif
     do_floppy = rw_interrupt;
     setup_DMA();
@@ -1184,7 +1189,7 @@ static void DFPROC redo_fd_request(void)
                 goto repeat;
             }
             floppy = &minor_types[tmp];
-            if (!recalibrate)
+            if (!recalibrate && probing)
                 printk("df%d: auto-probe #%d %s\n", drive, probing, floppy->name);
         }
     }
@@ -1209,7 +1214,7 @@ static void DFPROC redo_fd_request(void)
     command = (req->rq_cmd == READ)? FD_READ: FD_WRITE;
     DEBUG("df%d: %s sector %d CHS %d/%d/%d max %d stretch %d seek %d\n",
         DEVICE_NR(req->rq_dev), req->rq_cmd==READ? "read": "write",
-        start, track, head, sector, floppy->sect, floppy->stretch, seek_track);
+        start, track, head, sector+1, floppy->sect, floppy->stretch, seek_track);
 
     /* restart timer for hung operations, 6 secs probably too long ... */
     del_timer(&fd_timeout);

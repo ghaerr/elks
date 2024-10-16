@@ -106,6 +106,7 @@ static struct gendisk bioshd_gendisk = {
 
 static void BFPROC set_cache_invalid(void)
 {
+    if (cache_drive) debug_cache("INV%d ", cache_drive - drive_info);
     cache_drive = NULL;
 }
 
@@ -580,8 +581,8 @@ static int BFPROC do_readwrite(struct drive_infot *drivep, sector_t start, char 
             segment = (seg_t)seg;
             offset = (unsigned) buf;
         }
-        debug_bios("bioshd(%x): cmd %d CHS %d/%d/%d count %d\n",
-            drive, cmd, cylinder, head, sector, this_pass);
+        debug_cache("bioshd(%x): %s CHS %d/%d/%d count %d\n",
+            drive, cmd==WRITE? "WR": "RD", cylinder, head, sector, this_pass);
 
         bios_set_ddpt(drivep->sectors);
         error = bios_disk_rw(cmd == WRITE? BIOSHD_WRITE: BIOSHD_READ, this_pass,
@@ -622,8 +623,8 @@ static void BFPROC do_readtrack(struct drive_infot *drivep, sector_t start)
         num_sectors = DMASEGSZ / drivep->sector_size;
 
     do {
-        debug_cache("\nTR %lu(CHS %u,%u,%u-%u) ", start>>1, cylinder, head, sector,
-            sector+num_sectors-1);
+        debug_cache("\nTR%d %lu(CHS %u,%u,%u-%u) ", drive, start>>1, cylinder, head,
+            sector, sector+num_sectors-1);
         debug_bios("bioshd(%x): track read CHS %d/%d/%d count %d\n",
                 drive, cylinder, head, sector, num_sectors);
 
