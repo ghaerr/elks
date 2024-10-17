@@ -16,7 +16,7 @@
 #define DEBUG_LEVEL     0               /* default startup debug level*/
 #define DEBUG_BIOS      0               /* BIOS driver*/
 #define DEBUG_BLK       0               /* block i/o*/
-#define DEBUG_CACHE     1               /* floppy track cache*/
+#define DEBUG_CACHE     0               /* floppy track cache*/
 #define DEBUG_ETH       0               /* ethernet*/
 #define DEBUG_FAT       0               /* FAT filesystem*/
 #define DEBUG_FILE      0               /* sys open and file i/o*/
