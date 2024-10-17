@@ -15,7 +15,7 @@ static int malloc_debug;
 static int net_debug;
 
 struct sysctl sysctl[] = {
-    { "kern.debug",         &dprintk_on         },  /* debug (^P) on/off */
+    { "kern.debug",         &debug_level        },  /* debug level (^P toggled) */
     { "kern.strace",        &tracing            },  /* strace=1, kstack=2 */
     { "kern.console",       (int *)&dev_console },  /* console */
     { "malloc.debug",       &malloc_debug       },

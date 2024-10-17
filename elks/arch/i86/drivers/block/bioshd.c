@@ -106,6 +106,7 @@ static struct gendisk bioshd_gendisk = {
 
 static void BFPROC set_cache_invalid(void)
 {
+    if (cache_drive) debug_cache2("INV%d ", cache_drive - drive_info);
     cache_drive = NULL;
 }
 
@@ -535,7 +536,7 @@ static void BFPROC get_chst(struct drive_infot *drivep, sector_t *start_sec,
         *start_sec -= save - *s;
     }
 #endif
-    if (extra) debug_cache("bioshd: lba %ld is CHS %d/%d/%d remaining sectors %d\n",
+    if (extra) debug_cache2("bioshd: lba %ld is CHS %d/%d/%d remaining sectors %d\n",
         start, *c, *h, *s, *t);
 }
 
@@ -580,6 +581,8 @@ static int BFPROC do_readwrite(struct drive_infot *drivep, sector_t start, char 
             segment = (seg_t)seg;
             offset = (unsigned) buf;
         }
+        debug_cache("%s%d CHS %d/%d/%d count %d\n",
+            cmd==WRITE? "WR": "RD", drive, cylinder, head, sector, this_pass);
         debug_bios("bioshd(%x): cmd %d CHS %d/%d/%d count %d\n",
             drive, cmd, cylinder, head, sector, this_pass);
 
@@ -622,8 +625,8 @@ static void BFPROC do_readtrack(struct drive_infot *drivep, sector_t start)
         num_sectors = DMASEGSZ / drivep->sector_size;
 
     do {
-        debug_cache("\nTR %lu(CHS %u,%u,%u-%u) ", start>>1, cylinder, head, sector,
-            sector+num_sectors-1);
+        debug_cache("\nTR%d %lu(CHS %u,%u,%u-%u) ", drive, start>>1, cylinder, head,
+            sector, sector+num_sectors-1);
         debug_bios("bioshd(%x): track read CHS %d/%d/%d count %d\n",
                 drive, cylinder, head, sector, num_sectors);
 
@@ -676,7 +679,7 @@ static int BFPROC do_cache_read(struct drive_infot *drivep, sector_t start, char
     if (cmd == READ) {
         cache_tries++;
         if (cache_valid(drivep, start, buf, seg)) { /* try cache first*/
-            debug_cache("CH %lu ", start>>1);
+            debug_cache2("CH %lu ", start >> 1);
             cache_hits++;
             return 1;
         }

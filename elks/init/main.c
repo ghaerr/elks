@@ -491,10 +491,6 @@ static int INITPROC parse_options(void)
             root_mountflags &= ~MS_RDONLY;
             continue;
         }
-        if (!strcmp(line,"debug")) {
-            dprintk_on = 1;
-            continue;
-        }
         if (!strcmp(line,"strace")) {
             tracing |= TRACE_STRACE;
             continue;
@@ -518,6 +514,10 @@ static int INITPROC parse_options(void)
         }
         if (!strncmp(line,"3c0=",4)) {
             parse_nic(line+4, &netif_parms[ETH_EL3]);
+            continue;
+        }
+        if (!strncmp(line,"debug=", 6)) {
+            debug_level = (int)simple_strtol(line+6, 10);
             continue;
         }
         if (!strncmp(line,"buf=",4)) {
