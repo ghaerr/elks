@@ -13,11 +13,11 @@
 #sync=30
 #init=/bin/init 3 n	# muser serial no rc.sys
 #init=/bin/sash
-root=df0
+#root=df0
 #root=hda1 ro
 #kstack
 #strace
 #FTRACE=1
 #net=ne0
-debug=1
-console=ttyS0,19200 3
+#debug=1
+#console=ttyS0,19200 3

@@ -108,6 +108,9 @@
 #error  Direct FD driver requires CONFIG_ASYNCIO
 #endif
 
+//#define DEBUG printk
+#define DEBUG(...)
+
 /*
  * The original 8272A doesn't have FD_DOR, FD_DIR or FD_CCR registers,
  * but the 82077 found on modern clones can be configured in hardware
@@ -132,10 +135,13 @@ char USE_IMPLIED_SEEK = 0; /* =1 for QEMU with 360k/AT stretch floppies (not rea
 #define TIMEOUT_MOTOR_OFF  (3 * HZ)    /* 3 secs wait for floppy motor off after I/O */
 #define TIMEOUT_CMD_COMPL  (6 * HZ)    /* 6 secs wait for FDC command complete */
 
-#define FLOPPY_DMA      2       /* hardwired on old PCs */
+/* locations for cache and bounce buffers */
+#define CACHE_SEG       DMASEG  /* track cache at DMASEG:0 (shared with BIOS driver) */
+#define CACHE_OFF       0
+#define BOUNCE_SEG      DMASEG  /* share bounce buffer with track cache at DMASEG:0 */
+#define BOUNCE_OFF      0
 
-//#define DEBUG printk
-#define DEBUG(...)
+#define FLOPPY_DMA      2       /* hardwired on old PCs */
 
 #define abs(v)          (((int)(v) >= 0)? (v): -(v))
 
@@ -163,7 +169,14 @@ static unsigned char running;   /* keep track of motors already running */
  * max X times - some types of errors increase the errorcount by 2 or
  * even 3, so we might actually retry only X/2 times before giving up.
  */
-#define MAX_ERRORS 6
+#define MAX_ERRORS      6
+
+/*
+ * Threshold for reporting FDC errors to the console.
+ * Setting this to zero may flood your screen when using
+ * ultra cheap floppies ;-)
+ */
+#define MIN_ERRORS      0
 
 /*
  * Maximum number of sectors in a track buffer. Track buffering is disabled
@@ -270,27 +283,13 @@ static int access_count;
 static unsigned int changed_floppies;
 
 /*
- * Threshold for reporting FDC errors to the console.
- * Setting this to zero may flood your screen when using
- * ultra cheap floppies ;-)
- */
-#define MIN_ERRORS      0
-
-/*
- * The block buffer is used for all writes and for reads
- * in case track buffering doesn't work or has been turned off.
- */
-static char *floppy_buffer;
-
-/*
- * These are global variables, as that's the easiest way to give
- * information to interrupts. They are the data used for the current
- * request.
+ * These are global variables, as that's the easiest way to pass info
+ * to interrupts. They are the data used for the current request.
  */
 #define NO_TRACK 255
 
-static bool use_cache;          /* read entire track when set*/
-static int use_bounce;          /* XMS or 64k address wrap when set */
+static bool use_cache;          /* expand read request to fill cache when set */
+static int use_bounce;          /* XMS I/O or 64k address wrap or not caching when set */
 static unsigned char cache_drive = 255;
 static int cache_track;
 static int cur_spec1 = -1;
@@ -480,21 +479,26 @@ static void DFPROC setup_DMA(void)
     unsigned long dma_addr;
 
     DEBUG("setupDMA ");
-#pragma GCC diagnostic ignored "-Wshift-count-overflow"
+    dma_addr = LINADDR(CACHE_SEG, CACHE_OFF);
     count = req->rq_nr_sectors << 9;
     physaddr = (req->rq_seg << 4) + (unsigned int)req->rq_buffer;
+#pragma GCC diagnostic ignored "-Wshift-count-overflow"
     use_bounce = (req->rq_seg >> 16) || (physaddr + count) < physaddr;
-    if (use_bounce)
-        dma_addr = LINADDR(kernel_ds, floppy_buffer);
-    else
-        dma_addr = LINADDR(req->rq_seg, req->rq_buffer);
+    if (!use_cache) {                   /* use_cache overrides use_bounce */
+        if (use_bounce) {
+            dma_addr = LINADDR(BOUNCE_SEG, BOUNCE_OFF);
+#if (BOUNCE_SEG == CACHE_SEG) && (BOUNCE_OFF == CACHE_OFF)
+            invalidate_cache();
+#endif
+        } else
+            dma_addr = LINADDR(req->rq_seg, req->rq_buffer);
+    }
 
     if (use_cache) {
-        dma_addr = LINADDR(DMASEG, 0);
         /* read sectors/track (one side) + split block */
         count = (floppy->sect + (floppy->sect & 1 && !head)) << 9;
     } else if (use_bounce && command == FD_WRITE) {
-        xms_fmemcpyw(floppy_buffer, kernel_ds, req->rq_buffer, req->rq_seg, BLOCK_SIZE/2);
+        xms_fmemcpyw(BOUNCE_OFF, BOUNCE_SEG, req->rq_buffer, req->rq_seg, BLOCK_SIZE/2);
     }
     DEBUG("%d/%lx;", count, dma_addr);
 
@@ -658,6 +662,7 @@ static void rw_interrupt(void)
 {
     struct request *req = CURRENT;
     int nr, bad;
+    char *cache_offset;
 
     nr = result();
     /* NOTE: If use_cache is active and sector count is uneven, ST0 will
@@ -726,15 +731,14 @@ static void rw_interrupt(void)
         probing = 0;
     }
     if (use_cache) {
-        /* This encoding is ugly, should use block-start, block-end instead */
-        cache_drive = current_drive;
+        cache_drive = current_drive;    /* cache now valid */
         cache_track = (seek_track << 1) + head;
-        DEBUG("rd %04x:%04x->%08lx:%04x;", DMASEG, sector << 9,
+        cache_offset = (char *)((sector << 9) + CACHE_OFF);
+        DEBUG("rd %04x:%04x->%08lx:%04x;", CACHE_SEG, cache_offset,
                 (unsigned long)req->rq_seg, req->rq_buffer);
-        xms_fmemcpyw(req->rq_buffer, req->rq_seg, (char *)(sector << 9), DMASEG,
-			BLOCK_SIZE/2);
+        xms_fmemcpyw(req->rq_buffer, req->rq_seg, cache_offset, CACHE_SEG, BLOCK_SIZE/2);
     } else if (use_bounce && command == FD_READ) {
-        xms_fmemcpyw(req->rq_buffer, req->rq_seg, floppy_buffer, kernel_ds, BLOCK_SIZE/2);
+        xms_fmemcpyw(req->rq_buffer, req->rq_seg, BOUNCE_OFF, BOUNCE_SEG, BLOCK_SIZE/2);
     }
     request_done(1);
     DEBUG("RQOK;");
@@ -1208,13 +1212,15 @@ static void DFPROC redo_fd_request(void)
          */
         DEBUG("cache CHS %d/%d/%d\n", seek_track, head, sector);
         debug_cache2("CH %d ", start >> 1);
-        cache_offset = (char *)(sector << 9);
+        cache_offset = (char *)((sector << 9) + CACHE_OFF);
         if (command == FD_READ) {       /* cache hit, no I/O necessary */
-            xms_fmemcpyw(req->rq_buffer, req->rq_seg, cache_offset, DMASEG, BLOCK_SIZE/2);
+            xms_fmemcpyw(req->rq_buffer, req->rq_seg, cache_offset, CACHE_SEG,
+                BLOCK_SIZE/2);
             request_done(1);
             goto repeat;
         } else if (command == FD_WRITE) /* update track buffer, then write */
-            xms_fmemcpyw(cache_offset, DMASEG, req->rq_buffer, req->rq_seg, BLOCK_SIZE/2);
+            xms_fmemcpyw(cache_offset, CACHE_SEG, req->rq_buffer, req->rq_seg,
+                BLOCK_SIZE/2);
     } 
 
     /* restart timer for hung operations, 6 secs probably too long ... */
@@ -1404,7 +1410,6 @@ static void DFPROC floppy_deregister(void)
     *(__u32 __far *)FLOPPY_VEC = old_floppy_vec;
     enable_irq(FLOPPY_IRQ);
     set_irq();
-    heap_free(floppy_buffer);
 }
 
 /* Try to determine the floppy controller type */
@@ -1455,14 +1460,10 @@ static int DFPROC floppy_register(void)
     current_DOR = 0x0c;
     outb(0x0c, FD_DOR);         /* all motors off, enable IRQ and DMA */
 
-    floppy_buffer = heap_alloc(BLOCK_SIZE, HEAP_TAG_DRVR);
-    if (!floppy_buffer)
-        return -ENOMEM;
     old_floppy_vec = *((__u32 __far *)FLOPPY_VEC);
     err = request_irq(FLOPPY_IRQ, floppy_interrupt, INT_GENERIC);
     if (err) {
         printk("df: IRQ %d busy\n", FLOPPY_IRQ);
-        heap_free(floppy_buffer);
         return err;
     }
 
