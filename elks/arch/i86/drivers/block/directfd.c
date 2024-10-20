@@ -128,6 +128,7 @@
 char USE_IMPLIED_SEEK = 0; /* =1 for QEMU with 360k/AT stretch floppies (not real hw) */
 #define CHECK_DIR_REG       1   /* =1 to read and clear DIR DSKCHG when media changed */
 #define CHECK_DISK_CHANGE   1   /* =1 to inform kernel of media changed */
+#define FULL_TRACK          1   /* =1 to read full tracks when track caching */
 #define IODELAY             0   /* =1 to emulate delay for floppy on QEMU */
 
 /* adjustable timeouts */
@@ -291,12 +292,14 @@ static unsigned int changed_floppies;
 static bool use_cache;          /* expand read request to fill cache when set */
 static int use_bounce;          /* XMS I/O or 64k address wrap or not caching when set */
 static unsigned char cache_drive = 255;
+static unsigned char cache_startsector; /* cache start sector */
 static int cache_track;
 static int cur_spec1 = -1;
 static int cur_rate = -1;
 static struct floppy_struct *floppy;
 static unsigned char current_drive = 255;
-static unsigned char sector;	/* zero relative sector number for I/O start */
+static unsigned char sector;	    /* zero relative requested I/O sector */
+static unsigned char startsector;   /* zero relative actual I/O start sector */
 static unsigned char head;
 static unsigned char track;
 static unsigned char seek_track;
@@ -495,8 +498,8 @@ static void DFPROC setup_DMA(void)
     }
 
     if (use_cache) {
-        /* read sectors/track (one side) + split block */
-        count = (floppy->sect + (floppy->sect & 1 && !head)) << 9;
+        /* read full or partial one side + split block */
+        count = (floppy->sect + (floppy->sect & 1 && !head) - startsector) << 9;
     } else if (use_bounce && command == FD_WRITE) {
         xms_fmemcpyw(BOUNCE_OFF, BOUNCE_SEG, req->rq_buffer, req->rq_seg, BLOCK_SIZE/2);
     }
@@ -733,7 +736,8 @@ static void rw_interrupt(void)
     if (use_cache) {
         cache_drive = current_drive;    /* cache now valid */
         cache_track = (seek_track << 1) + head;
-        cache_offset = (char *)((sector << 9) + CACHE_OFF);
+        cache_startsector = startsector;
+        cache_offset = (char *)(((sector - cache_startsector) << 9) + CACHE_OFF);
         DEBUG("rd %04x:%04x->%08lx:%04x;", CACHE_SEG, cache_offset,
                 (unsigned long)req->rq_seg, req->rq_buffer);
         xms_fmemcpyw(req->rq_buffer, req->rq_seg, cache_offset, CACHE_SEG, BLOCK_SIZE/2);
@@ -762,9 +766,11 @@ static void rw_interrupt(void)
 static void DFPROC setup_rw_floppy(void)
 {
     DEBUG("setup_rw-");
+    startsector = (use_cache && FULL_TRACK)? 0: sector;
+
 #if IODELAY || DEBUG_CACHE
     int num_sectors = use_cache
-        ? floppy->sect + (floppy->sect & 1 && !head) /* - sector */
+        ? floppy->sect + (floppy->sect & 1 && !head) - startsector
         : CURRENT->rq_nr_sectors;
 #if IODELAY
     static unsigned lasttrack;
@@ -779,8 +785,8 @@ static void DFPROC setup_rw_floppy(void)
 #endif
     debug_cache("%s%d %lu(CHS %u,%u,%u-%u)\n",
         use_cache? "TR": (command == FD_WRITE? "WR": "RD"),
-        current_drive, CURRENT->rq_sector>>1, track, head, /*sector + */ 1,
-        /*sector + */ num_sectors);
+        current_drive, CURRENT->rq_sector>>1, track, head,
+        startsector + 1, startsector + num_sectors);
 #endif
     do_floppy = rw_interrupt;
     setup_DMA();
@@ -788,7 +794,7 @@ static void DFPROC setup_rw_floppy(void)
     output_byte(head << 2 | current_drive);
     output_byte(track);
     output_byte(head);
-    output_byte(use_cache? 1: sector+1); /* start at sector 1 when caching */
+    output_byte(startsector+1);
     output_byte(2);             /* sector size = 512 */
     output_byte(floppy->sect);
     output_byte(floppy->gap);
@@ -1205,14 +1211,15 @@ static void DFPROC redo_fd_request(void)
 
     DEBUG("prep %d|%d,%d|%d-", cache_track, seek_track, cache_drive, current_drive);
 
-    if (cache_drive == current_drive && cache_track == ((seek_track << 1) + head)) {
+    if (cache_drive == current_drive && cache_track == ((seek_track << 1) + head)
+        && sector >= cache_startsector) {
         /* Requested block is in the buffer. If reading, go get it.
          * If the sector count is odd, we buffer sectors+1 when head=0 to get an even
          * number of sectors (full blocks). When head=1 we read the entire track.
          */
         DEBUG("cache CHS %d/%d/%d\n", seek_track, head, sector);
         debug_cache2("CH %d ", start >> 1);
-        cache_offset = (char *)((sector << 9) + CACHE_OFF);
+        cache_offset = (char *)(((sector - cache_startsector) << 9) + CACHE_OFF);
         if (command == FD_READ) {       /* cache hit, no I/O necessary */
             xms_fmemcpyw(req->rq_buffer, req->rq_seg, cache_offset, CACHE_SEG,
                 BLOCK_SIZE/2);
