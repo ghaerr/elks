@@ -164,8 +164,8 @@ void add_part(void)
     oset = MBR + PARTITION_START + ((part - 1) * 16);
 
     printf("Total cylinders: %d\n", geometry.cylinders);
-    for (scyl = geometry.cylinders + 1; scyl < 0 || scyl > geometry.cylinders;) {
-        printf("First cylinder (%d-%d): ", 0, geometry.cylinders);
+    for (scyl = geometry.cylinders; scyl < 0 || scyl > geometry.cylinders-1;) {
+        printf("First cylinder (%d-%d): ", 0, geometry.cylinders-1);
         fflush(stdout);
         fgets(buf, 31, stdin);
         scyl = atoi(buf);
@@ -185,8 +185,8 @@ void add_part(void)
     p.cyl       = (scyl & 0xff);
     p.sys_ind   = PARTITION_TYPE;
 
-    for (ecyl = geometry.cylinders + 1; ecyl < scyl || ecyl > geometry.cylinders;) {
-        printf("Ending cylinder (%d-%d): ", 0, geometry.cylinders);
+    for (ecyl = geometry.cylinders; ecyl < scyl || ecyl > geometry.cylinders-1;) {
+        printf("Ending cylinder (%d-%d): ", 0, geometry.cylinders-1);
         fflush(stdout);
         fgets(buf, 31, stdin);
         ecyl = atoi(buf);
