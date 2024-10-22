@@ -5,11 +5,10 @@
  * ELKS: ported from directhd.c 
  */
 
+#include <linuxmt/config.h>
 #include <linuxmt/init.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/heap.h>
-#include <linuxmt/config.h>
-#include <linuxmt/debug.h>
 #include <arch/ports.h>
 #include <arch/io.h>
 #include "blk.h"
