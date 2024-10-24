@@ -20,6 +20,7 @@
  *              %D      device name as %04x
  *              %P      process ID
  *              %k      pticks (0.838usec intervals auto displayed as us, ms or s)
+ *              %#k     pticks truncated at decimal point
  *
  *      All except %% can be followed by a width specifier 1 -> 31 only
  *      and the h/l length specifiers also work where appropriate.

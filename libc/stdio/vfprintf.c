@@ -12,6 +12,7 @@
  *              %x/%X   hexadecimal with lower/upper case letters
  *              %p      pointer - same as %04x
  *              %k      pticks (0.838usec intervals auto displayed as us, ms or s)
+ *              %#k     pticks truncated at decimal point
  *              %efgEG  optional floating point formatting using dtostr
  *          The following flags preceding the format type are supported:
  *              0       fill with leading zeros
