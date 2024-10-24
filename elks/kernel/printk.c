@@ -154,8 +154,8 @@ static void numout(unsigned long v, int width, unsigned int base, int type,
             *--p = '0' + c;
         if (!v)
             break;
-        if (alt == ',' && ++i == 3) {
-            *--p = ',';
+        if ((alt == ',' || alt == '\'') && ++i == 3) {
+            *--p = alt;
             i = 0;
         }
     }
@@ -171,8 +171,10 @@ static void numout(unsigned long v, int width, unsigned int base, int type,
     if (Sign)
         kputchar('-');
     while (*p) {
-        if (n-- == Decimal)                 /* only for %k pticks */
-            kputchar('.');
+        if (n-- == Decimal) {               /* only for %k pticks */
+            if (alt) break;
+            else kputchar('.');
+        }
         kputchar(*p++);
     }
     while (Suffix) {
@@ -199,7 +201,7 @@ static void vprintk(const char *fmt, va_list p)
             }
 
             ptrfmt = alt = width = 0;
-            if (c == '#' || c == ',') {
+            if (c == '#' || c == ',' || c == '\'') {
                 alt = c;
                 c = *fmt++;
             }
