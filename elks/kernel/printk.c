@@ -20,6 +20,7 @@
  *              %D      device name as %04x
  *              %P      process ID
  *              %k      pticks (0.838usec intervals auto displayed as us, ms or s)
+ *              %#k     pticks truncated at decimal point
  *
  *      All except %% can be followed by a width specifier 1 -> 31 only
  *      and the h/l length specifiers also work where appropriate.
@@ -154,8 +155,8 @@ static void numout(unsigned long v, int width, unsigned int base, int type,
             *--p = '0' + c;
         if (!v)
             break;
-        if (alt == ',' && ++i == 3) {
-            *--p = ',';
+        if ((alt == ',' || alt == '\'') && ++i == 3) {
+            *--p = alt;
             i = 0;
         }
     }
@@ -171,8 +172,11 @@ static void numout(unsigned long v, int width, unsigned int base, int type,
     if (Sign)
         kputchar('-');
     while (*p) {
-        if (n-- == Decimal)                 /* only for %k pticks */
+        if (n-- == Decimal) {               /* only for %k pticks */
+            if (alt)
+                break;
             kputchar('.');
+        }
         kputchar(*p++);
     }
     while (Suffix) {
@@ -199,7 +203,7 @@ static void vprintk(const char *fmt, va_list p)
             }
 
             ptrfmt = alt = width = 0;
-            if (c == '#' || c == ',') {
+            if (c == '#' || c == ',' || c == '\'') {
                 alt = c;
                 c = *fmt++;
             }
