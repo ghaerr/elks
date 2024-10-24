@@ -130,7 +130,7 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
    unsigned long v;
    int buffer_mode;
    char *p;
-   //char hash;
+   int hash;
    char buf[64];
 
    /* turn off putc calling fputc every time for non or line buffered */
@@ -140,7 +140,7 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
    while (*fmt) {
       if (*fmt == '%') {
          ljustf = 0;            /* left justify flag */
-         //hash = 0;            /* alternate output */
+         hash = 0;              /* alternate output */
          quot = 0;              /* thousands grouping */
          dpoint = 0;            /* found decimal point */
          sign = '\0';           /* sign char & status */
@@ -183,9 +183,9 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
             quot = *fmt;
             goto fmtnxt;
 
-         //case '#':
-            //hash = 1;
-            //goto fmtnxt;
+         case '#':
+            hash = 1;
+            goto fmtnxt;
 
          case '\0':             /* early EOS */
             continue;
@@ -249,7 +249,7 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
             v = lval? va_arg(ap, unsigned long) : (unsigned long)va_arg(ap, unsigned int);
             if (*fmt == 'k') {
                 if (_weakaddr(ptostr)) {
-                    (_weakfn(ptostr))(v, p);
+                    (_weakfn(ptostr))(v, hash, p);
                     preci = -1;
                     goto printit;
                 }

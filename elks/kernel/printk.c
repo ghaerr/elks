@@ -172,8 +172,9 @@ static void numout(unsigned long v, int width, unsigned int base, int type,
         kputchar('-');
     while (*p) {
         if (n-- == Decimal) {               /* only for %k pticks */
-            if (alt) break;
-            else kputchar('.');
+            if (alt)
+                break;
+            kputchar('.');
         }
         kputchar(*p++);
     }
