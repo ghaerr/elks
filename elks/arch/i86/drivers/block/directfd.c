@@ -263,25 +263,16 @@ static unsigned char p2880k[] = { FT_2880k,   FT_1440k,    0 };
  */
 static unsigned char *probe_list[CMOS_MAX] = { p360k, p1200k, p720k, p1440k, p2880k };
 
+/*
+ * The following variables must exist in duality, one for each drive.
+ */
+
 /* Auto-detection: disk type determined from CMOS and probing */
 static struct floppy_struct *current_type[2];
-
-/* initial probe per drive */
-static unsigned char *base_type[2];
-
-/*
- * The driver is trying to determine the correct media format
- * while probing is set. rw_interrupt() clears it after a
- * successful access.
- */
-static int probing;
-
-/* device reference counters */
-static int fd_ref[2];
-static int access_count;
-
-/* bit vector set when media changed - causes I/O to be discarded until unset */
-static unsigned int changed_floppies;
+static unsigned char *base_type[2];     /* initial probe per drive */
+static int fd_ref[2];                   /* ref count for invalidating buffers */
+static int fd_probe[2];                 /* set by open routine to start probing */
+static struct inode *fd_inode[2];       /* for inode->i_size set after probe */
 
 /*
  * These are global variables, as that's the easiest way to pass info
@@ -289,8 +280,10 @@ static unsigned int changed_floppies;
  */
 #define NO_TRACK 255
 
-static bool use_cache;          /* expand read request to fill cache when set */
-static int use_bounce;          /* XMS I/O or 64k address wrap or not caching when set */
+static int access_count;            /* ref count for deregistering driver */
+static int probing;                 /* set when determining media format */
+static bool use_cache;              /* expand read request to fill cache when set */
+static int use_bounce;              /* XMS I/O or 64k address wrap when set */
 static unsigned char cache_drive = 255;
 static unsigned char cache_startsector; /* cache start sector */
 static int cache_track;
@@ -306,7 +299,6 @@ static unsigned char seek_track;
 static unsigned char current_track = NO_TRACK;
 static unsigned char command;
 static unsigned char fdc_version;
-static struct inode *open_inode;        /* to reset inode->i_size after probe */
 
 static void DFPROC floppy_ready(void);
 static void DFPROC redo_fd_request(void);
@@ -505,7 +497,7 @@ static void DFPROC setup_DMA(void)
     }
     DEBUG("%d/%lx;", count, dma_addr);
 
-    clr_irq();                          /* FIXME unclear interrupts need to be disabled */
+    clr_irq();
     outb(FLOPPY_DMA | 4, DMA_INIT);     /* disable floppy dma channel */
     outb(0, DMA_FLIPFLOP);              /* reset flip flop */
     outb(FLOPPY_DMA | (command==FD_READ? DMA_MODE_READ : DMA_MODE_WRITE), DMA_MODE);
@@ -614,7 +606,7 @@ static void DFPROC perpendicular_mode(unsigned char rate)
             reset = 1;
         }
     }
-}                               /* perpendicular_mode */
+}
 
 static void DFPROC configure_fdc_mode(void)
 {
@@ -625,12 +617,12 @@ static void DFPROC configure_fdc_mode(void)
         output_byte(FD_CONFIGURE);
         output_byte(0);
         if (implied_seek)
-            output_byte(0x4A);      /* FIFO on, polling on, 10 byte threshold, implied seek */
+            output_byte(0x4A); /* FIFO on, polling on, 10 byte threshold, implied seek */
         else
             output_byte(0x0A);      /* FIFO on, polling on, 10 byte threshold */
         output_byte(0);             /* precompensation from track 0 upwards */
         if (need_configure)
-            printk("df: implied seek %s\n", implied_seek? "enabled": "disabled");
+            DEBUG("df: implied seek %s\n", implied_seek? "enabled": "disabled");
         need_configure = 0;
     }
     if (cur_spec1 != floppy->spec1) {
@@ -644,7 +636,7 @@ static void DFPROC configure_fdc_mode(void)
         perpendicular_mode(floppy->rate);
         outb_p((cur_rate = (floppy->rate)) & ~0x40, FD_CCR);
     }
-}                               /* configure_fdc_mode */
+}
 
 static void DFPROC tell_sector(int nr)
 {
@@ -654,7 +646,7 @@ static void DFPROC tell_sector(int nr)
     } else
         printk(": track %d, head %d, sector %d", reply_buffer[3],
                reply_buffer[4], reply_buffer[5]);
-}                               /* tell_sector */
+}
 
 /*
  * Ok, this interrupt is called after a DMA read/write has succeeded
@@ -714,8 +706,9 @@ static void rw_interrupt(void)
         redo_fd_request();
         return;
     case 2:                     /* invalid command given */
-        printk("df: Invalid FDC command\n");
+        DEBUG("df: Invalid FDC command\n");
         request_done(0);
+        redo_fd_request();
         return;
     case 3:
         printk("df: Abnormal cmd termination\n");
@@ -727,10 +720,10 @@ static void rw_interrupt(void)
     }
 
     if (probing) {
-        open_inode->i_size = (sector_t)floppy->size << 9;
         nr = DEVICE_NR(req->rq_dev);
-        printk("df%d: auto-detected floppy type %s\n", nr, floppy->name);
+        printk("df%d: floppy type %s\n", nr, floppy->name);
         current_type[nr] = floppy;
+        fd_inode[nr]->i_size = (sector_t)floppy->size << 9;
         probing = 0;
     }
     if (use_cache) {
@@ -1042,6 +1035,9 @@ void fake_disk_change(void)
 }
 #endif
 
+/* bit vector set when media changed - causes I/O to be discarded until unset */
+static unsigned int changed_floppies;
+
 int check_disk_change(kdev_t dev)
 {
     unsigned int mask;
@@ -1156,6 +1152,10 @@ static void DFPROC redo_fd_request(void)
     seek = 0;
     type = MINOR(req->rq_dev);
     drive = DEVICE_NR(type);
+    if (fd_probe[drive]) {
+        probing = 1;
+        fd_probe[drive] = 0;
+    }
 
 #if CHECK_DISK_CHANGE
     if (changed_floppies & (1 << drive)) {
@@ -1174,11 +1174,11 @@ static void DFPROC redo_fd_request(void)
             if (!tmp) {
                 printk("df%d: Unable to determine drive type\n", drive);
                 request_done(0);
-                probing = 1;
+                fd_probe[drive] = 1;
                 goto repeat;
             }
             floppy = &minor_types[tmp];
-            if (!recalibrate && probing)
+            if (!recalibrate && probing > 1)
                 printk("df%d: auto-probe #%d %s\n", drive, probing, floppy->name);
         }
     }
@@ -1326,7 +1326,7 @@ static int floppy_open(struct inode *inode, struct file *filp)
     }
 #endif
 
-    probing = 0;
+    fd_probe[drive] = 0;
     if (type > 1 && type < MAX_MINOR)           /* forced floppy type */
         floppy = &minor_types[type >> 1];
     else {                      /* Auto-detection */
@@ -1334,7 +1334,8 @@ static int floppy_open(struct inode *inode, struct file *filp)
         if (!floppy) {
             if (!base_type[drive])
                 return -ENXIO;
-            probing = 1;
+            if (sys_caps & CAP_PC_AT)           /* don't probe XT systems */
+                fd_probe[drive] = 1;
             floppy = &minor_types[base_type[drive][0]];
         }
     }
@@ -1347,8 +1348,8 @@ static int floppy_open(struct inode *inode, struct file *filp)
 
     access_count++;
     fd_ref[drive]++;
-    inode->i_size = (sector_t)floppy->size << 9;    /* NOTE: assumes sector size 512 */
-    open_inode = inode;
+    fd_inode[drive] = inode;
+    inode->i_size = (sector_t)floppy->size << 9; /* NOTE: may change value after probe */
     DEBUG("df%d: open %s, size %lu\n", drive, floppy->name, inode->i_size);
 
     return 0;
