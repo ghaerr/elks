@@ -113,21 +113,12 @@ unsigned long get_ptime(void)
     count = lo | hi;
     pticks = lastcount - count;
     lastcount = count;
-#if 1
     if ((int)pticks < 0) {          /* wrapped, jiffies is higher */
         pticks += MAX_PTICK;        /* = MAX_PTICK - count + lastcount */
         jdiff--;                    /* adjust jiffies for wrap, won't ever be negative */
     }
     if (jdiff < 4286)               /* < ~42.86s */
         return jdiff * (unsigned long)MAX_PTICK + pticks;
-#else /* incorrect (old) version - to be removed */
-    if ((int)pticks < 0)            /* wrapped */
-        pticks += MAX_PTICK;        /* = MAX_PTICK - count + lastcount */
-    if (jdiff < 2)                  /* < 10ms: 1..11931 */
-        return pticks;
-    if (jdiff < 4286)               /* < ~42.86s */
-        return (jdiff - 1) * (unsigned long)MAX_PTICK + pticks;
-#endif
     return 0;                       /* overflow displays 0s */
 }
 
