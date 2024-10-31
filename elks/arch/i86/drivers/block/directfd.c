@@ -86,7 +86,6 @@
 #include <linuxmt/timer.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/signal.h>
-#include <linuxmt/fdreg.h>
 #include <linuxmt/fd.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/string.h>
@@ -94,6 +93,7 @@
 #include <linuxmt/debug.h>
 
 #include <arch/dma.h>
+#include <arch/fdreg.h>
 #include <arch/system.h>
 #include <arch/io.h>
 #include <arch/irq.h>
