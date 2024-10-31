@@ -52,10 +52,10 @@
 !			5  = 80186
 !			6  = 80286
 !			7  = 80386
-!			8  = 80486
-!			9  = Pentium
-!			10 = Pentium PRO
-!			255 = VM86 mode
+!			8  = 80486 UNUSED
+!			9  = Pentium UNUSED
+!			10 = Pentium PRO UNUSED
+!			255 = Unknown
 !	...
 !	0x2a:	mem_kbytes	word	size of base memory in kbytes
 !	0x30:	proc_name	byte[16] processor name string UNUSED

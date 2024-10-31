@@ -1,7 +1,6 @@
 // obsolete and inaccurate, but required for arch_cpu = 6 and 7 (286, 386+)
 // XT vs AT BIOS system capabilities (sys_caps) auto-detection by kernel
 //
-#define CONFIG_CPU_8086		/* required for this file only */
 
 /*
 ! Probe for the CPU
@@ -12,7 +11,6 @@
 getcpu:
 	mov	$SETUPSEG,%ax   // setup.S code segment
 	mov	%ax,%ds
-#ifndef CONFIG_ROMCODE
 	pushf                   // check for 8088/8086/V20/V30/80188/80186
 	xor	%ax,%ax
 	push	%ax
@@ -50,13 +48,11 @@ getcpu:
 	lea	p80386,%si
 	jmp	cpu_store
 
-not_32bit:                      // Unknown CPU
+not_32bit:			// Unknown CPU
 	mov	$255,%cl
 	lea	px86,%si
 	jmp	cpu_store
-#endif
 
-#if !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_8086)
 is8086:
 	mov	$0xff,%al
 	mov	$0x21,%cl	// 80188/86 uses only the five lower
@@ -96,18 +92,14 @@ isv30:
 isv20:	mov	$2,%cl
 	lea	pv20,%si
 	jmp     cpu_store
-#endif
-#if !defined (CONFIG_ROMCODE) || defined(CONFIG_CPU_80286)
+
 is80286:mov	$6,%cl
 	lea	p80286,%si
 //	jmp	cpu_store
-#endif
 
 cpu_store:
-	//
-	// Store the processor name and type
-	//
-	push	%cx
+#if UNUSED
+	push	%cx		// Store processor name
 	mov	$INITSEG,%ax
 	mov	%ax,%es
 	mov	$0x30,%di
@@ -124,12 +116,13 @@ con_cp1:
 	rep
 	movsb
 	pop	%cx
-	mov	$INITSEG,%ax
+#endif
+	mov	$INITSEG,%ax	// Store processor type
 	mov	%ax,%ds
 	mov	%cl,0x20
+	cli			// FIXME reset to cli; shouldn't have sti's above
 	ret
 
-#if !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_8086)
 /*
 !
 ! Determine the length of the prefetch queue. 8088/188/v20 has
@@ -189,24 +182,19 @@ queue_end:
 
 	or	%dx,%dx
 	ret
+
 //
 // The processor name must not be longer than 15 characters!
 //
-#if !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_8086)
 p8088:	.ascii "Intel 8088\0"
 p8086:	.ascii "Intel 8086\0"
 pv20:	.ascii "NEC V20\0"
 pv30:	.ascii "NEC V30\0"
 p80188:	.ascii "Intel 80188\0"
 p80186:	.ascii "Intel 80186\0"
-#endif
-#if !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_80286)
 p80286:	.ascii "Intel 80286\0"
 p80386:	.ascii "Intel 80386+\0"
-#endif
-#if !defined(CONFIG_ROMCODE)
 px86:   .ascii "Unknown x86\0"
-#endif
 //
 // Here is the CPU id stored
 //
@@ -214,7 +202,3 @@ v_id:	.byte 0,0,0,0
 v_id2:	.byte 0,0,0,0
 v_id3:	.byte 0,0,0,0
 	.byte 0
-
-#endif /* !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_8086)*/
-
-#undef CONFIG_CPU_8086
