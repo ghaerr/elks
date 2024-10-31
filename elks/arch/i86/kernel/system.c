@@ -71,7 +71,7 @@ unsigned int INITPROC setup_arch(void)
     byte_t arch_cpu = SETUP_CPU_TYPE;
     if (arch_cpu > 5)       /* 80286+ IBM PC/AT capabilities or Unknown CPU */
         sys_caps = CAP_ALL;
-    printk("arch %d sys_caps %02x\n", arch_cpu, sys_caps);
+    debug("arch %d sys_caps %02x\n", arch_cpu, sys_caps);
 #endif
 
     return endbss;                      /* used as start address in near heap init */

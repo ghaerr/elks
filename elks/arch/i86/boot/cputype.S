@@ -1,6 +1,6 @@
 // obsolete and inaccurate, but required for arch_cpu = 6 and 7 (286, 386+)
 // XT vs AT BIOS system capabilities (sys_caps) auto-detection by kernel
-//
+// Note: enables, then disables interrupts when called
 
 /*
 ! Probe for the CPU
@@ -9,7 +9,7 @@
 !
 */
 getcpu:
-	mov	$SETUPSEG,%ax   // setup.S code segment
+	mov	$SETUPSEG,%ax   // setup code segment
 	mov	%ax,%ds
 	pushf                   // check for 8088/8086/V20/V30/80188/80186
 	xor	%ax,%ax
@@ -45,12 +45,12 @@ getcpu:
 	and	$0x70,%bh       // 32-bit CPU if we changed NT or IOPL
 	je	not_32bit
 	mov	$7,%cl          // 80386+
-	lea	p80386,%si
+	#lea	p80386,%si
 	jmp	cpu_store
 
 not_32bit:			// Unknown CPU
 	mov	$255,%cl
-	lea	px86,%si
+	#lea	px86,%si
 	jmp	cpu_store
 
 is8086:
@@ -63,38 +63,37 @@ is8086:
 	mov	$0xffff,%cx
 	nop
 	rep
-//	seg	es
 	lodsb
 	or	%cx,%cx
 	jz	isv30
 	call	queue
 	jz	is8088
 	mov	$1,%cl
-	lea	p8086,%si
+	#lea	p8086,%si
 	jmp	cpu_store
 is8088:	xor	%cl,%cl
-	lea	p8088,%si
+	#lea	p8088,%si
 	jmp	cpu_store
 is80186:call	queue
 	jz	is80188
 	mov	$5,%cl
-	lea	p80186,%si
+	#lea	p80186,%si
 	jmp	cpu_store
 is80188:mov	$4,%cl
-	lea	p80188,%si
+	#lea	p80188,%si
 	jmp	cpu_store
 isv30:	
 	call	queue
 	jz	isv20
 	mov	$3,%cl
-	lea	pv30,%si
+	#lea	pv30,%si
 	jmp	cpu_store
 isv20:	mov	$2,%cl
-	lea	pv20,%si
+	#lea	pv20,%si
 	jmp     cpu_store
 
 is80286:mov	$6,%cl
-	lea	p80286,%si
+	#lea	p80286,%si
 //	jmp	cpu_store
 
 cpu_store:
@@ -183,6 +182,7 @@ queue_end:
 	or	%dx,%dx
 	ret
 
+#if UNUSED
 //
 // The processor name must not be longer than 15 characters!
 //
@@ -202,3 +202,4 @@ v_id:	.byte 0,0,0,0
 v_id2:	.byte 0,0,0,0
 v_id3:	.byte 0,0,0,0
 	.byte 0
+#endif

@@ -43,7 +43,7 @@
 !	10:	mono/color, video memory size, 2 bytes 
 !	14:	screen_lines, 1 byte
 !	15:	VGA present, 1 byte
-!	0x20:	cpu_type	byte Processor type UNUSED
+!	0x20:	cpu_type	byte Processor type
 !			0  = 8088
 !			1  = 8086
 !			2  = NEC V20
