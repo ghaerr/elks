@@ -1,4 +1,4 @@
-// obsolote and inaccurate, but required for arch_cpu > 5
+// obsolete and inaccurate, but required for arch_cpu = 6 and 7 (286, 386+)
 // XT vs AT BIOS system capabilities (sys_caps) auto-detection by kernel
 //
 #define CONFIG_CPU_8086		/* required for this file only */
@@ -10,10 +10,10 @@
 !
 */
 getcpu:
-	mov	$SETUPSEG,%ax         /* Codesegment setup.S */
+	mov	$SETUPSEG,%ax   // setup.S code segment
 	mov	%ax,%ds
 #ifndef CONFIG_ROMCODE
-	pushf
+	pushf                   // check for 8088/8086/V20/V30/80188/80186
 	xor	%ax,%ax
 	push	%ax
 	popf
@@ -23,7 +23,7 @@ getcpu:
 	and	$0xf000,%ax
 	cmp	$0xf000,%ax
 	je	is8086
-	mov	$0x7000,%ax
+	mov	$0x7000,%ax     // check for 80286
 	pushf
 	push	%ax
 	popf
@@ -32,13 +32,28 @@ getcpu:
 	popf
 	and	$0x7000,%ax
 	je	is80286
-//
-// Default & unknown CPU
-//
-	mov	$0xff,%cl
+	pushf			// check for 32-bit CPU (80386+)
+	pushf
+	pop	%bx             // old FLAGS -> BX
+	mov	%bx,%ax
+	xor	$0x70,%ah       // try changing b14 (NT) or b13:b12 (IOPL)
+	push	%ax
+	popf
+	pushf
+	pop	%ax             // new FLAGS -> AX
+	popf
+	xor	%ah,%bh
+	xor	%ax,%ax
+	and	$0x70,%bh       // 32-bit CPU if we changed NT or IOPL
+	je	not_32bit
+	mov	$7,%cl          // 80386+
+	lea	p80386,%si
+	jmp	cpu_store
+
+not_32bit:                      // Unknown CPU
+	mov	$255,%cl
 	lea	px86,%si
 	jmp	cpu_store
-	nop
 #endif
 
 #if !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_8086)
@@ -178,26 +193,19 @@ queue_end:
 // The processor name must not be longer than 15 characters!
 //
 #if !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_8086)
-p8088:	.ascii "Intel 8088"
-	.byte 0
-p8086:	.ascii "Intel 8086"
-	.byte 0
-pv20:	.ascii "NEC V20"
-	.byte 0
-pv30:	.ascii "NEC V30"
-	.byte 0
-p80188:	.ascii "Intel 80188"
-	.byte 0
-p80186:	.ascii "Intel 80186"
-	.byte 0
+p8088:	.ascii "Intel 8088\0"
+p8086:	.ascii "Intel 8086\0"
+pv20:	.ascii "NEC V20\0"
+pv30:	.ascii "NEC V30\0"
+p80188:	.ascii "Intel 80188\0"
+p80186:	.ascii "Intel 80186\0"
 #endif
 #if !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_80286)
-p80286:	.ascii "Intel 80286"
-	.byte 0
+p80286:	.ascii "Intel 80286\0"
+p80386:	.ascii "Intel 80386+\0"
 #endif
 #if !defined(CONFIG_ROMCODE)
-px86:   .ascii "Unknown x86"
-	.byte 0
+px86:   .ascii "Unknown x86\0"
 #endif
 //
 // Here is the CPU id stored
