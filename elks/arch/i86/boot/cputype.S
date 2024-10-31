@@ -1,7 +1,6 @@
-// obsolote and inaccurate, but required for arch_cpu > 5
+// obsolete and inaccurate, but required for arch_cpu = 6 and 7 (286, 386+)
 // XT vs AT BIOS system capabilities (sys_caps) auto-detection by kernel
-//
-#define CONFIG_CPU_8086		/* required for this file only */
+// Note: enables, then disables interrupts when called
 
 /*
 ! Probe for the CPU
@@ -10,10 +9,9 @@
 !
 */
 getcpu:
-	mov	$SETUPSEG,%ax         /* Codesegment setup.S */
+	mov	$SETUPSEG,%ax   // setup code segment
 	mov	%ax,%ds
-#ifndef CONFIG_ROMCODE
-	pushf
+	pushf                   // check for 8088/8086/V20/V30/80188/80186
 	xor	%ax,%ax
 	push	%ax
 	popf
@@ -23,7 +21,7 @@ getcpu:
 	and	$0xf000,%ax
 	cmp	$0xf000,%ax
 	je	is8086
-	mov	$0x7000,%ax
+	mov	$0x7000,%ax     // check for 80286
 	pushf
 	push	%ax
 	popf
@@ -32,16 +30,29 @@ getcpu:
 	popf
 	and	$0x7000,%ax
 	je	is80286
-//
-// Default & unknown CPU
-//
-	mov	$0xff,%cl
-	lea	px86,%si
+	pushf			// check for 32-bit CPU (80386+)
+	pushf
+	pop	%bx             // old FLAGS -> BX
+	mov	%bx,%ax
+	xor	$0x70,%ah       // try changing b14 (NT) or b13:b12 (IOPL)
+	push	%ax
+	popf
+	pushf
+	pop	%ax             // new FLAGS -> AX
+	popf
+	xor	%ah,%bh
+	xor	%ax,%ax
+	and	$0x70,%bh       // 32-bit CPU if we changed NT or IOPL
+	je	not_32bit
+	mov	$7,%cl          // 80386+
+	#lea	p80386,%si
 	jmp	cpu_store
-	nop
-#endif
 
-#if !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_8086)
+not_32bit:			// Unknown CPU
+	mov	$255,%cl
+	#lea	px86,%si
+	jmp	cpu_store
+
 is8086:
 	mov	$0xff,%al
 	mov	$0x21,%cl	// 80188/86 uses only the five lower
@@ -52,47 +63,42 @@ is8086:
 	mov	$0xffff,%cx
 	nop
 	rep
-//	seg	es
 	lodsb
 	or	%cx,%cx
 	jz	isv30
 	call	queue
 	jz	is8088
 	mov	$1,%cl
-	lea	p8086,%si
+	#lea	p8086,%si
 	jmp	cpu_store
 is8088:	xor	%cl,%cl
-	lea	p8088,%si
+	#lea	p8088,%si
 	jmp	cpu_store
 is80186:call	queue
 	jz	is80188
 	mov	$5,%cl
-	lea	p80186,%si
+	#lea	p80186,%si
 	jmp	cpu_store
 is80188:mov	$4,%cl
-	lea	p80188,%si
+	#lea	p80188,%si
 	jmp	cpu_store
 isv30:	
 	call	queue
 	jz	isv20
 	mov	$3,%cl
-	lea	pv30,%si
+	#lea	pv30,%si
 	jmp	cpu_store
 isv20:	mov	$2,%cl
-	lea	pv20,%si
+	#lea	pv20,%si
 	jmp     cpu_store
-#endif
-#if !defined (CONFIG_ROMCODE) || defined(CONFIG_CPU_80286)
+
 is80286:mov	$6,%cl
-	lea	p80286,%si
+	#lea	p80286,%si
 //	jmp	cpu_store
-#endif
 
 cpu_store:
-	//
-	// Store the processor name and type
-	//
-	push	%cx
+#if UNUSED
+	push	%cx		// Store processor name
 	mov	$INITSEG,%ax
 	mov	%ax,%es
 	mov	$0x30,%di
@@ -109,12 +115,13 @@ con_cp1:
 	rep
 	movsb
 	pop	%cx
-	mov	$INITSEG,%ax
+#endif
+	mov	$INITSEG,%ax	// Store processor type
 	mov	%ax,%ds
 	mov	%cl,0x20
+	cli			// FIXME reset to cli; shouldn't have sti's above
 	ret
 
-#if !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_8086)
 /*
 !
 ! Determine the length of the prefetch queue. 8088/188/v20 has
@@ -174,31 +181,20 @@ queue_end:
 
 	or	%dx,%dx
 	ret
+
+#if UNUSED
 //
 // The processor name must not be longer than 15 characters!
 //
-#if !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_8086)
-p8088:	.ascii "Intel 8088"
-	.byte 0
-p8086:	.ascii "Intel 8086"
-	.byte 0
-pv20:	.ascii "NEC V20"
-	.byte 0
-pv30:	.ascii "NEC V30"
-	.byte 0
-p80188:	.ascii "Intel 80188"
-	.byte 0
-p80186:	.ascii "Intel 80186"
-	.byte 0
-#endif
-#if !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_80286)
-p80286:	.ascii "Intel 80286"
-	.byte 0
-#endif
-#if !defined(CONFIG_ROMCODE)
-px86:   .ascii "Unknown x86"
-	.byte 0
-#endif
+p8088:	.ascii "Intel 8088\0"
+p8086:	.ascii "Intel 8086\0"
+pv20:	.ascii "NEC V20\0"
+pv30:	.ascii "NEC V30\0"
+p80188:	.ascii "Intel 80188\0"
+p80186:	.ascii "Intel 80186\0"
+p80286:	.ascii "Intel 80286\0"
+p80386:	.ascii "Intel 80386+\0"
+px86:   .ascii "Unknown x86\0"
 //
 // Here is the CPU id stored
 //
@@ -206,7 +202,4 @@ v_id:	.byte 0,0,0,0
 v_id2:	.byte 0,0,0,0
 v_id3:	.byte 0,0,0,0
 	.byte 0
-
-#endif /* !defined(CONFIG_ROMCODE) || defined(CONFIG_CPU_8086)*/
-
-#undef CONFIG_CPU_8086
+#endif
