@@ -7,6 +7,8 @@
 /*
  * Compile-time configuration
  */
+#define UTS_SYSNAME "ELKS"                      /* uname system name */
+#define UTS_NODENAME "elks"                     /* someday set by sethostname() */
 
 #define CONFIG_MSDOS_PARTITION  1               /* support DOS HD partitions */
 #define CONFIG_FS_DEV           1               /* support FAT /dev folder */
@@ -28,7 +30,7 @@
 #define SETUP_PART_OFFSETLO     setupw(0x1e2)   /* partition offset low word */
 #define SETUP_PART_OFFSETHI     setupw(0x1e4)   /* partition offset high word */
 #ifdef CONFIG_ROMCODE
-#define SYS_CAPS        (CAP_PC_AT)
+#define SYS_CAPS                (CAP_PC_AT)
 #endif
 #define UTS_MACHINE             "ibmpc i8086"
 
@@ -101,66 +103,48 @@
 #define DEF_SETUPSEG    DEF_INITSEG + 0x20
 #define DEF_SYSMAX      0x2F00  /* maximum system size (=.text+.fartext+.data) */
 
-/* DMASEG is a bounce buffer of 1K (=BLOCKSIZE) below the first 64K boundary (=0x1000:0)
- * for use with the old 8237 DMA controller OR a disk track buffer of 9K (18 ectors).
- * Following that is the kernel code and data at REL_INITSYS.
+/* Segmemnt DMASEG up to DMASEGEND is used as a bounce buffer of at least 1K (=BLOCKSIZE)
+ * below the first 64K boundary (=0x1000:0) for use with the old 8237 DMA controller.
+ * If floppy track caching is enabled, this area is also used for the track buffer
+ * for direct DMA access using multisector I/O.
+ * Following DMASEGEND is the kernel code and data at REL_SYSSEG.
  */
+
+#ifdef CONFIG_TRACK_CACHE           /* floppy track buffer in low mem */
+#define DMASEGSZ        0x2400      /* SECTOR_SIZE * 18 (9216) */
+#else
+#define DMASEGSZ        0x0400      /* BLOCK_SIZE (1024) */
+#endif
+#define DMASEGEND       (DMASEG+(DMASEGSZ>>4))
 
 #ifdef CONFIG_ROMCODE
 #if defined(CONFIG_BLK_DEV_BFD) || defined(CONFIG_BLK_DEV_BHD)  /* BIOS disk driver*/
-#define DMASEG          0x80  /* 0x400 bytes floppy sector buffer */
-#ifdef CONFIG_TRACK_CACHE     /* floppy track buffer in low mem */
-#define DMASEGSZ      0x2400  /* SECTOR_SIZE * 18 (9216) */
-#define KERNEL_DATA    0x2C0  /* kernel data segment */
+#define DMASEG          0x80        /* 0x400 bytes floppy sector buffer */
+#define KERNEL_DATA     DMASEGEND   /* kernel data segment */
 #else
-#define DMASEGSZ       0x040  /* BLOCK_SIZE (1024) */
-#define KERNEL_DATA    0x0C0  /* kernel data segment */
-#endif
-#else
-#define KERNEL_DATA     0x80  /* kernel data segment */
+#define KERNEL_DATA     0x080       /* kernel data segment */
 #endif
 #define SETUP_DATA      CONFIG_ROM_SETUP_DATA
 #endif
 
-
 #if (defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_8018X)) && !defined(CONFIG_ROMCODE)
 /* Define segment locations of low memory, must not overlap */
-#define DEF_OPTSEG      0x50  /* 0x200 bytes boot options*/
-#define OPTSEGSZ       0x200  /* max size of /bootopts file (1K max) */
-#define REL_INITSEG     0x70  /* 0x200 bytes setup data */
-#define DMASEG          0x90  /* 0x400 bytes floppy sector buffer */
-#ifdef CONFIG_TRACK_CACHE     /* floppy track buffer in low mem */
-#define DMASEGSZ      0x2400  /* SECTOR_SIZE * 18 (9216) */
-#define REL_SYSSEG     0x2D0  /* kernel code segment */
-#else
-#define DMASEGSZ 0x0400       /* BLOCK_SIZE (1024) */
-#define REL_SYSSEG     0x0D0  /* kernel code segment */
-#endif
+#define OPTSEGSZ        0x200       /* max size of /bootopts file (512 bytes max) */
+#define DEF_OPTSEG      0x50        /* 0x200 bytes boot options at lowest usable ram */
+#define REL_INITSEG     0x70        /* 0x200 bytes setup data */
+#define DMASEG          0x90        /* start of floppy sector buffer */
+#define REL_SYSSEG      DMASEGEND   /* kernel code segment */
 #define SETUP_DATA      REL_INITSEG
 #endif
-
 
 #if defined(CONFIG_ARCH_PC98) && !defined(CONFIG_ROMCODE)
 /* Define segment locations of low memory, must not overlap */
-#define DEF_OPTSEG      0x60  /* 0x200 bytes boot options*/
-#define OPTSEGSZ       0x200  /* max size of /bootopts file (1K max) */
-#define REL_INITSEG     0x80  /* 0x200 bytes setup data */
-#define DMASEG          0xA0  /* 0x400 bytes floppy sector buffer */
-#ifdef CONFIG_TRACK_CACHE     /* floppy track buffer in low mem */
-#define DMASEGSZ      0x2400  /* SECTOR_SIZE * 18 (9216) > SECTOR_SIZE * 8 (8192) */
-#define REL_SYSSEG     0x2E0  /* kernel code segment */
-#else
-#define DMASEGSZ      0x0400  /* BLOCK_SIZE (1024) */
-#define REL_SYSSEG     0x0E0  /* kernel code segment */
-#endif
+#define OPTSEGSZ        0x200       /* max size of /bootopts file (512 bytes max) */
+#define DEF_OPTSEG      0x60        /* 0x200 bytes boot options at lowest usable ram */
+#define REL_INITSEG     0x80        /* 0x200 bytes setup data */
+#define DMASEG          0xA0        /* start of floppy sector buffer */
+#define REL_SYSSEG      DMASEGEND   /* kernel code segment */
 #define SETUP_DATA      REL_INITSEG
 #endif
-
-/* Defines for what uname() should return.
- * The definitions for UTS_RELEASE and UTS_VERSION are now passed as
- * kernel compilation parameters, and should only be used by elks/kernel/version.c
- */
-#define UTS_SYSNAME "ELKS"
-#define UTS_NODENAME "elks"             /* someday set by sethostname() */
 
 #endif

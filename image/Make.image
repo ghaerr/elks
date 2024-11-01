@@ -143,3 +143,4 @@ romfs:
 	-rm -f romfs.devices
 	$(MAKE) -f Make.devices "MKDEV=echo >> romfs.devices"
 	mkromfs -d romfs.devices $(DESTDIR)
+	-rm -f romfs.devices
