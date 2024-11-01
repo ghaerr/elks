@@ -103,7 +103,7 @@
 #define DEF_SETUPSEG    DEF_INITSEG + 0x20
 #define DEF_SYSMAX      0x2F00  /* maximum system size (=.text+.fartext+.data) */
 
-/* Segmemnt DMASEG up to DMASEGEND is used as a bounce buffer of at least 1K (=BLOCKSIZE)
+/* Segment DMASEG up to DMASEGEND is used as a bounce buffer of at least 1K (=BLOCKSIZE)
  * below the first 64K boundary (=0x1000:0) for use with the old 8237 DMA controller.
  * If floppy track caching is enabled, this area is also used for the track buffer
  * for direct DMA access using multisector I/O.
