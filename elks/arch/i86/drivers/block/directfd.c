@@ -137,10 +137,10 @@ char USE_IMPLIED_SEEK = 0; /* =1 for QEMU with 360k/AT stretch floppies (not rea
 #define TIMEOUT_CMD_COMPL  (6 * HZ)    /* 6 secs wait for FDC command complete */
 
 /* locations for cache and bounce buffers */
-#define CACHE_SEG       DMASEG  /* track cache at DMASEG:0 (shared with BIOS driver) */
-#define CACHE_OFF       0
-#define BOUNCE_SEG      DMASEG  /* share bounce buffer with track cache at DMASEG:0 */
+#define BOUNCE_SEG      TRACKSEG /* share bounce buffer with track cache at TRACKSEG:0 */
 #define BOUNCE_OFF      0
+#define CACHE_SEG       TRACKSEG /* track cache at TRACKSEG:0 (same as BIOS FD driver) */
+#define CACHE_OFF       0
 
 #define FLOPPY_DMA      2       /* hardwired on old PCs */
 
