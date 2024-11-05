@@ -560,25 +560,25 @@ static int BFPROC do_readwrite(struct drive_infot *drivep, sector_t start, char 
                         drive, start, this_pass);
 
 #pragma GCC diagnostic ignored "-Wshift-count-overflow"
-        usedmaseg = seg >> 16; /* will be nonzero only if XMS configured and XMS buffer */
-        if (!usedmaseg) {
-            /* check for 64k I/O overlap */
-            physaddr = (seg << 4) + (unsigned int)buf;
-            end = this_pass * drivep->sector_size - 1;
-            usedmaseg = (physaddr + end < physaddr);
-            debug_blk("bioshd: %p:%p = %p count %d wrap %d\n",
-                (unsigned int)seg, buf, physaddr, this_pass, usedmaseg);
-        }
-        if (usedmaseg) {
-            segment = DMASEG;           /* if xms buffer use DMASEG*/
-            offset = 0;
-            if (cmd == WRITE)           /* copy xms buffer down before write*/
-                xms_fmemcpyw(0, DMASEG, buf, seg, this_pass*(drivep->sector_size >> 1));
-            //set_cache_invalid();      /* don't invalidate cache - not shared */
-        } else {
-            segment = (seg_t)seg;
-            offset = (unsigned) buf;
-        }
+    usedmaseg = seg >> 16; /* will be nonzero only if XMS configured and XMS buffer */
+    if (!usedmaseg) {
+        /* check for 64k I/O overlap */
+        physaddr = (seg << 4) + (unsigned int)buf;
+        end = this_pass * drivep->sector_size - 1;
+        usedmaseg = (physaddr + end < physaddr);
+        debug_blk("bioshd: %p:%p = %p count %d wrap %d\n",
+            (unsigned int)seg, buf, physaddr, this_pass, usedmaseg);
+    }
+    if (usedmaseg) {
+        segment = DMASEG;           /* if xms buffer use DMASEG*/
+        offset = 0;
+        if (cmd == WRITE)           /* copy xms buffer down before write*/
+            xms_fmemcpyw(0, DMASEG, buf, seg, this_pass*(drivep->sector_size >> 1));
+        //set_cache_invalid();      /* don't invalidate cache - not shared */
+    } else {
+        segment = (seg_t)seg;
+        offset = (unsigned) buf;
+    }
     errs = MAX_ERRS;        /* BIOS disk reads should be retried at least five times */
     do {
         debug_cache("%s%s%d CHS %d/%d/%d count %d\n",
@@ -598,6 +598,9 @@ static int BFPROC do_readwrite(struct drive_infot *drivep, sector_t start, char 
     } while (error && --errs);      /* On error, retry up to MAX_ERRS times */
     last_drive = drivep;
 
+    if (cmd == WRITE && drivep == cache_drive)
+        set_cache_invalid();        /* cache not updated on write so invalidate */
+
     if (error) return 0;            /* error message in blk.h */
 
     if (usedmaseg) {
@@ -605,8 +608,6 @@ static int BFPROC do_readwrite(struct drive_infot *drivep, sector_t start, char 
             xms_fmemcpyw(buf, seg, 0, DMASEG, this_pass*(drivep->sector_size >> 1));
         //set_cache_invalid();      /* don't invalidate cache - not shared */
     }
-    if (cmd == WRITE && drivep == cache_drive)
-        set_cache_invalid();        /* cache isn't updated on writes */
     return this_pass;
 }
 
@@ -689,8 +690,8 @@ static int BFPROC do_cache_read(struct drive_infot *drivep, sector_t start, char
         do_readtrack(drivep, start);                /* read whole track*/
         if (cache_valid(drivep, start, buf, seg))   /* try cache again*/
             return 1;
+        //set_cache_invalid();          /* old code invalidated cache on failure */
     }
-    set_cache_invalid();
     return 0;
 }
 #endif

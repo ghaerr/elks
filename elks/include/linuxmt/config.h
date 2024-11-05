@@ -115,7 +115,7 @@
  * outside its track cache; thus the complicated defines below.
  */
 
-#if defined(CONFIG_BLK_DEV_BFD) || defined(CONFIG_BLK_DEV_BHD)
+#if defined(CONFIG_BLK_DEV_BFD) || defined(CONFIG_BLK_DEV_BHD)  /* BIOS driver */
 #define DMASEGSZ        0x0400      /* BLOCK_SIZE (1024) for external XMS/DMA buffer */
 #else
 #define DMASEGSZ        0           /* no external XMS/DMA buffer */
@@ -123,9 +123,13 @@
 
 #if defined(CONFIG_BLK_DEV_BFD) || defined(CONFIG_BLK_DEV_BHD) || defined(CONFIG_BLK_FD)
 #ifdef CONFIG_TRACK_CACHE           /* floppy track buffer in low mem */
-#define TRACKSEGSZ      0x2400      /* SECTOR_SIZE * 18 (9216) */
+#   define TRACKSEGSZ      0x2400   /* SECTOR_SIZE * 18 (9216) */
 #else
-#define TRACKSEGSZ      0x0400      /* BLOCK_SIZE (1024) */
+#  ifdef CONFIG_BLK_FD
+#  define TRACKSEGSZ      0x0400    /* DF driver requires DMASEG internal to TRACKSEG */
+#  else
+#  define TRACKSEGSZ      0         /* no TRACKSEG buffer */
+#  endif
 #endif
 #define TRACKSEG        (DMASEG+(DMASEGSZ>>4))
 #define DMASEGEND       (DMASEG+(DMASEGSZ>>4)+(TRACKSEGSZ>>4))
