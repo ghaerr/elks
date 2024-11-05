@@ -103,27 +103,43 @@
 #define DEF_SETUPSEG    DEF_INITSEG + 0x20
 #define DEF_SYSMAX      0x2F00  /* maximum system size (=.text+.fartext+.data) */
 
-/* Segment DMASEG up to DMASEGEND is used as a bounce buffer of at least 1K (=BLOCKSIZE)
- * below the first 64K boundary (=0x1000:0) for use with the old 8237 DMA controller.
- * If floppy track caching is enabled, this area is also used for the track buffer
- * for direct DMA access using multisector I/O.
- * Following DMASEGEND is the kernel code and data at REL_SYSSEG.
+/* Segment DMASEG up to DMASEGEND is used for the XMS/DMA bounce buffer and track cache.
+ * Following DMASEGEND is the kernel code at REL_SYSSEG (or kernel data for ROM configs).
+ *
+ * A "bounce buffer" is configured below the first 64K boundary for use with
+ * old 8237 DMA controller which wraps addresses wider than 16-bits on PC/XT systems.
+ * If floppy track caching is enabled, the track buffer is also configured in
+ * low memory for direct DMA access usig multisector I/O.
+ * The DF driver uses the first sector of its track cache for the XMS/DMA buffer.
+ * In contrast, the BIOS FD/HD driver is configured to use an XMS/DMA buffer
+ * outside its track cache; thus the complicated defines below.
  */
 
-#ifdef CONFIG_TRACK_CACHE           /* floppy track buffer in low mem */
-#define DMASEGSZ        0x2400      /* SECTOR_SIZE * 18 (9216) */
+#if defined(CONFIG_BLK_DEV_BFD) || defined(CONFIG_BLK_DEV_BHD)  /* BIOS driver */
+#define DMASEGSZ        0x0400      /* BLOCK_SIZE (1024) for external XMS/DMA buffer */
 #else
-#define DMASEGSZ        0x0400      /* BLOCK_SIZE (1024) */
+#define DMASEGSZ        0           /* no external XMS/DMA buffer */
 #endif
-#define DMASEGEND       (DMASEG+(DMASEGSZ>>4))
+
+#if defined(CONFIG_BLK_DEV_BFD) || defined(CONFIG_BLK_DEV_BHD) || defined(CONFIG_BLK_FD)
+#ifdef CONFIG_TRACK_CACHE           /* floppy track buffer in low mem */
+#   define TRACKSEGSZ      0x2400   /* SECTOR_SIZE * 18 (9216) */
+#else
+#  ifdef CONFIG_BLK_FD
+#  define TRACKSEGSZ      0x0400    /* DF driver requires DMASEG internal to TRACKSEG */
+#  else
+#  define TRACKSEGSZ      0         /* no TRACKSEG buffer */
+#  endif
+#endif
+#define TRACKSEG        (DMASEG+(DMASEGSZ>>4))
+#define DMASEGEND       (DMASEG+(DMASEGSZ>>4)+(TRACKSEGSZ>>4))
+#else
+#define DMASEGEND       DMASEG      /* no DMASEG buffer */
+#endif
 
 #ifdef CONFIG_ROMCODE
-#if defined(CONFIG_BLK_DEV_BFD) || defined(CONFIG_BLK_DEV_BHD)  /* BIOS disk driver*/
-#define DMASEG          0x80        /* 0x400 bytes floppy sector buffer */
+#define DMASEG          0x80        /* start of floppy sector buffer */
 #define KERNEL_DATA     DMASEGEND   /* kernel data segment */
-#else
-#define KERNEL_DATA     0x080       /* kernel data segment */
-#endif
 #define SETUP_DATA      CONFIG_ROM_SETUP_DATA
 #endif
 
