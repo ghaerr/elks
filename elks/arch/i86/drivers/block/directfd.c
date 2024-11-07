@@ -128,10 +128,14 @@
 char USE_IMPLIED_SEEK = 0; /* =1 for QEMU with 360k/AT stretch floppies (not real hw) */
 #define CHECK_DIR_REG       1   /* =1 to read and clear DIR DSKCHG when media changed */
 #define CHECK_DISK_CHANGE   1   /* =1 to inform kernel of media changed */
-#define FULL_TRACK          1   /* =1 to read full tracks when track caching */
+#define CACHE_CYLINDER      0   /* =1 to cache to end of cylinder rather than track */
+#define FULL_TRACK          0   /* =1 to read full tracks when track caching */
 #define TRACK_SPLIT_BLK     1   /* =1 to read extra sector on track split block */
 #define MOTORDELAY          0   /* =1 to emulate motor on delay for floppy on QEMU */
 #define IODELAY             0   /* =1 to emulate delay for floppy on QEMU */
+
+#define CACHE_CYLINDER_MAX  12  /* max sectors to cache when CACHE_CYLINDER */
+#define CACHE_SIZE          (TRACKSEGSZ >> 9)   /* max usable track cache */
 
 /* adjustable timeouts */
 #define TIMEOUT_MOTOR_ON   (HZ/2)      /* 500 ms wait for floppy motor on before I/O */
@@ -180,12 +184,6 @@ static unsigned char running;   /* keep track of motors already running */
  * ultra cheap floppies ;-)
  */
 #define MIN_ERRORS      0
-
-/*
- * Maximum number of sectors in a track buffer. Track buffering is disabled
- * if tracks are bigger.
- */
-#define MAX_BUFFER_SECTORS 18
 
 #define LINADDR(seg, offs) ((unsigned long)((((unsigned long)(seg)) << 4) + (unsigned)(offs)))
 
@@ -663,7 +661,7 @@ static void rw_interrupt(void)
     char *cache_offset;
 
     nr = result();
-    /* NOTE: If use_cache is active and sector count is uneven, ST0 will
+    /* NOTE: If cache is active and sector count is uneven, ST0 will
      * always show HD1 as selected at this point. */
     DEBUG("rwI%x|%x|%x-", ST0,ST1,ST2);
 
@@ -732,7 +730,7 @@ static void rw_interrupt(void)
     if (use_cache) {
         cache_drive = current_drive;    /* cache now valid */
         start = (unsigned int)req->rq_sector;
-        cache_start = (FULL_TRACK? start - sector: start);
+        cache_start = ((FULL_TRACK && floppy->sect < CACHE_SIZE)? start - sector: start);
         cache_numsectors = numsectors;
         cache_offset = (char *)(((start - cache_start) << 9) + CACHE_OFF);
         DEBUG("rd %04x:%04x->%08lx:%04x;", CACHE_SEG, cache_offset,
@@ -1204,12 +1202,15 @@ static void DFPROC redo_fd_request(void)
     startsector = sector;
     numsectors = req->rq_nr_sectors;
 #ifdef CONFIG_TRACK_CACHE
-    use_cache = (command == FD_READ) && (req->rq_errors < 4) &&
-        (floppy->sect <= MAX_BUFFER_SECTORS);
+    use_cache = (command == FD_READ) && (req->rq_errors < 4);
     if (use_cache) {
-        if (FULL_TRACK)
+        if (FULL_TRACK && floppy->sect < CACHE_SIZE)
             startsector = 0;
-#if TRACK_SPLIT_BLK
+#if CACHE_CYLINDER
+        numsectors = (floppy->sect << 1) - (sector + head*floppy->sect);
+        if (numsectors > CACHE_CYLINDER_MAX)
+            numsectors = CACHE_CYLINDER_MAX;
+#elif TRACK_SPLIT_BLK
         /* If the floppy sector count is odd, we cache one more sector
          * when head=0 to get an even number of sectors (full blocks).
          */
@@ -1217,6 +1218,8 @@ static void DFPROC redo_fd_request(void)
 #else
         numsectors = floppy->sect - startsector;
 #endif
+        if (numsectors > CACHE_SIZE)
+            numsectors = CACHE_SIZE;
     }
 #endif
 
