@@ -129,6 +129,7 @@ char USE_IMPLIED_SEEK = 0; /* =1 for QEMU with 360k/AT stretch floppies (not rea
 #define CHECK_DIR_REG       1   /* =1 to read and clear DIR DSKCHG when media changed */
 #define CHECK_DISK_CHANGE   1   /* =1 to inform kernel of media changed */
 #define FULL_TRACK          1   /* =1 to read full tracks when track caching */
+#define TRACK_SPLIT_BLK     1   /* =1 to read extra sector on track split block */
 #define IODELAY             0   /* =1 to emulate delay for floppy on QEMU */
 
 /* adjustable timeouts */
@@ -484,7 +485,6 @@ static void DFPROC setup_DMA(void)
         if (use_bounce) {
             dma_addr = LINADDR(BOUNCE_SEG, BOUNCE_OFF);
             if (use_bounce && command == FD_WRITE) {
-                printk("XWRITE ");
                 xms_fmemcpyw(BOUNCE_OFF, BOUNCE_SEG, req->rq_buffer, req->rq_seg,
                     BLOCK_SIZE/2);
             }
@@ -1197,17 +1197,24 @@ static void DFPROC redo_fd_request(void)
     track = tmp / floppy->head;
     seek_track = track << floppy->stretch;
     command = (req->rq_cmd == READ)? FD_READ: FD_WRITE;
+    startsector = sector;
+    numsectors = req->rq_nr_sectors;
 #ifdef CONFIG_TRACK_CACHE
     use_cache = (command == FD_READ) && (req->rq_errors < 4) &&
         (floppy->sect <= MAX_BUFFER_SECTORS);
+    if (use_cache) {
+        if (FULL_TRACK)
+            startsector = 0;
+#if TRACK_SPLIT_BLK
+        /* If the floppy sector count is odd, we cache one more sector
+         * when head=0 to get an even number of sectors (full blocks).
+         */
+        numsectors = floppy->sect + (floppy->sect & 1 && !head) - startsector;
+#else
+        numsectors = floppy->sect - startsector;
 #endif
-    startsector = (use_cache && FULL_TRACK)? 0: sector;
-    /* If the floppy sector count is odd, we cache one more sector
-     * when head=0 to get an even number of sectors (full blocks).
-     */
-    numsectors = use_cache?
-        floppy->sect + (floppy->sect & 1 && !head) - startsector
-        : req->rq_nr_sectors;
+    }
+#endif
 
     DEBUG("df%d: %s sector %d CHS %d/%d/%d max %d stretch %d seek %d\n",
         DEVICE_NR(req->rq_dev), req->rq_cmd==READ? "read": "write",
