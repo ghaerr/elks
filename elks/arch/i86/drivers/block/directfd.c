@@ -130,6 +130,7 @@ char USE_IMPLIED_SEEK = 0; /* =1 for QEMU with 360k/AT stretch floppies (not rea
 #define CHECK_DISK_CHANGE   1   /* =1 to inform kernel of media changed */
 #define FULL_TRACK          1   /* =1 to read full tracks when track caching */
 #define TRACK_SPLIT_BLK     1   /* =1 to read extra sector on track split block */
+#define MOTORDELAY          0   /* =1 to emulate motor on delay for floppy on QEMU */
 #define IODELAY             0   /* =1 to emulate delay for floppy on QEMU */
 
 /* adjustable timeouts */
@@ -419,7 +420,8 @@ static void DFPROC floppy_on(int nr)
     if (!(mask & current_DOR)) {        /* motor not running yet */
         del_timer(&motor_on_timer[nr]);
         /* TEAC 1.44M says 'waiting time' 505ms, may be too little for 5.25in drives. */
-        motor_on_timer[nr].tl_expires = jiffies + TIMEOUT_MOTOR_ON;
+        motor_on_timer[nr].tl_expires = jiffies +
+            ((running_qemu && !MOTORDELAY)? 0: TIMEOUT_MOTOR_ON);
         add_timer(&motor_on_timer[nr]);
 
         current_DOR &= 0xFC;            /* remove drive select */
@@ -763,15 +765,17 @@ static void DFPROC setup_rw_floppy(void)
     DEBUG("setup_rw-");
 
 #if IODELAY
-    static unsigned lasttrack;
-    unsigned ms = abs(track - lasttrack) * 4 / 10;
-    lasttrack = track;
-    if (current_drive == 0)
-        ms += 10 + numsectors;      /* 1440k @300rpm = 100ms + ~10ms/sector + 4ms/tr */
-    else
-        ms += 8 + (numsectors<<1);  /* 360k @360rpm = 83ms + ~20ms/sector + 3ms/tr */
-    unsigned long timeout = jiffies + ms*HZ/100;
-    while (!time_after(jiffies, timeout)) continue;
+    if (running_qemu) {
+        static unsigned lasttrack;
+        unsigned ms = abs(track - lasttrack) * 4 / 10;
+        lasttrack = track;
+        if (current_drive == 0)
+            ms += 10 + numsectors;    /* 1440k @300rpm = 100ms + ~10ms/sector + 4ms/tr */
+        else
+            ms += 8 + (numsectors<<1); /* 360k @360rpm = 83ms + ~20ms/sector + 3ms/tr */
+        unsigned long timeout = jiffies + ms*HZ/100;
+        while (!time_after(jiffies, timeout)) continue;
+    }
 #endif
     debug_cache("%s%d %lu(CHS %u,%u,%u-%u)\n",
         use_cache? "TR": (command == FD_WRITE? "WR": "RD"),
