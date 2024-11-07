@@ -211,7 +211,7 @@ static void INITPROC kernel_init(void)
 static void INITPROC kernel_banner(seg_t init, seg_t extra)
 {
 #ifdef CONFIG_ARCH_IBMPC
-    printk("PC/%cT class arch %d, ", (sys_caps & CAP_PC_AT) ? 'A' : 'X', SETUP_CPU_TYPE);
+    printk("PC/%cT class cpu %d, ", (sys_caps & CAP_PC_AT) ? 'A' : 'X', SETUP_CPU_TYPE);
 #endif
 
 #ifdef CONFIG_ARCH_PC98
