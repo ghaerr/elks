@@ -732,7 +732,7 @@ static void rw_interrupt(void)
     if (use_cache) {
         cache_drive = current_drive;    /* cache now valid */
         start = (unsigned int)req->rq_sector;
-        cache_start = FULL_TRACK? start - sector: start;
+        cache_start = (FULL_TRACK? start - sector: start);
         cache_numsectors = numsectors;
         cache_offset = (char *)(((start - cache_start) << 9) + CACHE_OFF);
         DEBUG("rd %04x:%04x->%08lx:%04x;", CACHE_SEG, cache_offset,
