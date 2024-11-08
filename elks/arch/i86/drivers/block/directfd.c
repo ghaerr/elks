@@ -128,8 +128,8 @@
 char USE_IMPLIED_SEEK = 0; /* =1 for QEMU with 360k/AT stretch floppies (not real hw) */
 #define CHECK_DIR_REG       1   /* =1 to read and clear DIR DSKCHG when media changed */
 #define CHECK_DISK_CHANGE   1   /* =1 to inform kernel of media changed */
-#define CACHE_CYLINDER      0   /* =1 to cache to end of cylinder rather than track */
-#define FULL_TRACK          0   /* =1 to read full tracks when track caching */
+#define CACHE_CYLINDER      1   /* =1 to cache to end of cylinder rather than track */
+#define CACHE_FULL_TRACK    0   /* =1 to read full tracks when track caching */
 #define TRACK_SPLIT_BLK     1   /* =1 to read extra sector on track split block */
 #define MOTORDELAY          0   /* =1 to emulate motor on delay for floppy on QEMU */
 #define IODELAY             0   /* =1 to emulate delay for floppy on QEMU */
@@ -730,7 +730,8 @@ static void rw_interrupt(void)
     if (use_cache) {
         cache_drive = current_drive;    /* cache now valid */
         start = (unsigned int)req->rq_sector;
-        cache_start = ((FULL_TRACK && floppy->sect < CACHE_SIZE)? start - sector: start);
+        cache_start = ((CACHE_FULL_TRACK && floppy->sect < CACHE_SIZE)?
+            start - sector: start);
         cache_numsectors = numsectors;
         cache_offset = (char *)(((start - cache_start) << 9) + CACHE_OFF);
         DEBUG("rd %04x:%04x->%08lx:%04x;", CACHE_SEG, cache_offset,
@@ -1204,9 +1205,11 @@ static void DFPROC redo_fd_request(void)
 #ifdef CONFIG_TRACK_CACHE
     use_cache = (command == FD_READ) && (req->rq_errors < 4);
     if (use_cache) {
-        if (FULL_TRACK && floppy->sect < CACHE_SIZE)
+        /* full track caching only if cache large enough */
+        if (CACHE_FULL_TRACK && floppy->sect < CACHE_SIZE)
             startsector = 0;
 #if CACHE_CYLINDER
+        /* cache to end of cylinder, max CACHE_CYLINDER_MAX sectors */
         numsectors = (floppy->sect << 1) - (sector + head*floppy->sect);
         if (numsectors > CACHE_CYLINDER_MAX)
             numsectors = CACHE_CYLINDER_MAX;
@@ -1216,6 +1219,7 @@ static void DFPROC redo_fd_request(void)
          */
         numsectors = floppy->sect + (floppy->sect & 1 && !head) - startsector;
 #else
+        /* partial track caching */
         numsectors = floppy->sect - startsector;
 #endif
         if (numsectors > CACHE_SIZE)
