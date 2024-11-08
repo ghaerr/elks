@@ -99,7 +99,7 @@
 
 /* Don't touch these, unless you really know what you are doing. */
 #define DEF_INITSEG     0x0100  /* initial Image load address by boot code */
-#define DEF_SYSSEG      0x1300  /* address setup then copies kernel to, then REL_SYSSEG */
+#define DEF_SYSSEG      0x1400  /* address setup then copies kernel to, then REL_SYSSEG */
 #define DEF_SETUPSEG    DEF_INITSEG + 0x20
 #define DEF_SYSMAX      0x2F00  /* maximum system size (=.text+.fartext+.data) */
 
