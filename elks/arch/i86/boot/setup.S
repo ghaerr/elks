@@ -51,7 +51,7 @@
 !			4  = 80188
 !			5  = 80186
 !			6  = 80286
-!			7  = 80386
+!			7  = 32-bit CPU (80386+)
 !			8  = 80486 UNUSED
 !			9  = Pentium UNUSED
 !			10 = Pentium PRO UNUSED
