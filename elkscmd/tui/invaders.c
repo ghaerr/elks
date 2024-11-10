@@ -24,12 +24,20 @@
 
 #include "invaders.h"
 
+#ifdef ELKS
+#include "curses.h"
+#else
 #include <curses.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/time.h>
+#ifdef ELKS
+#include <signal.h>
+#else
 #include <sys/signal.h>
+#endif
 #include <time.h>
 #include <termios.h>
 
@@ -154,7 +162,9 @@ struct termios save;
 
 static void cleanup(int sig)
 {
+#ifndef ELKS
 	clrscr();
+#endif
 	refresh();
 	curs_set(1);
 	endwin();
