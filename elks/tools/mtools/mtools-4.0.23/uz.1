@@ -1,0 +1,43 @@
+'\" t
+.\" ** The above line should force tbl to be a preprocessor **
+.\" Man page for uz
+.\"
+.\" Copyright (C), 2000, Robert A.R. King
+.\"
+.\" You may distribute under the terms of the GNU General Public
+.\" License as specified in the file COPYING that comes with the mtools
+.\" package
+.\"
+.\" Fri Dec  1 01:50:54 EST 2000 Robert A.R. King (Robert.King@mailbox.gu.edu.au)
+.\" 
+.TH UZ 1 "Wed Feb 23 00:00:00 EET 2000" "" "Mtools Users Manual"
+.SH NAME
+uz \- gunzips and extracts a gzip'd tar'd archive
+.SH SYNOPSIS
+.\" The command line
+.B uz 
+.I file
+.SH DESCRIPTION
+.B uz
+extracts a gzip'd tar'd archive, that is a \fBtar\fR(1) archive
+compressed with the \fBgzip\fR(1) utility.
+It is not strictly necessary on Debian GNU/Linux, because the GNU
+\fBtar\fR(1) program provides the same capability with the command
+
+.B tar -xzf
+.I file
+
+but this utility is provided in the mtools package for other platforms and 
+is retained here for completeness.
+
+.SH AUTHOR
+Robert King (Robert.King@mailbox.gu.edu.au) wrote this page for the
+.I Debian/GNU
+mtools package.
+
+
+.SH "SEE ALSO"
+.BR mtools (1), 
+.BR gzip (1),
+.BR tar (1),
+.BR lz (1).

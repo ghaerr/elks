@@ -1,0 +1,21 @@
+# boot
+dev
+etc
+bin
+bin/init
+etc/inittab
+etc/rc.sys
+bin/sh
+etc/profile
+bin/clock
+etc/mount.cfg
+bin/date
+bin/getty
+etc/issue
+#etc/net.cfg
+bootopts
+linux
+# login
+bin/login
+etc/passwd
+root

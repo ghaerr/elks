@@ -1,0 +1,228 @@
+%  Copyright 2003,2005,2007 Alain Knaff.
+
+% This documentation is for Mtools which is a collection of tools to
+% allow Unix systems to manipulate MS-DOS files.
+
+% Permission is granted to copy, distribute and/or modify this document
+% under the terms of the GNU Free Documentation License, Version 1.3 or
+% any later version published by the Free Software Foundation; with no
+% Invariant Sections, with no Front-Cover Texts, and with no Back-Cover
+%Texts.  A copy of the license is included in the section entitled
+% ``GNU Free Documentation License''.
+
+\documentclass[a4paper,12pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[latin1]{inputenc}
+\usepackage{pslatex}
+\usepackage[pdfpagemode=None,colorlinks]{hyperref}
+
+\author{Alain Knaff}
+\title{How mformat-3.9.10 and above calculates needed FAT size}
+
+\begin{document}
+
+\maketitle
+
+This small document explains the formula used by {\tt mformat.c} to
+figure out fat size and number of clusters. Due to the way that
+filesystem parameters are stored in the boot sector, we can afford to
+have a FAT that is larger than need to be to accommodate the clusters
+present on disk, but under no circumstances can we have one that is
+too small.
+
+In this discussion, we use the following variable names:
+
+\begin{tabular}{|r|p{12cm}|}
+
+\hline
+
+$fatNybls$&
+Number of nubbles (4 bit unit per FAT). This is 3 for FAT12, 4 for
+FAT16, and 8 for FAT16\\
+
+\hline
+
+$numClus$&
+Number of clusters on the disk\\
+
+\hline
+
+$clusSiz$&
+Size of a cluster, expressed in sectors\\
+
+\hline
+
+$secSiz$&
+Size of a sector, in bytes. Size of a sector in nybbles is $secSiz$ * 2\\
+
+\hline
+
+$nfats$&
+Number of FAT copies, usually two\\
+
+\hline
+
+$remSects$&
+``Remaining sectors'', after number of boot sectors and root directory
+have been accounted for\\
+
+\hline
+
+$fatLen$&
+Length of the FAT, in sectors\\
+
+\hline
+
+
+\end{tabular}
+
+\ \\
+
+Taking into account both data and fat, each cluster takes up the
+following number of nybbles (units of 4 bytes):
+
+
+$$clusSiz * (2*secSiz)  + nfats * fatNybls$$
+	
+This accounts for the data of the cluster ($clusSiz * secSiz$),
+as well as for the space taken up by its descriptor.
+
+The space taken up by all clusters together, plus the space taken by
+descriptors for clusters 0 and 1 ($2*nfats*fatNybls$) should be less
+than what is available.
+
+Additional sectors may be lost due to slack (you have to use a full
+FAT sector, you also have to use a full cluster in the data
+area). Thus, an {\em upper bound} for the number of clusters is as
+follows:
+
+$$
+numClus \le  {2*remSect*secSiz - 2*nfats*fatNybls \over
+2*clusSiz*secSiz + nfats*fatNybls}
+$$
+
+	                        
+$$
+numClus \le {(remSect+2*clusSiz)*2*secSiz \over
+2*clusSiz*secSiz + nfats*fatNybls} - 2
+$$
+
+	   
+These will take up at most the following space in one copy of the FAT
+(we have to round up, because even a half-full fat sector must be
+taken in its entirety)
+
+$$
+fatLen \le \left\lceil {  (numClus+2)*fatNybls \over secSiz * 2 } \right\rceil
+$$
+
+
+$$
+fatLen \le \left\lceil {
+\left( { 2*(remSect+2*clusSiz)*secSiz \over
+2*clusSiz*secSiz + nfats*fatNybls} \right) * fatNybls \over
+2*secSiz 
+} \right\rceil
+$$
+
+
+$$
+fatLen \le \left\lceil {
+(remSect+2*clusSiz)* fatNybls \over
+2*clusSiz*secSiz + nfats*fatNybls
+} \right\rceil
+$$
+
+The space left after FAT sector has been deduced is now {\em less than
+or equal} to what would be needed for the data area of the clusters
+(including fractional clusters), which is good, as we may have under
+no circumstances {\em more} clusters in the data area than in the FAT.
+An important point in this calculation is that we based the needed FAT
+size on a {\em fractional} number of clusters, rather than a rounded
+down amount of clusters. Indeed, using a rounded down number could
+have exposed us to a situation where we had an {\em almost enough}
+space for one more cluster (i.e. not enough space for data + FAT, but
+enough for data alone). This situation, combined with a situation
+where the last FAT sector was flush full could have lead to a
+situation where $numClus$ would become too large for the FAT to
+accommodate. I think this is clearer with an example:
+\begin{itemize}
+\item $remSect=4127$, $clusSiz=1$, $nfats=1$
+\item (Non rounded down) $numClus={(4127+2)*(1024) \over 1032} -
+2 =4094.992$
+\item Rounded down: 4094 clusters
+\item These fit into 16 FAT sectors, exactly
+\item ... leaving us 4095 clusters, which is one to many (because
+these 4095 clusters would now need 17 FAT clusters)
+\end{itemize}
+
+Keeping the fractional part (0.992) allows us to round {\em up} the
+needed number of FAT sectors to 17, nicely solving this problem.
+
+The downside of counting the fractional part however is that we quite
+often waste a sector in the really common situation where both $nfats$
+and $clusSiz$ are even, while $remSect$ is odd. An easy way to address
+this is to subtract one from $remSect$ before application of the
+formula, if this case is detected. Such operation carries no risk, as
+the odd final sector cannot be used to make a full cluster.
+
+There is still a case however, where fatLen must be grown manually
+after application of the formula: If numClus exceeds the maximum
+number of clusters allowable for FAT12 or FAT16), we need to shrink
+$numClus$ after application of the formula, and manually make the FAT
+larger in order to take up any excess space.
+
+Also note that as we used upper bounds, we may waste a certain number
+of sectors, which an exact calculation may not have wasted. However,
+normally, we should not lose more than one sector per FAT copy.
+
+N.B. In its document at \url{http://www.microsoft.com/hwdev/download/hardware/fatgen103.pdf},
+Microsoft proposes a much simpler formula. However, this formula is
+both wrong (i.e. occasionally it produces a smaller FAT than is
+needed for the clusters on disk), less generic (only works for sector
+sizes equal to 512), and less efficient (in case of FAT32, it may
+waste up to 8 sectors!)
+
+The formula is the following (for FAT16):
+$$
+fatLen \le \left\lceil { remSect \over 256 * clusSiz + nfats} \right\rceil
+$$
+
+Note that it doesn't account for the dummy clusters 0 and 1. Thus, if
+we have 258 sectors remaining, with a cluster size of 1, and two FAT
+copies, the Microsoft formula mistakenly assumes fatLen = 1. This
+leaves 258 - 2 = 256 sectors for clusters, which yields 256 clusters.
+However, those clusters do not fit into the FAT, as two clusters are
+lost (0 and 1). However, to Micro\$ofts' credit, this is not actually
+the formula they're using (tested with $remsect=160056$ and
+$clusSize=4$), so this seems to be a documentation issue rather than a
+genuine bug.
+
+In case of FAT32, Microsoft just halves the denominator. This is
+wasteful, as only the $256*clusSiz$ part would need to be halved.
+
+If we assume 16777000, and a cluster size of 8, our formula would give
+us:
+$$fatLen = \left\lceil (16777000 + 16) * 8 \over 2 * 8 * 512 + 16
+\right\rceil = 16352$$
+This would leave $16777000-2*16352=16744296$ sectors for the clusters,
+i.e. 2093037 clusters. The FAT descriptors for those 2093037 clusters
+do indeed fit into our 16352 fat sectors.
+
+Microsoft, on the other hand, would get: $$fatLen = \left\lceil{
+16777000 \over (256 * 8 + 2)/2} \right\rceil = 16368$$ This would only
+leave $16777000-2*16368=16744264$, i.e. 2093033 clusters, thus wasting
+4 clusters. The FAT would be 28 sectors too big, i.e. more than the
+mere 8 sectors announced by Microsoft! Unfortunately, I currently
+don't have access to any sufficiently recent Windows to check out
+whether this really happens in the code, or whether it is only a
+documentation issue as well.
+
+Oh, and before somebody points it out: the formula in this document
+occassionnally wastes sectors too, although not as much (Example: With
+$remsect=685$, $clusSiz=1$ and $nfats=2$ our formula gives $fatLen=3$,
+which leaves 679 clusters. However, we could use $fatLen=2$, leaving
+681 clusters.
+
+\end{document}

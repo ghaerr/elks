@@ -202,11 +202,11 @@ hd32-fat:
 	rm Config
 
 # MBR images
-hd32mbr-minix:
+hd32mbr-minix: hd32-minix
 	dd if=/dev/zero bs=512 count=63 | cat - hd32-minix.img > hd32mbr-minix.img
 	setboot hd32mbr-minix.img -P63,16,63 -Sm $(HD_MBR_BOOT)
 
-hd32mbr-fat:
+hd32mbr-fat: hd32-fat
 	dd if=/dev/zero bs=512 count=63 | cat - hd32-fat.img > hd32mbr-fat.img
 	setboot hd32mbr-fat.img -P63,16,63 -Sf $(HD_MBR_BOOT)
 

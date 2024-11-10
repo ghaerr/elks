@@ -4,7 +4,7 @@
  */
 #include <stdlib.h>
 
-void ptostr(unsigned long v, char *outbuf)
+void ptostr(unsigned long v, int alt, char *outbuf)
 {
     unsigned int c;
     char *p;
@@ -40,8 +40,11 @@ void ptostr(unsigned long v, char *outbuf)
 
     n = buf + sizeof(buf) - 1 - p;  /* string length */
     while (*p) {
-        if (n == Decimal)
+        if (n == Decimal) {
+            if (alt)
+                break;
             *outbuf++ = '.';
+        }
         --n;
         *outbuf++ = *p++;
     }

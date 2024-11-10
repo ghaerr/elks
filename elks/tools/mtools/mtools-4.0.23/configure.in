@@ -1,0 +1,411 @@
+dnl Copyright 1996-2003,2005,2006,2008,2009 Alain Knaff.
+dnl This file is part of mtools.
+dnl
+dnl Mtools is free software: you can redistribute it and/or modify
+dnl it under the terms of the GNU General Public License as published by
+dnl the Free Software Foundation, either version 3 of the License, or
+dnl (at your option) any later version.
+dnl
+dnl Mtools is distributed in the hope that it will be useful,
+dnl but WITHOUT ANY WARRANTY; without even the implied warranty of
+dnl MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+dnl GNU General Public License for more details.
+dnl
+dnl You should have received a copy of the GNU General Public License
+dnl along with Mtools.  If not, see <http://www.gnu.org/licenses/>.
+dnl
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(buffer.c)
+
+AC_CONFIG_HEADER(config.h)
+
+dnl Checks for compiler
+AC_PROG_CC
+dnl AC_PROG_CXX
+AC_PROG_GCC_TRADITIONAL
+AC_PROG_INSTALL
+AC_PROG_LN_S
+
+AC_PATH_PROG(INSTALL_INFO, install-info, "")
+
+dnl Check for Systems
+AC_USE_SYSTEM_EXTENSIONS
+AC_CANONICAL_SYSTEM
+
+AC_C_CONST
+AC_C_INLINE
+
+
+dnl Check for configuration options
+dnl Enable OS/2 extended density format disks
+AC_ARG_ENABLE(xdf,
+[  --enable-xdf           support for OS/2 extended density format disks],
+[if test x$enableval = xyes; then
+  AC_DEFINE([USE_XDF],1,[Define this if you want to use Xdf])
+fi],AC_DEFINE([USE_XDF],1,[Define this if you want to use Xdf]))
+
+
+dnl Check for configuration options
+dnl Enable usage of vold on Solaris
+AC_ARG_ENABLE(vold,
+[  --enable-vold          compatibility with Solaris' vold],
+[if test x$enableval = xyes; then
+  AC_DEFINE([USING_VOLD],1,[Define this if you use mtools together with Solaris' vold])
+fi])
+
+
+dnl Check for configuration options
+dnl Enable usage of vold on Solaris
+AC_ARG_ENABLE(new-vold,
+[  --enable-new-vold          compatibility with Solaris' vold, new version],
+[newVold=x$enableval
+if test x$enableval = xyes; then
+  AC_DEFINE([USING_NEW_VOLD],1,[Define this if you use mtools together with the new Solaris' vold support])
+fi])
+
+
+dnl Check for configuration options
+dnl Debugging
+AC_ARG_ENABLE(debug,
+[  --enable-debug         debugging messages],
+[if test x$enableval = xyes; then
+  AC_DEFINE([DEBUG],1,[Define for debugging messages])
+fi])
+
+
+dnl Check for configuration options
+dnl Raw terminal code (enabled by default)
+AC_ARG_ENABLE(raw_term,
+[  --enable-raw-term      raw terminal (readkey behaviour, default)],
+[if test x$enableval = xyes; then
+  AC_DEFINE([USE_RAWTERM],1,[Define on non Unix OS'es which don't have the concept of tty's])
+fi],
+AC_DEFINE([USE_RAWTERM],1,[Define on non Unix OS'es which don't have the concept of tty's]))
+
+
+dnl Checks for libraries.
+
+dnl AC_IRIX_SUN
+AC_CHECK_LIB(sun, getpwnam)
+AC_CHECK_LIB(cam, cam_open_device)
+
+dnl Checks for header files.
+AC_HEADER_STDC
+AC_HEADER_SYS_WAIT
+AC_CHECK_HEADERS(getopt.h sys/stat.h stdlib.h unistd.h linux/unistd.h \
+libc.h fcntl.h limits.h sys/file.h sys/ioctl.h sys/time.h strings.h string.h \
+sys/param.h memory.h malloc.h io.h signal.h sys/signal.h utime.h sgtty.h \
+sys/floppy.h mntent.h sys/sysmacros.h netinet/in.h netinet/tcp.h assert.h \
+iconv.h wctype.h wchar.h locale.h linux/fs.h)
+AC_CHECK_HEADERS(termio.h sys/termio.h, [break])
+AC_CHECK_HEADERS(termios.h sys/termios.h, [break])
+
+dnl Check for types
+AC_TYPE_INT8_T
+AC_TYPE_INT16_T
+AC_TYPE_INT32_T
+AC_TYPE_UINT8_T
+AC_TYPE_UINT16_T
+AC_TYPE_UINT32_T
+AC_TYPE_SSIZE_T
+AC_TYPE_SIZE_T
+AC_TYPE_OFF_T
+AC_TYPE_SIGNAL
+AC_TYPE_UID_T
+
+AC_CHECK_TYPES(caddr_t)
+AC_CHECK_SIZEOF(size_t)
+AC_CHECK_SIZEOF(time_t)
+AC_CHECK_SIZEOF(long)
+AC_CHECK_SIZEOF(long long)
+
+dnl
+dnl Check to see if llseek() is declared in unistd.h.  On some libc's
+dnl it is, and on others it isn't..... Thank you glibc developers....
+dnl
+dnl Warning!  Use of --enable-gcc-wall may throw off this test.
+dnl
+dnl
+AC_MSG_CHECKING(whether llseek declared in unistd.h)
+AC_CACHE_VAL(mtools_cv_have_llseek_prototype,
+        AC_TRY_COMPILE(
+[#include <unistd.h>], [extern int llseek(int);],
+        [mtools_cv_have_llseek_prototype=no],
+        [mtools_cv_have_llseek_prototype=yes]))
+AC_MSG_RESULT($mtools_cv_have_llseek_prototype)
+if test "$mtools_cv_have_llseek_prototype" = yes; then
+   AC_DEFINE([HAVE_LLSEEK_PROTOTYPE],1,[Define when you have an LLSEEK prototype])
+fi
+
+AC_MSG_CHECKING(whether lseek64 declared in unistd.h)
+AC_CACHE_VAL(mtools_cv_have_lseek64_prototype,
+        AC_TRY_COMPILE(
+[
+#include "sysincludes.h"
+#include <unistd.h>
+], [extern int lseek64(int);],
+        [mtools_cv_have_lseek64_prototype=no],
+        [mtools_cv_have_lseek64_prototype=yes]))
+AC_MSG_RESULT($mtools_cv_have_lseek64_prototype)
+if test "$mtools_cv_have_lseek64_prototype" = yes; then
+   AC_DEFINE([HAVE_LSEEK64_PROTOTYPE],1,[Define when you have an LSEEK64 prototype])
+fi
+
+
+AC_CHECK_FUNCS(htons)
+
+dnl Apparently termio before termios is preferred by A/UX, AIX and SCO
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_C_INLINE
+AC_TYPE_SIZE_T
+AC_HEADER_TIME
+AC_STRUCT_TM
+
+
+dnl Checks for library functions.
+AC_TYPE_SIGNAL
+AC_CHECK_FUNCS(strerror random srandom strchr strrchr lockf flock \
+strcasecmp strncasecmp strnlen atexit on_exit getpass memmove \
+strdup strndup strcspn strspn strtoul strtol strtoll memcpy strpbrk memset \
+setenv seteuid setresuid setpgrp \
+tcsetattr tcflush basename fchdir media_oldaliases llseek lseek64 \
+snprintf stat64 setlocale \
+wcsdup wcscasecmp wcsnlen putwc \
+getuserid getgroupid \
+alarm sigaction usleep)
+
+dnl
+dnl Check for 64-bit off_t
+dnl
+AC_DEFUN(SFS_CHECK_OFF_T_64,
+[AC_CACHE_CHECK(for 64-bit off_t, sfs_cv_off_t_64,
+AC_TRY_COMPILE([
+#include <unistd.h>
+#include <sys/types.h>
+],[
+switch (0) case 0: case (sizeof (off_t) <= 4):;
+], sfs_cv_off_t_64=no, sfs_cv_off_t_64=yes))
+if test $sfs_cv_off_t_64 = yes; then
+        AC_DEFINE([HAVE_OFF_T_64],1,[Define when the system has a 64 bit off_t type])
+fi])
+
+
+dnl ICE_CC_LOFF_T
+dnl -------------
+dnl
+dnl If the CC compiler supports `loff_t' type,  define `HAVE_LOFF_T'.
+dnl
+AC_DEFUN(ICE_CC_LOFF_T,
+[
+AC_MSG_CHECKING(whether ${CC} supports loff_t type)
+AC_CACHE_VAL(ice_cv_have_loff_t,
+[
+AC_TRY_COMPILE([#include <sys/types.h>],[loff_t a;],
+ice_cv_have_loff_t=yes,
+ice_cv_have_loff_t=no)
+])
+AC_MSG_RESULT($ice_cv_have_loff_t)
+if test "$ice_cv_have_loff_t" = yes; then
+AC_DEFINE([HAVE_LOFF_T],1,[Define when the compiler supports LOFF_T type])
+fi
+])dnl
+
+
+dnl ICE_CC_OFFSET_T
+dnl -------------
+dnl
+dnl If the CC compiler supports `offset_t' type,  define `HAVE_OFFSET_T'.
+dnl
+AC_DEFUN(ICE_CC_OFFSET_T,
+[
+AC_MSG_CHECKING(whether ${CC} supports offset_t type)
+AC_CACHE_VAL(ice_cv_have_offset_t,
+[
+AC_TRY_COMPILE([#include <sys/types.h>],[offset_t a;],
+ice_cv_have_offset_t=yes,
+ice_cv_have_offset_t=no)
+])
+AC_MSG_RESULT($ice_cv_have_offset_t)
+if test "$ice_cv_have_offset_t" = yes; then
+AC_DEFINE([HAVE_OFFSET_T],1,[Define when the compiler supports OFFSET_T type])
+fi
+])dnl
+
+dnl ICE_CC_LONG_LONG
+dnl -------------
+dnl
+dnl If the CC compiler supports `long long' type,  define `HAVE_LONG_LONG'.
+dnl
+AC_DEFUN(ICE_CC_LONG_LONG,
+[
+AC_MSG_CHECKING(whether ${CC} supports long long type)
+AC_CACHE_VAL(ice_cv_have_long_long,
+[
+AC_TRY_COMPILE(,[long long a;],
+ice_cv_have_long_long=yes,
+ice_cv_have_long_long=no)
+])
+AC_MSG_RESULT($ice_cv_have_long_long)
+if test "$ice_cv_have_long_long" = yes; then
+AC_DEFINE([HAVE_LONG_LONG],1,[Define when the compiler supports LONG_LONG type])
+fi
+])dnl
+
+dnl ICE_CC_OFF64_T
+dnl -------------
+dnl
+dnl If the CC compiler supports `long long' type,  define `HAVE_OFF64_T'.
+dnl
+AC_DEFUN(ICE_CC_OFF64_T,
+[
+AC_MSG_CHECKING(whether ${CC} supports off64_t type)
+AC_CACHE_VAL(ice_cv_have_off64_t,
+[
+AC_TRY_COMPILE(,[off64_t a;],
+ice_cv_have_off64_t=yes,
+ice_cv_have_off64_t=no)
+])
+AC_MSG_RESULT($ice_cv_have_off64_t)
+if test "$ice_cv_have_off64_t" = yes; then
+AC_DEFINE([HAVE_OFF64_T],1,[Define when the compiler supports OFF64_T type])
+fi
+])dnl
+
+
+SFS_CHECK_OFF_T_64
+ICE_CC_LOFF_T
+ICE_CC_OFFSET_T
+ICE_CC_LONG_LONG
+
+
+AC_CHECK_FUNCS(utimes utime, [break])
+AC_CHECK_FUNCS(tzset gettimeofday)
+
+CF_SYS_ERRLIST
+
+[
+host_os0=`echo $host_os | sed 's/-/_/g'`
+host_os1=`echo $host_os0 | sed 's/\./_/g'`
+host_os2=`echo $host_os0 | sed 's/^\([^.]*\)\..*$/\1/g'`
+host_os3=`echo $host_os2 | sed 's/^\([^0-9]*\)[0-9]*$/\1/g'`
+host_cpu1=`echo $host_cpu | sed 's/\./_/g'`
+host_vendor1=`echo $host_vendor | sed 's/\./_/g'`
+HOST_ID="-DCPU_$host_cpu1 -DVENDOR_$host_vendor1 -DOS_$host_os1"
+if [ $host_os1 != $host_os2 ] ; then
+	HOST_ID="$HOST_ID -DOS_$host_os2"
+fi
+if [ $host_os1 != $host_os3 ] && [ $host_os2 != $host_os3 ] ; then
+	HOST_ID="$HOST_ID -DOS_$host_os3"
+fi
+
+my_host_os=`echo $host_os1 $host_os2 $host_os3 | sort -u`
+objs=`echo $srcdir/*.c | sed 's/\.c$/.o/' `
+if [ "X$GCC" = "Xyes" ] ; then
+    Wall=-Wall
+    if [ "$host_os3" = sunos ] ; then
+	    Wall=""
+    fi
+    if [ "$host_os3" = ultrix ] ; then
+	    Wall=""
+    fi
+    if [ "$host_os3" = linux ] ; then
+	    CFLAGS="$CFLAGS -fno-strength-reduce"
+    fi
+    if [ "$host_os3" = aux ] ; then
+	    CFLAGS="$CFLAGS -ZP"
+	    MACHDEPLIBS="-lposix -UTIL"
+    fi
+    case "${host}" in
+       arm*-*-linux) CFLAGS="$CFLAGS -mstructure-size-boundary=8";;
+    esac
+    CFLAGS="$CFLAGS $Wall"
+else
+    if [ $host_os3 = hpux ] ; then
+	    CPPFLAGS="$CPPFLAGS -Ae"
+    fi
+
+    if [ $host_os3 = xenix ] ; then
+	    CFLAGS="$CFLAGS -M2e"
+    fi
+fi
+
+if [ $host_os3 = hpux ] ; then
+	    LDFLAGS="$LDFLAGS -z"
+fi
+
+if [ $host_os3 = xenix ] ; then
+    LDFLAGS="$LDFLAGS -M2e -i -f 5000"
+fi
+
+if [ $host_os2 = sysv4 ] ; then
+    SHLIB="-lc -L/usr/ucblib -lucb"
+else
+    SHLIB=""
+fi
+
+if [ $host_os3 = isc ] ; then
+    CFLAGS="$CFLAGS -D_SYSV3"
+    SHLIB="-lc_s"
+fi
+
+if [ $host_os3 = solaris -a x$newVold = xxyes ] ; then
+    SHLIB="$SHLIB -s -lvolmgt"
+fi
+
+if [ $host_os3 = nextstep ] ; then
+    CFLAGS="$CFLAGS -DBSD"
+    SHLIB=""
+fi
+
+if [ -d /usr/5lib ] ; then
+	extralibdir=-L/usr/5lib
+fi
+
+]
+
+AC_PATH_X
+AC_PATH_XTRA
+
+dnl Floppyd
+AC_ARG_ENABLE(floppyd,
+[  --enable-floppyd       floppy daemon support],
+[if test x$enableval != x; then
+  use_floppyd=$enableval
+fi])
+
+AC_CHECK_LIB(socket,main)
+dnl AC_CHECK_LIB(nsl,getpwnam)
+AC_CHECK_LIB(bsd,main)
+AC_CHECK_HEADERS(sys/socket.h arpa/inet.h netdb.h)
+
+if test X$use_floppyd = X -a X$no_x = X ; then
+    use_floppyd="yes"
+fi
+
+if test X$use_floppyd = Xyes; then
+    if test X$no_x = Xyes ; then
+	echo "Floppyd needs X support" >&2
+	echo "To compile without floppyd, use ./configure --disable-floppyd" >&2
+	exit 1
+    fi
+    FLOPPYD="floppyd floppyd_installtest"
+    BINFLOPPYD="\$(DESTDIR)\$(bindir)/floppyd \$(DESTDIR)\$(bindir)/floppyd_installtest"
+    AC_DEFINE([USE_FLOPPYD],1,[Define when you want to include floppyd support])
+    AC_FUNC_SETPGRP
+else
+    FLOPPYD=
+    BINFLOPPYD=
+fi
+
+
+AC_SUBST(FLOPPYD)
+AC_SUBST(BINFLOPPYD)
+AC_SUBST(extraincludedir)
+AC_SUBST(extralibdir)
+AC_SUBST(MACHDEPLIBS)
+AC_SUBST(SHLIB)
+AC_SUBST(host_cpu)
+AC_SUBST(HOST_ID)
+AC_OUTPUT(Makefile)

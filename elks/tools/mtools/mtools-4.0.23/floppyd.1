@@ -1,0 +1,255 @@
+'\" t
+.TH floppyd 1 "10Dec18" mtools-4.0.23
+.SH Name
+floppyd - floppy daemon for remote access to floppy drive
+'\" t
+.de TQ
+.br
+.ns
+.TP \\$1
+..
+
+.tr \(is'
+.tr \(if`
+.tr \(pd"
+
+.SH Note\ of\ warning
+This manpage has been automatically generated from mtools's texinfo
+documentation, and may not be entirely accurate or complete.  See the
+end of this man page for details.
+.PP
+.SH Description
+.PP
+\&\fR\&\f(CWFloppyd\fR is used as a server to grant access to the floppy drive
+to clients running on a remote machine, just as an X server grants
+access to the display to remote clients.  It has the following syntax:
+.PP
+\&\fR\&\f(CWfloppyd\fR [\fR\&\f(CW-d\fR] [\fR\&\f(CW-l\fR] [\fR\&\f(CW-s\fR \fIport\fR] [\fR\&\f(CW-r\fR
+\&\fIuser\fR] [\fR\&\f(CW-b\fR \fIipaddr\fR] [\fR\&\f(CW-x\fR \fIdisplay\fR] \fIdevicenames\fR
+.PP
+\&\fR\&\f(CWfloppyd\fR is always associated with an X server.  It runs on the
+same machine as its X server, and listens on port 5703 and above.
+.PP
+.SH Authentication
+.PP
+\&\fR\&\f(CWfloppyd\fR authenticates remote clients using the \fR\&\f(CWXauthority\fR
+protocol. Xhost authentication is not supported. Each floppyd is
+associated with an X server.  When a remote client attempts to connect
+to floppyd, it sends floppyd the X authority record corresponding to
+floppyd's X server.  Floppyd in turn then tries to open up a connection
+to the X server in order to verify the authenticity of the xauth record.
+If the connection to the X server succeeds, the client is granted
+access.
+\&\fR\&\f(CWDISPLAY\fR.
+.PP
+\&\fBCaution\fR: In order to make authentication work correctly, the
+local host should \fBnot\fR be listed in the \fR\&\f(CWxhost\fR list of
+allowed hosts.
+ Indeed, hosts listed in \fR\&\f(CWxhost\fR do not need a correct
+\&\fR\&\f(CWXauthority\fR cookie to connect to the X server. As \fR\&\f(CWfloppyd\fR
+runs on the same host as the X server, all its probe connection would
+succeed even for clients who supplied a bad cookie.  This means that
+your floppy drive would be open to the world, i.e. a huge security hole.
+ If your X server does not allow you to remove \fR\&\f(CWlocalhost:0\fR and
+\&\fR\&\f(CW:0\fR from the \fR\&\f(CWxhost\fR list, you can prevent floppyd from
+probing those display names with the \fR\&\f(CW-l\fR option.
+.PP
+.SH Command\ line\ options
+.TP
+\&\fR\&\f(CWd\fR\ 
+Daemon mode. Floppyd runs its own server loop.  Do not supply this if
+you start floppyd from \fR\&\f(CWinetd.conf\fR
+.TP
+\&\fR\&\f(CWs\ \ \fIport\fR\&\f(CW\fR\ 
+Port number for daemon mode.  Default is 5703 + \fIdisplaynumber\fR.
+This flag implies daemon mode.  For example, for display
+\&\fR\&\f(CWhitchhiker:5\fR, the port would be 5708.
+.TP
+\&\fR\&\f(CWb\ \ \fIipaddr\fR\&\f(CW\fR\ 
+Bind address (for multi homed hosts). This flag implies daemon mode
+.TP
+\&\fR\&\f(CWr\ \fIuser\fR\&\f(CW\fR\ 
+Run the server under as the given user
+.TP
+\&\fR\&\f(CWx\ \fIdisplay\fR\&\f(CW\fR\ 
+X display to use for authentication. By default, this is taken from the
+\&\fR\&\f(CWDISPLAY\fR variable. If neither the \fR\&\f(CWx\fR attribute is present
+nor \fR\&\f(CWDISPLAY\fR is set, floppyd uses \fR\&\f(CW:0.0\fR.
+.PP
+\&\fIdevicenames\fR is a list of device nodes to be opened.  Default
+is \fR\&\f(CW/dev/fd0\fR. Multiple devices are only supported on mtools
+versions newer than 3.9.11.
+.PP
+.SH Connecting\ to\ floppyd
+.PP
+ In order to use floppyd, add the flag \fR\&\f(CWremote\fR to the device
+description in your \fR\&\f(CW\(if~/.mtoolsrc\(is\fR file.  If the flag \fR\&\f(CWremote\fR
+is given, the \fR\&\f(CWfile\fR parameter of the device description is taken
+to be a remote address.  It's format is the following:
+\&\fIhostname\fR\fR\&\f(CW:\fR\fIdisplaynumber\fR[\fR\&\f(CW/\fR[\fIbaseport\fR][\fR\&\f(CW/\fR\fIdrive\fR]]. When
+using this entry, mtools connects to port
+\&\fIbaseport\fR+\fIdisplaynumber\fR at \fIhostname\fR. By default
+\&\fIbaseport\fR is 5703. The drive parameter is to distinguish among
+multiple drives associated with a single display (only mtools versions
+more recent than 3.9.11)
+.PP
+.SH Examples:
+.PP
+ The following starts a floppy daemon giving access to \fR\&\f(CW\(if/dev/fd0\(is\fR,
+listening on the default port 5703, tied to the default X servers:
+.PP
+ 
+.nf
+.ft 3
+.in +0.3i
+floppyd -d /dev/fd0
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.PP
+ Each of the following starts a floppy daemon giving access to
+\&\fR\&\f(CW\(if/dev/fd1\(is\fR, tied to the :1 local X servers, and listening on port
+5704. We assume that the local host is named \fR\&\f(CWhitchhiker\fR.
+.PP
+ 
+.nf
+.ft 3
+.in +0.3i
+floppyd -d /dev/fd0
+floppyd -d -x :1 -p 5704 /dev/fd0 
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.PP
+ If you want to start floppyd by \fR\&\f(CWinetd\fR instead of running it as a 
+daemon, insert the following lines into \fR\&\f(CW\(if/etc/services\(is\fR:
+ 
+.nf
+.ft 3
+.in +0.3i
+# floppy daemon
+floppyd-0    5703/tcp    # floppy daemon for X server :0
+floppyd-1    5704/tcp    # floppy daemon for X server :1
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.PP
+ And insert the following into \fR\&\f(CW\(if/etc/inetd.conf\(is\fR (assuming that you
+have defined a user named floppy in your \fR\&\f(CW\(if/etc/passwd\(is\fR):
+.PP
+ 
+.nf
+.ft 3
+.in +0.3i
+# floppy daemon
+floppyd-0 stream  tcp  wait  floppy  /usr/sbin/floppyd floppyd /dev/fd0 
+floppyd-1 stream  tcp  wait  floppy  /usr/sbin/floppyd floppyd -x :1 /dev/fd0 
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.PP
+ Note that you need to supply the X display names for the second
+floppyd.  This is because the port is opened by inetd.conf, and hence
+floppyd cannot know its number to interfere the display number.
+.PP
+On the client side, insert the following into your \fR\&\f(CW\(if~/.mtoolsrc\(is\fR
+to define a drive letter accessing floppy drive in your X terminal:
+ 
+.nf
+.ft 3
+.in +0.3i
+drive x: file="$DISPLAY" remote
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.PP
+If your X terminal has more than one drive, you may access the
+additional drives as follows:
+ 
+.nf
+.ft 3
+.in +0.3i
+drive y: file="$DISPLAY//1" remote
+drive z: file="$DISPLAY//2" remote
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.PP
+.SH See\ Also
+Mtools' texinfo doc
+.SH Viewing\ the\ texi\ doc
+This manpage has been automatically generated from mtools's texinfo
+documentation. However, this process is only approximative, and some
+items, such as crossreferences, footnotes and indices are lost in this
+translation process.  Indeed, these items have no appropriate
+representation in the manpage format.  Moreover, not all information has
+been translated into the manpage version.  Thus I strongly advise you to
+use the original texinfo doc.  See the end of this manpage for
+instructions how to view the texinfo doc.
+.TP
+* \ \ 
+To generate a printable copy from the texinfo doc, run the following
+commands:
+ 
+.nf
+.ft 3
+.in +0.3i
+    ./configure; make dvi; dvips mtools.dvi
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.TP
+* \ \ 
+To generate a html copy,  run:
+ 
+.nf
+.ft 3
+.in +0.3i
+    ./configure; make html
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fRA premade html can be found at
+\&\fR\&\f(CW\(ifhttp://www.gnu.org/software/mtools/manual/mtools.html\(is\fR
+.TP
+* \ \ 
+To generate an info copy (browsable using emacs' info mode), run:
+ 
+.nf
+.ft 3
+.in +0.3i
+    ./configure; make info
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.PP
+The texinfo doc looks most pretty when printed or as html.  Indeed, in
+the info version certain examples are difficult to read due to the
+quoting conventions used in info.
+.PP

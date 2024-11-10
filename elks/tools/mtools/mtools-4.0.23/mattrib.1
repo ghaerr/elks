@@ -1,0 +1,128 @@
+'\" t
+.TH mattrib 1 "10Dec18" mtools-4.0.23
+.SH Name
+mattrib - change MSDOS file attribute flags
+'\" t
+.de TQ
+.br
+.ns
+.TP \\$1
+..
+
+.tr \(is'
+.tr \(if`
+.tr \(pd"
+
+.SH Note\ of\ warning
+This manpage has been automatically generated from mtools's texinfo
+documentation, and may not be entirely accurate or complete.  See the
+end of this man page for details.
+.PP
+.SH Description
+.PP
+\&\fR\&\f(CWMattrib\fR is used to change MS-DOS file attribute flags. It has the
+following syntax:
+.PP
+\&\fR\&\f(CWmattrib\fR [\fR\&\f(CW-a|+a\fR] [\fR\&\f(CW-h|+h\fR] [\fR\&\f(CW-r|+r\fR]
+[\fR\&\f(CW-s|+s\fR] [\fR\&\f(CW-/\fR]  [\fR\&\f(CW-p\fR] [\fR\&\f(CW-X\fR] \fImsdosfile\fR [ \fImsdosfiles\fR \&... ]
+.PP
+\&\fR\&\f(CWMattrib\fR adds attribute flags to an MS-DOS file (with the
+`\fR\&\f(CW+\fR' operator) or remove attribute flags (with the `\fR\&\f(CW-\fR'
+operator).
+.PP
+\&\fR\&\f(CWMattrib\fR supports the following attribute bits:
+.TP
+\&\fR\&\f(CWa\fR\ 
+Archive bit.  Used by some backup programs to indicate a new file.
+.TP
+\&\fR\&\f(CWr\fR\ 
+Read-only bit.  Used to indicate a read-only file.  Files with this bit
+set cannot be erased by \fR\&\f(CWDEL\fR nor modified.
+.TP
+\&\fR\&\f(CWs\fR\ 
+System bit.  Used by MS-DOS to indicate a operating system file.
+.TP
+\&\fR\&\f(CWh\fR\ 
+Hidden bit.  Used to make files hidden from \fR\&\f(CWDIR\fR.
+.PP
+\&\fR\&\f(CWMattrib\fR supports the following command line flags:
+.TP
+\&\fR\&\f(CW/\fR\ 
+Recursive.  Recursively list the attributes of the files in the subdirectories.
+.TP
+\&\fR\&\f(CWX\fR\ 
+Concise. Prints the attributes without any whitespace padding.  If
+neither the "/" option is given, nor the \fImsdosfile\fR contains a
+wildcard, and there is only one MS-DOS file parameter on the command
+line, only the attribute is printed, and not the filename.  This option
+is convenient for scripts
+.TP
+\&\fR\&\f(CWp\fR\ 
+Replay mode.  Outputs a series of mformat commands that will reproduce
+the current situation, starting from a situation as left by untarring
+the MS-DOS file system.  Commands are only output for attribute settings
+that differ from the default (archive bit set for files, unset for
+directories).  This option is intended to be used in addition to
+tar. The \fR\&\f(CWreadonly\fR attribute is not taken into account, as tar can
+set that one itself.
+.PP
+.SH See\ Also
+Mtools' texinfo doc
+.SH Viewing\ the\ texi\ doc
+This manpage has been automatically generated from mtools's texinfo
+documentation. However, this process is only approximative, and some
+items, such as crossreferences, footnotes and indices are lost in this
+translation process.  Indeed, these items have no appropriate
+representation in the manpage format.  Moreover, not all information has
+been translated into the manpage version.  Thus I strongly advise you to
+use the original texinfo doc.  See the end of this manpage for
+instructions how to view the texinfo doc.
+.TP
+* \ \ 
+To generate a printable copy from the texinfo doc, run the following
+commands:
+ 
+.nf
+.ft 3
+.in +0.3i
+    ./configure; make dvi; dvips mtools.dvi
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.TP
+* \ \ 
+To generate a html copy,  run:
+ 
+.nf
+.ft 3
+.in +0.3i
+    ./configure; make html
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fRA premade html can be found at
+\&\fR\&\f(CW\(ifhttp://www.gnu.org/software/mtools/manual/mtools.html\(is\fR
+.TP
+* \ \ 
+To generate an info copy (browsable using emacs' info mode), run:
+ 
+.nf
+.ft 3
+.in +0.3i
+    ./configure; make info
+.fi
+.in -0.3i
+.ft R
+.PP
+ 
+\&\fR
+.PP
+The texinfo doc looks most pretty when printed or as html.  Indeed, in
+the info version certain examples are difficult to read due to the
+quoting conventions used in info.
+.PP

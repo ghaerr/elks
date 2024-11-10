@@ -43,7 +43,7 @@
 !	10:	mono/color, video memory size, 2 bytes 
 !	14:	screen_lines, 1 byte
 !	15:	VGA present, 1 byte
-!	0x20:	cpu_type	byte Processor type UNUSED
+!	0x20:	cpu_type	byte Processor type
 !			0  = 8088
 !			1  = 8086
 !			2  = NEC V20
@@ -51,11 +51,11 @@
 !			4  = 80188
 !			5  = 80186
 !			6  = 80286
-!			7  = 80386
-!			8  = 80486
-!			9  = Pentium
-!			10 = Pentium PRO
-!			255 = VM86 mode
+!			7  = 32-bit CPU (80386+)
+!			8  = 80486 UNUSED
+!			9  = Pentium UNUSED
+!			10 = Pentium PRO UNUSED
+!			255 = Unknown
 !	...
 !	0x2a:	mem_kbytes	word	size of base memory in kbytes
 !	0x30:	proc_name	byte[16] processor name string UNUSED

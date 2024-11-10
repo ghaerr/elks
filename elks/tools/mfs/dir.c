@@ -242,6 +242,7 @@ int domkdir(struct minix_fs_dat *fs,char *newdir, int mode) {
   int dinode;
   int ninode = make_node(fs,newdir,mode|S_IFDIR,dogetuid(),dogetgid(), 0,
   			NOW,NOW,NOW,&dinode);
+  if (ninode == 0) return 0;    /* already exists, must remove to recreate */
   dname_add(fs,ninode,".",ninode);
   dname_add(fs,ninode,"..",dinode);
   if (VERSION_2(fs)) {

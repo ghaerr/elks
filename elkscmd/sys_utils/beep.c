@@ -37,7 +37,8 @@ static void beep(long freq)
 
     //And play the sound using the PC speaker
     outb(0x06, PORTC_CONTROL);
-#else
+#endif
+#ifdef CONFIG_ARCH_IBMPC
     //Set the PIT to the desired frequency
     unsigned int d = 1193180L / freq;
     outb(0xb6, TIMER_CMDS_PORT);
@@ -56,7 +57,8 @@ static void silent()
 {
 #ifdef CONFIG_ARCH_PC98
     outb(0x07, PORTC_CONTROL);
-#else
+#endif
+#ifdef CONFIG_ARCH_IBMPC
     unsigned int tmp = inb(SPEAKER_PORT) & 0xFC;
     outb(tmp, SPEAKER_PORT);
 #endif

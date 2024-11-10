@@ -161,6 +161,14 @@ static void add_request(struct blk_dev_struct *dev, struct request *req)
         req->rq_next = tmp->rq_next;
         tmp->rq_next = req;
         set_irq();
+#if DEBUG_CACHE
+        if (debug_level) {
+            int n = 0;
+            for (tmp = dev->current_request; tmp->rq_next; tmp = tmp->rq_next)
+                n++;
+            if (n > 1) printk("REQS %d ", n);
+        }
+#endif
 #else
         panic("add_request");   /* non-empty request queue */
 #endif

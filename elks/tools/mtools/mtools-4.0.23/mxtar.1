@@ -1,0 +1,48 @@
+'\" t
+.\" ** The above line should force tbl to be a preprocessor **
+.\" Man page for mxtar
+.\"
+.\" Copyright (C), 2003, Luis Bustamante
+.\"
+.\" You may distribute under the terms of the GNU General Public
+.\" License as specified in the file COPYING that comes with the mtools
+.\" package
+.\"
+.\" Mon Mar  3 11:58:15 COT 2003 Luis Bustamante <luferbu@fluidsignal.com>
+.\" 
+.TH MXTAR 1 "Mon Mar  3 11:58:15 COT 2003" "" "Mtools Users Manual"
+.SH NAME
+mxtar \- Wrapper for using GNU tar directly from a floppy disk
+.SH SYNOPSIS
+.\" The command line
+.B mxtar 
+[
+.B \-
+]
+.I [ tar-options ]
+.I file
+.SH DESCRIPTION
+.B mxtar
+let you use GNU \fBtar\fR(1) on a floppy disk without mounting it using
+\fBmtools\fR(1).
+It is not strictly necessary on Debian GNU/Linux, because the GNU
+\fBtar\fR(1) program provides the same capability after copying the
+file locally with
+
+.B mcopy
+.I file
+.I destination
+
+but this utility is provided in the mtools package for other platforms and 
+is retained here for completeness.
+
+.SH AUTHOR
+Luis Bustamante <luferbu@fluidsignal.com> wrote this page for the
+.I Debian/GNU
+mtools package.
+
+
+.SH "SEE ALSO"
+.BR mtools (1),
+.BR tar (1), 
+.BR mcopy (1)

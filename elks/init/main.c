@@ -211,7 +211,7 @@ static void INITPROC kernel_init(void)
 static void INITPROC kernel_banner(seg_t init, seg_t extra)
 {
 #ifdef CONFIG_ARCH_IBMPC
-    printk("PC/%cT class machine, ", (sys_caps & CAP_PC_AT) ? 'A' : 'X');
+    printk("PC/%cT class cpu %d, ", (sys_caps & CAP_PC_AT) ? 'A' : 'X', SETUP_CPU_TYPE);
 #endif
 
 #ifdef CONFIG_ARCH_PC98
@@ -491,10 +491,6 @@ static int INITPROC parse_options(void)
             root_mountflags &= ~MS_RDONLY;
             continue;
         }
-        if (!strcmp(line,"debug")) {
-            dprintk_on = 1;
-            continue;
-        }
         if (!strcmp(line,"strace")) {
             tracing |= TRACE_STRACE;
             continue;
@@ -518,6 +514,10 @@ static int INITPROC parse_options(void)
         }
         if (!strncmp(line,"3c0=",4)) {
             parse_nic(line+4, &netif_parms[ETH_EL3]);
+            continue;
+        }
+        if (!strncmp(line,"debug=", 6)) {
+            debug_level = (int)simple_strtol(line+6, 10);
             continue;
         }
         if (!strncmp(line,"buf=",4)) {
