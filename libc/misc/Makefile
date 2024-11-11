@@ -6,6 +6,7 @@ LIB ?= out.a
 include $(TOPDIR)/libc/$(COMPILER).inc
 
 OBJS = \
+	abs.o \
 	aliases.o \
 	atexit.o \
 	atof.o \

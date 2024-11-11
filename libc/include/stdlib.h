@@ -33,6 +33,7 @@ void dtostr(double val, int style, int preci, char *buf);
 
 long atol(const char *str);
 int atoi(const char *str);
+int abs(int x);
 
 /* Returned by `div'.  */
 typedef struct
