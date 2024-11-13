@@ -65,21 +65,27 @@ char errmsg_initargs[] = "init args > " STR(MAX_INIT_ARGS) "\n";
 char errmsg_initenvs[] = "init envs > " STR(MAX_INIT_ENVS) "\n";
 char errmsg_initslen[] = "init words > " STR(MAX_INIT_SLEN) "\n";
 
+#ifdef CONFIG_SYS_NO_BININIT
+static char *argv_init[MAX_INIT_SLEN] = { NULL, binshell, NULL };
+#else
+/* argv_init doubles as sptr data for sys_execv later*/
+static char *argv_init[MAX_INIT_SLEN] = { NULL, bininit, NULL };
+#endif
+static char hasopts;
+static int args = 2;    /* room for argc and av[0] */
+static int envs;
+static int argv_slen;
+#if ENV
+static char *envp_init[MAX_INIT_ENVS];
+#endif
+
 /* this entire structure is released to kernel heap after /bootopts parsing */
 static struct {
-    int hasopts;
-    int args;
-    int envs;
-    int argv_slen;
-    char *argv_init[MAX_INIT_SLEN]; /* argv_init doubles as sptr data for sys_execv */
-    struct umbseg {                 /* save umb= lines during /bootopts parse */
+    struct umbseg {                     /* save umb= lines during /bootopts parse */
         seg_t base;
         segext_t len;
     } umbseg[MAX_UMB], *nextumb;
-    unsigned char options[OPTSEGSZ];
-#if ENV
-    char *envp_init[MAX_INIT_ENVS];
-#endif
+    unsigned char options[OPTSEGSZ];    /* near data parsing buffer */
 } opts;
 
 extern int boot_rootdev;
@@ -111,15 +117,6 @@ void start_kernel(void)
     kfork_proc(init_task);
     wake_up_process(&task[1]);
 
-#ifdef CONFIG_BOOTOPTS
-    /* Release /bootopts load segment (DEF_OPTSEG) and setup data segment (REL_INITSEG) */
-    seg_add(DEF_OPTSEG, DMASEG);
-
-    /* Let init_task run, then release kernel data associated with /bootopts parsing */
-    schedule();
-    heap_add(&opts, sizeof(opts));
-#endif
-
     /*
      * We are now the idle task. We won't run unless no other process can run.
      * The idle task always runs with _gint_count == 1 (switched from user mode syscall)
@@ -129,7 +126,7 @@ void start_kernel(void)
 #ifdef CONFIG_TIMER_INT0F
         int0F();        /* simulate timer interrupt hooked on IRQ 7 */
 #else
-        idle_halt();    /* halt until interrupt to save power */
+        idle_halt();    /* halt until interrupt to save poer */
 #endif
     }
 }
@@ -146,9 +143,7 @@ static void INITPROC early_kernel_init(void)
     ROOT_DEV = SETUP_ROOT_DEV;      /* default root device from boot loader */
 #ifdef CONFIG_BOOTOPTS
     opts.nextumb = opts.umbseg;     /* init static structure variables */
-    opts.args = 2;                  /* room for argc and av[0] */
-    opts.argv_init[1] = init_command;
-    opts.hasopts = parse_options(); /* parse options found in /bootops */
+    hasopts = parse_options();      /* parse options found in /bootops */
 #endif
 
     /* create near heap at end of kernel bss */
@@ -200,7 +195,7 @@ static void INITPROC kernel_init(void)
 
 #ifdef CONFIG_BOOTOPTS
     finalize_options();
-    if (!opts.hasopts) printk("/bootopts not found or bad format/size\n");
+    if (!hasopts) printk("/bootopts not found or bad format/size\n");
 #endif
 
 #ifdef CONFIG_FARTEXT_KERNEL
@@ -276,8 +271,11 @@ static void INITPROC do_init_task(void)
         sys_dup(num);       /* open stderr*/
     //}
 
-
 #ifdef CONFIG_BOOTOPTS
+    /* Release options parsing buffers and setup data seg */
+    heap_add(&opts, sizeof(opts));
+    seg_add(DEF_OPTSEG, DMASEG);    /* DEF_OPTSEG through REL_INITSEG */
+
     /* pass argc/argv/env array to init_command */
 
     /* unset special sys_wait4() processing if pid 1 not /bin/init*/
@@ -285,7 +283,7 @@ static void INITPROC do_init_task(void)
         current->ppid = 1;      /* turns off auto-child reaping*/
 
     /* run /bin/init or init= command, normally no return*/
-    run_init_process_sptr(init_command, (char *)opts.argv_init, opts.argv_slen);
+    run_init_process_sptr(init_command, (char *)argv_init, argv_slen);
 #else
     try_exec_process(init_command);
 #endif /* CONFIG_BOOTOPTS */
@@ -512,7 +510,7 @@ static int INITPROC parse_options(void)
         }
         if (!strncmp(line,"init=",5)) {
             line += 5;
-            init_command = opts.argv_init[1] = line;
+            init_command = argv_init[1] = line;
             continue;
         }
         if (!strncmp(line,"ne0=",4)) {
@@ -576,14 +574,14 @@ static int INITPROC parse_options(void)
          * Then check if it's an environment variable or an init argument.
          */
         if (!strchr(line,'=')) {    /* no '=' means init argument*/
-            if (opts.args < MAX_INIT_ARGS)
-                opts.argv_init[opts.args++] = line;
+            if (args < MAX_INIT_ARGS)
+                argv_init[args++] = line;
             else printk(errmsg_initargs);
         }
 #if ENV
         else {
-            if (opts.envs < MAX_INIT_ENVS)
-                opts.envp_init[opts.envs++] = line;
+            if (envs < MAX_INIT_ENVS)
+                envp_init[envs++] = line;
             else printk(errmsg_initenvs);
         }
 #endif
@@ -598,54 +596,54 @@ static void INITPROC finalize_options(void)
 
 #if ENV
     /* set ROOTDEV environment variable for rc.sys fsck*/
-    if (opts.envs + running_qemu < MAX_INIT_ENVS) {
-        opts.envp_init[opts.envs++] = root_dev_name(ROOT_DEV);
+    if (envs + running_qemu < MAX_INIT_ENVS) {
+        envp_init[envs++] = root_dev_name(ROOT_DEV);
         if (running_qemu)
-            opts.envp_init[opts.envs++] = (char *)"QEMU=1";
+            envp_init[envs++] = (char *)"QEMU=1";
     } else printk(errmsg_initenvs);
 #endif
 
 #if DEBUG
     printk("args: ");
-    for (i=1; i<opts.args; i++)
-        printk("'%s'", opts.argv_init[i]);
+    for (i=1; i<args; i++)
+        printk("'%s'", argv_init[i]);
     printk("\n");
 
 #if ENV
     printk("envp: ");
-    for (i=0; i<opts.envs; i++)
-        printk("'%s'", opts.envp_init[i]);
+    for (i=0; i<envs; i++)
+        printk("'%s'", envp_init[i]);
     printk("\n");
 #endif
 #endif
 
     /* convert argv array to stack array for sys_execv*/
-    opts.args--;
-    opts.argv_init[0] = (char *)opts.args;          /* 0 = argc*/
-    char *q = (char *)&opts.argv_init[opts.args+2+opts.envs+1];
-    for (i=1; i<=opts.args; i++) {                  /* 1..argc = av*/
-        char *p = opts.argv_init[i];
+    args--;
+    argv_init[0] = (char *)args;        /* 0 = argc*/
+    char *q = (char *)&argv_init[args+2+envs+1];
+    for (i=1; i<=args; i++) {           /* 1..argc = av*/
+        char *p = argv_init[i];
         char *savq = q;
         while ((*q++ = *p++) != 0)
             ;
-        opts.argv_init[i] = (char *)(savq - (char *)opts.argv_init);
+        argv_init[i] = (char *)(savq - (char *)argv_init);
     }
-    /*opts.argv_init[opts.args+1] = NULL;*/         /* argc+1 = 0*/
+    /*argv_init[args+1] = NULL;*/       /* argc+1 = 0*/
 #if ENV
-    if (opts.envs) {
-        for (i=0; i<opts.envs; i++) {
-            char *p = opts.envp_init[i];
+    if (envs) {
+        for (i=0; i<envs; i++) {
+            char *p = envp_init[i];
             char *savq = q;
             while ((*q++ = *p++) != 0)
                 ;
-            opts.argv_init[opts.args+2+i] = (char *)(savq - (char *)opts.argv_init);
+            argv_init[args+2+i] = (char *)(savq - (char *)argv_init);
         }
 
     }
 #endif
-    /*opts.argv_init[opts.args+2+opts.envs] = NULL;*/
-    opts.argv_slen = q - (char *)opts.argv_init;
-    if (opts.argv_slen > sizeof(opts.argv_init))
+    /*argv_init[args+2+envs] = NULL;*/
+    argv_slen = q - (char *)argv_init;
+    if (argv_slen > sizeof(argv_init))
         panic(errmsg_initslen);
 }
 
