@@ -7,10 +7,9 @@
 ! both setup.s and system has been loaded by the bootblock.
 !
 ! This code asks the bios for memory/disk/other parameters, and
-! puts them in a "safe" place: INITSEG:0-INITSEG:01FF, ie where the
-! boot-block used to be. It is then up to the protected mode
-! system to read them from there before the area is overwritten
-! for buffer-blocks.
+! puts them in a "safe" place: REL_INITSEG:0-REL_INITSEG:01FF, ie where
+! the boot-block used to be. It is then up to the kernel to read them
+! from there before the area is released to the main memory allocator.
 !
 ! Move PS/2 aux init code to psaux.c
 ! (troyer@saifr00.cfsat.Honeywell.COM) 03Oct92
@@ -36,7 +35,7 @@
 !
 ! index
 !	...
-!	4:	display page
+!	4:	display page, 1 byte UNUSED
 !	6:	video mode, 1 byte
 !	7:	screen_cols, 1 byte
 !	8:	video data, 2 bytes
@@ -899,7 +898,6 @@ novga:	mov	%al,14		// CGA 25 rows
 
 	mov	$0x0f,%ah
 	int	$0x10
-	mov	%bx,4		// bh = display page
 	mov	%ax,6		// al = video mode, ah = window width
 
 	call	getcpu		// implemented in cputype.S

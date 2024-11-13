@@ -211,7 +211,7 @@ static void INITPROC kernel_init(void)
 static void INITPROC kernel_banner(seg_t init, seg_t extra)
 {
 #ifdef CONFIG_ARCH_IBMPC
-    printk("PC/%cT class cpu %d, ", (sys_caps & CAP_PC_AT) ? 'A' : 'X', SETUP_CPU_TYPE);
+    printk("PC/%cT class cpu %d, ", (sys_caps & CAP_PC_AT) ? 'A' : 'X', arch_cpu);
 #endif
 
 #ifdef CONFIG_ARCH_PC98
@@ -267,7 +267,16 @@ static void INITPROC do_init_task(void)
         sys_dup(num);       /* open stderr*/
     //}
 
+
 #ifdef CONFIG_BOOTOPTS
+    /* Release kernel data associated with /bootopts parsing */
+    heap_add(options, OPTSEGSZ);
+
+    /* Release /bootopts load segment (DEF_OPTSEG) and setup.S data segment (REL_INITSEG).
+     * Must not use SETUP_xxx setupw/setupb after this.
+     */
+    seg_add(DEF_OPTSEG, DMASEG);
+
     /* pass argc/argv/env array to init_command */
 
     /* unset special sys_wait4() processing if pid 1 not /bin/init*/

@@ -13,14 +13,16 @@
 #define CONFIG_MSDOS_PARTITION  1               /* support DOS HD partitions */
 #define CONFIG_FS_DEV           1               /* support FAT /dev folder */
 
+/*
+ * SETUP_ defines are initialzied by setup.S and queried only during kernel init.
+ * The REL_INITSEG segment is released at end of kernel init. For later use the
+ * value must be copied, as afterwards setupb/setupw will return incorrect data.
+ * These defines are overridden for ROM based systems w/o setup code.
+ * See setup.S for setupb/setupw offsets.
+ */
+
 #ifdef CONFIG_ARCH_IBMPC
 #define MAX_SERIAL              4               /* max number of serial tty devices*/
-
-/*
- * Setup data - normally queried by startup setup.S code, but can
- * be overridden for embedded systems with less overhead.
- * See setup.S for more details.
- */
 #define SETUP_VID_COLS          setupb(7)       /* BIOS video # columns */
 #define SETUP_VID_LINES         setupb(14)      /* BIOS video # lines */
 #define SETUP_CPU_TYPE          setupb(0x20)    /* processor type */

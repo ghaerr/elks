@@ -1204,7 +1204,7 @@ static void DFPROC redo_fd_request(void)
     numsectors = req->rq_nr_sectors;
 #ifdef CONFIG_TRACK_CACHE
     use_cache = (command == FD_READ) && (req->rq_errors < 4)
-        && (SETUP_CPU_TYPE != 7 || running_qemu);    /* disable cache on 32-bit systems */
+        && (arch_cpu != 7 || running_qemu);     /* disable cache on 32-bit systems */
     if (use_cache) {
         /* full track caching only if cache large enough */
         if (CACHE_FULL_TRACK && floppy->sect < CACHE_SIZE)
@@ -1453,7 +1453,7 @@ static int DFPROC get_fdc_version(void)
     }
     switch (reply_buffer[0]) {
     case 0x80:
-        if (SETUP_CPU_TYPE > 5) {       /* 80286 CPU PC/AT or better */
+        if (arch_cpu > 5) {     /* 80286 CPU PC/AT or better */
             type = FDC_TYPE_8272PC_AT;
             name = "8272A (PC/AT)";
         } else {
