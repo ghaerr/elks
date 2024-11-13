@@ -26,18 +26,15 @@
 
 #ifdef ELKS
 #include "curses.h"
+#include <signal.h>
 #else
 #include <curses.h>
+#include <sys/signal.h>
 #endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/time.h>
-#ifdef ELKS
-#include <signal.h>
-#else
-#include <sys/signal.h>
-#endif
 #include <time.h>
 #include <termios.h>
 
@@ -162,9 +159,7 @@ struct termios save;
 
 static void cleanup(int sig)
 {
-#ifndef ELKS
-	clrscr();
-#endif
+	erase();
 	refresh();
 	curs_set(1);
 	endwin();
@@ -717,7 +712,7 @@ void paintAlienRow(int row, int clean)
 
 	if (clean) {
 		move((row * ALIEN_HEIGHT) + aliens.y - 1, 0);
-		deleteln();
+		//deleteln();
 	}
 	// draw the alien space ships
 #ifdef USE_COLORS

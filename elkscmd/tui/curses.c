@@ -112,13 +112,3 @@ void printw(char *fmt, ...)
     vfprintf(stdout,fmt,ptr);
     va_end(ptr);
 }
-
-void mvprintw(int y, int x, char *fmt, ...)
-{
-    va_list ptr;
-
-    move(y, x);
-    va_start(ptr, fmt);
-    vfprintf(stdout,fmt,ptr);
-    va_end(ptr);
-}

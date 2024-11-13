@@ -113,5 +113,4 @@ void wattroff(WINDOW *w, int a);
 void wbkgdset(WINDOW *w, int a);
 
 /* partially implemented functions for invaders */
-#define deleteln(void);
-void mvprintw(int y, int x, char *fmt, ...);
+void mvprintw(int y, int x, const char *fmt, ...);
