@@ -15,6 +15,7 @@
 #include <linuxmt/devnum.h>
 #include <linuxmt/heap.h>
 #include <linuxmt/prectimer.h>
+#include <linuxmt/debug.h>
 #include <arch/system.h>
 #include <arch/segment.h>
 #include <arch/ports.h>
@@ -27,20 +28,11 @@
 #define ENV             1       /* allow environ variables as bootopts*/
 #define DEBUG           0       /* display parsing at boot*/
 
-#include <linuxmt/debug.h>
-
 #define MAX_INIT_ARGS   6       /* max # arguments to /bin/init or init= program */
 #define MAX_INIT_ENVS   12      /* max # environ variables passed to /bin/init */
 #define MAX_INIT_SLEN   80      /* max # words of args + environ passed to /bin/init */
 #define MAX_UMB         3       /* max umb= segments in /bootopts */
 
-#define STR(x)          __STRING(x)
-/* bootopts error message are duplicated below so static here for space */
-char errmsg_initargs[] = "init args > " STR(MAX_INIT_ARGS) "\n";
-char errmsg_initenvs[] = "init envs > " STR(MAX_INIT_ENVS) "\n";
-char errmsg_initslen[] = "init words > " STR(MAX_INIT_SLEN) "\n";
-
-int root_mountflags;
 struct netif_parms netif_parms[MAX_ETHS] = {
     /* NOTE:  The order must match the defines in netstat.h:
      * ETH_NE2K, ETH_WD, ETH_EL3    */
@@ -49,11 +41,11 @@ struct netif_parms netif_parms[MAX_ETHS] = {
     { EL3_IRQ, EL3_PORT, 0, EL3_FLAGS },
 };
 seg_t kernel_cs, kernel_ds;
+int root_mountflags;
 int tracing;
 int nr_ext_bufs, nr_xms_bufs, nr_map_bufs;
 char running_qemu;
 static int boot_console;
-static segext_t umbtotal;
 static char bininit[] = "/bin/init";
 static char binshell[] = "/bin/sh";
 #ifdef CONFIG_SYS_NO_BININIT
@@ -66,24 +58,29 @@ static char *init_command = bininit;
 /*
  * Parse /bootopts startup options
  */
-static char opts;
-static int args = 2;    /* room for argc and av[0] */
-static int envs;
-static int argv_slen;
-#ifdef CONFIG_SYS_NO_BININIT
-static char *argv_init[MAX_INIT_SLEN] = { NULL, binshell, NULL };
-#else
-/* argv_init doubles as sptr data for sys_execv later*/
-static char *argv_init[MAX_INIT_SLEN] = { NULL, bininit, NULL };
-#endif
+#define STR(x)          __STRING(x)
+/* bootopts error message are duplicated below so static here for space */
+char errmsg_initargs[] = "init args > " STR(MAX_INIT_ARGS) "\n";
+char errmsg_initenvs[] = "init envs > " STR(MAX_INIT_ENVS) "\n";
+char errmsg_initslen[] = "init words > " STR(MAX_INIT_SLEN) "\n";
+
+/* this entire structure is released to kernel heap after /bootopts parsing */
+static struct {
+    int hasopts;
+    int args;
+    int envs;
+    int argv_slen;
+    char *argv_init[MAX_INIT_SLEN]; /* argv_init doubles as sptr data for sys_execv */
+    struct umbseg {                 /* save umb= lines during /bootopts parse */
+        seg_t base;
+        segext_t len;
+    } umbseg[MAX_UMB], *nextumb;
+    segext_t umbtotal;
+    unsigned char options[OPTSEGSZ];
 #if ENV
-static char *envp_init[MAX_INIT_ENVS];
+    char *envp_init[MAX_INIT_ENVS];
 #endif
-static struct umbseg {  /* saves umb= lines during /bootopts parse */
-    seg_t base;
-    segext_t len;
-} umbseg[MAX_UMB], *nextumb = umbseg;
-static unsigned char options[OPTSEGSZ];
+} opts;
 
 extern int boot_rootdev;
 static char * INITPROC root_dev_name(int dev);
@@ -110,9 +107,18 @@ void start_kernel(void)
     setsp(&task->t_regs.ax);    /* change to idle task stack */
     kernel_init();              /* continue init running on idle task stack */
 
-    /* fork and run procedure init_task() as task #1*/
+    /* fork and setup procedure init_task() to run as task #1 */
     kfork_proc(init_task);
     wake_up_process(&task[1]);
+
+#ifdef CONFIG_BOOTOPTS
+    /* Release /bootopts load segment (DEF_OPTSEG) and setup data segment (REL_INITSEG) */
+    seg_add(DEF_OPTSEG, DMASEG);
+
+    /* Let init_task run, then release kernel data associated with /bootopts parsing */
+    schedule();
+    heap_add(&opts, sizeof(opts));
+#endif
 
     /*
      * We are now the idle task. We won't run unless no other process can run.
@@ -139,7 +145,10 @@ static void INITPROC early_kernel_init(void)
 #endif
     ROOT_DEV = SETUP_ROOT_DEV;      /* default root device from boot loader */
 #ifdef CONFIG_BOOTOPTS
-    opts = parse_options();         /* parse options found in /bootops */
+    opts.nextumb = opts.umbseg;     /* init static structure variables */
+    opts.args = 2;                  /* room for argc and av[0] */
+    opts.argv_init[1] = init_command;
+    opts.hasopts = parse_options(); /* parse options found in /bootops */
 #endif
 
     /* create near heap at end of kernel bss */
@@ -151,11 +160,11 @@ static void INITPROC early_kernel_init(void)
 #ifdef CONFIG_BOOTOPTS
     struct umbseg *p;
     /* now able to add umb memory segments */
-    for (p = umbseg; p < &umbseg[MAX_UMB]; p++) {
+    for (p = opts.umbseg; p < &opts.umbseg[MAX_UMB]; p++) {
         if (p->base) {
             debug("umb segment from %x to %x\n", p->base, p->base + p->len);
             seg_add(p->base, p->base + p->len);
-            umbtotal += p->len;
+            opts.umbtotal += p->len;
         }
     }
 #endif
@@ -191,7 +200,7 @@ static void INITPROC kernel_init(void)
 
 #ifdef CONFIG_BOOTOPTS
     finalize_options();
-    if (!opts) printk("/bootopts not found or bad format/size\n");
+    if (!opts.hasopts) printk("/bootopts not found or bad format/size\n");
 #endif
 
 #ifdef CONFIG_FARTEXT_KERNEL
@@ -234,7 +243,7 @@ static void INITPROC kernel_banner(seg_t init, seg_t extra)
 #endif
     printk("data %x end %x top %x %u+%u+%uK free\n",
            kernel_ds, membase, memend, (int) ((memend - membase) >> 6),
-           extra >> 6, umbtotal >> 6);
+           extra >> 6, opts.umbtotal >> 6);
 }
 
 static void INITPROC try_exec_process(const char *path)
@@ -269,14 +278,6 @@ static void INITPROC do_init_task(void)
 
 
 #ifdef CONFIG_BOOTOPTS
-    /* Release kernel data associated with /bootopts parsing */
-    heap_add(options, OPTSEGSZ);
-
-    /* Release /bootopts load segment (DEF_OPTSEG) and setup.S data segment (REL_INITSEG).
-     * Must not use SETUP_xxx setupw/setupb after this.
-     */
-    seg_add(DEF_OPTSEG, DMASEG);
-
     /* pass argc/argv/env array to init_command */
 
     /* unset special sys_wait4() processing if pid 1 not /bin/init*/
@@ -284,7 +285,7 @@ static void INITPROC do_init_task(void)
         current->ppid = 1;      /* turns off auto-child reaping*/
 
     /* run /bin/init or init= command, normally no return*/
-    run_init_process_sptr(init_command, (char *)argv_init, argv_slen);
+    run_init_process_sptr(init_command, (char *)opts.argv_init, opts.argv_slen);
 #else
     try_exec_process(init_command);
 #endif /* CONFIG_BOOTOPTS */
@@ -417,10 +418,10 @@ static void INITPROC parse_umb(char *line)
     do {
         base = (seg_t)simple_strtol(p+1, 16);
         if((p = strchr(p+1, ':'))) {
-            if (nextumb < &umbseg[MAX_UMB]) {
-                nextumb->len = (segext_t)simple_strtol(p+1, 16);
-                nextumb->base = base;
-                nextumb++;
+            if (opts.nextumb < &opts.umbseg[MAX_UMB]) {
+                opts.nextumb->len = (segext_t)simple_strtol(p+1, 16);
+                opts.nextumb->base = base;
+                opts.nextumb++;
             }
         }
     } while((p = strchr(p+1, ',')));
@@ -442,15 +443,16 @@ static void INITPROC parse_umb(char *line)
  */
 static int INITPROC parse_options(void)
 {
-    char *line = (char *)options;
+    char *line = (char *)opts.options;
     char *next;
 
     /* copy /bootopts loaded by boot loader at 0050:0000*/
-    fmemcpyb(options, kernel_ds, 0, DEF_OPTSEG, sizeof(options));
+    fmemcpyb(opts.options, kernel_ds, 0, DEF_OPTSEG, sizeof(opts.options));
 
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
     /* check file starts with ##, one or two sectors, max 1023 bytes */
-    if (*(unsigned short *)options != 0x2323 || (options[511] && options[OPTSEGSZ-1]))
+    if (*(unsigned short *)opts.options != 0x2323 ||
+        (opts.options[511] && opts.options[OPTSEGSZ-1]))
         return 0;
 
     next = line;
@@ -510,7 +512,7 @@ static int INITPROC parse_options(void)
         }
         if (!strncmp(line,"init=",5)) {
             line += 5;
-            init_command = argv_init[1] = line;
+            init_command = opts.argv_init[1] = line;
             continue;
         }
         if (!strncmp(line,"ne0=",4)) {
@@ -574,14 +576,14 @@ static int INITPROC parse_options(void)
          * Then check if it's an environment variable or an init argument.
          */
         if (!strchr(line,'=')) {    /* no '=' means init argument*/
-            if (args < MAX_INIT_ARGS)
-                argv_init[args++] = line;
+            if (opts.args < MAX_INIT_ARGS)
+                opts.argv_init[opts.args++] = line;
             else printk(errmsg_initargs);
         }
 #if ENV
         else {
-            if (envs < MAX_INIT_ENVS)
-                envp_init[envs++] = line;
+            if (opts.envs < MAX_INIT_ENVS)
+                opts.envp_init[opts.envs++] = line;
             else printk(errmsg_initenvs);
         }
 #endif
@@ -596,54 +598,54 @@ static void INITPROC finalize_options(void)
 
 #if ENV
     /* set ROOTDEV environment variable for rc.sys fsck*/
-    if (envs + running_qemu < MAX_INIT_ENVS) {
-        envp_init[envs++] = root_dev_name(ROOT_DEV);
+    if (opts.envs + running_qemu < MAX_INIT_ENVS) {
+        opts.envp_init[opts.envs++] = root_dev_name(ROOT_DEV);
         if (running_qemu)
-            envp_init[envs++] = (char *)"QEMU=1";
+            opts.envp_init[opts.envs++] = (char *)"QEMU=1";
     } else printk(errmsg_initenvs);
 #endif
 
 #if DEBUG
     printk("args: ");
-    for (i=1; i<args; i++)
-        printk("'%s'", argv_init[i]);
+    for (i=1; i<opts.args; i++)
+        printk("'%s'", opts.argv_init[i]);
     printk("\n");
 
 #if ENV
     printk("envp: ");
-    for (i=0; i<envs; i++)
-        printk("'%s'", envp_init[i]);
+    for (i=0; i<opts.envs; i++)
+        printk("'%s'", opts.envp_init[i]);
     printk("\n");
 #endif
 #endif
 
     /* convert argv array to stack array for sys_execv*/
-    args--;
-    argv_init[0] = (char *)args;            /* 0 = argc*/
-    char *q = (char *)&argv_init[args+2+envs+1];
-    for (i=1; i<=args; i++) {                   /* 1..argc = av*/
-        char *p = argv_init[i];
+    opts.args--;
+    opts.argv_init[0] = (char *)opts.args;          /* 0 = argc*/
+    char *q = (char *)&opts.argv_init[opts.args+2+opts.envs+1];
+    for (i=1; i<=opts.args; i++) {                  /* 1..argc = av*/
+        char *p = opts.argv_init[i];
         char *savq = q;
         while ((*q++ = *p++) != 0)
             ;
-        argv_init[i] = (char *)(savq - (char *)argv_init);
+        opts.argv_init[i] = (char *)(savq - (char *)opts.argv_init);
     }
-    /*argv_init[args+1] = NULL;*/               /* argc+1 = 0*/
+    /*opts.argv_init[opts.args+1] = NULL;*/         /* argc+1 = 0*/
 #if ENV
-    if (envs) {
-        for (i=0; i<envs; i++) {
-            char *p = envp_init[i];
+    if (opts.envs) {
+        for (i=0; i<opts.envs; i++) {
+            char *p = opts.envp_init[i];
             char *savq = q;
             while ((*q++ = *p++) != 0)
                 ;
-            argv_init[args+2+i] = (char *)(savq - (char *)argv_init);
+            opts.argv_init[opts.args+2+i] = (char *)(savq - (char *)opts.argv_init);
         }
 
     }
 #endif
-    /*argv_init[args+2+envs] = NULL;*/
-    argv_slen = q - (char *)argv_init;
-    if (argv_slen > sizeof(argv_init))
+    /*opts.argv_init[opts.args+2+opts.envs] = NULL;*/
+    opts.argv_slen = q - (char *)opts.argv_init;
+    if (opts.argv_slen > sizeof(opts.argv_init))
         panic(errmsg_initslen);
 }
 
