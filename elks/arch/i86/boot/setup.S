@@ -946,7 +946,10 @@ putc:	push %ax
 
 #ifdef CONFIG_BOOTOPTS
 //
-// load /bootopts for FAT filesystem boot
+// load /bootopts file for FAT filesystem boot
+//      If size > 512 bytes, both sectors must be contiguous.
+//      This is currently guaranteed by using a 1K /bootopts in
+//      distribution images, as later edits will remain contiguous.
 //
 // Uses previous boot sector's BPB contents for disk geometry
 // and previous boot sector's buffer which still holds root directory sector.
@@ -990,20 +993,19 @@ bootopts:
 	xor	%bp,%bp
 
 	mov	root_dev,%al	// Physical Device Address
-	mov	$0xD6,%ah		// Read Data
-	mov	$512,%bx
-	test	$0x10,%al		// Check Floppy Disk or Hard Disk
+	mov	$0xD6,%ah	// Read Data
+	mov	$1024,%bx	// 1K bytes
+	test	$0x10,%al	// Check Floppy Disk or Hard Disk
 	jz	pc98_int1b
 #ifdef CONFIG_IMG_FD1232
-	mov	$1024,%bx
-	mov	$0x03,%ch		// 1024 Bytes per sector
-	inc	%dl				// sector number for PC_98 Floppy Disk
+	mov	$0x03,%ch	// 1024 Bytes per sector
+	inc	%dl		// sector number for PC_98 Floppy Disk
 #else
-	mov	$0x02,%ch		// 512 Bytes per sector
-	inc	%dl				// sector number for PC_98 Floppy Disk
+	mov	$0x02,%ch	// 512 Bytes per sector
+	inc	%dl		// sector number for PC_98 Floppy Disk
 #endif
 pc98_int1b:
-	int	$0x1B			// BIOS disk interrupt
+	int	$0x1B		// BIOS disk interrupt
 	pop	%bp
 #else
 	mov	$INITSEG,%ax
@@ -1013,7 +1015,7 @@ pc98_int1b:
 	mov	$DEF_OPTSEG,%ax	// ES:BX = DEF_OPTSEG:0
 	mov	%ax,%es
 	xor	%bx,%bx
-	mov	$0x0201,%ax	// BIOS read disk, 1 sector
+	mov	$0x0202,%ax	// BIOS read disk, 2 sectors
 	int	$0x13		// BIOS disk interrupt
 #endif
 

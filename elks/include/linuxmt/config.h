@@ -137,30 +137,33 @@
 #define DMASEGEND       DMASEG      /* no DMASEG buffer */
 #endif
 
+/* Define segment locations of low memory, must not overlap */
+
 #ifdef CONFIG_ROMCODE
 #define DMASEG          0x80        /* start of floppy sector buffer */
 #define KERNEL_DATA     DMASEGEND   /* kernel data segment */
 #define SETUP_DATA      CONFIG_ROM_SETUP_DATA
-#endif
 
-#if (defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_8018X)) && !defined(CONFIG_ROMCODE)
-/* Define segment locations of low memory, must not overlap */
-#define OPTSEGSZ        0x200       /* max size of /bootopts file (512 bytes max) */
-#define DEF_OPTSEG      0x50        /* 0x200 bytes boot options at lowest usable ram */
-#define REL_INITSEG     0x70        /* 0x200 bytes setup data */
-#define DMASEG          0x90        /* start of floppy sector buffer */
+#else /* !CONFIG_ROMCODE */
+
+#ifdef CONFIG_ARCH_IBMPC
+#define OPTSEGSZ        0x400       /* max size of /bootopts file (1024 bytes max) */
+#define DEF_OPTSEG      0x50        /* 0x400 bytes boot options at lowest usable ram */
+#define REL_INITSEG     0x90        /* 0x200 bytes setup data */
+#define DMASEG          0xB0        /* start of floppy sector buffer */
 #define REL_SYSSEG      DMASEGEND   /* kernel code segment */
 #define SETUP_DATA      REL_INITSEG
 #endif
 
-#if defined(CONFIG_ARCH_PC98) && !defined(CONFIG_ROMCODE)
-/* Define segment locations of low memory, must not overlap */
-#define OPTSEGSZ        0x200       /* max size of /bootopts file (512 bytes max) */
-#define DEF_OPTSEG      0x60        /* 0x200 bytes boot options at lowest usable ram */
-#define REL_INITSEG     0x80        /* 0x200 bytes setup data */
-#define DMASEG          0xA0        /* start of floppy sector buffer */
+#ifdef CONFIG_ARCH_PC98
+#define OPTSEGSZ        0x400       /* max size of /bootopts file (1024 bytes max) */
+#define DEF_OPTSEG      0x60        /* 0x400 bytes boot options at lowest usable ram */
+#define REL_INITSEG     0xA0        /* 0x200 bytes setup data */
+#define DMASEG          0xC0        /* start of floppy sector buffer */
 #define REL_SYSSEG      DMASEGEND   /* kernel code segment */
 #define SETUP_DATA      REL_INITSEG
 #endif
+
+#endif /* !CONFIG_ROMCODE */
 
 #endif
