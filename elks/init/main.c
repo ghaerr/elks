@@ -46,6 +46,7 @@ int tracing;
 int nr_ext_bufs, nr_xms_bufs, nr_map_bufs;
 char running_qemu;
 static int boot_console;
+static segext_t umbtotal;
 static char bininit[] = "/bin/init";
 static char binshell[] = "/bin/sh";
 #ifdef CONFIG_SYS_NO_BININIT
@@ -75,7 +76,6 @@ static struct {
         seg_t base;
         segext_t len;
     } umbseg[MAX_UMB], *nextumb;
-    segext_t umbtotal;
     unsigned char options[OPTSEGSZ];
 #if ENV
     char *envp_init[MAX_INIT_ENVS];
@@ -164,7 +164,7 @@ static void INITPROC early_kernel_init(void)
         if (p->base) {
             debug("umb segment from %x to %x\n", p->base, p->base + p->len);
             seg_add(p->base, p->base + p->len);
-            opts.umbtotal += p->len;
+            umbtotal += p->len;
         }
     }
 #endif
@@ -243,7 +243,7 @@ static void INITPROC kernel_banner(seg_t init, seg_t extra)
 #endif
     printk("data %x end %x top %x %u+%u+%uK free\n",
            kernel_ds, membase, memend, (int) ((memend - membase) >> 6),
-           extra >> 6, opts.umbtotal >> 6);
+           extra >> 6, umbtotal >> 6);
 }
 
 static void INITPROC try_exec_process(const char *path)
