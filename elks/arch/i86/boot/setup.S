@@ -946,8 +946,8 @@ putc:	push %ax
 //
 // load /bootopts file for FAT filesystem boot
 //      If size > 512 bytes, both sectors must be contiguous.
-//      This is currently guaranteed by using a 1K /bootopts in
-//      distribution images, as later edits will remain contiguous.
+//      This is currently guaranteed by providing a 1K /bootopts in
+//      distribution images, so later edits will remain contiguous.
 //
 // Uses previous boot sector's BPB contents for disk geometry
 // and previous boot sector's buffer which still holds root directory sector.

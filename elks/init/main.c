@@ -113,7 +113,7 @@ void start_kernel(void)
     setsp(&task->t_regs.ax);    /* change to idle task stack */
     kernel_init();              /* continue init running on idle task stack */
 
-    /* fork and setup procedure init_task() to run as task #1 */
+    /* fork and setup procedure init_task() to run as task #1 on reschedule */
     kfork_proc(init_task);
     wake_up_process(&task[1]);
 
@@ -126,7 +126,7 @@ void start_kernel(void)
 #ifdef CONFIG_TIMER_INT0F
         int0F();        /* simulate timer interrupt hooked on IRQ 7 */
 #else
-        idle_halt();    /* halt until interrupt to save poer */
+        idle_halt();    /* halt until interrupt to save power */
 #endif
     }
 }
@@ -619,16 +619,16 @@ static void INITPROC finalize_options(void)
 
     /* convert argv array to stack array for sys_execv*/
     args--;
-    argv_init[0] = (char *)args;        /* 0 = argc*/
+    argv_init[0] = (char *)args;            /* 0 = argc*/
     char *q = (char *)&argv_init[args+2+envs+1];
-    for (i=1; i<=args; i++) {           /* 1..argc = av*/
+    for (i=1; i<=args; i++) {               /* 1..argc = av*/
         char *p = argv_init[i];
         char *savq = q;
         while ((*q++ = *p++) != 0)
             ;
         argv_init[i] = (char *)(savq - (char *)argv_init);
     }
-    /*argv_init[args+1] = NULL;*/       /* argc+1 = 0*/
+    /*argv_init[args+1] = NULL;*/           /* argc+1 = 0*/
 #if ENV
     if (envs) {
         for (i=0; i<envs; i++) {

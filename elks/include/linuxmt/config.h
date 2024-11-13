@@ -15,8 +15,8 @@
 
 /*
  * SETUP_ defines are initialzied by setup.S and queried only during kernel init.
- * The REL_INITSEG segment is released at end of kernel init. For later use the
- * value must be copied, as afterwards setupb/setupw will return incorrect data.
+ * The REL_INITSEG segment is released at end of kernel init. If used later any
+ * values must be copied, as afterwards setupb/setupw will return incorrect data.
  * These defines are overridden for ROM based systems w/o setup code.
  * See setup.S for setupb/setupw offsets.
  */
