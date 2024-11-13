@@ -832,6 +832,7 @@ void paintIntro(void)
 	if (has_colors())
 		attron(COLOR_PAIR(1));
 #endif
+	mvprintw(LINES - 3, (COLS - 41) / 2, "j:move left, k:move right, space:missile, q:quit");
 	mvprintw(LINES - 1, (COLS - 41) / 2, "https://github.com/macdice/ascii-invaders");
 	refresh();
 }
