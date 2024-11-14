@@ -180,6 +180,7 @@ tui/sl                          :tui                    :1200k
 tui/ttyclock                    :tui            :360c   :1200k
 tui/ttypong                     :tui                            :1440k
 tui/ttytetris                   :tui            :360c
+tui/invaders                    :tui                    :1232k  :1440k
 busyelks/busyelks               :busyelks
 inet/httpd/sample_index.html ::var/www/index.html :net
 ktcp/ktcp                       :net

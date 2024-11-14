@@ -111,3 +111,6 @@ void wrefresh(WINDOW *w);
 void wattron(WINDOW *w, int a);
 void wattroff(WINDOW *w, int a);
 void wbkgdset(WINDOW *w, int a);
+
+/* partially implemented functions for invaders */
+void mvprintw(int y, int x, const char *fmt, ...);
