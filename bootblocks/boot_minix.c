@@ -22,6 +22,7 @@
 static byte_t sb_block [BLOCK_SIZE];  // super block block buffer
 #define sb_data	((struct super_block *)sb_block)
 
+static char linux[] = "/linux";
 static int i_now;
 static int i_boot;
 static int loadaddr;
@@ -82,10 +83,10 @@ void load_prog ()
 	load_file ();
 
 	for (int d = 0; d < BLOCK_SIZE /*(int)i_data->i_size*/; d += DIRENT_SIZE) {
-		if (!strcmp ((char *)(d_dir + 2 + d), "linux")) {
+		if (!strcmp ((char *)(d_dir + 2 + d), linux+1)) {
 			i_boot = i_now = (*(int *)(d_dir + d)) - 1;
 			if (i_boot == -1) continue;
-			puts ("/linux");
+			puts (linux);
 			loadaddr = LOADSEG << 4;
 			load_file();
 			continue;
@@ -121,7 +122,7 @@ static int strcmp (const char * s, const char * d)
 
 static void load_super ()
 {
-	disk_read (2, 2, sb_block, seg_data ());
+	disk_read (2, 1, sb_block, seg_data ());
 
 	/*
 	if (sb_data->s_log_zone_size) {
