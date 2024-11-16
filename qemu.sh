@@ -12,7 +12,7 @@
 # Select disk image to use
 # MINIX or FAT .config build
 #IMAGE="-fda image/fd2880.img"
-IMAGE="-fda image/fd1440.img"
+#IMAGE="-fda image/fd1440.img"
 #IMAGE="-fda image/fd1200.img"
 #IMAGE="-fda image/fd720.img"
 #IMAGE="-fda image/fd360.img"
@@ -24,7 +24,7 @@ IMAGE="-fda image/fd1440.img"
 #IMAGE="-fda image/fd720-fat.img"
 #IMAGE="-fda image/fd1200-fat.img"
 #IMAGE="-fda image/fd1440-fat.img"
-#IMAGE="-fda image/fd2880-fat.img"
+IMAGE="-fda image/fd2880.img -fdb fd2880aux.img"
 #IMAGE="-hda image/hd32-fat.img"
 #IMAGE="-hda image/hd32-fat.img -fda image/fd1440-minix.img"
 
@@ -34,7 +34,7 @@ IMAGE="-fda image/fd1440.img"
 #IMAGE="-fda image/fd1200-minix.img"
 #IMAGE="-fda image/fd1440-minix.img"
 #IMAGE="-fda image/fd2880-minix.img"
-#IMAGE="-hda image/hd32-minix.img"
+#IMAGE="-hda hd32-fat_heep_optimized_elks_doom_v20240902.img"
 
 # MBR builds
 #IMAGE="-hda image/hd32-minix.img"
@@ -110,12 +110,12 @@ NET="-netdev user,id=mynet,$FWD -device ne2k_isa,irq=12,netdev=mynet"
 # NETDUMP="-net dump"
 
 # Enable PC-Speaker here:
-#AUDIO="-audiodev pa,id=speaker -machine pcspk-audiodev=speaker"
+AUDIO="-audiodev pa,id=speaker -machine pcspk-audiodev=speaker"
 
 UNAME=`uname -a`
 
 # Determine display type ("Darwin" = OSX)
-[ $UNAME != 'Darwin' ] && QDISPLAY="-display sdl"
+#[ $UNAME != 'Darwin' ] && QDISPLAY="-display sdl"
 
 # Configure QEMU as pure ISA system
 

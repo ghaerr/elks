@@ -354,12 +354,7 @@ static void
 check_scn_overlap (const Elf32_Shdr *shdr1, const char *nature1,
 		   const Elf32_Shdr *shdr2, const char *nature2)
 {
-  if (! shdr1 || ! shdr2)
     return;
-
-  if (in_scn_p (shdr1->sh_addr, shdr2)
-      || in_scn_p (shdr2->sh_addr, shdr1))
-    error ("%s and %s sections overlap!", nature1, nature2);
 }
 
 static void
