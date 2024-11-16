@@ -448,7 +448,7 @@ static int INITPROC parse_options(void)
     fmemcpyb(opts.options, kernel_ds, 0, DEF_OPTSEG, sizeof(opts.options));
 
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
-    /* check file starts with ##, one or two sectors, max 1023 bytes */
+    /* check file starts with ##, one or two sectors, max 1023 bytes or 511 one sector */
     if (*(unsigned short *)opts.options != 0x2323 ||
         (opts.options[511] && opts.options[OPTSEGSZ-1]))
         return 0;

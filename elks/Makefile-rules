@@ -20,9 +20,9 @@ include $(TOPDIR)/Make.defs
 #			extensively through these definitions, so must be
 #			correct.
 #
-#	USEBCC		Whether to compile using BCC or GCC. If this is
-#			set to 'N' it compiles using GCC, otherwise it
-#			compiles using BCC.
+#	USEBCC		Whether to compile using ia16-elf-gcc or host GCC.
+#			If this is set to 'N' it compiles using GCC, otherwise
+#			it compiles using ia16-elf-gcc.
 #
 #	CLEANDEP	Any files in the current directory that the
 #			`make dep` command is dependent on.

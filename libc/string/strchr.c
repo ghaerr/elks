@@ -1,25 +1,12 @@
 #include <string.h>
 
-char *
-strchr (const char * s, int c)
-{
-#ifdef BCC_AX_ASM
-#asm
+#ifdef BCC_ASM
   mov	bx,sp
   push	si
-#if __FIRST_ARG_IN_AX__
-  mov	bx,[bx+2]
-  mov	si,ax
-#else
   mov	si,[bx+2]
   mov	bx,[bx+4]
-#endif
   xor	ax,ax
-
-#ifdef PARANOID
   cld
-#endif
-
 in_loop:
   lodsb
   cmp	al,bl
@@ -31,15 +18,17 @@ in_loop:
 got_it:
   lea	ax,[si-1]
   pop	si
+  ret
+#endif
 
-#endasm
-#else /* ifdef BCC_AX_ASM */
+char *
+strchr(const char * s, int c)
+{
     for(; *s != (char)c; ++s) {
         if (*s == '\0')
             return NULL;
     }
     return (char *)s;
-#endif /* ifdef BCC_AX_ASM */
 }
 
 #ifdef __GNUC__
