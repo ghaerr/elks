@@ -1,0 +1,86 @@
+#!/bin/sh
+# Copyright 1994 David C. Niemi.
+# Copyright 1997,2001,2002 Alain Knaff.
+# This file is part of mtools.
+#
+# Mtools is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Mtools is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Mtools.  If not, see <http://www.gnu.org/licenses/>.
+#
+# tgz [destination [source...] ]
+#
+# Make a gzip'd tar archive $1 (or stdout) out of specified files
+# (or, if not specified, from everything in the current directory)
+#
+# Requires gzip in the user's path.
+#
+# Requires gnu tar (or something close) in the user's path
+# due to use of --exclude, --totals and -S.
+#
+# 1994/02/19	DCN	Created
+# 1994/12/01	DCN	Cleanup and major improvements
+#
+# Copyright (C) 1994 David C. Niemi (niemi@tuxers.net)
+# The author requires that any copies or derived works include this
+# copyright notice; no other restrictions are placed on its use.
+#
+
+set -e
+set -u
+
+Error ()
+{	echo "Error: $0: ${@-}." >&2
+	exit 1
+}
+
+if [ $# = 0 ]; then
+	dest=
+	src=.
+	tar cvf - . | gzip -9v
+	exit 0
+elif [ $# = 1 ]; then
+	dest=$1
+	src=.
+else
+	dest=$1
+	shift
+	src="${@-}"
+fi
+
+case $dest in
+"" | . | .. | */ | */. | */.. )
+	echo "Usage: $0: [destination [source...] ]" >&2
+	exit 1
+	;;
+*.t?z | *.?z | *.z | *.Z | *.tz | *.tz? )
+	;;
+*)
+	dest=${dest}.tgz	## Add on .tgz as default suffix
+esac
+
+if [ -h "$dest" ]; then
+	Error "Destination file \"$dest\" already exists as a symbolic link"
+elif [ -f "$dest" ]; then
+	Error "Destination \"$dest\" already exists as a file"
+elif [ -d "$dest" ]; then
+	Error "Destination \"$dest\" already exists as a directory"
+fi
+if [ -z "$dest" -o "X$dest" = 'X-' ]; then
+	echo "Writing gzipp'd tar archive to standard output." >&2
+	tar cvfS - -- $src | gzip -9v
+else
+	echo "Writing gzip'd tar archive to \"$dest\"." >&2
+	tar -cvS --totals --exclude "$dest" -f - -- $src | gzip -9v > "$dest" 
+	ls -l "$dest" >&2
+fi
+
+exit 0

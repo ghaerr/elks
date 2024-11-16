@@ -1,0 +1,147 @@
+#!/bin/bash
+
+# Copyright 1997,1999,2001,2002,2004,2009,2010 Alain Knaff.
+# This file is part of mtools.
+#
+# Mtools is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Mtools is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Mtools.  If not, see <http://www.gnu.org/licenses/>.
+
+# TODO
+VERSION=`cat version.texi | awk '$2 == "VERSION" {print $3}'`
+UPDATED=`cat version.texi | awk '$2 == "UPDATED" {print $3 " " $4}'`
+
+# extracts the manpage for a given command out of a texinfo doc
+unset LANG
+
+date=`date +%d%b%y`
+package="mtools-"`grep mversion patchlevel.c | sed 's/^.*"\(.*\)";/\1/'`
+
+infile=/tmp/infile.$$
+
+extract()
+{
+  command=$1
+  echo extracting $command
+  outfile=`echo $command | tr '[A-Z]' '[a-z]'`.1
+  exec 4>&1
+  exec >$outfile
+
+  echo \'\\\" t
+# '
+  echo .TH\ $command\ 1\ \"$date\" $package
+  echo .SH Name
+  egrep -i "^$command " cmdname | fgrep -v '#'
+  #echo ".SH Description"
+  
+  cat man-warning.texi mtools.texi man-warning-end.texi |
+  egrep -v '@end copying|@copying|@insertcopying' |
+  sed \
+   -e "/^@c\(omment\)\? skipskipskip/,/^@node $command/d" \
+   -e "/^@node [^,]*, [^,]*, $command, Commands$/,/^@bye/d" \
+   -e "/^@node [^,]*, [^,]*, Commands/,/^@bye/d" \
+   -e 's/^@section/@chapter/' \
+   -e 's/^@subs/@s/' \
+   -e 's/^@chapter.*$/@chapter Description/' \
+   -e 's/^@section/@chapter/' \
+   -e 's/^@subs/@s/' \
+   -e 's/^@c\(omment\)\? xMANoptions/@chapter Options/' \
+   -e "s/^@c\(omment\)\? MAN/@MAN/"  |
+  texi2roff -ma  |
+  sed -f strip-pp.sed |
+  sed -e '/^\.iX/d'
+  exec 1>&4
+#  echo ".SH See Also"
+#  echo "Mtools' texinfo doc"
+}
+
+
+for name in `fgrep -v '#' cmdname | cut -f1 -d\  ` ; do
+  extract $name
+done
+
+rm -f mtools.tmpl.1
+exec >mtools.tmpl.1
+echo \'\\\" t
+# '
+echo .TH mtools 1 \"$date\" $package
+echo .SH Name
+echo "mtools - utilities to access DOS disks in Unix."
+cat mtools.texi |
+  egrep -v '@end copying|@copying|@insertcopying' |
+	sed \
+	 -e "1,/^@c\(omment\)\? MANstart 1/d" \
+	 -e '/^@c\(omment\)\? MANskip 1/,/^@c\(omment\)\? MANend-skip 1/d' \
+	 -e '/^@c\(omment\)\? MANend-skip 5/d' \
+	 -e '/^@c\(omment\)\? MANend 5/d' \
+	 -e "s/^@c\(omment\)\? MAN/@MAN/" \
+	 -e "s/@value{VERSION}/$VERSION/g" \
+	 -e "s%@value{SYSCONFDIR}%SYSCONFDIR%g" |
+	texi2roff -ma  |
+	sed -f strip-pp.sed |
+	sed -e '/^\.iX/d'
+
+echo .SH See also
+echo floppyd_installtest
+echo mattrib
+echo mbadblocks
+echo mcd
+echo mclasserase
+echo mcopy
+echo mdel
+echo mdeltree
+echo mdir
+echo mdu
+echo mformat
+echo minfo
+echo mkmanifest
+echo mlabel
+echo mmd
+echo mmount
+echo mmove
+echo mrd
+echo mren
+echo mshortname
+echo mshowfat
+echo mtoolstest
+echo mtype
+
+rm -f mtools.tmpl.5
+exec >mtools.tmpl.5
+echo \'\\\" t
+# '
+echo .TH mtools 5 \"$date\" "MTOOLS" "MTOOLS"
+echo .SH Name
+echo "mtools.conf - mtools configuration files"
+cat mtools.texi |
+  egrep -v '@end copying|@copying|@insertcopying' |
+	sed \
+		-e '1d' \
+		-e '/^@c\(omment\)\? MANskip 5/,/^@c\(omment\)\? MANend-skip 5/d' \
+	        -e '/^@c\(omment\)\? MANend-skip 1/d' \
+	        -e '/^@c\(omment\)\? MANskip 1/d' \
+		-e "s/^@c\(omment\)\? MAN/@MAN/"  \
+		-e "/@include/ d" \
+		-e "s/@value{VERSION}/$VERSION/g" \
+		-e "s/@value{UPDATED}/$UPDATED/g" \
+		-e "s%@value{SYSCONFDIR}%SYSCONFDIR%g" \
+		-e "/@top/d" \
+		-e "/@format/d" \
+		-e "/@end format/d" \
+		-e "/@ifnottex/d" \
+		-e "/@end ifnottex/d" |
+	texi2roff -ma  |
+	sed -f strip-pp.sed |
+	sed -e '/^\.iX/d' -e 's/\.SS Description/.SH Description/'
+
+echo .SH See also
+echo mtools

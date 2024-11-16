@@ -1,0 +1,76 @@
+Compilation
+-----------
+
+ To compile mtools on Unix, first type ./configure, then make.  To
+compile mtools on a Bebox, refer to README.BEBOX.
+
+Doc
+---
+
+ The most uptodate doc of this package is the texinfo doc. Type 'make
+info' to get online info doc, and 'make dvi ; dvips mtools.dvi' to get
+a printed copy.  The info doc has a concept index.  Make use of it.
+ You may get an info copy using the following command 'make info'.
+This can then be viewed using emacs' info mode, or using a standalone
+info viewer.
+ Man pages are still present, but contain less information.
+ If you do not have the necessary tools to view the texinfo doc, you
+may also find it on the World Wide Web at the following locations:
+  http://ftp.gnu.org/software/mtools/manual/mtools.html
+
+Compiler
+--------
+
+ Mtools should be compiled with an Ansi compiler, preferably gcc
+
+Authors
+-------
+
+Original code (versions through 2.0.7?) by Emmet P. Gray (Texas, USA).
+Viktor Dukhovni (at Princeton, USA) had major input into v2.0.
+
+Since 2.0.7: maintained primarily and until now by Alain Knaff
+(Luxembourg) and David Niemi (Reston, Virginia, USA).
+
+Please report bugs to the mtools mailing list at mtools@www.tux.org.
+Before reporting any problems, check whether they have already been
+fixed in the Alpha patches at http://mtools.linux.lu and
+http://www.tux.org/pub/knaff
+
+You may subscribe to the mtools mailing list by sending a message
+containing 'subscribe mtools' in its body to majordomo@www.tux.org
+
+Since March 3rd 2009, mtools is now officially a GNU package. Special
+thanks to Emmet P. Gray, the original developer of the program, who
+supported dubbing mtools a GNU package.
+
+Current Status
+--------------
+
+Stable release 4.0.x
+
+Copying
+-------
+Mtools is a GNU program published under GPL v3.0 (code) and GNU Free
+Documentation License.
+
+Most files of mtools bears a notice describing the copyright, and
+whether it is covered by GPL or GFDL
+
+GPL:
+
+debian/control		Copyright 2007 Alain Knaff
+
+debian/changelog	Copyright 2007-2009 Alain Knaff
+
+NEWS			Copyright 1995 David C. Niemi
+			Copyright 1995-2009 Alain Knaff
+
+mtools.spec		Copyright 2003-2005,2007-2009 Alain Knaff
+
+
+GFDL:
+
+README			Copyright 1996-1998,2001,2002,2009 Alain Knaff.
+Release.notes		Copyright 1995 Alain Knaff
+

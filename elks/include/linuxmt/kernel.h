@@ -18,8 +18,9 @@
 #define structof(p,t,m) ((t *) ((char *) (p) - offsetof (t,m)))
 
 extern char running_qemu;
+extern unsigned char arch_cpu;
 extern dev_t dev_console;
-extern int dprintk_on;
+extern int debug_level;
 
 extern void do_exit(int) noreturn;
 

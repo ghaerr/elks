@@ -1,0 +1,33 @@
+.\" mcheck (package: mtools) 2003-05-04
+.TH mcheck 1 "May 2003" "mtools"
+.SH NAME
+mcheck \- verify all files on an MS-DOS formatted disk 
+.SH SYNOPSIS
+.PP
+.B mcheck
+[\fImsdosdrive\fR]
+.SH DESCRIPTION
+.\" Putting a newline after each sentence can generate better output.
+mcheck is a script that verifies all files on a MS-DOS formatted disk by
+reading them using 
+.BR mtype (1)
+
+The optional argument specifies the MS-DOS drive letter of the disk 
+to be checked. A: is used by default.
+
+.SH LICENSE
+Copyright (C) 1994 David C. Niemi (niemi@tuxers.net)
+
+The author requires that any copies or derived works include this
+copyright notice; no other restrictions are placed on its use.
+
+.SH AUTHOR
+mcheck was written by David C. Niemi <niemi@tuxers.net>
+
+This manual page was written by Rabin Vincent <r.vincent@iu-bremen.de>
+for the Debian GNU/Linux system (but may be used by others).
+ 
+.SH "SEE ALSO"
+.BR mtools (1),
+.BR mdir (1),
+.BR mtype (1)

@@ -2,6 +2,9 @@
  * Precision timer routines for IBM PC and compatibles
  * 2 Aug 2024 Greg Haerr
  *
+ * This file is identical in elks/arch/i86/kernel/lib/prectimer.c (kernel)
+ * and libc/debug/prectimer.c (user mode).
+ *
  * Use 8254 PIT to measure elapsed time in pticks = 0.8381 usecs.
  */
 
@@ -109,14 +112,13 @@ unsigned long get_ptime(void)
 
     count = lo | hi;
     pticks = lastcount - count;
-    if ((int)pticks < 0)            /* wrapped */
-        pticks += MAX_PTICK;        /* = MAX_PTICK - count + lastcount */
     lastcount = count;
-
-    if (jdiff < 2)                  /* < 10ms: 1..11931 */
-        return pticks;
+    if ((int)pticks < 0) {          /* wrapped, jiffies is higher */
+        pticks += MAX_PTICK;        /* = MAX_PTICK - count + lastcount */
+        jdiff--;                    /* adjust jiffies for wrap, won't ever be negative */
+    }
     if (jdiff < 4286)               /* < ~42.86s */
-        return (jdiff - 1) * (unsigned long)MAX_PTICK + pticks;
+        return jdiff * (unsigned long)MAX_PTICK + pticks;
     return 0;                       /* overflow displays 0s */
 }
 

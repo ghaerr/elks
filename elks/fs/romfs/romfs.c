@@ -10,6 +10,7 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/string.h>
 #include <linuxmt/debug.h>
+#include <linuxmt/devnum.h>
 #include <arch/segment.h>
 
 
@@ -320,6 +321,8 @@ static struct super_block * romfs_read_super (struct super_block * s, void * dat
 	struct romfs_super_mem rsm;
 	struct inode * i;
 
+    if (s->s_dev != DEV_ROM)
+        return NULL;
 	while (1) {
 		lock_super (s);
 

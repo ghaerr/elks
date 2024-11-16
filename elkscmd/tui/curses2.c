@@ -118,3 +118,13 @@ void attroff(int a)
 {
     printf("\033[1;0;0m");
 }
+
+void mvprintw(int y, int x, const char *fmt, ...)
+{
+    va_list ptr;
+
+    move(y, x);
+    va_start(ptr, fmt);
+    vfprintf(stdout,fmt,ptr);
+    va_end(ptr);
+}

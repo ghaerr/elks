@@ -15,6 +15,7 @@
 #include <linuxmt/devnum.h>
 #include <linuxmt/heap.h>
 #include <linuxmt/prectimer.h>
+#include <linuxmt/debug.h>
 #include <arch/system.h>
 #include <arch/segment.h>
 #include <arch/ports.h>
@@ -27,20 +28,11 @@
 #define ENV             1       /* allow environ variables as bootopts*/
 #define DEBUG           0       /* display parsing at boot*/
 
-#include <linuxmt/debug.h>
-
 #define MAX_INIT_ARGS   6       /* max # arguments to /bin/init or init= program */
 #define MAX_INIT_ENVS   12      /* max # environ variables passed to /bin/init */
 #define MAX_INIT_SLEN   80      /* max # words of args + environ passed to /bin/init */
 #define MAX_UMB         3       /* max umb= segments in /bootopts */
 
-#define STR(x)          __STRING(x)
-/* bootopts error message are duplicated below so static here for space */
-char errmsg_initargs[] = "init args > " STR(MAX_INIT_ARGS) "\n";
-char errmsg_initenvs[] = "init envs > " STR(MAX_INIT_ENVS) "\n";
-char errmsg_initslen[] = "init words > " STR(MAX_INIT_SLEN) "\n";
-
-int root_mountflags;
 struct netif_parms netif_parms[MAX_ETHS] = {
     /* NOTE:  The order must match the defines in netstat.h:
      * ETH_NE2K, ETH_WD, ETH_EL3    */
@@ -49,6 +41,7 @@ struct netif_parms netif_parms[MAX_ETHS] = {
     { EL3_IRQ, EL3_PORT, 0, EL3_FLAGS },
 };
 seg_t kernel_cs, kernel_ds;
+int root_mountflags;
 int tracing;
 int nr_ext_bufs, nr_xms_bufs, nr_map_bufs;
 char running_qemu;
@@ -66,24 +59,34 @@ static char *init_command = bininit;
 /*
  * Parse /bootopts startup options
  */
-static char opts;
-static int args = 2;    /* room for argc and av[0] */
-static int envs;
-static int argv_slen;
+#define STR(x)          __STRING(x)
+/* bootopts error message are duplicated below so static here for space */
+char errmsg_initargs[] = "init args > " STR(MAX_INIT_ARGS) "\n";
+char errmsg_initenvs[] = "init envs > " STR(MAX_INIT_ENVS) "\n";
+char errmsg_initslen[] = "init words > " STR(MAX_INIT_SLEN) "\n";
+
 #ifdef CONFIG_SYS_NO_BININIT
 static char *argv_init[MAX_INIT_SLEN] = { NULL, binshell, NULL };
 #else
 /* argv_init doubles as sptr data for sys_execv later*/
 static char *argv_init[MAX_INIT_SLEN] = { NULL, bininit, NULL };
 #endif
+static char hasopts;
+static int args = 2;    /* room for argc and av[0] */
+static int envs;
+static int argv_slen;
 #if ENV
 static char *envp_init[MAX_INIT_ENVS];
 #endif
-static struct umbseg {  /* saves umb= lines during /bootopts parse */
-    seg_t base;
-    segext_t len;
-} umbseg[MAX_UMB], *nextumb = umbseg;
-static unsigned char options[OPTSEGSZ];
+
+/* this entire structure is released to kernel heap after /bootopts parsing */
+static struct {
+    struct umbseg {                     /* save umb= lines during /bootopts parse */
+        seg_t base;
+        segext_t len;
+    } umbseg[MAX_UMB], *nextumb;
+    unsigned char options[OPTSEGSZ];    /* near data parsing buffer */
+} opts;
 
 extern int boot_rootdev;
 static char * INITPROC root_dev_name(int dev);
@@ -110,7 +113,7 @@ void start_kernel(void)
     setsp(&task->t_regs.ax);    /* change to idle task stack */
     kernel_init();              /* continue init running on idle task stack */
 
-    /* fork and run procedure init_task() as task #1*/
+    /* fork and setup procedure init_task() to run as task #1 on reschedule */
     kfork_proc(init_task);
     wake_up_process(&task[1]);
 
@@ -139,7 +142,8 @@ static void INITPROC early_kernel_init(void)
 #endif
     ROOT_DEV = SETUP_ROOT_DEV;      /* default root device from boot loader */
 #ifdef CONFIG_BOOTOPTS
-    opts = parse_options();         /* parse options found in /bootops */
+    opts.nextumb = opts.umbseg;     /* init static structure variables */
+    hasopts = parse_options();      /* parse options found in /bootops */
 #endif
 
     /* create near heap at end of kernel bss */
@@ -151,7 +155,7 @@ static void INITPROC early_kernel_init(void)
 #ifdef CONFIG_BOOTOPTS
     struct umbseg *p;
     /* now able to add umb memory segments */
-    for (p = umbseg; p < &umbseg[MAX_UMB]; p++) {
+    for (p = opts.umbseg; p < &opts.umbseg[MAX_UMB]; p++) {
         if (p->base) {
             debug("umb segment from %x to %x\n", p->base, p->base + p->len);
             seg_add(p->base, p->base + p->len);
@@ -191,7 +195,7 @@ static void INITPROC kernel_init(void)
 
 #ifdef CONFIG_BOOTOPTS
     finalize_options();
-    if (!opts) printk("/bootopts not found or bad format/size\n");
+    if (!hasopts) printk("/bootopts not found or bad format/size\n");
 #endif
 
 #ifdef CONFIG_FARTEXT_KERNEL
@@ -211,7 +215,7 @@ static void INITPROC kernel_init(void)
 static void INITPROC kernel_banner(seg_t init, seg_t extra)
 {
 #ifdef CONFIG_ARCH_IBMPC
-    printk("PC/%cT class machine, ", (sys_caps & CAP_PC_AT) ? 'A' : 'X');
+    printk("PC/%cT class cpu %d, ", (sys_caps & CAP_PC_AT) ? 'A' : 'X', arch_cpu);
 #endif
 
 #ifdef CONFIG_ARCH_PC98
@@ -268,6 +272,10 @@ static void INITPROC do_init_task(void)
     //}
 
 #ifdef CONFIG_BOOTOPTS
+    /* Release options parsing buffers and setup data seg */
+    heap_add(&opts, sizeof(opts));
+    seg_add(DEF_OPTSEG, DMASEG);    /* DEF_OPTSEG through REL_INITSEG */
+
     /* pass argc/argv/env array to init_command */
 
     /* unset special sys_wait4() processing if pid 1 not /bin/init*/
@@ -408,10 +416,10 @@ static void INITPROC parse_umb(char *line)
     do {
         base = (seg_t)simple_strtol(p+1, 16);
         if((p = strchr(p+1, ':'))) {
-            if (nextumb < &umbseg[MAX_UMB]) {
-                nextumb->len = (segext_t)simple_strtol(p+1, 16);
-                nextumb->base = base;
-                nextumb++;
+            if (opts.nextumb < &opts.umbseg[MAX_UMB]) {
+                opts.nextumb->len = (segext_t)simple_strtol(p+1, 16);
+                opts.nextumb->base = base;
+                opts.nextumb++;
             }
         }
     } while((p = strchr(p+1, ',')));
@@ -433,15 +441,16 @@ static void INITPROC parse_umb(char *line)
  */
 static int INITPROC parse_options(void)
 {
-    char *line = (char *)options;
+    char *line = (char *)opts.options;
     char *next;
 
     /* copy /bootopts loaded by boot loader at 0050:0000*/
-    fmemcpyb(options, kernel_ds, 0, DEF_OPTSEG, sizeof(options));
+    fmemcpyb(opts.options, kernel_ds, 0, DEF_OPTSEG, sizeof(opts.options));
 
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
-    /* check file starts with ## and max len 511 bytes*/
-    if (*(unsigned short *)options != 0x2323 || options[OPTSEGSZ-1])
+    /* check file starts with ##, one or two sectors, max 1023 bytes or 511 one sector */
+    if (*(unsigned short *)opts.options != 0x2323 ||
+        (opts.options[511] && opts.options[OPTSEGSZ-1]))
         return 0;
 
     next = line;
@@ -491,10 +500,6 @@ static int INITPROC parse_options(void)
             root_mountflags &= ~MS_RDONLY;
             continue;
         }
-        if (!strcmp(line,"debug")) {
-            dprintk_on = 1;
-            continue;
-        }
         if (!strcmp(line,"strace")) {
             tracing |= TRACE_STRACE;
             continue;
@@ -518,6 +523,10 @@ static int INITPROC parse_options(void)
         }
         if (!strncmp(line,"3c0=",4)) {
             parse_nic(line+4, &netif_parms[ETH_EL3]);
+            continue;
+        }
+        if (!strncmp(line,"debug=", 6)) {
+            debug_level = (int)simple_strtol(line+6, 10);
             continue;
         }
         if (!strncmp(line,"buf=",4)) {
@@ -612,14 +621,14 @@ static void INITPROC finalize_options(void)
     args--;
     argv_init[0] = (char *)args;            /* 0 = argc*/
     char *q = (char *)&argv_init[args+2+envs+1];
-    for (i=1; i<=args; i++) {                   /* 1..argc = av*/
+    for (i=1; i<=args; i++) {               /* 1..argc = av*/
         char *p = argv_init[i];
         char *savq = q;
         while ((*q++ = *p++) != 0)
             ;
         argv_init[i] = (char *)(savq - (char *)argv_init);
     }
-    /*argv_init[args+1] = NULL;*/               /* argc+1 = 0*/
+    /*argv_init[args+1] = NULL;*/           /* argc+1 = 0*/
 #if ENV
     if (envs) {
         for (i=0; i<envs; i++) {

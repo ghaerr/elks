@@ -2,7 +2,6 @@
 #define __LINUXMT_SOCKET_H
 
 #include <linuxmt/types.h>
-#include <linuxmt/uio.h>
 
 #define MAX_SOCK_ADDR 110  /* Sufficient size for AF_UNIX */
 
@@ -27,17 +26,7 @@ struct linger {
         int             l_linger;       /* How long to linger for       */
 };
 
-struct msghdr {
-    void *		msg_name;
-    int 		msg_namelen;
-    struct iovec *	msg_iov;
-    int 		msg_iovlen;
-    void *		msg_control;
-    int 		msg_controllen;
-    int 		msg_flags;
-};
-
-#define AF_INET	0		/* Only implemented type */
+#define AF_INET	0
 #define AF_UNIX	1
 #define AF_NANO	2
 
@@ -52,6 +41,26 @@ struct msghdr {
 #define SOCK_SEQPACKET  5	/* sequential packet socket     */
 
 #ifdef __KERNEL__
+
+#if UNUSED
+struct iovec {
+    void *iov_base;	/* BSD uses caddr_t (same thing in effect) */
+    int iov_len;
+};
+
+#define UIO_MAXIOV	16
+
+struct msghdr {
+    void *		msg_name;
+    int 		msg_namelen;
+    struct iovec *	msg_iov;
+    int 		msg_iovlen;
+    void *		msg_control;
+    int 		msg_controllen;
+    int 		msg_flags;
+};
+#endif
+
 struct proto_ops;
 struct socket;
 int sock_register(int,struct proto_ops *);

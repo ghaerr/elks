@@ -7,12 +7,12 @@ on:
       - '!.github/workflows/cross.yml'
       - '!.github/workflows/ow-libc.yml'
       - '!tools/*'
-  pull_request:
-    paths:
-     - '**'
-     - '!.github/workflows/cross.yml'
-     - '!.github/workflows/ow-libc.yml'
-     - '!tools/*'
+#  pull_request:
+#    paths:
+#     - '**'
+#     - '!.github/workflows/cross.yml'
+#     - '!.github/workflows/ow-libc.yml'
+#     - '!tools/*'
 
 jobs:
   build:
@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - name: setup
-        run: 'sudo apt-get install bison flex texinfo libncurses5-dev libelf-dev mtools ncompress'
+        run: 'sudo apt-get install texinfo libncurses5-dev libelf-dev ncompress'
 
       - name: checkout
         uses: actions/checkout@v2

@@ -1,0 +1,31 @@
+Source: mtools
+Build-Depends: debhelper (>= 7), autotools-dev, libxt-dev, texinfo
+Section: otherosfs
+Priority: optional
+Maintainer: Alain Knaff <alain@knaff.lu>
+Homepage: http://www.mtools.linux.lu/
+
+Package: floppyd
+Priority: extra
+Architecture: any
+Replaces: mtools (<< 3.9.7)
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Suggests: mtools
+Description: Daemon for remote access to floppy drives
+ Floppyd is used as a server to grant access to the floppy drive to
+ clients running on a remote machine, just as an X server grants access
+ to the display to remote clients.
+
+Package: mtools
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Provides: mtools
+Suggests: floppyd
+Description: Tools for manipulating MSDOS files
+ Mtools is a collection of utilities to access MS-DOS disks from Unix
+ without mounting them. It supports Win'95 style long file names, OS/2
+ Xdf disks, ZIP/JAZ disks and 2m disks (store up to 1992k on a high
+ density 3 1/2 disk).
+ .
+ Also included in this package are commands to eject and manipulate
+ the write/password protection control of Zip disks.

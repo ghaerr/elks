@@ -8,7 +8,7 @@ CFLAGS += -DELKS=1
 
 ###############################################################################
 
-PRGS = fm matrix cons ttyinfo sl ttyclock ttypong ttytetris
+PRGS = fm matrix cons ttyinfo sl ttyclock ttypong ttytetris invaders
 
 #PRGS_HOST =
 
@@ -38,6 +38,9 @@ ttypong: ttypong.o curses.o curses2.o tty.o unikey.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 ttytetris: ttytetris.o tetris-frame.o tetris-shapes.o tetris-util.o
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+invaders: invaders.o curses.o curses2.o tty.o unikey.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 install: $(PRGS)

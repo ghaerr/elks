@@ -8,8 +8,8 @@
 #include <linuxmt/memory.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/init.h>
-
 #include <linuxmt/string.h>
+#include <linuxmt/debug.h>
 #include <arch/segment.h>
 
 /* linear address to start XMS buffer allocations from */
@@ -51,10 +51,10 @@ int xms_init(void)
 		return 0;
 	}
 #endif
-	printk("A20 was %s", verify_a20()? "on" : "off");
+	debug("A20 was %s", verify_a20()? "on" : "off");
 	enable_a20_gate();
 	enabled = verify_a20();
-	printk(" now %s, ", enabled? "on" : "off");
+	debug(" now %s, ", enabled? "on" : "off");
 	if (!enabled) {
 		printk("disabled, A20 error, ");
 		return 0;

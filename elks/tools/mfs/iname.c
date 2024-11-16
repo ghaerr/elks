@@ -140,8 +140,8 @@ void dname_rem(struct minix_fs_dat *fs,int dinode,const char *name) {
 
   i =  ilookup_name(fs,dinode,name,&nblk,&off);
   if (i == -1) return;
-  i = (VERSION_2(fs) ? INODE2(fs,dinode)->i_size : INODE(fs,dinode)->i_size)
-	- dentsz;
+  i = (VERSION_2(fs) ?
+        INODE2(fs,dinode)->i_size : INODE(fs,dinode)->i_size) - dentsz;
 
   if (i == (nblk * BLOCK_SIZE + off)) {
     /* Need to shorten directory file */
@@ -181,7 +181,17 @@ int make_node(struct minix_fs_dat *fs,char *fpath, int mode,
   char *fname = strrchr(fpath,'/');
   int dinode,ninode;
 
-  if (find_inode(fs,fpath) != -1) fatalmsg("%s: already exists",fpath); 
+  ninode = find_inode(fs,fpath);
+  /*
+   * Allow already existing inode/dir for boot image optimization using
+   * initial addfs followed by genfs -a or duplicate mknods in Make.devices.
+   * This change won't work for non-duplicate mknod or symlinks, but allows
+   * duplicate mkdirs.
+   */
+  if (ninode != -1) {
+    fprintf(stderr, "mfs: %s already exists, no change made\n", fpath);
+    return 0;
+  }
   if (fname) {
     *fname++ = 0;
   } else {

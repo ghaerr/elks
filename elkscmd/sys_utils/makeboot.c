@@ -37,7 +37,7 @@
 #define MOUNTDIR	"/tmp/mnt"
 
 #define SYSFILE1	"/linux"		/* copied for MINIX and FAT*/
-#define SYSFILE2	"/bootopts"		/* copied for MINIX only */
+#define SYSFILE2	"/bootopts"		/* copied for MINIX and FAT */
 #define DEVDIR		"/dev"			/* created for FAT only */
 
 /* BIOS driver numbers must match bioshd.c*/
@@ -458,13 +458,12 @@ usage:
 			fprintf(stderr, "Error copying %s\n", SYSFILE1);
 			goto errout;
 		}
+		if (!copyfile(SYSFILE2, MOUNTDIR SYSFILE2, 1))
+			fprintf(stderr, "Not copying %s file\n", SYSFILE2);
 
 		if (fstype == FST_MSDOS) {
 			if (mkdir(MOUNTDIR DEVDIR, 0777) < 0)
 				fprintf(stderr, "/dev directory may already exist on target\n");
-		} else {
-			if (!copyfile(SYSFILE2, MOUNTDIR SYSFILE2, 1))
-				fprintf(stderr, "Not copying %s file\n", SYSFILE2);
 		}
 	
 		if (umount(targetdevice) < 0)

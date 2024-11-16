@@ -112,11 +112,10 @@ NET="-netdev user,id=mynet,$FWD -device ne2k_isa,irq=12,netdev=mynet"
 # Enable PC-Speaker here:
 AUDIO="-audiodev pa,id=speaker -machine pcspk-audiodev=speaker"
 
-UNAME=`uname -a`
+UNAME=`uname`
 
 # Determine display type ("Darwin" = OSX)
 #[ $UNAME != 'Darwin' ] && QDISPLAY="-display sdl"
-
 # Configure QEMU as pure ISA system
 
 # For macOS x86, HVF can be used to increase emulation speed
