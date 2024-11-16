@@ -106,7 +106,7 @@ void display_seg(int fd, word_t mem)
     byte_t ref_count = getword(fd, mem + offsetof(segment_s, ref_count), ds);
     struct task_struct *t;
 
-    printf("   %4x   %s %7ld %4d  ",
+    printf("   %04x   %s %7ld %4d  ",
         segbase, segtype[segflags], (long)segsize << 4, ref_count);
     if (segflags == SEG_FLAG_CSEG || segflags == SEG_FLAG_DSEG) {
         if ((t = find_process(fd, mem)) != NULL) {
@@ -169,7 +169,7 @@ void dump_heap(int fd)
 
         if (allflag || (fflag && free) || (aflag && app) || (tflag && tty)
                     || (bflag && buffer) || (sflag && system)) {
-            printf("  %4x   %s %5d", mem, heaptype[tag], size);
+            printf("  %04x   %s %5d", mem, heaptype[tag], size);
             total_size += size + sizeof(heap_s);
             if (tag == HEAP_TAG_FREE)
                 total_free += size;
