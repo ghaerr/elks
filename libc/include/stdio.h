@@ -163,4 +163,8 @@ int vsscanf(char *sp, const char *fmt, va_list ap);
 FILE *popen(const char *, const char *);
 int pclose(FILE *);
 
+#ifdef __WATCOMC__
+int remove(const char *filename);
+#endif
+
 #endif /* __STDIO_H */
