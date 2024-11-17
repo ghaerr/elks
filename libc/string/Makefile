@@ -31,6 +31,8 @@ OBJS = \
 	strspn.o \
 	strstr.o \
 	strtok.o \
+	strlwr.o \
+	strupr.o \
 	# end of list
 
 .PHONY: all

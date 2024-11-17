@@ -51,6 +51,9 @@ char *strsep(char **, const char *);
 size_t strcspn(const char *, const char *);
 size_t strspn(const char *, const char *);
 
+char *strlwr(char *str);
+char *strupr(char *str);
+
 /* Linux silly hour */
 char *strfry(char *);
 
