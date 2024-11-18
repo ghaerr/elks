@@ -31,6 +31,8 @@ extern void __wcnear *(*__alloca_alloc)(size_t);
 
 /* alloc from main memory */
 void __far *fmemalloc(unsigned long size);
+int fmemfree(void __far *ptr);
 int _fmemalloc(int paras, unsigned short *pseg);
+int _fmemfree(unsigned short seg);
 
 #endif

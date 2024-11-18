@@ -149,6 +149,7 @@ typedef int syscall_res;
 #define SYS_setsockopt          204
 #define SYS_getsocknam          205
 #define SYS_fmemalloc           206
+#define SYS_fmemfree            207
 
 
 #define _sys_exit(rc)       sys_call1n(SYS_exit, rc)

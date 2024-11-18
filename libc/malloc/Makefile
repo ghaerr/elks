@@ -27,6 +27,7 @@ OBJS = \
 	realloc.o \
 	sbrk.o \
 	fmemalloc.o \
+	fmemfree.o \
 
 .PHONY: all
 

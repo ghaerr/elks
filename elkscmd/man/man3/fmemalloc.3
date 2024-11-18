@@ -7,6 +7,7 @@ fmemalloc \- allocate far memory outside process
 #include <stdlib.h>
 
 void __far *fmemalloc(unsigned long \fIsize\fP)
+int fmemfree(void __far *\fIptr\fP)
 .ft R
 .fi
 .SH DESCRIPTION
@@ -19,7 +20,11 @@ within the application.
 The
 .IR size
 parameter will be rounded up to the next paragraph boundary.
-
+.PP
+.B fmemfree
+frees memory allocated by a prevous
+.BR fmemalloc .
+.PP
 Any allocated memory will be automatically freed on exit from the application.
 .SH "RETURN VALUE
 The value 0 is returned if no error occurs.  Otherwise,
