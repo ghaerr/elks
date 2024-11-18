@@ -45,6 +45,7 @@ char **__argv;
 char *__program_filename;
 char **environ;
 unsigned int __stacklow;
+unsigned char _HShift = 12;      /* huge pointer support required by pia.asm */
 
 static unsigned int _SP(void);
 #pragma aux _SP = __value [__sp]
