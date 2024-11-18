@@ -294,6 +294,28 @@ int sys_fmemalloc(int paras, unsigned short *pseg)
 	return 0;
 }
 
+// free process allocated memory
+int sys_fmemfree(unsigned short segment)
+{
+	list_s *n;
+
+	for (n = _seg_all.next; n != &_seg_all; ) {
+		segment_s * seg = structof (n, segment_s, all);
+
+        if (seg->base == segment) {
+		    if (seg->pid == current->pid) {
+			    seg_free(seg);
+                return 0;
+            }
+            printk("sys_fmemfree: not owner %04x\n", segment);
+            return -EACCES;
+        }
+		n = seg->all.next;
+	}
+    printk("sys_fmemfree: segment not found %04x\n", segment);
+    return -EINVAL;
+}
+
 // free all program allocated segments for PID pid
 void seg_free_pid(pid_t pid)
 {

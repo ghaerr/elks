@@ -171,5 +171,6 @@ struct sc_info elks_table2[] = {
     ENTRY("connect",        packinfo(3, P_SSHORT, P_PDATA,   P_SSHORT )),
     ENTRY("setsockopt",     packinfo(5, P_SSHORT, P_SSHORT,  P_SSHORT )), /* +2 args*/
     ENTRY("getsocknam",     packinfo(4, P_SSHORT, P_DATA,    P_PUSHORT)), /* +1 arg*/
-    ENTRY("fmemalloc",      packinfo(2, P_USHORT, P_PUSHORT, P_NONE)   ),   // 206
+    ENTRY("fmemalloc",      packinfo(2, P_USHORT, P_PUSHORT, P_NONE)   ),
+    ENTRY("fmemfree",       packinfo(1, P_USHORT, P_NONE,    P_NONE)   ),   // 207
 };
