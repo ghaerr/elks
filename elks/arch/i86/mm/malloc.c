@@ -302,18 +302,18 @@ int sys_fmemfree(unsigned short segment)
 	for (n = _seg_all.next; n != &_seg_all; ) {
 		segment_s * seg = structof (n, segment_s, all);
 
-        if (seg->base == segment) {
-		    if (seg->pid == current->pid) {
-			    seg_free(seg);
-                return 0;
-            }
-            debug("sys_fmemfree: not owner %04x\n", segment);
-            return -EACCES;
-        }
+		if (seg->base == segment) {
+			if (seg->pid == current->pid) {
+				seg_free(seg);
+				return 0;
+			}
+			debug("sys_fmemfree: not owner %04x\n", segment);
+			return -EACCES;
+		}
 		n = seg->all.next;
 	}
-    debug("sys_fmemfree: segment not found %04x\n", segment);
-    return -EINVAL;
+	debug("sys_fmemfree: segment not found %04x\n", segment);
+	return -EINVAL;
 }
 
 // free all program allocated segments for PID pid
