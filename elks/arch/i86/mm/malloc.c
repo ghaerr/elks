@@ -307,12 +307,12 @@ int sys_fmemfree(unsigned short segment)
 			    seg_free(seg);
                 return 0;
             }
-            printk("sys_fmemfree: not owner %04x\n", segment);
+            debug("sys_fmemfree: not owner %04x\n", segment);
             return -EACCES;
         }
 		n = seg->all.next;
 	}
-    printk("sys_fmemfree: segment not found %04x\n", segment);
+    debug("sys_fmemfree: segment not found %04x\n", segment);
     return -EINVAL;
 }
 
