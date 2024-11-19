@@ -8,7 +8,7 @@
  */
 #include <unistd.h>
 #include <stdlib.h>			/* __MINI_MALLOC must not be defined in malloc.h include*/
-#define DEBUG		2		/* =1 heap checking asserts, =2 sysctl, =3 debug printf */
+#define DEBUG		2		/* =1 heap checking asserts, =2 sysctl, =3 show heap */
 
 /*	C storage allocator
  *	circular first-fit strategy
@@ -105,7 +105,7 @@ malloc(size_t nbytes)
     sysctl(CTL_GET, "malloc.debug", &debug_level);
 #endif
 
-debug("(%d)malloc(%d) ", getpid(), nbytes);
+	debug("(%d)malloc(%d) ", getpid(), nbytes);
 	if (nbytes == 0)
 		return NULL;	/* ANSI std */
 
@@ -119,7 +119,7 @@ debug("(%d)malloc(%d) ", getpid(), nbytes);
 	ASSERT(allocp>=allocs && allocp<=alloct);
 	ASSERT(malloc_check_heap());
 allocp = (union store __wcnear *)allocs;     /* experimental */
-	debug("search start %p ", allocp);
+	//debug("search start %p ", allocp);
 	for(p=allocp; ; ) {
 		for(temp=0; ; ) {
 			if(!testbusy(p->ptr)) {
@@ -175,7 +175,8 @@ allocp = (union store __wcnear *)allocs;     /* experimental */
 		if(q!=alloct+1)			/* mark any gap as permanently allocated*/
 			alloct->ptr = setbusy(alloct->ptr);
 		alloct = q->ptr = q+temp-1;
-debug("(TOTAL %u) ", 2+(char *)clearbusy(alloct) - (char *)clearbusy(allocs[1].ptr));
+		debug("(TOTAL %u) ",
+			2+(char *)clearbusy(alloct) - (char *)clearbusy(allocs[1].ptr));
 		alloct->ptr = setbusy(allocs);
 	}
 found:
@@ -186,8 +187,8 @@ found:
 		allocp->ptr = p->ptr;
 	}
 	p->ptr = setbusy(allocp);
-debug("= %p\n", p);
-malloc_show_heap();
+	debug("= %p\n", p);
+	if (debug_level > 2) malloc_show_heap();
 	return((void *)(p+1));
 }
 
@@ -200,14 +201,14 @@ free(void *ptr)
 
 	if (p == NULL)
 		return;
-debug("(%d)free(%p)\n", getpid(), p-1);
+	debug("(%d)  free(%d) = %p\n", getpid(), (unsigned)(p[-1].ptr - p) << 1, p-1);
 	ASSERT(p>clearbusy(allocs[1].ptr)&&p<=alloct);
 	ASSERT(malloc_check_heap());
 	allocp = --p;
 	ASSERT(testbusy(p->ptr));
 	p->ptr = clearbusy(p->ptr);
 	ASSERT(p->ptr > allocp && p->ptr <= alloct);
-malloc_show_heap();
+	if (debug_level > 2) malloc_show_heap();
 }
 
 /*	realloc(p, nbytes) reallocates a block obtained from malloc()
@@ -225,7 +226,7 @@ realloc(void *ptr, size_t nbytes)
 
 	if (p == 0)
 		return malloc(nbytes);
-debug("(%d)realloc(%p,%d) ", getpid(), p-1, nbytes);
+	debug("(%d)realloc(%p,%d) ", getpid(), p-1, nbytes);
 
 	ASSERT(testbusy(p[-1].ptr));
 	if(testbusy(p[-1].ptr))
@@ -249,7 +250,7 @@ debug("(%d)realloc(%p,%d) ", getpid(), p-1, nbytes);
 		debug("allocx patch %p,%p,%d ", q, p, nw);
 		(q+(q+nw-p))->ptr = allocx;
 	}
-debug("= %p\n", q);
+	debug("= %p\n", q);
 	return((void *)q);
 }
 
