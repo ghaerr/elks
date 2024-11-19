@@ -48,7 +48,7 @@ HOSTCFLAGS = -O3
 
 CLBASE =  -mcmodel=small -melks-libc -mtune=i8086 -Wall -Os
 CLBASE += -mno-segment-relocation-stuff
-CLBASE += -fno-inline -fno-builtin-printf
+CLBASE += -fno-inline -fno-builtin-printf -fno-builtin-fprintf
 #CLBASE += -mregparmcall
 ifeq ($(CONFIG_APPS_FTRACE), y)
     CLBASE += -fno-omit-frame-pointer -fno-optimize-sibling-calls
