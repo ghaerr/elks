@@ -12,6 +12,8 @@
 
 #if DEBUG
 #include <stdio.h>
+#include <fcntl.h>
+#include <paths.h>
 #define ASSERT(p)	if(!(p))botch(#p);else
 static void botch(char *s);
 static int allock(void);
@@ -22,9 +24,9 @@ void showheap(void);
 #endif
 
 #if DEBUG > 1
-#define debug		printf
+#define debug(...)		fprintf(dbgout, __VA_ARGS__)
 #else
-#define debug(str,...)
+#define debug(...)
 #endif
 
 /*	C storage allocator
@@ -49,7 +51,8 @@ void showheap(void);
 #define ALIGN int
 #define NALIGN 1
 #define WORD sizeof(union store)
-#define BLOCK 1028	/* 1024+4, amount to sbrk*/
+//#define BLOCK 514	/* min+2, amount to sbrk*/
+#define BLOCK 34	/* min+2, amount to sbrk*/
 #define GRANULE 0	/* sbrk granularity*/
 #define BUSY 1
 #ifndef NULL
@@ -70,13 +73,29 @@ static	union store __wcnear *allocp;	/*search ptr*/
 static	union store __wcnear *alloct;	/*arena top*/
 static	union store __wcnear *allocx;	/*for benefit of realloc*/
 
+static unsigned char bufdbg[64];
+static FILE  dbgout[1] =
+{
+   {
+    bufdbg,
+    bufdbg,
+    bufdbg,
+    bufdbg,
+    bufdbg + sizeof(bufdbg),
+    -1,
+    _IONBF | __MODE_WRITE | __MODE_IOTRAN
+   }
+};
+
 void *
 malloc(size_t nbytes)
 {
 	register union store __wcnear *p, __wcnear *q;
 	int nw, temp;
 
-debug("malloc(%d) %d ", getpid(), nbytes);
+    if (dbgout->fd < 0)
+        dbgout->fd = open(_PATH_CONSOLE, O_WRONLY);
+debug("(%d)malloc(%d) ", getpid(), nbytes);
 	if (nbytes == 0)
 		return NULL;	/* ANSI std */
 
@@ -89,12 +108,16 @@ debug("malloc(%d) %d ", getpid(), nbytes);
 	nw = (nbytes+WORD+WORD-1)/WORD;			/* extra word for link ptr/size*/
 	ASSERT(allocp>=allocs && allocp<=alloct);
 	ASSERT(allock());
+allocp = allocs;    /* experimental */
+	debug("search start %p ", allocp);
 	for(p=allocp; ; ) {
 		for(temp=0; ; ) {
 			if(!testbusy(p->ptr)) {
 				while(!testbusy((q=p->ptr)->ptr)) {
 					ASSERT(q>p);
 					ASSERT(q<alloct);
+					debug("(combine %u and %u) ",
+						(char *)p->ptr - (char *)p, (char *)q->ptr - (char *)q);
 					p->ptr = q->ptr;
 				}
 				if(q>=p+nw && p+nw>=p)
@@ -106,6 +129,7 @@ debug("malloc(%d) %d ", getpid(), nbytes);
 				ASSERT(p<=alloct);
 			else if(q!=alloct || p!=allocs) {
 				ASSERT(q==alloct&&p==allocs);
+				debug(" (corrupt) = NULL\n");
 				return(NULL);
 			} else if(++temp>1)
 				break;
@@ -117,6 +141,7 @@ debug("malloc(%d) %d ", getpid(), nbytes);
 		else
 			temp = nw;
 
+		debug("sbrk(%d) ", temp*WORD);
 		/* ensure next sbrk returns even address*/
 		q = (union store __wcnear *)sbrk(0);
 		if((INT)q & (sizeof(union store) - 1))
@@ -124,12 +149,13 @@ debug("malloc(%d) %d ", getpid(), nbytes);
 
 		/* check possible wrap (>= 32k alloc)*/
 		if(q+temp+GRANULE < q) {
-			ASSERT(q+temp+GRANULE>=q);
+			debug(" (req too big) = NULL\n");
 			return(NULL);
 		}
 
 		q = (union store __wcnear *)sbrk(temp*WORD);
 		if((INT)q == -1) {
+			debug(" (no more mem) = NULL\n");
 			showheap();
 			return(NULL);
 		}
@@ -139,7 +165,7 @@ debug("malloc(%d) %d ", getpid(), nbytes);
 		if(q!=alloct+1)			/* mark any gap as permanently allocated*/
 			alloct->ptr = setbusy(alloct->ptr);
 		alloct = q->ptr = q+temp-1;
-		debug("alloct->ptr %x, alloct %x\n", alloct->ptr, alloct);
+debug("(TOTAL %u) ", 2+(char *)clearbusy(alloct) - (char *)clearbusy(allocs[1].ptr));
 		alloct->ptr = setbusy(allocs);
 	}
 found:
@@ -150,7 +176,8 @@ found:
 		allocp->ptr = p->ptr;
 	}
 	p->ptr = setbusy(allocp);
-debug("= %x\n", p);
+debug("= %p\n", p);
+showheap();
 	return((void *)(p+1));
 }
 
@@ -163,13 +190,14 @@ free(void *ptr)
 
 	if (p == NULL)
 		return;
-debug("free(%d) %x\n", getpid(), p-1);
+debug("(%d)free(%p)\n", getpid(), p-1);
 	ASSERT(p>clearbusy(allocs[1].ptr)&&p<=alloct);
 	ASSERT(allock());
 	allocp = --p;
 	ASSERT(testbusy(p->ptr));
 	p->ptr = clearbusy(p->ptr);
 	ASSERT(p->ptr > allocp && p->ptr <= alloct);
+showheap();
 }
 
 /*	realloc(p, nbytes) reallocates a block obtained from malloc()
@@ -188,7 +216,7 @@ realloc(void *ptr, size_t nbytes)
 
 	if (p == 0)
 		return malloc(nbytes);
-debug("realloc(%d) %x %d ", getpid(), p-1, nbytes);
+debug("(%d)realloc(%p,%d) ", getpid(), p-1, nbytes);
 
 	ASSERT(testbusy(p[-1].ptr));
 	if(testbusy(p[-1].ptr))
@@ -209,10 +237,10 @@ debug("realloc(%d) %x %d ", getpid(), p-1, nbytes);
 
 	/* restore old data for special case of malloc link overwrite*/
 	if(q<p && q+nw>=p) {
-debug("realloc patch with allocx %x,%x,%d\n", q, p, nw);
+debug("allocx patch %p,%p,%d ", q, p, nw);
 		(q+(q+nw-p))->ptr = allocx;
 	}
-debug("= %x\n", q);
+debug("= %p\n", q);
 	return((void *)q);
 }
 
@@ -226,17 +254,17 @@ static void botch(char *s)
 static int
 allock(void)
 {
-	register union store *p;
+	register union store __wcnear *p;
 	int x;
 	x = 0;
-	//printf("[(%x),", (int)alloct);
+	//printf("[(%p),", (int)alloct);
 	for(p=&allocs[0]; clearbusy(p->ptr) > p; p=clearbusy(p->ptr)) {
-		//printf("%x,", (int)p);
+		//printf("%p,", (int)p);
 		if(p==allocp)
 			x++;
 	}
 	//printf("]\n");
-	if (p != alloct) printf("%x %x %x\n", (int)p, (int)alloct, (int)p->ptr);
+	if (p != alloct) printf("%p %p %p\n", p, alloct, p->ptr);
 	ASSERT(p==alloct);
 	return((x==1)|(p==allocp));
 }
@@ -246,25 +274,26 @@ showheap(void)
 {
 	register union store __wcnear *p;
 	int n = 1;
-	int size, alloc = 0, free = 0;
+	unsigned int size, alloc = 0, free = 0;
 
-	printf("HEAP LIST\n");
+	debug("--- heap size ---\n");
 	allock();
 	for(p = (union store __wcnear *)&allocs[0]; clearbusy(p->ptr) > p; p=clearbusy(p->ptr)) {
-		size = (int)clearbusy(p->ptr) - (int)clearbusy(p) - 2;
-		printf("%d: %04x size %d", n, (int)p+2, size);
+		size = (char *)clearbusy(p->ptr) - (char *)clearbusy(p);
+		debug("%2d: %p %4u", n, p, size);
 		if (!testbusy(p->ptr)) {
-			printf(" (free)");
+			debug(" (free)");
 			free += size;
 		} else {
 			if (n < 3)		/* don't count ptr to first sbrk()*/
-				printf(" (skipped)");
-			else alloc += size + 2;
+				debug(" (skipped)");
+			else alloc += size;
 		}
 		n++;
-		printf("\n");
+		debug("\n");
 	}
-	printf("%d: %x (top)\n", n, (int)alloct);
-	printf("Total alloc %u, free %u\n", alloc, free);
+	alloc += 2;
+	debug("%2d: %p %4u  (top) alloc %u, free %u, total %u\n",
+		n, alloct, 2, alloc, free, alloc+free);
 }
 #endif
