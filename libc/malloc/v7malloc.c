@@ -12,12 +12,15 @@
 
 #if DEBUG
 #include <stdio.h>
+#include <string.h>
 #include <fcntl.h>
 #include <paths.h>
-#define ASSERT(p)	if(!(p))botch(#p);else
-static void botch(char *s);
+#define ASSERT(p)	if(!(p))malloc_assert_fail(#p);else
+#define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
+#define errstr(str) write(STDERR_FILENO, str, strlen(str))
+static void malloc_assert_fail(char *s);
 static int allock(void);
-void showheap(void);
+static void showheap(void);
 #else
 #define ASSERT(p)
 #define showheap()
@@ -244,9 +247,10 @@ debug("= %p\n", q);
 }
 
 #if DEBUG
-static void botch(char *s)
+static void malloc_assert_fail(char *s)
 {
-	printf("malloc assert fail: %s\n",s);
+	errmsg("malloc assert fail: ");
+	errstr(s);
 	abort();
 }
 
@@ -254,13 +258,13 @@ static int
 allock(void)
 {
 	union store __wcnear *p;
-	int x;
-	x = 0;
+	int x = 0;
+
 	for(p=(union store __wcnear *)&allocs[0]; clearbusy(p->ptr) > p; p=clearbusy(p->ptr)) {
 		if(p==allocp)
 			x++;
 	}
-	if (p != alloct) printf("%p %p %p\n", p, alloct, p->ptr);
+	if (p != alloct) debug("%p %p %p\n", p, alloct, p->ptr);
 	ASSERT(p==alloct);
 	return((x==1)|(p==allocp));
 }
