@@ -31,11 +31,12 @@
 #define INT int
 #define ALIGN int
 #define NALIGN 1
-#define WORD sizeof(union store)
-//#define BLOCK 514	/* min+2, amount to sbrk*/
-#define BLOCK 34	/* min+2, amount to sbrk*/
-#define GRANULE 0	/* sbrk granularity*/
 #define BUSY 1
+#define WORD sizeof(union store)
+//#define BLOCK     514	            /* min+2, amount to sbrk */
+#define BLOCK       34	            /* min+2, amount to sbrk */
+#define MINALLOC    14              /* minimum actual malloc size */
+#define GRANULE     0	            /* sbrk granularity */
 #ifndef NULL
 #define NULL 0
 #endif
@@ -70,7 +71,8 @@ static int malloc_check_heap(void);
 #endif
 
 #if DEBUG > 1
-#define debug(...)	if (debug_level > 1) fprintf(dbgout, __VA_ARGS__)
+#define debug(...)	do { if (debug_level > 1) fprintf(dbgout, __VA_ARGS__); } while (0)
+#define debug2(...)	do { if (debug_level > 2) fprintf(dbgout, __VA_ARGS__); } while (0)
 static void malloc_show_heap(void);
 static int debug_level = DEBUG;
 static unsigned char bufdbg[64];
@@ -98,23 +100,25 @@ malloc(size_t nbytes)
 	int nw, temp;
 
 #if DEBUG > 1
-    if (dbgout->fd < 0)
-        dbgout->fd = open(_PATH_CONSOLE, O_WRONLY);
+	if (dbgout->fd < 0)
+		dbgout->fd = open(_PATH_CONSOLE, O_WRONLY);
 #endif
 #if DEBUG == 2
-    sysctl(CTL_GET, "malloc.debug", &debug_level);
+	sysctl(CTL_GET, "malloc.debug", &debug_level);
 #endif
-
-	debug("(%d)malloc(%d) ", getpid(), nbytes);
-	if (nbytes == 0)
-		return NULL;	/* ANSI std */
-
 	if(allocs[0].ptr==0) {	/*first time*/
 		allocs[0].ptr = setbusy((union store __wcnear *)&allocs[1]);
 		allocs[1].ptr = setbusy((union store __wcnear *)&allocs[0]);
 		alloct = (union store __wcnear *)&allocs[1];
 		allocp = (union store __wcnear *)&allocs[0];
 	}
+
+	debug("(%d)malloc(%d) ", getpid(), nbytes);
+	if (nbytes == 0)
+		return NULL;	/* ANSI std */
+
+	if (nbytes < MINALLOC)
+		nbytes = MINALLOC;
 	nw = (nbytes+WORD+WORD-1)/WORD;			/* extra word for link ptr/size*/
 	ASSERT(allocp>=allocs && allocp<=alloct);
 	ASSERT(malloc_check_heap());
@@ -188,7 +192,7 @@ found:
 	}
 	p->ptr = setbusy(allocp);
 	debug("= %p\n", p);
-	if (debug_level > 2) malloc_show_heap();
+	malloc_show_heap();
 	return((void *)(p+1));
 }
 
@@ -208,7 +212,7 @@ free(void *ptr)
 	ASSERT(testbusy(p->ptr));
 	p->ptr = clearbusy(p->ptr);
 	ASSERT(p->ptr > allocp && p->ptr <= alloct);
-	if (debug_level > 2) malloc_show_heap();
+	malloc_show_heap();
 }
 
 /*	realloc(p, nbytes) reallocates a block obtained from malloc()
@@ -286,24 +290,24 @@ malloc_show_heap(void)
 	int n = 1;
 	unsigned int size, alloc = 0, free = 0;
 
-	debug("--- heap size ---\n");
+	debug2("--- heap size ---\n");
 	malloc_check_heap();
 	for(p = (union store __wcnear *)&allocs[0]; clearbusy(p->ptr) > p; p=clearbusy(p->ptr)) {
 		size = (char *)clearbusy(p->ptr) - (char *)clearbusy(p);
-		debug("%2d: %p %4u", n, p, size);
+		debug2("%2d: %p %4u", n, p, size);
 		if (!testbusy(p->ptr)) {
-			debug(" (free)");
+			debug2(" (free)");
 			free += size;
 		} else {
 			if (n < 3)		/* don't count ptr to first sbrk()*/
-				debug(" (skipped)");
+				debug2(" (skipped)");
 			else alloc += size;
 		}
 		n++;
-		debug("\n");
+		debug2("\n");
 	}
 	alloc += 2;
-	debug("%2d: %p %4u  (top) alloc %u, free %u, total %u\n",
-		n, alloct, 2, alloc, free, alloc+free);
+	debug2("%2d: %p %4u  (top) ", n, alloct, 2);
+	debug("alloc %u, free %u, total %u\n", alloc, free, alloc+free);
 }
 #endif
