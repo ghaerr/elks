@@ -13,10 +13,11 @@ PRGS = fm matrix cons ttyinfo sl ttyclock ttypong ttytetris invaders
 #PRGS_HOST =
 
 TUILIB = tty.o runes.o unikey.o
+MALLOC=../../libc/malloc/v7malloc.o
 
 all: $(PRGS) $(PRGS_HOST)
 
-fm: fm.o strverscmp.o realpath.o strlcpy.o strlcat.o curses.o curses2.o $(TUILIB) v7malloc.o
+fm: fm.o strverscmp.o realpath.o strlcpy.o strlcat.o curses.o curses2.o $(TUILIB) $(MALLOC)
 	$(LD) $(LDFLAGS) -maout-heap=0xffff -o $@ $^ $(LDLIBS)
 
 matrix: matrix.o tty-cp437.o kcp437.o tty.o runes.o
