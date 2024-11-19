@@ -3,10 +3,10 @@
 
 #include <sys/types.h>
 
-void free(void *);
-void *calloc(unsigned int elm, unsigned int sz);
 void *malloc(size_t);
+void free(void *);
 void *realloc(void *, size_t);
+void *calloc(size_t elm, size_t sz);
 void *alloca(size_t);
 
 #ifdef __LIBC__
