@@ -90,7 +90,7 @@ static FILE  dbgout[1] =
 void *
 malloc(size_t nbytes)
 {
-	register union store __wcnear *p, __wcnear *q;
+	union store __wcnear *p, __wcnear *q;
 	int nw, temp;
 
     if (dbgout->fd < 0)
@@ -108,7 +108,7 @@ debug("(%d)malloc(%d) ", getpid(), nbytes);
 	nw = (nbytes+WORD+WORD-1)/WORD;			/* extra word for link ptr/size*/
 	ASSERT(allocp>=allocs && allocp<=alloct);
 	ASSERT(allock());
-allocp = allocs;    /* experimental */
+allocp = (union store __wcnear *)allocs;     /* experimental */
 	debug("search start %p ", allocp);
 	for(p=allocp; ; ) {
 		for(temp=0; ; ) {
@@ -186,7 +186,7 @@ showheap();
 void
 free(void *ptr)
 {
-	register union store __wcnear *p = (union store __wcnear *)ptr;
+	union store __wcnear *p = (union store __wcnear *)ptr;
 
 	if (p == NULL)
 		return;
@@ -208,11 +208,10 @@ showheap();
 void *
 realloc(void *ptr, size_t nbytes)
 {
-	register union store __wcnear *p = (union store __wcnear *)ptr;
-	register union store __wcnear *q;
+	union store __wcnear *p = (union store __wcnear *)ptr;
+	union store __wcnear *q;
 	union store __wcnear *s, __wcnear *t;
-	register unsigned nw;
-	unsigned onw;
+	unsigned int nw, onw;
 
 	if (p == 0)
 		return malloc(nbytes);
@@ -237,7 +236,7 @@ debug("(%d)realloc(%p,%d) ", getpid(), p-1, nbytes);
 
 	/* restore old data for special case of malloc link overwrite*/
 	if(q<p && q+nw>=p) {
-debug("allocx patch %p,%p,%d ", q, p, nw);
+		debug("allocx patch %p,%p,%d ", q, p, nw);
 		(q+(q+nw-p))->ptr = allocx;
 	}
 debug("= %p\n", q);
@@ -254,16 +253,13 @@ static void botch(char *s)
 static int
 allock(void)
 {
-	register union store __wcnear *p;
+	union store __wcnear *p;
 	int x;
 	x = 0;
-	//printf("[(%p),", (int)alloct);
-	for(p=&allocs[0]; clearbusy(p->ptr) > p; p=clearbusy(p->ptr)) {
-		//printf("%p,", (int)p);
+	for(p=(union store __wcnear *)&allocs[0]; clearbusy(p->ptr) > p; p=clearbusy(p->ptr)) {
 		if(p==allocp)
 			x++;
 	}
-	//printf("]\n");
 	if (p != alloct) printf("%p %p %p\n", p, alloct, p->ptr);
 	ASSERT(p==alloct);
 	return((x==1)|(p==allocp));
@@ -272,7 +268,7 @@ allock(void)
 void
 showheap(void)
 {
-	register union store __wcnear *p;
+	union store __wcnear *p;
 	int n = 1;
 	unsigned int size, alloc = 0, free = 0;
 
