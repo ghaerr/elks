@@ -3,7 +3,7 @@
 #include <string.h>
 
 void *
-calloc(unsigned int elm, unsigned int sz)
+calloc(size_t elm, size_t sz)
 {
     unsigned int v;
     void *ptr;

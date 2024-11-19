@@ -58,7 +58,7 @@ struct Bomb {
 #define MA_HEIGHT 2
 #define MA_WIDTH 6
 
-#define GUNNER_ENTRANCE 40 // how many frames before gunner appears
+#define GUNNER_ENTRANCE 10 // how many frames before gunner appears
 #define MA_ENTRANCE 400 // how many frames before MA comes on the screen
 
 #define STATE_INTRO 1
