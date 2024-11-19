@@ -8,29 +8,7 @@
  */
 #include <unistd.h>
 #include <stdlib.h>			/* __MINI_MALLOC must not be defined in malloc.h include*/
-#define DEBUG		1		/* =1 for heap checking asserts, =2 for debug printf*/
-
-#if DEBUG
-#include <stdio.h>
-#include <string.h>
-#include <fcntl.h>
-#include <paths.h>
-#define ASSERT(p)	if(!(p))malloc_assert_fail(#p);else
-#define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
-#define errstr(str) write(STDERR_FILENO, str, strlen(str))
-static void malloc_assert_fail(char *s);
-static int allock(void);
-static void showheap(void);
-#else
-#define ASSERT(p)
-#define showheap()
-#endif
-
-#if DEBUG > 1
-#define debug(...)		fprintf(dbgout, __VA_ARGS__)
-#else
-#define debug(...)
-#endif
+#define DEBUG		2		/* =1 heap checking asserts, =2 sysctl, =3 debug printf */
 
 /*	C storage allocator
  *	circular first-fit strategy
@@ -76,6 +54,25 @@ static	union store __wcnear *allocp;	/*search ptr*/
 static	union store __wcnear *alloct;	/*arena top*/
 static	union store __wcnear *allocx;	/*for benefit of realloc*/
 
+#if DEBUG
+#include <stdio.h>
+#include <string.h>
+#include <paths.h>
+#include <fcntl.h>
+#include <sys/sysctl.h>
+#define ASSERT(p)	if(!(p))malloc_assert_fail(#p);else
+#define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
+#define errstr(str) write(STDERR_FILENO, str, strlen(str))
+static void malloc_assert_fail(char *s);
+static int malloc_check_heap(void);
+#else
+#define ASSERT(p)
+#endif
+
+#if DEBUG > 1
+#define debug(...)	if (debug_level > 1) fprintf(dbgout, __VA_ARGS__)
+static void malloc_show_heap(void);
+static int debug_level = DEBUG;
 static unsigned char bufdbg[64];
 static FILE  dbgout[1] =
 {
@@ -89,6 +86,10 @@ static FILE  dbgout[1] =
     _IONBF | __MODE_WRITE | __MODE_IOTRAN
    }
 };
+#else
+#define debug(...)
+#define malloc_show_heap()
+#endif
 
 void *
 malloc(size_t nbytes)
@@ -96,8 +97,14 @@ malloc(size_t nbytes)
 	union store __wcnear *p, __wcnear *q;
 	int nw, temp;
 
+#if DEBUG > 1
     if (dbgout->fd < 0)
         dbgout->fd = open(_PATH_CONSOLE, O_WRONLY);
+#endif
+#if DEBUG == 2
+    sysctl(CTL_GET, "malloc.debug", &debug_level);
+#endif
+
 debug("(%d)malloc(%d) ", getpid(), nbytes);
 	if (nbytes == 0)
 		return NULL;	/* ANSI std */
@@ -110,7 +117,7 @@ debug("(%d)malloc(%d) ", getpid(), nbytes);
 	}
 	nw = (nbytes+WORD+WORD-1)/WORD;			/* extra word for link ptr/size*/
 	ASSERT(allocp>=allocs && allocp<=alloct);
-	ASSERT(allock());
+	ASSERT(malloc_check_heap());
 allocp = (union store __wcnear *)allocs;     /* experimental */
 	debug("search start %p ", allocp);
 	for(p=allocp; ; ) {
@@ -159,7 +166,7 @@ allocp = (union store __wcnear *)allocs;     /* experimental */
 		q = (union store __wcnear *)sbrk(temp*WORD);
 		if((INT)q == -1) {
 			debug(" (no more mem) = NULL\n");
-			showheap();
+			malloc_show_heap();
 			return(NULL);
 		}
 		ASSERT(!((INT)q & 1));
@@ -180,7 +187,7 @@ found:
 	}
 	p->ptr = setbusy(allocp);
 debug("= %p\n", p);
-showheap();
+malloc_show_heap();
 	return((void *)(p+1));
 }
 
@@ -195,12 +202,12 @@ free(void *ptr)
 		return;
 debug("(%d)free(%p)\n", getpid(), p-1);
 	ASSERT(p>clearbusy(allocs[1].ptr)&&p<=alloct);
-	ASSERT(allock());
+	ASSERT(malloc_check_heap());
 	allocp = --p;
 	ASSERT(testbusy(p->ptr));
 	p->ptr = clearbusy(p->ptr);
 	ASSERT(p->ptr > allocp && p->ptr <= alloct);
-showheap();
+malloc_show_heap();
 }
 
 /*	realloc(p, nbytes) reallocates a block obtained from malloc()
@@ -255,7 +262,7 @@ static void malloc_assert_fail(char *s)
 }
 
 static int
-allock(void)
+malloc_check_heap(void)
 {
 	union store __wcnear *p;
 	int x = 0;
@@ -268,16 +275,18 @@ allock(void)
 	ASSERT(p==alloct);
 	return((x==1)|(p==allocp));
 }
+#endif
 
-void
-showheap(void)
+#if DEBUG > 1
+static void
+malloc_show_heap(void)
 {
 	union store __wcnear *p;
 	int n = 1;
 	unsigned int size, alloc = 0, free = 0;
 
 	debug("--- heap size ---\n");
-	allock();
+	malloc_check_heap();
 	for(p = (union store __wcnear *)&allocs[0]; clearbusy(p->ptr) > p; p=clearbusy(p->ptr)) {
 		size = (char *)clearbusy(p->ptr) - (char *)clearbusy(p);
 		debug("%2d: %p %4u", n, p, size);
