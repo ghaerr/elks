@@ -15,18 +15,14 @@ TEST_CASE(malloc_malloc_free) {
         free(p);
     }
 
-    /* TODO:BUG: causes hang at 100% CPU */
-#if 0
     errno = 0;
-    p = malloc((size_t) - 1);
+    p = malloc((size_t)-1);
     if (p == NULL) {
         EXPECT_EQ(errno, ENOMEM);
     } else {
         EXPECT_EQ(errno, 0);
-        memset(p, 0xff, (size_t) - 1);
         free(p);
     }
-#endif
 
     /* strange sizes are fine; memory is writable and free-able */
     for (int i = 1; i < 1024; i += 123) {

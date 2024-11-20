@@ -33,7 +33,9 @@ FILE  stdout[1] =
     bufout,
     bufout + sizeof(bufout),
     1,
-    _IOLBF | __MODE_WRITE | __MODE_IOTRAN
+    _IOLBF | __MODE_WRITE | __MODE_IOTRAN,
+    { 0,0,0,0,0,0,0,0 },
+    0
    }
 };
 
@@ -46,7 +48,9 @@ FILE  stderr[1] =
     buferr,
     buferr + sizeof(buferr),
     2,
-    _IOLBF | __MODE_WRITE | __MODE_IOTRAN
+    _IOLBF | __MODE_WRITE | __MODE_IOTRAN,
+    { 0,0,0,0,0,0,0,0 },
+    0
    }
 };
 

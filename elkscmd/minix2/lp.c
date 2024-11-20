@@ -42,7 +42,7 @@ lp(char *file)
     if (pid < 0)
         fatal("can't fork");
 
-    if (waitpid(pid, &status, 0) < 0)
+    if (waitpid(pid, &status, 0) == -1)
         fatal("wait");
 
     if (status != 0)

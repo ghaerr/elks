@@ -141,7 +141,9 @@ FILE  stdin[1] =
     bufin,
     bufin + sizeof(bufin),
     0,
-    _IOFBF | __MODE_READ | __MODE_IOTRAN
+    _IOFBF | __MODE_READ | __MODE_IOTRAN,
+    { 0,0,0,0,0,0,0,0 },
+    0
    }
 };
 
@@ -155,7 +157,9 @@ FILE  stdout[1] =
     bufout,
     bufout + sizeof(bufout),
     1,
-    _IOFBF | __MODE_WRITE | __MODE_IOTRAN
+    _IOFBF | __MODE_WRITE | __MODE_IOTRAN,
+    { 0,0,0,0,0,0,0,0 },
+    0
    }
 };
 
@@ -169,7 +173,9 @@ FILE  stderr[1] =
     buferr,
     buferr + sizeof(buferr),
     2,
-    _IONBF | __MODE_WRITE | __MODE_IOTRAN
+    _IONBF | __MODE_WRITE | __MODE_IOTRAN,
+    { 0,0,0,0,0,0,0,0 },
+    0
    }
 };
 

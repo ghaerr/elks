@@ -48,7 +48,7 @@ HOSTCFLAGS = -O3
 
 CLBASE =  -mcmodel=small -melks-libc -mtune=i8086 -Wall -Os
 CLBASE += -mno-segment-relocation-stuff
-CLBASE += -fno-inline -fno-builtin-printf
+CLBASE += -fno-inline -fno-builtin-printf -fno-builtin-fprintf
 #CLBASE += -mregparmcall
 ifeq ($(CONFIG_APPS_FTRACE), y)
     CLBASE += -fno-omit-frame-pointer -fno-optimize-sibling-calls
@@ -65,6 +65,7 @@ AS=ia16-elf-as
 LD=ia16-elf-gcc
 
 CFLAGS =  $(CLBASE) $(WARNINGS) $(LOCALFLAGS) $(INCLUDES)
+CFLAGS += -Wextra -Wtype-limits -Wno-unused-parameter -Wno-sign-compare -Wno-empty-body
 CFLAGS += -D__ELKS__ -DELKS_VERSION=\"$(ELKS_VSN)\"
 ASFLAGS = -mtune=i8086 --32-segelf
 LDFLAGS = $(CLBASE)
