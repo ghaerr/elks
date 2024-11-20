@@ -194,7 +194,7 @@ CFLAGS += -Wno-missing-prototypes
 CFLAGS += -Wno-empty-body
 #CFLAGS += -Wstrict-prototypes
 #CFLAGS += -Wconversion
-#CFLAGS += -Wextra
+CFLAGS += -Wextra -Wtype-limits
 
 LD      = ia16-elf-ld.gold
 LDFLAGS = $(CPU_LD) -s
