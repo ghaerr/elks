@@ -7,6 +7,7 @@
  * Set DEBUG=1 for heap integrity checking on each call
  */
 #include <unistd.h>
+#include <errno.h>
 #include <stdlib.h>			/* __MINI_MALLOC must not be defined in malloc.h include*/
 #define DEBUG		2		/* =1 heap checking asserts, =2 sysctl, =3 show heap */
 
@@ -114,23 +115,25 @@ malloc(size_t nbytes)
 	}
 
 	debug("(%d)malloc(%u) ", getpid(), nbytes);
+	errno = 0;
 	if (nbytes == 0) {
 		debug(" (malloc 0) = NULL\n");
-		return NULL;	/* ANSI std */
+		return NULL;        /* ANSI std, no error */
 	}
 	if (nbytes < MINALLOC)
 		nbytes = MINALLOC;
 
-	/* check INT overflow beyond 32764 (nbytes/WORD+WORD+1 > 0xFFFF/WORD/WORD)*/
-	if (nbytes > 0xFFFF/WORD-WORD-1) {      /* UINT_MAX = 0xFFFF */
+	/* check INT overflow beyond 32764 (nbytes/WORD+WORD+(WORD-1) > 0xFFFF/WORD/WORD)*/
+	if (nbytes > ((unsigned)-1)/WORD-WORD-(WORD-1)) {
 		debug(" (req too big) = NULL\n");
+		errno = ENOMEM;
 		return(NULL);
 	}
+	nw = (nbytes+WORD+WORD-1)/WORD;          /* extra word for link ptr/size*/
 
-	nw = (nbytes+WORD+WORD-1)/WORD;			/* extra word for link ptr/size*/
 	ASSERT(allocp>=allocs && allocp<=alloct);
 	ASSERT(malloc_check_heap());
-allocp = (union store __wcnear *)allocs;     /* experimental */
+allocp = (union store __wcnear *)allocs;    /* experimental */
 	//debug("search start %p ", allocp);
 	for(p=allocp; ; ) {
 		for(temp=0; ; ) {
@@ -152,6 +155,7 @@ allocp = (union store __wcnear *)allocs;     /* experimental */
 			} else if(q!=alloct || p!=allocs) {
 				ASSERT(q==alloct&&p==allocs);
 				debug(" (corrupt) = NULL\n");
+				errno = ENOMEM;
 				return(NULL);
 			} else if(++temp>1)
 				break;
@@ -172,6 +176,7 @@ allocp = (union store __wcnear *)allocs;     /* experimental */
 		/* check possible address wrap*/
 		if(q+temp+GRANULE < q) {
 			debug(" (no more address space) = NULL\n");
+			errno = ENOMEM;
 			return(NULL);
 		}
 
@@ -179,6 +184,7 @@ allocp = (union store __wcnear *)allocs;     /* experimental */
 		if((INT)q == -1) {
 			debug(" (no more mem) = NULL\n");
 			malloc_show_heap();
+			errno = ENOMEM;
 			return(NULL);
 		}
 		ASSERT(!((INT)q & 1));
