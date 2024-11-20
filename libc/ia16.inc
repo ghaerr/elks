@@ -19,6 +19,8 @@ AR=ia16-elf-ar
 LD=ia16-elf-ld
 
 CFLAGS=$(ARCH) $(INCLUDES) $(CDEFS) -Wall -Os $(MULTILIB)
+CFLAGS+=-Wextra -Wtype-limits -Wno-unused-parameter -Wno-sign-compare
+CFLAGS+=$(MULTILIB)
 ASFLAGS=--32-segelf -mtune=i8086
 LDFLAGS=-mtune=i8086
 # Used in subdirs to quickly create a library archive without a symbol index

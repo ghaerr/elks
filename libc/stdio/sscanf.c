@@ -12,7 +12,9 @@ sscanf(const char *str, const char *format, ...)
 			0,
 			(unsigned char *)(unsigned)-1,
 			-1,
-			_IOFBF | __MODE_READ
+			_IOFBF | __MODE_READ,
+			{ 0,0,0,0,0,0,0,0 },
+			0
 		}
 	};
 
