@@ -543,7 +543,7 @@ int
 find_builtin(name)
 	register char *name;
 	{
-	const register struct builtincmd *bp;
+	register const struct builtincmd *bp;
 
 	for (bp = builtincmd ; bp->name ; bp++) {
 		if (*bp->name == *name && equal(bp->name, name))

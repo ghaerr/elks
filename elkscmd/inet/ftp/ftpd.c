@@ -597,7 +597,6 @@ int main(int argc, char **argv) {
 	int listenfd, ret;
 	unsigned int myport = FTP_PORT;
 	struct sockaddr_in servaddr, myaddr;
-	char *cp;
 
 	if (argc > 2) {	/* FIXME - improve parameter checking */
 		usage();
@@ -618,6 +617,7 @@ int main(int argc, char **argv) {
 			myport = atoi(argv[0]);
 	}
 #if 0 /* FIXME temporarily remove as ftpd hangs on start with QEMU=1 */
+	char *cp;
 	if ((cp = getenv("QEMU")) != NULL) {
 		qemu = atoi(cp);
 		//printf("QEMU set to %d\n", qemu);

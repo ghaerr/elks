@@ -65,6 +65,7 @@ AS=ia16-elf-as
 LD=ia16-elf-gcc
 
 CFLAGS =  $(CLBASE) $(WARNINGS) $(LOCALFLAGS) $(INCLUDES)
+CFLAGS += -Wextra -Wtype-limits -Wno-unused-parameter -Wno-sign-compare -Wno-empty-body
 CFLAGS += -D__ELKS__ -DELKS_VERSION=\"$(ELKS_VSN)\"
 ASFLAGS = -mtune=i8086 --32-segelf
 LDFLAGS = $(CLBASE)

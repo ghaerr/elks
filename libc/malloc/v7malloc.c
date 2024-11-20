@@ -86,7 +86,9 @@ static FILE  dbgout[1] =
     bufdbg,
     bufdbg + sizeof(bufdbg),
     -1,
-    _IONBF | __MODE_WRITE | __MODE_IOTRAN
+    _IONBF | __MODE_WRITE | __MODE_IOTRAN,
+    { 0,0,0,0,0,0,0,0 },
+    0
    }
 };
 #else
