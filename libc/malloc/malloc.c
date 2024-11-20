@@ -11,6 +11,7 @@
 
 #include <malloc.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "_malloc.h"
 
@@ -190,8 +191,16 @@ malloc(size_t size)
    register mem __wcnear *ptr = 0;
    register unsigned int sz;
 
+   errno = 0;
    if (size == 0)
-      return 0;			/* ANSI STD */
+      return 0;			/* ANSI STD, no error */
+
+   /* Minor oops here, sbrk has a signed argument */
+   if((int)size < 0 || size > (((unsigned)-1) >> 1) - sizeof(mem) * 3)
+   {
+      errno = ENOMEM;
+      return 0;
+   }
 
    sz = size + sizeof(mem) * 2 - 1;
    sz /= sizeof(mem);
@@ -281,6 +290,7 @@ malloc(size_t size)
 #ifndef MCHUNK
 	    ptr = __mini_malloc(size);
 #endif
+	    if( ptr == 0) errno = ENOMEM;
 #ifdef VERBOSE
 	    if( ptr == 0 )
 	       __noise("MALLOC FAIL", 0);
