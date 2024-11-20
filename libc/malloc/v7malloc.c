@@ -7,6 +7,7 @@
  * Set DEBUG=1 for heap integrity checking on each call
  */
 #include <unistd.h>
+#include <errno.h>
 #include <stdlib.h>			/* __MINI_MALLOC must not be defined in malloc.h include*/
 #define DEBUG		2		/* =1 heap checking asserts, =2 sysctl, =3 show heap */
 
@@ -61,7 +62,7 @@ static	union store __wcnear *allocx;	/*for benefit of realloc*/
 #include <paths.h>
 #include <fcntl.h>
 #include <sys/sysctl.h>
-#define ASSERT(p)	if(!(p))malloc_assert_fail(#p);else
+#define ASSERT(p)	if(!(p))malloc_assert_fail(#p);else {}
 #define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
 #define errstr(str) write(STDERR_FILENO, str, strlen(str))
 static void malloc_assert_fail(char *s);
@@ -97,7 +98,7 @@ void *
 malloc(size_t nbytes)
 {
 	union store __wcnear *p, __wcnear *q;
-	int nw, temp;
+	unsigned int nw, temp;
 
 #if DEBUG > 1
 	if (dbgout->fd < 0)
@@ -113,16 +114,26 @@ malloc(size_t nbytes)
 		allocp = (union store __wcnear *)&allocs[0];
 	}
 
-	debug("(%d)malloc(%d) ", getpid(), nbytes);
-	if (nbytes == 0)
-		return NULL;	/* ANSI std */
-
+	debug("(%d)malloc(%u) ", getpid(), nbytes);
+	errno = 0;
+	if (nbytes == 0) {
+		debug(" (malloc 0) = NULL\n");
+		return NULL;        /* ANSI std, no error */
+	}
 	if (nbytes < MINALLOC)
 		nbytes = MINALLOC;
-	nw = (nbytes+WORD+WORD-1)/WORD;			/* extra word for link ptr/size*/
+
+	/* check INT overflow beyond 32764 (nbytes/WORD+WORD+(WORD-1) > 0xFFFF/WORD/WORD)*/
+	if (nbytes > ((unsigned)-1)/WORD-WORD-(WORD-1)) {
+		debug(" (req too big) = NULL\n");
+		errno = ENOMEM;
+		return(NULL);
+	}
+	nw = (nbytes+WORD+WORD-1)/WORD;          /* extra word for link ptr/size*/
+
 	ASSERT(allocp>=allocs && allocp<=alloct);
 	ASSERT(malloc_check_heap());
-allocp = (union store __wcnear *)allocs;     /* experimental */
+allocp = (union store __wcnear *)allocs;    /* experimental */
 	//debug("search start %p ", allocp);
 	for(p=allocp; ; ) {
 		for(temp=0; ; ) {
@@ -139,11 +150,12 @@ allocp = (union store __wcnear *)allocs;     /* experimental */
 			}
 			q = p;
 			p = clearbusy(p->ptr);
-			if(p>q)
+			if(p>q) {
 				ASSERT(p<=alloct);
-			else if(q!=alloct || p!=allocs) {
+			} else if(q!=alloct || p!=allocs) {
 				ASSERT(q==alloct&&p==allocs);
 				debug(" (corrupt) = NULL\n");
+				errno = ENOMEM;
 				return(NULL);
 			} else if(++temp>1)
 				break;
@@ -161,9 +173,10 @@ allocp = (union store __wcnear *)allocs;     /* experimental */
 		if((INT)q & (sizeof(union store) - 1))
 			sbrk(4 - ((INT)q & (sizeof(union store) - 1)));
 
-		/* check possible wrap (>= 32k alloc)*/
+		/* check possible address wrap*/
 		if(q+temp+GRANULE < q) {
-			debug(" (req too big) = NULL\n");
+			debug(" (no more address space) = NULL\n");
+			errno = ENOMEM;
 			return(NULL);
 		}
 
@@ -171,6 +184,7 @@ allocp = (union store __wcnear *)allocs;     /* experimental */
 		if((INT)q == -1) {
 			debug(" (no more mem) = NULL\n");
 			malloc_show_heap();
+			errno = ENOMEM;
 			return(NULL);
 		}
 		ASSERT(!((INT)q & 1));
@@ -230,7 +244,7 @@ realloc(void *ptr, size_t nbytes)
 
 	if (p == 0)
 		return malloc(nbytes);
-	debug("(%d)realloc(%p,%d) ", getpid(), p-1, nbytes);
+	debug("(%d)realloc(%p,%u) ", getpid(), p-1, nbytes);
 
 	ASSERT(testbusy(p[-1].ptr));
 	if(testbusy(p[-1].ptr))
@@ -307,7 +321,7 @@ malloc_show_heap(void)
 		debug2("\n");
 	}
 	alloc += 2;
-	debug2("%2d: %p %4u  (top) ", n, alloct, 2);
+	debug2("%2d: %p %4u (top) ", n, alloct, 2);
 	debug("alloc %u, free %u, total %u\n", alloc, free, alloc+free);
 }
 #endif
