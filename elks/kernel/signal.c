@@ -140,19 +140,20 @@ int sys_signal(int signr, __kern_sighandler_t handler)
     else if (handler == KERN_SIG_IGN)
         current->sig.action[signr - 1].sa_dispose = SIGDISP_IGN;
     else {
+        debug_sig("handler %x:%x\n", _FP_SEG(handler), _FP_OFF(handler));
         for (i = 0; i < MAX_SEGS; i++) {
             s = current->mm[i];
             if (!s || (s->flags & SEG_FLAG_TYPE) != SEG_FLAG_CSEG)
                 continue;
-            if (_FP_SEG(handler) < s->base || _FP_SEG(handler) >= s->base + s->size) {
-                printk("SIGNAL sys_signal supplied handler is bad\n");
-                debug_sig("SIGNAL sys_signal cs not in [%x, %x)\n",
-                    s->base, s->base + s->size);
-                return -EINVAL;
+            debug_sig("codeseg %x:%x\n", s->base, s->size<<4);
+            if (_FP_SEG(handler) == s->base && _FP_OFF(handler) < (s->size << 4)) {
+                current->sig.handler = handler;
+                current->sig.action[signr - 1].sa_dispose = SIGDISP_CUSTOM;
+                return 0;
             }
         }
-        current->sig.handler = handler;
-        current->sig.action[signr - 1].sa_dispose = SIGDISP_CUSTOM;
+        printk("SIGNAL sys_signal bad handler addr\n");
+        return -EINVAL;
     }
     return 0;
 }
