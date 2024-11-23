@@ -311,7 +311,7 @@ int in_group_p(gid_t grp)
     gid_t *pg;
     char *p;
 
-    if (grp != (current->egid) {
+    if (grp != (current->egid)) {
         pg = current->groups - 1;
         p = (char *)(pg + NGROUPS);
 
