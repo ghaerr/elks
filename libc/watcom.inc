@@ -10,7 +10,7 @@ endif
 
 INCLUDES = -I$(TOPDIR)/libc/include -I$(TOPDIR)/elks/include
 INCLUDES += -I$(WATCOM)/h
-DEFINES = -D__LIBC__
+DEFINES = -D__LIBC__ -D__ELKS__
 LIBOBJS=$(OBJS:.o=.obj)
 
 include $(TOPDIR)/libc/watcom.model

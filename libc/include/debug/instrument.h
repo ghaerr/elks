@@ -1,6 +1,10 @@
 /* ELKS stack trace and instrumentation functions library */
 /* Jan 2023 Greg Haerr */
+#ifdef __ELKS__
 #include <sys/cdefs.h>
+#else
+#define noinstrument
+#endif
 
 /* calc_push_count returns */
 #define BP_PUSHED   0x0100

@@ -1,5 +1,9 @@
 /* ELKS symbol table support */
+#ifdef __ELKS__
 #include <sys/cdefs.h>
+#else
+#define noinstrument
+#endif
 
 /* symbol table format
  *  | byte type | word address | byte symbol length | symbol |
