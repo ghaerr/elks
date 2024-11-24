@@ -1,5 +1,9 @@
 /* ELKS symbol table support */
+#if defined(__ia16__) || defined(__WATCOMC__)
 #include <sys/cdefs.h>
+#else
+#define noinstrument
+#endif
 
 /* symbol table format
  *  | byte type | word address | byte symbol length | symbol |
