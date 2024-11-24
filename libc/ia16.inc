@@ -1,7 +1,7 @@
 # Makefile include for ia16-elf-gcc build
 
 INCLUDES=-I$(TOPDIR)/include -I$(TOPDIR)/libc/include -I$(TOPDIR)/elks/include
-DEFINES=-D__LIBC__ -D__ELKS__
+DEFINES=-D__LIBC__
 LIBOBJS=$(OBJS)
 
 INCS=$(INCLUDES)

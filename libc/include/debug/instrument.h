@@ -1,6 +1,6 @@
 /* ELKS stack trace and instrumentation functions library */
 /* Jan 2023 Greg Haerr */
-#ifdef __ELKS__
+#if defined(__ia16__) || defined(__WATCOMC__)
 #include <sys/cdefs.h>
 #else
 #define noinstrument

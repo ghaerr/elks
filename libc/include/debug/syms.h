@@ -1,5 +1,5 @@
 /* ELKS symbol table support */
-#ifdef __ELKS__
+#if defined(__ia16__) || defined(__WATCOMC__)
 #include <sys/cdefs.h>
 #else
 #define noinstrument
