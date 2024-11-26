@@ -9,7 +9,7 @@ include $(BASEDIR)/Makefile-rules
 #TODO: fix uncompress zcat lpfilter disabled
 PRGS = tar miniterm ed od hd time kilo mined sleep tty uuencode uudecode compress
 
-HOSTPRGS = hostcompress
+HOSTPRGS = hostcompress hosthd
 
 all: $(PRGS)
 
@@ -53,6 +53,9 @@ uuencode: uuencode.o
 
 uudecode: uudecode.o
 	$(LD) $(LDFLAGS) -o uudecode uudecode.o $(LDLIBS)
+
+hosthd: hd.c
+	$(HOSTCC) $(HOSTCFLAGS) -D__far= hd.c -o $@
 
 hostcompress: compress.c
 	$(HOSTCC) $(HOSTCFLAGS) compress.c -o $@
