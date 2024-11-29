@@ -34,8 +34,8 @@
 #define EINVAL          22      /* Invalid argument */
 #define ENFILE          23      /* File table overflow */
 #define EMFILE          24      /* Too many open files */
-#define ENOTTY          25      /* Not a typewriter */  //linenoise
-#define ETXTBSY         26      /* Text file busy */    //ash
+#define ENOTTY          25      /* Not a typewriter */  /*linenoise*/
+#define ETXTBSY         26      /* Text file busy */    /*ash*/
 #define EFBIG           27      /* File too large */
 #define ENOSPC          28      /* No space left on device */
 #define ESPIPE          29      /* Illegal seek */
@@ -61,7 +61,7 @@
 #define EADDRINUSE      98      /* Address already in use */
 #define ENETDOWN        100     /* Network is down */
 #define ENETUNREACH     101     /* Network is unreachable */
-#define ENOBUFS         105     /* No buffer space available */ //regex
+#define ENOBUFS         105     /* No buffer space available */ /*regex*/
 #define EISCONN         106     /* Transport endpoint is already connected */
 #define ETIMEDOUT       110     /* Connection timed out */
 #define ECONNREFUSED    111     /* Connection refused */
