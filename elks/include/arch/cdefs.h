@@ -41,5 +41,19 @@
 #define __wcnear        __near
 #endif
 
+#ifdef __C86__
+#define __HAS_NO_FLOATS__
+#define __far
+#define noreturn
+#define stdcall
+#define restrict
+#define printfesque(n)
+#define noinstrument
+#define CONSTRUCTOR(fn,pri) void fn(void)
+#define DESTRUCTOR(fn,pri)  void fn(void)
+#define __attribute__(n)
+#define __wcfar
+#define __wcnear
+#endif
 
 #endif

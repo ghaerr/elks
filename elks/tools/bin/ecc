@@ -1,0 +1,74 @@
+# ecc - ELKS cc compiler wrapper for C86 (8086-toolchain)
+#
+# This script runs cpp86, c86, nasm and ld86 on the input file.
+# The input file must be specified without its .c extension for now,
+# and the script must be run in the 8086-toolchain/ directory,
+# as it also builds the libc86.a C86 library.
+# This restriction will be removed shortly.
+#
+# Usage: to compile and link foo.c:
+#   cd 8086-toolchain
+#   ecc foo
+#
+# Before using, modify the full paths below to ELKS and C86:
+
+#####################################################################
+
+# Full path to ELKS and C86 installations
+export TOPDIR=/Users/greg/net/elks-gh
+export C86DIR=/Users/greg/net/8086-toolchain
+
+# OpenWatcom path, not yet necessary to have installed
+export WATCOM=/Users/greg/net/open-watcom-v2/rel
+
+#####################################################################
+
+set -e
+
+add_path () {
+    if [[ ":$PATH:" != *":$1:"* ]]; then
+        export PATH="$1:$PATH"
+    fi
+}
+
+# ia16-elf-gcc
+export MAKEFLAGS="$MAKEFLAGS"
+add_path "$TOPDIR/cross/bin"
+add_path "$TOPDIR/elks/tools/bin"
+
+# OpenWatcom
+#add_path "$WATCOM/binl"    # for Linux-32
+#add_path "$WATCOM/binl64"  # for Linux-64
+#add_path "$WATCOM/bino64"   # for macOS
+
+#echo PATH set to $PATH
+
+# C86
+add_path "$C86DIR/host-bin"
+
+INCLUDES="-I$TOPDIR/libc/include -I$TOPDIR/elks/include -I$C86DIR/libc/include"
+DEFINES="-D__C86__ -D__STDC__"
+C86FLAGS="-O -warn=4 -lang=c99 -align=yes -stackopt=minimum -peep=all -stackcheck=no"
+CPPFLAGS="$INCLUDES $DEFINES"
+CFLAGS="$C86FLAGS"
+ASFLAGS="-f as86"
+ARFLAGS="q"
+LDFLAGS="-0 -i -L$C86DIR/libc"
+
+# preprocessor
+echo cpp86 $CPPFLAGS $1.c $1.i
+cpp86 $CPPFLAGS $1.c -o $1.i
+
+# C compiler
+echo c86 $CFLAGS $1.c $1.asm
+c86 $CFLAGS $1.i $1.asm
+
+# assembler
+echo nasm $ASFLAGS -l $1.lst -o $1.o $1.asm
+nasm $ASFLAGS -l $1.lst -o $1.o $1.asm
+objdump86 -s $1.o
+
+# link executable
+echo ld86 $LDFLAGS $1.o -o $1 -lc86
+ld86 $LDFLAGS $1.o -o $1 -lc86
+objdump86 -s $1
