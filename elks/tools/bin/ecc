@@ -10,18 +10,7 @@
 #   cd 8086-toolchain
 #   ecc foo
 #
-# Before using, modify the full paths below to ELKS and C86:
-
-#####################################################################
-
-# Full path to ELKS and C86 installations
-export TOPDIR=/Users/greg/net/elks-gh
-export C86DIR=/Users/greg/net/8086-toolchain
-
-# OpenWatcom path, not yet necessary to have installed
-export WATCOM=/Users/greg/net/open-watcom-v2/rel
-
-#####################################################################
+# Before using, modify the paths in set_host_vars or set_elks_vars.
 
 set -e
 
@@ -31,29 +20,67 @@ add_path () {
     fi
 }
 
-# ia16-elf-gcc
-export MAKEFLAGS="$MAKEFLAGS"
-add_path "$TOPDIR/cross/bin"
-add_path "$TOPDIR/elks/tools/bin"
+# Host section - for cross compiling
+# Uses ELKS and C86 installation directories for header files and binaries
+set_host_vars() {
+    # Set full path to ELKS and C86 installations on host
+    export TOPDIR=/Users/greg/net/elks-gh
+    export C86DIR=/Users/greg/net/8086-toolchain
+    export C86LIB=$C86DIR/libc
+    INCLUDES="-I$TOPDIR/libc/include -I$TOPDIR/elks/include -I$C86DIR/libc/include"
 
-# OpenWatcom
-#add_path "$WATCOM/binl"    # for Linux-32
-#add_path "$WATCOM/binl64"  # for Linux-64
-#add_path "$WATCOM/bino64"   # for macOS
+    # OpenWatcom path, not yet necessary to have installed
+    export WATCOM=/Users/greg/net/open-watcom-v2/rel
 
-#echo PATH set to $PATH
+    # ia16-elf-gcc
+    export MAKEFLAGS="$MAKEFLAGS"
+    add_path "$TOPDIR/cross/bin"
+    add_path "$TOPDIR/elks/tools/bin"
 
-# C86
-add_path "$C86DIR/host-bin"
+    # OpenWatcom
+    #add_path "$WATCOM/binl"    # for Linux-32
+    #add_path "$WATCOM/binl64"  # for Linux-64
+    #add_path "$WATCOM/bino64"   # for macOS
 
-INCLUDES="-I$TOPDIR/libc/include -I$TOPDIR/elks/include -I$C86DIR/libc/include"
+    #echo PATH set to $PATH
+
+    # C86
+    add_path "$C86DIR/host-bin"
+}
+
+# ELKS section - for compiling on ELKS
+# When compiling on ELKS itself, the C library and kernel header files
+# must be copied over to the directory tree with the paths set below.
+# Header files are expected to be in ELKS tree as follows:
+#   TOPDIR=/path/to/elks86      Top level of elks86 native dev tree (default /elks86)
+#       elks86/libc/include     C library header files
+#       elks86/elks/include     ELKS kernel header files
+#       elks86/c86/include      C86 header files
+#       elks86/libc             C86 libc86.a library location
+set_elks_vars() {
+    export TOPDIR=/elks86
+    # currently cheat and use libc86.a and binaries from current directory
+    export C86DIR=.
+    export C86LIB=$C86DIR
+    INCLUDES="-I$TOPDIR/libc/include -I$TOPDIR/elks/include -I$TOPDIR/c86/include"
+    export PATH=.:$PATH
+}
+
+if [ `uname` = 'ELKS' ]; then
+    set_elks_vars
+else
+    set_host_vars
+fi
+
+# Shared section follows
+
 DEFINES="-D__C86__ -D__STDC__"
 C86FLAGS="-O -warn=4 -lang=c99 -align=yes -stackopt=minimum -peep=all -stackcheck=no"
 CPPFLAGS="$INCLUDES $DEFINES"
 CFLAGS="$C86FLAGS"
 ASFLAGS="-f as86"
-ARFLAGS="q"
-LDFLAGS="-0 -i -L$C86DIR/libc"
+ARFLAGS="r"
+LDFLAGS="-0 -i -L$C86LIB"
 
 # preprocessor
 echo cpp86 $CPPFLAGS $1.c $1.i
