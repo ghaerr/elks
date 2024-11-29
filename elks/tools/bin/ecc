@@ -46,8 +46,8 @@ add_path "$TOPDIR/elks/tools/bin"
 # C86
 add_path "$C86DIR/host-bin"
 
-INCLUDES="-I$TOPDIR/libc/include -I$TOPDIR/elks/include"
-DEFINES="-D__C86__ -Drestrict="
+INCLUDES="-I$TOPDIR/libc/include -I$TOPDIR/elks/include -I$C86DIR/lib"
+DEFINES="-D__C86__ -D__STDC__"
 C86FLAGS="-O -warn=4 -lang=c99 -align=yes -stackopt=minimum -peep=all -stackcheck=no"
 CPPFLAGS="$INCLUDES $DEFINES"
 CFLAGS="$C86FLAGS"

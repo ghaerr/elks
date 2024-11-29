@@ -187,7 +187,8 @@ typedef stdcall __far void (*__kern_sighandler_t)(int);
 #pragma GCC diagnostic pop
 #endif
 
-#ifdef __WATCOMC__
+#if defined(__WATCOMC__) || defined(__C86__)
+/* FIXME broken for C86 w/o stdcall and __far */
 typedef void stdcall (__far *__kern_sighandler_t)(int);
 #endif
 
