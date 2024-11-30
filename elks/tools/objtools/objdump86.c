@@ -830,8 +830,7 @@ static char * byteord[] = { "LITTLE_ENDIAN", "(2143)","(3412)","BIG_ENDIAN" };
    if( h_flgs & 0x80 ) printf(" A_TOVLY");
    printf("\n");
 
-   if( header[5] )
-      printf("a_entry  = 0x%08lx\n", header[5]);
+   printf("a_entry  = 0x%08lx\n", header[5]);
    printf("a_total  = 0x%08lx\n", header[6]);
    if( header[7] )
       printf("a_syms   = 0x%08lx\n", header[7]);

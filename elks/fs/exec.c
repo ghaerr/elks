@@ -488,7 +488,8 @@ static int execve_aout(struct inode *inode, struct file *filp, char *sptr, size_
     /* From this point, exec() will surely succeed */
 
     /* clear bss */
-    fmemsetb((char *)(size_t)mh.dseg + base_data, seg_data->base, 0, (size_t)mh.bseg);
+    if ((size_t)mh.bseg)
+        fmemsetb((char *)(size_t)mh.dseg + base_data, seg_data->base, 0, (size_t)mh.bseg);
 
     /* set data/stack limits and copy argc/argv */
     currentp->t_enddata = (size_t)mh.dseg + (size_t)mh.bseg + base_data;
