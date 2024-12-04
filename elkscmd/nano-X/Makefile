@@ -53,7 +53,8 @@ ifeq ($(CONFIG_ARCH_PC98), y)
 DRIVERS += drivers/ramfont.o drivers/X6x13.o drivers/elksutilasm.o
 else
 ifeq ($(CONFIG_HW_VGA), y)
-DRIVERS += drivers/romfont.o drivers/elksutilasm.o
+# DRIVERS += drivers/romfont.o drivers/elksutilasm.o
+DRIVERS += drivers/ramfont.o drivers/X6x13.o drivers/elksutilasm.o
 else
 DRIVERS += drivers/ramfont.o drivers/X6x13.o drivers/elksutilasm.o
 endif
