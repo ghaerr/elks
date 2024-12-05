@@ -44,17 +44,8 @@ int __argc;
 char **__argv;
 char *__program_filename;
 char **environ;
-unsigned int __stacklow;
-unsigned char _HShift = 12;      /* huge pointer support required by pia.asm */
-
-static unsigned int _SP(void);
-#pragma aux _SP = __value [__sp]
-
-/* called by alloca() to check stack available */
-unsigned int stackavail(void)
-{
-    return (_SP() - __stacklow);
-}
+unsigned int __stacklow;        /* lowest valid SP value */
+unsigned char _HShift = 12;     /* huge pointer support required by pia.asm */
 
 #if defined(__SMALL__) || defined(__MEDIUM__)   /* near data models */
 /* no argv/environ rewrite */
