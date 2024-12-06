@@ -36,6 +36,7 @@ _start:
 
 // C runtime startup
 // Stack is empty and immediately followed by argc, argv and envp
+// DX is stack size
 
 	pop %cx		// argc
 	mov %sp,%bx	// argv [0]
@@ -51,7 +52,7 @@ _start:
 	push %cx        // argc
 
 // ...Code fragments from .preinit & .preinit.* sections will go here...
-//    NOTE: these assume ax = envp, bx = argv, cx = argc & may clobber dx
+//    NOTE: these assume ax = envp, bx = argv, cx = argc, dx = stacksize & may clobber si
 
 // ...Then code fragments from .init & .init.* sections will go here...
 //    NOTE: these are allowed to clobber ax, bx, cx, dx, si

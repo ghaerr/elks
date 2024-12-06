@@ -244,8 +244,8 @@ int sys_brk(segoff_t newbrk)
 
     if (current->t_begstack > current->t_endbrk) {				/* stack above heap?*/
         if (newbrk > current->t_begstack - current->t_minstack) {
-			printk("sys_brk(%d) fail: brk %x over by %u bytes\n",
-				current->pid, newbrk, newbrk - (current->t_begstack - current->t_minstack));
+			printk("(%d)CAN'T EXPAND HEAP by %u\n",
+				current->pid, newbrk - (current->t_begstack - current->t_minstack));
             return -ENOMEM;
 		}
     }

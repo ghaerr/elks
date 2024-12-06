@@ -494,7 +494,7 @@ static int execve_aout(struct inode *inode, struct file *filp, char *sptr, size_
     /* set data/stack limits and copy argc/argv */
     currentp->t_enddata = (size_t)mh.dseg + (size_t)mh.bseg + base_data;
     currentp->t_endseg = len;
-    currentp->t_minstack = stack;
+    currentp->t_regs.dx = currentp->t_minstack = stack;
 
 #ifdef CONFIG_EXEC_LOW_STACK
     currentp->t_begstack = ((base_data   /* Just above the top of stack */
