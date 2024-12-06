@@ -13,6 +13,7 @@ bin/exomizer
 bin/eman
 bin/ewcc
 bin/ewlink
+bin/ecc
 bin/fixomf
 elftoolchain-0.7.1
 bin/mattrib
