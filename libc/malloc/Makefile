@@ -29,6 +29,13 @@ OBJS = \
 	fmemalloc.o \
 	fmemfree.o \
 
+IA16OBJS = \
+	stackcheck.o \
+
+ifeq "$(COMPILER)" "ia16"
+OBJS += $(IA16OBJS)
+endif
+
 .PHONY: all
 
 all: $(LIB)
