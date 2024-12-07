@@ -56,9 +56,9 @@ include $(TOPDIR)/Make.defs
 # State the current version of this system.
 
 VERSION     = 0	# (0-255)
-PATCHLEVEL  = 8	# (0-255)
-SUBLEVEL    = 1	# (0-255)
-PRE         =
+PATCHLEVEL  = 9	# (0-255)
+SUBLEVEL    = 0	# (0-255)
+PRE         = -dev
 
 #########################################################################
 # Specify the architecture we will use.
