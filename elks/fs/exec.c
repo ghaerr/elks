@@ -266,18 +266,8 @@ static int execve_aout(struct inode *inode, struct file *filp, char *sptr, size_
         if (esuph.msh_tbase != 0)
             goto error_exec3;
         base_data = esuph.msh_dbase;
-#ifdef CONFIG_EXEC_LOW_STACK
-        if (base_data & 0xf)
-            goto error_exec3;
-        if (base_data != 0)
-            debug("EXEC: New type executable stack = %x\n", base_data);
-
-        if (add_overflow(min_len, base_data, &min_len)) /* adds stack size*/
-            goto error_exec3;
-#else
         if (base_data != 0)
             goto error_exec3;
-#endif
         break;
 #endif /* CONFIG_EXEC_MMODEL*/
     default:
@@ -293,9 +283,6 @@ static int execve_aout(struct inode *inode, struct file *filp, char *sptr, size_
         goto error_exec3;
     case 1:
         len = min_len;
-#ifdef CONFIG_EXEC_LOW_STACK
-        if (!base_data)
-#endif
         {
             stack = mh.minstack? mh.minstack: INIT_STACK;
             if (add_overflow(len, stack, &len)) {       /* add stack */
@@ -335,14 +322,6 @@ static int execve_aout(struct inode *inode, struct file *filp, char *sptr, size_
         } else {
             stack = INIT_STACK;
             len = min_len;
-#ifdef CONFIG_EXEC_LOW_STACK
-            if (base_data) {
-                if (add_overflow(len, INIT_HEAP, &len)) {
-                    retval = -EFBIG;
-                    goto error_exec3;
-                }
-            } else
-#endif
             {
                 if (add_overflow(len, INIT_HEAP + INIT_STACK, &len)) {
                     retval = -EFBIG;
@@ -495,14 +474,7 @@ static int execve_aout(struct inode *inode, struct file *filp, char *sptr, size_
     currentp->t_enddata = (size_t)mh.dseg + (size_t)mh.bseg + base_data;
     currentp->t_endseg = len;
     currentp->t_regs.dx = currentp->t_minstack = stack;
-
-#ifdef CONFIG_EXEC_LOW_STACK
-    currentp->t_begstack = ((base_data   /* Just above the top of stack */
-        ? base_data
-        : currentp->t_endseg) - slen) & ~1;
-#else
     currentp->t_begstack = (currentp->t_endseg - slen) & ~1; /* force even SP and argv */
-#endif
     fmemcpyb((char *)currentp->t_begstack, seg_data->base, sptr, ds, slen);
 
     finalize_exec(inode, seg_code, seg_data, (word_t)mh.entry, 0);

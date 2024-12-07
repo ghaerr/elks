@@ -249,10 +249,6 @@ int sys_brk(segoff_t newbrk)
             return -ENOMEM;
         }
     }
-#ifdef CONFIG_EXEC_LOW_STACK
-    if (newbrk > current->t_endseg)
-        return -ENOMEM;
-#endif
     current->t_endbrk = newbrk;
 
     return 0;

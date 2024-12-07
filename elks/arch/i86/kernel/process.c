@@ -50,13 +50,6 @@ void stack_check(void)
 {
     segoff_t end = current->t_endbrk;
 
-#ifdef CONFIG_EXEC_LOW_STACK
-    if (current->t_begstack <= current->t_enddata) {  /* stack below heap?*/
-        if (current->t_regs.sp < end)
-            return;
-        end = 0;
-    } else
-#endif
     {
         /* optional: check stack over min stack*/
         if (current->t_regs.sp < current->t_begstack - current->t_minstack) {
