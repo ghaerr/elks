@@ -230,8 +230,11 @@ void mm_get_usage (unsigned int * pfree, unsigned int * pused)
 
 // User data segment functions
 
-int sys_brk(segoff_t newbrk)
+static int set_brk(segoff_t brk, int increment)
 {
+    segoff_t newbrk = brk + increment;
+    segoff_t stacklow;
+
     /***unsigned int memfree, memused;
     mm_get_usage(&memfree, &memused);
     printk("brk(%P): new %x, edat %x, ebrk %x, free %x sp %x, eseg %x, %d/%dK\n",
@@ -239,36 +242,46 @@ int sys_brk(segoff_t newbrk)
         current->t_regs.sp - current->t_endbrk,
         current->t_regs.sp, current->t_endseg, memfree, memused);***/
 
-    if (newbrk < current->t_enddata)
+    if (newbrk < current->t_enddata) {
+        printk("(%P)SBRK %d FAIL, BELOW HEAP\n", increment);
         return -ENOMEM;
-
-    if (current->t_begstack > current->t_endbrk) {              /* stack above heap?*/
-        if (newbrk > current->t_begstack - current->t_minstack) {
-            printk("(%d)CAN'T EXPAND HEAP by %u\n",
-                current->pid, newbrk - (current->t_begstack - current->t_minstack));
-            return -ENOMEM;
-        }
     }
-    current->t_endbrk = newbrk;
 
+    stacklow = current->t_begstack - current->t_minstack;
+    if (newbrk > stacklow) {
+        printk("(%P)SBRK %d FAIL, OUT OF HEAP SPACE\n", increment);
+        return -ENOMEM;
+    }
+    if (newbrk > current->t_regs.sp) {
+        printk("(%P)SBRK %d FAIL, WOULD OVERWRITE STACK\n", increment);
+        return -ENOMEM;
+    }
+
+    current->t_endbrk = newbrk;
     return 0;
 }
 
+int sys_brk(segoff_t newbrk)
+{
+    dprintk("(%P)BRK %u\n", newbrk);
+    return set_brk(newbrk, 0);
+}
 
-int sys_sbrk (int increment, segoff_t *pbrk)
+int sys_sbrk(int increment, segoff_t *pbrk)
 {
     segoff_t brk = current->t_endbrk;   /* always return start of old break*/
     int err;
 
-    debug("sbrk incr %u pointer %04x curbreak %04x\n", increment, pbrk, brk);
+    if (increment)
+        dprintk("(%P)SBRK %d, curbreak %u, SP %u\n",
+            increment, current->t_endbrk, current->t_regs.sp);
     err = verify_area(VERIFY_WRITE, pbrk, sizeof(*pbrk));
     if (err)
         return err;
-    if (increment) {
-        err = sys_brk(brk + increment);
-        if (err) return err;
-    }
-
+    /* FIXME test for brk+increment overflow/underflow here */
+    err = set_brk(brk, increment);
+    if (err)
+        return err;
     put_user (brk, pbrk);
     return 0;
 }
@@ -303,12 +316,12 @@ int sys_fmemfree(unsigned short segment)
                 seg_free(seg);
                 return 0;
             }
-            debug("sys_fmemfree: not owner %04x\n", segment);
+            printk("sys_fmemfree: not owner %04x\n", segment);
             return -EACCES;
         }
         n = seg->all.next;
     }
-    debug("sys_fmemfree: segment not found %04x\n", segment);
+    printk("sys_fmemfree: segment not found %04x\n", segment);
     return -EINVAL;
 }
 
