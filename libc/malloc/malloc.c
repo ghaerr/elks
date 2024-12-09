@@ -265,10 +265,13 @@ malloc(size_t size)
       {
 #ifdef MCHUNK
          unsigned int alloc;
-         alloc = sizeof(mem) * (MCHUNK * ((sz + MCHUNK - 1) / MCHUNK) - 1);
+         if (sz < MCHUNK)
+                alloc = sizeof(mem) * (MCHUNK * ((sz + MCHUNK - 1) / MCHUNK) - 1);
+         else alloc = sz * sizeof(mem);
 	 ptr = __mini_malloc(alloc);
 	 if (ptr)
 	    __insert_chunk(ptr - 1);
+#if MCHUNK >= 256
 	 else		/* Oooo, near end of RAM */
 	 {
 	    unsigned int needed = alloc;
@@ -283,6 +286,7 @@ malloc(size_t size)
 	       else     alloc/=2;
 	    }
 	 }
+#endif
 	 ptr = __search_chunk(sz);
 	 if (ptr == 0)
 #endif

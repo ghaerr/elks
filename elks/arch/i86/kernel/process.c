@@ -43,34 +43,27 @@ int run_init_process_sptr(const char *cmd, char *sptr, int slen)
 }
 
 /*
- * We only need to do this as long as we support old format binaries
- * that grow stack and heap towards each other
+ * Check that SP is within proper range, called before every syscall.
  */
 void stack_check(void)
 {
-    segoff_t end = current->t_endbrk;
+    segoff_t sp = current->t_regs.sp;
+    segoff_t brk = current->t_endbrk;
+    segoff_t stacklow = current->t_begstack - current->t_minstack;
 
-#ifdef CONFIG_EXEC_LOW_STACK
-    if (current->t_begstack <= current->t_enddata) {  /* stack below heap?*/
-        if (current->t_regs.sp < end)
-            return;
-        end = 0;
-    } else
-#endif
-    {
-        /* optional: check stack over min stack*/
-        if (current->t_regs.sp < current->t_begstack - current->t_minstack) {
-          if (current->t_minstack)     /* display if protected stack*/
-            printk("(%P)STACK OUTSIDE PROTECTED LIMIT by %u\n",
-                current->t_begstack - current->t_minstack - current->t_regs.sp);
-        }
-
-        /* check stack overflow heap*/
-        if (current->t_regs.sp > end)
-            return;
+    if (sp < brk) {
+        printk("(%P)STACK OVERFLOW by %u\n", brk - sp);
+        printk("curbreak %u, SP %u\n", current->t_endbrk, current->t_regs.sp);
+        do_exit(SIGSEGV);
     }
-    printk("(%P)STACK OVERFLOW by %u\n", end - current->t_regs.sp);
-    do_exit(SIGSEGV);
+    if (sp < stacklow) {
+        /* notification only, allow process to continue */
+        printk("(%P)STACK USING %u UNUSED HEAP\n", stacklow - sp);
+    }
+    if (sp > current->t_begstack) {
+        printk("(%P)STACK UNDERFLOW\n");
+        do_exit(SIGSEGV);
+    }
 }
 
 /*

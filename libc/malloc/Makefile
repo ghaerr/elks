@@ -4,12 +4,13 @@ COMPILER ?= ia16
 LIB ?= out.a
 
 include $(TOPDIR)/libc/$(COMPILER).inc
-#CFLAGS	+= -DL_alloca
-#CFLAGS	+= -DLAZY_FREE
-# MCHUNK is word not byte min allocation size
-CFLAGS	+= -DMCHUNK=512
+# allocations smaller than MCHUNK words (not bytes) are rounded up,
+# larger requests are allocated from heap as is.
+CFLAGS	+= -DMCHUNK=16
 #CFLAGS	+= -DMINALLOC
+#CFLAGS	+= -DLAZY_FREE
 #CFLAGS	+= -DVERBOSE
+#CFLAGS	+= -DL_alloca
 
 # use V7 malloc for heap integrity checking
 #OBJS = v7malloc.o calloc.o sbrk.o brk.o
