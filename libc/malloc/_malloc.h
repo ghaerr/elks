@@ -10,10 +10,19 @@ typedef union mem_cell
    char __wcnear *depth;		/* For the alloca hack */
 } mem;
 
-#ifdef VERBOSE
 void __noise(char *y, mem __wcnear *x);
+int __dprintf(const char *fmt, ...);
+extern int __debug_level;
+
+#if !VERBOSE
+#define dprintf(...)
+#define debug(str,ptr)
+#elif VERBOSE == 1
+#define dprintf             __dprintf
+#define debug(str,ptr)
 #else
-#define __noise(y,x)
+#define dprintf(...)
+#define debug(str,ptr)      __noise(str,ptr)
 #endif
 
 #define m_deep(p)  ((p) [0].depth)	/* For alloca */
