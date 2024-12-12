@@ -9,7 +9,7 @@ __mini_malloc(size_t size)
 {
 	mem __wcnear *ptr;
 
-#if 0
+#if 0       /* not required and slow, initial break always even */
 	size_t sz;
 	/* First time round this _might_ be odd, But we won't do that! */
 	sz = (size_t)sbrk(0);
@@ -28,11 +28,11 @@ __mini_malloc(size_t size)
 
 	size /= sizeof(mem);
 	ptr = (mem __wcnear *) sbrk(size * sizeof(mem));
-	/*if((uintptr_t)ptr == (intptr_t)-1)*/  /* this is better only when not __wcnear */
-    if ((int)ptr == -1)
+	if ((int)ptr == -1) {
+		debug("SBRK FAIL", 0);
 		return 0;
-
+	}
 	m_size(ptr) = size;
-	__noise("CREATE", ptr);
+	debug("SBRK", ptr);
 	return ptr + 1;
 }

@@ -272,9 +272,11 @@ int sys_sbrk(int increment, segoff_t *pbrk)
     segoff_t brk = current->t_endbrk;   /* always return start of old break*/
     int err;
 
-    if (increment)
-        dprintk("(%P)SBRK %d, curbreak %u, SP %u\n",
-            increment, current->t_endbrk, current->t_regs.sp);
+    if (increment) {
+        dprintk("(%P)SBRK %d\n", increment);
+        /*dprintk("(%P)SBRK %d, curbreak %u, SP %u\n",
+            increment, current->t_endbrk, current->t_regs.sp);*/
+    }
     err = verify_area(VERIFY_WRITE, pbrk, sizeof(*pbrk));
     if (err)
         return err;
@@ -296,8 +298,11 @@ int sys_fmemalloc(int paras, unsigned short *pseg)
     if (err)
         return err;
     seg = seg_alloc((segext_t)paras, SEG_FLAG_FDAT);
-    if (!seg)
+    if (!seg) {
+        dprintk("(%P)FMEMALLOC %ld FAIL\n", (unsigned long)paras << 4);
         return -ENOMEM;
+    }
+    dprintk("(%P)FMEMALLOC %ld\n", (unsigned long)paras << 4);
     seg->pid = current->pid;
     put_user(seg->base, pseg);
     return 0;

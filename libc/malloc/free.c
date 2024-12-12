@@ -18,7 +18,7 @@ free(void * ptr)
 #endif
 	top = (mem __wcnear *) sbrk(0);
 	if (chk + m_size(chk) == top) {
-		__noise("FREE brk", chk);
+		debug("BRK (releasing top chunk)", chk);
 		brk(top - m_size(chk));
 		/*
 		 * Adding this code allow free to release blocks in any order; they
@@ -49,6 +49,6 @@ free(void * ptr)
 		m_next(chk) = (union mem_cell __wcnear *)__freed_list;
 		__freed_list = chk;
 #endif
-		__noise("ADD LIST", chk);
+		debug("ADD LIST", chk);
 	}
 }
