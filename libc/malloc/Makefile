@@ -9,7 +9,7 @@ include $(TOPDIR)/libc/$(COMPILER).inc
 CFLAGS	+= -DMCHUNK=16
 #CFLAGS	+= -DMINALLOC
 #CFLAGS	+= -DLAZY_FREE
-#CFLAGS	+= -DVERBOSE
+CFLAGS	+= -DVERBOSE=1
 #CFLAGS	+= -DL_alloca
 
 # use V7 malloc for heap integrity checking
@@ -25,6 +25,7 @@ OBJS = \
 	free.o \
 	malloc.o \
 	noise.o \
+	dprintf.o \
 	realloc.o \
 	sbrk.o \
 	fmemalloc.o \
