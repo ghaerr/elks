@@ -57,14 +57,9 @@ static  union store __wcnear *alloct;   /*arena top*/
 static  union store __wcnear *allocx;   /*for benefit of realloc*/
 
 #if DEBUG
-#include <stdio.h>
 #include <string.h>
-#include <paths.h>
-#include <fcntl.h>
 #include <sys/sysctl.h>
 #define ASSERT(p)   if(!(p))malloc_assert_fail(#p);else {}
-#define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
-#define errstr(str) write(STDERR_FILENO, str, strlen(str))
 static void malloc_assert_fail(char *s);
 static int malloc_check_heap(void);
 #else
@@ -72,25 +67,11 @@ static int malloc_check_heap(void);
 #endif
 
 #if DEBUG > 1
-#define debug(...)  do { if (debug_level > 1) fprintf(dbgout, __VA_ARGS__); } while (0)
-#define debug2(...) do { if (debug_level > 2) fprintf(dbgout, __VA_ARGS__); } while (0)
+#define debug(...)  do { if (debug_level > 1) __dprintf(__VA_ARGS__); } while (0)
+#define debug2(...) do { if (debug_level > 2) __dprintf(__VA_ARGS__); } while (0)
+int __dprintf(const char *fmt, ...);
 static void malloc_show_heap(void);
 static int debug_level = DEBUG;
-static unsigned char bufdbg[64];
-static FILE  dbgout[1] =
-{
-   {
-    bufdbg,
-    bufdbg,
-    bufdbg,
-    bufdbg,
-    bufdbg + sizeof(bufdbg),
-    -1,
-    _IONBF | __MODE_WRITE | __MODE_IOTRAN,
-    { 0,0,0,0,0,0,0,0 },
-    0
-   }
-};
 #else
 #define debug(...)
 #define malloc_show_heap()
@@ -102,10 +83,6 @@ malloc(size_t nbytes)
     union store __wcnear *p, __wcnear *q;
     unsigned int nw, temp;
 
-#if DEBUG > 1
-    if (dbgout->fd < 0)
-        dbgout->fd = open(_PATH_CONSOLE, O_WRONLY);
-#endif
 #if DEBUG == 2
     sysctl(CTL_GET, "malloc.debug", &debug_level);
 #endif
@@ -277,8 +254,7 @@ realloc(void *ptr, size_t nbytes)
 #if DEBUG
 static void malloc_assert_fail(char *s)
 {
-    errmsg("malloc assert fail: ");
-    errstr(s);
+    __dprintf("malloc assert fail: %s\n", s);
     abort();
 }
 
