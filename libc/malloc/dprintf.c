@@ -4,17 +4,41 @@
 #include <paths.h>
 #include <fcntl.h>
 
+static char *uitostr(unsigned int val, int radix, int width)
+{
+    static char buf[6];
+    char *p = buf + sizeof(buf) - 1;
+    unsigned int c;
+
+    *p = '\0';
+    do {
+        c = val % radix;
+        val = val / radix;
+        if (c > 9)
+            *--p = 'a' - 10 + c;
+        else
+            *--p = '0' + c;
+    } while (val);
+    c = (radix == 16)? '0': ' ';
+    while (buf + sizeof(buf) - 1 - p < width)
+        *--p = c;
+    return p;
+}
+
 /*
  * Very tiny printf to console.
  * Supports:
- *  %u  unsigned int
- *  %p  unsigned int (displays as unsigned int!)
- *  %d  int (positive numbers only)
- *  %s  char *
+ *  %{0-9}  width
+ *  %u      unsigned decimal
+ *  %d      decimal (positive numbers only)
+ *  %p      zero-fill hexadecimal width 4
+ *  %x      hexadecimal
+ *  %s      string
  */
 int __dprintf(const char *fmt, ...)
 {
     unsigned int n;
+    int radix, width;
     char *p;
     va_list va;
     char b[80];
@@ -25,14 +49,26 @@ int __dprintf(const char *fmt, ...)
     va_start(va, fmt);
     for (n = 0; *fmt; fmt++) {
         if (*fmt == '%') {
-            switch (*++fmt) {
+            ++fmt;
+            width = 0;
+            while (*fmt >= '0' && *fmt <= '9') {
+                width = width * 10 + *fmt - '0';
+                fmt++;
+            }
+            switch (*fmt) {
             case 's':
                 p = va_arg(va, char *);
                 goto outstr;
-            case 'p':   /* displays as unsigned int! */
+            case 'p':
+                width = 4;
+            case 'x':
+                radix = 16;
+                goto convert;
             case 'd':
             case 'u':
-                p = uitoa(va_arg(va, unsigned int));
+                radix = 10;
+        convert:
+                p = uitostr(va_arg(va, unsigned int), radix, width);
         outstr:
                 while (*p && n < sizeof(b))
                     b[n++] = *p++;
