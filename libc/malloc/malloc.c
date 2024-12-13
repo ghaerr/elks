@@ -18,6 +18,10 @@
 
 #define MAX_INT ((int)(((unsigned)-1)>>1))
 
+#if VERBOSE == 1
+int __debug_level = 1;
+#endif
+
 /*
  * The chunk_list pointer is either NULL or points to a chunk in a
  * circular list of all the free blocks in memory
@@ -192,9 +196,7 @@ malloc(size_t size)
 
 #if VERBOSE == 1
    if (chunk_list == 0)
-   {
         sysctl(CTL_GET, "kern.debug", &__debug_level);
-   }
 #endif
 
    errno = 0;

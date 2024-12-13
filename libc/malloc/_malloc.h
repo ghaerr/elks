@@ -18,7 +18,7 @@ extern int __debug_level;
 #define dprintf(...)
 #define debug(str,ptr)
 #elif VERBOSE == 1
-#define dprintf             __dprintf
+#define dprintf(...)  do { if (__debug_level) __dprintf(__VA_ARGS__); } while (0)
 #define debug(str,ptr)
 #else
 #define dprintf(...)

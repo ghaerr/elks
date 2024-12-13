@@ -1,30 +1,39 @@
-#if VERBOSE
 #include <stdarg.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-int __debug_level = 1;
+#include <paths.h>
+#include <fcntl.h>
 
 /*
- * Very tiny printf to stderr.
+ * Very tiny printf to console.
  * Supports:
  *  %u  unsigned int
+ *  %p  unsigned int (displays as unsigned int!)
+ *  %d  int (positive numbers only)
+ *  %s  char *
  */
 int __dprintf(const char *fmt, ...)
 {
-    unsigned int n = 0;
+    unsigned int n;
     char *p;
     va_list va;
-    char b[128];
+    char b[80];
+    static int fd = -1;
 
-    if (__debug_level == 0)
-        return 0;
+    if (fd < 0)
+        fd = open(_PATH_CONSOLE, O_WRONLY);
     va_start(va, fmt);
-    for (; *fmt; fmt++) {
+    for (n = 0; *fmt; fmt++) {
         if (*fmt == '%') {
             switch (*++fmt) {
+            case 's':
+                p = va_arg(va, char *);
+                goto outstr;
+            case 'p':   /* displays as unsigned int! */
+            case 'd':
             case 'u':
                 p = uitoa(va_arg(va, unsigned int));
+        outstr:
                 while (*p && n < sizeof(b))
                     b[n++] = *p++;
                 break;
@@ -36,6 +45,5 @@ int __dprintf(const char *fmt, ...)
         }
     }
     va_end(va);
-    return write(2, b, n);
+    return write(fd, b, n);
 }
-#endif
