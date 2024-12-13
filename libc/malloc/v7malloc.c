@@ -113,7 +113,7 @@ malloc(size_t nbytes)
     ASSERT(allocp>=allocs && allocp<=alloct);
     ASSERT(malloc_check_heap());
 allocp = (union store __wcnear *)allocs;    /* experimental */
-    //debug("search start %p ", (unsigned)allocp);
+    //debug("search start %04x ", (unsigned)allocp);
     for(p=allocp; ; ) {
         for(temp=0; ; ) {
             if(!testbusy(p->ptr)) {
@@ -184,7 +184,7 @@ found:
         allocp->ptr = p->ptr;
     }
     p->ptr = setbusy(allocp);
-    debug("= %p\n", (unsigned)p);
+    debug("= %04x\n", (unsigned)p);
     malloc_show_heap();
     return((void *)(p+1));
 }
@@ -198,7 +198,7 @@ free(void *ptr)
 
     if (p == NULL)
         return;
-    debug("(%d)  free(%d) = %p\n", getpid(), (unsigned)(p[-1].ptr - p) << 1, p-1);
+    debug("(%d)  free(%d) = %04x\n", getpid(), (unsigned)(p[-1].ptr - p) << 1, p-1);
     ASSERT(p>clearbusy(allocs[1].ptr)&&p<=alloct);
     ASSERT(malloc_check_heap());
     allocp = --p;
@@ -223,7 +223,7 @@ realloc(void *ptr, size_t nbytes)
 
     if (p == 0)
         return malloc(nbytes);
-    debug("(%d)realloc(%p,%u) ", getpid(), (unsigned)(p-1), nbytes);
+    debug("(%d)realloc(%04x,%u) ", getpid(), (unsigned)(p-1), nbytes);
 
     ASSERT(testbusy(p[-1].ptr));
     if(testbusy(p[-1].ptr))
@@ -244,10 +244,10 @@ realloc(void *ptr, size_t nbytes)
 
     /* restore old data for special case of malloc link overwrite*/
     if(q<p && q+nw>=p) {
-        debug("allocx patch %p,%p,%d ", (unsigned)q, (unsigned)p, nw);
+        debug("allocx patch %04x,%04x,%d ", (unsigned)q, (unsigned)p, nw);
         (q+(q+nw-p))->ptr = allocx;
     }
-    debug("= %p\n", (unsigned)q);
+    debug("= %04x\n", (unsigned)q);
     return((void *)q);
 }
 
@@ -268,7 +268,8 @@ malloc_check_heap(void)
         if(p==allocp)
             x++;
     }
-    if (p != alloct) debug("%p %p %p\n", (unsigned)p, (unsigned)alloct, (unsigned)p->ptr);
+    if (p != alloct) debug("%04x %04x %04x\n",
+        (unsigned)p, (unsigned)alloct, (unsigned)p->ptr);
     ASSERT(p==alloct);
     return((x==1)|(p==allocp));
 }
@@ -286,7 +287,7 @@ malloc_show_heap(void)
     malloc_check_heap();
     for(p = (union store __wcnear *)&allocs[0]; clearbusy(p->ptr) > p; p=clearbusy(p->ptr)) {
         size = (clearbusy(p->ptr) - clearbusy(p)) * sizeof(union store);
-        debug2("%2d: %p %4u", n, (unsigned)p, size);
+        debug2("%2d: %04x %4u", n, (unsigned)p, size);
         if (!testbusy(p->ptr)) {
             debug2(" (free)");
             free += size;
@@ -299,7 +300,7 @@ malloc_show_heap(void)
         debug2("\n");
     }
     alloc += 2;
-    debug2("%2d: %p %4u (top) ", n, (unsigned)alloct, 2);
+    debug2("%2d: %04x %4u (top) ", n, (unsigned)alloct, 2);
     debug("alloc %u, free %u, total %u\n", alloc, free, alloc+free);
 }
 #endif
