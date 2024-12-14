@@ -143,5 +143,11 @@ jobs:
       - name: upload17
         uses: actions/upload-artifact@v4
         with:
+          name: hd64mbr-minix.img
+          path: image/hd64mbr-minix.img
+
+      - name: upload18
+        uses: actions/upload-artifact@v4
+        with:
           name: fd1232.img
           path: image/fd1232.img
