@@ -108,7 +108,6 @@ malloc(size_t nbytes)
         errno = ENOMEM;
         return(NULL);
     }
-
     nw = (nbytes+WORD+WORD-1)/WORD;          /* extra word for link ptr/size*/
 
     ASSERT(allocp>=allocs && allocp<=alloct);
@@ -123,7 +122,8 @@ allocp = (union store __wcnear *)allocs;    /* experimental */
                     ASSERT(q>p);
                     ASSERT(q<alloct);
                     debug("(combine %u and %u) ",
-                        (char *)p->ptr - (char *)p, (char *)q->ptr - (char *)q);
+                        (p->ptr - p) * sizeof(union store),
+                        (q->ptr - q) * sizeof(union store));
                     p->ptr = q->ptr;
                 }
                 debug2("q %04x p %04x nw %d p+nw %04x ", (unsigned)q, (unsigned)p,
@@ -156,15 +156,14 @@ allocp = (union store __wcnear *)allocs;    /* experimental */
         q = (union store __wcnear *)sbrk(0);
         if((INT)q & (sizeof(union store) - 1))
             sbrk(4 - ((INT)q & (sizeof(union store) - 1)));
-#endif
 
-        /* check possible address wrap*/
+        /* check possible address wrap - performed in kernel */
         if(q+temp+GRANULE < q) {
             debug(" (no more address space) = NULL\n");
             errno = ENOMEM;
             return(NULL);
         }
-
+#endif
         q = (union store __wcnear *)sbrk(temp*WORD);
         if((INT)q == -1) {
             debug(" (no more mem) = NULL\n");
@@ -179,7 +178,7 @@ allocp = (union store __wcnear *)allocs;    /* experimental */
             alloct->ptr = setbusy(alloct->ptr);
         alloct = q->ptr = q+temp-1;
         debug("(TOTAL %u) ",
-            2+(char *)clearbusy(alloct) - (char *)clearbusy(allocs[1].ptr));
+            2 + (clearbusy(alloct) - clearbusy(allocs[1].ptr)) * sizeof(union store));
         alloct->ptr = setbusy(allocs);
     }
 found:
