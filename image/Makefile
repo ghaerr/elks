@@ -47,7 +47,7 @@ images-minix: fd360-minix fd720-minix fd1200-minix fd1440-minix fd2880-minix
 
 images-fat: fd360-fat fd720-fat fd1200-fat fd1440-fat fd2880-fat hd32-fat hd32mbr-fat
 
-images-hd: hd32-minix hd32mbr-minix hd64-minix
+images-hd: hd32-minix hd32mbr-minix hd64-minix hd64mbr-minix
 
 fd360-minix:
 	echo CONFIG_APPS_360K=y		> Config
@@ -205,6 +205,10 @@ hd32-fat:
 hd32mbr-minix: hd32-minix
 	dd if=/dev/zero bs=512 count=63 | cat - hd32-minix.img > hd32mbr-minix.img
 	setboot hd32mbr-minix.img -P63,16,63 -Sm $(HD_MBR_BOOT)
+
+hd64mbr-minix: hd64-minix
+	dd if=/dev/zero bs=512 count=63 | cat - hd64-minix.img > hd64mbr-minix.img
+	setboot hd64mbr-minix.img -P63,16,63 -Sm $(HD_MBR_BOOT)
 
 hd32mbr-fat: hd32-fat
 	dd if=/dev/zero bs=512 count=63 | cat - hd32-fat.img > hd32mbr-fat.img
