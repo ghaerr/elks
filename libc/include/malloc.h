@@ -15,7 +15,8 @@ void  __dfree(void *);
 
 /* arena malloc (64k near/unlimited far heap) */
 void *__amalloc(size_t);
-void *__arealloc(void *, size_t);
+int   __amalloc_add_heap(char __far *start, size_t size);
+void *__arealloc(void *, size_t);       /* NYI */
 void  __afree(void *);
 
 void *calloc(size_t elm, size_t sz);

@@ -28,6 +28,9 @@ DEFAULT_MALLOC_OBJS = \
 # debug malloc (v7)
 DEBUG_MALLOC_OBJS = v7malloc.o
 
+# arena malloc
+ARENA_MALLOC_OBJS = amalloc.o
+
 # these objects work with any malloc
 OBJS = \
 	calloc.o \
@@ -37,8 +40,13 @@ OBJS = \
 	fmemfree.o \
 	dprintf.o \
 
-# make all mallocs available
+# default and debug mallocs available for ia16 and OWC
 OBJS += $(DEFAULT_MALLOC_OBJS) $(DEBUG_MALLOC_OBJS)
+
+# arena malloc for OWC only for now
+ifeq "$(COMPILER)" "watcom"
+OBJS += $(ARENA_MALLOC_OBJS)
+endif
 
 IA16OBJS = \
 	stackcheck.o \
