@@ -4,32 +4,41 @@ COMPILER ?= ia16
 LIB ?= out.a
 
 include $(TOPDIR)/libc/$(COMPILER).inc
+
+# options for default malloc (dev86) only:
 # allocations smaller than MCHUNK words (not bytes) are rounded up,
 # larger requests are allocated from heap as is.
 CFLAGS	+= -DMCHUNK=16
+CFLAGS	+= -DVERBOSE=1
 #CFLAGS	+= -DMINALLOC
 #CFLAGS	+= -DLAZY_FREE
-CFLAGS	+= -DVERBOSE=1
 #CFLAGS	+= -DL_alloca
 
-# use V7 malloc for heap integrity checking
-#OBJS = v7malloc.o calloc.o sbrk.o brk.o
-
-OBJS = \
+# default malloc (dev86)
+DEFAULT_MALLOC_OBJS = \
+	malloc.o \
+	free.o \
+	realloc.o \
+	__mini_malloc.o \
 	__alloca_alloc.o \
 	__freed_list.o \
-	__mini_malloc.o \
-	alloca.o \
-	brk.o \
-	calloc.o \
-	free.o \
-	malloc.o \
 	noise.o \
-	dprintf.o \
-	realloc.o \
+	alloca.o \
+
+# debug malloc (v7)
+DEBUG_MALLOC_OBJS = v7malloc.o
+
+# these objects work with any malloc
+OBJS = \
+	calloc.o \
+	brk.o \
 	sbrk.o \
 	fmemalloc.o \
 	fmemfree.o \
+	dprintf.o \
+
+# make all mallocs available
+OBJS += $(DEFAULT_MALLOC_OBJS) $(DEBUG_MALLOC_OBJS)
 
 IA16OBJS = \
 	stackcheck.o \

@@ -11,7 +11,7 @@
  */
 #include <unistd.h>
 #include <errno.h>
-#include <stdlib.h>         /* __MINI_MALLOC must not be defined in malloc.h include*/
+#include <stdlib.h>
 #define DEBUG       2       /* =1 heap checking asserts, =2 sysctl, =3 show heap */
 
 /*  C storage allocator
@@ -54,7 +54,7 @@ typedef union store __wcnear *NPTR;
 #define next(p)         ((p)->ptr)
 
 #define SIZE     2
-static  union store allocs[SIZE];       // FIXME OWC may allocate in addtl data segment
+static  union store allocs[SIZE];
 static  NPTR allocp;   /*search ptr*/
 static  NPTR alloct;   /*arena top*/
 static  NPTR allocx;   /*for benefit of realloc*/
