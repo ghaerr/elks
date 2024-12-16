@@ -43,8 +43,7 @@ pcrom_init(PSD psd)
 	if (rom_char_addr == rom_char_addr_temp) {
 		ROM_CHAR_HEIGHT = 16;
 		rom_char_addr = rom_char_addr_temp;
-	}
-	else {
+	} else {
 		ROM_CHAR_HEIGHT = 14;
 	}
 
