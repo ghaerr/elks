@@ -242,6 +242,10 @@ static int set_brk(segoff_t brk, int increment)
         current->t_regs.sp - current->t_endbrk,
         current->t_regs.sp, current->t_endseg, memfree, memused);***/
 
+    if ((increment > 0 && newbrk < brk) || (increment < 0 && newbrk > brk)) {
+        printk("(%P)SBRK %d FAIL, OUT OF HEAP (address wrap)\n", increment);
+        return -ENOMEM;
+    }
     if (newbrk < current->t_enddata) {
         printk("(%P)SBRK %d FAIL, BELOW HEAP\n", increment);
         return -ENOMEM;

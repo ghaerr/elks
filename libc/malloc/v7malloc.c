@@ -102,8 +102,8 @@ malloc(size_t nbytes)
     if (nbytes < MINALLOC)
         nbytes = MINALLOC;
 
-    /* check INT overflow beyond 32764 (nbytes/WORD+WORD+(WORD-1) > 0xFFFF/WORD/WORD)*/
-    if (nbytes > ((unsigned)-1)/WORD-WORD-(WORD-1)) {
+    /* check INT overflow beyond 32762 (nbytes/WORD+WORD+WORD+(WORD-1) > 0xFFFF/WORD/WORD)*/
+    if (nbytes > ((unsigned)-1)/WORD-WORD-WORD-(WORD-1)) {
         debug(" (req too big) = NULL\n");
         errno = ENOMEM;
         return(NULL);
@@ -118,12 +118,16 @@ allocp = (union store __wcnear *)allocs;    /* experimental */
         for(temp=0; ; ) {
             if(!testbusy(p->ptr)) {
                 while(!testbusy((q=p->ptr)->ptr)) {
+                    if (debug_level > 2) malloc_show_heap();
                     ASSERT(q>p);
                     ASSERT(q<alloct);
                     debug("(combine %u and %u) ",
-                        (char *)p->ptr - (char *)p, (char *)q->ptr - (char *)q);
+                        (p->ptr - p) * sizeof(union store),
+                        (q->ptr - q) * sizeof(union store));
                     p->ptr = q->ptr;
                 }
+                debug2("q %04x p %04x nw %d p+nw %04x ", (unsigned)q, (unsigned)p,
+                    nw, (unsigned)(p+nw));
                 if(q>=p+nw && p+nw>=p)
                     goto found;
             }
@@ -140,25 +144,26 @@ allocp = (union store __wcnear *)allocs;    /* experimental */
                 break;
         }
 
-        /* extend break at least BLOCK bytes at a time*/
+        /* extend break at least BLOCK bytes at a time, plus a word for top link */
         if (nw < BLOCK/WORD)
-            temp = BLOCK/WORD;
+            temp = BLOCK/WORD + 1;
         else
-            temp = nw;
+            temp = nw + 1; /* NOTE always allocates full req w/o looking at free at top */
 
+        if (debug_level > 2) malloc_show_heap();
         debug("sbrk(%d) ", temp*WORD);
-        /* ensure next sbrk returns even address*/
+#if 0   /* not required and slow, initial break always even */
         q = (union store __wcnear *)sbrk(0);
         if((INT)q & (sizeof(union store) - 1))
             sbrk(4 - ((INT)q & (sizeof(union store) - 1)));
 
-        /* check possible address wrap*/
+        /* check possible address wrap - performed in kernel */
         if(q+temp+GRANULE < q) {
             debug(" (no more address space) = NULL\n");
             errno = ENOMEM;
             return(NULL);
         }
-
+#endif
         q = (union store __wcnear *)sbrk(temp*WORD);
         if((INT)q == -1) {
             debug(" (no more mem) = NULL\n");
@@ -173,7 +178,7 @@ allocp = (union store __wcnear *)allocs;    /* experimental */
             alloct->ptr = setbusy(alloct->ptr);
         alloct = q->ptr = q+temp-1;
         debug("(TOTAL %u) ",
-            2+(char *)clearbusy(alloct) - (char *)clearbusy(allocs[1].ptr));
+            2 + (clearbusy(alloct) - clearbusy(allocs[1].ptr)) * sizeof(union store));
         alloct->ptr = setbusy(allocs);
     }
 found:
