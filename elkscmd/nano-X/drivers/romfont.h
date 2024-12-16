@@ -18,6 +18,7 @@
 /* int10 functions*/
 #define FNGETROMADDR	0x1130	/* function for address of rom character table*/
 #define GETROM8x14	0x0200	/* want address of ROM 8x14 char table*/
+#define GETROM8x16	0x0600	/* want address of ROM 8x16 char table*/
 
 /* entry points*/
 void	pcrom_init(PSD psd);
