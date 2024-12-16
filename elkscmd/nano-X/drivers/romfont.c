@@ -28,7 +28,6 @@ pcrom_init(PSD psd)
 	char *	p;
 	FARADDR rom_char_addr_temp;
 
-
 	/* use INT 10h to get address of rom character table*/
 
 	/* we first compare of 8x14 fonts address is equal

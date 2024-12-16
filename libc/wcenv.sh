@@ -6,7 +6,7 @@
 
 # change to OpenWatcom installation root it is full path to OpenWatcom location
 # if you use your own OpenWatcom build than it is located in rel subdirectory
-export WATCOM=/Users/greg/net/open-watcom-v2/rel
+export WATCOM=/usr/bin/watcom/
 
 add_path () {
 	if [[ ":$PATH:" != *":$1:"* ]]; then
@@ -15,7 +15,7 @@ add_path () {
 }
 
 #add_path "$WATCOM/binl"    # for Linux-32
-#add_path "$WATCOM/binl64"  # for Linux-64
-add_path "$WATCOM/bino64"   # for macOS
+add_path "$WATCOM/binl64"  # for Linux-64
+#add_path "$WATCOM/bino64"   # for macOS
 
 echo PATH set to $PATH
