@@ -81,7 +81,7 @@ static int debug_level = DEBUG;
 #endif
 
 void *
-malloc(size_t nbytes)
+__dmalloc(size_t nbytes)
 {
     NPTR p, q;
     unsigned int nw, temp;
@@ -211,7 +211,7 @@ found:
 /*  freeing strategy tuned for LIFO allocation
  */
 void
-free(void *ptr)
+__dfree(void *ptr)
 {
     NPTR p = (NPTR)ptr;
 
@@ -233,7 +233,7 @@ free(void *ptr)
  *  returns new location, or 0 on failure
  */
 void *
-realloc(void *ptr, size_t nbytes)
+__drealloc(void *ptr, size_t nbytes)
 {
     NPTR p = (NPTR)ptr;
     NPTR q;
@@ -241,14 +241,14 @@ realloc(void *ptr, size_t nbytes)
     unsigned int nw, onw;
 
     if (p == 0)
-        return malloc(nbytes);
+        return __dmalloc(nbytes);
     debug("(%d)realloc(%04x,%u) ", getpid(), (unsigned)(p-1), nbytes);
 
     ASSERT(testbusy(p[-1].ptr));
     if(testbusy(p[-1].ptr))
         free(p);
     onw = p[-1].ptr - p;
-    q = (NPTR)malloc(nbytes);   // FIXME and also use memcpy
+    q = (NPTR)__dmalloc(nbytes);   // FIXME and also use memcpy
     if(q==NULL || q==p)
         return((void *)q);
 
