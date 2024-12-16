@@ -18,7 +18,7 @@
 #include "romfont.h"
 
 /* local data*/
-int	ROM_CHAR_HEIGHT = 14;	/* number of scan lines in fonts in ROM */
+int	ROM_CHAR_HEIGHT = 16;	/* number of scan lines in fonts in ROM */
 FARADDR rom_char_addr;
 
 /* init PC ROM routines, must be called in graphics mode*/
@@ -28,7 +28,9 @@ pcrom_init(PSD psd)
 	char *	p;
 
 	/* use INT 10h to get address of rom character table*/
-	rom_char_addr = int10(FNGETROMADDR, GETROM8x14);
+	// rom_char_addr = int10(FNGETROMADDR, GETROM8x14);
+	rom_char_addr = int10(FNGETROMADDR, GETROM8x16);
+
 #if 0
 	/* check bios data area for actual character height,
 	 * as the returned font isn't always 14 high
@@ -38,7 +40,7 @@ pcrom_init(PSD psd)
 		ROM_CHAR_HEIGHT = MAX_ROM_HEIGHT;
 #endif
 #if ELKS
-	ROM_CHAR_HEIGHT = 14;
+	ROM_CHAR_HEIGHT = 16;
 #endif
 	p = getenv("CHARHEIGHT");
 	if(p)
