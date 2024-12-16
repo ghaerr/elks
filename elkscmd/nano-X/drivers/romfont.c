@@ -41,14 +41,11 @@ pcrom_init(PSD psd)
 	rom_char_addr = int10(FNGETROMADDR, GETROM8x14);
 	rom_char_addr_temp = int10(FNGETROMADDR, GETROM8x16);
 
-	if (rom_char_addr == rom_char_addr_temp)
-	{
-		printf("Fonts have the same address!\nFalling back to 8x16 font!\n");
+	if (rom_char_addr == rom_char_addr_temp) {
 		ROM_CHAR_HEIGHT = 16;
 		rom_char_addr = rom_char_addr_temp;
 	}
-	else
-	{
+	else {
 		ROM_CHAR_HEIGHT = 14;
 	}
 
