@@ -3,8 +3,11 @@
  *  Ported to ELKS from V7 malloc by Greg Haerr 20 Apr 2020
  *
  * Enhancements:
- * Minimum 1024 bytes (BLOCK) allocated from kernel sbrk, > 1024 allocates requested size
- * Set DEBUG=1 for heap integrity checking on each call
+ * Minimum BLOCK allocate from kernel sbrk, > BLOCK allocates requested size
+ * Much improved size and heap overflow handling with errno returns
+ * Full heap integrity checking and reporting with DEBUG options
+ * Use near heap pointers to work with OpenWatcom large model
+ * Combine free areas at heap start before allocating from free area at end of heap
  */
 #include <unistd.h>
 #include <errno.h>
@@ -33,28 +36,28 @@
 #define ALIGN int
 #define NALIGN 1
 #define BUSY 1
-#define WORD sizeof(union store)
-//#define BLOCK     514             /* min+2, amount to sbrk */
-#define BLOCK       34              /* min+2, amount to sbrk */
+//#define BLOCK     514             /* min+WORD amount to sbrk */
+#define BLOCK       34              /* min+WORD amount to sbrk */
 #define MINALLOC    14              /* minimum actual malloc size */
 #define GRANULE     0               /* sbrk granularity */
-#ifndef NULL
-#define NULL 0
-#endif
-#define testbusy(p) ((INT)(p)&BUSY)
-#define setbusy(p) (union store __wcnear *)((INT)(p)|BUSY)
-#define clearbusy(p) (union store __wcnear *)((INT)(p)&~BUSY)
 
 union store {
     union store __wcnear *ptr;
     ALIGN dummy[NALIGN];
-    int calloc; /*calloc clears an array of integers*/
 };
+typedef union store __wcnear *NPTR;
+#define WORD            sizeof(union store)
 
-static  union store allocs[2];          /*initial arena*/
-static  union store __wcnear *allocp;   /*search ptr*/
-static  union store __wcnear *alloct;   /*arena top*/
-static  union store __wcnear *allocx;   /*for benefit of realloc*/
+#define testbusy(p)           ((INT)(p)&BUSY)
+#define setbusy(p)      (NPTR)((INT)(p)|BUSY)
+#define clearbusy(p)    (NPTR)((INT)(p)&~BUSY)
+#define next(p)         ((p)->ptr)
+
+#define SIZE     2
+static  union store allocs[SIZE];       // FIXME OWC may allocate in addtl data segment
+static  NPTR allocp;   /*search ptr*/
+static  NPTR alloct;   /*arena top*/
+static  NPTR allocx;   /*for benefit of realloc*/
 
 #if DEBUG
 #include <string.h>
@@ -80,17 +83,21 @@ static int debug_level = DEBUG;
 void *
 malloc(size_t nbytes)
 {
-    union store __wcnear *p, __wcnear *q;
+    NPTR p, q;
     unsigned int nw, temp;
 
 #if DEBUG == 2
     sysctl(CTL_GET, "malloc.debug", &debug_level);
 #endif
-    if(allocs[0].ptr==0) {  /*first time*/
-        allocs[0].ptr = setbusy((union store __wcnear *)&allocs[1]);
-        allocs[1].ptr = setbusy((union store __wcnear *)&allocs[0]);
-        alloct = (union store __wcnear *)&allocs[1];
-        allocp = (union store __wcnear *)&allocs[0];
+    if (allocs[0].ptr == 0) {  /*first time*/
+        allocs[0].ptr = setbusy(&allocs[1]);
+#if SIZE > 2
+        allocs[1].ptr = (NPTR)&allocs[SIZE-2];
+        allocs[SIZE-2].ptr = setbusy(&allocs[SIZE-1]);
+#endif
+        allocs[SIZE-1].ptr = setbusy(&allocs[0]);
+        alloct = (NPTR)&allocs[SIZE-1];
+        allocp = (NPTR)&allocs[0];
     }
 
     debug("(%d)malloc(%u) ", getpid(), nbytes);
@@ -112,19 +119,19 @@ malloc(size_t nbytes)
 
     ASSERT(allocp>=allocs && allocp<=alloct);
     ASSERT(malloc_check_heap());
-allocp = (union store __wcnear *)allocs;    /* experimental */
-    //debug("search start %04x ", (unsigned)allocp);
+    /* combine free areas at heap start before allocating from free area past allocp */
+    allocp = (NPTR)allocs;
     for(p=allocp; ; ) {
         for(temp=0; ; ) {
-            if(!testbusy(p->ptr)) {
-                while(!testbusy((q=p->ptr)->ptr)) {
+            if(!testbusy(next(p))) {
+                while(!testbusy(next(q = next(p)))) {
                     if (debug_level > 2) malloc_show_heap();
                     ASSERT(q>p);
                     ASSERT(q<alloct);
                     debug("(combine %u and %u) ",
-                        (p->ptr - p) * sizeof(union store),
-                        (q->ptr - q) * sizeof(union store));
-                    p->ptr = q->ptr;
+                        (next(p) - p) * sizeof(union store),
+                        (next(q) - q) * sizeof(union store));
+                    next(p) = next(q);
                 }
                 debug2("q %04x p %04x nw %d p+nw %04x ", (unsigned)q, (unsigned)p,
                     nw, (unsigned)(p+nw));
@@ -132,17 +139,22 @@ allocp = (union store __wcnear *)allocs;    /* experimental */
                     goto found;
             }
             q = p;
-            p = clearbusy(p->ptr);
+            p = clearbusy(next(p));
             if(p>q) {
                 ASSERT(p<=alloct);
-            } else if(q!=alloct || p!=allocs) {
-                ASSERT(q==alloct&&p==allocs);
+            } else if(q!=alloct || p!=(NPTR)allocs) {
+                ASSERT(q==alloct&&p==(NPTR)allocs);
                 debug(" (corrupt) = NULL\n");
                 errno = ENOMEM;
                 return(NULL);
             } else if(++temp>1)
                 break;
         }
+
+#if SIZE > 2
+        debug("Out of fixed heap\n");
+        return NULL;
+#else
 
         /* extend break at least BLOCK bytes at a time, plus a word for top link */
         if (nw < BLOCK/WORD)
@@ -153,7 +165,7 @@ allocp = (union store __wcnear *)allocs;    /* experimental */
         if (debug_level > 2) malloc_show_heap();
         debug("sbrk(%d) ", temp*WORD);
 #if 0   /* not required and slow, initial break always even */
-        q = (union store __wcnear *)sbrk(0);
+        q = (NPTR)sbrk(0);
         if((INT)q & (sizeof(union store) - 1))
             sbrk(4 - ((INT)q & (sizeof(union store) - 1)));
 
@@ -164,7 +176,7 @@ allocp = (union store __wcnear *)allocs;    /* experimental */
             return(NULL);
         }
 #endif
-        q = (union store __wcnear *)sbrk(temp*WORD);
+        q = (NPTR)sbrk(temp*WORD);
         if((INT)q == -1) {
             debug(" (no more mem) = NULL\n");
             malloc_show_heap();
@@ -173,22 +185,24 @@ allocp = (union store __wcnear *)allocs;    /* experimental */
         }
         ASSERT(!((INT)q & 1));
         ASSERT(q>alloct);
-        alloct->ptr = q;
+        next(alloct) = q;
         if(q!=alloct+1)         /* mark any gap as permanently allocated*/
-            alloct->ptr = setbusy(alloct->ptr);
-        alloct = q->ptr = q+temp-1;
+            next(alloct) = setbusy(next(alloct));
+        alloct = next(q) = q+temp-1;
         debug("(TOTAL %u) ",
-            2 + (clearbusy(alloct) - clearbusy(allocs[1].ptr)) * sizeof(union store));
-        alloct->ptr = setbusy(allocs);
+            sizeof(union store) +
+            (clearbusy(alloct) - clearbusy(allocs[SIZE-1].ptr)) * sizeof(union store));
+        next(alloct) = setbusy(allocs);
+#endif
     }
 found:
     allocp = p + nw;
     ASSERT(allocp<=alloct);
     if(q>allocp) {
-        allocx = allocp->ptr;   /* save contents in case of realloc data overwrite*/
-        allocp->ptr = p->ptr;
+        allocx = next(allocp);   /* save contents in case of realloc data overwrite*/
+        next(allocp) = next(p);
     }
-    p->ptr = setbusy(allocp);
+    next(p) = setbusy(allocp);
     debug("= %04x\n", (unsigned)p);
     malloc_show_heap();
     return((void *)(p+1));
@@ -199,17 +213,17 @@ found:
 void
 free(void *ptr)
 {
-    union store __wcnear *p = (union store __wcnear *)ptr;
+    NPTR p = (NPTR)ptr;
 
     if (p == NULL)
         return;
     debug("(%d)  free(%d) = %04x\n", getpid(), (unsigned)(p[-1].ptr - p) << 1, p-1);
-    ASSERT(p>clearbusy(allocs[1].ptr)&&p<=alloct);
+    ASSERT(p>clearbusy(allocs[SIZE-1].ptr)&&p<=alloct);
     ASSERT(malloc_check_heap());
     allocp = --p;
-    ASSERT(testbusy(p->ptr));
-    p->ptr = clearbusy(p->ptr);
-    ASSERT(p->ptr > allocp && p->ptr <= alloct);
+    ASSERT(testbusy(next(p)));
+    next(p) = clearbusy(next(p));
+    ASSERT(next(p) > allocp && next(p) <= alloct);
     malloc_show_heap();
 }
 
@@ -221,9 +235,9 @@ free(void *ptr)
 void *
 realloc(void *ptr, size_t nbytes)
 {
-    union store __wcnear *p = (union store __wcnear *)ptr;
-    union store __wcnear *q;
-    union store __wcnear *s, __wcnear *t;
+    NPTR p = (NPTR)ptr;
+    NPTR q;
+    NPTR s, t;
     unsigned int nw, onw;
 
     if (p == 0)
@@ -234,7 +248,7 @@ realloc(void *ptr, size_t nbytes)
     if(testbusy(p[-1].ptr))
         free(p);
     onw = p[-1].ptr - p;
-    q = (union store __wcnear *)malloc(nbytes);
+    q = (NPTR)malloc(nbytes);   // FIXME and also use memcpy
     if(q==NULL || q==p)
         return((void *)q);
 
@@ -250,7 +264,7 @@ realloc(void *ptr, size_t nbytes)
     /* restore old data for special case of malloc link overwrite*/
     if(q<p && q+nw>=p) {
         debug("allocx patch %04x,%04x,%d ", (unsigned)q, (unsigned)p, nw);
-        (q+(q+nw-p))->ptr = allocx;
+        next(q+(q+nw-p)) = allocx;
     }
     debug("= %04x\n", (unsigned)q);
     return((void *)q);
@@ -266,15 +280,15 @@ static void malloc_assert_fail(char *s)
 static int
 malloc_check_heap(void)
 {
-    union store __wcnear *p;
+    NPTR p;
     int x = 0;
 
-    for(p=(union store __wcnear *)&allocs[0]; clearbusy(p->ptr) > p; p=clearbusy(p->ptr)) {
+    for(p=(NPTR)&allocs[0]; clearbusy(next(p)) > p; p=clearbusy(next(p))) {
         if(p==allocp)
             x++;
     }
     if (p != alloct) debug("%04x %04x %04x\n",
-        (unsigned)p, (unsigned)alloct, (unsigned)p->ptr);
+        (unsigned)p, (unsigned)alloct, (unsigned)next(p));
     ASSERT(p==alloct);
     return((x==1)|(p==allocp));
 }
@@ -284,27 +298,30 @@ malloc_check_heap(void)
 static void
 malloc_show_heap(void)
 {
-    union store __wcnear *p;
+    NPTR p;
     int n = 1;
     unsigned int size, alloc = 0, free = 0;
 
     debug2("--- heap size ---\n");
     malloc_check_heap();
-    for(p = (union store __wcnear *)&allocs[0]; clearbusy(p->ptr) > p; p=clearbusy(p->ptr)) {
-        size = (clearbusy(p->ptr) - clearbusy(p)) * sizeof(union store);
+    for(p = (NPTR)&allocs[0]; clearbusy(next(p)) > p; p=clearbusy(next(p))) {
+        size = (clearbusy(next(p)) - clearbusy(p)) * sizeof(union store);
         debug2("%2d: %04x %4u", n, (unsigned)p, size);
-        if (!testbusy(p->ptr)) {
+        if (!testbusy(next(p))) {
             debug2(" (free)");
             free += size;
         } else {
+#if SIZE == 2
             if (n < 3)      /* don't count ptr to first sbrk()*/
                 debug2(" (skipped)");
-            else alloc += size;
+            else
+#endif
+                alloc += size;
         }
         n++;
         debug2("\n");
     }
-    alloc += 2;
+    alloc += sizeof(union store);
     debug2("%2d: %04x %4u (top) ", n, (unsigned)alloct, 2);
     debug("alloc %u, free %u, total %u\n", alloc, free, alloc+free);
 }
