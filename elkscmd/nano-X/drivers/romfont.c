@@ -30,8 +30,8 @@ pcrom_init(PSD psd)
 
 	/* use INT 10h to get address of rom character table*/
 
-	/* we first compare of 8x14 fonts address is equal
-	 * to the 8x16 fonts address. If yes, it means
+	/* we first compare if 8x14 font address is equal
+	 * to the 8x16 font address. If yes, it means
 	 * the 8x14 are not present, so we fallback to
 	 * 8x16 fonts. Source:
 	 * https://www.bttr-software.de/products/fix8x14/
