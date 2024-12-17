@@ -238,7 +238,8 @@ __afree(void *ptr)
 
     if (p == NULL)
         return;
-    debug("(%d)  free(%d) = %04x\n", getpid(), (unsigned)(p[-1].ptr - p) << 1, p-1);
+    debug("(%d)  free(%d) = %04x\n", getpid(),
+        (unsigned)(next(p-1) - p) * sizeof(union store), p-1);
     ASSERT(FP_SEG(ptr)==allocseg);
     ASSERT(p>clearbusy(allocs[allocsize-1].ptr)&&p<=alloct);
     ASSERT(malloc_check_heap());
@@ -253,7 +254,7 @@ size_t __amalloc_usable_size(void *ptr)
 {
     NPTR p = (NPTR)ptr;
 
-    if (p == NULL)
+    if (p == NULL)          /* NOTE this allows fmemalloc pointers to return 0 here */
         return 0;
     ASSERT(FP_SEG(ptr)==allocseg);
     ASSERT(p>clearbusy(allocs[allocsize-1].ptr)&&p<=alloct);
@@ -280,10 +281,10 @@ __arealloc(void *ptr, size_t nbytes)
         return __amalloc(nbytes);
     debug("(%d)realloc(%04x,%u) ", getpid(), (unsigned)(p-1), nbytes);
 
-    ASSERT(testbusy(p[-1].ptr));
-    if(testbusy(p[-1].ptr))
-        free(p);
-    onw = p[-1].ptr - p;
+    ASSERT(testbusy(next(p-1)));
+    if(testbusy(next(p-1)))
+        __afree(p);
+    onw = next(p-1) - p;
     q = (NPTR)__amalloc(nbytes);   // FIXME and also use memcpy
     if(q==NULL || q==p)
         return((void *)q);

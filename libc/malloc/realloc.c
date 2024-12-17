@@ -1,7 +1,6 @@
 #include <malloc.h>
 #include <string.h>
 
-/* this realloc usable with all malloc allocators */
 void *realloc(void *ptr, size_t size)
 {
 	void *nptr;
@@ -11,15 +10,17 @@ void *realloc(void *ptr, size_t size)
 		return malloc(size);
 
 	osize = malloc_usable_size(ptr);
-#if LATER
+#if 0
 	if (size <= osize)
-		return ptr;
+		return ptr;         /* don't reallocate, do nothing */
+#else
+	if (size <= osize)
+        osize = size;       /* copy less bytes in memcpy below */
 #endif
 
 	nptr = malloc(size);
 	if (nptr == 0)
 		return 0;
-
 	memcpy(nptr, ptr, osize);
 	free(ptr);
 
