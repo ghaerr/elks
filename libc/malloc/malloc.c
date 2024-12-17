@@ -196,7 +196,7 @@ malloc(size_t size)
 
 #if VERBOSE == 1
    if (chunk_list == 0)
-        sysctl(CTL_GET, "kern.debug", &__debug_level);
+        sysctl(CTL_GET, "malloc.debug", &__debug_level);
 #endif
 
    errno = 0;
