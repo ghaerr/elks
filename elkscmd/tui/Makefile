@@ -13,7 +13,7 @@ PRGS = fm matrix cons ttyinfo sl ttyclock ttypong ttytetris invaders
 #PRGS_HOST =
 
 TUILIB = tty.o runes.o unikey.o
-MALLOC=../../libc/malloc/v7malloc.o
+MALLOC=v7stub.o
 
 all: $(PRGS) $(PRGS_HOST)
 
