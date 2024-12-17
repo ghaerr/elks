@@ -9,7 +9,7 @@ include $(TOPDIR)/libc/$(COMPILER).inc
 # allocations smaller than MCHUNK words (not bytes) are rounded up,
 # larger requests are allocated from heap as is.
 CFLAGS	+= -DMCHUNK=16
-CFLAGS	+= -DVERBOSE=1
+#CFLAGS	+= -DVERBOSE=1
 #CFLAGS	+= -DMINALLOC
 #CFLAGS	+= -DLAZY_FREE
 #CFLAGS	+= -DL_alloca
