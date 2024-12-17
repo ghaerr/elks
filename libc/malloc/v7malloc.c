@@ -217,7 +217,8 @@ __dfree(void *ptr)
 
     if (p == NULL)
         return;
-    debug("(%d)  free(%d) = %04x\n", getpid(), (unsigned)(p[-1].ptr - p) << 1, p-1);
+    debug("(%d)  free(%d) = %04x\n", getpid(),
+        (unsigned)(next(p-1) - p) * sizeof(union store), p-1);
     ASSERT(p>clearbusy(allocs[SIZE-1].ptr)&&p<=alloct);
     ASSERT(malloc_check_heap());
     allocp = --p;
@@ -256,10 +257,10 @@ __drealloc(void *ptr, size_t nbytes)
         return __dmalloc(nbytes);
     debug("(%d)realloc(%04x,%u) ", getpid(), (unsigned)(p-1), nbytes);
 
-    ASSERT(testbusy(p[-1].ptr));
-    if(testbusy(p[-1].ptr))
-        free(p);
-    onw = p[-1].ptr - p;
+    ASSERT(testbusy(next(p-1)));
+    if(testbusy(next(p-1)))
+        __dfree(p);
+    onw = next(p-1) - p;
     q = (NPTR)__dmalloc(nbytes);   // FIXME and also use memcpy
     if(q==NULL || q==p)
         return((void *)q);
