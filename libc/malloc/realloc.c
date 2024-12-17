@@ -1,26 +1,22 @@
 #include <malloc.h>
 #include <string.h>
 
-#include "_malloc.h"
-
-#undef malloc
-
-void *
-realloc(void *ptr, size_t size)
+/* this realloc usable with all malloc allocators */
+void *realloc(void *ptr, size_t size)
 {
 	void *nptr;
-	unsigned int osize;
+    size_t osize;
 
 	if (ptr == 0)
 		return malloc(size);
 
-	osize = (m_size(((mem *) ptr) - 1) - 1) * sizeof(mem);
-
+	osize = malloc_usable_size(ptr);
+#if LATER
 	if (size <= osize)
 		return ptr;
+#endif
 
 	nptr = malloc(size);
-
 	if (nptr == 0)
 		return 0;
 

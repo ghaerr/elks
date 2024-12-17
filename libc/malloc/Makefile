@@ -18,7 +18,6 @@ CFLAGS	+= -DMCHUNK=16
 DEFAULT_MALLOC_OBJS = \
 	malloc.o \
 	free.o \
-	realloc.o \
 	__mini_malloc.o \
 	__alloca_alloc.o \
 	__freed_list.o \
@@ -33,6 +32,7 @@ ARENA_MALLOC_OBJS = amalloc.o
 
 # these objects work with any malloc
 OBJS = \
+	realloc.o \
 	calloc.o \
 	brk.o \
 	sbrk.o \

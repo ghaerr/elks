@@ -109,8 +109,8 @@ __dmalloc(size_t nbytes)
     if (nbytes < MINALLOC)
         nbytes = MINALLOC;
 
-    /* check INT overflow beyond 32762 (nbytes/WORD+WORD+WORD+(WORD-1) > 0xFFFF/WORD/WORD)*/
-    if (nbytes > ((unsigned)-1)/WORD-WORD-WORD-(WORD-1)) {
+    /* check INT overflow beyond 32762 (nbytes/WORD+2*WORD+(WORD-1) > 0xFFFF/WORD/WORD) */
+    if (nbytes > ((unsigned)-1)/WORD-2*WORD-(WORD-1)) {
         debug(" (req too big) = NULL\n");
         errno = ENOMEM;
         return(NULL);
@@ -133,8 +133,8 @@ __dmalloc(size_t nbytes)
                         (next(q) - q) * sizeof(union store));
                     next(p) = next(q);
                 }
-                debug2("q %04x p %04x nw %d p+nw %04x ", (unsigned)q, (unsigned)p,
-                    nw, (unsigned)(p+nw));
+                /*debug2("q %04x p %04x nw %d p+nw %04x ", (unsigned)q, (unsigned)p,
+                    nw, (unsigned)(p+nw));*/
                 if(q>=p+nw && p+nw>=p)
                     goto found;
             }
@@ -225,6 +225,18 @@ __dfree(void *ptr)
     next(p) = clearbusy(next(p));
     ASSERT(next(p) > allocp && next(p) <= alloct);
     malloc_show_heap();
+}
+
+size_t __dmalloc_usable_size(void *ptr)
+{
+    NPTR p = (NPTR)ptr;
+
+    if (p == NULL)
+        return 0;
+    ASSERT(p>clearbusy(allocs[SIZE-1].ptr)&&p<=alloct);
+    --p;
+    ASSERT(testbusy(next(p)));
+    return (clearbusy(next(p)) - clearbusy(p)) * sizeof(union store);
 }
 
 /*  realloc(p, nbytes) reallocates a block obtained from malloc()

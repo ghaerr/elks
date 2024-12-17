@@ -249,6 +249,19 @@ __afree(void *ptr)
     malloc_show_heap();
 }
 
+size_t __amalloc_usable_size(void *ptr)
+{
+    NPTR p = (NPTR)ptr;
+
+    if (p == NULL)
+        return 0;
+    ASSERT(FP_SEG(ptr)==allocseg);
+    ASSERT(p>clearbusy(allocs[allocsize-1].ptr)&&p<=alloct);
+    --p;
+    ASSERT(testbusy(next(p)));
+    return (clearbusy(next(p)) - clearbusy(p)) * sizeof(union store);
+}
+
 #if LATER
 /*  realloc(p, nbytes) reallocates a block obtained from malloc()
  *  and freed since last call of malloc()
