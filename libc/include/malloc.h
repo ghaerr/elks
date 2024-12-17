@@ -4,27 +4,32 @@
 #include <sys/types.h>
 
 /* default malloc (dev86) */
-void *malloc(size_t);
-void *realloc(void *, size_t);
-void  free(void *);
+void  *malloc(size_t);
+void   free(void *);
+size_t malloc_usable_size(void *);
 
 /* debug malloc (v7 malloc) */
-void *__dmalloc(size_t);
-void *__drealloc(void *, size_t);
-void  __dfree(void *);
+void  *__dmalloc(size_t);
+void  *__drealloc(void *, size_t);
+void   __dfree(void *);
+size_t __dmalloc_usable_size(void *);
 
 /* arena malloc (64k near/unlimited far heap) */
-void *__amalloc(size_t);
-int   __amalloc_add_heap(char __far *start, size_t size);
-void *__arealloc(void *, size_t);       /* NYI */
-void  __afree(void *);
+void  *__amalloc(size_t);
+int    __amalloc_add_heap(char __far *start, size_t size);
+void  *__arealloc(void *, size_t);       /* NYI */
+void   __afree(void *);
+size_t __dmalloc_usable_size(void *);
 
-void *calloc(size_t elm, size_t sz);
+/* usable with all mallocs */
+void  *realloc(void *, size_t);
+void  *calloc(size_t elm, size_t sz);
 
 /* alloc/free from main memory */
 void __far *fmemalloc(unsigned long size);
-int fmemfree(void __far *ptr);
-int _fmemalloc(int paras, unsigned short *pseg);
-int _fmemfree(unsigned short seg);
+int         fmemfree(void __far *ptr);
+
+int        _fmemalloc(int paras, unsigned short *pseg); /* syscall */
+int        _fmemfree(unsigned short seg);               /* syscall */
 
 #endif

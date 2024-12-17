@@ -188,6 +188,13 @@ __search_chunk(unsigned int mem_size)
    return p1;
 }
 
+size_t malloc_usable_size(void *ptr)
+{
+    if (ptr == 0)
+        return 0;
+    return (m_size(((mem *) ptr) - 1) - 1) * sizeof(mem);
+}
+
 void *
 malloc(size_t size)
 {
