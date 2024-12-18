@@ -208,7 +208,7 @@ hd32mbr-minix: hd32-minix
 
 hd64mbr-minix: hd64-minix
 	dd if=/dev/zero bs=512 count=63 | cat - hd64-minix.img > hd64mbr-minix.img
-	setboot hd64mbr-minix.img -P63,16,63 -Sm $(HD_MBR_BOOT)
+	setboot hd64mbr-minix.img -P63,16,127 -Sm $(HD_MBR_BOOT)
 
 hd32mbr-fat: hd32-fat
 	dd if=/dev/zero bs=512 count=63 | cat - hd32-fat.img > hd32mbr-fat.img

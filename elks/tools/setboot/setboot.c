@@ -77,7 +77,7 @@ static void writePartition(unsigned char *buf)
 	p->head = 1;
 	p->sector = 1;				/* next cylinder after MBR, standard*/
 	p->cyl = 0;
-	p->start_sect = NumTracks;	/* zero-relative start sector here*/
+	p->start_sect = SecPerTrk;	/* zero-relative start sector here*/
 	nr_sects -= SecPerTrk;
 #else
 	p->head = 0;
