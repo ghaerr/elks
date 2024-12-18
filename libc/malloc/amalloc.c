@@ -92,9 +92,7 @@ static int debug_level = DEBUG;
 /* add size bytes to arena malloc heap, must be done before first malloc */
 int __amalloc_add_heap(char __far *start, size_t size)
 {
-    if (size < 16)
-        return 0;
-
+    ASSERT(start != NULL && size >= 16);
     allocs = (FPTR)start;
     allocseg = FP_SEG(start);
     allocsize = size / sizeof(union store);
@@ -254,7 +252,7 @@ size_t __amalloc_usable_size(void *ptr)
 {
     NPTR p = (NPTR)ptr;
 
-    if (p == NULL)          /* NOTE this allows fmemalloc pointers to return 0 here */
+    if (ptr == NULL)
         return 0;
     ASSERT(FP_SEG(ptr)==allocseg);
     ASSERT(p>clearbusy(allocs[allocsize-1].ptr)&&p<=alloct);
