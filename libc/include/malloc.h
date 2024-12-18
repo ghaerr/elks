@@ -21,6 +21,8 @@ int     __amalloc_add_heap(char __far *start, size_t size);
 void   *__arealloc(void *, size_t);         /* not implemented */
 void    __afree(void *);
 size_t  __amalloc_usable_size(void *);
+extern unsigned int malloc_arena_size;
+extern unsigned int malloc_arena_thresh;
 
 /* usable with all mallocs */
 void   *calloc(size_t elm, size_t sz);
@@ -32,7 +34,7 @@ int         fmemfree(void __far *ptr);
 int        _fmemalloc(int paras, unsigned short *pseg); /* syscall */
 int        _fmemfree(unsigned short seg);               /* syscall */
 
-extern unsigned int malloc_arena_size;
-extern unsigned int malloc_arena_thresh;
+/* debug output */
+int __dprintf(const char *fmt, ...);
 
 #endif

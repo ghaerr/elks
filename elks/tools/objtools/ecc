@@ -1,6 +1,6 @@
 # ecc - ELKS cc compiler wrapper for C86 (8086-toolchain)
 #
-# This script runs cpp86, c86, nasm and ld86 on the input file.
+# This script runs cpp86, c86, nasm86 and ld86 on the input file.
 # The input file must be specified without its .c extension for now,
 # and the script must be run in the 8086-toolchain/ directory,
 # as it also builds the libc86.a C86 library.
@@ -91,8 +91,8 @@ echo c86 $CFLAGS $1.c $1.asm
 c86 $CFLAGS $1.i $1.asm
 
 # assembler
-echo nasm $ASFLAGS -l $1.lst -o $1.o $1.asm
-nasm $ASFLAGS -l $1.lst -o $1.o $1.asm
+echo nasm86 $ASFLAGS -l $1.lst -o $1.o $1.asm
+nasm86 $ASFLAGS -l $1.lst -o $1.o $1.asm
 objdump86 -s $1.o
 
 # link executable
