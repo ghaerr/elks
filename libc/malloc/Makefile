@@ -37,7 +37,6 @@ OBJS = \
 	brk.o \
 	sbrk.o \
 	fmemalloc.o \
-	fmemfree.o \
 	dprintf.o \
 
 # default and debug mallocs available for ia16 and OWC

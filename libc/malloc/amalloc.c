@@ -9,7 +9,7 @@
  * Enhancements:
  * Minimum BLOCK allocate from kernel sbrk, > BLOCK allocates requested size
  * Much improved size and heap overflow handling with errno returns
- * Full heap integrity checking and reporting with DEBUG options
+ * Full heap integrity checking and reporting with debug options
  * Use near heap pointers to work with OpenWatcom large model
  * Combine free areas at heap start before allocating from free area at end of heap
  */

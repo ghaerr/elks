@@ -59,7 +59,10 @@ int __dprintf(const char *fmt, ...)
                 width = width * 10 + *fmt - '0';
                 fmt++;
             }
+        again:
             switch (*fmt) {
+            case 'l':
+                fmt++; goto again;
             case 's':
                 p = va_arg(va, char *);
                 goto outstr;
