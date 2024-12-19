@@ -17,7 +17,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/sysctl.h>
-#define DEBUG       2       /* =1 heap checking asserts, =2 sysctl, =3 show heap */
+#define DEBUG       1       /* =1 use sysctl, =2 debug output, =3 show heap */
 
 /*  C storage allocator
  *  circular first-fit strategy
@@ -41,7 +41,7 @@
 #define ALIGN int
 #define NALIGN 1
 #define BUSY 1
-#define BLOCK       34              /* min+WORD amount to sbrk */
+#define BLOCK       34              /* min+WORD amount to sbrk (was 514) */
 #define MINALLOC    14              /* minimum actual malloc size */
 #define GRANULE     0               /* sbrk granularity */
 
@@ -71,21 +71,17 @@ static  NPTR alloct;   /*arena top*/
 static  NPTR allocx;   /*for benefit of realloc*/
 
 #if DEBUG
-#define ASSERT(p)   if(!(p))malloc_assert_fail(#p);else {}
-static void malloc_assert_fail(char *s);
+#define ASSERT(p)   if(!(p))malloc_assert_fail(#p,__LINE__);else {}
+#define debug(...)  do { if (debug_level > 1) __dprintf(__VA_ARGS__); } while (0)
+#define debug2(...) do { if (debug_level > 2) __dprintf(__VA_ARGS__); } while (0)
+static int debug_level = DEBUG;
+static void malloc_assert_fail(char *s, int);
+static void malloc_show_heap(void);
 static int malloc_check_heap(void);
 #else
 #define ASSERT(p)
-#endif
-
-#if DEBUG > 1
-#define debug(...)  do { if (debug_level > 1) __dprintf(__VA_ARGS__); } while (0)
-#define debug2(...) do { if (debug_level > 2) __dprintf(__VA_ARGS__); } while (0)
-int __dprintf(const char *fmt, ...);
-static void malloc_show_heap(void);
-static int debug_level = DEBUG;
-#else
 #define debug(...)
+#define debug2(...)
 #define malloc_show_heap()
 #endif
 
@@ -96,7 +92,7 @@ int __amalloc_add_heap(char __far *start, size_t size)
     allocs = (FPTR)start;
     allocseg = FP_SEG(start);
     allocsize = size / sizeof(union store);
-    debug("Adding %04x %04x size %d DS %04x %04x\n", start, size, &size);
+    debug("Adding SEG %04x size %d DS %04x\n", FP_SEG(start), size, FP_SEG(&size));
 
     allocs[0].ptr = setbusy(&allocs[1]);
     allocs[1].ptr = (NPTR)&allocs[allocsize-2];
@@ -113,11 +109,11 @@ __amalloc(size_t nbytes)
     NPTR p, q;
     unsigned int nw, temp;
 
-#if DEBUG == 2
+#if DEBUG == 1
     sysctl(CTL_GET, "malloc.debug", &debug_level);
 #endif
 
-    debug("(%d)malloc(%u) ", getpid(), nbytes);
+    debug("(%d)malloc(%5u) ", getpid(), nbytes);
     if (!allocs)
         return NULL;
     errno = 0;
@@ -147,7 +143,7 @@ __amalloc(size_t nbytes)
                     if (debug_level > 2) malloc_show_heap();
                     ASSERT(q>p);
                     ASSERT(q<alloct);
-                    debug("(combine %u and %u) ",
+                    debug2("(combine %u and %u) ",
                         (next(p) - p) * sizeof(union store),
                         (next(q) - q) * sizeof(union store));
                     next(p) = next(q);
@@ -182,7 +178,7 @@ __amalloc(size_t nbytes)
             temp = nw + 1; /* NOTE always allocates full req w/o looking at free at top */
 
         if (debug_level > 2) malloc_show_heap();
-        debug("sbrk(%d) ", temp*WORD);
+        debug2("sbrk(%d) ", temp*WORD);
 #if 0   /* not required and slow, initial break always even */
         q = (NPTR)sbrk(0);
         if((INT)q & (sizeof(union store) - 1))
@@ -208,7 +204,7 @@ __amalloc(size_t nbytes)
         if(q!=alloct+1)         /* mark any gap as permanently allocated*/
             next(alloct) = setbusy(next(alloct));
         alloct = next(q) = q+temp-1;
-        debug("(TOTAL %u) ",
+        debug2("(TOTAL %u) ",
             sizeof(union store) +
             (clearbusy(alloct) - clearbusy(allocs[allocsize-1].ptr)) * sizeof(union store));
         next(alloct) = setbusy(allocs);
@@ -222,7 +218,7 @@ found:
         next(allocp) = next(p);
     }
     next(p) = setbusy(allocp);
-    debug("= %04x\n", (unsigned)p);
+    debug2("= %04x\n", (unsigned)p);
     malloc_show_heap();
     return MK_FPTR(allocseg, p+1);
 }
@@ -236,8 +232,8 @@ __afree(void *ptr)
 
     if (p == NULL)
         return;
-    debug("(%d)  free(%d) = %04x\n", getpid(),
-        (unsigned)(next(p-1) - p) * sizeof(union store), p-1);
+    debug("(%d)  free(%5u) ", getpid(), (unsigned)(next(p-1) - p) * sizeof(union store));
+    debug2("= %04x\n", p-1);
     ASSERT(FP_SEG(ptr)==allocseg);
     ASSERT(p>clearbusy(allocs[allocsize-1].ptr)&&p<=alloct);
     ASSERT(malloc_check_heap());
@@ -307,9 +303,9 @@ __arealloc(void *ptr, size_t nbytes)
 #endif
 
 #if DEBUG
-static void malloc_assert_fail(char *s)
+static void malloc_assert_fail(char *s, int line)
 {
-    __dprintf("malloc assert fail: %s\n", s);
+    __dprintf("amalloc assert fail: %s (line %d)\n", s, line);
     abort();
 }
 
@@ -330,15 +326,14 @@ malloc_check_heap(void)
     ASSERT(p==alloct);
     return((x==1)|(p==allocp));
 }
-#endif
 
-#if DEBUG > 1
 static void
 malloc_show_heap(void)
 {
     NPTR p;
     int n = 1;
     unsigned int size, alloc = 0, free = 0;
+    static unsigned int maxalloc;
 
     debug2("--- heap size ---\n");
     malloc_check_heap();
@@ -357,7 +352,8 @@ malloc_show_heap(void)
         debug2("\n");
     }
     alloc += sizeof(union store);
+    if (alloc > maxalloc) maxalloc = alloc;
     debug2("%2d: %04x %4u (top) ", n, (unsigned)alloct, 2);
-    debug("alloc %u, free %u, total %u\n", alloc, free, alloc+free);
+    debug("alloc %5u, free %5u, arena %5u/%5u\n", alloc, free, maxalloc, alloc+free);
 }
 #endif
