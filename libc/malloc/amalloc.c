@@ -70,11 +70,11 @@ static  NPTR allocp;   /*search ptr*/
 static  NPTR alloct;   /*arena top*/
 static  NPTR allocx;   /*for benefit of realloc*/
 
+static int debug_level = DEBUG;
 #if DEBUG
 #define ASSERT(p)   if(!(p))malloc_assert_fail(#p,__LINE__);else {}
 #define debug(...)  do { if (debug_level > 1) __dprintf(__VA_ARGS__); } while (0)
 #define debug2(...) do { if (debug_level > 2) __dprintf(__VA_ARGS__); } while (0)
-static int debug_level = DEBUG;
 static void malloc_assert_fail(char *s, int);
 static void malloc_show_heap(void);
 static int malloc_check_heap(void);
@@ -335,6 +335,7 @@ malloc_show_heap(void)
     unsigned int size, alloc = 0, free = 0;
     static unsigned int maxalloc;
 
+    if (!debug_level) return;
     debug2("--- heap size ---\n");
     malloc_check_heap();
     for(p = (NPTR)&allocs[0]; clearbusy(next(p)) > p; p=clearbusy(next(p))) {

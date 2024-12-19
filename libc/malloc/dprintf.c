@@ -44,8 +44,12 @@ int __dprintf(const char *fmt, ...)
     char b[80];
     static int fd = -1;
 
-    if (fd < 0)
-        fd = open(_PATH_CONSOLE, O_WRONLY);
+    if (fd < 0) {
+        if (!isatty(STDERR_FILENO))
+            fd = STDERR_FILENO;
+        else
+            fd = open(_PATH_CONSOLE, O_WRONLY);
+    }
     va_start(va, fmt);
     for (n = 0; *fmt; fmt++) {
         if (*fmt == '%') {
