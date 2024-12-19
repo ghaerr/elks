@@ -36,7 +36,7 @@ void __far *fmemalloc(unsigned long size)
 #if DEBUG
     total += size;
     if (size > maxsize) maxsize = size;
-    debug("total %lu, maxsize %lu\n", (unsigned)total, (unsigned)maxsize);
+    debug("total %lu, maxsize %lu\n", total, maxsize);
 #endif
     return MK_FP(seg, 0);
 }
