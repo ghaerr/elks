@@ -30,7 +30,7 @@ all:
 	$(MAKE) -C system -f out.mk COMPILER=c86 LIB=out.lib
 	for DIR in $(SUBDIRS); do $(MAKE) -C $$DIR COMPILER=c86 LIB=out.lib || exit 1; done
 	$(AR) $(ARFLAGS_SUB) libc86.a */*.lib
-	cp libc86.a  $(TOPDIR)/elkscmd/rootfs_template/root
+	cp libc86.a $(TOPDIR)/elkscmd/rootfs_template/root
 
 .PHONY: clean
 clean:
