@@ -1,5 +1,5 @@
 /***************************************************************************
- * FILE: stdint.h/cstdint (Various integer type definitions)
+ * FILE: stdint.h (Various integer type definitions)
  *
  * =========================================================================
  *
@@ -14,48 +14,11 @@
  *
  * Description: This header is part of the C99/C++ standard library. It
  *              describes a number of useful integer types.
+ *
+ * 26 Dec 24 Greg Haerr ported from OWC for C86 compiler
  ***************************************************************************/
 #ifndef _STDINT_H_INCLUDED
 #define _STDINT_H_INCLUDED
-
-#ifndef _ENABLE_AUTODEPEND
- #pragma read_only_file
-#endif
-
-#ifdef __cplusplus
-
-#include <cstdint>
-
-using std::int8_t;
-using std::uint8_t;
-using std::int16_t;
-using std::uint16_t;
-using std::int32_t;
-using std::uint32_t;
-using std::int64_t;
-using std::uint64_t;
-using std::int_least8_t;
-using std::uint_least8_t;
-using std::int_least16_t;
-using std::uint_least16_t;
-using std::int_least32_t;
-using std::uint_least32_t;
-using std::int_least64_t;
-using std::uint_least64_t;
-using std::int_fast8_t;
-using std::uint_fast8_t;
-using std::int_fast16_t;
-using std::uint_fast16_t;
-using std::int_fast32_t;
-using std::uint_fast32_t;
-using std::int_fast64_t;
-using std::uint_fast64_t;
-using std::intptr_t;
-using std::uintptr_t;
-using std::intmax_t;
-using std::uintmax_t;
-
-#else /* __cplusplus not defined */
 
 /* Limit macros */
 
@@ -70,11 +33,7 @@ using std::uintmax_t;
 #define INT64_MAX  9223372036854775807LL
 
 #define UINT8_MAX   255
-#ifdef _M_I86
  #define UINT16_MAX  65535U
-#else
- #define UINT16_MAX  65535
-#endif
 #define UINT32_MAX  4294967295UL
 #define UINT64_MAX  18446744073709551615ULL
 
@@ -89,68 +48,35 @@ using std::uintmax_t;
 #define INT_LEAST64_MAX  9223372036854775807LL
 
 #define UINT_LEAST8_MAX   255
-#ifdef _M_I86
  #define UINT_LEAST16_MAX  65535U
-#else
- #define UINT_LEAST16_MAX  65535
-#endif
 #define UINT_LEAST32_MAX  4294967295UL
 #define UINT_LEAST64_MAX  18446744073709551615ULL
 
 /* Fast minimum-width types. */
-#ifdef _M_I86
  #define INT_FAST8_MIN   (-32767-1)
  #define INT_FAST8_MAX   32767
  #define INT_FAST16_MIN  (-32767-1)
  #define INT_FAST16_MAX  32767
-#else
- #define INT_FAST8_MIN   (-2147483647-1)
- #define INT_FAST8_MAX   2147483647
- #define INT_FAST16_MIN  (-2147483647-1)
- #define INT_FAST16_MAX  2147483647
-#endif
 #define INT_FAST32_MIN  (-2147483647L-1)
 #define INT_FAST32_MAX  2147483647L
 #define INT_FAST64_MIN  (-9223372036854775807LL-1)
 #define INT_FAST64_MAX  9223372036854775807LL
 
-#ifdef _M_I86
  #define UINT_FAST8_MAX   65535U
  #define UINT_FAST16_MAX  65535U
-#else
- #define UINT_FAST8_MAX   4294967295U
  #define UINT_FAST16_MAX  4294967295U
-#endif
 #define UINT_FAST32_MAX  4294967295UL
 #define UINT_FAST64_MAX  18446744073709551615ULL
 
 /* Integer types able to hold object pointers. */
-#ifdef _M_I86
- #if defined(__SMALL__) || defined(__MEDIUM__)
   #define INTPTR_MIN   (-32767-1)
   #define INTPTR_MAX   32767
   #define UINTPTR_MAX  65535U
- #else
-  #define INTPTR_MIN   (-2147483647L-1)
-  #define INTPTR_MAX   2147483647L
-  #define UINTPTR_MAX  4294967295UL
- #endif
-#else /* 32 bit */
- #if defined(__COMPACT__) || defined(__LARGE__)
-  #define INTPTR_MIN   (-9223372036854775807LL-1)
-  #define INTPTR_MAX   9223372036854775807LL
-  #define UINTPTR_MAX  18446744073709551615ULL
- #else
-  #define INTPTR_MIN   (-2147483647L-1)
-  #define INTPTR_MAX   2147483647L
-  #define UINTPTR_MAX  4294967295UL
- #endif
-#endif
 
 /* Greatest-width types. */
-#define INTMAX_MIN   (-9223372036854775807LL-1)
-#define INTMAX_MAX   9223372036854775807LL
-#define UINTMAX_MAX  18446744073709551615ULL
+#define INTMAX_MIN    (-2147483647L-1)
+#define INTMAX_MAX    2147483647L
+#define UINTMAX_MAX   4294967295U
 
 /* Limits of wide character types */
 #define WCHAR_MIN       0
@@ -159,24 +85,11 @@ using std::uintmax_t;
 #define WINT_MAX        WCHAR_MAX
 
 /* Limits of other integer types. */
-#ifdef _M_I86
- #ifdef __HUGE__
-  #define PTRDIFF_MIN    (-2147483647L-1)
-  #define PTRDIFF_MAX    2147483647L
- #else
   #define PTRDIFF_MIN    (-32767-1)
   #define PTRDIFF_MAX    32767
- #endif
  #define SIG_ATOMIC_MIN  (-32767-1)
  #define SIG_ATOMIC_MAX  32767
  #define SIZE_MAX        65535U
-#else /* 32 bit */
- #define PTRDIFF_MIN     (-2147483647-1)
- #define PTRDIFF_MAX     2147483647
- #define SIG_ATOMIC_MIN  (-2147483647-1)
- #define SIG_ATOMIC_MAX  2147483647
- #define SIZE_MAX        4294967295U
-#endif
 
 /* Constant macros */
 
@@ -196,37 +109,13 @@ using std::uintmax_t;
 /* Signed integer type able to hold pointers. */
  #ifndef _INTPTR_T_DEFINED
  #define _INTPTR_T_DEFINED
- #ifdef _M_I86
-  #if defined(__SMALL__) || defined(__MEDIUM__)
    typedef int intptr_t;
-  #else
-   typedef long intptr_t;
-  #endif
- #else /* 32 bit */
-  #if defined(__COMPACT__) || defined(__LARGE__)
-   typedef long long intptr_t;
-  #else
-   typedef long intptr_t;
-  #endif
- #endif
   typedef intptr_t  __w_intptr_t;
  #endif
 /* Unsigned integer type able to hold pointers. */
  #ifndef _UINTPTR_T_DEFINED
  #define _UINTPTR_T_DEFINED
- #ifdef _M_I86
-  #if defined(__SMALL__) || defined(__MEDIUM__)
    typedef unsigned int uintptr_t;
-  #else
-   typedef unsigned long uintptr_t;
-  #endif
- #else /* 32 bit */
-  #if defined(__COMPACT__) || defined(__LARGE__)
-   typedef unsigned long long uintptr_t;
-  #else
-   typedef unsigned long uintptr_t;
-  #endif
- #endif
   typedef uintptr_t   __w_uintptr_t;
  #endif
 
@@ -237,14 +126,9 @@ using std::uintmax_t;
  typedef unsigned char       uint8_t;
  typedef short               int16_t;
  typedef unsigned short      uint16_t;
-#ifdef _M_I86
  typedef long                int32_t;
  typedef unsigned long       uint32_t;
-#else
- typedef int                 int32_t;
- typedef unsigned int        uint32_t;
-#endif
- typedef long long           int64_t;
+//typedef long long           int64_t;      /* defined in elks/include/arch/types.h */
  typedef unsigned long long  uint64_t;
 #endif /* _EXACT_WIDTH_INTS */
 
@@ -271,19 +155,7 @@ typedef unsigned long      uint_fast32_t;
 typedef unsigned long long uint_fast64_t;
 
 /* Greatest-width types. */
-typedef long long intmax_t;
-typedef unsigned long long uintmax_t;
-
-#if defined(__STDC_WANT_LIB_EXT1__) && __STDC_WANT_LIB_EXT1__ == 1
-
-#if SIZE_MAX > 65535U
- #define RSIZE_MAX      (SIZE_MAX >> 1)
-#else
- #define RSIZE_MAX      SIZE_MAX
-#endif
-
-#endif /* __STDC_WANT_LIB_EXT1__ */
-
-#endif /* __cplusplus not defined */
+typedef long intmax_t;
+typedef unsigned long uintmax_t;
 
 #endif
