@@ -42,7 +42,7 @@
 #endif
 
 #ifdef __C86__
-#define __HAS_NO_FLOATS__
+#define __HAS_NO_FLOATS__   1
 #define __far
 #define noreturn
 #define stdcall

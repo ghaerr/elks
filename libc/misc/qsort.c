@@ -1,3 +1,4 @@
+#ifndef __C86__
 /*
  * NEATLIBC C STANDARD LIBRARY
  *
@@ -65,3 +66,4 @@ void qsort(void *a, size_t n, size_t width, int (*cmp)(void *, void *))
 		fix(a, 0, i - 1, width, cmp);
 	}
 }
+#endif
