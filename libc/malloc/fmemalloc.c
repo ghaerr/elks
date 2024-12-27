@@ -1,3 +1,4 @@
+#ifndef __C86__
 #include <malloc.h>
 #include <unistd.h>
 #include <errno.h>
@@ -51,3 +52,4 @@ int fmemfree(void __far *ptr)
     }
     return _fmemfree(FP_SEG(ptr));
 }
+#endif

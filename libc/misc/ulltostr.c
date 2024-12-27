@@ -1,3 +1,5 @@
+#ifndef __HAS_NO_LONGLONG__
+
 /* unsigned long long to string, Jul 2022 Greg Haerr */
 #include <stdlib.h>
 
@@ -18,3 +20,4 @@ char *ulltostr(unsigned long long val, int radix)
   } while ((val /= radix) != 0);
   return p;
 }
+#endif

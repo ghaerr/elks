@@ -39,8 +39,12 @@ OBJS = \
 	fmemalloc.o \
 	dprintf.o \
 
-# default and debug mallocs available for ia16 and OWC
-OBJS += $(DEFAULT_MALLOC_OBJS) $(DEBUG_MALLOC_OBJS)
+OBJS += $(DEFAULT_MALLOC_OBJS)
+
+# debug mallocs available for ia16 and OWC
+ifneq "$(COMPILER)" "c86"
+OBJS += $(DEBUG_MALLOC_OBJS)
+endif
 
 # arena malloc for OWC only for now
 ifeq "$(COMPILER)" "watcom"

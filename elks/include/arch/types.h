@@ -78,4 +78,9 @@ typedef unsigned int    uintptr_t;
 #endif
 #endif
 
+#ifdef __C86__
+typedef int             intptr_t;
+typedef unsigned int    uintptr_t;
+#endif
+
 #endif

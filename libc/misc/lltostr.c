@@ -1,3 +1,5 @@
+#ifndef __HAS_NO_LONGLONG__
+
 /* long long to string, Jul 2022 Greg Haerr */
 #include <stdlib.h>
 
@@ -9,3 +11,4 @@ char *lltostr(long long val, int radix)
    if(p && val < 0) *--p = '-';
    return p;
 }
+#endif
