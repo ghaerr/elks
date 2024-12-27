@@ -7,8 +7,9 @@ To build ELKS, you need a development environment on Linux or macOS or Windows w
 - ncompress (for compressed man pages; use `sudo apt-get install ncompress`)
 - texinfo
 - libelf-dev
+- bison
 
-On Ubuntu these can be installed with: `sudo apt-get install texinfo libncurses5-dev libelf-dev ncompress`. Additionally gcc and other common tools are installed with: `sudo apt install build-essential`
+On Ubuntu these can be installed with: `sudo apt-get install texinfo libncurses5-dev libelf-dev ncompress bison`. Additionally gcc and other common tools are installed with: `sudo apt install build-essential`
 
 ## Quick start
 
