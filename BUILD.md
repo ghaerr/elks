@@ -4,10 +4,22 @@
 
 To build ELKS, you need a development environment on Linux or macOS or Windows with [WSL](https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux), including:
 - libncurses5-dev
-- compress (for compressed man pages; use `sudo apt-get install ncompress`)
+- ncompress (for compressed man pages; use `sudo apt-get install ncompress`)
 - texinfo
+- libelf-dev
 
-## Build steps
+## Quick start
+
+Clone this repository. It contains a script that automates the whole build process
+(cross tool chain, configuration, kernel, user land and target image),
+which is run by GitHub on PRs and pushes:
+
+`./build.sh`
+
+Note: all the scripts must be executed within the top folder of
+the ELKS repository as the current one (= TOPDIR).
+
+## Step by step
 
 1- Create a `cross` subfolder:
 
@@ -53,14 +65,3 @@ supported floppy formats and hard disks (with and without MBRs) for both
 MINIX and MSDOS FAT format. To create these images, use the following:
 
 `cd image; make images`
-
-## GitHub Continuous Integration
-
-A script is provided to automate the whole build process
-(cross tool chain, configuration, kernel, user land and target image),
-which is run by GitHub on PRs and pushes:
-
-`./build.sh`
-
-Note: all the scripts must be executed within the top folder of
-the ELKS repository as the current one (= TOPDIR).
