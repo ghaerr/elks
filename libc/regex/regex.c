@@ -164,7 +164,7 @@ STATIC char *regpiece();
 STATIC char *regatom();
 STATIC char *regnode();
 STATIC char *regnext();
-STATIC void regc();
+STATIC void regc(char);
 STATIC void reginsert();
 STATIC void regtail();
 STATIC void regoptail();
@@ -584,8 +584,7 @@ char op;
  - regc - emit (if appropriate) a byte of code
  */
 static void
-regc(b)
-char b;
+regc(char b)
 {
 	if (regcode != &regdummy)
 		*regcode++ = b;

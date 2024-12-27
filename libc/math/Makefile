@@ -5,7 +5,7 @@ LIB ?= out.a
 
 include $(TOPDIR)/libc/$(COMPILER).inc
 
-CFLAGS += -I$(TOPDIR)/libc/math -D__BSD_VISIBLE -Wno-type-limits
+DEFINES += -I$(TOPDIR)/libc/math -D__BSD_VISIBLE -Wno-type-limits
 
 DOUBLE = \
 	s_floor.o \
