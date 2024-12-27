@@ -1,17 +1,50 @@
-; ELKS system call library for C86 - AS86 version
+; ELKS system call library and startup code for C86 - AS86 version
 ; Must be kept synchronized with elks/arch/i86/kernel/syscall.dat
 ; PART I
 ;
 ; 23 Nov 24 Greg Haerr
+; 26 Dec 24 Added C startup code for argc/argv and exit return
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         use16   86
 
         .data
         .align  2
-        .global _errno
-_errno: dw      0               ; global C errno
+        .comm   _errno,2
+        .comm   _environ,2
+        .comm   ___stacklow,2
+        ;.comm   ___argc,2
+        ;.comm   ___argv,2
+        ;.comm  ___program_filename,2
 
         .text
+        .align  2
+        entry   start
+        .extern _main
+start:                          ; C program entry point
+        mov     ax,sp
+        sub     ax,dx           ; DX is stack size
+        mov     [___stacklow],ax
+        pop     ax              ; get argc
+        ;mov     [___argc],ax
+        mov     bx, sp
+        ;mov     [___argv],bx
+        mov     dx,bx           ; save argc in DX
+.1:     cmp     [bx],#1
+        inc     bx
+        inc     bx
+        jnc     .1
+        mov     [_environ],bx
+        ;mov     bx,sp
+        ;mov     bx,[bx]
+        ;mov     ___program_filename, bx
+        ;push    [___argv]
+        push    dx              ; push argv
+        push    ax              ; restore argc
+        ;call   __Init_Rtns
+        call    _main
+        push    ax              ; pass return value to exit
+        call    _exit           ; no return
+
         .align  2
         .global callsys
 callsys:                        ; common routine for ELKS system call
