@@ -52,5 +52,5 @@ ARFLAGS_SUB=r
 	$(CC) $(CFLAGS) $< $*.as
 
 %.ocj: %.as
-	cp $*.as /tmp
+#	cp $*.as /tmp
 	$(AS) $(ASFLAGS) -o $*.ocj $*.as
