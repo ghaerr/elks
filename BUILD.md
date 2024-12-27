@@ -21,7 +21,7 @@ which is run by GitHub on PRs and pushes:
 Note: all the scripts must be executed within the top folder of
 the ELKS repository as the current one (= TOPDIR).
 
-## Step by step
+## Full step by step procedure
 
 1- Create a `cross` subfolder:
 
