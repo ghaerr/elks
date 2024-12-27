@@ -39,8 +39,8 @@ OBJS = \
 	fmemalloc.o \
 	dprintf.o \
 
-# debug malloc for all compilers
-OBJS += $(DEFAULT_MALLOC_OBJS)
+# default and debug mallocs for all compilers
+OBJS += $(DEFAULT_MALLOC_OBJS) $(DEBUG_MALLOC_OBJS)
 
 # arena malloc works with OWC only for now
 ifeq "$(COMPILER)" "watcom"
