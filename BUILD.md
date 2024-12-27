@@ -8,6 +8,8 @@ To build ELKS, you need a development environment on Linux or macOS or Windows w
 - texinfo
 - libelf-dev
 
+On Ubuntu the gcc and other common tools are installed with: sudo apt install build-essential
+
 ## Quick start
 
 Clone this repository. It contains a script that automates the whole build process
