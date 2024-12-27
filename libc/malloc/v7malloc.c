@@ -13,7 +13,11 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/sysctl.h>
+#ifdef __C86__
+#define DEBUG 0
+#else
 #define DEBUG       1       /* =1 use sysctl, =2 debug output, =3 show heap */
+#endif
 
 /*  C storage allocator
  *  circular first-fit strategy

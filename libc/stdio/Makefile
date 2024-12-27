@@ -5,7 +5,7 @@ LIB ?= out.a
 
 include $(TOPDIR)/libc/$(COMPILER).inc
 
-CFLAGS	+= -DL_ftell
+DEFINES	+= -DL_ftell
 
 OBJS = \
 	init.o \

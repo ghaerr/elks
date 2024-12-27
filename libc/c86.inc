@@ -13,12 +13,14 @@ INCLUDES += -I$(C86)/libc/include
 DEFINES = -D__LIBC__ -D__HAS_NO_FLOATS__=1 -D__HAS_NO_LONGLONG__
 LIBOBJS=$(OBJS:.o=.ocj)
 
-CPP86FLAGS=\
+CPP86FLAGS =\
     -0                          \
+
+C86UNUSED =\
+    -v                          \
 
 C86FLAGS =\
     -g                          \
-    -v                          \
     -O                          \
     -bas86                      \
     -warn=4                     \

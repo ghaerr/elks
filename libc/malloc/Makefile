@@ -8,11 +8,11 @@ include $(TOPDIR)/libc/$(COMPILER).inc
 # options for default malloc (dev86) only:
 # allocations smaller than MCHUNK words (not bytes) are rounded up,
 # larger requests are allocated from heap as is.
-CFLAGS	+= -DMCHUNK=16
-#CFLAGS	+= -DVERBOSE=1
-#CFLAGS	+= -DMINALLOC
-#CFLAGS	+= -DLAZY_FREE
-#CFLAGS	+= -DL_alloca
+DEFINES	+= -DMCHUNK=16
+#DEFINES += -DVERBOSE=1
+#DEFINES += -DMINALLOC
+#DEFINES += -DLAZY_FREE
+#DEFINES += -DL_alloca
 
 # default malloc (dev86)
 DEFAULT_MALLOC_OBJS = \
@@ -39,14 +39,10 @@ OBJS = \
 	fmemalloc.o \
 	dprintf.o \
 
+# debug malloc for all compilers
 OBJS += $(DEFAULT_MALLOC_OBJS)
 
-# debug mallocs available for ia16 and OWC
-ifneq "$(COMPILER)" "c86"
-OBJS += $(DEBUG_MALLOC_OBJS)
-endif
-
-# arena malloc for OWC only for now
+# arena malloc works with OWC only for now
 ifeq "$(COMPILER)" "watcom"
 OBJS += $(ARENA_MALLOC_OBJS)
 endif
