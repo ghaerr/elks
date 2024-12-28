@@ -23,7 +23,7 @@ ___alloca:
         mov     ax,sp
         sub     ax,[___stacklow] ; AX = remaining
         cmp     ax,#0           ; fail if remaining < 0
-        jc      .1
+        jl      .1
         cmp     ax,dx           ; fail if remaining < size
         jc      .1
         mov     ax,dx           ; OK to extend stack
