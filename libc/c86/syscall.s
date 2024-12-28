@@ -14,7 +14,7 @@
         .comm   ___stacklow,2
         ;.comm   ___argc,2
         ;.comm   ___argv,2
-        ;.comm  ___program_filename,2
+        ;.comm   ___program_filename,2
 
         .text
         .align  2
@@ -36,11 +36,11 @@ start:                          ; C program entry point
         mov     [_environ],bx
         ;mov     bx,sp
         ;mov     bx,[bx]
-        ;mov     ___program_filename, bx
+        ;mov     [___program_filename], bx
         ;push    [___argv]
         push    dx              ; push argv
         push    ax              ; restore argc
-        ;call   __Init_Rtns
+        ;call   initrtns
         call    _main
         push    ax              ; pass return value to exit
         call    _exit           ; no return

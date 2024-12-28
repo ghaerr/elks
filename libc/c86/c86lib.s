@@ -12,13 +12,26 @@
 ;
 ; C86 helper functions
 ;
-        .global __alloca
-__alloca:
+        .global ___alloca
+        .comm   ___stacklow,2   ; lowest protected SP value
+___alloca:
         pop     bx              ; ret address
         pop     ax              ; alloca size
+        inc     ax
+        and     ax,#0xfffe
+        mov     dx,ax           ; DX = size
+        mov     ax,sp
+        sub     ax,[___stacklow] ; AX = remaining
+        cmp     ax,#0           ; fail if (int)remaining < 0
+        jl      .1
+        cmp     ax,dx           ; fail if (unsigned)remaining < size
+        jc      .1
+        mov     ax,dx           ; OK to extend stack
         sub     sp,ax
         mov     ax,sp           ; AX = mem
         jmp     bx              ; return (compiler won't readjust stack)
+.1:     xor     ax,ax
+        jmp     bx
 
         .global stackcheck
 stackcheck:
