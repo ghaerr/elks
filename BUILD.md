@@ -10,7 +10,7 @@ To build ELKS, you need a development environment on Linux or macOS or Windows w
 - bison
 - flex
 
-On Ubuntu these can be installed with: `sudo apt-get install texinfo libncurses5-dev libelf-dev ncompress bison flex`. Additionally gcc and other common tools are installed with: `sudo apt install build-essential`
+On Ubuntu these can be installed with: `sudo apt-get install texinfo libncurses5-dev libelf-dev ncompress bison flex`. Additionally GCC and other common tools are installed with: `sudo apt install build-essential`
 
 ## Build output
 
@@ -76,4 +76,4 @@ MINIX and MSDOS FAT format. To create these images, use the following:
 
 ## Build errors
 
-If you get a message similar to `Blocks required 1456, available 1440` then you need to enable Userland ---> Select Applications by Image Size in `make menuconfig`. 
+* if you get a message similar to `Blocks required 1456, available 1440` then you need to enable Userland ---> Select Applications by Image Size in `make menuconfig`. 
