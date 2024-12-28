@@ -76,4 +76,4 @@ MINIX and MSDOS FAT format. To create these images, use the following:
 
 ## Build errors
 
-If you get a message similar to `Blocks required 1456, available 1440` then you need to select "" in the kernel config.
+If you get a message similar to `Blocks required 1456, available 1440` then you need to enable Userland ---> Select Applications by Image Size in `make menuconfig`. 
