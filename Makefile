@@ -5,7 +5,8 @@ endif
 
 include $(TOPDIR)/Make.defs
 
-.PHONY: all clean libc kconfig defconfig config menuconfig image images kclean
+.PHONY: all clean libc kconfig defconfig config menuconfig image images \
+    kimage kernel kclean owc c86
 
 all: .config include/autoconf.h
 	$(MAKE) -C libc all
@@ -34,6 +35,8 @@ kclean:
 
 clean:
 	$(MAKE) -C libc clean
+	$(MAKE) -C libc -f watcom.mk clean
+	$(MAKE) -C libc -f c86.mk
 	$(MAKE) -C libc DESTDIR='$(TOPDIR)/cross' uninstall
 	$(MAKE) -C elks clean
 	$(MAKE) -C bootblocks clean
@@ -53,6 +56,14 @@ libc:
 	$(MAKE) -C libc DESTDIR='$(TOPDIR)/cross' uninstall
 	$(MAKE) -C libc all
 	$(MAKE) -C libc DESTDIR='$(TOPDIR)/cross' install
+
+owc:
+	$(MAKE) -C libc -f watcom.mk clean
+	$(MAKE) -C libc -f watcom.mk
+
+c86:
+	$(MAKE) -C libc -f c86.mk clean
+	$(MAKE) -C libc -f c86.mk
 
 elks/arch/i86/drivers/char/KeyMaps/config.in:
 	$(MAKE) -C elks/arch/i86/drivers/char/KeyMaps config.in

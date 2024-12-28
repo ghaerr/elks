@@ -9,7 +9,11 @@ $(error WATCOM environment variable not set)
 endif
 
 INCLUDES = -I$(TOPDIR)/libc/include -I$(TOPDIR)/elks/include
-INCLUDES += -I$(WATCOM)/h
+# Watcom headers now included in libc/include/watcom
+INCLUDES += -I$(TOPDIR)/libc/include/watcom
+# Don't pull in headers from Watcom installation
+#INCLUDES += -I$(WATCOM)/h
+
 DEFINES = -D__LIBC__
 LIBOBJS=$(OBJS:.o=.obj)
 
