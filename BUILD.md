@@ -5,7 +5,7 @@
 To build ELKS, you need a development environment on Linux or macOS or Windows with [WSL](https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux), including:
 - libncurses5-dev
 - ncompress (for compressed man pages; use `sudo apt-get install ncompress`)
-- texinfo
+- texinfo (not the same as texTinfo)
 - libelf-dev
 - bison
 - flex
