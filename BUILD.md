@@ -12,6 +12,10 @@ To build ELKS, you need a development environment on Linux or macOS or Windows w
 
 On Ubuntu these can be installed with: `sudo apt-get install texinfo libncurses5-dev libelf-dev ncompress bison flex`. Additionally gcc and other common tools are installed with: `sudo apt install build-essential`
 
+## Build output
+
+The build process, depending on the configuration, will produce an ELKS distribution in TOPDIR/target (16 bit kernel, programs, etc). Again, depending on the configuration, a bootable image or images will be produced in TOPDIR/target. These can be booted in QEMU or real hardware. See details below.
+
 ## Quick start
 
 Clone this repository. It contains a script that automates the whole build process
@@ -69,3 +73,7 @@ supported floppy formats and hard disks (with and without MBRs) for both
 MINIX and MSDOS FAT format. To create these images, use the following:
 
 `cd image; make images`
+
+## Build errors
+
+If you get a message similar to `Blocks required 1456, available 1440` then you need to select "" in the kernel config.
