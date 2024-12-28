@@ -284,7 +284,6 @@ int sys_sbrk(int increment, segoff_t *pbrk)
     err = verify_area(VERIFY_WRITE, pbrk, sizeof(*pbrk));
     if (err)
         return err;
-    /* FIXME test for brk+increment overflow/underflow here */
     err = set_brk(brk, increment);
     if (err)
         return err;
