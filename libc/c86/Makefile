@@ -6,6 +6,7 @@ LIB ?= out.lib
 include $(TOPDIR)/libc/$(COMPILER).inc
 
 OBJS = $(patsubst %.s,%.ocj,$(wildcard *.s))
+OBJS += stackavail.o
 
 all: $(LIB)
 
