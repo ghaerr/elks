@@ -64,11 +64,6 @@ _stat:
         mov     ax,#18
         jmp     near callsys
 
-        .global __lseek
-__lseek:
-        mov     ax,#19
-        jmp     near callsys
-
         .global __getpid
 __getpid:
         mov     ax,#20
@@ -167,11 +162,6 @@ __signal:
         .global _fcntl
 _fcntl:
         mov     ax,#50
-        jmp     near callsys
-
-        .global _ioctl
-_ioctl:
-        mov     ax,#54
         jmp     near callsys
 
         .global _reboot

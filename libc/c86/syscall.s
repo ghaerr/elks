@@ -95,3 +95,14 @@ _open:
 _close:
         mov     ax,#6
         jmp     callsys
+
+        .global __lseek
+__lseek:
+        mov     ax,#19
+        jmp     near callsys
+        .global _ioctl
+
+_ioctl:
+        mov     ax,#54
+        jmp     near callsys
+
