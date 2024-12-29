@@ -35,13 +35,17 @@ kclean:
 
 clean:
 	$(MAKE) -C libc clean
-	$(MAKE) -C libc -f watcom.mk clean
-	$(MAKE) -C libc -f c86.mk
 	$(MAKE) -C libc DESTDIR='$(TOPDIR)/cross' uninstall
 	$(MAKE) -C elks clean
 	$(MAKE) -C bootblocks clean
 	$(MAKE) -C elkscmd clean
 	$(MAKE) -C image clean
+ifneq "$(WATCOM)" ""
+	$(MAKE) -C libc -f watcom.mk clean
+endif
+ifneq "$(C86)" ""
+	$(MAKE) -C libc -f c86.mk clean
+endif
 ifeq ($(shell uname), Linux)
 	$(MAKE) -C elksemu clean
 endif
