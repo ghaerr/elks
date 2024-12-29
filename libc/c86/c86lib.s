@@ -12,8 +12,10 @@
 ;
 ; C86 helper functions
 ;
+        .data
+        .extern ___stacklow     ; lowest protected SP value
+        .text
         .global ___alloca
-        .comm   ___stacklow,2   ; lowest protected SP value
 ___alloca:
         pop     bx              ; ret address
         pop     ax              ; alloca size
