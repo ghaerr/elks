@@ -4,10 +4,30 @@
 
 To build ELKS, you need a development environment on Linux or macOS or Windows with [WSL](https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux), including:
 - libncurses5-dev
-- compress (for compressed man pages; use `sudo apt-get install ncompress`)
-- texinfo
+- ncompress (for compressed man pages; use `sudo apt-get install ncompress`)
+- texinfo (not the same as texTinfo)
+- libelf-dev
+- bison
+- flex
 
-## Build steps
+On Ubuntu these can be installed with: `sudo apt-get install texinfo libncurses5-dev libelf-dev ncompress bison flex`. Additionally GCC and other common tools are installed with: `sudo apt install build-essential`
+
+## Build output
+
+The build process, depending on the configuration, will produce an ELKS distribution in TOPDIR/target (16 bit kernel, programs, etc). Again, depending on the configuration, a bootable image or images will be produced in TOPDIR/target. These can be booted in QEMU or real hardware. See details below.
+
+## Quick start
+
+Clone this repository. It contains a script that automates the whole build process
+(cross tool chain, configuration, kernel, user land and target image),
+which is run by GitHub on PRs and pushes:
+
+`./build.sh`
+
+Note: all the scripts must be executed within the top folder of
+the ELKS repository as the current one (= TOPDIR).
+
+## Full step by step procedure
 
 1- Create a `cross` subfolder:
 
@@ -54,13 +74,6 @@ MINIX and MSDOS FAT format. To create these images, use the following:
 
 `cd image; make images`
 
-## GitHub Continuous Integration
+## Build errors
 
-A script is provided to automate the whole build process
-(cross tool chain, configuration, kernel, user land and target image),
-which is run by GitHub on PRs and pushes:
-
-`./build.sh`
-
-Note: all the scripts must be executed within the top folder of
-the ELKS repository as the current one (= TOPDIR).
+* if you get a message similar to `Blocks required 1456, available 1440` then you need to enable Userland ---> Select Applications by Image Size in `make menuconfig`. 
