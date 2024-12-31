@@ -101,6 +101,7 @@ static size_t msdos_file_write(register struct inode *inode,register struct file
 	int error;
 	char *start;
 	struct buffer_head *bh;
+	int dontuseisize;
 
 	debug_fat("file_write\n");
 	if (!inode) {
@@ -119,8 +120,11 @@ static size_t msdos_file_write(register struct inode *inode,register struct file
 	if (count <= 0) return 0;
 	error = 0;
 	for (start = buf; count; count -= size) {
-		while (!(sector = msdos_smap(inode,filp->f_pos >> SECTOR_BITS(inode))))
-			if ((error = msdos_add_cluster(inode)) < 0) break;
+		while (!(sector = msdos_smap(inode,filp->f_pos >> SECTOR_BITS(inode)))) {
+			/* don't use inode size in add_cluster if lseek past EOF */
+			dontuseisize = filp->f_pos > inode->i_size;
+			if ((error = msdos_add_cluster(inode, dontuseisize)) < 0) break;
+		}
 		if (error) break;
 		offset = (int)filp->f_pos & (SECTOR_SIZE(inode)-1);
 		size = MIN(SECTOR_SIZE(inode)-offset,count);
