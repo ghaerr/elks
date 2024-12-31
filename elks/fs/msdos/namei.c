@@ -182,7 +182,7 @@ static int FATPROC msdos_create_entry(struct inode *dir,const char *name,int is_
 		/* if rootdir return no space*/
 		if (dir->i_ino == MSDOS_ROOT_INO) return -ENOSPC;
 		/* try adding space to directory*/
-		if ((res = msdos_add_cluster(dir)) < 0) return res;
+		if ((res = msdos_add_cluster(dir, 0)) < 0) return res;
 		/* if can't find empty entry return error*/
 		if ((res = msdos_scan(dir,NULL,&bh,&de,&ino)) < 0) return res;
 	}
@@ -259,7 +259,7 @@ int msdos_mkdir(struct inode *dir,const const char *name,size_t len,mode_t mode)
 	}
 
 	inode->u.msdos_i.i_busy = 1; /* prevent lookups */
-	if ((res = msdos_add_cluster(inode)) < 0) goto mkdir_error;
+	if ((res = msdos_add_cluster(inode, 0)) < 0) goto mkdir_error;
 	if ((res = msdos_create_entry(inode,MSDOS_DOT,1,&dot)) < 0)
 		goto mkdir_error;
 

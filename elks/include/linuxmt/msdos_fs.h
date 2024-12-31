@@ -121,7 +121,7 @@ struct buffer_head * FATPROC msdos_sread_nomap(struct super_block *s, sector_t s
 struct buffer_head * FATPROC msdos_sread(struct super_block *s, sector_t sector, void **start);
 void FATPROC lock_creation(void);
 void FATPROC unlock_creation(void);
-int  FATPROC msdos_add_cluster(struct inode *inode);
+int  FATPROC msdos_add_cluster(struct inode *inode, int dontuseisize);
 long FATPROC date_dos2unix(unsigned short time,unsigned short date);
 void FATPROC date_unix2dos(long unix_date,unsigned short *time, unsigned short *date);
 ino_t FATPROC msdos_get_entry(struct inode *dir,loff_t *pos,struct buffer_head **bh,

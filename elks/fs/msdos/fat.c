@@ -248,6 +248,7 @@ cluster_t FATPROC get_cluster(register struct inode *inode, cluster_t cluster)
 	cluster_t this, count;
 
 	if (!(this = inode->u.msdos_i.i_start)) return 0;
+	debug("get_cluster %ld = %ld\n", cluster, this);
 	if (!cluster) return this;
 	count = 0;
 	for (cache_lookup(inode,cluster,&count,&this); count < cluster; count++) {
