@@ -7,7 +7,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         use16   86
 
-        .data
+        .sect   1               ; first data seg
+        dw      0,0             ; prevent data having address 0
+        .data                   ; default data seg 3
         .align  2
         .comm   _errno,2
         .comm   _environ,2

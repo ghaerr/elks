@@ -294,9 +294,7 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
 
          case 's':              /* String */
             p = va_arg(ap, char *);
-#ifndef __C86__     /* FIXME add 4 bytes nullptr at start of .data */
             if (!p) p = "(null)";
-#endif
           nopad:
             sign = '\0';
             pad = ' ';
