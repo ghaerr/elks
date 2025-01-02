@@ -36,9 +36,10 @@
 
 int select( int __width, fd_set * __readfds, fd_set * __writefds, fd_set * __exceptfds, struct timeval * __timeout )
 {
-    if (__readfds) sys_setseg(__readfds);
-    else if (__writefds) sys_setseg(__writefds);
-    else if (__timeout) sys_setseg(__timeout);
+    sys_setseg(__readfds);
+    sys_setseg(__writefds);
+    sys_setseg(__exceptfds);
+    sys_setseg(__timeout);
     syscall_res res = sys_call5( SYS_select, __width, (unsigned)__readfds, (unsigned)__writefds, (unsigned)__exceptfds, (unsigned)__timeout );
     __syscall_return( int, res );
 }

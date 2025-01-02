@@ -35,6 +35,7 @@
 int utime( const char *__path, struct utimbuf * __times )
 {
     sys_setseg(__path);
+    sys_setseg(__times);
     syscall_res res = sys_call2( SYS_utime, (unsigned)__path, (unsigned)__times );
     __syscall_return( int, res );
 }

@@ -35,6 +35,7 @@
 int symlink( const char *__pname, const char *__slink )
 {
     sys_setseg(__pname);
+    sys_setseg(__slink);
     syscall_res res = sys_call2( SYS_symlink, (unsigned)__pname, (unsigned)__slink );
     __syscall_return( int, res );
 }
