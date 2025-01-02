@@ -53,7 +53,7 @@ int __dprintf(const char *fmt, ...)
     static int fd = -1;
 
     if (fd < 0) {
-        if (!isatty(STDERR_FILENO))
+        if (!isatty(STDERR_FILENO)) /* continue piping __dprintf to redirected stderr */
             fd = STDERR_FILENO;
         else
             fd = open(_PATH_CONSOLE, O_WRONLY);

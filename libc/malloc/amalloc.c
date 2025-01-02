@@ -17,7 +17,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/sysctl.h>
-#define DEBUG       1       /* =1 use sysctl, =2 debug output, =3 show heap */
+#define DEBUG       0       /* =1 use sysctl, =2 debug output, =3 show heap */
 
 /*  C storage allocator
  *  circular first-fit strategy
@@ -94,10 +94,10 @@ int __amalloc_add_heap(char __far *start, size_t size)
     allocsize = size / sizeof(union store);
     debug("Adding SEG %04x size %d DS %04x\n", FP_SEG(start), size, FP_SEG(&size));
 
-    allocs[0].ptr = setbusy(&allocs[1]);
+    allocs[0].ptr = setbusy((NPTR)&allocs[1]);
     allocs[1].ptr = (NPTR)&allocs[allocsize-2];
-    allocs[allocsize-2].ptr = setbusy(&allocs[allocsize-1]);
-    allocs[allocsize-1].ptr = setbusy(&allocs[0]);
+    allocs[allocsize-2].ptr = setbusy((NPTR)&allocs[allocsize-1]);
+    allocs[allocsize-1].ptr = setbusy((NPTR)&allocs[0]);
     alloct = (NPTR)&allocs[allocsize-1];
     allocp = (NPTR)&allocs[0];
     return 1;
@@ -114,7 +114,7 @@ __amalloc(size_t nbytes)
 #endif
 
     debug("(%d)malloc(%5u) ", getpid(), nbytes);
-    if (!allocs)
+    if (!allocseg)
         return NULL;
     errno = 0;
     if (nbytes == 0) {
@@ -132,7 +132,7 @@ __amalloc(size_t nbytes)
     }
     nw = (nbytes+WORD+WORD-1)/WORD;          /* extra word for link ptr/size*/
 
-    ASSERT(allocp>=allocs && allocp<=alloct);
+    ASSERT(allocp>=(NPTR)allocs && allocp<=alloct);
     ASSERT(malloc_check_heap());
     /* combine free areas at heap start before allocating from free area past allocp */
     allocp = (NPTR)allocs;
@@ -207,7 +207,7 @@ __amalloc(size_t nbytes)
         debug2("(TOTAL %u) ",
             sizeof(union store) +
             (clearbusy(alloct) - clearbusy(allocs[allocsize-1].ptr)) * sizeof(union store));
-        next(alloct) = setbusy(allocs);
+        next(alloct) = setbusy((NPTR)allocs);
 #endif
     }
 found:
@@ -335,7 +335,7 @@ malloc_show_heap(void)
     unsigned int size, alloc = 0, free = 0;
     static unsigned int maxalloc;
 
-    if (!debug_level) return;
+    if (debug_level < 2) return;
     debug2("--- heap size ---\n");
     malloc_check_heap();
     for(p = (NPTR)&allocs[0]; clearbusy(next(p)) > p; p=clearbusy(next(p))) {
