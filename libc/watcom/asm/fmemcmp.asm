@@ -1,5 +1,6 @@
-; int fmemcmp(void __far *s1, void __far *s2, size_t n)
-;   returns 0 on match, otherwise -1/1.
+;  int fmemcmp(void __far *s1, void __far *s2, size_t n)
+;   returns 0 on match, otherwise -1/1 on the difference
+;   of the first differing bytes as unsigned char values
 ;
 ; 2 Jan 2025 Greg Haerr
 
