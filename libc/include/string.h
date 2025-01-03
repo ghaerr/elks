@@ -29,6 +29,7 @@ int memcmp(const void*, const void*, size_t);
 void * memmove(void*, const void*, size_t);
 
 void __far *fmemset(void __far *buf, int c, size_t l);
+int fmemcmp(void __far *s1, void __far *s2, size_t n);  /* Watcom C only, in ASM */
 
 /* Error messages */
 char * strerror(int);
