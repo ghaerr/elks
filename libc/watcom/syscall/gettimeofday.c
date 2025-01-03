@@ -8,8 +8,8 @@
 
 int gettimeofday(struct timeval * restrict __tv, void * restrict __tzp)
 {
-    if (__tv) sys_setseg(__tv);
-    else if (__tzp) sys_setseg(__tzp);
+    sys_setseg(__tv);
+    sys_setseg(__tzp);
     syscall_res res = sys_call2(SYS_gettimeofday, (unsigned)__tv, (unsigned)__tzp);
     __syscall_return(int, res);
 }

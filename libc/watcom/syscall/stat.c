@@ -36,6 +36,7 @@
 /* in large/compact mode, __filename and __buf must be from same segment! */
 int stat( const char *__filename, struct stat * __buf )
 {
+    sys_setseg(__filename);
     sys_setseg(__buf);
     syscall_res res = sys_call2( SYS_stat, (unsigned)__filename, (unsigned)__buf);
     __syscall_return( int, res );

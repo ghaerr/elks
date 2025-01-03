@@ -37,6 +37,7 @@ WATCINCLUDE=$WATCOM/h
 # -Wc,-wcd=N                # disable warning N
 # -Wc,-fpi87                # inline 8087 fp
 # -Wc,-x                    # ignore INCLUDE environment variable
+# -Wc,-r                    # save/restore segment registers
 # -fnostdlib                # don't refere standard libraries
 # unused:
 # -fno-stack-check          # don't generate stack check code

@@ -33,11 +33,11 @@
 #include <sys/wait.h>
 #include "watcom/syselks.h"
 
-pid_t wait4( pid_t __pid, int *__stat_loc, int __options, struct rusage *rusage )
+pid_t wait4( pid_t __pid, int *__stat_loc, int __options, struct rusage *__rusage )
 {
-    if (__stat_loc)
-        sys_setseg(__stat_loc);
+    sys_setseg(__stat_loc);
+    sys_setseg(__rusage);
     syscall_res res = sys_call4( SYS_wait4, __pid, (unsigned)__stat_loc, __options,
-        (unsigned)rusage );
+        (unsigned)__rusage );
     __syscall_return( pid_t, res );
 }

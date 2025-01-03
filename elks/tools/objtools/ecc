@@ -51,8 +51,8 @@ CFLAGS="\
 
 ASFLAGS="\
     -0                          \
-    -O                          \
     -j                          \
+    -O                          \
     -w-                         \
     "
 

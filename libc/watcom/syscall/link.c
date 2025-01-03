@@ -35,6 +35,7 @@
 int link( const char *__path1, const char *__path2 )
 {
     sys_setseg(__path1);
+    sys_setseg(__path2);
     syscall_res res = sys_call2( SYS_link, (unsigned)__path1, (unsigned)__path2 );
     __syscall_return( int, res );
 }

@@ -34,9 +34,9 @@
 #include "watcom/syselks.h"
 
 
-int unlink( const char *filename )
+int unlink( const char *__filename )
 {
-    sys_setseg(filename);
-    syscall_res res = sys_call1( SYS_unlink, (unsigned)filename );
+    sys_setseg(__filename);
+    syscall_res res = sys_call1( SYS_unlink, (unsigned)__filename );
     __syscall_return( int, res );
 }
