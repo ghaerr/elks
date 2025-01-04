@@ -135,8 +135,9 @@ __amalloc(size_t nbytes)
     ASSERT(allocp>=(NPTR)allocs && allocp<=alloct);
     ASSERT(malloc_check_heap());
     /* combine free areas at heap start before allocating from free area past allocp */
-    allocp = (NPTR)allocs;
+    //allocp = (NPTR)allocs;    /* NOTE: start at last allocation for speed */
     for(p=allocp; ; ) {
+        //f = nb = n = 0;
         for(temp=0; ; ) {
             if(!testbusy(next(p))) {
                 while(!testbusy(next(q = next(p)))) {
@@ -147,12 +148,15 @@ __amalloc(size_t nbytes)
                         (next(p) - p) * sizeof(union store),
                         (next(q) - q) * sizeof(union store));
                     next(p) = next(q);
+                    //f++;
                 }
                 /*debug2("q %04x p %04x nw %d p+nw %04x ", (unsigned)q, (unsigned)p,
                     nw, (unsigned)(p+nw));*/
+                //nb++;
                 if(q>=p+nw && p+nw>=p)
                     goto found;
             }
+            //n++;
             q = p;
             p = clearbusy(next(p));
             if(p>q) {
@@ -211,6 +215,7 @@ __amalloc(size_t nbytes)
 #endif
     }
 found:
+    //__dprintf("n %d, nb %d, f %d\n", n, nb, f);
     allocp = p + nw;
     ASSERT(allocp<=alloct);
     if(q>allocp) {
