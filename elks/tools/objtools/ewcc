@@ -23,9 +23,8 @@ if [ -z "$WATCOM" ]
 fi
 
 ELKSLIBCINCLUDE=$TOPDIR/libc/include
-ELKSINCLUDE1=$TOPDIR/include
-ELKSINCLUDE2=$TOPDIR/elks/include
-WATCINCLUDE=$WATCOM/h
+ELKSINCLUDE1=$TOPDIR/elks/include
+ELKSINCLUDE2=$TOPDIR/libc/include/watcom
 
 # owcc options:
 # -bnone                    # no target specific setup
@@ -68,7 +67,6 @@ CCFLAGS="\
     -I$ELKSLIBCINCLUDE              \
     -I$ELKSINCLUDE1                 \
     -I$ELKSINCLUDE2                 \
-    -I$WATCINCLUDE                  \
     "
 
 while true; do

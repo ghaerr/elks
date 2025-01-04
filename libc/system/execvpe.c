@@ -52,12 +52,13 @@ execvpe(const char *fname, char **argv, char **envp)
 	    strcpy(pname, path);
 	    strcat(pname, "/");
 	    strcat(pname, fname);
+	    if(p) *p++ = ':';
 
 	    tryrun(pname, argv, envp);
 	    if( errno == EACCES ) besterr = EACCES;
 	    if( errno == ENOMEM || errno == E2BIG || errno == ENOEXEC ) goto out;
 
-	    brk((char *)pname);
+	    brk(pname);
 	    pname = (char *)fname;
 	    if(p) *p++ = ':';
 	    path=p;
