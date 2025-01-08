@@ -3,15 +3,15 @@
 
 void *malloc(size_t size)
 {
-    return __dmalloc(size);
+    return _dmalloc(size);
 }
 
 void free(void *ptr)
 {
-    __dfree(ptr);
+    _dfree(ptr);
 }
 
 void *realloc(void *ptr, size_t size)
 {
-    return __drealloc(ptr, size);
+    return _drealloc(ptr, size);
 }

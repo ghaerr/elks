@@ -1,6 +1,6 @@
 /*
- * __amalloc - Arena-based heap allocator - provides up to 64k local (far) heap
- * Based on __dmalloc (v7 debug malloc).
+ * _fmalloc - Arena-based far heap allocator - provides up to 64k far heap
+ * Based on _dmalloc (v7 debug malloc).
  * 16 Dec 2024 Greg Haerr
  *
  * Small malloc/realloc/free with heap checking
@@ -86,7 +86,7 @@ static int malloc_check_heap(void);
 #endif
 
 /* add size bytes to arena malloc heap, must be done before first malloc */
-int __amalloc_add_heap(char __far *start, size_t size)
+int _fmalloc_add_heap(char __far *start, size_t size)
 {
     ASSERT(start != NULL && size >= 16);
     allocs = (FPTR)start;
@@ -103,8 +103,8 @@ int __amalloc_add_heap(char __far *start, size_t size)
     return 1;
 }
 
-void *
-__amalloc(size_t nbytes)
+void __far *
+_fmalloc(size_t nbytes)
 {
     NPTR p, q;
     unsigned int nw, temp;
@@ -169,50 +169,8 @@ __amalloc(size_t nbytes)
             } else if(++temp>1)
                 break;
         }
-
-#if 1 // SIZE > 2
         debug("Out of fixed heap\n");
         return NULL;
-#else
-
-        /* extend break at least BLOCK bytes at a time, plus a word for top link */
-        if (nw < BLOCK/WORD)
-            temp = BLOCK/WORD + 1;
-        else
-            temp = nw + 1; /* NOTE always allocates full req w/o looking at free at top */
-
-        if (debug_level > 2) malloc_show_heap();
-        debug2("sbrk(%d) ", temp*WORD);
-#if 0   /* not required and slow, initial break always even */
-        q = (NPTR)sbrk(0);
-        if((INT)q & (sizeof(union store) - 1))
-            sbrk(4 - ((INT)q & (sizeof(union store) - 1)));
-
-        /* check possible address wrap - performed in kernel */
-        if(q+temp+GRANULE < q) {
-            debug(" (no more address space) = NULL\n");
-            errno = ENOMEM;
-            return(NULL);
-        }
-#endif
-        q = (NPTR)sbrk(temp*WORD);
-        if((INT)q == -1) {
-            debug(" (no more mem) = NULL\n");
-            malloc_show_heap();
-            errno = ENOMEM;
-            return(NULL);
-        }
-        ASSERT(!((INT)q & 1));
-        ASSERT(q>alloct);
-        next(alloct) = q;
-        if(q!=alloct+1)         /* mark any gap as permanently allocated*/
-            next(alloct) = setbusy(next(alloct));
-        alloct = next(q) = q+temp-1;
-        debug2("(TOTAL %u) ",
-            sizeof(union store) +
-            (clearbusy(alloct) - clearbusy(allocs[allocsize-1].ptr)) * sizeof(union store));
-        next(alloct) = setbusy((NPTR)allocs);
-#endif
     }
 found:
     //__dprintf("n %d, nb %d, f %d\n", n, nb, f);
@@ -231,7 +189,7 @@ found:
 /*  freeing strategy tuned for LIFO allocation
  */
 void
-__afree(void *ptr)
+_ffree(void __far *ptr)
 {
     NPTR p = (NPTR)ptr;
 
@@ -249,7 +207,7 @@ __afree(void *ptr)
     malloc_show_heap();
 }
 
-size_t __amalloc_usable_size(void *ptr)
+size_t _fmalloc_usable_size(void __far *ptr)
 {
     NPTR p = (NPTR)ptr;
 
@@ -269,7 +227,7 @@ size_t __amalloc_usable_size(void *ptr)
  *  returns new location, or 0 on failure
  */
 void *
-__arealloc(void *ptr, size_t nbytes)
+_frealloc(void __far *ptr, size_t nbytes)
 {
     NPTR p = (NPTR)ptr;
     NPTR q;
@@ -277,14 +235,14 @@ __arealloc(void *ptr, size_t nbytes)
     unsigned int nw, onw;
 
     if (p == 0)
-        return __amalloc(nbytes);
+        return _fmalloc(nbytes);
     debug("(%d)realloc(%04x,%u) ", getpid(), (unsigned)(p-1), nbytes);
 
     ASSERT(testbusy(next(p-1)));
     if(testbusy(next(p-1)))
-        __afree(p);
+        _ffree(p);
     onw = next(p-1) - p;
-    q = (NPTR)__amalloc(nbytes);   // FIXME and also use memcpy
+    q = (NPTR)_fmalloc(nbytes);     // FIXME and also use memcpy
     if(q==NULL || q==p)
         return((void *)q);
 
@@ -310,7 +268,7 @@ __arealloc(void *ptr, size_t nbytes)
 #if DEBUG
 static void malloc_assert_fail(char *s, int line)
 {
-    __dprintf("amalloc assert fail: %s (line %d)\n", s, line);
+    __dprintf("fmalloc assert fail: %s (line %d)\n", s, line);
     abort();
 }
 

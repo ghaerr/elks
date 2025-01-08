@@ -3,26 +3,26 @@
 
 #include <sys/types.h>
 
-/* default malloc (dev86) */
+/* default malloc (dev86 near heap) */
 void   *malloc(size_t);
 void   *realloc(void *, size_t);
 void    free(void *);
 size_t  malloc_usable_size(void *);
 
-/* debug malloc (v7 malloc) */
-void   *__dmalloc(size_t);
-void   *__drealloc(void *, size_t);
-void    __dfree(void *);
-size_t  __dmalloc_usable_size(void *);
+/* debug malloc (v7 malloc near heap) */
+void   *_dmalloc(size_t);
+void   *_drealloc(void *, size_t);
+void    _dfree(void *);
+size_t  _dmalloc_usable_size(void *);
 
-/* arena malloc (64k near/unlimited far heap) */
-void   *__amalloc(size_t);
-int     __amalloc_add_heap(char __far *start, size_t size);
-void   *__arealloc(void *, size_t);         /* not implemented */
-void    __afree(void *);
-size_t  __amalloc_usable_size(void *);
-extern unsigned int malloc_arena_size;
-extern unsigned int malloc_arena_thresh;
+/* _fmalloc (single arena 64k far heap) */
+void __far *_fmalloc(size_t);
+int         _fmalloc_add_heap(char __far *start, size_t size);
+void __far *_frealloc(void *, size_t);         /* not implemented */
+void        _ffree(void __far *);
+size_t      _fmalloc_usable_size(void __far *);
+extern unsigned int malloc_arena_size;          /* mem.c wrapper function */
+extern unsigned int malloc_arena_thresh;        /* mem.c wrapper function */
 
 /* usable with all mallocs */
 void   *calloc(size_t elm, size_t sz);

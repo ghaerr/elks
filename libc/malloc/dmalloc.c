@@ -1,5 +1,5 @@
 /*
- * Small malloc/realloc/free with heap checking
+ * _dmalloc - Small malloc/realloc/free with heap checking
  *  Ported to ELKS from V7 malloc by Greg Haerr 20 Apr 2020
  *
  * Enhancements:
@@ -79,7 +79,7 @@ static int malloc_check_heap(void);
 #endif
 
 void *
-__dmalloc(size_t nbytes)
+_dmalloc(size_t nbytes)
 {
     NPTR p, q;
     unsigned int nw, temp;
@@ -89,10 +89,6 @@ __dmalloc(size_t nbytes)
 #endif
     if (allocs[0].ptr == 0) {  /*first time*/
         allocs[0].ptr = setbusy(&allocs[1]);
-#if SIZE > 2
-        allocs[1].ptr = (NPTR)&allocs[SIZE-2];
-        allocs[SIZE-2].ptr = setbusy(&allocs[SIZE-1]);
-#endif
         allocs[SIZE-1].ptr = setbusy(&allocs[0]);
         alloct = (NPTR)&allocs[SIZE-1];
         allocp = (NPTR)&allocs[0];
@@ -149,11 +145,6 @@ __dmalloc(size_t nbytes)
                 break;
         }
 
-#if SIZE > 2
-        debug("Out of fixed heap\n");
-        return NULL;
-#else
-
         /* extend break at least BLOCK bytes at a time, plus a word for top link */
         if (nw < BLOCK/WORD)
             temp = BLOCK/WORD + 1;
@@ -191,7 +182,6 @@ __dmalloc(size_t nbytes)
             sizeof(union store) +
             (clearbusy(alloct) - clearbusy(allocs[SIZE-1].ptr)) * sizeof(union store));
         next(alloct) = setbusy(allocs);
-#endif
     }
 found:
     allocp = p + nw;
@@ -209,11 +199,11 @@ found:
 /*  freeing strategy tuned for LIFO allocation
  */
 void
-__dfree(void *ptr)
+_dfree(void *ptr)
 {
     NPTR p = (NPTR)ptr;
 
-    if (p == NULL)
+    if (ptr == NULL)
         return;
     debug("(%d)  free(%5u) ", getpid(), (unsigned)(next(p-1) - p) * sizeof(union store));
     debug2("= %04x\n", p-1);
@@ -226,7 +216,7 @@ __dfree(void *ptr)
     malloc_show_heap();
 }
 
-size_t __dmalloc_usable_size(void *ptr)
+size_t _dmalloc_usable_size(void *ptr)
 {
     NPTR p = (NPTR)ptr;
 
@@ -244,7 +234,7 @@ size_t __dmalloc_usable_size(void *ptr)
  *  returns new location, or 0 on failure
  */
 void *
-__drealloc(void *ptr, size_t nbytes)
+_drealloc(void *ptr, size_t nbytes)
 {
     NPTR p = (NPTR)ptr;
     NPTR q;
@@ -252,14 +242,14 @@ __drealloc(void *ptr, size_t nbytes)
     unsigned int nw, onw;
 
     if (p == 0)
-        return __dmalloc(nbytes);
+        return _dmalloc(nbytes);
     debug("(%d)realloc(%04x,%u) ", getpid(), (unsigned)(p-1), nbytes);
 
     ASSERT(testbusy(next(p-1)));
     if(testbusy(next(p-1)))
-        __dfree(p);
+        _dfree(p);
     onw = next(p-1) - p;
-    q = (NPTR)__dmalloc(nbytes);   // FIXME and also use memcpy
+    q = (NPTR)_dmalloc(nbytes);   // FIXME and also use memcpy
     if(q==NULL || q==p)
         return((void *)q);
 
@@ -312,7 +302,7 @@ malloc_show_heap(void)
     unsigned int size, alloc = 0, free = 0;
     static unsigned int maxalloc;
 
-    if (!debug_level) return;
+    if (debug_level < 2) return;
     debug2("--- heap size ---\n");
     malloc_check_heap();
     for(p = (NPTR)&allocs[0]; clearbusy(next(p)) > p; p=clearbusy(next(p))) {
@@ -322,11 +312,9 @@ malloc_show_heap(void)
             debug2(" (free)");
             free += size;
         } else {
-#if SIZE == 2
             if (n < 3)      /* don't count ptr to first sbrk()*/
                 debug2(" (skipped)");
             else
-#endif
                 alloc += size;
         }
         n++;
