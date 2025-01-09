@@ -85,7 +85,7 @@ _dmalloc(size_t nbytes)
     unsigned int nw, temp;
 
 #if DEBUG == 1
-    sysctl(CTL_GET, "malloc.debug", &debug_level);
+    if (debug_level == 1) sysctl(CTL_GET, "malloc.debug", &debug_level);
 #endif
     if (allocs[0].ptr == 0) {  /*first time*/
         allocs[0].ptr = setbusy(&allocs[1]);
