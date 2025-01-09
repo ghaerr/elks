@@ -26,7 +26,7 @@ OBJS=	builtins.o cd.o dirent.o error.o eval.o exec.o expand.o input.o \
 	linenoise_elks.o autocomplete.o
 
 # heap debugging using v7 debug malloc
-#OBJS += v7stub.o
+#OBJS += dmalloc.o
 
 # builtins must be manually added
 OBJS += bltin/echo.o

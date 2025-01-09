@@ -26,10 +26,10 @@ DEFAULT_MALLOC_OBJS = \
 	alloca.o \
 
 # debug malloc (v7)
-DEBUG_MALLOC_OBJS = v7malloc.o
+DEBUG_MALLOC_OBJS = dmalloc.o
 
-# arena malloc
-ARENA_MALLOC_OBJS = amalloc.o
+# far malloc (single arena)
+FAR_MALLOC_OBJS = fmalloc.o
 
 # these objects work with any malloc
 OBJS = \
@@ -42,9 +42,9 @@ OBJS = \
 # default and debug mallocs for all compilers
 OBJS += $(DEFAULT_MALLOC_OBJS) $(DEBUG_MALLOC_OBJS)
 
-# arena malloc works with OWC only for now
+# far malloc works with OWC only for now
 ifeq "$(COMPILER)" "watcom"
-OBJS += $(ARENA_MALLOC_OBJS)
+OBJS += $(FAR_MALLOC_OBJS)
 endif
 
 IA16OBJS = \
