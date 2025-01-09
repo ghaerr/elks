@@ -17,7 +17,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/sysctl.h>
-#define DEBUG       0       /* =1 use sysctl, =2 debug output, =3 show heap */
+#define DEBUG       1       /* =1 use sysctl, =2 debug output, =3 show heap */
 
 /*  C storage allocator
  *  circular first-fit strategy
@@ -110,7 +110,7 @@ _fmalloc(size_t nbytes)
     unsigned int nw, temp;
 
 #if DEBUG == 1
-    sysctl(CTL_GET, "malloc.debug", &debug_level);
+    if (debug_level == 1) sysctl(CTL_GET, "malloc.debug", &debug_level);
 #endif
 
     debug("(%d)malloc(%5u) ", getpid(), nbytes);
@@ -137,7 +137,7 @@ _fmalloc(size_t nbytes)
     /* combine free areas at heap start before allocating from free area past allocp */
     //allocp = (NPTR)allocs;    /* NOTE: start at last allocation for speed */
     for(p=allocp; ; ) {
-        //f = nb = n = 0;
+        //int f = 0, nb = 0, n = 0;
         for(temp=0; ; ) {
             if(!testbusy(next(p))) {
                 while(!testbusy(next(q = next(p)))) {
