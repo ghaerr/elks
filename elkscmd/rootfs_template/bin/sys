@@ -11,68 +11,68 @@ usage()
 
 create_dev_dir()
 {
-	echo "Create /dev"
-	mkdir $MNT/dev
-	mknod $MNT/dev/hda	b 3 0
-	mknod $MNT/dev/hda1	b 3 1
-	mknod $MNT/dev/hda2	b 3 2
-	mknod $MNT/dev/hda3	b 3 3
-	mknod $MNT/dev/hda4	b 3 4
-	mknod $MNT/dev/fd0	b 3 32
-	mknod $MNT/dev/fd1	b 3 40
-	mknod $MNT/dev/df0	b 4 0
-	mknod $MNT/dev/df1	b 4 1
-	mknod $MNT/dev/kmem	c 1 2
-	mknod $MNT/dev/null	c 1 3
-	mknod $MNT/dev/zero	c 1 5
-	mknod $MNT/dev/tcpdev	c 8 0
-	mknod $MNT/dev/ne0	c 9 0
-	mknod $MNT/dev/wd0	c 9 1
-	mknod $MNT/dev/3c0	c 9 2
-	mknod $MNT/dev/ptyp0	c 2 8
-	mknod $MNT/dev/ttyp0	c 4 8
-	mknod $MNT/dev/tty1	c 4 0
-	mknod $MNT/dev/ttyS0	c 4 64
-	mknod $MNT/dev/ttyS1	c 4 65
-	mknod $MNT/dev/console	c 4 254
+	echo "Creating /dev ..."
+	test -d $MNT/dev || mkdir $MNT/dev
+	test -b $MNT/dev/hda || mknod $MNT/dev/hda	b 3 0
+	test -b $MNT/dev/hda1 || mknod $MNT/dev/hda1	b 3 1
+	test -b $MNT/dev/hda2 || mknod $MNT/dev/hda2	b 3 2
+	test -b $MNT/dev/hda3 || mknod $MNT/dev/hda3	b 3 3
+	test -b $MNT/dev/hda4 || mknod $MNT/dev/hda4	b 3 4
+	test -b $MNT/dev/fd0 || mknod $MNT/dev/fd0	b 3 32
+	test -b $MNT/dev/fd1 || mknod $MNT/dev/fd1	b 3 40
+	test -b $MNT/dev/df0 || mknod $MNT/dev/df0	b 4 0
+	test -b $MNT/dev/df1 || mknod $MNT/dev/df1	b 4 1
+	test -c $MNT/dev/kmem || mknod $MNT/dev/kmem	c 1 2
+	test -c $MNT/dev/null || mknod $MNT/dev/null	c 1 3
+	test -c $MNT/dev/zero || mknod $MNT/dev/zero	c 1 5
+	test -c $MNT/dev/tcpdev || mknod $MNT/dev/tcpdev	c 8 0
+	test -c $MNT/dev/ne0 || mknod $MNT/dev/ne0	c 9 0
+	test -c $MNT/dev/wd0 || mknod $MNT/dev/wd0	c 9 1
+	test -c $MNT/dev/3c0 || mknod $MNT/dev/3c0	c 9 2
+	test -c $MNT/dev/ptyp0 || mknod $MNT/dev/ptyp0	c 2 8
+	test -c $MNT/dev/ttyp0 || mknod $MNT/dev/ttyp0	c 4 8
+	test -c $MNT/dev/tty1 || mknod $MNT/dev/tty1	c 4 0
+	test -c $MNT/dev/ttyS0 || mknod $MNT/dev/ttyS0	c 4 64
+	test -c $MNT/dev/ttyS1 || mknod $MNT/dev/ttyS1	c 4 65
+	test -c $MNT/dev/console || mknod $MNT/dev/console	c 4 254
 	chmod 0600 $MNT/dev/console
-	mknod $MNT/dev/tty	c 4 255
+	test -c $MNT/dev/tty || mknod $MNT/dev/tty	c 4 255
 	chmod 0666 $MNT/dev/tty
 	if test "$small" = "1"; then return; fi
-	mknod $MNT/dev/hdb	b 3 8
-	mknod $MNT/dev/hdb1	b 3 9
-	mknod $MNT/dev/hdb2	b 3 10
-	mknod $MNT/dev/hdb3	b 3 11
-	mknod $MNT/dev/hdb4	b 3 12
-	mknod $MNT/dev/hdc	b 3 16
-	mknod $MNT/dev/hdc1	b 3 17
-	mknod $MNT/dev/hdd	b 3 24
-	mknod $MNT/dev/rd0	b 1 0
-	mknod $MNT/dev/rd1	b 1 1
-	mknod $MNT/dev/tty2	c 4 1
-	mknod $MNT/dev/tty3	c 4 2
-	mknod $MNT/dev/ttyS2	c 4 66
-	mknod $MNT/dev/ttyS3	c 4 67
-	mknod $MNT/dev/ttyp1	c 4 9
-	mknod $MNT/dev/ttyp2	c 4 10
-	mknod $MNT/dev/ttyp3	c 4 11
-	mknod $MNT/dev/ptyp1	c 2 9
-	mknod $MNT/dev/ptyp2	c 2 10
-	mknod $MNT/dev/ptyp3	c 2 11
+	test -b $MNT/dev/hdb || mknod $MNT/dev/hdb	b 3 8
+	test -b $MNT/dev/hdb1 || mknod $MNT/dev/hdb1	b 3 9
+	test -b $MNT/dev/hdb2 || mknod $MNT/dev/hdb2	b 3 10
+	test -b $MNT/dev/hdb3 || mknod $MNT/dev/hdb3	b 3 11
+	test -b $MNT/dev/hdb4 || mknod $MNT/dev/hdb4	b 3 12
+	test -b $MNT/dev/hdc || mknod $MNT/dev/hdc	b 3 16
+	test -b $MNT/dev/hdc1 || mknod $MNT/dev/hdc1	b 3 17
+	test -b $MNT/dev/hdd || mknod $MNT/dev/hdd	b 3 24
+	test -b $MNT/dev/rd0 || mknod $MNT/dev/rd0	b 1 0
+	test -b $MNT/dev/rd1 || mknod $MNT/dev/rd1	b 1 1
+	test -c $MNT/dev/tty2 || mknod $MNT/dev/tty2	c 4 1
+	test -c $MNT/dev/tty3 || mknod $MNT/dev/tty3	c 4 2
+	test -c $MNT/dev/ttyS2 || mknod $MNT/dev/ttyS2	c 4 66
+	test -c $MNT/dev/ttyS3 || mknod $MNT/dev/ttyS3	c 4 67
+	test -c $MNT/dev/ttyp1 || mknod $MNT/dev/ttyp1	c 4 9
+	test -c $MNT/dev/ttyp2 || mknod $MNT/dev/ttyp2	c 4 10
+	test -c $MNT/dev/ttyp3 || mknod $MNT/dev/ttyp3	c 4 11
+	test -c $MNT/dev/ptyp1 || mknod $MNT/dev/ptyp1	c 2 9
+	test -c $MNT/dev/ptyp2 || mknod $MNT/dev/ptyp2	c 2 10
+	test -c $MNT/dev/ptyp3 || mknod $MNT/dev/ptyp3	c 2 11
 }
 
 create_directories()
 {
-	mkdir $MNT/bin
-	mkdir $MNT/etc
-	mkdir $MNT/mnt
-	mkdir $MNT/tmp
-	mkdir $MNT/root
+	mkdir -p $MNT/bin
+	mkdir -p $MNT/etc
+	mkdir -p $MNT/mnt
+	mkdir -p $MNT/tmp
+	mkdir -p $MNT/root
 }
 
 copy_bin_files()
 {
-	echo "Copy /bin"
+	echo "Copying /bin ..."
 	if test "$small" = "1"; then
 	cp /bin/sh	$MNT/bin
 	cp /bin/cat	$MNT/bin
@@ -111,7 +111,7 @@ copy_bin_files()
 
 copy_etc_files()
 {
-	echo "Copy /etc"
+	echo "Copying /etc ..."
 	cp /etc/*	$MNT/etc
 }
 
@@ -130,7 +130,7 @@ FSTYPE=$?
 if test "$FSTYPE" = "255"; then exit 1; fi;
 
 mkdir -p $MNT
-mount $1 $MNT 
+mount $1 $MNT || exit 1
 
 # if MINIX, create /dev entries
 if test "$FSTYPE" = "1"; then create_dev_dir; fi
@@ -142,3 +142,4 @@ sync
 umount $1
 rmdir $MNT
 sync
+echo "Finished."
