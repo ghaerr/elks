@@ -36,10 +36,10 @@ AS86FLAGS =\
     -j                          \
     -w-                         \
 
-CPP=cpp86
-CC=c86
-AS=as86
-AR=ar86
+CPP=$(C86)/host-bin/cpp86
+CC=$(C86)/host-bin/c86
+AS=$(C86)/host-bin/as86
+AR=$(C86)/host-bin/ar86
 
 CPPFLAGS=$(CPP86FLAGS) $(INCLUDES) $(DEFINES)
 CFLAGS=$(C86FLAGS)
