@@ -15,7 +15,7 @@ static void alarm_cb(int sig)
 	/* no action */
 }
 
-int in_connect(int socket, const struct sockaddr *address, socklen_t address_len,
+int in_connect(int sock, const struct sockaddr *address, socklen_t address_len,
 		int secs)
 {
 	int ret;
@@ -23,7 +23,7 @@ int in_connect(int socket, const struct sockaddr *address, socklen_t address_len
 
 	old = signal(SIGALRM, alarm_cb);
 	alarm(secs);
-	ret = connect(socket, address, address_len);
+	ret = connect(sock, address, address_len);
 	alarm(0);
 	signal(SIGALRM, old);
 	return ret;

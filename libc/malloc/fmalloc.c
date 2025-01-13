@@ -1,4 +1,8 @@
 /*
+ * _fmalloc - Arena-based far heap allocator - provides up to 64k far heap
+ * Based on _dmalloc (v7 debug malloc).
+ * 16 Dec 2024 Greg Haerr
+ *
  * Small malloc/realloc/free with heap checking
  *  Ported to ELKS from V7 malloc by Greg Haerr 20 Apr 2020
  *
@@ -46,15 +50,22 @@ union store {
     ALIGN dummy[NALIGN];
 };
 typedef union store __wcnear *NPTR;
+typedef union store __far    *FPTR;
 #define WORD            sizeof(union store)
+
+#define FP_SEG(fp)       ((unsigned)((unsigned long)(void __far *)(fp) >> 16))
+#define FP_OFF(fp)       ((unsigned)(unsigned long)(void __far *)(fp))
+#define MK_FPTR(seg,off) ((FPTR)((((unsigned long)(seg)) << 16) | ((unsigned int)(off))))
 
 #define testbusy(p)           ((INT)(p)&BUSY)
 #define setbusy(p)      (NPTR)((INT)(p)|BUSY)
 #define clearbusy(p)    (NPTR)((INT)(p)&~BUSY)
-#define next(p)         ((p)->ptr)
+#define next(p)         ((MK_FPTR(allocseg,p))->ptr)
 
-#define SIZE     2
-static  union store allocs[SIZE];
+static FPTR allocs;             /* arena base address */
+static unsigned int allocsize;  /* total arena size in bytes */
+static unsigned int allocseg;   /* arena segment */
+
 static  NPTR allocp;   /*search ptr*/
 static  NPTR alloct;   /*arena top*/
 static  NPTR allocx;   /*for benefit of realloc*/
@@ -74,27 +85,37 @@ static int malloc_check_heap(void);
 #define malloc_show_heap()
 #endif
 
-void *
-__dmalloc(size_t nbytes)
+/* add size bytes to arena malloc heap, must be done before first malloc */
+int _fmalloc_add_heap(char __far *start, size_t size)
+{
+    ASSERT(start != NULL && size >= 16);
+    allocs = (FPTR)start;
+    allocseg = FP_SEG(start);
+    allocsize = size / sizeof(union store);
+    debug("Adding SEG %04x size %d DS %04x\n", FP_SEG(start), size, FP_SEG(&size));
+
+    allocs[0].ptr = setbusy((NPTR)&allocs[1]);
+    allocs[1].ptr = (NPTR)&allocs[allocsize-2];
+    allocs[allocsize-2].ptr = setbusy((NPTR)&allocs[allocsize-1]);
+    allocs[allocsize-1].ptr = setbusy((NPTR)&allocs[0]);
+    alloct = (NPTR)&allocs[allocsize-1];
+    allocp = (NPTR)&allocs[0];
+    return 1;
+}
+
+void __far *
+_fmalloc(size_t nbytes)
 {
     NPTR p, q;
     unsigned int nw, temp;
 
 #if DEBUG == 1
-    sysctl(CTL_GET, "malloc.debug", &debug_level);
+    if (debug_level == 1) sysctl(CTL_GET, "malloc.debug", &debug_level);
 #endif
-    if (allocs[0].ptr == 0) {  /*first time*/
-        allocs[0].ptr = setbusy(&allocs[1]);
-#if SIZE > 2
-        allocs[1].ptr = (NPTR)&allocs[SIZE-2];
-        allocs[SIZE-2].ptr = setbusy(&allocs[SIZE-1]);
-#endif
-        allocs[SIZE-1].ptr = setbusy(&allocs[0]);
-        alloct = (NPTR)&allocs[SIZE-1];
-        allocp = (NPTR)&allocs[0];
-    }
 
     debug("(%d)malloc(%5u) ", getpid(), nbytes);
+    if (!allocseg)
+        return NULL;
     errno = 0;
     if (nbytes == 0) {
         debug(" (malloc 0) = NULL\n");
@@ -111,11 +132,12 @@ __dmalloc(size_t nbytes)
     }
     nw = (nbytes+WORD+WORD-1)/WORD;          /* extra word for link ptr/size*/
 
-    ASSERT(allocp>=allocs && allocp<=alloct);
+    ASSERT(allocp>=(NPTR)allocs && allocp<=alloct);
     ASSERT(malloc_check_heap());
     /* combine free areas at heap start before allocating from free area past allocp */
-    allocp = (NPTR)allocs;
+    //allocp = (NPTR)allocs;    /* NOTE: start at last allocation for speed */
     for(p=allocp; ; ) {
+        //int f = 0, nb = 0, n = 0;
         for(temp=0; ; ) {
             if(!testbusy(next(p))) {
                 while(!testbusy(next(q = next(p)))) {
@@ -126,12 +148,15 @@ __dmalloc(size_t nbytes)
                         (next(p) - p) * sizeof(union store),
                         (next(q) - q) * sizeof(union store));
                     next(p) = next(q);
+                    //f++;
                 }
                 /*debug2("q %04x p %04x nw %d p+nw %04x ", (unsigned)q, (unsigned)p,
                     nw, (unsigned)(p+nw));*/
+                //nb++;
                 if(q>=p+nw && p+nw>=p)
                     goto found;
             }
+            //n++;
             q = p;
             p = clearbusy(next(p));
             if(p>q) {
@@ -144,52 +169,11 @@ __dmalloc(size_t nbytes)
             } else if(++temp>1)
                 break;
         }
-
-#if SIZE > 2
         debug("Out of fixed heap\n");
         return NULL;
-#else
-
-        /* extend break at least BLOCK bytes at a time, plus a word for top link */
-        if (nw < BLOCK/WORD)
-            temp = BLOCK/WORD + 1;
-        else
-            temp = nw + 1; /* NOTE always allocates full req w/o looking at free at top */
-
-        if (debug_level > 2) malloc_show_heap();
-        debug2("sbrk(%d) ", temp*WORD);
-#if 0   /* not required and slow, initial break always even */
-        q = (NPTR)sbrk(0);
-        if((INT)q & (sizeof(union store) - 1))
-            sbrk(4 - ((INT)q & (sizeof(union store) - 1)));
-
-        /* check possible address wrap - performed in kernel */
-        if(q+temp+GRANULE < q) {
-            debug(" (no more address space) = NULL\n");
-            errno = ENOMEM;
-            return(NULL);
-        }
-#endif
-        q = (NPTR)sbrk(temp*WORD);
-        if((INT)q == -1) {
-            debug(" (no more mem) = NULL\n");
-            malloc_show_heap();
-            errno = ENOMEM;
-            return(NULL);
-        }
-        ASSERT(!((INT)q & 1));
-        ASSERT(q>alloct);
-        next(alloct) = q;
-        if(q!=alloct+1)         /* mark any gap as permanently allocated*/
-            next(alloct) = setbusy(next(alloct));
-        alloct = next(q) = q+temp-1;
-        debug2("(TOTAL %u) ",
-            sizeof(union store) +
-            (clearbusy(alloct) - clearbusy(allocs[SIZE-1].ptr)) * sizeof(union store));
-        next(alloct) = setbusy(allocs);
-#endif
     }
 found:
+    //__dprintf("n %d, nb %d, f %d\n", n, nb, f);
     allocp = p + nw;
     ASSERT(allocp<=alloct);
     if(q>allocp) {
@@ -199,13 +183,13 @@ found:
     next(p) = setbusy(allocp);
     debug2("= %04x\n", (unsigned)p);
     malloc_show_heap();
-    return((void *)(p+1));
+    return MK_FPTR(allocseg, p+1);
 }
 
 /*  freeing strategy tuned for LIFO allocation
  */
 void
-__dfree(void *ptr)
+_ffree(void __far *ptr)
 {
     NPTR p = (NPTR)ptr;
 
@@ -213,7 +197,8 @@ __dfree(void *ptr)
         return;
     debug("(%d)  free(%5u) ", getpid(), (unsigned)(next(p-1) - p) * sizeof(union store));
     debug2("= %04x\n", p-1);
-    ASSERT(p>clearbusy(allocs[SIZE-1].ptr)&&p<=alloct);
+    ASSERT(FP_SEG(ptr)==allocseg);
+    ASSERT(p>clearbusy(allocs[allocsize-1].ptr)&&p<=alloct);
     ASSERT(malloc_check_heap());
     allocp = --p;
     ASSERT(testbusy(next(p)));
@@ -222,25 +207,27 @@ __dfree(void *ptr)
     malloc_show_heap();
 }
 
-size_t __dmalloc_usable_size(void *ptr)
+size_t _fmalloc_usable_size(void __far *ptr)
 {
     NPTR p = (NPTR)ptr;
 
-    if (p == NULL)
+    if (ptr == NULL)
         return 0;
-    ASSERT(p>clearbusy(allocs[SIZE-1].ptr)&&p<=alloct);
+    ASSERT(FP_SEG(ptr)==allocseg);
+    ASSERT(p>clearbusy(allocs[allocsize-1].ptr)&&p<=alloct);
     --p;
     ASSERT(testbusy(next(p)));
     return (clearbusy(next(p)) - clearbusy(p)) * sizeof(union store);
 }
 
+#if LATER
 /*  realloc(p, nbytes) reallocates a block obtained from malloc()
  *  and freed since last call of malloc()
  *  to have new size nbytes, and old content
  *  returns new location, or 0 on failure
  */
 void *
-__drealloc(void *ptr, size_t nbytes)
+_frealloc(void __far *ptr, size_t nbytes)
 {
     NPTR p = (NPTR)ptr;
     NPTR q;
@@ -248,14 +235,14 @@ __drealloc(void *ptr, size_t nbytes)
     unsigned int nw, onw;
 
     if (p == 0)
-        return __dmalloc(nbytes);
+        return _fmalloc(nbytes);
     debug("(%d)realloc(%04x,%u) ", getpid(), (unsigned)(p-1), nbytes);
 
     ASSERT(testbusy(next(p-1)));
     if(testbusy(next(p-1)))
-        __dfree(p);
+        _ffree(p);
     onw = next(p-1) - p;
-    q = (NPTR)__dmalloc(nbytes);   // FIXME and also use memcpy
+    q = (NPTR)_fmalloc(nbytes);     // FIXME and also use memcpy
     if(q==NULL || q==p)
         return((void *)q);
 
@@ -276,11 +263,12 @@ __drealloc(void *ptr, size_t nbytes)
     debug("= %04x\n", (unsigned)q);
     return((void *)q);
 }
+#endif
 
 #if DEBUG
 static void malloc_assert_fail(char *s, int line)
 {
-    __dprintf("dmalloc assert fail: %s (line %d)\n", s, line);
+    __dprintf("fmalloc assert fail: %s (line %d)\n", s, line);
     abort();
 }
 
@@ -290,7 +278,9 @@ malloc_check_heap(void)
     NPTR p;
     int x = 0;
 
+    //debug("next(0) = %04x\n", clearbusy(next(&allocs[0])));
     for(p=(NPTR)&allocs[0]; clearbusy(next(p)) > p; p=clearbusy(next(p))) {
+        //debug("%04x %04x %04x\n", (unsigned)p, (unsigned)alloct, (unsigned)next(p));
         if(p==allocp)
             x++;
     }
@@ -308,7 +298,7 @@ malloc_show_heap(void)
     unsigned int size, alloc = 0, free = 0;
     static unsigned int maxalloc;
 
-    if (!debug_level) return;
+    if (debug_level < 2) return;
     debug2("--- heap size ---\n");
     malloc_check_heap();
     for(p = (NPTR)&allocs[0]; clearbusy(next(p)) > p; p=clearbusy(next(p))) {
@@ -318,12 +308,9 @@ malloc_show_heap(void)
             debug2(" (free)");
             free += size;
         } else {
-#if SIZE == 2
-            if (n < 3)      /* don't count ptr to first sbrk()*/
+            if (n < 2)
                 debug2(" (skipped)");
-            else
-#endif
-                alloc += size;
+            alloc += size;
         }
         n++;
         debug2("\n");

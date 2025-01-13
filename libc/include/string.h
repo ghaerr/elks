@@ -23,12 +23,13 @@ char * strdup(const char*);
 /* Basic mem functions */
 void * memcpy(void * dest, const void * src, size_t n);
 void * memccpy(void*, const void*, int, size_t);
-void * memchr(const void*, const int, size_t);
+void * memchr(const void*, int, size_t);
 void * memset(void*, int, size_t);
 int memcmp(const void*, const void*, size_t);
 void * memmove(void*, const void*, size_t);
 
 void __far *fmemset(void __far *buf, int c, size_t l);
+int fmemcmp(void __far *s1, void __far *s2, size_t n);  /* Watcom C only, in ASM */
 
 /* Error messages */
 char * strerror(int);

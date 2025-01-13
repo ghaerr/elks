@@ -240,7 +240,7 @@ int sys_open(const char *filename, int flags, mode_t mode)
     if ((flags + 1) & O_ACCMODE) flag++;
     if (flag & (O_TRUNC | O_CREAT)) flag |= FMODE_WRITE;
 
-    debug_cache("\nOPEN '%t' flags %02x ", filename, flags);
+    debug_file("\nOPEN '%t' flags %02x ", filename, flags);
     error = open_namei(filename, flag, mode, &inode, NULL);
     if (!error) {
         if ((error = open_fd(flags, inode)) < 0)

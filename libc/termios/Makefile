@@ -6,10 +6,10 @@ LIB ?= out.a
 include $(TOPDIR)/libc/$(COMPILER).inc
 
 # these are unimplemented
-#CFLAGS += -DL_tcdrain -DL_tcflow -DL_tcgetpgrp -DL_cfmakeraw
+#DEFINES += -DL_tcdrain -DL_tcflow -DL_tcgetpgrp -DL_cfmakeraw
 
 # TCSBRK is unimplemented except for with elksemu
-CFLAGS += -DL_tcsendbreak
+DEFINES += -DL_tcsendbreak
 
 OBJS = \
 	cfgetispeed.o \

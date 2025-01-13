@@ -1,101 +1,109 @@
-# ecc - ELKS cc compiler wrapper for C86 (8086-toolchain)
+#!/usr/bin/env bash
 #
-# This script runs cpp86, c86, nasm86 and ld86 on the input file.
-# The input file must be specified without its .c extension for now,
-# and the script must be run in the 8086-toolchain/ directory,
-# as it also builds the libc86.a C86 library.
-# This restriction will be removed shortly.
+# ecc - wrapper script for ELKS C86 toolchain
+#   Preprocesses, compiles, assembles and links passed .c files
 #
-# Usage: to compile and link foo.c:
-#   cd 8086-toolchain
-#   ecc foo
+# Usage: ecc [-c] [-{option}] file.c ...
 #
-# Before using, modify the paths in set_host_vars or set_elks_vars.
-
+# 27 Dec 24 Greg Haerr
+#
 set -e
 
-add_path () {
-    if [[ ":$PATH:" != *":$1:"* ]]; then
-        export PATH="$1:$PATH"
-    fi
-}
-
-# Host section - for cross compiling
-# Uses ELKS and C86 installation directories for header files and binaries
-set_host_vars() {
-    # Set full path to ELKS and C86 installations on host
-    export TOPDIR=/Users/greg/net/elks-gh
-    export C86DIR=/Users/greg/net/8086-toolchain
-    export C86LIB=$C86DIR/libc
-    INCLUDES="-I$TOPDIR/libc/include -I$TOPDIR/elks/include -I$C86DIR/libc/include"
-
-    # OpenWatcom path, not yet necessary to have installed
-    export WATCOM=/Users/greg/net/open-watcom-v2/rel
-
-    # ia16-elf-gcc
-    export MAKEFLAGS="$MAKEFLAGS"
-    add_path "$TOPDIR/cross/bin"
-    add_path "$TOPDIR/elks/tools/bin"
-
-    # OpenWatcom
-    #add_path "$WATCOM/binl"    # for Linux-32
-    #add_path "$WATCOM/binl64"  # for Linux-64
-    #add_path "$WATCOM/bino64"   # for macOS
-
-    #echo PATH set to $PATH
-
-    # C86
-    add_path "$C86DIR/host-bin"
-}
-
-# ELKS section - for compiling on ELKS
-# When compiling on ELKS itself, the C library and kernel header files
-# must be copied over to the directory tree with the paths set below.
-# Header files are expected to be in ELKS tree as follows:
-#   TOPDIR=/path/to/elks86      Top level of elks86 native dev tree (default /elks86)
-#       elks86/libc/include     C library header files
-#       elks86/elks/include     ELKS kernel header files
-#       elks86/c86/include      C86 header files
-#       elks86/libc             C86 libc86.a library location
-set_elks_vars() {
-    export TOPDIR=/elks86
-    # currently cheat and use libc86.a and binaries from current directory
-    export C86DIR=.
-    export C86LIB=$C86DIR
-    INCLUDES="-I$TOPDIR/libc/include -I$TOPDIR/elks/include -I$TOPDIR/c86/include"
-    export PATH=.:$PATH
-}
-
-if [ `uname` = 'ELKS' ]; then
-    set_elks_vars
-else
-    set_host_vars
+if [ -z "$TOPDIR" ]
+  then
+    echo "ELKS TOPDIR= environment variable not set"
+    exit
 fi
 
-# Shared section follows
+if [ -z "$C86" ]
+  then
+    echo "C86= environment variable not set"
+    exit
+fi
 
-DEFINES="-D__C86__ -D__STDC__"
-C86FLAGS="-O -warn=4 -lang=c99 -align=yes -stackopt=minimum -peep=all -stackcheck=no"
-CPPFLAGS="$INCLUDES $DEFINES"
-CFLAGS="$C86FLAGS"
-ASFLAGS="-f as86"
-ARFLAGS="r"
-LDFLAGS="-0 -i -L$C86LIB"
+INCLUDES="-I$TOPDIR/libc/include -I$TOPDIR/elks/include -I$TOPDIR/libc/include/c86"
+#DEFINES="-D__HAS_NO_FLOATS__=1 -D__HAS_NO_LONGONG__"
 
-# preprocessor
-echo cpp86 $CPPFLAGS $1.c $1.i
-cpp86 $CPPFLAGS $1.c -o $1.i
+CPP=cpp86
+CC=c86
+AS=as86
+AR=ar86
+LD=ld86
 
-# C compiler
-echo c86 $CFLAGS $1.c $1.asm
-c86 $CFLAGS $1.i $1.asm
+CPPFLAGS="\
+    -0                          \
+    $INCLUDES                   \
+    $DEFINES                    \
+    "
 
-# assembler
-echo nasm86 $ASFLAGS -l $1.lst -o $1.o $1.asm
-nasm86 $ASFLAGS -l $1.lst -o $1.o $1.asm
-objdump86 -s $1.o
+CFLAGS="\
+    -g                          \
+    -O                          \
+    -bas86                      \
+    -warn=4                     \
+    -lang=c99                   \
+    -align=yes                  \
+    -separate=yes               \
+    -stackopt=minimum           \
+    -peep=all                   \
+    -stackcheck=no              \
+    "
 
-# link executable
-echo ld86 $LDFLAGS $1.o -o $1 -lc86
-ld86 $LDFLAGS $1.o -o $1 -lc86
-objdump86 -s $1
+ASFLAGS="\
+    -0                          \
+    -j                          \
+    -O                          \
+    -w-                         \
+    "
+
+LDFLAGS="\
+    -0                          \
+    -i                          \
+    -L$TOPDIR/libc              \
+    "
+
+DOLINK=1
+while true; do
+  case "$1" in
+    -c)
+        DOLINK=0
+        shift ;;
+    -*)
+        CFLAGS="$CFLAGS $1"
+        shift ;;
+    *)  break ;;
+  esac
+done
+
+if [ $# -eq 0 ]
+  then
+    echo "Usage: ecc [-c] [-{option}] file.c ..."
+    exit
+fi
+
+OUT=$1
+if [ ${OUT%.c} == $OUT ]
+  then
+    echo "Must specify .c file(s)"
+    exit
+fi
+OUT=${OUT%.c}
+
+OBJS=
+for PROG in $@
+  do
+    echo $CPP $CPPFLAGS -o ${PROG%.c}.i ${PROG%.i}
+    $CPP $CPPFLAGS -o ${PROG%.c}.i ${PROG%.i}
+    echo $CC $CFLAGS ${PROG%.c}.i ${PROG%.c}.as
+    $CC $CFLAGS ${PROG%.c}.i ${PROG%.c}.as
+    echo $AS $ASFLAGS -o ${PROG%.c}.o ${PROG%.c}.as
+    $AS $ASFLAGS -o ${PROG%.c}.o ${PROG%.c}.as
+    OBJS="$OBJS ${PROG%.c}.o"
+    if [ $DOLINK -eq 1 ]; then rm ${PROG%.c}.i ${PROG%.c}.as; fi
+  done
+if [ $DOLINK -eq 1 ]
+  then
+    echo $LD $LDFLAGS -o $OUT $OBJS -lc86
+    $LD $LDFLAGS -o $OUT $OBJS -lc86
+    rm ${PROG%.c}.o
+  fi

@@ -23,9 +23,8 @@ if [ -z "$WATCOM" ]
 fi
 
 ELKSLIBCINCLUDE=$TOPDIR/libc/include
-ELKSINCLUDE1=$TOPDIR/include
-ELKSINCLUDE2=$TOPDIR/elks/include
-WATCINCLUDE=$WATCOM/h
+ELKSINCLUDE1=$TOPDIR/elks/include
+ELKSINCLUDE2=$TOPDIR/libc/include/watcom
 
 # owcc options:
 # -bnone                    # no target specific setup
@@ -37,6 +36,7 @@ WATCINCLUDE=$WATCOM/h
 # -Wc,-wcd=N                # disable warning N
 # -Wc,-fpi87                # inline 8087 fp
 # -Wc,-x                    # ignore INCLUDE environment variable
+# -Wc,-r                    # save/restore segment registers
 # -fnostdlib                # don't refere standard libraries
 # unused:
 # -fno-stack-check          # don't generate stack check code
@@ -67,7 +67,6 @@ CCFLAGS="\
     -I$ELKSLIBCINCLUDE              \
     -I$ELKSINCLUDE1                 \
     -I$ELKSINCLUDE2                 \
-    -I$WATCINCLUDE                  \
     "
 
 while true; do

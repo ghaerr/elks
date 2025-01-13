@@ -4,7 +4,9 @@
 #include <sys/sysctl.h>
 /* fmemalloc/fmemfree - allocate/free from main memory */
 
+#ifndef __C86__
 #define DEBUG       1       /* =1 use sysctl, =2 debug output */
+#endif
 
 #if DEBUG
 #define debug(...)  do { if (debug_level > 1) __dprintf(__VA_ARGS__); } while (0)

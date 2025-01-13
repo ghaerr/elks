@@ -4,3 +4,6 @@ libc.lst
 build-ml/
 *.obj
 *.lib
+*.ocj
+*.as
+*.i

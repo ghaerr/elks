@@ -11,68 +11,68 @@ usage()
 
 create_dev_dir()
 {
-	echo "Create /dev"
-	mkdir $MNT/dev
-	mknod $MNT/dev/hda	b 3 0
-	mknod $MNT/dev/hda1	b 3 1
-	mknod $MNT/dev/hda2	b 3 2
-	mknod $MNT/dev/hda3	b 3 3
-	mknod $MNT/dev/hda4	b 3 4
-	mknod $MNT/dev/fd0	b 3 32
-	mknod $MNT/dev/fd1	b 3 40
-	mknod $MNT/dev/df0	b 4 0
-	mknod $MNT/dev/df1	b 4 1
-	mknod $MNT/dev/kmem	c 1 2
-	mknod $MNT/dev/null	c 1 3
-	mknod $MNT/dev/zero	c 1 5
-	mknod $MNT/dev/tcpdev	c 8 0
-	mknod $MNT/dev/ne0	c 9 0
-	mknod $MNT/dev/wd0	c 9 1
-	mknod $MNT/dev/3c0	c 9 2
-	mknod $MNT/dev/ptyp0	c 2 8
-	mknod $MNT/dev/ttyp0	c 4 8
-	mknod $MNT/dev/tty1	c 4 0
-	mknod $MNT/dev/ttyS0	c 4 64
-	mknod $MNT/dev/ttyS1	c 4 65
-	mknod $MNT/dev/console	c 4 254
+	echo "Creating /dev"
+	mkdir -p $MNT/dev
+	mknod -p $MNT/dev/hda	b 3 0
+	mknod -p $MNT/dev/hda1	b 3 1
+	mknod -p $MNT/dev/hda2	b 3 2
+	mknod -p $MNT/dev/hda3	b 3 3
+	mknod -p $MNT/dev/hda4	b 3 4
+	mknod -p $MNT/dev/fd0	b 3 32
+	mknod -p $MNT/dev/fd1	b 3 40
+	mknod -p $MNT/dev/df0	b 4 0
+	mknod -p $MNT/dev/df1	b 4 1
+	mknod -p $MNT/dev/kmem	c 1 2
+	mknod -p $MNT/dev/null	c 1 3
+	mknod -p $MNT/dev/zero	c 1 5
+	mknod -p $MNT/dev/tcpdev	c 8 0
+	mknod -p $MNT/dev/ne0	c 9 0
+	mknod -p $MNT/dev/wd0	c 9 1
+	mknod -p $MNT/dev/3c0	c 9 2
+	mknod -p $MNT/dev/ptyp0	c 2 8
+	mknod -p $MNT/dev/ttyp0	c 4 8
+	mknod -p $MNT/dev/tty1	c 4 0
+	mknod -p $MNT/dev/ttyS0	c 4 64
+	mknod -p $MNT/dev/ttyS1	c 4 65
+	mknod -p $MNT/dev/console	c 4 254
 	chmod 0600 $MNT/dev/console
-	mknod $MNT/dev/tty	c 4 255
+	mknod -p $MNT/dev/tty	c 4 255
 	chmod 0666 $MNT/dev/tty
 	if test "$small" = "1"; then return; fi
-	mknod $MNT/dev/hdb	b 3 8
-	mknod $MNT/dev/hdb1	b 3 9
-	mknod $MNT/dev/hdb2	b 3 10
-	mknod $MNT/dev/hdb3	b 3 11
-	mknod $MNT/dev/hdb4	b 3 12
-	mknod $MNT/dev/hdc	b 3 16
-	mknod $MNT/dev/hdc1	b 3 17
-	mknod $MNT/dev/hdd	b 3 24
-	mknod $MNT/dev/rd0	b 1 0
-	mknod $MNT/dev/rd1	b 1 1
-	mknod $MNT/dev/tty2	c 4 1
-	mknod $MNT/dev/tty3	c 4 2
-	mknod $MNT/dev/ttyS2	c 4 66
-	mknod $MNT/dev/ttyS3	c 4 67
-	mknod $MNT/dev/ttyp1	c 4 9
-	mknod $MNT/dev/ttyp2	c 4 10
-	mknod $MNT/dev/ttyp3	c 4 11
-	mknod $MNT/dev/ptyp1	c 2 9
-	mknod $MNT/dev/ptyp2	c 2 10
-	mknod $MNT/dev/ptyp3	c 2 11
+	mknod -p $MNT/dev/hdb	b 3 8
+	mknod -p $MNT/dev/hdb1	b 3 9
+	mknod -p $MNT/dev/hdb2	b 3 10
+	mknod -p $MNT/dev/hdb3	b 3 11
+	mknod -p $MNT/dev/hdb4	b 3 12
+	mknod -p $MNT/dev/hdc	b 3 16
+	mknod -p $MNT/dev/hdc1	b 3 17
+	mknod -p $MNT/dev/hdd	b 3 24
+	mknod -p $MNT/dev/rd0	b 1 0
+	mknod -p $MNT/dev/rd1	b 1 1
+	mknod -p $MNT/dev/tty2	c 4 1
+	mknod -p $MNT/dev/tty3	c 4 2
+	mknod -p $MNT/dev/ttyS2	c 4 66
+	mknod -p $MNT/dev/ttyS3	c 4 67
+	mknod -p $MNT/dev/ttyp1	c 4 9
+	mknod -p $MNT/dev/ttyp2	c 4 10
+	mknod -p $MNT/dev/ttyp3	c 4 11
+	mknod -p $MNT/dev/ptyp1	c 2 9
+	mknod -p $MNT/dev/ptyp2	c 2 10
+	mknod -p $MNT/dev/ptyp3	c 2 11
 }
 
 create_directories()
 {
-	mkdir $MNT/bin
-	mkdir $MNT/etc
-	mkdir $MNT/mnt
-	mkdir $MNT/tmp
-	mkdir $MNT/root
+	mkdir -p $MNT/bin
+	mkdir -p $MNT/etc
+	mkdir -p $MNT/mnt
+	mkdir -p $MNT/tmp
+	mkdir -p $MNT/root
 }
 
 copy_bin_files()
 {
-	echo "Copy /bin"
+	echo "Copying /bin"
 	if test "$small" = "1"; then
 	cp /bin/sh	$MNT/bin
 	cp /bin/cat	$MNT/bin
@@ -111,11 +111,12 @@ copy_bin_files()
 
 copy_etc_files()
 {
-	echo "Copy /etc"
+	echo "Copying /etc"
 	cp /etc/*	$MNT/etc
 }
 
 # sys script starts here
+echo "Installing/Updating ELKS"
 MNT=/tmp/mnt
 small=0
 arg=-s
@@ -130,7 +131,7 @@ FSTYPE=$?
 if test "$FSTYPE" = "255"; then exit 1; fi;
 
 mkdir -p $MNT
-mount $1 $MNT 
+mount $1 $MNT || exit 1
 
 # if MINIX, create /dev entries
 if test "$FSTYPE" = "1"; then create_dev_dir; fi
@@ -142,3 +143,4 @@ sync
 umount $1
 rmdir $MNT
 sync
+echo "Finished."

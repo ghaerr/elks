@@ -35,6 +35,7 @@
 int rename( const char *__old, const char *__new )
 {
     sys_setseg(__old);
+    sys_setseg(__new);
     syscall_res res = sys_call2( SYS_rename, (unsigned)__old, (unsigned)__new );
     __syscall_return( int, res );
 }

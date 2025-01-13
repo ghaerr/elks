@@ -248,6 +248,7 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
          case 'k':              /* Pticks */
           usproc:
             v = lval? va_arg(ap, unsigned long) : (unsigned long)va_arg(ap, unsigned int);
+#ifndef __C86__
             if (*fmt == 'k') {
                 if (_weakaddr(ptostr)) {
                     (_weakfn(ptostr))(v, hash, p);
@@ -256,6 +257,7 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
                 }
                 /* if precision timing not linked in, display as unsigned */
             }
+#endif
 
         convert:
             p = buf + sizeof(buf) - 1;

@@ -6,7 +6,7 @@ time(time_t *where)
    struct timeval rv;
 
    if(gettimeofday(&rv, (void*)0) < 0 )
-      return -1;
+      return (time_t)-1;
 
    if(where)
       *where = rv.tv_sec;

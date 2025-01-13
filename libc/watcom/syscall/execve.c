@@ -10,6 +10,7 @@
 int _execve(const char *__fname, char *__stk_ptr, int __stack_bytes)
 {
     sys_setseg(__fname);
+    sys_setseg(__stk_ptr);
     syscall_res res = sys_call3( SYS_execve, (unsigned)__fname, (unsigned)__stk_ptr,
         __stack_bytes);
     __syscall_return( int, res );

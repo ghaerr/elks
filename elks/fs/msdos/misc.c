@@ -60,7 +60,7 @@ void FATPROC unlock_creation(void)
 }
 
 
-int FATPROC msdos_add_cluster(register struct inode *inode)
+int FATPROC msdos_add_cluster(struct inode *inode, int dontuseisize)
 {
 	static struct wait_queue wait;
 	static int lock = 0;
@@ -84,7 +84,7 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 		this = ((count+prev) % limit)+2;
 		if (fat_access(inode->i_sb,this,-1L) == 0) break;
 	}
-	debug("free cluster: %d\r\n",this);
+	debug_fat("free cluster: %d\r\n",this);
 
 	prev = (count+prev+1) % limit;
 	sb->previous_cluster = prev;
@@ -102,7 +102,7 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 	wake_up(&wait);
 	debug("set to %x\r\n",fat_access(inode->i_sb,this,-1L));
 
-	if (!S_ISDIR(inode->i_mode)) {
+	if (!S_ISDIR(inode->i_mode) && !dontuseisize) {
 		last = inode->i_size?
 			get_cluster(inode,(inode->i_size-1) / SECTOR_SIZE(inode) / sb->cluster_size)
 			: 0;
@@ -117,7 +117,7 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 				}
 			}
 	}
-	debug("last = %d\r\n",last);
+	debug_fat("last = %d\r\n",last);
 
 	if (last)
 		fat_access(inode->i_sb,last,this);
@@ -125,7 +125,7 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 		inode->u.msdos_i.i_start = this;
 		inode->i_dirt = 1;
 	}
-	if (last) debug("next set to %d\r\n",fat_access(inode->i_sb,last,-1L));
+	if (last) debug_fat("next set to %d\r\n",fat_access(inode->i_sb,last,-1L));
 
 	for (curr = 0; curr < sb->cluster_size; curr++) {
 		sector = sb->data_start + (this - 2) * sb->cluster_size + curr;
@@ -151,7 +151,7 @@ int FATPROC msdos_add_cluster(register struct inode *inode)
 			}
 		}
 		if (bh) {
-			debug_fat("add_cluster block write %lu\n", buffer_blocknr(bh));
+			debug("add_cluster block write %lu\n", buffer_blocknr(bh));
 			mark_buffer_dirty(bh);
 			brelse(bh);
 		}
