@@ -17,9 +17,9 @@ int main(int argc, char **argv)
 		/* preserve option */
 		struct stat sb;
 		if (stat(argv[2], &sb) == 0) {
-			if (S_ISCHR(sb.st_mode) && argv[3] && (argv[3][0] == 'c' || argv[3][0] == 'u')) return 1;
-			if (S_ISBLK(sb.st_mode)  && argv[3] && argv[3][0] == 'b') return 1;
-			if (S_ISFIFO(sb.st_mode) && argv[3] && argv[3][0] == 'p') return 1;
+			if (S_ISCHR(sb.st_mode) && argv[3] && (argv[3][0] == 'c' || argv[3][0] == 'u')) return 0;
+			if (S_ISBLK(sb.st_mode)  && argv[3] && argv[3][0] == 'b') return 0;
+			if (S_ISFIFO(sb.st_mode) && argv[3] && argv[3][0] == 'p') return 0;
 		}
 		/* valid node not there yet, so we advance and create it */
 		argc--;

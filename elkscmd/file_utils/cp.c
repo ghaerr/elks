@@ -428,6 +428,8 @@ int do_symlink(char *symlnk, char *file)
 {
 	if (opt_verbose) printf("Symlink %s -> %s\n", file, symlnk);
 
+	if (opt_force)
+		unlink(file);
 	if (symlink(symlnk, file) < 0) {
 		fprintf(stderr, "Can't create symlink "); fflush(stderr);
 		perror(symlnk);
