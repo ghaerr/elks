@@ -28,7 +28,6 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 
-int opt_nocopyzero = 0;		/* don't copy zero-length files starting with . */
 int opt_appendifexists = 0; /* don't create new fs on genfs if exists */
 
 /**
@@ -76,12 +75,9 @@ void parse_mkfs(int argc,char **argv,int *magic_p,int *nblks_p,int *inodes_p) {
     case 's':
       *nblks_p = atoi(optarg);
       break;
-	case 'k':
-		opt_nocopyzero = 1;
-		break;
-	case 'a':
-		opt_appendifexists = 1;
-		break;
+    case 'a':
+      opt_appendifexists = 1;
+      break;
     default:
       usage(argv[0]);
     }

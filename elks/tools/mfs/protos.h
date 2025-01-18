@@ -74,7 +74,6 @@ extern int opt_keepuid;
 extern int opt_fsbad_fatal;
 extern char *toolname;
 
-extern int opt_nocopyzero;
 extern int opt_appendifexists;
 
 extern char *optarg;
