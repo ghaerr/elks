@@ -389,6 +389,13 @@ compile_fs(struct minix_fs_dat *fs)
 				av[2] = 0;
 				cmd_mkdir(fs, 2, av, sb.st_mode & 0777);
 			} else if (flags == S_IFREG) {
+				if (opt_nocopyzero && !inode_build->blocks) {
+					char *p = strrchr(inode_build->path, '/');
+					if (p && *++p == '.') {
+						if (opt_verbose) printf("Skipping %s\n", inode_build->path);
+						continue;
+					}
+				}
 				if (opt_verbose) printf("cp %s %s\n", inode_build->path, prefix+inode_build->path);
 				av[0] = "cp";
 				av[1] = inode_build->path;
