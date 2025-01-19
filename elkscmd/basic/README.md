@@ -6,6 +6,8 @@ A complete BASIC interpreter for your 80's home computer! This BASIC supports al
 
 This interpreter uses some of the commands from Sinclair the original BASIC, but string functions are the newer RIGHT$/LEFT$ variety, rather than A$(2 TO 5) Sinclair-style slicing.
 
+To exit BASIC use CTRL-D. To quit a basic program use CTRL-C.
+
 BASIC Language
 --------------
 Variables names can be up to 8 alphanumeric characters but start with a letter e.g. a, bob32
