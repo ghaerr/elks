@@ -132,6 +132,7 @@ void arch_setup_user_stack (register struct task_struct * t, word_t entry)
 void arch_setup_sighandler_stack(register struct task_struct *t,
                                  __kern_sighandler_t addr,unsigned signr)
 {
+    printk("SIGCB %d: DS %x SS %x\n", t->pid, t->t_regs.ds, t->t_regs.ss);
     debug("Stack %x:%x was %x %x %x %x\n", _FP_SEG(addr), _FP_OFF(addr),
            get_ustack(t,0), get_ustack(t,2), get_ustack(t,4), get_ustack(t,6));
     put_ustack(t, -6, (int)get_ustack(t,0));
