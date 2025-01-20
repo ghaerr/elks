@@ -64,7 +64,7 @@ MODE number (set graphics mode, e.g MODE 1 to use PLOT/DRAW/CIRCLE)
 COLOR fg,bg
 PLOT x,y
 DRAW x,y
-CIRCLE x,y,r (PC-98 only for now)
+CIRCLE x,y,r
 INPB(port) (IO read byte from `port`)
 INPW(port) (IO read word from `port`)
 OUTB port, value (IO write byte `value` from `port`)

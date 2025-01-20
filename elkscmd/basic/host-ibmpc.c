@@ -282,7 +282,30 @@ void host_draw(int x, int y) {
     }
 }
 
-void host_circle(int x, int y, int r) {
+//using midpoint circle algorithm
+void host_circle(int xc, int yc, int r) {
+    int x = 0;
+    int y = r;
+    int d = 1 - r;
+
+    while (x <= y) {
+        host_plot(xc + x, yc + y);
+        host_plot(xc - x, yc + y);
+        host_plot(xc + x, yc - y);
+        host_plot(xc - x, yc - y);
+        host_plot(xc + y, yc + x);
+        host_plot(xc - y, yc + x);
+        host_plot(xc + y, yc - x);
+        host_plot(xc - y, yc - x);
+
+        if (d < 0) {
+            d += 2 * x + 3;
+        } else {
+            d += 2 * (x - y) + 5;
+            y--;
+        }
+        x++;
+    }
 }
 
 void host_outb(int port, int value) {
