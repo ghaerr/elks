@@ -35,5 +35,5 @@ cp -p elks-bin/objdump86        $DEST
 cp -p elks-bin/disasm86         $DEST
 cp -p elks-bin/cpp86            $DEST
 cd examples
-cp -p *.c *.h                   $DEST
+cp -p *.c *.h *.s               $DEST
 cp -p Makefile.elks             $DEST/Makefile
