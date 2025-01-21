@@ -49,17 +49,17 @@ DIM variable(n1,n2...)
 READ var
 DATA NumberOrString [,NumberOrString...]
 RESTORE [lineNumber]
-CLS
+CLS removes all text and graphics
 PAUSE milliseconds
 POSITION x,y sets the cursor
-NEW
+NEW clears the current program from memory
 LIST [start],[end] e.g. LIST or LIST 10,100
 RUN [lineNumber]
 LOAD "filename" loads filename.bas
 SAVE "filename" saves filename.bas
 SAVE+ "filename" saves filename.bas, sets auto-run on load
 DELETE "filename" deletes filename.bas
-DIR
+DIR list the contents of a directory
 MODE number (set graphics mode, e.g MODE 1 to use PLOT/DRAW/CIRCLE)
 COLOR fg,bg
 PLOT x,y
@@ -97,7 +97,7 @@ CODE(string) e.g. CODE(" ") -> 32
 STR$(number) e.g. STR$(2) -> "2"
 LEFT$(string,n)
 RIGHT$(string,n)
-MID$(string,start,n)
+MID$(string,start,n) extracts a substring from a given string
 COS(x) cosine
 SIN(x) sine
 TAN(x) tangent
