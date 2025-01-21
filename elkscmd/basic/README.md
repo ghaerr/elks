@@ -59,7 +59,7 @@ LOAD "filename" loads filename.bas
 SAVE "filename" saves filename.bas
 SAVE+ "filename" saves filename.bas, sets auto-run on load
 DELETE "filename" deletes filename.bas
-DIR list the contents of a directory
+DIR list all *.bas files in current directory
 MODE number (set graphics mode, e.g MODE 1 to use PLOT/DRAW/CIRCLE)
 COLOR fg,bg
 PLOT x,y
