@@ -20,7 +20,10 @@ _signal_cbhandler:
 	push %dx
 	push %si
 	push %di
+	push %ds
 	push %es
+	mov %ss,%ax
+	mov %ax,%ds
 
 	mov 6(%bp),%bx
 #ifndef __IA16_CALLCVT_REGPARMCALL
@@ -43,6 +46,7 @@ _signal_cbhandler:
 #endif
 
 	pop %es
+	pop %ds
 	pop %di
 	pop %si
 	pop %dx

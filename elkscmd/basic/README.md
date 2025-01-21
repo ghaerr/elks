@@ -6,6 +6,8 @@ A complete BASIC interpreter for your 80's home computer! This BASIC supports al
 
 This interpreter uses some of the commands from Sinclair the original BASIC, but string functions are the newer RIGHT$/LEFT$ variety, rather than A$(2 TO 5) Sinclair-style slicing.
 
+To exit BASIC use CTRL-D. To quit a basic program use CTRL-C.
+
 BASIC Language
 --------------
 Variables names can be up to 8 alphanumeric characters but start with a letter e.g. a, bob32
@@ -47,22 +49,22 @@ DIM variable(n1,n2...)
 READ var
 DATA NumberOrString [,NumberOrString...]
 RESTORE [lineNumber]
-CLS
+CLS removes all text and graphics
 PAUSE milliseconds
 POSITION x,y sets the cursor
-NEW
+NEW clears the current program from memory
 LIST [start],[end] e.g. LIST or LIST 10,100
 RUN [lineNumber]
 LOAD "filename" loads filename.bas
 SAVE "filename" saves filename.bas
 SAVE+ "filename" saves filename.bas, sets auto-run on load
 DELETE "filename" deletes filename.bas
-DIR
+DIR list all *.bas files in current directory
 MODE number (set graphics mode, e.g MODE 1 to use PLOT/DRAW/CIRCLE)
 COLOR fg,bg
 PLOT x,y
 DRAW x,y
-CIRCLE x,y,r (PC-98 only for now)
+CIRCLE x,y,r
 INPB(port) (IO read byte from `port`)
 INPW(port) (IO read word from `port`)
 OUTB port, value (IO write byte `value` from `port`)
@@ -95,7 +97,7 @@ CODE(string) e.g. CODE(" ") -> 32
 STR$(number) e.g. STR$(2) -> "2"
 LEFT$(string,n)
 RIGHT$(string,n)
-MID$(string,start,n)
+MID$(string,start,n) extracts a substring from a given string
 COS(x) cosine
 SIN(x) sine
 TAN(x) tangent
@@ -108,17 +110,17 @@ POW(x,y) e.g. POW(2,0.5) -> 1.414 square root of 2
 HEX$(number) e.g. HEX$(25923) -> "6543"
 PEEK(offset,segment) Memory read byte from `segment:offset`
 
-Architecture-specific
+Architecture-specific:
 PINREAD(pin)
 ANALOGRD(pin) - not implemented
 
-Not implemented
-x^y x to the y power - use POW(x,y)
-SQR(number) square root, use POW(number,0.5)
-SGN(number) sign, use IF number < 0 etc
+Not implemented, but alternatives exist:
+x^y x to the y power, use POW(x,y) instead
+SQR(number) square root, use POW(number,0.5) instead
+SGN(number) get sign, use IF number < 0 etc instead
 
-Not yet implemented
-SCREEN$(line,col)
-ATTR(line,col)
-POINT(x,y)
+Not yet implemented:
+SCREEN$(line,col) - retrieves the ASCII code of the character displayed at (line,col)
+ATTR(line,col) -  returns the attribute byte for this screen position. The byte contains information about the color attributes of the pixel block at (line,col)
+POINT(x,y) - checks whether the pixel at screen coordinates (x, y) is ON or OFF
 ```

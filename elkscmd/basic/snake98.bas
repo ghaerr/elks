@@ -1,4 +1,4 @@
-100 REM port from www.quitebasic.com/prj/games/snake
+100 REM port from www.quitebasic.com/prj/games/snake The version below is specific to PC 98 computers. 
 200 MODE 1
 300 CLS
 400 PRINT "=== Snake and Dots ==="
