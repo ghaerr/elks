@@ -110,17 +110,17 @@ POW(x,y) e.g. POW(2,0.5) -> 1.414 square root of 2
 HEX$(number) e.g. HEX$(25923) -> "6543"
 PEEK(offset,segment) Memory read byte from `segment:offset`
 
-Architecture-specific
+Architecture-specific:
 PINREAD(pin)
 ANALOGRD(pin) - not implemented
 
-Not implemented
+Not implemented, but alternatives exist:
 x^y x to the y power - use POW(x,y)
 SQR(number) square root, use POW(number,0.5)
 SGN(number) sign, use IF number < 0 etc
 
-Not yet implemented
-SCREEN$(line,col)
-ATTR(line,col)
-POINT(x,y)
+Not yet implemented:
+SCREEN$(line,col) - retrieves the ASCII code of the character displayed at (line,col)
+ATTR(line,col) -  returns the attribute byte for this screen position. The byte contains information about the color attributes of the pixel block at (line,col)
+POINT(x,y) - checks whether the pixel at screen coordinates (x, y) is ON or OFF
 ```
