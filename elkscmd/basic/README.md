@@ -115,9 +115,9 @@ PINREAD(pin)
 ANALOGRD(pin) - not implemented
 
 Not implemented, but alternatives exist:
-x^y x to the y power - use POW(x,y)
-SQR(number) square root, use POW(number,0.5)
-SGN(number) sign, use IF number < 0 etc
+x^y x to the y power, use POW(x,y) instead
+SQR(number) square root, use POW(number,0.5) instead
+SGN(number) get sign, use IF number < 0 etc instead
 
 Not yet implemented:
 SCREEN$(line,col) - retrieves the ASCII code of the character displayed at (line,col)
