@@ -134,8 +134,18 @@ _fmalloc(size_t nbytes)
 
     ASSERT(allocp>=(NPTR)allocs && allocp<=alloct);
     ASSERT(malloc_check_heap());
-    /* combine free areas at heap start before allocating from free area past allocp */
-    //allocp = (NPTR)allocs;    /* NOTE: start at last allocation for speed */
+    /*
+     * Start search at heap start to combine free areas before allocating
+     * from free area past allocp. Slower but required for best fit and
+     * least heap fragmentation, resulting in maximum use of heap area.
+     *
+     * Comment out following line to start at last allocation for speed,
+     * but this will not combine any free space until alloc top reached,
+     * usually resulting in highly fragmented heap without large spaces
+     * available.
+     */
+    allocp = (NPTR)allocs;
+
     for(p=allocp; ; ) {
         //int f = 0, nb = 0, n = 0;
         for(temp=0; ; ) {
@@ -166,9 +176,12 @@ _fmalloc(size_t nbytes)
                 debug(" (corrupt) = NULL\n");
                 errno = ENOMEM;
                 return(NULL);
-            } else if(++temp>1)
-                break;
+            } else {
+                if (++temp > 1)
+                    break;
+            }
         }
+        debug_level = 2;    /* force message display below unless !DEBUG */
         debug("Out of fixed heap\n");
         return NULL;
     }

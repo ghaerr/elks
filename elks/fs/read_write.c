@@ -98,7 +98,7 @@ int sys_write(unsigned int fd, char *buf, size_t count)
     register struct inode *inode;
     int written;
 
-    debug_file("write %d, buf, %u\n", fd, count);
+    debug("write %d, buf, %u\n", fd, count);
     if (((written = fd_check(fd, buf, count, FMODE_WRITE, &file)) == 0) && count) {
 	written = -EINVAL;
 	fop = file->f_op;

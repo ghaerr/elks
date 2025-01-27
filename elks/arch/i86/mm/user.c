@@ -10,13 +10,31 @@
 
 int verfy_area(void *p, size_t len)
 {
-    /*
-     * Kernel tasks can always access user process boundaries
-     */
-    if ((kernel_ds == current->t_regs.ds) ||
-          ((segoff_t)((char *)p + len) <= current->t_endseg))
+    int i;
+    segoff_t offset;
+
+    /* Kernel tasks can always access user process boundaries */
+    if (kernel_ds == current->t_regs.ds)
         return 0;
 
+    offset = (segoff_t)((char *)p + len);
+
+    /* use fast method when DS == SS indicating default data segment request */
+    if (current->t_regs.ds == current->t_regs.ss)
+         return (offset < current->t_endseg)? 0: -EFAULT;
+
+    /* check allocated code and data segments with syscall DS segment */
+    for (i = 0; i < MAX_SEGS; i++) {
+        if (current->mm[i] && (current->mm[i]->base == current->t_regs.ds) &&
+           offset < (current->mm[i]->size << 4)) /* task segments never >= 64k */
+            return 0;
+    }
+
+    /* check fmemalloc allocations in main memory (slow) */
+    if (seg_verify_area(current->pid, current->t_regs.ds, offset))
+        return 0;
+
+    printk("FAULT\n");
     return -EFAULT;
 }
 
