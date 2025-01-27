@@ -42,6 +42,7 @@ int strlen_fromfs(void *,size_t);
 #define verify_area(mode,point,size) verfy_area(point,size)
 
 int verfy_area(void *,size_t);
+int seg_verify_area(pid_t pid, seg_t base, segoff_t offset);
 void put_user_char(unsigned char,void *);
 void put_user(unsigned short,void *);
 void put_user_long(unsigned long,void *);

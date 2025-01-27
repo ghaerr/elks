@@ -350,6 +350,21 @@ again:
     }
 }
 
+// verify passed address range within process-owned memory
+int seg_verify_area(pid_t pid, seg_t base, segoff_t offset)
+{
+    list_s *n;
+
+    for (n = _seg_all.next; n != &_seg_all; ) {
+        segment_s * seg = structof (n, segment_s, all);
+
+        if (seg->pid == pid && seg->base == base)
+            return offset < (seg->size << 4);
+        n = seg->all.next;
+    }
+    return 0;
+}
+
 void INITPROC seg_add(seg_t start, seg_t end)
 {
     segment_s * seg = (segment_s *) heap_alloc (sizeof (segment_s), HEAP_TAG_SEG);
