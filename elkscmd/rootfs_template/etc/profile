@@ -1,4 +1,4 @@
-export PATH=/bin
+export PATH=/bin:/usr/bin
 PS1="$HOSTNAME$PS1"
 umask 022
 #FAT permissions fix
