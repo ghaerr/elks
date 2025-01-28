@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 #
 # copyc86.sh - copy native ELKS C86 toolchain, header files and examples to ELKS /usr
+# Also creates $TOPDIR/devc86.tar development tarball
 #
-# Usage: ./copyc86.sh
+# Usage: ./copyc86.sh; cd image; make hd32-minix
 #
 set -e
 
@@ -20,6 +21,8 @@ fi
 
 # create and copy to /usr/bin, /usr/lib, /usr/include, /usr/src on destination
 DEST=$TOPDIR/elkscmd/rootfs_template/usr
+rm -rf $DEST
+rm -rf $TOPDIR/target/usr
 mkdir -p $DEST
 mkdir -p $DEST/bin
 mkdir -p $DEST/lib
@@ -73,13 +76,17 @@ cp -p libc/libc86.a                         $DEST/lib
 
 cd $C86
 cp -p elks-bin/make             $DEST/bin
-cp -p elks-bin/cpp86            $DEST/bin
+cp -p elks-bin/cpp              $DEST/bin
 cp -p elks-bin/c86              $DEST/bin
-cp -p elks-bin/as86             $DEST/bin
-cp -p elks-bin/ld86             $DEST/bin
-cp -p elks-bin/ar86             $DEST/bin
-cp -p elks-bin/objdump86        $DEST/bin
+cp -p elks-bin/as               $DEST/bin
+cp -p elks-bin/ld               $DEST/bin
+cp -p elks-bin/ar               $DEST/bin
+cp -p elks-bin/objdump          $DEST/bin
 cp -p elks-bin/disasm86         $DEST/bin
 cd examples
 cp -p *.c *.h *.s               $DEST/src
 cp -p Makefile.elks             $DEST/src/Makefile
+
+cd $TOPDIR/elkscmd/rootfs_template
+tar cf $TOPDIR/devc86.tar usr
+echo "Files copied and devc86.tar produced"

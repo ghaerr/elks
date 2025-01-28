@@ -214,6 +214,6 @@ basic/basic                     :basic                  :1200k
 advent/advent                     :other                            :1440c
 advent/advent.db ::lib/advent.db  :other                            :1440c
 debug/disasm                      :other                        :1440k
-debug/nm86                        :other                            :1440c
+#debug/nm86                        :other                            :1440c
 debug/system.sym ::lib/system.sym :other                            :1440c
 debug/testsym                     :other                            :1440c
