@@ -10,7 +10,7 @@ To exit BASIC use CTRL-D. To quit a basic program use CTRL-C.
 
 BASIC Language
 --------------
-Variables names can be up to 8 alphanumeric characters but start with a letter e.g. a, bob32
+Variables names can be up to 8 alphanumeric characters (no special charactes such as "_") but start with a letter e.g. a, bob32
 String variable names must end in $ e.g. a$, bob32$
 Case is ignored (for all identifiers). BOB32 is the same as Bob32. print is the same as PRINT
 
@@ -40,7 +40,7 @@ REM <comment> e.g. REM ** My Program ***
 STOP
 CONT (continue from a STOP)
 INPUT [string prompt,] variable e.g. INPUT a$ or INPUT a(5,3)
-IF <expr> THEN cmd e.g. IF a>10 THEN a = 0: GOTO 20
+IF <expr> THEN cmd e.g. IF a>10 THEN a = 0: GOTO 20, "ELSE" is not supported
 FOR variable = start TO end STEP step
 NEXT variable
 GOSUB lineNumber
