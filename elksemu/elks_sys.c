@@ -492,7 +492,7 @@ elks_execve(int bx, int cx, int dx, int di, int si)
     }
     ct = 0;
     if (is_elks) {
-        argp[0] = emu_prog;
+        argp[0] = (char *)emu_prog;
         /* argp[1]=ELKS_PTR(char, bx); */
         ct = 1;
     }
@@ -695,13 +695,13 @@ elks_reboot(int bx, int cx, int dx, int di, int si)
     switch (dx) {
         /* graceful shutdown, C-A-D off, kill -? 1 */
     case 0:
-        return reboot(0xfee1dead, 672274793, 0);
+        return reboot(0xfee1dead, 672274793, 0, NULL);
         /* Enable C-A-D */
     case 0xCAD:
-        return reboot(0xfee1dead, 672274793, 0x89abcdef);
+        return reboot(0xfee1dead, 672274793, 0x89abcdef, NULL);
         /* Time to die! */
     case 0xD1E:
-        return reboot(0xfee1dead, 672274793, 0x1234567);
+        return reboot(0xfee1dead, 672274793, 0x1234567, NULL);
     }
     return -1;
 }

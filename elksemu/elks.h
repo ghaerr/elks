@@ -177,4 +177,4 @@ void elks_pid_init(void);
 pid_t elks_to_linux_pid(int16_t);
 int16_t linux_to_elks_pid(pid_t);
 
-int reboot(int magic1, int magic2, int magic3);
+int reboot(int magic1, int magic2, int magic3, void *args);
