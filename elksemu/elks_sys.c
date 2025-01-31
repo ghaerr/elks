@@ -492,7 +492,7 @@ elks_execve(int bx, int cx, int dx, int di, int si)
     }
     ct = 0;
     if (is_elks) {
-        argp[0] = emu_prog;
+        argp[0] = (char *)emu_prog;
         /* argp[1]=ELKS_PTR(char, bx); */
         ct = 1;
     }
