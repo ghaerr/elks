@@ -23,6 +23,7 @@
 #include <dirent.h>
 #include <sys/time.h>
 #include <sys/ptrace.h>
+#include <sys/socket.h>
 #include "elks.h"
 
 #include "efile.h"
@@ -708,6 +709,109 @@ elks_reboot(int bx, int cx, int dx, int di, int si)
         return reboot(0xfee1dead, 672274793, 0x1234567, NULL);
     }
     return -1;
+}
+
+static void
+squash_fd_set(fd_set * fds, int fds16)
+{
+   if( fds16 )
+   {
+      FD_ZERO(fds);
+      memcpy(fds, ELKS_PTR(void, fds16), sizeof(uint64_t));
+   }
+}
+
+static void
+unsquash_fd_set(fd_set * fds, int fds16)
+{
+   if( fds16 )
+   {
+      memcpy(ELKS_PTR(void, fds16), fds, sizeof(uint64_t));
+   }
+}
+
+#define sys_select elks_select
+static int
+elks_select(int bx, int cx, int dx, int di, int si)
+{
+   struct timeval tv, * pv = 0;
+   int ax;
+   fd_set readfds, writefds, exceptfds;
+
+   dbprintf(("select(%d,%d,%d,%d,%d)\n",bx,cx,dx,di,si));
+
+   squash_fd_set(&readfds, cx);
+   squash_fd_set(&writefds, dx);
+   squash_fd_set(&exceptfds, di);
+
+   if( si )
+   {
+      pv = &tv;
+      tv.tv_sec  = ELKS_PEEK(long, si);
+      tv.tv_usec = ELKS_PEEK(long, si+4);
+   }
+
+   ax = select(bx, cx ? &readfds : 0, dx ? &writefds : 0, di ? &exceptfds : 0, pv);
+
+   unsquash_fd_set(&readfds, cx);
+   unsquash_fd_set(&writefds, dx);
+   unsquash_fd_set(&exceptfds, di);
+
+   if( ax > 0 && si )
+   {
+      pv = &tv;
+      ELKS_POKE(long, si, tv.tv_sec);
+      ELKS_POKE(long, si+4, tv.tv_usec);
+   }
+
+   return ax;
+}
+
+#define sys_socket elks_socket
+static int
+elks_socket(int bx, int cx, int dx, int di, int si)
+{
+   dbprintf(("socket(%d,%d,%d)\n",bx,cx,dx));
+   return socket(bx, cx, dx);
+}
+
+#define sys_bind elks_bind
+static int
+elks_bind(int bx, int cx, int dx, int di, int si)
+{
+   dbprintf(("bind(%d,%d,%d)\n",bx,cx,dx));
+   return bind(bx, ELKS_PTR(void, cx), dx);
+}
+
+#define sys_listen elks_listen
+static int
+elks_listen(int bx, int cx, int dx, int di, int si)
+{
+   dbprintf(("listen(%d,%d,%d)\n",bx,cx));
+   return listen(bx, cx);
+}
+
+#define sys_accept elks_accept
+static int
+elks_accept(int bx, int cx, int dx, int di, int si)
+{
+   int r;
+   uint16_t * lp = ELKS_PTR(uint16_t, dx);
+   socklen_t addrlen;
+
+   dbprintf(("accept(%d,%d,%d)\n",bx,cx,dx));
+   r = accept(bx, ELKS_PTR(void, cx), &addrlen);
+
+   *lp = addrlen;
+   return r;
+}
+
+#define sys_connect elks_connect
+static int
+elks_connect(int bx, int cx, int dx, int di, int si)
+{
+   dbprintf(("connect(%d,%d,%d)\n",bx,cx,dx));
+   return connect(bx, ELKS_PTR(void, cx), dx);
 }
 
 /****************************************************************************/
