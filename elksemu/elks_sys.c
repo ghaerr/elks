@@ -713,7 +713,7 @@ squash_fd_set(fd_set * fds, int fds16)
    if( fds16 )
    {
       FD_ZERO(fds);
-      memcpy(fds, ELKS_PTR(void, fds16), sizeof(uint32_t));
+      memcpy(fds, ELKS_PTR(void, fds16), sizeof(uint64_t));
    }
 }
 
@@ -722,7 +722,7 @@ unsquash_fd_set(fd_set * fds, int fds16)
 {
    if( fds16 )
    {
-      memcpy(ELKS_PTR(void, fds16), fds, sizeof(uint32_t));
+      memcpy(ELKS_PTR(void, fds16), fds, sizeof(uint64_t));
    }
 }
 
