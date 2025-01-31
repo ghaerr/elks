@@ -26,12 +26,21 @@ endif
 # CFLAGS=-O2 -fno-strength-reduce -b i486-linuxaout -N -s -static
 
 OBJ=elks.o elks_sys.o elks_signal.o elks_pid.o minix.o
+OBJ_STRACE=elks.o elks_sys_strace.o elks_signal.o elks_pid.o minix.o
+
+all:	elksemu strace_elksemu
 
 elksemu:	$(OBJ)
 		$(CC) $(CFLAGS) -o $@ $^
 
+strace_elksemu:	$(OBJ_STRACE)
+		$(CC) $(CFLAGS) -o $@ $^
+
 elks_sys.o:	call_tab.v defn_tab.v efile.h
 $(OBJ):		elks.h
+
+elks_sys_strace.o:	elks_sys.c elks.h call_tab.v defn_tab.v efile.h
+		$(CC) $(CFLAGS) -DSTRACE=1 -c -o $@ $<
 
 ifdef PREFIX
 INSTALLED_CALL_TAB = $(PREFIX)/share/misc/elks/call_tab.v
@@ -84,7 +93,7 @@ install: elksemu
 	install -s -o root -g root -m 4555 elksemu $(DIST)/lib/elksemu
 
 clean realclean:
-	rm -f $(OBJ) binfmt_elks.o elksemu call_tab.v defn_tab.v efile.h
+	rm -f $(OBJ) $(OBJ_STRACE) binfmt_elks.o elksemu strace_elksemu call_tab.v defn_tab.v efile.h
 
 module: binfmt_elks.o
 
@@ -103,4 +112,6 @@ binfmt_elks.o:	binfmt_elks.c
 #MODCFLAGS=-O -fomit-frame-pointer -DCPU=386 -D__KERNEL__ -DMODULE
 # Or this ...
 #MODCFLAGS=-O -fomit-frame-pointer -D__KERNEL__ -DMODULE -DCONFIG_MODVERSIONS
+
+.PHONY:	all
 

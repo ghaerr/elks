@@ -29,6 +29,10 @@
 
 #ifdef DEBUG
 #define dbprintf(x) db_printf x
+#elif defined STRACE
+#include <stdarg.h>
+static void strace(const char *fmt, ...);
+#define dbprintf(x) strace x
 #else
 #define dbprintf(x)
 #endif
@@ -909,3 +913,17 @@ elks_syscall(void)
     else
         return -errno;
 }
+
+#ifdef STRACE
+#undef strace
+static void
+strace(const char * fmt, ...)
+{
+  va_list ptr;
+  int rv;
+  va_start(ptr, fmt);
+  rv = vfprintf(stderr,fmt,ptr);
+  va_end(ptr);
+  fflush(stderr);
+}
+#endif
