@@ -232,7 +232,7 @@ static int load_elks(int fd, uint16_t argv_envp_bytes)
 
 	if(read(fd, &mh,sizeof(mh))!=sizeof(mh))
 		return -ENOEXEC;
-	if(mh.type!=ELKS_SPLITID && mh.type!=ELKS_SPLITID_AHISTORICAL)
+	if(mh.type!=ELKS_COMBID && mh.type!=ELKS_SPLITID && mh.type!=ELKS_SPLITID_AHISTORICAL)
 		return -ENOEXEC;
 
 	memset(&esuph, 0, sizeof esuph);
@@ -305,6 +305,9 @@ static int load_elks(int fd, uint16_t argv_envp_bytes)
 				return -E2BIG;
 		} else {
 			len = min_len;
+			if (mh.type == ELKS_COMBID &&
+				__builtin_add_overflow(len, mh.tseg, &len))
+				return -EFBIG;
 			if (__builtin_add_overflow(len, INIT_HEAP + stack,
 						   &len))
 				return -EFBIG;
@@ -318,7 +321,11 @@ static int load_elks(int fd, uint16_t argv_envp_bytes)
 	elks_fartext_base=elks_base+0x10000;
 	if(read(fd,elks_fartext_base,esuph.esh_ftseg)!=esuph.esh_ftseg)
 		return -ENOEXEC;
-	elks_data_base=elks_base+0x20000;
+	if(mh.type==ELKS_COMBID)
+		elks_data_base=elks_base+mh.tseg;
+	else
+		elks_data_base=elks_base+0x20000;
+	int r;
 	if(read(fd,elks_data_base,mh.dseg)!=mh.dseg)
 		return -ENOEXEC;
 	memset(elks_data_base+mh.dseg,0, mh.bseg);
@@ -340,6 +347,12 @@ static int load_elks(int fd, uint16_t argv_envp_bytes)
 	retval = relocate(elks_data_base, esuph.msh_drsize, cs, fcs, ds, fd);
 	if (retval != 0)
 		return retval;
+
+	if (mh.type == ELKS_COMBID)
+	{
+		elks_data_base = elks_base;
+		mh.tseg = len;
+	}
 
 	/*
 	 *	Really set up the LDT descriptors
@@ -644,7 +657,7 @@ main(int argc, char *argv[], char *envp[])
 	if((err = load_elks(fd, (uint16_t)argv_envp_bytes)) < 0)
 	{
 		if (err == -ENOEXEC)
-			fprintf(stderr, "Not a elks binary.\n");
+			fprintf(stderr, "Not an elks binary.\n");
 		else
 			fprintf(stderr, "Unsupported elks binary (%s).\n",
 				strerror(-err));
