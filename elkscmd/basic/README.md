@@ -6,7 +6,12 @@ A complete BASIC interpreter for your 80's home computer! This BASIC supports al
 
 This interpreter uses some of the commands from Sinclair the original BASIC, but string functions are the newer RIGHT$/LEFT$ variety, rather than A$(2 TO 5) Sinclair-style slicing.
 
-To exit BASIC use CTRL-D. To quit a basic program use CTRL-C.
+To exit BASIC use CTRL-D. To quit a basic program use CTRL-C. You can have a host x86-64 version of BASIC by:
+```
+$ make host
+./hostbasic
+```
+`hostbasic` allows you to identify BASIC language errors before executing under ELKS. `hostbasic` does not support graphics, but the native version does.
 
 BASIC Language
 --------------

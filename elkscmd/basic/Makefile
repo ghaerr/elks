@@ -45,7 +45,7 @@ HOSTSRC += ../../libc/misc/ecvt.c
 HOSTSRC += ../../libc/misc/dtostr.c
 
 hostbasic: $(HOSTSRC)
-	$(HOSTCC) $(HOSTCFLAGS) $(HOSTSRC) -o $@
+	$(HOSTCC) $(HOSTCFLAGS) $(HOSTSRC) -o $@ -lm
 
 install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
