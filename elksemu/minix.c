@@ -44,9 +44,9 @@ minix_syscall()
    static char *nm[4] = {"?", "send", "receive", "sendrec"};
    char   tsks[13], syss[12];
 
-   int   sr  = (unsigned short) elks_cpu.regs.xcx;
-   int   tsk = (unsigned short) elks_cpu.regs.xax;
-   int   sys = ELKS_PEEK(short, (unsigned short) elks_cpu.regs.xbx + 2);
+   int   sr  = (unsigned short) elks_cpu.xcx;
+   int   tsk = (unsigned short) elks_cpu.xax;
+   int   sys = ELKS_PEEK(short, (unsigned short) elks_cpu.xbx + 2);
 
    if (sr < 0 || sr > 3) sr = 0;
    switch(tsk)

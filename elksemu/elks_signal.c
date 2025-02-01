@@ -15,6 +15,7 @@ static int elks_sigtrap_ip = -1, elks_sigtrap_cs = -1;
 void
 sig_trap(int signo)
 {
+#if USE_PTRACE
     pid_t child = elks_cpu.child, pid;
     int status;
     kill(elks_cpu.child, SIGSTOP);
@@ -22,17 +23,20 @@ sig_trap(int signo)
         if (errno != ESRCH)
             return;
     }
-    elks_cpu.regs.xsp -= 2;
-    ELKS_POKE(unsigned short, elks_cpu.regs.xsp, signo);
-    elks_cpu.regs.xsp -= 2;
-    ELKS_POKE(unsigned short, elks_cpu.regs.xsp, elks_cpu.regs.xcs);
-    elks_cpu.regs.xsp -= 2;
-    ELKS_POKE(unsigned short, elks_cpu.regs.xsp, elks_cpu.regs.xip);
-    elks_cpu.regs.xip = elks_sigtrap_ip;
-    elks_cpu.regs.xcs = elks_sigtrap_cs;
+#endif
+    elks_cpu.xsp -= 2;
+    ELKS_POKE(unsigned short, elks_cpu.xsp, signo);
+    elks_cpu.xsp -= 2;
+    ELKS_POKE(unsigned short, elks_cpu.xsp, elks_cpu.xcs);
+    elks_cpu.xsp -= 2;
+    ELKS_POKE(unsigned short, elks_cpu.xsp, elks_cpu.xip);
+    elks_cpu.xip = elks_sigtrap_ip;
+    elks_cpu.xcs = elks_sigtrap_cs;
+#if USE_PTRACE
     if (ptrace(PTRACE_SETREGS, child, NULL, &elks_cpu.regs) != 0)
         return;
     kill(elks_cpu.child, SIGCONT);
+#endif
 }
 
 int

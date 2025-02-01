@@ -87,7 +87,9 @@ static int
 elks_exit(int bx, int cx, int dx, int di, int si)
 {
     dbprintf(("exit(%d)\n", bx));
+#if USE_PTRACE
     kill(elks_cpu.child, SIGKILL);
+#endif
     exit(bx);
 }
 
@@ -889,12 +891,12 @@ elks_sbrk(int bx, int cx, int dx, int di, int si)
             return -1;
         }
     } else {
-        if (brk_at <= -bx || brk_at + bx >= elks_cpu.regs.xsp) {
+        if (brk_at <= -bx || brk_at + bx >= elks_cpu.xsp) {
             errno = ENOMEM;
             return -1;
         }
     }
-    if (brk_at >= elks_cpu.regs.xsp ^ brk_at + bx >= elks_cpu.regs.xsp) {
+    if (brk_at >= elks_cpu.xsp ^ brk_at + bx >= elks_cpu.xsp) {
         errno = ENOMEM;
         return -1;
     }
@@ -979,7 +981,7 @@ static int
 elks_enosys(int bx, int cx, int dx, int di, int si)
 {
     fprintf(stderr, "Function number %d called (%d,%d,%d)\n",
-            (int)(0xFFFF & elks_cpu.regs.xax),
+            (int)(0xFFFF & elks_cpu.xax),
             bx, cx, dx);
     errno = ENOSYS;
     return -1;
@@ -999,14 +1001,14 @@ int
 elks_syscall(void)
 {
     int r, n;
-    int bx = elks_cpu.regs.xbx & 0xFFFF;
-    int cx = elks_cpu.regs.xcx & 0xFFFF;
-    int dx = elks_cpu.regs.xdx & 0xFFFF;
-    int di = elks_cpu.regs.xdi & 0xFFFF;
-    int si = elks_cpu.regs.xsi & 0xFFFF;
+    int bx = elks_cpu.xbx & 0xFFFF;
+    int cx = elks_cpu.xcx & 0xFFFF;
+    int dx = elks_cpu.xdx & 0xFFFF;
+    int di = elks_cpu.xdi & 0xFFFF;
+    int si = elks_cpu.xsi & 0xFFFF;
 
     errno = 0;
-    n = (elks_cpu.regs.xax & 0xFFFF);
+    n = (elks_cpu.xax & 0xFFFF);
     if (n >= 0 && n < sizeof(jump_tbl) / sizeof(funcp))
         r = (*(jump_tbl[n])) (bx, cx, dx, di, si);
     else
