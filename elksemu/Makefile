@@ -6,14 +6,6 @@ ifndef TOPDIR
 $(error TOPDIR is not defined)
 endif
 
-# Use BCC to make a tiny static a.out version.
-ifeq ($(CC),bcc)
-CFLAGS=-Ml -ansi -s $(DEFS)
-endif
-ifeq ($(CC),ncc)
-CFLAGS=-Ml -ansi -s $(DEFS)
-endif
-
 # Default
 ifeq ($(CFLAGS),)
 CFLAGS=-O $(DEFS)
@@ -23,6 +15,8 @@ endif
 # USE_VM86 - uses the kernel syscall vm86, note that this only works for x86-32 Linux systems
 # USE_X86EMU - uses the libx86emu CPU emulation library
 # USE_PTRACE - start a 16-bit protected mode child process and controls it via ptrace calls
+USE_PTRACE=1
+
 ifdef USE_VM86
 CFLAGS+=-m32 -DUSE_VM86
 else
@@ -33,7 +27,6 @@ ifdef USE_PTRACE
 CFLAGS+=-DUSE_PTRACE=1
 else
 $(error One of USE_PTRACE, USE_X86EMU, USE_VM86 must be defined)
-USE_PTRACE=1
 endif
 endif
 endif
