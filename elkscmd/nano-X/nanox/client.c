@@ -10,14 +10,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
-#ifndef __linux__ 
-#include <linuxmt/socket.h>
 #include <linuxmt/un.h>
-#else
 #include <sys/socket.h>
-#include <sys/un.h>
 #include <sys/select.h>
-#endif
 #include "nano-X.h"
 #include "serv.h"
 
@@ -105,7 +100,7 @@ static int GrSendBlock(void *b, long n)
 			z = GrReadByte();
 			if(z == -1) return -1;
 printf("client bad GrSendBlock\r\n");
-			raise(z);
+			//raise(z);
 		}
 		else if(i == GrRetErrorPending)
 			if(GrDeliverErrorEvent() == -1) return -1;
@@ -368,6 +363,55 @@ int GrGetNextEvent(GR_EVENT *ep)
 		 */
 		if(GrSendByte(GrNumGetNextEvent) != GrRetDataFollows)
 			return -1;
+
+readevent:
+		/* this will never be GR_EVENT_IDLE
+		 * with current implementation
+		 */
+		if(GrReadBlock(ep, sizeof(*ep)) == -1)
+			return -1;
+	}
+	return 0;
+}
+
+int GrGetNextEventTimeout(GR_EVENT *ep, GR_TIMEOUT timeout)
+{
+	char 	c;
+	fd_set 	rfds;
+	int	setsize = 0;
+
+	if(regfd != -1) {
+		c = GrNumGetNextEventTimeout;
+		write(sock, &c, 1); /* fixme: check return code*/
+		write(sock, &timeout, sizeof(timeout));
+		FD_ZERO(&rfds);
+		FD_SET(sock, &rfds);
+		FD_SET(regfd, &rfds);
+		if(sock > setsize) setsize = sock;
+		if(regfd > setsize) setsize = regfd;
+		++setsize;
+		if(select(setsize, &rfds, NULL, NULL, NULL) > 0) {
+			if(FD_ISSET(sock, &rfds)) {
+				/* fixme: check return code*/
+				read(sock, &c, 1);
+				if(c != GrRetDataFollows)
+					return -1;
+				goto readevent;
+			}
+			if(FD_ISSET(regfd, &rfds)) {
+				ep->type = GR_EVENT_TYPE_FDINPUT;
+			}
+		}
+	} else {
+		/* send a byte requesting an event check,
+		 * wait till event exists
+		 */
+		if(GrSendByte(GrNumGetNextEventTimeout) != GrRetSendData)
+			return -1;
+
+		if(GrSendBlock(&timeout, sizeof(timeout)) != GrRetDataFollows)
+			return -1;
+
 
 readevent:
 		/* this will never be GR_EVENT_IDLE
