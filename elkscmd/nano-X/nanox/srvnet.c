@@ -14,13 +14,8 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
-#ifndef __linux__ 
-#include <linuxmt/socket.h>
 #include <linuxmt/un.h>
-#else
 #include <sys/socket.h>
-#include <sys/un.h>
-#endif
 #include <sys/stat.h>
 #include "serv.h"
 
@@ -441,7 +436,31 @@ void GsGetNextEventWrapper(void)
 	GR_EVENT evt;
 
 	/* first check if any event ready*/
-	GsCheckNextEvent(&evt);
+	GsCheckNextEvent(&evt, GR_TIMEOUT_POLL);
+	if(evt.type == GR_EVENT_TYPE_NONE) {
+		/* tell main loop to call Finish routine on event*/
+		curclient->waiting_for_event = TRUE;
+		return;
+	}
+
+	GsPutCh(current_fd, GrRetDataFollows);
+
+	GsWrite(current_fd, (void *) &evt, sizeof(evt));
+}
+
+void GsGetNextEventTimeoutWrapper(void)
+{
+	GR_EVENT evt;
+
+	GR_TIMEOUT timeout;
+
+	GsPutCh(current_fd, GrRetSendData);
+
+	if(GsRead(current_fd, (void *) &timeout, sizeof(timeout)))
+		return;
+
+	/* first check if any event ready*/
+	GsCheckNextEvent(&evt, timeout);
 	if(evt.type == GR_EVENT_TYPE_NONE) {
 		/* tell main loop to call Finish routine on event*/
 		curclient->waiting_for_event = TRUE;
@@ -462,7 +481,7 @@ void GsGetNextEventWrapperFinish(void)
 
 	/* get the event and pass it to client*/
 	/* this will never be GR_EVENT_TYPE_NONE*/
-	GsCheckNextEvent(&evt);
+	GsCheckNextEvent(&evt, GR_TIMEOUT_POLL);
 
 	GsPutCh(current_fd, GrRetDataFollows);
 
@@ -473,7 +492,7 @@ void GsCheckNextEventWrapper(void)
 {
 	GR_EVENT evt;
 
-	GsCheckNextEvent(&evt);
+	GsCheckNextEvent(&evt, GR_TIMEOUT_POLL);
 
 	GsPutCh(current_fd, GrRetDataFollows);
 
@@ -1335,7 +1354,8 @@ struct GrFunction {
 	{GsBitmapWrapper, "GsBitmap"},
 	{GsTextWrapper, "GsText"},
 	{GsSetCursorWrapper, "GsSetCursor"},
-	{GsMoveCursorWrapper, "GsMoveCursor"}
+	{GsMoveCursorWrapper, "GsMoveCursor"},
+	{GsGetNextEventTimeoutWrapper, "GsGetNextEventTimeout"},
 };
 
 /*
