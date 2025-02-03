@@ -23,14 +23,14 @@
 
 #ifdef CONFIG_UNIX
 
-#define NO_MKNOD 1  /* =1 use normal file rather than named socket for FAT filesystems*/
+#define USE_IFREG 1     /* =1 for FAT filesystem compatibility */
 
-#if NO_MKNOD
-#define MODE    S_IFREG
-#define FLAG    (O_CREAT|FMODE_WRITE)
+#if USE_IFREG   /* use regular file rather than named socket for bind and connect */
+#define MODE    S_IFREG                 /* regular file type */
+#define FLAG    (O_CREAT|FMODE_WRITE)   /* create using open_namei */
 #else
-#define MODE    S_IFSOCK
-#define FLAG    0
+#define MODE    S_IFSOCK                /* named pipe/socket file type */
+#define FLAG    0                       /* created seperately using do_mknod */
 #endif
 
 struct unix_proto_data unix_datas[NSOCKETS_UNIX];
@@ -161,7 +161,7 @@ static int unix_bind(struct socket *sock,
     old_ds = current->t_regs.ds;
     current->t_regs.ds = kernel_ds;
 
-#if !NO_MKNOD
+#if !USE_IFREG
     i = do_mknod(upd->sockaddr_un.sun_path,
 	    offsetof(struct inode_operations,mknod), MODE | S_IRWXUGO, 0);
 
