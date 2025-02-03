@@ -58,8 +58,8 @@ TTY_Open(KBDDEVICE *pkd)
 
 	new = old;
 	/* If you uncomment ISIG and BRKINT below, then ^C will be ignored.*/
-	new.c_lflag &= ~(ECHO | ICANON | IEXTEN /*| ISIG*/);
-	new.c_iflag &= ~(ICRNL | INPCK | ISTRIP | IXON /*| BRKINT*/);
+	new.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
+	new.c_iflag &= ~(ICRNL | INPCK | ISTRIP | IXON | BRKINT);
 	new.c_cflag &= ~(CSIZE | PARENB);
 	new.c_cflag |= CS8;
 	new.c_cc[VMIN] = 0;

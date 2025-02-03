@@ -385,6 +385,7 @@ static int unix_write(struct socket *sock, char *ubuf, int size, int nonblock)
     pupd = UN_DATA(sock)->peerupd;	/* safer than sock->conn */
 
     while (!(space = UN_BUF_SPACE(pupd))) {
+	printk("NO SPACE on WRITE pid %d size %d\n", current->pid, size);
 	sock->flags |= SF_NOSPACE;
 
 	if (nonblock)

@@ -574,6 +574,7 @@ GsNewWindow(GR_WINDOW_ID parent, GR_COORD x, GR_COORD y, GR_SIZE width,
 	GR_WINDOW	*pwp;		/* parent window */
 	GR_WINDOW	*wp;		/* new window */
 	static int	nextid = GR_ROOT_WINDOW_ID + 1;
+	static nextx = 10, nexty = 10;
 
 	if ((width <= 0) || (height <= 0) || (bordersize < 0)) {
 		GsError(GR_ERROR_BAD_WINDOW_SIZE, 0);
@@ -594,6 +595,10 @@ GsNewWindow(GR_WINDOW_ID parent, GR_COORD x, GR_COORD y, GR_SIZE width,
 		GsError(GR_ERROR_MALLOC_FAILED, 0);
 		return 0;
 	}
+	if (x < 0)
+		x = nextx, nextx += 100;
+	if (y < 0)
+		y = nexty, nexty += 100;
 
 	wp->id = nextid++;
 	wp->parent = pwp;
