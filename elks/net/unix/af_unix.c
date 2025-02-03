@@ -23,6 +23,16 @@
 
 #ifdef CONFIG_UNIX
 
+#define USE_IFREG 1     /* =1 for FAT filesystem compatibility */
+
+#if USE_IFREG   /* use regular file rather than named socket for bind and connect */
+#define MODE    S_IFREG                 /* regular file type */
+#define FLAG    (O_CREAT|FMODE_WRITE)   /* create using open_namei */
+#else
+#define MODE    S_IFSOCK                /* named pipe/socket file type */
+#define FLAG    0                       /* created seperately using do_mknod */
+#endif
+
 struct unix_proto_data unix_datas[NSOCKETS_UNIX];
 
 static struct unix_proto_data *unix_data_alloc(void)
@@ -151,11 +161,13 @@ static int unix_bind(struct socket *sock,
     old_ds = current->t_regs.ds;
     current->t_regs.ds = kernel_ds;
 
+#if !USE_IFREG
     i = do_mknod(upd->sockaddr_un.sun_path,
-	    offsetof(struct inode_operations,mknod), S_IFSOCK | S_IRWXUGO, 0);
+	    offsetof(struct inode_operations,mknod), MODE | S_IRWXUGO, 0);
 
     if (i == 0)
-	i = open_namei(upd->sockaddr_un.sun_path, 0, S_IFSOCK, &upd->inode, NULL);
+#endif
+	i = open_namei(upd->sockaddr_un.sun_path, FLAG, MODE, &upd->inode, NULL);
 
     current->t_regs.ds = old_ds;
     if (i < 0) {
@@ -203,7 +215,7 @@ static int unix_connect(struct socket *sock,
     old_ds = current->t_regs.ds;
     current->t_regs.ds = kernel_ds;
 
-    i = open_namei(sockun.sun_path, 2, S_IFSOCK, &inode, NULL);
+    i = open_namei(sockun.sun_path, 2, MODE, &inode, NULL);
     current->t_regs.ds = old_ds;
 
     if (i < 0)
@@ -385,6 +397,7 @@ static int unix_write(struct socket *sock, char *ubuf, int size, int nonblock)
     pupd = UN_DATA(sock)->peerupd;	/* safer than sock->conn */
 
     while (!(space = UN_BUF_SPACE(pupd))) {
+	printk("NO SPACE on WRITE pid %d size %d\n", current->pid, size);
 	sock->flags |= SF_NOSPACE;
 
 	if (nonblock)

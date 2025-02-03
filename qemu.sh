@@ -12,7 +12,7 @@
 # Select disk image to use
 # MINIX or FAT .config build
 #IMAGE="-fda image/fd2880.img"
-IMAGE="-fda image/fd1440.img"
+IMAGE="-fda fd2880.img"
 #IMAGE="-fda image/fd1200.img"
 #IMAGE="-fda image/fd720.img"
 #IMAGE="-fda image/fd360.img"
@@ -37,7 +37,7 @@ IMAGE="-fda image/fd1440.img"
 #IMAGE="-hda image/hd32-minix.img"
 
 # MBR builds
-#IMAGE="-hda image/hd32-minix.img"
+IMAGE="-hda image/hd32-minix.img"
 #IMAGE="-hda image/hd32mbr-minix.img"
 #IMAGE="-hda image/hd32mbr-minix.img -hdb image/hd32-minix.img"
 #IMAGE="-hda image/hd32mbr-fat.img"
@@ -51,7 +51,7 @@ IMAGE="-fda image/fd1440.img"
 #DISK2="-fdb image/fd720-fat.img"
 #DISK2="-fdb image/fd1200-fat.img"
 #DISK2="-fdb image/fd1440-fat.img"
-#DISK2="-fdb image/fd2880-fat.img"
+DISK2="-fdb fd2880.img"
 #DISK2="-fdb image/fd360-minix.img"
 #DISK2="-fdb image/fd720-minix.img"
 #DISK2="-fdb image/fd1200-minix.img"
@@ -70,7 +70,7 @@ KEYBOARD=
 
 # Select pty serial port or serial mouse driver
 #SERIAL="-chardev pty,id=chardev1 -device isa-serial,chardev=chardev1,id=serial1"
-#SERIAL="-chardev msmouse,id=chardev1 -device isa-serial,chardev=chardev1,id=serial1"
+SERIAL="-chardev msmouse,id=chardev1 -device isa-serial,chardev=chardev1,id=serial1"
 
 # Uncomment this to route ELKS /dev/ttyS0 to host terminal
 CONSOLE="-serial stdio"

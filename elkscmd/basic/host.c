@@ -342,6 +342,8 @@ static int loop(FILE *infile) {
         if (lineNumber != 0) {
             host_outputLong(lineNumber);
             host_outputChar('-');
+        } else {
+            printf("Tokenization error near '%s'\n", input);
         }
         printf("%s\n\n", errorTable[ret]);
     } else if (!infile)

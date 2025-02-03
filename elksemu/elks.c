@@ -11,25 +11,29 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <string.h>
-#include <unistd.h>
 #include <stdarg.h>
 #include <fcntl.h>
 #include <signal.h>
-#include <sched.h>
 #include <errno.h>
 #include <stdint.h>
 #include <sys/stat.h>
-#include <sys/mman.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
+#if !USE_X86EMU
+#include <sys/mman.h>
+#endif
+#if USE_PTRACE
+#include <unistd.h>
+#include <sched.h>
 #include <sys/ptrace.h>
 #include <sys/wait.h>
 #include <asm/ldt.h>
 #include <asm/ptrace-abi.h>
+#endif
 #include "elks.h"
 
 const char *emu_prog;
-volatile struct elks_cpu_s elks_cpu;
+volatile elks_cpu_t elks_cpu;
 /* Paragraph aligned */
 unsigned char *elks_base, *elks_fartext_base, *elks_data_base;
 unsigned short brk_at = 0;
@@ -40,13 +44,41 @@ unsigned short brk_at = 0;
 #define dbprintf(x)
 #endif
 
+#if USE_X86EMU
+static void elks_take_interrupt(int arg);
+static int x86emu_interrupt_callback(x86emu_t * emu, unsigned char num, unsigned type)
+{
+	x86emu_t * tmp = elks_cpu.regs;
+	elks_cpu.regs = emu;
+	elks_cpu.orig_eax = elks_cpu.xax;
+	elks_take_interrupt(num);
+	elks_cpu.regs = tmp;
+	return 1;
+}
+#endif
+
+#if USE_PTRACE
 static int modify_ldt(int func, void *ptr, unsigned long bytes)
 {
 	return syscall(SYS_modify_ldt, func, ptr, bytes);
 }
+#endif
 
 static void elks_init(char *prog)
 {
+#if USE_VM86
+	elks_cpu.screen_bitmap = 0;
+	elks_cpu.cpu_type = CPU_286;
+	/*
+	 *	All INT xx calls are trapped.
+	 */
+	memset((void *)&elks_cpu.int_revectored, 0xFF, sizeof(elks_cpu.int_revectored));
+	emu_prog = prog;
+#elif USE_X86EMU
+	elks_cpu.regs = x86emu_new(X86EMU_PERM_R | X86EMU_PERM_W | X86EMU_PERM_X, 0);
+	x86emu_set_intr_handler(elks_cpu.regs, x86emu_interrupt_callback);
+	emu_prog = prog;
+#elif USE_PTRACE
 	uint64_t ldt[8192];
 	struct user_desc cs_desc, fcs_desc, ds_desc;
 	int cs_idx = 0, fcs_idx, ds_idx, ldt_count;
@@ -70,11 +102,11 @@ static void elks_init(char *prog)
 				"segments\n");
 		exit(255);
 	}
-	elks_cpu.regs.xcs = cs = cs_idx * 8 + 7;
+	elks_cpu.xcs = cs = cs_idx * 8 + 7;
 	/* Stash the far text descriptor number in .orig_eax or .orig_rax
 	   first... */
-	elks_cpu.regs.orig_xax = fcs_idx * 8 + 7;
-	elks_cpu.regs.xds = elks_cpu.regs.xes = elks_cpu.regs.xss
+	elks_cpu.orig_xax = fcs_idx * 8 + 7;
+	elks_cpu.xds = elks_cpu.xes = elks_cpu.xss
 			  = ds = ds_idx * 8 + 7;
 	dbprintf(("LDT descriptor for text is %#x\n", cs));
 	dbprintf(("LDT descriptor for data is %#x\n", ds));
@@ -108,6 +140,7 @@ static void elks_init(char *prog)
 				"and data segments\n");
 		exit(255);
 	}
+#endif
 }
 
 static void elks_take_interrupt(int arg)
@@ -125,20 +158,20 @@ static void elks_take_interrupt(int arg)
 
 	dbprintf(("syscall AX=%x BX=%x CX=%x DX=%x SP=%x "
 		  "stack=%x %x %x %x %x\n",
-		(unsigned short)elks_cpu.regs.xax,
-		(unsigned short)elks_cpu.regs.xbx,
-		(unsigned short)elks_cpu.regs.xcx,
-		(unsigned short)elks_cpu.regs.xdx,
-		(unsigned short)elks_cpu.regs.xsp,
-		ELKS_PEEK(unsigned short, elks_cpu.regs.xsp),
-		ELKS_PEEK(unsigned short, elks_cpu.regs.xsp + 2),
-		ELKS_PEEK(unsigned short, elks_cpu.regs.xsp + 4),
-		ELKS_PEEK(unsigned short, elks_cpu.regs.xsp + 6),
-		ELKS_PEEK(unsigned short, elks_cpu.regs.xsp + 8)));
+		(unsigned short)elks_cpu.xax,
+		(unsigned short)elks_cpu.xbx,
+		(unsigned short)elks_cpu.xcx,
+		(unsigned short)elks_cpu.xdx,
+		(unsigned short)elks_cpu.xsp,
+		ELKS_PEEK(unsigned short, elks_cpu.xsp),
+		ELKS_PEEK(unsigned short, elks_cpu.xsp + 2),
+		ELKS_PEEK(unsigned short, elks_cpu.xsp + 4),
+		ELKS_PEEK(unsigned short, elks_cpu.xsp + 6),
+		ELKS_PEEK(unsigned short, elks_cpu.xsp + 8)));
 
-	elks_cpu.regs.xax = elks_syscall();
+	elks_cpu.xax = elks_syscall();
 	dbprintf(("elks syscall returned %d\n",
-		  (int)(short)elks_cpu.regs.xax));
+		  (int)(short)elks_cpu.xax));
 	/* Finally resume the child process */
 }
 
@@ -225,14 +258,16 @@ static int load_elks(int fd, uint16_t argv_envp_bytes)
 	   data segment according to a.out total field */
 	struct minix_exec_hdr mh;
 	struct elks_supl_hdr esuph;
+#if USE_PTRACE
 	struct user_desc cs_desc, fcs_desc, ds_desc;
+#endif
 	uint16_t len, min_len, heap, stack;
 	unsigned cs, fcs, ds;
 	int retval;
 
 	if(read(fd, &mh,sizeof(mh))!=sizeof(mh))
 		return -ENOEXEC;
-	if(mh.type!=ELKS_SPLITID && mh.type!=ELKS_SPLITID_AHISTORICAL)
+	if(mh.type!=ELKS_COMBID && mh.type!=ELKS_SPLITID && mh.type!=ELKS_SPLITID_AHISTORICAL)
 		return -ENOEXEC;
 
 	memset(&esuph, 0, sizeof esuph);
@@ -305,6 +340,9 @@ static int load_elks(int fd, uint16_t argv_envp_bytes)
 				return -E2BIG;
 		} else {
 			len = min_len;
+			if (mh.type == ELKS_COMBID &&
+				__builtin_add_overflow(len, mh.tseg, &len))
+				return -EFBIG;
 			if (__builtin_add_overflow(len, INIT_HEAP + stack,
 						   &len))
 				return -EFBIG;
@@ -318,14 +356,33 @@ static int load_elks(int fd, uint16_t argv_envp_bytes)
 	elks_fartext_base=elks_base+0x10000;
 	if(read(fd,elks_fartext_base,esuph.esh_ftseg)!=esuph.esh_ftseg)
 		return -ENOEXEC;
-	elks_data_base=elks_base+0x20000;
+	if(mh.type==ELKS_COMBID)
+		elks_data_base=elks_base+mh.tseg;
+	else
+		elks_data_base=elks_base+0x20000;
 	if(read(fd,elks_data_base,mh.dseg)!=mh.dseg)
 		return -ENOEXEC;
 	memset(elks_data_base+mh.dseg,0, mh.bseg);
 
-	cs = elks_cpu.regs.xcs;
-	fcs = elks_cpu.regs.orig_xax;
-	ds = elks_cpu.regs.xds;
+#if USE_VM86
+	cs = PARAGRAPH(elks_base);
+	fcs = PARAGRAPH(elks_fartext_base);
+	ds = PARAGRAPH(elks_data_base);
+	elks_cpu.xcs = cs;
+	elks_cpu.xds = elks_cpu.xes = elks_cpu.xss = ds;
+#elif USE_X86EMU
+	cs = PARAGRAPH(elks_base);
+	fcs = PARAGRAPH(elks_fartext_base);
+	ds = PARAGRAPH(elks_data_base);
+	x86emu_set_seg_register(elks_cpu.regs, elks_cpu.regs->x86.R_CS_SEL, cs);
+	x86emu_set_seg_register(elks_cpu.regs, elks_cpu.regs->x86.R_DS_SEL, ds);
+	x86emu_set_seg_register(elks_cpu.regs, elks_cpu.regs->x86.R_ES_SEL, ds);
+	x86emu_set_seg_register(elks_cpu.regs, elks_cpu.regs->x86.R_SS_SEL, ds);
+#elif USE_PTRACE
+	cs = elks_cpu.xcs;
+	fcs = elks_cpu.orig_xax;
+	ds = elks_cpu.xds;
+#endif
 
 	/*
 	 *	Apply relocations
@@ -341,6 +398,13 @@ static int load_elks(int fd, uint16_t argv_envp_bytes)
 	if (retval != 0)
 		return retval;
 
+	if (mh.type == ELKS_COMBID)
+	{
+		elks_data_base = elks_base;
+		mh.tseg = len;
+	}
+
+#if USE_PTRACE
 	/*
 	 *	Really set up the LDT descriptors
 	 */
@@ -370,14 +434,18 @@ static int load_elks(int fd, uint16_t argv_envp_bytes)
 				"segments\n");
 		exit(255);
 	}
+#endif
 
-	elks_cpu.regs.xsp = len;	/* Args stacked later */
-	elks_cpu.regs.xip = mh.entry;	/* Run from entry point */
+	elks_cpu.xsp = len;	/* Args stacked later */
+	elks_cpu.xip = mh.entry;	/* Run from entry point */
+#if USE_PTRACE
 	elks_cpu.child = 0;
+#endif
 	brk_at = mh.dseg + mh.bseg;
 	return 0;
 }
 
+#if USE_PTRACE
 static int child_idle(void *dummy)
 {
 	for (;;)
@@ -406,12 +474,13 @@ __attribute__((noreturn)) static void linux3_workaround()
 {
 	static struct { uint32_t rip, cs; } ljmp_to;
 	uint32_t scratch;
-	ljmp_to.rip = elks_cpu.regs.xip;
-	ljmp_to.cs = elks_cpu.regs.xcs;
+	ljmp_to.rip = elks_cpu.xip;
+	ljmp_to.cs = elks_cpu.xcs;
 	__asm volatile("movl %%ds, %0; movl %0, %%ss; xorl %0, %0; ljmpl *%1"
 		       : "=&r" (scratch) : "m" (ljmp_to) : "memory");
 	__builtin_unreachable();
 }
+#endif
 #endif
 
 void run_elks()
@@ -419,98 +488,160 @@ void run_elks()
 	/*
 	 *	Execute 8086 code for a while.
 	 */
-	pid_t child = elks_cpu.child;
-	int status;
-	if (!child)
+#if USE_VM86
+	int num;
+	int err;
+	while(1)
 	{
-		child = clone(child_idle, elks_data_base + elks_cpu.regs.xsp,
-			      CLONE_FILES | CLONE_FS | CLONE_IO | CLONE_VM,
-			      NULL);
-		if (child <= 0)
+		err = vm86(VM86_ENTER, (struct vm86plus_struct *)&elks_cpu);
+		if(err == -1)
 		{
-			fprintf(stderr, "clone call failed\n");
-			exit(255);
-		}
-		dbprintf(("Created child thread %ld\n", (long)child));
-		elks_cpu.child = child;
-		if (ptrace(PTRACE_ATTACH, child, NULL, NULL) != 0)
-		{
-			int err = errno;
-			fprintf(stderr, "ptrace(PTRACE_ATTACH ...) failed\n");
-			fprintf(stderr, "%s\n", strerror(err));
-			exit(255);
-		}
-		wait_for_child();
-	}
-	if (ptrace(PTRACE_SETREGS, child, NULL, &elks_cpu.regs) != 0)
-	{
-		fprintf(stderr, "ptrace(PTRACE_SETREGS ...) failed\n");
-		exit(255);
-	}
-#ifdef __x86_64__
-	/*
-	 * On Linux 3.16.6 for x86-64 --- as used by openSUSE 13.2 ---
-	 * ptrace(PTRACE_SETREGS, ...) does not properly set .cs and .ss in
-	 * the `struct user_regs_struct'.
-	 *
-	 * To overcome this, after PTRACE_SETREGS, first do a sanity check
-	 * for the correct .cs and .ss values here.  If they are wrong,
-	 * arrange for the child to start at a trampoline which will jump to
-	 * the true ELKS program entry point.
-	 */
-	{
-		struct user_regs_struct tr_r;
-		if (ptrace(PTRACE_GETREGS, child, NULL, &tr_r) != 0)
-		{
-			fprintf(stderr,"ptrace(PTRACE_GETREGS ...) failed\n");
-			exit(255);
-		}
-		if (tr_r.xcs != elks_cpu.regs.xcs ||
-		    tr_r.xss != elks_cpu.regs.xss)
-		{
-			tr_r.xip = (uintptr_t)linux3_workaround;
-			if (ptrace(PTRACE_SETREGS, child, NULL, &tr_r) != 0)
+			switch(errno)
 			{
-				fprintf(stderr, "ptrace(PTRACE_SETREGS ...) "
-						"failed\n");
+			case EFAULT:
+				fprintf(stderr, "vm86 error: problem getting user-space data\n");
+				break;
+			case ENOSYS:
+				fprintf(stderr, "vm86 error: unimplemented system call\n");
+				break;
+			default:
+				fprintf(stderr, "vm86 error: unknown error occured\n");
+				break;
+			}
+			exit(1);
+		}
+		switch(VM86_TYPE(err))
+		{
+			/*
+			 *	Signals are just re-starts of emulation (yes the
+			 *	handler might alter elks_cpu)
+			 */
+			case VM86_SIGNAL:
+				break;
+			case VM86_UNKNOWN:
+				fprintf(stderr, "VM86_UNKNOWN returned\n");
+				exit(1);
+			case VM86_INTx:
+				num = VM86_ARG(err);
+				/* workaround for qemu-i386 where interrupts cause a general protection fault */
+				if(num == 0x0D && *(uint8_t *)((elks_cpu.xcs << 4) + elks_cpu.xip) == 0xCD)
+				{
+					/* get actual interrupt number */
+					num = *(uint8_t *)((elks_cpu.xcs << 4) + elks_cpu.xip + 1);
+					elks_cpu.xip += 2;
+				}
+				elks_take_interrupt(num);
+				break;
+			case VM86_STI:
+				fprintf(stderr, "VM86_STI returned\n");
+				break;	/* Shouldnt be seen */
+			default:
+				fprintf(stderr, "Unknown return value from vm86\n");
+				exit(1);
+		}
+	}
+#elif USE_X86EMU
+	x86emu_run(elks_cpu.regs, 0);
+#elif USE_PTRACE
+	while(1)
+	{
+		pid_t child = elks_cpu.child;
+		int status;
+		if (!child)
+		{
+			child = clone(child_idle, elks_data_base + elks_cpu.xsp,
+					  CLONE_FILES | CLONE_FS | CLONE_IO | CLONE_VM,
+					  NULL);
+			if (child <= 0)
+			{
+				fprintf(stderr, "clone call failed\n");
 				exit(255);
 			}
+			dbprintf(("Created child thread %ld\n", (long)child));
+			elks_cpu.child = child;
+			if (ptrace(PTRACE_ATTACH, child, NULL, NULL) != 0)
+			{
+				int err = errno;
+				fprintf(stderr, "ptrace(PTRACE_ATTACH ...) failed\n");
+				fprintf(stderr, "%s\n", strerror(err));
+				exit(255);
+			}
+			wait_for_child();
+		}
+		if (ptrace(PTRACE_SETREGS, child, NULL, &elks_cpu.regs) != 0)
+		{
+			fprintf(stderr, "ptrace(PTRACE_SETREGS ...) failed\n");
+			exit(255);
+		}
+#ifdef __x86_64__
+		/*
+		 * On Linux 3.16.6 for x86-64 --- as used by openSUSE 13.2 ---
+		 * ptrace(PTRACE_SETREGS, ...) does not properly set .cs and .ss in
+		 * the `struct user_regs_struct'.
+		 *
+		 * To overcome this, after PTRACE_SETREGS, first do a sanity check
+		 * for the correct .cs and .ss values here.  If they are wrong,
+		 * arrange for the child to start at a trampoline which will jump to
+		 * the true ELKS program entry point.
+		 */
+		{
+			struct
+			{
+				struct user_regs_struct regs;
+			} tr_r;
+			if (ptrace(PTRACE_GETREGS, child, NULL, &tr_r.regs) != 0)
+			{
+				fprintf(stderr,"ptrace(PTRACE_GETREGS ...) failed\n");
+				exit(255);
+			}
+			if (tr_r.xcs != elks_cpu.xcs ||
+				tr_r.xss != elks_cpu.xss)
+			{
+				tr_r.xip = (uintptr_t)linux3_workaround;
+				if (ptrace(PTRACE_SETREGS, child, NULL, &tr_r.regs) != 0)
+				{
+					fprintf(stderr, "ptrace(PTRACE_SETREGS ...) "
+							"failed\n");
+					exit(255);
+				}
+			}
+		}
+#endif
+		if (ptrace(PTRACE_SYSEMU, child, NULL, NULL) != 0)
+		{
+			fprintf(stderr, "ptrace(PTRACE_SYSEMU ...) failed\n");
+			exit(255);
+		}
+		status = wait_for_child();
+		if (ptrace(PTRACE_GETREGS, child, NULL, &elks_cpu.regs) != 0)
+		{
+			fprintf(stderr, "ptrace(PTRACE_GETREGS ...) failed\n");
+			exit(255);
+		}
+		dbprintf(("%#lx:%#lx\n", elks_cpu.xcs, elks_cpu.xip));
+		if (WIFSIGNALED(status))
+			raise(WTERMSIG(status));
+		else if (WIFSTOPPED(status))
+		{
+			siginfo_t si;
+			if (WSTOPSIG(status) != SIGTRAP
+			  || ptrace(PTRACE_GETSIGINFO, child, NULL, &si) != 0
+			  || (si.si_code != SIGTRAP
+				  && si.si_code != (SIGTRAP | 0x80)))
+				raise(WSTOPSIG(status));
+			else
+			{	/* this is a syscall-stop */
+				elks_cpu.xax = elks_cpu.orig_xax;
+				elks_take_interrupt(0x80);
+			}
+		}
+		else if (!WIFCONTINUED(status))
+		{
+			fprintf(stderr, "Unknown return value from waitpid\n");
+			exit(255);
 		}
 	}
 #endif
-	if (ptrace(PTRACE_SYSEMU, child, NULL, NULL) != 0)
-	{
-		fprintf(stderr, "ptrace(PTRACE_SYSEMU ...) failed\n");
-		exit(255);
-	}
-	status = wait_for_child();
-	if (ptrace(PTRACE_GETREGS, child, NULL, &elks_cpu.regs) != 0)
-	{
-		fprintf(stderr, "ptrace(PTRACE_GETREGS ...) failed\n");
-		exit(255);
-	}
-	dbprintf(("%#lx:%#lx\n", elks_cpu.regs.xcs, elks_cpu.regs.xip));
-	if (WIFSIGNALED(status))
-		raise(WTERMSIG(status));
-	else if (WIFSTOPPED(status))
-	{
-		siginfo_t si;
-		if (WSTOPSIG(status) != SIGTRAP
-		  || ptrace(PTRACE_GETSIGINFO, child, NULL, &si) != 0
-		  || (si.si_code != SIGTRAP
-		      && si.si_code != (SIGTRAP | 0x80)))
-			raise(WSTOPSIG(status));
-		else
-		{	/* this is a syscall-stop */
-			elks_cpu.regs.xax = elks_cpu.regs.orig_xax;
-			elks_take_interrupt(0x80);
-		}
-	}
-	else if (!WIFCONTINUED(status))
-	{
-		fprintf(stderr, "Unknown return value from waitpid\n");
-		exit(255);
-	}
 }
 
 void build_stack(char ** argv, char ** envp, size_t argv_envp_bytes)
@@ -528,15 +659,15 @@ void build_stack(char ** argv, char ** envp, size_t argv_envp_bytes)
 	   envp_count++;
 
 	/* Allocate stack space in ELKS memory for argv and envp */
-	elks_cpu.regs.xsp -= argv_envp_bytes;
+	elks_cpu.xsp -= argv_envp_bytes;
 
 	/* Make sp aligned on a 2-byte boundary */
-	if ((elks_cpu.regs.xsp & 1) != 0)
-		--elks_cpu.regs.xsp;
+	if ((elks_cpu.xsp & 1) != 0)
+		--elks_cpu.xsp;
 
 	/* Now copy in the strings */
-	pip=ELKS_PTR(unsigned short, elks_cpu.regs.xsp);
-	pcp=elks_cpu.regs.xsp+2*(1+argv_count+1+envp_count+1);
+	pip=ELKS_PTR(unsigned short, elks_cpu.xsp);
+	pcp=elks_cpu.xsp+2*(1+argv_count+1+envp_count+1);
 
 	*pip++ = argv_count;
 	for(p=argv; *p; p++)
@@ -568,9 +699,14 @@ main(int argc, char *argv[], char *envp[])
 
 	if(argc<=1)
 	{
+#if USE_PTRACE
 		fprintf(stderr,"elksemu {cmd args..... | -t}\n");
+#else
+		fprintf(stderr,"elksemu cmd args.....\n");
+#endif
 		exit(1);
 	}
+#if USE_PTRACE
 	/* If -t is given, do a quick test to see if our Linux host supports
 	 * running 16-bit protected mode code. */
 	else if (argc==2 && strcmp(argv[1], "-t")==0)
@@ -579,6 +715,7 @@ main(int argc, char *argv[], char *envp[])
 		fprintf(stderr, "Yes, this Linux host supports elksemu\n");
 		exit(0);
 	}
+#endif
 
 	/* This uses the _real_ user ID If the file is exec only that's */
 	/* ok cause the suid root will override.  */
@@ -611,6 +748,29 @@ main(int argc, char *argv[], char *envp[])
 
 	dbprintf(("ELKSEMU\n"));
 	elks_init(argv[0]);
+
+#if USE_VM86
+#if __AOUT__
+#if __GNUC__
+	/* GNU malloc will align to 4k with large chunks */
+	elks_base = malloc(0x30000);
+#else
+	/* But others won't */
+	elks_base = malloc(0x30000+4096);
+	elks_base = (void*) (((int)elks_base+4095) & -4096);
+#endif
+#else
+	/* For ELF first 128M is unmapped, it needs to be mapped manually */
+	elks_base = mmap((void*)0x10000, 0x30000,
+	                  PROT_EXEC|PROT_READ|PROT_WRITE,
+			  MAP_ANON|MAP_PRIVATE|MAP_FIXED, 
+			  0, 0);
+#endif
+#elif USE_X86EMU
+	elks_base = malloc(0x30000);
+	for(long i = 0L; i < 0x30000L + X86EMU_PAGE_SIZE - 1; i += X86EMU_PAGE_SIZE)
+		x86emu_set_page(elks_cpu.regs, ELKS_BASE + i, elks_base + i);
+#elif USE_PTRACE
 	elks_pid_init();
 
 	pg_sz = getpagesize();
@@ -632,6 +792,7 @@ main(int argc, char *argv[], char *envp[])
 		exit(255);
 	}
 	mprotect(elks_base + 0x30000, pg_sz, PROT_NONE);
+#endif
 
 	argv_envp_bytes = count_argv_envp_bytes(argv + 1, envp);
 
@@ -644,7 +805,7 @@ main(int argc, char *argv[], char *envp[])
 	if((err = load_elks(fd, (uint16_t)argv_envp_bytes)) < 0)
 	{
 		if (err == -ENOEXEC)
-			fprintf(stderr, "Not a elks binary.\n");
+			fprintf(stderr, "Not an elks binary.\n");
 		else
 			fprintf(stderr, "Unsupported elks binary (%s).\n",
 				strerror(-err));
@@ -655,8 +816,7 @@ main(int argc, char *argv[], char *envp[])
 
 	build_stack(argv + 1, envp, argv_envp_bytes);
 
-	while(1)
-		run_elks();
+	run_elks();
 }
 
 #ifdef DEBUG

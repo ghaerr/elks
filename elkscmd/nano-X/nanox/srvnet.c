@@ -14,14 +14,10 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
-#ifndef __linux__ 
-#include <linuxmt/socket.h>
 #include <linuxmt/un.h>
-#else
 #include <sys/socket.h>
-#include <sys/un.h>
-#endif
 #include <sys/stat.h>
+#include <sys/time.h>
 #include "serv.h"
 
 extern	int		un_sock;
@@ -441,10 +437,43 @@ void GsGetNextEventWrapper(void)
 	GR_EVENT evt;
 
 	/* first check if any event ready*/
-	GsCheckNextEvent(&evt);
+	GsCheckNextEvent(&evt, GR_TIMEOUT_POLL);
 	if(evt.type == GR_EVENT_TYPE_NONE) {
 		/* tell main loop to call Finish routine on event*/
-		curclient->waiting_for_event = TRUE;
+		curclient->waiting_for_event = 1;
+		return;
+	}
+
+	GsPutCh(current_fd, GrRetDataFollows);
+
+	GsWrite(current_fd, (void *) &evt, sizeof(evt));
+}
+
+static unsigned long mstime(void)
+{
+   struct timeval tv;
+
+   gettimeofday(&tv, NULL);
+   return tv.tv_sec * 1000L + (tv.tv_usec >> 10);
+}
+
+void GsGetNextEventTimeoutWrapper(void)
+{
+	GR_EVENT evt;
+	GR_TIMEOUT timeout;
+
+	GsPutCh(current_fd, GrRetSendData);
+
+	if(GsRead(current_fd, (void *) &timeout, sizeof(timeout)))
+		return;
+
+	/* first check if any event ready*/
+	GsCheckNextEvent(&evt, timeout);
+	if(evt.type == GR_EVENT_TYPE_NONE && timeout != GR_TIMEOUT_POLL) {
+		/* tell main loop to call Finish routine on event*/
+		if (timeout != GR_TIMEOUT_BLOCK)
+			curclient->wakeup_time = mstime() + timeout;
+		curclient->waiting_for_event = (timeout == GR_TIMEOUT_BLOCK)? 1: 2;
 		return;
 	}
 
@@ -461,19 +490,24 @@ void GsGetNextEventWrapperFinish(void)
 	GR_EVENT evt;
 
 	/* get the event and pass it to client*/
-	/* this will never be GR_EVENT_TYPE_NONE*/
-	GsCheckNextEvent(&evt);
+	/* this might be GR_EVENT_TYPE_NONE if GrGetNextEventTimeout called */
+	GsCheckNextEvent(&evt, GR_TIMEOUT_POLL);
+	if (evt.type == GR_EVENT_TYPE_NONE
+	    && curclient->waiting_for_event == 2 && mstime() < curclient->wakeup_time) {
+		return;
+	}
+	curclient->waiting_for_event = 0;
 
-	GsPutCh(current_fd, GrRetDataFollows);
+	GsPutCh(curclient->id, GrRetDataFollows);
 
-	GsWrite(current_fd, (void *) &evt, sizeof(evt));
+	GsWrite(curclient->id, (void *) &evt, sizeof(evt));
 }
 
 void GsCheckNextEventWrapper(void)
 {
 	GR_EVENT evt;
 
-	GsCheckNextEvent(&evt);
+	GsCheckNextEvent(&evt, GR_TIMEOUT_POLL);
 
 	GsPutCh(current_fd, GrRetDataFollows);
 
@@ -929,7 +963,7 @@ void GsGetGCTextSizeWrapper(void)
 	GR_SIZE len, retwidth, retheight, retbase;
 	GR_GC_ID gc;
 	GR_CHAR *string;
-	char strbuf[128];
+	unsigned char strbuf[128];
 
 	GsPutCh(current_fd, GrRetSendData);
 
@@ -1147,7 +1181,7 @@ void GsTextWrapper(void)
 	GR_COORD x, y;
 	GR_COUNT count;
 	GR_CHAR *str;
-	char strbuf[128];
+	unsigned char strbuf[128];
 
 	GsPutCh(current_fd, GrRetSendData);
 
@@ -1335,7 +1369,8 @@ struct GrFunction {
 	{GsBitmapWrapper, "GsBitmap"},
 	{GsTextWrapper, "GsText"},
 	{GsSetCursorWrapper, "GsSetCursor"},
-	{GsMoveCursorWrapper, "GsMoveCursor"}
+	{GsMoveCursorWrapper, "GsMoveCursor"},
+	{GsGetNextEventTimeoutWrapper, "GsGetNextEventTimeout"},
 };
 
 /*
@@ -1499,8 +1534,8 @@ void GsHandleClient(int fd)
 	if(c >= GrTotalNumCalls) {
 		GsPutCh(fd, GrRetENoFunction);
 	} else {
-		curfunc = GrFunctions[c].name;
-/*printf("HandleClient %s\r\n", curfunc);*/
+		/*curfunc = GrFunctions[c].name;
+		__dprintf("HandleClient %s\r\n", curfunc);*/
 		GrFunctions[c].func();
 	}
 }

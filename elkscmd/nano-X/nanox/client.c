@@ -10,14 +10,11 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
-#ifndef __linux__ 
-#include <linuxmt/socket.h>
+#include <stdlib.h>
+#include <errno.h>
 #include <linuxmt/un.h>
-#else
 #include <sys/socket.h>
-#include <sys/un.h>
 #include <sys/select.h>
-#endif
 #include "nano-X.h"
 #include "serv.h"
 
@@ -46,7 +43,10 @@ static int GrReadBlock(void *b, int n)
 
 	while(v < ((char *) b + n)) {
 		i = read(sock, v, ((char *) b + n - v));
-		if(i <= 0) return -1;
+		if(i <= 0) {
+			//__dprintf("GrReadBlock read error %d, errno %d\n", i, errno);
+			return -1;
+		}
 		v += i;
 	}
 
@@ -64,6 +64,7 @@ static int GrReadByte()
 	else return (int) c;
 }
 
+#if UNUSED
 /*
  * Read an error event structure from the server and deliver it to the client.
  */
@@ -81,13 +82,14 @@ static int GrDeliverErrorEvent(void)
 
 	return 0;
 }
+#endif
 
 /*
  * Send a block of data to the server and read it's reply.
  */
 static int GrSendBlock(void *b, long n)
 {
-	int i = 0, z;
+	int i = 0;
 	unsigned char *c;
 
 	c = (unsigned char *) b;
@@ -95,24 +97,30 @@ static int GrSendBlock(void *b, long n)
 	/* FIXME: n > 64k will fail here if sizeof(int) == 2*/
 	while(c < ((unsigned char *) b + n)) {
 		i = write(sock, c, ((unsigned char *) b + n - c));
-		if(i <= 0) return -1;
+		if(i <= 0) {
+			//__dprintf("GrSendBlock write error %d, errno %d\n", i, errno);
+			return -1;
+		}
 		c += i;
 	}
 
 	do {
-		if((i = GrReadByte()) < 0) return -1;
+		if((i = GrReadByte()) < 0) {
+			//__dprintf("GrSendBlock readbyte error %d, errno %d\n", i, errno);
+			return -1;
+		}
+#if UNUSED
 		else if(i == GrRetESig) {
-			z = GrReadByte();
+			int z = GrReadByte();
 			if(z == -1) return -1;
-printf("client bad GrSendBlock\r\n");
 			raise(z);
 		}
 		else if(i == GrRetErrorPending)
 			if(GrDeliverErrorEvent() == -1) return -1;
-			
+#endif
 	} while((i == GrRetESig) | (i == GrRetErrorPending));
 
-	return((int) i);
+	return i;
 }
 
 /*
@@ -132,7 +140,6 @@ int GrOpen(void)
 	struct sockaddr_un name;
 	size_t size;
 
-	
 	if(!sock)
 		if((sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
 			sock = 0;
@@ -162,6 +169,7 @@ int GrClose(void)
 	return 0;
 }
 
+#if UNUSED
 /* 
  * The default error handler which is called when the server reports an error event
  * and the client hasn't set a handler for error events.
@@ -218,6 +226,7 @@ void GrDefaultErrorHandler(GR_EVENT_ERROR err)
 	fprintf(stderr,"Error event recieved from server:\n"
 		"\t%s() failed because %s.\n", err.name, why);
 }
+#endif
 
 /*
  * Set an error handling routine, which will be called on any errors from
@@ -226,6 +235,8 @@ void GrDefaultErrorHandler(GR_EVENT_ERROR err)
  */
 GR_ERROR_FUNC GrSetErrorHandler(GR_ERROR_FUNC func)
 {
+        return NULL;
+#if UNUSED
 #ifndef __linux__ 
 	GR_ERROR_FUNC temp = GrDefaultErrorHandler;
 #else  
@@ -234,6 +245,7 @@ GR_ERROR_FUNC GrSetErrorHandler(GR_ERROR_FUNC func)
 	else GrErrorFunc = func;
 #endif	
 	return temp;
+#endif
 }
 
 /*
@@ -329,6 +341,7 @@ int GrRegisterInput(int fd)
 	return 0;
 }
 
+#if 0
 /*
  * Return the next event from the event queue.
  * This waits for a new one if one is not ready.
@@ -370,9 +383,57 @@ int GrGetNextEvent(GR_EVENT *ep)
 			return -1;
 
 readevent:
-		/* this will never be GR_EVENT_IDLE
-		 * with current implementation
+		/* this will never be GR_EVENT_NONE with current implementation */
+		if(GrReadBlock(ep, sizeof(*ep)) == -1)
+			return -1;
+	}
+	return 0;
+}
+#endif
+
+int GrGetNextEvent(GR_EVENT *ep)
+{
+	return GrGetNextEventTimeout(ep, GR_TIMEOUT_BLOCK);
+}
+
+int GrGetNextEventTimeout(GR_EVENT *ep, GR_TIMEOUT timeout)
+{
+	char 	c;
+	fd_set 	rfds;
+	int	setsize = 0;
+
+	if(regfd != -1) {	/* GrRegisterInput not supported with timeout */
+		GrSendByte(GrNumGetNextEventTimeout);
+		/* don't wait for GrRetDataFollows */
+		write(sock, &timeout, sizeof(timeout));
+		FD_ZERO(&rfds);
+		FD_SET(sock, &rfds);
+		FD_SET(regfd, &rfds);
+		if(sock > setsize) setsize = sock;
+		if(regfd > setsize) setsize = regfd;
+		++setsize;
+		if(select(setsize, &rfds, NULL, NULL, NULL) > 0) {
+			if(FD_ISSET(sock, &rfds)) {
+				/* fixme: check return code*/
+				read(sock, &c, 1);
+				if(c != GrRetDataFollows)
+					return -1;
+				goto readevent;
+			}
+			if(FD_ISSET(regfd, &rfds)) {
+				ep->type = GR_EVENT_TYPE_FDINPUT;
+			}
+		}
+	} else {
+		/* send a byte requesting an event check,
+		 * wait till event exists
 		 */
+		if(GrSendByte(GrNumGetNextEventTimeout) != GrRetSendData)
+			return -1;
+
+		if(GrSendBlock(&timeout, sizeof(timeout)) != GrRetDataFollows)
+			return -1;
+readevent:
 		if(GrReadBlock(ep, sizeof(*ep)) == -1)
 			return -1;
 	}

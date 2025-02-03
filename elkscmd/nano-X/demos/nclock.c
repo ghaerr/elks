@@ -66,7 +66,7 @@ main(int argc,char **argv)
 
 	GrSetErrorHandler(errorcatcher);
 
-	w1 = GrNewWindow(GR_ROOT_WINDOW_ID, 100, 50, CWIDTH + 1,
+	w1 = GrNewWindow(GR_ROOT_WINDOW_ID, -1, -1, CWIDTH + 1,
 		CHEIGHT + 1, 1, WHITE, BLACK);
 
 	GrSelectEvents(w1, GR_EVENT_MASK_EXPOSURE);
@@ -108,8 +108,9 @@ main(int argc,char **argv)
 
 	GrMapWindow(w1);
 
+	do_idle();
 	while (1) {
-		GrCheckNextEvent(&event);
+		GrGetNextEventTimeout(&event, 400);
 
 		switch (event.type) {
 			case GR_EVENT_TYPE_EXPOSURE:

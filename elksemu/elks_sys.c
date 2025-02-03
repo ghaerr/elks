@@ -23,12 +23,17 @@
 #include <dirent.h>
 #include <sys/time.h>
 #include <sys/ptrace.h>
+#include <sys/socket.h>
 #include "elks.h"
 
 #include "efile.h"
 
 #ifdef DEBUG
 #define dbprintf(x) db_printf x
+#elif defined STRACE
+#include <stdarg.h>
+static void strace(const char *fmt, ...);
+#define dbprintf(x) strace x
 #else
 #define dbprintf(x)
 #endif
@@ -82,7 +87,9 @@ static int
 elks_exit(int bx, int cx, int dx, int di, int si)
 {
     dbprintf(("exit(%d)\n", bx));
+#if USE_PTRACE
     kill(elks_cpu.child, SIGKILL);
+#endif
     exit(bx);
 }
 
@@ -492,7 +499,7 @@ elks_execve(int bx, int cx, int dx, int di, int si)
     }
     ct = 0;
     if (is_elks) {
-        argp[0] = emu_prog;
+        argp[0] = (char *)emu_prog;
         /* argp[1]=ELKS_PTR(char, bx); */
         ct = 1;
     }
@@ -695,15 +702,118 @@ elks_reboot(int bx, int cx, int dx, int di, int si)
     switch (dx) {
         /* graceful shutdown, C-A-D off, kill -? 1 */
     case 0:
-        return reboot(0xfee1dead, 672274793, 0);
+        return reboot(0xfee1dead, 672274793, 0, NULL);
         /* Enable C-A-D */
     case 0xCAD:
-        return reboot(0xfee1dead, 672274793, 0x89abcdef);
+        return reboot(0xfee1dead, 672274793, 0x89abcdef, NULL);
         /* Time to die! */
     case 0xD1E:
-        return reboot(0xfee1dead, 672274793, 0x1234567);
+        return reboot(0xfee1dead, 672274793, 0x1234567, NULL);
     }
     return -1;
+}
+
+static void
+squash_fd_set(fd_set * fds, int fds16)
+{
+   if( fds16 )
+   {
+      FD_ZERO(fds);
+      memcpy(fds, ELKS_PTR(void, fds16), sizeof(uint64_t));
+   }
+}
+
+static void
+unsquash_fd_set(fd_set * fds, int fds16)
+{
+   if( fds16 )
+   {
+      memcpy(ELKS_PTR(void, fds16), fds, sizeof(uint64_t));
+   }
+}
+
+#define sys_select elks_select
+static int
+elks_select(int bx, int cx, int dx, int di, int si)
+{
+   struct timeval tv, * pv = 0;
+   int ax;
+   fd_set readfds, writefds, exceptfds;
+
+   dbprintf(("select(%d,%d,%d,%d,%d)\n",bx,cx,dx,di,si));
+
+   squash_fd_set(&readfds, cx);
+   squash_fd_set(&writefds, dx);
+   squash_fd_set(&exceptfds, di);
+
+   if( si )
+   {
+      pv = &tv;
+      tv.tv_sec  = ELKS_PEEK(long, si);
+      tv.tv_usec = ELKS_PEEK(long, si+4);
+   }
+
+   ax = select(bx, cx ? &readfds : 0, dx ? &writefds : 0, di ? &exceptfds : 0, pv);
+
+   unsquash_fd_set(&readfds, cx);
+   unsquash_fd_set(&writefds, dx);
+   unsquash_fd_set(&exceptfds, di);
+
+   if( ax > 0 && si )
+   {
+      pv = &tv;
+      ELKS_POKE(long, si, tv.tv_sec);
+      ELKS_POKE(long, si+4, tv.tv_usec);
+   }
+
+   return ax;
+}
+
+#define sys_socket elks_socket
+static int
+elks_socket(int bx, int cx, int dx, int di, int si)
+{
+   dbprintf(("socket(%d,%d,%d)\n",bx,cx,dx));
+   return socket(bx, cx, dx);
+}
+
+#define sys_bind elks_bind
+static int
+elks_bind(int bx, int cx, int dx, int di, int si)
+{
+   dbprintf(("bind(%d,%d,%d)\n",bx,cx,dx));
+   return bind(bx, ELKS_PTR(void, cx), dx);
+}
+
+#define sys_listen elks_listen
+static int
+elks_listen(int bx, int cx, int dx, int di, int si)
+{
+   dbprintf(("listen(%d,%d,%d)\n",bx,cx));
+   return listen(bx, cx);
+}
+
+#define sys_accept elks_accept
+static int
+elks_accept(int bx, int cx, int dx, int di, int si)
+{
+   int r;
+   uint16_t * lp = ELKS_PTR(uint16_t, dx);
+   socklen_t addrlen;
+
+   dbprintf(("accept(%d,%d,%d)\n",bx,cx,dx));
+   r = accept(bx, ELKS_PTR(void, cx), &addrlen);
+
+   *lp = addrlen;
+   return r;
+}
+
+#define sys_connect elks_connect
+static int
+elks_connect(int bx, int cx, int dx, int di, int si)
+{
+   dbprintf(("connect(%d,%d,%d)\n",bx,cx,dx));
+   return connect(bx, ELKS_PTR(void, cx), dx);
 }
 
 /****************************************************************************/
@@ -781,12 +891,12 @@ elks_sbrk(int bx, int cx, int dx, int di, int si)
             return -1;
         }
     } else {
-        if (brk_at <= -bx || brk_at + bx >= elks_cpu.regs.xsp) {
+        if (brk_at <= -bx || brk_at + bx >= elks_cpu.xsp) {
             errno = ENOMEM;
             return -1;
         }
     }
-    if (brk_at >= elks_cpu.regs.xsp ^ brk_at + bx >= elks_cpu.regs.xsp) {
+    if (brk_at >= elks_cpu.xsp ^ brk_at + bx >= elks_cpu.xsp) {
         errno = ENOMEM;
         return -1;
     }
@@ -871,7 +981,7 @@ static int
 elks_enosys(int bx, int cx, int dx, int di, int si)
 {
     fprintf(stderr, "Function number %d called (%d,%d,%d)\n",
-            (int)(0xFFFF & elks_cpu.regs.xax),
+            (int)(0xFFFF & elks_cpu.xax),
             bx, cx, dx);
     errno = ENOSYS;
     return -1;
@@ -891,14 +1001,14 @@ int
 elks_syscall(void)
 {
     int r, n;
-    int bx = elks_cpu.regs.xbx & 0xFFFF;
-    int cx = elks_cpu.regs.xcx & 0xFFFF;
-    int dx = elks_cpu.regs.xdx & 0xFFFF;
-    int di = elks_cpu.regs.xdi & 0xFFFF;
-    int si = elks_cpu.regs.xsi & 0xFFFF;
+    int bx = elks_cpu.xbx & 0xFFFF;
+    int cx = elks_cpu.xcx & 0xFFFF;
+    int dx = elks_cpu.xdx & 0xFFFF;
+    int di = elks_cpu.xdi & 0xFFFF;
+    int si = elks_cpu.xsi & 0xFFFF;
 
     errno = 0;
-    n = (elks_cpu.regs.xax & 0xFFFF);
+    n = (elks_cpu.xax & 0xFFFF);
     if (n >= 0 && n < sizeof(jump_tbl) / sizeof(funcp))
         r = (*(jump_tbl[n])) (bx, cx, dx, di, si);
     else
@@ -909,3 +1019,17 @@ elks_syscall(void)
     else
         return -errno;
 }
+
+#ifdef STRACE
+#undef strace
+static void
+strace(const char * fmt, ...)
+{
+  va_list ptr;
+  int rv;
+  va_start(ptr, fmt);
+  rv = vfprintf(stderr,fmt,ptr);
+  va_end(ptr);
+  fflush(stderr);
+}
+#endif

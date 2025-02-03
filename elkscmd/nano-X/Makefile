@@ -7,6 +7,7 @@ BASEDIR = ..
 include $(BASEDIR)/Makefile-rules
 
 LOCALFLAGS = -DELKS=1 -DUNIX=1 -DDEBUG=1 -I.
+AR = ia16-elf-ar
 MATHLIB =
 
 # nano-X demo programs
@@ -61,7 +62,7 @@ endif
 
 # The following line links the nano-X application with the server.
 # This is required if no network is present, or for speed or debugging.
-LINK_APP_INTO_SERVER=1
+#LINK_APP_INTO_SERVER=1
 
 NANOXFILES = nanox/srvmain.o nanox/srvfunc.o nanox/srvutil.o nanox/srvevent.o
 CLNTFILES = nanox/client.o
@@ -126,16 +127,19 @@ bin/nxvgatest: demos/demo-vga.o
 # client/server
 #
 nano-X: $(SERVFILES) $(NANOXFILES)
-	$(LD) $(LDFLAGS) $(NANOXFILES) $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nano-X $(MATHLIB) $(LDFLAGS)
+	$(LD) $(LDFLAGS) $(NANOXFILES) $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nano-X $(MATHLIB) $(LDLIBS)
 
 # only a few demos work in client/server mode
-nxdemos: libnano-X.a
-	$(LD) $(LDFLAGS) demos/demo.o $(DEMOLIBS) -o bin/demo $(MATHLIB) $(LDFLAGS)
-	$(LD) $(LDFLAGS) demos/demo2.o $(DEMOLIBS) -o bin/demo2 $(MATHLIB) $(LDFLAGS)
-	$(LD) $(LDFLAGS) demos/landmine.o $(DEMOLIBS) -o bin/landmine $(MATHLIB) $(LDFLAGS)
-#	$(LD) $(LDFLAGS) demos/nterm.o $(DEMOLIBS) -o bin/nterm $(MATHLIB)	 $(LDFLAGS)
-#	$(LD) $(LDFLAGS) demos/nclock.o $(DEMOLIBS) -o bin/nclock $(MATHLIB)	 $(LDFLAGS)
-#	$(LD) $(LDFLAGS) demos/world.o $(DEMOLIBS) -o bin/world $(MATHLIB) $(LDFLAGS)
+nxdemos: libnano-X.a demos/demo.o demos/demo2.o demos/landmine.o demos/nclock.o demos/world.o demos/nterm.o demos/ntetris.o
+	$(LD) $(LDFLAGS) demos/demo.o $(DEMOLIBS) -o bin/nxdemo $(MATHLIB) $(LDLIBS)
+	$(LD) $(LDFLAGS) demos/demo2.o $(DEMOLIBS) -o bin/nxdemo2 $(MATHLIB) $(LDLIBS)
+	$(LD) $(LDFLAGS) demos/landmine.o $(DEMOLIBS) -o bin/nxlandmine $(MATHLIB) $(LDLIBS)
+	$(LD) $(LDFLAGS) demos/world.o $(DEMOLIBS) -o bin/nxworld $(MATHLIB) $(LDLIBS)
+	cp demos/nxworld.map bin/nxworld.map
+	$(LD) $(LDFLAGS) demos/nclock.o $(DEMOLIBS) -o bin/nxclock $(MATHLIB)	 $(LDLIBS)
+	$(LD) $(LDFLAGS) demos/nterm.o $(DEMOLIBS) -o bin/nxterm $(MATHLIB)	 $(LDLIBS)
+	$(LD) $(LDFLAGS) demos/ntetris.o $(DEMOLIBS) -o bin/nxtetris $(MATHLIB)	 $(LDLIBS)
+
 #	cp demos/demo.sh bin/demo.sh
 
 install: $(NANOXDEMOS)
