@@ -14,8 +14,8 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
-#include <linuxmt/un.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include "serv.h"
@@ -1379,28 +1379,19 @@ struct GrFunction {
  */
 int GsOpenSocket(void)
 {
-	struct stat s;
-	struct sockaddr_un sckt;
-#ifndef SUN_LEN
-#define SUN_LEN(ptr)	((size_t) (((struct sockaddr_un *) 0)->sun_path) \
-		      		+ strlen ((ptr)->sun_path))
-#endif
+	struct sockaddr_un name;
 
-	/* Check if the file already exists: */
-	if(!stat(GR_NAMED_SOCKET, &s)) {
-		/* FIXME: should try connecting to see if server is active */
-		if(unlink(GR_NAMED_SOCKET))
-			return -1;
-	}
+    /* Remove named pipe if exists */
+    unlink(GR_NAMED_SOCKET);
 
 	/* Create the socket: */
 	if((un_sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		return -1;
 
 	/* Bind a name to the socket: */
-	sckt.sun_family = AF_UNIX;
-	strncpy(sckt.sun_path, GR_NAMED_SOCKET, sizeof(sckt.sun_path));
-	if(bind(un_sock, (struct sockaddr *) &sckt, SUN_LEN(&sckt)) < 0)
+	name.sun_family = AF_UNIX;
+	strcpy(name.sun_path, GR_NAMED_SOCKET);
+	if(bind(un_sock, (struct sockaddr *) &name, SUN_LEN(&name)) < 0)
 		return -1;
 
 	/* Start listening on the socket: */
@@ -1427,7 +1418,7 @@ void GsAcceptClient(void)
 	size_t size = sizeof(sckt);
 
 	if((i = accept(un_sock, (struct sockaddr *) &sckt, &size)) == -1) {
-		printf("accept failed (%d)\n", errno);
+		perror("accept");
 		return;
 	}
 	GsAcceptClientFd(i);
@@ -1467,7 +1458,7 @@ void GsDropClient(int fd)
 		if(client->prev) client->prev->next = client->next; /* Link the prev to the next */
 		if(client->next) client->next->prev = client->prev; /* Link the next to the prev */
 		free(client);	/* Free the structure */
-	} else fprintf(stderr, "Error: trying to drop non-existent client %d.\n", fd);
+	} else __dprintf("Dropping non-existent client %d\n", fd);
 }
 
 /*
@@ -1483,7 +1474,7 @@ int GsRead(int fd, void *buf, int c)
 	while(n < c) {
 		e = read(fd, ((char *)buf + n), (c - n));
 		if(e <= 0) {
-printf("GsRead: read failed %d %x %d: %d\r\n", e, ((char *)buf +n), c-n, errno);
+			__dprintf("GsRead errror %d", errno);
 			GsClose();
 			return -1;
 		}

@@ -14,9 +14,6 @@ struct net_proto protocols[] = {
 #ifdef	CONFIG_UNIX
     {"UNIX", unix_proto_init},
 #endif
-#ifdef	CONFIG_NANO
-    {"NANO", nano_proto_init},
-#endif
 #ifdef	CONFIG_INET
     {"INET", inet_proto_init},
 #endif

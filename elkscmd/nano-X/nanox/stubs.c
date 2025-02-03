@@ -517,7 +517,7 @@ int GrText(GR_DRAW_ID id, GR_GC_ID gc, GR_COORD x, GR_COORD y, GR_CHAR *str, GR_
 	return 0;
 }
 
-#if 0000
+#if UNUSED
 /*
  * The following is the user defined function for handling errors.
  * If this is not set, then the default action is to close the connection
@@ -592,7 +592,7 @@ void GrDefaultErrorHandler(GR_EVENT_ERROR err)
 			break;
 	}
 
-	fprintf(stderr,"Error event recieved from server:\n"
+	__dprintf("Error event recieved from server:\n"
 		"\t%s() failed because %s.\n", err.name, why);
 }
 #endif
