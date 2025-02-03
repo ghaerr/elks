@@ -27,6 +27,7 @@ include struct.inc
 ;  divides DX:AX / [BX]
 ;  returns DX:AX with remainder in [BX]
 
+        push   cx
         xor    cx,cx                ; temp CX = 0
         cmp    dx,[bx]              ; is upper 16 bits numerator less than denominator
         jb     short fast           ; yes - only one DIV needed
@@ -38,6 +39,7 @@ include struct.inc
         div    word ptr [bx]        ; AX = lower numerator / base, DX = remainder
         mov    [bx],dx              ; store remainder
         mov    dx,cx                ; DX = high quotient, AX = low quotient
+        pop    cx
         ret
 
 __divmod endp

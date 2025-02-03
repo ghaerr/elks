@@ -34,7 +34,7 @@ int verfy_area(void *p, size_t len)
     if (seg_verify_area(current->pid, current->t_regs.ds, offset))
         return 0;
 
-    printk("FAULT\n");
+    printk("FAULT at user DS %04x:%04x size %u\n", current->t_regs.ds, p, len);
     return -EFAULT;
 }
 
