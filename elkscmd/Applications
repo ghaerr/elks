@@ -202,9 +202,10 @@ test/libc/test_libc             :test                           :1440c
 test/other/test_fd              :test
 test/other/test_float           :test
 #nano/nano-2.0.6/src/nano       :other
+nano-X/bin/nano-X               :other                              :1440c
 nano-X/bin/nxclock              :other                              :1440c
 nano-X/bin/nxdemo               :other
-nano-X/bin/nxtest               :other
+#nano-X/bin/nxtest               :other
 nano-X/bin/nxtetris             :nanox                  :1200k
 nano-X/bin/nxlandmine           :nanox                   :1232k :1440k
 nano-X/bin/nxterm               :nanox                   :1232k     :1440c

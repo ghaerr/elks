@@ -41,6 +41,7 @@ struct gr_client {
 	GR_CLIENT	*next;		/* the next client in the list */
 	GR_CLIENT	*prev;		/* the previous client in the list */
 	int		waiting_for_event; /* used to implement GrGetNextEvent*/
+	unsigned long   wakeup_time;    /* mstime to wakeup on timeout */
 };
 
 /*
