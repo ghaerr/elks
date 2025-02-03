@@ -12,19 +12,12 @@
 #include <string.h>
 #include "nano-X.h"
 
-#if MSDOS
-#include <fcntl.h>
-#endif
-
-#ifndef O_BINARY
-#define O_BINARY 	0
-#endif
-
+#define MAPW    400
+#define MAPH    240
 #define	MAPFILE	"/lib/nxworld.map"
 
 #define	SELECTBUTTON	GR_BUTTON_L
 #define	COORDBUTTON	GR_BUTTON_R
-
 
 /*
  * Definitions to use fixed point in place of true floating point.
@@ -154,28 +147,29 @@ main(argc, argv)
 {
 	GR_SCREEN_INFO	si;
 
+#if 0   // FIXME this breaks GrOpen/connect below for unknown reasons!
 	if (access(MAPFILE, F_OK) < 0) {
 		fprintf(stderr, "Missing map file: %s\n", MAPFILE);
 		return 1;
 	}
-	if (GrOpen() < 0) {
+#endif
+
+	if (GrOpen() < 0)
 		return 1;
-	}
+
 	GrGetScreenInfo(&si);
 
-	mainwid = GrNewWindow(GR_ROOT_WINDOW_ID, 0, 0, si.cols, si.rows,
-		0, BLACK, BLACK);
+	mainwid = GrNewWindow(GR_ROOT_WINDOW_ID, -1, -1, MAPW, MAPH, 0, BLACK, BLACK);
 
-	mapwidth = si.cols - 2;
-	mapheight = si.rows - 2;
+	mapwidth = MAPW - 2;
+	mapheight = MAPH - 2;
 	mapxorig = mapwidth / 2;
 	mapyorig = mapheight / 2;
 	selectxscale = 4;
 	selectyscale = 3;
 	coordx = 0;
-	coordy = si.rows - 1;
-	mapwid = GrNewWindow(mainwid, 1, 1, mapwidth, mapheight,
-		1, BLACK, WHITE);
+	coordy = MAPW - 1;
+	mapwid = GrNewWindow(mainwid, 1, 1, mapwidth, mapheight, 1, BLACK, WHITE);
 
 	GrSelectEvents(mapwid, GR_EVENT_MASK_EXPOSURE |
 		GR_EVENT_MASK_BUTTON_DOWN | GR_EVENT_MASK_BUTTON_UP |
@@ -531,7 +525,7 @@ load(fn)
 	is_out = GR_FALSE;
 	was_out = GR_FALSE;
 
-	fh = open(fn, O_BINARY);
+	fh = open(fn, O_RDONLY);
 	if (fh < 0) {
 		GrClose();
 		fprintf(stderr, "Cannot open %s\n", fn);

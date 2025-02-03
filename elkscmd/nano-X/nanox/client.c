@@ -147,9 +147,10 @@ int GrOpen(void)
 
 	name.sun_family = AF_UNIX;
 	strcpy(name.sun_path, GR_NAMED_SOCKET);
-	if(connect(sock, (struct sockaddr *) &name, SUN_LEN(&name)) == -1)
+	if(connect(sock, (struct sockaddr *) &name, SUN_LEN(&name)) == -1) {
+        perror("Can't connect to Nano-X server");
 		return -1;
-
+    }
 	if(GrSendByte(GrNumOpen) != GrRetOK)
 		return -1;
 
