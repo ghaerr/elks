@@ -26,7 +26,7 @@
 #define USE_IFREG 1     /* =1 for FAT filesystem compatibility */
 
 #if USE_IFREG   /* use regular file rather than named socket for bind and connect */
-#define MODE    S_IFREG                 /* regular file type */
+#define MODE    (S_IFREG|0666)          /* regular file type */
 #define FLAG    (O_CREAT|FMODE_WRITE)   /* create using open_namei */
 #else
 #define MODE    S_IFSOCK                /* named pipe/socket file type */

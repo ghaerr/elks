@@ -84,7 +84,7 @@
 #include <errno.h>
 #include "nano-X.h"
 #include "nxcolors.h"
-#include "ntetris.h"
+#include "nxtetris.h"
 
 static long delay = 100;
 
@@ -998,6 +998,7 @@ int main(int argc, char *argv[])
 
 	write_hiscore(state);
 
+        GrUnmapWindow(state->main_window);
 	GrClose();
 
 	return 0;
