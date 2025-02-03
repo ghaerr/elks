@@ -13,15 +13,13 @@
 GETBYTE_FP:
 	push	%bp
 	mov		%sp,%bp
-	push	%ds
+	mov		%ds,%dx
 
-	mov		4(%bp),%bx	// bx = lo addr
-	mov		6(%bp),%ax	// ds = hi addr
-	mov		%ax,%ds
+	lds		4(%bp),%bx
 	mov		(%bx),%al	// get byte at ds:bx
 	xor		%ah,%ah
 
-	pop		%ds
+	mov		%dx,%ds
 	pop		%bp
 	ret
 
@@ -34,15 +32,13 @@ GETBYTE_FP:
 PUTBYTE_FP:
 	push	%bp
 	mov		%sp,%bp
-	push	%ds
+	mov		%ds,%dx
 
-	mov		4(%bp),%bx	// bx = lo addr
-	mov		6(%bp),%ax	// ds = hi addr
-	mov		%ax,%ds
+	lds		4(%bp),%bx
 	mov		8(%bp),%al	// al = val
 	mov		%al,(%bx)	// put type at ds:bx
 
-	pop		%ds
+	mov		%dx,%ds
 	pop		%bp
 	ret
 
@@ -54,14 +50,12 @@ PUTBYTE_FP:
 RMW_FP:
 	push	%bp
 	mov		%sp,%bp
-	push	%ds
+	mov		%ds,%dx
 
-	mov		4(%bp),%bx	// bx = lo addr
-	mov		6(%bp),%ax	// ds = hi addr
-	mov		%ax,%ds
+	lds		4(%bp),%bx
 	or		%al,(%bx)	// rmw byte at ds:bx, al value doesn't matter
 
-	pop		%ds
+	mov		%dx,%ds
 	pop		%bp
 	ret
 
@@ -73,15 +67,13 @@ RMW_FP:
 ORBYTE_FP:
 	push	%bp
 	mov		%sp,%bp
-	push	%ds
+	mov		%ds,%dx
 
-	mov		4(%bp),%bx	// bx = lo addr
-	mov		6(%bp),%ax	// ds = hi addr
-	mov		%ax,%ds
+	lds		4(%bp),%bx
 	mov		8(%bp),%al	// al = val
 	or		%al,(%bx)	// or byte at ds:bx
 
-	pop		%ds
+	mov		%dx,%ds
 	pop		%bp
 	ret
 
@@ -93,15 +85,13 @@ ORBYTE_FP:
 ANDBYTE_FP:
 	push	%bp
 	mov		%sp,%bp
-	push	%ds
+	mov		%ds,%dx
 
-	mov		4(%bp),%bx	// bx = lo addr
-	mov		6(%bp),%ax	// ds = hi addr
-	mov		%ax,%ds
+	lds		4(%bp),%bx
 	mov		8(%bp),%al	// al = val
 	and		%al,(%bx)	// and byte at ds:bx
 
-	pop		%ds
+	mov		%dx,%ds
 	pop		%bp
 	ret
 
