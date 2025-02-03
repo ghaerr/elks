@@ -359,7 +359,7 @@ int seg_verify_area(pid_t pid, seg_t base, segoff_t offset)
         segment_s * seg = structof (n, segment_s, all);
 
         if (seg->pid == pid && seg->base == base)
-            return offset < (seg->size << 4);
+            return offset <= (seg->size << 4);
         n = seg->all.next;
     }
     return 0;
