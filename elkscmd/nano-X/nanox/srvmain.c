@@ -289,7 +289,7 @@ GsInitialize(void)
 
 	wp = (GR_WINDOW *) malloc(sizeof(GR_WINDOW));
 	if (wp == NULL) {
-		fprintf(stderr, "Cannot allocate root window\n");
+		perror("Cannot allocate root window");
 		return -1;
 	}
 

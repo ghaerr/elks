@@ -8,9 +8,8 @@ mainmenu_option next_comment
     bool 'Socket support'                              CONFIG_SOCKET           y
 
     if [ "$CONFIG_SOCKET" = "y" ]; then
-        bool '  NANO sockets'                          CONFIG_NANO             n
         bool '  TCP/IP sockets'                        CONFIG_INET             y
-        bool '  UNIX sockets'                          CONFIG_UNIX             n
+        bool '  UNIX sockets'                          CONFIG_UNIX             y
     fi
 
 endmenu
