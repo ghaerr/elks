@@ -21,7 +21,7 @@
 
 #define KSTACK_GUARD    100     /* bytes before CHECK_KSTACK overflow warning */
 
-#define MAX_POLLFD      6       /* Maximum number of polled filedescs per process */
+#define MAX_POLLFD      10      /* Maximum number of polled filedescs per process */
 
 #define MAX_SEGS        5       /* Maximum number of application code/data segments */
 
