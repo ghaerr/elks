@@ -14,7 +14,8 @@
 #include <fcntl.h>
 #include <termios.h>
 
-#define	MOUSE_DEVICE "/dev/ttyS0"	/* mouse tty device*/
+#define	MOUSE_DEVICE  "/dev/ttyS0"	/* real hardware mouse tty device*/
+#define	MOUSE_DEVICE2 "/dev/ttyS1"	/* QEMU mouse tty device*/
 #define	MOUSE_MICROSOFT		1		/* microsoft mouse*/
 #define	MOUSE_PC			0		/* pc/logitech mouse*/
 #define MAX_BYTES	128				/* number of bytes for buffer*/
@@ -77,6 +78,7 @@ int  	        parseMS(int);		/* routine to interpret MS mouse */
 int
 open_mouse(void)
 {
+    char *port;
 	struct termios termios;
 
 	/* set button bits and parse procedure*/
@@ -97,9 +99,10 @@ open_mouse(void)
 #endif
 
 	/* open mouse port*/
-	mouse_fd = open(MOUSE_DEVICE, O_EXCL | O_NOCTTY | O_NONBLOCK);
+	port = getenv("QEMU")? MOUSE_DEVICE2: MOUSE_DEVICE;
+	mouse_fd = open(port, O_EXCL | O_NOCTTY | O_NONBLOCK);
 	if (mouse_fd < 0) {
-		printf("Can't open %s, error %d\n", MOUSE_DEVICE, errno);
+		printf("Can't open %s, error %d\n", port, errno);
  		return -1;
 	}
 
