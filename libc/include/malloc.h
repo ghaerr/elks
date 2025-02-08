@@ -36,5 +36,6 @@ int        _fmemfree(unsigned short seg);               /* syscall */
 
 /* debug output */
 int __dprintf(const char *fmt, ...);
+int __open_readable_terminal(void);
 
 #endif
