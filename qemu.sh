@@ -71,6 +71,8 @@ KEYBOARD=
 # Select pty serial port or serial mouse driver
 #SERIAL="-chardev pty,id=chardev1 -device isa-serial,chardev=chardev1,id=serial1"
 #SERIAL="-chardev msmouse,id=chardev1 -device isa-serial,chardev=chardev1,id=serial1"
+# Uncomment the following line to emulate two serial devices, required for Nano-X:
+#SERIAL="-chardev msmouse,id=c1 -device isa-serial,chardev=c1,id=s1 -chardev msmouse,id=c2 -device isa-serial,chardev=c2,id=s2"
 
 # Uncomment this to route ELKS /dev/ttyS0 to host terminal
 CONSOLE="-serial stdio"

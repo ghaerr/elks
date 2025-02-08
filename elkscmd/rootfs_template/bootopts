@@ -1,4 +1,4 @@
-## ELKS /bootopts boot options file, max 1023 bytes
+## /bootopts 1023 max
 #TZ=MDT6
 #LOCALIP=10.0.2.16
 #HOSTNAME=elks16
@@ -21,3 +21,4 @@
 #net=ne0
 #debug=1
 #console=ttyS0,19200 3
+#MOUSE_PORT=/dev/ttyS1
