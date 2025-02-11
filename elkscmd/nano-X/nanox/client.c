@@ -12,8 +12,8 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <linuxmt/un.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <sys/select.h>
 #include "nano-X.h"
 #include "serv.h"
@@ -44,7 +44,7 @@ static int GrReadBlock(void *b, int n)
 	while(v < ((char *) b + n)) {
 		i = read(sock, v, ((char *) b + n - v));
 		if(i <= 0) {
-			//__dprintf("GrReadBlock read error %d, errno %d\n", i, errno);
+			__dprintf("GrReadBlock error %d ret %d\n", errno, i);
 			return -1;
 		}
 		v += i;
@@ -98,7 +98,7 @@ static int GrSendBlock(void *b, long n)
 	while(c < ((unsigned char *) b + n)) {
 		i = write(sock, c, ((unsigned char *) b + n - c));
 		if(i <= 0) {
-			//__dprintf("GrSendBlock write error %d, errno %d\n", i, errno);
+			__dprintf("GrSendBlock write error %d ret %d\n", errno, i);
 			return -1;
 		}
 		c += i;
@@ -106,7 +106,7 @@ static int GrSendBlock(void *b, long n)
 
 	do {
 		if((i = GrReadByte()) < 0) {
-			//__dprintf("GrSendBlock readbyte error %d, errno %d\n", i, errno);
+			__dprintf("GrSendBlock readbyte error %d ret %d\n", errno, i);
 			return -1;
 		}
 #if UNUSED
@@ -138,7 +138,6 @@ static int GrSendByte(unsigned char c)
 int GrOpen(void)
 {
 	struct sockaddr_un name;
-	size_t size;
 
 	if(!sock)
 		if((sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
@@ -148,10 +147,10 @@ int GrOpen(void)
 
 	name.sun_family = AF_UNIX;
 	strcpy(name.sun_path, GR_NAMED_SOCKET);
-	size = sizeof(name); //(offsetof(struct sockaddr_un, sun_path) + strlen(name.sun_path) + 1);
-	if(connect(sock, (struct sockaddr *) &name, size) == -1)
+	if(connect(sock, (struct sockaddr *) &name, SUN_LEN(&name)) == -1) {
+        perror("Can't connect to Nano-X server");
 		return -1;
-
+    }
 	if(GrSendByte(GrNumOpen) != GrRetOK)
 		return -1;
 
@@ -223,7 +222,7 @@ void GrDefaultErrorHandler(GR_EVENT_ERROR err)
 			break;
 	}
 
-	fprintf(stderr,"Error event recieved from server:\n"
+	__dprintf("Error event recieved from server:\n"
 		"\t%s() failed because %s.\n", err.name, why);
 }
 #endif

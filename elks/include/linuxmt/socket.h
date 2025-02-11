@@ -28,11 +28,12 @@ struct linger {
 
 #define AF_INET	0
 #define AF_UNIX	1
-#define AF_NANO	2
 
 #define PF_INET	AF_INET
 #define PF_UNIX	AF_UNIX
-#define PF_NANO	AF_NANO
+
+#define AF_LOCAL AF_UNIX
+#define PF_LOCAL PF_UNIX
 
 #define SOCK_STREAM     1	/* stream (connection) socket   */
 #define SOCK_DGRAM      2	/* datagram (conn.less) socket  */
@@ -41,26 +42,6 @@ struct linger {
 #define SOCK_SEQPACKET  5	/* sequential packet socket     */
 
 #ifdef __KERNEL__
-
-#if UNUSED
-struct iovec {
-    void *iov_base;	/* BSD uses caddr_t (same thing in effect) */
-    int iov_len;
-};
-
-#define UIO_MAXIOV	16
-
-struct msghdr {
-    void *		msg_name;
-    int 		msg_namelen;
-    struct iovec *	msg_iov;
-    int 		msg_iovlen;
-    void *		msg_control;
-    int 		msg_controllen;
-    int 		msg_flags;
-};
-#endif
-
 struct proto_ops;
 struct socket;
 int sock_register(int,struct proto_ops *);

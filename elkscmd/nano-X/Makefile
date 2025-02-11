@@ -1,155 +1,80 @@
 # Microwindows and Nano-X Makefile for ELKS
-#
 # originally from v0.86 10/29/99 g haerr
-#
 
 BASEDIR = ..
 include $(BASEDIR)/Makefile-rules
 
-LOCALFLAGS = -DELKS=1 -DUNIX=1 -DDEBUG=1 -I.
-AR = ia16-elf-ar
-MATHLIB =
+# Uncomment the following line to link nano-X applications with the server.
+#LINK_APP_INTO_SERVER=1
 
-# nano-X demo programs
-NANOXDEMOS = bin/nxlandmine
-NANOXDEMOS += bin/nxworld
-NANOXDEMOS += bin/nxclock
-NANOXDEMOS += bin/nxterm			# enable pseudo ttys in ELKS
-NANOXDEMOS += bin/nxtest
-NANOXDEMOS += bin/nxtetris
-NANOXDEMOS += bin/nxdemo
-#NANOXDEMOS += bin/nxdemo2
-#NANOXDEMOS += bin/nxvgatest		# low-level vga routines test
+# remove any -mregparmcall as ASM files need cdecl calling convention
+CFLAGS := $(filter-out -mregparmcall, $(CFLAGS))
+CFLAGS += -DELKS=1 -DUNIX=1 -DNDEBUG=1 -I.
+AR = ia16-elf-ar
 
 # mouse and kbd drivers
-# SLOW_CPU discards unprocessed mouse input for slow systems
-LOCALFLAGS += -DSLOW_CPU=1
 ifeq ($(CONFIG_ARCH_PC98), y)
-#DRIVERS += drivers/mou_null.o
-DRIVERS += drivers/mou_pc98.o
-else
-DRIVERS += drivers/mou_ser.o
+DRIVERS += drivers/mou_pc98.o drivers/kbd_tty.o
+DRIVERS += drivers/scr_pc98.o drivers/vgaplan4_pc98.o
+DRIVERS += drivers/ramfont.o drivers/X6x13.o
+DRIVERS += drivers/mempl4.o drivers/elksutilasm.o
 endif
-DRIVERS += drivers/kbd_tty.o
 
-# portable C VGA driver
-ifeq ($(CONFIG_ARCH_PC98), y)
-DRIVERS += drivers/scr_pc98.o drivers/vgaplan4_pc98.o drivers/mempl4.o
-LDFLAGS += -maout-heap=0xffff
-else
+ifeq ($(CONFIG_ARCH_IBMPC), y)
+DRIVERS += drivers/mou_ser.o drivers/kbd_tty.o
+DRIVERS += drivers/mempl4.o drivers/elksutilasm.o
+
 ifeq ($(CONFIG_HW_VGA), y)
-DRIVERS += drivers/scr_bios.o drivers/vgaplan4.o drivers/mempl4.o
+DRIVERS += drivers/scr_bios.o drivers/vgaplan4.o
+DRIVERS += drivers/romfont.o drivers/elksutilasm.o
 else
-DRIVERS += drivers/scr_cga.o drivers/vgaplan4_cga.o drivers/mempl4.o
+DRIVERS += drivers/scr_cga.o drivers/vgaplan4_cga.o
+DRIVERS += drivers/ramfont.o drivers/X6x13.o
 endif
 endif
 
-# higher speed asm VGA driver
-#DRIVERS += drivers/scr_bios.o drivers/elkplan4.o drivers/mempl4.o
+# high speed C VGA driver (BCC)
+#DRIVERS += drivers/elkplan4.o
+
+# high speed asm VGA driver (MASM)
+#DRIVERS += drivers/asmplan4.o
 
 # hercules driver
 #DRIVERS += drivers/scr_herc.o
 
-ifeq ($(CONFIG_ARCH_PC98), y)
-DRIVERS += drivers/ramfont.o drivers/X6x13.o drivers/elksutilasm.o
-else
-ifeq ($(CONFIG_HW_VGA), y)
-DRIVERS += drivers/romfont.o drivers/elksutilasm.o
-else
-DRIVERS += drivers/ramfont.o drivers/X6x13.o drivers/elksutilasm.o
-endif
-endif
+# high speed asm VGA driver (BCC)
+#DRIVERS += drivers/elkplan4.o
 
-# The following line links the nano-X application with the server.
-# This is required if no network is present, or for speed or debugging.
-#LINK_APP_INTO_SERVER=1
+# hercules driver
+#DRIVERS += drivers/scr_herc.o
 
-NANOXFILES = nanox/srvmain.o nanox/srvfunc.o nanox/srvutil.o nanox/srvevent.o
-CLNTFILES = nanox/client.o
-NETFILES = nanox/srvnet.o
-STUBFILES = nanox/stubs.o
+# Nano-X client and server build
+NANOX = nanox/srvmain.o nanox/srvfunc.o nanox/srvutil.o nanox/srvevent.o
+ENGINE = engine/devdraw.o engine/devmouse.o engine/devkbd.o engine/devclip1.o \
+	engine/devpal1.o engine/devpal2.o engine/devpal4.o
+
+ALL = libnano-X.a nxdemos
 
 ifdef LINK_APP_INTO_SERVER
 CFLAGS += -DNONETWORK=1
-NANOXFILES += $(STUBFILES)
-ALL += salibs $(NANOXDEMOS)
+CLIENT = $(NANOX) $(ENGINE) $(DRIVERS) nanox/stubs.o
 else
-NANOXFILES += $(NETFILES)
-DEMOLIBS += libnano-X.a
-ALL += libnano-X.a nano-X nxdemos
+CLIENT = nanox/client.o
+SERVER = $(NANOX) $(ENGINE) $(DRIVERS) nanox/srvnet.o
+ALL += bin/nano-X
 endif
-
-# remove any -mregparmcall as ASM files need cdecl calling convention
-CFLAGS := $(filter-out -mregparmcall, $(CFLAGS))
-
-SERVFILES = engine/devdraw.o engine/devmouse.o engine/devkbd.o engine/devclip1.o \
-	engine/devpal1.o engine/devpal2.o engine/devpal4.o
-
-SERVFILES += $(DRIVERS)
 
 all: $(ALL)
 
-libnano-X.a: $(CLNTFILES)
-	$(AR) rc libnano-X.a $(CLNTFILES)
+libnano-X.a: $(CLIENT)
+	$(AR) rc libnano-X.a $(CLIENT)
 
-salibs: $(SERVFILES) $(NANOXFILES)
+bin/nano-X: $(SERVER)
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
-bin/nxlandmine: demos/landmine.o $(NANOXFILES) $(SERVFILES)
-	$(LD) $(LDFLAGS) $(NANOXFILES) demos/landmine.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nxlandmine $(MATHLIB) $(LDLIBS)
-
-bin/nxworld: demos/world.o $(NANOXFILES) $(SERVFILES)
-	$(LD) $(LDFLAGS) $(NANOXFILES) demos/world.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nxworld $(MATHLIB) $(LDLIBS)
-	cp demos/nxworld.map bin/nxworld.map
-
-bin/nxclock: demos/nclock.o $(NANOXFILES) $(SERVFILES)
-	$(LD) $(LDFLAGS) $(NANOXFILES) demos/nclock.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nxclock $(MATHLIB) $(LDLIBS)
-
-bin/nxterm: demos/nterm.o $(NANOXFILES) $(SERVFILES)
-	$(LD) $(LDFLAGS) $(NANOXFILES) demos/nterm.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nxterm $(MATHLIB) $(LDLIBS)
-
-bin/nxtetris: demos/ntetris.o $(NANOXFILES) $(SERVFILES)
-	$(LD) $(LDFLAGS) -maout-heap=0xffff $(NANOXFILES) demos/ntetris.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nxtetris $(MATHLIB) $(LDLIBS)
-
-bin/nxtest: demos/nxtest.o $(NANOXFILES) $(SERVFILES)
-	$(LD) $(LDFLAGS) $(NANOXFILES) demos/nxtest.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nxtest $(MATHLIB) $(LDLIBS)
-
-bin/nxdemo: demos/demo.o $(NANOXFILES) $(SERVFILES)
-	$(LD) $(LDFLAGS) $(NANOXFILES) demos/demo.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nxdemo $(MATHLIB) $(LDLIBS)
-
-bin/nxdemo2: demos/demo2.o $(NANOXFILES) $(SERVFILES)
-	$(LD) $(LDFLAGS) $(NANOXFILES) demos/demo2.o $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nxdemo2 $(MATHLIB) $(LDLIBS)
-
-bin/nxvgatest: demos/demo-vga.o
-	$(LD) $(LDFLAGS) demos/demo-vga.o $(DRIVERS) $(LIBS) -o bin/nxvgatest $(MATHLIB) $(LDLIBS)
-
-
-#
-# client/server
-#
-nano-X: $(SERVFILES) $(NANOXFILES)
-	$(LD) $(LDFLAGS) $(NANOXFILES) $(SERVFILES) $(NANOLIBS) $(LIBS) -o bin/nano-X $(MATHLIB) $(LDLIBS)
-
-# only a few demos work in client/server mode
-nxdemos: libnano-X.a demos/demo.o demos/demo2.o demos/landmine.o demos/nclock.o demos/world.o demos/nterm.o demos/ntetris.o
-	$(LD) $(LDFLAGS) demos/demo.o $(DEMOLIBS) -o bin/nxdemo $(MATHLIB) $(LDLIBS)
-	$(LD) $(LDFLAGS) demos/demo2.o $(DEMOLIBS) -o bin/nxdemo2 $(MATHLIB) $(LDLIBS)
-	$(LD) $(LDFLAGS) demos/landmine.o $(DEMOLIBS) -o bin/nxlandmine $(MATHLIB) $(LDLIBS)
-	$(LD) $(LDFLAGS) demos/world.o $(DEMOLIBS) -o bin/nxworld $(MATHLIB) $(LDLIBS)
-	cp demos/nxworld.map bin/nxworld.map
-	$(LD) $(LDFLAGS) demos/nclock.o $(DEMOLIBS) -o bin/nxclock $(MATHLIB)	 $(LDLIBS)
-	$(LD) $(LDFLAGS) demos/nterm.o $(DEMOLIBS) -o bin/nxterm $(MATHLIB)	 $(LDLIBS)
-	$(LD) $(LDFLAGS) demos/ntetris.o $(DEMOLIBS) -o bin/nxtetris $(MATHLIB)	 $(LDLIBS)
-
-#	cp demos/demo.sh bin/demo.sh
-
-install: $(NANOXDEMOS)
-	$(INSTALL) $(NANOXDEMOS) $(DESTDIR)/bin
-	$(INSTALL) demos/nxworld.map $(DESTDIR)/lib/nxworld.map
+nxdemos: libnano-X.a
+	$(MAKE) -C demos
 
 clean:
-	$(RM) *.o *.a nano-X
-	$(RM) drivers/*.o
-	$(RM) bin/*
-	$(RM) nanox/*.o
-	$(RM) engine/*.o
-	$(RM) demos/*.o
+	$(RM) *.o *.a bin/nano-X drivers/*.o nanox/*.o engine/*.o
+	$(MAKE) -C demos clean

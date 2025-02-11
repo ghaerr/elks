@@ -4,6 +4,25 @@
 #include <paths.h>
 #include <fcntl.h>
 
+/*
+ * Open /dev/console for debug messages. On real hardware, this should
+ * have been setup so that the console is on the serial port so that
+ * messages can be seen when Nano-X is running.
+ * On QEMU, check if /dev/tty1 and /dev/console are the same,
+ * and if so open /dev/ttyS0 instead for terminal output assuming
+ * QEMU has been run with -serial stdio option which maps /devttyS0 to it.
+ */
+int __open_readable_terminal(void)
+{
+    int fd;
+
+    if (!isatty(STDERR_FILENO)) /* continue piping __dprintf to redirected stderr */
+        fd = STDERR_FILENO;
+    else if ((fd = open("/dev/ttyS0", O_NOCTTY | O_WRONLY)) < 0)
+        fd = open(_PATH_CONSOLE, O_WRONLY);
+    return fd;
+}
+
 static char *fmtultostr(unsigned long val, int radix, int width)
 {
     static char buf[34];
@@ -49,15 +68,11 @@ int __dprintf(const char *fmt, ...)
     char *p;
     va_list va;
     int lval;
-    char b[80];
+    char b[128];
     static int fd = -1;
 
-    if (fd < 0) {
-        if (!isatty(STDERR_FILENO)) /* continue piping __dprintf to redirected stderr */
-            fd = STDERR_FILENO;
-        else
-            fd = open(_PATH_CONSOLE, O_WRONLY);
-    }
+    if (fd < 0)
+        fd = __open_readable_terminal();
     va_start(va, fmt);
     for (n = 0; *fmt; fmt++) {
         if (*fmt == '%') {

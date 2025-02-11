@@ -28,20 +28,13 @@ static char ScreenVersion[] = "screen 2.0a.2 (ELKS) 30-Apr-2020";
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <termcap.h>
 #include <termios.h>
 #include <time.h>
 #include <unistd.h>
-
-#ifdef ELKS
-#include <linuxmt/un.h>
-#else
-#include <linux/un.h>
-#define OPEN_MAX 1024
-extern char **environ;
-#endif
 
 #ifdef UTMP
 #include <utmp.h>

@@ -21,7 +21,7 @@ int verfy_area(void *p, size_t len)
 
     /* use fast method when DS == SS indicating default data segment request */
     if (current->t_regs.ds == current->t_regs.ss)
-         return (offset < current->t_endseg)? 0: -EFAULT;
+         return (offset <= current->t_endseg)? 0: -EFAULT;
 
     /* check allocated code and data segments with syscall DS segment */
     for (i = 0; i < MAX_SEGS; i++) {

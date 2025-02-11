@@ -50,9 +50,8 @@ CONFIG_FARTEXT_KERNEL=y
 # Networking Support
 #
 CONFIG_SOCKET=y
-# CONFIG_NANO is not set
 CONFIG_INET=y
-# CONFIG_UNIX is not set
+CONFIG_UNIX=y
 
 #
 # Filesystem Support

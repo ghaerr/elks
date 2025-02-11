@@ -15,6 +15,8 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/stat.h>
 #include <linuxmt/fcntl.h>
+#include <linuxmt/string.h>
+#include <linuxmt/heap.h>
 #include <linuxmt/debug.h>
 
 #include <arch/segment.h>
@@ -26,51 +28,50 @@
 #define USE_IFREG 1     /* =1 for FAT filesystem compatibility */
 
 #if USE_IFREG   /* use regular file rather than named socket for bind and connect */
-#define MODE    S_IFREG                 /* regular file type */
+#define MODE    (S_IFREG|0666)          /* regular file type */
 #define FLAG    (O_CREAT|FMODE_WRITE)   /* create using open_namei */
 #else
 #define MODE    S_IFSOCK                /* named pipe/socket file type */
 #define FLAG    0                       /* created seperately using do_mknod */
 #endif
 
-struct unix_proto_data unix_datas[NSOCKETS_UNIX];
+struct unix_proto_data *unix_data[NSOCKETS_UNIX];
 
 static struct unix_proto_data *unix_data_alloc(void)
 {
     struct unix_proto_data *upd;
+    int i;
 
-    clr_irq();
-    for (upd = unix_datas; upd <= last_unix_data; ++upd) {
-	if (!upd->refcnt) {
-	    /* unix domain socket not yet in itialised - bgm */
-	    upd->refcnt = -1;
-	    set_irq();
-	    upd->socket = NULL;
-	    upd->sockaddr_len = 0;
-	    upd->sockaddr_un.sun_family = 0;
-	    upd->bp_head = upd->bp_tail = 0;
-	    upd->inode = NULL;
-	    upd->peerupd = NULL;
-	    upd->sem = 0;
-	    return upd;
+    for (i = 0; i < NSOCKETS_UNIX ; ++i) {
+        if (!unix_data[i]) {
+                upd = heap_alloc(sizeof(struct unix_proto_data), HEAP_TAG_PIPE);
+            if (!upd) {
+                printk("No memory for UNIX socket\n");
+                return NULL;
+            }
+            memset(upd, 0, sizeof(*upd));
+            upd->index = i;
+            unix_data[i] = upd;
+            return upd;
 	}
     }
-    set_irq();
     return NULL;
 }
 
-static struct unix_proto_data *unix_data_lookup(struct sockaddr_un *sockun,
-						int sockaddr_len,
-						struct inode *inode)
+static struct unix_proto_data *
+unix_data_lookup(struct sockaddr_un *sockun, int sockaddr_len, struct inode *inode)
 {
     struct unix_proto_data *upd;
+    int i;
 
-    for (upd = unix_datas; upd <= last_unix_data; ++upd)
-	if (upd->refcnt > 0 && upd->socket)
+    for (i = 0; i < NSOCKETS_UNIX; ++i) {
+	upd = unix_data[i];
+	if (upd && upd->refcnt > 0 && upd->socket)
 	    if (upd->socket->state == SS_UNCONNECTED)
 		if (upd->sockaddr_un.sun_family == sockun->sun_family &&
 		    upd->inode == inode)
 		    return upd;
+    }
     return NULL;
 }
 
@@ -83,9 +84,11 @@ static void unix_data_ref(struct unix_proto_data *upd)
 
 static void unix_data_deref(struct unix_proto_data *upd)
 {
-    if (upd->refcnt == 1)
-	upd->bp_head = upd->bp_tail = 0;
     --upd->refcnt;
+    if (upd->refcnt == 0) {
+        unix_data[upd->index] = NULL;
+        heap_free(upd);
+    }
 }
 
 static int unix_create(struct socket *sock, int protocol)
@@ -99,8 +102,8 @@ static int unix_create(struct socket *sock, int protocol)
 	return -ENOMEM;
 
     upd->socket = sock;
-    sock->data = upd;
     upd->refcnt = 1;
+    sock->data = upd;
 
     return 0;
 }
@@ -119,7 +122,7 @@ static int unix_release(struct socket *sock, struct socket *peer)
 	return 0;
 
     if (upd->socket != sock) {
-	printk("UNIX: release: socket link mismatch\n");
+	printk("UNIX_release: socket link mismatch\n");
 	return -EINVAL;
     }
 
@@ -139,8 +142,7 @@ static int unix_release(struct socket *sock, struct socket *peer)
     return 0;
 }
 
-static int unix_bind(struct socket *sock,
-		     struct sockaddr *umyaddr, int sockaddr_len)
+static int unix_bind(struct socket *sock, struct sockaddr *umyaddr, int sockaddr_len)
 {
     struct unix_proto_data *upd = sock->data;
     unsigned short old_ds;
@@ -181,9 +183,8 @@ static int unix_bind(struct socket *sock,
     return 0;
 }
 
-static int unix_connect(struct socket *sock,
-			struct sockaddr *uservaddr,
-			int sockaddr_len, int flags)
+static int
+unix_connect(struct socket *sock, struct sockaddr *uservaddr, int sockaddr_len, int flags)
 {
     struct sockaddr_un sockun;
     struct unix_proto_data *serv_upd;
@@ -296,9 +297,8 @@ static int unix_accept(struct socket *sock, struct socket *newsock, int flags)
     return 0;
 }
 
-static int unix_getname(struct socket *sock,
-			struct sockaddr *usockaddr,
-			int *usockaddr_len, int peer)
+static int
+unix_getname(struct socket *sock, struct sockaddr *usockaddr, int *usockaddr_len, int peer)
 {
     struct unix_proto_data *upd;
 
@@ -397,7 +397,7 @@ static int unix_write(struct socket *sock, char *ubuf, int size, int nonblock)
     pupd = UN_DATA(sock)->peerupd;	/* safer than sock->conn */
 
     while (!(space = UN_BUF_SPACE(pupd))) {
-	printk("NO SPACE on WRITE pid %d size %d\n", current->pid, size);
+	debug("(%P) NO SPACE on WRITE pid %d size %d\n", current->pid, size);
 	sock->flags |= SF_NOSPACE;
 
 	if (nonblock)
@@ -544,8 +544,8 @@ static int unix_send(struct socket *sock,
  *      Receive data. This version of AF_UNIX also lacks MSG_PEEK 8(
  */
 
-static int unix_recv(struct socket *sock,
-		     void *buff, int len, int nonblock, unsigned flags)
+static int
+unix_recv(struct socket *sock, void *buff, int len, int nonblock, unsigned flags)
 {
     if (flags != 0)
 	return -EINVAL;

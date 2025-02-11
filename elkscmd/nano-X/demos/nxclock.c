@@ -37,14 +37,13 @@ unsigned char trig[91] =
 /* If you need a clock bigger than 200x200 you will need to re-write the trig *
  * to use longs. (Only applies under ELKS I think. */
 
-#define CWIDTH		200		/* Max 200 */
-#define CHEIGHT		200		/* Max 200 */
+#define CWIDTH		120		/* Max 200 */
+#define CHEIGHT		120		/* Max 200 */
 
 
 static	GR_WINDOW_ID	w1;		/* id for large window */
 static	GR_GC_ID	gc1;		/* graphics context for text */
 static	GR_GC_ID	gc2;		/* graphics context for rectangle */
-static	GR_GC_ID	gc3;		/* graphics context for rectangle */
 static	GR_SCREEN_INFO	si;		/* information about screen */
 
 void do_exposure();
@@ -74,13 +73,11 @@ main(int argc,char **argv)
 
 	gc1 = GrNewGC();
 	gc2 = GrNewGC();
-	gc3 = GrNewGC();
 
 	GrSetGCForeground(gc1, WHITE);
 	GrSetGCBackground(gc1, BLACK);
 	GrSetGCForeground(gc2, BLACK);
 	GrSetGCBackground(gc2, WHITE);
-	GrSetGCForeground(gc3, GRAY);
 
 	bitmap1bg[0] = MASK(_,_,X,X,X,_,_);
 	bitmap1bg[1] = MASK(_,X,X,X,X,X,_);
@@ -99,12 +96,6 @@ main(int argc,char **argv)
 	bitmap1fg[6] = MASK(_,_,_,X,_,_,_);
 
 	GrSetCursor(w1, 7, 7, 3, 3, WHITE, BLACK, bitmap1fg, bitmap1bg);
-
-	GrFillRect(GR_ROOT_WINDOW_ID, gc3, 0, 0, si.cols, si.rows);
-
-	GrSetGCForeground(gc3, BLACK);
-	GrSetGCBackground(gc3, WHITE);
-/*	GrSetGCMode(gc3, GR_MODE_XOR); */
 
 	GrMapWindow(w1);
 

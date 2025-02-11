@@ -1,7 +1,7 @@
 #ifndef __LINUXMT_UN_H
 #define __LINUXMT_UN_H
 
-#define UNIX_PATH_MAX	108
+#define UNIX_PATH_MAX   16          /* keep size of unix_proto_data small, incl/NUL */
 
 struct sockaddr_un {
     unsigned short sun_family;		/* AF_UNIX */
