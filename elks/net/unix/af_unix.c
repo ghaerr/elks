@@ -497,7 +497,7 @@ static int unix_select(struct socket *sock, int sel_type)
 	    return 1;
 
 	else if (sock->state != SS_CONNECTED)
-	    return 1;
+	    return 1;           /* FIXME is this correct? */
 
 	select_wait(sock->wait);
 

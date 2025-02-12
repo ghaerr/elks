@@ -90,11 +90,11 @@ typedef unsigned long sigset_t; /* at least 32 bits */
  */
 
 #define SA_NOCLDSTOP    1
-#define SA_STACK        0x08000000
-#define SA_RESTART      0x10000000
-#define SA_INTERRUPT    0x20000000
-#define SA_NOMASK       0x40000000
-#define SA_ONESHOT      0x80000000
+#define SA_STACK        0x0800
+#define SA_RESTART      0x1000
+#define SA_INTERRUPT    0x2000
+#define SA_NOMASK       0x4000
+#define SA_ONESHOT      0x8000
 
 #ifdef __KERNEL__
 /*
