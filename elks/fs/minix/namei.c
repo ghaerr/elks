@@ -344,12 +344,11 @@ static int empty_dir(register struct inode *inode)
 	    return 0;
 	}
     }
-    brelse(bh);
     goto empt_dir;
   bad_dir:
-    unmap_brelse(bh);
     printk("Bad directory on device %D\n", inode->i_dev);
   empt_dir:
+    unmap_brelse(bh);
     return 1;
 }
 
