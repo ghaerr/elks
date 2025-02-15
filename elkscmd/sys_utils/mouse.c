@@ -100,6 +100,7 @@ open_mouse(void)
 
 	/* open mouse port*/
 	port = getenv("QEMU")? MOUSE_DEVICE2: MOUSE_DEVICE;
+	printf("Opening mouse on %s\n", port);
 	mouse_fd = open(port, O_EXCL | O_NOCTTY | O_NONBLOCK);
 	if (mouse_fd < 0) {
 		printf("Can't open %s, error %d\n", port, errno);
