@@ -267,7 +267,7 @@ static int set_brk(segoff_t brk, int increment)
 
 int sys_brk(segoff_t newbrk)
 {
-    dprintk("(%P)BRK %u\n", newbrk);
+    debug_brk("(%P)BRK %u\n", newbrk);
     return set_brk(newbrk, 0);
 }
 
@@ -277,8 +277,8 @@ int sys_sbrk(int increment, segoff_t *pbrk)
     int err;
 
     if (increment) {
-        dprintk("(%P)SBRK %d\n", increment);
-        /*dprintk("(%P)SBRK %d, curbreak %u, SP %u\n",
+        debug_brk("(%P)SBRK %d\n", increment);
+        /*debug_brk("(%P)SBRK %d, curbreak %u, SP %u\n",
             increment, current->t_endbrk, current->t_regs.sp);*/
     }
     err = verify_area(VERIFY_WRITE, pbrk, sizeof(*pbrk));
@@ -302,10 +302,10 @@ int sys_fmemalloc(int paras, unsigned short *pseg)
         return err;
     seg = seg_alloc((segext_t)paras, SEG_FLAG_FDAT);
     if (!seg) {
-        dprintk("(%P)FMEMALLOC %ld FAIL\n", (unsigned long)paras << 4);
+        debug_brk("(%P)FMEMALLOC %ld FAIL\n", (unsigned long)paras << 4);
         return -ENOMEM;
     }
-    dprintk("(%P)FMEMALLOC %ld\n", (unsigned long)paras << 4);
+    debug_brk("(%P)FMEMALLOC %ld\n", (unsigned long)paras << 4);
     seg->pid = current->pid;
     put_user(seg->base, pseg);
     return 0;

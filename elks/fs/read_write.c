@@ -22,7 +22,7 @@ int sys_lseek(unsigned int fd, loff_t * p_offset, unsigned int origin)
     loff_t offset;
 
     offset = (loff_t) get_user_long(p_offset);
-    debug_file("lseek %d, %ld, %d\n", fd, offset, origin);
+    debug("lseek %d, %ld, %d\n", fd, offset, origin);
     if (fd >= NR_OPEN || !(file = current->files.fd[fd]) || !(file->f_inode))
 	return -EBADF;
     if (origin > 2) return -EINVAL;
