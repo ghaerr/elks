@@ -1,6 +1,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 #include <paths.h>
 #include <fcntl.h>
 
@@ -14,12 +15,19 @@
  */
 int __open_readable_terminal(void)
 {
-    int fd;
+    int fd = -1;
+    char *serial = "/dev/ttyS0";    /* preferred console but could be  mouse port */
+    char *mouse;
 
-    if (!isatty(STDERR_FILENO)) /* continue piping __dprintf to redirected stderr */
+    if (!isatty(STDERR_FILENO))     /* continue piping __dprintf to redirected stderr */
         fd = STDERR_FILENO;
-    else if ((fd = open("/dev/ttyS0", O_NOCTTY | O_WRONLY)) < 0)
-        fd = open(_PATH_CONSOLE, O_WRONLY);
+    else {
+        mouse = getenv("MOUSE_PORT");
+        if (!mouse || strcmp(mouse, serial) != 0)  /* use serial if not used by mouse */
+            fd = open(serial, O_NOCTTY | O_WRONLY);
+        if (fd < 0)
+            fd = open(_PATH_CONSOLE, O_WRONLY);
+    }
     return fd;
 }
 

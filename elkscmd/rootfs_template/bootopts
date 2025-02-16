@@ -21,4 +21,4 @@
 #net=ne0
 #debug=1
 #console=ttyS0,19200 3
-#MOUSE_PORT=/dev/ttyS1
+#MOUSE_PORT=/dev/ttyS0
