@@ -7,6 +7,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         use16   86
 
+        .sect   0               ; first text seg
+        dw      0,0             ; prevent text having address 0 for SIG_DFL,SIG_IGN
         .sect   1               ; first data seg
         dw      0,0             ; prevent data having address 0
         .data                   ; default data seg 3

@@ -45,16 +45,31 @@ void __far _signal_wchandler(int sig)               /* callback handler calls th
 }
 #endif
 
+#ifdef __C86__
+extern void _signal_cbhandler(int);                 /* kernel callback in ASM */
+static unsigned int _CS(void)
+{
+    asm("mov    ax,cs");
+}
+#endif
+
 sighandler_t signal(int number, sighandler_t pointer)
 {
     sighandler_t old_sig;
     int rv;
     if (number < 1 || number > _NSIG) { errno = EINVAL; return SIG_ERR; }
 
+#ifdef __C86__
+    if (pointer == SIG_DFL || pointer == SIG_IGN)
+        rv = _signal(number, (__kern_sighandler_t) pointer, 0);
+    else
+        rv = _signal(number, (__kern_sighandler_t) _signal_cbhandler, _CS());
+#else
     if (pointer == SIG_DFL || pointer == SIG_IGN)
         rv = _signal(number, (__kern_sighandler_t) (unsigned long)pointer);
     else
         rv = _signal(number, (__kern_sighandler_t) _signal_cbhandler);
+#endif
     if (rv < 0) return SIG_ERR;
 
     old_sig = _sigtable[number-1];
