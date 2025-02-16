@@ -40,6 +40,7 @@ OBJS = \
 	seekdir.o \
 	setpgrp.o \
 	sigaction.o \
+	signal.o \
 	sleep.o \
 	telldir.o \
 	time.o \
@@ -48,12 +49,6 @@ OBJS = \
 	wait.o \
 	wait3.o \
 	waitpid.o \
-
-# C86 doesn't have these yet
-ifneq "$(COMPILER)" "c86"
-OBJS += \
-	signal.o
-endif
 
 # these files written in assembly language
 IA16OBJS = \
