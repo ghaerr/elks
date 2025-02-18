@@ -8,10 +8,13 @@
         use16   86
 
         .sect   0               ; first text seg
-        dw      0,0             ; prevent text having address 0 for SIG_DFL,SIG_IGN
-        .sect   1               ; first data seg
+        nop                     ; prevent text having address 0 for SIG_DFL,SIG_IGN
+        nop
+        nop
+        nop
+        .sect   4               ; first data seg
         dw      0,0             ; prevent data having address 0
-        .data                   ; default data seg 3
+        .data                   ; default data seg 7
         .align  2
         .comm   _errno,2
         .comm   _environ,2
