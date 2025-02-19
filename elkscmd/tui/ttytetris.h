@@ -47,8 +47,8 @@
 #define KEY_MOVE_RIGHT 'l'
 
 /* Change the shape position */
-#define KEY_CHANGE_POSITION_NEXT 'k'
-#define KEY_CHANGE_POSITION_PREV 'j'
+#define KEY_CHANGE_POSITION_NEXT 'k'    /* also 'd' */
+#define KEY_CHANGE_POSITION_PREV 'j'    /* also 's' */
 
 /* ' ' for space key */
 #define KEY_DROP_SHAPE ' '
@@ -56,7 +56,7 @@
 /* Other key */
 #define KEY_PAUSE 'p'
 #define KEY_QUIT  'q'
-#define KEY_SPEED 's'
+#define KEY_SPEED '-'
 
 /* Timing in milisecond */
 #define TIMING 300000
@@ -80,9 +80,9 @@
 #define P_POS ((current.pos > 0) ? current.pos - 1 : 3)
 
 /* Draw the score.. */
-#define DRAW_SCORE() set_color(Score);                             \
-     printf("\033[%d;%dH %d", FRAMEH_NB + 3, FRAMEW + 10, score);   \
-     printf("\033[%d;%dH %d", FRAMEH_NB + 4, FRAMEW + 10, lines);   \
+#define DRAW_SCORE() set_color(Score);                 \
+     printf("\033[%d;%dH %d", FRAMEH + 3, 9, score);   \
+     printf("\033[%d;%dH %d", FRAMEH + 4, 9, lines);   \
      set_color(0);
 
 /* Bool type */
@@ -113,9 +113,7 @@ void sig_handler(int);
 
 /* frame.c */
 void frame_init(void);
-void frame_nextbox_init(void);
 void frame_refresh(void);
-void frame_nextbox_refresh(void);
 
 /* shapes.c */
 void shape_set(void);
@@ -138,7 +136,7 @@ struct itimerval tv;
 struct termios back_attr;
 shape_t current;
 int frame[FRAMEH + 1][FRAMEW + 1];
-int frame_nextbox[FRAMEH_NB+1][FRAMEW_NB+1];
+int frame_prev[FRAMEH + 1][FRAMEW + 1];
 int score;
 int lines;
 Bool running;
