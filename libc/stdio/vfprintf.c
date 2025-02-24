@@ -42,12 +42,25 @@
  * Greg Haerr enhanced for speed, new features
  */
 
+/*
+ * NOTE: Weak symbols aren't working with OpenWatcom small and compact models
+ * due to compiler creating far segment relocation on _weaken() and link failure.
+ * As a result, printf can't support float (%f/%g) or ptick (%k) output
+ * for small and compact model programs without pulling in dtostr and ptostr
+ * whether float/ptick output is used or not. Small and compact model OWC programs
+ * should thus explicitly use dtostr and ptostr for conversion if required.
+ */
+#if defined(__GNUC__) || \
+    (defined(__WATCOMC__) && (defined(__MEDIUM__) || defined(__LARGE__)))
+#define HAS_WEAKEN
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <string.h>
 
-#ifndef __HAS_NO_FLOATS__
+#if !defined(__HAS_NO_FLOATS__) && defined(HAS_WEAKEN)
 #include <sys/weaken.h>
 /*
  * Use '#include <sys/weaken.h>` and '__STDIO_PRINT_FLOATS'
@@ -248,7 +261,7 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
          case 'k':              /* Pticks */
           usproc:
             v = lval? va_arg(ap, unsigned long) : (unsigned long)va_arg(ap, unsigned int);
-#ifndef __C86__
+#ifdef HAS_WEAKEN
             if (*fmt == 'k') {
                 if (_weakaddr(ptostr)) {
                     (_weakfn(ptostr))(v, hash, p);
@@ -303,7 +316,7 @@ vfprintf(FILE *op, const char *fmt, va_list ap)
                         buffer_mode);
             break;
 
-#ifndef __HAS_NO_FLOATS__
+#if !defined(__HAS_NO_FLOATS__) && defined(HAS_WEAKEN)
          case 'e':              /* float */
          case 'f':
          case 'g':
