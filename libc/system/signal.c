@@ -61,9 +61,9 @@ sighandler_t signal(int number, sighandler_t pointer)
 
 #ifdef __C86__
     if (pointer == SIG_DFL || pointer == SIG_IGN)
-        rv = _signal(number, (__kern_sighandler_t) pointer, 0);
+        rv = _signal(number, pointer, 0);
     else
-        rv = _signal(number, (__kern_sighandler_t) _signal_cbhandler, _CS());
+        rv = _signal(number, _signal_cbhandler, _CS());
 #else
     if (pointer == SIG_DFL || pointer == SIG_IGN)
         rv = _signal(number, (__kern_sighandler_t) (unsigned long)pointer);

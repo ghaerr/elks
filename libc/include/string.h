@@ -28,8 +28,10 @@ void * memset(void*, int, size_t);
 int memcmp(const void*, const void*, size_t);
 void * memmove(void*, const void*, size_t);
 
+#ifndef __STRICT_ANSI__
 void __far *fmemset(void __far *buf, int c, size_t l);
 int fmemcmp(void __far *s1, void __far *s2, size_t n);  /* Watcom C only, in ASM */
+#endif
 
 /* Error messages */
 char * strerror(int);
