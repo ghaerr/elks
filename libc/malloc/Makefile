@@ -36,7 +36,6 @@ OBJS = \
 	calloc.o \
 	brk.o \
 	sbrk.o \
-	fmemalloc.o \
 	dprintf.o \
 
 # default and debug mallocs for all compilers
@@ -44,14 +43,14 @@ OBJS += $(DEFAULT_MALLOC_OBJS) $(DEBUG_MALLOC_OBJS)
 
 # far malloc works with OWC only for now
 ifeq "$(COMPILER)" "watcom"
-OBJS += $(FAR_MALLOC_OBJS)
+OBJS += $(FAR_MALLOC_OBJS) fmemalloc.o
 endif
 
 IA16OBJS = \
 	stackcheck.o \
 
 ifeq "$(COMPILER)" "ia16"
-OBJS += $(IA16OBJS)
+OBJS += $(IA16OBJS) fmemalloc.o
 endif
 
 .PHONY: all

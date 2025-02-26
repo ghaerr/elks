@@ -9,8 +9,8 @@
 sighandler_t signal(int number, sighandler_t pointer);
 
 #ifdef __C86__
-int _signal(int __sig, __kern_sighandler_t __cbfunc, unsigned int cs);   /* syscall */
-#else
+int _signal(int __sig, sighandler_t __cbfunc, unsigned int cs);   /* syscall */
+#elif !defined(__STRICT_ANSI__)
 int _signal(int __sig, __kern_sighandler_t __cbfunc);   /* syscall */
 #endif
 

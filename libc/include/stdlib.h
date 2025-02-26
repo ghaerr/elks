@@ -64,7 +64,7 @@ void qsort(void *base, size_t nel, size_t width,
 	int (*compar)(/*const void *, const void * */));
 char *devname(dev_t dev, mode_t type);
 
-#ifndef __STRICT_ANSI__
+/* non-standard routines */
 int (bsr)(int x);
 char *itoa(int val);
 char *uitoa(unsigned int val);
@@ -74,6 +74,5 @@ char *ltostr(long val, int radix);
 char *lltostr(long long val, int radix);
 char *ultostr(unsigned long val, int radix);
 char *ulltostr(unsigned long long val, int radix);
-#endif
 
 #endif /* __STDLIB_H */

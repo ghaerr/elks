@@ -177,6 +177,8 @@ typedef unsigned long sigset_t; /* at least 32 bits */
 
 /* Type of a signal handler within userland.  */
 typedef void (*sighandler_t)(int);
+
+#ifndef __STRICT_ANSI__
 /* Type of a signal handler which interfaces with the kernel.  This is always
    a far function that uses the `stdcall' calling convention, even for a
    user program that is being compiled for a different calling convention.  */
@@ -194,6 +196,7 @@ typedef void stdcall (__far *__kern_sighandler_t)(int);
 #ifdef __C86__
 typedef void (*__kern_sighandler_t)(int);   /* CS passed separately to _signal */
 #endif
+#endif /* !__STRICT_ANSI__ */
 
 /*
  * Because this stuff can get pretty confusing:
