@@ -141,7 +141,7 @@ static int follow_link(struct inode *dir, register struct inode *inode,
  * specified name, and the name within that directory.
  */
 
-static int dir_namei(const char *pathname, size_t * namelen,
+static int dir_namei(const char *pathname, size_t *namelen,
     const char **name, register struct inode *base, struct inode **res_inode)
 {
     const char *thisname;
@@ -221,13 +221,13 @@ int _namei(const char *pathname, register struct inode *base, int follow_links,
     size_t namelen;
     struct inode *inode;
 
-    debug("_namei: calling dir_namei\n");
+    debug("_namei: calling dir_namei on %t\n", pathname);
     *res_inode = NULL;
     error = dir_namei(pathname, &namelen, &basename, base, &inode);
     debug("_namei: dir_namei returned %d\n", error);
     if (!error) {
         base = inode;
-        debug("_namei: calling lookup\n");
+        debug("_namei: calling lookup on %t\n", basename);
         error = lookup(base, basename, namelen, &inode);
         debug("_namei: lookup returned %d\n", error);
         if (!error) {
@@ -508,7 +508,8 @@ int sys_link(char *oldname, char *pathname)
     error = namei(oldname, &oldinode, 0, 0);
     if (!error) {
         error = do_mknod(pathname, offsetof(struct inode_operations,link), (int)oldinode, 0);
-        if (error)
+        /* minix_link fails if oldname is directory and iputs oldinode itself */
+        if (error && oldinode->i_count)
             iput(oldinode);
     }
     return error;
