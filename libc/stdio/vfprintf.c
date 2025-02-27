@@ -63,7 +63,7 @@
 #if !defined(__HAS_NO_FLOATS__) && defined(HAS_WEAKEN)
 #include <sys/weaken.h>
 /*
- * Use '#include <sys/weaken.h>` and '__STDIO_PRINT_FLOATS'
+ * Use '#include <sys/linksym.h>` and '__STDIO_PRINT_FLOATS'
  * in user program to link in libc %e,%f,%g * printf/sprintf support
  * (see below, stdio.h and sys/weaken.h).
  */

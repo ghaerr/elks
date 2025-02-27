@@ -25,7 +25,7 @@
 ;*  ========================================================================
 ;*
 ;* Description:  Floating-point exception signaling
-;*
+;* Modified by ghaerr for 8086 CPU
 ;*****************************************************************************
 
 
@@ -62,10 +62,10 @@ include fstatus.inc
 ;       FPUnderFlow( void ) : void
 ;
         defpe   FPUnderFlow
-        push    eax                 ; save EAX
-;;      mov     eax,FPE_UNDERFLOW   ; indicate underflow
+        push    ax                  ; save EAX
+;;      mov     ax,FPE_UNDERFLOW    ; indicate underflow
 ;;      call    __FPE_exception_    ;
-        pop     eax                 ; restore EAX
+        pop     ax                  ; restore EAX
         ret                         ; return
         endproc FPUnderFlow
 
@@ -73,10 +73,10 @@ include fstatus.inc
 ;       FPInvalidOp( void ) : void
 ;
         defpe   FPInvalidOp
-        push    eax                 ; save EAX
-        mov     eax,FPE_ZERODIVIDE  ; indicate divide by 0
+        push    ax                  ; save EAX
+        mov     ax,FPE_ZERODIVIDE   ; indicate divide by 0
         call    __FPE_exception_    ;
-        pop     eax                 ; restore EAX
+        pop     ax                  ; restore EAX
         ret                         ; return
         endproc FPInvalidOp
 
@@ -84,10 +84,10 @@ include fstatus.inc
 ;       FPDivZero( void ) : void
 ;
         defpe   FPDivZero
-        push    eax                 ; save EAX
-        mov     eax,FPE_ZERODIVIDE  ; indicate divide by 0
+        push    ax                  ; save EAX
+        mov     ax,FPE_ZERODIVIDE   ; indicate divide by 0
         call    __FPE_exception_    ;
-        pop     eax                 ; restore EAX
+        pop     ax                  ; restore EAX
         ret                         ; return
         endproc FPDivZero
 
@@ -95,11 +95,11 @@ include fstatus.inc
 ;       FPOverFlow( void ) : void
 ;
         defpe   FPOverFlow
-        push    eax                 ; save EAX
+        push    ax                  ; save EAX
         call    __set_ERANGE        ; errno = ERANGE
-        mov     eax,FPE_OVERFLOW    ; indicate overflow
+        mov     ax,FPE_OVERFLOW     ; indicate overflow
         call    __FPE_exception_    ;
-        pop     eax                 ; restore EAX
+        pop     ax                  ; restore EAX
         ret                         ; return
         endproc FPOverFlow
 
@@ -107,13 +107,13 @@ include fstatus.inc
 ;       F8UnderFlow( void ) : reallong
 ;
         defp    F8UnderFlow
-        xor     edx,edx             ; return zero
+        xor     dx,dx               ; return zero       FIXME
 ;
 ;       F4UnderFlow( void ) : real
 ;
         defp    F4UnderFlow
         call    FPUnderFlow         ; handle underflow
-        xor     eax,eax             ; return zero
+        xor     ax,ax               ; return zero       FIXME
         ret                         ; return
         endproc F4UnderFlow
         endproc F8UnderFlow
@@ -133,8 +133,8 @@ include fstatus.inc
 ;       F4RetInf( sign : int ) : real
 ;
         defp    F4RetInf
-        and     eax,80000000h       ; get sign
-        or      eax,7F800000h       ; set infinity
+        ;;;;and     ax,80000000h       ; get sign       FIXME
+        ;;;;or      ax,7F800000h       ; set infinity
         ret                         ; return
         endproc F4RetInf
         endproc F4OverFlow
@@ -155,10 +155,10 @@ include fstatus.inc
 ;       F8RetInf( sign : int ) : reallong
 ;
         defp    F8RetInf
-        and     eax,80000000h       ; get sign
-        or      eax,7FF00000h       ; set infinity
-        mov     edx,eax             ;
-        sub     eax,eax             ; ...
+        ;;;;and     ax,80000000h       ; get sign       FIXME
+        ;;;;or      ax,7FF00000h       ; set infinity
+        mov     dx,ax               ;                   FIXME
+        sub     ax,ax               ; ...               FIXME
         ret                         ; return
         endproc F8RetInf
         endproc F8OverFlow
