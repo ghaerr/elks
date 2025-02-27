@@ -7,10 +7,12 @@
 
 # What is ELKS?
 
-ELKS is a project providing a Linux-like OS for systems based on the Intel
-IA16 architecture (16-bit processors: 8086, 8088, 80188, 80186, 80286,
-NEC V20, V30 and compatibles). Such systems are ancient computers (IBM-PC
-XT / AT and clones) as well as more recent SBCs, SoCs, and FPGAs. ELKS supports networking and installation to HDD using both MINIX and FAT file systems.
+ELKS is a project providing an early fork of the Linux OS for systems based on the Intel
+IA16 architecture (16-bit processors: 8086, 8088, 80188, 80186, 80286, NEC V20, V30
+and compatibles). Such systems can be ancient computers (IBM-PC XT / AT and clones)
+as well as more recent SBCs, SoCs, FPGAs, as well as modern 80386+ x86 desktops.
+ELKS supports networking, graphics, ia16-elf-gcc, OpenWatcom C and its own native
+C compiler, and installation to HDD using both MINIX and MSDOS FAT filesystems.
 
 ## Memory requirements
 
@@ -33,6 +35,9 @@ You can [play with ELKS online](https://copy.sh/v86/?profile=elks) thanks to the
 
 ELKS running on QEMU
 ![ss1](https://github.com/ghaerr/elks/blob/master/Screenshots/ELKS_0.7.0.png)
+
+Nano-X running on ELKS
+![ss8](https://github.com/ghaerr/elks/blob/master/Screenshots/Nano-X_on_ELKS.png)
 
 Olivetti M24 8086 CPU
 ![ss2](https://github.com/ghaerr/elks/blob/master/Screenshots/Olivetti_M24_8086_CPU.png)
@@ -72,6 +77,9 @@ More information is in the Documentation folder: [Index of ELKS Documentation](h
 
 Other projects and resources interesting to ELKS and our programming community:
 
+- [8086 toolchain](https://github.com/ghaerr/8086-toolchain) A full C toolchain running
+on the host desktop and ELKS itself, featuring C compiler, the as86 assembler,
+ld86 linker, make and a complete C library..
 - [blink16](https://github.com/ghaerr/blink16) A visual 8086 emulator and debugger capable of booting the ELKS kernel for symbolic debugging, as well as an emulator for ELKS executables.
 - [Size Optimization Tricks](https://justine.lol/sizetricks/) A great article from Justine Tunney's blog showing how big things can be done without bloat.
 - [gcc-ia16](https://github.com/tkchia/gcc-ia16) TK Chia's gcc compiler targeted for 8086, maintained and used for the ELKS kernel and all its applications.
