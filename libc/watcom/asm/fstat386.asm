@@ -25,7 +25,9 @@
 ;*  ========================================================================
 ;*
 ;* Description:  Floating-point exception signaling
-;* Modified by ghaerr for 8086 CPU
+;* Modified by ghaerr for 8086 CPU (16-bits)
+;*  32-bit "float"  type stored in DX:AX
+;*  64-bit "double" type stored in AX:BX:CX:DX
 ;*****************************************************************************
 
 
@@ -107,13 +109,15 @@ include fstatus.inc
 ;       F8UnderFlow( void ) : reallong
 ;
         defp    F8UnderFlow
-        xor     dx,dx               ; return zero       FIXME
+        xor     bx,bx               ; return zero
+        xor     cx,cx
 ;
 ;       F4UnderFlow( void ) : real
 ;
         defp    F4UnderFlow
         call    FPUnderFlow         ; handle underflow
-        xor     ax,ax               ; return zero       FIXME
+        xor     dx,dx               ; return zero
+        xor     ax,ax
         ret                         ; return
         endproc F4UnderFlow
         endproc F8UnderFlow
@@ -133,8 +137,9 @@ include fstatus.inc
 ;       F4RetInf( sign : int ) : real
 ;
         defp    F4RetInf
-        ;;;;and     ax,80000000h       ; get sign       FIXME
-        ;;;;or      ax,7F800000h       ; set infinity
+        and     dx,8000h            ; get sign
+        or      dx,7F80h            ; set infinity
+        xor     ax,ax
         ret                         ; return
         endproc F4RetInf
         endproc F4OverFlow
@@ -155,10 +160,11 @@ include fstatus.inc
 ;       F8RetInf( sign : int ) : reallong
 ;
         defp    F8RetInf
-        ;;;;and     ax,80000000h       ; get sign       FIXME
-        ;;;;or      ax,7FF00000h       ; set infinity
-        mov     dx,ax               ;                   FIXME
-        sub     ax,ax               ; ...               FIXME
+        and     ax,8000h            ; get sign
+        or      ax,7FF0h            ; set infinity
+        xor     bx,bx
+        xor     cx,cx
+        xor     dx,dx
         ret                         ; return
         endproc F8RetInf
         endproc F8OverFlow

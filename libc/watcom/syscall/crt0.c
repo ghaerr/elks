@@ -47,11 +47,6 @@ char **environ;
 unsigned int __stacklow;        /* lowest protected SP value */
 unsigned char _HShift = 12;     /* huge pointer support required by pia.asm */
 
-/* floating point globals */
-char _8087;
-char _real87;
-char _chipbug;
-
 #if defined(__SMALL__) || defined(__MEDIUM__)   /* near data models */
 /* no argv/environ rewrite */
 static noreturn void premain(void)

@@ -1,6 +1,11 @@
-/* Various routines called from OWC soft float library */
+/* Various routines or globals called/referenced from OWC soft float library */
 #include <assert.h>
 #include <errno.h>
+
+/* floating point globals - FIXME should initialize at startup? */
+char _8087;
+char _real87;
+char _chipbug;
 
 /*
     __FPE_exception is called from machine language with parm in AX
