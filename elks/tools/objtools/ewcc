@@ -40,9 +40,9 @@ ELKSINCLUDE2=$TOPDIR/libc/include/watcom
 # unused:
 # -fno-stack-check          # don't generate stack check code
 # -ztNum                    # specify far data threshold (default 32767, or 256 if no Num)
-# -Wc,-fpi87                # inline 8087 fp
+# -Wc,-fpi87                # generate inline 8087 hardware fp
 # -mhard-emu-float          # -Wc,-fpi (inline 8087 w/emulation)
-# -msoft-float              # -Wc,-fpc (software fp)
+# -msoft-float              # -Wc,-fpc (non-IEEE software fp)
 # -fpmath
 # -mabi=cdecl               # push all args
 # -fnonconst-initializers   # -Wc,aa

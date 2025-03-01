@@ -25,7 +25,7 @@ CARCH =\
     -march=i86                      \
     -std=c99                        \
     -fno-stack-check                \
-    -Wc,-fpc                        \
+    -msoft-float                    \
     -Wc,-zev                        \
     -Wc,-zls                        \
     -Wc,-x                          \
