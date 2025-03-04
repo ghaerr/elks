@@ -6,6 +6,10 @@
  * Apr 2022 Greg Haerr
  */
 
+#ifdef __WATCOMC__
+#include <watcom/math.h>
+#else
+
 #define M_E         2.7182818284590452354   /* e */
 #define M_LOG2E     1.4426950408889634074   /* log 2e */
 #define M_LOG10E    0.43429448190325182765  /* log 10e */
@@ -67,4 +71,5 @@ float atanf(float x);
 
 float fminf(float x, float y);
 float fmaxf(float x, float y);
+#endif
 #endif
