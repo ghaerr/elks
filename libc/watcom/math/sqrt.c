@@ -24,37 +24,62 @@
 *
 *  ========================================================================
 *
-* Description:  Floating-point absolute value routine.
+* Description:  Square root routine.
 *
 ****************************************************************************/
 
 
 #include "variety.h"
-#include <math.h>
+#include <stddef.h>
+#include "mathlib.h"
 #include "ifprag.h"
+//#include "rtdata.h"
 
 
-_WMRTLINK float _IF_fabs( float x )
+_WMRTLINK float _IF_sqrt( float x )
 /*********************************/
 {
-    if( x < 0.0f ) {
-        x = - x;
-    }
-    return( x );
+    return( _IF_dsqrt( x ) );
 }
 
-_WMRTLINK double (fabs)( double x )
-/*********************************/
+_WMRTLINK double sqrt( double x )
+/*******************************/
 {
-    return( _IF_dfabs( x ) );
+    return( _IF_dsqrt( x ) );
 }
 
 
-_WMRTLINK double _IF_dfabs( double x )
+_WMRTLINK double _IF_dsqrt( double x )
 /************************************/
 {
     if( x < 0.0 ) {
-        x = - x;
+        x = __math1err( FP_FUNC_SQRT | M_DOMAIN | V_ZERO, &x );
+#if 0 //defined(_M_IX86)
+    } else if( _RWD_real87 ) {
+        x = __sqrt87( x );
+#endif
+    } else if( x != 0.0 ) {
+#if 0 //defined(_M_IX86)
+        x = __sqrtd( x );
+#else
+        int         i;
+        int         exp;
+        double      e;
+
+        x = frexp( x, &exp );
+        if( exp & 1 ) {     /* if odd */
+            ++exp;
+            x = x / 2.0;
+            e = x * 0.828427314758301 + 0.297334909439087;
+        } else {        /* even */
+            e = x * 0.58578634262085 + 0.42049503326416;
+        }
+        i = 4;
+        do {
+            e = (x / e + e) / 2.0;
+        } while( --i != 0 );
+        x = ldexp( e, exp >> 1 );
+#endif
     }
     return( x );
 }

@@ -2,6 +2,7 @@
 *
 *                            Open Watcom Project
 *
+* Copyright (c) 2002-2021 The Open Watcom Contributors. All Rights Reserved.
 *    Portions Copyright (c) 1983-2002 Sybase, Inc. All Rights Reserved.
 *
 *  ========================================================================
@@ -24,37 +25,46 @@
 *
 *  ========================================================================
 *
-* Description:  Floating-point absolute value routine.
+* Description:  Base 2 exponentiation routine.
 *
 ****************************************************************************/
 
 
 #include "variety.h"
 #include <math.h>
-#include "ifprag.h"
+
+//#include "clibsupp.h"
+extern void   __set_ERANGE( void );
 
 
-_WMRTLINK float _IF_fabs( float x )
-/*********************************/
+_WMRTLINK double ldexp( double value, int n )
+/*******************************************/
 {
-    if( x < 0.0f ) {
-        x = - x;
+    int     exp;
+    union {
+        double      x;
+        short       a[4];
+    } u;
+
+    u.x = value;
+    if( value != 0.0 ) {
+        exp = (u.a[3] & 0x7ff0) >> 4;
+        if( n > 16000 ) n = 16000;  /* so exp +=n does not overflow */
+        if( n < -16000 ) n = -16000;/* so exp +=n does not underflow */
+        exp += n;
+        if( exp <= 0 ) {
+            return( 0.0 );
+        }
+        if( exp >= 0x07ff ) {
+            __set_ERANGE();
+            if( u.a[3] > 0 ) {
+                return( HUGE_VAL );
+            }
+            return( -HUGE_VAL );
+        }
+        exp = exp << 4;
+        u.a[3] &= 0x800f;
+        u.a[3] |= exp;
     }
-    return( x );
-}
-
-_WMRTLINK double (fabs)( double x )
-/*********************************/
-{
-    return( _IF_dfabs( x ) );
-}
-
-
-_WMRTLINK double _IF_dfabs( double x )
-/************************************/
-{
-    if( x < 0.0 ) {
-        x = - x;
-    }
-    return( x );
+    return( u.x );
 }

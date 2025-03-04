@@ -24,37 +24,21 @@
 *
 *  ========================================================================
 *
-* Description:  Floating-point absolute value routine.
+* Description:  Sign determination routine.
 *
 ****************************************************************************/
 
 
 #include "variety.h"
-#include <math.h>
-#include "ifprag.h"
+#include "mathlib.h"
 
 
-_WMRTLINK float _IF_fabs( float x )
-/*********************************/
+int __sgn( double x )
+/*******************/
 {
-    if( x < 0.0f ) {
-        x = - x;
-    }
-    return( x );
-}
-
-_WMRTLINK double (fabs)( double x )
-/*********************************/
-{
-    return( _IF_dfabs( x ) );
-}
-
-
-_WMRTLINK double _IF_dfabs( double x )
-/************************************/
-{
-    if( x < 0.0 ) {
-        x = - x;
-    }
-    return( x );
+    if( x == 0.0 )
+        return( 0 );
+    if( x < 0.0  )
+        return( -1 );
+    return( 1 );
 }

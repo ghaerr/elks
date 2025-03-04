@@ -33,7 +33,7 @@
 #include <stddef.h>
 #include "mathlib.h"
 #include "ifprag.h"
-#include "rtdata.h"
+//#include "rtdata.h"
 
 
 #define log2e           1.4426950408889633
@@ -82,7 +82,7 @@ _WMRTLINK double _IF_dexp( double x )
         } else {
             x = __math1err( FP_FUNC_EXP | M_OVERFLOW | V_HUGEVAL, &x );
         }
-#if defined(_M_IX86)
+#if 0 //defined(_M_IX86)
     } else if( _RWD_real87 ) {
         x = _exp87( x );
 #endif

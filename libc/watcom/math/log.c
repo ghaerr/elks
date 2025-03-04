@@ -33,7 +33,7 @@
 #include <stddef.h>
 #include "mathlib.h"
 #include "ifprag.h"
-#include "rtdata.h"
+//#include "rtdata.h"
 
 
 #define sqrt_of_half    0.7071067811865475244
@@ -74,7 +74,7 @@ _WMRTLINK double _IF_dlog( double x )
 
     if( x <= 0.0 ) {
         x = __log_matherr( x, FP_FUNC_LOG );
-#if defined(_M_IX86)
+#if 0 //defined(_M_IX86)
     } else if( _RWD_real87 ) {
         x = _log87( x );
 #endif

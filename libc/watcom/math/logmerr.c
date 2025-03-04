@@ -24,37 +24,29 @@
 *
 *  ========================================================================
 *
-* Description:  Floating-point absolute value routine.
+* Description:  Handles errors related to logarithmic functions,
+*               passing actual errors on to the standard math error
+*               handler.
 *
 ****************************************************************************/
 
 
 #include "variety.h"
-#include <math.h>
-#include "ifprag.h"
+#include <stddef.h>
+#include "mathlib.h"
 
 
-_WMRTLINK float _IF_fabs( float x )
-/*********************************/
+double __log_matherr( double x, unsigned char code )
+/**************************************************/
 {
-    if( x < 0.0f ) {
-        x = - x;
+    unsigned int    err_code;
+
+    if( code != FP_FUNC_ACOSH && x == 0.0 ) {
+        err_code = code | M_SING | V_NEG_HUGEVAL;
+    } else if(fabs(x) == 0.0) {
+        err_code = code | M_SING | V_NEG_HUGEVAL;
+    } else {
+        err_code = code | M_DOMAIN | V_NEG_HUGEVAL;
     }
-    return( x );
-}
-
-_WMRTLINK double (fabs)( double x )
-/*********************************/
-{
-    return( _IF_dfabs( x ) );
-}
-
-
-_WMRTLINK double _IF_dfabs( double x )
-/************************************/
-{
-    if( x < 0.0 ) {
-        x = - x;
-    }
-    return( x );
+    return( __math1err( err_code, &x ) );
 }

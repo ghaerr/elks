@@ -24,37 +24,32 @@
 *
 *  ========================================================================
 *
-* Description:  Floating-point absolute value routine.
+* Description:  Floating-point normalization routine.
 *
 ****************************************************************************/
 
 
 #include "variety.h"
 #include <math.h>
-#include "ifprag.h"
 
 
-_WMRTLINK float _IF_fabs( float x )
-/*********************************/
+_WMRTLINK double frexp( double value, int *exp )
+/**********************************************/
 {
-    if( x < 0.0f ) {
-        x = - x;
+    int     n;
+    union {
+        double          x;
+        unsigned short  a[4];
+    } u;
+
+    n = 0;
+    u.x = value;
+    if( value != 0.0 ) {
+        n = (u.a[3] & 0x7ff0) >> 4;
+        n -= 0x03fe;
+        u.a[3] &= 0x800f;
+        u.a[3] |= 0x3fe0;
     }
-    return( x );
-}
-
-_WMRTLINK double (fabs)( double x )
-/*********************************/
-{
-    return( _IF_dfabs( x ) );
-}
-
-
-_WMRTLINK double _IF_dfabs( double x )
-/************************************/
-{
-    if( x < 0.0 ) {
-        x = - x;
-    }
-    return( x );
+    *exp = n;
+    return( u.x );
 }

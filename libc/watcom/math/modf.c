@@ -24,37 +24,23 @@
 *
 *  ========================================================================
 *
-* Description:  Floating-point absolute value routine.
+* Description:  Floating-point modulo routine.
 *
 ****************************************************************************/
 
 
 #include "variety.h"
-#include <math.h>
-#include "ifprag.h"
+#include "mathlib.h"
 
 
-_WMRTLINK float _IF_fabs( float x )
-/*********************************/
+_WMRTLINK double modf( double x, double *iptr )
+/*********************************************/
 {
-    if( x < 0.0f ) {
-        x = - x;
-    }
-    return( x );
-}
+    double  value;
+    double  ipart;
 
-_WMRTLINK double (fabs)( double x )
-/*********************************/
-{
-    return( _IF_dfabs( x ) );
-}
-
-
-_WMRTLINK double _IF_dfabs( double x )
-/************************************/
-{
-    if( x < 0.0 ) {
-        x = - x;
-    }
-    return( x );
+    value = x;
+    _ModF( &value, &ipart );
+    *iptr = ipart;
+    return( value );
 }

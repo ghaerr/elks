@@ -33,11 +33,12 @@
 #include <stdio.h>
 #include <limits.h>
 #include "mathlib.h"
-#include "clibsupp.h"
 #include "ifprag.h"
-#include "rtdata.h"
+//#include "rtdata.h"
 #include "pi.h"
 
+//#include "clibsupp.h"
+extern void   __set_ERANGE( void );
 
 static const double _sinpoly[] = {
      1.0 / (2.*3*4*5*6*7*8*9*10*11*12*13*14*15*16*17),
@@ -174,7 +175,7 @@ _WMRTLINK double (sin)( double x )
 _WMRTLINK double _IF_dsin( double x )
 /************************/
 {
-#if defined(_M_IX86)
+#if 0 //defined(_M_IX86)
     if( _RWD_real87 )
         return( _sin87(x) );
 #endif
@@ -198,7 +199,7 @@ _WMRTLINK double (cos)( double x )
 _WMRTLINK double _IF_dcos( double x )
 /***********************************/
 {
-#if defined(_M_IX86)
+#if 0 //defined(_M_IX86)
     if( _RWD_real87 )
         return( _cos87(x) );
 #endif
@@ -222,7 +223,7 @@ _WMRTLINK double (tan)( double x )
 _WMRTLINK double _IF_dtan( double x )
 /***********************************/
 {
-#if defined(_M_IX86)
+#if 0 //defined(_M_IX86)
     if( _RWD_real87 )
         return( _tan87(x) );
 #endif

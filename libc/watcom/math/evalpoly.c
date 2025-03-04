@@ -24,37 +24,30 @@
 *
 *  ========================================================================
 *
-* Description:  Floating-point absolute value routine.
+* Description:  Polynomial evaluation routines.
 *
 ****************************************************************************/
 
 
 #include "variety.h"
-#include <math.h>
-#include "ifprag.h"
+#include "mathlib.h"
 
-
-_WMRTLINK float _IF_fabs( float x )
-/*********************************/
+double _EvalPoly( double x, const double *poly, int degree )
+/**********************************************************/
 {
-    if( x < 0.0f ) {
-        x = - x;
-    }
-    return( x );
-}
+    double  z;
 
-_WMRTLINK double (fabs)( double x )
-/*********************************/
-{
-    return( _IF_dfabs( x ) );
+    z = *poly++;
+    do {
+        z = z * x + *poly++;
+    } while( --degree != 0 );
+    return( z );
 }
 
 
-_WMRTLINK double _IF_dfabs( double x )
-/************************************/
+double _OddPoly( double x, const double *poly, int degree )
+/*********************************************************/
 {
-    if( x < 0.0 ) {
-        x = - x;
-    }
-    return( x );
+    return( _EvalPoly( x * x, poly, degree ) * x );
 }
+

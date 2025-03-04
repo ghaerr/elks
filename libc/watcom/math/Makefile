@@ -5,7 +5,7 @@ LIB ?= out.lib
 
 include $(TOPDIR)/libc/$(COMPILER).inc
 
-CFLAGS += -D__GENERIC__
+CFLAGS += -D__ELKS__ -D__GENERIC__
 OBJS = $(patsubst %.c,%.o,$(wildcard *.c))
 
 all: $(LIB)

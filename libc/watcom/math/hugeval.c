@@ -24,37 +24,12 @@
 *
 *  ========================================================================
 *
-* Description:  Floating-point absolute value routine.
+* Description:  Definition of _HugeValue (IEEE-double infinity).
 *
 ****************************************************************************/
 
 
 #include "variety.h"
-#include <math.h>
-#include "ifprag.h"
 
 
-_WMRTLINK float _IF_fabs( float x )
-/*********************************/
-{
-    if( x < 0.0f ) {
-        x = - x;
-    }
-    return( x );
-}
-
-_WMRTLINK double (fabs)( double x )
-/*********************************/
-{
-    return( _IF_dfabs( x ) );
-}
-
-
-_WMRTLINK double _IF_dfabs( double x )
-/************************************/
-{
-    if( x < 0.0 ) {
-        x = - x;
-    }
-    return( x );
-}
+_WCRTDATA unsigned short const _HUGEDATA _HugeValue[] = { 0x0000, 0x0000, 0x0000, 0x7ff0 };

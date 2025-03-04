@@ -4,11 +4,8 @@
  * ELKS libc math header file
  *
  * Apr 2022 Greg Haerr
+ * Mar 2025 Added OpenWatcom math library
  */
-
-#ifdef __WATCOMC__
-#include <watcom/math.h>
-#else
 
 #define M_E         2.7182818284590452354   /* e */
 #define M_LOG2E     1.4426950408889634074   /* log 2e */
@@ -24,6 +21,12 @@
 #define M_SQRT2     1.41421356237309504880  /* sqrt(2) */
 #define M_SQRT1_2   0.70710678118654752440  /* 1/sqrt(2) */
 
+#ifdef __WATCOMC__
+/* OpenWatcom math routines */
+#include <watcom/math.h>
+#else
+
+/* ia16-elf-gcc math routines */
 double floor(double x);		/* round to largest integral value not greater than x */
 float floorf(float x);
 
