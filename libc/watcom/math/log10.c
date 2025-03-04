@@ -24,62 +24,38 @@
 *
 *  ========================================================================
 *
-* Description:  Square root routine.
+* Description:  Base 10 logarithm routine.
 *
 ****************************************************************************/
 
 
 #include "variety.h"
-#include <stddef.h>
 #include "mathlib.h"
 #include "ifprag.h"
-//#include "rtdata.h"
 
 
-_WMRTLINK float _IF_sqrt( float x )
-/*********************************/
+#define log10_of_e    0.4342944819032518
+
+
+_WMRTLINK float _IF_log10( float x )
+/**********************************/
 {
-    return( _IF_dsqrt( x ) );
+    return( _IF_dlog10( x ) );
 }
 
-_WMRTLINK double sqrt( double x )
-/*******************************/
+_WMRTLINK double (log10)( double x )
+/**********************************/
 {
-    return( _IF_dsqrt( x ) );
+    return( _IF_dlog10( x ) );
 }
 
-
-_WMRTLINK double _IF_dsqrt( double x )
-/************************************/
+_WMRTLINK double _IF_dlog10( double x )
+/*************************************/
 {
-    if( x < 0.0 ) {
-        x = __math1err( FP_FUNC_SQRT | M_DOMAIN | V_ZERO, &x );
-#if defined(_M_IX86) && 0
-    } else if( _RWD_real87 ) {
-        x = __sqrt87( x );
-#endif
-    } else if( x != 0.0 ) {
-#if defined(_M_IX86) && 0
-        x = __sqrtd( x );
-#else
-        int         i;
-        int         exp;
-        double      e;
-
-        x = frexp( x, &exp );
-        if( exp & 1 ) {     /* if odd */
-            ++exp;
-            x = x / 2.0;
-            e = x * 0.828427314758301 + 0.297334909439087;
-        } else {        /* even */
-            e = x * 0.58578634262085 + 0.42049503326416;
-        }
-        i = 4;
-        do {
-            e = (x / e + e) / 2.0;
-        } while( --i != 0 );
-        x = ldexp( e, exp >> 1 );
-#endif
+    if( x <= 0.0 ) {
+        x = __log_matherr( x, FP_FUNC_LOG10 );
+    } else {
+        x =  log(x) * log10_of_e;
     }
     return( x );
 }

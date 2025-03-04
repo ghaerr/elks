@@ -74,7 +74,7 @@ _WMRTLINK double _IF_dlog( double x )
 
     if( x <= 0.0 ) {
         x = __log_matherr( x, FP_FUNC_LOG );
-#if 0 //defined(_M_IX86)
+#if defined(_M_IX86) && 0
     } else if( _RWD_real87 ) {
         x = _log87( x );
 #endif

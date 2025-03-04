@@ -82,7 +82,7 @@ _WMRTLINK double _IF_dexp( double x )
         } else {
             x = __math1err( FP_FUNC_EXP | M_OVERFLOW | V_HUGEVAL, &x );
         }
-#if 0 //defined(_M_IX86)
+#if defined(_M_IX86) && 0
     } else if( _RWD_real87 ) {
         x = _exp87( x );
 #endif

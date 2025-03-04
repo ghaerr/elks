@@ -24,62 +24,24 @@
 *
 *  ========================================================================
 *
-* Description:  Square root routine.
+* Description:  Floating-point floor routine.
 *
 ****************************************************************************/
 
 
 #include "variety.h"
-#include <stddef.h>
-#include "mathlib.h"
-#include "ifprag.h"
-//#include "rtdata.h"
+#include <math.h>
 
 
-_WMRTLINK float _IF_sqrt( float x )
-/*********************************/
+_WMRTLINK double floor( double x )
+/********************************/
 {
-    return( _IF_dsqrt( x ) );
-}
+    double  ipart;
+    double  fraction;
 
-_WMRTLINK double sqrt( double x )
-/*******************************/
-{
-    return( _IF_dsqrt( x ) );
-}
-
-
-_WMRTLINK double _IF_dsqrt( double x )
-/************************************/
-{
-    if( x < 0.0 ) {
-        x = __math1err( FP_FUNC_SQRT | M_DOMAIN | V_ZERO, &x );
-#if defined(_M_IX86) && 0
-    } else if( _RWD_real87 ) {
-        x = __sqrt87( x );
-#endif
-    } else if( x != 0.0 ) {
-#if defined(_M_IX86) && 0
-        x = __sqrtd( x );
-#else
-        int         i;
-        int         exp;
-        double      e;
-
-        x = frexp( x, &exp );
-        if( exp & 1 ) {     /* if odd */
-            ++exp;
-            x = x / 2.0;
-            e = x * 0.828427314758301 + 0.297334909439087;
-        } else {        /* even */
-            e = x * 0.58578634262085 + 0.42049503326416;
-        }
-        i = 4;
-        do {
-            e = (x / e + e) / 2.0;
-        } while( --i != 0 );
-        x = ldexp( e, exp >> 1 );
-#endif
+    fraction = modf( x, &ipart );
+    if( fraction < 0.0 ) {
+        ipart -= 1.0;
     }
-    return( x );
+    return( ipart );
 }

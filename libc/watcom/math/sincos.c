@@ -175,7 +175,7 @@ _WMRTLINK double (sin)( double x )
 _WMRTLINK double _IF_dsin( double x )
 /************************/
 {
-#if 0 //defined(_M_IX86)
+#if defined(_M_IX86) && 0
     if( _RWD_real87 )
         return( _sin87(x) );
 #endif
@@ -199,7 +199,7 @@ _WMRTLINK double (cos)( double x )
 _WMRTLINK double _IF_dcos( double x )
 /***********************************/
 {
-#if 0 //defined(_M_IX86)
+#if defined(_M_IX86) && 0
     if( _RWD_real87 )
         return( _cos87(x) );
 #endif
@@ -223,7 +223,7 @@ _WMRTLINK double (tan)( double x )
 _WMRTLINK double _IF_dtan( double x )
 /***********************************/
 {
-#if 0 //defined(_M_IX86)
+#if defined(_M_IX86) && 0
     if( _RWD_real87 )
         return( _tan87(x) );
 #endif

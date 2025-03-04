@@ -89,7 +89,7 @@ _WMRTLINK double _IF_datan( double x )
     int     sgnx;
     double  tmp;
 
-#if 0 //defined(_M_IX86)
+#if defined(_M_IX86) && 0
     if( _RWD_real87 )
         return( _atan87(x) );
 #endif
