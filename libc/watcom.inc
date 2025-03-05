@@ -24,8 +24,9 @@ CARCH =\
     -mcmodel=$(MODEL)               \
     -march=i86                      \
     -std=c99                        \
-    -fno-stack-check                \
+    -fsigned-char                   \
     -msoft-float                    \
+    -fno-stack-check                \
     -Wc,-zev                        \
     -Wc,-zls                        \
     -Wc,-x                          \

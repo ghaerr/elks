@@ -31,6 +31,8 @@ ELKSINCLUDE2=$TOPDIR/libc/include/watcom
 # -mcmodel={s,m,c,l}        # memory model
 # -march=i86                # 8086 codegen
 # -std=c99                  # -Wc,-za99
+# -fsigned-char             # -Wc,-j plain char is signed (as gcc)
+# -msoft-float              # -Wc,-fpc (non-IEEE software fp)
 # -Wc,-zev                  # enable void arithmetic
 # -Wc,-zls                  # remove automatically inserted symbols
 # -Wc,-wcd=N                # disable warning N
@@ -42,11 +44,9 @@ ELKSINCLUDE2=$TOPDIR/libc/include/watcom
 # -ztNum                    # specify far data threshold (default 32767, or 256 if no Num)
 # -Wc,-fpi87                # generate inline 8087 hardware fp
 # -mhard-emu-float          # -Wc,-fpi (inline 8087 w/emulation)
-# -msoft-float              # -Wc,-fpc (non-IEEE software fp)
-# -fpmath
+# -fpmath=87                # produce code for 8087 FPU
 # -mabi=cdecl               # push all args
 # -fnonconst-initializers   # -Wc,aa
-# -fsigned-char             # plain char is signed (as gcc)
 
 source $TOPDIR/libc/watcom.model
 
@@ -56,6 +56,7 @@ CCFLAGS="\
     -march=i86                      \
     -Os                             \
     -std=c99                        \
+    -fsigned-char                   \
     -msoft-float                    \
     -Wc,-zev                        \
     -Wc,-zls                        \
