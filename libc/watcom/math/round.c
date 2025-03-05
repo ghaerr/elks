@@ -39,11 +39,8 @@
 #include <assert.h>
 #include "variety.h"
 #include <math.h>
+#include "mathlib.h"
 //#include "_matherr.h"
-
-#ifdef __ELKS__
-#define __reporterror(a,b,c,d,e)    assert(0)
-#endif
 
 _WMRTLINK double round(double x)
 {

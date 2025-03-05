@@ -36,10 +36,6 @@
 #include <math.h>
 //#include "_matherr.h"
 
-#ifdef __ELKS__
-#define __reporterror(a,b,c,d,e)    assert(0)
-#endif
-
 
 /*  The fmod function computes the floating-point remainder of x/y.
     It returns x if y is 0, otherwise it returns the value f that has

@@ -35,9 +35,7 @@
 #include <limits.h>
 #include "mathlib.h"
 #include "ifprag.h"
-
 //#include "clibsupp.h"
-extern void   __set_ERANGE( void );
 
 _WMRTLINK float _IF_pow( float x, float y )
 /*****************************************/

@@ -49,6 +49,7 @@ _WMRTLINK double __math2err( unsigned int err_info, double *arg1, double *arg2 )
 {
 #ifdef __ELKS__
     assert(0);
+    return 0;
 #else
     int                 why;
     struct exception    exc;
