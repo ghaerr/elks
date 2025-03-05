@@ -32,9 +32,8 @@
 
 #include "variety.h"
 #include <math.h>
-
+#include "mathlib.h"
 //#include "clibsupp.h"
-extern void   __set_ERANGE( void );
 
 
 _WMRTLINK double ldexp( double value, int n )

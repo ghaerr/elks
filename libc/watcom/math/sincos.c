@@ -35,10 +35,8 @@
 #include "mathlib.h"
 #include "ifprag.h"
 //#include "rtdata.h"
-#include "pi.h"
-
 //#include "clibsupp.h"
-extern void   __set_ERANGE( void );
+#include "pi.h"
 
 static const double _sinpoly[] = {
      1.0 / (2.*3*4*5*6*7*8*9*10*11*12*13*14*15*16*17),

@@ -37,6 +37,8 @@
 #include "cplx.h"
 #include "mathcode.h"
 
+#define __reporterror(a,b,c,d,e)    assert(0)
+extern void   __set_ERANGE( void );
 
 #if !defined(_M_IX86) || defined(__FLAT__)
     typedef double                                      *m_dbl_stk_ptr;
