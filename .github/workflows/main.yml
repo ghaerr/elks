@@ -28,7 +28,7 @@ jobs:
 
       - name: cache
         id: cache
-        uses: actions/cache@v1
+        uses: actions/cache@v4
         with:
           path: cross
           key: cross-${{ hashFiles('tools/*') }}-${{ runner.os }}
