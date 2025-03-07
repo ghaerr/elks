@@ -37,6 +37,16 @@ int isadir(char *name)
 	return S_ISDIR(statbuf.st_mode);
 }
 
+int isasymlink(char *name)
+{
+	struct	stat	statbuf;
+
+	if (lstat(name, &statbuf) < 0)
+		return 0;
+
+	return S_ISLNK(statbuf.st_mode);
+}
+
 /*
  * Build a path name from the specified directory name and file name.
  * If the directory name is NULL, then the original filename is returned.
@@ -70,7 +80,9 @@ int linkfiles(char *srcdir, char *destdir)
 	DIR *dirp;
 	struct dirent *dp;
 	char *newsrc;
+	int n;
 	char newdest[PATH_MAX];
+	char newlink[PATH_MAX];
 
 	dirp = opendir(srcdir);
 	if (!dirp) {
@@ -86,9 +98,9 @@ int linkfiles(char *srcdir, char *destdir)
 			continue;
 
 		newsrc = buildname(srcdir, dp->d_name);
-		if (lstat(newsrc, &sbuf) >= 0 && (S_ISDIR(sbuf.st_mode) || S_ISLNK(sbuf.st_mode))) {
+		if (lstat(newsrc, &sbuf) >= 0 && S_ISDIR(sbuf.st_mode)) {
 			errstr(newsrc);
-			errmsg(": can't move directory or symlink\n");
+			errmsg(": can't move directory\n");
 			closedir(dirp);
 			return 0;
 		}
@@ -105,8 +117,19 @@ int linkfiles(char *srcdir, char *destdir)
 
 		/* link will fail if directory or symlink*/
 		if (link(newsrc, newdest) < 0) {
-			perror(newsrc);
-			return 0;
+			if (!isasymlink(newsrc)) {
+				perror(newsrc);
+				return 0;
+			}
+			if ((n = readlink(newsrc, newlink, sizeof(newlink))) < 0) {
+				perror(newsrc);
+				return 0;
+			}
+			newlink[n] = '\0';
+			if (symlink(newlink, newdest) < 0) {
+				perror(newdest);
+				return 0;
+			}
 		}
 
 		if (unlink(newsrc) < 0) {
