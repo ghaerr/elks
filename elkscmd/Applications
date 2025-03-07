@@ -193,9 +193,9 @@ inet/httpd/httpd                :net
 inet/ftp/ftp                    :net
 inet/ftp/ftpd                   :net
 inet/urlget/urlget              :net
-inet/urlget/urlget :::ftpget    :net
-inet/urlget/urlget :::ftpput    :net
-inet/urlget/urlget :::httpget   :net
+#inet/urlget/urlget :::ftpget    :net
+#inet/urlget/urlget :::ftpput    :net
+#inet/urlget/urlget :::httpget   :net
 inet/tinyirc/tinyirc            :other                          :1440c
 bc/bc                           :other                          :1440c
 test/libc/test_libc             :test                           :1440c

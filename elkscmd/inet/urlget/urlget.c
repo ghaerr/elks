@@ -13,7 +13,7 @@
  * 	-d -- discard data (httpget)
  * 	-p -- post instead of get (httpget), data to post (ascii/UTF) is appended to the URL (after a '?').
  *	-v -- verbose file listing & error reporting, progress meter (ftpput/ftpget)
- *
+ * 3/7/2025 Added -U, -F, -P, -H for urlget, ftpget, ftpput, httpget
  */
 
 
@@ -43,21 +43,35 @@ _PROTOTYPE(int ftpcmd, (FILE *fpw, FILE *fpr, char *cmd, char *arg));
 _PROTOTYPE(int ftpio, (char *host, int port, char *user, char *pass, char *path, int type, int verbose));
 _PROTOTYPE(int tcpget, (char *host, int port, char *user, char *pass, char *path));
 _PROTOTYPE(int main, (int argc, char *argv[]));
-_PROTOTYPE(void usage, (void));
 
 char ftpphost[15+1];
 unsigned int ftppport;
 int use_stdin = 0;
 char *progname;
 
-#define	SCHEME_HTTP	1
-#define	SCHEME_FTP	2
-#define	SCHEME_TCP	3
-#define	SCHEME_NNTP	4
+/* operating modes */
+#define	SCHEME_URLGET   1
+#define	SCHEME_FTPGET	2
+#define	SCHEME_FTPPUT	3
+#define	SCHEME_HTTPGET	4
 
 #define TRANS_DEBUG	0	/* for debug dumps */
 
 char buffer[4096];
+
+/*
+ * urlget  [-hp]  [tcp:|ftp:|http:]//url
+ * httpget [-hpd] http://host[:port] path
+ * ftpget  [-v]   ftp://host[:port] path[/] [user [pass]]
+ * ftpput         ftp://host[:port] remotepath [user [pass]] localpath
+ */
+int usage(void)
+{
+    fprintf(stderr,
+     "Usage: %s [-UFPHhpdv] [http:|ftp:|tcp://host[:port][url] [path][/] [user [pass]]\n",
+     progname);
+    return -1;
+}
 
 char *unesc(char *s) {
    char *p, *p2;
@@ -528,6 +542,11 @@ int main(int argc, char **argv) {
    argv++;
    argc--;
 
+   scheme = SCHEME_URLGET;
+   if (!strcmp(progname, "httpget")) scheme = SCHEME_HTTPGET;
+   if (!strcmp(progname, "ftpget")) scheme = SCHEME_FTPGET;
+   if (!strcmp(progname, "ftpput")) scheme = SCHEME_FTPPUT;
+
    while (*argv[0] == '-') {
 	switch (argv[0][1]) {
 	case 'h':
@@ -542,21 +561,29 @@ int main(int argc, char **argv) {
 	case 'p':
 		opt_p = -1;
 		break;
+	case 'U':
+		scheme = SCHEME_URLGET;
+		break;
+	case 'F':
+		scheme = SCHEME_FTPGET;
+		break;
+	case 'P':
+		scheme = SCHEME_FTPPUT;
+		break;
+	case 'H':
+		scheme = SCHEME_HTTPGET;
+		break;
 	default:
-		usage();
-		return(-1);
+		return usage();
 	}
 	argv++;
 	argc--;
    }
 
-   if ((strcmp(progname, "ftpget") == 0) || (strcmp(progname, "ftpput") == 0)) {
-   	if (argc < 2 || argc > 5) { 
-		fprintf(stderr, "Usage: %s [-v] host[:port] path [user [pass]]\n", progname);
-		fprintf(stderr, "Add / to path for directory listing (ftpget), -v for long listing\n");
-		fprintf(stderr, "e.g. ftpget 90.147.160.69 /mirrors/\n");
-   		return(-1);
-   	}
+   if (scheme == SCHEME_FTPGET || scheme == SCHEME_FTPPUT) {
+	if (argc < 2 || argc > 5)
+		return usage();
+
 	/* FIXME: Add the ability to specify input file separately for ftpput */
 
    	strncpy(host, *argv++, sizeof(host));
@@ -576,7 +603,7 @@ int main(int argc, char **argv) {
    		argc++;
    	} else
    		*pass = '\0';
-	if (strcmp(progname, "ftpput") == 0) {
+	if (scheme == SCHEME_FTPPUT) {
 		type = 'S';		/* Always send files as binary, 'S' is the put vs. get flag */
 		if (*argv[0] == '-')	/* Allow ftpput to use stdin */
 			use_stdin++;
@@ -584,11 +611,9 @@ int main(int argc, char **argv) {
 	s = ftpio(host, port, user, pass, path, type, opt_v);
 	return(s);
    }
-   if (strcmp(progname, "httpget") == 0) {
-   	if (argc != 2) {
-		fprintf(stderr, "Usage: %s [-h] [-d] [-p] host[:port] path\n", progname);
-   		return(-1);
-   	}
+   if (scheme == SCHEME_HTTPGET) {
+	if (argc != 2)
+		return usage();
    	strncpy(host, *argv++, sizeof(host));
 	if ((p = strchr(host, ':'))) {
 		*p++ = '\0';
@@ -600,25 +625,23 @@ int main(int argc, char **argv) {
 	return(s);
    }
 
-   if (argc != 1) {
-	fprintf(stderr, "Usage: %s [-h] [-p] url\n", progname);
-	fprintf(stderr, "e.g. urlget http://216.58.209.67/index.html\n");
-   	return(-1);
-   }
+   if (argc != 1)
+	return usage();
 
    url = *argv++;
    argc--;
 
-   if (strncasecmp(url, "http://", 7) == 0) {
-   	scheme = SCHEME_HTTP;
+   if (strncmp(url, "http://", 7) == 0) {
+	scheme = SCHEME_HTTPGET;
    	ps = url + 7;
    } else
-   if (strncasecmp(url, "ftp://", 6) == 0) {
-   	scheme = SCHEME_FTP;
+   if (strncmp(url, "ftp://", 6) == 0) {
+	if (scheme != SCHEME_FTPPUT)
+		scheme = SCHEME_FTPGET;
    	ps = url + 6;
    } else
-   if (strncasecmp(url, "tcp://", 6) == 0) {
-   	scheme = SCHEME_TCP;
+   if (strncmp(url, "tcp://", 6) == 0) {
+	scheme = SCHEME_URLGET;
    	ps = url + 6;
    } else {
 	errmsg("Must specify http://, ftp:// or tcp:// url prefix");
@@ -664,7 +687,7 @@ int main(int argc, char **argv) {
 	path = p;
    else
    	path = "/";
-   if (scheme == SCHEME_FTP) {
+   if (scheme == SCHEME_FTPGET || scheme == SCHEME_FTPPUT) {
    	p = path;
    	while (*p && *p != ';') p++;
    	if (*p) {
@@ -686,23 +709,17 @@ int main(int argc, char **argv) {
 #endif
 
    switch(scheme) {
-   	case SCHEME_HTTP:
+        case SCHEME_HTTPGET:
 		s = httpget(host, port, user, pass, path, opt_h, opt_d, opt_p);
 		break;
-	case SCHEME_FTP:
+	case SCHEME_FTPGET:
+	case SCHEME_FTPPUT:
 		s = ftpio(host, port, user, pass, path, type, opt_v);
 		break;
-	case SCHEME_TCP:
+	case SCHEME_URLGET:
 		s = tcpget(host, port, user, pass, path);
 		break;
    }
 
    return(s);
-}
-
-void usage(void) {	/* FIXME: this is confusing, add usage() per protocol */
-	fprintf(stderr, "%s: Error in options.\n\t-h include header in output (http only)\n", progname);
-	fprintf(stderr, "\t-d ignore content, show header only (http)\n");
-	fprintf(stderr, "\t-v verbose output\n\t-p use POST instead of GET (http)\n");
-	fprintf(stderr, "Refer to the ELKS File Transfer Howto for details.\n");
 }
