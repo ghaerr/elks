@@ -63,7 +63,7 @@ char buffer[4096];
  * urlget  [-hp]  [tcp:|ftp:|http:]//url
  * httpget [-hpd] http://host[:port] path
  * ftpget  [-v]   ftp://host[:port] path[/] [user [pass]]
- * ftpput         ftp://host[:port] path [user [pass]]
+ * ftpput         ftp://host[:port] remotepath [user [pass]] localpath
  */
 int usage(void)
 {
@@ -603,7 +603,7 @@ int main(int argc, char **argv) {
    		argc++;
    	} else
    		*pass = '\0';
-	if (strcmp(progname, "ftpput") == 0) {
+	if (scheme == SCHEME_FTPPUT) {
 		type = 'S';		/* Always send files as binary, 'S' is the put vs. get flag */
 		if (*argv[0] == '-')	/* Allow ftpput to use stdin */
 			use_stdin++;

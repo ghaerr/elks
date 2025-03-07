@@ -2,13 +2,13 @@
 .SH NAME
 urlget, ftpget, httpget - retrieve a file from the internet to stdout
 .SH SYNOPSIS
-\fBurlget\fR [\fB-h\fR] [\fB-d\fR] [\fB-p\fR] url
+\fBurlget\fR [\fB-h\fR] [\fB-d\fR] [\fB-p\fR] [\fBtcp:\fR|\fBftp:\fR|\fBhttp:\fR]url
 
-\fBhttpget\fR [\fB-h\fR] [\fB-d\fR] [\fB-p\fR] host[:port] path
+\fBhttpget\fR [\fB-h\fR] [\fB-d\fR] [\fB-p\fR] [http://]host[:port] path
 
-\fBftpget\fR host [\fB-v\fR] path[/] [user[pass]]
+\fBftpget\fR [ftp://]host[:port] [\fB-v\fR] path[/] [user [pass]]
 
-\fBftpput\fR host path [user[pass]]
+\fBftpput\fR [ftp://]host path[:port] remotepath [user [pass]] localpath
 .br
 .SH DESCRIPTION
 .B Urlget
@@ -17,6 +17,11 @@ gets a file specified by a URL and copies it to standard output.
 .B Ftpget
 similarly gets a file from a conventional ftp server, a login name
 and password can be specified.
+If a slash is appended to the path, a directory listing is performed
+instead of a file transfer.
+
+.B Ftpput
+transfers a file to an ftp server, a login name and password can be specified.
 
 .B Httpget
 is similar to  urlget,  but  the  host  and  path  are  specified
@@ -31,6 +36,11 @@ discard the file body.
 .TP 5
 .B \-p
 use POST method, otherwise use GET.
+.TP 5
+.B \-v
+For
+.B ftpget,
+long directory listing or verbose file transfer.
 .TP 5
 .B \-U
 Act as urlget.
