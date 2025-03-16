@@ -1,17 +1,18 @@
 # PAINT Makefile for ELKS using C86
 
+############# Standard Section for IA16 C ##############
 ifndef TOPDIR
 $(error ELKS TOPDIR is not defined)
 endif
 
 ifndef C86
-BIN=$(C86)/host-bin/
+$(error C86 is not defined)
 endif
-CPP=$(BIN)cpp86
-CC=$(BIN)c86
-AS=$(BIN)as86
-LD=$(BIN)ld86
-NASM=$(BIN)nasm86
+
+CPP=cpp86
+CC=c86
+AS=as86
+LD=ld86
 
 C86LIB=$(TOPDIR)/libc
 INCLUDES=-I$(TOPDIR)/libc/include -I$(TOPDIR)/elks/include -I$(C86LIB)/include/c86
@@ -24,7 +25,6 @@ CFLAGS+=-align=yes -separate=yes -stackopt=minimum -peep=all -stackcheck=no $(LO
 ASFLAGS=-0 -j
 LDFLAGS=-0 -i -L$(C86LIB)
 LDLIBS=-lc86
-NASMFLAGS=-f as86
 
 # Automated rules for C86 toolchain
 OBJS = $(SRCS:.c=.ocj)

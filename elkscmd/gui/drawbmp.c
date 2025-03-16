@@ -422,13 +422,13 @@ DecodeRLE4(unsigned char *buf, FILE *src)
 /* little-endian storage of longword*/
 static void putdw(unsigned long dw, FILE *ofp)
 {
-	fputc((unsigned char)dw, ofp);
-	dw >>= 8;
-	fputc((unsigned char)dw, ofp);
-	dw >>= 8;
-	fputc((unsigned char)dw, ofp);
-	dw >>= 8;
-	fputc((unsigned char)dw, ofp);
+    fputc((unsigned char)dw, ofp);
+    dw >>= 8;
+    fputc((unsigned char)dw, ofp);
+    dw >>= 8;
+    fputc((unsigned char)dw, ofp);
+    dw >>= 8;
+    fputc((unsigned char)dw, ofp);
 }
 
 /* MWIF_RGB565*/
@@ -445,87 +445,87 @@ static void putdw(unsigned long dw, FILE *ofp)
  */
 int save_bmp(char *pathname)
 {
-	FILE *ofp;
-	int	w, h, cx, cy, i, extra, bpp, bytespp, ncolors, sizecolortable;
-	int hdrsize, imagesize, filesize, compression, colorsused;
-	BMPFILEHEAD	bmpf;
-	BMPINFOHEAD bmpi;
+    FILE *ofp;
+    int w, h, cx, cy, i, extra, bpp, bytespp, ncolors, sizecolortable;
+    int hdrsize, imagesize, filesize, compression, colorsused;
+    BMPFILEHEAD bmpf;
+    BMPINFOHEAD bmpi;
 
-	ofp = fopen(pathname, "wb");
-	if (!ofp)
-		return 1;
+    ofp = fopen(pathname, "wb");
+    if (!ofp)
+        return 1;
 
-	cx = SCREEN_WIDTH;
-	cy = SCREEN_HEIGHT;
-	bpp = 8;                /* write 8bpp for now */
-	ncolors = (bpp <= 8)? 16: 0;
-	bytespp = (bpp+7)/8;
+    cx = SCREEN_WIDTH;
+    cy = SCREEN_HEIGHT;
+    bpp = 8;                /* write 8bpp for now */
+    ncolors = (bpp <= 8)? 16: 0;
+    bytespp = (bpp+7)/8;
 
-	/* dword right padded*/
-	extra = (cx*bytespp) & 3;
-	if (extra)
-		extra = 4 - extra;
+    /* dword right padded*/
+    extra = (cx*bytespp) & 3;
+    if (extra)
+        extra = 4 - extra;
 
-	/* color table is either palette or 3 longword r/g/b masks*/
-	sizecolortable = ncolors? ncolors*4: 3*4;
-	if (bpp == 24)
-		sizecolortable = 0;	/* special case 24bpp has no table*/
+    /* color table is either palette or 3 longword r/g/b masks*/
+    sizecolortable = ncolors? ncolors*4: 3*4;
+    if (bpp == 24)
+        sizecolortable = 0; /* special case 24bpp has no table*/
 
-	hdrsize = sizeof(bmpf) + sizeof(bmpi) + sizecolortable;
-	imagesize = (cx + extra) * cy * bytespp;
-	filesize =  hdrsize + imagesize;
-	compression = (bpp == 16 || bpp == 32)? BI_BITFIELDS: BI_RGB;
-	colorsused = (bpp <= 8)? ncolors: 0;
+    hdrsize = sizeof(bmpf) + sizeof(bmpi) + sizecolortable;
+    imagesize = (cx + extra) * cy * bytespp;
+    filesize =  hdrsize + imagesize;
+    compression = (bpp == 16 || bpp == 32)? BI_BITFIELDS: BI_RGB;
+    colorsused = (bpp <= 8)? ncolors: 0;
 
-	/* fill out headers*/
-	memset(&bmpf, 0, sizeof(bmpf));
-	bmpf.bfType[0] = 'B';
-	bmpf.bfType[1] = 'M';
-	bmpf.bfSize = filesize;
-	bmpf.bfOffBits = hdrsize;
+    /* fill out headers*/
+    memset(&bmpf, 0, sizeof(bmpf));
+    bmpf.bfType[0] = 'B';
+    bmpf.bfType[1] = 'M';
+    bmpf.bfSize = filesize;
+    bmpf.bfOffBits = hdrsize;
 
-	memset(&bmpi, 0, sizeof(bmpi));
-	bmpi.BiSize = sizeof(BMPINFOHEAD);
-	bmpi.BiWidth = cx;
-	bmpi.BiHeight = cy;
-	bmpi.BiPlanes = 1;
-	bmpi.BiBitCount = bpp;
-	bmpi.BiCompression = compression;
-	bmpi.BiSizeImage = imagesize;
-	bmpi.BiClrUsed = colorsused;
+    memset(&bmpi, 0, sizeof(bmpi));
+    bmpi.BiSize = sizeof(BMPINFOHEAD);
+    bmpi.BiWidth = cx;
+    bmpi.BiHeight = cy;
+    bmpi.BiPlanes = 1;
+    bmpi.BiBitCount = bpp;
+    bmpi.BiCompression = compression;
+    bmpi.BiSizeImage = imagesize;
+    bmpi.BiClrUsed = colorsused;
 
-	/* write headers*/
-	fwrite((char *)&bmpf, sizeof(bmpf), 1, ofp);
-	fwrite((char *)&bmpi, sizeof(bmpi), 1, ofp);
+    /* write headers*/
+    fwrite((char *)&bmpf, sizeof(bmpf), 1, ofp);
+    fwrite((char *)&bmpi, sizeof(bmpi), 1, ofp);
 
-	/* write colortable*/
-	if (sizecolortable) {
-		if(bpp <= 8) {
-			/* write palette*/
-			for(i=0; i<ncolors; i++) {
-				fputc(palette[i].b, ofp);
-				fputc(palette[i].g, ofp);
-				fputc(palette[i].r, ofp);
-				fputc(0, ofp);
-			}
-		} else {
+    /* write colortable*/
+    if (sizecolortable) {
+        if(bpp <= 8) {
+            /* write palette*/
+            for(i=0; i<ncolors; i++) {
+                fputc(palette[i].b, ofp);
+                fputc(palette[i].g, ofp);
+                fputc(palette[i].r, ofp);
+                fputc(0, ofp);
+            }
+        } else {
             /* write 3 r/g/b masks*/
             putdw(RMASK565, ofp);
             putdw(GMASK565, ofp);
             putdw(BMASK565, ofp);
-		}
-	}
+        }
+    }
 
-	/* write image data, upside down ;)*/
-	for(h=cy-1; h>=0; --h) {
+    /* write image data, upside down ;)*/
+    for(h=cy-1; h>=0; --h) {
         for (int x=0; x<cx; x++) {
             int c = readpixel(x, h);
             fputc(c, ofp);
-		}
-		for(w=0; w<extra; ++w)
-			fputc(0, ofp);		/* DWORD pad each line*/
-	}
+        }
+        for(w=0; w<extra; ++w)
+            fputc(0, ofp);      /* DWORD pad each line*/
+    }
 
-	fclose(ofp);
-	return 0;
+    fclose(ofp);
+    return 0;
 }
