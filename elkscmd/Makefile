@@ -27,6 +27,7 @@ SUBDIRS =       \
 	fsck_dos    \
 	elvis	    \
 	file_utils  \
+	gui         \
 	inet        \
 	ktcp        \
 	minix1      \
