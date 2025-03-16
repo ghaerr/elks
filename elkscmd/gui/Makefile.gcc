@@ -1,0 +1,39 @@
+# PAINT Makefile for ELKS using IA16
+
+############# Standard Section for IA16 C ##############
+ifndef TOPDIR
+$(error ELKS TOPDIR is not defined)
+endif
+
+CC = ia16-elf-gcc
+LD = ia16-elf-gcc
+CLBASE = -melks-libc -mtune=i8086 -mcmodel=small -mno-segment-relocation-stuff
+CLBASE += -fno-inline -fno-builtin-printf -fno-builtin-fprintf
+WARNINGS = -Wall -Wextra -Wtype-limits -Wno-unused-parameter -Wno-sign-compare
+INCLUDES = -I$(TOPDIR)/include -I$(TOPDIR)/libc/include -I$(TOPDIR)/elks/include
+DEFINES = -D__ELKS__
+CFLAGS = -Os $(CLBASE) $(WARNINGS) $(INCLUDES) $(DEFINES) $(LOCALFLAGS)
+LDFLAGS = $(CLBASE)
+LDLIBS =
+
+OBJS = $(SRCS:.c=.oaj)
+%.oaj: %.c
+	$(CC) $(CFLAGS) -c -o $*.oaj $<
+
+############# End of Standard Section ##############
+
+BINDIR = .
+LOCALFLAGS =
+PROG = $(BINDIR)/paint
+SRCS = main.c app.c gui.c input.c render.c event.c mouse.c graphics.c drawbmp.c cursor.c
+
+all: $(PROG)
+
+$(PROG): $(OBJS)
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+	cp $(PROG) $(TOPDIR)/elkscmd/rootfs_template/bin
+	mkdir -p $(TOPDIR)/elkscmd/rootfs_template/lib
+	cp -p images/*.bmp $(TOPDIR)/elkscmd/rootfs_template/lib
+
+clean:
+	rm -f $(PROG) *.oaj
