@@ -181,6 +181,18 @@ tui/ttyclock                    :tui            :360c   :1200k
 tui/ttypong                     :tui                            :1440k
 tui/ttytetris                   :tui            :360c
 tui/invaders                    :tui                    :1232k  :1440k
+gui/paint                           :gui                        :1440k
+gui/images/bs1.bmp ::lib/bs1.bmp    :gui                        :1440k
+gui/images/bs2.bmp ::lib/bs2.bmp    :gui                        :1440k
+gui/images/bs3.bmp ::lib/bs3.bmp    :gui                        :1440k
+gui/images/bs4.bmp ::lib/bs4.bmp    :gui                        :1440k
+gui/images/bs5.bmp ::lib/bs5.bmp    :gui                        :1440k
+gui/images/bs6.bmp ::lib/bs6.bmp    :gui                        :1440k
+gui/images/bs7.bmp ::lib/bs7.bmp    :gui                        :1440k
+gui/images/bs8.bmp ::lib/bs8.bmp    :gui                        :1440k
+gui/images/cls.bmp ::lib/cls.bmp    :gui                        :1440k
+gui/images/save.bmp ::lib/save.bmp  :gui                        :1440k
+gui/images/quit.bmp ::lib/quit.bmp  :gui                        :1440k
 busyelks/busyelks               :busyelks
 inet/httpd/sample_index.html ::var/www/index.html :net
 ktcp/ktcp                       :net
@@ -215,5 +227,5 @@ advent/advent                     :other                            :1440c
 advent/advent.db ::lib/advent.db  :other                            :1440c
 debug/disasm                      :other                        :1440k
 #debug/nm86                        :other                            :1440c
-debug/system.sym ::lib/system.sym :other                            :1440c
-debug/testsym                     :other                            :1440c
+#debug/system.sym ::lib/system.sym :other                            :1440c
+#debug/testsym                     :other                            :1440c
