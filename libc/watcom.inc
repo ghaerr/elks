@@ -15,9 +15,11 @@ INCLUDES += -I$(TOPDIR)/libc/include/watcom
 #INCLUDES += -I$(WATCOM)/h
 
 DEFINES = -D__LIBC__
-LIBOBJS=$(OBJS:.o=.obj)
+LIBOBJS=$(OBJS:.o=.o$(MODEL)j)
 
+ifndef MODEL
 include $(TOPDIR)/libc/watcom.model
+endif
 
 CARCH =\
     -bnone                          \
@@ -48,9 +50,9 @@ CFLAGS=$(CARCH) $(INCLUDES) $(DEFINES) -Wall -Os
 ASFLAGS=$(AARCH)
 ARFLAGS_SUB=-n -q -b -fo
 
-%.obj: %.c
-	$(CC) -c $(CFLAGS) -o $*.obj $<
+%.o$(MODEL)j: %.c
+	$(CC) -c $(CFLAGS) -o $*.o$(MODEL)j $<
 
-%.obj: %.asm
+%.o$(MODEL)j: %.asm
 	$(AS) $(ASFLAGS) $*.asm
-	mv $*.o $*.obj
+	mv $*.o $*.o$(MODEL)j

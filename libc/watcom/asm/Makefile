@@ -5,7 +5,7 @@ LIB ?= out.lib
 
 include $(TOPDIR)/libc/$(COMPILER).inc
 
-OBJS = $(patsubst %.asm,%.obj,$(wildcard *.asm))
+OBJS = $(patsubst %.asm,%.o$(MODEL)j,$(wildcard *.asm))
 
 all: $(LIB)
 
@@ -14,4 +14,4 @@ $(LIB): $(LIBOBJS)
 	$(AR) $(ARFLAGS_SUB) $@ $(LIBOBJS)
 
 clean:
-	$(RM) *.obj *.lib
+	$(RM) *.o$(MODEL)j *.lib

@@ -59,7 +59,7 @@ $(LIB): $(LIBOBJS)
 	$(RM) $@
 ifeq "$(COMPILER)" "watcom"
 ifdef FIXOMF
-	fixomf -w dtostr_,ptostr_ vfprintf.obj
+	fixomf -w dtostr_,ptostr_ vfprintf.o$(MODEL)j
 endif
 endif
 	$(AR) $(ARFLAGS_SUB) $@ $(LIBOBJS)

@@ -47,7 +47,10 @@ jobs:
         working-directory: libc
         run: |
           make -f watcom.mk clean
-          make -f watcom.mk
+          make -f watcom.mk MODEL=c
+          make -f watcom.mk MODEL=s
+          make -f watcom.mk MODEL=m
+          make -f watcom.mk MODEL=l
       - name: build ELKS sample
         working-directory: elkscmd/basic
         run: |

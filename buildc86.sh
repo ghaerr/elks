@@ -37,7 +37,7 @@ cd $C86
 make clean
 make host
 
-# build native OWC library libc/libc.a usin OWC
+# build native OWC libraries libc/libc{c,s,m,l}.a using OWC
 cd $TOPDIR
 make owc
 cd $C86
