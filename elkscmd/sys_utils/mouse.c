@@ -18,7 +18,6 @@
 #define	MOUSE_QEMU    "/dev/ttyS1"  /* default port on QEMU */
 #define	MOUSE_MICROSOFT		1		/* microsoft mouse*/
 #define	MOUSE_PC			0		/* pc/logitech mouse*/
-#define MAX_BYTES	128				/* number of bytes for buffer*/
 
 /* states for the mouse*/
 #define	IDLE			0		/* start of byte sequence */
@@ -63,13 +62,23 @@ static int		right;		/* redefined */
 
 static unsigned char	*bp;/* buffer pointer */
 static int		nbytes;		/* number of bytes left */
-static unsigned char	buffer[MAX_BYTES];	/* data bytes read */
 static int		(*parse)();	/* parse routine */
 
-/* local routines*/
+/*
+ * NOTE: MAX_BYTES can't be larger than 1 mouse read packet or select() can fail,
+ * as mouse driver would be storing unprocessed data not seen by select.
+ */
+#if MOUSE_PC
+static int      parsePC(int);       /* routine to interpret PC mouse */
+#define MAX_BYTES   5               /* max read() w/o storing excess mouse data */
+#endif
+
+#if MOUSE_MICROSOFT
+static int      parseMS(int);       /* routine to interpret MS mouse */
+#define MAX_BYTES   3               /* max read() w/o storing excess mouse data */
+#endif
+
 static int  	read_mouse(int *dx, int *dy, int *dz, int *bptr);
-int  	        parsePC(int);		/* routine to interpret PC mouse */
-int  	        parseMS(int);		/* routine to interpret MS mouse */
 
 /*
  * Open up the mouse device.
@@ -152,6 +161,7 @@ int
 read_mouse(int *dx, int *dy, int *dz, int *bptr)
 {
 	int	b;
+    static unsigned char buffer[MAX_BYTES];
 
 	/*
 	 * If there are no more bytes left, then read some more,

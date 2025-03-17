@@ -6,6 +6,8 @@
 #include "graphics.h"
 #include "mouse.h"
 
+static int cursor_sz;
+
 // -------------------------------
 // Handles SDL Events and input
 // -------------------------------
@@ -13,7 +15,7 @@ void I_HandleInput(void)
 {
     struct event event;
 
-    if (event_poll(&event))
+    if (event_wait_timeout(&event, EV_BLOCK))
     {
         switch (event.type)
         {
@@ -49,7 +51,21 @@ void I_HandleInput(void)
                 switch (event.keychar)
                 {
                     case 'c':
+                        hidecursor();
                         R_ClearCanvas();
+                        showcursor();
+                    break;
+
+                    case 'e':
+                        G_SaveButtonOnClick(NULL);
+                    break;
+
+                    case 'f':
+                        floodFillCalled = true;
+                    break;
+
+                    case 'm':
+                        setcursor((++cursor_sz & 1)? &cursor_sm: &cursor_lg);
                     break;
 
                     case 'q':
@@ -94,14 +110,6 @@ void I_HandleInput(void)
 
                     case '0':
                         bushSize = 10;
-                    break;
-
-                    case 'e':
-                        G_SaveButtonOnClick(NULL);
-                    break;
-
-                    case 'f':
-                        floodFillCalled = true;
                     break;
                 }
             break;

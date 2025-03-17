@@ -39,4 +39,6 @@ void fixcursor(void);
         (((((((((((((a * 2) + b) * 2) + c) * 2) + d) * 2) \
         + e) * 2) + f) * 2) + g) << 9)
 
+extern struct cursor cursor_lg;
+extern struct cursor cursor_sm;
 #endif

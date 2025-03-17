@@ -23,18 +23,22 @@
 struct event {
     int     type;           /* event type */
     int     keychar;        /* keyboard character on EVT_KEYBOARD */
-    int     button;         /* mouse BUTTON_xxx on EVT_MOUSE* events */
-    int     x;              /* mouse or wheel location on EVT_MOUSE* ior EVT_WHEEL* */
+    int     button;         /* mouse BUTTON_L/BUTTON_R on EVT_MOUSE* events */
+    int     x;              /* mouse position on all events */
     int     y;
-    int     xrel;           /* relative location on EVT_WHEEL* events */
+    int     xrel;           /* relative location on EVT_MOUSEMOVE events */
     int     yrel;
+    int     w;              /* wheel movement on EVT_WHEEL* events */
 };
 
 /* event handling */
 int event_open(void);
 void event_close(void);
 
-/* wait/poll on event, timeout in msecs or = -1 blocking */
+/* wait/poll on event, timeout in msecs or EV_BLOCK/EV_POLL */
+#define EV_BLOCK    (-1)
+#define EV_POLL     0
+
 int event_wait_timeout(struct event *e, int timeout);   /* returns 0 on EVT_QUIT */
 int event_poll(struct event *event);                    /* polls if event == NULL */
 
