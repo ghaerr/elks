@@ -15,4 +15,4 @@ $(LIB): $(LIBOBJS)
 	$(AR) $(ARFLAGS_SUB) $@ $(LIBOBJS)
 
 clean:
-	$(RM) *.obj *.lib
+	$(RM) *.ocj *.osj *.omj *.olj *.lib

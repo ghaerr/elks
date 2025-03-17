@@ -63,7 +63,10 @@ libc:
 
 owc:
 	$(MAKE) -C libc -f watcom.mk clean
-	$(MAKE) -C libc -f watcom.mk
+	$(MAKE) -C libc -f watcom.mk MODEL=c
+	$(MAKE) -C libc -f watcom.mk MODEL=s
+	$(MAKE) -C libc -f watcom.mk MODEL=m
+	$(MAKE) -C libc -f watcom.mk MODEL=l
 
 c86:
 	$(MAKE) -C libc -f c86.mk clean

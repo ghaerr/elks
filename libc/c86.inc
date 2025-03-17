@@ -10,7 +10,7 @@ endif
 
 INCLUDES = -I$(TOPDIR)/libc/include -I$(TOPDIR)/elks/include -I$(TOPDIR)/libc/include/c86
 DEFINES = -D__LIBC__ -D__HAS_NO_FLOATS__=1 -D__HAS_NO_LONGLONG__
-LIBOBJS=$(OBJS:.o=.ocj)
+LIBOBJS=$(OBJS:.o=.o8j)
 
 CPP86FLAGS =\
     -0                          \
@@ -52,6 +52,6 @@ ARFLAGS_SUB=r
 %.as: %.i
 	$(CC) $(CFLAGS) $< $*.as
 
-%.ocj: %.as
+%.o8j: %.as
 #	cp $*.as /tmp
-	$(AS) $(ASFLAGS) -o $*.ocj $*.as
+	$(AS) $(ASFLAGS) -o $*.o8j $*.as

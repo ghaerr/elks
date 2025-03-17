@@ -27,7 +27,7 @@ LDFLAGS=-0 -i -L$(C86LIB)
 LDLIBS=-lc86
 
 # Automated rules for C86 toolchain
-OBJS = $(SRCS:.c=.ocj)
+OBJS = $(SRCS:.c=.o8j)
 
 %.o: %.c
 
@@ -37,11 +37,11 @@ OBJS = $(SRCS:.c=.ocj)
 %.as: %.i
 	$(CC) $(CFLAGS) $< $*.as
 
-%.ocj: %.as
-	$(AS) $(ASFLAGS) -o $*.ocj $*.as
+%.o8j: %.as
+	$(AS) $(ASFLAGS) -o $*.o8j $*.as
 
-%.ocj: %.s
-	$(AS) $(ASFLAGS) -o $*.ocj $*.s
+%.o8j: %.s
+	$(AS) $(ASFLAGS) -o $*.o8j $*.s
 
 ##### End of standardized section #####
 
@@ -51,7 +51,7 @@ LOCALFLAGS =
 BINDIR = .
 PROG = $(BINDIR)/cpaint
 SRCS = main.c app.c gui.c input.c render.c event.c mouse.c graphics.c drawbmp.c cursor.c
-OBJS += vga-4bpp.ocj
+OBJS += vga-4bpp.o8j
 
 all: $(PROG)
 
@@ -60,4 +60,4 @@ $(PROG): $(OBJS)
 	cp $(PROG) $(TOPDIR)/elkscmd/rootfs_template/bin
 
 clean:
-	rm -f $(PROG) *.ocj *.as *.i *.lst
+	rm -f $(PROG) *.o8j *.as *.i *.lst

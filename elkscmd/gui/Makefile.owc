@@ -11,7 +11,8 @@ endif
 
 CC = owcc
 LD = owcc
-CLBASE = -mcmodel=l
+MODEL=s
+CLBASE = -mcmodel=$(MODEL)
 CLBASE += -bnone -march=i86 -std=c99 -fsigned-char -msoft-float
 CLBASE += -fno-stack-check -fnostdlib
 CLBASE += -Wc,-zev -Wc,-zls -Wc,-x -Wc,-wcd=303
@@ -27,7 +28,7 @@ LDBASE += -Wl,option -Wl,nodefaultlibs
 LDBASE += -Wl,option -Wl,stack=0x1000
 LDBASE += -Wl,option -Wl,heapsize=0x1000
 LDFLAGS = $(LDBASE)
-LDLIBS = -Wl,library -Wl,$(TOPDIR)/libc/libc.lib
+LDLIBS = -Wl,library -Wl,$(TOPDIR)/libc/libc$(MODEL).lib
 
 OBJS = $(SRCS:.c=.obj)
 %.obj: %.c

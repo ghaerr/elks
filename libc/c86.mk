@@ -33,6 +33,6 @@ all:
 
 .PHONY: clean
 clean:
-	rm -f */*.i */*.as */*.ocj */*.lst */*.lib
-	for DIR in $(SUBDIRS); do rm -f $$DIR/*.ocj $$DIR/*.lib || exit 1; done
+	rm -f */*.i */*.as */*.o8j */*.lst */*.lib
+	for DIR in $(SUBDIRS); do rm -f $$DIR/*.o8j $$DIR/*.lib || exit 1; done
 	rm -f libc86.a
