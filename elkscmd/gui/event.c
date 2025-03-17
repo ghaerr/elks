@@ -13,6 +13,7 @@
 #include <sys/select.h>
 #include <termios.h>
 #include <errno.h>
+#include <stdlib.h>
 
 int SCREENWIDTH = 640;              /* for mouse clipping, set in graphics_open */
 int SCREENHEIGHT = 480;
@@ -35,9 +36,9 @@ int event_wait_timeout(struct event *e, int timeout)
 
     if (timeout == -1)
         tv = NULL;
-    else {              /* FIXME just poll, ignore timeout for now */
-        timeint.tv_sec = 0;
-        timeint.tv_usec = 0;
+    else {
+        timeint.tv_sec = timeout / 1000;
+        timeint.tv_usec = (timeout % 1000) << 10;   /* approximation for C86 */
         tv = &timeint;
     }
     FD_ZERO(&fdset);
@@ -50,26 +51,28 @@ int event_wait_timeout(struct event *e, int timeout)
         if (ret == 0)
         {
             event->type = EVT_TIMEOUT;
-            return 1;
+            goto out;
         }
         if (ret < 0)
         {
             if (errno == EINTR)
                 continue;
-quit:
-            event->type = EVT_QUIT;
-            return 0;
+            goto quit;
         }
         if (FD_ISSET(0, &fdset))
         {
             unsigned char buf[1];
             if (read(0, buf, sizeof(buf)) > 0)
             {
-                if (buf[0] == '\003' || buf[0] == '\001')
-                    goto quit;          /* quit on ^C or ^A */
+                if (buf[0] == '\003' || buf[0] == '\001')   /* quit on ^C or ^A */
+                {
+quit:
+                    event->type = EVT_QUIT;
+                    return 0;
+                }
                 event->keychar = buf[0];
                 event->type = EVT_KEYCHAR;
-                return 1;
+                goto out;
             }
         }
         if (FD_ISSET(mouse_fd, &fdset))
@@ -81,28 +84,28 @@ quit:
                 if (b & (BUTTON_SCROLLUP|BUTTON_SCROLLDN))
                 {
                     event->type = EVT_MOUSEWHEEL;
-                    event->y = w * SCROLLFACTOR;
+                    event->w = w * SCROLLFACTOR;
                     lastb = b;
+out:
+                    event->x = posx;
+                    event->y = posy;
                     return 1;
                 }
                 if (b != lastb)
                 {
-                    if ((b & BUTTON_L) ^ (lastb & BUTTON_L))
+                    /* FIXME the code below won't handle simultaneous button changes */
+                    if ((b  ^ lastb) & BUTTON_L)
                     {
                         event->type = (b & BUTTON_L)? EVT_MOUSEDOWN: EVT_MOUSEUP;
                         event->button = BUTTON_L;
-                        event->x = posx;
-                        event->y = posy;
                     }
-                    else if ((b & BUTTON_R) ^ (lastb & BUTTON_R))
+                    else if ((b ^ lastb) & BUTTON_R)
                     {
                         event->type = (b & BUTTON_R)? EVT_MOUSEDOWN: EVT_MOUSEUP;
                         event->button = BUTTON_R;
-                        event->x = posx;
-                        event->y = posy;
                     }
                     lastb = b;
-                    return 1;
+                    goto out;
                 }
                 if (x != lastx || y != lasty)
                 {

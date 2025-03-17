@@ -55,61 +55,54 @@ static MWPIXELVALHW cursavbits[MWMAX_CURSOR_SIZE * MWMAX_CURSOR_SIZE];
 static MWIMAGEBITS cursormask[MWMAX_CURSOR_BUFLEN];
 static MWIMAGEBITS cursorcolor[MWMAX_CURSOR_BUFLEN];
 
+/* Small 8x8 cursor for machines to slow for 16x16 cursors */
+static MWIMAGEBITS smcursormask[8] = {
+    MASK(X,X,X,X,X,X,_),
+    MASK(X,X,X,X,X,_,_),
+    MASK(X,X,X,X,_,_,_),
+    MASK(X,X,X,X,X,_,_),
+    MASK(X,X,X,X,X,X,_),
+    MASK(X,_,_,X,X,X,X),
+    MASK(_,_,_,_,X,X,X)
+};
+static MWIMAGEBITS smcursorbits[8] = {
+    MASK(_,_,_,_,_,_,_),
+    MASK(_,X,X,X,X,_,_),
+    MASK(_,X,X,X,_,_,_),
+    MASK(_,X,X,X,_,_,_),
+    MASK(_,X,_,X,X,_,_),
+    MASK(_,_,_,_,X,X,_),
+    MASK(_,_,_,_,_,X,X)
+};
+struct cursor cursor_sm = {
+    8, 8, 1, 1, WHITE, BLACK, smcursorbits, smcursormask
+};
+
+/* Full size 16x16 cursor */
+static MWIMAGEBITS lgcursorbits[16] = {
+    0xe000, 0x9800, 0x8600, 0x4180,
+    0x4060, 0x2018, 0x2004, 0x107c,
+    0x1020, 0x0910, 0x0988, 0x0544,
+    0x0522, 0x0211, 0x000a, 0x0004
+};
+static MWIMAGEBITS lgcursormask[16] = {
+    0xe000, 0xf800, 0xfe00, 0x7f80,
+    0x7fe0, 0x3ff8, 0x3ffc, 0x1ffc,
+    0x1fe0, 0x0ff0, 0x0ff8, 0x077c,
+    0x073e, 0x021f, 0x000e, 0x0004
+};
+struct cursor cursor_lg = {
+    16, 16, 0, 0, WHITE, BLACK, lgcursorbits, lgcursormask
+};
+
 void initcursor(void)
 {
-#if USE_SMALL_CURSOR
-/* Small 8x8 cursor for machines to slow for 16x16 cursors */
-    static MWIMAGEBITS cursormask[8];
-    static MWIMAGEBITS cursorbits[8];
-#define HOTX    1
-#define HOTY    1
-#define CURSW   8
-#define CURSH   8
-    cursormask[0] = MASK(X,X,X,X,X,X,_);
-    cursormask[1] = MASK(X,X,X,X,X,_,_);
-    cursormask[2] = MASK(X,X,X,X,_,_,_);
-    cursormask[3] = MASK(X,X,X,X,X,_,_);
-    cursormask[4] = MASK(X,X,X,X,X,X,_);
-    cursormask[5] = MASK(X,_,_,X,X,X,X);
-    cursormask[6] = MASK(_,_,_,_,X,X,X);
-
-    cursorbits[0] = MASK(_,_,_,_,_,_,_);
-    cursorbits[1] = MASK(_,X,X,X,X,_,_);
-    cursorbits[2] = MASK(_,X,X,X,_,_,_);
-    cursorbits[3] = MASK(_,X,X,X,_,_,_);
-    cursorbits[4] = MASK(_,X,_,X,X,_,_);
-    cursorbits[5] = MASK(_,_,_,_,X,X,_);
-    cursorbits[6] = MASK(_,_,_,_,_,X,X);
-
-#else
-
-#define HOTX    0
-#define HOTY    0
-#define CURSW   16
-#define CURSH   16
-    static MWIMAGEBITS cursorbits[16] = {
-          0xe000, 0x9800, 0x8600, 0x4180,
-          0x4060, 0x2018, 0x2004, 0x107c,
-          0x1020, 0x0910, 0x0988, 0x0544,
-          0x0522, 0x0211, 0x000a, 0x0004
-    };
-    static MWIMAGEBITS cursormask[16] = {
-          0xe000, 0xf800, 0xfe00, 0x7f80,
-          0x7fe0, 0x3ff8, 0x3ffc, 0x1ffc,
-          0x1fe0, 0x0ff0, 0x0ff8, 0x077c,
-          0x073e, 0x021f, 0x000e, 0x0004
-    };
-#endif
-    static struct cursor cursor = {
-        CURSW, CURSH, HOTX, HOTY, WHITE, BLACK, cursorbits, cursormask
-    };
-
     /* init cursor position and size*/
     curvisible = 0;
     curneedsrestore = FALSE;
     curminx = 0;
     curminy = 0;
-    setcursor(&cursor);
+    setcursor(&cursor_lg);
     movecursor(posx, posy);
     showcursor();
 }
