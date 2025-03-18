@@ -236,7 +236,6 @@ void A_GameLoop(void)
         {
             R_Paint(omx, omy, mx, my);
         }
-#ifndef __C86__
         if(floodFillCalled == true)
         {
             floodFillCalled = false;
@@ -244,7 +243,6 @@ void A_GameLoop(void)
             R_LineFloodFill(omx, omy, currentMainColor, readpixel(mx, my));
             showcursor();
         }
-#endif
     }
     else // In toolbar
     {
