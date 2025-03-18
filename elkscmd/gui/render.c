@@ -205,7 +205,6 @@ static transform2d_t FF_StackPop(transform2d_t stack[], int* top)
     return stack[(*top)--];
 }
 
-#ifndef __C86__     /* FIXME C86 */
 // ----------------------------------------------------
 // Line Flood Fill, for the bucket tool
 // ----------------------------------------------------
@@ -225,8 +224,12 @@ void R_LineFloodFill(int x, int y, int color, int ogColor)
     while(stackTop >= 0)    // While there are elements
     {
         // Take the first one
+#ifdef __C86__     /* FIXME C86 compiler bug calling FF_StackPop*/
+        curElement = stack[stackTop];
+        stackTop--;
+#else
         curElement = FF_StackPop(stack, &stackTop);
-
+#endif
         mRight = false;
         int leftestX = curElement.x;
 
@@ -288,7 +291,6 @@ void R_LineFloodFill(int x, int y, int color, int ogColor)
         }
     }
 }
-#endif
 
 #if UNUSED
 // ----------------------------------------------------
