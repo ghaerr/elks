@@ -236,8 +236,8 @@ void R_LineFloodFill(int x, int y, int color, int ogColor)
         // Find leftest
         while(leftestX >= 0 && readpixel(leftestX, curElement.y) == ogColor) 
             leftestX--;
-
         leftestX++;
+
         alreadyCheckedAbove = false;
         alreadyCheckedBelow = false;
 
