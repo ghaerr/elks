@@ -1,14 +1,54 @@
 #ifndef APPLICATION_H_INCLUDED
 #define APPLICATION_H_INCLUDED
 
-#include "types.h"
-
 // Drawing + Palette
 #define SCREEN_WIDTH    (SCREENWIDTH-PALETTE_WIDTH)
 #define SCREEN_HEIGHT   SCREENHEIGHT
 
 #define PALETTE_WIDTH 158
  
+// Boolean Data Type
+typedef enum boolean_e
+{
+    false = 0,
+    true = 1
+} boolean_t;
+
+// Represents the colors in HSV (for Color Picker)
+typedef struct ColorHSV_s
+{
+    int h, s, v;
+} ColorHSV_t;
+
+// Represents the colors in RGB (for Color Picker)
+typedef struct ColorRGB_s
+{
+    int r,g,b,a;
+} ColorRGB_t;
+
+typedef struct rect
+{
+    int x, y;
+    int w, h;
+} rect;
+
+// GUI Button Data Type
+typedef struct button_s
+{
+    char* name;
+    rect box;
+    int (*OnClick)(struct button_s* btn);
+    int data1;
+    boolean_t render;
+    char* fileName;
+} button_t;
+
+// Represents a pixel
+typedef struct transform2d_x
+{
+    int x,y;
+} transform2d_t;
+
 typedef struct app_s
 {
     boolean_t quit;
@@ -27,9 +67,6 @@ extern int paletteBrightness;          // The brightness of the color picker
 extern int bushSize;                   // Size of the brush
 extern int currentMainColor;           // The selected color for LMB
 extern int currentAltColor;            // Color for RMB (eraser)
-
-//  Flood Fill stack
-#define FLOOD_FILL_STACK_SIZE SCREEN_WIDTH*SCREEN_HEIGHT
 
 // Palette Buttons
 #define PALETTE_BUTTONS_COUNT 15

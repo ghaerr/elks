@@ -16,6 +16,8 @@
 #include <math.h>
 #endif
 
+#define FLOOD_FILL_STACK    100
+
 // ----------------------------------------------------
 // Given an X pixel, draw the whole column
 // ----------------------------------------------------
@@ -195,9 +197,11 @@ void R_DrawCircle(int x0, int y0, int r)
 // ----------------------------------------------------
 static void FF_StackPush(transform2d_t stack[], int x, int y, int* top)
 {
-    (*top)++;
-    stack[*top].x = x;
-    stack[*top].y = y;
+    if (*top < FLOOD_FILL_STACK) {
+        (*top)++;
+        stack[*top].x = x;
+        stack[*top].y = y;
+    }
 }
 
 static transform2d_t FF_StackPop(transform2d_t stack[], int* top)
@@ -214,7 +218,7 @@ void R_LineFloodFill(int x, int y, int color, int ogColor)
     boolean_t mRight;
     boolean_t alreadyCheckedAbove, alreadyCheckedBelow;
     transform2d_t curElement;
-    transform2d_t stack[100];
+    transform2d_t stack[FLOOD_FILL_STACK];
 
     if(color == ogColor)
         return;
@@ -224,7 +228,7 @@ void R_LineFloodFill(int x, int y, int color, int ogColor)
     while(stackTop >= 0)    // While there are elements
     {
         // Take the first one
-#ifdef __C86__     /* FIXME C86 compiler bug calling FF_StackPop*/
+#ifdef __C86__     /* FIXME C86 compiler bug FF_StackPop returning struct*/
         curElement = stack[stackTop];
         stackTop--;
 #else

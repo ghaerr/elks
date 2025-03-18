@@ -39,7 +39,7 @@ OBJS = $(SRCS:.c=.obj)
 BINDIR = .
 LOCALFLAGS =
 PROG = $(BINDIR)/opaint
-SRCS = main.c app.c gui.c input.c render.c event.c mouse.c graphics.c drawbmp.c cursor.c
+SRCS = app.c gui.c input.c render.c event.c mouse.c graphics.c drawbmp.c cursor.c
 
 all: $(PROG)
 
