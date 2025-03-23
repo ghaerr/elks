@@ -37,6 +37,8 @@ int enable_a20_gate(void);	/* returns 0 on fail */
 int verify_a20(void);		/* returns 0 if a20 disabled */
 
 /* XMS memory management */
+extern int xms_enabled;
+
 #ifdef CONFIG_FS_XMS_BUFFER
 typedef __u32 ramdesc_t;	/* special physical ram descriptor */
 

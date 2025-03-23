@@ -80,7 +80,6 @@ static struct buffer_head *L1map[MAX_NR_MAPBUFS]; /* L1 indexed pointer to L2 bu
 static struct wait_queue L1wait;                  /* Wait for a free L1 buffer area */
 static int lastL1map;
 #endif
-static int xms_enabled;
 static int map_count, remap_count, unmap_count;
 
 static int nr_free_bh, nr_bh;
@@ -193,7 +192,7 @@ int INITPROC buffer_init(void)
 
 #ifdef CONFIG_FS_XMS_BUFFER
     if (nr_xms_bufs)
-        xms_enabled = xms_init();       /* try to enable unreal mode and A20 gate*/
+        xms_init();                 /* try to enable unreal mode and A20 gate*/
     if (xms_enabled)
         bufs_to_alloc = nr_xms_bufs;
 #endif

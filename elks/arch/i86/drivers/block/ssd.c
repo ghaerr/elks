@@ -1,10 +1,12 @@
 /*
  * ELKS Solid State Disk block device driver
  *      Use subdriver for particular SSD device
- *      ssd_test.c - test driver using allocated main memory
+ *      ssd-test.c - test driver using allocated main memory
+ *      ssd-xms.c - use XMS for allocated memory
  *
  * Rewritten June 2020 Greg Haerr
  * Rewritten to be async I/O capable Aug 2023 Greg Haerr
+ * Mar 2025 Greg Haerr added XMS support
  */
 #include <linuxmt/config.h>
 #include <linuxmt/kernel.h>
@@ -15,7 +17,8 @@
 #include "blk.h"
 #include "ssd.h"
 
-#define IODELAY     (5*HZ/100)  /* async time delay 5/100 sec = 50msec */
+/* enable when CONFIG_ASYNCIO for async callback testing */
+//#define IODELAY     (5*HZ/100)  /* async time delay 5/100 sec = 50msec */
 
 jiff_t ssd_timeout;
 
@@ -119,7 +122,7 @@ void ssd_io_complete(void)
             buf += SD_FIXED_SECTOR_SIZE;
         }
         end_request(count == req->rq_nr_sectors);
-#ifdef CONFIG_ASYNCIO
+#if IODELAY
         if (CURRENT) {              /* schedule next completion callback */
             ssd_timeout = jiffies + IODELAY;
         }
@@ -144,7 +147,7 @@ static void do_ssd_request(void)
             end_request(0);
             return;
         }
-#ifdef CONFIG_ASYNCIO
+#if IODELAY
         ssd_timeout = jiffies + IODELAY;    /* schedule completion callback */
         return;
 #else

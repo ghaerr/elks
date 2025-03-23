@@ -62,6 +62,10 @@ ifeq ($(CONFIG_ROMFS_FS), y)
 OBJS += romflash.o
 endif
 
+ifeq ($(CONFIG_FS_XMS_RAMDISK), y)
+	OBJS += ssd.o ssd-xms.o
+endif
+
 ifeq ($(CONFIG_BLK_DEV_SSD_TEST), y)
 	OBJS += ssd.o ssd-test.o
 endif
