@@ -83,13 +83,11 @@ struct tcpcb_list_s *tcpcb_new(int bufsize)
 	n->next = tcpcbs;
 	n->prev = NULL;
 	tcpcbs->prev = n;
-	tcpcbs = n;
     } else {
-	tcpcbs = n;
 	n->next = NULL;
 	n->prev = NULL;
-	tcpcbs = n;
     }
+    tcpcbs = n;
     tcpcb_num++;	/* for netstat*/
 
     return n;
