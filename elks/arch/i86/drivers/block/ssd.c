@@ -1,9 +1,9 @@
 /*
- * ELKS Solid State Disk /dev/ssd block device driver
- *      Use subdriver for particular SSD device
+ * ELKS Solid State Disk /dev/ssd multifunction block device driver
+ *      Uses subdriver for particular SSD device
  *      ssd-sd.c - compact flash driver for 8018X
+ *      ssd-xms.c - ramdisk driver, use XMS memory
  *      ssd-test.c - test driver, use main memory
- *      ssd-xms.c - use XMS memory
  *
  * Rewritten June 2020 Greg Haerr
  * Rewritten to be async I/O capable Aug 2023 Greg Haerr
