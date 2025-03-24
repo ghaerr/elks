@@ -25,7 +25,7 @@ extern void int15_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t 
 		size_t count);
 
 /*
- * ramdesc_t: if CONFIG_FS_XMS_BUFFER not set, then it's a normal seg_t segment descriptor.
+ * ramdesc_t: if CONFIG_FS_XMS not set, then it's a normal seg_t segment descriptor.
  * Otherwise, it's a physical RAM descriptor (32 bits), used for possible XMS access.
  * When <= 65535, low 16 bits are used as the (seg_t) physical segment.
  * When > 65535, all 32 bits are used as a linear address in unreal mode.
@@ -76,6 +76,8 @@ ramdesc_t xms_alloc(long_t size)
 {
 	long_t mem = xms_alloc_ptr;
 
+	if (!xms_enabled)
+		return 0;
 	xms_alloc_ptr += size;
 	//printk("xms_alloc %lx size %lu\n", mem, size);
 	return mem;

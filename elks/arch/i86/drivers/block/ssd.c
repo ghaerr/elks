@@ -43,11 +43,14 @@ static struct file_operations ssd_fops = {
 
 void INITPROC ssd_init(void)
 {
-    if (register_blkdev(MAJOR_NR, DEVICE_NAME, &ssd_fops) == 0) {
+    if (register_blkdev(MAJOR_NR, DEVICE_NAME, &ssd_fops) == 0)
         blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
-        ssd_num_sects = ssddev_init();  /* XMS memory allocated by ramdisk ioctl only */
-    }
-#ifndef CONFIG_FS_XMS
+#ifdef CONFIG_FS_XMS
+    xms_init();
+    if (!xms_enabled)
+        printk("ssd: no XMS\n");
+#else
+    ssd_num_sects = ssddev_init();
     if (ssd_num_sects)
         printk("ssd: %ldK disk\n", ssd_num_sects/2UL);
     else printk("ssd: init error\n");

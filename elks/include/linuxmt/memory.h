@@ -40,7 +40,7 @@ int verify_a20(void);		/* returns 0 if a20 disabled */
 extern int xms_enabled;
 extern long_t xms_alloc_ptr;
 
-#ifdef CONFIG_FS_XMS_BUFFER
+#ifdef CONFIG_FS_XMS
 typedef __u32 ramdesc_t;	/* special physical ram descriptor */
 
 /* allocate from XMS memory */
@@ -68,6 +68,6 @@ typedef seg_t ramdesc_t;	/* ramdesc_t is just a regular segment descriptor */
 #define xms_fmemcpyb	fmemcpyb
 #define xms_fmemset     fmemsetb
 
-#endif /* CONFIG_FS_XMS_BUFFER */
+#endif /* CONFIG_FS_XMS */
 
 #endif
