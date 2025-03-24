@@ -16,7 +16,7 @@
 #define XMS_START_ADDR    0x00100000L	/* 1M */
 //#define XMS_START_ADDR  0x00FA0000L	/* 15.6M (Compaq with only 1M ram) */
 
-#ifdef CONFIG_FS_XMS_BUFFER
+#ifdef CONFIG_FS_XMS
 
 /* these used in CONFIG_FS_XMS_INT15 only */
 struct gdt_table;
@@ -25,7 +25,7 @@ extern void int15_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t 
 		size_t count);
 
 /*
- * ramdesc_t: if CONFIG_FS_XMS_BUFFER not set, then it's a normal seg_t segment descriptor.
+ * ramdesc_t: if CONFIG_FS_XMS not set, then it's a normal seg_t segment descriptor.
  * Otherwise, it's a physical RAM descriptor (32 bits), used for possible XMS access.
  * When <= 65535, low 16 bits are used as the (seg_t) physical segment.
  * When > 65535, all 32 bits are used as a linear address in unreal mode.
@@ -35,14 +35,16 @@ extern void int15_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t 
  *     in linear32_fmemcypw.
  */
 
-static int xms_enabled;
-static long_t xms_alloc_ptr = XMS_START_ADDR;
+int xms_enabled;
+long_t xms_alloc_ptr = XMS_START_ADDR;
 
 /* try to enable unreal mode and A20 gate. Return 1 if successful */
 int xms_init(void)
 {
 	int enabled;
 
+	if (xms_enabled)
+		return 1;
 	/* display initial A20 and A20 enable result */
 	printk("xms: ");
 #ifndef CONFIG_FS_XMS_INT15
@@ -69,11 +71,13 @@ int xms_init(void)
 	return xms_enabled;
 }
 
-/* allocate from XMS memory - very simple for now, no free */
+/* allocate from XMS memory - very simple for now, no free and no bounds check */
 ramdesc_t xms_alloc(long_t size)
 {
 	long_t mem = xms_alloc_ptr;
 
+	if (!xms_enabled)
+		return 0;
 	xms_alloc_ptr += size;
 	//printk("xms_alloc %lx size %lu\n", mem, size);
 	return mem;
@@ -207,4 +211,4 @@ void int15_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg
 }
 #endif
 
-#endif /* CONFIG_FS_XMS_BUFFER */
+#endif /* CONFIG_FS_XMS */

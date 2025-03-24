@@ -33,6 +33,7 @@ int nr_ext_bufs = CONFIG_FS_NR_EXT_BUFFERS;     /* override with /bootopts buf= 
 #ifdef CONFIG_FS_XMS_BUFFER
 int nr_xms_bufs = CONFIG_FS_NR_XMS_BUFFERS;     /* override with /bootopts xmsbuf= */
 #endif
+static int xmsenabled;                          /* local copy of xms_enabled */
 
 /* Buffer heads: local heap allocated */
 static struct buffer_head *buffer_heads;
@@ -80,7 +81,6 @@ static struct buffer_head *L1map[MAX_NR_MAPBUFS]; /* L1 indexed pointer to L2 bu
 static struct wait_queue L1wait;                  /* Wait for a free L1 buffer area */
 static int lastL1map;
 #endif
-static int xms_enabled;
 static int map_count, remap_count, unmap_count;
 
 static int nr_free_bh, nr_bh;
@@ -135,7 +135,7 @@ static void INITPROC add_buffers(int nbufs, char *buf, ramdesc_t seg)
 
 #if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
         /* segment adjusted to require no offset to buffer */
-        offset = xms_enabled? ((n & 63) << BLOCK_SIZE_BITS) :
+        offset = xmsenabled?  ((n & 63) << BLOCK_SIZE_BITS) :
                               ((n & 63) << (BLOCK_SIZE_BITS - 4));
         ebh->b_L2seg = seg + offset;
 #else
@@ -193,8 +193,8 @@ int INITPROC buffer_init(void)
 
 #ifdef CONFIG_FS_XMS_BUFFER
     if (nr_xms_bufs)
-        xms_enabled = xms_init();       /* try to enable unreal mode and A20 gate*/
-    if (xms_enabled)
+        xmsenabled = xms_init();        /* try to enable unreal mode and A20 gate*/
+    if (xmsenabled)
         bufs_to_alloc = nr_xms_bufs;
 #endif
 #ifdef CONFIG_FAR_BUFHEADS
@@ -204,7 +204,7 @@ int INITPROC buffer_init(void)
 #endif
 
     printk("%d %s buffers (%dK ram), %dK cache, %d req hdrs\n", bufs_to_alloc,
-        xms_enabled? "xms": "ext", bufs_to_alloc, nr_map_bufs, NR_REQUEST);
+        xmsenabled? "xms": "ext", bufs_to_alloc, nr_map_bufs, NR_REQUEST);
 #else
     int bufs_to_alloc = nr_map_bufs;
 #endif
@@ -238,7 +238,7 @@ int INITPROC buffer_init(void)
             nbufs = 64;
         bufs_to_alloc -= nbufs;
 #ifdef CONFIG_FS_XMS_BUFFER
-        if (xms_enabled) {
+        if (xmsenabled) {
             ramdesc_t xmsseg = xms_alloc((long_t)nbufs << BLOCK_SIZE_BITS);
             add_buffers(nbufs, 0, xmsseg);
         } else

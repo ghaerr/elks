@@ -355,7 +355,8 @@ void INITPROC blk_dev_init(void)
     rd_init();          /* RAMDISK block device*/
 #endif
 
-#if defined(CONFIG_BLK_DEV_SSD_TEST) || defined(CONFIG_BLK_DEV_SSD_SD8018X)
+#if defined(CONFIG_BLK_DEV_SSD_TEST) || defined(CONFIG_BLK_DEV_SSD_SD8018X) || \
+    defined(CONFIG_FS_XMS_RAMDISK)
     ssd_init();         /* SSD block device*/
 #endif
 
