@@ -36,7 +36,7 @@ extern void int15_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t 
  */
 
 int xms_enabled;
-static long_t xms_alloc_ptr = XMS_START_ADDR;
+long_t xms_alloc_ptr = XMS_START_ADDR;
 
 /* try to enable unreal mode and A20 gate. Return 1 if successful */
 int xms_init(void)
@@ -71,7 +71,7 @@ int xms_init(void)
 	return xms_enabled;
 }
 
-/* allocate from XMS memory - very simple for now, no free */
+/* allocate from XMS memory - very simple for now, no free and no bounds check */
 ramdesc_t xms_alloc(long_t size)
 {
 	long_t mem = xms_alloc_ptr;

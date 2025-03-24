@@ -556,7 +556,7 @@ fail:
 /**
  * SSD API: Init this ssd device.
  * 
- * returns: 0 on failure, size of the card in 1K blocks on success.
+ * returns: 0 on failure, size of the card in 512 byte sectors on success.
  */
 sector_t ssddev_init(void) {
     unsigned long card_size;

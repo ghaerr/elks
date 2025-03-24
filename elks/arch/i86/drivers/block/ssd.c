@@ -1,12 +1,13 @@
 /*
- * ELKS Solid State Disk block device driver
+ * ELKS Solid State Disk /dev/ssd block device driver
  *      Use subdriver for particular SSD device
- *      ssd-test.c - test driver using allocated main memory
- *      ssd-xms.c - use XMS for allocated memory
+ *      ssd-sd.c - compact flash driver for 8018X
+ *      ssd-test.c - test driver, use main memory
+ *      ssd-xms.c - use XMS memory
  *
  * Rewritten June 2020 Greg Haerr
  * Rewritten to be async I/O capable Aug 2023 Greg Haerr
- * Mar 2025 Greg Haerr added XMS support
+ * Added XMS support Mar 2025
  */
 #include <linuxmt/config.h>
 #include <linuxmt/kernel.h>
@@ -17,14 +18,14 @@
 #include "blk.h"
 #include "ssd.h"
 
-/* enable when CONFIG_ASYNCIO for async callback testing */
+/* enable for async callback testing, requires CONFIG_ASYNCIO */
 //#define IODELAY     (5*HZ/100)  /* async time delay 5/100 sec = 50msec */
 
 jiff_t ssd_timeout;
 
-static sector_t NUM_SECTS = 0;  /* max # sectors on SSD device */
-static int access_count;
+sector_t ssd_num_sects;         /* max # sectors on SSD device */
 char ssd_initialized;
+static int access_count;
 
 static int ssd_open(struct inode *, struct file *);
 static void ssd_release(struct inode *, struct file *);
@@ -44,20 +45,24 @@ void INITPROC ssd_init(void)
 {
     if (register_blkdev(MAJOR_NR, DEVICE_NAME, &ssd_fops) == 0) {
         blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
-        NUM_SECTS = ssddev_init();
+        ssd_num_sects = ssddev_init();  /* XMS memory allocated by ramdisk ioctl only */
     }
-    if (NUM_SECTS)
-        printk("ssd: %ldK disk\n", NUM_SECTS/2UL);
+#ifndef CONFIG_FS_XMS
+    if (ssd_num_sects)
+        printk("ssd: %ldK disk\n", ssd_num_sects/2UL);
     else printk("ssd: init error\n");
+#endif
 }
 
 static int ssd_open(struct inode *inode, struct file *filp)
 {
     debug_blk("SSD: open\n");
-    if (!NUM_SECTS)
+#ifndef CONFIG_FS_XMS
+    if (!ssd_num_sects)
         return -ENODATA;
+#endif
     ++access_count;
-    inode->i_size = NUM_SECTS << 9;
+    inode->i_size = ssd_num_sects << 9;
     return 0;
 }
 
@@ -102,9 +107,9 @@ void ssd_io_complete(void)
         buf = req->rq_buffer;
         start = req->rq_sector;
 
-        if (start + req->rq_nr_sectors > NUM_SECTS) {
+        if (start + req->rq_nr_sectors > ssd_num_sects) {
             printk("ssd: sector %lu+%d beyond max %lu\n", start,
-                req->rq_nr_sectors, NUM_SECTS);
+                req->rq_nr_sectors, ssd_num_sects);
             end_request(0);
             continue;
         }

@@ -7,7 +7,7 @@
 #include <sys/ioctl.h>
 #include <linuxmt/rd.h>
 
-#define MAX_SIZE 640 /* 1 KB blocks */
+#define MAX_SIZE 16384      /* =16M in 1 KB blocks */
 
 #define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
 #define errstr(str) write(STDERR_FILENO, str, strlen(str))
@@ -33,7 +33,7 @@ int main(int argc, char **argv)
         size = 64; /* default */
 
     if (size < 1 || size > MAX_SIZE) {
-        errmsg("ramdisk: invalid size, range is 1-640\n");
+        errmsg("ramdisk: invalid size, range is 1-16384\n");
         return 1;
     }
     if (( fd = open(argv[1], 0) ) == -1) {

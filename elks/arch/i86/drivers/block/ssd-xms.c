@@ -1,20 +1,15 @@
 /*
- * ELKS Solid State Disk test subdriver
+ * ELKS /dev/ssd XMS ramdisk subdriver
  *
- * June 2020 Greg Haerr
+ * Mar 2025 Greg Haerr
  *
- * Use ramdisk utility for testing: (block argument = half of NUM_SECTS below)
- *      ramdisk /dev/ssd make 96
- *      mkfs /dev/ssd 96
- *      sync
+ * Use ramdisk utility to allocate from XMS memory:
+ *      ramdisk /dev/ssd make 3072      # 3M ramdisk
+ *      mkfs /dev/ssd 3072
  *      fsck -lvf /dev/ssd
  *      mount /dev/ssd /mnt
- *      cp /bin/ls /mnt
- *      /mnt/ls
- *      sync
  *      df /dev/ssd
  *      umount /dev/ssd
- *      fsck -lvf /dev/ssd
  */
 #include <linuxmt/config.h>
 #include <linuxmt/rd.h>
@@ -27,47 +22,50 @@
 #include <linuxmt/debug.h>
 #include "ssd.h"
 
-#define NUM_SECTS       192             /* set to max # sectors on SSD device */
-
-static segment_s *ssd_seg = 0;
+/* current implementation requires no other XMS allocations other than XMS buffers */
+static ramdesc_t xms_ram_base;      /* ramdisk XMS memory start address */
+static long_t    xms_ram_size;      /* ramdisk size in bytes */
 
 /* initialize SSD device */
 sector_t ssddev_init(void)
 {
-    return NUM_SECTS;   /* return max # 512-byte sectors on device */
+    return 0;
 }
 
 int ssddev_ioctl(struct inode *inode, struct file *file,
                         unsigned int cmd, unsigned int arg)
 {
-    unsigned int sector;
+    sector_t sector;
 
     if (!suser())
         return -EPERM;
 
     switch (cmd) {
     case RDCREATE:
-        debug_blk("SSD: ioctl make %d\n", arg); /* size ignored, always NUM_SECTS */
-        if (ssd_seg)
+        debug_blk("SSD: ioctl make %d\n", arg);
+        if (xms_ram_base)
             return -EBUSY;
-        ssd_seg = seg_alloc((segext_t)NUM_SECTS << 5, SEG_FLAG_RAMDSK);
-        if (!ssd_seg)
+        xms_ram_size = (long_t)arg << 10;       /* SD_FIXED_SECTOR_SIZE << 1 */
+        xms_ram_base = xms_alloc(xms_ram_size);
+        if (!xms_ram_base)
             return -ENOMEM;
 
-        for (sector = 0; sector < NUM_SECTS; sector++) {
-            unsigned long offset = (unsigned long)sector << 9;
-            fmemsetw(0, ssd_seg->base + (unsigned int)(offset >> 4), 0, 256);
-        }
+        ssd_num_sects = xms_ram_size >> 9;
+#ifndef CONFIG_FS_XMS_INT15
+        /* clear XMS only if using unreal mode as xms_fmemset not supported w/INT 15 */
+        for (sector = 0; sector < ssd_num_sects; sector++)
+            xms_fmemset(0, xms_ram_base+sector, 0, SD_FIXED_SECTOR_SIZE);
+#endif
         ssd_initialized = 1;
         return 0;
 
     case RDDESTROY:
         debug_blk("SSD: ioctl kill\n");
-        if (ssd_seg) {
+        if (xms_ram_base) {
             invalidate_inodes(inode->i_rdev);
             invalidate_buffers(inode->i_rdev);
-            seg_put(ssd_seg);
-            ssd_seg = NULL;
+            xms_alloc_ptr -= xms_ram_size;      /* NOTE: no xms_free yet */
+            xms_ram_base = 0;
             ssd_initialized = 0;
             return 0;
         }
@@ -79,19 +77,13 @@ int ssddev_ioctl(struct inode *inode, struct file *file,
 /* write one sector to SSD */
 int ssddev_write(sector_t start, char *buf, ramdesc_t seg)
 {
-    unsigned long offset = start << 9;
-
-    xms_fmemcpyw(0, ssd_seg->base + (unsigned int)(offset >> 4), buf, seg,
-        SD_FIXED_SECTOR_SIZE/2);
+    xms_fmemcpyw(0, xms_ram_base + (start << 9), buf, seg, SD_FIXED_SECTOR_SIZE/2);
     return 1;   /* # sectors written */
 }
 
 /* read one sector from SSD */
 int ssddev_read(sector_t start, char *buf, ramdesc_t seg)
 {
-    unsigned long offset = start << 9;
-
-    xms_fmemcpyw(buf, seg, 0, ssd_seg->base + (unsigned int)(offset >> 4),
-        SD_FIXED_SECTOR_SIZE/2);
+    xms_fmemcpyw(buf, seg, 0, xms_ram_base + (start << 9), SD_FIXED_SECTOR_SIZE/2);
     return 1;   /* # sectors read */
 }

@@ -142,6 +142,6 @@ fi
 #DEBUG="-D logfile -d out_asm,in_asm,int,unimp,guest_errors"
 
 echo "Using QEMU: $QEMU $ACCEL"
-exec $QEMU $ACCEL $DEBUG $AUDIO $CONSOLE -nodefaults -name ELKS -machine isapc -cpu 486,tsc -m 4M \
+exec $QEMU $ACCEL $DEBUG $AUDIO $CONSOLE -nodefaults -name ELKS -machine isapc -cpu 486,tsc -m 8M \
 $KEYBOARD $QDISPLAY -vga std -rtc base=utc $SERIAL \
 $NET $NETDUMP $IMAGE $DISK2 $@
