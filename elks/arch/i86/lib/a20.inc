@@ -18,7 +18,6 @@
 //#define USE_HIMEM_AT
 
 	.global	enable_a20_gate
-	.global	disable_a20_gate
 	.global	verify_a20
 	.global	set_a20
 
@@ -34,18 +33,6 @@ enable_a20_gate:
 	mov	$1,%ah		# enable A20
 	call	set_a20		# call configurable A20 handler
 	call	verify_a20	# returns 1 if enabled, 0 if disabled
-1:	ret
-
-disable_a20_gate:
-#ifdef USE_BIOS
-	xor	%ah,%ah		# disable A20
-	call	bios_set_a20	# try BIOS first
-	call	verify_a20	# returns 1 if enabled, 0 if disabled
-	and	%ax,%ax
-	jnz	1f
-#endif
-	xor	%ah,%ah		# disable A20
-	call	set_a20		# call configurable A20 handler
 1:	ret
 
 # verify if A20 gate is enabled, return 0 if disabled

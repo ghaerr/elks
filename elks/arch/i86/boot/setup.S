@@ -64,7 +64,7 @@
 !	0x1e6:	elks_magic	long "ELKS", written by build tool
 !	0x1ea:	xms_kbytes	word size of xms memory in kbytes
 !	0x1ec:	hma_kernel	byte hma=kernel seen in /bootopts
-!	0x1ed-0x1ee:		3 bytes UNUSED
+!	0x1ed-0x1ee:		2 bytes UNUSED
 !	0x1ef:	SETUPSEG	word UNUSED
 !	0x1f1:	setup_sects	byte in 512-byte sectors, written by build tool
 !	0x1f2:	ROOTFLAGS	word UNUSED
