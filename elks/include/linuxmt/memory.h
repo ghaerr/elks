@@ -38,14 +38,14 @@ int verify_a20(void);		/* returns 0 if a20 disabled */
 
 /* XMS memory management */
 extern int xms_enabled;
-extern long_t xms_alloc_ptr;
+extern unsigned long xms_alloc_ptr;
 
 #ifdef CONFIG_FS_XMS
 typedef __u32 ramdesc_t;	/* special physical ram descriptor */
 
 /* allocate from XMS memory */
 int xms_init(void);		/* enables unreal mode and A20 gate */
-ramdesc_t xms_alloc(long_t size);
+ramdesc_t xms_alloc(unsigned long size);
 
 /* copy to/from XMS or far memory - XMS requires unreal mode and A20 gate enabled */
 void xms_fmemcpyw(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src_seg,

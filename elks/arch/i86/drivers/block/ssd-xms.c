@@ -23,8 +23,8 @@
 #include "ssd.h"
 
 /* current implementation requires no other XMS allocations other than XMS buffers */
-static ramdesc_t xms_ram_base;      /* ramdisk XMS memory start address */
-static long_t    xms_ram_size;      /* ramdisk size in bytes */
+static ramdesc_t     xms_ram_base;      /* ramdisk XMS memory start address */
+static unsigned long xms_ram_size;      /* ramdisk size in bytes */
 
 /* initialize SSD device */
 sector_t ssddev_init(void)
@@ -45,7 +45,7 @@ int ssddev_ioctl(struct inode *inode, struct file *file,
         debug_blk("SSD: ioctl make %d\n", arg);
         if (xms_ram_base)
             return -EBUSY;
-        xms_ram_size = (long_t)arg << 10;       /* SD_FIXED_SECTOR_SIZE << 1 */
+        xms_ram_size = (unsigned long)arg << 10;    /* SD_FIXED_SECTOR_SIZE << 1 */
         xms_ram_base = xms_alloc(xms_ram_size);
         if (!xms_ram_base)
             return -ENOMEM;

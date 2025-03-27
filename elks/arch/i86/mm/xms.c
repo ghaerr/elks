@@ -36,7 +36,7 @@ extern void int15_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t 
  */
 
 int xms_enabled;
-long_t xms_alloc_ptr = XMS_START_ADDR;
+unsigned long xms_alloc_ptr = XMS_START_ADDR;
 
 /* try to enable unreal mode and A20 gate. Return 1 if successful */
 int xms_init(void)
@@ -47,7 +47,13 @@ int xms_init(void)
 		return 1;
 	/* display initial A20 and A20 enable result */
 	printk("xms: ");
-#ifndef CONFIG_FS_XMS_INT15
+#ifdef CONFIG_FS_XMS_INT15
+	if (kernel_cs == 0xffff) {
+        /* unfortunately, BIOS INT 15 block_move disables A20 on some systems! */
+		printk("not available with INT15 and kernel HMA");
+		return 0;
+	}
+#else
 	if (check_unreal_mode() <= 0) {
 		printk("disabled, requires 386, ");
 		return 0;
@@ -67,20 +73,20 @@ int xms_init(void)
 	enable_unreal_mode();
 	printk("using unreal mode, ");
 #endif
-	if (kernel_cs == 0xFFFF)
+	if (kernel_cs == 0xffff)
 		xms_alloc_ptr += 0x10000;   /* 64K reserved for HMA kernel */
 	xms_enabled = 1;	            /* enables xms_fmemcpyw()*/
 	return xms_enabled;
 }
 
 /* allocate from XMS memory - very simple for now, no free */
-ramdesc_t xms_alloc(long_t size)
+ramdesc_t xms_alloc(unsigned long size)
 {
-	long_t mem = xms_alloc_ptr;
+	unsigned long mem = xms_alloc_ptr;
 
 	if (!xms_enabled)
 		return 0;
-	if (xms_alloc_ptr - XMS_START_ADDR + size > ((long_t)SETUP_XMS_KBYTES << 10))
+	if (xms_alloc_ptr - XMS_START_ADDR + size > ((unsigned long)SETUP_XMS_KBYTES << 10))
 		return 0;
 	xms_alloc_ptr += size;
 	//printk("xms_alloc %lx size %lu\n", mem, size);
