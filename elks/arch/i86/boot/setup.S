@@ -511,6 +511,7 @@ sys_hdr_good:
 	add %bx,%ax      // skip header
 	mov %ax,%ds
 	xor %si,%si
+	xor %di,%di
 
 #ifdef CONFIG_ARCH_IBMPC
 // Check whether relocating .text to HMA is possible
@@ -526,13 +527,15 @@ sys_hdr_good:
 	call hex4sp
 	.endif
 
+	mov -2(%bp),%cx  // code size in bytes
 	add %dx,%ax      // add code paragraphs = .fartext start
 	jnc 1f		 // skip if didn't overflow (no HMA)
-	mov $REL_SYSSEG,%ax // .fartext start here
+	mov $REL_SYSSEG,%ax // .fartext starts at normal .text location
+	add $16,%si	 // skip first paragraph at FFFF:0000
+	add $16,%di
+	sub $16,%cx
 1:	mov %ax,-20(%bp) // save .data start in case no .fartext
-	xor %di,%di
 
-	mov -2(%bp),%cx  // code size in bytes
 	.hex4sp	%ds,"\nCopy DEF_SYSSEG .text to  REL_SYSSEG DS:"
 	.hex4sp	%si,"SI:"
 	.hex4sp	%es,"ES:"
