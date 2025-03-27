@@ -62,7 +62,9 @@
 !	...
 !	0x1e2:	part_offset	long Sector offset of booted MBR partition
 !	0x1e6:	elks_magic	long "ELKS", written by build tool
-!	0x1ea-0x1ee:		5 bytes UNUSED
+!	0x1ea:	xms_kbytes	word size of xms memory in kbytes
+!	0x1ec:	hma_kernel	byte hma=kernel seen in /bootopts
+!	0x1ed-0x1ee:		3 bytes UNUSED
 !	0x1ef:	SETUPSEG	word UNUSED
 !	0x1f1:	setup_sects	byte in 512-byte sectors, written by build tool
 !	0x1f2:	ROOTFLAGS	word UNUSED
@@ -91,6 +93,7 @@ debug_loader    =       0       // display relocations
 
 #define MINIX_SPLITID_LOW 0x0301L
 #define KERNEL_MAGICNUMBER MINIX_SPLITID_LOW
+#define HMA_SEG 0xffff
 
 #ifndef CONFIG_ROMCODE
   INITSEG  = DEF_INITSEG	// initial setup data seg and initial Image load address
@@ -477,11 +480,11 @@ sys_hdr_msg:
 
 sys_hdr_good:
 	mov %sp,%bp
-	mov 8,%dx     // -2(%bp) code size
+	mov 8,%dx     // -2(%bp) .text code size
 	push %dx
 	add $15,%dx   // align on next paragraph (issue #209)
 	mov $4,%cl
-	shr %cl,%dx   // DX = code segment size in paragraph
+	shr %cl,%dx   // DX = code size in paragraphs
 	shr %cl,%bx   // BX = header size in paragraphs
 
 	mov 12,%ax    // -4(%bp) data size
@@ -509,14 +512,24 @@ sys_hdr_good:
 	mov %ax,%ds
 	xor %si,%si
 
-	mov $REL_SYSSEG,%ax
-	mov %ax,%es
+#ifdef CONFIG_ARCH_IBMPC
+// Check whether relocating .text to HMA is possible
+	call checkhma
+	jc 2f		 // no HMA
+	mov $HMA_SEG,%ax
+	jmp 1f
+#endif
+2:	mov $REL_SYSSEG,%ax
+1:	mov %ax,%es
 	mov %ax,-18(%bp) // save .text segment
 	.ifeq debug_output
 	call hex4sp
 	.endif
-	add %dx,%ax      // add code paragraphs
-	mov %ax,-20(%bp) // save .data start in case no .fartext
+
+	add %dx,%ax      // add code paragraphs = .fartext start
+	jnc 1f		 // skip if didn't overflow (no HMA)
+	mov $REL_SYSSEG,%ax // .fartext start here
+1:	mov %ax,-20(%bp) // save .data start in case no .fartext
 	xor %di,%di
 
 	mov -2(%bp),%cx  // code size in bytes
@@ -559,7 +572,9 @@ sys_hdr_good:
 
 	mov -18(%bp),%ax  // kernel .text segment
 	add %dx,%ax       // skip code paragraphs
-	mov %ax,%es
+	jnc 1f
+	mov $REL_SYSSEG,%ax // if text in HMA, start fartext here
+1:	mov %ax,%es
 	mov %ax,-20(%bp)  // save .fartext segment
 	xor %di,%di
 
@@ -695,6 +710,8 @@ data_reloc:
 	.hex4sp	%cx,"entry:"
 	.if debug_output
 	.ifeq serial_output // if not serial output
+	mov $debug_prompt,%ax
+	call csputs
 	xor %ah,%ah         // read key press
 	int $0x16
 	.endif
@@ -797,6 +814,9 @@ csputs:	push	%bx
 	jmp	1b
 2:	pop	%bx
 	ret
+
+debug_prompt:
+	.ascii	"\r\nPress key to boot: \0"
 .endif
 
 // Output hex nibble, byte and word. All registers saved.
@@ -906,10 +926,70 @@ novga:	mov	%al,14		// CGA 25 rows
 	mov	%ax,%ds
 	call	arch_get_mem	// save base memory size
 	mov	%ax,mem_kbytes
+	mov	$0x8800,%ax	// get xms size
+	int	$0x15
+	jc	1f
+	mov	%ax,xms_kbytes
 
 #ifdef CONFIG_BOOTOPTS
 	call	bootopts	// load /bootopts into DEF_OPTSEG (0050:0000)
+	call    hmabootopts	// check /bootopts for hma=kernel
+	mov	%al,hma_kernel
 #endif
+	ret
+
+// check for hma=kernel in /bootopts, return AX = 0 if not
+hmabootopts:
+	push	%ds
+	push	%es
+
+	push	%cs			// ES = our code segment
+	pop	%es
+	mov	$DEF_OPTSEG,%ax		// DS:SI = /bootopts in memory
+	mov	%ax,%ds
+
+	xor	%si,%si			// look for hma=kernel in /bootopts segment
+look:	mov	(%si),%al		// done when NUL seen
+	test	%al,%al
+	jz	1f
+	mov	$hma_string,%di
+	mov	$11,%cx
+	push	%si
+	repz
+	cmpsb				// %ds:(%si) with %es:(%di)
+	pop	%si
+	inc	%si
+	test	%cx,%cx
+	jnz	look			// NZ = no match
+	mov	$'H',%ax
+	call	putc
+	jmp	2f
+1:	xor	%ax,%ax			// no HMA
+2:	pop	%es
+	pop	%ds
+	ret
+
+hma_string:
+	.ascii	"\nhma=kernel"		// size = 11
+
+// check whether HMA can be enabled, return NC if so with A20 enabled
+checkhma:
+	push	%ds
+	mov	$INITSEG,%ax
+	mov	%ax,%ds
+	mov	xms_kbytes,%ax		//. must have xms size >= 64k
+	cmp	$64,%ax
+	jl	1f
+	mov	hma_kernel,%al		// and hma=kernel in /bootopts
+	test	%al,%al
+	jz	1f
+	call	enable_a20_gate		// and A20 enabled
+	test	%ax,%ax
+	jz	1f
+	clc				// success
+	jmp 	2f
+1:	stc				// fail
+2:	pop	%ds
 	ret
 
 // Write AL to console, save all registers
@@ -938,6 +1018,9 @@ putc:	push %ax
 // needed for guessing system capabilities (sys_caps) for XT vs AT BIOS
 // TODO: remove and use alternate mechanism for XT vs AT BIOS capabilities
 #include "cputype.S"
+
+// include code to enable/verify A20 address gate
+#include "../lib/a20.inc"
 
 #endif /* CONFIG_ARCH_IBMPC*/
 

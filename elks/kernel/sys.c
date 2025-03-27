@@ -20,6 +20,8 @@
 #include <arch/system.h>
 #include <arch/io.h>
 
+extern void disable_a20_gate(void);
+
 /*
  * reboot doesn't sync: do that yourself before calling this.
  */
@@ -33,6 +35,7 @@ int sys_reboot(unsigned int magic, unsigned int magic_too, int flag)
 #endif
     switch(flag) {
     case RB_REBOOT:
+        disable_a20_gate();
         hard_reset_now();
         printk("Reboot failed\n");
         /* fall through */

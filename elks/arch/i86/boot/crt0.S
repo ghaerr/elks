@@ -10,6 +10,7 @@
         .extern start_kernel
         .global early_putchar
 
+        .word   0,0,0,0,0,0,0,0 // 16-byte offset for HMA segment FFFF:0000 not in XMS
 _start:
 
 /*

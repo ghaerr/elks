@@ -13,7 +13,7 @@
 #include <arch/segment.h>
 
 /* linear address to start XMS buffer allocations from */
-#define XMS_START_ADDR    0x00100000L	/* 1M */
+#define XMS_START_ADDR    0x00110000L	/* 1M+64K */
 //#define XMS_START_ADDR  0x00FA0000L	/* 15.6M (Compaq with only 1M ram) */
 
 #ifdef CONFIG_FS_XMS
