@@ -35,7 +35,7 @@ int sys_reboot(unsigned int magic, unsigned int magic_too, int flag)
 #endif
     switch(flag) {
     case RB_REBOOT:
-        disable_a20_gate();
+        //disable_a20_gate();
         hard_reset_now();
         printk("Reboot failed\n");
         /* fall through */
