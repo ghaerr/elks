@@ -1,5 +1,5 @@
 ####################################################################################
-# Unreal mode and A20 line management routines
+# Unreal mode and A20 line management routines for IBM PC
 # derived from UNREAL.ASM and A20.ASM code by Chris Giese
 # 8 Nov 2021 Greg Haerr
 #
@@ -32,7 +32,7 @@
 	.global	linear32_fmemset
 
 # A20 gate functions shared with setup.S
-#include "a20.inc"
+#include "a20-ibm.inc"
 
 # Check if unreal mode capable. Currently requires 32-bit CPU (386+)
 # Returns 1 if OK, otherwise error code (-1=not 386, -2=in V86 mode).

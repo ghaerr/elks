@@ -1,5 +1,5 @@
 ####################################################################################
-# A20 line management routines
+# A20 line management routines for IBM PC
 # derived from UNREAL.ASM and A20.ASM code by Chris Giese
 # 8 Nov 2021 Greg Haerr
 #
