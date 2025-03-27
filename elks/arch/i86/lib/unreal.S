@@ -31,7 +31,8 @@
 	.global	linear32_fmemcpyb
 	.global	linear32_fmemset
 
-#include "a20.inc"              # A20 gate functions shared with setup.S
+# A20 gate functions shared with setup.S
+#include "a20.inc"
 
 # Check if unreal mode capable. Currently requires 32-bit CPU (386+)
 # Returns 1 if OK, otherwise error code (-1=not 386, -2=in V86 mode).

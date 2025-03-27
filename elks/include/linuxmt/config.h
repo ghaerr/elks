@@ -27,6 +27,7 @@
 #define SETUP_VID_LINES         setupb(14)      /* BIOS video # lines */
 #define SETUP_CPU_TYPE          setupb(0x20)    /* processor type */
 #define SETUP_MEM_KBYTES        setupw(0x2a)    /* base memory in 1K bytes */
+#define SETUP_XMS_KBYTES        setupw(0x1ea)   /* xms memory in 1K bytes */
 #define SETUP_ROOT_DEV          setupw(0x1fc)   /* root device, kdev_t or BIOS dev */
 #define SETUP_ELKS_FLAGS        setupb(0x1f6)   /* flags for root device type */
 #define SETUP_PART_OFFSETLO     setupw(0x1e2)   /* partition offset low word */
@@ -56,6 +57,7 @@
 #define SETUP_VID_LINES         25      /* video # lines */
 #define SETUP_CPU_TYPE          1       /* processor type = 8086 */
 #define SETUP_MEM_KBYTES        setupw(0x2a)    /* base memory in 1K bytes */
+#define SETUP_XMS_KBYTES        setupw(0x1ea)   /* xms memory in 1K bytes */
 #define SETUP_ROOT_DEV          setupw(0x1fc)   /* root device, kdev_t or BIOS dev */
 #define SETUP_ELKS_FLAGS        setupb(0x1f6)   /* flags for root device type */
 #define SETUP_PART_OFFSETLO     setupw(0x1e2)   /* partition offset low word */
@@ -76,6 +78,7 @@
 #define SETUP_VID_LINES         25      /* video # lines */
 #define SETUP_CPU_TYPE          5       /* processor type 80186 */
 #define SETUP_MEM_KBYTES        512     /* base memory in 1K bytes */
+#define SETUP_XMS_KBYTES        0       /* xms memory in 1K bytes */
 #define SETUP_ROOT_DEV          0x0600  /* root device ROMFS */
 #define SETUP_ELKS_FLAGS        0       /* flags for root device type */
 #define SETUP_PART_OFFSETLO     0       /* partition offset low word */

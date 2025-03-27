@@ -13,7 +13,7 @@
 #include <arch/segment.h>
 
 /* linear address to start XMS buffer allocations from */
-#define XMS_START_ADDR    0x00110000L	/* 1M+64K */
+#define XMS_START_ADDR    0x00100000L	/* 1M */
 //#define XMS_START_ADDR  0x00FA0000L	/* 15.6M (Compaq with only 1M ram) */
 
 #ifdef CONFIG_FS_XMS
@@ -67,16 +67,20 @@ int xms_init(void)
 	enable_unreal_mode();
 	printk("using unreal mode, ");
 #endif
-	xms_enabled = 1;	/* enables xms_fmemcpyw()*/
+	if (kernel_cs == 0xFFFF)
+		xms_alloc_ptr += 0x10000;   /* 64K reserved for HMA kernel */
+	xms_enabled = 1;	            /* enables xms_fmemcpyw()*/
 	return xms_enabled;
 }
 
-/* allocate from XMS memory - very simple for now, no free and no bounds check */
+/* allocate from XMS memory - very simple for now, no free */
 ramdesc_t xms_alloc(long_t size)
 {
 	long_t mem = xms_alloc_ptr;
 
 	if (!xms_enabled)
+		return 0;
+	if (xms_alloc_ptr - XMS_START_ADDR + size > ((long_t)SETUP_XMS_KBYTES << 10))
 		return 0;
 	xms_alloc_ptr += size;
 	//printk("xms_alloc %lx size %lu\n", mem, size);
