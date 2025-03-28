@@ -1345,7 +1345,7 @@ arch_set_initseg:
    //mov $0x8800,%ax		// get xms size FIXME use PC-98 BIOS call
    //int $0x15
    //jc 1f
-   mov $2048,%ax		// FIXME fake 2M xms memory for PC-098
+   mov $4096,%ax		// FIXME fake 4M xms memory for PC-098
    mov %ax,xms_kbytes
 1:
 #ifdef CONFIG_BOOTOPTS

@@ -41,16 +41,19 @@ unsigned long xms_alloc_ptr = XMS_START_ADDR;
 /* try to enable unreal mode and A20 gate. Return 1 if successful */
 int xms_init(void)
 {
-	int enabled;
+	int enabled, size;
+	static char xms_tried;
 
-	if (xms_enabled)
-		return 1;
+	/* don't repeat messages */
+	if (xms_tried)
+		return xms_enabled;
+	xms_tried = 1;
 	/* display initial A20 and A20 enable result */
 	printk("xms: ");
 #ifdef CONFIG_FS_XMS_INT15
 	if (kernel_cs == 0xffff) {
-        /* unfortunately, BIOS INT 15 block_move disables A20 on some systems! */
-		printk("not available with INT15 and kernel HMA");
+		/* unfortunately, BIOS INT 15 block_move disables A20 on some systems! */
+		printk("disabled w/kernel HMA, ");
 		return 0;
 	}
 #else
@@ -59,6 +62,10 @@ int xms_init(void)
 		return 0;
 	}
 #endif
+	size = SETUP_XMS_KBYTES;
+	printk("%uK, ", size);
+	if (!size)
+		return 0;
 	debug("A20 was %s", verify_a20()? "on" : "off");
 	enable_a20_gate();
 	enabled = verify_a20();

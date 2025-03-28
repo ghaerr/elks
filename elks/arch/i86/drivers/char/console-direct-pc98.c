@@ -267,6 +267,6 @@ void INITPROC console_init(void)
 
     kbd_init();
 
-    printk("Direct console, %s kbd %ux%u"TERM_TYPE"(du virtual consoles)\n",
+    printk("Direct console, %s kbd %ux%u"TERM_TYPE"(%d virtual consoles)\n",
 	   kbd_name, Con[0].Width, Con[0].Height, NumConsoles);
 }

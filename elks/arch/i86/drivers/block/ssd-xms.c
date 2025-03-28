@@ -35,8 +35,6 @@ sector_t ssddev_init(void)
 int ssddev_ioctl(struct inode *inode, struct file *file,
                         unsigned int cmd, unsigned int arg)
 {
-    sector_t sector;
-
     if (!suser())
         return -EPERM;
 
@@ -53,7 +51,7 @@ int ssddev_ioctl(struct inode *inode, struct file *file,
         ssd_num_sects = xms_ram_size >> 9;
 #ifndef CONFIG_FS_XMS_INT15
         /* clear XMS only if using unreal mode as xms_fmemset not supported w/INT 15 */
-        for (sector = 0; sector < ssd_num_sects; sector++)
+        for (sector_t sector = 0; sector < ssd_num_sects; sector++)
             xms_fmemset(0, xms_ram_base+sector, 0, SD_FIXED_SECTOR_SIZE);
 #endif
         ssd_initialized = 1;
