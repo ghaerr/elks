@@ -36,23 +36,36 @@ extern void int15_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t 
  */
 
 int xms_enabled;
-long_t xms_alloc_ptr = XMS_START_ADDR;
+unsigned long xms_alloc_ptr = XMS_START_ADDR;
 
 /* try to enable unreal mode and A20 gate. Return 1 if successful */
 int xms_init(void)
 {
-	int enabled;
+	int enabled, size;
+	static char xms_tried;
 
-	if (xms_enabled)
-		return 1;
+	/* don't repeat messages */
+	if (xms_tried)
+		return xms_enabled;
+	xms_tried = 1;
 	/* display initial A20 and A20 enable result */
 	printk("xms: ");
-#ifndef CONFIG_FS_XMS_INT15
+#ifdef CONFIG_FS_XMS_INT15
+	if (kernel_cs == 0xffff) {
+		/* unfortunately, BIOS INT 15 block_move disables A20 on some systems! */
+		printk("disabled w/kernel HMA, ");
+		return 0;
+	}
+#else
 	if (check_unreal_mode() <= 0) {
 		printk("disabled, requires 386, ");
 		return 0;
 	}
 #endif
+	size = SETUP_XMS_KBYTES;
+	printk("%uK, ", size);
+	if (!size)
+		return 0;
 	debug("A20 was %s", verify_a20()? "on" : "off");
 	enable_a20_gate();
 	enabled = verify_a20();
@@ -62,21 +75,25 @@ int xms_init(void)
 		return 0;
 	}
 #ifdef CONFIG_FS_XMS_INT15
-	printk("using int 15/1F, ");
+	printk("int 15/1F, ");
 #else
 	enable_unreal_mode();
-	printk("using unreal mode, ");
+	printk("unreal mode, ");
 #endif
-	xms_enabled = 1;	/* enables xms_fmemcpyw()*/
+	if (kernel_cs == 0xffff)
+		xms_alloc_ptr += 0x10000;   /* 64K reserved for HMA kernel */
+	xms_enabled = 1;	            /* enables xms_fmemcpyw()*/
 	return xms_enabled;
 }
 
-/* allocate from XMS memory - very simple for now, no free and no bounds check */
-ramdesc_t xms_alloc(long_t size)
+/* allocate from XMS memory - very simple for now, no free */
+ramdesc_t xms_alloc(unsigned long size)
 {
-	long_t mem = xms_alloc_ptr;
+	unsigned long mem = xms_alloc_ptr;
 
 	if (!xms_enabled)
+		return 0;
+	if (xms_alloc_ptr - XMS_START_ADDR + size > ((unsigned long)SETUP_XMS_KBYTES << 10))
 		return 0;
 	xms_alloc_ptr += size;
 	//printk("xms_alloc %lx size %lu\n", mem, size);

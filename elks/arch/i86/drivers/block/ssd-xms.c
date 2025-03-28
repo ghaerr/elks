@@ -23,8 +23,8 @@
 #include "ssd.h"
 
 /* current implementation requires no other XMS allocations other than XMS buffers */
-static ramdesc_t xms_ram_base;      /* ramdisk XMS memory start address */
-static long_t    xms_ram_size;      /* ramdisk size in bytes */
+static ramdesc_t     xms_ram_base;      /* ramdisk XMS memory start address */
+static unsigned long xms_ram_size;      /* ramdisk size in bytes */
 
 /* initialize SSD device */
 sector_t ssddev_init(void)
@@ -35,8 +35,6 @@ sector_t ssddev_init(void)
 int ssddev_ioctl(struct inode *inode, struct file *file,
                         unsigned int cmd, unsigned int arg)
 {
-    sector_t sector;
-
     if (!suser())
         return -EPERM;
 
@@ -45,7 +43,7 @@ int ssddev_ioctl(struct inode *inode, struct file *file,
         debug_blk("SSD: ioctl make %d\n", arg);
         if (xms_ram_base)
             return -EBUSY;
-        xms_ram_size = (long_t)arg << 10;       /* SD_FIXED_SECTOR_SIZE << 1 */
+        xms_ram_size = (unsigned long)arg << 10;    /* SD_FIXED_SECTOR_SIZE << 1 */
         xms_ram_base = xms_alloc(xms_ram_size);
         if (!xms_ram_base)
             return -ENOMEM;
@@ -53,7 +51,7 @@ int ssddev_ioctl(struct inode *inode, struct file *file,
         ssd_num_sects = xms_ram_size >> 9;
 #ifndef CONFIG_FS_XMS_INT15
         /* clear XMS only if using unreal mode as xms_fmemset not supported w/INT 15 */
-        for (sector = 0; sector < ssd_num_sects; sector++)
+        for (sector_t sector = 0; sector < ssd_num_sects; sector++)
             xms_fmemset(0, xms_ram_base+sector, 0, SD_FIXED_SECTOR_SIZE);
 #endif
         ssd_initialized = 1;

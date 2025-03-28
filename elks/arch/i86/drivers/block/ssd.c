@@ -45,10 +45,11 @@ void INITPROC ssd_init(void)
 {
     if (register_blkdev(MAJOR_NR, DEVICE_NAME, &ssd_fops) == 0)
         blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
-#ifdef CONFIG_FS_XMS
+#ifdef CONFIG_FS_XMS_RAMDISK
     xms_init();
     if (!xms_enabled)
         printk("ssd: no XMS\n");
+    else printk("ssd: enabled\n");
 #else
     ssd_num_sects = ssddev_init();
     if (ssd_num_sects)
