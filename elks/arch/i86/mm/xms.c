@@ -75,10 +75,10 @@ int xms_init(void)
 		return 0;
 	}
 #ifdef CONFIG_FS_XMS_INT15
-	printk("using int 15/1F, ");
+	printk("int 15/1F, ");
 #else
 	enable_unreal_mode();
-	printk("using unreal mode, ");
+	printk("unreal mode, ");
 #endif
 	if (kernel_cs == 0xffff)
 		xms_alloc_ptr += 0x10000;   /* 64K reserved for HMA kernel */
