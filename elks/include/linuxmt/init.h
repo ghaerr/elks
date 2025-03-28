@@ -14,6 +14,7 @@ extern void INITPROC __start_fartext_init(void);
 extern void INITPROC __end_fartext_init(void);
 #else
 #define INITPROC
+#define FARPROC
 #endif
 
 struct task_struct;
