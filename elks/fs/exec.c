@@ -53,12 +53,14 @@
 #define debug_reloc2    debug
 #define debug_os2       debug
 
-static int execve_aout(struct inode *inode, struct file *filp, char *sptr, size_t slen);
-static void finalize_exec(struct inode *inode, segment_s *seg_code, segment_s *seg_data,
-    word_t entry, int multisegment);
+static int FARPROC execve_aout(struct inode *inode, struct file *filp,
+    char *sptr, size_t slen);
+static void FARPROC finalize_exec(struct inode *inode, segment_s *seg_code,
+    segment_s *seg_data, word_t entry, int multisegment);
 
 #ifdef CONFIG_EXEC_OS2
-static int execve_os2(struct inode *inode, struct file *filp, char *sptr, size_t slen);
+static int FARPROC execve_os2(struct inode *inode, struct file *filp,
+    char *sptr, size_t slen);
 static segment_s *mm_table[MAX_SEGS]; /* holds process segments until exec guaranteed */
 #endif
 
@@ -134,8 +136,8 @@ int sys_execve(const char *filename, char *sptr, size_t slen)
  * Read relocations for a particular segment and apply them
  * Only IA-16 segment relocations are accepted
  */
-static int relocate(seg_t place_base, unsigned long rsize, segment_s *seg_code,
-               segment_s *seg_data, struct inode *inode, struct file *filp, size_t tseg)
+static int FARPROC relocate(seg_t place_base, unsigned long rsize, segment_s *seg_code,
+    segment_s *seg_data, struct inode *inode, struct file *filp, size_t tseg)
 {
     int retval = 0;
     seg_t save_ds = current->t_regs.ds;
@@ -186,7 +188,8 @@ static int relocate(seg_t place_base, unsigned long rsize, segment_s *seg_code,
 }
 #endif
 
-static int execve_aout(struct inode *inode, struct file *filp, char *sptr, size_t slen)
+static int FARPROC execve_aout(struct inode *inode, struct file *filp,
+    char *sptr, size_t slen)
 {
     register struct task_struct *currentp;
     int retval;
@@ -494,8 +497,8 @@ static int execve_aout(struct inode *inode, struct file *filp, char *sptr, size_
 }
 
 /* seg_code is entry code segment, seg_data is main (auto stack/heap) data segment */
-static void finalize_exec(struct inode *inode, segment_s *seg_code, segment_s *seg_data,
-    word_t entry, int multisegment)
+static void FARPROC finalize_exec(struct inode *inode, segment_s *seg_code,
+    segment_s *seg_data, word_t entry, int multisegment)
 {
     struct task_struct *currentp = current;
     int i, n, v;
@@ -576,7 +579,8 @@ static void finalize_exec(struct inode *inode, segment_s *seg_code, segment_s *s
 }
 
 #ifdef CONFIG_EXEC_OS2
-static int execve_os2(struct inode *inode, struct file *filp, char *sptr, size_t slen)
+static int FARPROC execve_os2(struct inode *inode, struct file *filp,
+    char *sptr, size_t slen)
 {
     int retval;
     unsigned int n, seg;
