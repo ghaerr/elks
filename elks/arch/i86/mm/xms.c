@@ -23,10 +23,6 @@
  */
 #define INT15DisablesA20()	0		/* =1 if BIOS INT 15 disables A20 */
 
-/* linear address to start XMS buffer allocations from */
-#define XMS_START_ADDR    0x00100000L	/* 1M */
-//#define XMS_START_ADDR  0x00FA0000L	/* 15.6M (Compaq with only 1M ram) */
-
 /* these used when running XMS_INT15 */
 struct gdt_table;
 extern int block_move(struct gdt_table *gdtp, size_t words);
