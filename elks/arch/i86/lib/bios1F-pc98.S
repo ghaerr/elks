@@ -9,7 +9,7 @@
 	.global	enable_a20_gate
 	.global	verify_a20
 
-# A20 gate functions shared with setup.S
+# PC-98 A20 gate functions shared with setup.S
 #include "a20-pc98.inc"
 
 #

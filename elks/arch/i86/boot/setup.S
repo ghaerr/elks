@@ -1340,16 +1340,16 @@ arch_set_initseg:
 
    xor %ax,%ax                  // get xms size in CX
    mov %ax,%ds
-   mov $0x401,%bx               // xms_kbytes = *(0x401) * 128 (up to ~32MB)
+   mov $0x401,%bx               // xms_kbytes = *(byte 0x401) * 128
    mov (%bx),%al
    mov $128,%cl
    mul %cl
    mov %ax,%cx
-   mov $0x594,%bx               // xms_kbytes += (*0x594) * 1024 (up to 64MB)
+   mov $0x594,%bx               // xms_kbytes += *(word 0x594) * 1024
    mov (%bx),%ax
-   cmp $49,%ax                  // don't allow overflow at > 64MB
+   cmp $49,%ax                  // don't allow overflow when > 64MB
    jl 1f
-   mov $0xffff,%cx
+   mov $0xffff,%cx              // 64MB - 1024
    jmp 2f
 1: mov $1024,%bx
    mul %bx

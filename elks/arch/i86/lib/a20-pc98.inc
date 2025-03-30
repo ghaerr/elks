@@ -1,5 +1,9 @@
 ####################################################################################
-# A20 enable for PC-98
+# A20 line enable for PC-98
+#
+# int enable_a20_gate(void)	- Enable A20 gate, return 0 on fail
+# int verify_a20		- Verify A20 gate status, return 0 if disabled
+# void set_a20			- ASM routine: enable (AH=1) or disable (AH=0) A20 gate
 #
 # This file is #included into bios-xms-pc98.S and setup.S
 #

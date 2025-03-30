@@ -1,5 +1,5 @@
 ####################################################################################
-# BIOS INT 15H Block Move
+# BIOS INT 15H Block Move and A20 enable for IBM PC
 # Nov 2021 Greg Haerr
 #
 # int block_move(struct gdt_table *gdtp, size_t words)
@@ -19,6 +19,9 @@
 	.text
 
 	.global	block_move
+
+# IBM PC A20 gate functions shared with setup.S
+#include "a20-ibm.inc"
 
 #
 # int block_move(struct gdt_table *gdtp, size_t words)
