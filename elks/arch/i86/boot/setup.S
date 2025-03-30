@@ -59,7 +59,7 @@
 !			10 = Pentium PRO UNUSED
 !			255 = Unknown
 !	...
-!	0x2a:	mem_kbytes	word	size of base memory in kbytes
+!	0x2a:	mem_kbytes	word size of base memory in kbytes
 !	0x30:	proc_name	byte[16] processor name string UNUSED
 !	0x50:	cpu_id		byte[13] cpuid string UNUSED
 !	...
@@ -1338,16 +1338,29 @@ arch_set_initseg:
    stosw
    pop %es
 
-   mov $INITSEG,%ax
+   xor %ax,%ax                  // get xms size in CX
+   mov %ax,%ds
+   mov $0x401,%bx               // xms_kbytes = *(0x401) * 128 (up to ~32MB)
+   mov (%bx),%al
+   mov $128,%cl
+   mul %cl
+   mov %ax,%cx
+   mov $0x594,%bx               // xms_kbytes += (*0x594) * 1024 (up to 64MB)
+   mov (%bx),%ax
+   cmp $49,%ax                  // don't allow overflow at > 64MB
+   jl 1f
+   mov $0xffff,%cx
+   jmp 2f
+1: mov $1024,%bx
+   mul %bx
+   add %ax,%cx
+
+2: mov $INITSEG,%ax
    mov %ax,%ds
    call arch_get_mem		// save base memory for bootopts routine
    mov %ax,mem_kbytes
-   //mov $0x8800,%ax		// get xms size FIXME use PC-98 BIOS call
-   //int $0x15
-   //jc 1f
-   mov $4096,%ax		// FIXME fake 4M xms memory for PC-098
-   mov %ax,xms_kbytes
-1:
+   mov %cx,xms_kbytes           // save xms memory for checkhma
+
 #ifdef CONFIG_BOOTOPTS
    call bootopts		// attempting loading /bootopts config file
    call hmabootopts		// check /bootopts for hma=kernel
