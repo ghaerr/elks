@@ -12,13 +12,16 @@
 #include <linuxmt/debug.h>
 #include <arch/segment.h>
 
+#define ForceINT15()		1		/* =1 to simulate Compaq 386 BIOS requiring INT 15 */
+#define INT15DisablesA20()	0		/* =1 when BIOS INT 15 disables A20 */
+
 /* linear address to start XMS buffer allocations from */
 #define XMS_START_ADDR    0x00100000L	/* 1M */
 //#define XMS_START_ADDR  0x00FA0000L	/* 15.6M (Compaq with only 1M ram) */
 
 #ifdef CONFIG_FS_XMS
 
-/* these used in CONFIG_FS_XMS_INT15 only */
+/* these used when running XMS_INT15 */
 struct gdt_table;
 extern int block_move(struct gdt_table *gdtp, size_t words);
 extern void int15_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
@@ -50,39 +53,39 @@ int xms_init(void)
 	xms_tried = 1;
 	/* display initial A20 and A20 enable result */
 	printk("xms: ");
-#ifdef CONFIG_FS_XMS_INT15
-	if (kernel_cs == 0xffff) {
-		/* unfortunately, BIOS INT 15 block_move disables A20 on some systems! */
-		printk("disabled w/kernel HMA, ");
-		return 0;
-	}
-#else
-	if (check_unreal_mode() <= 0) {
-		printk("disabled, requires 386, ");
-		return 0;
-	}
-#endif
 	size = SETUP_XMS_KBYTES;
 	printk("%uK, ", size);
 	if (!size)
-		return 0;
+		return XMS_DISABLED;
 	debug("A20 was %s", verify_a20()? "on" : "off");
 	enable_a20_gate();
 	enabled = verify_a20();
 	debug(" now %s, ", enabled? "on" : "off");
 	if (!enabled) {
 		printk("disabled, A20 error, ");
-		return 0;
+		return XMS_DISABLED;
 	}
-#ifdef CONFIG_FS_XMS_INT15
-	printk("int 15/1F, ");
-#else
-	enable_unreal_mode();
-	printk("unreal mode, ");
-#endif
+	/* 80286 machines and Compaq BIOSes can't use unreal mode and must use INT 15/1F */
+	if (arch_cpu <= 6 || ForceINT15()) {
+		if (kernel_cs == 0xffff && INT15DisablesA20()) {
+			/* BIOS INT 15 block_move disables A20 on some systems! */
+			printk("disabled w/kernel HMA and int 15\n");
+			return XMS_DISABLED;
+		}
+		printk("int 15/1F, ");
+		enabled = XMS_INT15;
+	} else {
+		if (check_unreal_mode() <= 0) {
+			printk("disabled, requires 386, ");
+			return XMS_DISABLED;
+		}
+		enable_unreal_mode();
+		printk("unreal mode, ");
+		enabled = XMS_UNREAL;
+	}
 	if (kernel_cs == 0xffff)
 		xms_alloc_ptr += 0x10000;   /* 64K reserved for HMA kernel */
-	xms_enabled = 1;	            /* enables xms_fmemcpyw()*/
+	xms_enabled = enabled;
 	return xms_enabled;
 }
 
@@ -112,12 +115,11 @@ void xms_fmemcpyw(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src
 		if (!need_xms_src) src_seg <<= 4;
 		if (!need_xms_dst) dst_seg <<= 4;
 
-#ifndef CONFIG_FS_XMS_INT15
+	  if (xms_enabled == XMS_UNREAL)
 		linear32_fmemcpyw(dst_off, dst_seg, src_off, src_seg, count);
-#else
+	  else
 		int15_fmemcpyw(dst_off, dst_seg, src_off, src_seg, count);
-#endif
-		return;
+	  return;
 	}
 	fmemcpyw(dst_off, (seg_t)dst_seg, src_off, (seg_t)src_seg, count);
 }
@@ -134,9 +136,9 @@ void xms_fmemcpyb(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src
 		if (!need_xms_src) src_seg <<= 4;
 		if (!need_xms_dst) dst_seg <<= 4;
 
-#ifndef CONFIG_FS_XMS_INT15
+	  if (xms_enabled == XMS_UNREAL)
 		linear32_fmemcpyb(dst_off, dst_seg, src_off, src_seg, count);
-#else
+	  else {
 		/* lots of extra work on odd transfers because INT 15 block moves words only */
 		size_t wc = count >> 1;
 		if (count & 1) {
@@ -144,6 +146,7 @@ void xms_fmemcpyb(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src
 
 			if (wc)
 				int15_fmemcpyw(dst_off, dst_seg, src_off, src_seg, wc);
+#pragma GCC diagnostic ignored "-Wpointer-arith"
 			dst_off += count-1;
 			src_off += count-1;
 
@@ -161,8 +164,8 @@ void xms_fmemcpyb(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src
 			return;
 		}
 		int15_fmemcpyw(dst_off, dst_seg, src_off, src_seg, wc);
-#endif
-		return;
+	  }
+	  return;
 	}
 	fmemcpyb(dst_off, (seg_t)dst_seg, src_off, (seg_t)src_seg, count);
 }
@@ -173,19 +176,14 @@ void xms_fmemset(void *dst_off, ramdesc_t dst_seg, byte_t val, size_t count)
 	int	need_xms_dst = dst_seg >> 16;
 
 	if (need_xms_dst) {
-		if (!xms_enabled) panic("xms_fmemset");
-
-#ifdef CONFIG_FS_XMS_INT15
-		panic("xms_fmemset int15");
-#else
+		if (xms_enabled != XMS_UNREAL) panic("xms_fmemset");
 		linear32_fmemset(dst_off, dst_seg, val, count);
-#endif
 		return;
 	}
 	fmemsetb(dst_off, (seg_t)dst_seg, val, count);
 }
 
-#ifdef CONFIG_FS_XMS_INT15
+/* the following struct and code is used for XMS INT 15 block moves only */
 struct gdt_table {
 	word_t	limit_15_0;
 	word_t	base_15_0;
@@ -226,6 +224,5 @@ void int15_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg
 	gp->base_31_24 = dst_seg >> 24;
 	block_move(gdt_table, count);
 }
-#endif
 
 #endif /* CONFIG_FS_XMS */

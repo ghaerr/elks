@@ -7,7 +7,7 @@
 #3c0=11,0x330,,0x80
 #comirq=,,7,10
 #umb=0xC000:0x800,0xD000:0x1000
-xmsbuf=0
+#xmsbuf=0
 hma=kernel
 #task=16 buf=64 cache=8 file=64 inode=96 heap=44000 # std
 #task=6 buf=8 cache=4 file=20 inode=24 heap=15000 n # min

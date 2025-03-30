@@ -49,11 +49,11 @@ int ssddev_ioctl(struct inode *inode, struct file *file,
             return -ENOMEM;
 
         ssd_num_sects = xms_ram_size >> 9;
-#ifndef CONFIG_FS_XMS_INT15
         /* clear XMS only if using unreal mode as xms_fmemset not supported w/INT 15 */
-        for (sector_t sector = 0; sector < ssd_num_sects; sector++)
-            xms_fmemset(0, xms_ram_base+sector, 0, SD_FIXED_SECTOR_SIZE);
-#endif
+        if (xms_enabled == XMS_UNREAL) {
+            for (sector_t sector = 0; sector < ssd_num_sects; sector++)
+                xms_fmemset(0, xms_ram_base+sector, 0, SD_FIXED_SECTOR_SIZE);
+        }
         ssd_initialized = 1;
         return 0;
 
