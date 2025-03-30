@@ -31,8 +31,11 @@
 	.global	linear32_fmemcpyb
 	.global	linear32_fmemset
 
-# A20 gate functions shared with setup.S
+#include "autoconf.h"
+#ifdef CONFIG_ARCH_IBMPC
+# IBM PC A20 gate functions shared with setup.S, PC-98 functions are in bios-xms-pc98.S
 #include "a20-ibm.inc"
+#endif
 
 # Check if unreal mode capable. Currently requires 32-bit CPU (386+)
 # Returns 1 if OK, otherwise error code (-1=not 386, -2=in V86 mode).
