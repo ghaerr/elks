@@ -43,10 +43,13 @@ videoline = 0xb8000+80*2*22
     .arch	i386,nojumps
     .code16
     .text
-	.extern	enable_unreal_mode
-	.extern	enable_a20_gate
-	.extern	verify_a20
-	.extern	set_a20
+
+	;.extern	enable_unreal_mode
+	;.extern	enable_a20_gate
+	;.extern	verify_a20
+	;.extern	set_a20
+# A20 gate shared functions
+#include "../../elks/arch/i86/lib/a20-ibm.inc"
 
     .global _start
 _start:
