@@ -24,7 +24,7 @@
 /* these used when running XMS_INT15 */
 struct gdt_table;
 extern int block_move(struct gdt_table *gdtp, size_t words);
-extern void int15_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
+void int15_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
 		size_t count);
 
 /*
@@ -209,7 +209,7 @@ void int15_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg
 	gp->limit_15_0 = 0xffff;
 	gp->base_15_0 = (word_t)src_seg;
 	gp->base_23_16 = src_seg >> 16;
-	gp->access_byte = 0x93;		/* present, rignt 0, data, expand-up, writable, accessed */
+	gp->access_byte = 0x93;	/* present, rignt 0, data, expand-up, writable, accessed */
 	//gp->flags_limit_19_16 = 0;	/* byte-granular, 16-bit, limit=64K */
 	//gp->flags_limit_19_16 = 0xCF;	/* page-granular, 32-bit, limit=4GB */
 	gp->base_31_24 = src_seg >> 24;
@@ -218,7 +218,7 @@ void int15_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg
 	gp->limit_15_0 = 0xffff;
 	gp->base_15_0 = (word_t)dst_seg;
 	gp->base_23_16 = dst_seg >> 16;
-	gp->access_byte = 0x93;		/* present, rignt 0, data, expand-up, writable, accessed */
+	gp->access_byte = 0x93;	/* present, rignt 0, data, expand-up, writable, accessed */
 	//gp->flags_limit_19_16 = 0;	/* byte-granular, 16-bit, limit=64K */
 	//gp->flags_limit_19_16 = 0xCF;	/* page-granular, 32-bit, limit=4GB */
 	gp->base_31_24 = dst_seg >> 24;
