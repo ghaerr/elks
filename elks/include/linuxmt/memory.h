@@ -43,6 +43,7 @@ int verify_a20(void);		/* returns 0 if a20 disabled */
 #define XMS_UNREAL      1   /* using unreal mode and linear32_fmemcpy for block moves */
 #define XMS_INT15       2   /* using BIOS INT 15 block move (or INT 1F on PC-98) */
 extern int xms_enabled;
+extern char xms_useint15;   /* =1 when xms=int15 in /bootopts */
 
 extern unsigned long xms_alloc_ptr;
 

@@ -12,14 +12,20 @@
 #include <linuxmt/debug.h>
 #include <arch/segment.h>
 
-#define ForceINT15()		0		/* =1 to simulate Compaq 386 BIOS requiring INT 15 */
-#define INT15DisablesA20()	0		/* =1 when BIOS INT 15 disables A20 */
+#ifdef CONFIG_FS_XMS
+
+/*
+ * Set the below =1 to automatically disable XMS instead of hanging
+ * the system during boot, when hma=kernel and INT 15 disables A20,
+ * in some Compaq and other BIOSes (QEMU and PC-98 do not).
+ * Otherwise, when =0, hma=kernel must be commented out in /bootopts
+ * to boot when configured for XMS on those same systems.
+ */
+#define INT15DisablesA20()	0		/* =1 if BIOS INT 15 disables A20 */
 
 /* linear address to start XMS buffer allocations from */
 #define XMS_START_ADDR    0x00100000L	/* 1M */
 //#define XMS_START_ADDR  0x00FA0000L	/* 15.6M (Compaq with only 1M ram) */
-
-#ifdef CONFIG_FS_XMS
 
 /* these used when running XMS_INT15 */
 struct gdt_table;
@@ -66,7 +72,7 @@ int xms_init(void)
 		return XMS_DISABLED;
 	}
 	/* 80286 machines and Compaq BIOSes can't use unreal mode and must use INT 15/1F */
-	if (arch_cpu <= 6 || ForceINT15()) {
+	if (arch_cpu <= 6 || xms_useint15) {
 		if (kernel_cs == 0xffff && INT15DisablesA20()) {
 			/* BIOS INT 15 block_move disables A20 on some systems! */
 			printk("disabled w/kernel HMA and int 15\n");
