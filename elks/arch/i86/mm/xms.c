@@ -12,7 +12,7 @@
 #include <linuxmt/debug.h>
 #include <arch/segment.h>
 
-#define ForceINT15()		1		/* =1 to simulate Compaq 386 BIOS requiring INT 15 */
+#define ForceINT15()		0		/* =1 to simulate Compaq 386 BIOS requiring INT 15 */
 #define INT15DisablesA20()	0		/* =1 when BIOS INT 15 disables A20 */
 
 /* linear address to start XMS buffer allocations from */
