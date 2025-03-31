@@ -5,8 +5,8 @@
 #define SCREEN_WIDTH    (SCREENWIDTH-PALETTE_WIDTH)
 #define SCREEN_HEIGHT   SCREENHEIGHT
 
-#define PALETTE_WIDTH 158
- 
+#define PALETTE_WIDTH 148
+
 // Boolean Data Type
 typedef enum boolean_e
 {
@@ -69,7 +69,7 @@ extern int currentMainColor;           // The selected color for LMB
 extern int currentAltColor;            // Color for RMB (eraser)
 
 // Palette Buttons
-#define PALETTE_BUTTONS_COUNT 15
+#define PALETTE_BUTTONS_COUNT 13 //14
 
 // All the buttons
 extern button_t paletteButtons[PALETTE_BUTTONS_COUNT];
