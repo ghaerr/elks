@@ -102,7 +102,8 @@ void initcursor(void)
     curneedsrestore = FALSE;
     curminx = 0;
     curminy = 0;
-    setcursor(&cursor_lg);
+    // set small cursor for EGA
+    setcursor((SCREENHEIGHT < 480) ? &cursor_sm : &cursor_lg);
     movecursor(posx, posy);
     showcursor();
 }

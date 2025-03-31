@@ -42,6 +42,11 @@ void R_DrawCircle(int x0, int y0, int r);
 void R_DrawAllButtons(void);
 
 // ----------------------------------------------------
+// Draws Brush Buttons
+// ----------------------------------------------------
+void DrawButtonCircle(int x0, int y0, int w, int h, int r);
+
+// ----------------------------------------------------
 // Flood Fill Stack
 // ----------------------------------------------------
 void R_FloodFillStack(int x, int y, int color, int ogColor);
