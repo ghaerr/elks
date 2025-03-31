@@ -239,7 +239,7 @@ int INITPROC buffer_init(void)
         bufs_to_alloc -= nbufs;
 #ifdef CONFIG_FS_XMS_BUFFER
         if (xmsenabled) {
-            ramdesc_t xmsseg = xms_alloc((long_t)nbufs << BLOCK_SIZE_BITS);
+            ramdesc_t xmsseg = xms_alloc(nbufs);    /* in Kbytes */
             if (!xmsseg) panic("Not enough XMS for buffers");
             add_buffers(nbufs, 0, xmsseg);
         } else
@@ -633,13 +633,13 @@ int sys_sync(void)
 /* clear a buffer area to zeros, used to avoid slow map to L1 if possible */
 void zero_buffer(struct buffer_head *bh, size_t offset, int count)
 {
-#if defined(CONFIG_FS_XMS_INT15) || (!defined(CONFIG_FS_EXTERNAL_BUFFER) && !defined(CONFIG_FS_XMS_BUFFER))
+#if !defined(CONFIG_FS_EXTERNAL_BUFFER) && !defined(CONFIG_FS_XMS_BUFFER)
 #define FORCEMAP 1
 #else
 #define FORCEMAP 0
 #endif
     /* xms int15 doesn't support a memset function, so map into L1 */
-    if (FORCEMAP || bh->b_data) {
+    if (FORCEMAP || bh->b_data || xmsenabled == XMS_INT15 ) {
         map_buffer(bh);
         memset(bh->b_data + offset, 0, count);
         unmap_buffer(bh);

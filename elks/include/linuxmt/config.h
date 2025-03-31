@@ -90,6 +90,10 @@
 #define CONFIG_8018X_EB
 #endif
 
+/* linear address to start XMS buffer allocations from */
+#define XMS_START_ADDR    0x00100000L	/* 1M */
+//#define XMS_START_ADDR  0x00FA0000L	/* 15.6M (Compaq with only 1M ram) */
+
 /*
  * System capabilities - configurable for ROM or custom installations.
  * Normally, all capabilities will be set if arch_cpu > 5 (PC/AT),

@@ -1,13 +1,10 @@
 ####################################################################################
-# Unreal mode and A20 line management routines for IBM PC
+# Unreal mode routines for 80386+ CPUs
 # derived from UNREAL.ASM and A20.ASM code by Chris Giese
 # 8 Nov 2021 Greg Haerr
 #
-# int enable_unreal_mode(void)	- Attempt to turn on 80386 unreal mode,
-#				  returns > 0 on success else error code
-# int enable_a20_gate(void)	- Enable A20 gate, return 0 on fail
-# int verify_a20		- Verify A20 gate status, return 0 if disabled
-# void set_a20			- ASM routine: enable (AH=1) or disable (AH=0) A20 gate
+# int check_unreal_mode(void)	- Test for 32-bit CPU and not V86 mode
+# void enable_unreal_mode(void)	- Turn on 80386 unreal mode, requires 386+
 # void linear32_fmemcpyw (void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
 #		size_t count)	- Copy words between XMS and far memory
 # void linear32_fmemcpyb (void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
@@ -30,9 +27,6 @@
 	.global	linear32_fmemcpyw
 	.global	linear32_fmemcpyb
 	.global	linear32_fmemset
-
-# A20 gate functions shared with setup.S
-#include "a20-ibm.inc"
 
 # Check if unreal mode capable. Currently requires 32-bit CPU (386+)
 # Returns 1 if OK, otherwise error code (-1=not 386, -2=in V86 mode).
@@ -103,9 +97,7 @@ enable_unreal_mode:
 	popl %es
 	popl %ds
 	popf			# restore interrupt status
-
-	mov	$1,%ax		# system is in unreal mode, return 1
-	ret
+	ret			# system is in unreal mode
 
 #if UNUSED
 #
@@ -398,3 +390,4 @@ gdt_len = . - gdt
 
 gdt_ptr:.word gdt_len - 1
         .long gdt
+

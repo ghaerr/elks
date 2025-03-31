@@ -44,6 +44,7 @@ seg_t kernel_cs, kernel_ds;
 int root_mountflags;
 int tracing;
 int nr_ext_bufs, nr_xms_bufs, nr_map_bufs;
+int xms_bootopts;
 char running_qemu;
 static int boot_console;
 static segext_t umbtotal;
@@ -531,6 +532,11 @@ static int INITPROC parse_options(void)
         }
         if (!strncmp(line,"buf=",4)) {
             nr_ext_bufs = (int)simple_strtol(line+4, 10);
+            continue;
+        }
+        if (!strncmp(line,"xms=",4)) {
+            if (!strcmp(line+4, "on"))    xms_bootopts = XMS_UNREAL;
+            if (!strcmp(line+4, "int15")) xms_bootopts = XMS_INT15;
             continue;
         }
         if (!strncmp(line,"xmsbuf=",7)) {

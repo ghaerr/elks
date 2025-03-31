@@ -41,9 +41,9 @@ SRCS1 = \
 	# end of list
 
 ifeq ($(CONFIG_ARCH_PC98), y)
-SRCS1 += bios1B.S bios-xms-pc98.S
+SRCS1 += bios1B.S bios1F-pc98.S unreal.S
 else
-SRCS1 += bios13.S bios15.S unreal.S
+SRCS1 += bios13.S bios15-ibm.S unreal.S
 endif
 
 OBJS1 = $(SRCS1:.S=.o)
