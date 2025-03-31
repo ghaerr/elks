@@ -46,12 +46,18 @@ void R_DrawPalette()
     // Draw line and background
     R_DrawFullColumn(SCREEN_WIDTH+1, WHITE);
     int paletteX = SCREEN_WIDTH+2;
-    
+
     while(paletteX < SCREEN_WIDTH + PALETTE_WIDTH)
         R_DrawFullColumn(paletteX++, GRAY);
 
-
     R_DrawAllButtons();
+
+    // Draw Logo if VGA 640x480
+    if(SCREEN_HEIGHT==480)
+    {
+        char* fileName = "/lib/paint.bmp";
+        draw_bmp(fileName, SCREEN_WIDTH + 10, 350);
+    }
 
     R_UpdateColorPicker();
 }
@@ -65,10 +71,35 @@ void R_DrawAllButtons()
     {
         if(paletteButtons[i].render == true)
         {
-            draw_bmp(paletteButtons[i].fileName,
-                paletteButtons[i].box.x, paletteButtons[i].box.y);
+            if(paletteButtons[i].data1 > 0)
+            {
+                DrawButtonCircle(paletteButtons[i].box.x, paletteButtons[i].box.y,
+                    paletteButtons[i].box.w, paletteButtons[i].box.h, paletteButtons[i].data1);
+            }
+            else
+            {
+                draw_bmp(paletteButtons[i].fileName,
+                    paletteButtons[i].box.x, paletteButtons[i].box.y);
+            }
         }
     }
+}
+
+// ----------------------------------------------------
+// Draws Brush Buttons
+// ----------------------------------------------------
+void DrawButtonCircle(int x0, int y0, int w, int h, int r)
+{
+    // Double values for half-pixel precision and
+    // smoother circles by centering them on the middle of a pixel
+    int cx0 = 2*x0 + w - 1;
+    int cy0 = 2*y0 + h - 1;
+    for(int y=y0; y<y0 + h; y++)
+        for(int x=x0; x<x0 + w; x++)
+        {
+            int color = ((2*x-cx0)*(2*x-cx0)+(2*y-cy0)*(2*y-cy0) <= 4*r*r) ? BLACK : WHITE;
+            drawpixel(x, y, color);
+        }
 }
 
 #if UNUSED
@@ -87,11 +118,11 @@ static int MapRGB(int r, int g, int b)
 void R_UpdateColorPicker(void)
 {
     // Draw RGB scheme
-    int startingPixelXOffset = SCREEN_WIDTH + 7 + 8;
-    int startingPixelYOffset = 10 + 16;
+    int startingPixelXOffset = SCREEN_WIDTH + 10 + 1;
+    int startingPixelYOffset = 10 + 1;
 
-    for(int x = 0; x <128; x++)
-      for(int y = 0; y < 32; y++)
+    for(int x = 0; x < 128; x++)
+      for(int y = 0; y < 128; y++)
       {
         //static ColorRGB_t color;
         //ColorHSV_t hsv;
@@ -99,7 +130,9 @@ void R_UpdateColorPicker(void)
         //hsv.s = y * 4;
         //hsv.v = paletteBrightness;
         //color = HSVtoRGB(hsv);
-        int color = x/16 + (y/16) * 8;
+        int color = (x>>5) + (y>>5) * 4;
+        //draw gray bars
+        color = ((x - (x>>5)*32) >=30) | ((y - (y>>5)*32)>=30) ? GRAY : color;
         drawpixel(x+startingPixelXOffset, y + startingPixelYOffset, color);
       }
 
@@ -112,12 +145,26 @@ void R_UpdateColorPicker(void)
 void R_DrawCurrentColor(void)
 {
     // Draw current color
-    int startingPixelXOffset = SCREEN_WIDTH + 7 + 46;
-    int startingPixelYOffset = 102;
+    int startingPixelXOffset = SCREEN_WIDTH + 10 + 32 + 1;
+    int startingPixelYOffset = 10 + 128 + 10;
 
-    for(int x = 0; x < 48; x++)
-        for(int y = 0; y < 48; y++)
+    for(int x = 0; x < 62; x++)
+        for(int y = 0; y < 30; y++)
             drawpixel(x+startingPixelXOffset, y + startingPixelYOffset, currentMainColor);
+    // Draw white frame if the main color matches the panel backgound
+    if (currentMainColor == GRAY)
+        {
+            for(int x = 0; x < 62; x++)
+            {
+                drawpixel(x+startingPixelXOffset, 0 + startingPixelYOffset, WHITE);
+                drawpixel(x+startingPixelXOffset, 29 + startingPixelYOffset, WHITE);
+            }
+            for(int y = 0; y < 30; y++)
+            {
+                drawpixel(0+startingPixelXOffset, y + startingPixelYOffset, WHITE);
+                drawpixel(61+startingPixelXOffset, y + startingPixelYOffset, WHITE);
+            }
+        }
 }
 
 // ----------------------------------------------------
@@ -132,7 +179,7 @@ void R_Paint(int x1, int y1, int x2, int y2)
         }
         else // Otherwise keep drawing circles
             R_DrawCircle(x1, y1, bushSize);
-            
+
     // Creates the path from Old Mouse coords and current
     int repx = 1;
     int repy = 1;
@@ -185,11 +232,20 @@ void R_Paint(int x1, int y1, int x2, int y2)
 // ----------------------------------------------------
 void R_DrawCircle(int x0, int y0, int r)
 {
-    for(int y=-r; y<=r; y++)
-        for(int x=-r; x<=r; x++)
-            if(x*x+y*y <= r*r)
-                if(x0+x >= 0 && x0+x < SCREEN_WIDTH && y0+y >= 0 && y0+y < SCREEN_HEIGHT)
-                    drawpixel(x0+x, y0+y, drawing ? currentMainColor : currentAltColor);
+    if(r > 1)
+    {
+        for(int y=-r; y<=r; y++)
+            for(int x=-r; x<=r; x++)
+                if((2*x+1)*(2*x+1) + (2*y+1)*(2*y+1) <= 4*r*r)
+                    if(x0+x >= 0 && x0+x < SCREEN_WIDTH && y0+y >= 0 && y0+y < SCREEN_HEIGHT)
+                        drawpixel(x0+x, y0+y, drawing ? currentMainColor : currentAltColor);
+    }
+    else
+    {
+        if(x0 >= 0 && x0 < SCREEN_WIDTH && y0 >= 0 && y0 < SCREEN_HEIGHT)
+            drawpixel(x0, y0, drawing ? currentMainColor : currentAltColor);
+    }
+
 }
 
 // ----------------------------------------------------
@@ -238,7 +294,7 @@ void R_LineFloodFill(int x, int y, int color, int ogColor)
         int leftestX = curElement.x;
 
         // Find leftest
-        while(leftestX >= 0 && readpixel(leftestX, curElement.y) == ogColor) 
+        while(leftestX >= 0 && readpixel(leftestX, curElement.y) == ogColor)
             leftestX--;
         leftestX++;
 
@@ -249,7 +305,7 @@ void R_LineFloodFill(int x, int y, int color, int ogColor)
         while(mRight == false)
         {
             // Fill right
-            if(leftestX < SCREEN_WIDTH && readpixel(leftestX, curElement.y) == ogColor) 
+            if(leftestX < SCREEN_WIDTH && readpixel(leftestX, curElement.y) == ogColor)
             {
                 //pixels[leftestX + curElement.y * width] = color;
                 drawpixel(leftestX, curElement.y, color);
@@ -269,11 +325,11 @@ void R_LineFloodFill(int x, int y, int color, int ogColor)
                     // Skip now, but check next time
                     alreadyCheckedBelow = false;
                 }
-                
+
                 // Check below this pixel
                 if (alreadyCheckedAbove == false && (curElement.y+1) >= 0
                     && (curElement.y+1) < SCREEN_HEIGHT
-                    && readpixel(leftestX, curElement.y+1) == ogColor) 
+                    && readpixel(leftestX, curElement.y+1) == ogColor)
                     {
                         // If we never checked it, add it to the stack
                         FF_StackPush(stack, leftestX, curElement.y+1, &stackTop);
@@ -331,7 +387,7 @@ ColorRGB_t HSVtoRGB(ColorHSV_t colorHSV)
         }
     }
 
-    
+
     ColorRGB_t colorRGB;
     colorRGB.r = (int)(r * 255.0);
     colorRGB.g = (int)(g * 255.0);
