@@ -1,5 +1,5 @@
 /*
- * Extended (> 1M) memory management support for buffers.
+ * Extended (> 1M) memory management support for buffers and ramdisk.
  *
  * Nov 2021 Greg Haerr
  */
@@ -14,6 +14,7 @@
 
 #ifdef CONFIG_FS_XMS
 
+#if AUTODISABLE
 /*
  * Set the below =1 to automatically disable XMS instead of hanging
  * the system during boot, when hma=kernel and INT 15 disables A20,
@@ -21,7 +22,8 @@
  * Otherwise, when =0, hma=kernel must be commented out in /bootopts
  * to boot when configured for XMS on those same systems.
  */
-#define INT15DisablesA20()	0		/* =1 if BIOS INT 15 disables A20 */
+#define INT15DisablesA20()	1		/* =1 if BIOS INT 15 disables A20 */
+#endif
 
 /* these used when running XMS_INT15 */
 struct gdt_table;
@@ -43,8 +45,8 @@ void int15_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg
 int xms_enabled;
 unsigned long xms_alloc_ptr = XMS_START_ADDR;
 
-/* try to enable unreal mode and A20 gate. Return 1 if successful */
-int xms_init(void)
+/* try to enable XMS memory access using A20 gate and unreal mode or INT 15 block move */
+int INITPROC xms_init(void)
 {
 	int enabled, size;
 	static char xms_tried;
@@ -57,26 +59,32 @@ int xms_init(void)
 	printk("xms: ");
 	size = SETUP_XMS_KBYTES;
 	printk("%uK, ", size);
-	if (!size)
+	if (!size)                      /* 8086 systems won't have XMS */
 		return XMS_DISABLED;
 	debug("A20 was %s", verify_a20()? "on" : "off");
 	enable_a20_gate();
 	enabled = verify_a20();
 	debug(" now %s, ", enabled? "on" : "off");
 	if (!enabled) {
-		printk("disabled, A20 error, ");
+		printk("disabled, A20 error. ");
 		return XMS_DISABLED;
 	}
 	/* 80286 machines and Compaq BIOSes can't use unreal mode and must use INT 15/1F */
-	if (arch_cpu <= 6 || xms_useint15) {
+	if (xms_bootopts == XMS_INT15 || (arch_cpu <= 6 && xms_bootopts == XMS_UNREAL)) {
+#if AUTODISABLE
 		if (kernel_cs == 0xffff && INT15DisablesA20()) {
 			/* BIOS INT 15 block_move disables A20 on some systems! */
 			printk("disabled w/kernel HMA and int 15\n");
 			return XMS_DISABLED;
 		}
+#endif
 		printk("int 15/1F, ");
 		enabled = XMS_INT15;
 	} else {
+		if (xms_bootopts != XMS_UNREAL) {
+			printk("off. ");
+			return XMS_DISABLED;
+		}
 		if (check_unreal_mode() <= 0) {
 			printk("disabled, requires 386, ");
 			return XMS_DISABLED;
