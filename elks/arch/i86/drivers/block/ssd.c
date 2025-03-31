@@ -50,7 +50,7 @@ void INITPROC ssd_init(void)
     if (!xms_enabled)
         printk("ssd: no XMS\n");
     else printk("ssd: %uK avail\n",
-        SETUP_XMS_KBYTES - (unsigned)((xms_alloc_ptr - XMS_START_ADDR) >> 10));
+        SETUP_XMS_KBYTES - (xms_alloc_ptr - KBYTES(XMS_START_ADDR)));
 #else
     ssd_num_sects = ssddev_init();
     if (ssd_num_sects)

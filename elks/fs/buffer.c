@@ -239,7 +239,7 @@ int INITPROC buffer_init(void)
         bufs_to_alloc -= nbufs;
 #ifdef CONFIG_FS_XMS_BUFFER
         if (xmsenabled) {
-            ramdesc_t xmsseg = xms_alloc((long_t)nbufs << BLOCK_SIZE_BITS);
+            ramdesc_t xmsseg = xms_alloc(nbufs);    /* in Kbytes */
             if (!xmsseg) panic("Not enough XMS for buffers");
             add_buffers(nbufs, 0, xmsseg);
         } else

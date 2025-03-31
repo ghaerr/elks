@@ -41,7 +41,7 @@ void int15_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg
  */
 
 int xms_enabled;
-unsigned long xms_alloc_ptr = XMS_START_ADDR;
+unsigned int xms_alloc_ptr = KBYTES(XMS_START_ADDR);
 
 /* try to enable XMS memory access using A20 gate and unreal mode or INT 15 block move */
 int INITPROC xms_init(void)
@@ -92,23 +92,23 @@ int INITPROC xms_init(void)
 		enabled = XMS_UNREAL;
 	}
 	if (kernel_cs == 0xffff)
-		xms_alloc_ptr += 0x10000;   /* 64K reserved for HMA kernel */
+		xms_alloc_ptr += 64;    /* 64K reserved for HMA kernel */
 	xms_enabled = enabled;
 	return xms_enabled;
 }
 
 /* allocate from XMS memory - very simple for now, no free */
-ramdesc_t xms_alloc(unsigned long size)
+ramdesc_t xms_alloc(unsigned int kbytes)
 {
-	unsigned long mem = xms_alloc_ptr;
+	unsigned int mem = xms_alloc_ptr;
 
 	if (!xms_enabled)
 		return 0;
-	if (xms_alloc_ptr - XMS_START_ADDR + size > ((unsigned long)SETUP_XMS_KBYTES << 10))
+	if (xms_alloc_ptr - KBYTES(XMS_START_ADDR) + kbytes > SETUP_XMS_KBYTES)
 		return 0;
-	xms_alloc_ptr += size;
-	//printk("xms_alloc %lx size %lu\n", mem, size);
-	return mem;
+	xms_alloc_ptr += kbytes;
+	//printk("xms_alloc %lx size %uK\n", (unsigned long)mem<<10, kbytes);
+	return (ramdesc_t)mem << 10;
 }
 
 /* copy words between XMS and far memory */

@@ -38,20 +38,21 @@ int verify_a20(void);		/* returns 0 if a20 disabled */
 
 /* XMS memory management */
 
-/* possible values for xms_enabled */
+/* possible values for xms_enabled and xms_bootopts */
 #define XMS_DISABLED    0
 #define XMS_UNREAL      1   /* using unreal mode and linear32_fmemcpy for block moves */
 #define XMS_INT15       2   /* using BIOS INT 15 block move (or INT 1F on PC-98) */
-extern int xms_enabled;
 extern int xms_bootopts;    /* xms=on or xms=int15 /bootopts setting, default off */
 
-extern unsigned long xms_alloc_ptr;
-
 #ifdef CONFIG_FS_XMS
+extern int xms_enabled;
+
 typedef __u32 ramdesc_t;	/* special physical ram descriptor */
 
 /* allocate from XMS memory */
-ramdesc_t xms_alloc(unsigned long size);
+ramdesc_t xms_alloc(unsigned int kbytes);
+extern unsigned int xms_alloc_ptr;  /* in kbyte increments */
+#define KBYTES(n)   ((n) >> 10)
 
 /* copy to/from XMS or far memory - XMS requires unreal mode and A20 gate enabled */
 void xms_fmemcpyw(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src_seg,
