@@ -83,10 +83,12 @@ int INITPROC xms_init(void)
 			printk("off. ");
 			return XMS_DISABLED;
 		}
+#if UNUSED
 		if (check_unreal_mode() <= 0) {
 			printk("disabled, requires 386, ");
 			return XMS_DISABLED;
 		}
+#endif
 		enable_unreal_mode();
 		printk("unreal mode, ");
 		enabled = XMS_UNREAL;
