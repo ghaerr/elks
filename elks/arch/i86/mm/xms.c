@@ -14,16 +14,14 @@
 
 #ifdef CONFIG_FS_XMS
 
-#if AUTODISABLE
 /*
- * Set the below =1 to automatically disable XMS instead of hanging
- * the system during boot, when hma=kernel and INT 15 disables A20,
+ * Set the below =1 to automatically disable using XMS INT 15 instead of
+ * hanging the system during boot, when hma=kernel and INT 15 disables A20
  * in some Compaq and other BIOSes (QEMU and PC-98 do not).
  * Otherwise, when =0, hma=kernel must be commented out in /bootopts
- * to boot when configured for XMS on those same systems.
+ * to boot when configured for xms=int15 on those same systems.
  */
-#define INT15DisablesA20()	1		/* =1 if BIOS INT 15 disables A20 */
-#endif
+#define AUTODISABLE		0		/* =1 to disable XMS if BIOS INT 15 disables A20 */
 
 /* these used when running XMS_INT15 */
 struct gdt_table;
@@ -72,7 +70,7 @@ int INITPROC xms_init(void)
 	/* 80286 machines and Compaq BIOSes can't use unreal mode and must use INT 15/1F */
 	if (xms_bootopts == XMS_INT15 || (arch_cpu <= 6 && xms_bootopts == XMS_UNREAL)) {
 #if AUTODISABLE
-		if (kernel_cs == 0xffff && INT15DisablesA20()) {
+		if (kernel_cs == 0xffff) {
 			/* BIOS INT 15 block_move disables A20 on some systems! */
 			printk("disabled w/kernel HMA and int 15\n");
 			return XMS_DISABLED;
