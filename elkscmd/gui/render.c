@@ -4,18 +4,6 @@
 #include "event.h"
 #include "graphics.h"
 
-#if defined(__WATCOMC__) || defined(__ia16__)
-#define USE_FLOATS  1       /* =1 for float calculation of line slope */
-#endif
-
-#ifdef __ia16__
-#define round(n)    floor(n)
-#endif
-
-#if USE_FLOATS
-#include <math.h>
-#endif
-
 #define FLOOD_FILL_STACK    100
 
 // ----------------------------------------------------
@@ -170,62 +158,44 @@ void R_DrawCurrentColor(void)
 // ----------------------------------------------------
 // Paint
 // ----------------------------------------------------
-void R_Paint(int x1, int y1, int x2, int y2)
-{
-    // Draw a simple line if bushSize is 1
-        if(bushSize <= 1) {
-             if(x1 >= 0 && x1 < SCREEN_WIDTH && y1 >= 0 && y1 < SCREEN_HEIGHT)
-                drawpixel(x1, y1, drawing ? currentMainColor : currentAltColor);
+void R_Paint(int x1, int y1, int x2, int y2) {
+    // Draw initial point
+    if (bushSize <= 1) {
+        if (x1 >= 0 && x1 < SCREEN_WIDTH && y1 >= 0 && y1 < SCREEN_HEIGHT) {
+            drawpixel(x1, y1, drawing ? currentMainColor : currentAltColor);
         }
-        else // Otherwise keep drawing circles
-            R_DrawCircle(x1, y1, bushSize);
+    } else {
+        R_DrawCircle(x1, y1, bushSize);
+    }
 
-    // Creates the path from Old Mouse coords and current
-    int repx = 1;
-    int repy = 1;
-    int i = 0;
-    int j = 0;
-    while(x1 != x2 || y1 != y2)
-    {
-        if(i < repx){
-            if(x1 != x2)
-                x1 += x1 > x2 ? -1 : 1;
-            else
-                repx = 0;
-            i++;
-        }
-        if(j < repy){
-            if(y1 != y2)
-                y1 += y1 > y2 ? -1 : 1;
-            else
-                repy = 0;
-            j++;
-        }
-        if (i >= repx && j >= repy){
-            if(x1 != x2 && y1 != y2){
-#if USE_FLOATS
-                float slope = fabs(((float)(y2-y1))/((float)(x2-x1)));
-                if(slope > 128.f)      slope = 128.f;
-                if(slope < 0.0078125f) slope = 0.0078125f;
-                if(slope >= 1)         repy=round(slope);
-                else                   repx=round(1.f/slope);
-#else
-                repx = 1;
-                repy = 1;
-#endif
-            }
-            i = 0;
-            j = 0;
-        }
-        // Draw a simple line if bushSize is 1
-        if(bushSize <= 1) {
-            if( x1 >= 0 && x1 < SCREEN_WIDTH && y1 >= 0 && y1 < SCREEN_HEIGHT)
+    // Bresenham's line algorithm for efficient line drawing
+    int dx = abs(x2 - x1);
+    int dy = abs(y2 - y1);
+    int sx = (x1 < x2) ? 1 : -1;
+    int sy = (y1 < y2) ? 1 : -1;
+    int err = dx - dy;
+
+    while (x1 != x2 || y1 != y2) {
+        if (bushSize <= 1) {
+            if (x1 >= 0 && x1 < SCREEN_WIDTH && y1 >= 0 && y1 < SCREEN_HEIGHT) {
                 drawpixel(x1, y1, drawing ? currentMainColor : currentAltColor);
-        }
-        else // Otherwise keep drawing circles
+            }
+        } else {
             R_DrawCircle(x1, y1, bushSize);
+        }
+
+        int e2 = 2 * err;
+        if (e2 > -dy) {
+            err -= dy;
+            x1 += sx;
+        }
+        if (e2 < dx) {
+            err += dx;
+            y1 += sy;
+        }
     }
 }
+
 
 // ----------------------------------------------------
 // Used to draw at 2+px bush size.
