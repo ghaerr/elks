@@ -4,18 +4,6 @@
 #include "event.h"
 #include "graphics.h"
 
-#if defined(__WATCOMC__) || defined(__ia16__)
-#define USE_FLOATS  0       /* =1 for float calculation of line slope */
-#endif
-
-#ifdef __ia16__
-#define round(n)    floor(n)
-#endif
-
-#if USE_FLOATS
-#include <math.h>
-#endif
-
 #define FLOOD_FILL_STACK    100
 
 // ----------------------------------------------------
