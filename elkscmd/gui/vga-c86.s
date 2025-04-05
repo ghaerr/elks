@@ -66,13 +66,13 @@ _vga_drawpixel:
 
         ;mov     dx, #BYTESPERLN ; AX := [y * BYTESPERLN]
         ;mul     dx
-        shl     ax,1            ; AX := [y * 80] (= y*64 + y*16)
-        shl     ax,1
-        shl     ax,1
-        shl     ax,1
+        shl     ax, 1           ; AX := [y * 80] (= y*64 + y*16)
+        shl     ax, 1
+        shl     ax, 1
+        shl     ax, 1
         mov     dx, ax
-        shl     ax,1
-        shl     ax,1
+        shl     ax, 1
+        shl     ax, 1
         add     ax, dx
 
         and     cl, #7          ; CL := x & 7
@@ -159,19 +159,19 @@ _vga_drawhline:
         ; compute pixel address
         ;mov     dx, #BYTESPERLN ; AX := [row * BYTESPERLN]
         ;mul     dx
-        shl     ax,1            ; AX := [row * 80] (= row*64 + y*16)
-        shl     ax,1
-        shl     ax,1
-        shl     ax,1
+        shl     ax, 1           ; AX := [row * 80] (= row*64 + y*16)
+        shl     ax, 1
+        shl     ax, 1
+        shl     ax, 1
         mov     dx, ax
-        shl     ax,1
-        shl     ax,1
+        shl     ax, 1
+        shl     ax, 1
         add     ax, dx
 
         mov     cl, bl          ; save low order column bits
-        shr     bx, #1          ; BX := [col / 8]
-        shr     bx, #1
-        shr     bx, #1
+        shr     bx, 1           ; BX := [col / 8]
+        shr     bx, 1
+        shr     bx, 1
         add     bx, ax          ; BX := [row * BYTESPERLN] + [col / 8]
         and     cl, #7          ; CL := [col & 7]
         xor     cl, #7          ; CL := 7 - [col & 7]
@@ -310,19 +310,19 @@ L311:   inc     cx              ; CX := number of pixels to draw
         push    dx
         ;mov     dx, #BYTESPERLN ; AX := [row * BYTESPERLN]
         ;mul     dx
-        shl     ax,1            ; AX := [row * 80] (= row*64 + row*16)
-        shl     ax,1
-        shl     ax,1
-        shl     ax,1
+        shl     ax, 1           ; AX := [row * 80] (= row*64 + row*16)
+        shl     ax, 1
+        shl     ax, 1
+        shl     ax, 1
         mov     dx, ax
-        shl     ax,1
-        shl     ax,1
+        shl     ax, 1
+        shl     ax, 1
         add     ax, dx
 
         mov     cl, bl          ; save low order column bits
-        shr     bx, #1          ; BX := [col / 8]
-        shr     bx, #1
-        shr     bx, #1
+        shr     bx, 1           ; BX := [col / 8]
+        shr     bx, 1
+        shr     bx, 1
         add     bx, ax          ; BX := [row * BYTESPERLN] + [col / 8]
         and     cl, #7          ; CL := [col & 7]
         xor     cl, #7          ; CL := 7 - [col & 7]
@@ -372,19 +372,19 @@ _vga_readpixel:
         mov     bx, arg1[bp]    ; BX := x
         ;mov     dx, #BYTESPERLN ; AX := [y * BYTESPERLN]
         ;mul     dx
-        shl     ax,1            ; AX := [y * 80] (= y*64 + y*16)
-        shl     ax,1
-        shl     ax,1
-        shl     ax,1
+        shl     ax, 1           ; AX := [y * 80] (= y*64 + y*16)
+        shl     ax, 1
+        shl     ax, 1
+        shl     ax, 1
         mov     dx, ax
-        shl     ax,1
-        shl     ax,1
+        shl     ax, 1
+        shl     ax, 1
         add     ax, dx
 
         mov     cl, bl          ; save low order column bits
-        shr     bx, #1          ; BX := [x / 8]
-        shr     bx, #1
-        shr     bx, #1
+        shr     bx, 1           ; BX := [x / 8]
+        shr     bx, 1
+        shr     bx, 1
 
         add     bx, ax          ; BX := [y * BYTESPERLN] + [x / 8]
 
