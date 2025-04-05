@@ -160,7 +160,7 @@ vga_drawhline:
         // compute pixel address
         //mov     $BYTESPERLN, %dx // AX := [row * BYTESPERLN]
         //mul     %dx
-        shl     $1, %ax         // AX := [y * 80] (= y*64 + y*16)
+        shl     $1, %ax         // AX := [row * 80] (= row*64 + row*16)
         shl     $1, %ax
         shl     $1, %ax
         shl     $1, %ax

@@ -64,8 +64,16 @@ _vga_drawpixel:
         mov     bx, cx          ; BX := x
         mov     ax, arg1+2[bp]  ; AX := y
 
-        mov     dx, #BYTESPERLN ; AX := [y * BYTESPERLN]
-        mul     dx
+        ;mov     dx, #BYTESPERLN ; AX := [y * BYTESPERLN]
+        ;mul     dx
+        shl     ax,1            ; AX := [y * 80] (= y*64 + y*16)
+        shl     ax,1
+        shl     ax,1
+        shl     ax,1
+        mov     dx, ax
+        shl     ax,1
+        shl     ax,1
+        add     ax, dx
 
         and     cl, #7          ; CL := x & 7
         xor     cl, #7          ; CL := 7 - (x & 7)
@@ -149,8 +157,17 @@ _vga_drawhline:
         mov     bx, x1[bp]
 
         ; compute pixel address
-        mov     dx, #BYTESPERLN ; AX := [row * BYTESPERLN]
-        mul     dx
+        ;mov     dx, #BYTESPERLN ; AX := [row * BYTESPERLN]
+        ;mul     dx
+        shl     ax,1            ; AX := [row * 80] (= row*64 + y*16)
+        shl     ax,1
+        shl     ax,1
+        shl     ax,1
+        mov     dx, ax
+        shl     ax,1
+        shl     ax,1
+        add     ax, dx
+
         mov     cl, bl          ; save low order column bits
         shr     bx, #1          ; BX := [col / 8]
         shr     bx, #1
@@ -291,8 +308,17 @@ L311:   inc     cx              ; CX := number of pixels to draw
 
         ; compute pixel address
         push    dx
-        mov     dx, #BYTESPERLN ; AX := [row * BYTESPERLN]
-        mul     dx
+        ;mov     dx, #BYTESPERLN ; AX := [row * BYTESPERLN]
+        ;mul     dx
+        shl     ax,1            ; AX := [row * 80] (= row*64 + row*16)
+        shl     ax,1
+        shl     ax,1
+        shl     ax,1
+        mov     dx, ax
+        shl     ax,1
+        shl     ax,1
+        add     ax, dx
+
         mov     cl, bl          ; save low order column bits
         shr     bx, #1          ; BX := [col / 8]
         shr     bx, #1
@@ -344,8 +370,16 @@ _vga_readpixel:
 
         mov     ax, arg1+2[bp]  ; AX := y
         mov     bx, arg1[bp]    ; BX := x
-        mov     dx, #BYTESPERLN ; AX := [y * BYTESPERLN]
-        mul     dx
+        ;mov     dx, #BYTESPERLN ; AX := [y * BYTESPERLN]
+        ;mul     dx
+        shl     ax,1            ; AX := [y * 80] (= y*64 + y*16)
+        shl     ax,1
+        shl     ax,1
+        shl     ax,1
+        mov     dx, ax
+        shl     ax,1
+        shl     ax,1
+        add     ax, dx
 
         mov     cl, bl          ; save low order column bits
         shr     bx, #1          ; BX := [x / 8]
