@@ -7,8 +7,6 @@
 #include "graphics.h"
 #include "mouse.h"
 
-#define LIBPATH     "/lib/"     // path to images
-
 // --------------------------------------------
 // Definition of Globals
 // --------------------------------------------

@@ -34,11 +34,11 @@ int event_wait_timeout(struct event *e, int timeout)
     fd_set fdset;
     struct timeval timeint, *tv;
 
-    if (timeout == -1)
+    if (timeout == EV_BLOCK)
         tv = NULL;
-    else {
-        timeint.tv_sec = timeout / 1000;
-        timeint.tv_usec = (timeout % 1000) << 10;   /* approximation for C86 */
+    else {                          /* approximation for speed for C86 and 8088 */
+        timeint.tv_sec = timeout >> 10;
+        timeint.tv_usec = (timeout & 0x3FF) << 10;
         tv = &timeint;
     }
     FD_ZERO(&fdset);

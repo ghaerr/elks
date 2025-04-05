@@ -15,9 +15,9 @@ int SCREENWIDTH;                /* initialized by graphics_open */
 int SCREENHEIGHT;
 int VGA;
 
+#ifdef __WATCOMC__
 static unsigned char mask[8] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
 
-#ifdef __WATCOMC__
 void set_mode(int mode);
 #pragma aux set_mode parm [ax] =                \
     "int 10h",                                  \
@@ -88,7 +88,7 @@ int get_byte(unsigned int offset);
         : "a" ((unsigned short)(mode))          \
     )
 
-#define vga_init()                              \
+#define vga_init_unused()                       \
     asm volatile (                              \
         "mov $0x03ce,%%dx\n"                    \
         "mov $0xff01,%%ax\n"                    \
@@ -234,12 +234,13 @@ void graphics_close(void)
     set_mode(TEXT_MODE);
 }
 
+#ifndef __ia16__
 void drawpixel(int x, int y, int color)
 {
-#if defined(__WATCOMC__) || defined(__ia16__)
+#if defined(__WATCOMC__)
     set_color(color);
     set_mask(mask[x & 7]);
-    asm_drawpixel(y * 80 + (x >> 3));   /* FIXME changes with resolution */
+    asm_drawpixel((y<<6) + (y<<4) + (x >> 3));  /* =y*80 FIXME changes with resolution */
 #endif
 #ifdef __C86__
     if (VGA)
@@ -250,11 +251,11 @@ void drawpixel(int x, int y, int color)
 
 int readpixel(int x, int y)
 {
-#if defined(__WATCOMC__) || defined(__ia16__)
+#if defined(__WATCOMC__)
     int c = 0;
     for (int plane=0; plane<4; plane++) {
         set_read_plane(plane);
-        if (get_byte(y * 80 + (x >> 3)) & mask[x&7])
+        if (get_byte((y<<6) + (y<<4) + (x >> 3)) & mask[x&7])   /* = y * 80 */
             c |= 1 << plane;
     }
     return c;
@@ -266,6 +267,32 @@ int readpixel(int x, int y)
     return 0;
 #endif
 }
+#endif
+
+#if UNUSED
+// Draw a horizontal line from x1,1 to x2,y including final point
+#define _MK_FP(seg,off) ((void __far *)((((unsigned long)(seg)) << 16) | (off)))
+#define EGA_BASE _MK_FP(0xa000, 0)
+void drawhline(int x1, int x2, int y, int color)
+{
+    set_color(color);
+    char __far *dst = (char __far *)EGA_BASE + (x1>>3) + (y<<6) + (y<<4); /* y * 80 */
+    //set_op(0);
+    if ((x1>>3) == (x2>>3)) {
+        set_mask((0xff >> (x1 & 7)) & (0xff << (7 - (x2 & 7))));
+        *dst |= 1;
+    } else {
+        set_mask(0xff >> (x1 & 7));
+        *dst++ |= 1;
+        set_mask(0xff);
+        char __far *last = (char __far *)EGA_BASE + (x2>>3) + (y<<6) + (y<<4);
+        while (dst < last)
+            *dst++ |= 1;
+        set_mask(0xff << (7 - (x2 & 7)));
+        *dst |= 1;
+    }
+}
+#endif
 
 void fill_rect(int x1, int y1, int x2, int y2, int c)
 {

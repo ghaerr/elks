@@ -20,9 +20,14 @@ void R_DrawFullColumn(int x, int color)
 // ----------------------------------------------------
 void R_ClearCanvas(void)
 {
+#ifdef __ia16__
+    for(int y = 0; y < SCREEN_HEIGHT; y++)
+        drawhline(0, SCREEN_WIDTH-1, y, BLACK);
+#else
     for(int y = 0; y < SCREEN_HEIGHT; y++)
       for(int x = 0; x < SCREEN_WIDTH; x++)
         drawpixel(x, y, BLACK);
+#endif
 }
 
 
@@ -35,16 +40,19 @@ void R_DrawPalette()
     R_DrawFullColumn(SCREEN_WIDTH+1, WHITE);
     int paletteX = SCREEN_WIDTH+2;
 
+#ifdef __ia16__
+    for (int y=0; y<SCREEN_HEIGHT; y++)
+        drawhline(paletteX, SCREEN_WIDTH + PALETTE_WIDTH - 1, y, GRAY);
+#else
     while(paletteX < SCREEN_WIDTH + PALETTE_WIDTH)
         R_DrawFullColumn(paletteX++, GRAY);
-
+#endif
     R_DrawAllButtons();
 
     // Draw Logo if VGA 640x480
     if(SCREEN_HEIGHT==480)
     {
-        char* fileName = "/lib/paint.bmp";
-        draw_bmp(fileName, SCREEN_WIDTH + 10, 350);
+        //draw_bmp(LIBPATH "paint.bmp", SCREEN_WIDTH + 10, 350);
     }
 
     R_UpdateColorPicker();
@@ -161,7 +169,7 @@ void R_DrawCurrentColor(void)
 void R_Paint(int x1, int y1, int x2, int y2) {
     // Draw initial point
     if (bushSize <= 1) {
-        if (x1 >= 0 && x1 < SCREEN_WIDTH && y1 >= 0 && y1 < SCREEN_HEIGHT) {
+        if (x1 < SCREEN_WIDTH && y1 < SCREEN_HEIGHT) {
             drawpixel(x1, y1, drawing ? currentMainColor : currentAltColor);
         }
     } else {
@@ -177,7 +185,7 @@ void R_Paint(int x1, int y1, int x2, int y2) {
 
     while (x1 != x2 || y1 != y2) {
         if (bushSize <= 1) {
-            if (x1 >= 0 && x1 < SCREEN_WIDTH && y1 >= 0 && y1 < SCREEN_HEIGHT) {
+            if (x1 < SCREEN_WIDTH && y1 < SCREEN_HEIGHT) {
                 drawpixel(x1, y1, drawing ? currentMainColor : currentAltColor);
             }
         } else {
@@ -202,17 +210,14 @@ void R_Paint(int x1, int y1, int x2, int y2) {
 // ----------------------------------------------------
 void R_DrawCircle(int x0, int y0, int r)
 {
-    if(r > 1)
-    {
+    if(r > 1) {
         for(int y=-r; y<=r; y++)
             for(int x=-r; x<=r; x++)
                 if((2*x+1)*(2*x+1) + (2*y+1)*(2*y+1) <= 4*r*r)
                     if(x0+x >= 0 && x0+x < SCREEN_WIDTH && y0+y >= 0 && y0+y < SCREEN_HEIGHT)
                         drawpixel(x0+x, y0+y, drawing ? currentMainColor : currentAltColor);
-    }
-    else
-    {
-        if(x0 >= 0 && x0 < SCREEN_WIDTH && y0 >= 0 && y0 < SCREEN_HEIGHT)
+    } else {
+        if(x0 < SCREEN_WIDTH && y0 < SCREEN_HEIGHT)
             drawpixel(x0, y0, drawing ? currentMainColor : currentAltColor);
     }
 
