@@ -51,7 +51,7 @@ LOCALFLAGS =
 BINDIR = .
 PROG = $(BINDIR)/cpaint
 SRCS = app.c gui.c input.c render.c event.c mouse.c graphics.c drawbmp.c cursor.c
-OBJS += vga-4bpp.o8j
+OBJS += vga-c86.o8j
 
 all: $(PROG)
 

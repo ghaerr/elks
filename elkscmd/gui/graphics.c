@@ -13,7 +13,6 @@
 
 int SCREENWIDTH;                /* initialized by graphics_open */
 int SCREENHEIGHT;
-int VGA;
 
 #ifdef __WATCOMC__
 static unsigned char mask[8] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
@@ -207,20 +206,17 @@ int graphics_open(int mode)
         SCREENHEIGHT = 350;
         set_mode(mode);
         vga_init();
-        VGA = 1;
         break;
     case VGA_640x480x16:
         SCREENWIDTH = 640;
         SCREENHEIGHT = 480;
         set_mode(mode);
         vga_init();
-        VGA = 1;
         break;
     case PAL_320x200x256:
         SCREENWIDTH = 320;
         SCREENHEIGHT = 200;
         set_mode(mode);
-        VGA = 0;
         break;
     default:
         printf("Unsupported mode: %02x\n", mode);
@@ -234,24 +230,16 @@ void graphics_close(void)
     set_mode(TEXT_MODE);
 }
 
-#ifndef __ia16__
+#ifdef __WATCOMC__
 void drawpixel(int x, int y, int color)
 {
-#if defined(__WATCOMC__)
     set_color(color);
     set_mask(mask[x & 7]);
     asm_drawpixel((y<<6) + (y<<4) + (x >> 3));  /* =y*80 FIXME changes with resolution */
-#endif
-#ifdef __C86__
-    if (VGA)
-        vga_drawpixel(x, y, color);
-    else pal_drawpixel(x, y, color);    /* FIXME C86 */
-#endif
 }
 
 int readpixel(int x, int y)
 {
-#if defined(__WATCOMC__)
     int c = 0;
     for (int plane=0; plane<4; plane++) {
         set_read_plane(plane);
@@ -259,50 +247,41 @@ int readpixel(int x, int y)
             c |= 1 << plane;
     }
     return c;
-#endif
-#ifdef __C86__
-    if (VGA)
-        return vga_readpixel(x, y);
-    //else pal_readpixel(x, y);         /* FIXME C86 */
-    return 0;
-#endif
 }
-#endif
 
-#if UNUSED
+#define EGA_BASE ((char __far *)0xA0000000L)
+
 // Draw a horizontal line from x1,1 to x2,y including final point
-#define _MK_FP(seg,off) ((void __far *)((((unsigned long)(seg)) << 16) | (off)))
-#define EGA_BASE _MK_FP(0xa000, 0)
-void drawhline(int x1, int x2, int y, int color)
+void drawhline(int x1, int x2, int y, int c)
 {
-    set_color(color);
-    char __far *dst = (char __far *)EGA_BASE + (x1>>3) + (y<<6) + (y<<4); /* y * 80 */
-    //set_op(0);
-    if ((x1>>3) == (x2>>3)) {
+    set_color(c);
+    char __far *dst = EGA_BASE + (x1>>3) + (y<<6) + (y<<4); /* y * 80 */
+    if ((x1 >> 3) == (x2 >> 3)) {
         set_mask((0xff >> (x1 & 7)) & (0xff << (7 - (x2 & 7))));
         *dst |= 1;
     } else {
         set_mask(0xff >> (x1 & 7));
         *dst++ |= 1;
         set_mask(0xff);
-        char __far *last = (char __far *)EGA_BASE + (x2>>3) + (y<<6) + (y<<4);
+        char __far *last = EGA_BASE + (x2>>3) + (y<<6) + (y<<4);
         while (dst < last)
             *dst++ |= 1;
         set_mask(0xff << (7 - (x2 & 7)));
         *dst |= 1;
     }
 }
-#endif
 
-void fill_rect(int x1, int y1, int x2, int y2, int c)
+void drawvline(int x, int y1, int y2, int c)
 {
-    int x;
-    while(y1 <= y2) {
-        x = x1;
-        while (x <= x2)
-            drawpixel(x++, y1, c);
-        y1++;
-    }
+    while (y1 <= y2)
+        drawpixel(x, y1++, c);
+}
+#endif /* __WATCOMC__ */
+
+void fillrect(int x1, int y1, int x2, int y2, int c)
+{
+    while(y1 <= y2)
+        drawhline(x1, x2, y1++, c);
 }
 
 #ifdef __C86__
@@ -311,34 +290,25 @@ void pal_drawpixel(int x,int y, int color)
 {
     pal_writevid(y*SCREENWIDTH + x, color);
 }
-#endif
 
-#if LATER
-/* PAL fill rectangle with color c */
-void pal_fill_rect(int x1, int y1, int x2, int y2, int c)
+int pal_readpixel(int x, int y)
+{
+    return 0;       /* FIXME */
+}
+
+/* PAL draw horizontal line */
+void pal_drawhline(int x1, int x2, int y, int c)
 {
     int x, offset;
 
-    while(y1 <= y2) {
-        offset = y1*SCREENWIDTH + x1;
-        for(x = x1; x <= x2; x++)
-            pal_writevid(offset++, c);
-        y1++;
-    }
+    offset = y*SCREENWIDTH + x1;
+    while(x1++ <= x2)
+        pal_writevid(offset++, c);
 }
 
-/* VGA fill rectangle with color c */
-void vga_fill_rect(int x1, int y1, int x2, int y2, int c)
+void pal_drawvline(int x, int y1, int y2, int c)
 {
-    while(y1 <= y2)
-        vga_drawhline(x1, x2, y1++, c);
-}
-
-/* general routines */
-void fill_rect(int x1, int y1, int x2, int y2, int c)
-{
-    if (VGA)
-        vga_fill_rect(x1, y1, x2, y2, c);
-    else pal_fill_rect(x1, y1, x2, y2, c);
+    while (y1 <= y2)
+        pal_drawpixel(x, y1++, c);
 }
 #endif

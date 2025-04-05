@@ -2,8 +2,7 @@
 // High speed version for ia16-elf-gcc using GAS assembly
 // Supports  the following EGA and VGA 16 color modes:
 //       640x480 16 color (mode 0x12)
-//       350 line modes
-//       200 line modes
+//       640x350 16 color (mode 0x10)
 //
 // The algorithms for some of these routines are taken from the book:
 // Programmer's Guide to PC and PS/2 Video Systems by Richard Wilton.
@@ -87,7 +86,7 @@ vga_drawpixel:
         add     %ax, %bx        // BX := [y * BYTESPERLN] + [x / 8]
 
         mov     $0x03ce, %dx    // graphics controller port address
-        xor     %ax, %ax         // set color register 0
+        xor     %ax, %ax        // set color register 0
         mov     arg1+4(%bp), %ah// color pixel value
         out     %ax, %dx
 
@@ -161,7 +160,7 @@ vga_drawhline:
         // compute pixel address
         //mov     $BYTESPERLN, %dx // AX := [row * BYTESPERLN]
         //mul     %dx
-        shl     $1, %ax         // AX := [y * 80] (= y*64 + y*16)
+        shl     $1, %ax         // AX := [row * 80] (= row*64 + row*16)
         shl     $1, %ax
         shl     $1, %ax
         shl     $1, %ax
@@ -260,97 +259,104 @@ L44:    mov     %bl, %ah        // AH := bit mask for last byte
         pop     %bp
         ret
 
-#if UNUSED
-;
-; Draw a vertical line from x,y1 to x,y2 including final point
-; void vga_drawvline(int x, int y1, int y2, int color);
-;
-; C version:
-;   //set_op(0);
-;   set_color(c);
-;   select_mask();
-;   set_mask(mask[x&7]);
-;   char far *dst = SCREENBASE + x / 8 + y1 * BYTESPERLN;
-;   char far *last = SCREENBASE + x / 8 + y2 * BYTESPERLN;
-;   while (dst < last) {
-;       *dst |= 1;
-;       dst += BYTESPERLN;
-;   }
-;
+//
+// Draw a vertical line from x,y1 to x,y2 including final point
+// void vga_drawvline(int x, int y1, int y2, int color)
+//
+// C version:
+//   //set_op(0);
+//   set_color(c);
+//   select_mask();
+//   set_mask(mask[x&7]);
+//   char far *dst = SCREENBASE + x / 8 + y1 * BYTESPERLN;
+//   char far *last = SCREENBASE + x / 8 + y2 * BYTESPERLN;
+//   while (dst < last) {
+//       *dst |= 1;
+//       dst += BYTESPERLN;
+//   }
+//
 
-x       = arg1          ; first X coordinate
-y1      = arg1 + 2      ; first Y coordinate
-y2      = arg1 + 4      ; second Y coordinate
-color   = arg1 + 6      ; pixel value
+#define x       arg1            // first X coordinate
+#define y1      arg1 + 2        // first Y coordinate
+#define y2      arg1 + 4        // second Y coordinate
+#define color   arg1 + 6        // pixel value
 
-        .global  _vga_drawvline
-_vga_drawvline:
-        push    bp              ; setup stack frame and preserve registers
-        mov     bp, sp
-        push    ds
+        .global  vga_drawvline
+vga_drawvline:
+        push    %bp             // setup stack frame and preserve registers
+        mov     %sp, %bp
+        push    %ds
 
-        mov     dx, #0x03ce     ; DX := Graphics Controller port address
-        ;mov     ax, #0x0003     ; data rotate register 3 NOP 0
-        ;out     dx, ax
+        mov     $0x03ce, %dx    // DX := Graphics Controller port address
+        //mov     ax, #0x0003   // data rotate register 3 NOP 0
+        //out     dx, ax
 
-        xor     al, al          ; set Set/Reset register 0 with color
-        mov     ah, color[bp]
-        out     dx, ax
+        xor     %al, %al        // set Set/Reset register 0 with color
+        mov     color(%bp),%ah
+        out     %ax, %dx
 
-        mov     ax, #0x0f01     ; AH := bit plane mask for Enable Set/Reset
-        out     dx, ax          ; AL := Enable Set/Reset register number
+        mov     $0x0f01, %ax    // AH := bit plane mask for Enable Set/Reset
+        out     %ax, %dx        // AL := Enable Set/Reset register number
 
-        ; prepare to draw vertical line
-        mov     ax, y1[bp]      ; AX := y1
-        mov     cx, y2[bp]      ; BX := y2
-        sub     cx, ax          ; CX := dy
+        // prepare to draw vertical line
+        mov     y1(%bp), %ax    // AX := y1
+        mov     y2(%bp), %cx    // BX := y2
+        sub     %ax, %cx        // CX := dy
 
-L311:   inc     cx              ; CX := number of pixels to draw
-        mov     bx, x[bp]       ; BX := x
-        push    cx              ; save register
+L311:   inc     %cx             // CX := number of pixels to draw
+        mov     x(%bp), %bx     // BX := x
+        push    %cx             // save register
 
-        ; compute pixel address
-        push    dx
-        mov     dx, #BYTESPERLN ; AX := [row * BYTESPERLN]
-        mul     dx
-        mov     cl, bl          ; save low order column bits
-        shr     bx, #1          ; BX := [col / 8]
-        shr     bx, #1
-        shr     bx, #1
-        add     bx, ax          ; BX := [row * BYTESPERLN] + [col / 8]
-        and     cl, #7          ; CL := [col & 7]
-        xor     cl, #7          ; CL := 7 - [col & 7]
-        mov     ah, #1          ; AH := 1 << [7 - [col & 7]]    [mask]
-        mov     dx, #0x0A000    ; DS := EGA buffer segment address
-        mov     ds, dx          ; DS:BX -> video buffer
-        pop     dx
-                                ; AH := bit mask
-                                ; CL := number bits to shift left
-        ; set up Graphics controller
-        shl     ah, cl          ; AH := bit mask in proper position
-        mov     al, #8          ; AL := Bit Mask register number 8
-        out     dx, ax
+        // compute pixel address
+        push    %dx
+        //mov     $BYTESPERLN, %dx // AX := [row * BYTESPERLN]
+        //mul     %dx
+        shl     $1, %ax         // AX := [row * 80] (= row*64 + row*16)
+        shl     $1, %ax
+        shl     $1, %ax
+        shl     $1, %ax
+        mov     %ax, %dx
+        shl     $1, %dx
+        shl     $1, %dx
+        add     %dx, %ax
 
-        pop     cx              ; restore number of pixels to draw
+        mov     %bl, %cl        // save low order column bits
+        shr     $1, %bx         // BX := [col / 8]
+        shr     $1, %bx
+        shr     $1, %bx
+        add     %ax, %bx        // BX := [row * BYTESPERLN] + [col / 8]
+        and     $7, %cl         // CL := [col & 7]
+        xor     $7, %cl         // CL := 7 - [col & 7]
+        mov     $1, %ah         // AH := 1 << [7 - [col & 7]]    [mask]
+        mov     $0x0A000, %dx   // DS := EGA buffer segment address
+        mov     %dx,%ds         // DS:BX -> video buffer
+        pop     %dx
+                                // AH := bit mask
+                                // CL := number bits to shift left
+        // set up Graphics controller
+        shl     %cl, %ah        // AH := bit mask in proper position
+        mov     $8, %al         // AL := Bit Mask register number 8
+        out     %ax, %dx
 
-        ; draw the line
-        mov     dx, #BYTESPERLN ; increment for video buffer
-L1111:  or      [bx], al        ; set pixel
-        add     bx, dx          ; increment to next line
+        pop     %cx             // restore number of pixels to draw
+
+        // draw the line
+        mov     $BYTESPERLN, %dx // increment for video buffer
+L1111:  or      %al, (%bx)      // set pixel
+        add     %dx, %bx        // increment to next line
         loop    L1111
 
-        ; restore default Graphics Controller state and return to caller
-        ;xor   ax, ax          ; AH := 0, AL := 0
-        ;out   dx, ax          ; restore Set/Reset register
-        ;inc   ax              ; AH := 0, AL := 1
-        ;out   dx, ax          ; restore Enable Set/Reset register
-        ;mov   ax, #0xff08     ; AH := 0xff, AL := 0
-        ;out   dx, ax          ; restore Bit Mask register
+        // restore default Graphics Controller state and return to caller
+        //xor   ax, ax          // AH := 0, AL := 0
+        //out   dx, ax          // restore Set/Reset register
+        //inc   ax              // AH := 0, AL := 1
+        //out   dx, ax          // restore Enable Set/Reset register
+        //mov   ax, #0xff08     // AH := 0xff, AL := 0
+        //out   dx, ax          // restore Bit Mask register
 
-        pop     ds
-        pop     bp
+        pop     %ds
+        pop     %bp
         ret
-#endif
 
 //
 // Read the value of an individual pixel.

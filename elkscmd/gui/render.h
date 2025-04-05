@@ -2,11 +2,6 @@
 #define RENDERING_H_INCLUDED
 
 // ----------------------------------------------------
-// Given an X pixel, draw the whole column
-// ----------------------------------------------------
-void R_DrawFullColumn(int x, int color);
-
-// ----------------------------------------------------
 // Clear the screen
 // ----------------------------------------------------
 void R_ClearCanvas(void);

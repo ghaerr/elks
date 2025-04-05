@@ -2,8 +2,7 @@
 ; High speed version for C86 using AS86 assembly
 ; Supports  the following EGA and VGA 16 color modes:
 ;       640x480 16 color (mode 0x12)
-;       350 line modes
-;       200 line modes
+;       640x350 16 color (mode 0x10)
 ;
 ; The algorithms for some of these routines are taken from the book:
 ; Programmer's Guide to PC and PS/2 Video Systems by Richard Wilton.
@@ -65,8 +64,16 @@ _vga_drawpixel:
         mov     bx, cx          ; BX := x
         mov     ax, arg1+2[bp]  ; AX := y
 
-        mov     dx, #BYTESPERLN ; AX := [y * BYTESPERLN]
-        mul     dx
+        ;mov     dx, #BYTESPERLN ; AX := [y * BYTESPERLN]
+        ;mul     dx
+        shl     ax, 1           ; AX := [y * 80] (= y*64 + y*16)
+        shl     ax, 1
+        shl     ax, 1
+        shl     ax, 1
+        mov     dx, ax
+        shl     ax, 1
+        shl     ax, 1
+        add     ax, dx
 
         and     cl, #7          ; CL := x & 7
         xor     cl, #7          ; CL := 7 - (x & 7)
@@ -150,12 +157,21 @@ _vga_drawhline:
         mov     bx, x1[bp]
 
         ; compute pixel address
-        mov     dx, #BYTESPERLN ; AX := [row * BYTESPERLN]
-        mul     dx
+        ;mov     dx, #BYTESPERLN ; AX := [row * BYTESPERLN]
+        ;mul     dx
+        shl     ax, 1           ; AX := [row * 80] (= row*64 + y*16)
+        shl     ax, 1
+        shl     ax, 1
+        shl     ax, 1
+        mov     dx, ax
+        shl     ax, 1
+        shl     ax, 1
+        add     ax, dx
+
         mov     cl, bl          ; save low order column bits
-        shr     bx, #1          ; BX := [col / 8]
-        shr     bx, #1
-        shr     bx, #1
+        shr     bx, 1           ; BX := [col / 8]
+        shr     bx, 1
+        shr     bx, 1
         add     bx, ax          ; BX := [row * BYTESPERLN] + [col / 8]
         and     cl, #7          ; CL := [col & 7]
         xor     cl, #7          ; CL := 7 - [col & 7]
@@ -292,12 +308,21 @@ L311:   inc     cx              ; CX := number of pixels to draw
 
         ; compute pixel address
         push    dx
-        mov     dx, #BYTESPERLN ; AX := [row * BYTESPERLN]
-        mul     dx
+        ;mov     dx, #BYTESPERLN ; AX := [row * BYTESPERLN]
+        ;mul     dx
+        shl     ax, 1           ; AX := [row * 80] (= row*64 + row*16)
+        shl     ax, 1
+        shl     ax, 1
+        shl     ax, 1
+        mov     dx, ax
+        shl     ax, 1
+        shl     ax, 1
+        add     ax, dx
+
         mov     cl, bl          ; save low order column bits
-        shr     bx, #1          ; BX := [col / 8]
-        shr     bx, #1
-        shr     bx, #1
+        shr     bx, 1           ; BX := [col / 8]
+        shr     bx, 1
+        shr     bx, 1
         add     bx, ax          ; BX := [row * BYTESPERLN] + [col / 8]
         and     cl, #7          ; CL := [col & 7]
         xor     cl, #7          ; CL := 7 - [col & 7]
@@ -345,13 +370,21 @@ _vga_readpixel:
 
         mov     ax, arg1+2[bp]  ; AX := y
         mov     bx, arg1[bp]    ; BX := x
-        mov     dx, #BYTESPERLN ; AX := [y * BYTESPERLN]
-        mul     dx
+        ;mov     dx, #BYTESPERLN ; AX := [y * BYTESPERLN]
+        ;mul     dx
+        shl     ax, 1           ; AX := [y * 80] (= y*64 + y*16)
+        shl     ax, 1
+        shl     ax, 1
+        shl     ax, 1
+        mov     dx, ax
+        shl     ax, 1
+        shl     ax, 1
+        add     ax, dx
 
         mov     cl, bl          ; save low order column bits
-        shr     bx, #1          ; BX := [x / 8]
-        shr     bx, #1
-        shr     bx, #1
+        shr     bx, 1           ; BX := [x / 8]
+        shr     bx, 1
+        shr     bx, 1
 
         add     bx, ax          ; BX := [y * BYTESPERLN] + [x / 8]
 
