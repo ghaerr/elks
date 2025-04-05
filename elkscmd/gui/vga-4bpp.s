@@ -108,7 +108,7 @@ _vga_drawpixel:
 ;   char far *dst = SCREENBASE + x1 / 8 + y * BYTESPERLN;
 ;   select_mask();
 ;   if (x1 / 8 == x2 / 8) {
-;       set_mask((0xff >> (x1 & 7)) & (0xff << (7 - x2 & 7)));
+;       set_mask((0xff >> (x1 & 7)) & (0xff << (7 - (x2 & 7))));
 ;       *dst |= 1;
 ;   } else {
 ;       set_mask(0xff >> (x1 & 7));
@@ -116,7 +116,7 @@ _vga_drawpixel:
 ;       set_mask(0xff);
 ;       last = SCREENBASE + x2 / 8 + y * BYTESPERLN;
 ;       while (dst < last)
-;           *dst++ = 1;
+;           *dst++ |= 1;
 ;       set_mask(0xff << (7 - x2 & 7));
 ;       *dst |= 1;
 ;   }
@@ -127,7 +127,7 @@ y       = arg1 + 4      ; second Y coordinate
 color   = arg1 + 6      ; pixel value
 
         .global _vga_drawhline
- _vga_drawhline:
+_vga_drawhline:
         push    bp              ; setup stack frame and preserve registers
         mov     bp, sp
         push    si
@@ -334,7 +334,7 @@ L1111:  or      [bx], al        ; set pixel
 
 ;
 ; Read the value of an individual pixel.
-; int ega_readpixel(int x, int y);
+; int vga_readpixel(int x, int y);
 ;
         .global _vga_readpixel
 _vga_readpixel:

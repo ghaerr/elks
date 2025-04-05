@@ -7,7 +7,7 @@ ALL += owc
 endif
 
 ifdef C86
-ALL += c86
+#ALL += c86
 endif
 
 all: $(ALL)

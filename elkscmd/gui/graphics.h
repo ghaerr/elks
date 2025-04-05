@@ -13,11 +13,19 @@ extern int VGA;                         /* VGA vs PAL mode */
 /* start/stop graphics mode */
 int graphics_open(int mode);
 void graphics_close(void);
-void drawpixel(int x,int y, int color);
 void fill_rect(int x1, int y1, int x2, int y2, int c);
-int readpixel(int x, int y);
 int draw_bmp(char *path, int x, int y);
 int save_bmp(char *pathname);
+
+#ifdef __ia16__                 /* ASM routines in vga-ia16.S */
+#define drawpixel(x,y,c)        vga_drawpixel(x,y,c)
+#define drawhline(x1,x2,y,c)    vga_drawhline(x1,x2,y,c)
+#define readpixel(x,y)          vga_readpixel(x,y)
+#else
+void drawpixel(int x,int y, int color);
+void drawhline(int x1, int x2, int y, int c);
+int readpixel(int x, int y);
+#endif
 
 /* VGA 16 color, 4bpp routines */
 void vga_init(void);

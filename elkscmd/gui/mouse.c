@@ -24,6 +24,9 @@
 #define MOUSE_PC            0       /* pc/logitech mouse*/
 #define MOUSE_PS2           0       /* PS/2 mouse */
 
+#define SCALE       2               /* default scaling factor for acceleration */
+#define THRESH      5               /* default threshhold for acceleration */
+
 /* states for the mouse*/
 #define IDLE            0       /* start of byte sequence */
 #define XSET            1       /* setting x delta */
@@ -165,6 +168,35 @@ void close_mouse(void)
     mouse_fd = -1;
 }
 
+static void
+filter_relative(int *xpos, int *ypos, int x, int y)
+{
+    int sign = 1;
+
+    if (x < 0) {
+        sign = -1;
+        x = -x;
+    }
+
+    if (x > THRESH)
+        x = THRESH + (x - THRESH) * SCALE;
+    x *= sign;
+
+    sign = 1;
+
+    if (y < 0) {
+        sign = -1;
+        y = -y;
+    }
+
+    if (y > THRESH)
+        y = THRESH + (y - THRESH) * SCALE;
+    y *= sign;
+
+    *xpos = x;
+    *ypos = y;
+}
+
 #if MOUSE_PS2
 /* IntelliMouse PS/2 protocol uses four byte reports
  * (PS/2 protocol omits last byte):
@@ -258,6 +290,9 @@ int read_mouse(int *dx, int *dy, int *dz, int *bptr)
      */
     while (nbytes-- > 0) {
         if ((*parse)((int) *bp++)) {
+#if MOUSE_MICROSOFT
+            filter_relative(&xd, &yd, xd, yd);
+#endif
             *dx = xd;
             *dy = yd;
             *dz = 0;
