@@ -41,21 +41,19 @@ void R_DrawPalette()
     int paletteX = SCREEN_WIDTH+2;
 
 #ifdef __ia16__
-    for (int y=0; y<SCREEN_HEIGHT; y++)
+    for(int y=0; y<SCREEN_HEIGHT; y++)
         drawhline(paletteX, SCREEN_WIDTH + PALETTE_WIDTH - 1, y, GRAY);
 #else
     while(paletteX < SCREEN_WIDTH + PALETTE_WIDTH)
         R_DrawFullColumn(paletteX++, GRAY);
 #endif
+    R_UpdateColorPicker();
+
     R_DrawAllButtons();
 
     // Draw Logo if VGA 640x480
-    if(SCREEN_HEIGHT==480)
-    {
-        //draw_bmp(LIBPATH "paint.bmp", SCREEN_WIDTH + 10, 350);
-    }
-
-    R_UpdateColorPicker();
+    if(SCREEN_HEIGHT == 480)
+        draw_bmp(LIBPATH "paint.bmp", SCREEN_WIDTH + 10, 350);
 }
 
 // ----------------------------------------------------
