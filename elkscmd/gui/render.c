@@ -7,27 +7,11 @@
 #define FLOOD_FILL_STACK    100
 
 // ----------------------------------------------------
-// Given an X pixel, draw the whole column
-// ----------------------------------------------------
-void R_DrawFullColumn(int x, int color)
-{
-    for(int y = 0; y < SCREEN_HEIGHT; y++)
-        drawpixel(x, y, color);
-}
-
-// ----------------------------------------------------
 // Clear the screen
 // ----------------------------------------------------
 void R_ClearCanvas(void)
 {
-#ifdef __ia16__
-    for(int y = 0; y < SCREEN_HEIGHT; y++)
-        drawhline(0, SCREEN_WIDTH-1, y, BLACK);
-#else
-    for(int y = 0; y < SCREEN_HEIGHT; y++)
-      for(int x = 0; x < SCREEN_WIDTH; x++)
-        drawpixel(x, y, BLACK);
-#endif
+    fillrect(0, 0, SCREEN_WIDTH-1, SCREEN_HEIGHT-1, BLACK);
 }
 
 
@@ -37,18 +21,11 @@ void R_ClearCanvas(void)
 void R_DrawPalette()
 {
     // Draw line and background
-    R_DrawFullColumn(SCREEN_WIDTH+1, WHITE);
-    int paletteX = SCREEN_WIDTH+2;
+    drawvline(SCREEN_WIDTH+1, 0, SCREEN_HEIGHT-1, WHITE);
+    fillrect(SCREEN_WIDTH + 2, 0,
+        SCREEN_WIDTH + PALETTE_WIDTH - 1, SCREEN_HEIGHT - 1, GRAY);
 
-#ifdef __ia16__
-    for(int y=0; y<SCREEN_HEIGHT; y++)
-        drawhline(paletteX, SCREEN_WIDTH + PALETTE_WIDTH - 1, y, GRAY);
-#else
-    while(paletteX < SCREEN_WIDTH + PALETTE_WIDTH)
-        R_DrawFullColumn(paletteX++, GRAY);
-#endif
     R_UpdateColorPicker();
-
     R_DrawAllButtons();
 
     // Draw Logo if VGA 640x480
@@ -89,9 +66,14 @@ void DrawButtonCircle(int x0, int y0, int w, int h, int r)
     int cx0 = 2*x0 + w - 1;
     int cy0 = 2*y0 + h - 1;
     for(int y=y0; y<y0 + h; y++)
-        for(int x=x0; x<x0 + w; x++)
-        {
+        for(int x=x0; x<x0 + w; x++) {
+#ifdef __C86__
+            int xx = 2*x-cx0;
+            int yy = 2*y-cy0;
+            int color = (xx*xx + yy*yy <= 4*r*r)? BLACK: WHITE;
+#else
             int color = ((2*x-cx0)*(2*x-cx0)+(2*y-cy0)*(2*y-cy0) <= 4*r*r) ? BLACK : WHITE;
+#endif
             drawpixel(x, y, color);
         }
 }
@@ -202,7 +184,6 @@ void R_Paint(int x1, int y1, int x2, int y2) {
     }
 }
 
-
 // ----------------------------------------------------
 // Used to draw at 2+px bush size.
 // ----------------------------------------------------
@@ -210,10 +191,19 @@ void R_DrawCircle(int x0, int y0, int r)
 {
     if(r > 1) {
         for(int y=-r; y<=r; y++)
-            for(int x=-r; x<=r; x++)
-                if((2*x+1)*(2*x+1) + (2*y+1)*(2*y+1) <= 4*r*r)
-                    if(x0+x >= 0 && x0+x < SCREEN_WIDTH && y0+y >= 0 && y0+y < SCREEN_HEIGHT)
+            for(int x=-r; x<=r; x++) {
+#ifdef __C86__
+                int xx = 2*x+1;
+                int yy = 2*y+1;
+                if (xx*xx + yy*yy <= 4*r*r) {
+#else
+                if((2*x+1)*(2*x+1) + (2*y+1)*(2*y+1) <= 4*r*r) {
+#endif
+                    if(x0+x >= 0 && x0+x < SCREEN_WIDTH &&
+                       y0+y >= 0 && y0+y < SCREEN_HEIGHT)
                         drawpixel(x0+x, y0+y, drawing ? currentMainColor : currentAltColor);
+                }
+            }
     } else {
         if(x0 < SCREEN_WIDTH && y0 < SCREEN_HEIGHT)
             drawpixel(x0, y0, drawing ? currentMainColor : currentAltColor);
