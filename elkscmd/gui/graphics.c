@@ -13,7 +13,6 @@
 
 int SCREENWIDTH;                /* initialized by graphics_open */
 int SCREENHEIGHT;
-int VGA;
 
 #ifdef __WATCOMC__
 static unsigned char mask[8] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
@@ -207,20 +206,17 @@ int graphics_open(int mode)
         SCREENHEIGHT = 350;
         set_mode(mode);
         vga_init();
-        VGA = 1;
         break;
     case VGA_640x480x16:
         SCREENWIDTH = 640;
         SCREENHEIGHT = 480;
         set_mode(mode);
         vga_init();
-        VGA = 1;
         break;
     case PAL_320x200x256:
         SCREENWIDTH = 320;
         SCREENHEIGHT = 200;
         set_mode(mode);
-        VGA = 0;
         break;
     default:
         printf("Unsupported mode: %02x\n", mode);

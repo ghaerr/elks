@@ -2,8 +2,7 @@
 // High speed version for ia16-elf-gcc using GAS assembly
 // Supports  the following EGA and VGA 16 color modes:
 //       640x480 16 color (mode 0x12)
-//       350 line modes
-//       200 line modes
+//       640x350 16 color (mode 0x10)
 //
 // The algorithms for some of these routines are taken from the book:
 // Programmer's Guide to PC and PS/2 Video Systems by Richard Wilton.

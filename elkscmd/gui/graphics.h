@@ -10,12 +10,10 @@
 
 extern int SCREENWIDTH;                 /* set by graphics_open */
 extern int SCREENHEIGHT;
-extern int VGA;                         /* VGA vs PAL mode */
 
 /* start/stop graphics mode */
 int graphics_open(int mode);
 void graphics_close(void);
-void fillrect(int x1, int y1, int x2, int y2, int c);
 int draw_bmp(char *path, int x, int y);
 int save_bmp(char *pathname);
 
@@ -35,8 +33,9 @@ void drawhline(int x1, int x2, int y, int c);
 void drawvline(int x, int y1, int y2, int c);
 int readpixel(int x, int y);
 #endif
+void fillrect(int x1, int y1, int x2, int y2, int c);
 
-/* VGA 16 color, 4bpp routines */
+/* VGA 16 color, 4bpp routines implemented in ASM in vga-ia16.S and vga-c86.s */
 void vga_init(void);
 void vga_drawpixel(int x, int y, int c);
 void vga_drawhline(int x1, int x2, int y, int c);
@@ -45,7 +44,9 @@ int  vga_readpixel(int x, int y);
 
 /* PAL 256 color 8bpp routines */
 void pal_drawpixel(int x, int y, int color);
-void pal_fillrect(int x1, int y1, int x2, int y2, int c);
+void pal_drawhline(int x1, int x2, int y, int c);
+void pal_drawvline(int x, int y1, int y2, int c);
+int  pal_readpixel(int x, int y);
 
 unsigned int strtoi(const char *s, int base);
 
