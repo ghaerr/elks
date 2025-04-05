@@ -30,6 +30,7 @@ void R_DrawCurrentColor(void);
 // Used to draw at 2+px bush size.
 // ----------------------------------------------------
 void R_DrawCircle(int x0, int y0, int r);
+void R_DrawDisk(int x0, int y0, int r, int color, int X_lim);
 
 // ----------------------------------------------------
 // Draws all the Palette Buttons

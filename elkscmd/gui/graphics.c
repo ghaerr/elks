@@ -230,6 +230,13 @@ void graphics_close(void)
     set_mode(TEXT_MODE);
 }
 
+// Draw a horizontal line from x1,1 to x2,y including final point
+void drawhline(int x1, int x2, int y, int c)
+{
+    while (x1 <= x2)
+        drawpixel(x1++, y, c);
+}
+
 #ifdef __WATCOMC__
 void drawpixel(int x, int y, int color)
 {
