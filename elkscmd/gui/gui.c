@@ -50,3 +50,15 @@ int G_ClearScreen(struct button_s* btn)
     R_ClearCanvas();
     return 0;
 }
+
+int G_SetFloodFill(struct button_s* btn)
+{
+    floodFill = true;
+    return 0;
+}
+
+int G_SetBrush(struct button_s* btn)
+{
+    floodFill = false;
+    return 0;
+}
