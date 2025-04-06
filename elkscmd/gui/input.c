@@ -31,11 +31,15 @@ void I_HandleInput(void)
 
                 mx = event.x;
                 my = event.y;
-                if (mx < SCREEN_WIDTH){
-                    if(event.button == BUTTON_L)
-                        drawing = true;
-                    else
-                        altdrawing = true;
+                if (mx < CANVAS_WIDTH){
+                    if(floodFill) {
+                        floodFillCalled = true;
+                    } else {
+                            if(event.button == BUTTON_L)
+                                drawing = true;
+                            else
+                                altdrawing = true;
+                        }
                 }
                 hidecursor();
 
@@ -133,11 +137,11 @@ void I_HandleInput(void)
     my = posy;
 
 #if UNUSED
-    mx = CLAMP(mx, 0, SCREEN_WIDTH + PALETTE_WIDTH);
-    my = CLAMP(my, 0, SCREEN_HEIGHT-1);
+    mx = CLAMP(mx, 0, CANVAS_WIDTH + PALETTE_WIDTH);
+    my = CLAMP(my, 0, CANVAS_HEIGHT-1);
 
-    omx = CLAMP(omx, 0, SCREEN_WIDTH + PALETTE_WIDTH);
-    omy = CLAMP(omy, 0, SCREEN_HEIGHT-1);
+    omx = CLAMP(omx, 0, CANVAS_WIDTH + PALETTE_WIDTH);
+    omy = CLAMP(omy, 0, CANVAS_HEIGHT-1);
 #endif
 }
 

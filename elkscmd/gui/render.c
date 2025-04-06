@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include "app.h"
 #include "render.h"
-// #include "event.h"
 #include "graphics.h"
 
 #define FLOOD_FILL_STACK    100
@@ -11,7 +10,7 @@
 // ----------------------------------------------------
 void R_ClearCanvas(void)
 {
-    fillrect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT-1, BLACK);
+    fillrect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT-1, BLACK);
 }
 
 
@@ -21,16 +20,16 @@ void R_ClearCanvas(void)
 void R_DrawPalette()
 {
     // Draw line and background
-    drawvline(SCREEN_WIDTH+1, 0, SCREEN_HEIGHT-1, WHITE);
-    fillrect(SCREEN_WIDTH + 2, 0,
-        SCREEN_WIDTH + PALETTE_WIDTH - 1, SCREEN_HEIGHT - 1, GRAY);
+    drawvline(CANVAS_WIDTH+1, 0, CANVAS_HEIGHT-1, WHITE);
+    fillrect(CANVAS_WIDTH + 2, 0,
+        CANVAS_WIDTH + PALETTE_WIDTH - 1, CANVAS_HEIGHT - 1, GRAY);
 
     R_UpdateColorPicker();
     R_DrawAllButtons();
 
     // Draw Logo if VGA 640x480
-    if(SCREEN_HEIGHT == 480)
-        draw_bmp(LIBPATH "paint.bmp", SCREEN_WIDTH + 10, 350);
+    if(CANVAS_HEIGHT == 480)
+        draw_bmp(LIBPATH "paint.bmp", CANVAS_WIDTH + 10, 350);
 }
 
 // ----------------------------------------------------
@@ -76,7 +75,7 @@ static int MapRGB(int r, int g, int b)
 void R_UpdateColorPicker(void)
 {
     // Draw RGB scheme
-    int startingPixelXOffset = SCREEN_WIDTH + 10 + 1;
+    int startingPixelXOffset = CANVAS_WIDTH + 10 + 1;
     int startingPixelYOffset = 10 + 1;
 
     //static ColorRGB_t color;
@@ -103,7 +102,7 @@ void R_UpdateColorPicker(void)
 void R_DrawCurrentColor(void)
 {
     // Draw current color
-    int startingPixelXOffset = SCREEN_WIDTH + 10 + 32 + 1;
+    int startingPixelXOffset = CANVAS_WIDTH + 10 + 32 + 1;
     int startingPixelYOffset = 10 + 128 + 10;
 
     fillrect(startingPixelXOffset, startingPixelYOffset, startingPixelXOffset + 61,
@@ -124,7 +123,7 @@ void R_DrawCurrentColor(void)
 void R_Paint(int x1, int y1, int x2, int y2) {
     int color = drawing ? currentMainColor : currentAltColor;
     // Draw initial point
-    R_DrawDisk(x1, y1, bushSize, color, SCREEN_WIDTH);
+    R_DrawDisk(x1, y1, bushSize, color, CANVAS_WIDTH);
 
     // Bresenham's line algorithm for efficient line drawing
     int dx = abs(x2 - x1);
@@ -134,7 +133,7 @@ void R_Paint(int x1, int y1, int x2, int y2) {
     int err = dx - dy;
 
     while (x1 != x2 || y1 != y2) {
-        R_DrawDisk(x1, y1, bushSize, color, SCREEN_WIDTH);
+        R_DrawDisk(x1, y1, bushSize, color, CANVAS_WIDTH);
 
         int e2 = err << 1;
         if (e2 > -dy) {
@@ -163,7 +162,7 @@ void R_DrawDisk(int x0, int y0, int r, int color, int X_lim)
         int xstart = (x0 + x >= 0) ? x0 + x : 0;
         int xend   = (x0 - x <= X_lim) ? x0 - x : X_lim;
 
-        if (y0 + y < SCREEN_HEIGHT)
+        if (y0 + y < CANVAS_HEIGHT)
             drawhline(xstart, xend, y0 + y, color);
 
         if (y0 - y >= 0 && y > 0)
@@ -233,14 +232,14 @@ void R_LineFloodFill(int x, int y, int color, int ogColor)
         while(mRight == false)
         {
             // Fill right
-            if(leftestX < SCREEN_WIDTH && readpixel(leftestX, curElement.y) == ogColor)
+            if(leftestX < CANVAS_WIDTH && readpixel(leftestX, curElement.y) == ogColor)
             {
                 //pixels[leftestX + curElement.y * width] = color;
                 drawpixel(leftestX, curElement.y, color);
 
                 // Check above this pixel
                 if (alreadyCheckedBelow == false && (curElement.y-1) >= 0
-                    && (curElement.y-1) < SCREEN_HEIGHT
+                    && (curElement.y-1) < CANVAS_HEIGHT
                     && readpixel(leftestX, curElement.y-1) == ogColor)
                     {
                         // If we never checked it, add it to the stack
@@ -256,7 +255,7 @@ void R_LineFloodFill(int x, int y, int color, int ogColor)
 
                 // Check below this pixel
                 if (alreadyCheckedAbove == false && (curElement.y+1) >= 0
-                    && (curElement.y+1) < SCREEN_HEIGHT
+                    && (curElement.y+1) < CANVAS_HEIGHT
                     && readpixel(leftestX, curElement.y+1) == ogColor)
                     {
                         // If we never checked it, add it to the stack
@@ -264,7 +263,7 @@ void R_LineFloodFill(int x, int y, int color, int ogColor)
                         alreadyCheckedAbove = true;
                     }
                 else if (alreadyCheckedAbove == true
-                    && (curElement.y+1) < SCREEN_WIDTH
+                    && (curElement.y+1) < CANVAS_WIDTH
                     && readpixel(leftestX, curElement.y+1) != ogColor)
                 {
                     // Skip now, but check next time

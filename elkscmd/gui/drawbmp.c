@@ -319,7 +319,7 @@ draw_bmp(char *path, int x, int y)
     }
     fclose(src);
     return 1;
-    
+
 out:
     fclose(src);
 err:
@@ -469,8 +469,8 @@ int save_bmp(char *pathname)
     if (!ofp)
         return 1;
 
-    cx = SCREEN_WIDTH;
-    cy = SCREEN_HEIGHT;
+    cx = CANVAS_WIDTH;
+    cy = CANVAS_HEIGHT;
     bpp = 8;                /* write 8bpp for now */
     ncolors = (bpp <= 8)? 16: 0;
     bytespp = (bpp+7)/8;
