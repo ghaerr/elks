@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include "app.h"
 #include "render.h"
-#include "event.h"
+// #include "event.h"
 #include "graphics.h"
 
 #define FLOOD_FILL_STACK    100
@@ -11,7 +11,7 @@
 // ----------------------------------------------------
 void R_ClearCanvas(void)
 {
-    fillrect(0, 0, SCREEN_WIDTH-1, SCREEN_HEIGHT-1, BLACK);
+    fillrect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT-1, BLACK);
 }
 
 
@@ -38,17 +38,12 @@ void R_DrawPalette()
 // ----------------------------------------------------
 void R_DrawAllButtons()
 {
-    for(int i = 1; i < PALETTE_BUTTONS_COUNT; i++)
-    {
-        if(paletteButtons[i].render == true)
-        {
-            if(paletteButtons[i].data1 > 0)
-            {
+    for(int i = 1; i < PALETTE_BUTTONS_COUNT; i++) {
+        if(paletteButtons[i].render == true) {
+            if(paletteButtons[i].data1 > 0) {
                 DrawButtonCircle(paletteButtons[i].box.x, paletteButtons[i].box.y,
                     paletteButtons[i].box.w, paletteButtons[i].box.h, paletteButtons[i].data1);
-            }
-            else
-            {
+            } else {
                 draw_bmp(paletteButtons[i].fileName,
                     paletteButtons[i].box.x, paletteButtons[i].box.y);
             }
@@ -62,11 +57,7 @@ void R_DrawAllButtons()
 void DrawButtonCircle(int x0, int y0, int w, int h, int r)
 {
     fillrect(x0, y0, x0 + w-1, y0 + h-1, WHITE);
-    if (r <= 1) {
-        drawpixel(x0 + (w>>1), y0 + (h>>1), BLACK);
-    } else {
-        R_DrawDisk(x0 + (w>>1), y0 + (h>>1), r, BLACK, SCREENWIDTH);
-    }
+    R_DrawDisk(x0 + (w>>1), y0 + (h>>1), r, BLACK, SCREENWIDTH);
 }
 
 #if UNUSED
@@ -94,8 +85,8 @@ void R_UpdateColorPicker(void)
     //hsv.s = y * 4;
     //hsv.v = paletteBrightness;
     //color = HSVtoRGB(hsv);
-    for(int cy = 0; cy < 4; cy++){
-        for(int cx = 0; cx < 4; cx++){
+    for(int cy = 0; cy < 4; cy++) {
+        for(int cx = 0; cx < 4; cx++) {
             int color = cx + (cy<<2);
             int x0 = (cx<<5)+startingPixelXOffset;
             int y0 = (cy<<5)+startingPixelYOffset;
@@ -119,7 +110,7 @@ void R_DrawCurrentColor(void)
         startingPixelYOffset + 29, currentMainColor);
 
     // Draw white frame if the main color matches the panel backgound
-    if (currentMainColor == GRAY){
+    if (currentMainColor == GRAY) {
         drawhline(startingPixelXOffset, startingPixelXOffset + 61, 0 + startingPixelYOffset, WHITE);
         drawhline(startingPixelXOffset, startingPixelXOffset + 61, 29+ startingPixelYOffset, WHITE);
         drawvline(0 +startingPixelXOffset, startingPixelYOffset, 29 + startingPixelYOffset, WHITE);
@@ -133,11 +124,7 @@ void R_DrawCurrentColor(void)
 void R_Paint(int x1, int y1, int x2, int y2) {
     int color = drawing ? currentMainColor : currentAltColor;
     // Draw initial point
-    if (bushSize <= 1) {
-        drawpixel(x1, y1, color);
-    } else {
-        R_DrawDisk(x1, y1, bushSize, color, SCREEN_WIDTH);
-    }
+    R_DrawDisk(x1, y1, bushSize, color, SCREEN_WIDTH);
 
     // Bresenham's line algorithm for efficient line drawing
     int dx = abs(x2 - x1);
@@ -147,11 +134,7 @@ void R_Paint(int x1, int y1, int x2, int y2) {
     int err = dx - dy;
 
     while (x1 != x2 || y1 != y2) {
-        if (bushSize <= 1) {
-            drawpixel(x1, y1, color);
-        } else {
-            R_DrawDisk(x1, y1, bushSize, color, SCREEN_WIDTH);
-        }
+        R_DrawDisk(x1, y1, bushSize, color, SCREEN_WIDTH);
 
         int e2 = err << 1;
         if (e2 > -dy) {
@@ -168,38 +151,17 @@ void R_Paint(int x1, int y1, int x2, int y2) {
 // ----------------------------------------------------
 // Used to draw at 2+px bush size.
 // ----------------------------------------------------
-void R_DrawCircle(int x0, int y0, int r)
-{
-    if(r > 1) {
-        for(int y=-r; y<=r; y++)
-            for(int x=-r; x<=r; x++) {
-#ifdef __C86__
-                int xx = 2*x+1;
-                int yy = 2*y+1;
-                if (xx*xx + yy*yy <= 4*r*r) {
-#else
-                if((2*x+1)*(2*x+1) + (2*y+1)*(2*y+1) <= 4*r*r) {
-#endif
-                    if(x0+x >= 0 && x0+x < SCREEN_WIDTH &&
-                       y0+y >= 0 && y0+y < SCREEN_HEIGHT)
-                        drawpixel(x0+x, y0+y, drawing ? currentMainColor : currentAltColor);
-                }
-            }
-    } else {
-        if(x0 < SCREEN_WIDTH && y0 < SCREEN_HEIGHT)
-            drawpixel(x0, y0, drawing ? currentMainColor : currentAltColor);
-    }
-
-}
-
 void R_DrawDisk(int x0, int y0, int r, int color, int X_lim)
 // Based on Algorithm http://members.chello.at/easyfilter/bresenham.html
 {
+    if (bushSize <= 1){
+        drawpixel(x0, y0, color);
+        return;
+    }
     int x = -r, y = 0, err = 2-2*r; /* II. Quadrant */
-    do
-    {
+    do {
         int xstart = (x0 + x >= 0) ? x0 + x : 0;
-        int xend   = (x0 - x < X_lim) ? x0 - x : X_lim - 1;
+        int xend   = (x0 - x <= X_lim) ? x0 - x : X_lim;
 
         if (y0 + y < SCREEN_HEIGHT)
             drawhline(xstart, xend, y0 + y, color);
@@ -208,7 +170,7 @@ void R_DrawDisk(int x0, int y0, int r, int color, int X_lim)
             drawhline(xstart, xend, y0 - y, color);
 
         r = err;
-        if (r <= y) err +=  ++y*2+1;           /* e_xy+e_y < 0 */
+        if (r <= y) err +=  ++y*2+1;          /* e_xy+e_y < 0 */
         if (r > x || err > y) err += ++x*2+1; /* e_xy+e_x > 0 or no 2nd y-step */
     }
     while (x < 0);
