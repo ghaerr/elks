@@ -25,18 +25,20 @@ void I_HandleInput(void)
 
             // Get Mouse Pos
             case EVT_MOUSEDOWN:
-                if(event.button == BUTTON_L)
-                    drawing = true;
-                else
-                    altdrawing = true;
-                hidecursor();
-
                 // Get latest mouse
                 omx = mx;
                 omy = my;
 
                 mx = event.x;
                 my = event.y;
+                if (mx < SCREEN_WIDTH){
+                    if(event.button == BUTTON_L)
+                        drawing = true;
+                    else
+                        altdrawing = true;
+                }
+                hidecursor();
+
             break;
 
             case EVT_MOUSEUP:
@@ -118,7 +120,7 @@ void I_HandleInput(void)
                 break;
         }
 
-        // Handle 
+        // Handle
         I_HandleGUI(&event);
     }
 
@@ -166,9 +168,9 @@ void I_HandleGUI(struct event *event)
 
                 //If the mouse is over the button
                 if( ( x > paletteButtons[i].box.x ) &&
-                    ( x < paletteButtons[i].box.x + paletteButtons[i].box.w ) && 
+                    ( x < paletteButtons[i].box.x + paletteButtons[i].box.w ) &&
                     ( y > paletteButtons[i].box.y ) &&
-                    ( y < paletteButtons[i].box.y + paletteButtons[i].box.h ) )                
+                    ( y < paletteButtons[i].box.y + paletteButtons[i].box.h ) )
                 {
                     // Callback
                     paletteButtons[i].OnClick(&paletteButtons[i]);

@@ -197,6 +197,8 @@ void A_GameLoop(void)
 {
     movecursor(mx, my);
 
+    if((drawing || altdrawing) && mx > SCREEN_WIDTH) mx = SCREEN_WIDTH;
+
     // In canvas
     if(mx <= SCREEN_WIDTH)
     {
