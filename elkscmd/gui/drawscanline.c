@@ -200,7 +200,7 @@ void vga_drawscanline(unsigned char *colors, int x, int y, int length)
     if (soffs)
         plane0[0] |= *address & ~mask[soffs];
     if (eoffs)
-        plane0[k] |= *(address + l1 - 1) & mask[eoffs];
+        plane0[k] |= *(address + k) & mask[eoffs];
     MEMCPY(address, plane0, l1);
     
     /* REG 2: write plane 1 */
@@ -210,7 +210,7 @@ void vga_drawscanline(unsigned char *colors, int x, int y, int length)
     if (soffs)
         plane1[0] |= *address & ~mask[soffs];
     if (eoffs)
-        plane1[k] |= *(address + l1 - 1) & mask[eoffs];
+        plane1[k] |= *(address + k) & mask[eoffs];
     MEMCPY(address, plane1, l1);
     
     /* REG 2: write plane 2 */
@@ -220,7 +220,7 @@ void vga_drawscanline(unsigned char *colors, int x, int y, int length)
     if (soffs)
         plane2[0] |= *address & ~mask[soffs];
     if (eoffs)
-        plane2[k] |= *(address + l1 - 1) & mask[eoffs];
+        plane2[k] |= *(address + k) & mask[eoffs];
     MEMCPY(address, plane2, l1);
     
     /* REG 2: write plane 3 */
@@ -230,7 +230,7 @@ void vga_drawscanline(unsigned char *colors, int x, int y, int length)
     if (soffs)
         plane3[0] |= *address & ~mask[soffs];
     if (eoffs)
-        plane3[k] |= *(address + l1 - 1) & mask[eoffs];
+        plane3[k] |= *(address + k) & mask[eoffs];
     MEMCPY(address, plane3, l1);
     
     /* REG 2: restore map mask register */
