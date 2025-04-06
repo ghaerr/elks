@@ -42,6 +42,9 @@ void vga_drawhline(int x1, int x2, int y, int c);
 void vga_drawvline(int x, int y1, int y2, int c);
 int  vga_readpixel(int x, int y);
 
+/* ia16 only fast scanline blit */
+void vga_drawscanline(unsigned char *colors, int x, int y, int length);
+
 /* PAL 256 color 8bpp routines */
 void pal_drawpixel(int x, int y, int color);
 void pal_drawhline(int x1, int x2, int y, int c);

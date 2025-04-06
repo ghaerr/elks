@@ -163,6 +163,7 @@ draw_bmp(char *path, int x, int y)
     BMPFILEHEAD bmpf;
     static unsigned char imagebits[640*4];  /* static so no stack usage */
     static struct palette bmppal[256];
+    static int cache[256];
 
     if ((src = fopen(path, "r")) == NULL)
         goto err;
@@ -232,6 +233,7 @@ draw_bmp(char *path, int x, int y)
 #endif
     case 8:
         pitch = width;
+        memset(cache, 0xff, 256*sizeof(int));
         break;
     case 24:
         pitch = width * 3;
@@ -289,10 +291,22 @@ draw_bmp(char *path, int x, int y)
         switch (bpp) {
         case 8:
             for (w = 0; w < width; w++) {
-                struct palette *pal = &bmppal[image[w]];
-                unsigned int c = find_nearest_color(pal->r, pal->g, pal->b);
+                unsigned int c;
+                struct palette *pal;
+                if ((c = cache[image[w]]) == 0xffff) {
+                    pal = &bmppal[image[w]];
+                    c = find_nearest_color(pal->r, pal->g, pal->b);
+                    cache[image[w]] = c;
+                }
+#ifdef __ia16__
+                image[w] = c;
+#else
                 drawpixel(x+w, y+h, c);
+#endif
             }
+#ifdef __ia16__
+            vga_drawscanline(image, x, y+h, width);
+#endif
             break;
         case 24:
             for (w = 0; w < width; w++) {
