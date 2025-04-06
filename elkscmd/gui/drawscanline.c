@@ -141,7 +141,7 @@ static unsigned char plane3[80];
         )
 #endif
 
-static void MEMCPY(unsigned char __far *dst, unsigned char __far *src, int n)
+static void MEMCPY(unsigned char __far *dst, unsigned char *src, int n)
 {
     while (n--)
         *dst++ = *src++;
