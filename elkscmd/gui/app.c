@@ -14,6 +14,7 @@ app_t DrawingApp;
 
 boolean_t drawing;              // Are we drawing with the left mouse button?
 boolean_t altdrawing;           // Are we drawing with the right mouse button?
+boolean_t floodFill;            // Are we flood filling with the left mouse button?
 boolean_t floodFillCalled;      // True if user is trying to floodfill
 int mx,my;                      // Mouse X and Y
 int omx, omy;                   // Old MouseX and Old MouseY (pos at previous update)
@@ -38,10 +39,7 @@ void A_InitTomentPainter(void)
     graphics_open(EGA? VGA_640x350x16: VGA_640x480x16);
 
     DrawingApp.quit = false;
-
-    // for(int y = 0; y < SCREEN_HEIGHT; y++)
-    //     for(int x = 0; x < SCREEN_WIDTH; x++)
-    //         drawpixel(x, y, BLACK);
+    floodFill = false;
 
     A_InitPalette();
 }
@@ -61,132 +59,81 @@ void A_InitPalette(void)
 
 
     // Create and configure buttons
-#if UNUSED
-    paletteButtons[0].name = "BrightnessSelector";
-    paletteButtons[0].box.x = 775;
-    paletteButtons[0].box.y = 10;
-    paletteButtons[0].box.w = 16;
-    paletteButtons[0].box.h = 64;
-    paletteButtons[0].OnClick = G_BrightnessButtonOnClick;
-    paletteButtons[0].render = false;
-#endif
-    paletteButtons[1].name = "ColorPicker";
-    paletteButtons[1].box.x = SCREEN_WIDTH + 10;
-    paletteButtons[1].box.y = 10;
-    paletteButtons[1].box.w = 128;
-    paletteButtons[1].box.h = 128;
-    paletteButtons[1].OnClick = G_ColorPickerOnClick;
-    paletteButtons[1].render = false;
+    // --- Helper macro to initialize buttons ---
+#define INIT_BUTTON(ID, LABEL, X, Y, W, H, CLICK, RENDER) \
+    paletteButtons[ID].name = LABEL; \
+    paletteButtons[ID].box.x = (X); \
+    paletteButtons[ID].box.y = (Y); \
+    paletteButtons[ID].box.w = (W); \
+    paletteButtons[ID].box.h = (H); \
+    paletteButtons[ID].OnClick = CLICK; \
+    paletteButtons[ID].render = RENDER;
 
-    // Bush Sizes 1
-    paletteButtons[2].name = "BushSize1";
-    paletteButtons[2].box.x = SCREEN_WIDTH + 11 + 32*0;
-    paletteButtons[2].box.y = 195;
-    paletteButtons[2].box.w = 30;
-    paletteButtons[2].box.h = 30;
-    paletteButtons[2].OnClick = G_SetBushSize;
-    paletteButtons[2].data1 = 1;
-    paletteButtons[2].render = true;
+    #if UNUSED
+        INIT_BUTTON(0, "BrightnessSelector", 775, 10, 16, 64, G_BrightnessButtonOnClick, 0);
+    #endif
 
-    // Bush Sizes 2
-    paletteButtons[3].name = "BushSize2";
-    paletteButtons[3].box.x = SCREEN_WIDTH + 11 + 32*1;
-    paletteButtons[3].box.y = 195;
-    paletteButtons[3].box.w = 30;
-    paletteButtons[3].box.h = 30;
-    paletteButtons[3].OnClick = G_SetBushSize;
-    paletteButtons[3].data1 = 2;
-    paletteButtons[3].render = true;
+    // --- Color Picker ---
+    INIT_BUTTON(1, "ColorPicker", CANVAS_WIDTH + 10, 10, 128, 128, G_ColorPickerOnClick, 0);
 
-    // Bush Sizes 3
-    paletteButtons[4].name = "BushSize3";
-    paletteButtons[4].box.x = SCREEN_WIDTH + 11 + 32*2;
-    paletteButtons[4].box.y = 195;
-    paletteButtons[4].box.w = 30;
-    paletteButtons[4].box.h = 30;
-    paletteButtons[4].OnClick = G_SetBushSize;
-    paletteButtons[4].data1 = 3;
-    paletteButtons[4].render = true;
+    // --- Brush Size Buttons (8 total in two rows) ---
+    {
+        int brushSizes[8] = {1, 2, 3, 4,
+                                   6, 8, 10, 12};
+        char* brushNames[8] = {
+            "BushSize1", "BushSize2", "BushSize3", "BushSize4",
+            "BushSize5", "BushSize6", "BushSize7", "BushSize8"
+        };
 
-    // Bush Sizes 4
-    paletteButtons[5].name = "BushSize4";
-    paletteButtons[5].box.x = SCREEN_WIDTH + 11 + 32*3;
-    paletteButtons[5].box.y = 195;
-    paletteButtons[5].box.w = 30;
-    paletteButtons[5].box.h = 30;
-    paletteButtons[5].OnClick = G_SetBushSize;
-    paletteButtons[5].data1 = 4;
-    paletteButtons[5].render = true;
+        for (int i = 0; i < 8; ++i) {
+            int index = i + 2;
+            int col = i % 4;
+            int row = i / 4;
+            INIT_BUTTON(index,
+                        brushNames[i],
+                        CANVAS_WIDTH + 11 + 32 * col,
+                        195 + row * 32,
+                        30, 30,
+                        G_SetBushSize, 1);
+            paletteButtons[index].data1 = brushSizes[i];
+        }
+    }
 
-    // Bush Sizes 5
-    paletteButtons[6].name = "BushSize5";
-    paletteButtons[6].box.x = SCREEN_WIDTH + 11 + 32*0;
-    paletteButtons[6].box.y = 227;
-    paletteButtons[6].box.w = 30;
-    paletteButtons[6].box.h = 30;
-    paletteButtons[6].OnClick = G_SetBushSize;
-    paletteButtons[6].data1 = 6;
-    paletteButtons[6].render = true;
+    // --- Utility Buttons ---
+    {
+        int utilCount = 5;
+        int indices[]   = {10, 11, 12, 13, 14};
+        char* names[]   = {"SaveButton", "FillButton", "BrushButton", "QuitButton", "Cls"};
+        int offsetX[]   = {0,  32,   0, 32 * 3, 32 * 3};
+        int offsetY[]   = {0, -32, -32,      0,    -32};
+        int (*handlers[])(struct button_s*) = {
+            G_SaveButtonOnClick,
+            G_SetFloodFill,
+            G_SetBrush,
+            G_QuitButtonOnClick,
+            G_ClearScreen
+        };
+        char* files[] = {
+            LIBPATH "save.bmp",
+            LIBPATH "fill.bmp",
+            LIBPATH "brush.bmp",
+            LIBPATH "quit.bmp",
+            LIBPATH "cls.bmp"
+        };
 
-    // Bush Sizes 6
-    paletteButtons[7].name = "BushSize6";
-    paletteButtons[7].box.x = SCREEN_WIDTH + 11 + 32*1;
-    paletteButtons[7].box.y = 227;
-    paletteButtons[7].box.w = 30;
-    paletteButtons[7].box.h = 30;
-    paletteButtons[7].OnClick = G_SetBushSize;
-    paletteButtons[7].data1 = 8;
-    paletteButtons[7].render = true;
+        for (int i = 0; i < utilCount; ++i) {
+            INIT_BUTTON(indices[i],
+                        names[i],
+                        CANVAS_WIDTH + 10 + offsetX[i],
+                        300 + offsetY[i],
+                        32, 32,
+                        handlers[i],
+                        1);
+            paletteButtons[indices[i]].fileName = files[i];
+        }
+    }
 
-    // Bush Sizes 7
-    paletteButtons[8].name = "BushSize7";
-    paletteButtons[8].box.x = SCREEN_WIDTH + 11 + 32*2;
-    paletteButtons[8].box.y = 227;
-    paletteButtons[8].box.w = 30;
-    paletteButtons[8].box.h = 30;
-    paletteButtons[8].OnClick = G_SetBushSize;
-    paletteButtons[8].data1 = 10;
-    paletteButtons[8].render = true;
-
-    // Bush Sizes 8
-    paletteButtons[9].name = "BushSize8";
-    paletteButtons[9].box.x = SCREEN_WIDTH + 11 + 32*3;
-    paletteButtons[9].box.y = 227;
-    paletteButtons[9].box.w = 30;
-    paletteButtons[9].box.h = 30;
-    paletteButtons[9].OnClick = G_SetBushSize;
-    paletteButtons[9].data1 = 12;
-    paletteButtons[9].render = true;
-
-    // Save
-    paletteButtons[10].name = "SaveButton";
-    paletteButtons[10].box.x = SCREEN_WIDTH + 10;
-    paletteButtons[10].box.y = 300;
-    paletteButtons[10].box.w = 32;
-    paletteButtons[10].box.h = 32;
-    paletteButtons[10].OnClick = G_SaveButtonOnClick;
-    paletteButtons[10].render = true;
-    paletteButtons[10].fileName = LIBPATH "save.bmp";
-
-    // Clear Screen
-    paletteButtons[11].name = "Cls";
-    paletteButtons[11].box.x = SCREEN_WIDTH + 10 + 32*2;
-    paletteButtons[11].box.y = 300;
-    paletteButtons[11].box.w = 32;
-    paletteButtons[11].box.h = 32;
-    paletteButtons[11].OnClick = G_ClearScreen;
-    paletteButtons[11].render = true;
-    paletteButtons[11].fileName = LIBPATH "cls.bmp";
-
-    // Quit
-    paletteButtons[12].name = "QuitButton";
-    paletteButtons[12].box.x = SCREEN_WIDTH + 10 + 32*3;
-    paletteButtons[12].box.y = 300;
-    paletteButtons[12].box.w = 32;
-    paletteButtons[12].box.h = 32;
-    paletteButtons[12].OnClick = G_QuitButtonOnClick;
-    paletteButtons[12].render = true;
-    paletteButtons[12].fileName = LIBPATH "quit.bmp";
+#undef INIT_BUTTON
 }
 
 
@@ -197,10 +144,10 @@ void A_GameLoop(void)
 {
     movecursor(mx, my);
 
-    if((drawing || altdrawing) && mx > SCREEN_WIDTH) mx = SCREEN_WIDTH;
+    if((drawing || altdrawing) && mx > CANVAS_WIDTH) mx = CANVAS_WIDTH;
 
     // In canvas
-    if(mx <= SCREEN_WIDTH)
+    if(mx <= CANVAS_WIDTH)
     {
         mouseOnPalette = false;
 

@@ -2,8 +2,8 @@
 #define APPLICATION_H_INCLUDED
 
 // Drawing + Palette
-#define SCREEN_WIDTH    (SCREENWIDTH-PALETTE_WIDTH)
-#define SCREEN_HEIGHT   SCREENHEIGHT
+#define CANVAS_WIDTH    (SCREENWIDTH-PALETTE_WIDTH)
+#define CANVAS_HEIGHT   SCREENHEIGHT
 
 #define PALETTE_WIDTH 148
 
@@ -60,7 +60,8 @@ extern app_t DrawingApp;
 
 extern boolean_t drawing;              // Are we drawing with the left mouse button?
 extern boolean_t altdrawing;           // Are we drawing with the right mouse button?
-extern boolean_t floodFillCalled;      // True if user is trying to flood fiil
+extern boolean_t floodFill;            // Are we flood filling with the left mouse button?
+extern boolean_t floodFillCalled;      // True if user is trying to flood fill
 extern int mx,my;                      // Mouse X and Y
 extern int omx, omy;                   // Old MouseX and MouseY (pos at previous update)
 extern boolean_t mouseOnPalette;       // True if the mouse is on the palette and not the canvas
@@ -71,7 +72,7 @@ extern int currentMainColor;           // The selected color for LMB
 extern int currentAltColor;            // Color for RMB (eraser)
 
 // Palette Buttons
-#define PALETTE_BUTTONS_COUNT 13 //14
+#define PALETTE_BUTTONS_COUNT 15
 
 // All the buttons
 extern button_t paletteButtons[PALETTE_BUTTONS_COUNT];
