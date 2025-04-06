@@ -105,7 +105,7 @@ _vga_drawpixel:
         ret
 
 ;
-; Draw a horizontal line from x1,1 to x2,y including final point
+; Draw a horizontal line from x1,y to x2,y including final point
 ; void vga_drawhine(int x1, int x2, int y, int color);
 ;
 ; C version:
