@@ -48,7 +48,6 @@ _vga_init:
 ;   static unsigned char mask[8] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
 ;   //set_op(0);
 ;   set_color(c);
-;   select_mask();
 ;   set_mask(mask[x&7]);
 ;
         .global  _vga_drawpixel
@@ -106,14 +105,13 @@ _vga_drawpixel:
         ret
 
 ;
-; Draw a horizontal line from x1,1 to x2,y including final point
+; Draw a horizontal line from x1,y to x2,y including final point
 ; void vga_drawhine(int x1, int x2, int y, int color);
 ;
 ; C version:
 ;   set_color(c);
 ;   //set_op(0);
 ;   char far *dst = SCREENBASE + x1 / 8 + y * BYTESPERLN;
-;   select_mask();
 ;   if (x1 / 8 == x2 / 8) {
 ;       set_mask((0xff >> (x1 & 7)) & (0xff << (7 - (x2 & 7))));
 ;       *dst |= 1;
@@ -265,7 +263,6 @@ L44:    mov     ah, bl          ; AH := bit mask for last byte
 ; C version:
 ;   //set_op(0);
 ;   set_color(c);
-;   select_mask();
 ;   set_mask(mask[x&7]);
 ;   char far *dst = SCREENBASE + x / 8 + y1 * BYTESPERLN;
 ;   char far *last = SCREENBASE + x / 8 + y2 * BYTESPERLN;

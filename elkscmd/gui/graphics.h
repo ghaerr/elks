@@ -24,11 +24,9 @@ int save_bmp(char *pathname);
 #define readpixel(x,y)          pal_readpixel(x,y)
 #elif defined(__C86__) || defined(__ia16__)   /* use ASM vga_ routines */
 #define drawpixel(x,y,c)        vga_drawpixel(x,y,c)
-// #define drawhline(x1,x2,y,c)    vga_drawhline(x1,x2,y,c)
+#define drawhline(x1,x2,y,c)    vga_drawhline(x1,x2,y,c)
 #define drawvline(x,y1,y2,c)    vga_drawvline(x,y1,y2,c)
 #define readpixel(x,y)          vga_readpixel(x,y)
-
-void drawhline(int x1, int x2, int y, int c);
 #else
 void drawpixel(int x,int y, int color);
 void drawhline(int x1, int x2, int y, int c);
@@ -40,9 +38,12 @@ void fillrect(int x1, int y1, int x2, int y2, int c);
 /* VGA 16 color, 4bpp routines implemented in ASM in vga-ia16.S and vga-c86.s */
 void vga_init(void);
 void vga_drawpixel(int x, int y, int c);
-// void vga_drawhline(int x1, int x2, int y, int c);
+void vga_drawhline(int x1, int x2, int y, int c);
 void vga_drawvline(int x, int y1, int y2, int c);
 int  vga_readpixel(int x, int y);
+
+/* ia16 only fast scanline blit */
+void vga_drawscanline(unsigned char *colors, int x, int y, int length);
 
 /* PAL 256 color 8bpp routines */
 void pal_drawpixel(int x, int y, int color);

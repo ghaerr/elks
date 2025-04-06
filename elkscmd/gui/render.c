@@ -115,7 +115,7 @@ void R_DrawCurrentColor(void)
     int startingPixelXOffset = SCREEN_WIDTH + 10 + 32 + 1;
     int startingPixelYOffset = 10 + 128 + 10;
 
-    fillrect(startingPixelXOffset, startingPixelYOffset, startingPixelXOffset + 61, \
+    fillrect(startingPixelXOffset, startingPixelYOffset, startingPixelXOffset + 61,
         startingPixelYOffset + 29, currentMainColor);
 
     // Draw white frame if the main color matches the panel backgound
