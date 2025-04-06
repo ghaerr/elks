@@ -5,7 +5,6 @@
  */
 
 #include "event.h"
-#include "app.h"
 #include "mouse.h"
 #include <stdio.h>
 #include <unistd.h>
@@ -115,13 +114,8 @@ out:
                     posy += y;
                     if (posx < 0) posx = 0;
                     if (posy < 0) posy = 0;
-                    //if ((drawing || altdrawing)){
-                        //if (posx >= SCREEN_WIDTH) posx = SCREEN_WIDTH - 1;
-                        //if (posy >= SCREEN_HEIGHT) posy = SCREEN_HEIGHT - 1;
-                    //} else {
-                        if (posx >= SCREENWIDTH) posx = SCREENWIDTH - 1;
-                        if (posy >= SCREENHEIGHT) posy = SCREENHEIGHT - 1;
-                    //}
+                    if (posx >= SCREENWIDTH) posx = SCREENWIDTH - 1;
+                    if (posy >= SCREENHEIGHT) posy = SCREENHEIGHT - 1;
                     event->x = posx;
                     event->y = posy;
                     event->xrel = x;
