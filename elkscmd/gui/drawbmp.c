@@ -215,6 +215,9 @@ draw_bmp(char *path, int x, int y)
     /*__dprintf("'%s' bpp %d comp %d pal %d %dx%d\n",
         path, bpp, compression, palsize, width, height);*/
 
+    if (width > 640)        /* bounds check for later array overflow */
+        goto out;
+
     /* compute pitch: bytes per line*/
     switch(bpp) {
 #if UNUSED

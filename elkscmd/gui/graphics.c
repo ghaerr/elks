@@ -15,87 +15,6 @@
 int SCREENWIDTH;                /* initialized by graphics_open */
 int SCREENHEIGHT;
 
-#ifdef __WATCOMC__
-
-void vga_init(void);
-#pragma aux vga_init =                          \
-    "mov dx,0x03ce",                            \
-    "mov ax,0xff01",                            \
-    "out dx,ax",                                \
-    "mov ax,0x0003",                            \
-    "out dx,ax",                                \
-    "mov ax,0x0005",                            \
-    "out dx,ax",                                \
-    modify [ ax dx ];
-
-#endif
-
-#ifdef __ia16__
-
-#define vga_init_unused()                       \
-    asm volatile (                              \
-        "mov $0x03ce,%%dx\n"                    \
-        "mov $0xff01,%%ax\n"                    \
-        "out %%ax,%%dx\n"                       \
-        "mov $0x0003,%%ax\n"                    \
-        "out %%ax,%%dx\n"                       \
-        "mov $0x0005,%%ax\n"                    \
-        "out %%ax,%%dx\n"                       \
-        : /* no output */                       \
-        : /* no input */                        \
-        : "a", "d"                              \
-        )
-
-#endif
-
-#ifdef __C86__
-/* use BIOS to set video mode */
-static void set_bios_mode(int mode)
-{
-    asm(
-        "push   si\n"
-        "push   di\n"
-        "push   ds\n"
-        "push   es\n"
-        "mov    ax,[bp+4]\n"    /* AH=0, AL=mode */
-        "int    0x10\n"
-        "pop    es\n"
-        "pop    ds\n"
-        "pop    di\n"
-        "pop    si\n"
-    );
-}
-
-int asm_getbyte(int offset)
-{
-    asm(
-        "mov cx,ds\n"
-        "mov bx,[bp+4]\n"
-        "mov ax,0xa000\n"
-        "mov ds,ax\n"
-        "mov al,[bx]\n"
-        "xor ah,ah\n"
-        "mov ds,cx\n"
-    );
-}
-
-/* PAL write color byte at video offset */
-static void pal_writevid(unsigned int offset, int c)
-{
-    asm(
-        "push   ds\n"
-        "push   bx\n"
-        "mov    ax,#0xA000\n"
-        "mov    ds,ax\n"
-        "mov    bx,[bp+4]\n"    /* offset */
-        "mov    al,[bp+6]\n"    /* color */
-        "mov    [bx],al\n"
-        "pop    bx\n"
-        "pop    ds\n"
-    );
-}
-#endif
-
 int graphics_open(int mode)
 {
     switch (mode) {
@@ -131,19 +50,27 @@ void graphics_close(void)
 #ifdef __WATCOMC__
 static unsigned char mask[8] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
 
+void vga_init(void)
+{
+    set_enable_sr(0xff);
+    set_op(0);
+    set_write_mode(0);
+}
+
 void drawpixel(int x, int y, int color)
 {
     set_color(color);
     set_mask(mask[x & 7]);
-    asm_orbyte((y<<6) + (y<<4) + (x >> 3)); /* =y*80 FIXME changes with resolution */
+    asm_orbyte((y << 6) + (y << 4) + (x >> 3)); /* y * 80 + x / 8 */
 }
 
 int readpixel(int x, int y)
 {
     int c = 0;
+    int offset = (y<<6) + (y<<4) + (x >> 3);    /* y * 80  + x / 8*/
     for (int plane=0; plane<4; plane++) {
         set_read_plane(plane);
-        if (asm_getbyte((y<<6) + (y<<4) + (x >> 3)) & mask[x&7])  /* y * 80  + x / 8*/
+        if (asm_getbyte(offset) & mask[x&7])
             c |= 1 << plane;
     }
     return c;
@@ -184,6 +111,54 @@ void fillrect(int x1, int y1, int x2, int y2, int c)
 }
 
 #ifdef __C86__
+
+/* use BIOS to set video mode */
+void set_bios_mode(int mode)
+{
+    asm(
+        "push   si\n"
+        "push   di\n"
+        "push   ds\n"
+        "push   es\n"
+        "mov    ax,[bp+4]\n"    /* AH=0, AL=mode */
+        "int    0x10\n"
+        "pop    es\n"
+        "pop    ds\n"
+        "pop    di\n"
+        "pop    si\n"
+    );
+}
+
+int asm_getbyte(int offset)
+{
+    asm(
+        "mov cx,ds\n"
+        "mov bx,[bp+4]\n"
+        "mov ax,0xa000\n"
+        "mov ds,ax\n"
+        "mov al,[bx]\n"
+        "xor ah,ah\n"
+        "mov ds,cx\n"
+    );
+}
+
+#if UNUSED
+/* PAL write color byte at video offset */
+void pal_writevid(unsigned int offset, int c)
+{
+    asm(
+        "push   ds\n"
+        "push   bx\n"
+        "mov    ax,#0xA000\n"
+        "mov    ds,ax\n"
+        "mov    bx,[bp+4]\n"    /* offset */
+        "mov    al,[bp+6]\n"    /* color */
+        "mov    [bx],al\n"
+        "pop    bx\n"
+        "pop    ds\n"
+    );
+}
+
 /* PAL draw a pixel at x, y with 8-bit color c */
 void pal_drawpixel(int x,int y, int color)
 {
@@ -211,3 +186,5 @@ void pal_drawvline(int x, int y1, int y2, int c)
         pal_drawpixel(x, y1++, c);
 }
 #endif
+
+#endif /* __C86__ */

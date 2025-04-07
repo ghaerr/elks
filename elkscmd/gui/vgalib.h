@@ -293,6 +293,7 @@ void set_bios_mode(int mode);
     )
     
 int asm_getbyte(int offset);
+void set_bios_mode(int mode);
 
 #endif /* __C86__ */
 
