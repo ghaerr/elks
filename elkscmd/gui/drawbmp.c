@@ -12,6 +12,8 @@
 #include "graphics.h"
 #include "app.h"
 
+#define USE_DRAWSCANLINE    1       /* =1 to use vga_drawscanline instead of drawpixel */
+
 #define MWPACKED
 #define abs(x)  ((x < 0)? -x : x)
 
@@ -301,13 +303,13 @@ draw_bmp(char *path, int x, int y)
                     c = find_nearest_color(pal->r, pal->g, pal->b);
                     cache[image[w]] = c;
                 }
-#if defined(__ia16__) || defined(__WATCOMC__)
+#if USE_DRAWSCANLINE
                 image[w] = c;
 #else
                 drawpixel(x+w, y+h, c);
 #endif
             }
-#if defined(__ia16__) || defined(__WATCOMC__)
+#if USE_DRAWSCANLINE
             vga_drawscanline(image, x, y+h, width);
 #endif
             break;

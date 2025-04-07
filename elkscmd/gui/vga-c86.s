@@ -418,9 +418,10 @@ L112:   out     dx, ax          ; select bit plane
         pop     bp      
         ret
 
-; void fdstmemcpy (int dst_off, seg_t dst_seg, char *src_off, size_t count)
+; void fdstmemcpy (word_t dst_off, seg_t dst_seg, char *src_off, word_t count)
 ; Copy near source to far destination
 ; segment parameter after offset to allow LES from the stack
+; NOTE: currently saves SI, DI and ES - may not be required
 
 ARG0    = 2
 ARG1    = 4

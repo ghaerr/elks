@@ -51,7 +51,7 @@ void pal_drawhline(int x1, int x2, int y, int c);
 void pal_drawvline(int x, int y1, int y2, int c);
 int  pal_readpixel(int x, int y);
 
-void fdstmemcpy(int dst_off, int dst_seg, void *src_off, int count);
+void fdstmemcpy(unsigned dst_off, unsigned dst_seg, void *src_off, unsigned count);
 
 unsigned int strtoi(const char *s, int base);
 
