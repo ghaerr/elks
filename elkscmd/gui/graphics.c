@@ -66,6 +66,19 @@ static void set_bios_mode(int mode)
     );
 }
 
+int asm_getbyte(int offset)
+{
+    asm(
+        "mov cx,ds\n"
+        "mov bx,[bp+4]\n"
+        "mov ax,0xa000\n"
+        "mov ds,ax\n"
+        "mov al,[bx]\n"
+        "xor ah,ah\n"
+        "mov ds,cx\n"
+    );
+}
+
 /* PAL write color byte at video offset */
 static void pal_writevid(unsigned int offset, int c)
 {
@@ -135,8 +148,6 @@ int readpixel(int x, int y)
     }
     return c;
 }
-
-#define EGA_BASE ((char __far *)0xA0000000L)
 
 // Draw a horizontal line from x1,1 to x2,y including final point
 void drawhline(int x1, int x2, int y, int c)
