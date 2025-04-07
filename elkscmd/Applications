@@ -188,6 +188,7 @@ gui/images/quit.bmp ::lib/quit.bmp  :gui                        :1440k
 gui/images/paint.bmp ::lib/paint.bmp  :gui                        :1440k
 gui/images/fill.bmp ::lib/fill.bmp  :gui                        :1440k
 gui/images/brush.bmp ::lib/brush.bmp  :gui                      :1440k
+gui/images/circle.bmp ::lib/circle.bmp  :gui                      :1440k
 busyelks/busyelks               :busyelks
 inet/httpd/sample_index.html ::var/www/index.html :net
 ktcp/ktcp                       :net

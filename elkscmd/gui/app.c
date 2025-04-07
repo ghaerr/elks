@@ -5,6 +5,7 @@
 #include "gui.h"
 #include "event.h"
 #include "graphics.h"
+#include "vgalib.h"
 #include "mouse.h"
 
 // --------------------------------------------
@@ -16,8 +17,14 @@ boolean_t drawing;              // Are we drawing with the left mouse button?
 boolean_t altdrawing;           // Are we drawing with the right mouse button?
 boolean_t floodFill;            // Are we flood filling with the left mouse button?
 boolean_t floodFillCalled;      // True if user is trying to floodfill
+boolean_t circleMode;        // Are we drawing circle with the left mouse button?
+boolean_t circleDrawing;
+boolean_t circleDrawingCalled;  // True if user is trying to draw a circle
 int mx,my;                      // Mouse X and Y
 int omx, omy;                   // Old MouseX and Old MouseY (pos at previous update)
+int omx, omy;                   // Old MouseX and Old MouseY (pos at previous update)
+int startX, startY;             // Circle center X and Y
+int lastRadius;                 // Circle old radius
 boolean_t mouseOnPalette;       // True if the mouse is on the palette and not the canvas
 int paletteBrightness;          // The brightness of the color picker
 int bushSize;                   // Size of the brush
@@ -40,6 +47,9 @@ void A_InitTomentPainter(void)
 
     DrawingApp.quit = false;
     floodFill = false;
+    circleMode = false;
+    circleDrawing = false;
+    lastRadius = 0;
 
     A_InitPalette();
 }
@@ -48,6 +58,26 @@ void A_InitTomentPainter(void)
 // --------------------------------------------
 // Initializes the palette
 // --------------------------------------------
+
+// --- Helper macro to initialize buttons ---
+#define DEFINE_BUTTON(ID, NAME, X, Y, W, H, CLICK, RENDER) \
+    paletteButtons[ID].name = NAME; \
+    paletteButtons[ID].box.x = (X); \
+    paletteButtons[ID].box.y = (Y); \
+    paletteButtons[ID].box.w = (W); \
+    paletteButtons[ID].box.h = (H); \
+    paletteButtons[ID].OnClick = CLICK; \
+    paletteButtons[ID].render = RENDER;
+
+#define DEFINE_BUTTON_WITH_DATA(ID, NAME, X, Y, W, H, CLICK, RENDER, DATA) \
+    DEFINE_BUTTON(ID, NAME, X, Y, W, H, CLICK, RENDER) \
+    paletteButtons[ID].data1 = DATA;
+
+#define DEFINE_BUTTON_WITH_FILE(ID, NAME, X, Y, W, H, CLICK, RENDER, FILE) \
+    DEFINE_BUTTON(ID, NAME, X, Y, W, H, CLICK, RENDER) \
+    paletteButtons[ID].fileName = FILE;
+
+
 void A_InitPalette(void)
 {
     // Set defaults
@@ -57,85 +87,42 @@ void A_InitPalette(void)
     paletteBrightness = 256;
     bushSize = 3;
 
-
     // Create and configure buttons
-    // --- Helper macro to initialize buttons ---
-#define INIT_BUTTON(ID, LABEL, X, Y, W, H, CLICK, RENDER) \
-    paletteButtons[ID].name = LABEL; \
-    paletteButtons[ID].box.x = (X); \
-    paletteButtons[ID].box.y = (Y); \
-    paletteButtons[ID].box.w = (W); \
-    paletteButtons[ID].box.h = (H); \
-    paletteButtons[ID].OnClick = CLICK; \
-    paletteButtons[ID].render = RENDER;
-
     #if UNUSED
-        INIT_BUTTON(0, "BrightnessSelector", 775, 10, 16, 64, G_BrightnessButtonOnClick, 0);
+        DEFINE_BUTTON(0, "BrightnessSelector", 775, 10, 16, 64, G_BrightnessButtonOnClick, 0);
     #endif
 
-    // --- Color Picker ---
-    INIT_BUTTON(1, "ColorPicker", CANVAS_WIDTH + 10, 10, 128, 128, G_ColorPickerOnClick, 0);
+    // Color Picker
+    DEFINE_BUTTON(1, "ColorPicker", CANVAS_WIDTH + 10, 10, 128, 128, G_ColorPickerOnClick, 0);
 
-    // --- Brush Size Buttons (8 total in two rows) ---
-    {
-        int brushSizes[8] = {1, 2, 3, 4,
-                                   6, 8, 10, 12};
-        char* brushNames[8] = {
-            "BushSize1", "BushSize2", "BushSize3", "BushSize4",
-            "BushSize5", "BushSize6", "BushSize7", "BushSize8"
-        };
+    // Brush Sizes (2 rows, 4 buttons each)
+    #define BRUSH_Y 195
+    DEFINE_BUTTON_WITH_DATA(2, "BushSize1", CANVAS_WIDTH + 11 + 32*0, BRUSH_Y, 30, 30, G_SetBushSize, 1, 1);
+    DEFINE_BUTTON_WITH_DATA(3, "BushSize2", CANVAS_WIDTH + 11 + 32*1, BRUSH_Y, 30, 30, G_SetBushSize, 1, 2);
+    DEFINE_BUTTON_WITH_DATA(4, "BushSize3", CANVAS_WIDTH + 11 + 32*2, BRUSH_Y, 30, 30, G_SetBushSize, 1, 3);
+    DEFINE_BUTTON_WITH_DATA(5, "BushSize4", CANVAS_WIDTH + 11 + 32*3, BRUSH_Y, 30, 30, G_SetBushSize, 1, 4);
+    DEFINE_BUTTON_WITH_DATA(6, "BushSize5", CANVAS_WIDTH + 11 + 32*0, BRUSH_Y+32, 30, 30, G_SetBushSize, 1, 6);
+    DEFINE_BUTTON_WITH_DATA(7, "BushSize6", CANVAS_WIDTH + 11 + 32*1, BRUSH_Y+32, 30, 30, G_SetBushSize, 1, 8);
+    DEFINE_BUTTON_WITH_DATA(8, "BushSize7", CANVAS_WIDTH + 11 + 32*2, BRUSH_Y+32, 30, 30, G_SetBushSize, 1, 10);
+    DEFINE_BUTTON_WITH_DATA(9, "BushSize8", CANVAS_WIDTH + 11 + 32*3, BRUSH_Y+32, 30, 30, G_SetBushSize, 1, 12);
 
-        for (int i = 0; i < 8; ++i) {
-            int index = i + 2;
-            int col = i % 4;
-            int row = i / 4;
-            INIT_BUTTON(index,
-                        brushNames[i],
-                        CANVAS_WIDTH + 11 + 32 * col,
-                        195 + row * 32,
-                        30, 30,
-                        G_SetBushSize, 1);
-            paletteButtons[index].data1 = brushSizes[i];
-        }
-    }
-
-    // --- Utility Buttons ---
-    {
-        int utilCount = 5;
-        int indices[]   = {10, 11, 12, 13, 14};
-        char* names[]   = {"SaveButton", "FillButton", "BrushButton", "QuitButton", "Cls"};
-        int offsetX[]   = {0,  32,   0, 32 * 3, 32 * 3};
-        int offsetY[]   = {0, -32, -32,      0,    -32};
-        int (*handlers[])(struct button_s*) = {
-            G_SaveButtonOnClick,
-            G_SetFloodFill,
-            G_SetBrush,
-            G_QuitButtonOnClick,
-            G_ClearScreen
-        };
-        char* files[] = {
-            LIBPATH "save.bmp",
-            LIBPATH "fill.bmp",
-            LIBPATH "brush.bmp",
-            LIBPATH "quit.bmp",
-            LIBPATH "cls.bmp"
-        };
-
-        for (int i = 0; i < utilCount; ++i) {
-            INIT_BUTTON(indices[i],
-                        names[i],
-                        CANVAS_WIDTH + 10 + offsetX[i],
-                        300 + offsetY[i],
-                        32, 32,
-                        handlers[i],
-                        1);
-            paletteButtons[indices[i]].fileName = files[i];
-        }
-    }
-
-#undef INIT_BUTTON
+    // Functional buttons with icons
+    #define FUNC_Y 300
+    DEFINE_BUTTON_WITH_FILE(10, "SaveButton",  CANVAS_WIDTH + 10 + 32*0, FUNC_Y,    32, 32, G_SaveButtonOnClick, 1, LIBPATH "save.bmp");
+    DEFINE_BUTTON_WITH_FILE(11, "FillButton",  CANVAS_WIDTH + 10 + 32*1, FUNC_Y-32, 32, 32, G_SetFloodFill,      1, LIBPATH "fill.bmp");
+    DEFINE_BUTTON_WITH_FILE(12, "BrushButton", CANVAS_WIDTH + 10 + 32*0, FUNC_Y-32, 32, 32, G_SetBrush,          1, LIBPATH "brush.bmp");
+    DEFINE_BUTTON_WITH_FILE(13, "CircleButton",CANVAS_WIDTH + 10 + 32*2, FUNC_Y-32, 32, 32, G_SetCircle,         1, LIBPATH "circle.bmp");
+    DEFINE_BUTTON_WITH_FILE(14, "QuitButton",  CANVAS_WIDTH + 10 + 32*3, FUNC_Y,    32, 32, G_QuitButtonOnClick, 1, LIBPATH "quit.bmp");
+    DEFINE_BUTTON_WITH_FILE(15, "Cls",         CANVAS_WIDTH + 10 + 32*3, FUNC_Y-32, 32, 32, G_ClearScreen,       1, LIBPATH "cls.bmp");
 }
 
+// Utility: distance between two points
+// Compute the minimal distance along x or y (Chebyshev distance)
+static int distance(int x1, int y1, int x2, int y2) {
+    int dx = abs(x2 - x1);
+    int dy = abs(y2 - y1);
+    return (dx > dy) ? dx : dy;  // Return the maximum of dx or dy
+}
 
 // --------------------------------------------
 // Update
@@ -144,7 +131,22 @@ void A_GameLoop(void)
 {
     movecursor(mx, my);
 
-    if((drawing || altdrawing) && mx > CANVAS_WIDTH) mx = CANVAS_WIDTH;
+    if((drawing || altdrawing || circleDrawing) && mx > CANVAS_WIDTH) mx = CANVAS_WIDTH;
+
+    if(circleDrawingCalled)
+    {
+        circleDrawingCalled = false;
+
+        // Erase the old preview circle
+        if (lastRadius > 0) {
+            set_op(0x18);    // turn on XOR drawing
+            R_DrawCircle(startX, startY, lastRadius, currentMainColor); // erase using XOR
+        }
+        int radius = distance(startX, startY, omx, omy);
+        set_op(0);       // turn off XOR drawing
+        R_DrawCircle(startX, startY, radius, currentMainColor); // Final draw
+        lastRadius = 0;
+    }
 
     // In canvas
     if(mx <= CANVAS_WIDTH)
@@ -155,7 +157,19 @@ void A_GameLoop(void)
         {
             R_Paint(omx, omy, mx, my);
         }
-        if(floodFillCalled == true)
+        if(circleDrawing)
+        {
+            int radius = distance(startX, startY, mx, my);
+            // Erase the old preview circle
+            if (lastRadius > 0) {
+                R_DrawCircle(startX, startY, lastRadius, currentMainColor); // XOR again to erase
+            }
+
+            // Draw new preview
+            R_DrawCircle(startX, startY, radius, currentMainColor);
+            lastRadius = radius;
+        }
+        if(floodFillCalled)
         {
             floodFillCalled = false;
             hidecursor();

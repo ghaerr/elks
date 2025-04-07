@@ -54,11 +54,21 @@ int G_ClearScreen(struct button_s* btn)
 int G_SetFloodFill(struct button_s* btn)
 {
     floodFill = true;
+    circleMode = false;
+    return 0;
+}
+
+int G_SetCircle(struct button_s* btn)
+{
+    floodFill = false;
+    circleMode = true;
+    circleDrawing = false;
     return 0;
 }
 
 int G_SetBrush(struct button_s* btn)
 {
     floodFill = false;
+    circleMode = false;
     return 0;
 }
