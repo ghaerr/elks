@@ -62,8 +62,13 @@ extern boolean_t drawing;              // Are we drawing with the left mouse but
 extern boolean_t altdrawing;           // Are we drawing with the right mouse button?
 extern boolean_t floodFill;            // Are we flood filling with the left mouse button?
 extern boolean_t floodFillCalled;      // True if user is trying to flood fill
+extern boolean_t circleMode;        // Are we drawing circle with the left mouse button?
+extern boolean_t circleDrawing;        // Are we drawing circle with the left mouse button?
+extern boolean_t circleDrawingCalled;  // True if user is trying to draw a circle
 extern int mx,my;                      // Mouse X and Y
 extern int omx, omy;                   // Old MouseX and MouseY (pos at previous update)
+extern int startX, startY;             // Circle center X and Y
+extern int lastRadius;                 // Circle old radius
 extern boolean_t mouseOnPalette;       // True if the mouse is on the palette and not the canvas
 
 extern int paletteBrightness;          // The brightness of the color picker
@@ -72,7 +77,7 @@ extern int currentMainColor;           // The selected color for LMB
 extern int currentAltColor;            // Color for RMB (eraser)
 
 // Palette Buttons
-#define PALETTE_BUTTONS_COUNT 15
+#define PALETTE_BUTTONS_COUNT 16
 
 // All the buttons
 extern button_t paletteButtons[PALETTE_BUTTONS_COUNT];
