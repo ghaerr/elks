@@ -23,7 +23,7 @@ arg1        = 4                 ; small model
 ; void vga_init(void)
 ;
 ; C version:
-;   set_enable_sr(0x0f);
+;   set_enable_sr(0xff);
 ;   set_op(0);
 ;   set_write_mode(0);
 ;
