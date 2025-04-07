@@ -298,13 +298,13 @@ draw_bmp(char *path, int x, int y)
                     c = find_nearest_color(pal->r, pal->g, pal->b);
                     cache[image[w]] = c;
                 }
-#ifdef __ia16__
+#if defined(__ia16__) || defined(__WATCOMC__)
                 image[w] = c;
 #else
                 drawpixel(x+w, y+h, c);
 #endif
             }
-#ifdef __ia16__
+#if defined(__ia16__) || defined(__WATCOMC__)
             vga_drawscanline(image, x, y+h, width);
 #endif
             break;
