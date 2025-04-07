@@ -14,8 +14,7 @@
 /* non 8-pixel aligned scanlines in 16 color mode. billr@rastergr.com */
 
 #include "graphics.h"
-
-#define EGA_BASE ((unsigned char __far *)0xA0000000L)
+#include "vgalib.h"
 
 /* used to decompose color value into bits (for fast scanline drawing) */
 union bits {
@@ -62,87 +61,10 @@ static unsigned char plane1[80];
 static unsigned char plane2[80];
 static unsigned char plane3[80];
 
-#ifdef __ia16__
-#define set_mask(mask)                          \
-    asm volatile (                              \
-        "mov $0x03ce,%%dx\n"                    \
-        "mov %%al,%%ah\n"                       \
-        "mov $8,%%al\n"                         \
-        "out %%ax,%%dx\n"                       \
-        : /* no output */                       \
-        : "a" ((unsigned short)(mask))          \
-        : "d"                                   \
-        )
-
-#define set_read_plane(plane)                   \
-    asm volatile (                              \
-        "mov $0x03ce,%%dx\n"                    \
-        "mov %%al,%%ah\n"                       \
-        "mov $4,%%al\n"                         \
-        "out %%ax,%%dx\n"                       \
-        : /* no output */                       \
-        : "a" ((unsigned short)(plane))         \
-        : "d"                                   \
-        )
-
-#define set_write_planes(plane)                 \
-    asm volatile (                              \
-        "mov $0x03c4,%%dx\n"                    \
-        "mov %%al,%%ah\n"                       \
-        "mov $2,%%al\n"                         \
-        "out %%ax,%%dx\n"                       \
-        : /* no output */                       \
-        : "a" ((unsigned short)(plane))         \
-        : "d"                                   \
-        )
-
-#define set_enable_sr(flag)                     \
-    asm volatile (                              \
-        "mov $0x03ce,%%dx\n"                    \
-        "mov %%al,%%ah\n"                       \
-        "mov $1,%%al\n"                         \
-        "out %%ax,%%dx\n"                       \
-        : /* no output */                       \
-        : "a" ((unsigned short)(flag))          \
-        : "d"                                   \
-        )
-
-#define set_op(op)                              \
-    asm volatile (                              \
-        "mov $0x03ce,%%dx\n"                    \
-        "mov %%al,%%ah\n"                       \
-        "mov $3,%%al\n"                         \
-        "out %%ax,%%dx\n"                       \
-        : /* no output */                       \
-        : "a" ((unsigned short)(op))            \
-        : "d"                                   \
-        )
-
-#define set_color(color)                        \
-    asm volatile (                              \
-        "mov $0x03ce,%%dx\n"                    \
-        "mov %%al,%%ah\n"                       \
-        "mov $0,%%al\n"                         \
-        "out %%ax,%%dx\n"                       \
-        : /* no output */                       \
-        : "a" ((unsigned short)(color))         \
-        : "d"                                   \
-        )
-
-#define set_write_mode(mode)                    \
-    asm volatile (                              \
-        "mov $0x03ce,%%dx\n"                    \
-        "mov %%al,%%ah\n"                       \
-        "mov $5,%%al\n"                         \
-        "out %%ax,%%dx\n"                       \
-        : /* no output */                       \
-        : "a" ((unsigned short)(mode))          \
-        : "d"                                   \
-        )
-#endif
-
-static void MEMCPY(unsigned char __far *dst, unsigned char *src, int n)
+static void MEMCPY(unsigned int dstoff, unsigned char *src, int n)
 {
+    unsigned char __far *dst =
+        (unsigned char __far *)(((unsigned long)EGA_BASE << 16) | dstoff);
     while (n--)
         *dst++ = *src++;
 }
@@ -152,7 +74,6 @@ void vga_drawscanline(unsigned char *colors, int x, int y, int length)
     int i, j, k, first, last, l1;
     unsigned int offset, eoffs, soffs, ioffs;
     union bits bytes;
-    unsigned char __far *address;
     
     k = 0;
     soffs = ioffs = (x & 0x7);  /* starting offset into first byte */
@@ -180,8 +101,7 @@ void vga_drawscanline(unsigned char *colors, int x, int y, int length)
         plane2[k] = bytes.b.bit2;
         plane3[k++] = bytes.b.bit3;
     }
-    offset = y * 640/8 + (x >> 3);
-    address = EGA_BASE + offset;
+    offset = (y << 6) + (y << 4) + (x >> 3);    /* y * 640/8 + x / 8 */
     /* k currently contains number of bytes to write */
     l1 = k;
     /* make k the index of the last byte to write */
@@ -198,54 +118,46 @@ void vga_drawscanline(unsigned char *colors, int x, int y, int length)
     /* REG 4: select read map mask register */
     set_read_plane(0x00);
     if (soffs)
-        plane0[0] |= *address & ~mask[soffs];
+        plane0[0] |= asm_getbyte(offset) & ~mask[soffs];
     if (eoffs)
-        plane0[k] |= *(address + k) & mask[eoffs];
-    MEMCPY(address, plane0, l1);
+        plane0[k] |= asm_getbyte(offset + k) & mask[eoffs];
+    MEMCPY(offset, plane0, l1);
     
     /* REG 2: write plane 1 */
     set_write_planes(0x02);
     /* REG 4: read plane 1 */
     set_read_plane(0x01);
     if (soffs)
-        plane1[0] |= *address & ~mask[soffs];
+        plane1[0] |= asm_getbyte(offset) & ~mask[soffs];
     if (eoffs)
-        plane1[k] |= *(address + k) & mask[eoffs];
-    MEMCPY(address, plane1, l1);
+        plane1[k] |= asm_getbyte(offset + k) & mask[eoffs];
+    MEMCPY(offset, plane1, l1);
     
     /* REG 2: write plane 2 */
     set_write_planes(0x04);
     /* REG 4: read plane 2 */
     set_read_plane(0x02);
     if (soffs)
-        plane2[0] |= *address & ~mask[soffs];
+        plane2[0] |= asm_getbyte(offset) & ~mask[soffs];
     if (eoffs)
-        plane2[k] |= *(address + k) & mask[eoffs];
-    MEMCPY(address, plane2, l1);
+        plane2[k] |= asm_getbyte(offset + k) & mask[eoffs];
+    MEMCPY(offset, plane2, l1);
     
     /* REG 2: write plane 3 */
     set_write_planes(0x08);
     /* REG 4: read plane 3 */
     set_read_plane(0x03);
     if (soffs)
-        plane3[0] |= *address & ~mask[soffs];
+        plane3[0] |= asm_getbyte(offset) & ~mask[soffs];
     if (eoffs)
-        plane3[k] |= *(address + k) & mask[eoffs];
-    MEMCPY(address, plane3, l1);
+        plane3[k] |= asm_getbyte(offset + k) & mask[eoffs];
+    MEMCPY(offset, plane3, l1);
     
     /* REG 2: restore map mask register */
     set_write_planes(0x0f);     
 
     /* REG 1: enable Set/Reset Register */
     set_enable_sr(0xff);
-
-    //set_color(0);           // REG 0
-    //set_enable_sr(0xff);    // REG 1
-    //set_write_planes(0x0f); // REG 2
-    //set_op(0);              // REG 3
-    //set_read_plane(0);      // REG 4
-    //set_write_mode(0);      // REG 5
-    //set_mask(0xff);         // REG 8
 
 #if UNUSED  /* 1bpp routine */
     /* REG 1: disable Set/Reset Register */
