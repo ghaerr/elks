@@ -12,6 +12,7 @@ int G_QuitButtonOnClick(struct button_s* btn);
 int G_SetBushSize(struct button_s* btn);
 int G_ClearScreen(struct button_s* btn);
 int G_SetFloodFill(struct button_s* btn);
+int G_SetCircle(struct button_s* btn);
 int G_SetBrush(struct button_s* btn);
 
 

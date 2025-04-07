@@ -175,6 +175,35 @@ void R_DrawDisk(int x0, int y0, int r, int color, int X_lim)
     while (x < 0);
 }
 
+void R_DrawCircle(int x0, int y0, int r, int color)
+{
+    int x = -r, y = 0, err = 2-2*r; /* II. Quadrant */
+
+    while (-x >= y) {
+        // Draw symmetry points
+        int x1 = (x0 + x >= 0) ? x0 + x : 0;
+        int x2   = (x0 - x <= CANVAS_WIDTH) ? x0 - x : CANVAS_WIDTH;
+        int y1 = (y0 - y >= 0) ? y0 - y : 0;
+        int y2   = (y0 + y < CANVAS_HEIGHT) ? y0 + y : CANVAS_HEIGHT-1;
+        drawpixel(x1, y2, color);
+        drawpixel(x2, y2, color);
+        drawpixel(x1, y1, color);
+        drawpixel(x2, y1, color);
+        x1 = (x0 - y >= 0) ? x0 - y : 0;
+        x2   = (x0 + y <= CANVAS_WIDTH) ? x0 + y : CANVAS_WIDTH;
+        y1 = (y0 + x >= 0) ? y0 + x : 0;
+        y2   = (y0 - x < CANVAS_HEIGHT) ? y0 - x : CANVAS_HEIGHT-1;
+        drawpixel(x2, y1, color);
+        drawpixel(x1, y1, color);
+        drawpixel(x2, y2, color);
+        drawpixel(x1, y2, color);
+
+        r = err;
+        if (r <= y) err +=  ++y*2+1;          /* e_xy+e_y < 0 */
+        if (r > x || err > y) err += ++x*2+1; /* e_xy+e_x > 0 or no 2nd y-step */
+    }
+}
+
 // ----------------------------------------------------
 // Flood Fill Stack Operations
 // ----------------------------------------------------

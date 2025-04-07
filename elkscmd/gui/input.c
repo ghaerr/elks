@@ -4,6 +4,7 @@
 #include "render.h"
 #include "gui.h"
 #include "graphics.h"
+#include "vgalib.h"
 #include "mouse.h"
 
 static int cursor_sz;
@@ -34,6 +35,15 @@ void I_HandleInput(void)
                 if (mx < CANVAS_WIDTH){
                     if(floodFill) {
                         floodFillCalled = true;
+                    }
+                    else if (circleMode){
+                        circleDrawing = true;
+                        startX = mx;
+                        startY = my;
+                        lastRadius = 0;
+                        hidecursor();
+                        set_op(0x18);    // turn on XOR drawing
+                        break;
                     } else {
                             if(event.button == BUTTON_L)
                                 drawing = true;
@@ -46,10 +56,16 @@ void I_HandleInput(void)
             break;
 
             case EVT_MOUSEUP:
+                if (circleDrawing){
+                    circleDrawingCalled = true;
+                    circleDrawing = false;
+                    set_op(0);       // turn off XOR drawing
+                } else {
                 if(event.button == BUTTON_L)
                     drawing = false;
                 else
                     altdrawing = false;
+                }
                 showcursor();
             break;
 
