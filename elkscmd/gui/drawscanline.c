@@ -13,6 +13,7 @@
 /* 21 January 1995 - added vga_readscanline(), added support for   */
 /* non 8-pixel aligned scanlines in 16 color mode. billr@rastergr.com */
 
+#include <string.h>
 #include "graphics.h"
 #include "vgalib.h"
 
@@ -61,6 +62,11 @@ static unsigned char plane1[80];
 static unsigned char plane2[80];
 static unsigned char plane3[80];
 
+#if     defined(__ia16__)
+#define MEMCPY(dstoff, src, n)  fdstmemcpy(dstoff, EGA_BASE, src, n)
+#elif   defined(__WATCOMC__)
+#define MEMCPY(dstoff, src, n)  fmemcpy(MK_FP(EGA_BASE, dstoff), src, n);
+#else
 static void MEMCPY(unsigned int dstoff, unsigned char *src, int n)
 {
     unsigned char __far *dst =
@@ -68,6 +74,7 @@ static void MEMCPY(unsigned int dstoff, unsigned char *src, int n)
     while (n--)
         *dst++ = *src++;
 }
+#endif
 
 void vga_drawscanline(unsigned char *colors, int x, int y, int length)
 {
