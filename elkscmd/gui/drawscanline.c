@@ -75,6 +75,8 @@ void vga_drawscanline(unsigned char *colors, int x, int y, int length)
     unsigned int offset, eoffs, soffs, ioffs;
     union bits bytes;
     
+    if (length > 640)
+        length = 640;
     k = 0;
     soffs = ioffs = (x & 0x7);  /* starting offset into first byte */
     eoffs = (x + length) & 0x7;     /* ending offset into last byte */
