@@ -142,19 +142,20 @@ int readpixel(int x, int y)
 void drawhline(int x1, int x2, int y, int c)
 {
     set_color(c);
-    char __far *dst = EGA_BASE + (x1>>3) + (y<<6) + (y<<4);  /* y * 80 + x / 8 */
+    unsigned int dst = (y<<6) + (y<<4) + (x1>>3);  /* y * 80 + x / 8 */
     if ((x1 >> 3) == (x2 >> 3)) {
         set_mask((0xff >> (x1 & 7)) & (0xff << (7 - (x2 & 7))));
-        *dst |= 1;
+        asm_orbyte(dst);
     } else {
         set_mask(0xff >> (x1 & 7));
-        *dst++ |= 1;
+        asm_orbyte(dst); dst++;
         set_mask(0xff);
-        char __far *last = EGA_BASE + (x2>>3) + (y<<6) + (y<<4);
-        while (dst < last)
-            *dst++ |= 1;
+        unsigned int last = (y<<6) + (y<<4) + (x2>>3);
+        while (dst < last) {
+            asm_orbyte(dst); dst++;
+        }
         set_mask(0xff << (7 - (x2 & 7)));
-        *dst |= 1;
+        asm_orbyte(dst);
     }
 }
 
