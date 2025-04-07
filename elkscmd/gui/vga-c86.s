@@ -417,3 +417,33 @@ L112:   out     dx, ax          ; select bit plane
         pop     si
         pop     bp      
         ret
+
+; void fdstmemcpy (int dst_off, seg_t dst_seg, char *src_off, size_t count)
+; Copy near source to far destination
+; segment parameter after offset to allow LES from the stack
+
+ARG0    = 2
+ARG1    = 4
+ARG2    = 6
+ARG3    = 8
+
+        .global _fdstmemcpy
+_fdstmemcpy:
+        mov    ax,si
+        mov    dx,di
+        mov    si,sp
+        mov    bx,es
+        mov    cx,ARG3[si]      ; byte count
+        les    di,ARG0[si]      ; far destination pointer
+        mov    si,ARG2[si]      ; far source pointer
+        cld
+        shr    cx,1             ; copy words
+        rep
+        movsw
+        rcl    cx,1             ; then possibly final byte
+        rep
+        movsb
+        mov    es,bx
+        mov    si,ax
+        mov    di,dx
+        ret

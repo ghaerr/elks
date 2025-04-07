@@ -421,8 +421,7 @@ L112:   out     %ax, %dx        // select bit plane
 
 // void fdstmemcpy (int dst_off, seg_t dst_seg, char *src_off, size_t count)
 // Copy near source to far destination
-// segment parameter after offset to allow LDS/LES from the stack
-// assume DS=SS, save ES, for GCC-IA16
+// segment parameter after offset to allow LES from the stack
 
 #define ARG0    2
 #define ARG1    4
@@ -437,7 +436,7 @@ fdstmemcpy:
         mov    %es,%bx
         mov    ARG3(%si),%cx    // byte count
         les    ARG0(%si),%di    // far destination pointer
-        mov    ARG2(%si),%si    // far source pointer
+        mov    ARG2(%si),%si    // near far source pointer
         cld
         shr    $1,%cx           // copy words
         rep
@@ -448,6 +447,4 @@ fdstmemcpy:
         mov    %bx,%es
         mov    %ax,%si
         mov    %dx,%di
-        mov    %ss,%ax
-        mov    %ax,%ds
         ret
