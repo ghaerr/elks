@@ -153,7 +153,7 @@ void R_Paint(int x1, int y1, int x2, int y2) {
 void R_DrawDisk(int x0, int y0, int r, int color, int X_lim)
 // Based on Algorithm http://members.chello.at/easyfilter/bresenham.html
 {
-    if (bushSize <= 1){
+    if (r <= 1) {
         drawpixel(x0, y0, color);
         return;
     }

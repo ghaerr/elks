@@ -35,6 +35,8 @@
  */
 
 #define EGA_BASE 0xA000         /* segment address of EGA/VGA video memory */
+#define MK_FP(seg,off)          \
+        ((void __far *)((((unsigned long)(seg)) << 16) | ((unsigned int)(off))))
 
 #ifdef __ia16__
 

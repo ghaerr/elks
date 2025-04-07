@@ -134,9 +134,9 @@ int asm_getbyte(int offset)
     asm(
         "mov cx,ds\n"
         "mov bx,[bp+4]\n"
-        "mov ax,0xa000\n"
+        "mov ax,#0xa000\n"
         "mov ds,ax\n"
-        "mov al,[bx]\n"
+        "mov al,[bx]\n"         /* offset */
         "xor ah,ah\n"
         "mov ds,cx\n"
     );

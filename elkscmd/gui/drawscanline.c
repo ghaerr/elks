@@ -13,6 +13,7 @@
 /* 21 January 1995 - added vga_readscanline(), added support for   */
 /* non 8-pixel aligned scanlines in 16 color mode. billr@rastergr.com */
 
+#include <string.h>
 #include "graphics.h"
 #include "vgalib.h"
 
@@ -61,13 +62,18 @@ static unsigned char plane1[80];
 static unsigned char plane2[80];
 static unsigned char plane3[80];
 
+#if     defined(__ia16__) || defined(__C86__)
+#define MEMCPY(dstoff, src, n)  fdstmemcpy(dstoff, EGA_BASE, src, n)
+#elif   defined(__WATCOMC__)
+#define MEMCPY(dstoff, src, n)  fmemcpy(MK_FP(EGA_BASE, dstoff), src, n);
+#else   /* future compiler */
 static void MEMCPY(unsigned int dstoff, unsigned char *src, int n)
 {
-    unsigned char __far *dst =
-        (unsigned char __far *)(((unsigned long)EGA_BASE << 16) | dstoff);
+    unsigned char __far *dst = MK_FP(EGA_BASE, dstoff);
     while (n--)
         *dst++ = *src++;
 }
+#endif
 
 void vga_drawscanline(unsigned char *colors, int x, int y, int length)
 {
@@ -86,8 +92,14 @@ void vga_drawscanline(unsigned char *colors, int x, int y, int length)
         last = i + 8 - ioffs;
         if (last > length)
             last = length;
-        for (j = first; j < last; j++, i++)
+        for (j = first; j < last; j++, i++) {
+#ifdef __C86__
+            bytes.i = (bytes.i << 1);
+            bytes.i |= color16[colors[j]].i;
+#else
             bytes.i = (bytes.i << 1) | color16[colors[j]&15].i;
+#endif
+        }
         plane0[k] = bytes.b.bit0;
         plane1[k] = bytes.b.bit1;
         plane2[k] = bytes.b.bit2;
@@ -108,7 +120,7 @@ void vga_drawscanline(unsigned char *colors, int x, int y, int length)
     l1 = k;
     /* make k the index of the last byte to write */
     k--;
-    
+
     /* REG 1: disable Set/Reset Register */
     set_enable_sr(0x00);
     

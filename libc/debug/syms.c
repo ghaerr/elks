@@ -20,7 +20,7 @@ struct minix_exec_hdr sym_hdr;
 
 #define MAGIC       0x0301  /* magic number for executable progs */
 
-static void noinstrument fmemcpy(unsigned char __far *dst, unsigned char *src, int n)
+static void noinstrument cfmemcpy(unsigned char __far *dst, unsigned char *src, int n)
 {
     do {
         *dst++ = *src++;
@@ -43,7 +43,7 @@ static unsigned char __far * noinstrument alloc_read(int fd, size_t size)
         n = size > sizeof(buf)? sizeof(buf): size;
         if (read(fd, buf, n) != n)
             return NULL;            // FIXME no fmemfree
-        fmemcpy(s+t, buf, n);
+        cfmemcpy(s+t, buf, n);
         t += n;
         size -= n;
     } while (size);

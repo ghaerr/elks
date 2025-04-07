@@ -31,6 +31,7 @@ void * memmove(void*, const void*, size_t);
 #ifndef __STRICT_ANSI__
 void __far *fmemset(void __far *buf, int c, size_t l);
 int fmemcmp(void __far *s1, void __far *s2, size_t n);  /* Watcom C only, in ASM */
+int fmemcpy(void __far *s1, void __far *s2, size_t n);  /* Watcom C only, in ASM */
 #endif
 
 /* Error messages */
