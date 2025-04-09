@@ -10,13 +10,13 @@
  * OpenWatcom and C86 compilers.
  *
  * Functions/Macros:
- *  set_color(color)            // 03ce REG 0 Set/Reset Register color for write mode 0
- *  set_enable_sr(flag)         // 03ce REG 1 Set Enable/Set/Reset Register
- *  set_op(op)                  // 03ce REG 3 Set Data Rotate Register
- *  set_read_plane(plane)       // 03ce REG 4 Set Read Map Select Register
- *  set_write_mode(mode)        // 03ce REG 5 Set Graphics Mode Register
- *  set_mask(mask)              // 03ce REG 8 Set Bit Mask Register
- *  set_write_planes(mask)      // 03c4 REG 2 Set Memory Plane Write Enable Register
+ *  set_color(color)            // 03ce REG 0 Set/Reset Register (color for write mode 0)
+ *  set_enable_sr(flag)         // 03ce REG 1 Enable Set/Reset Register (forces REG 0)
+ *  set_op(op)                  // 03ce REG 3 Data Rotate Register (nop, xor)
+ *  set_read_plane(plane)       // 03ce REG 4 Read Map Select Register
+ *  set_write_mode(mode)        // 03ce REG 5 Graphics Mode Register (write mode 0)
+ *  set_mask(mask)              // 03ce REG 8 Bit Mask Register
+ *  set_write_planes(mask)      // 03c4 REG 2 Memory Plane Write Enable Register
  *
  *  void set_bios_mode(mode)    // set BIOS graphics/text mode
  *  void asm_orbyte(int offset) // OR byte at A000:offset
