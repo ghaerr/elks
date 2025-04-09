@@ -126,29 +126,29 @@
 
 #define asm_orbyte(offset)                      \
     asm volatile (                              \
-        "mov %%ds,%%cx\n"                       \
+        "mov %%ds,%%dx\n"                       \
         "mov $0xa000,%%ax\n"                    \
         "mov %%ax,%%ds\n"                       \
         "or %%al,(%%bx)\n"                      \
-        "mov %%cx,%%ds\n"                       \
+        "mov %%dx,%%ds\n"                       \
         : /* no output */                       \
         : "b" ((unsigned short)(offset))        \
-        : "a", "c", "d"                         \
+        : "a", "d"                              \
         )
 
 #define asm_getbyte(offset)                     \
     __extension__ ({                            \
     unsigned short _v;                          \
     asm volatile (                              \
-        "mov %%ds,%%cx\n"                       \
+        "mov %%ds,%%dx\n"                       \
         "mov $0xa000,%%ax\n"                    \
         "mov %%ax,%%ds\n"                       \
         "mov (%%bx),%%al\n"                     \
         "xor %%ah,%%ah\n"                       \
-        "mov %%cx,%%ds\n"                       \
+        "mov %%dx,%%ds\n"                       \
         : "=a" (_v)                             \
         : "b" ((unsigned short)(offset))        \
-        : "c", "d"                              \
+        : "d"                                   \
         );                                      \
     _v; })
 
@@ -214,24 +214,24 @@ void set_write_planes(unsigned int mask);
 
 void asm_orbyte(unsigned int offset);
 #pragma aux asm_orbyte parm [ax] =              \
-    "mov cx,ds",                                \
+    "mov dx,ds",                                \
     "mov bx,ax",                                \
     "mov ax,0xa000",                            \
     "mov ds,ax",                                \
     "or [bx],al",                               \
-    "mov ds,cx",                                \
-    modify [ ax bx cx dx ];
+    "mov ds,dx",                                \
+    modify [ ax bx dx ];
 
 int asm_getbyte(unsigned int offset);
 #pragma aux asm_getbyte parm [ax] =             \
-    "mov cx,ds",                                \
+    "mov dx,ds",                                \
     "mov bx,ax",                                \
     "mov ax,0xa000",                            \
     "mov ds,ax",                                \
     "mov al,[bx]",                              \
     "xor ah,ah",                                \
-    "mov ds,cx",                                \
-    modify [ ax bx cx dx ];
+    "mov ds,dx",                                \
+    modify [ ax bx dx ];
 
 void set_bios_mode(int mode);
 #pragma aux set_bios_mode parm [ax] =           \
