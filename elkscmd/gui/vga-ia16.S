@@ -17,7 +17,7 @@
 //
         .code16
         .text
-#define BYTESPERLN  80                // number of bytes in scan line
+#define BYTESPERLN  80                // number of bytes in scan line (640/8)
 #define arg1        4                 // small model
 
 //
@@ -33,10 +33,8 @@ vga_init:
         mov     $0x03ce, %dx    // graphics controller port address
         mov     $0xff01, %ax    // set enable set/reset register 1 mask FF
         out     %ax, %dx
-
         mov     $0x0003, %ax    // data rotate register 3 NOP 0
         out     %ax, %dx
-
         mov     $0x0005, %ax    // set graphics mode register 5 write mode 0
         out     %ax, %dx        // [load value 0 into mode register 5]
         ret
@@ -47,7 +45,6 @@ vga_init:
 //
 // C version:
 //   static unsigned char mask[8] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
-//   //set_op(0);
 //   set_color(c);
 //   set_mask(mask[x&7]);
 //
@@ -55,10 +52,6 @@ vga_init:
 vga_drawpixel:
         push    %bp
         mov     %sp, %bp
-
-        //mov     dx, #0x03ce     // graphics controller port address
-        //mov     ax, #0x0003     // data rotate register 3 NOP 0
-        //out     dx, ax
 
         mov     arg1(%bp), %cx  // CX := x
         mov     %cx, %bx        // BX := x
@@ -99,9 +92,6 @@ vga_drawpixel:
         or      %al,(%bx)       // quick rmw to set pixel
         mov     %cx, %ds        // restore registers and return
 
-        //mov     ax, #0x0005     // restore default write mode 0
-        //out     dx, ax          // [load value 0 into mode register 5]
-
         pop     %bp
         ret
 
@@ -111,16 +101,15 @@ vga_drawpixel:
 //
 // C version:
 //   set_color(c);
-//   //set_op(0);
-//   char far *dst = SCREENBASE + x1 / 8 + y * BYTESPERLN;
-//   if (x1 / 8 == x2 / 8) {
+//   char far *dst = EGA_BASE + x1 / 8 + y * BYTESPERLN;
+//   if ((x1 >> 3) == (x2 >> 3)) {
 //       set_mask((0xff >> (x1 & 7)) & (0xff << (7 - (x2 & 7))));
 //       *dst |= 1;
 //   } else {
 //       set_mask(0xff >> (x1 & 7));
 //       *dst++ |= 1;
 //       set_mask(0xff);
-//       last = SCREENBASE + x2 / 8 + y * BYTESPERLN;
+//       last = EGA_BASE + x2 / 8 + y * BYTESPERLN;
 //       while (dst < last)
 //           *dst++ |= 1;
 //       set_mask(0xff << (7 - x2 & 7));
@@ -142,9 +131,6 @@ vga_drawhline:
         push    %ds
 
         mov     $0x03ce, %dx    // Graphics Controller port address
-        //mov     ax, #0x0003   // data rotate register 3 NOP 0
-        //out     dx, ax
-
         xor     %al, %al        // set Set/Reset register 0 with color
         mov     color(%bp), %ah
         out     %ax, %dx
@@ -242,14 +228,6 @@ L44:    mov     %bl, %ah        // AH := bit mask for last byte
         out     %ax, %dx        // update Graphics Controller
         movsb                   // update bit planes
 
-        // restore default Graphics Controller state and return to caller
-        //xor   ax, ax          // AH := 0, AL := 0
-        //out   dx, ax          // restore Set/Reset register
-        //inc   ax              // AH := 0, AL := 1
-        //out   dx, ax          // restore Enable Set/Reset register
-        //mov   ax, #0xff08     // AH := 0xff, AL := 0
-        //out   dx, ax          // restore Bit Mask register
-
         pop     %ds
         pop     %es
         pop     %di
@@ -262,11 +240,10 @@ L44:    mov     %bl, %ah        // AH := bit mask for last byte
 // void vga_drawvline(int x, int y1, int y2, int color)
 //
 // C version:
-//   //set_op(0);
 //   set_color(c);
 //   set_mask(mask[x&7]);
-//   char far *dst = SCREENBASE + x / 8 + y1 * BYTESPERLN;
-//   char far *last = SCREENBASE + x / 8 + y2 * BYTESPERLN;
+//   char far *dst = EGA_BASE + x / 8 + y1 * BYTESPERLN;
+//   char far *last = EGA_BASE + x / 8 + y2 * BYTESPERLN;
 //   while (dst < last) {
 //       *dst |= 1;
 //       dst += BYTESPERLN;
@@ -285,11 +262,8 @@ vga_drawvline:
         push    %ds
 
         mov     $0x03ce, %dx    // DX := Graphics Controller port address
-        //mov     ax, #0x0003   // data rotate register 3 NOP 0
-        //out     dx, ax
-
         xor     %al, %al        // set Set/Reset register 0 with color
-        mov     color(%bp),%ah
+        mov     color(%bp), %ah
         out     %ax, %dx
 
         mov     $0x0f01, %ax    // AH := bit plane mask for Enable Set/Reset
@@ -326,7 +300,7 @@ L311:   inc     %cx             // CX := number of pixels to draw
         xor     $7, %cl         // CL := 7 - [col & 7]
         mov     $1, %ah         // AH := 1 << [7 - [col & 7]]    [mask]
         mov     $0x0A000, %dx   // DS := EGA buffer segment address
-        mov     %dx,%ds         // DS:BX -> video buffer
+        mov     %dx ,%ds        // DS:BX -> video buffer
         pop     %dx
                                 // AH := bit mask
                                 // CL := number bits to shift left
@@ -342,14 +316,6 @@ L311:   inc     %cx             // CX := number of pixels to draw
 L1111:  or      %al, (%bx)      // set pixel
         add     %dx, %bx        // increment to next line
         loop    L1111
-
-        // restore default Graphics Controller state and return to caller
-        //xor   ax, ax          // AH := 0, AL := 0
-        //out   dx, ax          // restore Set/Reset register
-        //inc   ax              // AH := 0, AL := 1
-        //out   dx, ax          // restore Enable Set/Reset register
-        //mov   ax, #0xff08     // AH := 0xff, AL := 0
-        //out   dx, ax          // restore Bit Mask register
 
         pop     %ds
         pop     %bp
@@ -430,21 +396,23 @@ L112:   out     %ax, %dx        // select bit plane
 
         .global fdstmemcpy
 fdstmemcpy:
-        mov    %si,%ax
-        mov    %di,%dx
-        mov    %sp,%si
-        mov    %es,%bx
-        mov    ARG3(%si),%cx    // byte count
-        les    ARG0(%si),%di    // far destination pointer
-        mov    ARG2(%si),%si    // near far source pointer
+        mov    %si, %ax
+        mov    %di, %dx
+        mov    %es, %bx
+        mov    %sp, %si
+
+        mov    ARG3(%si), %cx   // byte count
+        les    ARG0(%si), %di   // far destination pointer
+        mov    ARG2(%si), %si   // near far source pointer
         cld
-        shr    $1,%cx           // copy words
+        shr    $1, %cx          // copy words
         rep
         movsw
-        rcl    $1,%cx           // then possibly final byte
+        rcl    $1, %cx          // then possibly final byte
         rep
         movsb
-        mov    %bx,%es
-        mov    %ax,%si
-        mov    %dx,%di
+
+        mov    %bx, %es
+        mov    %dx, %di
+        mov    %ax, %si
         ret

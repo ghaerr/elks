@@ -16,7 +16,7 @@
 ;
         use16   86
         .text
-BYTESPERLN  = 80                ; number of bytes in scan line
+BYTESPERLN  = 80                ; number of bytes in scan line (640/8)
 arg1        = 4                 ; small model
 
 ;
@@ -31,11 +31,9 @@ arg1        = 4                 ; small model
 _vga_init:
         mov     dx, #0x03ce     ; graphics controller port address
         mov     ax, #0xff01     ; set enable set/reset register 1 mask FF
-        out     dx,ax
-
+        out     dx, ax
         mov     ax, #0x0003     ; data rotate register 3 NOP 0
         out     dx, ax
-
         mov     ax, #0x0005     ; set graphics mode register 5 write mode 0
         out     dx, ax          ; [load value 0 into mode register 5]
         ret
@@ -46,7 +44,6 @@ _vga_init:
 ;
 ; C version:
 ;   static unsigned char mask[8] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
-;   //set_op(0);
 ;   set_color(c);
 ;   set_mask(mask[x&7]);
 ;
@@ -54,10 +51,6 @@ _vga_init:
 _vga_drawpixel:
         push    bp
         mov     bp, sp
-
-        ;mov     dx, #0x03ce     ; graphics controller port address
-        ;mov     ax, #0x0003     ; data rotate register 3 NOP 0
-        ;out     dx, ax
 
         mov     cx, arg1[bp]    ; CX := x
         mov     bx, cx          ; BX := x
@@ -95,11 +88,8 @@ _vga_drawpixel:
         mov     cx, ds
         mov     ax, #0xA000     ; DS := EGA buffer segment address
         mov     ds, ax
-        or      [bx],al         ; quick rmw to set pixel
+        or      [bx], al        ; quick rmw to set pixel
         mov     ds, cx          ; restore registers and return
-
-        ;mov     ax, #0x0005     ; restore default write mode 0
-        ;out     dx, ax          ; [load value 0 into mode register 5]
 
         pop     bp
         ret
@@ -110,16 +100,15 @@ _vga_drawpixel:
 ;
 ; C version:
 ;   set_color(c);
-;   //set_op(0);
-;   char far *dst = SCREENBASE + x1 / 8 + y * BYTESPERLN;
-;   if (x1 / 8 == x2 / 8) {
+;   char far *dst = EGA_BASE + x1 / 8 + y * BYTESPERLN;
+;   if ((x1 >> 3) == (x2 >> 3)) {
 ;       set_mask((0xff >> (x1 & 7)) & (0xff << (7 - (x2 & 7))));
 ;       *dst |= 1;
 ;   } else {
 ;       set_mask(0xff >> (x1 & 7));
 ;       *dst++ |= 1;
 ;       set_mask(0xff);
-;       last = SCREENBASE + x2 / 8 + y * BYTESPERLN;
+;       last = EGA_BASE + x2 / 8 + y * BYTESPERLN;
 ;       while (dst < last)
 ;           *dst++ |= 1;
 ;       set_mask(0xff << (7 - x2 & 7));
@@ -141,9 +130,6 @@ _vga_drawhline:
         push    ds
 
         mov     dx, #0x03ce     ; Graphics Controller port address
-        ;mov     ax, #0x0003     ; data rotate register 3 NOP 0
-        ;out     dx, ax
-
         xor     al, al          ; set Set/Reset register 0 with color
         mov     ah, color[bp]
         out     dx, ax
@@ -241,14 +227,6 @@ L44:    mov     ah, bl          ; AH := bit mask for last byte
         out     dx, ax          ; update Graphics Controller
         movsb                   ; update bit planes
 
-        ; restore default Graphics Controller state and return to caller
-        ;xor   ax, ax          ; AH := 0, AL := 0
-        ;out   dx, ax          ; restore Set/Reset register
-        ;inc   ax              ; AH := 0, AL := 1
-        ;out   dx, ax          ; restore Enable Set/Reset register
-        ;mov   ax, #0xff08     ; AH := 0xff, AL := 0
-        ;out   dx, ax          ; restore Bit Mask register
-
         pop     ds
         pop     es
         pop     di
@@ -261,11 +239,10 @@ L44:    mov     ah, bl          ; AH := bit mask for last byte
 ; void vga_drawvline(int x, int y1, int y2, int color);
 ;
 ; C version:
-;   //set_op(0);
 ;   set_color(c);
 ;   set_mask(mask[x&7]);
-;   char far *dst = SCREENBASE + x / 8 + y1 * BYTESPERLN;
-;   char far *last = SCREENBASE + x / 8 + y2 * BYTESPERLN;
+;   char far *dst = EGA_BASE + x / 8 + y1 * BYTESPERLN;
+;   char far *last = EGA_BASE + x / 8 + y2 * BYTESPERLN;
 ;   while (dst < last) {
 ;       *dst |= 1;
 ;       dst += BYTESPERLN;
@@ -284,9 +261,6 @@ _vga_drawvline:
         push    ds
 
         mov     dx, #0x03ce     ; DX := Graphics Controller port address
-        ;mov     ax, #0x0003     ; data rotate register 3 NOP 0
-        ;out     dx, ax
-
         xor     al, al          ; set Set/Reset register 0 with color
         mov     ah, color[bp]
         out     dx, ax
@@ -341,14 +315,6 @@ L311:   inc     cx              ; CX := number of pixels to draw
 L1111:  or      [bx], al        ; set pixel
         add     bx, dx          ; increment to next line
         loop    L1111
-
-        ; restore default Graphics Controller state and return to caller
-        ;xor   ax, ax          ; AH := 0, AL := 0
-        ;out   dx, ax          ; restore Set/Reset register
-        ;inc   ax              ; AH := 0, AL := 1
-        ;out   dx, ax          ; restore Enable Set/Reset register
-        ;mov   ax, #0xff08     ; AH := 0xff, AL := 0
-        ;out   dx, ax          ; restore Bit Mask register
 
         pop     ds
         pop     bp
@@ -432,8 +398,9 @@ ARG3    = 8
 _fdstmemcpy:
         mov    ax,si
         mov    dx,di
-        mov    si,sp
         mov    bx,es
+        mov    si,sp
+
         mov    cx,ARG3[si]      ; byte count
         les    di,ARG0[si]      ; far destination pointer
         mov    si,ARG2[si]      ; far source pointer
@@ -444,7 +411,8 @@ _fdstmemcpy:
         rcl    cx,1             ; then possibly final byte
         rep
         movsb
+
         mov    es,bx
-        mov    si,ax
         mov    di,dx
+        mov    si,ax
         ret

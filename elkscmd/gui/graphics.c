@@ -132,13 +132,13 @@ void set_bios_mode(int mode)
 int asm_getbyte(int offset)
 {
     asm(
-        "mov cx,ds\n"
+        "mov dx,ds\n"
         "mov bx,[bp+4]\n"
         "mov ax,#0xa000\n"
         "mov ds,ax\n"
         "mov al,[bx]\n"         /* offset */
         "xor ah,ah\n"
-        "mov ds,cx\n"
+        "mov ds,dx\n"
     );
 }
 
@@ -147,15 +147,13 @@ int asm_getbyte(int offset)
 void pal_writevid(unsigned int offset, int c)
 {
     asm(
-        "push   ds\n"
-        "push   bx\n"
+        "mov    dx,ds\n"
         "mov    ax,#0xA000\n"
         "mov    ds,ax\n"
         "mov    bx,[bp+4]\n"    /* offset */
         "mov    al,[bp+6]\n"    /* color */
         "mov    [bx],al\n"
-        "pop    bx\n"
-        "pop    ds\n"
+        "mov    ds,dx\n"
     );
 }
 
