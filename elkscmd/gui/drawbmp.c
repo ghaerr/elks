@@ -302,6 +302,7 @@ draw_bmp(char *path, int x, int y)
                     pal = &bmppal[image[w]];
                     c = find_nearest_color(pal->r, pal->g, pal->b);
                     cache[image[w]] = c;
+                    /*__dprintf("cache %d\n", c);*/
                 }
 #if USE_DRAWSCANLINE
                 image[w] = c;

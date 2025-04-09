@@ -79,6 +79,7 @@ void vga_drawscanline(unsigned char *colors, int x, int y, int length)
 {
     int i, j, k, first, last, l1;
     unsigned int offset, eoffs, soffs, ioffs;
+    unsigned int soffmask, eoffmask;
     union bits bytes;
     
     if (length > 640)
@@ -106,6 +107,8 @@ void vga_drawscanline(unsigned char *colors, int x, int y, int length)
         plane3[k++] = bytes.b.bit3;
         ioffs = 0;
     }
+    if (soffs)
+        soffmask = ~mask[soffs];
     if (eoffs) {
         /* fixup last byte */
         k--;
@@ -114,6 +117,7 @@ void vga_drawscanline(unsigned char *colors, int x, int y, int length)
         plane1[k] = bytes.b.bit1;
         plane2[k] = bytes.b.bit2;
         plane3[k++] = bytes.b.bit3;
+        eoffmask = mask[eoffs];
     }
     offset = (y << 6) + (y << 4) + (x >> 3);    /* y * 640/8 + x / 8 */
     /* k currently contains number of bytes to write */
@@ -121,74 +125,52 @@ void vga_drawscanline(unsigned char *colors, int x, int y, int length)
     /* make k the index of the last byte to write */
     k--;
 
-    /* REG 1: disable Set/Reset Register */
-    set_enable_sr(0x00);
-    
-    /* REG 8: write to all bits */
-    set_mask(0xff);
-    
-    /* REG 2: select write map mask register */
-    set_write_planes(0x01);
-    /* REG 4: select read map mask register */
-    set_read_plane(0x00);
+    set_enable_sr(0x00);        /* REG 1: disable Set/Reset Register */
+    set_mask(0xff);             /* REG 8: write to all bits */
+
+    set_write_planes(0x01);     /* REG 2: select write map mask register */
+    set_read_plane(0x00);       /* REG 4: select read map mask register */
     if (soffs)
-        plane0[0] |= asm_getbyte(offset) & ~mask[soffs];
+        plane0[0] |= asm_getbyte(offset) & soffmask;
     if (eoffs)
-        plane0[k] |= asm_getbyte(offset + k) & mask[eoffs];
+        plane0[k] |= asm_getbyte(offset + k) & eoffmask;
     MEMCPY(offset, plane0, l1);
     
-    /* REG 2: write plane 1 */
-    set_write_planes(0x02);
-    /* REG 4: read plane 1 */
-    set_read_plane(0x01);
+    set_write_planes(0x02);     /* REG 2: write plane 1 */
+    set_read_plane(0x01);       /* REG 4: read plane 1 */
     if (soffs)
-        plane1[0] |= asm_getbyte(offset) & ~mask[soffs];
+        plane1[0] |= asm_getbyte(offset) & soffmask;
     if (eoffs)
-        plane1[k] |= asm_getbyte(offset + k) & mask[eoffs];
+        plane1[k] |= asm_getbyte(offset + k) & eoffmask;
     MEMCPY(offset, plane1, l1);
     
-    /* REG 2: write plane 2 */
-    set_write_planes(0x04);
-    /* REG 4: read plane 2 */
-    set_read_plane(0x02);
+    set_write_planes(0x04);     /* REG 2: write plane 2 */
+    set_read_plane(0x02);       /* REG 4: read plane 2 */
     if (soffs)
-        plane2[0] |= asm_getbyte(offset) & ~mask[soffs];
+        plane2[0] |= asm_getbyte(offset) & soffmask;
     if (eoffs)
-        plane2[k] |= asm_getbyte(offset + k) & mask[eoffs];
+        plane2[k] |= asm_getbyte(offset + k) & eoffmask;
     MEMCPY(offset, plane2, l1);
     
-    /* REG 2: write plane 3 */
-    set_write_planes(0x08);
-    /* REG 4: read plane 3 */
-    set_read_plane(0x03);
+    set_write_planes(0x08);     /* REG 2: write plane 3 */
+    set_read_plane(0x03);       /* REG 4: read plane 3 */
     if (soffs)
-        plane3[0] |= asm_getbyte(offset) & ~mask[soffs];
+        plane3[0] |= asm_getbyte(offset) & soffmask;
     if (eoffs)
-        plane3[k] |= asm_getbyte(offset + k) & mask[eoffs];
+        plane3[k] |= asm_getbyte(offset + k) & eoffmask;
     MEMCPY(offset, plane3, l1);
     
-    /* REG 2: restore map mask register */
-    set_write_planes(0x0f);     
-
-    /* REG 1: enable Set/Reset Register */
-    set_enable_sr(0xff);
+    set_write_planes(0x0f);     /* REG 2: restore map mask register */
+    set_enable_sr(0xff);        /* REG 1: enable Set/Reset Register */
 
 #if UNUSED  /* 1bpp routine */
-    /* REG 1: disable Set/Reset Register */
-    set_enable_sr(0x00);
+    set_enable_sr(0x00);        /* REG 1: disable Set/Reset Register */
+    set_mask(0xff);             /* REG 8: write to all bits */
+    set_write_planes(0x0f);     /* REG 2: write to all planes */
+
+    MEMCPY((y << 6) + (y << 4) + (x >> 3), colors, length);  /* y * 80 + x / 8 */
     
-    /* REG 8: write to all bits */
-    set_mask(0xff);
-    
-    /* REG 2: write to all planes */
-    set_write_planes(0x0f);
-    
-    MEMCPY(EGA_BASE + (y * 640 + x) / 8, colors, length);
-    
-    /* REG 2: restore map mask register */
-    set_write_planes(0x0f);
-    
-    /* REG 1: enable Set/Reset Register */
-    set_enable_sr(0xff);
+    set_write_planes(0x0f);     /* REG 2: restore map mask register */
+    set_enable_sr(0xff);        /* REG 1: enable Set/Reset Register */
 #endif
 }
