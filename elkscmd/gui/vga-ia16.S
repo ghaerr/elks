@@ -57,8 +57,6 @@ vga_drawpixel:
         mov     %cx, %bx        // BX := x
         mov     arg1+2(%bp), %ax// AX := y
 
-        //mov     $BYTESPERLN, %dx // AX := [y * BYTESPERLN]
-        //mul     %dx
         shl     $1, %ax         // AX := [y * 80] (= y*64 + y*16)
         shl     $1, %ax
         shl     $1, %ax
@@ -73,8 +71,9 @@ vga_drawpixel:
         mov     $1, %ch         // CH := 1 << (7 - (x & 7))
         shl     %cl, %ch        // CH is mask
 
-        mov     $3, %cl         // BX := x / 8
-        shr     %cl, %bx
+        shr     $1, %bx         // BX := x / 8
+        shr     $1, %bx
+        shr     $1, %bx
         add     %ax, %bx        // BX := [y * BYTESPERLN] + [x / 8]
 
         mov     $0x03ce, %dx    // graphics controller port address
@@ -142,8 +141,6 @@ vga_drawhline:
         mov     x1(%bp), %bx
 
         // compute pixel address
-        //mov     $BYTESPERLN, %dx // AX := [row * BYTESPERLN]
-        //mul     %dx
         shl     $1, %ax         // AX := [row * 80] (= row*64 + row*16)
         shl     $1, %ax
         shl     $1, %ax
@@ -182,10 +179,12 @@ vga_drawhline:
         mov     x2(%bp), %ax    // AX := x2
         mov     x1(%bp), %bx    // BX := x1
 
-        mov     $3, %cl         // bits to convert pixels to bytes
-
-        shr     %cl, %ax        // AX := byte offset of X2
-        shr     %cl, %bx        // BX := byte offset of X1
+        shr     $1, %ax         // AX := byte offset of X2
+        shr     $1, %ax
+        shr     $1, %ax
+        shr     $1, %bx         // BX: byte offset of X1
+        shr     $1, %bx
+        shr     $1, %bx
         mov     %ax, %cx
         sub     %bx, %cx        // CX := [number of bytes in line] - 1
 
@@ -223,7 +222,6 @@ L43:    mov     $0xff, %ah      // AH := bit mask
         movsb                   // update all pixels in the line
 
         // set pixels in the rightmost byte of the line
-
 L44:    mov     %bl, %ah        // AH := bit mask for last byte
         out     %ax, %dx        // update Graphics Controller
         movsb                   // update bit planes
@@ -279,9 +277,6 @@ L311:   inc     %cx             // CX := number of pixels to draw
         push    %cx             // save register
 
         // compute pixel address
-        push    %dx
-        //mov     $BYTESPERLN, %dx // AX := [row * BYTESPERLN]
-        //mul     %dx
         shl     $1, %ax         // AX := [row * 80] (= row*64 + row*16)
         shl     $1, %ax
         shl     $1, %ax
@@ -301,10 +296,10 @@ L311:   inc     %cx             // CX := number of pixels to draw
         mov     $1, %ah         // AH := 1 << [7 - [col & 7]]    [mask]
         mov     $0x0A000, %dx   // DS := EGA buffer segment address
         mov     %dx ,%ds        // DS:BX -> video buffer
-        pop     %dx
                                 // AH := bit mask
                                 // CL := number bits to shift left
         // set up Graphics controller
+        mov     $0x03ce, %dx    // DX := Graphics Controller port address
         shl     %cl, %ah        // AH := bit mask in proper position
         mov     $8, %al         // AL := Bit Mask register number 8
         out     %ax, %dx
@@ -334,8 +329,6 @@ vga_readpixel:
 
         mov     arg1+2(%bp), %ax// AX := y
         mov     arg1(%bp), %bx  // BX := x
-        //mov     $BYTESPERLN, %dx // AX := [y * BYTESPERLN]
-        //mul     %dx
         shl     $1, %ax         // AX := [y * 80] (= y*64 + y*16)
         shl     $1, %ax
         shl     $1, %ax
@@ -349,7 +342,6 @@ vga_readpixel:
         shr     $1, %bx         // BX := [x / 8]
         shr     $1, %bx
         shr     $1, %bx
-
         add     %ax, %bx        // BX := [y * BYTESPERLN] + [x / 8]
 
         and     $7, %cl         // CL := [x & 7]
