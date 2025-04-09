@@ -221,7 +221,6 @@ L43:    mov     ah, #0xff       ; AH := bit mask
         movsb                   ; update all pixels in the line
 
         ; set pixels in the rightmost byte of the line
-
 L44:    mov     ah, bl          ; AH := bit mask for last byte
         out     dx, ax          ; update Graphics Controller
         movsb                   ; update bit planes
@@ -342,7 +341,6 @@ _vga_readpixel:
         shr     bx, 1           ; BX := [x / 8]
         shr     bx, 1
         shr     bx, 1
-
         add     bx, ax          ; BX := [y * BYTESPERLN] + [x / 8]
 
         and     cl, #7          ; CL := [x & 7]
