@@ -263,7 +263,6 @@ void R_LineFloodFill(int x, int y, int color, int ogColor)
             // Fill right
             if(leftestX < CANVAS_WIDTH && readpixel(leftestX, curElement.y) == ogColor)
             {
-                //pixels[leftestX + curElement.y * width] = color;
                 drawpixel(leftestX, curElement.y, color);
 
                 // Check above this pixel
