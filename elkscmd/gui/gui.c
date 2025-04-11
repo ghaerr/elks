@@ -53,22 +53,44 @@ int G_ClearScreen(struct button_s* btn)
 
 int G_SetFloodFill(struct button_s* btn)
 {
-    floodFill = true;
-    circleMode = false;
+    R_HighlightActiveButton();
+    currentModeButton = btn->id;
+    R_HighlightActiveButton();
+
+    current_mode = mode_Fill;
+    current_state = state_Idle;
     return 0;
 }
 
 int G_SetCircle(struct button_s* btn)
 {
-    floodFill = false;
-    circleMode = true;
-    circleDrawing = false;
+    R_HighlightActiveButton();
+    currentModeButton = btn->id;
+    R_HighlightActiveButton();
+
+    current_mode = mode_Circle;
+    current_state = state_Idle;
+    return 0;
+}
+
+int G_SetRectangle(struct button_s* btn)
+{
+    R_HighlightActiveButton();
+    currentModeButton = btn->id;
+    R_HighlightActiveButton();
+
+    current_mode = mode_Rectangle;
+    current_state = state_Idle;
     return 0;
 }
 
 int G_SetBrush(struct button_s* btn)
 {
-    floodFill = false;
-    circleMode = false;
+    R_HighlightActiveButton();
+    currentModeButton = btn->id;
+    R_HighlightActiveButton();
+
+    current_mode = mode_Brush;
+    current_state = state_Idle;
     return 0;
 }

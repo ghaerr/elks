@@ -13,15 +13,7 @@
 // --------------------------------------------
 app_t DrawingApp;
 
-boolean_t drawing;              // Are we drawing with the left mouse button?
-boolean_t altdrawing;           // Are we drawing with the right mouse button?
-boolean_t floodFill;            // Are we flood filling with the left mouse button?
-boolean_t floodFillCalled;      // True if user is trying to floodfill
-boolean_t circleMode;        // Are we drawing circle with the left mouse button?
-boolean_t circleDrawing;
-boolean_t circleDrawingCalled;  // True if user is trying to draw a circle
 int mx,my;                      // Mouse X and Y
-int omx, omy;                   // Old MouseX and Old MouseY (pos at previous update)
 int omx, omy;                   // Old MouseX and Old MouseY (pos at previous update)
 int startX, startY;             // Circle center X and Y
 int lastRadius;                 // Circle old radius
@@ -30,6 +22,10 @@ int paletteBrightness;          // The brightness of the color picker
 int bushSize;                   // Size of the brush
 int currentMainColor;           // The selected color for LMB
 int currentAltColor;            // Color for RMB (eraser)
+int current_color;
+int currentModeButton;
+DrawingMode current_mode;
+DrawingState current_state;
 
 button_t paletteButtons[PALETTE_BUTTONS_COUNT];
 
@@ -46,9 +42,12 @@ void A_InitTomentPainter(void)
     graphics_open(EGA? VGA_640x350x16: VGA_640x480x16);
 
     DrawingApp.quit = false;
-    floodFill = false;
-    circleMode = false;
-    circleDrawing = false;
+
+    currentModeButton = 10; // BrushButton
+    current_mode = mode_Brush;
+    current_state = state_Idle;
+    startX = 0;
+    startY = 0;
     lastRadius = 0;
 
     A_InitPalette();
@@ -62,6 +61,7 @@ void A_InitTomentPainter(void)
 // --- Helper macro to initialize buttons ---
 #define DEFINE_BUTTON(ID, NAME, X, Y, W, H, CLICK, RENDER) \
     paletteButtons[ID].name = NAME; \
+    paletteButtons[ID].id   = ID;   \
     paletteButtons[ID].box.x = (X); \
     paletteButtons[ID].box.y = (Y); \
     paletteButtons[ID].box.w = (W); \
@@ -108,12 +108,13 @@ void A_InitPalette(void)
 
     // Functional buttons with icons
     #define FUNC_Y 300
-    DEFINE_BUTTON_WITH_FILE(10, "SaveButton",  CANVAS_WIDTH + 10 + 32*0, FUNC_Y,    32, 32, G_SaveButtonOnClick, 1, LIBPATH "save.bmp");
+    DEFINE_BUTTON_WITH_FILE(10, "BrushButton", CANVAS_WIDTH + 10 + 32*0, FUNC_Y-32, 32, 32, G_SetBrush,          1, LIBPATH "brush.bmp");
     DEFINE_BUTTON_WITH_FILE(11, "FillButton",  CANVAS_WIDTH + 10 + 32*1, FUNC_Y-32, 32, 32, G_SetFloodFill,      1, LIBPATH "fill.bmp");
-    DEFINE_BUTTON_WITH_FILE(12, "BrushButton", CANVAS_WIDTH + 10 + 32*0, FUNC_Y-32, 32, 32, G_SetBrush,          1, LIBPATH "brush.bmp");
-    DEFINE_BUTTON_WITH_FILE(13, "CircleButton",CANVAS_WIDTH + 10 + 32*2, FUNC_Y-32, 32, 32, G_SetCircle,         1, LIBPATH "circle.bmp");
-    DEFINE_BUTTON_WITH_FILE(14, "QuitButton",  CANVAS_WIDTH + 10 + 32*3, FUNC_Y,    32, 32, G_QuitButtonOnClick, 1, LIBPATH "quit.bmp");
-    DEFINE_BUTTON_WITH_FILE(15, "Cls",         CANVAS_WIDTH + 10 + 32*3, FUNC_Y-32, 32, 32, G_ClearScreen,       1, LIBPATH "cls.bmp");
+    DEFINE_BUTTON_WITH_FILE(12, "CircleButton",CANVAS_WIDTH + 10 + 32*2, FUNC_Y-32, 32, 32, G_SetCircle,         1, LIBPATH "circle.bmp");
+    DEFINE_BUTTON_WITH_FILE(13, "RectangleBtn",CANVAS_WIDTH + 10 + 32*3, FUNC_Y-32, 32, 32, G_SetRectangle,      1, LIBPATH "rectangle.bmp");
+    DEFINE_BUTTON_WITH_FILE(14, "SaveButton",  CANVAS_WIDTH + 10 + 32*0, FUNC_Y,    32, 32, G_SaveButtonOnClick, 1, LIBPATH "save.bmp");
+    DEFINE_BUTTON_WITH_FILE(15, "Cls",         CANVAS_WIDTH + 10 + 32*2, FUNC_Y,    32, 32, G_ClearScreen,       1, LIBPATH "cls.bmp");
+    DEFINE_BUTTON_WITH_FILE(16, "QuitButton",  CANVAS_WIDTH + 10 + 32*3, FUNC_Y,    32, 32, G_QuitButtonOnClick, 1, LIBPATH "quit.bmp");
 }
 
 // Utility: distance between two points
@@ -131,21 +132,45 @@ void A_GameLoop(void)
 {
     movecursor(mx, my);
 
-    if((drawing || altdrawing || circleDrawing) && mx > CANVAS_WIDTH) mx = CANVAS_WIDTH;
+    if((current_state == state_Drawing) && mx > CANVAS_WIDTH) mx = CANVAS_WIDTH;
 
-    if(circleDrawingCalled)
+    if(current_state == state_Finalize)
     {
-        circleDrawingCalled = false;
+        switch (current_mode) {
+            case mode_Brush:
+            break;
 
-        // Erase the old preview circle
-        if (lastRadius > 0) {
-            set_op(0x18);    // turn on XOR drawing
-            R_DrawCircle(startX, startY, lastRadius, currentMainColor); // erase using XOR
+            case mode_Fill:
+                if(mx <= CANVAS_WIDTH){
+                    hidecursor();
+                    R_LineFloodFill(omx, omy, current_color, readpixel(mx, my));
+                    showcursor();
+                    current_state = state_Idle;
+                }
+            break;
+
+            case mode_Circle:
+                // Erase the old preview circle
+                if (lastRadius > 0) {
+                    set_op(0x18);    // turn on XOR drawing
+                    R_DrawCircle(startX, startY, lastRadius, current_color); // erase using XOR
+                }
+                int radius = distance(startX, startY, omx, omy);
+                set_op(0);       // turn off XOR drawing
+                R_DrawCircle(startX, startY, radius, current_color); // Final draw
+                lastRadius = 0;
+                current_state = state_Idle;
+            break;
+            case mode_Rectangle:
+                // Erase the old preview
+                set_op(0x18);    // turn on XOR drawing
+                R_DrawRectangle(startX, startY, omx, omy); // erase using XOR
+                set_op(0);       // turn off XOR drawing
+                mx = (mx > CANVAS_WIDTH) ? CANVAS_WIDTH : mx;
+                R_DrawRectangle(startX, startY, mx, my); // Final draw
+                current_state = state_Idle;
+            break;
         }
-        int radius = distance(startX, startY, omx, omy);
-        set_op(0);       // turn off XOR drawing
-        R_DrawCircle(startX, startY, radius, currentMainColor); // Final draw
-        lastRadius = 0;
     }
 
     // In canvas
@@ -153,28 +178,33 @@ void A_GameLoop(void)
     {
         mouseOnPalette = false;
 
-        if(drawing || altdrawing)
-        {
-            R_Paint(omx, omy, mx, my);
-        }
-        if(circleDrawing)
-        {
-            int radius = distance(startX, startY, mx, my);
-            // Erase the old preview circle
-            if (lastRadius > 0) {
-                R_DrawCircle(startX, startY, lastRadius, currentMainColor); // XOR again to erase
-            }
+        if(current_state == state_Drawing){
+            switch (current_mode) {
+                case mode_Brush:
+                    R_Paint(omx, omy, mx, my);
+                break;
 
-            // Draw new preview
-            R_DrawCircle(startX, startY, radius, currentMainColor);
-            lastRadius = radius;
-        }
-        if(floodFillCalled)
-        {
-            floodFillCalled = false;
-            hidecursor();
-            R_LineFloodFill(omx, omy, currentMainColor, readpixel(mx, my));
-            showcursor();
+                case mode_Fill:
+                break;
+
+                case mode_Circle:
+                    // Erase the old preview circle
+                    if (lastRadius > 0) {
+                        R_DrawCircle(startX, startY, lastRadius, current_color); // XOR again to erase
+                    }
+                    // Draw new preview
+                    int radius = distance(startX, startY, mx, my);
+                    R_DrawCircle(startX, startY, radius, current_color);
+                    lastRadius = radius;
+                break;
+
+                case mode_Rectangle:
+                    // Erase the old preview
+                    R_DrawRectangle(startX, startY, omx, omy); // XOR again to erase
+                    // Draw new preview
+                    R_DrawRectangle(startX, startY, mx, my);
+                break;
+            }
         }
     }
     else // In toolbar
@@ -186,7 +216,7 @@ void A_GameLoop(void)
 // ------------------------------------------------
 //  Source Code
 // ------------------------------------------------
-//  A_ [ Application/Implementation Specific]
+//  A_ [Application/Implementation Specific]
 //  G_ [GUI]
 //  I_ [Input/Implementation Specific]
 //  R_ [Rendering]
@@ -200,6 +230,9 @@ int main(int argc, char* argv[])
 
     // Draw Palette
     R_DrawPalette();
+
+    // Highlight Brush Button
+    R_HighlightActiveButton();
 
     initcursor();
 

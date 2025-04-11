@@ -31,11 +31,13 @@ void R_DrawCurrentColor(void);
 // ----------------------------------------------------
 void R_DrawDisk(int x0, int y0, int r, int color, int X_lim);
 void R_DrawCircle(int cx, int cy, int r, int color);
+void R_DrawRectangle(int x1, int y1, int x2, int y2);
 
 // ----------------------------------------------------
 // Draws all the Palette Buttons
 // ----------------------------------------------------
 void R_DrawAllButtons(void);
+void R_HighlightActiveButton(void);
 
 // ----------------------------------------------------
 // Draws Brush Buttons
