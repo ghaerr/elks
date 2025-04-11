@@ -38,6 +38,7 @@ typedef struct rect
 typedef struct button_s
 {
     char* name;
+    int id;
     rect box;
     int (*OnClick)(struct button_s* btn);
     int data1;
@@ -56,28 +57,39 @@ typedef struct app_s
     boolean_t quit;
 } app_t;
 
+typedef enum {
+    mode_Brush,
+    mode_Fill,
+    mode_Circle,
+    mode_Rectangle
+} DrawingMode;
+
+typedef enum {
+    state_Idle,        // Not drawing anything
+    state_Drawing,     // Actively drawing (mouse left button held)
+    state_Finalize     // Releasing mouse, committing shape
+} DrawingState;
+
 extern app_t DrawingApp;
 
-extern boolean_t drawing;              // Are we drawing with the left mouse button?
-extern boolean_t altdrawing;           // Are we drawing with the right mouse button?
-extern boolean_t floodFill;            // Are we flood filling with the left mouse button?
-extern boolean_t floodFillCalled;      // True if user is trying to flood fill
-extern boolean_t circleMode;        // Are we drawing circle with the left mouse button?
-extern boolean_t circleDrawing;        // Are we drawing circle with the left mouse button?
-extern boolean_t circleDrawingCalled;  // True if user is trying to draw a circle
 extern int mx,my;                      // Mouse X and Y
 extern int omx, omy;                   // Old MouseX and MouseY (pos at previous update)
 extern int startX, startY;             // Circle center X and Y
 extern int lastRadius;                 // Circle old radius
 extern boolean_t mouseOnPalette;       // True if the mouse is on the palette and not the canvas
 
+extern DrawingMode current_mode;
+extern DrawingState current_state;
+
 extern int paletteBrightness;          // The brightness of the color picker
 extern int bushSize;                   // Size of the brush
 extern int currentMainColor;           // The selected color for LMB
 extern int currentAltColor;            // Color for RMB (eraser)
+extern int current_color;
+extern int currentModeButton;
 
 // Palette Buttons
-#define PALETTE_BUTTONS_COUNT 16
+#define PALETTE_BUTTONS_COUNT 17
 
 // All the buttons
 extern button_t paletteButtons[PALETTE_BUTTONS_COUNT];
