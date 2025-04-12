@@ -26,6 +26,7 @@ int current_color;
 int currentModeButton;
 DrawingMode current_mode;
 DrawingState current_state;
+boolean_t AltFinalize;
 
 button_t paletteButtons[PALETTE_BUTTONS_COUNT];
 
@@ -49,6 +50,7 @@ void A_InitTomentPainter(void)
     startX = 0;
     startY = 0;
     lastRadius = 0;
+    AltFinalize = false;
 
     A_InitPalette();
 }
@@ -157,7 +159,10 @@ void A_GameLoop(void)
                 }
                 int radius = distance(startX, startY, omx, omy);
                 set_op(0);       // turn off XOR drawing
-                R_DrawCircle(startX, startY, radius, current_color); // Final draw
+                if (AltFinalize)
+                    R_DrawDisk(startX, startY, radius, current_color, CANVAS_WIDTH);
+                else
+                    R_DrawCircle(startX, startY, radius, current_color); // Final draw
                 lastRadius = 0;
                 current_state = state_Idle;
             break;
@@ -167,7 +172,10 @@ void A_GameLoop(void)
                 R_DrawRectangle(startX, startY, omx, omy); // erase using XOR
                 set_op(0);       // turn off XOR drawing
                 mx = (mx > CANVAS_WIDTH) ? CANVAS_WIDTH : mx;
-                R_DrawRectangle(startX, startY, mx, my); // Final draw
+                if (AltFinalize)
+                    R_DrawFilledRectangle(startX, startY, mx, my); // Final draw
+                else
+                    R_DrawRectangle(startX, startY, mx, my);
                 current_state = state_Idle;
             break;
         }

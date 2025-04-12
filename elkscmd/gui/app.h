@@ -66,7 +66,7 @@ typedef enum {
 
 typedef enum {
     state_Idle,        // Not drawing anything
-    state_Drawing,     // Actively drawing (mouse left button held)
+    state_Drawing,     // Actively drawing (mouse button held)
     state_Finalize     // Releasing mouse, committing shape
 } DrawingState;
 
@@ -87,6 +87,7 @@ extern int currentMainColor;           // The selected color for LMB
 extern int currentAltColor;            // Color for RMB (eraser)
 extern int current_color;
 extern int currentModeButton;
+extern boolean_t AltFinalize;           // Releasing right mouse button, committing alternative shape
 
 // Palette Buttons
 #define PALETTE_BUTTONS_COUNT 17
