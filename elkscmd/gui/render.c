@@ -219,7 +219,8 @@ void R_DrawCircle(int x0, int y0, int r, int color)
     }
 }
 
-void R_DrawRectangle(int x1, int y1, int x2, int y2) {
+void R_DrawRectangle(int x1, int y1, int x2, int y2)
+{
     int color = current_color;
     int xmin, xmax, ymin, ymax;
 
@@ -236,6 +237,20 @@ void R_DrawRectangle(int x1, int y1, int x2, int y2) {
     // Left and right vertical lines
     drawvline(xmin, ymin, ymax, color);
     drawvline(xmax, ymin, ymax, color);
+}
+
+void R_DrawFilledRectangle(int x1, int y1, int x2, int y2)
+{
+    int color = current_color;
+    int xmin, xmax, ymin, ymax;
+
+    // Normalize coordinates
+    xmin = (x1 <= x2) ? x1 : x2;
+    xmax = (x1 > x2) ? x1 : x2;
+    ymin = (y1 <= y2) ? y1 : y2;
+    ymax = (y1 > y2) ? y1 : y2;
+
+    fillrect(xmin, ymin, xmax, ymax, color);
 }
 
 // ----------------------------------------------------
