@@ -33,18 +33,16 @@ void I_HandleInput(void)
                 mx = event.x;
                 my = event.y;
                 if (mx < CANVAS_WIDTH){
-                    if(event.button == BUTTON_L)
-                        current_color = currentMainColor;
-                    else
-                        current_color = currentAltColor;
-
+                    current_color = currentMainColor;
                     switch (current_mode){
                         case mode_Fill:
                             current_state = state_Finalize;
+                            if (event.button == BUTTON_R) current_color = currentAltColor;
                             break;
 
                         case mode_Circle:
                             current_state = state_Drawing;
+                            AltFinalize = (event.button == BUTTON_R);
                             startX = mx;
                             startY = my;
                             lastRadius = 0;
@@ -54,6 +52,7 @@ void I_HandleInput(void)
 
                         case mode_Rectangle:
                             current_state = state_Drawing;
+                            AltFinalize = (event.button == BUTTON_R);
                             startX = mx;
                             startY = my;
                             hidecursor();
@@ -62,6 +61,7 @@ void I_HandleInput(void)
 
                         default:
                             current_state = state_Drawing;
+                            if (event.button == BUTTON_R) current_color = currentAltColor;
                             break;
                     }
                 }
