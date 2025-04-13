@@ -152,6 +152,7 @@ void A_GameLoop(void)
             break;
 
             case mode_Circle:
+                hidecursor();
                 // Erase the old preview circle
                 if (lastRadius > 0) {
                     set_op(0x18);    // turn on XOR drawing
@@ -163,6 +164,7 @@ void A_GameLoop(void)
                     R_DrawDisk(startX, startY, radius, current_color, CANVAS_WIDTH);
                 else
                     R_DrawCircle(startX, startY, radius, current_color); // Final draw
+                showcursor();
                 lastRadius = 0;
                 current_state = state_Idle;
             break;
