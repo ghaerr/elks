@@ -16,8 +16,10 @@
 #include "graphics.h"
 #include "event.h"
 #include "mouse.h"
+#include "vgalib.h"
 
 #define USE_SMALL_CURSOR    0       /* =1 small cursor for slow systems*/
+#define USE_XOR_CURSOR      0       /* =1 use XOR drawing for slow systems*/
 
 #define MWMAX_CURSOR_SIZE   16      /* maximum cursor x and y size*/
 #define MWMAX_CURSOR_BUFLEN MWIMAGE_SIZE(MWMAX_CURSOR_SIZE,MWMAX_CURSOR_SIZE)
@@ -200,6 +202,22 @@ int showcursor(void)
             mbits = *maskptr++;
             curbit = MWIMAGE_FIRSTBIT;
         }
+#if USE_XOR_CURSOR
+        set_op(0x18);
+        for (x = curminx; x <= curmaxx; x++) {
+            if(x >= 0 && x < SCREENWIDTH && y >= 0 && y < SCREENHEIGHT) {
+                if (curbit & mbits)
+                    drawpixel(x, y, ~0);
+            }
+            curbit = MWIMAGE_NEXTBIT(curbit);
+            if (!curbit) {  /* check > one MWIMAGEBITS wide*/
+                cbits = *cursorptr++;
+                mbits = *maskptr++;
+                curbit = MWIMAGE_FIRSTBIT;
+            }
+        }
+        set_op(0);
+#else
         for (x = curminx; x <= curmaxx; x++) {
             if(x >= 0 && x < SCREENWIDTH && y >= 0 && y < SCREENHEIGHT) {
                 if (curbit & mbits) {
@@ -217,6 +235,7 @@ int showcursor(void)
                 curbit = MWIMAGE_FIRSTBIT;
             }
         }
+#endif
     }
 
     return prevcursor;
@@ -246,6 +265,21 @@ int hidecursor(void)
             mbits = *maskptr++;
             curbit = MWIMAGE_FIRSTBIT;
         }
+#if USE_XOR_CURSOR
+        set_op(0x18);
+        for (x = cursavx; x <= cursavx2; x++) {
+            if(x >= 0 && x < SCREENWIDTH && y >= 0 && y < SCREENHEIGHT) {
+                if (curbit & mbits)
+                    drawpixel(x, y, ~0);
+            }
+            curbit = MWIMAGE_NEXTBIT(curbit);
+            if (!curbit) {  /* check > one MWIMAGEBITS wide*/
+                mbits = *maskptr++;
+                curbit = MWIMAGE_FIRSTBIT;
+            }
+        }
+        set_op(0);
+#else
         for (x = cursavx; x <= cursavx2; x++) {
             if(x >= 0 && x < SCREENWIDTH && y >= 0 && y < SCREENHEIGHT) {
                 if (curbit & mbits)
@@ -257,6 +291,7 @@ int hidecursor(void)
                 curbit = MWIMAGE_FIRSTBIT;
             }
         }
+#endif
     }
     return prevcursor;
 }
