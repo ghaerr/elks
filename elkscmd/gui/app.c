@@ -167,6 +167,7 @@ void A_GameLoop(void)
                 current_state = state_Idle;
             break;
             case mode_Rectangle:
+                hidecursor();
                 // Erase the old preview
                 set_op(0x18);    // turn on XOR drawing
                 R_DrawRectangle(startX, startY, omx, omy); // erase using XOR
@@ -176,6 +177,7 @@ void A_GameLoop(void)
                     R_DrawFilledRectangle(startX, startY, mx, my); // Final draw
                 else
                     R_DrawRectangle(startX, startY, mx, my);
+                showcursor();
                 current_state = state_Idle;
             break;
         }
