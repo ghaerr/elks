@@ -19,7 +19,7 @@
 #include "vgalib.h"
 
 #define USE_SMALL_CURSOR    0       /* =1 small cursor for slow systems*/
-#define USE_XOR_CURSOR      0       /* =1 use XOR drawing for slow systems*/
+#define USE_XOR_CURSOR      1       /* =1 use XOR drawing for slow systems*/
 
 #define MWMAX_CURSOR_SIZE   16      /* maximum cursor x and y size*/
 #define MWMAX_CURSOR_BUFLEN MWIMAGE_SIZE(MWMAX_CURSOR_SIZE,MWMAX_CURSOR_SIZE)
@@ -53,9 +53,11 @@ static int  cursavy2;
 typedef int MWPIXELVALHW;
 static MWPIXELVALHW curfg;      /* foreground hardware pixel value */
 static MWPIXELVALHW curbg;      /* background hardware pixel value */
-static MWPIXELVALHW cursavbits[MWMAX_CURSOR_SIZE * MWMAX_CURSOR_SIZE];
 static MWIMAGEBITS cursormask[MWMAX_CURSOR_BUFLEN];
 static MWIMAGEBITS cursorcolor[MWMAX_CURSOR_BUFLEN];
+#if !USE_XOR_CURSOR
+static MWPIXELVALHW cursavbits[MWMAX_CURSOR_SIZE * MWMAX_CURSOR_SIZE];
+#endif
 
 /* Small 8x8 cursor for machines to slow for 16x16 cursors */
 static MWIMAGEBITS smcursormask[8] = {
@@ -171,56 +173,60 @@ void setcursor(struct cursor *pcursor)
  */
 int showcursor(void)
 {
-    int             x;
-    int             y;
-    MWPIXELVALHW *  saveptr;
-    MWIMAGEBITS *   cursorptr;
-    MWIMAGEBITS *   maskptr;
-    MWIMAGEBITS     curbit, cbits = 0, mbits = 0;
-    MWPIXELVALHW    oldcolor;
-    MWPIXELVALHW    newcolor;
+    MWIMAGEBITS *   maskptr = cursormask;
+    MWIMAGEBITS     curbit = 0;
+    MWIMAGEBITS     mbits = 0;
     int             prevcursor = curvisible;
+    int             x, y;
 
     if(++curvisible != 1)
         return prevcursor;
 
-    saveptr = cursavbits;
     cursavx = curminx;
     cursavy = curminy;
     cursavx2 = curmaxx;
     cursavy2 = curmaxy;
-    cursorptr = cursorcolor;
-    maskptr = cursormask;
 
     /*
      * Loop through bits, resetting to firstbit at end of each row
      */
-    curbit = 0;
+#if USE_XOR_CURSOR
+    set_op(0x18);
+    for (y = curminy; y <= curmaxy; y++) {
+        if (curbit != MWIMAGE_FIRSTBIT) {
+            mbits = *maskptr++;
+            curbit = MWIMAGE_FIRSTBIT;
+        }
+        for (x = curminx; x <= curmaxx; x++) {
+            if (curbit & mbits) {
+                if(x >= 0 && x < SCREENWIDTH && y >= 0 && y < SCREENHEIGHT) {
+                    drawpixel(x, y, ~0);
+                }
+            }
+            curbit = MWIMAGE_NEXTBIT(curbit);
+            if (!curbit) {  /* check > one MWIMAGEBITS wide*/
+                mbits = *maskptr++;
+                curbit = MWIMAGE_FIRSTBIT;
+            }
+        }
+    }
+    set_op(0);
+#else
+    MWPIXELVALHW *  saveptr = cursavbits;
+    MWIMAGEBITS *   cursorptr = cursorcolor;
+    MWIMAGEBITS     cbits = 0;
+    MWPIXELVALHW    oldcolor;
+    MWPIXELVALHW    newcolor;
+
     for (y = curminy; y <= curmaxy; y++) {
         if (curbit != MWIMAGE_FIRSTBIT) {
             cbits = *cursorptr++;
             mbits = *maskptr++;
             curbit = MWIMAGE_FIRSTBIT;
         }
-#if USE_XOR_CURSOR
-        set_op(0x18);
         for (x = curminx; x <= curmaxx; x++) {
-            if(x >= 0 && x < SCREENWIDTH && y >= 0 && y < SCREENHEIGHT) {
-                if (curbit & mbits)
-                    drawpixel(x, y, ~0);
-            }
-            curbit = MWIMAGE_NEXTBIT(curbit);
-            if (!curbit) {  /* check > one MWIMAGEBITS wide*/
-                cbits = *cursorptr++;
-                mbits = *maskptr++;
-                curbit = MWIMAGE_FIRSTBIT;
-            }
-        }
-        set_op(0);
-#else
-        for (x = curminx; x <= curmaxx; x++) {
-            if(x >= 0 && x < SCREENWIDTH && y >= 0 && y < SCREENHEIGHT) {
-                if (curbit & mbits) {
+            if (curbit & mbits) {
+                if (x >= 0 && x < SCREENWIDTH && y >= 0 && y < SCREENHEIGHT) {
                     oldcolor = readpixel(x, y);
                     newcolor = (curbit&cbits)? curbg: curfg;
                     if (oldcolor != newcolor)
@@ -235,8 +241,8 @@ int showcursor(void)
                 curbit = MWIMAGE_FIRSTBIT;
             }
         }
-#endif
     }
+#endif
 
     return prevcursor;
 }
@@ -248,29 +254,27 @@ int showcursor(void)
  */
 int hidecursor(void)
 {
-    MWPIXELVALHW *  saveptr;
-    int             x, y;
+    MWIMAGEBITS *   maskptr = cursormask;
+    MWIMAGEBITS     curbit = 0;
+    MWIMAGEBITS     mbits = 0;
     int             prevcursor = curvisible;
-    MWIMAGEBITS *   maskptr;
-    MWIMAGEBITS     curbit, mbits = 0;
+    int             x, y;
 
     if(curvisible-- <= 0)
         return prevcursor;
 
-    saveptr = cursavbits;
-    maskptr = cursormask;
-    curbit = 0;
+#if USE_XOR_CURSOR
+    set_op(0x18);
     for (y = cursavy; y <= cursavy2; y++) {
         if (curbit != MWIMAGE_FIRSTBIT) {
             mbits = *maskptr++;
             curbit = MWIMAGE_FIRSTBIT;
         }
-#if USE_XOR_CURSOR
-        set_op(0x18);
         for (x = cursavx; x <= cursavx2; x++) {
-            if(x >= 0 && x < SCREENWIDTH && y >= 0 && y < SCREENHEIGHT) {
-                if (curbit & mbits)
+            if (curbit & mbits) {
+                if (x >= 0 && x < SCREENWIDTH && y >= 0 && y < SCREENHEIGHT) {
                     drawpixel(x, y, ~0);
+                }
             }
             curbit = MWIMAGE_NEXTBIT(curbit);
             if (!curbit) {  /* check > one MWIMAGEBITS wide*/
@@ -278,21 +282,30 @@ int hidecursor(void)
                 curbit = MWIMAGE_FIRSTBIT;
             }
         }
-        set_op(0);
-#else
-        for (x = cursavx; x <= cursavx2; x++) {
-            if(x >= 0 && x < SCREENWIDTH && y >= 0 && y < SCREENHEIGHT) {
-                if (curbit & mbits)
-                    drawpixel(x, y, *saveptr++);
-            }
-            curbit = MWIMAGE_NEXTBIT(curbit);
-            if (!curbit) {  /* check > one MWIMAGEBITS wide*/
-                mbits = *maskptr++;
-                curbit = MWIMAGE_FIRSTBIT;
-            }
-        }
-#endif
     }
+    set_op(0);
+#else
+    MWPIXELVALHW *  saveptr = cursavbits;
+
+    for (y = cursavy; y <= cursavy2; y++) {
+        if (curbit != MWIMAGE_FIRSTBIT) {
+            mbits = *maskptr++;
+            curbit = MWIMAGE_FIRSTBIT;
+        }
+        for (x = cursavx; x <= cursavx2; x++) {
+            if (curbit & mbits) {
+                if (x >= 0 && x < SCREENWIDTH && y >= 0 && y < SCREENHEIGHT) {
+                    drawpixel(x, y, *saveptr++);
+                }
+            }
+            curbit = MWIMAGE_NEXTBIT(curbit);
+            if (!curbit) {  /* check > one MWIMAGEBITS wide*/
+                mbits = *maskptr++;
+                curbit = MWIMAGE_FIRSTBIT;
+            }
+        }
+    }
+#endif
     return prevcursor;
 }
 
