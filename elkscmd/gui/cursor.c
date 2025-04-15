@@ -67,7 +67,8 @@ static MWIMAGEBITS smcursormask[8] = {
     mask(X,X,X,X,X,_,_,_),
     mask(X,X,X,X,X,X,_,_),
     mask(X,_,_,X,X,X,X,_),
-    mask(_,_,_,_,X,X,X,_)
+    mask(_,_,_,_,X,X,X,X),
+    mask(_,_,_,_,_,X,X,X)
 };
 static MWIMAGEBITS smcursorbits[8] = {
     mask(_,_,_,_,_,_,_,_),
@@ -76,7 +77,8 @@ static MWIMAGEBITS smcursorbits[8] = {
     mask(_,X,X,X,_,_,_,_),
     mask(_,X,_,X,X,_,_,_),
     mask(_,_,_,_,X,X,_,_),
-    mask(_,_,_,_,_,X,X,_)
+    mask(_,_,_,_,_,X,X,_),
+    mask(_,_,_,_,_,_,X,X)
 };
 struct cursor cursor_sm = {
     8, 8, 1, 1, WHITE, BLACK, smcursorbits, smcursormask
