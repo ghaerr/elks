@@ -35,9 +35,14 @@ void fixcursor(void);
 /* Ascii cursor definition helper macros */
 #define _       ((unsigned) 0)          /* off bits */
 #define X       ((unsigned) 1)          /* on bits */
-#define MASK(a,b,c,d,e,f,g) \
-        (((((((((((((a * 2) + b) * 2) + c) * 2) + d) * 2) \
-        + e) * 2) + f) * 2) + g) << 9)
+#define mask(a,b,c,d,e,f,g,h)                                                           \
+   ((((((((((((((                                                                       \
+   (a * 2) + b) * 2) + c) * 2) + d) * 2) + e) * 2) + f) * 2) + g) * 2) + h) << 8)
+
+#define MASK(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p)                                           \
+    (((((((((((((((((((((((((((((                                                       \
+    (a * 2) + b) * 2) + c) * 2) + d) * 2) + e) * 2) + f) * 2) + g) * 2) + h) * 2)       \
+            + i) * 2) + j) * 2) + k) * 2) + l) * 2) + m) * 2) + n) * 2) + o) * 2) + p)
 
 extern struct cursor cursor_lg;
 extern struct cursor cursor_sm;
