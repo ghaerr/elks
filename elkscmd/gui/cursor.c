@@ -60,71 +60,97 @@ static MWPIXELVALHW cursavbits[MWMAX_CURSOR_SIZE * MWMAX_CURSOR_SIZE];
 #endif
 
 /* Small 8x8 cursor for machines to slow for 16x16 cursors */
-static MWIMAGEBITS smcursormask[8] = {
-    mask(X,X,X,X,X,X,_,_),
-    mask(X,X,X,X,X,_,_,_),
-    mask(X,X,X,X,_,_,_,_),
-    mask(X,X,X,X,X,_,_,_),
-    mask(X,X,X,X,X,X,_,_),
-    mask(X,_,_,X,X,X,X,_),
-    mask(_,_,_,_,X,X,X,X),
-    mask(_,_,_,_,_,X,X,X)
-};
-static MWIMAGEBITS smcursorbits[8] = {
-    mask(_,_,_,_,_,_,_,_),
-    mask(_,X,X,X,X,_,_,_),
-    mask(_,X,X,X,_,_,_,_),
-    mask(_,X,X,X,_,_,_,_),
-    mask(_,X,_,X,X,_,_,_),
-    mask(_,_,_,_,X,X,_,_),
-    mask(_,_,_,_,_,X,X,_),
-    mask(_,_,_,_,_,_,X,X)
-};
-struct cursor cursor_sm = {
-    8, 8, 1, 1, WHITE, BLACK, smcursorbits, smcursormask
-};
+#if USE_XOR_CURSOR
+    static MWIMAGEBITS smcursorbits[8] = {
+        mask(X,_,_,_,_,_,_,_),
+        mask(X,X,_,_,_,_,_,_),
+        mask(X,_,X,_,_,_,_,_),
+        mask(X,_,_,X,_,_,_,_),
+        mask(X,_,_,_,X,_,_,_),
+        mask(X,_,X,X,X,X,_,_),
+        mask(X,X,_,_,_,_,_,_),
+        mask(X,_,_,_,_,_,_,_)
+    };
+    static MWIMAGEBITS smcursormask[8] = {
+        mask(X,_,_,_,_,_,_,_),
+        mask(X,X,_,_,_,_,_,_),
+        mask(X,X,X,_,_,_,_,_),
+        mask(X,X,X,X,_,_,_,_),
+        mask(X,X,X,X,X,_,_,_),
+        mask(X,X,X,X,X,X,_,_),
+        mask(X,X,_,_,_,_,_,_),
+        mask(X,_,_,_,_,_,_,_)
+    };
+    struct cursor cursor_sm = {
+        6, 8, 1, 1, WHITE, BLACK, smcursorbits, smcursormask
+    };
+#else
+    static MWIMAGEBITS smcursormask[8] = {
+        mask(X,_,_,_,_,_,_,_),
+        mask(X,X,_,_,_,_,_,_),
+        mask(X,X,X,_,_,_,_,_),
+        mask(X,X,X,X,_,_,_,_),
+        mask(X,X,X,X,X,_,_,_),
+        mask(X,X,X,X,X,X,_,_),
+        mask(X,X,X,X,X,X,X,_),
+        mask(X,X,X,_,_,_,_,_)
+    };
+    static MWIMAGEBITS smcursorbits[8] = {
+        mask(_,_,_,_,_,_,_,_),
+        mask(_,_,_,_,_,_,_,_),
+        mask(_,X,_,_,_,_,_,_),
+        mask(_,X,X,_,_,_,_,_),
+        mask(_,X,X,X,_,_,_,_),
+        mask(_,X,X,X,X,_,_,_),
+        mask(_,X,X,_,_,_,_,_),
+        mask(_,_,_,_,_,_,_,_)
+    };
+    struct cursor cursor_sm = {
+        7, 8, 1, 1, WHITE, BLACK, smcursorbits, smcursormask
+    };
+#endif
 
 /* Full size 16x16 cursor */
 static MWIMAGEBITS lgcursorbits[16] = {
 //       8 4 2 1 8 4 2 1 8 4 2 1 8 4 2 1
-    MASK(X,X,X,_,_,_,_,_,_,_,_,_,_,_,_,_),  // E000
-    MASK(X,_,_,X,X,_,_,_,_,_,_,_,_,_,_,_),  // 9800
-    MASK(X,_,_,_,_,X,X,_,_,_,_,_,_,_,_,_),  // 8600
-    MASK(_,X,_,_,_,_,_,X,X,_,_,_,_,_,_,_),  // 4180
-    MASK(_,X,_,_,_,_,_,_,_,X,X,_,_,_,_,_),  // 4060
-    MASK(_,_,X,_,_,_,_,_,_,_,_,X,X,_,_,_),  // 2018
-    MASK(_,_,X,_,_,_,_,_,_,_,_,_,_,X,_,_),  // 2004
-    MASK(_,_,_,X,_,_,_,_,_,X,X,X,X,X,_,_),  // 107C
-    MASK(_,_,_,X,_,_,_,_,_,_,X,_,_,_,_,_),  // 1020
-    MASK(_,_,_,_,X,_,_,X,_,_,_,X,_,_,_,_),  // 0910
-    MASK(_,_,_,_,X,_,_,X,_,_,_,_,X,_,_,_),  // 0988
-    MASK(_,_,_,_,_,X,_,X,_,X,_,_,_,X,_,_),  // 0544
-    MASK(_,_,_,_,_,X,_,X,_,_,X,_,_,_,X,_),  // 0522
-    MASK(_,_,_,_,_,_,X,_,_,_,_,X,_,_,_,X),  // 0211
-    MASK(_,_,_,_,_,_,_,_,_,_,_,_,X,_,X,_),  // 000A
-    MASK(_,_,_,_,_,_,_,_,_,_,_,_,_,X,_,_)   // 0004
+    MASK(X,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_),
+    MASK(X,X,_,_,_,_,_,_,_,_,_,_,_,_,_,_),
+    MASK(X,_,X,_,_,_,_,_,_,_,_,_,_,_,_,_),
+    MASK(X,_,_,X,_,_,_,_,_,_,_,_,_,_,_,_),
+    MASK(X,_,_,_,X,_,_,_,_,_,_,_,_,_,_,_),
+    MASK(X,_,_,_,_,X,_,_,_,_,_,_,_,_,_,_),
+    MASK(X,_,_,_,_,_,X,_,_,_,_,_,_,_,_,_),
+    MASK(X,_,_,_,_,_,_,X,_,_,_,_,_,_,_,_),
+    MASK(X,_,_,_,_,_,_,_,X,_,_,_,_,_,_,_),
+    MASK(X,_,_,_,_,_,_,_,_,X,_,_,_,_,_,_),
+    MASK(X,_,_,_,_,_,X,X,X,X,X,_,_,_,_,_),
+    MASK(X,_,_,_,_,_,X,_,_,_,_,_,_,_,_,_),
+    MASK(X,_,_,X,_,_,X,_,_,_,_,_,_,_,_,_),
+    MASK(X,_,X,_,X,_,_,X,_,_,_,_,_,_,_,_),
+    MASK(X,X,_,_,X,_,_,X,_,_,_,_,_,_,_,_),
+    MASK(X,_,_,_,_,X,X,X,_,_,_,_,_,_,_,_)
 };
 static MWIMAGEBITS lgcursormask[16] = {
 //       8 4 2 1 8 4 2 1 8 4 2 1 8 4 2 1
-    MASK(X,X,X,_,_,_,_,_,_,_,_,_,_,_,_,_),  // E000
-    MASK(X,X,X,X,X,_,_,_,_,_,_,_,_,_,_,_),  // F800
-    MASK(X,X,X,X,X,X,X,_,_,_,_,_,_,_,_,_),  // FE00
-    MASK(_,X,X,X,X,X,X,X,X,_,_,_,_,_,_,_),  // 7F80
-    MASK(_,X,X,X,X,X,X,X,X,X,X,_,_,_,_,_),  // 7FE0
-    MASK(_,_,X,X,X,X,X,X,X,X,X,X,X,_,_,_),  // 3FF8
-    MASK(_,_,X,X,X,X,X,X,X,X,X,X,X,X,_,_),  // 3FFC
-    MASK(_,_,_,X,X,X,X,X,X,X,X,X,X,X,_,_),  // 1FFC
-    MASK(_,_,_,X,X,X,X,X,X,X,X,_,_,_,_,_),  // 1FE0
-    MASK(_,_,_,_,X,X,X,X,X,X,X,X,_,_,_,_),  // 0FF0
-    MASK(_,_,_,_,X,X,X,X,X,X,X,X,X,_,_,_),  // 0FF8
-    MASK(_,_,_,_,_,X,X,X,_,X,X,X,X,X,_,_),  // 077C
-    MASK(_,_,_,_,_,X,X,X,_,_,X,X,X,X,X,_),  // 073E
-    MASK(_,_,_,_,_,_,X,_,_,_,_,X,X,X,X,X),  // 021F
-    MASK(_,_,_,_,_,_,_,_,_,_,_,_,X,X,X,_),  // 000E
-    MASK(_,_,_,_,_,_,_,_,_,_,_,_,_,X,_,_)   // 0004
+    MASK(X,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_),
+    MASK(X,X,_,_,_,_,_,_,_,_,_,_,_,_,_,_),
+    MASK(X,X,X,_,_,_,_,_,_,_,_,_,_,_,_,_),
+    MASK(X,X,X,X,_,_,_,_,_,_,_,_,_,_,_,_),
+    MASK(X,X,X,X,X,_,_,_,_,_,_,_,_,_,_,_),
+    MASK(X,X,X,X,X,X,_,_,_,_,_,_,_,_,_,_),
+    MASK(X,X,X,X,X,X,X,_,_,_,_,_,_,_,_,_),
+    MASK(X,X,X,X,X,X,X,X,_,_,_,_,_,_,_,_),
+    MASK(X,X,X,X,X,X,X,X,X,_,_,_,_,_,_,_),
+    MASK(X,X,X,X,X,X,X,X,X,X,_,_,_,_,_,_),
+    MASK(X,X,X,X,X,X,X,X,X,X,X,_,_,_,_,_),
+    MASK(X,X,X,X,X,X,X,_,_,_,_,_,_,_,_,_),
+    MASK(X,X,X,X,X,X,X,_,_,_,_,_,_,_,_,_),
+    MASK(X,X,X,_,X,X,X,X,_,_,_,_,_,_,_,_),
+    MASK(X,X,_,_,X,X,X,X,_,_,_,_,_,_,_,_),
+    MASK(X,_,_,_,_,X,X,X,_,_,_,_,_,_,_,_)
 };
 struct cursor cursor_lg = {
-    16, 16, 0, 0, WHITE, BLACK, lgcursorbits, lgcursormask
+    11, 16, 0, 0, WHITE, BLACK, lgcursorbits, lgcursormask
 };
 
 void initcursor(void)
