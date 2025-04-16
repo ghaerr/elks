@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include "app.h"
 #include "input.h"
 #include "render.h"
