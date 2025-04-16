@@ -123,10 +123,10 @@ void R_DrawCurrentColor(void)
 // ----------------------------------------------------
 void R_HighlightActiveButton(void)
 {
-    int x1 = paletteButtons[currentModeButton].box.x;
-    int x2 = x1 + paletteButtons[currentModeButton].box.w - 1;
-    int y1 = paletteButtons[currentModeButton].box.y;
-    int y2 = y1 + paletteButtons[currentModeButton].box.h - 1;
+    int x1 = paletteButtons[currentModeButton].box.x + 1;
+    int x2 = x1 + paletteButtons[currentModeButton].box.w - 3;
+    int y1 = paletteButtons[currentModeButton].box.y + 1;
+    int y2 = y1 + paletteButtons[currentModeButton].box.h - 3;
     set_op(0x18);    // turn on XOR drawing
     fillrect(x1, y1, x2, y2, WHITE);
     set_op(0);       // turn off XOR drawing
