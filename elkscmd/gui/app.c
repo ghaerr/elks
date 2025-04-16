@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include "app.h"
 #include "input.h"
 #include "render.h"
@@ -237,8 +238,28 @@ void A_GameLoop(void)
 
 int main(int argc, char* argv[])
 {
-    // Init Application
-    A_InitTomentPainter();
+    // Check if one filename was provided
+    if (argc > 2 || strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
+        printf("Usage: %s <bmp_filename>\n", argv[0]);
+        return 1;
+    }
+    else if (argc > 1) {
+        // Check if the file has a .bmp extension
+        char* filename = argv[1];
+        char* extension = strrchr(filename, '.');
+        if (!extension || strcmp(extension, ".bmp") != 0) {
+            printf("Error: File must have .bmp extension\n");
+            return 1;
+        }
+        // Init Application
+        A_InitTomentPainter();
+        // Load the BMP file
+        draw_bmp(filename, 0, 0);
+    }
+    else {
+        // Init Application
+        A_InitTomentPainter();
+    }
 
     // Draw Palette
     R_DrawPalette();
