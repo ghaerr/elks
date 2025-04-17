@@ -18,8 +18,8 @@
 #include "mouse.h"
 #include "vgalib.h"
 
-#define USE_SMALL_CURSOR    0       /* =1 small cursor for slow systems*/
 #define USE_XOR_CURSOR      1       /* =1 use XOR drawing for slow systems*/
+#define USE_VGA_DRAWCURSOR  defined(__ia16__)
 
 #define MWMAX_CURSOR_SIZE   16      /* maximum cursor x and y size*/
 #define MWMAX_CURSOR_BUFLEN MWIMAGE_SIZE(MWMAX_CURSOR_SIZE,MWMAX_CURSOR_SIZE)
@@ -55,7 +55,7 @@ static MWPIXELVALHW curfg;      /* foreground hardware pixel value */
 static MWPIXELVALHW curbg;      /* background hardware pixel value */
 static MWIMAGEBITS cursormask[MWMAX_CURSOR_BUFLEN];
 static MWIMAGEBITS cursorcolor[MWMAX_CURSOR_BUFLEN];
-#if !USE_XOR_CURSOR
+#if !USE_VGA_DRAWCURSOR
 static MWPIXELVALHW cursavbits[MWMAX_CURSOR_SIZE * MWMAX_CURSOR_SIZE];
 #endif
 
@@ -111,6 +111,46 @@ static MWPIXELVALHW cursavbits[MWMAX_CURSOR_SIZE * MWMAX_CURSOR_SIZE];
 #endif
 
 /* Full size 16x16 cursor */
+#ifdef __WATCOMC__
+static MWIMAGEBITS lgcursorbits[16] = {
+//       8 4 2 1 8 4 2 1 8 4 2 1 8 4 2 1
+    MASK(X,X,X,_,_,_,_,_,_,_,_,_,_,_,_,_),  // E000
+    MASK(X,_,_,X,X,_,_,_,_,_,_,_,_,_,_,_),  // 9800
+    MASK(X,_,_,_,_,X,X,_,_,_,_,_,_,_,_,_),  // 8600
+    MASK(_,X,_,_,_,_,_,X,X,_,_,_,_,_,_,_),  // 4180
+    MASK(_,X,_,_,_,_,_,_,_,X,X,_,_,_,_,_),  // 4060
+    MASK(_,_,X,_,_,_,_,_,_,_,_,X,X,_,_,_),  // 2018
+    MASK(_,_,X,_,_,_,_,_,_,_,_,_,_,X,_,_),  // 2004
+    MASK(_,_,_,X,_,_,_,_,_,X,X,X,X,X,_,_),  // 107C
+    MASK(_,_,_,X,_,_,_,_,_,_,X,_,_,_,_,_),  // 1020
+    MASK(_,_,_,_,X,_,_,X,_,_,_,X,_,_,_,_),  // 0910
+    MASK(_,_,_,_,X,_,_,X,_,_,_,_,X,_,_,_),  // 0988
+    MASK(_,_,_,_,_,X,_,X,_,X,_,_,_,X,_,_),  // 0544
+    MASK(_,_,_,_,_,X,_,X,_,_,X,_,_,_,X,_),  // 0522
+    MASK(_,_,_,_,_,_,X,_,_,_,_,X,_,_,_,X),  // 0211
+    MASK(_,_,_,_,_,_,_,_,_,_,_,_,X,_,X,_),  // 000A
+    MASK(_,_,_,_,_,_,_,_,_,_,_,_,_,X,_,_)   // 0004
+};
+static MWIMAGEBITS lgcursormask[16] = {
+//       8 4 2 1 8 4 2 1 8 4 2 1 8 4 2 1
+    MASK(X,X,X,_,_,_,_,_,_,_,_,_,_,_,_,_),  // E000
+    MASK(X,X,X,X,X,_,_,_,_,_,_,_,_,_,_,_),  // F800
+    MASK(X,X,X,X,X,X,X,_,_,_,_,_,_,_,_,_),  // FE00
+    MASK(_,X,X,X,X,X,X,X,X,_,_,_,_,_,_,_),  // 7F80
+    MASK(_,X,X,X,X,X,X,X,X,X,X,_,_,_,_,_),  // 7FE0
+    MASK(_,_,X,X,X,X,X,X,X,X,X,X,X,_,_,_),  // 3FF8
+    MASK(_,_,X,X,X,X,X,X,X,X,X,X,X,X,_,_),  // 3FFC
+    MASK(_,_,_,X,X,X,X,X,X,X,X,X,X,X,_,_),  // 1FFC
+    MASK(_,_,_,X,X,X,X,X,X,X,X,_,_,_,_,_),  // 1FE0
+    MASK(_,_,_,_,X,X,X,X,X,X,X,X,_,_,_,_),  // 0FF0
+    MASK(_,_,_,_,X,X,X,X,X,X,X,X,X,_,_,_),  // 0FF8
+    MASK(_,_,_,_,_,X,X,X,_,X,X,X,X,X,_,_),  // 077C
+    MASK(_,_,_,_,_,X,X,X,_,_,X,X,X,X,X,_),  // 073E
+    MASK(_,_,_,_,_,_,X,_,_,_,_,X,X,X,X,X),  // 021F
+    MASK(_,_,_,_,_,_,_,_,_,_,_,_,X,X,X,_),  // 000E
+    MASK(_,_,_,_,_,_,_,_,_,_,_,_,_,X,_,_)   // 0004
+};
+#else
 static MWIMAGEBITS lgcursorbits[16] = {
 //       8 4 2 1 8 4 2 1 8 4 2 1 8 4 2 1
     MASK(X,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_),
@@ -149,6 +189,7 @@ static MWIMAGEBITS lgcursormask[16] = {
     MASK(X,X,_,_,X,X,X,X,_,_,_,_,_,_,_,_),
     MASK(X,_,_,_,_,X,X,X,_,_,_,_,_,_,_,_)
 };
+#endif
 struct cursor cursor_lg = {
     11, 16, 0, 0, WHITE, BLACK, lgcursorbits, lgcursormask
 };
@@ -227,11 +268,13 @@ void setcursor(struct cursor *pcursor)
  */
 int showcursor(void)
 {
+#if !USE_VGA_DRAWCURSOR
     MWIMAGEBITS *   maskptr = cursormask;
     MWIMAGEBITS     curbit = 0;
     MWIMAGEBITS     mbits = 0;
-    int             prevcursor = curvisible;
     int             x, y;
+#endif
+    int             prevcursor = curvisible;
 
     if(++curvisible != 1)
         return prevcursor;
@@ -244,7 +287,9 @@ int showcursor(void)
     /*
      * Loop through bits, resetting to firstbit at end of each row
      */
-#if USE_XOR_CURSOR
+#if USE_VGA_DRAWCURSOR
+    vga_drawcursor(curminx, curminy, curmaxy - curminy, cursormask);
+#elif USE_XOR_CURSOR
     set_op(0x18);
     for (y = curminy; y <= curmaxy; y++) {
         if (curbit != MWIMAGE_FIRSTBIT) {
@@ -308,16 +353,20 @@ int showcursor(void)
  */
 int hidecursor(void)
 {
+#if !USE_VGA_DRAWCURSOR
     MWIMAGEBITS *   maskptr = cursormask;
     MWIMAGEBITS     curbit = 0;
     MWIMAGEBITS     mbits = 0;
-    int             prevcursor = curvisible;
     int             x, y;
+#endif
+    int             prevcursor = curvisible;
 
     if(curvisible-- <= 0)
         return prevcursor;
 
-#if USE_XOR_CURSOR
+#if USE_VGA_DRAWCURSOR
+    vga_drawcursor(cursavx, cursavy, cursavy2 - cursavy, cursormask);
+#elif USE_XOR_CURSOR
     set_op(0x18);
     for (y = cursavy; y <= cursavy2; y++) {
         if (curbit != MWIMAGE_FIRSTBIT) {
