@@ -105,8 +105,10 @@ void I_HandleInput(void)
                     break;
 
                     case 'f':
-                        current_mode = mode_Fill;
-                        current_state = state_Finalize;
+                        current_color = currentMainColor;
+                        hidecursor();
+                        R_LineFloodFill(omx, omy, current_color, readpixel(mx, my));
+                        showcursor();
                     break;
 
                     case 'm':
