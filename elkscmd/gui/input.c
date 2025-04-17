@@ -105,9 +105,8 @@ void I_HandleInput(void)
                     break;
 
                     case 'f':
-                        current_color = currentMainColor;
                         hidecursor();
-                        R_LineFloodFill(omx, omy, current_color, readpixel(mx, my));
+                        R_LineFloodFill(omx, omy, currentMainColor, readpixel(mx, my));
                         showcursor();
                     break;
 
