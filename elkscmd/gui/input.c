@@ -32,6 +32,8 @@ void I_HandleInput(void)
 
                 mx = event.x;
                 my = event.y;
+
+                hidecursor();
                 if (mx < CANVAS_WIDTH){
                     current_color = currentMainColor;
                     switch (current_mode){
@@ -46,7 +48,6 @@ void I_HandleInput(void)
                             startX = mx;
                             startY = my;
                             lastRadius = 0;
-                            hidecursor();
                             set_op(0x18);    // turn on XOR drawing
                             goto break_mousedown;
 
@@ -55,7 +56,6 @@ void I_HandleInput(void)
                             AltFinalize = (event.button == BUTTON_R);
                             startX = mx;
                             startY = my;
-                            hidecursor();
                             set_op(0x18);    // turn on XOR drawing
                             goto break_mousedown;
 
@@ -65,7 +65,6 @@ void I_HandleInput(void)
                             break;
                     }
                 }
-                hidecursor();
 
             break_mousedown:
             break;
@@ -105,8 +104,9 @@ void I_HandleInput(void)
                     break;
 
                     case 'f':
-                        current_mode = mode_Fill;
-                        current_state = state_Finalize;
+                        hidecursor();
+                        R_LineFloodFill(omx, omy, currentMainColor, readpixel(mx, my));
+                        showcursor();
                     break;
 
                     case 'm':
