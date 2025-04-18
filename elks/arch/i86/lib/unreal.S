@@ -18,56 +18,84 @@
 #  like fast serial ports. Further, no other routines should be written that use
 #  the 32-bit register set without coordinating with the functions in this file.
 #
+
+/* set =1 to use full protected mode entry rather than unreal mode for segment cache */
+#define USE_PROTMODE    1
+
 	.arch	i386,nojumps
 	.code16
 	.text
 
-	.global	check_unreal_mode
 	.global	enable_unreal_mode
 	.global	linear32_fmemcpyw
 	.global	linear32_fmemcpyb
 	.global	linear32_fmemset
 
-# Check if unreal mode capable. Currently requires 32-bit CPU (386+)
-# Returns 1 if OK, otherwise error code (-1=not 386, -2=in V86 mode).
-check_unreal_mode:
-	pushf			# check for 32-bit CPU
-		pushf
-		popw %bx        # old FLAGS -> BX
-		movw %bx,%ax
-		xorb $0x70,%ah  # try changing b14 (NT) or b13:b12 (IOPL)
-		pushw %ax
-		popf
-		pushf
-		popw %ax        # new FLAGS -> AX
-	popf
-	xorb %ah,%bh
-	xorw %ax,%ax
-	andb $0x70,%bh          # 32-bit CPU if we changed NT or IOPL
-	je	not_32bit
-
-# check if (32-bit) CPU is in V86 mode
-	smsww %bx               # 'SMSW' is a '286+ instruction
-	andb $1,%bl
-	jne	in_vm86mode
-
-	mov	$1,%ax		# unreal mode capable, return 1
-	ret
-not_32bit:
-	mov	$-1,%ax		# requires 32 bit CPU
-	ret
-in_vm86mode:
-	mov	$-2,%ax		# CPU in V86 mode
-	ret
-
+#if USE_PROTMODE
 # Put CPU in unreal mode. Requires 32-bit CPU (386+) to call!
 enable_unreal_mode:
-# point gdt_ptr to gdt
 	xorl %eax,%eax
 	movw %ds,%ax
 	shll $4,%eax
 
-	addl $gdt, %eax
+	addl $gdt, %eax         # point gdt_ptr to gdt
+	movl %eax, gdt_ptr+2
+
+	pushf			# save interrupt status
+	cli                     # interrupts off
+	pushl %ds
+	pushl %es
+	pushl %fs
+	pushl %gs
+
+	push %cs		# push real mode return address for later lret
+	push $rmode
+	xorl %eax,%eax
+	mov %cs,%ax		# set up the GDT codesel entry for current code segment
+	shll $4,%eax
+	mov %ax,codesel+2       # base 15:0
+	ror $16,%eax
+	mov %al,codesel+4       # base 23:16
+	mov %ah,codesel+7       # base 31:24
+
+	lgdt gdt_ptr
+	movl %cr0, %eax         # CR0.PE=1: enable protected mode
+	orb $1,%al
+	movl %eax, %cr0
+
+	ljmp $CODE_SEL,$pmode	# enter protected mode by clearing prefetch & reloading CS
+pmode:
+
+	movw $LINEAR_SEL, %bx 	# selector to segment with 4GB-1 limit
+	movw %bx,%ds            # set segment limits in descriptor caches
+	movw %bx,%es
+	movw %bx,%fs
+	movw %bx,%gs
+
+	decb %al                # CR0.PE=0: back to real mode
+	movl %eax, %cr0
+
+	lret			# return to real mode at next line
+rmode:
+
+# loading segment registers after protected mode changes their base address
+# but not the segment limit; which remains 4GB-1
+	popl %gs
+	popl %fs
+	popl %es
+	popl %ds
+	popf			# restore interrupt status
+	ret			# system is in unreal mode
+
+#else
+
+# Put CPU in unreal mode. Requires 32-bit CPU (386+) to call!
+enable_unreal_mode:
+	xorl %eax,%eax
+	movw %ds,%ax
+	shll $4,%eax
+
+	addl $gdt, %eax         # point gdt_ptr to gdt
 	movl %eax, gdt_ptr+2
 
 	pushf			# save interrupt status
@@ -98,8 +126,44 @@ enable_unreal_mode:
 	popl %ds
 	popf			# restore interrupt status
 	ret			# system is in unreal mode
+#endif
 
 #if UNUSED
+# Check if unreal mode capable. Currently requires 32-bit CPU (386+)
+# Returns 1 if OK, otherwise error code (-1=not 386, -2=in V86 mode).
+	.global	check_unreal_mode
+check_unreal_mode:
+	pushf			# check for 32-bit CPU
+
+	pushf
+	popw %bx        	# old FLAGS -> BX
+	movw %bx,%ax
+	xorb $0x70,%ah  	# try changing b14 (NT) or b13:b12 (IOPL)
+	pushw %ax
+	popf
+	pushf
+	popw %ax        	# new FLAGS -> AX
+
+	popf
+	xorb %ah,%bh
+	xorw %ax,%ax
+	andb $0x70,%bh          # 32-bit CPU if we changed NT or IOPL
+	je	not_32bit
+
+# check if (32-bit) CPU is in V86 mode
+	smsww %bx               # 'SMSW' is a '286+ instruction
+	andb $1,%bl
+	jne	in_vm86mode
+
+	mov	$1,%ax		# unreal mode capable, return 1
+	ret
+not_32bit:
+	mov	$-1,%ax		# requires 32 bit CPU
+	ret
+in_vm86mode:
+	mov	$-2,%ax		# CPU in V86 mode
+	ret
+
 #
 # word_t linear32_peekw(void *src_off, addr_t src_seg)
 # WARNING: Requires 32-bit CPU, with unreal mode and A20 gate enabled!
@@ -109,9 +173,8 @@ enable_unreal_mode:
 linear32_peekw:
 	call   setgpf
 	mov    %si,%dx
+	//cli                 // uncomment if 32-bit registers used in interrupt routines
 
-	//pushf               // save interrupt status
-	//cli                 // uncomment if extended registers used in interrupt routines
 	xorl   %esi,%esi
 	mov    %sp,%si
 
@@ -125,8 +188,8 @@ linear32_peekw:
 
 	cld
 	addr32 lodsw          // AX = [DS:ESI++]
-	//popf                // restore interrupt status
 
+	//sti                 // restore interrupt status
 	mov    %dx,%si
 	mov    %ss,%bx
 	mov    %bx,%ds
@@ -143,9 +206,8 @@ linear32_fmemcpyw:
 	push   %es
 	mov    %si,%ax
 	mov    %di,%dx
+	//cli                 // uncomment if 32-bit registers used in interrupt routines
 
-	//pushf               // save interrupt status
-	//cli                 // uncomment if extended registers used in interrupt routines
 	xorl   %esi,%esi
 	mov    %sp,%si
 
@@ -170,8 +232,7 @@ linear32_fmemcpyw:
 	addr32 rep movsw      // word [ES:EDI++] <- [DS:ESI++], ECX times
 	addr32 nop            // 80386 B1 step chip bug on address size mixing
 
-	//popf                // restore interrupt status
-
+	//sti                 // restore interrupt status
 	mov    %ax,%si
 	mov    %dx,%di
 	mov    %ss,%ax
@@ -189,9 +250,7 @@ linear32_fmemcpyb:
 	push   %es
 	mov    %si,%ax
 	mov    %di,%dx
-
-	//pushf               // save interrupt status
-	//cli                 // uncomment if extended registers used in interrupt routines
+	//cli                 // uncomment if 32-bit registers used in interrupt routines
 	xorl   %esi,%esi
 	mov    %sp,%si
 
@@ -221,8 +280,7 @@ linear32_fmemcpyb:
 	addr32 rep movsb      // byte [ES:EDI++] <- [DS:ESI++], ECX times
 	addr32 nop            // 80386 B1 step chip bug on address size mixing
 
-	//popf                // restore interrupt status
-
+	//sti                 // restore interrupt status
 	mov    %ax,%si
 	mov    %dx,%di
 	mov    %ss,%ax
@@ -239,9 +297,7 @@ linear32_fmemset:
 	push   %si
 	push   %es
 	mov    %di,%dx
-
-	//pushf               // save interrupt status
-	//cli                 // uncomment if extended registers used in interrupt routines
+	//cli                 // uncomment if 32-bit registers used in interrupt routines
 	xorl   %esi,%esi
 	mov    %sp,%si
 
@@ -270,8 +326,7 @@ linear32_fmemset:
 	addr32 rep stosb      // byte [ES:EDI++] <- AL, ECX times
 	addr32 nop            // 80386 B1 step chip bug on address size mixing
 
-	//popf                // restore interrupt status
-
+	//sti                 // restore interrupt status
 	mov    %dx,%di
 	mov    %ss,%ax
 	mov    %ax,%ds
@@ -306,7 +361,7 @@ linear32_fmemset:
 #        +-------+-------+-------+-------+-------+-------+-------+-------+
 #
 #        +-------+-------+-------+-------+-------+-------+-------+-------+
-#byte 5  |   P   |      DPL      |   1   |   0   |  E/C  |  W/R  |   A   |
+#byte 5  |   P   |      DPL      |   S   |   E   |  D/C  |  W/R  |   A   |
 #        +-------+-------+-------+-------+-------+-------+-------+-------+
 #
 # This is the access/descriptor type byte, which sets the type of descriptor,
@@ -319,9 +374,12 @@ linear32_fmemset:
 # DPL is the DESCRIPTOR PRIVILEGE LEVEL. For simple code like this, these
 # two bits should always be zeroes.
 #
-# For data or executable Segment Descriptors, the next bits are always 1,0.
+# S is the descriptor type bit. 0 for System segment, 1 for code or data.
 #
-# The E/C bit specifies Expand-down for data segments, Conforming for code.
+# E specifies Executable. 0 for data, 1 for code segments.
+#
+# The D/C bit specifies Direction bit for data segments, 0=Expand Up else Down,
+# For code segments, 0 is nonconfirming, 1 Confirming.
 #
 # The W/R bit specifies Writable for data segments, Readable for code.
 #
@@ -378,16 +436,26 @@ gdt:    .word 0         # limit 15:0
         
 # linear data segment descriptor:
 LINEAR_SEL = . - gdt
-        .word 0xFFFF    # limit 0xFFFFF
-        .word 0         # base 0
-        .byte 0
-        .byte 0x93      # present, ring 0, data, expand-up, writable, accessed
-# putting a zero byte here (instead of 0xCF) effectively disables unreal mode:
-#       .byte 0         # byte-granular, 16-bit, limit=64K-1
-        .byte 0xCF      # page-granular, 32-bit, limit=4GB-1
-        .byte 0
-gdt_len = . - gdt
+        .word 0xFFFF    # limit 15:0
+        .word 0         # base  15:0
+        .byte 0         # base  23:16
+        .byte 0x92      # present, ring 0, data, expand-up, writable
+#       .byte 0         # byte-granular, 16-bit, limit=64K-1 (disables unreal mode)
+        .byte 0xCF      # page-granular, 32-bit, limit=4GB-1 (largest flat segment)
+        .byte 0         # base  31:24
 
+#if USE_PROTMODE
+# code segment descriptor for full protected mode:
+CODE_SEL = . - gdt
+codesel:.word 0xFFFF    # limit 15:0
+        .word 0         # base  15:0
+        .byte 0         # base  23:16
+        .byte 0x9A      # present, ring 0, code, nonconforming, readable
+        .byte 0x0F      # byte-granular, 16-bit, limit=1M-1 (real mode segment)
+        .byte 0         # base  31:24
+#endif
+
+gdt_len = . - gdt
 gdt_ptr:.word gdt_len - 1
         .long gdt
 
