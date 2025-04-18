@@ -41,12 +41,13 @@ int event_wait_timeout(struct event *e, int timeout)
         timeint.tv_usec = (timeout & 0x3FF) << 10;
         tv = &timeint;
     }
-    FD_ZERO(&fdset);
-    FD_SET(mouse_fd, &fdset);
-    FD_SET(0, &fdset);
 
     for (;;)
     {
+        FD_ZERO(&fdset);
+        FD_SET(mouse_fd, &fdset);
+        FD_SET(0, &fdset);
+
         ret = select(mouse_fd + 1, &fdset, NULL, NULL, tv);
         if (ret == 0)
         {
@@ -125,6 +126,7 @@ out:
                     lasty = y;
                     return 1;
                 }
+                /* here when duplicate mouse event - ignore */
             }
         }
     }
