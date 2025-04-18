@@ -18,8 +18,8 @@
 #include "mouse.h"
 #include "vgalib.h"
 
-#define USE_XOR_CURSOR      1       /* =1 use XOR drawing for slow systems*/
-#define USE_VGA_DRAWCURSOR  defined(__ia16__)
+#define USE_XOR_CURSOR      1       /* =1 use XOR drawpixel vs full cursor & mask draw */
+#define USE_VGA_DRAWCURSOR  (__ia16__ || __WATCOMC__)   /* VGA hardware XOR cursor */
 
 #define MWMAX_CURSOR_SIZE   16      /* maximum cursor x and y size*/
 #define MWMAX_CURSOR_BUFLEN MWIMAGE_SIZE(MWMAX_CURSOR_SIZE,MWMAX_CURSOR_SIZE)
@@ -150,6 +150,10 @@ static MWIMAGEBITS lgcursormask[16] = {
     MASK(_,_,_,_,_,_,_,_,_,_,_,_,X,X,X,_),  // 000E
     MASK(_,_,_,_,_,_,_,_,_,_,_,_,_,X,_,_)   // 0004
 };
+
+struct cursor cursor_lg = {
+    16, 16, 0, 0, WHITE, BLACK, lgcursorbits, lgcursormask
+};
 #else
 static MWIMAGEBITS lgcursorbits[16] = {
 //       8 4 2 1 8 4 2 1 8 4 2 1 8 4 2 1
@@ -189,10 +193,11 @@ static MWIMAGEBITS lgcursormask[16] = {
     MASK(X,X,_,_,X,X,X,X,_,_,_,_,_,_,_,_),
     MASK(X,_,_,_,_,X,X,X,_,_,_,_,_,_,_,_)
 };
-#endif
+
 struct cursor cursor_lg = {
     11, 16, 0, 0, WHITE, BLACK, lgcursorbits, lgcursormask
 };
+#endif
 
 void initcursor(void)
 {
@@ -288,7 +293,7 @@ int showcursor(void)
      * Loop through bits, resetting to firstbit at end of each row
      */
 #if USE_VGA_DRAWCURSOR
-    vga_drawcursor(curminx, curminy, curmaxy - curminy, cursormask);
+    vga_drawcursor(curminx, curminy, curmaxy - curminy + 1, cursormask);
 #elif USE_XOR_CURSOR
     set_op(0x18);
     for (y = curminy; y <= curmaxy; y++) {
@@ -365,7 +370,7 @@ int hidecursor(void)
         return prevcursor;
 
 #if USE_VGA_DRAWCURSOR
-    vga_drawcursor(cursavx, cursavy, cursavy2 - cursavy, cursormask);
+    vga_drawcursor(cursavx, cursavy, cursavy2 - cursavy + 1, cursormask);
 #elif USE_XOR_CURSOR
     set_op(0x18);
     for (y = cursavy; y <= cursavy2; y++) {

@@ -105,14 +105,14 @@ void drawvline(int x, int y1, int y2, int c)
 #endif /* __WATCOMC__ */
 
 #if defined(__WATCOMC__) || defined(__ia16__)
-/* draw 8 bits horizontally using XOR amd one or two memory writes */
+/* draw 8 bits horizontally using XOR and one or two memory writes w/clipping */
 static void drawbits(int x, int y, unsigned char bits)
 {
     set_op(0x18);
     set_color(15);
     unsigned int dst = (y<<6) + (y<<4) + (x>>3);  /* y * 80 + x / 8 */
     if (x < SCREENWIDTH) {
-        set_mask(bits >> ((x & 7)));
+        set_mask(bits >> (x & 7));
         asm_orbyte(dst);
     }
     if (x < SCREENWIDTH-8) {
