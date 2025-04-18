@@ -42,79 +42,58 @@
 
 #define set_color(color)                        \
     asm volatile (                              \
-        "mov $0x03ce,%%dx\n"                    \
-        "mov %%al,%%ah\n"                       \
-        "xor %%al,%%al\n"                       \
         "out %%ax,%%dx\n"                       \
         : /* no output */                       \
-        : "a" ((unsigned short)(color))         \
-        : "d"                                   \
+        : "a" ((unsigned short)(((color)<<8)|0))\
+        , "d" (0x03ce)                          \
         )
 
 #define set_enable_sr(flag)                     \
     asm volatile (                              \
-        "mov $0x03ce,%%dx\n"                    \
-        "mov %%al,%%ah\n"                       \
-        "mov $1,%%al\n"                         \
         "out %%ax,%%dx\n"                       \
         : /* no output */                       \
-        : "a" ((unsigned short)(flag))          \
-        : "d"                                   \
+        : "a" ((unsigned short)(((flag)<<8)|1)) \
+        , "d" (0x03ce)                          \
         )
 
 #define set_op(op)                              \
     asm volatile (                              \
-        "mov $0x03ce,%%dx\n"                    \
-        "mov %%al,%%ah\n"                       \
-        "mov $3,%%al\n"                         \
         "out %%ax,%%dx\n"                       \
         : /* no output */                       \
-        : "a" ((unsigned short)(op))            \
-        : "d"                                   \
+        : "a" ((unsigned short)(((op)<<8)|3))   \
+        , "d" (0x03ce)                          \
         )
 
 #define set_read_plane(plane)                   \
     asm volatile (                              \
-        "mov $0x03ce,%%dx\n"                    \
-        "mov %%al,%%ah\n"                       \
-        "mov $4,%%al\n"                         \
         "out %%ax,%%dx\n"                       \
         : /* no output */                       \
-        : "a" ((unsigned short)(plane))         \
-        : "d"                                   \
+        : "a" ((unsigned short)(((plane)<<8)|4))\
+        , "d" (0x03ce)                          \
         )
 
 #define set_write_mode(mode)                    \
     asm volatile (                              \
-        "mov $0x03ce,%%dx\n"                    \
-        "mov %%al,%%ah\n"                       \
-        "mov $5,%%al\n"                         \
         "out %%ax,%%dx\n"                       \
         : /* no output */                       \
-        : "a" ((unsigned short)(mode))          \
-        : "d"                                   \
+        : "a" ((unsigned short)(((mode)<<8)|5)) \
+        , "d" (0x03ce)                          \
         )
 
 #define set_mask(mask)                          \
     asm volatile (                              \
-        "mov $0x03ce,%%dx\n"                    \
-        "mov %%al,%%ah\n"                       \
-        "mov $8,%%al\n"                         \
         "out %%ax,%%dx\n"                       \
         : /* no output */                       \
-        : "a" ((unsigned short)(mask))          \
-        : "d"                                   \
+        : "a" ((unsigned short)(((mask)<<8)|8)) \
+        , "d" (0x03ce)                          \
         )
 
 #define set_write_planes(mask)                  \
     asm volatile (                              \
-        "mov $0x03c4,%%dx\n"                    \
-        "mov %%al,%%ah\n"                       \
-        "mov $2,%%al\n"                         \
         "out %%ax,%%dx\n"                       \
         : /* no output */                       \
-        : "a" ((unsigned short)(mask))          \
-        : "d"                                   \
+        : "a" ((unsigned short)(((mask)<<8)|2)) \
+        , "d" (0x03c4)                          \
         )
 
 #define set_bios_mode(mode)                     \
@@ -127,13 +106,13 @@
 #define asm_orbyte(offset)                      \
     asm volatile (                              \
         "mov %%ds,%%dx\n"                       \
-        "mov $0xa000,%%ax\n"                    \
         "mov %%ax,%%ds\n"                       \
         "or %%al,(%%bx)\n"                      \
         "mov %%dx,%%ds\n"                       \
         : /* no output */                       \
-        : "b" ((unsigned short)(offset))        \
-        : "a", "d"                              \
+        : "a" (0xa000)                          \
+        , "b" ((unsigned short)(offset))        \
+        : "d","dl","dh"                         \
         )
 
 #define asm_getbyte(offset)                     \
@@ -141,14 +120,14 @@
     unsigned short _v;                          \
     asm volatile (                              \
         "mov %%ds,%%dx\n"                       \
-        "mov $0xa000,%%ax\n"                    \
         "mov %%ax,%%ds\n"                       \
         "mov (%%bx),%%al\n"                     \
         "xor %%ah,%%ah\n"                       \
         "mov %%dx,%%ds\n"                       \
         : "=a" (_v)                             \
-        : "b" ((unsigned short)(offset))        \
-        : "d"                                   \
+        : "a" (0xa000)                          \
+        , "b" ((unsigned short)(offset))        \
+        : "d","dl","dh"                         \
         );                                      \
     _v; })
 
