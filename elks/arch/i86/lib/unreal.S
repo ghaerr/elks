@@ -1,10 +1,13 @@
 ####################################################################################
+# Use unreal or protected mode to set the segment cache register limits.
+#
 # Unreal mode routines for 80386+ CPUs
 # derived from UNREAL.ASM and A20.ASM code by Chris Giese
-# 8 Nov 2021 Greg Haerr
+#  8 Nov 2021 Greg Haerr
+# 18 Apr 2025 Greg Haerr added full protected mode entry from Helge Skrivervik
 #
 # int check_unreal_mode(void)	- Test for 32-bit CPU and not V86 mode
-# void enable_unreal_mode(void)	- Turn on 80386 unreal mode, requires 386+
+# void enable_unreal_mode(void)	- Set segment cache register limits, requires 386+
 # void linear32_fmemcpyw (void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
 #		size_t count)	- Copy words between XMS and far memory
 # void linear32_fmemcpyb (void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
@@ -32,7 +35,8 @@
 	.global	linear32_fmemset
 
 #if USE_PROTMODE
-# Put CPU in unreal mode. Requires 32-bit CPU (386+) to call!
+# Enter full protected mode to set the segment cache register limits.
+# Requires 32-bit CPU (386+) to call!
 enable_unreal_mode:
 	xorl %eax,%eax
 	movw %ds,%ax
@@ -51,7 +55,7 @@ enable_unreal_mode:
 	push %cs		# push real mode return address for later lret
 	push $rmode
 	xorl %eax,%eax
-	mov %cs,%ax		# set up the GDT codesel entry for current code segment
+	mov %cs,%ax		# set up the GDT entry for current 16-bit code segment
 	shll $4,%eax
 	mov %ax,codesel+2       # base 15:0
 	ror $16,%eax
@@ -66,7 +70,7 @@ enable_unreal_mode:
 	ljmp $CODE_SEL,$pmode	# enter protected mode by clearing prefetch & reloading CS
 pmode:
 
-	movw $LINEAR_SEL, %bx 	# selector to segment with 4GB-1 limit
+	movw $LINEAR_SEL, %bx 	# selector of segment with 4GB-1 limit
 	movw %bx,%ds            # set segment limits in descriptor caches
 	movw %bx,%es
 	movw %bx,%fs
@@ -85,11 +89,12 @@ rmode:
 	popl %es
 	popl %ds
 	popf			# restore interrupt status
-	ret			# system is in unreal mode
+	ret			# system is in real mode with 4GB segment limits
 
 #else
 
-# Put CPU in unreal mode. Requires 32-bit CPU (386+) to call!
+# Use unreal mode to set the segment cache register limits.
+# Requires 32-bit CPU (386+) to call!
 enable_unreal_mode:
 	xorl %eax,%eax
 	movw %ds,%ax
@@ -109,7 +114,7 @@ enable_unreal_mode:
 		orb $1,%al
 		movl %eax, %cr0
 
-		movw $LINEAR_SEL, %bx # selector to segment with 4GB-1 limit
+		movw $LINEAR_SEL, %bx # selector of segment with 4GB-1 limit
 		movw %bx,%ds    # set segment limits in descriptor caches
 		movw %bx,%es
 		movw %bx,%fs
@@ -125,10 +130,10 @@ enable_unreal_mode:
 	popl %es
 	popl %ds
 	popf			# restore interrupt status
-	ret			# system is in unreal mode
+	ret			# system is in real mode with 4GB segment limits
 #endif
 
-# Check if unreal mode capable. Currently requires 32-bit CPU (386+)
+# Check if unreal or protected mode capable. Currently requires 32-bit CPU (386+)
 # Returns 1 if OK, otherwise error code (-1=not 386, -2=in V86 mode).
 	.global	check_unreal_mode
 check_unreal_mode:
@@ -154,7 +159,7 @@ check_unreal_mode:
 	andb $1,%bl
 	jne	in_vm86mode
 
-	mov	$1,%ax		# unreal mode capable, return 1
+	mov	$1,%ax		# unreal/protected mode capable, return 1
 	ret
 not_32bit:
 	mov	$-1,%ax		# requires 32 bit CPU
@@ -166,7 +171,7 @@ in_vm86mode:
 #if UNUSED
 #
 # word_t linear32_peekw(void *src_off, addr_t src_seg)
-# WARNING: Requires 32-bit CPU, with unreal mode and A20 gate enabled!
+# WARNING: Requires 32-bit CPU, segment descriptor cache set and A20 gate enabled!
 #          Trashes EBX and ESI without saving.
 #
 	.global	linear32_peekw
@@ -199,7 +204,7 @@ linear32_peekw:
 #
 # void linear32_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
 #		size_t count)
-# WARNING: Requires 32-bit CPU, with unreal mode and A20 gate enabled!
+# WARNING: Requires 32-bit CPU, segment descriptor cache set and A20 gate enabled!
 #          Trashes EBX, ECX, ESI and EDI without saving.
 #
 linear32_fmemcpyw:
@@ -243,7 +248,7 @@ linear32_fmemcpyw:
 #
 # void linear32_fmemcpyb(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
 #		size_t count)
-# WARNING: Requires 32-bit CPU, with unreal mode and A20 gate enabled!
+# WARNING: Requires 32-bit CPU, segment descriptor cache set and A20 gate enabled!
 #          Trashes EBX, ECX, ESI and EDI without saving.
 #
 linear32_fmemcpyb:
@@ -290,7 +295,7 @@ linear32_fmemcpyb:
 
 #
 # void linear32_fmemset(void *dst_off, addr_t dst_seg, byte_t val, size_t count)
-# WARNING: Requires 32-bit CPU, with unreal mode and A20 gate enabled!
+# WARNING: Requires 32-bit CPU, segment descriptor cache set and A20 gate enabled!
 #          Trashes EAX, EBX, ECX, ESI and EDI without saving.
 #
 linear32_fmemset:
@@ -385,7 +390,9 @@ linear32_fmemset:
 #
 # The A bit is written to 1 by the CPU when the segment is accessed.
 #
-# For unreal mode data, the P, W and A bits would be set, which gives hex 93.
+# For unreal mode data segments, the P, S and W bits would be set, which gives hex 92.
+#
+# For protected mode 16-bit code, set the P, S, E and R bits, giving hex 9A.
 #
 #        +-------+-------+-------+-------+-------+-------+-------+-------+
 #byte 6  |   G   |  B/D  |   0   | Avail | bit 19<-- seg limit--->bit 16 |
@@ -440,18 +447,18 @@ LINEAR_SEL = . - gdt
         .word 0         # base  15:0
         .byte 0         # base  23:16
         .byte 0x92      # present, ring 0, data, expand-up, writable
-#       .byte 0         # byte-granular, 16-bit, limit=64K-1 (disables unreal mode)
+#       .byte 0         # byte-granular, 16-bit, limit=64K-1 (disables 4GB segments)
         .byte 0xCF      # page-granular, 32-bit, limit=4GB-1 (largest flat segment)
         .byte 0         # base  31:24
 
 #if USE_PROTMODE
-# code segment descriptor for full protected mode:
+# code segment descriptor for protected mode using 16-bit code segment
 CODE_SEL = . - gdt
 codesel:.word 0xFFFF    # limit 15:0
         .word 0         # base  15:0
         .byte 0         # base  23:16
         .byte 0x9A      # present, ring 0, code, nonconforming, readable
-        .byte 0x0F      # byte-granular, 16-bit, limit=1M-1 (real mode segment)
+        .byte 0x0F      # byte-granular, 16-bit, limit=1M-1 (16-bit PM code segment)
         .byte 0         # base  31:24
 #endif
 
