@@ -79,6 +79,15 @@ void timer_tick(int irq, struct pt_regs *regs)
     }
 #endif
 
+#ifdef CONFIG_ARCH_SWAN
+    /* spin timer segments */
+    if (spin_on && !(jiffies & 7)) {
+        static unsigned char wheel[4] = {0x00, 0x20, 0x10, 0x08};
+        static unsigned char c = 0;
+
+        outb((inb(0x15) & 0x07) | wheel[c++ & 0x03], 0x15);
+    }
+#else
 #ifdef CONFIG_CONSOLE_DIRECT
     /* spin timer wheel in upper right of screen*/
     if (spin_on && !(jiffies & 7)) {
@@ -88,12 +97,18 @@ void timer_tick(int irq, struct pt_regs *regs)
         pokeb((79 + 0*80) * 2, VideoSeg, wheel[c++ & 0x03]);
     }
 #endif
+#endif
 }
 
 void spin_timer(int onflag)
 {
+#ifdef CONFIG_ARCH_SWAN
+    if ((spin_on = onflag) == 0)
+        outb(inb(0x15) & 0x07, 0x15);
+#else
 #ifdef CONFIG_CONSOLE_DIRECT
     if ((spin_on = onflag) == 0)
         pokeb((79 + 0*80) * 2, VideoSeg, ' ');
+#endif
 #endif
 }

@@ -90,6 +90,23 @@
 #define CONFIG_8018X_EB
 #endif
 
+#ifdef CONFIG_ARCH_SWAN
+#define MAX_SERIAL              1       /* max number of serial tty devices*/
+#define SETUP_VID_COLS          28      /* video # columns */
+#define SETUP_VID_LINES         18      /* video # lines */
+#define SETUP_CPU_TYPE          5       /* processor type 80186 */
+#define SETUP_MEM_KBYTES        128     /* base memory in 1K bytes */
+#define SETUP_XMS_KBYTES        0       /* xms memory in 1K bytes */
+#define SETUP_ROOT_DEV          0x0600  /* root device ROMFS */
+#define SETUP_ELKS_FLAGS        0       /* flags for root device type */
+#define SETUP_PART_OFFSETLO     0       /* partition offset low word */
+#define SETUP_PART_OFFSETHI     0       /* partition offset high word */
+#define SYS_CAPS                0       /* no XT/AT capabilities */
+#define UTS_MACHINE             "swan"
+#define SETUP_HEAPSIZE          32768
+#define CONFIG_MEM_SEGMENT      0x1000
+#endif /* CONFIG_ARCH_SWAN */
+
 /* linear address to start XMS buffer allocations from */
 #define XMS_START_ADDR    0x00100000L	/* 1M */
 //#define XMS_START_ADDR  0x00FA0000L	/* 15.6M (Compaq with only 1M ram) */

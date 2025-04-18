@@ -51,6 +51,10 @@ ifeq ($(CONFIG_ARCH_8018X), y)
 OBJS += irq-8018x.o timer-8018x.o
 endif
 
+ifeq ($(CONFIG_ARCH_SWAN), y)
+OBJS += irq-swan.o timer-swan.o
+endif
+
 #########################################################################
 # Commands.
 
