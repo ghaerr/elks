@@ -51,6 +51,11 @@ ifeq ($(CONFIG_ARCH_8018X), y)
 OBJS += irq-8018x.o timer-8018x.o
 endif
 
+ifeq ($(CONFIG_ARCH_SOLO86), y)
+OBJS += irq-solo86.o timer-8254.o
+OBJS += divzero.o
+endif
+
 #########################################################################
 # Commands.
 

@@ -227,6 +227,10 @@ static void INITPROC kernel_banner(seg_t init, seg_t extra)
     printk("8018X machine, ");
 #endif
 
+#ifdef CONFIG_ARCH_SOLO86
+    printk("Solo86 machine, ");
+#endif
+
     printk("syscaps %x, %uK base ram, %d tasks, %d files, %d inodes\n",
         sys_caps, SETUP_MEM_KBYTES, max_tasks, nr_file, nr_inode);
     printk("ELKS %s (%u text, %u ftext, %u data, %u bss, %u heap)\n",

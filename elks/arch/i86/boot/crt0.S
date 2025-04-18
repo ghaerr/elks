@@ -55,6 +55,13 @@ int3:   int     $3              // C breakpoint for emu86
         ret
 
 #ifndef CONFIG_ARCH_PC98
+#ifdef CONFIG_ARCH_SOLO86
+early_putchar:
+        mov   %sp,%bx
+        mov   2(%bx),%al
+        outb  %al,$0x22
+        ret
+#else
 early_putchar:
         mov   %sp,%bx
         mov   2(%bx),%al
@@ -64,6 +71,7 @@ early_putchar:
         int   $0x10
         pop   %bp
         ret
+#endif
 #endif
 
 //      Segment beginnings
