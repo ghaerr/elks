@@ -128,7 +128,6 @@ enable_unreal_mode:
 	ret			# system is in unreal mode
 #endif
 
-#if UNUSED
 # Check if unreal mode capable. Currently requires 32-bit CPU (386+)
 # Returns 1 if OK, otherwise error code (-1=not 386, -2=in V86 mode).
 	.global	check_unreal_mode
@@ -164,6 +163,7 @@ in_vm86mode:
 	mov	$-2,%ax		# CPU in V86 mode
 	ret
 
+#if UNUSED
 #
 # word_t linear32_peekw(void *src_off, addr_t src_seg)
 # WARNING: Requires 32-bit CPU, with unreal mode and A20 gate enabled!
