@@ -45,6 +45,10 @@
 
 #define MAX_DISPLAYS    1
 
+#ifdef CONFIG_CONSOLE_FONT_4X8
+#define HALFWIDTH_FONT
+#endif
+
 struct console;
 typedef struct console Console;
 
@@ -79,24 +83,30 @@ int kraw;
 
 void soundp(unsigned period)
 {
+#ifdef CONFIG_CONSOLE_BELL
     outw(period / 12, AUD_CH1_FREQ_PORT);
     outb(0xFF, AUD_CH1_VOL_PORT);
     outb(0x01, AUD_CONTROL_PORT);
+#endif
 }
 
 void nosound(void)
 {
+#ifdef CONFIG_CONSOLE_BELL
     outb(0x01, AUD_CONTROL_PORT);
+#endif
 }
 
 void bell(void)
 {
+#ifdef CONFIG_CONSOLE_BELL
     register volatile unsigned int i = 60000U;
 
     soundp(BELL_PERIOD);
     while (--i)
 	continue;
     nosound();
+#endif
 }
 
 #ifdef CONFIG_EMUL_ANSI
@@ -110,10 +120,14 @@ static void std_char(Console *, int);
 static void SetDisplayPage(Console * C)
 {
     outw(0x0000, SCR_CONTROL_PORT);
-    outb((C->vseg >> 7) * 0x11, SCR_BASE_PORT);
+    outb(((C->vseg >> 7) * 0x11) + 0x01, SCR_BASE_PORT);
     outw(((unsigned int) C->sy) << 11, SCR1_SCROLL_PORT);
-    /* outw(C->sy << 11, SCR2_SCROLL_PORT); */
-    outw(0x0001, SCR_CONTROL_PORT);
+#ifdef HALFWIDTH_FONT
+    outw((((unsigned int) C->sy) << 11) | 0x04, SCR2_SCROLL_PORT);
+    outb(0x03, SCR_CONTROL_PORT);
+#else
+    outb(0x01, SCR_CONTROL_PORT);
+#endif
 }
 
 static void PositionCursor(Console * C)
@@ -128,18 +142,37 @@ static void DisplayCursor(Console * C, int onoff)
 
 static void VideoWrite(Console * C, int c)
 {
+#ifdef HALFWIDTH_FONT
+    pokew(((C->cx >> 1) + ((C->cy + C->sy) & 31) * 32) << 1,
+          (seg_t) C->vseg + ((C->cx & 1) << 7),
+          C->font_ofs | ((C->attr & 0x0F) << 9) | (c & 255));
+#else
     pokew((C->cx + ((C->cy + C->sy) & 31) * 32) << 1, (seg_t) C->vseg,
           C->font_ofs | ((C->attr & 0x0F) << 9) | (c & 255));
+#endif
 }
 
 static void ClearRange(Console * C, int x, int y, int x2, int y2)
 {
+#ifdef HALFWIDTH_FONT
+    int i;
+#endif
     int vp;
 
     y += (C->sy & 31);
     y2 += (C->sy & 31);
 
     x2 = x2 - x + 1;
+#ifdef HALFWIDTH_FONT
+    /* TODO: Optimize */
+    vp = (y * 32) << 1;
+    do {
+        vp &= 0x7FF;
+        for (i = x; i <= x2; i++)
+            pokew(vp + (i & ~1), (seg_t) C->vseg + ((i & 1) << 7), C->font_ofs);
+        vp += 64;
+    } while (++y <= y2);
+#else
     vp = (x + y * 32) << 1;
     do {
         vp &= 0x7FF;
@@ -149,6 +182,7 @@ static void ClearRange(Console * C, int x, int y, int x2, int y2)
         }
         vp += (32 - x2) << 1;
     } while (++y <= y2);
+#endif
 }
 
 static void ScrollUp(Console * C, int y)
@@ -167,9 +201,14 @@ static void ScrollUp(Console * C, int y)
     }
 
     vp = y * 64;
-    if ((unsigned int)y < MaxRow)
+    if ((unsigned int)y < MaxRow) {
         fmemcpyw((void *)vp, C->vseg,
                  (void *)(vp + 64), C->vseg, (MaxRow - y) * 32);
+#ifdef HALFWIDTH_FONT
+        fmemcpyw((void *)vp, C->vseg + 0x80,
+                 (void *)(vp + 64), C->vseg + 0x80, (MaxRow - y) * 32);
+#endif
+    }
     ClearRange(C, 0, MaxRow, MaxCol, MaxRow);
 }
 
@@ -182,6 +221,9 @@ static void ScrollDown(Console * C, int y)
     vp = yy * 64;
     while (--yy >= y) {
         fmemcpyw((void *)vp, C->vseg, (void *)(vp - 64), C->vseg, C->Width);
+#ifdef HALFWIDTH_FONT
+        fmemcpyw((void *)vp, C->vseg + 0x80, (void *)(vp - 64), C->vseg + 0x80, C->Width);
+#endif
         vp -= 64;
     }
     ClearRange(C, 0, y, C->Width - 1, y);
@@ -218,6 +260,7 @@ struct tty_ops dircon_ops = {
     Console_conout
 };
 
+extern unsigned int font_4x8[];
 extern unsigned int font_8x8[];
 
 #define RGB4(r,g,b) (((r) << 8) | ((g) << 4) | (b))
@@ -244,28 +287,51 @@ void INITPROC console_init(void)
 {
     Console *C = &Con[0];
     int i;
-    unsigned int low_mem_ofs = 0x4000;
+    unsigned int low_mem_ofs;
     unsigned int font_ofs;
 
     /* Set palette */
-    pokew(0xFE00, (seg_t) 0, color_palette[0]);
-    for (i = 0; i < 16; i++)
+    for (i = 0; i < 16; i++) {
+        pokew(0xFE00 + (i << 1), (seg_t) 0, color_palette[i]);
         pokew(0xFE02 + (i << 5), (seg_t) 0, color_palette[i]);
+    }
 
     /* Allocate room for font */
+#if defined(CONFIG_CONSOLE_FONT_4X8)
+    outb(inb(0x60) | 0xC0, 0x60);
+
+    low_mem_ofs = 0x6000;
+    low_mem_ofs -= (256 * 32);
+    font_ofs = (low_mem_ofs - 0x4000) >> 5;
+
+    unsigned long __far *dest = _MK_FP(0, low_mem_ofs);
+    unsigned char __far *src = _MK_FP(kernel_cs, font_4x8);
+    for (i = 0; i < 256 * 4; i++) {
+        *(dest++) = *src & 0x0F;
+        *(dest++) = *(src++) >> 4;
+    }
+#elif defined(CONFIG_CONSOLE_FONT_8X8)
+    low_mem_ofs = 0x4000;
     low_mem_ofs -= (256 * 16);
     font_ofs = (low_mem_ofs - 0x2000) >> 4;
 
     unsigned short __far *dest = _MK_FP(0, low_mem_ofs);
-    unsigned char __far *src = _MK_FP(kernel_cs, &font_8x8);
+    unsigned char __far *src = _MK_FP(kernel_cs, font_8x8);
     for (i = 0; i < 256 * 8; i++)
         *(dest++) = *(src++);
+#else
+#error No font defined!
+#endif
 
     NumConsoles = MAX_CONSOLES - 1;
 
     for (i = 0; i < NumConsoles; i++) {
         /* Allocate room for console data */
+#ifdef HALFWIDTH_FONT
+        low_mem_ofs -= (32 * 32 * 4);
+#else
         low_mem_ofs -= (32 * 32 * 2);
+#endif
 
         C->cx = C->cy = 0;
         C->sy = 0;
@@ -274,20 +340,29 @@ void INITPROC console_init(void)
         C->vseg = (low_mem_ofs >> 4);
         C->font_ofs = font_ofs;
         C->attr = A_DEFAULT;
+#ifdef HALFWIDTH_FONT
+        C->Width = 56;
+#else
         C->Width = 28;
+#endif
         C->Height = 18;
 
 #ifdef CONFIG_EMUL_ANSI
         C->savex = C->savey = 0;
 #endif
 
-        ClearRange(C, 0, 0, 28, 32);
+#ifdef HALFWIDTH_FONT
+        ClearRange(C, 0, 0, 57, 31);
+#else
+        ClearRange(C, 0, 0, 27, 31);
+#endif
 
         C++;
     }
 
     Console_set_vc(0);
 
+#ifdef CONFIG_CONSOLE_BELL
     /* Allocate room for sound RAM */
     low_mem_ofs -= 0x40;
     outb(low_mem_ofs >> 6, AUD_BASE_PORT);
@@ -299,6 +374,7 @@ void INITPROC console_init(void)
     }
 
     outw(0x09 << 8, AUD_CONTROL_PORT);
+#endif
 
     kbd_init();
 
