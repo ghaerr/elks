@@ -59,6 +59,10 @@ static void calc_cpu_usage(void)
 
 void timer_tick(int irq, struct pt_regs *regs)
 {
+#ifdef CONFIG_ARCH_SWAN
+    ack_irq(7);
+#endif
+
     do_timer();
 
 #ifdef CONFIG_CPU_USAGE

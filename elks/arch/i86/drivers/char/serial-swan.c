@@ -40,6 +40,7 @@ void rs_irq(int irq, struct pt_regs *regs)
     struct ch_queue *q = &tty->inq;
 
     unsigned char c = inb(UART_DATA_PORT); /* Read received data */
+    ack_irq(3);
     outb(UART_CONTROL_PORT, UART_OVR_RESET); /* Reset overrun, if any */
     if (!tty_intcheck(tty, c))
 	chq_addch(q, c);

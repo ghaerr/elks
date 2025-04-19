@@ -239,24 +239,6 @@ ret_from_syscall:
 !       ----------PROCESS INTERRUPT----------
 */
 updct:
-#ifdef CONFIG_ARCH_SWAN
-//
-//	Acknowledge interrupt
-//
-//	Note that the WonderSwan RTC/UART interrupts cannot be acknowledged
-//	without processing them, which is why interrupts are not re-enabled
-//	for IRQ work on this platform.
-//
-	push	%ax
-	push	%cx
-	sub	$8,%al
-	mov	%al,%cl
-	mov	$1,%al
-	shl	%cl,%al
-	out	%al,$0xB6
-	pop	%cx
-	pop	%ax
-#endif
 //
 //      Call the C code
 //
