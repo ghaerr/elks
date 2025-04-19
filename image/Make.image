@@ -24,6 +24,9 @@ endif
 
 ifdef CONFIG_IMG_ROM
 TARGETS += template romfs
+ifdef CONFIG_ARCH_SWAN
+TARGETS += swanrom
+endif
 endif
 
 .PHONY: image $(TARGETS)
@@ -144,3 +147,9 @@ romfs:
 	$(MAKE) -f Make.devices "MKDEV=echo >> romfs.devices"
 	mkromfs -d romfs.devices $(DESTDIR)
 	-rm -f romfs.devices
+
+swanrom:
+	rm -f $(TARGET_FILE)
+	cat $(IMG_DIR)/romfs.bin > $(TARGET_FILE)
+	truncate -s $(TARGET_ROMFS_BYTES) $(TARGET_FILE)
+	cat $(ELKS_DIR)/arch/i86/boot/Image >> $(TARGET_FILE)
