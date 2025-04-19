@@ -263,10 +263,6 @@ no_blob:
 
 start_os:
 #ifdef CONFIG_ARCH_SWAN
-        // Force color mode
-	mov	$0x80,%al
-	out	%al,$0x60
-
 	// Enable UART serial
 	mov	$0xE0,%al
 	out	%al,$0xB3
@@ -1444,9 +1440,13 @@ arch_get_mem:
 	mov $SETUP_MEM_KBYTES,%ax
 	ret
 
-// Set INITSEG values
+// Set INITSEG values for WonderSwan
 // currently hard-coded in config.h
 arch_set_initseg:
+        // Force color mode early to enable 64 KiB RAM
+	mov	$0x80,%al
+	out	%al,$0x60
+
 	mov	$INITSEG,%ax
 	mov	%ax,%ds
 	ret

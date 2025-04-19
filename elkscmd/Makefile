@@ -34,7 +34,6 @@ SUBDIRS =       \
 	minix2      \
 	minix3      \
 	misc_utils  \
-	nano-X      \
 	sash        \
 	screen      \
 	cron        \
@@ -43,6 +42,10 @@ SUBDIRS =       \
 	tui         \
 	test        \
 	# EOL
+
+ifndef CONFIG_ARCH_SWAN
+SUBDIRS += nano-X
+endif
 
 ###############################################################################
 #

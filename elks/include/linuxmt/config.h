@@ -104,7 +104,7 @@
 #define SYS_CAPS                0       /* no XT/AT capabilities */
 #define UTS_MACHINE             "swan"
 #define SETUP_HEAPSIZE          32768
-#define CONFIG_MEM_SEGMENT      0x1000
+#define CONFIG_MEM_SEGMENT      0x1000  /* start segment for appiication memory heap */
 #endif /* CONFIG_ARCH_SWAN */
 
 /* linear address to start XMS buffer allocations from */

@@ -26,7 +26,6 @@ PRGS = \
 	who \
 	man \
 	chmem \
-	clock \
 	unreal16 \
 	beep \
 	mouse \
@@ -36,6 +35,10 @@ PRGS = \
 	decomp \
 	sysctl \
 	# EOL
+
+ifndef CONFIG_ARCH_SWAN
+PRGS += clock
+endif
 
 HOSTPRGS = hostdecomp
 HOSTCFLAGS += -I$(TOPDIR)/elks/include

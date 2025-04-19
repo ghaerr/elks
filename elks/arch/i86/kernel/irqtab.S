@@ -274,9 +274,7 @@ updct:
         pop     %bx
 
         pop     %ax             // Saved IRQ
-#ifndef CONFIG_ARCH_SWAN
         cli                     // Disable interrupts to avoid reentering ISR
-#endif
 
 #if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_PC98)
 //
