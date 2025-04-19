@@ -136,7 +136,7 @@ debug_loader    =       0       // display relocations
 	.global _start
 _start:
 
-#ifdef CONFIG_ROMCODE
+#if defined(CONFIG_ROMCODE) && !defined(CONFIG_ARCH_SWAN)
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Entry point for IBM PC compatible option ROMs
 
