@@ -441,6 +441,7 @@ pmsg:   .ascii "Running unknown code\0"
 #endif
 dmsg:   .ascii  "DIVIDE FAULT\0"
 
+	.bss
         .p2align 1
 endistack:
         .skip ISTACK_BYTES,0    // interrupt stack
