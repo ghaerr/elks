@@ -242,7 +242,9 @@ updct:
 //
 //      Call the C code
 //
+#ifndef CONFIG_ARCH_SWAN
         sti                     // Reenable interrupts
+#endif
         mov     %sp,%bx         // Get pointer to pt_regs
         cbw
         push    %ax             // IRQ for later

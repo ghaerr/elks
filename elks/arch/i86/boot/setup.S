@@ -136,7 +136,7 @@ debug_loader    =       0       // display relocations
 	.global _start
 _start:
 
-#ifdef CONFIG_ROMCODE
+#if defined(CONFIG_ROMCODE) && !defined(CONFIG_ARCH_SWAN)
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Entry point for IBM PC compatible option ROMs
 
@@ -262,6 +262,12 @@ no_blob:
 // Entry point for EMU86 ROM emulation
 
 start_os:
+#ifdef CONFIG_ARCH_SWAN
+	// Enable UART serial
+	mov	$0xE0,%al
+	out	%al,$0xB3
+#endif
+
 	push	%cs
 	pop	%ds
 	mov	$hello_mess,%si
@@ -1420,6 +1426,42 @@ tvram_x:
 #include "../lib/a20-pc98.inc"
 
 #endif /* CONFIG_ARCH_PC98 */
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Architecture specific routines for WonderSwan
+//	Entry points specific for platform setup of SETUP_xxx variables (see config.h)
+//		arch_set_initseg
+//		arch_get_mem
+
+#ifdef CONFIG_ARCH_SWAN
+
+// Return total memory in Kbytes
+arch_get_mem:
+	mov $SETUP_MEM_KBYTES,%ax
+	ret
+
+// Set INITSEG values for WonderSwan
+// currently hard-coded in config.h
+arch_set_initseg:
+        // Force color mode early to enable 64 KiB RAM
+	mov	$0x80,%al
+	out	%al,$0x60
+
+	mov	$INITSEG,%ax
+	mov	%ax,%ds
+	ret
+
+// Write AL to console, save all other registers
+putc:
+	push	%ax
+1:	in	$0xB3,%al
+	test	$0x04,%al
+	jz	1b
+	pop	%ax
+	out	%al,$0xB1
+	ret
+
+#endif /* CONFIG_ARCH_SWAN */
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

@@ -60,16 +60,18 @@ int main(int argcnt, char **arg)
     unsigned firstname;		// nummber of first source in argument string
     int strip;			// local bool: strip the symbol table form a.out
     int skip;			// local bool: skip a.out header
+    int swan;			// local bool: generate swan ROM footer
     int32_t init;		// if > 0 address of reset vector
 
     if (argcnt < 5) {
 	printf
-	    ("mkbootloader [-r init] [-c start size] target.bin basis_rom [-s][-a] *.bin adr [*.bin adr]\n");
+	    ("mkbootloader [-w] [-r init] [-c start size] target.bin basis_rom [-s][-a] *.bin adr [*.bin adr]\n");
 	printf("   -a  skip a.out header (0x20 Bytes)\n");
 	printf("   -c  insert checksum at start(seg)+size(kBytes)\n");
 	printf
 	    ("   -r  add resetvector \"jmpf basis_rom*0x10+init\" to target finle at ffff0\n");
 	printf("   -s  strips symbols from a.out file\n");
+	printf("   -w  add swan ROM footer\n");
 	printf("  adr must above basis_rom\n");
 	printf("  mkbootloader -p 0000 003ff  rom.bin e000  arch/i86/boot/setup e000 arch/i86/tools/system e040\n");
 	return -1;
@@ -82,6 +84,11 @@ int main(int argcnt, char **arg)
 
 // load sources
     i = 1;
+    if (strcmp(arg[i], "-w") == 0) {
+	swan = 1;
+	i++;
+    } else
+	swan = 0;
     if (strcmp(arg[i], "-r") == 0) {
 	sscanf(arg[i + 1], "%x", &init);
 	i += 2;
@@ -171,6 +178,9 @@ int main(int argcnt, char **arg)
     if (init >= 0) {
 	romgr = 0xffff5 - offs;
     }
+    if (swan) {
+	romgr = 0x100000 - offs;
+    }
     if (check.sum) {
 	i = check.end + check.start - offs;
 	if (i > romgr)
@@ -232,6 +242,17 @@ int main(int argcnt, char **arg)
 	*(uint32_t *) &(rom[0xffff1 - offs]) = l;
 	printf("  RESET nach %04x:%04x (%05x)\n", l >> 16,
 	       l & 0xffff, offs + init);
+    }
+
+// add the swan footer
+    if (swan) {
+        rom[0xffff5 - offs] = 0x00; /* must be zero */
+        rom[0xffff7 - offs] = 0x01; /* color mode required */
+        rom[0xffff9 - offs] = 0x00; /* must be zero */
+        rom[0xffffa - offs] = 0x03; /* 1 MiB ROM size */
+        rom[0xffffb - offs] = 0x05; /* 512 KiB RAM size */
+        rom[0xffffc - offs] = 0x04; /* 16-bit ROM bus */
+        rom[0xffffd - offs] = 0x01; /* RTC enabled */
     }
 
 // calculate the checksum

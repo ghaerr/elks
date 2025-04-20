@@ -130,7 +130,11 @@ CROSS_CFLAGS = -ffreestanding -fno-inline -melks -mcmodel=small -msegment-reloca
 			| cut -d = -f 1 | cut -d _ -f 3- | tr A-Z a-z)
 #ifeq ($(MK_CPU), 8086)
     CPU_AS	= -mtune=i8086
+ifdef CONFIG_ARCH_SWAN
+    CPU_CC	= -march=v30mz -mtune=v30mz
+else
     CPU_CC	= -mtune=i8086
+endif
     CPU_LD	=
 #endif
 

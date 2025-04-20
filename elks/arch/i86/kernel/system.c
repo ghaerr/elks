@@ -45,6 +45,9 @@ unsigned int INITPROC setup_arch(void)
 #ifdef SETUP_HEAPSIZE
     heapsize = SETUP_HEAPSIZE;          /* may also be set via heap= in /bootopts */
 #endif
+#ifdef CONFIG_MEM_SEGMENT
+    membase = CONFIG_MEM_SEGMENT;
+#else
     if (heapsize) {
         heapsegs = (1 + ~endbss) >> 4;  /* max possible heap in segments*/
         if ((heapsize >> 4) < heapsegs) /* allow if less than max*/
@@ -55,6 +58,7 @@ unsigned int INITPROC setup_arch(void)
         membase = kernel_ds + 0x1000;
         heapsize = 1 + ~endbss;
     }
+#endif
     debug("endbss %x heap %x kdata size %x\n", endbss, heapsize, (membase-kernel_ds)<<4);
 
     memend = SETUP_MEM_KBYTES << 6;
