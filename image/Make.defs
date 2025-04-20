@@ -135,5 +135,5 @@ endif
 
 # override default image name if NAME specified
 ifdef NAME
-TARGET_FILE = $(IMG_DIR)/$(NAME).$(TARGET_EXT)
+TARGET_FILE = $(IMG_DIR)/$(NAME)$(TARGET_EXT)
 endif
