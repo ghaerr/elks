@@ -78,37 +78,6 @@ static int NumConsoles;
 int Current_VCminor;
 int kraw;
 
-#define BELL_FREQUENCY 800
-#define BELL_PERIOD (1193181/BELL_FREQUENCY)
-
-void soundp(unsigned period)
-{
-#ifdef CONFIG_CONSOLE_BELL
-    outw(period / 12, AUD_CH1_FREQ_PORT);
-    outb(0xFF, AUD_CH1_VOL_PORT);
-    outb(0x01, AUD_CONTROL_PORT);
-#endif
-}
-
-void nosound(void)
-{
-#ifdef CONFIG_CONSOLE_BELL
-    outb(0x01, AUD_CONTROL_PORT);
-#endif
-}
-
-void bell(void)
-{
-#ifdef CONFIG_CONSOLE_BELL
-    register volatile unsigned int i = 60000U;
-
-    soundp(BELL_PERIOD);
-    while (--i)
-	continue;
-    nosound();
-#endif
-}
-
 #ifdef CONFIG_EMUL_ANSI
 #define TERM_TYPE " emulating ANSI "
 #else
@@ -369,20 +338,6 @@ void INITPROC console_init(void)
     }
 
     Console_set_vc(0);
-
-#ifdef CONFIG_CONSOLE_BELL
-    /* Allocate room for sound RAM */
-    low_mem_ofs -= 0x40;
-    outb(low_mem_ofs >> 6, AUD_BASE_PORT);
-
-    /* Write square wave pattern */
-    for (i = 0; i < 8; i++) {
-        pokeb(low_mem_ofs + i,     (seg_t) 0, 0xFF);
-        pokeb(low_mem_ofs + i + 8, (seg_t) 0, 0x00);
-    }
-
-    outw(0x09 << 8, AUD_CONTROL_PORT);
-#endif
 
     kbd_init();
 

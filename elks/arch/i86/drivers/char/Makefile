@@ -67,12 +67,7 @@ endif
 else
 ifdef CONFIG_ARCH_SWAN
 ifdef CONFIG_CONSOLE_DIRECT
-OBJS += console-direct-swan.o
-ifdef CONFIG_CONSOLE_FONT_4X8
-OBJS += console-font-4x8-swan.o
-endif
-ifdef CONFIG_CONSOLE_FONT_8X8
-OBJS += console-font-8x8-swan.o
+OBJS += console-direct-swan.o console-font-4x8-swan.o console-font-8x8-swan.o
 endif
 endif
 else
@@ -104,7 +99,7 @@ ifdef CONFIG_ARCH_SWAN
 ifdef CONFIG_CONSOLE_HEADLESS
 OBJS += console-headless.o
 endif
-OBJS += kbd-poll.o conio-swan.o
+OBJS += kbd-poll.o bell-swan.o conio-swan.o
 endif
 
 ifdef CONFIG_ARCH_IBMPC

@@ -3,7 +3,8 @@ ELKS on WonderSwan memory layout
  +--------------------  seg  off  linear size (size decimal)  --------------------+
  | interrupt vectors    0000:0000 00000  0400 (1024)
  | kernel setup data    0040:0000 00400  0200 (512) (CONFIG_ROM_SETUP_DATA=0x0040)
- | kernel near dat/bss  0060:0000 00600  .... (...)
+ | bell wave table      0060:0000 00600  0010 (16)
+ | kernel near dat/bss  0061:0000 00610  .... (...)
  | video area           ....:0000 .....  .... (see below)
  | kernel near heap     0800:0000 08000  7E00 (32256)
  | palette area         0FE0:0000 00200  0200 (512)
