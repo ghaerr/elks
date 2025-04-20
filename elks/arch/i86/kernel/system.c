@@ -11,6 +11,7 @@
 #include <arch/segment.h>
 #include <arch/system.h>
 #include <arch/io.h>
+#include <arch/irq.h>
 
 seg_t membase, memend;  /* start and end segment of available main memory */
 unsigned int heapsize;  /* max size of kernel near heap */
@@ -19,7 +20,7 @@ unsigned char arch_cpu; /* CPU type from cputype.S */
 
 unsigned int INITPROC setup_arch(void)
 {
-    unsigned int endbss, heapsegs;
+    unsigned int heapofs, heapsegs;
 
 #ifdef CONFIG_HW_COMPAQFAST
     outb_p(1,0xcf); /* Switch COMPAQ Deskpro to high speed */
@@ -38,28 +39,33 @@ unsigned int INITPROC setup_arch(void)
      * Return start address for near heap allocator.
      */
 
+#ifdef SETUP_HEAPOFS
+    heapofs = (unsigned int)SETUP_HEAPOFS;
+#else
     /* Start heap allocations at even addresses */
-    endbss = (unsigned int)(_endbss + 1) & ~1;
+    heapofs = (unsigned int)(_endbss + 1) & ~1;
+#endif
 
     /* Calculate size of heap, which extends end of kernel data segment */
 #ifdef SETUP_HEAPSIZE
     heapsize = SETUP_HEAPSIZE;          /* may also be set via heap= in /bootopts */
 #endif
-#ifdef CONFIG_MEM_SEGMENT
-    membase = CONFIG_MEM_SEGMENT;
+#ifdef SETUP_USERHEAPSEG
+    membase = SETUP_USERHEAPSEG;
+    debug("endbss %x heap %x\n", heapofs, heapsize);
 #else
     if (heapsize) {
-        heapsegs = (1 + ~endbss) >> 4;  /* max possible heap in segments*/
+        heapsegs = (1 + ~heapofs) >> 4;  /* max possible heap in segments*/
         if ((heapsize >> 4) < heapsegs) /* allow if less than max*/
             heapsegs = heapsize >> 4;
-        membase = kernel_ds + heapsegs + (((unsigned int) (_endbss+15)) >> 4);
+        membase = kernel_ds + heapsegs + (((unsigned int) (_heapofs+15)) >> 4);
         heapsize = heapsegs << 4;
     } else {
         membase = kernel_ds + 0x1000;
-        heapsize = 1 + ~endbss;
+        heapsize = 1 + ~heapofs;
     }
+    debug("endbss %x heap %x kdata size %x\n", heapofs, heapsize, (membase-kernel_ds)<<4);
 #endif
-    debug("endbss %x heap %x kdata size %x\n", endbss, heapsize, (membase-kernel_ds)<<4);
 
     memend = SETUP_MEM_KBYTES << 6;
 
@@ -79,7 +85,7 @@ unsigned int INITPROC setup_arch(void)
     debug("arch %d sys_caps %02x\n", arch_cpu, sys_caps);
 #endif
 
-    return endbss;                      /* used as start address in near heap init */
+    return heapofs;                      /* used as start address in near heap init */
 }
 
 /*
@@ -103,6 +109,14 @@ void hard_reset_now(void)
         "movw $0x1234,0x72\n\t"
         "ljmp $0xFFFF,$0\n\t"
     );
+#endif
+#ifdef CONFIG_ARCH_SWAN
+    /* Disable interrupts */
+    outb(0x00, 0xB2);
+    outb(0xFF, 0xB6);
+    clr_irq();
+    /* Hard reset */
+    asm("ljmp $0xFFFF,$0\n\t");
 #endif
 }
 
@@ -129,5 +143,15 @@ void apm_shutdown_now(void)
         "int $0x15\n\t"
         "apm_error:\n\t"
     );
+#endif
+#ifdef CONFIG_ARCH_SWAN
+    /* Disable interrupts */
+    outb(0x00, 0xB2);
+    outb(0xFF, 0xB6);
+    clr_irq();
+    /* Request poweroff */
+    outb(1, 0x62);
+    /* Halt CPU */
+    while(1) asm("hlt");
 #endif
 }

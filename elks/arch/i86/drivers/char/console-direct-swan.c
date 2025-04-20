@@ -283,6 +283,14 @@ static unsigned int color_palette[16] = {
     RGB4(15,15,15)
 };
 
+static unsigned int addr_to_tile(unsigned int addr)
+{
+    if (addr > 0x4000)
+        return ((addr - 0x4000) >> 4) | (1 << 13);
+    else
+        return ((addr - 0x2000) >> 4);
+}
+
 void INITPROC console_init(void)
 {
     Console *C = &Con[0];
@@ -300,9 +308,9 @@ void INITPROC console_init(void)
 #if defined(CONFIG_CONSOLE_FONT_4X8)
     outb(inb(0x60) | 0xC0, 0x60);
 
-    low_mem_ofs = 0x6000;
+    low_mem_ofs = 0x8000;
     low_mem_ofs -= (256 * 32);
-    font_ofs = (low_mem_ofs - 0x4000) >> 5;
+    font_ofs = addr_to_tile(low_mem_ofs >> 1);
 
     unsigned long __far *dest = _MK_FP(0, low_mem_ofs);
     unsigned char __far *src = _MK_FP(kernel_cs, font_4x8);
@@ -311,9 +319,9 @@ void INITPROC console_init(void)
         *(dest++) = *(src++) >> 4;
     }
 #elif defined(CONFIG_CONSOLE_FONT_8X8)
-    low_mem_ofs = 0x4000;
+    low_mem_ofs = 0x6000;
     low_mem_ofs -= (256 * 16);
-    font_ofs = (low_mem_ofs - 0x2000) >> 4;
+    font_ofs = addr_to_tile(low_mem_ofs);
 
     unsigned short __far *dest = _MK_FP(0, low_mem_ofs);
     unsigned char __far *src = _MK_FP(kernel_cs, font_8x8);

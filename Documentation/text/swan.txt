@@ -1,0 +1,31 @@
+ELKS on WonderSwan memory layout
+
+ +--------------------  seg  off  linear size (size decimal)  --------------------+
+ | interrupt vectors    0000:0000 00000  0400 (1024)
+ | kernel setup data    0040:0000 00400  0200 (512) (CONFIG_ROM_SETUP_DATA=0x0040)
+ | kernel near dat/bss  0060:0000 00600  .... (...)
+ | video area           ....:0000 .....  .... (see below)
+ | kernel near heap     0800:0000 08000  7E00 (32256)
+ | palette area         0FE0:0000 00200  0200 (512)
+ | application memory   1000:0000 10000 10000 (64K)
+ | ...
+ | start of ROM disk    4000:0000 40000 B0000 (704K, CONFIG_ROMFS_BASE=0x4000)
+ | kernel code segment  F000:0000 F0000  FFF0 (65520)
+ | ROM footer           FFFF:0000 FFFF0  0010 (16)
+ +--------------------------------------------------------------------------------+
+
+Video area usage
+
+8x8 text mode
+	font:        0x5000 - 0x5FFF
+	console 1:   0x4800 - 0x4FFF
+	console 2:   0x4000 - 0x47FF
+	...
+	console 6:   0x2000 - 0x27FF
+
+4x8 text mode
+	font:        0x6000 - 0x7FFF
+	console 1:   0x5000 - 0x5FFF
+	console 2:   0x4000 - 0x4FFF
+	...
+	console 4:   0x2000 - 0x2FFF
