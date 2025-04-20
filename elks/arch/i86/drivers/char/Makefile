@@ -69,7 +69,6 @@ ifdef CONFIG_ARCH_SWAN
 ifdef CONFIG_CONSOLE_DIRECT
 OBJS += console-direct-swan.o console-font-4x8-swan.o console-font-8x8-swan.o
 endif
-endif
 else
 ifdef CONFIG_CONSOLE_DIRECT
 OBJS += console-direct.o bell-8254.o

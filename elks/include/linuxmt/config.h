@@ -104,7 +104,6 @@
 #define SYS_CAPS                0       /* no XT/AT capabilities */
 #define UTS_MACHINE             "swan"
 #define SETUP_HEAPSIZE          32256   /* 0x8000 - 0xFDFF */
-#define SETUP_HEAPOFS           (0x8000 - 0x0610) /* start offset for near kernel heap */
 #define SETUP_USERHEAPSEG       0x1000  /* start segment for appiication memory heap */
 #endif /* CONFIG_ARCH_SWAN */
 

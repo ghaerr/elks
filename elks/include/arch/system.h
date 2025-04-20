@@ -14,7 +14,10 @@ extern byte_t sys_caps;     /* system capabilities bits*/
 extern seg_t membase;       /* start and end segment of available main memory */
 extern seg_t memend;
 
+/* system.c */
 unsigned int INITPROC setup_arch(void);
+
+/* reset.c */
 void ctrl_alt_del(void);
 void hard_reset_now(void);
 void apm_shutdown_now(void);

@@ -22,64 +22,27 @@ unsigned int INITPROC setup_arch(void)
 {
     unsigned int heapofs, heapsegs;
 
-#ifdef CONFIG_HW_COMPAQFAST
-    outb_p(1,0xcf); /* Switch COMPAQ Deskpro to high speed */
-#endif
-
     /*
-     * Extend kernel data segment to maximum of 64K to make room for local heap.
-     *
-     * Set membase to beginning of available main memory, which
-     * is directly after end of the kernel data segment.
-     *
+     * Set membase to beginning of available main memory.
      * Set memend to end of available main memory.
      * If ramdisk configured, subtract space for it from end of memory.
-     *
-     * Calculate heapsize for near heap allocator.
+     * Set heapsize for near heap allocator.
      * Return start address for near heap allocator.
      */
 
+    heapofs = (unsigned int) (0x8000 - 0x0610);
     /* Start heap allocations at even addresses */
-    heapofs = ((unsigned int)_endbss + 1) & ~1;
+    heapofs = (heapofs + 1) & ~1;
 
     /* Calculate size of heap, which extends end of kernel data segment */
-#ifdef SETUP_HEAPSIZE
     heapsize = SETUP_HEAPSIZE;          /* may also be set via heap= in /bootopts */
-#endif
-#ifdef SETUP_USERHEAPSEG
     membase = SETUP_USERHEAPSEG;
     debug("endbss %x heap %x\n", heapofs, heapsize);
-#else
-    if (heapsize) {
-        heapsegs = (1 + ~heapofs) >> 4;  /* max possible heap in segments*/
-        if ((heapsize >> 4) < heapsegs) /* allow if less than max*/
-            heapsegs = heapsize >> 4;
-        membase = kernel_ds + heapsegs + ((heapofs+15) >> 4);
-        heapsize = heapsegs << 4;
-    } else {
-        membase = kernel_ds + 0x1000;
-        heapsize = 1 + ~heapofs;
-    }
-    debug("endbss %x heap %x kdata size %x\n", heapofs, heapsize, (membase-kernel_ds)<<4);
-#endif
 
     memend = SETUP_MEM_KBYTES << 6;
 
-#if defined(CONFIG_RAMDISK_SEGMENT) && (CONFIG_RAMDISK_SEGMENT > 0)
-    if (CONFIG_RAMDISK_SEGMENT <= memend) {
-        /* reduce top of memory by size of ram disk*/
-        memend -= CONFIG_RAMDISK_SECTORS << 5;
-    }
-#endif
-
     arch_cpu = SETUP_CPU_TYPE;
-#ifdef SYS_CAPS
     sys_caps = SYS_CAPS;    /* custom system capabilities */
-#else
-    if (arch_cpu > 5)       /* 80286+ IBM PC/AT capabilities or Unknown CPU */
-        sys_caps = CAP_ALL;
-    debug("arch %d sys_caps %02x\n", arch_cpu, sys_caps);
-#endif
 
     return heapofs;                      /* used as start address in near heap init */
 }
