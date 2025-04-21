@@ -177,6 +177,14 @@ void pc98_write_calendar(unsigned int, unsigned int);
 void pc98_read_calendar(unsigned int, unsigned int);
 #endif
 
+#ifdef CONFIG_ARCH_SWAN
+void swan_rtc_write(unsigned char, unsigned char *, int);
+int swan_rtc_read(unsigned char, unsigned char *, int);
+
+void swan_gettime(struct tm *);
+void swan_settime(struct tm *);
+#endif
+
 #if AST_SUPPORT
 void ast_settime(struct tm *);
 void ast_gettime(struct tm *);
@@ -367,6 +375,16 @@ int main(int argc, char **argv)
     return 0;
 }
 
+static int bcd_hex(unsigned char bcd_data)
+{
+    return (bcd_data & 15) + (bcd_data >> 4) * 10;
+}
+
+static int hex_bcd(int hex_data)
+{
+    return ((hex_data / 10) << 4) + hex_data % 10;
+}
+
 /****************************************************************************/
 #if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_8018X)
 #define CMOS_CMDREG     0x70
@@ -530,16 +548,6 @@ void pc98_write_calendar(unsigned int tm_seg, unsigned int tm_offset)
 
 }
 
-static int bcd_hex(unsigned char bcd_data)
-{
-    return (bcd_data & 15) + (bcd_data >> 4) * 10;
-}
-
-static int hex_bcd(int hex_data)
-{
-    return ((hex_data / 10) << 4) + hex_data % 10;
-}
-
 void pc98_gettime(struct tm *tm, unsigned char *timebuf)
 {
     tm->tm_sec = bcd_hex(timebuf[5]);
@@ -565,6 +573,102 @@ void pc98_settime(struct tm *tmp, unsigned char *timebuf)
             timebuf[0] = hex_bcd(tmp->tm_year - 100);
         else
             timebuf[0] = hex_bcd(tmp->tm_year);
+}
+#endif
+
+/****************************************************************************/
+#ifdef CONFIG_ARCH_SWAN
+/*
+ * FIXME: This code requires testing.
+ */
+#define RTC_DATA_PORT 0xCA
+#define RTC_CONTROL_PORT 0xCB
+#define RTC_READY 0x80
+#define RTC_ACTIVE 0x10
+
+void do_gettime(struct tm *tm)
+{
+    swan_gettime(tm);
+}
+
+void do_settime(struct tm *tm)
+{
+    swan_settime(tm);
+}
+
+void swan_rtc_write(unsigned char cmd, unsigned char *buf, int count)
+{
+    int i = 0;
+    unsigned int timeout = 0;
+    unsigned char status;
+
+    outb(buf[i++], RTC_DATA_PORT);
+    outb(cmd, RTC_CONTROL_PORT);
+
+    while (--timeout) {
+        status = inb(RTC_CONTROL_PORT);
+        if (!(status & 0x90)) break;
+        else if (status & 0x80) outb(buf[i++], RTC_DATA_PORT);
+        else if (status & 0x10) break;
+    }
+}
+
+int swan_rtc_read(unsigned char cmd, unsigned char *buf, int count)
+{
+    int i = 0;
+    unsigned int timeout = 0;
+    unsigned char status;
+
+    outb(cmd, RTC_CONTROL_PORT);
+
+    while (--timeout) {
+        status = inb(RTC_CONTROL_PORT);
+        if (!(status & 0x90)) break;
+        else if (status & 0x80) {
+           if (i < count) buf[i++] = inb(RTC_DATA_PORT);
+           else inb(RTC_DATA_PORT);
+        } else if (status & 0x10) break;
+    }
+
+    return i < count;
+}
+
+void swan_gettime(struct tm *tm)
+{
+    unsigned char timebuf[7];
+
+    swan_rtc_read(0x15, timebuf, 7);
+
+    tm->tm_sec = bcd_hex(timebuf[6]);
+    tm->tm_min = bcd_hex(timebuf[5]);
+    tm->tm_hour = bcd_hex(timebuf[4] & 0x3F);
+    tm->tm_wday = bcd_hex(timebuf[3]);
+    tm->tm_mday = bcd_hex(timebuf[2]);
+    tm->tm_mon = bcd_hex(timebuf[1]) - 1;
+    tm->tm_year = bcd_hex(timebuf[0]);
+    if (tm->tm_year < 70)
+        tm->tm_year += 100;  /* 70..99 => 1970..1999, 0..69 => 2000..2069 */
+}
+
+void swan_settime(struct tm *tmp)
+{
+    unsigned char timebuf[7];
+
+    timebuf[0] = 0x40;
+    swan_rtc_write(0x12, timebuf, 1);
+
+    timebuf[6] = hex_bcd(tmp->tm_sec);
+    timebuf[5] = hex_bcd(tmp->tm_min);
+    timebuf[4] = hex_bcd(tmp->tm_hour);
+    timebuf[3] = hex_bcd(tmp->tm_wday);
+    timebuf[2] = hex_bcd(tmp->tm_mday);
+    timebuf[1] = hex_bcd(tmp->tm_mon + 1);
+    if (tmp->tm_year >= 100)
+        timebuf[0] = hex_bcd(tmp->tm_year - 100);
+    else
+        timebuf[0] = hex_bcd(tmp->tm_year);
+
+    swan_rtc_write(0x14, timebuf, 7);
 }
 #endif
 
