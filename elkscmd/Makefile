@@ -44,7 +44,9 @@ SUBDIRS =       \
 	# EOL
 
 ifndef CONFIG_ARCH_SWAN
+ifndef CONFIG_ARCH_8018X
 SUBDIRS += nano-X
+endif
 endif
 
 ###############################################################################

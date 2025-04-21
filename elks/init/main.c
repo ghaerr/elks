@@ -134,7 +134,7 @@ void start_kernel(void)
 
 static void INITPROC early_kernel_init(void)
 {
-    unsigned int endbss;
+    unsigned int heapofs;
 
     /* Note: no memory allocation available until after heap_init */
     tty_init();                     /* parse_options may call rs_setbaud */
@@ -149,8 +149,8 @@ static void INITPROC early_kernel_init(void)
 
     /* create near heap at end of kernel bss */
     heap_init();                    /* init near memory allocator */
-    endbss = setup_arch();          /* sets membase and memend globals */
-    heap_add((void *)endbss, heapsize);
+    heapofs = setup_arch();          /* sets membase and memend globals */
+    heap_add((void *)heapofs, heapsize);
     mm_init(membase, memend);       /* init far/main memory allocator */
 
 #ifdef CONFIG_BOOTOPTS
@@ -225,6 +225,10 @@ static void INITPROC kernel_banner(seg_t init, seg_t extra)
 
 #ifdef CONFIG_ARCH_8018X
     printk("8018X machine, ");
+#endif
+
+#ifdef CONFIG_ARCH_SWAN
+    printk("WonderSwan, ");
 #endif
 
     printk("syscaps %x, %uK base ram, %d tasks, %d files, %d inodes\n",

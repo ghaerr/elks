@@ -34,11 +34,8 @@ PRGS = \
 	makeboot \
 	decomp \
 	sysctl \
+	clock \
 	# EOL
-
-ifndef CONFIG_ARCH_SWAN
-PRGS += clock
-endif
 
 HOSTPRGS = hostdecomp
 HOSTCFLAGS += -I$(TOPDIR)/elks/include

@@ -45,9 +45,6 @@ unsigned int INITPROC setup_arch(void)
 #ifdef SETUP_HEAPSIZE
     heapsize = SETUP_HEAPSIZE;          /* may also be set via heap= in /bootopts */
 #endif
-#ifdef CONFIG_MEM_SEGMENT
-    membase = CONFIG_MEM_SEGMENT;
-#else
     if (heapsize) {
         heapsegs = (1 + ~endbss) >> 4;  /* max possible heap in segments*/
         if ((heapsize >> 4) < heapsegs) /* allow if less than max*/
@@ -58,7 +55,6 @@ unsigned int INITPROC setup_arch(void)
         membase = kernel_ds + 0x1000;
         heapsize = 1 + ~endbss;
     }
-#endif
     debug("endbss %x heap %x kdata size %x\n", endbss, heapsize, (membase-kernel_ds)<<4);
 
     memend = SETUP_MEM_KBYTES << 6;
@@ -80,54 +76,4 @@ unsigned int INITPROC setup_arch(void)
 #endif
 
     return endbss;                      /* used as start address in near heap init */
-}
-
-/*
- * The following routines may need porting on non-IBM PC architectures
- */
-
-/*
- * This function gets called by the keyboard interrupt handler.
- * As it's called within an interrupt, it may NOT sync.
- */
-void ctrl_alt_del(void)
-{
-    hard_reset_now();
-}
-
-void hard_reset_now(void)
-{
-#ifdef CONFIG_ARCH_IBMPC
-    asm("mov $0x40,%ax\n\t"
-        "mov %ax,%ds\n\t"
-        "movw $0x1234,0x72\n\t"
-        "ljmp $0xFFFF,$0\n\t"
-    );
-#endif
-}
-
-/*
- *  Use Advanced Power Management to power off system
- *  For details on how this code works, see
- *  http://wiki.osdev.org/APM
- */
-void apm_shutdown_now(void)
-{
-#ifdef CONFIG_ARCH_IBMPC
-    asm("movw $0x5301,%ax\n\t"
-        "xorw %bx,%bx\n\t"
-        "int $0x15\n\t"
-        "jc apm_error\n\t"
-        "movw $0x5308,%ax\n\t"
-        "movw $1,%bx\n\t"
-        "movw $1,%cx\n\t"
-        "int $0x15\n\t"
-        "jc apm_error\n\t"
-        "movw $0x5307,%ax\n\t"
-        "movw $1,%bx\n\t"
-        "movw $3,%cx\n\t"
-        "int $0x15\n\t"
-        "apm_error:\n\t"
-    );
-#endif
 }
