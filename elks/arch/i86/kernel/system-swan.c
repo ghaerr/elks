@@ -30,12 +30,12 @@ unsigned int INITPROC setup_arch(void)
      * Return start address for near heap allocator.
      */
 
-    heapofs = (unsigned int) (0x8000 - 0x0610);
+    heapsize = SETUP_HEAPSIZE;          /* may also be set via heap= in /bootopts */
+
+    heapofs = (unsigned int) 0xFE00 - heapsize - (kernel_ds << 4);
     /* Start heap allocations at even addresses */
     heapofs = (heapofs + 1) & ~1;
 
-    /* Calculate size of heap, which extends end of kernel data segment */
-    heapsize = SETUP_HEAPSIZE;          /* may also be set via heap= in /bootopts */
     membase = SETUP_USERHEAPSEG;
     debug("endbss %x heap %x\n", heapofs, heapsize);
 
