@@ -111,6 +111,6 @@ make clean
 build_pc98
 build_rom_8018x
 build_rom_8088
+build_rom_swan
 build_ibm
 build_ibm_all
-build_rom_swan

@@ -11,7 +11,6 @@
 #include <arch/segment.h>
 #include <arch/system.h>
 #include <arch/io.h>
-#include <arch/irq.h>
 
 seg_t membase, memend;  /* start and end segment of available main memory */
 unsigned int heapsize;  /* max size of kernel near heap */
@@ -20,7 +19,7 @@ unsigned char arch_cpu; /* CPU type from cputype.S */
 
 unsigned int INITPROC setup_arch(void)
 {
-    unsigned int heapofs, heapsegs;
+    unsigned int endbss, heapsegs;
 
 #ifdef CONFIG_HW_COMPAQFAST
     outb_p(1,0xcf); /* Switch COMPAQ Deskpro to high speed */
@@ -40,28 +39,23 @@ unsigned int INITPROC setup_arch(void)
      */
 
     /* Start heap allocations at even addresses */
-    heapofs = ((unsigned int)_endbss + 1) & ~1;
+    endbss = (unsigned int)(_endbss + 1) & ~1;
 
     /* Calculate size of heap, which extends end of kernel data segment */
 #ifdef SETUP_HEAPSIZE
     heapsize = SETUP_HEAPSIZE;          /* may also be set via heap= in /bootopts */
 #endif
-#ifdef SETUP_USERHEAPSEG
-    membase = SETUP_USERHEAPSEG;
-    debug("endbss %x heap %x\n", heapofs, heapsize);
-#else
     if (heapsize) {
-        heapsegs = (1 + ~heapofs) >> 4;  /* max possible heap in segments*/
+        heapsegs = (1 + ~endbss) >> 4;  /* max possible heap in segments*/
         if ((heapsize >> 4) < heapsegs) /* allow if less than max*/
             heapsegs = heapsize >> 4;
-        membase = kernel_ds + heapsegs + ((heapofs+15) >> 4);
+        membase = kernel_ds + heapsegs + (((unsigned int) (_endbss+15)) >> 4);
         heapsize = heapsegs << 4;
     } else {
         membase = kernel_ds + 0x1000;
-        heapsize = 1 + ~heapofs;
+        heapsize = 1 + ~endbss;
     }
-    debug("endbss %x heap %x kdata size %x\n", heapofs, heapsize, (membase-kernel_ds)<<4);
-#endif
+    debug("endbss %x heap %x kdata size %x\n", endbss, heapsize, (membase-kernel_ds)<<4);
 
     memend = SETUP_MEM_KBYTES << 6;
 
@@ -81,5 +75,5 @@ unsigned int INITPROC setup_arch(void)
     debug("arch %d sys_caps %02x\n", arch_cpu, sys_caps);
 #endif
 
-    return heapofs;                      /* used as start address in near heap init */
+    return endbss;                      /* used as start address in near heap init */
 }
