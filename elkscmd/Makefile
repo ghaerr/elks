@@ -43,7 +43,7 @@ SUBDIRS =       \
 	test        \
 	# EOL
 
-ifndef CONFIG_ARCH_SWAN
+ifdef CONFIG_APP_NANOX
 SUBDIRS += nano-X
 endif
 
