@@ -23,8 +23,16 @@ void conio_init(void)
  */
 int conio_poll(void)
 {
+    // are there any keys waiting?
+
     if (inb_p(COM0_CMDS_PORT)) {
-        return inb_p(COM0_DATA_PORT);
+        // yes, fetch one
+        int c = inb_p(COM0_DATA_PORT);
+
+        // convert EOL
+        if (c == 0x0a) c = 0x0d;
+
+        return c;
     }
     return 0;
 }

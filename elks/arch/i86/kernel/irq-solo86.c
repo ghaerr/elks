@@ -1,5 +1,5 @@
 /*
- * Solo86 Programmable Interrupt Controller
+ * Solo86 Interrupt Handling
  *
  * Ferry Hendrikx, April 2025
  */
@@ -21,6 +21,7 @@ void initialize_irq(void)
 
 void enable_irq(unsigned int irq)
 {
+    // not required
 }
 
 int remap_irq(int irq)
@@ -32,11 +33,12 @@ int remap_irq(int irq)
 
 int irq_vector (int irq)
 {
-    // IRQ 0-7  are mapped to vectors INT 20h-27h
+    // IRQ 0-7 are mapped to vectors INT 20h-27h
 
     return irq + 0x20;
 }
 
 void disable_irq(unsigned int irq)
 {
+    // not required
 }

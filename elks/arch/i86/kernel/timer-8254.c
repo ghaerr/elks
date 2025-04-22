@@ -62,7 +62,7 @@ void enable_timer_tick(void)
 #endif
 
 #ifdef CONFIG_ARCH_SOLO86
-    outb(TIMER_ENABLE, TIMER_ENBL_PORT);
+    outb(TIMER_ENABLE, TIMER_ENBL_PORT);        /* enable TIMER */
 #endif
 
 #ifdef CONFIG_ARCH_PC98
