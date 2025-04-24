@@ -1247,7 +1247,7 @@ checkhma:
 	mov	%ax,%ds
 	mov	xms_kbytes,%ax		//. must have xms size >= 64k
 	cmp	$64,%ax
-	jl	1f
+	jc	1f
 	mov	hma_kernel,%al		// and hma=kernel in /bootopts
 	test	%al,%al
 	jz	1f
@@ -1312,7 +1312,7 @@ arch_get_mem:
 	push %bx
 	xor %ax,%ax
 	mov %ax,%es
-	mov $0x501,%bx
+	mov $0x501,%bx                  // 3 bit size - 1 in 128k of 0-1M mem range
 	mov %es:(%bx),%cl
 	and $7,%cl
 	inc %cl
@@ -1346,12 +1346,16 @@ arch_set_initseg:
 
    xor %ax,%ax                  // get xms size in CX
    mov %ax,%ds
-   mov $0x401,%bx               // xms_kbytes = *(byte 0x401) * 128
+   mov $0x401,%bx               // byte size in 128k of 1M-16M mem range
    mov (%bx),%al
    mov $128,%cl
    mul %cl
    mov %ax,%cx
-   mov $0x594,%bx               // xms_kbytes += *(word 0x594) * 1024
+// Check for possible hole between end of 1M-16M range and 16M+ range
+// When 0401h = 78h (=15MiB), hole does not exist
+   cmp $15360,%ax               // 15M, no hole
+   jnz 2f
+   mov $0x594,%bx               // word size in 1024k of 16M-4G range
    mov (%bx),%ax
    cmp $49,%ax                  // don't allow overflow when > 64MB
    jl 1f
