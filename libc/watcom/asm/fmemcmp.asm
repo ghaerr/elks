@@ -17,6 +17,8 @@ include struct.inc
         mov     bp,sp
         push    si
         push    di
+        push    ds          ; DS must be saved
+        push    es          ; save ES just in case
 
         mov     ds,dx
         mov     si,ax
@@ -33,7 +35,9 @@ endif
         jz      L1          ; equal
         sbb     ax,ax       ; not equal, AX now 0 or -1
         or      ax,1        ; AX now 1 or -1
-L1:     pop     di
+L1:     pop     es
+        pop     ds
+        pop     di
         pop     si
         pop     bp
         ret     2
