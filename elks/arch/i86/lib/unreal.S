@@ -6,7 +6,6 @@
 #  8 Nov 2021 Greg Haerr
 # 18 Apr 2025 Greg Haerr added full protected mode entry from Helge Skrivervik
 #
-# int check_unreal_mode(void)	- Test for 32-bit CPU and not V86 mode
 # void enable_unreal_mode(void)	- Set segment cache register limits, requires 386+
 # void linear32_fmemcpyw (void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
 #		size_t count)	- Copy words between XMS and far memory
@@ -22,9 +21,6 @@
 #  the 32-bit register set without coordinating with the functions in this file.
 #
 
-/* set =1 to use full protected mode entry rather than unreal mode for segment cache */
-#define USE_PROTMODE    1
-
 	.arch	i386,nojumps
 	.code16
 	.text
@@ -34,7 +30,6 @@
 	.global	linear32_fmemcpyb
 	.global	linear32_fmemset
 
-#if USE_PROTMODE
 # Enter full protected mode to set the segment cache register limits.
 # Requires 32-bit CPU (386+) to call!
 enable_unreal_mode:
@@ -91,115 +86,6 @@ rmode:
 	popf			# restore interrupt status
 	ret			# system is in real mode with 4GB segment limits
 
-#else
-
-# Use unreal mode to set the segment cache register limits.
-# Requires 32-bit CPU (386+) to call!
-enable_unreal_mode:
-	xorl %eax,%eax
-	movw %ds,%ax
-	shll $4,%eax
-
-	addl $gdt, %eax         # point gdt_ptr to gdt
-	movl %eax, gdt_ptr+2
-
-	pushf			# save interrupt status
-	cli                     # interrupts off
-	pushl %ds
-	pushl %es
-	pushl %fs
-	pushl %gs
-		lgdt gdt_ptr
-		movl %cr0, %eax # CR0.PE=1: enable protected mode
-		orb $1,%al
-		movl %eax, %cr0
-
-		movw $LINEAR_SEL, %bx # selector of segment with 4GB-1 limit
-		movw %bx,%ds    # set segment limits in descriptor caches
-		movw %bx,%es
-		movw %bx,%fs
-		movw %bx,%gs
-
-		decb %al        # CR0.PE=0: back to (un)real mode
-		movl %eax, %cr0
-
-# loading segment registers in (un)real mode changes their base address
-# but not the segment limit; which remains 4GB-1
-	popl %gs
-	popl %fs
-	popl %es
-	popl %ds
-	popf			# restore interrupt status
-	ret			# system is in real mode with 4GB segment limits
-#endif
-
-# Check if unreal or protected mode capable. Currently requires 32-bit CPU (386+)
-# Returns 1 if OK, otherwise error code (-1=not 386, -2=in V86 mode).
-	.global	check_unreal_mode
-check_unreal_mode:
-	pushf			# check for 32-bit CPU
-
-	pushf
-	popw %bx        	# old FLAGS -> BX
-	movw %bx,%ax
-	xorb $0x70,%ah  	# try changing b14 (NT) or b13:b12 (IOPL)
-	pushw %ax
-	popf
-	pushf
-	popw %ax        	# new FLAGS -> AX
-
-	popf
-	xorb %ah,%bh
-	xorw %ax,%ax
-	andb $0x70,%bh          # 32-bit CPU if we changed NT or IOPL
-	je	not_32bit
-
-# check if (32-bit) CPU is in V86 mode
-	smsww %bx               # 'SMSW' is a '286+ instruction
-	andb $1,%bl
-	jne	in_vm86mode
-
-	mov	$1,%ax		# unreal/protected mode capable, return 1
-	ret
-not_32bit:
-	mov	$-1,%ax		# requires 32 bit CPU
-	ret
-in_vm86mode:
-	mov	$-2,%ax		# CPU in V86 mode
-	ret
-
-#if UNUSED
-#
-# word_t linear32_peekw(void *src_off, addr_t src_seg)
-# WARNING: Requires 32-bit CPU, segment descriptor cache set and A20 gate enabled!
-#          Trashes EBX and ESI without saving.
-#
-	.global	linear32_peekw
-linear32_peekw:
-	mov    %si,%dx
-	//cli                 // uncomment if 32-bit registers used in interrupt routines
-
-	xorl   %esi,%esi
-	mov    %sp,%si
-
-	xorl   %ebx,%ebx
-	mov    2(%si),%bx     // word src offset -> EBX
-	movl   4(%esi),%esi   // long src address -> ESI
-	addl   %ebx,%esi      // ESI is linear destination
-
-	xor    %bx,%bx        // DS = 0 for 32-bit linear addressing
-	mov    %bx,%ds
-
-	cld
-	addr32 lodsw          // AX = [DS:ESI++]
-
-	//sti                 // restore interrupt status
-	mov    %dx,%si
-	mov    %ss,%bx
-	mov    %bx,%ds
-	ret
-#endif
-
 #
 # void linear32_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
 #		size_t count)
@@ -210,7 +96,6 @@ linear32_fmemcpyw:
 	push   %es
 	mov    %si,%ax
 	mov    %di,%dx
-	//cli                 // uncomment if 32-bit registers used in interrupt routines
 
 	xorl   %esi,%esi
 	mov    %sp,%si
@@ -236,7 +121,6 @@ linear32_fmemcpyw:
 	addr32 rep movsw      // word [ES:EDI++] <- [DS:ESI++], ECX times
 	addr32 nop            // 80386 B1 step chip bug on address size mixing
 
-	//sti                 // restore interrupt status
 	mov    %ax,%si
 	mov    %dx,%di
 	mov    %ss,%ax
@@ -254,7 +138,6 @@ linear32_fmemcpyb:
 	push   %es
 	mov    %si,%ax
 	mov    %di,%dx
-	//cli                 // uncomment if 32-bit registers used in interrupt routines
 	xorl   %esi,%esi
 	mov    %sp,%si
 
@@ -284,7 +167,6 @@ linear32_fmemcpyb:
 	addr32 rep movsb      // byte [ES:EDI++] <- [DS:ESI++], ECX times
 	addr32 nop            // 80386 B1 step chip bug on address size mixing
 
-	//sti                 // restore interrupt status
 	mov    %ax,%si
 	mov    %dx,%di
 	mov    %ss,%ax
@@ -301,7 +183,6 @@ linear32_fmemset:
 	push   %si
 	push   %es
 	mov    %di,%dx
-	//cli                 // uncomment if 32-bit registers used in interrupt routines
 	xorl   %esi,%esi
 	mov    %sp,%si
 
@@ -330,13 +211,42 @@ linear32_fmemset:
 	addr32 rep stosb      // byte [ES:EDI++] <- AL, ECX times
 	addr32 nop            // 80386 B1 step chip bug on address size mixing
 
-	//sti                 // restore interrupt status
 	mov    %dx,%di
 	mov    %ss,%ax
 	mov    %ax,%ds
 	pop    %es
 	pop    %si
 	ret
+
+#if UNUSED
+#
+# word_t linear32_peekw(void *src_off, addr_t src_seg)
+# WARNING: Requires 32-bit CPU, segment descriptor cache set and A20 gate enabled!
+#          Trashes EBX and ESI without saving.
+#
+	.global	linear32_peekw
+linear32_peekw:
+	mov    %si,%dx
+
+	xorl   %esi,%esi
+	mov    %sp,%si
+
+	xorl   %ebx,%ebx
+	mov    2(%si),%bx     // word src offset -> EBX
+	movl   4(%esi),%esi   // long src address -> ESI
+	addl   %ebx,%esi      // ESI is linear destination
+
+	xor    %bx,%bx        // DS = 0 for 32-bit linear addressing
+	mov    %bx,%ds
+
+	cld
+	addr32 lodsw          // AX = [DS:ESI++]
+
+	mov    %dx,%si
+	mov    %ss,%bx
+	mov    %bx,%ds
+	ret
+#endif
 
 # The GDT contains 8-byte DESCRIPTORS for each protected-mode segment.
 # Each descriptor contains a 32-bit segment base address, a 20-bit segment
@@ -450,7 +360,6 @@ LINEAR_SEL = . - gdt
         .byte 0xCF      # page-granular, 32-bit, limit=4GB-1 (largest flat segment)
         .byte 0         # base  31:24
 
-#if USE_PROTMODE
 # code segment descriptor for protected mode using 16-bit code segment
 CODE_SEL = . - gdt
 codesel:.word 0xFFFF    # limit 15:0
@@ -459,7 +368,6 @@ codesel:.word 0xFFFF    # limit 15:0
         .byte 0x9A      # present, ring 0, code, nonconforming, readable
         .byte 0x0F      # byte-granular, 16-bit, limit=1M-1 (16-bit PM code segment)
         .byte 0         # base  31:24
-#endif
 
 gdt_len = . - gdt
 gdt_ptr:.word gdt_len - 1

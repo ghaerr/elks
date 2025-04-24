@@ -59,9 +59,7 @@ int INITPROC xms_init(void)
 	printk("%uK, ", size);
 	if (!size)                      /* 8086 systems won't have XMS */
 		return XMS_DISABLED;
-	debug("A20 was %s", verify_a20()? "on" : "off");
 	enabled = enable_a20_gate();    /* returns verify_a20() */
-	debug(" now %s, ", enabled? "on" : "off");
 	if (!enabled) {
 		printk("disabled, A20 error. ");
 		return XMS_DISABLED;
@@ -82,12 +80,6 @@ int INITPROC xms_init(void)
 			printk("off. ");
 			return XMS_DISABLED;
 		}
-#if UNUSED
-		if (check_unreal_mode() <= 0) {
-			printk("disabled, requires 386, ");
-			return XMS_DISABLED;
-		}
-#endif
 		enable_unreal_mode();
 		printk("unreal mode, ");
 		enabled = XMS_UNREAL;

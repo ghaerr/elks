@@ -151,6 +151,40 @@ strlen:	push	%si
 	pop	%si
         ret
 
+# Check if unreal or protected mode capable. Currently requires 32-bit CPU (386+)
+# Returns 1 if OK, otherwise error code (-1=not 386, -2=in V86 mode).
+check_unreal_mode:
+	pushf			# check for 32-bit CPU
+
+	pushf
+	popw %bx        	# old FLAGS -> BX
+	movw %bx,%ax
+	xorb $0x70,%ah  	# try changing b14 (NT) or b13:b12 (IOPL)
+	pushw %ax
+	popf
+	pushf
+	popw %ax        	# new FLAGS -> AX
+
+	popf
+	xorb %ah,%bh
+	xorw %ax,%ax
+	andb $0x70,%bh          # 32-bit CPU if we changed NT or IOPL
+	je	not_32bit
+
+# check if (32-bit) CPU is in V86 mode
+	smsww %bx               # 'SMSW' is a '286+ instruction
+	andb $1,%bl
+	jne	in_vm86mode
+
+	mov	$1,%ax		# unreal/protected mode capable, return 1
+	ret
+not_32bit:
+	mov	$-1,%ax		# requires 32 bit CPU
+	ret
+in_vm86mode:
+	mov	$-2,%ax		# CPU in V86 mode
+	ret
+
         .data
 
 trying_unreal_msg:
