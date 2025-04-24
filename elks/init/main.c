@@ -220,7 +220,7 @@ static void INITPROC kernel_banner(seg_t init, seg_t extra)
 #endif
 
 #ifdef CONFIG_ARCH_PC98
-    printk("PC-9801 machine, ");
+    printk("PC-9801 cpu %d, ", arch_cpu);
 #endif
 
 #ifdef CONFIG_ARCH_8018X

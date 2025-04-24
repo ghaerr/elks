@@ -55,7 +55,7 @@
 #define MAX_SERIAL              1       /* max number of serial tty devices*/
 #define SETUP_VID_COLS          80      /* video # columns */
 #define SETUP_VID_LINES         25      /* video # lines */
-#define SETUP_CPU_TYPE          1       /* processor type = 8086 */
+#define SETUP_CPU_TYPE          setupb(0x20)    /* processor type */
 #define SETUP_MEM_KBYTES        setupw(0x2a)    /* base memory in 1K bytes */
 #define SETUP_XMS_KBYTES        setupw(0x1ea)   /* xms memory in 1K bytes */
 #define SETUP_ROOT_DEV          setupw(0x1fc)   /* root device, kdev_t or BIOS dev */

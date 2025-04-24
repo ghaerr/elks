@@ -972,8 +972,9 @@ putc:	push %ax
 	pop %ax
 	ret
 
-// include code to determine early CPU types
+// include code to determine CPU type
 // needed for guessing system capabilities (sys_caps) for XT vs AT BIOS
+// needed for XMS access using unreal vs INT 15
 // TODO: remove and use alternate mechanism for XT vs AT BIOS capabilities
 #include "cputype.S"
 
@@ -1344,6 +1345,8 @@ arch_set_initseg:
    stosw
    pop %es
 
+   call	getcpu                  // implemented in cputype.S
+
    xor %ax,%ax                  // get xms size in CX
    mov %ax,%ds
    mov $0x401,%bx               // byte size in 128k of 1M-16M mem range
@@ -1425,6 +1428,10 @@ putesc_n:
    jmp put_end
 tvram_x:
    .word 160
+
+// include code to determine 286 vs 386 CPU type
+// needed for XMS access using unreal vs INT 1F
+#include "cputype.S"
 
 // include code to enable/verify A20 address gate
 #include "../lib/a20-pc98.inc"
