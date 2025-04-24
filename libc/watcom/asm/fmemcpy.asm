@@ -15,6 +15,8 @@ include struct.inc
         mov     bp,sp
         push    si
         push    di
+        push    ds          ; DS must be saved
+        push    es          ; save ES just in case
 
         mov     ds,cx
         mov     si,bx
@@ -30,6 +32,8 @@ endif
         rep movsw
         rcl     cx,1        ; then possibly final byte
         rep movsb
+        pop     es
+        pop     ds
         pop     di
         pop     si
         pop     bp
