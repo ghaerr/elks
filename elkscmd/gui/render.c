@@ -5,7 +5,7 @@
 #include "vgalib.h"
 
 
-#define FLOOD_FILL_STACK    120
+#define FLOOD_FILL_STACK    200
 
 // ----------------------------------------------------
 // Clear the screen
