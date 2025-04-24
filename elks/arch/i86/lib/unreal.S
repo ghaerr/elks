@@ -176,7 +176,6 @@ in_vm86mode:
 #
 	.global	linear32_peekw
 linear32_peekw:
-	call   setgpf
 	mov    %si,%dx
 	//cli                 // uncomment if 32-bit registers used in interrupt routines
 
