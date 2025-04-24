@@ -3,9 +3,9 @@
 # derived from UNREAL.ASM and A20.ASM code by Chris Giese
 # 8 Nov 2021 Greg Haerr
 #
-# int enable_a20_gate(void)	- Enable A20 gate, return 0 on fail
-# int verify_a20		- Verify A20 gate status, return 0 if disabled
-# void set_a20			- ASM routine: enable (AH=1) or disable (AH=0) A20 gate
+# int __far enable_a20_gate(void) - Enable A20 gate, return 0 on fail
+# int verify_a20(void)            - Verify A20 gate status, return 0 if disabled
+# void set_a20                    - ASM routine: enable (AH=1) or disable (AH=0) A20 gate
 #
 # This file is #included into unreal.S and setup.S
 
@@ -16,10 +16,6 @@
 #define USE_BIOS
 #define USE_A20ASM
 //#define USE_HIMEM_AT
-
-	.global	enable_a20_gate
-	.global	verify_a20
-	.global	set_a20
 
 # Attempt to enable A20 address gate, return 0 on fail
 enable_a20_gate:
@@ -33,7 +29,7 @@ enable_a20_gate:
 	mov	$1,%ah		# enable A20
 	call	set_a20		# call configurable A20 handler
 	call	verify_a20	# returns 1 if enabled, 0 if disabled
-1:	ret
+1:	lret
 
 # verify if A20 gate is enabled, return 0 if disabled
 verify_a20:

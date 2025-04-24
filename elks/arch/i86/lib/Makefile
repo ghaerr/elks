@@ -82,9 +82,9 @@ $(OBJS1): $(TMPS1)
 $(OBJS2): $(SRCS2)
 $(OBJS3): $(SRCS3)
 
-unreal.o: a20-ibm.inc
+bios15-ibm.o: a20-ibm.inc
 
-bios-xms-pc98.o: a20-pc98.inc
+bios1F-pc98.o: a20-pc98.inc
 
 #########################################################################
 # Standard commands.

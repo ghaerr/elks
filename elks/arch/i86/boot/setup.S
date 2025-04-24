@@ -1252,6 +1252,7 @@ checkhma:
 	mov	hma_kernel,%al		// and hma=kernel in /bootopts
 	test	%al,%al
 	jz	1f
+	push    %cs			// enable_a20_gate is FARPROC
 	call	enable_a20_gate		// and A20 enabled
 	test	%ax,%ax
 	jz	1f

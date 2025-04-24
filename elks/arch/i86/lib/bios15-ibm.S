@@ -16,16 +16,18 @@
 
 	.arch	i8086, nojumps
 	.code16
-	.text
+	.section .fartext.far
 
 	.global	block_move
+	.global	enable_a20_gate
 
 # IBM PC A20 gate functions shared with setup.S
 #include "a20-ibm.inc"
 
 #
-# int block_move(struct gdt_table *gdtp, size_t words)
+# int FARPROC block_move(struct gdt_table *gdtp, size_t words)
 # Uses BIOS INT 15h AH=87h Block Move
+# Enables A20 gate on return in case kernel in HMA
 #
 block_move:
 	push	%es
@@ -33,8 +35,8 @@ block_move:
 	push	%bp
 	mov	%sp,%bp
 
-	mov	10(%bp),%cx	# word count -> CX
-	mov	8(%bp),%si	# gdtp -> ES:SI
+	mov	12(%bp),%cx	# word count -> CX
+	mov	10(%bp),%si	# gdtp -> ES:SI
 	push	%ds
 	pop	%es
 
@@ -48,7 +50,9 @@ block_move:
 2:	pop	%bp
 	pop	%si
 	pop	%es
-	ret
+	push    %cs
+	call    enable_a20_gate
+	lret
 
 #if UNUSED
 #

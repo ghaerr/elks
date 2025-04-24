@@ -21,11 +21,9 @@
  * Otherwise, when =0, hma=kernel must be commented out in /bootopts
  * to boot when configured for xms=int15 on those same systems.
  */
-#define AUTODISABLE		1		/* =1 to disable XMS if BIOS INT 15 disables A20 */
+#define AUTODISABLE		0		/* =1 to disable XMS if BIOS INT 15 disables A20 */
 
-/* these used when running XMS_INT15 */
-struct gdt_table;
-extern int block_move(struct gdt_table *gdtp, size_t words);
+/* used when running XMS_INT15 */
 void int15_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
 		size_t count);
 
@@ -60,8 +58,7 @@ int INITPROC xms_init(void)
 	if (!size)                      /* 8086 systems won't have XMS */
 		return XMS_DISABLED;
 	debug("A20 was %s", verify_a20()? "on" : "off");
-	enable_a20_gate();
-	enabled = verify_a20();
+	enabled = enable_a20_gate();    /* returns verify_a20() */
 	debug(" now %s, ", enabled? "on" : "off");
 	if (!enabled) {
 		printk("disabled, A20 error. ");
