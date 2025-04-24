@@ -15,15 +15,17 @@
 #ifdef CONFIG_FS_XMS
 
 /*
- * Set the below =1 to automatically disable using XMS INT 15 instead of
+ * Set the below =1 to automatically disable using XMS INT 15 w/HMA instead of
  * hanging the system during boot, when hma=kernel and INT 15/1F disables A20
- * in Compaq and most other BIOSes (QEMU does not).
+ * in Compaq and most other BIOSes (QEMU and DosBox-X do not).
  * Otherwise, when =0, hma=kernel must be commented out in /bootopts
  * to boot when configured for xms=int15 on those same systems.
  */
-#define AUTODISABLE		0		/* =1 to disable XMS if BIOS INT 15 disables A20 */
+#define AUTODISABLE		1		/* =1 to disable XMS w/HMA if BIOS INT 15 disables A20 */
 
-/* used when running XMS_INT15 */
+/* these used only when running XMS_INT15 */
+struct gdt_table;
+int block_move(struct gdt_table *gdtp, size_t words);
 void int15_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
 		size_t count);
 
