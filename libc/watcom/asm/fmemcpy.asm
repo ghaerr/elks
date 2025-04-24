@@ -15,10 +15,11 @@ include struct.inc
         mov     bp,sp
         push    si
         push    di
+        push    ds          ; DS must be saved
 
         mov     ds,cx
         mov     si,bx
-        mov     es,dx
+        mov     es,dx       ; ES need not be saved
         mov     di,ax
 if _MODEL and _BIG_CODE
         mov     cx,6[bp]    ; n
@@ -30,6 +31,7 @@ endif
         rep movsw
         rcl     cx,1        ; then possibly final byte
         rep movsb
+        pop     ds
         pop     di
         pop     si
         pop     bp
