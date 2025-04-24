@@ -1,9 +1,8 @@
 ####################################################################################
 # A20 line enable for PC-98
 #
-# int __far enable_a20_gate(void) - Enable A20 gate, return 0 on fail
-# int verify_a20(void)            - Verify A20 gate status, return 0 if disabled
-# void set_a20                    - ASM routine: enable (AH=1) or disable (AH=0) A20 gate
+# int enable_a20_gate(void) - Enable A20 gate, return verify_a20()
+# int verify_a20(void)      - Verify A20 gate status, return 0 if disabled
 #
 # This file is #included into bios-xms-pc98.S and setup.S
 #
@@ -14,9 +13,10 @@ enable_a20_gate:
 	mov	$2,%al
 	out	%al,$0xF6
 	call	verify_a20	# returns 1 if enabled, 0 if disabled
-	lret
+	ret
 
 # verify if A20 gate is enabled, return 0 if disabled
+# NOTE: only checks A20 wrap, doesn't actually read/write memory at 1M
 verify_a20:
 	push	%ds
 	push	%es

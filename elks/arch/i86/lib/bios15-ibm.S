@@ -16,7 +16,7 @@
 
 	.arch	i8086, nojumps
 	.code16
-	.section .fartext.far
+	.text
 
 	.global	block_move
 	.global	enable_a20_gate
@@ -25,18 +25,17 @@
 #include "a20-ibm.inc"
 
 #
-# int FARPROC block_move(struct gdt_table *gdtp, size_t words)
+# int block_move(struct gdt_table *gdtp, size_t words)
 # Uses BIOS INT 15h AH=87h Block Move
-# Enables A20 gate on return in case kernel in HMA
-#
+# NOTE: BIOS disables A20 during call, won't work with HMA kernel
 block_move:
 	push	%es
 	push	%si
 	push	%bp
 	mov	%sp,%bp
 
-	mov	12(%bp),%cx	# word count -> CX
-	mov	10(%bp),%si	# gdtp -> ES:SI
+	mov	10(%bp),%cx	# word count -> CX
+	mov	8(%bp),%si	# gdtp -> ES:SI
 	push	%ds
 	pop	%es
 
@@ -50,9 +49,7 @@ block_move:
 2:	pop	%bp
 	pop	%si
 	pop	%es
-	push    %cs
-	call    enable_a20_gate
-	lret
+	ret
 
 #if UNUSED
 #
