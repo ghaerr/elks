@@ -5,7 +5,7 @@
 #include "vgalib.h"
 
 
-#define FLOOD_FILL_STACK    100
+#define FLOOD_FILL_STACK    200
 
 // ----------------------------------------------------
 // Clear the screen
@@ -258,7 +258,7 @@ void R_DrawFilledRectangle(int x1, int y1, int x2, int y2)
 // ----------------------------------------------------
 static void FF_StackPush(transform2d_t stack[], int x, int y, int* top)
 {
-    if (*top < FLOOD_FILL_STACK) {
+    if (*top < FLOOD_FILL_STACK-1) {
         (*top)++;
         stack[*top].x = x;
         stack[*top].y = y;
