@@ -12,7 +12,8 @@
 #include "graphics.h"
 #include "app.h"
 
-#define USE_DRAWSCANLINE    1       /* =1 to use vga_drawscanline instead of drawpixel */
+#define USE_DRAWSCANLINE    1       /* = 1 to use vga_drawscanline instead of drawpixel */
+#define USE_BPP4    1               /* = 1(0) to save 4(8) bit par pixel BMP */
 
 #define MWPACKED
 #define abs(x)  ((x < 0)? -x : x)
@@ -152,6 +153,15 @@ static unsigned int find_nearest_color(int r, int g, int b)
     return best;
 }
 
+static void unpack_nibbles_inplace(unsigned char *data, int packed_len) {
+    // Start from the end of the packed array and move backwards
+    for (int i = packed_len; i >= 0; --i) {
+        unsigned char byte = data[i];
+        data[2 * i]     = (byte >> 4) & 0x0f; // High nibble
+        data[2 * i + 1] = byte & 0x0f;        // Low nibble
+    }
+}
+
 /*
  * Decode and display BMP file
  */
@@ -236,6 +246,10 @@ draw_bmp(char *path, int x, int y)
         pitch = width * 4;
         break;
 #endif
+    case 4:
+        pitch = (width+1)/2;
+        memset(cache, 0xff, 256*sizeof(int));
+        break;
     case 8:
         pitch = width;
         memset(cache, 0xff, 256*sizeof(int));
@@ -294,6 +308,8 @@ draw_bmp(char *path, int x, int y)
 
         image = imagebits;
         switch (bpp) {
+        case 4:
+            unpack_nibbles_inplace(image, pitch);
         case 8:
             for (w = 0; w < width; w++) {
                 unsigned int c;
@@ -466,10 +482,14 @@ static void putdw(unsigned long dw, FILE *ofp)
 int save_bmp(char *pathname)
 {
     FILE *ofp;
-    int w, h, cx, cy, i, extra, bpp, bytespp, ncolors, sizecolortable;
-    int hdrsize, imagesize, filesize, compression, colorsused;
+    int w, h, cx, cy, i, extra, bpp, ncolors, sizecolortable, row_bytes, padded_row_bytes;
+    int compression, colorsused;
+    long hdrsize, imagesize, filesize;
     BMPFILEHEAD bmpf;
     BMPINFOHEAD bmpi;
+    static unsigned char image_row[640];  /* static so no stack usage */
+    p = image_row;
+    once = 0;
 
     ofp = fopen(pathname, "wb");
     if (!ofp)
@@ -477,22 +497,23 @@ int save_bmp(char *pathname)
 
     cx = CANVAS_WIDTH;
     cy = CANVAS_HEIGHT;
-    bpp = 8;                /* write 8bpp for now */
+#if USE_BPP4
+    bpp = 4;                /* write 4bpp */
+#else
+    bpp = 8;                /* write 8bpp */
+#endif
     ncolors = (bpp <= 8)? 16: 0;
-    bytespp = (bpp+7)/8;
-
-    /* dword right padded*/
-    extra = (cx*bytespp) & 3;
-    if (extra)
-        extra = 4 - extra;
+    row_bytes = (bpp * cx + 7) / 8;
+    padded_row_bytes = ((bpp * cx + 31)/32) * 4; /* row must be 4 bytes aligned */
+    extra = padded_row_bytes - row_bytes;
 
     /* color table is either palette or 3 longword r/g/b masks*/
     sizecolortable = ncolors? ncolors*4: 3*4;
     if (bpp == 24)
         sizecolortable = 0; /* special case 24bpp has no table*/
 
-    hdrsize = sizeof(bmpf) + sizeof(bmpi) + sizecolortable;
-    imagesize = (cx + extra) * cy * bytespp;
+    hdrsize = (long)sizeof(bmpf) + (long)sizeof(bmpi) + (long)sizecolortable;
+    imagesize = (long)padded_row_bytes * (long)cy;
     filesize =  hdrsize + imagesize;
     compression = (bpp == 16 || bpp == 32)? BI_BITFIELDS: BI_RGB;
     colorsused = (bpp <= 8)? ncolors: 0;
@@ -512,6 +533,8 @@ int save_bmp(char *pathname)
     bmpi.BiBitCount = bpp;
     bmpi.BiCompression = compression;
     bmpi.BiSizeImage = imagesize;
+    bmpi.BiXpelsPerMeter = 2835;    /* 72 dpi */
+    bmpi.BiYpelsPerMeter = 2835;    /* 72 dpi */
     bmpi.BiClrUsed = colorsused;
 
     /* write headers*/
@@ -538,13 +561,26 @@ int save_bmp(char *pathname)
 
     /* write image data, upside down ;)*/
     for(h=cy-1; h>=0; --h) {
-        for (int x=0; x<cx; x++) {
-            int c = readpixel(x, h);
-            fputc(c, ofp);
+#if USE_BPP4
+        for (int x=0; x < cx>>1; x++) {
+            put4(readpixel(x<<1, h) & 0x0f);
+            put4(readpixel((x<<1) + 1, h) & 0x0f);
         }
+        if (cx & 1) {
+            put4(readpixel(cx-1, h) & 0x0f);
+            put4(0);
+        }
+#else
+        for (int x=0; x < cx; x++)
+            *p++ = readpixel(x, h);
+#endif
         for(w=0; w<extra; ++w)
-            fputc(0, ofp);      /* DWORD pad each line*/
+            *p++ = 0;               /* DWORD pad each line*/
+
+    fwrite((char *)&image_row, sizeof(unsigned char), padded_row_bytes, ofp);
+    p = image_row;
     }
+
 
     fclose(ofp);
     return 0;
