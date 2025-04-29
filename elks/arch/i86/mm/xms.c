@@ -230,11 +230,10 @@ void int15_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg
 	//gp->flags_limit_19_16 = 0;	/* byte-granular, 16-bit, limit=64K */
 	//gp->flags_limit_19_16 = 0xCF;	/* page-granular, 32-bit, limit=4GB */
 	gp->base_31_24 = dst_seg >> 24;
-	if(arch_cpu == 6){
+	if(arch_cpu == 6)
 	 loadall_block_move(gdt_table,count);
-	} else {
+	else 
 	 block_move(gdt_table, count);
-	}
 }
 
 #endif /* CONFIG_FS_XMS */
