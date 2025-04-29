@@ -174,18 +174,20 @@
 
 #ifdef CONFIG_ARCH_IBMPC
 #define OPTSEGSZ        0x400       /* max size of /bootopts file (1024 bytes max) */
-#define DEF_OPTSEG      0x50        /* 0x400 bytes boot options at lowest usable ram */
-#define REL_INITSEG     0x90        /* 0x200 bytes setup data */
-#define DMASEG          0xB0        /* start of floppy sector buffer */
+#define REL_INITSEG     0x50        /* 0x200 bytes setup data */
+//700-8ff 512byte for 800-866h LOADALL
+#define DEF_OPTSEG      0x90        /* 0x400 bytes boot options at lowest usable ram */
+#define DMASEG          0xD0        /* start of floppy sector buffer */
 #define REL_SYSSEG      DMASEGEND   /* kernel code segment */
 #define SETUP_DATA      REL_INITSEG
 #endif
 
 #ifdef CONFIG_ARCH_PC98
 #define OPTSEGSZ        0x400       /* max size of /bootopts file (1024 bytes max) */
-#define DEF_OPTSEG      0x60        /* 0x400 bytes boot options at lowest usable ram */
-#define REL_INITSEG     0xA0        /* 0x200 bytes setup data */
-#define DMASEG          0xC0        /* start of floppy sector buffer */
+#define REL_INITSEG     0x60        /* 0x200 bytes setup data */
+//800-8FF 256byte for 800-866h LOADALL
+#define DEF_OPTSEG      0x90        /* 0x400 bytes boot options at lowest usable ram */
+#define DMASEG          0xD0        /* start of floppy sector buffer */
 #define REL_SYSSEG      DMASEGEND   /* kernel code segment */
 #define SETUP_DATA      REL_INITSEG
 #endif
