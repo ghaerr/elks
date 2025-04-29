@@ -66,7 +66,7 @@ int INITPROC xms_init(void)
 	}
 	/* 80286 machines and Compaq BIOSes can't use unreal mode and must use INT 15/1F */
 	if (xms_bootopts == XMS_INT15 || (arch_cpu <= 6 && xms_bootopts == XMS_UNREAL)) {
-		enabled = XMS_INT15
+		enabled = XMS_INT15;
 #if AUTODISABLE
 		if(arch_cpu == 6){
 			printk("LOADALL, ");
