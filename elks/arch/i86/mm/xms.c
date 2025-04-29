@@ -66,10 +66,10 @@ int INITPROC xms_init(void)
 	}
 	/* 80286 machines and Compaq BIOSes can't use unreal mode and must use INT 15/1F */
 	if (xms_bootopts == XMS_INT15 || (arch_cpu <= 6 && xms_bootopts == XMS_UNREAL)) {
+		enabled = XMS_INT15
 #if AUTODISABLE
 		if(arch_cpu == 6){
 			printk("LOADALL, ");
-			enabled = XMS_INT15;
 		}else if (kernel_cs == 0xffff) {
 			/* BIOS INT 15/1F block_move disables A20 on most systems! */
 			printk("disabled w/kernel HMA and int 15/1F\n");
@@ -78,10 +78,9 @@ int INITPROC xms_init(void)
 #else
 		if(arch_cpu == 6)
 			printk("LOADALL, ");
+#endif
 		else
 			printk("int 15/1F, ");
-		enabled = XMS_INT15;
-#endif
 	} else {
 		if (xms_bootopts != XMS_UNREAL) {
 			printk("off. ");
