@@ -242,10 +242,6 @@ rep	stosw			#800h-866h clear
 	mov	-6(%bp),%ax
 	add	$2,%ax
 	mov	%ax,%es:(0x1a)	#new IP
-	mov	%ax,%bx
-	sub	$7,%bx
-	mov	$0x050f,%ax		#loadall
-	mov	%ax,%cs:(%bx)
 
 	mov	%ds,%es:(0x1e)	#not realaddress
 	mov	%ss,%es:(0x20)	#
@@ -259,10 +255,8 @@ rep	stosw			#800h-866h clear
 	mov	%dx,%es:(0x30)
 	mov	%cx,%es:(0x32)
 	mov	%ax,%es:(0x34)
-#db 0xf,db 0x5			#ia16-elf-as "no such instruction" error!!
-#syscall(0xf,0x5)			#ia16-elf-as "not supported on i8086" error
-	nop			#loadall
-	nop
+.word 0x050f				#loadall for direct binary
+
 modechange2:
 	call	retaddr	#3byte
 #this address is stacked [bp-6]
@@ -273,9 +267,11 @@ retaddr:
 rep	movsw				#word transfer
 	call	modechange2		#retf "cs back to 20bit segment" this is for 32bit CPU noneed?
 	pop	%ax
-	mov	%ax,%ss
+	mov	%ax,%ss		#SS 20bit segment
 	push	%ds
 	pop	%ds			#used 24bit DS back to 20bit segment
+	push	%es
+	pop	%es			#used 24bit ES back to 20bit segment
 	sti
 
 	pop	%bp
