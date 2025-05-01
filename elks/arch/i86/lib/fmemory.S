@@ -20,6 +20,8 @@
 	.global fmemcmpb
 	.global fmemcmpw
 
+	.global loadall_block_move
+
 // void fmemcpyb (void * dst_off, seg_t dst_seg, void * src_off, seg_t src_seg,
 //		size_t count)
 
@@ -158,4 +160,123 @@ fmemcmpw_exit:
 	mov    %ss,%dx
 	mov    %dx,%ds
 	mov    %bx,%es
+	ret
+
+loadall_block_move:
+# DS:BX gdtp
+# CX    word count
+# SI    0000h
+# DI    0000h
+	push	%es
+	push	%si
+	push	%di
+	push	%bp
+	mov	%sp,%bp
+
+	xor	%si,%si
+	xor	%di,%di
+
+	mov	$0x80,%cx
+	mov	%cx,%es	#ES=0080h segment
+	mov	$0x33,%cx	#loadall 800-866h
+	xor	%ax,%ax
+	cli
+rep	stosw			#800h-866h clear
+
+	xor	%di,%di
+	mov	10(%bp),%bx	# gdtp -> DS:BX
+
+#src DS
+	mov	16(%bx),%ax	#src limit
+	mov	%ax,%es:(0x4c)	#new DS limit
+	mov	18(%bx),%ax	#src addr low16
+	mov	%ax,%es:(0x48)	#new DS low16
+	mov	20(%bx),%ax	#src addr high8 & access byte
+	mov	%ax,%es:(0x4a)	#new DS high8 & access byte
+	
+#dst ES
+	mov	24(%bx),%ax	#dst limit
+	mov	%ax,%es:(0x3a)	#new ES limit
+	mov	26(%bx),%ax	#dst addr low16
+	mov	%ax,%es:(0x36)	#new ES low16
+	mov	28(%bx),%ax	#dst addr high8 & access byte
+	mov	%ax,%es:(0x38)	#new ES high8 & access byte
+
+#cs
+	mov	%cs,%ax
+	mov	$12,%cl
+	shr	%cl,%ax
+	mov	%al,%es:(0x3e)	#CS high8
+	mov	%cs,%ax
+	mov	$4,%cl
+	shl	%cl,%ax
+	mov	%ax,%es:(0x3c)	#CS low16
+	mov	$-1,%ax
+	mov	%ax,%es:(0x40)	#cs limit
+	mov	%ax,%es:(0x46)	#ss limit
+	mov	%al,%es:(0x5f)	#IDT limit(FF00h but 3FFh?) very important
+
+
+	mov	$0x9a93,%ax
+	mov	%ah,%es:(0x3f)	#cs access byte
+	mov	%al,%es:(0x45)	#ss access byte
+
+#ss
+	mov	%ss,%ax
+	mov	$12,%cl
+	shr	%cl,%ax
+	mov	%al,%es:(0x44)	#SS high8
+	mov	%ss,%ax
+	mov	$4,%cl
+	shl	%cl,%ax
+	mov	%ax,%es:(0x42)	#SS low16
+
+	mov	12(%bp),%cx	# word count
+
+	push	%ss
+	push	%cs
+
+	push	%cs
+	call	modechange2
+	mov	%sp,%bp
+	mov	-6(%bp),%ax
+	add	$2,%ax
+	mov	%ax,%es:(0x1a)	#new IP
+
+	mov	%ds,%es:(0x1e)	#not realaddress
+	mov	%ss,%es:(0x20)	#
+	mov	%cs,%es:(0x22)	#
+	mov	%es,%es:(0x24)	#set 20bit segment
+	mov	%di,%es:(0x26)
+	mov	%si,%es:(0x28)
+	mov	%bp,%es:(0x2a)
+	mov	%sp,%es:(0x2c)
+	mov	%bx,%es:(0x2e)
+	mov	%dx,%es:(0x30)
+	mov	%cx,%es:(0x32)
+	mov	%ax,%es:(0x34)
+.word 0x050f				#loadall for direct binary
+
+modechange2:
+	call	retaddr	#3byte
+#this address is stacked [bp-6]
+	retf			#1byte
+retaddr:
+	ret			#1byte
+#new IP
+rep	movsw				#word transfer
+	call	modechange2		#retf "cs back to 20bit segment" this is for 32bit CPU noneed?
+	pop	%ax
+	mov	%ax,%ss		#SS 20bit segment
+	push	%ds
+	pop	%ds			#used 24bit DS back to 20bit segment
+	push	%es
+	pop	%es			#used 24bit ES back to 20bit segment
+	sti
+
+	pop	%bp
+	pop	%di
+	pop	%si
+	pop	%es
+	xor	%ax,%ax		#all success
 	ret

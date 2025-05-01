@@ -66,15 +66,21 @@ int INITPROC xms_init(void)
 	}
 	/* 80286 machines and Compaq BIOSes can't use unreal mode and must use INT 15/1F */
 	if (xms_bootopts == XMS_INT15 || (arch_cpu <= 6 && xms_bootopts == XMS_UNREAL)) {
+		enabled = XMS_INT15;
 #if AUTODISABLE
-		if (kernel_cs == 0xffff) {
+		if(arch_cpu == 6){
+			printk("LOADALL, ");
+		}else if (kernel_cs == 0xffff) {
 			/* BIOS INT 15/1F block_move disables A20 on most systems! */
 			printk("disabled w/kernel HMA and int 15/1F\n");
 			return XMS_DISABLED;
 		}
+#else
+		if(arch_cpu == 6)
+			printk("LOADALL, ");
 #endif
-		printk("int 15/1F, ");
-		enabled = XMS_INT15;
+		else
+			printk("int 15/1F, ");
 	} else {
 		if (xms_bootopts != XMS_UNREAL) {
 			printk("off. ");
@@ -223,7 +229,10 @@ void int15_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg
 	//gp->flags_limit_19_16 = 0;	/* byte-granular, 16-bit, limit=64K */
 	//gp->flags_limit_19_16 = 0xCF;	/* page-granular, 32-bit, limit=4GB */
 	gp->base_31_24 = dst_seg >> 24;
-	block_move(gdt_table, count);
+	if(arch_cpu == 6)
+	 loadall_block_move(gdt_table,count);
+	else 
+	 block_move(gdt_table, count);
 }
 
 #endif /* CONFIG_FS_XMS */
