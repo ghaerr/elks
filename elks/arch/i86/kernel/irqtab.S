@@ -309,8 +309,8 @@ a6:     out     %al,$PIC1_CMD           // Ack on primary controller
         out %ax, %dx // acks the highest priority interrupt
 
 #elif defined(CONFIG_ARCH_SOLO86)
-        mov $0xa0, %dx
-        out %al, %dx            // EOI not required, but included here for EMU86
+        mov $0x1A, %dx          // Send INT done
+        out %al, %dx
 #endif
 
 //

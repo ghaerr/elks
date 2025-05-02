@@ -107,6 +107,9 @@
 #define TIMER2_DATA_PORT	0x04
 #define TIMER2_ENBL_PORT	0x05
 
+#define INT_CMDS_PORT		0x18
+#define INT_DATA_PORT		0x1A
+
 #define COM0_CMDS_PORT		0x20
 #define COM0_DATA_PORT		0x22
 #endif

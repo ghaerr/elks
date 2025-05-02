@@ -17,11 +17,24 @@
 
 void initialize_irq(void)
 {
+    // disable all IRQs
+
+    outb(0x00, INT_CMDS_PORT);
 }
 
 void enable_irq(unsigned int irq)
 {
-    // not required
+    if (irq > 3)
+    {
+        return;
+    }
+
+    unsigned char mask = 1 << irq;
+    unsigned char state = inb_p(INT_CMDS_PORT);
+
+    state |= mask;
+
+    outb(state, INT_CMDS_PORT);
 }
 
 int remap_irq(int irq)
@@ -40,5 +53,22 @@ int irq_vector (int irq)
 
 void disable_irq(unsigned int irq)
 {
-    // not required
+    if (irq > 3)
+    {
+        return;
+    }
+
+    flag_t flags;
+
+    save_flags(flags);
+    clr_irq();
+
+    unsigned char mask = ~(1 << irq);
+    unsigned char state = inb_p(INT_CMDS_PORT);
+
+    state &= mask;
+
+    outb(state, INT_CMDS_PORT);
+
+    restore_flags(flags);
 }
