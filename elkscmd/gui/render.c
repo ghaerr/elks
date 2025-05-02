@@ -358,429 +358,10 @@ void R_LineFloodFill(int x, int y, int color, int ogColor)
 }
 
 
-#define STACK_SIZE 200
-
-// #if UNUSED
-/* A shadow record for span-based stack fill */
-typedef struct {
-    int myLx, myRx;       /* endpoints of this shadow span */
-    int dadLx, dadRx;     /* endpoints of parent span */
-    int myY;              /* scanline of this span */
-    int myDirection;      /* +1 = below parent, -1 = above parent */
-} StackElement;
-
-/* Stack and pointer */
-static StackElement stack[STACK_SIZE];
-static int top = 0;
-
-/* Push a new shadow span */
-#define PUSH(l, r, dl, dr, yy, dir) \
-    do { if (top < STACK_SIZE - 1) \
-        stack[top++] = (StackElement){ (l), (r), (dl), (dr), (yy), (dir) }; } while (0)
-
-/* Pop the top shadow into locals */
-#define POP() \
-    do { \
-        StackElement _e = stack[--top]; \
-        lx       = _e.myLx; \
-        rx       = _e.myRx; \
-        dadLx    = _e.dadLx; \
-        dadRx    = _e.dadRx; \
-        y        = _e.myY; \
-        direction= _e.myDirection; \
-    } while (0)
-
-/* Handle new span discovery (S/U/W turns) */
-#define STACK(dir, dL, dR, l, r, yy)             \
-    do {                                        \
-        int _pushrx = (r) + 1;                  \
-        int _pushlx = (l) - 1;                  \
-        PUSH((l),   (r),   _pushlx, _pushrx, (yy) + (dir), (dir)); \
-        if ((r) > (dR))                         \
-            PUSH((dR) + 1, (r), _pushlx, dR, (yy) - (dir), -(dir)); \
-        if ((l) < (dL))                         \
-            PUSH((l),   (dL) - 1, dL, _pushrx, (yy) - (dir), -(dir)); \
-    } while (0)
-
-/*
- * Fill:
- *   Starting at (seedX, seedY), flood-fill all contiguous pixels
- *   whose readpixel(x,y) == targetColor, coloring each via drawpixel(x,y,newColor).
- *
- * Parameters:
- *   seedX, seedY  : seed point
- *   targetColor   : pixel value to replace
- *   newColor      : new pixel value to draw
- */
-void R_SpanFloodFill(int seedX, int seedY, int newColor, int targetColor)
-{
-    int lx, rx, dadLx, dadRx, y, direction;
-    int x;
-    int wasIn;
-
-    if(newColor == targetColor)
-        return;
-
-    /* Find initial span around seed */
-    lx = seedX;  rx = seedX;
-    while (lx > 0 && readpixel(lx - 1, seedY) == targetColor)
-        lx--;
-    while (rx < CANVAS_WIDTH - 1 && readpixel(rx + 1, seedY) == targetColor)
-        rx++;
-
-    drawhline(lx, rx, seedY, newColor);
-
-    /* Initialize stack: below and above */
-    PUSH(lx, rx, lx, rx, seedY + 1,  1);
-    PUSH(lx, rx, lx, rx, seedY - 1, -1);
-
-    /* Process spans */
-    while (top > 0) {
-        POP();  /* sets lx,rx,dadLx,dadRx,y,direction */
-
-        /* Skip outside vertical limits (0 to CANVAS_HEIGHT) */
-        if (y < 0 || y > CANVAS_HEIGHT)
-            continue;
-        // if (rx == CANVAS_WIDTH - 1) drawhline(lx, rx, y - direction, newColor);
-
-        /* Prepare for scanning */
-        x = lx + 1;
-        wasIn = (readpixel(lx, y) == targetColor);
-
-        /* Extend left if starting inside */
-        if (wasIn) {
-            drawpixel(lx, y, newColor);
-            lx--;
-            while (lx >= 0 && readpixel(lx, y) == targetColor) {
-                drawpixel(lx, y, newColor);
-                lx--;
-            }
-        }
-        lx++;
-        // drawhline(lx, x - 1, y, newColor);
-
-        /* Scan across line */
-        while (x <= CANVAS_WIDTH - 1) {
-            if (wasIn) {
-                if (readpixel(x, y) == targetColor) {
-                    /* case 1: still in span */
-                    drawpixel(x, y, newColor);
-                } else {
-                    /* case 2: exit span */
-                    // drawhline(lx, x - 1, y, newColor);
-                    STACK(direction, dadLx, dadRx, lx, x - 1, y);
-                    wasIn = 0;
-                }
-            } else {
-                if (x > rx)
-                    break;
-                if (readpixel(x, y) == targetColor) {
-                    /* case 3: enter new span */
-                    drawpixel(x, y, newColor);
-                    wasIn = 1;
-                    lx = x;
-                }
-            }
-            x++;
-        }
-        /* If still in span at edge, push it */
-        if (wasIn)
-            // drawhline(lx, x - 1, y, newColor);
-            STACK(direction, dadLx, dadRx, lx, x - 1, y);
-    }
-}
-// #endif
-
-
-
-#if UNUSED
-/* shadow “span” record, packed into 6×16 bits = 12 bytes each */
-typedef struct {
-    short myLx,   /* left  x of this span */
-          myRx,   /* right x of this span */
-          dadLx,  /* left  x of parent span */
-          dadRx,  /* right x of parent span */
-          myY,    /* y scanline of this span */
-          myDir;  /* +1 = below parent, -1 = above */
-} StackElement;
-
-/* one global stack and pointer */
-static StackElement stack[STACK_SIZE];
-static int           top = 0;
-
-void FastSpanFloodFill(int seedX, int seedY, int newColor, int targetColor)
-{
-    /* locals */
-    register int sp = top;                   /* local stack pointer */
-    register StackElement *stk = stack;     /* base of stack */
-    register int lx, rx, dadLx, dadRx, y, dir;
-    register int x, inSpan;
-
-    /* trivial reject */
-    if (newColor == targetColor)
-        return;
-
-    /* 1) find initial contiguous span around seed */
-    lx = seedX;  rx = seedX;
-    while (lx > 0 && readpixel(lx-1, seedY) == targetColor) lx--;
-    while (rx < CANVAS_WIDTH-1 && readpixel(rx+1, seedY) == targetColor) rx++;
-    drawhline(lx, rx, seedY, newColor);
-
-    /* 2) seed two spans: below (+1) and above (−1) */
-    if (sp < STACK_SIZE-1) {
-        stk[sp].myLx     = lx;
-        stk[sp].myRx     = rx;
-        stk[sp].dadLx    = lx;
-        stk[sp].dadRx    = rx;
-        stk[sp].myY      = seedY + 1;
-        stk[sp].myDir    =  1;
-        sp++;
-    }
-    if (sp < STACK_SIZE-1) {
-        stk[sp].myLx     = lx;
-        stk[sp].myRx     = rx;
-        stk[sp].dadLx    = lx;
-        stk[sp].dadRx    = rx;
-        stk[sp].myY      = seedY - 1;
-        stk[sp].myDir    = -1;
-        sp++;
-    }
-
-    /* 3) process until stack empty */
-    while (sp > 0) {
-        /* pop top */
-        {
-            StackElement e = stk[--sp];
-            lx    = e.myLx;   rx    = e.myRx;
-            dadLx = e.dadLx;  dadRx = e.dadRx;
-            y     = e.myY;    dir   = e.myDir;
-        }
-
-        /* skip if scanline is out of bounds */
-        if ((unsigned)y >= CANVAS_HEIGHT)
-            continue;
-
-        /* start just right of lx */
-        x      = lx + 1;
-        inSpan = (readpixel(lx, y) == targetColor);
-
-        /* if we start “in” the target, extend left */
-        if (inSpan) {
-            drawpixel(lx--, y, newColor);
-            while (lx >= 0 && readpixel(lx, y) == targetColor) {
-                drawpixel(lx--, y, newColor);
-            }
-            lx++;
-        }
-
-        /* now scan across [lx..rx] */
-        while (x <= rx) {
-            if (inSpan) {
-                if (readpixel(x, y) == targetColor) {
-                    drawpixel(x, y, newColor);
-                } else {
-                    /* 1) push the filled span on the “same-direction” line */
-                    {
-                        int l = lx, r = x - 1;
-                        int pl = l - 1, pr = r + 1;
-                        if (sp < STACK_SIZE-1) {
-                            stk[sp].myLx  = l;
-                            stk[sp].myRx  = r;
-                            stk[sp].dadLx = pl;
-                            stk[sp].dadRx = pr;
-                            stk[sp].myY   = y + dir;
-                            stk[sp].myDir = dir;
-                            sp++;
-                        }
-                        /* 2) “leak” to opposite side if r > dadRx */
-                        if (r > dadRx && sp < STACK_SIZE-1) {
-                            stk[sp].myLx  = dadRx + 1;
-                            stk[sp].myRx  = r;
-                            stk[sp].dadLx = pl;
-                            stk[sp].dadRx = dadRx;
-                            stk[sp].myY   = y - dir;
-                            stk[sp].myDir = -dir;
-                            sp++;
-                        }
-                        /* 3) “leak” on left if lx < dadLx */
-                        if (l < dadLx && sp < STACK_SIZE-1) {
-                            stk[sp].myLx  = l;
-                            stk[sp].myRx  = dadLx - 1;
-                            stk[sp].dadLx = dadLx;
-                            stk[sp].dadRx = pr;
-                            stk[sp].myY   = y - dir;
-                            stk[sp].myDir = -dir;
-                            sp++;
-                        }
-                    }
-                    inSpan = 0;
-                }
-            } else if (readpixel(x, y) == targetColor) {
-                /* enter a new span */
-                drawpixel(x, y, newColor);
-                inSpan = 1;
-                lx     = x;
-            }
-            x++;
-        }
-
-        /* if we ended still “in” target, push that last span */
-        if (inSpan) {
-            int l = lx, r = x - 1;
-            int pl = l - 1, pr = r + 1;
-            if (sp < STACK_SIZE-1) {
-                stk[sp].myLx  = l;
-                stk[sp].myRx  = r;
-                stk[sp].dadLx = pl;
-                stk[sp].dadRx = pr;
-                stk[sp].myY   = y + dir;
-                stk[sp].myDir = dir;
-                sp++;
-            }
-            if (r > dadRx && sp < STACK_SIZE-1) {
-                stk[sp].myLx  = dadRx + 1;
-                stk[sp].myRx  = r;
-                stk[sp].dadLx = pl;
-                stk[sp].dadRx = dadRx;
-                stk[sp].myY   = y - dir;
-                stk[sp].myDir = -dir;
-                sp++;
-            }
-            if (l < dadLx && sp < STACK_SIZE-1) {
-                stk[sp].myLx  = l;
-                stk[sp].myRx  = dadLx - 1;
-                stk[sp].dadLx = dadLx;
-                stk[sp].dadRx = pr;
-                stk[sp].myY   = y - dir;
-                stk[sp].myDir = -dir;
-                sp++;
-            }
-        }
-    }
-
-    /* write back stack pointer */
-    top = sp;
-}
-#endif
-
-#if UNUSED
-//****
-//****
-//****
-//****
-typedef struct {int y, xl, xr, dy;} Segment;
-/*
- * Filled horizontal segment of scanline y for xl<=x<=xr.
- * Parent segment was on line y-dy.  dy=1 or -1
- */
-
-#define PUSH_SEG(Y, XL, XR, DY)	/* push new segment on stack */ \
-    if (sp<stack+STACK_SIZE && Y+(DY)>=0 && Y+(DY) < CANVAS_HEIGHT) \
-    {sp->y = Y; sp->xl = XL; sp->xr = XR; sp->dy = DY; sp++;}
-
-#define POP_SEG(Y, XL, XR, DY)	/* pop segment off stack */ \
-    {sp--; Y = sp->y+(DY = sp->dy); XL = sp->xl; XR = sp->xr;}
-
-/*
- * fill: set the pixel at (x,y) and all of its 4-connected neighbors
- * with the same pixel value to the new pixel value nv.
- * A 4-connected neighbor is a pixel above, below, left, or right of a pixel.
- */
-
-void R_SpanFloodFill_v2(int x, int y, int newColor, int targetColor)
-{
-    int l, x1, x2, dy;
-    Segment stack[STACK_SIZE], *sp = stack;	/* stack of filled segments */
-
-    if(newColor == targetColor)
-        return;
-    PUSH_SEG(y, x, x, 1);			/* needed in some cases */
-    PUSH_SEG(y+1, x, x, -1);		/* seed segment (popped 1st) */
-
-    while (sp>stack) {
-    	/* pop segment off stack and fill a neighboring scan line */
-    	POP_SEG(y, x1, x2, dy);
-    	/*
-    	 * segment of scan line y-dy for x1<=x<=x2 was previously filled,
-    	 * now explore adjacent pixels in scan line y
-    	 */
-    	for (x=x1; x>=0 && readpixel(x, y)==targetColor; x--)
-    	    drawpixel(x, y, newColor);
-    	if (x>=x1) goto skip;
-    	l = x+1;
-    	if (l<x1) PUSH_SEG(y, l, x1-1, -dy);		/* leak on left? */
-    	x = x1+1;
-    	do {
-    	    for (; x<=CANVAS_WIDTH - 1 && readpixel(x, y)==targetColor; x++)
-      		drawpixel(x, y, newColor);
-    	    PUSH_SEG(y, l, x-1, dy);
-    	    if (x>x2+1) PUSH_SEG(y, x2+1, x-1, -dy);	/* leak on right? */
-skip:	    for (x++; x<=x2 && readpixel(x, y)!=targetColor; x++);
-    	    l = x;
-    	} while (x<=x2);
-    }
-}
-
-
-
-
-void FastSpanFloodFill_v2(int sx, int sy, int newColor, int targetColor)
-{
-    /* nothing to do if colors match */
-    if (newColor == targetColor)
-        return;
-
-    /* stack in static storage for faster 8088 access */
-    static Segment stack[STACK_SIZE];
-    int sp = 0;
-
-    /* seed segments: one going up, one going down */
-    stack[sp++] = (Segment){ sy,  sx,  sx, -1 };
-    stack[sp++] = (Segment){ sy,  sx,  sx,  1 };
-
-    while (sp > 0) {
-        /* pop a segment */
-        Segment s = stack[--sp];
-        register int cy = s.y + s.dy;
-        register int xl = s.xl;
-        register int xr = s.xr;
-        register int x;
-
-        /* scan left from xl */
-        x = xl;
-        while (x >= 0 && readpixel(x, cy) == targetColor) {
-            drawpixel(x--, cy, newColor);
-        }
-        int left = x + 1;
-
-        /* scan right from xl+1 */
-        x = xl + 1;
-        while (x < CANVAS_WIDTH && readpixel(x, cy) == targetColor) {
-            drawpixel(x++, cy, newColor);
-        }
-        int right = x - 1;
-
-        /* push the just-filled span so we can handle the next line in same direction */
-        stack[sp++] = (Segment){ cy, left, right, s.dy };
-
-        /* if there’s unfilled “leak” to the left of the original xl, push it (opposite direction) */
-        if (left < xl) {
-            stack[sp++] = (Segment){ cy, left, xl - 1, -s.dy };
-        }
-        /* likewise for any leak to the right of the original xr */
-        if (right > xr) {
-            stack[sp++] = (Segment){ cy, xr + 1, right, -s.dy };
-        }
-    }
-}
-#endif
-
-
-
 /* max segments in any one SegList */
 #define MAX_SEGS        18
 /* max SegLists we expect to push per stack */
-#define MAX_LISTS       18
+#define MAX_LISTS       4
 /* each push uses 2 ints per segment + 3 ints of metadata */
 #define STACK_STRIDE    (MAX_SEGS*2 + 3)
 /* total ints in stack buffer */
@@ -796,11 +377,21 @@ typedef struct {
 } SegList;
 
 /* fill every pixel in E.s on row E.y */
-static void fill_segs(const SegList *E, int new_color) {
-    for (int i = 0; i < E->n; i++) {
-        drawhline(E->s[i].xl, E->s[i].xr, E->y, new_color);
-    }
-}
+// static void fill_segs(const SegList *E, int new_color) {
+//     for (int i = 0; i < E->n; i++) {
+//         drawhline(E->s[i].xl, E->s[i].xr, E->y, new_color);
+//     }
+// }
+#define FILL_SEGS(E, color)                                         \
+    do {                                                            \
+        int __i;                                                    \
+        for (__i = 0; __i < (E)->n; __i++)                           \
+            drawhline((E)->s[__i].xl,                                \
+                      (E)->s[__i].xr,                                \
+                      (E)->y,                                        \
+                      (color));                                     \
+    } while (0)
+
 
 // /* EXPAND: full two-sided run around (x,y) if it matches target, else empty */
 // static Segment expand(int x, int y, int target) {
@@ -820,20 +411,20 @@ static void fill_segs(const SegList *E, int new_color) {
 //     return seg;
 // }
 
-#define EXPAND(result, x, y, target, width)                      \
+#define EXPAND(result, x, y, target)                      \
     do {                                                         \
         int _xl = (x), _xr = (x);                                \
         while (_xl > 0 && readpixel(_xl - 1, (y)) == target) \
             _xl--;                                           \
-        while (_xr < (width)-1 && readpixel(_xr + 1, (y)) == target) \
+        while (_xr < CANVAS_WIDTH-1 && readpixel(_xr + 1, (y)) == target) \
             _xr++;                                           \
         (result).xl = _xl; (result).xr = _xr;                \
     } while (0)
 
-#define EXPAND_RIGHT(result, x, y, target, width)                 \
+#define EXPAND_RIGHT(result, x, y, target)                 \
     do {                                                          \
         int _xr = (x);                                            \
-        while (_xr < (width)-1 && readpixel(_xr + 1, (y)) == target) \
+        while (_xr < CANVAS_WIDTH-1 && readpixel(_xr + 1, (y)) == target) \
             _xr++;                                                \
         (result).xl = (x);                                        \
         (result).xr = _xr;                                        \
@@ -863,12 +454,10 @@ static SegList LINK(const SegList *E, int target) {
         if (readpixel(x, out.y) == target) {
             Segment seg_new = {x, x};
             if (x == E->s[i].xl)
-                EXPAND(seg_new, x, out.y, target, CANVAS_WIDTH);
+                EXPAND(seg_new, x, out.y, target);
             else
-                EXPAND_RIGHT(seg_new, x, out.y, target, CANVAS_WIDTH);
-            // Segment seg_new = (x == E->s[i].xl)
-            //                   ? expand(x, out.y, target)
-            //                   : expand_right(x, out.y, target);
+                EXPAND_RIGHT(seg_new, x, out.y, target);
+
             if (seg_new.xl <= seg_new.xr && out.n < MAX_SEGS) {
                 out.s[out.n++] = seg_new;
                 x = seg_new.xr + 2;  /* jump past */
@@ -881,48 +470,51 @@ static SegList LINK(const SegList *E, int target) {
 }
 
 /* DIFF: Ep \ (each Ed.s[j] expanded ±1) → new runs going opposite dir */
+/* Both Ep and Ed have segments sorted with no overlaps. */
 static SegList DIFF(const SegList *Ep, const SegList *Ed) {
     SegList out;
     out.y   = Ep->y;
     out.dir = -Ep->dir;
     out.n   = 0;
+
+    int j = 0;  /* pointer into Ed->s[] */
+
     for (int i = 0; i < Ep->n; i++) {
         int cur_l = Ep->s[i].xl;
         int cur_r = Ep->s[i].xr;
-        for (int j = 0; j < Ed->n; j++) {
-            int fl = Ed->s[j].xl - 1;
-            int fr = Ed->s[j].xr + 1;
-            if (fr < cur_l)      continue;
-            if (fl > cur_r)      break;
-            if (fl > cur_l)
-                out.s[out.n++] = (Segment){ cur_l, fl - 1 };
-            if (fr + 1 > cur_l)
-                cur_l = fr + 1;
-            if (cur_l > cur_r)
-                break;
+
+        /* advance j past any forbidden intervals ending before cur_l */
+        while (j < Ed->n && Ed->s[j].xr + 1 < cur_l) {
+            j++;
         }
-        if (cur_l <= cur_r)
+        /* now subtract all forbidden intervals that overlap [cur_l..cur_r] */
+        int k = j;
+        while (k < Ed->n) {
+            int fl = Ed->s[k].xl - 1;  /* forbidden left */
+            if (fl > cur_r)            /* no more overlaps */
+                break;
+
+            int fr = Ed->s[k].xr + 1;  /* forbidden right */
+
+            /* output any gap before this forbidden block */
+            if (fl > cur_l) {
+                out.s[out.n++] = (Segment){ cur_l, fl - 1 };
+            }
+            /* advance cur_l past the forbidden block */
+            if (fr + 1 > cur_l) {
+                cur_l = fr + 1;
+            }
+            if (cur_l > cur_r)
+                break;  /* fully consumed */
+            k++;
+        }
+        /* if any tail remains, output it */
+        if (cur_l <= cur_r) {
             out.s[out.n++] = (Segment){ cur_l, cur_r };
+        }
     }
     return out;
 }
-
-// /* MERGE two sorted, non-overlapping lists into one (no touching) */
-// static SegList MERGE(const SegList *A, const SegList *B) {
-//     SegList out;  out.y = A->y;  out.dir = A->dir;  out.n = 0;
-//     int i = 0, j = 0;
-//     while (i < A->n && j < B->n) {
-//         if (A->s[i].xl <= B->s[j].xl)
-//             out.s[out.n++] = A->s[i++];
-//         else
-//             out.s[out.n++] = B->s[j++];
-//     }
-//     while (i < A->n) out.s[out.n++] = A->s[i++];
-//     while (j < B->n) out.s[out.n++] = B->s[j++];
-//     return out;
-// }
-
-
 
 /* One flat stack type for SegLists */
 typedef struct {
@@ -993,7 +585,7 @@ static int stack_pop(SegStack *S, SegList *E) {
 
 /*
  * Merge Ep directly into the top‐of‐stack SegList inside S, in place.
- * Precondition: Ep->y == top.y  &&  Ep->dir == top.dir
+ * Precondition: Ep->y == top.y
  *               top has n1 segments at seg1_start,
  *               Ep has n2 segments in Ep->s[0..n2-1].
  * Postcondition: the top now has (n1+n2) segments, merged in-order,
@@ -1026,24 +618,24 @@ static int stack_pop(SegStack *S, SegList *E) {
      Segment *p1   = (Segment *)seg1_start;   // cast to Segment pointer
      Segment *dest = (Segment *)(seg1_start + (total-1)*2); // cast to Segment pointer
 
-     int i1 = n1-1;
-     int i2 = n2-1;
-     while (i1 >= 0 && i2 >= 0) {
-         if (p1[i1].xl > Ep->s[i2].xl) {
-             *dest = p1[i1--];
+     n1--;
+     n2--;
+     while (n1 >= 0 && n2 >= 0) {
+         if (p1[n1].xl > Ep->s[n2].xl) {
+             *dest = p1[n1--];
          } else {
-             *dest = Ep->s[i2--];
+             *dest = Ep->s[n2--];
          }
          dest--;
      }
      // copy any remaining from seg1
-     while (i1 >= 0) {
-         *dest = p1[i1--];
+     while (n1 >= 0) {
+         *dest = p1[n1--];
          dest--;
      }
      // copy any remaining from Ep
-     while (i2 >= 0) {
-         *dest = Ep->s[i2--];
+     while (n2 >= 0) {
+         *dest = Ep->s[n2--];
          dest--;
      }
  }
@@ -1063,7 +655,7 @@ int R_FrontFill(int x0, int y0, int newColor, int targetColor) {
 
     /* seed span on row y0 */
     Segment s0 = {x0, x0};
-    EXPAND(s0, x0, y0, targetColor, CANVAS_WIDTH);
+    EXPAND(s0, x0, y0, targetColor);
 
     E.y = y0;
     E.dir = +1;
@@ -1071,7 +663,7 @@ int R_FrontFill(int x0, int y0, int newColor, int targetColor) {
     E.s[0] = s0;
 
     /* fill initial */
-    fill_segs(&E, newColor);
+    FILL_SEGS(&E, newColor);
 
     /* push seeds */
     stack_push(&S_plus,  &E);
@@ -1091,13 +683,13 @@ int R_FrontFill(int x0, int y0, int newColor, int targetColor) {
 
         /* forward link + fill */
         SegList Ep = LINK(&E, targetColor);
-        fill_segs(&Ep, newColor);
+        FILL_SEGS(&Ep, newColor);
 
         /* backward leak */
         SegList Em = DIFF(&Ep, &E);
 
         /* merge or push Ep */
-        /* peek top metadata if any */
+        /* peek top metadata to decide */
         int *meta = Sa->sp - 3;
         int y_top = meta[0];
         if ((Sa->cap == 0) || (y_top != Ep.y))
@@ -1114,9 +706,6 @@ int R_FrontFill(int x0, int y0, int newColor, int targetColor) {
     }
     return maxCap;
 }
-
-
-
 
 
 #if UNUSED
