@@ -246,12 +246,11 @@ loadall_block_move:
 	push	%bp
 	mov	%sp,%bp
 
-	xor	%si,%si
-	xor	%di,%di
 	mov	$0x80,%cx	#clear 33h words at 800-866h
 	mov	%cx,%es
 	mov	$0x33,%cx
 	xor	%ax,%ax
+	xor	%di,%di
 	cli                     #no interrupts, xms_fmemcpyw callable at interrupt time
 	cld
 	rep	stosw
@@ -274,7 +273,7 @@ loadall_block_move:
 	mov	28(%bx),%ax	#dst addr high8 & access byte
 	mov	%ax,%es:(0x38)	#new ES high8 & access byte
 
-#CS
+# code segment cache entry
 	mov	%cs,%ax
 	mov	$12,%cl
 	shr	%cl,%ax
@@ -292,7 +291,7 @@ loadall_block_move:
 	mov	%ah,%es:(0x3f)	#cs access byte 9A = P, S, E, R bits
 	mov	%al,%es:(0x45)	#ss access byte 92 = P, S,    W bits
 
-#SS
+# stack segment cache entry
 	mov	%ss,%ax
 	mov	$12,%cl
 	shr	%cl,%ax
@@ -305,7 +304,7 @@ loadall_block_move:
 	mov	12(%bp),%cx	#word count
 
 	push	%ss		#save SS for later SS reset
-	push	%cs		#CS used in later call to modechange
+	push	%cs		#CS used in later call to resetCS
 
 	movw	$newip,%es:(0x1a) #new IP after LOADALL
 	mov	%ds,%es:(0x1e)	#preserve all segment registers though values not used
@@ -314,28 +313,28 @@ loadall_block_move:
 	mov	%es,%es:(0x24)
 	mov	%bp,%es:(0x2a)  #preserve normal registers
 	mov	%sp,%es:(0x2c)
-	//mov	%di,%es:(0x26)	#all the following not required to be preserved
+	//mov	%di,%es:(0x26)	#set SI, DI zero for REP MOVS below
 	//mov	%si,%es:(0x28)
-	//mov	%bx,%es:(0x2e)
+	//mov	%bx,%es:(0x2e)	#the following not required to be preserved
 	//mov	%dx,%es:(0x30)
 	//mov	%cx,%es:(0x32)
 	//mov	%ax,%es:(0x34)
 	.byte   0x0F,0x05       #loadall opcode - execution continues at new IP
 	# not reached
 
-modechange:
+resetCS:
 	retf			#reset CS to 20-bit segment
 
 newip:				#new IP after LOADALL, interrupts disabled by FLAGS = 0
 	rep	movsw		#word transfer using DS&ES descriptor cache base values
 
-	call	modechange	#RETF resets CS to 20-bits, uses previous CS from stack
+	call	resetCS		#RETF resets CS to 20-bits, uses previous CS from stack
 	pop	%ax
 	mov	%ax,%ss		#reset SS base FIXME use POP %ss after testing
 	push	%ds
-	pop	%ds		#reset DS base
+	pop	%ds		#reset DS base FIXME pop from rewritten prologue
 	push	%es
-	pop	%es		#reset ES base
+	pop	%es		#reset ES base FIXME pop from rewritten prologue
 	sti
 
 	pop	%bp
