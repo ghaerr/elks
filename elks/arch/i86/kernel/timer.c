@@ -59,6 +59,10 @@ static void calc_cpu_usage(void)
 
 void timer_tick(int irq, struct pt_regs *regs)
 {
+#ifdef CONFIG_ARCH_SWAN
+    ack_irq(7);
+#endif
+
     do_timer();
 
 #ifdef CONFIG_CPU_USAGE
@@ -79,7 +83,7 @@ void timer_tick(int irq, struct pt_regs *regs)
     }
 #endif
 
-#ifdef CONFIG_CONSOLE_DIRECT
+#if defined(CONFIG_CONSOLE_DIRECT) && !defined(CONFIG_ARCH_SWAN)
     /* spin timer wheel in upper right of screen*/
     if (spin_on && !(jiffies & 7)) {
         static unsigned char wheel[4] = {'-', '\\', '|', '/'};
@@ -92,7 +96,7 @@ void timer_tick(int irq, struct pt_regs *regs)
 
 void spin_timer(int onflag)
 {
-#ifdef CONFIG_CONSOLE_DIRECT
+#if defined(CONFIG_CONSOLE_DIRECT) && !defined(CONFIG_ARCH_SWAN)
     if ((spin_on = onflag) == 0)
         pokeb((79 + 0*80) * 2, VideoSeg, ' ');
 #endif

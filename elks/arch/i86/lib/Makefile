@@ -41,11 +41,11 @@ SRCS1 = \
 	# end of list
 
 ifeq ($(CONFIG_ARCH_PC98), y)
-SRCS1 += bios1B.S bios1F-pc98.S unreal.S
+SRCS1 += bios1B-pc98.S bios1F-pc98.S unreal.S
 else ifeq ($(CONFIG_ARCH_SOLO86), y)
 SRCS1 += bios-none.S unreal.S
 else
-SRCS1 += bios13.S bios15-ibm.S unreal.S
+SRCS1 += bios13-ibm.S bios15-ibm.S unreal.S
 endif
 
 OBJS1 = $(SRCS1:.S=.o)
@@ -84,9 +84,9 @@ $(OBJS1): $(TMPS1)
 $(OBJS2): $(SRCS2)
 $(OBJS3): $(SRCS3)
 
-unreal.o: a20-ibm.inc
+bios15-ibm.o: a20-ibm.inc
 
-bios-xms-pc98.o: a20-pc98.inc
+bios1F-pc98.o: a20-pc98.inc
 
 #########################################################################
 # Standard commands.

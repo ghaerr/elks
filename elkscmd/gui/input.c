@@ -32,39 +32,60 @@ void I_HandleInput(void)
 
                 mx = event.x;
                 my = event.y;
-                if (mx < CANVAS_WIDTH){
-                    if(floodFill) {
-                        floodFillCalled = true;
-                    }
-                    else if (circleMode){
-                        circleDrawing = true;
-                        startX = mx;
-                        startY = my;
-                        lastRadius = 0;
-                        hidecursor();
-                        set_op(0x18);    // turn on XOR drawing
-                        break;
-                    } else {
-                            if(event.button == BUTTON_L)
-                                drawing = true;
-                            else
-                                altdrawing = true;
-                        }
-                }
-                hidecursor();
 
+                hidecursor();
+                if (mx < CANVAS_WIDTH){
+                    current_color = currentMainColor;
+                    switch (current_mode){
+                        case mode_Fill:
+                            current_state = state_Finalize;
+                            if (event.button == BUTTON_R) current_color = currentAltColor;
+                            break;
+
+                        case mode_Circle:
+                            current_state = state_Drawing;
+                            AltFinalize = (event.button == BUTTON_R);
+                            startX = mx;
+                            startY = my;
+                            lastRadius = 0;
+                            set_op(0x18);    // turn on XOR drawing
+                            goto break_mousedown;
+
+                        case mode_Rectangle:
+                            current_state = state_Drawing;
+                            AltFinalize = (event.button == BUTTON_R);
+                            startX = mx;
+                            startY = my;
+                            set_op(0x18);    // turn on XOR drawing
+                            goto break_mousedown;
+
+                        default:
+                            current_state = state_Drawing;
+                            if (event.button == BUTTON_R) current_color = currentAltColor;
+                            break;
+                    }
+                }
+
+            break_mousedown:
             break;
 
             case EVT_MOUSEUP:
-                if (circleDrawing){
-                    circleDrawingCalled = true;
-                    circleDrawing = false;
-                    set_op(0);       // turn off XOR drawing
-                } else {
-                if(event.button == BUTTON_L)
-                    drawing = false;
-                else
-                    altdrawing = false;
+                if (current_state == state_Drawing){
+                    switch (current_mode){
+                        case mode_Circle:
+                            current_state = state_Finalize;
+                            set_op(0);       // turn off XOR drawing
+                            break;
+
+                        case mode_Rectangle:
+                            current_state = state_Finalize;
+                            set_op(0);       // turn off XOR drawing
+                            break;
+
+                        default:
+                            current_state = state_Idle;
+                            break;
+                    }
                 }
                 showcursor();
             break;
@@ -83,7 +104,9 @@ void I_HandleInput(void)
                     break;
 
                     case 'f':
-                        floodFillCalled = true;
+                        hidecursor();
+                        R_LineFloodFill(omx, omy, currentMainColor, readpixel(mx, my));
+                        showcursor();
                     break;
 
                     case 'm':

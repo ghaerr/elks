@@ -3,23 +3,18 @@
 # derived from UNREAL.ASM and A20.ASM code by Chris Giese
 # 8 Nov 2021 Greg Haerr
 #
-# int enable_a20_gate(void)	- Enable A20 gate, return 0 on fail
-# int verify_a20		- Verify A20 gate status, return 0 if disabled
-# void set_a20			- ASM routine: enable (AH=1) or disable (AH=0) A20 gate
+# int enable_a20_gate(void) - Enable A20 gate, return verify_a20()
+# int verify_a20(void)      - Verify A20 gate status, return 0 if disabled
 #
 # This file is #included into unreal.S and setup.S
 
 # configurable options for A20 gate
-#   USE_BIOS		- use BIOS AX=2401h INT 15h method (always tried first)
+#   USE_BIOS		- use BIOS AX=2401h INT 15h method (tried first if set)
 #   USE_A20ASM		- use Chris Giese A20.ASM method (send D0, read, OR 2, D1, write)
 #   USE_HIMEM_AT	- use himem.sys PC AT method (send D1,DF,FF)
 #define USE_BIOS
 #define USE_A20ASM
 //#define USE_HIMEM_AT
-
-	.global	enable_a20_gate
-	.global	verify_a20
-	.global	set_a20
 
 # Attempt to enable A20 address gate, return 0 on fail
 enable_a20_gate:
@@ -36,6 +31,7 @@ enable_a20_gate:
 1:	ret
 
 # verify if A20 gate is enabled, return 0 if disabled
+# NOTE: only checks A20 wrap, doesn't actually read/write memory at 1M
 verify_a20:
 	push	%ds
 	push	%es
@@ -69,7 +65,7 @@ verify_a20:
 
 #ifdef USE_BIOS
 #
-# enable/disable A20 gate using keyboard port/controller, entry AH=0 disable
+# enable/disable A20 gate using BIOS, entry AH=0 disable
 bios_set_a20:
 	or	%ah,%ah
 	jz	bios_reset_a20
@@ -83,6 +79,7 @@ bios_reset_a20:
 #endif
 
 #ifdef USE_A20ASM
+# enable/disable A20 gate using keyboard port/controller, entry AH=0 disable
 set_a20:
 	pushf			# save interrupt status
 	cli			# interrupts off

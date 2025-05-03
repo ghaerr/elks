@@ -9,10 +9,21 @@ CC = ia16-elf-gcc
 LD = ia16-elf-gcc
 CLBASE = -melks-libc -mtune=i8086 -mcmodel=small -mno-segment-relocation-stuff
 CLBASE += -fno-inline -fno-builtin-printf -fno-builtin-fprintf
+OPTFLAGS = -O2
+OPTFLAGS += -fno-align-jumps
+OPTFLAGS += -fno-align-functions
+OPTFLAGS += -fno-align-loops
+OPTFLAGS += -fno-align-labels
+OPTFLAGS += -fira-region=one
+OPTFLAGS += -fira-hoist-pressure
+OPTFLAGS += -freorder-blocks-algorithm=simple
+OPTFLAGS += -fno-reorder-blocks
+OPTFLAGS += -fno-prefetch-loop-arrays
+OPTFLAGS += -fno-tree-ch
 WARNINGS = -Wall -Wextra -Wtype-limits -Wno-unused-parameter -Wno-sign-compare
 INCLUDES = -I$(TOPDIR)/include -I$(TOPDIR)/libc/include -I$(TOPDIR)/elks/include
 DEFINES = -D__ELKS__
-CFLAGS = -Os $(CLBASE) $(WARNINGS) $(INCLUDES) $(DEFINES) $(LOCALFLAGS)
+CFLAGS = $(OPTFLAGS) $(CLBASE) $(WARNINGS) $(INCLUDES) $(DEFINES) $(LOCALFLAGS)
 LDFLAGS = $(CLBASE)
 LDLIBS =
 

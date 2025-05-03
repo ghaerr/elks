@@ -136,7 +136,7 @@ debug_loader    =       0       // display relocations
 	.global _start
 _start:
 
-#ifdef CONFIG_ROMCODE
+#if defined(CONFIG_ROMCODE) && !defined(CONFIG_ARCH_SWAN)
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Entry point for IBM PC compatible option ROMs
 
@@ -262,6 +262,12 @@ no_blob:
 // Entry point for EMU86 ROM emulation
 
 start_os:
+#ifdef CONFIG_ARCH_SWAN
+	// Enable UART serial
+	mov	$0xE0,%al
+	out	%al,$0xB3
+#endif
+
 	push	%cs
 	pop	%ds
 	mov	$hello_mess,%si
@@ -966,8 +972,9 @@ putc:	push %ax
 	pop %ax
 	ret
 
-// include code to determine early CPU types
+// include code to determine CPU type
 // needed for guessing system capabilities (sys_caps) for XT vs AT BIOS
+// needed for XMS access using unreal vs INT 15
 // TODO: remove and use alternate mechanism for XT vs AT BIOS capabilities
 #include "cputype.S"
 
@@ -1241,7 +1248,7 @@ checkhma:
 	mov	%ax,%ds
 	mov	xms_kbytes,%ax		//. must have xms size >= 64k
 	cmp	$64,%ax
-	jl	1f
+	jc	1f
 	mov	hma_kernel,%al		// and hma=kernel in /bootopts
 	test	%al,%al
 	jz	1f
@@ -1333,7 +1340,7 @@ arch_get_mem:
 	push %bx
 	xor %ax,%ax
 	mov %ax,%es
-	mov $0x501,%bx
+	mov $0x501,%bx                  // 3 bit size - 1 in 128k of 0-1M mem range
 	mov %es:(%bx),%cl
 	and $7,%cl
 	inc %cl
@@ -1365,14 +1372,20 @@ arch_set_initseg:
    stosw
    pop %es
 
+   call	getcpu                  // implemented in cputype.S
+
    xor %ax,%ax                  // get xms size in CX
    mov %ax,%ds
-   mov $0x401,%bx               // xms_kbytes = *(byte 0x401) * 128
+   mov $0x401,%bx               // byte size in 128k of 1M-16M mem range
    mov (%bx),%al
    mov $128,%cl
    mul %cl
    mov %ax,%cx
-   mov $0x594,%bx               // xms_kbytes += *(word 0x594) * 1024
+// Check for possible hole between end of 1M-16M range and 16M+ range
+// When 0401h = 78h (=15MiB), hole does not exist
+   cmp $15360,%ax               // 15M, no hole
+   jnz 2f
+   mov $0x594,%bx               // word size in 1024k of 16M-4G range
    mov (%bx),%ax
    cmp $49,%ax                  // don't allow overflow when > 64MB
    jl 1f
@@ -1443,10 +1456,50 @@ putesc_n:
 tvram_x:
    .word 160
 
+// include code to determine 286 vs 386 CPU type
+// needed for XMS access using unreal vs INT 1F
+#include "cputype.S"
+
 // include code to enable/verify A20 address gate
 #include "../lib/a20-pc98.inc"
 
 #endif /* CONFIG_ARCH_PC98 */
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Architecture specific routines for WonderSwan
+//	Entry points specific for platform setup of SETUP_xxx variables (see config.h)
+//		arch_set_initseg
+//		arch_get_mem
+
+#ifdef CONFIG_ARCH_SWAN
+
+// Return total memory in Kbytes
+arch_get_mem:
+	mov $SETUP_MEM_KBYTES,%ax
+	ret
+
+// Set INITSEG values for WonderSwan
+// currently hard-coded in config.h
+arch_set_initseg:
+        // Force color mode early to enable 64 KiB RAM
+	mov	$0x80,%al
+	out	%al,$0x60
+
+	mov	$INITSEG,%ax
+	mov	%ax,%ds
+	ret
+
+// Write AL to console, save all other registers
+putc:
+	push	%ax
+1:	in	$0xB3,%al
+	test	$0x04,%al
+	jz	1b
+	pop	%ax
+	out	%al,$0xB1
+	ret
+
+#endif /* CONFIG_ARCH_SWAN */
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

@@ -104,6 +104,38 @@ void drawvline(int x, int y1, int y2, int c)
 }
 #endif /* __WATCOMC__ */
 
+#if defined(__WATCOMC__) || defined(__ia16__)
+/* draw 8 bits horizontally using XOR and one or two memory writes w/clipping */
+static void drawbits(int x, int y, unsigned char bits)
+{
+    set_op(0x18);
+    set_color(15);
+    unsigned int dst = (y<<6) + (y<<4) + (x>>3);  /* y * 80 + x / 8 */
+    if (x < SCREENWIDTH) {
+        set_mask(bits >> (x & 7));
+        asm_orbyte(dst);
+    }
+    if (x < SCREENWIDTH-8) {
+        set_mask(bits << (8 - (x & 7)));
+        asm_orbyte(dst+1);
+    }
+    set_op(0);
+}
+
+/* fast cursor draw for EGA/VGA hardware */
+void vga_drawcursor(int x, int y, int height, unsigned short *mask)
+{
+    for (int i=0; i<height; i++) {
+        unsigned int bits = *mask++;
+        if (bits >> 8)
+            drawbits(x, y, bits >> 8);
+        if (bits & 0xff)
+            drawbits(x+8, y, bits);
+        y++;
+    }
+}
+#endif
+
 void fillrect(int x1, int y1, int x2, int y2, int c)
 {
     while(y1 <= y2)

@@ -2,8 +2,10 @@
 #include "app.h"
 #include "render.h"
 #include "graphics.h"
+#include "vgalib.h"
 
-#define FLOOD_FILL_STACK    100
+
+#define FLOOD_FILL_STACK    200
 
 // ----------------------------------------------------
 // Clear the screen
@@ -29,7 +31,7 @@ void R_DrawPalette()
 
     // Draw Logo if VGA 640x480
     if(CANVAS_HEIGHT == 480)
-        draw_bmp(LIBPATH "paint.bmp", CANVAS_WIDTH + 10, 350);
+        draw_bmp(LIBPATH "paint.bmp", CANVAS_WIDTH + 10, 360);
 }
 
 // ----------------------------------------------------
@@ -116,12 +118,25 @@ void R_DrawCurrentColor(void)
         drawvline(61+startingPixelXOffset, startingPixelYOffset, 29 + startingPixelYOffset, WHITE);
     }
 }
+// ----------------------------------------------------
+// Highlight the button corresponding to the active drawing mode.
+// ----------------------------------------------------
+void R_HighlightActiveButton(void)
+{
+    int x1 = paletteButtons[currentModeButton].box.x + 1;
+    int x2 = x1 + paletteButtons[currentModeButton].box.w - 3;
+    int y1 = paletteButtons[currentModeButton].box.y + 1;
+    int y2 = y1 + paletteButtons[currentModeButton].box.h - 3;
+    set_op(0x18);    // turn on XOR drawing
+    fillrect(x1, y1, x2, y2, WHITE);
+    set_op(0);       // turn off XOR drawing
+}
 
 // ----------------------------------------------------
 // Paint
 // ----------------------------------------------------
 void R_Paint(int x1, int y1, int x2, int y2) {
-    int color = drawing ? currentMainColor : currentAltColor;
+    int color = current_color;
     // Draw initial point
     R_DrawDisk(x1, y1, bushSize, color, CANVAS_WIDTH);
 
@@ -204,12 +219,46 @@ void R_DrawCircle(int x0, int y0, int r, int color)
     }
 }
 
+void R_DrawRectangle(int x1, int y1, int x2, int y2)
+{
+    int color = current_color;
+    int xmin, xmax, ymin, ymax;
+
+    // Normalize coordinates
+    xmin = (x1 <= x2) ? x1 : x2;
+    xmax = (x1 > x2) ? x1 : x2;
+    ymin = (y1 <= y2) ? y1 : y2;
+    ymax = (y1 > y2) ? y1 : y2;
+
+    // Top and bottom horizontal lines
+    drawhline(xmin, xmax, ymin, color);
+    drawhline(xmin, xmax, ymax, color);
+
+    // Left and right vertical lines
+    drawvline(xmin, ymin, ymax, color);
+    drawvline(xmax, ymin, ymax, color);
+}
+
+void R_DrawFilledRectangle(int x1, int y1, int x2, int y2)
+{
+    int color = current_color;
+    int xmin, xmax, ymin, ymax;
+
+    // Normalize coordinates
+    xmin = (x1 <= x2) ? x1 : x2;
+    xmax = (x1 > x2) ? x1 : x2;
+    ymin = (y1 <= y2) ? y1 : y2;
+    ymax = (y1 > y2) ? y1 : y2;
+
+    fillrect(xmin, ymin, xmax, ymax, color);
+}
+
 // ----------------------------------------------------
 // Flood Fill Stack Operations
 // ----------------------------------------------------
 static void FF_StackPush(transform2d_t stack[], int x, int y, int* top)
 {
-    if (*top < FLOOD_FILL_STACK) {
+    if (*top < FLOOD_FILL_STACK-1) {
         (*top)++;
         stack[*top].x = x;
         stack[*top].y = y;
@@ -263,7 +312,6 @@ void R_LineFloodFill(int x, int y, int color, int ogColor)
             // Fill right
             if(leftestX < CANVAS_WIDTH && readpixel(leftestX, curElement.y) == ogColor)
             {
-                //pixels[leftestX + curElement.y * width] = color;
                 drawpixel(leftestX, curElement.y, color);
 
                 // Check above this pixel

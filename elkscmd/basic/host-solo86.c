@@ -30,6 +30,7 @@ void host_mode(int mode) {
 }
 
 void host_cls() {
+	fprintf(outfile, "\033[H\033[2J");
 }
 
 void host_color(int fgc, int bgc) {

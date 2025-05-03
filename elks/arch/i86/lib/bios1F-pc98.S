@@ -7,7 +7,6 @@
 
 	.global	block_move
 	.global	enable_a20_gate
-	.global	verify_a20
 
 # PC-98 A20 gate functions shared with setup.S
 #include "a20-pc98.inc"
@@ -15,6 +14,7 @@
 #
 # int block_move(struct gdt_table *gdtp, size_t words)
 # Uses BIOS INT 1Fh AH=90h Block Move
+# NOTE: BIOS disables A20 during call, won't work with HMA kernel
 # ES:BX gdtp
 # CX    byte count
 # SI    0000h

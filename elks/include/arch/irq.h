@@ -78,4 +78,13 @@ void idle_halt(void);
             :"memory")
 #endif
 
+#ifdef CONFIG_ARCH_SWAN
+/* acknowledge interrupt */
+#define ack_irq(i)              \
+        asm volatile ("outb %0, $0xB6\nsti\n"   \
+            : /* no output */   \
+            :"Ral" ((unsigned char) (1 << (i))) \
+            :"memory")
+#endif
+
 #endif

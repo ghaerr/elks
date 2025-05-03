@@ -41,6 +41,7 @@ void vga_drawpixel(int x, int y, int c);
 void vga_drawhline(int x1, int x2, int y, int c);
 void vga_drawvline(int x, int y1, int y2, int c);
 int  vga_readpixel(int x, int y);
+void vga_drawcursor(int x, int y, int height, unsigned short *mask);
 
 /* ia16 only fast scanline blit */
 void vga_drawscanline(unsigned char *colors, int x, int y, int length);

@@ -30,6 +30,10 @@ ifeq ($(CONFIG_ARCH_PC98), y)
 OBJS += host-pc98.o asm-pc98.o
 endif
 
+ifeq ($(CONFIG_ARCH_SWAN), y)
+OBJS += host-stubs.o
+endif
+
 ifeq ($(CONFIG_ARCH_SOLO86), y)
 OBJS += host-solo86.o
 endif

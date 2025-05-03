@@ -15,17 +15,17 @@
 #ifdef CONFIG_FS_XMS
 
 /*
- * Set the below =1 to automatically disable using XMS INT 15 instead of
- * hanging the system during boot, when hma=kernel and INT 15 disables A20
- * in some Compaq and other BIOSes (QEMU and PC-98 do not).
+ * Set the below =1 to automatically disable using XMS INT 15 w/HMA instead of
+ * hanging the system during boot, when hma=kernel and INT 15/1F disables A20
+ * in Compaq and most other BIOSes (QEMU and DosBox-X do not).
  * Otherwise, when =0, hma=kernel must be commented out in /bootopts
  * to boot when configured for xms=int15 on those same systems.
  */
-#define AUTODISABLE		0		/* =1 to disable XMS if BIOS INT 15 disables A20 */
+#define AUTODISABLE		1		/* =1 to disable XMS w/HMA if BIOS INT 15 disables A20 */
 
-/* these used when running XMS_INT15 */
+/* these used only when running XMS_INT15 */
 struct gdt_table;
-extern int block_move(struct gdt_table *gdtp, size_t words);
+int block_move(struct gdt_table *gdtp, size_t words);
 void int15_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
 		size_t count);
 
@@ -59,36 +59,33 @@ int INITPROC xms_init(void)
 	printk("%uK, ", size);
 	if (!size)                      /* 8086 systems won't have XMS */
 		return XMS_DISABLED;
-	debug("A20 was %s", verify_a20()? "on" : "off");
-	enable_a20_gate();
-	enabled = verify_a20();
-	debug(" now %s, ", enabled? "on" : "off");
+	enabled = enable_a20_gate();    /* returns verify_a20() */
 	if (!enabled) {
 		printk("disabled, A20 error. ");
 		return XMS_DISABLED;
 	}
 	/* 80286 machines and Compaq BIOSes can't use unreal mode and must use INT 15/1F */
 	if (xms_bootopts == XMS_INT15 || (arch_cpu <= 6 && xms_bootopts == XMS_UNREAL)) {
+		enabled = XMS_INT15;
 #if AUTODISABLE
-		if (kernel_cs == 0xffff) {
-			/* BIOS INT 15 block_move disables A20 on some systems! */
-			printk("disabled w/kernel HMA and int 15\n");
+		if(arch_cpu == 6){
+			printk("LOADALL, ");
+		}else if (kernel_cs == 0xffff) {
+			/* BIOS INT 15/1F block_move disables A20 on most systems! */
+			printk("disabled w/kernel HMA and int 15/1F\n");
 			return XMS_DISABLED;
 		}
+#else
+		if(arch_cpu == 6)
+			printk("LOADALL, ");
 #endif
-		printk("int 15/1F, ");
-		enabled = XMS_INT15;
+		else
+			printk("int 15/1F, ");
 	} else {
 		if (xms_bootopts != XMS_UNREAL) {
 			printk("off. ");
 			return XMS_DISABLED;
 		}
-#if UNUSED
-		if (check_unreal_mode() <= 0) {
-			printk("disabled, requires 386, ");
-			return XMS_DISABLED;
-		}
-#endif
 		enable_unreal_mode();
 		printk("unreal mode, ");
 		enabled = XMS_UNREAL;
@@ -232,7 +229,10 @@ void int15_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg
 	//gp->flags_limit_19_16 = 0;	/* byte-granular, 16-bit, limit=64K */
 	//gp->flags_limit_19_16 = 0xCF;	/* page-granular, 32-bit, limit=4GB */
 	gp->base_31_24 = dst_seg >> 24;
-	block_move(gdt_table, count);
+	if(arch_cpu == 6)
+	 loadall_block_move(gdt_table,count);
+	else 
+	 block_move(gdt_table, count);
 }
 
 #endif /* CONFIG_FS_XMS */

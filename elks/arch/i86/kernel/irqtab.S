@@ -242,7 +242,9 @@ updct:
 //
 //      Call the C code
 //
+#ifndef CONFIG_ARCH_SWAN
         sti                     // Reenable interrupts
+#endif
         mov     %sp,%bx         // Get pointer to pt_regs
         cbw
         push    %ax             // IRQ for later
@@ -445,6 +447,7 @@ pmsg:   .ascii "Running unknown code\0"
 #endif
 dmsg:   .ascii  "DIVIDE FAULT\0"
 
+	.bss
         .p2align 1
 endistack:
         .skip ISTACK_BYTES,0    // interrupt stack

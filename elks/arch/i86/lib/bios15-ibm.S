@@ -19,6 +19,7 @@
 	.text
 
 	.global	block_move
+	.global	enable_a20_gate
 
 # IBM PC A20 gate functions shared with setup.S
 #include "a20-ibm.inc"
@@ -26,7 +27,7 @@
 #
 # int block_move(struct gdt_table *gdtp, size_t words)
 # Uses BIOS INT 15h AH=87h Block Move
-#
+# NOTE: BIOS disables A20 during call, won't work with HMA kernel
 block_move:
 	push	%es
 	push	%si

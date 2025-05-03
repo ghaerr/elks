@@ -55,7 +55,7 @@
 #define MAX_SERIAL              1       /* max number of serial tty devices*/
 #define SETUP_VID_COLS          80      /* video # columns */
 #define SETUP_VID_LINES         25      /* video # lines */
-#define SETUP_CPU_TYPE          1       /* processor type = 8086 */
+#define SETUP_CPU_TYPE          setupb(0x20)    /* processor type */
 #define SETUP_MEM_KBYTES        setupw(0x2a)    /* base memory in 1K bytes */
 #define SETUP_XMS_KBYTES        setupw(0x1ea)   /* xms memory in 1K bytes */
 #define SETUP_ROOT_DEV          setupw(0x1fc)   /* root device, kdev_t or BIOS dev */
@@ -90,6 +90,23 @@
 #define CONFIG_8018X_EB
 #endif
 
+#ifdef CONFIG_ARCH_SWAN
+#define MAX_SERIAL              1       /* max number of serial tty devices*/
+#define SETUP_VID_COLS          28      /* video # columns */
+#define SETUP_VID_LINES         18      /* video # lines */
+#define SETUP_CPU_TYPE          5       /* processor type 80186 */
+#define SETUP_MEM_KBYTES        128     /* base memory in 1K bytes */
+#define SETUP_XMS_KBYTES        0       /* xms memory in 1K bytes */
+#define SETUP_ROOT_DEV          0x0600  /* root device ROMFS */
+#define SETUP_ELKS_FLAGS        0       /* flags for root device type */
+#define SETUP_PART_OFFSETLO     0       /* partition offset low word */
+#define SETUP_PART_OFFSETHI     0       /* partition offset high word */
+#define SYS_CAPS                0       /* no XT/AT capabilities */
+#define UTS_MACHINE             "swan"
+#define SETUP_HEAPSIZE          32256   /* 0x8000 - 0xFDFF */
+#define SETUP_USERHEAPSEG       0x1000  /* start segment for appiication memory heap */
+#endif /* CONFIG_ARCH_SWAN */
+
 #ifdef CONFIG_ARCH_SOLO86
 #define MAX_SERIAL              0       /* max number of serial tty devices*/
 #define SETUP_VID_COLS          80      /* video # columns */
@@ -103,7 +120,7 @@
 #define SETUP_PART_OFFSETHI     0       /* partition offset high word */
 #define SYS_CAPS                0       /* no XT/AT capabilities */
 #define UTS_MACHINE             "Solo86"
-#endif
+#endif /* CONFIG_ARCH_SOLO86 */
 
 /* linear address to start XMS buffer allocations from */
 #define XMS_START_ADDR    0x00100000L	/* 1M */

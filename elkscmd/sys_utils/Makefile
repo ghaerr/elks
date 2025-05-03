@@ -26,8 +26,7 @@ PRGS = \
 	who \
 	man \
 	chmem \
-	clock \
-	unreal16 \
+	test_unreal \
 	beep \
 	mouse \
 	sercat \
@@ -35,6 +34,7 @@ PRGS = \
 	makeboot \
 	decomp \
 	sysctl \
+	clock \
 	# EOL
 
 HOSTPRGS = hostdecomp
@@ -117,9 +117,9 @@ beep: beep.o
 sysctl: sysctl.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
-unreal16: unreal16.o unreal.o
-	$(LD) -melks-libc -mcmodel=small -c unreal16.S -o unreal16.o
-	$(LD) -melks-libc -mcmodel=small -nostdlib -o unreal16 unreal16.o unreal.o
+test_unreal: test_unreal.o unreal.o
+	$(LD) -melks-libc -mcmodel=small -c test_unreal.S -o test_unreal.o
+	$(LD) -melks-libc -mcmodel=small -nostdlib -o test_unreal test_unreal.o unreal.o
 
 decomp: decomp.o $(EXODECR_C) $(TINYPRINTF)
 	$(LD) $(LDFLAGS) -maout-heap=0xffff -o $@ $^ $(LDLIBS)
