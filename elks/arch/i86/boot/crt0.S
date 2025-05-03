@@ -63,15 +63,14 @@ early_putchar:
         mov	2(%bx),%al
 	out	%al,$0xB1
         ret
-#else
-#ifndef CONFIG_ARCH_PC98
-#ifdef CONFIG_ARCH_SOLO86
+#elif defined(CONFIG_ARCH_SOLO86)
 early_putchar:
         mov   %sp,%bx
         mov   2(%bx),%al
         outb  %al,$0x22
         ret
 #else
+#ifndef CONFIG_ARCH_PC98
 early_putchar:
         mov   %sp,%bx
         mov   2(%bx),%al
