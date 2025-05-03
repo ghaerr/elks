@@ -2,6 +2,7 @@
 #include "app.h"
 #include "render.h"
 #include "graphics.h"
+#include <string.h>   /* for memcpy */
 #include "vgalib.h"
 
 
@@ -340,7 +341,7 @@ void R_LineFloodFill(int x, int y, int color, int ogColor)
                         alreadyCheckedAbove = true;
                     }
                 else if (alreadyCheckedAbove == true
-                    && (curElement.y+1) < CANVAS_WIDTH
+                    && (curElement.y+1) < CANVAS_HEIGHT
                     && readpixel(leftestX, curElement.y+1) != ogColor)
                 {
                     // Skip now, but check next time
@@ -355,6 +356,357 @@ void R_LineFloodFill(int x, int y, int color, int ogColor)
         }
     }
 }
+
+
+/* max segments in any one SegList */
+#define MAX_SEGS        18
+/* max SegLists we expect to push per stack */
+#define MAX_LISTS       4
+/* each push uses 2 ints per segment + 3 ints of metadata */
+#define STACK_STRIDE    (MAX_SEGS*2 + 3)
+/* total ints in stack buffer */
+#define MAX_STACK_SIZE  (STACK_STRIDE * MAX_LISTS)
+
+/* one horizontal run [xl..xr] */
+typedef struct { int xl, xr; } Segment;
+
+/* temporary working SegList */
+typedef struct {
+    int       y, dir, n;
+    Segment   s[MAX_SEGS];
+} SegList;
+
+/* fill every pixel in E.s on row E.y */
+// static void fill_segs(const SegList *E, int new_color) {
+//     for (int i = 0; i < E->n; i++) {
+//         drawhline(E->s[i].xl, E->s[i].xr, E->y, new_color);
+//     }
+// }
+#define FILL_SEGS(E, color)                                         \
+    do {                                                            \
+        int __i;                                                    \
+        for (__i = 0; __i < (E)->n; __i++)                           \
+            drawhline((E)->s[__i].xl,                                \
+                      (E)->s[__i].xr,                                \
+                      (E)->y,                                        \
+                      (color));                                     \
+    } while (0)
+
+
+// /* EXPAND: full two-sided run around (x,y) if it matches target, else empty */
+// static Segment expand(int x, int y, int target) {
+//     Segment seg = {0, -1};
+//     if (readpixel(x, y) != target)
+//         return seg;
+//     seg.xl = seg.xr = x;
+//     while (seg.xl > 0 && readpixel(seg.xl - 1, y) == target) seg.xl--;
+//     while (seg.xr < CANVAS_WIDTH-1 && readpixel(seg.xr + 1, y) == target) seg.xr++;
+//     return seg;
+// }
+// /* EXPAND_RIGHT: only to the right from x (already target) */
+// static Segment expand_right(int x, int y, int target) {
+//     Segment seg = {x, x};
+//     while (seg.xr < CANVAS_WIDTH-1 && readpixel(seg.xr + 1, y) == target)
+//         seg.xr++;
+//     return seg;
+// }
+
+#define EXPAND(result, x, y, target)                      \
+    do {                                                         \
+        int _xl = (x), _xr = (x);                                \
+        while (_xl > 0 && readpixel(_xl - 1, (y)) == target) \
+            _xl--;                                           \
+        while (_xr < CANVAS_WIDTH-1 && readpixel(_xr + 1, (y)) == target) \
+            _xr++;                                           \
+        (result).xl = _xl; (result).xr = _xr;                \
+    } while (0)
+
+#define EXPAND_RIGHT(result, x, y, target)                 \
+    do {                                                          \
+        int _xr = (x);                                            \
+        while (_xr < CANVAS_WIDTH-1 && readpixel(_xr + 1, (y)) == target) \
+            _xr++;                                                \
+        (result).xl = (x);                                        \
+        (result).xr = _xr;                                        \
+    } while (0)
+
+
+/* LINK: scan one row above/below E for 4-connected runs under E.s */
+static SegList LINK(const SegList *E, int target) {
+    SegList out;
+    out.y   = E->y + E->dir;
+    out.dir = E->dir;
+    out.n   = 0;
+    if (out.y < 0 || out.y >= CANVAS_HEIGHT || E->n == 0)
+        return out;
+
+    /* scan across the union of parent spans */
+    int i =  0;
+    int x =  E->s[0].xl;
+    while (1) {
+        /* skip past any parent that ends before x */
+        while (i < E->n && x > E->s[i].xr) i++;
+        if (i >= E->n) break;
+        /* snap to start of this span if x too small */
+        if (x < E->s[i].xl) x = E->s[i].xl;
+
+        /* if we hit the target, expand and record */
+        if (readpixel(x, out.y) == target) {
+            Segment seg_new = {x, x};
+            if (x == E->s[i].xl)
+                EXPAND(seg_new, x, out.y, target);
+            else
+                EXPAND_RIGHT(seg_new, x, out.y, target);
+
+            if (seg_new.xl <= seg_new.xr && out.n < MAX_SEGS) {
+                out.s[out.n++] = seg_new;
+                x = seg_new.xr + 2;  /* jump past */
+                continue;
+            }
+        }
+        x++;
+    }
+    return out;
+}
+
+/* DIFF: Ep \ (each Ed.s[j] expanded ±1) → new runs going opposite dir */
+/* Both Ep and Ed have segments sorted with no overlaps. */
+static SegList DIFF(const SegList *Ep, const SegList *Ed) {
+    SegList out;
+    out.y   = Ep->y;
+    out.dir = -Ep->dir;
+    out.n   = 0;
+
+    int j = 0;  /* pointer into Ed->s[] */
+
+    for (int i = 0; i < Ep->n; i++) {
+        int cur_l = Ep->s[i].xl;
+        int cur_r = Ep->s[i].xr;
+
+        /* advance j past any forbidden intervals ending before cur_l */
+        while (j < Ed->n && Ed->s[j].xr + 1 < cur_l) {
+            j++;
+        }
+        /* now subtract all forbidden intervals that overlap [cur_l..cur_r] */
+        int k = j;
+        while (k < Ed->n) {
+            int fl = Ed->s[k].xl - 1;  /* forbidden left */
+            if (fl > cur_r)            /* no more overlaps */
+                break;
+
+            int fr = Ed->s[k].xr + 1;  /* forbidden right */
+
+            /* output any gap before this forbidden block */
+            if (fl > cur_l) {
+                out.s[out.n++] = (Segment){ cur_l, fl - 1 };
+            }
+            /* advance cur_l past the forbidden block */
+            if (fr + 1 > cur_l) {
+                cur_l = fr + 1;
+            }
+            if (cur_l > cur_r)
+                break;  /* fully consumed */
+            k++;
+        }
+        /* if any tail remains, output it */
+        if (cur_l <= cur_r) {
+            out.s[out.n++] = (Segment){ cur_l, cur_r };
+        }
+    }
+    return out;
+}
+
+/* One flat stack type for SegLists */
+typedef struct {
+    int    data[MAX_STACK_SIZE];
+    int   *sp;      /* next free slot */
+    int    cap;     /* sum of all n’s currently in stack */
+} SegStack;
+
+/* Initialize a stack */
+static void stack_init(SegStack *S) {
+    S->sp  = S->data;
+    S->cap = 0;
+}
+
+/* Push E onto the stack with one memcpy */
+static void stack_push(SegStack *S, const SegList *E) {
+    int needed = E->n*2 + 3;                // # of ints we need
+    int used   = (int)(S->sp - S->data);    // current usage
+    if (E->n <= 0 || used + needed > MAX_STACK_SIZE)
+        return;
+
+    /* copy segments (2*E->n ints) */
+    memcpy(S->sp,            /* dest */
+           E->s,             /* src: pointer is okay because Segment is two ints */
+           E->n * sizeof(Segment));
+    /* advance pointer by # of ints */
+    S->sp += E->n * 2;
+
+    /* now metadata: y, dir, n */
+    S->sp[0] = E->y;
+    S->sp[1] = E->dir;
+    S->sp[2] = E->n;
+    S->sp   += 3;
+
+    S->cap  += E->n;
+}
+
+/* Pop into *E using one memcpy for the segments */
+static int stack_pop(SegStack *S, SegList *E) {
+    /* need at least 3 ints for metadata */
+    if ((S->sp - S->data) < 3) return 0;
+
+    /* metadata lives in the last three ints */
+    int *meta = S->sp - 3;
+    int n     = meta[2];
+    int block = n*2 + 3;
+    /* ensure stack has enough ints */
+    if ((S->sp - S->data) < block) return 0;
+
+    /* locate segment data start */
+    int *seg_start = S->sp - block;
+
+    /* restore metadata */
+    E->y   = meta[0];
+    E->dir = meta[1];
+    E->n   = n;
+
+    /* bulk-copy segments back into E->s */
+    memcpy(E->s,            /* dest */
+           seg_start,       /* src: xl0,xr0,xl1,xr1,… */
+           n * sizeof(Segment));
+
+    /* rewind stack pointer */
+    S->sp  -= block;
+    S->cap -= n;
+    return 1;
+}
+
+/*
+ * Merge Ep directly into the top‐of‐stack SegList inside S, in place.
+ * Precondition: Ep->y == top.y
+ *               top has n1 segments at seg1_start,
+ *               Ep has n2 segments in Ep->s[0..n2-1].
+ * Postcondition: the top now has (n1+n2) segments, merged in-order,
+ *               metadata updated, sp and cap adjusted.
+ */
+ static void merge_Ep_inplace(SegStack *S, const SegList *Ep) {
+     // ----- 1) Locate top‐of‐stack metadata and its segments -----
+     int *meta1      = S->sp - 3;
+     int y_top       = meta1[0];
+     int dir_top     = meta1[1];
+     int n1          = meta1[2];
+     int *seg1_start = meta1 - (n1 * 2);
+
+     int n2 = Ep->n;
+     if (n2 <= 0) return;            // nothing to merge
+     if ((int)(S->sp - S->data) + (n2 * 2) > MAX_STACK_SIZE)
+         return;                     // overflow guard
+
+     // ----- 2) Reserve room for the extra segments -----
+     int total = n1 + n2;
+     S->sp   += (n2 * 2);            // grow segment‐block by n2*2 ints
+     S->cap  +=  n2;                 // grow capacity by n2
+     // ----- Rewrite merged metadata [y, dir, total] -----
+     int *meta_out = S->sp - 3;
+     meta_out[0]   = y_top;          // y
+     meta_out[1]   = dir_top;        // dir
+     meta_out[2]   = total;          // new n
+
+     // ----- 3) Merge backwards: seg1_start[0..2*n1-1] and Ep->s[] -----
+     Segment *p1   = (Segment *)seg1_start;   // cast to Segment pointer
+     Segment *dest = (Segment *)(seg1_start + (total-1)*2); // cast to Segment pointer
+
+     n1--;
+     n2--;
+     while (n1 >= 0 && n2 >= 0) {
+         if (p1[n1].xl > Ep->s[n2].xl) {
+             *dest = p1[n1--];
+         } else {
+             *dest = Ep->s[n2--];
+         }
+         dest--;
+     }
+     // copy any remaining from seg1
+     while (n1 >= 0) {
+         *dest = p1[n1--];
+         dest--;
+     }
+     // copy any remaining from Ep
+     while (n2 >= 0) {
+         *dest = Ep->s[n2--];
+         dest--;
+     }
+ }
+
+/*
+ * FRONT_FILL: iterative 4-connected flood-fill
+ * starting at (x0,y0), painting targetColor → newColor.
+ * Returns peak capacity seen (optional).
+ */
+int R_FrontFill(int x0, int y0, int newColor, int targetColor) {
+    if (newColor == targetColor) return 0;
+
+    SegStack S_plus, S_minus;
+    stack_init(&S_plus);
+    stack_init(&S_minus);
+    SegList E;
+
+    /* seed span on row y0 */
+    Segment s0 = {x0, x0};
+    EXPAND(s0, x0, y0, targetColor);
+
+    E.y = y0;
+    E.dir = +1;
+    E.n = 1;
+    E.s[0] = s0;
+
+    /* fill initial */
+    FILL_SEGS(&E, newColor);
+
+    /* push seeds */
+    stack_push(&S_plus,  &E);
+    E.dir = -1;
+    stack_push(&S_minus, &E);
+
+    int maxCap = S_plus.cap > S_minus.cap ? S_plus.cap : S_minus.cap;
+
+    /* main loop: always pop from the stack with larger capacity */
+    while (S_plus.cap > 0 || S_minus.cap > 0) {
+        SegStack *Sa = (S_plus.cap >= S_minus.cap) ? &S_plus : &S_minus;
+        SegStack *Sp = (Sa == &S_plus ? &S_minus : &S_plus);
+
+        /* pop one segment list */
+        if (!stack_pop(Sa, &E))
+            break;
+
+        /* forward link + fill */
+        SegList Ep = LINK(&E, targetColor);
+        FILL_SEGS(&Ep, newColor);
+
+        /* backward leak */
+        SegList Em = DIFF(&Ep, &E);
+
+        /* merge or push Ep */
+        /* peek top metadata to decide */
+        int *meta = Sa->sp - 3;
+        int y_top = meta[0];
+        if ((Sa->cap == 0) || (y_top != Ep.y))
+            stack_push(Sa, &Ep);
+        else
+            merge_Ep_inplace(Sa, &Ep);
+
+        /* push the leak */
+        stack_push(Sp, &Em);
+
+        /* update peak capacity */
+        if (Sa->cap > maxCap)
+            maxCap = Sa->cap;
+    }
+    return maxCap;
+}
+
 
 #if UNUSED
 // ----------------------------------------------------

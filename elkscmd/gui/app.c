@@ -10,6 +10,8 @@
 #include "vgalib.h"
 #include "mouse.h"
 
+#define BENCHMARK_PAINT 0  // Set to 1 to enable benchmark mode (draw and exit immediately)
+
 // --------------------------------------------
 // Definition of Globals
 // --------------------------------------------
@@ -147,7 +149,8 @@ void A_GameLoop(void)
             case mode_Fill:
                 if(mx <= CANVAS_WIDTH){
                     hidecursor();
-                    R_LineFloodFill(omx, omy, current_color, readpixel(mx, my));
+                    int maxCap = R_FrontFill(omx, omy, current_color, readpixel(mx, my));
+                    __dprintf("Peak stack size: %d\n", maxCap);
                     showcursor();
                     current_state = state_Idle;
                 }
@@ -261,6 +264,29 @@ int main(int argc, char* argv[])
         // Init Application
         A_InitTomentPainter();
     }
+
+#if BENCHMARK_PAINT
+    int y00 = 15;
+    for (int i = 0; i<16; i++) {
+        for (int j = i; j<16; j++) {
+            int x = y00 + i*30;
+            int y = y00 + j*30 - 10 * i;
+            R_DrawCircle(x, y, 12, WHITE);
+            currentMainColor = i;
+            currentAltColor = j;
+            R_LineFloodFill(x, y, currentMainColor, readpixel(x, y));
+            // R_FrontFill(x, y, currentMainColor, readpixel(x, y));
+        }
+    }
+    int x = 300;
+    int y = 101;
+    R_LineFloodFill(x, y, 5, readpixel(x, y));
+    // int maxCap = R_FrontFill(x, y, 5, readpixel(x, y));
+    // __dprintf("Peak stack size: %d\n", maxCap);
+
+    graphics_close();
+    return 0;
+#endif
 
     // Draw Palette
     R_DrawPalette();
