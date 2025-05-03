@@ -19,7 +19,6 @@
 	.global fmemsetw
 	.global fmemcmpb
 	.global fmemcmpw
-
 	.global loadall_block_move
 
 // void fmemcpyb (void * dst_off, seg_t dst_seg, void * src_off, seg_t src_seg,
@@ -163,6 +162,7 @@ fmemcmpw_exit:
 	ret
 
 // void loadall_block_move(struct gdt_table *gdtp, size_t words)
+// This function must only be called using 80286 CPU!!
 //
 // LOADALL Memory Format (0800h - 0865h)
 // Physical     Size in
@@ -218,6 +218,7 @@ fmemcmpw_exit:
 //      D)irection/C)onforming = 0
 //      W)ritable for data, R)eadable for code = 1
 //      A)ccessed = 0
+// Normal code segment access byte = 9Ah, data segment access byte = 92h
 //
 // LOADALL loads all CPU registers from memory physical addresses 800-865h.
 // The mechanism of action using LOADALL is that the CPU registers are
@@ -233,13 +234,13 @@ fmemcmpw_exit:
 // or FAR JMP/CALL (for code).
 // After exit from this routine, all segment registers are returned to their initial
 // values, and all segment descriptor cache base values are reset to their respective
-// segment 20-bit real mode value. It is currently unknown whether the descriptor
+// segment 20-bit real mode value. It is currently untested whether the descriptor
 // cache limit values and access bytes are reset, but this won't matter since the
 // limits are always passed as FFFFh and the access bytes normal in the GDT table
 // passed to this function.
 //
 loadall_block_move:
-	push	%es
+	push	%es		#FIXME rewrite prologue to avoid saving DS/ES twice
 	push	%si
 	push	%di
 	push	%bp
@@ -281,10 +282,10 @@ loadall_block_move:
 	mov	$4,%cl
 	shl	%cl,%ax
 	mov	%ax,%es:(0x3c)	#CS low16
-	mov	$-1,%ax
+	mov	$0xFFFF,%ax
 	mov	%ax,%es:(0x40)	#CS limit
 	mov	%ax,%es:(0x46)	#SS limit
-	mov	%al,%es:(0x5f)	#IDT limit(FF00h but 3FFh?) very important
+	mov	%al,%es:(0x5f)	#IDTR limit(FF00h not 3FFh?) Must not be zero!
 
 	mov	$0x9a92,%ax
 	mov	%ah,%es:(0x3f)	#cs access byte 9A = P, S, E, R bits
@@ -302,44 +303,34 @@ loadall_block_move:
 
 	mov	12(%bp),%cx	#word count
 
-	push	%ss		#save SS for later reset
-	push	%cs		#save CS for later call modechange
+	push	%ss		#save SS for later SS reset
+	push	%cs		#CS used in later call to modechange
 
-	cli
-	push	%cs
-	call	modechange	#writes IP into protected stack location
-	mov	%sp,%bp
-	mov	-6(%bp),%ax	#get saved IP off stack
-	add	$2,%ax		#skip RET and RETF bytes
-	mov	%ax,%es:(0x1a)	#new IP after LOADALL
-
-	mov	%ds,%es:(0x1e)	#preserve segment registers though values not used
+	movw	$newip,%es:(0x1a) #new IP after LOADALL
+	mov	%ds,%es:(0x1e)	#preserve all segment registers though values not used
 	mov	%ss,%es:(0x20)
 	mov	%cs,%es:(0x22)
 	mov	%es,%es:(0x24)
-	mov	%di,%es:(0x26)	#preserve normal registers
-	mov	%si,%es:(0x28)
-	mov	%bp,%es:(0x2a)
+	mov	%bp,%es:(0x2a)  #preserve normal registers
 	mov	%sp,%es:(0x2c)
-	mov	%bx,%es:(0x2e)
-	mov	%dx,%es:(0x30)
-	mov	%cx,%es:(0x32)
-	mov	%ax,%es:(0x34)
-	.word 0x050f		#loadall opcode 0F 05 - execution continues at new IP
+	//mov	%di,%es:(0x26)	#all the following not required to be preserved
+	//mov	%si,%es:(0x28)
+	//mov	%bx,%es:(0x2e)
+	//mov	%dx,%es:(0x30)
+	//mov	%cx,%es:(0x32)
+	//mov	%ax,%es:(0x34)
+	.byte   0x0F,0x05       #loadall opcode - execution continues at new IP
 	# not reached
 
 modechange:
-	call	retaddr		#3byte (writes IP=retaddr on stack at [SP-6])
-	retf			#1byte (resets CS to 20-bit segment for 32-bit CPU)
-retaddr:
-	ret			#1byte
+	retf			#reset CS to 20-bit segment
 
-#new IP after LOADALL
+newip:				#new IP after LOADALL, interrupts disabled by FLAGS = 0
 	rep	movsw		#word transfer using DS&ES descriptor cache base values
 
-	call	modechange	#RETF resets CS to 20-bits (required for 32-bit CPU?)
+	call	modechange	#RETF resets CS to 20-bits, uses previous CS from stack
 	pop	%ax
-	mov	%ax,%ss		#reset SS base
+	mov	%ax,%ss		#reset SS base FIXME use POP %ss after testing
 	push	%ds
 	pop	%ds		#reset DS base
 	push	%es
