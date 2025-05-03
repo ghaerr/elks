@@ -162,11 +162,83 @@ fmemcmpw_exit:
 	mov    %bx,%es
 	ret
 
+// void loadall_block_move(struct gdt_table *gdtp, size_t words)
+//
+// LOADALL Memory Format (0800h - 0865h)
+// Physical     Size in
+// Address	    Words   Associated CPU Register
+// 800          3       unused
+// 806          1       MSW
+// 808          7       unused
+// 816          1       TR (Task Register)
+// 818          1       Flag Word
+// 81A          1       IP
+// 81C          1       LDT (Local Descriptor Table)
+// 81E          1       DS
+// 820          1       SS
+// 822          1       CS
+// 824          1       ES
+// 826          1       DI
+// 828          1       SI
+// 82A          1       BP
+// 82C          1       SP
+// 82E          1       BX
+// 830          1       DX
+// 832          1       CX
+// 834          1       AX
+// 836          3       ES Descriptor Cache
+//  	836         1       ES base low  15:0
+//  	838         1       ES base high 23:0 & access byte
+//  	83A         1       ES limit     15:0
+// 83C          3       CS Descriptor Cache
+//  	83C         1       CS base low  15:0
+//  	83E         1       CS base high 23:0 & access byte
+//  	840         1       CS limit     15:0
+// 842          3       SS Descriptor Cache
+//  	842         1       SS base low  15:0
+//  	844         1       SS base high 23:0 & access byte
+//  	846         1       SS limit     15:0
+// 848          3       DS Descriptor Cache
+//  	848         1       DS base low  15:0
+//  	84A         1       DS base high 23:0 & access byte
+//  	84C         1       DS limit     15:0
+// 84E          3       GDTR (Global Descriptor Table Register)
+// 854          3       LDT Descriptor Cache
+// 85A          3       IDTR (Interrupt Descriptor Table Register)
+// 860          3       TSS (Task State Segment Descriptor Cache)
+// total =      66h bytes
+//
+// Access Byte:
+// +-------+-------+-------+-------+-------+-------+-------+-------+
+// |   P   |      DPL      |   S   |   E   |  D/C  |  W/R  |   A   |
+// +-------+-------+-------+-------+-------+-------+-------+-------+
+//      P)resent = 1
+//      S)ystem  = 0
+//      E)xecutable = 1 for code, 0 for data
+//      D)irection/C)onforming = 0
+//      W)ritable for data, R)eadable for code = 1
+//      A)ccessed = 0
+//
+// LOADALL loads all CPU registers from memory physical addresses 800-865h.
+// The mechanism of action using LOADALL is that the CPU registers are
+// all immediately set to the values set in memory without any checking.
+// In particular, the DS and ES descriptor cache register base values are
+// set to any physical address within the 24-bit physical address space.
+// Once set, the CPU uses the cache base (and limit) values directly without
+// referencing the segment register. This allows the REP MOVS after LOADALL
+// to move data between any memory locations without the normal 20-bit
+// addressing limitation in real mode.
+// The segment descriptor cache register base value remains as set until
+// the associated segment register is reloaded via a MOV or POP (for data segments)
+// or FAR JMP/CALL (for code).
+// After exit from this routine, all segment registers are returned to their initial
+// values, and all segment descriptor cache base values are reset to their respective
+// segment 20-bit real mode value. It is currently unknown whether the descriptor
+// cache limit values and access bytes are reset, but this won't matter since the
+// limits are always passed as FFFFh and the access bytes normal in the GDT table
+// passed to this function.
+//
 loadall_block_move:
-# DS:BX gdtp
-# CX    word count
-# SI    0000h
-# DI    0000h
 	push	%es
 	push	%si
 	push	%di
@@ -175,16 +247,14 @@ loadall_block_move:
 
 	xor	%si,%si
 	xor	%di,%di
-
-	mov	$0x80,%cx
-	mov	%cx,%es	#ES=0080h segment
-	mov	$0x33,%cx	#loadall 800-866h
+	mov	$0x80,%cx	#clear 33h words at 800-866h
+	mov	%cx,%es
+	mov	$0x33,%cx
 	xor	%ax,%ax
-	cli
-rep	stosw			#800h-866h clear
+	cld
+	rep	stosw
 
-	xor	%di,%di
-	mov	10(%bp),%bx	# gdtp -> DS:BX
+	mov	10(%bp),%bx	#BX=GDT
 
 #src DS
 	mov	16(%bx),%ax	#src limit
@@ -202,7 +272,7 @@ rep	stosw			#800h-866h clear
 	mov	28(%bx),%ax	#dst addr high8 & access byte
 	mov	%ax,%es:(0x38)	#new ES high8 & access byte
 
-#cs
+#CS
 	mov	%cs,%ax
 	mov	$12,%cl
 	shr	%cl,%ax
@@ -212,16 +282,15 @@ rep	stosw			#800h-866h clear
 	shl	%cl,%ax
 	mov	%ax,%es:(0x3c)	#CS low16
 	mov	$-1,%ax
-	mov	%ax,%es:(0x40)	#cs limit
-	mov	%ax,%es:(0x46)	#ss limit
+	mov	%ax,%es:(0x40)	#CS limit
+	mov	%ax,%es:(0x46)	#SS limit
 	mov	%al,%es:(0x5f)	#IDT limit(FF00h but 3FFh?) very important
 
+	mov	$0x9a92,%ax
+	mov	%ah,%es:(0x3f)	#cs access byte 9A = P, S, E, R bits
+	mov	%al,%es:(0x45)	#ss access byte 92 = P, S,    W bits
 
-	mov	$0x9a93,%ax
-	mov	%ah,%es:(0x3f)	#cs access byte
-	mov	%al,%es:(0x45)	#ss access byte
-
-#ss
+#SS
 	mov	%ss,%ax
 	mov	$12,%cl
 	shr	%cl,%ax
@@ -231,23 +300,24 @@ rep	stosw			#800h-866h clear
 	shl	%cl,%ax
 	mov	%ax,%es:(0x42)	#SS low16
 
-	mov	12(%bp),%cx	# word count
+	mov	12(%bp),%cx	#word count
 
-	push	%ss
-	push	%cs
+	push	%ss		#save SS for later reset
+	push	%cs		#save CS for later call modechange
 
+	cli
 	push	%cs
-	call	modechange2
+	call	modechange	#writes IP into protected stack location
 	mov	%sp,%bp
-	mov	-6(%bp),%ax
-	add	$2,%ax
-	mov	%ax,%es:(0x1a)	#new IP
+	mov	-6(%bp),%ax	#get saved IP off stack
+	add	$2,%ax		#skip RET and RETF bytes
+	mov	%ax,%es:(0x1a)	#new IP after LOADALL
 
-	mov	%ds,%es:(0x1e)	#not realaddress
-	mov	%ss,%es:(0x20)	#
-	mov	%cs,%es:(0x22)	#
-	mov	%es,%es:(0x24)	#set 20bit segment
-	mov	%di,%es:(0x26)
+	mov	%ds,%es:(0x1e)	#preserve segment registers though values not used
+	mov	%ss,%es:(0x20)
+	mov	%cs,%es:(0x22)
+	mov	%es,%es:(0x24)
+	mov	%di,%es:(0x26)	#preserve normal registers
 	mov	%si,%es:(0x28)
 	mov	%bp,%es:(0x2a)
 	mov	%sp,%es:(0x2c)
@@ -255,28 +325,29 @@ rep	stosw			#800h-866h clear
 	mov	%dx,%es:(0x30)
 	mov	%cx,%es:(0x32)
 	mov	%ax,%es:(0x34)
-.word 0x050f				#loadall for direct binary
+	.word 0x050f		#loadall opcode 0F 05 - execution continues at new IP
+	# not reached
 
-modechange2:
-	call	retaddr	#3byte
-#this address is stacked [bp-6]
-	retf			#1byte
+modechange:
+	call	retaddr		#3byte (writes IP=retaddr on stack at [SP-6])
+	retf			#1byte (resets CS to 20-bit segment for 32-bit CPU)
 retaddr:
 	ret			#1byte
-#new IP
-rep	movsw				#word transfer
-	call	modechange2		#retf "cs back to 20bit segment" this is for 32bit CPU noneed?
+
+#new IP after LOADALL
+	rep	movsw		#word transfer using DS&ES descriptor cache base values
+
+	call	modechange	#RETF resets CS to 20-bits (required for 32-bit CPU?)
 	pop	%ax
-	mov	%ax,%ss		#SS 20bit segment
+	mov	%ax,%ss		#reset SS base
 	push	%ds
-	pop	%ds			#used 24bit DS back to 20bit segment
+	pop	%ds		#reset DS base
 	push	%es
-	pop	%es			#used 24bit ES back to 20bit segment
+	pop	%es		#reset ES base
 	sti
 
 	pop	%bp
 	pop	%di
 	pop	%si
 	pop	%es
-	xor	%ax,%ax		#all success
 	ret
