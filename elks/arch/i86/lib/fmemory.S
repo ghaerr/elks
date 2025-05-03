@@ -252,6 +252,7 @@ loadall_block_move:
 	mov	%cx,%es
 	mov	$0x33,%cx
 	xor	%ax,%ax
+	cli                     #no interrupts, xms_fmemcpyw callable at interrupt time
 	cld
 	rep	stosw
 
