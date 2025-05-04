@@ -38,8 +38,8 @@ block_move:
 
 	mov	$0x90,%ah	# BIOS Block Move
 	int	$0x1F
-	jnc	1f
 	sti			# ensure we've got interrupts
+	jnc	1f
 	mov	$-1,%ax		# fail return AX < 0
 	jmp	2f
 1:	xor	%ax,%ax		# success return AX = 0

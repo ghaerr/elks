@@ -10,6 +10,7 @@
 #include <linuxmt/init.h>
 #include <linuxmt/string.h>
 #include <linuxmt/debug.h>
+#include <arch/irq.h>
 #include <arch/segment.h>
 
 #ifdef CONFIG_FS_XMS
@@ -26,6 +27,7 @@
 /* these used only when running XMS_INT15 */
 struct gdt_table;
 int block_move(struct gdt_table *gdtp, size_t words);
+int loadall_block_move(struct gdt_table *gdtp, size_t words);
 void int15_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
 		size_t count);
 
@@ -64,31 +66,30 @@ int INITPROC xms_init(void)
 		printk("disabled, A20 error. ");
 		return XMS_DISABLED;
 	}
-	/* 80286 machines and Compaq BIOSes can't use unreal mode and must use INT 15/1F */
-	if (xms_bootopts == XMS_INT15 || (arch_cpu <= 6 && xms_bootopts == XMS_UNREAL)) {
-		enabled = XMS_INT15;
+	if (xms_bootopts == XMS_DISABLED) {
+		printk("off. ");
+		return XMS_DISABLED;
+	}
+	/* check forced INT 15/1F or not 80286/80386 */
+	if (xms_bootopts == XMS_INT15 || arch_cpu < 6) {
 #if AUTODISABLE
-		if(arch_cpu == 6){
-			printk("LOADALL, ");
-		}else if (kernel_cs == 0xffff) {
+		if (kernel_cs == 0xffff) {
 			/* BIOS INT 15/1F block_move disables A20 on most systems! */
 			printk("disabled w/kernel HMA and int 15/1F\n");
 			return XMS_DISABLED;
 		}
-#else
-		if(arch_cpu == 6)
-			printk("LOADALL, ");
 #endif
-		else
-			printk("int 15/1F, ");
+		printk("int 15/1F, ");
+		enabled = XMS_INT15;
 	} else {
-		if (xms_bootopts != XMS_UNREAL) {
-			printk("off. ");
-			return XMS_DISABLED;
+		if (arch_cpu == 6) {        /* 80286 only */
+			printk("LOADALL, ");
+			enabled = XMS_LOADALL;
+		} else {                    /* 80386 only */
+			enable_unreal_mode();
+			printk("unreal mode, ");
+			enabled = XMS_UNREAL;
 		}
-		enable_unreal_mode();
-		printk("unreal mode, ");
-		enabled = XMS_UNREAL;
 	}
 	if (kernel_cs == 0xffff)
 		xms_alloc_ptr += 64;    /* 64K reserved for HMA kernel */
@@ -200,39 +201,40 @@ struct gdt_table {
 	byte_t	base_31_24;
 };
 
-static struct gdt_table gdt_table[8];
+static struct gdt_table gdt_table[8];   /* FIXME static table requires mutex below */
 
 /* move words between XMS and main memory using BIOS INT 15h AH=87h block move */
 void int15_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
 		size_t count)
 {
 	struct gdt_table *gp;
-	memset(gdt_table, 0, sizeof(gdt_table));
 
 	src_seg += (word_t)src_off;
 	dst_seg += (word_t)dst_off;
 
+	clr_irq();			/* xms_fmemcpyw callable at interrupt time! */
+	memset(gdt_table, 0, sizeof(gdt_table));
 	gp = &gdt_table[2];		/* source descriptor*/
-	gp->limit_15_0 = 0xffff;
+	gp->limit_15_0 = 0xffff;	/* must be FFFF for LOADALL */
 	gp->base_15_0 = (word_t)src_seg;
 	gp->base_23_16 = src_seg >> 16;
-	gp->access_byte = 0x93;	/* present, rignt 0, data, expand-up, writable, accessed */
+	gp->access_byte = 0x92;		/* present, data, expand-up, writable */
 	//gp->flags_limit_19_16 = 0;	/* byte-granular, 16-bit, limit=64K */
 	//gp->flags_limit_19_16 = 0xCF;	/* page-granular, 32-bit, limit=4GB */
 	gp->base_31_24 = src_seg >> 24;
 
 	gp = &gdt_table[3];		/* dest descriptor*/
-	gp->limit_15_0 = 0xffff;
+	gp->limit_15_0 = 0xffff;	/* must be FFFF for LOADALL */
 	gp->base_15_0 = (word_t)dst_seg;
 	gp->base_23_16 = dst_seg >> 16;
-	gp->access_byte = 0x93;	/* present, rignt 0, data, expand-up, writable, accessed */
+	gp->access_byte = 0x92;		/* present, data, expand-up, writable */
 	//gp->flags_limit_19_16 = 0;	/* byte-granular, 16-bit, limit=64K */
 	//gp->flags_limit_19_16 = 0xCF;	/* page-granular, 32-bit, limit=4GB */
 	gp->base_31_24 = dst_seg >> 24;
-	if(arch_cpu == 6)
-	 loadall_block_move(gdt_table,count);
+	if (xms_enabled == XMS_LOADALL)
+		loadall_block_move(gdt_table,count);
 	else 
-	 block_move(gdt_table, count);
+		block_move(gdt_table, count); /* interrupts re-enabled in BIOS ASM */
 }
 
 #endif /* CONFIG_FS_XMS */

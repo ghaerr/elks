@@ -240,11 +240,12 @@ fmemcmpw_exit:
 // passed to this function.
 //
 loadall_block_move:
-	push	%es		#FIXME rewrite prologue to avoid saving DS/ES twice
-	push	%si
-	push	%di
 	push	%bp
 	mov	%sp,%bp
+	push	%si
+	push	%di
+	push	%ds
+	push	%es
 
 	mov	$0x80,%cx	#clear 33h words at 800-866h
 	mov	%cx,%es
@@ -255,7 +256,7 @@ loadall_block_move:
 	cld
 	rep	stosw
 
-	mov	10(%bp),%bx	#BX=GDT
+	mov	4(%bp),%bx	#BX=GDT
 
 #src DS
 	mov	16(%bx),%ax	#src limit
@@ -301,7 +302,7 @@ loadall_block_move:
 	shl	%cl,%ax
 	mov	%ax,%es:(0x42)	#SS low16
 
-	mov	12(%bp),%cx	#word count
+	mov	6(%bp),%cx	#word count
 
 	push	%ss		#save SS for later SS reset
 	push	%cs		#CS used in later call to resetCS
@@ -313,11 +314,11 @@ loadall_block_move:
 	mov	%es,%es:(0x24)
 	mov	%bp,%es:(0x2a)  #preserve normal registers
 	mov	%sp,%es:(0x2c)
-	//mov	%di,%es:(0x26)	#set SI, DI zero for REP MOVS below
+	//mov	%di,%es:(0x26)	#set SI, DI zero for REP MOVS
 	//mov	%si,%es:(0x28)
+	mov	%cx,%es:(0x32)  #CX is word count for REP MOVS
 	//mov	%bx,%es:(0x2e)	#the following not required to be preserved
 	//mov	%dx,%es:(0x30)
-	//mov	%cx,%es:(0x32)
 	//mov	%ax,%es:(0x34)
 	.byte   0x0F,0x05       #loadall opcode - execution continues at new IP
 	# not reached
@@ -329,16 +330,11 @@ newip:				#new IP after LOADALL, interrupts disabled by FLAGS = 0
 	rep	movsw		#word transfer using DS&ES descriptor cache base values
 
 	call	resetCS		#RETF resets CS to 20-bits, uses previous CS from stack
-	pop	%ax
-	mov	%ax,%ss		#reset SS base FIXME use POP %ss after testing
-	push	%ds
-	pop	%ds		#reset DS base FIXME pop from rewritten prologue
-	push	%es
-	pop	%es		#reset ES base FIXME pop from rewritten prologue
+	pop	%ss		#reset SS base
+	pop	%es		#reset ES base
+	pop	%ds		#reset DS base
 	sti
-
-	pop	%bp
 	pop	%di
 	pop	%si
-	pop	%es
+	pop	%bp
 	ret

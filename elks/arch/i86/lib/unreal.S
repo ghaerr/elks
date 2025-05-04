@@ -293,7 +293,7 @@ linear32_peekw:
 # E specifies Executable. 0 for data, 1 for code segments.
 #
 # The D/C bit specifies Direction bit for data segments, 0=Expand Up else Down,
-# For code segments, 0 is nonconfirming, 1 Confirming.
+# For code segments, 0 is nonconforming, 1 Conforming.
 #
 # The W/R bit specifies Writable for data segments, Readable for code.
 #
