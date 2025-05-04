@@ -26,7 +26,7 @@
 
 /* these used when running XMS_INT15 or XMS_LOADALL */
 struct gdt_table;
-int bios_block_movew(struct gdt_table *gdtp, size_t words);	/* INT 15/1F */
+void bios_block_movew(struct gdt_table *gdtp, size_t words);	/* INT 15/1F */
 void int15_fmemcpy(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
 		size_t bytes);
 #define MOVE            0       /* block move */
