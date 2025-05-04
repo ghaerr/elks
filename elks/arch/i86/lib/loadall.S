@@ -17,7 +17,7 @@
 
 # LOADALL Memory Format (0800h - 0865h)
 # Physical     Size in
-# Address	    Words   Associated CPU Register
+# Address      Words   Associated CPU Register
 # 800          3       unused
 # 806          1       MSW
 # 808          7       unused
@@ -38,21 +38,21 @@
 # 832          1       CX
 # 834          1       AX
 # 836          3       ES Descriptor Cache
-#  	836         1       ES base low  15:0
-#  	838         1       ES base high 23:0 & access byte
-#  	83A         1       ES limit     15:0
+#    836         1       ES base low  15:0
+#    838         1       ES base high 23:0 & access byte
+#    83A         1       ES limit     15:0
 # 83C          3       CS Descriptor Cache
-#  	83C         1       CS base low  15:0
-#  	83E         1       CS base high 23:0 & access byte
-#  	840         1       CS limit     15:0
+#    83C         1       CS base low  15:0
+#    83E         1       CS base high 23:0 & access byte
+#    840         1       CS limit     15:0
 # 842          3       SS Descriptor Cache
-#  	842         1       SS base low  15:0
-#  	844         1       SS base high 23:0 & access byte
-#  	846         1       SS limit     15:0
+#    842         1       SS base low  15:0
+#    844         1       SS base high 23:0 & access byte
+#    846         1       SS limit     15:0
 # 848          3       DS Descriptor Cache
-#  	848         1       DS base low  15:0
-#  	84A         1       DS base high 23:0 & access byte
-#  	84C         1       DS limit     15:0
+#    848         1       DS base low  15:0
+#    84A         1       DS base high 23:0 & access byte
+#    84C         1       DS limit     15:0
 # 84E          3       GDTR (Global Descriptor Table Register)
 # 854          3       LDT Descriptor Cache
 # 85A          3       IDTR (Interrupt Descriptor Table Register)
