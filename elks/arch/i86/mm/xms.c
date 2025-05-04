@@ -24,11 +24,11 @@
  */
 #define AUTODISABLE		1		/* =1 to disable XMS w/HMA if BIOS INT 15 disables A20 */
 
-/* these used only when running XMS_INT15 */
+/* these used when running XMS_INT15 or XMS_LOADALL */
 struct gdt_table;
-int block_move(struct gdt_table *gdtp, size_t words);
-void int15_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
-		size_t count);
+int bios_block_movew(struct gdt_table *gdtp, size_t words);	/* INT 15/1F */
+void int15_fmemcpy(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
+		size_t bytes);
 #define MOVE            0       /* block move */
 #define CLEAR           1       /* block clear */
 int loadall_block_op(struct gdt_table *gdtp, size_t bytes, int op);
@@ -128,7 +128,7 @@ void xms_fmemcpyw(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src
 	  if (xms_enabled == XMS_UNREAL)
 		linear32_fmemcpyw(dst_off, dst_seg, src_off, src_seg, count);
 	  else
-		int15_fmemcpyw(dst_off, dst_seg, src_off, src_seg, count);
+		int15_fmemcpy(dst_off, dst_seg, src_off, src_seg, count << 1);
 	  return;
 	}
 	fmemcpyw(dst_off, (seg_t)dst_seg, src_off, (seg_t)src_seg, count);
@@ -151,29 +151,30 @@ void xms_fmemcpyb(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src
 	  else {
 		/* lots of extra work on odd transfers because INT 15 block moves words only */
 		size_t wc = count >> 1;
-		if (count & 1) {
+		if ((count & 1) && xms_enabled == XMS_INT15) {
 			static char buf[2];
 
 			if (wc)
-				int15_fmemcpyw(dst_off, dst_seg, src_off, src_seg, wc);
+				int15_fmemcpy(dst_off, dst_seg, src_off, src_seg, wc << 1);
 #pragma GCC diagnostic ignored "-Wpointer-arith"
 			dst_off += count-1;
 			src_off += count-1;
 
 			if (need_xms_src) {
 				/* move from XMS to kernel data segment */
-				int15_fmemcpyw(buf, (addr_t)kernel_ds<<4, src_off, src_seg, 1);
+				int15_fmemcpy(buf, (addr_t)kernel_ds<<4, src_off, src_seg, 2);
 				pokeb((word_t)dst_off, (seg_t)(dst_seg>>4), buf[0]);
 			} else {
 				/* move from kernel data segment to XMS, very infrequent for odd count */
 				addr_t kernel_ds_32 = (addr_t)kernel_ds << 4;
-				int15_fmemcpyw(buf, kernel_ds_32, dst_off, dst_seg, 1);
+				int15_fmemcpy(buf, kernel_ds_32, dst_off, dst_seg, 2);
 				buf[0] = peekb((word_t)src_off, (seg_t)(src_seg>>4));
-				int15_fmemcpyw(dst_off, dst_seg, buf, kernel_ds_32, 1);
+				int15_fmemcpy(dst_off, dst_seg, buf, kernel_ds_32, 2);
 			}
 			return;
 		}
-		int15_fmemcpyw(dst_off, dst_seg, src_off, src_seg, wc);
+		/* count can be odd bytes for XMS_LOADALL */
+		int15_fmemcpy(dst_off, dst_seg, src_off, src_seg, count);
 	  }
 	  return;
 	}
@@ -193,7 +194,7 @@ void xms_fmemset(void *dst_off, ramdesc_t dst_seg, byte_t val, size_t count)
 	fmemsetb(dst_off, (seg_t)dst_seg, val, count);
 }
 
-/* the following struct and code is used for XMS INT 15 block moves only */
+/* the following struct and code is used for XMS INT 15/1F and LOADALL block moves only */
 struct gdt_table {
 	word_t	limit_15_0;
 	word_t	base_15_0;
@@ -203,13 +204,15 @@ struct gdt_table {
 	byte_t	base_31_24;
 };
 
-static struct gdt_table gdt_table[8];   /* FIXME static table requires mutex below */
+static struct gdt_table gdt_table[8];   /* static table requires mutex below */
 
-/* move words between XMS and main memory using BIOS INT 15h AH=87h block move */
-void int15_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
-		size_t count)
+/* move data between XMS and main memory using either BIOS INT 15/1F or LOADALL */
+/* if running XMS_INT15, bytes must not be odd! */
+void int15_fmemcpy(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
+	size_t bytes)
 {
 	struct gdt_table *gp;
+	if ((bytes & 1) && xms_enabled == XMS_INT15) panic("int15_fmemcpy");
 
 	src_seg += (word_t)src_off;
 	dst_seg += (word_t)dst_off;
@@ -234,9 +237,9 @@ void int15_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg
 	gp->base_31_24 = dst_seg >> 24;
 	/* interrupts re-enabled in block_move or loadall_block_op routine */
 	if (xms_enabled == XMS_LOADALL)
-		loadall_block_op(gdt_table, count << 1, MOVE);  /* block move bytes */
+		loadall_block_op(gdt_table, bytes, MOVE);   /* block move bytes */
 	else 
-		block_move(gdt_table, count);
+		bios_block_movew(gdt_table, bytes >> 1);
 }
 
 #endif /* CONFIG_FS_XMS */

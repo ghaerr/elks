@@ -2,7 +2,7 @@
 # BIOS INT 15H Block Move and A20 enable for IBM PC
 # Nov 2021 Greg Haerr
 #
-# int block_move(struct gdt_table *gdtp, size_t words)
+# int bios_block_movew(struct gdt_table *gdtp, size_t words)
 #
 #	Move words to/from anywhere in physical memory using BIOS INT 15h AH=87h.
 #	Normally used to move data to/from extended memory (> 1M) because
@@ -18,17 +18,17 @@
 	.code16
 	.text
 
-	.global	block_move
+	.global	bios_block_movew
 	.global	enable_a20_gate
 
 # IBM PC A20 gate functions shared with setup.S
 #include "a20-ibm.inc"
 
 #
-# int block_move(struct gdt_table *gdtp, size_t words)
+# int bios_block_movew(struct gdt_table *gdtp, size_t words)
 # Uses BIOS INT 15h AH=87h Block Move
 # NOTE: BIOS disables A20 during call, won't work with HMA kernel
-block_move:
+bios_block_movew:
 	push	%es
 	push	%si
 	push	%bp
