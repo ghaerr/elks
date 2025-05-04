@@ -2,10 +2,10 @@
 # Use 80286 LOADALL instruction to set segment cache register base then block move
 # For 80286 CPUs only
 #
-# 1 May 2025 Originally written by @drachenjp6
+# 1 May 2025 Originally written by @drachen6jp
 #
-# void loadall_block_move(struct gdt_table *gdtp, size_t words)
-#   Replacement INT 15/1F block move function using undocumented Intel LOADALL opcode
+# void loadall_block_op(struct gdt_table *gdtp, size_t bytes, int op)
+#   Replacement INT 15/1F block ops function using undocumented Intel LOADALL opcode
 #   Performs block move from passed GDT structure in int15_fmemcpyw
 #   This function must only be called using 80286 CPU!!
 #
@@ -13,7 +13,7 @@
 	.code16
 	.text
 
-	.global loadall_block_move
+	.global loadall_block_op
 
 # LOADALL Memory Format (0800h - 0865h)
 # Physical     Size in
@@ -92,7 +92,7 @@
 
 # Use LOADALL to set the segment cache register limits and perform block move.
 # Requires 80286 CPU to call!
-loadall_block_move:
+loadall_block_op:
 	push	%bp
 	mov	%sp,%bp
 	push	%si
@@ -155,7 +155,8 @@ loadall_block_move:
 	shl	%cl,%ax
 	mov	%ax,%es:(0x42)	#SS low16
 
-	mov	6(%bp),%cx	#word count
+	mov	6(%bp),%cx	#byte count
+	mov	8(%bp),%bx	#op
 
 	push	%ss		#save SS for later SS reset
 	push	%cs		#CS used in later call to resetCS
@@ -167,11 +168,11 @@ loadall_block_move:
 	mov	%es,%es:(0x24)
 	mov	%bp,%es:(0x2a)  #preserve normal registers
 	mov	%sp,%es:(0x2c)
-	//mov	%di,%es:(0x26)	#set SI, DI zero for REP MOVS
+	//mov	%di,%es:(0x26)	#comment out sets SI, DI zero for REP MOVS
 	//mov	%si,%es:(0x28)
-	mov	%cx,%es:(0x32)  #CX is word count for REP MOVS
-	//mov	%bx,%es:(0x2e)	#the following not required to be preserved
-	//mov	%dx,%es:(0x30)
+	mov	%bx,%es:(0x30)  #BX is block operation code
+	mov	%cx,%es:(0x32)  #CX is byte count for block operation
+	//mov	%dx,%es:(0x2e)	#the following not required to be preserved
 	//mov	%ax,%es:(0x34)
 	.byte   0x0F,0x05       #loadall opcode - execution continues at new IP
 	# not reached
@@ -180,7 +181,10 @@ resetCS:
 	retf			#reset CS to 20-bit segment
 
 newip:				#new IP after LOADALL, interrupts disabled by FLAGS = 0
+	shr	$1,%cx		#convert to words
 	rep	movsw		#word transfer using DS&ES descriptor cache base values
+	rcl	$1,%cx		#final byte if any
+	rep	movsb
 
 	call	resetCS		#RETF resets CS to 20-bits, uses previous CS from stack
 	pop	%ss		#reset SS base

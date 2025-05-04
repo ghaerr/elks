@@ -27,9 +27,11 @@
 /* these used only when running XMS_INT15 */
 struct gdt_table;
 int block_move(struct gdt_table *gdtp, size_t words);
-int loadall_block_move(struct gdt_table *gdtp, size_t words);
 void int15_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
 		size_t count);
+#define MOVE            0       /* block move */
+#define CLEAR           1       /* block clear */
+int loadall_block_op(struct gdt_table *gdtp, size_t bytes, int op);
 
 /*
  * ramdesc_t: if CONFIG_FS_XMS not set, then it's a normal seg_t segment descriptor.
@@ -230,9 +232,9 @@ void int15_fmemcpyw(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg
 	gp->access_byte = 0x92;		/* present, data, expand-up, writable */
 	gp->flags_limit_19_16 = 0;	/* byte-granular, 16-bit, limit=64K */
 	gp->base_31_24 = dst_seg >> 24;
-	/* interrupts re-enabled in block_move or loadall_block_move routine */
+	/* interrupts re-enabled in block_move or loadall_block_op routine */
 	if (xms_enabled == XMS_LOADALL)
-		loadall_block_move(gdt_table,count);
+		loadall_block_op(gdt_table, count << 1, MOVE);  /* block move bytes */
 	else 
 		block_move(gdt_table, count);
 }
