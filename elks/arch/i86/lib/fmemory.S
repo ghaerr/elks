@@ -313,11 +313,11 @@ loadall_block_move:
 	mov	%es,%es:(0x24)
 	mov	%bp,%es:(0x2a)  #preserve normal registers
 	mov	%sp,%es:(0x2c)
-	//mov	%di,%es:(0x26)	#set SI, DI zero for REP MOVS below
+	//mov	%di,%es:(0x26)	#set SI, DI zero for REP MOVS
 	//mov	%si,%es:(0x28)
+	mov	%cx,%es:(0x32)  #CX is word count for REP MOVS
 	//mov	%bx,%es:(0x2e)	#the following not required to be preserved
 	//mov	%dx,%es:(0x30)
-	//mov	%cx,%es:(0x32)
 	//mov	%ax,%es:(0x34)
 	.byte   0x0F,0x05       #loadall opcode - execution continues at new IP
 	# not reached
