@@ -5,14 +5,14 @@
 	.code16
 	.text
 
-	.global	block_move
+	.global	bios_block_movew
 	.global	enable_a20_gate
 
 # PC-98 A20 gate functions shared with setup.S
 #include "a20-pc98.inc"
 
 #
-# int block_move(struct gdt_table *gdtp, size_t words)
+# void bios_block_movew(struct gdt_table *gdtp, size_t words)
 # Uses BIOS INT 1Fh AH=90h Block Move
 # NOTE: BIOS disables A20 during call, won't work with HMA kernel
 # ES:BX gdtp
@@ -20,7 +20,7 @@
 # SI    0000h
 # DI    0000h
 #
-block_move:
+bios_block_movew:
 	push	%es
 	push	%si
 	push	%di
@@ -38,12 +38,8 @@ block_move:
 
 	mov	$0x90,%ah	# BIOS Block Move
 	int	$0x1F
-	sti			# ensure we've got interrupts
-	jnc	1f
-	mov	$-1,%ax		# fail return AX < 0
-	jmp	2f
-1:	xor	%ax,%ax		# success return AX = 0
-2:	pop	%bp
+	sti			# re-enable interrupts from int15_fmemcpy
+	pop	%bp
 	pop	%di
 	pop	%si
 	pop	%es
