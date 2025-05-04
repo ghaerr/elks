@@ -29,7 +29,7 @@ struct gdt_table;
 void bios_block_movew(struct gdt_table *gdtp, size_t words);	/* INT 15/1F */
 void int15_fmemcpy(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
 		size_t bytes);
-#define MOVE            0       /* block move */
+#define COPY            0       /* block move */
 #define CLEAR           1       /* block clear */
 int loadall_block_op(struct gdt_table *gdtp, size_t bytes, int op);
 
@@ -150,9 +150,9 @@ void xms_fmemcpyb(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src
 		linear32_fmemcpyb(dst_off, dst_seg, src_off, src_seg, count);
 	  else {
 		/* lots of extra work on odd transfers because INT 15 block moves words only */
-		size_t wc = count >> 1;
 		if ((count & 1) && xms_enabled == XMS_INT15) {
 			static char buf[2];
+			size_t wc = count >> 1;
 
 			if (wc)
 				int15_fmemcpy(dst_off, dst_seg, src_off, src_seg, wc << 1);
@@ -237,7 +237,7 @@ void int15_fmemcpy(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
 	gp->base_31_24 = dst_seg >> 24;
 	/* interrupts re-enabled in block_move or loadall_block_op routine */
 	if (xms_enabled == XMS_LOADALL)
-		loadall_block_op(gdt_table, bytes, MOVE);   /* block move bytes */
+		loadall_block_op(gdt_table, bytes, COPY);   /* block move bytes */
 	else 
 		bios_block_movew(gdt_table, bytes >> 1);
 }
