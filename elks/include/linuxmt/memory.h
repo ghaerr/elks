@@ -40,6 +40,7 @@ int enable_a20_gate(void);      /* returns 0 on fail */
 #define XMS_DISABLED    0
 #define XMS_UNREAL      1   /* using unreal mode and linear32_fmemcpy for block moves */
 #define XMS_INT15       2   /* using BIOS INT 15 block move (or INT 1F on PC-98) */
+#define XMS_LOADALL     3   /* using LOADALL 286 opcode and loadall_block_move */
 extern int xms_bootopts;    /* xms=on or xms=int15 /bootopts setting, default off */
 
 #ifdef CONFIG_FS_XMS

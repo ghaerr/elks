@@ -48,7 +48,8 @@ void DrawButtonCircle(int x0, int y0, int w, int h, int r);
 // ----------------------------------------------------
 // Flood Fill Stack
 // ----------------------------------------------------
-void R_FloodFillStack(int x, int y, int color, int ogColor);
+void R_FloodFillStack(int x, int y, int newColor, int targetColor);
+int R_FrontFill(int x0, int y0, int newColor, int targetColor);
 
 // ----------------------------------------------------
 // Line Flood Fill, for the bucket tool

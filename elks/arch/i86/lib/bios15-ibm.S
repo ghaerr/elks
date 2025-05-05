@@ -2,33 +2,32 @@
 # BIOS INT 15H Block Move and A20 enable for IBM PC
 # Nov 2021 Greg Haerr
 #
-# int block_move(struct gdt_table *gdtp, size_t words)
+# void bios_block_movew(struct gdt_table *gdtp, size_t words)
 #
 #	Move words to/from anywhere in physical memory using BIOS INT 15h AH=87h.
 #	Normally used to move data to/from extended memory (> 1M) because
 #	real mode addressing can only address the first 1M of RAM, unless
 #	using unreal mode. Protected mode is used for the copy, and interrupts
-#	are disabled the whole time. Returns 0 on success.
+#	are disabled the whole time.
 #
 #	This is a substitute function for linear32_fmemcpyw which requires unreal mode,
 #	and uses a int15_fmemcpy wrapper above it to prefill the passed GDT table.
-#
 
 	.arch	i8086, nojumps
 	.code16
 	.text
 
-	.global	block_move
+	.global	bios_block_movew
 	.global	enable_a20_gate
 
 # IBM PC A20 gate functions shared with setup.S
 #include "a20-ibm.inc"
 
 #
-# int block_move(struct gdt_table *gdtp, size_t words)
+# void bios_block_movew(struct gdt_table *gdtp, size_t words)
 # Uses BIOS INT 15h AH=87h Block Move
 # NOTE: BIOS disables A20 during call, won't work with HMA kernel
-block_move:
+bios_block_movew:
 	push	%es
 	push	%si
 	push	%bp
@@ -41,12 +40,8 @@ block_move:
 
 	mov	$0x87,%ah	# BIOS Block Move
 	int	$0x15
-	jnc	1f
-	sti			# ensure we've got interrupts
-	mov	$-1,%ax		# fail return AX < 0
-	jmp	2f
-1:	xor	%ax,%ax		# success return AX = 0
-2:	pop	%bp
+	sti			# re-enable interrupts from int15_fmemcpy
+	pop	%bp
 	pop	%si
 	pop	%es
 	ret
