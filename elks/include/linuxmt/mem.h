@@ -13,9 +13,13 @@
 #define MEM_GETJIFFADDR 11
 #define MEM_GETSEGALL   12
 
-struct mem_usage {
-    unsigned int free_memory;
-    unsigned int used_memory;
+struct mem_usage {              /* all in Kbytes */
+    unsigned int main_free;
+    unsigned int main_used;
+    unsigned int xms_free;
+    unsigned int xms_used;
 };
+
+void mm_get_usage(struct mem_usage *mu);
 
 #endif
