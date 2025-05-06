@@ -1,12 +1,13 @@
-####################################################################################
-# Use 80286 LOADALL instruction to set segment cache register base then block move
+#######################################################################################
+# Use 80286 semi-documented LOADALL opcode to set segment cache register base,
+# then perform block move or memory copy operation.
 # For 80286 CPUs only
 #
 # 1 May 2025 Originally written by @drachen6jp
 #
 # void loadall_block_op(struct gdt_table *gdtp, size_t bytes, int op)
-#   Replacement INT 15/1F block ops function using undocumented Intel LOADALL opcode
-#   Performs block move from passed GDT structure in int15_fmemcpyw
+#   Replacement INT 15/1F block ops function using semi-documented Intel LOADALL opcode
+#   Performs block copy or clear from passed GDT structure in int15_fmemcpy
 #   This function must only be called using 80286 CPU!!
 #
 	.arch	i8086, nojumps
@@ -90,7 +91,7 @@
 # limits are always passed as FFFFh and the access bytes normal in the GDT table
 # passed to this function.
 
-# Use LOADALL to set the segment cache register limits and perform block move.
+# Use LOADALL to set the segment cache register limits and perform block copy/clear op.
 # Requires 80286 CPU to call!
 loadall_block_op:
 	push	%bp
@@ -180,13 +181,23 @@ loadall_block_op:
 resetCS:
 	retf			#reset CS to 20-bit segment
 
+# SI = 24-bit source address, DI = 24-bit destination, CX = byte count, BX = op
 newip:				#new IP after LOADALL, interrupts disabled by FLAGS = 0
-	shr	$1,%cx		#convert to words
+	test	%bx,%bx		#0:copy, 1:clear
+	jnz	clear
+copy:	shr	$1,%cx		#convert to words
 	rep	movsw		#word transfer using DS&ES descriptor cache base values
 	rcl	$1,%cx		#final byte if any
 	rep	movsb
+	jmp	9f
 
-	call	resetCS		#RETF resets CS to 20-bits, uses previous CS from stack
+clear:	xor	%ax,%ax		#clear block
+	shr	$1,%cx		#convert to words
+	rep	stosw		#word store using DS&ES descriptor cache base values
+	rcl	$1,%cx		#final byte if any
+	rep	stosb
+
+9:	call	resetCS		#RETF resets CS to 20-bits, uses previous CS from stack
 	pop	%ss		#reset SS base
 	pop	%es		#reset ES base
 	pop	%ds		#reset DS base
