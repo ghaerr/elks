@@ -27,10 +27,10 @@
 /* these used when running XMS_INT15 or XMS_LOADALL */
 struct gdt_table;
 void bios_block_movew(struct gdt_table *gdtp, size_t words);	/* INT 15/1F */
-void int15_fmemcpy(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
-		size_t bytes);
 #define COPY            0       /* block move */
 #define CLEAR           1       /* block clear */
+void int15_fmemcpy(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
+		size_t bytes, int op);
 int loadall_block_op(struct gdt_table *gdtp, size_t bytes, int op);
 
 /*
@@ -128,7 +128,7 @@ void xms_fmemcpyw(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src
 	  if (xms_enabled == XMS_UNREAL)
 		linear32_fmemcpyw(dst_off, dst_seg, src_off, src_seg, count);
 	  else
-		int15_fmemcpy(dst_off, dst_seg, src_off, src_seg, count << 1);
+		int15_fmemcpy(dst_off, dst_seg, src_off, src_seg, count << 1, COPY);
 	  return;
 	}
 	fmemcpyw(dst_off, (seg_t)dst_seg, src_off, (seg_t)src_seg, count);
@@ -155,40 +155,43 @@ void xms_fmemcpyb(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src
 			size_t wc = count >> 1;
 
 			if (wc)
-				int15_fmemcpy(dst_off, dst_seg, src_off, src_seg, wc << 1);
+				int15_fmemcpy(dst_off, dst_seg, src_off, src_seg, wc << 1, COPY);
 #pragma GCC diagnostic ignored "-Wpointer-arith"
 			dst_off += count-1;
 			src_off += count-1;
 
 			if (need_xms_src) {
 				/* move from XMS to kernel data segment */
-				int15_fmemcpy(buf, (addr_t)kernel_ds<<4, src_off, src_seg, 2);
+				int15_fmemcpy(buf, (addr_t)kernel_ds<<4, src_off, src_seg, 2, COPY);
 				pokeb((word_t)dst_off, (seg_t)(dst_seg>>4), buf[0]);
 			} else {
 				/* move from kernel data segment to XMS, very infrequent for odd count */
 				addr_t kernel_ds_32 = (addr_t)kernel_ds << 4;
-				int15_fmemcpy(buf, kernel_ds_32, dst_off, dst_seg, 2);
+				int15_fmemcpy(buf, kernel_ds_32, dst_off, dst_seg, 2, COPY);
 				buf[0] = peekb((word_t)src_off, (seg_t)(src_seg>>4));
-				int15_fmemcpy(dst_off, dst_seg, buf, kernel_ds_32, 2);
+				int15_fmemcpy(dst_off, dst_seg, buf, kernel_ds_32, 2, COPY);
 			}
 			return;
 		}
 		/* count can be odd bytes for XMS_LOADALL */
-		int15_fmemcpy(dst_off, dst_seg, src_off, src_seg, count);
+		int15_fmemcpy(dst_off, dst_seg, src_off, src_seg, count, COPY);
 	  }
 	  return;
 	}
 	fmemcpyb(dst_off, (seg_t)dst_seg, src_off, (seg_t)src_seg, count);
 }
 
-/* memset XMS or far memory, INT 15 not yet supported */
+/* memset XMS or far memory, INT 15 not supported */
+/* XMS_LOADALL will only clear memory to zero */
 void xms_fmemset(void *dst_off, ramdesc_t dst_seg, byte_t val, size_t count)
 {
 	int	need_xms_dst = dst_seg >> 16;
 
 	if (need_xms_dst) {
-		if (xms_enabled != XMS_UNREAL) panic("xms_fmemset");
-		linear32_fmemset(dst_off, dst_seg, val, count);
+		if (xms_enabled == XMS_INT15) panic("xms_fmemset");
+		if (xms_enabled == XMS_UNREAL)
+			linear32_fmemset(dst_off, dst_seg, val, count);
+		else int15_fmemcpy(dst_off, dst_seg, 0, 0, count, CLEAR);
 		return;
 	}
 	fmemsetb(dst_off, (seg_t)dst_seg, val, count);
@@ -206,13 +209,14 @@ struct gdt_table {
 
 static struct gdt_table gdt_table[8];   /* static table requires mutex below */
 
-/* move data between XMS and main memory using either BIOS INT 15/1F or LOADALL */
-/* if running XMS_INT15, bytes must not be odd! */
+/* move/clear data between XMS and main memory using either BIOS INT 15/1F or LOADALL */
+/* XMS_INT15 can't handle odd bytes or memory clear! */
 void int15_fmemcpy(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
-	size_t bytes)
+	size_t bytes, int op)
 {
 	struct gdt_table *gp;
-	if ((bytes & 1) && xms_enabled == XMS_INT15) panic("int15_fmemcpy");
+	if (xms_enabled == XMS_INT15 && ((bytes & 1) || op != COPY))
+		panic("int15_fmemcpy");
 
 	src_seg += (word_t)src_off;
 	dst_seg += (word_t)dst_off;
@@ -237,7 +241,7 @@ void int15_fmemcpy(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
 	gp->base_31_24 = dst_seg >> 24;
 	/* interrupts re-enabled in block_move or loadall_block_op routine */
 	if (xms_enabled == XMS_LOADALL)
-		loadall_block_op(gdt_table, bytes, COPY);   /* block move bytes */
+		loadall_block_op(gdt_table, bytes, op); /* block move/clear bytes */
 	else 
 		bios_block_movew(gdt_table, bytes >> 1);
 }
