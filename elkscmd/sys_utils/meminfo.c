@@ -255,8 +255,10 @@ int main(int argc, char **argv)
 
     if (!ioctl(fd, MEM_GETUSAGE, &mu)) {
         /* note MEM_GETUSAGE amounts are floors, so total may display less by 1k than actual*/
-        printf("  Memory usage %4dKB total, %4dKB used, %4dKB free\n",
-            mu.used_memory + mu.free_memory, mu.used_memory, mu.free_memory);
+        printf("  Main %d/%dK used, %dK free, ",
+            mu.main_used, mu.main_used + mu.main_free, mu.main_free);
+        printf("XMS %d/%dK used, %dK free\n",
+            mu.xms_used, mu.xms_used + mu.xms_free, mu.xms_free);
     }
 
     return 0;

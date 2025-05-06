@@ -64,8 +64,6 @@ void seg_free_pid(pid_t pid);
 
 extern list_s _seg_all;
 
-void mm_get_usage (unsigned int * free, unsigned int * used);
-
 #endif /* __KERNEL__ */
 
 #endif
