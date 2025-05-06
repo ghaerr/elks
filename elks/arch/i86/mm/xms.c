@@ -209,12 +209,12 @@ struct gdt_table {
 static struct gdt_table gdt_table[8];   /* static table requires mutex below */
 
 /* move/clear data between XMS and main memory using either BIOS INT 15/1F or LOADALL */
-/* XMS_INT15 can't handle odd bytes or memory clear! */
+/* NOTE: BIOS INT 15/1F can't handle odd bytes or memory clear! */
 static void int15_fmemcpy(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
 	size_t bytes, int op)
 {
 	struct gdt_table *gp;
-	if (xms_enabled == XMS_INT15 && ((bytes & 1) || op != COPY)) panic("int15_fmemcpy");
+	//if (xms_enabled == XMS_INT15 && ((bytes & 1) || op != COPY)) panic("int15_fmemcpy");
 
 	src_seg += (word_t)src_off;
 	dst_seg += (word_t)dst_off;
