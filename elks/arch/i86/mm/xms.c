@@ -22,16 +22,16 @@
  * Otherwise, when =0, hma=kernel must be commented out in /bootopts
  * to boot when configured for xms=int15 on those same systems.
  */
-#define AUTODISABLE		1		/* =1 to disable XMS w/HMA if BIOS INT 15 disables A20 */
+#define AUTODISABLE     1       /* =1 to disable XMS w/HMA if BIOS INT 15 disables A20 */
 
 /* these used when running XMS_INT15 or XMS_LOADALL */
 struct gdt_table;
-void bios_block_movew(struct gdt_table *gdtp, size_t words);	/* INT 15/1F */
+void bios_block_movew(struct gdt_table *gdtp, size_t words);	    /* INT 15/1F */
 #define COPY            0       /* block move */
 #define CLEAR           1       /* block clear */
-void int15_fmemcpy(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
-		size_t bytes, int op);
-int loadall_block_op(struct gdt_table *gdtp, size_t bytes, int op);
+int loadall_block_op(struct gdt_table *gdtp, size_t bytes, int op); /* LOADALL */
+static void int15_fmemcpy(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
+        size_t bytes, int op);
 
 /*
  * ramdesc_t: if CONFIG_FS_XMS not set, then it's a normal seg_t segment descriptor.
@@ -181,20 +181,19 @@ void xms_fmemcpyb(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src
 	fmemcpyb(dst_off, (seg_t)dst_seg, src_off, (seg_t)src_seg, count);
 }
 
-/* memset XMS or far memory, INT 15 not supported */
-/* XMS_LOADALL will only clear memory to zero */
-void xms_fmemset(void *dst_off, ramdesc_t dst_seg, byte_t val, size_t count)
+/* clear XMS or far memory, INT 15/1F not supported */
+void xms_fmemset(void *dst_off, ramdesc_t dst_seg, size_t count)
 {
 	int	need_xms_dst = dst_seg >> 16;
 
 	if (need_xms_dst) {
 		if (xms_enabled == XMS_INT15) panic("xms_fmemset");
 		if (xms_enabled == XMS_UNREAL)
-			linear32_fmemset(dst_off, dst_seg, val, count);
+			linear32_fmemset(dst_off, dst_seg, 0, count);
 		else int15_fmemcpy(dst_off, dst_seg, 0, 0, count, CLEAR);
 		return;
 	}
-	fmemsetb(dst_off, (seg_t)dst_seg, val, count);
+	fmemsetb(dst_off, (seg_t)dst_seg, 0, count);
 }
 
 /* the following struct and code is used for XMS INT 15/1F and LOADALL block moves only */
@@ -211,12 +210,11 @@ static struct gdt_table gdt_table[8];   /* static table requires mutex below */
 
 /* move/clear data between XMS and main memory using either BIOS INT 15/1F or LOADALL */
 /* XMS_INT15 can't handle odd bytes or memory clear! */
-void int15_fmemcpy(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
+static void int15_fmemcpy(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
 	size_t bytes, int op)
 {
 	struct gdt_table *gp;
-	if (xms_enabled == XMS_INT15 && ((bytes & 1) || op != COPY))
-		panic("int15_fmemcpy");
+	if (xms_enabled == XMS_INT15 && ((bytes & 1) || op != COPY)) panic("int15_fmemcpy");
 
 	src_seg += (word_t)src_off;
 	dst_seg += (word_t)dst_off;

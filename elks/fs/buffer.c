@@ -647,7 +647,7 @@ void zero_buffer(struct buffer_head *bh, size_t offset, int count)
 #if !FORCEMAP
     else {
         ext_buffer_head *ebh = EBH(bh);
-        xms_fmemset((char *)offset, ebh->b_L2seg, 0, count);
+        xms_fmemset((char *)offset, ebh->b_L2seg, count);
     }
 #endif
 }

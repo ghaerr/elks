@@ -1,11 +1,12 @@
-####################################################################################
-# Use 80286 LOADALL opcode to set segment cache register base then move/clear memory
+#######################################################################################
+# Use 80286 semi-documented LOADALL opcode to set segment cache register base,
+# then perform block move or memory copy operation.
 # For 80286 CPUs only
 #
 # 1 May 2025 Originally written by @drachen6jp
 #
 # void loadall_block_op(struct gdt_table *gdtp, size_t bytes, int op)
-#   Replacement INT 15/1F block ops function using undocumented Intel LOADALL opcode
+#   Replacement INT 15/1F block ops function using semi-documented Intel LOADALL opcode
 #   Performs block copy or clear from passed GDT structure in int15_fmemcpy
 #   This function must only be called using 80286 CPU!!
 #
@@ -180,8 +181,9 @@ loadall_block_op:
 resetCS:
 	retf			#reset CS to 20-bit segment
 
+# SI = 24-bit source address, DI = 24-bit destination, CX = byte count, BX = op
 newip:				#new IP after LOADALL, interrupts disabled by FLAGS = 0
-	test	%bx,%bx		#copy or clear memory?
+	test	%bx,%bx		#0:copy, 1:clear
 	jnz	clear
 copy:	shr	$1,%cx		#convert to words
 	rep	movsw		#word transfer using DS&ES descriptor cache base values
