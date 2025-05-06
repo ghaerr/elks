@@ -143,7 +143,7 @@ void fillrect(int x1, int y1, int x2, int y2, int c)
 }
 
 /* initialize VGA to Read Mode 1 & set compare/color mask */
-static void vga_cmp8_init(int target_color) {
+void vga_cmp8_init(int target_color) {
     /* Set Graphics Mode Register to read mode 1 (bit 3 = 1) */
     set_write_mode(8);
 
@@ -155,7 +155,6 @@ static void vga_cmp8_init(int target_color) {
 }
 
 unsigned short cmp8(int x, int y, int target_color) {
-    vga_cmp8_init(target_color);
     /* Calculate offset in video memory */
     unsigned int offset = (y<<6) + (y<<4) + (x >> 3);
     return asm_getbyte(offset);

@@ -540,7 +540,7 @@ static SegList LINK(const SegList *E, int target) {
     int i =  0;
     int x =  E->s[0].xl;
     /* Initialize Color Compare Mode to target color */
-    // vga_cmp8_init(target);
+    vga_cmp8_init(target);
     while (1) {
         /* skip past any parent that ends before x */
         while (i < E->n && x > E->s[i].xr) i++;
@@ -755,7 +755,9 @@ int R_FrontFill(int x0, int y0, int newColor, int targetColor) {
     /* seed span on row y0 */
     Segment s0 = {x0, x0};
     // EXPAND(s0, x0, y0, targetColor);
+    vga_cmp8_init(targetColor);
     s0 = expand_cmp8(x0, y0, targetColor);
+    set_write_mode(0);
 
     E.y = y0;
     E.dir = +1;
