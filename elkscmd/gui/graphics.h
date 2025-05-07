@@ -27,7 +27,6 @@ int save_bmp(char *pathname);
 #define drawhline(x1,x2,y,c)    vga_drawhline(x1,x2,y,c)
 #define drawvline(x,y1,y2,c)    vga_drawvline(x,y1,y2,c)
 #define readpixel(x,y)          vga_readpixel(x,y)
-unsigned short cmp8(int x, int y);
 void vga_cmp8_init(int target_color);
 #else
 void drawpixel(int x,int y, int color);
