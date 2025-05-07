@@ -70,9 +70,9 @@ void linear32_fmemset(void *dst_off, addr_t dst_seg, byte_t val, size_t count);
 #else
 
 typedef seg_t ramdesc_t;	/* ramdesc_t is just a regular segment descriptor */
-#define xms_fmemcpyw	fmemcpyw
-#define xms_fmemcpyb	fmemcpyb
-#define xms_fmemset     fmemsetb
+#define xms_fmemcpyw	            fmemcpyw
+#define xms_fmemcpyb	            fmemcpyb
+#define xms_fmemset(off,seg,cnt)    fmemsetb(off, seg, 0, cnt)
 
 #endif /* CONFIG_FS_XMS */
 
