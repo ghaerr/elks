@@ -309,16 +309,6 @@ int INITPROC bios_getfdinfo(struct drive_infot *drivep)
 {
     int drive, ndrives = 0;
 
-#ifndef CONFIG_ROMCODE
-    /*
-     * The INT 13h floppy query will fail on IBM XT v1 BIOS and earlier,
-     * so default to # drives from the BIOS data area at 0x040:0x0010 (INT 11h).
-     */
-    unsigned char equip_flags = peekb(0x10, 0x40);
-    if (equip_flags & 0x01)
-        ndrives = (equip_flags >> 6) + 1;
-#endif
-
 #ifdef CONFIG_ARCH_PC98
     for (drive = 0; drive < 4; drive++) {
         if (peekb(0x55C,0) & (1 << drive)) {
@@ -334,6 +324,18 @@ int INITPROC bios_getfdinfo(struct drive_infot *drivep)
         }
     }
 #else
+
+#ifndef CONFIG_ROMCODE
+    /*
+     * The INT 13h AH=8 floppy query will fail on IBM XT v1 BIOS and earlier,
+     * so default to # drives from the BIOS data area at 0x040:0x0010 (INT 11h).
+     * Note: Bit 0 may sometimes be zero even though floppies are present.
+     */
+    unsigned char equip_flags = peekb(0x10, 0x40);
+    if (equip_flags & 0x01)           /* bit 0 may be zero on some systems, see #2070 */
+        ndrives = (equip_flags >> 6) + 1;
+#endif
+
     /* Floppy query may fail if not PC/AT */
     BD_AX = BIOSHD_DRIVE_PARMS;
     BD_DX = 0;                          /* query floppies only*/
