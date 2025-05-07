@@ -154,7 +154,7 @@ void vga_cmp8_init(int target_color) {
     set_color_dont_care(0x0F);
 }
 
-unsigned short cmp8(int x, int y, int target_color) {
+unsigned short cmp8(int x, int y) {
     /* Calculate offset in video memory */
     unsigned int offset = (y<<6) + (y<<4) + (x >> 3);
     return asm_getbyte(offset);

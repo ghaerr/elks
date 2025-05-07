@@ -472,7 +472,7 @@ static inline Segment expand_cmp8(int x, int y, int target) {
     Segment seg = { 0, -1 };
 
     /* seed must match */
-    unsigned short m = cmp8(x, y, target);
+    unsigned short m = cmp8(x, y);
     int bit = x & 7;
 
     seg.xl = seg.xr = x;
@@ -486,7 +486,7 @@ static inline Segment expand_cmp8(int x, int y, int target) {
     if (b == 0) {
         int bx = (x >> 3) - 1;
         while (bx >= 0) {
-            unsigned short m2 = cmp8(bx<<3, y, target);
+            unsigned short m2 = cmp8(bx<<3, y);
             if (m2 == 0xFF) {
                 seg.xl = (bx<<3);
                 bx--;
@@ -509,7 +509,7 @@ static inline Segment expand_cmp8(int x, int y, int target) {
         int bx = (x >> 3) + 1;
         int maxBX = (CANVAS_WIDTH>>3);
         while (bx <= maxBX) {
-            unsigned short m2 = cmp8(bx<<3, y, target);
+            unsigned short m2 = cmp8(bx<<3, y);
             if (m2 == 0xFF) {
                 seg.xr = (bx<<3) + 7;
                 bx++;
@@ -549,7 +549,7 @@ static SegList LINK(const SegList *E, int target) {
         if (x < E->s[i].xl) x = E->s[i].xl;
 
         /* if we hit the target, expand and record */
-        if (cmp8(x, out.y, target) & (1 << (7 - (x & 7)))) {
+        if (cmp8(x, out.y) & (1 << (7 - (x & 7)))) {
         // if (readpixel(x, out.y) == target) {
             Segment seg_new = {x, x};
             seg_new = expand_cmp8(x, out.y, target);
