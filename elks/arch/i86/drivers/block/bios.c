@@ -329,10 +329,10 @@ int INITPROC bios_getfdinfo(struct drive_infot *drivep)
     /*
      * The INT 13h AH=8 floppy query will fail on IBM XT v1 BIOS and earlier,
      * so default to # drives from the BIOS data area at 0x040:0x0010 (INT 11h).
-     * Note: Bit 0 may sometimes be zero even though floppies are present.
+     * Note: Ignore bit 0 as it is sometimes zero even though floppies are present.
      */
     unsigned char equip_flags = peekb(0x10, 0x40);
-    if (equip_flags & 0x01)           /* bit 0 may be zero on some systems, see #2070 */
+    //if (equip_flags & 0x01)           /* bit 0 may be zero on some systems, see #2070 */
         ndrives = (equip_flags >> 6) + 1;
 #endif
 
