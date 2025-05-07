@@ -468,11 +468,11 @@ static int count_trailing_ones(unsigned short x) {
     * expand_cmp8:
     *   full two‑sided expansion around seed (x,y) for 'target' color.
     */
-static inline Segment expand_cmp8(int x, int y, int target) {
+static inline Segment expand_cmp8(int x, unsigned int offset_y, int target) {
     Segment seg = { 0, -1 };
 
     /* seed must match */
-    unsigned short m = cmp8(x, y);
+    unsigned short m = asm_getbyte(offset_y + (x >> 3));
     int bit = x & 7;
 
     seg.xl = seg.xr = x;
@@ -486,7 +486,7 @@ static inline Segment expand_cmp8(int x, int y, int target) {
     if (b == 0) {
         int bx = (x >> 3) - 1;
         while (bx >= 0) {
-            unsigned short m2 = cmp8(bx<<3, y);
+            unsigned short m2 = asm_getbyte(offset_y + bx);
             if (m2 == 0xFF) {
                 seg.xl = (bx<<3);
                 bx--;
@@ -509,7 +509,7 @@ static inline Segment expand_cmp8(int x, int y, int target) {
         int bx = (x >> 3) + 1;
         int maxBX = (CANVAS_WIDTH>>3);
         while (bx <= maxBX) {
-            unsigned short m2 = cmp8(bx<<3, y);
+            unsigned short m2 = asm_getbyte(offset_y + bx);
             if (m2 == 0xFF) {
                 seg.xr = (bx<<3) + 7;
                 bx++;
@@ -536,6 +536,8 @@ static SegList LINK(const SegList *E, int target) {
     if (out.y < 0 || out.y >= CANVAS_HEIGHT || E->n == 0)
         return out;
 
+    unsigned int offset_y = (out.y<<6) + (out.y<<4);
+
     /* scan across the union of parent spans */
     int i =  0;
     int x =  E->s[0].xl;
@@ -549,10 +551,10 @@ static SegList LINK(const SegList *E, int target) {
         if (x < E->s[i].xl) x = E->s[i].xl;
 
         /* if we hit the target, expand and record */
-        if (cmp8(x, out.y) & (1 << (7 - (x & 7)))) {
+        if (asm_getbyte(offset_y + (x >> 3)) & (1 << (7 - (x & 7)))) {
         // if (readpixel(x, out.y) == target) {
             Segment seg_new = {x, x};
-            seg_new = expand_cmp8(x, out.y, target);
+            seg_new = expand_cmp8(x, offset_y, target);
             // EXPAND(seg_new, x, out.y, target);
 
             if (seg_new.xl <= seg_new.xr && out.n < MAX_SEGS) {
@@ -756,7 +758,7 @@ int R_FrontFill(int x0, int y0, int newColor, int targetColor) {
     Segment s0 = {x0, x0};
     // EXPAND(s0, x0, y0, targetColor);
     vga_cmp8_init(targetColor);
-    s0 = expand_cmp8(x0, y0, targetColor);
+    s0 = expand_cmp8(x0, (y0<<6) + (y0<<4), targetColor);
     set_write_mode(0);
 
     E.y = y0;
