@@ -403,13 +403,6 @@ typedef struct {
 //     while (seg.xr < CANVAS_WIDTH-1 && readpixel(seg.xr + 1, y) == target) seg.xr++;
 //     return seg;
 // }
-// /* EXPAND_RIGHT: only to the right from x (already target) */
-// static Segment expand_right(int x, int y, int target) {
-//     Segment seg = {x, x};
-//     while (seg.xr < CANVAS_WIDTH-1 && readpixel(seg.xr + 1, y) == target)
-//         seg.xr++;
-//     return seg;
-// }
 
 #define EXPAND(result, x, y, target)                      \
     do {                                                         \
@@ -421,15 +414,118 @@ typedef struct {
         (result).xl = _xl; (result).xr = _xr;                \
     } while (0)
 
-#define EXPAND_RIGHT(result, x, y, target)                 \
-    do {                                                          \
-        int _xr = (x);                                            \
-        while (_xr < CANVAS_WIDTH-1 && readpixel(_xr + 1, (y)) == target) \
-            _xr++;                                                \
-        (result).xl = (x);                                        \
-        (result).xr = _xr;                                        \
-    } while (0)
 
+/* lookup table for number of leading 1s in a 4‑bit nibble
+   index = nibble value (0x0–0xF), value = count of 1‑bits
+   starting at the nibble’s MSB */
+static const unsigned short L1[16] = {
+    /*0x0*/ 0, /*0x1*/ 0, /*0x2*/ 0, /*0x3*/ 0,
+    /*0x4*/ 0, /*0x5*/ 0, /*0x6*/ 0, /*0x7*/ 0,
+    /*0x8*/ 1, /*0x9*/ 1, /*0xA*/ 1, /*0xB*/ 1,
+    /*0xC*/ 2, /*0xD*/ 2, /*0xE*/ 3, /*0xF*/ 4
+};
+
+/*
+ * Count the run of 1‑bits from bit 7 downward.
+ * – Extract the high nibble, look up its leading‑1 count.
+ * – If it was all ones (0xF), continue into the low nibble.
+ */
+static int count_leading_ones(unsigned short x) {
+    unsigned short hi = x >> 4;
+    int cnt = L1[hi];
+    if (hi == 0x0F) {
+        /* high nibble was 1111, so add low‑nibble’s leading‑1 count */
+        cnt += L1[x & 0x0F];
+    }
+    return cnt-1;
+}
+
+/* lookup table for number of trailing 1s in a 4‑bit nibble */
+static const unsigned short T1[16] = {
+    /* 0x0 */ 0,     /* 0x1 */ 1,    /* 0x2 */ 0,     /* 0x3 */ 2,
+    /* 0x4 */ 0,     /* 0x5 */ 1,    /* 0x6 */ 0,     /* 0x7 */ 3,
+    /* 0x8 */ 0,     /* 0x9 */ 1,    /* 0xA */ 0,     /* 0xB */ 2,
+    /* 0xC */ 0,     /* 0xD */ 1,    /* 0xE */ 0,     /* 0xF */ 4
+};
+
+/*
+ * Count the run of 1‐bits from bit 0 upward.
+ * For low nibble ≠ 0xF this is just one table lookup.
+ * If low nibble == 0xF, we get 4 + table[high_nibble].
+ */
+static int count_trailing_ones(unsigned short x) {
+    unsigned short lo = x & 0x0F;
+    int cnt = T1[lo];
+    if (lo == 0x0F) {
+        /* still all 1s in low nibble, so add count from high nibble */
+        cnt += T1[x >> 4];
+    }
+    return cnt-1;
+}
+
+
+/*
+    * expand_cmp8:
+    *   full two‑sided expansion around seed (x,y) for 'target' color.
+    */
+static inline Segment expand_cmp8(int x, unsigned int offset_y, int target) {
+    Segment seg = { 0, -1 };
+
+    /* seed must match */
+    unsigned short m = asm_getbyte(offset_y + (x >> 3));
+    int bit = x & 7;
+
+    seg.xl = seg.xr = x;
+
+    /* —— grow left within this byte —— */
+    int b = bit;
+    while (b > 0 && (m & (1 << (7 - (b - 1))))) {
+        b--; seg.xl--;
+    }
+    /* —— only if we reached the leftmost bit of this byte, go byte‑wise —— */
+    if (b == 0) {
+        int bx = (x >> 3) - 1;
+        while (bx >= 0) {
+            unsigned short m2 = asm_getbyte(offset_y + bx);
+            if (m2 == 0xFF) {
+                seg.xl = (bx<<3);
+                bx--;
+            } else {
+                int hb = count_trailing_ones(m2);
+                if (hb >= 0)
+                    seg.xl = (bx<<3) + (7 - hb);
+                break;
+            }
+        }
+    }
+
+    /* —— grow right within this byte —— */
+    b = bit;
+    while (b < 7 && (m & (1 << (7 - (b + 1))))) {
+        b++; seg.xr++;
+    }
+    /* —— only if we reached the rightmost bit of this byte, go byte‑wise —— */
+    if (b == 7) {
+        int bx = (x >> 3) + 1;
+        int maxBX = (CANVAS_WIDTH>>3);
+        while (bx <= maxBX) {
+            unsigned short m2 = asm_getbyte(offset_y + bx);
+            if (m2 == 0xFF) {
+                seg.xr = (bx<<3) + 7;
+                bx++;
+            } else {
+                int lb = count_leading_ones(m2);
+                if (lb >= 0)
+                    seg.xr = (bx<<3) + lb;
+                break;
+            }
+        }
+    }
+
+    if (seg.xr >= CANVAS_WIDTH)
+            seg.xr = CANVAS_WIDTH - 1;
+    return seg;
+}
 
 /* LINK: scan one row above/below E for 4-connected runs under E.s */
 static SegList LINK(const SegList *E, int target) {
@@ -440,9 +536,13 @@ static SegList LINK(const SegList *E, int target) {
     if (out.y < 0 || out.y >= CANVAS_HEIGHT || E->n == 0)
         return out;
 
+    unsigned int offset_y = (out.y<<6) + (out.y<<4);
+
     /* scan across the union of parent spans */
     int i =  0;
     int x =  E->s[0].xl;
+    /* Initialize Color Compare Mode to target color */
+    vga_cmp8_init(target);
     while (1) {
         /* skip past any parent that ends before x */
         while (i < E->n && x > E->s[i].xr) i++;
@@ -451,12 +551,11 @@ static SegList LINK(const SegList *E, int target) {
         if (x < E->s[i].xl) x = E->s[i].xl;
 
         /* if we hit the target, expand and record */
-        if (readpixel(x, out.y) == target) {
+        if (asm_getbyte(offset_y + (x >> 3)) & (1 << (7 - (x & 7)))) {
+        // if (readpixel(x, out.y) == target) {
             Segment seg_new = {x, x};
-            if (x == E->s[i].xl)
-                EXPAND(seg_new, x, out.y, target);
-            else
-                EXPAND_RIGHT(seg_new, x, out.y, target);
+            seg_new = expand_cmp8(x, offset_y, target);
+            // EXPAND(seg_new, x, out.y, target);
 
             if (seg_new.xl <= seg_new.xr && out.n < MAX_SEGS) {
                 out.s[out.n++] = seg_new;
@@ -466,6 +565,8 @@ static SegList LINK(const SegList *E, int target) {
         }
         x++;
     }
+    /* Restore default write mode */
+    set_write_mode(0);
     return out;
 }
 
@@ -655,7 +756,10 @@ int R_FrontFill(int x0, int y0, int newColor, int targetColor) {
 
     /* seed span on row y0 */
     Segment s0 = {x0, x0};
-    EXPAND(s0, x0, y0, targetColor);
+    // EXPAND(s0, x0, y0, targetColor);
+    vga_cmp8_init(targetColor);
+    s0 = expand_cmp8(x0, (y0<<6) + (y0<<4), targetColor);
+    set_write_mode(0);
 
     E.y = y0;
     E.dir = +1;

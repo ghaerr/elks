@@ -1061,11 +1061,10 @@ pc98_int1b:
 
 	jnc	1f
 0:	mov	$'F',%al
-	call	putc
 	jmp	2f
 1:	mov	$' ',%al
-	call	putc
-2:	pop	%es
+2:	call	putc
+	pop	%es
 	pop	%ds
 	ret
 

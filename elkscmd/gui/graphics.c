@@ -142,6 +142,18 @@ void fillrect(int x1, int y1, int x2, int y2, int c)
         drawhline(x1, x2, y1++, c);
 }
 
+/* initialize VGA to Read Mode 1 & set compare/color mask */
+void vga_cmp8_init(int target_color) {
+    /* Set Graphics Mode Register to read mode 1 (bit 3 = 1) */
+    set_write_mode(8);
+
+    /* Set Color Compare Register to target color (4 bits) */
+    set_color_compare(target_color & 0x0F);
+
+    /* Set Color Don't Care Register to 0x0F (include all planes) */
+    set_color_dont_care(0x0F);
+}
+
 #ifdef __C86__
 
 /* use BIOS to set video mode */

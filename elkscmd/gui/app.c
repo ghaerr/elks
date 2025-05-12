@@ -274,15 +274,15 @@ int main(int argc, char* argv[])
             R_DrawCircle(x, y, 12, WHITE);
             currentMainColor = i;
             currentAltColor = j;
-            R_LineFloodFill(x, y, currentMainColor, readpixel(x, y));
-            // R_FrontFill(x, y, currentMainColor, readpixel(x, y));
+            // R_LineFloodFill(x, y, currentMainColor, readpixel(x, y));
+            R_FrontFill(x, y, currentMainColor, readpixel(x, y));
         }
     }
     int x = 300;
     int y = 101;
-    R_LineFloodFill(x, y, 5, readpixel(x, y));
-    // int maxCap = R_FrontFill(x, y, 5, readpixel(x, y));
-    // __dprintf("Peak stack size: %d\n", maxCap);
+    // R_LineFloodFill(x, y, 5, readpixel(x, y));
+    int maxCap = R_FrontFill(x, y, 5, readpixel(x, y));
+    __dprintf("Peak stack size: %d\n", maxCap);
 
     graphics_close();
     return 0;

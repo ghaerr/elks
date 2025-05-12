@@ -12,15 +12,17 @@
  * Functions/Macros:
  *  set_color(color)            // 03ce REG 0 Set/Reset Register (color for write mode 0)
  *  set_enable_sr(flag)         // 03ce REG 1 Enable Set/Reset Register (forces REG 0)
+ *  set_color_compare(color)    // 03ce REG 2 Color Compare Register
  *  set_op(op)                  // 03ce REG 3 Data Rotate Register (nop, xor)
  *  set_read_plane(plane)       // 03ce REG 4 Read Map Select Register
  *  set_write_mode(mode)        // 03ce REG 5 Graphics Mode Register (write mode 0)
+ *  set_color_dont_care(color)  // 03ce REG 7 Color Don't Care Register
  *  set_mask(mask)              // 03ce REG 8 Bit Mask Register
  *  set_write_planes(mask)      // 03c4 REG 2 Memory Plane Write Enable Register
  *
  *  void set_bios_mode(mode)    // set BIOS graphics/text mode
  *  void asm_orbyte(int offset) // OR byte at A000:offset
- *  int  asm_getbyte(int offset)// read byte at A000:offset
+ *  unsigned short  asm_getbyte(int offset)// read byte at A000:offset
  *
  * Some defaults:
  *  set_color(0)                // REG 0
@@ -56,6 +58,14 @@
         , "d" (0x03ce)                          \
         )
 
+#define set_color_compare(color)                \
+    asm volatile (                              \
+        "out %%ax,%%dx\n"                       \
+        : /* no output */                       \
+        : "a" ((unsigned short)(((color)<<8)|2))\
+        , "d" (0x03ce)                          \
+        )
+
 #define set_op(op)                              \
     asm volatile (                              \
         "out %%ax,%%dx\n"                       \
@@ -85,6 +95,13 @@
         "out %%ax,%%dx\n"                       \
         : /* no output */                       \
         : "a" ((unsigned short)(((mask)<<8)|8)) \
+        , "d" (0x03ce)                          \
+        )
+#define set_color_dont_care(color)              \
+    asm volatile (                              \
+        "out %%ax,%%dx\n"                       \
+        : /* no output */                       \
+        : "a" ((unsigned short)(((color)<<8)|7))\
         , "d" (0x03ce)                          \
         )
 
@@ -230,49 +247,49 @@ void set_bios_mode(int mode);
         "mov ah,*" #color "\n"                  \
         "out dx,ax\n"                           \
     )
-    
+
 #define set_enable_sr(flag)                     \
     asm("mov dx,*0x03ce\n"                      \
         "mov al,*1\n"                           \
         "mov ah,*" #flag "\n"                   \
         "out dx,ax\n"                           \
     )
-    
+
 #define set_op(op)                              \
     asm("mov dx,*0x03ce\n"                      \
         "mov al,*3\n"                           \
         "mov ah,*" #op "\n"                     \
         "out dx,ax\n"                           \
     )
-    
+
 #define set_read_plane(plane)                   \
     asm("mov dx,*0x03ce\n"                      \
         "mov al,*4\n"                           \
         "mov ah,*" #plane "\n"                  \
         "out dx,ax\n"                           \
     )
-    
+
 #define set_write_mode(mode)                    \
     asm("mov dx,*0x03ce\n"                      \
         "mov al,*5\n"                           \
         "mov ah,*" #mode "\n"                   \
         "out dx,ax\n"                           \
     )
-    
+
 #define set_mask(mask)                          \
     asm("mov dx,*0x03ce\n"                      \
         "mov al,*8\n"                           \
         "mov ah,*" #mask "\n"                   \
         "out dx,ax\n"                           \
     )
-    
+
 #define set_write_planes(mask)                  \
     asm("mov dx,*0x03c4\n"                      \
         "mov al,*2\n"                           \
         "mov ah,*" #mask "\n"                   \
         "out dx,ax\n"                           \
     )
-    
+
 int asm_getbyte(int offset);
 void set_bios_mode(int mode);
 

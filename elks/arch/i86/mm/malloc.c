@@ -5,6 +5,8 @@
 #include <linuxmt/config.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/mem.h>
+#include <linuxmt/memory.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/heap.h>
@@ -199,7 +201,7 @@ segment_s * seg_dup (segment_s * src)
 
 // Get memory information (free and used) in KB
 
-void mm_get_usage (unsigned int * pfree, unsigned int * pused)
+void mm_get_usage (struct mem_usage *mu)
 {
     unsigned int free = 0;
     unsigned int used = 0;
@@ -223,8 +225,15 @@ void mm_get_usage (unsigned int * pfree, unsigned int * pused)
     // Convert paragraphs to kilobytes
     // Floor, not ceiling, so average return
 
-    *pfree = ((free + 31) >> 6);
-    *pused = ((used + 31) >> 6);
+    mu->main_free = ((free + 31) >> 6);
+    mu->main_used = ((used + 31) >> 6);
+#ifdef CONFIG_FS_XMS
+    mu->xms_used = xms_alloc_ptr - KBYTES(XMS_START_ADDR);
+    mu->xms_free = SETUP_XMS_KBYTES - mu->xms_used;
+#else
+    mu->xms_free = 0;
+    mu->xms_used = 0;
+#endif
 }
 
 

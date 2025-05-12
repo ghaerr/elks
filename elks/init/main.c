@@ -283,6 +283,12 @@ static void INITPROC do_init_task(void)
 #ifdef CONFIG_BOOTOPTS
     /* Release options parsing buffers and setup data seg */
     heap_add(&opts, sizeof(opts));
+#ifdef CONFIG_FS_XMS
+    if (xms_enabled == XMS_LOADALL) {
+        seg_add(DEF_OPTSEG, 0x80);  /* carve out LOADALL buf 0x800-0x865 from release! */
+        seg_add(0x87, DMASEG);
+    } else  /* fall through */
+#endif
     seg_add(DEF_OPTSEG, DMASEG);    /* DEF_OPTSEG through REL_INITSEG */
 
     /* pass argc/argv/env array to init_command */
