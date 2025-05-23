@@ -186,6 +186,7 @@ static unsigned char running;   /* keep track of motors already running */
 #define MIN_ERRORS      0
 
 #define LINADDR(seg, offs) ((unsigned long)((((unsigned long)(seg)) << 4) + (unsigned)(offs)))
+#define XMSADDR(seg, offs) ((unsigned long)((((unsigned long)(seg)) << 0) + (unsigned)(offs)))
 
 /*
  * globals used by 'result()'
@@ -480,7 +481,10 @@ static void DFPROC setup_DMA(void)
     count = numsectors << 9;
     physaddr = (req->rq_seg << 4) + (unsigned int)req->rq_buffer;
 #pragma GCC diagnostic ignored "-Wshift-count-overflow"
-    use_bounce = (req->rq_seg >> 16) || (physaddr + count) < physaddr;
+    unsigned int use_xms = req->rq_seg >> 16;
+    if (use_xms)
+        use_bounce = 0;
+    else use_bounce = (physaddr + count) < physaddr;
     if (!use_cache) {                   /* use_cache overrides use_bounce */
         if (use_bounce) {
             dma_addr = LINADDR(BOUNCE_SEG, BOUNCE_OFF);
@@ -491,8 +495,10 @@ static void DFPROC setup_DMA(void)
 #if (BOUNCE_SEG == CACHE_SEG) && (BOUNCE_OFF == CACHE_OFF)
             invalidate_cache();
 #endif
-        } else
-            dma_addr = LINADDR(req->rq_seg, req->rq_buffer);
+        }
+        else if (use_xms)
+             dma_addr = XMSADDR(req->rq_seg, req->rq_buffer);
+        else dma_addr = LINADDR(req->rq_seg, req->rq_buffer);
     }
 
     DEBUG("%d/%lx;", count, dma_addr);
@@ -1205,6 +1211,7 @@ static void DFPROC redo_fd_request(void)
 #ifdef CONFIG_TRACK_CACHE
     use_cache = (command == FD_READ) && (req->rq_errors < 4)
         && (arch_cpu != 7 || running_qemu);     /* disable cache on 32-bit systems */
+use_cache = 0;  /* proof of concept w/o caching for simplicity */
     if (use_cache) {
         /* full track caching only if cache large enough */
         if (CACHE_FULL_TRACK && floppy->sect < CACHE_SIZE)
