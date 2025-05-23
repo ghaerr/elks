@@ -63,6 +63,8 @@
  *
  * Mar 2024 - Greg Haerr
  * Added dynamic floppy bounce buffer
+ * 22 May 2025 - Greg Haerr
+ * Program 8237 DMA controller external page register instead of using XMS bounce buffer
  */
 
 /*
@@ -473,22 +475,22 @@ void request_done(int uptodate)
 static void DFPROC setup_DMA(void)
 {
     struct request *req = CURRENT;
-    unsigned int count, physaddr;
+    unsigned int count, physaddr, use_xms;
     unsigned long dma_addr;
 
-    DEBUG("setupDMA ");
-    dma_addr = LINADDR(CACHE_SEG, CACHE_OFF);
     count = numsectors << 9;
-    physaddr = (req->rq_seg << 4) + (unsigned int)req->rq_buffer;
-#pragma GCC diagnostic ignored "-Wshift-count-overflow"
-    unsigned int use_xms = req->rq_seg >> 16;
+    use_xms = req->rq_seg >> 16;
     if (use_xms)
-        use_bounce = 0;
-    else use_bounce = (physaddr + count) < physaddr;
+        use_bounce = 0;                 /* XMS buffers also always 1K aligned */
+    else {
+#pragma GCC diagnostic ignored "-Wshift-count-overflow"
+        physaddr = (req->rq_seg << 4) + (unsigned int)req->rq_buffer;
+        use_bounce = (physaddr + count) < physaddr;
+    }
     if (!use_cache) {                   /* use_cache overrides use_bounce */
         if (use_bounce) {
             dma_addr = LINADDR(BOUNCE_SEG, BOUNCE_OFF);
-            if (use_bounce && command == FD_WRITE) {
+            if (command == FD_WRITE) {
                 xms_fmemcpyw(BOUNCE_OFF, BOUNCE_SEG, req->rq_buffer, req->rq_seg,
                     BLOCK_SIZE/2);
             }
@@ -499,9 +501,13 @@ static void DFPROC setup_DMA(void)
         else if (use_xms)
              dma_addr = XMSADDR(req->rq_seg, req->rq_buffer);
         else dma_addr = LINADDR(req->rq_seg, req->rq_buffer);
-    }
+    } else
+        dma_addr = LINADDR(CACHE_SEG, CACHE_OFF);
 
-    DEBUG("%d/%lx;", count, dma_addr);
+    DEBUG("DMA %c cache %d, bounce %d, count %d req %04x:%04x dma %04x_%04x\n",
+        (command == FD_WRITE)? 'W': 'R', use_cache, use_bounce, count,
+        (unsigned short)req->rq_seg, req->rq_buffer,
+        (unsigned)(dma_addr >> 16), (unsigned short)dma_addr);
 
     clr_irq();
     outb(FLOPPY_DMA | 4, DMA_INIT);     /* disable floppy dma channel */
@@ -1210,8 +1216,8 @@ static void DFPROC redo_fd_request(void)
     numsectors = req->rq_nr_sectors;
 #ifdef CONFIG_TRACK_CACHE
     use_cache = (command == FD_READ) && (req->rq_errors < 4)
+        && (xms_enabled == XMS_DISABLED)        /* disable cache with XMS */
         && (arch_cpu != 7 || running_qemu);     /* disable cache on 32-bit systems */
-use_cache = 0;  /* proof of concept w/o caching for simplicity */
     if (use_cache) {
         /* full track caching only if cache large enough */
         if (CACHE_FULL_TRACK && floppy->sect < CACHE_SIZE)
