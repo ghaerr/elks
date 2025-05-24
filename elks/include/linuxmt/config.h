@@ -136,7 +136,8 @@
  * old 8237 DMA controller which wraps addresses wider than 16-bits on PC/XT systems.
  * If floppy track caching is enabled, the track buffer is also configured in
  * low memory for direct DMA access usig multisector I/O.
- * The DF driver uses the first sector of its track cache for the XMS/DMA buffer.
+ * The DF driver uses the first sector of its track cache for the DMA buffer,
+ * and doesn't require an XMS buffer, instead programming the 8237 external page register.
  * In contrast, the BIOS FD/HD driver is configured to use an XMS/DMA buffer
  * outside its track cache; thus the complicated defines below.
  */

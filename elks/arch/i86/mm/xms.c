@@ -125,11 +125,15 @@ void xms_fmemcpyw(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src
 		if (!need_xms_src) src_seg <<= 4;
 		if (!need_xms_dst) dst_seg <<= 4;
 
-	  if (xms_enabled == XMS_UNREAL)
-		linear32_fmemcpyw(dst_off, dst_seg, src_off, src_seg, count);
-	  else
-		int15_fmemcpy(dst_off, dst_seg, src_off, src_seg, count << 1, COPY);
-	  return;
+		if (need_xms_src && need_xms_dst)
+			debug("xms to xms fmemcpy %08lx -> %08lx %u\n",
+				src_seg + (unsigned)src_off, dst_seg + (unsigned)dst_off, count);
+
+		if (xms_enabled == XMS_UNREAL)
+			linear32_fmemcpyw(dst_off, dst_seg, src_off, src_seg, count);
+		else
+			int15_fmemcpy(dst_off, dst_seg, src_off, src_seg, count << 1, COPY);
+		return;
 	}
 	fmemcpyw(dst_off, (seg_t)dst_seg, src_off, (seg_t)src_seg, count);
 }

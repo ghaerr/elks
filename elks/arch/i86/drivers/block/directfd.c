@@ -63,19 +63,9 @@
  *
  * Mar 2024 - Greg Haerr
  * Added dynamic floppy bounce buffer
- */
-
-/*
- * TODO (HS 2023):
- * - Change read buffer logic to allow small floppies (720k and less) to fill 
- *   the track buffer (full cylinder)
- * - When XMS buffers are active, the BIOS hd driver will use DMASEG as a bounce buffer
- *   thus colliding with the usage here. This is a problem only in the odd case 
- *   that we're using BIOS HD + DIRECT FD + XMS buffers + TRACK cache, 
- *   which really should not happen. IOW - use either BIOS block IO or DIRECT block IO,
- *   don't mix!!
- * - Test density detection logic & floppy change detection
- * - Clean up debug output
+ *
+ * 22 May 2025 - Greg Haerr
+ * Program 8237 DMA controller external page register instead of using XMS bounce buffer
  */
 
 #include <linuxmt/config.h>
@@ -135,14 +125,14 @@ char USE_IMPLIED_SEEK = 0; /* =1 for QEMU with 360k/AT stretch floppies (not rea
 #define IODELAY             0   /* =1 to emulate delay for floppy on QEMU */
 
 #define CACHE_CYLINDER_MAX  12  /* max sectors to cache when CACHE_CYLINDER */
-#define CACHE_SIZE          (TRACKSEGSZ >> 9)   /* max usable track cache */
+#define CACHE_SIZE          (TRACKSEGSZ >> 9)   /* max usable track cache in sectors */
 
 /* adjustable timeouts */
 #define TIMEOUT_MOTOR_ON   (HZ/2)      /* 500 ms wait for floppy motor on before I/O */
 #define TIMEOUT_MOTOR_OFF  (3 * HZ)    /* 3 secs wait for floppy motor off after I/O */
 #define TIMEOUT_CMD_COMPL  (6 * HZ)    /* 6 secs wait for FDC command complete */
 
-/* locations for cache and bounce buffers */
+/* default locations for cache and bounce buffers */
 #define BOUNCE_SEG      TRACKSEG /* share bounce buffer with track cache at TRACKSEG:0 */
 #define BOUNCE_OFF      0
 #define CACHE_SEG       TRACKSEG /* track cache at TRACKSEG:0 (same as BIOS FD driver) */
@@ -186,6 +176,7 @@ static unsigned char running;   /* keep track of motors already running */
 #define MIN_ERRORS      0
 
 #define LINADDR(seg, offs) ((unsigned long)((((unsigned long)(seg)) << 4) + (unsigned)(offs)))
+#define XMSADDR(seg, offs) ((unsigned long)((((unsigned long)(seg)) << 0) + (unsigned)(offs)))
 
 /*
  * globals used by 'result()'
@@ -287,6 +278,7 @@ static int use_bounce;              /* XMS I/O or 64k address wrap when set */
 static unsigned char cache_drive = 255;
 static unsigned int cache_start;    /* logical sector number */
 static unsigned int cache_numsectors; /* size of cache in sectors */
+ramdesc_t df_cache_seg = CACHE_SEG; /* track cache segment or linear address if XMS */
 static int cur_spec1 = -1;
 static int cur_rate = -1;
 static struct floppy_struct *floppy;
@@ -472,30 +464,40 @@ void request_done(int uptodate)
 static void DFPROC setup_DMA(void)
 {
     struct request *req = CURRENT;
-    unsigned int count, physaddr;
+    unsigned int count, physaddr, use_xms;
     unsigned long dma_addr;
 
-    DEBUG("setupDMA ");
-    dma_addr = LINADDR(CACHE_SEG, CACHE_OFF);
     count = numsectors << 9;
-    physaddr = (req->rq_seg << 4) + (unsigned int)req->rq_buffer;
+    use_xms = req->rq_seg >> 16;
+    if (use_xms)
+        use_bounce = 0;                 /* XMS buffers also always 1K aligned */
+    else {
 #pragma GCC diagnostic ignored "-Wshift-count-overflow"
-    use_bounce = (req->rq_seg >> 16) || (physaddr + count) < physaddr;
+        physaddr = (req->rq_seg << 4) + (unsigned int)req->rq_buffer;
+        use_bounce = (physaddr + count) < physaddr;
+    }
     if (!use_cache) {                   /* use_cache overrides use_bounce */
         if (use_bounce) {
             dma_addr = LINADDR(BOUNCE_SEG, BOUNCE_OFF);
-            if (use_bounce && command == FD_WRITE) {
+            if (command == FD_WRITE) {
                 xms_fmemcpyw(BOUNCE_OFF, BOUNCE_SEG, req->rq_buffer, req->rq_seg,
                     BLOCK_SIZE/2);
             }
 #if (BOUNCE_SEG == CACHE_SEG) && (BOUNCE_OFF == CACHE_OFF)
             invalidate_cache();
 #endif
-        } else
-            dma_addr = LINADDR(req->rq_seg, req->rq_buffer);
+        }
+        else if (use_xms)
+             dma_addr = XMSADDR(req->rq_seg, req->rq_buffer);
+        else dma_addr = LINADDR(req->rq_seg, req->rq_buffer);
+    } else {
+        if (df_cache_seg >> 16)          /* XMS cache */
+            dma_addr = df_cache_seg;
+        else dma_addr = LINADDR(df_cache_seg, CACHE_OFF);
     }
-
-    DEBUG("%d/%lx;", count, dma_addr);
+    DEBUG("DMA %c cache %d, bounce %d, count %d req %04x:%04x dma %08lx\n",
+        (command == FD_WRITE)? 'W': 'R', use_cache, use_bounce, count,
+        (unsigned short)req->rq_seg, req->rq_buffer, dma_addr);
 
     clr_irq();
     outb(FLOPPY_DMA | 4, DMA_INIT);     /* disable floppy dma channel */
@@ -734,9 +736,9 @@ static void rw_interrupt(void)
             start - sector: start);
         cache_numsectors = numsectors;
         cache_offset = (char *)(((start - cache_start) << 9) + CACHE_OFF);
-        DEBUG("rd %04x:%04x->%08lx:%04x;", CACHE_SEG, cache_offset,
+        DEBUG("rd %08lx:%04x->%08lx:%04x;", (unsigned long)df_cache_seg, cache_offset,
                 (unsigned long)req->rq_seg, req->rq_buffer);
-        xms_fmemcpyw(req->rq_buffer, req->rq_seg, cache_offset, CACHE_SEG, BLOCK_SIZE/2);
+        xms_fmemcpyw(req->rq_buffer, req->rq_seg, cache_offset, df_cache_seg,BLOCK_SIZE/2);
     } else if (use_bounce && command == FD_READ) {
         xms_fmemcpyw(req->rq_buffer, req->rq_seg, BOUNCE_OFF, BOUNCE_SEG, BLOCK_SIZE/2);
     }
@@ -1204,7 +1206,7 @@ static void DFPROC redo_fd_request(void)
     numsectors = req->rq_nr_sectors;
 #ifdef CONFIG_TRACK_CACHE
     use_cache = (command == FD_READ) && (req->rq_errors < 4)
-        && (arch_cpu != 7 || running_qemu);     /* disable cache on 32-bit systems */
+        ; //&& (arch_cpu != 7 || running_qemu);     /* disable cache on 32-bit systems */
     if (use_cache) {
         /* full track caching only if cache large enough */
         if (CACHE_FULL_TRACK && floppy->sect < CACHE_SIZE)
@@ -1240,12 +1242,12 @@ static void DFPROC redo_fd_request(void)
         debug_cache2("CH %d ", start >> 1);
         cache_offset = (char *)(((start - cache_start) << 9) + CACHE_OFF);
         if (command == FD_READ) {       /* cache hit, no I/O necessary */
-            xms_fmemcpyw(req->rq_buffer, req->rq_seg, cache_offset, CACHE_SEG,
+            xms_fmemcpyw(req->rq_buffer, req->rq_seg, cache_offset, df_cache_seg,
                 BLOCK_SIZE/2);
             request_done(1);
             goto repeat;
         } else if (command == FD_WRITE) /* update track buffer, then write */
-            xms_fmemcpyw(cache_offset, CACHE_SEG, req->rq_buffer, req->rq_seg,
+            xms_fmemcpyw(cache_offset, df_cache_seg, req->rq_buffer, req->rq_seg,
                 BLOCK_SIZE/2);
     } 
 
@@ -1327,6 +1329,12 @@ static void INITPROC config_types(void)
         printk(", ");
         base_type[1] = find_base(1, CMOS_READ(0x10) & 0xF);
     }
+#ifdef CONFIG_FS_XMS_BUFFER
+    if (xms_enabled) {
+        /* df_cache_seg allocated in buffer_init to prevent any 64k DMA wrap */
+        printk(", xms cache %dK at %08lx", CACHE_SIZE >> 1, df_cache_seg);
+    }
+#endif
     printk("\n");
 }
 
