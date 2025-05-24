@@ -208,8 +208,8 @@ int INITPROC buffer_init(void)
     if (bufs_to_alloc > 256) bufs_to_alloc = 256; /* protect against high XMS value*/
 #endif
 
-    printk("%d %s buffers (%dK ram), %dK cache, %d req hdrs\n", bufs_to_alloc,
-        xmsenabled? "xms": "ext", bufs_to_alloc, nr_map_bufs, NR_REQUEST);
+    printk("%dK %s buffers, %dK cache, %d req hdrs\n", bufs_to_alloc,
+        xmsenabled? "xms": "ext", nr_map_bufs, NR_REQUEST);
 #else
     int bufs_to_alloc = nr_map_bufs;
 #endif

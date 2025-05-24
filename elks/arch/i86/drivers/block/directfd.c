@@ -68,16 +68,6 @@
  * Program 8237 DMA controller external page register instead of using XMS bounce buffer
  */
 
-/*
- * TODO (HS 2023):
- * - When XMS buffers are active, the BIOS hd driver will use DMASEG as a bounce buffer
- *   thus colliding with the usage here. This is a problem only in the odd case 
- *   that we're using BIOS HD + DIRECT FD + XMS buffers + TRACK cache, 
- *   which really should not happen. IOW - use either BIOS block IO or DIRECT block IO,
- *   don't mix!!
- * - Test density detection logic & floppy change detection
- */
-
 #include <linuxmt/config.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/fs.h>
@@ -1216,7 +1206,7 @@ static void DFPROC redo_fd_request(void)
     numsectors = req->rq_nr_sectors;
 #ifdef CONFIG_TRACK_CACHE
     use_cache = (command == FD_READ) && (req->rq_errors < 4)
-        && (arch_cpu != 7 || running_qemu);     /* disable cache on 32-bit systems */
+        ; //&& (arch_cpu != 7 || running_qemu);     /* disable cache on 32-bit systems */
     if (use_cache) {
         /* full track caching only if cache large enough */
         if (CACHE_FULL_TRACK && floppy->sect < CACHE_SIZE)
