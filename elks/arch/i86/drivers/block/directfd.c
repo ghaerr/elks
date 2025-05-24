@@ -63,21 +63,19 @@
  *
  * Mar 2024 - Greg Haerr
  * Added dynamic floppy bounce buffer
+ *
  * 22 May 2025 - Greg Haerr
  * Program 8237 DMA controller external page register instead of using XMS bounce buffer
  */
 
 /*
  * TODO (HS 2023):
- * - Change read buffer logic to allow small floppies (720k and less) to fill 
- *   the track buffer (full cylinder)
  * - When XMS buffers are active, the BIOS hd driver will use DMASEG as a bounce buffer
  *   thus colliding with the usage here. This is a problem only in the odd case 
  *   that we're using BIOS HD + DIRECT FD + XMS buffers + TRACK cache, 
  *   which really should not happen. IOW - use either BIOS block IO or DIRECT block IO,
  *   don't mix!!
  * - Test density detection logic & floppy change detection
- * - Clean up debug output
  */
 
 #include <linuxmt/config.h>
@@ -289,8 +287,8 @@ static bool use_cache;              /* expand read request to fill cache when se
 static int use_bounce;              /* XMS I/O or 64k address wrap when set */
 static unsigned char cache_drive = 255;
 static unsigned int cache_start;    /* logical sector number */
-static unsigned int cache_numsectors;   /* size of cache in sectors */
-static ramdesc_t cache_seg = CACHE_SEG; /* track cache segment or linear address if XMS */
+static unsigned int cache_numsectors; /* size of cache in sectors */
+ramdesc_t df_cache_seg = CACHE_SEG; /* track cache segment or linear address if XMS */
 static int cur_spec1 = -1;
 static int cur_rate = -1;
 static struct floppy_struct *floppy;
@@ -503,9 +501,9 @@ static void DFPROC setup_DMA(void)
              dma_addr = XMSADDR(req->rq_seg, req->rq_buffer);
         else dma_addr = LINADDR(req->rq_seg, req->rq_buffer);
     } else {
-        if (cache_seg >> 16)            /* XMS cache */
-            dma_addr = cache_seg;
-        else dma_addr = LINADDR(CACHE_SEG, CACHE_OFF);
+        if (df_cache_seg >> 16)          /* XMS cache */
+            dma_addr = df_cache_seg;
+        else dma_addr = LINADDR(df_cache_seg, CACHE_OFF);
     }
     DEBUG("DMA %c cache %d, bounce %d, count %d req %04x:%04x dma %08lx\n",
         (command == FD_WRITE)? 'W': 'R', use_cache, use_bounce, count,
@@ -748,9 +746,9 @@ static void rw_interrupt(void)
             start - sector: start);
         cache_numsectors = numsectors;
         cache_offset = (char *)(((start - cache_start) << 9) + CACHE_OFF);
-        DEBUG("rd %08lx:%04x->%08lx:%04x;", (unsigned long)cache_seg, cache_offset,
+        DEBUG("rd %08lx:%04x->%08lx:%04x;", (unsigned long)df_cache_seg, cache_offset,
                 (unsigned long)req->rq_seg, req->rq_buffer);
-        xms_fmemcpyw(req->rq_buffer, req->rq_seg, cache_offset, cache_seg, BLOCK_SIZE/2);
+        xms_fmemcpyw(req->rq_buffer, req->rq_seg, cache_offset, df_cache_seg,BLOCK_SIZE/2);
     } else if (use_bounce && command == FD_READ) {
         xms_fmemcpyw(req->rq_buffer, req->rq_seg, BOUNCE_OFF, BOUNCE_SEG, BLOCK_SIZE/2);
     }
@@ -1254,12 +1252,12 @@ static void DFPROC redo_fd_request(void)
         debug_cache2("CH %d ", start >> 1);
         cache_offset = (char *)(((start - cache_start) << 9) + CACHE_OFF);
         if (command == FD_READ) {       /* cache hit, no I/O necessary */
-            xms_fmemcpyw(req->rq_buffer, req->rq_seg, cache_offset, cache_seg,
+            xms_fmemcpyw(req->rq_buffer, req->rq_seg, cache_offset, df_cache_seg,
                 BLOCK_SIZE/2);
             request_done(1);
             goto repeat;
         } else if (command == FD_WRITE) /* update track buffer, then write */
-            xms_fmemcpyw(cache_offset, cache_seg, req->rq_buffer, req->rq_seg,
+            xms_fmemcpyw(cache_offset, df_cache_seg, req->rq_buffer, req->rq_seg,
                 BLOCK_SIZE/2);
     } 
 
@@ -1342,9 +1340,9 @@ static void INITPROC config_types(void)
         base_type[1] = find_base(1, CMOS_READ(0x10) & 0xF);
     }
 #ifdef CONFIG_FS_XMS_BUFFER
-    if (xms_enabled != XMS_DISABLED) {
-        cache_seg = xms_alloc(CACHE_SIZE << 1); /* 1K increments */
-        printk(", xms cache %dK at %08lx", CACHE_SIZE << 1, cache_seg);
+    if (xms_enabled) {
+        /* df_cache_seg allocated in buffer_init to prevent any 64k DMA wrap */
+        printk(", xms cache %dK at %08lx", CACHE_SIZE >> 1, df_cache_seg);
     }
 #endif
     printk("\n");

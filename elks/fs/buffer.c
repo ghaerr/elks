@@ -194,8 +194,13 @@ int INITPROC buffer_init(void)
 #ifdef CONFIG_FS_XMS_BUFFER
     if (nr_xms_bufs)
         xmsenabled = xms_init();        /* try to enable unreal mode and A20 gate*/
-    if (xmsenabled)
+    if (xmsenabled) {
         bufs_to_alloc = nr_xms_bufs;
+#ifdef CONFIG_BLK_DEV_FD
+        /* must allocate direct floppy track cache before buffers to avoid any 64k wrap */
+        df_cache_seg = xms_alloc(TRACKSEGSZ >> 10); /* in K, must match CACHE_SIZE */
+#endif
+    }
 #endif
 #ifdef CONFIG_FAR_BUFHEADS
     if (bufs_to_alloc > 2975) bufs_to_alloc = 2975; /* max 64K far bufheads @22 bytes*/
