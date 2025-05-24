@@ -17,7 +17,7 @@ xms=on
 #3	# multiuser serial
 #n	# no rc.sys
 #init=/bin/sash
-root=df0
+#root=df0
 #root=hda1 ro
 #kstack
 #strace
