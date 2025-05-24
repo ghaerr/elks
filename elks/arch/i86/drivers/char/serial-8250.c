@@ -510,25 +510,26 @@ void INITPROC rs_setbaud(dev_t dev, unsigned long baud)
 void INITPROC serial_init(void)
 {
     register struct serial_info *sp = ports;
-    int ttyno = 0;
+    int ttyno = 0, n = 0;
     static const char *serial_type[] = {
-        "n 8250",
-        " 16450",
-        " 16550",
-        " 16550A",
-        " 16750",
-        " UNKNOWN",
+        "8250",
+        "16450",
+        "16550",
+        "16550A",
+        "16750",
+        "?"
     };
 
     rs_init();
 
     do {
         if (sp->tty != NULL) {
-            printk("ttyS%d at %x, irq %d is a%s\n", ttyno,
-                       sp->io, sp->irq, serial_type[sp->flags & SERF_TYPE]);
+            printk("%sttyS%d at %x irq %d %s", n++? ", ": "", ttyno,
+               sp->io, sp->irq, serial_type[sp->flags & SERF_TYPE]);
         }
         sp++;
     } while (++ttyno < NR_SERIAL);
+    if (n) printk("\n");
 }
 
 struct tty_ops rs_ops = {

@@ -367,16 +367,9 @@ extern void _close_allfiles(void);
 extern struct inode *iget(struct super_block *,ino_t);
 
 extern struct file_operations *get_blkfops(unsigned int);
-extern int register_blkdev(unsigned int,const char *,struct file_operations *);
-extern int unregister_blkdev(void);
-extern int blkdev_open(struct inode *,struct file *);
 
 extern struct file_operations def_blk_fops;
 extern struct inode_operations blkdev_inode_operations;
-
-extern int register_chrdev(unsigned int,const char *,struct file_operations *);
-extern int unregister_chrdev(void);
-/* extern int chrdev_open(struct inode *,struct file *); */
 
 extern struct file_operations def_chr_fops;
 extern struct inode_operations chrdev_inode_operations;
