@@ -42,6 +42,8 @@ extern void INITPROC setup_dev(register struct gendisk *);
 extern void INITPROC tz_init(const char *tzstr);
 
 /* block device init routines*/
+struct file_operations;
+extern int INITPROC register_blkdev(unsigned int,const char *,struct file_operations *);
 extern void INITPROC blk_dev_init(void);
 extern void INITPROC bioshd_init(void);
 extern int INITPROC bios_gethdinfo(struct drive_infot *);
@@ -52,9 +54,10 @@ extern int directhd_init(void);
 extern void INITPROC floppy_init(void);
 extern void INITPROC rd_init(void);
 extern void INITPROC ssd_init(void);
-extern void romflash_init(void);
+extern void INITPROC romflash_init(void);
 
 /* char device init routines*/
+extern int INITPROC register_chrdev(unsigned int,const char *,struct file_operations *);
 extern void INITPROC chr_dev_init(void);
 extern void INITPROC cgatext_init(void);
 extern void INITPROC eth_init(void);
