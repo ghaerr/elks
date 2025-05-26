@@ -193,7 +193,7 @@ static unsigned char reply_buffer[MAX_REPLIES];
 #define CMOS_360k   1
 #define CMOS_1200k  2
 #define CMOS_720k   3
-#define CMOS_1400k  4
+#define CMOS_1440k  4
 #define CMOS_2880k  5
 #define CMOS_MAX    5
 
@@ -325,14 +325,10 @@ static struct timer_list select = { NULL, 0, 0, select_callback };
  * several drives can have the motor running at the same time. A drive cannot
  * be selected unless the motor is on, they can be set concurrently.
  */
-/*
- * FIXME: The argument (nr) is silently ignored, current_drive being used instead.
- * is this OK?
- */
 static void DFPROC floppy_select(unsigned int nr)
 {
     DEBUG("sel0x%x-", current_DOR);
-    if (current_drive == (current_DOR & 3)) {
+    if (nr == (current_DOR & 3)) {
         /* Drive already selected, we're ready to go */
         floppy_ready();
         return;
@@ -346,7 +342,7 @@ static void DFPROC floppy_select(unsigned int nr)
      * Setting them concurrently is OK
      */
     current_DOR &= 0xFC;
-    current_DOR |= current_drive;
+    current_DOR |= nr;
     outb(current_DOR, FD_DOR);
 
     /* Some FDCs require a delay when changing the current drive */
@@ -667,7 +663,7 @@ static void rw_interrupt(void)
      * always show HD1 as selected at this point. */
     DEBUG("rwI%x|%x|%x-", ST0,ST1,ST2);
 
-    /* check IC to find cause of interrupt */
+    /* check FDC to find cause of interrupt */
     switch ((ST0 & ST0_INTR) >> 6) {
     case 1:                     /* error occured during command execution */
         bad = 1;
