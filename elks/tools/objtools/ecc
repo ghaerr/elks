@@ -47,6 +47,8 @@ CFLAGS="\
     -stackopt=minimum           \
     -peep=all                   \
     -stackcheck=no              \
+    -obsolete=yes               \
+    -trace=no                   \
     "
 
 ASFLAGS="\

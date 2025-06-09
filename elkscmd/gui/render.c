@@ -1,8 +1,8 @@
 #include <stdlib.h>
+#include <string.h>   /* for memcpy */
 #include "app.h"
 #include "render.h"
 #include "graphics.h"
-#include <string.h>   /* for memcpy */
 #include "vgalib.h"
 
 
@@ -255,7 +255,9 @@ void R_DrawFilledRectangle(int x1, int y1, int x2, int y2)
 }
 
 // ----------------------------------------------------
-// Flood Fill Stack Operations
+// R_LineFloodFill: Line Flood Fill, for the bucket tool
+// Original slow but simple flood fill
+// Used by 'f' key and C86, C86 can't return structs used in new routine
 // ----------------------------------------------------
 static void FF_StackPush(transform2d_t stack[], int x, int y, int* top)
 {
@@ -271,9 +273,6 @@ static transform2d_t FF_StackPop(transform2d_t stack[], int* top)
     return stack[(*top)--];
 }
 
-// ----------------------------------------------------
-// Line Flood Fill, for the bucket tool
-// ----------------------------------------------------
 void R_LineFloodFill(int x, int y, int color, int ogColor)
 {
     int stackTop = -1;
@@ -357,6 +356,7 @@ void R_LineFloodFill(int x, int y, int color, int ogColor)
     }
 }
 
+#ifndef __C86__     /* very fast fill routine written by Vutshi, uses struct returns  */
 
 /* max segments in any one SegList */
 #define MAX_SEGS        18
@@ -527,6 +527,20 @@ static inline Segment expand_cmp8(int x, unsigned int offset_y, int target) {
     return seg;
 }
 
+/* initialize VGA to Read Mode 1 & set compare/color mask */
+/* FIXME ia16 & c86 only for now: set_color_compare takes non-constant parameter */
+static void vga_cmp8_init(int target_color)
+{
+    /* Set Graphics Mode Register to read mode 1 (bit 3 = 1) */
+    set_write_mode(8);
+
+    /* Set Color Compare Register to target color (4 bits) */
+    set_color_compare(target_color & 0x0F);
+
+    /* Set Color Don't Care Register to 0x0F (include all planes) */
+    set_color_dont_care(0x0F);
+}
+
 /* LINK: scan one row above/below E for 4-connected runs under E.s */
 static SegList LINK(const SegList *E, int target) {
     SegList out;
@@ -553,7 +567,9 @@ static SegList LINK(const SegList *E, int target) {
         /* if we hit the target, expand and record */
         if (asm_getbyte(offset_y + (x >> 3)) & (1 << (7 - (x & 7)))) {
         // if (readpixel(x, out.y) == target) {
-            Segment seg_new = {x, x};
+            Segment seg_new;
+            seg_new.xl = x;
+            seg_new.xr = x;
             seg_new = expand_cmp8(x, offset_y, target);
             // EXPAND(seg_new, x, out.y, target);
 
@@ -599,7 +615,8 @@ static SegList DIFF(const SegList *Ep, const SegList *Ed) {
 
             /* output any gap before this forbidden block */
             if (fl > cur_l) {
-                out.s[out.n++] = (Segment){ cur_l, fl - 1 };
+                out.s[out.n].xl = cur_l;
+                out.s[out.n++].xr = fl - 1;
             }
             /* advance cur_l past the forbidden block */
             if (fr + 1 > cur_l) {
@@ -611,7 +628,8 @@ static SegList DIFF(const SegList *Ep, const SegList *Ed) {
         }
         /* if any tail remains, output it */
         if (cur_l <= cur_r) {
-            out.s[out.n++] = (Segment){ cur_l, cur_r };
+            out.s[out.n].xl = cur_l;
+            out.s[out.n++].xr = cur_r;
         }
     }
     return out;
@@ -755,7 +773,9 @@ int R_FrontFill(int x0, int y0, int newColor, int targetColor) {
     SegList E;
 
     /* seed span on row y0 */
-    Segment s0 = {x0, x0};
+    Segment s0;
+    s0.xl = x0;
+    s0.xr = x0;
     // EXPAND(s0, x0, y0, targetColor);
     vga_cmp8_init(targetColor);
     s0 = expand_cmp8(x0, (y0<<6) + (y0<<4), targetColor);
@@ -810,7 +830,7 @@ int R_FrontFill(int x0, int y0, int newColor, int targetColor) {
     }
     return maxCap;
 }
-
+#endif /* !__C86__ */
 
 #if UNUSED
 // ----------------------------------------------------
