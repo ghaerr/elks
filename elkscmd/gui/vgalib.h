@@ -168,6 +168,14 @@ void set_enable_sr(unsigned int flag);
     "out dx,ax",                                \
     modify [ ax dx ];
 
+void set_color_compare(unsigned int color);
+#pragma aux set_color_compare parm [ax] =       \
+    "mov dx,0x03ce",                            \
+    "mov ah,al",                                \
+    "mov al,2",                                 \
+    "out dx,ax",                                \
+    modify [ ax dx ];
+
 void set_op(unsigned int op);
 #pragma aux set_op parm [ax] =                  \
     "mov dx,0x03ce",                            \
@@ -189,6 +197,14 @@ void set_write_mode(unsigned int mode);
     "mov dx,0x03ce",                            \
     "mov ah,al",                                \
     "mov al,5",                                 \
+    "out dx,ax",                                \
+    modify [ ax dx ];
+
+void set_color_dont_care(unsigned int color);
+#pragma aux set_color_dont_care parm [ax] =     \
+    "mov dx,0x03ce",                            \
+    "mov ah,al",                                \
+    "mov al,7",                                 \
     "out dx,ax",                                \
     modify [ ax dx ];
 
@@ -255,6 +271,13 @@ void set_bios_mode(int mode);
         "out dx,ax\n"                           \
     )
 
+#define set_color_compare(color)                \
+    asm("mov dx,*0x03ce\n"                      \
+        "mov al,*2\n"                           \
+        "mov ah,*" #color "\n"                  \
+        "out dx,ax\n"                           \
+    )
+
 #define set_op(op)                              \
     asm("mov dx,*0x03ce\n"                      \
         "mov al,*3\n"                           \
@@ -273,6 +296,13 @@ void set_bios_mode(int mode);
     asm("mov dx,*0x03ce\n"                      \
         "mov al,*5\n"                           \
         "mov ah,*" #mode "\n"                   \
+        "out dx,ax\n"                           \
+    )
+
+#define set_color_dont_care(color)              \
+    asm("mov dx,*0x03ce\n"                      \
+        "mov al,*7\n"                           \
+        "mov ah,*" #color "\n"                  \
         "out dx,ax\n"                           \
     )
 
