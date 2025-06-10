@@ -36,6 +36,7 @@ CPPFLAGS="\
     $DEFINES                    \
     "
 
+# -trace=yes
 CFLAGS="\
     -g                          \
     -O                          \
@@ -48,7 +49,6 @@ CFLAGS="\
     -peep=all                   \
     -stackcheck=no              \
     -obsolete=yes               \
-    -trace=no                   \
     "
 
 ASFLAGS="\
