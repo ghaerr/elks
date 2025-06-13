@@ -125,6 +125,7 @@ void when(void) {
 }
 #endif
 
+#if PARSE_ETC_ISSUE
 static void put(unsigned char ch)
 {
     col++;
@@ -132,6 +133,7 @@ static void put(unsigned char ch)
         col = 0;
     write(STDOUT_FILENO, &ch, 1);
 }
+#endif
 
 static void state(char *s)
 {
@@ -242,7 +244,7 @@ int main(int argc, char **argv)
 
     fd = open(_PATH_ISSUE, O_RDONLY);
     if (fd >= 0) {
-        put('\n');
+        /*put('\n');*/
 #if !PARSE_ETC_ISSUE
         while ((n=read(fd,Buffer,sizeof(Buffer))) > 0)
             write(1,Buffer,n);

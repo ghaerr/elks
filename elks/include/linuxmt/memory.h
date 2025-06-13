@@ -47,6 +47,7 @@ extern int xms_bootopts;    /* xms=on or xms=int15 /bootopts setting, default of
 extern int xms_enabled;
 
 typedef __u32 ramdesc_t;	/* special physical ram descriptor */
+extern ramdesc_t df_cache_seg;  /* track cache segment or linear address if XMS */
 
 /* allocate from XMS memory */
 ramdesc_t xms_alloc(unsigned int kbytes);

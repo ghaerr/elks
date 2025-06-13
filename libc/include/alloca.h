@@ -3,6 +3,7 @@
 /*
  * Stack-checking alloca for GCC, OWC and C86
  */
+#include <sys/types.h>
 
 int __stackavail(unsigned int size);    /* return 1 if size bytes stack available */
 extern unsigned int __stacklow;         /* lowest protected SP value */

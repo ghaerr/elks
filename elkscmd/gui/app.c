@@ -149,8 +149,12 @@ void A_GameLoop(void)
             case mode_Fill:
                 if(mx <= CANVAS_WIDTH){
                     hidecursor();
+#ifdef __C86__
+                    R_LineFloodFill(omx, omy, current_color, readpixel(mx, my));
+#else
                     int maxCap = R_FrontFill(omx, omy, current_color, readpixel(mx, my));
                     __dprintf("Peak stack size: %d\n", maxCap);
+#endif
                     showcursor();
                     current_state = state_Idle;
                 }

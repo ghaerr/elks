@@ -53,6 +53,18 @@
 #define __attribute__(n)
 #define __wcfar
 #define __wcnear
+
+/* register specification flags for __loadreg */
+#define __F_DREG    1               /* data register (AX, BX, CX, DX) */
+#define __F_AREG    2               /* address register (SI, DI) */
+#define __AX        (__F_DREG)
+#define __CX        (__F_DREG|1024)
+#define __DX        (__F_DREG|2048)
+#define __BX        (__F_DREG|4096)
+#define __SI        (__F_AREG)
+#define __DI        (__F_AREG|8192)
+void __loadreg(int reg, int value);
+
 #endif
 
 #endif
