@@ -14,6 +14,7 @@
 /* initialize */
 void conio_init(void)
 {
+    // nothing to do
 }
 
 /*

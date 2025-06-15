@@ -119,7 +119,7 @@
 #define SETUP_PART_OFFSETLO     0       /* partition offset low word */
 #define SETUP_PART_OFFSETHI     0       /* partition offset high word */
 #define SYS_CAPS                0       /* no XT/AT capabilities */
-#define UTS_MACHINE             "Solo86"
+#define UTS_MACHINE             "Solo/86"
 #endif /* CONFIG_ARCH_SOLO86 */
 
 /* linear address to start XMS buffer allocations from */

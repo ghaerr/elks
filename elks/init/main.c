@@ -232,7 +232,7 @@ static void INITPROC kernel_banner(seg_t init, seg_t extra)
 #endif
 
 #ifdef CONFIG_ARCH_SOLO86
-    printk("Solo86 machine, ");
+    printk("Solo/86 machine, ");
 #endif
 
     printk("syscaps %x, %uK base ram, %d tasks, %d files, %d inodes\n",

@@ -1295,7 +1295,7 @@ putc:	push %bx
 #endif /* CONFIG_ARCH_8018X*/
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// Architecture specific routines for Solo86
+// Architecture specific routines for Solo/86
 //	Entry points specific for platform setup of SETUP_xxx variables (see config.h)
 //		arch_set_initseg
 //		arch_get_mem
