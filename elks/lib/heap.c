@@ -89,8 +89,8 @@ void * heap_alloc (word_t size, byte_t tag)
 		h++;						// skip header
 		if (tag & HEAP_TAG_CLEAR)
 			memset(h, 0, size);
-	}
-	if (!h) printk("HEAP: no memory (%u bytes)\n", size);
+	} else
+		printk("HEAP: no memory (%u bytes)\n", size);
 	return h;
 }
 
@@ -118,10 +118,9 @@ void heap_free (void * data)
 			heap_merge (prev, h);
 			i = _heap_free.prev;
 			h = prev;
-		} else {
-			h->tag = HEAP_TAG_FREE;
 		}
 	}
+	h->tag = HEAP_TAG_FREE;
 
 	// Try to merge with next block if free
 
