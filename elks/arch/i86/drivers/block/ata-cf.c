@@ -119,7 +119,6 @@ void ata_cf_io_complete(void)
     }
 #endif
 
-    printk("ata_io 1\n");
     for (;;) {
         unsigned char drive;
         char *buf;
@@ -141,7 +140,6 @@ void ata_cf_io_complete(void)
             end_request(0);
             continue;
         }
-    printk("ata_io 2\n");
         for (count = 0; count < req->rq_nr_sectors; count++) {
             if (req->rq_cmd == WRITE) {
                 debug_blk("ata-cf: writing sector %lu\n", start);
@@ -150,7 +148,6 @@ void ata_cf_io_complete(void)
                 debug_blk("ata-cf: reading sector %lu\n", start);
                 ret = ata_read(drive, start, buf, req->rq_seg);
             }
-    printk("ata_io 3\n");
             if (ret != 1)           /* I/O error */
                 break;
             start++;

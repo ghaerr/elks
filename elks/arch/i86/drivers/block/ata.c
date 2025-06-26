@@ -160,14 +160,10 @@ int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
     unsigned int word;
     int i;
 
-    printk("ata_read drive=%d sector=%lu\n", drive, sector);
-
     // send command
 
     if (ata_cmd(drive, ATA_CMD_READ, sector, 1) != 0)
         return (-EINVAL);
-
-    printk("ata_read 1\n");
 
     // wait for drive to be ready/error
 
@@ -178,16 +174,14 @@ int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
             return (-EINVAL);
     } while ((status & ATA_STATUS_DRQ) != ATA_STATUS_DRQ);
 
-    printk("ata_read 2\n");
-
     // read data
 
     for (i = 0; i < ATA_SECTOR_SIZE; i+=2)
     {
         word = inw(ATA_PORT_DATA);
 
-        buffer[i+0] = (word >> 8);
-        buffer[i+1] = (word & 0xFF);
+        buffer[i+0] = (word & 0xFF);
+        buffer[i+1] = (word >> 8);
     }
 
     return (1);
