@@ -83,12 +83,19 @@ static void floppy_off(int nr);
 #define DEVICE_NR(device) (MINOR(device)>>6)
 #define DEVICE_OFF(device)
 
-#elif (MAJOR_NR == BIOSHD_MAJOR)
+#elif (MAJOR_NR == ATA_MAJOR)
 
-#define DEVICE_NAME "bioshd"
-#define DEVICE_REQUEST do_bioshd_request
-#define DEVICE_NR(device) (MINOR(device)>>MINOR_SHIFT)
-#define DEVICE_OFF(device)
+#if CONFIG_BLK_DEV_ATA_CF
+    #define DEVICE_NAME "hd"
+    #define DEVICE_REQUEST do_ata_cf_request
+    #define DEVICE_NR(device) (MINOR(device)>>MINOR_SHIFT)
+    #define DEVICE_OFF(device)
+#else
+    #define DEVICE_NAME "bioshd"
+    #define DEVICE_REQUEST do_bioshd_request
+    #define DEVICE_NR(device) (MINOR(device)>>MINOR_SHIFT)
+    #define DEVICE_OFF(device)
+#endif
 
 #elif (MAJOR_NR == UDD_MAJOR)
 

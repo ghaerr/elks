@@ -49,7 +49,8 @@
 
 #define RAM_MAJOR         1
 #define SSD_MAJOR         2
-#define BIOSHD_MAJOR      3
+#define ATA_MAJOR         3
+#define BIOSHD_MAJOR      ATA_MAJOR
 #define FLOPPY_MAJOR      4
 #define ATHD_MAJOR        5  /* experimental*/
 #define ROMFLASH_MAJOR    6
