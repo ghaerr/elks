@@ -1,7 +1,7 @@
 /*
  * ELKS ATA generic routines
  *
- * This set of routines currently assumes there is only one ATA controller.
+ * This set of routines assumes there is only one ATA controller.
  *
  * Ferry Hendrikx, June 2025
  */
@@ -33,12 +33,12 @@ static void delay_us(uint16_t n) {
 void ata_reset(void)
 {
     // set nIEN and SRST bits
-    outb_p(0x06, ATA_PORT_CTRL);
+    outb(0x06, ATA_PORT_CTRL);
 
     delay_us(10);
 
     // set nIEN bit (and clear SRST bit)
-    outb_p(0x02, ATA_PORT_CTRL);
+    outb(0x02, ATA_PORT_CTRL);
 }
 
 /**
@@ -50,22 +50,23 @@ int ata_cmd(unsigned int drive, unsigned int cmd, unsigned long sector, unsigned
     unsigned char status;
 
     // if we're doing a disk operation, include the LBA flag
+
     if (count > 0)
         select |= 0x40;
 
-    outb_p(select, ATA_PORT_DRVH);
-    outb_p(0x00, ATA_PORT_FEAT);
-    outb_p(count, ATA_PORT_CNT);
-    outb_p((unsigned char) (sector),       ATA_PORT_LBA_LO);
-    outb_p((unsigned char) (sector >> 8),  ATA_PORT_LBA_MD);
-    outb_p((unsigned char) (sector >> 16), ATA_PORT_LBA_HI);
-    outb_p(cmd, ATA_PORT_CMD);
+    outb(select, ATA_PORT_DRVH);
+    outb(0x00, ATA_PORT_FEAT);
+    outb(count, ATA_PORT_CNT);
+    outb((unsigned char) (sector),       ATA_PORT_LBA_LO);
+    outb((unsigned char) (sector >> 8),  ATA_PORT_LBA_MD);
+    outb((unsigned char) (sector >> 16), ATA_PORT_LBA_HI);
+    outb(cmd, ATA_PORT_CMD);
 
     // wait for drive to be not-busy
 
     do
     {
-        status = inb_p(ATA_PORT_STATUS);
+        status = inb(ATA_PORT_STATUS);
 
         // no such device?
         if (status == 0x00)
@@ -97,7 +98,7 @@ int ata_identify(unsigned int drive, char *buf)
 
     do
     {
-        status = inb_p(ATA_PORT_STATUS);
+        status = inb(ATA_PORT_STATUS);
         if (status & ATA_STATUS_ERR)
             return (-EINVAL);
     } while ((status & ATA_STATUS_DRQ) != ATA_STATUS_DRQ);
@@ -108,8 +109,8 @@ int ata_identify(unsigned int drive, char *buf)
     {
         word = inw(ATA_PORT_DATA);
 
-        buf[i+0] = (unsigned char) (word >> 8);
-        buf[i+1] = (unsigned char) (word & 0xFF);
+        buf[i+0] = (unsigned char) (word & 0xFF);
+        buf[i+1] = (unsigned char) (word >> 8);
     }
 
     return (0);
@@ -129,17 +130,11 @@ sector_t ata_init(unsigned int drive)
 {
     uint16_t buffer[ATA_SECTOR_SIZE/2];
 
-    uint16_t word60;
-    uint16_t word61;
-
     if (ata_identify(drive, (char *) &buffer) == 0)
     {
-        word60 = (buffer[60] >> 8) | (buffer[60] << 8);
-        word61 = (buffer[61] >> 8) | (buffer[61] << 8);
-
         // LBA sector total (MSB << 16, LSB)
 
-        return ((sector_t) word61 << 16 | word60);
+        return ((sector_t) buffer[61] << 16 | buffer[60]);
     }
 
     return (0);
@@ -159,8 +154,6 @@ int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
     unsigned int word;
     int i;
 
-    printk("ata_read: %lu\n", sector);
-
     // send command
 
     if (ata_cmd(drive, ATA_CMD_READ, sector, 1) != 0)
@@ -170,7 +163,7 @@ int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
 
     do
     {
-        status = inb_p(ATA_PORT_STATUS);
+        status = inb(ATA_PORT_STATUS);
         if (status & ATA_STATUS_ERR)
             return (-EINVAL);
     } while ((status & ATA_STATUS_DRQ) != ATA_STATUS_DRQ);
@@ -202,8 +195,6 @@ int ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
     unsigned int word;
     int i;
 
-    printk("ata_write: %lu\n", sector);
-
     // send command
 
     if (ata_cmd(drive, ATA_CMD_WRITE, sector, 1) != 0)
@@ -213,7 +204,7 @@ int ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
 
     do
     {
-        status = inb_p(ATA_PORT_STATUS);
+        status = inb(ATA_PORT_STATUS);
         if (status & ATA_STATUS_ERR)
             return (-EINVAL);
     } while ((status & ATA_STATUS_DRQ) != ATA_STATUS_DRQ);
@@ -224,19 +215,19 @@ int ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
     {
         word = buffer[i+0] | buffer[i+1] << 8;
 
-        outw(ATA_PORT_DATA, word);
+        outw(word, ATA_PORT_DATA);
     }
 
     // wait for drive to be not-busy
 
     do
     {
-        status = inb_p(ATA_PORT_STATUS);
+        status = inb(ATA_PORT_STATUS);
     } while ((status & ATA_STATUS_BSY) == ATA_STATUS_BSY);
 
     // check for error
 
-    status = inb_p(ATA_PORT_STATUS);
+    status = inb(ATA_PORT_STATUS);
 
     if (status & ATA_STATUS_ERR)
         return (-EINVAL);

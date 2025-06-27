@@ -3,7 +3,7 @@
  *
  * Please note that this driver does not currently support partitions.
  *
- * This driver largely based on Greg Haerr's SSD driver.
+ * This driver is largely based on Greg Haerr's SSD driver.
  *
  * Ferry Hendrikx, June 2025
  */
@@ -170,6 +170,7 @@ void ata_cf_io_complete(void)
 static void do_ata_cf_request(void)
 {
     debug_blk("do_ata_cf_request\n");
+
     for (;;) {
         struct request *req = CURRENT;
         if (!req) {
