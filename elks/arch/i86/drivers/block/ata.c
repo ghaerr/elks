@@ -46,7 +46,6 @@ void ata_reset(void)
  */
 int ata_cmd(unsigned int drive, unsigned int cmd, unsigned long sector, unsigned char count)
 {
-    //unsigned char select = 0xA0 | (drive << 4) | ((++sector >> 24) & 0x0F);
     unsigned char select = 0xA0 | (drive << 4) | ((sector >> 24) & 0x0F);
     unsigned char status;
 
@@ -124,7 +123,7 @@ int ata_identify(unsigned int drive, char *buf)
 /**
  * initialise an ATA device
  *
- * drive  : physical drive number (0 or 1)
+ * drive : physical drive number (0 or 1)
  */
 sector_t ata_init(unsigned int drive)
 {
@@ -149,9 +148,9 @@ sector_t ata_init(unsigned int drive)
 /**
  * read from an ATA device
  *
- * drive  : physical drive number (0 or 1)
- * sector : sector number
- * *buffer: __far pointer to buffer containing 512 bytes of space
+ * drive : physical drive number (0 or 1)
+ * sector: sector number
+ * buffer: __far pointer to buffer containing 512 bytes of space
  */
 int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
 {
@@ -159,6 +158,8 @@ int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
     unsigned char status;
     unsigned int word;
     int i;
+
+    printk("ata_read: %lu\n", sector);
 
     // send command
 
@@ -190,9 +191,9 @@ int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
 /**
  * write to an ATA device
  *
- * drive  : physical drive number (0 or 1)
- * sector : sector number
- * *buffer: __far pointer to buffer containing 512 bytes of data
+ * drive : physical drive number (0 or 1)
+ * sector: sector number
+ * buffer: __far pointer to buffer containing 512 bytes of data
  */
 int ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
 {
@@ -200,6 +201,8 @@ int ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
     unsigned char status;
     unsigned int word;
     int i;
+
+    printk("ata_write: %lu\n", sector);
 
     // send command
 
@@ -219,10 +222,24 @@ int ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
 
     for (i = 0; i < ATA_SECTOR_SIZE; i+=2)
     {
-        word = buffer[i+0] << 8 | buffer[i+1];
+        word = buffer[i+0] | buffer[i+1] << 8;
 
         outw(ATA_PORT_DATA, word);
     }
+
+    // wait for drive to be not-busy
+
+    do
+    {
+        status = inb_p(ATA_PORT_STATUS);
+    } while ((status & ATA_STATUS_BSY) == ATA_STATUS_BSY);
+
+    // check for error
+
+    status = inb_p(ATA_PORT_STATUS);
+
+    if (status & ATA_STATUS_ERR)
+        return (-EINVAL);
 
     return (1);
 }

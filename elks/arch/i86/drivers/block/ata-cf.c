@@ -3,6 +3,8 @@
  *
  * Please note that this driver does not currently support partitions.
  *
+ * This driver largely based on Greg Haerr's SSD driver.
+ *
  * Ferry Hendrikx, June 2025
  */
 
@@ -60,7 +62,7 @@ void INITPROC ata_cf_init(void)
         sectors = ata_init(i);
 
         if (sectors > 0)
-            printk("ata-cf: drive=%d sectors=%ld\n", i, sectors);
+            printk("ata-cf: drive=%d sectors=%ld size=%ldK\n", i, sectors, sectors >> 1);
         else
             printk("ata-cf: drive=%d not present\n", i);
 
@@ -87,6 +89,7 @@ static int ata_cf_open(struct inode *inode, struct file *filp)
 
     ++access_count[drive];
     inode->i_size = ata_cf_num_sects[drive] << 9;
+
     return 0;
 }
 
