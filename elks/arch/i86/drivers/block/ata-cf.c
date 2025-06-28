@@ -1,4 +1,4 @@
-/*
+/**********************************************************************
  * ELKS ATA-CF driver
  *
  * Please note that this driver does not currently support partitions.
@@ -6,7 +6,7 @@
  * This driver is largely based on Greg Haerr's SSD driver.
  *
  * Ferry Hendrikx, June 2025
- */
+ **********************************************************************/
 
 #include <linuxmt/config.h>
 #include <linuxmt/kernel.h>
@@ -54,8 +54,18 @@ void INITPROC ata_cf_init(void)
     sector_t sectors;
     int i;
 
+    // register device
+
     if (register_blkdev(MAJOR_NR, DEVICE_NAME, &ata_cf_fops) == 0)
         blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
+
+
+    // ATA reset
+
+    ata_reset();
+
+
+    // ATA drive detect
 
     for (i = 0; i < NUM_DRIVES; i++)
     {
@@ -74,7 +84,8 @@ void INITPROC ata_cf_init(void)
 
 int ata_cf_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned int arg)
 {
-    /* not used */
+    // not used
+
     return -EINVAL;
 }
 
@@ -99,6 +110,7 @@ static void ata_cf_release(struct inode *inode, struct file *filp)
     kdev_t dev = inode->i_rdev;
 
     debug_blk("ata-cf: release\n");
+
     if (--access_count[drive] == 0) {
         fsync_dev(dev);
         invalidate_inodes(dev);

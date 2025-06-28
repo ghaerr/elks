@@ -45,6 +45,7 @@
 
 #define ATA_STATUS_ERR  0x01
 #define ATA_STATUS_DRQ  0x08
+#define ATA_STATUS_DFE  0x20
 #define ATA_STATUS_BSY  0x80
 
 #endif /* !__ARCH_8086_ATA_H*/
