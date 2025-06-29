@@ -309,6 +309,10 @@ a6:     out     %al,$PIC1_CMD           // Ack on primary controller
         mov $0x8000, %ax // set the NSPEC bit on the
         mov $0xff02, %dx // EOI register so the ICU
         out %ax, %dx // acks the highest priority interrupt
+
+#elif defined(CONFIG_ARCH_SOLO86)
+        mov $0x1A, %dx          // Send INT done
+        out %al, %dx
 #endif
 
 //

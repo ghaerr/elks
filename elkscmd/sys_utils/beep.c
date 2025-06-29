@@ -51,6 +51,14 @@ static void beep(long freq)
         outb(tmp | 3, SPEAKER_PORT);
     }
 #endif
+#ifdef CONFIG_ARCH_SOLO86
+    //Set the PIT to the desired frequency
+    unsigned int d = 1000000L / freq;
+    outb(0xb6, TIMER_CMDS_PORT);
+    outb((unsigned int)(d), TIMER2_DATA_PORT);
+    outb((unsigned int)(d >> 8), TIMER2_DATA_PORT);
+    outb(0x01, TIMER2_ENBL_PORT);
+#endif
 }
 
 static void silent()
@@ -61,6 +69,9 @@ static void silent()
 #ifdef CONFIG_ARCH_IBMPC
     unsigned int tmp = inb(SPEAKER_PORT) & 0xFC;
     outb(tmp, SPEAKER_PORT);
+#endif
+#ifdef CONFIG_ARCH_SOLO86
+    outb(0x00, TIMER2_ENBL_PORT);
 #endif
 }
 

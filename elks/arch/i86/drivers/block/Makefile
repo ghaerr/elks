@@ -74,6 +74,10 @@ ifeq ($(CONFIG_BLK_DEV_SSD_SD8018X), y)
 	OBJS += ssd.o ssd-sd.o spi-8018x.o
 endif
 
+ifeq ($(CONFIG_BLK_DEV_ATA_CF), y)
+	OBJS += ata.o ata-cf.o
+endif
+
 # experimental (and not working) direct hd support
 ifeq ($(CONFIG_BLK_DEV_HD), y)
 OBJS += directhd.o

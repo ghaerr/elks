@@ -45,14 +45,24 @@
 #define TIMER_HI_BYTE_8M (__u8)(((5+(19968000L/(HZ)))/10)/256)
 #endif
 
+#ifdef CONFIG_ARCH_SOLO86
+#define TIMER_LO_BYTE (__u8)(((5+(10000000L/(HZ)))/10)%256)
+#define TIMER_HI_BYTE (__u8)(((5+(10000000L/(HZ)))/10)/256)
+#define TIMER_ENABLE  1
+#endif
+
 void enable_timer_tick(void)
 {
     /* set the clock frequency */
     outb (TIMER_MODE2, TIMER_CMDS_PORT);
 
-#ifdef CONFIG_ARCH_IBMPC
+#if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_SOLO86)
     outb (TIMER_LO_BYTE, TIMER_DATA_PORT);      /* LSB */
     outb (TIMER_HI_BYTE, TIMER_DATA_PORT);      /* MSB */
+#endif
+
+#ifdef CONFIG_ARCH_SOLO86
+    outb(TIMER_ENABLE, TIMER_ENBL_PORT);        /* enable TIMER */
 #endif
 
 #ifdef CONFIG_ARCH_PC98

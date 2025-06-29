@@ -1295,6 +1295,33 @@ putc:	push %bx
 #endif /* CONFIG_ARCH_8018X*/
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Architecture specific routines for Solo/86
+//	Entry points specific for platform setup of SETUP_xxx variables (see config.h)
+//		arch_set_initseg
+//		arch_get_mem
+
+#ifdef CONFIG_ARCH_SOLO86
+
+// Return total memory in Kbytes
+arch_get_mem:
+	mov $SETUP_MEM_KBYTES,%ax
+	ret
+
+// Set INITSEG values for Solo/86 architecture
+// currently hard-coded in config.h
+arch_set_initseg:
+	mov	$INITSEG,%ax
+	mov	%ax,%ds
+	ret
+
+// Write AL to console, save all other registers
+putc:
+	outb %al,$0x22
+	ret
+
+#endif /* CONFIG_ARCH_SOLO86 */
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Architecture specific routines for NEC PC98
 //	Entry points specific for platform setup of SETUP_xxx variables (see config.h)
 //		arch_set_initseg

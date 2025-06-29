@@ -165,7 +165,7 @@ int verbose;
 void do_gettime(struct tm *);
 void do_settime(struct tm *);
 
-#if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_8018X)
+#if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_8018X) || defined(CONFIG_ARCH_SOLO86)
 void cmos_settime(struct tm *);
 void cmos_gettime(struct tm *);
 #endif
@@ -386,9 +386,17 @@ static int hex_bcd(int hex_data)
 }
 
 /****************************************************************************/
+#if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_8018X) || defined(CONFIG_ARCH_SOLO86)
+
 #if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_8018X)
 #define CMOS_CMDREG     0x70
 #define CMOS_IOREG      0x71
+#endif
+
+#if defined(CONFIG_ARCH_SOLO86)
+#define CMOS_CMDREG     0x0C
+#define CMOS_IOREG      0x0E
+#endif
 
 void do_gettime(struct tm *tm)
 {
@@ -410,14 +418,14 @@ void do_settime(struct tm *tm)
             cmos_settime(tm);
 }
 
-#ifdef CONFIG_ARCH_IBMPC
+#if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_SOLO86)
 unsigned char cmos_read(unsigned char reg)
 {
     register unsigned char ret;
 
     clr_irq();
-    outb_p(reg | 0x80, 0x70);
-    ret = inb_p(0x71);
+    outb_p(reg | 0x80, CMOS_CMDREG);
+    ret = inb_p(CMOS_IOREG);
     set_irq();
     return ret;
 }
@@ -425,8 +433,8 @@ unsigned char cmos_read(unsigned char reg)
 void cmos_write(unsigned char reg, unsigned char val)
 {
     clr_irq();
-    outb_p(reg | 0x80, 0x70);
-    outb_p(val, 0x71);
+    outb_p(reg | 0x80, CMOS_CMDREG);
+    outb_p(val, CMOS_IOREG);
     set_irq();
 }
 #endif
