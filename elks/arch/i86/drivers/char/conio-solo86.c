@@ -1,5 +1,5 @@
 /*
- * conio API for Solo86
+ * conio API for Solo/86
  *
  * Ferry Hendrikx, April 2025
  */
@@ -14,7 +14,7 @@
 /* initialize */
 void conio_init(void)
 {
-    // nothing to do
+    // no-op
 }
 
 /*
@@ -26,16 +26,12 @@ int conio_poll(void)
 {
     // are there any keys waiting?
 
-    if (inb_p(COM0_CMDS_PORT)) {
-        // yes, fetch one
-        int c = inb_p(COM0_DATA_PORT);
-
-        // convert EOL
-        if (c == 0x0a) c = 0x0d;
-
-        return c;
+    if (inb(COM0_CMDS_PORT))
+    {
+        return (inb(COM0_DATA_PORT));
     }
-    return 0;
+
+    return (0);
 }
 
 void conio_putc(byte_t c)

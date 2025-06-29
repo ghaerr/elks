@@ -1,5 +1,5 @@
 /*
- * Solo86 Interrupt Handling
+ * Interrupt Handling for Solo/86
  *
  * Ferry Hendrikx, April 2025
  */
@@ -13,7 +13,7 @@
 #include <arch/ports.h>
 
 /*
- *  Low level interrupt handling for the Solo86 platform
+ *  Low level interrupt handling for the Solo/86 platform
  */
 
 void initialize_irq(void)
@@ -26,12 +26,10 @@ void initialize_irq(void)
 void enable_irq(unsigned int irq)
 {
     if (irq > 3)
-    {
         return;
-    }
 
     unsigned char mask = 1 << irq;
-    unsigned char state = inb_p(INT_CMDS_PORT);
+    unsigned char state = inb(INT_CMDS_PORT);
 
     state |= mask;
 
@@ -40,7 +38,7 @@ void enable_irq(unsigned int irq)
 
 int remap_irq(int irq)
 {
-    return irq;
+    return (irq);
 }
 
 // Get interrupt vector from IRQ
@@ -49,15 +47,13 @@ int irq_vector (int irq)
 {
     // IRQ 0-7 are mapped to vectors INT 20h-27h
 
-    return irq + 0x20;
+    return (irq + 0x20);
 }
 
 void disable_irq(unsigned int irq)
 {
     if (irq > 3)
-    {
         return;
-    }
 
     flag_t flags;
 
@@ -65,7 +61,7 @@ void disable_irq(unsigned int irq)
     clr_irq();
 
     unsigned char mask = ~(1 << irq);
-    unsigned char state = inb_p(INT_CMDS_PORT);
+    unsigned char state = inb(INT_CMDS_PORT);
 
     state &= mask;
 

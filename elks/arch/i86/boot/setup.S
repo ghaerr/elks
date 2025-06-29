@@ -1307,7 +1307,7 @@ arch_get_mem:
 	mov $SETUP_MEM_KBYTES,%ax
 	ret
 
-// Set INITSEG values for Solo86 architecture
+// Set INITSEG values for Solo/86 architecture
 // currently hard-coded in config.h
 arch_set_initseg:
 	mov	$INITSEG,%ax
