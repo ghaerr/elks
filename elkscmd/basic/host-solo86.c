@@ -1,5 +1,5 @@
 /*
- * Architecture Specific routines for Solo86
+ * Architecture Specific routines for Solo/86
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,20 +13,25 @@
  */
 
 void host_digitalWrite(int pin,int state) {
+    // TODO
 }
 
 int host_digitalRead(int pin) {
+    // TODO
 	return 0;
 }
 
 int host_analogRead(int pin) {
+    // TODO
 	return 0;
 }
 
 void host_pinMode(int pin,int mode) {
+    // TODO
 }
 
 void host_mode(int mode) {
+    // TODO
 }
 
 void host_cls() {
@@ -34,15 +39,19 @@ void host_cls() {
 }
 
 void host_color(int fgc, int bgc) {
+    // TODO
 }
 
 void host_plot(int x, int y) {
+    // TODO
 }
 
 void host_draw(int x, int y) {
+    // TODO
 }
 
 void host_circle(int x, int y, int r) {
+    // TODO
 }
 
 void host_outb(int port, int value) {

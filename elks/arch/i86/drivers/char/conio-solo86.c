@@ -27,9 +27,7 @@ int conio_poll(void)
     // are there any keys waiting?
 
     if (inb(COM0_CMDS_PORT))
-    {
         return (inb(COM0_DATA_PORT));
-    }
 
     return (0);
 }

@@ -388,12 +388,14 @@ static int hex_bcd(int hex_data)
 /****************************************************************************/
 #if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_8018X) || defined(CONFIG_ARCH_SOLO86)
 
-#ifdef CONFIG_ARCH_SOLO86
-#define CMOS_CMDREG     0x0C
-#define CMOS_IOREG      0x0E
-#else
+#if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_8018X)
 #define CMOS_CMDREG     0x70
 #define CMOS_IOREG      0x71
+#endif
+
+#if defined(CONFIG_ARCH_SOLO86)
+#define CMOS_CMDREG     0x0C
+#define CMOS_IOREG      0x0E
 #endif
 
 void do_gettime(struct tm *tm)
