@@ -6,11 +6,15 @@
  * This code uses LBA addressing for the disks. Any disks without
  * LBA support (they'd need to be pretty old) are simply ignored.
  *
- * All read/write methods check for ERR and DFE (drive-fault err)
- * There is also an internal timeout counter that once you exceed
- * ATA_TIMEOUT loops, the current operation is aborted. This is
- * intended to prevent code hanging on missing or unresponsive ATA
- * interfaces.
+ * All read/write methods follow this same process:
+ * - wait till drive is not busy
+ * - send drive/head information
+ * - wait till drive is not busy
+ * - send count and sector information
+ * - wait till drive is not busy
+ * - check ERR, DFE and DRQ bits
+ * - read/write data
+ * - wait till drive is not busy
  *
  * Caveat emptor: This code is based on the ATA specifications and
  * some common sense.
@@ -18,7 +22,6 @@
  * Ferry Hendrikx, June 2025
  **********************************************************************/
 
-#include <stdint.h>
 #include <linuxmt/config.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/errno.h>
@@ -33,11 +36,92 @@
  **********************************************************************/
 
 /**
- * Delays some amount of time (not exactly microseconds)
+ * ATA delay
  */
-static void delay_us(uint16_t n)
+static void ata_delay()
 {
-    while (n--) asm("nop");
+    unsigned short i = 1000;
+
+    while (i--) asm("nop");
+}
+
+/**
+ * ATA delay 400ns
+ */
+static void ata_delay_400()
+{
+    unsigned short i;
+
+    for (i = 0; i < 5; i++)
+        inb(ATA_PORT_STATUS);
+}
+
+/**
+ * ATA wait for state
+ */
+static unsigned char ata_wait(unsigned char state)
+{
+    unsigned char status;
+    unsigned int i;
+
+    status = 0;
+
+    // loop while the state is true
+
+    for (i = 0; i < 500; i++)
+    {
+        status = inb(ATA_PORT_STATUS);
+
+        // are we done?
+
+        if (status & state)
+            ata_delay();
+        else
+            return (0);
+    }
+
+    return (status);
+}
+
+/**
+ * ATA select
+ */
+static unsigned char ata_select(unsigned int drive, unsigned int cmd, unsigned long sector)
+{
+    unsigned char select = 0xA0 | 0x40 | (drive << 4) | ((sector >> 24) & 0x0F);
+    unsigned char status;
+    unsigned int i;
+
+    // wait for drive to be non-busy
+
+    for (i = 0; i < ATA_RETRY; i++)
+    {
+        status = ata_wait(ATA_STATUS_BSY);
+
+        if (status == 0)
+            break;
+    }
+
+    if (status)
+        return (status);
+
+    // send
+
+    outb(select, ATA_PORT_DRVH);
+
+    ata_delay_400();
+
+    // wait for drive to be non-busy
+
+    for (i = 0; i < ATA_RETRY; i++)
+    {
+        status = ata_wait(ATA_STATUS_BSY);
+
+        if (status == 0)
+            break;
+    }
+
+    return (status);
 }
 
 
@@ -50,18 +134,17 @@ static void delay_us(uint16_t n)
  */
 int ata_cmd(unsigned int drive, unsigned int cmd, unsigned long sector, unsigned char count)
 {
-    unsigned char select = 0xA0 | (drive << 4) | ((sector >> 24) & 0x0F);
     unsigned char status;
     unsigned int i;
 
 
     // send command
-    // if we're doing a disk operation, include the LBA flag
 
-    if (count > 0)
-        select |= 0x40;
+    status = ata_select(drive, cmd, sector);
 
-    outb(select, ATA_PORT_DRVH);
+    if (status != 0)
+        return (status);
+
     outb(0x00, ATA_PORT_FEAT);
     outb(count, ATA_PORT_CNT);
     outb((unsigned char) (sector),       ATA_PORT_LBA_LO);
@@ -72,32 +155,17 @@ int ata_cmd(unsigned int drive, unsigned int cmd, unsigned long sector, unsigned
 
     // wait for drive to be not-busy
 
-    i = 0;
-
-    do
+    for (i = 0; i < ATA_RETRY; i++)
     {
-        status = inb(ATA_PORT_STATUS);
+        status = ata_wait(ATA_STATUS_BSY);
 
-        // check for no device
-        if (status == 0x00)
-            return (-ENXIO);
+        // are we done?
 
-        // check for error
-        if (status & ATA_STATUS_ERR)
-            return (-EIO);
-        if (status & ATA_STATUS_DFE)
-            return (-EINVAL);
+        if (status == 0)
+            break;
+    }
 
-        // check for timeout
-        if (i++ == ATA_TIMEOUT)
-            return (-EINVAL);
-
-    } while ((status & ATA_STATUS_BSY) == ATA_STATUS_BSY);
-
-
-    // we got this far; there were no errors and we didn't timeout.
-
-    return (0);
+    return (status);
 }
 
 
@@ -112,31 +180,24 @@ int ata_identify(unsigned int drive, char *buf)
     unsigned char status;
     unsigned int word, i;
 
+
     // send command
 
     if (ata_cmd(drive, ATA_CMD_ID, 0, 0) != 0)
         return (-ENXIO);
 
 
-    // wait for drive to be ready/error
+    // check for error
 
-    i = 0;
+    status = inb(ATA_PORT_STATUS);
 
-    do
-    {
-        status = inb(ATA_PORT_STATUS);
+    if (status & ATA_STATUS_ERR)
+        return (-EIO);
+    if (status & ATA_STATUS_DFE)
+        return (-EIO);
 
-        // check for error
-        if (status & ATA_STATUS_ERR)
-            return (-EIO);
-        if (status & ATA_STATUS_DFE)
-            return (-EINVAL);
-
-        // check for timeout
-        if (i++ == ATA_TIMEOUT)
-            return (-EINVAL);
-
-    } while ((status & ATA_STATUS_DRQ) != ATA_STATUS_DRQ);
+    if (! (status & ATA_STATUS_DRQ))
+        return (-EINVAL);
 
 
     // read data
@@ -149,7 +210,7 @@ int ata_identify(unsigned int drive, char *buf)
         buf[i+1] = (unsigned char) (word >> 8);
     }
 
-    return (0);
+    return (! ata_wait(ATA_STATUS_BSY));
 }
 
 
@@ -162,13 +223,21 @@ int ata_identify(unsigned int drive, char *buf)
  */
 void ata_reset(void)
 {
+    unsigned char select = 0xA0;
+
+    outb(select, ATA_PORT_DRVH);
+
+    ata_delay();
+
     // set nIEN and SRST bits
     outb(0x06, ATA_PORT_CTRL);
 
-    delay_us(10);
+    ata_delay();
 
     // set nIEN bit (and clear SRST bit)
     outb(0x02, ATA_PORT_CTRL);
+
+    ata_delay();
 }
 
 
@@ -179,9 +248,9 @@ void ata_reset(void)
  */
 sector_t ata_init(unsigned int drive)
 {
-    uint16_t buffer[ATA_SECTOR_SIZE/2];
+    unsigned short buffer[ATA_SECTOR_SIZE/2];
 
-    if (ata_identify(drive, (char *) &buffer) == 0)
+    if (ata_identify(drive, (char *) &buffer))
     {
         // ATA LBA support?
 
@@ -210,31 +279,24 @@ int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
     unsigned char status;
     unsigned int word, i;
 
+
     // send command
 
     if (ata_cmd(drive, ATA_CMD_READ, sector, 1) != 0)
         return (-ENXIO);
 
 
-    // wait for drive to be ready/error
+    // check for error
 
-    i = 0;
+    status = inb(ATA_PORT_STATUS);
 
-    do
-    {
-        status = inb(ATA_PORT_STATUS);
+    if (status & ATA_STATUS_ERR)
+        return (-EIO);
+    if (status & ATA_STATUS_DFE)
+        return (-EIO);
 
-        // check for error
-        if (status & ATA_STATUS_ERR)
-            return (-EIO);
-        if (status & ATA_STATUS_DFE)
-            return (-EINVAL);
-
-        // check for timeout
-        if (i++ == ATA_TIMEOUT)
-            return (-EINVAL);
-
-    } while ((status & ATA_STATUS_DRQ) != ATA_STATUS_DRQ);
+    if (! (status & ATA_STATUS_DRQ))
+        return (-EINVAL);
 
 
     // read data
@@ -243,11 +305,11 @@ int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
     {
         word = inw(ATA_PORT_DATA);
 
-        buffer[i+0] = (word & 0xFF);
-        buffer[i+1] = (word >> 8);
+        buffer[i+0] = (unsigned char) (word & 0xFF);
+        buffer[i+1] = (unsigned char) (word >> 8);
     }
 
-    return (1);
+    return (!ata_wait(ATA_STATUS_BSY));
 }
 
 
@@ -264,31 +326,24 @@ int ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
     unsigned char status;
     unsigned int word, i;
 
+
     // send command
 
     if (ata_cmd(drive, ATA_CMD_WRITE, sector, 1) != 0)
         return (-ENXIO);
 
 
-    // wait for drive to be ready/error
+    // check for error
 
-    i = 0;
+    status = inb(ATA_PORT_STATUS);
 
-    do
-    {
-        status = inb(ATA_PORT_STATUS);
+    if (status & ATA_STATUS_ERR)
+        return (-EIO);
+    if (status & ATA_STATUS_DFE)
+        return (-EIO);
 
-        // check for error
-        if (status & ATA_STATUS_ERR)
-            return (-EIO);
-        if (status & ATA_STATUS_DFE)
-            return (-EINVAL);
-
-        // check for timeout
-        if (i++ == ATA_TIMEOUT)
-            return (-EINVAL);
-
-    } while ((status & ATA_STATUS_DRQ) != ATA_STATUS_DRQ);
+    if (! (status & ATA_STATUS_DRQ))
+        return (-EINVAL);
 
 
     // write data
@@ -299,24 +354,6 @@ int ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
         outw(word, ATA_PORT_DATA);
     }
 
-
-    // wait for drive to be not-busy
-
-    do
-    {
-        status = inb(ATA_PORT_STATUS);
-    } while ((status & ATA_STATUS_BSY) == ATA_STATUS_BSY);
-
-
-    // check for error
-
-    status = inb(ATA_PORT_STATUS);
-
-    if (status & ATA_STATUS_ERR)
-        return (-EIO);
-    if (status & ATA_STATUS_DFE)
-        return (-EINVAL);
-
-    return (1);
+    return (!ata_wait(ATA_STATUS_BSY));
 }
 

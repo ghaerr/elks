@@ -4,6 +4,7 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/kdev_t.h>
 
+#define ATA_RETRY           10
 #define ATA_SECTOR_SIZE     512
 #define ATA_TIMEOUT         1024
 

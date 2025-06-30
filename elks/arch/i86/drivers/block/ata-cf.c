@@ -22,10 +22,10 @@
  * device initialisation
  **********************************************************************/
 
-jiff_t ata_cf_timeout;
+static jiff_t ata_cf_timeout;
 
-char ata_cf_initialized;
-sector_t ata_cf_num_sects[NUM_DRIVES];     /* max # sectors on SSD device */
+static char ata_cf_initialized;
+static sector_t ata_cf_num_sects[NUM_DRIVES];   /* max # sectors on ATA-CF device */
 static int access_count[NUM_DRIVES];
 
 
@@ -56,30 +56,32 @@ void INITPROC ata_cf_init(void)
 
     // register device
 
-    if (register_blkdev(MAJOR_NR, DEVICE_NAME, &ata_cf_fops) == 0)
+    if (! register_blkdev(MAJOR_NR, DEVICE_NAME, &ata_cf_fops))
+    {
         blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
 
 
-    // ATA reset
+        // ATA reset
 
-    ata_reset();
+        ata_reset();
 
 
-    // ATA drive detect
+        // ATA drive detect
 
-    for (i = 0; i < NUM_DRIVES; i++)
-    {
-        sectors = ata_init(i);
+        for (i = 0; i < NUM_DRIVES; i++)
+        {
+            sectors = ata_init(i);
 
-        if (sectors > 0)
-            printk("ata-cf: drive=%d sectors=%ld size=%ldK\n", i, sectors, sectors >> 1);
-        else
-            printk("ata-cf: drive=%d not present\n", i);
+            if (sectors > 0)
+                printk("ata-cf: drive=%d sectors=%ld size=%ldK\n", i, sectors, sectors >> 1);
+            else
+                printk("ata-cf: drive=%d not present\n", i);
 
-        ata_cf_num_sects[i] = sectors;
+            ata_cf_num_sects[i] = sectors;
+        }
+
+        ata_cf_initialized = 1;
     }
-
-    ata_cf_initialized = 1;
 }
 
 int ata_cf_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned int arg)
