@@ -665,6 +665,10 @@ CONFIG_BLK_DEV_SSD_SD8018X
   Select this driver if you have an 8018x CPU and you have some GPIO lines
   available for a bit-banged SPI driver that can be used with the ssd SD card driver.
 
+ATA CF Hard Disk support
+CONFIG_BLK_DEV_ATA_CF
+  Select this driver to use ATA support for CF devices.
+
 #############################################################################
 
 Options that do not need help texts.

@@ -231,6 +231,10 @@ static void INITPROC kernel_banner(seg_t init, seg_t extra)
     printk("WonderSwan, ");
 #endif
 
+#ifdef CONFIG_ARCH_SOLO86
+    printk("Solo/86 machine, ");
+#endif
+
     printk("syscaps %x, %uK base ram, %d tasks, %d files, %d inodes\n",
         sys_caps, SETUP_MEM_KBYTES, max_tasks, nr_file, nr_inode);
     printk("ELKS %s (%u text, %u ftext, %u data, %u bss, %u heap)\n",

@@ -8,8 +8,9 @@ mainmenu_option next_comment
 	choice 'Select system' \
 		"IBM-PC CONFIG_ARCH_IBMPC \
 		 8018X	CONFIG_ARCH_8018X \
-		 PC-98	CONFIG_ARCH_PC98
-		 WonderSwan CONFIG_ARCH_SWAN" IBM-PC
+		 PC-98	CONFIG_ARCH_PC98 \
+		 WonderSwan CONFIG_ARCH_SWAN \
+		 SOLO86	CONFIG_ARCH_SOLO86" IBM-PC
 
 	comment 'Platform'
 
@@ -38,6 +39,10 @@ mainmenu_option next_comment
 		define_bool CONFIG_CONSOLE_DIRECT   n
 		define_bool CONFIG_CONSOLE_8018X    y
 
+	elif [ "$CONFIG_ARCH_SOLO86" = "y" ]; then
+
+		comment 'Devices'
+
 	elif [ "$CONFIG_ARCH_PC98" = "y" ]; then
 
 		comment 'Devices'
@@ -63,7 +68,7 @@ mainmenu_option next_comment
 	bool 'Use INT 1Ch from BIOS for timer'    CONFIG_TIMER_INT1C  n
 
 	if [ "$CONFIG_ARCH_IBMPC" = "y" ] || [ "$CONFIG_ARCH_8018X" = "y" ] \
-	|| [ "$CONFIG_ARCH_SWAN" = "y" ]; then
+	|| [ "$CONFIG_ARCH_SWAN" = "y" ] || [ "$CONFIG_ARCH_SOLO86" = "y" ]; then
 		bool 'Build kernel as ROM-bootable'   CONFIG_ROMCODE      n
     fi
 

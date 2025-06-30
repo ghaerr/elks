@@ -34,6 +34,10 @@ ifeq ($(CONFIG_ARCH_SWAN), y)
 OBJS += host-stubs.o
 endif
 
+ifeq ($(CONFIG_ARCH_SOLO86), y)
+OBJS += host-solo86.o
+endif
+
 HOSTPRGS = hostbasic
 
 all: $(PRGS)

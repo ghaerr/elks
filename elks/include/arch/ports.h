@@ -105,6 +105,22 @@
 #endif
 #endif
 
+#ifdef CONFIG_ARCH_SOLO86
+#define TIMER_CMDS_PORT     0x06    /* command port */
+#define TIMER_DATA_PORT     0x00    /* data port    */
+#define TIMER_ENBL_PORT     0x01    /* enable port  */
+#define TIMER_IRQ           0
+
+#define TIMER2_DATA_PORT    0x04
+#define TIMER2_ENBL_PORT    0x05
+
+#define INT_CMDS_PORT       0x18
+#define INT_DATA_PORT       0x1A
+
+#define COM0_CMDS_PORT      0x20
+#define COM0_DATA_PORT      0x22
+#endif
+
 /* Ethernet card settings may be overridden in /bootopts using netirq= and netport= */ 
 /* ne2k, ne2k.c */ 
 #define NE2K_PORT	0x300

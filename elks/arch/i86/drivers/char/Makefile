@@ -60,6 +60,10 @@ ifeq ($(CONFIG_ARCH_SWAN), y)
 	SERIAL = swan
 endif
 
+ifeq ($(CONFIG_ARCH_SOLO86), y)
+	CONIO = solo86
+endif
+
 ifdef CONFIG_ARCH_PC98
 ifdef CONFIG_CONSOLE_DIRECT
 OBJS += console-direct-pc98.o
@@ -111,6 +115,14 @@ OBJS += kbd-scancode.o
 else
 OBJS += kbd-poll.o conio-$(CONIO).o
 endif
+endif
+
+ifdef CONFIG_ARCH_SOLO86
+ifdef CONFIG_CONSOLE_HEADLESS
+OBJS += console-headless.o
+endif
+
+OBJS += kbd-poll.o conio-$(CONIO).o
 endif
 
 ifdef CONFIG_CHAR_DEV_RS

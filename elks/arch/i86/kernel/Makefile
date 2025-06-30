@@ -57,6 +57,11 @@ else
 OBJS += system.o
 endif
 
+ifeq ($(CONFIG_ARCH_SOLO86), y)
+OBJS += irq-solo86.o reset-stubs.o timer-8254.o
+OBJS += divzero.o
+endif
+
 #########################################################################
 # Commands.
 

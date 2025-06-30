@@ -368,6 +368,10 @@ void INITPROC blk_dev_init(void)
     ssd_init();         /* SSD block device*/
 #endif
 
+#ifdef CONFIG_BLK_DEV_ATA_CF
+    ata_cf_init();
+#endif
+
 #if defined(CONFIG_BLK_DEV_BFD) || defined(CONFIG_BLK_DEV_BHD)
     bioshd_init();
 #endif

@@ -11,13 +11,16 @@ KERNEL_LIBS = $(TOPDIR)/elks/arch/i86/lib/lib86.a
 PRGS = \
     test_exit \
     test_eth \
-    test_fd \
     test_float \
     test_pty \
     test_select \
     test_signal \
     test_sigfail \
     # EOL
+
+ifndef CONFIG_ARCH_SOLO86
+PRGS += test_fd
+endif
 
 all: $(PRGS)
 
