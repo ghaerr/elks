@@ -25,6 +25,7 @@
 #include <linuxmt/config.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/errno.h>
+#include <linuxmt/heap.h>
 #include <linuxmt/debug.h>
 #include <arch/ata.h>
 #include <arch/io.h>
@@ -248,9 +249,21 @@ void ata_reset(void)
  */
 sector_t ata_init(unsigned int drive)
 {
-    unsigned short buffer[ATA_SECTOR_SIZE/2];
+    unsigned short *buffer;
+    sector_t total;
 
-    if (ata_identify(drive, (char *) &buffer))
+
+    // allocate buffer
+
+    buffer = (unsigned short *) heap_alloc(ATA_SECTOR_SIZE, HEAP_TAG_DRVR);
+
+    if (!buffer)
+        return -EINVAL;
+
+
+    // identify drive
+
+    if (ata_identify(drive, (char *) buffer))
     {
         // ATA LBA support?
 
@@ -258,9 +271,15 @@ sector_t ata_init(unsigned int drive)
         {
             // ATA LBA sector total (MSB << 16, LSB)
 
-            return ((sector_t) buffer[61] << 16 | buffer[60]);
+            total = (sector_t) buffer[61] << 16 | buffer[60];
+
+            heap_free(buffer);
+
+            return (total);
         }
     }
+
+    heap_free(buffer);
 
     return (0);
 }
