@@ -464,11 +464,11 @@ static void DFPROC setup_DMA(void)
     unsigned long dma_addr;
 
     count = numsectors << 9;
+#pragma GCC diagnostic ignored "-Wshift-count-overflow"
     use_xms = req->rq_seg >> 16;
     if (use_xms)
         use_bounce = 0;                 /* XMS buffers also always 1K aligned */
     else {
-#pragma GCC diagnostic ignored "-Wshift-count-overflow"
         physaddr = (req->rq_seg << 4) + (unsigned int)req->rq_buffer;
         use_bounce = (physaddr + count) < physaddr;
     }

@@ -81,6 +81,13 @@ devices:
 #	$(MKDEV) /dev/df0-2880   b 4 16
 
 ##############################################################################
+# Direct hard drive/ATA-CF devices.
+	$(MKDEV) /dev/cf0  b 5 0
+	$(MKDEV) /dev/cf1  b 5 8
+#	$(MKDEV) /dev/dha  b 5 0
+#	$(MKDEV) /dev/dhb  b 5 8
+
+##############################################################################
 # Pseudo-TTY master devices. 
 
 	$(MKDEV) /dev/ptyp0 c 2 8

@@ -133,7 +133,8 @@ static unsigned char ata_select(unsigned int drive, unsigned int cmd, unsigned l
 /**
  * send an ATA command to the drive
  */
-int ata_cmd(unsigned int drive, unsigned int cmd, unsigned long sector, unsigned char count)
+static int ata_cmd(unsigned int drive, unsigned int cmd, unsigned long sector,
+    unsigned int count)
 {
     unsigned char status;
     unsigned int i;
@@ -176,7 +177,7 @@ int ata_cmd(unsigned int drive, unsigned int cmd, unsigned long sector, unsigned
  * drive  : physical drive number (0 or 1)
  * *buffer: pointer to buffer containing 512 bytes of space
  */
-int ata_identify(unsigned int drive, char *buf)
+static int ata_identify(unsigned int drive, char *buf)
 {
     unsigned char status;
     unsigned int word, i;
@@ -250,7 +251,8 @@ void ata_reset(void)
 sector_t ata_init(unsigned int drive)
 {
     unsigned short *buffer;
-    sector_t total;
+    sector_t total = 0;
+    int badide;
 
 
     // allocate buffer
@@ -258,30 +260,43 @@ sector_t ata_init(unsigned int drive)
     buffer = (unsigned short *) heap_alloc(ATA_SECTOR_SIZE, HEAP_TAG_DRVR);
 
     if (!buffer)
-        return -EINVAL;
+        return 0;
 
 
     // identify drive
 
     if (ata_identify(drive, (char *) buffer))
     {
-        // ATA LBA support?
+        // ATA LBA sector total (MSB << 16, LSB)
+        total = (sector_t)buffer[ATA_INFO_SECTORS_HI] << 16 | buffer[ATA_INFO_SECTORS_LO];
 
-        if (buffer[49] & 0x200)
+        printk("cf%d: %5luK CHS %2u,%2u,%2u",
+            drive, total >> 1, buffer[ATA_INFO_CYLINDERS], buffer[ATA_INFO_HEADS],
+            buffer[ATA_INFO_SPT]);
+        printk(" (x%d)", buffer[ATA_INFO_SECTSIZE]);
+
+        // Sanity check drive info
+        badide = buffer[ATA_INFO_SECTSIZE] != 512;
+        badide |= buffer[ATA_INFO_CYLINDERS] == 0 || buffer[ATA_INFO_CYLINDERS] > 63;
+        badide |= buffer[ATA_INFO_HEADS] == 0 || buffer[ATA_INFO_HEADS] > 16;
+        badide |= buffer[ATA_INFO_SPT] == 0 || buffer[ATA_INFO_SPT] > 63;
+        if (badide)
         {
-            // ATA LBA sector total (MSB << 16, LSB)
-
-            total = (sector_t) buffer[61] << 16 | buffer[60];
-
-            heap_free(buffer);
-
-            return (total);
+            total = 0;
+            printk(" invalid ATA data");
         }
+        else if (! (buffer[ATA_INFO_CAPS] & 0x200))      // ATA LBA support?
+        {
+
+            total = 0;
+            printk(" no LBA");
+        }
+        printk("\n");
     }
 
     heap_free(buffer);
 
-    return (0);
+    return total;
 }
 
 
