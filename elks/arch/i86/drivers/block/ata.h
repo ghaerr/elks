@@ -1,8 +1,7 @@
 #ifndef _ATA_H
 #define _ATA_H
 
-#include <linuxmt/sched.h>
-#include <linuxmt/kdev_t.h>
+#include <linuxmt/memory.h>
 
 #define ATA_RETRY           10
 #define ATA_SECTOR_SIZE     512

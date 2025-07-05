@@ -40,6 +40,7 @@
 #define ATA_CMD_READ    0x20
 #define ATA_CMD_WRITE   0x30
 #define ATA_CMD_ID      0xEC
+#define ATA_CMD_FEAT    0xEF
 
 /* ATA status bits */
 
@@ -47,5 +48,14 @@
 #define ATA_STATUS_DRQ  0x08
 #define ATA_STATUS_DFE  0x20
 #define ATA_STATUS_BSY  0x80
+
+/* ATA identify drive info buffer offsets */
+#define ATA_INFO_CYLINDERS  1
+#define ATA_INFO_HEADS      3
+#define ATA_INFO_SECTSIZE   5
+#define ATA_INFO_SPT        6
+#define ATA_INFO_CAPS       49
+#define ATA_INFO_SECTORS_LO 60
+#define ATA_INFO_SECTORS_HI 61
 
 #endif /* !__ARCH_8086_ATA_H*/

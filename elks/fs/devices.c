@@ -15,6 +15,11 @@
 #include <linuxmt/fcntl.h>
 #include <linuxmt/errno.h>
 
+/* minor number of first BIOSHD floppy, used for overlaying /dev/hd* -> /dev/cf* */
+#include "../arch/i86/drivers/block/bioshd.h"   /* FIXME move bioshd.h to linuxmt/ */
+#define FIRST_BIOSFD_MINOR  (DRIVE_FD0 << MINOR_SHIFT)  /* minor number of /dev/fd0 */
+
+
 struct device_struct {
     struct file_operations *ds_fops;
 };
@@ -62,6 +67,13 @@ static int blkdev_open(struct inode *inode, struct file *filp)
     int i;
 
     i = MAJOR(inode->i_rdev);
+#if defined(CONFIG_BLK_DEV_ATA_CF) && defined(CONFIG_ARCH_SOLO86)
+    /* map /dev/hd* to /dev/cf*, but not /dev/fd0* */
+    if (i == BIOSHD_MAJOR && MINOR(inode->i_rdev) < FIRST_BIOSFD_MINOR) {
+        inode->i_rdev = MKDEV(ATHD_MAJOR, MINOR(inode->i_rdev));
+        return blkdev_open(inode, filp);
+    }
+#endif
     if (i >= MAX_BLKDEV || !(fop = blkdevs[i].ds_fops)) return -ENODEV;
     filp->f_op = fop;
     return (fop->open) ? fop->open(inode, filp) : 0;

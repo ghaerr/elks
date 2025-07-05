@@ -21,8 +21,8 @@
  *  1 - /dev/mem               /dev/rd[01]            char mem, block ramdisk
  *  2 - /dev/ptyp*             /dev/ssd               char pty master, block ssd
  *  3 -                        /dev/{fd*,hd*}         block BIOS fd/hd
- *  4 - /dev/tty*,ttyp*,ttyS*  /dev/f{0,1}            char tty, pty slave, serial, block fd
- *  5 -
+ *  4 - /dev/tty*,ttyp*,ttyS*  /dev/df{0,1}           char tty, pty slave, serial, block fd
+ *  5 -                        /dev/cf{0,1}
  *  6 - /dev/lp                /dev/rom               char lp, block romflash
  *  7 -
  *  8 - /dev/tcpdev                                   kernel <-> ktcp comm
@@ -49,10 +49,9 @@
 
 #define RAM_MAJOR         1
 #define SSD_MAJOR         2
-#define ATA_MAJOR         3
-#define BIOSHD_MAJOR      ATA_MAJOR
-#define FLOPPY_MAJOR      4
-#define ATHD_MAJOR        5  /* experimental*/
+#define BIOSHD_MAJOR      3
+#define FLOPPY_MAJOR      4  /* direct floppy driver directfd.c */
+#define ATHD_MAJOR        5  /* at-cf.c and experimental directhd.c */
 #define ROMFLASH_MAJOR    6
 
 #endif
