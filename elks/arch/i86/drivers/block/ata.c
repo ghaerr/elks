@@ -31,6 +31,7 @@
 #include <arch/io.h>
 #include "ata.h"
 
+static char use_8bitmode;
 
 /**********************************************************************
  * ATA support functions
@@ -125,10 +126,51 @@ static unsigned char ata_select(unsigned int drive, unsigned int cmd, unsigned l
     return (status);
 }
 
-
 /**********************************************************************
  * ATA functions
  **********************************************************************/
+
+/**
+ * ATA set 8-bit transfer mode if possible
+ */
+static int ata_set8bitmode(void)
+{
+    int i, status;
+
+    // set 8-bit transfer mode
+
+    outb(0x01, ATA_PORT_FEAT);
+    outb(ATA_CMD_FEAT, ATA_PORT_CMD);
+
+    // wait for drive to be not-busy
+
+    for (i = 0; i < ATA_RETRY; i++)
+    {
+        status = ata_wait(ATA_STATUS_BSY);
+
+        // are we done?
+
+        if (status == 0)
+            break;
+    }
+
+    if (status)
+        return (0);
+
+
+    // check for error
+
+    status = inb(ATA_PORT_STATUS);
+
+    if (status & ATA_STATUS_ERR)
+    {
+        printk("cf: can't set 8-bit transfer mode (error %02xh)\n", inb(ATA_PORT_ERR));
+        return (0);
+    }
+
+    printk("cf: setting 8-bit transfer mode\n");
+    return (1);
+}
 
 /**
  * send an ATA command to the drive
@@ -204,12 +246,22 @@ static int ata_identify(unsigned int drive, char *buf)
 
     // read data
 
-    for (i = 0; i < ATA_SECTOR_SIZE; i+=2)
+    if (use_8bitmode)
     {
-        word = inw(ATA_PORT_DATA);
+        for (i = 0; i < ATA_SECTOR_SIZE; i++)
+        {
+            buf[i] = inb(ATA_PORT_DATA);
+        }
+    }
+    else
+    {
+        for (i = 0; i < ATA_SECTOR_SIZE; i+=2)
+        {
+            word = inw(ATA_PORT_DATA);
 
-        buf[i+0] = (unsigned char) (word & 0xFF);
-        buf[i+1] = (unsigned char) (word >> 8);
+            buf[i+0] = (unsigned char) (word & 0xFF);
+            buf[i+1] = (unsigned char) (word >> 8);
+        }
     }
 
     return (! ata_wait(ATA_STATUS_BSY));
@@ -240,6 +292,9 @@ void ata_reset(void)
     outb(0x02, ATA_PORT_CTRL);
 
     ata_delay();
+
+    // always attempt 8-bit transfer mode for now for testing
+    use_8bitmode = ata_set8bitmode();
 }
 
 
@@ -273,23 +328,21 @@ sector_t ata_init(unsigned int drive)
         printk("cf%d: %5luK CHS %2u,%2u,%2u",
             drive, total >> 1, buffer[ATA_INFO_CYLINDERS], buffer[ATA_INFO_HEADS],
             buffer[ATA_INFO_SPT]);
-        printk(" (x%d)", buffer[ATA_INFO_SECTSIZE]);
 
         // Sanity check drive info
         badide = buffer[ATA_INFO_SECTSIZE] != 512;
         badide |= buffer[ATA_INFO_CYLINDERS] == 0 || buffer[ATA_INFO_CYLINDERS] > 63;
         badide |= buffer[ATA_INFO_HEADS] == 0 || buffer[ATA_INFO_HEADS] > 16;
         badide |= buffer[ATA_INFO_SPT] == 0 || buffer[ATA_INFO_SPT] > 63;
-        if (badide)
+        if (badide)                                     // valid ATA info?
         {
+            printk(" ATA drive not present");
             total = 0;
-            printk(" invalid ATA data");
         }
-        else if (! (buffer[ATA_INFO_CAPS] & 0x200))      // ATA LBA support?
+        else if (! (buffer[ATA_INFO_CAPS] & 0x200))     // ATA LBA support?
         {
-
-            total = 0;
             printk(" no LBA");
+            total = 0;
         }
         printk("\n");
     }
@@ -310,8 +363,8 @@ sector_t ata_init(unsigned int drive)
 int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
 {
     unsigned char __far *buffer = _MK_FP((seg_t)seg, (unsigned)buf);
-    unsigned char status;
     unsigned int word, i;
+    unsigned char status;
 
 
     // send command
@@ -335,12 +388,22 @@ int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
 
     // read data
 
-    for (i = 0; i < ATA_SECTOR_SIZE; i+=2)
+    if (use_8bitmode)
     {
-        word = inw(ATA_PORT_DATA);
+        for (i = 0; i < ATA_SECTOR_SIZE; i++)
+        {
+            buffer[i] = inb(ATA_PORT_DATA);
+        }
+    }
+    else
+    {
+        for (i = 0; i < ATA_SECTOR_SIZE; i+=2)
+        {
+            word = inw(ATA_PORT_DATA);
 
-        buffer[i+0] = (unsigned char) (word & 0xFF);
-        buffer[i+1] = (unsigned char) (word >> 8);
+            buffer[i+0] = (unsigned char) (word & 0xFF);
+            buffer[i+1] = (unsigned char) (word >> 8);
+        }
     }
 
     return (!ata_wait(ATA_STATUS_BSY));
@@ -382,10 +445,20 @@ int ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
 
     // write data
 
-    for (i = 0; i < ATA_SECTOR_SIZE; i+=2)
+    if (use_8bitmode)
     {
-        word = buffer[i+0] | buffer[i+1] << 8;
-        outw(word, ATA_PORT_DATA);
+        for (i = 0; i < ATA_SECTOR_SIZE; i++)
+        {
+            outw(buffer[i], ATA_PORT_DATA);
+        }
+    }
+    else
+    {
+        for (i = 0; i < ATA_SECTOR_SIZE; i+=2)
+        {
+            word = buffer[i+0] | buffer[i+1] << 8;
+            outw(word, ATA_PORT_DATA);
+        }
     }
 
     return (!ata_wait(ATA_STATUS_BSY));

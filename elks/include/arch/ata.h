@@ -40,6 +40,7 @@
 #define ATA_CMD_READ    0x20
 #define ATA_CMD_WRITE   0x30
 #define ATA_CMD_ID      0xEC
+#define ATA_CMD_FEAT    0xEF
 
 /* ATA status bits */
 
