@@ -87,7 +87,7 @@ static int ata_cf_open(struct inode *inode, struct file *filp)
 {
     int drive = DEVICE_NR(inode->i_rdev);
 
-    printk("cf%d: open\n", drive);
+    debug_blk("cf%d: open\n", drive);
 
     if (!ata_cf_num_sects[drive])
         return -ENODATA;
