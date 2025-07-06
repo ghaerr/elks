@@ -5,16 +5,18 @@
 
 #ifdef CONFIG_ARCH_IBMPC
 
-#define ATA_PORT_DATA   0x1F0
-#define ATA_PORT_ERR    0x1F1
-#define ATA_PORT_FEAT   0x1F1
-#define ATA_PORT_CNT    0x1F2
-#define ATA_PORT_LBA_LO 0x1F3
-#define ATA_PORT_LBA_MD 0x1F4
-#define ATA_PORT_LBA_HI 0x1F5
-#define ATA_PORT_DRVH   0x1F6
-#define ATA_PORT_CMD    0x1F7
-#define ATA_PORT_STATUS 0x1F7
+#define ATA_BASE_ADDR   0x1F0 //XT-IDE usually uses 0x300
+
+#define ATA_PORT_DATA   (ATA_BASE_ADDR + 0) 
+#define ATA_PORT_ERR    (ATA_BASE_ADDR + 1)  
+#define ATA_PORT_FEAT   (ATA_BASE_ADDR + 1)
+#define ATA_PORT_CNT    (ATA_BASE_ADDR + 2)
+#define ATA_PORT_LBA_LO (ATA_BASE_ADDR + 3)
+#define ATA_PORT_LBA_MD (ATA_BASE_ADDR + 4)
+#define ATA_PORT_LBA_HI (ATA_BASE_ADDR + 5)
+#define ATA_PORT_DRVH   (ATA_BASE_ADDR + 6)
+#define ATA_PORT_CMD    (ATA_BASE_ADDR + 7)
+#define ATA_PORT_STATUS (ATA_BASE_ADDR + 7)
 #define ATA_PORT_CTRL   0x3F6
 
 #endif
