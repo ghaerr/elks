@@ -45,6 +45,7 @@ struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
     { "fd3",    S_IFBLK | 0644, DEV_FD3                     },
     { "rd0",	S_IFBLK | 0644, MKDEV(RAM_MAJOR, 0)         },
     { "ssd",	S_IFBLK | 0644, MKDEV(SSD_MAJOR, 0)         },
+    { "cf0",	S_IFBLK | 0644, MKDEV(ATHD_MAJOR, 0)        },
     { "kmem",	S_IFCHR | 0644, MKDEV(MEM_MAJOR, 2)         },
     { "null",	S_IFCHR | 0644, MKDEV(MEM_MAJOR, 3)         },
     { "zero",	S_IFCHR | 0644, MKDEV(MEM_MAJOR, 5)         },

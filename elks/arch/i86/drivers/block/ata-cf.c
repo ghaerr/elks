@@ -51,7 +51,6 @@ static struct file_operations ata_cf_fops = {
 
 void INITPROC ata_cf_init(void)
 {
-    sector_t sectors;
     int i;
 
     // register device
@@ -70,14 +69,7 @@ void INITPROC ata_cf_init(void)
 
         for (i = 0; i < NUM_DRIVES; i++)
         {
-            sectors = ata_init(i);
-
-            if (sectors > 0)
-                printk("ata-cf: drive=%d sectors=%ld size=%ldK\n", i, sectors, sectors >> 1);
-            else
-                printk("ata-cf: drive=%d not present\n", i);
-
-            ata_cf_num_sects[i] = sectors;
+            ata_cf_num_sects[i] = ata_init(i);
         }
 
         ata_cf_initialized = 1;
@@ -95,7 +87,7 @@ static int ata_cf_open(struct inode *inode, struct file *filp)
 {
     int drive = DEVICE_NR(inode->i_rdev);
 
-    debug_blk("ata-cf: open\n");
+    debug_blk("cf%d: open\n", drive);
 
     if (!ata_cf_num_sects[drive])
         return -ENODATA;
@@ -111,7 +103,7 @@ static void ata_cf_release(struct inode *inode, struct file *filp)
     int drive = DEVICE_NR(inode->i_rdev);
     kdev_t dev = inode->i_rdev;
 
-    debug_blk("ata-cf: release\n");
+    debug_blk("cf%d: release\n", drive);
 
     if (--access_count[drive] == 0) {
         fsync_dev(dev);
@@ -131,7 +123,7 @@ void ata_cf_io_complete(void)
 #ifdef CHECK_BLOCKIO
     req = CURRENT;
     if (!req) {
-        printk("ata_cf_io_complete: NULL request\n");
+        debug_blk("ata_cf_io_complete: NULL request\n");
         return;
     }
 #endif
@@ -152,17 +144,17 @@ void ata_cf_io_complete(void)
         start = req->rq_sector;
 
         if (start + req->rq_nr_sectors > ata_cf_num_sects[drive]) {
-            printk("ata-cf: sector %lu+%d beyond max %lu\n", start,
+            printk("cf%d: sector %lu+%d beyond max %lu\n", drive, start,
                 req->rq_nr_sectors, ata_cf_num_sects[drive]);
             end_request(0);
             continue;
         }
         for (count = 0; count < req->rq_nr_sectors; count++) {
             if (req->rq_cmd == WRITE) {
-                debug_blk("ata-cf: writing sector %lu\n", start);
+                debug_blk("cf%d: writing sector %lu\n", drive, start);
                 ret = ata_write(drive, start, buf, req->rq_seg);
             } else {
-                debug_blk("ata-cf: reading sector %lu\n", start);
+                debug_blk("cf%d: reading sector %lu\n", drive, start);
                 ret = ata_read(drive, start, buf, req->rq_seg);
             }
             if (ret != 1)           /* I/O error */
@@ -188,7 +180,7 @@ static void do_ata_cf_request(void)
     for (;;) {
         struct request *req = CURRENT;
         if (!req) {
-            printk("do_ata_cf_request: NULL request\n");
+            debug_blk("do_ata_cf_request: NULL request\n");
             return;
         }
         CHECK_REQUEST(req);
