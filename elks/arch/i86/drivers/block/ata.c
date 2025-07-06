@@ -337,12 +337,12 @@ sector_t ata_init(unsigned int drive)
         if (badide)                                     // valid ATA info?
         {
             printk(" ATA drive not present");
-            total = 0;
+            //total = 0;
         }
         else if (! (buffer[ATA_INFO_CAPS] & 0x200))     // ATA LBA support?
         {
             printk(" no LBA");
-            total = 0;
+            //total = 0;
         }
         printk("\n");
     }
