@@ -38,7 +38,7 @@ struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
     { "hdd1",	S_IFBLK | 0644, DEV_HDD+1                   },
     { "hdd2",	S_IFBLK | 0644, DEV_HDD+2                   },
     { "hdd3",	S_IFBLK | 0644, DEV_HDD+3                   },
-    //{ "hdd4",	S_IFBLK | 0644, DEV_HDD+4                   },
+    { "hdd4",	S_IFBLK | 0644, DEV_HDD+4                   },
     { "fd0",	S_IFBLK | 0644, DEV_FD0                     },
     { "fd1",	S_IFBLK | 0644, DEV_FD1                     },
     { "fd2",    S_IFBLK | 0644, DEV_FD2                     },
