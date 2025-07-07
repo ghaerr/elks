@@ -5,8 +5,7 @@
 
 #ifdef CONFIG_ARCH_IBMPC
 
-//#define ATA_BASE_PORT       0x1F0
-#define ATA_BASE_PORT       0x300
+/* ATA_BASE_PORT defined as variable in driver */
 #define ATA_PORT_DATA       (ATA_BASE_PORT + 0x0)
 #define ATA_PORT_ERR        (ATA_BASE_PORT + 0x1)
 #define ATA_PORT_FEAT       (ATA_BASE_PORT + 0x1)

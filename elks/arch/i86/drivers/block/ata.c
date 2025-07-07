@@ -33,6 +33,16 @@
 
 static char use_8bitmode;
 
+#ifdef CONFIG_ARCH_IBMPC
+/*
+ * The ATA base port is dynamically set on IBM PCs:
+ * For 8086 systems, use XT-IDE's port 0x300 (set in ata_reset),
+ * otherwise use the standard ATA port 0x1F0.
+ */
+static unsigned int ata_base_port = 0x1F0;
+
+#define ATA_BASE_PORT   ata_base_port
+#endif
 
 /**********************************************************************
  * ATA support functions
@@ -41,7 +51,7 @@ static char use_8bitmode;
 /**
  * ATA delay
  */
-static void ata_delay()
+static void ata_delay(void)
 {
     unsigned short i = 1000;
 
@@ -51,7 +61,7 @@ static void ata_delay()
 /**
  * ATA delay 400ns
  */
-static void ata_delay_400()
+static void ata_delay_400(void)
 {
     unsigned short i;
 
@@ -282,6 +292,11 @@ void ata_reset(void)
 {
     unsigned char select = 0xA0;
 
+#ifdef CONFIG_ARCH_IBMPC
+    // if not IBM PC/AT+ or later (w/80286), assume XT-IDE port 0x300
+    if (arch_cpu < 6)
+        ata_base_port = 0x300;
+#endif
 
     // controller reset
 
@@ -304,7 +319,7 @@ void ata_reset(void)
 
     use_8bitmode = 0;
 
-    if (arch_cpu < 5)
+    if (arch_cpu < 6)
     {
         // try and turn on 8-bit mode
 
@@ -339,8 +354,9 @@ sector_t ata_init(unsigned int drive)
         // ATA LBA sector total (MSB << 16, LSB)
         total = (sector_t)buffer[ATA_INFO_SECT_HI] << 16 | buffer[ATA_INFO_SECT_LO];
 
-        printk("cf%d: %7luK CHS %2u,%2u,%2u SZ %x ",
-            drive, total >> 1, buffer[ATA_INFO_CYLS], buffer[ATA_INFO_HEADS],
+        printk("cf%d: ATA port %x, %luK CHS %2u,%2u,%2u SZ %x ",
+            drive, ATA_BASE_PORT, total >> 1,
+            buffer[ATA_INFO_CYLS], buffer[ATA_INFO_HEADS],
             buffer[ATA_INFO_SPT], buffer[ATA_INFO_SECT_SZ]);
 
         // ATA version
@@ -356,7 +372,7 @@ sector_t ata_init(unsigned int drive)
             (buffer[ATA_INFO_HEADS] == 0 || buffer[ATA_INFO_HEADS] > 16) ||
             (buffer[ATA_INFO_SPT] == 0 || buffer[ATA_INFO_SPT] > 63))
         {
-            printk("ATA drive not present");
+            printk("drive not present");
             //total = 0;
         }
         else if (! (buffer[ATA_INFO_CAPS] & ATA_CAPS_LBA))      // ATA LBA support?
