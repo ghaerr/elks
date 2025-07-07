@@ -39,7 +39,7 @@ static char use_8bitmode;
  * For 8086 systems, use XT-IDE's port 0x300 (set in ata_reset),
  * otherwise use the standard ATA port 0x1F0.
  */
-unsigned int ata_base_port = 0x1F0;
+static unsigned int ata_base_port = 0x1F0;
 
 #define ATA_BASE_PORT   ata_base_port
 #endif
