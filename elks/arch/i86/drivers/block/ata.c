@@ -300,12 +300,14 @@ void ata_reset(void)
     ata_delay();
 
 
-    // controller 8-bit transfer is enabled for 8086/80186 systems
+    // controller 8-bit transfer is requested for 8086/80186 systems
 
     use_8bitmode = 0;
 
     if (arch_cpu < 5)
     {
+        // try and turn on 8-bit mode
+
         use_8bitmode = ata_set8bitmode();
     }
 }
