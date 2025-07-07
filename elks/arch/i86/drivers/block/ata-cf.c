@@ -59,7 +59,6 @@ void INITPROC ata_cf_init(void)
     {
         blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
 
-
         // ATA reset
 
         ata_reset();
@@ -69,7 +68,7 @@ void INITPROC ata_cf_init(void)
 
         for (i = 0; i < NUM_DRIVES; i++)
         {
-            ata_cf_num_sects[i] = ata_init(i);
+            ata_init(i);
         }
 
         ata_cf_initialized = 1;
@@ -89,10 +88,17 @@ static int ata_cf_open(struct inode *inode, struct file *filp)
 
     debug_blk("cf%d: open\n", drive);
 
-    if (!ata_cf_num_sects[drive])
-        return -ENODATA;
+    // initialise the device if its not already in use
+    if (access_count[drive] == 0)
+    {
+        ata_cf_num_sects[drive] = ata_init(drive);
+
+        if (!ata_cf_num_sects[drive])
+            return -ENODATA;
+    }
 
     ++access_count[drive];
+
     inode->i_size = ata_cf_num_sects[drive] << 9;
 
     return 0;

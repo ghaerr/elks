@@ -33,6 +33,7 @@
 
 static char use_8bitmode;
 
+
 /**********************************************************************
  * ATA support functions
  **********************************************************************/
@@ -126,6 +127,7 @@ static unsigned char ata_select(unsigned int drive, unsigned int cmd, unsigned l
     return (status);
 }
 
+
 /**********************************************************************
  * ATA functions
  **********************************************************************/
@@ -141,6 +143,7 @@ static int ata_set8bitmode(void)
 
     outb(0x01, ATA_PORT_FEAT);
     outb(ATA_CMD_FEAT, ATA_PORT_CMD);
+
 
     // wait for drive to be not-busy
 
@@ -279,6 +282,9 @@ void ata_reset(void)
 {
     unsigned char select = 0xA0;
 
+
+    // controller reset
+
     outb(select, ATA_PORT_DRVH);
 
     ata_delay();
@@ -293,8 +299,15 @@ void ata_reset(void)
 
     ata_delay();
 
-    // always attempt 8-bit transfer mode for now for testing
-    use_8bitmode = ata_set8bitmode();
+
+    // controller 8-bit transfer mode
+
+    use_8bitmode = 0;
+
+    if (1)                  // TODO: Detect 8086 CPU
+    {
+        use_8bitmode = ata_set8bitmode();
+    }
 }
 
 
@@ -307,7 +320,6 @@ sector_t ata_init(unsigned int drive)
 {
     unsigned short *buffer;
     sector_t total = 0;
-    int badide;
 
 
     // allocate buffer
@@ -323,27 +335,34 @@ sector_t ata_init(unsigned int drive)
     if (ata_identify(drive, (char *) buffer))
     {
         // ATA LBA sector total (MSB << 16, LSB)
-        total = (sector_t)buffer[ATA_INFO_SECTORS_HI] << 16 | buffer[ATA_INFO_SECTORS_LO];
+        total = (sector_t)buffer[ATA_INFO_SECT_HI] << 16 | buffer[ATA_INFO_SECT_LO];
 
-        printk("cf%d: %5luK CHS %2u,%2u,%2u",
-            drive, total >> 1, buffer[ATA_INFO_CYLINDERS], buffer[ATA_INFO_HEADS],
+        printk("cf%d: blocks=%7lu size=%7luK CHS=%2u,%2u,%2u ",
+            drive, total, total >> 1, buffer[ATA_INFO_CYLS], buffer[ATA_INFO_HEADS],
             buffer[ATA_INFO_SPT]);
 
-        // Sanity check drive info
-        badide = buffer[ATA_INFO_SECTSIZE] != 512;
-        badide |= buffer[ATA_INFO_CYLINDERS] == 0 || buffer[ATA_INFO_CYLINDERS] > 63;
-        badide |= buffer[ATA_INFO_HEADS] == 0 || buffer[ATA_INFO_HEADS] > 16;
-        badide |= buffer[ATA_INFO_SPT] == 0 || buffer[ATA_INFO_SPT] > 63;
-        if (badide)                                     // valid ATA info?
+        // ATA version
+        if ((buffer[ATA_INFO_VER_MAJ] != 0) && (buffer[ATA_INFO_VER_MAJ] != 0xFFFF))
         {
-            printk(" ATA drive not present");
+            // dump out version word (don't bother decoding it)
+
+            printk("version=%x ", buffer[ATA_INFO_VER_MAJ]);
+        }
+
+        // Sanity check
+        if ((buffer[ATA_INFO_CYLS] == 0 || buffer[ATA_INFO_CYLS] > 0x7F00) &&
+            (buffer[ATA_INFO_HEADS] == 0 || buffer[ATA_INFO_HEADS] > 0x7F00) &&
+            (buffer[ATA_INFO_SPT] == 0 || buffer[ATA_INFO_SPT] > 0x7F00))
+        {
+            printk("ATA drive not present");
             //total = 0;
         }
-        else if (! (buffer[ATA_INFO_CAPS] & 0x200))     // ATA LBA support?
+        else if (! (buffer[ATA_INFO_CAPS] & ATA_CAPS_LBA))      // ATA LBA support?
         {
-            printk(" no LBA");
+            printk("no LBA");
             //total = 0;
         }
+
         printk("\n");
     }
 
@@ -449,7 +468,7 @@ int ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
     {
         for (i = 0; i < ATA_SECTOR_SIZE; i++)
         {
-            outw(buffer[i], ATA_PORT_DATA);
+            outb(buffer[i], ATA_PORT_DATA);
         }
     }
     else
