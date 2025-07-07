@@ -300,11 +300,11 @@ void ata_reset(void)
     ata_delay();
 
 
-    // controller 8-bit transfer mode
+    // controller 8-bit transfer is enabled for 8086/80186 systems
 
     use_8bitmode = 0;
 
-    if (1)                  // TODO: Detect 8086 CPU
+    if (arch_cpu < 5)
     {
         use_8bitmode = ata_set8bitmode();
     }
@@ -337,29 +337,29 @@ sector_t ata_init(unsigned int drive)
         // ATA LBA sector total (MSB << 16, LSB)
         total = (sector_t)buffer[ATA_INFO_SECT_HI] << 16 | buffer[ATA_INFO_SECT_LO];
 
-        printk("cf%d: blocks=%7lu size=%7luK CHS=%2u,%2u,%2u ",
-            drive, total, total >> 1, buffer[ATA_INFO_CYLS], buffer[ATA_INFO_HEADS],
-            buffer[ATA_INFO_SPT]);
+        printk("cf%d: %7luK CHS %2u,%2u,%2u SZ %x ",
+            drive, total >> 1, buffer[ATA_INFO_CYLS], buffer[ATA_INFO_HEADS],
+            buffer[ATA_INFO_SPT], buffer[ATA_INFO_SECT_SZ]);
 
         // ATA version
         if ((buffer[ATA_INFO_VER_MAJ] != 0) && (buffer[ATA_INFO_VER_MAJ] != 0xFFFF))
         {
             // dump out version word (don't bother decoding it)
 
-            printk("version=%x ", buffer[ATA_INFO_VER_MAJ]);
+            printk("VER %x ", buffer[ATA_INFO_VER_MAJ]);
         }
 
         // Sanity check
         if ((buffer[ATA_INFO_CYLS] == 0 || buffer[ATA_INFO_CYLS] > 0x7F00) &&
-            (buffer[ATA_INFO_HEADS] == 0 || buffer[ATA_INFO_HEADS] > 0x7F00) &&
-            (buffer[ATA_INFO_SPT] == 0 || buffer[ATA_INFO_SPT] > 0x7F00))
+            (buffer[ATA_INFO_HEADS] == 0 || buffer[ATA_INFO_HEADS] > 16) &&
+            (buffer[ATA_INFO_SPT] == 0 || buffer[ATA_INFO_SPT] > 63))
         {
             printk("ATA drive not present");
             //total = 0;
         }
         else if (! (buffer[ATA_INFO_CAPS] & ATA_CAPS_LBA))      // ATA LBA support?
         {
-            printk("no LBA");
+            printk("LBA not detected");
             //total = 0;
         }
 
