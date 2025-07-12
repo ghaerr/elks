@@ -372,7 +372,7 @@ sector_t ata_init(unsigned int drive)
             (buffer[ATA_INFO_HEADS] == 0 || buffer[ATA_INFO_HEADS] > 16) ||
             (buffer[ATA_INFO_SPT] == 0 || buffer[ATA_INFO_SPT] > 63))
         {
-            printk("drive not present");
+            printk("not present");
             //total = 0;
         }
         else if (! (buffer[ATA_INFO_CAPS] & ATA_CAPS_LBA))      // ATA LBA support?
@@ -390,17 +390,64 @@ sector_t ata_init(unsigned int drive)
 }
 
 
+/* read from I/O port into far buffer */
+static void read_ioport(int port, unsigned char __far *buffer, size_t count)
+{
+    size_t i;
+    unsigned int word;
+
+    if (use_8bitmode)
+    {
+        for (i = 0; i < count; i++)
+        {
+            buffer[i] = inb(port);
+        }
+    }
+    else
+    {
+        for (i = 0; i < count; i+=2)
+        {
+            word = inw(port);
+
+            buffer[i+0] = (unsigned char) (word & 0xFF);
+            buffer[i+1] = (unsigned char) (word >> 8);
+        }
+    }
+}
+
+/* write from far buffer to I/O port */
+static void write_ioport(int port, unsigned char __far *buffer, size_t count)
+{
+    size_t i;
+    unsigned int word;
+
+    if (use_8bitmode)
+    {
+        for (i = 0; i < count; i++)
+        {
+            outb(buffer[i], port);
+        }
+    }
+    else
+    {
+        for (i = 0; i < count; i+=2)
+        {
+            word = buffer[i+0] | buffer[i+1] << 8;
+            outw(word, port);
+        }
+    }
+}
+
 /**
  * read from an ATA device
  *
  * drive : physical drive number (0 or 1)
  * sector: sector number
- * buffer: __far pointer to buffer containing 512 bytes of space
+ * buf/seg: I/O buffer address
  */
 int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
 {
     unsigned char __far *buffer = _MK_FP((seg_t)seg, (unsigned)buf);
-    unsigned int word, i;
     unsigned char status;
 
 
@@ -425,23 +472,7 @@ int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
 
     // read data
 
-    if (use_8bitmode)
-    {
-        for (i = 0; i < ATA_SECTOR_SIZE; i++)
-        {
-            buffer[i] = inb(ATA_PORT_DATA);
-        }
-    }
-    else
-    {
-        for (i = 0; i < ATA_SECTOR_SIZE; i+=2)
-        {
-            word = inw(ATA_PORT_DATA);
-
-            buffer[i+0] = (unsigned char) (word & 0xFF);
-            buffer[i+1] = (unsigned char) (word >> 8);
-        }
-    }
+    read_ioport(ATA_PORT_DATA, buffer, ATA_SECTOR_SIZE);
 
     return (!ata_wait(ATA_STATUS_BSY));
 }
@@ -452,13 +483,12 @@ int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
  *
  * drive : physical drive number (0 or 1)
  * sector: sector number
- * buffer: __far pointer to buffer containing 512 bytes of data
+ * buf/seg: I/O buffer address
  */
 int ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
 {
     unsigned char __far *buffer = _MK_FP((seg_t)seg, (unsigned)buf);
     unsigned char status;
-    unsigned int word, i;
 
 
     // send command
@@ -482,21 +512,7 @@ int ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
 
     // write data
 
-    if (use_8bitmode)
-    {
-        for (i = 0; i < ATA_SECTOR_SIZE; i++)
-        {
-            outb(buffer[i], ATA_PORT_DATA);
-        }
-    }
-    else
-    {
-        for (i = 0; i < ATA_SECTOR_SIZE; i+=2)
-        {
-            word = buffer[i+0] | buffer[i+1] << 8;
-            outw(word, ATA_PORT_DATA);
-        }
-    }
+    write_ioport(ATA_PORT_DATA, buffer, ATA_SECTOR_SIZE);
 
     return (!ata_wait(ATA_STATUS_BSY));
 }
