@@ -87,10 +87,10 @@ static int ata_wait(unsigned char state)
 
         // are we done?
 
-        if (status & state)
-            ata_delay();
-        else
-            return (0);
+        if ((status & state) == 0)
+            return 0;
+
+        ata_delay();
     }
 
     return -ENXIO;
@@ -301,13 +301,13 @@ static int ata_identify(unsigned int drive, unsigned char __far *buf)
 
     error = ata_cmd(drive, ATA_CMD_ID, 0, 0);
     if (error)
-        return 0;
+        return error;
 
     // read data
 
     read_ioport(ATA_PORT_DATA, buf, ATA_SECTOR_SIZE);
 
-    return (! ata_wait(ATA_STATUS_BSY));
+    return ata_wait(ATA_STATUS_BSY);
 }
 
 
@@ -376,7 +376,7 @@ sector_t ata_init(unsigned int drive)
 
     // identify drive
 
-    if (ata_identify(drive, (unsigned char __far *) buffer))
+    if (ata_identify(drive, (unsigned char __far *) buffer) == 0)
     {
         // ATA LBA sector total (MSB << 16, LSB)
         total = (sector_t)buffer[ATA_INFO_SECT_HI] << 16 | buffer[ATA_INFO_SECT_LO];
@@ -426,22 +426,34 @@ sector_t ata_init(unsigned int drive)
  */
 int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
 {
-    unsigned char __far *buffer = _MK_FP((seg_t)seg, (unsigned)buf);
-    int error;
+    unsigned char __far *buffer;
+    int error, use_xms;
 
 
     // send command
 
     error = ata_cmd(drive, ATA_CMD_READ, sector, 1);
     if (error)
-        return 0;
+        return error;
 
 
     // read data
 
-    read_ioport(ATA_PORT_DATA, buffer, ATA_SECTOR_SIZE);
+#pragma GCC diagnostic ignored "-Wshift-count-overflow"
+    use_xms = seg >> 16;
+    if (use_xms)
+    {
+        buffer = _MK_FP(DMASEG, 0);
+        read_ioport(ATA_PORT_DATA, buffer, ATA_SECTOR_SIZE);
+        xms_fmemcpyw(buf, seg, 0, DMASEG, ATA_SECTOR_SIZE / 2);
+    }
+    else
+    {
+        buffer = _MK_FP(seg, buf);
+        read_ioport(ATA_PORT_DATA, buffer, ATA_SECTOR_SIZE);
+    }
 
-    return (!ata_wait(ATA_STATUS_BSY));
+    return ata_wait(ATA_STATUS_BSY);
 }
 
 
@@ -454,20 +466,33 @@ int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
  */
 int ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
 {
-    unsigned char __far *buffer = _MK_FP((seg_t)seg, (unsigned)buf);
-    int error;
+    unsigned char __far *buffer;
+    int error, use_xms;
 
 
     // send command
 
     error = ata_cmd(drive, ATA_CMD_WRITE, sector, 1);
     if (error)
-        return 0;
+        return error;
 
 
     // write data
 
-    write_ioport(ATA_PORT_DATA, buffer, ATA_SECTOR_SIZE);
+#pragma GCC diagnostic ignored "-Wshift-count-overflow"
+    use_xms = seg >> 16;
+    if (use_xms)
+    {
+        xms_fmemcpyw(0, DMASEG, buf, seg, ATA_SECTOR_SIZE / 2);
+        buffer = _MK_FP(seg, buf);
+        write_ioport(ATA_PORT_DATA, buffer, ATA_SECTOR_SIZE);
+    }
+    else
+    {
+        buffer = _MK_FP(seg, buf);
+        write_ioport(ATA_PORT_DATA, buffer, ATA_SECTOR_SIZE);
+    }
 
-    return (!ata_wait(ATA_STATUS_BSY));
+
+    return ata_wait(ATA_STATUS_BSY);
 }
