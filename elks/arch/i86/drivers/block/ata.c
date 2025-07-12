@@ -97,34 +97,12 @@ static int ata_wait(unsigned char state)
 }
 
 /**
- * ATA select
+ * ATA wait until not busy
  */
-static int ata_select(unsigned int drive, unsigned int cmd, unsigned long sector)
+static int ata_wait_busy(void)
 {
-    unsigned char select = 0xA0 | 0x40 | (drive << 4) | ((sector >> 24) & 0x0F);
+    int i;
     unsigned char status;
-    unsigned int i;
-
-    // wait for drive to be non-busy
-
-    for (i = 0; i < ATA_RETRY; i++)
-    {
-        status = ata_wait(ATA_STATUS_BSY);
-
-        if (status == 0)
-            break;
-    }
-
-    if (status)
-        return -ENXIO;
-
-    // send
-
-    outb(select, ATA_PORT_DRVH);
-
-    ata_delay_400();
-
-    // wait for drive to be non-busy
 
     for (i = 0; i < ATA_RETRY; i++)
     {
@@ -135,6 +113,31 @@ static int ata_select(unsigned int drive, unsigned int cmd, unsigned long sector
     }
 
     return -ENXIO;
+}
+
+/**
+ * ATA select
+ */
+static int ata_select(unsigned int drive, unsigned int cmd, unsigned long sector)
+{
+    unsigned char select = 0xA0 | 0x40 | (drive << 4) | ((sector >> 24) & 0x0F);
+    int error;
+
+    // wait for drive to be non-busy
+
+    error = ata_wait_busy();
+    if (error)
+        return error;
+
+    // send
+
+    outb(select, ATA_PORT_DRVH);
+
+    ata_delay_400();
+
+    // wait for drive to be non-busy
+
+    return ata_wait_busy();
 }
 
 
@@ -195,7 +198,8 @@ static void write_ioport(int port, unsigned char __far *buffer, size_t count)
  */
 static int ata_set8bitmode(void)
 {
-    int i, status;
+    int error;
+    unsigned char status;
 
     // set 8-bit transfer mode
 
@@ -205,18 +209,9 @@ static int ata_set8bitmode(void)
 
     // wait for drive to be not-busy
 
-    for (i = 0; i < ATA_RETRY; i++)
-    {
-        status = ata_wait(ATA_STATUS_BSY);
-
-        // are we done?
-
-        if (status == 0)
-            break;
-    }
-
-    if (status)
-        return -ENXIO;
+    error = ata_wait_busy();
+    if (error)
+        return error;
 
 
     // check for error
@@ -239,9 +234,8 @@ static int ata_set8bitmode(void)
 static int ata_cmd(unsigned int drive, unsigned int cmd, unsigned long sector,
     unsigned int count)
 {
-    unsigned char status;
-    unsigned int i;
     int error;
+    unsigned char status;
 
 
     // send command
@@ -260,17 +254,10 @@ static int ata_cmd(unsigned int drive, unsigned int cmd, unsigned long sector,
 
     // wait for drive to be not-busy
 
-    for (i = 0; i < ATA_RETRY; i++)
-    {
-        status = ata_wait(ATA_STATUS_BSY);
+    error = ata_wait_busy();
+    if (error)
+        return error;
 
-        // are we done?
-
-        if (status == 0)
-            break;
-    }
-    if (status)
-        return -ENXIO;
 
     // check for error
 
@@ -427,7 +414,7 @@ sector_t ata_init(unsigned int drive)
 int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
 {
     unsigned char __far *buffer;
-    int error, use_xms;
+    int error;
 
 
     // send command
@@ -440,7 +427,8 @@ int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
     // read data
 
 #pragma GCC diagnostic ignored "-Wshift-count-overflow"
-    use_xms = seg >> 16;
+#ifdef CONFIG_FS_XMS
+    int use_xms = seg >> 16;
     if (use_xms)
     {
         buffer = _MK_FP(DMASEG, 0);
@@ -448,6 +436,7 @@ int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
         xms_fmemcpyw(buf, seg, 0, DMASEG, ATA_SECTOR_SIZE / 2);
     }
     else
+#endif
     {
         buffer = _MK_FP(seg, buf);
         read_ioport(ATA_PORT_DATA, buffer, ATA_SECTOR_SIZE);
@@ -467,7 +456,7 @@ int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
 int ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
 {
     unsigned char __far *buffer;
-    int error, use_xms;
+    int error;
 
 
     // send command
@@ -479,8 +468,9 @@ int ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
 
     // write data
 
+#ifdef CONFIG_FS_XMS
 #pragma GCC diagnostic ignored "-Wshift-count-overflow"
-    use_xms = seg >> 16;
+    int use_xms = seg >> 16;
     if (use_xms)
     {
         xms_fmemcpyw(0, DMASEG, buf, seg, ATA_SECTOR_SIZE / 2);
@@ -488,6 +478,7 @@ int ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
         write_ioport(ATA_PORT_DATA, buffer, ATA_SECTOR_SIZE);
     }
     else
+#endif
     {
         buffer = _MK_FP(seg, buf);
         write_ioport(ATA_PORT_DATA, buffer, ATA_SECTOR_SIZE);
