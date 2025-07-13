@@ -284,7 +284,10 @@ static int ata_identify(unsigned int drive, unsigned char __far *buf)
 
     error = ata_cmd(drive, ATA_CMD_ID, 0, 0);
     if (error)
+    {
+        printk("cf%d: port %x, ATA identify failed (%d)\n", drive, ata_base_port, error);
         return error;
+    }
 
     // read data
 
@@ -351,11 +354,10 @@ sector_t ata_init(unsigned int drive)
 
     // allocate buffer
 
-    buffer = (unsigned short *) heap_alloc(ATA_SECTOR_SIZE, HEAP_TAG_DRVR);
+    buffer = (unsigned short *) heap_alloc(ATA_SECTOR_SIZE, HEAP_TAG_DRVR|HEAP_TAG_CLEAR);
 
     if (!buffer)
         return 0;
-
 
     // identify drive
 
