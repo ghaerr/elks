@@ -64,9 +64,7 @@ void INITPROC ata_cf_init(void)
         // ATA drive detect
 
         for (i = 0; i < NUM_DRIVES; i++)
-        {
             ata_init(i);
-        }
     }
 }
 

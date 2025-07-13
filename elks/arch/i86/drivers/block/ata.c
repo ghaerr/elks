@@ -150,9 +150,7 @@ static void read_ioport(int port, unsigned char __far *buffer, size_t count)
     if (use_8bitmode)
     {
         for (i = 0; i < count; i++)
-        {
             buffer[i] = inb(port);
-        }
     }
     else
     {
@@ -175,9 +173,7 @@ static void write_ioport(int port, unsigned char __far *buffer, size_t count)
     if (use_8bitmode)
     {
         for (i = 0; i < count; i++)
-        {
             outb(buffer[i], port);
-        }
     }
     else
     {
