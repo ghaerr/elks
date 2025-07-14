@@ -26,7 +26,7 @@ mainmenu_option next_comment
 		ssd_test CONFIG_BLK_DEV_SSD_TEST \
 		ssd_sd_8018x CONFIG_BLK_DEV_SSD_SD8018X " None
 
-	bool 'ATA-CF disk drive support'	CONFIG_BLK_DEV_ATA_CF	n
+	bool 'ATA-CF disk drive support'	CONFIG_BLK_DEV_ATA_CF	y
 
     comment 'Block device options'
     bool 'Character access to block devices'	CONFIG_BLK_DEV_CHAR	y
