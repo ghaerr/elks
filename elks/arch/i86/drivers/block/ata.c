@@ -263,7 +263,7 @@ static int ata_identify(unsigned int drive, char *buf)
     {
         for (i = 0; i < ATA_SECTOR_SIZE; i++)
         {
-            buf[i] = inb(ATA_PORT_DATA);
+            *buf++ = inb(ATA_PORT_DATA);
         }
     }
     else
@@ -272,8 +272,8 @@ static int ata_identify(unsigned int drive, char *buf)
         {
             word = inw(ATA_PORT_DATA);
 
-            buf[i+0] = (unsigned char) (word & 0xFF);
-            buf[i+1] = (unsigned char) (word >> 8);
+            *buf++ = (unsigned char) (word & 0xFF);
+            *buf++ = (unsigned char) (word >> 8);
         }
     }
 
@@ -429,7 +429,7 @@ int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
     {
         for (i = 0; i < ATA_SECTOR_SIZE; i++)
         {
-            buffer[i] = inb(ATA_PORT_DATA);
+            *buffer++ = inb(ATA_PORT_DATA);
         }
     }
     else
@@ -438,8 +438,8 @@ int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
         {
             word = inw(ATA_PORT_DATA);
 
-            buffer[i+0] = (unsigned char) (word & 0xFF);
-            buffer[i+1] = (unsigned char) (word >> 8);
+            *buffer++ = (unsigned char) (word & 0xFF);
+            *buffer++ = (unsigned char) (word >> 8);
         }
     }
 
@@ -486,14 +486,14 @@ int ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
     {
         for (i = 0; i < ATA_SECTOR_SIZE; i++)
         {
-            outb(buffer[i], ATA_PORT_DATA);
+            outb(*buffer++, ATA_PORT_DATA);
         }
     }
     else
     {
         for (i = 0; i < ATA_SECTOR_SIZE; i+=2)
         {
-            word = buffer[i+0] | buffer[i+1] << 8;
+            word = *buffer++ | *buffer++ << 8;
             outw(word, ATA_PORT_DATA);
         }
     }
