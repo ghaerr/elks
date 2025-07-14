@@ -34,13 +34,15 @@ static char use_8bitmode;
 
 #ifdef CONFIG_ARCH_IBMPC
 /*
- * The ATA base port is dynamically set on IBM PCs:
- * For 8086 systems, use XT-IDE's port 0x300 (set in ata_reset),
- * otherwise use the standard ATA port 0x1F0.
+ * The ATA base and control ports are dynamically set on IBM PCs (in ata_reset):
+ * For 8086 systems, use XT-IDE's ports 0x300/0x30E,
+ * otherwise use the standard ATA ports 0x1F0/0x3F6.
  */
 static unsigned int ata_base_port = 0x1F0;
+static unsigned int ata_ctrl_port = 0x3F6;
 
 #define ATA_BASE_PORT   ata_base_port
+#define ATA_CTRL_PORT   ata_ctrl_port
 #endif
 
 /**********************************************************************
@@ -261,7 +263,8 @@ static int ata_identify(unsigned int drive, unsigned char __far *buf)
     error = ata_cmd(drive, ATA_CMD_ID, 0, 0);
     if (error)
     {
-        printk("cf%d: port %x, ATA identify failed (%d)\n", drive, ata_base_port, error);
+        printk("cf%d: ATA port %x/%x, probe failed (%d)\n",
+            drive, ATA_BASE_PORT, ATA_CTRL_PORT, error);
         return error;
     }
 
@@ -285,9 +288,12 @@ void ata_reset(void)
     unsigned char select = 0xA0;
 
 #ifdef CONFIG_ARCH_IBMPC
-    // if not IBM PC/AT+ or later (w/80286), assume XT-IDE port 0x300
+    // if not IBM PC/AT+ or later (w/80286), assume XT-IDE ports 0x300/0x30E
     if (arch_cpu < 6)
+    {
         ata_base_port = 0x300;
+        ata_ctrl_port = 0x30E;
+    }
 #endif
 
     // controller reset
@@ -297,12 +303,12 @@ void ata_reset(void)
     ata_delay();
 
     // set nIEN and SRST bits
-    outb(0x06, ATA_PORT_CTRL);
+    outb(0x06, ATA_CTRL_PORT);
 
     ata_delay();
 
     // set nIEN bit (and clear SRST bit)
-    outb(0x02, ATA_PORT_CTRL);
+    outb(0x02, ATA_CTRL_PORT);
 
     ata_delay();
 
@@ -342,8 +348,8 @@ sector_t ata_init(unsigned int drive)
         // ATA LBA sector total (MSB << 16, LSB)
         total = (sector_t)buffer[ATA_INFO_SECT_HI] << 16 | buffer[ATA_INFO_SECT_LO];
 
-        printk("cf%d: ATA port %x, %luK CHS %2u,%2u,%2u SZ %x ",
-            drive, ATA_BASE_PORT, total >> 1,
+        printk("cf%d: ATA port %x/%x, %luK CHS %2u,%2u,%2u SZ %x ",
+            drive, ATA_BASE_PORT, ATA_CTRL_PORT, total >> 1,
             buffer[ATA_INFO_CYLS], buffer[ATA_INFO_HEADS],
             buffer[ATA_INFO_SPT], buffer[ATA_INFO_SECT_SZ]);
 
@@ -360,7 +366,7 @@ sector_t ata_init(unsigned int drive)
             (buffer[ATA_INFO_HEADS] == 0 || buffer[ATA_INFO_HEADS] > 16) ||
             (buffer[ATA_INFO_SPT] == 0 || buffer[ATA_INFO_SPT] > 63))
         {
-            printk("not present");
+            printk("invalid CF");
             //total = 0;
         }
         else if (! (buffer[ATA_INFO_CAPS] & ATA_CAPS_LBA))      // ATA LBA support?
