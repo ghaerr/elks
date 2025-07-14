@@ -27,9 +27,8 @@
 #include <linuxmt/errno.h>
 #include <linuxmt/heap.h>
 #include <linuxmt/debug.h>
-#include <arch/ata.h>
 #include <arch/io.h>
-#include "ata.h"
+#include <arch/ata.h>
 
 static char use_8bitmode;
 
@@ -53,7 +52,7 @@ static unsigned int ata_base_port = 0x1F0;
  */
 static void ata_delay(void)
 {
-    unsigned short i = 1000;
+    int i = 1000;
 
     while (i--) asm("nop");
 }
@@ -63,31 +62,27 @@ static void ata_delay(void)
  */
 static void ata_delay_400(void)
 {
-    unsigned short i;
+    int i;
 
-    for (i = 0; i < 5; i++)
+    for (i = 0; i < 15; i++)
         inb(ATA_PORT_STATUS);
 }
 
 /**
- * ATA wait for state
+ * ATA wait until not busy
  */
-static int ata_wait(unsigned char state)
+static int ata_wait(void)
 {
+    int i;
     unsigned char status;
-    unsigned int i;
 
-    status = 0;
-
-    // loop while the state is true
-
-    for (i = 0; i < 500; i++)
+    for (i = 0; i < ATA_RETRY; i++)
     {
         status = inb(ATA_PORT_STATUS);
 
         // are we done?
 
-        if ((status & state) == 0)
+        if ((status & ATA_STATUS_BSY) == 0)
             return 0;
 
         ata_delay();
@@ -95,51 +90,6 @@ static int ata_wait(unsigned char state)
 
     return -ENXIO;
 }
-
-/**
- * ATA wait until not busy
- */
-static int ata_wait_busy(void)
-{
-    int i;
-    unsigned char status;
-
-    for (i = 0; i < ATA_RETRY; i++)
-    {
-        status = ata_wait(ATA_STATUS_BSY);
-
-        if (status == 0)
-            return 0;
-    }
-
-    return -ENXIO;
-}
-
-/**
- * ATA select
- */
-static int ata_select(unsigned int drive, unsigned int cmd, unsigned long sector)
-{
-    unsigned char select = 0xA0 | 0x40 | (drive << 4) | ((sector >> 24) & 0x0F);
-    int error;
-
-    // wait for drive to be non-busy
-
-    error = ata_wait_busy();
-    if (error)
-        return error;
-
-    // send
-
-    outb(select, ATA_PORT_DRVH);
-
-    ata_delay_400();
-
-    // wait for drive to be non-busy
-
-    return ata_wait_busy();
-}
-
 
 /* read from I/O port into far buffer */
 static void read_ioport(int port, unsigned char __far *buffer, size_t count)
@@ -190,6 +140,32 @@ static void write_ioport(int port, unsigned char __far *buffer, size_t count)
  **********************************************************************/
 
 /**
+ * ATA select drive
+ */
+static int ata_select(unsigned int drive, unsigned int cmd, unsigned long sector)
+{
+    unsigned char select = 0xA0 | 0x40 | (drive << 4) | ((sector >> 24) & 0x0F);
+    int error;
+
+    // wait for drive to be non-busy
+
+    error = ata_wait();
+    if (error)
+        return error;
+
+    // send
+
+    outb(select, ATA_PORT_DRVH);
+
+    ata_delay_400();
+
+    // wait for drive to be non-busy
+
+    return ata_wait();
+}
+
+
+/**
  * ATA set 8-bit transfer mode if possible
  */
 static int ata_set8bitmode(void)
@@ -205,7 +181,7 @@ static int ata_set8bitmode(void)
 
     // wait for drive to be not-busy
 
-    error = ata_wait_busy();
+    error = ata_wait();
     if (error)
         return error;
 
@@ -250,7 +226,7 @@ static int ata_cmd(unsigned int drive, unsigned int cmd, unsigned long sector,
 
     // wait for drive to be not-busy
 
-    error = ata_wait_busy();
+    error = ata_wait();
     if (error)
         return error;
 
@@ -293,7 +269,7 @@ static int ata_identify(unsigned int drive, unsigned char __far *buf)
 
     read_ioport(ATA_PORT_DATA, buf, ATA_SECTOR_SIZE);
 
-    return ata_wait(ATA_STATUS_BSY);
+    return ata_wait();
 }
 
 
@@ -440,7 +416,7 @@ int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
         read_ioport(ATA_PORT_DATA, buffer, ATA_SECTOR_SIZE);
     }
 
-    return ata_wait(ATA_STATUS_BSY);
+    return ata_wait();
 }
 
 
@@ -483,5 +459,5 @@ int ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
     }
 
 
-    return ata_wait(ATA_STATUS_BSY);
+    return ata_wait();
 }

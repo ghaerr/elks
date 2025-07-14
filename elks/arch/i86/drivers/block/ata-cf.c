@@ -13,9 +13,16 @@
 #include <linuxmt/errno.h>
 #include <linuxmt/debug.h>
 #include <arch/ata.h>
-#include "ata.h"
-#include "ata-cf.h"
+
+#define MAJOR_NR        ATHD_MAJOR
 #include "blk.h"
+
+/* the following must match with BIOSHD /dev minor numbering scheme*/
+#define NUM_MINOR       8       /* max minor devices per drive*/
+#define MINOR_SHIFT     3       /* =log2(NUM_MINOR) shift to get drive num*/
+#define MAX_DRIVES      8       /* <=256/NUM_MINOR*/
+
+#define NUM_DRIVES      2
 
 
 /**********************************************************************

@@ -1,6 +1,8 @@
 #ifndef __ARCH_8086_ATA_H
 #define __ARCH_8086_ATA_H
 
+#include <linuxmt/memory.h>
+
 /* ATA ports */
 
 #ifdef CONFIG_ARCH_IBMPC
@@ -66,5 +68,15 @@
 
 #define ATA_CAPS_DMA        0x100
 #define ATA_CAPS_LBA        0x200
+
+/* ATA subdriver */
+
+#define ATA_SECTOR_SIZE     512
+#define ATA_RETRY           5000        /* # times to poll for not busy */
+
+void ata_reset(void);
+sector_t ata_init(unsigned int drive);
+int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg);
+int ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg);
 
 #endif /* !__ARCH_8086_ATA_H*/
