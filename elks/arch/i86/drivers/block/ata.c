@@ -41,7 +41,7 @@
 #include <arch/io.h>
 #include <arch/ata.h>
 
-/* wait loop counts while busy waiting (FIXME use jiffies for accuracy) */
+/* wait loop counts while busy waiting (FIXME: use jiffies for accuracy) */
 #define SHORT_WAIT  500
 #define LONG_WAIT   5000        /* 14s wait required for some writes */
 
@@ -76,7 +76,8 @@ static unsigned char INB(int reg)
 }
 
 /* output byte from translated register number */
-static void OUTB(unsigned char byte, int reg)
+/* FIXME: compiler bug if 'unsigned int byte' declared below. Not debugged yet. */
+static void OUTB(unsigned int byte, int reg)
 {
     outb(byte, BASE(reg));
 }

@@ -161,8 +161,10 @@ static void do_ata_cf_request(void)
                 debug_blk("cf%d: reading sector %lu\n", drive, start);
                 ret = ata_read(drive, start, buf, req->rq_seg);
             }
-            if (ret != 0)           /* I/O error */
+            if (ret != 0) {         /* I/O error */
+                printk("cf%d: I/O error %d\n", drive, ret);
                 break;
+            }
             start++;
             buf += ATA_SECTOR_SIZE;
         }
