@@ -1,11 +1,15 @@
 #ifndef __ARCH_8086_ATA_H
 #define __ARCH_8086_ATA_H
 
+#include <linuxmt/memory.h>
+
 /* ATA ports */
 
 #ifdef CONFIG_ARCH_IBMPC
 
-/* ATA_BASE_PORT defined as variable in driver */
+/* ATA_BASE_PORT defined as variable in driver (0x1F0 for AT, 0x300 for XT */
+/* ATA_CTRL_PORT defined as variable in driver (0x3F6 for AT, 0x308 for XT */
+
 #define ATA_PORT_DATA       (ATA_BASE_PORT + 0x0)
 #define ATA_PORT_ERR        (ATA_BASE_PORT + 0x1)
 #define ATA_PORT_FEAT       (ATA_BASE_PORT + 0x1)
@@ -16,13 +20,14 @@
 #define ATA_PORT_DRVH       (ATA_BASE_PORT + 0x6)
 #define ATA_PORT_CMD        (ATA_BASE_PORT + 0x7)
 #define ATA_PORT_STATUS     (ATA_BASE_PORT + 0x7)
-#define ATA_PORT_CTRL       0x3F6
 
 #endif
 
 #ifdef CONFIG_ARCH_SOLO86
 
 #define ATA_BASE_PORT       0x40
+#define ATA_CTRL_PORT       0x5C
+
 #define ATA_PORT_DATA       (ATA_BASE_PORT + 0x0)
 #define ATA_PORT_ERR        (ATA_BASE_PORT + 0x2)
 #define ATA_PORT_FEAT       (ATA_BASE_PORT + 0x2)
@@ -33,7 +38,6 @@
 #define ATA_PORT_DRVH       (ATA_BASE_PORT + 0xC)
 #define ATA_PORT_CMD        (ATA_BASE_PORT + 0xE)
 #define ATA_PORT_STATUS     (ATA_BASE_PORT + 0xE)
-#define ATA_PORT_CTRL       0x5C
 
 #endif
 
@@ -66,5 +70,15 @@
 
 #define ATA_CAPS_DMA        0x100
 #define ATA_CAPS_LBA        0x200
+
+/* ATA subdriver */
+
+#define ATA_SECTOR_SIZE     512
+#define ATA_RETRY           5000        /* # times to poll for not busy */
+
+void ata_reset(void);
+sector_t ata_init(unsigned int drive);
+int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg);
+int ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg);
 
 #endif /* !__ARCH_8086_ATA_H*/

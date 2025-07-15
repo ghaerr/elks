@@ -159,6 +159,8 @@
 
 #if defined(CONFIG_BLK_DEV_BFD) || defined(CONFIG_BLK_DEV_BHD)  /* BIOS driver */
 #define DMASEGSZ        0x0400      /* BLOCK_SIZE (1024) for external XMS/DMA buffer */
+#elif defined(CONFIG_FS_XMS) && defined(CONFIG_BLK_DEV_ATA_CF)
+#define DMASEGSZ        0x200       /* ATA_SECTOR_SIZE (512) XMS buffer for ATA CF */
 #else
 #define DMASEGSZ        0           /* no external XMS/DMA buffer */
 #endif
@@ -176,7 +178,7 @@
 #define TRACKSEG        (DMASEG+(DMASEGSZ>>4))
 #define DMASEGEND       (DMASEG+(DMASEGSZ>>4)+(TRACKSEGSZ>>4))
 #else
-#define DMASEGEND       DMASEG      /* no DMASEG buffer */
+#define DMASEGEND       (DMASEG+(DMASEGSZ>>4))
 #endif
 
 /* Define segment locations of low memory, must not overlap */

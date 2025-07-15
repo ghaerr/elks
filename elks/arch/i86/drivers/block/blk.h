@@ -85,7 +85,11 @@ static void floppy_off(int nr);
 #elif (MAJOR_NR == ATHD_MAJOR)
 
 #if CONFIG_BLK_DEV_ATA_CF
+  #ifdef CONFIG_ARCH_SOLO86
     #define DEVICE_NAME "hd"
+  #else
+    #define DEVICE_NAME "cf"
+  #endif
     #define DEVICE_REQUEST do_ata_cf_request
     #define DEVICE_NR(device) (MINOR(device)>>MINOR_SHIFT)
     #define DEVICE_OFF(device)

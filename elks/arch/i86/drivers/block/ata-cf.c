@@ -13,18 +13,22 @@
 #include <linuxmt/errno.h>
 #include <linuxmt/debug.h>
 #include <arch/ata.h>
-#include "ata.h"
-#include "ata-cf.h"
+
+#define MAJOR_NR        ATHD_MAJOR
 #include "blk.h"
+
+/* the following must match with BIOSHD /dev minor numbering scheme*/
+#define NUM_MINOR       8       /* max minor devices per drive*/
+#define MINOR_SHIFT     3       /* =log2(NUM_MINOR) shift to get drive num*/
+#define MAX_DRIVES      8       /* <=256/NUM_MINOR*/
+
+#define NUM_DRIVES      2
 
 
 /**********************************************************************
  * device initialisation
  **********************************************************************/
 
-static jiff_t ata_cf_timeout;
-
-static char ata_cf_initialized;
 static sector_t ata_cf_num_sects[NUM_DRIVES];   /* max # sectors on ATA-CF device */
 static int access_count[NUM_DRIVES];
 
@@ -67,11 +71,7 @@ void INITPROC ata_cf_init(void)
         // ATA drive detect
 
         for (i = 0; i < NUM_DRIVES; i++)
-        {
             ata_init(i);
-        }
-
-        ata_cf_initialized = 1;
     }
 }
 
@@ -118,18 +118,16 @@ static void ata_cf_release(struct inode *inode, struct file *filp)
     }
 }
 
-/* called by timer interrupt if async operation */
-void ata_cf_io_complete(void)
+/* called by add_request to start I/O after first request added */
+static void do_ata_cf_request(void)
 {
     struct request *req;
     int ret;
 
-    ata_cf_timeout = 0;        /* stop further callbacks */
-
 #ifdef CHECK_BLOCKIO
     req = CURRENT;
     if (!req) {
-        debug_blk("ata_cf_io_complete: NULL request\n");
+        debug_blk("do_ata_cf_request: NULL request\n");
         return;
     }
 #endif
@@ -163,44 +161,12 @@ void ata_cf_io_complete(void)
                 debug_blk("cf%d: reading sector %lu\n", drive, start);
                 ret = ata_read(drive, start, buf, req->rq_seg);
             }
-            if (ret != 1)           /* I/O error */
+            if (ret != 0)           /* I/O error */
                 break;
             start++;
             buf += ATA_SECTOR_SIZE;
         }
         end_request(count == req->rq_nr_sectors);
-#if IODELAY
-        if (CURRENT) {              /* schedule next completion callback */
-            ata_cf_timeout = jiffies + IODELAY;
-        }
-        return;                     /* handle only one request per interrupt */
-#endif
-    }
-}
-
-/* called by add_request to start I/O after first request added */
-static void do_ata_cf_request(void)
-{
-    debug_blk("do_ata_cf_request\n");
-
-    for (;;) {
-        struct request *req = CURRENT;
-        if (!req) {
-            debug_blk("do_ata_cf_request: NULL request\n");
-            return;
-        }
-        CHECK_REQUEST(req);
-
-        if (!ata_cf_initialized) {
-            end_request(0);
-            return;
-        }
-#if IODELAY
-        ata_cf_timeout = jiffies + IODELAY;    /* schedule completion callback */
-        return;
-#else
-        ata_cf_io_complete();               /* synchronous I/O */
-        return;
-#endif
+        return;                     /* synchronous I/O */
     }
 }

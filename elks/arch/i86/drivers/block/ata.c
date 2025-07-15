@@ -27,21 +27,22 @@
 #include <linuxmt/errno.h>
 #include <linuxmt/heap.h>
 #include <linuxmt/debug.h>
-#include <arch/ata.h>
 #include <arch/io.h>
-#include "ata.h"
+#include <arch/ata.h>
 
 static char use_8bitmode;
 
 #ifdef CONFIG_ARCH_IBMPC
 /*
- * The ATA base port is dynamically set on IBM PCs:
- * For 8086 systems, use XT-IDE's port 0x300 (set in ata_reset),
- * otherwise use the standard ATA port 0x1F0.
+ * The ATA base and control ports are dynamically set on IBM PCs (in ata_reset):
+ * For 8086 systems, use XT-IDE's ports 0x300/0x30E,
+ * otherwise use the standard ATA ports 0x1F0/0x3F6.
  */
 static unsigned int ata_base_port = 0x1F0;
+static unsigned int ata_ctrl_port = 0x3F6;
 
 #define ATA_BASE_PORT   ata_base_port
+#define ATA_CTRL_PORT   ata_ctrl_port
 #endif
 
 /**********************************************************************
@@ -53,7 +54,7 @@ static unsigned int ata_base_port = 0x1F0;
  */
 static void ata_delay(void)
 {
-    unsigned short i = 1000;
+    int i = 1000;
 
     while (i--) asm("nop");
 }
@@ -63,60 +64,96 @@ static void ata_delay(void)
  */
 static void ata_delay_400(void)
 {
-    unsigned short i;
+    int i;
 
-    for (i = 0; i < 5; i++)
+    for (i = 0; i < 15; i++)
         inb(ATA_PORT_STATUS);
 }
 
 /**
- * ATA wait for state
+ * ATA wait until not busy
  */
-static unsigned char ata_wait(unsigned char state)
+static int ata_wait(void)
 {
+    int i;
     unsigned char status;
-    unsigned int i;
 
-    status = 0;
-
-    // loop while the state is true
-
-    for (i = 0; i < 500; i++)
+    for (i = 0; i < ATA_RETRY; i++)
     {
         status = inb(ATA_PORT_STATUS);
 
         // are we done?
 
-        if (status & state)
-            ata_delay();
-        else
-            return (0);
+        if ((status & ATA_STATUS_BSY) == 0)
+            return 0;
+
+        ata_delay();
     }
 
-    return (status);
+    return -ENXIO;
 }
 
+/* read from I/O port into far buffer */
+static void read_ioport(int port, unsigned char __far *buffer, size_t count)
+{
+    size_t i;
+    unsigned int word;
+
+    if (use_8bitmode)
+    {
+        for (i = 0; i < count; i++)
+            buffer[i] = inb(port);
+    }
+    else
+    {
+        for (i = 0; i < count; i+=2)
+        {
+            word = inw(port);
+
+            buffer[i+0] = (unsigned char) (word & 0xFF);
+            buffer[i+1] = (unsigned char) (word >> 8);
+        }
+    }
+}
+
+/* write from far buffer to I/O port */
+static void write_ioport(int port, unsigned char __far *buffer, size_t count)
+{
+    size_t i;
+    unsigned int word;
+
+    if (use_8bitmode)
+    {
+        for (i = 0; i < count; i++)
+            outb(buffer[i], port);
+    }
+    else
+    {
+        for (i = 0; i < count; i+=2)
+        {
+            word = buffer[i+0] | buffer[i+1] << 8;
+            outw(word, port);
+        }
+    }
+}
+
+/**********************************************************************
+ * ATA functions
+ **********************************************************************/
+
 /**
- * ATA select
+ * ATA select drive
  */
-static unsigned char ata_select(unsigned int drive, unsigned int cmd, unsigned long sector)
+static int ata_select(unsigned int drive, unsigned int cmd, unsigned long sector)
 {
     unsigned char select = 0xA0 | 0x40 | (drive << 4) | ((sector >> 24) & 0x0F);
-    unsigned char status;
-    unsigned int i;
+    int error;
 
     // wait for drive to be non-busy
 
-    for (i = 0; i < ATA_RETRY; i++)
-    {
-        status = ata_wait(ATA_STATUS_BSY);
-
-        if (status == 0)
-            break;
-    }
-
-    if (status)
-        return (status);
+    error = ata_wait();
+    if (error)
+        return error;
 
     // send
 
@@ -126,28 +163,17 @@ static unsigned char ata_select(unsigned int drive, unsigned int cmd, unsigned l
 
     // wait for drive to be non-busy
 
-    for (i = 0; i < ATA_RETRY; i++)
-    {
-        status = ata_wait(ATA_STATUS_BSY);
-
-        if (status == 0)
-            break;
-    }
-
-    return (status);
+    return ata_wait();
 }
 
-
-/**********************************************************************
- * ATA functions
- **********************************************************************/
 
 /**
  * ATA set 8-bit transfer mode if possible
  */
 static int ata_set8bitmode(void)
 {
-    int i, status;
+    int error;
+    unsigned char status;
 
     // set 8-bit transfer mode
 
@@ -157,18 +183,9 @@ static int ata_set8bitmode(void)
 
     // wait for drive to be not-busy
 
-    for (i = 0; i < ATA_RETRY; i++)
-    {
-        status = ata_wait(ATA_STATUS_BSY);
-
-        // are we done?
-
-        if (status == 0)
-            break;
-    }
-
-    if (status)
-        return (0);
+    error = ata_wait();
+    if (error)
+        return error;
 
 
     // check for error
@@ -178,11 +195,11 @@ static int ata_set8bitmode(void)
     if (status & ATA_STATUS_ERR)
     {
         printk("cf: can't set 8-bit transfer mode (error %02xh)\n", inb(ATA_PORT_ERR));
-        return (0);
+        return -EINVAL;
     }
 
     printk("cf: setting 8-bit transfer mode\n");
-    return (1);
+    return 0;
 }
 
 /**
@@ -191,16 +208,15 @@ static int ata_set8bitmode(void)
 static int ata_cmd(unsigned int drive, unsigned int cmd, unsigned long sector,
     unsigned int count)
 {
+    int error;
     unsigned char status;
-    unsigned int i;
 
 
     // send command
 
-    status = ata_select(drive, cmd, sector);
-
-    if (status != 0)
-        return (status);
+    error = ata_select(drive, cmd, sector);
+    if (error)
+        return error;
 
     outb(0x00, ATA_PORT_FEAT);
     outb(count, ATA_PORT_CNT);
@@ -212,17 +228,22 @@ static int ata_cmd(unsigned int drive, unsigned int cmd, unsigned long sector,
 
     // wait for drive to be not-busy
 
-    for (i = 0; i < ATA_RETRY; i++)
-    {
-        status = ata_wait(ATA_STATUS_BSY);
+    error = ata_wait();
+    if (error)
+        return error;
 
-        // are we done?
 
-        if (status == 0)
-            break;
-    }
+    // check for error
 
-    return (status);
+    status = inb(ATA_PORT_STATUS);
+
+    if (status & (ATA_STATUS_ERR|ATA_STATUS_DFE))
+        return -EIO;
+
+    if (! (status & ATA_STATUS_DRQ))
+        return -EINVAL;
+
+    return 0;
 }
 
 
@@ -232,52 +253,26 @@ static int ata_cmd(unsigned int drive, unsigned int cmd, unsigned long sector,
  * drive  : physical drive number (0 or 1)
  * *buffer: pointer to buffer containing 512 bytes of space
  */
-static int ata_identify(unsigned int drive, char *buf)
+static int ata_identify(unsigned int drive, unsigned char __far *buf)
 {
-    unsigned char status;
-    unsigned int word, i;
+    int error;
 
 
     // send command
 
-    if (ata_cmd(drive, ATA_CMD_ID, 0, 0) != 0)
-        return (-ENXIO);
-
-
-    // check for error
-
-    status = inb(ATA_PORT_STATUS);
-
-    if (status & ATA_STATUS_ERR)
-        return (-EIO);
-    if (status & ATA_STATUS_DFE)
-        return (-EIO);
-
-    if (! (status & ATA_STATUS_DRQ))
-        return (-EINVAL);
-
+    error = ata_cmd(drive, ATA_CMD_ID, 0, 0);
+    if (error)
+    {
+        printk("cf%d: ATA port %x/%x, probe failed (%d)\n",
+            drive, ATA_BASE_PORT, ATA_CTRL_PORT, error);
+        return error;
+    }
 
     // read data
 
-    if (use_8bitmode)
-    {
-        for (i = 0; i < ATA_SECTOR_SIZE; i++)
-        {
-            buf[i] = inb(ATA_PORT_DATA);
-        }
-    }
-    else
-    {
-        for (i = 0; i < ATA_SECTOR_SIZE; i+=2)
-        {
-            word = inw(ATA_PORT_DATA);
+    read_ioport(ATA_PORT_DATA, buf, ATA_SECTOR_SIZE);
 
-            buf[i+0] = (unsigned char) (word & 0xFF);
-            buf[i+1] = (unsigned char) (word >> 8);
-        }
-    }
-
-    return (! ata_wait(ATA_STATUS_BSY));
+    return ata_wait();
 }
 
 
@@ -293,9 +288,12 @@ void ata_reset(void)
     unsigned char select = 0xA0;
 
 #ifdef CONFIG_ARCH_IBMPC
-    // if not IBM PC/AT+ or later (w/80286), assume XT-IDE port 0x300
+    // if not IBM PC/AT+ or later (w/80286), assume XT-IDE ports 0x300/0x30E
     if (arch_cpu < 6)
+    {
         ata_base_port = 0x300;
+        ata_ctrl_port = 0x30E;
+    }
 #endif
 
     // controller reset
@@ -305,26 +303,23 @@ void ata_reset(void)
     ata_delay();
 
     // set nIEN and SRST bits
-    outb(0x06, ATA_PORT_CTRL);
+    outb(0x06, ATA_CTRL_PORT);
 
     ata_delay();
 
     // set nIEN bit (and clear SRST bit)
-    outb(0x02, ATA_PORT_CTRL);
+    outb(0x02, ATA_CTRL_PORT);
 
     ata_delay();
 
 
-    // controller 8-bit transfer is requested for 8086/80186 systems
+    // controller 8-bit transfer is requested for 8086/80186 systems:
+    // try and turn on 8-bit mode
 
     use_8bitmode = 0;
 
     if (arch_cpu < 6)
-    {
-        // try and turn on 8-bit mode
-
-        use_8bitmode = ata_set8bitmode();
-    }
+        use_8bitmode = (ata_set8bitmode() == 0);
 }
 
 
@@ -341,21 +336,20 @@ sector_t ata_init(unsigned int drive)
 
     // allocate buffer
 
-    buffer = (unsigned short *) heap_alloc(ATA_SECTOR_SIZE, HEAP_TAG_DRVR);
+    buffer = (unsigned short *) heap_alloc(ATA_SECTOR_SIZE, HEAP_TAG_DRVR|HEAP_TAG_CLEAR);
 
     if (!buffer)
         return 0;
 
-
     // identify drive
 
-    if (ata_identify(drive, (char *) buffer))
+    if (ata_identify(drive, (unsigned char __far *) buffer) == 0)
     {
         // ATA LBA sector total (MSB << 16, LSB)
         total = (sector_t)buffer[ATA_INFO_SECT_HI] << 16 | buffer[ATA_INFO_SECT_LO];
 
-        printk("cf%d: ATA port %x, %luK CHS %2u,%2u,%2u SZ %x ",
-            drive, ATA_BASE_PORT, total >> 1,
+        printk("cf%d: ATA port %x/%x, %luK CHS %2u,%2u,%2u SZ %x ",
+            drive, ATA_BASE_PORT, ATA_CTRL_PORT, total >> 1,
             buffer[ATA_INFO_CYLS], buffer[ATA_INFO_HEADS],
             buffer[ATA_INFO_SPT], buffer[ATA_INFO_SECT_SZ]);
 
@@ -372,7 +366,7 @@ sector_t ata_init(unsigned int drive)
             (buffer[ATA_INFO_HEADS] == 0 || buffer[ATA_INFO_HEADS] > 16) ||
             (buffer[ATA_INFO_SPT] == 0 || buffer[ATA_INFO_SPT] > 63))
         {
-            printk("drive not present");
+            printk("invalid CF");
             //total = 0;
         }
         else if (! (buffer[ATA_INFO_CAPS] & ATA_CAPS_LBA))      // ATA LBA support?
@@ -395,55 +389,40 @@ sector_t ata_init(unsigned int drive)
  *
  * drive : physical drive number (0 or 1)
  * sector: sector number
- * buffer: __far pointer to buffer containing 512 bytes of space
+ * buf/seg: I/O buffer address
  */
 int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
 {
-    unsigned char __far *buffer = _MK_FP((seg_t)seg, (unsigned)buf);
-    unsigned int word, i;
-    unsigned char status;
+    unsigned char __far *buffer;
+    int error;
 
 
     // send command
 
-    if (ata_cmd(drive, ATA_CMD_READ, sector, 1) != 0)
-        return (-ENXIO);
-
-
-    // check for error
-
-    status = inb(ATA_PORT_STATUS);
-
-    if (status & ATA_STATUS_ERR)
-        return (-EIO);
-    if (status & ATA_STATUS_DFE)
-        return (-EIO);
-
-    if (! (status & ATA_STATUS_DRQ))
-        return (-EINVAL);
+    error = ata_cmd(drive, ATA_CMD_READ, sector, 1);
+    if (error)
+        return error;
 
 
     // read data
 
-    if (use_8bitmode)
+#pragma GCC diagnostic ignored "-Wshift-count-overflow"
+#ifdef CONFIG_FS_XMS
+    int use_xms = seg >> 16;
+    if (use_xms)
     {
-        for (i = 0; i < ATA_SECTOR_SIZE; i++)
-        {
-            buffer[i] = inb(ATA_PORT_DATA);
-        }
+        buffer = _MK_FP(DMASEG, 0);
+        read_ioport(ATA_PORT_DATA, buffer, ATA_SECTOR_SIZE);
+        xms_fmemcpyw(buf, seg, 0, DMASEG, ATA_SECTOR_SIZE / 2);
     }
     else
+#endif
     {
-        for (i = 0; i < ATA_SECTOR_SIZE; i+=2)
-        {
-            word = inw(ATA_PORT_DATA);
-
-            buffer[i+0] = (unsigned char) (word & 0xFF);
-            buffer[i+1] = (unsigned char) (word >> 8);
-        }
+        buffer = _MK_FP(seg, buf);
+        read_ioport(ATA_PORT_DATA, buffer, ATA_SECTOR_SIZE);
     }
 
-    return (!ata_wait(ATA_STATUS_BSY));
+    return ata_wait();
 }
 
 
@@ -452,52 +431,39 @@ int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
  *
  * drive : physical drive number (0 or 1)
  * sector: sector number
- * buffer: __far pointer to buffer containing 512 bytes of data
+ * buf/seg: I/O buffer address
  */
 int ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
 {
-    unsigned char __far *buffer = _MK_FP((seg_t)seg, (unsigned)buf);
-    unsigned char status;
-    unsigned int word, i;
+    unsigned char __far *buffer;
+    int error;
 
 
     // send command
 
-    if (ata_cmd(drive, ATA_CMD_WRITE, sector, 1) != 0)
-        return (-ENXIO);
-
-
-    // check for error
-
-    status = inb(ATA_PORT_STATUS);
-
-    if (status & ATA_STATUS_ERR)
-        return (-EIO);
-    if (status & ATA_STATUS_DFE)
-        return (-EIO);
-
-    if (! (status & ATA_STATUS_DRQ))
-        return (-EINVAL);
+    error = ata_cmd(drive, ATA_CMD_WRITE, sector, 1);
+    if (error)
+        return error;
 
 
     // write data
 
-    if (use_8bitmode)
+#ifdef CONFIG_FS_XMS
+#pragma GCC diagnostic ignored "-Wshift-count-overflow"
+    int use_xms = seg >> 16;
+    if (use_xms)
     {
-        for (i = 0; i < ATA_SECTOR_SIZE; i++)
-        {
-            outb(buffer[i], ATA_PORT_DATA);
-        }
+        xms_fmemcpyw(0, DMASEG, buf, seg, ATA_SECTOR_SIZE / 2);
+        buffer = _MK_FP(seg, buf);
+        write_ioport(ATA_PORT_DATA, buffer, ATA_SECTOR_SIZE);
     }
     else
+#endif
     {
-        for (i = 0; i < ATA_SECTOR_SIZE; i+=2)
-        {
-            word = buffer[i+0] | buffer[i+1] << 8;
-            outw(word, ATA_PORT_DATA);
-        }
+        buffer = _MK_FP(seg, buf);
+        write_ioport(ATA_PORT_DATA, buffer, ATA_SECTOR_SIZE);
     }
 
-    return (!ata_wait(ATA_STATUS_BSY));
-}
 
+    return ata_wait();
+}
