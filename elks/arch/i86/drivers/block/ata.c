@@ -76,7 +76,7 @@ static unsigned char INB(int reg)
 }
 
 /* output byte to port from translated register number */
-/* FIXME: compiler bug if 'unsigned int byte' declared below. Not debugged yet. */
+/* FIXME: compiler bug if 'unsigned char byte' declared below, bad code in ata_cmd */
 static void OUTB(unsigned int byte, int reg)
 {
     outb(byte, BASE(reg));
@@ -256,7 +256,7 @@ static int ata_cmd(unsigned int drive, unsigned int cmd, unsigned long sector,
     OUTB(count, ATA_REG_CNT);
     OUTB((unsigned char) (sector),       ATA_REG_LBA_LO);
     OUTB((unsigned char) (sector >> 8),  ATA_REG_LBA_MD);
-    OUTB((unsigned char) (sector >> 16), ATA_REG_LBA_HI);
+    OUTB((unsigned char) (sector >> 16), ATA_REG_LBA_HI); // FIXME OUTB compiler bug here
     OUTB(cmd, ATA_REG_CMD);
 
 
@@ -276,7 +276,6 @@ static int ata_cmd(unsigned int drive, unsigned int cmd, unsigned long sector,
 
     if (! (status & ATA_STATUS_DRQ))
         return -EINVAL;
-
     return 0;
 }
 
