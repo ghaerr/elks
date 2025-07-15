@@ -321,7 +321,7 @@ void ata_reset(void)
     // dynamically set I/O port addresses
 
 #ifdef CONFIG_ARCH_SOLO86
-    mode = MODE_SOLO86
+    mode = MODE_SOLO86;
 #else
     if (arch_cpu < 6)       // prior to 80286 IBM PC/AT
         mode = MODE_XTCF;
@@ -355,7 +355,7 @@ void ata_reset(void)
 
     use_8bitmode = 0;
 
-    if (arch_cpu < 6)
+    if (arch_cpu < 5)
         use_8bitmode = (ata_set8bitmode() == 0);
 }
 
