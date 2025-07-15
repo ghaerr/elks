@@ -162,7 +162,7 @@ static void do_ata_cf_request(void)
                 ret = ata_read(drive, start, buf, req->rq_seg);
             }
             if (ret != 0) {         /* I/O error */
-                printk("cf%d: I/O error %d\n", drive, ret);
+                printk("cf%d: I/O error %d cmd %d\n", drive, ret, req->rq_cmd);
                 break;
             }
             start++;

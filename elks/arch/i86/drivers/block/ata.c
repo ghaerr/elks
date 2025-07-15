@@ -75,7 +75,7 @@ static unsigned char INB(int reg)
     return inb(BASE(reg));
 }
 
-/* output byte from translated register number */
+/* output byte to port from translated register number */
 /* FIXME: compiler bug if 'unsigned int byte' declared below. Not debugged yet. */
 static void OUTB(unsigned int byte, int reg)
 {
