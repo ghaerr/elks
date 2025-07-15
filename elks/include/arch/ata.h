@@ -49,7 +49,6 @@
 /* ATA subdriver */
 
 #define ATA_SECTOR_SIZE     512
-#define ATA_RETRY           5000        /* # times to poll for not busy */
 
 void ata_reset(void);
 sector_t ata_init(unsigned int drive);

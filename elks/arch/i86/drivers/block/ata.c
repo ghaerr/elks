@@ -41,6 +41,10 @@
 #include <arch/io.h>
 #include <arch/ata.h>
 
+/* wait loop counts while busy waiting (FIXME use jiffies for accuracy) */
+#define SHORT_WAIT  500
+#define LONG_WAIT   5000        /* 14s wait required for some writes */
+
 /* controller emulation modes */
 #define MODE_ATA    0
 #define MODE_XTIDE  1
@@ -101,12 +105,12 @@ static void ata_delay_400(void)
 /**
  * ATA wait until not busy
  */
-static int ata_wait(void)
+static int ata_wait(int loops)
 {
     int i;
     unsigned char status;
 
-    for (i = 0; i < ATA_RETRY; i++)
+    for (i = 0; i < loops; i++)
     {
         status = INB(ATA_REG_STATUS);
 
@@ -180,7 +184,7 @@ static int ata_select(unsigned int drive, unsigned int cmd, unsigned long sector
 
     // wait for drive to be non-busy
 
-    error = ata_wait();
+    error = ata_wait(SHORT_WAIT);
     if (error)
         return error;
 
@@ -192,7 +196,7 @@ static int ata_select(unsigned int drive, unsigned int cmd, unsigned long sector
 
     // wait for drive to be non-busy
 
-    return ata_wait();
+    return ata_wait(SHORT_WAIT);
 }
 
 
@@ -212,7 +216,7 @@ static int ata_set8bitmode(void)
 
     // wait for drive to be not-busy
 
-    error = ata_wait();
+    error = ata_wait(SHORT_WAIT);
     if (error)
         return error;
 
@@ -257,7 +261,7 @@ static int ata_cmd(unsigned int drive, unsigned int cmd, unsigned long sector,
 
     // wait for drive to be not-busy
 
-    error = ata_wait();
+    error = ata_wait(cmd == ATA_CMD_READ? LONG_WAIT: SHORT_WAIT);
     if (error)
         return error;
 
@@ -301,7 +305,7 @@ static int ata_identify(unsigned int drive, unsigned char __far *buf)
 
     read_ioport(BASE(ATA_REG_DATA), buf, ATA_SECTOR_SIZE);
 
-    return ata_wait();
+    return ata_wait(SHORT_WAIT);
 }
 
 
@@ -455,7 +459,7 @@ int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
         read_ioport(BASE(ATA_REG_DATA), buffer, ATA_SECTOR_SIZE);
     }
 
-    return ata_wait();
+    return ata_wait(SHORT_WAIT);
 }
 
 
@@ -498,5 +502,5 @@ int ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
     }
 
 
-    return ata_wait();
+    return ata_wait(LONG_WAIT);
 }
