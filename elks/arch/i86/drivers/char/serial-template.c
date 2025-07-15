@@ -112,6 +112,7 @@ static void update_port(struct serial_info *port)
 {
     unsigned int cflags;	/* use smaller 16-bit width to save code*/
     unsigned divisor;
+    flag_t flags;
 
     /* set baud rate divisor, first lower, then higher byte */
     cflags = port->tty->termios.c_cflag & CBAUD;
@@ -125,6 +126,7 @@ static void update_port(struct serial_info *port)
     if (divisor != port->divisor) {
 	port->divisor = divisor;
 
+	save_flags(flags);
 	clr_irq();
 
 	/* Set the divisor latch bit */
@@ -137,7 +139,7 @@ static void update_port(struct serial_info *port)
 	/* Clear the divisor latch bit */
 	outb(port->lcr, port->io + UART_LCR);
 
-	set_irq();
+	restore_flags(flags);
     }
 }
 

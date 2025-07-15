@@ -244,6 +244,7 @@ static void wd_init_8390(int strategy)
 	const e8390_pkt_hdr __far *rxhdr;
 	word_t hdr_start;
 	byte_t *mac_addr = (byte_t *)&netif_stat.mac_addr;
+	flag_t flags;
 
 	outb(E8390_NODMA | E8390_PAGE0 | E8390_STOP,
 		WD_8390_PORT + E8390_CMD);
@@ -271,6 +272,7 @@ static void wd_init_8390(int strategy)
 
 
 		/* Copy the station address into the DS8390 registers. */
+		save_flags(flags);
 		clr_irq();
 		outb(E8390_NODMA | E8390_PAGE1 | E8390_STOP,
 			WD_8390_PORT + E8390_CMD);
@@ -279,7 +281,7 @@ static void wd_init_8390(int strategy)
 		outb(WD_FIRST_RX_PG, WD_8390_PORT + EN1_CURPAG);
 		outb(E8390_NODMA | E8390_PAGE0 | E8390_STOP,
 			WD_8390_PORT + E8390_CMD);
-		set_irq();
+		restore_flags(flags);
 
 	} else {	/* 'strategy' is the # of packets to keep. */
 			/* This is for overflow recovery */
@@ -505,14 +507,16 @@ static size_t wd_write(struct inode * inode, struct file * file,
 static word_t wd_rx_stat(void)
 {
 	unsigned char rxing_page;
+	flag_t flags;
 
+	save_flags(flags);
 	clr_irq();	// FIXME: don't need this, just block
 			// our own interrupts
 	/* Get the rx page (incoming packet pointer). */
 	outb(E8390_NODMA | E8390_PAGE1, WD_8390_PORT + E8390_CMD);
 	rxing_page = inb(WD_8390_PORT + EN1_CURPAG);
 	outb(E8390_NODMA | E8390_PAGE0, WD_8390_PORT + E8390_CMD);
-	set_irq();
+	restore_flags(flags);
 
 	return (current_rx_page == rxing_page) ? 0U : WD_STAT_RX;
 }
