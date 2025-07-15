@@ -3,43 +3,18 @@
 
 #include <linuxmt/memory.h>
 
-/* ATA ports */
+/* ATA register offsets from base I/O address */
 
-#ifdef CONFIG_ARCH_IBMPC
-
-/* ATA_BASE_PORT defined as variable in driver (0x1F0 for AT, 0x300 for XT */
-/* ATA_CTRL_PORT defined as variable in driver (0x3F6 for AT, 0x308 for XT */
-
-#define ATA_PORT_DATA       (ATA_BASE_PORT + 0x0)
-#define ATA_PORT_ERR        (ATA_BASE_PORT + 0x1)
-#define ATA_PORT_FEAT       (ATA_BASE_PORT + 0x1)
-#define ATA_PORT_CNT        (ATA_BASE_PORT + 0x2)
-#define ATA_PORT_LBA_LO     (ATA_BASE_PORT + 0x3)
-#define ATA_PORT_LBA_MD     (ATA_BASE_PORT + 0x4)
-#define ATA_PORT_LBA_HI     (ATA_BASE_PORT + 0x5)
-#define ATA_PORT_DRVH       (ATA_BASE_PORT + 0x6)
-#define ATA_PORT_CMD        (ATA_BASE_PORT + 0x7)
-#define ATA_PORT_STATUS     (ATA_BASE_PORT + 0x7)
-
-#endif
-
-#ifdef CONFIG_ARCH_SOLO86
-
-#define ATA_BASE_PORT       0x40
-#define ATA_CTRL_PORT       0x5C
-
-#define ATA_PORT_DATA       (ATA_BASE_PORT + 0x0)
-#define ATA_PORT_ERR        (ATA_BASE_PORT + 0x2)
-#define ATA_PORT_FEAT       (ATA_BASE_PORT + 0x2)
-#define ATA_PORT_CNT        (ATA_BASE_PORT + 0x4)
-#define ATA_PORT_LBA_LO     (ATA_BASE_PORT + 0x6)
-#define ATA_PORT_LBA_MD     (ATA_BASE_PORT + 0x8)
-#define ATA_PORT_LBA_HI     (ATA_BASE_PORT + 0xA)
-#define ATA_PORT_DRVH       (ATA_BASE_PORT + 0xC)
-#define ATA_PORT_CMD        (ATA_BASE_PORT + 0xE)
-#define ATA_PORT_STATUS     (ATA_BASE_PORT + 0xE)
-
-#endif
+#define ATA_REG_DATA       0
+#define ATA_REG_ERR        1
+#define ATA_REG_FEAT       1
+#define ATA_REG_CNT        2
+#define ATA_REG_LBA_LO     3
+#define ATA_REG_LBA_MD     4
+#define ATA_REG_LBA_HI     5
+#define ATA_REG_DRVH       6
+#define ATA_REG_CMD        7
+#define ATA_REG_STATUS     7
 
 /* ATA commands */
 

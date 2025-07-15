@@ -1,5 +1,15 @@
 /**********************************************************************
- * ELKS Generic ATA functions
+ * ELKS Generic ATA/IDE functions
+ *
+ *  Supports dynamic I/O port setup of ATA, XTIDE, XTCF and SOLO/86 controllers:
+ *
+ *             ATA             XTIDE           XTCF                SOLO/86
+ * BASE        0x1F0           0x300           0x300               0x40
+ * BASE+reg    0x1F0+reg       0x300+reg       0x300+(reg<<1)      0x40+(reg<<1)
+ *
+ * CTRL        BASE+0x200+reg  BASE+0x08+reg   BASE+0x10+(reg<<1)  BASE+0x10+(reg<<1)
+ * CTRL+6      0x3F6           0x30E           0x31C               0x5C
+ * DEVCTRL     BASE+0x206      BASE+0x0E       BASE+0x1C           BASE+0x1C
  *
  * This code assumes there is only one ATA controller.
  *
@@ -20,6 +30,7 @@
  * some common sense.
  *
  * Ferry Hendrikx, June 2025
+ * Greg Haerr, July 2025 Added XTCF support
  **********************************************************************/
 
 #include <linuxmt/config.h>
@@ -30,24 +41,41 @@
 #include <arch/io.h>
 #include <arch/ata.h>
 
+/* controller emulation modes */
+#define MODE_ATA    0
+#define MODE_XTIDE  1
+#define MODE_XTCF   2
+#define MODE_SOLO86 3
+
+/* default base ports for ATA, XTIDE, XTCF and SOLO86 */
+static unsigned int def_base_ports[4] = { 0x1F0, 0x300, 0x300, 0x40 };
+
+/* control register offsets from base ports */
+static unsigned int ctrl_offsets[4] =   { 0x200, 0x08, 0x10, 0x10 };
+
+static int mode = MODE_ATA;
+static unsigned int ata_base_port;
+static unsigned int ata_ctrl_port;
 static char use_8bitmode;
 
-#ifdef CONFIG_ARCH_IBMPC
-/*
- * The ATA base and control ports are dynamically set on IBM PCs (in ata_reset):
- * For 8086 systems, use XT-IDE's ports 0x300/0x30E,
- * otherwise use the standard ATA ports 0x1F0/0x3F6.
- */
-static unsigned int ata_base_port = 0x1F0;
-static unsigned int ata_ctrl_port = 0x3F6;
-
-#define ATA_BASE_PORT   ata_base_port
-#define ATA_CTRL_PORT   ata_ctrl_port
-#endif
+/* convert register number to base port address */
+#define BASE(reg)   ((mode < MODE_XTCF)? (ata_base_port+reg): (ata_base_port+((reg)<<1)))
 
 /**********************************************************************
  * ATA support functions
  **********************************************************************/
+
+/* input byte from translated register number */
+static unsigned char INB(int reg)
+{
+    return inb(BASE(reg));
+}
+
+/* output byte from translated register number */
+static void OUTB(unsigned char byte, int reg)
+{
+    outb(byte, BASE(reg));
+}
 
 /**
  * ATA delay
@@ -67,7 +95,7 @@ static void ata_delay_400(void)
     int i;
 
     for (i = 0; i < 15; i++)
-        inb(ATA_PORT_STATUS);
+        INB(ATA_REG_STATUS);
 }
 
 /**
@@ -80,7 +108,7 @@ static int ata_wait(void)
 
     for (i = 0; i < ATA_RETRY; i++)
     {
-        status = inb(ATA_PORT_STATUS);
+        status = INB(ATA_REG_STATUS);
 
         // are we done?
 
@@ -92,6 +120,7 @@ static int ata_wait(void)
 
     return -ENXIO;
 }
+
 
 /* read from I/O port into far buffer */
 static void read_ioport(int port, unsigned char __far *buffer, size_t count)
@@ -157,7 +186,7 @@ static int ata_select(unsigned int drive, unsigned int cmd, unsigned long sector
 
     // send
 
-    outb(select, ATA_PORT_DRVH);
+    OUTB(select, ATA_REG_DRVH);
 
     ata_delay_400();
 
@@ -177,8 +206,8 @@ static int ata_set8bitmode(void)
 
     // set 8-bit transfer mode
 
-    outb(0x01, ATA_PORT_FEAT);
-    outb(ATA_CMD_FEAT, ATA_PORT_CMD);
+    OUTB(0x01, ATA_REG_FEAT);
+    OUTB(ATA_CMD_FEAT, ATA_REG_CMD);
 
 
     // wait for drive to be not-busy
@@ -190,11 +219,11 @@ static int ata_set8bitmode(void)
 
     // check for error
 
-    status = inb(ATA_PORT_STATUS);
+    status = INB(ATA_REG_STATUS);
 
     if (status & ATA_STATUS_ERR)
     {
-        printk("cf: can't set 8-bit transfer mode (error %02xh)\n", inb(ATA_PORT_ERR));
+        printk("cf: can't set 8-bit transfer mode (error %02xh)\n", INB(ATA_REG_ERR));
         return -EINVAL;
     }
 
@@ -218,12 +247,12 @@ static int ata_cmd(unsigned int drive, unsigned int cmd, unsigned long sector,
     if (error)
         return error;
 
-    outb(0x00, ATA_PORT_FEAT);
-    outb(count, ATA_PORT_CNT);
-    outb((unsigned char) (sector),       ATA_PORT_LBA_LO);
-    outb((unsigned char) (sector >> 8),  ATA_PORT_LBA_MD);
-    outb((unsigned char) (sector >> 16), ATA_PORT_LBA_HI);
-    outb(cmd, ATA_PORT_CMD);
+    OUTB(0x00, ATA_REG_FEAT);
+    OUTB(count, ATA_REG_CNT);
+    OUTB((unsigned char) (sector),       ATA_REG_LBA_LO);
+    OUTB((unsigned char) (sector >> 8),  ATA_REG_LBA_MD);
+    OUTB((unsigned char) (sector >> 16), ATA_REG_LBA_HI);
+    OUTB(cmd, ATA_REG_CMD);
 
 
     // wait for drive to be not-busy
@@ -235,7 +264,7 @@ static int ata_cmd(unsigned int drive, unsigned int cmd, unsigned long sector,
 
     // check for error
 
-    status = inb(ATA_PORT_STATUS);
+    status = INB(ATA_REG_STATUS);
 
     if (status & (ATA_STATUS_ERR|ATA_STATUS_DFE))
         return -EIO;
@@ -264,13 +293,13 @@ static int ata_identify(unsigned int drive, unsigned char __far *buf)
     if (error)
     {
         printk("cf%d: ATA port %x/%x, probe failed (%d)\n",
-            drive, ATA_BASE_PORT, ATA_CTRL_PORT, error);
+            drive, ata_base_port, ata_ctrl_port, error);
         return error;
     }
 
     // read data
 
-    read_ioport(ATA_PORT_DATA, buf, ATA_SECTOR_SIZE);
+    read_ioport(BASE(ATA_REG_DATA), buf, ATA_SECTOR_SIZE);
 
     return ata_wait();
 }
@@ -285,30 +314,34 @@ static int ata_identify(unsigned int drive, unsigned char __far *buf)
  */
 void ata_reset(void)
 {
-    unsigned char select = 0xA0;
+    // dynamically set I/O port addresses
 
-#ifdef CONFIG_ARCH_IBMPC
-    // if not IBM PC/AT+ or later (w/80286), assume XT-IDE ports 0x300/0x30E
-    if (arch_cpu < 6)
-    {
-        ata_base_port = 0x300;
-        ata_ctrl_port = 0x30E;
-    }
+#ifdef CONFIG_ARCH_SOLO86
+    mode = MODE_SOLO86
+#else
+    if (arch_cpu < 6)       // prior to 80286 IBM PC/AT
+        mode = MODE_XTCF;
 #endif
+
+    // set base port I/O address from emulation mode
+    ata_base_port = def_base_ports[mode];
+
+    // set device control register 6 I/O address
+    ata_ctrl_port = BASE(6) + ctrl_offsets[mode];
 
     // controller reset
 
-    outb(select, ATA_PORT_DRVH);
+    OUTB(0xA0, ATA_REG_DRVH);
 
     ata_delay();
 
     // set nIEN and SRST bits
-    outb(0x06, ATA_CTRL_PORT);
+    outb(0x06, ata_ctrl_port);
 
     ata_delay();
 
     // set nIEN bit (and clear SRST bit)
-    outb(0x02, ATA_CTRL_PORT);
+    outb(0x02, ata_ctrl_port);
 
     ata_delay();
 
@@ -349,7 +382,7 @@ sector_t ata_init(unsigned int drive)
         total = (sector_t)buffer[ATA_INFO_SECT_HI] << 16 | buffer[ATA_INFO_SECT_LO];
 
         printk("cf%d: ATA port %x/%x, %luK CHS %2u,%2u,%2u SZ %x ",
-            drive, ATA_BASE_PORT, ATA_CTRL_PORT, total >> 1,
+            drive, ata_base_port, ata_ctrl_port, total >> 1,
             buffer[ATA_INFO_CYLS], buffer[ATA_INFO_HEADS],
             buffer[ATA_INFO_SPT], buffer[ATA_INFO_SECT_SZ]);
 
@@ -412,14 +445,14 @@ int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
     if (use_xms)
     {
         buffer = _MK_FP(DMASEG, 0);
-        read_ioport(ATA_PORT_DATA, buffer, ATA_SECTOR_SIZE);
+        read_ioport(BASE(ATA_REG_DATA), buffer, ATA_SECTOR_SIZE);
         xms_fmemcpyw(buf, seg, 0, DMASEG, ATA_SECTOR_SIZE / 2);
     }
     else
 #endif
     {
         buffer = _MK_FP(seg, buf);
-        read_ioport(ATA_PORT_DATA, buffer, ATA_SECTOR_SIZE);
+        read_ioport(BASE(ATA_REG_DATA), buffer, ATA_SECTOR_SIZE);
     }
 
     return ata_wait();
@@ -455,13 +488,13 @@ int ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
     {
         xms_fmemcpyw(0, DMASEG, buf, seg, ATA_SECTOR_SIZE / 2);
         buffer = _MK_FP(seg, buf);
-        write_ioport(ATA_PORT_DATA, buffer, ATA_SECTOR_SIZE);
+        write_ioport(BASE(ATA_REG_DATA), buffer, ATA_SECTOR_SIZE);
     }
     else
 #endif
     {
         buffer = _MK_FP(seg, buf);
-        write_ioport(ATA_PORT_DATA, buffer, ATA_SECTOR_SIZE);
+        write_ioport(BASE(ATA_REG_DATA), buffer, ATA_SECTOR_SIZE);
     }
 
 
