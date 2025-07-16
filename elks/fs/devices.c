@@ -51,8 +51,10 @@ int INITPROC register_blkdev(unsigned int major, const char *name,
 {
     register struct device_struct *dev = &blkdevs[major];
 
-    if (major >= MAX_BLKDEV) return -EINVAL;
-    if (dev->ds_fops && dev->ds_fops != fops) return -EBUSY;
+    if (major >= MAX_BLKDEV || (dev->ds_fops && dev->ds_fops != fops)) {
+        printk("%s: can't register blkdev %d\n", name, major);
+        return -EBUSY;
+    }
     dev->ds_fops = fops;
     return 0;
 }

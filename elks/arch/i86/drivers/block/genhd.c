@@ -37,7 +37,6 @@
 # define END_SECT_PC98(p98)     ((sector_t) p98->end_cyl * last_drive->heads * last_drive->sectors + p98->end_head * last_drive->sectors + p98->end_sector)
 #endif
 
-struct gendisk *gendisk_head;
 int boot_partition = 0;         /* MBR boot partition, if any*/
 
 #ifdef CONFIG_BLK_DEV_BHD
@@ -200,7 +199,6 @@ static void INITPROC extended_partition(register struct gendisk *hd, kdev_t dev)
     unmap_brelse(bh);
 }
 
-#ifdef CONFIG_MSDOS_PARTITION
 static int INITPROC msdos_partition(struct gendisk *hd,
                            kdev_t dev, sector_t first_sector)
 {
@@ -288,7 +286,6 @@ out:
     unmap_brelse(bh);
     return 1;
 }
-#endif
 
 static void INITPROC check_partition(register struct gendisk *hd, kdev_t dev)
 {
@@ -309,26 +306,41 @@ static void INITPROC check_partition(register struct gendisk *hd, kdev_t dev)
 
     print_minor_name(hd, MINOR(dev));
 
-#ifdef CONFIG_MSDOS_PARTITION
     if (msdos_partition(hd, dev, first_sector))
         return;
-#endif
 
     printk(" no partitions\n");
 }
-#endif
 
-void INITPROC setup_dev(register struct gendisk *dev)
+static void INITPROC clear_partition(struct gendisk *dev)
 {
-    //memset((void *)dev->part, 0, sizeof(struct hd_struct)*dev->max_nr*dev->max_p);
-    dev->init();
+    struct drive_infot *drivep = drive_info;
+    struct hd_struct *hdp = dev->part;
+    int i;
 
-#ifdef CONFIG_BLK_DEV_BHD
+    memset(hdp, 0, sizeof(struct hd_struct) * dev->num_drives * dev->max_partitions);
+    for (i = 0; i < dev->num_drives << dev->minor_shift; i++) {
+        if ((i & ((1 << dev->minor_shift) - 1)) == 0) {
+            hdp->nr_sects = (sector_t)drivep->sectors * drivep->heads * drivep->cylinders;
+            //hdp->start_sect = 0;
+            drivep++;
+        } else {
+            //hdp->nr_sects = 0;
+            hdp->start_sect = -1;
+        }
+        hdp++;
+    }
+
+}
+
+void INITPROC init_partitions(struct gendisk *dev)
+{
+    clear_partition(dev);
+
     for (int i = 0; i < dev->nr_hd; i++) {
         unsigned int first_minor = i << dev->minor_shift;
         current_minor = first_minor + 1;
         check_partition(dev, MKDEV(dev->major, first_minor));
     }
-#endif
-
 }
+#endif /* CONFIG_BLK_DEV_BHD */

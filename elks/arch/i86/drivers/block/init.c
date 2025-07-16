@@ -38,12 +38,7 @@ void INITPROC device_init(void)
     struct gendisk *p;
 
     chr_dev_init();
-    blk_dev_init();
-
-    set_irq();          /* interrupts enabled for possible disk I/O */
-
-    for (p = gendisk_head; p; p = p->next)
-        setup_dev(p);
+    blk_dev_init();     /* interrupts enabled here prior to partition table reading */
 
 #if defined(CONFIG_BLK_DEV_BFD) || defined(CONFIG_BLK_DEV_BHD) || defined(CONFIG_BLK_DEV_FD)
     /*

@@ -67,19 +67,15 @@ struct gendisk
     int major;                  /* major number of driver */
     const char *major_name;     /* name of major driver */
     int minor_shift;            /* number of times minor is shifted to get real minor */
-    int max_p;                  /* maximum partitions per device */
-    int max_nr;                 /* maximum number of real devices */
-    void (*init)(void);         /* Initialization called before we do our thing */
+    int max_partitions;         /* maximum partitions per device */
+    int num_drives;             /* maximum number of real devices */
     struct hd_struct *part;     /* partition table */
     int nr_hd;                  /* number of hard drives */
     struct drive_infot *drive_info;
-    struct gendisk *next;
 };
 
 extern struct drive_infot *last_drive;  /* set to last drivep-> used in read/write */
 extern unsigned char bios_drive_map[];  /* map drive to BIOS drivenum */
 extern struct drive_infot drive_info[];
-
-extern struct gendisk *gendisk_head;    /* linked list of disks */
 
 #endif

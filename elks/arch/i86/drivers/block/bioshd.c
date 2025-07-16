@@ -89,19 +89,16 @@ static struct hd_struct hd[NUM_DRIVES << MINOR_SHIFT];  /* partitions start, siz
 static int bioshd_open(struct inode *, struct file *);
 static void bioshd_release(struct inode *, struct file *);
 static int bioshd_ioctl(struct inode *, struct file *, unsigned int, unsigned int);
-static void bioshd_geninit(void);
 
 static struct gendisk bioshd_gendisk = {
     MAJOR_NR,                   /* Major number */
     "hd",                       /* Major name */
     MINOR_SHIFT,                /* Bits to shift to get real from partition */
-    1 << MINOR_SHIFT,           /* Number of partitions per real */
+    1 << MINOR_SHIFT,           /* maximum number of partitions per drive */
     NUM_DRIVES,                 /* maximum number of drives */
-    bioshd_geninit,             /* init function */
     hd,                         /* hd struct */
     0,                          /* hd drives found */
-    drive_info,
-    NULL                        /* next */
+    drive_info                  /* fd/hd drive CHS and type */
 };
 
 static void BFPROC set_cache_invalid(void)
@@ -357,9 +354,8 @@ static struct file_operations bioshd_fops = {
     bioshd_release              /* release */
 };
 
-void INITPROC bioshd_init(void)
+struct gendisk * INITPROC bioshd_init(void)
 {
-    register struct gendisk *ptr;
     int count;
 
     /* FIXME perhaps remove for speed on floppy boot*/
@@ -420,52 +416,16 @@ void INITPROC bioshd_init(void)
 #endif
 #endif /* PER_DRIVE_INFO */
 
-    if (!(fd_count + hd_count)) return;
+    if (!(fd_count + hd_count))
+        return NULL;
+
+    if (register_blkdev(MAJOR_NR, DEVICE_NAME, &bioshd_fops))
+        return NULL;
+    blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
 
     bios_copy_ddpt();       /* make a RAM copy of the disk drive parameter table*/
-
-    if (!register_blkdev(MAJOR_NR, DEVICE_NAME, &bioshd_fops)) {
-        blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
-
-        if (gendisk_head == NULL) {
-            bioshd_gendisk.next = gendisk_head;
-            gendisk_head = &bioshd_gendisk;
-        } else {
-            for (ptr = gendisk_head; ptr->next != NULL; ptr = ptr->next)
-                continue;
-            ptr->next = &bioshd_gendisk;
-            //bioshd_gendisk.next = NULL;
-        }
-        bioshd_initialized = 1;
-    } else {
-        printk("bioshd: init error\n");
-    }
-}
-
-static void INITPROC bioshd_geninit2(void)
-{
-    struct drive_infot *drivep = drive_info;
-    struct hd_struct *hdp = hd;
-    int i;
-
-    for (i = 0; i < NUM_DRIVES << MINOR_SHIFT; i++) {
-        if ((i & ((1 << MINOR_SHIFT) - 1)) == 0) {
-            hdp->nr_sects = (sector_t)drivep->sectors * drivep->heads * drivep->cylinders;
-            hdp->start_sect = 0;
-            drivep++;
-        } else {
-            hdp->nr_sects = 0;
-            hdp->start_sect = -1;
-        }
-        hdp++;
-    }
-
-}
-
-/* called by setup_dev() */
-static void bioshd_geninit(void)
-{
-    bioshd_geninit2();
+    bioshd_initialized = 1;
+    return &bioshd_gendisk;
 }
 
 static int bioshd_ioctl(struct inode *inode, struct file *file, unsigned int cmd,

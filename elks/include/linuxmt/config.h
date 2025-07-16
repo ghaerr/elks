@@ -10,7 +10,6 @@
 #define UTS_SYSNAME "ELKS"                      /* uname system name */
 #define UTS_NODENAME "elks"                     /* someday set by sethostname() */
 
-#define CONFIG_MSDOS_PARTITION  1               /* support DOS HD partitions */
 #define CONFIG_FS_DEV           1               /* support FAT /dev folder */
 
 /*
