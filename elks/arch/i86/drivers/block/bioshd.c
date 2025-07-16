@@ -313,10 +313,11 @@ static void BFPROC probe_floppy(int target, struct hd_struct *hdp)
 
 static int bioshd_open(struct inode *inode, struct file *filp)
 {
-    int target = DEVICE_NR(inode->i_rdev);      /* >> MINOR_SHIFT */
-    struct hd_struct *hdp = &hd[MINOR(inode->i_rdev)];
+    int minor = MINOR(inode->i_rdev);
+    struct hd_struct *hdp = &hd[minor];
+    int target = minor >> MINOR_SHIFT;
 
-    if (!bioshd_initialized || target >= NUM_DRIVES || hdp->start_sect == -1U)
+    if (!bioshd_initialized || target >= NUM_DRIVES || hdp->start_sect == NOPART)
         return -ENXIO;
 
     if (++access_count[target] == 1) {
@@ -693,8 +694,8 @@ next_block:
         count = req->rq_nr_sectors;
         start = req->rq_sector;
 
-        if (hd[minor].start_sect == -1U || start + count > hd[minor].nr_sects) {
-            printk("bioshd: sector %ld access beyond partition (%ld,%ld)\n",
+        if (hd[minor].start_sect == NOPART || start + count > hd[minor].nr_sects) {
+            printk("bioshd: sector %ld not in partition (%ld,%ld)\n",
                 start, hd[minor].start_sect, hd[minor].nr_sects);
             end_request(0);
             continue;

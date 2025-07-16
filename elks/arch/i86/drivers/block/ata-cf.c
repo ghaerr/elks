@@ -96,7 +96,7 @@ static int ata_cf_open(struct inode *inode, struct file *filp)
 
     debug_blk("cf%d: open\n", drive);
 
-    if (drive >= NUM_DRIVES)
+    if (drive >= NUM_DRIVES || hdp->start_sect == NOPART)
         return -ENXIO;
 
 #if NOTYET
@@ -106,9 +106,6 @@ static int ata_cf_open(struct inode *inode, struct file *filp)
         init_partitions(&ata_gendisk);  // INITPROC can't be called after init!
     }
 #endif
-
-    if (hdp->start_sect == -1U)
-        return -ENXIO;
 
     ++access_count[drive];
     inode->i_size = hdp->nr_sects * ata_drive_info[drive].sector_size;
@@ -161,8 +158,8 @@ static void do_ata_cf_request(void)
         buf = req->rq_buffer;
         start = req->rq_sector;
 
-        if (hd[minor].start_sect == -1U || start + req->rq_nr_sectors > hd[minor].nr_sects) {
-              printk("cf%d: sector %ld access beyond partition (%ld,%ld)\n",
+        if (hd[minor].start_sect == NOPART || start + req->rq_nr_sectors > hd[minor].nr_sects) {
+              printk("cf%d: sector %ld not in partition (%ld,%ld)\n",
                 drive, start, hd[minor].start_sect, hd[minor].nr_sects);
             end_request(0);
             continue;

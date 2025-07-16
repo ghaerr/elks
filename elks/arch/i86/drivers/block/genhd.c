@@ -72,7 +72,7 @@ static void INITPROC add_partition(struct gendisk *hd, unsigned int minor,
     sector_t adj_nr_sects = hd0->nr_sects + 63 * 255;
     if (start > adj_nr_sects || start+size > adj_nr_sects) {
         printk("skipped ");
-        hdp->start_sect = -1;
+        hdp->start_sect = NOPART;
         hdp->nr_sects = 0;
         return;
     }
@@ -259,7 +259,7 @@ out:
             extended_partition(hd, MKDEV(hd->major, minor));
 
             /* then disable mbr partition number */
-            hdp->start_sect = -1;
+            hdp->start_sect = NOPART;
             hdp->nr_sects = 0;
 
             printk(">");
@@ -298,17 +298,15 @@ out:
 
 static void INITPROC check_partition(register struct gendisk *hd, kdev_t dev)
 {
-    sector_t first_sector;
-
-    first_sector = hd->part[MINOR(dev)].start_sect;
+    sector_t first_sector = hd->part[MINOR(dev)].start_sect;
 
 #if UNUSED
     /*
      * This is a kludge to allow the partition check to be
      * skipped for specific drives (e.g. IDE cd-rom drives)
      */
-    if ((sector_t) first_sector == (sector_t) -1) {
-        hd->part[MINOR(dev)].start_sect = (sector_t) 0;
+    if (first_sector == NOPART) {
+        hd->part[MINOR(dev)].start_sect = 0;
         return;
     }
 #endif
@@ -330,12 +328,14 @@ static void INITPROC clear_partition(struct gendisk *dev)
     memset(hdp, 0, sizeof(struct hd_struct) * dev->num_drives * dev->max_partitions);
     for (i = 0; i < dev->num_drives << dev->minor_shift; i++) {
         if ((i & ((1 << dev->minor_shift) - 1)) == 0) {
-            hdp->nr_sects = (sector_t)drivep->sectors * drivep->heads * drivep->cylinders;
             //hdp->start_sect = 0;
+            hdp->nr_sects = (sector_t)drivep->sectors * drivep->heads * drivep->cylinders;
+            if (hdp->nr_sects == 0)
+                hdp->start_sect = NOPART;
             drivep++;
         } else {
+            hdp->start_sect = NOPART;
             //hdp->nr_sects = 0;
-            hdp->start_sect = -1;
         }
         hdp++;
     }

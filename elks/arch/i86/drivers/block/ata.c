@@ -297,7 +297,7 @@ static int ata_identify(unsigned int drive, unsigned char __far *buf)
     error = ata_cmd(drive, ATA_CMD_ID, 0, 0);
     if (error)
     {
-        printk("cf%d: ATA port %x/%x, probe failed (%d)\n",
+        printk("cf%d: ATA port %x/%x, not found (%d)\n",
             drive, ata_base_port, ata_ctrl_port, error);
         return error;
     }
@@ -362,19 +362,16 @@ void ata_reset(void)
 
 
 /**
- * initialise an ATA device
+ * initialise an ATA device, return zero if not found
  */
 int ata_init(int drive, struct drive_infot *drivep)
 {
     unsigned short *buffer;
     sector_t total;
-    int ret = 0;
 
-
-    // allocate buffer
+    drivep->cylinders = 0;      // invalidate device
 
     buffer = (unsigned short *) heap_alloc(ATA_SECTOR_SIZE, HEAP_TAG_DRVR|HEAP_TAG_CLEAR);
-
     if (!buffer)
         return 0;
 
@@ -404,28 +401,26 @@ int ata_init(int drive, struct drive_infot *drivep)
             (buffer[ATA_INFO_SPT] == 0 || buffer[ATA_INFO_SPT] > 63) ||
             (buffer[ATA_INFO_SECT_SZ] != ATA_SECTOR_SIZE))
         {
-            printk("invalid CF");
-            ret = 0;
+            printk("(unsupported format)");
         }
         else if (! (buffer[ATA_INFO_CAPS] & ATA_CAPS_LBA))      // ATA LBA support?
         {
-            printk("no LBA");
-            ret = 0;
+            printk("(missing LBA)");
         }
         else
-            ret = 1;
-        drivep->cylinders = buffer[ATA_INFO_CYLS];
-        drivep->sectors = buffer[ATA_INFO_SPT];
-        drivep->heads = buffer[ATA_INFO_HEADS];
-        drivep->sector_size = ATA_SECTOR_SIZE;
-        drivep->fdtype = -1;
-
+        {
+            drivep->cylinders = buffer[ATA_INFO_CYLS];
+            drivep->sectors = buffer[ATA_INFO_SPT];
+            drivep->heads = buffer[ATA_INFO_HEADS];
+            drivep->sector_size = ATA_SECTOR_SIZE;
+            drivep->fdtype = -1;
+        }
         printk("\n");
     }
 
     heap_free(buffer);
 
-    return ret;
+    return drivep->cylinders;
 }
 
 

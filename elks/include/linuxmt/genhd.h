@@ -48,10 +48,12 @@ struct partition_pc98
     char name[16];
 };
 
+#define NOPART      -1UL        /* no partition at start_sect */
+
 struct hd_struct
 {
-    sector_t start_sect;
-    sector_t nr_sects;
+    sector_t start_sect;        /* start sector of partition or NOPART */
+    sector_t nr_sects;          /* # sectors in partition */
 };
 
 struct drive_infot {            /* CHS per drive*/
