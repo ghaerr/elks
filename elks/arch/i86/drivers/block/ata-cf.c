@@ -103,7 +103,7 @@ static int ata_cf_open(struct inode *inode, struct file *filp)
     // reidentify device if its not already in use
     if (access_count[drive] == 0) {
         ata_init(drive, &ata_drive_info[drive]);
-        init_partitions(&ata_gendisk);
+        init_partitions(&ata_gendisk);  // INITPROC can't be called after init!
     }
 #endif
 

@@ -385,10 +385,10 @@ int ata_init(int drive, struct drive_infot *drivep)
         // ATA LBA sector total (MSB << 16, LSB)
         total = (sector_t)buffer[ATA_INFO_SECT_HI] << 16 | buffer[ATA_INFO_SECT_LO];
 
-        printk("cf%d: ATA port %x/%x, %luK CHS %2u,%2u,%2u SZ %x ",
+        printk("cf%d: ATA port %x/%x, %luK CHS %2u,%2u,%2u ",
             drive, ata_base_port, ata_ctrl_port, total >> 1,
             buffer[ATA_INFO_CYLS], buffer[ATA_INFO_HEADS],
-            buffer[ATA_INFO_SPT], buffer[ATA_INFO_SECT_SZ]);
+            buffer[ATA_INFO_SPT]);
 
         // ATA version
         if ((buffer[ATA_INFO_VER_MAJ] != 0) && (buffer[ATA_INFO_VER_MAJ] != 0xFFFF))
@@ -401,14 +401,15 @@ int ata_init(int drive, struct drive_infot *drivep)
         // Sanity check
         if ((buffer[ATA_INFO_CYLS] == 0 || buffer[ATA_INFO_CYLS] > 0x7F00) ||
             (buffer[ATA_INFO_HEADS] == 0 || buffer[ATA_INFO_HEADS] > 16) ||
-            (buffer[ATA_INFO_SPT] == 0 || buffer[ATA_INFO_SPT] > 63))
+            (buffer[ATA_INFO_SPT] == 0 || buffer[ATA_INFO_SPT] > 63) ||
+            (buffer[ATA_INFO_SECT_SZ] != ATA_SECTOR_SIZE))
         {
             printk("invalid CF");
             ret = 0;
         }
         else if (! (buffer[ATA_INFO_CAPS] & ATA_CAPS_LBA))      // ATA LBA support?
         {
-            printk("LBA not detected");
+            printk("no LBA");
             ret = 0;
         }
         else

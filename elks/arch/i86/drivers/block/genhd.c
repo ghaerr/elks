@@ -48,7 +48,8 @@ static void INITPROC print_minor_name(register struct gendisk *hd, unsigned int 
     printk("%s%c", hd->major_name, 'a' + (unsigned char)(minor >> hd->minor_shift));
     if ((part = (unsigned) (minor & ((1 << hd->minor_shift) - 1))))
         printk("%d", part);
-    printk(":(%,lu;%,lu) ", hdp->start_sect, hdp->nr_sects);
+    //printk(":(%,lu;%,lu) ", hdp->start_sect, hdp->nr_sects);
+    printk(":(%lu,%lu) ", hdp->start_sect, hdp->nr_sects);
 }
 
 static void INITPROC add_partition(struct gendisk *hd, unsigned int minor,
@@ -60,12 +61,13 @@ static void INITPROC add_partition(struct gendisk *hd, unsigned int minor,
     hdp->nr_sects = size;
     print_minor_name(hd, minor);
 
+#if UNUSED
+/* partition skipping disabled as virtual cylinder values sometimes needed for CF cards*/
     /*
      * Additional partition check since no MBR signature:
      * Some BIOS subtract a cylinder, making direct comparison incorrect.
      * A CHS cylinder can have 63 max sectors * 255 heads, so adjust for that.
      */
-#if UNUSED /* partition skipping disabled as virtual cylinder values sometimes needed for CF cards*/
     struct hd_struct *hd0 = &hd->part[0];
     sector_t adj_nr_sects = hd0->nr_sects + 63 * 255;
     if (start > adj_nr_sects || start+size > adj_nr_sects) {
@@ -76,6 +78,7 @@ static void INITPROC add_partition(struct gendisk *hd, unsigned int minor,
     }
 #endif
 
+#ifdef CONFIG_BLK_DEV_BHD
     /*
      * Save boot partition # based on start offset.  This is needed if
      * ROOT_DEV is still a BIOS drive number at this point (see init.c), and
@@ -84,11 +87,13 @@ static void INITPROC add_partition(struct gendisk *hd, unsigned int minor,
      * If the root device is already fully known, i.e. ROOT_DEV is already
      * a device number, then we do not really need boot_partition.
      */
-    if (ROOT_DEV == bios_drive_map[minor >> hd->minor_shift]) {
+    if (hd->major == BIOSHD_MAJOR &&
+        (ROOT_DEV == bios_drive_map[minor >> hd->minor_shift])) {
         sector_t boot_start = SETUP_PART_OFFSETLO | (sector_t) SETUP_PART_OFFSETHI << 16;
         if (start == boot_start)
             boot_partition = minor & 0x7;
     }
+#endif
 }
 
 static int INITPROC is_extended_partition(register struct partition *p)
@@ -196,15 +201,11 @@ static void INITPROC extended_partition(register struct gendisk *hd, kdev_t dev)
     unmap_brelse(bh);
 }
 
-static int INITPROC msdos_partition(struct gendisk *hd,
-                           kdev_t dev, sector_t first_sector)
+static int INITPROC mbr_partition(struct gendisk *hd, kdev_t dev, sector_t first_sector)
 {
-    struct buffer_head *bh;
     register struct partition *p;
-#ifdef CONFIG_ARCH_PC98
-    struct partition_pc98 *p98;
-#endif
     register struct hd_struct *hdp;
+    struct buffer_head *bh;
     unsigned int i, minor = current_minor;
 
     if (!(bh = bread(dev, (block_t) 0)))
@@ -234,37 +235,48 @@ out:
     if (i == 0 && (*(unsigned short *) (bh->b_data + 0x1fc)) == 0x4c65)
         goto out;
 
-    /* first "extra" minor (for extended partitions) */
-    p = (struct partition *) (bh->b_data + 0x1be);
+    /* current_minor is first "extra" minor (for extended partitions) */
     current_minor += 4;
+    p = (struct partition *) (bh->b_data + 0x1be);
     for (i = 1; i <= 4; minor++, i++, p++) {
-        hdp = &hd->part[minor];
         if (!NR_SECTS(p))
             continue;
-        add_partition(hd, minor, first_sector + START_SECT(p), NR_SECTS(p));
-        if (is_extended_partition(p)) {
-            printk(" <");
+        /* create partition unless its an extended partition entry */
+        if (!is_extended_partition(p)) {
+            add_partition(hd, minor, first_sector + START_SECT(p), NR_SECTS(p));
+        } else {
+            printk("\n< ");
             /*
              * If we are rereading the partition table, we need
              * to set the size of the partition so that we will
              * be able to bread the block containing the extended
              * partition info.
              */
-#if UNUSED
-            hd->sizes[minor] = hdp->nr_sects >> (BLOCK_SIZE_BITS - 9);
-#endif
+            hdp = &hd->part[minor];
+            hdp->start_sect = first_sector + START_SECT(p);
+            hdp->nr_sects = NR_SECTS(p);
+
             extended_partition(hd, MKDEV(hd->major, minor));
-            printk(" >");
+
+            /* then disable mbr partition number */
+            hdp->start_sect = -1;
+            hdp->nr_sects = 0;
+
+            printk(">");
+#if UNUSED
             /* prevent someone doing mkfs on an
              * extended partition, but leave room for LILO */
             if (hdp->nr_sects > 2)
                 hdp->nr_sects = 2;
+#endif
         }
     }
 
 #ifdef CONFIG_ARCH_PC98
     if (*(unsigned short *) (bh->b_data + 0x4) == 0x5049 &&
         *(unsigned short *) (bh->b_data + 0x6) == 0x314C) {
+        struct partition_pc98 *p98;
+
         printk(" pc-98 IPL1");
         current_minor -= 4;
         minor = current_minor;
@@ -303,7 +315,7 @@ static void INITPROC check_partition(register struct gendisk *hd, kdev_t dev)
 
     print_minor_name(hd, MINOR(dev));
 
-    if (msdos_partition(hd, dev, first_sector))
+    if (mbr_partition(hd, dev, first_sector))
         return;
 
     printk(" no partitions\n");
