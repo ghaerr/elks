@@ -35,6 +35,7 @@
 
 #include <linuxmt/config.h>
 #include <linuxmt/kernel.h>
+#include <linuxmt/genhd.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/heap.h>
 #include <linuxmt/debug.h>
@@ -362,13 +363,12 @@ void ata_reset(void)
 
 /**
  * initialise an ATA device
- *
- * drive : physical drive number (0 or 1)
  */
-sector_t ata_init(unsigned int drive)
+int ata_init(int drive, struct drive_infot *drivep)
 {
     unsigned short *buffer;
-    sector_t total = 0;
+    sector_t total;
+    int ret = 0;
 
 
     // allocate buffer
@@ -404,20 +404,27 @@ sector_t ata_init(unsigned int drive)
             (buffer[ATA_INFO_SPT] == 0 || buffer[ATA_INFO_SPT] > 63))
         {
             printk("invalid CF");
-            //total = 0;
+            ret = 0;
         }
         else if (! (buffer[ATA_INFO_CAPS] & ATA_CAPS_LBA))      // ATA LBA support?
         {
             printk("LBA not detected");
-            //total = 0;
+            ret = 0;
         }
+        else
+            ret = 1;
+        drivep->cylinders = buffer[ATA_INFO_CYLS];
+        drivep->sectors = buffer[ATA_INFO_SPT];
+        drivep->heads = buffer[ATA_INFO_HEADS];
+        drivep->sector_size = ATA_SECTOR_SIZE;
+        drivep->fdtype = -1;
 
         printk("\n");
     }
 
     heap_free(buffer);
 
-    return total;
+    return ret;
 }
 
 

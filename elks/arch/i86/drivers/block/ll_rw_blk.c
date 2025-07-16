@@ -377,7 +377,7 @@ void INITPROC blk_dev_init(void)
 #endif
 
 #ifdef CONFIG_BLK_DEV_ATA_CF
-    ata_cf_init();
+    struct gendisk *atadisk = ata_cf_init();
 #endif
 
     set_irq();          /* interrupts enabled for possible disk I/O */
@@ -385,5 +385,10 @@ void INITPROC blk_dev_init(void)
 #ifdef CONFIG_BLK_DEV_BHD
     if (biosdisk)
         init_partitions(biosdisk);
+#endif
+
+#ifdef CONFIG_BLK_DEV_ATA_CF
+    if (atadisk)
+        init_partitions(atadisk);
 #endif
 }

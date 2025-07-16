@@ -83,7 +83,20 @@ devices:
 ##############################################################################
 # Direct hard drive/ATA-CF devices.
 	$(MKDEV) /dev/cf0  b 5 0
+	$(MKDEV) /dev/cfa1 b 5 1
+	$(MKDEV) /dev/cfa2 b 5 2
+	$(MKDEV) /dev/cfa3 b 5 3
+	$(MKDEV) /dev/cfa4 b 5 4
+	$(MKDEV) /dev/cfa5 b 5 5
+	$(MKDEV) /dev/cfa6 b 5 6
+	$(MKDEV) /dev/cfa7 b 5 7
+
 	$(MKDEV) /dev/cf1  b 5 8
+	$(MKDEV) /dev/cfb1 b 5 9
+	$(MKDEV) /dev/cfb2 b 5 10
+	$(MKDEV) /dev/cfb3 b 5 11
+	$(MKDEV) /dev/cfb4 b 5 12
+
 #	$(MKDEV) /dev/dha  b 5 0
 #	$(MKDEV) /dev/dhb  b 5 8
 

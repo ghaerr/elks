@@ -52,7 +52,7 @@ extern dev_t INITPROC bios_conv_bios_drive(unsigned int biosdrive);
 extern int INITPROC get_ide_data(int, struct drive_infot *);
 extern struct gendisk * directhd_init(void);
 extern void INITPROC floppy_init(void);
-extern void INITPROC ata_cf_init(void);
+extern struct gendisk * INITPROC ata_cf_init(void);
 extern void INITPROC rd_init(void);
 extern void INITPROC ssd_init(void);
 extern void INITPROC romflash_init(void);

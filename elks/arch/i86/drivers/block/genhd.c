@@ -24,10 +24,10 @@
 #include <linuxmt/major.h>
 #include <linuxmt/string.h>
 #include <linuxmt/memory.h>
-
 #include <arch/system.h>
-
 #include "blk.h"
+
+#if defined(CONFIG_BLK_DEV_BHD) || defined(CONFIG_BLK_DEV_ATA_CF)
 
 #define NR_SECTS(p)     p->nr_sects
 #define START_SECT(p)   p->start_sect
@@ -38,9 +38,6 @@
 #endif
 
 int boot_partition = 0;         /* MBR boot partition, if any*/
-
-#ifdef CONFIG_BLK_DEV_BHD
-
 static unsigned int current_minor;
 
 static void INITPROC print_minor_name(register struct gendisk *hd, unsigned int minor)
@@ -314,7 +311,7 @@ static void INITPROC check_partition(register struct gendisk *hd, kdev_t dev)
 
 static void INITPROC clear_partition(struct gendisk *dev)
 {
-    struct drive_infot *drivep = drive_info;
+    struct drive_infot *drivep = dev->drive_info;
     struct hd_struct *hdp = dev->part;
     int i;
 
@@ -343,4 +340,4 @@ void INITPROC init_partitions(struct gendisk *dev)
         check_partition(dev, MKDEV(dev->major, first_minor));
     }
 }
-#endif /* CONFIG_BLK_DEV_BHD */
+#endif /* CONFIG_BLK_DEV_BHD || CONFIG_BLK_DEV_ATA_CF */

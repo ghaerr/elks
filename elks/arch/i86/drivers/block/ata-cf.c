@@ -6,6 +6,7 @@
  * This driver is largely based on Greg Haerr's SSD driver.
  *
  * Ferry Hendrikx, June 2025
+ * Greg Haerr, July 2025 Add partition handling
  **********************************************************************/
 
 #include <linuxmt/config.h>
@@ -20,18 +21,24 @@
 /* the following must match with BIOSHD /dev minor numbering scheme*/
 #define NUM_MINOR       8       /* max minor devices per drive*/
 #define MINOR_SHIFT     3       /* =log2(NUM_MINOR) shift to get drive num*/
-#define MAX_DRIVES      8       /* <=256/NUM_MINOR*/
 
+#define MAX_DRIVES      2       /* <=256/NUM_MINOR*/
 #define NUM_DRIVES      2
 
-
-/**********************************************************************
- * device initialisation
- **********************************************************************/
-
-static sector_t ata_cf_num_sects[NUM_DRIVES];   /* max # sectors on ATA-CF device */
 static int access_count[NUM_DRIVES];
+static struct drive_infot ata_drive_info[NUM_DRIVES];   /* operating drive info */
+static struct hd_struct hd[NUM_DRIVES << MINOR_SHIFT];  /* partitions start, size*/
 
+static struct gendisk ata_gendisk = {
+    MAJOR_NR,                   /* Major number */
+    "cf",                       /* Major name */
+    MINOR_SHIFT,                /* Bits to shift to get real from partition */
+    1 << MINOR_SHIFT,           /* maximum number of partitions per drive */
+    NUM_DRIVES,                 /* maximum number of drives */
+    hd,                         /* hd struct */
+    0,                          /* hd drives found */
+    ata_drive_info              /* fd/hd drive CHS and type */
+};
 
 static int ata_cf_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned int arg);
 static int ata_cf_open(struct inode *, struct file *);
@@ -53,31 +60,31 @@ static struct file_operations ata_cf_fops = {
  * ATA-CF functions
  **********************************************************************/
 
-void INITPROC ata_cf_init(void)
+struct gendisk * INITPROC ata_cf_init(void)
 {
     int i;
 
     // register device
 
-    if (! register_blkdev(MAJOR_NR, DEVICE_NAME, &ata_cf_fops))
-    {
-        blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
+    if (register_blkdev(MAJOR_NR, DEVICE_NAME, &ata_cf_fops))
+        return NULL;
+    blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
 
-        // ATA reset
+    ata_reset();
 
-        ata_reset();
+    // ATA drive detect
 
-
-        // ATA drive detect
-
-        for (i = 0; i < NUM_DRIVES; i++)
-            ata_init(i);
+    for (i = 0; i < NUM_DRIVES; i++) {
+        if (ata_init(i, &ata_drive_info[i]))
+            ata_gendisk.nr_hd++;
     }
+
+    return &ata_gendisk;
 }
 
 int ata_cf_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned int arg)
 {
-    // not used
+    // FIXME share with bioshd for fdisk geometry
 
     return -EINVAL;
 }
@@ -85,21 +92,26 @@ int ata_cf_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsig
 static int ata_cf_open(struct inode *inode, struct file *filp)
 {
     int drive = DEVICE_NR(inode->i_rdev);
+    struct hd_struct *hdp = &hd[MINOR(inode->i_rdev)];
 
     debug_blk("cf%d: open\n", drive);
 
-    // initialise the device if its not already in use
-    if (access_count[drive] == 0)
-    {
-        ata_cf_num_sects[drive] = ata_init(drive);
+    if (drive >= NUM_DRIVES)
+        return -ENXIO;
 
-        if (!ata_cf_num_sects[drive])
-            return -ENODATA;
+#if NOTYET
+    // reidentify device if its not already in use
+    if (access_count[drive] == 0) {
+        ata_init(drive, &ata_drive_info[drive]);
+        init_partitions(&ata_gendisk);
     }
+#endif
+
+    if (hdp->start_sect == -1U)
+        return -ENXIO;
 
     ++access_count[drive];
-
-    inode->i_size = ata_cf_num_sects[drive] << 9;
+    inode->i_size = hdp->nr_sects * ata_drive_info[drive].sector_size;
 
     return 0;
 }
@@ -133,7 +145,8 @@ static void do_ata_cf_request(void)
 #endif
 
     for (;;) {
-        unsigned char drive;
+        int drive;
+        unsigned short minor;
         char *buf;
         int count;
         sector_t start;
@@ -143,16 +156,19 @@ static void do_ata_cf_request(void)
             return;
         CHECK_REQUEST(req);
 
-        drive = DEVICE_NR(req->rq_dev);
+        minor = MINOR(req->rq_dev);
+        drive = minor >> MINOR_SHIFT;
         buf = req->rq_buffer;
         start = req->rq_sector;
 
-        if (start + req->rq_nr_sectors > ata_cf_num_sects[drive]) {
-            printk("cf%d: sector %lu+%d beyond max %lu\n", drive, start,
-                req->rq_nr_sectors, ata_cf_num_sects[drive]);
+        if (hd[minor].start_sect == -1U || start + req->rq_nr_sectors > hd[minor].nr_sects) {
+              printk("cf%d: sector %ld access beyond partition (%ld,%ld)\n",
+                drive, start, hd[minor].start_sect, hd[minor].nr_sects);
             end_request(0);
             continue;
         }
+        start += hd[minor].start_sect;
+
         for (count = 0; count < req->rq_nr_sectors; count++) {
             if (req->rq_cmd == WRITE) {
                 debug_blk("cf%d: writing sector %lu\n", drive, start);
