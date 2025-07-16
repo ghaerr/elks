@@ -1505,11 +1505,10 @@ static int DFPROC floppy_register(void)
 
 void INITPROC floppy_init(void)
 {
-    if (register_blkdev(MAJOR_NR, DEVICE_NAME, &floppy_fops)) {
-        printk("df: init error\n");
+    if (register_blkdev(MAJOR_NR, DEVICE_NAME, &floppy_fops))
         return;
-    }
     blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
+
     if (!USE_IMPLIED_SEEK)
         USE_IMPLIED_SEEK = running_qemu;
     config_types();

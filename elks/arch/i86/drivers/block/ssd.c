@@ -43,8 +43,10 @@ static struct file_operations ssd_fops = {
 
 void INITPROC ssd_init(void)
 {
-    if (register_blkdev(MAJOR_NR, DEVICE_NAME, &ssd_fops) == 0)
-        blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
+    if (register_blkdev(MAJOR_NR, DEVICE_NAME, &ssd_fops))
+        return;
+    blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
+
 #ifdef CONFIG_FS_XMS_RAMDISK
     xms_init();
     if (!xms_enabled)
