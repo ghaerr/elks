@@ -19,12 +19,12 @@
  *      -----------------   --------------------   ------------- ------------
  *  0 - nodevice            nodevice
  *  1 - /dev/mem            /dev/rd[01]            mem           ramdisk
- *  2 - /dev/ptyp[0123]     /dev/ssd               pty master    XMS ramdisk
+ *  2 - /dev/ptyp[0123]     /dev/ssd               pty master    XMS ramdisk or SSD
  *  3 -                     /dev/{fd[01],hd[ab][1-7]}            BIOS floppy/hd
  *  4 - /dev/tty[1234]      /dev/df[01]            tty           direct floppy
  *  4 - /dev/ttyp[0123]                            pty slave
  *  4 - /dev/ttyS[0123]                            serial
- *  5 -                     /dev/cf[ab][012334567]               direct ATA/CF/hd
+ *  5 -                     /dev/cf[ab][1-7]                     direct ATA/CF/hd
  *  6 - /dev/lp             /dev/rom               printer       rom filesystem
  *  7 -
  *  8 - /dev/tcpdev                                kernel <-> ktcp

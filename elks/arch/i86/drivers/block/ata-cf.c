@@ -1,7 +1,6 @@
 /**********************************************************************
  * ELKS ATA-CF driver
- *
- * Please note that this driver does not currently support partitions.
+ * Supports ATA, XTIDE, XTCF and SOLO/86 controllers.
  *
  * This driver is largely based on Greg Haerr's SSD driver.
  *
@@ -12,8 +11,10 @@
 #include <linuxmt/config.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/errno.h>
+#include <linuxmt/mm.h>
 #include <linuxmt/debug.h>
 #include <arch/ata.h>
+#include <arch/hdreg.h>
 
 #define MAJOR_NR        ATHD_MAJOR
 #include "blk.h"
@@ -82,17 +83,11 @@ struct gendisk * INITPROC ata_cf_init(void)
     return &ata_gendisk;
 }
 
-int ata_cf_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned int arg)
-{
-    // FIXME share with bioshd for fdisk geometry
-
-    return -EINVAL;
-}
-
 static int ata_cf_open(struct inode *inode, struct file *filp)
 {
-    int drive = DEVICE_NR(inode->i_rdev);
-    struct hd_struct *hdp = &hd[MINOR(inode->i_rdev)];
+    unsigned short minor = MINOR(inode->i_rdev);
+    struct hd_struct *hdp = &hd[minor];
+    int drive = minor >> MINOR_SHIFT;
 
     debug_blk("cf%d: open\n", drive);
 
@@ -115,8 +110,8 @@ static int ata_cf_open(struct inode *inode, struct file *filp)
 
 static void ata_cf_release(struct inode *inode, struct file *filp)
 {
-    int drive = DEVICE_NR(inode->i_rdev);
     kdev_t dev = inode->i_rdev;
+    int drive = DEVICE_NR(dev);
 
     debug_blk("cf%d: release\n", drive);
 
@@ -125,6 +120,41 @@ static void ata_cf_release(struct inode *inode, struct file *filp)
         invalidate_inodes(dev);
         invalidate_buffers(dev);
     }
+}
+
+static int ata_cf_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
+    unsigned int arg)
+{
+    struct hd_geometry *loc = (struct hd_geometry *) arg;
+    struct drive_infot *drivep;
+    int drive, err;
+    unsigned short minor;
+
+    /* get sector size called with NULL inode and arg = superblock s_dev */
+    if (cmd == IOCTL_BLK_GET_SECTOR_SIZE)
+        return ATA_SECTOR_SIZE;
+
+    if (!inode)
+        return -EINVAL;
+
+    minor = MINOR(inode->i_rdev);
+    drive = minor >> MINOR_SHIFT;
+    if (drive >= NUM_DRIVES)
+        return -ENODEV;
+
+    drivep = &ata_drive_info[drive];
+    err = -EINVAL;
+    switch (cmd) {
+    case HDIO_GETGEO:
+        err = verify_area(VERIFY_WRITE, (void *)loc, sizeof(struct hd_geometry));
+        if (!err) {
+            put_user_char(drivep->heads, &loc->heads);
+            put_user_char(drivep->sectors, &loc->sectors);
+            put_user(drivep->cylinders, &loc->cylinders);
+            put_user_long(hd[minor].start_sect, &loc->start);
+        }
+    }
+    return err;
 }
 
 /* called by add_request to start I/O after first request added */

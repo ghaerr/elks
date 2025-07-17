@@ -375,7 +375,7 @@ void list_partition(char *devname)
                 *p++ = '1' + i;
                 *p = 0;
         }
-        printf("%-15s %c%d:%02x    %2d  %3d%5d     %2d  %3d%5d %6lu %6lu\n",
+        printf("%-15s %c%d:%02x  %4d  %3d%5d   %4d  %3d%5d %6lu %6lu\n",
             device,
             p->boot_ind==0?' ':(p->boot_ind==0x80?'*':'?'),
             i+1,                                         /* #*/

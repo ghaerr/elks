@@ -18,6 +18,7 @@ xms=on
 #n	# no rc.sys
 #init=/bin/sash
 #root=df0
+#root=cfa1
 #root=hda1 ro
 #kstack
 #strace
