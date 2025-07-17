@@ -11,7 +11,8 @@
  * CTRL+6      0x3F6           0x30E           0x31C               0x5C
  * DEVCTRL     BASE+0x206      BASE+0x0E       BASE+0x1C           BASE+0x1C
  *
- * This code assumes there is only one ATA controller.
+ * This code assumes there is only one ATA controller, and normally tries to
+ * set 8-bit transfer mode on 8088/8086/NEC V20 CPUs.
  *
  * This code uses LBA addressing for the disks. Any disks without
  * LBA support (they'd need to be pretty old) are simply ignored.
@@ -42,26 +43,32 @@
 #include <arch/io.h>
 #include <arch/ata.h>
 
-/* wait loop counts while busy waiting (FIXME: use jiffies for accuracy) */
-#define SHORT_WAIT  500
-#define LONG_WAIT   5000        /* 14s wait required for some writes */
+/* hardware controller access modes */
+#define MODE_ATA    0           /* standard - ATA at ports 0x1F0/0x3F6 */
+#define MODE_XTIDE  1           /* XTIDE - ATA at ports 0x300/0x30E */
+#define MODE_XTCF   2           /* XTCF - non-standard ATA at ports 0x300/0x31C */
+#define MODE_SOLO86 3           /* XTCF at ports 0x40/0x5C */
+#define AUTO        (-1)        /* use MODE_ATA for PC/AT (286+), MODE_XTCF on PC/XT */
 
-/* controller emulation modes */
-#define MODE_ATA    0
-#define MODE_XTIDE  1
-#define MODE_XTCF   2
-#define MODE_SOLO86 3
+/* configurable options - may have to be changed and kernel recompiled*/
 
-/* default base ports for ATA, XTIDE, XTCF and SOLO86 */
+static int mode = AUTO;         /* change this to force a particular controller */
+static int use_8bitmode = AUTO; /* =0 16-bit xfer, =1 force 8-bit xfer, AUTO=automatic */
+
+/* default base port (change if required)   ATA, XTIDE,  XTCF, SOLO86 */
 static unsigned int def_base_ports[4] = { 0x1F0, 0x300, 0x300, 0x40 };
 
-/* control register offsets from base ports */
+/* control register offsets from base ports (should not need changing) */
 static unsigned int ctrl_offsets[4] =   { 0x200, 0x08, 0x10, 0x10 };
 
-static int mode = MODE_ATA;
+/* wait loop counts while busy waiting (FIXME: use jiffies for accuracy) */
+#define SHORT_WAIT  500
+#define LONG_WAIT   5000        /* FIXME: 14s wait required for some writes */
+
+/* end of configurable options */
+
 static unsigned int ata_base_port;
 static unsigned int ata_ctrl_port;
-static char use_8bitmode;
 
 /* convert register number to base port address */
 #define BASE(reg)   ((mode < MODE_XTCF)? (ata_base_port+reg): (ata_base_port+((reg)<<1)))
@@ -322,10 +329,15 @@ void ata_reset(void)
     // dynamically set I/O port addresses
 
 #ifdef CONFIG_ARCH_SOLO86
-    mode = MODE_SOLO86
+    mode = MODE_SOLO86;
+    use_8bitmode = 0;
 #else
-    if (arch_cpu < 6)       // prior to 80286 IBM PC/AT
-        mode = MODE_XTCF;
+    if (mode == AUTO)
+    {
+        mode = MODE_ATA;
+        if (arch_cpu < 6)           // prior to 80286 IBM PC/AT
+            mode = MODE_XTCF;
+    }
 #endif
 
     // set base port I/O address from emulation mode
@@ -354,9 +366,13 @@ void ata_reset(void)
     // controller 8-bit transfer is requested for 8086/80186 systems:
     // try and turn on 8-bit mode
 
-    use_8bitmode = 0;
-
-    if (arch_cpu < 6)
+    if (use_8bitmode == AUTO)
+    {
+        use_8bitmode = 0;
+        if (arch_cpu < 6)
+            use_8bitmode = 1;
+    }
+    if (use_8bitmode)
         use_8bitmode = (ata_set8bitmode() == 0);
 }
 
