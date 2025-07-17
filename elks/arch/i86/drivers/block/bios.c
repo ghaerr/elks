@@ -433,7 +433,6 @@ dev_t INITPROC bios_conv_bios_drive(unsigned int biosdrive)
 {
     int minor;
     int partition = 0;
-    extern int boot_partition;
 
 #ifdef CONFIG_ARCH_PC98
     if (((biosdrive & 0xF0) == 0x80) || ((biosdrive & 0xF0) == 0xA0)) { /* hard drive*/

@@ -37,7 +37,7 @@
 # define END_SECT_PC98(p98)     ((sector_t) p98->end_cyl * last_drive->heads * last_drive->sectors + p98->end_head * last_drive->sectors + p98->end_sector)
 #endif
 
-int boot_partition = 0;         /* MBR boot partition, if any*/
+int boot_partition;         /* MBR boot partition, if any*/
 static unsigned int current_minor;
 
 static void INITPROC print_minor_name(register struct gendisk *hd, unsigned int minor)
@@ -78,7 +78,6 @@ static void INITPROC add_partition(struct gendisk *hd, unsigned int minor,
     }
 #endif
 
-#ifdef CONFIG_BLK_DEV_BHD
     /*
      * Save boot partition # based on start offset.  This is needed if
      * ROOT_DEV is still a BIOS drive number at this point (see init.c), and
@@ -86,12 +85,22 @@ static void INITPROC add_partition(struct gendisk *hd, unsigned int minor,
      *
      * If the root device is already fully known, i.e. ROOT_DEV is already
      * a device number, then we do not really need boot_partition.
+     *
+     * If linked in, the BIOS HD driver takes precedence over the ATA driver.
      */
-    if (hd->major == BIOSHD_MAJOR &&
-        (ROOT_DEV == bios_drive_map[minor >> hd->minor_shift])) {
-        sector_t boot_start = SETUP_PART_OFFSETLO | (sector_t) SETUP_PART_OFFSETHI << 16;
-        if (start == boot_start)
-            boot_partition = minor & 0x7;
+    sector_t boot_start = SETUP_PART_OFFSETLO | (sector_t) SETUP_PART_OFFSETHI << 16;
+    if (start == boot_start) {
+#if defined(CONFIG_BLK_DEV_ATA_CF) && !defined(CONFIG_BLK_DEV_BHD)
+        if (hd->major == ATHD_MAJOR && (ROOT_DEV & 0x80)) {
+            if ((minor >> hd->minor_shift) == (ROOT_DEV & 1))
+                boot_partition = minor & 1;
+        }
+#endif
+#ifdef CONFIG_BLK_DEV_BHD
+        if (hd->major == BIOSHD_MAJOR) {
+            if (ROOT_DEV == bios_drive_map[minor >> hd->minor_shift])
+                boot_partition = minor & 0x7;
+        }
     }
 #endif
 }
