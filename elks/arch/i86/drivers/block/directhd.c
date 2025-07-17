@@ -14,7 +14,6 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/debug.h>
 
-#include <arch/hdreg.h>
 #include <arch/io.h>
 #include <arch/segment.h>
 

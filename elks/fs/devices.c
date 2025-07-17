@@ -14,6 +14,7 @@
 #include <linuxmt/stat.h>
 #include <linuxmt/fcntl.h>
 #include <linuxmt/errno.h>
+#include <linuxmt/kernel.h>
 
 /* minor number of first BIOSHD floppy, used for overlaying /dev/hd* -> /dev/cf* */
 #include "../arch/i86/drivers/block/bioshd.h"   /* FIXME move bioshd.h to linuxmt/ */

@@ -436,7 +436,8 @@ int main(int argc, char **argv)
         }
         if (fstat(pFd, &stat) < 0 || !S_ISBLK(stat.st_mode) ||
             (stat.st_rdev & PARTITION_MINORS)) {
-            printf("Bad block device: %s, use non-partitioned device\n", dev);
+            printf("Block device %s is a partition: use non-partitioned device name\n",
+                dev);
             return 1;
         }
         if (read(pFd,MBR,512) != 512) {

@@ -12,9 +12,9 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/genhd.h>
 #include <linuxmt/debug.h>
 #include <arch/ata.h>
-#include <arch/hdreg.h>
 
 #define MAJOR_NR        ATHD_MAJOR
 #include "blk.h"
@@ -125,8 +125,8 @@ static void ata_cf_release(struct inode *inode, struct file *filp)
 static int ata_cf_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
     unsigned int arg)
 {
-    struct hd_geometry *loc = (struct hd_geometry *) arg;
     struct drive_infot *drivep;
+    struct hd_geometry *loc;
     int drive, err;
     unsigned short minor;
 
@@ -145,7 +145,8 @@ static int ata_cf_ioctl(struct inode *inode, struct file *file, unsigned int cmd
     drivep = &ata_drive_info[drive];
     err = -EINVAL;
     switch (cmd) {
-    case HDIO_GETGEO:
+    case HDIO_GETGEO:   /* need this one for the fdisk/sys/makeboot commands */
+        loc = (struct hd_geometry *)arg;
         err = verify_area(VERIFY_WRITE, (void *)loc, sizeof(struct hd_geometry));
         if (!err) {
             put_user_char(drivep->heads, &loc->heads);

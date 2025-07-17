@@ -46,7 +46,6 @@
 #include <linuxmt/debug.h>
 #include <linuxmt/timer.h>
 
-#include <arch/hdreg.h>
 #include <arch/io.h>
 #include <arch/segment.h>
 #include <arch/system.h>
@@ -432,8 +431,8 @@ struct gendisk * INITPROC bioshd_init(void)
 static int bioshd_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
     unsigned int arg)
 {
-    register struct hd_geometry *loc = (struct hd_geometry *) arg;
-    register struct drive_infot *drivep;
+    struct drive_infot *drivep;
+    struct hd_geometry *loc;
     int dev, err;
 
     /* get sector size called with NULL inode and arg = superblock s_dev */
@@ -450,7 +449,8 @@ static int bioshd_ioctl(struct inode *inode, struct file *file, unsigned int cmd
     drivep = &drive_info[dev];
     err = -EINVAL;
     switch (cmd) {
-    case HDIO_GETGEO:
+    case HDIO_GETGEO:   /* need this one for the fdisk/sys/makeboot commands */
+        loc = (struct hd_geometry *)arg;
         err = verify_area(VERIFY_WRITE, (void *)loc, sizeof(struct hd_geometry));
         if (!err) {
             put_user_char(drivep->heads, &loc->heads);

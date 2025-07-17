@@ -80,6 +80,7 @@
 #include <linuxmt/errno.h>
 #include <linuxmt/string.h>
 #include <linuxmt/heap.h>
+#include <linuxmt/genhd.h>
 #include <linuxmt/debug.h>
 
 #include <arch/dma.h>
@@ -89,7 +90,6 @@
 #include <arch/irq.h>
 #include <arch/segment.h>
 #include <arch/ports.h>
-#include <arch/hdreg.h>         /* for ioctl GETGEO */
 
 #define MAJOR_NR        FLOPPY_MAJOR
 #include "blk.h"
