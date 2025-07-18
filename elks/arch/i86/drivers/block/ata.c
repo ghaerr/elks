@@ -50,10 +50,15 @@
 #define MODE_SOLO86 3           /* XTCF at ports 0x40/0x5C, 16-bit I/O */
 #define AUTO        (-1)        /* use MODE_ATA for PC/AT (286+), MODE_XTCF on PC/XT */
 
+/* hardware I/O port xfer modes */
+#define XFER_16BIT  0           /* standard 16-bit ATA I/O */
+#define XFER_8XTCF  1           /* XTCF set 8-bit feature cmd, then xfer lo then hi */
+#define XFER_8XTIDE 2           /* XTIDE 8-bit xfer hi at data+8 then lo at data+0 */
+
 /* configurable options - may have to be changed and kernel recompiled*/
 
 static int mode = AUTO;         /* change this to force a particular controller */
-static int use_8bitmode = AUTO; /* =0 16-bit xfer, =1 force 8-bit xfer, AUTO=automatic */
+static int xfer_mode = AUTO;    /* change this to force a particular I/O xfer method */
 
 /* default base port (change if required)   ATA, XTIDE,  XTCF, SOLO86 */
 static unsigned int def_base_ports[4] = { 0x1F0, 0x300, 0x300, 0x40 };
@@ -139,22 +144,31 @@ static int ata_wait(int loops)
 static void read_ioport(int port, unsigned char __far *buffer, size_t count)
 {
     size_t i;
-    unsigned int word;
+    unsigned short word;
 
-    if (use_8bitmode)
-    {
-        for (i = 0; i < count; i++)
-            buffer[i] = inb(port);
-    }
-    else
-    {
+    switch (xfer_mode) {
+    case XFER_16BIT:
         for (i = 0; i < count; i+=2)
         {
             word = inw(port);
 
-            buffer[i+0] = (unsigned char) (word & 0xFF);
-            buffer[i+1] = (unsigned char) (word >> 8);
+            *buffer++ = word;
+            *buffer++ = word >> 8;
         }
+        break;
+
+    case XFER_8XTCF:
+        for (i = 0; i < count; i++)
+            *buffer++ = inb(port);
+        break;
+
+    case XFER_8XTIDE:
+        for (i = 0; i < count; i+=2)
+        {
+            *buffer++=  inb(port);      // lo byte first when reading
+            *buffer++ = inb(port+8);    // then hi byte from port+8
+        }
+        break;
     }
 }
 
@@ -162,20 +176,31 @@ static void read_ioport(int port, unsigned char __far *buffer, size_t count)
 static void write_ioport(int port, unsigned char __far *buffer, size_t count)
 {
     size_t i;
-    unsigned int word;
+    unsigned short word;
 
-    if (use_8bitmode)
-    {
-        for (i = 0; i < count; i++)
-            outb(buffer[i], port);
-    }
-    else
-    {
+    switch (xfer_mode) {
+    case XFER_16BIT:
         for (i = 0; i < count; i+=2)
         {
-            word = buffer[i+0] | buffer[i+1] << 8;
+            word = *buffer++;
+            word |= *buffer++ << 8;
             outw(word, port);
         }
+        break;
+
+    case XFER_8XTCF:
+        for (i = 0; i < count; i++)
+            outb(*buffer++, port);
+        break;
+
+    case XFER_8XTIDE:
+        for (i = 0; i < count; i+=2)
+        {
+            word = *buffer++;           // save low byte
+            outb(*buffer++, port+8);    // hi byte first to port+8
+            outb(word, port);           // then lo byte to port+0
+        }
+        break;
     }
 }
 
@@ -330,7 +355,7 @@ void ata_reset(void)
 
 #ifdef CONFIG_ARCH_SOLO86
     mode = MODE_SOLO86;
-    use_8bitmode = 0;
+    xfer_mode = XFER_16BIT;
 #else
     if (mode == AUTO)
     {
@@ -362,18 +387,28 @@ void ata_reset(void)
 
     ata_delay();
 
+    // 8-bit transfer is default for 8086/80186 systems
 
-    // controller 8-bit transfer is requested for 8086/80186 systems:
-    // try and turn on 8-bit mode
-
-    if (use_8bitmode == AUTO)
+    if (xfer_mode == AUTO)
     {
-        use_8bitmode = 0;
         if (arch_cpu <= CPU_80186)
-            use_8bitmode = 1;
+        {
+            if (mode == MODE_XTIDE)
+                xfer_mode = XFER_8XTIDE;
+            else
+                xfer_mode = XFER_8XTCF;
+        }
+        else
+            xfer_mode = XFER_16BIT;
     }
-    if (use_8bitmode)
-        use_8bitmode = (ata_set8bitmode() == 0);
+
+    // try and turn on 8-bit mode, fallback to 16-bit if controller can't handle it
+
+    if (xfer_mode == XFER_8XTCF)
+    {
+        if (ata_set8bitmode() < 0)
+            xfer_mode = XFER_16BIT;
+    }
 }
 
 
