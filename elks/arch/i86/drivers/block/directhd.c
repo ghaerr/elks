@@ -14,7 +14,6 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/debug.h>
 
-#include <arch/hdreg.h>
 #include <arch/io.h>
 #include <arch/segment.h>
 
@@ -86,7 +85,6 @@ static struct drive_infot {
 } drive_info[4] = { 0, };	/* preset to 0 */
 
 static struct hd_struct hd[4 << 6];
-static void directhd_geninit();
 
 static struct gendisk directhd_gendisk = {
     MAJOR_NR,			/* major number */
@@ -94,29 +92,10 @@ static struct gendisk directhd_gendisk = {
     6,
     1 << 6,
     4,
-    directhd_geninit,		/* init */
     hd,				/* hd struct */
     0,
-    drive_info,
-    NULL
+    drive_info
 };
-
-void directhd_geninit(void)
-{
-    int i;
-
-    for (i = 0; i < 4 << 6; i++) {
-	if ((i & ((1 << 6) - 1)) == 0) {
-	    hd[i].start_sect = 0;
-	    hd[i].nr_sects = (sector_t)drive_info[i >> 6].sectors *
-		drive_info[i >> 6].heads * drive_info[i >> 6].cylinders;
-	} else {
-	    hd[i].start_sect = -1;
-	    hd[i].nr_sects = 0;
-	}
-    }
-    return;
-}
 
 #ifndef USE_ASM
 
@@ -260,7 +239,7 @@ void out_hd(unsigned int drive,unsigned int nsect,unsigned int sect,
     return;
 }
 
-int directhd_init(void)
+struct gendisk * directhd_init(void)
 {
     unsigned int buffer[256];
     struct gendisk *ptr;
@@ -356,25 +335,13 @@ int directhd_init(void)
 
     if (!hdcount) {
 	printk("athd: no drives found\n");
-	return 0;
+	return NULL;
     }
-
     directhd_gendisk.nr_hd = hdcount;
 
-    if (register_blkdev(MAJOR_NR, DEVICE_NAME, &directhd_fops)) {
-	printk("athd: unable to register\n");
-	return -1;
-    }
-
+    if (register_blkdev(MAJOR_NR, DEVICE_NAME, &directhd_fops))
+	return NULL;
     blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
-    if (gendisk_head == NULL) {
-	directhd_gendisk.next = gendisk_head;
-	gendisk_head = &directhd_gendisk;
-    } else {
-	for (ptr = gendisk_head; ptr->next != NULL; ptr = ptr->next);
-	ptr->next = &directhd_gendisk;
-	directhd_gendisk.next = NULL;
-    }
 
     printk("athd: found %d hard drive%c\n", hdcount, hdcount == 1 ? ' ' : 's');
 
@@ -390,7 +357,7 @@ int directhd_init(void)
 
     directhd_initialized = 1;
 
-    return 0;
+    return &directhd_gendisk;
 }
 
 /* why is arg unsigned int here if it's used as hd_geometry later ?

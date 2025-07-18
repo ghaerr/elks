@@ -80,6 +80,7 @@
 #include <linuxmt/errno.h>
 #include <linuxmt/string.h>
 #include <linuxmt/heap.h>
+#include <linuxmt/genhd.h>
 #include <linuxmt/debug.h>
 
 #include <arch/dma.h>
@@ -89,7 +90,6 @@
 #include <arch/irq.h>
 #include <arch/segment.h>
 #include <arch/ports.h>
-#include <arch/hdreg.h>         /* for ioctl GETGEO */
 
 #define MAJOR_NR        FLOPPY_MAJOR
 #include "blk.h"
@@ -1505,11 +1505,10 @@ static int DFPROC floppy_register(void)
 
 void INITPROC floppy_init(void)
 {
-    if (register_blkdev(MAJOR_NR, DEVICE_NAME, &floppy_fops)) {
-        printk("df: init error\n");
+    if (register_blkdev(MAJOR_NR, DEVICE_NAME, &floppy_fops))
         return;
-    }
     blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
+
     if (!USE_IMPLIED_SEEK)
         USE_IMPLIED_SEEK = running_qemu;
     config_types();

@@ -2,6 +2,7 @@
 #define __LINUXMT_GENHD_H
 
 #include <linuxmt/types.h>
+#include <linuxmt/kdev_t.h>
 
 /*
  *      genhd.h Copyright (C) 1992 Drew Eckhardt
@@ -48,13 +49,16 @@ struct partition_pc98
     char name[16];
 };
 
+#define NOPART      -1UL        /* no partition at start_sect */
+
 struct hd_struct
 {
-    sector_t start_sect;
-    sector_t nr_sects;
+    sector_t start_sect;        /* start sector of partition or NOPART */
+    sector_t nr_sects;          /* # sectors in partition */
 };
 
-struct drive_infot {            /* CHS per drive*/
+struct drive_infot              /* CHS per drive*/
+{
     unsigned int cylinders;
     int sectors;
     int heads;
@@ -67,19 +71,31 @@ struct gendisk
     int major;                  /* major number of driver */
     const char *major_name;     /* name of major driver */
     int minor_shift;            /* number of times minor is shifted to get real minor */
-    int max_p;                  /* maximum partitions per device */
-    int max_nr;                 /* maximum number of real devices */
-    void (*init)(void);         /* Initialization called before we do our thing */
+    int max_partitions;         /* maximum partitions per device */
+    int num_drives;             /* maximum number of real devices */
     struct hd_struct *part;     /* partition table */
     int nr_hd;                  /* number of hard drives */
     struct drive_infot *drive_info;
-    struct gendisk *next;
 };
+
+struct hd_geometry              /* structure returned from HDIO_GETGEO */
+{
+    unsigned char heads;
+    unsigned char sectors;
+    unsigned short cylinders;
+    unsigned long start;
+};
+
+/* hd/ide ctl's that pass (arg) ptrs to user space are numbered 0x030n/0x031n */
+#define HDIO_GETGEO     0x0301  /* get device geometry */
 
 extern struct drive_infot *last_drive;  /* set to last drivep-> used in read/write */
 extern unsigned char bios_drive_map[];  /* map drive to BIOS drivenum */
 extern struct drive_infot drive_info[];
+extern int boot_partition;              /* MBR boot partition, if any */
 
-extern struct gendisk *gendisk_head;    /* linked list of disks */
+int ioctl_hdio_geometry(struct gendisk *hd, kdev_t dev, struct hd_geometry *loc);
+void show_drive_info(struct drive_infot *drivep, const char *name, int drive, int count,
+    const char *eol);
 
 #endif

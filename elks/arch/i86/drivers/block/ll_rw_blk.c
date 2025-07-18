@@ -351,12 +351,16 @@ void INITPROC blk_dev_init(void)
     } while (++req < &all_requests[NR_REQUEST]);
 #endif
 
+#ifdef CONFIG_ROMFS_FS
+    romflash_init();
+#endif
+
 #ifdef CONFIG_BLK_DEV_RAM
     rd_init();          /* RAMDISK block device*/
 #endif
 
 #ifdef CONFIG_BLK_DEV_HD
-    directhd_init();
+    struct gendisk *hddisk = directhd_init();
 #endif
 
 #ifdef CONFIG_BLK_DEV_FD
@@ -369,14 +373,22 @@ void INITPROC blk_dev_init(void)
 #endif
 
 #if defined(CONFIG_BLK_DEV_BFD) || defined(CONFIG_BLK_DEV_BHD)
-    bioshd_init();
+    struct gendisk *biosdisk = bioshd_init();
 #endif
 
 #ifdef CONFIG_BLK_DEV_ATA_CF
-    ata_cf_init();
+    struct gendisk *atadisk = ata_cf_init();
 #endif
 
-#ifdef CONFIG_ROMFS_FS
-    romflash_init();
+    set_irq();          /* interrupts enabled for possible disk I/O */
+
+#ifdef CONFIG_BLK_DEV_BHD
+    if (biosdisk)
+        init_partitions(biosdisk);
+#endif
+
+#ifdef CONFIG_BLK_DEV_ATA_CF
+    if (atadisk)
+        init_partitions(atadisk);
 #endif
 }

@@ -321,11 +321,13 @@ static struct dev_name_struct {
     const char *name;
     int num;
 } devices[] = {
-	/* the 4 partitionable drives must be first */
+	/* the 6 partitionable drives must be first */
 	{ "hda",     DEV_HDA },
 	{ "hdb",     DEV_HDB },
 	{ "hdc",     DEV_HDC },
 	{ "hdd",     DEV_HDD },
+	{ "cfa",     DEV_CFA },
+	{ "cfb",     DEV_CFB },
 	{ "fd0",     DEV_FD0 },
 	{ "fd1",     DEV_FD1 },
 	{ "df0",     DEV_DF0 },
@@ -349,10 +351,10 @@ static char * INITPROC root_dev_name(int dev)
 #define NAMEOFF 13
     static char name[18] = "ROOTDEV=/dev/";
 
-    for (i=0; i<5; i++) {
+    for (i=0; i<7; i++) {
         if (devices[i].num == (dev & 0xfff0)) {
             strcpy(&name[NAMEOFF], devices[i].name);
-            if (i < 4) {
+            if (i < 6) {
                 if (dev & 0x07) {
                     name[NAMEOFF+3] = '0' + (dev & 7);
                     name[NAMEOFF+4] = '\0';

@@ -51,7 +51,8 @@
 #define ATA_SECTOR_SIZE     512
 
 void ata_reset(void);
-sector_t ata_init(unsigned int drive);
+struct drive_infot;
+int ata_init(int drive, struct drive_infot *drivep);
 int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg);
 int ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg);
 

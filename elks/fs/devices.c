@@ -14,6 +14,7 @@
 #include <linuxmt/stat.h>
 #include <linuxmt/fcntl.h>
 #include <linuxmt/errno.h>
+#include <linuxmt/kernel.h>
 
 /* minor number of first BIOSHD floppy, used for overlaying /dev/hd* -> /dev/cf* */
 #include "../arch/i86/drivers/block/bioshd.h"   /* FIXME move bioshd.h to linuxmt/ */
@@ -51,8 +52,10 @@ int INITPROC register_blkdev(unsigned int major, const char *name,
 {
     register struct device_struct *dev = &blkdevs[major];
 
-    if (major >= MAX_BLKDEV) return -EINVAL;
-    if (dev->ds_fops && dev->ds_fops != fops) return -EBUSY;
+    if (major >= MAX_BLKDEV || (dev->ds_fops && dev->ds_fops != fops)) {
+        printk("%s: can't register blkdev %d\n", name, major);
+        return -EBUSY;
+    }
     dev->ds_fops = fops;
     return 0;
 }

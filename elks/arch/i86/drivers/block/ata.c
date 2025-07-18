@@ -11,7 +11,8 @@
  * CTRL+6      0x3F6           0x30E           0x31C               0x5C
  * DEVCTRL     BASE+0x206      BASE+0x0E       BASE+0x1C           BASE+0x1C
  *
- * This code assumes there is only one ATA controller.
+ * This code assumes there is only one ATA controller, and normally tries to
+ * set 8-bit transfer mode on 8088/8086/NEC V20 CPUs.
  *
  * This code uses LBA addressing for the disks. Any disks without
  * LBA support (they'd need to be pretty old) are simply ignored.
@@ -35,32 +36,39 @@
 
 #include <linuxmt/config.h>
 #include <linuxmt/kernel.h>
+#include <linuxmt/genhd.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/heap.h>
 #include <linuxmt/debug.h>
 #include <arch/io.h>
 #include <arch/ata.h>
 
-/* wait loop counts while busy waiting (FIXME: use jiffies for accuracy) */
-#define SHORT_WAIT  500
-#define LONG_WAIT   5000        /* 14s wait required for some writes */
+/* hardware controller access modes */
+#define MODE_ATA    0           /* standard - ATA at ports 0x1F0/0x3F6 */
+#define MODE_XTIDE  1           /* XTIDE - ATA at ports 0x300/0x30E */
+#define MODE_XTCF   2           /* XTCF - non-standard ATA at ports 0x300/0x31C */
+#define MODE_SOLO86 3           /* XTCF at ports 0x40/0x5C, 16-bit I/O */
+#define AUTO        (-1)        /* use MODE_ATA for PC/AT (286+), MODE_XTCF on PC/XT */
 
-/* controller emulation modes */
-#define MODE_ATA    0
-#define MODE_XTIDE  1
-#define MODE_XTCF   2
-#define MODE_SOLO86 3
+/* configurable options - may have to be changed and kernel recompiled*/
 
-/* default base ports for ATA, XTIDE, XTCF and SOLO86 */
+static int mode = AUTO;         /* change this to force a particular controller */
+static int use_8bitmode = AUTO; /* =0 16-bit xfer, =1 force 8-bit xfer, AUTO=automatic */
+
+/* default base port (change if required)   ATA, XTIDE,  XTCF, SOLO86 */
 static unsigned int def_base_ports[4] = { 0x1F0, 0x300, 0x300, 0x40 };
 
-/* control register offsets from base ports */
+/* control register offsets from base ports (should not need changing) */
 static unsigned int ctrl_offsets[4] =   { 0x200, 0x08, 0x10, 0x10 };
 
-static int mode = MODE_ATA;
+/* wait loop counts while busy waiting (FIXME: use jiffies for accuracy) */
+#define SHORT_WAIT  500
+#define LONG_WAIT   5000        /* FIXME: 14s wait required for some writes */
+
+/* end of configurable options */
+
 static unsigned int ata_base_port;
 static unsigned int ata_ctrl_port;
-static char use_8bitmode;
 
 /* convert register number to base port address */
 #define BASE(reg)   ((mode < MODE_XTCF)? (ata_base_port+reg): (ata_base_port+((reg)<<1)))
@@ -296,8 +304,8 @@ static int ata_identify(unsigned int drive, unsigned char __far *buf)
     error = ata_cmd(drive, ATA_CMD_ID, 0, 0);
     if (error)
     {
-        printk("cf%d: ATA port %x/%x, probe failed (%d)\n",
-            drive, ata_base_port, ata_ctrl_port, error);
+        printk("cf%c: not found at %x/%x (%d)\n",
+            drive+'a', ata_base_port, ata_ctrl_port, error);
         return error;
     }
 
@@ -321,10 +329,15 @@ void ata_reset(void)
     // dynamically set I/O port addresses
 
 #ifdef CONFIG_ARCH_SOLO86
-    mode = MODE_SOLO86
+    mode = MODE_SOLO86;
+    use_8bitmode = 0;
 #else
-    if (arch_cpu < 6)       // prior to 80286 IBM PC/AT
-        mode = MODE_XTCF;
+    if (mode == AUTO)
+    {
+        mode = MODE_ATA;
+        if (arch_cpu < 6)           // prior to 80286 IBM PC/AT
+            mode = MODE_XTCF;
+    }
 #endif
 
     // set base port I/O address from emulation mode
@@ -353,28 +366,28 @@ void ata_reset(void)
     // controller 8-bit transfer is requested for 8086/80186 systems:
     // try and turn on 8-bit mode
 
-    use_8bitmode = 0;
-
-    if (arch_cpu < 6)
+    if (use_8bitmode == AUTO)
+    {
+        use_8bitmode = 0;
+        if (arch_cpu < 6)
+            use_8bitmode = 1;
+    }
+    if (use_8bitmode)
         use_8bitmode = (ata_set8bitmode() == 0);
 }
 
 
 /**
- * initialise an ATA device
- *
- * drive : physical drive number (0 or 1)
+ * initialise an ATA device, return zero if not found
  */
-sector_t ata_init(unsigned int drive)
+int ata_init(int drive, struct drive_infot *drivep)
 {
     unsigned short *buffer;
-    sector_t total = 0;
+    sector_t total;
 
-
-    // allocate buffer
+    drivep->cylinders = 0;      // invalidate device
 
     buffer = (unsigned short *) heap_alloc(ATA_SECTOR_SIZE, HEAP_TAG_DRVR|HEAP_TAG_CLEAR);
-
     if (!buffer)
         return 0;
 
@@ -382,42 +395,38 @@ sector_t ata_init(unsigned int drive)
 
     if (ata_identify(drive, (unsigned char __far *) buffer) == 0)
     {
-        // ATA LBA sector total (MSB << 16, LSB)
+        drivep->cylinders = buffer[ATA_INFO_CYLS];
+        drivep->sectors = buffer[ATA_INFO_SPT];
+        drivep->heads = buffer[ATA_INFO_HEADS];
+        drivep->sector_size = ATA_SECTOR_SIZE;
+        drivep->fdtype = -1;
+        show_drive_info(drivep, "cf", drive, 1, " ");
+
+        // now display extra info: ATA LBA sector total, version and sector size
+
         total = (sector_t)buffer[ATA_INFO_SECT_HI] << 16 | buffer[ATA_INFO_SECT_LO];
-
-        printk("cf%d: ATA port %x/%x, %luK CHS %2u,%2u,%2u SZ %x ",
-            drive, ata_base_port, ata_ctrl_port, total >> 1,
-            buffer[ATA_INFO_CYLS], buffer[ATA_INFO_HEADS],
-            buffer[ATA_INFO_SPT], buffer[ATA_INFO_SECT_SZ]);
-
-        // ATA version
-        if ((buffer[ATA_INFO_VER_MAJ] != 0) && (buffer[ATA_INFO_VER_MAJ] != 0xFFFF))
-        {
-            // dump out version word (don't bother decoding it)
-
-            printk("VER %x ", buffer[ATA_INFO_VER_MAJ]);
-        }
+        printk("%luK VER %x/%d ", total >> 1, buffer[ATA_INFO_VER_MAJ],
+            buffer[ATA_INFO_SECT_SZ]);
 
         // Sanity check
         if ((buffer[ATA_INFO_CYLS] == 0 || buffer[ATA_INFO_CYLS] > 0x7F00) ||
             (buffer[ATA_INFO_HEADS] == 0 || buffer[ATA_INFO_HEADS] > 16) ||
             (buffer[ATA_INFO_SPT] == 0 || buffer[ATA_INFO_SPT] > 63))
         {
-            printk("invalid CF");
-            //total = 0;
+            printk("(unsupported format) ");
+            drivep->cylinders = 0;
         }
-        else if (! (buffer[ATA_INFO_CAPS] & ATA_CAPS_LBA))      // ATA LBA support?
+        if (! (buffer[ATA_INFO_CAPS] & ATA_CAPS_LBA))   // ATA LBA support?
         {
-            printk("LBA not detected");
-            //total = 0;
+            printk("(missing LBA)");
+            drivep->cylinders = 0;
         }
-
         printk("\n");
     }
 
     heap_free(buffer);
 
-    return total;
+    return drivep->cylinders;
 }
 
 

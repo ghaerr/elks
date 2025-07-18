@@ -315,6 +315,5 @@ void INITPROC rd_init(void)
 			i, rd_segment[i].seg, rd_segment[i].next, rd_segment[i].sectors);
 #endif
 #endif /* CONFIG_RAMDISK_SEGMENT*/
-    } else
-	printk("rd: init error\n");
+    }
 }
