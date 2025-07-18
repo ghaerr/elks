@@ -347,7 +347,8 @@ void help()
 
 void list_partition(char *devname)
 {
-    int i, fd;
+    int i, fd = -1;
+    int bad_mbr = 0;
     unsigned char table[512];
 
     if (devname!=NULL) {
@@ -369,12 +370,15 @@ void list_partition(char *devname)
         unsigned long start_sect = p->start_sect | ((unsigned long)p->start_sect_hi << 16);
         unsigned long nr_sects = p->nr_sects | ((unsigned long)p->nr_sects_hi << 16);
         char device[32];
+
         strcpy(device, devname? devname: dev);
         if (device[0] == '/') {
                 char *p = &device[strlen(device)];
                 *p++ = '1' + i;
                 *p = 0;
         }
+        if (p->boot_ind != 0x00 && p->boot_ind != 0x80)
+            bad_mbr++;
         printf("%-15s %c%d:%02x  %4d  %3d%5d   %4d  %3d%5d %6lu %6lu\n",
             device,
             p->boot_ind==0?' ':(p->boot_ind==0x80?'*':'?'),
@@ -389,7 +393,9 @@ void list_partition(char *devname)
             start_sect,                                  /* Size*/
             nr_sects);                                   /* Sector count */
     }
-    if (devname!=NULL)
+    if (bad_mbr)
+        printf("\nWarning: Invalid MBR!\n");
+    if (fd >= 0)
         close(fd);
 }
 
