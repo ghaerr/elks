@@ -11,7 +11,6 @@
 #include <linuxmt/config.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/errno.h>
-#include <linuxmt/mm.h>
 #include <linuxmt/genhd.h>
 #include <linuxmt/debug.h>
 #include <arch/ata.h>
