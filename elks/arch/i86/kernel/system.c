@@ -70,7 +70,7 @@ unsigned int INITPROC setup_arch(void)
 #ifdef SYS_CAPS
     sys_caps = SYS_CAPS;    /* custom system capabilities */
 #else
-    if (arch_cpu > 5)       /* 80286+ IBM PC/AT capabilities or Unknown CPU */
+    if (arch_cpu >= CPU_80286)          /* 80286+ IBM PC/AT capabilities or Unknown CPU */
         sys_caps = CAP_ALL;
     debug("arch %d sys_caps %02x\n", arch_cpu, sys_caps);
 #endif

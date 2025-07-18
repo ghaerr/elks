@@ -75,7 +75,7 @@
 #define MAX_SERIAL              2       /* max number of serial tty devices*/
 #define SETUP_VID_COLS          80      /* video # columns */
 #define SETUP_VID_LINES         25      /* video # lines */
-#define SETUP_CPU_TYPE          5       /* processor type 80186 */
+#define SETUP_CPU_TYPE          CPU_80186  /* processor type */
 #define SETUP_MEM_KBYTES        512     /* base memory in 1K bytes */
 #define SETUP_XMS_KBYTES        0       /* xms memory in 1K bytes */
 #define SETUP_ROOT_DEV          0x0600  /* root device ROMFS */
@@ -93,7 +93,7 @@
 #define MAX_SERIAL              1       /* max number of serial tty devices*/
 #define SETUP_VID_COLS          28      /* video # columns */
 #define SETUP_VID_LINES         18      /* video # lines */
-#define SETUP_CPU_TYPE          5       /* processor type 80186 */
+#define SETUP_CPU_TYPE          CPU_80186  /* processor type */
 #define SETUP_MEM_KBYTES        128     /* base memory in 1K bytes */
 #define SETUP_XMS_KBYTES        0       /* xms memory in 1K bytes */
 #define SETUP_ROOT_DEV          0x0600  /* root device ROMFS */
@@ -110,7 +110,7 @@
 #define MAX_SERIAL              0       /* max number of serial tty devices*/
 #define SETUP_VID_COLS          80      /* video # columns */
 #define SETUP_VID_LINES         25      /* video # lines */
-#define SETUP_CPU_TYPE          6       /* processor type 80286 */
+#define SETUP_CPU_TYPE          CPU_80286  /* processor type */
 #define SETUP_MEM_KBYTES        512     /* base memory in 1K bytes */
 #define SETUP_XMS_KBYTES        0       /* xms memory in 1K bytes */
 #define SETUP_ROOT_DEV          0x0600  /* root device ROMFS */
@@ -127,7 +127,7 @@
 
 /*
  * System capabilities - configurable for ROM or custom installations.
- * Normally, all capabilities will be set if arch_cpu > 5 (PC/AT),
+ * Normally, all capabilities will be set if arch_cpu >= CPU_80286 (PC/AT),
  * except when SYS_CAPS is defined for custom installations or emulations.
  */
 #define CAP_PC_AT       (CAP_IRQ8TO15|CAP_IRQ2MAP9)      /* PC/AT capabilities */
