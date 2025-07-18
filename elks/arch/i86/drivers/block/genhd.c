@@ -24,6 +24,7 @@
 #include <linuxmt/major.h>
 #include <linuxmt/string.h>
 #include <linuxmt/memory.h>
+#include <linuxmt/debug.h>
 #include <arch/system.h>
 #include "blk.h"
 
@@ -362,3 +363,33 @@ void INITPROC init_partitions(struct gendisk *dev)
     }
 }
 #endif /* CONFIG_BLK_DEV_BHD || CONFIG_BLK_DEV_ATA_CF */
+
+void show_drive_info(struct drive_infot *drivep, const char *name, int drive, int count,
+   const char *eol)
+{
+    unsigned long size;
+    char *unit;
+    static char UNITS[4] = "KMGT";
+
+    for (; count; count--, drive++) {
+        if (drivep->cylinders != 0) {
+            unit = UNITS;
+            size = (unsigned long)drivep->sectors * 5;  /* 0.1 kB units */
+            if (drivep->sector_size == 1024)
+                size <<= 1;
+            size *= ((unsigned long) drivep->cylinders) * drivep->heads;
+
+            /* Select appropriate unit */
+            while (size > 99999 && unit[1]) {
+                debug("DBG: Size = %lu (%X/%X)\n", size, *unit, unit[1]);
+                size += 512;
+                size /= 1024U;
+                unit++;
+            }
+            debug("DBG: Size = %lu (%X/%X)\n",size,*unit,unit[1]);
+            printk("%s%c: %4lu%c CHS %3u,%2d,%d%s",
+                name, drive + (drivep->fdtype < 0? 'a' : '0'), (size/10), *unit,
+                drivep->cylinders, drivep->heads, drivep->sectors, eol);
+        }
+    }
+}

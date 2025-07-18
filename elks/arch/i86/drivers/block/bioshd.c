@@ -356,8 +356,6 @@ static struct file_operations bioshd_fops = {
 
 struct gendisk * INITPROC bioshd_init(void)
 {
-    int count;
-
     /* FIXME perhaps remove for speed on floppy boot*/
     outb_p(0x0C, FDC_DOR);      /* FD motors off, enable IRQ and DMA*/
 
@@ -371,32 +369,8 @@ struct gendisk * INITPROC bioshd_init(void)
 
 #ifdef PER_DRIVE_INFO
     {
-        register struct drive_infot *drivep;
-        static char UNITS[4] = "KMGT";
-
-        drivep = drive_info;
-        for (count = 0; count < NUM_DRIVES; count++, drivep++) {
-            if (drivep->heads != 0) {
-                char *unit = UNITS;
-                __u32 size = ((__u32) drivep->sectors) * 5;     /* 0.1 kB units */
-                if (drivep->sector_size == 1024)
-                    size <<= 1;
-                size *= ((__u32) drivep->cylinders) * drivep->heads;
-
-                /* Select appropriate unit */
-                while (size > 99999 && unit[1]) {
-                    debug("DBG: Size = %lu (%X/%X)\n", size, *unit, unit[1]);
-                    size += 512U;
-                    size /= 1024U;
-                    unit++;
-                }
-                debug("DBG: Size = %lu (%X/%X)\n",size,*unit,unit[1]);
-                printk("%cd%c: %4lu%c CHS %3u,%2d,%d\n",
-                    (count < 4 ? 'h' : 'f'), (count & 3) + (count < 4 ? 'a' : '0'),
-                    (size/10), *unit,
-                    drivep->cylinders, drivep->heads, drivep->sectors);
-            }
-        }
+        show_drive_info(&drive_info[DRIVE_HD0], "hd", 0, hd_count, "\n");
+        show_drive_info(&drive_info[DRIVE_FD0], "fd", 0, fd_count, "\n");
     }
 #else /* one line version */
 #ifdef CONFIG_BLK_DEV_BFD

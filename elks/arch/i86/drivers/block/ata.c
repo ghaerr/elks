@@ -47,7 +47,7 @@
 #define MODE_ATA    0           /* standard - ATA at ports 0x1F0/0x3F6 */
 #define MODE_XTIDE  1           /* XTIDE - ATA at ports 0x300/0x30E */
 #define MODE_XTCF   2           /* XTCF - non-standard ATA at ports 0x300/0x31C */
-#define MODE_SOLO86 3           /* XTCF at ports 0x40/0x5C */
+#define MODE_SOLO86 3           /* XTCF at ports 0x40/0x5C, 16-bit I/O */
 #define AUTO        (-1)        /* use MODE_ATA for PC/AT (286+), MODE_XTCF on PC/XT */
 
 /* configurable options - may have to be changed and kernel recompiled*/
@@ -304,8 +304,8 @@ static int ata_identify(unsigned int drive, unsigned char __far *buf)
     error = ata_cmd(drive, ATA_CMD_ID, 0, 0);
     if (error)
     {
-        printk("cf%d: ATA port %x/%x, not found (%d)\n",
-            drive, ata_base_port, ata_ctrl_port, error);
+        printk("cf%c: not found at %x/%x (%d)\n",
+            drive+'a', ata_base_port, ata_ctrl_port, error);
         return error;
     }
 
@@ -395,41 +395,31 @@ int ata_init(int drive, struct drive_infot *drivep)
 
     if (ata_identify(drive, (unsigned char __far *) buffer) == 0)
     {
-        // ATA LBA sector total (MSB << 16, LSB)
+        drivep->cylinders = buffer[ATA_INFO_CYLS];
+        drivep->sectors = buffer[ATA_INFO_SPT];
+        drivep->heads = buffer[ATA_INFO_HEADS];
+        drivep->sector_size = ATA_SECTOR_SIZE;
+        drivep->fdtype = -1;
+        show_drive_info(drivep, "cf", drive, 1, " ");
+
+        // now display extra info: ATA LBA sector total, version and sector size
+
         total = (sector_t)buffer[ATA_INFO_SECT_HI] << 16 | buffer[ATA_INFO_SECT_LO];
-
-        printk("cf%d: ATA port %x/%x, %luK CHS %2u,%2u,%2u ",
-            drive, ata_base_port, ata_ctrl_port, total >> 1,
-            buffer[ATA_INFO_CYLS], buffer[ATA_INFO_HEADS],
-            buffer[ATA_INFO_SPT]);
-
-        // ATA version
-        if ((buffer[ATA_INFO_VER_MAJ] != 0) && (buffer[ATA_INFO_VER_MAJ] != 0xFFFF))
-        {
-            // dump out version word (don't bother decoding it)
-
-            printk("VER %x ", buffer[ATA_INFO_VER_MAJ]);
-        }
+        printk("%luK VER %x/%d ", total >> 1, buffer[ATA_INFO_VER_MAJ],
+            buffer[ATA_INFO_SECT_SZ]);
 
         // Sanity check
         if ((buffer[ATA_INFO_CYLS] == 0 || buffer[ATA_INFO_CYLS] > 0x7F00) ||
             (buffer[ATA_INFO_HEADS] == 0 || buffer[ATA_INFO_HEADS] > 16) ||
-            (buffer[ATA_INFO_SPT] == 0 || buffer[ATA_INFO_SPT] > 63) ||
-            (buffer[ATA_INFO_SECT_SZ] != ATA_SECTOR_SIZE))
+            (buffer[ATA_INFO_SPT] == 0 || buffer[ATA_INFO_SPT] > 63))
         {
-            printk("(unsupported format)");
+            printk("(unsupported format) ");
+            drivep->cylinders = 0;
         }
-        else if (! (buffer[ATA_INFO_CAPS] & ATA_CAPS_LBA))      // ATA LBA support?
+        if (! (buffer[ATA_INFO_CAPS] & ATA_CAPS_LBA))   // ATA LBA support?
         {
             printk("(missing LBA)");
-        }
-        else
-        {
-            drivep->cylinders = buffer[ATA_INFO_CYLS];
-            drivep->sectors = buffer[ATA_INFO_SPT];
-            drivep->heads = buffer[ATA_INFO_HEADS];
-            drivep->sector_size = ATA_SECTOR_SIZE;
-            drivep->fdtype = -1;
+            drivep->cylinders = 0;
         }
         printk("\n");
     }

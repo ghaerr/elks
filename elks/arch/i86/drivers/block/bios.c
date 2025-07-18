@@ -219,14 +219,14 @@ int INITPROC bios_gethdinfo(struct drive_infot *drivep) {
 #endif
             drivep->fdtype = -1;
             drivep->sector_size = 512;
-            printk("bioshd: hd%c BIOS CHS %u,%d,%d\n", 'a'+drive, drivep->cylinders,
+            debug_bios("hd%c:  BIOS CHS %3d,%d,%d\n", 'a'+drive, drivep->cylinders,
                 drivep->heads, drivep->sectors);
         }
 #ifdef CONFIG_IDE_PROBE
         if (sys_caps & CAP_HD_IDE) {            /* Normally PC/AT or higher */
             if (!get_ide_data(drive, drivep)) { /* get CHS from the drive itself */
                 /* sanity checks already done, accepting data */
-                printk("bioshd: hd%c  IDE CHS %d,%d,%d\n", 'a'+drive, drivep->cylinders,
+                debug_bios("hd%c:   IDE CHS %3d,%d,%d\n", 'a'+drive, drivep->cylinders,
                 drivep->heads, drivep->sectors);
             }
         }

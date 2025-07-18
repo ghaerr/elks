@@ -89,7 +89,7 @@ static int ata_cf_open(struct inode *inode, struct file *filp)
     struct hd_struct *hdp = &hd[minor];
     int drive = minor >> MINOR_SHIFT;
 
-    debug_blk("cf%d: open\n", drive);
+    debug_blk("cf%c: open\n", drive+'a');
 
     if (drive >= NUM_DRIVES || hdp->start_sect == NOPART)
         return -ENXIO;
@@ -113,7 +113,7 @@ static void ata_cf_release(struct inode *inode, struct file *filp)
     kdev_t dev = inode->i_rdev;
     int drive = DEVICE_NR(dev);
 
-    debug_blk("cf%d: release\n", drive);
+    debug_blk("cf%c: release\n", drive+'a');
 
     if (--access_count[drive] == 0) {
         fsync_dev(dev);
@@ -190,8 +190,8 @@ static void do_ata_cf_request(void)
         start = req->rq_sector;
 
         if (hd[minor].start_sect == NOPART || start + req->rq_nr_sectors > hd[minor].nr_sects) {
-              printk("cf%d: sector %ld not in partition (%ld,%ld)\n",
-                drive, start, hd[minor].start_sect, hd[minor].nr_sects);
+              printk("cf%c: sector %ld not in partition (%ld,%ld)\n",
+                drive+'a', start, hd[minor].start_sect, hd[minor].nr_sects);
             end_request(0);
             continue;
         }
@@ -199,14 +199,14 @@ static void do_ata_cf_request(void)
 
         for (count = 0; count < req->rq_nr_sectors; count++) {
             if (req->rq_cmd == WRITE) {
-                debug_blk("cf%d: writing sector %lu\n", drive, start);
+                debug_blk("cf%c: writing sector %lu\n", drive+'a', start);
                 ret = ata_write(drive, start, buf, req->rq_seg);
             } else {
-                debug_blk("cf%d: reading sector %lu\n", drive, start);
+                debug_blk("cf%c: reading sector %lu\n", drive+'a', start);
                 ret = ata_read(drive, start, buf, req->rq_seg);
             }
             if (ret != 0) {         /* I/O error */
-                printk("cf%d: I/O error %d cmd %d\n", drive, ret, req->rq_cmd);
+                printk("cf%c: I/O error %d cmd %d\n", drive+'a', ret, req->rq_cmd);
                 break;
             }
             start++;

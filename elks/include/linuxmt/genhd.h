@@ -93,4 +93,7 @@ extern unsigned char bios_drive_map[];  /* map drive to BIOS drivenum */
 extern struct drive_infot drive_info[];
 extern int boot_partition;              /* MBR boot partition, if any */
 
+void show_drive_info(struct drive_infot *drivep, const char *name, int drive, int count,
+    const char *eol);
+
 #endif
