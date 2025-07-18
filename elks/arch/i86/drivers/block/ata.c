@@ -393,10 +393,10 @@ void ata_reset(void)
     {
         if (arch_cpu <= CPU_80186)
         {
-            if (mode == MODE_XTCF)
-                xfer_mode = XFER_8XTCF;
-            else
+            if (mode == MODE_XTIDE)
                 xfer_mode = XFER_8XTIDE;
+            else
+                xfer_mode = XFER_8XTCF;
         }
         else
             xfer_mode = XFER_16BIT;
