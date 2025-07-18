@@ -36,7 +36,7 @@ static struct gendisk ata_gendisk = {
     MINOR_SHIFT,                /* Bits to shift to get real from partition */
     1 << MINOR_SHIFT,           /* maximum number of partitions per drive */
     NUM_DRIVES,                 /* maximum number of drives */
-    hd,                         /* hd struct */
+    hd,                         /* partition table */
     0,                          /* hd drives found */
     ata_drive_info              /* fd/hd drive CHS and type */
 };
@@ -125,10 +125,7 @@ static void ata_cf_release(struct inode *inode, struct file *filp)
 static int ata_cf_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
     unsigned int arg)
 {
-    struct drive_infot *drivep;
-    struct hd_geometry *loc;
-    int drive, err;
-    unsigned short minor;
+    int drive;
 
     /* get sector size called with NULL inode and arg = superblock s_dev */
     if (cmd == IOCTL_BLK_GET_SECTOR_SIZE)
@@ -137,25 +134,15 @@ static int ata_cf_ioctl(struct inode *inode, struct file *file, unsigned int cmd
     if (!inode)
         return -EINVAL;
 
-    minor = MINOR(inode->i_rdev);
-    drive = minor >> MINOR_SHIFT;
+    drive = DEVICE_NR(inode->i_rdev);
     if (drive >= NUM_DRIVES)
         return -ENODEV;
 
-    drivep = &ata_drive_info[drive];
-    err = -EINVAL;
     switch (cmd) {
     case HDIO_GETGEO:   /* need this one for the fdisk/sys/makeboot commands */
-        loc = (struct hd_geometry *)arg;
-        err = verify_area(VERIFY_WRITE, (void *)loc, sizeof(struct hd_geometry));
-        if (!err) {
-            put_user_char(drivep->heads, &loc->heads);
-            put_user_char(drivep->sectors, &loc->sectors);
-            put_user(drivep->cylinders, &loc->cylinders);
-            put_user_long(hd[minor].start_sect, &loc->start);
-        }
+       return ioctl_hdio_geometry(&ata_gendisk, inode->i_rdev, (struct hd_geometry *)arg);
     }
-    return err;
+    return -EINVAL;
 }
 
 /* called by add_request to start I/O after first request added */

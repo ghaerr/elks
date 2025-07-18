@@ -95,7 +95,7 @@ static struct gendisk bioshd_gendisk = {
     MINOR_SHIFT,                /* Bits to shift to get real from partition */
     1 << MINOR_SHIFT,           /* maximum number of partitions per drive */
     NUM_DRIVES,                 /* maximum number of drives */
-    hd,                         /* hd struct */
+    hd,                         /* partition table */
     0,                          /* hd drives found */
     drive_info                  /* fd/hd drive CHS and type */
 };
@@ -405,35 +405,25 @@ struct gendisk * INITPROC bioshd_init(void)
 static int bioshd_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
     unsigned int arg)
 {
-    struct drive_infot *drivep;
-    struct hd_geometry *loc;
-    int dev, err;
+    int dev;
 
     /* get sector size called with NULL inode and arg = superblock s_dev */
     if (cmd == IOCTL_BLK_GET_SECTOR_SIZE)
         return drive_info[DEVICE_NR(arg)].sector_size;
 
-    if (!inode || !inode->i_rdev)
+    if (!inode)
         return -EINVAL;
 
     dev = DEVICE_NR(inode->i_rdev);
     if (dev >= ((dev < DRIVE_FD0) ? hd_count : (DRIVE_FD0 + fd_count)))
         return -ENODEV;
 
-    drivep = &drive_info[dev];
-    err = -EINVAL;
     switch (cmd) {
     case HDIO_GETGEO:   /* need this one for the fdisk/sys/makeboot commands */
-        loc = (struct hd_geometry *)arg;
-        err = verify_area(VERIFY_WRITE, (void *)loc, sizeof(struct hd_geometry));
-        if (!err) {
-            put_user_char(drivep->heads, &loc->heads);
-            put_user_char(drivep->sectors, &loc->sectors);
-            put_user(drivep->cylinders, &loc->cylinders);
-            put_user_long(hd[MINOR(inode->i_rdev)].start_sect, &loc->start);
-        }
+        return ioctl_hdio_geometry(&bioshd_gendisk, inode->i_rdev,
+            (struct hd_geometry *)arg);
     }
-    return err;
+    return -EINVAL;
 }
 
 /* calculate CHS and sectors remaining for track read */

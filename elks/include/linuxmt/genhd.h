@@ -2,6 +2,7 @@
 #define __LINUXMT_GENHD_H
 
 #include <linuxmt/types.h>
+#include <linuxmt/kdev_t.h>
 
 /*
  *      genhd.h Copyright (C) 1992 Drew Eckhardt
@@ -93,6 +94,7 @@ extern unsigned char bios_drive_map[];  /* map drive to BIOS drivenum */
 extern struct drive_infot drive_info[];
 extern int boot_partition;              /* MBR boot partition, if any */
 
+int ioctl_hdio_geometry(struct gendisk *hd, kdev_t dev, struct hd_geometry *loc);
 void show_drive_info(struct drive_infot *drivep, const char *name, int drive, int count,
     const char *eol);
 

@@ -24,6 +24,7 @@
 #include <linuxmt/major.h>
 #include <linuxmt/string.h>
 #include <linuxmt/memory.h>
+#include <linuxmt/mm.h>
 #include <linuxmt/debug.h>
 #include <arch/system.h>
 #include "blk.h"
@@ -364,6 +365,27 @@ void INITPROC init_partitions(struct gendisk *dev)
 }
 #endif /* CONFIG_BLK_DEV_BHD || CONFIG_BLK_DEV_ATA_CF */
 
+#if defined(CONFIG_BLK_DEV_BFD) || defined(CONFIG_BLK_DEV_BHD) || \
+    defined(CONFIG_BLK_DEV_ATA_CF)
+
+int ioctl_hdio_geometry(struct gendisk *hd, kdev_t dev, struct hd_geometry *loc)
+{
+    unsigned short minor = MINOR(dev);
+    int drive = minor >> hd->minor_shift;
+    struct drive_infot *drivep;
+    int err;
+
+    drivep = &hd->drive_info[drive];
+    err = verify_area(VERIFY_WRITE, (void *)loc, sizeof(struct hd_geometry));
+    if (!err) {
+        put_user_char(drivep->heads, &loc->heads);
+        put_user_char(drivep->sectors, &loc->sectors);
+        put_user(drivep->cylinders, &loc->cylinders);
+        put_user_long(hd->part[minor].start_sect, &loc->start);
+    }
+    return err;
+}
+
 void show_drive_info(struct drive_infot *drivep, const char *name, int drive, int count,
    const char *eol)
 {
@@ -393,3 +415,4 @@ void show_drive_info(struct drive_infot *drivep, const char *name, int drive, in
         }
     }
 }
+#endif
