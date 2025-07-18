@@ -335,7 +335,7 @@ void ata_reset(void)
     if (mode == AUTO)
     {
         mode = MODE_ATA;
-        if (arch_cpu < 6)           // prior to 80286 IBM PC/AT
+        if (arch_cpu < CPU_80286)       // prior to 80286 IBM PC/AT
             mode = MODE_XTCF;
     }
 #endif
