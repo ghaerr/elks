@@ -369,7 +369,7 @@ void ata_reset(void)
     if (use_8bitmode == AUTO)
     {
         use_8bitmode = 0;
-        if (arch_cpu < 6)
+        if (arch_cpu <= CPU_80186)
             use_8bitmode = 1;
     }
     if (use_8bitmode)

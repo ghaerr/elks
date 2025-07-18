@@ -73,7 +73,7 @@ int INITPROC xms_init(void)
 		return XMS_DISABLED;
 	}
 	/* check forced INT 15/1F or not 80286/80386 */
-	if (xms_bootopts == XMS_INT15 || arch_cpu < 6) {
+	if (xms_bootopts == XMS_INT15 || arch_cpu < CPU_80286) {
 #if AUTODISABLE
 		if (kernel_cs == 0xffff) {
 			/* BIOS INT 15/1F block_move disables A20 on most systems! */
@@ -84,7 +84,7 @@ int INITPROC xms_init(void)
 		printk("int 15/1F, ");
 		enabled = XMS_INT15;
 	} else {
-		if (arch_cpu == 6) {        /* 80286 only */
+		if (arch_cpu == CPU_80286) {/* 80286 only */
 			printk("LOADALL, ");
 			enabled = XMS_LOADALL;
 		} else {                    /* 80386 only */

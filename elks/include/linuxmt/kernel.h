@@ -17,8 +17,18 @@
 
 #define structof(p,t,m) ((t *) ((char *) (p) - offsetof (t,m)))
 
-extern char running_qemu;
+/* ordered arch_cpu values, used for feature selection */
+#define CPU_8088        0
+#define CPU_8086        1
+#define CPU_NECV20      2
+#define CPU_NECV30      3
+#define CPU_80188       4
+#define CPU_80186       5
+#define CPU_80286       6       /* first PC/AT */
+#define CPU_80386       7       /* 80386 or later, other CPUs not tested for */
+
 extern unsigned char arch_cpu;
+extern char running_qemu;
 extern dev_t dev_console;
 extern int debug_level;
 
