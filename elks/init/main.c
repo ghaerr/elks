@@ -45,6 +45,7 @@ int root_mountflags;
 int tracing;
 int nr_ext_bufs, nr_xms_bufs, nr_map_bufs;
 int xms_bootopts;
+int ata_mode = -1;              /* =AUTO default set ATA CF driver mode automatically */
 char running_qemu;
 static int boot_console;
 static segext_t umbtotal;
@@ -557,6 +558,10 @@ static int INITPROC parse_options(void)
         }
         if (!strncmp(line,"xmsbuf=",7)) {
             nr_xms_bufs = (int)simple_strtol(line+7, 10);
+            continue;
+        }
+        if (!strncmp(line,"xtide=",6)) {
+            ata_mode = (int)simple_strtol(line+6, 10);
             continue;
         }
         if (!strncmp(line,"cache=",6)) {

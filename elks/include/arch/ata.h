@@ -3,18 +3,36 @@
 
 #include <linuxmt/memory.h>
 
-/* ATA register offsets from base I/O address */
+/*
+ * Command block register offsets from base I/O address,
+ * for standard ATA and XTIDE v1.
+ * These offsets are shifted left 1 for XTCF operation,
+ * and the offsets have bits 0 and 3 swapped for XTIDE v2.
+ */
 
-#define ATA_REG_DATA       0
-#define ATA_REG_ERR        1
-#define ATA_REG_FEAT       1
-#define ATA_REG_CNT        2
-#define ATA_REG_LBA_LO     3
-#define ATA_REG_LBA_MD     4
-#define ATA_REG_LBA_HI     5
-#define ATA_REG_DRVH       6
-#define ATA_REG_CMD        7
-#define ATA_REG_STATUS     7
+#define ATA_REG_DATA        0       /* r/w */
+#define ATA_REG_ERR         1       /* r   */
+#define ATA_REG_FEAT        1       /*   w */
+#define ATA_REG_CNT         2       /* r/w */
+#define ATA_REG_LBA_LO      3       /* r/w */
+#define ATA_REG_LBA_MD      4       /* r/w */
+#define ATA_REG_LBA_HI      5       /* r/w */
+#define ATA_REG_DRVH        6       /* r/w */
+#define ATA_REG_STATUS      7       /* r   */
+#define ATA_REG_CMD         7       /*   w */
+#define ATA_REG_DATA_HI     8       /* r/w XTIDE only */
+
+/* XTIDE v2 block register offsets (a3/a0 swapped from ATA/XTIDE v1) */
+#define XTIDEV2_DATA        0       /* r/w */
+#define XTIDEV2_DATA_HI     1       /* r/w */
+#define XTIDEV2_CNT         2       /* r/w */
+#define XTIDEV2_LBA_MD      4       /* r/w */
+#define XTIDEV2_DRVH        6       /* r/w */
+#define XTIDEV2_ERR         8       /* r   */
+#define XTIDEV2_LBA_LO      10      /* r/w */
+#define XTIDEV2_LBA_HI      12      /* r/w */
+#define XTIDEV2_STATUS      14      /* r   */
+#define XTIDEV2_CMD         14      /*   w */
 
 /* ATA commands */
 
@@ -49,6 +67,8 @@
 /* ATA subdriver */
 
 #define ATA_SECTOR_SIZE     512
+
+extern int ata_mode;        /* ATA CF driver operating mode, /bootopts xtide= */
 
 void ata_reset(void);
 struct drive_infot;
