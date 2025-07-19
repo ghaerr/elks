@@ -21,7 +21,7 @@
  * DEVCTL                      0x307
  *
  * This code assumes only supports one ATA controller, and sets XTCF operation
- * on 8088/8086 CPUs, unless reconfigured below.
+ * on 8088/8086 CPUs, unless overriden using xtide= in /bootopts.
  *
  * This code uses LBA addressing for the disks. Any disks without
  * LBA support (they'd need to be pretty old) are simply ignored.
@@ -36,8 +36,8 @@
  * - read/write data
  * - wait till drive is not busy
  *
- * Caveat emptor: This code is based on the ATA specifications and
- * some common sense.
+ * Caveat emptor: This code is based on the ATA specifications,
+ * XTIDE Universal BIOS source, and some common sense.
  *
  * Ferry Hendrikx, June 2025
  * Greg Haerr, July 2025 Added XTCF and XTIDE support
