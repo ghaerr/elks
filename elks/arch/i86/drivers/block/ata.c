@@ -52,12 +52,13 @@
 #include <arch/io.h>
 #include <arch/ata.h>
 
-/* hardware controller access modes */
+/* hardware controller access modes, override using xtide= in /bootopts */
 #define MODE_ATA        0       /* standard - ATA at ports 0x1F0/0x3F6 */
 #define MODE_XTIDEv1    1       /* XTIDE rev1 - ATA at ports 0x300/0x30E, 8-bit I/O */
 #define MODE_XTIDEv2    2       /* XTIDE rev2 - XTIDE v1 with registers a0/a3 swapped */
 #define MODE_XTCF       3       /* XTCF - XTIDE v1 w/regs << 1 at ports 0x300/0x31C */
 #define MODE_SOLO86     4       /* XTCF at ports 0x40/0x5C, 16-bit I/O */
+#define MODE_MAX        4
 #define AUTO            (-1)    /* use MODE_ATA for PC/AT (286+), MODE_XTCF on PC/XT */
 
 /* hardware I/O port data xfer modes */
@@ -65,13 +66,8 @@
 #define XFER_8_XTCF     1       /* XTCF set 8-bit feature cmd, then xfer lo then hi */
 #define XFER_8_XTIDEv1  2       /* XTIDEv1 8-bit xfer hi at data+8 then lo at data+0 */
 
-/* configurable options - may have to be changed and kernel recompiled*/
+/* configurable options */
 
-#ifdef CONFIG_ARCH_SOLO86
-static int mode = MODE_SOLO86;
-#else
-static int mode = AUTO;         /* change this to force a particular controller */
-#endif
 static int xfer_mode = AUTO;    /* change this to force a particular I/O xfer method */
 
 /* default base port (change if required) ATA, XTIDEv1, XTIDEv2,  XTCF, SOLO86 */
@@ -108,9 +104,9 @@ static unsigned int ata_ctrl_port;
 /* convert register number to base port address */
 int BASE(int reg)
 {
-    if (mode >= MODE_XTCF)          /* XTCF uses SHL 1 register file */
+    if (ata_mode >= MODE_XTCF)          /* XTCF uses SHL 1 register file */
         reg <<= 1;
-    else if (mode == MODE_XTIDEv2)  /* XTIDEv2 uses a3/a0 swapped register file */
+    else if (ata_mode == MODE_XTIDEv2)  /* XTIDEv2 uses a3/a0 swapped register file */
         reg = xlate_XTIDEv2[reg];
     return ata_base_port + reg;
 }
@@ -362,8 +358,8 @@ static int ata_identify(unsigned int drive, unsigned char __far *buf)
     error = ata_cmd(drive, ATA_CMD_ID, 0, 0);
     if (error)
     {
-        printk("cf%c: not found at %x/%x (%d) mode %d\n",
-            drive+'a', ata_base_port, ata_ctrl_port, error, mode);
+        printk("cf%c: not found at %x/%x (%d) xtide=%d\n",
+            drive+'a', ata_base_port, ata_ctrl_port, error, ata_mode);
         return error;
     }
 
@@ -384,19 +380,23 @@ static int ata_identify(unsigned int drive, unsigned char __far *buf)
  */
 void ata_reset(void)
 {
+#ifdef CONFIG_ARCH_SOLO86
+    ata_mode = MODE_SOLO86;
+#endif
+
     // dynamically set controller access method and I/O port addresses
 
-    if (mode == AUTO)
+    if (ata_mode == AUTO || ata_mode > MODE_MAX)
     {
         if (arch_cpu < CPU_80286)       // XTCF is default for 8088/8086 systems
-            mode = MODE_XTCF;
+            ata_mode = MODE_XTCF;
         else
-            mode = MODE_ATA;            // otherwise standard ATA
+            ata_mode = MODE_ATA;        // otherwise standard ATA
     }
 
     if (xfer_mode == AUTO)
     {
-        switch (mode) {
+        switch (ata_mode) {
         case MODE_ATA:
         case MODE_SOLO86:
         case MODE_XTIDEv2:
@@ -412,13 +412,12 @@ void ata_reset(void)
     }
 
     // set base port I/O address from emulation mode
-    ata_base_port = def_base_ports[mode];
+    ata_base_port = def_base_ports[ata_mode];
 
     // set device control register 6 I/O address
-    ata_ctrl_port = BASE(6) + ctrl_offsets[mode];
-    if (mode == MODE_XTIDEv2)
+    ata_ctrl_port = BASE(6) + ctrl_offsets[ata_mode];
+    if (ata_mode == MODE_XTIDEv2)
         ata_ctrl_port ^= 0b1001;        // tricky swap A0 and A3 works only for reg 6
-    printk("BASE %x base(7) %x ctrl %x\n", ata_base_port, BASE(7), ata_ctrl_port);
 
     // controller reset
 
@@ -474,8 +473,8 @@ int ata_init(int drive, struct drive_infot *drivep)
         // now display extra info: ATA LBA sector total, version and sector size
 
         total = (sector_t)buffer[ATA_INFO_SECT_HI] << 16 | buffer[ATA_INFO_SECT_LO];
-        printk("%luK VER %x/%d mode %d", total >> 1, buffer[ATA_INFO_VER_MAJ],
-            buffer[ATA_INFO_SECT_SZ], mode);
+        printk("%luK VER %x/%d xtide=%d", total >> 1, buffer[ATA_INFO_VER_MAJ],
+            buffer[ATA_INFO_SECT_SZ], ata_mode);
 
         // Sanity check
         if ((buffer[ATA_INFO_CYLS] == 0 || buffer[ATA_INFO_CYLS] > 0x7F00) ||

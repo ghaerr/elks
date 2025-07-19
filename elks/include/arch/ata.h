@@ -68,6 +68,8 @@
 
 #define ATA_SECTOR_SIZE     512
 
+extern int ata_mode;        /* ATA CF driver operating mode, /bootopts xtide= */
+
 void ata_reset(void);
 struct drive_infot;
 int ata_init(int drive, struct drive_infot *drivep);
