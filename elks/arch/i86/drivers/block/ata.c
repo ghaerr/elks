@@ -3,16 +3,25 @@
  *
  *  Supports dynamic I/O port setup of ATA, XTIDE, XTCF and SOLO/86 controllers:
  *
- *             ATA             XTIDE           XTCF                SOLO/86
+ *             ATA             XTIDE v1        XTCF                SOLO/86
  * BASE        0x1F0           0x300           0x300               0x40
  * BASE+reg    0x1F0+reg       0x300+reg       0x300+(reg<<1)      0x40+(reg<<1)
+ * I/O         16-bit          8-bit           8-bit               16-bit
+ *
+ *                             XTIDE v2 (high speed mode)
+ * BASE+reg                    0x300+swapA0A3(reg)
  *
  * CTRL        BASE+0x200+reg  BASE+0x08+reg   BASE+0x10+(reg<<1)  BASE+0x10+(reg<<1)
- * CTRL+6      0x3F6           0x30E           0x31C               0x5C
- * DEVCTRL     BASE+0x206      BASE+0x0E       BASE+0x1C           BASE+0x1C
+ * CTRL+6      BASE+0x206      BASE+0x0E       BASE+0x1C           BASE+0x1C
+ * DEVCTL      0x3F6           0x30E           0x31C               0x5C
  *
- * This code assumes there is only one ATA controller, and normally tries to
- * set 8-bit transfer mode on 8088/8086/NEC V20 CPUs.
+ *                             XTIDE v2 (high speed mode)
+ * CTRL                        BASE+swapA0A3(0x08+reg)
+ * CTRL+6                      BASE+swapA0A3(0x0E)
+ * DEVCTL                      0x307
+ *
+ * This code assumes only supports one ATA controller, and sets XTCF operation
+ * on 8088/8086 CPUs, unless reconfigured below.
  *
  * This code uses LBA addressing for the disks. Any disks without
  * LBA support (they'd need to be pretty old) are simply ignored.
@@ -31,7 +40,7 @@
  * some common sense.
  *
  * Ferry Hendrikx, June 2025
- * Greg Haerr, July 2025 Added XTCF support
+ * Greg Haerr, July 2025 Added XTCF and XTIDE support
  **********************************************************************/
 
 #include <linuxmt/config.h>
@@ -44,27 +53,44 @@
 #include <arch/ata.h>
 
 /* hardware controller access modes */
-#define MODE_ATA    0           /* standard - ATA at ports 0x1F0/0x3F6 */
-#define MODE_XTIDE  1           /* XTIDE - ATA at ports 0x300/0x30E */
-#define MODE_XTCF   2           /* XTCF - non-standard ATA at ports 0x300/0x31C */
-#define MODE_SOLO86 3           /* XTCF at ports 0x40/0x5C, 16-bit I/O */
-#define AUTO        (-1)        /* use MODE_ATA for PC/AT (286+), MODE_XTCF on PC/XT */
+#define MODE_ATA        0       /* standard - ATA at ports 0x1F0/0x3F6 */
+#define MODE_XTIDEv1    1       /* XTIDE rev1 - ATA at ports 0x300/0x30E, 8-bit I/O */
+#define MODE_XTIDEv2    2       /* XTIDE rev2 - XTIDE v1 with registers a0/a3 swapped */
+#define MODE_XTCF       3       /* XTCF - XTIDE v1 w/regs << 1 at ports 0x300/0x31C */
+#define MODE_SOLO86     4       /* XTCF at ports 0x40/0x5C, 16-bit I/O */
+#define AUTO            (-1)    /* use MODE_ATA for PC/AT (286+), MODE_XTCF on PC/XT */
 
-/* hardware I/O port xfer modes */
-#define XFER_16BIT  0           /* standard 16-bit ATA I/O */
-#define XFER_8XTCF  1           /* XTCF set 8-bit feature cmd, then xfer lo then hi */
-#define XFER_8XTIDE 2           /* XTIDE 8-bit xfer hi at data+8 then lo at data+0 */
+/* hardware I/O port data xfer modes */
+#define XFER_16         0       /* ATA/XTIDEv2 16-bit I/O */
+#define XFER_8_XTCF     1       /* XTCF set 8-bit feature cmd, then xfer lo then hi */
+#define XFER_8_XTIDEv1  2       /* XTIDEv1 8-bit xfer hi at data+8 then lo at data+0 */
 
 /* configurable options - may have to be changed and kernel recompiled*/
 
+#ifdef CONFIG_ARCH_SOLO86
+static int mode = MODE_SOLO86;
+#else
 static int mode = AUTO;         /* change this to force a particular controller */
+#endif
 static int xfer_mode = AUTO;    /* change this to force a particular I/O xfer method */
 
-/* default base port (change if required)   ATA, XTIDE,  XTCF, SOLO86 */
-static unsigned int def_base_ports[4] = { 0x1F0, 0x300, 0x300, 0x40 };
+/* default base port (change if required) ATA, XTIDEv1, XTIDEv2,  XTCF, SOLO86 */
+static unsigned int def_base_ports[5] = { 0x1F0, 0x300,   0x300, 0x300, 0x40 };
 
 /* control register offsets from base ports (should not need changing) */
-static unsigned int ctrl_offsets[4] =   { 0x200, 0x08, 0x10, 0x10 };
+static unsigned int ctrl_offsets[5] =   { 0x200,  0x08,    0x08,  0x10, 0x10 };
+
+/* table to translate from ATA -> XTIDEV2 register file */
+static unsigned int xlate_XTIDEv2[8] = {
+    XTIDEV2_DATA,
+    XTIDEV2_ERR,
+    XTIDEV2_CNT,
+    XTIDEV2_LBA_LO,
+    XTIDEV2_LBA_MD,
+    XTIDEV2_LBA_HI,
+    XTIDEV2_DRVH,
+    XTIDEV2_STATUS
+};
 
 /* wait loop counts while busy waiting (FIXME: use jiffies for accuracy) */
 #define SHORT_WAIT  500
@@ -75,12 +101,19 @@ static unsigned int ctrl_offsets[4] =   { 0x200, 0x08, 0x10, 0x10 };
 static unsigned int ata_base_port;
 static unsigned int ata_ctrl_port;
 
-/* convert register number to base port address */
-#define BASE(reg)   ((mode < MODE_XTCF)? (ata_base_port+reg): (ata_base_port+((reg)<<1)))
-
 /**********************************************************************
  * ATA support functions
  **********************************************************************/
+
+/* convert register number to base port address */
+int BASE(int reg)
+{
+    if (mode >= MODE_XTCF)          /* XTCF uses SHL 1 register file */
+        reg <<= 1;
+    else if (mode == MODE_XTIDEv2)  /* XTIDEv2 uses a3/a0 swapped register file */
+        reg = xlate_XTIDEv2[reg];
+    return ata_base_port + reg;
+}
 
 /* input byte from translated register number */
 static unsigned char INB(int reg)
@@ -147,7 +180,7 @@ static void read_ioport(int port, unsigned char __far *buffer, size_t count)
     unsigned short word;
 
     switch (xfer_mode) {
-    case XFER_16BIT:
+    case XFER_16:
         for (i = 0; i < count; i+=2)
         {
             word = inw(port);
@@ -157,12 +190,12 @@ static void read_ioport(int port, unsigned char __far *buffer, size_t count)
         }
         break;
 
-    case XFER_8XTCF:
+    case XFER_8_XTCF:
         for (i = 0; i < count; i++)
             *buffer++ = inb(port);
         break;
 
-    case XFER_8XTIDE:
+    case XFER_8_XTIDEv1:
         for (i = 0; i < count; i+=2)
         {
             *buffer++=  inb(port);      // lo byte first when reading
@@ -179,7 +212,7 @@ static void write_ioport(int port, unsigned char __far *buffer, size_t count)
     unsigned short word;
 
     switch (xfer_mode) {
-    case XFER_16BIT:
+    case XFER_16:
         for (i = 0; i < count; i+=2)
         {
             word = *buffer++;
@@ -188,12 +221,12 @@ static void write_ioport(int port, unsigned char __far *buffer, size_t count)
         }
         break;
 
-    case XFER_8XTCF:
+    case XFER_8_XTCF:
         for (i = 0; i < count; i++)
             outb(*buffer++, port);
         break;
 
-    case XFER_8XTIDE:
+    case XFER_8_XTIDEv1:
         for (i = 0; i < count; i+=2)
         {
             word = *buffer++;           // save low byte
@@ -261,11 +294,11 @@ static int ata_set8bitmode(void)
 
     if (status & ATA_STATUS_ERR)
     {
-        printk("cf: can't set 8-bit transfer mode (error %02xh)\n", INB(ATA_REG_ERR));
+        printk("cfa: can't set 8-bit transfer mode (error %02xh)\n", INB(ATA_REG_ERR));
         return -EINVAL;
     }
 
-    printk("cf: setting 8-bit transfer mode\n");
+    printk("cfa: setting 8-bit transfer mode\n");
     return 0;
 }
 
@@ -329,8 +362,8 @@ static int ata_identify(unsigned int drive, unsigned char __far *buf)
     error = ata_cmd(drive, ATA_CMD_ID, 0, 0);
     if (error)
     {
-        printk("cf%c: not found at %x/%x (%d)\n",
-            drive+'a', ata_base_port, ata_ctrl_port, error);
+        printk("cf%c: not found at %x/%x (%d) mode %d\n",
+            drive+'a', ata_base_port, ata_ctrl_port, error, mode);
         return error;
     }
 
@@ -351,25 +384,41 @@ static int ata_identify(unsigned int drive, unsigned char __far *buf)
  */
 void ata_reset(void)
 {
-    // dynamically set I/O port addresses
+    // dynamically set controller access method and I/O port addresses
 
-#ifdef CONFIG_ARCH_SOLO86
-    mode = MODE_SOLO86;
-    xfer_mode = XFER_16BIT;
-#else
     if (mode == AUTO)
     {
-        mode = MODE_ATA;
-        if (arch_cpu < CPU_80286)       // prior to 80286 IBM PC/AT
+        if (arch_cpu < CPU_80286)       // XTCF is default for 8088/8086 systems
             mode = MODE_XTCF;
+        else
+            mode = MODE_ATA;            // otherwise standard ATA
     }
-#endif
+
+    if (xfer_mode == AUTO)
+    {
+        switch (mode) {
+        case MODE_ATA:
+        case MODE_SOLO86:
+        case MODE_XTIDEv2:
+            xfer_mode = XFER_16;
+            break;
+        case MODE_XTIDEv1:
+            xfer_mode = XFER_8_XTIDEv1;
+            break;
+        case MODE_XTCF:
+            xfer_mode = XFER_8_XTCF;
+            break;
+        }
+    }
 
     // set base port I/O address from emulation mode
     ata_base_port = def_base_ports[mode];
 
     // set device control register 6 I/O address
     ata_ctrl_port = BASE(6) + ctrl_offsets[mode];
+    if (mode == MODE_XTIDEv2)
+        ata_ctrl_port ^= 0b1001;        // tricky swap A0 and A3 works only for reg 6
+    printk("BASE %x base(7) %x ctrl %x\n", ata_base_port, BASE(7), ata_ctrl_port);
 
     // controller reset
 
@@ -387,27 +436,12 @@ void ata_reset(void)
 
     ata_delay();
 
-    // 8-bit transfer is default for 8086/80186 systems
-
-    if (xfer_mode == AUTO)
-    {
-        if (arch_cpu <= CPU_80186)
-        {
-            if (mode == MODE_XTIDE)
-                xfer_mode = XFER_8XTIDE;
-            else
-                xfer_mode = XFER_8XTCF;
-        }
-        else
-            xfer_mode = XFER_16BIT;
-    }
-
     // try and turn on 8-bit mode, fallback to 16-bit if controller can't handle it
 
-    if (xfer_mode == XFER_8XTCF)
+    if (xfer_mode == XFER_8_XTCF)
     {
         if (ata_set8bitmode() < 0)
-            xfer_mode = XFER_16BIT;
+            xfer_mode = XFER_16;
     }
 }
 
@@ -440,8 +474,8 @@ int ata_init(int drive, struct drive_infot *drivep)
         // now display extra info: ATA LBA sector total, version and sector size
 
         total = (sector_t)buffer[ATA_INFO_SECT_HI] << 16 | buffer[ATA_INFO_SECT_LO];
-        printk("%luK VER %x/%d ", total >> 1, buffer[ATA_INFO_VER_MAJ],
-            buffer[ATA_INFO_SECT_SZ]);
+        printk("%luK VER %x/%d mode %d", total >> 1, buffer[ATA_INFO_VER_MAJ],
+            buffer[ATA_INFO_SECT_SZ], mode);
 
         // Sanity check
         if ((buffer[ATA_INFO_CYLS] == 0 || buffer[ATA_INFO_CYLS] > 0x7F00) ||
