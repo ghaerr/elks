@@ -45,6 +45,7 @@
 
 #include <linuxmt/config.h>
 #include <linuxmt/kernel.h>
+#include <linuxmt/sched.h>
 #include <linuxmt/genhd.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/heap.h>
@@ -88,9 +89,9 @@ static unsigned int xlate_XTIDEv2[8] = {
     XTIDEV2_STATUS
 };
 
-/* wait loop counts while busy waiting (FIXME: use jiffies for accuracy) */
-#define SHORT_WAIT  500
-#define LONG_WAIT   5000        /* FIXME: 14s wait required for some writes */
+/* wait loop 10ms ticks while busy waiting */
+#define WAIT_50MS   (5*HZ/100)      /* 5/100 sec = 50ms while busy */
+#define WAIT_10SEC  (10*HZ)         /* 10 sec wait for read/write */
 
 /* end of configurable options */
 
@@ -101,7 +102,7 @@ static unsigned int ata_ctrl_port;
  * ATA support functions
  **********************************************************************/
 
-/* convert register number to base port address */
+/* convert register number to command block port address */
 int BASE(int reg)
 {
     if (ata_mode >= MODE_XTCF)          /* XTCF uses SHL 1 register file */
@@ -124,36 +125,24 @@ static void OUTB(unsigned int byte, int reg)
     outb(byte, BASE(reg));
 }
 
-/**
- * ATA delay
- */
-static void ata_delay(void)
+/* delay 10ms */
+static void delay_10ms(void)
 {
-    int i = 1000;
+    unsigned long timeout = jiffies + 1 + 1;    /* guarantee at least 10ms interval */
 
-    while (i--) asm("nop");
+    while (!time_after(jiffies, timeout))
+        continue;
 }
 
 /**
- * ATA delay 400ns
+ * ATA wait 10ms ticks until not busy
  */
-static void ata_delay_400(void)
+static int ata_wait(unsigned int ticks)
 {
-    int i;
-
-    for (i = 0; i < 15; i++)
-        INB(ATA_REG_STATUS);
-}
-
-/**
- * ATA wait until not busy
- */
-static int ata_wait(int loops)
-{
-    int i;
+    unsigned long timeout = jiffies + ticks + 1;
     unsigned char status;
 
-    for (i = 0; i < loops; i++)
+    do
     {
         status = INB(ATA_REG_STATUS);
 
@@ -162,8 +151,7 @@ static int ata_wait(int loops)
         if ((status & ATA_STATUS_BSY) == 0)
             return 0;
 
-        ata_delay();
-    }
+    } while (!time_after(jiffies, timeout));
 
     return -ENXIO;
 }
@@ -238,33 +226,7 @@ static void write_ioport(int port, unsigned char __far *buffer, size_t count)
  **********************************************************************/
 
 /**
- * ATA select drive
- */
-static int ata_select(unsigned int drive, unsigned int cmd, unsigned long sector)
-{
-    unsigned char select = 0xA0 | 0x40 | (drive << 4) | ((sector >> 24) & 0x0F);
-    int error;
-
-    // wait for drive to be non-busy
-
-    error = ata_wait(SHORT_WAIT);
-    if (error)
-        return error;
-
-    // send
-
-    OUTB(select, ATA_REG_DRVH);
-
-    ata_delay_400();
-
-    // wait for drive to be non-busy
-
-    return ata_wait(SHORT_WAIT);
-}
-
-
-/**
- * ATA set 8-bit transfer mode if possible
+ * ATA try setting 8-bit transfer mode, may be unimplemented by controller
  */
 static int ata_set8bitmode(void)
 {
@@ -279,7 +241,7 @@ static int ata_set8bitmode(void)
 
     // wait for drive to be not-busy
 
-    error = ata_wait(SHORT_WAIT);
+    error = ata_wait(WAIT_50MS);
     if (error)
         return error;
 
@@ -296,6 +258,31 @@ static int ata_set8bitmode(void)
 
     printk("cfa: setting 8-bit transfer mode\n");
     return 0;
+}
+
+/**
+ * ATA select drive
+ */
+static int ata_select(unsigned int drive, unsigned int cmd, unsigned long sector)
+{
+    unsigned char select = 0xA0 | 0x40 | (drive << 4) | ((sector >> 24) & 0x0F);
+    int error;
+
+    // wait for drive to be non-busy
+
+    error = ata_wait(WAIT_50Ms);
+    if (error)
+        return error;
+
+    // select drive and wait 10ms
+
+    OUTB(select, ATA_REG_DRVH);
+
+    delay_10ms();
+
+    // wait for drive to be non-busy
+
+    return ata_wait(WAIT_50Ms);
 }
 
 /**
@@ -324,7 +311,7 @@ static int ata_cmd(unsigned int drive, unsigned int cmd, unsigned long sector,
 
     // wait for drive to be not-busy
 
-    error = ata_wait(cmd == ATA_CMD_READ? LONG_WAIT: SHORT_WAIT);
+    error = ata_wait(cmd == ATA_CMD_READ? WAIT_10SEC: WAIT_50Ms);
     if (error)
         return error;
 
@@ -367,7 +354,7 @@ static int ata_identify(unsigned int drive, unsigned char __far *buf)
 
     read_ioport(BASE(ATA_REG_DATA), buf, ATA_SECTOR_SIZE);
 
-    return ata_wait(SHORT_WAIT);
+    return ata_wait(WAIT_50MS);
 }
 
 
@@ -423,17 +410,17 @@ void ata_reset(void)
 
     OUTB(0xA0, ATA_REG_DRVH);
 
-    ata_delay();
+    delay_10ms();
 
     // set nIEN and SRST bits
     outb(0x06, ata_ctrl_port);
 
-    ata_delay();
+    delay_10ms();
 
     // set nIEN bit (and clear SRST bit)
     outb(0x02, ata_ctrl_port);
 
-    ata_delay();
+    delay_10ms();
 
     // try and turn on 8-bit mode, fallback to 16-bit if controller can't handle it
 
@@ -536,7 +523,7 @@ int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
         read_ioport(BASE(ATA_REG_DATA), buffer, ATA_SECTOR_SIZE);
     }
 
-    return ata_wait(SHORT_WAIT);
+    return ata_wait(WAIT_50MS);
 }
 
 
@@ -579,5 +566,5 @@ int ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
     }
 
 
-    return ata_wait(LONG_WAIT);
+    return ata_wait(WAIT_10SEC);
 }
