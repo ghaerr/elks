@@ -85,7 +85,7 @@ static unsigned int xlate_XTIDEv2[8] = {
     XTIDEV2_LBA_LO,
     XTIDEV2_LBA_MD,
     XTIDEV2_LBA_HI,
-    XTIDEV2_DRVH,
+    XTIDEV2_SELECT,
     XTIDEV2_STATUS
 };
 
@@ -276,7 +276,7 @@ static int ata_select(unsigned int drive, unsigned int cmd, unsigned long sector
 
     // select drive and wait 10ms
 
-    OUTB(select, ATA_REG_DRVH);
+    OUTB(select, ATA_REG_SELECT);
 
     delay_10ms();
 
@@ -345,8 +345,8 @@ static int ata_identify(unsigned int drive, unsigned char __far *buf)
     error = ata_cmd(drive, ATA_CMD_ID, 0, 0);
     if (error)
     {
-        printk("cf%c: not found at %x/%x (%d) xtide=%d\n",
-            drive+'a', ata_base_port, ata_ctrl_port, error, ata_mode);
+        printk("cf%c: not found at %x/%x (%d) xtide=%d,%d\n",
+            drive+'a', ata_base_port, ata_ctrl_port, error, ata_mode, xfer_mode);
         return error;
     }
 
@@ -365,8 +365,10 @@ static int ata_identify(unsigned int drive, unsigned char __far *buf)
 /**
  * reset the ATA interface
  */
-void ata_reset(void)
+int ata_reset(void)
 {
+    unsigned char byte;
+
 #ifdef CONFIG_ARCH_SOLO86
     ata_mode = MODE_SOLO86;
 #endif
@@ -399,27 +401,37 @@ void ata_reset(void)
     }
 
     // set base port I/O address from emulation mode
+
     ata_base_port = def_base_ports[ata_mode];
 
     // set device control register 6 I/O address
+
     ata_ctrl_port = BASE(6) + ctrl_offsets[ata_mode];
     if (ata_mode == MODE_XTIDEv2)
         ata_ctrl_port ^= 0b1001;        // tricky swap A0 and A3 works only for reg 6
 
     // controller reset
 
-    OUTB(0xA0, ATA_REG_DRVH);
-
+    byte = INB(ATA_REG_SELECT);
+    OUTB(0xA0, ATA_REG_SELECT);
     delay_10ms();
+    if (INB(ATA_REG_SELECT) != 0xA0)    // FIXME try probe w/message only for now
+    {
+        printk("cf: probe failed at %x/%x (%x) xtide=%d\n",
+            ata_base_port, ata_ctrl_port, byte, ata_mode);
+        printk("cf: probe failed %x\n", byte);
+        OUTB(byte, ATA_REG_SELECT);
+        //return -ENODEV;
+    }
 
     // set nIEN and SRST bits
-    outb(0x06, ata_ctrl_port);
 
+    outb(0x06, ata_ctrl_port);
     delay_10ms();
 
     // set nIEN bit (and clear SRST bit)
-    outb(0x02, ata_ctrl_port);
 
+    outb(0x02, ata_ctrl_port);
     delay_10ms();
 
     // try and turn on 8-bit mode, fallback to 16-bit if controller can't handle it
@@ -429,6 +441,7 @@ void ata_reset(void)
         if (ata_set8bitmode() < 0)
             xfer_mode = XFER_16;
     }
+    return 0;
 }
 
 
@@ -460,8 +473,8 @@ int ata_init(int drive, struct drive_infot *drivep)
         // now display extra info: ATA LBA sector total, version and sector size
 
         total = (sector_t)buffer[ATA_INFO_SECT_HI] << 16 | buffer[ATA_INFO_SECT_LO];
-        printk("%luK VER %x/%d xtide=%d", total >> 1, buffer[ATA_INFO_VER_MAJ],
-            buffer[ATA_INFO_SECT_SZ], ata_mode);
+        printk("%luK VER %x/%d xtide=%d,%d", total >> 1, buffer[ATA_INFO_VER_MAJ],
+            buffer[ATA_INFO_SECT_SZ], ata_mode, xfer_mode);
 
         // Sanity check
         if ((buffer[ATA_INFO_CYLS] == 0 || buffer[ATA_INFO_CYLS] > 0x7F00) ||
