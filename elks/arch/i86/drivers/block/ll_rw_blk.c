@@ -380,8 +380,6 @@ void INITPROC blk_dev_init(void)
     struct gendisk *atadisk = ata_cf_init();
 #endif
 
-    set_irq();          /* interrupts enabled for possible disk I/O */
-
 #ifdef CONFIG_BLK_DEV_BHD
     if (biosdisk)
         init_partitions(biosdisk);

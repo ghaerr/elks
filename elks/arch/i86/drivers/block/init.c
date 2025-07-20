@@ -36,7 +36,10 @@ int boot_rootdev;       /* set by /bootopts options if configured*/
 void INITPROC device_init(void)
 {
     chr_dev_init();
-    blk_dev_init();     /* interrupts enabled here prior to partition table reading */
+
+    set_irq();          /* interrupts enabled for possible disk I/O or timers */
+
+    blk_dev_init();
 
 #if defined(CONFIG_BLK_DEV_BFD) || defined(CONFIG_BLK_DEV_BHD) || \
     defined(CONFIG_BLK_DEV_FD) || defined(CONFIG_BLK_DEV_ATA_CF)
