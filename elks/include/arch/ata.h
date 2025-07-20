@@ -17,7 +17,7 @@
 #define ATA_REG_LBA_LO      3       /* r/w */
 #define ATA_REG_LBA_MD      4       /* r/w */
 #define ATA_REG_LBA_HI      5       /* r/w */
-#define ATA_REG_DRVH        6       /* r/w */
+#define ATA_REG_SELECT      6       /* r/w */
 #define ATA_REG_STATUS      7       /* r   */
 #define ATA_REG_CMD         7       /*   w */
 #define ATA_REG_DATA_HI     8       /* r/w XTIDE only */
@@ -27,7 +27,7 @@
 #define XTIDEV2_DATA_HI     1       /* r/w */
 #define XTIDEV2_CNT         2       /* r/w */
 #define XTIDEV2_LBA_MD      4       /* r/w */
-#define XTIDEV2_DRVH        6       /* r/w */
+#define XTIDEV2_SELECT      6       /* r/w */
 #define XTIDEV2_ERR         8       /* r   */
 #define XTIDEV2_LBA_LO      10      /* r/w */
 #define XTIDEV2_LBA_HI      12      /* r/w */
@@ -70,7 +70,7 @@
 
 extern int ata_mode;        /* ATA CF driver operating mode, /bootopts xtide= */
 
-void ata_reset(void);
+int ata_reset(void);
 struct drive_infot;
 int ata_init(int drive, struct drive_infot *drivep);
 int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg);
