@@ -1,4 +1,4 @@
-## 1023 max
+## /bootopts 1023 max
 #TZ=MDT6
 #LOCALIP=10.0.2.16
 #HOSTNAME=elks16
@@ -11,7 +11,7 @@ hma=kernel
 xms=on
 #xms=int15
 #xmsbuf=0
-#xtide=2
+#xtide=3 # 0=ATA, 1=XTIDEv1, 2=XTIDEv2 (high speed), 3=XTCF
 #task=16 buf=64 cache=8 file=64 inode=96 heap=44000 # std
 #task=6 buf=8 cache=4 file=20 inode=24 heap=15000 n # min
 #sync=30
