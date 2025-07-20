@@ -270,7 +270,7 @@ static int ata_select(unsigned int drive, unsigned int cmd, unsigned long sector
 
     // wait for drive to be non-busy
 
-    error = ata_wait(WAIT_50Ms);
+    error = ata_wait(WAIT_50MS);
     if (error)
         return error;
 
@@ -282,7 +282,7 @@ static int ata_select(unsigned int drive, unsigned int cmd, unsigned long sector
 
     // wait for drive to be non-busy
 
-    return ata_wait(WAIT_50Ms);
+    return ata_wait(WAIT_50MS);
 }
 
 /**
@@ -311,7 +311,7 @@ static int ata_cmd(unsigned int drive, unsigned int cmd, unsigned long sector,
 
     // wait for drive to be not-busy
 
-    error = ata_wait(cmd == ATA_CMD_READ? WAIT_10SEC: WAIT_50Ms);
+    error = ata_wait(cmd == ATA_CMD_READ? WAIT_10SEC: WAIT_50MS);
     if (error)
         return error;
 
