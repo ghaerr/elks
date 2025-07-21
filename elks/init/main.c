@@ -95,7 +95,6 @@ static struct {
 } opts;
 
 extern int boot_rootdev;
-static char * INITPROC root_dev_name(int dev);
 static int INITPROC parse_options(void);
 static void INITPROC finalize_options(void);
 static char * INITPROC option(char *s);
@@ -321,7 +320,6 @@ static void init_task(void)
     do_init_task();
 }
 
-#ifdef CONFIG_BOOTOPTS
 static struct dev_name_struct {
     const char *name;
     int num;
@@ -350,7 +348,7 @@ static struct dev_name_struct {
  * Convert a root device number to name.
  * Device number could be bios device, not kdev_t.
  */
-static char * INITPROC root_dev_name(int dev)
+char *root_dev_name(kdev_t dev)
 {
     int i;
 #define NAMEOFF 13
@@ -371,6 +369,7 @@ static char * INITPROC root_dev_name(int dev)
     return NULL;
 }
 
+#ifdef CONFIG_BOOTOPTS
 /*
  * Convert a /dev/ name to device number.
  */
