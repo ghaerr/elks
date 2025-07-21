@@ -12,6 +12,7 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/genhd.h>
+#include <linuxmt/devnum.h>
 #include <linuxmt/debug.h>
 #include <arch/ata.h>
 
@@ -66,6 +67,10 @@ struct gendisk * INITPROC ata_cf_init(void)
 
     // register device
 
+    if (dev_disabled(DEV_CFA)) {
+        printk("cfa: disabled\n");
+        return NULL;
+    }
     if (register_blkdev(MAJOR_NR, DEVICE_NAME, &ata_cf_fops))
         return NULL;
     blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;

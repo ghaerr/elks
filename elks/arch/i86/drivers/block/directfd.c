@@ -81,6 +81,7 @@
 #include <linuxmt/string.h>
 #include <linuxmt/heap.h>
 #include <linuxmt/genhd.h>
+#include <linuxmt/devnum.h>
 #include <linuxmt/debug.h>
 
 #include <arch/dma.h>
@@ -1505,6 +1506,10 @@ static int DFPROC floppy_register(void)
 
 void INITPROC floppy_init(void)
 {
+    if (dev_disabled(DEV_DF0)) {
+        printk("df0: disabled\n");
+        return;
+    }
     if (register_blkdev(MAJOR_NR, DEVICE_NAME, &floppy_fops))
         return;
     blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;

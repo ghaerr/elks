@@ -43,8 +43,9 @@
 #include <linuxmt/string.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/memory.h>
-#include <linuxmt/debug.h>
 #include <linuxmt/timer.h>
+#include <linuxmt/devnum.h>
+#include <linuxmt/debug.h>
 
 #include <arch/io.h>
 #include <arch/segment.h>
@@ -74,8 +75,8 @@ struct elks_disk_parms {
 } __attribute__((packed));
 
 static int bioshd_initialized = 0;
-static int fd_count = 0;                /* number of floppy disks */
-static int hd_count = 0;                /* number of hard disks */
+static int fd_count;                    /* number of floppy disks */
+static int hd_count;                    /* number of hard disks */
 
 static int access_count[NUM_DRIVES];    /* device open count */
 struct drive_infot drive_info[NUM_DRIVES];   /* operating drive info */
@@ -356,16 +357,24 @@ static struct file_operations bioshd_fops = {
 
 struct gendisk * INITPROC bioshd_init(void)
 {
-    /* FIXME perhaps remove for speed on floppy boot*/
-    outb_p(0x0C, FDC_DOR);      /* FD motors off, enable IRQ and DMA*/
-
 #if defined(CONFIG_BLK_DEV_BFD) || defined(CONFIG_BLK_DEV_BFD_HARD)
-    fd_count = bios_getfdinfo(&drive_info[DRIVE_FD0]);
+    if (dev_disabled(DEV_FD0))
+        printk("fd0: disabled\n");
+    else
+        fd_count = bios_getfdinfo(&drive_info[DRIVE_FD0]);
 #endif
 #ifdef CONFIG_BLK_DEV_BHD
-    hd_count = bios_gethdinfo(&drive_info[DRIVE_HD0]);
-    bioshd_gendisk.nr_hd = hd_count;
+    if (dev_disabled(DEV_HDA))
+        printk("hda: disabled\n");
+    else
+        hd_count = bioshd_gendisk.nr_hd = bios_gethdinfo(&drive_info[DRIVE_HD0]);
 #endif
+
+    if (!(fd_count + hd_count))
+        return NULL;
+
+    /* FIXME perhaps remove for speed on floppy boot*/
+    outb_p(0x0C, FDC_DOR);      /* FD motors off, enable IRQ and DMA*/
 
 #ifdef PER_DRIVE_INFO
     {
@@ -389,9 +398,6 @@ struct gendisk * INITPROC bioshd_init(void)
 #endif
 #endif
 #endif /* PER_DRIVE_INFO */
-
-    if (!(fd_count + hd_count))
-        return NULL;
 
     if (register_blkdev(MAJOR_NR, DEVICE_NAME, &bioshd_fops))
         return NULL;
