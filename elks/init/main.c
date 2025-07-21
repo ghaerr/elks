@@ -33,7 +33,10 @@
 #define MAX_INIT_SLEN   80      /* max # words of args + environ passed to /bin/init */
 #define MAX_UMB         3       /* max umb= segments in /bootopts */
 
+#define ARRAYLEN(a)     (sizeof(a)/sizeof(a[0]))
+
 struct netif_parms netif_parms[MAX_ETHS] = {
+
     /* NOTE:  The order must match the defines in netstat.h:
      * ETH_NE2K, ETH_WD, ETH_EL3    */
     { NE2K_IRQ, NE2K_PORT, 0, NE2K_FLAGS },
@@ -49,6 +52,7 @@ int ata_mode = -1;              /* =AUTO default set ATA CF driver mode automati
 char running_qemu;
 static int boot_console;
 static segext_t umbtotal;
+static kdev_t disabled[4];      /* disabled devices using disable= */
 static char bininit[] = "/bin/init";
 static char binshell[] = "/bin/sh";
 #ifdef CONFIG_SYS_NO_BININIT
@@ -443,6 +447,32 @@ static void INITPROC parse_umb(char *line)
     } while((p = strchr(p+1, ',')));
 }
 
+static void INITPROC parse_disable(char *line)
+{
+    char *p = line;
+    kdev_t dev;
+    int n = 0;
+
+    do {
+        dev = parse_dev(p);
+        disabled[n++] = dev;
+        p = strchr(p+1, ',');
+        if (p)
+            *p++ = 0;
+    } while (p && n < ARRAYLEN(disabled));
+}
+
+/* return true if device disabled in disable= list */
+int INITPROC dev_disabled(int dev)
+{
+    int i;
+
+    for (i=0; i < ARRAYLEN(disabled); i++)
+        if (disabled[i] == dev)
+            return 1;
+    return 0;
+}
+
 /*
  * Boot-time kernel and /bin/init configuration - /bootopts options parser,
  * read early in kernel startup.
@@ -590,6 +620,10 @@ static int INITPROC parse_options(void)
         }
         if (!strncmp(line,"umb=",4)) {
             parse_umb(line+4);
+            continue;
+        }
+        if (!strncmp(line,"disable=",8)) {
+            parse_disable(line+8);
             continue;
         }
         if (!strncmp(line,"TZ=",3)) {
