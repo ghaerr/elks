@@ -325,17 +325,18 @@ static struct dev_name_struct {
     int num;
 } devices[] = {
 	/* the 6 partitionable drives must be first */
-	{ "hda",     DEV_HDA },
+	{ "hda",     DEV_HDA },         /* 0 */
 	{ "hdb",     DEV_HDB },
 	{ "hdc",     DEV_HDC },
 	{ "hdd",     DEV_HDD },
 	{ "cfa",     DEV_CFA },
 	{ "cfb",     DEV_CFB },
-	{ "fd0",     DEV_FD0 },
+	{ "fd0",     DEV_FD0 },         /* 6 */
 	{ "fd1",     DEV_FD1 },
-	{ "df0",     DEV_DF0 },
+	{ "df0",     DEV_DF0 },         /* 8 */
 	{ "df1",     DEV_DF1 },
-	{ "ttyS0",   DEV_TTYS0 },
+	{ "rom",     DEV_ROM },
+	{ "ttyS0",   DEV_TTYS0 },       /* 11 */
 	{ "ttyS1",   DEV_TTYS1 },
 	{ "tty1",    DEV_TTY1 },
 	{ "tty2",    DEV_TTY2 },
@@ -351,11 +352,14 @@ static struct dev_name_struct {
 char *root_dev_name(kdev_t dev)
 {
     int i;
+    unsigned int mask;
 #define NAMEOFF 13
     static char name[18] = "ROOTDEV=/dev/";
 
-    for (i=0; i<7; i++) {
-        if (devices[i].num == (dev & 0xfff0)) {
+    name[8] = '/';
+    for (i=0; i<11; i++) {
+        mask = (i < 6)? 0xfff8: 0xffff;
+        if (devices[i].num == (dev & mask)) {
             strcpy(&name[NAMEOFF], devices[i].name);
             if (i < 6) {
                 if (dev & 0x07) {
@@ -366,7 +370,8 @@ char *root_dev_name(kdev_t dev)
             return name;
         }
     }
-    return NULL;
+    name[8] = '\0';     /* just return "ROOTDEV=" on not found */
+    return name;
 }
 
 #ifdef CONFIG_BOOTOPTS

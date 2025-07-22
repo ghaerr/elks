@@ -91,9 +91,9 @@ static struct super_operations minix_sops = {
 static void minix_mount_warning(register struct super_block *sb, const char *prefix)
 {
 	if ((sb->u.minix_sb.s_mount_state & (MINIX_VALID_FS|MINIX_ERROR_FS)) != MINIX_VALID_FS)
-		printk("MINIX-fs: %smounting %s %D %E, running fsck is recommended\n", prefix,
+		printk("MINIX-fs: %smounting %s %E, running fsck recommended\n", prefix,
 	     !(sb->u.minix_sb.s_mount_state & MINIX_VALID_FS) ?
-		 "unchecked filesystem" : "filesystem with errors", sb->s_dev, sb->s_dev);
+		 "unchecked filesystem" : "filesystem with errors", sb->s_dev);
 }
 
 
