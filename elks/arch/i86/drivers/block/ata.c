@@ -568,7 +568,7 @@ int ATPROC ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t s
     if (use_xms)
     {
         xms_fmemcpyw(0, DMASEG, buf, seg, ATA_SECTOR_SIZE / 2);
-        buffer = _MK_FP(seg, buf);
+        buffer = _MK_FP(DMASEG, 0);
         write_ioport(BASE(ATA_REG_DATA), buffer, ATA_SECTOR_SIZE);
     }
     else
