@@ -159,7 +159,9 @@ endif
 ##############################################################################
 # ROM / Flash memory card
 
-#	$(MKDEV) /dev/rom b 6 0
+ifdef CONFIG_ROMCODE
+	$(MKDEV) /dev/rom b 6 0
+endif
 
 ##############################################################################
 # Direct PATA / IDE disks. (Not working)

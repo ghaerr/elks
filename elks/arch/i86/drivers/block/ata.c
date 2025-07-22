@@ -252,11 +252,11 @@ static int ATPROC ata_set8bitmode(void)
 
     if (status & ATA_STATUS_ERR)
     {
-        printk("cfa: can't set 8-bit transfer mode (error %02xh)\n", INB(ATA_REG_ERR));
+        printk("cfa: can't set 8-bit xfer\n");
         return -EINVAL;
     }
 
-    printk("cfa: setting 8-bit transfer mode\n");
+    printk("cfa: 8-bit xfer on\n");
     return 0;
 }
 
@@ -417,9 +417,8 @@ int ATPROC ata_reset(void)
     delay_10ms();
     if (INB(ATA_REG_SELECT) != 0xA0)    // FIXME try probe w/message only for now
     {
-        printk("cf: probe failed at %x/%x (%x) xtide=%d\n",
+        printk("cf: probe fail at %x/%x (%x) xtide=%d\n",
             ata_base_port, ata_ctrl_port, byte, ata_mode);
-        printk("cf: probe failed %x\n", byte);
         OUTB(byte, ATA_REG_SELECT);
         //return -ENODEV;
     }

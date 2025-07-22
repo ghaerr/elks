@@ -661,8 +661,7 @@ next_block:
 
         /* make sure it's a disk that we are dealing with. */
         if (drive > (DRIVE_FD0 + FD_DRIVES - 1) || drivep->heads == 0) {
-            printk("bioshd: non-existent drive: %D %E\n", req->rq_dev, req->rq_dev);
-            end_request(0);
+            end_request(0);     /* will display I/O error */
             continue;
         }
 

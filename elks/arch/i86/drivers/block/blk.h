@@ -118,7 +118,7 @@ static void end_request(int uptodate)
 
     if (!uptodate) {
         /*if (req->rq_errors >= 0)*/
-        printk(DEVICE_NAME ": I/O %s error dev %D %E lba sector %lu\n",
+        printk(DEVICE_NAME ": I/O %s error %E (%D) LBA %lu\n",
             (req->rq_cmd == WRITE)? "write": "read",
             req->rq_dev, req->rq_dev, req->rq_sector);
     }
