@@ -47,11 +47,11 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/genhd.h>
+#include <linuxmt/ata.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/heap.h>
 #include <linuxmt/debug.h>
 #include <arch/io.h>
-#include <arch/ata.h>
 
 /* hardware controller access modes, override using xtide= in /bootopts */
 #define MODE_ATA        0       /* standard - ATA at ports 0x1F0/0x3F6 */
@@ -103,7 +103,7 @@ static unsigned int ata_ctrl_port;
  **********************************************************************/
 
 /* convert register number to command block port address */
-int BASE(int reg)
+static int ATPROC BASE(int reg)
 {
     if (ata_mode >= MODE_XTCF)          /* XTCF uses SHL 1 register file */
         reg <<= 1;
@@ -113,20 +113,20 @@ int BASE(int reg)
 }
 
 /* input byte from translated register number */
-static unsigned char INB(int reg)
+static unsigned char ATPROC INB(int reg)
 {
     return inb(BASE(reg));
 }
 
 /* output byte to port from translated register number */
 /* FIXME: compiler bug if 'unsigned char byte' declared below, bad code in ata_cmd */
-static void OUTB(unsigned int byte, int reg)
+static void ATPROC OUTB(unsigned int byte, int reg)
 {
     outb(byte, BASE(reg));
 }
 
 /* delay 10ms */
-static void delay_10ms(void)
+static void ATPROC delay_10ms(void)
 {
     unsigned long timeout = jiffies + 1 + 1;    /* guarantee at least 10ms interval */
 
@@ -137,7 +137,7 @@ static void delay_10ms(void)
 /**
  * ATA wait 10ms ticks until not busy
  */
-static int ata_wait(unsigned int ticks)
+static int ATPROC ata_wait(unsigned int ticks)
 {
     unsigned long timeout = jiffies + ticks + 1;
     unsigned char status;
@@ -158,7 +158,7 @@ static int ata_wait(unsigned int ticks)
 
 
 /* read from I/O port into far buffer */
-static void read_ioport(int port, unsigned char __far *buffer, size_t count)
+static void ATPROC read_ioport(int port, unsigned char __far *buffer, size_t count)
 {
     size_t i;
     unsigned short word;
@@ -190,7 +190,7 @@ static void read_ioport(int port, unsigned char __far *buffer, size_t count)
 }
 
 /* write from far buffer to I/O port */
-static void write_ioport(int port, unsigned char __far *buffer, size_t count)
+static void ATPROC write_ioport(int port, unsigned char __far *buffer, size_t count)
 {
     size_t i;
     unsigned short word;
@@ -228,7 +228,7 @@ static void write_ioport(int port, unsigned char __far *buffer, size_t count)
 /**
  * ATA try setting 8-bit transfer mode, may be unimplemented by controller
  */
-static int ata_set8bitmode(void)
+static int ATPROC ata_set8bitmode(void)
 {
     int error;
     unsigned char status;
@@ -263,7 +263,7 @@ static int ata_set8bitmode(void)
 /**
  * ATA select drive
  */
-static int ata_select(unsigned int drive, unsigned int cmd, unsigned long sector)
+static int ATPROC ata_select(unsigned int drive, unsigned int cmd, unsigned long sector)
 {
     unsigned char select = 0xA0 | 0x40 | (drive << 4) | ((sector >> 24) & 0x0F);
     int error;
@@ -288,7 +288,7 @@ static int ata_select(unsigned int drive, unsigned int cmd, unsigned long sector
 /**
  * send an ATA command to the drive
  */
-static int ata_cmd(unsigned int drive, unsigned int cmd, unsigned long sector,
+static int ATPROC ata_cmd(unsigned int drive, unsigned int cmd, unsigned long sector,
     unsigned int count)
 {
     int error;
@@ -335,7 +335,7 @@ static int ata_cmd(unsigned int drive, unsigned int cmd, unsigned long sector,
  * drive  : physical drive number (0 or 1)
  * *buffer: pointer to buffer containing 512 bytes of space
  */
-static int ata_identify(unsigned int drive, unsigned char __far *buf)
+static int ATPROC ata_identify(unsigned int drive, unsigned char __far *buf)
 {
     int error;
 
@@ -365,7 +365,7 @@ static int ata_identify(unsigned int drive, unsigned char __far *buf)
 /**
  * reset the ATA interface
  */
-int ata_reset(void)
+int ATPROC ata_reset(void)
 {
     unsigned char byte;
 
@@ -448,7 +448,7 @@ int ata_reset(void)
 /**
  * initialise an ATA device, return zero if not found
  */
-int ata_init(int drive, struct drive_infot *drivep)
+int ATPROC ata_init(int drive, struct drive_infot *drivep)
 {
     unsigned short *buffer;
     sector_t total;
@@ -505,7 +505,7 @@ int ata_init(int drive, struct drive_infot *drivep)
  * sector: sector number
  * buf/seg: I/O buffer address
  */
-int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
+int ATPROC ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
 {
     unsigned char __far *buffer;
     int error;
@@ -547,7 +547,7 @@ int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
  * sector: sector number
  * buf/seg: I/O buffer address
  */
-int ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
+int ATPROC ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg)
 {
     unsigned char __far *buffer;
     int error;

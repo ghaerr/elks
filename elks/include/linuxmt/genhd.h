@@ -12,10 +12,16 @@
  *              <drew@colorado.edu>
  */
 
+/* the genhd partition code can be INITPROC if called only at kernel init time */
+#if defined(CONFIG_FARTEXT_KERNEL) && !defined(__STRICT_ANSI__)
+#define GENPROC __far __attribute__ ((far_section, noinline, section (".fartext.gen")))
+#else
+#define GENPROC
+#endif
+
 /* These two have identical behaviour; use the second one if DOS fdisk gets
    confused about extended/logical partitions starting past cylinder 1023. */
-
-#define DOS_EXTENDED_PARTITION 5
+#define DOS_EXTENDED_PARTITION   5
 #define LINUX_EXTENDED_PARTITION 0x85
 
 struct partition
@@ -94,8 +100,10 @@ extern unsigned char bios_drive_map[];  /* map drive to BIOS drivenum */
 extern struct drive_infot drive_info[];
 extern int boot_partition;              /* MBR boot partition, if any */
 
+void GENPROC init_partitions(struct gendisk *dev);
+void GENPROC show_drive_info(struct drive_infot *drivep, const char *name, int drive,
+    int count, const char *eol);
+
 int ioctl_hdio_geometry(struct gendisk *hd, kdev_t dev, struct hd_geometry *loc);
-void show_drive_info(struct drive_infot *drivep, const char *name, int drive, int count,
-    const char *eol);
 
 #endif

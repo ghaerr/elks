@@ -12,9 +12,9 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/genhd.h>
+#include <linuxmt/ata.h>
 #include <linuxmt/devnum.h>
 #include <linuxmt/debug.h>
-#include <arch/ata.h>
 
 #define MAJOR_NR        ATHD_MAJOR
 #include "blk.h"
@@ -41,7 +41,8 @@ static struct gendisk ata_gendisk = {
     ata_drive_info              /* fd/hd drive CHS and type */
 };
 
-static int ata_cf_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned int arg);
+static int ata_cf_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
+    unsigned int arg);
 static int ata_cf_open(struct inode *, struct file *);
 static void ata_cf_release(struct inode *, struct file *);
 
@@ -55,7 +56,6 @@ static struct file_operations ata_cf_fops = {
     ata_cf_open,                /* open */
     ata_cf_release              /* release */
 };
-
 
 /**********************************************************************
  * ATA-CF functions

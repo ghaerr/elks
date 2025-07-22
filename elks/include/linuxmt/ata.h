@@ -3,6 +3,13 @@
 
 #include <linuxmt/memory.h>
 
+/* place most of this driver in the far text section if possible */
+#if defined(CONFIG_FARTEXT_KERNEL) && !defined(__STRICT_ANSI__)
+#define ATPROC __far __attribute__ ((far_section, noinline, section (".fartext.at")))
+#else
+#define ATPROC
+#endif
+
 /*
  * Command block register offsets from base I/O address,
  * for standard ATA and XTIDE v1.
@@ -70,10 +77,10 @@
 
 extern int ata_mode;        /* ATA CF driver operating mode, /bootopts xtide= */
 
-int ata_reset(void);
+int ATPROC ata_reset(void);
 struct drive_infot;
-int ata_init(int drive, struct drive_infot *drivep);
-int ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg);
-int ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg);
+int ATPROC ata_init(int drive, struct drive_infot *drivep);
+int ATPROC ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg);
+int ATPROC ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t seg);
 
 #endif /* !__ARCH_8086_ATA_H*/
