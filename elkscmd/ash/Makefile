@@ -68,13 +68,13 @@ init.o: mkinit $(SRCS)
 	./mkinit '$(CC) -c $(CFLAGS) init.c' $(SRCS)
 
 mkinit: mkinit.c
-	gcc -O2 mkinit.c -o $@
+	gcc -std=c99 -O2 mkinit.c -o $@
 
 nodes.c nodes.h: mknodes nodetypes nodes.c.pat
 	./mknodes nodetypes nodes.c.pat
 
 mknodes: mknodes.c
-	gcc -O2 mknodes.c -o $@
+	gcc -std=c99 -O2 mknodes.c -o $@
 
 #signames.c signames.h: mksignames
 #	./mksignames
@@ -110,3 +110,4 @@ $(OBJS): error.h eval.h exec.h expand.h init.h input.h \
 	builtins.h nodes.h signames.h syntax.h
 
 bltin/expr.o bltin/operators.o:	bltin/operators.h
+bltin/operators.c: bltin/operators.h
