@@ -143,7 +143,7 @@ struct super_block *minix_read_super(register struct super_block *s, char *data,
 	ms = (struct minix_super_block *) bh->b_data;
 	if (ms->s_magic != MINIX_SUPER_MAGIC) {
 	    if (!silent)
-		printk("VFS: device %D %E is not minixfs\n", dev, dev);
+		printk("VFS: %E (%D) is not minixfs\n", dev, dev);
 	    msgerr = err0;
 	    goto err_read_super_1;
 	}
