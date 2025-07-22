@@ -130,13 +130,13 @@ setup:	toolkit boot/setup
 .PHONY: kernel/akernel.a lib/lib86.a mm/mm.a drivers/char/chr_drv.a \
 	drivers/block/blk_drv.a drivers/net/net_drv.a
 
-kernel/akernel.a:
+kernel/akernel.a: $(XINCLUDE)
 	${MAKE} -C kernel akernel.a
 
 lib/lib86.a:
 	${MAKE} -C lib lib86.a
 
-mm/mm.a:
+mm/mm.a: $(XINCLUDE)
 	${MAKE} -C mm mm.a
 
 drivers/char/chr_drv.a:
@@ -145,7 +145,7 @@ drivers/char/chr_drv.a:
 drivers/block/blk_drv.a:
 	${MAKE} -C drivers/block blk_drv.a
 
-drivers/net/net_drv.a:
+drivers/net/net_drv.a: $(XINCLUDE)
 	${MAKE} -C drivers/net net_drv.a
 
 #########################################################################

@@ -15,6 +15,7 @@
 *.o
 *.a
 *.map
+*.sym
 
 #
 # Normal output and testing dirs
