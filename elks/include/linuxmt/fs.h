@@ -428,6 +428,7 @@ extern int do_umount(kdev_t);
 extern kdev_t ROOT_DEV;
 
 extern void mount_root(void);
+extern char *root_dev_name(kdev_t dev);     /* actually returns ROOTDEV=/dev/name */
 
 extern int fd_check(unsigned int,char *,size_t,int,struct file **);
 

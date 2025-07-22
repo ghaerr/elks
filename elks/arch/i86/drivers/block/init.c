@@ -67,7 +67,7 @@ void INITPROC device_init(void)
         if (!rootdev)
             rootdev = bios_conv_bios_drive(ROOT_DEV);
 #endif
-        printk("boot: BIOS drive %x, root device %04x\n", ROOT_DEV, rootdev);
+        printk("boot: BIOS drive %x, root device %D %E\n", ROOT_DEV, rootdev, rootdev);
         ROOT_DEV = (kdev_t)rootdev;
     }
 #endif

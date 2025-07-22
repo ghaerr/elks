@@ -33,6 +33,7 @@ static struct dev_name_struct {
     { "fd1",     S_IFBLK,   DEV_FD1             },
     { "df0",     S_IFBLK,   DEV_DF0             },
     { "df1",     S_IFBLK,   DEV_DF1             },
+    { "rom",     S_IFBLK,   DEV_ROM             },
     { "ssd",     S_IFBLK,   MKDEV(SSD_MAJOR, 0) },
     { "rd0",     S_IFBLK,   MKDEV(RAM_MAJOR, 0) },
     { "ttyS0",   S_IFCHR,   DEV_TTYS0           },

@@ -118,9 +118,9 @@ static void end_request(int uptodate)
 
     if (!uptodate) {
         /*if (req->rq_errors >= 0)*/
-        printk(DEVICE_NAME ": I/O %s error dev %D lba sector %lu\n",
+        printk(DEVICE_NAME ": I/O %s error dev %D %E lba sector %lu\n",
             (req->rq_cmd == WRITE)? "write": "read",
-            req->rq_dev, req->rq_sector);
+            req->rq_dev, req->rq_dev, req->rq_sector);
     }
 
 #ifdef MULTI_BH
