@@ -42,7 +42,7 @@
 int boot_partition;         /* MBR boot partition, if any*/
 static unsigned int current_minor;
 
-static void INITPROC print_minor_name(register struct gendisk *hd, unsigned int minor)
+static void GENPROC print_minor_name(register struct gendisk *hd, unsigned int minor)
 {
     unsigned int part;
     struct hd_struct *hdp = &hd->part[minor];
@@ -54,7 +54,7 @@ static void INITPROC print_minor_name(register struct gendisk *hd, unsigned int 
     printk(":(%lu,%lu) ", hdp->start_sect, hdp->nr_sects);
 }
 
-static void INITPROC add_partition(struct gendisk *hd, unsigned int minor,
+static void GENPROC add_partition(struct gendisk *hd, unsigned int minor,
                           sector_t start, sector_t size)
 {
     struct hd_struct *hdp = &hd->part[minor];
@@ -107,7 +107,7 @@ static void INITPROC add_partition(struct gendisk *hd, unsigned int minor,
 #endif
 }
 
-static int INITPROC is_extended_partition(register struct partition *p)
+static int GENPROC is_extended_partition(register struct partition *p)
 {
     return (p->sys_ind == DOS_EXTENDED_PARTITION ||
             p->sys_ind == LINUX_EXTENDED_PARTITION);
@@ -124,7 +124,7 @@ static int INITPROC is_extended_partition(register struct partition *p)
  * only for the actual data partitions.
  */
 
-static void INITPROC extended_partition(register struct gendisk *hd, kdev_t dev)
+static void GENPROC extended_partition(register struct gendisk *hd, kdev_t dev)
 {
     struct buffer_head *bh;
     register struct partition *p;
@@ -212,7 +212,7 @@ static void INITPROC extended_partition(register struct gendisk *hd, kdev_t dev)
     unmap_brelse(bh);
 }
 
-static int INITPROC mbr_partition(struct gendisk *hd, kdev_t dev, sector_t first_sector)
+static int GENPROC mbr_partition(struct gendisk *hd, kdev_t dev, sector_t first_sector)
 {
     register struct partition *p;
     register struct hd_struct *hdp;
@@ -307,7 +307,7 @@ out:
     return 1;
 }
 
-static void INITPROC check_partition(register struct gendisk *hd, kdev_t dev)
+static void GENPROC check_partition(register struct gendisk *hd, kdev_t dev)
 {
     sector_t first_sector = hd->part[MINOR(dev)].start_sect;
 
@@ -330,7 +330,7 @@ static void INITPROC check_partition(register struct gendisk *hd, kdev_t dev)
     printk(" no partitions\n");
 }
 
-static void INITPROC clear_partition(struct gendisk *dev)
+static void GENPROC clear_partition(struct gendisk *dev)
 {
     struct drive_infot *drivep = dev->drive_info;
     struct hd_struct *hdp = dev->part;
@@ -353,7 +353,7 @@ static void INITPROC clear_partition(struct gendisk *dev)
 
 }
 
-void INITPROC init_partitions(struct gendisk *dev)
+void GENPROC init_partitions(struct gendisk *dev)
 {
     clear_partition(dev);
 
@@ -386,8 +386,8 @@ int ioctl_hdio_geometry(struct gendisk *hd, kdev_t dev, struct hd_geometry *loc)
     return err;
 }
 
-void show_drive_info(struct drive_infot *drivep, const char *name, int drive, int count,
-   const char *eol)
+void GENPROC show_drive_info(struct drive_infot *drivep, const char *name, int drive,
+    int count, const char *eol)
 {
     unsigned long size;
     char *unit;

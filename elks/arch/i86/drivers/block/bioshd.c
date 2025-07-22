@@ -85,6 +85,7 @@ struct drive_infot *last_drive;         /* set to last drivep-> used in read/wri
 extern struct drive_infot fd_types[];   /* BIOS floppy formats */
 
 static struct hd_struct hd[NUM_DRIVES << MINOR_SHIFT];  /* partitions start, size*/
+static char mbr_modified;
 
 static int bioshd_open(struct inode *, struct file *);
 static void bioshd_release(struct inode *, struct file *);
@@ -325,6 +326,11 @@ static int bioshd_open(struct inode *inode, struct file *filp)
         probe_floppy(target, hdp);      /* probe only on initial open */
 #endif
     }
+    if (mbr_modified && target < DRIVE_FD0) {
+        init_partitions(&bioshd_gendisk);
+        mbr_modified = 0;
+    }
+
     inode->i_size = hdp->nr_sects * drive_info[target].sector_size;
     /* limit inode size to max filesize for CHS >= 4MB (2^22)*/
     if (hdp->nr_sects >= 0x00400000L)   /* 2^22*/
@@ -685,6 +691,9 @@ next_block:
                 /* then fallback with retries if required*/
                 num_sectors = do_readwrite(drivep, start, buf, req->rq_seg,
                     req->rq_cmd, count);
+
+            if (start == 0 && req->rq_cmd == WRITE && (drivep - drive_info < DRIVE_FD0))
+                mbr_modified = 1;
 
             if (num_sectors == 0) {
                 end_request(0);

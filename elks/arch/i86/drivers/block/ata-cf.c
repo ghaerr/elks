@@ -12,9 +12,9 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/genhd.h>
+#include <linuxmt/ata.h>
 #include <linuxmt/devnum.h>
 #include <linuxmt/debug.h>
-#include <arch/ata.h>
 
 #define MAJOR_NR        ATHD_MAJOR
 #include "blk.h"
@@ -29,6 +29,7 @@
 static int access_count[NUM_DRIVES];
 static struct drive_infot ata_drive_info[NUM_DRIVES];   /* operating drive info */
 static struct hd_struct hd[NUM_DRIVES << MINOR_SHIFT];  /* partitions start, size*/
+static char mbr_modified;
 
 static struct gendisk ata_gendisk = {
     MAJOR_NR,                   /* Major number */
@@ -41,7 +42,8 @@ static struct gendisk ata_gendisk = {
     ata_drive_info              /* fd/hd drive CHS and type */
 };
 
-static int ata_cf_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned int arg);
+static int ata_cf_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
+    unsigned int arg);
 static int ata_cf_open(struct inode *, struct file *);
 static void ata_cf_release(struct inode *, struct file *);
 
@@ -55,7 +57,6 @@ static struct file_operations ata_cf_fops = {
     ata_cf_open,                /* open */
     ata_cf_release              /* release */
 };
-
 
 /**********************************************************************
  * ATA-CF functions
@@ -102,9 +103,12 @@ static int ata_cf_open(struct inode *inode, struct file *filp)
     // reidentify device if its not already in use
     if (access_count[drive] == 0) {
         ata_init(drive, &ata_drive_info[drive]);
-        init_partitions(&ata_gendisk);  // INITPROC can't be called after init!
     }
 #endif
+    if (mbr_modified) {
+        init_partitions(&ata_gendisk);
+        mbr_modified = 0;
+    }
 
     ++access_count[drive];
     inode->i_size = hdp->nr_sects * ata_drive_info[drive].sector_size;
@@ -192,6 +196,8 @@ static void do_ata_cf_request(void)
             if (req->rq_cmd == WRITE) {
                 debug_blk("cf%c: writing sector %lu\n", drive+'a', start);
                 ret = ata_write(drive, start, buf, req->rq_seg);
+                if (start == 0)
+                    mbr_modified = 1;
             } else {
                 debug_blk("cf%c: reading sector %lu\n", drive+'a', start);
                 ret = ata_read(drive, start, buf, req->rq_seg);

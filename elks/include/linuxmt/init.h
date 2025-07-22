@@ -37,7 +37,6 @@ extern void INITPROC tty_init(void);
 extern int  INITPROC xms_init(void);
 
 extern void INITPROC device_init(void);
-extern void INITPROC init_partitions(struct gendisk *dev);
 
 extern void INITPROC tz_init(const char *tzstr);
 

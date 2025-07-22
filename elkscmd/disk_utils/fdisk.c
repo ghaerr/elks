@@ -329,7 +329,9 @@ void write_out()
     else {
         MBR[510] = 0x55;
         MBR[511] = 0xAA;
-        if ((i=write(pFd,MBR,512))!=512) {
+        i = write(pFd,MBR,512);
+        sync();
+        if (i != 512) {
             printf("Error writing partition table to %s (%d)\n", errno);
         } else
             printf("Partition table written to %s\n",dev);
