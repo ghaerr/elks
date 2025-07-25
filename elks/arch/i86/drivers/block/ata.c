@@ -50,6 +50,7 @@
 #include <linuxmt/ata.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/heap.h>
+#include <linuxmt/memory.h>
 #include <linuxmt/debug.h>
 #include <arch/io.h>
 
@@ -68,6 +69,7 @@
 #define XFER_8_XTIDEv1  2       /* XTIDEv1 8-bit xfer hi at data+8 then lo at data+0 */
 
 /* configurable options */
+#define FASTIO          1       /* =1 to use ASM in/out instructions for I/O */
 
 static int xfer_mode = AUTO;    /* change this to force a particular I/O xfer method */
 
@@ -161,22 +163,29 @@ static int ATPROC ata_wait(unsigned int ticks)
 static void ATPROC read_ioport(int port, unsigned char __far *buffer, size_t count)
 {
     size_t i;
-    unsigned short word;
 
     switch (xfer_mode) {
     case XFER_16:
+#if FASTIO
+        insw(port, _FP_SEG(buffer), _FP_OFF(buffer), count/2);
+#else
         for (i = 0; i < count; i+=2)
         {
-            word = inw(port);
+            unsigned short word = inw(port);
 
             *buffer++ = word;
             *buffer++ = word >> 8;
         }
+#endif
         break;
 
     case XFER_8_XTCF:
+#if FASTIO
+        insb(port, _FP_SEG(buffer), _FP_OFF(buffer), count);
+#else
         for (i = 0; i < count; i++)
             *buffer++ = inb(port);
+#endif
         break;
 
     case XFER_8_XTIDEv1:
@@ -197,17 +206,25 @@ static void ATPROC write_ioport(int port, unsigned char __far *buffer, size_t co
 
     switch (xfer_mode) {
     case XFER_16:
+#if FASTIO
+        outsw(port, _FP_SEG(buffer), _FP_OFF(buffer), count/2);
+#else
         for (i = 0; i < count; i+=2)
         {
             word = *buffer++;
             word |= *buffer++ << 8;
             outw(word, port);
         }
+#endif
         break;
 
     case XFER_8_XTCF:
+#if FASTIO
+        outsb(port, _FP_SEG(buffer), _FP_OFF(buffer), count);
+#else
         for (i = 0; i < count; i++)
             outb(*buffer++, port);
+#endif
         break;
 
     case XFER_8_XTIDEv1:
@@ -462,7 +479,7 @@ int ATPROC ata_init(int drive, struct drive_infot *drivep)
 
     if (ata_identify(drive, (unsigned char __far *) buffer) == 0)
     {
-        drivep->cylinders = buffer[ATA_INFO_CYLS];
+        drivep->cylinders = buffer[ATA_INFO_CYLS];  // FIXME if 0 no cfa: displayed
         drivep->sectors = buffer[ATA_INFO_SPT];
         drivep->heads = buffer[ATA_INFO_HEADS];
         drivep->sector_size = ATA_SECTOR_SIZE;
@@ -480,12 +497,12 @@ int ATPROC ata_init(int drive, struct drive_infot *drivep)
             (buffer[ATA_INFO_HEADS] == 0 || buffer[ATA_INFO_HEADS] > 16) ||
             (buffer[ATA_INFO_SPT] == 0 || buffer[ATA_INFO_SPT] > 63))
         {
-            printk("(unsupported format) ");
+            printk(" (unsupported format)");
             drivep->cylinders = 0;
         }
         if (! (buffer[ATA_INFO_CAPS] & ATA_CAPS_LBA))   // ATA LBA support?
         {
-            printk("(missing LBA)");
+            printk(" (missing LBA)");
             drivep->cylinders = 0;
         }
         printk("\n");

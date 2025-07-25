@@ -31,13 +31,6 @@
 
 static int io_ports[2] = { HD1_PORT, HD2_PORT };	/* physical port addresses */
 
-static void INITPROC insw(word_t port, word_t *buffer, int count) {
-
-    do {
-   	*buffer++ = inw(port);
-    } while (--count);
-}
-
 static void INITPROC out_hd(int drive, word_t cmd)
 {
     word_t port = io_ports[drive >> 1];
@@ -92,7 +85,7 @@ int INITPROC get_ide_data(int drive, struct drive_infot *drivep) {
 		ide_debug("hd%c: drive at port 0x%x not found\n", 'a'+drive, port);
 		break;
 	    }
-	    insw(port, ide_buffer, 512/2);	/* read - word size */
+	    insw(port, kernel_ds, ide_buffer, 512/2);	/* read - word size */
 	    /*
 	     * Sanity check: Head, cyl and sector values must be other than
 	     * 0 and buffer has to contain valid data (first entry in buffer
