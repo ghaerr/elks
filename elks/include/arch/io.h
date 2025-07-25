@@ -67,8 +67,7 @@
             "1:\n"                  \
             "in (%%dx),%%al\n"      \
             "stosb\n"               \
-            "dec %%cx\n"            \
-            "jnz 1b\n"              \
+            "loop 1b\n"             \
             "pop %%es\n"            \
             : "=a" (ax), "=c" (cx), "=D" (di)                   \
             : "d" (port), "a" (seg), "D" (offset), "c" (cnt)    \
@@ -85,8 +84,7 @@
             "1:\n"                  \
             "in (%%dx),%%ax\n"      \
             "stosw\n"               \
-            "dec %%cx\n"            \
-            "jnz 1b\n"              \
+            "loop 1b\n"             \
             "pop %%es\n"            \
             : "=a" (ax), "=c" (cx), "=D" (di)                   \
             : "d" (port), "a" (seg), "D" (offset), "c" (cnt)    \
@@ -104,8 +102,7 @@
             "1:\n"                  \
             "lodsb\n"               \
             "out %%al,(%%dx)\n"     \
-            "dec %%cx\n"            \
-            "jnz 1b\n"              \
+            "loop 1b\n"             \
             "pop %%ds\n"            \
             : "=a" (ax), "=c" (cx), "=S" (si)                   \
             : "d" (port), "a" (seg), "S" (offset), "c" (cnt)    \
@@ -122,8 +119,7 @@
             "1:\n"                  \
             "lodsw\n"               \
             "out %%ax,(%%dx)\n"     \
-            "dec %%cx\n"            \
-            "jnz 1b\n"              \
+            "loop 1b\n"             \
             "pop %%ds\n"            \
             : "=a" (ax), "=c" (cx), "=S" (si)                   \
             : "d" (port), "a" (seg), "S" (offset), "c" (cnt)    \
