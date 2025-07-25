@@ -45,10 +45,6 @@
 
 #define WAITING(port) (STATUS(port) & 0x80) == 0x80
 
-/* use asm insw/outsw instead of C version */
-/* asm versions should work on 8088/86, but only with CONFIG_PC_XT */
-/* #define USE_ASM */
-
 /* uncomment this to include debugging code .. this increases size of driver */
 #define USE_DEBUG_CODE
 
@@ -96,101 +92,6 @@ static struct gendisk directhd_gendisk = {
     0,
     drive_info
 };
-
-#ifndef USE_ASM
-
-void insw(unsigned int port,unsigned int *buffer,int count)
-{
-    int i;
-
-    for (i = 0; i < count / 2; i++)
-	buffer[i] = inw(port);
-    return;
-}
-
-#else
-
-/* this _should_ work on an 8088/86 now, but I haven't tested it yet */
-
-void insw(unsigned int port,unsigned int *buffer,int count)
-{
-#asm
-	push	bp
-	mov	bp, sp
-	push	cx
-	push	di
-	push	dx
-	mov	dx, [bp + 04]
-	mov	di, [bp + 06]
-	mov	cx, [bp + 08]
-	shr	cx, 1
-	cld
-#ifndef CONFIG_PC_XT
-	repz
-	insw
-#else
-			/* this should work on an 8088 */
-dhd_insw_loop:
-	in	ax, dx
-	stosw
-	loop	dhd_insw_loop
-#endif
-	pop	dx
-	pop	di
-	pop	cx
-	pop	bp
-#endasm
-}
-
-#endif
-
-#ifndef USE_ASM
-
-void outsw(unsigned int port,unsigned int *buffer,int count)
-{
-    int i;
-
-    for (i = 0; i < count / 2; i++)
-	outw(port, buffer[i]);
-    return;
-}
-
-#else
-
-/* the assembler version. Again, this should work,
- * but I haven't had a chance to test it yet.
- */
-
-void outsw(unsigned int port,unsigned int *buffer,int count)
-{
-#asm
-	push	bp
-	mov	bp, sp
-	push	cx
-	push	si
-	push	dx
-	mov	dx, [bp + 04]
-	mov	si, [bp + 06]
-	mov	cx, [bp + 08]
-	shr	cx, 1
-	cld
-#ifndef CONFIG_PC_XT
-	repz
-	outsw
-#else
-dhd_outsw_loop:		/* this should work on an 8088 */
-	lodsw
-	out	dx, ax
-	loop	dhd_outsw_loop
-#endif
-	pop	dx
-	pop	si
-	pop	cx
-	pop	bp
-#endasm
-}
-
-#endif
 
 #if 0				/* not used */
 
@@ -281,7 +182,7 @@ struct gendisk * directhd_init(void)
 
 	/* get drive info */
 
-	insw(port, buffer, 512);
+	insw(port, kernel_ds, buffer, 512/2);
 #if 0
 	swap_order(buffer, 512);
 #endif
@@ -551,7 +452,7 @@ void do_directhd_request(void)
 
 
 		/* read this_pass * 512 bytes, which is 63 * 512 b max. */
-		insw(port, buff, this_pass * 512);
+		insw(port, kernel_ds, buff, this_pass * (512/2));
 	    }
 	    if (req->rq_cmd == WRITE) {
 		/* write from buffer */
@@ -595,7 +496,7 @@ void do_directhd_request(void)
 		    }
 		}
 
-		outsw(port, buff, this_pass * 512);
+		outsw(port, kernel_ds, buff, this_pass * (512/2));
 	    }
 
 	    count -= this_pass;
