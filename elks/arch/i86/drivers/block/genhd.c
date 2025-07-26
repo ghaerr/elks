@@ -329,15 +329,15 @@ static void GENPROC check_partition(struct gendisk *hd, kdev_t dev)
     printk(" no partitions\n");
 }
 
-static void GENPROC clear_partition(struct gendisk *dev)
+static void GENPROC clear_partition(struct gendisk *hd)
 {
-    struct drive_infot *drivep = dev->drive_info;
-    struct hd_struct *hdp = dev->part;
+    struct drive_infot *drivep = hd->drive_info;
+    struct hd_struct *hdp = hd->part;
     int i;
 
-    memset(hdp, 0, sizeof(struct hd_struct) * dev->num_drives * dev->max_partitions);
-    for (i = 0; i < dev->num_drives << dev->minor_shift; i++) {
-        if ((i & ((1 << dev->minor_shift) - 1)) == 0) {
+    memset(hdp, 0, sizeof(struct hd_struct) * hd->num_drives * hd->max_partitions);
+    for (i = 0; i < hd->num_drives << hd->minor_shift; i++) {
+        if ((i & ((1 << hd->minor_shift) - 1)) == 0) {
             //hdp->start_sect = 0;
             hdp->nr_sects = (sector_t)drivep->sectors * drivep->heads * drivep->cylinders;
             if (hdp->nr_sects == 0)
@@ -352,14 +352,14 @@ static void GENPROC clear_partition(struct gendisk *dev)
 
 }
 
-void GENPROC init_partitions(struct gendisk *dev)
+void GENPROC init_partitions(struct gendisk *hd)
 {
-    clear_partition(dev);
+    clear_partition(hd);
 
-    for (int i = 0; i < dev->nr_hd; i++) {
-        unsigned int first_minor = i << dev->minor_shift;
+    for (int i = 0; i < hd->nr_hd; i++) {
+        unsigned int first_minor = i << hd->minor_shift;
         current_minor = first_minor + 1;
-        check_partition(dev, MKDEV(dev->major, first_minor));
+        check_partition(hd, MKDEV(hd->major, first_minor));
     }
 }
 #endif /* CONFIG_BLK_DEV_BHD || CONFIG_BLK_DEV_ATA_CF */
