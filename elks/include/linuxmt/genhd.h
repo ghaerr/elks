@@ -95,9 +95,9 @@ struct hd_geometry              /* structure returned from HDIO_GETGEO */
 /* hd/ide ctl's that pass (arg) ptrs to user space are numbered 0x030n/0x031n */
 #define HDIO_GETGEO     0x0301  /* get device geometry */
 
-extern struct drive_infot *last_drive;  /* set to last drivep-> used in read/write */
+extern struct gendisk bioshd_gendisk;   /* IBM for bios_disk_park_all() */
+extern struct drive_infot *last_drive;  /* PC98 set to last drivep-> used in read/write */
 extern unsigned char bios_drive_map[];  /* map drive to BIOS drivenum */
-extern struct drive_infot drive_info[];
 extern int boot_partition;              /* MBR boot partition, if any */
 
 void GENPROC init_partitions(struct gendisk *dev);

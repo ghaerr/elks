@@ -79,7 +79,7 @@ static int fd_count;                    /* number of floppy disks */
 static int hd_count;                    /* number of hard disks */
 
 static int access_count[NUM_DRIVES];    /* device open count */
-struct drive_infot drive_info[NUM_DRIVES];   /* operating drive info */
+static struct drive_infot drive_info[NUM_DRIVES];       /* operating drive info */
 static struct drive_infot *cache_drive;
 struct drive_infot *last_drive;         /* set to last drivep-> used in read/write */
 extern struct drive_infot fd_types[];   /* BIOS floppy formats */
@@ -91,7 +91,7 @@ static int bioshd_open(struct inode *, struct file *);
 static void bioshd_release(struct inode *, struct file *);
 static int bioshd_ioctl(struct inode *, struct file *, unsigned int, unsigned int);
 
-static struct gendisk bioshd_gendisk = {
+struct gendisk bioshd_gendisk = {
     MAJOR_NR,                   /* Major number */
     "hd",                       /* Major name */
     MINOR_SHIFT,                /* Bits to shift to get real from partition */

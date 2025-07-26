@@ -33,11 +33,6 @@
 
 #define NR_SECTS(p)     p->nr_sects
 #define START_SECT(p)   p->start_sect
-#ifdef CONFIG_ARCH_PC98
-# define NR_SECTS_PC98(p98)     ((sector_t) END_SECT_PC98(p98) - START_SECT_PC98(p98) + 1)
-# define START_SECT_PC98(p98)   ((sector_t) p98->cyl * last_drive->heads * last_drive->sectors + p98->head * last_drive->sectors + p98->sector)
-# define END_SECT_PC98(p98)     ((sector_t) p98->end_cyl * last_drive->heads * last_drive->sectors + p98->end_head * last_drive->sectors + p98->end_sector)
-#endif
 
 int boot_partition;         /* MBR boot partition, if any*/
 static unsigned int current_minor;
@@ -284,6 +279,10 @@ out:
     }
 
 #ifdef CONFIG_ARCH_PC98
+#define NR_SECTS_PC98(p98)     ((sector_t) END_SECT_PC98(p98) - START_SECT_PC98(p98) + 1)
+#define START_SECT_PC98(p98)   ((sector_t) p98->cyl * last_drive->heads * last_drive->sectors + p98->head * last_drive->sectors + p98->sector)
+#define END_SECT_PC98(p98)     ((sector_t) p98->end_cyl * last_drive->heads * last_drive->sectors + p98->end_head * last_drive->sectors + p98->end_sector)
+
     if (*(unsigned short *) (bh->b_data + 0x4) == 0x5049 &&
         *(unsigned short *) (bh->b_data + 0x6) == 0x314C) {
         struct partition_pc98 *p98;
@@ -307,7 +306,7 @@ out:
     return 1;
 }
 
-static void GENPROC check_partition(register struct gendisk *hd, kdev_t dev)
+static void GENPROC check_partition(struct gendisk *hd, kdev_t dev)
 {
     sector_t first_sector = hd->part[MINOR(dev)].start_sect;
 
