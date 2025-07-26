@@ -483,7 +483,7 @@ int ATPROC ata_init(int drive, struct drive_infot *drivep)
         drivep->sectors = buffer[ATA_INFO_SPT];
         drivep->heads = buffer[ATA_INFO_HEADS];
         drivep->sector_size = ATA_SECTOR_SIZE;
-        drivep->fdtype = -1;
+        drivep->fdtype = HARDDISK;
         show_drive_info(drivep, "cf", drive, 1, " ");
 
         // now display extra info: ATA LBA sector total, version and sector size

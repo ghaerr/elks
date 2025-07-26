@@ -217,7 +217,7 @@ int INITPROC bios_gethdinfo(struct drive_infot *drivep) {
             /* NOTE: some BIOS may underreport cylinders by 1*/
             drivep->cylinders = (((BD_CX & 0xc0) << 2) | (BD_CX >> 8)) + 1;
 #endif
-            drivep->fdtype = -1;
+            drivep->fdtype = HARDDISK;
             drivep->sector_size = 512;
             debug_bios("hd%c:  BIOS CHS %3d,%d,%d\n", 'a'+drive, drivep->cylinders,
                 drivep->heads, drivep->sectors);
@@ -236,25 +236,30 @@ int INITPROC bios_gethdinfo(struct drive_infot *drivep) {
     return ndrives;
 }
 
-void BFPROC bios_disk_park_all(void)
+static BFPROC void bios_disk_park(struct gendisk *hd)
 {
 #ifdef CONFIG_ARCH_IBMPC
     struct drive_infot *drivep;
     unsigned int cyl;
 
-    for (drivep = drive_info; drivep < &drive_info[NUM_DRIVES]; drivep++) {
-        if (drivep->fdtype != -1)       /* hard drives only */
+    for (drivep = hd->drive_info; drivep < &hd->drive_info[NUM_DRIVES]; drivep++) {
+        if (drivep->fdtype != HARDDISK)
             continue;
         cyl = drivep->cylinders - 1;    /* expects zero-based cylinder */
         BD_AX = BIOSHD_SEEK;
         BD_CX = ((cyl & 0xFF) << 8) | ((cyl & 0x300) >> 2) | 1; /* 1 = sector */
-        BD_DX = bios_drive_map[drivep - drive_info];
+        BD_DX = bios_drive_map[drivep - hd->drive_info];
         call_bios(&bdt);
     }
 #endif
 }
 
-#endif
+void BFPROC bios_disk_park_all(void)
+{
+    bios_disk_park(&bioshd_gendisk);
+}
+
+#endif /* CONFIG_BLK_DEV_BHD */
 
 #ifdef CONFIG_BLK_DEV_BFD_HARD
 int INITPROC bios_getfdinfo(struct drive_infot *drivep)

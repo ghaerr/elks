@@ -74,30 +74,29 @@ struct elks_disk_parms {
     __u8 marker[2];             /* should be "eL" */
 } __attribute__((packed));
 
-static int bioshd_initialized = 0;
+static char bioshd_initialized;
+static char mbr_modified;
 static int fd_count;                    /* number of floppy disks */
 static int hd_count;                    /* number of hard disks */
 
 static int access_count[NUM_DRIVES];    /* device open count */
-struct drive_infot drive_info[NUM_DRIVES];   /* operating drive info */
+static struct drive_infot drive_info[NUM_DRIVES];        /* operating drive info */
+static struct hd_struct part[NUM_DRIVES << MINOR_SHIFT]; /* partitions start, size*/
 static struct drive_infot *cache_drive;
-struct drive_infot *last_drive;         /* set to last drivep-> used in read/write */
+       struct drive_infot *last_drive;  /* set to last drivep-> used in read/write */
 extern struct drive_infot fd_types[];   /* BIOS floppy formats */
-
-static struct hd_struct hd[NUM_DRIVES << MINOR_SHIFT];  /* partitions start, size*/
-static char mbr_modified;
 
 static int bioshd_open(struct inode *, struct file *);
 static void bioshd_release(struct inode *, struct file *);
 static int bioshd_ioctl(struct inode *, struct file *, unsigned int, unsigned int);
 
-static struct gendisk bioshd_gendisk = {
+struct gendisk bioshd_gendisk = {
     MAJOR_NR,                   /* Major number */
     "hd",                       /* Major name */
     MINOR_SHIFT,                /* Bits to shift to get real from partition */
     1 << MINOR_SHIFT,           /* maximum number of partitions per drive */
     NUM_DRIVES,                 /* maximum number of drives */
-    hd,                         /* partition table */
+    part,                       /* partition table */
     0,                          /* hd drives found */
     drive_info                  /* fd/hd drive CHS and type */
 };
@@ -315,7 +314,7 @@ static void BFPROC probe_floppy(int target, struct hd_struct *hdp)
 static int bioshd_open(struct inode *inode, struct file *filp)
 {
     int minor = MINOR(inode->i_rdev);
-    struct hd_struct *hdp = &hd[minor];
+    struct hd_struct *hdp = &part[minor];
     int target = minor >> MINOR_SHIFT;
 
     if (!bioshd_initialized || target >= NUM_DRIVES || hdp->start_sect == NOPART)
@@ -651,7 +650,7 @@ next_block:
             break;
         CHECK_REQUEST(req);
 
-        if (bioshd_initialized != 1) {
+        if (!bioshd_initialized) {
             end_request(0);
             continue;
         }
@@ -666,18 +665,18 @@ next_block:
         }
 
         /* get request start sector and sector count */
-        count = req->rq_nr_sectors;
+        buf = req->rq_buffer;
         start = req->rq_sector;
+        count = req->rq_nr_sectors;
 
-        if (hd[minor].start_sect == NOPART || start + count > hd[minor].nr_sects) {
+        if (part[minor].start_sect == NOPART || start + count > part[minor].nr_sects) {
             printk("bioshd: sector %ld not in partition (%ld,%ld)\n",
-                start, hd[minor].start_sect, hd[minor].nr_sects);
+                start, part[minor].start_sect, part[minor].nr_sects);
             end_request(0);
             continue;
         }
-        start += hd[minor].start_sect;
+        start += part[minor].start_sect;
 
-        buf = req->rq_buffer;
         while (count > 0) {
             int num_sectors = 0;
 #ifdef CONFIG_TRACK_CACHE
@@ -699,9 +698,9 @@ next_block:
                 goto next_block;
             }
 
-            count -= num_sectors;
-            start += num_sectors;
             buf += num_sectors * drivep->sector_size;
+            start += num_sectors;
+            count -= num_sectors;
         }
         debug_bios("cache: hits %u total %u %lu%%\n", cache_hits, cache_tries,
             (long)cache_hits * 100L / cache_tries);
