@@ -217,7 +217,7 @@ int INITPROC bios_gethdinfo(struct drive_infot *drivep) {
             /* NOTE: some BIOS may underreport cylinders by 1*/
             drivep->cylinders = (((BD_CX & 0xc0) << 2) | (BD_CX >> 8)) + 1;
 #endif
-            drivep->fdtype = -1;
+            drivep->fdtype = HARDDISK;
             drivep->sector_size = 512;
             debug_bios("hd%c:  BIOS CHS %3d,%d,%d\n", 'a'+drive, drivep->cylinders,
                 drivep->heads, drivep->sectors);
@@ -243,7 +243,7 @@ static BFPROC void bios_disk_park(struct gendisk *hd)
     unsigned int cyl;
 
     for (drivep = hd->drive_info; drivep < &hd->drive_info[NUM_DRIVES]; drivep++) {
-        if (drivep->fdtype != -1)       /* hard drives only */
+        if (drivep->fdtype != HARDDISK)
             continue;
         cyl = drivep->cylinders - 1;    /* expects zero-based cylinder */
         BD_AX = BIOSHD_SEEK;

@@ -27,8 +27,8 @@
 #define NUM_DRIVES      2
 
 static int access_count[NUM_DRIVES];
-static struct drive_infot ata_drive_info[NUM_DRIVES];   /* operating drive info */
-static struct hd_struct hd[NUM_DRIVES << MINOR_SHIFT];  /* partitions start, size*/
+static struct drive_infot ata_drive_info[NUM_DRIVES];    /* operating drive info */
+static struct hd_struct part[NUM_DRIVES << MINOR_SHIFT]; /* partitions start, size*/
 static char mbr_modified;
 
 static struct gendisk ata_gendisk = {
@@ -37,7 +37,7 @@ static struct gendisk ata_gendisk = {
     MINOR_SHIFT,                /* Bits to shift to get real from partition */
     1 << MINOR_SHIFT,           /* maximum number of partitions per drive */
     NUM_DRIVES,                 /* maximum number of drives */
-    hd,                         /* partition table */
+    part,                       /* partition table */
     0,                          /* hd drives found */
     ata_drive_info              /* fd/hd drive CHS and type */
 };
@@ -91,7 +91,7 @@ struct gendisk * INITPROC ata_cf_init(void)
 static int ata_cf_open(struct inode *inode, struct file *filp)
 {
     unsigned short minor = MINOR(inode->i_rdev);
-    struct hd_struct *hdp = &hd[minor];
+    struct hd_struct *hdp = &part[minor];
     int drive = minor >> MINOR_SHIFT;
 
     debug_blk("cf%c: open\n", drive+'a');
@@ -102,7 +102,7 @@ static int ata_cf_open(struct inode *inode, struct file *filp)
 #if NOTYET
     // reidentify device if its not already in use
     if (access_count[drive] == 0) {
-        ata_init(drive, &ata_drive_info[drive]);
+        ata_init(drive, &ata_gendisk.drive_info[drive]);
     }
 #endif
     if (mbr_modified) {
@@ -183,16 +183,17 @@ static void do_ata_cf_request(void)
         drive = minor >> MINOR_SHIFT;
         buf = req->rq_buffer;
         start = req->rq_sector;
+        count = req->rq_nr_sectors;
 
-        if (hd[minor].start_sect == NOPART || start + req->rq_nr_sectors > hd[minor].nr_sects) {
+        if (part[minor].start_sect == NOPART || start + count > part[minor].nr_sects) {
               printk("cf%c: sector %ld not in partition (%ld,%ld)\n",
-                drive+'a', start, hd[minor].start_sect, hd[minor].nr_sects);
+                drive+'a', start, part[minor].start_sect, part[minor].nr_sects);
             end_request(0);
             continue;
         }
-        start += hd[minor].start_sect;
+        start += part[minor].start_sect;
 
-        for (count = 0; count < req->rq_nr_sectors; count++) {
+        while (count > 0) {
             if (req->rq_cmd == WRITE) {
                 debug_blk("cf%c: writing sector %lu\n", drive+'a', start);
                 ret = ata_write(drive, start, buf, req->rq_seg);
@@ -204,12 +205,14 @@ static void do_ata_cf_request(void)
             }
             if (ret != 0) {         /* I/O error */
                 printk("cf%c: I/O error %d cmd %d\n", drive+'a', ret, req->rq_cmd);
-                break;
+                end_request(0);
+                return;
             }
-            start++;
             buf += ATA_SECTOR_SIZE;
+            start++;
+            count--;
         }
-        end_request(count == req->rq_nr_sectors);
+        end_request(1);
         return;                     /* synchronous I/O */
     }
 }

@@ -63,13 +63,15 @@ struct hd_struct
     sector_t nr_sects;          /* # sectors in partition */
 };
 
+#define HARDDISK    (-1)        /* fdtype for hard disk */
+
 struct drive_infot              /* CHS per drive*/
 {
     unsigned int cylinders;
     int sectors;
     int heads;
     int sector_size;
-    int fdtype;                 /* floppy fd_types[] index  or -1 if hd */
+    int fdtype;                 /* floppy fd_types[] index  or HARDDISK if hd */
 };
 
 struct gendisk
