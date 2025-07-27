@@ -24,7 +24,7 @@
 #define DOS_EXTENDED_PARTITION   5
 #define LINUX_EXTENDED_PARTITION 0x85
 
-struct partition
+struct partition                /* IBM PC MBR partition entry */
 {
     unsigned char boot_ind;     /* 0x80 - active */
     unsigned char head;         /* starting head */
@@ -38,7 +38,7 @@ struct partition
     sector_t nr_sects;          /* nr of sectors in partition */
 };
 
-struct partition_pc98
+struct partition_pc98           /* PC-98 IPL1 partition entry */
 {
     unsigned char boot_ind;     /* bootable */
     unsigned char active;       /* active or sleep */
@@ -57,7 +57,7 @@ struct partition_pc98
 
 #define NOPART      -1UL        /* no partition at start_sect */
 
-struct hd_struct
+struct hd_struct                /* internal partition table entry */
 {
     sector_t start_sect;        /* start sector of partition or NOPART */
     sector_t nr_sects;          /* # sectors in partition */
@@ -74,7 +74,7 @@ struct drive_infot              /* CHS per drive*/
     int fdtype;                 /* floppy fd_types[] index  or HARDDISK if hd */
 };
 
-struct gendisk
+struct gendisk                  /* general disk information struct */
 {
     int major;                  /* major number of driver */
     const char *major_name;     /* name of major driver */
