@@ -24,7 +24,7 @@
 #define DOS_EXTENDED_PARTITION   5
 #define LINUX_EXTENDED_PARTITION 0x85
 
-struct partition
+struct partition                /* IBM PC MBR partition entry */
 {
     unsigned char boot_ind;     /* 0x80 - active */
     unsigned char head;         /* starting head */
@@ -38,7 +38,7 @@ struct partition
     sector_t nr_sects;          /* nr of sectors in partition */
 };
 
-struct partition_pc98
+struct partition_pc98           /* PC-98 IPL1 partition entry */
 {
     unsigned char boot_ind;     /* bootable */
     unsigned char active;       /* active or sleep */
@@ -57,11 +57,13 @@ struct partition_pc98
 
 #define NOPART      -1UL        /* no partition at start_sect */
 
-struct hd_struct
+struct hd_struct                /* internal partition table entry */
 {
     sector_t start_sect;        /* start sector of partition or NOPART */
     sector_t nr_sects;          /* # sectors in partition */
 };
+
+#define HARDDISK    (-1)        /* fdtype for hard disk */
 
 struct drive_infot              /* CHS per drive*/
 {
@@ -69,10 +71,10 @@ struct drive_infot              /* CHS per drive*/
     int sectors;
     int heads;
     int sector_size;
-    int fdtype;                 /* floppy fd_types[] index  or -1 if hd */
+    int fdtype;                 /* floppy fd_types[] index  or HARDDISK if hd */
 };
 
-struct gendisk
+struct gendisk                  /* general disk information struct */
 {
     int major;                  /* major number of driver */
     const char *major_name;     /* name of major driver */
@@ -95,9 +97,9 @@ struct hd_geometry              /* structure returned from HDIO_GETGEO */
 /* hd/ide ctl's that pass (arg) ptrs to user space are numbered 0x030n/0x031n */
 #define HDIO_GETGEO     0x0301  /* get device geometry */
 
-extern struct drive_infot *last_drive;  /* set to last drivep-> used in read/write */
+extern struct gendisk bioshd_gendisk;   /* IBM for bios_disk_park_all() */
+extern struct drive_infot *last_drive;  /* PC98 set to last drivep-> used in read/write */
 extern unsigned char bios_drive_map[];  /* map drive to BIOS drivenum */
-extern struct drive_infot drive_info[];
 extern int boot_partition;              /* MBR boot partition, if any */
 
 void GENPROC init_partitions(struct gendisk *dev);
