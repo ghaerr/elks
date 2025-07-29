@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 
 # Set up the build environment
+# For macOS Catalina without realpath, uncomment 2nd line below
 
 export TOPDIR="$(realpath $(dirname $BASH_SOURCE))"
+#export TOPDIR=`pwd`
+
 echo TOPDIR set to $TOPDIR
 
 export CROSSDIR="$TOPDIR/cross"

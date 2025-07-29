@@ -52,6 +52,7 @@
 #include <linuxmt/heap.h>
 #include <linuxmt/memory.h>
 #include <linuxmt/debug.h>
+#include <linuxmt/prectimer.h>
 #include <arch/io.h>
 
 /* hardware controller access modes, override using xtide= in /bootopts */
@@ -70,6 +71,7 @@
 
 /* configurable options */
 #define FASTIO          1       /* =1 to use ASM in/out instructions for I/O */
+#define EMUL_XTCF       0       /* =1 to force XTCF xfer mode for use with PCem */
 
 static int xfer_mode = AUTO;    /* change this to force a particular I/O xfer method */
 
@@ -245,6 +247,7 @@ static void ATPROC write_ioport(int port, unsigned char __far *buffer, size_t co
 /**
  * ATA try setting 8-bit transfer mode, may be unimplemented by controller
  */
+#pragma GCC diagnostic ignored "-Wunused-function"
 static int ATPROC ata_set8bitmode(void)
 {
     int error;
@@ -285,21 +288,17 @@ static int ATPROC ata_select(unsigned int drive, unsigned int cmd, unsigned long
     unsigned char select = 0xA0 | 0x40 | (drive << 4) | ((sector >> 24) & 0x0F);
     int error;
 
-    // wait for drive to be non-busy
+    // wait for current drive to be non-busy
 
     error = ata_wait(WAIT_50MS);
     if (error)
         return error;
 
-    // select drive and wait 10ms
+    // select drive, 400ns wait not required since BSY clear above
 
     OUTB(select, ATA_REG_SELECT);
 
-    delay_10ms();
-
-    // wait for drive to be non-busy
-
-    return ata_wait(WAIT_50MS);
+    return 0;
 }
 
 /**
@@ -371,7 +370,7 @@ static int ATPROC ata_identify(unsigned int drive, unsigned char __far *buf)
 
     read_ioport(BASE(ATA_REG_DATA), buf, ATA_SECTOR_SIZE);
 
-    return ata_wait(WAIT_50MS);
+    return 0;
 }
 
 
@@ -388,6 +387,9 @@ int ATPROC ata_reset(void)
 
 #ifdef CONFIG_ARCH_SOLO86
     ata_mode = MODE_SOLO86;
+#endif
+#if EMUL_XTCF
+    xfer_mode = XFER_8_XTCF;
 #endif
 
     // dynamically set controller access method and I/O port addresses
@@ -452,11 +454,13 @@ int ATPROC ata_reset(void)
 
     // try and turn on 8-bit mode, fallback to 16-bit if controller can't handle it
 
+#if !EMUL_XTCF
     if (xfer_mode == XFER_8_XTCF)
     {
         if (ata_set8bitmode() < 0)
             xfer_mode = XFER_16;
     }
+#endif
     return 0;
 }
 
@@ -526,7 +530,6 @@ int ATPROC ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t se
     unsigned char __far *buffer;
     int error;
 
-
     // send command
 
     error = ata_cmd(drive, ATA_CMD_READ, sector, 1);
@@ -552,7 +555,7 @@ int ATPROC ata_read(unsigned int drive, sector_t sector, char *buf, ramdesc_t se
         read_ioport(BASE(ATA_REG_DATA), buffer, ATA_SECTOR_SIZE);
     }
 
-    return ata_wait(WAIT_50MS);
+    return 0;
 }
 
 
