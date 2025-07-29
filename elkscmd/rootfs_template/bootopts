@@ -15,6 +15,7 @@ xms=on
 #disable=cfa
 #xtide=3 # 0=ATA, 1=XTIDEv1, 2=XTIDEv2 (high speed), 3=XTCF
 #disable=hda
+#xtide=1
 #root=cfa1
 #root=hda1 ro
 #root=df0
