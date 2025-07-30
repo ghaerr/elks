@@ -570,6 +570,7 @@ int ATPROC ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t s
 {
     unsigned char __far *buffer;
     int error;
+    unsigned char status;
 
 
     // send command
@@ -597,6 +598,16 @@ int ATPROC ata_write(unsigned int drive, sector_t sector, char *buf, ramdesc_t s
         write_ioport(BASE(ATA_REG_DATA), buffer, ATA_SECTOR_SIZE);
     }
 
+    error = ata_wait(WAIT_10SEC);
+    if (error)
+        return error;
 
-    return ata_wait(WAIT_10SEC);
+    // check for write error
+
+    status = INB(ATA_REG_STATUS);
+
+    if (status & (ATA_STATUS_ERR|ATA_STATUS_DFE))
+        return -EIO;
+
+    return 0;
 }
