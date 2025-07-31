@@ -13,9 +13,10 @@ xms=on
 #xmsbuf=0
 #disable=hda,cfa,df0,fd0
 #disable=cfa
-#xtide=3 # 0=ATA, 1=XTIDEv1, 2=XTIDEv2 (high speed), 3=XTCF
 #disable=hda
-#xtide=1
+#xtide=3 # 0=ATA, 1=XTIDEv1, 2=XTIDEv2 (high speed), 3=XTCF
+#xtide=1	# for PCem
+#disable=hda
 #root=cfa1
 #root=hda1 ro
 #root=df0
