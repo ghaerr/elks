@@ -412,6 +412,7 @@ void GENPROC show_drive_info(struct drive_infot *drivep, const char *name, int d
                 name, drive + (drivep->fdtype < 0? 'a' : '0'), (size/10), *unit,
                 drivep->cylinders, drivep->heads, drivep->sectors, eol);
         }
+        drivep++;
     }
 }
 #endif
