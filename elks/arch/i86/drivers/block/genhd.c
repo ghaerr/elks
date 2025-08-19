@@ -98,8 +98,8 @@ static void GENPROC add_partition(struct gendisk *hd, unsigned int minor,
             if (ROOT_DEV == bios_drive_map[minor >> hd->minor_shift])
                 boot_partition = minor & 0x7;
         }
-    }
 #endif
+    }
 }
 
 static int GENPROC is_extended_partition(register struct partition *p)

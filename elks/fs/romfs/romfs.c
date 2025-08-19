@@ -321,8 +321,8 @@ static struct super_block * romfs_read_super (struct super_block * s, void * dat
 	struct romfs_super_mem rsm;
 	struct inode * i;
 
-    if (s->s_dev != DEV_ROM)
-        return NULL;
+	if (s->s_dev != DEV_ROM)
+		return NULL;
 	while (1) {
 		lock_super (s);
 
