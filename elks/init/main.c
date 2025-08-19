@@ -374,6 +374,17 @@ char *root_dev_name(kdev_t dev)
     return name;
 }
 
+/* return true if device disabled in disable= list */
+int INITPROC dev_disabled(int dev)
+{
+    int i;
+
+    for (i=0; i < ARRAYLEN(disabled); i++)
+        if (disabled[i] == dev)
+            return 1;
+    return 0;
+}
+
 #ifdef CONFIG_BOOTOPTS
 /*
  * Convert a /dev/ name to device number.
@@ -464,17 +475,6 @@ static void INITPROC parse_disable(char *line)
         if (p)
             *p++ = 0;
     } while (p && n < ARRAYLEN(disabled));
-}
-
-/* return true if device disabled in disable= list */
-int INITPROC dev_disabled(int dev)
-{
-    int i;
-
-    for (i=0; i < ARRAYLEN(disabled); i++)
-        if (disabled[i] == dev)
-            return 1;
-    return 0;
 }
 
 /*
