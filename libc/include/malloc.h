@@ -38,6 +38,5 @@ void   *calloc(size_t elm, size_t sz);
 
 /* debug output */
 int __dprintf(const char *fmt, ...);
-int __open_readable_terminal(void);
 
 #endif

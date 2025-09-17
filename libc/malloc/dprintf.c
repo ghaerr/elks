@@ -6,27 +6,35 @@
 #include <fcntl.h>
 
 /*
- * Open /dev/console for debug messages. On real hardware, this should
- * have been setup so that the console is on the serial port so that
- * messages can be seen when Nano-X is running.
+ * Open /dev/console for debug messages. On real hardware, this can
+ * be setup using serial console so that the console is /dev/ttyS0,
+ * and messages will be seen when Nano-X is running, or use
+ * DEBUG_PORT= to specify an alternative device or 'none'.
+ *
  * On QEMU, check if /dev/tty1 and /dev/console are the same,
  * and if so open /dev/ttyS0 instead for terminal output assuming
  * QEMU has been run with -serial stdio option which maps /devttyS0 to it.
  */
-int __open_readable_terminal(void)
+static int open_debug_terminal(void)
 {
     int fd = -1;
-    char *serial = "/dev/ttyS0";    /* preferred console but could be  mouse port */
-    char *mouse;
+    char *debug, *mouse;
+
+    debug = getenv("DEBUG_PORT");
+    if (debug) {
+        if (!strcmp(debug, "none"))
+            return -1;
+    } else
+        debug = "/dev/ttyS0";       /* preferred console but could be mouse port */
 
     if (!isatty(STDERR_FILENO))     /* continue piping __dprintf to redirected stderr */
         fd = STDERR_FILENO;
     else {
         mouse = getenv("MOUSE_PORT");
-        if (!mouse || strcmp(mouse, serial) != 0)  /* use serial if not used by mouse */
-            fd = open(serial, O_NOCTTY | O_WRONLY);
+        if (!mouse || strcmp(mouse, debug) != 0)    /* use debug if not used by mouse */
+            fd = open(debug, O_NOCTTY | O_WRONLY);
         if (fd < 0)
-            fd = open(_PATH_CONSOLE, O_WRONLY);
+            fd = open(_PATH_CONSOLE, O_NOCTTY | O_WRONLY);
     }
     return fd;
 }
@@ -80,7 +88,8 @@ int __dprintf(const char *fmt, ...)
     static int fd = -1;
 
     if (fd < 0)
-        fd = __open_readable_terminal();
+        fd = open_debug_terminal();
+    if (fd < 0) return 0;
     va_start(va, fmt);
     for (n = 0; *fmt; fmt++) {
         if (*fmt == '%') {
