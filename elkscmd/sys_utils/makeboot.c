@@ -31,6 +31,7 @@
 #include <linuxmt/minix_fs.h>
 #include <linuxmt/kdev_t.h>
 #include "../../bootblocks/mbr_autogen.c"
+#include "../../elks/arch/i86/drivers/block/bioshd.h"
 
 #define BUF_SIZE	1024 
 
@@ -40,10 +41,10 @@
 #define SYSFILE2	"/bootopts"		/* copied for MINIX and FAT */
 #define DEVDIR		"/dev"			/* created for FAT only */
 
-/* BIOS driver numbers must match bioshd.c*/
-#define BIOS_NUM_MINOR	32		/* max minor devices per drive*/
+/* BIOS driver numbers must match elks/arch/i86/drivers/block/bioshd.h */
+#define BIOS_NUM_MINOR	NUM_MINOR       /* max minor devices per drive */
 #define BIOS_MINOR_MASK	(BIOS_NUM_MINOR - 1)
-#define BIOS_FD0_MINOR	128		/* minor # of first floppy, must match bioshd.c*/
+#define BIOS_FD0_MINOR	(DRIVE_FD0 * (1<<MINOR_SHIFT)) /* minor # of first floppy */
 
 /* See bootblocks/minix.map for the offsets, these used for MINIX and FAT */
 #define ELKS_BPB_NumTracks	0x1F7		/* offset of number of tracks (word)*/
