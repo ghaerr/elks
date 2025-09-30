@@ -57,6 +57,7 @@
 /* these are used, pulled out of the below unused list */
 #define ENODATA         61      /* No data available */
 #define ENOSR           63      /* Out of streams resources */
+#define EILSEQ          84      /* Illegal byte sequence */
 #define ENOTSOCK        88      /* Socket operation on non-socket */
 #define EADDRINUSE      98      /* Address already in use */
 #define ENETDOWN        100     /* Network is down */
@@ -119,7 +120,6 @@
 #define ELIBSCN         81      /* .lib section in a.out corrupted */
 #define ELIBMAX         82      /* Attempting to link in too many shared libraries */
 #define ELIBEXEC        83      /* Cannot exec a shared library directly */
-#define EILSEQ          84      /* Illegal byte sequence */
 #define ERESTART        85      /* Interrupted system call should be restarted */
 #define ESTRPIPE        86      /* Streams pipe error */
 #define EUSERS          87      /* Too many users */

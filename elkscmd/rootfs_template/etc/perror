@@ -38,6 +38,7 @@
 40 Too many symbolic links encountered 
 61 No data available 
 63 Out of streams resources 
+84 Illegal byte sequence
 88 Socket operation on non-socket 
 98 Address already in use 
 100 Network is down 
