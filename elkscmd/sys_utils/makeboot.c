@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <utime.h>
+#include <errno.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>
@@ -279,6 +280,7 @@ void get_bootblock(char *bootf)
 {
 	int fd, n;
 	unsigned short *bsect = (unsigned short *)bootblock;
+	struct stat sbuf;
 	
 	if (bootf == NULL) {	/* get bootblock from current root */
 		fd = open(rootdevice, O_RDONLY);
@@ -295,17 +297,18 @@ void get_bootblock(char *bootf)
 		bootsecsize = (rootfstype == FST_MINIX)? 1024: 512;
 
 	} else {	/* get bootblock from file */
-
 		fd = open(bootf, O_RDONLY);
 		if (fd < 0)
 			fatalmsg("Can't open boot file %s\n", bootf);
-		bootsecsize = 1024;
+		if (stat(bootf, &sbuf) < 0 || (sbuf.st_size != 512 && sbuf.st_size != 1024))
+			fatalmsg("Boot file must be 512 or 1024 bytes\n");
+		bootsecsize = sbuf.st_size;
 	}
 	lseek(fd, 0L, SEEK_SET);
 	n = read(fd, bootblock, bootsecsize);
 	if (n == 512) { rootfstype = FST_MSDOS; }
 	else if (n == 1024) { rootfstype = FST_MINIX; }
-	else { fatalmsg("Bootblock size error %d\n", n); }
+	else { fatalmsg("Bootblock read error %d, size %d\n", errno, n); }
 
 	if (bsect[255] != 0xaa55)
 		fatalmsg("Bad signature in bootblock\n");
@@ -440,6 +443,7 @@ usage:
 		}
 
 		lseek(fd, 0L, SEEK_SET);
+		printf("Boot sector size %d\n", bootsecsize);
 		n = write(fd, bootblock, bootsecsize);
 		if (n != bootsecsize)
 			fatalmsg("Can't write target boot sector\n");
