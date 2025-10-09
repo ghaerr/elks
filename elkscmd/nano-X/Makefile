@@ -61,7 +61,7 @@ CLIENT = $(NANOX) $(ENGINE) $(DRIVERS) nanox/stubs.o
 else
 CLIENT = nanox/client.o
 SERVER = $(NANOX) $(ENGINE) $(DRIVERS) nanox/srvnet.o
-ALL += bin/nano-X
+ALL += bin/nano-x
 endif
 
 all: $(ALL)
@@ -69,12 +69,12 @@ all: $(ALL)
 libnano-X.a: $(CLIENT)
 	$(AR) rc libnano-X.a $(CLIENT)
 
-bin/nano-X: $(SERVER)
+bin/nano-x: $(SERVER)
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 nxdemos: libnano-X.a
 	$(MAKE) -C demos
 
 clean:
-	$(RM) *.o *.a bin/nano-X drivers/*.o nanox/*.o engine/*.o
+	$(RM) *.o *.a bin/nano-x drivers/*.o nanox/*.o engine/*.o
 	$(MAKE) -C demos clean
