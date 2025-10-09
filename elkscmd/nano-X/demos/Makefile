@@ -16,7 +16,7 @@ PROGS   = \
     $(BIN)nxtetris  \
     $(BIN)nxterm    \
     $(BIN)nxworld   \
-    $(BIN)nxlandmine\
+    $(BIN)nxmine\
     $(BIN)nxdemo    \
 
 all: $(PROGS)
@@ -34,7 +34,7 @@ $(BIN)nxworld: nxworld.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 	cp -p nxworld.map $(BIN)
 
-$(BIN)nxlandmine: nxlandmine.o
+$(BIN)nxmine: nxmine.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 $(BIN)nxdemo: nxdemo.o
