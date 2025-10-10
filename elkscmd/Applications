@@ -132,6 +132,7 @@ misc_utils/sleep                :miscutil               :1200k
 misc_utils/tty                  :miscutil               :1200k
 misc_utils/uuencode             :miscutil                :1200c     :1440k
 misc_utils/uudecode             :miscutil                :1200c     :1440k
+misc_utils/ecalc                :miscutil           :720k :1200k    :1440k
 #misc_utils/ed                  :be-miscutil        :720k
 elvis/elvis ::bin/vi            :elvis              :720k
 minix1/banner                   :minix1                 :1200k
