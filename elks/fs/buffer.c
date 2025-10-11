@@ -795,9 +795,4 @@ ramdesc_t buffer_seg(struct buffer_head *bh)
 {
     return (bh->b_data? kernel_ds: EBH(bh)->b_L2seg);
 }
-
-char *buffer_data(struct buffer_head *bh)
-{
-    return (bh->b_data? bh->b_data: 0); /* L2 addresses are at offset 0 */
-}
 #endif /* CONFIG_FS_EXTERNAL_BUFFER | CONFIG_FS_XMS_BUFFER*/

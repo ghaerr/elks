@@ -32,7 +32,7 @@
 #include <linuxmt/minix_fs.h>
 #include <linuxmt/kdev_t.h>
 #include "../../bootblocks/mbr_autogen.c"
-#include "../../elks/arch/i86/drivers/block/bioshd.h"
+#include "../../elks/arch/i86/drivers/block/bioshd.h" /* don't use FD_DRIVES/NUM_DRIVES */
 
 #define BUF_SIZE	1024 
 
