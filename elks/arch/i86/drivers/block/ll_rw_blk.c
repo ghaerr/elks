@@ -223,6 +223,7 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
 
     /* fill up the request-info, and add it to the queue */
     req->rq_cmd = rw;
+    /* tricky: if nr_sectors is 1 (FAT) then blocknr is sector #, not block # */
     req->rq_nr_sectors = BLOCK_SIZE / get_sector_size(req->rq_dev);
     req->rq_sector = buffer_blocknr(bh) * req->rq_nr_sectors;
     req->rq_seg = buffer_seg(bh);

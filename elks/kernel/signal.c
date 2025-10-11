@@ -88,7 +88,7 @@ int kill_process(pid_t pid, sig_t sig, int priv)
     debug_sig("SIGNAL kill_proc sig %d pid %d\n", sig, pid);
     for_each_task(p)
         if (p->pid == pid && p->state < TASK_ZOMBIE)
-            return send_sig(sig, p, 0);
+            return send_sig(sig, p, priv);
     return -ESRCH;
 }
 
