@@ -55,7 +55,7 @@ struct sec_per_clus_table
 struct sec_per_clus_table _cluster_size_table16[] =
 {
     { 4084L,   1},   // 2MB - 512b
-    { 32680L,  2},   // 16MB - 1K
+    { 65525L,  2},   // 64MB - 1K (was 32680/16MB)
     { 262144L, 4},   // 128MB - 2K
     { 524288L, 8},   // 256MB - 4K
     { 1048576L, 16}, // 512MB - 8K
