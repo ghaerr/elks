@@ -1,0 +1,52 @@
+.TH ecalc 1
+.SH NAME
+ecalc \- simple integer calculator for ELKS
+.SH SYNOPSIS
+.B ecalc
+.SH DESCRIPTION
+.I ecalc
+is a simple terminal integer calculator for ELKS. It uses 16-bit signed integers(-32768 to 32767).
+.SH OPERATORS
+.TP 20
+.B +
+Addition
+.TP 20
+.B -
+Subtraction
+.TP 20
+.B *
+Multiplication
+.TP 20
+.B /
+Division
+.TP 20
+.B e
+Exponent
+.TP 20
+.B ~
+Bitwise NOT
+.TP 20
+.B &
+Bitwise AND
+.TP 20
+.B |
+Bitwise OR
+.TP 20
+.B ^
+Bitwise XOR
+.TP 20
+.B ()
+Parentheses
+.TP 20
+.B ans
+Previous result
+.SH EXAMPLES
+.TP 20
+.B Example 1: 
+3*10e3, should print 3000
+.TP 20
+.B Example 2:
+ans/2|1, should print 1501
+.SH AUTHORS
+.\" If you have contributed to this program, please add your name here
+Benjamin Helle

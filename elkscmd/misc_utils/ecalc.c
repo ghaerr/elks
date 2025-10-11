@@ -11,7 +11,7 @@
 #include <string.h>
 #include <ctype.h>
 
-/* version 1.1 */
+/* version 1.2 */
 /* notice: int is always signed 16 bit*/
 
 /* define tokens*/
@@ -20,6 +20,7 @@
 #define TOKEN_NUM   2
 #define TOKEN_LPAR  3
 #define TOKEN_RPAR  4
+#define TOKEN_ANS   5
 /* arithmetic operators */
 #define TOKEN_ADD   10
 #define TOKEN_SUB   11
@@ -35,6 +36,7 @@
 char* src;
 int token;
 int num;
+int result;
 
 /* built in pow function to reduce size */
 int ipow(int x, int y) {
@@ -70,6 +72,12 @@ void next_token(void)
     return;
   }
 
+  if (strncmp(src, "ans", 3) == 0) { /* previous result */
+    token = TOKEN_ANS;
+    src += 3;
+    return;
+  }
+
   switch(*src) { /* operators and parentheses */
     case '+': token = TOKEN_ADD; break;
     case '-': token = TOKEN_SUB; break;
@@ -90,6 +98,7 @@ void next_token(void)
 }
 
 /* forward declarations */
+int parse_ans(void);
 int parse_term(void);
 int parse_factor(void);
 int parse_expr(void);
@@ -103,7 +112,8 @@ int parse_not(void);
 
 /* this forms a predence tree, from lowest to highest precedence
  * OR, AND, XOR, ADD/SUB, MUL/DIV, EXP, UNARY(eg. NOT)
- */
+*/
+
 int parse_and(void) {
   int val = parse_term();
   if (token == TOKEN_AND) {
@@ -164,9 +174,11 @@ int parse_factor(void)
   } else if (token == TOKEN_NOT) {
     next_token();
     val = ~parse_factor();
+  } else if (token == TOKEN_ANS) {
+    next_token();
+    val = result;
   }
-  
-  else error("expected number or an expression. Run 'ecalc -h' for help"); /* error if nothing matches */
+  else error("expected number or an expression."); /* error if nothing matches */
   return val;
 }
 
@@ -205,34 +217,7 @@ int parse_expr(void)
 
 int main(int argc, char **argv) 
 {
-  if (argc > 1) { /* scan for any arguments */
-    for (int i = 1; i < argc; i++) {
-      if (strcmp(argv[i], "-v") == 0) {
-        printf("ecalc 1.1\nCopyright (c) 2025 Benjamin Helle\n");
-      } else if (strcmp(argv[i], "-h") == 0) {
-        /* help message */
-        printf(
-          "ecalc 1.1 Help\n"
-          "Available arguments:\n-v\t\tPrint version information\n-h\t\tPrint this help text\n"
-          "Integer format: 16-bit signed(-32768 to 32767)\n"
-          "Available operators:\n"
-          "+\tAdd\n"
-          "-\tSub\n"
-          "*\tMul\n"
-          "/\tDiv\n"
-          "e\tExponent\n"
-          "~\tBitwise NOT\n"
-          "&\tBitwise AND\n"
-          "|\tBitwise OR\n"
-          "^\tBitwise XOR\n"
-          "()\tParentheses\n"
-        );
-      }
-    }
-    return 0;
-  }
-
-  printf("ecalc 1.1 - simple integer calculator for ELKS\nRun 'ecalc -h' for help. Ctrl+C to exit\n");
+  printf("ecalc 1.2\nSee the man page for help. Ctrl+C to exit\n");
   char line[0xFF];
   while (1) { /* main loop */
     printf("> ");
@@ -241,7 +226,7 @@ int main(int argc, char **argv)
     src = line;
     next_token();
 
-    int result = parse_expr(); /* get result */
+    result = parse_expr(); /* get result */
 
     printf("= %d\n", result); /* and print it */
   }
