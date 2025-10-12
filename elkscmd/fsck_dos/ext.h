@@ -66,11 +66,11 @@ extern struct dosDirEntry *rootDir;
 
 #if defined(__COMPACT__) || defined(__LARGE__)
 void *hmalloc(unsigned long size);
-void *hcalloc(unsigned long size);
+void *hcalloc(unsigned long count, size_t size);
 #define MAXCLUSTERS     31752
 #else
 #define hmalloc(n)      malloc(n)
-#define hcalloc(n)      calloc(n,1)
+#define hcalloc(c, s)   calloc(c, s)
 #define MAXCLUSTERS     3969
 #endif
 

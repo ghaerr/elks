@@ -221,11 +221,11 @@ static struct dosDirEntry *lostDir;
 int
 resetDosDirSection(struct bootblock *boot, struct fatEntry __huge *fat)
 {
-	unsigned int b1, b2;     //FIXME check
+	unsigned int b1, b2;
 	cl_t cl;
 	int ret = FSOK;
 
-	b1 = boot->RootDirEnts * 32;
+	b1 = boot->RootDirEnts * 32;                // FIXME limits not checed
 	b2 = boot->SecPerClust * boot->BytesPerSec;
 
 	if (!(buffer = hmalloc(b1 > b2 ? b1 : b2))
@@ -442,7 +442,7 @@ check_dot_dot(int f, struct bootblock *boot, struct fatEntry __huge *fat,struct 
 {
 	u_char *p, *buf;
 	loff_t off;
-	int last;   //FIXME check RootDirEnts max
+	int last;
 	cl_t cl;
 	int rc=0, n_count;
 
@@ -464,7 +464,7 @@ check_dot_dot(int f, struct bootblock *boot, struct fatEntry __huge *fat,struct 
 		}
 
 		off *= boot->BytesPerSec;
-		buf = hmalloc(last);
+		buf = hmalloc(last);            // FIXE buf not huge, limits not checked
 		if (!buf) {
 			perror("Unable to malloc");
 			return FSFATAL;

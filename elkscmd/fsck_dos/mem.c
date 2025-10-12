@@ -39,19 +39,21 @@ void *malloc(size_t size)
     return hmalloc(size);
 }
 
-void *hcalloc(unsigned long size)
+void *hcalloc(unsigned long count, size_t size)
 {
-    char *mem = hmalloc(size);
-    char __huge *clr = mem;
+    char *mem;
+    char __huge *clr;
 
+    count *= size;
+    clr = mem = hmalloc(count);
     if (!mem) return NULL;
     do {
-        unsigned long n = size;
+        unsigned long n = count;
         if (n > 16384) n = 16384;
         fmemset(clr, '\0', n);
-        size -= n;
+        count -= n;
         clr += n;
-    } while (size);
+    } while (count);
     return mem;
 }
 

@@ -192,13 +192,13 @@ _readfat(int fs, struct bootblock *boot, int no, u_char **buffer)
 	size_t n, r;
 
 #ifdef ELKS
-	if (boot->FATsecs > 127) {
+	if (boot->FATsecs > 127) {      /* prevent overflow in n below */
 		printf("FAT table too large: %ld\n", boot->FATsecs);
 		return 0;
 	}
 #endif
 	n = boot->FATsecs * boot->BytesPerSec;
-	*buffer = hmalloc(boot->FATsecs * boot->BytesPerSec);
+	*buffer = hmalloc(n);
 	if (*buffer == NULL) {
 		printf("Can't allocate %lu KB for FAT\n",
 			(boot->FATsecs * boot->BytesPerSec) / 1024);
@@ -248,7 +248,7 @@ readfat(int fs, struct bootblock *boot, int no, struct fatEntry **fp)
         return FSFATAL;
     }
 #endif
-	fat = hcalloc((u_int32_t)boot->NumClusters * sizeof(struct fatEntry));
+	fat = hcalloc(boot->NumClusters, sizeof(struct fatEntry));
 	if (fat == NULL) {
 		perror("No space for FAT entries");
 		free(buffer);
