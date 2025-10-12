@@ -344,7 +344,6 @@ readfat(int fs, struct bootblock *boot, int no, struct fatEntry **fp)
 			break;
 		}
 	}
-    //{ char c; read(0, &c, 1); }
 
 	free(buffer);
 	*fp = fat;
