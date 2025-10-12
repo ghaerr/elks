@@ -82,7 +82,7 @@ checkdirty(int fs, struct bootblock *boot)
 	off = boot->ResSectors;
 	off *= boot->BytesPerSec;
 
-	buffer = malloc(boot->BytesPerSec);
+	buffer = hmalloc(boot->BytesPerSec);
 	if (buffer == NULL) {
 		perror("No space for FAT dirty check");
 		return 1;
@@ -161,6 +161,27 @@ checkclnum(struct bootblock *boot, int fat, cl_t cl, cl_t *next)
 	return FSOK;
 }
 
+#ifdef ELKS
+/* read > 32k bytes w/o failing */
+size_t nread(int fd, char *buf, size_t n)
+{
+    int r;
+    size_t m, c = 0;
+    do {
+        m = n;
+        if (m > 8192) m = 8192;
+        r = read(fd, buf, m);
+        if (r < 0) return r;
+        buf += m;
+        c += m;
+        n -= m;
+    } while (r != 0 && n != 0);
+    return c;
+}
+#else
+#define nread   read
+#endif
+
 /*
  * Read a FAT from disk. Returns 1 if successful, 0 otherwise.
  */
@@ -168,8 +189,16 @@ static int
 _readfat(int fs, struct bootblock *boot, int no, u_char **buffer)
 {
 	off_t off;
+	size_t n, r;
 
-	*buffer = malloc(boot->FATsecs * boot->BytesPerSec);
+#ifdef ELKS
+	if (boot->FATsecs > 127) {
+		printf("FAT table too large: %ld\n", boot->FATsecs);
+		return 0;
+	}
+#endif
+	n = boot->FATsecs * boot->BytesPerSec;
+	*buffer = hmalloc(boot->FATsecs * boot->BytesPerSec);
 	if (*buffer == NULL) {
 		printf("Can't allocate %lu KB for FAT\n",
 			(boot->FATsecs * boot->BytesPerSec) / 1024);
@@ -184,8 +213,8 @@ _readfat(int fs, struct bootblock *boot, int no, u_char **buffer)
 		goto err;
 	}
 
-	if (read(fs, *buffer, boot->FATsecs * boot->BytesPerSec)
-	    != boot->FATsecs * boot->BytesPerSec) {
+	r = nread(fs, (char *)*buffer, n);
+	if (r != n) {
 		perror("Unable to read FAT");
 		goto err;
 	}
@@ -203,7 +232,7 @@ _readfat(int fs, struct bootblock *boot, int no, u_char **buffer)
 int
 readfat(int fs, struct bootblock *boot, int no, struct fatEntry **fp)
 {
-	struct fatEntry *fat;
+	struct fatEntry __huge *fat;
 	u_char *buffer, *p;
 	cl_t cl;
 	int ret = FSOK;
@@ -213,7 +242,13 @@ readfat(int fs, struct bootblock *boot, int no, struct fatEntry **fp)
 	if (!_readfat(fs, boot, no, &buffer))
 		return FSFATAL;
 		
-	fat = calloc(boot->NumClusters, sizeof(struct fatEntry));
+#ifdef ELKS
+    if (boot->NumClusters > MAXCLUSTERS) {  /* don't overflow hcalloc below */
+        printf("NumClusters too large: %ld\n", boot->NumClusters);
+        return FSFATAL;
+    }
+#endif
+	fat = hcalloc((u_int32_t)boot->NumClusters * sizeof(struct fatEntry));
 	if (fat == NULL) {
 		perror("No space for FAT entries");
 		free(buffer);
@@ -309,6 +344,7 @@ readfat(int fs, struct bootblock *boot, int no, struct fatEntry **fp)
 			break;
 		}
 	}
+    //{ char c; read(0, &c, 1); }
 
 	free(buffer);
 	*fp = fat;
@@ -401,8 +437,8 @@ clustdiffer(cl_t cl, cl_t *cp1, cl_t *cp2, int fatnum)
  * into the first one.
  */
 int
-comparefat(struct bootblock *boot, struct fatEntry *first, 
-    struct fatEntry *second, int fatnum)
+comparefat(struct bootblock *boot, struct fatEntry __huge *first,
+    struct fatEntry __huge *second, int fatnum)
 {
 	cl_t cl;
 	int ret = FSOK;
@@ -414,7 +450,7 @@ comparefat(struct bootblock *boot, struct fatEntry *first,
 }
 
 void
-clearchain(struct bootblock *boot, struct fatEntry *fat, cl_t head)
+clearchain(struct bootblock *boot, struct fatEntry __huge *fat, cl_t head)
 {
 	cl_t p, q;
 
@@ -444,7 +480,7 @@ tryclear(struct bootblock *boot, struct fatEntry *fat, cl_t head, cl_t *trunc)
  * Check a complete FAT in-memory for crosslinks
  */
 int
-checkfat(struct bootblock *boot, struct fatEntry *fat)
+checkfat(struct bootblock *boot, struct fatEntry __huge *fat)
 {
 	cl_t head, p, h, n, wdk;
 	cl_t len;
@@ -548,7 +584,7 @@ checkfat(struct bootblock *boot, struct fatEntry *fat)
  * Write out FATs encoding them from the internal format
  */
 int
-writefat(int fs, struct bootblock *boot, struct fatEntry *fat, int correct_fat)
+writefat(int fs, struct bootblock *boot, struct fatEntry __huge *fat, int correct_fat)
 {
 	u_char *buffer, *p;
 	cl_t cl;
@@ -557,7 +593,7 @@ writefat(int fs, struct bootblock *boot, struct fatEntry *fat, int correct_fat)
 	off_t off;
 	int ret = FSOK;
 
-	buffer = malloc(fatsz = boot->FATsecs * boot->BytesPerSec);
+	buffer = hmalloc(fatsz = boot->FATsecs * boot->BytesPerSec);
 	if (buffer == NULL) {
 		perror("No space for FAT write");
 		return FSFATAL;
@@ -656,7 +692,7 @@ writefat(int fs, struct bootblock *boot, struct fatEntry *fat, int correct_fat)
  * Check a complete in-memory FAT for lost cluster chains
  */
 int
-checklost(int dosfs, struct bootblock *boot, struct fatEntry *fat)
+checklost(int dosfs, struct bootblock *boot, struct fatEntry __huge *fat)
 {
 	cl_t head;
 	int mod = FSOK;
