@@ -4,7 +4,7 @@ include $(BASEDIR)/Makefile-rules
 
 ###############################################################################
 
-LOCALCFLAGS = -Dlint -DELKS=1
+LOCALCFLAGS = -Dlint -DELKS=1 -D__huge=
 # remove next line when FAT32 supported
 LOCALCFLAGS += -Wno-shift-count-overflow
 
@@ -35,5 +35,9 @@ fat.o: fat.c
 fsck-dos: main.o boot.o check.o dir.o fat.o
 	$(LD) $(LDFLAGS) -maout-heap=0xffff -o $@ $^ $(LDLIBS)
 
+fsck-dos.os2:
+	ewcc -Dlint=1 -DELKS=1 boot.c check.c dir.c fat.c main.c mem.c
+	ewlink -o fsck-dos.os2 boot.obj check.obj dir.obj fat.obj main.obj mem.obj
+
 clean:
-	$(RM) *.o $(PRGS)
+	$(RM) *.o $(PRGS) *.obj *.os2

@@ -64,6 +64,16 @@ extern int skipclean;	/* skip clean file systems if preening */
 
 extern struct dosDirEntry *rootDir;
 
+#if defined(__COMPACT__) || defined(__LARGE__)
+void *hmalloc(unsigned long size);
+void *hcalloc(unsigned long size);
+#define MAXCLUSTERS     31752
+#else
+#define hmalloc(n)      malloc(n)
+#define hcalloc(n)      calloc(n,1)
+#define MAXCLUSTERS     3969
+#endif
+
 /*
  * function declarations
  */
@@ -114,22 +124,22 @@ int readfat(int, struct bootblock *, int, struct fatEntry **);
  * Check two FAT copies for consistency and merge changes into the
  * first if neccessary.
  */
-int comparefat(struct bootblock *, struct fatEntry *, struct fatEntry *, int);
+int comparefat(struct bootblock *, struct fatEntry __huge *, struct fatEntry __huge *, int);
 
 /*
  * Check a FAT
  */
-int checkfat(struct bootblock *, struct fatEntry *);
+int checkfat(struct bootblock *, struct fatEntry __huge *);
 
 /*
  * Write back FAT entries
  */
-int writefat(int, struct bootblock *, struct fatEntry *, int);
+int writefat(int, struct bootblock *, struct fatEntry __huge *, int);
 
 /*
  * Read a directory
  */
-int resetDosDirSection(struct bootblock *, struct fatEntry *);
+int resetDosDirSection(struct bootblock *, struct fatEntry __huge *);
 void finishDosDirSection(void);
 int handleDirTree(int, struct bootblock *, struct fatEntry *);
 
@@ -139,11 +149,11 @@ int handleDirTree(int, struct bootblock *, struct fatEntry *);
 /*
  * Check for lost cluster chains
  */
-int checklost(int, struct bootblock *, struct fatEntry *);
+int checklost(int, struct bootblock *, struct fatEntry __huge *);
 /*
  * Try to reconnect a lost cluster chain
  */
-int reconnect(int, struct bootblock *, struct fatEntry *, cl_t);
+int reconnect(int, struct bootblock *, struct fatEntry __huge *, cl_t);
 void finishlf(void);
 
 /*
@@ -157,6 +167,6 @@ char *rsrvdcltype(cl_t);
 /*
  * Clear a cluster chain in a FAT
  */
-void clearchain(struct bootblock *, struct fatEntry *, cl_t);
+void clearchain(struct bootblock *, struct fatEntry __huge *, cl_t);
 
 #endif

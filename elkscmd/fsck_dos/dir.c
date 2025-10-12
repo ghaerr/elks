@@ -97,13 +97,13 @@ static struct dirTodoNode *newDirTodo(void);
 static void freeDirTodo(struct dirTodoNode *);
 static char *fullpath(struct dosDirEntry *);
 static u_char calcShortSum(u_char *);
-static int delete(int, struct bootblock *, struct fatEntry *, cl_t, int,
+static int delete(int, struct bootblock *, struct fatEntry __huge *, cl_t, int,
     cl_t, int, int);
 static int removede(int, struct bootblock *, struct fatEntry *, u_char *,
     u_char *, cl_t, cl_t, cl_t, char *, int);
-static int checksize(struct bootblock *, struct fatEntry *, u_char *,
+static int checksize(struct bootblock *, struct fatEntry __huge *, u_char *,
     struct dosDirEntry *);
-static int readDosDirSection(int, struct bootblock *, struct fatEntry *,
+static int readDosDirSection(int, struct bootblock *, struct fatEntry __huge *,
     struct dosDirEntry *);
 
 /*
@@ -117,7 +117,7 @@ newDosDirEntry(void)
 	struct dosDirEntry *de;
 
 	if (!(de = freede)) {
-		if (!(de = (struct dosDirEntry *)malloc(sizeof *de)))
+		if (!(de = (struct dosDirEntry *)hmalloc(sizeof *de)))
 			return 0;
 	} else
 		freede = de->next;
@@ -142,7 +142,7 @@ newDirTodo(void)
 	struct dirTodoNode *dt;
 
 	if (!(dt = freedt)) {
-		if (!(dt = (struct dirTodoNode *)malloc(sizeof *dt)))
+		if (!(dt = (struct dirTodoNode *)hmalloc(sizeof *dt)))
 			return 0;
 	} else
 		freedt = dt->next;
@@ -219,17 +219,17 @@ static struct dosDirEntry *lostDir;
  * Init internal state for a new directory scan.
  */
 int
-resetDosDirSection(struct bootblock *boot, struct fatEntry *fat)
+resetDosDirSection(struct bootblock *boot, struct fatEntry __huge *fat)
 {
-	int b1, b2;
+	unsigned int b1, b2;     //FIXME check
 	cl_t cl;
 	int ret = FSOK;
 
 	b1 = boot->RootDirEnts * 32;
 	b2 = boot->SecPerClust * boot->BytesPerSec;
 
-	if (!(buffer = malloc(b1 > b2 ? b1 : b2))
-	    || !(delbuf = malloc(b2))
+	if (!(buffer = hmalloc(b1 > b2 ? b1 : b2))
+	    || !(delbuf = hmalloc(b2))
 	    || !(rootDir = newDosDirEntry())) {
 		perror("No space for directory");
 		return FSFATAL;
@@ -302,7 +302,7 @@ finishDosDirSection(void)
  * Delete directory entries between startcl, startoff and endcl, endoff.
  */
 static int
-delete(int f, struct bootblock *boot, struct fatEntry *fat, cl_t startcl,
+delete(int f, struct bootblock *boot, struct fatEntry __huge *fat, cl_t startcl,
     int startoff, cl_t endcl, int endoff, int notlast)
 {
 	u_char *s, *e;
@@ -385,7 +385,7 @@ removede(int f, struct bootblock *boot, struct fatEntry *fat, u_char *start,
  * Check an in-memory file entry
  */
 static int
-checksize(struct bootblock *boot, struct fatEntry *fat, u_char *p,
+checksize(struct bootblock *boot, struct fatEntry __huge *fat, u_char *p,
     struct dosDirEntry *dir)
 {
 	/*
@@ -438,11 +438,11 @@ static u_char  dot_dot_header[16]={0x2E, 0x2E, 0x20, 0x20, 0x20, 0x20, 0x20, 0x2
  * Check for missing or broken '.' and '..' entries.
  */
 static int
-check_dot_dot(int f, struct bootblock *boot, struct fatEntry *fat,struct dosDirEntry *dir)
+check_dot_dot(int f, struct bootblock *boot, struct fatEntry __huge *fat,struct dosDirEntry *dir)
 {
 	u_char *p, *buf;
 	loff_t off;
-	int last;
+	int last;   //FIXME check RootDirEnts max
 	cl_t cl;
 	int rc=0, n_count;
 
@@ -464,7 +464,7 @@ check_dot_dot(int f, struct bootblock *boot, struct fatEntry *fat,struct dosDirE
 		}
 
 		off *= boot->BytesPerSec;
-		buf = malloc(last);
+		buf = hmalloc(last);
 		if (!buf) {
 			perror("Unable to malloc");
 			return FSFATAL;
@@ -518,7 +518,7 @@ check_dot_dot(int f, struct bootblock *boot, struct fatEntry *fat,struct dosDirE
  *   - push directories onto the todo-stack
  */
 static int
-readDosDirSection(int f, struct bootblock *boot, struct fatEntry *fat,
+readDosDirSection(int f, struct bootblock *boot, struct fatEntry __huge *fat,
     struct dosDirEntry *dir)
 {
 	struct dosDirEntry dirent, *d;
@@ -1008,7 +1008,7 @@ static cl_t lfcl;
 static loff_t lfoff;
 
 int
-reconnect(int dosfs, struct bootblock *boot, struct fatEntry *fat, cl_t head)
+reconnect(int dosfs, struct bootblock *boot, struct fatEntry __huge *fat, cl_t head)
 {
 	struct dosDirEntry d;
 	u_char *p;
@@ -1027,7 +1027,7 @@ reconnect(int dosfs, struct bootblock *boot, struct fatEntry *fat, cl_t head)
 		}
 	}
 	if (!lfbuf) {
-		lfbuf = malloc(boot->ClusterSize);
+		lfbuf = hmalloc(boot->ClusterSize);
 		if (!lfbuf) {
 			perror("No space for buffer");
 			return FSFATAL;
