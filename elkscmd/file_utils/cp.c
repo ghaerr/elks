@@ -369,8 +369,6 @@ char *destdir(char *file)
 
 int do_cp(char *srcfile, char *dstfile)
 {
-	if (opt_verbose) printf("Copying %s to %s\n", srcfile, dstfile);
-
 	return copyfile(srcfile, dstfile, 1);
 }
 
@@ -537,6 +535,8 @@ int copyfile(char *srcname, char *destname, int setmodes)
 	struct	stat	statbuf1;
 	struct	stat	statbuf2;
 	struct	utimbuf	times;
+
+	if (opt_verbose) printf("Copying %s to %s\n", srcname, destname);
 
 	if (stat(srcname, &statbuf1) < 0) {
 		perror(srcname);
