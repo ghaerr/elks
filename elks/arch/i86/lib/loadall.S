@@ -171,9 +171,9 @@ loadall_block_op:
 	mov	%sp,%es:(0x2c)
 	//mov	%di,%es:(0x26)	#comment out sets SI, DI zero for REP MOVS
 	//mov	%si,%es:(0x28)
-	mov	%bx,%es:(0x30)  #BX is block operation code
+	mov	%bx,%es:(0x2e)  #BX is block operation code
 	mov	%cx,%es:(0x32)  #CX is byte count for block operation
-	//mov	%dx,%es:(0x2e)	#the following not required to be preserved
+	//mov	%dx,%es:(0x30)	#the following not required to be preserved
 	//mov	%ax,%es:(0x34)
 	.byte   0x0F,0x05       #loadall opcode - execution continues at new IP
 	# not reached
