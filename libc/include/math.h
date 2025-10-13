@@ -74,5 +74,8 @@ float atanf(float x);
 
 float fminf(float x, float y);
 float fmaxf(float x, float y);
+
+double modf(double x, double *iptr);
+float modff(float x, float *iptr);
 #endif
 #endif
