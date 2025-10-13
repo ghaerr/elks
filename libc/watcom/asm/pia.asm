@@ -42,7 +42,7 @@
 include mdef.inc
 
 
-extrn  "C",_HShift      : byte
+;;extrn  "C",_HShift      : byte
 
         modstart        pia
 
@@ -58,15 +58,15 @@ extrn  "C",_HShift      : byte
         add     ax,bx           ; add offsets
         adc     cx,0            ; calculate overflow
         mov     bx,cx           ; shuffle overflow info bx
-if (_MODEL and (_BIG_DATA or _HUGE_DATA)) and ((_MODEL and _DS_PEGGED) eq 0)
-        push    ds              ; need a segment register
-        mov     cx,seg _HShift  ; get the huge shift value
-        mov     ds,cx           ; ...
-        mov     cl,ds:_HShift   ; ...
-        pop     ds              ; restore register
-else
-        mov     cl,_HShift      ; get huge shift value
-endif
+;;if (_MODEL and (_BIG_DATA or _HUGE_DATA)) and ((_MODEL and _DS_PEGGED) eq 0)
+;;      push    ds              ; need a segment register
+;;      mov     cx,seg _HShift  ; get the huge shift value
+;;      mov     ds,cx           ; ...
+;;      mov     cl,ds:_HShift   ; ...
+;;      pop     ds              ; restore register
+;;else
+        mov     cl,12           ; get huge shift value (real mode only)
+;;endif
         shl     bx,cl           ; adjust the overflow by huge shift value
         add     dx,bx           ; and add into selector value
         ret                     ; ...
