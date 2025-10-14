@@ -45,7 +45,7 @@ compare_subtract        macro name
 
 include mdef.inc
 
-extrn   "C",_HShift     : byte
+;;extrn   "C",_HShift     : byte
 
         modstart        &name
 
@@ -76,15 +76,15 @@ extrn   "C",_HShift     : byte
         mov     si,dx
         mov     di,cx
 
-if (_MODEL and (_BIG_DATA or _HUGE_DATA)) and ((_MODEL and _DS_PEGGED) eq 0)
-        push    ds              ; save segment register
-        mov     cx,seg _HShift  ; get huge shift value
-        mov     ds,cx           ; ...
-        mov     cl,ds:_HShift   ; prepare to shift
-        pop     ds              ; restore segment register
-else
-        mov     cl,_HShift      ; get huge shift value
-endif
+;;if (_MODEL and (_BIG_DATA or _HUGE_DATA)) and ((_MODEL and _DS_PEGGED) eq 0)
+;;      push    ds              ; save segment register
+;;      mov     cx,seg _HShift  ; get huge shift value
+;;      mov     ds,cx           ; ...
+;;      mov     cl,ds:_HShift   ; prepare to shift
+;;      pop     ds              ; restore segment register
+;;else
+        mov     cl,12           ; get huge shift value (real mode only)
+;;endif
 
         shr     dx,cl
         shr     di,cl
