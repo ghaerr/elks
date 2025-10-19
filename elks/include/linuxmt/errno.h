@@ -34,8 +34,8 @@
 #define EINVAL          22      /* Invalid argument */
 #define ENFILE          23      /* File table overflow */
 #define EMFILE          24      /* Too many open files */
-#define ENOTTY          25      /* Not a typewriter */  //linenoise
-#define ETXTBSY         26      /* Text file busy */    //ash
+#define ENOTTY          25      /* Not a typewriter */  /*linenoise*/
+#define ETXTBSY         26      /* Text file busy */    /*ash*/
 #define EFBIG           27      /* File too large */
 #define ENOSPC          28      /* No space left on device */
 #define ESPIPE          29      /* Illegal seek */
@@ -57,11 +57,12 @@
 /* these are used, pulled out of the below unused list */
 #define ENODATA         61      /* No data available */
 #define ENOSR           63      /* Out of streams resources */
+#define EILSEQ          84      /* Illegal byte sequence */
 #define ENOTSOCK        88      /* Socket operation on non-socket */
 #define EADDRINUSE      98      /* Address already in use */
 #define ENETDOWN        100     /* Network is down */
 #define ENETUNREACH     101     /* Network is unreachable */
-#define ENOBUFS         105     /* No buffer space available */ //regex
+#define ENOBUFS         105     /* No buffer space available */ /*regex*/
 #define EISCONN         106     /* Transport endpoint is already connected */
 #define ETIMEDOUT       110     /* Connection timed out */
 #define ECONNREFUSED    111     /* Connection refused */
@@ -119,7 +120,6 @@
 #define ELIBSCN         81      /* .lib section in a.out corrupted */
 #define ELIBMAX         82      /* Attempting to link in too many shared libraries */
 #define ELIBEXEC        83      /* Cannot exec a shared library directly */
-#define EILSEQ          84      /* Illegal byte sequence */
 #define ERESTART        85      /* Interrupted system call should be restarted */
 #define ESTRPIPE        86      /* Streams pipe error */
 #define EUSERS          87      /* Too many users */

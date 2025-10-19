@@ -23,12 +23,16 @@ char * strdup(const char*);
 /* Basic mem functions */
 void * memcpy(void * dest, const void * src, size_t n);
 void * memccpy(void*, const void*, int, size_t);
-void * memchr(const void*, const int, size_t);
+void * memchr(const void*, int, size_t);
 void * memset(void*, int, size_t);
 int memcmp(const void*, const void*, size_t);
 void * memmove(void*, const void*, size_t);
 
+#ifndef __STRICT_ANSI__
 void __far *fmemset(void __far *buf, int c, size_t l);
+int fmemcmp(void __far *s1, void __far *s2, size_t n);  /* Watcom C only, in ASM */
+int fmemcpy(void __far *s1, void __far *s2, size_t n);  /* Watcom C only, in ASM */
+#endif
 
 /* Error messages */
 char * strerror(int);
@@ -50,6 +54,9 @@ char *strsep(char **, const char *);
 
 size_t strcspn(const char *, const char *);
 size_t strspn(const char *, const char *);
+
+char *strlwr(char *str);
+char *strupr(char *str);
 
 /* Linux silly hour */
 char *strfry(char *);

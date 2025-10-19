@@ -60,6 +60,7 @@ IA16OBJS = \
 	execlpe.o \
 	program_filename.o \
 	setjmp.o \
+	stacklow.o \
 	syscall01.o \
 	syscall23.o \
 	syscall4.o \

@@ -245,11 +245,13 @@ void host_mode(int mode) {
         lio_m[9] = 0xFF;
         int_A2(lio_m_seg);
 
-        lio_m[0] = 0xFF;
         lio_m[1] = 0xFF;
         lio_m[2] = 0xFF;
-        lio_m[3] = 0x02; // 16 Color mode
+        lio_m[3] = 0xFF;
+        lio_m[4] = 0x02; // 16 Color mode
         int_A3(lio_m_seg);
+
+        outb(0x01,0x6A); // 16 Color mode
     }
 }
 

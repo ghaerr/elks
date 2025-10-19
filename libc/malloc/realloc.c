@@ -1,29 +1,26 @@
 #include <malloc.h>
 #include <string.h>
 
-#include "_malloc.h"
-
-#undef malloc
-
-void *
-realloc(void *ptr, size_t size)
+void *realloc(void *ptr, size_t size)
 {
 	void *nptr;
-	unsigned int osize;
+    size_t osize;
 
 	if (ptr == 0)
 		return malloc(size);
 
-	osize = (m_size(((mem *) ptr) - 1) - 1) * sizeof(mem);
-
+	osize = malloc_usable_size(ptr);
+#if 0
 	if (size <= osize)
-		return ptr;
+		return ptr;         /* don't reallocate, do nothing */
+#else
+	if (size <= osize)
+        osize = size;       /* copy less bytes in memcpy below */
+#endif
 
 	nptr = malloc(size);
-
 	if (nptr == 0)
 		return 0;
-
 	memcpy(nptr, ptr, osize);
 	free(ptr);
 

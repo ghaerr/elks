@@ -1,0 +1,64 @@
+# PAINT Makefile for ELKS using C86
+
+############# Standard Section for IA16 C ##############
+ifndef TOPDIR
+$(error ELKS TOPDIR is not defined)
+endif
+
+ifndef C86
+$(error C86 is not defined)
+endif
+
+CPP=cpp86
+CC=c86
+AS=as86
+LD=ld86
+
+C86LIB=$(TOPDIR)/libc
+INCLUDES=-I$(TOPDIR)/libc/include -I$(TOPDIR)/elks/include -I$(C86LIB)/include/c86
+DEFINES=
+
+CPPFLAGS=-0 $(INCLUDES) $(DEFINES)
+CFLAGS=-g -O -bas86 -warn=4 -lang=c99
+CFLAGS+=-align=yes -separate=yes -stackopt=minimum -peep=all -stackcheck=no $(LOCALFLAGS)
+#ASFLAGS=-0 -j -O -w-
+ASFLAGS=-0 -j
+LDFLAGS=-0 -i -L$(C86LIB)
+LDLIBS=-lc86
+
+# Automated rules for C86 toolchain
+OBJS = $(SRCS:.c=.o8j)
+
+%.o: %.c
+
+%.i: %.c
+	$(CPP) $(CPPFLAGS) -o $*.i $<
+
+%.as: %.i
+	$(CC) $(CFLAGS) $< $*.as
+
+%.o8j: %.as
+	$(AS) $(ASFLAGS) -o $*.o8j $*.as
+
+%.o8j: %.s
+	$(AS) $(ASFLAGS) -o $*.o8j $*.s
+
+##### End of standardized section #####
+
+DEFINES +=
+LOCALFLAGS =
+
+BINDIR = .
+PROG = $(BINDIR)/cpaint
+SRCS = app.c gui.c input.c render.c event.c mouse.c graphics.c drawbmp.c cursor.c \
+    drawscanline.c
+OBJS += vga-c86.o8j
+
+all: $(PROG)
+
+$(PROG): $(OBJS)
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+	cp $(PROG) $(TOPDIR)/elkscmd/rootfs_template/bin
+
+clean:
+	rm -f $(PROG) *.o8j *.as *.i *.lst

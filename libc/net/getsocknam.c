@@ -1,17 +1,17 @@
 #include <sys/socket.h>
 
 /* actual system call */
-extern int getsocknam(int socket, struct sockaddr * restrict address,
+extern int getsocknam(int sock, struct sockaddr * restrict address,
 	socklen_t * restrict address_len, int peer);
 
-int getsockname(int socket, struct sockaddr * restrict address,
+int getsockname(int sock, struct sockaddr * restrict address,
 	socklen_t * restrict address_len)
 {
-	return getsocknam(socket, address, address_len, 0);
+	return getsocknam(sock, address, address_len, 0);
 }
 
-int getpeername(int socket, struct sockaddr * restrict address,
+int getpeername(int sock, struct sockaddr * restrict address,
 	socklen_t * restrict address_len)
 {
-	return getsocknam(socket, address, address_len, 1);
+	return getsocknam(sock, address, address_len, 1);
 }

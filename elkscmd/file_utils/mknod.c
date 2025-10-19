@@ -13,6 +13,19 @@ int main(int argc, char **argv)
 	
 	newmode = 0666 & ~umask(0);
 	
+	if (argv[1] && argv[1][0] == '-' && argv[1][1] == 'p') {
+		/* preserve option */
+		struct stat sb;
+		if (stat(argv[2], &sb) == 0) {
+			if (S_ISCHR(sb.st_mode) && argv[3] && (argv[3][0] == 'c' || argv[3][0] == 'u')) return 0;
+			if (S_ISBLK(sb.st_mode)  && argv[3] && argv[3][0] == 'b') return 0;
+			if (S_ISFIFO(sb.st_mode) && argv[3] && argv[3][0] == 'p') return 0;
+		}
+		/* valid node not there yet, so we advance and create it */
+		argc--;
+		argv++;
+	}
+
 	if (argc == 5) {
 		switch(argv[2][0]) {
 		case 'b':
@@ -46,6 +59,6 @@ int main(int argc, char **argv)
 	return 0;
 
 usage:
-	errmsg("usage: mknod device [bcup] major minor\n");
+	errmsg("usage: mknod [-p] device [bcup] major minor\n");
 	return 1;
 }

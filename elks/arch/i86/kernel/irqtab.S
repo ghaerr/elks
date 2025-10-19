@@ -242,7 +242,9 @@ updct:
 //
 //      Call the C code
 //
+#ifndef CONFIG_ARCH_SWAN
         sti                     // Reenable interrupts
+#endif
         mov     %sp,%bx         // Get pointer to pt_regs
         cbw
         push    %ax             // IRQ for later
@@ -307,6 +309,10 @@ a6:     out     %al,$PIC1_CMD           // Ack on primary controller
         mov $0x8000, %ax // set the NSPEC bit on the
         mov $0xff02, %dx // EOI register so the ICU
         out %ax, %dx // acks the highest priority interrupt
+
+#elif defined(CONFIG_ARCH_SOLO86)
+        mov $0x1A, %dx          // Send INT done
+        out %al, %dx
 #endif
 
 //
@@ -441,6 +447,7 @@ pmsg:   .ascii "Running unknown code\0"
 #endif
 dmsg:   .ascii  "DIVIDE FAULT\0"
 
+	.bss
         .p2align 1
 endistack:
         .skip ISTACK_BYTES,0    // interrupt stack

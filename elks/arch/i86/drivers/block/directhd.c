@@ -14,7 +14,6 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/debug.h>
 
-#include <arch/hdreg.h>
 #include <arch/io.h>
 #include <arch/segment.h>
 
@@ -45,10 +44,6 @@
 #define ERROR(port) inb_p(port + DIRECTHD_ERROR)
 
 #define WAITING(port) (STATUS(port) & 0x80) == 0x80
-
-/* use asm insw/outsw instead of C version */
-/* asm versions should work on 8088/86, but only with CONFIG_PC_XT */
-/* #define USE_ASM */
 
 /* uncomment this to include debugging code .. this increases size of driver */
 #define USE_DEBUG_CODE
@@ -86,7 +81,6 @@ static struct drive_infot {
 } drive_info[4] = { 0, };	/* preset to 0 */
 
 static struct hd_struct hd[4 << 6];
-static void directhd_geninit();
 
 static struct gendisk directhd_gendisk = {
     MAJOR_NR,			/* major number */
@@ -94,124 +88,10 @@ static struct gendisk directhd_gendisk = {
     6,
     1 << 6,
     4,
-    directhd_geninit,		/* init */
     hd,				/* hd struct */
     0,
-    drive_info,
-    NULL
+    drive_info
 };
-
-void directhd_geninit(void)
-{
-    int i;
-
-    for (i = 0; i < 4 << 6; i++) {
-	if ((i & ((1 << 6) - 1)) == 0) {
-	    hd[i].start_sect = 0;
-	    hd[i].nr_sects = (sector_t)drive_info[i >> 6].sectors *
-		drive_info[i >> 6].heads * drive_info[i >> 6].cylinders;
-	} else {
-	    hd[i].start_sect = -1;
-	    hd[i].nr_sects = 0;
-	}
-    }
-    return;
-}
-
-#ifndef USE_ASM
-
-void insw(unsigned int port,unsigned int *buffer,int count)
-{
-    int i;
-
-    for (i = 0; i < count / 2; i++)
-	buffer[i] = inw(port);
-    return;
-}
-
-#else
-
-/* this _should_ work on an 8088/86 now, but I haven't tested it yet */
-
-void insw(unsigned int port,unsigned int *buffer,int count)
-{
-#asm
-	push	bp
-	mov	bp, sp
-	push	cx
-	push	di
-	push	dx
-	mov	dx, [bp + 04]
-	mov	di, [bp + 06]
-	mov	cx, [bp + 08]
-	shr	cx, 1
-	cld
-#ifndef CONFIG_PC_XT
-	repz
-	insw
-#else
-			/* this should work on an 8088 */
-dhd_insw_loop:
-	in	ax, dx
-	stosw
-	loop	dhd_insw_loop
-#endif
-	pop	dx
-	pop	di
-	pop	cx
-	pop	bp
-#endasm
-}
-
-#endif
-
-#ifndef USE_ASM
-
-void outsw(unsigned int port,unsigned int *buffer,int count)
-{
-    int i;
-
-    for (i = 0; i < count / 2; i++)
-	outw(port, buffer[i]);
-    return;
-}
-
-#else
-
-/* the assembler version. Again, this should work,
- * but I haven't had a chance to test it yet.
- */
-
-void outsw(unsigned int port,unsigned int *buffer,int count)
-{
-#asm
-	push	bp
-	mov	bp, sp
-	push	cx
-	push	si
-	push	dx
-	mov	dx, [bp + 04]
-	mov	si, [bp + 06]
-	mov	cx, [bp + 08]
-	shr	cx, 1
-	cld
-#ifndef CONFIG_PC_XT
-	repz
-	outsw
-#else
-dhd_outsw_loop:		/* this should work on an 8088 */
-	lodsw
-	out	dx, ax
-	loop	dhd_outsw_loop
-#endif
-	pop	dx
-	pop	si
-	pop	cx
-	pop	bp
-#endasm
-}
-
-#endif
 
 #if 0				/* not used */
 
@@ -260,7 +140,7 @@ void out_hd(unsigned int drive,unsigned int nsect,unsigned int sect,
     return;
 }
 
-int directhd_init(void)
+struct gendisk * directhd_init(void)
 {
     unsigned int buffer[256];
     struct gendisk *ptr;
@@ -302,7 +182,7 @@ int directhd_init(void)
 
 	/* get drive info */
 
-	insw(port, buffer, 512);
+	insw(port, kernel_ds, buffer, 512/2);
 #if 0
 	swap_order(buffer, 512);
 #endif
@@ -356,25 +236,13 @@ int directhd_init(void)
 
     if (!hdcount) {
 	printk("athd: no drives found\n");
-	return 0;
+	return NULL;
     }
-
     directhd_gendisk.nr_hd = hdcount;
 
-    if (register_blkdev(MAJOR_NR, DEVICE_NAME, &directhd_fops)) {
-	printk("athd: unable to register\n");
-	return -1;
-    }
-
+    if (register_blkdev(MAJOR_NR, DEVICE_NAME, &directhd_fops))
+	return NULL;
     blk_dev[MAJOR_NR].request_fn = DEVICE_REQUEST;
-    if (gendisk_head == NULL) {
-	directhd_gendisk.next = gendisk_head;
-	gendisk_head = &directhd_gendisk;
-    } else {
-	for (ptr = gendisk_head; ptr->next != NULL; ptr = ptr->next);
-	ptr->next = &directhd_gendisk;
-	directhd_gendisk.next = NULL;
-    }
 
     printk("athd: found %d hard drive%c\n", hdcount, hdcount == 1 ? ' ' : 's');
 
@@ -390,7 +258,7 @@ int directhd_init(void)
 
     directhd_initialized = 1;
 
-    return 0;
+    return &directhd_gendisk;
 }
 
 /* why is arg unsigned int here if it's used as hd_geometry later ?
@@ -584,7 +452,7 @@ void do_directhd_request(void)
 
 
 		/* read this_pass * 512 bytes, which is 63 * 512 b max. */
-		insw(port, buff, this_pass * 512);
+		insw(port, kernel_ds, buff, this_pass * (512/2));
 	    }
 	    if (req->rq_cmd == WRITE) {
 		/* write from buffer */
@@ -628,7 +496,7 @@ void do_directhd_request(void)
 		    }
 		}
 
-		outsw(port, buff, this_pass * 512);
+		outsw(port, kernel_ds, buff, this_pass * (512/2));
 	    }
 
 	    count -= this_pass;

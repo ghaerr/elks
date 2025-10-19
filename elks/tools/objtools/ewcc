@@ -23,31 +23,30 @@ if [ -z "$WATCOM" ]
 fi
 
 ELKSLIBCINCLUDE=$TOPDIR/libc/include
-ELKSINCLUDE1=$TOPDIR/include
-ELKSINCLUDE2=$TOPDIR/elks/include
-WATCINCLUDE=$WATCOM/h
+ELKSINCLUDE1=$TOPDIR/elks/include
+ELKSINCLUDE2=$TOPDIR/libc/include/watcom
 
 # owcc options:
 # -bnone                    # no target specific setup
 # -mcmodel={s,m,c,l}        # memory model
 # -march=i86                # 8086 codegen
 # -std=c99                  # -Wc,-za99
+# -fsigned-char             # -Wc,-j plain char is signed (as gcc)
+# -msoft-float              # -Wc,-fpc (non-IEEE software fp)
 # -Wc,-zev                  # enable void arithmetic
 # -Wc,-zls                  # remove automatically inserted symbols
 # -Wc,-wcd=N                # disable warning N
-# -Wc,-fpi87                # inline 8087 fp
 # -Wc,-x                    # ignore INCLUDE environment variable
-# -fno-stack-check          # don't generate stack check code
+# -Wc,-r                    # save/restore segment registers
 # -fnostdlib                # don't refere standard libraries
 # unused:
+# -fno-stack-check          # don't generate stack check code
 # -ztNum                    # specify far data threshold (default 32767, or 256 if no Num)
+# -Wc,-fpi87                # generate inline 8087 hardware fp
 # -mhard-emu-float          # -Wc,-fpi (inline 8087 w/emulation)
-# -msoft-float              # -Wc,-fpc
-# -Wc,-fpc                  # non-IEEE soft fp
-# -fpmath
+# -fpmath=87                # produce code for 8087 FPU
 # -mabi=cdecl               # push all args
 # -fnonconst-initializers   # -Wc,aa
-# -fsigned-char             # plain char is signed (as gcc)
 
 source $TOPDIR/libc/watcom.model
 
@@ -57,18 +56,17 @@ CCFLAGS="\
     -march=i86                      \
     -Os                             \
     -std=c99                        \
-    -Wc,-fpi87                      \
+    -fsigned-char                   \
+    -msoft-float                    \
     -Wc,-zev                        \
     -Wc,-zls                        \
     -Wc,-x                          \
-    -fno-stack-check                \
     -fnostdlib                      \
     -Wall -Wextra                   \
     -Wc,-wcd=303                    \
     -I$ELKSLIBCINCLUDE              \
     -I$ELKSINCLUDE1                 \
     -I$ELKSINCLUDE2                 \
-    -I$WATCINCLUDE                  \
     "
 
 while true; do

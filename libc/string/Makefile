@@ -14,7 +14,6 @@ OBJS = \
 	memmove.o \
 	memset-c.o \
 	fmemset-c.o \
-	movedata.o \
 	strcasecmp.o \
 	strcat.o \
 	strchr.o \
@@ -32,6 +31,8 @@ OBJS = \
 	strspn.o \
 	strstr.o \
 	strtok.o \
+	strlwr.o \
+	strupr.o \
 	# end of list
 
 .PHONY: all

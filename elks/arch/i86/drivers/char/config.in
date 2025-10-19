@@ -11,6 +11,11 @@ mainmenu_option next_comment
 		 8018x		CONFIG_CONSOLE_8018X 	\
 		 Headless       CONFIG_CONSOLE_HEADLESS"	Direct
 	if [ "$CONFIG_CONSOLE_DIRECT" = "y" ]; then
+		if [ "$CONFIG_ARCH_SWAN" = "y" ]; then
+			choice 'Console font'			\
+				"8x8   CONFIG_CONSOLE_FONT_8X8  \
+				4x8    CONFIG_CONSOLE_FONT_4X8" 4x8
+		fi
 		bool '  Scancode keyboard driver'	CONFIG_KEYBOARD_SCANCODE y
 		bool '  Dual-screen console support'    CONFIG_CONSOLE_DUAL n
 	fi
@@ -19,14 +24,14 @@ mainmenu_option next_comment
 	        bool 'Console ANSI terminal emulation'  CONFIG_EMUL_ANSI  y
 	fi
 	if [ "$CONFIG_CONSOLE_DIRECT" = "y" ]; then
-	    source elks/arch/i86/drivers/char/KeyMaps/config.in
+		source elks/arch/i86/drivers/char/KeyMaps/config.in
 	fi
 
 	comment 'Other character devices'
 	if [ "$CONFIG_CONSOLE_SERIAL" = "n" ]; then
-	    bool 'Serial device driver'		CONFIG_CHAR_DEV_RS	  y
+		bool 'Serial device driver'	CONFIG_CHAR_DEV_RS	  y
 	else
-	    define_bool CONFIG_CHAR_DEV_RS y
+		define_bool CONFIG_CHAR_DEV_RS y
 	fi
 	bool 'Parallel device driver'		CONFIG_CHAR_DEV_LP	  y
 	#bool 'CGA text mode videobuffer'	CONFIG_CHAR_DEV_CGATEXT	  n

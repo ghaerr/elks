@@ -143,13 +143,15 @@ static unsigned char *scan_tabs[] = {
 void kbd_init(void)
 {
     /* Set off the initial keyboard interrupt handler */
+    flag_t flags;
 
     if (request_irq(KBD_IRQ, keyboard_irq, INT_GENERIC))
 	panic("Unable to get keyboard");
 
+    save_flags(flags);
     clr_irq();
     kb_read();      /* discard any unread keyboard input*/
-    set_irq();
+    restore_flags(flags);
 
     set_leds();
 }
@@ -464,8 +466,11 @@ static void restart_timer(void)
    be enabled. */
 static void set_leds(void)
 {
+    flag_t flags;
+
     if (!(sys_caps & CAP_KBD_LEDS)) return;	/* PC/XT doesn't have LEDs */
 
+    save_flags(flags);
     clr_irq();
     if (kb_cmd_state == KS_FREE) {
 	/* if already in the middle of setting LEDs, then nothing to do;
@@ -473,5 +478,5 @@ static void set_leds(void)
 	kb_cmd_state = KS_SETTING_LED_1;
 	restart_timer();
     }
-    set_irq();
+    restore_flags(flags);
 }

@@ -15,6 +15,7 @@
 seg_t membase, memend;  /* start and end segment of available main memory */
 unsigned int heapsize;  /* max size of kernel near heap */
 byte_t sys_caps;        /* system capabilities bits */
+unsigned char arch_cpu; /* CPU type from cputype.S */
 
 unsigned int INITPROC setup_arch(void)
 {
@@ -65,64 +66,14 @@ unsigned int INITPROC setup_arch(void)
     }
 #endif
 
+    arch_cpu = SETUP_CPU_TYPE;
 #ifdef SYS_CAPS
     sys_caps = SYS_CAPS;    /* custom system capabilities */
 #else
-    byte_t arch_cpu = SETUP_CPU_TYPE;
-    if (arch_cpu > 5)       /* 80286+ IBM PC/AT capabilities or Unknown CPU */
+    if (arch_cpu >= CPU_80286)          /* 80286+ IBM PC/AT capabilities or Unknown CPU */
         sys_caps = CAP_ALL;
     debug("arch %d sys_caps %02x\n", arch_cpu, sys_caps);
 #endif
 
     return endbss;                      /* used as start address in near heap init */
-}
-
-/*
- * The following routines may need porting on non-IBM PC architectures
- */
-
-/*
- * This function gets called by the keyboard interrupt handler.
- * As it's called within an interrupt, it may NOT sync.
- */
-void ctrl_alt_del(void)
-{
-    hard_reset_now();
-}
-
-void hard_reset_now(void)
-{
-#ifdef CONFIG_ARCH_IBMPC
-    asm("mov $0x40,%ax\n\t"
-        "mov %ax,%ds\n\t"
-        "movw $0x1234,0x72\n\t"
-        "ljmp $0xFFFF,$0\n\t"
-    );
-#endif
-}
-
-/*
- *  Use Advanced Power Management to power off system
- *  For details on how this code works, see
- *  http://wiki.osdev.org/APM
- */
-void apm_shutdown_now(void)
-{
-#ifdef CONFIG_ARCH_IBMPC
-    asm("movw $0x5301,%ax\n\t"
-        "xorw %bx,%bx\n\t"
-        "int $0x15\n\t"
-        "jc apm_error\n\t"
-        "movw $0x5308,%ax\n\t"
-        "movw $1,%bx\n\t"
-        "movw $1,%cx\n\t"
-        "int $0x15\n\t"
-        "jc apm_error\n\t"
-        "movw $0x5307,%ax\n\t"
-        "movw $1,%bx\n\t"
-        "movw $3,%cx\n\t"
-        "int $0x15\n\t"
-        "apm_error:\n\t"
-    );
-#endif
 }

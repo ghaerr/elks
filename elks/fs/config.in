@@ -22,10 +22,13 @@ mainmenu_option next_comment
 	    int 'Number of external buffers'   CONFIG_FS_NR_EXT_BUFFERS   64
 	fi
 
-	bool 'XMS buffer cache'                CONFIG_FS_XMS_BUFFER       n
-	if [ "$CONFIG_FS_XMS_BUFFER" == "y" ]; then
-	    int 'Number of XMS buffers'        CONFIG_FS_NR_XMS_BUFFERS   1024
-	    bool 'Use BIOS INT 15h/1Fh instead of unreal mode' CONFIG_FS_XMS_INT15 n
+	bool 'Use XMS memory'                  CONFIG_FS_XMS              n
+	if [ "$CONFIG_FS_XMS" == "y" ]; then
+        bool 'XMS RAM disk'                    CONFIG_FS_XMS_RAMDISK      y
+	    bool 'XMS buffer cache'                CONFIG_FS_XMS_BUFFER       y
+	    if [ "$CONFIG_FS_XMS_BUFFER" == "y" ]; then
+	        int 'Number of XMS buffers'        CONFIG_FS_NR_XMS_BUFFERS   1024
+	    fi
 	fi
 
 	comment 'Executable file formats'

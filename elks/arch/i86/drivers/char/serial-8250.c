@@ -159,6 +159,7 @@ static void update_port(register struct serial_info *port)
 {
     unsigned int cflags;        /* use smaller 16-bit width to save code*/
     unsigned divisor;
+    flag_t flags;
 
     /* set baud rate divisor, first lower, then higher byte */
     cflags = port->tty->termios.c_cflag & CBAUD;
@@ -172,6 +173,7 @@ static void update_port(register struct serial_info *port)
     if (divisor != port->divisor) {
         port->divisor = divisor;
 
+        save_flags(flags);
         clr_irq();
 
         /* Set the divisor latch bit */
@@ -184,7 +186,7 @@ static void update_port(register struct serial_info *port)
         /* Clear the divisor latch bit */
         OUTB(port->lcr, port->io + UART_LCR);
 
-        set_irq();
+        restore_flags(flags);
     }
 }
 
@@ -510,25 +512,26 @@ void INITPROC rs_setbaud(dev_t dev, unsigned long baud)
 void INITPROC serial_init(void)
 {
     register struct serial_info *sp = ports;
-    int ttyno = 0;
+    int ttyno = 0, n = 0;
     static const char *serial_type[] = {
-        "n 8250",
-        " 16450",
-        " 16550",
-        " 16550A",
-        " 16750",
-        " UNKNOWN",
+        "8250",
+        "16450",
+        "16550",
+        "16550A",
+        "16750",
+        "?"
     };
 
     rs_init();
 
     do {
         if (sp->tty != NULL) {
-            printk("ttyS%d at %x, irq %d is a%s\n", ttyno,
-                       sp->io, sp->irq, serial_type[sp->flags & SERF_TYPE]);
+            printk("%sttyS%d at %x irq %d %s", n++? ", ": "", ttyno,
+               sp->io, sp->irq, serial_type[sp->flags & SERF_TYPE]);
         }
         sp++;
     } while (++ttyno < NR_SERIAL);
+    if (n) printk("\n");
 }
 
 struct tty_ops rs_ops = {

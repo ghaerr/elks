@@ -1,0 +1,75 @@
+.TH URLGET 1
+.SH NAME
+urlget, ftpget, httpget - retrieve a file from the internet to stdout
+.SH SYNOPSIS
+\fBurlget\fR [\fB-h\fR] [\fB-d\fR] [\fB-p\fR] [\fBtcp:\fR|\fBftp:\fR|\fBhttp:\fR]url
+
+\fBhttpget\fR [\fB-h\fR] [\fB-d\fR] [\fB-p\fR] [http://]host[:port] path
+
+\fBftpget\fR [ftp://]host[:port] [\fB-v\fR] path[/] [user [pass]]
+
+\fBftpput\fR [ftp://]host path[:port] remotepath [user [pass]] localpath
+.br
+.SH DESCRIPTION
+.B Urlget
+gets a file specified by a URL and copies it to standard output.
+
+.B Ftpget
+similarly gets a file from a conventional ftp server, a login name
+and password can be specified.
+If a slash is appended to the path, a directory listing is performed
+instead of a file transfer.
+
+.B Ftpput
+transfers a file to an ftp server, a login name and password can be specified.
+
+.B Httpget
+is similar to  urlget,  but  the  host  and  path  are  specified
+separately without a scheme, as with ftpget.
+.SS OPTIONS
+.TP 5
+.B \-h
+show the status line and MIME header from the server.
+.TP 5
+.B \-d
+discard the file body.
+.TP 5
+.B \-p
+use POST method, otherwise use GET.
+.TP 5
+.B \-v
+For
+.B ftpget,
+long directory listing or verbose file transfer.
+.TP 5
+.B \-U
+Act as urlget.
+.TP 5
+.B \-F
+Act as ftpget.
+.TP 5
+.B \-P
+Act as ftpput.
+.TP 5
+.B \-H
+Act as httpget.
+.SH EXAMPLES
+.TP 20
+.B urlget http://minix1.woodhull.com/pub/contrib/file.tar.Z > file.tar.Z
+    # Download file.tar.Z
+.TP 20
+.B ftpget minix1.woodhull.com /pub/contrib/README.txt > README.txt
+.BR
+    # Get a file from an anonymous ftp server
+.TP 20
+.B httpget -dh minix1.woodhull.com/index.html
+.BR
+    # Inspect the header of a web page
+.TP 20
+.SH NOTES
+These commands execute the  same  binary  under  different  names.  These
+commands  provide  a  lightweight  non-interactive command-line method of
+downloading a file or inspecting the status of a web page. Data retrieved
+are written to standard output.
+.SH AUTHOR
+     Michael Temari <Michael@TemWare.Com>

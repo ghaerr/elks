@@ -1,4 +1,4 @@
-#if defined(VERBOSE)
+#if VERBOSE
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
@@ -17,23 +17,17 @@ phex(unsigned int val)
 }
 
 void
-__noise(char *y, mem __wcnear *x)
+__noise(char *str, mem __wcnear *ptr)
 {
     int saved_errno = errno;
     write(2, "Malloc ", 7);
-    phex((int)x);
-    write(2, " sz ", 4);
-    if (x)
-        phex((unsigned int)m_size(x));
-    else
-        phex(0);
+    phex(ptr? (unsigned int)m_size(ptr): 0);
+    write(2, " ptr ", 5);
+    phex((int)ptr);
     write(2, " nxt ", 5);
-    if (x)
-        phex((unsigned int)m_next(x));
-    else
-        phex(0);
-    write(2, " is ", 4);
-    write(2, y, strlen(y));
+    phex(ptr? (unsigned int)m_next(ptr): 0);
+    write(2, " ", 1);
+    write(2, str, strlen(str));
     write(2, "\n", 1);
     errno = saved_errno;
 }

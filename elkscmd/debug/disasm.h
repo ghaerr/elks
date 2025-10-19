@@ -1,6 +1,10 @@
 /* ELKS disassembler header file */
 
-#define noinstrument    __attribute__((no_instrument_function))
+#if defined(__ia16__) || defined(__WATCOMC__)
+#include <sys/cdefs.h>
+#else
+#define noinstrument
+#endif
 
 /* to be defined by caller of disasm() */
 char * noinstrument getsymbol(int seg, int offset);

@@ -57,6 +57,75 @@
                         :"d" (port));     \
         _v; })
 
+#define insb(port,seg,offset,cnt)   \
+    __extension__ ({                \
+        unsigned ax, cx, di;        \
+        asm volatile (              \
+            "push %%es\n"           \
+            "mov %%ax,%%es\n"       \
+            "cld\n"                 \
+            "1:\n"                  \
+            "in (%%dx),%%al\n"      \
+            "stosb\n"               \
+            "loop 1b\n"             \
+            "pop %%es\n"            \
+            : "=a" (ax), "=c" (cx), "=D" (di)                   \
+            : "d" (port), "a" (seg), "D" (offset), "c" (cnt)    \
+            : "memory" );           \
+    })
+
+#define insw(port,seg,offset,cnt)   \
+    __extension__ ({                \
+        unsigned ax, cx, di;        \
+        asm volatile (              \
+            "push %%es\n"           \
+            "mov %%ax,%%es\n"       \
+            "cld\n"                 \
+            "1:\n"                  \
+            "in (%%dx),%%ax\n"      \
+            "stosw\n"               \
+            "loop 1b\n"             \
+            "pop %%es\n"            \
+            : "=a" (ax), "=c" (cx), "=D" (di)                   \
+            : "d" (port), "a" (seg), "D" (offset), "c" (cnt)    \
+            : "memory" );           \
+    })
+
+
+#define outsb(port,seg,offset,cnt)  \
+    __extension__ ({                \
+        unsigned ax, cx, si;        \
+        asm volatile (              \
+            "push %%ds\n"           \
+            "mov %%ax,%%ds\n"       \
+            "cld\n"                 \
+            "1:\n"                  \
+            "lodsb\n"               \
+            "out %%al,(%%dx)\n"     \
+            "loop 1b\n"             \
+            "pop %%ds\n"            \
+            : "=a" (ax), "=c" (cx), "=S" (si)                   \
+            : "d" (port), "a" (seg), "S" (offset), "c" (cnt)    \
+            : "memory" );           \
+    })
+
+#define outsw(port,seg,offset,cnt)  \
+    __extension__ ({                \
+        unsigned ax, cx, si;        \
+        asm volatile (              \
+            "push %%ds\n"           \
+            "mov %%ax,%%ds\n"       \
+            "cld\n"                 \
+            "1:\n"                  \
+            "lodsw\n"               \
+            "out %%ax,(%%dx)\n"     \
+            "loop 1b\n"             \
+            "pop %%ds\n"            \
+            : "=a" (ax), "=c" (cx), "=S" (si)                   \
+            : "d" (port), "a" (seg), "S" (offset), "c" (cnt)    \
+            : "memory" );           \
+    })
+
 #endif /* __ia16__ */
 
 #endif /* !__ARCH_8086_IO_H*/

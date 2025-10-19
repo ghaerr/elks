@@ -18,9 +18,9 @@ LDFLAGS += -maout-symtab
 
 ###############################################################################
 
-PRGS = testsym disasm nm opcodes
+PRGS = testsym disasm nm86 opcodes
 
-HOSTPRGS = nm86 hostdisasm
+HOSTPRGS = hostnm86 hostdisasm
 HOSTCFLAGS += -I. -I$(TOPDIR)/elks/include
 SYMS_C = $(TOPDIR)/libc/debug/syms.c
 
@@ -35,7 +35,7 @@ testsym: testsym.o
 disasm: dis.o disasm.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
-nm: nm86.o
+nm86: nm86.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 system.sym:
@@ -54,7 +54,7 @@ dis.o: dis.c
 nm86.o: nm86.c
 	$(CC) $(CFLAGS) $(NOINSTFLAGS) -c -o $*.o $<
 
-nm86: nm86.c $(SYMS_C)
+hostnm86: nm86.c $(SYMS_C)
 	$(HOSTCC) $(HOSTCFLAGS) -D__far= -o $@ $^
 
 hostdisasm: dis.c disasm.c $(SYMS_C)

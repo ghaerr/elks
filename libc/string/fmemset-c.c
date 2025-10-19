@@ -1,6 +1,7 @@
 #include <string.h>
 #include <asm/config.h>
 
+#ifndef __C86__
 #ifndef LIBC_ASM_FMEMSET
 
 void __far *fmemset(void __far *str, int c, size_t l)
@@ -12,4 +13,5 @@ void __far *fmemset(void __far *str, int c, size_t l)
     return str;
 }
 
+#endif
 #endif

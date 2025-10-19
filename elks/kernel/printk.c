@@ -18,6 +18,7 @@
  *              %#x/%#X hexadecimal using 0x alt prefix
  *              %p      pointer - same as %04x
  *              %D      device name as %04x
+ *              %E      device name as /dev/...
  *              %P      process ID
  *              %k      pticks (0.838usec intervals auto displayed as us, ms or s)
  *              %#k     pticks truncated at decimal point
@@ -260,6 +261,9 @@ static void vprintk(const char *fmt, va_list p)
             case 't':
                 n = current->t_regs.ds;
                 goto str;
+            case 'E':
+                kputs(root_dev_name(va_arg(p, unsigned int))+8); /* skip ROOTDEV= */
+                break;
             case 's':
                 n = kernel_ds;
             str:

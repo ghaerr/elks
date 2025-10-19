@@ -27,7 +27,6 @@
 
 int opt_recurse;	/* implicitly initialized */
 int opt_verbose;
-int opt_nocopyzero;
 int opt_force;
 int whole_disk_copy;
 char *destination_dir;
@@ -329,14 +328,6 @@ static int do_copies(void)
 
 				err |= do_mkdir(inode_build->path, destdir(inode_build->path));
 		} else if (flags == S_IFREG) {
-			if (opt_nocopyzero && !inode_build->blocks) {
-				char *p = strrchr(inode_build->path, '/');
-				if (p && *++p == '.') {
-					if (opt_verbose)
-						printf("Skipping zero length %s\n", inode_build->path);
-					continue;
-				}
-			}
 
 			err |= do_cp(inode_build->path, destdir(inode_build->path));
 		} else if (flags == S_IFCHR) {
@@ -378,8 +369,6 @@ char *destdir(char *file)
 
 int do_cp(char *srcfile, char *dstfile)
 {
-	if (opt_verbose) printf("Copying %s to %s\n", srcfile, dstfile);
-
 	return copyfile(srcfile, dstfile, 1);
 }
 
@@ -428,6 +417,8 @@ int do_symlink(char *symlnk, char *file)
 {
 	if (opt_verbose) printf("Symlink %s -> %s\n", file, symlnk);
 
+	if (opt_force)
+		unlink(file);
 	if (symlink(symlnk, file) < 0) {
 		fprintf(stderr, "Can't create symlink "); fflush(stderr);
 		perror(symlnk);
@@ -544,6 +535,8 @@ int copyfile(char *srcname, char *destname, int setmodes)
 	struct	stat	statbuf1;
 	struct	stat	statbuf2;
 	struct	utimbuf	times;
+
+	if (opt_verbose) printf("Copying %s to %s\n", srcname, destname);
 
 	if (stat(srcname, &statbuf1) < 0) {
 		perror(srcname);

@@ -7,7 +7,7 @@ ctime(const time_t *timep)
   time_t offt;
   struct tm tmb;
   struct timezone tz;
-  static char cbuf[26];
+  static char cbuf[30];
   
   gettimeofday((void*)0, &tz);
   

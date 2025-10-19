@@ -367,16 +367,9 @@ extern void _close_allfiles(void);
 extern struct inode *iget(struct super_block *,ino_t);
 
 extern struct file_operations *get_blkfops(unsigned int);
-extern int register_blkdev(unsigned int,const char *,struct file_operations *);
-extern int unregister_blkdev(void);
-extern int blkdev_open(struct inode *,struct file *);
 
 extern struct file_operations def_blk_fops;
 extern struct inode_operations blkdev_inode_operations;
-
-extern int register_chrdev(unsigned int,const char *,struct file_operations *);
-extern int unregister_chrdev(void);
-/* extern int chrdev_open(struct inode *,struct file *); */
 
 extern struct file_operations def_chr_fops;
 extern struct inode_operations chrdev_inode_operations;
@@ -435,10 +428,13 @@ extern int do_umount(kdev_t);
 extern kdev_t ROOT_DEV;
 
 extern void mount_root(void);
+extern char *root_dev_name(kdev_t dev);     /* actually returns ROOTDEV=/dev/name */
 
 extern int fd_check(unsigned int,char *,size_t,int,struct file **);
 
 extern void zero_buffer(struct buffer_head *bh, size_t offset, int count);
+
+#define buffer_data(bh)  ((bh)->b_data)     /* L2 addresses are at offset 0 */
 
 #ifdef CONFIG_FS_EXTERNAL_BUFFER
 extern void map_buffer(struct buffer_head *);
@@ -447,14 +443,12 @@ extern void unmap_brelse(struct buffer_head *);
 extern void brelseL1(struct buffer_head *bh, int copyout);
 extern void brelseL1_index(int i, int copyout);
 ramdesc_t buffer_seg(struct buffer_head *bh);
-extern char *buffer_data(struct buffer_head *);
 #else
 #define map_buffer(bh)
 #define unmap_buffer(bh)
 #define unmap_brelse(bh) brelse(bh)
 #define brelseL1_index(i,copyout)
 #define brelseL1(bh,copyout)
-#define buffer_data(bh)  ((bh)->b_data)
 #define buffer_seg(bh)   (kernel_ds)
 #endif
 

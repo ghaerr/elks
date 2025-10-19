@@ -213,7 +213,7 @@ char	*arg;
 
 	fseek(tfile, 0L, SEEK_SET);
 	for (;;) {
-		if ((seekp = lookup(arg)) < 0)
+		if ((seekp = lookup(arg)) == -1L)
 			return(1);
 		fseek(tfile, seekp, 0);
 		fscanf(tfile, "%s %lo", name, &mtime);

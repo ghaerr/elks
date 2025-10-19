@@ -87,7 +87,7 @@ static struct socket *sock_alloc(void)
 	NULL,		/* inode */
 	NULL,		/* file */
 
-#if defined(CONFIG_UNIX) || defined(CONFIG_NANO)
+#if defined(CONFIG_UNIX)
 	NULL,		/* conn */
 	NULL,		/* iconn */
 	NULL,		/* next */
@@ -198,7 +198,7 @@ static int sock_select(struct inode *inode, struct file *file, int sel_type)
     return 0;
 }
 
-#if defined(CONFIG_UNIX) || defined(CONFIG_NANO)
+#if defined(CONFIG_UNIX)
 int sock_awaitconn(register struct socket *mysock, struct socket *servsock, int flags)
 {
     register struct socket *last;
@@ -285,7 +285,7 @@ static void sock_release(register struct socket *sock)
     if ((oldstate = sock->state) != SS_UNCONNECTED)
 	sock->state = SS_DISCONNECTING;
 
-#if defined(CONFIG_UNIX) || defined(CONFIG_NANO)
+#if defined(CONFIG_UNIX)
     struct socket *nextsock;
     for (peersock = sock->iconn; peersock; peersock = nextsock) {
 	nextsock = peersock->next;
@@ -300,7 +300,7 @@ static void sock_release(register struct socket *sock)
     if (sock->ops)
 	sock->ops->release(sock, peersock);
 
-#if defined(CONFIG_UNIX) || defined(CONFIG_NANO)
+#if defined(CONFIG_UNIX)
     if (peersock)
 	sock_release_peer(peersock);
 #endif

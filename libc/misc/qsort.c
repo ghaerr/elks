@@ -61,7 +61,7 @@ void qsort(void *a, size_t n, size_t width, int (*cmp)(void *, void *))
 	for (i = (n + 1) >> 1; i; i--)
 		fix(a, i - 1, n - 1, width, cmp);
 	for (i = n - 1; i; i--) {
-		swap(a, a + i * width, width);
+		swap(a, (char *)a + i * width, width);
 		fix(a, 0, i - 1, width, cmp);
 	}
 }

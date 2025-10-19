@@ -18,7 +18,7 @@
 #include "romfont.h"
 
 /* local data*/
-int	ROM_CHAR_HEIGHT = 14;	/* number of scan lines in fonts in ROM */
+int	ROM_CHAR_HEIGHT;	/* number of scan lines in fonts in ROM */
 FARADDR rom_char_addr;
 
 /* init PC ROM routines, must be called in graphics mode*/
@@ -26,9 +26,27 @@ void
 pcrom_init(PSD psd)
 {
 	char *	p;
+	FARADDR rom_char_addr_temp;
 
 	/* use INT 10h to get address of rom character table*/
+
+	/* we first compare if 8x14 font address is equal
+	 * to the 8x16 font address. If yes, it means
+	 * the 8x14 are not present, so we fallback to
+	 * 8x16 fonts. Source:
+	 * https://www.bttr-software.de/products/fix8x14/
+	 */
+
 	rom_char_addr = int10(FNGETROMADDR, GETROM8x14);
+	rom_char_addr_temp = int10(FNGETROMADDR, GETROM8x16);
+
+	if (rom_char_addr == rom_char_addr_temp) {
+		ROM_CHAR_HEIGHT = 16;
+		rom_char_addr = rom_char_addr_temp;
+	} else {
+		ROM_CHAR_HEIGHT = 14;
+	}
+
 #if 0
 	/* check bios data area for actual character height,
 	 * as the returned font isn't always 14 high
@@ -37,9 +55,7 @@ pcrom_init(PSD psd)
 	if(ROM_CHAR_HEIGHT > MAX_ROM_HEIGHT)
 		ROM_CHAR_HEIGHT = MAX_ROM_HEIGHT;
 #endif
-#if ELKS
-	ROM_CHAR_HEIGHT = 14;
-#endif
+
 	p = getenv("CHARHEIGHT");
 	if(p)
 		ROM_CHAR_HEIGHT = atoi(p);

@@ -55,7 +55,7 @@ struct uregs {
  */
 
 /* <stddef.h> */
-typedef unsigned    size_t;
+typedef unsigned int    size_t;
 #define offsetof(__typ,__id) ((size_t)((char *)&(((__typ*)0)->__id) - (char *)0))
 
 /* <sys/types.h> */
@@ -76,6 +76,17 @@ typedef unsigned long   uintptr_t;
 typedef int             intptr_t;
 typedef unsigned int    uintptr_t;
 #endif
+#endif
+
+#ifdef __C86__
+ #ifndef _INTPTR_T_DEFINED
+ #define _INTPTR_T_DEFINED
+   typedef int             intptr_t;
+ #endif
+#ifndef _UINTPTR_T_DEFINED
+ #define _UINTPTR_T_DEFINED
+   typedef unsigned int    uintptr_t;
+ #endif
 #endif
 
 #endif

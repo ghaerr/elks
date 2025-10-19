@@ -9,19 +9,26 @@ $(error WATCOM environment variable not set)
 endif
 
 INCLUDES = -I$(TOPDIR)/libc/include -I$(TOPDIR)/elks/include
-INCLUDES += -I$(WATCOM)/h
-DEFINES = -D__LIBC__
-LIBOBJS=$(OBJS:.o=.obj)
+# Watcom headers now included in libc/include/watcom
+INCLUDES += -I$(TOPDIR)/libc/include/watcom
+# Don't pull in headers from Watcom installation
+#INCLUDES += -I$(WATCOM)/h
 
+DEFINES = -D__LIBC__
+LIBOBJS=$(OBJS:.o=.o$(MODEL)j)
+
+ifndef MODEL
 include $(TOPDIR)/libc/watcom.model
+endif
 
 CARCH =\
     -bnone                          \
     -mcmodel=$(MODEL)               \
     -march=i86                      \
     -std=c99                        \
+    -fsigned-char                   \
+    -msoft-float                    \
     -fno-stack-check                \
-    -Wc,-fpi87                      \
     -Wc,-zev                        \
     -Wc,-zls                        \
     -Wc,-x                          \
@@ -43,9 +50,9 @@ CFLAGS=$(CARCH) $(INCLUDES) $(DEFINES) -Wall -Os
 ASFLAGS=$(AARCH)
 ARFLAGS_SUB=-n -q -b -fo
 
-%.obj: %.c
-	$(CC) -c $(CFLAGS) -o $*.obj $<
+%.o$(MODEL)j: %.c
+	$(CC) -c $(CFLAGS) -o $*.o$(MODEL)j $<
 
-%.obj: %.asm
+%.o$(MODEL)j: %.asm
 	$(AS) $(ASFLAGS) $*.asm
-	mv $*.o $*.obj
+	mv $*.o $*.o$(MODEL)j

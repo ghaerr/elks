@@ -67,6 +67,12 @@ extern void resetup_one_dev(struct gendisk *dev, int drive);
 #define DEVICE_NR(device) ((device) & 0)
 #define DEVICE_OFF(device)
 
+#elif (MAJOR_NR == BIOSHD_MAJOR)
+#define DEVICE_NAME "bioshd"
+#define DEVICE_REQUEST do_bioshd_request
+#define DEVICE_NR(device) (MINOR(device)>>MINOR_SHIFT)
+#define DEVICE_OFF(device)
+
 #elif (MAJOR_NR == FLOPPY_MAJOR)
 
 static void floppy_off(int nr);
@@ -78,24 +84,21 @@ static void floppy_off(int nr);
 
 #elif (MAJOR_NR == ATHD_MAJOR)
 
-#define DEVICE_NAME "hd"
-#define DEVICE_REQUEST do_directhd_request
-#define DEVICE_NR(device) (MINOR(device)>>6)
-#define DEVICE_OFF(device)
-
-#elif (MAJOR_NR == BIOSHD_MAJOR)
-
-#define DEVICE_NAME "bioshd"
-#define DEVICE_REQUEST do_bioshd_request
-#define DEVICE_NR(device) (MINOR(device)>>MINOR_SHIFT)
-#define DEVICE_OFF(device)
-
-#elif (MAJOR_NR == UDD_MAJOR)
-
-#define DEVICE_NAME "udd"
-#define DEVICE_REQUEST do_meta_request
-#define DEVICE_NR(device) (MINOR(device))
-#define DEVICE_OFF(device)
+#if CONFIG_BLK_DEV_ATA_CF
+  #ifdef CONFIG_ARCH_SOLO86
+    #define DEVICE_NAME "hd"
+  #else
+    #define DEVICE_NAME "cf"
+  #endif
+    #define DEVICE_REQUEST do_ata_cf_request
+    #define DEVICE_NR(device) (MINOR(device)>>MINOR_SHIFT)
+    #define DEVICE_OFF(device)
+#else
+    #define DEVICE_NAME "hd"
+    #define DEVICE_REQUEST do_directhd_request
+    #define DEVICE_NR(device) (MINOR(device)>>6)
+    #define DEVICE_OFF(device)
+#endif
 
 #endif
 
@@ -115,9 +118,9 @@ static void end_request(int uptodate)
 
     if (!uptodate) {
         /*if (req->rq_errors >= 0)*/
-        printk(DEVICE_NAME ": I/O %s error dev %D lba sector %lu\n",
+        printk(DEVICE_NAME ": I/O %s error %E (%D) LBA %lu\n",
             (req->rq_cmd == WRITE)? "write": "read",
-            req->rq_dev, req->rq_sector);
+            req->rq_dev, req->rq_dev, req->rq_sector);
     }
 
 #ifdef MULTI_BH

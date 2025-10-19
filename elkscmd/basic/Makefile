@@ -30,6 +30,14 @@ ifeq ($(CONFIG_ARCH_PC98), y)
 OBJS += host-pc98.o asm-pc98.o
 endif
 
+ifeq ($(CONFIG_ARCH_SWAN), y)
+OBJS += host-stubs.o
+endif
+
+ifeq ($(CONFIG_ARCH_SOLO86), y)
+OBJS += host-solo86.o
+endif
+
 HOSTPRGS = hostbasic
 
 all: $(PRGS)
@@ -45,7 +53,7 @@ HOSTSRC += ../../libc/misc/ecvt.c
 HOSTSRC += ../../libc/misc/dtostr.c
 
 hostbasic: $(HOSTSRC)
-	$(HOSTCC) $(HOSTCFLAGS) $(HOSTSRC) -o $@
+	$(HOSTCC) $(HOSTCFLAGS) $(HOSTSRC) -o $@ -lm
 
 install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin

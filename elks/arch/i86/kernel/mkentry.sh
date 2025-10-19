@@ -12,7 +12,11 @@ cat <<'.eof'
 
 	.code16
 
+#ifdef CONFIG_ROMCODE
+	.text
+#else
 	.data
+#endif
 	.p2align 1
 sys_call_table:
 .eof
@@ -103,6 +107,9 @@ syscall:
 	// look up address and jump to function
 	mov  %ax,%bx
         add  %ax,%bx              // multiply by 2
+#ifdef CONFIG_ROMCODE
+	cs
+#endif
         jmp    *sys_call_table(%bx)
 
 //	All unimplemented calls

@@ -48,7 +48,7 @@
 #   :busyelks   Busyelks                                    busyelks
 #   :be-*       File created as symlink if busyelks option 'B' set
 #   ::path/file path/file to install file as on $(DESTDIR)
-# 
+#
 # ------------- ----------------------------------------------------------
 sys_utils/init          :boot   :sysutil    :128k
 #sys_utils/min_init ::bin/init :boot :sysutil :128k
@@ -97,7 +97,6 @@ sys_utils/passwd                :sysutil                :1200k
 sys_utils/sercat                :sysutil                            :1400c
 sys_utils/console               :sysutil                :1200k
 #sys_utils/who                  :sysutil                :1200k
-sys_utils/unreal16              :sysutil                            :1440c
 sys_utils/beep                  :sysutil                :1200k
 sys_utils/decomp                :sysutil         :360c          :1440k
 sys_utils/sysctl                :sysutil                :1200k
@@ -133,6 +132,7 @@ misc_utils/sleep                :miscutil               :1200k
 misc_utils/tty                  :miscutil               :1200k
 misc_utils/uuencode             :miscutil                :1200c     :1440k
 misc_utils/uudecode             :miscutil                :1200c     :1440k
+misc_utils/ecalc                :miscutil                           :1440k
 #misc_utils/ed                  :be-miscutil        :720k
 elvis/elvis ::bin/vi            :elvis              :720k
 minix1/banner                   :minix1                 :1200k
@@ -179,7 +179,17 @@ tui/ttyinfo                     :tui                            :1440k
 tui/sl                          :tui                    :1200k
 tui/ttyclock                    :tui            :360c   :1200k
 tui/ttypong                     :tui                            :1440k
-tui/ttytetris                   :tui            :360c
+tui/tetris                      :tui            :360c
+tui/invaders                    :tui                    :1232k  :1440k
+gui/paint                           :gui                        :1440k
+gui/images/cls.bmp  ::lib/cls.bmp   :gui                        :1440k
+gui/images/save.bmp ::lib/save.bmp  :gui                        :1440k
+gui/images/quit.bmp ::lib/quit.bmp  :gui                        :1440k
+gui/images/paint.bmp ::lib/paint.bmp  :gui                        :1440k
+gui/images/fill.bmp ::lib/fill.bmp  :gui                        :1440k
+gui/images/brush.bmp ::lib/brush.bmp  :gui                      :1440k
+gui/images/circle.bmp ::lib/circle.bmp  :gui                      :1440k
+gui/images/rectangle.bmp ::lib/rectangle.bmp  :gui                      :1440k
 busyelks/busyelks               :busyelks
 inet/httpd/sample_index.html ::var/www/index.html :net
 ktcp/ktcp                       :net
@@ -192,27 +202,28 @@ inet/httpd/httpd                :net
 inet/ftp/ftp                    :net
 inet/ftp/ftpd                   :net
 inet/urlget/urlget              :net
-inet/urlget/urlget :::ftpget    :net
-inet/urlget/urlget :::ftpput    :net
-inet/urlget/urlget :::httpget   :net
+#inet/urlget/urlget :::ftpget    :net
+#inet/urlget/urlget :::ftpput    :net
+#inet/urlget/urlget :::httpget   :net
 inet/tinyirc/tinyirc            :other                          :1440c
 bc/bc                           :other                          :1440c
+sys_utils/test_unreal           :test                           :1440c
 test/libc/test_libc             :test                           :1440c
 test/other/test_fd              :test
 test/other/test_float           :test
 #nano/nano-2.0.6/src/nano       :other
-nano-X/bin/nxclock              :other                              :1440c
-nano-X/bin/nxdemo               :other
-nano-X/bin/nxtest               :other
-nano-X/bin/nxtetris             :nanox                  :1200k
-nano-X/bin/nxlandmine           :nanox                   :1232k :1440k
-nano-X/bin/nxterm               :nanox                   :1232k     :1440c
-nano-X/bin/nxworld              :nanox                   :1232c :1440k
-nano-X/bin/nxworld.map ::lib/nxworld.map :nanox          :1232c :1440k
+#nano-X/bin/nano-x               :nanox                   :1232c     :1440c
+#nano-X/bin/nxclock              :nanox                   :1232c     :1440c
+#nano-X/bin/nxdemo               :nanox
+#nano-X/bin/nxtetris             :nanox                  :1200k
+#nano-X/bin/nxmine               :nanox                   :1232k :1440k
+#nano-X/bin/nxterm               :nanox                   :1232k     :1440c
+#nano-X/bin/nxworld              :nanox                   :1232c :1440k
+#nano-X/bin/nxworld.map ::lib/nxworld.map :nanox          :1232c :1440k
 basic/basic                     :basic                  :1200k
 advent/advent                     :other                            :1440c
 advent/advent.db ::lib/advent.db  :other                            :1440c
-debug/disasm                      :other                        :1440k
-debug/nm                          :other                            :1440c
-debug/system.sym ::lib/system.sym :other                            :1440c
-debug/testsym                     :other                            :1440c
+debug/disasm                      :other                    :1232k:1440k
+#debug/nm86                        :other                            :1440c
+#debug/system.sym ::lib/system.sym :other                            :1440c
+#debug/testsym                     :other                            :1440c

@@ -45,7 +45,7 @@ struct msdos_sb_info { /* space in struct super_block is 28 bytes */
 #endif
 
 #ifdef CONFIG_FS_DEV
-#define DEVDIR_SIZE             45              /* # entries in FAT device table */
+#define DEVDIR_SIZE             50              /* # entries in FAT device table */
 #define DEVINO_BASE             (MSDOS_DPB*2)   /* (DEVDIR_SIZE+MSDOS_DBP-1) & ~(MSDOS_DBP-1) */
 
 struct msdos_devdir_entry {

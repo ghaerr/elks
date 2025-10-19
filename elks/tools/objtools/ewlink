@@ -24,6 +24,8 @@ fi
 
 ELKSLIBC=$TOPDIR/libc
 
+source $TOPDIR/libc/watcom.model
+
 # wlink options for debugging:
 # -Wl,option -Wl,map              # produce mapfile (or use -fm=file.map)
 # -Wl,option -Wl,verbose          # more detail in mapfile
@@ -38,7 +40,7 @@ LDFLAGS="\
     -Wl,option -Wl,nodefaultlibs    \
     -Wl,option -Wl,stack=0x1000     \
     -Wl,option -Wl,heapsize=0x1000  \
-    -Wl,library -Wl,$TOPDIR/libc/libc.lib \
+    -Wl,library -Wl,$TOPDIR/libc/libc$MODEL.lib \
     "
 
 while true; do

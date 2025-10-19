@@ -52,6 +52,8 @@
 #define cpu_id          0x50            /* 13 bytes cpu id string*/
 #define part_offset     0x1e2           /* long sector offset of booted partition*/
 #define elks_magic      0x1e6           /* long "ELKS" (45 4c 4b 53) checked by boot sector*/
+#define xms_kbytes      0x1ea           /* word size of XMS memory in Kbytes*/
+#define hma_kernel      0x1ec           /* byte hma=kernel seen in /bootopts*/
 #define setup_sects     0x1f1           /* byte 512-byte sectors used by setup.S*/
 #define syssize         0x1f4           /* word paragraph kernel size used by setup.S*/
 #define elks_flags      0x1f6           /* byte ELKS flags, BLOB and BIOS_DRV*/

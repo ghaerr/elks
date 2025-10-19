@@ -27,13 +27,13 @@ SUBDIRS =       \
 	fsck_dos    \
 	elvis	    \
 	file_utils  \
+	gui         \
 	inet        \
 	ktcp        \
 	minix1      \
 	minix2      \
 	minix3      \
 	misc_utils  \
-	nano-X      \
 	sash        \
 	screen      \
 	cron        \
@@ -42,6 +42,14 @@ SUBDIRS =       \
 	tui         \
 	test        \
 	# EOL
+
+ifndef CONFIG_ARCH_SOLO86
+ifndef CONFIG_ARCH_SWAN
+ifndef CONFIG_ARCH_8018X
+SUBDIRS += nano-X
+endif
+endif
+endif
 
 ###############################################################################
 #

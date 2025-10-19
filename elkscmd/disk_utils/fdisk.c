@@ -329,7 +329,9 @@ void write_out()
     else {
         MBR[510] = 0x55;
         MBR[511] = 0xAA;
-        if ((i=write(pFd,MBR,512))!=512) {
+        i = write(pFd,MBR,512);
+        sync();
+        if (i != 512) {
             printf("Error writing partition table to %s (%d)\n", errno);
         } else
             printf("Partition table written to %s\n",dev);
@@ -347,7 +349,8 @@ void help()
 
 void list_partition(char *devname)
 {
-    int i, fd;
+    int i, fd = -1;
+    int bad_mbr = 0;
     unsigned char table[512];
 
     if (devname!=NULL) {
@@ -369,13 +372,16 @@ void list_partition(char *devname)
         unsigned long start_sect = p->start_sect | ((unsigned long)p->start_sect_hi << 16);
         unsigned long nr_sects = p->nr_sects | ((unsigned long)p->nr_sects_hi << 16);
         char device[32];
+
         strcpy(device, devname? devname: dev);
         if (device[0] == '/') {
                 char *p = &device[strlen(device)];
                 *p++ = '1' + i;
                 *p = 0;
         }
-        printf("%-15s %c%d:%02x    %2d  %3d%5d     %2d  %3d%5d %6lu %6lu\n",
+        if (p->boot_ind != 0x00 && p->boot_ind != 0x80)
+            bad_mbr++;
+        printf("%-15s %c%d:%02x  %4d  %3d%5d   %4d  %3d%5d %6lu %6lu\n",
             device,
             p->boot_ind==0?' ':(p->boot_ind==0x80?'*':'?'),
             i+1,                                         /* #*/
@@ -389,7 +395,9 @@ void list_partition(char *devname)
             start_sect,                                  /* Size*/
             nr_sects);                                   /* Sector count */
     }
-    if (devname!=NULL)
+    if (bad_mbr)
+        printf("\nWarning: Invalid MBR!\n");
+    if (fd >= 0)
         close(fd);
 }
 
@@ -436,7 +444,8 @@ int main(int argc, char **argv)
         }
         if (fstat(pFd, &stat) < 0 || !S_ISBLK(stat.st_mode) ||
             (stat.st_rdev & PARTITION_MINORS)) {
-            printf("Bad block device: %s, use non-partitioned device\n", dev);
+            printf("Block device %s is a partition: use non-partitioned device name\n",
+                dev);
             return 1;
         }
         if (read(pFd,MBR,512) != 512) {

@@ -20,9 +20,9 @@ include $(TOPDIR)/Make.defs
 #			extensively through these definitions, so must be
 #			correct.
 #
-#	USEBCC		Whether to compile using BCC or GCC. If this is
-#			set to 'N' it compiles using GCC, otherwise it
-#			compiles using BCC.
+#	USEBCC		Whether to compile using ia16-elf-gcc or host GCC.
+#			If this is set to 'N' it compiles using GCC, otherwise
+#			it compiles using ia16-elf-gcc.
 #
 #	CLEANDEP	Any files in the current directory that the
 #			`make dep` command is dependent on.
@@ -56,9 +56,9 @@ include $(TOPDIR)/Make.defs
 # State the current version of this system.
 
 VERSION     = 0	# (0-255)
-PATCHLEVEL  = 8	# (0-255)
-SUBLEVEL    = 1	# (0-255)
-PRE         =
+PATCHLEVEL  = 9	# (0-255)
+SUBLEVEL    = 0	# (0-255)
+PRE         = -dev
 
 #########################################################################
 # Specify the architecture we will use.
@@ -130,7 +130,11 @@ CROSS_CFLAGS = -ffreestanding -fno-inline -melks -mcmodel=small -msegment-reloca
 			| cut -d = -f 1 | cut -d _ -f 3- | tr A-Z a-z)
 #ifeq ($(MK_CPU), 8086)
     CPU_AS	= -mtune=i8086
+ifdef CONFIG_ARCH_SWAN
+    CPU_CC	= -march=v30mz -mtune=v30mz
+else
     CPU_CC	= -mtune=i8086
+endif
     CPU_LD	=
 #endif
 
@@ -194,7 +198,7 @@ CFLAGS += -Wno-missing-prototypes
 CFLAGS += -Wno-empty-body
 #CFLAGS += -Wstrict-prototypes
 #CFLAGS += -Wconversion
-#CFLAGS += -Wextra
+CFLAGS += -Wextra -Wtype-limits
 
 LD      = ia16-elf-ld.gold
 LDFLAGS = $(CPU_LD) -s

@@ -1,9 +1,10 @@
 *.o
-fm
-matrix
 cons
-ttyinfo
+fm
+invaders
+matrix
 sl
 ttyclock
-ttytetris
+ttyinfo
 ttypong
+ttytetris

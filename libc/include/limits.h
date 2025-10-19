@@ -18,6 +18,10 @@
 #include <watcom/limits.h>
 #endif
 
+#ifdef __C86__
+#include <c86/limits.h>
+#endif
+
 #if defined(__GNUC__) && !defined(_GCC_NEXT_LIMITS_H)
 #include_next <limits.h>
 #endif

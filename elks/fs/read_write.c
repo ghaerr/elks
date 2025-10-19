@@ -22,6 +22,7 @@ int sys_lseek(unsigned int fd, loff_t * p_offset, unsigned int origin)
     loff_t offset;
 
     offset = (loff_t) get_user_long(p_offset);
+    debug("lseek %d, %ld, %d\n", fd, offset, origin);
     if (fd >= NR_OPEN || !(file = current->files.fd[fd]) || !(file->f_inode))
 	return -EBADF;
     if (origin > 2) return -EINVAL;
@@ -97,6 +98,7 @@ int sys_write(unsigned int fd, char *buf, size_t count)
     register struct inode *inode;
     int written;
 
+    debug("write %d, buf, %u\n", fd, count);
     if (((written = fd_check(fd, buf, count, FMODE_WRITE, &file)) == 0) && count) {
 	written = -EINVAL;
 	fop = file->f_op;

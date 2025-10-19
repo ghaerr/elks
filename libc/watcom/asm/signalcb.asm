@@ -20,6 +20,8 @@ __signal_cbhandler proc far
         push di
         push ds
         push es
+        mov ax,ss                   ; ensure valid DS (=SS)
+        mov ds,ax
 
         mov ax,6[bp]                ; get signal #
         callf _signal_wchandler_    ; call user function from C

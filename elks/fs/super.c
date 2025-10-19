@@ -173,7 +173,7 @@ static struct super_block *read_super(kdev_t dev, int t, int flags,
     if (s) return s;
 
     if (!(type = get_fs_type(t))) {
-        printk("VFS: device %D unknown fs type %d\n", dev, t);
+        printk("VFS: %E (%D) unknown fs type %d\n", dev, dev, t);
         return NULL;
     }
 
@@ -444,7 +444,8 @@ void mount_root(void)
         retval = open_filp(0, d_inode, &filp);
     }
     if (retval) {
-        printk("VFS: Unable to open root device %D (%d)\n", ROOT_DEV, retval);
+        printk("VFS: Unable to open root device %E (%D) %d\n",
+            ROOT_DEV, ROOT_DEV, retval);
         halt();
     }
 
@@ -460,8 +461,9 @@ void mount_root(void)
             memcpy(sb->s_mntonname, "/", 2);
 /*          sb->s_flags = (unsigned short int) root_mountflags;*/
             current->fs.pwd = current->fs.root = sb->s_mounted;
-            printk("VFS: Mounted root device %04x (%s filesystem)%s.\n", ROOT_DEV,
-                   fsname[fp->type], (sb->s_flags & MS_RDONLY) ? " readonly" : "");
+            printk("VFS: Mounted root device %E (%04x) %s %sfilesystem.\n",
+                ROOT_DEV, ROOT_DEV, fsname[fp->type],
+               (sb->s_flags & MS_RDONLY) ? "readonly " : "");
             iput(d_inode);
             filp->f_count = 0;
             return;
@@ -477,6 +479,6 @@ void mount_root(void)
     }
 #endif
 
-    printk("VFS: Unable to mount root fs on %D\n", ROOT_DEV);
+    printk("VFS: Unable to mount root fs on %E (%D)\n", ROOT_DEV, ROOT_DEV);
     halt();
 }

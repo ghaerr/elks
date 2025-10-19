@@ -1,0 +1,111 @@
+#!/usr/bin/env bash
+#
+# ecc - wrapper script for ELKS C86 toolchain
+#   Preprocesses, compiles, assembles and links passed .c files
+#
+# Usage: ecc [-c] [-{option}] file.c ...
+#
+# 27 Dec 24 Greg Haerr
+#
+set -e
+
+if [ -z "$TOPDIR" ]
+  then
+    echo "ELKS TOPDIR= environment variable not set"
+    exit
+fi
+
+if [ -z "$C86" ]
+  then
+    echo "C86= environment variable not set"
+    exit
+fi
+
+INCLUDES="-I$TOPDIR/libc/include -I$TOPDIR/elks/include -I$TOPDIR/libc/include/c86"
+#DEFINES="-D__HAS_NO_FLOATS__=1 -D__HAS_NO_LONGONG__"
+
+CPP=cpp86
+CC=c86
+AS=as86
+AR=ar86
+LD=ld86
+
+CPPFLAGS="\
+    -0                          \
+    $INCLUDES                   \
+    $DEFINES                    \
+    "
+
+# -trace=yes
+CFLAGS="\
+    -g                          \
+    -O                          \
+    -bas86                      \
+    -warn=4                     \
+    -lang=c99                   \
+    -align=yes                  \
+    -separate=yes               \
+    -stackopt=minimum           \
+    -peep=all                   \
+    -stackcheck=no              \
+    -obsolete=yes               \
+    "
+
+ASFLAGS="\
+    -0                          \
+    -j                          \
+    -O                          \
+    -w-                         \
+    "
+
+LDFLAGS="\
+    -0                          \
+    -i                          \
+    -L$TOPDIR/libc              \
+    "
+
+DOLINK=1
+while true; do
+  case "$1" in
+    -c)
+        DOLINK=0
+        shift ;;
+    -*)
+        CFLAGS="$CFLAGS $1"
+        shift ;;
+    *)  break ;;
+  esac
+done
+
+if [ $# -eq 0 ]
+  then
+    echo "Usage: ecc [-c] [-{option}] file.c ..."
+    exit
+fi
+
+OUT=$1
+if [ ${OUT%.c} == $OUT ]
+  then
+    echo "Must specify .c file(s)"
+    exit
+fi
+OUT=${OUT%.c}
+
+OBJS=
+for PROG in $@
+  do
+    echo $CPP $CPPFLAGS -o ${PROG%.c}.i ${PROG%.i}
+    $CPP $CPPFLAGS -o ${PROG%.c}.i ${PROG%.i}
+    echo $CC $CFLAGS ${PROG%.c}.i ${PROG%.c}.as
+    $CC $CFLAGS ${PROG%.c}.i ${PROG%.c}.as
+    echo $AS $ASFLAGS -o ${PROG%.c}.o ${PROG%.c}.as
+    $AS $ASFLAGS -o ${PROG%.c}.o ${PROG%.c}.as
+    OBJS="$OBJS ${PROG%.c}.o"
+    if [ $DOLINK -eq 1 ]; then rm ${PROG%.c}.i ${PROG%.c}.as; fi
+  done
+if [ $DOLINK -eq 1 ]
+  then
+    echo $LD $LDFLAGS -o $OUT $OBJS -lc86
+    $LD $LDFLAGS -o $OUT $OBJS -lc86
+    rm ${PROG%.c}.o
+  fi

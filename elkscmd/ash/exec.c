@@ -168,6 +168,9 @@ tryexec(cmd, argv, envp)
 			argv[0] = cmd;
 			execinterp(argv, envp);
 		}
+		if (parsenleft > 2 && p[0] == 'M' && p[1] == 'Z') {
+			error2("Can't run OpenWatcom OS/2 program", "Set CONFIG_EXEC_OS2=y in kernel");
+		}
 #endif
 		setparam(argv + 1);
 		exraise(EXSHELLPROC);
@@ -543,7 +546,7 @@ int
 find_builtin(name)
 	register char *name;
 	{
-	const register struct builtincmd *bp;
+	register const struct builtincmd *bp;
 
 	for (bp = builtincmd ; bp->name ; bp++) {
 		if (*bp->name == *name && equal(bp->name, name))

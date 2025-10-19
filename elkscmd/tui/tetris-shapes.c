@@ -135,8 +135,6 @@ shape_new(void)
      current.y = (FRAMEW / 2) - 1;;
      current.next = nrand(0, 6);
 
-     frame_nextbox_refresh();
-
      if(current.x > 1)
           for(i = 2; i < FRAMEW - 1; ++i)
                frame[1][i] = 0;

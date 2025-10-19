@@ -34,6 +34,7 @@
 
 int readlink( const char *__path, char *__buf, size_t __bufsiz )
 {
+    sys_setseg(__path);
     sys_setseg(__buf);
     syscall_res res = sys_call3( SYS_readlink, (unsigned)__path, (unsigned)__buf, __bufsiz );
     __syscall_return( int, res );

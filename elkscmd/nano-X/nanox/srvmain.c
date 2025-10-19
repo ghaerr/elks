@@ -88,7 +88,7 @@ GsAcceptClientFd(int i)
 	client->eventtail = NULL;
 	client->errorevent.type = GR_EVENT_TYPE_NONE;
 	client->next = NULL;
-	client->waiting_for_event = FALSE;
+	client->waiting_for_event = 0;
 
 	if(connectcount++ == 0)
 		root_client = client;
@@ -199,11 +199,12 @@ GsSelect(GR_TIMEOUT timeout)
 	if (un_sock > setsize) setsize = un_sock;
 	curclient = root_client;
 	while(curclient) {
-		if(curclient->waiting_for_event && curclient->eventhead) {
-			curclient->waiting_for_event = FALSE;
+		if(curclient->waiting_for_event == 1 && curclient->eventhead) {
 			GsGetNextEventWrapperFinish();
-			return;
+			//return;
 		}
+		if (curclient->waiting_for_event == 2)
+			timeout = 50;       /* 50 msec min timeout resolution */
 		FD_SET(curclient->id, &rfds);
 		if(curclient->id > setsize) setsize = curclient->id;
 		curclient = curclient->next;
@@ -250,9 +251,11 @@ GsSelect(GR_TIMEOUT timeout)
 		if(FD_ISSET(un_sock, &rfds))
 			GsAcceptClient();
 
-		/* If a client is sending us a command, handle it: */
+		/* If a client is sending us a command or timed out, handle it: */
 		curclient = root_client;
 		while(curclient) {
+			if(e == 0 && curclient->waiting_for_event == 2)
+				GsGetNextEventWrapperFinish();
 			if(FD_ISSET(curclient->id, &rfds))
 				GsHandleClient(curclient->id);
 			curclient = curclient->next;
@@ -260,17 +263,6 @@ GsSelect(GR_TIMEOUT timeout)
 #endif
 
 	} 
-#if 0
-	else if(!e) {
-#if FRAMEBUFFER | BOGL
-		if(fb_CheckVtChange())
-			GsRedrawScreen();
-#endif
-	}
-#endif
-    else
-		if(errno != EINTR)
-			perror("Select() call in main failed");
 }
 #endif
 
@@ -297,7 +289,7 @@ GsInitialize(void)
 
 	wp = (GR_WINDOW *) malloc(sizeof(GR_WINDOW));
 	if (wp == NULL) {
-		fprintf(stderr, "Cannot allocate root window\n");
+		perror("Cannot allocate root window");
 		return -1;
 	}
 

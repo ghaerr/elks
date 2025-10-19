@@ -5,7 +5,7 @@ mainmenu_option next_comment
     comment 'Block device drivers'
 
 	bool '  BIOS floppy drive support'	CONFIG_BLK_DEV_BFD	y
-	bool '  Direct to hw floppy support'    CONFIG_BLK_DEV_FD       n
+	bool '  Direct hw floppy support'	CONFIG_BLK_DEV_FD	n
 	bool '  Floppy drive track caching'	CONFIG_TRACK_CACHE	y
 	bool '  BIOS preset floppy types'	CONFIG_BLK_DEV_BFD_HARD n
 	bool '  BIOS hard drive support'	CONFIG_BLK_DEV_BHD	y
@@ -25,6 +25,8 @@ mainmenu_option next_comment
 		"None CONFIG_BLK_DEV_SSD_NONE \
 		ssd_test CONFIG_BLK_DEV_SSD_TEST \
 		ssd_sd_8018x CONFIG_BLK_DEV_SSD_SD8018X " None
+
+	bool 'ATA-CF drive support'	        CONFIG_BLK_DEV_ATA_CF	n
 
     comment 'Block device options'
     bool 'Character access to block devices'	CONFIG_BLK_DEV_CHAR	y

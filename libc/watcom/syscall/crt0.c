@@ -44,16 +44,7 @@ int __argc;
 char **__argv;
 char *__program_filename;
 char **environ;
-unsigned int __stacklow;
-
-static unsigned int _SP(void);
-#pragma aux _SP = __value [__sp]
-
-/* called by alloca() to check stack available */
-unsigned int stackavail(void)
-{
-    return (_SP() - __stacklow);
-}
+unsigned int __stacklow;        /* lowest protected SP value */
 
 #if defined(__SMALL__) || defined(__MEDIUM__)   /* near data models */
 /* no argv/environ rewrite */

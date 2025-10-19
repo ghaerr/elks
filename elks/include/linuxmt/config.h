@@ -10,21 +10,23 @@
 #define UTS_SYSNAME "ELKS"                      /* uname system name */
 #define UTS_NODENAME "elks"                     /* someday set by sethostname() */
 
-#define CONFIG_MSDOS_PARTITION  1               /* support DOS HD partitions */
 #define CONFIG_FS_DEV           1               /* support FAT /dev folder */
+
+/*
+ * SETUP_ defines are initialzied by setup.S and queried only during kernel init.
+ * The REL_INITSEG segment is released at end of kernel init. If used later any
+ * values must be copied, as afterwards setupb/setupw will return incorrect data.
+ * These defines are overridden for ROM based systems w/o setup code.
+ * See setup.S for setupb/setupw offsets.
+ */
 
 #ifdef CONFIG_ARCH_IBMPC
 #define MAX_SERIAL              4               /* max number of serial tty devices*/
-
-/*
- * Setup data - normally queried by startup setup.S code, but can
- * be overridden for embedded systems with less overhead.
- * See setup.S for more details.
- */
 #define SETUP_VID_COLS          setupb(7)       /* BIOS video # columns */
 #define SETUP_VID_LINES         setupb(14)      /* BIOS video # lines */
 #define SETUP_CPU_TYPE          setupb(0x20)    /* processor type */
 #define SETUP_MEM_KBYTES        setupw(0x2a)    /* base memory in 1K bytes */
+#define SETUP_XMS_KBYTES        setupw(0x1ea)   /* xms memory in 1K bytes */
 #define SETUP_ROOT_DEV          setupw(0x1fc)   /* root device, kdev_t or BIOS dev */
 #define SETUP_ELKS_FLAGS        setupb(0x1f6)   /* flags for root device type */
 #define SETUP_PART_OFFSETLO     setupw(0x1e2)   /* partition offset low word */
@@ -52,8 +54,9 @@
 #define MAX_SERIAL              1       /* max number of serial tty devices*/
 #define SETUP_VID_COLS          80      /* video # columns */
 #define SETUP_VID_LINES         25      /* video # lines */
-#define SETUP_CPU_TYPE          1       /* processor type = 8086 */
+#define SETUP_CPU_TYPE          setupb(0x20)    /* processor type */
 #define SETUP_MEM_KBYTES        setupw(0x2a)    /* base memory in 1K bytes */
+#define SETUP_XMS_KBYTES        setupw(0x1ea)   /* xms memory in 1K bytes */
 #define SETUP_ROOT_DEV          setupw(0x1fc)   /* root device, kdev_t or BIOS dev */
 #define SETUP_ELKS_FLAGS        setupb(0x1f6)   /* flags for root device type */
 #define SETUP_PART_OFFSETLO     setupw(0x1e2)   /* partition offset low word */
@@ -72,8 +75,9 @@
 #define MAX_SERIAL              2       /* max number of serial tty devices*/
 #define SETUP_VID_COLS          80      /* video # columns */
 #define SETUP_VID_LINES         25      /* video # lines */
-#define SETUP_CPU_TYPE          5       /* processor type 80186 */
+#define SETUP_CPU_TYPE          CPU_80186  /* processor type */
 #define SETUP_MEM_KBYTES        512     /* base memory in 1K bytes */
+#define SETUP_XMS_KBYTES        0       /* xms memory in 1K bytes */
 #define SETUP_ROOT_DEV          0x0600  /* root device ROMFS */
 #define SETUP_ELKS_FLAGS        0       /* flags for root device type */
 #define SETUP_PART_OFFSETLO     0       /* partition offset low word */
@@ -85,9 +89,45 @@
 #define CONFIG_8018X_EB
 #endif
 
+#ifdef CONFIG_ARCH_SWAN
+#define MAX_SERIAL              1       /* max number of serial tty devices*/
+#define SETUP_VID_COLS          28      /* video # columns */
+#define SETUP_VID_LINES         18      /* video # lines */
+#define SETUP_CPU_TYPE          CPU_80186  /* processor type */
+#define SETUP_MEM_KBYTES        128     /* base memory in 1K bytes */
+#define SETUP_XMS_KBYTES        0       /* xms memory in 1K bytes */
+#define SETUP_ROOT_DEV          0x0600  /* root device ROMFS */
+#define SETUP_ELKS_FLAGS        0       /* flags for root device type */
+#define SETUP_PART_OFFSETLO     0       /* partition offset low word */
+#define SETUP_PART_OFFSETHI     0       /* partition offset high word */
+#define SYS_CAPS                0       /* no XT/AT capabilities */
+#define UTS_MACHINE             "swan"
+#define SETUP_HEAPSIZE          32256   /* 0x8000 - 0xFDFF */
+#define SETUP_USERHEAPSEG       0x1000  /* start segment for appiication memory heap */
+#endif /* CONFIG_ARCH_SWAN */
+
+#ifdef CONFIG_ARCH_SOLO86
+#define MAX_SERIAL              0       /* max number of serial tty devices*/
+#define SETUP_VID_COLS          80      /* video # columns */
+#define SETUP_VID_LINES         25      /* video # lines */
+#define SETUP_CPU_TYPE          CPU_80286  /* processor type */
+#define SETUP_MEM_KBYTES        512     /* base memory in 1K bytes */
+#define SETUP_XMS_KBYTES        0       /* xms memory in 1K bytes */
+#define SETUP_ROOT_DEV          0x0600  /* root device ROMFS */
+#define SETUP_ELKS_FLAGS        0       /* flags for root device type */
+#define SETUP_PART_OFFSETLO     0       /* partition offset low word */
+#define SETUP_PART_OFFSETHI     0       /* partition offset high word */
+#define SYS_CAPS                0       /* no XT/AT capabilities */
+#define UTS_MACHINE             "Solo/86"
+#endif /* CONFIG_ARCH_SOLO86 */
+
+/* linear address to start XMS buffer allocations from */
+#define XMS_START_ADDR    0x00100000L	/* 1M */
+//#define XMS_START_ADDR  0x00FA0000L	/* 15.6M (Compaq with only 1M ram) */
+
 /*
  * System capabilities - configurable for ROM or custom installations.
- * Normally, all capabilities will be set if arch_cpu > 5 (PC/AT),
+ * Normally, all capabilities will be set if arch_cpu >= CPU_80286 (PC/AT),
  * except when SYS_CAPS is defined for custom installations or emulations.
  */
 #define CAP_PC_AT       (CAP_IRQ8TO15|CAP_IRQ2MAP9)      /* PC/AT capabilities */
@@ -110,13 +150,16 @@
  * old 8237 DMA controller which wraps addresses wider than 16-bits on PC/XT systems.
  * If floppy track caching is enabled, the track buffer is also configured in
  * low memory for direct DMA access usig multisector I/O.
- * The DF driver uses the first sector of its track cache for the XMS/DMA buffer.
+ * The DF driver uses the first sector of its track cache for the DMA buffer,
+ * and doesn't require an XMS buffer, instead programming the 8237 external page register.
  * In contrast, the BIOS FD/HD driver is configured to use an XMS/DMA buffer
  * outside its track cache; thus the complicated defines below.
  */
 
 #if defined(CONFIG_BLK_DEV_BFD) || defined(CONFIG_BLK_DEV_BHD)  /* BIOS driver */
 #define DMASEGSZ        0x0400      /* BLOCK_SIZE (1024) for external XMS/DMA buffer */
+#elif defined(CONFIG_FS_XMS) && defined(CONFIG_BLK_DEV_ATA_CF)
+#define DMASEGSZ        0x200       /* ATA_SECTOR_SIZE (512) XMS buffer for ATA CF */
 #else
 #define DMASEGSZ        0           /* no external XMS/DMA buffer */
 #endif
@@ -134,33 +177,38 @@
 #define TRACKSEG        (DMASEG+(DMASEGSZ>>4))
 #define DMASEGEND       (DMASEG+(DMASEGSZ>>4)+(TRACKSEGSZ>>4))
 #else
-#define DMASEGEND       DMASEG      /* no DMASEG buffer */
+#define DMASEGEND       (DMASEG+(DMASEGSZ>>4))
 #endif
+
+/* Define segment locations of low memory, must not overlap */
 
 #ifdef CONFIG_ROMCODE
 #define DMASEG          0x80        /* start of floppy sector buffer */
 #define KERNEL_DATA     DMASEGEND   /* kernel data segment */
 #define SETUP_DATA      CONFIG_ROM_SETUP_DATA
-#endif
 
-#if (defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_8018X)) && !defined(CONFIG_ROMCODE)
-/* Define segment locations of low memory, must not overlap */
-#define OPTSEGSZ        0x200       /* max size of /bootopts file (512 bytes max) */
-#define DEF_OPTSEG      0x50        /* 0x200 bytes boot options at lowest usable ram */
-#define REL_INITSEG     0x70        /* 0x200 bytes setup data */
-#define DMASEG          0x90        /* start of floppy sector buffer */
+#else /* !CONFIG_ROMCODE */
+
+#ifdef CONFIG_ARCH_IBMPC
+#define OPTSEGSZ        0x400       /* max size of /bootopts file (1024 bytes max) */
+#define DEF_OPTSEG      0x50        /* 0x400 bytes boot options at lowest usable ram */
+#define LOADALL_SEG     0x80        /* LOADALL buffer from 0x800-0x865 on 80286 CPU */
+#define REL_INITSEG     0x90        /* 0x200 bytes setup data */
+#define DMASEG          0xB0        /* start of floppy sector buffer */
 #define REL_SYSSEG      DMASEGEND   /* kernel code segment */
 #define SETUP_DATA      REL_INITSEG
 #endif
 
-#if defined(CONFIG_ARCH_PC98) && !defined(CONFIG_ROMCODE)
-/* Define segment locations of low memory, must not overlap */
-#define OPTSEGSZ        0x200       /* max size of /bootopts file (512 bytes max) */
-#define DEF_OPTSEG      0x60        /* 0x200 bytes boot options at lowest usable ram */
-#define REL_INITSEG     0x80        /* 0x200 bytes setup data */
-#define DMASEG          0xA0        /* start of floppy sector buffer */
+#ifdef CONFIG_ARCH_PC98
+#define OPTSEGSZ        0x400       /* max size of /bootopts file (1024 bytes max) */
+#define DEF_OPTSEG      0x60        /* 0x400 bytes boot options at lowest usable ram */
+#define LOADALL_SEG     0x80        /* LOADALL buffer from 0x800-0x865 on 80286 CPU */
+#define REL_INITSEG     0xA0        /* 0x200 bytes setup data */
+#define DMASEG          0xC0        /* start of floppy sector buffer */
 #define REL_SYSSEG      DMASEGEND   /* kernel code segment */
 #define SETUP_DATA      REL_INITSEG
 #endif
+
+#endif /* !CONFIG_ROMCODE */
 
 #endif

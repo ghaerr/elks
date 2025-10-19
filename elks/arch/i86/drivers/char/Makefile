@@ -15,7 +15,7 @@ BASEDIR 	= ../../../..
 # Define the variables required by the standard rules - see the standard
 # rules file (below) for details of these variables.
 
-USEBCC 		= 
+USEBCC 		= Y
 
 CLEANDEP	= 
 
@@ -55,15 +55,30 @@ ifeq ($(CONFIG_ARCH_PC98), y)
 	SERIAL = pc98
 endif
 
+ifeq ($(CONFIG_ARCH_SWAN), y)
+	CONIO = swan
+	SERIAL = swan
+endif
+
+ifeq ($(CONFIG_ARCH_SOLO86), y)
+	CONIO = solo86
+endif
+
 ifdef CONFIG_ARCH_PC98
 ifdef CONFIG_CONSOLE_DIRECT
 OBJS += console-direct-pc98.o
+endif
+else
+ifdef CONFIG_ARCH_SWAN
+ifdef CONFIG_CONSOLE_DIRECT
+OBJS += console-direct-swan.o console-font-4x8-swan.o console-font-8x8-swan.o
 endif
 else
 ifdef CONFIG_CONSOLE_DIRECT
 OBJS += console-direct.o bell-8254.o
 ifdef CONFIG_CONSOLE_DUAL
 OBJS += crtc-6845.o
+endif
 endif
 endif
 endif
@@ -83,6 +98,13 @@ endif
 OBJS += conio-pc98.o conio-pc98-asm.o kbd-poll-pc98.o
 endif
 
+ifdef CONFIG_ARCH_SWAN
+ifdef CONFIG_CONSOLE_HEADLESS
+OBJS += console-headless.o
+endif
+OBJS += kbd-poll.o bell-swan.o conio-swan.o
+endif
+
 ifdef CONFIG_ARCH_IBMPC
 ifdef CONFIG_CONSOLE_HEADLESS
 OBJS += console-headless.o
@@ -93,6 +115,14 @@ OBJS += kbd-scancode.o
 else
 OBJS += kbd-poll.o conio-$(CONIO).o
 endif
+endif
+
+ifdef CONFIG_ARCH_SOLO86
+ifdef CONFIG_CONSOLE_HEADLESS
+OBJS += console-headless.o
+endif
+
+OBJS += kbd-poll.o conio-$(CONIO).o
 endif
 
 ifdef CONFIG_CHAR_DEV_RS

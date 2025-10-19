@@ -72,7 +72,7 @@ endif
 Image: $(TOPDIR)/include/autoconf.h tools
 	$(MAKE) $(ARCHIVES)
 	$(MAKE) init/main.o
-	cd $(ARCH_DIR) && $(MAKE) Image
+	$(MAKE) -C $(ARCH_DIR) Image
 
 nbImage: $(TOPDIR)/include/autoconf.h $(ARCHIVES) init/main.o tools
 	${MAKE} -C $(ARCH_DIR) nbImage
@@ -186,7 +186,7 @@ dist.old:
 	@echo
 	@printf '\n  %076u\n\n' 0 | tr 0 =
 
-distclean: clean nodep
+distclean: clean
 	rm -f arch/i86/Image
 
 #########################################################################
@@ -214,6 +214,7 @@ tar:	dist
 
 kclean: dokclean
 
+.NOTPARALLEL: clean
 clean:	nodep doclean
 
 dep:	$(TOPDIR)/include/autoconf.h

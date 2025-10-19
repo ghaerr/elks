@@ -1,28 +1,44 @@
-CFLAGS = -g -I../server/nanox
-LDFLAGS = -g -L../server -lnano-X
-BINDIR = .
-PROGS = info demo landmine world demo2
+BASEDIR=../..
 
-all:	$(PROGS)
+include $(BASEDIR)/Makefile-rules
 
-install:	$(PROGS)
-	cp $(PROGS) $(BINDIR)
-	cd $(BINDIR); strip $(PROGS); chmod 755 $(PROGS)
+###############################################################################
+
+CFLAGS += -DELKS=1 -DUNIX=1 -DNDEBUG=1 -I..
+LDFLAGS += -L..
+LDLIBS += -lnano-X
+BIN = ../bin/
+
+###############################################################################
+
+PROGS   = \
+    $(BIN)nxclock   \
+    $(BIN)nxtetris  \
+    $(BIN)nxterm    \
+    $(BIN)nxworld   \
+    $(BIN)nxmine\
+    $(BIN)nxdemo    \
+
+all: $(PROGS)
+
+$(BIN)nxclock: nxclock.o
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+$(BIN)nxtetris: nxtetris.o
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+$(BIN)nxterm: nxterm.o
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+$(BIN)nxworld: nxworld.o
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+	cp -p nxworld.map $(BIN)
+
+$(BIN)nxmine: nxmine.o
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+$(BIN)nxdemo: nxdemo.o
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 clean:
-	$(RM) $(PROGS) *.o
-
-demo:	demo.c
-	$(CC) $(CFLAGS) -o demo demo.c $(LDFLAGS)
-
-landmine: landmine.c
-	$(CC) $(CFLAGS) -o landmine landmine.c $(LDFLAGS)
-
-world: world.c
-	$(CC) $(CFLAGS) -o world world.c $(LDFLAGS)
-
-info: info.c
-	$(CC) $(CFLAGS) -o info info.c $(LDFLAGS)
-
-demo2: demo2.c
-	$(CC) $(CFLAGS) -o demo2 demo2.c $(LDFLAGS)
+	$(RM) $(PROGS) *.o $(BIN)nxworld.map

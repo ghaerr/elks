@@ -9,7 +9,7 @@ BASEDIR 	= ../../..
 # Define the variables required by the standard rules - see the standard
 # rules file (below) for details of these variables.
 
-USEBCC 		=
+USEBCC 		= Y
 
 CLEANDEP	= 
 
@@ -41,9 +41,11 @@ SRCS1 = \
 	# end of list
 
 ifeq ($(CONFIG_ARCH_PC98), y)
-SRCS1 += bios1B.S bios-xms-pc98.S
+SRCS1 += bios1B-pc98.S bios1F-pc98.S unreal.S loadall.S
+else ifeq ($(CONFIG_ARCH_SOLO86), y)
+SRCS1 += unreal.S loadall.S
 else
-SRCS1 += bios13.S bios15.S unreal.S
+SRCS1 += bios13-ibm.S bios15-ibm.S unreal.S loadall.S
 endif
 
 OBJS1 = $(SRCS1:.S=.o)
@@ -81,6 +83,10 @@ $(TMPS1): $(SRCS1)
 $(OBJS1): $(TMPS1)
 $(OBJS2): $(SRCS2)
 $(OBJS3): $(SRCS3)
+
+bios15-ibm.o: a20-ibm.inc
+
+bios1F-pc98.o: a20-pc98.inc
 
 #########################################################################
 # Standard commands.

@@ -24,6 +24,9 @@ endif
 
 ifdef CONFIG_IMG_ROM
 TARGETS += template romfs
+ifdef CONFIG_ARCH_SWAN
+TARGETS += swanrom
+endif
 endif
 
 .PHONY: image $(TARGETS)
@@ -75,7 +78,7 @@ endif
 #	Check image integrity
 #	Print filesystem used inode and block count
 
-minixfs:
+minixfs: template
 	rm -f $(TARGET_FILE)
 	mfs $(VERBOSE) $(TARGET_FILE) mkfs $(MINIX_MKFSOPTS)
 	mfs -v $(TARGET_FILE) addfs Image.all $(DESTDIR)
@@ -109,7 +112,7 @@ endif
 # all mtools commands require image file
 # -i image	image filename
 
-fatfs:
+fatfs: template
 	rm -f $(TARGET_FILE)
 	dd if=/dev/zero of=$(TARGET_FILE) bs=1024 count=$(TARGET_BLKS)
 	mformat -V
@@ -139,8 +142,14 @@ endif
 
 # Create ROM filesystem from template
 
-romfs:
+romfs: template
 	-rm -f romfs.devices
 	$(MAKE) -f Make.devices "MKDEV=echo >> romfs.devices"
 	mkromfs -d romfs.devices $(DESTDIR)
 	-rm -f romfs.devices
+
+swanrom:
+	rm -f $(TARGET_FILE)
+	cat $(IMG_DIR)/romfs.bin > $(TARGET_FILE)
+	truncate -s $(TARGET_ROMFS_BYTES) $(TARGET_FILE)
+	cat $(ELKS_DIR)/arch/i86/boot/Image >> $(TARGET_FILE)

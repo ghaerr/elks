@@ -41,6 +41,7 @@ struct gr_client {
 	GR_CLIENT	*next;		/* the next client in the list */
 	GR_CLIENT	*prev;		/* the previous client in the list */
 	int		waiting_for_event; /* used to implement GrGetNextEvent*/
+	unsigned long   wakeup_time;    /* mstime to wakeup on timeout */
 };
 
 /*
@@ -336,7 +337,7 @@ extern	GR_FONT_INFO	curfont;		/* current font information */
  * The filename to use for the named socket. If we ever support multiple
  * servers on one machine, the last digit will be that of the FB used for it.
  */
-#define GR_NAMED_SOCKET "/var/uds"
+#define GR_NAMED_SOCKET "/tmp/nxsock"
 
 /*
  * The network interface version number. Increment this if you make a change
@@ -411,7 +412,8 @@ extern	GR_FONT_INFO	curfont;		/* current font information */
 #define GrNumText               43
 #define GrNumSetCursor          44
 #define GrNumMoveCursor         45
-#define GrTotalNumCalls         46
+#define GrNumGetNextEventTimeout 46
+#define GrTotalNumCalls         47
 
 /*
  * The values the server can return in response to a command.

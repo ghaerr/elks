@@ -85,53 +85,53 @@ struct key {
 };
 
 struct key bindings[] = {
-	{ 'Z',            SEL_QUIT },
+	{ 'Z',            SEL_QUIT, 0,0 },
 
-	{ kBackSpace,     SEL_BACK },       /* exit directory */
-	{ kDel,           SEL_BACK },
-	{ kLeftArrow,     SEL_BACK },
-	{ CONTROL('H'),   SEL_BACK },
+	{ kBackSpace,     SEL_BACK, 0,0 },       /* exit directory */
+	{ kDel,           SEL_BACK, 0,0 },
+	{ kLeftArrow,     SEL_BACK, 0,0 },
+	{ CONTROL('H'),   SEL_BACK, 0,0 },
 
-	{ '\r',           SEL_GOIN },       /* enter directory or display file */
-	{ kRightArrow,    SEL_GOIN },
-	{ kMouseLeftDoubleClick,SEL_GOIN },
+	{ '\r',           SEL_GOIN, 0,0 },       /* enter directory or display file */
+	{ kRightArrow,    SEL_GOIN, 0,0 },
+	{ kMouseLeftDoubleClick,SEL_GOIN, 0,0 },
 
-	{ kDownArrow,     SEL_NEXT },       /* next entry */
-	{ kMouseWheelDown,SEL_NEXT },
-	{ CONTROL('N'),   SEL_NEXT },
+	{ kDownArrow,     SEL_NEXT, 0,0 },       /* next entry */
+	{ kMouseWheelDown,SEL_NEXT, 0,0 },
+	{ CONTROL('N'),   SEL_NEXT, 0,0 },
 
-	{ kUpArrow,       SEL_PREV },       /* previous entry */
-	{ CONTROL('P'),   SEL_PREV },
-	{ kMouseWheelUp,  SEL_PREV },
+	{ kUpArrow,       SEL_PREV, 0,0 },       /* previous entry */
+	{ CONTROL('P'),   SEL_PREV, 0,0 },
+	{ kMouseWheelUp,  SEL_PREV, 0,0 },
 
-	{ kPageDown,      SEL_PGDN },       /* more next entries */
-	{ CONTROL('D'),   SEL_PGDN },
+	{ kPageDown,      SEL_PGDN, 0,0 },       /* more next entries */
+	{ CONTROL('D'),   SEL_PGDN, 0,0 },
 
-	{ kPageUp,        SEL_PGUP },       /* more previous entries */
-	{ CONTROL('U'),   SEL_PGUP },
+	{ kPageUp,        SEL_PGUP, 0,0 },       /* more previous entries */
+	{ CONTROL('U'),   SEL_PGUP, 0,0 },
 
-	{ kHome,          SEL_HOME },       /* first entry */
-	{ '^',            SEL_HOME },
-	{ 'H',            SEL_HOME },
+	{ kHome,          SEL_HOME, 0,0 },       /* first entry */
+	{ '^',            SEL_HOME, 0,0 },
+	{ 'H',            SEL_HOME, 0,0 },
 
-	{ kEnd,           SEL_END },        /* last entry */
-	{ '$',            SEL_END },
-	{ 'B',            SEL_END },
+	{ kEnd,           SEL_END, 0,0 },        /* last entry */
+	{ '$',            SEL_END, 0,0 },
+	{ 'B',            SEL_END, 0,0 },
 
-	{ '/',            SEL_FLTR },       /* file filter */
+	{ '/',            SEL_FLTR, 0,0 },       /* file filter */
 
-	{ 'C',            SEL_CD },         /* Change dir */
-	{ '~',            SEL_CDHOME },     /* Change to home dir */
+	{ 'C',            SEL_CD, 0,0 },         /* Change dir */
+	{ '~',            SEL_CDHOME, 0,0 },     /* Change to home dir */
 
-	{ '.',            SEL_TOGGLEDOT },  /* Tottle hide .dot files */
-	{ 'D',            SEL_DSORT },      /* Toggle sort by directory first */
-	{ 'S',            SEL_SSIZE },      /* Toggle sort by size */
-	{ 'T',            SEL_MTIME },      /* Toggle sort by time */
-	{ 'I',            SEL_ICASE },      /* Toggle case sensitivity */
-	{ 'V',            SEL_VERS },       /* Toggle sort by version number */
+	{ '.',            SEL_TOGGLEDOT, 0,0 },  /* Tottle hide .dot files */
+	{ 'D',            SEL_DSORT, 0,0 },      /* Toggle sort by directory first */
+	{ 'S',            SEL_SSIZE, 0,0 },      /* Toggle sort by size */
+	{ 'T',            SEL_MTIME, 0,0 },      /* Toggle sort by time */
+	{ 'I',            SEL_ICASE, 0,0 },      /* Toggle case sensitivity */
+	{ 'V',            SEL_VERS, 0,0 },       /* Toggle sort by version number */
 
-	{ CONTROL('L'),   SEL_REDRAW },
-	{ '?',            SEL_HELP },
+	{ CONTROL('L'),   SEL_REDRAW, 0,0 },
+	{ '?',            SEL_HELP, 0,0 },
 
 	{ '!',            SEL_RUN, "sh",                            Noargs },
 	{ 'E',            SEL_RUN, "vi",                            Curname },

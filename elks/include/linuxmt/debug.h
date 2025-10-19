@@ -16,6 +16,7 @@
 #define DEBUG_LEVEL     0               /* default startup debug level*/
 #define DEBUG_BIOS      0               /* BIOS driver*/
 #define DEBUG_BLK       0               /* block i/o*/
+#define DEBUG_BRK       0               /* sbrk/brk */
 #define DEBUG_CACHE     0               /* floppy track cache*/
 #define DEBUG_ETH       0               /* ethernet*/
 #define DEBUG_FAT       0               /* FAT filesystem*/
@@ -53,6 +54,12 @@ void debug_setcallback(int evnum, void (*cbfunc)()); /* callback on debug event*
 #define debug_blk       PRINTK
 #else
 #define debug_blk(...)
+#endif
+
+#if DEBUG_BRK
+#define debug_brk       PRINTK
+#else
+#define debug_brk(...)
 #endif
 
 #if DEBUG_CACHE

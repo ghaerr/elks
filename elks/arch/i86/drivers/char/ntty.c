@@ -46,7 +46,7 @@ struct termios def_vals = {
     0,          /* VSWTCH unused*/
     17,         /* VSTART unused*/
     19,         /* VSTOP unused*/
-    26,         /* VSUSP unused*/
+    26,         /* VSUSP*/
     0,          /* VEOL*/
     18,         /* VREPRINT unused*/
     15,         /* VDISCARD unused*/
@@ -192,7 +192,7 @@ void tty_release(struct inode *inode, struct file *file)
     /* don't release pgrp for /dev/tty, only real tty*/
     if (current->pid == rtty->pgrp) {
         debug_tty("TTY release pgrp %P\n");
-        if ((int)rtty->termios.c_cflag & HUPCL) {       /* warning truncated to 16 bits*/
+        if (rtty->termios.c_cflag & HUPCL) {
                 debug_tty("TTY sending SIGHUP pid %P\n");
                 kill_pg(rtty->pgrp, SIGHUP, 1);
         }

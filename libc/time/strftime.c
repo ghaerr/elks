@@ -245,7 +245,7 @@ _fmt(const char *format, const struct tm *t)
 					return(0);
 				continue;
 			case 'Z':
-#ifdef _M_I86
+#if 1
 				if (!getenv("TZ") || _add(getenv("TZ")))
 					return(0);
 #else

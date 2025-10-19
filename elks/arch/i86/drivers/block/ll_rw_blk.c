@@ -223,6 +223,7 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
 
     /* fill up the request-info, and add it to the queue */
     req->rq_cmd = rw;
+    /* tricky: if nr_sectors is 1 (FAT) then blocknr is sector #, not block # */
     req->rq_nr_sectors = BLOCK_SIZE / get_sector_size(req->rq_dev);
     req->rq_sector = buffer_blocknr(bh) * req->rq_nr_sectors;
     req->rq_seg = buffer_seg(bh);
@@ -351,27 +352,42 @@ void INITPROC blk_dev_init(void)
     } while (++req < &all_requests[NR_REQUEST]);
 #endif
 
+#ifdef CONFIG_ROMFS_FS
+    romflash_init();
+#endif
+
 #ifdef CONFIG_BLK_DEV_RAM
     rd_init();          /* RAMDISK block device*/
 #endif
 
-#if defined(CONFIG_BLK_DEV_SSD_TEST) || defined(CONFIG_BLK_DEV_SSD_SD8018X)
-    ssd_init();         /* SSD block device*/
-#endif
-
 #ifdef CONFIG_BLK_DEV_HD
-    directhd_init();
+    struct gendisk *hddisk = directhd_init();
 #endif
 
 #ifdef CONFIG_BLK_DEV_FD
-    floppy_init();
+    floppy_init();      /* direct floppy, init before SSD for possible XMS track cache */
+#endif
+
+#if defined(CONFIG_BLK_DEV_SSD_TEST) || defined(CONFIG_BLK_DEV_SSD_SD8018X) || \
+    defined(CONFIG_FS_XMS_RAMDISK)
+    ssd_init();         /* SSD block device*/
 #endif
 
 #if defined(CONFIG_BLK_DEV_BFD) || defined(CONFIG_BLK_DEV_BHD)
-    bioshd_init();
+    struct gendisk *biosdisk = bioshd_init();
 #endif
 
-#ifdef CONFIG_ROMFS_FS
-    romflash_init();
+#ifdef CONFIG_BLK_DEV_ATA_CF
+    struct gendisk *atadisk = ata_cf_init();
+#endif
+
+#ifdef CONFIG_BLK_DEV_BHD
+    if (biosdisk)
+        init_partitions(biosdisk);
+#endif
+
+#ifdef CONFIG_BLK_DEV_ATA_CF
+    if (atadisk)
+        init_partitions(atadisk);
 #endif
 }

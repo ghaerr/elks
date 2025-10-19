@@ -62,6 +62,15 @@ build_rom_8088()
     mv image/romfs.bin image/romfs-8088.bin
 }
 
+# build Swan rom image
+build_rom_swan()
+{
+    cleanup
+    cp swan.config .config
+    make
+    mv image/rom.wsc image/rom-swan.wsc
+}
+
 # build IBM PC versions
 build_ibm()
 {
@@ -100,7 +109,8 @@ fi
 # full (re)build including C library and all applications
 make clean
 build_pc98
-build_8018x
-build_8088
+build_rom_8018x
+build_rom_8088
+build_rom_swan
 build_ibm
 build_ibm_all

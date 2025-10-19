@@ -11,11 +11,16 @@
 
 #include <malloc.h>
 #include <unistd.h>
+#include <errno.h>
+#include <sys/sysctl.h>
 
 #include "_malloc.h"
 
-#undef  malloc
 #define MAX_INT ((int)(((unsigned)-1)>>1))
+
+#if VERBOSE == 1
+int __debug_level = 1;
+#endif
 
 /*
  * The chunk_list pointer is either NULL or points to a chunk in a
@@ -36,7 +41,7 @@ __insert_chunk(mem __wcnear *mem_chunk)
    {
       chunk_list = mem_chunk;
       m_next(mem_chunk) = (union mem_cell __wcnear *)mem_chunk;
-      __noise("FIRST CHUNK", mem_chunk);
+      debug("FIRST CHUNK", mem_chunk);
       return;
    }
    p1 = mem_chunk;
@@ -52,16 +57,16 @@ __insert_chunk(mem __wcnear *mem_chunk)
 
 	    if (p2 + m_size(p2) == p1)
 	    {			/* Good, stick 'em together */
-	       __noise("INSERT CHUNK", mem_chunk);
+	       debug("INSERT CHUNK", mem_chunk);
 	       m_size(p2) += m_size(p1);
-	       __noise("JOIN 1", p2);
+	       debug("JOIN 1", p2);
 	    }
 	    else
 	    {
 	       m_next(p1) = m_next(p2);
 	       m_next(p2) = (union mem_cell __wcnear *)p1;
-	       __noise("INSERT CHUNK", mem_chunk);
-	       __noise("FROM", p2);
+	       debug("INSERT CHUNK", mem_chunk);
+	       debug("FROM", p2);
 	    }
 	    return;
 	 }
@@ -71,22 +76,22 @@ __insert_chunk(mem __wcnear *mem_chunk)
 
 	    m_next(p1) = m_next(p2);
 	    m_next(p2) = (union mem_cell __wcnear *)p1;
-	    __noise("INSERT CHUNK", mem_chunk);
-	    __noise("FROM", p2);
+	    debug("INSERT CHUNK", mem_chunk);
+	    debug("FROM", p2);
 
 	    /* Try to join above */
 	    if (p1 + m_size(p1) == m_next(p1))
 	    {
 	       m_size(p1) += m_size(m_next(p1));
 	       m_next(p1) = m_next(m_next(p1));
-	       __noise("JOIN 2", p1);
+	       debug("JOIN 2", p1);
 	    }
 	    /* Try to join below */
 	    if (p2 + m_size(p2) == p1)
 	    {
 	       m_size(p2) += m_size(p1);
 	       m_next(p2) = m_next(p1);
-	       __noise("JOIN 3", p2);
+	       debug("JOIN 3", p2);
 	    }
 	    chunk_list = p2;	/* Make sure it's valid */
 	    return;
@@ -100,8 +105,8 @@ __insert_chunk(mem __wcnear *mem_chunk)
 
 	    m_next(p1) = m_next(p2);
 	    m_next(p2) = (union mem_cell __wcnear *)p1;
-	    __noise("INSERT CHUNK", mem_chunk);
-	    __noise("FROM", p2);
+	    debug("INSERT CHUNK", mem_chunk);
+	    debug("FROM", p2);
 	    chunk_list = p2;
 
 	    if (p1 + m_size(p1) == m_next(p1))
@@ -110,7 +115,7 @@ __insert_chunk(mem __wcnear *mem_chunk)
 		  chunk_list = p1;
 	       m_size(p1) += m_size(m_next(p1));
 	       m_next(p1) = m_next(m_next(p1));
-	       __noise("JOIN 4", p1);
+	       debug("JOIN 4", p1);
 	    }
 	    return;
 	 }
@@ -121,7 +126,7 @@ __insert_chunk(mem __wcnear *mem_chunk)
    while (p2 != chunk_list);
 
    /* If we get here we have a problem, ignore it, maybe it'll go away */
-   __noise("DROPPED CHUNK", mem_chunk);
+   debug("DROPPED CHUNK", mem_chunk);
 }
 
 /*
@@ -141,7 +146,7 @@ __search_chunk(unsigned int mem_size)
    p2 = chunk_list;
    do
    {
-      __noise("CHECKED", p1);
+      debug("CHECKED", p1);
       if (m_size(p1) >= mem_size)
 	 break;
 
@@ -157,14 +162,14 @@ __search_chunk(unsigned int mem_size)
    /* If it's exactly right remove it */
    if (m_size(p1) < mem_size + 2)
    {
-      __noise("FOUND RIGHT", p1);
+      debug("FOUND RIGHT", p1);
       chunk_list = m_next(p2) = m_next(p1);
       if (chunk_list == p1)
 	 chunk_list = 0;
       return p1;
    }
 
-   __noise("SPLIT", p1);
+   debug("SPLIT", p1);
    /* Otherwise split it */
    m_next(p2) = (union mem_cell __wcnear *)(p1 + mem_size);
    chunk_list = p2;
@@ -175,13 +180,19 @@ __search_chunk(unsigned int mem_size)
    m_size(p1) = mem_size;
    if (chunk_list == p1)
       chunk_list = p2;
-#ifdef VERBOSE
-   p1[1].size = (unsigned int)0xAAAAAAAA;
-#endif
-   __noise("INSERT CHUNK", p2);
-   __noise("FOUND CHUNK", p1);
-   __noise("LIST IS", chunk_list);
+
+   p1[1].size = (unsigned int)0xAAAA;   /* canary, not required */
+   debug("INSERT CHUNK", p2);
+   debug("FOUND CHUNK", p1);
+   debug("LIST IS", chunk_list);
    return p1;
+}
+
+size_t malloc_usable_size(void *ptr)
+{
+    if (ptr == 0)
+        return 0;
+    return (m_size(((mem *) ptr) - 1) - 1) * sizeof(mem);
 }
 
 void *
@@ -190,8 +201,21 @@ malloc(size_t size)
    register mem __wcnear *ptr = 0;
    register unsigned int sz;
 
+#if VERBOSE == 1
+   if (chunk_list == 0)
+        sysctl(CTL_GET, "malloc.debug", &__debug_level);
+#endif
+
+   errno = 0;
    if (size == 0)
-      return 0;			/* ANSI STD */
+      return 0;			/* ANSI STD, no error */
+
+   /* Minor oops here, sbrk has a signed argument */
+   if((int)size < 0 || size > (((unsigned)-1) >> 1) - sizeof(mem) * 3)
+   {
+      errno = ENOMEM;
+      return 0;
+   }
 
    sz = size + sizeof(mem) * 2 - 1;
    sz /= sizeof(mem);
@@ -201,11 +225,12 @@ malloc(size_t size)
       sz = MINALLOC;
 #endif
 
-#ifdef VERBOSE
+   dprintf("MALLOC %u\n", sz * sizeof(mem));
+#if VERBOSE > 1
    {
       static mem arr[2];
       m_size(arr) = sz;
-      __noise("WANTED", arr);
+      debug("WANTED", arr);
    }
 #endif
 
@@ -227,10 +252,9 @@ malloc(size_t size)
 	    ptr = __freed_list;
 	    __freed_list = m_next(__freed_list);
 
-	    if (m_size(ptr) == sz)	/* Oh! Well that's lucky ain't it
-					 * :-) */
+	    if (m_size(ptr) == sz)	/* Oh! Well that's lucky ain't it :-) */
 	    {
-	       __noise("LUCKY MALLOC", ptr);
+	       debug("RETURN (exact from freelist)", ptr);
 	       return ptr + 1;
 	    }
 
@@ -256,10 +280,13 @@ malloc(size_t size)
       {
 #ifdef MCHUNK
          unsigned int alloc;
-         alloc = sizeof(mem) * (MCHUNK * ((sz + MCHUNK - 1) / MCHUNK) - 1);
+         if (sz < MCHUNK)
+                alloc = sizeof(mem) * (MCHUNK * ((sz + MCHUNK - 1) / MCHUNK) - 1);
+         else alloc = sz * sizeof(mem);
 	 ptr = __mini_malloc(alloc);
 	 if (ptr)
 	    __insert_chunk(ptr - 1);
+#if MCHUNK >= 256
 	 else		/* Oooo, near end of RAM */
 	 {
 	    unsigned int needed = alloc;
@@ -274,6 +301,7 @@ malloc(size_t size)
 	       else     alloc/=2;
 	    }
 	 }
+#endif
 	 ptr = __search_chunk(sz);
 	 if (ptr == 0)
 #endif
@@ -281,22 +309,22 @@ malloc(size_t size)
 #ifndef MCHUNK
 	    ptr = __mini_malloc(size);
 #endif
-#ifdef VERBOSE
-	    if( ptr == 0 )
-	       __noise("MALLOC FAIL", 0);
-	    else
-	       __noise("MALLOC NOW", ptr - 1);
-#endif
-	    return ptr;
+            if (ptr == 0)
+            {
+                errno = ENOMEM;
+                dprintf("FAIL\n");
+                debug("FAIL", 0);
+                return 0;       /* don't far-extend near ptr in large model */
+            }
+            debug("RETURN (new chunk)", ptr - 1);
+            return ptr;
 	 }
       }
 #ifdef LAZY_FREE
    }
 #endif
 
-#ifdef VERBOSE
-   ptr[1].size = (unsigned int)0x55555555;
-#endif
-   __noise("MALLOC RET", ptr);
+   ptr[1].size = (unsigned int)0x5555;  /* canary, not required */
+   debug("RETURN", ptr);
    return ptr + 1;
 }

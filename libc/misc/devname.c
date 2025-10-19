@@ -22,15 +22,18 @@ static struct dev_name_struct {
     mode_t type;
     dev_t num;
 } devices[] = {
-    /* the 4 partitionable drives must be first */
+    /* the 6 partitionable drives must be first */
     { "hda",     S_IFBLK,   DEV_HDA             },
     { "hdb",     S_IFBLK,   DEV_HDB             },
     { "hdc",     S_IFBLK,   DEV_HDC             },
     { "hdd",     S_IFBLK,   DEV_HDD             },
+    { "cfa",     S_IFBLK,   DEV_CFA             },
+    { "cfb",     S_IFBLK,   DEV_CFB             },
     { "fd0",     S_IFBLK,   DEV_FD0             },
     { "fd1",     S_IFBLK,   DEV_FD1             },
     { "df0",     S_IFBLK,   DEV_DF0             },
     { "df1",     S_IFBLK,   DEV_DF1             },
+    { "rom",     S_IFBLK,   DEV_ROM             },
     { "ssd",     S_IFBLK,   MKDEV(SSD_MAJOR, 0) },
     { "rd0",     S_IFBLK,   MKDEV(RAM_MAJOR, 0) },
     { "ttyS0",   S_IFCHR,   DEV_TTYS0           },
@@ -47,10 +50,10 @@ static char *__fast_devname(dev_t dev, mode_t type)
     unsigned mask;
 
     for (i = 0; i < ARRAYLEN(devices); i++) {
-        mask = (i < 4)? 0xfff8: 0xffff;
+        mask = (i < 6)? 0xfff8: 0xffff;
         if (devices[i].type == type && devices[i].num == (dev & mask)) {
             strcpy(&path[NAMEOFF], devices[i].name);
-            if (i < 4) {
+            if (i < 6) {
                 if (dev & 0x07) {
                     path[NAMEOFF+3] = '0' + (dev & 7);
                     path[NAMEOFF+4] = '\0';

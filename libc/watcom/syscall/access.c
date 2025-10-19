@@ -32,9 +32,9 @@
 #include <unistd.h>
 #include "watcom/syselks.h"
 
-int access( const char *filename, int mode )
+int access( const char *__filename, int mode )
 {
-    sys_setseg(filename);
-    syscall_res res = sys_call2( SYS_access, (unsigned)filename, mode );
+    sys_setseg(__filename);
+    syscall_res res = sys_call2( SYS_access, (unsigned)__filename, mode );
     __syscall_return( int, res );
 }

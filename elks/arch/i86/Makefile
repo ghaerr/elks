@@ -103,8 +103,12 @@ ifeq ($(CONFIG_ROM_BOOTABLE_BY_RESET), y)
     RVECT = -r $(CONFIG_ROM_RESET_ADDRESS)   
 endif
 
+ifdef CONFIG_ARCH_SWAN
+    SWANARG = -w
+endif
+
 Image:	toolkit boot/setup boot/system  
-	tools/mkbootloader $(RVECT) -c $(CONFIG_ROM_SETUP_CODE) $(CONFIG_ROM_CHECKSUM_SIZE) boot/Image $(CONFIG_ROM_BASE) -a boot/setup $(CONFIG_ROM_SETUP_CODE) -s boot/system $(CONFIG_ROM_KERNEL_CODE) $(CONFIG_ROM_BIOS_MODULE) $(CONFIG_ROM_BIOS_MODULE_ADDR)
+	tools/mkbootloader $(SWANARG) $(RVECT) -c $(CONFIG_ROM_SETUP_CODE) $(CONFIG_ROM_CHECKSUM_SIZE) boot/Image $(CONFIG_ROM_BASE) -a boot/setup $(CONFIG_ROM_SETUP_CODE) -s boot/system $(CONFIG_ROM_KERNEL_CODE) $(CONFIG_ROM_BIOS_MODULE) $(CONFIG_ROM_BIOS_MODULE_ADDR)
 	$(CONFIG_ROM_SIMULATOR_PROGRAM)
 
 # End PC image build
@@ -126,13 +130,13 @@ setup:	toolkit boot/setup
 .PHONY: kernel/akernel.a lib/lib86.a mm/mm.a drivers/char/chr_drv.a \
 	drivers/block/blk_drv.a drivers/net/net_drv.a
 
-kernel/akernel.a:
+kernel/akernel.a: $(XINCLUDE)
 	${MAKE} -C kernel akernel.a
 
 lib/lib86.a:
 	${MAKE} -C lib lib86.a
 
-mm/mm.a:
+mm/mm.a: $(XINCLUDE)
 	${MAKE} -C mm mm.a
 
 drivers/char/chr_drv.a:
@@ -141,7 +145,7 @@ drivers/char/chr_drv.a:
 drivers/block/blk_drv.a:
 	${MAKE} -C drivers/block blk_drv.a
 
-drivers/net/net_drv.a:
+drivers/net/net_drv.a: $(XINCLUDE)
 	${MAKE} -C drivers/net net_drv.a
 
 #########################################################################

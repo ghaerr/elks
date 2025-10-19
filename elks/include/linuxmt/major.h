@@ -15,18 +15,20 @@
  *
  * devices are as follows (same as minix, so we can use the minix fs):
  *
- *      character              block                  comments
- *      --------------------   --------------------   --------------------
- *  0 - unnamed                unnamed                minor 0 = true nodev
- *  1 - /dev/mem               /dev/rd[01]            char mem, block ramdisk
- *  2 - /dev/ptyp*             /dev/ssd               char pty master, block ssd
- *  3 -                        /dev/{fd*,hd*}         block BIOS fd/hd
- *  4 - /dev/tty*,ttyp*,ttyS*  /dev/f{0,1}            char tty, pty slave, serial, block fd
- *  5 -
- *  6 - /dev/lp                /dev/rom               char lp, block romflash
+ *      character              block               char          block
+ *      -----------------   --------------------   ------------- ------------
+ *  0 - nodevice            nodevice
+ *  1 - /dev/mem            /dev/rd[01]            mem           ramdisk
+ *  2 - /dev/ptyp[0123]     /dev/ssd               pty master    XMS ramdisk or SSD
+ *  3 -                     /dev/{fd[01],hd[ab][1-7]}            BIOS floppy/hd
+ *  4 - /dev/tty[1234]      /dev/df[01]            tty           direct floppy
+ *  4 - /dev/ttyp[0123]                            pty slave
+ *  4 - /dev/ttyS[0123]                            serial
+ *  5 -                     /dev/cf[ab][1-7]                     direct ATA/CF/hd
+ *  6 - /dev/lp             /dev/rom               printer       rom filesystem
  *  7 -
- *  8 - /dev/tcpdev                                   kernel <-> ktcp comm
- *  9 - /dev/eth                                      NIC driver
+ *  8 - /dev/tcpdev                                kernel <-> ktcp
+ *  9 - /dev/eth                                   NIC driver
  * 10 - /dev/cgatext
  */
 
@@ -50,8 +52,8 @@
 #define RAM_MAJOR         1
 #define SSD_MAJOR         2
 #define BIOSHD_MAJOR      3
-#define FLOPPY_MAJOR      4
-#define ATHD_MAJOR        5  /* experimental*/
+#define FLOPPY_MAJOR      4  /* direct floppy driver directfd.c */
+#define ATHD_MAJOR        5  /* direct ATA/CF driver and nonworking directhd.c */
 #define ROMFLASH_MAJOR    6
 
 #endif

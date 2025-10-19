@@ -149,6 +149,7 @@ typedef int syscall_res;
 #define SYS_setsockopt          204
 #define SYS_getsocknam          205
 #define SYS_fmemalloc           206
+#define SYS_fmemfree            207
 
 
 #define _sys_exit(rc)       sys_call1n(SYS_exit, rc)
@@ -201,7 +202,7 @@ syscall_res sys_call5( unsigned func, unsigned r_bx, unsigned r_cx, unsigned r_d
 
 /* Set the DS register from passed far address before system call */
 #if defined(__COMPACT__) || defined(__LARGE__)
-#define sys_setseg(ptr)     sys_setds(((unsigned long)ptr) >> 16)
+#define sys_setseg(ptr)         if (ptr) sys_setds(((unsigned long)ptr) >> 16)
 #else
 #define sys_setseg(ptr)         /* DS already set in small and medium models */
 #endif

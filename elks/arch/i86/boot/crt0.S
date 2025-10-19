@@ -10,6 +10,7 @@
         .extern start_kernel
         .global early_putchar
 
+        .word   0,0,0,0,0,0,0,0 // 16-byte offset for HMA segment FFFF:0000 not in XMS
 _start:
 
 /*
@@ -53,6 +54,22 @@ _start:
 int3:   int     $3              // C breakpoint for emu86
         ret
 
+#ifdef CONFIG_ARCH_SWAN
+early_putchar:
+1:	in	$0xB3,%al
+	test	$0x04,%al
+	jz	1b
+        mov	%sp,%bx
+        mov	2(%bx),%al
+	out	%al,$0xB1
+        ret
+#elif defined(CONFIG_ARCH_SOLO86)
+early_putchar:
+        mov   %sp,%bx
+        mov   2(%bx),%al
+        outb  %al,$0x22
+        ret
+#else
 #ifndef CONFIG_ARCH_PC98
 early_putchar:
         mov   %sp,%bx
@@ -63,6 +80,7 @@ early_putchar:
         int   $0x10
         pop   %bp
         ret
+#endif
 #endif
 
 //      Segment beginnings

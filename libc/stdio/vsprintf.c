@@ -12,7 +12,9 @@ vsprintf(char *sp, const char *fmt, va_list ap)
 			0,
 			(unsigned char *)(unsigned)-1,
 			-1,
-		 _IOFBF | __MODE_WRITE
+			_IOFBF | __MODE_WRITE,
+			{ 0,0,0,0,0,0,0,0 },
+			0
 		 }
 	};
 

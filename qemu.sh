@@ -71,6 +71,8 @@ KEYBOARD=
 # Select pty serial port or serial mouse driver
 #SERIAL="-chardev pty,id=chardev1 -device isa-serial,chardev=chardev1,id=serial1"
 #SERIAL="-chardev msmouse,id=chardev1 -device isa-serial,chardev=chardev1,id=serial1"
+# Uncomment the following line to emulate two serial devices, required for Nano-X:
+SERIAL="-chardev msmouse,id=c1 -device isa-serial,chardev=c1,id=s1 -chardev msmouse,id=c2 -device isa-serial,chardev=c2,id=s2"
 
 # Uncomment this to route ELKS /dev/ttyS0 to host terminal
 CONSOLE="-serial stdio"
@@ -140,6 +142,6 @@ fi
 #DEBUG="-D logfile -d out_asm,in_asm,int,unimp,guest_errors"
 
 echo "Using QEMU: $QEMU $ACCEL"
-exec $QEMU $ACCEL $DEBUG $AUDIO $CONSOLE -nodefaults -name ELKS -machine isapc -cpu 486,tsc -m 4M \
+exec $QEMU $ACCEL $DEBUG $AUDIO $CONSOLE -nodefaults -name ELKS -machine isapc -cpu 486,tsc -m 8M \
 $KEYBOARD $QDISPLAY -vga std -rtc base=utc $SERIAL \
 $NET $NETDUMP $IMAGE $DISK2 $@

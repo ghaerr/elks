@@ -111,6 +111,7 @@ static void update_port(struct serial_info *port)
 {
     unsigned int cflags;
     unsigned int baudrate_compare;
+    flag_t flags;
 
     cflags = port->tty->termios.c_cflag & CBAUD;
     if (cflags & CBAUDEX) {
@@ -119,6 +120,7 @@ static void update_port(struct serial_info *port)
     /* get which baud rate compare value is requested */
     baudrate_compare = baudrate_compares[cflags];
 
+    save_flags(flags);
     clr_irq();
 
     /* Disable receiver */
@@ -137,7 +139,7 @@ static void update_port(struct serial_info *port)
     /* Enable receiver */
     outw(inw(port->io_ccon) | 0x0020, port->io_ccon);
 
-    set_irq();
+    restore_flags(flags);
 }
 
 /* Called from main.c! */

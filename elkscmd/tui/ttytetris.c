@@ -54,8 +54,8 @@ init(void)
      current.next = nrand(0, 6);
 
      /* Score */
-     printxy(0, FRAMEH_NB + 2, FRAMEW + 3, "Score:");
-     printxy(0, FRAMEH_NB + 3, FRAMEW + 3, "Lines:");
+     printxy(0, FRAMEH + 2, 2, "Score:");
+     printxy(0, FRAMEH + 3, 2, "Lines:");
      DRAW_SCORE();
 
      /* Init signal */
@@ -99,7 +99,9 @@ get_key_event(void)
      {
      case KEY_MOVE_LEFT:            shape_move(-EXP_FACT);              break;
      case KEY_MOVE_RIGHT:           shape_move(EXP_FACT);               break;
+     case 'd':
      case KEY_CHANGE_POSITION_NEXT: shape_set_position(N_POS);          break;
+     case 's':
      case KEY_CHANGE_POSITION_PREV: shape_set_position(P_POS);          break;
      case KEY_DROP_SHAPE:           shape_drop();                       break;
      case KEY_SPEED:                ++current.x; ++score; DRAW_SCORE(); break;
@@ -184,7 +186,6 @@ main(int argc, char **argv)
 {
      init();
      frame_init();
-     frame_nextbox_init();;
 
      current.last_move = False;
 

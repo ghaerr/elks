@@ -17,7 +17,7 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: setup
@@ -28,7 +28,7 @@ jobs:
 
       - name: cache
         id: cache
-        uses: actions/cache@v1
+        uses: actions/cache@v4
         with:
           path: cross
           key: cross-${{ hashFiles('tools/*') }}-${{ runner.os }}
@@ -141,6 +141,12 @@ jobs:
           path: image/hd64-minix.img
 
       - name: upload17
+        uses: actions/upload-artifact@v4
+        with:
+          name: hd64mbr-minix.img
+          path: image/hd64mbr-minix.img
+
+      - name: upload18
         uses: actions/upload-artifact@v4
         with:
           name: fd1232.img

@@ -24,27 +24,20 @@
 #include <linuxmt/major.h>
 #include <linuxmt/string.h>
 #include <linuxmt/memory.h>
-
+#include <linuxmt/mm.h>
+#include <linuxmt/debug.h>
 #include <arch/system.h>
-
 #include "blk.h"
+
+#if defined(CONFIG_BLK_DEV_BHD) || defined(CONFIG_BLK_DEV_ATA_CF)
 
 #define NR_SECTS(p)     p->nr_sects
 #define START_SECT(p)   p->start_sect
-#ifdef CONFIG_ARCH_PC98
-# define NR_SECTS_PC98(p98)     ((sector_t) END_SECT_PC98(p98) - START_SECT_PC98(p98) + 1)
-# define START_SECT_PC98(p98)   ((sector_t) p98->cyl * last_drive->heads * last_drive->sectors + p98->head * last_drive->sectors + p98->sector)
-# define END_SECT_PC98(p98)     ((sector_t) p98->end_cyl * last_drive->heads * last_drive->sectors + p98->end_head * last_drive->sectors + p98->end_sector)
-#endif
 
-struct gendisk *gendisk_head;
-int boot_partition = 0;         /* MBR boot partition, if any*/
-
-#ifdef CONFIG_BLK_DEV_BHD
-
+int boot_partition;         /* MBR boot partition, if any*/
 static unsigned int current_minor;
 
-static void INITPROC print_minor_name(register struct gendisk *hd, unsigned int minor)
+static void GENPROC print_minor_name(register struct gendisk *hd, unsigned int minor)
 {
     unsigned int part;
     struct hd_struct *hdp = &hd->part[minor];
@@ -52,10 +45,11 @@ static void INITPROC print_minor_name(register struct gendisk *hd, unsigned int 
     printk("%s%c", hd->major_name, 'a' + (unsigned char)(minor >> hd->minor_shift));
     if ((part = (unsigned) (minor & ((1 << hd->minor_shift) - 1))))
         printk("%d", part);
-    printk(":(%,lu;%,lu) ", hdp->start_sect, hdp->nr_sects);
+    //printk(":(%,lu;%,lu) ", hdp->start_sect, hdp->nr_sects);
+    printk(":(%lu,%lu) ", hdp->start_sect, hdp->nr_sects);
 }
 
-static void INITPROC add_partition(struct gendisk *hd, unsigned int minor,
+static void GENPROC add_partition(struct gendisk *hd, unsigned int minor,
                           sector_t start, sector_t size)
 {
     struct hd_struct *hdp = &hd->part[minor];
@@ -64,17 +58,18 @@ static void INITPROC add_partition(struct gendisk *hd, unsigned int minor,
     hdp->nr_sects = size;
     print_minor_name(hd, minor);
 
+#if UNUSED
+/* partition skipping disabled as virtual cylinder values sometimes needed for CF cards*/
     /*
      * Additional partition check since no MBR signature:
      * Some BIOS subtract a cylinder, making direct comparison incorrect.
      * A CHS cylinder can have 63 max sectors * 255 heads, so adjust for that.
      */
-#if UNUSED /* partition skipping disabled as virtual cylinder values sometimes needed for CF cards*/
     struct hd_struct *hd0 = &hd->part[0];
     sector_t adj_nr_sects = hd0->nr_sects + 63 * 255;
     if (start > adj_nr_sects || start+size > adj_nr_sects) {
         printk("skipped ");
-        hdp->start_sect = -1;
+        hdp->start_sect = NOPART;
         hdp->nr_sects = 0;
         return;
     }
@@ -87,15 +82,27 @@ static void INITPROC add_partition(struct gendisk *hd, unsigned int minor,
      *
      * If the root device is already fully known, i.e. ROOT_DEV is already
      * a device number, then we do not really need boot_partition.
+     *
+     * If linked in, the BIOS HD driver takes precedence over the ATA driver.
      */
-    if (ROOT_DEV == bios_drive_map[minor >> hd->minor_shift]) {
-        sector_t boot_start = SETUP_PART_OFFSETLO | (sector_t) SETUP_PART_OFFSETHI << 16;
-        if (start == boot_start)
-            boot_partition = minor & 0x7;
+    sector_t boot_start = SETUP_PART_OFFSETLO | (sector_t) SETUP_PART_OFFSETHI << 16;
+    if (start == boot_start) {
+#if defined(CONFIG_BLK_DEV_ATA_CF) && !defined(CONFIG_BLK_DEV_BHD)
+        if (hd->major == ATHD_MAJOR && (ROOT_DEV & 0x80)) {
+            if ((minor >> hd->minor_shift) == (ROOT_DEV & 1))
+                boot_partition = minor & 1;
+        }
+#endif
+#ifdef CONFIG_BLK_DEV_BHD
+        if (hd->major == BIOSHD_MAJOR) {
+            if (ROOT_DEV == bios_drive_map[minor >> hd->minor_shift])
+                boot_partition = minor & 0x7;
+        }
+#endif
     }
 }
 
-static int INITPROC is_extended_partition(register struct partition *p)
+static int GENPROC is_extended_partition(register struct partition *p)
 {
     return (p->sys_ind == DOS_EXTENDED_PARTITION ||
             p->sys_ind == LINUX_EXTENDED_PARTITION);
@@ -112,7 +119,7 @@ static int INITPROC is_extended_partition(register struct partition *p)
  * only for the actual data partitions.
  */
 
-static void INITPROC extended_partition(register struct gendisk *hd, kdev_t dev)
+static void GENPROC extended_partition(register struct gendisk *hd, kdev_t dev)
 {
     struct buffer_head *bh;
     register struct partition *p;
@@ -200,16 +207,11 @@ static void INITPROC extended_partition(register struct gendisk *hd, kdev_t dev)
     unmap_brelse(bh);
 }
 
-#ifdef CONFIG_MSDOS_PARTITION
-static int INITPROC msdos_partition(struct gendisk *hd,
-                           kdev_t dev, sector_t first_sector)
+static int GENPROC mbr_partition(struct gendisk *hd, kdev_t dev, sector_t first_sector)
 {
-    struct buffer_head *bh;
     register struct partition *p;
-#ifdef CONFIG_ARCH_PC98
-    struct partition_pc98 *p98;
-#endif
     register struct hd_struct *hdp;
+    struct buffer_head *bh;
     unsigned int i, minor = current_minor;
 
     if (!(bh = bread(dev, (block_t) 0)))
@@ -239,37 +241,52 @@ out:
     if (i == 0 && (*(unsigned short *) (bh->b_data + 0x1fc)) == 0x4c65)
         goto out;
 
-    /* first "extra" minor (for extended partitions) */
-    p = (struct partition *) (bh->b_data + 0x1be);
+    /* current_minor is first "extra" minor (for extended partitions) */
     current_minor += 4;
+    p = (struct partition *) (bh->b_data + 0x1be);
     for (i = 1; i <= 4; minor++, i++, p++) {
-        hdp = &hd->part[minor];
         if (!NR_SECTS(p))
             continue;
-        add_partition(hd, minor, first_sector + START_SECT(p), NR_SECTS(p));
-        if (is_extended_partition(p)) {
-            printk(" <");
+        /* create partition unless its an extended partition entry */
+        if (!is_extended_partition(p)) {
+            add_partition(hd, minor, first_sector + START_SECT(p), NR_SECTS(p));
+        } else {
+            printk("\n< ");
             /*
              * If we are rereading the partition table, we need
              * to set the size of the partition so that we will
              * be able to bread the block containing the extended
              * partition info.
              */
-#if UNUSED
-            hd->sizes[minor] = hdp->nr_sects >> (BLOCK_SIZE_BITS - 9);
-#endif
+            hdp = &hd->part[minor];
+            hdp->start_sect = first_sector + START_SECT(p);
+            hdp->nr_sects = NR_SECTS(p);
+
             extended_partition(hd, MKDEV(hd->major, minor));
-            printk(" >");
+
+            /* then disable mbr partition number */
+            hdp->start_sect = NOPART;
+            hdp->nr_sects = 0;
+
+            printk(">");
+#if UNUSED
             /* prevent someone doing mkfs on an
              * extended partition, but leave room for LILO */
             if (hdp->nr_sects > 2)
                 hdp->nr_sects = 2;
+#endif
         }
     }
 
 #ifdef CONFIG_ARCH_PC98
+#define NR_SECTS_PC98(p98)     ((sector_t) END_SECT_PC98(p98) - START_SECT_PC98(p98) + 1)
+#define START_SECT_PC98(p98)   ((sector_t) p98->cyl * last_drive->heads * last_drive->sectors + p98->head * last_drive->sectors + p98->sector)
+#define END_SECT_PC98(p98)     ((sector_t) p98->end_cyl * last_drive->heads * last_drive->sectors + p98->end_head * last_drive->sectors + p98->end_sector)
+
     if (*(unsigned short *) (bh->b_data + 0x4) == 0x5049 &&
         *(unsigned short *) (bh->b_data + 0x6) == 0x314C) {
+        struct partition_pc98 *p98;
+
         printk(" pc-98 IPL1");
         current_minor -= 4;
         minor = current_minor;
@@ -288,47 +305,114 @@ out:
     unmap_brelse(bh);
     return 1;
 }
-#endif
 
-static void INITPROC check_partition(register struct gendisk *hd, kdev_t dev)
+static void GENPROC check_partition(struct gendisk *hd, kdev_t dev)
 {
-    sector_t first_sector;
-
-    first_sector = hd->part[MINOR(dev)].start_sect;
+    sector_t first_sector = hd->part[MINOR(dev)].start_sect;
 
 #if UNUSED
     /*
      * This is a kludge to allow the partition check to be
      * skipped for specific drives (e.g. IDE cd-rom drives)
      */
-    if ((sector_t) first_sector == (sector_t) -1) {
-        hd->part[MINOR(dev)].start_sect = (sector_t) 0;
+    if (first_sector == NOPART) {
+        hd->part[MINOR(dev)].start_sect = 0;
         return;
     }
 #endif
 
     print_minor_name(hd, MINOR(dev));
 
-#ifdef CONFIG_MSDOS_PARTITION
-    if (msdos_partition(hd, dev, first_sector))
+    if (mbr_partition(hd, dev, first_sector))
         return;
-#endif
 
     printk(" no partitions\n");
 }
-#endif
 
-void INITPROC setup_dev(register struct gendisk *dev)
+static void GENPROC clear_partition(struct gendisk *hd)
 {
-    //memset((void *)dev->part, 0, sizeof(struct hd_struct)*dev->max_nr*dev->max_p);
-    dev->init();
+    struct drive_infot *drivep = hd->drive_info;
+    struct hd_struct *hdp = hd->part;
+    int i;
 
-#ifdef CONFIG_BLK_DEV_BHD
-    for (int i = 0; i < dev->nr_hd; i++) {
-        unsigned int first_minor = i << dev->minor_shift;
-        current_minor = first_minor + 1;
-        check_partition(dev, MKDEV(dev->major, first_minor));
+    memset(hdp, 0, sizeof(struct hd_struct) * hd->num_drives * hd->max_partitions);
+    for (i = 0; i < hd->num_drives << hd->minor_shift; i++) {
+        if ((i & ((1 << hd->minor_shift) - 1)) == 0) {
+            //hdp->start_sect = 0;
+            hdp->nr_sects = (sector_t)drivep->sectors * drivep->heads * drivep->cylinders;
+            if (hdp->nr_sects == 0)
+                hdp->start_sect = NOPART;
+            drivep++;
+        } else {
+            hdp->start_sect = NOPART;
+            //hdp->nr_sects = 0;
+        }
+        hdp++;
     }
-#endif
 
 }
+
+void GENPROC init_partitions(struct gendisk *hd)
+{
+    clear_partition(hd);
+
+    for (int i = 0; i < hd->nr_hd; i++) {
+        unsigned int first_minor = i << hd->minor_shift;
+        current_minor = first_minor + 1;
+        check_partition(hd, MKDEV(hd->major, first_minor));
+    }
+}
+#endif /* CONFIG_BLK_DEV_BHD || CONFIG_BLK_DEV_ATA_CF */
+
+#if defined(CONFIG_BLK_DEV_BFD) || defined(CONFIG_BLK_DEV_BHD) || \
+    defined(CONFIG_BLK_DEV_ATA_CF)
+
+int ioctl_hdio_geometry(struct gendisk *hd, kdev_t dev, struct hd_geometry *loc)
+{
+    unsigned short minor = MINOR(dev);
+    int drive = minor >> hd->minor_shift;
+    struct drive_infot *drivep;
+    int err;
+
+    drivep = &hd->drive_info[drive];
+    err = verify_area(VERIFY_WRITE, (void *)loc, sizeof(struct hd_geometry));
+    if (!err) {
+        put_user_char(drivep->heads, &loc->heads);
+        put_user_char(drivep->sectors, &loc->sectors);
+        put_user(drivep->cylinders, &loc->cylinders);
+        put_user_long(hd->part[minor].start_sect, &loc->start);
+    }
+    return err;
+}
+
+void GENPROC show_drive_info(struct drive_infot *drivep, const char *name, int drive,
+    int count, const char *eol)
+{
+    unsigned long size;
+    char *unit;
+    static char UNITS[4] = "KMGT";
+
+    for (; count; count--, drive++) {
+        if (drivep->cylinders != 0) {
+            unit = UNITS;
+            size = (unsigned long)drivep->sectors * 5;  /* 0.1 kB units */
+            if (drivep->sector_size == 1024)
+                size <<= 1;
+            size *= ((unsigned long) drivep->cylinders) * drivep->heads;
+
+            /* Select appropriate unit */
+            while (size > 99999 && unit[1]) {
+                debug("DBG: Size = %lu (%X/%X)\n", size, *unit, unit[1]);
+                size += 512;
+                size /= 1024U;
+                unit++;
+            }
+            debug("DBG: Size = %lu (%X/%X)\n",size,*unit,unit[1]);
+            printk("%s%c: %4lu%c CHS %3u,%2d,%d%s",
+                name, drive + (drivep->fdtype < 0? 'a' : '0'), (size/10), *unit,
+                drivep->cylinders, drivep->heads, drivep->sectors, eol);
+        }
+        drivep++;
+    }
+}
+#endif

@@ -23,7 +23,7 @@ void GsError(GR_ERROR code, GR_ID id)
 {
 	GR_EVENT_ERROR	*ep;		/* event to describe error */
 
-printf("GsError %d, %d\r\n", code, id);
+	__dprintf("GsError %d, %d\n", code, id);
 	/*
 	 * If there is already an outstanding error, then forget this one.
 	 */
@@ -36,10 +36,8 @@ printf("GsError %d, %d\r\n", code, id);
 	ep = &curclient->errorevent;
 	ep->type = GR_EVENT_TYPE_ERROR;
 	ep->name[0] = 0;
-	if(curfunc) {
-		strncpy(ep->name, curfunc, sizeof(GR_FUNC_NAME));
-		ep->name[sizeof(GR_FUNC_NAME)-1] = '\0';
-	}
+	if(curfunc)
+		strcpy(ep->name, curfunc);
 	ep->code = code;
 	ep->id = id;
 }

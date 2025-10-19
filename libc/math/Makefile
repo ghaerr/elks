@@ -5,7 +5,7 @@ LIB ?= out.a
 
 include $(TOPDIR)/libc/$(COMPILER).inc
 
-CFLAGS += -I$(TOPDIR)/libc/math -D__BSD_VISIBLE
+DEFINES += -I$(TOPDIR)/libc/math -D__BSD_VISIBLE -Wno-type-limits
 
 DOUBLE = \
 	s_floor.o \
@@ -28,6 +28,7 @@ DOUBLE = \
 	e_acos.o \
 	e_asin.o \
 	s_atan.o \
+	s_modf.o \
 	# end of list
 
 FLOAT = \
@@ -52,6 +53,7 @@ FLOAT = \
 	s_atanf.o \
 	s_fminf.o \
 	s_fmaxf.o \
+	s_modff.o \
 	# end of list
 
 OBJS = $(DOUBLE) $(FLOAT)

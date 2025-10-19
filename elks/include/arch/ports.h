@@ -70,6 +70,11 @@
 #define PIC2_DATA  0x0A
 #endif
 
+#ifdef CONFIG_ARCH_SWAN
+#define TIMER_IRQ	15
+#define COM1_IRQ	11
+#endif
+
 /* keyboard, kbd-scancode.c*/
 #define KBD_IO		0x60
 #define KBD_CTL		0x61
@@ -81,6 +86,7 @@
 //#define CONFIG_FAST_IRQ3             /* COM2 very fast serial driver, no ISIG handling*/
 #endif
 
+#ifndef CONFIG_ARCH_SWAN
 #ifdef CONFIG_ARCH_PC98
 #define COM1_PORT	0x30
 #define COM1_IRQ	4		/* unregistered unless COM1_PORT found*/
@@ -96,6 +102,23 @@
 
 #define COM4_PORT	0x2e8
 #define COM4_IRQ	7		/* unregistered unless COM4_PORT found*/
+#endif
+#endif
+
+#ifdef CONFIG_ARCH_SOLO86
+#define TIMER_CMDS_PORT     0x06    /* command port */
+#define TIMER_DATA_PORT     0x00    /* data port    */
+#define TIMER_ENBL_PORT     0x01    /* enable port  */
+#define TIMER_IRQ           0
+
+#define TIMER2_DATA_PORT    0x04
+#define TIMER2_ENBL_PORT    0x05
+
+#define INT_CMDS_PORT       0x18
+#define INT_DATA_PORT       0x1A
+
+#define COM0_CMDS_PORT      0x20
+#define COM0_DATA_PORT      0x22
 #endif
 
 /* Ethernet card settings may be overridden in /bootopts using netirq= and netport= */ 

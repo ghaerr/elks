@@ -1,9 +1,9 @@
 # Start/stop ELKS networking
 #
-# Usage: net [start|stop|restart|show] [ne0|slip|cslip] [baud] [device]
+# Usage: net [start|stop|restart|show] [ne0|wd0|3c0|slip|cslip] [baud] [device]
 #
 # Examples:
-#	net start ne0k			start ethernet networking
+#	net start ne0			start ethernet networking
 #	net start slip			start slip networking
 #	net start slip 19200	start slip at 19200 baud
 #	net start cslip 4800 /dev/ttyS1

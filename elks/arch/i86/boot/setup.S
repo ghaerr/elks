@@ -7,10 +7,9 @@
 ! both setup.s and system has been loaded by the bootblock.
 !
 ! This code asks the bios for memory/disk/other parameters, and
-! puts them in a "safe" place: INITSEG:0-INITSEG:01FF, ie where the
-! boot-block used to be. It is then up to the protected mode
-! system to read them from there before the area is overwritten
-! for buffer-blocks.
+! puts them in a "safe" place: REL_INITSEG:0-REL_INITSEG:01FF, ie where
+! the boot-block used to be. It is then up to the kernel to read them
+! from there before the area is released to the main memory allocator.
 !
 ! Move PS/2 aux init code to psaux.c
 ! (troyer@saifr00.cfsat.Honeywell.COM) 03Oct92
@@ -32,11 +31,14 @@
 ! load /bootopts file for FAT fs using boot sector's ram buffers
 ! Feb 2022 Greg Haerr
 !
+! read /bootopts hma=kernel to load kernel into HMA memory for IBM PC and PC-98
+! March 2025 Greg Haerr
+!
 ! The following data is passed to the main kernel (relative to INITSEG)
 !
 ! index
 !	...
-!	4:	display page
+!	4:	display page, 1 byte UNUSED
 !	6:	video mode, 1 byte
 !	7:	screen_cols, 1 byte
 !	8:	video data, 2 bytes
@@ -57,13 +59,15 @@
 !			10 = Pentium PRO UNUSED
 !			255 = Unknown
 !	...
-!	0x2a:	mem_kbytes	word	size of base memory in kbytes
+!	0x2a:	mem_kbytes	word size of base memory in kbytes
 !	0x30:	proc_name	byte[16] processor name string UNUSED
 !	0x50:	cpu_id		byte[13] cpuid string UNUSED
 !	...
 !	0x1e2:	part_offset	long Sector offset of booted MBR partition
 !	0x1e6:	elks_magic	long "ELKS", written by build tool
-!	0x1ea-0x1ee:		5 bytes UNUSED
+!	0x1ea:	xms_kbytes	word size of xms memory in kbytes
+!	0x1ec:	hma_kernel	byte hma=kernel seen in /bootopts
+!	0x1ed-0x1ee:		2 bytes UNUSED
 !	0x1ef:	SETUPSEG	word UNUSED
 !	0x1f1:	setup_sects	byte in 512-byte sectors, written by build tool
 !	0x1f2:	ROOTFLAGS	word UNUSED
@@ -92,6 +96,7 @@ debug_loader    =       0       // display relocations
 
 #define MINIX_SPLITID_LOW 0x0301L
 #define KERNEL_MAGICNUMBER MINIX_SPLITID_LOW
+#define HMA_SEG 0xffff
 
 #ifndef CONFIG_ROMCODE
   INITSEG  = DEF_INITSEG	// initial setup data seg and initial Image load address
@@ -131,7 +136,7 @@ debug_loader    =       0       // display relocations
 	.global _start
 _start:
 
-#ifdef CONFIG_ROMCODE
+#if defined(CONFIG_ROMCODE) && !defined(CONFIG_ARCH_SWAN)
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Entry point for IBM PC compatible option ROMs
 
@@ -257,6 +262,12 @@ no_blob:
 // Entry point for EMU86 ROM emulation
 
 start_os:
+#ifdef CONFIG_ARCH_SWAN
+	// Enable UART serial
+	mov	$0xE0,%al
+	out	%al,$0xB3
+#endif
+
 	push	%cs
 	pop	%ds
 	mov	$hello_mess,%si
@@ -478,11 +489,11 @@ sys_hdr_msg:
 
 sys_hdr_good:
 	mov %sp,%bp
-	mov 8,%dx     // -2(%bp) code size
+	mov 8,%dx     // -2(%bp) .text code size
 	push %dx
 	add $15,%dx   // align on next paragraph (issue #209)
 	mov $4,%cl
-	shr %cl,%dx   // DX = code segment size in paragraph
+	shr %cl,%dx   // DX = code size in paragraphs
 	shr %cl,%bx   // BX = header size in paragraphs
 
 	mov 12,%ax    // -4(%bp) data size
@@ -509,18 +520,31 @@ sys_hdr_good:
 	add %bx,%ax      // skip header
 	mov %ax,%ds
 	xor %si,%si
+	xor %di,%di
 
-	mov $REL_SYSSEG,%ax
-	mov %ax,%es
+#ifdef CONFIG_BOOTOPTS
+// Check whether relocating .text to HMA is possible
+	call checkhma
+	jc 2f		 // no HMA
+	mov $HMA_SEG,%ax
+	jmp 1f
+#endif
+2:	mov $REL_SYSSEG,%ax
+1:	mov %ax,%es
 	mov %ax,-18(%bp) // save .text segment
 	.ifeq debug_output
 	call hex4sp
 	.endif
-	add %dx,%ax      // add code paragraphs
-	mov %ax,-20(%bp) // save .data start in case no .fartext
-	xor %di,%di
 
 	mov -2(%bp),%cx  // code size in bytes
+	add %dx,%ax      // add code paragraphs = .fartext start
+	jnc 1f		 // skip if didn't overflow (no HMA)
+	mov $REL_SYSSEG,%ax // .fartext starts at normal .text location
+	add $16,%si	 // skip first paragraph at FFFF:0000
+	add $16,%di
+	sub $16,%cx
+1:	mov %ax,-20(%bp) // save .data start in case no .fartext
+
 	.hex4sp	%ds,"\nCopy DEF_SYSSEG .text to  REL_SYSSEG DS:"
 	.hex4sp	%si,"SI:"
 	.hex4sp	%es,"ES:"
@@ -560,7 +584,9 @@ sys_hdr_good:
 
 	mov -18(%bp),%ax  // kernel .text segment
 	add %dx,%ax       // skip code paragraphs
-	mov %ax,%es
+	jnc 1f
+	mov $REL_SYSSEG,%ax // if text in HMA, start fartext here
+1:	mov %ax,%es
 	mov %ax,-20(%bp)  // save .fartext segment
 	xor %di,%di
 
@@ -696,6 +722,8 @@ data_reloc:
 	.hex4sp	%cx,"entry:"
 	.if debug_output
 	.ifeq serial_output // if not serial output
+	mov $debug_prompt,%ax
+	call csputs
 	xor %ah,%ah         // read key press
 	int $0x16
 	.endif
@@ -798,6 +826,9 @@ csputs:	push	%bx
 	jmp	1b
 2:	pop	%bx
 	ret
+
+debug_prompt:
+	.ascii	"\r\nPress key to boot: \0"
 .endif
 
 // Output hex nibble, byte and word. All registers saved.
@@ -899,7 +930,6 @@ novga:	mov	%al,14		// CGA 25 rows
 
 	mov	$0x0f,%ah
 	int	$0x10
-	mov	%bx,4		// bh = display page
 	mov	%ax,6		// al = video mode, ah = window width
 
 	call	getcpu		// implemented in cputype.S
@@ -908,9 +938,15 @@ novga:	mov	%al,14		// CGA 25 rows
 	mov	%ax,%ds
 	call	arch_get_mem	// save base memory size
 	mov	%ax,mem_kbytes
-
+	mov	$0x8800,%ax	// get xms size
+	int	$0x15
+	jc	1f
+	mov	%ax,xms_kbytes
+1:
 #ifdef CONFIG_BOOTOPTS
 	call	bootopts	// load /bootopts into DEF_OPTSEG (0050:0000)
+	call    hmabootopts	// check /bootopts for hma=kernel
+	mov	%al,hma_kernel
 #endif
 	ret
 
@@ -936,17 +972,24 @@ putc:	push %ax
 	pop %ax
 	ret
 
-// include code to determine early CPU types
+// include code to determine CPU type
 // needed for guessing system capabilities (sys_caps) for XT vs AT BIOS
+// needed for XMS access using unreal vs INT 15
 // TODO: remove and use alternate mechanism for XT vs AT BIOS capabilities
 #include "cputype.S"
+
+// include code to enable/verify A20 address gate
+#include "../lib/a20-ibm.inc"
 
 #endif /* CONFIG_ARCH_IBMPC*/
 
 
 #ifdef CONFIG_BOOTOPTS
 //
-// load /bootopts for FAT filesystem boot
+// load /bootopts file for FAT filesystem boot
+//      If size > 512 bytes, both sectors must be contiguous.
+//      This is currently guaranteed by providing a 1K /bootopts in
+//      distribution images, so later edits will remain contiguous.
 //
 // Uses previous boot sector's BPB contents for disk geometry
 // and previous boot sector's buffer which still holds root directory sector.
@@ -990,20 +1033,19 @@ bootopts:
 	xor	%bp,%bp
 
 	mov	root_dev,%al	// Physical Device Address
-	mov	$0xD6,%ah		// Read Data
-	mov	$512,%bx
-	test	$0x10,%al		// Check Floppy Disk or Hard Disk
+	mov	$0xD6,%ah	// Read Data
+	mov	$1024,%bx	// 1K bytes
+	test	$0x10,%al	// Check Floppy Disk or Hard Disk
 	jz	pc98_int1b
 #ifdef CONFIG_IMG_FD1232
-	mov	$1024,%bx
-	mov	$0x03,%ch		// 1024 Bytes per sector
-	inc	%dl				// sector number for PC_98 Floppy Disk
+	mov	$0x03,%ch	// 1024 Bytes per sector
+	inc	%dl		// sector number for PC_98 Floppy Disk
 #else
-	mov	$0x02,%ch		// 512 Bytes per sector
-	inc	%dl				// sector number for PC_98 Floppy Disk
+	mov	$0x02,%ch	// 512 Bytes per sector
+	inc	%dl		// sector number for PC_98 Floppy Disk
 #endif
 pc98_int1b:
-	int	$0x1B			// BIOS disk interrupt
+	int	$0x1B		// BIOS disk interrupt
 	pop	%bp
 #else
 	mov	$INITSEG,%ax
@@ -1013,17 +1055,16 @@ pc98_int1b:
 	mov	$DEF_OPTSEG,%ax	// ES:BX = DEF_OPTSEG:0
 	mov	%ax,%es
 	xor	%bx,%bx
-	mov	$0x0201,%ax	// BIOS read disk, 1 sector
+	mov	$0x0202,%ax	// BIOS read disk, 2 sectors
 	int	$0x13		// BIOS disk interrupt
 #endif
 
 	jnc	1f
 0:	mov	$'F',%al
-	call	putc
 	jmp	2f
 1:	mov	$' ',%al
-	call	putc
-2:	pop	%es
+2:	call	putc
+	pop	%es
 	pop	%ds
 	ret
 
@@ -1164,6 +1205,61 @@ getchs:
 	call	hex2
 
 	ret
+
+// check for hma=kernel in /bootopts, return AX = 0 if not
+hmabootopts:
+	push	%ds
+	push	%es
+
+	push	%cs			// ES = our code segment
+	pop	%es
+	mov	$DEF_OPTSEG,%ax		// DS:SI = /bootopts in memory
+	mov	%ax,%ds
+
+	xor	%si,%si			// look for hma=kernel in /bootopts segment
+look:	mov	(%si),%al		// done when NUL seen
+	test	%al,%al
+	jz	1f
+	mov	$hma_string,%di
+	mov	$11,%cx
+	push	%si
+	repz
+	cmpsb				// %ds:(%si) with %es:(%di)
+	pop	%si
+	inc	%si
+	test	%cx,%cx
+	jnz	look			// NZ = no match
+	mov	$'H',%ax
+	call	putc
+	jmp	2f
+1:	xor	%ax,%ax			// no HMA
+2:	pop	%es
+	pop	%ds
+	ret
+
+hma_string:
+	.ascii	"\nhma=kernel"		// size = 11
+
+// check whether HMA can be enabled, return NC if so with A20 enabled
+checkhma:
+	push	%ds
+	mov	$INITSEG,%ax
+	mov	%ax,%ds
+	mov	xms_kbytes,%ax		//. must have xms size >= 64k
+	cmp	$64,%ax
+	jc	1f
+	mov	hma_kernel,%al		// and hma=kernel in /bootopts
+	test	%al,%al
+	jz	1f
+	call	enable_a20_gate		// and A20 enabled
+	test	%ax,%ax
+	jz	1f
+	clc				// success
+	jmp 	2f
+1:	stc				// fail
+2:	pop	%ds
+	ret
+
 #endif /* ifdef CONFIG_BOOTOPTS */
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1199,6 +1295,33 @@ putc:	push %bx
 #endif /* CONFIG_ARCH_8018X*/
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Architecture specific routines for Solo/86
+//	Entry points specific for platform setup of SETUP_xxx variables (see config.h)
+//		arch_set_initseg
+//		arch_get_mem
+
+#ifdef CONFIG_ARCH_SOLO86
+
+// Return total memory in Kbytes
+arch_get_mem:
+	mov $SETUP_MEM_KBYTES,%ax
+	ret
+
+// Set INITSEG values for Solo/86 architecture
+// currently hard-coded in config.h
+arch_set_initseg:
+	mov	$INITSEG,%ax
+	mov	%ax,%ds
+	ret
+
+// Write AL to console, save all other registers
+putc:
+	outb %al,$0x22
+	ret
+
+#endif /* CONFIG_ARCH_SOLO86 */
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Architecture specific routines for NEC PC98
 //	Entry points specific for platform setup of SETUP_xxx variables (see config.h)
 //		arch_set_initseg
@@ -1216,7 +1339,7 @@ arch_get_mem:
 	push %bx
 	xor %ax,%ax
 	mov %ax,%es
-	mov $0x501,%bx
+	mov $0x501,%bx                  // 3 bit size - 1 in 128k of 0-1M mem range
 	mov %es:(%bx),%cl
 	and $7,%cl
 	inc %cl
@@ -1248,12 +1371,39 @@ arch_set_initseg:
    stosw
    pop %es
 
-   mov $INITSEG,%ax
+   call	getcpu                  // implemented in cputype.S
+
+   xor %ax,%ax                  // get xms size in CX
+   mov %ax,%ds
+   mov $0x401,%bx               // byte size in 128k of 1M-16M mem range
+   mov (%bx),%al
+   mov $128,%cl
+   mul %cl
+   mov %ax,%cx
+// Check for possible hole between end of 1M-16M range and 16M+ range
+// When 0401h = 78h (=15MiB), hole does not exist
+   cmp $15360,%ax               // 15M, no hole
+   jnz 2f
+   mov $0x594,%bx               // word size in 1024k of 16M-4G range
+   mov (%bx),%ax
+   cmp $49,%ax                  // don't allow overflow when > 64MB
+   jl 1f
+   mov $0xffff,%cx              // 64MB - 1024
+   jmp 2f
+1: mov $1024,%bx
+   mul %bx
+   add %ax,%cx
+
+2: mov $INITSEG,%ax
    mov %ax,%ds
    call arch_get_mem		// save base memory for bootopts routine
    mov %ax,mem_kbytes
+   mov %cx,xms_kbytes           // save xms memory for checkhma
+
 #ifdef CONFIG_BOOTOPTS
    call bootopts		// attempting loading /bootopts config file
+   call hmabootopts		// check /bootopts for hma=kernel
+   mov %al,hma_kernel
 #endif
    ret
 
@@ -1304,7 +1454,51 @@ putesc_n:
    jmp put_end
 tvram_x:
    .word 160
+
+// include code to determine 286 vs 386 CPU type
+// needed for XMS access using unreal vs INT 1F
+#include "cputype.S"
+
+// include code to enable/verify A20 address gate
+#include "../lib/a20-pc98.inc"
+
 #endif /* CONFIG_ARCH_PC98 */
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Architecture specific routines for WonderSwan
+//	Entry points specific for platform setup of SETUP_xxx variables (see config.h)
+//		arch_set_initseg
+//		arch_get_mem
+
+#ifdef CONFIG_ARCH_SWAN
+
+// Return total memory in Kbytes
+arch_get_mem:
+	mov $SETUP_MEM_KBYTES,%ax
+	ret
+
+// Set INITSEG values for WonderSwan
+// currently hard-coded in config.h
+arch_set_initseg:
+        // Force color mode early to enable 64 KiB RAM
+	mov	$0x80,%al
+	out	%al,$0x60
+
+	mov	$INITSEG,%ax
+	mov	%ax,%ds
+	ret
+
+// Write AL to console, save all other registers
+putc:
+	push	%ax
+1:	in	$0xB3,%al
+	test	$0x04,%al
+	jz	1b
+	pop	%ax
+	out	%al,$0xB1
+	ret
+
+#endif /* CONFIG_ARCH_SWAN */
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
