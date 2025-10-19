@@ -7,7 +7,7 @@
 
 /* returns pticks in 0.838us resolution, 0.838 microseconds to 42.85 seconds  */
 unsigned long get_ptime(void);
-void init_ptime(void);
+int init_ptime(void);
 
 /* internal test routines */
 void test_ptime_idle_loop(void);

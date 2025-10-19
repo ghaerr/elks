@@ -57,23 +57,25 @@ static unsigned short __far *pjiffies;  /* only access low order jiffies word */
 
 #define errmsg(str)     write(STDERR_FILENO, str, sizeof(str) - 1)
 
-void init_ptime(void)
+int init_ptime(void)
 {
     int fd, offset, kds;
 
     __LINK_SYMBOL(ptostr);
     fd = open("/dev/kmem", O_RDONLY);
     if (fd < 0) {
-        errmsg("No kmem\n");
-        return;
+        errmsg("No /dev/kmem\n");
+        return 0;
     }
     if (ioctl(fd, MEM_GETDS, &kds) < 0 ||
         ioctl(fd, MEM_GETJIFFADDR, &offset) < 0) {
-        errmsg("No mem ioctl\n");
-    } else {
-        pjiffies = _MK_FP(kds, offset);
+        errmsg("No kmem ioctl\n");
+        close(fd);
+        return 0;
     }
+    pjiffies = _MK_FP(kds, offset);
     close(fd);
+    return 1;
 }
 #endif
 
