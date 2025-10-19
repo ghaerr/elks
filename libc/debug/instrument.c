@@ -43,9 +43,10 @@ static noinstrument void ftrace_checkargs(void)
             close(fd);
         }
         sym_read_exe_symbols(__program_filename);
+        if (!init_ptime())          /* init precision time routine */
+            _exit(1);
+        get_ptime();
     }
-    init_ptime();                   /* init precision time routine */
-    get_ptime();
 }
 
 /* every function this function calls must also be noinstrument!! */
