@@ -37,7 +37,7 @@ early_putchar:
 	xor %ah,%ah
 	mov $tvram_x,%bx
 	mov (%bx),%di
-	mov $0xa000,%dx
+	call	tvram_place
 	mov %dx,%es
 	mov %ax,%es:(%di)
 	inc %di
@@ -86,7 +86,7 @@ putesc_b:
 put_scroll:
 	xor %ax,%ax
 	mov $24,%bx
-	mov $0xa000,%dx
+	call	tvram_place
 	mov %dx,%es
 	mov %dx,%ds
 	mov %ax,%di
@@ -134,7 +134,7 @@ clear_tvram:
 	push %cs
 	pop %ds
 	mov tvram_x,%bx
-	mov $0xa000,%dx
+	call	tvram_place
 	mov %dx,%es
 	movw $0x0000,%es:(%bx)
 	pop %es
@@ -188,3 +188,20 @@ cursor_set:
 
 tvram_x:
 	.word 480
+
+tvram_place:
+	push %es
+	push %bx
+	xor %dx,%dx
+	mov %dx,%es
+	mov $0x501,%bx
+	mov $8,%dl
+	test %dl,%es:(%bx)
+	pop %bx
+	pop %es
+	jne HiVRAM
+	mov $0xa000,%dx
+	ret
+HiVRAM:
+	mov $0xe000,%dx
+	ret
