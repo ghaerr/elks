@@ -21,6 +21,7 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/ioctl.h>
 #include <linuxmt/biosparm.h>
+#include <linuxmt/genhd.h>
 #include <linuxmt/debug.h>
 
 #include <arch/system.h>
@@ -384,7 +385,7 @@ void INITPROC blk_dev_init(void)
 
 #ifdef CONFIG_BLK_DEV_BHD
     if (biosdisk) {
-        bios_disk_reset(0x80);      /* required for copy.sh/v86 with ATA CF driver */
+        bios_disk_reset(bios_drive_map[0]); /* required for copy.sh/v86 with ATA CF */
         init_partitions(biosdisk);
     }
 #endif
