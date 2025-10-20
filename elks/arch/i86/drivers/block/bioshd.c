@@ -234,7 +234,7 @@ static void BFPROC probe_floppy(int target, struct hd_struct *hdp)
                 bios_switch_device98(target, 0x10, drivep);  /* 720 KB */
                 if (read_sector(target, track_probe[count] - 1, 1))
                     bios_switch_device98(target, 0x90, drivep);  /* 1.232 MB */
-                else
+			else
                     pc98_720KB = 1;
             }
         } while (++count < sizeof(track_probe)/sizeof(track_probe[0]));
@@ -489,6 +489,7 @@ static int BFPROC do_readwrite(struct drive_infot *drivep, sector_t start, char 
 
     drive = bios_drive_map[drivep - drive_info];
     get_chst(drivep, &start, &cylinder, &head, &sector, &this_pass, 0);
+//if (cmd != READ)printk("LBA is %lx\n",start);
 
     /* limit I/O to requested sector count*/
     if (this_pass > count) this_pass = count;
