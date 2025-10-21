@@ -27,6 +27,8 @@ OBJS = \
 	ltoa.o \
 	ltostr.o \
 	lltostr.o \
+	linenoise.o \
+	linenoise_compl.o \
 	mktemp.o \
 	popen.o \
 	ptostr.o \

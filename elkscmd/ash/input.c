@@ -55,6 +55,7 @@ static char sccsid[] = "@(#)input.c	5.4 (Berkeley) 7/1/91";
 #include "memalloc.h"
 #include "error.h"
 #include "redir.h"
+#include "var.h"
 
 #define EOF_NLEFT -99		/* value of parsenleft when EOF pushed back */
 
@@ -90,7 +91,7 @@ void add_history __P((char *line));
 char *r_use_prompt = NULL;	/* the prompt to use with readline */
 #endif
 #if LINENOISE
-#include "linenoise.h"
+#include <linenoise.h>
 void completion(const char *buf, linenoiseCompletions *lc);
 char *r_use_prompt = NULL;	/* the prompt to use with readline */
 #endif
@@ -217,7 +218,8 @@ preadbuffer() {
 	char *prompt;
 	char *line;
 
-    linenoiseSetCompletionCallback(completion);
+	linenoiseSetCompletionCallback(linenoiseStdCompletion);
+	linenoiseSetTerm(termval());
 
 	p = parsenextc = parsefile->buf;
 	prompt = r_use_prompt;

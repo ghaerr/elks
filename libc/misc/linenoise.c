@@ -125,24 +125,19 @@
  * linenoiseSetHintsCallback(hints);
  */
 
-#include "shell.h"
-
-#if LINENOISE           /* entire file if LINENOISE=0 in shell.h*/
 #include <termios.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
-#include <stdlib.h>
 #include <ctype.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
-#include "linenoise.h"
-#include "var.h"
-#include "output.h"
+#include <linenoise.h>
 
 /* set these to 0 to reduce the code size */
 #define COMPLETION_ON 1
@@ -154,7 +149,7 @@
 #define HISTORY_SAVE 0
 #define LINENOISE_DEFAULT_HISTORY_MAX_LEN 100
 
-static char *unsupported_term[] = {"dumb","cons25","emacs",NULL};
+static char *unsupported_term[] = {"dumb","emacs",NULL};
 static linenoiseCompletionCallback *completionCallback = NULL;
 static linenoiseHintsCallback *hintsCallback = NULL;
 
@@ -230,6 +225,58 @@ FILE *lndebug_fp = NULL;
 #define lndebug(fmt, ...)
 #endif
 
+void lnoutstr(char *str)
+{
+    write(STDOUT_FILENO, str, strlen(str));
+}
+
+/* very small snprintf, %s and unsigned %d only */
+int tsnprintf(char *str, size_t cnt, const char *fmt, ...)
+{
+    char *p, *q = str;
+    unsigned int c, v;
+    va_list ap;
+    char tmp[34];
+
+    va_start(ap, fmt);
+    while (*fmt) {
+        if (*fmt != '%')
+            goto charout;
+        else
+        switch (*++fmt) {
+        case 's':
+            p = va_arg(ap, char *);
+            goto printit;
+        case 'd':                       /* unsigned */
+            v = va_arg(ap, int);
+            p = tmp + sizeof(tmp) - 1;
+            *p = '\0';
+            do {
+                c = 10;
+                v = __divmod(v, &c);    /* remainder returned in c */
+                *--p = '0' + c;
+            } while (v != 0);
+        printit:
+            while (*p && cnt > 1) {
+                *q++ = *p++;
+                --cnt;
+            }
+            break;
+        default:
+        charout:
+            if (cnt > 1) {
+                *q++ = *fmt;
+                --cnt;
+            }
+            break;
+        }
+        ++fmt;
+    }
+    *q++ = '\0';
+    va_end(ap);
+    return q - str;
+}
+
 /* ======================= Low level terminal handling ====================== */
 
 #if MASK_ON
@@ -254,10 +301,17 @@ void linenoiseSetMultiLine(int ml) {
 }
 #endif
 
+static char *termval;
+
+void linenoiseSetTerm(char *term)
+{
+    termval = term;     /* allows using internal shell TERM variable */
+}
+
 /* Return true if the terminal name is in the list of terminals we know are
  * not able to understand basic escape sequences. */
 static int isUnsupportedTerm(void) {
-    char *term = termval();
+    char *term = termval? termval: getenv("TERM");
     int j;
 
     if (term == NULL) return 0;
@@ -392,7 +446,7 @@ static int getColumns(int ifd, int ofd)
         /* Restore position. */
         if (cols > start) {
             char seq[32];
-            fmtstr(seq, sizeof(seq), "\x1b[%dD",cols-start);
+            tsnprintf(seq, sizeof(seq), "\x1b[%dD",cols-start);
             if (write(ofd,seq,strlen(seq)) == -1) {
                 /* Can't recover... */
             }
@@ -491,7 +545,7 @@ static int completeLine(struct linenoiseState *ls) {
                 default:
                     /* Update buffer and return */
                     if (i < lc.len) {
-                        fmtstr(ls->buf, ls->buflen, "%s",lc.cvec[i]);
+                        tsnprintf(ls->buf, ls->buflen, "%s",lc.cvec[i]);
                         ls->len = ls->pos = strlen(ls->buf);
                     }
                     stop = 1;
@@ -590,7 +644,7 @@ void refreshShowHints(struct abuf *ab, struct linenoiseState *l, int plen) {
             if (color != -1 || bold != 0)
             {
                 char seq[64];
-                fmtstr(seq, sizeof(seq), "\033[%d;%d;49m",bold,color);
+                tsnprintf(seq, sizeof(seq), "\033[%d;%d;49m",bold,color);
                 abAppend(ab, seq, strlen(seq));
             }
             abAppend(ab,hint,hintlen);
@@ -643,7 +697,7 @@ static void refreshSingleLine(struct linenoiseState *l) {
     strcpy(seq, "\x1b[0K");
     abAppend(&ab,seq,strlen(seq));
     /* Move cursor to original position. */
-    fmtstr(seq, sizeof(seq), "\r\x1b[%dC", (int)(pos+plen));
+    tsnprintf(seq, sizeof(seq), "\r\x1b[%dC", (int)(pos+plen));
     abAppend(&ab,seq,strlen(seq));
     if (write(fd,ab.b,ab.len) == -1) {} /* Can't recover from write error. */
     abFree(&ab);
@@ -673,7 +727,7 @@ static void refreshMultiLine(struct linenoiseState *l) {
     abInit(&ab);
     if (old_rows-rpos > 0) {
         lndebug("go down %d", old_rows-rpos);
-        fmtstr(seq, sizeof(seq), "\x1b[%dB", old_rows-rpos);
+        tsnprintf(seq, sizeof(seq), "\x1b[%dB", old_rows-rpos);
         abAppend(&ab,seq,strlen(seq));
     }
 
@@ -723,7 +777,7 @@ static void refreshMultiLine(struct linenoiseState *l) {
     /* Go up till we reach the expected positon. */
     if (rows-rpos2 > 0) {
         lndebug("go-up %d", rows-rpos2);
-        fmtstr(seq, sizeof(seq), "\x1b[%dA", rows-rpos2);
+        tsnprintf(seq, sizeof(seq), "\x1b[%dA", rows-rpos2);
         abAppend(&ab,seq,strlen(seq));
     }
 
@@ -731,7 +785,7 @@ static void refreshMultiLine(struct linenoiseState *l) {
     col = (plen+(int)l->pos) % (int)l->cols;
     lndebug("set col %d", 1+col);
     if (col)
-        fmtstr(seq, sizeof(seq), "\r\x1b[%dC", col);
+        tsnprintf(seq, sizeof(seq), "\r\x1b[%dC", col);
     else
         strcpy(seq, "\r");
     abAppend(&ab,seq,strlen(seq));
@@ -1117,14 +1171,14 @@ static int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, size_t buflen, 
     return l.len;
 }
 
-#if 0
+#if UNUSED
 /* This special mode is used by linenoise in order to print scan codes
  * on screen for debugging / development purposes. It is implemented
  * by the linenoise_example program using the --keycodes option. */
 void linenoisePrintKeyCodes(void) {
     char quit[4];
 
-    out1str("Linenoise key codes debugging mode.\n"
+    lnoutstr("Linenoise key codes debugging mode.\n"
             "Press keys to see scan codes. Type 'quit' at any time to exit.\n");
     if (enableRawMode(STDIN_FILENO) == -1) return;
     memset(quit,' ',4);
@@ -1138,10 +1192,9 @@ void linenoisePrintKeyCodes(void) {
         quit[sizeof(quit)-1] = c; /* Insert current char on the right. */
         if (memcmp(quit,"quit",sizeof(quit)) == 0) break;
 
-        outfmt(out1, "'%c' %02x (%d) (type quit to exit)\n",
+        printf("'%c' %02x (%d) (type quit to exit)\n",
             isprint(c) ? c : '?', (int)c, (int)c);
-        out1str("\r"); /* Go left edge manually, we are in raw mode. */
-        flushout(out1);
+        lnoutstr("\r"); /* Go left edge manually, we are in raw mode. */
     }
     disableRawMode(STDIN_FILENO);
 }
@@ -1215,8 +1268,7 @@ char *linenoise(const char *prompt) {
     } else if (isUnsupportedTerm()) {
         size_t len;
 
-        out1str((char *)prompt);
-        flushout(out1);
+        lnoutstr((char *)prompt);
         if (fgets(buf,LINENOISE_MAX_LINE,stdin) == NULL) return NULL;
         len = strlen(buf);
         while(len && (buf[len-1] == '\n' || buf[len-1] == '\r')) {
@@ -1368,5 +1420,3 @@ int linenoiseHistoryLoad(const char *filename) {
     return 0;
 }
 #endif /* HISTORY_SAVE*/
-
-#endif /* LINENOISE entire file*/
