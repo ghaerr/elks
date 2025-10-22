@@ -29,6 +29,13 @@ verify_a20:
 	pushf			# save interrupt status
 	cli			# interrupts off
 
+	push	%dx
+	mov	$0x8,%al
+	mov	$0x37,%dx
+	out	%al,%dx	# parity check off
+	mov	$0x50,%dx
+	out	%al,%dx	# NMI off
+
 	mov	%es:0x10,%ax	# read word at FFFF:0010 (1 meg)
 	not	%ax		# 1's complement
 	pushw	0		# save word at 0000:0000 (0)
@@ -38,6 +45,13 @@ verify_a20:
 	cmp	%es:0x10,%ax	# fail if word at 0 == word at 1 meg
 
 	popw	0
+
+	mov	$0x9,%al
+	mov	$0x37,%dx
+	out	%al,%dx	# parity check on
+	mov	$0x52,%dx
+	out	%al,%dx	# NMI on
+	pop	%dx
 
 	jz	1f		# if ZF=1, the A20 gate is NOT enabled
 	mov	$1,%ax		# return 1 if enabled
