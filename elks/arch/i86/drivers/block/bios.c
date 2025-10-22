@@ -47,11 +47,7 @@ struct drive_infot fd_types[] = {   /* AT/PS2 BIOS reported floppy formats*/
 #ifdef CONFIG_ARCH_PC98
 unsigned char bios_drive_map[MAX_DRIVES] = {
     0xA0, 0xA1, 0xA2, 0xA3,             /* hda, hdb */
-#ifdef CONFIG_IMG_FD1232
     0x90, 0x91, 0x92, 0x93              /* fd0, fd1 */
-#else
-    0x30, 0x31, 0x32, 0x33              /* fd0, fd1 */
-#endif
 };
 #else
 unsigned char bios_drive_map[MAX_DRIVES] = {
@@ -93,11 +89,16 @@ int BFPROC bios_disk_rw(unsigned cmd, unsigned num_sectors, unsigned drive,
         BD_DX = (head << 8) | ((sector - 1) & 0xFF);
     }
     else {
-        if ((0xF0 & drive) == 0x90) {
+        if (((0xF0 & drive) == 0x90)||((0xF0 & drive) == 0xf0)) {
+            BD_AX = 0x5a00|drive;
+            call_bios(&bdt);
+            BD_AX = cmd | drive;
+            if((BD_CX & 0x300)==0x200) goto notMFM1024;
             BD_BX = (unsigned int) (num_sectors << 10);
             BD_CX = (3 << 8) | cylinder;
         }
         else {
+notMFM1024:
             BD_BX = (unsigned int) (num_sectors << 9);
             BD_CX = (2 << 8) | cylinder;
         }
@@ -286,17 +287,10 @@ int INITPROC bios_getfdinfo(struct drive_infot *drivep)
     int ndrives = FD_DRIVES;
 
 #ifdef CONFIG_ARCH_PC98
-#if defined(CONFIG_IMG_FD1232)
     drivep[0] = fd_types[FD1232];
     drivep[1] = fd_types[FD1232];
     drivep[2] = fd_types[FD1232];
     drivep[3] = fd_types[FD1232];
-#else
-    drivep[0] = fd_types[FD1440];
-    drivep[1] = fd_types[FD1440];
-    drivep[2] = fd_types[FD1440];
-    drivep[3] = fd_types[FD1440];
-#endif
 #endif
 
 #ifdef CONFIG_ARCH_IBMPC
@@ -317,16 +311,16 @@ int INITPROC bios_getfdinfo(struct drive_infot *drivep)
 #ifdef CONFIG_ARCH_PC98
     for (drive = 0; drive < 4; drive++) {
         if (peekb(0x55C,0) & (1 << drive)) {
-#ifdef CONFIG_IMG_FD1232
             bios_drive_map[DRIVE_FD0 + drive] = drive + 0x90;
             *drivep = fd_types[FD1232];
-#else
-            bios_drive_map[DRIVE_FD0 + drive] = drive + 0x30;
-            *drivep = fd_types[FD1440];
-#endif
+/* test yet. when bios_switch_device98 is called these value are broken to 0x90 or 0x30 or 0x10.
+        }else if (((peekb(0x55C,0) & 0xf) == 0) && (peekb(0x55D,0) & (0x10 << drive))) {
+            bios_drive_map[DRIVE_FD0 + drive] = drive + 0x70;
+            *drivep = fd_types[FD720];
+*/
+         }
             ndrives++;  /* floppy drive count*/
             drivep++;
-        }
     }
 #else
 
@@ -426,10 +420,16 @@ void BFPROC bios_switch_device98(int target, unsigned int device,
         (device | (bios_drive_map[target + DRIVE_FD0] & 0x0F));
     if (device == 0x30)
         *drivep = fd_types[FD1440];
-    else if (device == 0x10)
+    else if ((device == 0x10) || (device == 0x70))
         *drivep = fd_types[FD720];
-    else if (device == 0x90)
-        *drivep = fd_types[FD1232];
+    else if ((device == 0x90)||(device == 0xf0)){
+        BD_AX = 0x5a00|device|(bios_drive_map[target + DRIVE_FD0] & 0x0F);
+        call_bios(&bdt);
+        if((BD_CX & 0x300)==0x300)
+         *drivep = fd_types[FD1232];
+        else
+         *drivep = fd_types[FD1200];
+     }
 }
 #endif
 
@@ -449,6 +449,12 @@ dev_t INITPROC bios_conv_bios_drive(unsigned int biosdrive)
     } else {
         for (minor = 4; minor < 8; minor++) {
             if (biosdrive == bios_drive_map[minor]) break;
+		if((biosdrive &0xf0) == 0x30) {
+//		if(((biosdrive &0xf0) == 0x30)
+//		 ||((biosdrive &0xf0) == 0x70)){
+			minor = (biosdrive & 0x3) + 4;
+			break;
+		}
         }
         if (minor >= 8) minor = 4;
     }
