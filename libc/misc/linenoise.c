@@ -230,7 +230,7 @@ void lnoutstr(char *str)
     write(STDOUT_FILENO, str, strlen(str));
 }
 
-/* very small snprintf, %s and unsigned %d only */
+/* very small snprintf, %s and unsigned %d only, returns nonzero chars written  */
 int tsnprintf(char *str, size_t cnt, const char *fmt, ...)
 {
     char *p, *q = str;
@@ -272,7 +272,7 @@ int tsnprintf(char *str, size_t cnt, const char *fmt, ...)
         }
         ++fmt;
     }
-    *q++ = '\0';
+    *q = '\0';
     va_end(ap);
     return q - str;
 }
