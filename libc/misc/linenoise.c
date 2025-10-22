@@ -157,7 +157,6 @@ static struct termios orig_termios; /* In order to restore at exit.*/
 static int maskmode = 0; /* Show "***" instead of input. For passwords. */
 static int rawmode = 0; /* For atexit() function to check if restore is needed*/
 static int mlmode = 0;  /* Multi line mode. Default is single line. */
-static int atexit_registered = 0; /* Register atexit just 1 time. */
 static int history_max_len = LINENOISE_DEFAULT_HISTORY_MAX_LEN;
 static int history_len = 0;
 static char **history = NULL;
@@ -181,28 +180,27 @@ struct linenoiseState {
 };
 
 enum KEY_ACTION{
-	KEY_NULL = 0,	    /* NULL */
-	CTRL_A = 1,         /* Ctrl+a */
-	CTRL_B = 2,         /* Ctrl-b */
-	CTRL_C = 3,         /* Ctrl-c */
-	CTRL_D = 4,         /* Ctrl-d */
-	CTRL_E = 5,         /* Ctrl-e */
-	CTRL_F = 6,         /* Ctrl-f */
-	CTRL_H = 8,         /* Ctrl-h - Backspace*/
-	TAB = 9,            /* Tab */
-	CTRL_K = 11,        /* Ctrl+k */
-	CTRL_L = 12,        /* Ctrl+l */
-	ENTER = 13,         /* Enter */
-	CTRL_N = 14,        /* Ctrl-n */
-	CTRL_P = 16,        /* Ctrl-p */
-	CTRL_T = 20,        /* Ctrl-t */
-	CTRL_U = 21,        /* Ctrl+u */
-	CTRL_W = 23,        /* Ctrl+w */
-	ESC = 27,           /* Escape */
-	DELETE =  127       /* Delete */
+    KEY_NULL = 0,       /* NULL */
+    CTRL_A = 1,         /* Ctrl+a */
+    CTRL_B = 2,         /* Ctrl-b */
+    CTRL_C = 3,         /* Ctrl-c */
+    CTRL_D = 4,         /* Ctrl-d */
+    CTRL_E = 5,         /* Ctrl-e */
+    CTRL_F = 6,         /* Ctrl-f */
+    CTRL_H = 8,         /* Ctrl-h - Backspace*/
+    TAB = 9,            /* Tab */
+    CTRL_K = 11,        /* Ctrl+k */
+    CTRL_L = 12,        /* Ctrl+l */
+    ENTER = 13,         /* Enter */
+    CTRL_N = 14,        /* Ctrl-n */
+    CTRL_P = 16,        /* Ctrl-p */
+    CTRL_T = 20,        /* Ctrl-t */
+    CTRL_U = 21,        /* Ctrl+u */
+    CTRL_W = 23,        /* Ctrl+w */
+    ESC = 27,           /* Escape */
+    DELETE =  127       /* Delete */
 };
 
-static void linenoiseAtExit(void);
 int linenoiseHistoryAdd(const char *line);
 static void refreshLine(struct linenoiseState *l);
 
@@ -277,6 +275,79 @@ int tsnprintf(char *str, size_t cnt, const char *fmt, ...)
     return q - str;
 }
 
+/* slimmed down _fgetc, _fgets and _fread for ash linenoise */
+size_t _fread(void *buf, size_t size, size_t nelm, FILE *fp)
+{
+    ssize_t len;
+    size_t bytes, got = 0;
+
+    bytes = size * nelm;
+    len = fp->bufread - fp->bufpos;
+    if ((size_t)len >= bytes) {             /* Enough buffered */
+        memcpy(buf, fp->bufpos, bytes);
+        fp->bufpos += bytes;
+        return nelm;
+    }
+    if (len > 0) {                          /* Some buffered */
+        memcpy(buf, fp->bufpos, len);
+        fp->bufpos += len;
+        got = len;
+    }
+
+    len = read(fp->fd, (char *)buf + got, bytes - got);
+    if (len < 0) {
+        fp->mode |= __MODE_ERR;
+        len = 0;
+    } else if (len == 0)
+        fp->mode |= __MODE_EOF;
+
+    return (got + len) / size;
+}
+
+int _fgetc(FILE *fp)
+{
+   size_t ch;
+
+   if ((fp->mode & (__MODE_READ | __MODE_EOF | __MODE_ERR)) != __MODE_READ)
+      return EOF;
+
+   if (fp->bufpos >= fp->bufread) {
+      fp->bufpos = fp->bufread = fp->bufstart;
+      ch = _fread(fp->bufpos, 1, fp->bufend - fp->bufstart, fp);
+      if (ch == 0)
+         return EOF;
+      fp->bufread += ch;
+   }
+   ch = *(fp->bufpos++);
+
+   return ch;
+}
+
+char *_fgets(char *s, size_t count, FILE *f)
+{
+    char *ret = s;
+    size_t i;
+    int ch;
+
+    if (count == 0)
+        return NULL;
+    for (i = count-1; i > 0; i--) {
+        ch = _fgetc(f);
+        if (ch == EOF) {
+            if (s == ret)
+                return NULL;
+            break;
+        }
+        *s++ = ch;
+        if (ch == '\n')
+            break;
+    }
+    *s = '\0';
+
+    if (ferror(f))
+        return NULL;
+    return ret;
+}
 /* ======================= Low level terminal handling ====================== */
 
 #if MASK_ON
@@ -326,11 +397,14 @@ static int enableRawMode(int fd) {
     static char once = 0;
 
     if (!isatty(STDIN_FILENO)) goto fatal;
+#if UNUSED
+    static int atexit_registered = 0;
     if (!atexit_registered) {
+        static void linenoiseAtExit(void);
         atexit(linenoiseAtExit);
         atexit_registered = 1;
     }
-
+#endif
     if (!once) {
         if (tcgetattr(fd,&orig_termios) == -1) goto fatal;
         once = 1;
@@ -338,9 +412,9 @@ static int enableRawMode(int fd) {
 
     /* modify the original mode except baud rate/char size/stop bits/parity */
     if (tcgetattr(fd, &speed) != -1) {
-	orig_termios.c_cflag &= ~(CBAUD | CBAUDEX | CSIZE | CSTOPB | PARENB | PARODD);
-	orig_termios.c_cflag |=
-	    speed.c_cflag & (CBAUD | CBAUDEX | CSIZE | CSTOPB | PARENB | PARODD);
+        orig_termios.c_cflag &= ~(CBAUD | CBAUDEX | CSIZE | CSTOPB | PARENB | PARODD);
+        orig_termios.c_cflag |=
+            speed.c_cflag & (CBAUD | CBAUDEX | CSIZE | CSTOPB | PARENB | PARODD);
     }
     raw = orig_termios;
     /* input modes: no break, no CR to NL, no parity check, no strip char,
@@ -371,8 +445,8 @@ fatal:
 static void disableRawMode(int fd) {
     /* Don't even check the return value as it's too late. */
     if (rawmode && tcsetattr(fd,TCSAFLUSH,&orig_termios) != -1) {
-	/* set blocking mode in case of miniterm/telnet etc crash or killed*/
-	fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) & ~O_NONBLOCK);
+        /* set blocking mode in case of miniterm/telnet etc crash or killed*/
+        fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) & ~O_NONBLOCK);
         rawmode = 0;
     }
 }
@@ -414,7 +488,7 @@ static int getCursorPosition(int ifd, int ofd) {
             return -1;
     if (*p == '\0')
         return -1;
-    return (int)atol(p+1);	/* cols, last parm */
+    return (int)atol(p+1);      /* cols, last parm */
 }
 #endif /* DYNAMIC_LINELEN*/
 
@@ -521,9 +595,9 @@ static int completeLine(struct linenoiseState *ls) {
                 refreshLine(ls);
             }
 
-			/* if only a single match, fill in match and continue*/
-			if (lc.len == 1)
-				goto out;
+            /* if only a single match, fill in match and continue*/
+            if (lc.len == 1)
+                goto out;
 
             nread = read(ls->ifd,&c,1);
             if (nread <= 0) {
@@ -541,7 +615,7 @@ static int completeLine(struct linenoiseState *ls) {
                     if (i < lc.len) refreshLine(ls);
                     stop = 1;
                     break;
-				out: c = 0;
+                out: c = 0;
                 default:
                     /* Update buffer and return */
                     if (i < lc.len) {
@@ -971,7 +1045,7 @@ static int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, size_t buflen, 
      * initially is just an empty string. */
     linenoiseHistoryAdd("");
 
-    if (write(l.ofd,prompt,l.plen) == -1) return 0;	// -1 will exit shell
+    if (write(l.ofd,prompt,l.plen) == -1) return 0; // -1 will exit shell
 
     while(1) {
         unsigned char c;
@@ -1236,7 +1310,7 @@ static char *linenoiseNoTTY(void) {
                 return NULL;
             }
         }
-        int c = fgetc(stdin);
+        int c = _fgetc(stdin);
         if (c == EOF || c == '\n') {
             if (c == EOF && len == 0) {
                 free(line);
@@ -1269,7 +1343,7 @@ char *linenoise(const char *prompt) {
         size_t len;
 
         lnoutstr((char *)prompt);
-        if (fgets(buf,LINENOISE_MAX_LINE,stdin) == NULL) return NULL;
+        if (_fgets(buf,LINENOISE_MAX_LINE,stdin) == NULL) return NULL;
         len = strlen(buf);
         while(len && (buf[len-1] == '\n' || buf[len-1] == '\r')) {
             len--;
@@ -1293,6 +1367,7 @@ void linenoiseFree(void *ptr) {
 
 /* ================================ History ================================= */
 
+#if UNUSED
 /* Free the history, but does not reset it. Only used when we have to
  * exit() to avoid memory leaks are reported by valgrind & co. */
 static void freeHistory(void) {
@@ -1310,6 +1385,7 @@ static void linenoiseAtExit(void) {
     disableRawMode(STDIN_FILENO);
     freeHistory();
 }
+#endif
 
 /* This is the API call to add a new entry in the linenoise history.
  * It uses a fixed array of char pointers that are shifted (memmoved)
@@ -1408,7 +1484,7 @@ int linenoiseHistoryLoad(const char *filename) {
 
     if (fp == NULL) return -1;
 
-    while (fgets(buf,LINENOISE_MAX_LINE,fp) != NULL) {
+    while (_fgets(buf,LINENOISE_MAX_LINE,fp) != NULL) {
         char *p;
 
         p = strchr(buf,'\r');
