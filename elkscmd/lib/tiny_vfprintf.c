@@ -80,8 +80,10 @@ int fflush(FILE *fp)
 
 int fputc(int ch, FILE *fp)
 {
-   if (fp->bufpos >= fp->bufend)
-     fflush(fp);
+   if (fp->bufpos >= fp->bufend) {
+     if (fflush(fp))
+        return EOF;
+   }
 
    *(fp->bufpos++) = ch;
 
