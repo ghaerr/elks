@@ -725,7 +725,11 @@ data_reloc:
 	mov $debug_prompt,%ax
 	call csputs
 	xor %ah,%ah         // read key press
+#ifdef CONFIG_ARCH_PC98
+	int $0x18
+#else
 	int $0x16
+#endif
 	.endif
 	.endif
 
@@ -1002,19 +1006,66 @@ bootopts:
 	// set ES = boot sector (BPB) address in high memory
 	mov	$INITSEG,%ax
 	mov	%ax,%ds
+#ifdef CONFIG_ARCH_PC98
+	mov	root_dev,%al
+	and	$0xf0,%al
+	cmp	$0xf0,%al
+	je	FDC1M
+	cmp	$0x90,%al
+	jne	notfd1232
+FDC1M:
+	push	%ax
+	push	%bx
+	push	%cx
+	push	%dx
+	mov	$0,%dx
+	mov	$0,%cx
+	mov	$0x5a,%ah	//;readID MFM
+	int	$0x1b
+	mov	%ch,%cs:MFM1024	//;sector length
+	jnc	continue
+	mov	$0,%dx
+	mov	$0,%cx
+	mov	$0x1a,%ah	//;readID FM
+	int	$0x1b
+	or	$0x40,%ch	//;FM flag 0x40 but I don't have them.
+	mov	%ch,%cs:MFM1024
+continue:
+	pop	%dx
+	pop	%cx
+	pop	%bx
+	pop	%ax
+	mov 	$0x3,%al
+	cmp	%al,%cs:MFM1024
+	jne	notfd1232
 	mov	mem_kbytes,%ax	// Kbytes of memory
 	mov	$6,%cl		// to paras
 	shl	%cl,%ax
 	sub	$0x1000,%ax	// find highest aligned 64K
 	and	$0xf000,%ax
+	jmp	memsize
+notfd1232:
+	mov	$2,%al		//means MFM512 
+	mov	%al,%cs:MFM1024
+	mov	$0x7000,%ax	// boot_sect.S set fat bpb to 7000h though over 512kB(ex.Hireso98)
+#else
+	mov	mem_kbytes,%ax	// Kbytes of memory
+	mov	$6,%cl		// to paras
+	shl	%cl,%ax
+	sub	$0x1000,%ax	// find highest aligned 64K
+	and	$0xf000,%ax
+#endif
+memsize:
 	mov	%ax,%es		// ES = boot sector w/BPB
 
 	// set DS = boot sector buffer (rootdir) address in high memory
-#ifdef CONFIG_IMG_FD1232
+	cmpb	$0x3,%cs:MFM1024
+	jnz	1f
 	add	$0x40,%ax	// buffer follows boot block in high mem
-#else
+	jmp	2f
+1:
 	add	$0x20,%ax	// buffer follows boot block in high mem
-#endif
+2:
 	mov	%ax,%ds
 
 	// get bootopts logical sector address (LBA)
@@ -1033,17 +1084,19 @@ bootopts:
 	xor	%bp,%bp
 
 	mov	root_dev,%al	// Physical Device Address
-	mov	$0xD6,%ah	// Read Data
+	mov	$0xD6,%ah	// Read Data MFM
 	mov	$1024,%bx	// 1K bytes
 	test	$0x10,%al	// Check Floppy Disk or Hard Disk
 	jz	pc98_int1b
-#ifdef CONFIG_IMG_FD1232
-	mov	$0x03,%ch	// 1024 Bytes per sector
+	mov	%cs:MFM1024,%ch
+	mov	0x40,%ah
+	test	%ah,%ch
+	mov	$0x16,%ah	//;FM read
+	jne	1f
+	or	$0x0c0,%ah	//;MFM read
+1:
+	and	$0x3,%ch	//;sector size
 	inc	%dl		// sector number for PC_98 Floppy Disk
-#else
-	mov	$0x02,%ch	// 512 Bytes per sector
-	inc	%dl		// sector number for PC_98 Floppy Disk
-#endif
 pc98_int1b:
 	int	$0x1B		// BIOS disk interrupt
 	pop	%bp
@@ -1067,6 +1120,7 @@ pc98_int1b:
 	pop	%es
 	pop	%ds
 	ret
+
 
 // BPB offsets in boot sector already in high memory
 sec_per_clus	= 13
@@ -1131,13 +1185,15 @@ find:	add	$0x20,%si		// look for /bootopts in root directory at DS:SI
 	pop	%bx			// BX = # sectors before root directory
 	add	%ax,%bx
 	pop	%ax			// AX = root directory entry count
-#ifdef CONFIG_IMG_FD1232
-	add	$0x1f,%ax
+	cmpb	$0x3,%cs:MFM1024
+	jnz	1f
+	add	$0x1f,%ax	//MFM1024
 	mov	$5,%cl
-#else
-	add	$0xf,%ax
+	jmp	2f
+1:
+	add	$0xf,%ax	//other
 	mov	$4,%cl
-#endif
+2:
 	shr	%cl,%ax			// AX = # sectors of root directory
 	add	%bx,%ax			// AX = sector of /bootopts file
 
@@ -1188,7 +1244,24 @@ getchs:
 	inc	%cx			// CX = sector
 #endif
 	mov	%al,%dh			// DH = head
+#ifdef CONFIG_ARCH_PC98
+	mov	$' ',%ax
+	call	putc
+	mov	$'C',%ax
+	call	putc
+	mov	%cx,%ax
+	call	hex4
 
+	mov	$'H',%ax
+	call	putc
+	mov	%dh,%al
+	call	hex2
+
+	mov	$'S',%ax
+	call	putc
+	mov	%dl,%al
+	call	hex2
+#else
 	mov	$'C',%ax
 	call	putc
 	mov	%ch,%al
@@ -1203,6 +1276,7 @@ getchs:
 	call	putc
 	mov	%cl,%al
 	call	hex2
+#endif
 
 	ret
 
@@ -1328,7 +1402,8 @@ putc:
 //		arch_get_mem
 
 #ifdef CONFIG_ARCH_PC98
-
+MFM1024:
+.byte 0
 // Return total memory in Kbytes
 arch_get_mem:
 #if SETUP_MEM_KBYTES_ASM
@@ -1341,15 +1416,35 @@ arch_get_mem:
 	mov %ax,%es
 	mov $0x501,%bx                  // 3 bit size - 1 in 128k of 0-1M mem range
 	mov %es:(%bx),%cl
+	mov $0x8,%ch
+	test %ch,%cl
+	jne memwindow
+memsize_:
 	and $7,%cl
 	inc %cl
 	mov $128,%al
 	mul %cl
+PC98XA:
 	pop %bx
 	pop %cx
 	pop %es
 #endif
 	ret
+
+memwindow:
+	mov $0x200,%ax	//512kB
+	mov $0x20,%ch
+	test %ch,%cl
+	je PC98XA
+	push %dx
+	mov $0x91,%dx
+	mov $0x8,%al
+	out %al,%dx
+	mov $0x93,%dx
+	mov $0xa,%al
+	out %al,%dx
+	pop %dx
+	jmp memsize_
 
 // Set INITSEG values for PC98 architecture
 // currently hard-coded in config.h
@@ -1420,10 +1515,18 @@ putc:
    cmp $'\n',%al
    jz putesc_n
    xor %ah,%ah
+   xor %di,%di
+   mov %di,%es
+   mov $0x501,%bx
+   mov $0xe000,%dx
+   mov $8,%di
+   test %di,%es:(%bx)
+   jne HiTvram
+   mov $0xa000,%dx
+HiTvram:
+   mov %dx,%es
    mov $tvram_x,%bx
    mov (%bx),%di
-   mov $0xa000,%dx
-   mov %dx,%es
    mov %ax,%es:(%di)
    inc %di
    inc %di
