@@ -23,8 +23,9 @@
 #define SECTOR_SIZE	1024
 #else
 #define SECTOR_SIZE	512
+#define MEMTOPSEG	0x8000		// 512K memory
 #endif
-#define MEMTOPSEG	0xA000		// 640K memory
+
 
 #else
 // IBM PC
@@ -93,6 +94,11 @@ entry1:
 #endif
 
 	// Get the memory size
+#if defined(CONFIG_IMG_FD1232)
+	call	memsz
+	mov $6,%cl
+	shl %cl,%ax
+#else
 #ifdef MEMTOPSEG
 	mov $MEMTOPSEG,%ax
 #else
@@ -100,12 +106,11 @@ entry1:
 	mov $6,%cl  // to paragraphs
 	shl %cl,%ax
 #endif
-
+#endif
 	// Move to the highest & aligned 64K
 
 	// Some BIOSes are intolerant to unaligned buffer for INT 13h
 	// so the 64K is the safest possible alignement in all cases
-
 	sub $0x1000,%ax
 	and $0xF000,%ax
 	mov %ax,%es
@@ -212,7 +217,7 @@ _next1:
 
 no_system:
 	mov $ERR_NO_SYSTEM,%al
-	// fall through to _except
+	jmp except	// fall through to _except
 
 //------------------------------------------------------------------------------
 
@@ -221,8 +226,9 @@ no_system:
 
 // void except (char code)
 
+#if defined(CONFIG_IMG_FD1232)
+#else
 	.global except
-
 except:
 _except:
 	// AL = exception code
@@ -247,19 +253,26 @@ _reboot1:
 	int $0x16
 #endif
 	ljmpw $0xffff,$0  // do a cold(er) boot
+#endif
 
 //------------------------------------------------------------------------------
 
 	.global _putc
-
 _putc:
-
 #ifdef CONFIG_ARCH_PC98
+	xor %ah,%ah
+#if defined(CONFIG_IMG_FD1232)
+	mov $0xe000,%dx
+	mov $8,%di
+	mov $hirezo,%si
+	test %di,%cs:(%si)
+	jne Hirezo98
+#endif
+	mov $0xa000,%dx
+Hirezo98:
 	mov $tvram_x,%si
 	mov (%si),%di
-	xor %ah,%ah
 	push %es
-	mov $0xa000,%dx
 	mov %dx,%es
 	mov %ax,%es:(%di)
 	pop %es
@@ -434,7 +447,7 @@ dr_try:
 #if defined(CONFIG_IMG_FD1232)
 	mov $0x03,%ch    // 1024 Bytes per sector
 	inc %dl          // sector number for PC_98
-#elif defined(CONFIG_IMG_FD1440)
+#else
 	mov $0x02,%ch    // 512 Bytes per sector
 	inc %dl          // sector number for PC_98
 #endif
@@ -583,6 +596,7 @@ msg_reboot:
 	.byte 0
 tvram_x:
 	.word 0
+hirezo: .byte 0
 #else
 	.asciz "Press key\r\n"
 #endif
@@ -594,7 +608,72 @@ end_of_code:
 #if defined(CONFIG_IMG_FD1232)
 	.org SECTOR_SIZE/2-2
 	.word 0xAA55 // boot signature need to be at 0x1FE and 0x1FF
+
+//extra code over 512Byte for 1024Byte/Sector
+	.global except
+except:
+_except:
+	// AL = exception code
+	xor %sp,%sp
+	add $'0',%al  // first version with single digit
+	call _putc
+	mov $msg_error,%bx
+	jmp _reboot1
+
+	.global _reboot
+
+_reboot:
+	mov $msg_reboot,%bx
+
+_reboot1:
+	call _puts
+
+	xor %ax,%ax  // wait for key
+#ifdef CONFIG_ARCH_PC98
+	int $0x18
+#else
+	int $0x16
 #endif
+	ljmpw $0xffff,$0  // do a cold(er) boot
+
+memsz:
+	push %cx
+	push %bx
+	xor %ax,%ax
+	mov %ax,%es
+	mov $0x501,%bx                  // 3 bit size - 1 in 128k of 0-1M mem range
+	mov %es:(%bx),%cl
+	mov $hirezo,%bx
+	mov $0x8,%ch
+	test %ch,%cl
+	jne memorywindow
+memsize_2:
+	mov %cl,%cs:(%bx)
+	and $7,%cl
+	inc %cl
+	mov $128,%al
+	mul %cl
+PC_98XA:
+	pop %bx
+	pop %cx
+	ret
+
+memorywindow:	
+	mov $0x200,%ax		//512kB
+	mov $0x20,%ch
+	test %ch,%cl
+	je PC_98XA
+	push %dx
+	mov $0x91,%dx
+	mov $0x8,%al
+	out %al,%dx
+	mov $0x93,%dx
+	mov $0xa,%al
+	out %al,%dx
+	pop %dx
+	jmp memsize_2
+#endif
+
 
 // ELKS disk parameter structure
 // For future expansion, fields should be added at the _front_ of structure
