@@ -70,6 +70,12 @@ void linenoisePrintKeyCodes(void);
 void linenoiseMaskModeEnable(void);
 void linenoiseMaskModeDisable(void);
 
+/* non-standard ELKS-only routines */
+void linenoiseStdCompletion(const char *buf, linenoiseCompletions *lc);
+void linenoiseSetTerm(char *term);                          /* for ELKS bash */
+void lnoutstr(char *str);                                   /* internal */
+int tsnprintf(char *buf, size_t cnt, const char *fmt, ...); /* internal */
+
 #ifdef __cplusplus
 }
 #endif

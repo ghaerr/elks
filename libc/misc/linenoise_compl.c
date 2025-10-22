@@ -3,19 +3,16 @@
  * Autocompletion operates identically to BASH shell. Greg Haerr 17 Apr 2020
  */
 
-#include "shell.h"
-
-#if LINENOISE		/* entire file if LINENOISE=0 in shell.h*/
 #include <dirent.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
-#include "linenoise.h"
-#include "output.h"
+#include <unistd.h>
+#include <linenoise.h>
 
-void completion(const char *buf, linenoiseCompletions *lc)
+void linenoiseStdCompletion(const char *buf, linenoiseCompletions *lc)
 {
 	char *arg, *file;
 	DIR *fp;
@@ -72,7 +69,7 @@ void completion(const char *buf, linenoiseCompletions *lc)
 		struct stat st;
 		char path[PATH_MAX];
 
-		fmtstr(path, sizeof(path), "%s/%s", dir, lastentry);
+		tsnprintf(path, sizeof(path), "%s/%s", dir, lastentry);
 		if (!stat(path, &st)) {
 			if (S_ISDIR(st.st_mode))
 				strcat(result, "/");
@@ -98,21 +95,21 @@ void completion(const char *buf, linenoiseCompletions *lc)
 				linenoiseAddCompletion(lc, result);
 
 				strcpy(result, dp->d_name);
-				fmtstr(path, sizeof(path), "%s/%s", dir, dp->d_name);
+				tsnprintf(path, sizeof(path), "%s/%s", dir, dp->d_name);
 				if (!stat(path, &st) && S_ISDIR(st.st_mode))
 					strcat(result, "/");
 
 				if ((count & 3) == 0)
-					out1str("\r\n");
-				outfmt(out1, "%-16s", result);
+					lnoutstr("\r\n");
+                lnoutstr(result);
+                int n = strlen(result);
+                while (n++ < 16)
+                    lnoutstr(" ");
 				count++;
 			}
 		}
 	}
 	if (count)
-		out1str("\r\n");
-	flushout(out1);
+		lnoutstr("\r\n");
 	closedir(fp);
 }
-
-#endif /* LINENOISE entire file*/
