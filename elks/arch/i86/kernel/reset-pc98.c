@@ -1,4 +1,8 @@
 #include <arch/system.h>
+#include <arch/io.h>
+
+#define PORT_CTRL_REG 0x37
+#define PORT_STATUS_SHUT 0xF0
 
 /*
  * This function gets called by the keyboard interrupt handler.
@@ -10,24 +14,14 @@ void ctrl_alt_del(void)
 
 void hard_reset_now(void)
 {
-    asm("mov $0x37,%dx\n\t"
-        "mov $0xb,%al\n\t"
-        "out %al,%dx\n\t"
-        "mov $0xf,%al\n\t"
-        "out %al,%dx\n\t"
-        "mov $0xf0,%dx\n\t"
-        "in  %dx,%al\n\t"
-        "and $2,%al\n\t"
-        "cmp $2,%al\n\t"
-        "je V30\n\t"
-        "mov $0,%al\n\t"
-        "out %al,%dx\n\t"
-        "ljmp $0xFFFF,$0\n\t"
-"V30:\n\t"
-        "mov $7,%al\n\t"
-        "out %al,%dx\n\t"
-        "ljmp $0xFFFF,$0\n\t"
-    );
+    outb(0x0B, PORT_CTRL_REG); /* SHUT1: 1 */
+    outb(0x0F, PORT_CTRL_REG); /* SHUT0: 1 */
+    if (inb(PORT_STATUS_SHUT) & 0x02) /* V30 mode */
+        outb(0x07, PORT_STATUS_SHUT);
+    else                              /* 286/386 mode */
+        outb(0x00, PORT_STATUS_SHUT);
+
+    asm("ljmp $0xFFFF,$0\n\t");
 }
 
 void apm_shutdown_now(void)
