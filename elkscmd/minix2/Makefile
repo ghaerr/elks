@@ -12,8 +12,8 @@ LOCALFLAGS=-D_POSIX_SOURCE
 # compiling but unused: pwdauth
 PRGS=env lp lpd remsync synctree tget
 
-env: env.o $(TINYPRINTF)
-	$(LD) $(LDFLAGS) -o env env.o $(TINYPRINTF) $(LDLIBS)
+env: env.o
+	$(LD) $(LDFLAGS) -o env env.o $(LDLIBS)
 
 pwdauth: pwdauth.o
 	$(LD) $(LDFLAGS) -o pwdauth pwdauth.o $(LDLIBS)
