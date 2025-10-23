@@ -3,11 +3,15 @@
  */
 #define nil 0
 #include <sys/types.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+
+#define outmsg(str) write(STDOUT_FILENO, str, sizeof(str) - 1)
+#define outstr(str) write(STDOUT_FILENO, str, strlen(str))
+#define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
+#define errstr(str) write(STDERR_FILENO, str, strlen(str))
 
 int main(int argc, char **argv)
 {
@@ -31,9 +35,8 @@ int main(int argc, char **argv)
 			aflag= 1;
 			break;
 		default:
-			fprintf(stderr,
-		"Usage: env [-ia] [name=value] ... [utility [argument ...]]\n");
-			exit(1);
+			errmsg("Usage: env [-ia] [name=value] ... [utility [args ...]]\n");
+			return 1;
 		}
 	}
 
@@ -43,9 +46,10 @@ int main(int argc, char **argv)
 	/* Set the new environment strings. */
 	while (i < argc && strchr(argv[i], '=') != nil) {
 		if (putenv(argv[i]) != 0) {
-			fprintf(stderr, "env: Setting '%s' failed: %s\n",
-				argv[i], strerror(errno));
-			exit(1);
+			errmsg("env: Setting '");
+			errstr(argv[i]);
+			errmsg("' failed\n");
+			return 1;
 		}
 		i++;
 	}
@@ -55,11 +59,9 @@ int main(int argc, char **argv)
 		char **ep;
 
 		for (ep= environ; *ep != nil; ep++) {
-			if (puts(*ep) == EOF) {
-				fprintf(stderr, "env: %s\n", strerror(errno));
-				exit(1);
-			}
-		}
+			outstr(*ep);
+                        outmsg("\n");
+                }
 		return 0;
 	} else {
 		char *util, **args;
@@ -70,8 +72,9 @@ int main(int argc, char **argv)
 		if (aflag) args++;
 		(void) execvp(util, args);
 		err= errno;
-		fprintf(stderr, "env: Can't execute %s: %s\n",
-			util, strerror(err));
+		errmsg("env: Can't execute ");
+		errstr(util);
+		errmsg("\n");
 		return err == ENOENT ? 127 : 126;
 	}
 }
