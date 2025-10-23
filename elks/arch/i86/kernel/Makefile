@@ -44,7 +44,7 @@ OBJS += divzero.o
 endif
 
 ifeq ($(CONFIG_ARCH_PC98), y)
-OBJS += irq-8259.o reset-stubs.o timer-8254.o
+OBJS += irq-8259.o reset-pc98.o timer-8254.o
 endif
 
 ifeq ($(CONFIG_ARCH_8018X), y)
