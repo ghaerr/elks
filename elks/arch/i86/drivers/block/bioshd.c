@@ -56,7 +56,11 @@
 
 #define PER_DRIVE_INFO  1       /* =1 for per-line display of drive info at init */
 #define DEBUG_PROBE     0       /* =1 to display more floppy probing information */
+#ifdef CONFIG_ARCH_PC98
+#define FORCE_PROBE     1       /* =1 to force floppy probing */
+#else
 #define FORCE_PROBE     0       /* =1 to force floppy probing */
+#endif
 #define TRACK_SPLIT_BLK 0       /* =1 to read extra sector on track split block */
 #define SPLIT_BLK       0       /* =1 to read extra sector on single split block */
 #define FULL_TRACK      0       /* =1 to read full tracks when track caching */
@@ -142,7 +146,7 @@ static void BFPROC probe_floppy(int target, struct hd_struct *hdp)
          * somewhere near)
          */
 #ifdef CONFIG_ARCH_PC98
-        static unsigned char sector_probe[3] = { 8, 9, 18 };
+        static unsigned char sector_probe[4] = { 8, 9, 15, 18 };
         static unsigned char track_probe[2] = { 77, 80 };
 #else
         static unsigned char sector_probe[5] = { 8, 9, 15, 18, 36 };
@@ -233,7 +237,7 @@ static void BFPROC probe_floppy(int target, struct hd_struct *hdp)
             if (count && read_sector(target, track_probe[count] - 1, 1)) {
                 bios_switch_device98(target, 0x10, drivep);  /* 720 KB */
                 if (read_sector(target, track_probe[count] - 1, 1))
-                    bios_switch_device98(target, 0x90, drivep);  /* 1.232 MB */
+                    bios_switch_device98(target, 0x90, drivep);  /* 1.200 MB or 1.232 MB */
                 else
                     pc98_720KB = 1;
             }
@@ -262,10 +266,10 @@ static void BFPROC probe_floppy(int target, struct hd_struct *hdp)
         count = 0;
 #ifdef CONFIG_ARCH_PC98
         do {
-            if (count == 2)
+            if (count == 3)
                 bios_switch_device98(target, 0x30, drivep);  /* 1.44 MB */
             /* skip reading first entry */
-            if ((count == 2) && read_sector(target, 0, sector_probe[count])) {
+            if ((count == 3) && read_sector(target, 0, sector_probe[count])) {
                 if (pc98_720KB) {
                     bios_switch_device98(target, 0x10, drivep);  /* 720 KB */
                     /* Read BPB to find 8 sectors, 640KB format. Currently, it is not supported */
@@ -274,7 +278,7 @@ static void BFPROC probe_floppy(int target, struct hd_struct *hdp)
                         bios_switch_device98(target, 0x90, drivep);
                 }
                 else
-                    bios_switch_device98(target, 0x90, drivep);  /* 1.232 MB */
+                    bios_switch_device98(target, 0x90, drivep);  /* 1.200 MB or 1.232 MB */
             }
         } while (++count < sizeof(sector_probe)/sizeof(sector_probe[0]));
 #else
