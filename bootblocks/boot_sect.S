@@ -434,7 +434,7 @@ dr_try:
 #if defined(CONFIG_IMG_FD1232)
 	mov $0x03,%ch    // 1024 Bytes per sector
 	inc %dl          // sector number for PC_98
-#elif defined(CONFIG_IMG_FD1440)
+#elif defined(CONFIG_IMG_FD1440) || defined(CONFIG_IMG_FD1200)
 	mov $0x02,%ch    // 512 Bytes per sector
 	inc %dl          // sector number for PC_98
 #endif
