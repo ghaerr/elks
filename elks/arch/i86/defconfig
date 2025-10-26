@@ -28,7 +28,6 @@ CONFIG_ARCH_IBMPC=y
 #
 # Devices
 #
-CONFIG_HW_VGA=y
 CONFIG_HW_SERIAL_FIFO=y
 
 #

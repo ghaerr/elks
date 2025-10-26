@@ -21,7 +21,6 @@ mainmenu_option next_comment
 
 		comment 'Devices'
 
-		bool 'VGA adapter'      CONFIG_HW_VGA       y
 		bool 'Serial port FIFO' CONFIG_HW_SERIAL_FIFO y
 
 	elif [ "$CONFIG_ARCH_8018X" = "y" ]; then

@@ -24,14 +24,14 @@ ifeq ($(CONFIG_ARCH_IBMPC), y)
 DRIVERS += drivers/mou_ser.o drivers/kbd_tty.o
 DRIVERS += drivers/mempl4.o drivers/elksutilasm.o
 
-ifeq ($(CONFIG_HW_VGA), y)
+# EGA/VGA screen driver
 DRIVERS += drivers/scr_bios.o drivers/vgaplan4.o
 DRIVERS += drivers/romfont.o drivers/elksutilasm.o
-else
-DRIVERS += drivers/scr_cga.o drivers/vgaplan4_cga.o
-DRIVERS += drivers/ramfont.o drivers/X6x13.o
 endif
-endif
+
+# CGA screen driver
+#DRIVERS += drivers/scr_cga.o drivers/vgaplan4_cga.o
+#DRIVERS += drivers/ramfont.o drivers/X6x13.o
 
 # high speed C VGA driver (BCC)
 #DRIVERS += drivers/elkplan4.o

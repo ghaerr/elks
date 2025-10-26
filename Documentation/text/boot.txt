@@ -137,7 +137,7 @@ ELKS "INITSEG" (setup data segment) offsets:
 | Hex  | Dec | Size | Name              | Description              | Where set
 +------+-----+------+-------------------+--------------------------+------------
 | 0007 |   7 | byte | screen_cols       | screen width             | setup.S
-| 000E |  14 | byte | screen_lines      | screen height            | setup.S
+| 000E |  14 | byte | screen_lines      | UNUSED                   |
 | 0020 |  32 | byte | cpu_type          | UNUSED                   |
 | 002A |  42 | word | mem_kbytes        | base memory size in K    | setup.S
 | 0030 |  48 |16byte| proc_name         | UNUSED                   |

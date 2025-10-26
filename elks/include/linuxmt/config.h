@@ -23,7 +23,7 @@
 #ifdef CONFIG_ARCH_IBMPC
 #define MAX_SERIAL              4               /* max number of serial tty devices*/
 #define SETUP_VID_COLS          setupb(7)       /* BIOS video # columns */
-#define SETUP_VID_LINES         setupb(14)      /* BIOS video # lines */
+#define SETUP_VID_LINES         25              /* video # lines */
 #define SETUP_CPU_TYPE          setupb(0x20)    /* processor type */
 #define SETUP_MEM_KBYTES        setupw(0x2a)    /* base memory in 1K bytes */
 #define SETUP_XMS_KBYTES        setupw(0x1ea)   /* xms memory in 1K bytes */
@@ -51,9 +51,9 @@
 #endif /* CONFIG_ARCH_IBMPC */
 
 #ifdef CONFIG_ARCH_PC98
-#define MAX_SERIAL              1       /* max number of serial tty devices*/
-#define SETUP_VID_COLS          80      /* video # columns */
-#define SETUP_VID_LINES         25      /* video # lines */
+#define MAX_SERIAL              1               /* max number of serial tty devices*/
+#define SETUP_VID_COLS          80              /* video # columns */
+#define SETUP_VID_LINES         25              /* video # lines */
 #define SETUP_CPU_TYPE          setupb(0x20)    /* processor type */
 #define SETUP_MEM_KBYTES        setupw(0x2a)    /* base memory in 1K bytes */
 #define SETUP_XMS_KBYTES        setupw(0x1ea)   /* xms memory in 1K bytes */
