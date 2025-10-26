@@ -1,6 +1,6 @@
 ELKS Porting Guide
 ==================
-21 June 2022 - Rev 4 ghaerr
+26 Oct 2025 - Rev 5 ghaerr
 
 Platforms (target)
 -------------------------------------------------
@@ -98,7 +98,7 @@ BIOS Console
 ------------
 	BIOS Console using BIOS only				console-bios.c
 		SETUP_VID_COLS      setupb(7)
-		SETUP_VID_LINES     setupb(14)
+		SETUP_VID_LINES     25
 		BDA:0x49    VID_MODE (7=MDA, force 1 console)
 	All INT 10h and INT 16h BIOS Console routines  console-bios-asm.S
 		INT 16h AH=01h  Poll kbd
@@ -164,9 +164,6 @@ INT 10h AH=09h Write character at cursor		CONFIG_CONSOLE_BIOS
 INT 10h AH=0Eh Write teletype current page		CONFIG_CONSOLE_HEADLESS
 		boot_sect.S, setup.S, conio-bios.S
 INT 10h AH=0Fh Get video mode					CONFIG_ARCH_IBMPC, setup.S
-
-INT 10h AH=12h Get EGA video configuration		CONFIG_HW_VGA
-INT 10h AH=1Ah Get VGA video configuration		CONFIG_HW_VGA
 
 INT 12h        Get memory in kilobytes			boot_sect.S, setup.S
 

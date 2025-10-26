@@ -32,12 +32,6 @@ OS/loader function.
   Systems with SIO console doesn't need a keyboard BIOS
   
 
-'System has a VGA-adapter'        CONFIG_HW_VGA
---------------------------------------------
-  
-  No search to VGA
-  
-  
 'System has a PS/2 pointing device'   CONFIG_HW_PS2_MOUSE
 ------------------------------------------------------
 
