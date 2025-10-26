@@ -34,6 +34,14 @@ build_pc98_fast()
     mv image/fd1232.img image/fd1232-pc98.img
 }
 
+build_pc98_1200()
+{
+    cleanup
+    cp pc98-1200.config .config
+    make
+    mv image/fd1200.img image/fd1200-pc98.img
+}
+
 build_pc98_1440()
 {
     cleanup
@@ -109,6 +117,8 @@ fi
 # full (re)build including C library and all applications
 make clean
 build_pc98
+build_pc98_1200
+build_pc98_1440
 build_rom_8018x
 build_rom_8088
 build_rom_swan
