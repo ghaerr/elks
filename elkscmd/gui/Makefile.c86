@@ -49,7 +49,7 @@ DEFINES +=
 LOCALFLAGS =
 
 BINDIR = .
-PROG = $(BINDIR)/cpaint
+PROG = $(BINDIR)/paint.c86
 SRCS = app.c gui.c input.c render.c event.c mouse.c graphics.c drawbmp.c cursor.c \
     drawscanline.c
 OBJS += vga-c86.o8j
@@ -58,7 +58,7 @@ all: $(PROG)
 
 $(PROG): $(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
-	cp $(PROG) $(TOPDIR)/elkscmd/rootfs_template/bin
+	cp $@ $(TOPDIR)/elkscmd/rootfs_template/bin
 
 clean:
 	rm -f $(PROG) *.o8j *.as *.i *.lst
