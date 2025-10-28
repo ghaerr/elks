@@ -11,6 +11,9 @@ LOCALCFLAGS += -Wno-shift-count-overflow
 ###############################################################################
 
 PRGS = fsck-dos
+ifdef WATCOM
+PRGS += fsck-dos.os2
+endif
 
 all: $(PRGS)
 
@@ -37,7 +40,9 @@ fsck-dos: main.o boot.o check.o dir.o fat.o
 
 fsck-dos.os2:
 	ewcc -Dlint=1 -DELKS=1 boot.c check.c dir.c fat.c main.c mem.c
-	ewlink -o fsck-dos.os2 boot.obj check.obj dir.obj fat.obj main.obj mem.obj
+	ewlink -o $@ boot.obj check.obj dir.obj fat.obj main.obj mem.obj
+	cp $@ $(TOPDIR)/elkscmd/rootfs_template/bin
 
 clean:
 	$(RM) *.o $(PRGS) *.obj *.os2
+	$(RM) $(TOPDIR)/elkscmd/rootfs_template/bin/fsck-dos.os2

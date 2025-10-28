@@ -5,9 +5,9 @@ ifndef TOPDIR
 $(error ELKS TOPDIR is not defined)
 endif
 
-ifndef WATCOM
-$(error OpenWatcom WATCOM is not defined)
-endif
+#ifndef WATCOM
+#$(error OpenWatcom WATCOM is not defined)
+#endif
 
 CC = owcc
 LD = owcc
@@ -38,7 +38,7 @@ OBJS = $(SRCS:.c=.obj)
 
 BINDIR = .
 LOCALFLAGS =
-PROG = $(BINDIR)/opaint
+PROG = $(BINDIR)/paint.os2
 SRCS = app.c gui.c input.c render.c event.c mouse.c graphics.c drawbmp.c cursor.c
 SRCS += drawscanline.c
 
@@ -46,7 +46,8 @@ all: $(PROG)
 
 $(PROG): $(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
-	cp $(PROG) $(TOPDIR)/elkscmd/rootfs_template/bin
+	cp $@ $(TOPDIR)/elkscmd/rootfs_template/bin
 
 clean:
-	rm -f $(PROG) *.obj
+	$(RM) $(PROG) *.obj
+	$(RM) $(TOPDIR)/elkscmd/rootfs_template/bin/$(PROG)

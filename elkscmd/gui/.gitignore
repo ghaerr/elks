@@ -1,6 +1,6 @@
 paint
-opaint
-cpaint
+paint.os2
+paint.c86
 *.oaj
 *.obj
 *.ocj
