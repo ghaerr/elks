@@ -45,3 +45,4 @@ fsck-dos.os2:
 
 clean:
 	$(RM) *.o $(PRGS) *.obj *.os2
+	$(RM) $(TOPDIR)/elkscmd/rootfs_template/bin/fsck-dos.os2

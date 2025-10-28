@@ -5,9 +5,9 @@ ifndef TOPDIR
 $(error ELKS TOPDIR is not defined)
 endif
 
-ifndef C86
-$(error C86 is not defined)
-endif
+#ifndef C86
+#$(error C86 is not defined)
+#endif
 
 CPP=cpp86
 CC=c86
@@ -61,4 +61,5 @@ $(PROG): $(OBJS)
 	cp $@ $(TOPDIR)/elkscmd/rootfs_template/bin
 
 clean:
-	rm -f $(PROG) *.o8j *.as *.i *.lst
+	$(RM) $(PROG) *.o8j *.as *.i *.lst
+	$(RM) $(TOPDIR)/elkscmd/rootfs_template/bin/$(PROG)

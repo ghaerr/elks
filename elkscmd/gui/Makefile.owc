@@ -5,9 +5,9 @@ ifndef TOPDIR
 $(error ELKS TOPDIR is not defined)
 endif
 
-ifndef WATCOM
-$(error OpenWatcom WATCOM is not defined)
-endif
+#ifndef WATCOM
+#$(error OpenWatcom WATCOM is not defined)
+#endif
 
 CC = owcc
 LD = owcc
@@ -49,4 +49,5 @@ $(PROG): $(OBJS)
 	cp $@ $(TOPDIR)/elkscmd/rootfs_template/bin
 
 clean:
-	rm -f $(PROG) *.obj
+	$(RM) $(PROG) *.obj
+	$(RM) $(TOPDIR)/elkscmd/rootfs_template/bin/$(PROG)

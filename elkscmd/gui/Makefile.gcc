@@ -49,4 +49,4 @@ vga-ia16.oaj: vga-ia16.o
 	mv vga-ia16.o vga-ia16.oaj
 
 clean:
-	rm -f $(PROG) *.oaj
+	$(RM) $(PROG) *.oaj

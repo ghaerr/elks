@@ -23,9 +23,5 @@ c86:
 
 clean:
 	make -f Makefile.gcc clean
-ifdef WATCOM
 	make -f Makefile.owc clean
-endif
-ifdef C86
 	make -f Makefile.c86 clean
-endif
