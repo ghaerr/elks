@@ -138,8 +138,6 @@ void R_HighlightActiveButton(void)
 // ----------------------------------------------------
 void R_Paint(int x1, int y1, int x2, int y2) {
     int color = current_color;
-    // Draw initial point
-    R_DrawDisk(x1, y1, bushSize, color, CANVAS_WIDTH);
 
     // Bresenham's line algorithm for efficient line drawing
     int dx = abs(x2 - x1);
@@ -161,6 +159,7 @@ void R_Paint(int x1, int y1, int x2, int y2) {
             y1 += sy;
         }
     }
+    R_DrawDisk(x2, y2, bushSize, color, CANVAS_WIDTH);
 }
 
 // ----------------------------------------------------
@@ -236,8 +235,8 @@ void R_DrawRectangle(int x1, int y1, int x2, int y2)
     drawhline(xmin, xmax, ymax, color);
 
     // Left and right vertical lines
-    drawvline(xmin, ymin, ymax, color);
-    drawvline(xmax, ymin, ymax, color);
+    drawvline(xmin, ymin+1, ymax-1, color);
+    drawvline(xmax, ymin+1, ymax-1, color);
 }
 
 void R_DrawFilledRectangle(int x1, int y1, int x2, int y2)

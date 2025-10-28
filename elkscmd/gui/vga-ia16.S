@@ -269,10 +269,11 @@ vga_drawvline:
 
         // prepare to draw vertical line
         mov     y1(%bp), %ax    // AX := y1
-        mov     y2(%bp), %cx    // BX := y2
+        mov     y2(%bp), %cx    // CX := y2
         sub     %ax, %cx        // CX := dy
+        jc      L1112
 
-L311:   inc     %cx             // CX := number of pixels to draw
+        inc     %cx             // CX := number of pixels to draw
         mov     x(%bp), %bx     // BX := x
         push    %cx             // save register
 
@@ -312,7 +313,7 @@ L1111:  or      %al, (%bx)      // set pixel
         add     %dx, %bx        // increment to next line
         loop    L1111
 
-        pop     %ds
+L1112:  pop     %ds
         pop     %bp
         ret
 
