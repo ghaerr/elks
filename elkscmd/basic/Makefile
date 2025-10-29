@@ -9,6 +9,10 @@ CFLAGS += -Wno-maybe-uninitialized
 ###############################################################################
 
 PRGS = basic
+ifdef WATCOM
+PRGS += basic.os2
+endif
+
 OBJS = basic.o host.o
 #MAPFILE = -Wl,-Map=basic.map
 
@@ -46,7 +50,12 @@ all: $(PRGS)
 host: $(HOSTPRGS)
 
 basic: $(OBJS) basic.h host.h
-	$(LD) $(LDFLAGS) $(MAPFILE) -o basic $(OBJS) $(LDLIBS)
+	$(LD) -o $@ $(LDFLAGS) $(MAPFILE) $(OBJS) $(LDLIBS)
+
+basic.os2:
+	ewcc basic.c host.c host-stubs.c
+	ewlink -o $@ basic.obj host.obj host-stubs.obj
+	cp $@ $(TOPDIR)/elkscmd/rootfs_template/bin
 
 HOSTSRC = basic.c host.c host-stubs.c
 HOSTSRC += ../../libc/misc/ecvt.c
@@ -59,4 +68,5 @@ install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
-	$(RM) $(PRGS) $(HOSTPRGS) *.o *.map
+	$(RM) $(PRGS) $(HOSTPRGS) *.o *.map *.obj *.os2
+	$(RM) $(TOPDIR)/elkscmd/rootfs_template/bin/basic.os2
