@@ -31,6 +31,9 @@ OBJS = $(SRCS:.c=.oaj)
 %.oaj: %.c
 	$(CC) $(CFLAGS) -c -o $*.oaj $<
 
+%.oaj: %.S
+	$(CC) $(CFLAGS) -c -o $*.oaj $<
+
 ############# End of Standard Section ##############
 
 BINDIR = .
@@ -44,9 +47,6 @@ all: $(PROG)
 
 $(PROG): $(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
-
-vga-ia16.oaj: vga-ia16.o
-	mv vga-ia16.o vga-ia16.oaj
 
 clean:
 	$(RM) $(PROG) *.oaj
