@@ -32,66 +32,51 @@ ifdef CONFIG_APP_ASH
 endif
 
 ifdef CONFIG_APP_BUSYELKS
-	TAGS += :busyelks|
+	TAGS += busyelks/|
 endif
 
 ifdef CONFIG_APP_DISK_UTILS
-	TAGS += :diskutil|
-	ifeq ($(CONFIG_APP_DISK_UTILS), y)
-		TAGS += :be-diskutil|
-	endif
+	TAGS += disk_utils/|
 endif
 
 ifdef CONFIG_APP_FILE_UTILS
-	TAGS += :fileutil|
-	ifeq ($(CONFIG_APP_FILE_UTILS), y)
-		TAGS += :be-fileutil|
-	endif
+	TAGS += file_utils/|
 endif
 
 ifdef CONFIG_APP_ELVIS
-	TAGS += :elvis|
+	TAGS += elvis/|
 endif
 
 ifdef CONFIG_APP_KTCP
-	TAGS += :net|
+	TAGS += ktcp/|inet/|
 endif
 
 ifdef CONFIG_APP_MINIX1
-	TAGS += :minix1|
-	ifeq ($(CONFIG_APP_MINIX1), y)
-		TAGS += :be-minix1|
-	endif
+	TAGS += minix1/|
 endif
 
 ifdef CONFIG_APP_MINIX2
-	TAGS += :minix2|
+	TAGS += minix2/|
 endif
 
 ifdef CONFIG_APP_MINIX3
-	TAGS += :minix3|
-	ifeq ($(CONFIG_APP_MINIX3), y)
-		TAGS += :be-minix3|
-	endif
+	TAGS += minix3/|
 endif
 
 ifdef CONFIG_APP_MISC_UTILS
-	TAGS += :miscutil|
-	ifeq ($(CONFIG_APP_MISC_UTILS), y)
-		TAGS += :be-miscutil|
-	endif
+	TAGS += misc_utils/|
 endif
 
 ifdef CONFIG_APP_TUI
-	TAGS += :tui|
+	TAGS += tui/|
 endif
 
 ifdef CONFIG_APP_NANOX
-	TAGS += :nanox|
+	TAGS += nano-X/|
 endif
 
 ifdef CONFIG_APP_BASIC
-	TAGS += :basic|
+	TAGS += basic/|
 endif
 
 ifdef CONFIG_APP_OTHER
@@ -103,51 +88,48 @@ ifdef CONFIG_APP_SASH
 endif
 
 ifdef CONFIG_APP_SCREEN
-	TAGS += :screen|
+	TAGS += screen/|
 endif
 
 ifdef CONFIG_APP_CRON
-	TAGS += :cron|
+	TAGS += cron/|
 endif
 
 ifdef CONFIG_APP_SH_UTILS
-	TAGS += :shutil|
-	ifeq ($(CONFIG_APP_SH_UTILS), y)
-		TAGS += :be-shutil|
-	endif
+	TAGS += sh_utils/|
 endif
 
 ifdef CONFIG_APP_SYS_UTILS
-	TAGS += :sysutil|
+	TAGS += sys_utils/|
 endif
 
 ifdef CONFIG_APP_TEST
-	TAGS += :test|
+	TAGS += test/|
 endif
 
 #
 # Install apps by image size
 #
 ifdef CONFIG_APPS_360K
-	TAGS = :boot|:360k|
+	TAGS += :360k|
 ifdef CONFIG_APPS_COMPRESS
 	TAGS += :360c|
 endif
 endif
 
 ifdef CONFIG_APPS_720K
-	TAGS = :boot|:360k|:720k|:net|
+	TAGS += :360k|:720k|ktcp/|inet/|
 endif
 
 ifdef CONFIG_APPS_1200K
-	TAGS = :boot|:360k|:720k|:1200k|:net|
+	TAGS += :360k|:720k|:1200k|ktcp/|inet/|
 ifdef CONFIG_APPS_COMPRESS
 	TAGS += :360c|:1200c|:1440k|
 endif
 endif
 
 ifdef CONFIG_APPS_1232K
-	TAGS = :boot|:360k|:720k|:1200k|:1232k|
+	TAGS += :360k|:720k|:1200k|:1232k|
 ifdef CONFIG_APPS_COMPRESS
 	# does not include :1200c
 	TAGS += :360c|:1232c|
@@ -155,7 +137,7 @@ endif
 endif
 
 ifdef CONFIG_APPS_1440K
-	TAGS = :boot|:360k|:720k|:1200k|:1440k|:net|
+	TAGS += :360k|:720k|:1200k|:1440k|ktcp/|inet/|
 ifdef CONFIG_APPS_COMPRESS
 	# does not include :1232c
 	TAGS += :360c|:1200c|:1440c|
@@ -172,8 +154,13 @@ endif
 
 #
 # System startup
+#
 ifdef CONFIG_SYS_DEFSHELL_SASH
 	TAGS += :defsash|
+endif
+
+ifndef CONFIG_SYS_NO_BININIT
+	TAGS += :init|
 endif
 
 TAGS += :end
@@ -187,8 +174,7 @@ TAGS += :end
 # use bash instead of /bin/sh for curly brace expansion
 SHELL=/bin/bash
 install:
-	@echo "TAGS=$(TAGS)" | tr -d ' '
-	awk /`echo "$(TAGS)" | tr -d ' '`/{print} $(PACKAGE) | sed '/^#/d' > Filelist
+	grep -E `echo "$(TAGS)" | tr -d ' '` Applications | sed '/^#/d' > Filelist
 	@while IFS= read -r line; \
 	do \
 		file=`echo $$line | cut -d" " -f 1`; \

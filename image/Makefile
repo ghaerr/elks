@@ -41,6 +41,7 @@ copyrom:
 compress:
 	cd $(TOPDIR)/target/bin; elks-compress *
 
+.NOTPARALLEL: images images-minix images-fat images-hd
 images: images-minix images-hd images-fat
 
 images-minix: fd360-minix fd720-minix fd1200-minix fd1440-minix fd2880-minix
