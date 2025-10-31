@@ -88,9 +88,6 @@ void kfork_proc(void (*addr)())
  *  Build a user return stack for exec*(). This is quite easy,
  *  especially as our syscall entry doesnt use the user stack.
  */
-
-#define USER_FLAGS 0x3200               /* IPL 3, interrupt enabled */
-
 void put_ustack(register struct task_struct *t,int off,int val)
 {
     pokew(t->t_regs.sp+off, t->t_regs.ss, (word_t) val);

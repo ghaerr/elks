@@ -12,6 +12,8 @@
 
 #define CONFIG_FS_DEV           1               /* support FAT /dev folder */
 
+#define USER_FLAGS 0x3200                       /* IPL 3, interrupt enabled,  used in process.c */
+
 /*
  * SETUP_ defines are initialzied by setup.S and queried only during kernel init.
  * The REL_INITSEG segment is released at end of kernel init. If used later any
