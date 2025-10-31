@@ -91,6 +91,8 @@ int BFPROC bios_disk_rw(unsigned cmd, unsigned num_sectors, unsigned drive,
     else {
         if ((0xF0 & drive) == 0x90) {
             BD_AX = 0x5a00|drive;
+            BD_CX = 0;
+            BD_DX = 0;
             call_bios(&bdt);
             BD_AX = cmd | drive;
             if((BD_CX & 0x300)==0x200) goto notMFM1024;
@@ -420,6 +422,8 @@ void BFPROC bios_switch_device98(int target, unsigned int device,
         *drivep = fd_types[FD720];
     else if (device == 0x90) {
         BD_AX = 0x5a00|device|(bios_drive_map[target + DRIVE_FD0] & 0x0F);
+        BD_CX = 0;
+        BD_DX = 0;
         call_bios(&bdt);
         if((BD_CX & 0x300)==0x300)
          *drivep = fd_types[FD1232];
