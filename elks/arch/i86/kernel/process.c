@@ -89,7 +89,7 @@ void kfork_proc(void (*addr)())
  *  especially as our syscall entry doesnt use the user stack.
  */
 
-#define USER_FLAGS 0x3200               /* IPL 3, interrupt enabled */
+#define USER_FLAGS 0xf200               /* IPL 3, interrupt enabled */
 
 void put_ustack(register struct task_struct *t,int off,int val)
 {
