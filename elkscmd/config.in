@@ -68,6 +68,6 @@ mainmenu_option next_comment
 	comment "System startup"
 
 	bool 'Use sash as default shell'		CONFIG_SYS_DEFSHELL_SASH n
-	bool 'Dont run /bin/init on startup' 	CONFIG_SYS_NO_BININIT n
+	bool 'Run /bin/sh as init' 	CONFIG_SYS_NO_BININIT n
 
 endmenu

@@ -16,214 +16,210 @@
 #
 # Following are the current ELKS application packages and description,
 # see Make.install for more details.
-#   Tag         Description                                 Directory
-#   --------    -----------------------------------------   -----------
-#   :boot       Required for ELKS to boot
-#   :128k       Minimal set of apps to fit on 128k rom image
-#   :192k       Additional apps to fit on 192k rom image
-#   :360k       Minimal set of apps to fit on 360k disks
-#   :360c       Extra apps to add to 360k disks if CONFIG_APPS_COMPRESS set
-#   :720k       Set of apps to fit on 720k disks
-#   :1200k      Set of apps to fit on 1200k disks
-#   :1200c      Extra apps to add to 1200k disks if CONFIG_APPS_COMPRESS set
-#   :1232k      Set of apps to fit on PC-98 1232k disks
-#   :1232c      Extra apps to add to 1232k disks if CONFIG_APPS_COMPRESS set
-#   :1440k      Set of apps to fit on 1440k disks (and 1200k if compressed)
-#   :1440c      Extra apps to add to 1440k disks if CONFIG_APPS_COMPRESS set
-#   :ash        Ash (bash) shell                            ash
-#   :sash       Sash (standalone very small) shell          sash
-#   :defsash    Use sash as default shell                   sash
-#   :sysutil    System utilities                            sys_utils
-#   :fileutil   File handling utilies                       file_utils
-#   :shutil     Shell utilities                             shell_utils
-#   :diskutil   Disk utilities                              disk_utils
-#   :miscutil   Miscellaneous utilities                     misc_utils
-#   :minix1,2,3 Minix utilities                             minix{1,2,3}
-#   :tui        Text user interface library programs        tui
-#   :mtools     MSDOS utilities                             mtools
-#   :elvis      Elvis vi editor                             elvis
-#   :net        Networking apps (inc. on 720k,1200k,1440k)  ktcp,inet
-#   :nanox      Nano-X graphical apps                       nano-X
+#   Tag         Description
+#   --------    -----------------------------------------
+#   :init       Required to boot with /bin/init
+#   :*k         Set of apps to fit on *k disks
+#   :*c         Extra apps to add to *k disks if CONFIG_APPS_COMPRESS set
+#
+#   :ash        Ash (bash) shell
+#   :sash       Sash (standalone very small) shell
+#   :defsash    Use sash as default shell
 #   :other      Other apps
-#   :busyelks   Busyelks                                    busyelks
-#   :be-*       File created as symlink if busyelks option 'B' set
+#
 #   ::path/file path/file to install file as on $(DESTDIR)
+#   :::file     install as symlink
+#
+#   Directory
+#   ---------
+#   sys_utils   System utilities
+#   file_utils  File handling utilies
+#   shell_utils Shell utilities
+#   disk_utils  Disk utilities
+#   misc_utils  Miscellaneous utilities
+#   minix1,2,3  Minix utilities
+#   tui         Text user interface library programs
+#   mtools      MSDOS utilities
+#   elvis       Elvis vi editor
+#   ktcp,inet   Networking apps
+#   nano-X      Nano-X graphical apps
+#   busyelks    Busyelks
 #
 # ------------- ----------------------------------------------------------
-sys_utils/init          :boot   :sysutil    :128k
-#sys_utils/min_init ::bin/init :boot :sysutil :128k
-sys_utils/getty         :boot   :sysutil    :128k
-sys_utils/login         :boot   :sysutil    :128k
-sash/sash   ::bin/sh            :defsash    # install as /bin/sh
-ash/ash     ::bin/sh    :boot   :ash :nocomp # install as /bin/sh (must follow :defsash)
-sash/sash                       :sash                   :1200k
-sys_utils/mount         :boot   :sysutil    :128k
-sys_utils/umount        :boot   :sysutil    :128k
-sys_utils/clock         :boot   :sysutil    :128k
-sys_utils/shutdown      :boot   :sysutil    :128k
-sh_utils/uname          :boot   :be-shutil  :128k
-sh_utils/date           :boot   :be-shutil  :128k
-file_utils/cat          :boot   :be-fileutil :128k
-file_utils/chgrp                :be-fileutil            :1200k
-file_utils/chmod                :be-fileutil    :360k
-file_utils/chown                :be-fileutil            :1200k
-file_utils/cmp                  :be-fileutil            :1200k
-file_utils/cp                   :be-fileutil    :360k
-file_utils/dd                   :be-fileutil            :1200k
-file_utils/md5sum               :fileutil                               :1440c
-file_utils/mkdir                :fileutil       :360k
-file_utils/mknod                :fileutil       :360k
-#file_utils/mkfifo              :fileutil               :1200k
-file_utils/more                 :fileutil       :360k           :128k
-file_utils/mv                   :fileutil       :360k
-file_utils/ln                   :fileutil           :720k
-file_utils/ls                   :fileutil       :360k           :128k       :nocomp
-file_utils/rm                   :fileutil       :360k
-file_utils/rmdir                :fileutil       :360k
-file_utils/split                :fileutil                 :1200c    :1440k
-file_utils/sync                 :fileutil       :360k
-file_utils/touch                :fileutil           :720k
-sys_utils/chmem                 :sysutil            :720k
-sys_utils/kill                  :sysutil        :360c :720k
-sys_utils/ps            :sash   :sysutil        :360k           :128k       :nocomp
-sys_utils/ps :::uptime          :sysutil                        :128k   :1440k
-sys_utils/makeboot              :sysutil        :360k
-sys_utils/man                   :sysutil
-sys_utils/meminfo       :sash   :sysutil        :360k           :128k
-sys_utils/mouse                 :sysutil                 :1200c     :1440k
-sys_utils/passwd                :sysutil                :1200k
-#sys_utils/shutdown :::reboot    :sysutil            :720k       :128k
-#sys_utils/shutdown :::poweroff  :sysutil            :720k
-sys_utils/sercat                :sysutil                            :1400c
-sys_utils/console               :sysutil                :1200k
-#sys_utils/who                  :sysutil                :1200k
-sys_utils/beep                  :sysutil                :1200k
-sys_utils/decomp                :sysutil         :360c          :1440k
-sys_utils/sysctl                :sysutil                :1200k
-screen/screen                   :screen                 :1200k
-cron/cron                       :cron                   :1200k
-cron/crontab                    :cron                   :1200k
-sh_utils/basename               :be-shutil               :1200c
-sh_utils/clear                  :shutil                 :1200k
-sh_utils/dirname                :be-shutil               :1200c
-sh_utils/echo                   :be-shutil              :1200k
-#sh_utils/test                  :shutil                 :1200k
-#sh_utils/false                 :be-shutil              :1200k
-#sh_utils/true                  :be-shutil              :1200k
-#sh_utils/logname               :shutil                 :1200k
-#sh_utils/mesg                  :shutil                 :1200k
-sh_utils/stty                   :shutil                 :1200k  :192k
-sh_utils/printenv               :shutil         :360k           :128k
-sh_utils/pwd                    :shutil         :360k           :128k
-sh_utils/tr                     :shutil                  :1200c     :1440k
-#sh_utils/which                 :shutil                 :1200k
-#sh_utils/whoami                :shutil                 :1200k
-sh_utils/xargs                  :shutil                  :1200c     :1440k
-sh_utils/yes                    :shutil                  :1200c     :1440k
-misc_utils/compress             :miscutil               :1200k
-misc_utils/miniterm             :miscutil           :720k
-misc_utils/tar                  :miscutil               :1200k
-misc_utils/od                   :miscutil               :1200k
-misc_utils/hd                   :miscutil               :1200k
-misc_utils/time                 :miscutil           :720k
-misc_utils/kilo                 :miscutil               :1200k
-misc_utils/mined ::bin/edit     :miscutil       :360k
-misc_utils/sleep                :miscutil               :1200k
-misc_utils/tty                  :miscutil               :1200k
-misc_utils/uuencode             :miscutil                :1200c     :1440k
-misc_utils/uudecode             :miscutil                :1200c     :1440k
-misc_utils/ecalc                :miscutil                           :1440k
-#misc_utils/ed                  :be-miscutil        :720k
-elvis/elvis ::bin/vi            :elvis              :720k
-minix1/banner                   :minix1                 :1200k
-#minix1/decomp16                :minix1                         :1440k
-#minix1/fgrep                   :minix1                 :1200k
-minix1/grep                     :minix1         :360k
-minix1/sum                      :minix1                  :1200c     :1440k
-minix1/uniq                     :minix1             :720k
-minix1/wc                       :minix1                 :1200k
-#minix1/proto                   :minix1                 :1200k
-minix1/cut                      :be-minix1               :1200c     :1440k
-#minix1/cksum                   :be-minix1              :1200k
-minix1/du                       :be-minix1              :1200k
-minix2/env                      :minix2                             :1440k
-minix2/lp                       :minix2                 :1200k
-minix2/lpd                      :minix2                 :1200k
-#minix2/pwdauth                 :minix2
-minix2/remsync                  :other
-minix2/synctree                 :other
-#minix2/tget                    :minix2                         :1440k
-#minix2/man                     :minix2                 :1200k
-minix3/sed                      :minix3             :720k
-minix3/file                     :minix3             :720k
-minix3/head                     :minix3                  :1200c     :1440k
-minix3/sort                     :minix3             :720k
-minix3/tail                     :minix3             :720k
-minix3/tee                      :minix3                  :1200c     :1440k
-minix3/cal                      :be-minix3               :1200c     :1440k
-minix3/diff                     :be-minix3          :720k
-minix3/find                     :be-minix3          :720k
-minix3/mail                     :minix3                         :other  :1440c
-disk_utils/df                   :diskutil       :360k
-disk_utils/fsck                 :diskutil       :360k
-disk_utils/mkfs                 :diskutil       :360k
-disk_utils/mkfat                :diskutil       :360k
-disk_utils/partype              :diskutil               :1200k
-disk_utils/ramdisk              :diskutil       :360c   :1200k
-disk_utils/fdisk                :be-diskutil    :360k
-fsck_dos/fsck-dos               :diskutil               :1200k
-tui/fm                          :tui                    :1200k
-tui/matrix                      :tui            :360c   :1200k
-tui/cons                        :tui                            :1440k
-tui/ttyinfo                     :tui                            :1440k
-tui/sl                          :tui                    :1200k
-tui/ttyclock                    :tui            :360c   :1200k
-tui/ttypong                     :tui                            :1440k
-tui/tetris                      :tui            :360c
-tui/invaders                    :tui                    :1232k  :1440k
-gui/paint                           :gui                        :1440k
-gui/images/cls.bmp  ::lib/cls.bmp   :gui                        :1440k
-gui/images/save.bmp ::lib/save.bmp  :gui                        :1440k
-gui/images/quit.bmp ::lib/quit.bmp  :gui                        :1440k
-gui/images/paint.bmp ::lib/paint.bmp  :gui                        :1440k
-gui/images/fill.bmp ::lib/fill.bmp  :gui                        :1440k
-gui/images/brush.bmp ::lib/brush.bmp  :gui                      :1440k
-gui/images/circle.bmp ::lib/circle.bmp  :gui                      :1440k
-gui/images/rectangle.bmp ::lib/rectangle.bmp  :gui                      :1440k
-busyelks/busyelks               :busyelks
-inet/httpd/sample_index.html ::var/www/index.html :net
-ktcp/ktcp                       :net
-inet/nettools/netstat           :net
-inet/nettools/nslookup          :net
-inet/nettools/arp               :net
-inet/telnet/telnet              :net
-inet/telnetd/telnetd            :net
-inet/httpd/httpd                :net
-inet/ftp/ftp                    :net
-inet/ftp/ftpd                   :net
-inet/urlget/urlget              :net
-#inet/urlget/urlget :::ftpget    :net
-#inet/urlget/urlget :::ftpput    :net
-#inet/urlget/urlget :::httpget   :net
-inet/tinyirc/tinyirc            :other                          :1440c
-bc/bc                           :other                          :1440c
-sys_utils/test_unreal           :test                           :1440c
-test/libc/test_libc             :test                           :1440c
-test/other/test_fd              :test
-test/other/test_float           :test
-#nano/nano-2.0.6/src/nano       :other
-#nano-X/bin/nano-x               :nanox                   :1232c     :1440c
-#nano-X/bin/nxclock              :nanox                   :1232c     :1440c
-#nano-X/bin/nxdemo               :nanox
-#nano-X/bin/nxtetris             :nanox                  :1200k
-#nano-X/bin/nxmine               :nanox                   :1232k :1440k
-#nano-X/bin/nxterm               :nanox                   :1232k     :1440c
-#nano-X/bin/nxworld              :nanox                   :1232c :1440k
-#nano-X/bin/nxworld.map ::lib/nxworld.map :nanox          :1232c :1440k
-basic/basic                     :basic                  :1200k
-advent/advent                     :other                            :1440c
-advent/advent.db ::lib/advent.db  :other                            :1440c
-debug/disasm                      :other                    :1232k:1440k
-#debug/nm86                        :other                            :1440c
-#debug/system.sym ::lib/system.sym :other                            :1440c
-#debug/testsym                     :other                            :1440c
+sys_utils/init :init
+#sys_utils/min_init ::bin/init :init
+sys_utils/getty :init
+sys_utils/login :init
+sash/sash :::sh :defsash # install as /bin/sh
+ash/ash ::bin/sh :360k :init :ash :nocomp # install as /bin/sh (must follow defsash)
+sash/sash :1200k :sash
+sys_utils/mount :360k
+sys_utils/umount :360k
+sys_utils/clock :360k :init
+sys_utils/shutdown :360k
+sh_utils/uname :360k
+sh_utils/date :360k :init
+file_utils/cat :360k
+file_utils/chgrp :1200k
+file_utils/chmod :360k
+file_utils/chown :1200k
+file_utils/cmp :1200k
+file_utils/cp :360k
+file_utils/dd :1200k
+file_utils/md5sum :1440c
+file_utils/mkdir :360k
+file_utils/mknod :360k
+#file_utils/mkfifo :1200k
+file_utils/more :360k
+file_utils/mv :360k
+file_utils/ln :720k
+file_utils/ls :360k :nocomp
+file_utils/rm :360k
+file_utils/rmdir :360k
+file_utils/split :1200c :1440k
+file_utils/sync :360k
+file_utils/touch :720k
+sys_utils/chmem :720k
+sys_utils/kill :360c :720k
+sys_utils/ps :360k :nocomp
+sys_utils/ps :::uptime :1440k
+sys_utils/makeboot :360k
+sys_utils/man
+sys_utils/meminfo :360k
+sys_utils/mouse :1200c :1440k
+sys_utils/passwd :1200k
+#sys_utils/shutdown :::reboot :720k
+#sys_utils/shutdown :::poweroff :720k
+sys_utils/sercat :1400c
+sys_utils/console :1200k
+#sys_utils/who :1200k
+sys_utils/beep :1200k
+sys_utils/decomp :360c :1440k
+sys_utils/sysctl :1200k
+screen/screen :1200k
+cron/cron :1200k
+cron/crontab :1200k
+sh_utils/basename :1200c
+sh_utils/clear :1200k
+sh_utils/dirname :1200c
+sh_utils/echo :1200k
+#sh_utils/test :1200k
+#sh_utils/false :1200k
+#sh_utils/true :1200k
+#sh_utils/logname :1200k
+#sh_utils/mesg :1200k
+sh_utils/stty :1200k
+sh_utils/printenv :360k
+sh_utils/pwd :360k
+sh_utils/tr :1200c :1440k
+#sh_utils/which :1200k
+#sh_utils/whoami :1200k
+sh_utils/xargs :1200c :1440k
+sh_utils/yes :1200c :1440k
+misc_utils/compress :1200k
+misc_utils/miniterm :720k
+misc_utils/tar :1200k
+misc_utils/od :1200k
+misc_utils/hd :1200k
+misc_utils/time :720k
+misc_utils/kilo :1200k
+misc_utils/mined ::bin/edit :360k
+misc_utils/sleep :1200k
+misc_utils/tty :1200k
+misc_utils/uuencode :1200c :1440k
+misc_utils/uudecode :1200c :1440k
+misc_utils/ecalc :1440k
+#misc_utils/ed :720k
+elvis/elvis ::bin/vi :720k
+minix1/banner :1200k
+#minix1/decomp16 :1440k
+#minix1/fgrep :1200k
+minix1/grep :360k
+minix1/sum :1200c :1440k
+minix1/uniq :720k
+minix1/wc :1200k
+#minix1/proto :1200k
+minix1/cut :1200c :1440k
+#minix1/cksum :1200k
+minix1/du :1200k
+minix2/env :1440k
+minix2/lp :1200k
+minix2/lpd :1200k
+#minix2/pwdauth
+minix2/remsync :other
+minix2/synctree :other
+#minix2/tget :1440k
+#minix2/man :1200k
+minix3/sed :720k
+minix3/file :720k
+minix3/head :1200c :1440k
+minix3/sort :720k
+minix3/tail :720k
+minix3/tee :1200c :1440k
+minix3/cal :1200c :1440k
+minix3/diff :720k
+minix3/find :720k
+minix3/mail :1440c :other
+disk_utils/df :360k
+disk_utils/fsck :360k
+disk_utils/mkfs :360k
+disk_utils/mkfat :360k
+disk_utils/partype :1200k
+disk_utils/ramdisk :360c :1200k
+disk_utils/fdisk :360k
+fsck_dos/fsck-dos :1200k
+tui/fm :1200k
+tui/matrix :360c :1200k
+tui/cons :1440k
+tui/ttyinfo :1440k
+tui/sl :1200k
+tui/ttyclock :360c :1200k
+tui/ttypong :1440k
+tui/tetris :360c
+tui/invaders :1232k :1440k
+gui/paint :1440k
+gui/images/cls.bmp ::lib/cls.bmp :1440k
+gui/images/save.bmp ::lib/save.bmp :1440k
+gui/images/quit.bmp ::lib/quit.bmp :1440k
+gui/images/paint.bmp ::lib/paint.bmp :1440k
+gui/images/fill.bmp ::lib/fill.bmp :1440k
+gui/images/brush.bmp ::lib/brush.bmp :1440k
+gui/images/circle.bmp ::lib/circle.bmp :1440k
+gui/images/rectangle.bmp ::lib/rectangle.bmp :1440k
+busyelks/busyelks
+inet/httpd/sample_index.html ::var/www/index.html
+ktcp/ktcp
+inet/nettools/netstat
+inet/nettools/nslookup
+inet/nettools/arp
+inet/telnet/telnet
+inet/telnetd/telnetd
+inet/httpd/httpd
+inet/ftp/ftp
+inet/ftp/ftpd
+inet/urlget/urlget
+#inet/urlget/urlget ::ftpget
+#inet/urlget/urlget ::ftpput
+#inet/urlget/urlget ::httpget
+inet/tinyirc/tinyirc :1440c :other
+bc/bc :1440c :other
+sys_utils/test_unreal :1440c
+test/libc/test_libc :1440c
+test/other/test_fd
+test/other/test_float
+#nano/nano-2.0.6/src/nano :other
+#nano-X/bin/nano-x :1232c :1440c
+#nano-X/bin/nxclock :1232c :1440c
+#nano-X/bin/nxdemo
+#nano-X/bin/nxtetris :1200k
+#nano-X/bin/nxmine :1232k :1440k
+#nano-X/bin/nxterm :1232k :1440c
+#nano-X/bin/nxworld :1232c :1440k
+#nano-X/bin/nxworld.map ::lib/nxworld.map :1232c :1440k
+basic/basic :1200k
+advent/advent :1440c :other
+advent/advent.db ::lib/advent.db :1440c :other
+debug/disasm :1232k :1440k :other
+#debug/nm86 :1440c :other
+#debug/system.sym ::lib/system.sym :1440c :other
+#debug/testsym :1440c :other
