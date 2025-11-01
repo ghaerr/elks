@@ -313,9 +313,13 @@ int INITPROC bios_getfdinfo(struct drive_infot *drivep)
 #ifdef CONFIG_ARCH_PC98
     for (drive = 0; drive < 4; drive++) {
         if (peekb(0x55C,0) & (1 << drive)) {
-            bios_drive_map[DRIVE_FD0 + drive] = drive + 0x90;
-            *drivep = fd_types[FD1232];
-
+            if ((peekb(0x584,0) & 0xF0) == 0x30) {
+                bios_drive_map[DRIVE_FD0 + drive] = drive + 0x30;
+                *drivep = fd_types[FD1440];
+            } else {
+                bios_drive_map[DRIVE_FD0 + drive] = drive + 0x90;
+                *drivep = fd_types[FD1232];
+            }
             ndrives++;  /* floppy drive count*/
             drivep++;
         }
