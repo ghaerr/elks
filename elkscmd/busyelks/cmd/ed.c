@@ -7,6 +7,8 @@
  */
 
 #include "../sash.h"
+#include <unistd.h>
+#include <fcntl.h>
 
 #include "cmd.h"
 
@@ -59,7 +61,7 @@ int
 ed_main(int argc, char * argv[])
 {
 	if (!initedit())
-		return;
+		return 1;
 
 	if (argc > 1) {
 		filename = strdup(argv[1]);
@@ -127,7 +129,7 @@ docommands()
 
 		cp = buf;
 		while (isblank(*cp))
-			*cp++;
+			cp++;
 
 		have1 = 0;
 		have2 = 0;
@@ -750,6 +752,7 @@ initedit()
 
 	for (i = 0; i < 26; i++)
 		marks[i] = 0;
+	return TRUE;
 }
 
 
@@ -981,7 +984,7 @@ printlines(num1, num2, expandflag)
 		 * Show control characters and characters with the
 		 * high bit set specially.
 		 */
-		cp = lp->data;
+		cp = (unsigned char *)lp->data;
 		count = lp->len;
 		if ((count > 0) && (cp[count - 1] == '\n'))
 			count--;

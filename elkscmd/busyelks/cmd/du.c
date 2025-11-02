@@ -46,9 +46,6 @@
 
 #define BLOCK_SIZE	1024
 
-static char *optarg;
-static int optind;
-
 #define	LINELEN		256
 #define	NR_ALREADY	512
 

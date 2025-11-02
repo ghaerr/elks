@@ -13,6 +13,7 @@
 #include <dirent.h>
 #include <time.h>
 #include <utime.h>
+#include <limits.h>
 
 /*
  * Build a path name from the specified directory name and file name.
