@@ -1,4 +1,4 @@
-# Makefile for compiling assembler for Psion 3a - SDW 28/2/99
+#
 #
 ###########################################################################
 # Relative path to base directory.
@@ -13,11 +13,11 @@ USEBCC  	= N
 
 CLEANDEP	= 
 
-CLEANME 	= build imgconv mkbootloader wrt_disk.img
+CLEANME 	= build mkbootloader
 
 DEPEND  	= 
 
-DISTFILES	= mknbi-elks
+DISTFILES	= 
 
 NOINDENT	= 
 
@@ -27,27 +27,19 @@ NOINDENT	=
 include $(BASEDIR)/Makefile-rules
 
 ###########################################################################
-# SIBO paramters.
-
-STACK_SIZE	= 64		# paragraphs of 16 bytes
-HEAP_SIZE	= 128		# paragraphs of 16 bytes
-
-DATA_SEG	= 0x400 	# Segment address
-HEAP_SEG	= 0x800 	# Segment address
-
-###########################################################################
 # Targets. You have to build the psion tree first to get driver stuff.
-
-ifeq ($(CONFIG_ARCH_SIBO), y)
-
-all: wrt_disk.img build mkbootloader imgconv
-
-else
 
 all: build mkbootloader
 
-endif
+build: build.c
+	gcc $(INCLUDES) -o build build.c
 
+mkbootloader: mkbootloader.c
+	gcc $(INCLUDES) -o mkbootloader mkbootloader.c
+
+# SIBO stuff
+DATA_SEG	= 0x400 	# Segment address
+HEAP_SEG	= 0x800 	# Segment address
 wrt_disk.o: wrt_disk.c
 
 wrt_disk.tmp: wrt_disk.o file.o
@@ -61,12 +53,6 @@ wrt_disk.tmp: wrt_disk.o file.o
 
 wrt_disk.img: wrt_disk.tmp imgconv
 	./imgconv wrt_disk.tmp wrt_disk.img
-
-build: build.c
-	gcc $(INCLUDES) -o build build.c
-
-mkbootloader: mkbootloader.c
-	gcc $(INCLUDES) -o mkbootloader mkbootloader.c
 
 imgconv: imgconv.c
 	gcc -o imgconv imgconv.c

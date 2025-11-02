@@ -156,13 +156,5 @@ console-bios.o: console.c
 #########################################################################
 # Standard commands.
 
-distdir:
-	mkdir $(DISTDIR)/arch/i86/drivers/char/KeyMaps
-	${MAKE} -C KeyMaps distdir
-	cp -pf CGAsnow Changes NEW_NOTES $(DISTDIR)/arch/i86/drivers/char
-	cp -pf NOTES README_CONSOLE $(DISTDIR)/arch/i86/drivers/char
-	cp -pf Makefile config.in $(DISTDIR)/arch/i86/drivers/char
-	cp -pf *.S *.h *.c $(DISTDIR)/arch/i86/drivers/char
-
 #########################################################################
 ### Dependencies:
