@@ -17,7 +17,7 @@ static void reparent_children(void)
         if (p->p_parent == current) {
             /* remove orphaned zombies, no need to reparent them to init*/
             if (p->state == TASK_ZOMBIE) {
-                printk("Zombie orphan pid %d ppid %d removed\n", p->pid, p->ppid);
+                debug_wait("Zombie orphan pid %d ppid %d removed\n", p->pid, p->ppid);
                 p->state = TASK_UNUSED;     /* unassign task entry*/
                 next_task_slot = p;
                 task_slots_unused++;
@@ -25,7 +25,7 @@ static void reparent_children(void)
 
             /* reparent orphans to init*/
             if (p->state != TASK_UNUSED) {
-                printk("Reparenting orphan pid %d ppid %d to init\n",
+                debug_wait("Reparenting orphan pid %d ppid %d to init\n",
                     p->pid, p->p_parent->pid);
                 p->p_parent = &task[1];
                 p->ppid = task[1].pid;
