@@ -261,10 +261,8 @@ static void INITPROC do_init_task(void)
 
     mount_root();
 
-    execinit = (strcmp(init_command, bininit) == 0) && (sys_access("/bin/init", 1) == 0);
-    printk("execinit %d\n", execinit);
-
     /* when no /bin/init, force initial process group on console to make signals work*/
+    execinit = (strcmp(init_command, bininit) == 0) && (sys_access(bininit, 1) == 0);
     if (!execinit)
         current->session = current->pgrp = 1;
 

@@ -23,3 +23,4 @@ bin/mformat
 bin/minfo
 bin/mmd
 bin/mshowfat
+bin/hd
