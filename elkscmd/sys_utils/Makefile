@@ -4,9 +4,11 @@ include $(BASEDIR)/Makefile-rules
 
 ###############################################################################
 
-###############################################################################
+LOCALFLAGS = -DELKS_VERSION=\"$(ELKS_VERSION)\"
 
 ELKS_LIB=$(ELKS_DIR)/arch/i86/lib
+
+###############################################################################
 
 # clock enabled and has direct I/O port access
 # knl, insmod removed as useless

@@ -29,12 +29,10 @@ INCLUDES=-I$(TOPDIR)/include -I$(TOPDIR)/libc/include -I$(ELKS_DIR)/include
 #
 # Determine the ELKS kernel version.
 
-E_V=$(shell if [ -f $(ELKS_DIR)/Makefile-rules ]; then \
-		grep -v '^\#' $(ELKS_DIR)/Makefile-rules \
-		    | fgrep = | head -4 | tr '\#' = | cut -d = -f 2 ;\
-	    else echo Version not known ; fi)
+E_V=$(shell grep -v '^\#' $(ELKS_DIR)/Makefile-rules \
+		    | fgrep = | head -4 | tr '\#' = | cut -d = -f 2 ; )
 
-ELKS_VSN=$(shell printf '%s.%s.%s%s' $(E_V))
+ELKS_VERSION=$(shell printf '%s.%s.%s%s' $(E_V))
 
 ##############################################################################
 #
@@ -66,7 +64,6 @@ LD=ia16-elf-gcc
 
 CFLAGS =  $(CLBASE) $(WARNINGS) $(LOCALFLAGS) $(INCLUDES)
 CFLAGS += -Wextra -Wtype-limits -Wno-unused-parameter -Wno-sign-compare -Wno-empty-body
-CFLAGS += -D__ELKS__ -DELKS_VERSION=\"$(ELKS_VSN)\"
 ASFLAGS = -mtune=i8086 --32-segelf
 LDFLAGS = $(CLBASE)
 
