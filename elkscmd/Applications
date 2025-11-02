@@ -19,6 +19,7 @@
 #   Tag         Description                                 Directory
 #   --------    -----------------------------------------   -----------
 #   :boot       Required for ELKS to boot
+#   :init       Used by /bin/init, installed when CONFIG_SYS_NO_BININIT not set
 #   :128k       Minimal set of apps to fit on 128k rom image
 #   :192k       Additional apps to fit on 192k rom image
 #   :360k       Minimal set of apps to fit on 360k disks
@@ -48,12 +49,13 @@
 #   :busyelks   Busyelks                                    busyelks
 #   :be-*       File created as symlink if busyelks option 'B' set
 #   ::path/file path/file to install file as on $(DESTDIR)
+#   :::file     install as symlink
 #
 # ------------- ----------------------------------------------------------
-sys_utils/init          :boot   :sysutil    :128k
-#sys_utils/min_init ::bin/init :boot :sysutil :128k
-sys_utils/getty         :boot   :sysutil    :128k
-sys_utils/login         :boot   :sysutil    :128k
+sys_utils/init          :init   :sysutil
+#sys_utils/min_init ::bin/init :init :sysutil
+sys_utils/getty         :init   :sysutil
+sys_utils/login         :init   :sysutil
 sash/sash   ::bin/sh            :defsash    # install as /bin/sh
 ash/ash     ::bin/sh    :boot   :ash :nocomp # install as /bin/sh (must follow :defsash)
 sash/sash                       :sash                   :1200k

@@ -361,6 +361,7 @@ extern int notify_change(struct inode *,struct iattr *);
 
 extern int sys_open(const char *,int,mode_t);
 extern int sys_close(unsigned int);     /* yes, it's really unsigned */
+extern int sys_access(const char *, mode_t);
 
 extern void _close_allfiles(void);
 

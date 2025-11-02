@@ -81,7 +81,9 @@ endif
 minixfs: template
 	rm -f $(TARGET_FILE)
 	mfs $(VERBOSE) $(TARGET_FILE) mkfs $(MINIX_MKFSOPTS)
+ifndef CONFIG_SYS_NO_BININIT
 	mfs -v $(TARGET_FILE) addfs Image.all $(DESTDIR)
+endif
 #	rm -f Filelist
 #	for f in $$(cd $(DESTDIR); find * -name '*'); do \
 #		echo $$f >> FileList; \

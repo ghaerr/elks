@@ -564,6 +564,10 @@ runcmd(char *cmd, int argc, char **argv)
 
 	endpwent();
 	endgrent();
+
+	while (waitpid(-1, &status, 0) != -1)   /* reap any spurious children */
+		continue;
+
 	/*
 	 * If a full shell is required, run 'sh -c cmd' unless we are the only shell.
 	 */
