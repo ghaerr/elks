@@ -200,7 +200,7 @@ CONFIG_APPS_1440K=y
 
 # System startup
 CONFIG_SYS_DEFSHELL_SASH=n
-CONFIG_SYS_NO_BININIT=n
+# CONFIG_SYS_NO_BININIT is not set
 
 #
 # Target image

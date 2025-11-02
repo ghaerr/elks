@@ -50,10 +50,10 @@
 #   ::path/file path/file to install file as on $(DESTDIR)
 #
 # ------------- ----------------------------------------------------------
-sys_utils/init          :boot   :sysutil    :128k
-#sys_utils/min_init ::bin/init :boot :sysutil :128k
-sys_utils/getty         :boot   :sysutil    :128k
-sys_utils/login         :boot   :sysutil    :128k
+sys_utils/init          :init   :sysutil
+#sys_utils/min_init ::bin/init :init :sysutil
+sys_utils/getty         :init   :sysutil
+sys_utils/login         :init   :sysutil
 sash/sash   ::bin/sh            :defsash    # install as /bin/sh
 ash/ash     ::bin/sh    :boot   :ash :nocomp # install as /bin/sh (must follow :defsash)
 sash/sash                       :sash                   :1200k

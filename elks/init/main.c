@@ -54,12 +54,7 @@ static int boot_console;
 static segext_t umbtotal;
 static kdev_t disabled[4];      /* disabled devices using disable= */
 static char bininit[] = "/bin/init";
-static char binshell[] = "/bin/sh";
-#ifdef CONFIG_SYS_NO_BININIT
-static char *init_command = binshell;
-#else
 static char *init_command = bininit;
-#endif
 
 #ifdef CONFIG_BOOTOPTS
 /*
@@ -71,12 +66,8 @@ char errmsg_initargs[] = "init args > " STR(MAX_INIT_ARGS) "\n";
 char errmsg_initenvs[] = "init envs > " STR(MAX_INIT_ENVS) "\n";
 char errmsg_initslen[] = "init words > " STR(MAX_INIT_SLEN) "\n";
 
-#ifdef CONFIG_SYS_NO_BININIT
-static char *argv_init[MAX_INIT_SLEN] = { NULL, binshell, NULL };
-#else
 /* argv_init doubles as sptr data for sys_execv later*/
 static char *argv_init[MAX_INIT_SLEN] = { NULL, bininit, NULL };
-#endif
 static char hasopts;
 static int args = 2;    /* room for argc and av[0] */
 static int envs;
@@ -148,6 +139,7 @@ static void INITPROC early_kernel_init(void)
     ROOT_DEV = SETUP_ROOT_DEV;      /* default root device from boot loader */
 #ifdef CONFIG_BOOTOPTS
     opts.nextumb = opts.umbseg;     /* init static structure variables */
+    init_command = argv_init[1];    /* default startup task 1 */
     hasopts = parse_options();      /* parse options found in /bootops */
 #endif
 
@@ -264,18 +256,20 @@ static void INITPROC try_exec_process(const char *path)
 
 static void INITPROC do_init_task(void)
 {
-    int num;
+    int num, execinit;
     const char *s;
 
     mount_root();
 
-#ifdef CONFIG_SYS_NO_BININIT
+    execinit = (strcmp(init_command, bininit) == 0) && (sys_access("/bin/init", 1) == 0);
+    printk("execinit %d\n", execinit);
+
     /* when no /bin/init, force initial process group on console to make signals work*/
-    current->session = current->pgrp = 1;
-#endif
+    if (!execinit)
+        current->session = current->pgrp = 1;
 
     /* Don't open /dev/console for /bin/init, 0-2 closed immediately and fragments heap*/
-    //if (strcmp(init_command, bininit) != 0) {
+    //if (!execinit) {
         /* Set stdin/stdout/stderr to /dev/console if not running /bin/init*/
         num = sys_open(s="/dev/console", O_RDWR, 0);
         if (num < 0)
@@ -295,21 +289,14 @@ static void INITPROC do_init_task(void)
 #endif
     seg_add(DEF_OPTSEG, DMASEG);    /* DEF_OPTSEG through REL_INITSEG */
 
-    /* pass argc/argv/env array to init_command */
-
-    /* unset special sys_wait4() processing if pid 1 not /bin/init*/
-    if (strcmp(init_command, bininit) != 0)
-        current->ppid = 1;      /* turns off auto-child reaping*/
-
-    /* run /bin/init or init= command, normally no return*/
+    /* run /bin/init or init= command w/argc/argv/env, normally no return*/
     run_init_process_sptr(init_command, (char *)argv_init, argv_slen);
 #else
     try_exec_process(init_command);
 #endif /* CONFIG_BOOTOPTS */
 
-    printk("No init - running %s\n", binshell);
-    current->ppid = 1;          /* turns off auto-child reaping*/
-    try_exec_process(binshell);
+    printk("No %s - running sh\n", init_command);
+    try_exec_process("/bin/sh");
     try_exec_process("/bin/sash");
     panic("No init or sh found");
 }

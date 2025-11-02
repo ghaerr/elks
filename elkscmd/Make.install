@@ -175,6 +175,9 @@ endif
 ifdef CONFIG_SYS_DEFSHELL_SASH
 	TAGS += :defsash|
 endif
+ifndef CONFIG_SYS_NO_BININIT
+	TAGS += :init|
+endif
 
 TAGS += :end
 
