@@ -17,7 +17,7 @@ CLEANME 	= $(BASEDIR)/include/arch/asm-offsets.h
 
 DEPEND  	= 
 
-DISTFILES	= defconfig
+DISTFILES	= 
 
 NOINDENT	= 
 

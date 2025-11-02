@@ -23,7 +23,7 @@ CLEANME 	=
 
 DEPEND  	= 
 
-DISTFILES	= syscall.dat
+DISTFILES	= 
 
 NOINDENT	= irqtab.S process.c strace.h system.c timer.c
 

@@ -4,6 +4,18 @@
 #							#
 #########################################################
 
+#
+# make clean	Remove all of the compilation junk, so we know
+#		we're starting from scratch.
+#
+# make dep	Create a full set of dependencies.
+#
+# make Image	Compile ELKS and create the standard image file.
+#
+# make nodep	Remove all of the dependency information.
+#
+
+
 # Specify the relative path from here to the root of the tree.
 # Several other variables are defined based on the definition of this
 # variable, so it needs to be accurate.
@@ -22,7 +34,7 @@ CLEANME 	=
 
 DEPEND  	= include/linuxmt/compiler-generated.h
 
-DISTFILES	= BUGS CHANGELOG COPYING INSTALLATION RELNOTES TODO nodeps
+DISTFILES	= 
 
 NOINDENT	=
 
@@ -128,18 +140,8 @@ elks.spec: Makefile
 #########################################################################
 # Standard commands.
 
-dist:
-	@${MAKE} -C . nodep clean distclean
-	@echo
-	-rm -rf $(DISTDIR)
-	@${MAKE} mkdist
-
-distclean: clean
-	rm -f arch/i86/Image
-
 #########################################################################
 # Create distribution archives.
-
 
 #########################################################################
 # Configuration stuff
@@ -151,33 +153,6 @@ clean:	nodep doclean
 
 dep:	$(TOPDIR)/include/autoconf.h
 	@$(MAKE) dodep
-	@echo
-	@echo ' * Dependencies configured. Next, you need to run the'
-	@echo ' * following command:'
-	@echo ' *'
-	@echo ' *    `make Image`     to create a kernel image ready to boot'
-	@echo ' *                     from floppy diskette, or'
-	@echo
-
-#########################################################################
-#
-#	make dist	Create a distribution tree from the current set
-#			of files.
-#
-#	make clean	Remove all of the compilation junk, so we know
-#			we're starting from scratch.
-#
-#	make dep	Create a full set of dependencies.
-#
-#	make Image	Compile ELKS and create the standard image file.
-#
-#	make nodep	Remove all of the dependency information.
-#
-#	make dist	Create a distribution tree from the current set
-#			of files. This creates the POST distribution.
-#
-#########################################################################
-
 
 #########################################################################
 ### Dependencies:

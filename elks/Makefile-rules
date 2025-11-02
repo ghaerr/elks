@@ -357,16 +357,14 @@ nodep:
 # Sub-command used by the `make dist` command in the toplevel Makefile.
 # NOTE: disabled as slows general make times greatly
 
-mkdist:
-	echo "make dist not supported"
-	exit
-	mkdir -m 755 -p $(DISTDIR)
-	cp -pf $(MKDIST) $(DISTFILES) $(DISTDIR)
-	@for DIR in */ ; do \
-		if [ -f "$${DIR}/Makefile" ]; then \
-			${MAKE} -C "$${DIR}" mkdist ; \
-		fi ; \
-	done
+#mkdist:
+#	mkdir -m 755 -p $(DISTDIR)
+#	cp -pf $(MKDIST) $(DISTFILES) $(DISTDIR)
+#	@for DIR in */ ; do \
+#		if [ -f "$${DIR}/Makefile" ]; then \
+#			${MAKE} -C "$${DIR}" mkdist ; \
+#		fi ; \
+#	done
 
 #########################################################################
 # End of standard rules file.
