@@ -17,7 +17,7 @@ CLEANME 	= $(BASEDIR)/include/arch/asm-offsets.h
 
 DEPEND  	= 
 
-DISTFILES	= defconfig
+DISTFILES	= 
 
 NOINDENT	= 
 
@@ -149,24 +149,7 @@ drivers/net/net_drv.a: $(XINCLUDE)
 	${MAKE} -C drivers/net net_drv.a
 
 #########################################################################
-# commands.
-
-distdir:
-	mkdir -p $(DISTDIR)/arch/i86
-	(cd $(DISTDIR)/arch/i86 ; \
-		mkdir -p boot drivers kernel lib mm tools)
-	(cd $(DISTDIR)/arch/i86/drivers ; \
-		mkdir -p block char)
-	cp -pf defconfig Makefile $(DISTDIR)/arch/i86
-	cp -pf boot/*.S boot/*.c $(DISTDIR)/arch/i86/boot
-	cp -pf tools/Makefile tools/*.h $(DISTDIR)/arch/i86/tools
-	cp -pf tools/mknbi-elks tools/*.c $(DISTDIR)/arch/i86/tools
-	cp -pf tools/*.s tools/*.1 $(DISTDIR)/arch/i86/tools
-	${MAKE} -C drivers/block distdir
-	${MAKE} -C drivers/char distdir
-	${MAKE} -C kernel distdir
-	${MAKE} -C lib distdir
-	${MAKE} -C mm distdir
+# Standard commands.
 
 #########################################################################
 ### Dependencies:

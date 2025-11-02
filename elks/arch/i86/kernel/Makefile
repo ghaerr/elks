@@ -23,7 +23,7 @@ CLEANME 	=
 
 DEPEND  	= 
 
-DISTFILES	= syscall.dat
+DISTFILES	= 
 
 NOINDENT	= irqtab.S process.c strace.h system.c timer.c
 
@@ -79,11 +79,6 @@ strace.o: strace.c
 
 #########################################################################
 # Standard commands.
-
-distdir:
-	cp -pf Makefile mkentry.sh $(DISTDIR)/arch/i86/kernel
-	cp -pf syscall.dat $(DISTDIR)/arch/i86/kernel
-	cp -pf *.c $(DISTDIR)/arch/i86/kernel
 
 #########################################################################
 ### Dependencies:

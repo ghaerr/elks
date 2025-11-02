@@ -29,7 +29,7 @@ include $(TOPDIR)/Make.defs
 #
 #	CLEANME 	Any files in the current directory to be removed
 #			by the `make clean` command that are not in the
-#			standard list of files matching "*~", "*.bak",
+#			standard list of files matching "*~",
 #			"*.a", "*.o", "*.map" or "*.tmp" or named "core".
 #			Also removed are any files matching "*.s" for
 #			which a "*.c" or "*.S" file also exists.
@@ -158,7 +158,7 @@ endif
 #########################################################################
 # Specify the tools to use, with their flags.
 
-################################
+#########################################################################
 # Common definitions
 
 CC_PROTO	= gcc $(INCLUDES) -M -MG $(CCDEFS)
@@ -173,7 +173,7 @@ LHFLAGS 	= $(LCFLAGS) -exportfcn -declundef -fcnuse -fielduse \
 
 ifneq ($(USEBCC), N)
 
-################################
+#########################################################################
 # Definitions using ia16-elf-gcc compiler
 
 AS      = ia16-elf-as
@@ -210,7 +210,7 @@ INCLUDES += -I$(TOPDIR)/libc/include
 
 else
 
-################################
+#########################################################################
 # Definitions using GCC host compiler
 
 AS      = as
@@ -253,7 +253,7 @@ elks:
 # Standard commands.
 
 dokclean: $(CLEANDEP)
-	rm -fv *~ *.a *.bak *.lint *.map *.o *.tmp core $(CLEANME)
+	rm -f *~ *.a *.map *.o *.tmp $(CLEANME)
 	@for DIR in */ ; do \
 		if [ -f "$$DIR/Makefile" -a "$$DIR" != "tools" ]; then \
 			${MAKE} -C "$$DIR" dokclean ; \
@@ -261,12 +261,12 @@ dokclean: $(CLEANDEP)
 	done
 
 doclean: $(CLEANDEP)
-	rm -fv *~ *.a *.bak *.lint *.map *.o *.tmp core $(CLEANME)
+	rm -f *~ *.a *.bak *.lint *.map *.o *.tmp core $(CLEANME)
 #	@for FILE in *.s ; do \
 #		BASE=`basename "$$FILE" .s` ; \
 #		if [ -f "$$BASE.c" -o -f "$$BASE.S" ]; then \
-#			echo rm -fv "$$FILE" ; \
-#			rm -fv "$$FILE" ; \
+#			echo rm -f "$$FILE" ; \
+#			rm -f "$$FILE" ; \
 #		fi ; \
 #	done
 	@for DIR in */ ; do \
@@ -284,90 +284,6 @@ dodep:	$(DEPEND)
 			${MAKE} -C "$$DIR" dodep ; \
 		fi ; \
 	done
-
-dofixme:
-	@for FILE in $${USEME:-*.[ch]} ; do \
-	    if [ -f "$${FILE}" ]; then \
-		if fgrep -q FIXME "$${FILE}" ; then \
-		    echo WARNING: "$${FILE}" includes a FIXME comment. ; \
-		fi ; \
-	    fi ; \
-	done
-	@if [ -z "$${USEME}" ]; then \
-		for DIR in */ ; do \
-			if [ -f "$$DIR/Makefile" ]; then \
-				${MAKE} -C "$$DIR" dolint ; \
-			fi ; \
-		done ; \
-	fi
-
-doindent:
-	$(BASEDIR)/scripts/reindent $(NOINDENT)
-
-dolint:
-	@for FILE in $${USEME:-*.[ch]} ; do \
-	    if [ -f "$${FILE}" ]; then \
-		    echo $(LINT) ... "$${FILE}" ; \
-		    SLEEP=N ; \
-		    if fgrep -q FIXME "$${FILE}" ; then \
-			echo WARNING: "$${FILE}" includes a FIXME comment. ; \
-			SLEEP=Y ; \
-		    fi ; \
-		    if fgrep -q '#asm' "$${FILE}" ; then \
-			echo WARNING: "$${FILE}" includes assembler section. ; \
-			SLEEP=Y ; \
-		    fi ; \
-		    if fgrep -q '#ifndef S_SPLINT_S' "$${FILE}" ; then \
-			echo WARNING: "$${FILE}" includes disabled section. ; \
-			SLEEP=Y ; \
-		    fi ; \
-		    if fgrep -q '/*@ignore@*/' "$${FILE}" ; then \
-			echo WARNING: "$${FILE}" includes section ignored by splint ; \
-			SLEEP=Y ; \
-		    fi ; \
-		    if [ $SLEEP != N ]; then \
-			sleep 1 ; \
-		    fi ; \
-		    if echo "$${FILE}" | grep -q '\.h$$' ; then \
-			$(LINT) $(LINTLEVEL) $(LHFLAGS) "$${FILE}" \
-				> "$${FILE}.lint" 2>&1 ; \
-		    else \
-			$(LINT) $(LINTLEVEL) $(LCFLAGS) "$${FILE}" \
-				> "$${FILE}.lint" 2>&1 ; \
-		    fi ; \
-		    if [ $$? -eq 0 ]; then \
-			rm -f "$${FILE}.lint" ; \
-		    else \
-			cat "$${FILE}.lint" ; \
-		    fi ; \
-	    fi ; \
-	done
-	@if [ -z "$${USEME}" ]; then \
-		for DIR in */ ; do \
-			if [ -f "$$DIR/Makefile" ]; then \
-				${MAKE} -C "$$DIR" dolint ; \
-			fi ; \
-		done ; \
-	fi
-
-fixme:	dofixme
-	@echo
-	@echo Those are all the FIXME comments in this tree.
-	@echo
-
-indent:	doindent
-	@for DIR in */ ; do \
-		if [ -f "$$DIR/Makefile" ]; then \
-			${MAKE} -C "$$DIR" indent ; \
-		fi ; \
-	done
-
-lint:	dolint
-	@echo
-	@echo " * All files in and under this directory have now been checked. Where problems"
-	@echo " * were found, they will be found in the relevant *.lint file in the same"
-	@echo " * directory. However, where no problems were found, this file is deleted."
-	@echo
 
 mkdep:
 	@sed '/\#\#\# Dependencies:/q' < Makefile > make.tmp
@@ -397,6 +313,16 @@ nodep:
 		fi ; \
 	done
 
+doindent:
+	$(BASEDIR)/scripts/reindent $(NOINDENT)
+
+indent:	doindent
+	@for DIR in */ ; do \
+		if [ -f "$$DIR/Makefile" ]; then \
+			${MAKE} -C "$$DIR" indent ; \
+		fi ; \
+	done
+
 #########################################################################
 # Specify the directory we are to create the distribution copy of this
 # directory in, in such a way that no . or .. directories occur. This
@@ -410,16 +336,14 @@ nodep:
 # Sub-command used by the `make dist` command in the toplevel Makefile.
 # NOTE: disabled as slows general make times greatly
 
-mkdist:
-	echo "make dist not supported"
-	exit
-	mkdir -m 755 -p $(DISTDIR)
-	cp -pf $(MKDIST) $(DISTFILES) $(DISTDIR)
-	@for DIR in */ ; do \
-		if [ -f "$${DIR}/Makefile" ]; then \
-			${MAKE} -C "$${DIR}" mkdist ; \
-		fi ; \
-	done
+#mkdist:
+#	mkdir -m 755 -p $(DISTDIR)
+#	cp -pf $(MKDIST) $(DISTFILES) $(DISTDIR)
+#	@for DIR in */ ; do \
+#		if [ -f "$${DIR}/Makefile" ]; then \
+#			${MAKE} -C "$${DIR}" mkdist ; \
+#		fi ; \
+#	done
 
 #########################################################################
 # End of standard rules file.

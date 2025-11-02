@@ -49,12 +49,5 @@ net.a: $(OBJS)
 #########################################################################
 # Standard commands.
 
-distdir:
-	cp -pf config.in Makefile *.c $(DISTDIR)/net
-	mkdir $(DISTDIR)/net/ipv4
-	cp -pf ipv4/Makefile ipv4/*.c ipv4/*.h $(DISTDIR)/net/ipv4
-	mkdir $(DISTDIR)/net/unix
-	cp -pf unix/Makefile unix/*.c unix/*.h $(DISTDIR)/net/unix
-
 #########################################################################
 ### Dependencies:
