@@ -52,9 +52,5 @@ all: mtools-4.0.23/Makefile
 mtools-4.0.23/Makefile:
 	cd mtools-4.0.23; ./configure --disable-floppyd; cd ..
 
-dokclean:
-
-doclean:
-
 clean:
 	make -C mtools-4.0.23 clean
