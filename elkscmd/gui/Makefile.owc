@@ -19,7 +19,7 @@ CLBASE += -Wc,-zev -Wc,-zls -Wc,-x -Wc,-wcd=303
 WARNINGS = -Wall -Wextra
 INCLUDES = -I$(TOPDIR)/libc/include -I$(TOPDIR)/elks/include
 INCLUDES += -I$(TOPDIR)/libc/include/watcom
-DEFINES = -D__ELKS__
+DEFINES = 
 CFLAGS = -Os $(CLBASE) $(WARNINGS) $(INCLUDES) $(DEFINES) $(LOCALFLAGS)
 LDBASE = -bos2 -s
 LDBASE += -Wl,option -Wl,dosseg
@@ -46,8 +46,7 @@ all: $(PROG)
 
 $(PROG): $(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
-	cp $@ $(TOPDIR)/elkscmd/rootfs_template/bin
 
 clean:
 	$(RM) $(PROG) *.obj
-	$(RM) $(TOPDIR)/elkscmd/rootfs_template/bin/$(PROG)
+	$(RM) $(PROG) *.o8j *.as *.i *.lst

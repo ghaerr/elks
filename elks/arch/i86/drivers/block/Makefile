@@ -96,9 +96,5 @@ blk_drv.a: $(OBJS)
 #########################################################################
 # Standard commands.
 
-distdir:
-	cp -pf config.in Makefile $(DISTDIR)/arch/i86/drivers/block
-	cp -pf *.S *.h *.c $(DISTDIR)/arch/i86/drivers/block
-
 #########################################################################
 ### Dependencies:

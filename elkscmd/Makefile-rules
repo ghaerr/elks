@@ -23,28 +23,37 @@ include $(TOPDIR)/Make.defs
 ELKS_DIR=$(TOPDIR)/elks
 ELKSCMD_DIR=$(TOPDIR)/elkscmd
 
-INCLUDES=-I$(TOPDIR)/include -I$(TOPDIR)/libc/include -I$(ELKS_DIR)/include
-
 ##############################################################################
 #
 # Determine the ELKS kernel version.
 
-E_V=$(shell if [ -f $(ELKS_DIR)/Makefile-rules ]; then \
-		grep -v '^\#' $(ELKS_DIR)/Makefile-rules \
-		    | fgrep = | head -4 | tr '\#' = | cut -d = -f 2 ;\
-	    else echo Version not known ; fi)
+E_V=$(shell grep -v '^\#' $(ELKS_DIR)/Makefile-rules \
+		    | fgrep = | head -4 | tr '\#' = | cut -d = -f 2 ; )
 
-ELKS_VSN=$(shell printf '%s.%s.%s%s' $(E_V))
+ELKS_VERSION=$(shell printf '%s.%s.%s%s' $(E_V))
 
 ##############################################################################
 #
 # Compiler variables for programs to be compiled as host applications.
+
 HOSTCC = gcc
 HOSTCFLAGS = -O3
 
 ##############################################################################
 #
-# Compiler variables for programs cross-compiled for ELKS.
+# Default compiler.
+
+ifeq ($(COMPILER), )
+COMPILER = IA16
+endif
+
+##############################################################################
+#
+# Compiler variables for programs cross-compiled for ELKS using ia16-elf-gcc
+
+ifeq ($(COMPILER), IA16)
+
+INCLUDES = -I$(TOPDIR)/include -I$(TOPDIR)/libc/include -I$(ELKS_DIR)/include
 
 CLBASE =  -mcmodel=small -melks-libc -mtune=i8086 -Wall -Os
 CLBASE += -mno-segment-relocation-stuff
@@ -55,8 +64,10 @@ ifeq ($(CONFIG_APPS_FTRACE), y)
     CLBASE += -finstrument-functions-simple -maout-symtab
 endif
 
+WARNINGS = -Wextra -Wtype-limits -Wno-unused-parameter -Wno-sign-compare -Wno-empty-body
+
 # temporarily turn off typical non-K&R warnings for now
-WARNINGS = -Wno-implicit-int
+WARNINGS += -Wno-implicit-int
 # temporarily turn off suggesting parenthesis around assignment used as truth value
 WARNINGS += -Wno-parentheses
 
@@ -65,11 +76,24 @@ AS=ia16-elf-as
 LD=ia16-elf-gcc
 
 CFLAGS =  $(CLBASE) $(WARNINGS) $(LOCALFLAGS) $(INCLUDES)
-CFLAGS += -Wextra -Wtype-limits -Wno-unused-parameter -Wno-sign-compare -Wno-empty-body
-CFLAGS += -D__ELKS__ -DELKS_VERSION=\"$(ELKS_VSN)\"
 ASFLAGS = -mtune=i8086 --32-segelf
 LDFLAGS = $(CLBASE)
+LDLIBS =
 
+endif
+
+##############################################################################
+#
+# Compiler variables for programs cross-compiled for ELKS using OpenWatcom C
+
+ifeq ($(COMPILER), WATCOM)
+CC = ewcc
+LD = ewlink
+CFLAGS = $(WARNINGS) $(LOCALFLAGS) $(INCLUDES)
+LDFLAGS =
+LDLIBS =
+
+endif
 
 ###############################################################################
 #
@@ -95,5 +119,8 @@ TINYPRINTF=$(ELKSCMD_DIR)/lib/tiny_vfprintf.o
 
 .c.o:
 	$(CC) $(CFLAGS) -c -o $*.o $<
+
+%.obj: %.c
+	$(CC) $(CFLAGS) $<
 
 ###############################################################################

@@ -4,9 +4,9 @@ ifeq "$(TOPDIR)" ""
 $(error TOPDIR environment variable not set)
 endif
 
-ifeq "$(C86)" ""
-$(error C86 environment variable not set)
-endif
+#ifeq "$(C86)" ""
+#$(error C86 environment variable not set)
+#endif
 
 INCLUDES = -I$(TOPDIR)/libc/include -I$(TOPDIR)/elks/include -I$(TOPDIR)/libc/include/c86
 DEFINES = -D__LIBC__ -D__HAS_NO_FLOATS__=1 -D__HAS_NO_LONGLONG__

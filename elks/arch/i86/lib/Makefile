@@ -91,8 +91,5 @@ bios1F-pc98.o: a20-pc98.inc
 #########################################################################
 # Standard commands.
 
-distdir:
-	cp -pf Makefile $(SRCS1) $(SRCS2) $(SRCS3) $(DISTDIR)/arch/i86/lib
-
 #########################################################################
 ### Dependencies:

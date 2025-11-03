@@ -1,0 +1,48 @@
+Notes on kernel Makefiles:
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you add any new directories to the ELKS tree, you can link them into the
+standard versions of the standard make commands for ELKS by including the
+following lines at the top of the Makefile you create in that directory:
+
+	BASEDIR		= {path to the base directory for this tree}
+
+	USEBCC	 	= Y
+
+	CLEANDEP	= 
+
+	CLEANME 	= 
+
+	DEPEND		= 
+
+	DISTFILES	= 
+
+	include $(BASEDIR)/Makefile-rules
+
+The values on these lines MUST match the following descriptions:
+
+	BASEDIR 	The relative path from the directory the Makefile
+			is in to the system base directory. This is used
+			extensively by the various rules, so MUST be
+			accurate.
+
+	USEBCC		Whether to compile using IA16 or HOST GCC. If this is
+			set to 'N' it compiles using HOST GCC, otherwise it
+			compiles using ia16-elf-gcc.
+
+	CLEANDEP	Any files in the current directory that the
+			`make clean` command is dependent on.
+
+	CLEANME 	Any files in the current directory to be removed
+			by the `make clean` command that are not in the
+			standard list of files matching "*~", "*.bak",
+			"*.o", "*.map" or "*.tmp", or named "core". Also
+			removed are any files matching "*.s" for which a
+			"*.c" or "*.S" file also exists.
+
+	DEPEND		Any files in the current directory that the
+			`make dep` command is dependent on.
+
+	DISTFILES	Unused.
+
+No other variables should be defined before including this file.
