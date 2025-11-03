@@ -87,9 +87,6 @@ endif
 # Compiler variables for programs cross-compiled for ELKS using OpenWatcom C
 
 ifeq ($(COMPILER), WATCOM)
-  ifeq ($(WATCOM), )
-  $(error WATCOM not defined: OpenWatcom C not installed?)
-  endif
 CC = ewcc
 LD = ewlink
 CFLAGS = $(WARNINGS) $(LOCALFLAGS) $(INCLUDES)

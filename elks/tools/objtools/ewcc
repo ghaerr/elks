@@ -13,13 +13,13 @@ set -e
 if [ -z "$TOPDIR" ]
   then
     echo "ELKS TOPDIR= environment variable not set"
-    exit
+    exit 1
 fi
 
 if [ -z "$WATCOM" ]
   then
     echo "WATCOM= environment variable not set"
-    exit
+    exit 1
 fi
 
 ELKSLIBCINCLUDE=$TOPDIR/libc/include
@@ -73,11 +73,11 @@ while true; do
   case "$1" in
     --*)
         a=${1:1}
-        echo "Adding -Wc,$a"
+        #echo "Adding -Wc,$a"
         CCFLAGS="$CCFLAGS -Wc,$a"
         shift ;;
     -*)
-        echo "Adding $1"
+        #echo "Adding $1"
         CCFLAGS="$CCFLAGS $1"
         shift ;;
     *)  break ;;
