@@ -58,8 +58,6 @@ all: $(PROG)
 
 $(PROG): $(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
-	cp $@ $(TOPDIR)/elkscmd/rootfs_template/bin
 
 clean:
 	$(RM) $(PROG) *.o8j *.as *.i *.lst
-	$(RM) $(TOPDIR)/elkscmd/rootfs_template/bin/$(PROG)

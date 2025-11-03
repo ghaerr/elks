@@ -16,11 +16,9 @@ all: $(PRGS)
 
 $(PRGS): $(OBJS)
 	$(LD) -o $@ $(LDFLAGS) $^ $(LDLIBS)
-	cp $@ $(TOPDIR)/elkscmd/rootfs_template/bin
 
 install: all
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
 	$(RM) $(PRGS) *.obj *.os2
-	$(RM) $(TOPDIR)/elkscmd/rootfs_template/bin/fsck-dos.os2
