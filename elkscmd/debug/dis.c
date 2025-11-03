@@ -161,7 +161,7 @@ void usage(void)
 int main(int ac, char **av)
 {
     unsigned long seg = 0, off = 0;
-    int fd, ch;
+    int ch;
     char *symfile = NULL;
     long count = 22;
 
@@ -196,7 +196,7 @@ int main(int ac, char **av)
 
 #ifdef _M_I86
     if (f_ksyms) {
-        fd = open("/dev/kmem", O_RDONLY);
+        int fd = open("/dev/kmem", O_RDONLY);
         if (fd < 0
             || ioctl(fd, MEM_GETCS, &textseg) < 0
             || ioctl(fd, MEM_GETDS, &dataseg) < 0

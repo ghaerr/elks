@@ -163,7 +163,8 @@ endif
 endif
 
 ifdef CONFIG_APPS_2880K
-	TAGS = :boot|:init|:ash|:sash|:net|:other|:busyelks|:test|:128k|:192k|:360k|:360c|:720k|:1200k|:1200c|:1232k|:1232c|:1440k|:1440c|
+    # :128k|:192k| rom apps not included
+	TAGS = :boot|:init|:ash|:sash|:net|:other|:busyelks|:test|:360k|:360c|:720k|:1200k|:1200c|:1232k|:1232c|:1440k|:1440c|
 ifndef CONFIG_APPS_FTRACE
 	CONFIG_APP_MAN_PAGES=y
 endif
@@ -241,9 +242,6 @@ ifdef CONFIG_APP_BUSYELKS
 	$(MAKE) -C busyelks links
 endif
 	for DIR in $(INSTDIRS); do $(MAKE) -C $$DIR install || exit 1; done
-ifdef CONFIG_APP_ROMPRG
-	$(MAKE) -C romprg install
-endif
 ifdef CONFIG_APP_MAN_PAGES
 	mkdir -p $(DESTDIR)/lib/man1
 	cp -rp man/man1 $(DESTDIR)/lib

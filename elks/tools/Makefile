@@ -35,7 +35,7 @@ all:
 	$(MAKE) -C fixomf all
 	$(MAKE) -C elf2elks all
 	$(MAKE) -C elks-compress all
-	$(MAKE) -C eman all
+	$(MAKE) -C elkscmds all
 	$(MAKE) -C mtools all
 
 

@@ -20,12 +20,14 @@ struct minix_exec_hdr sym_hdr;
 
 #define MAGIC       0x0301  /* magic number for executable progs */
 
+#ifdef _M_I86
 static void noinstrument cfmemcpy(unsigned char __far *dst, unsigned char *src, int n)
 {
     do {
         *dst++ = *src++;
     } while (--n);
 }
+#endif
 
 /* allocate space and read symbol table */
 static unsigned char __far * noinstrument alloc_read(int fd, size_t size)

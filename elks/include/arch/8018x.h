@@ -1,4 +1,6 @@
-
+#ifndef CONFIG_8018X_FCPU
+#define CONFIG_8018X_FCPU       16
+#endif
 
 /* serial, serial-8018x.c */
 #define UART0_IRQ_RX  1 /* maps to interrupt type 20 */

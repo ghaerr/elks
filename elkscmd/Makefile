@@ -34,6 +34,7 @@ IA16DIRS =       \
 	minix2      \
 	minix3      \
 	misc_utils  \
+	romprg      \
 	sash        \
 	screen      \
 	cron        \
@@ -71,9 +72,6 @@ ia16:
 	@if [ ! -e $(TOPDIR)/include/autoconf.h ]; \
 	then echo -e "\n*** ERROR: You must configure ELKS first ***\n" >&2; exit 1; fi
 	for DIR in $(IA16DIRS); do $(MAKE) -C $$DIR all || exit 1; done
-ifdef CONFIG_APP_ROMPRG
-	$(MAKE) -C romprg
-endif
 
 owc:
 	for DIR in $(OWCDIRS); do $(MAKE) -C $$DIR -f Makefile.owc all || exit 1; done
