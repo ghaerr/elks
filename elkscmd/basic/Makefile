@@ -30,6 +30,10 @@ ifeq ($(CONFIG_ARCH_8018X), y)
 OBJS += host-8018x.o
 endif
 
+ifeq ($(CONFIG_ARCH_NECV25), y)
+OBJS += host-necv25.o
+endif
+
 ifeq ($(CONFIG_ARCH_PC98), y)
 OBJS += host-pc98.o asm-pc98.o
 endif
