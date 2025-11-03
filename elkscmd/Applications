@@ -44,8 +44,8 @@
 #   :mtools     MSDOS utilities                             mtools
 #   :elvis      Elvis vi editor                             elvis
 #   :net        Networking apps (inc. on 720k,1200k,1440k)  ktcp,inet
-#   :nanox      Nano-X graphical apps                       nano-X
 #   :other      Other apps
+#   :romprg     8018X flash rom programmer                  romprg
 #   :busyelks   Busyelks                                    busyelks
 #   :be-*       File created as symlink if busyelks option 'B' set
 #   ::path/file path/file to install file as on $(DESTDIR)
@@ -229,6 +229,7 @@ debug/disasm                      :other                    :1232k:1440k
 #debug/nm86                        :other                            :1440c
 #debug/system.sym ::lib/system.sym :other                            :1440c
 #debug/testsym                     :other                            :1440c
+romprg/romprg                   :romprg
 basic/basic.os2                 :owc
 fsck_dos/fsck-dos.os2           :owc
 gui/paint.os2                   :owc

@@ -288,12 +288,12 @@ int cli_erase(int argc, char **argv) {
 
       int err = 0;
 
-      if(start & (PROGRAMMER_SECTOR_SIZE - 1) != 0) {
+      if(start & (PROGRAMMER_SECTOR_SIZE - 1)) {
         fprintf(stderr, "Start address 0x%x is not at sector boundary\n", start);
         err = 1;
       }
 
-      if(end & (PROGRAMMER_SECTOR_SIZE - 1) != 0) {
+      if(end & (PROGRAMMER_SECTOR_SIZE - 1)) {
         fprintf(stderr, "End address 0x%x is not at sector boundary\n", end);
         err = 1;
       }

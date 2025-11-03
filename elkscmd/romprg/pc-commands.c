@@ -3,6 +3,7 @@
 #include "common/replies.h"
 #include "common/protocol.h"
 #include "pc-commands.h"
+#include "version.h"
 
 
 int command_ping(ReplyPing *ping) {
@@ -100,7 +101,7 @@ int command_write(uint32_t start_address, uint8_t len, uint8_t const* buffer) {
   struct {
     uint8_t  cmd_id;
     uint32_t write_addr;
-    uint8_t  data[len];
+    uint8_t  data[PROGRAMMER_MAX_LEN];
   } __attribute__((packed)) cmd;
 
   cmd.cmd_id = CMD_write;

@@ -127,7 +127,7 @@ CONFIG_APP_TINYIRC		inet/tinyirc/	Installs /bin/tinyirc
 CONFIG_APP_URLGET		inet/urlget/	Installs /bin/urlget
 
 # embedded target tools
-CONFIG_APP_ROMPRG       romprg/			Installs /bin/romprg
+                        romprg/			8018X ROM flash programmer
 
 # Other directories in elkscmd/
 rootfs_template/						Root filesystem template for static files not built in elkscmd/
