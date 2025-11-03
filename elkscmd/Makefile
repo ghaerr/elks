@@ -14,7 +14,7 @@ include $(BASEDIR)/Makefile-rules
 
 # All subdirectories to build & clean
 
-# unused commands but working compilations: nano levee
+# unused commands but working compilations: nano-X nano levee
 IA16DIRS =       \
 	lib         \
 	advent      \
@@ -42,14 +42,6 @@ IA16DIRS =       \
 	tui         \
 	test        \
 	# EOL
-
-ifndef CONFIG_ARCH_SOLO86
-ifndef CONFIG_ARCH_SWAN
-ifndef CONFIG_ARCH_8018X
-IA16DIRS += nano-X
-endif
-endif
-endif
 
 OWCDIRS =       \
     basic       \
