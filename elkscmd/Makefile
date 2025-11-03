@@ -46,7 +46,9 @@ SUBDIRS =       \
 ifndef CONFIG_ARCH_SOLO86
 ifndef CONFIG_ARCH_SWAN
 ifndef CONFIG_ARCH_8018X
+ifndef CONFIG_ARCH_NECV25
 SUBDIRS += nano-X
+endif
 endif
 endif
 endif

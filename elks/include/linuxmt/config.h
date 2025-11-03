@@ -89,6 +89,26 @@
 #define CONFIG_8018X_EB
 #endif
 
+#ifdef CONFIG_ARCH_NECV25
+#define MAX_SERIAL              2       /* max number of serial tty devices*/
+#define SETUP_VID_COLS          80      /* video # columns */
+#define SETUP_VID_LINES         25      /* video # lines */
+#define SETUP_CPU_TYPE          setupb(0x20)    /* processor type */
+#define SETUP_MEM_KBYTES        512     /* base memory in 1K bytes */
+#define SETUP_XMS_KBYTES        0       /* xms memory in 1K bytes */
+#define SETUP_ROOT_DEV          0x0600  /* root device ROMFS */
+#define SETUP_ELKS_FLAGS        0       /* flags for root device type */
+#define SETUP_PART_OFFSETLO     0       /* partition offset low word */
+#define SETUP_PART_OFFSETHI     0       /* partition offset high word */
+#define SYS_CAPS                0       /* no XT/AT capabilities */
+#define UTS_MACHINE             "NECV25"
+
+#undef  USER_FLAGS                      /* not redefining hangs V25   */
+#define USER_FLAGS 0xf200               /* keep default register bank */
+
+#define CONFIG_NECV25_FCPU      14745600UL /* external CPU crystal clock in Hz             */
+#endif /* CONFIG_ARCH_NECV25 */
+
 #ifdef CONFIG_ARCH_SWAN
 #define MAX_SERIAL              1       /* max number of serial tty devices*/
 #define SETUP_VID_COLS          28      /* video # columns */

@@ -223,6 +223,10 @@ static void INITPROC kernel_banner(seg_t init, seg_t extra)
     printk("8018X machine, ");
 #endif
 
+#ifdef CONFIG_ARCH_NECV25
+    printk("NECV25 machine, cpu %d, ", arch_cpu);
+#endif
+
 #ifdef CONFIG_ARCH_SWAN
     printk("WonderSwan, ");
 #endif

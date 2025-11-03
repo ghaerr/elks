@@ -310,6 +310,16 @@ a6:     out     %al,$PIC1_CMD           // Ack on primary controller
         mov $0xff02, %dx // EOI register so the ICU
         out %ax, %dx // acks the highest priority interrupt
 
+#elif defined(CONFIG_ARCH_NECV25)
+//
+//      Determine if trap or interrupt
+//
+   
+        cmp     $16,%ax
+        jge     was_trap         // Traps need no reset
+
+        .word   0x920f           // NEC V25 specific FINT (End Of Interrupt) instruction
+
 #elif defined(CONFIG_ARCH_SOLO86)
         mov $0x1A, %dx          // Send INT done
         out %al, %dx

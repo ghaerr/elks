@@ -1265,6 +1265,52 @@ putc:	push %bx
 #endif /* CONFIG_ARCH_8018X*/
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Architecture specific routines for NECV25
+// Based on Santiago Hormazabal CONFIG_ARCH_8018X
+//	Entry points specific for platform setup of SETUP_xxx variables (see config.h)
+//		arch_set_initseg
+//		arch_get_mem
+
+#ifdef CONFIG_ARCH_NECV25
+#include "cputype.S"
+#include <arch/necv25.h>
+
+// Return total memory in Kbytes
+arch_get_mem:
+   mov   $SETUP_MEM_KBYTES,%ax
+   ret
+
+// Set INITSEG values for NEC V25 architecture
+// currently hard-coded in config.h
+arch_set_initseg:
+   call  getcpu                     // implemented in cputype.S
+
+   mov   $INITSEG,%ax
+   mov   %ax,%ds
+   ret
+
+// Write AL to console, save all other registers
+putc:	
+   push  %bx
+   push  %ds
+	 
+   movw  $NEC_HW_SEGMENT, %bx       // load DS to access memmory mapped CPU registers
+   movw  %bx, %ds
+
+1:                                  // wait for Tx ready
+   testb $0x80, %ds:NEC_STIC1
+   jz	   1b
+
+   movb  $0x47, %ds:NEC_STIC1       // clear Tx ready flag
+   movb  %al, %ds:NEC_TXB1          // send char
+	
+   pop   %ds
+   pop   %bx
+   ret
+
+#endif /* CONFIG_ARCH_NECV25 */
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Architecture specific routines for Solo/86
 //	Entry points specific for platform setup of SETUP_xxx variables (see config.h)
 //		arch_set_initseg
