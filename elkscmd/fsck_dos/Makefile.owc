@@ -1,22 +1,22 @@
 BASEDIR=..
+COMPILER=WATCOM
 
 include $(BASEDIR)/Makefile-rules
 
 ###############################################################################
 
 LOCALFLAGS = -Dlint -DELKS=1 -D__huge=
-# remove next line when FAT32 supported
-LOCALFLAGS += -Wno-shift-count-overflow
 
 ###############################################################################
 
-PRGS = fsck-dos
-OBJS = main.o boot.o check.o dir.o fat.o
+PRGS = fsck-dos.os2
+OBJS = boot.obj check.obj dir.obj fat.obj main.obj mem.obj
 
 all: $(PRGS)
 
 $(PRGS): $(OBJS)
-	$(LD) -o $@ $(LDFLAGS) -maout-heap=0xffff $^ $(LDLIBS)
+	$(LD) -o $@ $(LDFLAGS) $^ $(LDLIBS)
+	cp $@ $(TOPDIR)/elkscmd/rootfs_template/bin
 
 install: all
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
