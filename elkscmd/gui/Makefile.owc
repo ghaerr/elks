@@ -50,4 +50,5 @@ $(PROG): $(OBJS)
 
 clean:
 	$(RM) $(PROG) *.obj
+	$(RM) $(PROG) *.o8j *.as *.i *.lst
 	$(RM) $(TOPDIR)/elkscmd/rootfs_template/bin/$(PROG)
