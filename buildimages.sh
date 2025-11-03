@@ -59,6 +59,16 @@ build_rom_8018x()
     mv image/romfs.bin image/romfs-8018x.bin
 }
 
+# build NEC V25 rom image
+build_rom_necv25()
+{
+    cleanup
+    cp necv25.config .config
+    make
+    cp -p elks/arch/i86/boot/Image image/rom-necv25.bin
+    mv image/romfs.bin image/romfs-necv25.bin
+}
+
 # build 8088 rom image
 build_rom_8088()
 {
@@ -119,6 +129,7 @@ build_pc98
 build_pc98_1200
 build_pc98_1440
 build_rom_8018x
+build_rom_necv25
 build_rom_8088
 build_rom_swan
 build_ibm

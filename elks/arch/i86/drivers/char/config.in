@@ -9,6 +9,7 @@ mainmenu_option next_comment
 		"Direct         CONFIG_CONSOLE_DIRECT	\
 		 BIOS           CONFIG_CONSOLE_BIOS	\
 		 8018x		CONFIG_CONSOLE_8018X 	\
+		 NECV25		CONFIG_CONSOLE_NECV25 	\
 		 Headless       CONFIG_CONSOLE_HEADLESS"	Direct
 	if [ "$CONFIG_CONSOLE_DIRECT" = "y" ]; then
 		if [ "$CONFIG_ARCH_SWAN" = "y" ]; then

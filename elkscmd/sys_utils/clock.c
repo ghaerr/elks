@@ -248,6 +248,11 @@ int main(int argc, char **argv)
     time_t systime;
     int    arg;
 
+#ifdef CONFIG_ARCH_NECV25
+    errmsg("Sorry, clock not supported on this system.\n");
+    exit(1);
+#endif
+
     while ((arg = getopt(argc, argv, "rwsuvA")) != -1) {
         switch (arg) {
         case 'r':

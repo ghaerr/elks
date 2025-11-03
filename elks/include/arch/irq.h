@@ -27,7 +27,7 @@ void _irqit (void);
 void int_vector_set (int vect, word_t proc, word_t seg);
 void div0_handler_panic(void);
 
-/* irq-8259.c, irq-8018x.c*/
+/* irq-8259.c, irq-8018x.c, irq-necv25.c */
 void initialize_irq(void);
 void enable_irq(unsigned int);
 void disable_irq(unsigned int irq);

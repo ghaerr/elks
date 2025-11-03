@@ -81,6 +81,15 @@ if [ "$1" = "auto" ]; then
     make -j1 || clean_exit 8
 fi
 
+# Build NEC V25 kernel and image
+if [ "$1" = "auto" ]; then
+    echo "Building NECV 25 image..."
+    cp necv25.config .config
+    make kclean || clean_exit 7
+    rm elkscmd/basic/*.o
+    make -j1 || clean_exit 8
+fi
+
 # Build PC-98 kernel, some user land files and image
 if [ "$1" = "auto" ]; then
     echo "Building PC-98 image..."

@@ -46,6 +46,11 @@ ifeq ($(CONFIG_ARCH_8018X), y)
 	SERIAL = template
 endif
 
+ifeq ($(CONFIG_ARCH_NECV25), y)
+	CONIO = necv25
+	SERIAL = template
+endif
+
 ifeq ($(CONFIG_ARCH_IBMPC), y)
 	CONIO = bios
 	SERIAL = 8250
@@ -89,6 +94,10 @@ endif
 
 ifdef CONFIG_CONSOLE_8018X
 OBJS += console-serial-8018x.o
+endif
+
+ifdef CONFIG_CONSOLE_NECV25
+OBJS += console-serial-necv25.o
 endif
 
 ifdef CONFIG_ARCH_PC98

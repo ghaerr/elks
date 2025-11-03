@@ -50,6 +50,10 @@
 #define TIMER_IRQ	0		/* logical IRQ number, NOT related to the actual IRQ vector! */
 #endif
 
+#ifdef CONFIG_ARCH_NECV25
+#define TIMER_IRQ	0		/* logical IRQ number, NOT related to the actual IRQ vector! */
+#endif
+
 #ifdef CONFIG_ARCH_PC98
 /* timer, timer-8254.c*/
 #define TIMER_CMDS_PORT 0x77		/* command port */

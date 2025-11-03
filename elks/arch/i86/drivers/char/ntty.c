@@ -465,6 +465,7 @@ extern struct tty_ops headlesscon_ops;  /* CONFIG_CONSOLE_HEADLESS*/
 extern struct tty_ops rs_ops;           /* CONFIG_CHAR_DEV_RS*/
 extern struct tty_ops ttyp_ops;         /* CONFIG_PSEUDO_TTY*/
 extern struct tty_ops i8018xcon_ops;    /* CONFIG_CONSOLE_8018X*/
+extern struct tty_ops necv25con_ops;    /* CONFIG_CONSOLE_NECV25*/
 
 void INITPROC tty_init(void)
 {
@@ -485,6 +486,8 @@ void INITPROC tty_init(void)
         ttyp->ops = &bioscon_ops;
 #elif defined(CONFIG_CONSOLE_8018X)
         ttyp->ops = &i8018xcon_ops;
+#elif defined(CONFIG_CONSOLE_NECV25)
+        ttyp->ops = &necv25con_ops;
 #else
         ttyp->ops = &headlesscon_ops;
 #endif
