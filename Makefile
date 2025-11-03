@@ -40,12 +40,6 @@ clean:
 	$(MAKE) -C bootblocks clean
 	$(MAKE) -C elkscmd clean
 	$(MAKE) -C image clean
-ifneq "$(WATCOM)" ""
-	$(MAKE) -C libc -f watcom.mk clean
-endif
-ifneq "$(C86)" ""
-	$(MAKE) -C libc -f c86.mk clean
-endif
 ifeq ($(shell uname), Linux)
 	$(MAKE) -C elksemu clean
 endif
@@ -61,16 +55,28 @@ libc:
 	$(MAKE) -C libc all
 	$(MAKE) -C libc DESTDIR='$(TOPDIR)/cross' install
 
-owc:
+owclean:
 	$(MAKE) -C libc -f watcom.mk clean
+	$(MAKE) -C elkscmd owclean
+
+owlibc:
 	$(MAKE) -C libc -f watcom.mk MODEL=c
 	$(MAKE) -C libc -f watcom.mk MODEL=s
 	$(MAKE) -C libc -f watcom.mk MODEL=m
 	$(MAKE) -C libc -f watcom.mk MODEL=l
 
-c86:
+owc: owlibc
+	$(MAKE) -C elkscmd owc
+
+c86clean:
 	$(MAKE) -C libc -f c86.mk clean
+	$(MAKE) -C elkscmd c86clean
+
+c86libc:
 	$(MAKE) -C libc -f c86.mk
+
+c86: c86libc
+	$(MAKE) -C elkscmd c86
 
 elks/arch/i86/drivers/char/KeyMaps/config.in:
 	$(MAKE) -C elks/arch/i86/drivers/char/KeyMaps config.in

@@ -57,13 +57,20 @@ OWCDIRS =       \
     gui         \
     # EOL
 
+C86DIRS =       \
+    gui         \
+    # EOL
+
 ###############################################################################
 #
-# Compile all IA16 apps, and OpenWatcom apps if CONFIG_APPS_OWC set
+# Compile all IA16 apps, OpenWatcom apps if CONFIG_APPS_WATCOM set, and C86 apps same
 
 ALL = ia16
-ifdef CONFIG_APPS_OWC
+ifdef CONFIG_APPS_WATCOM
 ALL += owc
+endif
+ifdef CONFIG_APPS_C86
+ALL += c86
 endif
 
 all: $(ALL)
@@ -79,13 +86,19 @@ endif
 owc:
 	for DIR in $(OWCDIRS); do $(MAKE) -C $$DIR -f Makefile.owc all || exit 1; done
 
-install:
-	$(MAKE) -f Make.install "CONFIG=$(TOPDIR)/.config"
+c86:
+	for DIR in $(C86DIRS); do $(MAKE) -C $$DIR -f Makefile.c86 all || exit 1; done
 
-clean: owclean
+clean: owclean c86clean
 	for DIR in $(IA16DIRS); do $(MAKE) -C $$DIR clean || exit 1; done
 
 owclean:
 	for DIR in $(OWCDIRS); do $(MAKE) -C $$DIR -f Makefile.owc clean || exit 1; done
+
+c86clean:
+	for DIR in $(C86DIRS); do $(MAKE) -C $$DIR -f Makefile.c86 clean || exit 1; done
+
+install:
+	$(MAKE) -f Make.install "CONFIG=$(TOPDIR)/.config"
 
 ###############################################################################

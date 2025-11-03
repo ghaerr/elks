@@ -5,9 +5,9 @@ ifndef TOPDIR
 $(error ELKS TOPDIR is not defined)
 endif
 
-#ifndef C86
-#$(error C86 is not defined)
-#endif
+##ifndef C86
+##$(error C86 is not defined)
+##endif
 
 CPP=cpp86
 CC=c86

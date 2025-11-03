@@ -38,5 +38,5 @@ clean:
 	rm -f system/*.ocj system/*.osj system/*.omj system/*.olj system/*.lib libc*.lst
 	$(MAKE) -C watcom/syscall clean
 	$(MAKE) -C watcom/asm clean
-	for DIR in $(SUBDIRS); do rm -f $$DIR/*.osj $$DIR/*.omj $$DIR/*.olj $$DIR/*.lib || exit 1; done
+	for DIR in $(SUBDIRS); do rm -f $$DIR/*.ocj $$DIR/*.osj $$DIR/*.omj $$DIR/*.olj $$DIR/*.lib || exit 1; done
 	rm -f libc*.lib
