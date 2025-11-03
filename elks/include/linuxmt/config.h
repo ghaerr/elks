@@ -84,10 +84,9 @@
 #define SETUP_PART_OFFSETHI     0       /* partition offset high word */
 #define SYS_CAPS                0       /* no XT/AT capabilities */
 #define UTS_MACHINE             "8018x"
-
 #define CONFIG_8018X_FCPU       16
 #define CONFIG_8018X_EB
-#endif
+#endif /* CONFIG_ARCH_8018X */
 
 #ifdef CONFIG_ARCH_NECV25
 #define MAX_SERIAL              2       /* max number of serial tty devices*/
@@ -102,11 +101,7 @@
 #define SETUP_PART_OFFSETHI     0       /* partition offset high word */
 #define SYS_CAPS                0       /* no XT/AT capabilities */
 #define UTS_MACHINE             "NECV25"
-
-#undef  USER_FLAGS                      /* not redefining hangs V25   */
-#define USER_FLAGS 0xf200               /* keep default register bank */
-
-#define CONFIG_NECV25_FCPU      14745600UL /* external CPU crystal clock in Hz             */
+#define CONFIG_NECV25_FCPU      14745600UL /* external CPU crystal clock in Hz */
 #endif /* CONFIG_ARCH_NECV25 */
 
 #ifdef CONFIG_ARCH_SWAN
