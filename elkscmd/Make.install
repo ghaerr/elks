@@ -126,17 +126,6 @@ ifdef CONFIG_APP_TEST
 endif
 
 #
-# Install apps by compiler type
-#
-ifdef CONFIG_APPS_WATCOM
-	TAGS += :owc|
-endif
-
-ifdef CONFIG_APPS_C86
-	TAGS += :c86|
-endif
-
-#
 # Install apps by image size
 #
 ifdef CONFIG_APPS_360K
@@ -174,11 +163,21 @@ endif
 endif
 
 ifdef CONFIG_APPS_2880K
-	# below TAGS relies on :ash rule following :defsash rule in Applications
-	TAGS = :*|
+	TAGS = :boot|:init|:ash|:sash|:net|:other|:busyelks|:test|:128k|:192k|:360k|:360c|:720k|:1200k|:1200c|:1232k|:1232c|:1440k|:1440c|
 ifndef CONFIG_APPS_FTRACE
 	CONFIG_APP_MAN_PAGES=y
 endif
+endif
+
+#
+# Install apps by compiler type
+#
+ifdef CONFIG_APPS_WATCOM
+	TAGS += :owc|
+endif
+
+ifdef CONFIG_APPS_C86
+	TAGS += :c86|
 endif
 
 #
@@ -186,6 +185,7 @@ endif
 ifdef CONFIG_SYS_DEFSHELL_SASH
 	TAGS += :defsash|
 endif
+
 ifndef CONFIG_SYS_NO_BININIT
 	TAGS += :init|
 endif
