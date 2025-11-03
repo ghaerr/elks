@@ -20,8 +20,7 @@ USEBCC 		= N
 CLEANDEP	=
 
 CLEANME 	= ../bin/objdump86 ../bin/omfdump ../bin/omf2elf \
-	../bin/os2toelks ../bin/os2dump ../bin/hd \
-	../bin/ewcc ../bin/ewlink ../bin/ecc
+	../bin/os2toelks ../bin/os2dump ../bin/ewcc ../bin/ewlink ../bin/ecc
 
 DEPEND  	=
 
@@ -42,7 +41,7 @@ include $(BASEDIR)/Makefile-rules
 
 CFLAGS += -Wall -Wextra -O3
 
-all: ../bin/objdump86 ../bin/omf2elf ../bin/omfdump ../bin/os2toelks ../bin/os2dump ../bin/hd ../bin/ewcc ../bin/ewlink ../bin/ecc
+all: $(CLEANME)
 
 ../bin/objdump86: objdump86.o
 	$(CC) -o ../bin/objdump86 $(CFLAGS) $^
@@ -58,12 +57,6 @@ all: ../bin/objdump86 ../bin/omf2elf ../bin/omfdump ../bin/os2toelks ../bin/os2d
 
 ../bin/os2dump: os2dump.o
 	$(CC) -o ../bin/os2dump $(CFLAGS) $^
-
-hd.o:
-	$(CC) -c $(CFLAGS) -D__far= hd.c -o hd.o
-
-../bin/hd: hd.o
-	$(CC) -o ../bin/hd $(CFLAGS) $^
 
 ../bin/ewcc: ewcc
 	cp -p ewcc ../bin

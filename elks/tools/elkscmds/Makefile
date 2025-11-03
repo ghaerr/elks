@@ -1,4 +1,4 @@
-# eman - display ELKS manual pages on host
+# elkscmds - ELKS commands for host use
 #
 #########################################################################
 #
@@ -19,7 +19,7 @@ USEBCC 		= N
 
 CLEANDEP	=
 
-CLEANME 	= ../bin/eman
+CLEANME 	= ../bin/eman ../bin/hd ../bin/disasm ../bin/nm86
 
 DEPEND  	=
 
@@ -35,17 +35,28 @@ include $(BASEDIR)/Makefile-rules
 #########################################################################
 # Objects to be compiled.
 
-SRCS=$(TOPDIR)/elkscmd/sys_utils/man.c
-
-#OBJS=$(SRCS:.c=.o)
+EMAN =      $(TOPDIR)/elkscmd/sys_utils/man.c
+HD =        $(TOPDIR)/elkscmd/misc_utils/hd.c
+DEBUG_DIR = $(TOPDIR)/elkscmd/debug
+DISASM =    $(DEBUG_DIR)/disasm.c $(DEBUG_DIR)/dis.c $(TOPDIR)/libc/debug/syms.c
+NM86  =     $(DEBUG_DIR)/nm86.c $(TOPDIR)/libc/debug/syms.c
 
 #########################################################################
 # Commands.
 
-all:	../bin/eman
+all: $(CLEANME)
 
-../bin/eman: $(SRCS)
-	$(CC) -D_PATH_MANPAGES=\"$(TOPDIR)/elkscmd/man\" -o ../bin/eman $(CFLAGS) $(SRCS)
+../bin/eman: $(EMAN)
+	$(CC) -o $@ $(CFLAGS) -D_PATH_MANPAGES=\"$(TOPDIR)/elkscmd/man\" $^
+
+../bin/hd: $(HD)
+	$(CC) -o $@ $(CFLAGS) -D__far= $^
+
+../bin/disasm: $(DISASM)
+	$(CC) -o $@ $(CFLAGS) -I. -D__far= -Wno-int-to-void-pointer-cast -Wno-format $(DISASM)
+
+../bin/nm86: $(NM86)
+	$(CC) -o $@ $(CFLAGS) -I. -D__far= $^
 
 #########################################################################
 ### Dependencies:

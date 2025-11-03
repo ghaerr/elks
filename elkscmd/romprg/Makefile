@@ -10,7 +10,7 @@ CFLAGS += -Wno-maybe-uninitialized
 
 PRGS = romprg
 OBJS = main.o flash.o commands.o crc.o protocol.o serial.o
-#MAPFILE = -Wl,-Map=romprWg.map
+#MAPFILE = -Wl,-Map=romprg.map
 
 HOSTPRGS = hostromprg
 HOSTSRC = pc-main.c protocol.c pc-serial.c pc-commands.c crc.c
