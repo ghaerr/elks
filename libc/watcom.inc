@@ -4,9 +4,9 @@ ifeq "$(TOPDIR)" ""
 $(error TOPDIR environment variable not set)
 endif
 
-ifeq "$(WATCOM)" ""
-$(error WATCOM environment variable not set)
-endif
+#ifeq "$(WATCOM)" ""
+#$(error WATCOM environment variable not set)
+#endif
 
 INCLUDES = -I$(TOPDIR)/libc/include -I$(TOPDIR)/elks/include
 # Watcom headers now included in libc/include/watcom

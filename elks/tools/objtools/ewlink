@@ -13,13 +13,13 @@ set -e
 if [ -z "$TOPDIR" ]
   then
     echo "ELKS TOPDIR= environment variable not set"
-    exit
+    exit 1
 fi
 
 if [ -z "$WATCOM" ]
   then
     echo "WATCOM= environment variable not set"
-    exit
+    exit 1
 fi
 
 ELKSLIBC=$TOPDIR/libc
