@@ -10,7 +10,6 @@ CFLAGS += -Wno-maybe-uninitialized
 
 PRGS = basic
 OBJS = basic.o host.o
-
 #MAPFILE = -Wl,-Map=basic.map
 
 # uncomment following four lines for --ftrace function tracing
@@ -20,38 +19,31 @@ OBJS = basic.o host.o
 #OBJS += ../debug/instrument.o ../debug/syms.o ../debug/shared.o ../debug/shared-asm.o
 
 ifeq ($(CONFIG_ARCH_IBMPC), y)
-OBJS += host-ibmpc.o asm-ibmpc.o
-endif
-
-ifeq ($(CONFIG_ARCH_8018X), y)
-OBJS += host-8018x.o
-endif
-
-ifeq ($(CONFIG_ARCH_NECV25), y)
-OBJS += host-necv25.o
+HOST_SPECIFIC = host-ibmpc.o asm-ibmpc.o
 endif
 
 ifeq ($(CONFIG_ARCH_PC98), y)
-OBJS += host-pc98.o asm-pc98.o
+HOST_SPECIFIC = host-pc98.o asm-pc98.o
 endif
 
-ifeq ($(CONFIG_ARCH_SWAN), y)
-OBJS += host-stubs.o
+ifeq ($(CONFIG_ARCH_8018X), y)
+HOST_SPECIFIC = host-8018x.o
 endif
 
-ifeq ($(CONFIG_ARCH_SOLO86), y)
-OBJS += host-solo86.o
+ifndef HOST_SPECIFIC
+HOST_SPECIFIC = host-stubs.o
 endif
 
-HOSTPRGS = hostbasic
+OBJS += $(HOST_SPECIFIC)
 
 all: $(PRGS)
 
-.PHONY: host
-host: $(HOSTPRGS)
-
 $(PRGS): $(OBJS) basic.h host.h
 	$(LD) -o $@ $(LDFLAGS) $(MAPFILE) $(OBJS) $(LDLIBS)
+
+HOSTPRGS = hostbasic
+.PHONY: host
+host: $(HOSTPRGS)
 
 HOSTSRC = basic.c host.c host-stubs.c
 HOSTSRC += ../../libc/misc/ecvt.c

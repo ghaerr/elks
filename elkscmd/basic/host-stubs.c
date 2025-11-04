@@ -1,5 +1,5 @@
 /*
- * Architecture Specific stubs
+ * Stub routines used by generic ports of ELKS basic.
  */
 #include <stdio.h>
 #include <stdlib.h>
