@@ -13,20 +13,21 @@
 #define VGA_640x480x16      0x12        /* 640x480 16 color/4bpp */
 #define TEXT_MODE           0x03        /* 80x25 text mode */
 
+/* graphics context */
+struct gc {
+    int x;
+    int y;
+    int fg;
+    int bg;
+    int r;
+};
+
 static int gmode;
 static int MAX_Y;
 static char exit_on = 0;
+static struct gc gc = {0, 0, 7, 0, 1};
 
-typedef struct {
-    int x;
-    int y;
-    int fgc;
-    int bgc;
-    int r;
-} xyc_t;
-
-static xyc_t gxyc = {0, 0, 7, 0, 1};
-
+/* external procedures */
 void fmemsetw(void * off, unsigned int seg, unsigned int val, size_t count);
 void int_10(unsigned int ax, unsigned int bx, unsigned int cx, unsigned int dx);
 
@@ -71,225 +72,66 @@ void host_mode(int mode) {
 }
 
 void host_cls() {
-
     if (gmode)
         fmemsetw(0, 0xA000, 0, 19200);  /* 640*480/8 bytes VGA ram */
     else
         fprintf(outfile, "\033[H\033[2J");
 }
 
-void host_color(int fgc, int bgc) {
-
+void host_color(int fg, int bg) {
     if (gmode) {
-        gxyc.fgc = fgc;
-        gxyc.bgc = bgc;
+        gc.fg = fg;
+        gc.bg = bg;
     }
 }
 
 static void draw_point(int x, int y)
 {
-    int_10((0x0C00 | (0xFF & gxyc.fgc)), 0, x, y);
+    int_10((0x0C00 | (0xFF & gc.fg)), 0, x, y);
+}
+
+static void draw_line(int x1, int y1, int x2, int y2)
+{
+    /* Bresenham's line algorithm for efficient line drawing */
+    int dx = abs(x2 - x1);
+    int dy = abs(y2 - y1);
+    int sx = (x1 < x2) ? 1 : -1;
+    int sy = (y1 < y2) ? 1 : -1;
+    int err = dx - dy;
+
+    while (x1 != x2 || y1 != y2) {
+        draw_point(x1, y1);
+
+        int e2 = err << 1;
+        if (e2 > -dy) {
+            err -= dy;
+            x1 += sx;
+        }
+        if (e2 < dx) {
+            err += dx;
+            y1 += sy;
+        }
+    }
+    draw_point(x2, y2);
 }
 
 void host_plot(int x, int y) {
-
     if (gmode) {
         y = MAX_Y - y;
 
         draw_point(x, y);
 
-        gxyc.x = x;
-        gxyc.y = y;
+        gc.x = x;
+        gc.y = y;
     }
 }
 
 void host_draw(int x, int y) {
-
-    int nx;
-    int ny;
-    unsigned int fdiff;
-    unsigned int xdiff;
-    unsigned int ydiff;
-    unsigned int nxdiff;
-    unsigned int nydiff;
-    int ni;
-
-    nx = gxyc.x;
-    ny = gxyc.y;
-
     if (gmode) {
         y = MAX_Y - y;
-
-        xdiff = 0;
-        ydiff = 0;
-        nxdiff = 0;
-        nydiff = 0;
-
-        if ((nx < x) && (ny < y)) {
-            if ((y - ny) > (x - nx)) {
-                fdiff = (y - ny) << 7;                         // binary fraction 7bits
-                ydiff = (unsigned int) (fdiff / (x - nx));    // maximum slope is 511.992...
-            }
-            else {
-                fdiff = (x - nx) << 7;
-                xdiff = (unsigned int) (fdiff / (y - ny));
-            }
-        }
-        else if ((nx > x) && (ny < y)) {
-            if ((y - ny) > (nx - x)) {
-                fdiff = (y - ny) << 7;
-                ydiff = (unsigned int) (fdiff / (nx - x));
-            }
-            else {
-                fdiff = (nx - x) << 7;
-                xdiff = (unsigned int) (fdiff /(y - ny));
-            }
-        }
-        else if ((nx < x) && (ny > y)) {
-            if ((ny - y) > (x - nx)) {
-                fdiff = (ny - y) << 7;
-                ydiff = (unsigned int) (fdiff /(x - nx));
-            }
-            else {
-                fdiff = (x - nx) << 7;
-                xdiff = (unsigned int) (fdiff /(ny - y));
-            }
-        }
-        else if ((nx > x) && (ny > y)) {
-            if ((ny - y) > (nx - x)) {
-                fdiff = (ny - y) << 7;
-                ydiff = (unsigned int) (fdiff /(nx - x));
-            }
-            else {
-                fdiff = (nx - x) << 7;
-                xdiff = (unsigned int) (fdiff /(ny - y));
-            }
-        }
-
-        if (xdiff == 0) {
-            if (nx < x) {
-                while (nx < x) {
-                    nx++;
-                    nydiff += ydiff;
-                    if (ny < y) {
-                        for (ni = 0; ni < (nydiff >> 7); ni++) {
-                            ny++;
-                            draw_point(nx, ny);
-                        }
-                        nydiff &= 0x007F;
-                    }
-                    else if (ny > y) {
-                        for (ni = 0; ni < (nydiff >> 7); ni++) {
-                            ny--;
-                            draw_point(nx, ny);
-                        }
-                        nydiff &= 0x007F;
-                    }
-                    else
-                        draw_point(nx, ny);
-                }
-            }
-            else if (nx > x) {
-                while (nx > x) {
-                    nx--;
-                    nydiff += ydiff;
-                    if (ny < y) {
-                        for (ni = 0; ni < (nydiff >> 7); ni++) {
-                            ny++;
-                            draw_point(nx, ny);
-                        }
-                        nydiff &= 0x007F;
-                    }
-                    else if (ny > y) {
-                        for (ni = 0; ni < (nydiff >> 7); ni++) {
-                            ny--;
-                            draw_point(nx, ny);
-                        }
-                        nydiff &= 0x007F;
-                    }
-                    else
-                        draw_point(nx, ny);
-                }
-            }
-            else if (nx == x) {
-                if (ny < y) {
-                    while (ny < y) {
-                        ny++;
-                        draw_point(nx, ny);
-                    }
-                }
-                else if (ny > y) {
-                    while (ny > y) {
-                        ny--;
-                        draw_point(nx, ny);
-                    }
-                }
-            }
-        }
-        else {
-            if (ny < y) {
-                while (ny < y) {
-                    ny++;
-                    nxdiff += xdiff;
-                    if (nx < x) {
-                        for (ni = 0; ni < (nxdiff >> 7); ni++) {
-                            nx++;
-                            draw_point(nx, ny);
-                        }
-                        nxdiff &= 0x007F;
-                    }
-                    else if (nx > x) {
-                        for (ni = 0; ni < (nxdiff >> 7); ni++) {
-                            nx--;
-                            draw_point(nx, ny);
-                        }
-                        nxdiff &= 0x007F;
-                    }
-                    else
-                        draw_point(nx, ny);
-                }
-            }
-            else if (ny > y) {
-                while (ny > y) {
-                    ny--;
-                    nxdiff += xdiff;
-                    if (nx < x) {
-                        for (ni = 0; ni < (nxdiff >> 7); ni++) {
-                            nx++;
-                            draw_point(nx, ny);
-                        }
-                        nxdiff &= 0x007F;
-                    }
-                    else if (nx > x) {
-                        for (ni = 0; ni < (nxdiff >> 7); ni++) {
-                            nx--;
-                            draw_point(nx, ny);
-                        }
-                        nxdiff &= 0x007F;
-                    }
-                    else
-                        draw_point(nx, ny);
-                }
-            }
-            else if (ny == y) {
-                if (nx < x) {
-                    while (nx < x) {
-                        nx++;
-                        draw_point(nx, ny);
-                    }
-                }
-                else if (nx > x) {
-                    while (nx > x) {
-                        nx--;
-                        draw_point(nx, ny);
-                    }
-                }
-            }
-        }
-        draw_point(nx, ny);
-
-        gxyc.x = x;
-        gxyc.y = y;
+        draw_line(gc.x, gc.y, x, y);
+        gc.x = x;
+        gc.y = y;
     }
 }
 
