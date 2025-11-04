@@ -72,10 +72,8 @@ void host_mode(int mode) {
 
 void host_cls() {
 
-    if (gmode) {
-        fmemsetw(0, 0xB800, 0, 4000);
-        fmemsetw(0, 0xBA00, 0, 4000);
-    }
+    if (gmode)
+        fmemsetw(0, 0xA000, 0, 19200);  /* 640*480/8 bytes VGA ram */
     else
         fprintf(outfile, "\033[H\033[2J");
 }
@@ -88,12 +86,17 @@ void host_color(int fgc, int bgc) {
     }
 }
 
+static void draw_point(int x, int y)
+{
+    int_10((0x0C00 | (0xFF & gxyc.fgc)), 0, x, y);
+}
+
 void host_plot(int x, int y) {
 
     if (gmode) {
         y = MAX_Y - y;
 
-        int_10((0x0C00 | (0xFF & gxyc.fgc)), 0, x, y);
+        draw_point(x, y);
 
         gxyc.x = x;
         gxyc.y = y;
@@ -171,19 +174,19 @@ void host_draw(int x, int y) {
                     if (ny < y) {
                         for (ni = 0; ni < (nydiff >> 7); ni++) {
                             ny++;
-                            int_10((0x0C00 | (0xFF & gxyc.fgc)), 0, nx, ny);
+                            draw_point(nx, ny);
                         }
                         nydiff &= 0x007F;
                     }
                     else if (ny > y) {
                         for (ni = 0; ni < (nydiff >> 7); ni++) {
                             ny--;
-                            int_10((0x0C00 | (0xFF & gxyc.fgc)), 0, nx, ny);
+                            draw_point(nx, ny);
                         }
                         nydiff &= 0x007F;
                     }
                     else
-                        int_10((0x0C00 | (0xFF & gxyc.fgc)), 0, nx, ny);
+                        draw_point(nx, ny);
                 }
             }
             else if (nx > x) {
@@ -193,32 +196,32 @@ void host_draw(int x, int y) {
                     if (ny < y) {
                         for (ni = 0; ni < (nydiff >> 7); ni++) {
                             ny++;
-                            int_10((0x0C00 | (0xFF & gxyc.fgc)), 0, nx, ny);
+                            draw_point(nx, ny);
                         }
                         nydiff &= 0x007F;
                     }
                     else if (ny > y) {
                         for (ni = 0; ni < (nydiff >> 7); ni++) {
                             ny--;
-                            int_10((0x0C00 | (0xFF & gxyc.fgc)), 0, nx, ny);
+                            draw_point(nx, ny);
                         }
                         nydiff &= 0x007F;
                     }
                     else
-                        int_10((0x0C00 | (0xFF & gxyc.fgc)), 0, nx, ny);
+                        draw_point(nx, ny);
                 }
             }
             else if (nx == x) {
                 if (ny < y) {
                     while (ny < y) {
                         ny++;
-                        int_10((0x0C00 | (0xFF & gxyc.fgc)), 0, nx, ny);
+                        draw_point(nx, ny);
                     }
                 }
                 else if (ny > y) {
                     while (ny > y) {
                         ny--;
-                        int_10((0x0C00 | (0xFF & gxyc.fgc)), 0, nx, ny);
+                        draw_point(nx, ny);
                     }
                 }
             }
@@ -231,19 +234,19 @@ void host_draw(int x, int y) {
                     if (nx < x) {
                         for (ni = 0; ni < (nxdiff >> 7); ni++) {
                             nx++;
-                            int_10((0x0C00 | (0xFF & gxyc.fgc)), 0, nx, ny);
+                            draw_point(nx, ny);
                         }
                         nxdiff &= 0x007F;
                     }
                     else if (nx > x) {
                         for (ni = 0; ni < (nxdiff >> 7); ni++) {
                             nx--;
-                            int_10((0x0C00 | (0xFF & gxyc.fgc)), 0, nx, ny);
+                            draw_point(nx, ny);
                         }
                         nxdiff &= 0x007F;
                     }
                     else
-                        int_10((0x0C00 | (0xFF & gxyc.fgc)), 0, nx, ny);
+                        draw_point(nx, ny);
                 }
             }
             else if (ny > y) {
@@ -253,37 +256,37 @@ void host_draw(int x, int y) {
                     if (nx < x) {
                         for (ni = 0; ni < (nxdiff >> 7); ni++) {
                             nx++;
-                            int_10((0x0C00 | (0xFF & gxyc.fgc)), 0, nx, ny);
+                            draw_point(nx, ny);
                         }
                         nxdiff &= 0x007F;
                     }
                     else if (nx > x) {
                         for (ni = 0; ni < (nxdiff >> 7); ni++) {
                             nx--;
-                            int_10((0x0C00 | (0xFF & gxyc.fgc)), 0, nx, ny);
+                            draw_point(nx, ny);
                         }
                         nxdiff &= 0x007F;
                     }
                     else
-                        int_10((0x0C00 | (0xFF & gxyc.fgc)), 0, nx, ny);
+                        draw_point(nx, ny);
                 }
             }
             else if (ny == y) {
                 if (nx < x) {
                     while (nx < x) {
                         nx++;
-                        int_10((0x0C00 | (0xFF & gxyc.fgc)), 0, nx, ny);
+                        draw_point(nx, ny);
                     }
                 }
                 else if (nx > x) {
                     while (nx > x) {
                         nx--;
-                        int_10((0x0C00 | (0xFF & gxyc.fgc)), 0, nx, ny);
+                        draw_point(nx, ny);
                     }
                 }
             }
         }
-        int_10((0x0C00 | (0xFF & gxyc.fgc)), 0, x, y);
+        draw_point(nx, ny);
 
         gxyc.x = x;
         gxyc.y = y;
