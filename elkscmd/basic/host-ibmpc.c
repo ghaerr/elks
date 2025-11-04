@@ -1,5 +1,5 @@
 /*
- * Architecture Specific routines for CGA
+ * Architecture Specific routines for IBM PC BASIC with EGA/VGA graphics support
  * Sep 2024 Takahiro Yamada
  */
 #include <stdio.h>
@@ -8,7 +8,7 @@
 #include "host.h"
 #include "basic.h"
 
-/* supported graphics modes in host_mode() */
+/* supported graphics modes */
 #define VGA_640x350x16      0x10        /* 640x350 16 color/4bpp */
 #define VGA_640x480x16      0x12        /* 640x480 16 color/4bpp */
 #define TEXT_MODE           0x03        /* 80x25 text mode */
@@ -31,26 +31,32 @@ static struct gc gc = {0, 0, 7, 0, 1};
 void fmemsetw(void * off, unsigned int seg, unsigned int val, size_t count);
 void int_10(unsigned int ax, unsigned int bx, unsigned int cx, unsigned int dx);
 
-void host_digitalWrite(int pin,int state) {
+void host_digitalWrite(int pin,int state)
+{
 }
 
-int host_digitalRead(int pin) {
+int host_digitalRead(int pin)
+{
     return 0;
 }
 
-int host_analogRead(int pin) {
+int host_analogRead(int pin)
+{
     return 0;
 }
 
-void host_pinMode(int pin,int mode) {
+void host_pinMode(int pin,int mode)
+{
 }
 
-static void mode_reset() {
+static void mode_reset(void)
+{
     if (gmode)
         int_10(TEXT_MODE, 0, 0, 0);
 }
 
-void host_mode(int mode) {
+void host_mode(int mode)
+{
     gmode = mode;
 
     if (gmode && !exit_on) {
@@ -71,14 +77,16 @@ void host_mode(int mode) {
         int_10(TEXT_MODE, 0, 0, 0);
 }
 
-void host_cls() {
+void host_cls(void)
+{
     if (gmode)
         fmemsetw(0, 0xA000, 0, 19200);  /* 640*480/8 bytes VGA ram */
     else
         fprintf(outfile, "\033[H\033[2J");
 }
 
-void host_color(int fg, int bg) {
+void host_color(int fg, int bg)
+{
     if (gmode) {
         gc.fg = fg;
         gc.bg = bg;
@@ -115,7 +123,8 @@ static void draw_line(int x1, int y1, int x2, int y2)
     draw_point(x2, y2);
 }
 
-void host_plot(int x, int y) {
+void host_plot(int x, int y)
+{
     if (gmode) {
         y = MAX_Y - y;
 
@@ -126,7 +135,8 @@ void host_plot(int x, int y) {
     }
 }
 
-void host_draw(int x, int y) {
+void host_draw(int x, int y)
+{
     if (gmode) {
         y = MAX_Y - y;
         draw_line(gc.x, gc.y, x, y);
@@ -136,7 +146,8 @@ void host_draw(int x, int y) {
 }
 
 //using midpoint circle algorithm
-void host_circle(int xc, int yc, int r) {
+void host_circle(int xc, int yc, int r)
+{
     int x = 0;
     int y = r;
     int d = 1 - r;
@@ -161,18 +172,22 @@ void host_circle(int xc, int yc, int r) {
     }
 }
 
-void host_outb(int port, int value) {
+void host_outb(int port, int value)
+{
     outb(value, port);
 }
 
-void host_outw(int port, int value) {
+void host_outw(int port, int value)
+{
     outw(value, port);
 }
 
-int host_inpb(int port) {
+int host_inpb(int port)
+{
     return inb(port);
 }
 
-int host_inpw(int port) {
+int host_inpw(int port)
+{
     return inw(port);
 }
