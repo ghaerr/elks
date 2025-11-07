@@ -1,0 +1,23 @@
+BASEDIR=..
+COMPILER=WATCOM
+
+include $(BASEDIR)/Makefile-rules
+
+###############################################################################
+
+
+###############################################################################
+
+PRGS = basic.os2
+OBJS = basic.obj host.obj host-stubs.obj
+
+all: $(PRGS)
+
+$(PRGS): $(OBJS) basic.h host.h
+	$(LD) -o $@ $(LDFLAGS) $(OBJS) $(LDLIBS)
+
+install: $(PRGS)
+	$(INSTALL) $(PRGS) $(DESTDIR)/bin
+
+clean:
+	$(RM) $(PRGS) *.obj
