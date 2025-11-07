@@ -45,7 +45,6 @@ IA16DIRS =       \
 	# EOL
 
 OWCDIRS =       \
-    basic       \
     fsck_dos    \
     gui         \
     # EOL
