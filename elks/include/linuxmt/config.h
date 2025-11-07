@@ -101,7 +101,7 @@
 #define SETUP_PART_OFFSETHI     0       /* partition offset high word */
 #define SYS_CAPS                0       /* no XT/AT capabilities */
 #define UTS_MACHINE             "NECV25"
-#define CONFIG_NECV25_FCPU      14745600UL /* external CPU crystal clock in Hz */
+#define CONFIG_NECV25_FCPU      22118400UL /* external CPU crystal clock in Hz 14745600UL or 22118400UL */
 #endif /* CONFIG_ARCH_NECV25 */
 
 #ifdef CONFIG_ARCH_SWAN
