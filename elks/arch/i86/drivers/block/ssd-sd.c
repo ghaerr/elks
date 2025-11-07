@@ -164,8 +164,17 @@ static uint8_t sd_send_acmd(uint8_t cmd, uint32_t arg)
  * returns: 0 on success, -EBUSY otherwise.
  */
 static int sd_cmd_go_idle(void) {
+    uint8_t retry = 0;
+    int     ret;
+
     /* GO_IDLE_STATE */
-    return sd_send_cmd(CMD_GO_IDLE, 0) == IDLE ? 0 : -EBUSY;
+    
+    do { // try more than once helps on startup
+        ret = sd_send_cmd(CMD_GO_IDLE, 0);
+    }
+    while((ret != IDLE) && (retry++ < 1));
+    
+    return ret == IDLE ? 0 : -EBUSY;
 }
 
 /**

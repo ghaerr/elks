@@ -73,7 +73,11 @@ ifeq ($(CONFIG_BLK_DEV_SSD_TEST), y)
 endif
 
 ifeq ($(CONFIG_BLK_DEV_SSD_SD8018X), y)
+ifeq ($(CONFIG_ARCH_NECV25), y)
+	OBJS += ssd.o ssd-sd.o spi-necv25.o
+else
 	OBJS += ssd.o ssd-sd.o spi-8018x.o
+endif
 endif
 
 ifeq ($(CONFIG_BLK_DEV_ATA_CF), y)
