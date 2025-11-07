@@ -31,23 +31,23 @@ void initialize_irq(void)    // see irq-necv25asm.S
             "movw  %%bx, %%ds                                                                                              \n"\
             "pushf                                 // save iqr status and disable all interrupts                           \n"\
             "cli                                                                                                           \n"\
-            "movb  $IRQMSK+IRQPRI5, %%ds:(EXIC0)   // EXIC0: External interrupt 0, irq prio 5                              \n"\
-            "movb  $IRQMSK+IRQPRID, %%ds:(EXIC1)   // EXIC1: External interrupt 1                                          \n"\
-            "movb  $IRQMSK+IRQPRID, %%ds:(EXIC2)   // EXIC2: External interrupt 2                                          \n"\
-            "movb  $IRQMSK+IRQPRI6, %%ds:(SEIC0)   // SEIC0: Serial error interrupt request control register 0, irq prio 6 \n"\
-            "movb  $IRQMSK+IRQPRID, %%ds:(SRIC0)   // SRIC0: Serial reception interrupt request control register 0         \n"\
-            "movb  $IRQMSK+IRQPRID, %%ds:(STIC0)   // STIC0: Serial transmission interrupt request control register 0      \n"\
+            "movb  $(IRQMSK+IRQPRI5), %%ds:(EXIC0) // EXIC0: External interrupt 0, irq prio 5                              \n"\
+            "movb  $(IRQMSK+IRQPRID), %%ds:(EXIC1) // EXIC1: External interrupt 1                                          \n"\
+            "movb  $(IRQMSK+IRQPRID), %%ds:(EXIC2) // EXIC2: External interrupt 2                                          \n"\
+            "movb  $(IRQMSK+IRQPRI6), %%ds:(SEIC0) // SEIC0: Serial error interrupt request control register 0, irq prio 6 \n"\
+            "movb  $(IRQMSK+IRQPRID), %%ds:(SRIC0) // SRIC0: Serial reception interrupt request control register 0         \n"\
+            "movb  $(IRQMSK+IRQPRID), %%ds:(STIC0) // STIC0: Serial transmission interrupt request control register 0      \n"\
             "movb  $0x00, %%ds:(TXB0)              // TXB0:  restart transmitter, so that ready waiting funtions           \n"\
-            "movb  $IRQMSK+IRQPRI6, %%ds:(SEIC1)   // SEIC1: Serial error interrupt request control register 1, irq prio 6 \n"\
-            "movb  $IRQMSK+IRQPRID, %%ds:(SRIC1)   // SRIC1: Serial reception interrupt request control register 1         \n"\
-            "movb  $IRQMSK+IRQPRID, %%ds:(STIC1)   // STIC1: Serial transmission interrupt request control register 1      \n"\
+            "movb  $(IRQMSK+IRQPRI6), %%ds:(SEIC1) // SEIC1: Serial error interrupt request control register 1, irq prio 6 \n"\
+            "movb  $(IRQMSK+IRQPRID), %%ds:(SRIC1) // SRIC1: Serial reception interrupt request control register 1         \n"\
+            "movb  $(IRQMSK+IRQPRID), %%ds:(STIC1) // STIC1: Serial transmission interrupt request control register 1      \n"\
             "movb  $0x00, %%ds:(TXB1)              // TXB1:  restart transmitter, so that ready waiting funtions           \n"\
-            "movb  $IRQMSK+IRQPRI7, %%ds:(TMIC0)   // TMIC0: Timer unit interrupt request control register 0, irq prio 7   \n"\
-            "movb  $IRQMSK+IRQPRID, %%ds:(TMIC1)   // TMIC1: Timer unit interrupt request control register 1               \n"\
-            "movb  $IRQMSK+IRQPRID, %%ds:(TMIC2)   // TMIC2: Timer unit interrupt request control register 2               \n"\
-            "movb  $IRQMSK+IRQPRI4, %%ds:(DIC0)    // DIC0:  DMA interrupt 0, irq prio 4                                   \n"\
-            "movb  $IRQMSK+IRQPRID, %%ds:(DIC1)    // DIC1:  DMA interrupt 1                                               \n"\
-            "movb  $IRQMSK+IRQPRID, %%ds:(TBIC)    // TBIC:  Time base interrupt, fixed irq prio 7                         \n"\
+            "movb  $(IRQMSK+IRQPRI7), %%ds:(TMIC0) // TMIC0: Timer unit interrupt request control register 0, irq prio 7   \n"\
+            "movb  $(IRQMSK+IRQPRID), %%ds:(TMIC1) // TMIC1: Timer unit interrupt request control register 1               \n"\
+            "movb  $(IRQMSK+IRQPRID), %%ds:(TMIC2) // TMIC2: Timer unit interrupt request control register 2               \n"\
+            "movb  $(IRQMSK+IRQPRI4), %%ds:(DIC0)  // DIC0:  DMA interrupt 0, irq prio 4                                   \n"\
+            "movb  $(IRQMSK+IRQPRID), %%ds:(DIC1)  // DIC1:  DMA interrupt 1                                               \n"\
+            "movb  $(IRQMSK+IRQPRID), %%ds:(TBIC)  // TBIC:  Time base interrupt, fixed irq prio 7                         \n"\
             "popf                                  // restore flags and irq status                                         \n"\
             "pop   %%ds                                                                                                    \n"\
             :                    \
@@ -130,12 +130,12 @@ void disable_irq(unsigned int irq)
                "push  %%ds                                                                     \n"\
                "movw  $NEC_HW_SEGMENT, %%bx  // load DS to access memmory mapped CPU registers \n"\
                "movw  %%bx, %%ds                                                               \n"\
-               "pushf                     // save iqr status and disable all interrupts        \n"\
+               "pushf                        // save iqr status and disable all interrupts     \n"\
                "cli                                                                            \n"\
-               "movb  %%ds:(%%si), %%al   // disable specific interrupt in IRC register        \n"\
+               "movb  %%ds:(%%si), %%al      // disable specific interrupt in IRC register     \n"\
                "orb   $IRQMSK, %%al                                                            \n"\
                "movb  %%al, %%ds:(%%si)                                                        \n"\
-               "popf                      // restore flags and irq status                      \n"\
+               "popf                         // restore flags and irq status                   \n"\
                "pop   %%ds                                                                     \n"\
                :                          \
                : "S"   (map->pcb_register)\
