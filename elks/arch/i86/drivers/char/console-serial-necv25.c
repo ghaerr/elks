@@ -44,9 +44,16 @@ struct serial_info {
 };
 
 
+// Baud rate is already initialized to 9600 baud by startup code,
+// so first switching to 9600 baud from ELKS is not necessary
+// but shows artefacts. This init values prevent first switching
+
+#define INIT_BAUD_COUNT (CONFIG_NECV25_FCPU / (  9600UL * 2UL *   16UL))
+#define INIT_BAUD_N     3
+
 static struct serial_info ports[1] = {
-    /* TODO: Serial 0 { NEC_RXB0, NEC_INTSR0, NEC_INTST0, UART0_IRQ_RX, UART0_IRQ_TX,  0, 0, &ttys[0] },*/
-    /*    Serial 1 */ { NEC_RXB1, NEC_INTSR1, NEC_INTST1, UART1_IRQ_RX, UART1_IRQ_TX, 48, 3, &ttys[0] },
+    /* TODO: Serial 0 { NEC_RXB0, NEC_INTSR0, NEC_INTST0, UART0_IRQ_RX, UART0_IRQ_TX, INIT_BAUD_COUNT, INIT_BAUD_N, &ttys[0] },*/
+    /*    Serial 1 */ { NEC_RXB1, NEC_INTSR1, NEC_INTST1, UART1_IRQ_RX, UART1_IRQ_TX, INIT_BAUD_COUNT, INIT_BAUD_N, &ttys[0] },
 };
 
 
@@ -68,7 +75,7 @@ static const struct baud_tab {
     {(CONFIG_NECV25_FCPU / (  1800UL * 2UL *  128UL)),  6}, /* 10 = B1800   32 6 */
     {(CONFIG_NECV25_FCPU / (  2400UL * 2UL *   64UL)),  5}, /* 11 = B2400   48 5 */
     {(CONFIG_NECV25_FCPU / (  4800UL * 2UL *   16UL)),  3}, /* 12 = B4800   96 3 */
-    {(CONFIG_NECV25_FCPU / (  9600UL * 2UL *   16UL)),  3}, /* 13 = B9600   48 3 */
+    { INIT_BAUD_COUNT,                       INIT_BAUD_N }, /* 13 = B9600   48 3 */ /* preset for inital serial_info */
     {(CONFIG_NECV25_FCPU / ( 19200UL * 2UL *    8UL)),  2}, /* 14 = B19200  48 2 */
     {(CONFIG_NECV25_FCPU / ( 38400UL * 2UL *    4UL)),  1}, /* 15 = B38400  48 1 */
     {(CONFIG_NECV25_FCPU / ( 57600UL * 2UL *    2UL)),  0}, /* 16 = B57600  64 0 */
@@ -113,19 +120,19 @@ static void serial_putc(const struct serial_info *sp, byte_t c)
 {
     __extension__ ({                   \
         asm volatile (                 \
-            ".include \"../../../../include/arch/necv25.inc\"                                         \n"\
-            "push  %%ds                                                                               \n"\
-            "movw  $NEC_HW_SEGMENT, %%bx            // load DS to access memmory mapped CPU registers \n"\
-            "movw  %%bx, %%ds                                                                         \n"\
-            "1:                                                                                       \n"\
-            "testb $IRQFLAG, %%ds:STIC(%%si)        // STIC: wait for Tx ready                        \n"\
-            "jz    1b                                                                                 \n"\
-            "pushf                                  // save iqr status and disable all interrupts     \n"\
-            "cli                                                                                      \n"\
-            "movb  $IRQMSK+IRQPRID, %%ds:STIC(%%si) // STIC: clear Tx ready flag                      \n"\
-            "movb  %%al, %%ds:TXB(%%si)             // TXB: send char                                 \n"\
-            "popf                                   // restore flags and irq status                   \n"\
-            "pop   %%ds                                                                               \n"\
+            ".include \"../../../../include/arch/necv25.inc\"                                           \n"\
+            "push  %%ds                                                                                 \n"\
+            "movw  $NEC_HW_SEGMENT, %%bx              // load DS to access memmory mapped CPU registers \n"\
+            "movw  %%bx, %%ds                                                                           \n"\
+            "1:                                                                                         \n"\
+            "testb $IRQFLAG, %%ds:STIC(%%si)          // STIC: wait for Tx ready                        \n"\
+            "jz    1b                                                                                   \n"\
+            "pushf                                    // save iqr status and disable all interrupts     \n"\
+            "cli                                                                                        \n"\
+            "movb  $(IRQMSK+IRQPRID), %%ds:STIC(%%si) // STIC: clear Tx ready flag                      \n"\
+            "movb  %%al, %%ds:TXB(%%si)               // TXB: send char                                 \n"\
+            "popf                                     // restore flags and irq status                   \n"\
+            "pop   %%ds                                                                                 \n"\
             :                          \
             : "S"   (sp->io_base),     \
               "Ral" (c)                \
@@ -167,10 +174,10 @@ static void update_port(struct serial_info *port)
                 "movw   %%bx, %%ds                                                                                            \n"\
                 "pushf                                            // save iqr status and disable all interrupts               \n"\
                 "cli                                                                                                          \n"\
-                "movb   $NOPRTY+CL8+SL1, %%ds:SCM(%%si)           // SCM: Rx/Tx disable, 8 data, 1 stop bit, no parity, async \n"\
+                "movb   $(NOPRTY+CL8+SL1), %%ds:SCM(%%si)         // SCM: Rx/Tx disable, 8 data, 1 stop bit, no parity, async \n"\
                 "movb   %%al, %%ds:SCC(%%si)                      // SCC: set prescaler                                       \n"\
                 "movb   %%ah, %%ds:BRG(%%si)                      // BRG: set counter                                         \n"\
-                "movb   $TXE+RXE+NOPRTY+CL8+SL1, %%ds:SCM(%%si)   // SCM: Rx/Tx enable, 8 data, 1 stop bit, no parity, async  \n"\
+                "movb   $(TXE+RXE+NOPRTY+CL8+SL1), %%ds:SCM(%%si) // SCM: Rx/Tx enable, 8 data, 1 stop bit, no parity, async  \n"\
                 "popf                                             // restore flags and irq status                             \n"\
                 "pop    %%ds                                                                                                  \n"\
                 :                          \
@@ -199,7 +206,7 @@ void INITPROC console_init(void)
          "push   %%ds                                                                                                  \n"\
          "movw   $NEC_HW_SEGMENT, %%bx                     // load DS to access memmory mapped CPU registers           \n"\
          "movw   %%bx, %%ds                                                                                            \n"\
-         "movb   $TXE+RXE+NOPRTY+CL8+SL1, %%ds:SCM(%%si)   // SCM: Rx/Tx enable, 8 data, 1 stop bit, no parity, async  \n"\
+         "movb   $(TXE+RXE+NOPRTY+CL8+SL1), %%ds:SCM(%%si) // SCM: Rx/Tx enable, 8 data, 1 stop bit, no parity, async  \n"\
          "pop    %%ds                                                                                                  \n"\
          :                          \
          : "S"   (sp->io_base)      \
