@@ -66,6 +66,13 @@ SAVE+ "filename" saves filename.bas, sets auto-run on load
 DELETE "filename" deletes filename.bas
 DIR list all *.bas files in current directory
 MODE number (set graphics mode, e.g MODE 1 to use PLOT/DRAW/CIRCLE)
+    MODE 0  # return to text mode
+    MODE 1  # default graphics (EGA if EGAMODE= in environment, otherwise VGA)
+    MODE 2  # VGA 640x480 16 color
+    MODE 3  # EGA 640x350 16 color
+    MODE 4  # CGA 320x200 4 color
+    MODE n  # BIOS mode number n (decimal).
+        Modes 5+  dont't support CLS and also position 0,0 at top left
 COLOR fg,bg
 PLOT x,y
 DRAW x,y
