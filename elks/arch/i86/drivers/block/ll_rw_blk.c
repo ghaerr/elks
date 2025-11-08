@@ -385,7 +385,9 @@ void INITPROC blk_dev_init(void)
 
 #ifdef CONFIG_BLK_DEV_BHD
     if (biosdisk) {
+#ifdef CONFIG_BLK_DEV_ATA_CF
         bios_disk_reset(bios_drive_map[0]); /* required for copy.sh/v86 with ATA CF */
+#endif
         init_partitions(biosdisk);
     }
 #endif
