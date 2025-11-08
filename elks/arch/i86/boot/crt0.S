@@ -54,20 +54,24 @@ _start:
 int3:   int     $3              // C breakpoint for emu86
         ret
 
-early_putchar:
 #if defined(CONFIG_ARCH_SWAN)
+early_putchar:
 1:      in      $0xB3,%al
         test    $0x04,%al
         jz      1b
         mov     %sp,%bx
         mov     2(%bx),%al
         out     %al,$0xB1
+        ret
 #elif defined(CONFIG_ARCH_SOLO86)
+early_putchar:
         mov   %sp,%bx
         mov   2(%bx),%al
         outb  %al,$0x22
+        ret
 #elif defined(CONFIG_ARCH_NECV25)
 #include <arch/necv25.h>
+early_putchar:
         push  %bp
         push  %ds
         mov   %sp, %bp
@@ -80,7 +84,9 @@ early_putchar:
         movb  %al, %ds:NEC_TXB1         // send char
         pop   %ds
         pop   %bp
+        ret
 #elif defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_8018X)
+early_putchar:
         mov   %sp,%bx
         mov   2(%bx),%al
         mov   $0x0E,%ah
@@ -88,8 +94,8 @@ early_putchar:
         push  %bp               // some BIOS may destroy BP
         int   $0x10
         pop   %bp
-#endif
         ret
+#endif
 
 //      Segment beginnings
 
