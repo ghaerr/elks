@@ -54,14 +54,14 @@ _start:
 int3:   int     $3              // C breakpoint for emu86
         ret
 
-#ifdef CONFIG_ARCH_SWAN
+#if defined(CONFIG_ARCH_SWAN)
 early_putchar:
-1:	in	$0xB3,%al
-	test	$0x04,%al
-	jz	1b
-        mov	%sp,%bx
-        mov	2(%bx),%al
-	out	%al,$0xB1
+1:      in      $0xB3,%al
+        test    $0x04,%al
+        jz      1b
+        mov     %sp,%bx
+        mov     2(%bx),%al
+        out     %al,$0xB1
         ret
 #elif defined(CONFIG_ARCH_SOLO86)
 early_putchar:
@@ -72,26 +72,20 @@ early_putchar:
 #elif defined(CONFIG_ARCH_NECV25)
 #include <arch/necv25.h>
 early_putchar:
-   push  %bp
-   push  %ds
-   mov   %sp, %bp
-   mov   6(%bp), %al
-
-   movw  $NEC_HW_SEGMENT, %bx       // load DS to access memmory mapped CPU registers
-   movw  %bx, %ds
-
-1:                                  // wait for Tx ready
-   testb $0x80, %ds:NEC_STIC1
-   jz    1b
-
-   movb  $0x47, %ds:NEC_STIC1       // clear Tx ready flag
-   movb  %al, %ds:NEC_TXB1          // send char
-	
-   pop   %ds
-   pop   %bp
-   ret
-#else
-#ifndef CONFIG_ARCH_PC98
+        push  %bp
+        push  %ds
+        mov   %sp, %bp
+        mov   6(%bp), %al
+        movw  $NEC_HW_SEGMENT, %bx      // load DS to access memmory mapped CPU registers
+        movw  %bx, %ds
+1:      testb $0x80, %ds:NEC_STIC1      // wait for Tx ready
+        jz    1b
+        movb  $0x47, %ds:NEC_STIC1      // clear Tx ready flag
+        movb  %al, %ds:NEC_TXB1         // send char
+        pop   %ds
+        pop   %bp
+        ret
+#elif defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_8018X)
 early_putchar:
         mov   %sp,%bx
         mov   2(%bx),%al
@@ -101,7 +95,6 @@ early_putchar:
         int   $0x10
         pop   %bp
         ret
-#endif
 #endif
 
 //      Segment beginnings

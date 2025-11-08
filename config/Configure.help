@@ -661,8 +661,8 @@ CONFIG_BLK_DEV_SSD_TEST
   Select this driver to use a memory mapped ssd disk.
 
 8018X bit-banged SPI low-level SD driver
-CONFIG_BLK_DEV_SSD_SD8018X
-  Select this driver if you have an 8018x CPU and you have some GPIO lines
+CONFIG_BLK_DEV_SSD_SD
+  Select this driver if you have an 8018x or NEC V25 CPU and you have some GPIO lines
   available for a bit-banged SPI driver that can be used with the ssd SD card driver.
 
 ATA CF Hard Disk support

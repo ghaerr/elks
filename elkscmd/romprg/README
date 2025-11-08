@@ -1,4 +1,4 @@
-romprg is a project by tehKaiN aimed to program ROM/flash chips using an
+romprg is a project by tehKaiN aimed to program 29Fxxx and other ROM/flash chips using an
 inexpensive Arduino board as the programmer.
 Original source code can be obtained from https://github.com/tehKaiN/ROMprg.
 
