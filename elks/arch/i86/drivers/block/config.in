@@ -23,8 +23,8 @@ mainmenu_option next_comment
 	fi
 	choice 'SSD disk driver' \
 		"None CONFIG_BLK_DEV_SSD_NONE \
-		ssd_test CONFIG_BLK_DEV_SSD_TEST \
-		ssd_sd_8018x CONFIG_BLK_DEV_SSD_SD8018X " None
+		Test CONFIG_BLK_DEV_SSD_TEST \
+		SDCard CONFIG_BLK_DEV_SSD_SD" None
 
 	bool 'ATA-CF drive support'	        CONFIG_BLK_DEV_ATA_CF	n
 

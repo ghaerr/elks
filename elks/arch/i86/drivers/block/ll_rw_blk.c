@@ -370,7 +370,7 @@ void INITPROC blk_dev_init(void)
     floppy_init();      /* direct floppy, init before SSD for possible XMS track cache */
 #endif
 
-#if defined(CONFIG_BLK_DEV_SSD_TEST) || defined(CONFIG_BLK_DEV_SSD_SD8018X) || \
+#if defined(CONFIG_BLK_DEV_SSD_TEST) || defined(CONFIG_BLK_DEV_SSD_SD) || \
     defined(CONFIG_FS_XMS_RAMDISK)
     ssd_init();         /* SSD block device*/
 #endif

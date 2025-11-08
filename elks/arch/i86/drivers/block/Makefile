@@ -42,10 +42,10 @@ endif
 
 ifeq ($(CONFIG_BLK_DEV_BHD), y)
   ifneq ($(CONFIG_BLK_DEV_BFD), y)
-  OBJS += bioshd.o bios.o
+    OBJS += bioshd.o bios.o
   endif
   ifeq ($(CONFIG_IDE_PROBE), y)
-  OBJS += idequery.o
+    OBJS += idequery.o
   endif
 endif
 
@@ -63,25 +63,26 @@ OBJS += romflash.o
 endif
 
 ifeq ($(CONFIG_FS_XMS), y)
-ifeq ($(CONFIG_FS_XMS_RAMDISK), y)
-	OBJS += ssd.o ssd-xms.o
-endif
+  ifeq ($(CONFIG_FS_XMS_RAMDISK), y)
+    OBJS += ssd.o ssd-xms.o
+  endif
 endif
 
 ifeq ($(CONFIG_BLK_DEV_SSD_TEST), y)
-	OBJS += ssd.o ssd-test.o
+OBJS += ssd.o ssd-test.o
 endif
 
-ifeq ($(CONFIG_BLK_DEV_SSD_SD8018X), y)
-ifeq ($(CONFIG_ARCH_NECV25), y)
-	OBJS += ssd.o ssd-sd.o spi-necv25.o
-else
-	OBJS += ssd.o ssd-sd.o spi-8018x.o
-endif
+ifeq ($(CONFIG_BLK_DEV_SSD_SD), y)
+  ifeq ($(CONFIG_ARCH_NECV25), y)
+    OBJS += ssd.o ssd-sd.o spi-necv25.o
+  endif
+  ifeq ($(CONFIG_ARCH_8018X), y)
+    OBJS += ssd.o ssd-sd.o spi-8018x.o
+  endif
 endif
 
 ifeq ($(CONFIG_BLK_DEV_ATA_CF), y)
-	OBJS += ata.o ata-cf.o
+OBJS += ata.o ata-cf.o
 endif
 
 # experimental (and not working) direct hd support
