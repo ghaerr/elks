@@ -20,13 +20,7 @@ LDFLAGS += -maout-symtab
 
 PRGS = testsym disasm nm86 opcodes
 
-HOSTPRGS = hostnm86 hostdisasm
-HOSTCFLAGS += -I. -I$(TOPDIR)/elks/include
-SYMS_C = $(TOPDIR)/libc/debug/syms.c
-
 all: $(PRGS) system.sym
-
-host: $(HOSTPRGS)
 
 testsym: testsym.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
@@ -53,12 +47,6 @@ dis.o: dis.c
 
 nm86.o: nm86.c
 	$(CC) $(CFLAGS) $(NOINSTFLAGS) -c -o $*.o $<
-
-hostnm86: nm86.c $(SYMS_C)
-	$(HOSTCC) $(HOSTCFLAGS) -D__far= -o $@ $^
-
-hostdisasm: dis.c disasm.c $(SYMS_C)
-	$(HOSTCC) $(HOSTCFLAGS) -D__far= -Wno-int-to-void-pointer-cast -Wno-format -o $@ $^
 
 install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
