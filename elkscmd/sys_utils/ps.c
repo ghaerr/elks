@@ -187,7 +187,7 @@ int main(int argc, char **argv)
     }
 
     printf("  PID");
-    if (f_listall) printf(" PPID");
+    if (f_listall) printf("  PPID");
     printf("   GRP  TTY USER STAT ");
 #ifdef CONFIG_CPU_USAGE
     printf("CPU");
@@ -221,7 +221,7 @@ int main(int argc, char **argv)
 
         /* pid grp tty user stat*/
         printf("%5d", task_table.pid);
-        if (f_listall) printf("%5d", task_table.ppid);
+        if (f_listall) printf(" %5d", task_table.ppid);
         printf(" %5d %4s %-8s%c ",
                 task_table.pgrp,
                 tty_name(fd, (unsigned int)task_table.tty, ds),
