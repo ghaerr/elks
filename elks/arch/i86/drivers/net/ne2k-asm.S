@@ -272,12 +272,12 @@ dma_read:
 	push    %di
 	push    %es
 	push	%bx
+	pushfw		// save interrupt state
 	push	%ax
 
 	inc     %cx     // make byte count even
 	and     $0xfffe,%cx
 
-	pushfw		// save interrupt state
 	cli		// Experimental - disable INTR
 	call    dma_init
 
