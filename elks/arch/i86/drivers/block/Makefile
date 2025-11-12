@@ -74,7 +74,8 @@ endif
 
 ifeq ($(CONFIG_BLK_DEV_SSD_SD), y)
   ifeq ($(CONFIG_ARCH_NECV25), y)
-    OBJS += ssd.o ssd-sd.o spi-necv25.o
+    OBJS += ssd.o ssd-sd.o spi-hw-necv25.o
+#    OBJS += ssd.o ssd-sd.o spi-necv25.o
   endif
   ifeq ($(CONFIG_ARCH_8018X), y)
     OBJS += ssd.o ssd-sd.o spi-8018x.o

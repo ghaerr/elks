@@ -474,8 +474,6 @@ fail:
  * returns: 0 on success, negative value on failure.
  */
 static int sd_read(char *buf, ramdesc_t seg, sector_t sector) {
-    /* init far pointer to segment:offset. FIXME won't work with XMS buffers*/
-    unsigned char __far *buffer = _MK_FP((seg_t)seg, (unsigned)buf);
     int ret;
     uint16_t count = SD_FIXED_SECTOR_SIZE;
 
@@ -494,10 +492,17 @@ static int sd_read(char *buf, ramdesc_t seg, sector_t sector) {
     if (ret < 0) {
         goto fail;
     }
+    
+#ifdef CONFIG_HW_SPI
+    spi_read_block(buf, seg, count);
+#else
+    /* init far pointer to segment:offset. FIXME won't work with XMS buffers*/
+    unsigned char __far *buffer = _MK_FP((seg_t)seg, (unsigned)buf);
 
     do {
         *buffer++ = spi_receive();
     } while (--count);
+#endif
 
     /* Skip trailing CRC */
     spi_send_ffs(2);
@@ -518,8 +523,6 @@ fail:
  * returns: 0 on success, negative value on failure.
  */
 static int sd_write(char *buf, ramdesc_t seg, sector_t sector) {
-    /* init far pointer to segment:offset. FIXME won't work with XMS buffers*/
-    unsigned char __far *buffer = _MK_FP((seg_t)seg, (unsigned)buf);
     int ret;
     uint16_t count = SD_FIXED_SECTOR_SIZE;
 
@@ -539,9 +542,17 @@ static int sd_write(char *buf, ramdesc_t seg, sector_t sector) {
     spi_transmit(0xfe);
 
     /* Send the entire sector data */
+
+#ifdef CONFIG_HW_SPI
+    spi_write_block(buf, seg, count);
+#else
+    /* init far pointer to segment:offset. FIXME won't work with XMS buffers*/
+    unsigned char __far *buffer = _MK_FP((seg_t)seg, (unsigned)buf);
+
     do {
         spi_transmit(*buffer++);
     } while (--count);
+#endif
 
     /* Send a dummy CRC */
     spi_transmit(0);

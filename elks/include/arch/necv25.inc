@@ -66,7 +66,7 @@
 
 // Interrupt register options
 .set IRQFLAG,  0x80     /* interrupt request flag */
-.set IRQMSK,   0x40      /* mask interrupt, vectored int, no macro service, no register bank switching */
+.set IRQMSK,   0x40     /* mask interrupt, vectored int, no macro service, no register bank switching */
 .set IRQUMSK,  0x00     /* unmask interrupt, vectored int, no macro service, no register bank switching */
 .set IRQPRI0,  0x00     /* interrupt priority 0 */
 .set IRQPRI1,  0x01     /* interrupt priority 1 */

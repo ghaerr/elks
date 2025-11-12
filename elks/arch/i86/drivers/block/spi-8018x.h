@@ -40,3 +40,23 @@ uint8_t spi_receive(void);
  * bytes: count of bytes to send.
  */
 void spi_send_ffs(uint16_t bytes);
+
+#ifdef CONFIG_HW_SPI
+/**
+ * Reads one block from SD card via hardware SPI into buffer
+ * 
+ * buf: offset address of receive buffer
+ * seg: segment adress of receive buffer
+ * count: number of bytes to read into buffer (has to be 512)
+ */
+uint8_t spi_read_block(char *buf, ramdesc_t seg, uint16_t count);
+
+/**
+ * Write one block from buffer to SD card via hardware SPI
+ * 
+ * buf: offset address of write buffer
+ * seg: segment adress of write buffer
+ * count: number of bytes to write from buffer (has to be 512)
+ */
+uint8_t spi_write_block(char *buf, ramdesc_t seg, uint16_t count);
+#endif
