@@ -44,6 +44,7 @@ struct arp_cache *arp_cache_get(ipaddr_t ip_addr, eth_addr_t eth_addr, int flags
 		if (!entry->ip_addr)
 		    break;
 		if (entry->ip_addr == ip_addr) {
+			if (flags == -1) return entry; /* Already waiting for reply */
 			if ((flags & ARP_VALID) && !entry->valid)
 				return NULL;	/* not yet valid - awaiting ARP reply*/
 			if (flags & ARP_UPDATE) {
@@ -83,6 +84,11 @@ struct arp_cache *arp_cache_add(ipaddr_t ip_addr, eth_addr_t eth_addr)
 {
 	struct arp_cache *entry;
 
+	/* Check if we're already waiting for a reply for this address */
+	if ((entry = arp_cache_get(ip_addr, eth_addr, -1))) {
+		debug_arp("arp: reusing unresolved entry for %s\n", in_ntoa(ip_addr));
+		return entry;
+	}
 	/* Shift the whole cache */
 	entry = arp_cache + ARP_CACHE_MAX - 1;
 	while (entry > arp_cache) {

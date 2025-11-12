@@ -2,7 +2,6 @@
 #define TCP_H
 
 #include <sys/types.h>
-
 #include "config.h"
 #include "timer.h"
 #include "ip.h"
@@ -10,50 +9,65 @@
 #include <arpa/inet.h>
 
 /*
- * /etc/tcpdev max read/write size
- * Must be at least as big as CB_NORMAL_BUFSIZ
- * And at least as big as TCPDEV_INBUFFERSIZE in <linuxmt/tcpdev.h> (currently 1500)
+ * /dev/tcpdev max read/write size
+ * must be at least as big as CB_NORMAL_BUFSIZ
+ * and at least as big as TCPDEV_INBUFFERSIZE in <linuxmt/tcpdev.h> (currently 1500)
  */
 #define TCPDEV_BUFSIZ	(CB_NORMAL_BUFSIZ + sizeof(struct tdb_return_data))
 
 /* max tcp buffer size (no ip header)*/
-#define TCP_BUFSIZ	(TCPDEV_BUFSIZ + sizeof(tcphdr_t) + TCP_OPT_MSS_LEN)
+#define TCP_BUFSIZ      (TCPDEV_BUFSIZ + sizeof(tcphdr_t) + TCP_OPT_MSS_LEN)
 
 /* max ip buffer size (with link layer frame)*/
-#define IP_BUFSIZ	(TCP_BUFSIZ + sizeof(iphdr_t) + sizeof(struct ip_ll))
+#define IP_BUFSIZ       (TCP_BUFSIZ + sizeof(iphdr_t) + sizeof(struct ip_ll))
 
 /*
  * control block input buffer size - max window size, doesn't have to be power of two
  * default will be (ETH_MTU - IP_HDRSIZ) * 3 = (1500-40) * 3 = 4380
  */
-#define CB_NORMAL_BUFSIZ	4380	/* normal input buffer size*/
-#define USE_SWS			0	/* =1 to use silly window algorithm */
+#define CB_NORMAL_BUFSIZ    4380    /* normal input buffer size*/
+#define USE_SWS             0       /* =1 to use silly window algorithm */
 
-/* max outstanding send window size*/
-#define TCP_SEND_WINDOW_MAX	1024	/* should be less than TCP_RETRANS_MAXMEM*/
+/* max outstanding send window size */
+#define TCP_SEND_WINDOW_MAX 1800    /* should be less than TCP_RETRANS_MAXMEM
+                                     * was 1024, 1560 works well, higher is experimental
+                                     * too high is bad for XT type slow systems */
 
 /* threshold to wait before pushing data to application (turned off for now) */
-//#define PUSH_THRESHOLD	512
+//#define PUSH_THRESHOLD    512
 
-/* timeout values in 1/16 seconds, or (seconds << 4). Half second = 8*/
-#define TIMEOUT_ENTER_WAIT	(4<<4)	/* TIME_WAIT state (was 30, then 10)*/
-#define TIMEOUT_CLOSE_WAIT	(10<<4)	/* CLOSING/LAST_ACK/FIN_WAIT states (was 240)*/
-#define TIMEOUT_INITIAL_RTT	(1<<4)	/* initial RTT before retransmit (was 4)*/
-#define TCP_RETRANS_MAXWAIT	(4<<4)	/* max retransmit wait (4 secs)*/
-#define TCP_RETRANS_MINWAIT_SLIP 8	/* min retrans timeout for slip/cslip (1/2 sec)*/
-#define TCP_RETRANS_MINWAIT_ETH	4	/* min retrans timeout for ethernet (1/4 sec)*/
+/* timeout values - unit is set by 'Now' in ktcp.c, currently 60ms */
+#define TIMEOUT_ENTER_WAIT  (4<<4)  /* TIME_WAIT state (was 30, then 10, now 4 secs) */
+#define TIMEOUT_CLOSE_WAIT  (10<<4) /* CLOSING/LAST_ACK/FIN_WAIT states (10 secs) */
+                                    /* Initial RTT & RTO values are not important,
+                                     * as they get adjusted automatically as soon
+                                     * as the connection is up and running. Recommended
+                                     * values per RFC 1122 are RTT=0, RTO=3s */
+#define TIMEOUT_INITIAL_RTT 1       /* Still we set RTT to 1 because the smoothing
+                                     * algorithm is (currently) disabled when RTT=0 */
+#define TIMEOUT_INITIAL_RTO (3<<4)  /* 3 seconds */
+#define TCP_RETRANS_MAXWAIT (4<<4)  /* max retransmit wait (4 secs) */
+#define TCP_RETRANS_MINWAIT_SLIP 8  /* min retrans timeout for slip/cslip (1/2 sec) */
+#define TCP_RETRANS_MINWAIT_ETH  4  /* min retrans timeout for ethernet (1/4 sec) */
+#define TCP_RETRANS_ADJUST  (3*TIME_CNV_FACTOR) /* retrans multiplier for slow peers */
 
-/* retransmit settings*/
-#define TCP_RTT_ALPHA			90
-#define TCP_RETRANS_MAXMEM		4096	/* max retransmit total memory*/
-#define TCP_RETRANS_MAXTRIES		6	/* max # retransmits (~12 secs total)*/
+/* retransmit settings */
+#define TCP_RTT_ALPHA       40      /* was 90, need much faster convergence for
+                                     * slow systems */
+#define TCP_RETRANS_MAXMEM  5120    /* max retransmit total memory (was 4096) */
+#define TCP_RETRANS_MAXTRIES 6      /* max # retransmits (~12 secs total) */
 
-#define SEQ_LT(a,b)	((long)((a)-(b)) < 0)
-#define SEQ_LEQ(a,b)	((long)((a)-(b)) <= 0)
-#define SEQ_GT(a,b)	((long)((a)-(b)) > 0)
-#define SEQ_GEQ(a,b)	((long)((a)-(b)) >= 0)
+/* Slow start/congestion avoidance */
+#define TCP_INIT_CWND       2       /* initial congestion window, don't set to 1 */
+                                    /* will cause connection deadlock on slow systems */
+#define TCP_INIT_SSTHRESH   100     /* SS threshold, could be infinity */
 
-#define PROTO_TCP	0x06
+#define SEQ_LT(a,b)     ((long)((a)-(b)) < 0)
+#define SEQ_LEQ(a,b)    ((long)((a)-(b)) <= 0)
+#define SEQ_GT(a,b)     ((long)((a)-(b)) > 0)
+#define SEQ_GEQ(a,b)    ((long)((a)-(b)) >= 0)
+
+#define PROTO_TCP       0x06
 
 #define	TF_FIN	0x01
 #define TF_SYN	0x02
@@ -121,10 +135,14 @@ struct tcpcb_s {
 
 	__u8	state;
 	__u8	unaccepted;		/* boolean */
-	timeq_t	rtt;			/* in 1/16 secs*/
+	__u8	retrans_act;		/* set when a retrans has been sent */
+	__u16	rtt;			/* roundtriptime */
+	__u16	cwnd;			/* congestion window */
+	__u16	inflight;		/* # of unacked packets for this cb */
+	__u16	ssthresh;		/* slow start threshold */
+	__u32	sstimer;		/* congestion avoidance timer EXPERIMENTAL */
 
 	__u32	time_wait_exp;
-	//__u16	wait_data;
 
 	short	bytes_to_push;
 
@@ -169,7 +187,7 @@ struct	tcp_retrans_list_s {
 	struct tcp_retrans_list_s	*next;
 
 	int				retrans_num;
-	timeq_t 			rto;
+	__u16	 			rto;
 	timeq_t 			next_retrans;
 	timeq_t 			first_trans;
 
@@ -180,15 +198,16 @@ struct	tcp_retrans_list_s {
 
 };
 
-extern int tcp_timeruse;	/* retrans timer active, call tcp_retrans */
-extern int cbs_in_time_wait;	/* time_wait timer active, call tcp_expire_timeouts */
-extern int cbs_in_user_timeout;	/* fin_wait/closing/last_ack active, call " */
-extern int tcpcb_need_push;	/* push required, tcpcb_push_data/call notify_data_avail */
-extern int tcp_retrans_memory;	/* total retransmit memory in use */
+extern int tcp_timeruse;        /* retrans timer active, call tcp_retrans */
+extern int cbs_in_time_wait;    /* time_wait timer active, call tcp_expire_timeouts */
+extern int cbs_in_user_timeout; /* fin_wait/closing/last_ack active, call " */
+extern int tcpcb_need_push;     /* push required,tcpcb_push_data/call notify_data_avail */
+extern int tcp_retrans_memory;  /* total retransmit memory in use */
 
 struct tcpcb_list_s *tcpcb_new(int bufsize);
 struct tcpcb_list_s *tcpcb_find(__u32 addr, __u16 lport, __u16 rport);
 struct tcpcb_list_s *tcpcb_find_by_sock(void *sock);
+void tcpcb_update_sstimer(void);
 
 __u16 tcp_chksum(struct iptcp_s *h);
 __u16 tcp_chksumraw(struct tcphdr_s *h, __u32 saddr, __u32 daddr, __u16 len);
@@ -201,8 +220,10 @@ void tcp_send_ack(struct tcpcb_s *cb);
 void tcp_send_fin(struct tcpcb_s *cb);
 void tcp_send_reset(struct tcpcb_s *cb);
 void tcp_reset_connection(struct tcpcb_s *cb);
+void tcp_reject(struct iphdr_s *);
+
 
 void hexdump(unsigned char *addr, int count, int summary, char *prefix);
 
-extern char *tcp_states[];	/* used in DEBUG_CLOSE only*/
+extern char *tcp_states[];      /* used in DEBUG_CLOSE only*/
 #endif
