@@ -33,7 +33,6 @@
 #include "netconf.h"
 #include "deveth.h"
 #include "arp.h"
-#include <linuxmt/prectimer.h>
 
 ipaddr_t local_ip;
 ipaddr_t gateway_ip;
@@ -73,7 +72,6 @@ void ktcp_run(void)
     int count;
     int loopagain = 0;
 
-    //init_ptime();
     while (1) {
 	if (tcp_timeruse > 0 || tcpcb_need_push > 0 || loopagain ||
 	    cbs_in_time_wait > 0 || cbs_in_user_timeout > 0) {
@@ -105,8 +103,8 @@ void ktcp_run(void)
 		return;
 	}
 
-	//printf("pticks %lk\n", get_ptime());
-	Now = timer_get_time();
+	Now = *jp/6;
+
 
 	/* expire timeouts*/
 	if (cbs_in_time_wait > 0 || cbs_in_user_timeout > 0) {
@@ -121,6 +119,12 @@ void ktcp_run(void)
 
 	loopagain = 0;
 
+	/* NOTE:
+	 * Changing the order of processing (socket actions before receive actions)
+	 * will reduce the outgoing transfer rate by 80% while increasing incoming
+	 * rate by 10%.
+	 */
+
 	/* process received packets*/
 	if (FD_ISSET(intfd, &fdset)) {
 		if (linkprotocol == LINK_ETHER)
@@ -134,6 +138,8 @@ void ktcp_run(void)
 		tcpdev_process();
 		loopagain = 1;
 	}
+
+	tcpcb_update_sstimer();
 
 	/* check for expired retrans packets and free them*/
 	if (tcp_timeruse > 0)
@@ -181,7 +187,7 @@ void catch(int sig)
 
 static void usage(void)
 {
-    printf("Usage: ktcp [-b] [-d] [-m MTU] [-p ne0|wd0|3c0|slip|cslip] [-s baud] [-l device] [local_ip] [gateway] [netmask]\n");
+    printf("Usage: ktcp [-b] [-d] [-m MTU] [-p ee0|ne0|wd0|3c0|slip|cslip] [-s baud] [-l device] [local_ip] [gateway] [netmask]\n");
     exit(1);
 }
 
@@ -208,6 +214,8 @@ int main(int argc,char **argv)
 	    linkprotocol = !strcmp(optarg, "ne0")? LINK_ETHER :
 			   !strcmp(optarg, "wd0")? LINK_ETHER :
 			   !strcmp(optarg, "3c0")? LINK_ETHER :
+			   !strcmp(optarg, "ee0")? LINK_ETHER :
+			   !strcmp(optarg, "le0")? LINK_ETHER :
 			   !strcmp(optarg, "slip")? LINK_SLIP :
 			   !strcmp(optarg, "cslip")? LINK_CSLIP:
 			   -1;
@@ -227,6 +235,8 @@ int main(int argc,char **argv)
 	}
     }
 
+    if (timer_init() < 0)
+	exit(1);
     /*
      * Default IP, gateway and netmask set by env variables in
      * /bootopts or /etc/profile. They can be IP addresses or

@@ -51,8 +51,8 @@ void notify_sock(void *sock, int type, int value)
 /* inform kernel of socket data bytes available*/
 void notify_data_avail(struct tcpcb_s *cb)
 {
-    if (cb->bytes_to_push <= 0)
-	return;
+    //if (cb->bytes_to_push <= 0)	/* always checked before call */
+	//return;
 
     notify_sock(cb->sock, TDT_AVAIL_DATA, cb->bytes_to_push);
 }
@@ -200,7 +200,8 @@ void tcpdev_notify_accept(struct tcpcb_s *cb)
     accept_ret.addr_ip = cb->remaddr;
     accept_ret.addr_port = htons(cb->remport);
 
-    debug_accept("tcpdev notify_accept: ACCEPT (SYN received before accept) sock[%p] newsock[%p]\n", listencb->sock, listencb->newsock);
+    debug_accept("tcpdev notify_accept: ACCEPT (SYN received before accept) sock[%p] newsock[%p]\n",
+						listencb->sock, listencb->newsock);
 
     cb->unaccepted = 0;
     cb->sock = listencb->newsock;
@@ -317,14 +318,29 @@ static void tcpdev_read(void)
 	}
 	return;
     }
-
+#if 0
     /* send ACK to restart server should window have been full (unless it's netstat)*/
     if (cb->remport != NETCONF_PORT || cb->remaddr != 0)
 	if (cb->remport != local_ip) {	/* no ack to localhost either*/
-	    debug_window("tcp: extra ACK seq %ld, app read %d bytes\n",
+	    debug_window("[%lu]tcp: extra ACK seq %ld, app read %d bytes\n", *jp,
 		cb->rcv_nxt - cb->irs, data_avail);
 	    tcp_send_ack(cb);
 	}
+#else
+    /* Fix the 'zero window problem': if the previous ACK advertized a window smaller
+     * than the MSS - AND the sender needs that size, the sender will stop until a
+     * larger window is advertized by the receiver (fast) or wait for a timeout, typically 2 or
+     * more seconds and then send a packet using the advertized size. If the window size was zero,
+     * that send-size will be 1 byte.
+     * (MSS is MTU minus headers, MTU - 40).
+     */
+    if (CB_BUF_SPACE(cb) - data_avail <= MTU - 40) {
+	//printf("Extra ACK, size %d, space %d\n", data_avail, CB_BUF_SPACE(cb));
+	////printf("tcp: extra ACK seq %ld, last win %d this data %d\n",
+		////cb->rcv_nxt - cb->irs, CB_BUF_SPACE(cb)-data_avail, data_avail);
+	tcp_send_ack(cb);
+    }
+#endif
 }
 
 /* kernel write data to ktcp (network)*/
@@ -335,6 +351,7 @@ static void tcpdev_write(void)
     struct tcpcb_s *cb;
     void *  sock = db->sock;
     unsigned int size, maxwindow;
+    int dbg_counter = 0;
 
     sock = db->sock;
     /*
@@ -343,10 +360,11 @@ static void tcpdev_write(void)
      */
     size = db->size;
 
-    /* This is a bit ugly but I'm to lazy right now */
+    /* This is a bit ugly but I'm too lazy right now */
     if (tcp_retrans_memory > TCP_RETRANS_MAXMEM) {
 	printf("ktcp: RETRANS memory limit exceeded\n");
-	retval_to_sock(sock, -ENOMEM);
+	//retval_to_sock(sock, -ENOMEM);
+	retval_to_sock(sock, -ERESTARTSYS);	/* source will wait for 100ms, then retry */
 	return;
     }
 
@@ -359,7 +377,9 @@ static void tcpdev_write(void)
 
     cb = &n->tcpcb;
 
-    if (cb->state != TS_ESTABLISHED && cb->state != TS_CLOSE_WAIT) {
+    if (cb->state != TS_ESTABLISHED
+		/*&& cb->state != TS_CLOSE_WAIT*/) {	// No write data if in CLOSE_WAIT
+	/* FIXME: May want to delete (or 'debugify') the printf below, this is not uncommon */
 	printf("tcpdev_write: write to socket in improper state %d\n", cb->state);
 	retval_to_sock(sock, -EPIPE);
 	return;
@@ -379,10 +399,18 @@ static void tcpdev_write(void)
     maxwindow = cb->rcv_wnd;
     if (maxwindow > TCP_SEND_WINDOW_MAX)	/* limit retrans memory usage*/
 	maxwindow = TCP_SEND_WINDOW_MAX;
-    if (cb->send_nxt - cb->send_una + size > maxwindow) {
+    if ((cb->inflight >= cb->cwnd) 		/* check congestion window first */
+		|| (cb->send_nxt - cb->send_una + size > maxwindow)) {
+	dbg_counter++;	/* will not work well if multiple connections */
+	if (dbg_counter >10) {
+		printf("tcp limit: seq %lu size %d maxwnd %u unack %lu rcvwnd %u inflight %d cwnd %d\n",
+		    cb->send_nxt - cb->iss, size, maxwindow, cb->send_nxt - cb->send_una, cb->rcv_wnd,
+		    cb->inflight, cb->cwnd);
+		dbg_counter = 0;
+	}
 	debug_tcp("tcp limit: seq %lu size %d maxwnd %u unack %lu rcvwnd %u\n",
 	    cb->send_nxt - cb->iss, size, maxwindow, cb->send_nxt - cb->send_una, cb->rcv_wnd);
-	retval_to_sock(sock, -ERESTARTSYS);	/* kernel will retry 100ms later*/
+	retval_to_sock(sock, -ERESTARTSYS);	/* source will wait for 100ms, then retry */
 	return;
     }
 
@@ -410,6 +438,9 @@ static void tcpdev_release(void)
 	cb = &n->tcpcb;
 	debug_close("tcpdev release: close socket %p, state is %s\n",
 	    sock, tcp_states[cb->state]);
+	//printf("_release btp: %d, state %d\n", cb->bytes_to_push, cb->state);
+	if (cb->bytes_to_push > 0) /* transfer aborted with more data in the pipe */
+		tcpcb_need_push--;
 
 	switch(cb->state){
 	    case TS_CLOSED:

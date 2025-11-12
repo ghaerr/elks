@@ -74,9 +74,12 @@ struct tcpcb_list_s *tcpcb_new(int bufsize)
     }
     debug_mem("Alloc CB %d bytes\n", sizeof(struct tcpcb_list_s) + bufsize);
 
-    memset(&n->tcpcb, 0, sizeof(struct tcpcb_s));
+    memset(n, 0, sizeof(struct tcpcb_list_s));
     n->tcpcb.buf_size = bufsize;
     n->tcpcb.rtt = TIMEOUT_INITIAL_RTT;
+    n->tcpcb.cwnd = TCP_INIT_CWND;
+    n->tcpcb.ssthresh = TCP_INIT_SSTHRESH;
+    n->tcpcb.sstimer = Now;
 
     /* Link it to the list */
     if (tcpcbs) {
@@ -129,7 +132,8 @@ void tcpcb_remove(struct tcpcb_list_s *n)
     else {
 	/* Head update */
 	n = next;
-	n->prev = NULL;
+	if (n)
+	    n->prev = NULL;
 
 	rmv_all_retrans(tcpcbs);
 	free(tcpcbs);
@@ -244,7 +248,10 @@ void tcpcb_expire_timeouts(void)
 		    debug_close("tcp[%p] exit TIME_WAIT state on port %u remote %s:%u\n",
 				n->tcpcb.sock, n->tcpcb.localport,
 				in_ntoa(n->tcpcb.remaddr), n->tcpcb.remport);
-		    tcpcb_remove(n);
+		    //printf("timeout: buf_used: %d\n", n->tcpcb.buf_used);
+		    if (n->tcpcb.buf_used > 0)	/* still unread data in the pipe? */
+			tcpcb_need_push--;	/* yes, adjust need_push ... */
+		    tcpcb_remove(n);		/* so we can remove cb safely */
 		}
 		break;
 	    case TS_FIN_WAIT_1:
@@ -296,4 +303,20 @@ void tcpcb_buf_read(struct tcpcb_s *cb, unsigned char *data, int len)
 	cb->buf_used--;
     }
     cb->buf_head = head;
+}
+
+/* congestion avoidance: increment cwnd once per rtt */
+void tcpcb_update_sstimer(void)
+{
+	struct tcpcb_list_s *cb = tcpcbs;
+
+	while (cb) {
+	    if ((cb->tcpcb.cwnd > cb->tcpcb.ssthresh) &&
+				(unsigned)(Now - cb->tcpcb.sstimer) > cb->tcpcb.rtt) {
+		if (cb->tcpcb.cwnd < 100)	/* for now, FIX when we change to bytes */
+		    cb->tcpcb.cwnd++;		/* instead of packets */
+		cb->tcpcb.sstimer = Now;
+	    }
+	    cb = cb->next;
+	}
 }

@@ -145,7 +145,7 @@ minix1/sum                      :minix1                  :1200c     :1440k
 minix1/uniq                     :minix1             :720k
 minix1/wc                       :minix1                 :1200k
 #minix1/proto                   :minix1                 :1200k
-minix1/cut                      :be-minix1               :1200c     :1440k
+minix1/cut                      :be-minix1          :720k:1200c     :1440k
 #minix1/cksum                   :be-minix1              :1200k
 minix1/du                       :be-minix1              :1200k
 minix2/env                      :minix2                             :1440k
