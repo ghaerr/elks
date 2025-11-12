@@ -382,7 +382,6 @@ void tcp_retrans_retransmit(void)
     struct tcp_retrans_list_s *n;
 
     n = retrans_list;
-
     while (n != NULL) {
 	/* check for retrans time up */
 	/* adding inflight reduces the # of unneccessary retransmits when

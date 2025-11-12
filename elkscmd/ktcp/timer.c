@@ -8,17 +8,13 @@
  *	2 of the License, or (at your option) any later version.
  */
 
-#define __LIBC__	/* to get types for memory.h FIXME */
-//#include <sys/time.h>
-#include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <linuxmt/mem.h>
-#include <linuxmt/types.h>
-#include <linuxmt/memory.h>
 #include <sys/ioctl.h>
-
+#include <linuxmt/mem.h>
 #include "timer.h"
+
+#define _MK_FP(seg,off) ((void __far *)((((unsigned long)(seg)) << 16) | ((unsigned int)(off))))
 
 #if 0
 timeq_t timer_get_time(void)
@@ -40,11 +36,11 @@ int timer_init(void)
     int fd = open("/dev/kmem", O_RDONLY);
 
     if (fd < 0) {
-	perror("/dev/kmem");
+	write(2, "No /dev/kmem\n", 13);
 	return -1;
     }
     if ((ioctl(fd, MEM_GETDS, &kds) < 0) || (ioctl(fd, MEM_GETJIFFADDR, &jaddr)) < 0 )  {
-	perror("ktcp: ioctl error in /dev/kmem");
+	write(2, "kmem ioctl err\n", 15);
 	return -1;
     }
     jp = _MK_FP(kds, jaddr);

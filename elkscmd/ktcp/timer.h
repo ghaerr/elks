@@ -4,7 +4,7 @@
 #include <sys/types.h>
 
 /* timeq_t used to be the time type counted in 62.5ms (1/16 sec) quantums */
-/* Now (2025) it's simply jiffies. */
+/* Now it's simply jiffies. */
 typedef	__u32 timeq_t;
 
 #define TIME_LT(a,b)		((long)((a)-(b)) < 0)

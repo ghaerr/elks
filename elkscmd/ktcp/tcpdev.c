@@ -336,8 +336,8 @@ static void tcpdev_read(void)
      */
     if (CB_BUF_SPACE(cb) - data_avail <= MTU - 40) {
 	//printf("Extra ACK, size %d, space %d\n", data_avail, CB_BUF_SPACE(cb));
-	////printf("tcp: extra ACK seq %ld, last win %d this data %d\n",
-		////cb->rcv_nxt - cb->irs, CB_BUF_SPACE(cb)-data_avail, data_avail);
+	//printf("tcp: extra ACK seq %ld, last win %d this data %d\n",
+		//cb->rcv_nxt - cb->irs, CB_BUF_SPACE(cb)-data_avail, data_avail);
 	tcp_send_ack(cb);
     }
 #endif
@@ -379,7 +379,6 @@ static void tcpdev_write(void)
 
     if (cb->state != TS_ESTABLISHED
 		/*&& cb->state != TS_CLOSE_WAIT*/) {	// No write data if in CLOSE_WAIT
-	/* FIXME: May want to delete (or 'debugify') the printf below, this is not uncommon */
 	printf("tcpdev_write: write to socket in improper state %d\n", cb->state);
 	retval_to_sock(sock, -EPIPE);
 	return;
@@ -438,7 +437,6 @@ static void tcpdev_release(void)
 	cb = &n->tcpcb;
 	debug_close("tcpdev release: close socket %p, state is %s\n",
 	    sock, tcp_states[cb->state]);
-	//printf("_release btp: %d, state %d\n", cb->bytes_to_push, cb->state);
 	if (cb->bytes_to_push > 0) /* transfer aborted with more data in the pipe */
 		tcpcb_need_push--;
 
