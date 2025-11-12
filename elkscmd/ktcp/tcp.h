@@ -2,7 +2,6 @@
 #define TCP_H
 
 #include <sys/types.h>
-
 #include "config.h"
 #include "timer.h"
 #include "ip.h"
@@ -17,58 +16,58 @@
 #define TCPDEV_BUFSIZ	(CB_NORMAL_BUFSIZ + sizeof(struct tdb_return_data))
 
 /* max tcp buffer size (no ip header)*/
-#define TCP_BUFSIZ	(TCPDEV_BUFSIZ + sizeof(tcphdr_t) + TCP_OPT_MSS_LEN)
+#define TCP_BUFSIZ      (TCPDEV_BUFSIZ + sizeof(tcphdr_t) + TCP_OPT_MSS_LEN)
 
 /* max ip buffer size (with link layer frame)*/
-#define IP_BUFSIZ	(TCP_BUFSIZ + sizeof(iphdr_t) + sizeof(struct ip_ll))
+#define IP_BUFSIZ       (TCP_BUFSIZ + sizeof(iphdr_t) + sizeof(struct ip_ll))
 
 /*
  * control block input buffer size - max window size, doesn't have to be power of two
  * default will be (ETH_MTU - IP_HDRSIZ) * 3 = (1500-40) * 3 = 4380
  */
-#define CB_NORMAL_BUFSIZ	4380	/* normal input buffer size*/
-#define USE_SWS			0	/* =1 to use silly window algorithm */
+#define CB_NORMAL_BUFSIZ    4380    /* normal input buffer size*/
+#define USE_SWS             0       /* =1 to use silly window algorithm */
 
 /* max outstanding send window size */
-#define TCP_SEND_WINDOW_MAX	1800	/* should be less than TCP_RETRANS_MAXMEM */
-					/* was 1024, 1560 works well, higher is experimental */
-					/* too high is bad for XT type slow systems */
+#define TCP_SEND_WINDOW_MAX 1800    /* should be less than TCP_RETRANS_MAXMEM
+                                     * was 1024, 1560 works well, higher is experimental
+                                     * too high is bad for XT type slow systems */
 
 /* threshold to wait before pushing data to application (turned off for now) */
-//#define PUSH_THRESHOLD	512
+//#define PUSH_THRESHOLD    512
 
 /* timeout values - unit is set by 'Now' in ktcp.c, currently 60ms */
-#define TIMEOUT_ENTER_WAIT     /*4000000*/ (4<<4)	/* TIME_WAIT state (was 30, then 10) */
-#define TIMEOUT_CLOSE_WAIT    /*10000000*/ (10<<4)	/* CLOSING/LAST_ACK/FIN_WAIT states (was 240) */
-							/* Initial RTT & RTO values are not important,
-							 * as they get adjusted automatically as soon
-							 * as the connection is up and running. Recommended
-							 * values per RFC 1122 are RTT=0, RTO=3s */
-#define TIMEOUT_INITIAL_RTT	1			/* Still we set RTT to 1 because the smoothing
-							 * algorithm is (currently) disabled when RTT=0 */
-#define TIMEOUT_INITIAL_RTO	(3<<4)			/* 3 seconds */
-#define TCP_RETRANS_MAXWAIT    /*4000000*/ (4<<4)	/* max retransmit wait (4 secs) */
-#define TCP_RETRANS_MINWAIT_SLIP /*500000*/ 8	/* min retrans timeout for slip/cslip (1/2 sec) */
-#define TCP_RETRANS_MINWAIT_ETH	/*250000*/ 4	/* min retrans timeout for ethernet (1/4 sec) */
-#define TCP_RETRANS_ADJUST 3*TIME_CNV_FACTOR /* retrans timeout multiplier for slow peers */
+#define TIMEOUT_ENTER_WAIT  (4<<4)  /* TIME_WAIT state (was 30, then 10, now 4 secs) */
+#define TIMEOUT_CLOSE_WAIT  (10<<4) /* CLOSING/LAST_ACK/FIN_WAIT states (10 secs) */
+                                    /* Initial RTT & RTO values are not important,
+                                     * as they get adjusted automatically as soon
+                                     * as the connection is up and running. Recommended
+                                     * values per RFC 1122 are RTT=0, RTO=3s */
+#define TIMEOUT_INITIAL_RTT 1       /* Still we set RTT to 1 because the smoothing
+                                     * algorithm is (currently) disabled when RTT=0 */
+#define TIMEOUT_INITIAL_RTO (3<<4)  /* 3 seconds */
+#define TCP_RETRANS_MAXWAIT (4<<4)  /* max retransmit wait (4 secs) */
+#define TCP_RETRANS_MINWAIT_SLIP 8  /* min retrans timeout for slip/cslip (1/2 sec) */
+#define TCP_RETRANS_MINWAIT_ETH  4  /* min retrans timeout for ethernet (1/4 sec) */
+#define TCP_RETRANS_ADJUST  (3*TIME_CNV_FACTOR) /* retrans multiplier for slow peers */
 
 /* retransmit settings */
-#define TCP_RTT_ALPHA			40	/* was 90, need much faster convergence for
-						 * slow systems */
-#define TCP_RETRANS_MAXMEM		5120	/* max retransmit total memory (was 4096) */
-#define TCP_RETRANS_MAXTRIES		6	/* max # retransmits (~12 secs total) */
+#define TCP_RTT_ALPHA       40      /* was 90, need much faster convergence for
+                                     * slow systems */
+#define TCP_RETRANS_MAXMEM  5120    /* max retransmit total memory (was 4096) */
+#define TCP_RETRANS_MAXTRIES 6      /* max # retransmits (~12 secs total) */
 
 /* Slow start/congestion avoidance */
-#define TCP_INIT_CWND			2	/* initial congestion window, don't set to 1 */
-						/* will cause connection deadlock on slow systems */
-#define TCP_INIT_SSTHRESH		100	/* SS threshold, could be infinity */
+#define TCP_INIT_CWND       2       /* initial congestion window, don't set to 1 */
+                                    /* will cause connection deadlock on slow systems */
+#define TCP_INIT_SSTHRESH   100     /* SS threshold, could be infinity */
 
-#define SEQ_LT(a,b)	((long)((a)-(b)) < 0)
-#define SEQ_LEQ(a,b)	((long)((a)-(b)) <= 0)
-#define SEQ_GT(a,b)	((long)((a)-(b)) > 0)
-#define SEQ_GEQ(a,b)	((long)((a)-(b)) >= 0)
+#define SEQ_LT(a,b)     ((long)((a)-(b)) < 0)
+#define SEQ_LEQ(a,b)    ((long)((a)-(b)) <= 0)
+#define SEQ_GT(a,b)     ((long)((a)-(b)) > 0)
+#define SEQ_GEQ(a,b)    ((long)((a)-(b)) >= 0)
 
-#define PROTO_TCP	0x06
+#define PROTO_TCP       0x06
 
 #define	TF_FIN	0x01
 #define TF_SYN	0x02
@@ -136,12 +135,12 @@ struct tcpcb_s {
 
 	__u8	state;
 	__u8	unaccepted;		/* boolean */
-	__u8	retrans_act;		/* set when a retrans has been sent on a connection */
+	__u8	retrans_act;		/* set when a retrans has been sent */
 	__u16	rtt;			/* roundtriptime */
 	__u16	cwnd;			/* congestion window */
 	__u16	inflight;		/* # of unacked packets for this cb */
 	__u16	ssthresh;		/* slow start threshold */
-	__u32	sstimer;		/* concestion avoidance timer EXPERIMENTAL */
+	__u32	sstimer;		/* congestion avoidance timer EXPERIMENTAL */
 
 	__u32	time_wait_exp;
 
@@ -199,11 +198,11 @@ struct	tcp_retrans_list_s {
 
 };
 
-extern int tcp_timeruse;	/* retrans timer active, call tcp_retrans */
-extern int cbs_in_time_wait;	/* time_wait timer active, call tcp_expire_timeouts */
-extern int cbs_in_user_timeout;	/* fin_wait/closing/last_ack active, call " */
-extern int tcpcb_need_push;	/* push required, tcpcb_push_data/call notify_data_avail */
-extern int tcp_retrans_memory;	/* total retransmit memory in use */
+extern int tcp_timeruse;        /* retrans timer active, call tcp_retrans */
+extern int cbs_in_time_wait;    /* time_wait timer active, call tcp_expire_timeouts */
+extern int cbs_in_user_timeout; /* fin_wait/closing/last_ack active, call " */
+extern int tcpcb_need_push;     /* push required,tcpcb_push_data/call notify_data_avail */
+extern int tcp_retrans_memory;  /* total retransmit memory in use */
 
 struct tcpcb_list_s *tcpcb_new(int bufsize);
 struct tcpcb_list_s *tcpcb_find(__u32 addr, __u16 lport, __u16 rport);
@@ -226,5 +225,5 @@ void tcp_reject(struct iphdr_s *);
 
 void hexdump(unsigned char *addr, int count, int summary, char *prefix);
 
-extern char *tcp_states[];	/* used in DEBUG_CLOSE only*/
+extern char *tcp_states[];      /* used in DEBUG_CLOSE only*/
 #endif
