@@ -293,15 +293,16 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	acknum = ntohl(h->acknum);
 	if (SEQ_LT(cb->send_una, acknum)) {
 	    cb->send_una = acknum;
-	    if (cb->cwnd <= cb->ssthresh && !cb->retrans_act) cb->cwnd++;  /* adjust congestion win */
+	    /* adjust congestion window */
+	    if (cb->cwnd <= cb->ssthresh && !cb->retrans_act)
+	    	cb->cwnd++;
 	    cb->inflight--;
 	}
     }
 
     if (h->flags & TF_FIN) {
 	cb->rcv_nxt++;
-	debug_close("tcp[%p] packet in established, fin: 1, data: %d, setting state to CLOSE_WAIT\n",
-					cb->sock, datasize);
+	debug_close("tcp[%p] packet in established, fin: 1, data: %d, setting state to CLOSE_WAIT\n", cb->sock, datasize);
 
 	cb->state = TS_CLOSE_WAIT;
 	cb->time_wait_exp = Now;	/* used for debug output only*/
@@ -464,8 +465,8 @@ void tcp_reject(struct iphdr_s *iph) {
 
 	tcph = (struct tcphdr_s *)(((char *)iph) + 4 * IP_HLEN(iph));
 	seqno = ntohl(tcph->seqnum);
-	debug_tcp("tcp: refusing packet from %s:%u to :%u fl 0x%02x\n", in_ntoa(iph->saddr),
-		ntohs(tcph->sport), ntohs(tcph->dport), tcph->flags);
+	debug_tcp("tcp: refusing packet from %s:%u to :%u fl 0x%02x\n",
+	    in_ntoa(iph->saddr), ntohs(tcph->sport), ntohs(tcph->dport), tcph->flags);
 
 	/* Dummy up a new control block and send RST to shutdown sender */
 	cbnode = tcpcb_new(1);		/* bufsize = 1, dummy */

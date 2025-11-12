@@ -316,11 +316,13 @@ void tcp_reoutput(struct tcp_retrans_list_s *n)
 	n->rto = TCP_RETRANS_MAXWAIT;
     n->next_retrans = Now + n->rto;
 
-#ifdef VERBOSE
-    printf("tcp retrans: seq %lu+%u size %d rcvwnd %u unack %lu rto %ld rtt %ld state %d (RETRY %d cnt %d mem %u)\n",
+#if VERBOSE
+    printf("tcp retrans: seq %lu+%u size %d rcvwnd %u unack %lu rto %ld rtt %ld state %d"
+	" (RETRY %d cnt %d mem %u)\n",
 	ntohl(n->tcphdr[0].seqnum) - n->cb->iss, datalen,
 	n->len - TCP_DATAOFF(&n->tcphdr[0]), n->cb->rcv_wnd, n->cb->send_una - n->cb->iss,
-	n->rto, n->cb->rtt, n->cb->state, n->retrans_num, tcp_timeruse, tcp_retrans_memory);
+	n->rto, n->cb->rtt, n->cb->state,
+	n->retrans_num, tcp_timeruse, tcp_retrans_memory);
 #endif
 
     ip_sendpacket((unsigned char *)n->tcphdr, n->len, &n->apair, n->cb);
@@ -397,12 +399,15 @@ void tcp_retrans_retransmit(void)
 
 	    /* congestion avoidance adjustments */
 	    if ((n->cb->inflight > 1) && (n->cb->cwnd > TCP_INIT_CWND)) {
-	    	n->cb->ssthresh = n->cb->inflight/2;	/* inflight has current window in packets */
+		/* inflight has current window in packets */
+	    	n->cb->ssthresh = n->cb->inflight/2;
 	    	if (n->cb->ssthresh < 2) n->cb->ssthresh = 2;
 	    }
-	    n->cb->cwnd = TCP_INIT_CWND;	/* EXPERIMENTAL - keep cwnd at 2 while retransmitting */
-    	//printf("retrans (%d,%d,%lu)\n", n->cb->inflight, n->len, Now - n->next_retrans);
+	    /* EXPERIMENTAL - keep cwnd at 2 while retransmitting */
+	    n->cb->cwnd = TCP_INIT_CWND;
 	    n->cb->retrans_act++;
+	    //printf("retrans (%d,%d,%lu)\n",
+	    	//n->cb->inflight, n->len, Now - n->next_retrans);
 	    tcp_reoutput(n);
 
 	    /* Doesn't make all that sense to first retrans, then kill the connection */

@@ -148,7 +148,8 @@ static void tcpdev_accept(void)
 	    retval_to_sock(db->sock,-EAGAIN);
 	else
 	    cb->newsock = db->newsock;	/* save new sock in listen CB for later*/
-	debug_accept("tcp accept: WAIT (on SYN) sock[%p] saving newsock[%p]\n", sock, db->newsock);
+	debug_accept("tcp accept: WAIT (on SYN) sock[%p] saving newsock[%p]\n",
+	    sock, db->newsock);
 	return;
     }
 
@@ -394,22 +395,23 @@ static void tcpdev_write(void)
 	return;
     }
 
-    /* Delay sending if outstanding send window too large. FIXME could hang if no ACKs rcvd*/
+    /* Delay sending if outstanding send win too large. FIXME could hang if no ACKs rcvd*/
     maxwindow = cb->rcv_wnd;
     if (maxwindow > TCP_SEND_WINDOW_MAX)	/* limit retrans memory usage*/
 	maxwindow = TCP_SEND_WINDOW_MAX;
     if ((cb->inflight >= cb->cwnd) 		/* check congestion window first */
 		|| (cb->send_nxt - cb->send_una + size > maxwindow)) {
 	dbg_counter++;	/* will not work well if multiple connections */
-	if (dbg_counter >10) {
+	if (dbg_counter > 10) {
 		printf("tcp limit: seq %lu size %d maxwnd %u unack %lu rcvwnd %u inflight %d cwnd %d\n",
-		    cb->send_nxt - cb->iss, size, maxwindow, cb->send_nxt - cb->send_una, cb->rcv_wnd,
-		    cb->inflight, cb->cwnd);
+		    cb->send_nxt - cb->iss, size, maxwindow,
+		    cb->send_nxt - cb->send_una, cb->rcv_wnd, cb->inflight, cb->cwnd);
 		dbg_counter = 0;
 	}
 	debug_tcp("tcp limit: seq %lu size %d maxwnd %u unack %lu rcvwnd %u\n",
-	    cb->send_nxt - cb->iss, size, maxwindow, cb->send_nxt - cb->send_una, cb->rcv_wnd);
-	retval_to_sock(sock, -ERESTARTSYS);	/* source will wait for 100ms, then retry */
+	    cb->send_nxt - cb->iss, size, maxwindow, cb->send_nxt - cb->send_una,
+	    cb->rcv_wnd);
+	retval_to_sock(sock, -ERESTARTSYS); /* source will wait for 100ms, then retry */
 	return;
     }
 

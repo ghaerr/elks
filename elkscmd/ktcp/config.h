@@ -3,6 +3,7 @@
 
 /* compile time options*/
 #define CSLIP		0	/* compile in CSLIP support*/
+#define VERBOSE         0       /* =1 compile in more verbose status messages */
 
 /* turn these on for ELKS debugging*/
 #define USE_DEBUG_EVENT 1	/* use CTRLP to toggle debug output*/
