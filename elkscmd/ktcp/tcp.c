@@ -24,9 +24,6 @@
 #include "timer.h"
 #include "netconf.h"
 
-timeq_t Now;
-unsigned long __far *jp;
-
 #if DEBUG_TCPPKT
 static char *tcp_flags(int flags)
 {
@@ -47,7 +44,7 @@ static char *tcp_flags(int flags)
 void tcp_print(struct iptcp_s *head, int recv, struct tcpcb_s *cb)
 {
 #if DEBUG_TCPPKT
-    debug_tcppkt("[%lu]tcp: %s ", *jp, recv? "recv": "send");
+    debug_tcppkt("[%lu]tcp: %s ", get_time(), recv? "recv": "send");
     debug_tcppkt("%u->%u ", ntohs(head->tcph->sport), ntohs(head->tcph->dport));
     debug_tcppkt("[%s] ", tcp_flags(head->tcph->flags));
     if (cb) {
@@ -85,7 +82,7 @@ int tcp_init(void)
 
 static __u32 choose_seq(void)
 {
-    return *jp;
+    return get_time();
 }
 
 void tcp_send_reset(struct tcpcb_s *cb)
@@ -269,7 +266,8 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 
     datasize = iptcp->tcplen - TCP_DATAOFF(h);
     if (datasize != 0) {
-	debug_window("[%lu]tcp: recv data len %u avail %u\n", *jp, datasize, CB_BUF_SPACE(cb));
+	debug_window("[%lu]tcp: recv data len %u avail %u\n",
+            get_time(), datasize, CB_BUF_SPACE(cb));
 	/* Process the data */
 	data = (__u8 *)h + TCP_DATAOFF(h);
 
@@ -316,7 +314,8 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	return; /* ACK with no data received - so don't answer*/
 
     cb->rcv_nxt += datasize;
-    debug_window("[%lu]tcp: ACK seq %ld len %d\n", *jp, cb->rcv_nxt - cb->irs, datasize);
+    debug_window("[%lu]tcp: ACK seq %ld len %d\n",
+        get_time(), cb->rcv_nxt - cb->irs, datasize);
     tcp_send_ack(cb);
 }
 

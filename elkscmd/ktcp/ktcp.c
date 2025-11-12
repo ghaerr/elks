@@ -103,8 +103,7 @@ void ktcp_run(void)
 		return;
 	}
 
-	Now = *jp/6;
-
+	Now = get_time();
 
 	/* expire timeouts*/
 	if (cbs_in_time_wait > 0 || cbs_in_user_timeout > 0) {

@@ -301,8 +301,7 @@ void add_for_retrans(struct tcpcb_s *cb, struct tcphdr_s *th, __u16 len,
 	    n->rto = TCP_RETRANS_MINWAIT_SLIP;	/* 1/2 sec min retrans timeout on slip/cslip*/
     }
     n->first_trans = Now;
-    n->next_retrans = Now + (timeq_t)n->rto;
-
+    n->next_retrans = Now + n->rto;
 }
 
 void tcp_reoutput(struct tcp_retrans_list_s *n)
@@ -315,7 +314,7 @@ void tcp_reoutput(struct tcp_retrans_list_s *n)
     n->rto <<= 2;				/* quadruple retrans timeout*/
     if (n->rto > TCP_RETRANS_MAXWAIT)		/* limit retransmit timeouts to 4 seconds*/
 	n->rto = TCP_RETRANS_MAXWAIT;
-    n->next_retrans = Now + (timeq_t)n->rto;
+    n->next_retrans = Now + n->rto;
 
 #ifdef VERBOSE
     printf("tcp retrans: seq %lu+%u size %d rcvwnd %u unack %lu rto %ld rtt %ld state %d (RETRY %d cnt %d mem %u)\n",
@@ -433,7 +432,7 @@ static int tcp_calc_rcv_window(struct tcpcb_s *cb)
     len = CB_BUF_SPACE(cb);
     if (len < minwindow)	/* FIXME this results in "shrinking the window" */
 	len = 0;
-    debug_window("[%lu]tcp output: len %d min sws %u space %u window %u\n", *jp,
+    debug_window("[%lu]tcp output: len %d min sws %u space %u window %u\n", get_time(),
 	cb->datalen, minwindow, CB_BUF_SPACE(cb), len);
 #else
     /*
@@ -446,7 +445,7 @@ static int tcp_calc_rcv_window(struct tcpcb_s *cb)
      */
     len = CB_BUF_SPACE(cb);
 
-    debug_window("[%lu]tcp output: len %d space %u window %u\n", *jp,
+    debug_window("[%lu]tcp output: len %d space %u window %u\n", get_time(),
 	cb->datalen, CB_BUF_SPACE(cb), len);
 #endif
 

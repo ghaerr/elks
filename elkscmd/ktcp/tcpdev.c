@@ -322,7 +322,7 @@ static void tcpdev_read(void)
     /* send ACK to restart server should window have been full (unless it's netstat)*/
     if (cb->remport != NETCONF_PORT || cb->remaddr != 0)
 	if (cb->remport != local_ip) {	/* no ack to localhost either*/
-	    debug_window("[%lu]tcp: extra ACK seq %ld, app read %d bytes\n", *jp,
+	    debug_window("[%lu]tcp: extra ACK seq %ld, app read %d bytes\n", get_time(),
 		cb->rcv_nxt - cb->irs, data_avail);
 	    tcp_send_ack(cb);
 	}
