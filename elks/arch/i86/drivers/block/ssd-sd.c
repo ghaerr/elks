@@ -26,7 +26,7 @@
 #include <linuxmt/memory.h>
 #include "arch/io.h"
 #include "ssd.h"
-#include "spi-8018x.h"
+#include "spi.h"
 
 enum SdR1Flags {
     IDLE = 1,
@@ -465,6 +465,43 @@ fail:
 }
 
 /**
+ * Wrappers functions block read/write for software SPI implementation
+ **/
+#ifndef CONFIG_HW_SPI
+/**
+ * Reads one block from SD card via hardware SPI into buffer
+ * 
+ * buf: offset address of receive buffer
+ * seg: segment adress of receive buffer
+ * count: number of bytes to read into buffer (has to be 512)
+ */
+void spi_read_block(char *buf, ramdesc_t seg, uint16_t count) {
+    /* init far pointer to segment:offset. FIXME won't work with XMS buffers*/
+    unsigned char __far *buffer = _MK_FP((seg_t)seg, (unsigned)buf);
+
+    do {
+        *buffer++ = spi_receive();
+    } while (--count);
+}
+
+/**
+ * Write one block from buffer to SD card via hardware SPI
+ * 
+ * buf: offset address of write buffer
+ * seg: segment adress of write buffer
+ * count: number of bytes to write from buffer (has to be 512)
+ */
+void spi_write_block(char *buf, ramdesc_t seg, uint16_t count) {
+    /* init far pointer to segment:offset. FIXME won't work with XMS buffers*/
+    unsigned char __far *buffer = _MK_FP((seg_t)seg, (unsigned)buf);
+
+    do {
+        spi_transmit(*buffer++);
+    } while (--count);
+}
+#endif
+
+/**
  * Reads an entire sector off the SD card.
  * 
  * *buffer: __far pointer of the buffer to be written with the
@@ -474,8 +511,6 @@ fail:
  * returns: 0 on success, negative value on failure.
  */
 static int sd_read(char *buf, ramdesc_t seg, sector_t sector) {
-    /* init far pointer to segment:offset. FIXME won't work with XMS buffers*/
-    unsigned char __far *buffer = _MK_FP((seg_t)seg, (unsigned)buf);
     int ret;
     uint16_t count = SD_FIXED_SECTOR_SIZE;
 
@@ -495,9 +530,8 @@ static int sd_read(char *buf, ramdesc_t seg, sector_t sector) {
         goto fail;
     }
 
-    do {
-        *buffer++ = spi_receive();
-    } while (--count);
+    /* Read the entire sector data */
+    spi_read_block(buf, seg, count);
 
     /* Skip trailing CRC */
     spi_send_ffs(2);
@@ -507,6 +541,7 @@ fail:
 
     return ret;
 }
+
 
 /**
  * Writes an entire sector off the SD card.
@@ -518,8 +553,6 @@ fail:
  * returns: 0 on success, negative value on failure.
  */
 static int sd_write(char *buf, ramdesc_t seg, sector_t sector) {
-    /* init far pointer to segment:offset. FIXME won't work with XMS buffers*/
-    unsigned char __far *buffer = _MK_FP((seg_t)seg, (unsigned)buf);
     int ret;
     uint16_t count = SD_FIXED_SECTOR_SIZE;
 
@@ -539,9 +572,7 @@ static int sd_write(char *buf, ramdesc_t seg, sector_t sector) {
     spi_transmit(0xfe);
 
     /* Send the entire sector data */
-    do {
-        spi_transmit(*buffer++);
-    } while (--count);
+    spi_write_block(buf, seg, count);
 
     /* Send a dummy CRC */
     spi_transmit(0);

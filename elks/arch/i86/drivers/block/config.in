@@ -26,6 +26,10 @@ mainmenu_option next_comment
 		Test CONFIG_BLK_DEV_SSD_TEST \
 		SDCard CONFIG_BLK_DEV_SSD_SD" None
 
+	if [ "$CONFIG_BLK_DEV_SSD_SD" == "y" ] && [ "$CONFIG_ARCH_NECV25" == "y" ]; then
+      bool 'Interface SD card with hardware SPI'	CONFIG_HW_SPI	y
+	fi
+
 	bool 'ATA-CF drive support'	        CONFIG_BLK_DEV_ATA_CF	n
 
     comment 'Block device options'

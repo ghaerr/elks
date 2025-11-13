@@ -51,6 +51,11 @@
 #define NEC_TMIC1 0xff9d      /* Timer unit interrupt request control register 1 */
 #define NEC_TMIC2 0xff9e      /* Timer unit interrupt request control register 2 */
 
+// Parallel Port 1
+#define NEC_P1    0xff08      /* P2   Data */
+#define NEC_PM1   0xff09      /* P2M2 Direction */
+#define NEC_PMC1  0xff0A      /* PMC2 Control */
+
 // Parallel Port 2
 #define NEC_P2    0xff10      /* P2   Data */
 #define NEC_PM2   0xff11      /* P2M2 Direction */
@@ -76,3 +81,28 @@
 
 #define UART1_IRQ_RX  1       /* maps to interrupt NEC_INTSR1 */
 #define UART1_IRQ_TX  2       /* maps to interrupt NEC_INTST1 */
+
+// Interrupt register options
+#define IRQFLAG      0x80     /* interrupt request flag */
+#define IRQMSK       0x40     /* mask interrupt, vectored int, no macro service, no register bank switching */
+#define IRQUMSK      0x00     /* unmask interrupt, vectored int, no macro service, no register bank switching */
+#define IRQPRI0      0x00     /* interrupt priority 0 */
+#define IRQPRI1      0x01     /* interrupt priority 1 */
+#define IRQPRI2      0x02     /* interrupt priority 2 */
+#define IRQPRI3      0x03     /* interrupt priority 3 */
+#define IRQPRI4      0x04     /* interrupt priority 4 */
+#define IRQPRI5      0x05     /* interrupt priority 5 */
+#define IRQPRI6      0x06     /* interrupt priority 6 */
+#define IRQPRI7      0x07     /* interrupt priority 7 */
+#define IRQPRID      0x07     /* interrupt priority not selectable (set in base register!) */
+
+// Baud rate prescaler
+#define BR_DIV2      0x00     /* CPU clock / 2 */
+#define BR_DIV4      0x01     /* CPU clock / 4 */
+#define BR_DIV8      0x02     /* CPU clock / 8 */
+#define BR_DIV16     0x03     /* CPU clock / 16 */
+#define BR_DIV32     0x04     /* CPU clock / 32 */
+#define BR_DIV64     0x05     /* CPU clock / 64 */
+#define BR_DIV128    0x06     /* CPU clock / 128 */
+#define BR_DIV256    0x07     /* CPU clock / 256 */
+#define BR_DIV512    0x08     /* CPU clock / 512 */

@@ -37,7 +37,6 @@ void initialize_irq(void)    // see irq-necv25asm.S
             "movb  $(IRQMSK+IRQPRI6), %%ds:(SEIC0) // SEIC0: Serial error interrupt request control register 0, irq prio 6 \n"\
             "movb  $(IRQMSK+IRQPRID), %%ds:(SRIC0) // SRIC0: Serial reception interrupt request control register 0         \n"\
             "movb  $(IRQMSK+IRQPRID), %%ds:(STIC0) // STIC0: Serial transmission interrupt request control register 0      \n"\
-            "movb  $0x00, %%ds:(TXB0)              // TXB0:  restart transmitter, so that ready waiting funtions           \n"\
             "movb  $(IRQMSK+IRQPRI6), %%ds:(SEIC1) // SEIC1: Serial error interrupt request control register 1, irq prio 6 \n"\
             "movb  $(IRQMSK+IRQPRID), %%ds:(SRIC1) // SRIC1: Serial reception interrupt request control register 1         \n"\
             "movb  $(IRQMSK+IRQPRID), %%ds:(STIC1) // STIC1: Serial transmission interrupt request control register 1      \n"\
