@@ -54,7 +54,7 @@ static const unsigned int baudrate_compares[] = {
 };
 
 void set_baud_rate(uint8_t idx) {
-    outw(0x8000 | baudrate_compares[idx], PCB_B0CMP); // 38400bps
+    outw(0x8000 | baudrate_compares[idx], PCB_B0CMP);
 }
 
 #else
@@ -130,7 +130,7 @@ int main (int argc, char **argv)
 
     // switch to a faster baud rate for data tranfere
     // Has to match with PROGRAMMER_BAUD in "version.h"
-    set_baud_rate(17);
+    set_baud_rate(17); // set to 115200 baud
 
     for(;;)
     {
