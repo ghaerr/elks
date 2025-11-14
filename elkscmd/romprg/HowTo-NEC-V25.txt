@@ -1,0 +1,90 @@
+How to use romprg (on a NEC V25 ELKS system)
+
+What is romprg?
+On embedded devices the ELKS system firmware usualy resides in a flash 
+memory chip (ROM for short) and may contain the system BIOS or startup 
+code, the ELKS operating system and/or the ROM filesystem for booting ELKS. 
+
+romprg is a client server utilyty tool for system builders to program
+the ELKS system firmware in a running ELKS 8018x-system. It was ported
+to ELKS from https://github.com/tehKaiN/ROMprg by git user cocus 
+(Santiago Hormazabal) and adapted by me, swausd, for using on
+a NEC V25 ELKS system.
+
+romprg was designed to program 29Fxxx flash ROMs. I have verified that
+it works for SST39SF040 types too. I use romprg with serial baud rate set
+to 115200 baud.
+
+For the "in system programming" to work you have to have a running ELKS 
+system with the ROM integrated into the systems address space. Starting 
+address of the flash for now is fixed in the source code flash.c to 0x8:0000
+
+
+Requirements:
+A working serial connection between the ELKS system and the PC is needed.
+This conection is configured at compile-time of romprg and hostromprg.
+See version.h and main.c in the romprg source folder.
+
+Start romprg on ELKS (the server). romprg now waits for commands like
+live check, erase ROM or read/erase/write ROM from the client (hostromprg
+on the PC) and executes these commands.
+
+Attention:
+You should know what you are doing, for exaple how sectors of the flash 
+are organized. Otherwise you may end with an ELSK system without a 
+functional firmware!
+So please think twice before doing anything ;-)
+
+
+Example workflow to get a new romfs.bin into my embedded ELKS:
+
+'#' mark commands on the ELKS command shell
+'>' mark commands on the PC command shell
+
+Working directory for this example is ./elks/elkscmd/romprg
+
+Connection to the ELKS system is via PC terminal emulation using the serial
+port console which is also configured for using with romprg.
+
+1. Start romprg on the ELKS system, for example from SD card:
+
+# romprg
+Flash program, build on Thu Nov 13 18:28:57 2025
+
+Attention: On NEC V25 0xf:fe00 - 0xf:ffff cannot be programmed with romprg!
+           This is the MCU internal RAM/IO address space.
+
+Exit the terminal emulation now and start the host programmer client...
+
+2. Exit the PC terminal emulation session, because romprg now is using the
+connection exclusively until to the next ELKS reboot.
+To manage flashing, enter hostromprg-commands on the PC command shell.
+
+3. Live check the connection between ELKS and the PC by
+specifying the used <serial port device name> and the command <ping>:
+> ./hostromprg /dev/ttyUSB0 ping
+Firmware version:   1.02
+  address bits:       18
+  max write length:  128
+
+4. Delete the part of the flash memory which is to be re-programmed by
+specifying <relative start-address in ROM> and <relativ end-address-1 in ROM>:
+> ./hostromprg /dev/ttyUSB0 erase 0x00000 0x60000
+
+5. Write image file to flash by specifying <relative start-address in ROM> 
+and <filename with binary data>:
+> ./hostromprg /dev/ttyUSB0 write 0x00000 ../../image/romfs.bin 
+Writing 0x0xxxxx-0x05cc68
+
+6. Read programmed ROM to verify programming by specifying 
+<relative start-address in ROM>, <relativ end-address-1 in ROM> and
+<filename of read data>:
+> ./hostromprg /dev/ttyUSB0 read  0x00000 0x5cc69 rom.bin
+Reading 0x0xxxxx-0x05cc68
+
+7. Compare the two files using linux diff to show any differences:
+> diff ../../image/romfs.bin ./rom.bin
+
+8. Reboot the ELKS system.
+
+14. Nov. 2025 swausd

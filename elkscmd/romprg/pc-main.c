@@ -36,7 +36,7 @@ int check_address_range(uint32_t start, uint32_t end) {
     err = 1;
   }
 
-  if(end >= PROGRAMMER_ROM_SIZE) {
+  if(end-1 >= PROGRAMMER_ROM_SIZE) {
     fprintf(stderr, "End address 0x%x is outside of chip space\n", start);
     err = 1;
   }
@@ -59,7 +59,7 @@ int cli_ping(int argc, char **argv) {
     return 1;
   }
 
-  printf("Firmware version %d.%02d\n", ping.firmware_version_major, ping.firmware_version_minor);
+  printf("Firmware version:  %2d.%02d\n", ping.firmware_version_major, ping.firmware_version_minor);
   printf("  address bits:     %4d\n", ping.address_bits);
   printf("  max write length: %4d\n", ping.max_write_length);
 
