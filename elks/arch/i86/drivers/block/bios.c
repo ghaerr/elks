@@ -314,7 +314,7 @@ int INITPROC bios_getfdinfo(struct drive_infot *drivep)
                 *drivep = fd_types[FD1440];
             } else {
                 bios_drive_map[DRIVE_FD0 + drive] = drive + 0x90;
-                *drivep = fd_types[FD1232];
+                bios_check_sector98(drive, 0x90, drivep);
             }
             ndrives++;  /* floppy drive count*/
             drivep++;
@@ -421,15 +421,22 @@ void BFPROC bios_switch_device98(int target, unsigned int device,
     else if (device == 0x10)
         *drivep = fd_types[FD720];
     else if (device == 0x90) {
-        BD_AX = 0x5a00|device|(bios_drive_map[target + DRIVE_FD0] & 0x0F);
-        BD_CX = 0;
-        BD_DX = 0;
-        call_bios(&bdt);
-        if((BD_CX & 0x300)==0x300)
-         *drivep = fd_types[FD1232];
-        else
-         *drivep = fd_types[FD1200];
-     }
+        bios_check_sector98(target, device, drivep);
+    }
+}
+
+/* check sector size */
+void BFPROC bios_check_sector98(int target, unsigned int device,
+    struct drive_infot *drivep)
+{
+    BD_AX = BIOSHD_READ_ID |device|(bios_drive_map[target + DRIVE_FD0] & 0x0F);
+    BD_CX = 0;
+    BD_DX = 0;
+    call_bios(&bdt);
+    if((BD_CX & 0x300)==0x300)
+        *drivep = fd_types[FD1232];
+    else
+        *drivep = fd_types[FD1200];
 }
 #endif
 

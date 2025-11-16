@@ -56,11 +56,7 @@
 
 #define PER_DRIVE_INFO  1       /* =1 for per-line display of drive info at init */
 #define DEBUG_PROBE     0       /* =1 to display more floppy probing information */
-#ifdef CONFIG_ARCH_PC98
-#define FORCE_PROBE     1       /* =1 to force floppy probing */
-#else
 #define FORCE_PROBE     0       /* =1 to force floppy probing */
-#endif
 #define TRACK_SPLIT_BLK 0       /* =1 to read extra sector on track split block */
 #define SPLIT_BLK       0       /* =1 to read extra sector on single split block */
 #define FULL_TRACK      0       /* =1 to read full tracks when track caching */

@@ -69,6 +69,7 @@ struct biosparms {
 #define BIOSHD_DRIVE_PARMS      0x8400
 #define BIOSHD_DEVICE_TYPE      0x1400
 #define BIOSHD_MODESET          0x8E00
+#define BIOSHD_READ_ID          0x5A00
 #else
 #define BIOSHD_INT              0x13
 #define BIOSHD_RESET            0x0000
@@ -88,6 +89,8 @@ void BFPROC bios_set_ddpt(int max_sectors);
 void BFPROC bios_copy_ddpt(void);
 struct drive_infot;
 void BFPROC bios_switch_device98(int target, unsigned int device,
+        struct drive_infot *drivep);
+void BFPROC bios_check_sector98(int target, unsigned int device,
         struct drive_infot *drivep);
 void BFPROC bios_disk_park_all(void);
 
