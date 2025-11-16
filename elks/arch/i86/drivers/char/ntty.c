@@ -321,7 +321,7 @@ size_t tty_read(struct inode *inode, struct file *file, char *data, size_t len)
     int ch, k;
 
     while (i < len) {
-        timeout = jiffies + vtime * (HZ / 10);
+        timeout = jiffies() + vtime * (HZ / 10);
 again:
         if (tty->ops->read) {
             tty->ops->read(tty);
@@ -338,7 +338,7 @@ again:
                 if (current->signal)
                     return -EINTR;
                 if (!icanon && vtime) {
-                    if (jiffies < timeout) {
+                    if (jiffies() < timeout) {
                         schedule();
                         goto again;             /* don't reset timer*/
                     } else {

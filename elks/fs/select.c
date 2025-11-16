@@ -25,6 +25,7 @@
 
 #include <arch/segment.h>
 #include <arch/system.h>
+#include <arch/irq.h>
 
 #define ROUND_UP(x,y) (((x)+(y)-1)/(y))
 
@@ -212,7 +213,7 @@ int sys_select(int n, fd_set * inp, fd_set * outp, fd_set * exp,
 
         timeout = ROUND_UP(get_user_long(&tvp->tv_usec), (1000000 / HZ));
         timeout += get_user_long(&tvp->tv_sec) * (jiff_t) HZ;
-        if (timeout) timeout += jiffies + 1UL;
+        if (timeout) timeout += jiffies() + 1;
     }
     zero_fd_set(&res_in);
     zero_fd_set(&res_out);

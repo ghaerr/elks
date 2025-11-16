@@ -33,7 +33,7 @@
 
 #include <arch/system.h>
 #include <arch/segment.h>
-
+#include <arch/irq.h>
 
 /* this is the structure holding the base time (in UTC, of course) */
 struct timeval xtime;
@@ -53,7 +53,7 @@ void INITPROC tz_init(const char *tzstr)
 
 time_t current_time(void)
 {
-    return (xtime.tv_sec + (jiffies - xtime_jiffies)/HZ);
+    return (xtime.tv_sec + (jiffies() - xtime_jiffies)/HZ);
 }
 
 /* set the time of day */
@@ -90,7 +90,7 @@ int sys_settimeofday(register struct timeval *tv, struct timezone *tz)
      * current jiffies for later use as offset - ghaerr.
      */
     if (tv != NULL) {
-        xtime_jiffies = jiffies;
+        xtime_jiffies = jiffies();
         xtime.tv_sec = tmp_tv.tv_sec;
         xtime.tv_usec = tmp_tv.tv_usec;
     }
@@ -107,7 +107,7 @@ int sys_gettimeofday(register struct timeval *tv, struct timezone *tz)
 
     /* load the current time into the structures passed */
     if (tv != NULL) {
-        now = jiffies;
+        now = jiffies();
         tmp_tv.tv_sec = xtime.tv_sec + (now - xtime_jiffies) / HZ;
         tmp_tv.tv_usec = xtime.tv_usec + ((now - xtime_jiffies) % HZ) * (1000000L / HZ);
         if (tmp_tv.tv_usec >= 10000000L)

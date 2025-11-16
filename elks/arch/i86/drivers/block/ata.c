@@ -54,6 +54,7 @@
 #include <linuxmt/debug.h>
 #include <linuxmt/prectimer.h>
 #include <arch/io.h>
+#include <arch/irq.h>
 
 /* hardware controller access modes, override using xtide= in /bootopts */
 #define MODE_ATA        0       /* standard - ATA at ports 0x1F0/0x3F6 */
@@ -133,9 +134,9 @@ static void ATPROC OUTB(unsigned int byte, int reg)
 /* delay 10ms */
 static void ATPROC delay_10ms(void)
 {
-    unsigned long timeout = jiffies + 1 + 1;    /* guarantee at least 10ms interval */
+    jiff_t timeout = jiffies() + 1 + 1; /* guarantee at least 10ms interval */
 
-    while (!time_after(jiffies, timeout))
+    while (!time_after(jiffies(), timeout))
         continue;
 }
 
@@ -144,7 +145,7 @@ static void ATPROC delay_10ms(void)
  */
 static int ATPROC ata_wait(unsigned int ticks)
 {
-    unsigned long timeout = jiffies + ticks + 1;
+    jiff_t timeout = jiffies() + ticks + 1;
     unsigned char status;
 
     do
@@ -156,7 +157,7 @@ static int ATPROC ata_wait(unsigned int ticks)
         if ((status & ATA_STATUS_BSY) == 0)
             return 0;
 
-    } while (!time_after(jiffies, timeout));
+    } while (!time_after(jiffies(), timeout));
 
     return -ENXIO;
 }
