@@ -8,7 +8,6 @@
 // 25 June 2020 Greg Haerr
 //
 #include <linuxmt/config.h>
-#include <arch/ports.h>
 	.code16
 	.text
 
@@ -41,7 +40,7 @@ _irq_com1:
 	pop	%cx
 	pop	%bx
 	pop	%ax
-	add	$4,%sp		// skip the trampoline DS:*irq
+	add	$4,%sp			// skip the trampoline DS:*irq
 	iret
 #endif
 
@@ -74,6 +73,6 @@ _irq_com2:
 	pop	%cx
 	pop	%bx
 	pop	%ax
-	add	$4,%sp		// skip the trampoline DS:*irq
+	add	$4,%sp			// skip the trampoline DS:*irq
 	iret
 #endif
