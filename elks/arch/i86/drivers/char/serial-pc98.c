@@ -100,7 +100,7 @@ static int rs_write(struct tty *tty)
     int i = 0;
 
     while (tty->outq.len > 0) {
-	jiff_t timeout = jiffies() + 4*HZ/100   /* 40ms, 300 baud needs 33.3ms */
+	jiff_t timeout = jiffies() + 4*HZ/100;  /* 40ms, 300 baud needs 33.3ms */
 	/* Wait until transmitter hold buffer empty */
 	while (!(inb(port->io + UART_LSR) & UART_LSR_THRE)) {
 	    if (time_after(jiffies(), timeout)) /* waits 40ms max */
