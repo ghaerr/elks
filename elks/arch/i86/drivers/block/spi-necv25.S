@@ -9,32 +9,22 @@
  * 04. Nov. 2025 swausd
  *
  * Limitations: CLK, MOSI, MISP and CS have to be on the same port.
+ **************************************************************************
+ * Attention: Direction and functions of port pins have to be set in a 
+ * central position (BIOS or startup code). See definitions in necv25.h
+ **************************************************************************
  */
 
 #include <arch/necv25.h>
 
 // port definitions
 #define PORT_LATCH      NEC_P2               /* read port input or write port output      */
-#define PORT_CONTROL    NEC_PMC2             /* controll 0=I/O or 1=special chip function */
-#define PORT_DIRECTION  NEC_PM2              /* mode of I/O pins 1=input, 1=output        */
 
 // pin definitions                           /* V25 Port pin: */
 #define PIN_CS   4                           /* P2.4 */
 #define PIN_CLK  5                           /* P2.5 */
 #define PIN_MOSI 6                           /* P2.6 */
 #define PIN_MISO 7                           /* P2.7 */
-
-#define PIN_CS_BIT (1 << PIN_CS)
-#define PIN_CS_MASK (~(PIN_CS_BIT))
-
-#define PIN_CLK_BIT (1 << PIN_CLK)
-#define PIN_CLK_MASK (~(PIN_CLK_BIT))
-
-#define PIN_MOSI_BIT (1 << PIN_MOSI)
-#define PIN_MOSI_MASK (~(PIN_MOSI_BIT))
-
-#define PIN_MISO_BIT (1 << PIN_MISO)
-#define PIN_MISO_MASK (~(PIN_MISO_BIT))
 
     .text
 
@@ -102,11 +92,6 @@ spi_init_ll:
     push    %ds
     movw    $NEC_HW_SEGMENT, %bx             // load DS to access memmory mapped CPU registers
     movw    %bx, %ds
-
-    andb    $(PIN_CS_MASK & PIN_CLK_MASK & PIN_MOSI_MASK), (PORT_DIRECTION)                // set to output
-    orb     $PIN_MISO_BIT, (PORT_DIRECTION)                                                // set to input
-    nop     // delay? seems to be necessary
-    andb    $(PIN_CS_MASK & PIN_CLK_MASK & PIN_MOSI_MASK & PIN_MISO_MASK), (PORT_CONTROL)  // set to IO, not special function
 
     set1    PIN_CS, PORT_LATCH
     clr1    PIN_CLK, PORT_LATCH
