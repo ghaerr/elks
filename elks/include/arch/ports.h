@@ -57,11 +57,6 @@
 #define COM4_PORT       0x2e8
 #define COM4_IRQ        7               /* unregistered unless COM4_PORT found*/
 
-#ifdef CONFIG_CHAR_DEV_RS
-//#define CONFIG_FAST_IRQ4             /* COM1 very fast serial driver, no ISIG handling*/
-//#define CONFIG_FAST_IRQ3             /* COM2 very fast serial driver, no ISIG handling*/
-#endif
-
 #endif
 
 #ifdef CONFIG_ARCH_PC98
