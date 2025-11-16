@@ -433,10 +433,10 @@ void BFPROC bios_check_sector98(int target, unsigned int device,
     BD_CX = 0;
     BD_DX = 0;
     call_bios(&bdt);
-    if((BD_CX & 0x300)==0x300)
-        *drivep = fd_types[FD1232];
-    else
+    if((BD_CX & 0x300)==0x200)
         *drivep = fd_types[FD1200];
+    else
+        *drivep = fd_types[FD1232];
 }
 #endif
 
