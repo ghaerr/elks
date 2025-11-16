@@ -27,8 +27,9 @@ struct serial_info {
     unsigned char lcr;
     unsigned char mcr;
     unsigned int  divisor;
-    struct tty *tty;
-    int pad1, pad2, pad3;       // round out to 16 bytes for faster addressing of ports[]
+    struct tty *  tty;
+    int           intrchar; /* used by fast handler for ^C SIGINT processing */
+    int pad1, pad2;         /* round out to 16 bytes for faster addressing of ports[] */
 };
 
 /* flags*/
@@ -209,8 +210,8 @@ static int rs_write(struct tty *tty)
 #if defined(CONFIG_FAST_IRQ4)
 /*
  * Fast serial driver for slower machines. Should work up to 38400 baud.
- * No ISIG (tty signal interrupt) handling for shells, used for fast
- * SLIP transfer or arrow key input on slow systems.
+ * Incomplete tty signal handling, will generate SIGINT when VINTR = ^C.
+ * Useful for fast SLIP transfer or arrow key input on slow systems.
  *
  * Specially-coded fast C interrupt handler, called from asm _irq_com1/2 after
  * saving scratch registers AX,BX,CX,DX & DS and setting DS to kernel data segment.
@@ -223,17 +224,19 @@ extern void _irq_com1(int irq, struct pt_regs *regs);
 void fast_com1_irq(void)
 {
     struct serial_info *sp = &ports[0];
-    char *io = sp->io;
     struct ch_queue *q = &sp->tty->inq;
     unsigned char c;
 
-    c = INB(io + UART_RX);              /* Read received data */
+    c = INB(sp->io + UART_RX);          /* Read received data */
     if (q->len < q->size) {
         q->base[q->head] = c;
         if (++q->head >= q->size)
             q->head = 0;
         q->len++;
     }
+    /* unfortunately, can't add more specifics w/o compiler generating BP accesses */
+    if (c == 03)                        /* assumes VINTR = ^C and byte queued anyways */
+        sp->intrchar = c;
 }
 #endif
 
@@ -242,40 +245,53 @@ extern void _irq_com2(int irq, struct pt_regs *regs);
 void fast_com2_irq(void)
 {
     struct serial_info *sp = &ports[1];
-    char *io = sp->io;
     struct ch_queue *q = &sp->tty->inq;
     unsigned char c;
 
-    c = INB(io + UART_RX);              /* Read received data */
+    c = INB(sp->io + UART_RX);          /* Read received data */
     if (q->len < q->size) {
         q->base[q->head] = c;
         if (++q->head >= q->size)
             q->head = 0;
         q->len++;
     }
+    /* unfortunately, can't add more specifics w/o compiler generating BP accesses */
+    if (c == 03)                        /* assumes VINTR = ^C and byte queued anyways */
+        sp->intrchar = c;
 }
 #endif
 
 #if defined(CONFIG_FAST_IRQ4) || defined(CONFIG_FAST_IRQ3)
+/* check for SIGINT and wakeup waiting processes */
+static void pump_port(struct serial_info *sp)
+{
+    struct tty *ttyp = sp->tty;
+    struct ch_queue *q = &ttyp->inq;
+
+    if (ttyp->usecount && q->len) {
+        if (sp->intrchar) {
+            tty_intcheck(ttyp, sp->intrchar);
+            sp->intrchar = 0;
+        }
+        if (q->len == 1) {
+            /* attempt process (again) of VINTR, also VQUIT and ^P-^N debug chars */
+            if (tty_intcheck(ttyp, chq_peekch(q))) {
+                (void)chq_getch(q);     /* discard received character */
+                return;
+            }
+        }
+        wake_up(&q->wait);
+    }
+}
+
 /* called from timer interrupt - check ring buffer and wakeup waiting processes */
 void rs_pump(void)
 {
-    struct serial_info *sp;
-    struct ch_queue *q;
-
 #if defined(CONFIG_FAST_IRQ4)
-    sp = &ports[0];
-    q = &sp->tty->inq;
-
-    if (sp->tty->usecount && q->len)
-        wake_up(&q->wait);
+    pump_port(&ports[0]);
 #endif
 #if defined(CONFIG_FAST_IRQ3)
-    sp = &ports[1];
-    q = &sp->tty->inq;
-
-    if (sp->tty->usecount && q->len)
-        wake_up(&q->wait);
+    pump_port(&ports[1]);
 #endif
 }
 #endif
@@ -343,11 +359,13 @@ static int rs_open(struct tty *tty)
     switch(port->irq) {
 #if defined(CONFIG_FAST_IRQ4)
     case 4:
+        port->intrchar = 0;
         err = request_irq(port->irq, (irq_handler) _irq_com1, INT_SPECIFIC);
         break;
 #endif
 #if defined(CONFIG_FAST_IRQ3)
     case 3:
+        port->intrchar = 0;
         err = request_irq(port->irq, (irq_handler) _irq_com2, INT_SPECIFIC);
         break;
 #endif
