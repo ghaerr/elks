@@ -9,12 +9,14 @@
 #if defined(CONFIG_FARTEXT_KERNEL) && !defined(__STRICT_ANSI__)
 #define INITPROC __far __attribute__ ((far_section, noinline, section (".fartext.init")))
 #define FARPROC  __far __attribute__ ((far_section, noinline, section (".fartext.far")))
+#define NICPROC __far __attribute__ ((far_section, noinline, section (".fartext.nic")))
 /* these symbols defined in elks-small.ld linker script */
 extern void INITPROC __start_fartext_init(void);
 extern void INITPROC __end_fartext_init(void);
 #else
 #define INITPROC
 #define FARPROC
+#define NICPROC
 #endif
 
 struct task_struct;
