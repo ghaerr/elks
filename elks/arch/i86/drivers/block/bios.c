@@ -79,7 +79,8 @@ void BFPROC bios_disk_reset(int drive)
 }
 
 int BFPROC bios_disk_rw(unsigned cmd, unsigned num_sectors, unsigned drive,
-        unsigned cylinder, unsigned head, unsigned sector, unsigned seg, unsigned offset)
+        unsigned cylinder, unsigned head, unsigned sector, unsigned seg, unsigned offset,
+        struct drive_infot *drivep)
 {
 #ifdef CONFIG_ARCH_PC98
     BD_AX = cmd | drive;
@@ -90,12 +91,7 @@ int BFPROC bios_disk_rw(unsigned cmd, unsigned num_sectors, unsigned drive,
     }
     else {
         if ((0xF0 & drive) == 0x90) {
-            BD_AX = 0x5a00|drive;
-            BD_CX = 0;
-            BD_DX = 0;
-            call_bios(&bdt);
-            BD_AX = cmd | drive;
-            if((BD_CX & 0x300)==0x200) goto notMFM1024;
+            if (drivep->sector_size == 512) goto notMFM1024;
             BD_BX = (unsigned int) (num_sectors << 10);
             BD_CX = (3 << 8) | cylinder;
         }

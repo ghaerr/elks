@@ -112,7 +112,7 @@ static void BFPROC set_cache_invalid(void)
 }
 
 #ifdef CONFIG_BLK_DEV_BFD
-static int BFPROC read_sector(int drive, int cylinder, int sector)
+static int BFPROC read_sector(int drive, int cylinder, int sector, struct drive_infot *drivep)
 {
     int count = 2;              /* one retry on probe or boot sector read */
 
@@ -124,7 +124,7 @@ static int BFPROC read_sector(int drive, int cylinder, int sector)
     do {
         set_irq();
         bios_set_ddpt(36);      /* set to large value to avoid BIOS issues*/
-        if (!bios_disk_rw(BIOSHD_READ, 1, drive, cylinder, 0, sector, DMASEG, 0))
+        if (!bios_disk_rw(BIOSHD_READ, 1, drive, cylinder, 0, sector, DMASEG, 0, drivep))
             return 0;           /* everything is OK */
         bios_disk_reset(drive);
     } while (--count > 0);
@@ -160,7 +160,7 @@ static void BFPROC probe_floppy(int target, struct hd_struct *hdp)
         /* Try to look for an ELKS or DOS parameter block in the first sector.
          * If it exists, we can obtain the disk geometry from it.
          */
-        if (!read_sector(target, 0, 1)) {
+        if (!read_sector(target, 0, 1, drivep)) {
             struct elks_disk_parms __far *parms = _MK_FP(DMASEG, drivep->sector_size -
                 2 - sizeof(struct elks_disk_parms));
 
@@ -234,9 +234,9 @@ static void BFPROC probe_floppy(int target, struct hd_struct *hdp)
             if (count)
                 bios_switch_device98(target, 0x30, drivep);  /* 1.44 MB */
             /* skip probing first entry */
-            if (count && read_sector(target, track_probe[count] - 1, 1)) {
+            if (count && read_sector(target, track_probe[count] - 1, 1, drivep)) {
                 bios_switch_device98(target, 0x10, drivep);  /* 720 KB */
-                if (read_sector(target, track_probe[count] - 1, 1))
+                if (read_sector(target, track_probe[count] - 1, 1, drivep))
                     bios_switch_device98(target, 0x90, drivep);  /* 1.200 MB or 1.232 MB */
                 else
                     pc98_720KB = 1;
@@ -246,7 +246,7 @@ static void BFPROC probe_floppy(int target, struct hd_struct *hdp)
         do {
             /* skip probing first entry */
             if (count) {
-                int res = read_sector(target, track_probe[count] - 1, 1);
+                int res = read_sector(target, track_probe[count] - 1, 1, drivep);
 #if DEBUG_PROBE
                 printk("CYL %d %s, ", track_probe[count]-1, res? "fail": "ok");
 #endif
@@ -269,12 +269,12 @@ static void BFPROC probe_floppy(int target, struct hd_struct *hdp)
             if (count == 3)
                 bios_switch_device98(target, 0x30, drivep);  /* 1.44 MB */
             /* skip reading first entry */
-            if ((count == 3) && read_sector(target, 0, sector_probe[count])) {
+            if ((count == 3) && read_sector(target, 0, sector_probe[count], drivep)) {
                 if (pc98_720KB) {
                     bios_switch_device98(target, 0x10, drivep);  /* 720 KB */
                     /* Read BPB to find 8 sectors, 640KB format. Currently, it is not supported */
                     unsigned char __far *boot = _MK_FP(DMASEG, 0);
-                    if (!read_sector(target, 0, 1) && (boot[24] == 8))
+                    if (!read_sector(target, 0, 1, drivep) && (boot[24] == 8))
                         bios_switch_device98(target, 0x90, drivep);
                 }
                 else
@@ -283,7 +283,7 @@ static void BFPROC probe_floppy(int target, struct hd_struct *hdp)
         } while (++count < sizeof(sector_probe)/sizeof(sector_probe[0]));
 #else
         do {
-            int res = read_sector(target, 0, sector_probe[count]);
+            int res = read_sector(target, 0, sector_probe[count], drivep);
 #if DEBUG_PROBE
             printk("SEC %d %s, ", sector_probe[count], res? "fail": "ok");
 #endif
@@ -529,7 +529,7 @@ static int BFPROC do_readwrite(struct drive_infot *drivep, sector_t start, char 
 
         bios_set_ddpt(drivep->sectors);
         error = bios_disk_rw(cmd == WRITE? BIOSHD_WRITE: BIOSHD_READ, this_pass,
-                                drive, cylinder, head, sector, segment, offset);
+                                drive, cylinder, head, sector, segment, offset, drivep);
         if (error) {
             printk("bioshd(%x): cmd %d retry #%d CHS %d/%d/%d count %d\n",
                 drive, cmd, MAX_ERRS - errs + 1, cylinder, head, sector, this_pass);
@@ -576,7 +576,7 @@ static void BFPROC do_readtrack(struct drive_infot *drivep, sector_t start)
 
         bios_set_ddpt(drivep->sectors);
         error = bios_disk_rw(BIOSHD_READ, num_sectors, drive,
-                                 cylinder, head, sector, TRACKSEG, 0);
+                                cylinder, head, sector, TRACKSEG, 0, drivep);
         if (error) {
             printk("bioshd(%x): track read retry #%d CHS %d/%d/%d count %d\n",
                 drive, errs + 1, cylinder, head, sector, num_sectors);
