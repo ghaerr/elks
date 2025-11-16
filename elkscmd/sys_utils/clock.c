@@ -141,8 +141,6 @@
  * v1.7 (april 2024 hs/@mellvik TLVC): Add support for ASTCLOCK
  * (AST SixPackPlus), seemingly the common choice in pre-AT
  * systems. Supports both NS and Ricoh chips.
- * 
- * v1.8 (14. Nov. 2025 swausd) Adapted for NEC V25 and DS3231
  */
 
 #ifdef CONFIG_ARCH_IBMPC
@@ -192,10 +190,6 @@ void ast_settime(struct tm *);
 void ast_gettime(struct tm *);
 int  ast_chiptype(void);
 int  cmos_probe(void);
-#endif
-
-#ifdef CONFIG_ARCH_NECV25
-#include "ds3231.h"
 #endif
 
 int usage(void)
@@ -254,6 +248,11 @@ int main(int argc, char **argv)
     time_t systime;
     int    arg;
 
+#ifdef CONFIG_ARCH_NECV25
+    errmsg("Sorry, clock not supported on this system.\n");
+    exit(1);
+#endif
+
     while ((arg = getopt(argc, argv, "rwsuvA")) != -1) {
         switch (arg) {
         case 'r':
@@ -288,16 +287,11 @@ int main(int argc, char **argv)
     }
 #endif
 
-#ifdef CONFIG_ARCH_NECV25
-    ds3231_init();
-#endif
-
     if (readit + writeit + setit > 1)
         usage();                /* only allow one of these */
 
     if (!(readit | writeit | setit))    /* default to read */
         readit = 1;
-
 
     if (readit || setit) {
         do_gettime(&tm);
@@ -870,29 +864,3 @@ int cmos_probe(void)
     return 0;
 }
 #endif /* AST_SUPPORT */
-
-#ifdef CONFIG_ARCH_NECV25
-void do_gettime(struct tm *tm)
-{
-   tm->tm_sec  = bcd_hex(ds3231_read(REG_SEC));
-   tm->tm_min  = bcd_hex(ds3231_read(REG_MIN));
-   tm->tm_hour = bcd_hex(ds3231_read(REG_HOUR)  & 0x3f);
-
-   tm->tm_wday = bcd_hex(ds3231_read(REG_DAY)   & 0x07) - 1; 
-   tm->tm_mday = bcd_hex(ds3231_read(REG_DATE)  & 0x3f);
-   tm->tm_mon  = bcd_hex(ds3231_read(REG_MONTH) & 0x1f);
-   tm->tm_year = bcd_hex(ds3231_read(REG_YEAR));
-}
-
-void do_settime(struct tm *tm)
-{
-   ds3231_write(REG_SEC,   hex_bcd(tm->tm_sec));
-   ds3231_write(REG_MIN,   hex_bcd(tm->tm_min));
-   ds3231_write(REG_HOUR,  hex_bcd(tm->tm_hour));
-
-   ds3231_write(REG_DAY,   hex_bcd(tm->tm_wday + 1));
-   ds3231_write(REG_DATE,  hex_bcd(tm->tm_mday));
-   ds3231_write(REG_MONTH, hex_bcd(tm->tm_mon + 1));
-   ds3231_write(REG_YEAR,  hex_bcd(tm->tm_year));
-}
-#endif
