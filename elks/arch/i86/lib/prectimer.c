@@ -130,12 +130,12 @@ unsigned long get_ptime(void)
 void test_ptime_idle_loop(void)
 {
     static int v;
-    unsigned long timeout = jiffies + v;
+    jiff_t timeout = jiffies() + v;
     unsigned long pticks = get_ptime();
     printk("%lu %u = %lk\n", pticks, (unsigned)lastjiffies, pticks);
     if (++v > 5) v = 0;
     /* idle_halt() must be commented out to vary timings */
-    while (jiffies < timeout)
+    while (jiffies() < timeout)
         ;
 }
 #endif

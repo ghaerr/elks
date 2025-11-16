@@ -16,8 +16,8 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/types.h>
 #include <linuxmt/debug.h>
-
 #include <arch/io.h>
+#include <arch/irq.h>
 
 struct lp_info {
     unsigned short io;
@@ -83,7 +83,7 @@ lp_char_polled(unsigned char c, struct lp_info *lpp)
 static size_t
 lp_write(struct inode *inode, struct file *file, char *buf, size_t count)
 {
-    jiff_t timeout = jiffies + LP_TIME_WAIT;
+    jiff_t timeout = jiffies() + LP_TIME_WAIT;
     unsigned short target;
     struct lp_info *lpp;
     size_t retval;
@@ -112,7 +112,7 @@ lp_write(struct inode *inode, struct file *file, char *buf, size_t count)
             } else if (!(status & LP_PERRORP)) {
                 printk("lp%d printer error\n", target);
                 retval = -EFAULT;
-            } else if (timeout >= jiffies) {
+            } else if (timeout >= jiffies()) {
                 debug_lp("lp%d: timeout %d<%d\n", target, chrsp, count);
                 retval = 0;
             } else {

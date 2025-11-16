@@ -96,7 +96,7 @@ static int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg
 
     switch (cmd) {
     case MEM_GETTASK:
-        retword = (unsigned short)task;
+        retword = (unsigned)task;
         break;
     case MEM_GETMAXTASKS:
         retword = max_tasks;
@@ -115,17 +115,17 @@ static int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg
         memcpy_tofs(arg, &mu, sizeof(struct mem_usage));
         return 0;
     case MEM_GETHEAP:
-        retword = (unsigned short) &_heap_all;
+        retword = (unsigned)&_heap_all;
         break;
     case MEM_GETJIFFADDR:
-        retword = (unsigned short) &jiffies;
+        retword = (unsigned)&jiffies;
         break;
     case MEM_GETSEGALL:
-        retword = (unsigned short) &_seg_all;
+        retword = (unsigned)&_seg_all;
         break;
     case MEM_GETUPTIME:
 #ifdef CONFIG_CPU_USAGE
-        retword = (unsigned short) &uptime;
+        retword = (unsigned)&uptime;
         break;
 #endif
         /* fall thru */

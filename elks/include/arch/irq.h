@@ -78,6 +78,22 @@ void idle_halt(void);
             :"memory")
 #endif
 
+/* atomic access of 32-bit volatile jiffies */
+#define jiffies()                           \
+    __extension__ ({                        \
+        unsigned long v;                    \
+        asm volatile ("pushfw\n"            \
+                      "cli\n"               \
+                        : /* no input */    \
+                        : /* no output */   \
+                        : "memory");        \
+        v = jiffies;                        \
+        asm volatile ("popfw\n"             \
+                        : /* no input */    \
+                        : /* no output */   \
+                        : "memory");        \
+        v; })
+
 #ifdef CONFIG_ARCH_SWAN
 /* acknowledge interrupt */
 #define ack_irq(i)              \

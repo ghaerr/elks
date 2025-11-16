@@ -69,7 +69,7 @@ int INITPROC get_ide_data(int drive, struct drive_infot *drivep) {
 	if (!ide_buffer) return -1;
 
 	while (1) {
-	    unsigned long timeout = jiffies + WAIT_READY;
+	    jiff_t timeout = jiffies + WAIT_READY;
 	    out_hd(drive, IDE_DRIVE_ID);
 	    while ((STATUS(port) & 0x80) == 0x80) {     /* wait 300ms until not busy */
 		if (time_after(jiffies, timeout))

@@ -7,6 +7,7 @@
 #include <linuxmt/debug.h>
 #include <arch/segment.h>
 #include <arch/io.h>
+#include <arch/irq.h>
 /*
  * Alarm system call
  *
@@ -52,7 +53,7 @@ static int setalarm(unsigned long jiffs)
             return 0;
         }
         del_timer(ap);
-        ap->tl_expires = jiffies + jiffs;
+        ap->tl_expires = jiffies() + jiffs;
         ap->tl_function = alarm_callback;
         ap->tl_data = (int)current; /* must delete timer on process exit*/
         add_timer(ap);

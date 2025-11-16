@@ -348,7 +348,7 @@ static void DFPROC floppy_select(unsigned int nr)
 
     /* Some FDCs require a delay when changing the current drive */
     del_timer(&select);
-    select.tl_expires = jiffies + 2;
+    select.tl_expires = jiffies() + 2;
     add_timer(&select);
 }
 
@@ -407,7 +407,7 @@ static void DFPROC floppy_on(int nr)
     if (!(mask & current_DOR)) {        /* motor not running yet */
         del_timer(&motor_on_timer[nr]);
         /* TEAC 1.44M says 'waiting time' 505ms, may be too little for 5.25in drives. */
-        motor_on_timer[nr].tl_expires = jiffies +
+        motor_on_timer[nr].tl_expires = jiffies() +
             ((running_qemu && !MOTORDELAY)? 0: TIMEOUT_MOTOR_ON);
         add_timer(&motor_on_timer[nr]);
 
@@ -428,7 +428,7 @@ static void DFPROC floppy_on(int nr)
 static void floppy_off(int nr)
 {
     del_timer(&motor_off_timer[nr]);
-    motor_off_timer[nr].tl_expires = jiffies + TIMEOUT_MOTOR_OFF;
+    motor_off_timer[nr].tl_expires = jiffies() + TIMEOUT_MOTOR_OFF;
     add_timer(&motor_off_timer[nr]);
     DEBUG("flpOFF-\n");
 }
@@ -771,7 +771,7 @@ static void DFPROC setup_rw_floppy(void)
             ms += 10 + numsectors;    /* 1440k @300rpm = 100ms + ~10ms/sector + 4ms/tr */
         else
             ms += 8 + (numsectors<<1); /* 360k @360rpm = 83ms + ~20ms/sector + 3ms/tr */
-        unsigned long timeout = jiffies + ms*HZ/100;
+        jiff_t timeout = jiffies + ms*HZ/100;
         while (!time_after(jiffies, timeout)) continue;
     }
 #endif
@@ -1250,7 +1250,7 @@ static void DFPROC redo_fd_request(void)
 
     /* restart timer for hung operations, 6 secs probably too long ... */
     del_timer(&fd_timeout);
-    fd_timeout.tl_expires = jiffies + TIMEOUT_CMD_COMPL;
+    fd_timeout.tl_expires = jiffies() + TIMEOUT_CMD_COMPL;
     add_timer(&fd_timeout);
 
     if (seek_track != current_track)

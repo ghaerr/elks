@@ -17,7 +17,7 @@
  *        frequency. Christian Mardm"oller (chm@kdt.de)
  */
 
-volatile jiff_t jiffies = 0;
+volatile jiff_t jiffies;
 static int spin_on;
 
 extern void rs_pump(void);
