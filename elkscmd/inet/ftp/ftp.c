@@ -75,8 +75,6 @@ static int send_cmd(int, char *);
 static int is_connected(int);
 static int parse_cmd(char *, char **);
 
-//static FILE *fcmd;
-
 enum {	// commands in disconnected mode
 	CMD_OPEN,	// Must be first!!
 	CMD_USER,
@@ -131,7 +129,7 @@ struct cmd_tab cmdtab[] = {
 	{"cd", CMD_CWD, "Change (remote) working directory"},
 	{"pwd", CMD_PWD, "Show (remote) working directory"},
 	{"bin", CMD_BIN, "Set file transfer type to BINARY"},
-	{"ascii", CMD_ASCII, "Set file transer type to ASCII"},
+	{"ascii", CMD_ASCII, "Set file transfer type to ASCII"},
 	{"quit", CMD_QUIT, "Quit program"},
 	{"type", CMD_TYPE, "Show file transfer type."},
 	{"prompt", CMD_PROMPT, "Toggle interactive multifile transfers"},
@@ -208,7 +206,6 @@ int ask(char *source, char *name) {
 		if (tolower(*buf) == 'n') return 1;
 	}
 	/*NOTREACHED*/
-	//return 1;
 }
 		
 /*
@@ -244,9 +241,6 @@ int get_reply(int fd, char *buf, int size, int dbg) {
 		strncpy(buf, lbuf, size);
 		lb = 0;
 		goto reply_finis;
-		//if (debug >= dbg) printf("(bf) %s", buf);
-		//if (!strncmp(buf, "421", 3)) connected = 0;	/* look for server timeout */
-		//return 1;
 	}
 	bzero(buf, size);
 
@@ -399,11 +393,9 @@ int parse_cmd(char *input, char **argv) {
 	int i = 0;
 
 	trim(input);
-	//printf("parse_cmd: <%s>\n", input);
 	argv[i++] = strtok(input, " ");
 	while ((parm = strtok(NULL, " \r\n\t"))) {
 		argv[i++] = parm;
-		//printf("parse_cmd: %s\n", parm);
 	}
 	argv[i] = NULL;
 	argv[i+1] = NULL;		// Insurance
@@ -530,7 +522,6 @@ int do_ls(int controlfd, int datafd, char **cmdline, int mode) {
 				break;
 			}
 			control_finished = TRUE;
-			//bzero(recvline, (int)sizeof(recvline));
 			FD_CLR(controlfd, &rdset);
 		}
 
@@ -1096,7 +1087,6 @@ void do_close(int controlfd, char *str, int len) {
 			sprintf(str, "Server timed out.\n");
 		printf("Closing: %s", str);
 	}
-	//fclose(fcmd);
 	close(controlfd);
 	return;
 }
@@ -1375,8 +1365,6 @@ int main(int argc, char **argv) {
 			break;
 
 		case CMD_QUIT:		/* close connection, leave program */
-			//do_close(controlfd, command, sizeof(command));
-			//connected = 0;
 			goto out;
 
 #ifdef BLOATED
