@@ -26,6 +26,7 @@
 #define PIN_MOSI 6                           /* P2.6 */
 #define PIN_MISO 7                           /* P2.7 */
 
+#define PIN_MISO_BIT (1 << PIN_MISO)
     .text
 
 // NEC V25 "set1" set bit instruction
