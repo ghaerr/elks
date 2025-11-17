@@ -11,7 +11,6 @@
 #include <errno.h>
 #include <signal.h>
 #include <termios.h>
-#include <signal.h>
 #include <string.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -65,7 +64,7 @@ again:
 		close(STDERR_FILENO);
 		close(*pty_fd);
 
-		setsid();
+		setsid();	   /* required to get the tty right in ps(1) */
 		pty_name[5] = 't'; /* results in /dev/ttyp%d, slave side (TTY) /dev/ttyp0 = 4,8 */
 		if ((tty_fd = open(pty_name, O_RDWR)) < 0) {
 			errmsg("telnetd: Can't open pty ");
@@ -121,7 +120,9 @@ static void telnet_init(int ofd)
 #endif
 }
 
-static void client_loop (int fdsock, int fdterm)
+/* read/write loop for the telnet connection */
+
+static void client_loop(int fdsock, int fdterm)
 {
     fd_set fds_read;
     fd_set fds_write;
@@ -188,13 +189,12 @@ static void client_loop (int fdsock, int fdterm)
     }
 }
 
-#if 0
-void sigchild(void)
+void cleanup()
 {
-	waitpid(-1, NULL, WNOHANG);
-	signal(SIGCHLD, sigchild);
+	while (wait4(-1, NULL, WNOHANG, NULL) > 0)
+		;
+	signal(SIGCHLD, cleanup);
 }
-#endif
 
 int main(int argc, char **argv)
 {
@@ -242,7 +242,7 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	/* become daemon, debug output on 1 and 2*/
+	/* become daemon, debug output on 1 and 2 */
 	if ((ret = fork()) == -1) {
 		perror("telnetd");
 		return 1;
@@ -254,13 +254,16 @@ int main(int argc, char **argv)
 	dup2(fd, STDERR_FILENO);
 	if (fd > STDERR_FILENO)
 		close(fd);
-	setsid();
-	//signal(SIGCHLD, sigchild);
+	setsid();	/* create new process group */
+	signal(SIGCHLD, cleanup);
 
 	while (1) {
 		unsigned int len = sizeof(addr_in);
 		connectionfd = accept(sockfd, (struct sockaddr *)&addr_in, &len);
 		if (connectionfd < 0) {
+			/* interrupted accept() returns ERESTARTSYS on signal SIGCHLD, not EINTR */
+			if (errno == ERESTARTSYS || errno == EINTR)
+				continue;
 			perror ("telnetd accept");
 			break;
 		}
@@ -269,7 +272,8 @@ int main(int argc, char **argv)
 
 		if ((ret = fork()) == -1)		/* handle new accept*/
 			perror("telnetd");
-		else if (ret == 0) {
+		else if (ret == 0) {			/* child processing */
+
 #if 0 /* test code for accept and getpeername */
 			fprintf(stderr, "accept from %s:%u\n", in_ntoa(addr_in.sin_addr.s_addr),
 				ntohs(addr_in.sin_port));
@@ -286,8 +290,8 @@ int main(int argc, char **argv)
 				kill (pid, SIGKILL);
 				waitpid(pid, NULL, 0);
 			}
-			close (connectionfd);
-			close (pty_fd);
+			close(connectionfd);
+			close(pty_fd);
 			exit(0);
 		} else {
 			close(connectionfd);
