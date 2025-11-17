@@ -11,8 +11,8 @@ void ds3231_init(void)
 {
    i2c_init();
 
-   write_rtc(REG_CNTRL, 0x00);
-   write_rtc(REG_STAT,  0x08);
+   ds3231_write(REG_CNTRL, 0x00);
+   ds3231_write(REG_STAT,  0x08);
 }
 
 
