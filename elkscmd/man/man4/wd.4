@@ -9,7 +9,7 @@ wd8003, wd8013, wd8216
 .fi
 .SH DESCRIPTION
 The \fBwd0\fP 
-device refers to the TLVC driver for the WD/SMC family of 10Mbps 
+device refers to the network interface card driver for the WD/SMC family of 10Mbps 
 Ethernet interfaces (aka NICs) running on the PC ISA 8 or 16 bit bus. The 
 \fBwd8013\fP
 and later models have a full width 16 bit (double) edge connector an may
@@ -26,7 +26,7 @@ file.
 .SH CONFIGURATION
 The default settings for the interface are set in the
 .I ports.h 
-file in the TLVC source tree, see the FILES section below. These settings may conveniently
+file in the source tree, see the FILES section below. These settings may conveniently
 be overridden at boot-time via the
 .I /bootopts
 file using the syntax shown in the SYNOPSIS section above.
@@ -80,7 +80,7 @@ the displayed MAC (Ethernet) address was found and set.
 The interrupt line (IRQ) is reported but not tested or activated at this point. If the interface does 
 not seem to work, the IRQ may be wrong. Verify this by trying an outgoing 
 .I telnet
-command from the TLVC system. Since the driver will collect arrived packets when sending a packet,
+command from the desktop. Since the driver will collect arrived packets when sending a packet,
 an outgoing 
 .I telnet
 connection will enable traffic to flow, even for other connections, for as long as it's 
@@ -132,7 +132,7 @@ more than once - indicate a hardware malfunction.
 \fIeth: mismatched read page pointers %2x vs %2x.\fR
 .fi
 This should never happen and indicates either a driver bug or a physical hardware problem.
-Contact the TLVC support community if you see this error.
+Contact the support community if you see this error.
 .PP
 .nf
 \fIwd0: Rcv oflow (0x%x), keep %d\fR

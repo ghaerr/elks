@@ -3,22 +3,31 @@
 telnet \- user interface to the TELNET protocol
 .SH SYNOPSIS
 .B telnet
+[
+.I -e
+<esc>
+-I 
+]
 .I host
 [
 .I port
 ]
 .SH DESCRIPTION
-.B Telnet
-is used to communicate with another host using the TELNET protocol.
+.B telnet
+is a small and simple implementation of the client side of the TELNET protocol,
+used to communicate interactively with another Internet or LAN host.
 .PP
 Once a connection has been opened, all
 text typed is immediately sent to the remote host for processing.
 .PP
-.SH BUGS
+A hung session may be terminated using the
+.I escape
+character, '^]' by default, which may be set via the 
+.I -e
+option. The new escape character may be specified as a single character optionally
+preceded by a caret ('^'), which will be converted to the corresponding
+ control character, as in '^A' becoming 'control-A' etc.  
 .PP
-There is no way to exit
-.B telnet
-except by disconnecting from the remote host. This is usually
-done by typing ^D (control-D).
+.SH BUGS
 .PP
 There is no adequate way for dealing with flow control.

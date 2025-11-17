@@ -1,10 +1,11 @@
-.TH FTPD 8 ELKS
+.TH FTPD 8
 .SH NAME
 ftpd \- Internet File Transfer Protocol server
 .SH SYNOPSIS
 .B ftpd
 .RB [ \-d ]
 .RB [ \-q ]
+.RB [ \-D ]
 .RI [ port ]
 .SH DESCRIPTION
 .B Ftpd
@@ -17,8 +18,11 @@ option is specified,
 debugging information is written to the console. Multiple 
 .B \-d
 options may be specified for increased verbosity level. More than 4 is not meaningful.
+.PP
 .B Ftpd
-will normally detach itself from the controlling terminal. If the debug level is 2 or higher, such detach is prevented. 
+will normally detach itself from the controlling terminal. If the 
+.B \-D
+option is specified, such detach is prevented. 
 .PP
 If the
 .B \-q
@@ -26,22 +30,25 @@ option is specified or the environment variable
 .I QEMU=1 
 is present,
 .B ftpd
-will assume it is running in the QEMU emulator and remap ports and IP-addresses accordingly.
+will enter QEMU mode and assume to be running in the QEMU emulator
+and remap ports and IP-addresses accordingly.
 The mappings correspond with the setup provided for QEMU in the 
 .I qemu.sh
-script in the ELKS distribution. When QEMU mode is active, the server 
-will look for loopback connections (ELKS internal) and turn off QEMU mode 
-if detected, in order for file transfers to work correctly. This is meaningful for testing only.
+script in the distribution. When QEMU mode is active, the server 
+will check for loopback connections and turn off QEMU mode 
+if detected, in order for file transfers to work correctly. Loopback mode is meaningful for testing only.
+.PP
+The QEMU and debug modes can also be set from the client via the SITE command, see below.
 .PP
 The ftp server
 will timeout an inactive session after 15 minutes. 
 .PP
-The ftp server currently supports (or will support) the following ftp
-requests; case is not distinguished. The commands marked with a '*' are planned, but not currently implemented.
+The ftp server currently supports (or will support) the following subset of the ftp command repertoire,
+case is not distinguished. The commands marked with a '*' are planned, but not currently implemented.
 .PP
 .nf
 .ta \w'Request        'u
-\fBRequest	Description\fP
+\fBRequest	Description\fR
 ABOR*	abort previous command
 CWD	change working directory
 DELE	delete a file
@@ -56,7 +63,7 @@ PORT	specify data connection port
 PWD	print the current working directory
 QUIT	terminate session
 RETR	retrieve a file
-RMD*	remove a directory
+RMD	remove a directory
 SIZE*	return size of file
 SITE	accept SITE specific command
 STAT	return status of server
@@ -66,7 +73,7 @@ TYPE	specify data transfer \fItype\fP
 USER	specify user name
 .fi
 .PP
-The remaining ftp requests specified in Internet RFC 959 are
+The remaining ftp commands specified in Internet RFC 959 are
 reported as unrecognized.
 .PP
 For simplicity, the 
@@ -77,22 +84,31 @@ This applies only to the server, it is still necessary to set the desired transf
 The ftp server will abort an active file transfer only when the
 ABOR command is preceded by a Telnet "Interrupt Process" (IP)
 signal and a Telnet "Synch" signal in the command Telnet stream,
-as described in Internet RFC 959. (Not yet implemented in ELKS].
+as described in Internet RFC 959. (Not yet implemented).
 .PP
 The
 .I SITE 
-command implements only the
+command implements the following subcommands:
+.PP
 .I IDLE
-subcommand, which without a parameter will display the current idle timeout value in seconds. Add a numeric argument to the 
+- which without a parameter will display the current idle timeout value in seconds. Add a numeric argument to the 
 .i IDLE 
 subcommand to set the timeout value. Acceptable range is 30 to 2700 seconds.
+.PP
+.I QEMU
+- which will toggle QEMU mode.
+.PP
+.I DEBUG
+- which will increase the server's debug level.
+.PP
 .B Ftpd
 interprets file names according to the ``globbing''
-conventions used by the ELKS 
-.IR sash (1).
-This allows users to utilize the metacharacters ``*?[].
+conventions used by the 
+.IR sash (1)
+command.
+This allows users to utilize the metacharacters *?[].
 .PP
-The current ELKS-implementation of 
+The current implementation of 
 .B ftpd
 requires username and password to be specified, but ignores them. 
 Future implementations may support authentication via 
@@ -107,7 +123,13 @@ Anonymous authentication is not supported.
 .B Ftpd
 implements no securtity measures, and runs from the authenticated user's (currently root) home directory.
 CWD to any directory is allowed, which - in combination with the DELETE and RMDIR commands - may be very dangerous.
+.SH FILES
+/etc/net.cfg, /bin/net
 .SH "SEE ALSO"
 ftp(1), ftpget(1), ftpput(1)
 .SH BUGS
 The lack of security measures makes it easy for inexperienced users to inflict havoc on the system.
+.PP
+When running under QEMU, 
+.B ftpd
+will hang if file transefers (including using the DIR and LS commands) unless QEMU mode has been set.
