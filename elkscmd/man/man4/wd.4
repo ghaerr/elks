@@ -1,31 +1,32 @@
 .TH WD 4
 .SH NAME
-wd0 \- Driver for the wd/smc 8003 and 8013 ISA Ethernet controller family
+wd0 \- Driver for the wd/smc 8003/8013/8216 ISA Ethernet controller family
 .SH SYNOPSIS
 .nf
-wd8003, wd8013
+wd8003, wd8013, wd8216
 	/bootopts: wd0=11,0x300,0xcc00,0x80
 	/dev/wd0 - major: 9 minor: 1
 .fi
 .SH DESCRIPTION
 The \fBwd0\fP 
-device refers to the ELKS driver for the wd8003/8013 family of 10Mbps 
-Ethernet interfaces (aka NICs) running
-on the PC ISA 8 or 16 bit bus. The 
+device refers to the TLVC driver for the WD/SMC family of 10Mbps 
+Ethernet interfaces (aka NICs) running on the PC ISA 8 or 16 bit bus. The 
 \fBwd8013\fP
-has a full width 16 bit (double) edge connector an may be used in 16 or 8 bit modes. The
+and later models have a full width 16 bit (double) edge connector an may
+be used in 16 or 8 bit modes. The
 .B wd8003
 has a single, 8bit wide edge connector and is an 8 bit only device.
 .PP
-The driver will attempt to recognize the type of controller and adjust settings accordingly. 
+The driver will attempt to recognize the type of controller and bus width, and 
+adjust settings accordingly. 
 The actual settings will be displayed at boot time. If autodetection does not work, all settings
-may be overridden via the 
+may be overridden via the flags-parameter in the
 .I /bootopts
 file.
 .SH CONFIGURATION
 The default settings for the interface are set in the
 .I ports.h 
-file in the ELKS source tree, see the FILES section below. These settings may conveniently
+file in the TLVC source tree, see the FILES section below. These settings may conveniently
 be overridden at boot-time via the
 .I /bootopts
 file using the syntax shown in the SYNOPSIS section above.
@@ -40,7 +41,7 @@ will be used. The commas must be kept.
 .SH FLAGS
 The 
 .I flags 
-part of the configuration line enables/disables various interface and driver parameters at boot time.
+part of the configuration line enables/disables various interface and driver parmeters at boot time.
 These parameters vary slightly from one interface type/vendor to the next, so make sure to 
 look at the correct man page to get correct information.
 .PP
@@ -58,7 +59,7 @@ file set the verbose flag (0x80) in the flags field to aid debugging.
 .nf
 	NAME		VALUE	FUNCTION
 	ETHF_8BIT_BUS   0x10    Force  8 bit bus
-	ETHF_16BIT_BUS  0x20    Force 16 bit bus (currently unused)
+	ETHF_16BIT_BUS  0x20    Force 16 bit bus
 	ETHF_VERBOSE    0x80    Turn on console error messages
 .fi
 
@@ -66,7 +67,8 @@ file set the verbose flag (0x80) in the flags field to aid debugging.
 When the \fBne0\fP
 interface has been configured into the running kernel via
 \fImenuconfig\fP,
-a boot message will indicate whether the configuration works or not. The following message indicates success:
+a boot message will indicate whether the configuration works or not.
+The following message indicates success:
 .PP
 .nf
 eth: wd0 at 0x320, irq 11, ram 0xcc00, (wd8013) MAC 00:00:C0:BC:8F:4B, 
@@ -76,22 +78,24 @@ eth: wd0 at 0x320, irq 11, ram 0xcc00, (wd8013) MAC 00:00:C0:BC:8F:4B,
 The interface was found at the specified I/O address, the shared memory address works and
 the displayed MAC (Ethernet) address was found and set. 
 The interrupt line (IRQ) is reported but not tested or activated at this point. If the interface does 
-not seem to work, the IRQ may be wrong.  
-If the interface has several connection options (AUI, BNC and/or TP), the card may need to 
+not seem to work, the IRQ may be wrong. Verify this by trying an outgoing 
+.I telnet
+command from the TLVC system. Since the driver will collect arrived packets when sending a packet,
+an outgoing 
+.I telnet
+connection will enable traffic to flow, even for other connections, for as long as it's 
+active. If it stops, type enter and it continues.
+.PP 
+If the interface has several connection options (AUI, BNC and/or TP), this may also be the source
+of the problem. The card may need to 
 be configured specifically for the connection type in use.
 .PP
 If the interface is reported as 'not found' it is likely that the I/O address is wrong. 
-.PP
-.nf
-eth: wd0 at 0x320, irq 11, ram 0xcc00 not found
-.fi
-.PP
-Check the configuration again – in particular the IRQ and the shared memory address.
-On most reasonably modern NICs this means firing 
-up a configuration utility under MSDOS to do so called 'soft configuration'. 
-Older NICs are configured via physical jumpers,
-some have both, one jumper setting indicating 'soft configuration'. Make sure that the shared
-memory address is used by other ISA interfaces.
+Use the DOS
+.I EZSETUP
+program to configure jumperless cards.
+Also make sure that the shared
+memory address is not used by other ISA interfaces.
 .PP
 If the interface seems to work  or partly work but emit error messages while 
 transferring data, make sure you set the
@@ -128,12 +132,13 @@ more than once - indicate a hardware malfunction.
 \fIeth: mismatched read page pointers %2x vs %2x.\fR
 .fi
 This should never happen and indicates either a driver bug or a physical hardware problem.
-Contact the ELKS support community if you see this error.
+Contact the TLVC support community if you see this error.
 .PP
 .nf
 \fIwd0: Rcv oflow (0x%x), keep %d\fR
 .fi
-The interface was unable to handle the amount of incoming traffic and had to discard one or more packets.
+The interface was unable to handle the amount of incoming traffic and had to 
+discard one or more packets.
 Since incoming packets are transferred directly from the interface buffer to user space,
 with no buffering by the operating system, this may occur regularly when under heavy load. 
 If it happens in light load conditions, it may indicate a hardware or network media problem.
@@ -155,12 +160,12 @@ This message is informational.
 \fIwd0: RX-error, status 0x%x\fR
 .fi
 A link level error happened during receive. This should not happen but may occur 
-under heavy load. The message is informational and will not show unless the verbose-flag is set.
+under heavy load. The message is informational and will not show unless the verbolse-falg is set.
 .PP
 .nf
 \fIwd0: Bogus packet: status %#x nxpg %#x size %d\fR
 .fi
-A unusual status code was set by the NIC related to a received packet. This should not 
+A unusual status code was set by the NIC related to a recieved packet. This should not 
 happen, and would be of great interest to developers.
 .PP
 .nf
@@ -199,4 +204,4 @@ ioctl is currently unused and disabled.
 .BR bootopts (5).
 .SH AUTHOR
 Adapted from the ELKS ne2k driver by @pawosm-arm (2020), expanded and partly 
-rewritten by @mellvik (2022).
+rewritten by @mellvik/TLVC (2022, 2025).

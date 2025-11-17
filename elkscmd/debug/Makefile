@@ -52,4 +52,4 @@ install: $(PRGS)
 	$(INSTALL) $(PRGS) $(DESTDIR)/bin
 
 clean:
-	$(RM) $(PRGS) $(HOSTPRGS) *.o *.map system.sym
+	$(RM) $(PRGS) *.o *.map system.sym
