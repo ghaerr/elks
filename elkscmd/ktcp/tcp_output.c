@@ -306,10 +306,8 @@ void add_for_retrans(struct tcpcb_s *cb, struct tcphdr_s *th, __u16 len,
 
 void tcp_reoutput(struct tcp_retrans_list_s *n)
 {
-    //unsigned int datalen = n->len - TCP_DATAOFF(&n->tcphdr[0]);
-
-    //if (datalen < n->cb->rcv_wnd)		/* don't record retry if not in recv window*/
     /*  I don't understand, a retrans is per definition within the rcv window */
+    //if (datalen < n->cb->rcv_wnd)		/* don't record retry if not in recv window*/
 	n->retrans_num++;
     n->rto <<= 2;				/* quadruple retrans timeout*/
     if (n->rto > TCP_RETRANS_MAXWAIT)		/* limit retransmit timeouts to 4 seconds*/
@@ -317,10 +315,11 @@ void tcp_reoutput(struct tcp_retrans_list_s *n)
     n->next_retrans = Now + n->rto;
 
 #if VERBOSE
-    printf("tcp retrans: seq %lu+%u size %d rcvwnd %u unack %lu rto %ld rtt %ld state %d"
+    unsigned int datalen = n->len - TCP_DATAOFF(&n->tcphdr[0]);
+    printf("tcp retrans: seq %lu size %d rcvwnd %u unack %lu rto %u rtt %u state %d"
 	" (RETRY %d cnt %d mem %u)\n",
 	ntohl(n->tcphdr[0].seqnum) - n->cb->iss, datalen,
-	n->len - TCP_DATAOFF(&n->tcphdr[0]), n->cb->rcv_wnd, n->cb->send_una - n->cb->iss,
+	n->cb->rcv_wnd, n->cb->send_una - n->cb->iss,
 	n->rto, n->cb->rtt, n->cb->state,
 	n->retrans_num, tcp_timeruse, tcp_retrans_memory);
 #endif
@@ -339,7 +338,8 @@ void tcp_retrans_expire(void)
     n = retrans_list;
     /* avoid running out of memory with excessive retransmits*/
     if (tcp_retrans_memory > TCP_RETRANS_MAXMEM) {
-	printf("ktcp: retransmit memory over limit (cnt %d, mem %u)\n", tcp_timeruse, tcp_retrans_memory);
+	printf("ktcp: retransmit memory over limit (cnt %d, mem %u)\n",
+		tcp_timeruse, tcp_retrans_memory);
 	while (n != NULL)
 		n = rmv_from_retrans(n);
 	return;
@@ -501,7 +501,7 @@ void tcp_output(struct tcpcb_s *cb)
     apair.daddr = cb->remaddr;
     apair.protocol = PROTO_TCP;
 
-    ip_sendpacket((unsigned char *)th, len, &apair, cb);
     add_for_retrans(cb, th, len, &apair);
+    ip_sendpacket((unsigned char *)th, len, &apair, cb);
     netstats.tcpsndcnt++;
 }
