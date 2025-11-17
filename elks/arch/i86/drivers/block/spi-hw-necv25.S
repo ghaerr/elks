@@ -17,6 +17,11 @@
  * serial has to be serial 0
  * /SCK0 connected with /CTS0, Tx clock (out) to Rx clock (in)
  * configure baud rate by setting BR_PRSCLR to desired value
+ *
+ **************************************************************************
+ * Attention: Direction and functions of port pins have to be set in a 
+ * central position (BIOS or startup code). See definitions in necv25.h
+ **************************************************************************
  */
 
 #include <arch/necv25.h>
@@ -62,11 +67,6 @@ spi_init_ll:
     movb    $0x47, (NEC_STIC0)               // STIC0: clear Tx ready flag
     movb    $0xc0, (NEC_SCM0)                // SCM0:  synchronous mode, enable Rx/Tx, external Rx clock
 
-    clr1    PIN_CS, NEC_PMC2                 // set to IO, not special function
-    clr1    PIN_CS, NEC_PM2                  // set to output
-    set1    PIN_CS, NEC_P2                   // de-select SPI
-    set1    PIN_SCK0, NEC_PMC1               // set to special function
-    clr1    PIN_SCK0, NEC_PM1                // set to output
     set1    PIN_CS, NEC_P2                   // de-select SPI
 
     pop     %ds

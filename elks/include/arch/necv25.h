@@ -61,6 +61,40 @@
 #define NEC_PM2   0xff11      /* P2M2 Direction */
 #define NEC_PMC2  0xff12      /* PMC2 Control */
 
+/************************************************************
+ * Configuration of port have to be remembert because
+ * PM and PMC registers can only be written to and
+ * only written as a whole byte (no bit set/clear).
+ *
+ * So this is the config for the current NEC V25 ELKS system
+ *
+ * Port.Pin  Name   Function Direction Used in
+ * P1.0             special  in        do not change
+ * P1.1             special  in        do not change
+ * P1.2             special  in        do not change
+ * P1.3             special  in        do not change
+ * P1.4             I/O      in
+ * P1.5             I/O      in
+ * P1.6      /SCK0  special  out       spi-hw-necv25.S
+ * P1.7             I/O      in
+ *
+ * Port.Pin  Name   Function Direction Used in
+ * P2.0      SDA    I/O      in/out    i2c-ll.S
+ * P2.1      SCL    I/O      out       i2c-ll.S
+ * P2.2             I/O      in        currently not used
+ * P2.3      CS     I/O      out       spi-hw-necv25.S
+ * P2.4      CS     I/O      out       spi-necv25.S
+ * P2.5      CLK    I/O      out       spi-necv25.S
+ * P2.6      MOSI   I/O      out       spi-necv25.S
+ * P2.7      MISO   I/O      in        spi-necv25.S
+ * *********************************************************/
+// PM1 PMC1, PM2 and PMC2 have to get initialized in BIOS
+// or startup code with these values before ELKS starts:
+#define NEC_PM1_DEF  0xbf
+#define NEC_PMC1_DEF 0x48
+#define NEC_PM2_DEF  0x84
+#define NEC_PMC2_DEF 0x00
+ 
 // Other interrupt control registers
 #define NEC_EXIC0 0xff4c      /* External interrupt 0 */
 #define NEC_EXIC1 0xff4d      /* External interrupt 1 */
