@@ -1,5 +1,5 @@
 /*
- * Minimal FTP server for TLVC
+ * Minimal FTP server for ELKS and TLVC
  * November 2021 by Helge Skrivervik - helge@skrivervik.com
  *
  * TODO:
@@ -94,7 +94,6 @@ enum {
 struct cmd_tab {
 	char *cmd;
 	int value;
-	//char *hlp;
 };
 
 struct cmd_tab cmdtab[] = {
@@ -345,7 +344,6 @@ int do_list(int datafd, char *input) {
    	FILE *in;
 	int len, nlst = 0, status = 0;
 
-	//bzero(cmd_buf, sizeof(cmd_buf));
 	bzero(iobuf, sizeof(iobuf));
 
 	if (strncmp(input, "NLST", 4) == 0)
@@ -471,7 +469,6 @@ int do_nlist(int dfd, char *iobuf)
 				    strcat(iobuf, thisdir);
 				    strcat(iobuf, dp->d_name);
 				    strcat(iobuf, "\r\n");
-			    	    //printf("name: %s(%d)\n", &iobuf[len], dp->d_namlen);
 				    len += slen + dp->d_namlen + 2;
 				} else {
 				    write(dfd, iobuf, len);
@@ -582,7 +579,6 @@ int do_retr(int datafd, char *input){
 	int fd, len;
 	struct stat fst;
 
-	//bzero(cmd_buf, sizeof(cmd_buf));
 	bzero(iobuf, sizeof(iobuf));
 
 	if (get_param(input, cmd_buf) > 0) {
@@ -595,7 +591,6 @@ int do_retr(int datafd, char *input){
 			write(controlfd, iobuf, strlen(iobuf));
 			while ((len = read(fd, iobuf, sizeof(iobuf))) > 0) 
 			    if (write(datafd, iobuf, len) != len) {
-				//printf("RETR error fd %d len %d\n", datafd, len);
 				perror("Data write error"); 
 				break;
 			    }
@@ -621,12 +616,10 @@ int do_stor(int datafd, char *input) {
 	int fp;
 	int n = 0, len;
 
-	//bzero(cmd_buf, sizeof(cmd_buf));
 	bzero(iobuf, sizeof(iobuf));
 
 
 	if (get_param(input, cmd_buf) < 0) {
-		//if (debug) printf("No file specified.\n");
 		send_reply(450, "Requested action not taken - no file");
 		return -1;
 	}
@@ -725,7 +718,6 @@ int main(int argc, char **argv) {
 		perror("getsockname");
 		//return -1;
 	}
-	//if (debug) printf("ftpd running - debug level %d.\n", debug);
 	if (!nofork) {
 		/* become daemon, debug output on 1 and 2*/
 		if ((ret = fork()) == -1) {
@@ -786,7 +778,7 @@ int main(int argc, char **argv) {
 				printf("local: %s, remote: %s, QEMU: %d\n", 
 					in_ntoa(myaddr.sin_addr.s_addr), real_ip, qemu);
 
-			send_reply(220, "TLVC minimal FTP server speaking");
+			send_reply(220, "Welcome - ELKS FTP server speaking");
 
 			/* standard housekeeping */
 			if (do_login(controlfd) < 0) {
@@ -898,7 +890,6 @@ int main(int argc, char **argv) {
 					break;
 #ifdef BLOAT
 				case CMD_MKD:
-					//bzero(namebuf, sizeof(namebuf));
 					if (get_param(command, namebuf) < 0) {
 						send_reply(501, "Syntax error - MKDIR needs parameter");
 					} else {
@@ -913,7 +904,6 @@ int main(int argc, char **argv) {
 					break;
 
 				case CMD_RMD:
-					//bzero(namebuf, sizeof(namebuf));
 					if (get_param(command, namebuf) < 0) {
 						send_reply(501, "Syntax error - RMD needs parameter");
 					} else {
@@ -927,7 +917,6 @@ int main(int argc, char **argv) {
 					break;
 
 				case CMD_DELE:
-					//bzero(namebuf, sizeof(namebuf));
 					if (get_param(command, namebuf) < 0) {
 						send_reply(501, "Syntax error - DELE needs parameter");
 					} else {
@@ -954,7 +943,6 @@ int main(int argc, char **argv) {
 
 				case CMD_CWD:
 					/* FIXME: if no arg, change back to home dir */
-					//bzero(namebuf, sizeof(namebuf));
 					if (get_param(command, namebuf) < 0) {
 						send_reply(501, "Syntax error - CWD needs parameter");
 					} else {
@@ -968,7 +956,6 @@ int main(int argc, char **argv) {
 					break;
 #ifdef BLOAT
 				case CMD_SITE:	/* allow client to set or query server idle timeout */
-					//bzero(namebuf, sizeof(namebuf));
 					if (get_param(command, namebuf) < 0) {
 						send_reply(501, "Syntax error - SITE needs subcommand");
 						break;
