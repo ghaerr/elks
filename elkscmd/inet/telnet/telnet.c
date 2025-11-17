@@ -1,5 +1,5 @@
 /*
- * Telnet for ELKS 
+ * Telnet for ELKS - TLVC
  *
  * Based on minix telnet client.
  * (c) 2001 Harry Kalogirou <harkal@rainbow.cs.unipi.gr>
@@ -24,7 +24,8 @@
 #include "ttn.h"
 
 //#define DEBUG 1
-//#define RAWTELNET	/* set in telnet and telnetd for raw telnet without IAC*/
+//#define RAWTELNET         /* set in telnet and telnetd for raw telnet without IAC*/
+#define ESCAPE (']'&0x1f)   /* = ^] escape session, effectively terminate */
 
 #if DEBUG
 #define where() (fprintf(stderr, "%s %d:", __FILE__, __LINE__))
@@ -37,6 +38,7 @@ static char *term_env;
 static struct termios def_termios;
 static int writeall (int fd, char *buffer, int buf_size);
 static int process_opt (char *bp, int count);
+static int escape = ESCAPE;
 
 void finish()
 {
@@ -51,8 +53,11 @@ static void keybd(void)
 	int count;
 	char buffer[BUFSIZE];
 
-		count= read (0, buffer, sizeof(buffer));
-		if (count <= 0) {
+		count = read(0, buffer, sizeof(buffer));
+		if (count <= 0 || buffer[0] == escape) {
+			char *msg = NULL;
+			if (count <= 0) msg = "read error, ";
+			fprintf(stderr, "\r\ntelnet: %ssession terminated\r\n", msg);
 			finish();
 			return;
 		}
@@ -60,7 +65,7 @@ static void keybd(void)
  { where(); fprintf(stderr, "writing %d bytes\r\n", count); }
 #endif
 		count = write(tcp_fd, buffer, count);
-		if (count<0)
+		if (count < 0)
 		{
 			perror("Connection closed");
 			finish();
@@ -73,7 +78,7 @@ static void scrn(void)
 	int count, optsize;
 	char buffer[BUFSIZE];
 
-		count = read (tcp_fd, buffer, sizeof(buffer));
+		count = read(tcp_fd, buffer, sizeof(buffer));
 #if DEBUG
  { where(); fprintf(stderr, "read %d bytes\r\n", count); }
 #endif
@@ -81,8 +86,7 @@ static void scrn(void)
 			printf("\r\nTELNET BUFFER OVERFLOW\r\n");
 			finish();
 		}
-		if (count <= 0)
-		{
+		if (count <= 0) {
 			if (count < 0)
 				perror("Read socket");
 			printf("\r\nConnection closed\r\n");
@@ -95,14 +99,12 @@ static void scrn(void)
 		do
 		{
 			iacptr= memchr (bp, IAC, count);
-			if (!iacptr)
-			{
+			if (!iacptr) {
 				write(1, bp, count);
 				count= 0;
 				return;
 			}
-			if (iacptr && iacptr>bp)
-			{
+			if (iacptr && iacptr>bp) {
 #if DEBUG
  { where(); fprintf(stderr, " ptr-bp= %d\r\n", iacptr-bp); }
 #endif
@@ -111,8 +113,7 @@ static void scrn(void)
 				bp= iacptr;
 				continue;
 			}
-			if (iacptr)
-			{
+			if (iacptr) {
 				optsize= process_opt(bp, count);
 #if DEBUG
  { where(); fprintf(stderr, "process_opt(...)= %d\r\n", optsize); }
@@ -127,6 +128,12 @@ assert (optsize);
 #endif
 }
 
+static int usage(void)
+{
+	printf("Usage: telnet [-e esc_char] host <port>\n");
+	return 1;
+}
+
 int main(int argc, char **argv)
 {
 	unsigned short port;
@@ -134,10 +141,20 @@ int main(int argc, char **argv)
 	int nonblock;
 	ipaddr_t ipaddr;
 
-	if (argc < 2 || argc > 3) {
-		fprintf(stderr, "Usage: %s host <port>\r\n", argv[0]);
-		return 1;
+	if (argc < 2)
+		return usage();
+
+	if (*argv[1] == '-') {
+		if (*(argv[1]+1) != 'e')
+			return usage();
+		if (*argv[2] != '^')
+			escape = *argv[2];
+		else
+			escape = *(argv[2]+1);
+		escape = (escape&0xdf) - '@';
+		argv += 2;
 	}
+
 	tcgetattr(0, &def_termios);
 	signal(SIGINT, finish);
 
@@ -170,18 +187,19 @@ int main(int argc, char **argv)
 		perror(argv[1]);
 		return 1;
 	}
-	port = (argc >= 3)? atoi(argv[2]): 23;
+	port = argv[2] ? atoi(argv[2]): 23;
 
 	remadr.sin_family = AF_INET;
 	remadr.sin_port = htons(port);
 	remadr.sin_addr.s_addr = ipaddr;
 
-	printf("Connecting to %s (%s:%u)\n", argv[1], in_ntoa(ipaddr), port);
+	printf("Trying %s (%s:%u)...\n", argv[1], in_ntoa(ipaddr), port);
 	if (in_connect(tcp_fd, (struct sockaddr *)&remadr, sizeof(struct sockaddr_in), 10) < 0) {
 		perror("Connection failed");
 		return 1;
 	}
-	printf("Connected\r\n");
+	printf("Connected\n");
+	printf("Escape character is '^%c'.\n", escape + '@');
 
 #ifdef RAWTELNET
 	{
@@ -217,10 +235,10 @@ int main(int argc, char **argv)
 
 #ifndef RAWTELNET
 #define next_char(var) \
-	if (offset<count) { (var) = bp[offset++]; } \
+	if (offset < count) { (var) = bp[offset++]; } \
 	else { if (read(tcp_fd, (char *)&(var), 1) != 1) printf("TELNET BAD READ2\n"); exit(1); }
 
-static void do_option (int optsrt)
+static void do_option(int optsrt)
 {
 	int result;
 	unsigned char reply[3];
@@ -230,14 +248,11 @@ static void do_option (int optsrt)
 	case OPT_TERMTYPE:
 		if (WILL_terminal_type)
 			return;
-		if (!WILL_terminal_type_allowed)
-		{
+		if (!WILL_terminal_type_allowed) {
 			reply[0]= IAC;
 			reply[1]= IAC_WONT;
 			reply[2]= optsrt;
-		}
-		else
-		{
+		} else {
 			WILL_terminal_type= TRUE;
 			term_env= getenv("TERM");
 			if (!term_env)
@@ -264,7 +279,7 @@ static void do_option (int optsrt)
 		perror("write");
 }
 
-static void will_option (int optsrt)
+static void will_option(int optsrt)
 {
 	int result;
 	unsigned char reply[3];
@@ -274,14 +289,11 @@ static void will_option (int optsrt)
 	case OPT_ECHO:
 		if (DO_echo)
 			break;
-		if (!DO_echo_allowed)
-		{
+		if (!DO_echo_allowed) {
 			reply[0]= IAC;
 			reply[1]= IAC_DONT;
 			reply[2]= optsrt;
-		}
-		else
-		{
+		} else {
 			struct termios termios;
 			tcgetattr(0, &termios);
 			termios.c_iflag &= ~(ICRNL|IGNCR|INLCR|IXON|IXOFF);
@@ -295,30 +307,29 @@ static void will_option (int optsrt)
 			reply[1]= IAC_DO;
 			reply[2]= optsrt;
 		}
-		result= writeall(tcp_fd, (char *)reply, 3);
-		if (result<0)
+		result = writeall(tcp_fd, (char *)reply, 3);
+		if (result < 0)
 			perror("write");
 		break;
+
 	case OPT_SUPP_GA:
 		if (DO_suppress_go_ahead)
 			break;
-		if (!DO_suppress_go_ahead_allowed)
-		{
+		if (!DO_suppress_go_ahead_allowed) {
 			reply[0]= IAC;
 			reply[1]= IAC_DONT;
 			reply[2]= optsrt;
-		}
-		else
-		{
+		} else {
 			DO_suppress_go_ahead= TRUE;
 			reply[0]= IAC;
 			reply[1]= IAC_DO;
 			reply[2]= optsrt;
 		}
-		result= writeall(tcp_fd, (char *)reply, 3);
-		if (result<0)
+		result = writeall(tcp_fd, (char *)reply, 3);
+		if (result < 0)
 			perror("write");
 		break;
+
 	default:
 #if DEBUG
  { where(); fprintf(stderr, "got a WILL (%d)\r\n", optsrt); }
@@ -336,7 +347,7 @@ static void will_option (int optsrt)
 	}
 }
 
-static int writeall (int fd, char *buffer, int buf_size)
+static int writeall(int fd, char *buffer, int buf_size)
 {
 	int result;
 
@@ -352,7 +363,7 @@ assert (result <= buf_size);
 	return 0;
 }
 
-static void dont_option (int optsrt)
+static void dont_option(int optsrt)
 {
 	switch (optsrt)
 	{
@@ -364,7 +375,7 @@ static void dont_option (int optsrt)
 	}
 }
 
-static void wont_option (int optsrt)
+static void wont_option(int optsrt)
 {
 	switch (optsrt)
 	{
@@ -376,7 +387,7 @@ static void wont_option (int optsrt)
 	}
 }
 
-static int sb_termtype (char *bp, int count)
+static int sb_termtype(char *bp, int count)
 {
 	unsigned char command, iac, optsrt;
 	unsigned char buffer[4];
@@ -445,10 +456,10 @@ ret:
 }
 
 
-static int process_opt (char *bp, int count)
+static int process_opt(char *bp, int count)
 {
 	unsigned char iac, command, optsrt, sb_command;
-	int offset, result;	;
+	int offset, result;
 #if DEBUG
  { where(); fprintf(stderr, "process_opt(bp= 0x%x, count= %d)\r\n",
 	bp, count); }
