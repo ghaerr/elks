@@ -21,17 +21,60 @@
 #include <sys/time.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include "ttn.h"
 
 //#define DEBUG 1
-//#define RAWTELNET         /* set in telnet and telnetd for raw telnet without IAC*/
-#define ESCAPE (']'&0x1f)   /* = ^] escape session, effectively terminate */
+//#define RAWTELNET             /* set in telnet and telnetd for raw telnet without IAC*/
+
+#define ESCAPE      (']'&0x1f)  /* = ^] escape session, effectively terminate */
+#define BUFSIZE		1500
+
+/* telnet protocol */
+#define IAC		255
+#define IAC_SE		240
+#define IAC_NOP		241
+#define IAC_DataMark	242
+#define IAC_BRK		243
+#define IAC_IP		244
+#define IAC_AO		245
+#define IAC_AYT		246
+#define IAC_EC		247
+#define IAC_EL		248
+#define IAC_GA		249
+#define IAC_SB		250
+#define IAC_WILL	251
+#define IAC_WONT	252
+#define IAC_DO		253
+#define IAC_DONT	254
+
+#define OPT_ECHO	1
+#define OPT_SUPP_GA	3
+#define OPT_TERMTYPE	24
+
+#define TERMTYPE_SEND	1
+#define TERMTYPE_IS	0
+
+#define FALSE	0
+#define TRUE	(!(FALSE))
+
+#ifdef __linux__
+int DO_echo= TRUE;
+int DO_echo_allowed= TRUE;
+int WILL_terminal_type= FALSE;
+int WILL_terminal_type_allowed= TRUE;
+int DO_suppress_go_ahead= TRUE;
+int DO_suppress_go_ahead_allowed= TRUE;
+#else
+int DO_echo= FALSE;
+int DO_echo_allowed= TRUE;
+int WILL_terminal_type= FALSE;
+int WILL_terminal_type_allowed= TRUE;
+int DO_suppress_go_ahead= FALSE;
+int DO_suppress_go_ahead_allowed= TRUE;
+#endif
 
 #if DEBUG
 #define where() (fprintf(stderr, "%s %d:", __FILE__, __LINE__))
 #endif
-
-#define BUFSIZE		1500
 
 static int tcp_fd;
 static char *term_env;

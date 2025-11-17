@@ -8,8 +8,7 @@ include $(BASEDIR)/Makefile-rules
 
 ###############################################################################
 
-SRCS = telnet.c ttn_conf.c
-OBJS = $(SRCS:.c=.o)
+OBJS = telnet.o
 
 all:	telnet
 
