@@ -17,9 +17,9 @@ void ds3231_init(void)
 
 
 // Read from a DS3231 register
-unsigned char ds3231_read(unsigned char clock_reg)
+unsigned int ds3231_read(unsigned int clock_reg)
 {
-   unsigned char val = 0;
+   unsigned int val = 0;
 
    i2c_start();
 
@@ -47,7 +47,7 @@ unsigned char ds3231_read(unsigned char clock_reg)
 
 
 // Write to a DS3231 register
-void ds3231_write(unsigned char clock_reg, unsigned char val)
+void ds3231_write(unsigned int clock_reg, unsigned int val)
 {
    i2c_start();
 

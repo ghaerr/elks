@@ -83,12 +83,12 @@ meminfo: meminfo.o $(TINYPRINTF)
 who: who.o
 	$(LD) $(LDFLAGS) -o who who.o $(LDLIBS)
 
-ifneq ($(CONFIG_ARCH_NECV25), y)
-clock: clock.o
-	$(LD) $(LDFLAGS) -o clock clock.o $(LDLIBS)
-else
+ifeq ($(CONFIG_ARCH_NECV25), y)
 clock: clock.o ds3231.o i2c-ll.o 
 	$(LD) $(LDFLAGS) -o clock clock.o ds3231.o i2c-ll.o $(LDLIBS)
+else
+clock: clock.o
+	$(LD) $(LDFLAGS) -o clock clock.o $(LDLIBS)
 endif
 
 exitemu: exitemu.o

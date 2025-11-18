@@ -21,6 +21,6 @@
 #define REG_STAT           0x0F
 
 void ds3231_init(void);
-unsigned char ds3231_read(unsigned char clock_reg);
-void ds3231_write(unsigned char clock_reg, unsigned char val);
+unsigned int ds3231_read(unsigned int clock_reg);
+void ds3231_write(unsigned int clock_reg, unsigned int val);
 

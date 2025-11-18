@@ -117,7 +117,7 @@ i2c_nak:
 
 .global i2c_ack
 // read I2C acknowledgement
-// unsigned char i2c_ack(void)
+// unsigned int i2c_ack(void)
 // returns true if ACK
 i2c_ack:
    push     %ds
@@ -141,7 +141,7 @@ i2c_ack:
 
 .global i2c_read
 // Read a byte from the I2C bus
-// unsigned char i2c_read(void)
+// unsigned int i2c_read(void)
 i2c_read:
    push     %ds
    movw     $NEC_HW_SEGMENT, %bx             // load DS to access memmory mapped CPU registers
@@ -169,7 +169,7 @@ i2c_read:
 
 .global i2c_write
 // Write a byte to the I2C bus
-// void i2c_write(unsigned char data)
+// void i2c_write(unsigned int data)
 i2c_write:
    push     %bp
    movw     %sp, %bp
