@@ -19,7 +19,7 @@ void flash_enter_software_id(void);
 void flash_leave_software_id(void);
 uint8_t flash_read_manufacturer_id(void);
 uint8_t flash_read_device_id(void);
-void flash_wait_dq7(uint8_t addr, uint8_t value);
+void flash_wait_dq7(uint32_t addr, uint8_t value);
 void flash_write_byte(uint32_t addr, uint8_t byte);
 void flash_erase_sector(uint32_t addr);
 void flash_erase_chip(void);
