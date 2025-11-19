@@ -53,7 +53,7 @@ all: $(CLEANME)
 	$(CC) -o $@ $(CFLAGS) -D__far= $^
 
 ../bin/disasm: $(DISASM)
-	$(CC) -o $@ $(CFLAGS) -I. -D__far= -Wno-int-to-void-pointer-cast -Wno-format $(DISASM)
+	$(CC) -o $@ $(CFLAGS) -I. -D__far= -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -Wno-format -std=gnu99 $(DISASM)
 
 ../bin/nm86: $(NM86)
 	$(CC) -o $@ $(CFLAGS) -I. -D__far= $^
