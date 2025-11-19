@@ -24,3 +24,5 @@ bin/minfo
 bin/mmd
 bin/mshowfat
 bin/hd
+bin/disasm
+bin/nm86
