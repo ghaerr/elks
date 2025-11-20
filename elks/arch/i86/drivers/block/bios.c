@@ -62,6 +62,22 @@ static struct biosparms bdt;
 static unsigned char DDPT[14];  /* our copy of diskette drive parameter table*/
 static unsigned long __far *vec1E = _MK_FP(0, 0x1E << 2);
 
+#ifdef CONFIG_ARCH_PC98
+/* check sector size */
+static void BFPROC bios_check_sector98(int target, unsigned int device,
+    struct drive_infot *drivep)
+{
+    BD_AX = BIOSHD_READ_ID |device|(bios_drive_map[target + DRIVE_FD0] & 0x0F);
+    BD_CX = 0;
+    BD_DX = 0;
+    call_bios(&bdt);
+    if((BD_CX & 0x300)==0x200)
+        *drivep = fd_types[FD1200];
+    else
+        *drivep = fd_types[FD1232];
+}
+#endif
+
 /* As far as I can tell this doesn't actually work, but we might
  * as well try it -- Some XT controllers are happy with it.. [AC]
  */
@@ -423,20 +439,6 @@ void BFPROC bios_switch_device98(int target, unsigned int device,
     else if (device == 0x90) {
         bios_check_sector98(target, device, drivep);
     }
-}
-
-/* check sector size */
-void BFPROC bios_check_sector98(int target, unsigned int device,
-    struct drive_infot *drivep)
-{
-    BD_AX = BIOSHD_READ_ID |device|(bios_drive_map[target + DRIVE_FD0] & 0x0F);
-    BD_CX = 0;
-    BD_DX = 0;
-    call_bios(&bdt);
-    if((BD_CX & 0x300)==0x200)
-        *drivep = fd_types[FD1200];
-    else
-        *drivep = fd_types[FD1232];
 }
 #endif
 

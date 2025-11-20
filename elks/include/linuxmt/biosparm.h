@@ -90,8 +90,6 @@ void BFPROC bios_copy_ddpt(void);
 struct drive_infot;
 void BFPROC bios_switch_device98(int target, unsigned int device,
         struct drive_infot *drivep);
-void BFPROC bios_check_sector98(int target, unsigned int device,
-        struct drive_infot *drivep);
 void BFPROC bios_disk_park_all(void);
 
 #endif
