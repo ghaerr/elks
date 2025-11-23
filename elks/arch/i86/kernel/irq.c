@@ -123,7 +123,7 @@ void INITPROC irq_init(void)
     /* use INT 0x80h for system calls */
     int_handler_add(IDX_SYSCALL, 0x80, _irqit);
 
-#ifdef CONFIG_ARCH_IBMPC
+#if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_SWAN)
     /* catch INT 0 divide by zero/divide overflow hardware fault */
 #if 1
     /* install direct panic-only DIV fault handler until known that

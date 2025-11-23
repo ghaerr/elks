@@ -57,6 +57,7 @@ endif
 
 ifeq ($(CONFIG_ARCH_SWAN), y)
 OBJS += irq-swan.o reset-swan.o system-swan.o timer-swan.o
+OBJS += divzero.o
 else
 OBJS += system.o
 endif
