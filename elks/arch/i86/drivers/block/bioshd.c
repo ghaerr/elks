@@ -56,11 +56,7 @@
 
 #define PER_DRIVE_INFO  1       /* =1 for per-line display of drive info at init */
 #define DEBUG_PROBE     0       /* =1 to display more floppy probing information */
-#ifdef CONFIG_ARCH_PC98
-#define FORCE_PROBE     1       /* =1 to force floppy probing */
-#else
 #define FORCE_PROBE     0       /* =1 to force floppy probing */
-#endif
 #define TRACK_SPLIT_BLK 0       /* =1 to read extra sector on track split block */
 #define SPLIT_BLK       0       /* =1 to read extra sector on single split block */
 #define FULL_TRACK      0       /* =1 to read full tracks when track caching */
@@ -116,6 +112,7 @@ static int BFPROC read_sector(int drive, int cylinder, int sector)
 {
     int count = 2;              /* one retry on probe or boot sector read */
 
+    struct drive_infot *drivep = &drive_info[DRIVE_FD0+drive];
 #ifdef CONFIG_ARCH_PC98
     drive = bios_drive_map[DRIVE_FD0+drive];
 #endif
@@ -124,7 +121,7 @@ static int BFPROC read_sector(int drive, int cylinder, int sector)
     do {
         set_irq();
         bios_set_ddpt(36);      /* set to large value to avoid BIOS issues*/
-        if (!bios_disk_rw(BIOSHD_READ, 1, drive, cylinder, 0, sector, DMASEG, 0))
+        if (!bios_disk_rw(BIOSHD_READ, 1, drive, cylinder, 0, sector, DMASEG, 0, drivep))
             return 0;           /* everything is OK */
         bios_disk_reset(drive);
     } while (--count > 0);
@@ -529,7 +526,7 @@ static int BFPROC do_readwrite(struct drive_infot *drivep, sector_t start, char 
 
         bios_set_ddpt(drivep->sectors);
         error = bios_disk_rw(cmd == WRITE? BIOSHD_WRITE: BIOSHD_READ, this_pass,
-                                drive, cylinder, head, sector, segment, offset);
+                                drive, cylinder, head, sector, segment, offset, drivep);
         if (error) {
             printk("bioshd(%x): cmd %d retry #%d CHS %d/%d/%d count %d\n",
                 drive, cmd, MAX_ERRS - errs + 1, cylinder, head, sector, this_pass);
@@ -576,7 +573,7 @@ static void BFPROC do_readtrack(struct drive_infot *drivep, sector_t start)
 
         bios_set_ddpt(drivep->sectors);
         error = bios_disk_rw(BIOSHD_READ, num_sectors, drive,
-                                 cylinder, head, sector, TRACKSEG, 0);
+                                cylinder, head, sector, TRACKSEG, 0, drivep);
         if (error) {
             printk("bioshd(%x): track read retry #%d CHS %d/%d/%d count %d\n",
                 drive, errs + 1, cylinder, head, sector, num_sectors);

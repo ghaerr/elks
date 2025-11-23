@@ -62,6 +62,22 @@ static struct biosparms bdt;
 static unsigned char DDPT[14];  /* our copy of diskette drive parameter table*/
 static unsigned long __far *vec1E = _MK_FP(0, 0x1E << 2);
 
+#ifdef CONFIG_ARCH_PC98
+/* check sector size */
+static void BFPROC bios_check_sector98(int target, unsigned int device,
+    struct drive_infot *drivep)
+{
+    BD_AX = BIOSHD_READ_ID |device|(bios_drive_map[target + DRIVE_FD0] & 0x0F);
+    BD_CX = 0;
+    BD_DX = 0;
+    call_bios(&bdt);
+    if((BD_CX & 0x300)==0x200)
+        *drivep = fd_types[FD1200];
+    else
+        *drivep = fd_types[FD1232];
+}
+#endif
+
 /* As far as I can tell this doesn't actually work, but we might
  * as well try it -- Some XT controllers are happy with it.. [AC]
  */
@@ -79,7 +95,8 @@ void BFPROC bios_disk_reset(int drive)
 }
 
 int BFPROC bios_disk_rw(unsigned cmd, unsigned num_sectors, unsigned drive,
-        unsigned cylinder, unsigned head, unsigned sector, unsigned seg, unsigned offset)
+        unsigned cylinder, unsigned head, unsigned sector, unsigned seg, unsigned offset,
+        struct drive_infot *drivep)
 {
 #ifdef CONFIG_ARCH_PC98
     BD_AX = cmd | drive;
@@ -90,12 +107,7 @@ int BFPROC bios_disk_rw(unsigned cmd, unsigned num_sectors, unsigned drive,
     }
     else {
         if ((0xF0 & drive) == 0x90) {
-            BD_AX = 0x5a00|drive;
-            BD_CX = 0;
-            BD_DX = 0;
-            call_bios(&bdt);
-            BD_AX = cmd | drive;
-            if((BD_CX & 0x300)==0x200) goto notMFM1024;
+            if (drivep->sector_size == 512) goto notMFM1024;
             BD_BX = (unsigned int) (num_sectors << 10);
             BD_CX = (3 << 8) | cylinder;
         }
@@ -318,7 +330,7 @@ int INITPROC bios_getfdinfo(struct drive_infot *drivep)
                 *drivep = fd_types[FD1440];
             } else {
                 bios_drive_map[DRIVE_FD0 + drive] = drive + 0x90;
-                *drivep = fd_types[FD1232];
+                bios_check_sector98(drive, 0x90, drivep);
             }
             ndrives++;  /* floppy drive count*/
             drivep++;
@@ -425,15 +437,8 @@ void BFPROC bios_switch_device98(int target, unsigned int device,
     else if (device == 0x10)
         *drivep = fd_types[FD720];
     else if (device == 0x90) {
-        BD_AX = 0x5a00|device|(bios_drive_map[target + DRIVE_FD0] & 0x0F);
-        BD_CX = 0;
-        BD_DX = 0;
-        call_bios(&bdt);
-        if((BD_CX & 0x300)==0x300)
-         *drivep = fd_types[FD1232];
-        else
-         *drivep = fd_types[FD1200];
-     }
+        bios_check_sector98(target, device, drivep);
+    }
 }
 #endif
 
