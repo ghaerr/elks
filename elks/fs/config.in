@@ -11,7 +11,7 @@ mainmenu_option next_comment
 
 	if [ "$CONFIG_ROMFS_FS" = "y" ]; then
 		hex 'Base in ROM (paragraphs)' CONFIG_ROMFS_BASE 0x8000
-		fi
+	fi
 
 	bool 'FAT filesystem' CONFIG_FS_FAT 'n'
 

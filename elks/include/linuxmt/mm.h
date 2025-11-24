@@ -55,6 +55,7 @@ int fs_memcmp(const void *,const void *,size_t);
 
 /* Memory allocation */
 
+segment_s * seg_alloc_romfs (seg_t, segext_t, word_t);
 segment_s * seg_alloc (segext_t, word_t);
 void seg_free (segment_s *);
 segment_s * seg_get (segment_s *);
