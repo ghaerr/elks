@@ -55,7 +55,7 @@ $(BUILDDIR)/.binutils.build: $(BUILDDIR)/.binutils.src
 	touch $(BUILDDIR)/.binutils.build
 
 $(CROSSDIR)/.binutils.install: $(BUILDDIR)/.binutils.build
-	$(MAKE) -C $(BUILDDIR)/binutils-build install
+	$(MAKE) -C $(BUILDDIR)/binutils-build -j1 install
 	touch $(CROSSDIR)/.binutils.install
 
 all:: $(CROSSDIR)/.binutils.install
@@ -149,7 +149,7 @@ $(BUILDDIR)/.gcc.build: $(BUILDDIR)/.gcc.src $(BUILDDIR)/.binutils.build
 	touch $(BUILDDIR)/.gcc.build
 
 $(CROSSDIR)/.gcc.install: $(BUILDDIR)/.gcc.build
-	$(MAKE) -C $(BUILDDIR)/gcc-build install
+	$(MAKE) -C $(BUILDDIR)/gcc-build -j1 install
 	touch $(CROSSDIR)/.gcc.install
 
 all:: $(CROSSDIR)/.gcc.install
