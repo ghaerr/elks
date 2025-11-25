@@ -18,6 +18,7 @@
 #define WRITE(fd,str)   write(fd, str, sizeof(str))
 
 static int fd;
+static int COLS = 80;
 static int LINES = 25;
 static int MAXLINES = 25;
 static char cflag = 0;  /* -c flag: clear screen on start */
@@ -176,8 +177,10 @@ int main(int argc, char **argv)
 	char	*name, ch, next[80];
 	char 	*divider = "\n::::::::::::::\n";
 
-	if (isatty(2) && getWindowSize(2, 2, &line, &col) == 0)
+	if (isatty(2) && getWindowSize(2, 2, &line, &col) == 0) {
 		LINES = MAXLINES = line;
+		COLS = col;
+	}
 	multi = (argc >= 3); 		/* multiple input files */
 	do {
 		line = 1;
@@ -238,8 +241,8 @@ int main(int argc, char **argv)
 
 			putchar(ch);
 
-			if (!sawesc && col >= 80) {
-				col -= 80;
+			if (!sawesc && col >= COLS) {
+				col -= COLS;
 				line++;
 			}
 			if (line < LINES)
