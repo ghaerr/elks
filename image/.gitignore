@@ -1,6 +1,7 @@
 # Image files
 *.img
 *.bin
+*.wsc
 
 # Temporary files
 romfs.devices
