@@ -85,7 +85,7 @@ $(DISTDIR)/$(GMP_DIST).tar.bz2:
 $(DISTDIR)/$(MPFR_DIST).tar.bz2:
 	mkdir -p $(DISTDIR)
 	rm -rf $(DISTDIR)/mpfr-*.tar.bz2 $(DISTDIR)/mpfr-*.tar.bz2.tmp
-	wget -c https://www.mpfr.org/$(MPFR_DIST)/$(MPFR_DIST).tar.bz2 \
+	wget -c https://ftp.gnu.org/gnu/mpfr/$(MPFR_DIST).tar.bz2 \
 		-O $@.tmp
 	touch $@.tmp
 	mv $@.tmp $@
