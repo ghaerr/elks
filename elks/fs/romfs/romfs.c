@@ -162,7 +162,6 @@ static int romfs_followlink (struct inode * dir, register struct inode * inode,
 	int flag, mode_t mode, struct inode ** res_inode)
 {
 	int err;
-
 	seg_t user_ds;
 	seg_t *pds;
 
@@ -170,10 +169,17 @@ static int romfs_followlink (struct inode * dir, register struct inode * inode,
 	 * even if they are not links... maybe something to fix here ?
 	 */
 
-	if (!S_ISLNK (inode->i_mode)) {
+	*res_inode = NULL;
+	if (!dir) {
+		dir = current->fs.root;
+		dir->i_count++;
+	}
+	if (!inode) err = -ENOENT;
+	else if (!S_ISLNK (inode->i_mode)) {
 		*res_inode = inode;
 		err = 0;
 	} else {
+		iput(inode);
 		pds = &current->t_regs.ds;
 		user_ds = *pds;
 		*pds = inode->u.romfs.seg;
@@ -184,8 +190,10 @@ static int romfs_followlink (struct inode * dir, register struct inode * inode,
 
 		err = open_namei (0, flag, mode, res_inode, dir);
 		*pds = user_ds;
+		return err;
 	}
 
+	iput(dir);
 	return err;
 }
 
