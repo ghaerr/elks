@@ -192,6 +192,49 @@ $(CROSSDIR)/.emu86.install: $(BUILDDIR)/.emu86.build
 
 all:: $(CROSSDIR)/.emu86.install
 
+# wf-mednafen
+
+WF_MEDNAFEN_VER=6203a47cce4a0a44a5f9f58618bbfc50e0ab45e7
+WF_MEDNAFEN_DIST=wf-mednafen-$(WF_MEDNAFEN_VER)
+
+$(DISTDIR)/$(WF_MEDNAFEN_DIST).tar.gz:
+	mkdir -p $(DISTDIR)
+	rm -rf $(DISTDIR)/wf-mednafen-*.tar.gz \
+	       $(DISTDIR)/wf-mednafen-*.tmp \
+	       $(DISTDIR)/wf-mednafen-*.zip
+	set -e; \
+	cd $(DISTDIR); \
+	until gunzip -t $(WF_MEDNAFEN_DIST).tar.gz.tmp 2>/dev/null; do \
+		wget -c https://github.com/WonderfulToolchain/wf-mednafen/archive/$(WF_MEDNAFEN_VER).tar.gz \
+		     -O $(WF_MEDNAFEN_DIST).tar.gz.tmp; \
+	done
+	cd $(DISTDIR) && mv $(WF_MEDNAFEN_DIST).tar.gz.tmp $(WF_MEDNAFEN_DIST).tar.gz
+
+$(BUILDDIR)/.wf-mednafen.src: $(DISTDIR)/$(WF_MEDNAFEN_DIST).tar.gz
+	mkdir -p $(BUILDDIR)
+	rm -rf $(BUILDDIR)/$(WF_MEDNAFEN_DIST)
+	cd $(BUILDDIR) && tar -xzf $(DISTDIR)/$(WF_MEDNAFEN_DIST).tar.gz
+	rm -rf $(BUILDDIR)/wf-mednafen
+	cd $(BUILDDIR) && mv $(WF_MEDNAFEN_DIST) wf-mednafen
+	touch $(BUILDDIR)/.wf-mednafen.src
+
+$(BUILDDIR)/.wf-mednafen.build: $(BUILDDIR)/.wf-mednafen.src
+	cd $(BUILDDIR)/wf-mednafen/mednafen && ./autogen.sh
+	mkdir -p $(BUILDDIR)/wf-mednafen-build
+	# Disable most non-wswan emulator cores to save disk space and build time.
+	cd $(BUILDDIR)/wf-mednafen-build && ../wf-mednafen/mednafen/configure --disable-apple2 --disable-gb \
+		--disable-gba --disable-lynx --disable-md --disable-nes --disable-ngp --disable-psx \
+		--disable-sasplay --disable-sms --disable-snes --disable-snes-faust --disable-ssfplay \
+		--disable-ss --disable-vb --disable-nls --disable-fancy-scalers
+	$(MAKE) -C $(BUILDDIR)/wf-mednafen-build $(PARALLEL)
+	touch $(BUILDDIR)/.wf-mednafen.build
+
+$(CROSSDIR)/.wf-mednafen.install: $(BUILDDIR)/.wf-mednafen.build
+	install $(BUILDDIR)/wf-mednafen-build/src/mednafen $(CROSSDIR)/bin/wf-mednafen
+	touch $(CROSSDIR)/.wf-mednafen.install
+
+swan:: $(CROSSDIR)/.wf-mednafen.install
+
 # Tools pruning (to save disk space)
 
 prune:
