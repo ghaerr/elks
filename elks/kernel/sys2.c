@@ -39,7 +39,6 @@ static int setalarm(unsigned long jiffs)
 {
     struct timer_list *ap;
 
-    debug("(%P)sys_alarm %d\n", secs);
     ap = find_alarm(current);
     if (jiffs == 0) {
         if (ap) {
@@ -63,6 +62,7 @@ static int setalarm(unsigned long jiffs)
 
 unsigned int sys_alarm(unsigned int secs)
 {
+    debug("(%P)sys_alarm %d\n", secs);
     return setalarm((unsigned long)secs * HZ);
 }
 
