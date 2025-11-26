@@ -174,8 +174,8 @@ static int romfs_followlink (struct inode * dir, register struct inode * inode,
 		dir = current->fs.root;
 		dir->i_count++;
 	}
-	if (!inode) return -ENOENT;
-	if (!S_ISLNK (inode->i_mode)) {
+	if (!inode) err = -ENOENT;
+	else if (!S_ISLNK (inode->i_mode)) {
 		*res_inode = inode;
 		err = 0;
 	} else {
@@ -190,6 +190,7 @@ static int romfs_followlink (struct inode * dir, register struct inode * inode,
 
 		err = open_namei (0, flag, mode, res_inode, dir);
 		*pds = user_ds;
+		return err;
 	}
 
 	iput(dir);
