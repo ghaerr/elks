@@ -112,6 +112,25 @@ static void seg_merge (segment_s * s1, segment_s * s2)
     heap_free (s2);
 }
 
+#ifdef CONFIG_ROMFS_FS
+
+// Allocate fixed segment for romfs (outside of memory allocator)
+
+segment_s * seg_alloc_romfs (seg_t base, segext_t size, word_t type)
+{
+    segment_s * seg = heap_alloc(sizeof(segment_s),
+        HEAP_TAG_SEG | HEAP_TAG_CLEAR);
+    if (!seg)
+        return seg;
+
+    seg->base = base;
+    seg->size = size;
+    seg->flags = SEG_FLAG_USED | type;
+    seg->ref_count = 1;
+    return seg;
+}
+
+#endif
 
 // Allocate segment
 
@@ -129,6 +148,15 @@ segment_s * seg_alloc (segext_t size, word_t type)
 
 void seg_free (segment_s * seg)
 {
+#ifdef CONFIG_ROMFS_FS
+    // Handle segments created outside of the memory allocator
+    // (via seg_alloc_romfs).
+    if (seg->all.prev == NULL && seg->all.next == NULL) {
+        heap_free(seg);
+        return;
+    }
+#endif
+
     // Free segment will be inserted to free list:
     //   - tail if merged to previous or next free segment
     //   - head if still alone to increase 'exact hit'

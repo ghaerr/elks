@@ -352,6 +352,26 @@ static int FARPROC execve_aout(struct inode *inode, struct file *filp,
     /*
      *      Looks good. Get the memory we need
      */
+
+#ifdef CONFIG_ROMFS_FS
+    if (filp->f_inode->i_sb->s_type->type == FST_ROMFS
+        && mh.hlen == EXEC_MINIX_HDR_SIZE
+    ) {
+        /* Point the code segment directly to in-memory ROMFS. This runs text
+         * segments directly from ROM, as opposed to making copies of them in
+         * RAM. Not supported for compressed or relocatable binaries. */
+
+        seg_code = seg_alloc_romfs(
+            filp->f_inode->u.romfs.seg + (filp->f_pos >> 4),
+            bytes_to_paras(mh.tseg), SEG_FLAG_CSEG);
+        if (!seg_code) goto error_exec3;
+
+        filp->f_pos += (size_t)mh.tseg;
+#ifdef CONFIG_EXEC_MMODEL
+        need_reloc_code = 0;
+#endif
+    } else
+#endif
     if (!seg_code) {
         bytes = (size_t)mh.tseg;
         paras = bytes_to_paras(bytes);
