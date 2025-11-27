@@ -211,29 +211,7 @@ static void INITPROC kernel_init(void)
 
 static void INITPROC kernel_banner(seg_t init, seg_t extra)
 {
-#ifdef CONFIG_ARCH_IBMPC
-    printk("PC/%cT class cpu %d, ", (sys_caps & CAP_PC_AT) ? 'A' : 'X', arch_cpu);
-#endif
-
-#ifdef CONFIG_ARCH_PC98
-    printk("PC-9801 cpu %d, ", arch_cpu);
-#endif
-
-#ifdef CONFIG_ARCH_8018X
-    printk("8018X machine, ");
-#endif
-
-#ifdef CONFIG_ARCH_NECV25
-    printk("NECV25 machine, cpu %d, ", arch_cpu);
-#endif
-
-#ifdef CONFIG_ARCH_SWAN
-    printk("WonderSwan, ");
-#endif
-
-#ifdef CONFIG_ARCH_SOLO86
-    printk("Solo/86 machine, ");
-#endif
+    kernel_banner_arch();
 
     printk("syscaps %x, %uK base ram, %d tasks, %d files, %d inodes\n",
         sys_caps, SETUP_MEM_KBYTES, max_tasks, nr_file, nr_inode);

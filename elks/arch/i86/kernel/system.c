@@ -77,3 +77,25 @@ unsigned int INITPROC setup_arch(void)
 
     return endbss;                      /* used as start address in near heap init */
 }
+
+void INITPROC kernel_banner_arch(void) {
+#ifdef CONFIG_ARCH_IBMPC
+    printk("PC/%cT class cpu %d, ", (sys_caps & CAP_PC_AT) ? 'A' : 'X', arch_cpu);
+#endif
+
+#ifdef CONFIG_ARCH_PC98
+    printk("PC-9801 cpu %d, ", arch_cpu);
+#endif
+
+#ifdef CONFIG_ARCH_8018X
+    printk("8018X machine, ");
+#endif
+
+#ifdef CONFIG_ARCH_NECV25
+    printk("NECV25 machine, cpu %d, ", arch_cpu);
+#endif
+
+#ifdef CONFIG_ARCH_SOLO86
+    printk("Solo/86 machine, ");
+#endif
+}

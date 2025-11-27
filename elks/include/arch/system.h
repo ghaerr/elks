@@ -16,6 +16,7 @@ extern seg_t memend;
 
 /* system.c */
 unsigned int INITPROC setup_arch(void);
+void INITPROC kernel_banner_arch(void);
 
 /* reset.c */
 void ctrl_alt_del(void);

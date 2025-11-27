@@ -12,6 +12,7 @@
 #include <arch/system.h>
 #include <arch/io.h>
 #include <arch/irq.h>
+#include <arch/swan.h>
 
 seg_t membase, memend;  /* start and end segment of available main memory */
 unsigned int heapsize;  /* max size of kernel near heap */
@@ -45,4 +46,14 @@ unsigned int INITPROC setup_arch(void)
     sys_caps = SYS_CAPS;    /* custom system capabilities */
 
     return heapofs;                      /* used as start address in near heap init */
+}
+
+void INITPROC kernel_banner_arch(void) {
+    if (inb(SYS_CONTROL_PORT) & SYS_CONTROL_IS_COLOR) {
+        if (inb(0x62) & 0x80)
+            printk("SwanCrystal, ");
+        else
+            printk("WonderSwan Color, ");
+    } else
+        printk("WonderSwan, ");
 }
