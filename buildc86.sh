@@ -39,15 +39,17 @@ make host
 
 # build native OWC libraries libc/libc{c,s,m,l}.a using OWC
 cd $TOPDIR
-make owc
+make owlibc
 cd $C86
 
 # build ELKS Version of c86 using host OWC and native OWC libc in 8086-toolchain/elks-bin
 make elks
 
 # build native c86 library libc/libc86.a using host c86
+cd $TOPDIR/libc
+rm -f */out.lib
 cd $TOPDIR
-make c86
+make c86libc
 
 # build ELKS example apps using host c86 and native c86 libc in 8086-toolchain/examples
 cd $C86/examples
