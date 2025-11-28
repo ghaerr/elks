@@ -148,7 +148,6 @@ static void INITPROC add_buffers(int nbufs, char *buf, ramdesc_t seg)
 #if defined(CHECK_FREECNTS) && DEBUG_EVENT
 static void list_buffer_status(void)
 {
-    int i = 1;
     int inuse = 0;
     int isinuse, j;
     struct buffer_head *bh = bh_llru;
@@ -167,14 +166,13 @@ static void list_buffer_status(void)
                     }
                 }
             }
-            printk("\n#%3d: buf %3d blk/dev %5ld/%p %c%c%c %smapped L%02d %d count %d",
-                i, buf_num(bh), ebh->b_blocknr, ebh->b_dev,
+            printk("\n#%3d: blk/dev %5ld/%p %c%c%c %smapped L%02d %d count %d",
+                buf_num(bh), ebh->b_blocknr, ebh->b_dev,
                 ebh->b_locked?  'L': ' ',
                 ebh->b_dirty?   'D': ' ',
                 ebh->b_uptodate?'U': ' ',
                 j? "  ": "un", j, ebh->b_mapcount, ebh->b_count);
         }
-        i++;
         if (isinuse) inuse++;
     } while ((bh = ebh->b_prev_lru) != NULL);
     printk("\nTotal L2 buffers inuse %d/%d (%d free)", inuse, nr_bh, nr_free_bh);

@@ -80,18 +80,17 @@ void clear_inode(register struct inode *inode) /* and put_first_lru() */
 #if defined(CHECK_FREECNTS) && DEBUG_EVENT
 static void list_inode_status(void)
 {
-    int i = 1;
     int inuse = 0;
     struct inode *inode = inode_llru;
 
     do {
         if (inode->i_count || inode->i_dev || inode->i_dirt) {
             inode->i_path[sizeof(inode->i_path)-1] = '\0';
-            printk("\n#%2d: dev %p inode %5lu cnt %2d %c %06o %s", i, inode->i_dev,
-                (unsigned long)inode->i_ino, inode->i_count, inode->i_dirt? 'D':' ',
-                inode->i_mode, S_ISSOCK(inode->i_mode)? " [socket]": inode->i_path);
+            printk("\n#%2d: dev %p inode %5lu cnt %2d %c %06o %s", inode - inode_block,
+                inode->i_dev, (unsigned long)inode->i_ino, inode->i_count,
+                inode->i_dirt? 'D':' ', inode->i_mode,
+                S_ISSOCK(inode->i_mode)? " [socket]": inode->i_path);
         }
-        i++;
         if (inode->i_count) inuse++;
     } while ((inode = inode->i_prev) != NULL);
     printk("\nTotal inodes inuse %d/%d (%d free)\n", inuse, NR_INODE, nr_free_inodes);
