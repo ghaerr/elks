@@ -125,7 +125,7 @@ void do_exit(int status)
     /* Let the parent know */
     kill_process(current->ppid, SIGCHLD, 1);
 
-    /* Free the text, pwd, and root inodes */
+    /* Free the text, chroot, and current working directory inodes */
     iput(current->t_inode);
     iput(current->fs.root);
     iput(current->fs.pwd);

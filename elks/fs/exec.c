@@ -45,8 +45,8 @@
 #include <linuxmt/init.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/memory.h>
-
 #include <arch/segment.h>
+#pragma GCC diagnostic ignored "-Wunused-label"
 
 /* for relocation debugging change to printk */
 #define debug_reloc     debug
@@ -359,14 +359,12 @@ static int FARPROC execve_aout(struct inode *inode, struct file *filp,
         retval = -ENOMEM;
 #ifdef CONFIG_ROMFS_FS
         if (filp->f_inode->i_sb->s_type->type == FST_ROMFS
-            && mh.hlen == EXEC_MINIX_HDR_SIZE
-        ) {
+            && mh.hlen == EXEC_MINIX_HDR_SIZE) {
             /* Point the code segment directly to in-memory ROMFS. This runs text
              * segments directly from ROM, as opposed to making copies of them in
-             * RAM. Not supported for compressed or relocatable binaries. */
-
-            seg_code = seg_alloc_fixed(
-                filp->f_inode->u.romfs.seg + (filp->f_pos >> 4),
+             * RAM. Not supported for compressed or relocatable binaries.
+             */
+            seg_code = seg_alloc_fixed(filp->f_inode->u.romfs.seg + (filp->f_pos >> 4),
                 paras, SEG_FLAG_CSEG);
             if (seg_code)
                 goto code_seg_found_exec;
@@ -382,8 +380,8 @@ static int FARPROC execve_aout(struct inode *inode, struct file *filp,
 #ifdef CONFIG_EXEC_MMODEL
         paras += bytes_to_paras((size_t)esuph.esh_ftseg);
 #endif
-        debug_reloc("EXEC: allocating %04x paras (%04x bytes) for text segment(s)\n", paras,
-            bytes);
+        debug_reloc("EXEC: allocating %04x paras (%04x bytes) for text segment(s)\n",
+            paras, bytes);
         seg_code = seg_alloc(paras, SEG_FLAG_CSEG);
         if (!seg_code) goto error_exec3;
         currentp->t_regs.ds = seg_code->base;

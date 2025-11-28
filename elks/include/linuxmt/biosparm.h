@@ -82,12 +82,12 @@ struct biosparms {
 int call_bios(struct biosparms *);
 
 void BFPROC bios_disk_reset(int drive);
+struct drive_infot;
 int BFPROC bios_disk_rw(unsigned cmd, unsigned num_sectors, unsigned drive,
         unsigned cylinder, unsigned head, unsigned sector, unsigned seg, unsigned offset,
         struct drive_infot *drivep);
 void BFPROC bios_set_ddpt(int max_sectors);
 void BFPROC bios_copy_ddpt(void);
-struct drive_infot;
 void BFPROC bios_switch_device98(int target, unsigned int device,
         struct drive_infot *drivep);
 void BFPROC bios_disk_park_all(void);
