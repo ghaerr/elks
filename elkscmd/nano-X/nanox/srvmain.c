@@ -17,7 +17,7 @@
 #include <sys/time.h>
 #endif
 #if ELKS
-#include <linuxmt/posix_types.h>
+#include <linuxmt/posixtyp.h>
 #include <linuxmt/time.h>
 #endif
 

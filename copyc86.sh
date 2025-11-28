@@ -61,14 +61,14 @@ cp -p elks/include/linuxmt/fcntl.h          $DEST/include/linuxmt
 cp -p elks/include/linuxmt/ioctl.h          $DEST/include/linuxmt
 cp -p elks/include/linuxmt/limits.h         $DEST/include/linuxmt
 cp -p elks/include/linuxmt/types.h          $DEST/include/linuxmt
-cp -p elks/include/linuxmt/posix_types.h    $DEST/include/linuxmt
+cp -p elks/include/linuxmt/posixtyp.h       $DEST/include/linuxmt
 cp -p elks/include/linuxmt/signal.h         $DEST/include/linuxmt
 cp -p elks/include/linuxmt/stat.h           $DEST/include/linuxmt
 cp -p elks/include/linuxmt/termios.h        $DEST/include/linuxmt
 cp -p elks/include/linuxmt/time.h           $DEST/include/linuxmt
 cp -p elks/include/arch/cdefs.h             $DEST/include/arch
 cp -p elks/include/arch/divmod.h            $DEST/include/arch
-cp -p elks/include/arch/posix_types.h       $DEST/include/arch
+cp -p elks/include/arch/posixtyp.h          $DEST/include/arch
 cp -p elks/include/arch/stat.h              $DEST/include/arch
 cp -p elks/include/arch/types.h             $DEST/include/arch
 
