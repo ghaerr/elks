@@ -28,7 +28,7 @@
 
 typedef __u32 __kernel_fd_set;
 
-#include <arch/posix_types.h>
+#include <arch/posixtyp.h>
 #include <linuxmt/time.h>
 
 #endif

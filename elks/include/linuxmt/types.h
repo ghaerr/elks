@@ -20,7 +20,7 @@ typedef __u32                   tcflag_t;
 typedef __u32                   speed_t;
 typedef __u8                    cc_t;
 
-#include <linuxmt/posix_types.h>
+#include <linuxmt/posixtyp.h>
 
 typedef __kernel_fd_set         fd_set;
 
