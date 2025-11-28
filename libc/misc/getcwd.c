@@ -52,6 +52,7 @@ search_dir(dev_t this_dev, ino_t this_ino)
       {
          if( slen + strlen(d->d_name) > path_size )
          {
+            closedir(dp);
             errno = ERANGE;
             return NULL;
          }
