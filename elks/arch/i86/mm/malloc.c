@@ -116,7 +116,7 @@ static void seg_merge (segment_s * s1, segment_s * s2)
 
 // Allocate fixed segment for romfs (outside of memory allocator)
 
-segment_s * seg_alloc_romfs (seg_t base, segext_t size, word_t type)
+segment_s * seg_alloc_fixed (seg_t base, segext_t size, word_t type)
 {
     segment_s * seg = heap_alloc(sizeof(segment_s),
         HEAP_TAG_SEG | HEAP_TAG_CLEAR);
@@ -150,7 +150,7 @@ void seg_free (segment_s * seg)
 {
 #ifdef CONFIG_ROMFS_FS
     // Handle segments created outside of the memory allocator
-    // (via seg_alloc_romfs).
+    // (via seg_alloc_fixed).
     if (seg->all.prev == NULL && seg->all.next == NULL) {
         heap_free(seg);
         return;
