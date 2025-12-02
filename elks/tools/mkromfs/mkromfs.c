@@ -38,17 +38,11 @@ typedef struct super_disk_s super_disk_t;
 
 /* INode on disk (actually in ROM) */
 
-#define INODE_FILE  0x0000
-#define INODE_DIR   0x0001
-#define INODE_CHAR  0x0002
-#define INODE_BLOCK 0x0003
-#define INODE_LINK  0x0004
-
 struct inode_disk_s
 	{
 	u16_t offset;  /* offset in paragraphs */
 	u16_t size;    /* size in bytes */
-	u16_t flags;
+	u16_t mode;    /* file mode */
 	};
 
 typedef struct inode_disk_s inode_disk_t;
@@ -59,6 +53,9 @@ typedef struct inode_disk_s inode_disk_t;
 #define ROMFS_MAX 0x100000
 #define ROMFS_FILE_MAX 0x10000
 
+#define S_IRUGO     (S_IRUSR|S_IRGRP|S_IROTH)
+#define S_IXUGO     (S_IXUSR|S_IXGRP|S_IXOTH)
+
 struct inode_build_s
 	{
 	list_node_t node;
@@ -67,7 +64,7 @@ struct inode_build_s
 	u16_t index;
 
 	u16_t dev;           /* major & minor for device */
-	u16_t flags;
+	u16_t mode;
 	off_t offset;
 	u32_t size;
 	};
@@ -196,7 +193,7 @@ static int parse_dir_dev (inode_build_t * parent_inode, char * child_path)
 
 			child_ent->inode = child_inode;
 
-			child_inode->flags = (type == 'c')? INODE_CHAR: INODE_BLOCK;
+			child_inode->mode = (type == 'c')? (S_IFCHR|0755): (S_IFBLK|0755);
 			child_inode->dev = (major << 8) | minor;
 			child_inode->size = 0;
 			}
@@ -294,14 +291,14 @@ static int parse_dir (inode_build_t * grand_parent_inode,
 				if (S_ISREG (mode))
 					{
 					printf ("File:   %s\n", child_path);
-					child_inode->flags = INODE_FILE;
+					child_inode->mode = mode & ~(S_IWUSR|S_IWGRP|S_IWOTH);
 					child_inode->size = child_stat.st_size;
 					}
 
 				else if (S_ISDIR (mode))
 					{
 					printf ("Dir:    %s\n", child_path);
-					child_inode->flags = INODE_DIR;
+					child_inode->mode = mode & ~(S_IWUSR|S_IWGRP|S_IWOTH);
 					child_inode->size = 0;  // initial size
 
 					/* check if /dev and special device file specified */
@@ -318,14 +315,14 @@ static int parse_dir (inode_build_t * grand_parent_inode,
 				else if (S_ISCHR (mode))
 					{
 					printf ("Char:   %s\n", child_path);
-					child_inode->flags = INODE_CHAR;
+					child_inode->mode = S_IFCHR|0755;
 					goto char_block_inode;
 					}
 
 				else if (S_ISBLK (mode))
 					{
 					printf ("Block:  %s\n", child_path);
-					child_inode->flags = INODE_BLOCK;
+					child_inode->mode = S_IFBLK|0755;
 
 					char_block_inode:
 					child_inode->dev = child_stat.st_rdev;
@@ -335,7 +332,7 @@ static int parse_dir (inode_build_t * grand_parent_inode,
 				else if (S_ISLNK (mode))
 					{
 					printf ("Link:   %s\n", child_path);
-					child_inode->flags = INODE_LINK;
+					child_inode->mode = mode & ~(S_IWUSR|S_IWGRP|S_IWOTH);
 					child_inode->size = 0;
 					}
 
@@ -586,27 +583,27 @@ static int compile_fs ()
 		while (inode_build != (inode_build_t *) &_inodes.node)
 			{
 			inode_build->offset = offset;
-			u16_t flags = inode_build->flags;
+			u16_t mode = inode_build->mode;
 
-			if (flags == INODE_DIR)
+			if (S_ISDIR(mode))
 				{
 				printf ("Dir:    %s\n", &inode_build->path[arglen]);
 				err = compile_dir (fd, inode_build);
 				}
 
-			else if (flags == INODE_FILE)
+			else if (S_ISREG(mode))
 				{
 				printf ("File:   %s\n", &inode_build->path[arglen]);
 				err = compile_file (fd, inode_build);
 				}
 
-			else if (flags == INODE_CHAR || flags == INODE_BLOCK)
+			else if (S_ISCHR(mode) || S_ISBLK(mode))
 				{
 				// No data to compile as (major,minor) in inode
 				printf ("Device: %s\n", &inode_build->path[arglen]);
 				}
 
-			else if (flags == INODE_LINK)
+			else if (S_ISLNK(mode))
 				{
 				printf ("Link:   %s\n", &inode_build->path[arglen]);
 				err = compile_link (fd, inode_build);
@@ -673,10 +670,10 @@ static int compile_fs ()
 			inode_disk_t inode_disk;
 			memset (&inode_disk, 0, sizeof (inode_disk_t));
 
-			u16_t flags = inode_build->flags;
-			inode_disk.flags = flags;
+			u16_t mode = inode_build->mode;
+			inode_disk.mode = mode;
 
-			if (flags == INODE_FILE || flags == INODE_DIR || flags == INODE_LINK)
+			if (S_ISREG(mode) || S_ISDIR(mode) || S_ISLNK(mode))
 				{
 				/* TODO: replace assert() by error */
 				assert (inode_build->size < ROMFS_FILE_MAX);
@@ -692,7 +689,7 @@ static int compile_fs ()
 					}
 				}
 
-			else if (flags == INODE_CHAR || flags == INODE_BLOCK)
+			else if (S_ISCHR(mode) || S_ISBLK(mode))
 				{
 				/* Data block offset holds the device major & minor */
 				inode_disk.offset = inode_build->dev;
@@ -759,7 +756,7 @@ help:
 		inode_build_t * root_node = inode_alloc (NULL, argv [1]);
 		if (!root_node) break;
 
-		root_node->flags = INODE_DIR;
+		root_node->mode = S_IFDIR | S_IRUGO | S_IXUGO;  /* 0555 */
 
 		err = parse_dir (NULL, root_node, argv [1]);
 		if (err) break;

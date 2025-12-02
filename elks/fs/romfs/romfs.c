@@ -4,6 +4,7 @@
 #include <linuxmt/types.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/fs.h>
+#include <linuxmt/stat.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/stat.h>
 #include <linuxmt/kernel.h>
@@ -227,22 +228,6 @@ static struct inode_operations romfs_inode_operations = {
 	NULL              /* truncate */
 };
 
-static mode_t romfs_modemap [] = {
-	S_IFREG,
-	S_IFDIR,
-	S_IFCHR,
-	S_IFBLK,
-	S_IFLNK
-};
-
-static struct inode_operations * romfs_inode_ops [] = {
-	&romfs_inode_operations,
-	&romfs_inode_operations,
-	&chrdev_inode_operations,  /* standard handler */
-	&blkdev_inode_operations,  /* standard handler */
-	&romfs_inode_operations
-};
-
 
 /* Read inode from memory */
 
@@ -262,7 +247,8 @@ static void romfs_read_inode (struct inode * i)
 		if (ino >= isb->icount) break;
 
 		off_i = isb->ssize + ino * isb->isize;
-		fmemcpyw (&rim, kernel_ds, (char *)off_i, CONFIG_ROMFS_BASE, sizeof (struct romfs_inode_mem) >> 1);
+		fmemcpyw (&rim, kernel_ds, (char *)off_i, CONFIG_ROMFS_BASE,
+			sizeof (struct romfs_inode_mem) >> 1);
 
 		i->i_size = rim.size;
 
@@ -270,11 +256,19 @@ static void romfs_read_inode (struct inode * i)
 		i->i_mtime = i->i_atime = i->i_ctime = 0;
 		i->i_uid = i->i_gid = 0;
 
-		i->i_op = romfs_inode_ops [rim.flags & ROMFS_TYPE];
+		m = rim.mode;
+		switch (m & S_IFMT) {
+		case S_IFCHR:
+			i->i_op = &chrdev_inode_operations;
+			break;
+		case S_IFBLK:
+			i->i_op = &blkdev_inode_operations;
+			break;
+		default:
+			i->i_op = &romfs_inode_operations;
+		}
 
 		/* Compute inode mode (type & permissions) */
-
-		m = S_IRUGO | S_IXUGO | romfs_modemap [rim.flags & ROMFS_TYPE];
 
 		if (S_ISBLK (m) || S_ISCHR (m)) {
 			m = (m & ~S_IXUGO) | S_IWUGO;

@@ -359,6 +359,7 @@ static int FARPROC execve_aout(struct inode *inode, struct file *filp,
         retval = -ENOMEM;
 #ifdef CONFIG_ROMFS_FS
         if (filp->f_inode->i_sb->s_type->type == FST_ROMFS
+            && !(filp->f_inode->i_mode & S_ISVTX)
             && mh.hlen == EXEC_MINIX_HDR_SIZE) {
             /* Point the code segment directly to in-memory ROMFS. This runs text
              * segments directly from ROM, as opposed to making copies of them in
