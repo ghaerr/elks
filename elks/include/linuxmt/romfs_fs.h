@@ -28,15 +28,8 @@ struct romfs_super_mem {
 struct romfs_inode_mem {
 	word_t offset;  /* offset in paragraphs */
 	word_t size;    /* size in bytes */
-	word_t flags;
+	word_t mode;	/* inode mode bits */
 };
-
-#define ROMFS_TYPE 7
-#define ROMFH_REG 0
-#define ROMFH_DIR 1
-#define ROMFH_CHR 2
-#define ROMFH_BLK 3
-#define ROMFH_LNK 4
 
 struct romfs_super_info {
        word_t ssize;   /* size of superblock */
