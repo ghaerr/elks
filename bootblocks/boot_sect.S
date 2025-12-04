@@ -472,11 +472,10 @@ pc98_1b:
 #endif
 	pop %es
 	jnc dr_cont
+#ifndef CONFIG_ARCH_PC98
 	cmp $0x11,%ah	 // accept soft errors (MFM drives)
 	jz dr_cont
 
-
-#ifndef CONFIG_ARCH_PC98
 	xor %ah,%ah       // BIOS reset disk
 	int $0x13
 #endif
