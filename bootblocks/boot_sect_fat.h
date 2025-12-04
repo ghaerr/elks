@@ -45,6 +45,14 @@
 	.set FAT_TABLE_SIZE, 9
 	.set FAT_SEC_PER_TRK, 18
 	.set FAT_NUM_HEADS, 2
+#elif defined(CONFIG_IMG_FD2880)
+	.set FAT_SEC_PER_CLUS, 2
+	.set FAT_ROOT_ENT_CNT, 224
+	.set FAT_TOT_SEC, 5760
+	.set FAT_MEDIA_BYTE, 0xf0
+	.set FAT_TABLE_SIZE, 9
+	.set FAT_SEC_PER_TRK, 36
+	.set FAT_NUM_HEADS, 2
 #elif defined(CONFIG_IMG_HD)
 	.set FAT_ROOT_ENT_CNT, 512
 	.set FAT_TOT_SEC, 2 * CONFIG_IMG_BLOCKS
@@ -167,7 +175,10 @@ bpb_fil_sys_type:			// Filesystem type (8 bytes)
 					// anyway
 	mov $buf,%cx
 	push %ss
-	call disk_read
+#ifndef CONFIG_ARCH_PC98
+	clc
+#endif
+	call disk_read_sec
 
 	// See if /linux is in the first few root directory entries; bail out
 	// if not
@@ -238,7 +249,10 @@ find_system:
 	mov $LOADSEG&0xf000,%bx
 .endif
 	push %bx
-	call disk_read
+#ifndef CONFIG_ARCH_PC98
+	clc
+#endif
+	call disk_read_sec
 	mov sect_offset,%cx
 	mov sect_offset+2,%si
 

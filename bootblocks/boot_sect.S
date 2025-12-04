@@ -104,7 +104,7 @@ entry1:
 	// Move to the highest & aligned 64K
 
 	// Some BIOSes are intolerant to unaligned buffer for INT 13h
-	// so the 64K is the safest possible alignement in all cases
+	// so the 64K is the safest possible alignment in all cases
 
 	sub $0x1000,%ax
 	and $0xF000,%ax
@@ -200,8 +200,8 @@ _next1:
 	mov %ax,%dx
 	mov $payload,%cx
 	push %ss
-	mov $ERR_PAYLOAD,%bl
-	call _disk_read
+	clc
+	call disk_read_sec
 
 	call payload
 #else
@@ -290,7 +290,7 @@ _puts:
 	call _putc
 	inc %bx
 	jmp _puts
-1:  ret
+1:	ret
 
 //------------------------------------------------------------------------------
 
@@ -310,27 +310,39 @@ drive_reset:
 
 //------------------------------------------------------------------------------
 
-// void disk_read (int sect, int count, byte_t * buf, int seg)
+// void disk_read_blk(unsigned block, int sec_count, byte_t *buf, int seg)
+// void disk_read_sec(unsigned17 sector, int sec_count, byte_t *buf, int seg)
 
-	.global disk_read
-
-disk_read:
-	// AX = sect
-	// DX = count
+#ifndef BOOT_FAT
+	.global disk_read_blk
+disk_read_blk:
+	// AX = starting 1K block number
+	// DX = sector count
 	// CX = buf
 	// seg pushed on stack
-	mov $ERR_DISK_READ,%bl
+	shl %ax			// AX block -> 17-bit CF:AX sector number
+#endif
 
-_disk_read:
-	// BL = error code in case of failure
+	.global disk_read_sec
+disk_read_sec:
+#ifdef CONFIG_ARCH_PC98
+	clc
+#endif
+	// CF:AX is 17-bit sector number
 
-	mov $5,%bh
 	push %bp
 	mov %sp,%bp
 	push %ax
 	push %dx
 	push %cx
+	mov $(5<<8)|ERR_DISK_READ,%bx // BH=retries, BL=error code if failure
 	push %bx
+
+#ifndef CONFIG_ARCH_PC98
+	mov $0,%dx		// don't change CF
+	push %dx		// initialize stack space for sector hi word
+	adc %dx,-10(%bp)
+#endif
 
 // word 4(%bp) = segment
 // word -2(%bp) = logical sector number
@@ -338,18 +350,25 @@ _disk_read:
 // word -6(%bp) = buffer offset
 // byte -7(%bp) = no. of retries left
 // byte -8(%bp) = failure error code
+// word -10(%bp) = high word of sector number
 
 dr_loop:
 	// Compute the CHS from logical sector
-	// AX = logical sector
+	// AX = logical sector, low word
+
 	xchg %ax,%bx
 	mov sect_max,%al
 	mulb head_max
-	xchg %ax,%bx
+	xchg %ax,%bx		// BX = sects per cyl
+#ifdef CONFIG_ARCH_PC98
 	xor %dx,%dx
+#else
+	mov -10(%bp),%dx	// DX = high word of start sector
+#endif
 	add sect_offset,%ax
 	adc sect_offset+2,%dx
 	div %bx
+
 #ifdef CONFIG_ARCH_PC98
 	mov %ax,%cx      // cylinder number for PC_98
 #else
@@ -359,7 +378,7 @@ dr_loop:
 	mov %ah,%cl      // stash higher 2 bits of cylinder number in CL
 #endif
 
-	xchg %ax,%dx
+	xchg %ax,%dx     // AX = remainder, ie. sect # on this cylinder
 	xor %dx,%dx
 #ifndef BOOT_FAT
 	mov sect_max,%bl
@@ -453,8 +472,10 @@ pc98_1b:
 #endif
 	pop %es
 	jnc dr_cont
-
 #ifndef CONFIG_ARCH_PC98
+	cmp $0x11,%ah	 // accept soft errors (MFM drives)
+	jz dr_cont
+
 	xor %ah,%ah       // BIOS reset disk
 	int $0x13
 #endif
@@ -473,7 +494,7 @@ pc98_1b:
 	jnz dr_try
 
 	// TODO: use BIOS returned error
-	pop %ax
+	pop %ax		 // get ERR_ code
 	jmp _except
 
 dr_cont:
