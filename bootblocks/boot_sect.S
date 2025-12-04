@@ -326,14 +326,17 @@ disk_read_blk:
 disk_read_sec:
 	// CF:AX is 17-bit sector number
 
-	mov $ERR_DISK_READ,%bl	// BL = error code in case of failure
-	mov $5,%bh
 	push %bp
 	mov %sp,%bp
 	push %ax
 	push %dx
 	push %cx
+	mov $(5<<8)|ERR_DISK_READ,%bx // BH=retries, BL=error code if failure
 	push %bx
+
+	mov $0,%dx		// don't change CF
+	push %dx		// initialize stack space for sector hi word
+	adc %dx,-10(%bp)
 
 // word 4(%bp) = segment
 // word -2(%bp) = logical sector number
@@ -342,10 +345,6 @@ disk_read_sec:
 // byte -7(%bp) = no. of retries left
 // byte -8(%bp) = failure error code
 // word -10(%bp) = high word of sector number
-
-	mov $0,%dx		// must not affect CF
-	push %dx		// initialize stack space for sector overflow
-	adc %dx, -10(%bp)
 
 dr_loop:
 	// Compute the CHS from logical sector
