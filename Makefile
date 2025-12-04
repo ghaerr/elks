@@ -10,38 +10,38 @@ include $(TOPDIR)/Make.defs
 
 all: .config include/autoconf.h
 	$(MAKE) -C libc all
-	$(MAKE) -C libc DESTDIR='$(TOPDIR)/cross' install
-	$(MAKE) -C elks all
-	$(MAKE) -C bootblocks all
-	$(MAKE) -C elkscmd all
-	$(MAKE) -C image all
+	$(MAKE) -C libc -j1 DESTDIR='$(TOPDIR)/cross' install
+	$(MAKE) -C elks -j1 all
+	$(MAKE) -C bootblocks -j1 all
+	$(MAKE) -C elkscmd -j1 all
+	$(MAKE) -C image -j1 all
 ifeq ($(shell uname), Linux)
 	$(MAKE) -C elksemu PREFIX='$(TOPDIR)/cross' elksemu
 endif
 
 image:
-	$(MAKE) -C image
+	$(MAKE) -C image -j1
 
 images:
-	$(MAKE) -C image images
+	$(MAKE) -C image -j1 images
 
 kimage: kernel image
 
 kernel:
-	$(MAKE) -C elks
+	$(MAKE) -C elks -j1
 
 kclean:
-	$(MAKE) -C elks kclean
+	$(MAKE) -C elks -j1 kclean
 
 clean:
-	$(MAKE) -C libc clean
-	$(MAKE) -C libc DESTDIR='$(TOPDIR)/cross' uninstall
-	$(MAKE) -C elks clean
-	$(MAKE) -C bootblocks clean
-	$(MAKE) -C elkscmd clean
-	$(MAKE) -C image clean
+	$(MAKE) -C libc -j1 clean
+	$(MAKE) -C libc -j1 DESTDIR='$(TOPDIR)/cross' uninstall
+	$(MAKE) -C elks -j1 clean
+	$(MAKE) -C bootblocks -j1 clean
+	$(MAKE) -C elkscmd -j1 clean
+	$(MAKE) -C image -j1 clean
 ifeq ($(shell uname), Linux)
-	$(MAKE) -C elksemu clean
+	$(MAKE) -C elksemu -j1 clean
 endif
 	@echo
 	@if [ ! -f .config ]; then \
@@ -51,13 +51,13 @@ endif
 	fi
 
 libc:
-	$(MAKE) -C libc DESTDIR='$(TOPDIR)/cross' uninstall
+	$(MAKE) -C libc -j1 DESTDIR='$(TOPDIR)/cross' uninstall
 	$(MAKE) -C libc all
-	$(MAKE) -C libc DESTDIR='$(TOPDIR)/cross' install
+	$(MAKE) -C libc -j1 DESTDIR='$(TOPDIR)/cross' install
 
 owclean:
-	$(MAKE) -C libc -f watcom.mk clean
-	$(MAKE) -C elkscmd owclean
+	$(MAKE) -C libc -j1 -f watcom.mk clean
+	$(MAKE) -C elkscmd -j1 owclean
 
 owlibc:
 	$(MAKE) -C libc -f watcom.mk MODEL=c
@@ -66,23 +66,23 @@ owlibc:
 	$(MAKE) -C libc -f watcom.mk MODEL=l
 
 owc: owlibc
-	$(MAKE) -C elkscmd owc
+	$(MAKE) -C elkscmd -j1 owc
 
 c86clean:
-	$(MAKE) -C libc -f c86.mk clean
-	$(MAKE) -C elkscmd c86clean
+	$(MAKE) -C libc -f c86.mk -j1 clean
+	$(MAKE) -C elkscmd -j1 c86clean
 
 c86libc:
-	$(MAKE) -C libc -f c86.mk
+	$(MAKE) -C libc -f c86.mk -j1
 
 c86: c86libc
-	$(MAKE) -C elkscmd c86
+	$(MAKE) -C elkscmd -j1 c86
 
 elks/arch/i86/drivers/char/KeyMaps/config.in:
-	$(MAKE) -C elks/arch/i86/drivers/char/KeyMaps config.in
+	$(MAKE) -C elks/arch/i86/drivers/char/KeyMaps -j1 config.in
 
 kconfig:
-	$(MAKE) -C config all
+	$(MAKE) -C config -j1 all
 
 defconfig:
 	$(RM) .config
