@@ -313,17 +313,21 @@ drive_reset:
 // void disk_read_blk(unsigned block, int sec_count, byte_t *buf, int seg)
 // void disk_read_sec(unsigned17 sector, int sec_count, byte_t *buf, int seg)
 
+#ifndef BOOT_FAT
 	.global disk_read_blk
-	.global disk_read_sec
-
 disk_read_blk:
 	// AX = starting 1K block number
 	// DX = sector count
 	// CX = buf
 	// seg pushed on stack
 	shl %ax			// AX block -> 17-bit CF:AX sector number
+#endif
 
+	.global disk_read_sec
 disk_read_sec:
+#ifdef CONFIG_ARCH_PC98
+	clc
+#endif
 	// CF:AX is 17-bit sector number
 
 	push %bp
@@ -334,9 +338,11 @@ disk_read_sec:
 	mov $(5<<8)|ERR_DISK_READ,%bx // BH=retries, BL=error code if failure
 	push %bx
 
+#ifndef CONFIG_ARCH_PC98
 	mov $0,%dx		// don't change CF
 	push %dx		// initialize stack space for sector hi word
 	adc %dx,-10(%bp)
+#endif
 
 // word 4(%bp) = segment
 // word -2(%bp) = logical sector number
@@ -354,7 +360,11 @@ dr_loop:
 	mov sect_max,%al
 	mulb head_max
 	xchg %ax,%bx		// BX = sects per cyl
+#ifdef CONFIG_ARCH_PC98
+	xor %dx,%dx
+#else
 	mov -10(%bp),%dx	// DX = high word of start sector
+#endif
 	add sect_offset,%ax
 	adc sect_offset+2,%dx
 	div %bx
