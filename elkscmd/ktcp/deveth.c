@@ -143,6 +143,15 @@ void eth_sendpacket(unsigned char *packet, int len, eth_addr_t eth_addr)
 	memcpy(ipll->ll_eth_src, eth_local_addr, 6);
 	ipll->ll_type_len = 0x08; //FIXME what is 0x0800
 
+//#define FORCE_MISSING_PACKET 128        /* 128 and 512 are good values for debugging */
+
+#if FORCE_MISSING_PACKET        /* For debugging: Create errors */
+        static failcnt = 0;
+        if (failcnt++ > FORCE_MISSING_PACKET)
+                failcnt = 0;
+        else
+#endif
+
 	eth_write((unsigned char *)ipll, sizeof(struct ip_ll) + len);
 }
 
