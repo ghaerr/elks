@@ -296,7 +296,11 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	    /* adjust congestion window */
 	    if (cb->cwnd <= cb->ssthresh && !cb->retrans_act)
 	    	cb->cwnd++;
-	    cb->inflight--;
+        
+        if (cb->inflight == 1 || cb->send_una == cb->send_nxt)
+            cb->inflight = 0;       /* all outstanding packets ACKed */
+        else
+            cb->inflight--;
 	}
     }
 
