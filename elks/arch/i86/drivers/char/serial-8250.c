@@ -191,6 +191,16 @@ static void update_port(register struct serial_info *port)
     }
 }
 
+/* printk console out */
+void rs_conout(dev_t dev, int Ch)
+{
+    register struct serial_info *sp = &ports[MINOR(dev) - RS_MINOR_OFFSET];
+
+    while (!(INB(sp->io + UART_LSR) & UART_LSR_THRE))
+        continue;
+    outb(Ch, sp->io + UART_TX);
+}
+
 /* serial write - busy loops until transmit buffer available */
 static int rs_write(struct tty *tty)
 {
@@ -489,16 +499,6 @@ static void rs_init(void)
         }
         tty++;
     } while (++sp < &ports[NR_SERIAL]);
-}
-
-/* note: this function will be called prior to serial_init if serial console set*/
-void rs_conout(dev_t dev, int Ch)
-{
-    register struct serial_info *sp = &ports[MINOR(dev) - RS_MINOR_OFFSET];
-
-    while (!(INB(sp->io + UART_LSR) & UART_LSR_THRE))
-        continue;
-    outb(Ch, sp->io + UART_TX);
 }
 
 #ifdef CONFIG_BOOTOPTS

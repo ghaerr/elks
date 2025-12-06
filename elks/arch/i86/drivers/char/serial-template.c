@@ -65,6 +65,16 @@ static unsigned int divisors[] = {
 
 extern struct tty ttys[];
 
+/* printk console out */
+void rs_conout(dev_t dev, int c)
+{
+    struct serial_info *sp = &ports[MINOR(dev) - RS_MINOR_OFFSET];
+
+    while (!(inb(sp->io + UART_LSR) & UART_LSR_THRE))
+	continue;
+    outb(c, sp->io + UART_TX);
+}
+
 /* serial write - busy loops until transmit buffer available */
 static int rs_write(struct tty *tty)
 {
@@ -183,16 +193,6 @@ static int rs_open(struct tty *tty)
     inb(port->io + UART_MSR);
 
     return 0;
-}
-
-/* note: this function will be called prior to serial_init if serial console set*/
-void rs_conout(dev_t dev, int c)
-{
-    struct serial_info *sp = &ports[MINOR(dev) - RS_MINOR_OFFSET];
-
-    while (!(inb(sp->io + UART_LSR) & UART_LSR_THRE))
-	continue;
-    outb(c, sp->io + UART_TX);
 }
 
 /* initialize UART, interrupts off */
