@@ -20,6 +20,13 @@
 static struct tty *tty;
 extern struct tty ttys[];
 
+/* printk console out */
+void rs_conout(dev_t dev, int c)
+{
+    while (!(inb(UART_CONTROL_PORT) & UART_TX_READY));
+    outb(c, UART_DATA_PORT);
+}
+
 /* serial write - busy loops until transmit buffer available */
 static int rs_write(struct tty *tty)
 {
@@ -96,13 +103,6 @@ static int rs_open(struct tty *tty)
     update_port(1);
 
     return 0;
-}
-
-/* note: this function will be called prior to serial_init if serial console set*/
-void rs_conout(dev_t dev, int c)
-{
-    while (!(inb(UART_CONTROL_PORT) & UART_TX_READY));
-    outb(c, UART_DATA_PORT);
 }
 
 void INITPROC serial_init(void)

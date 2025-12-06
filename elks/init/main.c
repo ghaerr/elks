@@ -164,31 +164,29 @@ static void INITPROC early_kernel_init(void)
 
 static void INITPROC kernel_init(void)
 {
-    irq_init();                     /* installs timer and div fault handlers */
-
-    /* set console from /bootopts console= or 0=default*/
-    set_console(boot_console);
-    console_init();                 /* init direct, bios or headless console*/
-
-#ifdef CONFIG_CHAR_DEV_RS
-    serial_init();
-#endif
-
-    inode_init();
-    if (buffer_init())  /* also enables xms and unreal mode if configured and possible*/
-        panic("No buf mem");
-
 #ifdef CONFIG_ARCH_IBMPC
     outw(0, 0x510);
     if (inb(0x511) == 'Q' && inb(0x511) == 'E')
         running_qemu = 1;
 #endif
+    irq_init();                     /* installs timer and div fault handlers */
 
+    set_irq();                      /* interrupts enabled early for jiffie timers */
+
+    /* set console from /bootopts console= or 0=default*/
+    set_console(boot_console);
+#ifdef CONFIG_CHAR_DEV_RS
+    serial_init();                  /* init serial first for printk */
+#endif
+    console_init();                 /* init direct, bios or headless console*/
+
+    inode_init();
+    if (buffer_init())  /* also enables xms and unreal mode if configured and possible*/
+        panic("No buf mem");
 #ifdef CONFIG_SOCKET
     sock_init();
 #endif
-
-    device_init();                  /* interrupts enabled here for possible disk I/O */
+    device_init();                  /* init char and block devices */
 
 #ifdef CONFIG_BOOTOPTS
     finalize_options();
@@ -212,7 +210,6 @@ static void INITPROC kernel_init(void)
 static void INITPROC kernel_banner(seg_t init, seg_t extra)
 {
     kernel_banner_arch();
-
     printk("syscaps %x, %uK base ram, %d tasks, %d files, %d inodes\n",
         sys_caps, SETUP_MEM_KBYTES, max_tasks, nr_file, nr_inode);
     printk("ELKS %s (%u text, %u ftext, %u data, %u bss, %u heap)\n",
