@@ -292,15 +292,18 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     if (h->flags & TF_ACK) {		/* update unacked*/
 	acknum = ntohl(h->acknum);
 	if (SEQ_LT(cb->send_una, acknum)) {
+	    debug_cwnd("tcp:     ACK seq %lu unack %lu\n", acknum, cb->send_una);
 	    cb->send_una = acknum;
 	    /* adjust congestion window */
 	    if (cb->cwnd <= cb->ssthresh && !cb->retrans_act)
 	    	cb->cwnd++;
-        
-        if (cb->inflight == 1 || cb->send_una == cb->send_nxt)
-            cb->inflight = 0;       /* all outstanding packets ACKed */
-        else
-            cb->inflight--;
+	    if (cb->inflight == 1 || cb->send_una == cb->send_nxt) {
+		cb->inflight = 0;       /* all outstanding packets ACKed */
+                debug_cwnd("tcp: all ACK seq %lu inflt %d\n", acknum, cb->inflight);
+	    } else
+		cb->inflight--;
+	} else {
+	    debug_cwnd("tcp: DUP ACK seq %lu unack %lu\n", acknum, cb->send_una);
 	}
     }
 

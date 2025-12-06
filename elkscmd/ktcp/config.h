@@ -11,6 +11,7 @@
 #define DEBUG_TCP	0	/* TCP ops*/
 #define DEBUG_TCPPKT	0	/* TCP packets info*/
 #define DEBUG_TCPDATA	1	/* TCP packet data display*/
+#define DEBUG_CWND	0	/* TCP congestion control*/
 #define DEBUG_TUNE	1	/* tuning options*/
 #define DEBUG_RETRANS	0	/* TCP retransmissions*/
 #define DEBUG_WINDOW	0	/* TCP window size*/
@@ -44,6 +45,12 @@ void dprintf(const char *, ...);
 #define debug_tune	DPRINTF
 #else
 #define debug_tune(...)
+#endif
+
+#if DEBUG_CWND
+#define debug_cwnd	DPRINTF
+#else
+#define debug_cwnd(...)
 #endif
 
 #if DEBUG_TCPPKT
