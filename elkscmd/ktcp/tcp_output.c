@@ -403,11 +403,11 @@ void tcp_retrans_retransmit(void)
 	    	n->cb->ssthresh = n->cb->inflight/2;
 	    	if (n->cb->ssthresh < 2) n->cb->ssthresh = 2;
 	    }
+	    debug_cwnd("tcp: retrans inflt %d cwnd %d time %lu)\n",
+			n->cb->inflight, n->cb->cwnd, Now - n->next_retrans);
 	    /* EXPERIMENTAL - keep cwnd at 2 while retransmitting */
 	    n->cb->cwnd = TCP_INIT_CWND;
 	    n->cb->retrans_act++;
-	    //printf("retrans (%d,%d,%lu)\n",
-	    	//n->cb->inflight, n->len, Now - n->next_retrans);
 	    tcp_reoutput(n);
 
 	    /* Doesn't make all that sense to first retrans, then kill the connection */

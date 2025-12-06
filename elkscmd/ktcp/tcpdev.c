@@ -352,7 +352,6 @@ static void tcpdev_write(void)
     struct tcpcb_s *cb;
     void *  sock = db->sock;
     unsigned int size, maxwindow;
-    int dbg_counter = 0;
 
     sock = db->sock;
     /*
@@ -401,23 +400,16 @@ static void tcpdev_write(void)
 	maxwindow = TCP_SEND_WINDOW_MAX;
     if ((cb->inflight >= cb->cwnd) 		/* check congestion window first */
 		|| (cb->send_nxt - cb->send_una + size > maxwindow)) {
-	dbg_counter++;	/* will not work well if multiple connections */
-	if (dbg_counter > 10) {
-		printf("tcp limit: seq %lu size %d maxwnd %u unack %lu rcvwnd %u inflight %d cwnd %d\n",
-		    cb->send_nxt - cb->iss, size, maxwindow,
-		    cb->send_nxt - cb->send_una, cb->rcv_wnd, cb->inflight, cb->cwnd);
-		dbg_counter = 0;
-	}
-	debug_tcp("tcp limit: seq %lu size %d maxwnd %u unack %lu rcvwnd %u\n",
+	debug_cwnd("tcp limit: seq %lu size %d maxwnd %u unack %lu rcvwnd %u inflt %d cwnd %d\n",
 	    cb->send_nxt - cb->iss, size, maxwindow, cb->send_nxt - cb->send_una,
-	    cb->rcv_wnd);
+	    cb->rcv_wnd, cb->inflight, cb->cwnd);
 	retval_to_sock(sock, -ERESTARTSYS); /* source will wait for 100ms, then retry */
 	return;
     }
 
-    debug_tcp("tcp write: seq %lu size %d rcvwnd %u unack %lu (cnt %d, mem %u)\n",
+    debug_cwnd("tcp write: seq %lu size %d rcvwnd %u unack %lu inflt %d cwnd %d (cnt %d, mem %u)\n",
 	cb->send_nxt - cb->iss, size, cb->rcv_wnd, cb->send_nxt - cb->send_una,
-	tcp_timeruse, tcp_retrans_memory);
+	cb->inflight, cb->cwnd, tcp_timeruse, tcp_retrans_memory);
 
     cb->flags = TF_PSH|TF_ACK;
     cb->datalen = size;
