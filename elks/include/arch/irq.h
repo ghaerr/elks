@@ -5,7 +5,8 @@
 /* irq numbers >= 16 are hardware exceptions/traps or syscall */
 #define IDX_SYSCALL     16
 #define IDX_DIVZERO     17
-#define NR_IRQS         18      /* = # IRQs plus special indexes above */
+#define IDX_NMI         18
+#define NR_IRQS         19      /* = # IRQs plus special indexes above */
 
 #define INT_GENERIC  0  // use the generic interrupt handler (aka '_irqit')
 #define INT_SPECIFIC 1  // use a specific interrupt handler
@@ -19,6 +20,7 @@ typedef void (* irq_handler) (int,struct pt_regs *);   // IRQ handler
 
 void do_IRQ(int,struct pt_regs *);
 void div0_handler(int, struct pt_regs *);
+void nmi_handler(int, struct pt_regs *);
 int request_irq(int,irq_handler,int hflag);
 int free_irq(int irq);
 
