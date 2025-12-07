@@ -4,9 +4,11 @@
 #define MAX_ETHS	3	/* max NICs */
 
 /* Enumeration for the netif_parms array */
-#define ETH_NE2K	0
-#define ETH_WD		1
-#define ETH_EL3		2
+#define ETH_NE2K	0	/* Novell NE & compatibles, including 8bit versions */
+#define ETH_WD		1	/* Western Digital 8003 and 8013, compatibles */
+#define ETH_EL3		2	/* 3Com 3C503 Etherlink III */
+#define ETH_EE16	3	/* Intel EtherExpress 16 (ISA) */
+#define ETH_LANCE	4	/* AMD LANCE and 79C960	*/
 
 #ifndef __ASSEMBLER__
 
@@ -28,13 +30,13 @@ struct eth {
 
 /* status for each NIC, returned through ioctl */
 struct netif_stat {
-	unsigned int rx_errors;     /* Receive errors, flagged by NIC */
-	unsigned int rq_errors;	    /* Receive queue errors (in 8bit interfaces) */
-	unsigned int tx_errors;	    /* Transmit errors, flagged by NIC */
-	unsigned int oflow_errors;	/* Receive buffer overflow interrupts */
-	unsigned int if_status;	    /* Interface status flags */
-	int oflow_keep;	            /* # of packets to keep if overflow */
-	char mac_addr[6];	        /* Current MAC address */
+	__u16 rx_errors;	/* Receive errors, flagged by NIC */
+	__u16 rq_errors;	/* Receive queue errors (in 8bit interfaces) */
+	__u16 tx_errors;	/* Transmit errors, flagged by NIC */
+	__u16 oflow_errors;	/* Receive buffer overflow interrupts */
+	__u16 if_status;	/* Interface status flags */
+	__s16 oflow_keep;	/* # of packets to keep if overflow */
+	__u8  mac_addr[6];	/* Current MAC address */
 };
 
 #endif	/* __ASSEMBLER__ */
@@ -43,17 +45,21 @@ struct netif_stat {
 /* The lower nibble has the autodetected buffer memory size,
  * 1=4k, 2=8k, 3=16k etc. */
 #define	NETIF_AUTO_8BIT	0x10	
-#define NETIF_IS_QEMU	0x20
+#define NETIF_IS_QEMU	0x20	/* unused */
 
-/* Config flags for 8390 based NICs */
-/* The first 3 make a number - for coding simplicity (a power of two),
- * the rest are regular flag bits */
+/* Config flags
+ * The first 3 make a number - for coding simplicity (a power of two),
+ * the rest are regular flag bits
+ */
+#define ETHF_DEF_BUF	0x00	/* Use default (i.e. max) NIC buffer */
 #define ETHF_8K_BUF	0x01	/* Force  8K NIC (default on SMC/WD memory mapped NICs) */
 #define ETHF_16K_BUF	0x02	/* Force 16k NIC buffer */
 #define ETHF_32K_BUF	0x03	/* Force 32k NIC buffer */
 #define ETHF_4K_BUF	0x04	/* Force  4k NIC buffer */
+#define ETHF_BUF_MASK	0x07	/* mask for all buffer sizes */
 #define ETHF_8BIT_BUS	0x10	/* Force  8 bit bus */
 #define ETHF_16BIT_BUS 	0x20	/* Force 16 bit bus */
+#define ETHF_USE_BNC	0x08	/* Use BNC connection */
 #define ETHF_USE_AUI	0x40	/* Use AUI connection */
 #define ETHF_VERBOSE	0x80U	/* turn on verbose console error messages */
 
