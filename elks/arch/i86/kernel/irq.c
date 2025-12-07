@@ -136,6 +136,12 @@ void INITPROC irq_init(void)
 #endif
 #endif
 
+#if defined(CONFIG_ARCH_PC98)
+    /* catch NMI */
+    irq_action[IDX_NMI] = nmi_handler;
+    int_handler_add(IDX_NMI, 0x02, _irqit);
+#endif
+
 #if defined(CONFIG_TIMER_INT0F) || defined(CONFIG_TIMER_INT1C)
     /* Use IRQ 7 vector (simulated by INT 0Fh) for timer interrupt handler */
     if (request_irq(7, timer_tick, INT_GENERIC))
