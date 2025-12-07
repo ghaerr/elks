@@ -1,4 +1,4 @@
-// Fast custom serial COM interrupt routine for ELKS
+// Fast custom serial input interrupt routines for ELKS
 //
 // runs on any stack and skips all ELKS overhead
 // must run with interrupts disabled as could interrupt user, kernel or interrupt stack
@@ -13,11 +13,11 @@
 
 #ifdef CONFIG_FAST_IRQ4
 //
-// fast com1 interrupt routine, uses "jmp _irq_com1" from interrupt vector
+// fast ttyS0 interrupt routine, called by CALLF within dynamic handler
 //
-	.extern	fast_com1_irq
-	.global	_irq_com1
-_irq_com1:
+	.extern	rs_fast_irq4
+	.global asm_fast_irq4
+asm_fast_irq4:
 	push	%ax			// save regs, uses 18 bytes of current stack
 	push	%bx
 	push	%cx
@@ -29,7 +29,7 @@ _irq_com1:
 	mov	%sp,%bx
 	mov	%ss:12(%bx),%ds
 
-	call	fast_com1_irq		// call special C interrupt routine
+	call	rs_fast_irq4		// call special C interrupt routine
 					// which doesn't use any SS/SP/BP addressing
 
 	mov	$0x20,%al		// EOI on primary controller
@@ -46,11 +46,11 @@ _irq_com1:
 
 #ifdef CONFIG_FAST_IRQ3
 //
-// fast com2 interrupt routine, uses "jmp _irq_com2" from interrupt vector
+// fast ttyS1 interrupt routine, called by CALLF within dynamic handler
 //
-	.extern	fast_com2_irq
-	.global	_irq_com2
-_irq_com2:
+	.extern	rs_fast_irq3
+	.global	asm_fast_irq3
+asm_fast_irq3:
 	push	%ax			// save regs, uses 18 bytes of current stack
 	push	%bx
 	push	%cx
@@ -62,7 +62,7 @@ _irq_com2:
 	mov	%sp,%bx
 	mov	%ss:12(%bx),%ds
 
-	call	fast_com2_irq		// call special C interrupt routine
+	call	rs_fast_irq3		// call special C interrupt routine
 					// which doesn't use any SS/SP/BP addressing
 
 	mov	$0x20,%al		// EOI on primary controller

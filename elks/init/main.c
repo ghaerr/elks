@@ -173,12 +173,11 @@ static void INITPROC kernel_init(void)
 
     set_irq();                      /* interrupts enabled early for jiffie timers */
 
-    /* set console from /bootopts console= or 0=default*/
-    set_console(boot_console);
 #ifdef CONFIG_CHAR_DEV_RS
-    serial_init();                  /* init serial first for printk */
+    serial_init();                  /* must init serial before console for ser console */
 #endif
-    console_init();                 /* init direct, bios or headless console*/
+    set_console(boot_console);      /* change to /bootopts console= or default */
+    console_init();                 /* init direct, bios or headless console */
 
     inode_init();
     if (buffer_init())  /* also enables xms and unreal mode if configured and possible*/
