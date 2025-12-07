@@ -63,12 +63,6 @@ struct proto_ops {
     int (*listen) ();
     int (*send) ();
     int (*recv) ();
-    int (*sendto) ();
-    int (*recvfrom) ();
-    int (*shutdown) ();
-    int (*setsocketopt) ();
-    int (*getsocketopt) ();
-    int (*fcntl) ();
 };
 #endif
 

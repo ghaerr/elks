@@ -3,27 +3,26 @@
  *
  * PC IRQ default mappings (* = possible conflicting uses)
  *
- *  IRQ ELKS Device         Config Option           Status
+ *  IRQ ELKS Device          Config Option          Status
  *  0   Timer                                       Required
- *  1   Keyboard            CONFIG_CONSOLE_DIRECT   Optional
- *  2*  Cascade -> 9 on AT  CONFIG_ETH_WD           Optional on XT, not available on AT
- *  3   Com2 (/dev/ttyS1)   CONFIG_CHAR_DEV_RS      Optional
- *  4   Com1 (/dev/ttyS0)   CONFIG_CHAR_DEV_RS      Optional
- *  5*  Unused
- *  5*  Com3 (/devb/ttyS2)  CONFIG_CHAR_DEV_RS      Optional
- *  5*  HW IDE hard drive   CONFIG_BLK_DEV_HD       Driver doesn't work
- *  6*  Unused
- *  6*  HW floppy drive     CONFIG_BLK_DEV_FD       Driver doesn't compile
+ *  1   Keyboard             CONFIG_CONSOLE_DIRECT  Optional
+ *  2*  Cascade -> 9 on AT                          Optional on XT, not available on AT
+ *  2*  WD 80x3   (/dev/wd0) CONFIG_ETH_WD          Optional on XT, not available on AT
+ *  3   Com2    (/dev/ttyS1) CONFIG_CHAR_DEV_RS     Optional
+ *  4   Com1    (/dev/ttyS0) CONFIG_CHAR_DEV_RS     Optional
+ *  5*  Com3    (/dev/ttyS2) CONFIG_CHAR_DEV_RS     Optional
+ *  5*  HW IDE hard drive    CONFIG_BLK_DEV_HD      Non-working directhd.c
+ *  6   HW floppy drive      CONFIG_BLK_DEV_FD      Optional
  *  7   Unused (LPT, Com4)
  *  8   Unused (RTC)
- *  9   3C509/EL3 (/dev/eth) CONFIG_ETH_EL3         Optional
- * 10   Unused (USB)                                Turned off
- * 11   Unused (Sound)                              Turned off
- * 12   NE2K (/dev/eth)     CONFIG_ETH_NE2K         Optional
- * 12*  Unused (Mouse)                              Turned off
- * 13   Unused (Math coproc.)                       Turned off
- * 14*  AT HD IDE (/dev/hda) CONFIG_BLK_DEV_HD      Driver doesn't work
- * 15*  AT HD IDE (/dev/hdb) CONFIG_BLK_DEV_HD      Driver doesn't work
+ *  9*  3C509/EL3 (/dev/3c0) CONFIG_ETH_EL3         Optional
+ * 10*  WD 80x3   (/dev/wd0) CONFIG_ETH_WD          Optional
+ * 11*  3C509/EL3 (/dev/3c0) CONFIG_ETH_EL3         Optional
+ * 12*  NE2K      (/dev/ne0) CONFIG_ETH_NE2K        Optional
+ * 12*  Unused (Mouse)                              No driver
+ * 13   Unused (Math coproc)                        No driver
+ * 14   AT HD IDE (/dev/hda) CONFIG_BLK_DEV_HD      Non-working hd.c
+ * 15   AT HD IDE (/dev/hdb) CONFIG_BLK_DEV_HD      Non-working hd.c
  *
  * Edit settings below to change port address or IRQ:
  *   Change I/O port and driver IRQ number to match your hardware

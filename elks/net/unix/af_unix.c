@@ -570,12 +570,6 @@ struct proto_ops unix_proto_ops = {
     unix_listen,
     unix_send,
     unix_recv,
-    NULL,			/* sendto */
-    NULL,			/* recvfrom */
-    NULL,			/* shutdown */
-    NULL,			/* setsockopt */
-    NULL,			/* getsockopt */
-    NULL			/* fcntl */
 };
 
 void unix_proto_init(struct net_proto *pro)

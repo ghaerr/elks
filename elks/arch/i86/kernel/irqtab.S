@@ -72,18 +72,18 @@ int_vector_set:
 !
 !       There are three possible cases to cope with
 !
-!       Syscall or Interrupted user mode (_gint_count == 0)
+!       Syscall or Interrupted user mode (intr_count == 0)
 !               Switch to process's kernel stack
 !               Optionally, check (SS == current->t_regs.ss)
 !               and panic on failure
 !               On return, task switch allowed
 !
 !       Interrupted kernel mode, interrupted kernel task
-!               or second interrupt (_gint_count == 1)
+!               or second interrupt (intr_count == 1)
 !               Switch to interrupt stack
 !               On return, no task switch allowed
 !
-!       Interrupted interrupt service routine (_gint_count > 1)
+!       Interrupted interrupt service routine (intr_count > 1)
 !               Already using interrupt stack, keep using it
 !               On return, no task switch allowed
 !
@@ -119,7 +119,7 @@ _irqit:
 //
 //      Determine which stack to use
 //
-        cmpw    $1,_gint_count
+        cmpw    $1,intr_count
         jc      utask           // We were in user mode
         jz      itask           // Using a process's kernel stack
 ktask:                          // Already using interrupt stack
@@ -162,7 +162,7 @@ utask1:
 //      Save segment, index, BP and SP registers
 //
 save_regs:
-        incw    _gint_count
+        incw    intr_count
         pop     (%si)           // DI
         pop     2(%si)          // SI
         pop     8(%si)          // DS
@@ -332,7 +332,7 @@ was_trap:
 //
 //      Look at rescheduling
 //
-        cmpw    $1,_gint_count
+        cmpw    $1,intr_count
         jne     restore_regs    // No
 //      cmp     $0,_need_resched // Schedule needed ?
 //      je      restore_regs    // No
@@ -347,7 +347,7 @@ was_trap:
 //      Restore registers and return
 //
 restore_regs:
-        decw    _gint_count
+        decw    intr_count
         pop     %ax
         pop     %bx
         pop     %cx
@@ -438,7 +438,7 @@ div0_handler_panic:
 //      iret
 
         .data
-        .global _gint_count
+        .global intr_count
         .global endistack
         .global endtstack
         .global istack
@@ -450,14 +450,14 @@ bios_call_cnt:                  // call BIOS IRQ 0 handler every 5th interrupt
         .word   5
 org_irq0:                       // original BIOS IRQ 0 vector
         .long   0
-_gint_count:                    // General interrupts count. Start with 1
+intr_count:                     // stacked interrupts count. Start with 1
         .word   1               // because init_task() is in kernel mode
 #ifdef CHECK_SS
 pmsg:   .ascii "Running unknown code\0"
 #endif
 dmsg:   .ascii  "DIVIDE FAULT\0"
 
-	.bss
+        .bss
         .p2align 1
 endistack:
         .skip ISTACK_BYTES,0    // interrupt stack

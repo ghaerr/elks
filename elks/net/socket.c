@@ -30,7 +30,7 @@
 
 #define socki_lookup(inode)	(&inode->u.socket_i)
 
-static struct proto_ops *pops[NPROTO] = { NULL, NULL, NULL };
+static struct proto_ops *pops[NPROTO];
 
 extern struct net_proto protocols[];	/* Network protocols */
 

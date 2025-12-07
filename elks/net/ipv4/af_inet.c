@@ -462,12 +462,6 @@ static struct proto_ops inet_proto_ops = {
     inet_listen,
     inet_send,
     inet_recv,
-    not_implemented,    /* inet_sendto */
-    not_implemented,    /* inet_recvfrom */
-    not_implemented,    /* inet_shutdown */
-    not_implemented,    /* inet_setsockopt */
-    not_implemented,    /* inet_getsockopt */
-    not_implemented,    /* inet_fcntl */
 };
 
 void inet_proto_init(struct net_proto *pro)
