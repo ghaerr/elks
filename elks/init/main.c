@@ -115,7 +115,7 @@ void start_kernel(void)
 
     /*
      * We are now the idle task. We won't run unless no other process can run.
-     * The idle task always runs with _gint_count == 1 (switched from user mode syscall)
+     * The idle task always runs with intr_count == 1 (switched from user mode syscall)
      */
     while (1) {
         schedule();

@@ -13,7 +13,7 @@ static char div0msg[] = { "Divide fault\n" };
 void div0_handler(int i, struct pt_regs *regs)
 {
     /* divide by 0 from nested interrupt or idle task means kernel code was executing */
-    if (_gint_count > 1 /*|| current->t_regs.ss == kernel_ds*/) {
+    if (intr_count > 1 /*|| current->t_regs.ss == kernel_ds*/) {
         /*
          * Trap from kernel code.
          *

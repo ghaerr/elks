@@ -559,12 +559,6 @@ struct proto_ops nano_proto_ops = {
     nano_listen,
     nano_send,
     nano_recv,
-    NULL,			/* sendto */
-    NULL,			/* recvfrom */
-    NULL,			/* shutdown */
-    NULL,			/* setsockopt */
-    NULL,			/* getsockopt */
-    NULL			/* fcntl */
 };
 
 void nano_proto_init(struct net_proto *pro)
