@@ -135,7 +135,7 @@ struct tcpcb_s {
 
 	__u8	state;
 	__u8	unaccepted;		/* boolean */
-	__u8	retrans_act;		/* set when a retrans has been sent on a connection */
+	__u8	retrans_act;		/* set when a retrans has been sent */
 	__u16	rtt;			/* roundtriptime */
 	__u16	cwnd;			/* congestion window */
 	__u16	inflight;		/* # of unacked packets for this cb */
