@@ -135,7 +135,7 @@ struct tcpcb_s {
 
 	__u8	state;
 	__u8	unaccepted;		/* boolean */
-	__u8	retrans_act;		/* set when a retrans has been sent */
+	__u8	retrans_act;		/* set when a retrans has been sent on a connection */
 	__u16	rtt;			/* roundtriptime */
 	__u16	cwnd;			/* congestion window */
 	__u16	inflight;		/* # of unacked packets for this cb */
@@ -169,7 +169,7 @@ struct tcpcb_s {
 	__u8	buf_base[];
 };
 
-/* TCP options*/
+/* TCP options */
 #define TCP_OPT_EOL		0
 #define TCP_OPT_NOP		1
 #define TCP_OPT_MSS		2
@@ -183,19 +183,17 @@ struct	tcpcb_list_s {
 };
 
 struct	tcp_retrans_list_s {
-	struct tcp_retrans_list_s	*prev;
-	struct tcp_retrans_list_s	*next;
-
-	int				retrans_num;
-	__u16	 			rto;
-	timeq_t 			next_retrans;
-	timeq_t 			first_trans;
-
-	struct tcpcb_s			*cb;
-	struct addr_pair		apair;
-	__u16				len;
-	struct tcphdr_s 		tcphdr[];
-
+	struct tcp_retrans_list_s *prev;
+	struct tcp_retrans_list_s *next;
+	int		retrans_num;	/* retrans counter for this packet */
+	__u16	 	rto;		/* retrans timeout */
+	timeq_t 	next_retrans;	/* time to resend, initially first_trans + rto */
+	timeq_t 	first_trans;	/* time initially sent */
+	struct tcpcb_s *cb;		/* connection this packet belongs to */
+	struct addr_pair apair;		/* actual addr, may be different
+					 * from packet addr for routing */
+	__u16		len;		/* data length, placed after header */
+	struct tcphdr_s tcphdr[];
 };
 
 extern int tcp_timeruse;        /* retrans timer active, call tcp_retrans */

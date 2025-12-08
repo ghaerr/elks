@@ -138,14 +138,14 @@ static void tcpdev_accept(void)
 
     n = tcpcb_find_by_sock(sock);
     if (!n || n->tcpcb.state != TS_LISTEN) {
-	retval_to_sock(db->sock,-EINVAL);
+	retval_to_sock(db->sock, -EINVAL);
 	return;
     }
     cb = &n->tcpcb;
     newn = tcpcb_find_unaccepted(sock);
     if (!newn) {			/* SYN not yet received by listen*/
 	if (db->nonblock)
-	    retval_to_sock(db->sock,-EAGAIN);
+	    retval_to_sock(db->sock, -EAGAIN);
 	else
 	    cb->newsock = db->newsock;	/* save new sock in listen CB for later*/
 	debug_accept("tcp accept: WAIT (on SYN) sock[%p] saving newsock[%p]\n",
@@ -360,10 +360,8 @@ static void tcpdev_write(void)
      */
     size = db->size;
 
-    /* This is a bit ugly but I'm too lazy right now */
     if (tcp_retrans_memory > TCP_RETRANS_MAXMEM) {
 	printf("ktcp: RETRANS memory limit exceeded\n");
-	//retval_to_sock(sock, -ENOMEM);
 	retval_to_sock(sock, -ERESTARTSYS);	/* source will wait for 100ms, then retry */
 	return;
     }
@@ -379,6 +377,7 @@ static void tcpdev_write(void)
 
     if (cb->state != TS_ESTABLISHED
 		/*&& cb->state != TS_CLOSE_WAIT*/) {	// No write data if in CLOSE_WAIT
+	/* FIXME: May want to delete the printf below, this is not uncommon */
 	printf("tcpdev_write: write to socket in improper state %d\n", cb->state);
 	retval_to_sock(sock, -EPIPE);
 	return;
