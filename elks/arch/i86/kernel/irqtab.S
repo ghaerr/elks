@@ -334,7 +334,7 @@ was_trap:
 //
 //      Look at rescheduling
 //
-        cmpw    $1,intr_count   // Syscall or interrupted user mode code?
+        cmpw    $1,intr_count   // Interrupted user mode code?
         jne     restore_regs    // No
 //      cmp     $0,_need_resched // Schedule needed ?
 //      je      restore_regs    // No

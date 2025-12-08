@@ -219,18 +219,28 @@ static int rs_write(struct tty *tty)
 
 #if defined(CONFIG_FAST_IRQ4)
 /*
- * Second half of fast serial input interrupt handler for slower machines.
- * Should work up to 38400 baud.
- * Incomplete tty signal handling, will generate SIGINT when VINTR = ^C.
+ * Serial interrupt top half. This top half actually consists of two parts.
+ * The first part of the top half of the handler is asm_fast_irq4 in serfast.S,
+ * and the function below is the second part of the top half, rs_fast_irq4.
+ *
+ * The first part asm_fast_irq4 is called directly from the IRQ 4 interrupt
+ * vector, bypassing the normal kernel stack switch code in _irqit. That code
+ * runs with interrupts disabled and saves registers AX,BX,CX,DX,DS, and
+ * sets DS to the kernel data segment. The stack segment is not changed,
+ * so SS != DS, then it calls the second part rs_fast_irq4 C code below.
+ *
+ * NOTE: Since the compiler emits BP addressing for parameters, no parameters can
+ * be passed, nor any code written which emits code using SP or BP addressing, as
+ * SS is not changed and not guaranteed to be equal to DS.
+ * Use 'ia16-elf-objdump -D -r -Mi8086 serial-8250.o' to look at code generated.
+ *
+ * Thus, the rs_fast_irq4 function below is a specially-coded C top half interrupt
+ * handler, subject to the above limitations, which just reads and queues the
+ * UART byte received, with the serial_bh bottom half run after the IRQ 4 EOI.
+ * As a result, it should handle speeds up to 38400 baud.
+ *
+ * Incomplete tty signal handling, generates SIGINT when VINTR = ^C.
  * Useful for fast SLIP transfer or arrow key input on slow systems.
- *
- * Specially-coded C interrupt handler, called from asm_fast_irq[43] with
- * interrupts disabled after saving scratch registers AX,BX,CX,DX & DS and
- * setting DS to kernel data segment.
- * NOTE: no parameters can be passed, nor any code written which emits code using
- * SP or BP addressing, as SS is not set and not guaranteed to equal DS.
- *
- * Use 'ia16-elfk-objdump -D -r -Mi8086 serial.o' to look at code generated.
  */
 extern void asm_fast_irq4(int irq, struct pt_regs *regs);   /* initial entry point */
 
@@ -251,8 +261,8 @@ void rs_fast_irq4(void)
     if (c == 03)                        /* assumes VINTR = ^C and byte queued anyways */
         sp->intrchar = c;
     /*
-     * This will mark the serial bottom half serial_bh to run very soon after
-     * this interrupt, which then calls wake_up() on every character received.
+     * This will mark the serial bottom half serial_bh to run after an _irqit
+     * interrupt, which then calls wake_up() on every character received.
      * For faster baud rates and less data loss, don't run bottom half here,
      * but call serial_bh directly from timer bottom half in timer_bh.
      */
@@ -296,7 +306,7 @@ static void pump_port(struct serial_info *sp)
             sp->intrchar = 0;
         }
         if (q->len == 1) {
-            /* attempt process (again) of VINTR, also VQUIT and ^P-^N debug chars */
+            /* attempt process (again) of VINTR, also VQUIT and ^N^O^P debug chars */
             if (tty_intcheck(ttyp, chq_peekch(q))) {
                 (void)chq_getch(q);     /* discard received character */
                 return;

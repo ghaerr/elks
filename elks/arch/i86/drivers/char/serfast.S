@@ -1,9 +1,9 @@
-// Fast custom serial input interrupt routines for ELKS
+// First part of top half of fast serial interrupt handlers for ELKS
 //
-// runs on any stack and skips all ELKS overhead
-// must run with interrupts disabled as could interrupt user, kernel or interrupt stack
-// reads character into ring buffer
-// timer interrupt runs serial_bh() which checks for non-zero queue and calls wake_up
+// Runs on any stack and skips ELKS _irqit stack switching overhead.
+// Must run with interrupts disabled as could interrupt user, kernel or interrupt stack.
+// Calls the second part of the top half (rs_fast_irq4) to read and queue received byte.
+// The bottom half (serial_bh) runs later, which processes queue and calls wake_up.
 //
 // 25 June 2020 Greg Haerr
 //
@@ -13,7 +13,7 @@
 
 #ifdef CONFIG_FAST_IRQ4
 //
-// fast ttyS0 interrupt routine, called by CALLF within dynamic handler
+// Entry for ttyS0 top half interrupt handler, called by CALLF within dynamic handler
 //
 	.extern	rs_fast_irq4
 	.global asm_fast_irq4
@@ -29,7 +29,7 @@ asm_fast_irq4:
 	mov	%sp,%bx
 	mov	%ss:12(%bx),%ds
 
-	call	rs_fast_irq4		// call special C interrupt routine
+	call	rs_fast_irq4		// call special 2nd part of top half C handler
 					// which doesn't use any SS/SP/BP addressing
 
 	mov	$0x20,%al		// EOI on primary controller
@@ -46,7 +46,7 @@ asm_fast_irq4:
 
 #ifdef CONFIG_FAST_IRQ3
 //
-// fast ttyS1 interrupt routine, called by CALLF within dynamic handler
+// Entry for ttyS1 top half interrupt handler, called by CALLF within dynamic handler
 //
 	.extern	rs_fast_irq3
 	.global	asm_fast_irq3
@@ -62,7 +62,7 @@ asm_fast_irq3:
 	mov	%sp,%bx
 	mov	%ss:12(%bx),%ds
 
-	call	rs_fast_irq3		// call special C interrupt routine
+	call	rs_fast_irq3		// call special 2nd part of top half C handler
 					// which doesn't use any SS/SP/BP addressing
 
 	mov	$0x20,%al		// EOI on primary controller
