@@ -6,15 +6,19 @@
 /*
  * Bottom half interrupt handler support (softirq's)
  *
- * Top half interrupt handlers should quickly perform hardware data acquisition,
- * then call mark_bh to request deferred execution of the bottom half handler
- * registered with init_bh, for non-interrupt-priority tasks like wake_up, etc.
+ * Top half interrupt handlers should quickly perform hardware data acquisition or
+ * extremely high-priority tasks, then call mark_bh to request deferred execution of a
+ * bottom half handler registered with init_bh for lesser-priority tasks like wake_up,
+ * etc. that can be performed after the end of hardware interrupt is sent to the PIC.
  *
- * All BH handlers run in interrupt context, which means they can't sleep,
- * can't access user space through current, and can't reschedule.
+ * BH handlers run with interrupts enabled in an interrupt context similar to the
+ * top half, but while TH handlers run before the PIC EOI is sent, BH handlers
+ * execute afterwards, thus allowing further PIC interrupts of any priority to run.
+ * A BH handler may be interrupted by any top-half interrupt, but are protected
+ * from being re-entered, so they don't need to be reentrant.
  *
- * Interrupts are enabled and a BH handler may be interrupted by any hardware
- * interrupt, but are protected from being re-entered, so don't need to be reentrant.
+ * Since BH handlers run in an interrupt context, they can't sleep, can't access user
+ * space, and can't reschedule.
  *
  * 6 Dec 25 Greg Haerr
  */
