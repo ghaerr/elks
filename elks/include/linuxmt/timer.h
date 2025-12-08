@@ -25,10 +25,11 @@ struct timer_list {
 /* sched.c*/
 void add_timer(struct timer_list *);
 int del_timer(struct timer_list *);
-void do_timer(void);
+void run_timer_list(void);
 
 /* timer.c*/
 void timer_tick(int, struct pt_regs *);
+void timer_bh(void);
 void spin_timer(int);
 
 /* timer-8254.c*/

@@ -120,25 +120,15 @@ int free_irq(int irq)
  */
 void INITPROC irq_init(void)
 {
-    /* use INT 0x80h for system calls */
-    int_handler_add(IDX_SYSCALL, 0x80, _irqit);
+    int_handler_add(IDX_SYSCALL, 0x80, _irqit); /* INT 80 for system calls */
 
-#if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_SWAN)
-    /* catch INT 0 divide by zero/divide overflow hardware fault */
-#if 1
-    /* install direct panic-only DIV fault handler until known that
-     * the _irqit version doesn't overwrite the stack
-     */
-    int_handler_add(IDX_DIVZERO, 0x00, div0_handler_panic);
-#else
-    irq_action[IDX_DIVZERO] = div0_handler;
+#if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_PC98) || \
+    defined(CONFIG_ARCH_SOLO86) || defined(CONFIG_ARCH_SWAN)
+
+    irq_action[IDX_DIVZERO] = div0_handler;     /* INT 0 divide by 0/divide overflow */
     int_handler_add(IDX_DIVZERO, 0x00, _irqit);
-#endif
-#endif
 
-#if defined(CONFIG_ARCH_PC98)
-    /* catch NMI */
-    irq_action[IDX_NMI] = nmi_handler;
+    irq_action[IDX_NMI] = nmi_handler;          /* INT 2 non-maskable interrupt */
     int_handler_add(IDX_NMI, 0x02, _irqit);
 #endif
 
@@ -165,6 +155,7 @@ void INITPROC irq_init(void)
     if (request_irq(TIMER_IRQ, timer_tick, INT_GENERIC))
         panic("Unable to get timer");
 
+    init_bh(TIMER_BH, timer_bh);
     enable_timer_tick();        /* reprogram timer for 100 HZ */
 #endif
 }

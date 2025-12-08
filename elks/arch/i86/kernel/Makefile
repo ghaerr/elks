@@ -36,16 +36,18 @@ include $(BASEDIR)/Makefile-rules
 # Objects to be compiled.
 
 OBJS  = strace.o irq.o irqtab.o process.o \
-		entry.o signal.o timer.o
+		entry.o signal.o timer.o softirq.o
 
 ifeq ($(CONFIG_ARCH_IBMPC), y)
-OBJS += irq-8259.o reset-ibm.o timer-8254.o
-OBJS += divzero.o
+OBJS += irq-8259.o reset-ibm.o timer-8254.o divzero.o nmi.o
 endif
 
 ifeq ($(CONFIG_ARCH_PC98), y)
-OBJS += irq-8259.o reset-pc98.o timer-8254.o
-OBJS += nmi.o
+OBJS += irq-8259.o reset-pc98.o timer-8254.o divzero.o nmi.o
+endif
+
+ifeq ($(CONFIG_ARCH_SOLO86), y)
+OBJS += irq-solo86.o reset-stubs.o timer-8254.o divzero.o nmi.o
 endif
 
 ifeq ($(CONFIG_ARCH_8018X), y)
@@ -57,15 +59,9 @@ OBJS += irq-necv25.o reset-stubs.o timer-necv25.o
 endif
 
 ifeq ($(CONFIG_ARCH_SWAN), y)
-OBJS += irq-swan.o reset-swan.o system-swan.o timer-swan.o
-OBJS += divzero.o
+OBJS += irq-swan.o reset-swan.o timer-swan.o system-swan.o divzero.o nmi.o
 else
 OBJS += system.o
-endif
-
-ifeq ($(CONFIG_ARCH_SOLO86), y)
-OBJS += irq-solo86.o reset-stubs.o timer-8254.o
-OBJS += divzero.o
 endif
 
 #########################################################################

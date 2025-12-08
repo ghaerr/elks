@@ -20,8 +20,6 @@
 volatile jiff_t jiffies;
 static int spin_on;
 
-extern void rs_pump(void);
-
 #ifdef CONFIG_CPU_USAGE
 jiff_t uptime;
 
@@ -59,18 +57,32 @@ static void calc_cpu_usage(void)
 
 void timer_tick(int irq, struct pt_regs *regs)
 {
+    jiffies++;
+
+    /***if (!((int) jiffies & 7))
+        need_resched = 1;***/       /* how primitive can you get? */
+
+    mark_bh(TIMER_BH);
+
 #ifdef CONFIG_ARCH_SWAN
     ack_irq(7);
 #endif
+}
 
-    do_timer();
+/* timer tick bottom half */
+void timer_bh(void)
+{
+    if (intr_count != 1) printk("{t%d}", intr_count);
+
+    run_timer_list();
 
 #ifdef CONFIG_CPU_USAGE
     calc_cpu_usage();
 #endif
 
 #if defined(CONFIG_CHAR_DEV_RS) && (defined(CONFIG_FAST_IRQ4) || defined(CONFIG_FAST_IRQ3))
-    rs_pump();          /* check if received serial chars and call wake_up*/
+    /* uncomment to process serial input every 10ms instead of serial irq bottom half */
+    serial_bh();        /* check if received serial chars and call wake_up*/
 #endif
 
 #if defined(CONFIG_BLK_DEV_SSD_TEST) && defined(CONFIG_ASYNCIO)

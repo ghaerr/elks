@@ -1,15 +1,14 @@
 #include <linuxmt/config.h>
+#include <linuxmt/kernel.h>
 #include <arch/io.h>
 
 /*
  * NMI handler
  */
 
-static char nmi_msg[] = { "NMI occurred\n" };
-
-void nmi_handler(int i, struct pt_regs *regs)
+void nmi_handler(int irq, struct pt_regs *regs)
 {
-    printk(nmi_msg);
+    printk("NMI FAULT\n");
 
 #ifdef CONFIG_ARCH_PC98
     if (inb(0x33) & 0x02)

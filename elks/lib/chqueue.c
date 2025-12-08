@@ -123,19 +123,12 @@ int chq_peek(struct ch_queue *q)
     return (q->len != 0);
 }
 
-#if defined(CONFIG_FAST_IRQ4) || defined(CONFIG_FAST_IRQ3)
 int chq_peekch(struct ch_queue *q)
 {
-    int retval;
-
-    if (!q->len)
-        return 0;
-    clr_irq();
-    retval = q->base[q->tail];
-    set_irq();
-    return retval;
+    if (q->len)
+        return q->base[q->tail];
+    return 0;
 }
-#endif
 
 #if UNUSED
 int chq_full(register struct ch_queue *q)

@@ -114,6 +114,8 @@ extern void set_serial_irq(int tty, int irq);
 
 extern void set_console(dev_t dev);
 
+extern void serial_bh(void);
+
 #ifdef CONFIG_CONSOLE_DIRECT
 extern unsigned VideoSeg;
 #endif
