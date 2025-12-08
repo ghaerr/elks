@@ -74,6 +74,9 @@ void schedule(void)
     }
 #endif
 
+    if (bh_active)
+        do_bottom_half();
+
     /* Disallow rescheduling during startup when idle task is the only task */
     if ((int)last_pid <= 0)
         return;
@@ -164,7 +167,7 @@ int del_timer(struct timer_list * timer)
     return 0;
 }
 
-static void run_timer_list(void)
+void run_timer_list(void)
 {
     struct timer_list *timer;
 
@@ -176,17 +179,6 @@ static void run_timer_list(void)
         clr_irq();
     }
     set_irq();
-}
-
-void do_timer(void)
-{
-    jiffies++;
-
-    /***if (!((int) jiffies & 7))
-        need_resched = 1;***/       /* how primitive can you get? */
-
-    run_timer_list();
-
 }
 
 void INITPROC sched_init(void)

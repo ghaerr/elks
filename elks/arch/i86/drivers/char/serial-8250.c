@@ -250,6 +250,13 @@ void rs_fast_irq4(void)
     /* unfortunately, can't add more specifics w/o compiler generating BP accesses */
     if (c == 03)                        /* assumes VINTR = ^C and byte queued anyways */
         sp->intrchar = c;
+    /*
+     * This will mark the serial bottom half serial_bh to run very soon after
+     * this interrupt, which then calls wake_up() on every character received.
+     * For faster baud rates and less data loss, don't run bottom half here,
+     * but call serial_bh directly from timer bottom half in timer_bh.
+     */
+    //mark_bh(SERIAL_BH);
 }
 #endif
 
@@ -272,6 +279,7 @@ void rs_fast_irq3(void)
     /* unfortunately, can't add more specifics w/o compiler generating BP accesses */
     if (c == 03)                        /* assumes VINTR = ^C and byte queued anyways */
         sp->intrchar = c;
+    //mark_bh(SERIAL_BH);               /* see comment in rs_fast_irq4 */
 }
 #endif
 
@@ -298,8 +306,8 @@ static void pump_port(struct serial_info *sp)
     }
 }
 
-/* called from timer interrupt - check ring buffer and wakeup waiting processes */
-void rs_pump(void)
+/* serial interrupt bottom half - check ring buffer and wakeup waiting processes */
+void serial_bh(void)
 {
 #if defined(CONFIG_FAST_IRQ4)
     pump_port(&ports[0]);
@@ -372,12 +380,14 @@ static int rs_open(struct tty *tty)
 #if defined(CONFIG_FAST_IRQ4)
     case 4:
         port->intrchar = 0;
+        init_bh(SERIAL_BH, serial_bh);
         err = request_irq(port->irq, (irq_handler) asm_fast_irq4, INT_SPECIFIC);
         break;
 #endif
 #if defined(CONFIG_FAST_IRQ3)
     case 3:
         port->intrchar = 0;
+        init_bh(SERIAL_BH, serial_bh);
         err = request_irq(port->irq, (irq_handler) asm_fast_irq3, INT_SPECIFIC);
         break;
 #endif

@@ -100,6 +100,8 @@ int_vector_set:
         .extern trace_begin
         .extern trace_end
         .extern panic
+        .extern bh_active
+        .extern do_bottom_half
 
         .global _irqit
 _irqit:
@@ -332,14 +334,42 @@ was_trap:
 //
 //      Look at rescheduling
 //
-        cmpw    $1,intr_count
+        cmpw    $1,intr_count   // Syscall or interrupted user mode code?
         jne     restore_regs    // No
 //      cmp     $0,_need_resched // Schedule needed ?
 //      je      restore_regs    // No
 //
 // This path will return directly to user space
 //
-        sti                     // Enable interrupts to help fast devices
+
+//
+// Check for any active bottom-half handlers and if we're able to run them now.
+//  Bottom half handlers can run now only if this interrupt is from user mode,
+//  otherwise handlers will be run during next call to schedule().
+//  Interrupts from the idle task have to return now since they're running on
+//  the interrupt stack and can't be switched. On return the idle task will call
+//  schedule() in its main loop, which then runs the bottom half handlers.
+//
+//  At this time, intr_count values mean:
+//  intr_count==0   not possible
+//  intr_count==1   syscall or interrupted user code (using process's kernel stack)
+//  intr_count==2   interrupted kernel code or idle task (using interrupt stack)
+//  intr_count>2    interrupted handler code (using interrupt stack)
+//  The idle task always runs at intr_count==1, since it is actually kernel code.
+//  This means that interrupts of idle task or kernel run on the interrupt stack
+//  and thus calling schedule() cannot be allowed. This also means that
+//  task rescheduling doesn't happen on return from a timer interrupt from the idle task.
+//  Instead, the idle task is resumed and it calls schedule which calls bottom half.
+//
+        cmpw    $0,bh_active    // Any active bottom halfs?
+        je      1f              // No
+        //incw    intr_count    // Don't rerun bottom half if interrupted
+        sti                     // interrupts enabled but handlers not reentrant
+        call    do_bottom_half
+        //cli
+        //decw    intr_count
+
+1:      sti                     // Enable interrupts to help fast devices
         call    schedule        // Task switch
         call    do_signal       // Check signals
         cli
@@ -401,6 +431,10 @@ setsp:
         pop     %ax
         mov     %ax,%sp
         jmp     *%bx
+
+        .global getsp
+getsp:  mov     %sp,%ax
+        ret
 
 // Halt - wait for next interrupt to save CPU power
         .global idle_halt

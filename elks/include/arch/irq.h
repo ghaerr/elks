@@ -19,15 +19,17 @@ typedef void (* int_proc) (void);  // any INT handler
 typedef void (* irq_handler) (int,struct pt_regs *);   // IRQ handler
 
 void do_IRQ(int,struct pt_regs *);
-void div0_handler(int, struct pt_regs *);
-void nmi_handler(int, struct pt_regs *);
 int request_irq(int,irq_handler,int hflag);
 int free_irq(int irq);
 
 /* irqtab.S */
 void _irqit (void);
 void int_vector_set (int vect, word_t proc, word_t seg);
+void idle_halt(void);
 void div0_handler_panic(void);
+
+void div0_handler(int, struct pt_regs *);   /* UNUSED for now*/
+void nmi_handler(int, struct pt_regs *);
 
 /* irq-8259.c, irq-8018x.c, irq-necv25.c */
 void initialize_irq(void);
@@ -36,7 +38,18 @@ void disable_irq(unsigned int irq);
 int remap_irq(int);
 int irq_vector(int irq);
 
-void idle_halt(void);
+/* softirq.c */
+enum {
+    TIMER_BH = 0,
+    SERIAL_BH,
+    MAX_SOFTIRQ
+};
+extern unsigned int bh_active;
+extern void (*bh_base[MAX_SOFTIRQ])(void);
+#define init_bh(nr, routine)    { bh_base[nr] = routine; }
+#define mark_bh(nr)             { bh_active |= 1 << nr;  }
+void do_bottom_half(void);
+
 #endif /* __ASSEMBLER__ */
 #endif /* __KERNEL__ */
 

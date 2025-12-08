@@ -3,7 +3,7 @@
 // runs on any stack and skips all ELKS overhead
 // must run with interrupts disabled as could interrupt user, kernel or interrupt stack
 // reads character into ring buffer
-// timer interrupt runs rs_pump() which checks for non-zero queue and calls wake_up
+// timer interrupt runs serial_bh() which checks for non-zero queue and calls wake_up
 //
 // 25 June 2020 Greg Haerr
 //

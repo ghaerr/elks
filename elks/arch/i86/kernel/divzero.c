@@ -4,6 +4,7 @@
 
 /*
  * Divide by zero and divide overflow exception handler
+ * NOTE: This handler is currently unused, see div0_handler_panic in irqtab.S
  *
  * 19 Aug 24 Greg Haerr
  */
