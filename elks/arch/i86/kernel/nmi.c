@@ -6,7 +6,7 @@
  * NMI handler
  */
 
-void nmi_handler(int i, struct pt_regs *regs)
+void nmi_handler(int irq, struct pt_regs *regs)
 {
     printk("NMI FAULT\n");
 

@@ -352,7 +352,7 @@ was_trap:
 //
 //  At this time, intr_count values mean:
 //  intr_count==0   not possible
-//  intr_count==1   syscall or interrupted user code (using process's kernel stack)
+//  intr_count==1   interrupted user code (using process's kernel stack)
 //  intr_count==2   interrupted kernel code or idle task (using interrupt stack)
 //  intr_count>2    interrupted handler code (using interrupt stack)
 //  The idle task always runs at intr_count==1, since it is actually kernel code.
@@ -432,8 +432,10 @@ setsp:
         mov     %ax,%sp
         jmp     *%bx
 
+// short *getsp(void) - get stack pointer
         .global getsp
-getsp:  mov     %sp,%ax
+getsp:
+        mov     %sp,%ax
         ret
 
 // Halt - wait for next interrupt to save CPU power
@@ -441,35 +443,6 @@ getsp:  mov     %sp,%ax
 idle_halt:
         hlt
         ret
-
-        .global div0_handler_panic
-// Divide Fault hander - just panic for now
-div0_handler_panic:
-        push    %ax                     // save regs, uses 4+4+10 bytes of current stack
-        push    %bx
-        push    %cx
-        push    %dx
-        push    %ds
-
-        // Recover kernel data segment
-        // Was pushed by the CALLF of the dynamic handler
-        mov     %sp,%bx
-        mov     %ss:12(%bx),%ds
-
-        mov     $dmsg,%ax
-        push    %ax
-        call    panic
-        pop     %ax
-1:      hlt
-        jmp     1b
-
-//      pop     %ds                     // restore regs
-//      pop     %dx
-//      pop     %cx
-//      pop     %bx
-//      pop     %ax
-//      add     $4,%sp                  // skip the trampoline lcall
-//      iret
 
         .data
         .global intr_count

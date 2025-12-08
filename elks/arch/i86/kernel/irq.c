@@ -120,24 +120,15 @@ int free_irq(int irq)
  */
 void INITPROC irq_init(void)
 {
-    /* use INT 0x80h for system calls */
-    int_handler_add(IDX_SYSCALL, 0x80, _irqit);
+    int_handler_add(IDX_SYSCALL, 0x80, _irqit); /* INT 80 for system calls */
 
 #if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_PC98) || \
     defined(CONFIG_ARCH_SOLO86) || defined(CONFIG_ARCH_SWAN)
 
-#if 1
-    /* install direct panic-only DIV fault handler until known that
-     * the _irqit version doesn't overwrite the stack
-     */
-    int_handler_add(IDX_DIVZERO, 0x00, div0_handler_panic);
-#else
-    /* catch INT 0 divide by zero/divide overflow hardware fault */
-    irq_action[IDX_DIVZERO] = div0_handler;
+    irq_action[IDX_DIVZERO] = div0_handler;     /* INT 0 divide by 0/divide overflow */
     int_handler_add(IDX_DIVZERO, 0x00, _irqit);
-#endif
 
-    irq_action[IDX_NMI] = nmi_handler;              /* catch NMI (INT 2) */
+    irq_action[IDX_NMI] = nmi_handler;          /* INT 2 non-maskable interrupt */
     int_handler_add(IDX_NMI, 0x02, _irqit);
 #endif
 

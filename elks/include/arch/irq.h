@@ -26,10 +26,9 @@ int free_irq(int irq);
 void _irqit (void);
 void int_vector_set (int vect, word_t proc, word_t seg);
 void idle_halt(void);
-void div0_handler_panic(void);
 
-void div0_handler(int, struct pt_regs *);   /* UNUSED for now*/
-void nmi_handler(int, struct pt_regs *);
+void div0_handler(int irq, struct pt_regs *regs);
+void nmi_handler(int irq, struct pt_regs *regs);
 
 /* irq-8259.c, irq-8018x.c, irq-necv25.c */
 void initialize_irq(void);
