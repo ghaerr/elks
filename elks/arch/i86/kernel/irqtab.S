@@ -462,7 +462,6 @@ intr_count:                     // stacked interrupts count. Start with 1
 #ifdef CHECK_SS
 pmsg:   .ascii "Running unknown code\0"
 #endif
-dmsg:   .ascii  "DIVIDE FAULT\0"
 
         .bss
         .p2align 1
