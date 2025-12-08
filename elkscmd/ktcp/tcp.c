@@ -245,7 +245,7 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	rmv_all_retrans_cb(cb);
 
 	if (cb->state == TS_CLOSE_WAIT) {
-	    //cbs_in_user_timeout--;	/* CLOSE_WAIT does not have a timeout */
+	    //cbs_in_user_timeout--;	/* CLOSE_WAIT does not timeout */
 	    ENTER_TIME_WAIT(cb);
 	    notify_sock(cb->sock, TDT_CHG_STATE, SS_DISCONNECTING);
 	} else {
@@ -258,6 +258,7 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
     /* this actually happens some times, on slow systems ... */
     if (cb->unaccepted && (h->flags & TF_FIN)) {
 	debug_tcp("tcp: FIN received before accept, dropping packet\n");
+	printf("tcp: activity before accept, dropping packet\n");
 	netstats.tcpdropcnt++;
 
 	/* We can't change state before accept processing, so drop packet*/
@@ -296,14 +297,22 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	    cb->send_una = acknum;
 	    /* adjust congestion window */
 	    if (cb->cwnd <= cb->ssthresh && !cb->retrans_act)
-	    	cb->cwnd++;
+		cb->cwnd++;
 	    if (cb->inflight == 1 || cb->send_una == cb->send_nxt) {
-		cb->inflight = 0;       /* all outstanding packets ACKed */
-                debug_cwnd("tcp: all ACK seq %lu inflt %d\n", acknum, cb->inflight);
-	    } else
+		cb->inflight = 0;	/* all outstanding packets ACKed */
+		debug_cwnd("tcp: all ACK seq %lu inflt %d\n", acknum, cb->inflight);
+	    } else {
+		/* We're more than 1 packet ahead of the recipient - which is normal.
+		 * The inflight counter may occasionally get slightly
+		 * out of sync but will be autocorrected eventually. */
 		cb->inflight--;
+	    }
 	} else {
 	    debug_cwnd("tcp: DUP ACK seq %lu unack %lu\n", acknum, cb->send_una);
+	    /* Keep in mind that a DUP ACK rarely means a lost packet nowadays, but
+	     * rather a delay that will rectify itself if we don't mess with it.
+	     * TODO: We may still want to adjust the slowStart/CongestionAvoidance
+	     * parameter when this happens even if it's rare */
 	}
     }
 
@@ -312,8 +321,18 @@ static void tcp_established(struct iptcp_s *iptcp, struct tcpcb_s *cb)
 	debug_close("tcp[%p] packet in established, fin: 1, data: %d, setting state to CLOSE_WAIT\n", cb->sock, datasize);
 
 	cb->state = TS_CLOSE_WAIT;
-	cb->time_wait_exp = Now;	/* used for debug output only*/
+	cb->time_wait_exp = Now;	/* used for debug output only */
+	/* NOTE:
+	   There is no timeout on CLOSE_WAIT. It will wait forever - until the client
+	   decides to close the connection. If there is unread data, ktcp will loop
+	   trying to push that data to the client. This is a feature, not a bug.
+	   It will happen in cases like an idle ftp client: The server will timeout
+	   and close the connection. The client side will enter CLOSE_WAIT and wait
+	   until user decides to come back and close the connection.
+	 */
+
 	debug_tcp("tcp: got FIN with data %d buffer %d\n", datasize, cb->buf_used);
+
 	if (cb->bytes_to_push <= 0)
 	    notify_sock(cb->sock, TDT_CHG_STATE, SS_DISCONNECTING);
     }

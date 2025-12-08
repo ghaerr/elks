@@ -146,12 +146,13 @@ void eth_sendpacket(unsigned char *packet, int len, eth_addr_t eth_addr)
 	ipll->ll_type_len = 0x08; //FIXME what is 0x0800
 
 #if FORCE_MISSING_PACKET        /* For debugging: Create errors */
-    static int failcnt = 0;
-    if (failcnt++ > FORCE_MISSING_PACKET)
-        failcnt = 0;
-    else
+	static int failcnt = 0;
+	if (failcnt++ > FORCE_MISSING_PACKET)
+		failcnt = 0;
+	else
 #endif
-    eth_write((unsigned char *)ipll, sizeof(struct ip_ll) + len);
+
+	eth_write((unsigned char *)ipll, sizeof(struct ip_ll) + len);
 }
 
 /* raw ethernet packet send*/
