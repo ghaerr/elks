@@ -10,55 +10,6 @@
         .text
 
 //------------------------------------------------------------------------------
-// Save BIOS IRQ 0 timer vector
-// void save_timer_irq(void)
-//------------------------------------------------------------------------------
-
-        .global save_timer_irq
-save_timer_irq:
-        push    %es
-        xor     %ax,%ax
-        mov     %ax,%es         // ES -> interrupt table
-        mov     $8*4,%bx        // INT 8 (IRQ 0) vector
-        mov     %es:(%bx),%ax   // get the old timer intr
-        mov     %ax,org_irq0
-        mov     %es:2(%bx),%ax
-        mov     %ax,org_irq0+2
-        pop     %es
-        ret
-
-//------------------------------------------------------------------------------
-// Set interrupt vector
-//------------------------------------------------------------------------------
-// void int_vector_set (int vect, int_proc proc, int seg);
-// arg1: vector number (byte pushed as word by the C compiler)
-// arg2: function offset (word)
-// arg3: function segment (word)
-
-        .global int_vector_set
-int_vector_set:
-        mov %sp,%bx
-        mov 6(%bx),%dx  // arg3
-        mov 4(%bx),%cx  // arg2
-        mov 2(%bx),%bx  // arg1
-
-        shl $1,%bx
-        shl $1,%bx
-
-        push %ds
-        xor %ax,%ax
-        mov %ax,%ds
-
-        pushf
-        cli
-        mov %cx,0(%bx)
-        mov %dx,2(%bx)
-        popf
-
-        pop %ds
-        ret
-
-//------------------------------------------------------------------------------
 //
 //      IRQ and IRQ return paths for Linux 8086
 //
@@ -147,11 +98,8 @@ utask:
 //
         mov     %ss,%di
         cmp     TASK_USER_SS(%si),%di // entry SS = current->t_regs.ss?
-        je      utask1          // User using the right stack
-//
-//      System got crazy
-//
-        mov     $pmsg,%ax
+        je      utask1                // User using the right stack
+        mov     $ssmsg,%ax            // INVALID SS - Corrupted user stack segment
         push    %ax
         call    panic
 utask1:
@@ -230,9 +178,9 @@ save_regs:
 // Switch to kernel stack specified by 'current' and return ax=0 into user mode.
 //
 ret_from_syscall:
-        mov     current,%bx     // Ensure we have the
+        mov     current,%bx           // Ensure we have the
         lea     TASK_USER_BX(%bx),%sp // right kernel SP
-        xor     %ax,%ax         // Just in case we are starting a new task
+        xor     %ax,%ax               // Just in case we are starting a new task
         push    %ax
         cli
         jmp     restore_regs
@@ -272,7 +220,7 @@ updct:
         jnz     do_eoi
 
 //
-//      IRQ 0 (timer) has to go on to the bios for some systems
+//      Call original BIOS IRQ 0 (timer) ~55ms for floppy motor control
 //
         decw    bios_call_cnt   // Will call bios int?
         jne     do_eoi
@@ -296,10 +244,10 @@ do_eoi:
 !       controller EOI..
 !
 */
-        out     %al,$PIC2_CMD           // Ack on secondary controller
+        out     %al,$PIC2_CMD   // Ack on secondary controller
         jmp     a5
 a5:     jmp     a6
-a6:     out     %al,$PIC1_CMD           // Ack on primary controller
+a6:     out     %al,$PIC1_CMD   // Ack on primary controller
 
 #elif defined(CONFIG_ARCH_8018X)
 //
@@ -308,9 +256,9 @@ a6:     out     %al,$PIC1_CMD           // Ack on primary controller
         cmp     $16,%ax
         jge     was_trap        // Traps need no reset
 
-        mov $0x8000, %ax // set the NSPEC bit on the
-        mov $0xff02, %dx // EOI register so the ICU
-        out %ax, %dx // acks the highest priority interrupt
+        mov $0x8000, %ax        // set the NSPEC bit on the
+        mov $0xff02, %dx        // EOI register so the ICU
+        out %ax, %dx            // acks the highest priority interrupt
 
 #elif defined(CONFIG_ARCH_NECV25)
 //
@@ -318,9 +266,9 @@ a6:     out     %al,$PIC1_CMD           // Ack on primary controller
 //
    
         cmp     $16,%ax
-        jge     was_trap         // Traps need no reset
+        jge     was_trap        // Traps need no reset
 
-        .word   0x920f           // NEC V25 specific FINT (End Of Interrupt) instruction
+        .word   0x920f          // NEC V25 specific FINT (End Of Interrupt) instruction
 
 #elif defined(CONFIG_ARCH_SOLO86)
         mov $0x1A, %dx          // Send INT done
@@ -332,12 +280,13 @@ a6:     out     %al,$PIC1_CMD           // Ack on primary controller
 //
 was_trap:
 //
-//      Look at rescheduling
+//      Look at running bottom halves or rescheduling
 //
-        cmpw    $1,intr_count   // Interrupted user mode code?
-        jne     restore_regs    // No
+        cmpw    $1,intr_count    // Interrupted user mode code?
+        jne     restore_regs     // No
 //      cmp     $0,_need_resched // Schedule needed ?
-//      je      restore_regs    // No
+//      je      restore_regs     // No
+
 //
 // This path will return directly to user space
 //
@@ -364,12 +313,12 @@ was_trap:
         cmpw    $0,bh_active    // Any active bottom halfs?
         je      1f              // No
         //incw    intr_count    // Don't rerun bottom half if interrupted
-        sti                     // interrupts enabled but handlers not reentrant
+        sti                     // Interrupts enabled but handlers not reentrant
         call    do_bottom_half
         //cli
         //decw    intr_count
 
-1:      sti                     // Enable interrupts to help fast devices
+1:      sti                     // Interrupts enabled while reschedule or signal checking
         call    schedule        // Task switch
         call    do_signal       // Check signals
         cli
@@ -444,6 +393,55 @@ idle_halt:
         hlt
         ret
 
+//------------------------------------------------------------------------------
+// Save BIOS IRQ 0 timer vector
+// void save_timer_irq(void)
+//------------------------------------------------------------------------------
+
+        .global save_timer_irq
+save_timer_irq:
+        push    %es
+        xor     %ax,%ax
+        mov     %ax,%es         // ES -> interrupt table
+        mov     $8*4,%bx        // INT 8 (IRQ 0) vector
+        mov     %es:(%bx),%ax   // get the old timer intr
+        mov     %ax,org_irq0
+        mov     %es:2(%bx),%ax
+        mov     %ax,org_irq0+2
+        pop     %es
+        ret
+
+//------------------------------------------------------------------------------
+// Set interrupt vector
+//------------------------------------------------------------------------------
+// void int_vector_set (int vect, int_proc proc, int seg);
+// arg1: vector number (byte pushed as word by the C compiler)
+// arg2: function offset (word)
+// arg3: function segment (word)
+
+        .global int_vector_set
+int_vector_set:
+        mov %sp,%bx
+        mov 6(%bx),%dx  // arg3
+        mov 4(%bx),%cx  // arg2
+        mov 2(%bx),%bx  // arg1
+
+        shl $1,%bx
+        shl $1,%bx
+
+        push %ds
+        xor %ax,%ax
+        mov %ax,%ds
+
+        pushf
+        cli
+        mov %cx,0(%bx)
+        mov %dx,2(%bx)
+        popf
+
+        pop %ds
+        ret
+
         .data
         .global intr_count
         .global endistack
@@ -460,7 +458,7 @@ org_irq0:                       // original BIOS IRQ 0 vector
 intr_count:                     // stacked interrupts count. Start with 1
         .word   1               // because init_task() is in kernel mode
 #ifdef CHECK_SS
-pmsg:   .ascii "Running unknown code\0"
+ssmsg:  .ascii "INVALID SS\0"
 #endif
 
         .bss
