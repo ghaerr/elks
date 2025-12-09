@@ -27,6 +27,12 @@ static void reparent_children(void)
             if (p->state != TASK_UNUSED) {
                 debug_wait("Reparenting orphan pid %d ppid %d to init\n",
                     p->pid, p->p_parent->pid);
+
+                /* release TTY process group and original session */
+                if (p->tty && (p->tty->pgrp == current->pid))
+                    p->tty->pgrp = 0;
+                p->session = p->pgrp = p->pid;
+
                 p->p_parent = &task[1];
                 p->ppid = task[1].pid;
             }
@@ -139,6 +145,8 @@ void do_exit(int status)
     current->state = TASK_ZOMBIE;
     wake_up(&parent->child_wait);
     schedule();
+    /* no return */
+    halt();
 }
 
 void sys_exit(int status)
