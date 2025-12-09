@@ -40,14 +40,15 @@ int sys_wait4(pid_t pid, int *status, int options, void *usage)
     register struct task_struct *p;
     int waitagain;
 
-    debug_wait("WAIT(%P) for %d %s\n", pid, (options & WNOHANG)? "nohang": "");
+    debug_wait("WAIT(%P) for %d opts %x\n", pid, options);
 
  for (;;) {
     waitagain = 0;
 
     for_each_task(p) {
         if (p->p_parent == current && p->state != TASK_UNUSED) {
-          if (p->state == TASK_ZOMBIE || p->state == TASK_STOPPED) {
+          if (p->state == TASK_ZOMBIE ||
+             (p->state == TASK_STOPPED && (options & WUNTRACED))) {
             if (pid == (pid_t)-1 || p->pid == pid || (!pid && p->pgrp == current->pgrp)) {
                 if (status) {
                     if (verified_memcpy_tofs(status, &p->exit_status, sizeof(int)))
@@ -65,7 +66,7 @@ int sys_wait4(pid_t pid, int *status, int options, void *usage)
                 debug_wait("WAIT(%P) got %d\n", p->pid);
                 return p->pid;
             }
-        } else {
+        } else if (p->state != TASK_STOPPED || (options & WUNTRACED)) {
             /* keep waiting while process has non-zombie/stopped children*/
             debug_wait("WAIT(%P) again for pid %d state %d\n", p->pid, p->state);
             waitagain = 1;
@@ -138,7 +139,6 @@ void do_exit(int status)
     current->state = TASK_ZOMBIE;
     wake_up(&parent->child_wait);
     schedule();
-    panic("sys_exit");
 }
 
 void sys_exit(int status)
