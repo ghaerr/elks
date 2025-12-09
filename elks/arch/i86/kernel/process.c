@@ -199,6 +199,7 @@ void arch_build_stack(struct task_struct *t, void (*addr)())
 #endif
 }
 
+#if UNUSED
 /*
  * Restart last system call.
  * Usage: instead of returning -ERESTARTSYS from kernel system call,
@@ -212,3 +213,4 @@ int restart_syscall(void)
     user_stack->ip -= 2;                /* backup to INT 80h*/
     return current->t_regs.orig_ax;     /* restore syscall # to user mode AX*/
 }
+#endif
