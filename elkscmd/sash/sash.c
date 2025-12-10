@@ -602,7 +602,7 @@ runcmd(char *cmd, int argc, char **argv)
 			status = 0;
 			intcrlf = FALSE;
 
-			while ((ret = waitpid(pid, &status, 0)) != pid)
+			while ((ret = waitpid(pid, &status, 0)) != pid && ret != -1)
 				continue;
 
 			intcrlf = TRUE;

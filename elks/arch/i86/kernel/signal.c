@@ -48,8 +48,8 @@ int do_signal(void)
 			(SM_SIGSTOP | SM_SIGTSTP | SM_SIGTTIN | SM_SIGTTOU)) {
 		debug_sig("SIGNAL pid %P stopped\n");
 		current->state = TASK_STOPPED;
-		/* Let the parent know */
-		current->exit_status = signr;
+		current->exit_status = signr;		/* Let the parent know */
+		wake_up(&current->p_parent->child_wait);
 		schedule();
 	    }
 	    else {					/* Default Core or Terminate */

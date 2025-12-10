@@ -162,6 +162,8 @@ int tty_open(struct inode *inode, struct file *file)
     if (MINOR(inode->i_rdev) == 255)
         return 0;
 
+    debug_tty("TTY open pid %P session %d pgrp %d ttygrp %d tty %x\n",
+        current->session, current->pgrp,  otty->pgrp, current->tty);
     err = otty->ops->open(otty);
     if (!err) {
         if (!(file->f_flags & O_NOCTTY) && current->session == current->pid
