@@ -64,8 +64,8 @@ devices:
 	$(MKDEV) /dev/hdc  b 3 16
 	$(MKDEV) /dev/hdc1 b 3 17
 	$(MKDEV) /dev/hdd  b 3 24
-	$(MKDEV) /dev/fd0  b 3 32
-	$(MKDEV) /dev/fd1  b 3 40
+#	$(MKDEV) /dev/fd0  b 3 32
+#	$(MKDEV) /dev/fd1  b 3 40
 
 ##############################################################################
 # Direct floppy devices.
@@ -110,7 +110,7 @@ devices:
 ##############################################################################
 # Virtual consoles, pseudo-tty slaves and serial ports.
 
-	$(MKDEV) /dev/tty1	c 4 0
+#	$(MKDEV) /dev/tty1	c 4 0
 	$(MKDEV) /dev/tty2	c 4 1
 	$(MKDEV) /dev/tty3	c 4 2
 	$(MKDEV) /dev/tty4	c 4 3
@@ -126,11 +126,13 @@ devices:
 # /dev/tty is minor 255, /dev/console minor 254
 
 	$(MKDEV) /dev/tty       c 4 255 1 1 0666
-	$(MKDEV) /dev/console	c 4 254 1 1 0600
+#	$(MKDEV) /dev/console	c 4 254 1 1 0600
 
 # Serial ports, as detected by the ROM BIOS.
 
-	$(MKDEV) /dev/ttyS c 4 64 4
+	$(MKDEV) /dev/ttyS1 c 4 65
+	$(MKDEV) /dev/ttyS2 c 4 66
+	$(MKDEV) /dev/ttyS3 c 4 67
 
 ##############################################################################
 # Parallel devices, as detected by the ROM BIOS.
