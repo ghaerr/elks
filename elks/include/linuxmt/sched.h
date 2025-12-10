@@ -97,7 +97,7 @@ struct task_struct {
 #define TASK_RUNNING            0
 #define TASK_INTERRUPTIBLE      1
 #define TASK_UNINTERRUPTIBLE    2
-#define TASK_WAITING            3
+#define TASK_WAITING            3               /* unused */
 #define TASK_STOPPED            4
 #define TASK_ZOMBIE             5
 #define TASK_EXITING            6
