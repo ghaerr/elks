@@ -321,6 +321,7 @@ static void readfile(char *name) {
 		}
 #endif
 
+		clearerr(fp);
 		if (fgets(buf, CMDLEN - 1, fp) == NULL) {
 			if (ferror(fp) && (errno == EINTR)) {
 				clearerr(fp);
@@ -600,9 +601,9 @@ runcmd(char *cmd, int argc, char **argv)
 
 		if (pid) {
 			status = 0;
-			intcrlf = FALSE;
+			//intcrlf = FALSE;
 
-			while ((ret = waitpid(pid, &status, 0)) != pid && ret != -1)
+			while ((ret = waitpid(pid, &status, WUNTRACED)) != pid)
 				continue;
 
 			intcrlf = TRUE;

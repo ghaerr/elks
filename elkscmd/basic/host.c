@@ -134,6 +134,7 @@ char *host_readLine() {
     static char buf[TOKEN_BUF_SIZE+1];
 
     tty_isig();
+    clearerr(stdin);
     while (!fgets(buf, sizeof(buf), stdin)) {
         if (ferror(stdin) && (errno == EINTR)) {
              clearerr(stdin);
