@@ -20,7 +20,7 @@
 #include <arch/segment.h>
 #include <arch/irq.h>
 
-int do_signal(void)
+void do_signal(void)
 {
     register __sigdisposition_t *sd;
     register __kern_sighandler_t sah;
@@ -51,6 +51,9 @@ int do_signal(void)
 		current->exit_status = signr;		/* Let the parent know */
 		wake_up(&current->p_parent->child_wait);
 		schedule();
+		/* task continues here after SIGCONT */
+		current->signal = 0;                    /* clear any SIGINT/SIGQUIT */
+		return;
 	    }
 	    else {					/* Default Core or Terminate */
 #if UNUSED
@@ -73,12 +76,10 @@ int do_signal(void)
 	    if (current->signal)
 		printk("SIGNAL(%P) processing mask %04x, additional signal w/mask %04x\n",
 		    mask, current->signal);
-
-	    return 1;
+	    return;
 	}
 	else /* else (*sd == SIGDISP_IGN) Ignore */
 	    debug_sig("SIGNAL signal %d ignored pid %P\n", signr);
     }
-    return 0;
 }
 
