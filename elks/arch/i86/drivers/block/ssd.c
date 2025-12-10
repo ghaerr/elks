@@ -21,6 +21,10 @@
 /* enable for async callback testing, requires CONFIG_ASYNCIO */
 //#define IODELAY     (5*HZ/100)  /* async time delay 5/100 sec = 50msec */
 
+#if defined(IODELAY) && !defined(CONFIG_ASYNCIO)
+#error  SSD IOTEST driver requires CONFIG_ASYNCIO
+#endif
+
 jiff_t ssd_timeout;
 
 sector_t ssd_num_sects;         /* max # sectors on SSD device */
