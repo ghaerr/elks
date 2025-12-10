@@ -29,11 +29,15 @@
 #include <linuxmt/heap.h>
 #include <arch/irq.h>
 
+#ifndef CONFIG_DEF_BAUD
+#define CONFIG_DEF_BAUD B9600   /* default baud rate */
+#endif
+
 /* default termios, set at init time, not reset at open*/
 struct termios def_vals = {
     BRKINT|ICRNL,                                       /* c_iflag*/
     OPOST|ONLCR,                                        /* c_oflag*/
-    (tcflag_t) (B9600 | CS8),                           /* c_cflag*/
+    (tcflag_t) (CONFIG_DEF_BAUD | CS8),                 /* c_cflag*/
     (tcflag_t) (ISIG | ICANON | ECHO | ECHOE),          /* c_lflag*/
     0,                                                  /* c_line*/
     { 3,        /* VINTR*/
