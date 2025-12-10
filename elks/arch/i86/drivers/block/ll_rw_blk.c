@@ -64,6 +64,7 @@ int get_sector_size(kdev_t dev)
  */
 static struct request *get_request(int n, kdev_t dev)
 {
+#ifdef CONFIG_ASYNCIO
     static struct request *prev_found = NULL;
     static struct request *prev_limit = NULL;
     struct request *req;
@@ -79,15 +80,16 @@ static struct request *get_request(int n, kdev_t dev)
         req = ((req > all_requests) ? req : limit) - 1;
         if (req->rq_status == RQ_INACTIVE)
             break;
-        if (req == prev_found) {
-#ifdef CONFIG_ASYNCIO
+        if (req == prev_found)
             return NULL;
-#else
-            panic("get_request");   /* no inactive requests */
-#endif
-        }
     }
     prev_found = req;
+#else
+    struct request *req = &all_requests[0];
+
+    if (req->rq_status != RQ_INACTIVE)
+        panic("get_request");
+#endif
     req->rq_status = RQ_ACTIVE;
     req->rq_dev = dev;
     return req;
@@ -118,7 +120,6 @@ static struct request *__get_request_wait(int n, kdev_t dev)
     current->state = TASK_RUNNING;
     return req;
 }
-#endif
 
 static struct request *get_request_wait(int n, kdev_t dev)
 {
@@ -128,14 +129,10 @@ static struct request *get_request_wait(int n, kdev_t dev)
     req = get_request(n, dev);
     set_irq();
     if (req) return req;
-#ifdef CONFIG_ASYNCIO
     /* Try again blocking if no request available */
     return __get_request_wait(n, dev);
-#else
-    panic("no reqs");
-    return NULL;
-#endif
 }
+#endif
 
 /*
  * add-request adds a request to the linked list.
@@ -144,6 +141,7 @@ static struct request *get_request_wait(int n, kdev_t dev)
  */
 static void add_request(struct blk_dev_struct *dev, struct request *req)
 {
+#ifdef CONFIG_ASYNCIO
     struct request *tmp;
 
     clr_irq();
@@ -154,7 +152,6 @@ static void add_request(struct blk_dev_struct *dev, struct request *req)
         (dev->request_fn) ();
     }
     else {
-#ifdef CONFIG_ASYNCIO
         for (; tmp->rq_next; tmp = tmp->rq_next) {
             if ((IN_ORDER(tmp, req) ||
                 !IN_ORDER(tmp, tmp->rq_next)) && IN_ORDER(req, tmp->rq_next))
@@ -171,10 +168,14 @@ static void add_request(struct blk_dev_struct *dev, struct request *req)
             if (n > 1) printk("REQS %d ", n);
         }
 #endif
-#else
-        panic("add_request");   /* non-empty request queue */
-#endif
     }
+#else
+    mark_buffer_clean(req->rq_bh);
+    if (dev->current_request)
+        panic("add_request");   /* non-empty request queue */
+    dev->current_request = req;
+    (dev->request_fn) ();
+#endif
 }
 
 static void make_request(unsigned short major, int rw, struct buffer_head *bh)
@@ -221,7 +222,11 @@ static void make_request(unsigned short major, int rw, struct buffer_head *bh)
     }
 
     /* find an unused request. */
+#ifdef CONFIG_ASYNCIO
     req = get_request_wait(max_req, buffer_dev(bh));
+#else
+    req = get_request(max_req, buffer_dev(bh));
+#endif
 
     /* fill up the request-info, and add it to the queue */
     req->rq_cmd = rw;
