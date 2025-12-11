@@ -561,7 +561,7 @@ trybuiltin(int wildargc, char **wildargv, int argc, char **argv)
 static void
 runcmd(char *cmd, int argc, char **argv)
 {
-	int		pid, status, ret;
+	int		pid, status, ret, signo;
 
 	endpwent();
 	endgrent();
@@ -611,11 +611,10 @@ runcmd(char *cmd, int argc, char **argv)
 				return;
 
 			if (WIFSTOPPED(status))	/* signo in high byte when stopped*/
-				status >>= 8;
+				signo = status >> 8;
+			else signo = status & 0xff;
 			fprintf(stderr, "pid %d: %s (signal %d)\n", pid,
-				(status & 0x80) ? "core dumped" :
-				(((status & 0x7f) == SIGTSTP)? "stopped" : "killed"),
-				status & 0x7f);
+				WIFSTOPPED(status)? "stopped" : "killed", signo);
 
 			return;
 		}
