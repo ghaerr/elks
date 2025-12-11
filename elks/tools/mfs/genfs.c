@@ -34,6 +34,8 @@
 #include "minix_fs.h"
 #include "protos.h"
 
+#define SKIPFILE	".DS_Store"		/* skip macOS Finder files from being copied */
+
 typedef unsigned short u16_t;
 typedef unsigned long u32_t;
 
@@ -389,8 +391,12 @@ compile_fs(struct minix_fs_dat *fs)
 				av[2] = 0;
 				cmd_mkdir(fs, 2, av, sb.st_mode & 0777);
 			} else if (flags == S_IFREG) {
+				char *p = strrchr(inode_build->path, '/');
+				if (p && p[1] == '.' && !strcmp(p+1, SKIPFILE)) {
+					printf("Skipping %s\n", inode_build->path);
+					continue;
+				}
 				if (opt_nocopyzero && !inode_build->blocks) {
-					char *p = strrchr(inode_build->path, '/');
 					if (p && *++p == '.') {
 						if (opt_verbose) printf("Skipping %s\n", inode_build->path);
 						continue;
