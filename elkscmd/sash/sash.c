@@ -610,6 +610,8 @@ runcmd(char *cmd, int argc, char **argv)
 			if ((status & 0xff) == 0)
 				return;
 
+			if (WIFSTOPPED(status))	/* signo in high byte when stopped*/
+				status >>= 8;
 			fprintf(stderr, "pid %d: %s (signal %d)\n", pid,
 				(status & 0x80) ? "core dumped" :
 				(((status & 0x7f) == SIGTSTP)? "stopped" : "killed"),

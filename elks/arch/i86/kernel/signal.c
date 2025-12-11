@@ -48,7 +48,7 @@ void do_signal(void)
 			(SM_SIGSTOP | SM_SIGTSTP | SM_SIGTTIN | SM_SIGTTOU)) {
 		debug_sig("SIGNAL pid %P stopped\n");
 		current->state = TASK_STOPPED;
-		current->exit_status = signr;		/* Let the parent know */
+		current->exit_status = (signr<<8)|0x7f;	/* Let the parent know */
 		wake_up(&current->p_parent->child_wait);
 		schedule();
 		/* task continues here after SIGCONT */
