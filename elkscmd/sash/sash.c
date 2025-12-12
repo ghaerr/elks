@@ -210,6 +210,7 @@ int main(int argc, char **argv)
 
 	signal(SIGINT, catchint);
 	signal(SIGQUIT, catchquit);
+	signal(SIGTERM, SIG_IGN);
 	signal(SIGTSTP, SIG_IGN);
 
 	/* check if we are /bin/sh*/
