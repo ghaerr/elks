@@ -24,15 +24,16 @@ static void generate(sig_t sig, sigset_t msksig, register struct task_struct *p)
     if ((sd == SIGDISP_IGN) ||
        ((sd == SIGDISP_DFL) &&
         (msksig & (SM_SIGCONT | SM_SIGCHLD | SM_SIGWINCH | SM_SIGURG)))) {
+
         if (!(msksig & SM_SIGCHLD))
-            debug_sig("SIGNAL ignoring %d pid %d\n", sig, p->pid);
+            debug_sig("SIGNAL(%P) generate ignore sig %d pid %d\n", sig, p->pid);
         return;
     }
-    debug_sig("SIGNAL gen_sig %d mask %x action %x:%x pid %d\n", sig, msksig,
-              _FP_SEG(p->sig.handler), _FP_OFF(p->sig.handler), p->pid);
+    debug_sig("SIGNAL(%P) generate sig %d pid %d mask %x action %x:%x\n",
+        sig, p->pid, msksig, _FP_SEG(p->sig.handler), _FP_OFF(p->sig.handler));
     p->signal |= msksig;
     if ((p->state == TASK_INTERRUPTIBLE) /* && (p->signal & ~p->blocked) */ ) {
-        debug_sig("SIGNAL wakeup pid %d\n", p->pid);
+        debug_sig("SIGNAL(%P) wakeup pid %d\n", p->pid);
         wake_up_process(p);
     }
 }
@@ -41,7 +42,7 @@ int send_sig(sig_t sig, register struct task_struct *p, int priv)
 {
     sigset_t msksig;
 
-    if (sig != SIGCHLD) debug_sig("SIGNAL send_sig %d pid %d\n", sig, p->pid);
+    if (sig != SIGCHLD) debug_sig("SIGNAL(%P) send_sig %d pid %d\n", sig, p->pid);
     if (!priv && ((sig != SIGCONT) || (current->session != p->session)) &&
         (current->euid ^ p->suid) && (current->euid ^ p->uid) &&
         (current->uid ^ p->suid) && (current->uid ^ p->uid) && !suser())
@@ -65,16 +66,16 @@ int kill_pg(pid_t pgrp, sig_t sig, int priv)
     int err = -ESRCH;
 
     if (!pgrp) {
-        debug_sig("SIGNAL kill_pg 0 ignored\n");
+        debug_sig("SIGNAL(%P) kill_pgrp sig %d grp 0 ignored\n", sig);
         return 0;
     }
-    debug_sig("SIGNAL kill_pg sig %d pgrp %d\n", sig, pgrp);
+    debug_sig("SIGNAL(%P) kill_pgrp sig %d pgrp %d\n", sig, pgrp);
     for_each_task(p) {
         if (p->pgrp == pgrp) {
                 if (p->state < TASK_ZOMBIE)
                     err = send_sig(sig, p, priv);
                 else if (p->state != TASK_UNUSED)
-                    debug_sig("SIGNAL skip kill_pg pgrp %d pid %d state %d\n",
+                    debug_sig("SIGNAL(%P) skip kill_pg pgrp %d pid %d state %d\n",
                                         pgrp, p->pid, p->state);
         }
     }
@@ -85,7 +86,7 @@ int kill_process(pid_t pid, sig_t sig, int priv)
 {
     register struct task_struct *p;
 
-    debug_sig("SIGNAL kill_proc sig %d pid %d\n", sig, pid);
+    debug_sig("SIGNAL(%P) kill_proc sig %d pid %d\n", sig, pid);
     for_each_task(p)
         if (p->pid == pid && p->state < TASK_ZOMBIE)
             return send_sig(sig, p, priv);
@@ -96,7 +97,7 @@ void kill_all(sig_t sig)
 {
     register struct task_struct *p;
 
-    debug_sig("SIGNAL kill_all %d\n", sig);
+    debug_sig("SIGNAL(%P) kill_all %d\n", sig);
     for_each_task(p)
         if (p->state < TASK_ZOMBIE)
             send_sig(sig, p, 0);
@@ -107,7 +108,7 @@ int sys_kill(pid_t pid, sig_t sig)
     register struct task_struct *p;
     int count, err, retval;
 
-    debug_sig("SIGNAL sys_kill %d, %d pid %P\n", pid, sig);
+    debug_sig("SIGNAL(%P) sys_kill pid %d sig %d pid %P\n", pid, sig);
     if ((unsigned int)(sig - 1) > (NSIG-1))
         return -EINVAL;
 
@@ -121,7 +122,7 @@ int sys_kill(pid_t pid, sig_t sig)
             }
         return (count ? retval : -ESRCH);
     }
-    if (pid < 1)
+    if ((int)pid < 1)
         return kill_pg((!pid ? current->pgrp : -pid), sig, 0);
     return kill_process(pid, sig, 0);
 }
@@ -131,8 +132,8 @@ int sys_signal(int signr, __kern_sighandler_t handler)
     int i;
     struct segment *s;
 
-    debug_sig("SIGNAL sys_signal %d action %x:%x pid %P\n", signr,
-              _FP_SEG(handler), _FP_OFF(handler));
+    debug_sig("SIGNAL(%P) sys_signal %2d action %x:%x\n", signr,
+        _FP_SEG(handler), _FP_OFF(handler));
     if (((unsigned int)signr > NSIG) || signr == SIGKILL || signr == SIGSTOP)
         return -EINVAL;
     if (handler == KERN_SIG_DFL)
@@ -140,19 +141,19 @@ int sys_signal(int signr, __kern_sighandler_t handler)
     else if (handler == KERN_SIG_IGN)
         current->sig.action[signr - 1].sa_dispose = SIGDISP_IGN;
     else {
-        debug_sig("handler %x:%x\n", _FP_SEG(handler), _FP_OFF(handler));
+        debug("handler %x:%x\n", _FP_SEG(handler), _FP_OFF(handler));
         for (i = 0; i < MAX_SEGS; i++) {
             s = current->mm[i];
             if (!s || (s->flags & SEG_FLAG_TYPE) != SEG_FLAG_CSEG)
                 continue;
-            debug_sig("codeseg %x:%x\n", s->base, s->size<<4);
+            debug("codeseg %x:%x\n", s->base, s->size<<4);
             if (_FP_SEG(handler) == s->base && _FP_OFF(handler) < (s->size << 4)) {
                 current->sig.handler = handler;
                 current->sig.action[signr - 1].sa_dispose = SIGDISP_CUSTOM;
                 return 0;
             }
         }
-        printk("SIGNAL sys_signal bad handler addr\n");
+        printk("SIGNAL(%P) sys_signal bad handler addr\n");
         return -EINVAL;
     }
     return 0;

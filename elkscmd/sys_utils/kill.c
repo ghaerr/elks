@@ -14,7 +14,7 @@
 
 static void usage()
 {
-	errmsg("usage: kill [-<signo>|-INT|-KILL|-HUP] PID...\n");
+	errmsg("usage: kill [-<signo>|-INT|-KILL|-HUP] pid ...\n");
 	exit(1);
 }
 

@@ -3,8 +3,11 @@
 kill \- Send a process a signal
 .SH SYNOPSIS
 .B kill
-.B [\-signal]
-.I pid...
+.RB [ \-signo ]
+.RB [ -INT ]
+.RB [ -KILL ]
+.RB [ -HUP ]
+.I pid ...
 .SH DESCRIPTION
 .B kill
 send a signal to the process specified by each
@@ -17,8 +20,8 @@ process  group can be signalled by the negative value of the process group
 ID.  Signals may be numerical, or the name of the signal without SIG.
 .SS OPTIONS
 .TP 10
-.B "\-signal"
-The signal to be sent. May be HUP, INT QUIT or KILL, or a numeric signal number.
+.B "\-signo"
+The signal to be sent. May be INT, HUP or KILL, or a numeric signal number.
 .SH EXAMPLES
 .TP 20
 .B kill \-HUP 45
@@ -29,7 +32,7 @@ The signal to be sent. May be HUP, INT QUIT or KILL, or a numeric signal number.
 .TP 20
 .B kill \-INT 4 6 -23
 # Send the INT signal to
-the processes with ids 4 and 6 and the process group with 23.
+the processes with ids 4 and 6 and the process group 23.
 .SH EXIT STATUS
 .TP
 .I 0
