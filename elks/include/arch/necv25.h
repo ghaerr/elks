@@ -70,7 +70,7 @@
  *
  * Port.Pin  Name   Function Direction Used in
  * P1.0             special  in        do not change
- * P1.1             special  in        do not change
+ * P1.1      INTP0  special  in        NE200 NIC
  * P1.2             special  in        do not change
  * P1.3             special  in        do not change
  * P1.4             I/O      in
@@ -81,7 +81,7 @@
  * Port.Pin  Name   Function Direction Used in
  * P2.0      SDA    I/O      in/out    i2c-ll.S
  * P2.1      SCL    I/O      out       i2c-ll.S
- * P2.2             I/O      in        currently not used
+ * P2.2   ISA Reset I/O      out       startup code
  * P2.3      CS     I/O      out       spi-hw-necv25.S
  * P2.4      CS     I/O      out       spi-necv25.S
  * P2.5      CLK    I/O      out       spi-necv25.S
@@ -92,7 +92,7 @@
 // or startup code with these values before ELKS starts:
 #define NEC_PM1_DEF  0xbf
 #define NEC_PMC1_DEF 0x48
-#define NEC_PM2_DEF  0x84
+#define NEC_PM2_DEF  0x80
 #define NEC_PMC2_DEF 0x00
  
 // Other interrupt control registers
@@ -105,13 +105,17 @@
 #define NEC_TBIC  0xffec      /* Time base interrupt */
 
 // Interrupt Vector numbers
-#define NEC_INTTU0  0x1e      /* Timer 0 Interrupt */
-#define NEC_INTTU1  0x1e      /* Timer 1 Interrupt */
+#define NEC_INTTU0  0x1c      /* Timer 0 Interrupt */
+#define NEC_INTTU1  0x1d      /* Timer 1 Interrupt */
 #define NEC_INTTU2  0x1e      /* Timer 1 Interrupt */
 
 #define NEC_INTSE1  0x10      /* SIO1 Error Interrupt */
 #define NEC_INTSR1  0x11      /* SIO1 RX Interrupt */
 #define NEC_INTST1  0x12      /* SIO1 TX Interrupt */
+
+#define NEC_INTP0   0x18      /* External Interrupt 0 */
+#define NEC_INTP1   0x19      /* External Interrupt 1 */
+#define NEC_INTP2   0x1A      /* External Interrupt 2 */
 
 #define UART1_IRQ_RX  1       /* maps to interrupt NEC_INTSR1 */
 #define UART1_IRQ_TX  2       /* maps to interrupt NEC_INTST1 */
