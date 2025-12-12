@@ -12,7 +12,43 @@
 
 #define errmsg(str)     write(STDERR_FILENO, str, sizeof(str) - 1)
 
-static void usage()
+#define ARRAYLEN(a)     (sizeof(a)/sizeof(a[0]))
+
+struct signames {
+	char *name;
+	int signo;
+} signames[] = {
+	{ "HUP",  SIGHUP	},
+	{ "INT",  SIGINT	},
+	{ "STOP", SIGSTOP	},
+	{ "TSTP", SIGTSTP	},
+	{ "CONT", SIGCONT	},
+	{ "KILL", SIGKILL	},
+	{ "TERM", SIGTERM	}
+};
+
+int atoi(const char *s)
+{
+    int n = 0;
+    int neg = *s == '-';
+
+    while ((unsigned) (*s - '0') <= 9u)
+        n = n * 10 + *s++ - '0';
+    return neg ? 0u - n : n;
+}
+
+int signum(char *str)
+{
+	struct signames *s;
+
+	for (s = signames; s < &signames[ARRAYLEN(signames)]; s++) {
+		if (!strcmp(str, s->name))
+			return s->signo;
+	}
+	return atoi(str);
+}
+
+void usage(void)
 {
 	errmsg("usage: kill [-<signo>|-INT|-KILL|-HUP] pid ...\n");
 	exit(1);
@@ -20,24 +56,15 @@ static void usage()
 
 int main(int argc, char **argv)
 {
-	char	*cp;
 	int	sig;
 	int	pid;
 
 	sig = SIGTERM;
 
 	if (argv[1][0] == '-') {
-		cp = &argv[1][1];
-		if (strcmp(cp, "HUP") == 0)
-			sig = SIGHUP;
-		else if (strcmp(cp, "INT") == 0)
-			sig = SIGINT;
-		else if (strcmp(cp, "KILL") == 0)
-			sig = SIGKILL;
-		else {
-			if (!(sig = atoi(cp)))
-				usage();
-		}
+		sig = signum(&argv[1][1]);
+		if (sig <= 0)
+			usage();
 		argc--;
 		argv++;
 	} else {	
@@ -45,8 +72,7 @@ int main(int argc, char **argv)
 	}
 	
 	while (argc-- > 1) {
-		cp = *++argv;
-		if (!(pid = atoi(cp)))
+		if (!(pid = atoi(*++argv)))
 			usage();
 
 		if (kill(pid, sig) < 0)

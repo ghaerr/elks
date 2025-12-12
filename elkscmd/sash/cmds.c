@@ -828,44 +828,53 @@ do_umask(argc, argv)
 #endif /* CMD_UMASK */
 
 #ifdef CMD_KILL
+#define ARRAYLEN(a)     (sizeof(a)/sizeof(a[0]))
+
+static struct signames {
+    char *name;
+    int signo;
+} signames[] = {
+    { "HUP",  SIGHUP    },
+    { "INT",  SIGINT    },
+    { "STOP", SIGSTOP   },
+    { "TSTP", SIGTSTP   },
+    { "CONT", SIGCONT   },
+    { "KILL", SIGKILL   },
+    { "TERM", SIGTERM   }
+};
+
+static int signum(char *str)
+{
+    struct signames *s;
+
+    for (s = signames; s < &signames[ARRAYLEN(signames)]; s++) {
+        if (!strcmp(str, s->name))
+            return s->signo;
+    }
+    return atoi(str);
+}
+
 void
 do_kill(argc, argv)
 	char	**argv;
 {
-	char	*cp;
 	int	sig;
 	int	pid;
 
 	sig = SIGTERM;
 
 	if (argv[1][0] == '-') {
-		cp = &argv[1][1];
-		if (strcmp(cp, "HUP") == 0)
-			sig = SIGHUP;
-		else if (strcmp(cp, "INT") == 0)
-			sig = SIGINT;
-		else if (strcmp(cp, "QUIT") == 0)
-			sig = SIGQUIT;
-		else if (strcmp(cp, "KILL") == 0)
-			sig = SIGKILL;
-		else {
-			sig = 0;
-			while (isdecimal(*cp))
-				sig = sig * 10 + *cp++ - '0';
-
-			if (*cp) {
-				fprintf(stderr, "Unknown signal\n");
-				return;
-			}
+		sig = signum(&argv[1][1]);
+		if (sig <= 0) {
+			fprintf(stderr, "Unknown signal\n");
+			return;
 		}
 		argc--;
 		argv++;
 	}
 
 	while (argc-- > 1) {
-		cp = *++argv;
-		pid = atoi(cp);
-		if (!pid) {
+		if (!(pid = atoi(*++argv))) {
 			fprintf(stderr, "Non-numeric pid\n");
 			return;
 		}

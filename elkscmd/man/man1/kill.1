@@ -4,9 +4,13 @@ kill \- Send a process a signal
 .SH SYNOPSIS
 .B kill
 .RB [ \-signo ]
-.RB [ -INT ]
-.RB [ -KILL ]
 .RB [ -HUP ]
+.RB [ -INT ]
+.RB [ -STOP ]
+.RB [ -TSTP ]
+.RB [ -CONT ]
+.RB [ -KILL ]
+.RB [ -TERM ]
 .I pid ...
 .SH DESCRIPTION
 .B kill
@@ -14,24 +18,24 @@ send a signal to the process specified by each
 .I pid
 operand listed.
 .sp
-By default signal 15 (SIGTERM) is
-sent.  Process 0 means all the processes in the sender's process group.  A
-process  group can be signalled by the negative value of the process group
+By default signal 15 (SIGTERM) is sent.
+.\" Process 0 means all the processes in the sender's process group.
+A process  group can be signalled by the negative value of the process group
 ID.  Signals may be numerical, or the name of the signal without SIG.
 .SS OPTIONS
 .TP 10
 .B "\-signo"
-The signal to be sent. May be INT, HUP or KILL, or a numeric signal number.
+The signal to be sent. May be HUP, INT, STOP, TSTP, CONT, KILL or TERM, or a numeric signal number.
 .SH EXAMPLES
 .TP 20
 .B kill \-HUP 45
-# Send the HUP signal to process 45.
+# Send the SIGHUP signal to process 45.
 .TP 20
 .B kill \-9 2
-# Send 9, KILL, to the process with id 2.
+# Send 9, SIGKILL, to the process with id 2.
 .TP 20
 .B kill \-INT 4 6 -23
-# Send the INT signal to
+# Send the SIGINT signal to
 the processes with ids 4 and 6 and the process group 23.
 .SH EXIT STATUS
 .TP
