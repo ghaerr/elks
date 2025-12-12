@@ -53,9 +53,13 @@ int sys_wait4(pid_t pid, int *status, int options, void *usage)
 
     for_each_task(p) {
         if (p->p_parent == current && p->state != TASK_UNUSED) {
-          if (p->state == TASK_ZOMBIE ||
-             (p->state == TASK_STOPPED && (options & WUNTRACED))) {
+          if (p->state == TASK_ZOMBIE || p->state == TASK_STOPPED) {
             if (pid == (pid_t)-1 || p->pid == pid || (!pid && p->pgrp == current->pgrp)) {
+                if (p->state == TASK_STOPPED) {
+                    if (!p->exit_status || !(options & WUNTRACED))
+                        continue;
+                }
+
                 if (status) {
                     if (verified_memcpy_tofs(status, &p->exit_status, sizeof(int)))
                         return -EFAULT;
@@ -63,17 +67,18 @@ int sys_wait4(pid_t pid, int *status, int options, void *usage)
 
                 /* just return status on stopped state, don't release task*/
                 if (p->state == TASK_STOPPED)
-                    return p->pid;
-
-                p->state = TASK_UNUSED;     /* unassign task entry*/
-                next_task_slot = p;
-                task_slots_unused++;
+                    p->exit_status = 0;
+                else {
+                    p->state = TASK_UNUSED;     /* unassign task entry*/
+                    next_task_slot = p;
+                    task_slots_unused++;
+                }
 
                 debug_wait("WAIT(%P) got %d\n", p->pid);
                 return p->pid;
             }
-        } else if (p->state != TASK_STOPPED || (options & WUNTRACED)) {
-            /* keep waiting while process has non-zombie/stopped children*/
+        } else {
+            /* keep waiting while process has non-zombie children*/
             debug_wait("WAIT(%P) again for pid %d state %d\n", p->pid, p->state);
             waitagain = 1;
         }

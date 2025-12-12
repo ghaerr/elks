@@ -272,10 +272,8 @@ showjobs(change) {
 				fmtstr(s, 64, "Exit %d", ps->status >> 8);
 			} else {
 				i = ps->status;
-#if JOBS
 				if ((i & 0xFF) == 0177)
 					i >>= 8;
-#endif
 				if ((i & 0x7F) <= MAXSIG && sigmesg[i & 0x7F])
 					scopy(sigmesg[i & 0x7F], s);
 				else
@@ -347,10 +345,8 @@ waitcmd(argc, argv)  char **argv; {
 				status = job->ps[job->nprocs - 1].status;
 				if ((status & 0xFF) == 0)
 					status = status >> 8 & 0xFF;
-#if JOBS
 				else if ((status & 0xFF) == 0177)
 					status = (status >> 8 & 0x7F) + 128;
-#endif
 				else
 					status = (status & 0x7F) + 128;
 				if (! iflag)
@@ -661,13 +657,11 @@ waitforjob(jp)
 	/* convert to 8 bits */
 	if ((status & 0xFF) == 0)
 		st = status >> 8 & 0xFF;
-#if JOBS
 	else if ((status & 0xFF) == 0177)
 		st = (status >> 8 & 0x7F) + 128;
-#endif
 	else
 		st = (status & 0x7F) + 128;
-	if (! JOBS || jp->state == JOBDONE)
+	if (/*! JOBS ||*/ jp->state == JOBDONE)
 		freejob(jp);
 	CLEAR_PENDING_INT;
 	if ((status & 0x7F) == SIGINT)
@@ -742,18 +736,18 @@ dowait(block, job)
 	}
 	INTON;
 	if (! rootshell || ! iflag || (job && thisjob == job)) {
-#if JOBS
 		if ((status & 0xFF) == 0177)
 			status >>= 8;
-#endif
 		core = status & 0x80;
 		status &= 0x7F;
 		if (status != 0 && status != SIGINT && status != SIGPIPE) {
 			if (thisjob != job)
 				outfmt(out2, "%d: ", pid);
-#if JOBS
 			if (status == SIGTSTP && rootshell && iflag)
+#if JOBS
 				outfmt(out2, "%%%d ", job - jobtab + 1);
+#else
+				outfmt(out2, "%d: ", pid);
 #endif
 			if (status <= MAXSIG && sigmesg[status])
 				out2str(sigmesg[status]);
@@ -818,19 +812,12 @@ STATIC int
 waitproc(block, status)
 	int *status;
 	{
-#ifdef BSD
-	int flags;
-
-#if JOBS
-	flags = WUNTRACED;
-#else
-	flags = 0;
-#endif
+#if defined(BSD)
+	int flags = WUNTRACED;
 	if (block == 0)
 		flags |= WNOHANG;
 	return wait3((union wait *)status, flags, (struct rusage *)NULL);
-#else
-#ifdef SYSV
+#elif defined(SYSV)
 	int (*save)();
 
 	if (block == 0) {
@@ -841,15 +828,15 @@ waitproc(block, status)
 			return 0;
 	}
 	return wait(status);
-#else
-#if POSIX
-	return waitpid(-1, status, block == 0 ? WNOHANG : 0);
+#elif POSIX
+	int flags = WUNTRACED;
+	if (block == 0)
+		flags |= WNOHANG;
+	return waitpid(-1, status, flags);
 #else
 	if (block == 0)
 		return 0;
 	return wait(status);
-#endif
-#endif
 #endif
 }
 
