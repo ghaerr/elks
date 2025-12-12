@@ -324,14 +324,15 @@ static int sercon_open(struct tty *tty)
 {
     struct serial_info *port = &ports[0];
 
-    port->intrchar = 0;
-    init_bh(SERIAL_BH, serial_bh);
-
     /* increment use count, don't init if already open*/
     if (tty->usecount++)
         return 0;
     else
+    {
+        port->intrchar = 0;
+        init_bh(SERIAL_BH, serial_bh);
         return tty_allocq(tty, RSINQ_SIZE, RSOUTQ_SIZE);
+    }
 }
 
 /* check for SIGINT and wakeup waiting processes */
