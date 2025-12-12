@@ -64,7 +64,7 @@ int main(int argc, char **argv)
     else {
         /* default to /dev/ttyS0 if not run from serial port and no argument */
         if (strncmp(ttyname(STDIN_FILENO), "/dev/ttyS", 9) != 0)
-            port = "/dev/ttyS0";
+            port = DEFAULT_PORT;
     }
     if (port) {
         if ((fd = open(port, O_RDONLY|O_EXCL)) < 0) {

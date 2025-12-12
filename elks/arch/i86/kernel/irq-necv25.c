@@ -31,6 +31,7 @@ void initialize_irq(void)    // see irq-necv25asm.S
             "movw  %%bx, %%ds                                                                                              \n"\
             "pushf                                 // save iqr status and disable all interrupts                           \n"\
             "cli                                                                                                           \n"\
+            "movb  $(0x55), %%ds:(INTM)            // INTM:  Interrupt Mode high/low edge trigger for INTP0..3/NMI         \n"\
             "movb  $(IRQMSK+IRQPRI5), %%ds:(EXIC0) // EXIC0: External interrupt 0, irq prio 5                              \n"\
             "movb  $(IRQMSK+IRQPRID), %%ds:(EXIC1) // EXIC1: External interrupt 1                                          \n"\
             "movb  $(IRQMSK+IRQPRID), %%ds:(EXIC2) // EXIC2: External interrupt 2                                          \n"\
@@ -65,8 +66,9 @@ logical_map[] =
     { TIMER_IRQ,    NEC_TMIC2, NEC_INTTU2 }, // Timmer 1 IRQ
     { UART1_IRQ_RX, NEC_SRIC1, NEC_INTSR1 }, // Serial 1 RX IRQ
 #ifdef UNUSED
-    { UART1_IRQ_TX, NEC_STIC1, NEC_INTST1 }, // Setial 1 TX IRQ
+    { UART1_IRQ_TX, NEC_STIC1, NEC_INTST1 }, // Serial 1 TX IRQ
 #endif
+    { NE2K_IRQ,     NEC_EXIC0, NEC_INTP0 }, // NE2000 NIC
 };
 
 struct irq_logical_map* get_from_logical_irq(unsigned int irq)
@@ -96,16 +98,14 @@ void enable_irq(unsigned int irq)
                "push  %%ds                                                                     \n"\
                "movw  $NEC_HW_SEGMENT, %%bx  // load DS to access memmory mapped CPU registers \n"\
                "movw  %%bx, %%ds                                                               \n"\
-               "pushf                        // save iqr status and disable all interrupts     \n"\
-               "cli                                                                            \n"\
-               "movb  %%ds:(%%si), %%al      // anable specific interrupt in IRC register      \n"\
-               "andb  $!(IRQFLAG+IRQMSK), %%al                                                 \n"\
-               "movb  %%al, %%ds:(%%si)                                                        \n"\
-               "popf                         // restore flags and irq status                   \n"\
+               ".word 0x1a0f                 // NEC V25 special: clr1 (%%si), 0x07 set IRQFLAG \n"\
+               ".word 0x0704                                                                   \n"\
+               ".word 0x1a0f                 // NEC V25 special: clr1 (%%si), 0x07 clr IRQMSK  \n"\
+               ".word 0x0604                                                                   \n"\
                "pop   %%ds                                                                     \n"\
                :                          \
                : "S"   (map->pcb_register)\
-               : "al", "bx", "memory" );  \
+               : "bx", "memory" );        \
        });
     }
 }
@@ -129,16 +129,12 @@ void disable_irq(unsigned int irq)
                "push  %%ds                                                                     \n"\
                "movw  $NEC_HW_SEGMENT, %%bx  // load DS to access memmory mapped CPU registers \n"\
                "movw  %%bx, %%ds                                                               \n"\
-               "pushf                        // save iqr status and disable all interrupts     \n"\
-               "cli                                                                            \n"\
-               "movb  %%ds:(%%si), %%al      // disable specific interrupt in IRC register     \n"\
-               "orb   $IRQMSK, %%al                                                            \n"\
-               "movb  %%al, %%ds:(%%si)                                                        \n"\
-               "popf                         // restore flags and irq status                   \n"\
+               ".word 0x1c0f                 // NEC V25 special: set1 (%%si), 0x06 set IRQMSK  \n"\
+               ".word 0x0604                                                                   \n"\
                "pop   %%ds                                                                     \n"\
                :                          \
                : "S"   (map->pcb_register)\
-               : "al", "bx", "memory" );  \
+               : "bx", "memory" );        \
        });
     }
 }

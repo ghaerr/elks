@@ -92,6 +92,7 @@
 .set TMIC1,    0xff9d   /* Timer unit interrupt request control register 1 */
 .set TMIC2,    0xff9e   /* Timer unit interrupt request control register 2 */
 
+.set INTM,     0xff40   /* Interrupt mode register */
 .set EXIC0,    0xff4c   /* External interrupt 0 */
 .set EXIC1,    0xff4d   /* External interrupt 1 */
 .set EXIC2,    0xff4e   /* External interrupt 2 */
