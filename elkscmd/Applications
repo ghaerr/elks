@@ -208,6 +208,8 @@ inet/urlget/urlget              :net
 #inet/urlget/urlget :::ftpput    :net
 #inet/urlget/urlget :::httpget   :net
 inet/tinyirc/tinyirc            :other                          :1440c
+inet/netcat/netcat              :net
+inet/netcat/netcat :::nc        :net
 bc/bc                           :other                          :1440c
 sys_utils/test_unreal           :test                           :1440c
 test/libc/test_libc             :test                           :1440c
