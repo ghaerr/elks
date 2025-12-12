@@ -4,7 +4,9 @@
  * This file contains code used for the embedded NEC V25 family only
  * Based on Santiago Hormazabal console-serial-8018x.c
  *
- * Uses the internal serial 1 port as tty console.
+ * Uses the MCU internal serial 1 port as tty console.
+ * Serial 0 is used as SPI for SD card interface and cannot be used
+ * for serial communication.
  *
  * 23 Oct. 2025 swausd
  */
@@ -26,34 +28,23 @@ struct serial_info {
     const unsigned int  io_irq_tx;
     const unsigned char irq_no_rx;
     const unsigned char irq_no_tx;
-
-    /**
-     * The baud rate generator is composed of a 15-bit counter
-     * register (BxCNT) and a 15-bit compare register (BxCMP). BxCNT
-     * is a free-running counter that is incremented by the baud
-     * timebase clock. The baud timebase clock can be either the
-     * internal CPU clock or an external clock applied to the BCLK pin.
-     * For the Asynchronous Mode 1, BxCMP can be calculated as follows
-     * BxCMP = (Fcpu / (Baudrate * 8)) - 1.
-     * Note: This driver uses the internal CPU clock.
-     */
     unsigned char count;
     unsigned char n;
-
+    int intrchar; /* used by fast handler for ^C SIGINT processing */
     struct tty *tty;
 };
 
 
-// Baud rate is already initialized to 9600 baud by startup code,
-// so first switching to 9600 baud from ELKS is not necessary
+// Baud rate is already initialized to 115200 baud by startup code,
+// so first switching to 115200 baud from ELKS is not necessary
 // but shows artefacts. This init values prevent first switching
 
-#define INIT_BAUD_COUNT (CONFIG_NECV25_FCPU / (  9600UL * 2UL *   16UL))
-#define INIT_BAUD_N     3
+#define INIT_BAUD_COUNT (CONFIG_NECV25_FCPU / (115200UL * 2UL * 2UL))
+#define INIT_BAUD_N     0
 
 static struct serial_info ports[1] = {
-    /* TODO: Serial 0 { NEC_RXB0, NEC_INTSR0, NEC_INTST0, UART0_IRQ_RX, UART0_IRQ_TX, INIT_BAUD_COUNT, INIT_BAUD_N, &ttys[0] },*/
-    /*    Serial 1 */ { NEC_RXB1, NEC_INTSR1, NEC_INTST1, UART1_IRQ_RX, UART1_IRQ_TX, INIT_BAUD_COUNT, INIT_BAUD_N, &ttys[0] },
+    /* Serial 0 is used as SPI for SD card interface */
+    /* Serial 1 */ { NEC_RXB1, NEC_INTSR1, NEC_INTST1, UART1_IRQ_RX, UART1_IRQ_TX, INIT_BAUD_COUNT, INIT_BAUD_N, 0, &ttys[0] },
 };
 
 
@@ -75,18 +66,61 @@ static const struct baud_tab {
     {(CONFIG_NECV25_FCPU / (  1800UL * 2UL *  128UL)),  6}, /* 10 = B1800   32 6 */
     {(CONFIG_NECV25_FCPU / (  2400UL * 2UL *   64UL)),  5}, /* 11 = B2400   48 5 */
     {(CONFIG_NECV25_FCPU / (  4800UL * 2UL *   16UL)),  3}, /* 12 = B4800   96 3 */
-    { INIT_BAUD_COUNT,                       INIT_BAUD_N }, /* 13 = B9600   48 3 */ /* preset for inital serial_info */
+    {(CONFIG_NECV25_FCPU / (  9600UL * 2UL *   16UL)),  3}, /* 12 = B4800   96 3 */
     {(CONFIG_NECV25_FCPU / ( 19200UL * 2UL *    8UL)),  2}, /* 14 = B19200  48 2 */
     {(CONFIG_NECV25_FCPU / ( 38400UL * 2UL *    4UL)),  1}, /* 15 = B38400  48 1 */
     {(CONFIG_NECV25_FCPU / ( 57600UL * 2UL *    2UL)),  0}, /* 16 = B57600  64 0 */
-    {(CONFIG_NECV25_FCPU / (115200UL * 2UL *    2UL)),  0}, /* 17 = B115200 32 0 */
+//  {(CONFIG_NECV25_FCPU / (115200UL * 2UL *    2UL)),  0}, /* 17 = B115200 32 0 */
+    { INIT_BAUD_COUNT,                       INIT_BAUD_N }, /* 17 = B115200 32 0 */ /* preset for inital serial_info */
     {(CONFIG_NECV25_FCPU / (230400UL * 2UL *    2UL)),  0}  /*  0 = B230400 16 0 */
 };
 
+
 /* serial receive interrupt routine, reads and queues received character */
+#ifdef CONFIG_FAST_IRQ1_NECV25
+extern void asm_fast_irq1_necv25(int irq, struct pt_regs *regs);   /* initial entry point */
+
+void sercon_fast_irq1_necv25(void)
+{
+    struct serial_info *sp = &ports[0];
+    struct ch_queue *q = &sp->tty->inq;
+    unsigned char c;
+
+    __extension__ ({                   \
+        asm volatile (                 \
+            ".include \"../../../../include/arch/necv25.inc\"                               \n"\
+            "push  %%ds                                                                     \n"\
+            "movw  $NEC_HW_SEGMENT, %%bx  // load DS to access memmory mapped CPU registers \n"\
+            "movw  %%bx, %%ds                                                               \n"\
+            "movb  %%ds:(%%Si), %%al      // get char                                       \n"\
+            "//testb $0x07, %%ds:SCE(%%Si)  // test for receive errors...                   \n"\
+            "//jz    1f                                                                     \n"\
+            "//movb  %%ds:SCE(%%Si), %%al   // ...and return error flag if any              \n"\
+            "//orb   $0x80, %%al                                                            \n"\
+            "//1:                                                                           \n"\
+            "pop   %%ds                                                                     \n"\
+            : "=Ral"(c)                \
+            : "S"   (sp->io_base)      \
+            : "bx", "memory" );        \
+    });
+
+    if (q->len < q->size) {
+        q->base[q->head] = c;
+        if (++q->head >= q->size)
+            q->head = 0;
+        q->len++;
+    }   // silently ignore buffer overflow
+
+    if ((c == 03) || (c == 26) || (c == 28))    /* assumes VINTR = ^C, VSUSP = Ẑ, VQUIT = ^\ and byte queued anyways */
+        sp->intrchar = c;
+}
+
+#else
+
 void irq_rx(int irq, struct pt_regs *regs)
 {
     struct serial_info *sp = &ports[0];
+    struct ch_queue *q = &sp->tty->inq;
     unsigned char c;
 
     __extension__ ({                   \
@@ -102,11 +136,19 @@ void irq_rx(int irq, struct pt_regs *regs)
             : "bx", "memory" );        \
     });
 
-   if (c)
-      if (!tty_intcheck(sp->tty, c))
-         chq_addch(&sp->tty->inq, c);
+    if (c) {
+        if (q->len < q->size) {
+            q->base[q->head] = c;
+            if (++q->head >= q->size)
+                q->head = 0;
+            q->len++;
+        }
+        if ((c == 03) || (c == 26) || (c == 28))    /* assumes VINTR = ^C, VSUSP = Ẑ, VQUIT = ^\ and byte queued anyways */
+            sp->intrchar = c;
+        mark_bh(SERIAL_BH);
+    }
 }
-
+#endif
 
 #ifdef UNUSED
 /* serial transmit interrupt routine, doesn't do anything */
@@ -189,7 +231,7 @@ static void update_port(struct serial_info *port)
     }
 }
 
-/* Called from main.c! */
+/* Called from main.c */
 void INITPROC console_init(void)
 {
     struct serial_info *sp = &ports[0]; /* TODO: add support for Serial 1 */
@@ -214,9 +256,13 @@ void INITPROC console_init(void)
     });
 
     /* setup the UART 1 */
-    request_irq(sp->irq_no_rx, irq_rx, INT_GENERIC);
+#ifdef CONFIG_FAST_IRQ1_NECV25
+    request_irq(sp->irq_no_rx, asm_fast_irq1_necv25, INT_SPECIFIC);   // for RX
+#else
+    request_irq(sp->irq_no_rx, irq_rx, INT_GENERIC);    // for RX
 #ifdef UNUSED
-    request_irq(sp->irq_no_tx, irq_tx, INT_GENERIC);
+    request_irq(sp->irq_no_tx, irq_tx, INT_GENERIC);    // for TX
+#endif
 #endif
 
     /* Set the baudrate, and enable the UART receiver */
@@ -230,7 +276,7 @@ void bell(void)
 
 static void sercon_conout(dev_t dev, int Ch)
 {
-    struct serial_info *sp = &ports[0]; /* TODO: add support for Serial 1 */
+    struct serial_info *sp = &ports[0];
 
     if (Ch == '\n') {
         serial_putc(sp, '\r');
@@ -240,7 +286,7 @@ static void sercon_conout(dev_t dev, int Ch)
 
 static int sercon_ioctl(struct tty *tty, int cmd, char *arg)
 {
-    struct serial_info *port = &ports[0]; /* TODO: add support for Serial 1 */
+    struct serial_info *port = &ports[0];
 
     switch (cmd) {
     case TCSETS:
@@ -258,7 +304,7 @@ static int sercon_ioctl(struct tty *tty, int cmd, char *arg)
 
 static int sercon_write(struct tty *tty)
 {
-    struct serial_info *port = &ports[0]; /* TODO: add support for Serial 1 */
+    struct serial_info *port = &ports[0];
     int cnt = 0;
 
     while (tty->outq.len > 0) {
@@ -270,12 +316,52 @@ static int sercon_write(struct tty *tty)
 
 static void sercon_release(struct tty *tty)
 {
-    ttystd_release(tty);
+    if (--tty->usecount == 0)
+        tty_freeq(tty);
 }
 
 static int sercon_open(struct tty *tty)
 {
-    return ttystd_open(tty);
+    struct serial_info *port = &ports[0];
+
+    port->intrchar = 0;
+    init_bh(SERIAL_BH, serial_bh);
+
+    /* increment use count, don't init if already open*/
+    if (tty->usecount++)
+        return 0;
+    else
+        return tty_allocq(tty, RSINQ_SIZE, RSOUTQ_SIZE);
+}
+
+/* check for SIGINT and wakeup waiting processes */
+static void pump_port(struct serial_info *sp)
+{
+    struct tty *ttyp = sp->tty;
+    struct ch_queue *q = &ttyp->inq;
+
+    if (ttyp->usecount && q->len) {
+        if (sp->intrchar) {
+            tty_intcheck(ttyp, sp->intrchar);
+            sp->intrchar = 0;
+        }
+        if (q->len == 1) {
+            /* attempt process (again) of VINTR, also VQUIT and ^P-^N debug chars */
+            if (tty_intcheck(ttyp, chq_peekch(q))) {
+                (void)chq_getch(q);     /* discard received character */
+                return;
+            }
+        }
+        wake_up(&q->wait);
+    }
+}
+
+/* serial interrupt bottom half - check ring buffer and wakeup waiting processes */
+void serial_bh(void)
+{
+    struct serial_info *port = &ports[0];
+
+    pump_port(port);
 }
 
 struct tty_ops necv25con_ops = {

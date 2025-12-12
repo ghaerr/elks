@@ -79,7 +79,7 @@ OBJS += console-serial-8018x.o
 endif
 
 ifdef CONFIG_CONSOLE_NECV25
-OBJS += console-serial-necv25.o
+OBJS += console-serial-necv25.o serfast.o
 endif
 
 ifdef CONFIG_ARCH_IBMPC

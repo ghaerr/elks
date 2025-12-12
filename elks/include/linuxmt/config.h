@@ -106,6 +106,8 @@
 #define SYS_CAPS                0       /* no XT/AT capabilities */
 #define UTS_MACHINE             "NECV25"
 #define CONFIG_NECV25_FCPU      22118400UL /* external CPU crystal clock in Hz 14745600UL or 22118400UL */
+#define CONFIG_DEF_BAUD         B115200
+#define CONFIG_FAST_IRQ1_NECV25        /* Serial 1 */
 #endif /* CONFIG_ARCH_NECV25 */
 
 #ifdef CONFIG_ARCH_SWAN

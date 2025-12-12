@@ -80,7 +80,7 @@ void timer_bh(void)
     calc_cpu_usage();
 #endif
 
-#if defined(CONFIG_CHAR_DEV_RS) && (defined(CONFIG_FAST_IRQ4) || defined(CONFIG_FAST_IRQ3))
+#if defined(CONFIG_CHAR_DEV_RS) && (defined(CONFIG_FAST_IRQ4) || defined(CONFIG_FAST_IRQ3)) || defined(CONFIG_FAST_IRQ1_NECV25)
     /* uncomment to process serial input every 10ms instead of serial irq bottom half */
     serial_bh();        /* check if received serial chars and call wake_up*/
 #endif

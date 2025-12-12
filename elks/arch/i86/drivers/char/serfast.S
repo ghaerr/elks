@@ -76,3 +76,35 @@ asm_fast_irq3:
 	add	$4,%sp			// skip the trampoline DS:*irq
 	iret
 #endif
+
+#ifdef CONFIG_FAST_IRQ1_NECV25
+//
+// Entry for console-serial-necv25 top half interrupt handler, called by CALLF within dynamic handler
+//
+    .extern	sercon_fast_irq1_necv25
+    .global asm_fast_irq1_necv25
+asm_fast_irq1_necv25:
+    push    %ax         // save regs, uses 18 bytes of current stack
+    push    %bx
+    push    %cx
+    push    %dx
+    push    %ds
+
+    // Recover kernel data segment
+    // Was pushed by the CALLF of the dynamic handler
+    mov	%sp,%bx
+    mov	%ss:12(%bx),%ds
+
+    call	sercon_fast_irq1_necv25 // call special 2nd part of top half C handler
+                                    // which doesn't use any SS/SP/BP addressing
+
+    .word   0x920f                  // NEC V25 specific FINT (End Of Interrupt) instruction
+
+    pop     %ds			// restore regs
+    pop     %dx
+    pop     %cx
+    pop     %bx
+    pop     %ax
+    add     $4,%sp      // skip the trampoline DS:*irq
+    iret
+#endif
