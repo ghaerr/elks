@@ -159,9 +159,10 @@ void arch_setup_sighandler_stack(register struct task_struct *t,
  * To start a child process we need to craft for it a kernel stack. The
  * child user stack must be the same than the caller user stack. The stack
  * state inside do_fork for the CALLER of sys_fork() looks like this:
+ *  [low address <---> high address ]
  *
  *             Kernel Stack                              User Stack
- *     ?? ip bx cx dx di si                              bp ip cs f
+ *     ?? ip bx cx dx di si orig_ax es ds sp ss          bp ip cs f
  *           --------------
  *           syscall params
  *

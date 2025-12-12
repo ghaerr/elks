@@ -42,7 +42,6 @@
 !       related nonsense. This way we need only one dedicated int stack
 !
 */
-        .global ret_from_syscall
         .extern schedule
         .extern do_signal
         .extern do_IRQ
@@ -172,18 +171,6 @@ save_regs:
 //      Done.
 //
 
-//
-// Called by run_init_process after sys_execve for the init task (/bin/init).
-// Stack setup by kfork_proc(init_task) and arch_build_stack.
-// Switch to kernel stack specified by 'current' and return ax=0 into user mode.
-//
-ret_from_syscall:
-        mov     current,%bx           // Ensure we have the
-        lea     TASK_USER_BX(%bx),%sp // right kernel SP
-        xor     %ax,%ax               // Just in case we are starting a new task
-        push    %ax
-        cli
-        jmp     restore_regs
 /*
 !
 !       ----------PROCESS INTERRUPT----------
@@ -344,6 +331,27 @@ restore_regs:
 //      Iret restores CS:IP and F (thus including the interrupt bit)
 //
         iret
+
+/*
+ *      ret_from_sys_call()
+ *
+ *      Called by run_init_process after sys_execve for the init task /bin/init.
+ *      The stack is previously setup by kfork_proc(init_task) and arch_build_stack.
+ *      Also called by arch_build_stack via do_fork when a new child process starts
+ *      execution to exit the kernel to user mode.
+ *
+ *      ret_from_sys_call() switches to the kernel stack specified by 'current' and
+ *      returns into user mode with AX=0. It does not return to the caller.
+ */
+
+        .global ret_from_syscall
+ret_from_syscall:
+        mov     current,%bx           // Ensure we have the
+        lea     TASK_USER_BX(%bx),%sp // right kernel SP
+        xor     %ax,%ax               // Just in case we are starting a new task
+        push    %ax
+        cli
+        jmp     restore_regs
 
 /*
  *      tswitch()
