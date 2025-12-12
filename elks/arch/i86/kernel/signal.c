@@ -27,6 +27,7 @@ void do_signal(void)
     unsigned int signr;
     sigset_t mask;
 
+top:
     signr = 1;
     mask = (sigset_t)1;
     while (current->signal) {
@@ -53,8 +54,8 @@ void do_signal(void)
 		wake_up(&current->p_parent->child_wait);
 		schedule();
 		/* task continues here after SIGCONT */
-		current->signal = 0;                    /* clear any SIGINT/SIGQUIT */
-		return;
+		current->signal &= ~(SM_SIGINT|SM_SIGQUIT|SM_SIGSTOP|SM_SIGTSTP);
+		goto top;
 	    }
 	    else {					/* Default Terminate */
 #if UNUSED
@@ -80,7 +81,7 @@ void do_signal(void)
 	    }
 	    return;
 	}
-	else /* else (*sd == SIGDISP_IGN) Ignore */
+	else /* (*sd == SIGDISP_IGN) Ignore */
 	    debug_sig("SIGNAL(%P) sig %d ignored\n", signr);
     }
 }

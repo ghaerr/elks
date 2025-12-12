@@ -864,11 +864,8 @@ do_kill(argc, argv)
 
 	while (argc-- > 1) {
 		cp = *++argv;
-		pid = 0;
-		while (isdecimal(*cp))
-			pid = pid * 10 + *cp++ - '0';
-
-		if (*cp) {
+		pid = atoi(cp);
+		if (!pid) {
 			fprintf(stderr, "Non-numeric pid\n");
 			return;
 		}
