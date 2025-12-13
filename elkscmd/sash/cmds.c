@@ -875,7 +875,7 @@ do_kill(argc, argv)
 
 	while (argc-- > 1) {
 		if (!(pid = atoi(*++argv))) {
-			fprintf(stderr, "Non-numeric pid\n");
+			fprintf(stderr, "Bad pid\n");
 			return;
 		}
 

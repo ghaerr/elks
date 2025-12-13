@@ -30,8 +30,9 @@ struct signames {
 int atoi(const char *s)
 {
     int n = 0;
-    int neg = *s == '-';
+    int neg = 0;
 
+    if (*s == '-') ++s, neg = 1;
     while ((unsigned) (*s - '0') <= 9u)
         n = n * 10 + *s++ - '0';
     return neg ? 0u - n : n;
@@ -50,7 +51,7 @@ int signum(char *str)
 
 void usage(void)
 {
-	errmsg("usage: kill [-<signo>|-INT|-KILL|-HUP] pid ...\n");
+	errmsg("usage: kill [-<signo>|-INT|-KILL|...] pid ...\n");
 	exit(1);
 }
 
