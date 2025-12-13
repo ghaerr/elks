@@ -80,10 +80,10 @@ int main(int argc, char **argv)
     if (tcgetattr(fd, &org) >= 0) {
         new = org;
         new.c_lflag &= ~(ICANON | ISIG | ECHO | ECHOE | ECHONL);
-        new.c_iflag &= ~(ICRNL);
+        new.c_iflag |= ICRNL;
         new.c_cflag |= CS8 | CREAD;
-        new.c_cc[VMIN] = 255;           /* min bytes to read if VTIME = 0*/
-        new.c_cc[VTIME] = 1;            /* intercharacter timeout if VMIN > 0, timeout if VMIN = 0*/
+        new.c_cc[VMIN] = 255; /* min bytes to read if VTIME = 0*/
+        new.c_cc[VTIME] = 1;  /* intercharacter timeout if VMIN > 0, timeout if VMIN = 0*/
         tcsetattr(fd, TCSAFLUSH, &new);
     } else errmsg("Can't set termios\n");
     signal(SIGINT, sig_handler);

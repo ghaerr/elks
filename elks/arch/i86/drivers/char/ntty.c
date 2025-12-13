@@ -362,7 +362,7 @@ again:
             ch = chq_getch(&tty->inq);
         }
 
-        if ((tty->termios.c_iflag & ICRNL) && (ch == '\r'))
+        if ((ch == '\r') && (tty->termios.c_iflag & ICRNL))
             ch = '\n';
 
         if (icanon) {
