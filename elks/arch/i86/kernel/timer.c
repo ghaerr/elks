@@ -4,11 +4,11 @@
 #include <linuxmt/timer.h>
 #include <linuxmt/ntty.h>
 #include <linuxmt/fixedpt.h>
-
 #include <arch/io.h>
 #include <arch/irq.h>
 #include <arch/param.h>
 #include <arch/ports.h>
+#include "../drivers/block/ssd.h"   /* for CONFIG_BLK_DEV_SSD_TEST */
 
 /*
  *  Timer tick routine
@@ -69,40 +69,35 @@ void timer_tick(int irq, struct pt_regs *regs)
 #endif
 }
 
-/* timer tick bottom half */
+/* timer tick bottom half, always runs at intr_count == 1 */
 void timer_bh(void)
 {
-    if (intr_count != 1) printk("{t%d}", intr_count);
-
     run_timer_list();
 
-#ifdef CONFIG_CPU_USAGE
-    calc_cpu_usage();
-#endif
-
-#if (defined(CONFIG_CHAR_DEV_RS) && (defined(CONFIG_FAST_IRQ4) || defined(CONFIG_FAST_IRQ3))) \
+#if (defined(CONFIG_CHAR_DEV_RS) &&                               \
+        (defined(CONFIG_FAST_IRQ4) || defined(CONFIG_FAST_IRQ3))) \
     || defined(CONFIG_FAST_IRQ1_NECV25)
-    /* uncomment to process serial input every 10ms instead of serial irq bottom half */
-    serial_bh();        /* check if received serial chars and call wake_up*/
+
+    /* call serial bottom half every 10ms instead of after every byte received */
+    serial_bh();        /* process serial input and call wake_up */
 #endif
 
 #if defined(CONFIG_BLK_DEV_SSD_TEST) && defined(CONFIG_ASYNCIO)
-    {
-        extern jiff_t ssd_timeout;
-        extern void ssd_io_complete(void);
-        if (ssd_timeout && jiffies >= ssd_timeout) {
-            ssd_io_complete();
-        }
-    }
+    if (ssd_timeout && time_after(jiffies, ssd_timeout))
+        ssd_io_complete();
+#endif
+
+#ifdef CONFIG_CPU_USAGE
+    calc_cpu_usage();
 #endif
 
 #if defined(CONFIG_CONSOLE_DIRECT) && !defined(CONFIG_ARCH_SWAN)
     /* spin timer wheel in upper right of screen*/
     if (spin_on && !(jiffies & 7)) {
         static unsigned char wheel[4] = {'-', '\\', '|', '/'};
-        static int c = 0;
+        static int c;
 
-        pokeb((79 + 0*80) * 2, VideoSeg, wheel[c++ & 0x03]);
+        pokeb((79 + 0*80) * 2, VideoSeg, wheel[++c & 0x03]);
     }
 #endif
 }
