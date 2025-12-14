@@ -109,6 +109,7 @@ struct task_struct {
 extern struct task_struct *task;
 extern struct task_struct *current;
 extern struct task_struct *next_task_slot;
+extern struct task_struct idle_task;
 extern int max_tasks;
 extern int task_slots_unused;
 

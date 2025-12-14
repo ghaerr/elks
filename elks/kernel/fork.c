@@ -10,7 +10,7 @@
 
 int task_slots_unused;
 struct task_struct *next_task_slot;
-pid_t last_pid = -1;
+pid_t last_pid = 0;
 
 static pid_t get_pid(void)
 {
@@ -46,7 +46,7 @@ struct task_struct *find_empty_process(void)
     t = next_task_slot;
     while (t->state != TASK_UNUSED) {
         if (++t >= &task[max_tasks])
-            t = &task[1];
+            t = &task[0];
     }
     next_task_slot = t;
     task_slots_unused--;

@@ -192,13 +192,11 @@ int main(int argc, char **argv)
     printf("  PID");
     if (f_listall) printf("  PPID");
     printf("   GRP  TTY USER STAT ");
-#ifdef CONFIG_CPU_USAGE
-    printf("CPU");
-#endif
+    printf(f_listall? "TSK": "CPU");
     printf(" ");
     if (f_listall) printf("CSEG DSEG ");
     printf(" HEAP  FREE   SIZE COMMAND\n");
-    for (j = 1; j < maxtasks; j++) {
+    for (j = 0; j < maxtasks; j++) {
         if (!memread(fd, off + j*sizeof(struct task_struct), ds, &task_table, sizeof(task_table))) {
             printf("no memread\n");
             return 1;
@@ -228,16 +226,16 @@ int main(int argc, char **argv)
         printf(" %5d %4s %-8s%c ",
                 task_table.pgrp,
                 tty_name(fd, (unsigned int)task_table.tty, ds),
-                (pwent ? pwent->pw_name : "unknown"),
-                c);
+                (pwent ? pwent->pw_name : "unknown"), c);
 
-#ifdef CONFIG_CPU_USAGE
-        {
+        if (f_listall)
+            printf("%3d ", j);
+        else {
             /* Round up, then divide by 2 for %. Change if SAMP_FREQ not 2 */
             unsigned long cpu_percent = (task_table.average + FIXED_HALF) >> 1;
             printf("%3d", FIXED_INT(cpu_percent));
         }
-#endif
+
         /* CSEG*/
         cseg = (word_t)task_table.mm[SEG_CODE];
         if (f_listall) printf(" %4x ",

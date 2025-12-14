@@ -100,18 +100,19 @@ static void init_task(void);
 void start_kernel(void)
 {
     printk("START\n");
-    early_kernel_init();        /* read bootopts using kernel temp stack */
+    early_kernel_init();            /* read bootopts using kernel temp stack */
     task = heap_alloc(max_tasks * sizeof(struct task_struct),
         HEAP_TAG_TASK|HEAP_TAG_CLEAR);
     if (!task) panic("No task mem");
 
-    sched_init();               /* set us (the current stack) to be idle task #0*/
-    setsp(&task->t_regs.ax);    /* change to idle task stack */
-    kernel_init();              /* continue init running on idle task stack */
+    sched_init();                   /* set us (the current stack) to be idle task */
+    setsp(&task->t_regs.ax);        /* change to large (unused task #0) stack */
+    kernel_init();                  /* continue init running on large stack */
+    setsp(&idle_task.t_regs.ax);    /* change to small idle task stack */
 
-    /* fork and setup procedure init_task() to run as task #1 on reschedule */
+    /* fork and setup procedure init_task() to run as task #0 (pid 1) on reschedule */
     kfork_proc(init_task);
-    wake_up_process(&task[1]);
+    wake_up_process(&task[0]);
 
     /*
      * We are now the idle task. We won't run unless no other process can run.

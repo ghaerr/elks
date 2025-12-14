@@ -15,12 +15,14 @@
 
 #include <arch/irq.h>
 
-#define idle_task task[0]
+//#define idle_task task[0]
 
 struct task_struct *task;           /* dynamically allocated task array */
 struct task_struct *current;
 struct task_struct *previous;
 int max_tasks = MAX_TASKS;
+
+struct task_struct idle_task;
 
 void add_to_runqueue(register struct task_struct *p)
 {
@@ -72,14 +74,16 @@ void schedule(void)
          * quite legal. We just dont switch then */
          panic("sched from int\n");
     }
+
+    /* Disallow rescheduling during startup when idle task is the only task */
+    if ((int)last_pid <= 0) {
+        printk("SCHED at startup\n");
+        return;
+    }
 #endif
 
     if (bh_active)
         do_bottom_half();
-
-    /* Disallow rescheduling during startup when idle task is the only task */
-    if ((int)last_pid <= 0)
-        return;
 
     /* We have to let a task exit! */
     if (prev->state == TASK_EXITING)
@@ -192,13 +196,13 @@ void INITPROC sched_init(void)
         (--t)->state = TASK_UNUSED;
     } while (t > task);
 
-    current = task;
+    t = &idle_task;
+    current = t;
     next_task_slot = task;
     task_slots_unused = max_tasks;
 /*
  *  Now create task 0 to be ourself.
  */
-    kfork_proc(NULL);
 
     t->state = TASK_RUNNING;
     t->next_run = t->prev_run = t;
