@@ -148,35 +148,35 @@ void tty_freeq(struct tty *tty)
 
 int tty_open(struct inode *inode, struct file *file)
 {
-    struct tty *otty;
+    struct tty *tty;
     int err;
 
-    if (!(otty = determine_tty(inode->i_rdev)))
+    if (!(tty = determine_tty(inode->i_rdev)))
         return -ENODEV;
 
     debug_tty("TTY open pid %P\n");
-#if UNUSED
-    memcpy(&otty->termios, &def_vals, sizeof(struct termios));
-#endif
 
-    if ((file->f_flags & O_EXCL) && (otty->flags & TTY_OPEN))
+    if ((file->f_flags & O_EXCL) && (tty->flags & TTY_OPEN))
         return -EBUSY;
 
     /* don't call driver on /dev/tty open*/
     if (MINOR(inode->i_rdev) == 255)
         return 0;
 
+#if UNUSED
+    memcpy(&tty->termios, &def_vals, sizeof(struct termios));
+#endif
     debug_tty("TTY open pid %P session %d pgrp %d ttygrp %d tty %x\n",
-        current->session, current->pgrp,  otty->pgrp, current->tty);
-    err = otty->ops->open(otty);
+        current->session, current->pgrp,  tty->pgrp, current->tty);
+    err = tty->ops->open(tty);
     if (!err) {
         if (!(file->f_flags & O_NOCTTY) && current->session == current->pid
-                && current->tty == NULL && otty->pgrp == 0) {
+                && current->tty == NULL && tty->pgrp == 0) {
             debug_tty("TTY setting pgrp %d pid %P\n", current->pgrp);
-            otty->pgrp = current->pgrp;
-            current->tty = otty;
+            tty->pgrp = current->pgrp;
+            current->tty = tty;
         }
-        otty->flags |= TTY_OPEN;
+        tty->flags |= TTY_OPEN;
     }
     return err;
 }
