@@ -312,18 +312,19 @@ int do_login() {
 	return 0; /* always OK */
 }
 
-void toolong() {	/* session timeout, close connection */
+/* session timeout, close connection */
+void sigalrm(int sig)
+{
 	char cmd_buf[CMDBUFSIZ];
-
 	sprintf(cmd_buf, "Timeout (%d seconds): closing control connection", timeout);
 	send_reply(421, cmd_buf);
 }
 
-void reapchildren()
+void sigchild(int sig)
 {
-	while (wait4(-1, NULL, WNOHANG, NULL) > 0)
-		;
-	signal(SIGCHLD, reapchildren);
+	signal(SIGCHLD, sigchild);
+	while (waitpid(-1, NULL, WNOHANG) > 0)
+		continue;
 }
 
 int checknum(char *s) {
@@ -657,11 +658,12 @@ void usage() {
 
 
 int main(int argc, char **argv) {
-	int listenfd, ret;
+	int listenfd, fd, ret;
+	pid_t pid;
 	unsigned int myport = FTP_PORT;
 	struct sockaddr_in servaddr, myaddr;
+	struct sockaddr_in client;
 	char *cp;
-
 
 	while (--argc) {
 		argv++;
@@ -720,44 +722,43 @@ int main(int argc, char **argv) {
 	}
 	if (!nofork) {
 		/* become daemon, debug output on 1 and 2*/
-		if ((ret = fork()) == -1) {
-			fprintf(stderr, "ftpd: Can't fork to become daemon\n");
+		if ((pid = fork()) == -1) {
+			perror("ftpd");
 			exit(1);
 		}
-		if (ret) exit(0);
-		ret = open("/dev/console", O_RDWR);
+		if (pid) exit(0);
+		fd = open("/dev/console", O_RDWR);
 		close(STDIN_FILENO);
-		dup2(ret, STDOUT_FILENO);
-		dup2(ret, STDERR_FILENO);
-		if (ret > STDERR_FILENO)
-			close(ret);
+		dup2(fd, STDOUT_FILENO);
+		dup2(fd, STDERR_FILENO);
+		if (fd > STDERR_FILENO)
+			close(fd);
 		setsid();
+		signal(SIGINT, SIG_IGN);
 	} else
 		printf("Debug: Not disconnecting from terminal.\n");
+	signal(SIGCHLD, sigchild);
 
-	struct sockaddr_in client;
 	ret = sizeof(client);
 	while (1) {
-		int kcount = 0;				/* avoid looping in case of errors */
+		int kcount = 0;					/* avoid looping in case of errors */
 
 		if ((controlfd = accept(listenfd, (struct sockaddr *)&client, (unsigned int *)&ret)) < 0) {
-			/* socket code bug, retruns error code 512 on interrupt */
-			if ((errno == 512 || errno == EINTR) && !kcount++) continue;
-			perror("Accept error");
+			/* socket code bug, retruns ERESTARTSYS on interrupt */
+			if ((errno == ERESTARTSYS || errno == EINTR) && !kcount++) continue;
+			perror("ftpd accept");
 			break;
 		}
 
-		waitpid(-1, NULL, WNOHANG);		/* Insurance, handled in reapchildren() */
+		waitpid(-1, NULL, WNOHANG);     /* reap previous accept */
 		if (debug) printf("Accepted connection from %s:%u.\n",
 			in_ntoa(client.sin_addr.s_addr), ntohs(client.sin_port));
 
-		if ((ret = fork()) == -1)       /* handle new accept*/
-			fprintf(stderr, "ftpd: No processes\n");
-		else if (ret != 0) {
+		if ((pid = fork()) == -1)       /* handle new accept*/
+			perror("ftpd");
+		else if (pid != 0) {
 			close(controlfd);
-			signal(SIGCHLD, reapchildren);
-		} else {					/* child process */
-
+		} else {						/* child process */
 			int datafd = -1, code, quit = FALSE;
 			unsigned int client_port = 0;
 			//char type = 'I';		/* treat everything as binary */
@@ -789,7 +790,7 @@ int main(int argc, char **argv) {
 
 			/* Main command loop */
 			while(1) {
-				signal(SIGALRM, toolong);
+				signal(SIGALRM, sigalrm);
 				alarm(timeout);
 				bzero(command, (int)sizeof(command));
 				if (read(controlfd, command, sizeof(command)) <= 0) 

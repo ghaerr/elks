@@ -37,70 +37,58 @@ static pid_t term_init(int *pty_fd)
 	int tty_fd;
 	pid_t pid;
 	char pty_name[12];
+	struct termios termios;
 
 again:
 	strcpy(pty_name, "/dev/ptyp");		/* master side (PTY) /dev/ptyp0 = 2,8 */
 	strcat(pty_name, itoa(n));
 	if ((*pty_fd = open(pty_name, O_RDWR)) < 0) {
-		if ((errno == EBUSY) && (n < 3)) {
-			n++;
+		if (errno == EBUSY && n++ < 3)
 			goto again;
-		}
-		errmsg("telnetd: Can't create pty ");
-		errstr(pty_name);
-		errmsg("\n");
+		perror(pty_name);
 		return -1;
 	}
-	signal(SIGCHLD, SIG_IGN);
-	signal(SIGINT, SIG_IGN);
 	
 	if ((pid = fork()) == -1) {
 		perror("telnetd");
 		return -1;
 	}
 	if (!pid) {
+		setsid();                       /* new process group for new tty in ps(1) */
+		close(*pty_fd);
 		close(STDIN_FILENO);
 		close(STDOUT_FILENO);
-		close(STDERR_FILENO);
-		close(*pty_fd);
-
-		setsid();	   /* required to get the tty right in ps(1) */
-		pty_name[5] = 't'; /* results in /dev/ttyp%d, slave side (TTY) /dev/ttyp0 = 4,8 */
+		pty_name[5] = 't';              /* slave side (TTY) /dev/ttyp0 = 4,8 */
 		if ((tty_fd = open(pty_name, O_RDWR)) < 0) {
-			errmsg("telnetd: Can't open pty ");
-			errstr(pty_name);
-			errmsg("\n");
+			perror(pty_name);
 			exit(1);
 		}
+		close(STDERR_FILENO);
 
 		/* set login tty to sane mode, since getty not called*/
-{
-		struct termios termios;
 		tcgetattr(tty_fd, &termios);
-
 		termios.c_lflag |= ISIG | ICANON | ECHO | ECHOE;
 		termios.c_lflag &= ~(IEXTEN | ECHOK | NOFLSH | ECHONL);
 		termios.c_iflag |= BRKINT | ICRNL;
-		termios.c_iflag &= ~(IGNBRK | IGNPAR | PARMRK | INPCK | ISTRIP | INLCR | IGNCR | IXON | IXOFF | IXANY);
+		termios.c_iflag &= ~(IGNBRK | IGNPAR | PARMRK | INPCK | ISTRIP
+                                    | INLCR | IGNCR | IXON | IXOFF | IXANY);
 		termios.c_oflag |= OPOST | ONLCR;
 		termios.c_oflag &= ~XTABS;
 		termios.c_cflag &= ~PARENB;
 		termios.c_cflag |= CS8 | CREAD | HUPCL;
-		termios.c_cflag |= CLOCAL;			/* ignore modem control lines*/
+		termios.c_cflag |= CLOCAL;	    /* ignore modem control lines*/
 		termios.c_cc[VMIN] = 1;
 		termios.c_cc[VTIME] = 0;
-
 		/* turn off echo - not needed with telnet ECHO option on*/
 		//termios.c_lflag &= ~ECHO;
 		tcsetattr(tty_fd, TCSANOW, &termios);
-}
 
 		dup2(tty_fd, STDIN_FILENO);
 		dup2(tty_fd, STDOUT_FILENO);
 		dup2(tty_fd, STDERR_FILENO);
 		execv(binlogin[0], binlogin);	/* try /bin/login first*/
-		execv(binsh[0], binsh);		/* then /bin/sh for small systems*/
-		perror("execv");
+		execv(binsh[0], binsh);         /* then /bin/sh for small systems*/
+		perror(binsh[0]);
 		exit(1);
 	}
 	return pid;
@@ -189,11 +177,11 @@ static void client_loop(int fdsock, int fdterm)
     }
 }
 
-void cleanup()
+void sigchild(int sig)
 {
-	while (wait4(-1, NULL, WNOHANG, NULL) > 0)
-		;
-	signal(SIGCHLD, cleanup);
+	signal(SIGCHLD, sigchild);
+	while (waitpid(-1, NULL, WNOHANG) > 0)
+		continue;
 }
 
 int main(int argc, char **argv)
@@ -243,19 +231,20 @@ int main(int argc, char **argv)
 	}
 
 	/* become daemon, debug output on 1 and 2 */
-	if ((ret = fork()) == -1) {
+	if ((pid = fork()) == -1) {
 		perror("telnetd");
 		return 1;
 	}
-	if (ret) exit(0);
+	if (pid) exit(0);
 	fd = open("/dev/console", O_RDWR);
 	close(STDIN_FILENO);
 	dup2(fd, STDOUT_FILENO);
 	dup2(fd, STDERR_FILENO);
 	if (fd > STDERR_FILENO)
 		close(fd);
-	setsid();	/* create new process group */
-	signal(SIGCHLD, cleanup);
+	setsid();	                        /* create new process group */
+	signal(SIGINT, SIG_IGN);
+	signal(SIGCHLD, sigchild);
 
 	while (1) {
 		unsigned int len = sizeof(addr_in);
@@ -270,9 +259,9 @@ int main(int argc, char **argv)
 
 		waitpid(-1, NULL, WNOHANG);		/* reap previous accepts*/
 
-		if ((ret = fork()) == -1)		/* handle new accept*/
+		if ((pid = fork()) == -1)		/* handle new accept*/
 			perror("telnetd");
-		else if (ret == 0) {			/* child processing */
+		else if (pid == 0) {			/* child processing */
 
 #if 0 /* test code for accept and getpeername */
 			fprintf(stderr, "accept from %s:%u\n", in_ntoa(addr_in.sin_addr.s_addr),
@@ -286,9 +275,8 @@ int main(int argc, char **argv)
 			pid = term_init(&pty_fd);
 			if (pid != -1) {
 				client_loop (connectionfd, pty_fd);
-
-				kill (pid, SIGKILL);
-				waitpid(pid, NULL, 0);
+				kill(pid, SIGKILL);
+				waitpid(pid, NULL, 0);  /* wait for termination */
 			}
 			close(connectionfd);
 			close(pty_fd);
