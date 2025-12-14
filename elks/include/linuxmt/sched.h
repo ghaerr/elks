@@ -31,15 +31,10 @@ struct signal_struct {
 #define SEG_CODE        0
 #define SEG_DATA        1
 
+/* ordering this struct saves kernel code space using byte offsets for freq accesses */
 struct task_struct {
-
-/* Executive stuff */
-    struct xregs                t_xregs;    /* CS and kernel SP */
-    segoff_t                    t_enddata;  /* start of heap = end of data+bss */
-    segoff_t                    t_endbrk;   /* current break (end of heap) */
-    segoff_t                    t_begstack; /* start SP, argc/argv strings above */
-    segoff_t                    t_endseg;   /* end of data seg (data+bss+heap+stack) */
-    segoff_t                    t_minstack; /* min stack size */
+    unsigned char               state;
+    unsigned char               ticks;          /* CONFIG_CPU_USAGE counts 2 secs */
 
 /* Kernel info */
     pid_t                       pid;
@@ -54,27 +49,32 @@ struct task_struct {
     gid_t                       sgid;
 
 /* Scheduling + status variables */
-    unsigned char               state;
-    struct wait_queue           child_wait;
-    jiff_t                      timeout;        /* for select() */
-    struct wait_queue           *waitpt;        /* Wait pointer */
-    struct wait_queue           *poll[MAX_POLLFD]; /* polled queues */
     struct task_struct          *next_run;
     struct task_struct          *prev_run;
-    struct file_struct          files;          /* File system structure */
-    struct fs_struct            fs;             /* File roots */
-    struct segment              *mm[MAX_SEGS];  /* App code/data segments */
-    struct tty                  *tty;
     struct task_struct          *p_parent;
-    int                         exit_status;    /* process exit status*/
     struct inode                *t_inode;
+    struct tty                  *tty;
     sigset_t                    signal;         /* Signal status */
-    struct signal_struct        sig;            /* Signal block */
+    jiff_t                      timeout;        /* for select() */
+    int                         exit_status;    /* Stopped or exit status */
+    struct fs_struct            fs;             /* File roots */
+    struct wait_queue           *waitpt;        /* Wait pointer */
+    struct wait_queue           *poll[MAX_POLLFD]; /* select() poll queues */
+    struct segment              *mm[MAX_SEGS];  /* App code/data segments */
+    struct file_struct          files;          /* Open files */
+    struct signal_struct        sig;            /* Signal actions */
+    struct wait_queue           child_wait;     /* Wait for stopped/zombie status */
 
-#ifdef CONFIG_CPU_USAGE
+/* Executive stuff */
+    struct xregs                t_xregs;        /* User CS and kernel SP */
+    segoff_t                    t_enddata;      /* start of heap = end of data+bss */
+    segoff_t                    t_endbrk;       /* current break (end of heap) */
+    segoff_t                    t_begstack;     /* start SP, argc/argv strings above */
+    segoff_t                    t_endseg;       /* end of dataseg (data+bss+heap+stack) */
+    segoff_t                    t_minstack;     /* min stack size */
+
+/* Other */
     unsigned long               average;        /* fixed point CPU % usage */
-    unsigned char               ticks;          /* # jiffies / 2 seconds */
-#endif
 
 #ifdef CONFIG_SUPPLEMENTARY_GROUPS
 #define NGROUPS     13

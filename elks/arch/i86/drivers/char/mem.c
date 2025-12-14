@@ -118,16 +118,12 @@ static int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg
         retword = (unsigned)&_heap_all;
         break;
     case MEM_GETJIFFADDR:
+    case MEM_GETUPTIME:
         retword = (unsigned)&jiffies;
         break;
     case MEM_GETSEGALL:
         retword = (unsigned)&_seg_all;
         break;
-    case MEM_GETUPTIME:
-#ifdef CONFIG_CPU_USAGE
-        retword = (unsigned)&uptime;
-        break;
-#endif
         /* fall thru */
     default:
         return -EINVAL;
