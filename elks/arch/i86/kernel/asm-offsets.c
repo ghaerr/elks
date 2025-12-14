@@ -6,7 +6,7 @@ extern int TASK_USER_BX, TASK_USER_SI, TASK_USER_DI;
 
 void asm_offsets(void)
 {
-    TASK_KRNL_SP = offsetof(struct task_struct, t_xregs.ksp);
+    TASK_KRNL_SP = offsetof(struct task_struct, t_ksp);
     TASK_USER_DS = offsetof(struct task_struct, t_regs.ds);
     TASK_USER_AX = offsetof(struct task_struct, t_regs.ax);
     TASK_USER_SS = offsetof(struct task_struct, t_regs.ss);

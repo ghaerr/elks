@@ -33,11 +33,6 @@ struct pt_regs {
     __u16       ax, bx, cx, dx, di, si, orig_ax, es, ds, sp, ss;
 };
 
-struct xregs {
-    __u16       cs;     /* code segment to use in arch_setup_user_stack()*/
-    __u16       ksp;    /* saved kernel SP used by twsitch()*/
-};
-
 /* ordering of saved registers on user stack after interrupt entry*/
 struct uregs {
     __u16       bp, ip, cs, f;

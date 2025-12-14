@@ -539,7 +539,6 @@ static void FARPROC finalize_exec(struct inode *inode, segment_s *seg_code,
         currentp->mm[SEG_DATA] = seg_data;
     }
 
-    currentp->t_xregs.cs = seg_code->base;
     currentp->t_regs.ss = currentp->t_regs.es = currentp->t_regs.ds = seg_data->base;
     currentp->t_regs.sp = currentp->t_begstack;
 
@@ -592,7 +591,7 @@ static void FARPROC finalize_exec(struct inode *inode, segment_s *seg_code,
      * Arrange for our return from sys_execve onto the new
      * user stack and to CS:entry of the user process.
      */
-    arch_setup_user_stack(currentp, entry);
+    arch_setup_user_stack(currentp, entry, seg_code->base);
 }
 
 #ifdef CONFIG_EXEC_OS2

@@ -66,7 +66,7 @@ struct task_struct {
     struct wait_queue           child_wait;     /* Wait for stopped/zombie status */
 
 /* Executive stuff */
-    struct xregs                t_xregs;        /* User CS and kernel SP */
+    segoff_t                    t_ksp;          /* kernel SP used by tswitch */
     segoff_t                    t_enddata;      /* start of heap = end of data+bss */
     segoff_t                    t_endbrk;       /* current break (end of heap) */
     segoff_t                    t_begstack;     /* start SP, argc/argv strings above */
