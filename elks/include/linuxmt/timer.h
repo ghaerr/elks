@@ -36,6 +36,4 @@ void spin_timer(int);
 void enable_timer_tick(void);
 void disable_timer_tick(void);
 
-extern jiff_t uptime;       /* uptime for CONFIG_CPU_USAGE */
-
 #endif

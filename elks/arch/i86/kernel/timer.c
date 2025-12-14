@@ -21,15 +21,12 @@ volatile jiff_t jiffies;
 static int spin_on;
 
 #ifdef CONFIG_CPU_USAGE
-jiff_t uptime;
-
 static void calc_cpu_usage(void)
 {
     static int count = SAMP_FREQ;
     struct task_struct *p;
 
     current->ticks++;
-    uptime++;
     if (--count <= 0) {
         count = SAMP_FREQ;
         //unsigned int total = 0;

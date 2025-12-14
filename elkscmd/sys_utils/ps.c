@@ -19,6 +19,7 @@
 #include <linuxmt/major.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/fixedpt.h>
+#include <arch/irq.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -34,6 +35,7 @@
 #include <libgen.h>
 
 #define LINEARADDRESS(off, seg)     ((off_t) (((off_t)seg << 4) + off))
+#define MK_FP(seg,off) ((void __far *)((((unsigned long)(seg))<<16) | ((unsigned)(off))))
 
 static int maxtasks;
 
@@ -148,25 +150,27 @@ int main(int argc, char **argv)
     }
 
     if ((fd = open("/dev/kmem", O_RDONLY)) < 0) {
-        printf("ps: no /dev/kmem\n");
+        printf("no /dev/kmem\n");
         return 1;
     }
     if (ioctl(fd, MEM_GETDS, &ds) < 0 ||
         ioctl(fd, MEM_GETMAXTASKS, &maxtasks) < 0) {
-        printf("ps: ioctl mem_getds\n");
+        printf("no mem_getds\n");
         return 1;
     }
 
-#ifdef CONFIG_CPU_USAGE
     if (f_uptime) {
         jiff_t uptime;
         unsigned int upoff;
 
-        if (ioctl(fd, MEM_GETUPTIME, &upoff) < 0 ||
-                !memread(fd, upoff, ds, &uptime, sizeof(uptime))) {
-            printf("ps: ioctl mem_getuptime\n");
+        if (ioctl(fd, MEM_GETUPTIME, &upoff) < 0) {
+            printf("no mem_getuptime\n");
             return 1;
         }
+        jiff_t __far *puptime = MK_FP(ds, upoff);
+        clr_irq();
+        uptime = *puptime;
+        set_irq();
 
         unsigned long n = uptime / HZ;
         int days = n / (24 * 3600L);
@@ -179,10 +183,9 @@ int main(int argc, char **argv)
             days, hours, hours == 1? "": "s", minutes, minutes == 1? "": "s");
         return 0;
     }
-#endif
 
     if (ioctl(fd, MEM_GETTASK, &off) < 0) {
-        printf("ps: ioctl mem_gettask\n");
+        printf("no mem_gettask\n");
         return 1;
     }
 
@@ -197,7 +200,7 @@ int main(int argc, char **argv)
     printf(" HEAP  FREE   SIZE COMMAND\n");
     for (j = 1; j < maxtasks; j++) {
         if (!memread(fd, off + j*sizeof(struct task_struct), ds, &task_table, sizeof(task_table))) {
-            printf("ps: memread\n");
+            printf("no memread\n");
             return 1;
         }
 
