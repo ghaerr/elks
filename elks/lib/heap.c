@@ -102,7 +102,6 @@ void heap_free (void * data)
 {
 	heap_s * h = ((heap_s *) (data)) - 1;  // back to header
 
-
 	// Free block will be inserted to free list:
 	//   - tail if merged to previous or next free block
 	//   - head if still alone to increase 'exact hit'

@@ -101,7 +101,7 @@ static void init_task(void);
  * performing the majority of kernel initialization. After that, the stack
  * is switched again to the tiny idle task struct and then becomes the idle
  * task. Must be compiled using -fno-defer-pop, as otherwise stack pointer
- * cleanup is delayed after function calls, which interferes SP resets.
+ * cleanup is delayed after function calls, which interferes with SP resets.
  */
 void start_kernel(void)
 {
@@ -109,11 +109,11 @@ void start_kernel(void)
     early_kernel_init();            /* read bootopts using kernel temp stack */
 
     /*
-     * Allocate the task array + smaller task struct for idle task.
+     * Allocate the task array + smaller task struct for the idle task.
      * The idle task struct has a smaller stack in t_kstack[] and no t_regs.
      * This works because the idle task always runs at intr_count 1, so
      * interrupts will always save registers onto istack, and never
-     * to the t_regs struct at the top of a normal task struct.
+     * to the t_regs struct at the end of a normal task struct.
      */
     task = heap_alloc(max_tasks * sizeof(struct task_struct) +
         TASK_KSTACK + IDLESTACK_BYTES, HEAP_TAG_TASK|HEAP_TAG_CLEAR);
@@ -130,10 +130,11 @@ void start_kernel(void)
     wake_up_process(&task[0]);
 
     /*
-     * Set SP to the idle task struct. We are now the idle task and are only
+     * Set SP to the idle task struct. We then become the idle task and are only
      * switched to when the last runnable user mode process sleeps from its
-     * kernel stack and calls schedule().
-     * As a result, the idle task always runs with intr_count 1.
+     * kernel stack and/or schedule() is called.
+     * As a result, the idle task always runs with intr_count 1, which guarantees
+     * interrupt register saves will be on the interrupt stack, not the idle stack.
      *
      * NOTE: Any calls to printk afer the small idle stack is set below can cause idle
      * stack overflow. The good news is that the overflow shouldn't cause much harm
@@ -146,7 +147,7 @@ void start_kernel(void)
      * In the call to schedule below, the init_task function will run, which
      * completes kernel initialization by mounting the root filesystem, then
      * loads an executable and executes ret_from_syscall, and the system
-     * enters user mode.
+     * enters user mode until the next clock tick or system call.
      */
     while (1) {
 #ifdef CHECK_KSTACK
