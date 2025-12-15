@@ -83,7 +83,7 @@ endif
 
 Image: $(TOPDIR)/include/autoconf.h tools
 	$(MAKE) $(ARCHIVES)
-	$(MAKE) init/main.o
+	$(MAKE) -C init main.o
 	$(MAKE) -C $(ARCH_DIR) Image
 
 setup: $(ARCH_DIR)/boot/setup
