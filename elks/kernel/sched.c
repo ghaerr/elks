@@ -15,20 +15,17 @@
 
 #include <arch/irq.h>
 
-//#define idle_task task[0]
-
 struct task_struct *task;           /* dynamically allocated task array */
+struct task_struct *idle_task;      /* NOTE: valid only thru k_stack[IDLESTACK_BYTES/2] */
 struct task_struct *current;
 struct task_struct *previous;
 int max_tasks = MAX_TASKS;
 
-struct task_struct idle_task;
-
 void add_to_runqueue(register struct task_struct *p)
 {
-    (p->prev_run = idle_task.prev_run)->next_run = p;
-    p->next_run = &idle_task;
-    idle_task.prev_run = p;
+    (p->prev_run = idle_task->prev_run)->next_run = p;
+    p->next_run = idle_task;
+    idle_task->prev_run = p;
 }
 
 static void del_from_runqueue(register struct task_struct *p)
@@ -36,7 +33,7 @@ static void del_from_runqueue(register struct task_struct *p)
 #ifdef CHECK_SCHED
     if (!p->next_run || !p->prev_run)
         panic("delrunq %d,%d", p->pid, p->state);   /* task not on run queue */
-    if (p == &idle_task)
+    if (p == idle_task)
         panic("delrunq idle");                      /* trying to sleep idle task */
 #endif
     (p->next_run->prev_run = p->prev_run)->next_run = p->next_run;
@@ -64,7 +61,7 @@ void schedule(void)
     struct task_struct *prev;
     struct task_struct *next;
     jiff_t timeout = 0UL;
-    struct timer_list timer;
+    struct timer_list timer;    // 16
 
     prev = current;
 
@@ -104,7 +101,7 @@ void schedule(void)
     next = prev->next_run;
     if (prev->state != TASK_RUNNING)
         del_from_runqueue(prev);
-    if (next == &idle_task)
+    if (next == idle_task)
         next = next->next_run;
     set_irq();
 
@@ -196,14 +193,16 @@ void INITPROC sched_init(void)
         (--t)->state = TASK_UNUSED;
     } while (t > task);
 
-    t = &idle_task;
-    current = t;
-    next_task_slot = task;
-    task_slots_unused = max_tasks;
 /*
  *  Now create task 0 to be ourself.
  */
-
+    t = idle_task;
     t->state = TASK_RUNNING;
+    t->kstack_magic = KSTACK_MAGIC;
     t->next_run = t->prev_run = t;
+    memset(t->t_kstack, 0xff, IDLESTACK_BYTES);
+
+    current = t;
+    next_task_slot = task;
+    task_slots_unused = max_tasks;
 }

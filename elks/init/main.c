@@ -16,8 +16,8 @@
 #include <linuxmt/heap.h>
 #include <linuxmt/prectimer.h>
 #include <linuxmt/debug.h>
-#include <arch/system.h>
 #include <arch/segment.h>
+#include <arch/asm-offsets.h>
 #include <arch/ports.h>
 #include <arch/irq.h>
 #include <arch/io.h>
@@ -96,19 +96,29 @@ static void INITPROC kernel_init(void);
 static void INITPROC kernel_banner(seg_t init, seg_t extra);
 static void init_task(void);
 
-/* this procedure called using temp stack then switched, no local vars allowed */
+#if UNUSED
+void printstack(int n)
+{
+    printk("ADDR %x:%x\n", kernel_ds, idle_task->t_kstack);
+    hexdump(idle_task->t_kstack, kernel_ds, IDLESTACK_BYTES, 1);
+}
+#endif
+
+/* this procedure called using interrupt stack then switched, no local vars allowed */
 void start_kernel(void)
 {
     printk("START\n");
     early_kernel_init();            /* read bootopts using kernel temp stack */
-    task = heap_alloc(max_tasks * sizeof(struct task_struct),
-        HEAP_TAG_TASK|HEAP_TAG_CLEAR);
+
+    task = heap_alloc(max_tasks * sizeof(struct task_struct) +
+        TASK_KSTACK + IDLESTACK_BYTES, HEAP_TAG_TASK|HEAP_TAG_CLEAR);
     if (!task) panic("No task mem");
+    idle_task = (struct task_struct *)
+        ((char *)task + max_tasks * sizeof(struct task_struct));
 
     sched_init();                   /* set us (the current stack) to be idle task */
     setsp(&task->t_regs.ax);        /* change to large (unused task #0) stack */
     kernel_init();                  /* continue init running on large stack */
-    setsp(&idle_task.t_regs.ax);    /* change to small idle task stack */
 
     /* fork and setup procedure init_task() to run as task #0 (pid 1) on reschedule */
     kfork_proc(init_task);
@@ -116,9 +126,24 @@ void start_kernel(void)
 
     /*
      * We are now the idle task. We won't run unless no other process can run.
-     * The idle task always runs with intr_count == 1 (switched from user mode syscall)
+     * The idle task always runs with intr_count == 1, switched from user mode syscall.
+     *
+     * Unless the kernel is compiled with -fno-defer-pop (which increases code
+     * size considerably), any calls to printk afer the small idle stack is
+     * set below can cause idle stack overflow. The good news is that the overflow
+     * shouldn't cause much harm since it overflows into relatively unused areas
+     * of the idle task's task_struct.
      */
+    setsp(&idle_task->t_kstack[IDLESTACK_BYTES/2]); /* change to small idle task stack */
+    //printstack(1);
+
     while (1) {
+#ifdef CHECK_KSTACK
+        if (idle_task->kstack_magic != KSTACK_MAGIC) {
+            printk("IDLE STACK OFLOW\n");
+            idle_task->kstack_magic = KSTACK_MAGIC;
+        }
+#endif
         schedule();
 #ifdef CONFIG_TIMER_INT0F
         int0F();        /* simulate timer interrupt hooked on IRQ 7 */
