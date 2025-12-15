@@ -67,7 +67,7 @@ void schedule(void)
     struct task_struct *prev;
     struct task_struct *next;
     jiff_t timeout = 0UL;
-    struct timer_list timer;    // 16
+    struct timer_list timer;
 
     prev = current;
 
