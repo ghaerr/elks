@@ -141,7 +141,7 @@ void start_kernel(void)
      * since it overflows into relatively unused areas of the idle task's task_struct.
      */
     setsp(&idle_task->t_kstack[IDLESTACK_BYTES/2]); /* change to small idle task stack */
-    //hexdump(idle_task->t_kstack, kernel_ds, IDLESTACK_BYTES, 1);
+    hexdump(idle_task->t_kstack, kernel_ds, IDLESTACK_BYTES, 1);
 
     /*
      * In the call to schedule below, the init_task function will run, which
