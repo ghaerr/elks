@@ -470,5 +470,5 @@ ssmsg:  .ascii "INVALID SS\0"
         .bss
         .p2align 1
 endistack:
-        .skip ISTACK_BYTES,0    // interrupt stack
+        .skip INTRSTACK_BYTES,0 // interrupt stack
 istack:

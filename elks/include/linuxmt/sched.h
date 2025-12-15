@@ -52,11 +52,11 @@ struct task_struct {
     struct task_struct          *next_run;
     struct task_struct          *prev_run;
     struct task_struct          *p_parent;
-    struct inode                *t_inode;
     struct tty                  *tty;
     sigset_t                    signal;         /* Signal status */
     jiff_t                      timeout;        /* for select() */
     int                         exit_status;    /* Stopped or exit status */
+    struct inode                *t_inode;
     struct fs_struct            fs;             /* File roots */
     struct wait_queue           *waitpt;        /* Wait pointer */
     struct wait_queue           *poll[MAX_POLLFD]; /* select() poll queues */
@@ -107,10 +107,14 @@ struct task_struct {
 //#define DEPRECATED    __attribute__ ((deprecated))
 
 extern struct task_struct *task;
+extern struct task_struct *idle_task;
 extern struct task_struct *current;
 extern struct task_struct *next_task_slot;
 extern int max_tasks;
 extern int task_slots_unused;
+
+/* size of task struct up to stack area */
+#define TASK_KSTACK         (offsetof(struct task_struct, t_kstack))
 
 extern volatile jiff_t jiffies; /* ticks updated by the timer interrupt*/
 extern pid_t last_pid;

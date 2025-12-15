@@ -48,7 +48,7 @@ void * heap_alloc (word_t size, byte_t tag);
 void heap_free (void * data);
 
 void heap_add (void * data, word_t size);
-void heap_init ();
-void heap_iterate (void (* cb) (heap_s * h));
+void heap_init (void);
+void heap_display (void);
 
 #endif

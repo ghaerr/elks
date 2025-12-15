@@ -1,6 +1,7 @@
 #include <linuxmt/config.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/kernel.h>
+#include <linuxmt/string.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/trace.h>
@@ -10,7 +11,7 @@
 
 int task_slots_unused;
 struct task_struct *next_task_slot;
-pid_t last_pid = -1;
+pid_t last_pid = 0;
 
 static pid_t get_pid(void)
 {
@@ -46,11 +47,13 @@ struct task_struct *find_empty_process(void)
     t = next_task_slot;
     while (t->state != TASK_UNUSED) {
         if (++t >= &task[max_tasks])
-            t = &task[1];
+            t = &task[0];
     }
     next_task_slot = t;
     task_slots_unused--;
-    *t = *current;
+    memcpy(t, current,              /* duplicate current task data into new one */
+        (current == idle_task)? (TASK_KSTACK+IDLESTACK_BYTES)
+                              : sizeof(struct task_struct));
     t->state = TASK_UNINTERRUPTIBLE;
     t->pid = get_pid();
     t->ticks = 0;                   /* for CONFIG_CPU_USAGE */

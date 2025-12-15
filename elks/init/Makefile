@@ -25,4 +25,13 @@ NOINDENT	= main.c
 include $(BASEDIR)/Makefile-rules
 
 #########################################################################
+# Commands:
+
+all:    main.o
+
+main.o: main.c
+	$(CC) $(CFLAGS) -fno-defer-pop -c -o main.o main.c
+
+
+#########################################################################
 ### Dependencies:

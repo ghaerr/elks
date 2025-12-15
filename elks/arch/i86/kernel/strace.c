@@ -102,11 +102,11 @@ static void check_kstack(int n)
     static int maxistack;
 
     /* calc interrupt stack usage */
-    for (i=0; i<ISTACK_BYTES/2; i++) {
+    for (i=0; i<INTRSTACK_BYTES/2; i++) {
         if (endistack[i] != 0)
             break;
     }
-    i = (ISTACK_BYTES/2 - i) << 1;
+    i = (INTRSTACK_BYTES/2 - i) << 1;
     if (i > maxistack) {
         maxistack = i;
         printk("ISTACK NEW MAX %d\n", maxistack);
