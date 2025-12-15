@@ -97,10 +97,10 @@ static void init_task(void);
 
 /*
  * This function is called using the interrupt stack as a temporary stack.
- * The stack is then switched to an unused kernel task struct stack while
- * performing the majority of kernel initialization. After that, the stack
- * is switched again to the tiny idle task struct and then becomes the idle
- * task. Must be compiled using -fno-defer-pop, as otherwise stack pointer
+ * The stack is then switched to an unused task struct's kernel stack area while
+ * performing the majority of kernel initialization. After that, the stack is
+ * switched again to the tiny idle task struct stack area and then becomes the
+ * idle task. Must be compiled using -fno-defer-pop, as otherwise stack pointer
  * cleanup is delayed after function calls, which interferes with SP resets.
  */
 void start_kernel(void)
@@ -132,7 +132,7 @@ void start_kernel(void)
     /*
      * Set SP to the idle task struct. We then become the idle task and are only
      * switched to when the last runnable user mode process sleeps from its
-     * kernel stack and/or schedule() is called.
+     * kernel stack and schedule() is called.
      * As a result, the idle task always runs with intr_count 1, which guarantees
      * interrupt register saves will be on the interrupt stack, not the idle stack.
      *
@@ -146,8 +146,8 @@ void start_kernel(void)
     /*
      * In the call to schedule below, the init_task function will run, which
      * completes kernel initialization by mounting the root filesystem, then
-     * loads an executable and executes ret_from_syscall, and the system
-     * enters user mode until the next clock tick or system call.
+     * loads an executable and executes ret_from_syscall, and the system returns
+     * from the kernel and enters user mode until the next clock tick or system call.
      */
     while (1) {
 #ifdef CHECK_KSTACK

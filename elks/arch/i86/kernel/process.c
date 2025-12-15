@@ -77,7 +77,7 @@ void kfork_proc(void (*addr)())
 
     t = find_empty_process();
 
-    /* t_regs values are invalid for idle task or handlers interrupting idle task */
+    /* t_regs values are nonexistent for idle task or handlers interrupting idle task */
     t->t_regs.ds = t->t_regs.es = t->t_regs.ss = kernel_ds;
     arch_build_stack(t, addr);
 }
