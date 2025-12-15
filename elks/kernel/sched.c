@@ -23,6 +23,12 @@ int max_tasks = MAX_TASKS;
 
 void add_to_runqueue(register struct task_struct *p)
 {
+#if UNUSED
+    if (p->next_run || p->prev_run)
+        panic("task already add_to_runq\n");
+    if (!idle_task->prev_run || !idle_task->next_run)
+        panic("idle add_to_runq");
+#endif
     (p->prev_run = idle_task->prev_run)->next_run = p;
     p->next_run = idle_task;
     idle_task->prev_run = p;
@@ -30,7 +36,7 @@ void add_to_runqueue(register struct task_struct *p)
 
 static void del_from_runqueue(register struct task_struct *p)
 {
-#ifdef CHECK_SCHED
+#if UNUSED
     if (!p->next_run || !p->prev_run)
         panic("delrunq %d,%d", p->pid, p->state);   /* task not on run queue */
     if (p == idle_task)
@@ -200,7 +206,7 @@ void INITPROC sched_init(void)
     t->state = TASK_RUNNING;
     t->kstack_magic = KSTACK_MAGIC;
     t->next_run = t->prev_run = t;
-    memset(t->t_kstack, 0xff, IDLESTACK_BYTES);
+    //memset(t->t_kstack, 0xff, IDLESTACK_BYTES);   /* for debugging idle stack size */
 
     current = t;
     next_task_slot = task;

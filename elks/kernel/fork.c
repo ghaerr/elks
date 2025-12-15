@@ -38,7 +38,6 @@ static pid_t get_pid(void)
 struct task_struct *find_empty_process(void)
 {
     register struct task_struct *t;
-    int n;
 
     if (task_slots_unused <= 1) {
         printk("Only %d task slots\n", task_slots_unused);
@@ -52,9 +51,9 @@ struct task_struct *find_empty_process(void)
     }
     next_task_slot = t;
     task_slots_unused--;
-    n = (current == idle_task)?
-        (TASK_KSTACK+IDLESTACK_BYTES): sizeof(struct task_struct);
-    memcpy(t, current, n);
+    memcpy(t, current,
+        (current == idle_task)? (TASK_KSTACK+IDLESTACK_BYTES)
+                              : sizeof(struct task_struct));
     t->state = TASK_UNINTERRUPTIBLE;
     t->pid = get_pid();
     t->ticks = 0;                   /* for CONFIG_CPU_USAGE */

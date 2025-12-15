@@ -199,7 +199,7 @@ CFLAGS += -Wno-empty-body
 #CFLAGS += -Wstrict-prototypes
 #CFLAGS += -Wconversion
 CFLAGS += -Wextra -Wtype-limits
-#CFLAGS += -fno-defer-pop
+CFLAGS += -fno-defer-pop
 
 LD      = ia16-elf-ld.gold
 LDFLAGS = $(CPU_LD) -s

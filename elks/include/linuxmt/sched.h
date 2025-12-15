@@ -113,7 +113,7 @@ extern struct task_struct *next_task_slot;
 extern int max_tasks;
 extern int task_slots_unused;
 
-#define IDLESTACK_BYTES     128
+/* size of task struct up to stack area */
 #define TASK_KSTACK         (offsetof(struct task_struct, t_kstack))
 
 extern volatile jiff_t jiffies; /* ticks updated by the timer interrupt*/

@@ -96,47 +96,59 @@ static void INITPROC kernel_init(void);
 static void INITPROC kernel_banner(seg_t init, seg_t extra);
 static void init_task(void);
 
-#if UNUSED
-void printstack(int n)
-{
-    printk("ADDR %x:%x\n", kernel_ds, idle_task->t_kstack);
-    hexdump(idle_task->t_kstack, kernel_ds, IDLESTACK_BYTES, 1);
-}
-#endif
-
-/* this procedure called using interrupt stack then switched, no local vars allowed */
+/*
+ * This function is called using the interrupt stack as a temporary stack.
+ * The stack is then switched to an unused kernel task struct stack while
+ * performing the majority of kernel initialization. After that, the stack
+ * is switched again to the tiny idle task struct and then becomes the idle
+ * task. Must be compiled using -fno-defer-pop, as otherwise stack pointer
+ * cleanup is delayed after function calls, which interferes SP resets.
+ */
 void start_kernel(void)
 {
     printk("START\n");
     early_kernel_init();            /* read bootopts using kernel temp stack */
 
+    /*
+     * Allocate the task array + smaller task struct for idle task.
+     * The idle task struct has a smaller stack in t_kstack[] and no t_regs.
+     * This works because the idle task always runs at intr_count 1, so
+     * interrupts will always save registers onto istack, and never
+     * to the t_regs struct at the top of a normal task struct.
+     */
     task = heap_alloc(max_tasks * sizeof(struct task_struct) +
         TASK_KSTACK + IDLESTACK_BYTES, HEAP_TAG_TASK|HEAP_TAG_CLEAR);
     if (!task) panic("No task mem");
     idle_task = (struct task_struct *)
         ((char *)task + max_tasks * sizeof(struct task_struct));
 
-    sched_init();                   /* set us (the current stack) to be idle task */
-    setsp(&task->t_regs.ax);        /* change to large (unused task #0) stack */
-    kernel_init();                  /* continue init running on large stack */
+    sched_init();                   /* init the idle and other task structs */
+    setsp(&(task+1)->t_regs.ax);    /* change to a large temp stack (unused task #1) */
+    kernel_init();                  /* continue kernel init running on large stack */
 
-    /* fork and setup procedure init_task() to run as task #0 (pid 1) on reschedule */
+    /* allocate task struct #0/pid 1 and setup init_task() to run on next reschedule */
     kfork_proc(init_task);
     wake_up_process(&task[0]);
 
     /*
-     * We are now the idle task. We won't run unless no other process can run.
-     * The idle task always runs with intr_count == 1, switched from user mode syscall.
+     * Set SP to the idle task struct. We are now the idle task and are only
+     * switched to when the last runnable user mode process sleeps from its
+     * kernel stack and calls schedule().
+     * As a result, the idle task always runs with intr_count 1.
      *
-     * Unless the kernel is compiled with -fno-defer-pop (which increases code
-     * size considerably), any calls to printk afer the small idle stack is
-     * set below can cause idle stack overflow. The good news is that the overflow
-     * shouldn't cause much harm since it overflows into relatively unused areas
-     * of the idle task's task_struct.
+     * NOTE: Any calls to printk afer the small idle stack is set below can cause idle
+     * stack overflow. The good news is that the overflow shouldn't cause much harm
+     * since it overflows into relatively unused areas of the idle task's task_struct.
      */
     setsp(&idle_task->t_kstack[IDLESTACK_BYTES/2]); /* change to small idle task stack */
-    //printstack(1);
+    //hexdump(idle_task->t_kstack, kernel_ds, IDLESTACK_BYTES, 1);
 
+    /*
+     * In the call to schedule below, the init_task function will run, which
+     * completes kernel initialization by mounting the root filesystem, then
+     * loads an executable and executes ret_from_syscall, and the system
+     * enters user mode.
+     */
     while (1) {
 #ifdef CHECK_KSTACK
         if (idle_task->kstack_magic != KSTACK_MAGIC) {
