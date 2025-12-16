@@ -561,6 +561,10 @@ static int INITPROC parse_options(void)
             tracing |= TRACE_KSTACK;
             continue;
         }
+        if (!strcmp(line,"istack")) {
+            tracing |= TRACE_ISTACK;
+            continue;
+        }
         if (!strncmp(line,"init=",5)) {
             line += 5;
             init_command = argv_init[1] = line;

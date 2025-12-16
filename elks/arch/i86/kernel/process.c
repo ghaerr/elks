@@ -43,30 +43,6 @@ int run_init_process_sptr(const char *cmd, char *sptr, int slen)
 }
 
 /*
- * Check that SP is within proper range, called before every syscall.
- */
-void stack_check(void)
-{
-    segoff_t sp = current->t_regs.sp;
-    segoff_t brk = current->t_endbrk;
-    segoff_t stacklow = current->t_begstack - current->t_minstack;
-
-    if (sp < brk) {
-        printk("(%P)STACK OVERFLOW by %u\n", brk - sp);
-        printk("curbreak %u, SP %u\n", current->t_endbrk, current->t_regs.sp);
-        do_exit(SIGSEGV);
-    }
-    if (sp < stacklow) {
-        /* notification only, allow process to continue */
-        printk("(%P)STACK USING %u UNUSED HEAP\n", stacklow - sp);
-    }
-    if (sp > current->t_begstack) {
-        printk("(%P)STACK UNDERFLOW\n");
-        do_exit(SIGSEGV);
-    }
-}
-
-/*
  *  Make task t fork into kernel space. We are in kernel mode
  *  so we fork onto our kernel stack.
  */

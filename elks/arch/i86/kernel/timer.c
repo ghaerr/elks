@@ -4,6 +4,7 @@
 #include <linuxmt/timer.h>
 #include <linuxmt/ntty.h>
 #include <linuxmt/fixedpt.h>
+#include <linuxmt/trace.h>
 #include <arch/io.h>
 #include <arch/irq.h>
 #include <arch/param.h>
@@ -19,6 +20,7 @@
 
 volatile jiff_t jiffies;
 static int spin_on;
+static int delaytick;
 
 #ifdef CONFIG_CPU_USAGE
 static void calc_cpu_usage(void)
@@ -56,10 +58,14 @@ void timer_tick(int irq, struct pt_regs *regs)
 {
     jiffies++;
 
-    /***if (!((int) jiffies & 7))
-        need_resched = 1;***/       /* how primitive can you get? */
+#ifdef CHECK_ISTACK
+    delaytick++;
+#endif
 
     mark_bh(TIMER_BH);
+
+    /***if (!((int) jiffies & 7))
+        need_resched = 1;***/       /* how primitive can you get? */
 
 #ifdef CONFIG_ARCH_SWAN
     ack_irq(7);
@@ -70,6 +76,14 @@ void timer_tick(int irq, struct pt_regs *regs)
 void timer_bh(void)
 {
     run_timer_list();
+
+#ifdef CHECK_ISTACK
+    if (tracing & TRACE_ISTACK) {
+        if (delaytick > 1)
+            printk("TIMER_BH DELAY %d\n", delaytick);
+        delaytick = 0;
+    }
+#endif
 
 #if (defined(CONFIG_CHAR_DEV_RS) &&                               \
         (defined(CONFIG_FAST_IRQ4) || defined(CONFIG_FAST_IRQ3))) \

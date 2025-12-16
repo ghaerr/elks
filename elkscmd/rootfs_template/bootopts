@@ -27,6 +27,7 @@ xms=on
 #n	# no rc.sys
 #init=/bin/sash
 #kstack
+#istack
 #strace
 #FTRACE=1
 #net=ne0
