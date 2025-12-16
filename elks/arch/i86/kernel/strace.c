@@ -6,8 +6,6 @@
 #include <linuxmt/string.h>
 #include <arch/segment.h>
 
-#ifdef CONFIG_TRACE
-
 /*
  * Kernel tracing functions for consistency checking and debugging support
  */
@@ -15,6 +13,32 @@
 /* stringize the result of expansion of a macro argument */
 #define str(bytes)  str2(bytes)
 #define str2(bytes) #bytes
+
+/*
+ * Check that user SP is within proper range, called before every syscall.
+ */
+void check_ustack(void)
+{
+    segoff_t sp = current->t_regs.sp;
+    segoff_t brk = current->t_endbrk;
+    segoff_t stacklow = current->t_begstack - current->t_minstack;
+
+    if (sp < brk) {
+        printk("(%P)STACK OVERFLOW by %u\n", brk - sp);
+        printk("curbreak %u, SP %u\n", current->t_endbrk, current->t_regs.sp);
+        do_exit(SIGSEGV);
+    }
+    if (sp < stacklow) {
+        /* notification only, allow process to continue */
+        printk("(%P)STACK USING %u UNUSED HEAP\n", stacklow - sp);
+    }
+    if (sp > current->t_begstack) {
+        printk("(%P)STACK UNDERFLOW\n");
+        do_exit(SIGSEGV);
+    }
+}
+
+#ifdef CONFIG_TRACE
 
 /* The table describing the system calls has been moved to a separate
  * header file, and is included by the following include line.
@@ -90,30 +114,6 @@ pscl:
     printk(")]");
 }
 #endif
-
-/*
- * Check that user SP is within proper range, called before every syscall.
- */
-void check_ustack(void)
-{
-    segoff_t sp = current->t_regs.sp;
-    segoff_t brk = current->t_endbrk;
-    segoff_t stacklow = current->t_begstack - current->t_minstack;
-
-    if (sp < brk) {
-        printk("(%P)STACK OVERFLOW by %u\n", brk - sp);
-        printk("curbreak %u, SP %u\n", current->t_endbrk, current->t_regs.sp);
-        do_exit(SIGSEGV);
-    }
-    if (sp < stacklow) {
-        /* notification only, allow process to continue */
-        printk("(%P)STACK USING %u UNUSED HEAP\n", stacklow - sp);
-    }
-    if (sp > current->t_begstack) {
-        printk("(%P)STACK UNDERFLOW\n");
-        do_exit(SIGSEGV);
-    }
-}
 
 #ifdef CHECK_ISTACK
 /* calc interrupt stack usage */

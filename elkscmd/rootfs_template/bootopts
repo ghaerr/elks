@@ -27,10 +27,10 @@ xms=on
 #n	# no rc.sys
 #init=/bin/sash
 #kstack
-#istack
 #strace
 #FTRACE=1
 #net=ne0
 #debug=1
+#istack
 #console=ttyS0,19200 3
 #MOUSE_PORT=/dev/ttyS1
