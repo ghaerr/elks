@@ -42,16 +42,18 @@
 !       related nonsense. This way we need only one dedicated int stack
 !
 */
-        .extern schedule
         .extern do_signal
         .extern do_IRQ
         .extern syscall
-        .extern stack_check
         .extern trace_begin
         .extern trace_end
-        .extern panic
+        .extern tracing
+        .extern check_ustack
+        .extern check_istack
         .extern bh_active
         .extern do_bottom_half
+        .extern schedule
+        .extern panic
 
         .global _irqit
 _irqit:
@@ -146,7 +148,7 @@ save_regs:
 //      ----------PROCESS SYSCALL----------
 //
         sti
-        call    stack_check     // Check user mode stack
+        call    check_ustack    // Check user mode stack
 
 #ifdef CONFIG_TRACE
         call    trace_begin
@@ -161,7 +163,6 @@ save_regs:
         call    trace_end       // syscall return value is top of stack
 #endif
 
-//
 //      Restore registers
 //
         call    do_signal
@@ -195,17 +196,16 @@ updct:
         pop     %ax             // Saved IRQ
         cli                     // Disable interrupts to avoid reentering ISR
 
+//
+//      Determine if hardware or software (trap) interrupt
+//
 #if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_PC98)
-//
-//      Determine if trap or interrupt
-//
         cmp     $16,%ax
         jge     was_trap        // Traps need no reset
 
 #if defined(CONFIG_BLK_DEV_BFD) && !defined(CONFIG_ARCH_PC98)
         or      %ax,%ax         // Is int #0?
         jnz     do_eoi
-
 //
 //      Call original BIOS IRQ 0 (timer) ~55ms for floppy motor control
 //
@@ -217,44 +217,29 @@ updct:
         jmp     was_trap        // EOI already sent by bios int
 #endif
 
-//
-//      Send EOI to interrupt controller
-//
-do_eoi:
-        cmp     $8,%ax
+do_eoi: cmp     $8,%ax          // Send EOI to interrupt controller(s)
         mov     $0x20,%al       // EOI
         jb      a6              // IRQ on low chip
-/*
-!
-!       Reset secondary 8259 if we have taken an AT rather
-!       than XT irq. We also have to prod the primay
-!       controller EOI..
-!
-*/
+
+//      Reset secondary 8259 if we have taken an AT rather
+//      than XT irq. We also have to prod the primary controller EOI..
+//
+
         out     %al,$PIC2_CMD   // Ack on secondary controller
         jmp     a5
 a5:     jmp     a6
 a6:     out     %al,$PIC1_CMD   // Ack on primary controller
 
 #elif defined(CONFIG_ARCH_8018X)
-//
-//      Determine if trap or interrupt
-//
-        cmp     $16,%ax
+        cmp     $16,%ax         // Determine if trap or interrupt
         jge     was_trap        // Traps need no reset
-
         mov $0x8000, %ax        // set the NSPEC bit on the
         mov $0xff02, %dx        // EOI register so the ICU
         out %ax, %dx            // acks the highest priority interrupt
 
 #elif defined(CONFIG_ARCH_NECV25)
-//
-//      Determine if trap or interrupt
-//
-   
-        cmp     $16,%ax
+        cmp     $16,%ax         // Determine if trap or interrupt
         jge     was_trap        // Traps need no reset
-
         .word   0x920f          // NEC V25 specific FINT (End Of Interrupt) instruction
 
 #elif defined(CONFIG_ARCH_SOLO86)
@@ -262,12 +247,18 @@ a6:     out     %al,$PIC1_CMD   // Ack on primary controller
         out %al, %dx
 #endif
 
-//
-//      And a trap does no hardware work
-//
 was_trap:
 //
 //      Look at running bottom halves or rescheduling
+//
+
+#ifdef CHECK_ISTACK
+        mov     tracing,%ax
+        and     $TRACE_ISTACK,%ax
+        jz      2f
+        call    check_istack
+#endif
+2:
 //
         cmpw    $1,intr_count    // Interrupted user mode code?
         jne     restore_regs     // No
@@ -304,8 +295,8 @@ was_trap:
         call    do_bottom_half
         //cli
         //decw    intr_count
-
-1:      sti                     // Interrupts enabled while reschedule or signal checking
+1:
+        sti                     // Interrupts enabled while reschedule or signal checking
         call    schedule        // Task switch
         call    do_signal       // Check signals
         cli

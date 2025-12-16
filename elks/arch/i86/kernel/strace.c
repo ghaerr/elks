@@ -10,6 +10,34 @@
  * Kernel tracing functions for consistency checking and debugging support
  */
 
+/* stringize the result of expansion of a macro argument */
+#define str(bytes)  str2(bytes)
+#define str2(bytes) #bytes
+
+/*
+ * Check that user SP is within proper range, called before every syscall.
+ */
+void check_ustack(void)
+{
+    segoff_t sp = current->t_regs.sp;
+    segoff_t brk = current->t_endbrk;
+    segoff_t stacklow = current->t_begstack - current->t_minstack;
+
+    if (sp < brk) {
+        printk("(%P)STACK OVERFLOW by %u\n", brk - sp);
+        printk("curbreak %u, SP %u\n", current->t_endbrk, current->t_regs.sp);
+        do_exit(SIGSEGV);
+    }
+    if (sp < stacklow) {
+        /* notification only, allow process to continue */
+        printk("(%P)STACK USING %u UNUSED HEAP\n", stacklow - sp);
+    }
+    if (sp > current->t_begstack) {
+        printk("(%P)STACK UNDERFLOW\n");
+        do_exit(SIGSEGV);
+    }
+}
+
 #ifdef CONFIG_TRACE
 
 /* The table describing the system calls has been moved to a separate
@@ -85,23 +113,15 @@ pscl:
     }
     printk(")]");
 }
-
 #endif
 
-/* stringize the result of expansion of a macro argument - used in check_kstack */
-#define str(bytes)  str2(bytes)
-#define str2(bytes) #bytes
-
-#ifdef CHECK_KSTACK
-static void check_kstack(int n)
+#ifdef CHECK_ISTACK
+/* calc interrupt stack usage */
+void check_istack(void)
 {
     int i;
-    struct sc_info *s;
-    const char *warning = "";
-    static int max;
     static int maxistack;
 
-    /* calc interrupt stack usage */
     for (i=0; i<INTRSTACK_BYTES/2; i++) {
         if (endistack[i] != 0)
             break;
@@ -109,9 +129,22 @@ static void check_kstack(int n)
     i = (INTRSTACK_BYTES/2 - i) << 1;
     if (i > maxistack) {
         maxistack = i;
-        printk("ISTACK NEW MAX %d\n", maxistack);
+        printk("ISTACK MAX %d\n", i);
     }
+}
+#endif
 
+#ifdef CHECK_KSTACK
+/* calculate kernel stack usage per system call */
+static void check_kstack(int n)
+{
+    struct sc_info *s;
+    const char *warning = "";
+    static int max;
+
+#ifdef CHECK_ISTACK
+    check_istack();
+#endif
     s = syscall_info(current->t_regs.orig_ax);
     if (s == &notimp)
         printk("KSTACK(%P) syscall %d NOTIMP\n", current->t_regs.orig_ax);
@@ -174,13 +207,16 @@ void trace_end(unsigned int retval)
         if (n > max) max = n;
     }
 #endif
-
+#ifdef CONFIG_STRACE
     if (tracing & TRACE_STRACE) {
         struct sc_info *s = syscall_info(current->t_regs.orig_ax);
         printk("[%P:%s/ret=%d,ks=%d/%d]\n", s->s_name, retval, n, max);
     }
+#endif
+#ifdef CHECK_KSTACK
     if (tracing & TRACE_KSTACK)
         check_kstack(n);
+#endif
 }
 
 #endif /* CONFIG_TRACE */

@@ -177,7 +177,6 @@ extern short *getsp(void);
 extern int run_init_process(const char *cmd);
 extern int run_init_process_sptr(const char *cmd, char *sptr, int slen);
 extern void ret_from_syscall(void);
-extern void check_stack(void);
 
 void select_wait(struct wait_queue *);
 int select_poll(struct task_struct *, struct wait_queue *);

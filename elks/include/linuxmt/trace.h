@@ -13,9 +13,13 @@
  * When CONFIG_TRACE is enabled, the following can be used in /bootopts:
  *  strace  - enable system call tracing
  *  kstack  - display max kernel stack usage per process
+ *  istack  - display max interrup stack usage and timer_bh execution delays
  */
 
 #ifdef CONFIG_TRACE
+
+/* calculate interrupt stack usage and timer_bh delays after hardware interrupts */
+#define CHECK_ISTACK
 
 /* calculate max kernel stack usage per system call, notify when near overflow */
 #define CHECK_KSTACK
@@ -51,13 +55,15 @@
 /* internal flags for kernel */
 #define TRACE_STRACE    0x01    /* system call tracing enabled */
 #define TRACE_KSTACK    0x02    /* calculate kernel stack used per syscall/process */
+#define TRACE_ISTACK    0x04    /* calculate interrupt stack use each hw interrupt */
 
 #ifndef __ASSEMBLER__
 extern int tracing;
 
 void trace_begin(void);
 void trace_end(unsigned int retval);
-void check_tstack(void);
+void check_ustack(void);
+void check_istack(void);
 #endif
 
 #endif
