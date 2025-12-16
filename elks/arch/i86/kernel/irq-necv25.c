@@ -38,6 +38,7 @@ void initialize_irq(void)    // see irq-necv25asm.S
             "movb  $(IRQMSK+IRQPRI6), %%ds:(SEIC0) // SEIC0: Serial error interrupt request control register 0, irq prio 6 \n"\
             "movb  $(IRQMSK+IRQPRID), %%ds:(SRIC0) // SRIC0: Serial reception interrupt request control register 0         \n"\
             "movb  $(IRQMSK+IRQPRID), %%ds:(STIC0) // STIC0: Serial transmission interrupt request control register 0      \n"\
+            "movb  $0x00, %%ds:(TXB0)              // TXB0:  restart transmitter, so that ready waiting funtions           \n"\
             "movb  $(IRQMSK+IRQPRI6), %%ds:(SEIC1) // SEIC1: Serial error interrupt request control register 1, irq prio 6 \n"\
             "movb  $(IRQMSK+IRQPRID), %%ds:(SRIC1) // SRIC1: Serial reception interrupt request control register 1         \n"\
             "movb  $(IRQMSK+IRQPRID), %%ds:(STIC1) // STIC1: Serial transmission interrupt request control register 1      \n"\
@@ -65,8 +66,12 @@ logical_map[] =
 {
     { TIMER_IRQ,    NEC_TMIC2, NEC_INTTU2 }, // Timmer 1 IRQ
     { UART1_IRQ_RX, NEC_SRIC1, NEC_INTSR1 }, // Serial 1 RX IRQ
+#ifdef CONFIG_FAST_IRQ2_NECV25
+    { UART2_IRQ_RX, NEC_SRIC0, NEC_INTSR0 }, // Serial 0 RX IRQ
+#endif
 #ifdef UNUSED
     { UART1_IRQ_TX, NEC_STIC1, NEC_INTST1 }, // Serial 1 TX IRQ
+    { UART2_IRQ_TX, NEC_STIC0, NEC_INTST0 }, // Serial 0 TX IRQ
 #endif
     { NE2K_IRQ,     NEC_EXIC0, NEC_INTP0 }, // NE2000 NIC
 };

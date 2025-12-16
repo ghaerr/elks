@@ -93,7 +93,6 @@
 #endif /* CONFIG_ARCH_8018X */
 
 #ifdef CONFIG_ARCH_NECV25
-#define MAX_SERIAL              2       /* max number of serial tty devices*/
 #define SETUP_VID_COLS          80      /* video # columns */
 #define SETUP_VID_LINES         25      /* video # lines */
 #define SETUP_CPU_TYPE          setupb(0x20)    /* processor type */
@@ -107,7 +106,10 @@
 #define UTS_MACHINE             "NECV25"
 #define CONFIG_NECV25_FCPU      22118400UL /* external CPU crystal clock in Hz 14745600UL or 22118400UL */
 #define CONFIG_DEF_BAUD         B115200
-#define CONFIG_FAST_IRQ1_NECV25        /* Serial 1 */
+#define CONFIG_FAST_IRQ1_NECV25         /* Serial 1 */
+#ifndef CONFIG_HW_SPI                   /* HW SPI uses Serial 0, so no console on this port */
+#define CONFIG_FAST_IRQ2_NECV25         /* Serial 0 as console, if no HW SPI configured */
+#endif
 #endif /* CONFIG_ARCH_NECV25 */
 
 #ifdef CONFIG_ARCH_SWAN

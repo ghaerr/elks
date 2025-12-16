@@ -23,18 +23,23 @@
 
 /* Predefined maximum number of tty character devices */
 
-#ifdef CONFIG_CONSOLE_DUAL
+#if defined(CONFIG_CONSOLE_DUAL)
 #define MAX_CONSOLES 4
+#elif defined(CONFIG_FAST_IRQ2_NECV25)
+#define MAX_CONSOLES 2
+#elif defined(CONFIG_FAST_IRQ1_NECV25)
+#define MAX_CONSOLES 1
 #else
 #define MAX_CONSOLES 3
 #endif
+
 #define MAX_PTYS     4
 
 #define TTY_MINOR_OFFSET 0
 #define PTY_MINOR_OFFSET 8
 #define RS_MINOR_OFFSET 64
 
-#if defined(CONFIG_CONSOLE_DIRECT) || defined(CONFIG_CONSOLE_BIOS)
+#if defined(CONFIG_CONSOLE_DIRECT) || defined(CONFIG_CONSOLE_BIOS) || defined(CONFIG_ARCH_NECV25)
 #define NR_CONSOLES	MAX_CONSOLES
 #else
 #define NR_CONSOLES	1	/* headless*/
