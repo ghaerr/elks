@@ -272,7 +272,7 @@ static void update_port(struct serial_info *port)
 /* Called from main.c */
 void INITPROC console_init(void)
 {
-    struct serial_info *sp = ports;;
+    struct serial_info *sp = ports;
 
     do
     {
