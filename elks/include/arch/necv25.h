@@ -109,6 +109,10 @@
 #define NEC_INTTU1  0x1d      /* Timer 1 Interrupt */
 #define NEC_INTTU2  0x1e      /* Timer 1 Interrupt */
 
+#define NEC_INTSE0  0x0c      /* SIO0 Error Interrupt */
+#define NEC_INTSR0  0x0d      /* SIO0 RX Interrupt */
+#define NEC_INTST0  0x0e      /* SIO0 TX Interrupt */
+
 #define NEC_INTSE1  0x10      /* SIO1 Error Interrupt */
 #define NEC_INTSR1  0x11      /* SIO1 RX Interrupt */
 #define NEC_INTST1  0x12      /* SIO1 TX Interrupt */
@@ -119,6 +123,8 @@
 
 #define UART1_IRQ_RX  1       /* maps to interrupt NEC_INTSR1 */
 #define UART1_IRQ_TX  2       /* maps to interrupt NEC_INTST1 */
+#define UART2_IRQ_RX  3       /* maps to interrupt NEC_INTSR0 */
+#define UART2_IRQ_TX  4       /* maps to interrupt NEC_INTST0 */
 
 // Interrupt register options
 #define IRQFLAG      0x80     /* interrupt request flag */

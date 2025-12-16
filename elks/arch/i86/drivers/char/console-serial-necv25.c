@@ -4,9 +4,11 @@
  * This file contains code used for the embedded NEC V25 family only
  * Based on Santiago Hormazabal console-serial-8018x.c
  *
- * Uses the MCU internal serial 1 port as tty console.
- * Serial 0 is used as SPI for SD card interface and cannot be used
- * for serial communication.
+ * Uses the MCU internal Serial 1 (and optional Serial 0) port as tty console.
+ * 
+ * If Serial 0 is used as SPI for SD card interface (CONFIG_HW_SPI is defined),
+ * only Serial 1 can be used as console (/dev/tty1). If sofware SPI is 
+ * configure, Serial 0 is setup as second console (/dev/tty2), see config.h
  *
  * 23 Oct. 2025 swausd
  */
@@ -42,9 +44,12 @@ struct serial_info {
 #define INIT_BAUD_COUNT (CONFIG_NECV25_FCPU / (115200UL * 2UL * 2UL))
 #define INIT_BAUD_N     0
 
-static struct serial_info ports[1] = {
+static struct serial_info ports[] = {
     /* Serial 0 is used as SPI for SD card interface */
     /* Serial 1 */ { NEC_RXB1, NEC_INTSR1, NEC_INTST1, UART1_IRQ_RX, UART1_IRQ_TX, INIT_BAUD_COUNT, INIT_BAUD_N, 0, &ttys[0] },
+#ifdef CONFIG_FAST_IRQ2_NECV25
+    /* Serial 0 */ { NEC_RXB0, NEC_INTSR0, NEC_INTST0, UART2_IRQ_RX, UART2_IRQ_TX, INIT_BAUD_COUNT, INIT_BAUD_N, 0, &ttys[1] },
+#endif
 };
 
 
@@ -150,12 +155,45 @@ void irq_rx(int irq, struct pt_regs *regs)
 }
 #endif
 
-#ifdef UNUSED
-/* serial transmit interrupt routine, doesn't do anything */
-void irq_tx(int irq, struct pt_regs *regs)
+#ifdef CONFIG_FAST_IRQ2_NECV25
+extern void asm_fast_irq2_necv25(int irq, struct pt_regs *regs);   /* initial entry point */
+
+void sercon_fast_irq2_necv25(void)
 {
+    struct serial_info *sp = &ports[1];
+    struct ch_queue *q = &sp->tty->inq;
+    unsigned char c;
+
+    __extension__ ({                   \
+        asm volatile (                 \
+            ".include \"../../../../include/arch/necv25.inc\"                               \n"\
+            "push  %%ds                                                                     \n"\
+            "movw  $NEC_HW_SEGMENT, %%bx  // load DS to access memmory mapped CPU registers \n"\
+            "movw  %%bx, %%ds                                                               \n"\
+            "movb  %%ds:(%%Si), %%al      // get char                                       \n"\
+            "//testb $0x07, %%ds:SCE(%%Si)  // test for receive errors...                   \n"\
+            "//jz    1f                                                                     \n"\
+            "//movb  %%ds:SCE(%%Si), %%al   // ...and return error flag if any              \n"\
+            "//orb   $0x80, %%al                                                            \n"\
+            "//1:                                                                           \n"\
+            "pop   %%ds                                                                     \n"\
+            : "=Ral"(c)                \
+            : "S"   (sp->io_base)      \
+            : "bx", "memory" );        \
+    });
+
+    if (q->len < q->size) {
+        q->base[q->head] = c;
+        if (++q->head >= q->size)
+            q->head = 0;
+        q->len++;
+    }   // silently ignore buffer overflow
+
+    if ((c == 03) || (c == 26) || (c == 28))    /* assumes VINTR = ^C, VSUSP = Ẑ, VQUIT = ^\ and byte queued anyways */
+        sp->intrchar = c;
 }
 #endif
+
 
 /* busy-loop and write a character to the UART */
 static void serial_putc(const struct serial_info *sp, byte_t c)
@@ -201,7 +239,7 @@ static void update_port(struct serial_info *port)
 
     /* FIXME: should update lcr parity and data width from termios values*/
 
-    /* update baudrate compare only if changed, since we have not TCSETW */
+    /* update baudrate compare only if changed */
     if ((count != port->count) || (n != port->n))
     {
         port->count = count;
@@ -234,39 +272,43 @@ static void update_port(struct serial_info *port)
 /* Called from main.c */
 void INITPROC console_init(void)
 {
-    struct serial_info *sp = &ports[0]; /* TODO: add support for Serial 1 */
+    struct serial_info *sp = ports;;
 
-    /*
-     * The serial port might have been not be configured until this point,
-     * so set it up just in case.
-     */
+    do
+    {
+        /*
+         * The serial port might have been not be configured until this point,
+         * so set it up just in case.
+         */
 
-    /* Asynchronous, 8 data bits, 1 start, 1 stop, no parity */
-    __extension__ ({                   \
-         asm volatile (                 \
-         ".include \"../../../../include/arch/necv25.inc\"                                                             \n"\
-         "push   %%ds                                                                                                  \n"\
-         "movw   $NEC_HW_SEGMENT, %%bx                     // load DS to access memmory mapped CPU registers           \n"\
-         "movw   %%bx, %%ds                                                                                            \n"\
-         "movb   $(TXE+RXE+NOPRTY+CL8+SL1), %%ds:SCM(%%si) // SCM: Rx/Tx enable, 8 data, 1 stop bit, no parity, async  \n"\
-         "pop    %%ds                                                                                                  \n"\
-         :                          \
-         : "S"   (sp->io_base)      \
-         : "bx", "memory" );        \
-    });
+        /* Asynchronous, 8 data bits, 1 start, 1 stop, no parity */
+        __extension__ ({                   \
+             asm volatile (                 \
+             ".include \"../../../../include/arch/necv25.inc\"                                                             \n"\
+             "push   %%ds                                                                                                  \n"\
+             "movw   $NEC_HW_SEGMENT, %%bx                     // load DS to access memmory mapped CPU registers           \n"\
+             "movw   %%bx, %%ds                                                                                            \n"\
+             "movb   $(TXE+RXE+NOPRTY+CL8+SL1), %%ds:SCM(%%si) // SCM: Rx/Tx enable, 8 data, 1 stop bit, no parity, async  \n"\
+             "pop    %%ds                                                                                                  \n"\
+             :                          \
+             : "S"   (sp->io_base)      \
+             : "bx", "memory" );        \
+        });
 
-    /* setup the UART 1 */
+        if (sp == &ports[0])
 #ifdef CONFIG_FAST_IRQ1_NECV25
-    request_irq(sp->irq_no_rx, asm_fast_irq1_necv25, INT_SPECIFIC);   // for RX
+            request_irq(sp->irq_no_rx, asm_fast_irq1_necv25, INT_SPECIFIC);   // for RX
 #else
-    request_irq(sp->irq_no_rx, irq_rx, INT_GENERIC);    // for RX
-#ifdef UNUSED
-    request_irq(sp->irq_no_tx, irq_tx, INT_GENERIC);    // for TX
+            request_irq(sp->irq_no_rx, irq_rx, INT_GENERIC);                  // for RX
 #endif
+#ifdef CONFIG_FAST_IRQ2_NECV25
+        else
+            request_irq(sp->irq_no_rx, asm_fast_irq2_necv25, INT_SPECIFIC);   // for RX
 #endif
-
-    /* Set the baudrate, and enable the UART receiver */
-    update_port(sp);
+        /* Set the baudrate, and enable the UART receiver */
+        update_port(sp);
+    }
+    while (++sp < &ports[NR_CONSOLES]);
 }
 
 void bell(void)
@@ -276,7 +318,7 @@ void bell(void)
 
 static void sercon_conout(dev_t dev, int Ch)
 {
-    struct serial_info *sp = &ports[0];
+    struct serial_info *sp = &ports[MINOR(dev) - TTY_MINOR_OFFSET];
 
     if (Ch == '\n') {
         serial_putc(sp, '\r');
@@ -286,7 +328,7 @@ static void sercon_conout(dev_t dev, int Ch)
 
 static int sercon_ioctl(struct tty *tty, int cmd, char *arg)
 {
-    struct serial_info *port = &ports[0];
+    struct serial_info *port = &ports[tty->minor - TTY_MINOR_OFFSET];
 
     switch (cmd) {
     case TCSETS:
@@ -304,7 +346,7 @@ static int sercon_ioctl(struct tty *tty, int cmd, char *arg)
 
 static int sercon_write(struct tty *tty)
 {
-    struct serial_info *port = &ports[0];
+    struct serial_info *port = &ports[tty->minor - TTY_MINOR_OFFSET];
     int cnt = 0;
 
     while (tty->outq.len > 0) {
@@ -322,7 +364,7 @@ static void sercon_release(struct tty *tty)
 
 static int sercon_open(struct tty *tty)
 {
-    struct serial_info *port = &ports[0];
+    struct serial_info *port = &ports[tty->minor - TTY_MINOR_OFFSET];
 
     /* increment use count, don't init if already open*/
     if (tty->usecount++)
@@ -358,9 +400,12 @@ static void pump_port(struct serial_info *sp)
 /* serial interrupt bottom half - check ring buffer and wakeup waiting processes */
 void serial_bh(void)
 {
-    struct serial_info *port = &ports[0];
-
-    pump_port(port);
+#if defined(CONFIG_FAST_IRQ1_NECV25)
+    pump_port(&ports[0]);
+#endif
+#if defined(CONFIG_FAST_IRQ2_NECV25)
+    pump_port(&ports[1]);
+#endif
 }
 
 struct tty_ops necv25con_ops = {
