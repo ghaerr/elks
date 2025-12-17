@@ -13,7 +13,7 @@
 //
 //      IRQ and IRQ return paths for Linux 8086
 //
-// The execution thread will not return from the function call.
+// The execution thread will not return from the interrupt vector trampoline.
 // Instead, the address pushed in the stack will be used to get
 // the interrupt number.
 
@@ -143,10 +143,11 @@ save_regs:
 //
         movb    (%di),%al
         cmpb    $IDX_SYSCALL,%al
-        jne     updct
-//
-//      ----------PROCESS SYSCALL----------
-//
+        jne     doirq
+/*
+!
+!       ----------PROCESS SYSCALL----------
+*/
         sti
         call    check_ustack    // Check user mode stack
 
@@ -173,7 +174,7 @@ save_regs:
 !
 !       ----------PROCESS INTERRUPT----------
 */
-updct:
+doirq:
 //
 //      Call the C code
 //
@@ -260,10 +261,10 @@ was_trap:
 //
 //  Hardware interrupts of kernel or idle code have to use the interrupt stack,
 //  which means that calling schedule() cannot be allowed. After possibly running
-//  BHs on the interrupt stack, we will return and the stack switched back to
-//  the kernel user process or idle task stack. Interrupted kernel code will be
-//  resumed with no reschedling, and in the case of idle task interruption,
-//  rescheduling will occur by the idle task when resumed.
+//  BHs on the kernel's user process or interrupt stack, we will return to user mode,
+//  or switch back to the interrupted kernel user process or idle task stack.
+//  Interrupted kernel code will be resumed with no reschedling, and in the case
+//  of idle task interruption, rescheduling will occur by the idle task when resumed.
 
         cmp     $2,intr_count   // Interrupting user or non-handler kernel code?
         ja      restore_regs    // No, interrupting handler code
