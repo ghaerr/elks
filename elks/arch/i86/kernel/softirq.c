@@ -18,8 +18,8 @@
  * from being re-entered, so they don't need to be reentrant.
  *
  * High priority BH handlers run directly after the hardware interrupt stack
- * is fully unwound, while normal priority BH handlers run after the kernel
- * has completed its previously interrupted code.
+ * is fully unwound, while other handlers are delayed until the next call to
+ * schedule(), or before turning to user mode if user code was interrupted.
  *
  * Since BH handlers run in an interrupt context, they can't sleep, can't access user
  * space, and can't reschedule.

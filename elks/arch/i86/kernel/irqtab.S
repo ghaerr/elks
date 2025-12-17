@@ -256,12 +256,12 @@ was_trap:
 //      Action: Run high priority bottom halves only, no rescheduling.
 //      Later, bottom halves will be run during the next call to schedule().
 //  intr_count > 2  interrupted handler code (using interrupt stack)
-//      Action: let interrupt stack unwind by returning immediately
+//      Action: let interrupt stack unwind by returning immediately.
 //
 //  Hardware interrupts of kernel or idle code have to use the interrupt stack,
 //  which means that calling schedule() cannot be allowed. This also means that task
 //  rescheduling doesn't happen on return from a timer interrupt from the idle task.
-//  Instead, the idle task is resumed and it calls schedule which calls bottom half.
+//  When the idle task is resumed it calls schedule which runs any bottom halves.
 
         cmp     $2,intr_count   // Interrupting user or mainline kernel code?
         ja      restore_regs    // No, interrupting handler code
