@@ -85,8 +85,11 @@ void schedule(void)
     }
 #endif
 
-    if (bh_active)
+    if (bh_active) {
+        intr_count++;
         do_bottom_half();
+        intr_count--;
+    }
 
     /* We have to let a task exit! */
     if (prev->state == TASK_EXITING)

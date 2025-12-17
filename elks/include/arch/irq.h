@@ -11,6 +11,9 @@
 #define INT_GENERIC  0  // use the generic interrupt handler (aka '_irqit')
 #define INT_SPECIFIC 1  // use a specific interrupt handler
 
+/* mask of handlers to run even when kernel is interrupted (high priority) */
+#define BHM_HIPRI   0x01    /* NETWORK_BH */
+
 #ifndef __ASSEMBLER__
 #include <linuxmt/types.h>
 
@@ -38,15 +41,17 @@ int remap_irq(int);
 int irq_vector(int irq);
 
 /* softirq.c */
+/* BH handlers, run in increasing numeric order */
 enum {
-    TIMER_BH = 0,
+//  NETWORK_BH = 0,         /* high priority */
+    TIMER_BH = 1,           /* lo priority */
     SERIAL_BH,
     MAX_SOFTIRQ
 };
 extern unsigned int bh_active;
 extern void (*bh_base[MAX_SOFTIRQ])(void);
 #define init_bh(nr, routine)    { bh_base[nr] = routine; }
-#define mark_bh(nr)             { bh_active |= 1 << nr;  }
+#define mark_bh(nr)             { bh_active |= 1 << (nr);  }
 void do_bottom_half(void);
 
 #endif /* __ASSEMBLER__ */

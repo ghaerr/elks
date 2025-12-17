@@ -153,7 +153,6 @@ save_regs:
 #ifdef CONFIG_TRACE
         call    trace_begin
 #endif
-
         pop     %ax             // get syscall function code in AX
         call    syscall
         push    %ax             // syscall return value in ax
@@ -162,10 +161,7 @@ save_regs:
         // strace.c must be compiled with tail optimization off to protect top of stack
         call    trace_end       // syscall return value is top of stack
 #endif
-
-//      Restore registers
-//
-        call    do_signal
+        call    do_signal       // process signals
         cli
         jmp     restore_regs
 //
@@ -220,11 +216,10 @@ updct:
 do_eoi: cmp     $8,%ax          // Send EOI to interrupt controller(s)
         mov     $0x20,%al       // EOI
         jb      a6              // IRQ on low chip
-
+//
 //      Reset secondary 8259 if we have taken an AT rather
 //      than XT irq. We also have to prod the primary controller EOI..
 //
-
         out     %al,$PIC2_CMD   // Ack on secondary controller
         jmp     a5
 a5:     jmp     a6
@@ -251,15 +246,37 @@ was_trap:
 //
 //      Look at running bottom halves or rescheduling
 //
-
+        cmp     $2,intr_count   // Interrupting user or mainline kernel code?
+        ja      restore_regs    // No, interrupting handler code
+        jne     1f              // Yes, interrupting user code
+//
+// Interrupted kernel code (intr_count = 2), only run high-priority BHs
+//
+        testb   $BHM_HIPRI,bh_active    // Any high-priority bottom halfs?
+        jz      restore_regs    // No
+        sti
+        call    do_bottom_half  // Run bottom halves
+        jmp     3f
+//
+// Interrupted user code (intr_count = 1), run all BHs
+//
+1:      cmpw    $0,bh_active    // Any active bottom halfs?
+        je      2f              // No
+        sti
+        call    do_bottom_half  // Run bottom halves
+2:      sti
+        call    schedule        // Task switch
+        call    do_signal       // Check signals
+3:
 #ifdef CHECK_ISTACK
         mov     tracing,%ax
         and     $TRACE_ISTACK,%ax
-        jz      2f
+        jz      4f
         call    check_istack
+4:      cli
 #endif
-2:
 //
+#if 0
         cmpw    $1,intr_count    // Interrupted user mode code?
         jne     restore_regs     // No
 //      cmp     $0,_need_resched // Schedule needed ?
@@ -300,6 +317,7 @@ was_trap:
         call    schedule        // Task switch
         call    do_signal       // Check signals
         cli
+#endif
 //
 //      Restore registers and return
 //

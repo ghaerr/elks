@@ -39,11 +39,12 @@ void do_bottom_half(void)
         printk("I");                /* called from idle task */
     else printk("K");               /* called after syscall or user mode interrupt */
     printk("{B%d}", intr_count);
+    if (intr_count != 2) printk("{B%d}", intr_count);
 #endif
 
     bh = bh_base;
     active = bh_active;
-    for (mask = 1, left = ~0; left & active; bh++, mask += mask, left += left) {
+    for (mask = 1, left = ~0; left & active; bh++, mask <<= 1, left <<= 1) {
         if (mask & active) {
             bh_active &= ~mask;
             if (*bh)
