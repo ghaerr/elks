@@ -13,13 +13,10 @@
  *
  * BH handlers run with interrupts enabled in an interrupt context similar to the
  * top half, but while TH handlers run before the PIC EOI is sent, BH handlers
- * execute afterwards, thus allowing further PIC interrupts of any priority to run.
- * A BH handler may be interrupted by any top-half interrupt, but are protected
+ * execute after after the PIC EOI when the hardware interrupt stack is fully unwound,
+ * allowing further PIC top half interrupts of any priority to run.
+ * A BH handler may be interrupted by any top half interrupt, but are protected
  * from being re-entered, so they don't need to be reentrant.
- *
- * High priority BH handlers run directly after the hardware interrupt stack
- * is fully unwound, while other handlers are delayed until the next call to
- * schedule(), or before turning to user mode if user code was interrupted.
  *
  * Since BH handlers run in an interrupt context, they can't sleep, can't access user
  * space, and can't reschedule.
@@ -36,7 +33,12 @@ void do_bottom_half(void)
     unsigned int active;
     unsigned int mask, left;
     void (**bh)(void);
+    static int in_bottom_half;
 
+    if (++in_bottom_half != 1) {    /* protect BHs from reentry */
+        //printk("REENTRANT BH\n");
+        return;
+    }
 #if DEBUG
     /* running on interrupt or kernel stack? - may run on either */
     if (getsp() >= endistack && getsp() < istack)
@@ -55,4 +57,5 @@ void do_bottom_half(void)
                 (*bh)();
         }
     }
+    in_bottom_half = 0;
 }

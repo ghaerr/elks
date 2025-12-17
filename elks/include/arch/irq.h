@@ -8,9 +8,6 @@
 #define IDX_NMI         18
 #define NR_IRQS         19      /* = # IRQs plus special indexes above */
 
-/* mask of handlers to run even when kernel is interrupted (high priority) */
-#define BHM_HIPRI       0x01    /* NETWORK_BH */
-
 #define INT_GENERIC  0  // use the generic interrupt handler (aka '_irqit')
 #define INT_SPECIFIC 1  // use a specific interrupt handler
 
@@ -43,9 +40,9 @@ int irq_vector(int irq);
 /* softirq.c */
 /* BH handlers, run in increasing numeric order */
 enum {
-//  NETWORK_BH = 0,         /* high priority */
-    TIMER_BH = 1,           /* lo priority */
-    SERIAL_BH,
+    NETWORK_BH = 0,
+    TIMER_BH = 1,
+    SERIAL_BH,          /* unused, handled by timer_bh */
     MAX_SOFTIRQ
 };
 extern unsigned int bh_active;

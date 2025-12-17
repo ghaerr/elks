@@ -153,6 +153,7 @@ save_regs:
 #ifdef CONFIG_TRACE
         call    trace_begin
 #endif
+
         pop     %ax             // get syscall function code in AX
         call    syscall
         push    %ax             // syscall return value in ax
@@ -251,74 +252,50 @@ was_trap:
 //  can be taken, depending on the kernel state described by intr_count:
 //  intr_count = 0  not possible
 //  intr_count = 1  interrupted user code (using process's kernel stack)
-//      Action: Run any bottom halves, schedule and do_signal.
+//      Action: Run bottom halves, schedule and do_signal.
 //  intr_count = 2  interrupted kernel code or idle task (using interrupt stack)
-//      Action: Run high priority bottom halves only, no rescheduling.
-//      Later, bottom halves will be run during the next call to schedule().
+//      Action: Run bottom halves, no rescheduling.
 //  intr_count > 2  interrupted handler code (using interrupt stack)
 //      Action: let interrupt stack unwind by returning immediately.
 //
 //  Hardware interrupts of kernel or idle code have to use the interrupt stack,
-//  which means that calling schedule() cannot be allowed. This also means that task
-//  rescheduling doesn't happen on return from a timer interrupt from the idle task.
-//  When the idle task is resumed it calls schedule which runs any bottom halves.
+//  which means that calling schedule() cannot be allowed. After possibly running
+//  BHs on the interrupt stack, we will return and the stack switched back to
+//  the kernel user process or idle task stack. Interrupted kernel code will be
+//  resumed with no reschedling, and in the case of idle task interruption,
+//  rescheduling will occur by the idle task when resumed.
 
-        cmp     $2,intr_count   // Interrupting user or mainline kernel code?
+        cmp     $2,intr_count   // Interrupting user or non-handler kernel code?
         ja      restore_regs    // No, interrupting handler code
         jne     1f              // Yes, interrupting user code
 //
-// Interrupted kernel code (intr_count = 2), only run high-priority BHs
+// Interrupted kernel or idle task code (intr_count = 2), run BHs and return
 //
-        testb   $BHM_HIPRI,bh_active    // Any high-priority bottom halfs?
-        jz      restore_regs    // No
+        cmpw    $0,bh_active    // Any active bottom halfs?
+        je      3f              // No, return
         sti
         call    do_bottom_half  // Run bottom halves
-        jmp     3f              // Return from interrupt
+        jmp     3f              // Return
 //
-// Interrupted user code (intr_count = 1), run all BHs, reschedule,
-// then return to user space
+// Interrupted user code (intr_count = 1), run BHs and reschedule
 //
 1:      cmpw    $0,bh_active    // Any active bottom halfs?
         je      2f              // No
         sti
         call    do_bottom_half  // Run bottom halves
-2:      sti
+2:      sti                     // Interrupts enabled while reschedule or signal checking
         call    schedule        // Task switch
         call    do_signal       // Check signals
 3:
-//
-// Check interrupt stack and return from interrupt
-//
+
 #ifdef CHECK_ISTACK
         mov     tracing,%ax
         and     $TRACE_ISTACK,%ax
         jz      4f
-        call    check_istack
+        call    check_istack    // Determine max interrupt stack used
 4:      cli
 #endif
-//
-#if 0
-        cmpw    $1,intr_count    // Interrupted user mode code?
-        jne     restore_regs     // No
-//      cmp     $0,_need_resched // Schedule needed ?
-//      je      restore_regs     // No
 
-//
-// This path will return directly to user space
-//
-        cmpw    $0,bh_active    // Any active bottom halfs?
-        je      1f              // No
-        //incw    intr_count    // Don't rerun bottom half if interrupted
-        sti                     // Interrupts enabled but handlers not reentrant
-        call    do_bottom_half
-        //cli
-        //decw    intr_count
-1:
-        sti                     // Interrupts enabled while reschedule or signal checking
-        call    schedule        // Task switch
-        call    do_signal       // Check signals
-        cli
-#endif
 //
 //      Restore registers and return
 //
