@@ -8,11 +8,11 @@
 #define IDX_NMI         18
 #define NR_IRQS         19      /* = # IRQs plus special indexes above */
 
+/* mask of handlers to run even when kernel is interrupted (high priority) */
+#define BHM_HIPRI       0x01    /* NETWORK_BH */
+
 #define INT_GENERIC  0  // use the generic interrupt handler (aka '_irqit')
 #define INT_SPECIFIC 1  // use a specific interrupt handler
-
-/* mask of handlers to run even when kernel is interrupted (high priority) */
-#define BHM_HIPRI   0x01    /* NETWORK_BH */
 
 #ifndef __ASSEMBLER__
 #include <linuxmt/types.h>
