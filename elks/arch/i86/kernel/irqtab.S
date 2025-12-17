@@ -13,7 +13,7 @@
 //
 //      IRQ and IRQ return paths for Linux 8086
 //
-// The execution thread will not return from the function call.
+// The execution thread will not return from the interrupt vector trampoline.
 // Instead, the address pushed in the stack will be used to get
 // the interrupt number.
 
@@ -143,10 +143,11 @@ save_regs:
 //
         movb    (%di),%al
         cmpb    $IDX_SYSCALL,%al
-        jne     updct
-//
-//      ----------PROCESS SYSCALL----------
-//
+        jne     doirq
+/*
+!
+!       ----------PROCESS SYSCALL----------
+*/
         sti
         call    check_ustack    // Check user mode stack
 
@@ -162,10 +163,7 @@ save_regs:
         // strace.c must be compiled with tail optimization off to protect top of stack
         call    trace_end       // syscall return value is top of stack
 #endif
-
-//      Restore registers
-//
-        call    do_signal
+        call    do_signal       // process signals
         cli
         jmp     restore_regs
 //
@@ -176,7 +174,7 @@ save_regs:
 !
 !       ----------PROCESS INTERRUPT----------
 */
-updct:
+doirq:
 //
 //      Call the C code
 //
@@ -220,11 +218,10 @@ updct:
 do_eoi: cmp     $8,%ax          // Send EOI to interrupt controller(s)
         mov     $0x20,%al       // EOI
         jb      a6              // IRQ on low chip
-
+//
 //      Reset secondary 8259 if we have taken an AT rather
 //      than XT irq. We also have to prod the primary controller EOI..
 //
-
         out     %al,$PIC2_CMD   // Ack on secondary controller
         jmp     a5
 a5:     jmp     a6
@@ -249,57 +246,61 @@ a6:     out     %al,$PIC1_CMD   // Ack on primary controller
 
 was_trap:
 //
-//      Look at running bottom halves or rescheduling
+//      Check if bottom halves can be run or rescheduling can occur
 //
+
+//  At this time after processing the hardware interrupt, the following actions
+//  can be taken, depending on the kernel state described by intr_count:
+//  intr_count = 0  not possible
+//  intr_count = 1  interrupted user code (using process's kernel stack)
+//      Action: Run bottom halves, schedule and do_signal.
+//  intr_count = 2  interrupted kernel code or idle task (using interrupt stack)
+//      Action: Run bottom halves, no rescheduling.
+//  intr_count > 2  interrupted handler code (using interrupt stack)
+//      Action: let interrupt stack unwind by returning immediately.
+//
+//  Hardware interrupts of kernel or idle code have to use the interrupt stack,
+//  which means that calling schedule() cannot be allowed. After possibly running
+//  BHs on the kernel's user process or interrupt stack, we will return to user mode,
+//  or switch back to the interrupted kernel user process or idle task stack.
+//  Interrupted kernel code will be resumed with no reschedling, and in the case
+//  of idle task interruption, rescheduling will occur by the idle task when resumed.
+
+        cmp     $2,intr_count   // Interrupting user or non-handler kernel code?
+        ja      restore_regs    // No, interrupting handler code
+        jne     1f              // Yes, interrupting user code
+//
+// Interrupted kernel or idle task code (intr_count = 2), run BHs and return
+//
+        cmpw    $0,bh_active    // Any active bottom halfs?
+        je      3f              // No, return
+        sti
+        call    do_bottom_half  // Run bottom halves
+        cli
+        jmp     3f              // Return
+//
+// Interrupted user code (intr_count = 1), run BHs and reschedule
+//
+1:      cmpw    $0,bh_active    // Any active bottom halfs?
+        je      2f              // No
+        sti
+        call    do_bottom_half  // Run bottom halves
+2:      sti                     // Interrupts enabled while reschedule or signal checking
+        call    schedule        // Task switch
+        call    do_signal       // Check signals
+        cli
+3:
 
 #ifdef CHECK_ISTACK
         mov     tracing,%ax
         and     $TRACE_ISTACK,%ax
-        jz      2f
-        call    check_istack
-#endif
-2:
-//
-        cmpw    $1,intr_count    // Interrupted user mode code?
-        jne     restore_regs     // No
-//      cmp     $0,_need_resched // Schedule needed ?
-//      je      restore_regs     // No
-
-//
-// This path will return directly to user space
-//
-
-//
-// Check for any active bottom-half handlers and if we're able to run them now.
-//  Bottom half handlers can run now only if this interrupt is from user mode,
-//  otherwise handlers will be run during next call to schedule().
-//  Interrupts from the idle task have to return now since they're running on
-//  the interrupt stack and can't be switched. On return the idle task will call
-//  schedule() in its main loop, which then runs the bottom half handlers.
-//
-//  At this time, intr_count values mean:
-//  intr_count==0   not possible
-//  intr_count==1   interrupted user code (using process's kernel stack)
-//  intr_count==2   interrupted kernel code or idle task (using interrupt stack)
-//  intr_count>2    interrupted handler code (using interrupt stack)
-//  The idle task always runs at intr_count==1, since it is actually kernel code.
-//  This means that interrupts of idle task or kernel run on the interrupt stack
-//  and thus calling schedule() cannot be allowed. This also means that
-//  task rescheduling doesn't happen on return from a timer interrupt from the idle task.
-//  Instead, the idle task is resumed and it calls schedule which calls bottom half.
-//
-        cmpw    $0,bh_active    // Any active bottom halfs?
-        je      1f              // No
-        //incw    intr_count    // Don't rerun bottom half if interrupted
-        sti                     // Interrupts enabled but handlers not reentrant
-        call    do_bottom_half
-        //cli
-        //decw    intr_count
-1:
-        sti                     // Interrupts enabled while reschedule or signal checking
-        call    schedule        // Task switch
-        call    do_signal       // Check signals
+        jz      4f
+        sti
+        call    check_istack    // Determine max interrupt stack used
         cli
+4:
+#endif
+
 //
 //      Restore registers and return
 //

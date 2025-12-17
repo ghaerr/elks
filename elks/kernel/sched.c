@@ -85,9 +85,6 @@ void schedule(void)
     }
 #endif
 
-    if (bh_active)
-        do_bottom_half();
-
     /* We have to let a task exit! */
     if (prev->state == TASK_EXITING)
         return;

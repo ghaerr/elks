@@ -38,15 +38,17 @@ int remap_irq(int);
 int irq_vector(int irq);
 
 /* softirq.c */
+/* BH handlers, run in increasing numeric order */
 enum {
-    TIMER_BH = 0,
-    SERIAL_BH,
+    NETWORK_BH = 0,
+    TIMER_BH = 1,
+    SERIAL_BH,          /* unused, handled by timer_bh */
     MAX_SOFTIRQ
 };
 extern unsigned int bh_active;
 extern void (*bh_base[MAX_SOFTIRQ])(void);
 #define init_bh(nr, routine)    { bh_base[nr] = routine; }
-#define mark_bh(nr)             { bh_active |= 1 << nr;  }
+#define mark_bh(nr)             { bh_active |= 1 << (nr);  }
 void do_bottom_half(void);
 
 #endif /* __ASSEMBLER__ */
