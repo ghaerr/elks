@@ -275,6 +275,7 @@ was_trap:
         je      3f              // No, return
         sti
         call    do_bottom_half  // Run bottom halves
+        cli
         jmp     3f              // Return
 //
 // Interrupted user code (intr_count = 1), run BHs and reschedule
@@ -286,14 +287,17 @@ was_trap:
 2:      sti                     // Interrupts enabled while reschedule or signal checking
         call    schedule        // Task switch
         call    do_signal       // Check signals
+        cli
 3:
 
 #ifdef CHECK_ISTACK
         mov     tracing,%ax
         and     $TRACE_ISTACK,%ax
         jz      4f
+        sti
         call    check_istack    // Determine max interrupt stack used
-4:      cli
+        cli
+4:
 #endif
 
 //

@@ -33,7 +33,7 @@ void do_bottom_half(void)
     unsigned int active;
     unsigned int mask, left;
     void (**bh)(void);
-    static int in_bottom_half;
+    static char in_bottom_half;
 
     if (++in_bottom_half != 1) {    /* protect BHs from reentry */
         //printk("REENTRANT BH\n");
