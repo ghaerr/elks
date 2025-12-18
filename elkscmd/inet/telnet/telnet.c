@@ -1,5 +1,5 @@
 /*
- * Telnet for ELKS - TLVC
+ * Telnet for ELKS / TLVC
  *
  * Based on minix telnet client. (c) 2001 Harry Kalogirou
  * <harkal@rainbow.cs.unipi.gr>
@@ -72,6 +72,7 @@ int     DO_suppress_go_ahead_allowed = TRUE;
 #endif
 
 int tcp_fd;
+int discard;
 char *term_env;
 int escape = ESCAPE;
 struct termios def_termios;
@@ -99,6 +100,8 @@ read_keyboard(void)
         fprintf(stderr, "\r\ntelnet: session terminated\r\n");
         finish();
     }
+    if (buffer[0] == 03)
+        discard = 1;
     count = write(tcp_fd, buffer, count);
     if (count < 0) {
         perror("Connection closed");
@@ -118,6 +121,8 @@ read_network(void)
         printf("\r\nConnection closed\r\n");
         finish();
     }
+    if (discard)
+        return;
 
 #ifdef RAWTELNET
     write(1, buffer, count);
@@ -221,12 +226,24 @@ main(int argc, char **argv)
     ioctl(0, FIONBIO, &nonblock);
 
     for (;;) {
+        int n;
         fd_set  fdset;
+        struct timeval tv;
+
         FD_ZERO(&fdset);
         FD_SET(0, &fdset);
         FD_SET(tcp_fd, &fdset);
+        tv.tv_sec = 0;
+        tv.tv_usec = 10000;
 
-        if (select(tcp_fd + 1, &fdset, NULL, NULL, NULL) < 0) {
+        n = select(tcp_fd + 1, &fdset, NULL, NULL, &tv);
+        if (n == 0) {
+            //if (discard)
+                //write(tcp_fd, "\n", 1);
+            discard = 0;
+            continue;
+        }
+        if (n < 0) {
             perror("select");
             break;
         }
