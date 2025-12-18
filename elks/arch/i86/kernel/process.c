@@ -7,6 +7,7 @@
 #include <linuxmt/signal.h>
 #include <linuxmt/types.h>
 #include <linuxmt/memory.h>
+#include <linuxmt/init.h>
 
 #include <arch/segment.h>
 
@@ -47,7 +48,7 @@ int run_init_process_sptr(const char *cmd, char *sptr, int slen)
  *  so we fork onto our kernel stack.
  */
 
-void kfork_proc(void (*addr)())
+void INITPROC kfork_proc(void (*addr)())
 {
     struct task_struct *t;
 

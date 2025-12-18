@@ -76,7 +76,7 @@ extern void INITPROC tcpdev_init(void);
 extern int INITPROC crtc_probe(unsigned short crtc_base);
 extern void INITPROC crtc_init(int dev);
 
-extern void kfork_proc(void (*addr)());
+extern void INITPROC kfork_proc(void (*addr)());
 extern void arch_setup_user_stack(struct task_struct *, word_t entry, seg_t cseg);
 
 #endif
