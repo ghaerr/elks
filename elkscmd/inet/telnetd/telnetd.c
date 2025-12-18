@@ -98,7 +98,6 @@ static void telnet_init(int ofd)
 {
 #ifndef RAWTELNET
   tel_init();
-
   telopt(ofd, WILL, TELOPT_SGA);
   telopt(ofd, DO,   TELOPT_SGA);
   telopt(ofd, WILL, TELOPT_BINARY);
@@ -109,7 +108,6 @@ static void telnet_init(int ofd)
 }
 
 /* read/write loop for the telnet connection */
-
 static void client_loop(int fdsock, int fdterm)
 {
     fd_set fds_read;
@@ -216,12 +214,11 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-#if 0 /* test code for getsockname */
-	unsigned int len = sizeof(addr_in);
-	if (getsockname(sockfd, (struct sockaddr *)&addr_in, &len) < 0)
-		perror("getsockname");
-	fprintf(stderr, "getsockname %s:%u\n", in_ntoa(addr_in.sin_addr.s_addr),
-			ntohs(addr_in.sin_port));
+#if DEBUG
+	socklen_t len = sizeof(addr_in);
+	getsockname(sockfd, (struct sockaddr *)&addr_in, &len);
+	__dprintf("getsockname %s:%u\n", in_ntoa(addr_in.sin_addr.s_addr),
+		ntohs(addr_in.sin_port));
 #endif
 
 	if (listen(sockfd, 3) < 0) {
@@ -247,7 +244,7 @@ int main(int argc, char **argv)
 	signal(SIGCHLD, sigchild);
 
 	while (1) {
-		unsigned int len = sizeof(addr_in);
+		socklen_t len = sizeof(addr_in);
 		connectionfd = accept(sockfd, (struct sockaddr *)&addr_in, &len);
 		if (connectionfd < 0) {
 			/* interrupted accept() returns ERESTARTSYS on signal SIGCHLD, not EINTR */
@@ -257,18 +254,16 @@ int main(int argc, char **argv)
 			break;
 		}
 
-		waitpid(-1, NULL, WNOHANG);		/* reap previous accepts*/
-
-		if ((pid = fork()) == -1)		/* handle new accept*/
-			perror("telnetd");
-		else if (pid == 0) {			/* child processing */
-
-#if 0 /* test code for accept and getpeername */
-			fprintf(stderr, "accept from %s:%u\n", in_ntoa(addr_in.sin_addr.s_addr),
+		if ((pid = fork()) == -1)
+			errmsg("telnetd: No more processes\n");
+		if (pid)
+			close(connectionfd);
+		else {
+#if DEBUG
+			__dprintf("accept from %s:%u\n", in_ntoa(addr_in.sin_addr.s_addr),
 				ntohs(addr_in.sin_port));
-			if (getpeername(connectionfd, (struct sockaddr *)&addr_in, &len) < 0)
-			    perror("getpeername");
-			fprintf(stderr, "getpeername %s:%u\n", in_ntoa(addr_in.sin_addr.s_addr),
+			getpeername(connectionfd, (struct sockaddr *)&addr_in, &len);
+			__dprintf("getpeername %s:%u\n", in_ntoa(addr_in.sin_addr.s_addr),
 				ntohs(addr_in.sin_port));
 #endif
 			close(sockfd);
@@ -281,8 +276,6 @@ int main(int argc, char **argv)
 			close(connectionfd);
 			close(pty_fd);
 			exit(0);
-		} else {
-			close(connectionfd);
 		}
 	}
 
