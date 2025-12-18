@@ -17,7 +17,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
-
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -27,6 +26,8 @@
 #include <arpa/inet.h>
 #include <ktcp/tcp.h>
 #include <ktcp/netconf.h>
+
+#define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
 
 char *tcp_states[11] = {
     "CLOSED",
@@ -67,7 +68,7 @@ int main(int ac, char **av)
     char addr[16];
 
     if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        perror("netstat");
+        errmsg("netstat: Network is down\n");
         return 1;
     }
 
@@ -75,7 +76,7 @@ int main(int ac, char **av)
     localadr.sin_port = PORT_ANY;
     localadr.sin_addr.s_addr = INADDR_ANY;  
     if (bind(s, (struct sockaddr *)&localadr, sizeof(struct sockaddr_in)) < 0) {
-        perror("bind");
+        errmsg("netstat bind failure\n");
         return 1;
     }
 
@@ -83,7 +84,7 @@ int main(int ac, char **av)
     remaddr.sin_port = htons(NETCONF_PORT);
     remaddr.sin_addr.s_addr = 0;
     if (connect(s, (struct sockaddr *)&remaddr, sizeof(struct sockaddr_in)) < 0) {
-        perror("connect");
+        errmsg("netstat: Can't connect to ktcp\n");
         return 1;
     }
 
