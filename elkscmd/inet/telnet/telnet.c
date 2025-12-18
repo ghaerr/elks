@@ -163,9 +163,9 @@ int
 main(int argc, char **argv)
 {
     unsigned short port;
-    struct sockaddr_in locadr, remadr;
-    int     nonblock;
     ipaddr_t ipaddr;
+    int     nonblock;
+    struct sockaddr_in locadr, remadr;
 
     if (argc < 2)
         return usage();
@@ -187,7 +187,7 @@ main(int argc, char **argv)
 
     tcp_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (tcp_fd < 0) {
-        perror("socket");
+        perror("telnet");
         return 1;
     }
     locadr.sin_family = AF_INET;
@@ -207,7 +207,7 @@ main(int argc, char **argv)
     remadr.sin_addr.s_addr = ipaddr;
     printf("Trying %s (%s:%u)...\n", argv[1], in_ntoa(ipaddr), port);
     if (in_connect(tcp_fd,
-        (struct sockaddr *)&remadr, sizeof(struct sockaddr_in), 10) < 0) {
+            (struct sockaddr *)&remadr, sizeof(struct sockaddr_in), 10) < 0) {
         perror("Connection failed");
         return 1;
     }
@@ -255,6 +255,7 @@ main(int argc, char **argv)
     finish();
 }
 
+/* telnet protocol handling */
 #define next_char(var)                      \
     if (offset < count)                     \
         (var) = bp[offset++];               \
