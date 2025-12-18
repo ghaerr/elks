@@ -1,5 +1,5 @@
 /*
- * telnetd for ELKS
+ * telnetd for ELKS / TLVC
  *
  * Debugged and added IAC processing.
  * Greg Haerr May 2020
@@ -19,266 +19,268 @@
 #include <paths.h>
 #include "telnet.h"
 
-//#define RAWTELNET	/* set in telnet and telnetd for raw telnet without IAC*/
+#define MAX_BUFFER 512      /* should be equal to TDB_WRITE_MAX and PTYOUTQ_SIZE */
+//#define RAWTELNET         /* set in telnet and telnetd for raw telnet without IAC */
 
 #define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
-#define errstr(str) write(STDERR_FILENO, str, strlen(str))
 
-#define MAX_BUFFER 512		/* should be equal to TDB_WRITE_MAX and PTYOUTQ_SIZE*/
-static char buf_in  [1500];
-static char buf_out [1500];
-
+char buf_in[1500];
+char buf_out[1500];
 char *binlogin[2] = {_PATH_LOGIN, NULL};
 char *binsh[2] = {_PATH_BSHELL, NULL};
 
-static pid_t term_init(int *pty_fd)
+static pid_t
+term_init(int *pty_fd)
 {
-	int n = 0;
-	int tty_fd;
-	pid_t pid;
-	char pty_name[12];
-	struct termios termios;
+    int     n = 0;
+    int     tty_fd;
+    pid_t   pid;
+    char    pty_name[12];
+    struct termios termios;
 
 again:
-	strcpy(pty_name, "/dev/ptyp");		/* master side (PTY) /dev/ptyp0 = 2,8 */
-	strcat(pty_name, itoa(n));
-	if ((*pty_fd = open(pty_name, O_RDWR)) < 0) {
-		if (errno == EBUSY && n++ < 3)
-			goto again;
-		perror(pty_name);
-		return -1;
-	}
-	
-	if ((pid = fork()) == -1) {
-		perror("telnetd");
-		return -1;
-	}
-	if (!pid) {
-		setsid();                       /* new process group for new tty in ps(1) */
-		close(*pty_fd);
-		close(STDIN_FILENO);
-		close(STDOUT_FILENO);
-		pty_name[5] = 't';              /* slave side (TTY) /dev/ttyp0 = 4,8 */
-		if ((tty_fd = open(pty_name, O_RDWR)) < 0) {
-			perror(pty_name);
-			exit(1);
-		}
-		close(STDERR_FILENO);
+    strcpy(pty_name, "/dev/ptyp");      /* master side (PTY) /dev/ptyp0 = 2,8 */
+    strcat(pty_name, itoa(n));
+    if ((*pty_fd = open(pty_name, O_RDWR)) < 0) {
+        if (errno == EBUSY && n++ < 3)
+            goto again;
+        perror(pty_name);
+        return -1;
+    }
+    if ((pid = fork()) == -1) {
+        errmsg("telnetd: No more processes\n");
+        return -1;
+    }
+    if (!pid) {
+        setsid();                       /* new process group for new tty in ps(1) */
+        close(*pty_fd);
+        close(STDIN_FILENO);
+        close(STDOUT_FILENO);
+        pty_name[5] = 't';              /* slave side (TTY) /dev/ttyp0 = 4,8 */
+        if ((tty_fd = open(pty_name, O_RDWR)) < 0) {
+            perror(pty_name);
+            exit(1);
+        }
+        close(STDERR_FILENO);
 
-		/* set login tty to sane mode, since getty not called*/
-		tcgetattr(tty_fd, &termios);
-		termios.c_lflag |= ISIG | ICANON | ECHO | ECHOE;
-		termios.c_lflag &= ~(IEXTEN | ECHOK | NOFLSH | ECHONL);
-		termios.c_iflag |= BRKINT | ICRNL;
-		termios.c_iflag &= ~(IGNBRK | IGNPAR | PARMRK | INPCK | ISTRIP
-                                    | INLCR | IGNCR | IXON | IXOFF | IXANY);
-		termios.c_oflag |= OPOST | ONLCR;
-		termios.c_oflag &= ~XTABS;
-		termios.c_cflag &= ~PARENB;
-		termios.c_cflag |= CS8 | CREAD | HUPCL;
-		termios.c_cflag |= CLOCAL;	    /* ignore modem control lines*/
-		termios.c_cc[VMIN] = 1;
-		termios.c_cc[VTIME] = 0;
-		/* turn off echo - not needed with telnet ECHO option on*/
-		//termios.c_lflag &= ~ECHO;
-		tcsetattr(tty_fd, TCSANOW, &termios);
+        /* set login tty to sane mode, since getty not called */
+        tcgetattr(tty_fd, &termios);
+        termios.c_lflag |= ISIG | ICANON | ECHO | ECHOE;
+        termios.c_lflag &= ~(IEXTEN | ECHOK | NOFLSH | ECHONL);
+        termios.c_iflag |= BRKINT | ICRNL;
+        termios.c_iflag &= ~(IGNBRK | IGNPAR | PARMRK | INPCK | ISTRIP
+                             | INLCR | IGNCR | IXON | IXOFF | IXANY);
+        termios.c_oflag |= OPOST | ONLCR;
+        termios.c_oflag &= ~XTABS;
+        termios.c_cflag &= ~PARENB;
+        termios.c_cflag |= CS8 | CREAD | HUPCL;
+        termios.c_cflag |= CLOCAL;      /* ignore modem control lines */
+        termios.c_cc[VMIN] = 1;
+        termios.c_cc[VTIME] = 0;
+        /* turn off echo - not needed with telnet ECHO option on */
+        //termios.c_lflag &= ~ECHO;
+        tcsetattr(tty_fd, TCSANOW, &termios);
 
-		dup2(tty_fd, STDIN_FILENO);
-		dup2(tty_fd, STDOUT_FILENO);
-		dup2(tty_fd, STDERR_FILENO);
-		execv(binlogin[0], binlogin);	/* try /bin/login first*/
-		execv(binsh[0], binsh);         /* then /bin/sh for small systems*/
-		perror(binsh[0]);
-		exit(1);
-	}
-	return pid;
+        dup2(tty_fd, STDIN_FILENO);
+        dup2(tty_fd, STDOUT_FILENO);
+        dup2(tty_fd, STDERR_FILENO);
+        execv(binlogin[0], binlogin);   /* try /bin/login first */
+        execv(binsh[0], binsh);         /* then /bin/sh for small systems */
+        perror(binsh[0]);
+        exit(1);
+    }
+    return pid;
 }
 
-static void telnet_init(int ofd)
+static void
+telnet_init(int ofd)
 {
 #ifndef RAWTELNET
-  tel_init();
-  telopt(ofd, WILL, TELOPT_SGA);
-  telopt(ofd, DO,   TELOPT_SGA);
-  telopt(ofd, WILL, TELOPT_BINARY);
-  telopt(ofd, DO,   TELOPT_BINARY);
-  telopt(ofd, WILL, TELOPT_ECHO);
-  //telopt(ofd, DO,   TELOPT_WINCH);
+    tel_init();
+    telopt(ofd, WILL, TELOPT_SGA);
+    telopt(ofd, DO, TELOPT_SGA);
+    telopt(ofd, WILL, TELOPT_BINARY);
+    telopt(ofd, DO, TELOPT_BINARY);
+    telopt(ofd, WILL, TELOPT_ECHO);
+    //telopt(ofd, DO, TELOPT_WINCH);
 #endif
 }
 
 /* read/write loop for the telnet connection */
-static void client_loop(int fdsock, int fdterm)
+static void
+client_loop(int fdsock, int fdterm)
 {
-    fd_set fds_read;
-    fd_set fds_write;
-    int count;
-    int count_in = 0;
-    int count_out = 0;
-    int count_fd = (fdsock > fdterm) ? (fdsock + 1) : (fdterm + 1);
+    int     count;
+    int     count_in = 0;
+    int     count_out = 0;
+    int     count_fd = (fdsock > fdterm) ? (fdsock + 1) : (fdterm + 1);
+    fd_set  fds_read;
+    fd_set  fds_write;
     struct timeval timeint;
 
     telnet_init(fdsock);
 
     timeint.tv_sec = 0;
-    timeint.tv_usec = 50000L;	/* slow 50ms timeout to fix select hang bug in #1048 */
+    timeint.tv_usec = 50000L;   /* slow 50ms timeout to fix select hang bug in #1048 */
     while (1) {
-		FD_ZERO (&fds_read);
-		if (!count_in)  FD_SET (fdsock, &fds_read);
-		if (!count_out) FD_SET (fdterm, &fds_read);
+        FD_ZERO(&fds_read);
+        FD_ZERO(&fds_write);
+        if (!count_in)
+            FD_SET(fdsock, &fds_read);
+        if (!count_out)
+            FD_SET(fdterm, &fds_read);
+        if (count_in)
+            FD_SET(fdterm, &fds_write);
+        if (count_out)
+            FD_SET(fdsock, &fds_write);
 
-		FD_ZERO (&fds_write);
-		if (count_in)  FD_SET (fdterm, &fds_write);
-		if (count_out) FD_SET (fdsock, &fds_write);
+        count = select(count_fd, &fds_read, &fds_write, NULL, &timeint);
+        if (count < 0) {
+            perror("telnetd select");
+            break;
+        }
 
-		count = select (count_fd, &fds_read, &fds_write, NULL, &timeint);
-		if (count < 0) {
-			perror ("telnetd select");
-			break;
-		}
-
-		/* network -> login process*/
-		if (!count_in && FD_ISSET (fdsock, &fds_read)) {
-			count_in = read (fdsock, buf_in, sizeof(buf_in));
-			if (count_in <= 0) {
-				if (count_in < 0)
-					perror ("telnetd read sock");
-				break;
-			}
-		}
-		if (count_in && FD_ISSET (fdterm, &fds_write)) {
+        /* network -> login process */
+        if (!count_in && FD_ISSET(fdsock, &fds_read)) {
+            count_in = read(fdsock, buf_in, sizeof(buf_in));
+            if (count_in <= 0) {
+                if (count_in < 0)
+                    perror("telnetd read sock");
+                break;
+            }
+        }
+        if (count_in && FD_ISSET(fdterm, &fds_write)) {
 #ifdef RAWTELNET
-			write (fdterm, buf_in, count_in);
+            write(fdterm, buf_in, count_in);
 #else
-			tel_in(fdterm, fdsock, buf_in, count_in);
+            tel_in(fdterm, fdsock, buf_in, count_in);
 #endif
-			count_in = 0;
-		}
+            count_in = 0;
+        }
 
-		/* login process -> network*/
-		if (!count_out && FD_ISSET (fdterm, &fds_read)) {
-			count_out = read (fdterm, buf_out, sizeof(buf_out));
-			if (count_out <= 0) {
-				if (count_out < 0)
-					perror ("telnetd read term");
-				break;
-			}
-		}
-		if (count_out && FD_ISSET (fdsock, &fds_write)) {
+        /* login process -> network */
+        if (!count_out && FD_ISSET(fdterm, &fds_read)) {
+            count_out = read(fdterm, buf_out, sizeof(buf_out));
+            if (count_out <= 0) {
+                if (count_out < 0)
+                    perror("telnetd read term");
+                break;
+            }
+        }
+        if (count_out && FD_ISSET(fdsock, &fds_write)) {
 #ifdef RAWTELNET
-			write (fdsock, buf_out, count_out);
+            write(fdsock, buf_out, count_out);
 #else
-			tel_out(fdsock, buf_out, count_out);
+            tel_out(fdsock, buf_out, count_out);
 #endif
-			count_out = 0;
-		}
+            count_out = 0;
+        }
     }
 }
 
-void sigchild(int sig)
+void
+sigchild(int sig)
 {
-	signal(SIGCHLD, sigchild);
-	while (waitpid(-1, NULL, WNOHANG) > 0)
-		continue;
+    signal(SIGCHLD, sigchild);
+    while (waitpid(-1, NULL, WNOHANG) > 0)
+        continue;
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
-	struct sockaddr_in addr_in;
-	int sockfd,connectionfd,fd;
-	int pty_fd, ret;
-	pid_t pid;
+    int     sockfd, connectionfd, fd;
+    int     pty_fd, ret;
+    pid_t   pid;
+    struct sockaddr_in addr_in;
 
-	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-		perror("telnetd");
-		return 1;
-	}
+    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+        perror("telnetd");
+        return 1;
+    }
+    /* set local port reuse, allows server to be restarted in less than 10 secs */
+    ret = 1;
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &ret, sizeof(int)) < 0)
+        perror("SO_REUSEADDR");
 
-	/* set local port reuse, allows server to be restarted in less than 10 secs */
-	ret = 1;
-	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &ret, sizeof(int)) < 0)
-		perror("SO_REUSEADDR");
+    /* set small listen buffer to save ktcp memory */
+    ret = SO_LISTEN_BUFSIZ;
+    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &ret, sizeof(int)) < 0)
+        perror("SO_RCVBUF");
 
-	/* set small listen buffer to save ktcp memory */
-	ret = SO_LISTEN_BUFSIZ;
-	if (setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &ret, sizeof(int)) < 0)
-		perror("SO_RCVBUF");
-
-	memset(&addr_in, 0, sizeof(addr_in));
-	addr_in.sin_family = AF_INET;
-	addr_in.sin_addr.s_addr = htons(INADDR_ANY);
-	addr_in.sin_port = htons(23);
-	if (bind(sockfd, (struct sockaddr *)&addr_in, sizeof(addr_in)) == -1) {
-		errmsg("telnetd: bind error (may already be running)\n");
-		close(sockfd);
-		return 1;
-	}
-
+    memset(&addr_in, 0, sizeof(addr_in));
+    addr_in.sin_family = AF_INET;
+    addr_in.sin_addr.s_addr = htons(INADDR_ANY);
+    addr_in.sin_port = htons(23);
+    if (bind(sockfd, (struct sockaddr *)&addr_in, sizeof(addr_in)) == -1) {
+        errmsg("telnetd: bind error (may already be running)\n");
+        close(sockfd);
+        return 1;
+    }
 #if DEBUG
-	socklen_t len = sizeof(addr_in);
-	getsockname(sockfd, (struct sockaddr *)&addr_in, &len);
-	__dprintf("getsockname %s:%u\n", in_ntoa(addr_in.sin_addr.s_addr),
-		ntohs(addr_in.sin_port));
+    socklen_t len = sizeof(addr_in);
+    getsockname(sockfd, (struct sockaddr *)&addr_in, &len);
+    __dprintf("getsockname %s:%u\n", in_ntoa(addr_in.sin_addr.s_addr),
+        ntohs(addr_in.sin_port));
 #endif
 
-	if (listen(sockfd, 3) < 0) {
-		perror("listen");
-		close(sockfd);
-		return 1;
-	}
+    if (listen(sockfd, 3) < 0) {
+        perror("listen");
+        close(sockfd);
+        return 1;
+    }
+    /* become daemon, debug output on 1 and 2 */
+    if ((pid = fork()) == -1) {
+        errmsg("telnetd: No more processes\n");
+        return 1;
+    }
+    if (pid)
+        exit(0);
+    fd = open("/dev/console", O_RDWR);
+    close(STDIN_FILENO);
+    dup2(fd, STDOUT_FILENO);
+    dup2(fd, STDERR_FILENO);
+    if (fd > STDERR_FILENO)
+        close(fd);
+    setsid();                   /* create new process group */
+    signal(SIGINT, SIG_IGN);
+    signal(SIGCHLD, sigchild);
 
-	/* become daemon, debug output on 1 and 2 */
-	if ((pid = fork()) == -1) {
-		perror("telnetd");
-		return 1;
-	}
-	if (pid) exit(0);
-	fd = open("/dev/console", O_RDWR);
-	close(STDIN_FILENO);
-	dup2(fd, STDOUT_FILENO);
-	dup2(fd, STDERR_FILENO);
-	if (fd > STDERR_FILENO)
-		close(fd);
-	setsid();	                        /* create new process group */
-	signal(SIGINT, SIG_IGN);
-	signal(SIGCHLD, sigchild);
-
-	while (1) {
-		socklen_t len = sizeof(addr_in);
-		connectionfd = accept(sockfd, (struct sockaddr *)&addr_in, &len);
-		if (connectionfd < 0) {
-			/* interrupted accept() returns ERESTARTSYS on signal SIGCHLD, not EINTR */
-			if (errno == ERESTARTSYS || errno == EINTR)
-				continue;
-			perror ("telnetd accept");
-			break;
-		}
-
-		if ((pid = fork()) == -1)
-			errmsg("telnetd: No more processes\n");
-		if (pid)
-			close(connectionfd);
-		else {
+    while (1) {
+        socklen_t len = sizeof(addr_in);
+        connectionfd = accept(sockfd, (struct sockaddr *)&addr_in, &len);
+        if (connectionfd < 0) {
+            /* interrupted accept() returns ERESTARTSYS on signal SIGCHLD, not EINTR */
+            if (errno == ERESTARTSYS || errno == EINTR)
+                continue;
+            perror("telnetd accept");
+            break;
+        }
+        if ((pid = fork()) == -1)
+            errmsg("telnetd: No more processes\n");
+        if (pid)
+            close(connectionfd);
+        else {
 #if DEBUG
-			__dprintf("accept from %s:%u\n", in_ntoa(addr_in.sin_addr.s_addr),
-				ntohs(addr_in.sin_port));
-			getpeername(connectionfd, (struct sockaddr *)&addr_in, &len);
-			__dprintf("getpeername %s:%u\n", in_ntoa(addr_in.sin_addr.s_addr),
-				ntohs(addr_in.sin_port));
+            __dprintf("accept from %s:%u\n", in_ntoa(addr_in.sin_addr.s_addr),
+                ntohs(addr_in.sin_port));
+            getpeername(connectionfd, (struct sockaddr *)&addr_in, &len);
+            __dprintf("getpeername %s:%u\n", in_ntoa(addr_in.sin_addr.s_addr),
+                ntohs(addr_in.sin_port));
 #endif
-			close(sockfd);
-			pid = term_init(&pty_fd);
-			if (pid != -1) {
-				client_loop (connectionfd, pty_fd);
-				kill(pid, SIGKILL);
-				waitpid(pid, NULL, 0);  /* wait for termination */
-			}
-			close(connectionfd);
-			close(pty_fd);
-			exit(0);
-		}
-	}
+            close(sockfd);
+            pid = term_init(&pty_fd);
+            if (pid != -1) {
+                client_loop(connectionfd, pty_fd);
+                kill(pid, SIGKILL);
+                waitpid(pid, NULL, 0);  /* wait for termination */
+            }
+            close(connectionfd);
+            close(pty_fd);
+            exit(0);
+        }
+    }
 
-	close (sockfd);
-	return 0;
+    close(sockfd);
+    return 0;
 }
