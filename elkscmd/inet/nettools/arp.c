@@ -19,6 +19,8 @@
 #include <ktcp/arp.h>
 #include <arpa/inet.h>
 
+#define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
+
 struct arp_cache arp_cache[ARP_CACHE_MAX];
 
 char *mac_ntoa(eth_addr_t eth_addr)
@@ -37,7 +39,7 @@ int main(int ac, char **av)
     struct sockaddr_in localadr, remaddr;
 
     if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        perror("arp");
+        errmsg("arp: Network is down\n");
         return 1;
     }
 
@@ -45,7 +47,7 @@ int main(int ac, char **av)
     localadr.sin_port = PORT_ANY;
     localadr.sin_addr.s_addr = INADDR_ANY;  
     if (bind(s, (struct sockaddr *)&localadr, sizeof(struct sockaddr_in)) < 0) {
-        perror("bind");
+        errmsg("arp: bind failure\n");
         return 1;
     }
 
@@ -53,7 +55,7 @@ int main(int ac, char **av)
     remaddr.sin_port = htons(NETCONF_PORT);
     remaddr.sin_addr.s_addr = 0;
     if (connect(s, (struct sockaddr *)&remaddr, sizeof(struct sockaddr_in)) < 0) {
-        perror("connect");
+        errmsg("arp: Can't connect to ktcp\n");
         return 1;
     }
 
@@ -61,7 +63,7 @@ int main(int ac, char **av)
     write(s, &sr, sizeof(sr));
     ret = read(s, arp_cache, ARP_CACHE_MAX*sizeof(struct arp_cache));
     if (ret != ARP_CACHE_MAX*sizeof(struct arp_cache)) {
-        perror("read");
+        errmsg("arp: Can't read ARP cache\n");
         return 1;
     }
 
