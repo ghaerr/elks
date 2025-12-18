@@ -16,6 +16,7 @@
 #include <linuxmt/fs.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/utime.h>
+#include <linuxmt/init.h>
 #include <linuxmt/debug.h>
 
 #include <arch/segment.h>
@@ -174,7 +175,7 @@ static int do_chown(register struct inode *inode, uid_t user, gid_t group)
 }
 #endif
 
-static int do_chown(register struct inode *inode, uid_t user, gid_t group)
+static int FARPROC do_chown(register struct inode *inode, uid_t user, gid_t group)
 {
     if (IS_RDONLY(inode)) return -EROFS;
 

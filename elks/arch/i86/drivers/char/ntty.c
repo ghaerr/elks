@@ -183,10 +183,10 @@ int tty_open(struct inode *inode, struct file *file)
 
 void tty_release(struct inode *inode, struct file *file)
 {
-    register struct tty *rtty;
+    register struct tty *tty;
 
-    rtty = determine_tty(inode->i_rdev);
-    if (!rtty)
+    tty = determine_tty(inode->i_rdev);
+    if (!tty)
         return;
 
     debug_tty("TTY close pid %P\n");
@@ -196,16 +196,16 @@ void tty_release(struct inode *inode, struct file *file)
         return;
 
     /* don't release pgrp for /dev/tty, only real tty*/
-    if (current->pid == rtty->pgrp) {
+    if (current->pid == tty->pgrp) {
         debug_tty("TTY release pgrp %P\n");
-        if (rtty->termios.c_cflag & HUPCL) {
+        if (tty->termios.c_cflag & HUPCL) {
                 debug_tty("TTY sending SIGHUP pid %P\n");
-                kill_pg(rtty->pgrp, SIGHUP, 1);
+                kill_pg(tty->pgrp, SIGHUP, 1);
         }
-        rtty->pgrp = 0;
+        tty->pgrp = 0;
     }
-    rtty->flags &= ~TTY_OPEN;
-    rtty->ops->release(rtty);
+    tty->flags &= ~TTY_OPEN;
+    tty->ops->release(tty);
 }
 
 /*

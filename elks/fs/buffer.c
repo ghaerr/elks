@@ -98,7 +98,7 @@ static int nr_free_bh, nr_bh;
 
 #define buf_num(bh)     ((bh) - buffer_heads)   /* buffer number, for debugging */
 
-static void put_last_lru(struct buffer_head *bh)
+static void FARPROC put_last_lru(struct buffer_head *bh)
 {
     ext_buffer_head *ebh = EBH(bh);
 
@@ -323,7 +323,7 @@ void invalidate_buffers(kdev_t dev)
     } while ((bh = ebh->b_prev_lru) != NULL);
 }
 
-static void sync_buffers(kdev_t dev, int wait)
+static void FARPROC sync_buffers(kdev_t dev, int wait)
 {
     struct buffer_head *bh = bh_lru;
     ext_buffer_head *ebh;
@@ -366,7 +366,7 @@ static void sync_buffers(kdev_t dev, int wait)
     debug_blk("SYNC_BUFFERS END %d wrote %d\n", wait, count);
 }
 
-static struct buffer_head *get_free_buffer(void)
+static struct buffer_head * FARPROC get_free_buffer(void)
 {
     struct buffer_head *bh = bh_lru;
     ext_buffer_head *ebh = EBH(bh);
@@ -434,7 +434,7 @@ void bforget(struct buffer_head *bh)
 }
 #endif
 
-static struct buffer_head *find_buffer(kdev_t dev, block32_t block)
+static struct buffer_head * FARPROC find_buffer(kdev_t dev, block32_t block)
 {
     struct buffer_head *bh = bh_llru;
     ext_buffer_head *ebh;

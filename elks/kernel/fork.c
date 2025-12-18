@@ -5,6 +5,7 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/trace.h>
+#include <linuxmt/init.h>
 #include <linuxmt/debug.h>
 
 #include <arch/segment.h>
@@ -13,7 +14,7 @@ int task_slots_unused;
 struct task_struct *next_task_slot;
 pid_t last_pid = 0;
 
-static pid_t get_pid(void)
+static pid_t FARPROC get_pid(void)
 {
     register struct task_struct *p;
 

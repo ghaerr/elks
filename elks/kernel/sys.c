@@ -99,7 +99,7 @@ pid_t sys_getpid(int *ppid)
     return twovalues(current->pid, (int *)&current->ppid, ppid);
 }
 
-unsigned short int sys_umask(mode_t mask)
+mode_t sys_umask(mode_t mask)
 {
     mode_t old;
 

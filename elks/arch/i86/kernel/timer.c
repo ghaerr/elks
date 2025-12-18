@@ -5,6 +5,7 @@
 #include <linuxmt/ntty.h>
 #include <linuxmt/fixedpt.h>
 #include <linuxmt/trace.h>
+#include <linuxmt/init.h>
 #include <arch/io.h>
 #include <arch/irq.h>
 #include <arch/param.h>
@@ -23,7 +24,7 @@ static int spin_on;
 static int delaytick;
 
 #ifdef CONFIG_CPU_USAGE
-static void calc_cpu_usage(void)
+static void FARPROC calc_cpu_usage(void)
 {
     static int count = SAMP_FREQ;
     struct task_struct *p;

@@ -7,9 +7,10 @@
 #include <linuxmt/sched.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/init.h>
 #include <linuxmt/debug.h>
 
-static void reparent_children(void)
+static void FARPROC reparent_children(void)
 {
     register struct task_struct *p;
 
