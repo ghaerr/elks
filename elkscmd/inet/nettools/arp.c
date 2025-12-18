@@ -37,38 +37,38 @@ int main(int ac, char **av)
     struct sockaddr_in localadr, remaddr;
 
     if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-	perror("arp");
-	return 1;
+        perror("arp");
+        return 1;
     }
 
     localadr.sin_family = AF_INET;
     localadr.sin_port = PORT_ANY;
     localadr.sin_addr.s_addr = INADDR_ANY;  
     if (bind(s, (struct sockaddr *)&localadr, sizeof(struct sockaddr_in)) < 0) {
-	perror("bind");
-	return 1;
+        perror("bind");
+        return 1;
     }
 
     remaddr.sin_family = AF_INET;
     remaddr.sin_port = htons(NETCONF_PORT);
     remaddr.sin_addr.s_addr = 0;
     if (connect(s, (struct sockaddr *)&remaddr, sizeof(struct sockaddr_in)) < 0) {
-	perror("connect");
-	return 1;
+        perror("connect");
+        return 1;
     }
 
     sr.type = NS_ARP;
-    write(s, &sr, sizeof(sr));	
+    write(s, &sr, sizeof(sr));
     ret = read(s, arp_cache, ARP_CACHE_MAX*sizeof(struct arp_cache));
     if (ret != ARP_CACHE_MAX*sizeof(struct arp_cache)) {
-	perror("read");
-	return 1;
+        perror("read");
+        return 1;
     }
 
     for(i=0; i<ARP_CACHE_MAX; i++) {
-	if (arp_cache[i].ip_addr)
-		printf("%-15s %s\n", in_ntoa(arp_cache[i].ip_addr),
-			mac_ntoa(arp_cache[i].eth_addr));
+        if (arp_cache[i].ip_addr)
+                printf("%-15s %s\n", in_ntoa(arp_cache[i].ip_addr),
+                        mac_ntoa(arp_cache[i].eth_addr));
     }
     return 1;
 }
