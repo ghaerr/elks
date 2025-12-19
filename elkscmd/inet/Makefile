@@ -9,14 +9,10 @@ include $(BASEDIR)/Makefile-rules
 # All subdirectories to build & clean
 
 SUBDIRS = \
-    httpd \
-    nettools \
-    telnet \
+    cmds \
+    ftp \
     telnetd \
     tinyirc \
-    urlget \
-    ftp \
-    netcat \
     # EOL
 
 all:

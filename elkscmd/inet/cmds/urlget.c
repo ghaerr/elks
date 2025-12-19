@@ -15,8 +15,6 @@
  *	-v -- verbose file listing & error reporting, progress meter (ftpput/ftpget)
  * 3/7/2025 Added -U, -F, -P, -H for urlget, ftpget, ftpput, httpget
  */
-
-
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -26,14 +24,12 @@
 #include <signal.h>
 #include <unistd.h>
 #include <time.h>
-
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #define _PROTOTYPE(a,b) a b
-
 _PROTOTYPE(char *unesc, (char *s));
 _PROTOTYPE(void encode64, (char **pp, char *s));
-_PROTOTYPE(int net_connect, (char *host, int port));
-_PROTOTYPE(void net_close, (int fd, int errflag));
 _PROTOTYPE(char *auth, (char *user, char *pass));
 _PROTOTYPE(int skipit, (char *buf, int len, int *skip));
 _PROTOTYPE(int httpget, (char *host, int port, char *user, char *pass, char *path, int headers, int discard, int post));
@@ -58,6 +54,58 @@ char *progname;
 #define TRANS_DEBUG	0	/* for debug dumps */
 
 char buffer[4096];
+
+static int net_connect(char *host, int port)
+{
+	int netfd, e;
+	struct sockaddr_in in_adr;
+	struct linger l;
+
+	netfd = socket(AF_INET, SOCK_STREAM, 0);
+	if (netfd < 0)
+		return -1;
+
+	in_adr.sin_family = AF_INET;
+	in_adr.sin_port = PORT_ANY;
+	in_adr.sin_addr.s_addr = INADDR_ANY;
+
+	if (bind(netfd, (struct sockaddr *)&in_adr, sizeof(struct sockaddr_in)) < 0)
+		goto error;
+
+	l.l_onoff = 1;	/* turn on linger option: will send RST on close*/
+	l.l_linger = 0;	/* must be 0 to turn on option*/
+	setsockopt(netfd, SOL_SOCKET, SO_LINGER, &l, sizeof(l));
+
+	in_adr.sin_family = AF_INET;
+	in_adr.sin_port = htons(port);
+	in_adr.sin_addr.s_addr = in_gethostbyname(host);
+	if (!in_adr.sin_addr.s_addr)
+		goto error;
+
+	if (in_connect(netfd, (struct sockaddr *)&in_adr, sizeof(struct sockaddr_in), 10) < 0)
+		goto error;
+
+	return netfd;
+error:
+	e = errno;
+	close(netfd);
+	errno = e;
+	return -1;
+}
+
+/* if errflag set, send TCP RST on close, else send FIN */
+static void net_close(int fd, int errflag)
+{
+	/* Send RST on close was previously turned on by net_connect*/
+	if (!errflag) {
+		struct linger l;
+
+		l.l_onoff = 0;	/* turn off linger option: will send FIN on close*/
+		l.l_linger = 0;
+		setsockopt(fd, SOL_SOCKET, SO_LINGER, &l, sizeof(l));
+	}
+	close(fd);
+}
 
 /*
  * urlget  [-hp]  [tcp:|ftp:|http:]//url
