@@ -194,21 +194,21 @@ gui/images/circle.bmp ::lib/circle.bmp  :gui                      :1440k
 gui/images/rectangle.bmp ::lib/rectangle.bmp  :gui                      :1440k
 busyelks/busyelks               :busyelks
 ktcp/ktcp                       :net
-inet/cmds/arp                   :net
-inet/cmds/ftp                   :net
-inet/cmds/ftpd                  :net
-inet/cmds/httpd                 :net
-inet/cmds/netcat                :net
-inet/cmds/netcat :::nc          :net
-inet/cmds/netstat               :net
-inet/cmds/nslookup              :net
-inet/cmds/telnet                :net
-inet/cmds/telnetd               :net
-inet/cmds/urlget                :net
-inet/cmds/sample_index.html ::var/www/index.html :net
-#inet/cmds/urlget :::ftpget     :net
-#inet/cmds/urlget :::ftpput     :net
-#inet/cmds/urlget :::httpget    :net
+inet/arp                        :net
+inet/ftp                        :net
+inet/ftpd                       :net
+inet/httpd                      :net
+inet/netcat                     :net
+inet/netcat :::nc               :net
+inet/netstat                    :net
+inet/nslookup                   :net
+inet/telnet                     :net
+inet/telnetd                    :net
+inet/urlget                     :net
+inet/sample_index.html ::var/www/index.html :net
+#inet/urlget :::ftpget          :net
+#inet/urlget :::ftpput          :net
+#inet/urlget :::httpget         :net
 inet/tinyirc/tinyirc            :other                          :1440c
 bc/bc                           :other                          :1440c
 sys_utils/test_unreal           :test                           :1440c
