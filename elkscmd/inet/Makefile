@@ -10,7 +10,6 @@ include $(BASEDIR)/Makefile-rules
 
 SUBDIRS = \
     cmds \
-    ftp \
     tinyirc \
     # EOL
 

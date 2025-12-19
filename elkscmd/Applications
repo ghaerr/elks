@@ -195,6 +195,8 @@ gui/images/rectangle.bmp ::lib/rectangle.bmp  :gui                      :1440k
 busyelks/busyelks               :busyelks
 ktcp/ktcp                       :net
 inet/cmds/arp                   :net
+inet/cmds/ftp                   :net
+inet/cmds/ftpd                  :net
 inet/cmds/httpd                 :net
 inet/cmds/netcat                :net
 inet/cmds/netcat :::nc          :net
@@ -204,8 +206,6 @@ inet/cmds/telnet                :net
 inet/cmds/telnetd               :net
 inet/cmds/urlget                :net
 inet/cmds/sample_index.html ::var/www/index.html :net
-inet/ftp/ftp                    :net
-inet/ftp/ftpd                   :net
 #inet/cmds/urlget :::ftpget     :net
 #inet/cmds/urlget :::ftpput     :net
 #inet/cmds/urlget :::httpget    :net

@@ -1,4 +1,6 @@
 arp
+ftp
+ftpd
 httpd
 netcat
 netstat
