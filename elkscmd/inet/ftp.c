@@ -408,7 +408,7 @@ int dataconn(int fd) {		/* wait for the actual data connection in PORT mode */
 	int datafd, i = sizeof(myaddr);
 
 	if ((datafd = accept(fd, (struct sockaddr *)&myaddr, (unsigned int *)&i)) < 0) {
-		perror("accept error");
+		perror("accept");
 		close(fd);
 		return -1;
 	}
@@ -823,27 +823,25 @@ int do_active(int cmdfd) {
 	}
 #endif
 	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		perror("socket error");
+		perror("socket");
 		return -1;
 	}
 
 	int on = 1;
-	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0) {
-		/* This should not happen */
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0)
 		perror("SO_REUSEADDR");
-	}
 
 	i = SO_LISTEN_BUFSIZ;
 	if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &i, sizeof(i)) < 0) 
 		perror("SO_RCVBUF");
+
 	bzero(&myaddr, sizeof(myaddr));
 	myaddr.sin_family = AF_INET;
 	myaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	myaddr.sin_port = htons(0);	/* if 0, system picks a port */
 	i = sizeof(myaddr);
-
 	if (bind(fd, (struct sockaddr *) &myaddr, i) < 0) {
-		perror("bind error");
+		perror("bind");
 		return -1;
 	}
 
@@ -852,7 +850,7 @@ int do_active(int cmdfd) {
 	p = (char *)&myport;
 
 	if (listen(fd, 1) < 0) {
-		perror("Listen failed");
+		perror("listen");
 		close(fd);
 		return -1;
 	}
@@ -891,7 +889,7 @@ int do_passive(int cmdfd) {
 		return -1;
 	}
 	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-			perror("socket error");
+			perror("socket");
 			return -1;
 	}
 
@@ -900,7 +898,7 @@ int do_passive(int cmdfd) {
 	srvaddr.sin_port = htons(0);
 
 	if (bind(fd, (struct sockaddr*) &srvaddr, sizeof(srvaddr)) < 0) {
-		perror("bind error");
+		perror("bind");
 		return -1;
 	} 
 
@@ -1031,7 +1029,7 @@ int connect_cmd(char *ip, unsigned int server_port) {
 	unsigned int myport;
 
 	if ((controlfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		printf("Can't open socket - check if ktcp is running.\n");
+		perror("ftp");
 		return -1;
 	}
 	//printf("CMD socket OK.\n");

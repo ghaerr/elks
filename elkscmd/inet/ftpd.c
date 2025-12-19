@@ -168,15 +168,13 @@ void clean(char *s) {	/* chop off CRLF at end of string */
 }
 
 void net_close(int fd, int errflag) {
-	int ret;
 	struct linger l;
 
 	if (errflag) {
 		l.l_onoff = 1; /* Force RST on close */
 		l.l_linger = 0;
-		ret = setsockopt(fd, SOL_SOCKET, SO_LINGER, &l, sizeof(l));
-		if (ret < 0)
-			perror("setsockopt FIN");
+		if (setsockopt(fd, SOL_SOCKET, SO_LINGER, &l, sizeof(l)) < 0)
+			perror("SO_LINGER");
 	}
 	close(fd);
 }
@@ -205,9 +203,9 @@ int do_active(char *client_ip, unsigned int client_port, unsigned int server_por
 	int fd, sockwait = 0;
 	char *ip = client_ip;
 
-	if ( (fd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
-    		perror("socket error");
-    		return -1;
+	if ( (fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+		perror("socket");
+		return -1;
 	}
 #if 1
 	int on = 1;
@@ -223,11 +221,9 @@ int do_active(char *client_ip, unsigned int client_port, unsigned int server_por
 	tempaddr.sin_family = AF_INET;
 	tempaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	tempaddr.sin_port = htons(server_port-1);
-
 	while ((bind(fd, (struct sockaddr*) &tempaddr, sizeof(tempaddr))) < 0) {
 		if (sockwait++ > 10 || errno != EADDRINUSE) {
 			printf("Bind: Could not connect on port %d\n", server_port-1);
-    			perror("bind error");
 			return -1;
 		} 
 		sleep(1);
@@ -242,9 +238,8 @@ int do_active(char *client_ip, unsigned int client_port, unsigned int server_por
 	cliaddr.sin_family = AF_INET;
 	cliaddr.sin_port = htons(client_port);
 	cliaddr.sin_addr.s_addr = in_aton(ip);
-
 	if (in_connect(fd, (struct sockaddr *) &cliaddr, sizeof(cliaddr), 10) < 0) {
-    		perror("connect error");
+		perror("connect");
     		return -1;
 	}
 
@@ -375,7 +370,7 @@ int do_list(int datafd, char *input) {
 			iobuf[len-1] = '\r';    /* Change to FTP ASCII-style line endings */
 			iobuf[len++] = '\n';
 			if (write(datafd, iobuf, len) != len) {
-				perror("LIST: Data socket write error");
+				perror("LIST: Data socket write");
 				status = -1;
 				break;
 			}
@@ -497,15 +492,15 @@ int do_pasv(int *datafd) {
 
 	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
     		write(controlfd, pasv_err, strlen(pasv_err));
-		perror("PASV: Socket open failed");
+		perror("PASV socket");
 		return -1;
 	}
 
 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &i, sizeof(i)) < 0)
-		perror("SO_REUSEADDR");
+		perror("PASV SO_REUSEADDR");
 	i = SO_LISTEN_BUFSIZ;
 	if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &i, sizeof(i)) < 0)
-                perror("SO_RCVBUF");
+                perror("PASV SO_RCVBUF");
 
 	pasv.sin_family = AF_INET;
 	pasv.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -514,10 +509,9 @@ int do_pasv(int *datafd) {
 	i = 0;
 	while (bind(fd, (struct sockaddr *)&pasv, sizeof(pasv)) < 0) {
 		if (debug) printf("PASV bind failed: host %s port %u\n", in_ntoa(pasv.sin_addr.s_addr), ntohs(pasv.sin_port));
-		perror("PASV bind failure");
+		perror("PASV bind");
 		if (i++ > 10 || errno != EADDRINUSE) {
 			if (debug) printf("Bind: Could not connect on port %u\n", port);
-    			perror("bind error");
     			write(controlfd, pasv_err, strlen(pasv_err));
 			close(fd);
 			return -1;
@@ -528,14 +522,13 @@ int do_pasv(int *datafd) {
     		pasv.sin_port = htons(port);
 	}
 	i = sizeof(pasv);
-	if (getsockname(fd, (struct sockaddr *) &pasv, (unsigned int *)&i) < 0) {
-		perror("getsockname");
-		//return -1;
-	}
-	if (debug) printf("getsockname: adr %s, port %u\n", in_ntoa(pasv.sin_addr.s_addr), ntohs(pasv.sin_port));
+	if (getsockname(fd, (struct sockaddr *) &pasv, (unsigned int *)&i) < 0)
+		perror("PASV getsockname");
+	if (debug) printf("getsockname: adr %s, port %u\n",
+		in_ntoa(pasv.sin_addr.s_addr), ntohs(pasv.sin_port));
 	if (listen(fd, 1) < 0) {
     		write(controlfd, pasv_err, strlen(pasv_err));
-		if (debug) perror("PASV");
+		if (debug) perror("PASV listen");
 		close(fd);
 		return -1;
 	}
@@ -556,7 +549,7 @@ int do_pasv(int *datafd) {
 	//FIXME: The accept() will block forever - this will happen in QEMU if an external client
 	// requests a passive mode connection.
 	if ((*datafd = accept(fd, (struct sockaddr *)&pasv, (unsigned int *)&i)) < 0 ) {
-		perror("accept error");	
+		perror("accept");
 		close(fd);
 		return -1;
 	}
@@ -584,7 +577,7 @@ int do_retr(int datafd, char *input){
 			write(controlfd, iobuf, strlen(iobuf));
 			while ((len = read(fd, iobuf, sizeof(iobuf))) > 0) 
 			    if (write(datafd, iobuf, len) != len) {
-				perror("Data write error"); 
+				perror("write data");
 				break;
 			    }
 			close(fd);
@@ -620,8 +613,8 @@ int do_stor(int datafd, char *input) {
 	/* FIXME - should query protection mode for the source file and use that */
 	//trim(cmd_buf);
 	if ((fp = open(cmd_buf, O_CREAT|O_RDWR|O_TRUNC, 0644)) < 1) {
-		perror("File create failure");
 		send_reply(552, "File create error, transfer aborted");
+		perror("create");
 		return -1;
 	}
 
@@ -630,7 +623,7 @@ int do_stor(int datafd, char *input) {
 	while ((n = read(datafd, iobuf, sizeof(iobuf))) > 0) {
 		if ((len = write(fp, iobuf, n)) != n) {
 			if (len < 0 )
-				perror("File write error");
+				perror("write file");
 			else
 				printf("File write error: %s\n", cmd_buf);
 			close(fp);
@@ -675,12 +668,11 @@ int main(int argc, char **argv) {
 	}
 	if ((cp = getenv("QEMU")) != NULL) 
 		qemu = atoi(cp);
-	if (qemu && debug) {
+	if (qemu && debug)
 		printf("QEMU mode\n");
-	}
-		
+
 	if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		perror("socket error");
+		perror("ftpd");
 		exit(1);
 	}
 
@@ -697,25 +689,23 @@ int main(int argc, char **argv) {
 	servaddr.sin_family      = AF_INET;
 	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	servaddr.sin_port	= htons(myport);
-	
 	if (bind(listenfd, (struct sockaddr*) &servaddr, sizeof(servaddr)) < 0 ) {
-		perror("Cannot bind socket");
+		perror("bind");
 		exit(2);
 	}
 
 	if (listen(listenfd, 1) < 0 ) {
-		perror("Error in listen");
+		perror("listen");
 		exit(3);
 	}
 	ret = sizeof(myaddr);	/* save my own address for later use */
-	if (getsockname(listenfd, (struct sockaddr *) &myaddr, (unsigned int *)&ret) < 0) {
+	if (getsockname(listenfd, (struct sockaddr *) &myaddr, (unsigned int *)&ret) < 0)
 		perror("getsockname");
-		//return -1;
-	}
+
 	if (!nofork) {
 		/* become daemon, debug output on 1 and 2*/
 		if ((pid = fork()) == -1) {
-			perror("ftpd");
+			perror("No more processes");
 			exit(1);
 		}
 		if (pid) exit(0);
@@ -747,7 +737,7 @@ int main(int argc, char **argv) {
 			in_ntoa(client.sin_addr.s_addr), ntohs(client.sin_port));
 
 		if ((pid = fork()) == -1)
-			perror("ftpd");
+			perror("No more processes");
 		if (pid)
 			close(controlfd);
 		else {						    /* child process for accept */
