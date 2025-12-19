@@ -170,7 +170,7 @@ static void check_kstack(int n)
  */
 void trace_begin(void)
 {
-#if defined(CONFIG_STRACE) || defined(CHECK_KSTACK)
+#if defined(CHECK_STRACE) || defined(CHECK_KSTACK)
     if (tracing & (TRACE_STRACE|TRACE_KSTACK))
         memset(current->t_kstack, 0x55, KSTACK_BYTES-32);
 #endif
@@ -197,7 +197,7 @@ void trace_end(unsigned int retval)
     }
 
     n = 0;
-#if defined(CONFIG_STRACE) || defined(CHECK_KSTACK)
+#if defined(CHECK_STRACE) || defined(CHECK_KSTACK)
     if (tracing & (TRACE_STRACE|TRACE_KSTACK)) {
         for (; n<KSTACK_BYTES/2; n++) {
         if (current->t_kstack[n] != 0x5555)
@@ -207,7 +207,7 @@ void trace_end(unsigned int retval)
         if (n > max) max = n;
     }
 #endif
-#ifdef CONFIG_STRACE
+#ifdef CHECK_STRACE
     if (tracing & TRACE_STRACE) {
         struct sc_info *s = syscall_info(current->t_regs.orig_ax);
         printk("[%P:%s/ret=%d,ks=%d/%d]\n", s->s_name, retval, n, max);
