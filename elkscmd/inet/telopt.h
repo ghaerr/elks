@@ -11,8 +11,8 @@
  * Authors:	Original taken from BSD 4.3/TAHOE.
  *		Fred N. van Kempen, <waltje@uwalt.nl.mugnet.org>
  */
-#ifndef _ARPA_TELNET_H
-#define _ARPA_TELNET_H
+#ifndef _TELOPT_H
+#define _TELOPT_H
 
 #define	IAC		255	/* interpret as command:		*/
 #define	DONT		254	/* you are not to use option		*/
@@ -69,7 +69,7 @@
 #define	TELQUAL_SEND	1	/* send option				*/
 
 void tel_init(void);
-void telopt(int fdout, int what, int option);
+void tel_opt(int fdout, int what, int option);
 void tel_in(int fdout, int telout, char *buffer, int len);
 void tel_out(int fdout, char *buf, int size);
-#endif /* _ARPA_TELNET_H */
+#endif /* _TELOPT_H */

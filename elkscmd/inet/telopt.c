@@ -1,4 +1,6 @@
 /*
+ * telopt.c - Telnet options processing for telnetd.c
+ *
  * TNET         A server program for MINIX which implements the TCP/IP suite
  *              of networking protocols.  It is based on the TCP/IP code written by Phil
  *              Karn et al, as found in his NET package for Packet Radio communications.
@@ -10,24 +12,16 @@
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
-#include <errno.h>
 #include <unistd.h>
 #include <termios.h>
-#include "telnet.h"
 #include <sys/ioctl.h>
+#include "telopt.h"
 
 #define IN_DATA 0
 #define IN_CR   1
 #define IN_IAC  2
 #define IN_IAC2 3
 #define IN_SB   4
-
-static void dowill(int c);
-static void dowont(int c);
-static void dodo(int c);
-static void dodont(int c);
-static void respond(int ack, int option);
-static void respond_really(int ack, int option);
 
 #define LASTTELOPT      TELOPT_SGA
 
@@ -36,8 +30,15 @@ static int telfdout;
 static int TelROpts[LASTTELOPT + 1];
 static int TelLOpts[LASTTELOPT + 1];
 
+static void dowill(int c);
+static void dowont(int c);
+static void dodo(int c);
+static void dodont(int c);
+static void respond(int ack, int option);
+static void respond_really(int ack, int option);
+
 void
-tel_init()
+tel_init(void)
 {
     int     i;
 
@@ -48,13 +49,10 @@ tel_init()
 }
 
 void
-telopt(fdout, what, option)
-    int     fdout;
-    int     what;
-    int     option;
+tel_opt(int fdout, int what, int option)
 {
-    char    buf[3];
     int     len;
+    char    buf[3];
 
     buf[0] = IAC;
     buf[1] = what;
@@ -94,8 +92,8 @@ telopt(fdout, what, option)
         (void)write(fdout, buf, len);
 }
 
-void
-set_winsize(int fd, unsigned int cols, unsigned int rows)
+static void
+setwinsize(int fd, unsigned int cols, unsigned int rows)
 {
     struct winsize w;
     memset(&w, 0, sizeof(w));
@@ -105,11 +103,7 @@ set_winsize(int fd, unsigned int cols, unsigned int rows)
 }
 
 void
-tel_in(fdout, telout, buffer, len)
-    int     fdout;
-    int     telout;
-    char   *buffer;
-    int     len;
+tel_in(int fdout, int telout, char *buffer, int len)
 {
     static int InState = IN_DATA;
     static int ThisOpt = 0;
@@ -215,7 +209,7 @@ tel_in(fdout, telout, buffer, len)
                     }
                     if (winchpos >= 4) {
                         /* End of WINCH data. */
-                        set_winsize(fdout,
+                        setwinsize(fdout,
                                     (winchbuf[0] << 8) | winchbuf[1],
                                     (winchbuf[2] << 8) | winchbuf[3]);
                         winchpos = -1;
@@ -251,10 +245,7 @@ tel_in(fdout, telout, buffer, len)
 }
 
 void
-tel_out(fdout, buf, size)
-    int     fdout;
-    char   *buf;
-    int     size;
+tel_out(int fdout, char *buf, int size)
 {
     char   *p;
     int     got_iac, len;
@@ -278,8 +269,7 @@ tel_out(fdout, buf, size)
 }
 
 static void
-dowill(c)
-    int     c;
+dowill(int c)
 {
     int     ack;
 
@@ -307,8 +297,7 @@ dowill(c)
 }
 
 static void
-dowont(c)
-    int     c;
+dowont(int c)
 {
     if (c <= LASTTELOPT) {
         if (TelROpts[c] == 0)
@@ -319,8 +308,7 @@ dowont(c)
 }
 
 static void
-dodo(c)
-    int     c;
+dodo(int c)
 {
     int     ack;
 
@@ -332,8 +320,7 @@ dodo(c)
 }
 
 static void
-dodont(c)
-    int     c;
+dodont(int c)
 {
     if (c <= LASTTELOPT) {
         if (TelLOpts[c] == 0)
@@ -344,8 +331,7 @@ dodont(c)
 }
 
 static void
-respond(ack, option)
-    int     ack, option;
+respond(int ack, int option)
 {
     /**unsigned char c[3];
 
@@ -356,8 +342,7 @@ respond(ack, option)
 }
 
 static void
-respond_really(ack, option)
-    int     ack, option;
+respond_really(int ack, int option)
 {
     unsigned char c[3];
 

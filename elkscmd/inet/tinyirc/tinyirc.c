@@ -1,16 +1,3 @@
-#define COMMANDCHAR	'/'
-#define ASCIIHEXCHAR	'@'
-#define HEXASCIICHAR	'#'
-#undef USE_ANSICOLOR
-/* each line of hist adds 512 bytes to resident size */
-#define HISTLEN		8
-#ifdef AUTOJOIN
-#define RELEASE		"TinyIRC 1.1 LinuxConv Edition"
-#else
-#define RELEASE		"TinyIRC 1.1"
-#endif
-/* most bytes to try to read from server at one time */
-#define IB_SIZE		4096
 /* TinyIRC 1.1
    Copyright (C) 1991-1996 Nathan I. Laredo
 
@@ -23,33 +10,14 @@
    Send your comments and all your spare pocket change to
    laredo@gnu.ai.mit.edu (Nathan Laredo) or to PSC1, BOX 709,
    Lackland AFB, TX, 78236-5128
- */
-/* $Id$
 
    Modified for ELKS by Claudio Matsuoka <claudio@conectiva.com>
-
-   $Log$
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/select.h>
-
-#ifndef POSIX
-#include <sgtty.h>
-#define	USE_OLD_TTY
-#include <sys/ioctl.h>
-#if !defined(sun) && !defined(sequent) && !defined(__hpux) && \
-	!defined(_AIX_)
-#include <strings.h>
-#define strchr index
-#else
-#include <string.h>
-#endif
-#else
 #include <string.h>
 #include <termios.h>
-#endif
 #include <pwd.h>
 #include <ctype.h>
 #include <unistd.h>
@@ -62,6 +30,23 @@
 #include <signal.h>
 #include <utmp.h>
 #include <termcap.h>
+
+#define ELKS
+#undef  AUTOJOIN
+#define DEFAULTSERVER   "162.213.39.42"         /* chat.freenode.net */
+#define DEFAULTPORT     8000
+#define RELEASE         "TinyIRC 1.1"
+
+#define HISTLEN		8       /* each line of hist adds 512 bytes to resident size */
+#define COMMANDCHAR	'/'
+#define ASCIIHEXCHAR	'@'
+#define HEXASCIICHAR	'#'
+#undef USE_ANSICOLOR
+
+
+/* most bytes to try to read from server at one time */
+#define IB_SIZE		4096
+
 struct dlist {
     char name[64];
     char mode[64];
@@ -71,6 +56,7 @@ struct dlist {
 #define ischan(x) (*x == 0x23 || *x == '&' || *x == '+')
 #define OBJ obj->name
 #define raise_sig(x) kill(getpid(), x)
+
 struct dlist *obj = NULL, *olist = NULL, *newobj;
 unsigned short IRCPORT = DEFAULTPORT;
 int my_tcp, sok = 1, my_tty, hline, dumb = 0, CO, LI, column;
@@ -83,12 +69,9 @@ struct timeval timeout;
 struct tm *timenow;
 static time_t idletimer, datenow, wasdate, tmptime;
 struct passwd *userinfo;
-#ifdef  CURSES
-#include <curses.h>
-#else
-#ifdef	POSIX
 struct termios _tty;
 tcflag_t _res_oflg, _res_lflg;
+
 #define raw() (_tty.c_lflag &= ~(ICANON | ECHO | ISIG), \
 	_tty.c_iflag &= ~ICRNL, \
 	_tty.c_oflag &= ~ONLCR, tcsetattr(my_tty, TCSANOW, &_tty))
@@ -96,17 +79,7 @@ tcflag_t _res_oflg, _res_lflg;
 	_res_oflg = _tty.c_oflag, _res_lflg = _tty.c_lflag)
 #define resetty() (_tty.c_oflag = _res_oflg, _tty.c_lflag = _res_lflg,\
 	(void) tcsetattr(my_tty, TCSADRAIN, &_tty))
-#else
-struct sgttyb _tty;
-int _res_flg;
-#define raw() (_tty.sg_flags |= RAW, _tty.sg_flags &= ~(ECHO | CRMOD), \
-	ioctl(my_tty, TIOCSETP, &_tty))
-#define savetty() ((void) ioctl(my_tty, TIOCGETP, &_tty), \
-	_res_flg = _tty.sg_flags)
-#define resetty() (_tty.sg_flags = _res_flg, \
-	(void) ioctl(my_tty, TIOCSETP, &_tty))
-#endif
-#endif
+
 int putchar_x(c)
 int c;
 {

@@ -17,7 +17,7 @@
 #include <arpa/inet.h>
 #include <time.h>
 #include <paths.h>
-#include "telnet.h"
+#include "telopt.h"
 
 #define MAX_BUFFER 512      /* should be equal to TDB_WRITE_MAX and PTYOUTQ_SIZE */
 //#define RAWTELNET         /* set in telnet and telnetd for raw telnet without IAC */
@@ -97,12 +97,12 @@ telnet_init(int ofd)
 {
 #ifndef RAWTELNET
     tel_init();
-    telopt(ofd, WILL, TELOPT_SGA);
-    telopt(ofd, DO, TELOPT_SGA);
-    telopt(ofd, WILL, TELOPT_BINARY);
-    telopt(ofd, DO, TELOPT_BINARY);
-    telopt(ofd, WILL, TELOPT_ECHO);
-    //telopt(ofd, DO, TELOPT_WINCH);
+    tel_opt(ofd, WILL, TELOPT_SGA);
+    tel_opt(ofd, DO, TELOPT_SGA);
+    tel_opt(ofd, WILL, TELOPT_BINARY);
+    tel_opt(ofd, DO, TELOPT_BINARY);
+    tel_opt(ofd, WILL, TELOPT_ECHO);
+    //tel_opt(ofd, DO, TELOPT_WINCH);
 #endif
 }
 

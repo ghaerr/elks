@@ -1,7 +1,11 @@
 arp
+ftp
+ftpd
 httpd
 netcat
 netstat
 nslookup
 telnet
+telnetd
 urlget
+tinyirc/tinyirc
