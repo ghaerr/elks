@@ -1,12 +1,10 @@
 /*
- * Minimal FTP server for ELKS and TLVC
+ * Minimal FTP server for ELKS / TLVC
  * November 2021 by Helge Skrivervik - helge@skrivervik.com
  *
  * TODO:
  *	- Add ABORT support
- *
  */
-
 #include	<time.h>
 #include	<sys/socket.h>
 #include	<string.h>
@@ -24,17 +22,11 @@
 #include	<sys/wait.h>
 #include	<signal.h>
 #include 	<dirent.h>
-
-#define		BLOAT
-
-#ifdef BLOAT
-#define GLOB	/* Enable local globbing - increases size of the executable significantly */
-#endif
-
-#ifdef GLOB
 #include	<pwd.h>
 #include	<regex.h>
-#endif
+
+#define		BLOAT		/* Adds MKD, RMD, DELE and SITE commmands */
+#define		GLOB	    /* Enable local globbing - increases size significantly */
 
 #define 	CMDBUFSIZ 	512
 #define		IOBUFSIZ	1500
@@ -754,11 +746,11 @@ int main(int argc, char **argv) {
 		if (debug) printf("Accepted connection from %s:%u.\n",
 			in_ntoa(client.sin_addr.s_addr), ntohs(client.sin_port));
 
-		if ((pid = fork()) == -1)       /* handle new accept*/
+		if ((pid = fork()) == -1)
 			perror("ftpd");
-		else if (pid != 0) {
+		if (pid)
 			close(controlfd);
-		} else {						/* child process */
+		else {						    /* child process for accept */
 			int datafd = -1, code, quit = FALSE;
 			unsigned int client_port = 0;
 			//char type = 'I';		/* treat everything as binary */
@@ -1016,10 +1008,9 @@ int main(int argc, char **argv) {
 
 			}
 			alarm(0);
-    			if (debug) printf("Child process exiting...\n");
-    			close(controlfd);
-    			_exit(0);
-							/* End child process */
+			close(controlfd);
+			_exit(0);
+			/* End child process */
 		}
 	}
 }
