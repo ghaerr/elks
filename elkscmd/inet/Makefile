@@ -11,7 +11,6 @@ include $(BASEDIR)/Makefile-rules
 SUBDIRS = \
     cmds \
     ftp \
-    telnetd \
     tinyirc \
     # EOL
 

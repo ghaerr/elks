@@ -8,7 +8,7 @@ LOCALFLAGS=-I$(ELKSCMD_DIR)
 
 ###############################################################################
 
-PRGS = arp httpd netcat netstat nslookup telnet urlget
+PRGS = arp httpd netcat netstat nslookup telnet telnetd urlget
 
 all: $(PRGS)
 
@@ -35,6 +35,9 @@ nslookup: nslookup.o
 
 telnet: telnet.o $(TINYPRINTF)
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+telnetd: telnetd.o telopt.o
+	$(LD) $(LDFLAGS) -maout-heap=256 -maout-stack=1024 -o $@ $^ $(LDLIBS)
 
 urlget: urlget.o $(TINYPRINTF)
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
