@@ -22,7 +22,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#define ESCAPE      (']'&0x1f)  /* = ^] escape session, effectively terminate */
+#define CTRL(c)     ((c) & 0x1f)
+#define ESCAPE      CTRL(']')   /* = escape and terminate session */
 #define BUFSIZE     1500
 #define debug(...)
 //#define RAWTELNET             /* test mode for raw telnet without IAC */
@@ -100,8 +101,12 @@ read_keyboard(void)
         fprintf(stderr, "\r\ntelnet: session terminated\r\n");
         finish();
     }
-    if (buffer[0] == 03)
+    if (buffer[0] == CTRL('C'))
         discard = 1;
+    else if (buffer[0] == CTRL('O')) {
+        discard ^= 1;
+        return;
+    }
     count = write(tcp_fd, buffer, count);
     if (count < 0) {
         perror("Connection closed");
@@ -214,14 +219,16 @@ main(int argc, char **argv)
     printf("Connected\n");
     printf("Escape character is '^%c'.\n", escape + '@');
 
-#ifdef RAWTELNET
     struct termios termios;
     tcgetattr(0, &termios);
+#ifdef RAWTELNET
     termios.c_iflag &= ~(ICRNL | IGNCR | INLCR | IXON | IXOFF);
     termios.c_oflag &= ~(OPOST);
     termios.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG);
-    tcsetattr(0, TCSANOW, &termios);
+#else
+    termios.c_lflag &= ~ISIG;
 #endif
+    tcsetattr(0, TCSANOW, &termios);
     nonblock = 1;
     ioctl(0, FIONBIO, &nonblock);
 
