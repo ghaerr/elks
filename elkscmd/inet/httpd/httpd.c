@@ -37,96 +37,101 @@
 #include <sys/wait.h>
 
 #define DEF_PORT        80
-#define DEF_CONTENT "text/html"
+#define DEF_CONTENT     "text/html"
 
 #define WS(c)   ( ((c) == ' ') || ((c) == '\t') || ((c) == '\r') || ((c) == '\n') )
 
-int listen_sock;
-char buf[1536];
+#define errmsg(str)     write(STDERR_FILENO, str, sizeof(str) - 1)
 
 char* get_mime_type(char *name)
 {
-    char* dot;
+    char *dot;
 
     dot = strrchr( name, '.' );
     if ( dot == (char*) 0 )
-    return "text/plain";
+        return "text/plain";
     if ( strcmp( dot, ".html" ) == 0 || strcmp( dot, ".htm" ) == 0 )
-    return "text/html";
+        return "text/html";
     if ( strcmp( dot, ".jpg" ) == 0 || strcmp( dot, ".jpeg" ) == 0 )
-    return "image/jpeg";
+        return "image/jpeg";
     if ( strcmp( dot, ".gif" ) == 0 )
-    return "image/gif";
+        return "image/gif";
     if ( strcmp( dot, ".png" ) == 0 )
-    return "image/png";
+        return "image/png";
     if ( strcmp( dot, ".css" ) == 0 )
-    return "text/css";
+        return "text/css";
     if ( strcmp( dot, ".vrml" ) == 0 || strcmp( dot, ".wrl" ) == 0 )
-    return "model/vrml";
+        return "model/vrml";
     if ( strcmp( dot, ".midi" ) == 0 || strcmp( dot, ".mid" ) == 0 )
-    return "audio/midi";
+        return "audio/midi";
     return "text/plain";
 }
 
 void send_header(int fd, char *ct)
 {
-    buf[0] = 0;
-    sprintf(buf, "HTTP/1.0 200 OK\r\nServer: nanoHTTPd/0.1\r\nDate: Thu Apr 26 15:37:46 GMT 2001\r\nContent-Type: %s\r\n",ct);
+    char buf[128];
+
+    sprintf(buf, "HTTP/1.0 200 OK\r\nServer: nanoHTTPd/0.1\r\n"
+                 "Date: Thu Apr 26 15:37:46 GMT 2001\r\n"
+                 "Content-Type: %s\r\n",ct);
     write(fd, buf, strlen(buf));
 }
 
 void send_error(int fd, int errnum, char *str)
 {
+    char buf[128];
+
     sprintf(buf,"HTTP/1.0 %d %s\r\nContent-type: %s\r\n", errnum, str, DEF_CONTENT);
     write(fd, buf, strlen(buf));
-    sprintf(buf,"Connection: close\r\nDate: Thu Apr 26 15:37:46 GMT 2001\r\n\r\n%s\r\n",str);
+    sprintf(buf,"Connection: close\r\n"
+                "Date: Thu Apr 26 15:37:46 GMT 2001\r\n"
+                "\r\n%s\r\n", str);
     write(fd, buf, strlen(buf));
 }
 
 void process_request(int fd)
 {
     int fin, ret;
+    char *c, *file;
     off_t size;
-    char *c, *file, fullpath[PATH_MAX];
     struct stat st;
+    char fullpath[PATH_MAX];
+    char buf[1536+1];
     
-    ret = read(fd, buf, sizeof(buf));
-    
+    if ((ret = read(fd, buf, sizeof(buf)-1)) <= 0)
+        return;
     c = buf;
-    while (*c && !WS(*c) && c < (buf + sizeof(buf))){
+    while (*c && !WS(*c) && (c - buf) < ret)
         c++;
-    }
-    *c = 0;
+    *c = '\0';
     
-    if (strcasecmp(buf, "get")){
+    if (strcasecmp(buf, "get")) {
         send_error(fd, 404, "Method not supported");
         return;     
     }
     
     file = ++c;
-    while (*c && !WS(*c) && c < (buf + sizeof(buf))){
+    while (*c && !WS(*c) && (c - buf) < ret)
         c++;
-    }
-    *c = 0;
+    *c = '\0';
 
     /* TODO : Use strncat when security is the only problem of this server! */
     strcpy(fullpath, _PATH_DOCBASE);
     strcat(fullpath, file);
     
     if (!stat(fullpath, &st) && (st.st_mode & S_IFMT) == S_IFDIR) {
-        if (file[strlen(fullpath) - 1] != '/'){
+        if (file[strlen(fullpath) - 1] != '/')
             strcat(fullpath, "/");
-        }
         strcat(fullpath, "index.html");
     }
     
     fin = open(fullpath, O_RDONLY);
-    if (fin < 0){
+    if (fin < 0) {
         send_error(fd, 404, "Document (probably) not found");
         return;
     }
-    size = lseek(fin, (off_t)0, SEEK_END);
-    lseek(fin, (off_t)0, SEEK_SET);
+    size = lseek(fin, 0, SEEK_END);
+    lseek(fin, 0, SEEK_SET);
     send_header(fd, get_mime_type(fullpath));
     sprintf(buf,"Content-Length: %ld\r\n\r\n", size);
     write(fd, buf, strlen(buf));
@@ -136,47 +141,44 @@ void process_request(int fd)
         if (ret > 0)
             ret = write(fd, buf, ret);
     } while (ret == sizeof(buf));
-    
     close(fin);
-    
 }
 
 int main(int argc, char **argv)
 {
-    int ret, conn_sock;
+    int ret, conn_sock, listen_sock;
     struct sockaddr_in localadr;
 
     if ((listen_sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        perror("httpd");
+        errmsg("httpd: Network is down\n");
         return -1;
     }
 
     /* set local port reuse, allows server to be restarted in less than 10 secs */
     ret = 1;
     if (setsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR, &ret, sizeof(int)) < 0)
-        perror("SO_REUSEADDR");
+        errmsg("http: SO_REUSEADDR");
 
     /* set small listen buffer to save ktcp memory */
     ret = SO_LISTEN_BUFSIZ;
     if (setsockopt(listen_sock, SOL_SOCKET, SO_RCVBUF, &ret, sizeof(int)) < 0)
-        perror("SO_RCVBUF");
+        errmsg("httpd: SO_RCVBUF");
 
     localadr.sin_family = AF_INET;
     localadr.sin_port = htons(DEF_PORT);
     localadr.sin_addr.s_addr = INADDR_ANY;
-
     if (bind(listen_sock, (struct sockaddr *)&localadr, sizeof(struct sockaddr_in)) < 0) {
-        fprintf(stderr, "httpd: bind error (may already be running)\n");
+        errmsg("httpd: bind error (may already be running)\n");
         return 1;
     }
     if (listen(listen_sock, 5) < 0) {
-        perror("listen");
+        errmsg("httpd: listen\n");
         return 1;
     }
 
     /* become daemon, debug output on 1 and 2*/
     if ((ret = fork()) == -1) {
-        perror("httpd");
+        errmsg("httpd: No more processes\n");
         return 1;
     }
     if (ret) exit(0);
@@ -190,23 +192,23 @@ int main(int argc, char **argv)
 
     while (1) {
         conn_sock = accept(listen_sock, NULL, NULL);
-        
         if (conn_sock < 0) {
             if (errno == ENOTSOCK)
                 exit(1);
             continue;
         }
 
-        if ((ret = fork()) == -1)
-            perror("httpd");
-        else if (ret == 0) {
+        if ((ret = fork()) == -1) {
+            close(conn_sock);
+            errmsg("httpd: No more processes\n");
+        } else if (ret) {
+            close(conn_sock);
+            waitpid(ret, NULL, 0);
+        } else {
             close(listen_sock);
             process_request(conn_sock);
             close(conn_sock);
             exit(0);
-        } else {
-            close(conn_sock);
-            waitpid(ret, NULL, 0);
         }
     }
 }

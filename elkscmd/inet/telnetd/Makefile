@@ -10,7 +10,7 @@ include $(BASEDIR)/Makefile-rules
 
 SRCS = telnetd.c telnet.c
 OBJS = $(SRCS:.c=.o) 
-LDFLAGS += -maout-heap=1024 -maout-stack=1024
+LDFLAGS += -maout-heap=256 -maout-stack=1024
 
 all:	telnetd
 

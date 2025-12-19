@@ -5,7 +5,7 @@ include $(BASEDIR)/Makefile-rules
 ###############################################################################
 
 LOCALFLAGS=-I$(ELKSCMD_DIR)
-LDFLAGS += -maout-heap=1024 -maout-stack=1024
+LDFLAGS += -maout-heap=256 -maout-stack=2048
 
 ###############################################################################
 
