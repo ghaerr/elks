@@ -17,7 +17,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
-
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -28,24 +27,26 @@
 #include <ktcp/tcp.h>
 #include <ktcp/netconf.h>
 
+#define errmsg(str) write(STDERR_FILENO, str, sizeof(str) - 1)
+
 char *tcp_states[11] = {
-	"CLOSED",
-	"LISTEN",
-	"SYN_SENT",
-	"SYN_RECEIVED",
-	"ESTABLISHED",
-	"FIN_WAIT_1",
-	"FIN_WAIT_2",
-	"CLOSE_WAIT",
-	"CLOSING",
-	"LAST_ACK",
-	"TIME_WAIT"	
+    "CLOSED",
+    "LISTEN",
+    "SYN_SENT",
+    "SYN_RECEIVED",
+    "ESTABLISHED",
+    "FIN_WAIT_1",
+    "FIN_WAIT_2",
+    "CLOSE_WAIT",
+    "CLOSING",
+    "LAST_ACK",
+    "TIME_WAIT"
 };
 
 timeq_t timer_get_time(void)
 {
-    struct timezone	tz;
-    struct timeval 	tv;
+    struct timezone tz;
+    struct timeval tv;
 
     gettimeofday(&tv, &tz);
 
@@ -65,30 +66,30 @@ int main(int ac, char **av)
     __u8 *addrbytes;
     char buf[100];
     char addr[16];
-	    
+
     if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-	perror("netstat");
-	return 1;
+        errmsg("netstat: Network is down\n");
+        return 1;
     }
 
     localadr.sin_family = AF_INET;
     localadr.sin_port = PORT_ANY;
     localadr.sin_addr.s_addr = INADDR_ANY;  
     if (bind(s, (struct sockaddr *)&localadr, sizeof(struct sockaddr_in)) < 0) {
-	perror("bind");
-	return 1;
+        errmsg("netstat bind failure\n");
+        return 1;
     }
 
     remaddr.sin_family = AF_INET;
     remaddr.sin_port = htons(NETCONF_PORT);
     remaddr.sin_addr.s_addr = 0;
     if (connect(s, (struct sockaddr *)&remaddr, sizeof(struct sockaddr_in)) < 0) {
-	perror("connect");
-	return 1;
+        errmsg("netstat: Can't connect to ktcp\n");
+        return 1;
     }
 
     sr.type = NS_GENERAL;
-    write(s, &sr, sizeof(sr));	
+    write(s, &sr, sizeof(sr));
     read(s, buf, sizeof(buf));
     gstats = (struct general_stats_s *)buf;
     retrans_mem = gstats->retrans_memory;
@@ -114,24 +115,24 @@ int main(int ac, char **av)
     printf(" No        State    RTT lport        raddress  rport\n");
     printf("-----------------------------------------------------\n");
     sr.type = NS_CB;
-    for (i = 0 ;; i++){
-		sr.extra = i;
-		write(s, &sr, sizeof(sr));	
-		read(s, buf, sizeof(buf));
-		cbstats = (struct cb_stats_s *)buf;
-		if (cbstats->valid == 0)break;
-		addrbytes = (__u8 *)&cbstats->remaddr;
-		sprintf(addr,"%d.%d.%d.%d",addrbytes[0],addrbytes[1],addrbytes[2],addrbytes[3]);
-		printf("%3d %12s %4dms", i+1, tcp_states[cbstats->state], cbstats->rtt);
-		printf(" %5u %15s  %5u", cbstats->localport, addr, cbstats->remport);
-		if (cbstats->state > TS_ESTABLISHED) {
-			/* time is in 1/16 second clicks*/
-			int secs = (unsigned)(cbstats->time_wait_exp - (long)timer_get_time());
-			unsigned int tenthsecs = ((secs + 8) & 15) >> 1;
-			secs >>= 4;
-			printf(" (%d.%d secs)", secs, tenthsecs);
-		}
-		printf("\n");
+    for (i = 0;; i++) {
+        sr.extra = i;
+        write(s, &sr, sizeof(sr));
+        read(s, buf, sizeof(buf));
+        cbstats = (struct cb_stats_s *)buf;
+        if (cbstats->valid == 0)break;
+        addrbytes = (__u8 *)&cbstats->remaddr;
+        sprintf(addr,"%d.%d.%d.%d",addrbytes[0],addrbytes[1],addrbytes[2],addrbytes[3]);
+        printf("%3d %12s %4dms", i+1, tcp_states[cbstats->state], cbstats->rtt);
+        printf(" %5u %15s  %5u", cbstats->localport, addr, cbstats->remport);
+        if (cbstats->state > TS_ESTABLISHED) {
+                /* time is in 1/16 second clicks*/
+                int secs = (unsigned)(cbstats->time_wait_exp - (long)timer_get_time());
+                unsigned int tenthsecs = ((secs + 8) & 15) >> 1;
+                secs >>= 4;
+                printf(" (%d.%d secs)", secs, tenthsecs);
+        }
+        printf("\n");
     }
     return 0;
 }
