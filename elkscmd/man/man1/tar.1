@@ -1,0 +1,217 @@
+.TH TAR 1
+.SH NAME
+tar  \-  tape archiver
+.SH SYNOPSIS
+.B tar
+[ key ] [ [ option ] name ... ]
+.SH DESCRIPTION
+.I Tar
+saves and restores files
+on magtape (historic) or to/from archive files (aka 'tar-files').
+Its actions are controlled by the
+.I key
+argument.
+The
+.I key
+is a string of characters containing
+at most one function letter and possibly
+one or more function modifiers.
+Other arguments to the command are file or directory
+names specifying which files are to be dumped or restored, or 
+options which affect how
+.B tar
+processes the following files/directories. Such options are conveniently
+capitalized. 
+In all cases, appearance of a directory name refers to
+the files and (recursively) subdirectories of that directory.
+.PP
+In addition to files and directories, 
+.B tar
+will also dump and restore (hard) links, symbolic links and devices.
+.PP
+In order to inadvertent overwrites, 
+.B tar
+will not store absolute pathnames, but remove the leading '/' if present. 
+.PP
+The function portion of
+the key is specified by one of the following letters:
+.TP 8
+.B  r
+The named files
+are written
+on the end of the tape.
+The
+.B c
+function implies this.
+.TP 8
+.B  x
+The named files are extracted from the tape.
+If the named file matches a directory whose contents 
+had been written onto the tape, this directory is (recursively) extracted.
+The owner, modification time, and mode are restored (if possible).
+If no file argument is given, the entire content of the
+tape is extracted.
+Note that if multiple entries specifying the same file
+are on the tape, the last one overwrites
+all earlier.
+.TP 8
+.B  t
+The names of the specified files are listed each time they occur
+on the tape.
+If no file argument is given,
+all of the names on the tape are listed.
+.TP 8
+.B  u
+The named files are added to the tape if either they
+are not already there or have
+been modified since last put on the tape.
+.TP 8
+.B  c
+Create a new tape; writing begins on the beginning
+of the tape instead of after the last file.
+This command implies
+.BR r .
+.PP
+The following characters may be used in addition to the letter
+which selects the function desired.
+.TP 10
+.B  v
+Normally
+.I tar
+does its work silently.
+The
+.B v
+(verbose)
+option causes it to type the name of each file it treats
+preceded by the function letter.
+With the
+.B t
+function,
+.B v
+gives more information about the
+tape entries than just the name.
+.TP 10
+.B  w
+causes
+.I tar
+to print the action to be taken followed by file name, then
+wait for user confirmation. If a word beginning with `y'
+is given, the action is performed. Any other input means
+don't do it.
+.TP 10
+.B f
+causes 
+.I tar
+to use the next argument as the name of the archive instead
+of (the historic default) /dev/mt1. 
+If the name of the file is `\-', tar writes to
+standard output or reads from standard input, whichever is
+appropriate. Thus,
+.I tar
+can be used as the head or tail of a filter chain.
+.I Tar
+can also be used to move hierarchies with the command
+.B cd fromdir; tar cf - . | (cd todir; tar xf -)
+.TP 10
+.B b
+causes
+.I tar
+to use the next argument as the blocking factor for tape
+records. The default is 1, the maximum is 20. This option
+should only be used with raw magnetic tape archives (See
+.B f
+above).
+The block size is determined automatically when reading
+tapes (key letters `x' and `t').
+.TP 10
+.B l
+tells
+.I tar
+to complain if it cannot resolve all of the links
+to the files dumped. If this is not specified, no
+error messages are printed.
+.TP 10
+.B m
+tells
+.I tar
+to not restore the modification times.
+The mod time
+will be the time of extraction.
+.TP 10
+.B h
+tells 
+.I tar
+to follow symlinks; archive and dump the files they point to.
+.TP 10
+.B o
+tells
+.I tar
+to be compatible with very old versions which did not store directories on
+the tape at all. Instead, they were created as needed when extracting.
+.TP 10
+.B p
+tells 
+.I tar
+to use the saved permissions of extracted files and directories instead of the 
+currently set
+.IR umode ,
+which is the default unnless the current user is
+.IR root .
+.PP
+.SH OPTIONS
+In addition to keys, 
+.I tar
+supports a few options which may appear anywhere on the command line, and apply to
+the arguments appearing after the option and its parameter.
+.TP 10
+.BR \-C \ directory
+Change ('chdir') to the specified directory before continuing. This option applies
+only when writing (keys `c', `r' and `u') tapes/tar-files, using this option
+with the `x' or `t' keys have no meaning and is an error.
+The directory change not only affects where 
+.I tar
+looks for files and directories to store, but also to the filenames they are store 
+under on the tape. Used with care and smartness, this allows 
+.I tar
+to create a tape/tar-file that extracts into a completely different tree than the source.
+.TP 10
+\ \ 
+This option may be repeated any number of times on the command line and applies
+to the file/directory arguments following the option.
+.TP 10
+.BR \-X \ file/dir
+Exclude: When creating a tape/tar-file, exclude this file/directory. This is particularly
+convenient for excluding mountpoints from a save-set. Currently, only one such exclusion
+may be specified, and - again currently - this option only works when creating tapes/tar-files.
+Eventually the parameter specified with the 
+.B \-X
+option will be a file containing a list of the files and directories to exclude.
+.TP 10
+\ 
+As is the case with all saved files and directories, a leading '/' will be automatically 
+removed from excluded files/directories too.
+.SH FILES
+/dev/mt1
+.br
+/tmp/tar*
+.SH DIAGNOSTICS
+Complaints about bad key characters and tape read/write errors.
+.br
+Complaints if enough memory is not available to hold
+the link tables.
+.SH BUGS
+.nf
+- There is no way to ask for the \fIn\fR-th occurrence of a file.
+.br
+- Tape errors are handled ungracefully.
+.br
+- The \fBu\fR option can be slow.
+.br
+- The \fBb\fR option should not be used with archives that are going to be
+updated. The current magtape driver cannot backspace raw magtape. If the
+archive is on a disk-file, the \fBb\fR option should not be used at all, as
+updating an archive stored in this manner can destroy it.
+.br
+- The limit on file name length (saved path) is 100 characters.
+.br
+- The \fB-X\fR option is very limited.
