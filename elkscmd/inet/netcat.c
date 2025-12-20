@@ -26,12 +26,13 @@
 #include <sys/socket.h>
 #include <sys/select.h>
 
-/* ELKS resolver */
-extern unsigned long in_gethostbyname(const char *name);
+#define debug(...)          /* comment out to enable debugging */
 
 /* Globals from env */
-static int opt_debug = 0;
 static long opt_maxbytes = -1;
+
+#ifndef debug
+static int opt_debug = 0;
 
 /* IPv4 to string */
 static const char *ip_to_str(unsigned long ip)
@@ -50,6 +51,7 @@ static void debug(const char *s)
     write(1, s, strlen(s));
     write(1, "\n", 1);
 }
+#endif
 
 static void msg(const char *s)
 {
@@ -75,9 +77,11 @@ static void load_env_options(void)
     if (p)
         opt_maxbytes = atol(p);
 
+#ifndef debug
     p = getenv("NETCAT_DEBUG");
     if (p && atoi(p) == 1)
         opt_debug = 1;
+#endif
 }
 
 /* Main function */
