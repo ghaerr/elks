@@ -31,7 +31,7 @@ ftpd: ftpd.o
 httpd: httpd.o $(TINYPRINTF)
 	$(LD) $(LDFLAGS) -maout-heap=256 -maout-stack=2048 -o $@ $^ $(LDLIBS)
 
-netcat: netcat.o
+netcat: netcat.o $(TINYPRINTF)
 	$(LD) $(LDFLAGS) -maout-heap=128 -maout-stack=1024 -o $@ $^ $(LDLIBS)
 
 netstat: netstat.o $(TINYPRINTF)
