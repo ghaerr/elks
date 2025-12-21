@@ -40,6 +40,7 @@ extern int kill_sl(void);
 extern void halt(void) noreturn;
 extern void panic(const char *, ...) noreturn;
 extern void printk(const char *, ...);
+extern void kputchar(int);
 extern void early_putchar(int);
 
 extern int wait_for_keypress(void);

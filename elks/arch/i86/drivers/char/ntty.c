@@ -71,12 +71,12 @@ int tty_intcheck(register struct tty *ttyp, unsigned char key)
     if ((ttyp->termios.c_lflag & ISIG) && ttyp->pgrp) {
         if (key == ttyp->termios.c_cc[VINTR])
             sig = SIGINT;
-        if (key == ttyp->termios.c_cc[VQUIT])
+        else if (key == ttyp->termios.c_cc[VQUIT])
             sig = SIGQUIT;
-        if (key == ttyp->termios.c_cc[VSUSP])
+        else if (key == ttyp->termios.c_cc[VSUSP])
             sig = SIGTSTP;
 #if DEBUG_EVENT
-        if (key >= ('N' & 0x1f) && key <= ('P' & 0x1f)) {       /* CTRLN-CTRLP */
+        else if (key >= ('N' & 0x1f) && key <= ('P' & 0x1f)) {  /* CTRLN-CTRLP */
             debug_event((key - 'N') & 0x1f);
             return 1;
         }
