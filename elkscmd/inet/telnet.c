@@ -239,10 +239,12 @@ main(int argc, char **argv)
         FD_SET(0, &fdset);
         FD_SET(tcp_fd, &fdset);
         tv.tv_sec = 0;
-        tv.tv_usec = 10000;
+        tv.tv_usec = 100000L;
 
         n = select(tcp_fd + 1, &fdset, NULL, NULL, &tv);
         if (n == 0) {
+            if (discard)
+                write(tcp_fd, "\r", 1);
             discard = 0;
             continue;
         }
