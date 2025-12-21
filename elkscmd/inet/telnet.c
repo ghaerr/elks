@@ -4,9 +4,8 @@
  * Based on minix telnet client. (c) 2001 Harry Kalogirou
  * <harkal@rainbow.cs.unipi.gr>
  *
- * 17 Dec 2025 Cleaned up, added ^C support. Greg Haerr
+ * 17 Dec 2025 Cleaned up, ^C/^O stops/discards streaming input. Greg Haerr
  */
-
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <errno.h>
@@ -25,7 +24,9 @@
 #define CTRL(c)     ((c) & 0x1f)
 #define ESCAPE      CTRL(']')   /* = escape and terminate session */
 #define BUFSIZE     1500
+
 #define debug(...)
+//#define debug     printf
 //#define RAWTELNET             /* test mode for raw telnet without IAC */
 
 /* telnet protocol */
@@ -304,8 +305,8 @@ do_option(int optsrt)
         }
         break;
     default:
-        debug("got a DO (%d)\r\n", optsrt);
-        debug("WONT (%d)\r\n", optsrt);
+        debug("got DO (%d)\n", optsrt);
+        debug("WONT (%d)\n", optsrt);
         reply[0] = IAC;
         reply[1] = IAC_WONT;
         reply[2] = optsrt;
@@ -359,8 +360,8 @@ will_option(int optsrt)
         break;
 
     default:
-        debug("got a WILL (%d)\r\n", optsrt);
-        debug("DONT (%d)\r\n", optsrt);
+        debug("got WILL (%d)\n", optsrt);
+        debug("DONT (%d)\n", optsrt);
         reply[0] = IAC;
         reply[1] = IAC_DONT;
         reply[2] = optsrt;
@@ -374,7 +375,7 @@ dont_option(int optsrt)
 {
     switch (optsrt) {
     default:
-        debug("got a DONT (%d)\r\n", optsrt);
+        debug("got DONT (%d)\n", optsrt);
         break;
     }
 }
@@ -384,7 +385,7 @@ wont_option(int optsrt)
 {
     switch (optsrt) {
     default:
-        debug("got a WONT (%d)\r\n", optsrt);
+        debug("got WONT (%d)\n", optsrt);
         break;
     }
 }
@@ -421,9 +422,9 @@ sb_termtype(char *bp, int count)
         result = writeall(tcp_fd, (char *)buffer, 2);
         if (result < 0)
             return result;
-    } else {
-        debug("got an unknown command (skipping)\r\n");
-    }
+    } else
+        debug("got unknown command (skipping)\n");
+
     for (;;) {
         next_char(iac);
         if (iac != IAC)
@@ -432,7 +433,7 @@ sb_termtype(char *bp, int count)
         if (optsrt == IAC)
             continue;
         if (optsrt != IAC_SE) {
-            debug("got IAC %d\r\n", optsrt);
+            debug("got IAC %d\n", optsrt);
         }
         break;
     }
@@ -454,41 +455,40 @@ process_opt(char *bp, int count)
     case IAC_NOP:
         break;
     case IAC_DataMark:
-        debug("got a DataMark\r\n");
+        debug("got DataMark\n");
         break;
     case IAC_BRK:
-        debug("got a BRK\r\n");
+        debug("got BRK\n");
         break;
     case IAC_IP:
-        debug("got a IP\r\n");
+        debug("got IP\n");
         break;
     case IAC_AO:
-        debug("got a AO\r\n");
+        debug("got AO\n");
         break;
     case IAC_AYT:
-        debug("got a AYT\r\n");
+        debug("got AYT\n");
         break;
     case IAC_EC:
-        debug("got a EC\r\n");
+        debug("got EC\n");
         break;
     case IAC_EL:
-        debug("got a EL\r\n");
+        debug("got EL\n");
         break;
     case IAC_GA:
-        debug("got a GA\r\n");
+        debug("got GA\n");
         break;
     case IAC_SB:
         next_char(sb_command);
         switch (sb_command) {
         case OPT_TERMTYPE:
-            debug("got SB TERMINAL-TYPE\r\n");
+            debug("got SB TERMINAL-TYPE\n");
             result = sb_termtype(bp + offset, count - offset);
             if (result < 0)
                 return result;
-            else
-                return result + offset;
+            return result + offset;
         default:
-            debug("got an unknown SB (skipping)\r\n");
+            debug("got unknown SB (skipping)\n");
             for (;;) {
                 next_char(iac);
                 if (iac != IAC)
@@ -497,7 +497,7 @@ process_opt(char *bp, int count)
                 if (optsrt == IAC)
                     continue;
                 if (optsrt != IAC_SE)
-                    debug("got IAC %d\r\n", optsrt);
+                    debug("got IAC %d\n", optsrt);
                 break;
             }
         }
@@ -519,10 +519,10 @@ process_opt(char *bp, int count)
         dont_option(optsrt);
         break;
     case IAC:
-        debug("got a IAC\r\n");
+        debug("got IAC\n");
         break;
     default:
-        debug("got unknown command (%d)\r\n", command);
+        debug("got unknown command (%d)\n", command);
     }
     return offset;
 }
