@@ -78,7 +78,6 @@ char *term_env;
 int escape = ESCAPE;
 struct termios def_termios;
 
-static int writeall(int fd, char *buffer, int buf_size);
 static int process_opt(char *bp, int count);
 
 void
@@ -98,7 +97,7 @@ read_keyboard(void)
 
     count = read(0, buffer, sizeof(buffer));
     if (count <= 0 || buffer[0] == escape) {
-        fprintf(stderr, "\r\ntelnet: session terminated\r\n");
+        fprintf(stderr, "\nSession terminated\n");
         finish();
     }
     if (buffer[0] == CTRL('C'))
@@ -123,7 +122,7 @@ read_network(void)
 
     count = read(tcp_fd, buffer, sizeof(buffer));
     if (count <= 0) {
-        printf("\r\nConnection closed\r\n");
+        printf("\nConnection closed\n");
         finish();
     }
     if (discard)
@@ -137,7 +136,6 @@ read_network(void)
         iacptr = memchr(bp, IAC, count);
         if (!iacptr) {
             write(1, bp, count);
-            count = 0;
             return;
         }
         if (iacptr && iacptr > bp) {
@@ -226,7 +224,7 @@ main(int argc, char **argv)
     termios.c_oflag &= ~(OPOST);
     termios.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG);
 #else
-    termios.c_lflag &= ~ISIG;
+    termios.c_lflag &= ~ISIG;   /* ISIG off to disable ^N/^O/^P */
 #endif
     tcsetattr(0, TCSANOW, &termios);
     nonblock = 1;
@@ -245,8 +243,6 @@ main(int argc, char **argv)
 
         n = select(tcp_fd + 1, &fdset, NULL, NULL, &tv);
         if (n == 0) {
-            //if (discard)
-                //write(tcp_fd, "\n", 1);
             discard = 0;
             continue;
         }
@@ -269,10 +265,24 @@ main(int argc, char **argv)
     else                                    \
         read(tcp_fd, (char *)&(var), 1)     \
 
+static int
+writeall(int fd, char *buffer, int buf_size)
+{
+    int     result;
+
+    while (buf_size) {
+        result = write(fd, buffer, buf_size);
+        if (result <= 0)
+            return -1;
+        buffer += result;
+        buf_size -= result;
+    }
+    return 0;
+}
+
 static void
 do_option(int optsrt)
 {
-    int     result;
     unsigned char reply[3];
 
     switch (optsrt) {
@@ -301,15 +311,12 @@ do_option(int optsrt)
         reply[2] = optsrt;
         break;
     }
-    result = writeall(tcp_fd, (char *)reply, 3);
-    if (result < 0)
-        perror("write");
+    writeall(tcp_fd, (char *)reply, 3);
 }
 
 static void
 will_option(int optsrt)
 {
-    int     result;
     unsigned char reply[3];
 
     switch (optsrt) {
@@ -324,19 +331,15 @@ will_option(int optsrt)
             struct termios termios;
             tcgetattr(0, &termios);
             termios.c_iflag &= ~(ICRNL | IGNCR | INLCR | IXON | IXOFF);
-            /* termios.c_oflag &= ~(OPOST); *//* leave OPOST|ONLCR on */
-            termios.c_lflag &= ~(ECHO | ECHONL | ICANON);       /* leave ISIG on for ^P */
-            termios.c_cc[VINTR] = 0;    /* turn ^C off */
-            termios.c_cc[VSUSP] = 0;    /* turn ^Z off */
+            termios.c_oflag |= (OPOST | ONLCR);
+            termios.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG); /* ISIG off for ^P */
             tcsetattr(0, TCSANOW, &termios);
             DO_echo = TRUE;
             reply[0] = IAC;
             reply[1] = IAC_DO;
             reply[2] = optsrt;
         }
-        result = writeall(tcp_fd, (char *)reply, 3);
-        if (result < 0)
-            perror("write");
+        writeall(tcp_fd, (char *)reply, 3);
         break;
 
     case OPT_SUPP_GA:
@@ -352,9 +355,7 @@ will_option(int optsrt)
             reply[1] = IAC_DO;
             reply[2] = optsrt;
         }
-        result = writeall(tcp_fd, (char *)reply, 3);
-        if (result < 0)
-            perror("write");
+        writeall(tcp_fd, (char *)reply, 3);
         break;
 
     default:
@@ -363,26 +364,9 @@ will_option(int optsrt)
         reply[0] = IAC;
         reply[1] = IAC_DONT;
         reply[2] = optsrt;
-        result = writeall(tcp_fd, (char *)reply, 3);
-        if (result < 0)
-            perror("write");
+        writeall(tcp_fd, (char *)reply, 3);
         break;
     }
-}
-
-static int
-writeall(int fd, char *buffer, int buf_size)
-{
-    int     result;
-
-    while (buf_size) {
-        result = write(fd, buffer, buf_size);
-        if (result <= 0)
-            return -1;
-        buffer += result;
-        buf_size -= result;
-    }
-    return 0;
 }
 
 static void
@@ -410,7 +394,7 @@ sb_termtype(char *bp, int count)
 {
     unsigned char command, iac, optsrt;
     unsigned char buffer[4];
-    int     offset, result, ret_value;
+    int     offset, result;
 
     offset = 0;
     next_char(command);
@@ -420,27 +404,23 @@ sb_termtype(char *bp, int count)
         buffer[2] = OPT_TERMTYPE;
         buffer[3] = TERMTYPE_IS;
         result = writeall(tcp_fd, (char *)buffer, 4);
-        if (result < 0) {
-            ret_value = result;
-            goto ret;
-        }
-        count = strlen(term_env);
+        if (result < 0)
+            return result;
+
+        count = term_env? strlen(term_env): 0;
         if (!count) {
             term_env = "unknown";
             count = strlen(term_env);
         }
         result = writeall(tcp_fd, term_env, count);
-        if (result < 0) {
-            ret_value = result;
-            goto ret;
-        }
+        if (result < 0)
+            return result;
+
         buffer[0] = IAC;
         buffer[1] = IAC_SE;
         result = writeall(tcp_fd, (char *)buffer, 2);
-        if (result < 0) {
-            ret_value = result;
-            goto ret;
-        }
+        if (result < 0)
+            return result;
     } else {
         debug("got an unknown command (skipping)\r\n");
     }
@@ -456,11 +436,8 @@ sb_termtype(char *bp, int count)
         }
         break;
     }
-    ret_value = offset;
-ret:
-    return ret_value;
+    return offset;
 }
-
 
 static int
 process_opt(char *bp, int count)
