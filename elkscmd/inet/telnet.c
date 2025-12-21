@@ -220,12 +220,11 @@ main(int argc, char **argv)
 
     struct termios termios;
     tcgetattr(0, &termios);
+    termios.c_oflag |= (OPOST | ONLCR);
+    termios.c_lflag &= ~ISIG;       /* ISIG off to disable ^N/^O/^P */
 #ifdef RAWTELNET
     termios.c_iflag &= ~(ICRNL | IGNCR | INLCR | IXON | IXOFF);
-    termios.c_oflag &= ~(OPOST);
-    termios.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG);
-#else
-    termios.c_lflag &= ~ISIG;   /* ISIG off to disable ^N/^O/^P */
+    termios.c_lflag &= ~(ECHO | ECHONL | ICANON)
 #endif
     tcsetattr(0, TCSANOW, &termios);
     nonblock = 1;
