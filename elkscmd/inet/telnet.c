@@ -8,7 +8,6 @@
  */
 #include <sys/types.h>
 #include <sys/ioctl.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <termios.h>
 #include <signal.h>
@@ -101,9 +100,12 @@ read_keyboard(void)
         fprintf(stderr, "\nSession terminated\n");
         finish();
     }
+#if DISABLED
     if (buffer[0] == CTRL('C'))
         discard = 1;
-    else if (buffer[0] == CTRL('O')) {
+    else
+#endif
+    if (buffer[0] == CTRL('O')) {
         discard ^= 1;
         return;
     }
@@ -224,7 +226,7 @@ main(int argc, char **argv)
     termios.c_lflag &= ~ISIG;       /* ISIG off to disable ^N/^O/^P */
 #ifdef RAWTELNET
     termios.c_iflag &= ~(ICRNL | IGNCR | INLCR | IXON | IXOFF);
-    termios.c_lflag &= ~(ECHO | ECHONL | ICANON)
+    termios.c_lflag &= ~(ECHO | ECHONL | ICANON);
 #endif
     tcsetattr(0, TCSANOW, &termios);
     nonblock = 1;
@@ -239,7 +241,7 @@ main(int argc, char **argv)
         FD_SET(0, &fdset);
         FD_SET(tcp_fd, &fdset);
         tv.tv_sec = 0;
-        tv.tv_usec = 100000L;
+        tv.tv_usec = 100000L;   /* 100ms */
 
         n = select(tcp_fd + 1, &fdset, NULL, NULL, &tv);
         if (n == 0) {
