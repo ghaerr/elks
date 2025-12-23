@@ -23,6 +23,7 @@
 #include <linuxmt/in.h>
 #include <linuxmt/tcpdev.h>
 #include <linuxmt/debug.h>
+#include <arch/irq.h>
 
 #include "af_inet.h"
 
@@ -369,7 +370,7 @@ static int inet_write(register struct socket *sock, char *ubuf, int size,
             if (ret == -ERESTARTSYS) {
                 /* delay process 100ms*/
                 current->state = TASK_INTERRUPTIBLE;
-                current->timeout = jiffies + (HZ / 10); /* 1/10 sec = 100ms*/
+                current->timeout = jiffies() + (HZ / 10); /* 1/10 sec = 100ms*/
                 schedule();
             } else
                 return ret;

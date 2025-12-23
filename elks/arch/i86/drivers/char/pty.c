@@ -20,13 +20,13 @@
 /* /dev/ptyp0 master (PTY) open */
 int pty_open(struct inode *inode, struct file *file)
 {
-    register struct tty *otty;
+    register struct tty *tty;
 
-    if (!(otty = determine_tty(inode->i_rdev))) {
+    if (!(tty = determine_tty(inode->i_rdev))) {
 	debug("pty open fail NODEV\n");
 	return -ENODEV;
     }
-    if (otty->flags & TTY_OPEN) {
+    if (tty->flags & TTY_OPEN) {
 	debug("pty open fail BUSY\n");
 	return -EBUSY;
     }
@@ -36,11 +36,11 @@ int pty_open(struct inode *inode, struct file *file)
 /* /dev/ptyp0 master close */
 void pty_release(struct inode *inode, struct file *file)
 {
-    register struct tty *otty;
+    register struct tty *tty;
 
     debug("pty release\n");
-    if ((otty = determine_tty(inode->i_rdev)))
-	kill_pg(otty->pgrp, SIGHUP, 1);
+    if ((tty = determine_tty(inode->i_rdev)))
+	kill_pg(tty->pgrp, SIGHUP, 1);
 }
 
 /* /dev/ptyp0 master select */
@@ -94,7 +94,7 @@ size_t pty_read (struct inode *inode, struct file *file, char *data, size_t len)
 			break;
 		}
 
-		put_user_char (tty_outproc (tty), (void *)(data++));
+		put_user_char (tty_outproc (tty), data++);
 		count++;
 	}
 
