@@ -12,6 +12,9 @@ jobs:
 
     runs-on: ubuntu-22.04
 
+    env:
+      MAKEFLAGS: "-j $(nproc)"
+
     steps:
       - name: setup-1
         run: 'sudo apt-get update'
