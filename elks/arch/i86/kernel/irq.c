@@ -141,9 +141,7 @@ void INITPROC irq_init(void)
     /* Also map BIOS INT 1C user timer callout to INT 0Fh */
     unsigned long __far *vec1C = _MK_FP(0, 0x1C << 2);  /* BIOS user timer callout */
     unsigned long __far *vec0F = _MK_FP(0, 0x0F << 2);  /* IRQ 7 vector (INT 0Fh) */
-    clr_irq();
     *vec1C = *vec0F;            /* point INT 1C to INT 0F vector */
-    set_irq();
 #endif
 
 #else /* normal IRQ 0 timer */
@@ -155,7 +153,8 @@ void INITPROC irq_init(void)
     if (request_irq(TIMER_IRQ, timer_tick, INT_GENERIC))
         panic("Unable to get timer");
 
-    init_bh(TIMER_BH, timer_bh);
     enable_timer_tick();        /* reprogram timer for 100 HZ */
 #endif
+
+    init_bh(TIMER_BH, timer_bh);
 }

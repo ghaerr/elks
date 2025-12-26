@@ -105,6 +105,12 @@ static void init_task(void);
  */
 void start_kernel(void)
 {
+    flag_t flags;                   /* check interrupts - should already be disabled! */
+    save_flags(flags);
+    if (flags & 0x0200)
+        printk("INT ON ");          /* warning message for bad setup.S code */
+    clr_irq();
+
     printk("START\n");
     early_kernel_init();            /* read bootopts using kernel temp stack */
 

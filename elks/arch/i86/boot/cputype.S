@@ -58,7 +58,7 @@ is8086:
 	mov	$0x21,%cl	// 80188/86 uses only the five lower
 	shr	%cl,%al		// bits of cl to determine the number
 	jnz	is80186		// of shifts.
-	sti             
+	//sti
 	xor	%si,%si
 	mov	$0xffff,%cx
 	nop
@@ -119,7 +119,7 @@ con_cp1:
 	mov	$INITSEG,%ax	// Store processor type
 	mov	%ax,%ds
 	mov	%cl,0x20
-	cli			// FIXME reset to cli; shouldn't have sti's above
+	cli			// FIXME still required even w/o sti's above
 	ret
 
 /*
@@ -144,7 +144,7 @@ queue:
 	cli
 	cld
 	rep movsw
-	sti
+	//sti
 	xorw	%ax,%ax
 	popw	%ds
 	pushw	%es
@@ -172,7 +172,7 @@ queue_start:
 	nop
 	inc	%dx
 q_end:	nop
-	sti
+	//sti
 
 #ifdef CONFIG_ROMCODE
         ljmp $CONFIG_ROM_SETUP_CODE,$queue_end
