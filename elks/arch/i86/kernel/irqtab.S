@@ -201,6 +201,11 @@ doirq:
         cmp     $16,%ax
         jge     was_trap        // Traps need no reset
 
+#if defined(CONFIG_TIMER_INT0F) || defined(CONFIG_TIMER_INT1C)
+        cmp     $7,%ax          // INT 0F (and INT 1C) also no reset
+        jz      was_trap
+#endif
+
 #if defined(CONFIG_BLK_DEV_BFD) && !defined(CONFIG_ARCH_PC98)
         or      %ax,%ax         // Is int #0?
         jnz     do_eoi
