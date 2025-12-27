@@ -40,6 +40,13 @@
   STUFF to see the real stuff.  ANSI C required.  Note: order of the
   following includes is important.
 */
+#ifdef ELKS
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <ctype.h>
+#endif
 #include "cdefs.h"      /* Data types for all modules */
 #include "debug.h"	/* Debugging */
 #include "platform.h"	/* Platform-specific includes and definitions */
@@ -117,7 +124,11 @@ doexit(int status) {
 void
 usage() {
     fprintf(stderr,"E-Kermit %s\n",VERSION);
+#ifdef ELKS
+    fprintf(stderr,"Usage: %s <options> [serial device]\n",xname);
+#else
     fprintf(stderr,"Usage: %s <options>\n",xname);
+#endif
     fprintf(stderr,"Options:\n");
     fprintf(stderr," -r           Receive files\n");
 #ifndef RECVONLY
@@ -186,6 +197,10 @@ doarg(char c) {				/* Command-line option parser */
 #endif /* DEBUG) */
 		if (**xargv == '-')
 		  break;
+#ifdef ELKS
+		if (strncasecmp(s, "/dev/ttyS", 9) == 0)	/* Stop if device name is found */
+		  break;
+#endif
 		errno = 0;
 		x = stat(s,&statbuf);
 		if (x < 0)
@@ -296,6 +311,7 @@ main(int argc, char ** argv) {
     char c;
     UCHAR *inbuf;
     short r_slot;
+    char device[] = "/dev/ttyS0";
 
     parity = P_PARITY;                  /* Set this to desired parity */
     status = X_OK;                      /* Initial kermit status */
@@ -310,6 +326,12 @@ main(int argc, char ** argv) {
 	    c = *(*xargv+1);		/* Get the option letter */
 	    x = doarg(c);		/* Go handle the option */
 	    if (x < 0) doexit(FAILURE);
+#ifdef ELKS
+	} else if (xargc == 1) {
+	    strncpy(device, argv[argc-1], sizeof(device)-1);
+	    device[sizeof(device) - 1] = '\0';
+	    argv[argc-1] = 0;		/* Clear for filelist */
+#endif
 	} else {			/* No dash where expected */
 	    fatal("Malformed command-line option: '",*xargv,"'");
 	}
@@ -319,9 +341,9 @@ main(int argc, char ** argv) {
 
 /* THE REAL STUFF IS FROM HERE DOWN */
 
-    if (!devopen("dummy"))		/* Open the communication device */
+    if (!devopen(device))		/* Open the communication device */
       doexit(FAILURE);
-    if (!devsettings("dummy"))		/* Perform any needed settings */
+    if (!devsettings(device))		/* Perform any needed settings */
       doexit(FAILURE);
     if (db)				/* Open debug log if requested */
       debug(DB_OPN,"debug.log",0,0);
