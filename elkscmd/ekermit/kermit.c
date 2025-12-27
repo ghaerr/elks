@@ -196,7 +196,7 @@ kermit(short f,				/* Function code */
         k->crcta[ 9] = 0112211;
         k->crcta[10] = 0122412;
         k->crcta[11] = 0132613;
-        k->crcta[12] = 0143014,
+        k->crcta[12] = 0143014;
         k->crcta[13] = 0153215;
         k->crcta[14] = 0163416;
         k->crcta[15] = 0173617;
