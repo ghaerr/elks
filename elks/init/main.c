@@ -139,7 +139,7 @@ static void FARPROC far_start_kernel(void)
     setsp(&(task+1)->t_regs.ax);    /* change to a large temp stack (unused task #1) */
     debug("SP SWITCH\n");
 
-    printk("endbss %x task %x idle_task %x idle_stack %x\n",
+    debug("endbss %x task %x idle_task %x idle_stack %x\n",
         _endbss, task, idle_task, &idle_task->t_kstack[IDLESTACK_BYTES/2]);
 
     sched_init();                   /* init the idle and other task structs */
