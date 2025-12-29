@@ -52,9 +52,8 @@ struct task_struct *find_empty_process(void)
     }
     next_task_slot = t;
     task_slots_unused--;
-    memcpy(t, current,              /* duplicate current task data into new one */
-        (current == idle_task)? (TASK_KSTACK+IDLESTACK_BYTES)
-                              : sizeof(struct task_struct));
+    if (current != idle_task)       /* duplicate current task data into new one */
+        memcpy(t, current, sizeof(struct task_struct));
     t->state = TASK_UNINTERRUPTIBLE;
     t->pid = get_pid();
     t->ticks = 0;                   /* for CONFIG_CPU_USAGE */

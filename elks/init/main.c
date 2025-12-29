@@ -119,7 +119,6 @@ static void FARPROC far_start_kernel(void)
     save_flags(flags);
     clr_irq();                      /* we're running on the kernel interrupt stack! */
     printk("INT %x ", flags);       /* to show interrupt status after setup.S */
-    printk("SP %x ", getsp());
     printk("START\n");
 
     early_kernel_init();            /* read bootopts using kernel interrupt stack */
@@ -156,8 +155,6 @@ static void FARPROC far_start_kernel(void)
 /* the idle task loop, no return */
 static void idle_loop(void)
 {
-    debug("IDLE LOOP\n");
-
     /*
      * Set SP to the small stack in the special idle task struct.
      * We then become the idle task and are only switched to when the last runnable
@@ -166,6 +163,7 @@ static void idle_loop(void)
      * interrupt register saves will be on the interrupt stack, not the idle stack.
      */
     setsp(&idle_task->t_kstack[IDLESTACK_BYTES/2]);
+    debug("IDLE LOOP\n");
     //hexdump(idle_task->t_kstack, kernel_ds, IDLESTACK_BYTES, 1);
 
     /*

@@ -30,7 +30,7 @@ include $(BASEDIR)/Makefile-rules
 all:    main.o
 
 main.o: main.c
-	$(CC) $(CFLAGS) -fno-defer-pop -c -o main.o main.c
+	$(CC) $(CFLAGS) -fno-optimize-sibling-calls -fno-defer-pop -c -o main.o main.c
 
 
 #########################################################################
