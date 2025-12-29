@@ -110,6 +110,19 @@ void do_bottom_half(void);
                         : "memory");        \
         v; })
 
+/* set stack pointer */
+#define setsp(newsp)                    \
+        asm volatile ("mov %%ax,%%sp"   \
+            : /* no output */           \
+            :"a" ((unsigned short)(newsp)) \
+            :"memory")
+
+/* breakpoint interrupt */
+#define int3()                  \
+        asm volatile ("int $3\n"\
+            : /* no output */   \
+            : /* no input */)
+
 #ifdef CONFIG_ARCH_SWAN
 /* acknowledge interrupt */
 #define ack_irq(i)              \

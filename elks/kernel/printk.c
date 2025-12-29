@@ -48,6 +48,7 @@
 #include <stdarg.h>
 
 #define CONFIG_PREC_TIMER   1   /* =1 to include %k precision timer printk format */
+#define STATIC static           /* avoid stack overflow from printk on idle stack */
 
 dev_t dev_console;
 
@@ -123,11 +124,12 @@ static unsigned long conv_ptick(unsigned long v, int *pDecimal, int *pSuffix)
 static void numout(unsigned long v, int width, unsigned int base, int type,
     int Zero, int alt)
 {
-    int n, i;
-    unsigned int c;
+    int i;
     char *p;
-    int Sign, Suffix, Decimal;
-    char buf[12];                       /* small stack: good up to max long octal v */
+    STATIC int n;
+    STATIC unsigned int c;
+    STATIC int Sign, Suffix, Decimal;
+    STATIC char buf[12];                    /* small stack: good up to max long octal v */
 
     Decimal = -1;
     Sign = Suffix = 0;
@@ -188,9 +190,10 @@ static void numout(unsigned long v, int width, unsigned int base, int type,
 
 static void vprintk(const char *fmt, va_list p)
 {
-    int c, n, width, zero, alt, ptrfmt;
-    unsigned long v;
-    char *str;
+    int c, n;
+    STATIC int width, zero, alt, ptrfmt;
+    STATIC unsigned long v;
+    STATIC char *str;
 
     while ((c = *fmt++)) {
         if (c != '%')

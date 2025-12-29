@@ -96,6 +96,7 @@ utask:
 #ifdef CHECK_SS
 //
 //      We were in user mode, first confirm
+//      FIXME: won't work - panic requires valid SS and SS == DS!
 //
         mov     %ss,%di
         cmp     TASK_USER_SS(%si),%di // entry SS = current->t_regs.ss?
@@ -377,14 +378,6 @@ tswitch:
         pop     %es
         pop     %bp             // BP of schedule()
         ret
-
-// setsp(void *sp) - set stack pointer
-        .global setsp
-setsp:
-        pop     %bx             // return address
-        pop     %ax
-        mov     %ax,%sp
-        jmp     *%bx
 
 // short *getsp(void) - get stack pointer
         .global getsp
