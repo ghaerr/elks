@@ -79,18 +79,6 @@ entry.S: syscall.dat mkentry.sh
 strace.o: strace.c
 	$(CC) $(CFLAGS) -fno-optimize-sibling-calls -c -o strace.o strace.c
 
-#
-# Special compilations apparently needed for startup failure using emu86 w/ROM
-# FIXME Apparent stack trashing but not fully verified
-irq.o: irq.c
-	$(CC) $(CFLAGS) -fno-defer-pop -c -o irq.o irq.c
-
-#irq-8259.o: irq-8259.c
-#	$(CC) $(CFLAGS) -fno-defer-pop -c -o irq-8259.o irq-8259.c
-
-#timer-8254.o: timer-8254.c
-#	$(CC) $(CFLAGS) -fno-defer-pop -c -o timer-8254.o timer-8254.c
-
 #########################################################################
 # Standard commands.
 

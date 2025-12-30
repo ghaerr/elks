@@ -155,6 +155,4 @@ void INITPROC irq_init(void)
 
     enable_timer_tick();        /* reprogram timer for 100 HZ */
 #endif
-
-    init_bh(TIMER_BH, timer_bh);
 }

@@ -143,7 +143,8 @@ static void check_kstack(int n)
     static int max;
 
 #ifdef CHECK_ISTACK
-    check_istack();
+    if (tracing & TRACE_ISTACK)
+        check_istack();
 #endif
     s = syscall_info(current->t_regs.orig_ax);
     if (s == &notimp)

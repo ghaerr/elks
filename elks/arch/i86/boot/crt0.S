@@ -50,10 +50,6 @@ _start:
 
         call    start_kernel    // no return
 
-        .global int3
-int3:   int     $3              // C breakpoint for emu86
-        ret
-
 #if defined(CONFIG_ARCH_SWAN)
 early_putchar:
 1:      in      $0xB3,%al
