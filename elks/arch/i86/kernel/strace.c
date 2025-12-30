@@ -144,7 +144,7 @@ static void check_kstack(int n)
 
 #ifdef CHECK_ISTACK
     if (tracing & TRACE_ISTACK)
-	check_istack();
+        check_istack();
 #endif
     s = syscall_info(current->t_regs.orig_ax);
     if (s == &notimp)
