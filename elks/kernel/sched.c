@@ -201,9 +201,9 @@ void INITPROC sched_init(void)
  */
     t = idle_task;
     t->state = TASK_RUNNING;
-    t->kstack_magic = KSTACK_MAGIC;
     t->next_run = t->prev_run = t;
     //memset(t->t_kstack, 0xff, IDLESTACK_BYTES);   /* for debugging idle stack size */
+    t->kstack_magic = KSTACK_MAGIC;
 
     current = t;
     next_task_slot = task;

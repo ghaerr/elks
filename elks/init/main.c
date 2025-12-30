@@ -110,6 +110,7 @@ static void idle_loop(void);
  */
 void start_kernel(void)
 {
+    //tracing = TRACE_KSTACK | TRACE_ISTACK;
     far_start_kernel();             /* start executing in reusable memory */
 }
 
@@ -148,7 +149,6 @@ static void FARPROC far_start_kernel(void)
     kfork_proc(init_task);
     wake_up_process(&task[0]);
 
-    init_bh(TIMER_BH, timer_bh);    /* finally enable timer bottom halves */
     idle_loop();                    /* no return */
 }
 
@@ -161,10 +161,16 @@ static void idle_loop(void)
      * user mode process sleeps from its kernel stack and schedule() is called.
      * As a result, the idle task always runs with intr_count 1, which guarantees
      * interrupt register saves will be on the interrupt stack, not the idle stack.
+     *
+     * NOTE: Any calls to printk after the small idle stack is set below can cause idle
+     * stack overflow. The good news is that the overflow shouldn't cause much harm
+     * since it overflows into relatively unused areas of the idle task's task_struct.
      */
     setsp(&idle_task->t_kstack[IDLESTACK_BYTES/2]);
-    debug("IDLE LOOP\n");
-    //hexdump(idle_task->t_kstack, kernel_ds, IDLESTACK_BYTES, 1);
+    debug("IDLE LOOP %x\n", getsp());
+    //hexdump(idle_task->t_kstack, kernel_ds, IDLESTACK_BYTES, 0);
+
+    init_bh(TIMER_BH, timer_bh);    /* finally enable timer bottom halves */
 
     /*
      * In the call to schedule below, the init_task function will run, which
@@ -173,7 +179,7 @@ static void idle_loop(void)
      * from the kernel and enters user mode until the next clock tick or system call.
      */
     while (1) {
-#ifdef CHECK_KSTACK
+#if defined(CHECK_KSTACK) || 1
         if (idle_task->kstack_magic != KSTACK_MAGIC) {
             printk("IDLE STACK OFLOW\n");
             idle_task->kstack_magic = KSTACK_MAGIC;
