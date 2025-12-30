@@ -25,6 +25,7 @@ IA16DIRS =       \
 	debug       \
 	disk_utils  \
 	fsck_dos    \
+	ekermit	    \
 	elvis	    \
 	file_utils  \
 	gui         \

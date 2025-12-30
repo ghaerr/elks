@@ -209,6 +209,7 @@ inet/sample_index.html ::var/www/index.html :net
 #inet/urlget :::ftpget          :net
 #inet/urlget :::ftpput          :net
 #inet/urlget :::httpget         :net
+ekermit/ekermit                 :other                          :1440c
 inet/tinyirc/tinyirc            :other                          :1440c
 bc/bc                           :other                          :1440c
 sys_utils/test_unreal           :test                           :1440c
