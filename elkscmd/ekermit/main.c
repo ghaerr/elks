@@ -209,7 +209,7 @@ doarg(char c) {				/* Command-line option parser */
 		  fatal("File '",s,"' not accessible");
 		nfils++;
 	    }
-	    xargc++, *xargv--;		/* Adjust argv/argc */
+	    xargc++, xargv--;		/* Adjust argv/argc */
 	    if (nfils < 1)
 	      fatal("Missing filename for -s",(char *)0,(char *)0);
 	    action = A_SEND;
@@ -224,7 +224,7 @@ doarg(char c) {				/* Command-line option parser */
 #endif /* DEBUG */
 	    if (*(xp+1))
 	      fatal("Invalid argument bundling",(char *)0,(char *)0);
-	    *xargv++, xargc--;
+	    xargv++, xargc--;
 	    if ((xargc < 1) || (**xargv == '-'))
 	      fatal("Missing option argument",(char *)0,(char *)0);
 	    s = *xargv;
@@ -275,7 +275,7 @@ doarg(char c) {				/* Command-line option parser */
 	  case 'p':			/* Parity */
 	    if (*(xp+1))
 	      fatal("Invalid argument bundling",(char *)0,(char *)0);
-	    *xargv++, xargc--;
+	    xargv++, xargc--;
 	    if ((xargc < 1) || (**xargv == '-'))
 	      fatal("Missing parity",(char *)0,(char *)0);
 	    switch(x = **xargv) {
@@ -305,7 +305,7 @@ doarg(char c) {				/* Command-line option parser */
     return(action);
 }
 
-void
+int
 main(int argc, char ** argv) {
     int status, rx_len, i, x;
     char c;

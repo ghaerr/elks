@@ -285,8 +285,8 @@
 #define K_SEND      6			/* Begin Send sequence */
 
 /* Kermit module return codes */
-
 #define X_ERROR    -1                   /* Fatal error */
+#undef X_OK                             /* WARNING: incompatible with unistd.h */
 #define X_OK        0                   /* OK, no action needed */
 #define X_FILE      1                   /* Filename received */
 #define X_DATA      2                   /* File data received */
