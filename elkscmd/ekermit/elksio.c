@@ -50,9 +50,6 @@
 #include <signal.h>
 #ifndef O_WRONLY
 //#include <sys/file.h>
-#ifdef X_OK
-#undef X_OK
-#endif /* X_OK */
 #endif /* O_WRONLY */
 
 #include "cdefs.h"
