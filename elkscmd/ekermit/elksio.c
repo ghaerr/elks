@@ -50,9 +50,6 @@
 #include <signal.h>
 #ifndef O_WRONLY
 //#include <sys/file.h>
-#ifdef X_OK
-#undef X_OK
-#endif /* X_OK */
 #endif /* O_WRONLY */
 
 #include "cdefs.h"
@@ -69,14 +66,18 @@ UCHAR i_buf[IBUFLEN+8];			/* File output buffer */
   This is just one of many possible implmentation choices, invisible to the
   Kermit protocol module.
 */
-static int ttyfd, ofile = -1;		/* File descriptors */
+static int ttyfd = -1, ofile = -1;	/* File descriptors */
 static FILE * ifile = (FILE *)0;	/* and pointers */
 
 static struct termios org_term, new_term;
+static int org_term_set = 0;
 
 static void sig_handler(int sig)
 {
-    tcsetattr(ttyfd, TCSAFLUSH, &org_term);
+    if(ttyfd < 0)
+      exit(1);
+    if (org_term_set)
+      tcsetattr(ttyfd, TCSAFLUSH, &org_term);
     close(ttyfd);
     exit(1);
 }
@@ -154,6 +155,7 @@ devopen(char *device) {
         }
     }
     if (tcgetattr(ttyfd, &org_term) >= 0) {
+        org_term_set = 1;
         new_term = org_term;
         new_term.c_lflag &= ~(ISIG | ECHO | ECHOE | ECHONL);
         new_term.c_iflag &= ~ICRNL;
@@ -217,7 +219,10 @@ devrestore(void) {
 */
 int
 devclose(void) {
-    tcsetattr(ttyfd, TCSAFLUSH, &org_term);
+    if (ttyfd < 0)
+      return(0);
+    if (org_term_set)
+      tcsetattr(ttyfd, TCSAFLUSH, &org_term);
     close(ttyfd);
     return(1);
 }
