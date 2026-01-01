@@ -83,7 +83,7 @@ struct sc_info {
     unsigned int s_info;    /* # and type of parameters */
 };
 
-struct sc_info elks_table1[] = {
+struct sc_info elks_table[] = {
     ENTRY("none",           packinfo(0, P_NONE,   P_NONE,    P_NONE   )),   // 0
     ENTRY("exit",           packinfo(1, P_SSHORT, P_NONE,    P_NONE   )),
     ENTRY("fork",           packinfo(0, P_NONE,   P_NONE,    P_NONE   )),
@@ -159,18 +159,13 @@ struct sc_info elks_table1[] = {
     ENTRY("sysctl",         packinfo(3, P_SSHORT, P_STR,     P_PSSHORT)),
     ENTRY(0,                packinfo(0, P_NONE,   P_NONE,    P_NONE   )),
     ENTRY("uname",          packinfo(1, P_PDATA,  P_NONE,    P_NONE   )),   // 74
-};
-
-#define START_TABLE2  198
-struct sc_info elks_table2[] = {
-    ENTRY("socket",         packinfo(3, P_SSHORT, P_SSHORT,  P_SSHORT )),   // 198
-    ENTRY(0,                packinfo(0, P_NONE,   P_NONE,    P_NONE   )),
-    ENTRY("bind",           packinfo(3, P_SSHORT, P_PDATA,   P_USHORT )),   // 200
+    ENTRY("socket",         packinfo(3, P_SSHORT, P_SSHORT,  P_SSHORT )),   // 75
+    ENTRY("bind",           packinfo(3, P_SSHORT, P_PDATA,   P_USHORT )),
     ENTRY("listen",         packinfo(2, P_SSHORT, P_SSHORT,  P_NONE   )),
     ENTRY("accept",         packinfo(3, P_SSHORT, P_DATA,    P_PUSHORT)),
     ENTRY("connect",        packinfo(3, P_SSHORT, P_PDATA,   P_SSHORT )),
     ENTRY("setsockopt",     packinfo(5, P_SSHORT, P_SSHORT,  P_SSHORT )), /* +2 args*/
     ENTRY("getsocknam",     packinfo(4, P_SSHORT, P_DATA,    P_PUSHORT)), /* +1 arg*/
     ENTRY("fmemalloc",      packinfo(2, P_USHORT, P_PUSHORT, P_NONE)   ),
-    ENTRY("fmemfree",       packinfo(1, P_USHORT, P_NONE,    P_NONE)   ),   // 207
+    ENTRY("fmemfree",       packinfo(1, P_USHORT, P_NONE,    P_NONE)   )    // 83
 };
