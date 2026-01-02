@@ -138,18 +138,17 @@ typedef int syscall_res;
 #define SYS_ustatfs              70
 #define SYS_setitimer            71
 #define SYS_sysctl               72
-#define SYS_uname                73
 
-#define SYS_socket              198
-
-#define SYS_bind                200
-#define SYS_listen              201
-#define SYS_accept              202
-#define SYS_connect             203
-#define SYS_setsockopt          204
-#define SYS_getsocknam          205
-#define SYS_fmemalloc           206
-#define SYS_fmemfree            207
+#define SYS_uname                74
+#define SYS_socket               75
+#define SYS_bind                 76
+#define SYS_listen               77
+#define SYS_accept               78
+#define SYS_connect              79
+#define SYS_setsockopt           80
+#define SYS_getsocknam           81
+#define SYS_fmemalloc            82
+#define SYS_fmemfree             83
 
 
 #define _sys_exit(rc)       sys_call1n(SYS_exit, rc)
