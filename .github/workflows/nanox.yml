@@ -1,0 +1,88 @@
+name: nanox
+
+on:
+  push:
+    paths:
+      - '**'
+      - '!.github/workflows/cross.yml'
+      - '!.github/workflows/ow-libc.yml'
+      - '!tools/*'
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: setup
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            texinfo \
+            libncurses5-dev \
+            libelf-dev \
+            ncompress \
+            git \
+            build-essential
+
+      - name: checkout
+        uses: actions/checkout@v2
+
+      - name: cache
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: cross
+          key: cross-${{ hashFiles('tools/*') }}-${{ runner.os }}
+
+      - name: prepare
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: mkdir -p cross
+
+      - name: build cross toolchain
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: tools/build.sh
+
+      # ------------------------------------------------------------
+      # Build ELKS + images
+      # ------------------------------------------------------------
+      - name: build ELKS images
+        run: ./build.sh auto allimages
+
+      # ------------------------------------------------------------
+      # Clone MicroWindows
+      # ------------------------------------------------------------
+      - name: clone microwindows
+        run: |
+          git clone https://github.com/ghaerr/microwindows.git
+
+      # ------------------------------------------------------------
+      # Build Nano-X for ELKS
+      # ------------------------------------------------------------
+      - name: build Nano-X for ELKS
+        working-directory: microwindows/src
+        run: |
+          make -f Makefile.elks
+
+      # ------------------------------------------------------------
+      # Copy Nano-X binaries into HDD Minix image (mfs cp)
+      # ------------------------------------------------------------
+      - name: install Nano-X into Minix HDD image
+        run: |
+          IMAGE=image/hd32-minix.img
+
+          echo "Nano-X binaries:"
+          ls -l microwindows/src/bin
+
+          for f in microwindows/src/bin/nx*; do
+            echo "Installing $(basename $f) into /bin"
+            mfs "$IMAGE" cp "$f" "/bin/$(basename $f)"
+          done
+
+      # ------------------------------------------------------------
+      # For now only upload the updated HDD Minix image
+      # ------------------------------------------------------------
+      - name: upload updated Minix HDD image with Nano-X
+        uses: actions/upload-artifact@v4
+        with:
+          name: hd32-minix-nanox.img
+          path: image/hd32-minix.img
