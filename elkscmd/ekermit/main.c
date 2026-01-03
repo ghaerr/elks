@@ -311,7 +311,7 @@ main(int argc, char ** argv) {
     char c;
     UCHAR *inbuf;
     short r_slot;
-    char device[] = "/dev/ttyS0";
+    char device[20] = "/dev/ttyS0";
 
     parity = P_PARITY;                  /* Set this to desired parity */
     status = X_OK;                      /* Initial kermit status */

@@ -35,4 +35,6 @@ stty 19200 < /dev/ttyS0
 
 Only 8bits, no flow control, no parity are supported for now.
 
-
+## build
+make will create ekermit for ELKS.  
+make host will create hostek for the host Linux.  
