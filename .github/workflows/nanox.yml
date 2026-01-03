@@ -73,16 +73,25 @@ jobs:
       # ------------------------------------------------------------
       - name: install Nano-X into Minix HDD image
         run: |
-          IMAGE=image/hd32-minix.img
-
+          cd "$GITHUB_WORKSPACE"
+          . ./env.sh
+      
+          MFS="$TOPDIR/tools/bin/mfs"
+          IMAGE=image/hd32-minix.img      
+          echo "Using mfs at: $MFS"
+          test -x "$MFS"
+      
           echo "Nano-X binaries:"
           ls -l microwindows/src/bin
-
+      
           for f in microwindows/src/bin/nx*; do
-            echo "Installing $(basename $f) into /bin"
-            mfs "$IMAGE" cp "$f" "/bin/$(basename $f)"
+            echo "Installing $(basename "$f") into /bin"
+            "$MFS" "$IMAGE" cp "$f" "/bin/$(basename "$f")"
           done
-
+      
+          echo "Verifying installation:"
+          "$MFS" "$IMAGE" ls /bin | grep nx
+      
       # ------------------------------------------------------------
       # For now only upload the updated HDD Minix image
       # ------------------------------------------------------------
