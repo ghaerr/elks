@@ -112,6 +112,29 @@ jobs:
           git clone https://github.com/ghaerr/microwindows.git
 
       # ------------------------------------------------------------
+      # Build ELKS host tools (elf2elks, mfs, etc.)
+      # Required for Nano-X linking
+      # ------------------------------------------------------------
+      - name: build ELKS tools
+        run: |
+          cd "$GITHUB_WORKSPACE/elks"
+          . ./env.sh
+
+          # Configure ELKS if not already configured
+          if [ ! -f .config ]; then
+            make defconfig
+          fi
+
+          # Build host tools only (fast)
+          make -j1 tools
+
+          echo "elf2elks location:"
+          command -v elf2elks || {
+            echo "ERROR: elf2elks not found after building tools"
+            exit 1
+          }
+
+      # ------------------------------------------------------------
       # Build Nano-X for ELKS
       # ------------------------------------------------------------
       - name: build Nano-X for ELKS
