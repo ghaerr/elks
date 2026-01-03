@@ -87,12 +87,12 @@ jobs:
           echo "which mfs:"
           which mfs || echo "mfs not found in PATH (expected in tools/bin)"
           
-          MFS="$TOPDIR/tools/bin/mfs"
+          MFS="$(command -v mfs)"
+          
           echo "Using mfs at: $MFS"
-          if [ ! -x "$MFS" ]; then
-            echo "ERROR: mfs not executable or missing at $MFS"
-            ls -l "$TOPDIR/tools/bin" || true
-            file "$MFS" || true
+
+          if [ -z "$MFS" ] || [ ! -x "$MFS" ]; then
+            echo "ERROR: mfs not found or not executable"
             exit 1
           fi
       
