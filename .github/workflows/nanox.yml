@@ -61,10 +61,12 @@ jobs:
       - name: build Nano-X for ELKS
         working-directory: microwindows/src
         run: |
-          export TOPDIR="$GITHUB_WORKSPACE" 
-          echo "Using TOPDIR=$TOPDIR"
+          cd "$GITHUB_WORKSPACE"
+          . ./env.sh
+          echo "TOPDIR=$TOPDIR"
           test -d "$TOPDIR/elkscmd"
-          make -f Makefile.elks 
+          cd microwindows/src
+          make -f Makefile.elks
 
       # ------------------------------------------------------------
       # Copy Nano-X binaries into HDD Minix image (mfs cp)
