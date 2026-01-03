@@ -1,17 +1,22 @@
 name: nanox
 
 on:
+  # Automatic trigger after main completes
   workflow_run:
     workflows: ["main"]
     types:
       - completed
-      
+
   # Manual trigger (force run)
   workflow_dispatch:
 
 jobs:
   nanox:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # Only auto-run on success of main; manual runs bypass this
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+
     runs-on: ubuntu-22.04
 
     permissions:
@@ -34,13 +39,13 @@ jobs:
             build-essential
 
       # ------------------------------------------------------------
-      # Checkout repo (needed for env.sh, tools, etc.)
+      # Checkout repo (needed for env.sh, tools, Nano-X build)
       # ------------------------------------------------------------
       - name: checkout
         uses: actions/checkout@v4
 
       # ------------------------------------------------------------
-      # Restore cross toolchain cache (needed for Nano-X build)
+      # Restore cross toolchain cache
       # ------------------------------------------------------------
       - name: cache
         id: cache
@@ -58,7 +63,7 @@ jobs:
         run: tools/build.sh
 
       # ------------------------------------------------------------
-      # Download hd32-minix.img artifact from "main"
+      # Download hd32-minix.img from main workflow
       # ------------------------------------------------------------
       - name: download hd32-minix image
         uses: actions/download-artifact@v4
@@ -87,7 +92,7 @@ jobs:
           make -f Makefile.elks
 
       # ------------------------------------------------------------
-      # Install Nano-X into downloaded Minix image
+      # Install Nano-X into Minix image
       # ------------------------------------------------------------
       - name: install Nano-X into Minix HDD image
         run: |
@@ -112,15 +117,22 @@ jobs:
             exit 1
           fi
 
+          # Ensure directories exist
+          "$MFS" "$IMAGE" mkdir /bin || true
+          "$MFS" "$IMAGE" mkdir /lib || true
+
           # Copy Nano-X binaries into /bin
           for f in "$GITHUB_WORKSPACE"/microwindows/src/bin/*; do
             echo "Installing $(basename "$f") into /bin"
             "$MFS" "$IMAGE" cp "$f" /bin
           done
 
-          # Move nxworld.map to /lib (host → image, then remove from /bin)
+          # Move nxworld.map to /lib
           "$MFS" "$IMAGE" cp "$GITHUB_WORKSPACE/microwindows/src/bin/nxworld.map" /lib
           "$MFS" "$IMAGE" rm /bin/nxworld.map
+
+          echo "Final /bin contents:"
+          "$MFS" "$IMAGE" ls /bin
 
       # ------------------------------------------------------------
       # Upload updated image
