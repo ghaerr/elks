@@ -96,9 +96,6 @@ jobs:
             "$MFS" "$IMAGE" cp "$f" "/bin/$(basename "$f")"
           done
       
-          echo "Verifying installation:"
-          "$MFS" "$IMAGE" ls /bin | grep nx
-      
       # ------------------------------------------------------------
       # For now only upload the updated HDD Minix image
       # ------------------------------------------------------------
