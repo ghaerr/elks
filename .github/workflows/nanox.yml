@@ -101,7 +101,12 @@ jobs:
             "$MFS" "$IMAGE" cp "$f" "/bin/$(basename "$f")"
           done
 
-          "$MFS" "$IMAGE" cp /bin/nxworld.map /lib/nxworld.map && "$MFS" "$IMAGE" rm /bin/nxworld.map
+          # Handle resource files:
+          # Copy nxworld.map from host directly into /lib
+          "$MFS" "$IMAGE" cp microwindows/src/bin/nxworld.map /lib
+          
+          # Remove it from /bin inside the image
+          "$MFS" "$IMAGE" rm /bin/nxworld.map
       
       # ------------------------------------------------------------
       # For now only upload the updated HDD Minix image
