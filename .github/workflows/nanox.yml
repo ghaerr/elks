@@ -73,7 +73,7 @@ jobs:
       # ------------------------------------------------------------
       - name: install Nano-X into Minix HDD image
         run: |
-          cd "$GITHUB_WORKSPACE"
+          cd "$GITHUB_WORKSPACE/elks"
           . ./env.sh
           
           IMAGE="$GITHUB_WORKSPACE/image/hd32-minix.img"
@@ -83,7 +83,9 @@ jobs:
             ls -l "$GITHUB_WORKSPACE/image"
             exit 1
           }
-          
+
+          echo "which mfs:"
+          which mfs || echo "mfs not found in PATH (expected in tools/bin)"
           MFS="$TOPDIR/tools/bin/mfs"
           echo "Using mfs at: $MFS"
           if [ ! -x "$MFS" ]; then
