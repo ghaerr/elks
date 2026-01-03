@@ -15,7 +15,8 @@ jobs:
     # Only auto-run on success of main; manual runs bypass this
     if: |
       github.event_name == 'workflow_dispatch' ||
-      github.event.workflow_run.conclusion == 'success'
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success')
 
     runs-on: ubuntu-22.04
 
