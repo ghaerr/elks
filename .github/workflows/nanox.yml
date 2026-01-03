@@ -96,7 +96,7 @@ jobs:
             exit 1
           fi
       
-          for f in microwindows/src/bin/nx*; do
+          for f in microwindows/src/bin/*; do
             echo "Installing $(basename "$f") into /bin"
             "$MFS" "$IMAGE" cp "$f" "/bin/$(basename "$f")"
           done
