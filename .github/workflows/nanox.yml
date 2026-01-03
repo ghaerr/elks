@@ -74,6 +74,8 @@ jobs:
           name: hd32-minix.img
           path: image
           run-id: ${{ github.event.workflow_run.id }}
+          repository: ${{ github.repository }}
+
       
       # Manual run fallback (latest artifact)
       - name: download hd32-minix image (latest)
