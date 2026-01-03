@@ -117,7 +117,7 @@ jobs:
       # ------------------------------------------------------------
       - name: build ELKS tools
         run: |
-          cd "$GITHUB_WORKSPACE/elks"
+          cd "$GITHUB_WORKSPACE"
           . ./env.sh
 
           # Configure ELKS if not already configured
