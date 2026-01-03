@@ -65,7 +65,18 @@ jobs:
       # ------------------------------------------------------------
       # Download hd32-minix.img from main workflow
       # ------------------------------------------------------------
-      - name: download hd32-minix image
+      # Automatic run (after main)
+      - name: download hd32-minix image (from main)
+        if: github.event_name == 'workflow_run'
+        uses: actions/download-artifact@v4
+        with:
+          name: hd32-minix.img
+          path: image
+          run-id: ${{ github.event.workflow_run.id }}
+      
+      # Manual run fallback (latest artifact)
+      - name: download hd32-minix image (latest)
+        if: github.event_name == 'workflow_dispatch'
         uses: actions/download-artifact@v4
         with:
           name: hd32-minix.img
