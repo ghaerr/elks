@@ -64,26 +64,45 @@ jobs:
         run: tools/build.sh
 
       # ------------------------------------------------------------
-      # Download hd32-minix.img from main workflow
+      # Download hd32-minix.img from latest successful main run
+      # (robust method using gh CLI)
       # ------------------------------------------------------------
-      # Automatic run (after main)
-      - name: download hd32-minix image (from main)
-        if: github.event_name == 'workflow_run'
-        uses: actions/download-artifact@v4
-        with:
-          name: hd32-minix.img
-          path: image
-          run-id: ${{ github.event.workflow_run.id }}
-          repository: ${{ github.repository }}
+      - name: download hd32-minix image via GitHub API
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
 
-      
-      # Manual run fallback (latest artifact)
-      - name: download hd32-minix image (latest)
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/download-artifact@v4
-        with:
-          name: hd32-minix.img
-          path: image
+          mkdir -p image
+
+          echo "Finding latest successful 'main' workflow run..."
+
+          RUN_ID=$(gh run list \
+            --workflow main \
+            --status success \
+            --limit 1 \
+            --json databaseId \
+            -q '.[0].databaseId')
+
+          if [ -z "$RUN_ID" ]; then
+            echo "ERROR: No successful 'main' workflow run found"
+            exit 1
+          fi
+
+          echo "Using main workflow run ID: $RUN_ID"
+
+          echo "Downloading artifact hd32-minix.img..."
+          gh run download "$RUN_ID" \
+            --name hd32-minix.img \
+            --dir image
+
+          echo "Downloaded files:"
+          ls -lh image
+
+          test -f image/hd32-minix.img || {
+            echo "ERROR: hd32-minix.img not found after download"
+            exit 1
+          }
 
       # ------------------------------------------------------------
       # Clone MicroWindows
