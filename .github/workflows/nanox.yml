@@ -100,6 +100,8 @@ jobs:
             echo "Installing $(basename "$f") into /bin"
             "$MFS" "$IMAGE" cp "$f" "/bin/$(basename "$f")"
           done
+
+          "$MFS" "$IMAGE" cp /bin/nxworld.map /lib/nxworld.map && "$MFS" "$IMAGE" rm /bin/nxworld.map
       
       # ------------------------------------------------------------
       # For now only upload the updated HDD Minix image
