@@ -5,6 +5,9 @@ on:
     workflows: ["main"]
     types:
       - completed
+      
+  # Manual trigger (force run)
+  workflow_dispatch:
 
 jobs:
   nanox:
