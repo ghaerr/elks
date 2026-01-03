@@ -115,14 +115,14 @@ jobs:
       # Build Nano-X for ELKS
       # ------------------------------------------------------------
       - name: build Nano-X for ELKS
+        working-directory: microwindows/src
         run: |
-          cd "$GITHUB_WORKSPACE/elks"
-          . ./env.sh
-          echo "TOPDIR=$TOPDIR"
-          test -d "$TOPDIR/elkscmd"
-
-          cd "$GITHUB_WORKSPACE/microwindows/src"
-          make -f Makefile.elks
+            cd "$GITHUB_WORKSPACE"
+            . ./env.sh
+            echo "TOPDIR=$TOPDIR"
+            test -d "$TOPDIR/elkscmd"
+            cd microwindows/src
+            make -f Makefile.elks
 
       # ------------------------------------------------------------
       # Install Nano-X into Minix image
