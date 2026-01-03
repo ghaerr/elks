@@ -115,22 +115,23 @@ jobs:
       # Build ELKS host tools (elf2elks, mfs, etc.)
       # Required for Nano-X linking
       # ------------------------------------------------------------
-      - name: build ELKS tools
+      - name: build ELKS tools (required for Nano-X)
         run: |
           cd "$GITHUB_WORKSPACE"
           . ./env.sh
 
-          # Configure ELKS if not already configured
-          if [ ! -f .config ]; then
-            make defconfig
-          fi
+          echo "Configuring ELKS (non-interactive)..."
+          make mrproper
+          make defconfig
+          yes "" | make oldconfig
 
-          # Build host tools only (fast)
+          echo "Building ELKS host tools..."
           make -j1 tools
 
-          echo "elf2elks location:"
+          echo "Checking elf2elks:"
           command -v elf2elks || {
-            echo "ERROR: elf2elks not found after building tools"
+            echo "ERROR: elf2elks still not found"
+            find . -name elf2elks
             exit 1
           }
 
