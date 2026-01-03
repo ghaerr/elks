@@ -86,7 +86,12 @@ jobs:
           
           MFS="$TOPDIR/tools/bin/mfs"
           echo "Using mfs at: $MFS"
-          test -x "$MFS"
+          if [ ! -x "$MFS" ]; then
+            echo "ERROR: mfs not executable or missing at $MFS"
+            ls -l "$TOPDIR/tools/bin" || true
+            file "$MFS" || true
+            exit 1
+          fi
       
           echo "Nano-X binaries:"
           ls -l microwindows/src/bin
