@@ -77,7 +77,7 @@ jobs:
             --json databaseId \
             -q '.[0].databaseId')
 
-          [ -n "$RUN_ID" ] || exit 1
+          test -n "$RUN_ID"
 
           gh run download "$RUN_ID" \
             --name hd32-minix.img \
@@ -86,40 +86,39 @@ jobs:
           test -f image/hd32-minix.img
 
       # ------------------------------------------------------------
+      # Clone ELKS (REQUIRED)
+      # ------------------------------------------------------------
+      - name: clone ELKS
+        run: git clone https://github.com/elks-org/elks.git
+
+      # ------------------------------------------------------------
       # Clone MicroWindows
       # ------------------------------------------------------------
       - name: clone microwindows
         run: git clone https://github.com/ghaerr/microwindows.git
 
       # ------------------------------------------------------------
-      # Build ELKS host tools (FIXED)
+      # Build ELKS host tools (FIX)
       # ------------------------------------------------------------
-      - name: build ELKS host tools
+      - name: build ELKS tools
         run: |
-          cd "$GITHUB_WORKSPACE"
+          cd "$GITHUB_WORKSPACE/elks"
 
           rm -f .config include/config.h
           make defconfig
           make -j1 tools
-
-          # Tools exist now — make them visible
-          export PATH="$GITHUB_WORKSPACE/elks/tools/bin:$PATH"
-
-          echo "Verifying tools:"
-          command -v elf2elks
-          command -v mfs
 
       # ------------------------------------------------------------
       # Build Nano-X for ELKS
       # ------------------------------------------------------------
       - name: build Nano-X for ELKS
         run: |
-          cd "$GITHUB_WORKSPACE"
+          cd "$GITHUB_WORKSPACE/elks"
           . ./env.sh
 
           export PATH="$GITHUB_WORKSPACE/elks/tools/bin:$PATH"
 
-          cd microwindows/src
+          cd "$GITHUB_WORKSPACE/microwindows/src"
           make -f Makefile.elks
 
       # ------------------------------------------------------------
@@ -133,23 +132,18 @@ jobs:
           export PATH="$GITHUB_WORKSPACE/elks/tools/bin:$PATH"
 
           IMAGE="$GITHUB_WORKSPACE/image/hd32-minix.img"
-          MFS="$(command -v mfs)"
 
-          [ -x "$MFS" ]
-
-          "$MFS" "$IMAGE" mkdir /bin || true
-          "$MFS" "$IMAGE" mkdir /lib || true
+          "$GITHUB_WORKSPACE/elks/tools/bin/mfs" "$IMAGE" mkdir /bin || true
+          "$GITHUB_WORKSPACE/elks/tools/bin/mfs" "$IMAGE" mkdir /lib || true
 
           for f in "$GITHUB_WORKSPACE"/microwindows/src/bin/*; do
-            "$MFS" "$IMAGE" cp "$f" /bin
+            "$GITHUB_WORKSPACE/elks/tools/bin/mfs" "$IMAGE" cp "$f" /bin
           done
 
-          "$MFS" "$IMAGE" cp \
-            "$GITHUB_WORKSPACE/microwindows/src/bin/nxworld.map" /lib
+          "$GITHUB_WORKSPACE/elks/tools/bin/mfs" "$IMAGE" \
+            cp "$GITHUB_WORKSPACE/microwindows/src/bin/nxworld.map" /lib
 
-          "$MFS" "$IMAGE" rm /bin/nxworld.map
-
-          "$MFS" "$IMAGE" ls /bin
+          "$GITHUB_WORKSPACE/elks/tools/bin/mfs" "$IMAGE" rm /bin/nxworld.map
 
       # ------------------------------------------------------------
       # Upload updated image
