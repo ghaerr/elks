@@ -246,45 +246,45 @@ _uname:
 
         .global _socket
 _socket:
-        mov     ax,#198
+        mov     ax,#75
         jmp     near callsys
 
         .global _bind
 _bind:
-        mov     ax,#200
+        mov     ax,#76
         jmp     near callsys
 
         .global _listen
 _listen:
-        mov     ax,#201
+        mov     ax,#77
         jmp     near callsys
 
         .global _accept
 _accept:
-        mov     ax,#202
+        mov     ax,#78
         jmp     near callsys
 
         .global _connect
 _connect:
-        mov     ax,#203
+        mov     ax,#79
         jmp     near callsys
 
         .global _setsockopt
 _setsockopt:
-        mov     ax,#204
+        mov     ax,#80
         jmp     near callsys
 
         .global _getsocknam
 _getsocknam:
-        mov     ax,#205
+        mov     ax,#81
         jmp     near callsys
 
         .global __fmemalloc
 __fmemalloc:
-        mov     ax,#206
+        mov     ax,#82
         jmp     near callsys
 
         .global __fmemfree
 __fmemfree:
-        mov     ax,#207
+        mov     ax,#83
         jmp     near callsys

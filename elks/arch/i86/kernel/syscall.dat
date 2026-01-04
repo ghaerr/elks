@@ -97,15 +97,15 @@ uname		+74	1	. was knlvsn
 #
 # From /usr/include/asm-generic/unistd.h
 #
-socket		+198	3	= CONFIG_SOCKET
-bind		+200	3	= CONFIG_SOCKET
-listen		+201	2	= CONFIG_SOCKET
-accept		+202	3	= CONFIG_SOCKET
-connect		+203	3	= CONFIG_SOCKET
-setsockopt	+204	5	= CONFIG_SOCKET
-getsocknam	+205	4	= CONFIG_SOCKET
-fmemalloc	+206	2	*
-fmemfree	+207	1	*
+socket		+75	3	= CONFIG_SOCKET
+bind		+76	3	= CONFIG_SOCKET
+listen		+77	2	= CONFIG_SOCKET
+accept		+78	3	= CONFIG_SOCKET
+connect		+79	3	= CONFIG_SOCKET
+setsockopt	+80	5	= CONFIG_SOCKET
+getsocknam	+81	4	= CONFIG_SOCKET
+fmemalloc	+82	2	*
+fmemfree	+83	1	*
 #
 # Name			No	Args	Flag&comment
 #
