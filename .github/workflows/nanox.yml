@@ -1,30 +1,19 @@
+
 name: nanox
 
 on:
-  workflow_run:
-    workflows: ["main"]
-    types:
-      - completed
-
-  workflow_dispatch:
+  push:
+    paths:
+      - '**'
+      - '!.github/workflows/cross.yml'
+      - '!.github/workflows/ow-libc.yml'
+      - '!tools/*'
 
 jobs:
-  nanox:
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'workflow_run' &&
-       github.event.workflow_run.conclusion == 'success')
-
+  build:
     runs-on: ubuntu-22.04
 
-    permissions:
-      actions: read
-      contents: read
-
     steps:
-      # ------------------------------------------------------------
-      # Setup dependencies
-      # ------------------------------------------------------------
       - name: setup
         run: |
           sudo apt-get update
@@ -36,15 +25,9 @@ jobs:
             git \
             build-essential
 
-      # ------------------------------------------------------------
-      # Checkout repo
-      # ------------------------------------------------------------
       - name: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
 
-      # ------------------------------------------------------------
-      # Restore cross toolchain cache
-      # ------------------------------------------------------------
       - name: cache
         id: cache
         uses: actions/cache@v4
@@ -61,94 +44,73 @@ jobs:
         run: tools/build.sh
 
       # ------------------------------------------------------------
-      # Download hd32-minix.img from latest successful main run
+      # Build ELKS + images
       # ------------------------------------------------------------
-      - name: download hd32-minix image via GitHub API
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -e
-          mkdir -p image
-
-          RUN_ID=$(gh run list \
-            --workflow main \
-            --status success \
-            --limit 1 \
-            --json databaseId \
-            -q '.[0].databaseId')
-
-          test -n "$RUN_ID"
-
-          gh run download "$RUN_ID" \
-            --name hd32-minix.img \
-            --dir image
-
-          test -f image/hd32-minix.img
-
-      - name: ensure ELKS source present
-        run: |
-            if [ ! -d elks/.git ]; then
-              git clone https://github.com/elks-org/elks.git
-            else
-              echo "ELKS already present, using existing checkout"
-            fi
+      - name: build ELKS images
+        run: ./build.sh auto allimages
 
       # ------------------------------------------------------------
       # Clone MicroWindows
       # ------------------------------------------------------------
       - name: clone microwindows
-        run: git clone https://github.com/ghaerr/microwindows.git
-
-      # ------------------------------------------------------------
-      # Build ELKS host tools (FIX)
-      # ------------------------------------------------------------
-      - name: build ELKS tools
         run: |
-          cd "$GITHUB_WORKSPACE/elks"
-
-          rm -f .config include/config.h
-          make defconfig
-          make -j1 tools
+          git clone https://github.com/ghaerr/microwindows.git
 
       # ------------------------------------------------------------
       # Build Nano-X for ELKS
       # ------------------------------------------------------------
       - name: build Nano-X for ELKS
+        working-directory: microwindows/src
         run: |
-          cd "$GITHUB_WORKSPACE/elks"
+          cd "$GITHUB_WORKSPACE"
           . ./env.sh
-
-          export PATH="$GITHUB_WORKSPACE/elks/tools/bin:$PATH"
-
-          cd "$GITHUB_WORKSPACE/microwindows/src"
+          echo "TOPDIR=$TOPDIR"
+          test -d "$TOPDIR/elkscmd"
+          cd microwindows/src
           make -f Makefile.elks
 
       # ------------------------------------------------------------
-      # Install Nano-X into Minix HDD image
+      # Copy Nano-X binaries into HDD Minix image (mfs cp)
       # ------------------------------------------------------------
       - name: install Nano-X into Minix HDD image
         run: |
-          cd "$GITHUB_WORKSPACE/elks"
+          cd "$GITHUB_WORKSPACE"
           . ./env.sh
-
-          export PATH="$GITHUB_WORKSPACE/elks/tools/bin:$PATH"
-
+          
           IMAGE="$GITHUB_WORKSPACE/image/hd32-minix.img"
+          
+          test -f "$IMAGE" || {
+            echo "ERROR: $IMAGE does not exist"
+            ls -l "$GITHUB_WORKSPACE/image"
+            exit 1
+          }
 
-          "$GITHUB_WORKSPACE/elks/tools/bin/mfs" "$IMAGE" mkdir /bin || true
-          "$GITHUB_WORKSPACE/elks/tools/bin/mfs" "$IMAGE" mkdir /lib || true
+          echo "which mfs:"
+          which mfs || echo "mfs not found in PATH (expected in tools/bin)"
+          
+          MFS="$(command -v mfs)"
+          
+          echo "Using mfs at: $MFS"
 
-          for f in "$GITHUB_WORKSPACE"/microwindows/src/bin/*; do
-            "$GITHUB_WORKSPACE/elks/tools/bin/mfs" "$IMAGE" cp "$f" /bin
+          if [ -z "$MFS" ] || [ ! -x "$MFS" ]; then
+            echo "ERROR: mfs not found or not executable"
+            exit 1
+          fi
+      
+          for f in microwindows/src/bin/*; do
+            echo "Installing $(basename "$f") into /bin"
+            "$MFS" "$IMAGE" cp "$f" "/bin/$(basename "$f")"
           done
 
-          "$GITHUB_WORKSPACE/elks/tools/bin/mfs" "$IMAGE" \
-            cp "$GITHUB_WORKSPACE/microwindows/src/bin/nxworld.map" /lib
-
-          "$GITHUB_WORKSPACE/elks/tools/bin/mfs" "$IMAGE" rm /bin/nxworld.map
-
+          # Handle resource files:
+          # Copy nxworld.map from host directly into /lib
+          "$MFS" "$IMAGE" cp microwindows/src/bin/nxworld.map /lib
+          
+          # Remove it from /bin inside the image
+          "$MFS" "$IMAGE" rm /bin/nxworld.map
+      
       # ------------------------------------------------------------
-      # Upload updated image
+      # For now only upload the updated HDD Minix image
       # ------------------------------------------------------------
       - name: upload updated Minix HDD image with Nano-X
         uses: actions/upload-artifact@v4
