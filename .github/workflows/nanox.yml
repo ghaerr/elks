@@ -85,11 +85,13 @@ jobs:
 
           test -f image/hd32-minix.img
 
-      # ------------------------------------------------------------
-      # Clone ELKS (REQUIRED)
-      # ------------------------------------------------------------
-      - name: clone ELKS
-        run: git clone https://github.com/elks-org/elks.git
+      - name: ensure ELKS source present
+        run: |
+            if [ ! -d elks/.git ]; then
+              git clone https://github.com/elks-org/elks.git
+            else
+              echo "ELKS already present, using existing checkout"
+            fi
 
       # ------------------------------------------------------------
       # Clone MicroWindows
