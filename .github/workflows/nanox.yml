@@ -1,18 +1,15 @@
 name: nanox
 
 on:
-  # Automatic trigger after main completes
   workflow_run:
     workflows: ["main"]
     types:
       - completed
 
-  # Manual trigger (force run)
   workflow_dispatch:
 
 jobs:
   nanox:
-    # Only auto-run on success of main; manual runs bypass this
     if: |
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'workflow_run' &&
@@ -40,7 +37,7 @@ jobs:
             build-essential
 
       # ------------------------------------------------------------
-      # Checkout repo (needed for env.sh, tools, Nano-X build)
+      # Checkout repo
       # ------------------------------------------------------------
       - name: checkout
         uses: actions/checkout@v4
@@ -65,17 +62,13 @@ jobs:
 
       # ------------------------------------------------------------
       # Download hd32-minix.img from latest successful main run
-      # (robust method using gh CLI)
       # ------------------------------------------------------------
       - name: download hd32-minix image via GitHub API
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
-
           mkdir -p image
-
-          echo "Finding latest successful 'main' workflow run..."
 
           RUN_ID=$(gh run list \
             --workflow main \
@@ -84,111 +77,78 @@ jobs:
             --json databaseId \
             -q '.[0].databaseId')
 
-          if [ -z "$RUN_ID" ]; then
-            echo "ERROR: No successful 'main' workflow run found"
-            exit 1
-          fi
+          [ -n "$RUN_ID" ] || exit 1
 
-          echo "Using main workflow run ID: $RUN_ID"
-
-          echo "Downloading artifact hd32-minix.img..."
           gh run download "$RUN_ID" \
             --name hd32-minix.img \
             --dir image
 
-          echo "Downloaded files:"
-          ls -lh image
-
-          test -f image/hd32-minix.img || {
-            echo "ERROR: hd32-minix.img not found after download"
-            exit 1
-          }
+          test -f image/hd32-minix.img
 
       # ------------------------------------------------------------
       # Clone MicroWindows
       # ------------------------------------------------------------
       - name: clone microwindows
-        run: |
-          git clone https://github.com/ghaerr/microwindows.git
+        run: git clone https://github.com/ghaerr/microwindows.git
 
       # ------------------------------------------------------------
-      # Build ELKS host tools (elf2elks, mfs, etc.)
-      # Required for Nano-X linking
+      # Build ELKS host tools (FIXED)
       # ------------------------------------------------------------
-      - name: build ELKS tools (required for Nano-X)
+      - name: build ELKS host tools
         run: |
           cd "$GITHUB_WORKSPACE"
-          . ./env.sh
 
-          echo "Configuring ELKS..."
           rm -f .config include/config.h
           make defconfig
-
-          echo "Building ELKS host tools..."
           make -j1 tools
 
-          echo "Checking elf2elks:"
-          command -v elf2elks || {
-            echo "ERROR: elf2elks not found"
-            find . -name elf2elks
-            exit 1
-          }
+          # Tools exist now — make them visible
+          export PATH="$GITHUB_WORKSPACE/elks/tools/bin:$PATH"
 
+          echo "Verifying tools:"
+          command -v elf2elks
+          command -v mfs
 
       # ------------------------------------------------------------
       # Build Nano-X for ELKS
       # ------------------------------------------------------------
       - name: build Nano-X for ELKS
-        working-directory: microwindows/src
         run: |
-            cd "$GITHUB_WORKSPACE"
-            . ./env.sh
-            echo "TOPDIR=$TOPDIR"
-            test -d "$TOPDIR/elkscmd"
-            cd microwindows/src
-            make -f Makefile.elks
+          cd "$GITHUB_WORKSPACE"
+          . ./env.sh
+
+          export PATH="$GITHUB_WORKSPACE/elks/tools/bin:$PATH"
+
+          cd microwindows/src
+          make -f Makefile.elks
 
       # ------------------------------------------------------------
-      # Install Nano-X into Minix image
+      # Install Nano-X into Minix HDD image
       # ------------------------------------------------------------
       - name: install Nano-X into Minix HDD image
         run: |
           cd "$GITHUB_WORKSPACE/elks"
           . ./env.sh
 
+          export PATH="$GITHUB_WORKSPACE/elks/tools/bin:$PATH"
+
           IMAGE="$GITHUB_WORKSPACE/image/hd32-minix.img"
-          test -f "$IMAGE" || {
-            echo "ERROR: hd32-minix.img not found"
-            ls -l "$GITHUB_WORKSPACE/image"
-            exit 1
-          }
-
-          echo "which mfs:"
-          which mfs || echo "mfs not found in PATH"
-
           MFS="$(command -v mfs)"
-          echo "Using mfs at: $MFS"
 
-          if [ -z "$MFS" ] || [ ! -x "$MFS" ]; then
-            echo "ERROR: mfs not found or not executable"
-            exit 1
-          fi
+          [ -x "$MFS" ]
 
-          # Ensure directories exist
           "$MFS" "$IMAGE" mkdir /bin || true
           "$MFS" "$IMAGE" mkdir /lib || true
 
-          # Copy Nano-X binaries into /bin
           for f in "$GITHUB_WORKSPACE"/microwindows/src/bin/*; do
-            echo "Installing $(basename "$f") into /bin"
             "$MFS" "$IMAGE" cp "$f" /bin
           done
 
-          # Move nxworld.map to /lib
-          "$MFS" "$IMAGE" cp "$GITHUB_WORKSPACE/microwindows/src/bin/nxworld.map" /lib
+          "$MFS" "$IMAGE" cp \
+            "$GITHUB_WORKSPACE/microwindows/src/bin/nxworld.map" /lib
+
           "$MFS" "$IMAGE" rm /bin/nxworld.map
 
-          echo "Final /bin contents:"
           "$MFS" "$IMAGE" ls /bin
 
       # ------------------------------------------------------------
