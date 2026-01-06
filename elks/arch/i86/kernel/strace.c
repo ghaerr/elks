@@ -51,12 +51,8 @@ static struct sc_info *syscall_info(unsigned int callno)
 {
     struct sc_info *s;
 
-    if (callno < sizeof(elks_table1)/sizeof(struct sc_info)) {
-        s = &elks_table1[callno];
-        if (s) return s;
-    }
-    else if (callno < sizeof(elks_table2)/sizeof(struct sc_info) + START_TABLE2) {
-        s = &elks_table2[callno-START_TABLE2];
+    if (callno < sizeof(elks_table)/sizeof(struct sc_info)) {
+        s = &elks_table[callno];
         if (s) return s;
     }
     return &notimp;
