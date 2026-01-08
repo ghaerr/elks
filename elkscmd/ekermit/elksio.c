@@ -464,7 +464,7 @@ openfile(struct k_data * k, UCHAR * s, int mode) {
 */
 #ifdef F_SCAN
 #define SCANBUF 1024
-#define SCANSIZ 32767
+#define SCANSIZ (32767 - SCANBUF)
 #endif /* F_SCAN */
 
 ULONG

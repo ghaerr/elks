@@ -4,7 +4,7 @@ include $(BASEDIR)/Makefile-rules
 
 ###############################################################################
 
-LOCALFLAGS = -DNO_LP -DELKS
+LOCALFLAGS = -DNO_LP -DNO_SCAN -DELKS
 LOCALFLAGS += -Wno-unused-variable -Wno-unused-but-set-variable -Wno-pointer-sign
 #LOCALFLAGS += -DNODEBUG
 
