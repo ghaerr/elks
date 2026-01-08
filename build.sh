@@ -61,14 +61,14 @@ if [ "$1" != "auto" ]; then
 # Forcing single threaded build because of dirty dependencies (see #273)
 
 echo "Building all..."
-make -j1 all || clean_exit 5
+make all || clean_exit 5
 
 # Possibly build all images
 
 if [ "$2" = "allimages" ]; then
 	echo "Building all images..."
 	cd image
-	make -j1 images || clean_exit 6
+	make images || clean_exit 6
 	cd ..
 fi
 
@@ -78,7 +78,7 @@ if [ "$1" = "auto" ]; then
     cp 8018x.config .config
     make kclean || clean_exit 7
     rm elkscmd/basic/*.o
-    make -j1 || clean_exit 8
+    make || clean_exit 8
 fi
 
 # Build NEC V25 kernel and image
@@ -87,7 +87,7 @@ if [ "$1" = "auto" ]; then
     cp necv25.config .config
     make kclean || clean_exit 7
     rm elkscmd/basic/*.o
-    make -j1 || clean_exit 8
+    make || clean_exit 8
 fi
 
 # Build PC-98 kernel, some user land files and image
@@ -101,7 +101,7 @@ if [ "$1" = "auto" ]; then
     rm elkscmd/sys_utils/meminfo.o
     rm elkscmd/sys_utils/beep.o
     rm elkscmd/basic/*.o
-    make -j1 || clean_exit 10
+    make || clean_exit 10
 fi
 
 # Success
