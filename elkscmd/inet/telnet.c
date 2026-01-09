@@ -263,11 +263,11 @@ main(int argc, char **argv)
         tv.tv_sec = 0;
         tv.tv_usec = 100000L;   /* 100ms */
 
-        n = select(tcp_fd + 1, &fdset, NULL, NULL, &tv);
+        n = select(tcp_fd + 1, &fdset, NULL, NULL, discard? &tv: NULL);
         if (n == 0) {
             if (discard) {
+                debug("TO");
                 write(tcp_fd, "\r", 1);
-                write(1, "TO", 2);
                 discard = 0;
             }
             continue;
@@ -481,10 +481,7 @@ process_opt(char *bp, int count)
         break;
     case IAC_DM:
         debug("got DM\n");
-        if (discard) {
-            write(1, "DM", 2);
-            discard = 0;
-        }
+        discard = 0;
         break;
     case IAC_BRK:
         debug("got BRK\n");
