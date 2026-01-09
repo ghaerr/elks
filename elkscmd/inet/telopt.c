@@ -146,13 +146,19 @@ tel_in(int fdout, int telout, char *buffer, int len)
             case WONT:
             case DO:
             case DONT:
-            case IP:
-            case AO:
                 InState = IN_IAC2;
                 ThisOpt = c;
                 break;
             case SB:
                 InState = IN_SB;
+                break;
+            case IP:
+                InState = IN_DATA;
+                write(fdout, "\003", 1);
+                break;
+            case AO:
+                InState = IN_DATA;
+                /* no action for Abort Output */
                 break;
             case EOR:
             case SE:
@@ -186,12 +192,6 @@ tel_in(int fdout, int telout, char *buffer, int len)
                 break;
             case DONT:
                 dodont(c);
-                break;
-            case IP:
-                write(fdout, "\003", 1);
-                break;
-            case AO:
-                /* no action for Abort Output */
                 break;
             }
             break;

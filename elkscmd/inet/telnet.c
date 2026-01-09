@@ -105,7 +105,7 @@ int iscmdchar(int c)
         discard = 1;
         return 1;
     }
-    else if (c == CTRL('O')) {
+    if (c == CTRL('O')) {
         sendcmd(IAC_AO);
         discard = 1;
         return 1;
