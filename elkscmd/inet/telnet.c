@@ -32,7 +32,7 @@
 #define IAC         255
 #define IAC_SE      240
 #define IAC_NOP     241
-#define IAC_DataMark 242
+#define IAC_DM      242
 #define IAC_BRK     243
 #define IAC_IP      244
 #define IAC_AO      245
@@ -89,6 +89,30 @@ finish()
     exit(0);
 }
 
+void sendcmd(int cmd)
+{
+    unsigned char reply[3];
+
+    reply[0] = IAC;
+    reply[1] = cmd;
+    write(tcp_fd, reply, 2);
+}
+
+int iscmdchar(int c)
+{
+    if (c == CTRL('C')) {
+        sendcmd(IAC_IP);
+        discard = 1;
+        return 1;
+    }
+    else if (c == CTRL('O')) {
+        sendcmd(IAC_AO);
+        discard = 1;
+        return 1;
+    }
+    return 0;
+}
+
 void
 read_keyboard(void)
 {
@@ -100,15 +124,10 @@ read_keyboard(void)
         fprintf(stderr, "\nSession terminated\n");
         finish();
     }
-#if DISABLED
-    if (buffer[0] == CTRL('C'))
-        discard = 1;
-    else
-#endif
-    if (buffer[0] == CTRL('O')) {
-        discard ^= 1;
+
+    if (iscmdchar(buffer[0] & 255))
         return;
-    }
+
     count = write(tcp_fd, buffer, count);
     if (count < 0) {
         perror("Connection closed");
@@ -245,8 +264,10 @@ main(int argc, char **argv)
 
         n = select(tcp_fd + 1, &fdset, NULL, NULL, &tv);
         if (n == 0) {
-            if (discard)
+            if (discard) {
                 write(tcp_fd, "\r", 1);
+                write(1, "TO", 2);
+            }
             discard = 0;
             continue;
         }
@@ -457,8 +478,12 @@ process_opt(char *bp, int count)
     switch (command) {
     case IAC_NOP:
         break;
-    case IAC_DataMark:
-        debug("got DataMark\n");
+    case IAC_DM:
+        debug("got DM\n");
+        if (discard) {
+            write(1, "DM", 2);
+            discard = 0;
+        }
         break;
     case IAC_BRK:
         debug("got BRK\n");

@@ -146,6 +146,8 @@ tel_in(int fdout, int telout, char *buffer, int len)
             case WONT:
             case DO:
             case DONT:
+            case IP:
+            case AO:
                 InState = IN_IAC2;
                 ThisOpt = c;
                 break;
@@ -156,8 +158,6 @@ tel_in(int fdout, int telout, char *buffer, int len)
             case SE:
             case NOP:
             case BREAK:
-            case IP:
-            case AO:
             case AYT:
             case EC:
             case EL:
@@ -186,6 +186,12 @@ tel_in(int fdout, int telout, char *buffer, int len)
                 break;
             case DONT:
                 dodont(c);
+                break;
+            case IP:
+                write(fdout, "\003", 1);
+                break;
+            case AO:
+                /* no action for Abort Output */
                 break;
             }
             break;
