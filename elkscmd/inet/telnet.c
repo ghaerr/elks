@@ -127,6 +127,7 @@ read_keyboard(void)
 
     if (iscmdchar(buffer[0] & 255))
         return;
+    discard = 0;
 
     count = write(tcp_fd, buffer, count);
     if (count < 0) {
@@ -267,8 +268,8 @@ main(int argc, char **argv)
             if (discard) {
                 write(tcp_fd, "\r", 1);
                 write(1, "TO", 2);
+                discard = 0;
             }
-            discard = 0;
             continue;
         }
         if (n < 0) {
