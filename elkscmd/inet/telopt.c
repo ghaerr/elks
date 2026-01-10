@@ -90,7 +90,7 @@ tel_opt(int fdout, int what, int option)
         break;
     }
     if (len > 0)
-        (void)write(fdout, buf, len);
+        write(fdout, buf, len);
 }
 
 static void
@@ -262,16 +262,16 @@ tel_out(int fdout, char *buf, int size)
     while (size > 0) {
         buf = p;
         got_iac = 0;
-        if ((p = (char *)memchr(buf, IAC, size)) != (char *)NULL) {
+        if ((p = memchr(buf, IAC, size)) != NULL) {
             got_iac = 1;
             p++;
         } else
             p = buf + size;
         len = p - buf;
         if (len > 0)
-            (void)write(fdout, buf, len);
+            write(fdout, buf, len);
         if (got_iac)
-            (void)write(fdout, p - 1, 1);
+            write(fdout, p - 1, 1);
         size = size - len;
     }
 }
