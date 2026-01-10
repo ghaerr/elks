@@ -25,7 +25,7 @@
 #define BUFSIZE     1500
 
 #define debug(...)
-//#define debug     printf
+//#define debug     __dprintf
 //#define RAWTELNET             /* test mode for raw telnet without IAC */
 
 /* telnet protocol */
@@ -89,16 +89,16 @@ finish()
     exit(0);
 }
 
-void sendcmd(int cmd)
+static void sendcmd(int cmd)
 {
-    unsigned char reply[3];
+    unsigned char reply[2];
 
     reply[0] = IAC;
     reply[1] = cmd;
     write(tcp_fd, reply, 2);
 }
 
-int iscmdchar(int c)
+static int iscmdchar(int c)
 {
     if (c == CTRL('C')) {
         sendcmd(IAC_IP);
@@ -266,7 +266,7 @@ main(int argc, char **argv)
         n = select(tcp_fd + 1, &fdset, NULL, NULL, discard? &tv: NULL);
         if (n == 0) {
             if (discard) {
-                debug("TO");
+                debug("TO\n");
                 write(tcp_fd, "\r", 1);
                 discard = 0;
             }

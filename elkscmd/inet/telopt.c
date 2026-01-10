@@ -34,8 +34,9 @@ static void dowill(int c);
 static void dowont(int c);
 static void dodo(int c);
 static void dodont(int c);
-static void respond(int ack, int option);
 static void respond_really(int ack, int option);
+#define respond(ack, option)    /* reduce code size with null procedure */
+//static void respond(int ack, int option);
 
 void
 tel_init(void)
@@ -154,7 +155,8 @@ tel_in(int fdout, int telout, char *buffer, int len)
                 break;
             case IP:
                 InState = IN_DATA;
-                write(fdout, "\003", 1);
+                *p2++ = '\003';
+                size++;
                 break;
             case AO:
                 InState = IN_DATA;
@@ -316,6 +318,7 @@ dowont(int c)
 static void
 dodo(int c)
 {
+#ifndef respond
     int     ack;
 
     switch (c) {
@@ -323,6 +326,7 @@ dodo(int c)
         ack = WONT;
     }
     respond(ack, c);
+#endif
 }
 
 static void
@@ -336,6 +340,7 @@ dodont(int c)
     respond(WONT, c);
 }
 
+#ifndef respond
 static void
 respond(int ack, int option)
 {
@@ -346,6 +351,7 @@ respond(int ack, int option)
     c[2] = option;
     write(telfdout, c, 3);**/
 }
+#endif
 
 static void
 respond_really(int ack, int option)
