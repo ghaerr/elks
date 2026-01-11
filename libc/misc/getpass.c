@@ -5,8 +5,6 @@
  * copyright:    1998 by Shane Kerr <kerr@wizard.net>, under terms of LPGL
  */
 
-#define WORKING_TERMINAL
-
 #include <pwd.h>
 #include <stdio.h>
 #include <string.h>
@@ -16,15 +14,11 @@
 
 char *getpass(char *prompt)
 {
-    static char result[128];
     FILE *in;
     int in_fd;
-#ifdef WORKING_TERMINAL
-    struct termios old, new;
-#else
-    struct termio old, new;
-#endif
     int reset_terminal;
+    struct termios old, new;
+    static char result[128];
 
     /* grab our input device */
     in = fopen(_PATH_TTY, "r");
@@ -36,7 +30,6 @@ char *getpass(char *prompt)
     reset_terminal = 0;
     in_fd = fileno(in);
 
-#ifdef WORKING_TERMINAL
     if (isatty(in_fd)) {
         if (tcgetattr(in_fd, &old) == 0) {
             new = old;
@@ -46,15 +39,6 @@ char *getpass(char *prompt)
             }
         }
     }
-#else
-    if (ioctl(in_fd, TCGETA, &old) == 0) {
-        new = old;
-        new.c_lflag &= ~(ISIG|ECHO);
-        if (ioctl(in_fd, TCSETA, &new) == 0) {
-            reset_terminal = 1;
-        }
-    }
-#endif /* WORKING_TERMINAL */
 
     /* display the prompt */
     fputs(prompt, stderr);
@@ -68,13 +52,8 @@ char *getpass(char *prompt)
     }
 
     /* reset our terminal, if necessary */
-    if (reset_terminal) {
-#ifdef WORKING_TERMINAL
+    if (reset_terminal)
         tcsetattr(in_fd, TCSAFLUSH, &old);
-#else
-        ioctl(in_fd, TCSETA, &old);
-#endif
-    }
 
     if (in != stdin)
         fclose(in);
@@ -82,4 +61,3 @@ char *getpass(char *prompt)
     /* return a pointer to our result string */
     return result;
 }
-
