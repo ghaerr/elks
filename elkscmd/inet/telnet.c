@@ -261,7 +261,7 @@ main(int argc, char **argv)
         FD_SET(0, &fdset);
         FD_SET(tcp_fd, &fdset);
         tv.tv_sec = 0;
-        tv.tv_usec = 100000L;   /* 100ms */
+        tv.tv_usec = 500000L;   /* 500ms */
 
         n = select(tcp_fd + 1, &fdset, NULL, NULL, discard? &tv: NULL);
         if (n == 0) {
