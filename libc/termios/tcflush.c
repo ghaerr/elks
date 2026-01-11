@@ -1,3 +1,4 @@
+#ifdef L_tcflush
 #include <sys/ioctl.h>
 #include <termios.h>
 
@@ -7,3 +8,4 @@ tcflush(int fd, int queue_selector)
 {
 	return ioctl(fd, TCFLSH, queue_selector);
 }
+#endif

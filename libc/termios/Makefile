@@ -9,7 +9,7 @@ include $(TOPDIR)/libc/$(COMPILER).inc
 #DEFINES += -DL_tcdrain -DL_tcflow -DL_tcgetpgrp -DL_cfmakeraw
 
 # TCSBRK is unimplemented except for with elksemu
-DEFINES += -DL_tcsendbreak
+DEFINES += -DL_tcsendbreak -DL_tcflush
 
 OBJS = \
 	cfgetispeed.o \
