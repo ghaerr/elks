@@ -149,7 +149,7 @@ read_network(void)
         printf("\nConnection closed\n");
         finish();
     }
-    //hexdump(buffer, FP_SEG(buffer), count, 0);
+    //hexdump(buffer, FP_SEG(buffer), count, 0, "<= ");
 
 #ifdef RAWTELNET
     write(1, buffer, count);

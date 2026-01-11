@@ -9,6 +9,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -23,6 +24,8 @@
 #include "tcp_output.h"
 #include "timer.h"
 #include "netconf.h"
+
+#define FP_SEG(fp) ((unsigned)((unsigned long)(void __far *)(fp) >> 16))
 
 #if DEBUG_TCPPKT
 static char *tcp_flags(int flags)
@@ -66,8 +69,8 @@ void tcp_print(struct iptcp_s *head, int recv, struct tcpcb_s *cb)
 #if DEBUG_TCPDATA
     int datalen = head->tcplen - TCP_DATAOFF(head->tcph);
     unsigned char *data = (__u8 *)head->tcph + TCP_DATAOFF(head->tcph);
-    if (datalen)
-	hexdump(data, datalen, 0, recv? "<- ": "-> ");
+    if (datalen && dprintf_on)
+	hexdump(data, FP_SEG(data), datalen, 0, recv? "<- ": "-> ");
 #endif
 }
 

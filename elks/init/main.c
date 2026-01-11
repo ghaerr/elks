@@ -168,7 +168,7 @@ static void idle_loop(void)
      */
     setsp(&idle_task->t_kstack[IDLESTACK_BYTES/2]);
     debug("IDLE LOOP %x\n", getsp());
-    //hexdump(idle_task->t_kstack, kernel_ds, IDLESTACK_BYTES, 0);
+    //hexdump(idle_task->t_kstack, kernel_ds, IDLESTACK_BYTES, 0, NULL);
 
     init_bh(TIMER_BH, timer_bh);    /* finally enable timer bottom halves */
 

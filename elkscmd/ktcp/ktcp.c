@@ -157,7 +157,7 @@ void ktcp_run(void)
 }
 
 #if USE_DEBUG_EVENT
-static int dprintf_on = DEBUG_STARTDEF;
+int dprintf_on = DEBUG_STARTDEF;
 
 void debug_toggle(int sig)
 {

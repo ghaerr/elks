@@ -35,7 +35,7 @@ extern char *strstr(char *,char *);
 extern void *memscan(void *,int,size_t);
 extern long simple_strtol(const char *,int);
 extern int atoi(const char *);
-extern void hexdump(void *off, unsigned int seg, int count, int flags);
+extern void hexdump(void *off, unsigned int seg, int count, int flags, const char *prefix);
 
 /*
  * Include machine specific routines
