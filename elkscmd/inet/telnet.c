@@ -27,6 +27,7 @@
 #define debug(...)
 //#define debug     __dprintf
 //#define RAWTELNET             /* test mode for raw telnet without IAC */
+#define FP_SEG(fp) ((unsigned)((unsigned long)(void __far *)(fp) >> 16))
 
 /* telnet protocol */
 #define IAC         255
@@ -148,6 +149,7 @@ read_network(void)
         printf("\nConnection closed\n");
         finish();
     }
+    //hexdump(buffer, FP_SEG(buffer), count, 0);
 
 #ifdef RAWTELNET
     write(1, buffer, count);

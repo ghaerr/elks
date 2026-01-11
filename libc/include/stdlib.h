@@ -74,5 +74,6 @@ char *ltostr(long val, int radix);
 char *lltostr(long long val, int radix);
 char *ultostr(unsigned long val, int radix);
 char *ulltostr(unsigned long long val, int radix);
+void hexdump(void *off, unsigned int seg, int count, int flags);
 
 #endif /* __STDLIB_H */
