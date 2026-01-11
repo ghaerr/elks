@@ -23,6 +23,7 @@ OBJS = \
 	getenv.o \
 	getpass.o \
 	getopt.o \
+	hexdump.o \
 	itoa.o \
 	ltoa.o \
 	ltostr.o \
