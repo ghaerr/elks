@@ -148,8 +148,6 @@ read_network(void)
         printf("\nConnection closed\n");
         finish();
     }
-    if (discard)
-        return;
 
 #ifdef RAWTELNET
     write(1, buffer, count);
@@ -158,11 +156,11 @@ read_network(void)
     do {
         iacptr = memchr(bp, IAC, count);
         if (!iacptr) {
-            write(1, bp, count);
+            if (!discard) write(1, bp, count);
             return;
         }
         if (iacptr && iacptr > bp) {
-            write(1, bp, iacptr - bp);
+            if (!discard) write(1, bp, iacptr - bp);
             count -= (iacptr - bp);
             bp = iacptr;
             continue;
