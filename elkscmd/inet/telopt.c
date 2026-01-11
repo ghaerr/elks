@@ -34,8 +34,9 @@ static void dowill(int c);
 static void dowont(int c);
 static void dodo(int c);
 static void dodont(int c);
-static void respond(int ack, int option);
 static void respond_really(int ack, int option);
+#define respond(ack, option)    /* reduce code size with null procedure */
+//static void respond(int ack, int option);
 
 void
 tel_init(void)
@@ -89,7 +90,7 @@ tel_opt(int fdout, int what, int option)
         break;
     }
     if (len > 0)
-        (void)write(fdout, buf, len);
+        write(fdout, buf, len);
 }
 
 static void
@@ -152,12 +153,19 @@ tel_in(int fdout, int telout, char *buffer, int len)
             case SB:
                 InState = IN_SB;
                 break;
+            case IP:
+                InState = IN_DATA;
+                *p2++ = '\003';
+                size++;
+                break;
+            case AO:
+                InState = IN_DATA;
+                /* no action for Abort Output */
+                break;
             case EOR:
             case SE:
             case NOP:
             case BREAK:
-            case IP:
-            case AO:
             case AYT:
             case EC:
             case EL:
@@ -254,16 +262,16 @@ tel_out(int fdout, char *buf, int size)
     while (size > 0) {
         buf = p;
         got_iac = 0;
-        if ((p = (char *)memchr(buf, IAC, size)) != (char *)NULL) {
+        if ((p = memchr(buf, IAC, size)) != NULL) {
             got_iac = 1;
             p++;
         } else
             p = buf + size;
         len = p - buf;
         if (len > 0)
-            (void)write(fdout, buf, len);
+            write(fdout, buf, len);
         if (got_iac)
-            (void)write(fdout, p - 1, 1);
+            write(fdout, p - 1, 1);
         size = size - len;
     }
 }
@@ -310,6 +318,7 @@ dowont(int c)
 static void
 dodo(int c)
 {
+#ifndef respond
     int     ack;
 
     switch (c) {
@@ -317,6 +326,7 @@ dodo(int c)
         ack = WONT;
     }
     respond(ack, c);
+#endif
 }
 
 static void
@@ -330,6 +340,7 @@ dodont(int c)
     respond(WONT, c);
 }
 
+#ifndef respond
 static void
 respond(int ack, int option)
 {
@@ -340,6 +351,7 @@ respond(int ack, int option)
     c[2] = option;
     write(telfdout, c, 3);**/
 }
+#endif
 
 static void
 respond_really(int ack, int option)

@@ -25,14 +25,14 @@
 #define BUFSIZE     1500
 
 #define debug(...)
-//#define debug     printf
+//#define debug     __dprintf
 //#define RAWTELNET             /* test mode for raw telnet without IAC */
 
 /* telnet protocol */
 #define IAC         255
 #define IAC_SE      240
 #define IAC_NOP     241
-#define IAC_DataMark 242
+#define IAC_DM      242
 #define IAC_BRK     243
 #define IAC_IP      244
 #define IAC_AO      245
@@ -89,6 +89,30 @@ finish()
     exit(0);
 }
 
+static void sendcmd(int cmd)
+{
+    unsigned char reply[2];
+
+    reply[0] = IAC;
+    reply[1] = cmd;
+    write(tcp_fd, reply, 2);
+}
+
+static int iscmdchar(int c)
+{
+    if (c == CTRL('C')) {
+        sendcmd(IAC_IP);
+        discard = 1;
+        return 1;
+    }
+    if (c == CTRL('O')) {
+        sendcmd(IAC_AO);
+        discard = 1;
+        return 1;
+    }
+    return 0;
+}
+
 void
 read_keyboard(void)
 {
@@ -100,15 +124,11 @@ read_keyboard(void)
         fprintf(stderr, "\nSession terminated\n");
         finish();
     }
-#if DISABLED
-    if (buffer[0] == CTRL('C'))
-        discard = 1;
-    else
-#endif
-    if (buffer[0] == CTRL('O')) {
-        discard ^= 1;
+
+    if (iscmdchar(buffer[0] & 255))
         return;
-    }
+    discard = 0;
+
     count = write(tcp_fd, buffer, count);
     if (count < 0) {
         perror("Connection closed");
@@ -241,13 +261,15 @@ main(int argc, char **argv)
         FD_SET(0, &fdset);
         FD_SET(tcp_fd, &fdset);
         tv.tv_sec = 0;
-        tv.tv_usec = 100000L;   /* 100ms */
+        tv.tv_usec = 500000L;   /* 500ms */
 
-        n = select(tcp_fd + 1, &fdset, NULL, NULL, &tv);
+        n = select(tcp_fd + 1, &fdset, NULL, NULL, discard? &tv: NULL);
         if (n == 0) {
-            if (discard)
+            if (discard) {
+                debug("TO\n");
                 write(tcp_fd, "\r", 1);
-            discard = 0;
+                discard = 0;
+            }
             continue;
         }
         if (n < 0) {
@@ -457,8 +479,9 @@ process_opt(char *bp, int count)
     switch (command) {
     case IAC_NOP:
         break;
-    case IAC_DataMark:
-        debug("got DataMark\n");
+    case IAC_DM:
+        debug("got DM\n");
+        discard = 0;
         break;
     case IAC_BRK:
         debug("got BRK\n");
