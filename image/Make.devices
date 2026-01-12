@@ -15,7 +15,7 @@ devices:
 
 ##############################################################################
 # Create frequently accessed /dev files first
-	$(MKDEV) /dev/console	c 4 254 1 1 0600
+	$(MKDEV) /dev/console	c 4 254 1 1 0622
 	$(MKDEV) /dev/tty1      c 4 0
 	$(MKDEV) /dev/ttyS0     c 4 64
 	$(MKDEV) /dev/fd0       b 3 32
@@ -126,7 +126,7 @@ devices:
 # /dev/tty is minor 255, /dev/console minor 254
 
 	$(MKDEV) /dev/tty       c 4 255 1 1 0666
-#	$(MKDEV) /dev/console	c 4 254 1 1 0600
+#	$(MKDEV) /dev/console	c 4 254 1 1 0622
 
 # Serial ports, as detected by the ROM BIOS.
 
