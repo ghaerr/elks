@@ -3,6 +3,7 @@
 #include <sys/cdefs.h>
 #else
 #define noinstrument
+#define __far
 #endif
 
 /* symbol table format
