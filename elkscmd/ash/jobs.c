@@ -39,10 +39,6 @@ static char sccsid[] = "@(#)jobs.c	5.1 (Berkeley) 3/7/91";
 #endif /* not lint */
 
 #include "shell.h"
-#if JOBS
-#include "sgtty.h"
-#undef CEOF			/* syntax.h redefines this */
-#endif
 #include "main.h"
 #include "parser.h"
 #include "nodes.h"
@@ -80,9 +76,9 @@ MKINIT short backgndpid = -1;	/* pid of last background process */
 #if JOBS
 int initialpgrp;		/* pgrp of shell on invocation */
 short curjob;			/* current job */
-STATIC void restartjob(struct job *);
 STATIC int procrunning(int);
 #endif
+STATIC void restartjob(struct job *);
 
 #ifdef __STDC__
 STATIC struct job *getjob(char *);
@@ -166,17 +162,17 @@ SHELLPROC {
 
 
 
-#if JOBS
 fgcmd(argc, argv)  char **argv; {
 	struct job *jp;
-	int pgrp;
 	int status;
 
 	jp = getjob(argv[1]);
+#if JOBS
 	if (jp->jobctl == 0)
 		error("job not created under job control");
-	pgrp = jp->ps[0].pid;
+	int pgrp = jp->ps[0].pid;
 	ioctl(2, TIOCSPGRP, (char *)&pgrp);
+#endif
 	restartjob(jp);
 	INTOFF;
 	status = waitforjob(jp);
@@ -185,6 +181,7 @@ fgcmd(argc, argv)  char **argv; {
 }
 
 
+#if JOBS
 bgcmd(argc, argv)  char **argv; {
 	struct job *jp;
 
@@ -196,6 +193,7 @@ bgcmd(argc, argv)  char **argv; {
 	} while (--argc > 1);
 	return 0;
 }
+#endif
 
 
 STATIC void
@@ -208,7 +206,7 @@ restartjob(jp)
 	if (jp->state == JOBDONE)
 		return;
 	INTOFF;
-	killpg(jp->ps[0].pid, SIGCONT);
+	kill(jp->ps[0].pid, SIGCONT);       /* NOTE: was killpg for JOBS */
 	for (ps = jp->ps, i = jp->nprocs ; --i >= 0 ; ps++) {
 		if ((ps->status & 0377) == 0177) {
 			ps->status = -1;
@@ -217,7 +215,6 @@ restartjob(jp)
 	}
 	INTON;
 }
-#endif
 
 
 int
