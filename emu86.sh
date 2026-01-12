@@ -1,29 +1,28 @@
 #!/usr/bin/env bash
 
-# Run ELKS in EMU86 (basic IA16 emulator)
+# Run ELKS in EMU86 (basic 8086 emulator)
 # EMU86 is part of the cross tools
-# See https://github.com/mfld-fr/emu86
+# See https://github.com/ghaerr/emu86
 
 # For ELKS ROM Configuration:
-# ELKS must be configured minimally with 'cp emu86-rom.config .config'
-#   or use './buildimages.sh fast'
+# ELKS must be configured minimaly with 'cp emu86-rom.config .config'
 # This uses headless console, HLT on idle, ROM filesystem.
 
-# Kernel image @ segment 0xE000 (as 64K BIOS extension)
+# First build ELKS with kernel and root FS in ROM
+# Kernel image @ segment 0xE000 (top of 1024K address space as 64K BIOS extension)
 # Root filesystem @ segment 0x8000 (assumes 512K RAM & 512K ROM)
+# Skip the INT 19h bootstrap in the kernel image (+0x14)
 
-# 8088 ROM version using emu-rom-full.config from './buildimages.sh fast'
-#exec emu86 -w 0xe0000 -f image/rom-8088.bin -w 0x80000 -f image/romfs-8088.bin ${1+"$@"}
+ELKSDIR=.
+EMU86DIR=../emu86
 
-# just built ROM version using 'make'
-exec emu86 -w 0xe0000 -f elks/arch/i86/boot/Image -w 0x80000 -f image/romfs.bin -I image/fd2880.img ${1+"$@"}
-
-# For ELKS Full ROM Configuration:
-# ELKS must be configured minimally with 'cp emu86-rom-full.config .config'
-# This adds MINIX/FAT filesytems with BIOS driver
-#exec emu86 -w 0xe0000 -f image/rom-8088.bin -w 0x80000 -f image/romfs-8088.bin -I image/fd1440.img ${1+"$@"}
-
-# For ELKS disk image Configuration:
-# ELKS must be configured with 'cp emu86-disk.config .config'
-# This uses headless console, HLT on idle, no CONFIG_IDE_PROBE
-#exec emu86 -I image/fd1440.img ${1+"$@"}
+#
+# run 'emu86.sh -i' to halt emulation at very first instruction (interactive mode)
+# run 'emu86.sh -I image/fd2880.img' to add floppy image
+#
+exec ${EMU86DIR}/emu86 \
+    -C 0xe062 -D 0x00c0 \
+    -w 0xe0000 -f ${ELKSDIR}/elks/arch/i86/boot/Image \
+    -w 0x80000 -f ${ELKSDIR}/image/romfs.bin \
+    -S ${ELKSDIR}/elks/arch/i86/boot/system.sym \
+    ${1+"$@"}
