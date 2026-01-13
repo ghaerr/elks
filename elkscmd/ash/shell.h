@@ -38,7 +38,8 @@
 
 /*
  * The follow should be set to reflect the type of system you have:
- *	JOBS -> 1 if you have Berkeley job control, 0 otherwise.
+ *	JOBS -> 1 if you want Berkeley job control, set JOBSB 1 also.
+ *	JOBSP -> 1 if you want partial job control (SIGTSTP, fg cmd).
  *	SYMLINKS -> 1 if your system includes symbolic links, 0 otherwise.
  *	DIRENT -> 1 if your system has the SVR3 directory(3X) routines.
  *	UDIR -> 1 if you want the shell to simulate the /u directory.
@@ -58,6 +59,7 @@
  */
 
 #define JOBS	  0
+#define JOBSP	  1
 #define SYMLINKS  0
 #define DIRENT	  1
 #define UDIR	  0
