@@ -461,10 +461,10 @@ static int getCursorPosition(int ifd, int ofd) {
     char buf[32];
     struct termios org, vmin;
 
-    /* change raw mode to wait 200ms instead of 1 character for DSR response*/
+    /* change raw mode to wait 500ms instead of 1 character for DSR response*/
     tcgetattr(ifd,&org);
     vmin = org;
-    vmin.c_cc[VMIN] = 0; vmin.c_cc[VTIME] = 2; /* 0 bytes, 200ms timer */
+    vmin.c_cc[VMIN] = 0; vmin.c_cc[VTIME] = 5; /* 0 bytes, 500ms timer */
     tcsetattr(ifd,TCSAFLUSH,&vmin);
 
     /* Report cursor location */

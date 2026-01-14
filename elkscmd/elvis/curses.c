@@ -486,14 +486,15 @@ static int getCursorPosition(int ifd, int ofd, int *rows, int *cols)
 	char buf[32];
 	struct termios org, vmin;
 
-	/* change to raw mode to wait 200ms instead of 1 character for DSR response*/
+	/* change to raw mode to wait 500ms instead of 1 character for DSR response*/
 	if (tcgetattr(ifd, &org) < 0)
 		return -1;
 	vmin = org;
 	vmin.c_iflag &= (IXON|IXOFF|IXANY|ISTRIP|IGNBRK);
 	vmin.c_oflag &= ~OPOST;
 	vmin.c_lflag &= ISIG;
-	vmin.c_cc[VMIN] = 0; vmin.c_cc[VTIME] = 2; /* 0 bytes, 200ms timer */
+	vmin.c_cc[VMIN] = 0;  /* 0 bytes */
+	vmin.c_cc[VTIME] = 5; /* 500ms timer for possible network delays */
 	if (tcsetattr(ifd, TCSAFLUSH, &vmin) < 0)
 		return -1;
 
