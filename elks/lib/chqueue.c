@@ -44,6 +44,8 @@ int chq_wait_wr(register struct ch_queue *q, int nonblock)
 	else {
 	    interruptible_sleep_on(&q->wait);
 	    if (q->len == q->size)
+		return -EAGAIN;
+	    if (current->signal)
 		return -EINTR;
 	}
     }
