@@ -115,7 +115,8 @@ size_t pty_write (struct inode *inode, struct file *file, char *data, size_t len
 	while (count < len) {
 		ret = chq_wait_wr (&tty->inq, (file->f_flags & O_NONBLOCK) | count);
 		if (ret < 0) {
-			if (count == 0) count = ret;
+			if (count == 0)
+				count = ret;
 			break;
 		}
 
@@ -126,7 +127,6 @@ size_t pty_write (struct inode *inode, struct file *file, char *data, size_t len
 	}
 	if (count > 0)
 		wake_up(&tty->inq.wait);
-
 	return count;
 }
 
