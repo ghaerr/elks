@@ -6,7 +6,12 @@
 #define IDX_SYSCALL     16
 #define IDX_DIVZERO     17
 #define IDX_NMI         18
+#ifdef CONFIG_ARCH_NECV25
+#define IDX_NECV25_IBRK 19      /* NEC V25 specific IO Break Exception */
+#define NR_IRQS         20      /* = # IRQs plus special indexes above */
+#else
 #define NR_IRQS         19      /* = # IRQs plus special indexes above */
+#endif
 
 #define INT_GENERIC  0  // use the generic interrupt handler (aka '_irqit')
 #define INT_SPECIFIC 1  // use a specific interrupt handler
@@ -29,6 +34,9 @@ void idle_halt(void);
 
 void div0_handler(int irq, struct pt_regs *regs);
 void nmi_handler(int irq, struct pt_regs *regs);
+#ifdef CONFIG_ARCH_NECV25
+void ibrk_handler(int irq, struct pt_regs *regs);
+#endif
 
 /* irq-8259.c, irq-8018x.c, irq-necv25.c */
 void initialize_irq(void);
