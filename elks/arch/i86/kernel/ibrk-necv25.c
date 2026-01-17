@@ -17,14 +17,14 @@ void ibrk_handler(int irq, struct pt_regs *regs)
     if (intr_count > 1 /*|| current->t_regs.ss == kernel_ds*/) {
         struct uregs __far *sys_stack;
         sys_stack = _MK_FP(regs->ss, regs->sp);
-#if IBRK_VERBOSE_MODE == 1
+#if IBRK_VERBOSE_MODE
         printk("IBRK EXCEPTION AT CS:IP %04x:%04x PSW %04x\n", sys_stack->cs, sys_stack->ip, sys_stack->f);
 #endif
         sys_stack->f |=0x02;    // set IBRK flag for restart of IO instruction
     } else {    /* For user mode faults, display error message and kill the process */
         struct uregs __far *user_stack;
         user_stack = _MK_FP(current->t_regs.ss, current->t_regs.sp);
-#if IBRK_VERBOSE_MODE == 1
+#if IBRK_VERBOSE_MODE
         printk("IBRK EXCEPTION AT CS:IP %04x:%04x PSW %04x\n", user_stack->cs, user_stack->ip, user_stack->f);
 #endif
         user_stack->f |=0x02;    // set IBRK flag for restart of IO instruction
