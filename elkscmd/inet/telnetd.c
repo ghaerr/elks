@@ -116,12 +116,9 @@ client_loop(int fdsock, int fdterm)
     int     count_fd = (fdsock > fdterm) ? (fdsock + 1) : (fdterm + 1);
     fd_set  fds_read;
     fd_set  fds_write;
-    struct timeval timeint;
 
     telnet_init(fdsock);
 
-    timeint.tv_sec = 0;
-    timeint.tv_usec = 50000L;   /* slow 50ms timeout to fix select hang bug in #1048 */
     while (1) {
         FD_ZERO(&fds_read);
         FD_ZERO(&fds_write);
@@ -134,7 +131,7 @@ client_loop(int fdsock, int fdterm)
         if (count_out)
             FD_SET(fdsock, &fds_write);
 
-        count = select(count_fd, &fds_read, &fds_write, NULL, &timeint);
+        count = select(count_fd, &fds_read, &fds_write, NULL, NULL);
         if (count < 0) {
             perror("telnetd select");
             break;

@@ -289,30 +289,28 @@ static void tty_echo(register struct tty *tty, unsigned char ch)
 size_t tty_write(struct inode *inode, struct file *file, char *data, size_t len)
 {
     register struct tty *tty = determine_tty(inode->i_rdev);
-    size_t i;
-    int s;
+    size_t count = 0;
+    int ret;
 
-    i = 0;
-    while (i < len) {
-        s = chq_wait_wr(&tty->outq, (file->f_flags & O_NONBLOCK) | i);
-        if (s < 0) {
-            /* FIXME EAGAIN not returned, cycle required on telnet nonblocking terminal */
-            if (s == -EINTR || s == -EAGAIN) {
+    while (count < len) {
+        ret = chq_wait_wr(&tty->outq, (file->f_flags & O_NONBLOCK) | count);
+        if (ret < 0) {
+            if (count != 0 && ret == -EAGAIN) {
                 tty->ops->write(tty);
                 wake_up(&tty->outq.wait);
                 schedule();
                 continue;
             }
-            if (i == 0)
-                i = s;
+            if (count == 0)
+                count = ret;
             break;
         }
         chq_addch_nowakeup(&tty->outq, get_user_char(data++));
-        i++;
+        count++;
     }
     tty->ops->write(tty);
     wake_up(&tty->outq.wait);
-    return i;
+    return count;
 }
 
 size_t tty_read(struct inode *inode, struct file *file, char *data, size_t len)
