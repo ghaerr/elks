@@ -66,10 +66,18 @@ make -j1 all || clean_exit 5
 # Possibly build all images
 
 if [ "$2" = "allimages" ]; then
-	echo "Building all images..."
+	echo "Building FD images..."
 	cd image
-	make -j1 images || clean_exit 6
+	make -j1 images-minix images-fat || clean_exit 6
 	cd ..
+
+	# Build Nano-X for HD images only
+	./buildnx.sh || clean_exit 62
+	echo "Building HD images..."
+	cd image
+	make -j1 images-hd || clean_exit 62
+	cd ..
+	./cleannx.sh || clean_exit 63
 fi
 
 # Build 8018X kernel and image

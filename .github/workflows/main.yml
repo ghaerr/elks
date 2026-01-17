@@ -122,15 +122,6 @@ jobs:
           name: fd2880-fat.img
           path: image/fd2880-fat.img
 
-      - name: upload1232
-        uses: actions/upload-artifact@v4
-        with:
-          name: fd1232.img
-          path: image/fd1232.img
-
-      - name: buildnx
-        run: ./buildnx.sh
-
       - name: upload14
         uses: actions/upload-artifact@v4
         with:
@@ -154,3 +145,9 @@ jobs:
         with:
           name: hd64mbr-minix.img
           path: image/hd64mbr-minix.img
+
+      - name: upload18
+        uses: actions/upload-artifact@v4
+        with:
+          name: fd1232.img
+          path: image/fd1232.img
