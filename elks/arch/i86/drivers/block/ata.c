@@ -396,6 +396,10 @@ int ATPROC ata_reset(void)
 #ifdef CONFIG_ARCH_SOLO86
     ata_mode = MODE_SOLO86;
 #endif
+#ifdef CONFIG_ARCH_NECV25
+    ata_mode = MODE_XTIDEv2;
+    xfer_mode = XFER_8_XTCF;
+#endif
 #if EMUL_XTCF
     xfer_mode = XFER_8_XTCF;
 #endif

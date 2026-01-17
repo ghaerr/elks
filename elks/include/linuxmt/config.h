@@ -110,6 +110,7 @@
 #ifndef CONFIG_HW_SPI                   /* HW SPI uses Serial 0, so no console on this port */
 #define CONFIG_FAST_IRQ2_NECV25         /* Serial 0 as console, if no HW SPI configured */
 #endif
+#define IBRK_VERBOSE_MODE       1       /* 0/1 no output / output of a message on IBRK exceptions */
 #endif /* CONFIG_ARCH_NECV25 */
 
 #ifdef CONFIG_ARCH_SWAN

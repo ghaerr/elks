@@ -73,7 +73,7 @@ logical_map[] =
     { UART1_IRQ_TX, NEC_STIC1, NEC_INTST1 }, // Serial 1 TX IRQ
     { UART2_IRQ_TX, NEC_STIC0, NEC_INTST0 }, // Serial 0 TX IRQ
 #endif
-    { NE2K_IRQ,     NEC_EXIC0, NEC_INTP0 }, // NE2000 NIC
+    { NE2K_IRQ,     NEC_EXIC2, NEC_INTP2 }, // NE2000 NIC, map NIC IRQ 2 to NEC V25 INTP2
 };
 
 struct irq_logical_map* get_from_logical_irq(unsigned int irq)
