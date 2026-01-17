@@ -19,25 +19,24 @@
 #define O_NONBLOCK	 04000
 #define O_NDELAY	O_NONBLOCK
 
+#define F_DUPFD		0	/* dup */
+#define F_GETFD		1	/* get cloexec flag */
+#define F_SETFD		2	/* set cloexec flag */
+#define F_GETFL		3	/* get f_flags */
+#define F_SETFL		4   /* set f_flags (O_APPEND, O_NONBLOCK only) */
+
+#define FD_CLOEXEC	1	/* for F_GETFD, F_SETFD */
+
 #if UNUSED
+/* unimplemented options */
 #define O_SYNC		010000	/* Not supported */
 #define FASYNC		020000	/* Not supported */
-#endif
 
-#define F_DUPFD		0	/* dup */
-#define F_GETFD		1	/* get f_flags */
-#define F_SETFD		2	/* set f_flags */
-#define F_GETFL		3	/* more flags (cloexec) */
-#define F_SETFL		4
 #define F_GETLK		5
 #define F_SETLK		6
 #define F_SETLKW	7
-
 #define F_SETOWN	8	/*  for sockets. */
 #define F_GETOWN	9	/*  for sockets. */
-
-/* for F_[GET|SET]FL */
-#define FD_CLOEXEC	1	/* actually anything with low bit set goes */
 
 /* for posix fcntl() and lockf() */
 #define F_RDLCK		0
@@ -51,13 +50,8 @@
 /* operations for bsd flock(), also used by the kernel implementation */
 #define LOCK_SH		1	/* shared lock */
 #define LOCK_EX		2	/* exclusive lock */
-#define LOCK_NB		4	/* or'd with one of the above to prevent
-				 * blocking */
+#define LOCK_NB		4	/* or'd with one of the above to prevent blocking */
 #define LOCK_UN		8	/* remove lock */
-
-#ifdef __KERNEL__
-#define F_POSIX		1
-#define F_FLOCK		2
 #endif
 
 #endif
