@@ -55,7 +55,7 @@ OBJS += irq-8018x.o reset-stubs.o timer-8018x.o
 endif
 
 ifeq ($(CONFIG_ARCH_NECV25), y)
-OBJS += irq-necv25.o reset-stubs.o timer-necv25.o
+OBJS += irq-necv25.o reset-stubs.o timer-necv25.o divzero.o nmi.o ibrk-necv25.o
 endif
 
 ifeq ($(CONFIG_ARCH_SWAN), y)

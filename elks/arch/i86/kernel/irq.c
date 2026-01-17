@@ -123,13 +123,19 @@ void INITPROC irq_init(void)
     int_handler_add(IDX_SYSCALL, 0x80, _irqit); /* INT 80 for system calls */
 
 #if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_PC98) || \
-    defined(CONFIG_ARCH_SOLO86) || defined(CONFIG_ARCH_SWAN)
+    defined(CONFIG_ARCH_SOLO86) || defined(CONFIG_ARCH_SWAN) || \
+    defined(CONFIG_ARCH_NECV25)
 
     irq_action[IDX_DIVZERO] = div0_handler;     /* INT 0 divide by 0/divide overflow */
     int_handler_add(IDX_DIVZERO, 0x00, _irqit);
 
     irq_action[IDX_NMI] = nmi_handler;          /* INT 2 non-maskable interrupt */
     int_handler_add(IDX_NMI, 0x02, _irqit);
+#endif
+
+#if defined(CONFIG_ARCH_NECV25)
+    irq_action[IDX_NECV25_IBRK] = ibrk_handler;     /* INT 0x13 IO Break  */
+    int_handler_add(IDX_NECV25_IBRK, 0x13, _irqit);
 #endif
 
 #if defined(CONFIG_TIMER_INT0F) || defined(CONFIG_TIMER_INT1C)

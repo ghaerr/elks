@@ -117,9 +117,15 @@
 
 /* Ethernet card settings may be overridden in /bootopts using netirq= and netport= */ 
 /* ne2k, ne2k.c */ 
+#ifdef CONFIG_ARCH_NECV25
+#define NE2K_PORT       0x200
+#define NE2K_IRQ        2
+#define NE2K_FLAGS      0x80
+#else
 #define NE2K_PORT       0x300
 #define NE2K_IRQ        12
 #define NE2K_FLAGS      0x80
+#endif
 
 /* wd, wd.c*/
 #define WD_PORT         0x240

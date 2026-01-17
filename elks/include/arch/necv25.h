@@ -52,17 +52,17 @@
 #define NEC_TMIC2 0xff9e      /* Timer unit interrupt request control register 2 */
 
 // Parallel Port 1
-#define NEC_P1    0xff08      /* P2   Data */
-#define NEC_PM1   0xff09      /* P2M2 Direction */
-#define NEC_PMC1  0xff0A      /* PMC2 Control */
+#define NEC_P1    0xff08      /* P1   Data */
+#define NEC_PM1   0xff09      /* PM1  Direction */
+#define NEC_PMC1  0xff0A      /* PMC1 Control */
 
 // Parallel Port 2
 #define NEC_P2    0xff10      /* P2   Data */
-#define NEC_PM2   0xff11      /* P2M2 Direction */
+#define NEC_PM2   0xff11      /* PM2  Direction */
 #define NEC_PMC2  0xff12      /* PMC2 Control */
 
 /************************************************************
- * Configuration of port have to be remembert because
+ * The configuration must be remembered because
  * PM and PMC registers can only be written to and
  * only written as a whole byte (no bit set/clear).
  *
@@ -70,9 +70,9 @@
  *
  * Port.Pin  Name   Function Direction Used in
  * P1.0             special  in        do not change
- * P1.1      INTP0  special  in        NE200 NIC
+ * P1.1      INTP0  special  in        do not change
  * P1.2             special  in        do not change
- * P1.3             special  in        do not change
+ * P1.3             special  in        NE200 NIC
  * P1.4             I/O      in
  * P1.5             I/O      in
  * P1.6      /SCK0  special  out       spi-hw-necv25.S
@@ -91,7 +91,7 @@
 // PM1 PMC1, PM2 and PMC2 have to get initialized in BIOS
 // or startup code with these values before ELKS starts:
 #define NEC_PM1_DEF  0xbf
-#define NEC_PMC1_DEF 0x48
+#define NEC_PMC1_DEF 0x40
 #define NEC_PM2_DEF  0x80
 #define NEC_PMC2_DEF 0x00
  
@@ -122,9 +122,9 @@
 #define NEC_INTP2   0x1A      /* External Interrupt 2 */
 
 #define UART1_IRQ_RX  1       /* maps to interrupt NEC_INTSR1 */
-#define UART1_IRQ_TX  2       /* maps to interrupt NEC_INTST1 */
-#define UART2_IRQ_RX  3       /* maps to interrupt NEC_INTSR0 */
-#define UART2_IRQ_TX  4       /* maps to interrupt NEC_INTST0 */
+#define UART1_IRQ_TX  3       /* maps to interrupt NEC_INTST1 ! IRQ 2 is mapped to NE2000 NIC ! */
+#define UART2_IRQ_RX  4       /* maps to interrupt NEC_INTSR0 */
+#define UART2_IRQ_TX  5       /* maps to interrupt NEC_INTST0 */
 
 // Interrupt register options
 #define IRQFLAG      0x80     /* interrupt request flag */
