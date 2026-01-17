@@ -66,7 +66,7 @@ int sys_fcntl(unsigned int fd, unsigned int cmd, unsigned int arg)
 	result = test_bit(fd, &fils->close_on_exec);
 	break;
     case F_SETFD:
-	if (arg & 1)
+	if (arg & FD_CLOEXEC)
 	    set_bit(fd, &fils->close_on_exec);
 	else
 	    clear_bit(fd, &fils->close_on_exec);

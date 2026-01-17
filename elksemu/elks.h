@@ -65,9 +65,6 @@ struct elks_stat
 #define ELKS_F_SETFD	2
 #define ELKS_F_GETFL	3
 #define ELKS_F_SETFL	4
-#define ELKS_F_GETLK	5
-#define ELKS_F_SETLK	6
-#define ELKS_F_SETLKW	7
 
 /*
  *	Elks binary formats
