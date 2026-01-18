@@ -18,7 +18,7 @@
 #undef getchar
 #undef EOF
 extern char *CE, *VS, *SO, *SE, *CL, *AL, *CM;
-#define YMAX		25		/* was 49 */
+#define YMAX		65		/* was 49 */
 #else
 #define YMAX		24		/* Maximum y coordinate starting at 0 */
 /* Escape sequences. */

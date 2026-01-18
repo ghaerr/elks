@@ -409,6 +409,7 @@
 #include <termios.h>
 #include <limits.h>
 #include <errno.h>
+#include <string.h>
 #include <sys/wait.h>
 #include <sys/ioctl.h>
 #if __STDC__
@@ -1383,8 +1384,6 @@ int main(int argc, char *argv[])
 /* mined is the Minix editor. */
 
   register int index;		/* Index in key table */
-  struct winsize winsize;
-
 #ifdef UNIX
   get_term();
   tputs(VS, 0, _putchar);
@@ -1392,10 +1391,6 @@ int main(int argc, char *argv[])
 #else
   string_print(enter_string);			/* Hello world */
 #endif /* UNIX */
-  if (ioctl(STD_OUT, TIOCGWINSZ, &winsize) == 0 && winsize.ws_row != 0) {
-	ymax = winsize.ws_row - 1;
-	screenmax = ymax - 1;
-  }
 
   if (!isatty(0)) {		/* Reading from pipe */
 	if (argc != 1) {
@@ -1849,11 +1844,81 @@ int _putchar(int c)
   return c;
 }
 
+/* Use the DSR ESC [6n escape sequence to query the cursor position */
+static int getCursorPosition(int ifd, int ofd, int *rows, int *cols)
+{
+	unsigned int i = 0;
+	char buf[32];
+	struct termios org, vmin;
+
+	/* change to raw mode to wait 500ms instead of 1 character for DSR response*/
+	if (tcgetattr(ifd, &org) < 0)
+		return -1;
+	vmin = org;
+	vmin.c_iflag &= (IXON|IXOFF|IXANY|ISTRIP|IGNBRK);
+	vmin.c_oflag &= ~OPOST;
+	vmin.c_lflag &= ISIG;
+	vmin.c_cc[VMIN] = 0;  /* 0 bytes */
+	vmin.c_cc[VTIME] = 5; /* 500ms timer for possible network delays */
+	if (tcsetattr(ifd, TCSAFLUSH, &vmin) < 0)
+		return -1;
+
+	/* Send DSR (report cursor location) */
+	write(ofd, "\x1b[6n", 4);
+
+	/* Read the response: ESC [ rows ; cols R */
+	while (i < sizeof(buf)-1) {
+		if (read(ifd, buf+i, 1) != 1)
+			break;
+		if (buf[i++] == 'R')
+			break;
+	}
+	buf[i] = '\0';
+
+	/* reset to original mode*/
+	tcsetattr(ifd, TCSAFLUSH, &org);
+
+	/* Parse it. */
+	if (buf[0] != 033 || buf[1] != '[')
+		return -1;
+	*rows = atoi(buf+2);
+	char *p = buf+2;
+	while (*p != ';')
+		if (*p++ == '\0')
+			return -1;
+	if (*p == '\0')
+		return -1;
+	*cols = atoi(p+1);
+	return 0;
+}
+
+/* Try to get the number of lines/columns from passed terminal file descriptors */
+static int getWindowSize(int ifd, int ofd, int *rows, int *cols)
+{
+	int orig_row, orig_col;
+	char seq[32];
+
+	/* get initial cursor position so we can restore it later */
+	if (getCursorPosition(ifd, ofd, &orig_row, &orig_col) < 0)
+		return -1;
+
+	/* goto right/bottom margin and get position */
+	write(ofd,"\x1b[999C\x1b[999B",12);
+	if (getCursorPosition(ifd, ofd, rows, cols) < 0)
+		return -1;
+
+	/* restore position */
+	sprintf(seq, "\033[%d;%dH", orig_row, orig_col);
+	write(ofd, seq, strlen(seq));
+	return 0;
+}
+
 void get_term(void)
 {
   static char termbuf[50];
   extern char *tgetstr(), *getenv();
   char *loc = termbuf;
+  int l, c;
   char entry[1024];
 
   if (tgetent(entry, getenv("TERM")) <= 0) {
@@ -1868,7 +1933,19 @@ void get_term(void)
   SO = tgetstr("so", &loc);
   SE = tgetstr("se", &loc);
   CM = tgetstr("cm", &loc);
+
+#if UNUSED
+  struct winsize winsize;
+  if (ioctl(STD_OUT, TIOCGWINSZ, &winsize) == 0 && winsize.ws_row != 0) {
+	ymax = winsize.ws_row - 1;
+	screenmax = ymax - 1;
+  }
+#endif
+
   ymax = tgetnum("li") - 1;
+  if (getWindowSize(0, 1, &l, &c) == 0)
+	ymax = l - 1;
+  if (ymax > YMAX) ymax = YMAX;
   screenmax = ymax - 1;
 
   if (!CE || !SO || !SE || !CL || !AL || !CM) {
