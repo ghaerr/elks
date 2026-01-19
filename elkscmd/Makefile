@@ -57,15 +57,9 @@ C86DIRS =       \
 
 ###############################################################################
 #
-# Compile all IA16 apps, OpenWatcom apps if CONFIG_APPS_WATCOM set, and C86 apps same
+# Compile all IA16 apps
 
 ALL = ia16
-ifdef CONFIG_APPS_WATCOM
-ALL += owc
-endif
-ifdef CONFIG_APPS_C86
-ALL += c86
-endif
 
 all: $(ALL)
 

@@ -92,7 +92,7 @@ dflat()
     echo "D-Flat build complete"
 }
 
-c86toolchain()
+c86_toolchain()
 {
     echo "Building 8086-toolchain..."
     cd $TOPDIR/extapps
@@ -108,6 +108,26 @@ c86toolchain()
 	cd $C86/examples
 	make
     echo "8086-toolchain build complete"
+}
+
+# build OWC apps in elkscmd/
+owc_elkscmd()
+{
+    echo "Building OWC apps in elkscmd/"
+    cd $TOPDIR
+    make -C elkscmd owclean
+    make -C elkscmd owc
+    echo "OWC apps in elkscmd/ build complete"
+}
+
+# build C86 apps in elkscmd/
+c86_elkscmd()
+{
+    echo "Building C86 apps in elkscmd/"
+    cd $TOPDIR
+    make -C elkscmd c86clean
+    make -C elkscmd c86
+    echo "C86 apps in elkscmd/ build complete"
 }
 
 doom()
@@ -163,7 +183,9 @@ make_all()
     elkirc
     if [ -n "$WATCOM" ] ; then
         build_owclib
-        c86toolchain
+        owc_elkscmd
+        c86_toolchain
+        c86_elkscmd
         doom
         ngircd_elks
     fi
