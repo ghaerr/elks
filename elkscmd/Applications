@@ -78,7 +78,7 @@ file_utils/md5sum               :fileutil                               :1440c
 file_utils/mkdir                :fileutil       :360k
 file_utils/mknod                :fileutil       :360k
 #file_utils/mkfifo              :fileutil               :1200k
-file_utils/more                 :fileutil       :360c           :128k
+file_utils/more                 :fileutil       :360k           :128k
 file_utils/mv                   :fileutil       :360k
 file_utils/ln                   :fileutil           :720k
 file_utils/ls                   :fileutil       :360k           :128k       :nocomp

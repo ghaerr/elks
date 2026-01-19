@@ -5,7 +5,7 @@ include $(CONFIG)
 
 include Make.defs
 
-VERBOSE=-v
+#VERBOSE=-v
 
 # Determine what to build for 'image' target
 TARGETS =
@@ -88,7 +88,6 @@ endif
 
 minixfs: template
 	rm -f $(TARGET_FILE)
-	ls -lR $(DESTDIR)
 	mfs $(VERBOSE) $(TARGET_FILE) mkfs $(MINIX_MKFSOPTS)
 ifndef CONFIG_SYS_NO_BININIT
 	mfs -v $(TARGET_FILE) addfs Image.all $(DESTDIR)
