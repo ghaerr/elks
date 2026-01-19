@@ -48,6 +48,13 @@ template:
 	find $(DESTDIR) -name .keep -delete
 	$(MAKE) -C $(ELKSCMD_DIR) -f Make.install install "CONFIG=$(CONFIG)"
 	-chmod 1755 $(DESTDIR)/bin/romprg
+ifdef CONFIG_APPS_360K
+	-rm $(DESTDIR)/etc/hosts
+	-rm $(DESTDIR)/etc/net.cfg
+	-rm $(DESTDIR)/etc/sashrc
+	-rm $(DESTDIR)/bin/net
+	-rm $(DESTDIR)/bin/setup
+endif
 ifdef CONFIG_APPS_COMPRESS
 	awk /`echo ":nocomp" | tr -d ' '`/{print} $(TOPDIR)/elkscmd/Applications | sed '/^#/d' | sed 's#.*/##g' | cut -d" " -f 1 | sed 's#\(^.*\)#/\1/d#' > Nocomp
 	ls $(DESTDIR)/bin | sed -f Nocomp > Filelist
