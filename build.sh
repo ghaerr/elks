@@ -64,7 +64,7 @@ echo "Building all..."
 make -j1 all || clean_exit 5
 
 echo "Building external applications..."
-./buildext.sh microwindows || clean_exit 51
+./buildext.sh all || clean_exit 51
 
 # Possibly build all images
 

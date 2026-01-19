@@ -5,7 +5,7 @@ on:
     paths:
       - '**'
       - '!.github/workflows/cross.yml'
-      - '!.github/workflows/ow-libc.yml'
+#     - '!.github/workflows/ow-libc.yml'
       - '!tools/*'
 #  pull_request:
 #    paths:
@@ -49,6 +49,7 @@ jobs:
       - name: environ
         run: |
             echo $WATCOM
+            echo $INCLUDE
             echo $PATH
 
       - name: build
