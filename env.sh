@@ -24,5 +24,3 @@ echo PATH set to $PATH
 # for example MAKEFLAGS="-j$(nproc)" . env.sh
 export MAKEFLAGS="$MAKEFLAGS"
 echo MAKEFLAGS set to $MAKEFLAGS
-
-unset add_path

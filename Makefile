@@ -60,7 +60,7 @@ owclean:
 	$(MAKE) -C elkscmd owclean
 
 owlibc:
-	$(MAKE) -C libc -f watcom.mk MODEL=c
+	#$(MAKE) -C libc -f watcom.mk MODEL=c
 	$(MAKE) -C libc -f watcom.mk MODEL=s
 	$(MAKE) -C libc -f watcom.mk MODEL=m
 	$(MAKE) -C libc -f watcom.mk MODEL=l

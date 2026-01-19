@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# buildext.sh - build external application repositories in extapps/
+# buildext.sh - build application repositories in extapps/, build OWC/C86 apps in elkscmd/
 # This build script is called in main.yml by GitHub Continuous Integration
 # 17 Jan 2026 Greg Haerr
 
@@ -11,8 +11,8 @@ doexit()
     E="$1"
     test -z $1 && E=0
     if [ $E -eq 0 ]
-        then echo "Build script has completed successfully."
-        else echo "Build script has terminated with error $E"
+        then echo "Buildext.sh has completed successfully."
+        else echo "Buildext.sh has terminated with error $E"
     fi
     exit $E
 }
@@ -25,7 +25,7 @@ add_path()
     fi
 }
 
-setup_elks()
+elks_environ()
 {
     SCRIPTDIR="$(dirname "$0")"
     . "$SCRIPTDIR/env.sh"
@@ -33,37 +33,77 @@ setup_elks()
     mkdir -p extapps
 }
 
-setup_owc()
+owc_environ()
 {
-    cd $TOPDIR/libc
-    . wcenv.sh
-    [ $? -ne 0 ] && doexit 2
+    # OWC should be setup outside this script!
+    #export WATCOM=/Users/greg/net/open-watcom-v2/rel
+    #add_path "$WATCOM/binl"    # for Linux-32
+    #add_path "$WATCOM/binl64"  # for Linux-64
+    #add_path "$WATCOM/bino64"  # for macOS
     return 0
 }
 
-setup_c86()
+c86_environ()
 {
-    cd $TOPDIR/libc
     export C86=$TOPDIR/extapps/8086-toolchain
-	add_path "$C86/host-bin"
+    add_path "$C86/host-bin"
     return 0
 }
 
-build_owclib()
+owc_libc()
 {
     cd $TOPDIR
-	make owclean
-	make owlibc
+    make owclean
+    make owlibc
 }
 
-build_c86lib()
+c86_libc()
 {
-    setup_c86
-	cd $TOPDIR
-	make c86clean
-	make c86libc
+    c86_environ
+    cd $TOPDIR
+    make c86clean
+    make c86libc
 }
 
+c86_toolchain()
+{
+    echo "Building 8086-toolchain..."
+    cd $TOPDIR/extapps
+    if [ ! -d 8086-toolchain ] ; then
+        git clone https://github.com/ghaerr/8086-toolchain
+    fi
+    cd 8086-toolchain
+    git pull
+    make clean
+    make host
+    make elks
+    c86_libc
+    cd $C86/examples
+    make
+    echo "8086-toolchain build complete"
+}
+
+# build OWC apps in elkscmd/
+owc_elkscmd()
+{
+    echo "Building OWC apps in elkscmd/"
+    cd $TOPDIR
+    make -C elkscmd owclean
+    make -C elkscmd owc
+    echo "OWC apps in elkscmd/ build complete"
+}
+
+# build C86 apps in elkscmd/
+c86_elkscmd()
+{
+    echo "Building C86 apps in elkscmd/"
+    cd $TOPDIR
+    make -C elkscmd c86clean
+    make -C elkscmd c86
+    echo "C86 apps in elkscmd/ build complete"
+}
+
+# external repositories
 microwindows()
 {
     echo "Building Nano-X..."
@@ -90,44 +130,6 @@ dflat()
     make -f Makefile.elks clean
     make -f Makefile.elks
     echo "D-Flat build complete"
-}
-
-c86_toolchain()
-{
-    echo "Building 8086-toolchain..."
-    cd $TOPDIR/extapps
-    if [ ! -d 8086-toolchain ] ; then
-        git clone https://github.com/ghaerr/8086-toolchain
-    fi
-    cd 8086-toolchain
-    git pull
-	make clean
-	make host
-	make elks
-	build_c86lib
-	cd $C86/examples
-	make
-    echo "8086-toolchain build complete"
-}
-
-# build OWC apps in elkscmd/
-owc_elkscmd()
-{
-    echo "Building OWC apps in elkscmd/"
-    cd $TOPDIR
-    make -C elkscmd owclean
-    make -C elkscmd owc
-    echo "OWC apps in elkscmd/ build complete"
-}
-
-# build C86 apps in elkscmd/
-c86_elkscmd()
-{
-    echo "Building C86 apps in elkscmd/"
-    cd $TOPDIR
-    make -C elkscmd c86clean
-    make -C elkscmd c86
-    echo "C86 apps in elkscmd/ build complete"
 }
 
 doom()
@@ -182,7 +184,7 @@ make_all()
     dflat
     elkirc
     if [ -n "$WATCOM" ] ; then
-        build_owclib
+        owc_libc
         owc_elkscmd
         c86_toolchain
         c86_elkscmd
@@ -198,8 +200,9 @@ echo "Usage: $0 [all | <repo_name>]"
 doexit 1
 fi
 
-setup_elks
-#setup_owc
+elks_environ
+#owc_environ
+#c86_environ
 
 if [ "$1" = "all" ] ; then
     make_all
