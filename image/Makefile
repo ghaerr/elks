@@ -105,7 +105,7 @@ fd2880-minix:
 	rm Config
 
 hd32-minix:
-	echo CONFIG_APPS_2880K=y	> Config
+	echo CONFIG_APPS_HD=y   	> Config
 	echo CONFIG_IMG_HD=y		>> Config
 	echo CONFIG_IMG_BLOCKS=31752 >> Config
 	echo CONFIG_IMG_SECT=63		>> Config
@@ -119,7 +119,7 @@ hd32-minix:
 	rm Config
 
 hd64-minix:
-	echo CONFIG_APPS_2880K=y	> Config
+	echo CONFIG_APPS_HD=y   	> Config
 	echo CONFIG_IMG_HD=y		>> Config
 	echo CONFIG_IMG_BLOCKS=65535 >> Config
 	echo CONFIG_IMG_SECT=63		>> Config
@@ -189,7 +189,7 @@ fd2880-fat:
 
 # FAT32 image
 hd32-fat:
-	echo CONFIG_APPS_2880K=y	> Config
+	echo CONFIG_APPS_HD=y   	> Config
 	echo CONFIG_IMG_HD=y		>> Config
 	echo CONFIG_IMG_BLOCKS=31752 >> Config
 	echo CONFIG_IMG_SECT=63		>> Config
