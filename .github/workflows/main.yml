@@ -41,6 +41,16 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: tools/build.sh
 
+      - name: Open Watcom setup
+        uses: open-watcom/setup-watcom@v0
+        with:
+          version: "2.0-64"
+
+      - name: environ
+        run: |
+            echo $WATCOM
+            echo $PATH
+
       - name: build
         run: ./build.sh auto allimages
 
