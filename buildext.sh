@@ -1,7 +1,28 @@
 #!/usr/bin/env bash
 #
-# buildext.sh - build application repositories in extapps/, build OWC/C86 apps in elkscmd/
-# This build script is called in main.yml by GitHub Continuous Integration
+# buildext.sh - build application repositories and internal OWC/C86 apps and libraries
+#       External repositories are cloned into extapps/.
+#       If OpenWatcom C installed and WATCOM= present, external OWC apps are built,
+#       The ELKS C Library is also built for OpenWatcom and C86, along with sample apps.
+#
+# This build script is called by build.sh in main.yml by GitHub Continuous Integration
+#
+# Usage: ./buildext.sh [all | <project ...> ]
+# Currently supported projects are:
+#       Name            Compiler        Desc
+#       microwindows    ia16-elf-gcc    Nano-X Graphical Windowing Environment
+#       dflat           ia16-elf-gcc    D-Flat TUI memopad/library
+#       elkirc          ia16-elf-gcc    IRC for ELKS
+#       owc_libc        OpenWatcom      ELKS C Library compiled by OWC
+#       owc_elkscmd     OpenWatcom      Some elkscmd/ programs compiled by OWC
+#       c86_toolchain   OpenWatcom/C86  C86 Toolchain, header files and examples
+#       c86_elkscmd     C86             Some elkscmd/ programs compiled by C86
+#       doom            OpenWatcom      Doom for ELKS
+#       ngircd_elks     OpenWatcom      IRC daemon for ELKS
+#
+# Some projects may require prerequisites.
+# To only build the C86 toolchain, use './buildext.sh owc_libc c86_toolchain'
+#
 # 17 Jan 2026 Greg Haerr
 
 set -e
@@ -195,7 +216,7 @@ make_all()
 # script starts here
 
 if [ "$1" = "" ] ; then
-echo "Usage: $0 [all | <repo_name>]"
+    echo "Usage: $0 [all | <project ...>]"
 doexit 1
 fi
 
