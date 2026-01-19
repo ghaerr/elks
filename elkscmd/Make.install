@@ -13,6 +13,7 @@ LN=ln
 
 # Application Package List
 PACKAGE=$(TOPDIR)/elkscmd/Applications
+EXTPACKAGE=$(TOPDIR)/elkscmd/ExtApplications
 # Install destination
 DESTDIR=$(TOPDIR)/target
 TAGS=
@@ -164,21 +165,14 @@ endif
 
 ifdef CONFIG_APPS_2880K
     # :128k|:192k| rom apps not included
-	TAGS = :boot|:init|:ash|:sash|:net|:other|:busyelks|:test|:360k|:360c|:720k|:1200k|:1200c|:1232k|:1232c|:1440k|:1440c|
+	TAGS = :boot|:init|:ash|:sash|:net|:360k|:360c|:720k|:1200k|:1200c|:1232k|:1232c|:1440k|:1440c|:2880k|
 ifndef CONFIG_APPS_FTRACE
 	CONFIG_APP_MAN_PAGES=y
 endif
 endif
 
-#
-# Install apps by compiler type
-#
-ifdef CONFIG_APPS_WATCOM
-	TAGS += :owc|
-endif
-
-ifdef CONFIG_APPS_C86
-	TAGS += :c86|
+ifdef CONFIG_APPS_HD
+    TAGS = :*|
 endif
 
 #
@@ -241,6 +235,42 @@ install:
 ifdef CONFIG_APP_BUSYELKS
 	$(MAKE) -C busyelks links
 endif
+# install external apps
+	awk /`echo "$(TAGS)" | tr -d ' '`/{print} $(EXTPACKAGE) | sed '/^#/d' > Filelist
+	@while IFS= read -r line; \
+	do \
+		file=../extapps/`echo $$line | cut -d" " -f 1`; \
+		dir=`echo $$line | cut -d" " -f 2`; \
+		link=no; \
+		if [ "$${dir:0:3}" == ":::" ]; \
+		then \
+			instdir=$${dir:3}; \
+			link=yes; \
+		else \
+			if [ "$${dir:0:2}" == "::" ]; \
+			then \
+				instdir=$${dir:2}; \
+			else \
+				instdir=bin; \
+				[ ! -d $(DESTDIR)/$$instdir ] && mkdir -p $(DESTDIR)/$$instdir; \
+			fi; \
+		fi; \
+		echo install $$file to $$instdir; \
+		if [ ! -e $$file ]; \
+		then \
+			echo "SKIPPED $$file (file not found)"; \
+		else \
+			if [ "$$link" == "yes" ]; \
+			then \
+				echo ln -s $$(basename $$file) $$instdir; \
+				ln -s $$(basename $$file) $(DESTDIR)/bin/$$instdir; \
+			else \
+				[ ! -d $$file ] && mkdir -p $$(dirname $(DESTDIR)/$$instdir); \
+				[ -f $$file ] && $(INSTALL) $$file $(DESTDIR)/$$instdir; \
+			fi; \
+		fi \
+	done < Filelist
+	rm Filelist
 	for DIR in $(INSTDIRS); do $(MAKE) -C $$DIR install || exit 1; done
 ifdef CONFIG_APP_MAN_PAGES
 	mkdir -p $(DESTDIR)/lib/man1

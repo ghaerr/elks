@@ -5,7 +5,7 @@ on:
     paths:
       - '**'
       - '!.github/workflows/cross.yml'
-      - '!.github/workflows/ow-libc.yml'
+#     - '!.github/workflows/ow-libc.yml'
       - '!tools/*'
 #  pull_request:
 #    paths:
@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - name: setup
-        run: 'sudo apt-get install texinfo libncurses5-dev libelf-dev ncompress'
+        run: 'sudo apt-get install texinfo libncurses5-dev libelf-dev ncompress nasm'
 
       - name: checkout
         uses: actions/checkout@v2
@@ -40,6 +40,17 @@ jobs:
       - name: cross
         if: steps.cache.outputs.cache-hit != 'true'
         run: tools/build.sh
+
+      - name: Open Watcom setup
+        uses: open-watcom/setup-watcom@v0
+        with:
+          version: "2.0-64"
+
+      - name: environ
+        run: |
+            echo $WATCOM
+            echo $INCLUDE
+            echo $PATH
 
       - name: build
         run: ./build.sh auto allimages

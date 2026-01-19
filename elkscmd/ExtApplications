@@ -1,0 +1,126 @@
+# ELKS External Application Installation Table
+#   1/17/26 Greg Haerr
+#
+# This file is used to specify when each application in external/ should
+# be installed to $(DESTDIR).
+#
+# The file format is the application build filename in the first field,
+# followed by a tab and optional '::' installation filename (default is /bin),
+# followed by tabs and any number of tags specifying which configuration
+# sets each application belongs to.
+# A tag is an alphanumeric name preceded by a colon.
+#
+# Multiple tags are combined with the | character in elkscmd/Makefile
+# to specify the set of files to be installed.
+# The applications are installed from their build directory to $(DESTDIR).
+#
+# Following are the current ELKS application packages and description,
+# see Make.install for more details.
+#   Tag         Description                                 Directory
+#   --------    -----------------------------------------   -----------
+#   :1232k      Set of apps to fit on PC-98 1232k disks
+#   :1232c      Extra apps to add to 1232k disks if CONFIG_APPS_COMPRESS set
+#   :1440k      Set of apps to fit on 1440k disks (and 1200k if compressed)
+#   :1440c      Extra apps to add to 1440k disks if CONFIG_APPS_COMPRESS set
+#   :2880k      Set of apps to fit on 2880k disks
+#   :::file     install as symlink
+#
+# ------------- ----------------------------------------------------------
+#
+# ia16 builds
+microwindows/src/bin/nano-x                         :nanox  :1232c :1440k
+microwindows/src/bin/nxcalc                         :nanox  :1232c :1440k
+microwindows/src/bin/nxclock                        :nanox  :1232c :1440k
+microwindows/src/bin/nxmine                         :nanox  :1232c
+microwindows/src/bin/nxstart                        :nanox  :1232c :1440k
+microwindows/src/bin/nxterm                         :nanox  :1232c :1440k
+microwindows/src/bin/nxtetris                       :nanox  :1232c :1440k
+microwindows/src/bin/nxworld                        :nanox              :2880k
+microwindows/src/images/demos/nanox/nxworld.map ::lib/nxworld.map :nanox :2880k
+microwindows/src/bin/nxdsktop                       :nanox  :1232c
+microwindows/src/bin/nxjpeg                         :nanox  :1232c
+microwindows/src/bin/nxmsg                          :nanox  :1232c
+microwindows/src/bin/nxselect                       :nanox  :1232c
+microwindows/src/demos/nanox/images/girl1.jpg ::root/girl1.jpg :nanox   :2880k
+microwindows/src/demos/nanox/images/earth.jpg ::root/earth.jpg :nanox   :2880k
+dflat/memopad                                       :dflat              :2880k
+# external OWC builds
+elksdoom/elksdoom.os2                               :elksdoom
+elksdoom/elksdoom.wad ::root/elksdoom.wad           :elksdoom
+ngircd-elks/ngircd.os2                              :ngircd
+ngircd-elks/ngircd.conf ::etc/ngircd.conf           :ngircd
+elkirc/elkirc                                       :elkirc             :2880k
+elkirc/man/elkirc.1 ::lib/man1/elkirc.1             :elkirc             :2880k
+# sample ELKS OWC/C86 files
+../elkscmd/basic/basic.os2                          :owc                :2880k
+../elkscmd/fsck_dos/fsck-dos.os2                    :owc                :2880k
+../elkscmd/gui/paint.os2                            :owc                :2880k
+../elkscmd/gui/paint.c86                            :c86                :2880k
+# C86 devkit and header files
+8086-toolchain/elks-bin/make        ::usr/bin/make
+8086-toolchain/elks-bin/cpp         ::usr/bin
+8086-toolchain/elks-bin/c86         ::usr/bin
+8086-toolchain/elks-bin/as          ::usr/bin
+8086-toolchain/elks-bin/ld          ::usr/bin
+8086-toolchain/elks-bin/ar          ::usr/bin
+8086-toolchain/elks-bin/objdump     ::usr/bin
+8086-toolchain/elks-bin/disasm86    ::usr/bin
+../libc/include/alloca.h            ::usr/include/alloca.h
+../libc/include/ctype.h             ::usr/include
+../libc/include/errno.h             ::usr/include
+../libc/include/fcntl.h             ::usr/include
+../libc/include/features.h          ::usr/include
+../libc/include/limits.h            ::usr/include
+../libc/include/malloc.h            ::usr/include
+../libc/include/signal.h            ::usr/include
+../libc/include/stdint.h            ::usr/include
+../libc/include/stdlib.h            ::usr/include
+../libc/include/stdio.h             ::usr/include
+../libc/include/string.h            ::usr/include
+../libc/include/termios.h           ::usr/include
+../libc/include/time.h              ::usr/include
+../libc/include/unistd.h            ::usr/include
+../libc/include/sys/cdefs.h         ::usr/include/sys/cdefs.h
+../libc/include/sys/ioctl.h         ::usr/include/sys
+../libc/include/sys/select.h        ::usr/include/sys
+../libc/include/sys/stat.h          ::usr/include/sys
+../libc/include/sys/types.h         ::usr/include/sys
+../libc/include/c86/limits.h        ::usr/include/c86/limits.h
+../libc/include/c86/stdarg.h        ::usr/include/c86
+../libc/include/c86/stddef.h        ::usr/include/c86
+../libc/include/c86/stdint.h        ::usr/include/c86
+../libc/libc86.a                    ::usr/lib/libc86.a
+../elks/include/linuxmt/errno.h     ::usr/include/linuxmt/errno.h
+../elks/include/linuxmt/fcntl.h     ::usr/include/linuxmt
+../elks/include/linuxmt/ioctl.h     ::usr/include/linuxmt
+../elks/include/linuxmt/limits.h    ::usr/include/linuxmt
+../elks/include/linuxmt/types.h     ::usr/include/linuxmt
+../elks/include/linuxmt/posixtyp.h  ::usr/include/linuxmt
+../elks/include/linuxmt/signal.h    ::usr/include/linuxmt
+../elks/include/linuxmt/stat.h      ::usr/include/linuxmt
+../elks/include/linuxmt/termios.h   ::usr/include/linuxmt
+../elks/include/linuxmt/time.h      ::usr/include/linuxmt
+../elks/include/arch/cdefs.h        ::usr/include/arch/cdefs.h
+../elks/include/arch/divmod.h       ::usr/include/arch
+../elks/include/arch/posixtyp.h     ::usr/include/arch
+../elks/include/arch/stat.h         ::usr/include/arch
+../elks/include/arch/types.h        ::usr/include/arch
+# C86 examples
+8086-toolchain/examples/Makefile.elks ::usr/src/Makefile
+8086-toolchain/examples/chess.c     ::usr/src
+8086-toolchain/examples/cprintf.c   ::usr/src
+8086-toolchain/examples/event.c     ::usr/src
+8086-toolchain/examples/evtest.c    ::usr/src
+8086-toolchain/examples/graphics.c  ::usr/src
+8086-toolchain/examples/mouse.c     ::usr/src
+8086-toolchain/examples/paint.c     ::usr/src
+8086-toolchain/examples/paint.c     ::usr/src
+8086-toolchain/examples/strtoi.c    ::usr/src
+8086-toolchain/examples/test.c      ::usr/src
+8086-toolchain/examples/test_cc.c   ::usr/src
+8086-toolchain/examples/vgatest.c   ::usr/src
+8086-toolchain/examples/cprintf.h   ::usr/src
+8086-toolchain/examples/event.h     ::usr/src
+8086-toolchain/examples/graphics.h  ::usr/src
+8086-toolchain/examples/showfont.s  ::usr/src
+8086-toolchain/examples/vga-4bp.s   ::usr/src
