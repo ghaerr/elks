@@ -51,6 +51,10 @@ ngircd-elks/ngircd.os2                              :ngircd
 ngircd-elks/ngircd.conf ::etc/ngircd.conf           :ngircd
 elkirc/elkirc                                       :elkirc             :2880k
 elkirc/man/elkirc.1 ::lib/man1/elkirc.1             :elkirc             :2880k
+# elks-viewer image viewers
+elks-viewer/jpgview                                 :elksviewer         :2880k
+elks-viewer/ppmview                                 :elksviewer         :2880k
+elks-viewer/bmpview                                 :elksviewer         :2880k
 # sample ELKS OWC/C86 files
 ../elkscmd/basic/basic.os2                          :owc                :2880k
 ../elkscmd/fsck_dos/fsck-dos.os2                    :owc                :2880k

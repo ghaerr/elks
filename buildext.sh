@@ -19,6 +19,7 @@
 #       c86_elkscmd     C86             Some elkscmd/ programs compiled by C86
 #       doom            OpenWatcom      Doom for ELKS
 #       ngircd_elks     OpenWatcom      IRC daemon for ELKS
+#       elks_viewer     OpenWatcom      Image viewers (BMP, PPM, JPG) for ELKS
 #
 # Some projects may require prerequisites.
 # To only build the C86 toolchain, use './buildext.sh owc_libc c86_toolchain'
@@ -197,6 +198,20 @@ elkirc()
     echo "elkirc build complete"
 }
 
+elks_viewer()
+{
+    echo "Building elks-viewer..."
+    cd $TOPDIR/extapps
+    if [ ! -d elks-viewer ] ; then
+        git clone https://github.com/rafael2k/elks-viewer
+    fi
+    cd elks-viewer
+    git pull
+    make -f Makefile.owc clean
+    make -f Makefile.owc
+    echo "elks-viewer build complete"
+}
+
 # build all extapps repos
 make_all()
 {
@@ -210,6 +225,7 @@ make_all()
         c86_elkscmd
         doom
         ngircd_elks
+        elks_viewer
     fi
 }
 
