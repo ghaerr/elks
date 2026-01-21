@@ -44,25 +44,23 @@ microwindows/src/bin/nxselect                       :nanox  :1232c
 microwindows/src/demos/nanox/images/girl1.jpg ::root/girl1.jpg :nanox   :2880k
 microwindows/src/demos/nanox/images/earth.jpg ::root/earth.jpg :nanox   :2880k
 dflat/memopad                                       :dflat              :2880k
-# external OWC builds
-elksdoom/elksdoom.os2                               :elksdoom
-elksdoom/elksdoom.wad ::root/elksdoom.wad           :elksdoom
-ngircd-elks/ngircd.os2                              :ngircd
-ngircd-elks/ngircd.conf ::etc/ngircd.conf           :ngircd
-elkirc/elkirc                                       :elkirc             :2880k
-elkirc/man/elkirc.1 ::lib/man1/elkirc.1             :elkirc             :2880k
-# elks-viewer image viewers
-elks-viewer/jpgview                                 :elksviewer         :2880k
-elks-viewer/ppmview                                 :elksviewer         :2880k
-elks-viewer/bmpview                                 :elksviewer         :2880k
-# Lua interpreter
-lua/lua                                             :lua                :2880k
-lua/testes/drawcube.lua ::root/drawcube.lua         :lua                :2880k
 # sample ELKS OWC/C86 files
 ../elkscmd/basic/basic.os2                          :owc                :2880k
 ../elkscmd/fsck_dos/fsck-dos.os2                    :owc                :2880k
 ../elkscmd/gui/paint.os2                            :owc                :2880k
 ../elkscmd/gui/paint.c86                            :c86                :2880k
+# external OWC builds
+elkirc/elkirc                                       :elkirc             :2880k
+elkirc/man/elkirc.1 ::lib/man1/elkirc.1             :elkirc             :2880k
+elksdoom/elksdoom.os2                               :elksdoom
+elksdoom/elksdoom.wad ::root/elksdoom.wad           :elksdoom
+ngircd-elks/ngircd.os2                              :ngircd
+ngircd-elks/ngircd.conf ::etc/ngircd.conf           :ngircd
+elks-viewer/jpgview                                 :elksviewer
+elks-viewer/ppmview                                 :elksviewer
+elks-viewer/bmpview                                 :elksviewer
+lua/lua                                             :lua
+lua/testes/drawcube.lua ::root/drawcube.lua         :lua
 # C86 devkit and header files
 8086-toolchain/elks-bin/make        ::usr/bin/make
 8086-toolchain/elks-bin/cpp         ::usr/bin
