@@ -24,6 +24,8 @@ then
 
 The default serial device is /dev/ttyS0.
 
+The filename cannot include PATH for now.
+
 If opening the device failed and the current ttyname is the serial device,  
 then STDIN_FILENO is used instead.
 
