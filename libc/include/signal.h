@@ -36,5 +36,6 @@ int sigemptyset(sigset_t *set);
 
 int kill (pid_t pid, int sig);
 int killpg (int pid, int sig);
+int raise (int sig);
 
 #endif

@@ -62,6 +62,7 @@ int unlink(const char *fname);
 int access(const char *path, int mode);
 ssize_t readlink(const char * restrict path, char * restrict buf, size_t bufsize);
 int chdir(const char *path);
+int chroot(const char *dirname);
 int rmdir(const char *path);
 
 int chown(const char *path, uid_t owner, gid_t group);

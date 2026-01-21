@@ -1,9 +1,5 @@
 #include <sys/socket.h>
 
-/* actual system call */
-extern int getsocknam(int sock, struct sockaddr * restrict address,
-	socklen_t * restrict address_len, int peer);
-
 int getsockname(int sock, struct sockaddr * restrict address,
 	socklen_t * restrict address_len)
 {
