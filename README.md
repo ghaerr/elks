@@ -77,9 +77,8 @@ More information is in the Documentation folder: [Index of ELKS Documentation](h
 
 Other projects and resources interesting to ELKS and our programming community:
 
-- [8086 toolchain](https://github.com/ghaerr/8086-toolchain) A full C toolchain running
-on the host desktop and ELKS itself, featuring C compiler, the as86 assembler,
-ld86 linker, make and a complete C library..
+- [8086 toolchain](https://github.com/ghaerr/8086-toolchain) A full C toolchain capable of running on Linux, macOS and natively on ELKS, featuring C compiler
+and preprocessor, as86 assembler, ld86 linker, disassembler, make, and a complete C library.
 - [blink16](https://github.com/ghaerr/blink16) A visual 8086 emulator and debugger capable of booting the ELKS kernel for symbolic debugging, as well as an emulator for ELKS executables.
 - [Size Optimization Tricks](https://justine.lol/sizetricks/) A great article from Justine Tunney's blog showing how big things can be done without bloat.
 - [gcc-ia16](https://github.com/tkchia/gcc-ia16) TK Chia's gcc compiler targeted for 8086, maintained and used for the ELKS kernel and all its applications.
