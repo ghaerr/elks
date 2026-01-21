@@ -198,7 +198,7 @@ doarg(char c) {				/* Command-line option parser */
 		if (**xargv == '-')
 		  break;
 #ifdef ELKS
-		if (strncasecmp(s, "/dev/ttyS", 9) == 0)	/* Stop if device name is found */
+		if (strncasecmp(s, "/dev/tty", 8) == 0)	/* Stop if device name is found */
 		  break;
 #endif
 		errno = 0;
