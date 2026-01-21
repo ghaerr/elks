@@ -20,6 +20,7 @@
 #       doom            OpenWatcom      Doom for ELKS
 #       ngircd_elks     OpenWatcom      IRC daemon for ELKS
 #       elks_viewer     OpenWatcom      Image viewers (BMP, PPM, JPG) for ELKS
+#       lua             OpenWatcom      Lua 5.5 interpreter
 #
 # Some projects may require prerequisites.
 # To only build the C86 toolchain, use './buildext.sh owc_libc c86_toolchain'
@@ -212,6 +213,20 @@ elks_viewer()
     echo "elks-viewer build complete"
 }
 
+lua()
+{
+    echo "Building Lua 5.5..."
+    cd $TOPDIR/extapps
+    if [ ! -d lua ] ; then
+        git clone https://github.com/rafael2k/lua lua
+    fi
+    cd lua
+    git pull
+    make -f Makefile.elks clean
+    make -f Makefile.elks
+    echo "Lua 5.5 build complete"
+}
+
 # build all extapps repos
 make_all()
 {
@@ -226,6 +241,7 @@ make_all()
         doom
         ngircd_elks
         elks_viewer
+        lua
     fi
 }
 
