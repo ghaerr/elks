@@ -53,7 +53,8 @@ mainmenu_option next_comment
 		comment "Select Applications by Image Size"
 
 		choice 'Apps and Image Size' \
-		"All-2880k/HD	CONFIG_APPS_2880K	\
+		"ALL-HD      	CONFIG_APPS_HD   	\
+		 Large-2880k	CONFIG_APPS_2880K	\
 		 Large-1440k	CONFIG_APPS_1440K	\
 		 PC98-1232k     CONFIG_APPS_1232K	\
 		 Medium-1200k	CONFIG_APPS_1200K	\
