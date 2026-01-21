@@ -55,6 +55,9 @@ elkirc/man/elkirc.1 ::lib/man1/elkirc.1             :elkirc             :2880k
 elks-viewer/jpgview                                 :elksviewer         :2880k
 elks-viewer/ppmview                                 :elksviewer         :2880k
 elks-viewer/bmpview                                 :elksviewer         :2880k
+# Lua interpreter
+lua/lua                                             :lua                :2880k
+lua/testes/drawcube.lua ::root/drawcube.lua         :lua                :2880k
 # sample ELKS OWC/C86 files
 ../elkscmd/basic/basic.os2                          :owc                :2880k
 ../elkscmd/fsck_dos/fsck-dos.os2                    :owc                :2880k
