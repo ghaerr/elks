@@ -21,6 +21,7 @@
 #       ngircd_elks     OpenWatcom      IRC daemon for ELKS
 #       elks_viewer     OpenWatcom      Image viewers (BMP, PPM, JPG) for ELKS
 #       lua             OpenWatcom      Lua 5.5 interpreter
+#       bobcat          OpenWatcom      Bobcat web browser (Lynx fork)
 #
 # Some projects may require prerequisites.
 # To only build the C86 toolchain, use './buildext.sh owc_libc c86_toolchain'
@@ -227,6 +228,21 @@ lua()
     echo "Lua 5.5 build complete"
 }
 
+bobcat()
+{
+    echo "Building Bobcat web browser..."
+    cd $TOPDIR/extapps
+    if [ ! -d bobcat ] ; then
+        git clone https://github.com/rafael2k/bobcat bobcat
+    fi
+    cd bobcat
+    git pull
+    cd src
+    make -f Makefile.elks clean
+    make -f Makefile.elks
+    echo "Bobcat build complete"
+}
+
 # build all extapps repos
 make_all()
 {
@@ -242,6 +258,7 @@ make_all()
         ngircd_elks
         elks_viewer
         lua
+        bobcat
     fi
 }
 

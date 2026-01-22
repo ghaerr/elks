@@ -61,6 +61,8 @@ elks-viewer/ppmview                                 :elksviewer
 elks-viewer/bmpview                                 :elksviewer
 lua/lua                                             :lua
 lua/testes/drawcube.lua ::root/drawcube.lua         :lua
+bobcat/src/bobcat                                   :bobcat
+bobcat/lynx.cfg ::etc/lynx.cfg                      :bobcat
 # C86 devkit and header files
 8086-toolchain/elks-bin/make        ::usr/bin/make
 8086-toolchain/elks-bin/cpp         ::usr/bin
