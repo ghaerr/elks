@@ -22,6 +22,7 @@
 #       elks_viewer     OpenWatcom      Image viewers (BMP, PPM, JPG) for ELKS
 #       lua             OpenWatcom      Lua 5.5 interpreter
 #       bobcat          OpenWatcom      Bobcat web browser (Lynx fork)
+#       kilomacs        OpenWatcom      Kilo-based editor with Emacs-style keybindings
 #
 # Some projects may require prerequisites.
 # To only build the C86 toolchain, use './buildext.sh owc_libc c86_toolchain'
@@ -243,6 +244,20 @@ bobcat()
     echo "Bobcat build complete"
 }
 
+kilomacs()
+{
+    echo "Building kilomacs editor..."
+    cd $TOPDIR/extapps
+    if [ ! -d kilomacs ] ; then
+        git clone https://github.com/rafael2k/kilomacs.git kilomacs
+    fi
+    cd kilomacs
+    git pull
+    make clean
+    make
+    echo "Kilomacs build complete"
+}
+
 # build all extapps repos
 make_all()
 {
@@ -259,6 +274,7 @@ make_all()
         elks_viewer
         lua
         bobcat
+        kilomacs
     fi
 }
 
