@@ -15,6 +15,8 @@
 #define RSINQ_SIZE	1024	/* serial input queue SLIP_MTU+128+8*/
 #define RSOUTQ_SIZE	80	/* serial output queue size*/
 
+#define MOUSEINQ_SIZE   64      /* PS/2 mouse input queue size */
+
 /*
  * Note: don't mess with NR_PTYS until you understand the tty minor
  * number allocation game...
@@ -35,9 +37,10 @@
 
 #define MAX_PTYS     4
 
-#define TTY_MINOR_OFFSET 0
-#define PTY_MINOR_OFFSET 8
-#define RS_MINOR_OFFSET 64
+#define TTY_MINOR_OFFSET   0
+#define PTY_MINOR_OFFSET   8
+#define MOUSE_MINOR_OFFSET 32
+#define RS_MINOR_OFFSET    64
 
 #if defined(CONFIG_CONSOLE_DIRECT) || defined(CONFIG_CONSOLE_BIOS) || defined(CONFIG_ARCH_NECV25)
 #define NR_CONSOLES	MAX_CONSOLES
@@ -57,7 +60,13 @@
 #define NR_SERIAL	0
 #endif
 
-#define MAX_TTYS (NR_CONSOLES+NR_SERIAL+NR_PTYS)
+#ifdef CONFIG_MOUSE_PS2
+#define NR_MOUSE 	1
+#else
+#define NR_MOUSE 	0
+#endif
+
+#define MAX_TTYS (NR_CONSOLES+NR_SERIAL+NR_PTYS+NR_MOUSE)
 
 #define DCGET_GRAPH	(('D'<<8)+0x01)
 #define DCREL_GRAPH	(('D'<<8)+0x02)
@@ -94,6 +103,8 @@ struct tty {
     unsigned char usecount;
     pid_t pgrp;
 };
+
+extern struct tty ttys[];
 
 extern int tty_intcheck(struct tty *,unsigned char);
 		/* Check for ctrl-C etc.. */

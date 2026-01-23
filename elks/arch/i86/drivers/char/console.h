@@ -2,7 +2,6 @@
 
 void Console_conin(unsigned char Key);
 void Console_conout(dev_t dev, int Ch);
-extern struct tty ttys[];
 
 void kbd_init(void);
 extern char kbd_name[];
