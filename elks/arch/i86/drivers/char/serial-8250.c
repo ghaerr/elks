@@ -83,8 +83,6 @@ static unsigned int divisors[] = {
     0                           /*  0 = B230400 */
 };
 
-extern struct tty ttys[];
-
 /* Flow control buffer markers */
 #define RS_IALLMOSTFULL         (3 * INQ_SIZE / 4)
 #define RS_IALLMOSTEMPTY        (    INQ_SIZE / 4)

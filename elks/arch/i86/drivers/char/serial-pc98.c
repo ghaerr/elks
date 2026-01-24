@@ -89,8 +89,6 @@ static unsigned int divisors_8MHz[] = {
     0				/*  0 = B230400 */
 };
 
-extern struct tty ttys[];
-
 static int rs_init_done = 0;
 
 /* printk console out */

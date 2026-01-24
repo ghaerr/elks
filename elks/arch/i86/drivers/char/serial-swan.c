@@ -18,7 +18,6 @@
 #include <arch/swan.h>
 
 static struct tty *tty;
-extern struct tty ttys[];
 
 /* printk console out */
 void rs_conout(dev_t dev, int c)

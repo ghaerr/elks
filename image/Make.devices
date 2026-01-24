@@ -134,6 +134,10 @@ devices:
 	$(MKDEV) /dev/ttyS2 c 4 66
 	$(MKDEV) /dev/ttyS3 c 4 67
 
+# PS/2 mouse port
+
+	$(MKDEV) /dev/psaux c 4 32
+
 ##############################################################################
 # Parallel devices, as detected by the ROM BIOS.
 

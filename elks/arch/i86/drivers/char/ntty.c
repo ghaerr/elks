@@ -470,6 +470,7 @@ extern struct tty_ops rs_ops;           /* CONFIG_CHAR_DEV_RS*/
 extern struct tty_ops ttyp_ops;         /* CONFIG_PSEUDO_TTY*/
 extern struct tty_ops i8018xcon_ops;    /* CONFIG_CONSOLE_8018X*/
 extern struct tty_ops necv25con_ops;    /* CONFIG_CONSOLE_NECV25*/
+extern struct tty_ops ps2_mouse_ops;    /* CONFIG_MOUSE_PS2*/
 
 void INITPROC tty_init(void)
 {
@@ -513,6 +514,11 @@ void INITPROC tty_init(void)
         ttyp->ops = &ttyp_ops;
         (ttyp++)->minor = i;            /* ttyp0 = PTY slave PTY_MINOR_OFFSET */
     }
+#endif
+
+#ifdef CONFIG_MOUSE_PS2
+        ttyp->ops = &ps2_mouse_ops;
+        (ttyp++)->minor = MOUSE_MINOR_OFFSET;   /* psaux = PS/2 mouse */
 #endif
 
     register_chrdev(TTY_MAJOR, "tty", &tty_fops);
