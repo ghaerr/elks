@@ -37,7 +37,7 @@ OBJS = $(SRCS:.c=.oaj)
 ############# End of Standard Section ##############
 
 BINDIR = .
-LOCALFLAGS =
+LOCALFLAGS = -DDRIVER=1
 PROG = $(BINDIR)/paint
 SRCS = app.c gui.c input.c render.c event.c mouse.c graphics.c drawbmp.c cursor.c \
     drawscanline.c
