@@ -163,9 +163,9 @@ int open_mouse(void)
         cfsetispeed(&termios, (speed_t)B1200);
 
     termios.c_lflag &= ~(ECHO | ECHONL | ICANON | IEXTEN | ISIG);
-    //termios.c_iflag &= ~(ICRNL | INPCK | ISTRIP | IXON | BRKINT | IGNBRK);
-    //termios.c_cflag &= ~(CSIZE | PARENB);
-    termios.c_cflag |= CS8;
+    termios.c_iflag &= ~(ICRNL | INPCK | ISTRIP | IXON | BRKINT | IGNBRK);
+    termios.c_cflag &= ~(CSIZE | PARENB);
+    termios.c_cflag |= CREAD | CS8;
     termios.c_cc[VMIN] = 0;
     termios.c_cc[VTIME] = 0;
     if(tcsetattr(mouse_fd, TCSAFLUSH, &termios) < 0) {
