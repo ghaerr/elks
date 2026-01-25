@@ -15,34 +15,72 @@
 
 #ifdef CONFIG_MOUSE_PS2
 
-#define IRQ_MOUSE       12      /* mouse interrupt, may conflict with networking */
+#define IRQ_MOUSE       12          /* mouse interrupt, may conflict with networking */
+#define MAX_RETRIES     60
 
-/* i8042 ports */
-#define I8042_DATA      0x60
-#define I8042_STATUS    0x64
-#define I8042_CMD       0x64
+/* 8042 ports */
+#define DATA            0x60
+#define STATUS          0x64
+#define COMMAND         0x64
 
-/* status bits */
-#define ST_OBF          0x01
-#define ST_AUXDATA      0x20
+/* 8042 commands */
+#define DISABLE_INTS    0x65        /* disable interrupts */
+#define ENABLE_INTS     0x47        /* enable interrupts */
+#define DISABLE_AUX     0xa7        /* disable aux */
+#define ENABLE_AUX      0xa8        /* enable aux */
+#define DISABLE_AUX_DEV 0xf5        /* disable aux device */
+#define ENABLE_AUX_DEV  0xf4        /* enable aux device */
+#define MAGIC_WRITE     0xd4        /* value to send aux device data */
+#define CMD_WRITE       0x60        /* value to write to controller */
 
-/* Minimal mouse enable (no reset, BIOS-friendly) */
+/* aux controller status bits */
+#define IBUF_FULL       0x02        /* input buffer (to device) full */
+#define OBUF_FULL       0x21        /* output buffer (from device) full */
+
+static void poll_aux_status(void)
+{
+    int retries = 0;
+
+    while ((inb(STATUS) & 0x03) && retries < MAX_RETRIES) {
+        if ((inb_p(STATUS) & OBUF_FULL) == OBUF_FULL)
+            inb_p(DATA);
+        retries++;
+    }
+}
+
+/* write to aux device */
+static void aux_write_dev(int val)
+{
+    poll_aux_status();
+    outb_p(MAGIC_WRITE, COMMAND);       /* next byte to mouse */
+    poll_aux_status();
+    outb_p(val, DATA);                  /* write data */
+}
+
+/* write aux device command */
+static void aux_write_cmd(int val)
+{
+    poll_aux_status();
+    outb_p(CMD_WRITE, COMMAND);         /* next byte to controller */
+    poll_aux_status();
+    outb_p(val, DATA);                  /* write data */
+}
+
+static void ps2_mouse_disable(void)
+{
+    aux_write_cmd(DISABLE_INTS);        /* disable controller interrupts */
+    poll_aux_status();
+    outb_p(DISABLE_AUX, COMMAND);       /* disable aux device */
+    poll_aux_status();
+}
+
 static void ps2_mouse_enable(void)
 {
-    /* FIXME controller ready (status bit 1) should be read before each write!! */
-    /* Enable AUX (mouse) device */
-    outb(0xA8, I8042_CMD);
-
-    /* FIXME unclear whether the following enables IRQ 12 */
-    /* Enable data reporting */
-    outb(0xD4, I8042_CMD);   /* next byte to mouse */
-    outb(0xF4, I8042_DATA);  /* enable streaming */
-
-    /* FIXME this could cause OS hang if no PS/2 controller present */
-    /* Eat ACK (0xFA) */
-    while (!(inb(I8042_STATUS) & ST_OBF))
-        ;
-    inb(I8042_DATA);
+    poll_aux_status();
+    outb_p(ENABLE_AUX, COMMAND);        /* enable aux */
+    aux_write_dev(ENABLE_AUX_DEV);      /* enable aux device streaming */
+    aux_write_cmd(ENABLE_INTS);         /* enable controller interrupts */
+    poll_aux_status();
 }
 
 /* IRQ handler */
@@ -52,8 +90,8 @@ static void ps2_irq(int irq, struct pt_regs *regs)
     unsigned char c;
 
     /* Read all available mouse bytes */
-    while ((inb(I8042_STATUS) & (ST_OBF | ST_AUXDATA)) == (ST_OBF | ST_AUXDATA)) {
-        c = inb(I8042_DATA);
+    while ((inb(STATUS) & OBUF_FULL) == OBUF_FULL) {
+        c = inb(DATA);
         chq_addch_nowakeup(q, c);
     }
 
@@ -79,7 +117,7 @@ static int ps2_open(struct tty *tty)
     }
 
     tty->usecount = 1;
-    ps2_mouse_enable();     /* minimal init */
+    ps2_mouse_enable();
 
     return 0;
 }
@@ -87,7 +125,7 @@ static int ps2_open(struct tty *tty)
 static void ps2_release(struct tty *tty)
 {
     if (--tty->usecount == 0) {
-        /* FIXME needs code to disable i8042 interrupts here!! */
+        ps2_mouse_disable();
         free_irq(IRQ_MOUSE);
         tty_freeq(tty);
     }
