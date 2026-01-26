@@ -41,7 +41,7 @@
 #define CONFIG_FAST_IRQ3                        /* com2 */
 
 /* temp always enable experimental PS/2 mouse driver for IBM PC */
-#define CONFIG_MOUSE_PS2        1
+#define CONFIG_MOUSE_PS2
 
 /* The following can be set for minimal systems or for QEMU emulation testing:
  * 10 buffers (@20 = 200), 2 ttyq (@80 = 160), 4k L1 cache, 512 heap free,

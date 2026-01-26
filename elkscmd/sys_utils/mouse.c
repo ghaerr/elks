@@ -127,7 +127,6 @@ int open_mouse(void)
         parse = parseMS;
         max_bytes = MS_MAX_BYTES;
     } else if (strcmp(type, "ps2") == 0) {
-        printf("got PS2 %s\n", type);
         /* PS/2 mouse*/
         left = PS2_LEFT_BUTTON;
         right = PS2_RIGHT_BUTTON;
