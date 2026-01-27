@@ -1,7 +1,7 @@
 /*
  * Minimal PS/2 mouse driver for ELKS
  *
- * 23 Jan 2026 Original version by @toncho11, adapted by Greg Haerr
+ * 23 Jan 2026 Original version by Anton Andreev, adapted by Greg Haerr
  */
 
 #include <linuxmt/config.h>
@@ -40,17 +40,42 @@
 
 /* controller status bits */
 #define IBUF_FULL       0x02        /* input buffer to device full */
-#define OBUF_FULL       0x21        /* aux (mouse) output and output buffer full */
+#define OBF             0x01        /* output buffer full */
+#define AUXDATA         0x20        /* mouse data */
 
 static void poll_aux_status(void)
 {
-    int retries = 0;
+    int retries = MAX_RETRIES;
 
-    while ((inb(STATUS) & 0x03) && retries < MAX_RETRIES) {
-        if ((inb_p(STATUS) & OBUF_FULL) == OBUF_FULL)
-            inb_p(DATA);
-        retries++;
+    while (retries--) {
+        unsigned char st = inb_p(STATUS);
+
+        /* Drain any pending output byte (kbd or mouse) */
+        if (st & OBF) {
+			(void)inb_p(DATA);
+			continue;
+		}
+
+        /* Input buffer clear and no output pending -> ready */
+        if (!(st & IBUF_FULL))
+            return;
     }
+}
+
+static unsigned char read_ccb(void)
+{
+    poll_aux_status();
+    outb_p(0x20, COMMAND);          /* read command byte */
+    poll_aux_status();
+    return inb_p(DATA);
+}
+
+static void write_ccb(unsigned char ccb)
+{
+    poll_aux_status();
+    outb_p(WRITE_CTRLR, COMMAND);   /* 0x60 */
+    poll_aux_status();
+    outb_p(ccb, DATA);
 }
 
 /* write command to mouse */
@@ -73,18 +98,32 @@ static void write_controller(int cmd)
 
 static void ps2_mouse_disable(void)
 {
-    write_controller(DISABLE_INTS);     /* disable controller interrupts */
+    unsigned char ccb;
+
+    write_mouse(DISABLE_AUX_DEV);       /* stop mouse packets */
+
+    ccb = read_ccb();
+    ccb &= (unsigned char)~0x02;        /* clear IRQ12 enable ONLY */
+    write_ccb(ccb);
+
     poll_aux_status();
-    outb_p(DISABLE_AUX, COMMAND);       /* disable aux (mouse) port */
+    outb_p(DISABLE_AUX, COMMAND);
     poll_aux_status();
 }
 
 static void ps2_mouse_enable(void)
 {
+    unsigned char ccb;
+
     poll_aux_status();
-    outb_p(ENABLE_AUX, COMMAND);        /* enable aux (mouse) port */
-    write_mouse(ENABLE_AUX_DEV);        /* enable mouse (aux device) */
-    write_controller(ENABLE_INTS);      /* enable controller interrupts */
+    outb_p(ENABLE_AUX, COMMAND);
+
+    write_mouse(ENABLE_AUX_DEV);
+
+    ccb = read_ccb();
+    ccb |= 0x02;                        /* set IRQ12 enable ONLY */
+    write_ccb(ccb);
+
     poll_aux_status();
 }
 
@@ -95,10 +134,10 @@ static void ps2_irq(int irq, struct pt_regs *regs)
     unsigned char c;
 
     /* Read all available mouse bytes */
-    while ((inb(STATUS) & OBUF_FULL) == OBUF_FULL) {
-        c = inb(DATA);
-        chq_addch_nowakeup(q, c);
-    }
+    while ((inb(STATUS) & (OBF | AUXDATA)) == (OBF | AUXDATA)) {
+		c = inb(DATA);
+		chq_addch_nowakeup(q, c);
+	}
 
     if (q->len)
         wake_up(&q->wait);
