@@ -26,10 +26,12 @@
 #define COMMAND         0x64
 
 /* 8042 commands using outb() */
-#define WRITE_CTRLR     0x60        /* send command to controller */
-#define WRITE_MOUSE     0xd4        /* send command to aux device (mouse) */
-#define DISABLE_AUX     0xa7        /* disable aux (mouse) port */
-#define ENABLE_AUX      0xa8        /* enable aux (mouse) port */
+#define WRITE_CTRLR      0x60        /* send command to controller */
+#define WRITE_MOUSE      0xd4        /* send command to aux device (mouse) */
+#define DISABLE_AUX      0xa7        /* disable aux (mouse) port */
+#define ENABLE_AUX       0xa8        /* enable aux (mouse) port */
+#define GET_CMD_BYTE     0x20        /* read command byte */
+#define ENABLE_MOUSE_IRQ 0x02        /* enable mouse irq 12 */
 
 /* commands using WRITE_CTRLR/write_controller() */
 #define ENABLE_INTS     0x47        /* enable interrupts */
@@ -63,20 +65,20 @@ static void poll_aux_status(void)
     }
 }
 
-static unsigned char read_ccb(void)
+static unsigned int read_ccb(void)
 {
     poll_aux_status();
-    outb_p(0x20, COMMAND);          /* read command byte */
+    outb_p(GET_CMD_BYTE, COMMAND);          /* read command byte */
     poll_aux_status();
-    return inb_p(DATA);
+    return (unsigned int)inb_p(DATA);
 }
 
-static void write_ccb(unsigned char ccb)
+static void write_ccb(unsigned int ccb)
 {
     poll_aux_status();
     outb_p(WRITE_CTRLR, COMMAND);   /* 0x60 */
     poll_aux_status();
-    outb_p(ccb, DATA);
+    outb_p((unsigned char)ccb, DATA);
 }
 
 /* write command to mouse */
@@ -99,27 +101,27 @@ static void write_controller(int cmd)
 
 static void ps2_mouse_disable(void)
 {
-    unsigned char ccb;
+    unsigned int ccb;
 
-    write_mouse(DISABLE_AUX_DEV);       /* stop mouse packets */
+    write_mouse(DISABLE_AUX_DEV);        /* stop mouse packets */
 
     ccb = read_ccb();
-    ccb &= (unsigned char)~0x02;        /* clear IRQ12 enable ONLY */
+    ccb &= ~ENABLE_MOUSE_IRQ;            /* clear IRQ12 enable ONLY */
     write_ccb(ccb);
 
     poll_aux_status();
-    outb_p(DISABLE_AUX, COMMAND);
+    outb_p(DISABLE_AUX, COMMAND);        /* disable aux (mouse) port */
     poll_aux_status();
 }
 
 static void ps2_mouse_enable(void)
 {
-    unsigned char ccb;
+    unsigned int ccb;
 
     poll_aux_status();
-    outb_p(ENABLE_AUX, COMMAND);
+    outb_p(ENABLE_AUX, COMMAND);        /* enable aux (mouse) port */
 
-    write_mouse(ENABLE_AUX_DEV);
+    write_mouse(ENABLE_AUX_DEV);        /* enable mouse (aux device) */
 
     ccb = read_ccb();
     ccb |= 0x02;                        /* set IRQ12 enable ONLY */
@@ -136,9 +138,9 @@ static void ps2_irq(int irq, struct pt_regs *regs)
 
     /* Read all available mouse bytes */
     while ((inb(STATUS) & (OBUF_FULL | AUXDATA)) == (OBUF_FULL | AUXDATA)) {
-		c = inb(DATA);
-		chq_addch_nowakeup(q, c);
-	}
+        c = inb(DATA);
+        chq_addch_nowakeup(q, c);
+    }
 
     if (q->len)
         wake_up(&q->wait);
