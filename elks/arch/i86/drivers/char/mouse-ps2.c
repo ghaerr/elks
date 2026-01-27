@@ -1,7 +1,8 @@
 /*
- * Minimal PS/2 mouse driver for ELKS
+ * PS/2 mouse driver for ELKS
  *
  * 23 Jan 2026 Original version by Anton Andreev, adapted by Greg Haerr
+ * No support for extensions IntelliMouse PS/2 (ImPS/2) and IntelliMouse Explorer PS/2 (IMEX / Explorer). 
  */
 
 #include <linuxmt/config.h>
@@ -40,7 +41,7 @@
 
 /* controller status bits */
 #define IBUF_FULL       0x02        /* input buffer to device full */
-#define OBF             0x01        /* output buffer full */
+#define OBUF_FULL       0x01        /* output buffer full */
 #define AUXDATA         0x20        /* mouse data */
 
 static void poll_aux_status(void)
@@ -51,7 +52,7 @@ static void poll_aux_status(void)
         unsigned char st = inb_p(STATUS);
 
         /* Drain any pending output byte (kbd or mouse) */
-        if (st & OBF) {
+        if (st & OBUF_FULL) {
 			(void)inb_p(DATA);
 			continue;
 		}
@@ -134,7 +135,7 @@ static void ps2_irq(int irq, struct pt_regs *regs)
     unsigned char c;
 
     /* Read all available mouse bytes */
-    while ((inb(STATUS) & (OBF | AUXDATA)) == (OBF | AUXDATA)) {
+    while ((inb(STATUS) & (OBUF_FULL | AUXDATA)) == (OBUF_FULL | AUXDATA)) {
 		c = inb(DATA);
 		chq_addch_nowakeup(q, c);
 	}
