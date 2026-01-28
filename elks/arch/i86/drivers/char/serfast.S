@@ -11,7 +11,7 @@
 	.code16
 	.text
 
-#ifdef CONFIG_FAST_IRQ4
+#if CONFIG_FAST_IRQ4
 //
 // Entry for ttyS0 top half interrupt handler, called by CALLF within dynamic handler
 //
@@ -44,7 +44,7 @@ asm_fast_irq4:
 	iret
 #endif
 
-#ifdef CONFIG_FAST_IRQ3
+#if CONFIG_FAST_IRQ3
 //
 // Entry for ttyS1 top half interrupt handler, called by CALLF within dynamic handler
 //

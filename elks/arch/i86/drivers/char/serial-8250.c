@@ -29,7 +29,8 @@ struct serial_info {
     unsigned int  divisor;
     struct tty *  tty;
     int           intrchar; /* used by fast handler for ^C SIGINT processing */
-    int pad1, pad2;         /* round out to 16 bytes for faster addressing of ports[] */
+    int           fast;     /* using CONFIG_FAST_xxx driver */
+    int           pad;      /* round out to 16 bytes for faster addressing of ports[] */
 };
 
 /* flags*/
@@ -54,10 +55,10 @@ struct serial_info {
         ((unsigned char) (UART_MCR_DTR | UART_MCR_RTS | UART_MCR_OUT2))
 
 static struct serial_info ports[NR_SERIAL] = {
-    {(char *)COM1_PORT, COM1_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,0,0},
-    {(char *)COM2_PORT, COM2_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,0,0},
-    {(char *)COM3_PORT, COM3_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,0,0},
-    {(char *)COM4_PORT, COM4_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,0,0},
+{(char *)COM1_PORT, COM1_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,CONFIG_FAST_IRQ4,0},
+{(char *)COM2_PORT, COM2_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,CONFIG_FAST_IRQ3,0},
+{(char *)COM3_PORT, COM3_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,0,0},
+{(char *)COM4_PORT, COM4_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,0,0},
 };
 
 static char irq_to_port[16];
@@ -215,7 +216,7 @@ static int rs_write(struct tty *tty)
     return i;
 }
 
-#if defined(CONFIG_FAST_IRQ4)
+#if CONFIG_FAST_IRQ4
 /*
  * Serial interrupt top half. This top half actually consists of two parts.
  * The first part of the top half of the handler is asm_fast_irq4 in serfast.S,
@@ -268,7 +269,7 @@ void rs_fast_irq4(void)
 }
 #endif
 
-#if defined(CONFIG_FAST_IRQ3)
+#if CONFIG_FAST_IRQ3
 extern void asm_fast_irq3(int irq, struct pt_regs *regs);   /* initial entry point */
 
 void rs_fast_irq3(void)
@@ -291,7 +292,7 @@ void rs_fast_irq3(void)
 }
 #endif
 
-#if defined(CONFIG_FAST_IRQ4) || defined(CONFIG_FAST_IRQ3)
+#if CONFIG_FAST_IRQ4 || CONFIG_FAST_IRQ3
 /* check for SIGINT and wakeup waiting processes */
 static void pump_port(struct serial_info *sp)
 {
@@ -317,10 +318,10 @@ static void pump_port(struct serial_info *sp)
 /* serial interrupt bottom half - check ring buffer and wakeup waiting processes */
 void serial_bh(void)
 {
-#if defined(CONFIG_FAST_IRQ4)
+#if CONFIG_FAST_IRQ4
     pump_port(&ports[0]);
 #endif
-#if defined(CONFIG_FAST_IRQ3)
+#if CONFIG_FAST_IRQ3
     pump_port(&ports[1]);
 #endif
 }
@@ -385,14 +386,14 @@ static int rs_open(struct tty *tty)
         return 0;
 
     switch(port->irq) {
-#if defined(CONFIG_FAST_IRQ4)
+#if CONFIG_FAST_IRQ4
     case 4:
         port->intrchar = 0;
         init_bh(SERIAL_BH, serial_bh);
         err = request_irq(port->irq, (irq_handler) asm_fast_irq4, INT_SPECIFIC);
         break;
 #endif
-#if defined(CONFIG_FAST_IRQ3)
+#if CONFIG_FAST_IRQ3
     case 3:
         port->intrchar = 0;
         init_bh(SERIAL_BH, serial_bh);
@@ -562,8 +563,9 @@ void INITPROC serial_init(void)
 
     do {
         if (sp->tty != NULL) {
-            printk("%sttyS%d at %x irq %d %s", n++? ", ": "", ttyno,
-               sp->io, sp->irq, serial_type[sp->flags & SERF_TYPE]);
+            printk("%sttyS%d %x %sirq %d %s", n++? ", ": "", ttyno,
+               sp->io, (sp->fast? "fast": ""), sp->irq,
+               serial_type[sp->flags & SERF_TYPE]);
         }
         sp++;
     } while (++ttyno < NR_SERIAL);
