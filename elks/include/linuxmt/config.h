@@ -36,10 +36,6 @@
 #endif
 #define UTS_MACHINE             "ibmpc i8086"
 
-/* Fast serial input handler for arrow keys or fast SLIP on very slow systems */
-#define CONFIG_FAST_IRQ4        1               /* com1 */
-#define CONFIG_FAST_IRQ3        1               /* com2 */
-
 /* temp always enable experimental PS/2 mouse driver for IBM PC */
 #define CONFIG_MOUSE_PS2
 

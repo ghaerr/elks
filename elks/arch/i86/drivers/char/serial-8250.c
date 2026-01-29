@@ -29,8 +29,7 @@ struct serial_info {
     unsigned int  divisor;
     struct tty *  tty;
     int           intrchar; /* used by fast handler for ^C SIGINT processing */
-    int           fast;     /* using CONFIG_FAST_xxx driver */
-    int           pad;      /* round out to 16 bytes for faster addressing of ports[] */
+    int pad1, pad2;         /* round out to 16 bytes for faster addressing of ports[] */
 };
 
 /* flags*/
@@ -43,7 +42,6 @@ struct serial_info {
 #define ST_16750        4
 #define ST_UNKNOWN      15
 
-#define CONSOLE_PORT 0
 
 /* I/O delay settings*/
 #define INB             inb     // use inb_p for 1us delay
@@ -54,14 +52,13 @@ struct serial_info {
 #define DEFAULT_MCR             \
         ((unsigned char) (UART_MCR_DTR | UART_MCR_RTS | UART_MCR_OUT2))
 
-static struct serial_info ports[NR_SERIAL] = {
-{(char *)COM1_PORT, COM1_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,CONFIG_FAST_IRQ4,0},
-{(char *)COM2_PORT, COM2_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,CONFIG_FAST_IRQ3,0},
-{(char *)COM3_PORT, COM3_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,0,0},
-{(char *)COM4_PORT, COM4_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,0,0},
+static struct serial_info ports[MAX_SERIAL] = {
+    {(char *)COM1_PORT, COM1_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,0,0},
+    {(char *)COM2_PORT, COM2_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,0,0},
+    {(char *)COM3_PORT, COM3_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,0,0},
+    {(char *)COM4_PORT, COM4_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,0,0},
 };
 
-static char irq_to_port[16];
 static unsigned int divisors[] = {
     0,                          /*  0 = B0      */
     2304,                       /*  1 = B50     */
@@ -216,24 +213,23 @@ static int rs_write(struct tty *tty)
     return i;
 }
 
-#if CONFIG_FAST_IRQ4
 /*
  * Serial interrupt top half. This top half actually consists of two parts.
  * The first part of the top half of the handler is asm_fast_irq4 in serfast.S,
- * and the function below is the second part of the top half, rs_fast_irq4.
+ * and the function below is the second part of the top half, rs_fast_com1.
  *
  * The first part asm_fast_irq4 is called directly from the IRQ 4 interrupt
  * vector, bypassing the normal kernel stack switch code in _irqit. That code
  * runs with interrupts disabled and saves registers AX,BX,CX,DX,DS, and
  * sets DS to the kernel data segment. The stack segment is not changed,
- * so SS != DS, then it calls the second part rs_fast_irq4 C code below.
+ * so SS != DS, then it calls the second part rs_fast_com1 C code below.
  *
  * NOTE: Since the compiler emits BP addressing for parameters, no parameters can
  * be passed, nor any code written which emits code using SP or BP addressing, as
  * SS is not changed and not guaranteed to be equal to DS.
  * Use 'ia16-elf-objdump -D -r -Mi8086 serial-8250.o' to look at code generated.
  *
- * Thus, the rs_fast_irq4 function below is a specially-coded C top half interrupt
+ * Thus, the rs_fast_com1 function below is a specially-coded C top half interrupt
  * handler, subject to the above limitations, which just reads and queues the
  * UART byte received, with the serial_bh bottom half run after the IRQ 4 EOI.
  * As a result, it should handle speeds up to 38400 baud.
@@ -241,9 +237,8 @@ static int rs_write(struct tty *tty)
  * Incomplete tty signal handling, generates SIGINT when VINTR = ^C.
  * Useful for fast SLIP transfer or arrow key input on slow systems.
  */
-extern void asm_fast_irq4(int irq, struct pt_regs *regs);   /* initial entry point */
 
-void rs_fast_irq4(void)
+void rs_fast_com1(void)
 {
     struct serial_info *sp = &ports[0];
     struct ch_queue *q = &sp->tty->inq;
@@ -267,39 +262,65 @@ void rs_fast_irq4(void)
      */
     //mark_bh(SERIAL_BH);
 }
-#endif
 
-#if CONFIG_FAST_IRQ3
-extern void asm_fast_irq3(int irq, struct pt_regs *regs);   /* initial entry point */
-
-void rs_fast_irq3(void)
+void rs_fast_com2(void)
 {
     struct serial_info *sp = &ports[1];
     struct ch_queue *q = &sp->tty->inq;
     unsigned char c;
 
-    c = INB(sp->io + UART_RX);          /* Read received data */
+    c = INB(sp->io + UART_RX);
     if (q->len < q->size) {
         q->base[q->head] = c;
         if (++q->head >= q->size)
             q->head = 0;
         q->len++;
     }
-    /* unfortunately, can't add more specifics w/o compiler generating BP accesses */
-    if (c == 03)                        /* assumes VINTR = ^C and byte queued anyways */
+    if (c == 03)
         sp->intrchar = c;
-    //mark_bh(SERIAL_BH);               /* see comment in rs_fast_irq4 */
 }
-#endif
 
-#if CONFIG_FAST_IRQ4 || CONFIG_FAST_IRQ3
+void rs_fast_com3(void)
+{
+    struct serial_info *sp = &ports[2];
+    struct ch_queue *q = &sp->tty->inq;
+    unsigned char c;
+
+    c = INB(sp->io + UART_RX);
+    if (q->len < q->size) {
+        q->base[q->head] = c;
+        if (++q->head >= q->size)
+            q->head = 0;
+        q->len++;
+    }
+    if (c == 03)
+        sp->intrchar = c;
+}
+
+void rs_fast_com4(void)
+{
+    struct serial_info *sp = &ports[3];
+    struct ch_queue *q = &sp->tty->inq;
+    unsigned char c;
+
+    c = INB(sp->io + UART_RX);
+    if (q->len < q->size) {
+        q->base[q->head] = c;
+        if (++q->head >= q->size)
+            q->head = 0;
+        q->len++;
+    }
+    if (c == 03)
+        sp->intrchar = c;
+}
+
 /* check for SIGINT and wakeup waiting processes */
 static void pump_port(struct serial_info *sp)
 {
     struct tty *ttyp = sp->tty;
     struct ch_queue *q = &ttyp->inq;
 
-    if (ttyp->usecount && q->len) {
+    if (q->len) {
         if (sp->intrchar) {
             tty_intcheck(ttyp, sp->intrchar);
             sp->intrchar = 0;
@@ -318,15 +339,16 @@ static void pump_port(struct serial_info *sp)
 /* serial interrupt bottom half - check ring buffer and wakeup waiting processes */
 void serial_bh(void)
 {
-#if CONFIG_FAST_IRQ4
-    pump_port(&ports[0]);
-#endif
-#if CONFIG_FAST_IRQ3
-    pump_port(&ports[1]);
-#endif
-}
-#endif
+    struct serial_info *sp;
 
+    for (sp = ports; sp < &ports[NR_SERIAL]; sp++) {
+        if (sp->tty->usecount)
+            pump_port(sp);
+    }
+}
+
+#if UNUSED
+static char irq_to_port[16];
 /*
  * Slower serial input interrupt routine, called from _irqit with passed irq #
  * Reads all FIFO data available per interrupt and can provide serial stats
@@ -341,7 +363,7 @@ void rs_irq(int irq, struct pt_regs *regs)
     if ((status & UART_LSR_DR) == 0)    /* QEMU may interrupt w/no data*/
         return;
 
-#if UNUSED                              /* remove to report data errors */
+#if DEBUG                               /* report data errors */
     if (status & UART_LSR_OE)
         printk("serial: data overrun\n");
     if (status & (UART_LSR_FE|UART_LSR_PE))
@@ -358,6 +380,7 @@ void rs_irq(int irq, struct pt_regs *regs)
     if (q->len)         /* don't wakeup unless chars else EINTR result*/
         wake_up(&q->wait);
 }
+#endif
 
 static void rs_release(struct tty *tty)
 {
@@ -371,10 +394,22 @@ static void rs_release(struct tty *tty)
     }
 }
 
+/* extern ASM entry points for fast serial handlers */
+void asm_fast_com1(int irq, struct pt_regs *regs);
+void asm_fast_com2(int irq, struct pt_regs *regs);
+void asm_fast_com3(int irq, struct pt_regs *regs);
+void asm_fast_com4(int irq, struct pt_regs *regs);
+
+/* array of fast serial handler entry points, indexed by port (0-3) */
+static void (*asm_fast_irq[MAX_SERIAL])(int, struct pt_regs *) = {
+    asm_fast_com1, asm_fast_com2, asm_fast_com3, asm_fast_com4
+};
+
 static int rs_open(struct tty *tty)
 {
-    register struct serial_info *port = &ports[tty->minor - RS_MINOR_OFFSET];
-    int err = 0;
+    int n = tty->minor - RS_MINOR_OFFSET;
+    struct serial_info *port = &ports[n];
+    int err;
 
     debug_tty("SERIAL open %P\n");
 
@@ -385,27 +420,12 @@ static int rs_open(struct tty *tty)
     if (tty->usecount++)
         return 0;
 
-    switch(port->irq) {
-#if CONFIG_FAST_IRQ4
-    case 4:
-        port->intrchar = 0;
-        init_bh(SERIAL_BH, serial_bh);
-        err = request_irq(port->irq, (irq_handler) asm_fast_irq4, INT_SPECIFIC);
-        break;
-#endif
-#if CONFIG_FAST_IRQ3
-    case 3:
-        port->intrchar = 0;
-        init_bh(SERIAL_BH, serial_bh);
-        err = request_irq(port->irq, (irq_handler) asm_fast_irq3, INT_SPECIFIC);
-        break;
-#endif
-    default:
-        err = request_irq(port->irq, rs_irq, INT_GENERIC);
-        break;
-    }
+    err = request_irq(port->irq, (irq_handler) asm_fast_irq[n], INT_SPECIFIC);
     if (err) goto errout;
-    irq_to_port[port->irq] = port - ports;      /* Map irq to this tty # */
+
+    port->intrchar = 0;
+    //init_bh(SERIAL_BH, serial_bh);
+    //irq_to_port[port->irq] = n;       /* Map irq to this tty #, slow handler only */
 
     err = tty_allocq(tty, RSINQ_SIZE, RSOUTQ_SIZE);
     if (err) {
@@ -563,9 +583,8 @@ void INITPROC serial_init(void)
 
     do {
         if (sp->tty != NULL) {
-            printk("%sttyS%d %x %sirq %d %s", n++? ", ": "", ttyno,
-               sp->io, (sp->fast? "fast": ""), sp->irq,
-               serial_type[sp->flags & SERF_TYPE]);
+            printk("%sttyS%d %x irq %d %s", n++? ", ": "", ttyno,
+               sp->io, sp->irq, serial_type[sp->flags & SERF_TYPE]);
         }
         sp++;
     } while (++ttyno < NR_SERIAL);
