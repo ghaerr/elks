@@ -89,7 +89,8 @@ void timer_bh(void)
     /*  Test timer_bh delay message and BH reentrancy when running loop program */
     //for (volatile long i=0; i<30000L; i++);
 
-#if defined(CONFIG_CHAR_DEV_RS) || defined(CONFIG_FAST_IRQ1_NECV25)
+#if (defined(CONFIG_CHAR_DEV_RS) && defined(CONFIG_ARCH_IBMPC)) \
+    || defined(CONFIG_FAST_IRQ1_NECV25)
     /* call serial bottom half every 10ms instead of after every byte received */
     serial_bh();        /* process serial input and call wake_up */
 #endif
