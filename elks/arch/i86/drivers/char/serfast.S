@@ -11,6 +11,8 @@
 	.code16
 	.text
 
+#ifdef CONFIG_ARCH_IBMPC
+
 	.global asm_fast_com1		// entry points
 	.global asm_fast_com2
 	.global asm_fast_com3
@@ -100,6 +102,7 @@ asm_fast_com4:
 	call	rs_fast_com4		// call special 2nd part of top half C handler
 					// which doesn't use any SS/SP/BP addressing
 	jmp     common_return
+#endif
 
 #ifdef CONFIG_FAST_IRQ1_NECV25
 //
