@@ -31,11 +31,9 @@
 #define DISABLE_AUX      0xa7        /* disable aux (mouse) port */
 #define ENABLE_AUX       0xa8        /* enable aux (mouse) port */
 #define GET_CMD_BYTE     0x20        /* read command byte */
-#define ENABLE_MOUSE_IRQ 0x02        /* enable mouse irq 12 */
 
-/* commands using WRITE_CTRLR/write_controller() */
-#define ENABLE_INTS     0x47        /* enable interrupts */
-#define DISABLE_INTS    0x65        /* disable interrupts */
+/* command byte status bits */
+#define ENABLE_MOUSE_IRQ 0x02        /* enable mouse irq 12 */
 
 /* comands using WRITE_MOUSE/write_mouse() */
 #define ENABLE_AUX_DEV  0xf4        /* enable aux device */
@@ -68,17 +66,17 @@ static void poll_aux_status(void)
 static unsigned int read_ccb(void)
 {
     poll_aux_status();
-    outb_p(GET_CMD_BYTE, COMMAND);          /* read command byte */
+    outb_p(GET_CMD_BYTE, COMMAND);      /* read command byte */
     poll_aux_status();
-    return (unsigned int)inb_p(DATA);
+    return inb_p(DATA);
 }
 
 static void write_ccb(unsigned int ccb)
 {
     poll_aux_status();
-    outb_p(WRITE_CTRLR, COMMAND);   /* 0x60 */
+    outb_p(WRITE_CTRLR, COMMAND);       /* 0x60 */
     poll_aux_status();
-    outb_p((unsigned char)ccb, DATA);
+    outb_p(ccb, DATA);
 }
 
 /* write command to mouse */
@@ -86,15 +84,6 @@ static void write_mouse(int cmd)
 {
     poll_aux_status();
     outb_p(WRITE_MOUSE, COMMAND);       /* send command to mouse (aux device) */
-    poll_aux_status();
-    outb_p(cmd, DATA);                  /* command */
-}
-
-/* write command to controller */
-static void write_controller(int cmd)
-{
-    poll_aux_status();
-    outb_p(WRITE_CTRLR, COMMAND);       /* send command to controller */
     poll_aux_status();
     outb_p(cmd, DATA);                  /* command */
 }
@@ -124,7 +113,7 @@ static void ps2_mouse_enable(void)
     write_mouse(ENABLE_AUX_DEV);        /* enable mouse (aux device) */
 
     ccb = read_ccb();
-    ccb |= 0x02;                        /* set IRQ12 enable ONLY */
+    ccb |= ENABLE_MOUSE_IRQ;                        /* set IRQ12 enable ONLY */
     write_ccb(ccb);
 
     poll_aux_status();
