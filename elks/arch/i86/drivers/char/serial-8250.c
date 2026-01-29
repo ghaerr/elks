@@ -417,19 +417,20 @@ static int rs_open(struct tty *tty)
         return -ENXIO;
 
     /* increment use count, don't init if already open*/
-    if (tty->usecount)
+    if (tty->usecount++)
         return 0;
 
     err = request_irq(port->irq, (irq_handler) asm_fast_irq[n], INT_SPECIFIC);
     if (err)
-        return err;
+        goto errout;
     err = tty_allocq(tty, RSINQ_SIZE, RSOUTQ_SIZE);
     if (err) {
         free_irq(port->irq);
+errout:
+        --tty->usecount;
         return err;
     }
 
-    ++tty->usecount;
     port->intrchar = 0;
     //init_bh(SERIAL_BH, serial_bh);
     //irq_to_port[port->irq] = n;       /* Map irq to this tty #, slow handler only */
