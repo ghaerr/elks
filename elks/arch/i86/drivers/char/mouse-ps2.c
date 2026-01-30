@@ -1,7 +1,10 @@
 /*
  * Minimal PS/2 mouse driver for ELKS
  *
- * 23 Jan 2026 Original version by @toncho11, adapted by Greg Haerr
+ * No support for extensions IntelliMouse PS/2 (ImPS/2) and
+ * IntelliMouse Explorer PS/2 (IMEX / Explorer).
+ *
+ * 23 Jan 2026 Original version by Anton Andreev, adapted by Greg Haerr
  */
 
 #include <linuxmt/config.h>
@@ -24,57 +27,68 @@
 #define STATUS          0x64
 #define COMMAND         0x64
 
+/* 8042 status register bits */
+#define OBUF_FULL       0x01        /* output buffer full */
+#define IBUF_FULL       0x02        /* input buffer to device full */
+#define ABUF_FULL       0x20        /* aux (mouse) output buffer full */
+
 /* 8042 commands using outb() */
-#define WRITE_CTRLR     0x60        /* send command to controller */
-#define WRITE_MOUSE     0xd4        /* send command to aux device (mouse) */
+#define SET_CTRL_REG    0x60        /* set control register byte in 8042 */
+#define SEND_AUX_CMD    0xd4        /* send command to aux device (mouse) */
 #define DISABLE_AUX     0xa7        /* disable aux (mouse) port */
 #define ENABLE_AUX      0xa8        /* enable aux (mouse) port */
 
-/* commands using WRITE_CTRLR/write_controller() */
-#define ENABLE_INTS     0x47        /* enable interrupts */
-#define DISABLE_INTS    0x65        /* disable interrupts */
+/* preset control register bit values for set_ctrl_reg() */
+#define ENABLE_INTS     0x47        /* enable mouse & keyboard interrupts, scan conv */
+#define DISABLE_INTS    0x65        /* disable mouse & interrupts, enable keyboard/scan */
 
-/* comands using WRITE_MOUSE/write_mouse() */
-#define ENABLE_AUX_DEV  0xf4        /* enable aux device */
-#define DISABLE_AUX_DEV 0xf5        /* disable aux device */
-
-/* controller status bits */
-#define IBUF_FULL       0x02        /* input buffer to device full */
-#define OBUF_FULL       0x21        /* aux (mouse) output and output buffer full */
+/* aux device (mouse) commands for send_aux_cmd() */
+#define AUX_ENABLE_DEV  0xf4        /* enable aux device */
+#define AUX_DISABLE_DEV 0xf5        /* disable aux device */
 
 static void poll_aux_status(void)
 {
-    int retries = 0;
+    int retries = MAX_RETRIES;
 
-    while ((inb(STATUS) & 0x03) && retries < MAX_RETRIES) {
-        if ((inb_p(STATUS) & OBUF_FULL) == OBUF_FULL)
-            inb_p(DATA);
-        retries++;
-    }
+    do {
+        unsigned char st = inb_p(STATUS);
+
+        /* Drain any pending output byte (kbd or mouse) */
+        if (st & OBUF_FULL) {
+			(void)inb_p(DATA);
+			continue;
+		}
+
+        /* Input buffer clear and no output pending -> ready */
+        if (!(st & IBUF_FULL))
+            return;
+    } while (--retries);
 }
 
-/* write command to mouse */
-static void write_mouse(int cmd)
+/* set 8042 control register bits */
+static void set_ctrl_reg(int cmd)
 {
     poll_aux_status();
-    outb_p(WRITE_MOUSE, COMMAND);       /* send command to mouse (aux device) */
+    outb_p(SET_CTRL_REG, COMMAND);      /* control register byte follows */
     poll_aux_status();
-    outb_p(cmd, DATA);                  /* command */
+    outb_p(cmd, DATA);                  /* control register bits */
+    poll_aux_status();
 }
 
-/* write command to controller */
-static void write_controller(int cmd)
+/* send command to mouse */
+static void send_aux_cmd(int cmd)
 {
     poll_aux_status();
-    outb_p(WRITE_CTRLR, COMMAND);       /* send command to controller */
+    outb_p(SEND_AUX_CMD, COMMAND);      /* command to aux device (mouse) follows */
     poll_aux_status();
     outb_p(cmd, DATA);                  /* command */
+    poll_aux_status();                  /* discard any ACK */
 }
 
 static void ps2_mouse_disable(void)
 {
-    write_controller(DISABLE_INTS);     /* disable controller interrupts */
-    poll_aux_status();
+    send_aux_cmd(AUX_DISABLE_DEV);      /* stop mouse packets */
+    set_ctrl_reg(DISABLE_INTS);         /* disable mouse interrupts */
     outb_p(DISABLE_AUX, COMMAND);       /* disable aux (mouse) port */
     poll_aux_status();
 }
@@ -83,9 +97,8 @@ static void ps2_mouse_enable(void)
 {
     poll_aux_status();
     outb_p(ENABLE_AUX, COMMAND);        /* enable aux (mouse) port */
-    write_mouse(ENABLE_AUX_DEV);        /* enable mouse (aux device) */
-    write_controller(ENABLE_INTS);      /* enable controller interrupts */
-    poll_aux_status();
+    send_aux_cmd(AUX_ENABLE_DEV);       /* enable mouse (aux device) */
+    set_ctrl_reg(ENABLE_INTS);          /* enable mouse interrupts */
 }
 
 /* IRQ handler */
@@ -95,7 +108,7 @@ static void ps2_irq(int irq, struct pt_regs *regs)
     unsigned char c;
 
     /* Read all available mouse bytes */
-    while ((inb(STATUS) & OBUF_FULL) == OBUF_FULL) {
+    while ((inb(STATUS) & (OBUF_FULL | ABUF_FULL)) == (OBUF_FULL | ABUF_FULL)) {
         c = inb(DATA);
         chq_addch_nowakeup(q, c);
     }
