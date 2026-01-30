@@ -72,6 +72,7 @@ static void set_ctrl_reg(int cmd)
     outb_p(SET_CTRL_REG, COMMAND);      /* control register byte follows */
     poll_aux_status();
     outb_p(cmd, DATA);                  /* control register bits */
+    poll_aux_status();
 }
 
 /* send command to mouse */
@@ -86,10 +87,8 @@ static void send_aux_cmd(int cmd)
 
 static void ps2_mouse_disable(void)
 {
-    poll_aux_status();
     send_aux_cmd(AUX_DISABLE_DEV);      /* stop mouse packets */
     set_ctrl_reg(DISABLE_INTS);         /* disable mouse interrupts */
-    poll_aux_status();
     outb_p(DISABLE_AUX, COMMAND);       /* disable aux (mouse) port */
     poll_aux_status();
 }
@@ -100,7 +99,6 @@ static void ps2_mouse_enable(void)
     outb_p(ENABLE_AUX, COMMAND);        /* enable aux (mouse) port */
     send_aux_cmd(AUX_ENABLE_DEV);       /* enable mouse (aux device) */
     set_ctrl_reg(ENABLE_INTS);          /* enable mouse interrupts */
-    poll_aux_status();
 }
 
 /* IRQ handler */
