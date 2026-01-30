@@ -1,7 +1,10 @@
 /*
  * Minimal PS/2 mouse driver for ELKS
  *
- * 23 Jan 2026 Original version by @toncho11, adapted by Greg Haerr
+ * No support for extensions IntelliMouse PS/2 (ImPS/2) and
+ * IntelliMouse Explorer PS/2 (IMEX / Explorer).
+ *
+ * 23 Jan 2026 Original version by Anton Andreev, adapted by Greg Haerr
  */
 
 #include <linuxmt/config.h>
