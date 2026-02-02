@@ -93,15 +93,15 @@ struct tty_ops {
     void (*conout) (dev_t, int);
 };
 
-struct tty {
-    struct tty_ops *ops;
+struct tty {            /* NOTE: first member used in fastser.S driver */
+    struct ch_queue inq, outq;
     unsigned short minor;
     unsigned int flags;
-    struct ch_queue inq, outq;
-    struct termios termios;
     unsigned char ostate;
     unsigned char usecount;
     pid_t pgrp;
+    struct tty_ops *ops;
+    struct termios termios;
 };
 
 extern struct tty ttys[];

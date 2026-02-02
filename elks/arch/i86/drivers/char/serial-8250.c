@@ -20,15 +20,15 @@
 #include <arch/serial-8250.h>
 #include <arch/ports.h>
 
-struct serial_info {
-             char *io;
+struct serial_info {        /* NOTE: first three members used in fastser.S driver */
+    struct tty *  tty;      /* 0 */
+    int           intrchar; /* 2 ^C SIGINT processing */
+    unsigned int  io;       /* 4 */
     unsigned char irq;
     unsigned char flags;
     unsigned char lcr;
     unsigned char mcr;
     unsigned int  divisor;
-    struct tty *  tty;
-    int           intrchar; /* used by fast handler for ^C SIGINT processing */
     int pad1, pad2;         /* round out to 16 bytes for faster addressing of ports[] */
 };
 
@@ -42,7 +42,6 @@ struct serial_info {
 #define ST_16750        4
 #define ST_UNKNOWN      15
 
-
 /* I/O delay settings*/
 #define INB             inb     // use inb_p for 1us delay
 #define OUTB            outb    // use outb_p for 1us delay
@@ -52,11 +51,11 @@ struct serial_info {
 #define DEFAULT_MCR             \
         ((unsigned char) (UART_MCR_DTR | UART_MCR_RTS | UART_MCR_OUT2))
 
-static struct serial_info ports[MAX_SERIAL] = {
-    {(char *)COM1_PORT, COM1_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,0,0},
-    {(char *)COM2_PORT, COM2_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,0,0},
-    {(char *)COM3_PORT, COM3_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,0,0},
-    {(char *)COM4_PORT, COM4_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, NULL, 0,0,0},
+struct serial_info ports[MAX_SERIAL] = {
+    {NULL, 0, COM1_PORT, COM1_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, 0,0},
+    {NULL, 0, COM2_PORT, COM2_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, 0,0},
+    {NULL, 0, COM3_PORT, COM3_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, 0,0},
+    {NULL, 0, COM4_PORT, COM4_IRQ, 0, DEFAULT_LCR, DEFAULT_MCR, 0, 0,0},
 };
 
 static unsigned int divisors[] = {
@@ -213,12 +212,15 @@ static int rs_write(struct tty *tty)
     return i;
 }
 
+#if UNUSED
 /*
+ * NOTE: This routine is no longer used, instead it was rewritten in serfast.S.
+ *
  * Serial interrupt top half. This top half actually consists of two parts.
- * The first part of the top half of the handler is asm_fast_irq4 in serfast.S,
+ * The first part of the top half of the handler is asm_fast_com1 in serfast.S,
  * and the function below is the second part of the top half, rs_fast_com1.
  *
- * The first part asm_fast_irq4 is called directly from the IRQ 4 interrupt
+ * The first part asm_fast_com1 is called directly from the IRQ 4 interrupt
  * vector, bypassing the normal kernel stack switch code in _irqit. That code
  * runs with interrupts disabled and saves registers AX,BX,CX,DX,DS, and
  * sets DS to the kernel data segment. The stack segment is not changed,
@@ -262,57 +264,7 @@ void rs_fast_com1(void)
      */
     //mark_bh(SERIAL_BH);
 }
-
-void rs_fast_com2(void)
-{
-    struct serial_info *sp = &ports[1];
-    struct ch_queue *q = &sp->tty->inq;
-    unsigned char c;
-
-    c = INB(sp->io + UART_RX);
-    if (q->len < q->size) {
-        q->base[q->head] = c;
-        if (++q->head >= q->size)
-            q->head = 0;
-        q->len++;
-    }
-    if (c == 03)
-        sp->intrchar = c;
-}
-
-void rs_fast_com3(void)
-{
-    struct serial_info *sp = &ports[2];
-    struct ch_queue *q = &sp->tty->inq;
-    unsigned char c;
-
-    c = INB(sp->io + UART_RX);
-    if (q->len < q->size) {
-        q->base[q->head] = c;
-        if (++q->head >= q->size)
-            q->head = 0;
-        q->len++;
-    }
-    if (c == 03)
-        sp->intrchar = c;
-}
-
-void rs_fast_com4(void)
-{
-    struct serial_info *sp = &ports[3];
-    struct ch_queue *q = &sp->tty->inq;
-    unsigned char c;
-
-    c = INB(sp->io + UART_RX);
-    if (q->len < q->size) {
-        q->base[q->head] = c;
-        if (++q->head >= q->size)
-            q->head = 0;
-        q->len++;
-    }
-    if (c == 03)
-        sp->intrchar = c;
-}
+#endif
 
 /* check for SIGINT and wakeup waiting processes */
 static void pump_port(struct serial_info *sp)
