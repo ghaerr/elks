@@ -3,11 +3,13 @@
 
 /* chqueue.h (C) 1997 Chad Page, rewritten Greg Haerr Oct 2020 */
 
-struct ch_queue {
-    unsigned char	*base;
-    int 		size;		/* doesn't have to be power of two*/
-    int			len, head, tail;
-    struct wait_queue	wait;
+struct ch_queue {               /* NOTE: members used in fastser.S driver */
+    int                 len;    /* 0 */
+    int                 size;   /* 2 doesn't have to be power of two */
+    int                 head;   /* 4 */
+    int                 tail;
+    unsigned char       *base;  /* 8 */
+    struct wait_queue   wait;
 };
 
 extern void chq_init(register struct ch_queue *,unsigned char *,int);
