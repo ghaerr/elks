@@ -23,6 +23,7 @@
 #       lua             OpenWatcom      Lua 5.5 interpreter
 #       bobcat          OpenWatcom      Bobcat web browser (Lynx fork)
 #       kilomacs        OpenWatcom      Kilo-based editor with Emacs-style keybindings
+#       elksmoria       OpenWatcom      Roguelike game
 #
 # Some projects may require prerequisites.
 # To only build the C86 toolchain, use './buildext.sh owc_libc c86_toolchain'
@@ -258,6 +259,20 @@ kilomacs()
     echo "Kilomacs build complete"
 }
 
+elksmoria()
+{
+    echo "Building ELKSmoria..."
+    cd $TOPDIR/extapps
+    if [ ! -d elksmoria ] ; then
+        git clone https://github.com/tyama501/ELKSmoria.git elksmoria
+    fi
+    cd elksmoria
+    git pull
+    make clean
+    make
+    echo "ELKSmoria build complete"
+}
+
 # build all extapps repos
 make_all()
 {
@@ -275,6 +290,7 @@ make_all()
         lua
         bobcat
         kilomacs
+        elksmoria
     fi
 }
 
