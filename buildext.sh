@@ -17,7 +17,7 @@
 #       owc_elkscmd     OpenWatcom      Some elkscmd/ programs compiled by OWC
 #       c86_toolchain   OpenWatcom/C86  C86 Toolchain, header files and examples
 #       c86_elkscmd     C86             Some elkscmd/ programs compiled by C86
-#       doom            OpenWatcom      Doom for ELKS
+#       elksdoom        OpenWatcom      Doom for ELKS
 #       ngircd_elks     OpenWatcom      IRC daemon for ELKS
 #       elks_viewer     OpenWatcom      Image viewers (BMP, PPM, JPG) for ELKS
 #       lua             OpenWatcom      Lua 5.5 interpreter
@@ -158,7 +158,7 @@ dflat()
     echo "D-Flat build complete"
 }
 
-doom()
+elksdoom()
 {
     echo "Building Doom..."
     cd $TOPDIR/extapps
@@ -284,7 +284,7 @@ make_all()
         owc_elkscmd
         c86_toolchain
         c86_elkscmd
-        doom
+        elksdoom
         ngircd_elks
         elks_viewer
         lua

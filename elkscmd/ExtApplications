@@ -51,9 +51,9 @@ dflat/memopad                                       :dflat              :2880k
 ../elkscmd/gui/paint.c86                            :c86                :2880k
 # external OWC builds
 elkirc/elkirc                                       :elkirc             :2880k
-elkirc/man/elkirc.1 ::lib/man1/elkirc.1             :elkirc             :2880k
-elksdoom/elksdoom.os2                               :elksdoom
-elksdoom/elksdoom.wad ::root/elksdoom.wad           :elksdoom
+elkirc/man/elkirc.1     ::lib/man1/elkirc.1         :elkirc             :2880k
+elksdoom/elksdoom       ::bin/doom                  :elksdoom
+elksdoom/elksdoom.wad   ::lib/elksdoom.wad          :elksdoom
 ngircd-elks/ngircd.os2                              :ngircd
 ngircd-elks/ngircd.conf ::etc/ngircd.conf           :ngircd
 elks-viewer/jpgview                                 :elksviewer
