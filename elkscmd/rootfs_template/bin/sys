@@ -128,7 +128,6 @@ copy_etc_files()
 }
 
 # sys script starts here
-echo "Installing/updating ELKS on $1"
 MNT=/tmp/mnt
 small=0
 arg=-s
@@ -136,6 +135,10 @@ if test "$1" = "-M"; then shift; arg="-M -s"; fi
 if test "$1" = "-F"; then shift; arg="-F -s"; fi
 if test "$1" = "-3"; then shift; small=1; fi
 if test "$#" -lt 1; then usage; fi
+
+echo "Installing/updating `grep ELKS /etc/issue` on $1. Continue (y/n)?"
+read confirm
+if test "$confirm" != "y"; then exit 0; fi;
 
 # returns fstype, 1=MINIX, 2=FAT
 set +e
