@@ -1,0 +1,49 @@
+# Bochs configuration file for ELKS
+# Use by running: ./bochs.sh or bochs -qf bochs.rc
+#
+
+# filename of ROM images
+romimage: file="$BXSHARE/BIOS-bochs-latest"
+vgaromimage: file="$BXSHARE/VGABIOS-lgpl-latest.bin"
+
+# default disk image is 2880k floppy. Change below for other sizes:
+#floppya: 360k=Unix360.img, status=inserted
+#floppya: 1_44=image/fd1440-minix.img, status=inserted
+#floppya: 2_88=image/fd2880-minix.img, status=inserted
+floppya: 2_88=image/fd2880.img, status=inserted
+
+# hard disk
+ata0: enabled=1, ioaddr1=0x1f0, ioaddr2=0x3f0, irq=14
+#ata0-master: type=disk, path="hd32-minix.img", mode=flat, cylinders=63, heads=16, spt=63
+
+# choose the boot disk.
+boot: a
+
+# default 1MB memory
+megs: 1
+
+# defines the parameters of the clock inside Bochs
+clock: sync=realtime, time0=938581955   # Wed Sep 29 07:12:35 1999
+
+# use term to run in existing terminal window, otherwise sdl2 for new (graphical) window
+display_library: sdl2
+#display_library: term
+
+# default PS/2 mouse emulation
+# (must set 'export MOUSE_TYPE=ps2' from shell or in /etc/profile on ELKS)
+# then use CTRL-ALT to enable/disable mouse emulation when running bochs
+#mouse: enabled=1, type=serial, toggle=ctrl+alt
+mouse: enabled=1, type=ps2, toggle=ctrl+alt
+
+# start with mouse disabled
+mouse: enabled=0
+
+#com1: enabled=1, mode=term, dev=/dev/ttys001
+#com1: enabled=1, mode=mouse
+
+# where do we send log messages?
+#log: bochsout.txt
+panic: action=ask
+error: action=report
+info: action=report
+#debug: action=report
