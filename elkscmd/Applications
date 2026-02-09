@@ -185,15 +185,15 @@ tui/ttyclock                    :tui            :360c   :1200k
 tui/ttypong                     :tui                            :1440k
 tui/tetris                      :tui            :360c
 tui/invaders                    :tui                    :1232k  :1440k
-gui/paint                           :gui                        :1440k
-gui/images/cls.bmp  ::lib/cls.bmp   :gui                        :1440k
-gui/images/save.bmp ::lib/save.bmp  :gui                        :1440k
-gui/images/quit.bmp ::lib/quit.bmp  :gui                        :1440k
-gui/images/paint.bmp ::lib/paint.bmp  :gui                        :1440k
-gui/images/fill.bmp ::lib/fill.bmp  :gui                        :1440k
-gui/images/brush.bmp ::lib/brush.bmp  :gui                      :1440k
-gui/images/circle.bmp ::lib/circle.bmp  :gui                      :1440k
-gui/images/rectangle.bmp ::lib/rectangle.bmp  :gui                      :1440k
+gui/paint                                    :gui               :1440k
+gui/images/cls.bmp  ::lib/paint/cls.bmp      :gui               :1440k
+gui/images/save.bmp ::lib/paint/save.bmp     :gui               :1440k
+gui/images/quit.bmp ::lib/paint/quit.bmp     :gui               :1440k
+gui/images/paint.bmp ::lib/paint/paint.bmp   :gui               :1440k
+gui/images/fill.bmp ::lib/paint/fill.bmp     :gui               :1440k
+gui/images/brush.bmp ::lib/paint/brush.bmp   :gui               :1440k
+gui/images/circle.bmp ::lib/paint/circle.bmp :gui               :1440k
+gui/images/rectangle.bmp ::lib/paint/rectangle.bmp :gui         :1440k
 busyelks/busyelks               :busyelks                                   :2880k
 ktcp/ktcp                       :net
 inet/arp                        :net

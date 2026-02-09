@@ -87,10 +87,6 @@ ifdef CONFIG_APP_TUI
 	TAGS += :tui|
 endif
 
-ifdef CONFIG_APP_NANOX
-	TAGS += :nanox|
-endif
-
 ifdef CONFIG_APP_BASIC
 	TAGS += :basic|
 endif

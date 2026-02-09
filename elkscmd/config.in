@@ -25,7 +25,6 @@ mainmenu_option next_comment
 		busyelks 'minix3'		CONFIG_APP_MINIX3		y
 		busyelks 'miscutils'	CONFIG_APP_MISC_UTILS	y
 		bool 'Text UI'			CONFIG_APP_TUI  		y
-		bool 'nano-X'			CONFIG_APP_NANOX		y
 		bool 'BASIC'			CONFIG_APP_BASIC		y
 		bool 'screen'     		CONFIG_APP_SCREEN       y
 		bool 'cron'           	CONFIG_APP_CRON        	y

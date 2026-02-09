@@ -45,7 +45,7 @@ OBJS = $(SRCS:.c=.o8j)
 
 ##### End of standardized section #####
 
-DEFINES +=
+DEFINES += -DDRIVER=1
 LOCALFLAGS =
 
 BINDIR = .
