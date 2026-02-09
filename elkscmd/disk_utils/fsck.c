@@ -1003,11 +1003,12 @@ int main(int argc, char ** argv)
 		printf(	"----------------------------\n"
 			"FILE SYSTEM HAS BEEN CHANGED\n"
 			"----------------------------\n");
-		for (count=0 ; count<3 ; count++)
-			sync();
 	}
 	else if (repair)
 		write_super_block();
+
+	for (count=0 ; count<3 ; count++)
+		sync();
 
 	if (repair && !automatic)
 		tcsetattr(0,TCSANOW,&termios);
