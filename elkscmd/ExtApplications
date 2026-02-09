@@ -54,8 +54,8 @@ elkirc/elkirc                                       :elkirc             :2880k
 elkirc/man/elkirc.1     ::lib/man1/elkirc.1         :elkirc             :2880k
 elksdoom/elksdoom       ::bin/doom                  :elksdoom
 elksdoom/elksdoom.wad   ::lib/elksdoom.wad          :elksdoom
-ngircd-elks/ngircd.os2                              :ngircd
-ngircd-elks/ngircd.conf ::etc/ngircd.conf           :ngircd
+ngircd-elks/ngircd.os2  ::bin/ngircd                :ngircd
+ngircd-elks/ngircd.conf ::etc/ngircd.cnf            :ngircd
 elks-viewer/jpgview                                 :elksviewer
 elks-viewer/ppmview                                 :elksviewer
 elks-viewer/bmpview                                 :elksviewer
