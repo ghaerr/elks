@@ -7,7 +7,7 @@
 
 #define PALETTE_WIDTH 148
 
-#define LIBPATH     "/lib/"     // path to images
+#define LIBPATH     "/lib/paint/"     // path to images
 
 // Boolean Data Type
 typedef enum boolean_e

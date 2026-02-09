@@ -37,6 +37,7 @@ OBJS = $(SRCS:.c=.obj)
 ############# End of Standard Section ##############
 
 BINDIR = .
+DEFINES += -DDRIVER=1
 LOCALFLAGS =
 PROG = $(BINDIR)/paint.os2
 SRCS = app.c gui.c input.c render.c event.c mouse.c graphics.c drawbmp.c cursor.c
