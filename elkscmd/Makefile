@@ -14,7 +14,6 @@ include $(BASEDIR)/Makefile-rules
 
 # All subdirectories to build & clean
 
-# unused commands but working compilations: nano-X nano levee
 IA16DIRS =       \
 	lib         \
 	advent      \
