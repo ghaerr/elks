@@ -32,19 +32,19 @@ static void noinstrument _print_stack_line(int level, int **addr, int *fn,
 {
     int j = 0;
 
-    printf("%4d: %04x =>", level, (int)addr);
+    fprintf(stderr, "%4d: %04x =>", level, (int)addr);
     do {
         if ((j == 0 && !(flag & BP_PUSHED))
          || (j == 1 && !(flag & DI_PUSHED))
          || (j == 2 && !(flag & SI_PUSHED)))
-            printf("     ");
-        else printf(" %04x", (int)*addr++);
+            fprintf(stderr, "     ");
+        else fprintf(stderr, " %04x", (int)*addr++);
     } while (++j < STACKCOLS);
-    printf(" (%04x)", (int)fn);
-    printf(" %s", sym_text_symbol(fn, (size_t)fn - (size_t)fnstart));
+    fprintf(stderr, " (%04x)", (int)fn);
+    fprintf(stderr, " %s", sym_text_symbol(fn, (size_t)fn - (size_t)fnstart));
     if (!(flag & BP_PUSHED))
-        printf("*");
-    printf("\n");
+        fprintf(stderr, "*");
+    fprintf(stderr, "\n");
 }
 
 /* display call stack, arg1 ignored but displayed for testing */
@@ -56,7 +56,7 @@ void noinstrument _print_stack(int arg1)
     int i = 0;
 
     sym_read_exe_symbols(__program_filename);
-    printf("Level Addr    BP   DI   SI   Ret  Arg  Arg2 Arg3 Arg4\n"
+    fprintf(stderr, "Level Addr    BP   DI   SI   Ret  Arg  Arg2 Arg3 Arg4\n"
            "~~~~~ ~~~~    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
     do {
         int *fnstart = _get_fn_start_address(fn);
