@@ -107,7 +107,7 @@ void noinstrument __cyg_profile_func_enter_simple(void)
     fprintf(stderr, ">%s, from %s %d/%u SP %x %lk", sym_text_symbol(calling_fn, 0),
         callsite, stack_used, max_stack, getsp(), get_ptime());
     fputc('\n', stderr);
-    save_calling_fn[count] = calling_fn;
+    save_calling_fn[count & 63] = calling_fn;
     if (ftrace & 2) _print_stack(0);
     ++count;
 }
