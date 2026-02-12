@@ -45,6 +45,10 @@ $(BUILDDIR)/.binutils.src: $(DISTDIR)/$(BINUTILS_DIST).tar.gz
 	cd $(BUILDDIR) && tar -xzf $(DISTDIR)/$(BINUTILS_DIST).tar.gz
 	rm -rf $(BUILDDIR)/binutils-src
 	cd $(BUILDDIR) && mv $(BINUTILS_DIST) binutils-src
+	case `uname -s` in Darwin) \
+		cd $(BUILDDIR)/binutils-src/zlib && \
+	    sed -i.bak 's/defined(MACOS) || defined(TARGET_OS_MAC)/defined(MACOS)/' zutil.h && \
+	    rm -f zutil.h.bak ;; esac
 	touch $(BUILDDIR)/.binutils.src
 
 $(BUILDDIR)/.binutils.build: $(BUILDDIR)/.binutils.src
@@ -130,12 +134,30 @@ $(BUILDDIR)/.gcc.src: $(DISTDIR)/$(GCC_DIST).tar.gz \
 	cd $(BUILDDIR)/gcc-src && ln -s $(MPFR_DIST) mpfr
 	cd $(BUILDDIR)/gcc-src && tar -xzf $(DISTDIR)/$(MPC_DIST).tar.gz
 	cd $(BUILDDIR)/gcc-src && ln -s $(MPC_DIST) mpc
+	case `uname -s` in Darwin) \
+		cd $(BUILDDIR)/gcc-src/zlib && \
+	    sed -i.bak 's/defined(MACOS) || defined(TARGET_OS_MAC)/defined(MACOS)/' zutil.h && \
+	    rm -f zutil.h.bak ;; esac
+	cd $(BUILDDIR)/gcc-src/gcc && \
+	    sed -i.bak 's/heapb->min->compare (heapa->min)/heapb->m_min->compare (heapa->m_min)/' fibonacci_heap.h && \
+	    rm -f fibonacci_heap.h.bak
+	case `uname -s`-`uname -m` in Darwin-arm64) \
+		cd $(BUILDDIR)/gcc-src/gcc/config && \
+	    sed -i.bak 's/aligned (4096)/aligned (16384)/' host-darwin.c && \
+	    rm -f host-darwin.c.bak && \
+		cd $(BUILDDIR)/gcc-src/gcc && \
+	    awk '/i\[34567\]86-\*-darwin\* \| x86_64-\*-darwin\*\)/{print "  aarch64-*-darwin* | arm-*-darwin*)"; print "    out_host_hook_obj=\"$${out_host_hook_obj} host-aarch64-darwin.o\""; print "    host_xmake_file=\"$${host_xmake_file} aarch64/x-darwin\""; print "    ;;"} {print}' config.host > config.host.tmp && \
+	    mv config.host.tmp config.host && \
+		printf 'host-aarch64-darwin.o : $$(srcdir)/config/aarch64/host-aarch64-darwin.c\n\t$$(COMPILE) $$<\n\t$$(POSTCOMPILE)\n' \
+		    > $(BUILDDIR)/gcc-src/gcc/config/aarch64/x-darwin && \
+		printf '/* aarch64-darwin host-specific hook definitions. */\n#include "config.h"\n#include "system.h"\n#include "coretypes.h"\n#include "hosthooks.h"\n#include "hosthooks-def.h"\n#include "config/host-darwin.h"\nconst struct host_hooks host_hooks = HOST_HOOKS_INITIALIZER;\n' \
+		    > $(BUILDDIR)/gcc-src/gcc/config/aarch64/host-aarch64-darwin.c ;; esac
 	touch $(BUILDDIR)/.gcc.src
 
 $(BUILDDIR)/.gcc.build: $(BUILDDIR)/.gcc.src $(BUILDDIR)/.binutils.build
 	cd $(BUILDDIR) && rm -rf gcc-build
 	mkdir $(BUILDDIR)/gcc-build
-	cd $(BUILDDIR)/gcc-build && ../gcc-src/configure --target=ia16-elf --prefix="$(CROSSDIR)" --without-headers --enable-languages=c --disable-libssp --without-isl
+	cd $(BUILDDIR)/gcc-build && LC_ALL=C ../gcc-src/configure --target=ia16-elf --prefix="$(CROSSDIR)" --without-headers --enable-languages=c --disable-libssp --without-isl --disable-nls
 	# If there are any obsolete multilib directories (which are no longer
 	# used) in the installation directory, remove them, so that they do
 	# not clutter up the installation directory.  This is a bit of a hack.
@@ -145,7 +167,7 @@ $(BUILDDIR)/.gcc.build: $(BUILDDIR)/.gcc.src $(BUILDDIR)/.binutils.build
 	       $(CROSSDIR)/lib/gcc/ia16-elf/6.3.0/regparmcall/size \
 	       $(CROSSDIR)/lib/gcc/ia16-elf/6.3.0/regparmcall/any_186/size
 	# Now build.
-	$(MAKE) -C $(BUILDDIR)/gcc-build $(PARALLEL)
+	LC_ALL=C $(MAKE) -C $(BUILDDIR)/gcc-build $(PARALLEL)
 	touch $(BUILDDIR)/.gcc.build
 
 $(CROSSDIR)/.gcc.install: $(BUILDDIR)/.gcc.build
