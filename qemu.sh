@@ -130,7 +130,7 @@ ACCEL_V9="-accel tcg,one-insn-per-tb=on"
 ACCEL_HVF="-accel hvf"
 
 ACCEL=$ACCEL_SSTP
-if [[ `$QEMU -version` =~ "version 9" ]]; then
+if [[ `$QEMU -version` =~ "version 9" || `$QEMU -version` =~ "version 10" ]]; then
      ACCEL=$ACCEL_V9
 fi
 if [[ $QEMU =~ "x86_64" && $UNAME =~ "Darwin" && $UNAME =~ "x86_64" ]]; then
