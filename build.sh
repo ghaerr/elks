@@ -1,10 +1,20 @@
 #!/usr/bin/env bash
 
-# This build script is called in main.yml by GitHub Continuous Integration
-# Full build (including the cross tool chain)
-
-# Arguments:
-#   - 'auto' : continuous integration context
+# ELKS System Builder
+# This build script is also called in main.yml for GitHub Continuous Integration
+#
+# Usage: ./build.sh [auto [[ext] [[[allimages]]]]]
+#   <no args>:  user build: build cross-compiler, menuconfig kernel and standard apps
+#   auto        github CI build:: just IBM PC, 8018X, NECV25 kernel and standard apps
+#   ext         also build external apps (requires OpenWatcom C installed)
+#   allimages   also build all floppy and HD disk images
+#
+# After building the system once, the following can be used to rebuild the system:
+#   $ make clean
+#   $ make
+#   $ ./buildext.sh all     # optionally build specified external apps (OpenWatcom reqd)
+#   $ ./qemu.sh
+#
 set -e
 
 SCRIPTDIR="$(dirname "$0")"
@@ -63,12 +73,14 @@ if [ "$1" != "auto" ]; then
 echo "Building all..."
 make -j1 all || clean_exit 5
 
-echo "Building external applications..."
-./buildext.sh all || clean_exit 51
+if [ "$2" = "ext" ]; then
+    echo "Building external applications..."
+    ./buildext.sh all || clean_exit 51
+fi
 
 # Possibly build all images
 
-if [ "$2" = "allimages" ]; then
+if [ "$3" = "allimages" ]; then
 	echo "Building FD images..."
 	cd image
 	make -j1 images-minix images-fat || clean_exit 6
