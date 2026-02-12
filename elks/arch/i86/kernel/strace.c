@@ -25,7 +25,7 @@ void check_ustack(void)
 
     if (sp < brk) {
         printk("(%P)STACK OVERFLOW by %u\n", brk - sp);
-        printk("curbreak %u, SP %u\n", current->t_endbrk, current->t_regs.sp);
+        printk("CURBREAK %x, SP %x\n", brk, sp);
         do_exit(SIGSEGV);
     }
     if (sp < stacklow) {
@@ -33,7 +33,7 @@ void check_ustack(void)
         printk("(%P)STACK USING %u UNUSED HEAP\n", stacklow - sp);
     }
     if (sp > current->t_begstack) {
-        printk("(%P)STACK UNDERFLOW\n");
+        printk("(%P)STACK UNDERFLOW: SP %x BEGSTACK %x\n", sp, current->t_begstack);
         do_exit(SIGSEGV);
     }
 }

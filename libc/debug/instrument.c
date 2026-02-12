@@ -14,10 +14,19 @@
 #include "debug/instrument.h"
 #include "debug/syms.h"
 
+#define getsp() __extension__ ({        \
+        unsigned int _v;                \
+        asm volatile ("mov %%sp,%%ax"   \
+            :"=a" (_v)                  \
+            : /* no input */            \
+        );                              \
+        _v; })
+
 static size_t ftrace;
 static size_t start_sp;
 static size_t max_stack;
 static int count;
+static int *save_calling_fn[64];
 
 /* runs before main and rewrites argc/argv on stack if --ftrace found */
 #pragma GCC diagnostic ignored "-Wprio-ctor-dtor"
@@ -25,16 +34,21 @@ static noinstrument CONSTRUCTOR(ftrace_checkargs, _INIT_PRI_FTRACE);
 static noinstrument void ftrace_checkargs(void)
 {
     char **avp = __argv + 1;
+    char *p;
     int fd;
 
-    ftrace = (size_t)getenv("FTRACE");
-    if ((*avp && !strcmp(*avp, "--ftrace"))) {
+    if (*avp && !strncmp("--ftrace", *avp, 8)) {
+        p = *avp + 8;
         while (*avp) {
             *avp = *(avp + 1);
             avp++;
         }
         __argc--;
-        ftrace = 1;
+    } else
+        p = getenv("FTRACE");
+    if (p) {
+        if (*p) ftrace = *p - '0';
+        else ftrace = 1;
     }
     if (ftrace) {
         fd = open(_PATH_CONSOLE, O_WRONLY);
@@ -90,16 +104,23 @@ void noinstrument __cyg_profile_func_enter_simple(void)
     fprintf(stderr, "(%d)", getpid());
     for (i=0; i<count; i++)
        fputc('|', stderr);
-    fprintf(stderr, ">%s, from %s %d/%u %lk", sym_text_symbol(calling_fn, 0),
-        callsite, stack_used, max_stack, get_ptime());
+    fprintf(stderr, ">%s, from %s %d/%u SP %x %lk", sym_text_symbol(calling_fn, 0),
+        callsite, stack_used, max_stack, getsp(), get_ptime());
     fputc('\n', stderr);
+    save_calling_fn[count & 63] = calling_fn;
+    if (ftrace & 2) _print_stack(0);
     ++count;
 }
 
 void noinstrument __cyg_profile_func_exit_simple(void)
 {
-    if (ftrace)
-        --count;
+    if (ftrace) {
+        int *calling_fn = save_calling_fn[--count];
+        fprintf(stderr, "(%d)", getpid());
+        for (int i=0; i<count; i++)
+            fputc('|', stderr);
+        fprintf(stderr, "<%s EXIT SP %x\n", sym_text_symbol(calling_fn, 0), getsp());
+    }
 }
 
 #if UNUSED
