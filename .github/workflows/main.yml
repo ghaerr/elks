@@ -53,7 +53,7 @@ jobs:
             echo $PATH
 
       - name: build
-        run: ./build.sh auto allimages
+        run: ./build.sh auto ext allimages
 
       - name: upload
         uses: actions/upload-artifact@v4
