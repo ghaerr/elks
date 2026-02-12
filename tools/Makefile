@@ -49,6 +49,9 @@ $(BUILDDIR)/.binutils.src: $(DISTDIR)/$(BINUTILS_DIST).tar.gz
 		cd $(BUILDDIR)/binutils-src/zlib && \
 	    sed -i.bak 's/defined(MACOS) || defined(TARGET_OS_MAC)/defined(MACOS)/' zutil.h && \
 	    rm -f zutil.h.bak ;; esac
+	cd $(BUILDDIR)/binutils-src/bfd && \
+	    sed -i.bak 's/development=.*/development=false/' development.sh && \
+	    rm -f development.sh.bak
 	touch $(BUILDDIR)/.binutils.src
 
 $(BUILDDIR)/.binutils.build: $(BUILDDIR)/.binutils.src
