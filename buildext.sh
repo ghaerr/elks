@@ -20,6 +20,7 @@
 #       elksdoom        OpenWatcom      Doom for ELKS
 #       ngircd_elks     OpenWatcom      IRC daemon for ELKS
 #       elks_viewer     OpenWatcom      Image viewers (BMP, PPM, JPG) for ELKS
+#       gzip            OpenWatcom      gzip compression utility
 #       lua             OpenWatcom      Lua 5.5 interpreter
 #       bobcat          OpenWatcom      Bobcat web browser (Lynx fork)
 #       kilomacs        OpenWatcom      Kilo-based editor with Emacs-style keybindings
@@ -216,6 +217,20 @@ elks_viewer()
     echo "elks-viewer build complete"
 }
 
+gzip()
+{
+    echo "Building gzip..."
+    cd $TOPDIR/extapps
+    if [ ! -d zlib ] ; then
+        git clone https://github.com/rafael2k/zlib zlib
+    fi
+    cd zlib
+    git pull
+    make -f elks/Makefile.elks clean
+    make -f elks/Makefile.elks
+    echo "gzip build complete"
+}
+
 lua()
 {
     echo "Building Lua 5.5..."
@@ -287,6 +302,7 @@ make_all()
         elksdoom
         ngircd_elks
         elks_viewer
+        gzip
         lua
         bobcat
         kilomacs
