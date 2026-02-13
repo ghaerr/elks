@@ -59,6 +59,8 @@ ngircd-elks/ngircd.conf ::etc/ngircd.cnf            :ngircd
 elks-viewer/jpgview                                 :elksviewer
 elks-viewer/ppmview                                 :elksviewer
 elks-viewer/bmpview                                 :elksviewer
+zlib/gzip                                           :gzip
+zlib/untgz                                          :gzip
 lua/lua                                             :lua
 lua/testes/drawcube.lua ::root/drawcube.lua         :lua
 bobcat/src/bobcat                                   :bobcat
