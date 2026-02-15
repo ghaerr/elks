@@ -3,7 +3,7 @@
 # run "net start slip" on ELKS after running this script as root
 #
 
-if [[ $(id -u) != 0 ]];
+if [ "$(id -un)" != "root" ];
 then
 	echo "Please run me as root."
 	exit 1
