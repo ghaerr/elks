@@ -41,8 +41,8 @@ microwindows/src/bin/nxdsktop                       :nanox  :1232c
 microwindows/src/bin/nxjpeg                         :nanox  :1232c
 microwindows/src/bin/nxmsg                          :nanox  :1232c
 microwindows/src/bin/nxselect                       :nanox  :1232c
-microwindows/src/demos/nanox/images/girl1.jpg ::root/girl1.jpg :nanox   :2880k
-microwindows/src/demos/nanox/images/earth.jpg ::root/earth.jpg :nanox   :2880k
+microwindows/src/demos/nanox/images/girl1.jpg ::root/girl1.jpg :nanox
+microwindows/src/demos/nanox/images/earth.jpg ::root/earth.jpg :nanox
 dflat/memopad                                       :dflat              :2880k
 # sample ELKS OWC/C86 files
 ../elkscmd/basic/basic.os2                          :owc                :2880k
