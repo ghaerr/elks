@@ -72,6 +72,7 @@ elksmoria/elks/morifile/newselks ::lib/moria/newselks :elksmoria
 elksmoria/elks/morifile/origcmds ::lib/moria/origcmds :elksmoria
 elksmoria/elks/morifile/roglcmds ::lib/moria/roglcmds :elksmoria
 # C86 devkit and header files
+8086-toolchain/elks-bin/make                                        :1440k
 8086-toolchain/elks-bin/make        ::usr/bin/make
 8086-toolchain/elks-bin/cpp         ::usr/bin
 8086-toolchain/elks-bin/c86         ::usr/bin
