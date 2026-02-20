@@ -103,7 +103,7 @@ static void flush_input(register struct serial_info *sp)
 #endif
 }
 
-static int rs_probe(register struct serial_info *sp)
+static int INITPROC rs_probe(register struct serial_info *sp)
 {
     int status, type;
     unsigned char scratch;
@@ -479,7 +479,7 @@ static int rs_ioctl(struct tty *tty, int cmd, char *arg)
     return retval;
 }
 
-static void rs_init(void)
+static void INITPROC rs_init(void)
 {
     register struct serial_info *sp = ports;
     register struct tty *tty = ttys + NR_CONSOLES;
