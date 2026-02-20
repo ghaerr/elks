@@ -72,10 +72,9 @@ common_entry:
         mov     0x4(%si),%bx            // bx = q->head
         mov     0x8(%si),%di            // di = q->base
         mov     %dl,(%bx,%di)           // q->base[q->head] = c
-        mov     0x4(%si),%ax            // ax = q->head
-        inc     %ax
-        mov     %ax,0x4(%si)            // ++q->head
-        cmp     0x2(%si),%ax            // if (q->size < q->head)
+        inc     %bx
+        mov     %bx,0x4(%si)            // ++q->head
+        cmp     0x2(%si),%bx            // if (q->size < q->head)
         jl      1f
         movw    $0x0,0x4(%si)           // q->head = 0
 1:      incw    (%si)                   // q->len++
