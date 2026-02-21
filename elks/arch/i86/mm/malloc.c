@@ -291,6 +291,9 @@ static int set_brk(segoff_t brk, int increment)
     stacklow = current->t_begstack - current->t_minstack;
     if (newbrk > stacklow) {
         printk("(%P)SBRK %d FAIL, OUT OF HEAP SPACE\n", increment);
+        /*printk("BEGSTK %x MINSTK %x LOWSTK %x NEWBRK %x CURBRK %x\n",
+            current->t_begstack, current->t_minstack, stacklow, newbrk,
+            current->t_endbrk);*/
         return -ENOMEM;
     }
     if (newbrk > current->t_regs.sp) {

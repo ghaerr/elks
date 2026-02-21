@@ -27,6 +27,7 @@
 //     struct ch_queue *q = &sp->tty->inq;
 //     unsigned char c;
 //
+//   do {
 //     c = INB(sp->io + UART_RX);       // Read received data
 //     if (q->len < q->size) {
 //         q->base[q->head] = c;
@@ -36,6 +37,7 @@
 //     }
 //     if (c == 03)                     // assumes VINTR = ^C and byte queued anyways
 //         sp->intrchar = c;
+//   } while (INB(sp->io + UART_LSR) & UART_LSR_DR);
 // }
 
 //
@@ -62,7 +64,7 @@ common_entry:
         mov     %cx,%bx                 // bx = sp = &ports[n]
         mov     (%bx),%si               // si = q = &sp->tty->inq
         mov     0x4(%bx),%dx            // dx = sp->io + UART_RX
-        in      (%dx),%al
+0:      in      (%dx),%al               // do {
         mov     %al,%dl                 // dl = c = INB(sp->io+UART_RX)
         mov     (%si),%ax               // ax = q->len
         cmp     0x2(%si),%ax            // if (ax >= q->size)
@@ -70,18 +72,24 @@ common_entry:
         mov     0x4(%si),%bx            // bx = q->head
         mov     0x8(%si),%di            // di = q->base
         mov     %dl,(%bx,%di)           // q->base[q->head] = c
-        mov     0x4(%si),%ax            // ax = q->head
-        inc     %ax
-        mov     %ax,0x4(%si)            // ++q->head
-        cmp     0x2(%si),%ax            // if (q->size < q->head)
+        inc     %bx
+        mov     %bx,0x4(%si)            // ++q->head
+        cmp     0x2(%si),%bx            // if (q->size < q->head)
         jl      1f
         movw    $0x0,0x4(%si)           // q->head = 0
-1:      incw    (%si)
-2:      cmp     $0x3,%dl                // if (c == 03)
+1:      incw    (%si)                   // q->len++
+2:      mov     %cx,%bx                 // bx = sp
+        cmp     $0x3,%dl                // if (c == 03)
         jne     3f
-        mov     %cx,%bx                 // bx = sp
         movw    $0x3,2(%bx)             // sp->intrchar = c
-3:      pop     %di
+3:      mov     0x4(%bx),%dx            // dx = sp->io
+        add     $5,%dx                  // dx = sp->io + UART_LSR
+        in      (%dx),%al               // al = INB(sp->io + UART_LSR)
+        test    $1,%al                  // while (al & UART_LSR_DR)
+        jz      4f
+        sub     $5,%dx                  // dx = sp->io + UART_RX
+        jmp     0b
+4:      pop     %di
         pop     %si
 
         mov     $0x20,%al               // EOI on primary controller
