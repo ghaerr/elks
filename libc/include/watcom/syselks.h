@@ -78,7 +78,7 @@ typedef int syscall_res;
 #define SYS_unlink               10
 #define SYS_execve               11
 #define SYS_chdir                12
-#define SYS_time                 13
+//#define SYS_time               13
 #define SYS_mknod                14
 #define SYS_chmod                15
 #define SYS_chown                16
@@ -91,7 +91,7 @@ typedef int syscall_res;
 #define SYS_setuid               23
 #define SYS_getuid               24
 //#define SYS_stime              25
-#define SYS_ptrace               26
+//#define SYS_ptrace             26
 #define SYS_alarm                27
 #define SYS_fstat                28
 //#define SYS_pause              29
