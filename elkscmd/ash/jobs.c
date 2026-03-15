@@ -179,8 +179,8 @@ bgcmd(argc, argv)  char **argv; {
 #endif
 
 
-#if JOBSP
 fgcmd(argc, argv)  char **argv; {
+#if JOBSP
 	struct job *jp;
 	int status;
 
@@ -196,9 +196,11 @@ fgcmd(argc, argv)  char **argv; {
 	status = waitforjob(jp);
 	INTON;
 	return status;
+#endif
 }
 
 
+#if JOBSP
 STATIC void
 restartjob(jp)
 	struct job *jp;
@@ -652,8 +654,10 @@ waitforjob(jp)
 			error("TIOCSPGRP failed, errno=%d\n", errno);
 	}
 #endif
+#if JOBSP
 	if (jp->state == JOBSTOPPED)
 		curjob = jp - jobtab + 1;
+#endif
 	status = jp->ps[jp->nprocs - 1].status;
 	/* convert to 8 bits */
 	if ((status & 0xFF) == 0)
