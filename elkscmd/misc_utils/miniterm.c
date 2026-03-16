@@ -456,16 +456,16 @@ int main(int argc, char **argv)
 	if (mode == MODE_TEXT) {
 		struct termios new;
 
+		tcgetattr(1, &stdout_termio);
 		set_raw(0);
 
-		new.c_cflag |= CS8 | CREAD;
+		new.c_cflag |= (stdout_termio.c_cflag & CBAUD) | CS8 | CREAD;
 		new.c_iflag = IGNPAR;
 		new.c_oflag = 0;
 		new.c_lflag = 0;
 		new.c_cc[VMIN] = 1;
 		new.c_cc[VTIME] = 0;
 
-		tcgetattr(1, &stdout_termio);
 		tcsetattr(1, TCSANOW, &new);
 
 		tcgetattr(0, &stdin_termio);
