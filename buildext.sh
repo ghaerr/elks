@@ -336,7 +336,7 @@ make_all()
         elks_viewer
         gzip
         lua
-        bobcat
+        #bobcat
         kilomacs
         elksmoria
     fi
