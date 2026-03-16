@@ -157,7 +157,6 @@ dcc()
     git pull
     make clean
     make
-    ./copyc88.sh
     echo "DCC build complete"
 }
 
