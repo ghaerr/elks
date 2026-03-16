@@ -81,7 +81,7 @@ void usage(const char *name) {
 	"	genfs [-1|2] [-i<#inodes>] [-n<#direntlen>] [-s<#blocks>] [-k] [-a] <directory>\n"
 	"	addfs <file_of_relative_paths> <directory>\n"
 	"	[stat]\n"
-	"	ls [-ld] [filelist...]"
+	"	ls [-ld] [filelist...]\n"
 	"	cp source_file dest_dir_or_file\n"
 	"	rm file_list ...\n"
 	"	mkdir directory_list ...\n"

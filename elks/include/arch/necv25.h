@@ -71,12 +71,12 @@
  * Port.Pin  Name   Function Direction Used in
  * P1.0             special  in        do not change
  * P1.1      INTP0  special  in        do not change
- * P1.2             special  in        do not change
- * P1.3             special  in        NE200 NIC
+ * P1.2      INTP1  special  in        do not change
+ * P1.3      INTP2  special  in        NE200 NIC
  * P1.4             I/O      in
  * P1.5             I/O      in
  * P1.6      /SCK0  special  out       spi-hw-necv25.S
- * P1.7             I/O      in
+ * P1.7      READY  I/O      in        connected to ISA IOCHRDY
  *
  * Port.Pin  Name   Function Direction Used in
  * P2.0      SDA    I/O      in/out    i2c-ll.S
@@ -91,7 +91,7 @@
 // PM1 PMC1, PM2 and PMC2 have to get initialized in BIOS
 // or startup code with these values before ELKS starts:
 #define NEC_PM1_DEF  0xbf
-#define NEC_PMC1_DEF 0x40
+#define NEC_PMC1_DEF 0xc0
 #define NEC_PM2_DEF  0x80
 #define NEC_PMC2_DEF 0x00
  
