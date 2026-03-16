@@ -107,10 +107,11 @@ if [ "$1" = "auto" ]; then
     make -j1 || clean_exit 8
 fi
 
-# Build PC-98 kernel, some user land files and image
+# Build PC-98 kernel, PC-98 Nano-X, some user land files and image
 if [ "$1" = "auto" ]; then
     echo "Building PC-98 image..."
     cp pc98-1232.config .config
+    ./buildext.sh microwindows_pc98
     make kclean || clean_exit 9
     rm bootblocks/*.o
     rm elkscmd/sys_utils/clock.o

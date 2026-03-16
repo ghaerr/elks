@@ -22,6 +22,8 @@ build_pc98()
     cleanup
     cp pc98-1232.config .config
     make
+    ./buildext.sh microwindows_pc98
+    make
     mv image/fd1232.img image/fd1232-pc98.img
 }
 
@@ -29,6 +31,8 @@ build_pc98_fast()
 {
     cleanup
     cp pc98-1232-nc.config .config
+    make
+    ./buildext.sh microwindows_pc98
     make
     mv image/fd1232.img image/fd1232-pc98.img
 }
@@ -128,6 +132,7 @@ make clean
 build_pc98
 build_pc98_1200
 build_pc98_1440
+./buildext.sh microwindows
 build_rom_8018x
 build_rom_necv25
 build_rom_8088

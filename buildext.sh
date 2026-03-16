@@ -11,6 +11,7 @@
 # Currently supported projects are:
 #       Name            Compiler        Desc
 #       microwindows    ia16-elf-gcc    Nano-X Graphical Windowing Environment
+#       microwindows_pc98 ia16-elf-gcc  Nano-X Graphical Windowing Environment for PC-98
 #       dcc             ia6-elf-gcc     DCC self-compiling C compiler for ELKS
 #       dflat           ia16-elf-gcc    D-Flat TUI memopad/library
 #       elkirc          ia16-elf-gcc    IRC for ELKS
@@ -144,6 +145,20 @@ microwindows()
     make -f Makefile.elks clean
     make -f Makefile.elks
     echo "Nano-X build complete"
+}
+
+microwindows_pc98()
+{
+    echo "Building Nano-X for PC-98..."
+    cd $TOPDIR/extapps
+    if [ ! -d microwindows ] ; then
+        git clone https://github.com/ghaerr/microwindows.git
+    fi
+    cd microwindows/src
+    git pull
+    make -f Makefile.elks clean
+    CONFIG_ARCH_PC98=y make -f Makefile.elks
+    echo "Nano-X for PC-98 build complete"
 }
 
 dcc()
