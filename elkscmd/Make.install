@@ -270,9 +270,10 @@ endif
 	for DIR in $(INSTDIRS); do $(MAKE) -C $$DIR install || exit 1; done
 ifdef CONFIG_APPS_HD
 # install DCC via external shell script for now
-	if [ -e ../extapps/dcc/C/c88 ]; \
-    then \
-		../extapps/dcc/copyc88.sh; \
+	if [ -e $(TOPDIR)/extapps/dcc/src/C/c88 ]; \
+	then \
+		cd $(TOPDIR)/extapps/dcc/src; \
+		$(TOPDIR)/extapps/dcc/src/copyc88.sh; \
 	fi
 endif
 ifdef CONFIG_APP_MAN_PAGES
