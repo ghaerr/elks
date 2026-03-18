@@ -14,6 +14,7 @@ cleanup()
     rm -f elkscmd/sys_utils/meminfo.o
     rm -f elkscmd/sys_utils/beep.o
     rm -f elkscmd/basic/*.o
+    rm -f elkscmd/romprg/*.o
 }
 
 # build PC-98 versions
@@ -90,6 +91,7 @@ build_rom_swan()
     cp swan.config .config
     make
     mv image/rom.wsc image/rom-swan.wsc
+    rm -f image/romfs.bin
 }
 
 # build IBM PC versions
@@ -104,6 +106,8 @@ build_ibm_fast()
 {
     cleanup
     cp ibmpc-1440-nc.config .config
+    make
+    ./buildext.sh all
     make
 }
 
@@ -129,6 +133,7 @@ fi
 
 # full (re)build including C library and all applications
 make clean
+build_ibm_fast
 build_pc98
 build_pc98_1200
 build_pc98_1440
