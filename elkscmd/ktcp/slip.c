@@ -184,7 +184,8 @@ void slip_process(void)
 #endif
 	for (i=0; i < len ; i++) {
 	    if (lastchar == ESC) {
-		switch (sbuf[i]) {
+		if (packpos < sizeof(packet))
+		    switch (sbuf[i]) {
 
 		    case ESC_END:
 			packet[packpos++] = END;
