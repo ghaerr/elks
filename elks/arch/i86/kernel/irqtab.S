@@ -164,7 +164,11 @@ save_regs:
         // strace.c must be compiled with tail optimization off to protect top of stack
         call    trace_end       // syscall return value is top of stack
 #endif
-        call    do_signal       // process signals
+
+        cmpw    $0,bh_active    // Any active bottom halfs?
+        je      1f              // No
+        call    do_bottom_half  // Run bottom halves
+1:      call    do_signal       // process signals
         cli
         jmp     restore_regs
 //
