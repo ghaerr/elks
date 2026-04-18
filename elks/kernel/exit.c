@@ -34,8 +34,8 @@ static void FARPROC reparent_children(void)
                     p->tty->pgrp = 0;
                 p->session = p->pgrp = p->pid;
 
-                p->p_parent = &task[1];
-                p->ppid = task[1].pid;
+                p->p_parent = &task[0];
+                p->ppid = task[0].pid;
             }
         }
     }
