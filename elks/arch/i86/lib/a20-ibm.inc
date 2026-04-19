@@ -128,7 +128,7 @@ empty_8042:
 set_a20:
 	pushf			# save interrupt status
 	cli			# interrupts off
-	xor	%ah,%ah
+	or	%ah,%ah
 	jz	reset_a20
 
 	call	sync_8042
