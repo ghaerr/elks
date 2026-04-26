@@ -137,6 +137,7 @@ build_ibm_fast
 build_pc98
 build_pc98_1200
 build_pc98_1440
+build_ibm_fast
 ./buildext.sh microwindows
 build_rom_8018x
 build_rom_necv25
