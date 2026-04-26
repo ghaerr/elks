@@ -134,7 +134,7 @@ int sys_signal(int signr, __kern_sighandler_t handler)
 
     debug_sig("SIGNAL(%P) sys_signal %2d action %x:%x\n", signr,
         _FP_SEG(handler), _FP_OFF(handler));
-    if (((unsigned int)signr > NSIG) || signr == SIGKILL || signr == SIGSTOP)
+    if (((unsigned int)(signr - 1) > (NSIG - 1)) || signr == SIGKILL || signr == SIGSTOP)
         return -EINVAL;
     if (handler == KERN_SIG_DFL)
         current->sig.action[signr - 1].sa_dispose = SIGDISP_DFL;
