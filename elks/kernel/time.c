@@ -110,8 +110,8 @@ int sys_gettimeofday(register struct timeval *tv, struct timezone *tz)
         now = jiffies();
         tmp_tv.tv_sec = xtime.tv_sec + (now - xtime_jiffies) / HZ;
         tmp_tv.tv_usec = xtime.tv_usec + ((now - xtime_jiffies) % HZ) * (1000000L / HZ);
-        if (tmp_tv.tv_usec >= 10000000L)
-            tmp_tv.tv_usec -= 10000000L;
+        if (tmp_tv.tv_usec >= 1000000L)
+            tmp_tv.tv_usec -= 1000000L;
         if (verified_memcpy_tofs(tv, &tmp_tv, sizeof(struct timeval)))
             return -EFAULT;
     }
