@@ -115,7 +115,7 @@ static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
 {
     fd_set set;
     int count = -1;
-    int i;
+    int i, ready;
     struct file **filp;
 
     set = *in | *out | *ex;
@@ -139,19 +139,22 @@ static int do_select(int n, fd_set * in, fd_set * out, fd_set * ex,
     memset (current->poll, 0, sizeof (struct wait_queue *) * MAX_POLLFD);
     filp = current->files.fd;
     for (i = 0; i < n; i++, filp++) {
+        ready = 0;
         if (*filp) {
             if (FD_ISSET(i, in) && check(SEL_IN, *filp)) {
                 FD_SET(i, res_in);
-                count++;
+                ready = 1;
             }
             if (FD_ISSET(i, out) && check(SEL_OUT, *filp)) {
                 FD_SET(i, res_out);
-                count++;
+                ready = 1;
             }
             if (FD_ISSET(i, ex) && check(SEL_EX, *filp)) {
                 FD_SET(i, res_ex);
-                count++;
+                ready = 1;
             }
+            if (ready)
+                count++;
         }
     }
     if (!count && current->timeout && !(current->signal /* & ~currentp->blocked */ )) {
