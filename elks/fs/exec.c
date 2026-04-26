@@ -522,8 +522,10 @@ static void FARPROC finalize_exec(struct inode *inode, segment_s *seg_code,
 
     /* From this point, the old code and data segments are not needed anymore */
     for (i = 0; i < MAX_SEGS; i++) {
-        if (currentp->mm[i])
+        if (currentp->mm[i]) {
             seg_put(currentp->mm[i]);
+            currentp->mm[i] = 0;
+        }
     }
 
 #ifdef CONFIG_EXEC_OS2
