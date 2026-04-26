@@ -294,7 +294,7 @@ void serial_bh(void)
     struct serial_info *sp;
 
     for (sp = ports; sp < &ports[NR_SERIAL]; sp++) {
-        if (sp->tty->usecount)
+        if (sp->tty && sp->tty->usecount)
             pump_port(sp);
     }
 }
