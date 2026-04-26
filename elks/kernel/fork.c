@@ -121,6 +121,8 @@ pid_t do_fork(int virtual)
     t->fs.root->i_count++;
     t->fs.pwd->i_count++;
 
+    t->signal = 0;
+    t->timeout = 0;
     t->exit_status = 0;
 
     t->ppid = current->pid;
