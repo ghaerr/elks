@@ -45,9 +45,25 @@ static void FARPROC reparent_children(void)
 int sys_wait4(pid_t pid, int *status, int options, void *usage)
 {
     register struct task_struct *p;
-    int waitagain;
+    int waitagain, has_child;
 
     debug_wait("WAIT(%P) for %d opts %x\n", pid, options);
+
+    /*
+     * If a specific pid is requested, verify it is actually our child first,
+     * otherwise return -ECHILD immediately.
+     */
+    if ((int)pid > 0) {
+        has_child = 0;
+        for_each_task(p) {
+            if (p->p_parent == current && p->state != TASK_UNUSED && p->pid == pid) {
+                has_child = 1;
+                break;
+            }
+        }
+        if (!has_child)
+            return -ECHILD;
+    }
 
  for (;;) {
     waitagain = 0;
@@ -79,17 +95,17 @@ int sys_wait4(pid_t pid, int *status, int options, void *usage)
                 return p->pid;
             }
         } else {
-            /* keep waiting while process has non-zombie children*/
+            /* keep waiting while process has running/exiting children */
             debug_wait("WAIT(%P) again for pid %d state %d\n", p->pid, p->state);
             waitagain = 1;
         }
       }
     }
 
-    if (options & WNOHANG)
-        return 0;
     if (!waitagain)
         break;
+    if (options & WNOHANG)
+        return 0;
 
     debug_wait("WAIT(%P) sleep\n");
     interruptible_sleep_on(&current->child_wait);
