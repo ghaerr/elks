@@ -98,7 +98,7 @@ sys_call_table_end:
 
 syscall:
 	cmp  $sys_call_len,%ax
-	ja   _no_syscall
+	jae  _no_syscall
 	// look up address and jump to function
 	mov  %ax,%bx
 	add  %ax,%bx              // multiply by 2
