@@ -23,6 +23,7 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/fs.h>
 #include <linuxmt/debug.h>
+//#define debug(...)      printk(__VA_ARGS__)
 
 #define MAJOR_NR    RAM_MAJOR
 #include "blk.h"
@@ -147,7 +148,7 @@ static int rd_ioctl(register struct inode *inode, struct file *file,
     if (!suser())
 	return -EPERM;
 
-    debug("RD: ioctl %d %s\n", target, (cmd ? "kill" : "make"));
+    debug("RD: ioctl %d\n", cmd);
     switch (cmd) {
     case RDCREATE:
 	if (rd_info[target].valid)
@@ -253,10 +254,11 @@ static void do_rd_request(void)
             /* find appropriate memory segment and sector offset*/
             offset = start;
             index = rd_info[target].start;
-            debug("index %d, ", index);
-            while (offset > rd_segment[index].sectors) {
+            debug("off/ind/sec %u/%u/%u\n", offset, index, rd_segment[index].sectors);
+            while (offset >= rd_segment[index].sectors) {
                 offset -= rd_segment[index].sectors;
                 index = rd_segment[index].next;
+                debug("off/ind/sec %u/%u/%u\n", offset, index, rd_segment[index].sectors);
             }
             debug("entry %d, seg %x, offset %d\n", index, rd_segment[index].seg, offset);
 
