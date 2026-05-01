@@ -52,7 +52,9 @@ void do_bottom_half(void)
     active = bh_active;
     for (mask = 1, left = ~0; left & active; bh++, mask <<= 1, left <<= 1) {
         if (mask & active) {
-            bh_active &= ~mask;
+            clr_irq();
+            bh_active &= ~mask; /* bh_active is modified by mark_bh() at interrupt time*/
+            set_irq();
             if (*bh)
                 (*bh)();
         }
