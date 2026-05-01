@@ -240,7 +240,7 @@ void execute(int set_mp, char *file)
 	char *(*plp)[8], **argv;
 	char *mp;
 	int fd0, pfd[2], err[2];
-	pid_t pid;
+	int pid;
 	int r, status;
 	int last;
 	void (*isav)(int sig), (*qsav)(int sig), (*tsav)(int sig);
