@@ -49,9 +49,14 @@ enum {
 };
 extern unsigned int bh_active;
 extern void (*bh_base[MAX_SOFTIRQ])(void);
-#define init_bh(nr, routine)    { bh_base[nr] = routine; }
-#define mark_bh(nr)             { bh_active |= 1 << (nr);  }
 void do_bottom_half(void);
+#define init_bh(nr, routine)    { bh_base[nr] = routine; }
+#define mark_bh(nr)             \
+    {                           \
+        clr_irq();              \
+        bh_active |= 1 << (nr); \
+        set_irq();              \
+    }
 
 #endif /* __ASSEMBLER__ */
 #endif /* __KERNEL__ */
