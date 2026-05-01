@@ -5,6 +5,7 @@
  */
 
 #include <linuxmt/sched.h>
+#include <linuxmt/timer.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/init.h>
@@ -134,6 +135,7 @@ void do_exit(int status)
 
     /* Let go of the process */
     current->state = TASK_EXITING;
+    cancel_alarm(find_alarm(current));
     for (i = 0; i < MAX_SEGS; i++) {
         if (current->mm[i])
             seg_put(current->mm[i]);

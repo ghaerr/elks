@@ -36,4 +36,8 @@ void spin_timer(int);
 void enable_timer_tick(void);
 void disable_timer_tick(void);
 
+/* sys2.c */
+struct timer_list *find_alarm(struct task_struct *t);
+void cancel_alarm(struct timer_list *ap);
+
 #endif
