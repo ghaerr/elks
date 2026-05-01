@@ -337,7 +337,7 @@ void copylink(char *source, char *dest, int mode, int owner, int group)
 		if (n < 0) report(source);
 		close(sfd);
 		close(dfd);
-		if (pid != 0 && waitpid(pid, &status, 0) < 0 || status != 0) {
+		if (pid != 0 && (int)waitpid(pid, &status, 0) < 0 || status != 0) {
 			excode= 1;
 			return;
 		}

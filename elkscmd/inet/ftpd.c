@@ -310,7 +310,7 @@ void sigalrm(int sig)
 void sigchild(int sig)
 {
 	signal(SIGCHLD, sigchild);
-	while (waitpid(-1, NULL, WNOHANG) > 0)
+	while ((int)waitpid(-1, NULL, WNOHANG) > 0)
 		continue;
 }
 
