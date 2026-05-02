@@ -77,14 +77,13 @@ int pty_select (struct inode *inode, struct file *file, int sel_type)
 /* /dev/ptyp0 master read (from slave /dev/ttyp0 outq to telnetd) */
 size_t pty_read (struct inode *inode, struct file *file, char *data, size_t len)
 {
+	struct tty *tty = determine_tty (inode->i_rdev); /* get slave TTY*/
 	size_t count = 0;
 	int err;
 
-	struct tty *tty = determine_tty (inode->i_rdev); /* get slave TTY*/
-	if (tty == NULL) return -EBADF;
-
-	/* return EOF on master closed*/
-	if (!tty->usecount)
+	if (tty == NULL)
+		return -EBADF;
+	if (!tty->usecount)	/* return EOF on master closed*/
 		return 0;
 
 	while (count < len) {
@@ -106,11 +105,14 @@ size_t pty_read (struct inode *inode, struct file *file, char *data, size_t len)
 /* /dev/ptyp0 master write (from telnetd to slave /dev/ttyp0 inq) */
 size_t pty_write (struct inode *inode, struct file *file, char *data, size_t len)
 {
+	struct tty *tty = determine_tty (inode->i_rdev); /* get slave TTY*/
 	size_t count = 0;
 	int ret;
 
-	struct tty *tty = determine_tty (inode->i_rdev); /* get slave TTY*/
-	if (tty == NULL) return -EBADF;
+	if (tty == NULL)
+		return -EBADF;
+	if (!tty->usecount)
+		return -EIO;
 
 	while (count < len) {
 		ret = chq_wait_wr (&tty->inq, (file->f_flags & O_NONBLOCK) | count);

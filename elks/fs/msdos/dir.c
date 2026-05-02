@@ -145,7 +145,7 @@ int FATPROC msdos_get_entry_long(
 			int i,i2,last;
 			int long_len = 0;
 			unsigned char c;
-			ASYNCIO_REENTRANT char longname[14];
+			ASYNCIO_REENTRANT char longname[15];
 
 			if (is_long) {
 				unsigned char sum;

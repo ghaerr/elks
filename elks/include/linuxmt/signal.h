@@ -240,7 +240,7 @@ struct __kern_sigaction_struct {
 #ifdef __KERNEL__
 struct task_struct;
 int send_sig(sig_t,struct task_struct *,int);
-void arch_setup_sighandler_stack(struct task_struct *, __kern_sighandler_t,unsigned);
+int arch_setup_sighandler_stack(struct task_struct *, __kern_sighandler_t, unsigned);
 int sys_kill(pid_t, sig_t);
 void do_signal(void);
 #endif /* __KERNEL__*/

@@ -155,7 +155,7 @@ void xms_fmemcpyb(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src
 	  else {
 		/* lots of extra work on odd transfers because INT 15 block moves words only */
 		if ((count & 1) && xms_enabled == XMS_INT15) {
-			static char buf[2];
+			char buf[2];
 			size_t wc = count >> 1;
 
 			if (wc)

@@ -71,7 +71,8 @@ top:
 	else if (*sd != SIGDISP_IGN) {			/* Set handler */
 	    debug_sig("SIGNAL(%P) calling handler %x:%x\n",
 		_FP_SEG(sah), _FP_OFF(sah));
-	    arch_setup_sighandler_stack(current, sah, signr);
+	    if (arch_setup_sighandler_stack(current, sah, signr) < 0)
+                do_exit(SIGSEGV);
 	    *sd = SIGDISP_DFL;
 	    clr_irq();		/* stop race between reset signal and return to user */
 	    current->signal &= ~mask;

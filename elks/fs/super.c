@@ -184,6 +184,7 @@ static struct super_block *read_super(kdev_t dev, int t, int flags,
             break;
     }
 
+    memset(s, 0, sizeof(*s));
     s->s_dev = dev;
     s->s_flags = flags;
 

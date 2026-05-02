@@ -96,7 +96,7 @@ void timer_bh(void)
 #endif
 
 #if defined(CONFIG_BLK_DEV_SSD_TEST) && defined(CONFIG_ASYNCIO)
-    if (ssd_timeout && time_after(jiffies, ssd_timeout))
+    if (ssd_timeout && time_after(jiffies(), ssd_timeout))
         ssd_io_complete();
 #endif
 

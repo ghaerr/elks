@@ -489,7 +489,7 @@ int sock_register(int family, register struct proto_ops *ops)
 	if (*props == NULL) {
 	    *props = ops;
 	    ops->family = family;
-	    return (props - pops)/sizeof(struct proto_ops *);
+	    return props - pops;
 	}
     return -ENOMEM;
 }
