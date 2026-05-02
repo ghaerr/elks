@@ -229,12 +229,13 @@ static int pipe_rdwr_open(register struct inode *inode,
     }
 
     if (filp->f_mode & FMODE_WRITE) {
+        if (!PIPE_READERS(inode) && filp->f_flags & O_NONBLOCK)
+            return -ENXIO;
         PIPE_WRITERS(inode)++;
         if (PIPE_READERS(inode) > 0) {
             if (PIPE_WRITERS(inode) < 2)
                 wake_up_interruptible(&PIPE_WAIT(inode));
         } else {
-            if (filp->f_flags & O_NONBLOCK) return -ENXIO;
             while (!PIPE_READERS(inode))
                 interruptible_sleep_on(&PIPE_WAIT(inode));
         }

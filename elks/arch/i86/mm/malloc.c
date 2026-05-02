@@ -137,6 +137,7 @@ segment_s * seg_alloc_fixed (seg_t base, segext_t size, word_t type)
 segment_s * seg_alloc (segext_t size, word_t type)
 {
     segment_s * seg = 0;
+
     seg = seg_free_get (size, type);
     if (seg && (type & SEG_FLAG_ALIGN1K))
         seg->base += ((~seg->base + 1) & ((1024 >> 4) - 1));
@@ -340,6 +341,8 @@ int sys_fmemalloc(int paras, unsigned short *pseg)
     err = verify_area(VERIFY_WRITE, pseg, sizeof(*pseg));
     if (err)
         return err;
+    if (paras == 0)
+        return -EINVAL;
     seg = seg_alloc((segext_t)paras, SEG_FLAG_FDAT);
     if (!seg) {
         debug_brk("(%P)FMEMALLOC %ld FAIL\n", (unsigned long)paras << 4);

@@ -57,8 +57,8 @@ include $(TOPDIR)/Make.defs
 
 VERSION     = 0	# (0-255)
 PATCHLEVEL  = 9	# (0-255)
-SUBLEVEL    = 0	# (0-255)
-PRE         =
+SUBLEVEL    = 1	# (0-255)
+PRE         = pre
 
 #########################################################################
 # Specify the architecture we will use.
