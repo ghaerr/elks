@@ -12,6 +12,8 @@ si::sysinit:/etc/rc.sys
 # 4 multiuser serial only (ttyS0,ttyS1)
 # 5 multiuser console only (tty1,tty2,tty3,tty4)
 # 6 multiuser console and serial
+# tN entries need CONFIG_CONSOLES_MAX >= N in the kernel build.
+# Comment out lines for missing ttys, or raise CONSOLES_MAX and rebuild.
 t1:1356:respawn:/bin/getty /dev/tty1
 t2:56:respawn:/bin/getty /dev/tty2
 t3:56:respawn:/bin/getty /dev/tty3

@@ -25,8 +25,13 @@
 
 /* Predefined maximum number of tty character devices */
 
-#if defined(CONFIG_CONSOLE_DUAL)
-#define MAX_CONSOLES 4
+/*
+ * MAX_CONSOLES upper bound is PTY_MINOR_OFFSET (defined below): consoles
+ * occupy minors 0..MAX_CONSOLES-1, so MAX_CONSOLES > PTY_MINOR_OFFSET would
+ * collide with the pty block.
+ */
+#if defined(CONFIG_CONSOLE_DIRECT)
+#define MAX_CONSOLES CONFIG_CONSOLES_MAX
 #elif defined(CONFIG_FAST_IRQ2_NECV25)
 #define MAX_CONSOLES 2
 #elif defined(CONFIG_FAST_IRQ1_NECV25)

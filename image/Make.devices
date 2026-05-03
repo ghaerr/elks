@@ -114,6 +114,10 @@ devices:
 	$(MKDEV) /dev/tty2	c 4 1
 	$(MKDEV) /dev/tty3	c 4 2
 	$(MKDEV) /dev/tty4	c 4 3
+	$(MKDEV) /dev/tty5	c 4 4
+	$(MKDEV) /dev/tty6	c 4 5
+	$(MKDEV) /dev/tty7	c 4 6
+	$(MKDEV) /dev/tty8	c 4 7
 
 ##############################################################################
 # Pseudo-TTY slave devices.

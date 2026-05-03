@@ -318,6 +318,29 @@ static void std_char(Console * C, int c)
     }
 }
 
+#ifdef VC_GRAPH_SAVE_RESTORE
+/* Per-VC backing store for text page contents across a graphics-mode
+ * acquisition. Allocated on DCGET_GRAPH, freed on DCREL_GRAPH. The graphics
+ * app is expected to restore text mode (e.g. INT 10h AH=0 AL=3) before
+ * releasing; we then restore each saved page on top of that.
+ *
+ * In RAM-buffer mode (g_use_rambuf), only the visible VC's page lives in
+ * actual video memory; backgrounded VCs live in the kernel heap and are
+ * untouched by any video write. So one save buffer suffices.
+ *
+ * In page-flip mode, every VC's text page shares the same physical video
+ * segment (e.g. four CGA text pages at 0xB800). A graphics mode that
+ * overwrites that segment (notably CGA mode 4) destroys all of them, so
+ * we save and restore every active VC. Cost is: 
+ *
+ *   Num-VCs * Width * Height * 2 bytes  (commonly works out to 16 KB)
+ *
+ * and only for the duration of the graphics session. */
+static unsigned char *graph_save_buf[MAX_CONSOLES];
+static seg_t graph_save_seg[MAX_CONSOLES];
+static unsigned int graph_save_words;
+#endif
+
 static int Console_ioctl(struct tty *tty, int cmd, char *arg)
 {
     Console *C = &Con[tty->minor];
@@ -325,12 +348,58 @@ static int Console_ioctl(struct tty *tty, int cmd, char *arg)
     switch (cmd) {
     case DCGET_GRAPH:
         if (!glock) {
+#ifdef VC_GRAPH_SAVE_RESTORE
+            unsigned int sz = C->Width * C->Height * 2;
+            int i, n;
+            graph_save_words = sz >> 1;
+            n = g_use_rambuf ? 1 : NumConsoles;
+            for (i = 0; i < n; i++) {
+                /* In RAM-buffer mode, the only at-risk page is the one
+                 * currently displayed (Visible[]); all others live in heap. */
+                Console *V = g_use_rambuf ? Visible[C->display] : &Con[i];
+                unsigned char *raw = heap_alloc(sz + 15, HEAP_TAG_DRVR);
+                if (raw) {
+                    unsigned int al = ((unsigned int)raw + 15) & ~0xF;
+                    graph_save_buf[i] = raw;
+                    graph_save_seg[i] = kernel_ds + (al >> 4);
+                    fmemcpyw((void *)0, graph_save_seg[i],
+                             (void *)0, (seg_t) V->vseg,
+                             graph_save_words);
+                }
+                /* Per-VC alloc failure is non-fatal: that slot stays
+                 * NULL and the matching restore is skipped. The lock
+                 * still proceeds. */
+            }
+#endif
             glock = C;
             return 0;
         }
         return -EBUSY;
     case DCREL_GRAPH:
         if (glock == C) {
+#ifdef VC_GRAPH_SAVE_RESTORE
+            int i, n;
+            n = g_use_rambuf ? 1 : NumConsoles;
+            for (i = 0; i < n; i++) {
+                Console *V = g_use_rambuf ? Visible[C->display] : &Con[i];
+                if (graph_save_buf[i]) {
+                    fmemcpyw((void *)0, (seg_t) V->vseg,
+                             (void *)0, graph_save_seg[i],
+                             graph_save_words);
+                    heap_free(graph_save_buf[i]);
+                    graph_save_buf[i] = NULL;
+                    graph_save_seg[i] = 0;
+                }
+            }
+            graph_save_words = 0;
+            /* The graphics app's BIOS mode reset left CRTC at page 0. In
+             * page-flip mode that may not be the foreground VC's page;
+             * re-program the start address so the user lands on the same
+             * VC they left. RAM-buffer mode never page-flips and needs
+             * no fixup. */
+            if (!g_use_rambuf)
+                SetDisplayPage(Visible[C->display]);
+#endif
             glock = NULL;
             wake_up(&glock_wait);
             return 0;
