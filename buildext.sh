@@ -15,6 +15,7 @@
 #       dcc             ia6-elf-gcc     DCC self-compiling C compiler for ELKS
 #       dflat           ia16-elf-gcc    D-Flat TUI memopad/library
 #       elkirc          ia16-elf-gcc    IRC for ELKS
+#       elksdigger      ia16-elf-gcc    Digger for ELKS
 #       owc_libc        OpenWatcom      ELKS C Library compiled by OWC
 #       owc_elkscmd     OpenWatcom      Some elkscmd/ programs compiled by OWC
 #       c86_toolchain   OpenWatcom/C86  C86 Toolchain, header files and examples
@@ -234,6 +235,20 @@ elkirc()
     echo "elkirc build complete"
 }
 
+elksdigger()
+{
+    echo "Building elksdigger..."
+    cd $TOPDIR/extapps
+    if [ ! -d ELKS-Digger ] ; then
+        git clone https://github.com/Vutshi/ELKS-Digger
+    fi
+    cd ELKS-Digger/elks
+    git pull
+    make clean
+    make
+    echo "elksdigger build complete"
+}
+
 elks_viewer()
 {
     echo "Building elks-viewer..."
@@ -326,6 +341,7 @@ make_all()
     dcc
     dflat
     elkirc
+    elksdigger
     if [ -n "$WATCOM" ] ; then
         owc_libc
         owc_elkscmd
