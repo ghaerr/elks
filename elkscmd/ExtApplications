@@ -37,6 +37,7 @@ microwindows/src/bin/nxterm                         :nanox  :1232c :1440k
 microwindows/src/bin/nxtetris                       :nanox  :1232c :1440k
 microwindows/src/bin/nxworld                        :nanox              :2880k
 microwindows/src/images/demos/nanox/nxworld.map ::lib/nxworld.map :nanox :2880k
+microwindows/src/bin/nxedit                         :nanox              :2880k
 microwindows/src/bin/nxdsktop                       :nanox  :1232c
 microwindows/src/bin/nxjpeg                         :nanox  :1232c
 microwindows/src/bin/nxmsg                          :nanox  :1232c
