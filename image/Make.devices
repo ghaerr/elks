@@ -102,10 +102,10 @@ devices:
 ##############################################################################
 # Pseudo-TTY master devices. 
 
-	$(MKDEV) /dev/ptyp0 c 2 8
-	$(MKDEV) /dev/ptyp1 c 2 9
-	$(MKDEV) /dev/ptyp2 c 2 10
-	$(MKDEV) /dev/ptyp3 c 2 11
+	$(MKDEV) /dev/ptyp0 c 2 8 1 1 0666
+	$(MKDEV) /dev/ptyp1 c 2 9 1 1 0666
+	$(MKDEV) /dev/ptyp2 c 2 10 1 1 0666
+	$(MKDEV) /dev/ptyp3 c 2 11 1 1 0666
 
 ##############################################################################
 # Virtual consoles, pseudo-tty slaves and serial ports.
@@ -118,10 +118,10 @@ devices:
 ##############################################################################
 # Pseudo-TTY slave devices.
 
-	$(MKDEV) /dev/ttyp0 c 4 8
-	$(MKDEV) /dev/ttyp1 c 4 9
-	$(MKDEV) /dev/ttyp2 c 4 10
-	$(MKDEV) /dev/ttyp3 c 4 11
+	$(MKDEV) /dev/ttyp0 c 4 8 1 1 0666
+	$(MKDEV) /dev/ttyp1 c 4 9 1 1 0666
+	$(MKDEV) /dev/ttyp2 c 4 10 1 1 0666
+	$(MKDEV) /dev/ttyp3 c 4 11 1 1 0666
 
 # /dev/tty is minor 255, /dev/console minor 254
 
