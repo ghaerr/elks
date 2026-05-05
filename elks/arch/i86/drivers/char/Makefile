@@ -129,7 +129,7 @@ ifdef CONFIG_CHAR_DEV_RS
 endif
 
 ifdef CONFIG_ARCH_IBMPC
-  OBJS += mouse-ps2.o
+  OBJS += mouse-ps2.o pcspkseq.o
 endif
 
 ifdef CONFIG_CHAR_DEV_CGATEXT
