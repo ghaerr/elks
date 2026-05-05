@@ -53,7 +53,7 @@ dflat/memopad                                       :dflat              :2880k
 # external OWC builds
 elkirc/elkirc                                       :elkirc             :2880k
 elkirc/man/elkirc.1     ::lib/man1/elkirc.1         :elkirc             :2880k
-ELKS-Digger/elks/digger                             :elksdigger         :2880k
+ELKS-Digger/elks/digger                             :elksdigger     :1440k
 ELKS-Digger/elks/digtitle.bmp ::lib/digtitle.bmp    :elksdigger         :2880k
 elksdoom/elksdoom       ::bin/doom                  :elksdoom
 elksdoom/elksdoom.wad   ::lib/elksdoom.wad          :elksdoom
