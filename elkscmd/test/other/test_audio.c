@@ -10,36 +10,6 @@
 #include <unistd.h>
 #include <linuxmt/kd.h>
 
-#if 0000
-#ifndef __KD_MAJ
-#define __KD_MAJ        ('K'<<8)
-#endif
-#ifndef KIOCSOUND
-#define KIOCSOUND       (__KD_MAJ + 0x2f)
-#endif
-#ifndef KIOCSNDSEQ
-#define KIOCSNDSEQ      (__KD_MAJ + 0x30)
-#define PCSPK_F_REST    0x00
-#define PCSPK_F_TONE    0x01
-#define PCSPK_F_STOP    0x02
-#define PCSPK_F_FLUSH   0x04
-#define PCSPK_SEQ_F_FLUSH 0x0001
-#define PCSPK_SEQ_F_STOP  0x0002
-struct pcspk_event {
-    unsigned short divisor;
-    unsigned short ticks;
-    unsigned char flags;
-    unsigned char priority;
-};
-struct pcspk_seq {
-    struct pcspk_event *events;
-    unsigned short count;
-    unsigned short rate_hz;
-    unsigned short flags;
-};
-#endif
-#endif
-
 #define REST 0
 #define C4   4560
 #define D4   4063
@@ -63,14 +33,14 @@ static volatile int stop_requested;
 
 static void stop_sound(void)
 {
-    struct pcspk_seq s;
+    struct audio_seq s;
 
     if (seqfd < 0)
         return;
     s.events = 0;
     s.count = 0;
     s.rate_hz = 0;
-    s.flags = PCSPK_SEQ_F_STOP | PCSPK_SEQ_F_FLUSH;
+    s.flags = AUDIO_SEQ_F_STOP | AUDIO_SEQ_F_FLUSH;
     ioctl(seqfd, KIOCSNDSEQ, &s);
     ioctl(seqfd, KIOCSOUND, 0);
 }
@@ -80,9 +50,9 @@ static void on_signal(int sig)
     stop_requested = sig ? sig : 1;
 }
 
-static int send_events(struct pcspk_event *ev, int count, int flush)
+static int send_events(struct audio_event *ev, int count, int flush)
 {
-    struct pcspk_seq s;
+    struct audio_seq s;
     int off = 0;
     int n;
 
@@ -90,7 +60,7 @@ static int send_events(struct pcspk_event *ev, int count, int flush)
         s.events = ev + off;
         s.count = count - off;
         s.rate_hz = 0;
-        s.flags = flush ? PCSPK_SEQ_F_FLUSH : 0;
+        s.flags = flush ? AUDIO_SEQ_F_FLUSH : 0;
         flush = 0;
 
         n = ioctl(seqfd, KIOCSNDSEQ, &s);
@@ -124,7 +94,7 @@ static unsigned short tempo_ticks(unsigned char dur, int tempo)
     return (unsigned short)v;
 }
 
-static int build_events(struct pcspk_event *out, struct note *in, int nnotes,
+static int build_events(struct audio_event *out, struct note *in, int nnotes,
                         int tempo, int add_stop)
 {
     int i;
@@ -139,14 +109,14 @@ static int build_events(struct pcspk_event *out, struct note *in, int nnotes,
         if (in[i].div) {
             out[n].divisor = in[i].div;
             out[n].ticks = t - gap;
-            out[n].flags = PCSPK_F_TONE;
+            out[n].flags = AUDIO_F_TONE;
             out[n].priority = 0;
             n++;
         }
         if (gap || !in[i].div) {
             out[n].divisor = 0;
             out[n].ticks = gap ? gap : t;
-            out[n].flags = PCSPK_F_REST;
+            out[n].flags = AUDIO_F_REST;
             out[n].priority = 0;
             n++;
         }
@@ -155,7 +125,7 @@ static int build_events(struct pcspk_event *out, struct note *in, int nnotes,
     if (add_stop) {
         out[n].divisor = 0;
         out[n].ticks = 1;
-        out[n].flags = PCSPK_F_STOP;
+        out[n].flags = AUDIO_F_STOP;
         out[n].priority = 0;
         n++;
     }
@@ -182,7 +152,7 @@ static void play_fallback(struct note *song, int nnotes, int tempo)
 
 static void usage(void)
 {
-    fputs("usage: pcspkpop [-s] [-t tempo]\n", stderr);
+    fputs("usage: test_audio [-s] [-t tempo]\n", stderr);
 }
 
 int main(int argc, char **argv)
@@ -199,7 +169,7 @@ int main(int argc, char **argv)
     static struct note scale[] = {
         {C4,1},{D4,1},{E4,1},{F4,1},{A4,1},{C5,1},{D5,1},{E5,1},{F5,1},{A5,2}
     };
-    static struct pcspk_event events[96];
+    static struct audio_event events[96];
     struct note *song = popcorn;
     int nnotes = sizeof(popcorn) / sizeof(popcorn[0]);
     int tempo = 120;
@@ -236,7 +206,7 @@ int main(int argc, char **argv)
         if (send_events(events, nevents, flush) < 0) {
             if (stop_requested)
                 break;
-            fputs("pcspkpop: KIOCSNDSEQ unavailable, using KIOCSOUND fallback\n",
+            fputs("test_audio: KIOCSNDSEQ unavailable, using KIOCSOUND fallback\n",
                   stderr);
             play_fallback(song, nnotes, tempo);
             break;

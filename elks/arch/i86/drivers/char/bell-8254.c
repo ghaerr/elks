@@ -22,7 +22,7 @@
 void soundp(unsigned period)
 {
 #ifdef CONFIG_AUDIO
-    pcspk_seq_stop();
+    audio_seq_stop();
 #endif
     clr_irq();
     outb(inb(SPEAKER_PORT) | 0x03, SPEAKER_PORT);
@@ -38,7 +38,7 @@ void soundp(unsigned period)
 void nosound(void)
 {
 #ifdef CONFIG_AUDIO
-    pcspk_seq_stop();
+    audio_seq_stop();
 #endif
     clr_irq();
     outb(inb(SPEAKER_PORT) & ~0x03, SPEAKER_PORT);

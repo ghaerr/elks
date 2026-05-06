@@ -18,46 +18,46 @@
 #include <arch/param.h>
 #include <arch/ports.h>
 
-#define PCSPK_QSIZE        32
-#define PCSPK_GATE_BITS    0x03
-#define PCSPK_TIMER2_MODE3 0xB6
-#define PCSPK_MAX_TICKS    (HZ * 10)    /* per-event stuck-tone guard */
+#define AUDIO_QSIZE        32
+#define AUDIO_GATE_BITS    0x03
+#define AUDIO_TIMER2_MODE3 0xB6
+#define AUDIO_MAX_TICKS    (HZ * 10)    /* per-event stuck-tone guard */
 
-static unsigned int pcspk_q_div[PCSPK_QSIZE];
-static unsigned int pcspk_q_ticks[PCSPK_QSIZE];
-static unsigned char pcspk_q_flags[PCSPK_QSIZE];
-static unsigned char pcspk_head;
-static unsigned char pcspk_tail;
-static unsigned char pcspk_count;
+static unsigned int audio_q_div[AUDIO_QSIZE];
+static unsigned int audio_q_ticks[AUDIO_QSIZE];
+static unsigned char audio_q_flags[AUDIO_QSIZE];
+static unsigned char audio_head;
+static unsigned char audio_tail;
+static unsigned char audio_count;
 
-static void pcspk_timer_fn(int unused);
+static void audio_timer_fn(int unused);
 
-static struct timer_list pcspk_timer = { NULL, 0, 0, pcspk_timer_fn };
-static unsigned char pcspk_timer_on;
-static unsigned char pcspk_active;
-static unsigned char pcspk_gate_on;
-static unsigned int pcspk_hw_divisor;
-static pid_t pcspk_owner;
+static struct timer_list audio_timer = { NULL, 0, 0, audio_timer_fn };
+static unsigned char audio_timer_on;
+static unsigned char audio_active;
+static unsigned char audio_gate_on;
+static unsigned int audio_hw_divisor;
+static pid_t audio_owner;
 
-static void pcspk_hw_gate(unsigned char on)
+static void audio_hw_gate(unsigned char on)
 {
     unsigned char v;
 
-    if (on == pcspk_gate_on)
+    if (on == audio_gate_on)
         return;
 
     v = inb(SPEAKER_PORT);
     if (on)
-        v |= PCSPK_GATE_BITS;
+        v |= AUDIO_GATE_BITS;
     else
-        v &= ~PCSPK_GATE_BITS;
+        v &= ~AUDIO_GATE_BITS;
     outb(v, SPEAKER_PORT);
-    pcspk_gate_on = on;
+    audio_gate_on = on;
 }
 
-static void pcspk_pit2_load(unsigned int divisor)
+static void audio_pit2_load(unsigned int divisor)
 {
-    outb(PCSPK_TIMER2_MODE3, TIMER_CMDS_PORT);
+    outb(AUDIO_TIMER2_MODE3, TIMER_CMDS_PORT);
 
 #ifdef __ia16__
     /*
@@ -76,133 +76,133 @@ static void pcspk_pit2_load(unsigned int divisor)
 #endif
 }
 
-static void pcspk_hw_tone(unsigned int divisor)
+static void audio_hw_tone(unsigned int divisor)
 {
-    if (divisor != pcspk_hw_divisor) {
-        pcspk_pit2_load(divisor);
-        pcspk_hw_divisor = divisor;
+    if (divisor != audio_hw_divisor) {
+        audio_pit2_load(divisor);
+        audio_hw_divisor = divisor;
     }
-    pcspk_hw_gate(1);
+    audio_hw_gate(1);
 }
 
-static void pcspk_cancel_timer(void)
+static void audio_cancel_timer(void)
 {
-    if (pcspk_timer_on) {
-        del_timer(&pcspk_timer);
-        pcspk_timer_on = 0;
+    if (audio_timer_on) {
+        del_timer(&audio_timer);
+        audio_timer_on = 0;
     }
 }
 
-static void pcspk_arm_timer(unsigned int ticks)
+static void audio_arm_timer(unsigned int ticks)
 {
     if (!ticks)
         ticks = 1;
-    if (ticks > PCSPK_MAX_TICKS)
-        ticks = PCSPK_MAX_TICKS;
+    if (ticks > AUDIO_MAX_TICKS)
+        ticks = AUDIO_MAX_TICKS;
 
-    if (!pcspk_timer_on) {
-        pcspk_timer.tl_expires = jiffies + ticks;
-        add_timer(&pcspk_timer);
-        pcspk_timer_on = 1;
+    if (!audio_timer_on) {
+        audio_timer.tl_expires = jiffies + ticks;
+        add_timer(&audio_timer);
+        audio_timer_on = 1;
     }
 }
 
-static void pcspk_stop_locked(void)
+static void audio_stop_locked(void)
 {
-    pcspk_cancel_timer();
-    pcspk_head = pcspk_tail = pcspk_count = 0;
-    pcspk_active = 0;
-    pcspk_owner = 0;
-    pcspk_hw_gate(0);
-    pcspk_hw_divisor = 0;
+    audio_cancel_timer();
+    audio_head = audio_tail = audio_count = 0;
+    audio_active = 0;
+    audio_owner = 0;
+    audio_hw_gate(0);
+    audio_hw_divisor = 0;
 }
 
-void pcspk_seq_stop(void)
-{
-    flag_t flags;
-
-    save_flags(flags);
-    clr_irq();
-    pcspk_stop_locked();
-    restore_flags(flags);
-}
-
-void pcspk_seq_exit(pid_t pid)
+void audio_seq_stop(void)
 {
     flag_t flags;
 
     save_flags(flags);
     clr_irq();
-    if (pcspk_owner == pid)
-        pcspk_stop_locked();
+    audio_stop_locked();
     restore_flags(flags);
 }
 
-static int pcspk_queue_event(struct pcspk_event *ev)
+void audio_seq_exit(pid_t pid)
+{
+    flag_t flags;
+
+    save_flags(flags);
+    clr_irq();
+    if (audio_owner == pid)
+        audio_stop_locked();
+    restore_flags(flags);
+}
+
+static int audio_queue_event(struct audio_event *ev)
 {
     unsigned char head;
     unsigned int ticks;
 
-    if (pcspk_count >= PCSPK_QSIZE)
+    if (audio_count >= AUDIO_QSIZE)
         return -EAGAIN;
 
     ticks = ev->ticks;
     if (!ticks)
         ticks = 1;
-    else if (ticks > PCSPK_MAX_TICKS)
-        ticks = PCSPK_MAX_TICKS;
+    else if (ticks > AUDIO_MAX_TICKS)
+        ticks = AUDIO_MAX_TICKS;
 
-    head = pcspk_head;
-    pcspk_q_div[head] = ev->divisor;
-    pcspk_q_ticks[head] = ticks;
-    pcspk_q_flags[head] = ev->flags;
-    pcspk_head = (head + 1) & (PCSPK_QSIZE - 1);
-    pcspk_count++;
+    head = audio_head;
+    audio_q_div[head] = ev->divisor;
+    audio_q_ticks[head] = ticks;
+    audio_q_flags[head] = ev->flags;
+    audio_head = (head + 1) & (AUDIO_QSIZE - 1);
+    audio_count++;
     return 0;
 }
 
-static void pcspk_load_next_locked(void)
+static void audio_load_next_locked(void)
 {
     unsigned char tail;
     unsigned char flags;
     unsigned int divisor;
     unsigned int ticks;
 
-    if (!pcspk_count) {
-        pcspk_stop_locked();
+    if (!audio_count) {
+        audio_stop_locked();
         return;
     }
 
-    tail = pcspk_tail;
-    divisor = pcspk_q_div[tail];
-    ticks = pcspk_q_ticks[tail];
-    flags = pcspk_q_flags[tail];
-    pcspk_tail = (tail + 1) & (PCSPK_QSIZE - 1);
-    pcspk_count--;
+    tail = audio_tail;
+    divisor = audio_q_div[tail];
+    ticks = audio_q_ticks[tail];
+    flags = audio_q_flags[tail];
+    audio_tail = (tail + 1) & (AUDIO_QSIZE - 1);
+    audio_count--;
 
-    if (flags & PCSPK_F_STOP) {
-        pcspk_stop_locked();
+    if (flags & AUDIO_F_STOP) {
+        audio_stop_locked();
         return;
     }
 
-    if ((flags & PCSPK_F_TONE) && divisor)
-        pcspk_hw_tone(divisor);
+    if ((flags & AUDIO_F_TONE) && divisor)
+        audio_hw_tone(divisor);
     else
-        pcspk_hw_gate(0);
+        audio_hw_gate(0);
 
-    pcspk_arm_timer(ticks);
+    audio_arm_timer(ticks);
 }
 
-static void pcspk_start_locked(void)
+static void audio_start_locked(void)
 {
-    if (!pcspk_active) {
-        pcspk_active = 1;
-        pcspk_owner = current->pid;
-        pcspk_load_next_locked();
+    if (!audio_active) {
+        audio_active = 1;
+        audio_owner = current->pid;
+        audio_load_next_locked();
     }
 }
 
-static void pcspk_timer_fn(int unused)
+static void audio_timer_fn(int unused)
 {
     flag_t flags;
 
@@ -210,19 +210,19 @@ static void pcspk_timer_fn(int unused)
 
     save_flags(flags);
     clr_irq();
-    pcspk_timer_on = 0;
+    audio_timer_on = 0;
 
-    if (pcspk_active)
-        pcspk_load_next_locked();
+    if (audio_active)
+        audio_load_next_locked();
 
     restore_flags(flags);
 }
 
-int pcspk_seq_ioctl(char *arg)
+int audio_seq_ioctl(char *arg)
 {
-    struct pcspk_seq req;
-    struct pcspk_event ev;
-    struct pcspk_event *up;
+    struct audio_seq req;
+    struct audio_event ev;
+    struct audio_event *up;
     unsigned int n;
     unsigned int queued = 0;
     int err;
@@ -238,15 +238,15 @@ int pcspk_seq_ioctl(char *arg)
     save_flags(flags);
     clr_irq();
 
-    if (req.flags & (PCSPK_SEQ_F_FLUSH | PCSPK_SEQ_F_STOP))
-        pcspk_stop_locked();
+    if (req.flags & (AUDIO_SEQ_F_FLUSH | AUDIO_SEQ_F_STOP))
+        audio_stop_locked();
 
-    if (req.flags & PCSPK_SEQ_F_STOP) {
+    if (req.flags & AUDIO_SEQ_F_STOP) {
         restore_flags(flags);
         return 0;
     }
 
-    if (pcspk_active && pcspk_owner != current->pid) {
+    if (audio_active && audio_owner != current->pid) {
         restore_flags(flags);
         return -EBUSY;
     }
@@ -261,9 +261,9 @@ int pcspk_seq_ioctl(char *arg)
 
         save_flags(flags);
         clr_irq();
-        if (pcspk_queue_event(&ev)) {
+        if (audio_queue_event(&ev)) {
             if (queued)
-                pcspk_start_locked();
+                audio_start_locked();
             restore_flags(flags);
             return queued ? (int)queued : -EAGAIN;
         }
@@ -274,7 +274,7 @@ int pcspk_seq_ioctl(char *arg)
     save_flags(flags);
     clr_irq();
     if (queued)
-        pcspk_start_locked();
+        audio_start_locked();
     restore_flags(flags);
 
     return (int)queued;
