@@ -18,10 +18,12 @@
 #include <arch/param.h>
 #include <arch/ports.h>
 
-#define AUDIO_QSIZE        32
+#define AUDIO_QSIZE        32           /* must be power of two */
 #define AUDIO_GATE_BITS    0x03
 #define AUDIO_TIMER2_MODE3 0xB6
 #define AUDIO_MAX_TICKS    (HZ * 10)    /* per-event stuck-tone guard */
+
+static void audio_timer_fn(int unused);
 
 static unsigned int audio_q_div[AUDIO_QSIZE];
 static unsigned int audio_q_ticks[AUDIO_QSIZE];
@@ -29,9 +31,6 @@ static unsigned char audio_q_flags[AUDIO_QSIZE];
 static unsigned char audio_head;
 static unsigned char audio_tail;
 static unsigned char audio_count;
-
-static void audio_timer_fn(int unused);
-
 static struct timer_list audio_timer = { NULL, 0, 0, audio_timer_fn };
 static unsigned char audio_timer_on;
 static unsigned char audio_active;
@@ -119,23 +118,17 @@ static void audio_stop_locked(void)
 
 void audio_seq_stop(void)
 {
-    flag_t flags;
-
-    save_flags(flags);
     clr_irq();
     audio_stop_locked();
-    restore_flags(flags);
+    set_irq();
 }
 
 void audio_seq_exit(pid_t pid)
 {
-    flag_t flags;
-
-    save_flags(flags);
     clr_irq();
     if (audio_owner == pid)
         audio_stop_locked();
-    restore_flags(flags);
+    set_irq();
 }
 
 static int audio_queue_event(struct audio_event *ev)
@@ -204,29 +197,21 @@ static void audio_start_locked(void)
 
 static void audio_timer_fn(int unused)
 {
-    flag_t flags;
-
-    unused = unused;
-
-    save_flags(flags);
     clr_irq();
     audio_timer_on = 0;
-
     if (audio_active)
         audio_load_next_locked();
-
-    restore_flags(flags);
+    set_irq();
 }
 
 int audio_seq_ioctl(char *arg)
 {
-    struct audio_seq req;
-    struct audio_event ev;
-    struct audio_event *up;
     unsigned int n;
     unsigned int queued = 0;
     int err;
-    flag_t flags;
+    struct audio_event *up;
+    struct audio_seq req;
+    struct audio_event ev;
 
     err = verified_memcpy_fromfs(&req, arg, sizeof(req));
     if (err)
@@ -235,47 +220,38 @@ int audio_seq_ioctl(char *arg)
     if (req.rate_hz && req.rate_hz != HZ)
         return -EINVAL;
 
-    save_flags(flags);
-    clr_irq();
-
-    if (req.flags & (AUDIO_SEQ_F_FLUSH | AUDIO_SEQ_F_STOP))
+    if (req.flags & (AUDIO_SEQ_F_FLUSH | AUDIO_SEQ_F_STOP)) {
+        clr_irq();
         audio_stop_locked();
+        set_irq();
+    }
 
-    if (req.flags & AUDIO_SEQ_F_STOP) {
-        restore_flags(flags);
+    if (req.flags & AUDIO_SEQ_F_STOP)
         return 0;
-    }
-
-    if (audio_active && audio_owner != current->pid) {
-        restore_flags(flags);
+    if (audio_active && audio_owner != current->pid)
         return -EBUSY;
-    }
-
-    restore_flags(flags);
 
     up = req.events;
     for (n = 0; n < req.count; n++) {
         err = verified_memcpy_fromfs(&ev, up + n, sizeof(ev));
         if (err)
-            return queued ? (int)queued : err;
+            return queued ? queued : err;
 
-        save_flags(flags);
         clr_irq();
         if (audio_queue_event(&ev)) {
             if (queued)
                 audio_start_locked();
-            restore_flags(flags);
-            return queued ? (int)queued : -EAGAIN;
+            set_irq();
+            return queued ? queued : -EAGAIN;
         }
         queued++;
-        restore_flags(flags);
+        set_irq();
     }
 
-    save_flags(flags);
     clr_irq();
     if (queued)
         audio_start_locked();
-    restore_flags(flags);
+    set_irq();
 
-    return (int)queued;
+    return queued;
 }
