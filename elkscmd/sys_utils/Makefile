@@ -30,7 +30,6 @@ PRGS = \
 	chmem \
 	test_unreal \
 	beep \
-	pcspkpop \
 	mouse \
 	sercat \
 	console \
@@ -121,9 +120,6 @@ unreal.o: $(ELKS_LIB)/unreal.S
 
 beep: beep.o
 	$(LD) $(LDFLAGS) -o beep beep.o $(LDLIBS)
-
-pcspkpop: pcspkpop.o
-	$(LD) $(LDFLAGS) -o pcspkpop pcspkpop.o $(LDLIBS)
 
 sysctl: sysctl.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
