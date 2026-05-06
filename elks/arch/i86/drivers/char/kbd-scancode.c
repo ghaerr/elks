@@ -277,8 +277,9 @@ static void keyboard_irq(int irq, struct pt_regs *regs)
     /* F11 and F12 function keys need 89 byte table like keys-de.h */
     /* function keys are not posix standard here */
     
-	/* AltF1-F4 are console switch*/
-	if ((ModeState & ALT) && code <= SCAN_F1+3) {
+	/* AltF1-F8 are console switch (downstream Console_set_vc validates
+	 * against NumConsoles, so unwired keys are silently ignored).*/
+	if ((ModeState & ALT) && code <= SCAN_F1+7) {
 	    Console_set_vc(code - SCAN_F1);
 	    return;
 	}
@@ -356,8 +357,8 @@ static void keyboard_irq(int irq, struct pt_regs *regs)
 
         /* Step 6: Modify keyboard character based on some special states*/
 	if ((ModeState & (CTRL|ALT)) == ALT) {
-	    /* Alt-1 - Alt-4 are also console switch (for systems w/no fnkeys)*/
-	    if (key >= '1' && key <= '4') {
+	    /* Alt-1 - Alt-8 are also console switch (for systems w/no fnkeys)*/
+	    if (key >= '1' && key <= '8') {
 		Console_set_vc(key - '1');
 		return;
 	    }
