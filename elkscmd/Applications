@@ -78,7 +78,7 @@ file_utils/md5sum               :fileutil                               :1440c
 file_utils/mkdir                :fileutil       :360k
 file_utils/mknod                :fileutil       :360k
 #file_utils/mkfifo              :fileutil               :1200k
-file_utils/more                 :fileutil       :360k           
+file_utils/more                 :fileutil       :360k
 file_utils/mv                   :fileutil       :360k
 file_utils/ln                   :fileutil           :720k
 file_utils/ls                   :fileutil       :360k           :128k       :nocomp
@@ -96,6 +96,7 @@ sys_utils/man                   :sysutil                                :1440k
 sys_utils/meminfo       :sash   :sysutil        :360k           :128k
 sys_utils/mouse                 :sysutil                 :1200c     :1440k
 sys_utils/passwd                :sysutil                :1200k
+sys_utils/pcspkpop                :sysutil                :1200k
 #sys_utils/shutdown :::reboot    :sysutil            :720k       :128k
 #sys_utils/shutdown :::poweroff  :sysutil            :720k
 sys_utils/sercat                :sysutil                            :1440c
