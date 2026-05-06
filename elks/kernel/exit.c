@@ -10,7 +10,7 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/init.h>
 #include <linuxmt/debug.h>
-#include <linuxmt/pcspk.h>
+#include <linuxmt/kd.h>
 
 static void FARPROC reparent_children(void)
 {
@@ -128,7 +128,7 @@ void do_exit(int status)
     struct task_struct *parent;
 
     debug_wait("EXIT(%P) status %d\n", status);
-#ifdef CONFIG_ARCH_IBMPC
+#ifdef CONFIG_AUDIO
     pcspk_seq_exit(current->pid);
 #endif
     _close_allfiles();

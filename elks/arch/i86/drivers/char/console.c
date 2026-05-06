@@ -1,5 +1,4 @@
 /* shared console routines for Direct and BIOS consoles - #include in console drivers*/
-#include <linuxmt/pcspk.h>
 
 static void WriteChar(Console * C, int c)
 {
@@ -358,7 +357,7 @@ static int Console_ioctl(struct tty *tty, int cmd, char *arg)
                 nosound();
         }
         return 0;
-#ifdef CONFIG_ARCH_IBMPC
+#ifdef CONFIG_AUDIO
     case KIOCSNDSEQ:
         return pcspk_seq_ioctl(arg);
 #endif

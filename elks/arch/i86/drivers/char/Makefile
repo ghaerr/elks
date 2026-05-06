@@ -128,8 +128,12 @@ ifdef CONFIG_CHAR_DEV_RS
 	endif
 endif
 
+ifdef CONFIG_AUDIO
+  OBJS += audio-8254.o
+endif
+
 ifdef CONFIG_ARCH_IBMPC
-  OBJS += mouse-ps2.o pcspkseq.o
+  OBJS += mouse-ps2.o
 endif
 
 ifdef CONFIG_CHAR_DEV_CGATEXT

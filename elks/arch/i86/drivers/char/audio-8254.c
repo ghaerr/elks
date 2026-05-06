@@ -11,15 +11,12 @@
 #include <linuxmt/errno.h>
 #include <linuxmt/kd.h>
 #include <linuxmt/mm.h>
-#include <linuxmt/pcspk.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/timer.h>
 #include <arch/io.h>
 #include <arch/irq.h>
 #include <arch/param.h>
 #include <arch/ports.h>
-
-#ifdef CONFIG_ARCH_IBMPC
 
 #define PCSPK_QSIZE        32
 #define PCSPK_GATE_BITS    0x03
@@ -282,5 +279,3 @@ int pcspk_seq_ioctl(char *arg)
 
     return (int)queued;
 }
-
-#endif /* CONFIG_ARCH_IBMPC */

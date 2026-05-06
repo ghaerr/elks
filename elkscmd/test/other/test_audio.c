@@ -1,4 +1,4 @@
-/* pcspkpop - ELKS PC speaker sequencer test: Popcorn opening loop */
+/* test_audio - ELKS PC speaker sequencer test: Popcorn opening loop */
 
 #include <sys/ioctl.h>
 #include <errno.h>
@@ -8,7 +8,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <linuxmt/kd.h>
 
+#if 0000
 #ifndef __KD_MAJ
 #define __KD_MAJ        ('K'<<8)
 #endif
@@ -35,6 +37,7 @@ struct pcspk_seq {
     unsigned short rate_hz;
     unsigned short flags;
 };
+#endif
 #endif
 
 #define REST 0

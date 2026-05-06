@@ -35,6 +35,7 @@ CONFIG_HW_SERIAL_FIFO=y
 #
 # CONFIG_TRACE is not set
 CONFIG_ASYNCIO=y
+# CONFIG_AUDIO is not set
 
 #
 # Memory manager

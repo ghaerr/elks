@@ -8,7 +8,7 @@
  */
 
 #include <linuxmt/config.h>
-#include <linuxmt/pcspk.h>
+#include <linuxmt/kd.h>
 #include <arch/ports.h>
 #include <arch/io.h>
 #include <arch/irq.h>
@@ -21,7 +21,7 @@
  */
 void soundp(unsigned period)
 {
-#ifdef CONFIG_ARCH_IBMPC
+#ifdef CONFIG_AUDIO
     pcspk_seq_stop();
 #endif
     clr_irq();
@@ -37,7 +37,7 @@ void soundp(unsigned period)
  */
 void nosound(void)
 {
-#ifdef CONFIG_ARCH_IBMPC
+#ifdef CONFIG_AUDIO
     pcspk_seq_stop();
 #endif
     clr_irq();
@@ -54,6 +54,6 @@ void bell(void)
 
     soundp(BELL_PERIOD);
     while (--i)
-	continue;
+        continue;
     nosound();
 }
