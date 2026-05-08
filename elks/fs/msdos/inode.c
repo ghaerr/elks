@@ -372,8 +372,8 @@ static void msdos_write_inode(register struct inode *inode)
 
 	inode->i_dirt = 0;
 #ifdef CONFIG_FS_DEV
-	/* FAT /dev inodes don't actually exist, so don't write anything*/
-	if (inode->i_ino < DEVINO_BASE + DEVDIR_SIZE)
+	/* FAT /dev inodes don't actually exist, so don't write anything */
+	if (MSDOS_SB(inode->i_sb)->dev_ino && inode->i_ino < DEVINO_BASE + DEVDIR_SIZE)
 		return;
 #endif
 	debug_fat("write_inode %ld %d\n", (unsigned long)inode->i_ino, inode->i_dirt);
