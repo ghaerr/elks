@@ -17,7 +17,7 @@
 #include <linuxmt/debug.h>
 
 #ifdef CONFIG_FS_DEV
-/* FAT device table, increase DEVDIR_SIZE and DEVINO_BASE to add entries*/
+/* FAT device table, increase DEVDIR_SIZE to add entries*/
 struct msdos_devdir_entry devnods[DEVDIR_SIZE] = {
     { "hda",	S_IFBLK | 0644, DEV_HDA                     },
     { "hda1",	S_IFBLK | 0644, DEV_HDA+1                   },
@@ -281,7 +281,7 @@ void msdos_read_inode(register struct inode *inode)
 	cluster_t this, nr;
 	int fatsz = MSDOS_SB(inode->i_sb)->fat_bits;
 
-	//debug_fat("read_inode %ld\n", (unsigned long)inode->i_ino);
+	debug_fat("read_inode %lu\n", (unsigned long)inode->i_ino);
 	inode->u.msdos_i.i_busy = 0;
 	inode->i_uid = current->uid;
 	inode->i_gid = current->gid;
@@ -315,15 +315,14 @@ void msdos_read_inode(register struct inode *inode)
 		return;
 	}
 #ifdef CONFIG_FS_DEV
-	else if (MSDOS_SB(inode->i_sb)->dev_ino
-                 && inode->i_ino < DEVINO_BASE + DEVDIR_SIZE) {
-		inode->i_mode = devnods[(int)inode->i_ino - DEVINO_BASE].mode;
+	if (MSDOS_SB(inode->i_sb)->dev_ino && inode->i_ino >= DEVINO_BASE) {
+		inode->i_mode = devnods[inode->i_ino - DEVINO_BASE].mode;
+		inode->i_rdev = devnods[inode->i_ino - DEVINO_BASE].rdev;
 		inode->i_uid  = 0;
 		inode->i_size = 0;
-		inode->i_mtime= current_time();
 		inode->i_gid  = 0;
 		inode->i_nlink= 1;
-		inode->i_rdev = devnods[(int)inode->i_ino - DEVINO_BASE].rdev;
+		inode->i_mtime= current_time();
 		if (S_ISCHR(inode->i_mode))
 			inode->i_op = &chrdev_inode_operations;
 		else if (S_ISBLK(inode->i_mode))
@@ -373,7 +372,7 @@ static void msdos_write_inode(register struct inode *inode)
 	inode->i_dirt = 0;
 #ifdef CONFIG_FS_DEV
 	/* FAT /dev inodes don't actually exist, so don't write anything */
-	if (MSDOS_SB(inode->i_sb)->dev_ino && inode->i_ino < DEVINO_BASE + DEVDIR_SIZE)
+	if (MSDOS_SB(inode->i_sb)->dev_ino && inode->i_ino >= DEVINO_BASE)
 		return;
 #endif
 	debug_fat("write_inode %ld %d\n", (unsigned long)inode->i_ino, inode->i_dirt);

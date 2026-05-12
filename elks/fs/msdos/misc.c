@@ -243,7 +243,7 @@ ino_t FATPROC msdos_get_entry(struct inode *dir,loff_t *pos,struct buffer_head *
 
 #ifdef CONFIG_FS_DEV
 	if (dir->i_ino == MSDOS_SB(dir->i_sb)->dev_ino) {
-		unsigned i = (unsigned)*pos / sizeof(struct msdos_dir_entry);
+		ino_t i = *pos >> MSDOS_DIR_BITS;
 		if (i - 2 <= DEVDIR_SIZE) {
 			static struct msdos_dir_entry deventry;
 			int j;
@@ -257,7 +257,7 @@ ino_t FATPROC msdos_get_entry(struct inode *dir,loff_t *pos,struct buffer_head *
 
 			i += DEVINO_BASE;
 			return i;
-	    }
+		}
 	}
 #endif
 
