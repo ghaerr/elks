@@ -180,18 +180,18 @@ static void BFPROC probe_floppy(int target, struct hd_struct *hdp)
                 }
             }
 
-            /* second check for valid FAT BIOS parm block */
+            /* Check for valid FAT v3.31+ BPB in boot sector */
             unsigned char __far *boot = _MK_FP(DMASEG, 0);
-            if (
-                //(boot[510] == 0x55 && boot[511] == 0xAA) &&   /* bootable sig*/
-                ((boot[3] == 'M' && boot[4] == 'S') ||          /* OEM 'MSDOS'*/
-                 (boot[3] == 'I' && boot[4] == 'B'))     &&     /* or 'IBM'*/
-                (boot[54] == 'F' && boot[55] == 'A')       ) {  /* v4.0 fil_sys 'FAT'*/
+            if (((boot[3] == 'M' && boot[4] == 'S') ||      /* OEM 'MSDOS' */
+                 (boot[3] == 'I' && boot[4] == 'B'))     && /* or 'IBM' */
+                boot[0x10] && !boot[0x19] && !boot[0x1B] && /* nzfat, hi head/spt 0 */
+                (boot[0x1A] == 1 || boot[0x1A] == 2)     && /* 1 or 2 heads */
+                (boot[0x18] == 8 || boot[0x18] == 9 ||      /* valid # sectors */
+                 boot[0x18] == 15 || boot[0x18] == 18 || boot[0x18] == 36)) {
 
-                /* has valid MSDOS 4.0+ FAT BPB, use it */
-                drivep->sectors = boot[24];             /* bpb_sec_per_trk */
-                drivep->heads = boot[26];               /* bpb_num_heads */
-                unsigned char media = boot[21];         /* bpb_media_byte */
+                drivep->sectors = boot[0x18];           /* bpb_sec_per_trk */
+                drivep->heads = boot[0x1A];             /* bpb_num_heads */
+                unsigned char media = boot[0x15];       /* bpb_media_byte */
                 drivep->cylinders =
                         (media == 0xFD)? 40:
 #ifdef CONFIG_ARCH_PC98
