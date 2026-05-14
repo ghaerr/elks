@@ -1447,18 +1447,17 @@ static void DFPROC floppy_deregister(void)
     set_irq();
 }
 
-/* Try to determine the floppy controller type */
-static int DFPROC get_fdc_version(void)
+/* Try to determine the floppy controller type; sets fdc_version global */
+static void DFPROC get_fdc_version(void)
 {
     int type = FDC_TYPE_8272A;
     const char *name;
 
     do_floppy = ignore_interrupt;
     output_byte(FD_VERSION);    /* get FDC version code */
-    if (result() != 1) {
-        printk("df: can't get FDC version\n");
-        return 0;
-    }
+    if (result() != 1)
+        reply_buffer[0] = 0;    /* NOTE: fixes unimplemented command in MartyPC */
+
     switch (reply_buffer[0]) {
     case 0x80:
         if (arch_cpu >= CPU_80286) {     /* PC/AT or better */
@@ -1473,10 +1472,11 @@ static int DFPROC get_fdc_version(void)
         name = "82077";
         break;
     default:
-        name = "Unknown";
+        name = "8272A assumed";
     }
     printk("df: direct floppy FDC %s (0x%x), irq %d, dma %d\n",
         name, reply_buffer[0], FLOPPY_IRQ, FLOPPY_DMA);
+    fdc_version = type;         /* must set version before reset_floppy called */
 
     /* Not all FDCs seem to be able to handle the version command
      * properly, so force a reset for the standard FDC clones,
@@ -1484,8 +1484,6 @@ static int DFPROC get_fdc_version(void)
      */
     initial_reset_flag = 1;
     reset_floppy();
-
-    return type;
 }
 
 static int DFPROC floppy_register(void)
@@ -1502,7 +1500,7 @@ static int DFPROC floppy_register(void)
         return err;
     }
 
-    fdc_version = get_fdc_version();
+    get_fdc_version();
     if (!fdc_version) return -EIO;
     return 0;
 }
