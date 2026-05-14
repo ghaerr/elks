@@ -304,6 +304,8 @@ static int load_elks(int fd, uint16_t argv_envp_bytes)
 	min_len = mh.dseg;
 	if (__builtin_add_overflow(min_len, mh.bseg, &min_len))
 		return -EINVAL;
+	if (mh.tseg > 0x10000 || esuph.esh_ftseg > 0x10000)
+		return -EINVAL;
 	/*
 	 * mh.version == 1: chmem is size of heap, 0 means use default heap
 	 * mh.version == 0: old ld86 used chmem as size of data+bss+heap+stack
@@ -351,11 +353,6 @@ static int load_elks(int fd, uint16_t argv_envp_bytes)
 		}
 	}
 
-	if (mh.tseg > 0x10000 || esuph.esh_ftseg > 0x10000 ||
-	    mh.dseg > 0x10000 || mh.bseg > 0x10000) {
-		fprintf(stderr, "ELKS binary: segment size exceeds 64K limit\n");
-		exit(1);
-	}
 	if(read(fd,elks_base,mh.tseg)!=mh.tseg)
 		return -ENOEXEC;
 	elks_fartext_base=elks_base+0x10000;

@@ -85,9 +85,9 @@ struct __attribute__((packed)) minix_exec_hdr
 	uint8_t hlen;
 	uint8_t reserved1;
 	uint16_t version;
-	uint16_t tseg, reserved2;
-	uint16_t dseg, reserved3;
-	uint16_t bseg, reserved4;
+	uint32_t tseg;
+	uint32_t dseg;
+	uint32_t bseg;
 	uint32_t entry;
 	uint16_t chmem;
 	uint16_t minstack;
@@ -102,7 +102,7 @@ struct __attribute__((packed)) elks_supl_hdr
 	uint32_t msh_tbase;
 	uint32_t msh_dbase;
 	/* even more optional fields */
-	uint16_t esh_ftseg, esh_reserved1;
+	uint32_t esh_ftseg;
 	uint32_t esh_ftrsize;
 	uint32_t esh_reserved2, esh_reserved3;
 };

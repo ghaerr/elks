@@ -42,6 +42,12 @@ OBJ_STRACE=elks.o elks_sys_strace.o elks_signal.o elks_pid.o minix.o
 
 all:	elksemu strace_elksemu
 
+test_segment_bounds: test_segment_bounds.c elks.h
+		$(CC) $(CFLAGS) -o $@ $<
+
+test: test_segment_bounds elksemu
+		./test_segment_bounds
+
 elksemu:	$(OBJ)
 		$(CC) $(CFLAGS) -o $@ $^
 
@@ -105,7 +111,7 @@ install: elksemu
 	install -s -o root -g root -m 4555 elksemu $(DIST)/lib/elksemu
 
 clean realclean:
-	rm -f $(OBJ) $(OBJ_STRACE) binfmt_elks.o elksemu strace_elksemu call_tab.v defn_tab.v efile.h
+	rm -f $(OBJ) $(OBJ_STRACE) binfmt_elks.o elksemu strace_elksemu call_tab.v defn_tab.v efile.h test_segment_bounds
 
 module: binfmt_elks.o
 
