@@ -351,6 +351,11 @@ static int load_elks(int fd, uint16_t argv_envp_bytes)
 		}
 	}
 
+	if (mh.tseg > 0x10000 || esuph.esh_ftseg > 0x10000 ||
+	    mh.dseg > 0x10000 || mh.bseg > 0x10000) {
+		fprintf(stderr, "ELKS binary: segment size exceeds 64K limit\n");
+		exit(1);
+	}
 	if(read(fd,elks_base,mh.tseg)!=mh.tseg)
 		return -ENOEXEC;
 	elks_fartext_base=elks_base+0x10000;
