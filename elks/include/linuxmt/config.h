@@ -187,11 +187,11 @@
 #define DMASEGSZ        0           /* no external XMS/DMA buffer */
 #endif
 
-#if defined(CONFIG_BLK_DEV_BFD) || defined(CONFIG_BLK_DEV_BHD) || defined(CONFIG_BLK_FD)
+#if defined(CONFIG_BLK_DEV_BFD) || defined(CONFIG_BLK_DEV_BHD) || defined(CONFIG_BLK_DEV_FD)
 #ifdef CONFIG_TRACK_CACHE           /* floppy track buffer in low mem */
 #   define TRACKSEGSZ   0x2400      /* SECTOR_SIZE * 18 (9216) */
 #else
-#  ifdef CONFIG_BLK_FD
+#  ifdef CONFIG_BLK_DEV_FD
 #  define TRACKSEGSZ    0x0400      /* DF driver requires DMASEG internal to TRACKSEG */
 #  else
 #  define TRACKSEGSZ    0           /* no TRACKSEG buffer */
