@@ -1,4 +1,4 @@
-![logo](https://github.com/ghaerr/elks/blob/master/Documentation/img/ELKS-Logo.png)
+![logo](https://github.com/ghaerr/elks/blob/master/Documentation/img/ELKS-Logo.svg)
 
 
 ![cross](https://github.com/jbruchon/elks/workflows/cross/badge.svg)
