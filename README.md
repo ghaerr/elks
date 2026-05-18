@@ -1,5 +1,10 @@
-![logo](https://github.com/ghaerr/elks/blob/master/Documentation/img/ELKS-Logo.svg)
-
+<p align="left">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./Documentation/img/ELKS-Logo-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="./Documentation/img/ELKS-Logo-light.svg">
+    <img alt="logo" src="./Documentation/img/ELKS-Logo-light.svg" width="224">
+  </picture>
+</p>
 
 ![cross](https://github.com/jbruchon/elks/workflows/cross/badge.svg)
 ![main](https://github.com/jbruchon/elks/workflows/main/badge.svg)
