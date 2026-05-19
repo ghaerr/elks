@@ -66,6 +66,12 @@
  *
  * 22 May 2025 - Greg Haerr
  * Program 8237 DMA controller external page register instead of using XMS bounce buffer
+ *
+ * 18 May 2026 - Greg Haerr
+ * Fix incorrect cache-hit and possible numsectors < 2 data corruption when
+ * TRACK_CACHE=y, CACHE_CYLINDER=0 and TRACK_SPLIT_BLK=0. This driver requires
+ * the FDC (or emulator) to implement auto-head increment when MT bit set.
+ * Currently MartyPC does not, so odd sector-per-track discs will produce I/O errors.
  */
 
 #include <linuxmt/config.h>
@@ -1219,9 +1225,17 @@ static void DFPROC redo_fd_request(void)
          */
         numsectors = floppy->sect + (floppy->sect & 1 && !head) - startsector;
 #else
-        /* partial track caching */
+        /* Partial track caching. NOTE: this will set numsectors to 1
+         * on odd sector-per-track floppies (i.e. 360k, 720k, 1200k).
+         */
         numsectors = floppy->sect - startsector;
 #endif
+        /* NOTE: TRACK_SPLIT_BLK #else option above requires this, should
+         * probably be combined into TRACK_SPLIT_BLK and option removed.
+         */
+        if (numsectors < req->rq_nr_sectors)
+            numsectors = req->rq_nr_sectors;
+
         if (numsectors > CACHE_SIZE)
             numsectors = CACHE_SIZE;
     }
@@ -1233,8 +1247,8 @@ static void DFPROC redo_fd_request(void)
 
     DEBUG("prep %u|%d,%d|%d-", start, seek_track, cache_drive, current_drive);
 
-    if (cache_drive == current_drive &&
-        start >= cache_start && start < cache_start + cache_numsectors) {
+    if (cache_drive == current_drive && start >= cache_start &&
+            start + req->rq_nr_sectors <= cache_start + cache_numsectors) {
         DEBUG("cache CHS %d/%d/%d\n", seek_track, head, sector);
         debug_cache2("CH %d ", start >> 1);
         cache_offset = (char *)(((start - cache_start) << 9) + CACHE_OFF);
