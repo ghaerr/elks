@@ -38,7 +38,8 @@ void netconf_request(struct stat_request_s *sr)
     sreq.extra = sr->extra;
 }
 
-/* Save extra request data following the 2-byte stat_request_s header */
+/* Save extra request data following the 2-byte stat_request_s header.
+ * Was defined but never called — ICMP echo (and IP/netmask/gateway set) silently dropped their payload. */
 void netconf_set_extra(unsigned char *data, int len)
 {
     if (sreq.type == NS_ICMP_ECHO && len >= (int)(sizeof(struct stat_request_s) + sizeof(struct icmp_echo_request_s))) {
@@ -84,7 +85,8 @@ void netconf_send(struct tcpcb_s *cb)
 	tcpcb_buf_write(cb, (unsigned char *)&arp_cache, ARP_CACHE_MAX*sizeof(struct arp_cache));
 	break;
     case NS_ICMP_ECHO:
-	/* Send ICMP Echo Request, defer reply until it arrives */
+	/* Send ICMP Echo Request, defer reply until it arrives via icmp_process() → netconf_icmp_reply().
+	 * We cannot block here because we're in the ktcp event loop, so the reply path is async. */
 	pending_icmp_cb = NULL;	/* clear any stale pending from previous timeout */
 	icmp_send_echo(icmp_req.target_ip, icmp_req.id, icmp_req.seq, icmp_req.timestamp);
 	pending_icmp_cb = cb;		/* new pending client */
@@ -113,7 +115,9 @@ void netconf_send(struct tcpcb_s *cb)
     tcpcb_need_push++;
 }
 
-/* called from icmp_process() when Echo Reply arrives for pending netconf client */
+/* Called from icmp_process() when Echo Reply arrives for pending netconf client.
+ * The reply path is async: icmp_send_echo() fires the request, and when the ICMP
+ * layer receives the reply it calls here to push data back through the netconf socket. */
 void netconf_icmp_reply(struct tcpcb_s *cb, __u32 timestamp, __u8 ttl)
 {
     struct icmp_echo_reply_s reply;
