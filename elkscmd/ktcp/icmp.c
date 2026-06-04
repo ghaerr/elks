@@ -32,7 +32,7 @@ void icmp_send_echo(ipaddr_t target_ip, unsigned short id, unsigned short seq, u
     int len = sizeof(struct icmp_echo_s) + 4;
     unsigned char buf[sizeof(struct icmp_echo_s) + 4];
     struct icmp_echo_s *icmp = (struct icmp_echo_s *)buf;
-    unsigned int *payload = (unsigned int *)(icmp + 1);
+    unsigned long *payload = (unsigned long *)(icmp + 1);	/* 32-bit timestamp on ia16 (int=16, long=32) */
 
     icmp->type = ICMP_TYPE_ECHO_REQ;
     icmp->code = 0;
