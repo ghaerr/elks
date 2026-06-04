@@ -203,7 +203,9 @@ inet/httpd                      :net
 inet/netcat                     :net
 inet/netcat :::nc               :net
 inet/netstat                    :net
-inet/nslookup                   :net
+inet/nslookup                    :net
+inet/ping                        :net
+inet/ifconfig                    :net
 inet/telnet                     :net
 inet/telnetd                    :net
 inet/urlget                     :net

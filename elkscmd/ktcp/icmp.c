@@ -23,6 +23,44 @@
 #include "tcpdev.h"
 #include "netconf.h"
 
+void icmp_send_echo(ipaddr_t target_ip, unsigned short id, unsigned short seq, unsigned long timestamp)
+{
+    struct addr_pair apair;
+    int icmp_len = sizeof(struct icmp_echo_s) + 4;
+    int ip_len = sizeof(struct iphdr_s) + icmp_len;
+    unsigned char buf[sizeof(struct iphdr_s) + sizeof(struct icmp_echo_s) + 4];
+    struct iphdr_s *iph = (struct iphdr_s *)buf;
+    struct icmp_echo_s *icmp = (struct icmp_echo_s *)(buf + sizeof(struct iphdr_s));
+    unsigned int *payload = (unsigned int *)(icmp + 1);
+
+    iph->version_ihl = 0x45;
+    iph->tos = 0;
+    iph->tot_len = htons(ip_len);
+    iph->id = htons(seq);
+    iph->frag_off = 0;
+    iph->ttl = 64;
+    iph->protocol = PROTO_ICMP;
+    iph->check = 0;
+    iph->saddr = local_ip;
+    iph->daddr = target_ip;
+
+    icmp->type = ICMP_TYPE_ECHO_REQ;
+    icmp->code = 0;
+    icmp->chksum = 0;
+    icmp->id = htons(id);
+    icmp->seqnum = htons(seq);
+    *payload = timestamp;
+
+    icmp->chksum = ip_calc_chksum((char *)icmp, icmp_len);
+    iph->check = ip_calc_chksum((char *)iph, sizeof(struct iphdr_s));
+
+    apair.daddr = target_ip;
+    apair.saddr = local_ip;
+    apair.protocol = PROTO_ICMP;
+    ip_sendpacket(buf, ip_len, &apair, NULL);
+    netstats.icmpsndcnt++;
+}
+
 int icmp_init(void)
 {
     return 0;
