@@ -68,10 +68,10 @@ if [ "$1" != "auto" ]; then
 	fi
 
 # Build default kernel, user land and image
-# Forcing single threaded build because of dirty dependencies (see #273)
+# Parallel build enabled via MAKEFLAGS in env.sh (historic #273 resolved)
 
 echo "Building all..."
-make -j1 all || clean_exit 5
+make all || clean_exit 5
 
 if [ "$2" = "ext" ]; then
     echo "Building external applications..."
@@ -83,9 +83,9 @@ fi
 if [ "$3" = "allimages" ]; then
 	echo "Building FD images..."
 	cd image
-	make -j1 images-minix images-fat || clean_exit 6
+	make images-minix images-fat || clean_exit 6
 	echo "Building HD images..."
-	make -j1 images-hd || clean_exit 61
+	make images-hd || clean_exit 61
 	cd ..
 fi
 
@@ -95,7 +95,7 @@ if [ "$1" = "auto" ]; then
     cp 8018x.config .config
     make kclean || clean_exit 7
     rm elkscmd/basic/*.o
-    make -j1 || clean_exit 8
+    make || clean_exit 8
 fi
 
 # Build NEC V25 kernel and image
@@ -104,7 +104,7 @@ if [ "$1" = "auto" ]; then
     cp necv25.config .config
     make kclean || clean_exit 7
     rm elkscmd/basic/*.o
-    make -j1 || clean_exit 8
+    make || clean_exit 8
 fi
 
 # Build PC-98 kernel, PC-98 Nano-X, some user land files and image
@@ -119,7 +119,7 @@ if [ "$1" = "auto" ]; then
     rm elkscmd/sys_utils/meminfo.o
     rm elkscmd/sys_utils/beep.o
     rm elkscmd/basic/*.o
-    make -j1 || clean_exit 10
+    make || clean_exit 10
 fi
 
 # Success

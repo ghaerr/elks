@@ -62,10 +62,18 @@ ALL = ia16
 
 all: $(ALL)
 
+.PHONY: ia16 lib $(filter-out lib,$(IA16DIRS))
+
 ia16:
 	@if [ ! -e $(TOPDIR)/include/autoconf.h ]; \
 	then echo -e "\n*** ERROR: You must configure ELKS first ***\n" >&2; exit 1; fi
-	for DIR in $(IA16DIRS); do $(MAKE) -C $$DIR all || exit 1; done
+	$(MAKE) $(IA16DIRS)
+
+lib:
+	$(MAKE) -C lib all
+
+$(filter-out lib,$(IA16DIRS)): | lib
+	$(MAKE) -C $@ all
 
 owc:
 	for DIR in $(OWCDIRS); do $(MAKE) -C $$DIR -f Makefile.owc all || exit 1; done

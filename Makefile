@@ -6,14 +6,10 @@ endif
 include $(TOPDIR)/Make.defs
 
 .PHONY: all clean libc kconfig defconfig config menuconfig image images \
-    kimage kernel kclean owc c86
+    kimage kernel kclean owc c86 elkscmd bootblocks
 
 all: .config include/autoconf.h
-	$(MAKE) -C libc all
-	$(MAKE) -C libc DESTDIR='$(TOPDIR)/cross' install
-	$(MAKE) -C elks all
-	$(MAKE) -C bootblocks all
-	$(MAKE) -C elkscmd all
+	$(MAKE) kernel bootblocks elkscmd
 	$(MAKE) -C image all
 ifeq ($(shell uname), Linux)
 	$(MAKE) -C elksemu PREFIX='$(TOPDIR)/cross' elksemu
@@ -28,7 +24,17 @@ images:
 kimage: kernel image
 
 kernel:
-	$(MAKE) -C elks
+	$(MAKE) -C elks all
+
+bootblocks:
+	$(MAKE) -C bootblocks all
+
+elkscmd: libc kernel
+	$(MAKE) -C elkscmd all
+
+libc:
+	$(MAKE) -C libc all
+	$(MAKE) -C libc DESTDIR='$(TOPDIR)/cross' install
 
 kclean:
 	$(MAKE) -C elks kclean
@@ -49,11 +55,6 @@ endif
 	    echo ' * `make config` or `make menuconfig` to configure it.' ;\
 	    echo ;\
 	fi
-
-libc:
-	$(MAKE) -C libc DESTDIR='$(TOPDIR)/cross' uninstall
-	$(MAKE) -C libc all
-	$(MAKE) -C libc DESTDIR='$(TOPDIR)/cross' install
 
 owclean:
 	$(MAKE) -C libc -f watcom.mk clean
