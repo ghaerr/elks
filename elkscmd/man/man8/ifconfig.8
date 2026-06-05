@@ -1,50 +1,44 @@
 .TH IFCONFIG 8
 .SH NAME
-ifconfig \- configure a TCP/IP device
+ifconfig \- configure a network interface
 .SH SYNOPSIS
 .B ifconfig
-.RB [ \-I
-.IR ip-device ]
-.RB [ \-h
-.IR ipaddr ]
-.RB [ \-n
-.IR netmask ]
-.RB [ \-m
-.IR mtu ]
-.RB [ \-iva ]
+.RI [ ip ]
+.RB [ netmask
+.IR mask ]
+.RB [ gateway
+.IR gw ]
 .SH DESCRIPTION
-.B Ifconfig
-initializes a TCP/IP device setting the IP address and/or netmask.  It will
-report the address and netmask set.  This command may be used if the system
-has not been configured properly yet.  It is only used at boot time to set a
-fixed address for a system without a physical ethernet.  Normally the
-.B inet
-task will find it out by itself from the RARP server.
+.B ifconfig
+displays or sets the IP address, netmask, and gateway for the Ethernet
+interface via the ktcp netconf protocol.  The ktcp daemon must be running.
+.PP
+Without arguments,
+.B ifconfig
+displays the current network configuration, including the hardware (MAC)
+address, IP address, netmask, and gateway.
+.PP
+With arguments, it updates the specified parameters.  All changes take effect
+immediately in ktcp; no reboot is required.
 .SH OPTIONS
 .TP
-.B \-h
-The decimal TCP/IP address to set.
+.I ip
+Set the local IP address.  Example: \fB10.0.2.15\fR.
 .TP
-.B \-n
-The netmask to set.
+.B netmask
+.I mask
+Set the network mask.  Example: \fB255.255.255.0\fR.
 .TP
-.B \-m
-The mtu to set.  (Minix-vmd only.)
-.TP
-.B \-i
-Don't set the IP address or netmask if already set.  This way ifconfig cannot
-interfere if the numbers have been found out by RARP.
-.TP
-.B \-v
-Report IP address and netmask.  This is the default action if there are no
-other options.
-.TP
-.B \-a
-Report the IP addresses and netmasks of all configured interfaces.
+.B gateway
+.I gw
+Set the default gateway IP address.  Example: \fB10.0.2.2\fR.
+.SH EXAMPLE
+.PP
+.nf
+ifconfig 10.0.2.15 netmask 255.255.255.0 gateway 10.0.2.2
+.fi
 .SH "SEE ALSO"
-.BR hostaddr (1),
-.BR rarpd (8),
-.BR inet (8),
-.BR boot (8).
+.BR ping (8),
+.BR ktcp (8).
 .SH AUTHOR
-Kees J. Bot (kjb@cs.vu.nl)
+Greg Haerr (greg@censoft.com)

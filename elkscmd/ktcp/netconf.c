@@ -86,10 +86,12 @@ void netconf_send(struct tcpcb_s *cb)
 	break;
     case NS_ICMP_ECHO:
 	/* Send ICMP Echo Request, defer reply until it arrives via icmp_process() → netconf_icmp_reply().
-	 * We cannot block here because we're in the ktcp event loop, so the reply path is async. */
+	 * We cannot block here because we're in the ktcp event loop, so the reply path is async.
+	 * Set pending_icmp_cb BEFORE icmp_send_echo() so localhost loopback (synchronous via ip_route)
+	 * finds the TCB when icmp_process handles the echo reply. */
 	pending_icmp_cb = NULL;	/* clear any stale pending from previous timeout */
-	icmp_send_echo(icmp_req.target_ip, icmp_req.id, icmp_req.seq, icmp_req.timestamp);
 	pending_icmp_cb = cb;		/* new pending client */
+	icmp_send_echo(icmp_req.target_ip, icmp_req.id, icmp_req.seq, icmp_req.timestamp);
 	return;	/* no response yet; netconf_icmp_reply() sends it later */
     case NS_GET_CONFIG:
 	config.local_ip = local_ip;
