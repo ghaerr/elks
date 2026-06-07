@@ -111,13 +111,10 @@ NET="-netdev user,id=mynet,$FWD -device ne2k_isa,irq=12,netdev=mynet"
 # Enable network dump here:
 # NETDUMP="-net dump"
 
-# Enable PC-Speaker here:
-#AUDIO="-audiodev pa,id=speaker -machine pcspk-audiodev=speaker"
-#AUDIO="-audiodev sdl,id=speaker -machine pcspk-audiodev=speaker"
-# Select audio backend (coreaudio for macOS, pa for Linux PulseAudio, sdl as fallback)
-[ "$UNAME" = 'Darwin' ] && AUDIO="-audiodev coreaudio,id=audio0 -machine pcspk-audiodev=audio0" || AUDIO="-audiodev pa,id=audio0 -machine pcspk-audiodev=audio0"
-
 UNAME=`uname`
+
+# Enable PC-Speaker here (UNAME must be set first)
+[ "$UNAME" = 'Darwin' ] && AUDIO="-audiodev coreaudio,id=audio0 -machine pcspk-audiodev=audio0" || AUDIO="-audiodev pa,id=audio0 -machine pcspk-audiodev=audio0"
 
 # Determine display type ("Darwin" = OSX)
 [ "$UNAME" != 'Darwin' ] && QDISPLAY="-display sdl"
