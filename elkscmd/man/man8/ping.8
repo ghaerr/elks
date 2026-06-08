@@ -1,0 +1,42 @@
+.TH PING 8
+.SH NAME
+ping \- send ICMP ECHO_REQUEST to network hosts
+.SH SYNOPSIS
+.B ping
+[
+.B \-c
+.I count
+] [
+.B \-i
+.I interval
+] [
+.B \-I
+.I ipaddr
+]
+.I host
+.SH DESCRIPTION
+.B ping
+uses the ktcp netconf protocol to send ICMP ECHO_REQUEST packets to a network
+host and reports round-trip times and packet loss statistics.  The ktcp daemon
+must be running.
+.SH OPTIONS
+.TP
+.B \-c
+.I count
+Stop after sending \fIcount\fR ECHO_REQUEST packets.  If not specified, ping
+runs until interrupted.
+.TP
+.B \-i
+.I interval
+Wait \fIinterval\fR seconds between sending each packet.  The default is 1
+second.
+.TP
+.B \-I
+.I ipaddr
+Set the local interface IP address to \fIipaddr\fR.  The default is
+10.0.2.15.
+.SH "SEE ALSO"
+.BR ifconfig (8),
+.BR ktcp (8).
+.SH AUTHOR
+Greg Haerr (greg@censoft.com)

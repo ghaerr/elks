@@ -111,12 +111,10 @@ NET="-netdev user,id=mynet,$FWD -device ne2k_isa,irq=12,netdev=mynet"
 # Enable network dump here:
 # NETDUMP="-net dump"
 
-# Enable PC-Speaker here:
-#AUDIO="-audiodev pa,id=speaker -machine pcspk-audiodev=speaker"
-#AUDIO="-audiodev sdl,id=speaker -machine pcspk-audiodev=speaker"
-AUDIO="-audiodev coreaudio,id=audio0 -machine pcspk-audiodev=audio0"
-
 UNAME=`uname`
+
+# Enable PC-Speaker here (UNAME must be set first)
+[ "$UNAME" = 'Darwin' ] && AUDIO="-audiodev coreaudio,id=audio0 -machine pcspk-audiodev=audio0" || AUDIO="-audiodev pa,id=audio0 -machine pcspk-audiodev=audio0"
 
 # Determine display type ("Darwin" = OSX)
 [ "$UNAME" != 'Darwin' ] && QDISPLAY="-display sdl"
@@ -132,7 +130,7 @@ ACCEL_V9="-accel tcg,one-insn-per-tb=on"
 ACCEL_HVF="-accel hvf"
 
 ACCEL=$ACCEL_SSTP
-if [[ `$QEMU -version` =~ "version 9" || `$QEMU -version` =~ "version 10" ]]; then
+if [[ `$QEMU -version` =~ "version 9" || `$QEMU -version` =~ "version 10" || `$QEMU -version` =~ "version 11" ]]; then
      ACCEL=$ACCEL_V9
 fi
 if [[ $QEMU =~ "x86_64" && $UNAME =~ "Darwin" && $UNAME =~ "x86_64" ]]; then
