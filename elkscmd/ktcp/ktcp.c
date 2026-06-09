@@ -190,11 +190,6 @@ static void usage(void)
     exit(1);
 }
 
-static void ktcp_sigignore(int sig)
-{
-    /* empty handler: catch signals that would kill a background process */
-}
-
 int main(int argc,char **argv)
 {
     int ch;
@@ -275,10 +270,8 @@ int main(int argc,char **argv)
     else printf("%s %s baud %lu", linknames[linkprotocol], serdev, baudrate);
     printf(" mtu %u\n", MTU);
 
-    signal(SIGHUP, (sighandler_t)ktcp_sigignore);   /* terminal hangup */
-    signal(SIGINT, (sighandler_t)ktcp_sigignore);   /* Ctrl+C */
-    signal(SIGTERM, (sighandler_t)ktcp_sigignore);  /* termination */
-    signal(SIGQUIT, (sighandler_t)ktcp_sigignore);  /* Ctrl+\ */
+    signal(SIGHUP, catch);
+    signal(SIGINT, catch);
 #if USE_DEBUG_EVENT
     signal(SIGURG, debug_toggle);
 #endif
