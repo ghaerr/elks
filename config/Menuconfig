@@ -1336,7 +1336,7 @@ set_geometry () {
     if [ $ROWS -lt 19 -o $COLS -lt 80 ]; then
 	echo -e "\n\007Your display is too small to run Menuconfig!"
 	echo "It must be at least 19 lines by 80 columns."
-	exit 0
+	exit 1
     fi 
     ROWS=$((ROWS-4))  COLS=$((COLS-5))
 }

@@ -55,7 +55,15 @@ else
 	echo "The defaults should be OK for many systems, but you may want to review them."
 	echo -n "Press ENTER to continue..."
 	read
-	make menuconfig || clean_exit 2
+	if ! make menuconfig 2>&1; then
+		echo
+		echo "ERROR: 'make menuconfig' failed (see above)."
+		echo "       If the display is too small, resize your terminal window"
+		echo "       to at least 19 lines by 80 columns and try again."
+		echo -n "Press ENTER to exit..."
+		read
+		clean_exit 2
+	fi
 fi
 
 test -e .config || clean_exit 3
