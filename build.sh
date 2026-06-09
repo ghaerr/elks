@@ -3,8 +3,9 @@
 # ELKS System Builder
 # This build script is also called in main.yml for GitHub Continuous Integration
 #
-# Usage: ./build.sh [auto [[ext] [[[allimages]]]]]
+# Usage: ./build.sh [auto|--config] [[ext] [[[allimages]]]]]
 #   <no args>:  user build: build cross-compiler, menuconfig kernel and standard apps
+#   --config    skip menuconfig, use existing .config (set up manually)
 #   auto        github CI build:: just IBM PC, 8018X, NECV25 kernel and standard apps
 #   ext         also build external apps (requires OpenWatcom C installed)
 #   allimages   also build all floppy and HD disk images
@@ -14,6 +15,10 @@
 #   $ make
 #   $ ./buildext.sh all     # optionally build specified external apps (OpenWatcom reqd)
 #   $ ./qemu.sh
+#
+# To bypass the interactive menuconfig and use an existing .config:
+#   $ cp <config-file> .config
+#   $ ./build.sh --config
 #
 set -e
 
@@ -36,6 +41,12 @@ clean_exit () {
 
 # Build cross tools if not already
 
+CONFIG_MODE=menuconfig
+if [ "$1" = "--config" ]; then
+	CONFIG_MODE=custom
+	shift
+fi
+
 if [ "$1" != "auto" ]; then
 	mkdir -p "$CROSSDIR"
 	tools/build.sh || clean_exit 1
@@ -49,7 +60,7 @@ if [ "$1" = "auto" ]; then
 	echo "Building IBM PC image..."
 	#cp ibmpc-1440.config .config
 	cp ibmpc-1440-nc.config .config
-else
+elif [ "$CONFIG_MODE" = "menuconfig" ]; then
 	echo
 	echo "Now invoking 'make menuconfig' for you to configure the system."
 	echo "The defaults should be OK for many systems, but you may want to review them."
@@ -60,6 +71,25 @@ else
 		echo "ERROR: 'make menuconfig' failed (see above)."
 		echo "       If the display is too small, resize your terminal window"
 		echo "       to at least 19 lines by 80 columns and try again."
+		echo
+		echo "Available pre-built configurations:"
+		for f in *.config; do
+			[ "$f" = ".config" ] && continue
+			printf "   %s\n" "$f"
+		done
+		echo
+		if [ -f .config ]; then
+			echo "Current config file: .config"
+			ARCH=$(grep '^CONFIG_ARCH_' .config | head -1 | sed 's/^CONFIG_ARCH_//; s/=.*//')
+			echo "  Target architecture: $ARCH"
+		else
+			echo "No .config file found."
+		fi
+		echo
+		echo "To use a custom config:"
+		echo "  1. cp <config-file> .config"
+		echo "  2. ./build.sh --config"
+		echo
 		echo -n "Press ENTER to exit..."
 		read
 		clean_exit 2
