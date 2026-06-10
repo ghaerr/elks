@@ -1,10 +1,12 @@
 arp
+ifconfig
 ftp
 ftpd
 httpd
 netcat
 netstat
 nslookup
+ping
 telnet
 telnetd
 urlget
