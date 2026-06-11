@@ -226,7 +226,7 @@ elkirc()
     echo "Building elkirc..."
     cd $TOPDIR/extapps
     if [ ! -d elkirc ] ; then
-        git clone https://github.com/sepen/elkirc
+        git clone https://github.com/ghaerr/elkirc
     fi
     cd elkirc
     git pull
