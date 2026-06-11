@@ -13,12 +13,14 @@ make -C elkscmd/ktcp
 make image
 
 echo "=== Booting ELKS with vmnet-shared (macOS bootpd DHCP) ==="
-echo "Auto-login as root, runs net start, then interactive."
 echo "Press Ctrl-A X to exit QEMU"
+echo ""
 
-# Auto-login, run net start, then hand off to interactive stdin
-( sleep 15; echo "root"; sleep 3; echo "net start"; sleep 5; cat ) | \
-sudo qemu-system-i386 \
+# Cache sudo credentials before piping stdin to QEMU
+sudo -v
+
+# Pipe through cat to forward terminal input to QEMU serial
+cat | sudo qemu-system-i386 \
     -accel tcg,one-insn-per-tb=on \
     -nodefaults \
     -name ELKS \
