@@ -35,7 +35,7 @@ eth_addr_t eth_local_addr;
 static unsigned char sbuf[MAX_PACKET_ETH];
 static int devfd;
 
-//static eth_addr_t broad_addr = {255, 255, 255, 255, 255, 255};
+static eth_addr_t broad_addr = {255, 255, 255, 255, 255, 255};
 
 int deveth_init(char *fdev)
 {
@@ -105,6 +105,12 @@ void eth_route(unsigned char *packet, int len, ipaddr_t ip_addr)
 	struct arp_cache *entry;
 	eth_addr_t eth_addr;
 	unsigned char *p;
+
+	/* broadcast to 255.255.255.255 */
+	if (ip_addr == 0xFFFFFFFF) {
+		eth_sendpacket(packet, len, broad_addr);
+		return;
+	}
 
 	/* try to get cached ethernet address and send packet*/
 	if (arp_cache_get (ip_addr, eth_addr, ARP_VALID)) {

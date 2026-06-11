@@ -49,6 +49,7 @@ struct packet_stats_s {
 
 	__u32	slipsndcnt;
 	__u32	sliprcvcnt;
+	__u32	udprcvcnt;
 };
 
 extern struct packet_stats_s netstats;
