@@ -206,7 +206,7 @@ void ip_route(unsigned char *packet, int len, struct addr_pair *apair)
     ipaddr_t ip_addr;
 
     /* determine if packet is routed to localhost, route right back to us*/
-    if (apair->saddr  == local_ip && apair->daddr == local_ip) {
+    if (apair->daddr == local_ip || (apair->daddr & 0xFF000000) == 0x7F000000) {
 	debug_ip("ip: route localhost\n");
 	ip_recvpacket(packet, len);
 	return;
