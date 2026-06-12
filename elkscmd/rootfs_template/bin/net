@@ -69,7 +69,15 @@ start_network()
 stop_network()
 {
 	echo "Stopping network"
-	kill $(ps | grep "ktcp|telnet|httpd|ftpd" | cut -c 1-5) > /dev/null 2>&1
+	ps > /tmp/psout
+	while read pid cmd
+	do
+		case $cmd in
+		*ktcp*|*telnet*|*httpd*|*ftpd*)
+			kill $pid > /dev/null 2>&1
+			;;
+		esac
+	done < /tmp/psout
 	custom_stop_network
 }
 
@@ -89,7 +97,16 @@ restart)
 	start_network ;;
 show)
 	echo -n ip $localip gateway $gateway mask $netmask $link
-	if test "$link" = "slip"; then echo "" $baud $device; else echo; fi ;;
+	if test "$link" = "slip"; then echo "" $baud $device; else echo; fi
+	running="[stopped]"
+	ps > /tmp/psout
+	while read pid cmd
+	do
+		case $cmd in
+		*ktcp*) running="[running]" ;;
+		esac
+	done < /tmp/psout
+	echo "ktcp $running" ;;
 *) usage ;;
 esac
 

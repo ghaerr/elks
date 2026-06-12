@@ -74,10 +74,8 @@ KEYBOARD=
 # Uncomment the following line to emulate two serial devices, required for Nano-X:
 SERIAL="-chardev msmouse,id=c1 -device isa-serial,chardev=c1,id=s1 -chardev msmouse,id=c2 -device isa-serial,chardev=c2,id=s2"
 
-# Uncomment this to route ELKS /dev/ttyS0 to host terminal
+# Route ELKS /dev/ttyS0 to host terminal in addition to VGA window
 CONSOLE="-serial stdio"
-# Hides qemu window also
-#CONSOLE="-serial stdio -nographic"
 
 # Host forwarding for networking
 # No forwarding: only outgoing from ELKS to host
@@ -92,7 +90,7 @@ FWD="\
 hostfwd=tcp:127.0.0.1:8080-10.0.2.15:80,\
 hostfwd=tcp:127.0.0.1:2323-10.0.2.15:23,\
 hostfwd=tcp::8020-:20,\
-hostfwd=tcp::8021-:21,\
+hostfwd=tcp::2121-:21,\
 hostfwd=tcp::8041-:49821,\
 hostfwd=tcp::8042-:49822,\
 hostfwd=tcp::8043-:49823,\
@@ -143,5 +141,5 @@ fi
 
 echo "Using QEMU: $QEMU $ACCEL"
 exec $QEMU $ACCEL $DEBUG $AUDIO $CONSOLE -nodefaults -name ELKS -machine isapc -cpu 486,tsc -m 8M \
-$KEYBOARD $QDISPLAY -vga std -rtc base=utc $SERIAL \
+$KEYBOARD $QDISPLAY -vga std -boot order=a -rtc base=utc $SERIAL \
 $NET $NETDUMP $IMAGE $DISK2 $@
