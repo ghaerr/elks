@@ -62,7 +62,7 @@ $(BUILDDIR)/.binutils.build: $(BUILDDIR)/.binutils.src
 	touch $(BUILDDIR)/.binutils.build
 
 $(CROSSDIR)/.binutils.install: $(BUILDDIR)/.binutils.build
-	$(MAKE) -C $(BUILDDIR)/binutils-build install
+	$(MAKE) -C $(BUILDDIR)/binutils-build -j1 install
 	touch $(CROSSDIR)/.binutils.install
 
 all:: $(CROSSDIR)/.binutils.install
@@ -174,7 +174,7 @@ $(BUILDDIR)/.gcc.build: $(BUILDDIR)/.gcc.src $(BUILDDIR)/.binutils.build
 	touch $(BUILDDIR)/.gcc.build
 
 $(CROSSDIR)/.gcc.install: $(BUILDDIR)/.gcc.build
-	$(MAKE) -C $(BUILDDIR)/gcc-build install
+	$(MAKE) -C $(BUILDDIR)/gcc-build -j1 install
 	touch $(CROSSDIR)/.gcc.install
 
 all:: $(CROSSDIR)/.gcc.install
@@ -211,6 +211,7 @@ $(BUILDDIR)/.emu86.build: $(BUILDDIR)/.emu86.src
 	touch $(BUILDDIR)/.emu86.build
 
 $(CROSSDIR)/.emu86.install: $(BUILDDIR)/.emu86.build
+	mkdir -p $(CROSSDIR)/bin
 	install $(BUILDDIR)/emu86/emu86 $(CROSSDIR)/bin/
 	install $(BUILDDIR)/emu86/pcat $(CROSSDIR)/bin/
 	touch $(CROSSDIR)/.emu86.install
@@ -255,6 +256,7 @@ $(BUILDDIR)/.wf-mednafen.build: $(BUILDDIR)/.wf-mednafen.src
 	touch $(BUILDDIR)/.wf-mednafen.build
 
 $(CROSSDIR)/.wf-mednafen.install: $(BUILDDIR)/.wf-mednafen.build
+	mkdir -p $(CROSSDIR)/bin
 	install $(BUILDDIR)/wf-mednafen-build/src/mednafen $(CROSSDIR)/bin/wf-mednafen
 	touch $(CROSSDIR)/.wf-mednafen.install
 
