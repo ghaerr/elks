@@ -19,6 +19,9 @@ jobs:
 
     runs-on: ubuntu-22.04
 
+    env:
+      MAKEFLAGS: "-j$(sysctl -n hw.perflevel0.logicalcpu 2>/dev/null || nproc 2>/dev/null || echo 2)"
+
     steps:
       - name: setup
         run: 'sudo apt-get install texinfo libncurses5-dev libelf-dev ncompress nasm'

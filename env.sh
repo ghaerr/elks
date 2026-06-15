@@ -21,6 +21,7 @@ add_path "$CROSSDIR/bin"
 add_path "$TOPDIR/elks/tools/bin"
 echo PATH set to $PATH
 
-# for example MAKEFLAGS="-j$(nproc)" . env.sh
-export MAKEFLAGS="$MAKEFLAGS"
+# Use P-cores only (hw.perflevel0) on macOS — E-cores are much slower for compilation.
+# On Linux falls back to nproc (all cores).
+export MAKEFLAGS="-j$(sysctl -n hw.perflevel0.logicalcpu 2>/dev/null || nproc 2>/dev/null || echo 2)"
 echo MAKEFLAGS set to $MAKEFLAGS

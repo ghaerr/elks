@@ -81,7 +81,7 @@ endif
 #########################################################################
 # Define commands.
 
-Image: $(TOPDIR)/include/autoconf.h tools
+Image: $(TOPDIR)/include/autoconf.h reset tools
 	$(MAKE) $(ARCHIVES)
 	$(MAKE) -C init main.o
 	$(MAKE) -C $(ARCH_DIR) Image
@@ -93,7 +93,7 @@ setup: $(ARCH_DIR)/boot/setup
 # library rules (all these are built even if they aren't used).
 
 .PHONY: fs/fs.a fs/msdos/msdos.a fs/minix/minixfs.a fs/romfs/romfs.a \
-        kernel/kernel.a lib/lib.a net/net.a tools
+        kernel/kernel.a lib/lib.a net/net.a tools reset
 
 fs/fs.a:
 	${MAKE} -C fs fs.a
@@ -119,6 +119,8 @@ net/net.a:
 
 tools:
 	${MAKE} -C tools all
+
+reset:
 	-rm -f include/linuxmt/compiler-generated.h
 	-rm -f kernel/version.o
 
@@ -148,8 +150,9 @@ elks.spec: Makefile
 
 kclean: dokclean
 
-.NOTPARALLEL: clean
-clean:	nodep doclean
+#.NOTPARALLEL: clean
+#clean:	nodep doclean
+clean:	doclean
 
 dep:	$(TOPDIR)/include/autoconf.h
 	@$(MAKE) dodep

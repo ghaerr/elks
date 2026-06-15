@@ -12,10 +12,9 @@ include $(BASEDIR)/Makefile-rules
 #
 # Subdirectories for clean / build / install
 
-# All subdirectories to build & clean
+# All subdirectories to build & clean (elkscmd/lib handled specially)
 
 IA16DIRS =       \
-	lib         \
 	advent      \
 	ash         \
 	basic       \
@@ -62,7 +61,10 @@ ALL = ia16
 
 all: $(ALL)
 
-ia16:
+lib:
+	$(MAKE) -C lib all
+
+ia16: lib
 	@if [ ! -e $(TOPDIR)/include/autoconf.h ]; \
 	then echo -e "\n*** ERROR: You must configure ELKS first ***\n" >&2; exit 1; fi
 	for DIR in $(IA16DIRS); do $(MAKE) -C $$DIR all || exit 1; done
@@ -74,6 +76,7 @@ c86:
 	for DIR in $(C86DIRS); do $(MAKE) -C $$DIR -f Makefile.c86 all || exit 1; done
 
 clean: owclean c86clean
+	$(MAKE) -C lib clean
 	for DIR in $(IA16DIRS); do $(MAKE) -C $$DIR clean || exit 1; done
 
 owclean:
