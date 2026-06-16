@@ -448,6 +448,10 @@ static void tcpdev_release(void)
 	    case TS_SYN_RECEIVED:
 	    case TS_ESTABLISHED:
 		if (cb->remport == NETCONF_PORT && cb->remaddr == 0){
+			if (pending_icmp_cb == cb) {
+				pending_icmp_cb = NULL;
+				pending_is_traceroute = 0;
+			}
 			tcpcb_remove(n);
 			return;
 		}

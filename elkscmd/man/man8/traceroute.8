@@ -1,0 +1,41 @@
+.TH TRACEROUTE 8
+.SH NAME
+traceroute \- print the route packets take to a network host
+.SH SYNOPSIS
+.B traceroute
+[
+.B \-m
+.I max_ttl
+]
+.I host
+.SH DESCRIPTION
+.B traceroute
+uses the ktcp netconf protocol to send ICMP ECHO_REQUEST packets with
+incrementally increasing TTL values, tracing the path of routers between the
+local system and a destination host.  Intermediate routers that decrement the
+TTL to zero respond with ICMP TIME_EXCEEDED messages, revealing each hop.
+The ktcp daemon must be running.
+.SH OPTIONS
+.TP
+.B \-m
+.I max_ttl
+Set the maximum number of hops (TTL) to probe.  The default is 30.
+.SH OUTPUT
+For each hop, three probes are not sent separately; a single probe is sent at
+each TTL value.  A hop that responds is printed with its IP address and
+round-trip time in milliseconds.  A hop that does not respond within 5 seconds
+is printed as "* * *".
+.SH EXAMPLE
+.nf
+.B traceroute 8.8.8.8
+traceroute to 8.8.8.8 (8.8.8.8), 30 hops max, 12 byte packets
+ 1  10.0.2.2  2.345 ms
+ 2  * * *
+ 3  8.8.8.8  30.123 ms
+.fi
+.SH "SEE ALSO"
+.BR ping (8),
+.BR ifconfig (8),
+.BR ktcp (8).
+.SH AUTHOR
+Greg Haerr (greg@censoft.com)

@@ -9,5 +9,6 @@ nslookup
 ping
 telnet
 telnetd
+traceroute
 urlget
 tinyirc/tinyirc

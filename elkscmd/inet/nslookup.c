@@ -23,7 +23,7 @@ int main(int ac, char **av)
 	if (ac > 2)
 		server = av[2];
 
-	result = in_resolv(av[1], server);
+	result = in_resolv(av[1], server, NULL);
 	if (result) {
 		msgstr(av[1]);
 		msg(" is ");
