@@ -23,10 +23,10 @@
 #include "tcpdev.h"
 #include "netconf.h"
 
-/* Send a raw ICMP echo request.
+/* Send a raw ICMP echo request with specified TTL.
  * NOTE: ip_sendpacket() prepends its own IP header, so buf contains only
  * the ICMP header + payload — do NOT embed a second IP header here. */
-void icmp_send_echo(ipaddr_t target_ip, unsigned short id, unsigned short seq, unsigned long timestamp)
+void icmp_send_echo(ipaddr_t target_ip, unsigned short id, unsigned short seq, unsigned long timestamp, __u8 ttl)
 {
     struct addr_pair apair;
     int len = sizeof(struct icmp_echo_s) + 4;
@@ -46,7 +46,7 @@ void icmp_send_echo(ipaddr_t target_ip, unsigned short id, unsigned short seq, u
     apair.daddr = target_ip;
     apair.saddr = local_ip;
     apair.protocol = PROTO_ICMP;
-    ip_sendpacket(buf, len, &apair, NULL);
+    ip_sendpacket_ttl(buf, len, &apair, NULL, ttl);
     netstats.icmpsndcnt++;
 }
 
@@ -87,11 +87,19 @@ void icmp_process(struct iphdr_s *iph, unsigned char *packet)
 	netstats.icmpsndcnt++;
 	break;
     case ICMP_TYPE_ECHO_REPL:
-	/* Echo Reply — forward to pending netconf client (needed so ping(1) gets its reply via netconf protocol) */
+	/* Echo Reply — forward to pending netconf client */
 	if (pending_icmp_cb) {
 	    __u32 *ts = (__u32 *)(packet + sizeof(struct icmp_echo_s));
-	    netconf_icmp_reply(pending_icmp_cb, *ts, iph->ttl);
+	    if (pending_is_traceroute)
+		netconf_icmp_traceroute_reply(pending_icmp_cb, *ts, iph->ttl, iph->saddr, ICMP_TRACEROUTE_ECHO_REPLY);
+	    else
+		netconf_icmp_reply(pending_icmp_cb, *ts, iph->ttl);
 	}
+	break;
+    case ICMP_TYPE_TIME_EXCEEDED:
+	debug_ip("icmp: TTL exceeded from %s\n", in_ntoa(iph->saddr));
+	if (pending_icmp_cb && pending_is_traceroute)
+	    netconf_icmp_traceroute_reply(pending_icmp_cb, 0, 0, iph->saddr, ICMP_TRACEROUTE_TIME_EXCEED);
 	break;
     case ICMP_TYPE_DST_UNRCH:
 	dp = (struct icmp_dest_unreachable_s *)packet;

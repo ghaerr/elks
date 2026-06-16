@@ -53,6 +53,7 @@ struct packet_stats_s {
 
 extern struct packet_stats_s netstats;
 extern struct tcpcb_s *pending_icmp_cb;	/* netconf client awaiting ICMP echo reply */
+extern int pending_is_traceroute;	/* 1 if pending_icmp_cb expects traceroute reply, 0 for ping */
 
 #define NS_IDLE 	0
 #define NS_GENERAL	1
@@ -64,6 +65,7 @@ extern struct tcpcb_s *pending_icmp_cb;	/* netconf client awaiting ICMP echo rep
 #define NS_SET_IP	7
 #define NS_SET_NETMASK	8
 #define NS_SET_GATEWAY	9
+#define NS_ICMP_TRACEROUTE	10
 
 struct config_info_s {
 	ipaddr_t	local_ip;
@@ -88,12 +90,34 @@ struct icmp_echo_reply_s {
 #define ICMP_ECHO_REPLY_SUCCESS	0
 #define ICMP_ECHO_REPLY_FAIL	1
 
+struct icmp_traceroute_request_s {
+	__u32	target_ip;
+	__u8	ttl;
+	__u16	id;
+	__u16	seq;
+	__u32	timestamp;
+};
+
+struct icmp_traceroute_reply_s {
+	__u32	timestamp;
+	__u32	resp_ip;	/* responding router/destination IP */
+	__u8	ttl;		/* TTL from echo reply (0 for time exceeded) */
+	__u8	status;		/* 0=echo reply, 1=time exceeded */
+};
+
+#define ICMP_TRACEROUTE_ECHO_REPLY	0
+#define ICMP_TRACEROUTE_TIME_EXCEED	1
+
 void netconf_init(void);
 void netconf_send(struct tcpcb_s *cb);
 void netconf_request(struct stat_request_s *sr);
 
 /* forward ICMP echo reply to pending netconf client */
 void netconf_icmp_reply(struct tcpcb_s *cb, __u32 timestamp, __u8 ttl);
+
+/* forward traceroute response (echo reply or time exceeded) to pending client */
+void netconf_icmp_traceroute_reply(struct tcpcb_s *cb, __u32 timestamp, __u8 ttl,
+				   ipaddr_t resp_ip, __u8 status);
 
 /* save extra request data for ICMP echo */
 void netconf_set_extra(unsigned char *data, int len);

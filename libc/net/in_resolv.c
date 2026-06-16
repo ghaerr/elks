@@ -82,7 +82,8 @@ static void format_dns(char *dns, const char *host)
 }
 
 /* resolve a name to an IP address, optionally use DNS 'server' */
-ipaddr_t in_resolv(const char *hostname, char *server)
+/* if ancount is non-NULL, stores the number of A records returned */
+ipaddr_t in_resolv(const char *hostname, char *server, int *ancount)
 {
 	int fd, rc, len;
 	struct DNS_HEADER *dns;
@@ -93,112 +94,117 @@ ipaddr_t in_resolv(const char *hostname, char *server)
 	unsigned short flags;
 	sighandler_t old;
 	char buf[256];
+	/* retry transient TCP connect/read failures (first DNS query often
+	 * times out when NAT gateway is cold; NXDOMAIN/etc are not retried) */
+	int retries = 2;
 
 	if (server == NULL)
 		server = getenv(DNS_ENV);
 	if (server == NULL)
 		server = DEFAULT_DNS;
 
-	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-		return 0;
+	while (retries-- > 0) {
+		if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+			return 0;
 
-	addr.sin_family = AF_INET;
-	addr.sin_port = PORT_ANY;
-	addr.sin_addr.s_addr = INADDR_ANY;
-	if (bind(fd, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)) < 0) {
-		int e = errno;
-		close(fd);
-		errno = e;
-		return 0;
-	}
+		addr.sin_family = AF_INET;
+		addr.sin_port = PORT_ANY;
+		addr.sin_addr.s_addr = INADDR_ANY;
+		if (bind(fd, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)) < 0) {
+			int e = errno;
+			close(fd);
+			errno = e;
+			return 0;
+		}
 
-	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = in_aton(server);
-	addr.sin_port = htons(53);
-	old = signal(SIGALRM, alarm_cb);
-	alarm(2);
-	if (connect(fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+		addr.sin_family = AF_INET;
+		addr.sin_addr.s_addr = in_aton(server);
+		addr.sin_port = htons(53);
+		old = signal(SIGALRM, alarm_cb);
+		alarm(2);
+		if (connect(fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+			alarm(0);
+			signal(SIGALRM, old);
+			close(fd);
+			continue;
+		}
+
+		dns = (struct DNS_HEADER *)buf;
+		dns->id = htons(0xABCD);
+		dns->flags = htons(QUERY | RD);
+		dns->qdcount = htons(1);
+		dns->ancount = 0;
+		dns->nscount = 0;
+		dns->arcount = 0;
+
+		dnsname = &buf[sizeof(struct DNS_HEADER)];
+		format_dns(dnsname, hostname);
+
+		len = strlen(dnsname) + 1;
+		qd = (struct QUESTION*)&buf[sizeof(struct DNS_HEADER) + len];
+		qd->qtype = htons(TYPE_A);
+		qd->qclass = htons(CLASS_IN);
+
+		len += sizeof(struct DNS_HEADER) + sizeof(struct QUESTION) - 2;
+		dns->len = htons(len);
+
+		write(fd, buf, len + 2);
+		rc = read(fd, buf, 200);
+#if DEBUG
+		printf("DNS: %d message bytes\n", rc);
+		for (int i=0;i<rc;i++) printf("%2x,",buf[i] & 0xff);
+		printf("\n");
+#endif
 		alarm(0);
 		signal(SIGALRM, old);
 		close(fd);
-		errno = ENONAMESERVER;
-		return 0;
-	}
 
-	dns = (struct DNS_HEADER *)buf;
-	dns->id = htons(0xABCD);
-	dns->flags = htons(QUERY | RD);
-	dns->qdcount = htons(1);
-	dns->ancount = 0;
-	dns->nscount = 0;
-	dns->arcount = 0;
+		if (rc < sizeof(struct DNS_HEADER) + sizeof(struct RR))
+			continue;
 
-	dnsname = &buf[sizeof(struct DNS_HEADER)];
-	format_dns(dnsname, hostname);
-
-	len = strlen(dnsname) + 1;
-	qd = (struct QUESTION*)&buf[sizeof(struct DNS_HEADER) + len];
-	qd->qtype = htons(TYPE_A);
-	qd->qclass = htons(CLASS_IN);
-
-	len += sizeof(struct DNS_HEADER) + sizeof(struct QUESTION) - 2;
-	dns->len = htons(len);
-
-	write(fd, buf, len + 2);
-	rc = read(fd,buf,200);
-	alarm(0);
-	signal(SIGALRM, old);
-	close(fd);
+		dns = (struct DNS_HEADER *)buf;
+		flags = htons(dns->flags);
 
 #if DEBUG
-	printf("DNS: %d message bytes\n", rc);
-	for (int i=0;i<rc;i++) printf("%2x,",buf[i] & 0xff);
-	printf("\n");
+		printf("response id %04x\n", htons(dns->id));
+		printf("response code %04x\n", flags);
+		printf("response qd count %04x\n", htons(dns->qdcount));
+		printf("response an count %04x\n", htons(dns->ancount));
+		printf("response ns count %04x\n", htons(dns->nscount));
+		printf("response ar count %04x\n", htons(dns->arcount));
 #endif
-
-	if (rc < sizeof(struct DNS_HEADER) + sizeof(struct RR)) {
-		errno = ESERVERERR;
-		return 0;
-	}
-
-	dns = (struct DNS_HEADER *)buf;
-	flags = htons(dns->flags);
-
-#if DEBUG
-	printf("response id %04x\n", htons(dns->id));
-	printf("response code %04x\n", flags);
-	printf("response qd count %04x\n", htons(dns->qdcount));
-	printf("response an count %04x\n", htons(dns->ancount));
-	printf("response ns count %04x\n", htons(dns->nscount));
-	printf("response ar count %04x\n", htons(dns->arcount));
-#endif
-
-	if ((flags & RC) != NO_ERROR) {
-		switch (flags & RC) {
-		case FORMAT_ERROR:	errno = EBADQUERY; break;
-		case NAME_ERROR:	errno = ENONAME; break;
-		case REFUSED:		errno = EQUERYREFUSED; break;
-		default:			errno = ESERVERERR; break;
+		/* non-transient: don't retry bad queries or NXDOMAIN */
+		if ((flags & RC) != NO_ERROR) {
+			switch (flags & RC) {
+			case FORMAT_ERROR:	errno = EBADQUERY; break;
+			case NAME_ERROR:	errno = ENONAME; break;
+			case REFUSED:		errno = EQUERYREFUSED; break;
+			default:		errno = ESERVERERR; break;
+			}
+			return 0;
 		}
-		return 0;
-	}
 
-	rr = (struct RR *)&buf[rc - sizeof(struct RR)];
+		rr = (struct RR *)&buf[rc - sizeof(struct RR)];
 
 #if DEBUG
-	printf("response type %04x\n", htons(rr->type));
-	printf("response class %04x\n", htons(rr->class));
-	printf("response ttl %ld\n", htonl(rr->ttl));
-	printf("response rdlength %04x\n", htons(rr->rdlength));
-	printf("response rdata %08lx\n", htonl(rr->rdata));
-	printf("response IP %s\n", in_ntoa(rr->rdata));
+		printf("response type %04x\n", htons(rr->type));
+		printf("response class %04x\n", htons(rr->class));
+		printf("response ttl %ld\n", htonl(rr->ttl));
+		printf("response rdlength %04x\n", htons(rr->rdlength));
+		printf("response rdata %08lx\n", htonl(rr->rdata));
+		printf("response IP %s\n", in_ntoa(rr->rdata));
 #endif
+		/* dns may return auth data but not answer */
+		if (htons(dns->ancount) == 0) {
+			errno = ENONAME;
+			return 0;
+		}
 
-	/* dns may return auth data but not answer */
-	if (htons(dns->ancount) == 0) {
-		errno = ENONAME;
-		return 0;
+		if (ancount)
+			*ancount = htons(dns->ancount);
+		return rr->rdata;
 	}
 
-	return rr->rdata;
+	errno = ENONAMESERVER;
+	return 0;
 }
