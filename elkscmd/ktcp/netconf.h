@@ -72,6 +72,7 @@ struct config_info_s {
 	ipaddr_t	netmask_ip;
 	ipaddr_t	gateway_ip;
 	__u8		hwaddr[6];
+	char		name[8];		/* interface name e.g. "ne0" */
 };
 
 struct icmp_echo_request_s {

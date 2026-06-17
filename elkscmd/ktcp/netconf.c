@@ -104,6 +104,8 @@ void netconf_send(struct tcpcb_s *cb)
 	config.netmask_ip = netmask_ip;
 	config.gateway_ip = gateway_ip;
 	memcpy(config.hwaddr, eth_local_addr, 6);
+	strncpy(config.name, ethdev + 5, sizeof(config.name) - 1);
+	config.name[sizeof(config.name) - 1] = '\0';
 	tcpcb_buf_write(cb, (unsigned char *)&config, sizeof(config));
 	break;
     case NS_SET_IP:
