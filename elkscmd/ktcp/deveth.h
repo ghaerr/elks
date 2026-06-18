@@ -29,6 +29,7 @@ struct ip_ll {			//FIXME rename or combine w/above
 };
 
 extern eth_addr_t eth_local_addr;
+extern char ethdev[10];
 
 int  deveth_init(char *fdev);
 void eth_printhex(unsigned char *packet, int len);
