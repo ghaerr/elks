@@ -1064,7 +1064,6 @@ int connect_cmd(char *ip, unsigned int server_port) {
 		if ((servaddr.sin_addr.s_addr == loopback) || (servaddr.sin_addr.s_addr == madr)) {
 			printf("loopback detected, disabling QEMU mode.\n");
 			qemu = 0;
-			servaddr.sin_addr.s_addr = madr;
 		}
 	}
 #endif

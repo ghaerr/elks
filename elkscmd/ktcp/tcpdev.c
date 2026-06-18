@@ -223,10 +223,11 @@ static void tcpdev_connect(void)
 	return;
     }
 
-    /* convert localhost to local_ip*/
+    /* No longer remap 127.0.0.1 -> local_ip here; ip_route() now catches
+     * all 127.x.x.x destinations and loops them back internally. Keeping
+     * the real destination address is also required for correct ICMP echo
+     * replies (ping localhost). */
     addr = db->addr.sin_addr.s_addr;
-    if (addr == ntohl(INADDR_LOOPBACK))
-	addr = local_ip;
     n->tcpcb.remaddr = addr;
     n->tcpcb.remport = ntohs(db->addr.sin_port);
 
