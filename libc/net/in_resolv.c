@@ -159,7 +159,7 @@ ipaddr_t in_resolv(const char *hostname, char *server, int *ancount)
 		signal(SIGALRM, old);
 		close(fd);
 
-		if (rc < sizeof(struct DNS_HEADER) + sizeof(struct RR))
+		if (rc < (int)(sizeof(struct DNS_HEADER) + sizeof(struct RR)))
 			continue;
 
 		dns = (struct DNS_HEADER *)buf;
