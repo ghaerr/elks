@@ -159,10 +159,7 @@ ipaddr_t in_resolv(const char *hostname, char *server, int *ancount)
 		signal(SIGALRM, old);
 		close(fd);
 
-		/* must check rc <= 0: read() returning -1 promotes to unsigned
-		 * in the comparison below, making -1 appear > 28 and skipping
-		 * the retry, then parsing the stale request buffer as a response */
-		if (rc <= 0 || (unsigned)rc < sizeof(struct DNS_HEADER) + sizeof(struct RR))
+		if (rc < (int)(sizeof(struct DNS_HEADER) + sizeof(struct RR)))
 			continue;
 
 		dns = (struct DNS_HEADER *)buf;
