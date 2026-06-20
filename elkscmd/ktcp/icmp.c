@@ -25,14 +25,16 @@
 
 /* Send a raw ICMP echo request with specified TTL.
  * NOTE: ip_sendpacket() prepends its own IP header, so buf contains only
- * the ICMP header + payload — do NOT embed a second IP header here. */
-void icmp_send_echo(ipaddr_t target_ip, unsigned short id, unsigned short seq, unsigned long timestamp, __u8 ttl)
+ * the ICMP header + payload — do NOT embed a second IP header here.
+ */
+void icmp_send_echo(ipaddr_t target_ip, unsigned short id, unsigned short seq,
+    unsigned long timestamp, unsigned int ttl)
 {
     struct addr_pair apair;
     int len = sizeof(struct icmp_echo_s) + 4;
     unsigned char buf[sizeof(struct icmp_echo_s) + 4];
     struct icmp_echo_s *icmp = (struct icmp_echo_s *)buf;
-    unsigned long *payload = (unsigned long *)(icmp + 1);	/* 32-bit timestamp on ia16 (int=16, long=32) */
+    __u32 *payload = (__u32 *)(icmp + 1);       /* 32-bit timestamp on ia16 */
 
     icmp->type = ICMP_TYPE_ECHO_REQ;
     icmp->code = 0;
@@ -91,7 +93,8 @@ void icmp_process(struct iphdr_s *iph, unsigned char *packet)
 	if (pending_icmp_cb) {
 	    __u32 *ts = (__u32 *)(packet + sizeof(struct icmp_echo_s));
 	    if (pending_is_traceroute)
-		netconf_icmp_traceroute_reply(pending_icmp_cb, *ts, iph->ttl, iph->saddr, ICMP_TRACEROUTE_ECHO_REPLY);
+		netconf_icmp_traceroute_reply(pending_icmp_cb, *ts, iph->ttl, iph->saddr,
+		    ICMP_TRACEROUTE_ECHO_REPLY);
 	    else
 		netconf_icmp_reply(pending_icmp_cb, *ts, iph->ttl);
 	}
@@ -99,7 +102,8 @@ void icmp_process(struct iphdr_s *iph, unsigned char *packet)
     case ICMP_TYPE_TIME_EXCEEDED:
 	debug_ip("icmp: TTL exceeded from %s\n", in_ntoa(iph->saddr));
 	if (pending_icmp_cb && pending_is_traceroute)
-	    netconf_icmp_traceroute_reply(pending_icmp_cb, 0, 0, iph->saddr, ICMP_TRACEROUTE_TIME_EXCEED);
+	    netconf_icmp_traceroute_reply(pending_icmp_cb, 0, 0, iph->saddr,
+	        ICMP_TRACEROUTE_TIME_EXCEED);
 	break;
     case ICMP_TYPE_DST_UNRCH:
 	dp = (struct icmp_dest_unreachable_s *)packet;

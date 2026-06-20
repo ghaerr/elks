@@ -53,7 +53,7 @@ struct packet_stats_s {
 
 extern struct packet_stats_s netstats;
 extern struct tcpcb_s *pending_icmp_cb;	/* netconf client awaiting ICMP echo reply */
-extern int pending_is_traceroute;	/* 1 if pending_icmp_cb expects traceroute reply, 0 for ping */
+extern int pending_is_traceroute;       /* pending_icmp_cb expects traceroute reply */
 
 #define NS_IDLE 	0
 #define NS_GENERAL	1
@@ -114,11 +114,11 @@ void netconf_send(struct tcpcb_s *cb);
 void netconf_request(struct stat_request_s *sr);
 
 /* forward ICMP echo reply to pending netconf client */
-void netconf_icmp_reply(struct tcpcb_s *cb, __u32 timestamp, __u8 ttl);
+void netconf_icmp_reply(struct tcpcb_s *cb, unsigned long timestamp, unsigned int ttl);
 
 /* forward traceroute response (echo reply or time exceeded) to pending client */
-void netconf_icmp_traceroute_reply(struct tcpcb_s *cb, __u32 timestamp, __u8 ttl,
-				   ipaddr_t resp_ip, __u8 status);
+void netconf_icmp_traceroute_reply(struct tcpcb_s *cb, unsigned long timestamp,
+    unsigned int ttl, ipaddr_t resp_ip, unsigned int status);
 
 /* save extra request data for ICMP echo */
 void netconf_set_extra(unsigned char *data, int len);

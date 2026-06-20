@@ -153,7 +153,8 @@ void ip_recvpacket(unsigned char *packet, int size)
     netstats.iprcvcnt++;
 }
 
-void ip_sendpacket_ttl(unsigned char *packet, int len, struct addr_pair *apair, struct tcpcb_s *cb, __u8 ttl)
+void ip_sendpacket_ttl(unsigned char *packet, int len, struct addr_pair *apair,
+    struct tcpcb_s *cb, unsigned int ttl)
 {
     /*
      * save space for possible ethernet header before ip packet

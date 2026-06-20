@@ -384,11 +384,11 @@ static void tcpdev_write(void)
     }
 
     if (cb->remport == NETCONF_PORT && cb->remaddr == 0) {
-	/* netconf writes may be >= 2 bytes (stat_request_s header + optional extra data) */
+	/* netconf writes may be >= 2 bytes (stat_request_s header+optional extra data) */
 	if (db->size >= sizeof(struct stat_request_s)) {
 	    netconf_request((struct stat_request_s *)db->data);
 	    if (db->size > sizeof(struct stat_request_s))
-		netconf_set_extra(db->data, db->size);	/* parse ICMP echo target, etc. (was orphaned — never called, broke ICMP echo) */
+		netconf_set_extra(db->data, db->size);	/* parse ICMP echo target, etc. */
 	    netconf_send(cb);		/* queue response*/
 	    notify_data_avail(cb);	/* set sock->data_avail to allow inet_read()*/
 	}
