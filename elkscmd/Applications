@@ -197,6 +197,7 @@ gui/images/rectangle.bmp ::lib/paint/rectangle.bmp :gui         :1440k
 busyelks/busyelks               :busyelks                                   :2880k
 ktcp/ktcp                       :net
 inet/arp                        :net
+inet/curl                       :net
 inet/ftp                        :net
 inet/ftpd                       :net
 inet/httpd                      :net

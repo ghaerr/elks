@@ -1,0 +1,86 @@
+.TH CURL 1
+.SH NAME
+curl \- transfer data from or to a server using HTTP, FTP or TCP
+.SH SYNOPSIS
+\fBcurl\fR [\fB-ovfT\fR] [\fB-u user:pass\fR] [\fB-d data\fR] [\fB--json\fR] \fIurl\fR
+.SH DESCRIPTION
+.B Curl
+transfers data to or from a network server using HTTP, FTP or raw TCP.
+The URL must specify the scheme: \fBhttp://\fR, \fBftp://\fR or \fBtcp://\fR.
+Data is written to standard output, or to a file with \fB-o\fR.
+.SS OPTIONS
+.TP 5
+.B \-o file
+Write output to \fIfile\fR instead of stdout.
+.TP 5
+.B \-v
+Verbose output.  Shows the URL and resolved address on stderr.
+For FTP directory listings, produces a long listing.
+.TP 5
+.B \-u user:pass
+Use \fIuser\fR and \fIpassword\fR for server authentication.
+For HTTP, this sends a Basic Authorization header.
+For FTP, this is used for the USER and PASS commands.
+.TP 5
+.B \-d data
+Use HTTP POST with the given data as the request body.
+Sets Content-Type to \fIapplication/x-www-form-urlencoded\fR.
+.TP 5
+.B \-\-json
+Use HTTP POST with Content-Type set to \fIapplication/json\fR.
+Must be specified before \fB-d\fR.
+.TP 5
+.B \-f key
+After an HTTP response, extract the top-level JSON value for \fIkey\fR
+and print only that value.
+.TP 5
+.B \-T file
+Upload \fIfile\fR to an FTP server using STOR.
+.SS URL SCHEMES
+.TP 5
+.B http://host[:port]/path
+HTTP GET (or POST with \fB-d\fR).  Default port 80.
+.TP 5
+.B ftp://[user:pass@]host[:port]/path[/]
+FTP download (RETR) or directory listing (if path ends with /).
+Default port 21, anonymous login if no credentials given.
+.TP 5
+.B tcp://host:port/path
+Raw TCP mode.  Connects to host:port, sends path + newline,
+then reads the response.  Port is required.
+.SH EXAMPLES
+.TP 20
+.B curl http://example.com/index.html
+    # Download a web page to stdout
+.TP 20
+.B curl \-o page.html http://example.com/index.html
+    # Download to a file
+.TP 20
+.B curl \-d "name=test" http://server/post
+    # HTTP POST with form data
+.TP 20
+.B curl \-\-json \-d '{"key":"value"}' http://server/api
+    # HTTP POST with JSON body
+.TP 20
+.B curl \-f "origin" http://httpbin.org/ip
+    # Extract a JSON key from the response
+.TP 20
+.B curl ftp://ftp.gnu.org/README
+    # Download a file via FTP
+.TP 20
+.B curl ftp://ftp.gnu.org/
+    # List an FTP directory
+.TP 20
+.B curl \-v ftp://mirror.example.org/
+    # Verbose FTP directory listing
+.TP 20
+.B curl \-u user:pass ftp://server/remote.txt
+    # FTP download with authentication
+.TP 20
+.B curl \-T local.txt ftp://server/remote.txt
+    # Upload a file via FTP
+.TP 20
+.B curl tcp://localhost:8080/request
+    # Raw TCP: sends "request\\n", prints response
+.SH AUTHOR
+Derek Johansen
