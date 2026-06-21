@@ -11,8 +11,8 @@
 
 # Select disk image to use
 # MINIX or FAT .config build
-#IMAGE="-fda image/fd2880.img"
-IMAGE="-fda image/fd1440.img"
+IMAGE="-fda image/fd2880.img"
+#IMAGE="-fda image/fd1440.img"
 #IMAGE="-fda image/fd1200.img"
 #IMAGE="-fda image/fd720.img"
 #IMAGE="-fda image/fd360.img"
