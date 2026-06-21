@@ -233,7 +233,7 @@ main(int argc, char **argv)
     }
     if (pid)
         exit(0);
-    fd = open("/dev/console", O_RDWR);
+    fd = open("/dev/console", O_WRONLY);
     close(STDIN_FILENO);
     dup2(fd, STDOUT_FILENO);
     dup2(fd, STDERR_FILENO);

@@ -19,6 +19,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdarg.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -349,9 +350,48 @@ static void parse_pasv(char *reply)
 }
 
 /*
+ * Read a line from socket, handling \r\n termination
+ */
+static int ftp_read_line(int fd, char *buf, int size)
+{
+	int i = 0;
+	char c;
+	
+	while (i < size - 1) {
+		if (read(fd, &c, 1) <= 0)
+			return -1;
+		if (c == '\n')
+			break;
+		if (c != '\r')
+			buf[i++] = c;
+	}
+	buf[i] = '\0';
+	return i;
+}
+
+/*
+ * Write a line to socket with \r\n termination
+ */
+static int ftp_write_line(int fd, char *fmt, ...)
+{
+	char buf[256];
+	va_list ap;
+	int len;
+	
+	va_start(ap, fmt);
+	len = vsnprintf(buf, sizeof(buf) - 2, fmt, ap);
+	va_end(ap);
+	
+	if (len < 0) return -1;
+	buf[len++] = '\r';
+	buf[len++] = '\n';
+	return write(fd, buf, len);
+}
+
+/*
  * Read FTP reply, handling multi-line responses
  */
-static int ftp_reply(FILE *fp)
+static int ftp_reply(int fd)
 {
 	char reply[256];
 	char code[4];
@@ -360,7 +400,7 @@ static int ftp_reply(FILE *fp)
 	do {
 		first = 1;
 		do {
-			if (!fgets(reply, sizeof(reply), fp))
+			if (ftp_read_line(fd, reply, sizeof(reply)) < 0)
 				return -1;
 			if (first) {
 				first = 0;
@@ -378,11 +418,11 @@ static int ftp_reply(FILE *fp)
 /*
  * Send FTP command and read response
  */
-static int ftp_cmd(FILE *fpw, FILE *fpr, char *cmd, char *arg)
+static int ftp_cmd(int fd, char *cmd, char *arg)
 {
-	fprintf(fpw, "%s%s%s\r\n", cmd, *arg ? " " : "", arg);
-	fflush(fpw);
-	return ftp_reply(fpr);
+	if (ftp_write_line(fd, "%s%s%s", cmd, *arg ? " " : "", arg) < 0)
+		return -1;
+	return ftp_reply(fd);
 }
 
 /*
@@ -392,7 +432,7 @@ static int ftp_get(char *host, int port, char *user, char *pass,
 	char *path, int outfd, char *upload, int verbose)
 {
 	int fd, dfd, s, n, is_dir;
-	FILE *fpr, *fpw, *local;
+	int local;
 	char *p;
 
 	if (port == 0) port = 21;
@@ -405,17 +445,15 @@ static int ftp_get(char *host, int port, char *user, char *pass,
 		perror(host);
 		return -1;
 	}
-	fpr = fdopen(fd, "r");
-	fpw = fdopen(fd, "w");
 
-	s = ftp_reply(fpr);
+	s = ftp_reply(fd);
 	if (s / 100 != 2) {
 		fprintf(stderr, "curl: FTP connect error: %d\n", s);
 		goto err;
 	}
-	s = ftp_cmd(fpw, fpr, "USER", user);
+	s = ftp_cmd(fd, "USER", user);
 	if (s / 100 == 3)
-		s = ftp_cmd(fpw, fpr, "PASS", pass);
+		s = ftp_cmd(fd, "PASS", pass);
 	if (s / 100 != 2) {
 		fprintf(stderr, "curl: FTP auth failed: %d\n", s);
 		goto err;
@@ -425,27 +463,31 @@ static int ftp_get(char *host, int port, char *user, char *pass,
 	if (*p == '/') p++;
 	while (*p) {
 		char *slash = strchr(p, '/');
-		if (slash) *slash = '\0';
-		if (*p) {
-			s = ftp_cmd(fpw, fpr, "CWD", p);
-			if (s / 100 != 2) {
-				fprintf(stderr, "curl: CWD %s failed: %d\n", p, s);
-				if (slash) *slash = '/';
-				goto err;
+		if (slash) {
+			*slash = '\0';
+			if (*p) {
+				s = ftp_cmd(fd, "CWD", p);
+				if (s / 100 != 2) {
+					fprintf(stderr, "curl: CWD %s failed: %d\n", p, s);
+					*slash = '/';
+					goto err;
+				}
 			}
+			*slash = '/';
+			p = slash + 1;
+		} else {
+			break;
 		}
-		if (slash) { *slash = '/'; p = slash + 1; }
-		else break;
 	}
 
-	s = ftp_cmd(fpw, fpr, "TYPE", "I");
+	s = ftp_cmd(fd, "TYPE", "I");
 	if (s / 100 != 2) {
 		fprintf(stderr, "curl: TYPE I failed: %d\n", s);
 		goto err;
 	}
 
 	pasv_port = 0;
-	s = ftp_cmd(fpw, fpr, "PASV", "");
+	s = ftp_cmd(fd, "PASV", "");
 	if (s != 227 || pasv_port == 0) {
 		fprintf(stderr, "curl: PASV failed: %d\n", s);
 		goto err;
@@ -457,30 +499,30 @@ static int ftp_get(char *host, int port, char *user, char *pass,
 	}
 
 	if (upload) {
-		local = fopen(upload, "r");
-		if (!local) {
+		local = open(upload, O_RDONLY);
+		if (local < 0) {
 			perror(upload);
 			net_close(dfd, 1);
 			goto err;
 		}
-		s = ftp_cmd(fpw, fpr, "STOR", path);
+		s = ftp_cmd(fd, "STOR", path);
 		if (s / 100 != 1) {
 			fprintf(stderr, "curl: STOR failed: %d\n", s);
-			fclose(local);
+			close(local);
 			net_close(dfd, 1);
 			goto err;
 		}
-		while ((n = fread(buffer, 1, sizeof(buffer), local)) > 0) {
+		while ((n = read(local, buffer, sizeof(buffer))) > 0) {
 			if (write(dfd, buffer, n) != n) {
 				perror("write data");
-				fclose(local);
+				close(local);
 				net_close(dfd, 1);
 				goto err;
 			}
 		}
-		fclose(local);
+		close(local);
 	} else if (is_dir) {
-		s = ftp_cmd(fpw, fpr, verbose ? "LIST" : "NLST", "");
+		s = ftp_cmd(fd, verbose ? "LIST" : "NLST", "");
 		if (s / 100 != 1) {
 			fprintf(stderr, "curl: LIST failed: %d\n", s);
 			net_close(dfd, 1);
@@ -497,7 +539,7 @@ static int ftp_get(char *host, int port, char *user, char *pass,
 		char *fname = path;
 		char *last = strrchr(path, '/');
 		if (last) fname = last + 1;
-		s = ftp_cmd(fpw, fpr, "RETR", fname);
+		s = ftp_cmd(fd, "RETR", fname);
 		if (s / 100 != 1) {
 			fprintf(stderr, "curl: RETR failed: %d\n", s);
 			net_close(dfd, 1);
@@ -512,19 +554,13 @@ static int ftp_get(char *host, int port, char *user, char *pass,
 		}
 	}
 	net_close(dfd, 0);
-	s = ftp_reply(fpr);
-	fflush(fpw);
+	s = ftp_reply(fd);
 	net_close(fd, 0);
-	fclose(fpr);
-	fclose(fpw);
 	return 0;
 
 err:
-	ftp_cmd(fpw, fpr, "QUIT", "");
-	fflush(fpw);
+	ftp_cmd(fd, "QUIT", "");
 	net_close(fd, 1);
-	fclose(fpr);
-	fclose(fpw);
 	return -1;
 }
 
