@@ -15,19 +15,15 @@
 #include <linuxmt/termios.h>
 #include <linuxmt/fcntl.h>	/* for f_flags values */
 
-static int file_ioctl(register struct file *filp, unsigned int cmd,
-		      unsigned int arg)
+static int file_ioctl(register struct file *filp, unsigned int cmd, unsigned int arg)
 {
     loff_t val;
 
     register struct file_operations *fop = filp->f_op;
 
     if (cmd == FIONREAD) {
-/*      switch (cmd) { */
-/*      case FIONREAD: */
 	val = filp->f_inode->i_size - filp->f_pos;
-	return verified_memcpy_tofs((char *) arg, (char *) &val,
-				    sizeof(loff_t));
+	return verified_memcpy_tofs((char *) arg, (char *) &val, sizeof(loff_t));
     }
     if (fop && fop->ioctl)
 	return fop->ioctl(filp->f_inode, filp, cmd, arg);

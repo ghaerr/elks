@@ -112,7 +112,7 @@ void schedule(void)
 
         if (timeout) {
             timer.tl_expires = timeout;
-            timer.tl_data = (int) prev;
+            timer.tl_data = prev;
             timer.tl_function = process_timeout;
             add_timer(&timer);
         }
