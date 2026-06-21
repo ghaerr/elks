@@ -26,9 +26,6 @@
 static ramdesc_t     xms_ram_base;      /* ramdisk XMS memory start address */
 static unsigned  int xms_ram_size;      /* ramdisk size in Kbytes */
 
-extern int xms_enabled;
-extern unsigned int xms_alloc_ptr;
-
 /* initialize SSD device */
 sector_t ssddev_init(void)
 {
