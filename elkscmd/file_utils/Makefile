@@ -32,7 +32,7 @@ cp: cp.o $(TINYPRINTF)
 	$(LD) $(LDFLAGS) -maout-heap=0xffff -o cp cp.o $(TINYPRINTF) $(LDLIBS)
 
 dd: dd.o
-	$(LD) $(LDFLAGS) -maout-heap=12288 -o dd dd.o $(LDLIBS)
+	$(LD) $(LDFLAGS) -maout-heap=16384 -o dd dd.o $(LDLIBS)
 
 grep: grep.o
 	$(LD) $(LDFLAGS) -o grep grep.o $(LDLIBS)
