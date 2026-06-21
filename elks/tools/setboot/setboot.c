@@ -223,8 +223,10 @@ int main(int argc,char **argv)
 	if (opt_new_bootsect) {
 		if (stat(infile,&sb)) die("stat(%s)",infile);
 		if (!S_ISREG(sb.st_mode)) fatalmsg("%s: not a regular file\n",infile);
-		if (sb.st_size > SECT_SIZE * 2)
-			fatalmsg("%s: Bad boot sector size: %ld bytes\n", infile, (long)sb.st_size);
+		if (opt_skipfatbpb && sb.st_size != SECT_SIZE)
+			fatalmsg("%s: boot sector size not equal to %d bytes\n", infile, SECT_SIZE);
+		else if (sb.st_size > SECT_SIZE * 2)
+			fatalmsg("%s: Bad boot sector size: %d bytes\n", sb.st_size);
 
 		ifp = fopen(infile,"rb");
 		if (!ifp) die(infile);
@@ -233,25 +235,21 @@ int main(int argc,char **argv)
 		if (!ofp) die(outfile);
 
 		if (opt_skipfatbpb) {
-			/* read full boot block into temp buffer (up to 2 sectors)*/
-			count = fread(inblk,1,SECT_SIZE*2,ifp);
+			/* read boot block into temp buffer*/
+			count = fread(inblk,1,SECT_SIZE,ifp);
 			if (count != sb.st_size) die("fread(%s)", infile);
 
-			/* read image boot sector into output buffer (preserve BPB)*/
+			/* read image boot sector into output buffer*/
 			count = fread(blk,1,SECT_SIZE,ofp);
-			if (count != SECT_SIZE) die("fread(%s)", infile);
+			if (count != sb.st_size) die("fread(%s)", infile);
 			if (fseek(ofp, 0L, SEEK_SET) != 0)
 				die("fseek(%s)", outfile);
 
-			/* copy boot sector skipping FAT BPB in first sector,
-			 * then copy second sector directly */
+			/* copy boot sector skipping FAT BPB*/
 			for (i=0; i<SECT_SIZE; i++) {
 				if (i < FATBPB_START || i > FATBPB_END)
 					blk[i] = inblk[i];
 			}
-			for (i=SECT_SIZE; i<sb.st_size; i++)
-				blk[i] = inblk[i];
-			count = sb.st_size;
 		} else {
 			/* read boot block directly into output block*/
 			count = fread(blk,1,SECT_SIZE*2,ifp);
