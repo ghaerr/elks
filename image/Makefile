@@ -58,7 +58,6 @@ fd360-minix:
 	echo CONFIG_IMG_BOOT=y		>> Config
 	sed -n -e '/CONFIG_TIME_/p'	        >> Config < $(TOPDIR)/.config
 	sed -n -e '/CONFIG_APPS_COMPRESS/p'	>> Config < $(TOPDIR)/.config
-
 	$(MAKE) -f Make.image "CONFIG=$(TOPDIR)/image/Config" NAME=fd360-minix
 	rm Config
 
@@ -70,7 +69,6 @@ fd720-minix:
 	echo CONFIG_IMG_BOOT=y		>> Config
 	sed -n -e '/CONFIG_TIME_/p'	        >> Config < $(TOPDIR)/.config
 	sed -n -e '/CONFIG_APPS_COMPRESS/p'	>> Config < $(TOPDIR)/.config
-
 	$(MAKE) -f Make.image "CONFIG=$(TOPDIR)/image/Config" NAME=fd720-minix
 	rm Config
 
@@ -82,7 +80,6 @@ fd1200-minix:
 	echo CONFIG_IMG_BOOT=y		>> Config
 	sed -n -e '/CONFIG_TIME_/p'	        >> Config < $(TOPDIR)/.config
 	sed -n -e '/CONFIG_APPS_COMPRESS/p'	>> Config < $(TOPDIR)/.config
-
 	$(MAKE) -f Make.image "CONFIG=$(TOPDIR)/image/Config" NAME=fd1200-minix
 	rm Config
 
@@ -94,7 +91,6 @@ fd1440-minix:
 	echo CONFIG_IMG_BOOT=y		>> Config
 	sed -n -e '/CONFIG_TIME_/p'	        >> Config < $(TOPDIR)/.config
 	sed -n -e '/CONFIG_APPS_COMPRESS/p'	>> Config < $(TOPDIR)/.config
-
 	$(MAKE) -f Make.image "CONFIG=$(TOPDIR)/image/Config" NAME=fd1440-minix
 	rm Config
 
@@ -105,7 +101,6 @@ fd2880-minix:
 	echo CONFIG_IMG_DEV=y		>> Config
 	echo CONFIG_IMG_BOOT=y		>> Config
 	sed -n -e '/CONFIG_TIME_/p'	>> Config < $(TOPDIR)/.config
-
 	$(MAKE) -f Make.image "CONFIG=$(TOPDIR)/image/Config" NAME=fd2880-minix
 	rm Config
 
@@ -178,7 +173,6 @@ fd1440-fat:
 	echo CONFIG_IMG_BOOT=y		>> Config
 	sed -n -e '/CONFIG_TIME_/p'	        >> Config < $(TOPDIR)/.config
 	sed -n -e '/CONFIG_APPS_COMPRESS/p'	>> Config < $(TOPDIR)/.config
-
 	$(MAKE) -f Make.image "CONFIG=$(TOPDIR)/image/Config" NAME=fd1440-fat
 	rm Config
 
