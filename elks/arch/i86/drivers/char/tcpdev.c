@@ -148,7 +148,8 @@ static int tcpdev_open(struct inode *inode, struct file *file)
         debug_net("TCPDEV open retval -EBUSY\n");
         return -EBUSY;
     }
-    bufin_sem = bufout_sem = 0;	/* reset semaphores in case leftover from previous session */
+    /* reset semaphores in case leftover from previous session */
+    bufin_sem = bufout_sem = 0;
     tdin_tail = tdout_tail = 0;
     tcpdev_inuse = 1;
     return 0;
@@ -157,7 +158,8 @@ static int tcpdev_open(struct inode *inode, struct file *file)
 static void tcpdev_release(struct inode *inode, struct file *file)
 {
     debug_net("TCPDEV(%P) release inuse %d\n", tcpdev_inuse);
-    bufin_sem = bufout_sem = 0;	/* reset semaphores in case ktcp was killed while they were locked */
+    /* reset semaphores in case ktcp was killed while they were locked */
+    bufin_sem = bufout_sem = 0;
     tcpdev_inuse = 0;
 }
 

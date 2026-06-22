@@ -48,9 +48,9 @@ struct icmp_dest_unreachable_s {
 	unsigned char iphdr[];
 };
 
-void icmp_send_echo(ipaddr_t target_ip, unsigned short id, unsigned short seq, unsigned long timestamp);
-
 int icmp_init(void);
 void icmp_process(struct iphdr_s *iph, unsigned char *packet);
+void icmp_send_echo(ipaddr_t target_ip, unsigned short id, unsigned short seq,
+    unsigned long timestamp, unsigned int ttl);
 
 #endif
