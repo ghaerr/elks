@@ -222,9 +222,11 @@ int main(int argc, char **argv)
 
 	buf = localbuf;
 	if (blocksize > sizeof(localbuf)) {
-		buf = malloc(blocksize);
+        buf = NULL;
+        if (blocksize <= 16384)
+		    buf = malloc(blocksize);
 		if (buf == NULL) {
-			errmsg("Cannot allocate buffer\n");
+			errmsg("Cannot allocate buffer, max 16k\n");
 			return retval;
 		}
 	}

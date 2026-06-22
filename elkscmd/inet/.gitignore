@@ -7,6 +7,7 @@ netcat
 netstat
 nslookup
 ping
+tcpdump
 telnet
 telnetd
 traceroute

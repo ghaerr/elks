@@ -202,6 +202,10 @@ int main(int argc, char **argv)
 		usage();
 
 	target_ip = in_gethostbyname(argv[optind]);
+	if (target_ip == 0) {
+		fprintf(stderr, "ping: unknown host %s\n", argv[optind]);
+		return 1;
+	}
 	if (local_ip == 0)
 		local_ip = in_gethostbyname("10.0.2.15");
 

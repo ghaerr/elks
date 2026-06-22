@@ -41,15 +41,14 @@ struct netif_stat {
 
 #endif	/* __ASSEMBLER__ */
 
-/* status flags for if_status */
-/* The lower nibble has the autodetected buffer memory size,
- * 1=4k, 2=8k, 3=16k etc. */
+/* Status flags for if_status.
+ * The lower nibble has the autodetected buffer memory size, 1=4k, 2=8k, 3=16k etc.
+ */
 #define	NETIF_AUTO_8BIT	0x10	
 #define NETIF_IS_QEMU	0x20	/* unused */
 
-/* Config flags
- * The first 3 make a number - for coding simplicity (a power of two),
- * the rest are regular flag bits
+/* Network card configuration flags specified in /bootopts.
+ * The low 3 bits specify the buffer size (0-4), the rest are regular flag bits.
  */
 #define ETHF_DEF_BUF	0x00	/* Use default (i.e. max) NIC buffer */
 #define ETHF_8K_BUF	0x01	/* Force  8K NIC (default on SMC/WD memory mapped NICs) */
@@ -61,6 +60,6 @@ struct netif_stat {
 #define ETHF_16BIT_BUS 	0x20	/* Force 16 bit bus */
 #define ETHF_USE_BNC	0x08	/* Use BNC connection */
 #define ETHF_USE_AUI	0x40	/* Use AUI connection */
-#define ETHF_VERBOSE	0x80U	/* turn on verbose console error messages */
+#define ETHF_VERBOSE	0x80	/* turn on verbose console error messages */
 
 #endif
