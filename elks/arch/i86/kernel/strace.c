@@ -188,7 +188,7 @@ void trace_end(unsigned int retval)
     /* Check if kernel stack has overflowed */
     if (current->kstack_magic != KSTACK_MAGIC) {
         printk("KSTACK(%P) KERNEL STACK OVERFLOW\n");
-        do_exit(SIGSEGV);
+        do_exit(SIGKILL);
     }
 
 #ifdef CONFIG_TRACE

@@ -10,9 +10,9 @@
 #define KSTACK_BYTES    740     /* Size of kernel stacks for PC-98 */
 #else
 #ifdef CONFIG_ASYNCIO
-#define KSTACK_BYTES    700     /* Size of kernel stacks w/async I/O */
+#define KSTACK_BYTES    730     /* Size of kernel stacks w/async I/O */
 #else
-#define KSTACK_BYTES    640     /* Size of kernel stacks w/o async I/O */
+#define KSTACK_BYTES    670     /* Size of kernel stacks w/o async I/O */
 #endif
 #endif
 
