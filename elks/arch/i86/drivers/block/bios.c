@@ -123,7 +123,7 @@ notMFM1024:
 #else
 
     /* return special error on BIOS cylinder overflow */
-    if (cylinder > 1023 && drivep->cylinders > 1023)
+    if (cylinder > 1023 && drivep->cylinders > 1024)
         return -1;
 
 #if RESET_DISK_CHG

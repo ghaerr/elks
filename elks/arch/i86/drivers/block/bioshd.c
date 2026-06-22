@@ -531,7 +531,7 @@ static int BFPROC do_readwrite(struct drive_infot *drivep, sector_t start, char 
             printk("bioshd(%x): cmd %d retry #%d CHS %d/%d/%d count %d\n",
                 drive, cmd, errs + 1, cylinder, head, sector, this_pass);
             bios_disk_reset(drive);
-            if (error == -1) errs = MAX_ERRS;   /* stop retries on CYL > 1023 */
+            if (error == -1) errs = MAX_ERRS;   /* no retries on cylinder > 1023 error */
         }
     } while (error && ++errs < MAX_ERRS);       /* On error, retry up to MAX_ERRS times */
     last_drive = drivep;
