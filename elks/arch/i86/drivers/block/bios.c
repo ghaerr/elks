@@ -122,7 +122,8 @@ notMFM1024:
     BD_BP = offset;
 #else
 
-    if (drivep->cylinders > 1023)       /* return special error on cylinder overflow */
+    /* return special error on BIOS cylinder overflow */
+    if (cylinder > 1023 && drivep->cylinders > 1023)
         return -1;
 
 #if RESET_DISK_CHG
