@@ -206,6 +206,7 @@ inet/netstat                    :net
 inet/nslookup                   :net
 inet/ping                       :net
 inet/ifconfig                   :net
+inet/tcpdump                    					     :2880k
 inet/traceroute                 :net
 inet/telnet                     :net
 inet/telnetd                    :net

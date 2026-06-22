@@ -1,0 +1,71 @@
+.TH TCPDUMP 1
+.SH NAME
+tcpdump \- display network traffic via ktcp netconf protocol
+.SH SYNOPSIS
+\fBtcpdump\fR [\fB\-c\fR \fIcount\fR]
+.SH DESCRIPTION
+.B Tcpdump
+connects to the ktcp TCP/IP stack and displays network packets on
+standard output.  Packets are printed with a direction indicator,
+protocol type, source and destination addresses, and transport
+protocol port numbers.
+.PP
+.B Tcpdump
+captures all packets seen by ktcp, including ARP, IP, ICMP, TCP, and
+UDP traffic.  It runs until interrupted by SIGINT (Ctrl-C) or until
+the specified number of packets have been captured.
+.SS OPTIONS
+.TP 5
+.B \-c \fIcount\fR
+Exit after capturing \fIcount\fR packets.
+.SS OUTPUT FORMAT
+Each captured packet is printed on a single line:
+.TP 20
+.B IN
+or
+.B OUT
+Packet direction relative to this host.
+.TP 20
+.B IP \fIsrc\fR > \fIdst\fR
+IP packet with source and destination addresses.
+.TP 20
+.B TCP \fIsrcport\fR > \fIdstport\fR
+TCP segment with source and destination ports (shown after IP line).
+.TP 20
+.B UDP \fIsrcport\fR > \fIdstport\fR
+UDP datagram with source and destination ports.
+.TP 20
+.B ICMP \fItype\fR
+ICMP message type (echo request, echo reply, time exceeded).
+.TP 20
+.B ARP
+ARP packet with who-has or is-at details.
+.SH EXAMPLES
+.TP 20
+.B tcpdump
+.BR
+    # Display all network traffic until interrupted
+.TP 20
+.B tcpdump \-c 10
+.BR
+    # Capture exactly 10 packets and exit
+.SH NOTES
+.B Tcpdump
+requires the ktcp TCP/IP stack to be running.  It communicates with
+ktcp via the netconf protocol on port 2.
+.PP
+Backgrounding
+.B tcpdump
+with
+.B &
+and running another command such as
+.BR urlget (1)
+or
+.BR ping (1)
+allows observing their network traffic live.
+.SH "SEE ALSO"
+.BR urlget (1),
+.BR ping (1),
+.BR netstat (1).
+.SH AUTHOR
+The ELKS project.

@@ -27,6 +27,7 @@ static struct icmp_echo_request_s icmp_req;
 static struct icmp_traceroute_request_s icmp_tr_req;
 static ipaddr_t set_ip_value;		/* temp storage for NS_SET_* operations */
 struct tcpcb_s *pending_icmp_cb;	/* netconf client awaiting ICMP echo reply */
+struct tcpcb_s *capture_cb;		/* netconf client receiving packet capture */
 int pending_is_traceroute;		/* pending_icmp_cb expects traceroute reply */
 
 void netconf_init(void)
@@ -137,6 +138,13 @@ void netconf_send(struct tcpcb_s *cb)
 	gateway_ip = set_ip_value;
 	tcpcb_buf_write(cb, (unsigned char *)"", 1);
 	break;
+    case NS_START_CAPTURE:
+	capture_cb = cb;
+	return;
+    case NS_STOP_CAPTURE:
+	capture_cb = NULL;
+	tcpcb_buf_write(cb, (unsigned char *)"", 1);
+	break;
     }
     cb->bytes_to_push = cb->buf_used;
     tcpcb_need_push++;
@@ -181,4 +189,27 @@ void netconf_icmp_traceroute_reply(struct tcpcb_s *cb, unsigned long timestamp,
 
     pending_icmp_cb = NULL;
     pending_is_traceroute = 0;
+}
+
+/* Called from deveth for every raw ethernet frame received or sent.
+ * Forwards a copy of the frame to the tcpdump client, if one is registered.
+ * Drops silently if the capture buffer has insufficient room. */
+void netconf_capture_packet(unsigned char *packet, int len, int direction)
+{
+    struct capture_hdr_s hdr;
+
+    if (capture_cb == NULL)
+	return;
+
+    /* drop if not enough room in control block buffer */
+    if (capture_cb->buf_used + (int)sizeof(hdr) + len > capture_cb->buf_size)
+	return;
+
+    hdr.direction = direction;
+    hdr.pktlen = htons(len);
+    tcpcb_buf_write(capture_cb, (unsigned char *)&hdr, sizeof(hdr));
+    tcpcb_buf_write(capture_cb, packet, len);
+    capture_cb->bytes_to_push = capture_cb->buf_used;
+    tcpcb_need_push++;
+    notify_data_avail(capture_cb);
 }
