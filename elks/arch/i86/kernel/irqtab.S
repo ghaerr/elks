@@ -160,10 +160,11 @@ save_regs:
         call    syscall
         push    %ax             // syscall return value in ax
 
-#ifdef CONFIG_TRACE
+//#ifdef CONFIG_TRACE
         // strace.c must be compiled with tail optimization off to protect top of stack
+        // Now always checks for kernel stack overflow
         call    trace_end       // syscall return value is top of stack
-#endif
+//#endif
 
         cmpw    $0,bh_active    // Any active bottom halfs?
         je      1f              // No

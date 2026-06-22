@@ -122,6 +122,10 @@ notMFM1024:
     BD_BP = offset;
 #else
 
+    /* return special error on BIOS cylinder overflow */
+    if (cylinder > 1023 && drivep->cylinders > 1024)
+        return -1;
+
 #if RESET_DISK_CHG
     static unsigned last = 0;
     if (running_qemu && drive != last) {
