@@ -176,24 +176,24 @@ void trace_begin(void)
         strace();
 #endif
 }
+#endif /* CONFIG_TRACE */
 
 /*
- * Called after syscall return
+ * Called after syscall return.
  * Must be compiled with -fno-optimize-siblings-calls (no tail call optimization)
  * in order to protect top of stack return value since called from _irqit.
  */
 void trace_end(unsigned int retval)
 {
-    int n;
-    static int max;
-
-    /* Check for kernel stack overflow */
+    /* Check if kernel stack has overflowed */
     if (current->kstack_magic != KSTACK_MAGIC) {
         printk("KSTACK(%P) KERNEL STACK OVERFLOW\n");
-        do_exit(SIGSEGV);
+        do_exit(SIGKILL);
     }
 
-    n = 0;
+#ifdef CONFIG_TRACE
+    int n = 0;
+    static int max;
 #if defined(CHECK_STRACE) || defined(CHECK_KSTACK)
     if (tracing & (TRACE_STRACE|TRACE_KSTACK)) {
         for (; n<KSTACK_BYTES/2; n++) {
@@ -214,6 +214,6 @@ void trace_end(unsigned int retval)
     if (tracing & TRACE_KSTACK)
         check_kstack(n);
 #endif
+#endif /* CONFIG_TRACE */
 }
 
-#endif /* CONFIG_TRACE */
