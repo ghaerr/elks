@@ -201,6 +201,8 @@ void dhcp_init(void)
 	       eth_local_addr[3];
     dhcp_xid ^= (Now & 0xFF) << 8;
 
+    udp_register(DHCP_CLIENT_PORT, dhcp_input);
+
     dhcp_send_discover();
     dhcp_set_retry();
 
@@ -241,7 +243,7 @@ void dhcp_timer(void)
     }
 }
 
-void dhcp_input(struct iphdr_s *iph, unsigned char *data, int len)
+void dhcp_input(struct iphdr_s *iph, uint16_t src_port, unsigned char *data, int len)
 {
     struct dhcp_message_s *msg = (struct dhcp_message_s *)data;
     unsigned char *opts;

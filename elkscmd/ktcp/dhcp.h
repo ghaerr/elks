@@ -1,6 +1,8 @@
 #ifndef DHCP_H
 #define DHCP_H
 
+#include <stdint.h>
+
 #define DHCP_CLIENT_PORT	68
 #define DHCP_SERVER_PORT	67
 
@@ -58,6 +60,6 @@ extern int dhcp_timer_active;
 
 void dhcp_init(void);
 void dhcp_timer(void);
-void dhcp_input(struct iphdr_s *iph, unsigned char *data, int len);
+void dhcp_input(struct iphdr_s *iph, uint16_t src_port, unsigned char *data, int len);
 
 #endif
