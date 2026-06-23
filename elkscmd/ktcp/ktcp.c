@@ -250,6 +250,7 @@ int main(int argc,char **argv)
      * /bootopts or /etc/profile. They can be IP addresses or
      * names in /etc/hosts.
      */
+
     char *default_ip = (p=getenv("HOSTNAME"))? p: DEFAULT_IP;
     char *default_gateway = (p=getenv("GATEWAY"))? p: DEFAULT_GATEWAY;
     char *default_netmask = (p=getenv("NETMASK"))? p: DEFAULT_NETMASK;

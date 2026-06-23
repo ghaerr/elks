@@ -52,7 +52,10 @@ extern unsigned int MTU;
 int ip_init(void);
 __u16 ip_calc_chksum(char *data, int len);
 void ip_recvpacket(unsigned char *packet, int size);
-void ip_sendpacket(unsigned char *packet, int len, struct addr_pair *apair, struct tcpcb_s *cb);
+void ip_sendpacket(unsigned char *packet, int len, struct addr_pair *apair,
+    struct tcpcb_s *cb);
+void ip_sendpacket_ttl(unsigned char *packet, int len, struct addr_pair *apair,
+    struct tcpcb_s *cb, unsigned int ttl);
 void ip_route(unsigned char *packet, int len, struct addr_pair *apair);
 
 #endif

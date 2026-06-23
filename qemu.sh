@@ -74,7 +74,7 @@ KEYBOARD=
 # Uncomment the following line to emulate two serial devices, required for Nano-X:
 SERIAL="-chardev msmouse,id=c1 -device isa-serial,chardev=c1,id=s1 -chardev msmouse,id=c2 -device isa-serial,chardev=c2,id=s2"
 
-# Uncomment this to route ELKS /dev/ttyS0 to host terminal
+# Route ELKS serial /dev/ttyS0 to host terminal
 CONSOLE="-serial stdio"
 # Hides qemu window also
 #CONSOLE="-serial stdio -nographic"

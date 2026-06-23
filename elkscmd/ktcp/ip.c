@@ -160,7 +160,8 @@ void ip_recvpacket(unsigned char *packet, int size)
     netstats.iprcvcnt++;
 }
 
-void ip_sendpacket(unsigned char *packet, int len, struct addr_pair *apair, struct tcpcb_s *cb)
+void ip_sendpacket_ttl(unsigned char *packet, int len, struct addr_pair *apair,
+    struct tcpcb_s *cb, unsigned int ttl)
 {
     /*
      * save space for possible ethernet header before ip packet
@@ -177,7 +178,7 @@ void ip_sendpacket(unsigned char *packet, int len, struct addr_pair *apair, stru
     iph->tot_len	= htons(iphdrlen + len);
     iph->id		= htons(nextID); nextID++;
     iph->frag_off 	= 0;
-    iph->ttl		= 64;
+    iph->ttl		= ttl;
     iph->saddr		= apair->saddr;
     iph->daddr		= apair->daddr;
     iph->protocol	= apair->protocol;
@@ -199,6 +200,11 @@ void ip_sendpacket(unsigned char *packet, int len, struct addr_pair *apair, stru
     /* route packet using src and dst address*/
     ip_route((unsigned char *)iph, iphdrlen + len, apair);
     netstats.ipsndcnt++;
+}
+
+void ip_sendpacket(unsigned char *packet, int len, struct addr_pair *apair, struct tcpcb_s *cb)
+{
+    ip_sendpacket_ttl(packet, len, apair, cb, 64);
 }
 
 void ip_route(unsigned char *packet, int len, struct addr_pair *apair)

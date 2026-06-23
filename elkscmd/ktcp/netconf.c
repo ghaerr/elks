@@ -24,8 +24,11 @@
 struct packet_stats_s netstats;
 static struct stat_request_s sreq;
 static struct icmp_echo_request_s icmp_req;
+static struct icmp_traceroute_request_s icmp_tr_req;
 static ipaddr_t set_ip_value;		/* temp storage for NS_SET_* operations */
 struct tcpcb_s *pending_icmp_cb;	/* netconf client awaiting ICMP echo reply */
+struct tcpcb_s *capture_cb;		/* netconf client receiving packet capture */
+int pending_is_traceroute;		/* pending_icmp_cb expects traceroute reply */
 
 void netconf_init(void)
 {
@@ -39,13 +42,24 @@ void netconf_request(struct stat_request_s *sr)
 }
 
 /* Save extra request data following the 2-byte stat_request_s header.
- * Was defined but never called — ICMP echo (and IP/netmask/gateway set) silently dropped their payload. */
+ * Was defined but never called, ICMP echo (and IP/netmask/gateway set)
+ * silently dropped their payload.
+ */
 void netconf_set_extra(unsigned char *data, int len)
 {
-    if (sreq.type == NS_ICMP_ECHO && len >= (int)(sizeof(struct stat_request_s) + sizeof(struct icmp_echo_request_s))) {
-	memcpy(&icmp_req, data + sizeof(struct stat_request_s), sizeof(struct icmp_echo_request_s));
+    if (sreq.type == NS_ICMP_ECHO &&
+	len >= (int)(sizeof(struct stat_request_s) +
+		sizeof(struct icmp_echo_request_s))) {
+	memcpy(&icmp_req, data + sizeof(struct stat_request_s),
+		sizeof(struct icmp_echo_request_s));
+    } else if (sreq.type == NS_ICMP_TRACEROUTE &&
+	len >= (int)(sizeof(struct stat_request_s) +
+		sizeof(struct icmp_traceroute_request_s))) {
+	memcpy(&icmp_tr_req, data + sizeof(struct stat_request_s),
+		sizeof(struct icmp_traceroute_request_s));
     } else if (len >= (int)(sizeof(struct stat_request_s) + sizeof(ipaddr_t))) {
-	if (sreq.type == NS_SET_IP || sreq.type == NS_SET_NETMASK || sreq.type == NS_SET_GATEWAY)
+	if (sreq.type == NS_SET_IP || sreq.type == NS_SET_NETMASK ||
+		sreq.type == NS_SET_GATEWAY)
 	    memcpy(&set_ip_value, data + sizeof(struct stat_request_s), sizeof(ipaddr_t));
     }
 }
@@ -85,19 +99,31 @@ void netconf_send(struct tcpcb_s *cb)
 	tcpcb_buf_write(cb, (unsigned char *)&arp_cache, ARP_CACHE_MAX*sizeof(struct arp_cache));
 	break;
     case NS_ICMP_ECHO:
-	/* Send ICMP Echo Request, defer reply until it arrives via icmp_process() → netconf_icmp_reply().
-	 * We cannot block here because we're in the ktcp event loop, so the reply path is async.
-	 * Set pending_icmp_cb BEFORE icmp_send_echo() so localhost loopback (synchronous via ip_route)
-	 * finds the TCB when icmp_process handles the echo reply. */
-	pending_icmp_cb = NULL;	/* clear any stale pending from previous timeout */
-	pending_icmp_cb = cb;		/* new pending client */
-	icmp_send_echo(icmp_req.target_ip, icmp_req.id, icmp_req.seq, icmp_req.timestamp);
-	return;	/* no response yet; netconf_icmp_reply() sends it later */
+	/* Send ICMP Echo Request, defer reply until it arrives via
+	 * icmp_process() → netconf_icmp_reply(). We cannot block here
+	 * because we're in the ktcp event loop, so the reply path is async.
+	 * Set pending_icmp_cb BEFORE icmp_send_echo() so localhost loopback
+	 * (synchronous via ip_route) finds the TCB when icmp_process handles
+	 * the echo reply.
+	 */
+	pending_is_traceroute = 0;
+	pending_icmp_cb = cb;
+	icmp_send_echo(icmp_req.target_ip, icmp_req.id, icmp_req.seq,
+		icmp_req.timestamp, 64);
+	return;
+    case NS_ICMP_TRACEROUTE:
+	pending_is_traceroute = 1;
+	pending_icmp_cb = cb;
+	icmp_send_echo(icmp_tr_req.target_ip, icmp_tr_req.id, icmp_tr_req.seq,
+		icmp_tr_req.timestamp, icmp_tr_req.ttl);
+	return;
     case NS_GET_CONFIG:
 	config.local_ip = local_ip;
 	config.netmask_ip = netmask_ip;
 	config.gateway_ip = gateway_ip;
 	memcpy(config.hwaddr, eth_local_addr, 6);
+	strncpy(config.name, ethdev + 5, sizeof(config.name) - 1);
+	config.name[sizeof(config.name) - 1] = '\0';
 	tcpcb_buf_write(cb, (unsigned char *)&config, sizeof(config));
 	break;
     case NS_SET_IP:
@@ -112,6 +138,13 @@ void netconf_send(struct tcpcb_s *cb)
 	gateway_ip = set_ip_value;
 	tcpcb_buf_write(cb, (unsigned char *)"", 1);
 	break;
+    case NS_START_CAPTURE:
+	capture_cb = cb;
+	return;
+    case NS_STOP_CAPTURE:
+	capture_cb = NULL;
+	tcpcb_buf_write(cb, (unsigned char *)"", 1);
+	break;
     }
     cb->bytes_to_push = cb->buf_used;
     tcpcb_need_push++;
@@ -120,7 +153,7 @@ void netconf_send(struct tcpcb_s *cb)
 /* Called from icmp_process() when Echo Reply arrives for pending netconf client.
  * The reply path is async: icmp_send_echo() fires the request, and when the ICMP
  * layer receives the reply it calls here to push data back through the netconf socket. */
-void netconf_icmp_reply(struct tcpcb_s *cb, __u32 timestamp, __u8 ttl)
+void netconf_icmp_reply(struct tcpcb_s *cb, unsigned long timestamp, unsigned int ttl)
 {
     struct icmp_echo_reply_s reply;
 
@@ -134,4 +167,49 @@ void netconf_icmp_reply(struct tcpcb_s *cb, __u32 timestamp, __u8 ttl)
     notify_data_avail(cb);
 
     pending_icmp_cb = NULL;
+    pending_is_traceroute = 0;
+}
+
+/* Called from icmp_process() when traceroute response arrives
+ * (Echo Reply or Time Exceeded) for pending netconf client. */
+void netconf_icmp_traceroute_reply(struct tcpcb_s *cb, unsigned long timestamp,
+	unsigned int ttl, ipaddr_t resp_ip, unsigned int status)
+{
+    struct icmp_traceroute_reply_s reply;
+
+    reply.status = status;
+    reply.timestamp = timestamp;
+    reply.ttl = ttl;
+    reply.resp_ip = resp_ip;
+
+    tcpcb_buf_write(cb, (unsigned char *)&reply, sizeof(reply));
+    cb->bytes_to_push = cb->buf_used;
+    tcpcb_need_push++;
+    notify_data_avail(cb);
+
+    pending_icmp_cb = NULL;
+    pending_is_traceroute = 0;
+}
+
+/* Called from deveth for every raw ethernet frame received or sent.
+ * Forwards a copy of the frame to the tcpdump client, if one is registered.
+ * Drops silently if the capture buffer has insufficient room. */
+void netconf_capture_packet(unsigned char *packet, int len, int direction)
+{
+    struct capture_hdr_s hdr;
+
+    if (capture_cb == NULL)
+	return;
+
+    /* drop if not enough room in control block buffer */
+    if (capture_cb->buf_used + (int)sizeof(hdr) + len > capture_cb->buf_size)
+	return;
+
+    hdr.direction = direction;
+    hdr.pktlen = htons(len);
+    tcpcb_buf_write(capture_cb, (unsigned char *)&hdr, sizeof(hdr));
+    tcpcb_buf_write(capture_cb, packet, len);
+    capture_cb->bytes_to_push = capture_cb->buf_used;
+    tcpcb_need_push++;
+    notify_data_avail(capture_cb);
 }

@@ -29,7 +29,7 @@ struct timer_list *find_alarm(struct task_struct *t)
     struct timer_list *ap;
 
     for (ap = alarms; ap < &alarms[NR_ALARMS]; ap++ ) {
-        if (ap->tl_data == (int)t)
+        if (ap->tl_data == t)
             return ap;
     }
     return NULL;
@@ -59,7 +59,7 @@ static int setalarm(unsigned long jiffs)
         del_timer(ap);
         ap->tl_expires = jiffies() + jiffs;
         ap->tl_function = alarm_callback;
-        ap->tl_data = (int)current; /* must delete timer on process exit*/
+        ap->tl_data = current;      /* must delete timer on process exit*/
         add_timer(ap);
     }
     return 0;

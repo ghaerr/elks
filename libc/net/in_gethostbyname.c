@@ -67,10 +67,11 @@ ipaddr_t in_gethostbyname(const char *str)
 
 	/* read all of /etc/hosts, no match found*/
 try_resolver:
-	addr = in_resolv(str, NULL);
+	addr = in_resolv(str, NULL, NULL);
 
 found:
-	//if (addr) printf("found %s\n", name);
-	fclose(fp);
+	/* fp may be NULL when try_resolver path jumps here after fopen failure */
+	if (fp)
+		fclose(fp);
 	return addr;
 }

@@ -93,6 +93,7 @@ void eth_process(void)
 	  break;
   }
   netstats.ethrcvcnt++;
+  netconf_capture_packet(sbuf, len, 0);
 }
 
 /*
@@ -167,6 +168,7 @@ void eth_write(unsigned char *packet, int len)
 #if DEBUG_ETH
     eth_printhex(packet,len);
 #endif
+    netconf_capture_packet(packet, len, 1);
     write(devfd, packet, len);
     netstats.ethsndcnt++;
 }

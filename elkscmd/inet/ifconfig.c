@@ -27,6 +27,7 @@ struct config_info_s {
 	unsigned long	netmask_ip;
 	unsigned long	gateway_ip;
 	unsigned char	hwaddr[6];
+	char		name[8];		/* interface name e.g. "ne0" */
 };
 
 static int netconf_connect(void)
@@ -99,8 +100,8 @@ static int show_config(int s)
 		return -1;
 	}
 
-	printf("ne0       HWaddr %02x:%02x:%02x:%02x:%02x:%02x\n",
-	       hw[0], hw[1], hw[2], hw[3], hw[4], hw[5]);
+	printf("%-8s HWaddr %02x:%02x:%02x:%02x:%02x:%02x\n",
+	       config.name, hw[0], hw[1], hw[2], hw[3], hw[4], hw[5]);
 	printf("          inet addr:%s", in_ntoa(config.local_ip));
 	printf("  Mask:%s", in_ntoa(config.netmask_ip));
 	if (config.gateway_ip)
