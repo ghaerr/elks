@@ -18,6 +18,7 @@
 #include "tcp_cb.h"
 #include "tcpdev.h"
 #include "tcp_output.h"
+#include "netconf.h"
 
 static struct tcpcb_list_s	*tcpcbs;
 
@@ -122,6 +123,12 @@ void tcpcb_remove_cb(struct tcpcb_s *cb)
 void tcpcb_remove(struct tcpcb_list_s *n)
 {
     struct tcpcb_list_s *next = n->next;
+
+    /* prevent dangling pointers when tcpdump/netconf client disconnects */
+    if (&n->tcpcb == capture_cb)
+	capture_cb = NULL;
+    if (&n->tcpcb == pending_icmp_cb)
+	pending_icmp_cb = NULL;
 
     debug_tcp("tcp: REMOVING control block %x\n", n);
     debug_mem("Free CB\n");

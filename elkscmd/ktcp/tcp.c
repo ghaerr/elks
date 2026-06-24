@@ -202,8 +202,9 @@ static void tcp_listen(struct iptcp_s *iptcp, struct tcpcb_s *lcb)
     cb->seg_seq = ntohl(h->seqnum);
     cb->seg_ack = ntohl(h->acknum);
 
-    cb->remaddr = iptcp->iph->saddr; /* sender's ip address*/
-    cb->remport = ntohs(h->sport);   /* sender's port*/
+    cb->localaddr = iptcp->iph->daddr; /* dest ip of incoming SYN (may be 127.0.0.1)*/
+    cb->remaddr = iptcp->iph->saddr;   /* sender's ip address*/
+    cb->remport = ntohs(h->sport);     /* sender's port*/
     cb->irs = cb->seg_seq;           /* sender's sequence number*/
     cb->rcv_nxt = cb->irs + 1;       /* ktcp's acknum */
     cb->rcv_wnd = ntohs(h->window);
