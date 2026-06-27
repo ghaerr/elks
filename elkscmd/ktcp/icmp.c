@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
+#include <string.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <arpa/inet.h>
@@ -49,6 +50,68 @@ void icmp_send_echo(ipaddr_t target_ip, unsigned short id, unsigned short seq,
     apair.saddr = local_ip;
     apair.protocol = PROTO_ICMP;
     ip_sendpacket_ttl(buf, len, &apair, NULL, ttl);
+    netstats.icmpsndcnt++;
+}
+
+/*
+ * Send ICMP Time Exceeded (code 0 = TTL expired) for the offending packet.
+ * ICMP payload = original IP header + first 8 bytes of original data.
+ */
+void icmp_send_time_exceeded(struct iphdr_s *orig_iph)
+{
+    int iphdrlen = 4 * IP_HLEN(orig_iph);
+    int payload_len = iphdrlen + 8;         /* IP hdr + first 8 bytes of data */
+    unsigned char buf[128];
+    struct addr_pair apair;
+    struct icmp_dest_unreachable_s *icmp = (struct icmp_dest_unreachable_s *)buf;
+
+    icmp->type = ICMP_TYPE_TIME_EXCEEDED;
+    icmp->code = ICMP_TTL_EXC;
+    icmp->chksum = 0;
+    icmp->unused = 0;
+    icmp->nexthop_mtu = 0;
+
+    memcpy(icmp->iphdr, (char *)orig_iph, payload_len);
+
+    icmp->chksum = ip_calc_chksum((char *)icmp,
+        sizeof(struct icmp_dest_unreachable_s) + payload_len);
+
+    apair.daddr = orig_iph->saddr;
+    apair.saddr = local_ip;
+    apair.protocol = PROTO_ICMP;
+    ip_sendpacket(buf, sizeof(struct icmp_dest_unreachable_s) + payload_len,
+        &apair, NULL);
+    netstats.icmpsndcnt++;
+}
+
+/*
+ * Send ICMP Destination Unreachable (code 3 = port unreachable) for the
+ * offending packet.  Same payload layout as Time Exceeded above.
+ */
+void icmp_send_port_unreachable(struct iphdr_s *orig_iph)
+{
+    int iphdrlen = 4 * IP_HLEN(orig_iph);
+    int payload_len = iphdrlen + 8;
+    unsigned char buf[128];
+    struct addr_pair apair;
+    struct icmp_dest_unreachable_s *icmp = (struct icmp_dest_unreachable_s *)buf;
+
+    icmp->type = ICMP_TYPE_DST_UNRCH;
+    icmp->code = ICMP_PORT_UNRCH;
+    icmp->chksum = 0;
+    icmp->unused = 0;
+    icmp->nexthop_mtu = 0;
+
+    memcpy(icmp->iphdr, (char *)orig_iph, payload_len);
+
+    icmp->chksum = ip_calc_chksum((char *)icmp,
+        sizeof(struct icmp_dest_unreachable_s) + payload_len);
+
+    apair.daddr = orig_iph->saddr;
+    apair.saddr = local_ip;
+    apair.protocol = PROTO_ICMP;
+    ip_sendpacket(buf, sizeof(struct icmp_dest_unreachable_s) + payload_len,
+        &apair, NULL);
     netstats.icmpsndcnt++;
 }
 

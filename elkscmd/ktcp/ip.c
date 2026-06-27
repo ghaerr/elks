@@ -136,6 +136,12 @@ void ip_recvpacket(unsigned char *packet, int size)
 	return;
     }
 
+    if (--iphdr->ttl == 0) {
+	icmp_send_time_exceeded(iphdr);
+	netstats.iprcvcnt++;
+	return;
+    }
+
     switch (iphdr->protocol) {
     case PROTO_ICMP:
         //debug_ip("IP: recv icmp packet\n");
@@ -148,6 +154,10 @@ void ip_recvpacket(unsigned char *packet, int size)
         //debug_ip("IP: recv tcp packet\n");
 	tcp_process(iphdr);
 	netstats.tcprcvcnt++;
+	break;
+
+    case PROTO_UDP:
+	icmp_send_port_unreachable(iphdr);
 	break;
     }
     netstats.iprcvcnt++;

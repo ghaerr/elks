@@ -168,7 +168,7 @@ static void print_packet(unsigned char *buf, int len, int dir)
 	    struct tcphdr *tcp = (struct tcphdr *)payload;
 	    unsigned char flg = tcp->flags;
 	    int comma = 0;
-	    printf(" TCP %d > %d", ntohs(tcp->sport), ntohs(tcp->dport));
+	    printf(" TCP %u > %u", ntohs(tcp->sport), ntohs(tcp->dport));
 	    printf(" [");
 	    if (flg & TCP_FLAG_SYN) { printf("SYN"); comma = 1; }
 	    if (flg & TCP_FLAG_ACK) { printf("%sACK", comma ? "," : ""); comma = 1; }
@@ -184,7 +184,7 @@ static void print_packet(unsigned char *buf, int len, int dir)
 	}
 	case IPPROTO_UDP: {
 	    struct udphdr *udp = (struct udphdr *)payload;
-	    printf(" UDP %d > %d", ntohs(udp->sport), ntohs(udp->dport));
+	    printf(" UDP %u > %u", ntohs(udp->sport), ntohs(udp->dport));
 	    break;
 	}
 	default:
@@ -221,6 +221,8 @@ int main(int argc, char **argv)
     int count = -1;
     int captured = 0;
     int ch;
+
+    unsigned char cmd_start[2] = { NS_START_CAPTURE, 0 };
 
     signal(SIGINT, handle_sigint);
 
@@ -259,24 +261,45 @@ int main(int argc, char **argv)
 	return 1;
     }
 
-    {
-	unsigned char cmd[2] = { NS_START_CAPTURE, 0 };
-	write(s, cmd, 2);
-    }
+    write(s, cmd_start, 2);
 
     while (!stopflag && (count < 0 || captured < count)) {
 	struct capture_hdr hdr;
 	unsigned short pktlen;
 
-	if (read_full(s, &hdr, sizeof(hdr)) < 0)
-	    break;
+	if (read_full(s, &hdr, sizeof(hdr)) < 0) {
+	    /* Netconf TCB was removed (e.g. by spurious RST from QEMU slirp
+	     * when an extra ACK to 0.0.0.0:2 was sent). Fixed in ktcp/tcpdev.c
+	     * but kept here as defensive resilience against future disconnects. */
+	    fprintf(stderr, "tcpdump: reconnecting...\n");
+	    close(s);
+	    sleep(1);
+	    s = socket(AF_INET, SOCK_STREAM, 0);
+	    if (s < 0) break;
+	    local.sin_port = 0;
+	    if (bind(s, (struct sockaddr *)&local, sizeof(local)) < 0) break;
+	    if (connect(s, (struct sockaddr *)&rem, sizeof(rem)) < 0) break;
+	    write(s, cmd_start, 2);
+	    captured = 0;
+	    continue;
+	}
 
 	pktlen = ntohs(hdr.pktlen);
 	if (pktlen > MAX_PKT)
 	    pktlen = MAX_PKT;
 
-	if (read_full(s, buf, pktlen) < 0)
-	    break;
+	if (read_full(s, buf, pktlen) < 0) {
+	    close(s);
+	    sleep(1);
+	    s = socket(AF_INET, SOCK_STREAM, 0);
+	    if (s < 0) break;
+	    local.sin_port = 0;
+	    if (bind(s, (struct sockaddr *)&local, sizeof(local)) < 0) break;
+	    if (connect(s, (struct sockaddr *)&rem, sizeof(rem)) < 0) break;
+	    write(s, cmd_start, 2);
+	    captured = 0;
+	    continue;
+	}
 
 	print_packet(buf, pktlen, hdr.direction);
 	captured++;

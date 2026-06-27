@@ -320,29 +320,23 @@ static void tcpdev_read(void)
 	}
 	return;
     }
-#if 0
-    /* send ACK to restart server should window have been full (unless it's netstat)*/
-    if (cb->remport != NETCONF_PORT || cb->remaddr != 0)
-	if (cb->remport != local_ip) {	/* no ack to localhost either*/
-	    debug_window("[%lu]tcp: extra ACK seq %ld, app read %d bytes\n", get_time(),
-		cb->rcv_nxt - cb->irs, data_avail);
-	    tcp_send_ack(cb);
-	}
-#else
     /* Fix the 'zero window problem': if the previous ACK advertized a window smaller
      * than the MSS - AND the sender needs that size, the sender will stop until a
      * larger window is advertized by the receiver (fast) or wait for a timeout, typically 2 or
      * more seconds and then send a packet using the advertized size. If the window size was zero,
      * that send-size will be 1 byte.
      * (MSS is MTU minus headers, MTU - 40).
+     *
+     * Skip this for the netconf TCB (remport=NETCONF_PORT, remaddr=0). This is a special
+     * pseudo-socket used only for packet capture (tcpdump) and network stats — it never
+     * carries real TCP data. Sending an extra ACK on it to 0.0.0.0:2 triggers a RST from
+     * QEMU slirp, which arrives back and removes the netconf TCB, disconnecting tcpdump.
+     * All normal TCBs (FTP, HTTP, telnet, etc.) have remaddr != 0 and are unaffected.
      */
-    if (CB_BUF_SPACE(cb) - data_avail <= MTU - 40) {
-	//printf("Extra ACK, size %d, space %d\n", data_avail, CB_BUF_SPACE(cb));
-	//printf("tcp: extra ACK seq %ld, last win %d this data %d\n",
-		//cb->rcv_nxt - cb->irs, CB_BUF_SPACE(cb)-data_avail, data_avail);
+    if ((cb->remport != NETCONF_PORT || cb->remaddr != 0) &&
+	CB_BUF_SPACE(cb) - data_avail <= MTU - 40) {
 	tcp_send_ack(cb);
     }
-#endif
 }
 
 /* kernel write data to ktcp (network)*/

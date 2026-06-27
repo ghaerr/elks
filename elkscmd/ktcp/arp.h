@@ -11,6 +11,12 @@ struct arp_addr {
 	__u8  eth_src[6]; 	/* MAC source address */
 };
 
+/*
+ * Must be packed: ip_src (offset 32) and ip_dest (offset 38) are not
+ * 4-byte aligned. Without packed, the compiler inserts padding before
+ * ip_dest, causing arp->ip_dest to read garbage from the packet buffer.
+ * This broke ARP replies in TAP/bridge mode (slirp bypasses ARP entirely).
+ */
 struct arp
 {
          __u8  ll_eth_dest[6]; 	/* link layer MAC destination address */
@@ -25,7 +31,7 @@ struct arp
          __u32 ip_src; 		/* IP source address */
          __u8  eth_dest[6]; 	/* MAC destination address */
          __u32 ip_dest; 	/* IP destination address */
-};
+} __attribute__((packed));
 
 struct arp_cache {
 	ipaddr_t   ip_addr;	/* IPv4 address */
