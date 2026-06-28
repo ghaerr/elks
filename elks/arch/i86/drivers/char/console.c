@@ -318,13 +318,13 @@ static void std_char(Console * C, int c)
     }
 }
 
-#ifdef VC_GRAPH_SAVE_RESTORE
+#if VC_GRAPH_SAVE_RESTORE
 /* Per-VC backing store for text page contents across a graphics-mode
  * acquisition. Allocated on DCGET_GRAPH, freed on DCREL_GRAPH. The graphics
  * app is expected to restore text mode (e.g. INT 10h AH=0 AL=3) before
  * releasing; we then restore each saved page on top of that.
  *
- * In RAM-buffer mode (g_use_rambuf), only the visible VC's page lives in
+ * In RAM-buffer mode (UseRambuf), only the visible VC's page lives in
  * actual video memory; backgrounded VCs live in the kernel heap and are
  * untouched by any video write. So one save buffer suffices.
  *
@@ -348,15 +348,15 @@ static int Console_ioctl(struct tty *tty, int cmd, char *arg)
     switch (cmd) {
     case DCGET_GRAPH:
         if (!glock) {
-#ifdef VC_GRAPH_SAVE_RESTORE
+#if VC_GRAPH_SAVE_RESTORE
             unsigned int sz = C->Width * C->Height * 2;
             int i, n;
             graph_save_words = sz >> 1;
-            n = g_use_rambuf ? 1 : NumConsoles;
+            n = UseRambuf ? 1 : NumConsoles;
             for (i = 0; i < n; i++) {
                 /* In RAM-buffer mode, the only at-risk page is the one
                  * currently displayed (Visible[]); all others live in heap. */
-                Console *V = g_use_rambuf ? Visible[C->display] : &Con[i];
+                Console *V = UseRambuf ? Visible[C->display] : &Con[i];
                 unsigned char *raw = heap_alloc(sz + 15, HEAP_TAG_DRVR);
                 if (raw) {
                     unsigned int al = ((unsigned int)raw + 15) & ~0xF;
@@ -377,11 +377,11 @@ static int Console_ioctl(struct tty *tty, int cmd, char *arg)
         return -EBUSY;
     case DCREL_GRAPH:
         if (glock == C) {
-#ifdef VC_GRAPH_SAVE_RESTORE
+#if VC_GRAPH_SAVE_RESTORE
             int i, n;
-            n = g_use_rambuf ? 1 : NumConsoles;
+            n = UseRambuf ? 1 : NumConsoles;
             for (i = 0; i < n; i++) {
-                Console *V = g_use_rambuf ? Visible[C->display] : &Con[i];
+                Console *V = UseRambuf ? Visible[C->display] : &Con[i];
                 if (graph_save_buf[i]) {
                     fmemcpyw((void *)0, (seg_t) V->vseg,
                              (void *)0, graph_save_seg[i],
@@ -397,7 +397,7 @@ static int Console_ioctl(struct tty *tty, int cmd, char *arg)
              * re-program the start address so the user lands on the same
              * VC they left. RAM-buffer mode never page-flips and needs
              * no fixup. */
-            if (!g_use_rambuf)
+            if (!UseRambuf)
                 SetDisplayPage(Visible[C->display]);
 #endif
             glock = NULL;

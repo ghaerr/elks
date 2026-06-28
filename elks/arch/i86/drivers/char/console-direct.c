@@ -25,6 +25,19 @@
 #include "console.h"
 #include "crtc-6845.h"
 
+/* Enable graphics-mode text page save/restore in the shared Console_ioctl().
+ * Only the IBM-PC direct driver provides the heap_alloc, kernel_ds, fmemcpyw
+ * and vseg ingredients the save/restore relies on. Other CONFIG_CONSOLE_DIRECT
+ * variants (PC-98) define a different Console struct and skip it.
+ */
+#define VC_GRAPH_SAVE_RESTORE 1
+
+#ifdef CONFIG_CONSOLE_DUAL
+#define MAX_DISPLAYS    2
+#else
+#define MAX_DISPLAYS    1
+#endif
+
 /* Assumes ASCII values. */
 #define isalpha(c) (((unsigned char)(((c) | 0x20) - 'a')) < 26)
 
@@ -45,15 +58,6 @@
 
 #define MAXPARMS        28
 
-#ifdef CONFIG_CONSOLE_DUAL
-#define MAX_DISPLAYS    2
-#else
-#define MAX_DISPLAYS    1
-#endif
-
-struct console;
-typedef struct console Console;
-
 struct console {
     int Width, Height;
     int cx, cy;                 /* cursor position */
@@ -61,7 +65,7 @@ struct console {
     unsigned char type;
     unsigned char attr;         /* current attribute */
     unsigned char XN;           /* delayed newline on column 80 */
-    void (*fsm)(Console *, int);
+    void (*fsm)(struct console *, int);
     unsigned int vseg;          /* current render target: video page seg when foreground,
                                    ram_buf_seg when backgrounded in RAM-buffer mode */
     unsigned int vseg_offset;   /* CRTC start address (chars) for this VC's video page;
@@ -76,6 +80,7 @@ struct console {
     unsigned char params[MAXPARMS];     /* ANSI params */
 #endif
 };
+typedef struct console Console;
 
 static Console *glock;
 static struct wait_queue glock_wait;
@@ -86,8 +91,9 @@ static int NumConsoles;
  * adapter can back natively. In that mode every VC has a RAM backing buffer;
  * Console_set_vc() blits buffer<->video on switch instead of just flipping
  * the CRTC start address. Single-display only; CONFIG_CONSOLE_DUAL retains
- * pure page-flip behavior bounded by hardware page count. */
-static int g_use_rambuf;
+ * pure page-flip behavior bounded by hardware page count.
+ */
+static char UseRambuf;
 
 unsigned int VideoSeg = 0xb800;
 int Current_VCminor;
@@ -181,12 +187,6 @@ static void ScrollDown(Console * C, int y)
 }
 #endif
 
-/* Enable graphics-mode text page save/restore in the shared Console_ioctl().
- * Only the IBM-PC direct driver provides the heap_alloc, kernel_ds, fmemcpyw
- * and vseg ingredients the save/restore relies on. Other CONFIG_CONSOLE_DIRECT
- * variants (PC-98) define a different Console struct and skip it. */
-#define VC_GRAPH_SAVE_RESTORE 1
-
 /* shared console routines*/
 #include "console.c"
 
@@ -202,7 +202,7 @@ void Console_set_vc(int N)
         return;
 
     outgoing = Visible[C->display];
-    if (g_use_rambuf) {
+    if (UseRambuf) {
         /* RAM-buffer mode: foreground VC writes go to VideoSeg directly;
          * backgrounded VCs write to their ram_buf_seg. Swap on transition. */
         if (outgoing && outgoing != C) {
@@ -238,7 +238,7 @@ struct tty_ops dircon_ops = {
 
 #ifndef CONFIG_CONSOLE_DUAL
 /* Number of native text pages each adapter type can hold in its video RAM. */
-static unsigned char INITPROC pages_for_type(unsigned char t)
+static int INITPROC pages_for_type(int t)
 {
     switch (t) {
     case OT_MDA: return 1;      /* 4 KB at 0xB000 holds one 80x25 page */
@@ -259,7 +259,7 @@ void INITPROC console_init(void)
     unsigned char *raw;
     unsigned char avail_pages;
     unsigned short boot_crtc;
-    unsigned char output_type = OT_EGA;
+    unsigned int output_type = OT_EGA;
 
     Width = peekb(0x4a, 0x40);  /* BIOS data segment */
     /* Trust this. Cga does not support peeking at 0x40:0x84. */
@@ -279,12 +279,14 @@ void INITPROC console_init(void)
     NumConsoles = MAX_CONSOLES;
     /* Kernel built for more VCs than the adapter can back.  
      * Alloc paragraph-aligned RAM buffers up front.
-     * Failure rolls back and clamps to avail_pages (pure video-page mode). */
-    if (NumConsoles > avail_pages) {
+     * Failure rolls back and clamps to avail_pages (pure video-page mode).
+     */
+    if (1 || NumConsoles > avail_pages) {
         int alloc_ok = 1;
         bufsize = Width * Height * 2;
+
         for (j = 0; j < NumConsoles; j++) {
-            raw = heap_alloc(bufsize + 15, HEAP_TAG_DRVR | HEAP_TAG_CLEAR);
+            raw = heap_alloc(bufsize + 16, HEAP_TAG_DRVR | HEAP_TAG_CLEAR);
             if (!raw) {
                 alloc_ok = 0;
                 break;
@@ -294,7 +296,7 @@ void INITPROC console_init(void)
             Con[j].ram_buf_seg = kernel_ds + (linear_off >> 4);
         }
         if (alloc_ok) {
-            g_use_rambuf = 1;
+            UseRambuf = 1;
         } else {
             while (--j >= 0) {
                 heap_free(Con[j].ram_buf);
@@ -302,8 +304,6 @@ void INITPROC console_init(void)
                 Con[j].ram_buf_seg = 0;
             }
             NumConsoles = avail_pages;
-            printk("console: RAM buffer alloc failed, clamping to %d VCs\n",
-                   NumConsoles);
         }
     }
 
@@ -317,11 +317,12 @@ void INITPROC console_init(void)
             C->cy = peekb(0x51, 0x40);
         }
         C->fsm = std_char;
-        if (g_use_rambuf) {
+        if (UseRambuf) {
             /* Foreground VC writes go to video RAM, 
              * backgrounded VCs to their own buffers. 
              * SetDisplayPage() is unused in this mode -
-             * only one video page is ever displayed. */
+             * only one video page is ever displayed.
+             */
             C->vseg_offset = 0;
             C->vseg = (i == 0) ? VideoSeg : C->ram_buf_seg;
         } else {
@@ -339,9 +340,9 @@ void INITPROC console_init(void)
 #endif
 
         /* Background VCs in RAM-buffer mode start with cleared screens.
-         * The foreground VC's video memory is left alone to preserve 
-         * printk() output.  */
-        if (g_use_rambuf && i > 0)
+         * The foreground VC's video memory is left alone to preserve printk() output.
+         */
+        if (UseRambuf && i != 0)
             ClearRange(C, 0, 0, Width - 1, Height - 1);
 
         C++;
@@ -351,7 +352,7 @@ void INITPROC console_init(void)
 
     printk("Direct console, %s kbd %ux%u"TERM_TYPE"(%d virtual consoles%s)\n",
            kbd_name, Width, Height, NumConsoles,
-           g_use_rambuf ? ", RAM-buffered" : "");
+           UseRambuf ? ", RAM-buffered" : "");
 }
 #else
 
