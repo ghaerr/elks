@@ -25,11 +25,10 @@
 #include "console.h"
 #include "crtc-6845.h"
 
-/* Enable graphics-mode text page save/restore in the shared Console_ioctl().
- * Only the IBM-PC direct driver provides the heap_alloc, kernel_ds, fmemcpyw
- * and vseg ingredients the save/restore relies on. Other CONFIG_CONSOLE_DIRECT
- * variants (PC-98) define a different Console struct and skip it.
- */
+/* Enable ram-buffered text pages */
+#define VC_USE_RAM_BUFFER     0
+
+/* Enable graphics-mode text page save/restore in the shared Console_ioctl() */
 #define VC_GRAPH_SAVE_RESTORE 1
 
 #ifdef CONFIG_CONSOLE_DUAL
@@ -67,13 +66,11 @@ struct console {
     unsigned char XN;           /* delayed newline on column 80 */
     void (*fsm)(struct console *, int);
     unsigned int vseg;          /* current render target: video page seg when foreground,
-                                   ram_buf_seg when backgrounded in RAM-buffer mode */
+                                   ram_seg when backgrounded in RAM-buffer mode */
     unsigned int vseg_offset;   /* CRTC start address (chars) for this VC's video page;
                                    only meaningful when this VC is video-page-backed */
     unsigned short crtc_base;   /* 6845 CRTC base I/O address */
-    unsigned char *ram_buf;     /* heap_alloc'd backing buffer (RAM-buffer mode);
-                                   NULL if this VC is video-page-backed */
-    unsigned int ram_buf_seg;   /* paragraph-aligned segment alias for ram_buf */
+    unsigned int ram_seg;       /* seg_alloc'd back buffer segment (RAM-buffer mode) */
 #ifdef CONFIG_EMUL_ANSI
     int savex, savey;           /* saved cursor position */
     unsigned char *parmptr;     /* ptr to params */
@@ -197,29 +194,29 @@ static void ScrollDown(Console * C, int y)
 void Console_set_vc(int N)
 {
     Console *C = &Con[N];
-    Console *outgoing;
     if ((N >= NumConsoles) || glock)
         return;
 
-    outgoing = Visible[C->display];
+#if VC_USE_RAM_BUFFER
+    Console *outgoing = Visible[C->display];
     if (UseRambuf) {
         /* RAM-buffer mode: foreground VC writes go to VideoSeg directly;
-         * backgrounded VCs write to their ram_buf_seg. Swap on transition. */
+         * backgrounded VCs write to their ram_seg. Swap on transition. */
         if (outgoing && outgoing != C) {
             /* save outgoing's screen into its RAM buffer, retarget its writes there */
-            fmemcpyw((void *)0, (seg_t) outgoing->ram_buf_seg,
+            fmemcpyw((void *)0, (seg_t) outgoing->ram_seg,
                      (void *)0, (seg_t) outgoing->vseg,
                      outgoing->Width * outgoing->Height);
-            outgoing->vseg = outgoing->ram_buf_seg;
+            outgoing->vseg = outgoing->ram_seg;
             /* restore incoming's screen from its RAM buffer, retarget writes to video */
             fmemcpyw((void *)0, (seg_t) VideoSeg,
-                     (void *)0, (seg_t) C->ram_buf_seg,
+                     (void *)0, (seg_t) C->ram_seg,
                      C->Width * C->Height);
             C->vseg = VideoSeg;
         }
-    } else {
+    } else  /* fall through #endif */
+#endif
         SetDisplayPage(C);
-    }
     Visible[C->display] = C;
     PositionCursor(C);
     DisplayCursor(&Con[Current_VCminor], 0);
@@ -237,6 +234,8 @@ struct tty_ops dircon_ops = {
 };
 
 #ifndef CONFIG_CONSOLE_DUAL
+
+#if VC_USE_RAM_BUFFER
 /* Number of native text pages each adapter type can hold in its video RAM. */
 static int INITPROC pages_for_type(int t)
 {
@@ -246,18 +245,14 @@ static int INITPROC pages_for_type(int t)
     default:     return 8;      /* EGA/VGA, 32 KB holds eight pages */
     }
 }
+#endif
 
 void INITPROC console_init(void)
 {
     Console *C = &Con[0];
     int i;
-    int j;
     int Width, Height;
     unsigned int PageSizeW;
-    unsigned int bufsize;
-    unsigned int linear_off;
-    unsigned char *raw;
-    unsigned char avail_pages;
     unsigned short boot_crtc;
     unsigned int output_type = OT_EGA;
 
@@ -274,39 +269,39 @@ void INITPROC console_init(void)
         if (peekw(0xA8+2, 0x40) == 0)
             output_type = OT_CGA;
     }
-    avail_pages = pages_for_type(output_type);
-
     NumConsoles = MAX_CONSOLES;
+
+#if VC_USE_RAM_BUFFER
     /* Kernel built for more VCs than the adapter can back.  
      * Alloc paragraph-aligned RAM buffers up front.
      * Failure rolls back and clamps to avail_pages (pure video-page mode).
      */
-    if (1 || NumConsoles > avail_pages) {
+    unsigned int avail_pages = pages_for_type(output_type);
+    if (NumConsoles > avail_pages) {
+        int j;
         int alloc_ok = 1;
-        bufsize = Width * Height * 2;
+        unsigned int bufsize = Width * Height * 2;
+        segment_s *seg[8];
 
         for (j = 0; j < NumConsoles; j++) {
-            raw = heap_alloc(bufsize + 16, HEAP_TAG_DRVR | HEAP_TAG_CLEAR);
-            if (!raw) {
+            seg[j] = seg_alloc((bufsize + 15) >> 4, SEG_FLAG_VIDBUF);
+            if (!seg[j]) {
                 alloc_ok = 0;
                 break;
             }
-            Con[j].ram_buf = raw;
-            linear_off = ((unsigned int)raw + 15) & ~0xF;
-            Con[j].ram_buf_seg = kernel_ds + (linear_off >> 4);
+            Con[j].ram_seg = seg[j]->base;
         }
         if (alloc_ok) {
             UseRambuf = 1;
         } else {
             while (--j >= 0) {
-                heap_free(Con[j].ram_buf);
-                Con[j].ram_buf = NULL;
-                Con[j].ram_buf_seg = 0;
+                seg_free(seg[j]);
+                //Con[j].ram_seg = 0;
             }
             NumConsoles = avail_pages;
         }
     }
-
+#endif
     Visible[0] = C;
 
     for (i = 0; i < NumConsoles; i++) {
@@ -324,7 +319,7 @@ void INITPROC console_init(void)
              * only one video page is ever displayed.
              */
             C->vseg_offset = 0;
-            C->vseg = (i == 0) ? VideoSeg : C->ram_buf_seg;
+            C->vseg = (i == 0) ? VideoSeg : C->ram_seg;
         } else {
             C->vseg_offset = i * PageSizeW;
             C->vseg = VideoSeg + (C->vseg_offset >> 3);
@@ -338,13 +333,13 @@ void INITPROC console_init(void)
 #ifdef CONFIG_EMUL_ANSI
         C->savex = C->savey = 0;
 #endif
-
+#if VC_USE_RAM_BUFFER
         /* Background VCs in RAM-buffer mode start with cleared screens.
          * The foreground VC's video memory is left alone to preserve printk() output.
          */
         if (UseRambuf && i != 0)
             ClearRange(C, 0, 0, Width - 1, Height - 1);
-
+#endif
         C++;
     }
 

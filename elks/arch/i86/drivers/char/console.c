@@ -335,7 +335,8 @@ static void std_char(Console * C, int c)
  *
  *   Num-VCs * Width * Height * 2 bytes  (commonly works out to 16 KB)
  *
- * and only for the duration of the graphics session. */
+ * and only for the duration of the graphics session.
+ */
 static unsigned char *graph_save_buf[MAX_CONSOLES];
 static seg_t graph_save_seg[MAX_CONSOLES];
 static unsigned int graph_save_words;
