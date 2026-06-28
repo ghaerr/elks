@@ -337,8 +337,7 @@ static void std_char(Console * C, int c)
  *
  * and only for the duration of the graphics session.
  */
-static unsigned char *graph_save_buf[MAX_CONSOLES];
-static seg_t graph_save_seg[MAX_CONSOLES];
+static segment_s *graph_save_seg[MAX_CONSOLES];
 static unsigned int graph_save_words;
 #endif
 
@@ -356,20 +355,20 @@ static int Console_ioctl(struct tty *tty, int cmd, char *arg)
             n = UseRambuf ? 1 : NumConsoles;
             for (i = 0; i < n; i++) {
                 /* In RAM-buffer mode, the only at-risk page is the one
-                 * currently displayed (Visible[]); all others live in heap. */
+                 * currently displayed (Visible[]); all others live in heap.
+                 */
                 Console *V = UseRambuf ? Visible[C->display] : &Con[i];
-                unsigned char *raw = heap_alloc(sz + 15, HEAP_TAG_DRVR);
-                if (raw) {
-                    unsigned int al = ((unsigned int)raw + 15) & ~0xF;
-                    graph_save_buf[i] = raw;
-                    graph_save_seg[i] = kernel_ds + (al >> 4);
-                    fmemcpyw((void *)0, graph_save_seg[i],
+                segment_s *seg = seg_alloc((sz + 15) >> 4, SEG_FLAG_VIDBUF);
+                if (seg) {
+                    graph_save_seg[i] = seg;
+                    fmemcpyw((void *)0, graph_save_seg[i]->base,
                              (void *)0, (seg_t) V->vseg,
                              graph_save_words);
                 }
                 /* Per-VC alloc failure is non-fatal: that slot stays
                  * NULL and the matching restore is skipped. The lock
-                 * still proceeds. */
+                 * still proceeds.
+                 */
             }
 #endif
             glock = C;
@@ -383,12 +382,11 @@ static int Console_ioctl(struct tty *tty, int cmd, char *arg)
             n = UseRambuf ? 1 : NumConsoles;
             for (i = 0; i < n; i++) {
                 Console *V = UseRambuf ? Visible[C->display] : &Con[i];
-                if (graph_save_buf[i]) {
+                if (graph_save_seg[i]) {
                     fmemcpyw((void *)0, (seg_t) V->vseg,
-                             (void *)0, graph_save_seg[i],
+                             (void *)0, graph_save_seg[i]->base,
                              graph_save_words);
-                    heap_free(graph_save_buf[i]);
-                    graph_save_buf[i] = NULL;
+                    seg_free(graph_save_seg[i]);
                     graph_save_seg[i] = 0;
                 }
             }
@@ -396,8 +394,8 @@ static int Console_ioctl(struct tty *tty, int cmd, char *arg)
             /* The graphics app's BIOS mode reset left CRTC at page 0. In
              * page-flip mode that may not be the foreground VC's page;
              * re-program the start address so the user lands on the same
-             * VC they left. RAM-buffer mode never page-flips and needs
-             * no fixup. */
+             * VC they left. RAM-buffer mode never page-flips and needs no fixup.
+             */
             if (!UseRambuf)
                 SetDisplayPage(Visible[C->display]);
 #endif

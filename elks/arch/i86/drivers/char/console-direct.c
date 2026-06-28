@@ -29,7 +29,7 @@
 #define VC_USE_RAM_BUFFER     0
 
 /* Enable graphics-mode text page save/restore in the shared Console_ioctl() */
-#define VC_GRAPH_SAVE_RESTORE 1
+#define VC_GRAPH_SAVE_RESTORE 0
 
 #ifdef CONFIG_CONSOLE_DUAL
 #define MAX_DISPLAYS    2
