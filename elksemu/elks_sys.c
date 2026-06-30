@@ -852,7 +852,8 @@ elks_readdir(int bx, int cx, int dx, int di, int si)
     ELKS_POKE(int32_t, cx, ent->d_ino);
     ELKS_POKE(int32_t, cx + 4, ent->d_off);
     ELKS_POKE(int16_t, cx + 8, ent->d_reclen);
-    memcpy(ELKS_PTR(char, cx + 10), ent->d_name, ent->d_reclen + 1);
+    size_t namelen = strnlen(ent->d_name, NAME_MAX);
+    memcpy(ELKS_PTR(char, cx + 10), ent->d_name, namelen + 1);
     return dx;
 }
 
