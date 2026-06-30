@@ -19,10 +19,10 @@ mainmenu_option next_comment
 		fi
 		bool '  Scancode keyboard driver'	CONFIG_KEYBOARD_SCANCODE y
 		bool '  Dual-screen console support'    CONFIG_CONSOLE_DUAL n
-		int  '  Number of virtual consoles (1-8)' CONFIG_CONSOLE_MAX 3
 	fi
 	bool 'Serial Console'	CONFIG_CONSOLE_SERIAL		n
 	if [[ "$CONFIG_CONSOLE_DIRECT" = "y" || "$CONFIG_CONSOLE_BIOS" = "y" ]]; then
+		int  '  Number of virtual consoles (1-8)' CONFIG_CONSOLE_MAX 3
 	        bool 'Console ANSI terminal emulation'  CONFIG_EMUL_ANSI  y
 	fi
 	if [ "$CONFIG_CONSOLE_DIRECT" = "y" ]; then
