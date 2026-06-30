@@ -235,7 +235,6 @@ struct tty_ops dircon_ops = {
 
 #ifndef CONFIG_CONSOLE_DUAL
 
-#if VC_USE_RAM_BUFFER
 /* Number of native text pages each adapter type can hold in its video RAM. */
 static int INITPROC pages_for_type(int t)
 {
@@ -245,7 +244,6 @@ static int INITPROC pages_for_type(int t)
     default:     return 8;      /* EGA/VGA, 32 KB holds eight pages */
     }
 }
-#endif
 
 void INITPROC console_init(void)
 {
@@ -254,7 +252,8 @@ void INITPROC console_init(void)
     int Width, Height;
     unsigned int PageSizeW;
     unsigned short boot_crtc;
-    unsigned int output_type = OT_EGA;
+    int output_type = OT_EGA;
+    int avail_pages;
 
     Width = peekb(0x4a, 0x40);  /* BIOS data segment */
     /* Trust this. Cga does not support peeking at 0x40:0x84. */
@@ -270,14 +269,14 @@ void INITPROC console_init(void)
             output_type = OT_CGA;
     }
     NumConsoles = MAX_CONSOLES;
+    avail_pages = pages_for_type(output_type);
 
-#if VC_USE_RAM_BUFFER
     /* Kernel built for more VCs than the adapter can back.  
      * Alloc paragraph-aligned RAM buffers up front.
      * Failure rolls back and clamps to avail_pages (pure video-page mode).
      */
-    unsigned int avail_pages = pages_for_type(output_type);
     if (NumConsoles > avail_pages) {
+#if VC_USE_RAM_BUFFER
         int j;
         int alloc_ok = 1;
         unsigned int bufsize = Width * Height * 2;
@@ -300,8 +299,10 @@ void INITPROC console_init(void)
             }
             NumConsoles = avail_pages;
         }
-    }
+#else
+        NumConsoles = avail_pages;
 #endif
+    }
     Visible[0] = C;
 
     for (i = 0; i < NumConsoles; i++) {
@@ -312,6 +313,7 @@ void INITPROC console_init(void)
             C->cy = peekb(0x51, 0x40);
         }
         C->fsm = std_char;
+#if VC_USE_RAM_BUFFER
         if (UseRambuf) {
             /* Foreground VC writes go to video RAM, 
              * backgrounded VCs to their own buffers. 
@@ -320,7 +322,9 @@ void INITPROC console_init(void)
              */
             C->vseg_offset = 0;
             C->vseg = (i == 0) ? VideoSeg : C->ram_seg;
-        } else {
+        } else /* fall through #endif */
+#endif
+        {
             C->vseg_offset = i * PageSizeW;
             C->vseg = VideoSeg + (C->vseg_offset >> 3);
         }
