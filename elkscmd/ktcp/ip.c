@@ -136,12 +136,6 @@ void ip_recvpacket(unsigned char *packet, int size)
 	return;
     }
 
-    if (--iphdr->ttl == 0) {
-	icmp_send_time_exceeded(iphdr);
-	netstats.iprcvcnt++;
-	return;
-    }
-
     switch (iphdr->protocol) {
     case PROTO_ICMP:
         //debug_ip("IP: recv icmp packet\n");
@@ -228,9 +222,9 @@ void ip_route(unsigned char *packet, int len, struct addr_pair *apair)
      * Also keep the original self-IP check (both source and dest == local_ip):
      * ftp PASV data connections advertise the real IP, so the client connects
      * to local_ip:port from local_ip — neither address is 127.x.x.x. */
-    if (((apair->daddr & htonl(0xFF000000)) == htonl(0x7F000000)) ||
-        ((apair->saddr & htonl(0xFF000000)) == htonl(0x7F000000)) ||
-        (apair->saddr == local_ip && apair->daddr == local_ip)) {
+    if ((apair->saddr == local_ip && apair->daddr == local_ip) ||
+        ((apair->daddr & htonl(0xFF000000)) == htonl(0x7F000000)) ||
+        ((apair->saddr & htonl(0xFF000000)) == htonl(0x7F000000))) {
 	debug_ip("ip: route localhost\n");
 	ip_recvpacket(packet, len);
 	return;

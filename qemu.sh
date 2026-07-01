@@ -141,16 +141,6 @@ fi
 #DEBUG="-D logfile -d cpu,in_asm,int,unimp,guest_errors"
 #DEBUG="-D logfile -d out_asm,in_asm,int,unimp,guest_errors"
 
-# Check for conflicting QEMU instances when using hostfwd
-if [ -n "$FWD" ]; then
-  for port in 2121 8041 8042 8043 8044 8045 8046 8047 8048 8049; do
-    if lsof -iTCP:$port -sTCP:LISTEN &>/dev/null 2>&1; then
-      echo "ERROR: Port $port already in use — another QEMU instance running?"
-      exit 1
-    fi
-  done
-fi
-
 echo "Using QEMU: $QEMU $ACCEL"
 exec $QEMU $ACCEL $DEBUG $AUDIO $CONSOLE -nodefaults -name ELKS -machine isapc -cpu 486,tsc -m 8M \
 $KEYBOARD $QDISPLAY -vga std -rtc base=utc $SERIAL \

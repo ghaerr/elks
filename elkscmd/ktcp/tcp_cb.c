@@ -120,6 +120,17 @@ void tcpcb_remove_cb(struct tcpcb_s *cb)
 	}
 }
 
+void tcpcb_remove_all(void)
+{
+    struct tcpcb_list_s *n = tcpcbs, *next;
+    while (n) {
+	next = n->next;
+	if (n->tcpcb.remaddr != 0)
+	    tcpcb_remove(n);
+	n = next;
+    }
+}
+
 void tcpcb_remove(struct tcpcb_list_s *n)
 {
     struct tcpcb_list_s *next = n->next;

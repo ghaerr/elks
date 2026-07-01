@@ -267,39 +267,16 @@ int main(int argc, char **argv)
 	struct capture_hdr hdr;
 	unsigned short pktlen;
 
-	if (read_full(s, &hdr, sizeof(hdr)) < 0) {
-	    /* Netconf TCB was removed (e.g. by spurious RST from QEMU slirp
-	     * when an extra ACK to 0.0.0.0:2 was sent). Fixed in ktcp/tcpdev.c
-	     * but kept here as defensive resilience against future disconnects. */
-	    fprintf(stderr, "tcpdump: reconnecting...\n");
-	    close(s);
-	    sleep(1);
-	    s = socket(AF_INET, SOCK_STREAM, 0);
-	    if (s < 0) break;
-	    local.sin_port = 0;
-	    if (bind(s, (struct sockaddr *)&local, sizeof(local)) < 0) break;
-	    if (connect(s, (struct sockaddr *)&rem, sizeof(rem)) < 0) break;
-	    write(s, cmd_start, 2);
-	    captured = 0;
-	    continue;
-	}
+	if (read_full(s, &hdr, sizeof(hdr)) < 0)
+	    break;
+
 
 	pktlen = ntohs(hdr.pktlen);
 	if (pktlen > MAX_PKT)
 	    pktlen = MAX_PKT;
 
-	if (read_full(s, buf, pktlen) < 0) {
-	    close(s);
-	    sleep(1);
-	    s = socket(AF_INET, SOCK_STREAM, 0);
-	    if (s < 0) break;
-	    local.sin_port = 0;
-	    if (bind(s, (struct sockaddr *)&local, sizeof(local)) < 0) break;
-	    if (connect(s, (struct sockaddr *)&rem, sizeof(rem)) < 0) break;
-	    write(s, cmd_start, 2);
-	    captured = 0;
-	    continue;
-	}
+	if (read_full(s, buf, pktlen) < 0)
+           break;
 
 	print_packet(buf, pktlen, hdr.direction);
 	captured++;

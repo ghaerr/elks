@@ -54,6 +54,7 @@ struct arp_cache {
 extern struct arp_cache arp_cache [ARP_CACHE_MAX];
 
 int arp_init (void);
+void arp_flush_cache(void);
 struct arp_cache *arp_cache_get(ipaddr_t ip_addr, eth_addr_t eth_addr, int flags);
 struct arp_cache *arp_cache_update(ipaddr_t ip_addr, eth_addr_t eth_addr);
 struct arp_cache *arp_cache_add(ipaddr_t ip_addr, eth_addr_t eth_addr);
