@@ -25,8 +25,15 @@
 
 /* Predefined maximum number of tty character devices */
 
+/* MAX_CONSOLES upper bound is PTY_MINOR_OFFSET */
+#if CONFIG_CONSOLE_MAX > 8
+#error Maximum number of consoles is 8, please reconfigure.
+#endif
+
 #if defined(CONFIG_CONSOLE_DUAL)
 #define MAX_CONSOLES 4
+#elif defined(CONFIG_CONSOLE_DIRECT) || defined(CONFIG_CONSOLE_BIOS)
+#define MAX_CONSOLES CONFIG_CONSOLE_MAX
 #elif defined(CONFIG_FAST_IRQ2_NECV25)
 #define MAX_CONSOLES 2
 #elif defined(CONFIG_FAST_IRQ1_NECV25)
