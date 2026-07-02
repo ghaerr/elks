@@ -19,9 +19,23 @@
 #include <linuxmt/chqueue.h>
 #include <linuxmt/ntty.h>
 #include <linuxmt/kd.h>
+#include <linuxmt/heap.h>
 #include <arch/io.h>
+#include <arch/segment.h>
 #include "console.h"
 #include "crtc-6845.h"
+
+/* Enable ram-buffered text pages */
+#define VC_USE_RAM_BUFFER     0
+
+/* Enable graphics-mode text page save/restore in the shared Console_ioctl() */
+#define VC_GRAPH_SAVE_RESTORE 0
+
+#ifdef CONFIG_CONSOLE_DUAL
+#define MAX_DISPLAYS    2
+#else
+#define MAX_DISPLAYS    1
+#endif
 
 /* Assumes ASCII values. */
 #define isalpha(c) (((unsigned char)(((c) | 0x20) - 'a')) < 26)
@@ -43,15 +57,6 @@
 
 #define MAXPARMS        28
 
-#ifdef CONFIG_CONSOLE_DUAL
-#define MAX_DISPLAYS    2
-#else
-#define MAX_DISPLAYS    1
-#endif
-
-struct console;
-typedef struct console Console;
-
 struct console {
     int Width, Height;
     int cx, cy;                 /* cursor position */
@@ -59,22 +64,33 @@ struct console {
     unsigned char type;
     unsigned char attr;         /* current attribute */
     unsigned char XN;           /* delayed newline on column 80 */
-    void (*fsm)(Console *, int);
-    unsigned int vseg;          /* vram for this console page */
-    unsigned int vseg_offset;   /* vram offset of vseg for this console page */
+    void (*fsm)(struct console *, int);
+    unsigned int vseg;          /* current render target: video page seg when foreground,
+                                   ram_seg when backgrounded in RAM-buffer mode */
+    unsigned int vseg_offset;   /* CRTC start address (chars) for this VC's video page;
+                                   only meaningful when this VC is video-page-backed */
     unsigned short crtc_base;   /* 6845 CRTC base I/O address */
+    unsigned int ram_seg;       /* seg_alloc'd back buffer segment (RAM-buffer mode) */
 #ifdef CONFIG_EMUL_ANSI
     int savex, savey;           /* saved cursor position */
     unsigned char *parmptr;     /* ptr to params */
     unsigned char params[MAXPARMS];     /* ANSI params */
 #endif
 };
+typedef struct console Console;
 
 static Console *glock;
 static struct wait_queue glock_wait;
 static Console *Visible[MAX_DISPLAYS];
 static Console Con[MAX_CONSOLES];
 static int NumConsoles;
+/* When non-zero, MAX_CONSOLES exceeds the number of video text pages this
+ * adapter can back natively. In that mode every VC has a RAM backing buffer;
+ * Console_set_vc() blits buffer<->video on switch instead of just flipping
+ * the CRTC start address. Single-display only; CONFIG_CONSOLE_DUAL retains
+ * pure page-flip behavior bounded by hardware page count.
+ */
+static char UseRambuf;
 
 unsigned int VideoSeg = 0xb800;
 int Current_VCminor;
@@ -181,8 +197,27 @@ void Console_set_vc(int N)
     if ((N >= NumConsoles) || glock)
         return;
 
+#if VC_USE_RAM_BUFFER
+    Console *outgoing = Visible[C->display];
+    if (UseRambuf) {
+        /* RAM-buffer mode: foreground VC writes go to VideoSeg directly;
+         * backgrounded VCs write to their ram_seg. Swap on transition. */
+        if (outgoing && outgoing != C) {
+            /* save outgoing's screen into its RAM buffer, retarget its writes there */
+            fmemcpyw((void *)0, (seg_t) outgoing->ram_seg,
+                     (void *)0, (seg_t) outgoing->vseg,
+                     outgoing->Width * outgoing->Height);
+            outgoing->vseg = outgoing->ram_seg;
+            /* restore incoming's screen from its RAM buffer, retarget writes to video */
+            fmemcpyw((void *)0, (seg_t) VideoSeg,
+                     (void *)0, (seg_t) C->ram_seg,
+                     C->Width * C->Height);
+            C->vseg = VideoSeg;
+        }
+    } else  /* fall through #endif */
+#endif
+        SetDisplayPage(C);
     Visible[C->display] = C;
-    SetDisplayPage(C);
     PositionCursor(C);
     DisplayCursor(&Con[Current_VCminor], 0);
     Current_VCminor = N;
@@ -199,6 +234,17 @@ struct tty_ops dircon_ops = {
 };
 
 #ifndef CONFIG_CONSOLE_DUAL
+
+/* Number of native text pages each adapter type can hold in its video RAM. */
+static int INITPROC pages_for_type(int t)
+{
+    switch (t) {
+    case OT_MDA: return 1;      /* 4 KB at 0xB000 holds one 80x25 page */
+    case OT_CGA: return 4;      /* 16 KB at 0xB800 holds four pages */
+    default:     return 8;      /* EGA/VGA, 32 KB holds eight pages */
+    }
+}
+
 void INITPROC console_init(void)
 {
     Console *C = &Con[0];
@@ -206,7 +252,8 @@ void INITPROC console_init(void)
     int Width, Height;
     unsigned int PageSizeW;
     unsigned short boot_crtc;
-    unsigned char output_type = OT_EGA;
+    int output_type = OT_EGA;
+    int avail_pages;
 
     Width = peekb(0x4a, 0x40);  /* BIOS data segment */
     /* Trust this. Cga does not support peeking at 0x40:0x84. */
@@ -214,16 +261,48 @@ void INITPROC console_init(void)
     boot_crtc = peekw(0x63, 0x40);
     PageSizeW = ((unsigned int)peekw(0x4C, 0x40) >> 1);
 
-    NumConsoles = MAX_CONSOLES - 1;
     if (peekb(0x49, 0x40) == 7) {
         VideoSeg = 0xB000;
-        NumConsoles = 1;
         output_type = OT_MDA;
     } else {
         if (peekw(0xA8+2, 0x40) == 0)
             output_type = OT_CGA;
     }
+    NumConsoles = MAX_CONSOLES;
+    avail_pages = pages_for_type(output_type);
 
+    /* Kernel built for more VCs than the adapter can back.  
+     * Alloc paragraph-aligned RAM buffers up front.
+     * Failure rolls back and clamps to avail_pages (pure video-page mode).
+     */
+    if (NumConsoles > avail_pages) {
+#if VC_USE_RAM_BUFFER
+        int j;
+        int alloc_ok = 1;
+        unsigned int bufsize = Width * Height * 2;
+        segment_s *seg[8];
+
+        for (j = 0; j < NumConsoles; j++) {
+            seg[j] = seg_alloc((bufsize + 15) >> 4, SEG_FLAG_VIDBUF);
+            if (!seg[j]) {
+                alloc_ok = 0;
+                break;
+            }
+            Con[j].ram_seg = seg[j]->base;
+        }
+        if (alloc_ok) {
+            UseRambuf = 1;
+        } else {
+            while (--j >= 0) {
+                seg_free(seg[j]);
+                //Con[j].ram_seg = 0;
+            }
+            NumConsoles = avail_pages;
+        }
+#else
+        NumConsoles = avail_pages;
+#endif
+    }
     Visible[0] = C;
 
     for (i = 0; i < NumConsoles; i++) {
@@ -234,8 +313,21 @@ void INITPROC console_init(void)
             C->cy = peekb(0x51, 0x40);
         }
         C->fsm = std_char;
-        C->vseg_offset = i * PageSizeW;
-        C->vseg = VideoSeg + (C->vseg_offset >> 3);
+#if VC_USE_RAM_BUFFER
+        if (UseRambuf) {
+            /* Foreground VC writes go to video RAM, 
+             * backgrounded VCs to their own buffers. 
+             * SetDisplayPage() is unused in this mode -
+             * only one video page is ever displayed.
+             */
+            C->vseg_offset = 0;
+            C->vseg = (i == 0) ? VideoSeg : C->ram_seg;
+        } else /* fall through #endif */
+#endif
+        {
+            C->vseg_offset = i * PageSizeW;
+            C->vseg = VideoSeg + (C->vseg_offset >> 3);
+        }
         C->attr = A_DEFAULT;
         C->type = output_type;
         C->Width = Width;
@@ -245,17 +337,21 @@ void INITPROC console_init(void)
 #ifdef CONFIG_EMUL_ANSI
         C->savex = C->savey = 0;
 #endif
-
-        /* Do not erase early printk() */
-        /* ClearRange(C, 0, C->cy, MaxCol, MaxRow); */
-
+#if VC_USE_RAM_BUFFER
+        /* Background VCs in RAM-buffer mode start with cleared screens.
+         * The foreground VC's video memory is left alone to preserve printk() output.
+         */
+        if (UseRambuf && i != 0)
+            ClearRange(C, 0, 0, Width - 1, Height - 1);
+#endif
         C++;
     }
 
     kbd_init();
 
-    printk("Direct console, %s kbd %ux%u"TERM_TYPE"(%d virtual consoles)\n",
-           kbd_name, Width, Height, NumConsoles);
+    printk("Direct console, %s kbd %ux%u"TERM_TYPE"(%d virtual consoles%s)\n",
+           kbd_name, Width, Height, NumConsoles,
+           UseRambuf ? ", RAM-buffered" : "");
 }
 #else
 
