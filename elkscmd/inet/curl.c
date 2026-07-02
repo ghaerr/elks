@@ -173,11 +173,62 @@ static char *json_find(char *body, const char *key, int *vlen)
 }
 
 /*
+ * Base64 encode inlen bytes from in[], write null-terminated result to out[].
+ */
+static void b64encode(char *in, int inlen, char *out)
+{
+	static const char b64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+				   "abcdefghijklmnopqrstuvwxyz0123456789+/";
+	int i, len = 0;
+	unsigned char c[3];
+
+	for (i = 0; i < inlen; i += 3) {
+		c[0] = in[i];
+		c[1] = i + 1 < inlen ? in[i + 1] : 0;
+		c[2] = i + 2 < inlen ? in[i + 2] : 0;
+		out[len++] = b64[c[0] >> 2];
+		out[len++] = b64[((c[0] << 4) & 0x30) | ((c[1] >> 4) & 0x0f)];
+		out[len++] = i + 1 < inlen ? b64[((c[1] << 2) & 0x3c) | ((c[2] >> 6) & 0x03)] : '=';
+		out[len++] = i + 2 < inlen ? b64[c[2] & 0x3f] : '=';
+	}
+	out[len] = '\0';
+}
+
+/*
+ * In-place URL percent-decoding on string s.
+ */
+static void unescape(char *s)
+{
+	char *p = s;
+	unsigned char c;
+
+	while (*s) {
+		if (*s != '%') {
+			*p++ = *s++;
+			continue;
+		}
+		s++;
+		if (*s >= '0' && *s <= '9') c = *s++ - '0';
+		else if (*s >= 'a' && *s <= 'f') c = *s++ - 'a' + 10;
+		else if (*s >= 'A' && *s <= 'F') c = *s++ - 'A' + 10;
+		else { *p++ = '%'; continue; }
+		if (*s >= '0' && *s <= '9') c = (c << 4) | (*s++ - '0');
+		else if (*s >= 'a' && *s <= 'f') c = (c << 4) | (*s++ - 'a' + 10);
+		else if (*s >= 'A' && *s <= 'F') c = (c << 4) | (*s++ - 'A' + 10);
+		else { *p++ = '%'; continue; }
+		*p++ = c;
+	}
+	*p = '\0';
+}
+
+/*
  * HTTP GET/POST: send request, strip headers, write body to outfd.
  * If key is set, buffer body and extract that JSON key instead.
+ * If include_headers is set, write HTTP response headers to outfd.
  */
 static int http_get(char *host, int port, char *path, int outfd,
-	char *postdata, int use_json, char *key)
+	char *postdata, int use_json, char *key,
+	char *user, char *pass, int include_headers)
 {
 	int fd, skip, n, remaining;
 	char *p;
@@ -201,6 +252,15 @@ static int http_get(char *host, int port, char *path, int outfd,
 	write(fd, "Host: ", 6);
 	write(fd, host, strlen(host));
 	write(fd, "\r\n", 2);
+	if (*user) {
+		char up[128], b64[180];
+		int blen;
+		blen = sprintf(up, "%s:%s", user, pass);
+		b64encode(up, blen, b64);
+		write(fd, "Authorization: Basic ", 21);
+		write(fd, b64, strlen(b64));
+		write(fd, "\r\n", 2);
+	}
 	if (postdata) {
 		if (use_json)
 			write(fd, "Content-Type: application/json\r\n", 32);
@@ -279,12 +339,19 @@ static int http_get(char *host, int port, char *path, int outfd,
 						{ p++; remaining--; skip = 0; }
 				}
 			}
-			if (remaining > 0)
+			if (include_headers) {
+				if (write(outfd, buffer, n) != n) {
+					perror("write");
+					net_close(fd, 1);
+					return -1;
+				}
+			} else if (remaining > 0) {
 				if (write(outfd, p, remaining) != remaining) {
 					perror("write");
 					net_close(fd, 1);
 					return -1;
 				}
+			}
 		} else {
 			if (write(outfd, buffer, n) != n) {
 				perror("write");
@@ -432,7 +499,7 @@ static int ftp_cmd(int fd, char *cmd, char *arg)
  * FTP passive mode GET, PUT, or LIST.  If upload is set, store that file.
  */
 static int ftp_get(char *host, int port, char *user, char *pass,
-	char *path, int outfd, char *upload, int verbose)
+	char *path, int outfd, char *upload, int verbose, char type)
 {
 	int fd, dfd, s, n, is_dir;
 	int local;
@@ -471,9 +538,24 @@ static int ftp_get(char *host, int port, char *user, char *pass,
 			if (*p) {
 				s = ftp_cmd(fd, "CWD", p);
 				if (s / 100 != 2) {
-					fprintf(stderr, "curl: CWD %s failed: %d\n", p, s);
-					*slash = '/';
-					goto err;
+					if (upload) {
+						s = ftp_cmd(fd, "MKD", p);
+						if (s / 100 != 2) {
+							fprintf(stderr, "curl: CWD/MKD %s failed: %d\n", p, s);
+							*slash = '/';
+							goto err;
+						}
+						s = ftp_cmd(fd, "CWD", p);
+						if (s / 100 != 2) {
+							fprintf(stderr, "curl: CWD %s failed after MKD: %d\n", p, s);
+							*slash = '/';
+							goto err;
+						}
+					} else {
+						fprintf(stderr, "curl: CWD %s failed: %d\n", p, s);
+						*slash = '/';
+						goto err;
+					}
 				}
 			}
 			*slash = '/';
@@ -483,9 +565,9 @@ static int ftp_get(char *host, int port, char *user, char *pass,
 		}
 	}
 
-	s = ftp_cmd(fd, "TYPE", "I");
+	s = ftp_cmd(fd, "TYPE", type == 'a' ? "A" : "I");
 	if (s / 100 != 2) {
-		fprintf(stderr, "curl: TYPE I failed: %d\n", s);
+		fprintf(stderr, "curl: TYPE %s failed: %d\n", type == 'a' ? "A" : "I", s);
 		goto err;
 	}
 
@@ -502,28 +584,34 @@ static int ftp_get(char *host, int port, char *user, char *pass,
 	}
 
 	if (upload) {
-		local = open(upload, O_RDONLY);
-		if (local < 0) {
-			perror(upload);
-			net_close(dfd, 1);
-			goto err;
-		}
-		s = ftp_cmd(fd, "STOR", p);
-		if (s / 100 != 1) {
-			fprintf(stderr, "curl: STOR failed: %d\n", s);
-			close(local);
-			net_close(dfd, 1);
-			goto err;
-		}
-		while ((n = read(local, buffer, sizeof(buffer))) > 0) {
-			if (write(dfd, buffer, n) != n) {
-				perror("write data");
-				close(local);
+		if (strcmp(upload, "-") == 0)
+			local = 0;
+		else {
+			local = open(upload, O_RDONLY);
+			if (local < 0) {
+				perror(upload);
 				net_close(dfd, 1);
 				goto err;
 			}
 		}
-		close(local);
+		s = ftp_cmd(fd, "STOR", p);
+		if (s / 100 != 1) {
+			fprintf(stderr, "curl: STOR failed: %d\n", s);
+			if (local > 0) close(local);
+			net_close(dfd, 1);
+			goto err;
+		}
+		while ((n = read(local, buffer, sizeof(buffer))) > 0) {
+			if (verbose) fprintf(stderr, ".");
+			if (write(dfd, buffer, n) != n) {
+				perror("write data");
+				if (local > 0) close(local);
+				net_close(dfd, 1);
+				goto err;
+			}
+		}
+		if (verbose) fprintf(stderr, "\n");
+		if (local > 0) close(local);
 	} else if (is_dir) {
 		s = ftp_cmd(fd, verbose ? "LIST" : "NLST", "");
 		if (s / 100 != 1) {
@@ -532,12 +620,14 @@ static int ftp_get(char *host, int port, char *user, char *pass,
 			goto err;
 		}
 		while ((n = read(dfd, buffer, sizeof(buffer))) > 0) {
+			if (verbose) fprintf(stderr, ".");
 			if (write(outfd, buffer, n) != n) {
 				perror("write");
 				net_close(dfd, 1);
 				goto err;
 			}
 		}
+		if (verbose) fprintf(stderr, "\n");
 	} else {
 		char *fname = path;
 		char *last = strrchr(path, '/');
@@ -549,12 +639,14 @@ static int ftp_get(char *host, int port, char *user, char *pass,
 			goto err;
 		}
 		while ((n = read(dfd, buffer, sizeof(buffer))) > 0) {
+			if (verbose) fprintf(stderr, ".");
 			if (write(outfd, buffer, n) != n) {
 				perror("write");
 				net_close(dfd, 1);
 				goto err;
 			}
 		}
+		if (verbose) fprintf(stderr, "\n");
 	}
 	net_close(dfd, 0);
 	s = ftp_reply(fd);
@@ -569,28 +661,32 @@ err:
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: curl [-vojfT] [-u user:pass] [-d data] <url>\n");
+	fprintf(stderr, "Usage: curl [-vojfiT] [-u user:pass] [-d data] <url>\n");
 	fprintf(stderr, "  -o file    output to file\n");
-	fprintf(stderr, "  -v         verbose\n");
-	fprintf(stderr, "  -u u:p     user:password\n");
+	fprintf(stderr, "  -v         verbose (FTP: show progress dots)\n");
+	fprintf(stderr, "  -u u:p     user:password for HTTP Basic auth or FTP\n");
 	fprintf(stderr, "  -d data    HTTP POST with form-urlencoded body\n");
 	fprintf(stderr, "  --json     HTTP POST with application/json (use with -d)\n");
 	fprintf(stderr, "  -f key     extract top-level JSON key from response\n");
-	fprintf(stderr, "  -T file    upload file via FTP\n");
+	fprintf(stderr, "  -i         include HTTP response headers in output\n");
+	fprintf(stderr, "  -T file    upload file via FTP (use - for stdin)\n");
+	fprintf(stderr, "FTP URL: ;type=a for ASCII, ;type=i for binary (default)\n");
 	fprintf(stderr, "Schemes: http://, ftp://, tcp://\n");
 }
 
 int main(int argc, char **argv)
 {
 	char *url, host[64], user[64], pass[64], path[256];
-	int port, outfd, verbose;
+	int port, outfd, verbose, include_headers;
 	char *outfile, *ps, *p, *at, *postdata, *jkey, *upload;
 	int use_json;
+	char ftp_type = 'i';
 
 	user[0] = pass[0] = '\0';
 	outfile = NULL;
 	outfd = 1;
 	verbose = 0;
+	include_headers = 0;
 	postdata = NULL;
 	jkey = NULL;
 	upload = NULL;
@@ -634,6 +730,9 @@ int main(int argc, char **argv)
 			argv++; argc--;
 			if (argc == 0) { usage(); return 1; }
 			jkey = argv[0];
+			break;
+		case 'i':
+			include_headers = 1;
 			break;
 		case 'T':
 			argv++; argc--;
@@ -693,6 +792,17 @@ int main(int argc, char **argv)
 	else
 		strcpy(path, "/");
 
+	unescape(path);
+
+	{
+		char *sp = strchr(path, ';');
+		if (sp) {
+			*sp++ = '\0';
+			if (strncasecmp(sp, "type=", 5) == 0)
+				ftp_type = tolower(sp[5]);
+		}
+	}
+
 	if (verbose) {
 		char *scheme = "http";
 		int defport = 80;
@@ -713,9 +823,10 @@ int main(int argc, char **argv)
 	}
 
 	if (strncmp(url, "http://", 7) == 0)
-		return http_get(host, port, path, outfd, postdata, use_json, jkey);
+		return http_get(host, port, path, outfd, postdata, use_json, jkey,
+			user, pass, include_headers);
 	if (strncmp(url, "tcp://", 6) == 0)
 		return tcp_get(host, port, path, outfd);
 
-	return ftp_get(host, port, user, pass, path, outfd, upload, verbose);
+	return ftp_get(host, port, user, pass, path, outfd, upload, verbose, ftp_type);
 }
