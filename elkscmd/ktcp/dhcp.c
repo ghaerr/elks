@@ -243,6 +243,11 @@ void dhcp_timer(void)
     }
 }
 
+/*
+ * UDP callback on port 68 (DHCP_CLIENT_PORT).
+ * Handles OFFER, ACK, and NAK replies from the DHCP server.
+ * Registered in dhcp_init() via udp_register().
+ */
 void dhcp_input(struct iphdr_s *iph, uint16_t src_port, unsigned char *data, int len)
 {
     struct dhcp_message_s *msg = (struct dhcp_message_s *)data;
@@ -250,17 +255,21 @@ void dhcp_input(struct iphdr_s *iph, uint16_t src_port, unsigned char *data, int
     int optlen;
     int msg_type;
 
+    /* Minimum DHCP message = fixed header + magic cookie + msg-type option (3 bytes) */
+
     if (len < (int)sizeof(struct dhcp_message_s) + 4)
 	return;
-    if (msg->op != 2)
+    if (msg->op != 2)			/* 1=request, 2=reply */
 	return;
-    if (ntohl(msg->xid) != dhcp_xid)
+    if (ntohl(msg->xid) != dhcp_xid)	/* must match our transaction ID */
 	return;
+
     opts = (unsigned char *)(msg + 1);
     optlen = len - (int)(opts - data);
+
     if (optlen < 4)
 	return;
-    if (*(__u32 *)opts != htonl(DHCP_MAGIC_COOKIE))
+    if (*(__u32 *)opts != htonl(DHCP_MAGIC_COOKIE))	/* DHCP option marker */
 	return;
     opts += 4;
     optlen -= 4;
@@ -271,6 +280,7 @@ void dhcp_input(struct iphdr_s *iph, uint16_t src_port, unsigned char *data, int
 
     switch (dhcp_state) {
     case DHCP_STATE_DISCOVER:
+	/* Expecting OFFER — save offered IP and send REQUEST */
 	if (msg_type == DHCP_OFFER) {
 	    dhcp_yiaddr = msg->yiaddr;
 	    dhcp_parse_options_full(opts, optlen);
@@ -284,7 +294,9 @@ void dhcp_input(struct iphdr_s *iph, uint16_t src_port, unsigned char *data, int
 	    printf("dhcp: sending REQUEST\n");
 	}
 	break;
+
     case DHCP_STATE_REQUESTING:
+	/* Expecting ACK — apply lease (IP, netmask, gateway) */
 	if (msg_type == DHCP_ACK) {
 	    dhcp_parse_options_full(opts, optlen);
 	    if (dhcp_server_ip == 0)
@@ -300,8 +312,9 @@ void dhcp_input(struct iphdr_s *iph, uint16_t src_port, unsigned char *data, int
 	    if (dhcp_gateway_val)
 		gateway_ip = dhcp_gateway_val;
 	    dhcp_state = DHCP_STATE_BOUND;
-	    dhcp_timer_active = 0;
+	    dhcp_timer_active = 0;		/* stop retry timer */
 	} else if (msg_type == DHCP_NAK) {
+	    /* NAK — start over with a new transaction */
 	    printf("dhcp: received NAK, restarting\n");
 	    dhcp_state = DHCP_STATE_INIT;
 	    dhcp_retry_count = 0;
