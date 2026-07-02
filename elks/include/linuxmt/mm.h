@@ -27,6 +27,7 @@ typedef struct segment segment_s;
 #define SEG_FLAG_FDAT	 0x04   /* app fmemalloc far data */
 #define SEG_FLAG_EXTBUF	 0x05   /* ext/main memory buffers */
 #define SEG_FLAG_RAMDSK	 0x06   /* ram disk buffers */
+#define SEG_FLAG_VIDBUF  0x07   /* console video buffers */
 
 #ifdef __KERNEL__
 

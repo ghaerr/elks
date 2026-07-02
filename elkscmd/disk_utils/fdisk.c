@@ -333,8 +333,11 @@ void write_out()
         sync();
         if (i != 512) {
             printf("Error writing partition table to %s (%d)\n", errno);
-        } else
+        } else {
             printf("Partition table written to %s\n",dev);
+            /* force re-read of partition table by kernel driver */
+            close(open(dev, O_RDONLY));
+        }
     }
 }
 
@@ -484,7 +487,6 @@ int main(int argc, char **argv)
 
         while (!feof(stdin)) {
             printf("Command (? for help): ");
-            fflush(stdout);
             *buf = 0;
             if (fgets(buf,CMDLEN-1,stdin)) {
                 printf("\n");

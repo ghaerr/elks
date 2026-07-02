@@ -73,7 +73,7 @@ file_utils/chmod                :be-fileutil    :360k
 file_utils/chown                :be-fileutil            :1200k
 file_utils/cmp                  :be-fileutil            :1200k
 file_utils/cp                   :be-fileutil    :360k
-file_utils/dd                   :be-fileutil            :1200k
+file_utils/dd                   :be-fileutil    :360k
 file_utils/md5sum               :fileutil                               :1440c
 file_utils/mkdir                :fileutil       :360k
 file_utils/mknod                :fileutil       :360k
@@ -102,7 +102,7 @@ sys_utils/sercat                :sysutil                            :1440c
 sys_utils/console               :sysutil                :1200k
 #sys_utils/who                  :sysutil                :1200k
 sys_utils/beep                  :sysutil                :1200k
-sys_utils/decomp                :sysutil         :360c          :1440k
+sys_utils/decomp                :sysutil         :360c              :1440k
 sys_utils/sysctl                :sysutil                :1200k
 screen/screen                   :screen                 :1200k
 cron/cron                       :cron                   :1200k
@@ -134,15 +134,15 @@ misc_utils/kilo                 :miscutil               :1200k
 misc_utils/mined ::bin/edit     :miscutil       :360k
 misc_utils/sleep                :miscutil               :1200k
 misc_utils/tty                  :miscutil               :1200k
-misc_utils/uuencode             :miscutil                :1200c     :1440k
-misc_utils/uudecode             :miscutil                :1200c     :1440k
+misc_utils/uuencode             :miscutil                :1200c
+misc_utils/uudecode             :miscutil                :1200c
 misc_utils/ecalc                :miscutil                           :1440k
 #misc_utils/ed                  :be-miscutil        :720k
 elvis/elvis ::bin/vi            :elvis              :720k
 minix1/banner                   :minix1                 :1200k
 #minix1/decomp16                :minix1                         :1440k
 #minix1/fgrep                   :minix1                 :1200k
-minix1/grep                     :minix1         :360c
+minix1/grep                     :minix1         :360c :720k
 minix1/sum                      :minix1                  :1200c     :1440k
 minix1/uniq                     :minix1             :720k
 minix1/wc                       :minix1                 :1200k
@@ -183,7 +183,7 @@ tui/ttyinfo                     :tui                            :1440k
 tui/sl                          :tui                    :1200k
 tui/ttyclock                    :tui            :360c   :1200k
 tui/ttypong                     :tui                            :1440k
-tui/tetris                      :tui            :360c
+tui/tetris                      :tui            :360c   :1200k
 tui/invaders                    :tui                    :1232k  :1440k
 gui/paint                                    :gui               :1440k
 gui/images/cls.bmp  ::lib/paint/cls.bmp      :gui               :1440k
@@ -207,6 +207,7 @@ inet/netstat                    :net
 inet/nslookup                   :net
 inet/ping                       :net
 inet/ifconfig                   :net
+inet/tcpdump                    					     :2880k
 inet/traceroute                 :net
 inet/telnet                     :net
 inet/telnetd                    :net

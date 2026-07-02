@@ -226,7 +226,7 @@ int main(int argc,char **argv)
 		if (opt_skipfatbpb && sb.st_size != SECT_SIZE)
 			fatalmsg("%s: boot sector size not equal to %d bytes\n", infile, SECT_SIZE);
 		else if (sb.st_size > SECT_SIZE * 2)
-			fatalmsg("%s: Bad boot sector size: %d bytes\n", sb.st_size);
+			fatalmsg("%s: Bad boot sector size: %d bytes\n", infile, sb.st_size);
 
 		ifp = fopen(infile,"rb");
 		if (!ifp) die(infile);

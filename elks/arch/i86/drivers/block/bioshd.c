@@ -516,7 +516,7 @@ static int BFPROC do_readwrite(struct drive_infot *drivep, sector_t start, char 
         segment = (seg_t)seg;
         offset = (unsigned) buf;
     }
-    errs = MAX_ERRS;        /* BIOS disk reads should be retried at least five times */
+    errs = 0;               /* BIOS disk reads should be retried at least five times */
     do {
         debug_cache("%s%s%d CHS %d/%d/%d count %d\n",
             cmd==WRITE? "WR": "RD", usedmaseg? "X": "", drive, cylinder, head, sector,
@@ -529,10 +529,11 @@ static int BFPROC do_readwrite(struct drive_infot *drivep, sector_t start, char 
                                 drive, cylinder, head, sector, segment, offset, drivep);
         if (error) {
             printk("bioshd(%x): cmd %d retry #%d CHS %d/%d/%d count %d\n",
-                drive, cmd, MAX_ERRS - errs + 1, cylinder, head, sector, this_pass);
+                drive, cmd, errs + 1, cylinder, head, sector, this_pass);
             bios_disk_reset(drive);
+            if (error == -1) errs = MAX_ERRS;   /* no retries on cylinder > 1023 error */
         }
-    } while (error && --errs);      /* On error, retry up to MAX_ERRS times */
+    } while (error && ++errs < MAX_ERRS);       /* On error, retry up to MAX_ERRS times */
     last_drive = drivep;
 
     if (cmd == WRITE && drivep == cache_drive)

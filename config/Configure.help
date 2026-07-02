@@ -435,15 +435,11 @@ Number of valid text consoles
 CONFIG_CONSOLES_MAX
   ELKS (like Linux) can run with multiple virtual text consoles. Unlike
   Linux, there is a definite limit on the amount of memory available to
-  implement this feature, and there is thus a need to limit the number
-  of these consoles that are made available.
-
-  This option allows the number of consoles to be made available to be
-  configured, and valid responses are in the range from 3 to 9.
-
-  Because of a historical legacy, the default is 3 consoles, as the
-  serial ports were originally mapped to conflict with virtual text
-  consoles 4 to 7.
+  implement this feature. By default text consoles are backed by video
+  RAM. For CGA cards this means you get 4 for free. For EGA/VGA you 
+  get 8. On MDA cards only 1 console fits in video RAM. If the number
+  of consoles exceeds these limits then *all* consoles use main RAM
+  buffers, each one costing 4 KB.
 
 # Block devices
 # ~~~~~~~~~~~~~

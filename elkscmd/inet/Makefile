@@ -46,6 +46,9 @@ ping: ping.o
 ifconfig: ifconfig.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
+tcpdump: tcpdump.o
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
 traceroute: traceroute.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 

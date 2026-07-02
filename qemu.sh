@@ -75,10 +75,10 @@ KEYBOARD=
 # Uncomment the following line to emulate two serial devices, required for Nano-X:
 SERIAL="-chardev msmouse,id=c1 -device isa-serial,chardev=c1,id=s1 -chardev msmouse,id=c2 -device isa-serial,chardev=c2,id=s2"
 
-# Route ELKS /dev/ttyS0 to host terminal (for headless/serial console)
-CONSOLE="-nographic -serial stdio"
-# VGA display (for direct console)
-#CONSOLE=""
+# Route ELKS serial /dev/ttyS0 to host terminal
+CONSOLE="-serial stdio"
+# Hides qemu window also
+#CONSOLE="-serial stdio -nographic"
 
 # Host forwarding for networking
 # No forwarding: only outgoing from ELKS to host
@@ -93,7 +93,7 @@ FWD="\
 hostfwd=tcp:127.0.0.1:8080-10.0.2.15:80,\
 hostfwd=tcp:127.0.0.1:2323-10.0.2.15:23,\
 hostfwd=tcp::8020-:20,\
-hostfwd=tcp::8022-:21,\
+hostfwd=tcp::2121-:21,\
 hostfwd=tcp::8041-:49821,\
 hostfwd=tcp::8042-:49822,\
 hostfwd=tcp::8043-:49823,\

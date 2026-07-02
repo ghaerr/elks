@@ -117,7 +117,7 @@ copy_bin_files()
 	cp /bin/umount	$MNT/bin
 	cp /bin/uname	$MNT/bin
 	else
-	cp -fR /bin $MNT/bin
+	cp -fvR /bin $MNT/bin
 	fi
 }
 
