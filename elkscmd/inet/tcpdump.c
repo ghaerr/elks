@@ -168,7 +168,7 @@ static void print_packet(unsigned char *buf, int len, int dir)
 	    struct tcphdr *tcp = (struct tcphdr *)payload;
 	    unsigned char flg = tcp->flags;
 	    int comma = 0;
-	    printf(" TCP %d > %d", ntohs(tcp->sport), ntohs(tcp->dport));
+	    printf(" TCP %u > %u", ntohs(tcp->sport), ntohs(tcp->dport));
 	    printf(" [");
 	    if (flg & TCP_FLAG_SYN) { printf("SYN"); comma = 1; }
 	    if (flg & TCP_FLAG_ACK) { printf("%sACK", comma ? "," : ""); comma = 1; }
@@ -184,7 +184,7 @@ static void print_packet(unsigned char *buf, int len, int dir)
 	}
 	case IPPROTO_UDP: {
 	    struct udphdr *udp = (struct udphdr *)payload;
-	    printf(" UDP %d > %d", ntohs(udp->sport), ntohs(udp->dport));
+	    printf(" UDP %u > %u", ntohs(udp->sport), ntohs(udp->dport));
 	    break;
 	}
 	default:
@@ -221,6 +221,8 @@ int main(int argc, char **argv)
     int count = -1;
     int captured = 0;
     int ch;
+
+    unsigned char cmd_start[2] = { NS_START_CAPTURE, 0 };
 
     signal(SIGINT, handle_sigint);
 
@@ -259,10 +261,7 @@ int main(int argc, char **argv)
 	return 1;
     }
 
-    {
-	unsigned char cmd[2] = { NS_START_CAPTURE, 0 };
-	write(s, cmd, 2);
-    }
+    write(s, cmd_start, 2);
 
     while (!stopflag && (count < 0 || captured < count)) {
 	struct capture_hdr hdr;
@@ -271,12 +270,13 @@ int main(int argc, char **argv)
 	if (read_full(s, &hdr, sizeof(hdr)) < 0)
 	    break;
 
+
 	pktlen = ntohs(hdr.pktlen);
 	if (pktlen > MAX_PKT)
 	    pktlen = MAX_PKT;
 
 	if (read_full(s, buf, pktlen) < 0)
-	    break;
+           break;
 
 	print_packet(buf, pktlen, hdr.direction);
 	captured++;

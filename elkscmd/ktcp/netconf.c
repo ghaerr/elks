@@ -127,6 +127,8 @@ void netconf_send(struct tcpcb_s *cb)
 	tcpcb_buf_write(cb, (unsigned char *)&config, sizeof(config));
 	break;
     case NS_SET_IP:
+	tcpcb_remove_all();
+	arp_flush_cache();
 	local_ip = set_ip_value;
 	tcpcb_buf_write(cb, (unsigned char *)"", 1);
 	break;
