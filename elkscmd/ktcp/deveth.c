@@ -83,10 +83,17 @@ void eth_process(void)
 
   /* dispatch to IP or ARP*/
   switch (eth_head->eth_type) {
-  case ETH_TYPE_IPV4:
+  case ETH_TYPE_IPV4: {
+	  struct iphdr_s *iph = (struct iphdr_s *)(sbuf + sizeof(eth_head_t));
+	  /* Accept only packets addressed to us or the limited broadcast
+	   * (255.255.255.255).  DHCP servers reply to the broadcast address
+	   * before the client has an assigned IP. */
+	  if (iph->daddr != local_ip && iph->daddr != (ipaddr_t)-1)
+	      break;
 	  /* strip link layer */
 	  ip_recvpacket (sbuf + sizeof(eth_head_t), len - sizeof(eth_head_t));
 	  break;
+  }
 
   case ETH_TYPE_ARP:
 	  arp_recvpacket (sbuf, len);

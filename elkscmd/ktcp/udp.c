@@ -79,4 +79,5 @@ void udp_process(struct iphdr_s *iph, unsigned char *packet)
 	}
     }
     netstats.udpnoportcnt++;
+    icmp_send_port_unreachable(iph);
 }

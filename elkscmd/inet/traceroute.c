@@ -178,19 +178,15 @@ int main(int argc, char **argv)
 
 	{
 		char *host = argv[optind];
-		int ancount = 0;
 		/* check for IP literal */
 		if (*host >= '0' && *host <= '9')
 			target_ip = in_aton(host);
 		else {
-			target_ip = in_resolv(host, NULL, &ancount);
+			target_ip = in_gethostbyname(host);
 			if (target_ip == 0) {
 				fprintf(stderr, "traceroute: unknown host %s\n", host);
 				return 1;
 			}
-			if (ancount > 1)
-				printf("warning: %s has multiple addresses, using %s\n",
-				       host, in_ntoa(target_ip));
 		}
 	}
 	{
