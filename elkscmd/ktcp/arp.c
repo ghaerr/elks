@@ -35,6 +35,11 @@ int arp_init (void)
 	return 0;
 }
 
+void arp_flush_cache(void)
+{
+	memset(arp_cache, 0, ARP_CACHE_MAX * sizeof(struct arp_cache));
+}
+
 struct arp_cache *arp_cache_get(ipaddr_t ip_addr, eth_addr_t eth_addr, int flags)
 {
 	register struct arp_cache *entry = arp_cache;
