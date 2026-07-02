@@ -1,4 +1,5 @@
-/* curl.c -- HTTP/FTP download tool for ELKS
+/*
+ * curl -- HTTP/FTP download tool for ELKS
  *
  * Usage:
  *   curl [-vojf] [-u user:pass] [-d data] <url>
@@ -11,6 +12,8 @@
  *   -d "data"      HTTP POST with form-urlencoded body
  *   --json         HTTP POST with application/json body (use with -d)
  *   -f "key"       extract top-level JSON key from HTTP response
+ *
+ * 29 Mar 2024 Greg Haerr <greg@censoft.com>
  */
 #include <stdio.h>
 #include <ctype.h>
