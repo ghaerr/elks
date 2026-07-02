@@ -64,6 +64,11 @@ common_entry:
         mov     %cx,%bx                 // bx = sp = &ports[n]
         mov     (%bx),%si               // si = q = &sp->tty->inq
         mov     0x4(%bx),%dx            // dx = sp->io + UART_RX
+        add     $5,%dx                  // dx = sp->io + UART_LSR
+        in      (%dx),%al
+        sub     $5,%dx                  // dx = sp->io + UART_RX
+        test    $1,%al                  // data ready? QEMU may interrupt w/no data:
+        jz      4f                      // reading empty RX would queue a NUL as input
 0:      in      (%dx),%al               // do {
         mov     %al,%dl                 // dl = c = INB(sp->io+UART_RX)
         mov     (%si),%ax               // ax = q->len
