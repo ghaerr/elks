@@ -505,7 +505,7 @@ static int ftp_get(char *host, int port, char *user, char *pass,
 			net_close(dfd, 1);
 			goto err;
 		}
-		s = ftp_cmd(fd, "STOR", path);
+		s = ftp_cmd(fd, "STOR", p);
 		if (s / 100 != 1) {
 			fprintf(stderr, "curl: STOR failed: %d\n", s);
 			close(local);
