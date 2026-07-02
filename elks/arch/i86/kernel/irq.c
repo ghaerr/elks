@@ -59,7 +59,7 @@ static void int_handler_add(int irq, int vect, int_proc proc)
     h = &trampoline[irq];
     h->call = 0x9A;         /* CALLF opcode */
     h->proc = (word_t)proc;
-    h->seg  = kernel_cs;    /* resident kernel code segment */
+    h->seg  = KERNEL_CS;    /* resident kernel code segment */
     h->irq  = irq;
     int_vector_set(vect, (word_t)h, kernel_ds);
 }

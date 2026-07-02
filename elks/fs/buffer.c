@@ -256,7 +256,7 @@ int INITPROC buffer_init(void)
     } while (bufs_to_alloc > 0);
 #else
     /* no EXT or XMS buffers, internal L1 only */
-    add_buffers(nr_map_bufs, L1buf, kernel_ds);
+    add_buffers(nr_map_bufs, L1buf, KERNEL_DS);
 #endif
     return 0;
 }
@@ -720,7 +720,7 @@ void map_buffer(struct buffer_head *bh)
     L1map[i] = bh;
     bh->b_data = L1buf + (i << BLOCK_SIZE_BITS);
     if (ebh->b_uptodate)
-        xms_fmemcpyw(bh->b_data, kernel_ds, 0, ebh->b_L2seg, BLOCK_SIZE/2);
+        xms_fmemcpyw(bh->b_data, KERNEL_DS, 0, ebh->b_L2seg, BLOCK_SIZE/2);
     map_count++;
     debug_map("MAP:   L%02d block %ld\n", i+1, ebh->b_blocknr);
   end_map_buffer:
@@ -768,7 +768,7 @@ void brelseL1_index(int i, int copyout)
     if (ebh->b_mapcount || ebh->b_locked)
         return;
     if (copyout && ebh->b_uptodate && bh->b_data) {
-        xms_fmemcpyw(0, ebh->b_L2seg, bh->b_data, kernel_ds, BLOCK_SIZE/2);
+        xms_fmemcpyw(0, ebh->b_L2seg, bh->b_data, KERNEL_DS, BLOCK_SIZE/2);
         unmap_count++;
     }
     bh->b_data = 0;
@@ -791,6 +791,6 @@ void brelseL1(struct buffer_head *bh, int copyout)
 
 ramdesc_t buffer_seg(struct buffer_head *bh)
 {
-    return (bh->b_data? kernel_ds: EBH(bh)->b_L2seg);
+    return (bh->b_data? KERNEL_DS: EBH(bh)->b_L2seg);
 }
 #endif /* CONFIG_FS_EXTERNAL_BUFFER | CONFIG_FS_XMS_BUFFER*/
