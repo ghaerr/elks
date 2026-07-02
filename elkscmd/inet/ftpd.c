@@ -642,6 +642,42 @@ void usage() {
 }
 
 
+/*
+ * Get the current interface IP address from ktcp.
+ *
+ * The kernel caches sock->localaddr at bind time from ktcp's response,
+ * and never refreshes it. So getsockname() on the listen socket always
+ * returns the IP that was current when ftpd started, even after ifconfig
+ * changes the interface address. This stale value makes loopback detection
+ * (myaddr == client_addr) fail after an ifconfig, because myaddr still
+ * holds the old IP while the client connects from the new one.
+ *
+ * Creating a fresh socket and binding to INADDR_ANY forces ktcp to respond
+ * with its current local_ip global — which IS updated by ifconfig via the
+ * NS_SET_IP netconf path. We then read it back via getsockname() and
+ * discard the throwaway socket.
+ */
+static unsigned long get_current_ip(void)
+{
+	int fd;
+	struct sockaddr_in test;
+	unsigned int len = sizeof(test);
+	unsigned long ip = 0;
+
+	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+		return ip;
+
+	test.sin_family = AF_INET;
+	test.sin_addr.s_addr = htonl(INADDR_ANY);
+	test.sin_port = htons(0);
+
+	if (bind(fd, (struct sockaddr *)&test, sizeof(test)) == 0)
+		getsockname(fd, (struct sockaddr *)&test, (unsigned int *)&len);
+	ip = test.sin_addr.s_addr;
+	close(fd);
+	return ip;
+}
+
 int main(int argc, char **argv) {
 	int listenfd, fd, ret;
 	pid_t pid;
@@ -751,9 +787,33 @@ int main(int argc, char **argv) {
 			close(listenfd);
 			signal(SIGCHLD, SIG_DFL);
 
+			/*
+			 * Refresh myaddr so the loopback check below sees the current
+			 * interface IP, not the stale one captured at startup.
+			 *
+			 * Without this, after ifconfig changes the address:
+			 *   - myaddr = 10.0.2.15 (old, captured at startup)
+			 *   - client = 127.0.0.1 or the new IP
+			 *   - Neither matches myaddr, so qemu stays ON
+			 *   - PASV then reports 127,0,0,1:8041 (QEMU-mapped port)
+			 *   - but the server really listens on port 49821
+			 *   - Client tries 127.0.0.1:8041 inside the guest -> refused
+			 */
+			myaddr.sin_addr.s_addr = get_current_ip();
+
 			strncpy(real_ip, in_ntoa(client.sin_addr.s_addr), 20); // Save for QEMU hack
-			/* Turn off qemu mode if we're talking to ourselves (loopback) */
-			if (qemu && (myaddr.sin_addr.s_addr == client.sin_addr.s_addr)) {
+			/*
+			 * Disable QEMU mode for loopback connections.
+			 *
+			 * Two checks:
+			 *   1) client IP == myaddr (current local IP) — catches
+			 *      "ftp <local-ip>" after ifconfig
+			 *   2) client IP == 127.0.0.1 — catches "ftp localhost",
+			 *      which in_gethostbyname() always resolves to
+			 *      INADDR_LOOPBACK (hardcoded fast-path in libc)
+			 */
+			if (qemu && (myaddr.sin_addr.s_addr == client.sin_addr.s_addr ||
+			    client.sin_addr.s_addr == htonl(INADDR_LOOPBACK))) {
 				if (debug) printf("Loopback detected, disabling qemu mode.\n");
 				qemu = 0; 
 			}

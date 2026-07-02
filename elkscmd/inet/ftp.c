@@ -1064,7 +1064,17 @@ int connect_cmd(char *ip, unsigned int server_port) {
 		if ((servaddr.sin_addr.s_addr == loopback) || (servaddr.sin_addr.s_addr == madr)) {
 			printf("loopback detected, disabling QEMU mode.\n");
 			qemu = 0;
-			servaddr.sin_addr.s_addr = madr;
+			/*
+			 * Note: we intentionally do NOT remap servaddr to madr here.
+			 * Previously this block also did:
+			 *   servaddr.sin_addr.s_addr = madr;
+			 * which mirrored ktcp's old tcpdev_connect() behaviour of
+			 * rewriting 127.0.0.1 to local_ip.  That was removed when
+			 * ip_route() was taught to loop back ALL 127.x.x.x packets
+			 * internally (commit cf1a0a45).  Keeping 127.0.0.1 as the
+			 * connect target is now correct — ktcp handles the loopback
+			 * regardless of destination address.
+			 */
 		}
 	}
 #endif
