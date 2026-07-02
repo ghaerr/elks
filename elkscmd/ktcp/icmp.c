@@ -53,6 +53,7 @@ void icmp_send_echo(ipaddr_t target_ip, unsigned short id, unsigned short seq,
     netstats.icmpsndcnt++;
 }
 
+#if 0 //not currently used
 /*
  * Send ICMP Time Exceeded (code 0 = TTL expired) for the offending packet.
  * ICMP payload = original IP header + first 8 bytes of original data.
@@ -83,6 +84,7 @@ void icmp_send_time_exceeded(struct iphdr_s *orig_iph)
         &apair, NULL);
     netstats.icmpsndcnt++;
 }
+#endif //if 0
 
 /*
  * Send ICMP Destination Unreachable (code 3 = port unreachable) for the
