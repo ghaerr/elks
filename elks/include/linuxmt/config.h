@@ -208,7 +208,7 @@
 #ifdef CONFIG_ROMCODE
 #define DMASEG          0x80        /* start of floppy sector buffer */
 #define KERNEL_DATA     DMASEGEND   /* kernel data segment */
-#define SETUP_DATA      CONFIG_ROM_SETUP_DATA
+#define SEG_SETUP_DATA  CONFIG_ROM_SETUP_DATA
 
 #else /* !CONFIG_ROMCODE */
 
