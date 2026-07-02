@@ -56,10 +56,10 @@ then reads the response.  Port is required.
 .B curl \-o page.html http://example.com/index.html
     # Download to a file
 .TP 20
-.B curl \-d "name=test" http://server/post
+.B curl \-d "name=test" http://httpbin.org/post
     # HTTP POST with form data
 .TP 20
-.B curl \-\-json \-d '{"key":"value"}' http://server/api
+.B curl \-\-json \-d '{"key":"value"}' http://httpbin.org/post
     # HTTP POST with JSON body
 .TP 20
 .B curl \-f "origin" http://httpbin.org/ip
@@ -71,10 +71,10 @@ then reads the response.  Port is required.
 .B curl ftp://ftp.gnu.org/
     # List an FTP directory
 .TP 20
-.B curl \-v ftp://mirror.example.org/
+.B curl \-v ftp://ftp.gnu.org/
     # Verbose FTP directory listing
 .TP 20
-.B curl \-u user:pass ftp://server/remote.txt
+.B curl \-u demo:demo ftp://demo.wftpserver.com
     # FTP download with authentication
 .TP 20
 .B curl \-T local.txt ftp://server/remote.txt

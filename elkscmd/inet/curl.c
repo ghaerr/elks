@@ -236,9 +236,9 @@ static int http_get(char *host, int port, char *path, int outfd,
 							{ p++; remaining--; off++; skip = 0; }
 					}
 				}
-				body_len += remaining;
-				if (remaining > 0 && body_len > off)
-					memmove(buffer, buffer + off, body_len);
+			body_len += remaining;
+			if (remaining > 0)
+			    memmove(buffer, buffer + off, body_len);
 			} else {
 				body_len += n;
 				if (body_len >= (int)sizeof(buffer))
