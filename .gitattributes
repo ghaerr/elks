@@ -1,0 +1,3 @@
+# Kernel config files are parsed by shell/awk build tooling that anchors on
+# LF; keep them LF in the working tree even when core.autocrlf is set (Windows).
+*.config text eol=lf

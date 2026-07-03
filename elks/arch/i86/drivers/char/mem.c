@@ -68,11 +68,33 @@ static size_t zero_read(struct inode *inode, struct file *filp, char *data, size
 /*
  * /dev/kmem code
  */
+#ifdef CONFIG_286_PMODE
+/* Userland seeks to LINEARADDRESS(off, seg) = (seg << 4) + off, where seg came
+ * from MEM_GETDS -- in PM that is the KERNEL_DS selector, so the packing is not
+ * a physical address and (pos >> 4) does not reconstruct a loadable segment.
+ * Undo the known composition instead: strip the (KERNEL_DS << 4) bias and access
+ * the kernel data segment via its selector. Reads composed with other segment
+ * values (e.g. a process's SS from its task struct) are not supported in PM. */
+#define KMEM_SEG(pos)   KERNEL_DS
+#define KMEM_OFF(pos)   ((segext_t)((pos) - ((unsigned long)KERNEL_DS << 4)))
+/* only positions inside that window decode to real kernel data; anything else
+ * (e.g. ps packing another process's SS) would silently read the wrong bytes */
+#define KMEM_VALID(pos, len) \
+    ((pos) >= ((unsigned long)KERNEL_DS << 4) && \
+     (pos) - ((unsigned long)KERNEL_DS << 4) + (len) <= 0x10000UL)
+#else
+#define KMEM_SEG(pos)   ((seg_t)((unsigned long)(pos) >> 4))
+#define KMEM_OFF(pos)   ((segext_t)((pos) & 0x0F))
+#define KMEM_VALID(pos, len)    1
+#endif
+
 static size_t kmem_read(struct inode *inode, struct file *filp, char *data, size_t len)
 {
-    seg_t sseg = (unsigned long)filp->f_pos >> 4;
-    segext_t soff = filp->f_pos & 0x0F;
+    seg_t sseg = KMEM_SEG(filp->f_pos);
+    segext_t soff = KMEM_OFF(filp->f_pos);
 
+    if (!KMEM_VALID(filp->f_pos, (unsigned long)len))
+        return -EFAULT;
     fmemcpyb((byte_t *)data, current->t_regs.ds, (byte_t *)soff, sseg, (word_t) len);
     filp->f_pos += len;
     return len;
@@ -80,9 +102,11 @@ static size_t kmem_read(struct inode *inode, struct file *filp, char *data, size
 
 static size_t kmem_write(struct inode *inode, struct file *filp, char *data, size_t len)
 {
-    seg_t dseg = (unsigned long)filp->f_pos >> 4;
-    segext_t doff = filp->f_pos & 0x0F;
+    seg_t dseg = KMEM_SEG(filp->f_pos);
+    segext_t doff = KMEM_OFF(filp->f_pos);
 
+    if (!KMEM_VALID(filp->f_pos, (unsigned long)len))
+        return -EFAULT;
     /* FIXME: very dangerous! */
     fmemcpyb((byte_t *)doff, dseg, (byte_t *)data, current->t_regs.ds, (word_t) len);
     filp->f_pos += len;

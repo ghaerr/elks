@@ -46,6 +46,7 @@
 #include <linuxmt/debug.h>
 #include <linuxmt/memory.h>
 #include <arch/segment.h>
+#include <arch/seg286.h>
 #pragma GCC diagnostic ignored "-Wunused-label"
 
 /* for relocation debugging change to printk */
@@ -385,6 +386,10 @@ static int FARPROC execve_aout(struct inode *inode, struct file *filp,
             paras, bytes);
         seg_code = seg_alloc(paras, SEG_FLAG_CSEG);
         if (!seg_code) goto error_exec3;
+#ifdef CONFIG_286_PMODE
+        /* text seg is a code selector (not writable in PM); make it writable to load */
+        desc_chaccess(seg_code->base, DESC_KDATA);
+#endif
         currentp->t_regs.ds = seg_code->base;
         retval = filp->f_op->read(inode, filp, 0, bytes);
         if (retval != bytes) {
@@ -497,6 +502,10 @@ static int FARPROC execve_aout(struct inode *inode, struct file *filp,
     currentp->t_begstack = (currentp->t_endseg - slen) & ~1; /* force even SP and argv */
     fmemcpyb((char *)currentp->t_begstack, seg_data->base, sptr, ds, slen);
 
+#ifdef CONFIG_286_PMODE
+    /* text fully loaded; restore executable access so seg_code can be used as CS */
+    desc_chaccess(seg_code->base, DESC_KCODE);
+#endif
     finalize_exec(inode, seg_code, seg_data, (word_t)mh.entry, 0);
     return 0;           /* success */
 

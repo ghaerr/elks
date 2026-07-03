@@ -48,6 +48,10 @@ else
 SRCS1 += bios13-ibm.S bios15-ibm.S unreal.S loadall.S
 endif
 
+ifeq ($(CONFIG_286_PMODE), y)
+SRCS1 += pm_enter.S             # 286 PM mode-switch + fault stubs (near text)
+endif
+
 OBJS1 = $(SRCS1:.S=.o)
 
 # Non-precompiled assembly
