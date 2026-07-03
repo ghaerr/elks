@@ -13,6 +13,16 @@
 
 #include <arch/segment.h>
 
+#ifdef CONFIG_286_PMODE
+/* PM must use additional 'para' member seperately from
+ * 'base' selector value to track main memory physical address.
+ * Real mode just uses single 'base' member as segment address.
+ */
+#define BASE(seg)   ((seg)->para)   /* use base paragraph address in protected mode */
+#else
+#define BASE(seg)   ((seg)->base)   /* use segment address in real mode */
+#endif
+
 // Minimal segment size to be useful
 // (= size of the smallest allocation)
 
@@ -41,7 +51,7 @@ static segment_s * seg_split (segment_s * s1, segext_t size0)
         if (!s2)
             return 0;   // heap_alloc gives heap full message
 
-        s2->base = s1->base + size0;
+        BASE(s2) = BASE(s1) + size0;
         s2->size = size2;
         s2->flags = SEG_FLAG_FREE;
         s2->ref_count = 0;
@@ -75,7 +85,7 @@ static segment_s * seg_free_get (segext_t size0, word_t type)
         segext_t size1 = seg->size;
 
         if (type & SEG_FLAG_ALIGN1K)
-            size00 = size0 + ((~seg->base + 1) & ((1024 >> 4) - 1));
+            size00 = size0 + ((~BASE(seg) + 1) & ((1024 >> 4) - 1));
         if ((seg->flags == SEG_FLAG_FREE) && (size1 >= size00) && (size1 < best_size)) {
             best_seg  = seg;
             best_size = size1;
@@ -123,7 +133,7 @@ segment_s * seg_alloc_fixed (seg_t base, segext_t size, word_t type)
     if (!seg)
         return seg;
 
-    seg->base = base;
+    BASE(seg) = base;
     seg->size = size;
     seg->flags = SEG_FLAG_USED | type;
     seg->ref_count = 1;
@@ -140,7 +150,7 @@ segment_s * seg_alloc (segext_t size, word_t type)
 
     seg = seg_free_get (size, type);
     if (seg && (type & SEG_FLAG_ALIGN1K))
-        seg->base += ((~seg->base + 1) & ((1024 >> 4) - 1));
+        BASE(seg) += ((~BASE(seg) + 1) & ((1024 >> 4) - 1));
     return seg;
 }
 
@@ -171,7 +181,7 @@ void seg_free (segment_s * seg)
     list_s * p = seg->all.prev;
     if (&_seg_all != p) {
         segment_s * prev = structof (p, segment_s, all);
-        if ((prev->flags == SEG_FLAG_FREE) && (prev->base + prev->size == seg->base)) {
+        if ((prev->flags == SEG_FLAG_FREE) && (BASE(prev) + prev->size == BASE(seg))) {
             list_remove (&(prev->free));
             seg_merge (prev, seg);
             i = _seg_free.prev;
@@ -184,7 +194,7 @@ void seg_free (segment_s * seg)
     list_s * n = seg->all.next;
     if (n != &_seg_all) {
         segment_s * next = structof (n, segment_s, all);
-        if ((next->flags == SEG_FLAG_FREE) && (seg->base + seg->size == next->base)) {
+        if ((next->flags == SEG_FLAG_FREE) && (BASE(seg) + seg->size == BASE(next))) {
             list_remove (&(next->free));
             seg_merge (seg, next);
             i = _seg_free.prev;
@@ -241,7 +251,7 @@ void mm_get_usage (struct mem_usage *mu)
         segment_s * seg = structof (n, segment_s, all);
 
         /*if (used) printk ("seg %X: size %u used %u count %u\n",
-            seg->base, seg->size, seg->flags, seg->ref_count);*/
+            BASE(seg), seg->size, seg->flags, seg->ref_count);*/
 
         if (seg->flags == SEG_FLAG_FREE)
             free += seg->size;
@@ -350,7 +360,7 @@ int sys_fmemalloc(int paras, unsigned short *pseg)
     }
     debug_brk("(%P)FMEMALLOC %ld\n", (unsigned long)paras << 4);
     seg->pid = current->pid;
-    put_user(seg->base, pseg);
+    put_user(BASE(seg), pseg);
     return 0;
 }
 
@@ -362,7 +372,7 @@ int sys_fmemfree(unsigned short segment)
     for (n = _seg_all.next; n != &_seg_all; ) {
         segment_s * seg = structof (n, segment_s, all);
 
-        if (seg->base == segment) {
+        if (BASE(seg) == segment) {
             if (seg->pid == current->pid) {
                 seg_free(seg);
                 return 0;
@@ -401,7 +411,7 @@ int seg_verify_area(pid_t pid, seg_t base, segoff_t offset)
     for (n = _seg_all.next; n != &_seg_all; ) {
         segment_s * seg = structof (n, segment_s, all);
 
-        if (seg->pid == pid && seg->base == base)
+        if (seg->pid == pid && BASE(seg) == base)
             return offset <= (seg->size << 4);
         n = seg->all.next;
     }
@@ -412,7 +422,7 @@ void INITPROC seg_add(seg_t start, seg_t end)
 {
     segment_s * seg = (segment_s *) heap_alloc (sizeof (segment_s), HEAP_TAG_SEG);
     if(seg) {
-        seg->base = start;
+        BASE(seg) = start;
         seg->size = end - start;
         seg->flags = SEG_FLAG_FREE;
         seg->ref_count = 0;

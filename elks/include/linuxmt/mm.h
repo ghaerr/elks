@@ -9,13 +9,13 @@
 struct segment {
 	list_s    all;
 	list_s    free;
-	seg_t     base;             /* segment or selector value of main memory */
+	seg_t     base;             /* segment or selector used to access memory */
 	segext_t  size;             /* size in bytes */
 	byte_t    flags;
 	byte_t    ref_count;
 	word_t    pid;
 #ifdef CONFIG_286_PMODE
-	seg_t     phys;             /* physical segment value of memory (=base in real mode) */
+	seg_t     para;             /* paragraph address of memory (=base in real mode) */
 #endif
 };
 
