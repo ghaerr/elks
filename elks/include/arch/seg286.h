@@ -119,6 +119,9 @@ void   desc_free(unsigned int sel);
 /* recover the physical base behind a selector (for DMA, exec relocation, etc.) */
 addr_t desc_base(unsigned int sel);
 
+/* max valid byte offset in a selector's segment (its descriptor limit) */
+word_t desc_limit(unsigned int sel);
+
 /* IDT: zero the table + point every vector at the fault-catch stub (called from
  * gdt_init before entering PM); install one gate (used by the IRQ/syscall path). */
 void idt_init(void);

@@ -98,6 +98,11 @@ addr_t desc_base(unsigned int sel)
     return ((addr_t)d->base_hi << 16) | d->base_lo;
 }
 
+word_t desc_limit(unsigned int sel)         /* max valid byte offset in the segment */
+{
+    return gdt[SEL_INDEX(sel)].limit;
+}
+
 const void *gdt_table(void) { return gdt; }             /* for lgdt in boot asm */
 unsigned    gdt_limit(void) { return sizeof(gdt) - 1; }
 

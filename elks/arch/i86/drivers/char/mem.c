@@ -28,6 +28,9 @@
 
 #include <arch/io.h>
 #include <arch/segment.h>
+#ifdef CONFIG_286_PMODE
+#include <arch/seg286.h>
+#endif
 
 #define DEV_MEM_MINOR           1       /* unused */
 #define DEV_KMEM_MINOR          2
@@ -67,35 +70,37 @@ static size_t zero_read(struct inode *inode, struct file *filp, char *data, size
 
 /*
  * /dev/kmem code
+ *
+ * f_pos carries a seg:off far pointer -- segment in the high word, offset in the
+ * low word -- rather than a linear (seg<<4)+off address, so the segment reaches
+ * the kernel intact.  fmemcpyb reads it as a GDT selector in 286 protected mode
+ * and as a paragraph in real mode, so both kernel data (KERNEL_DS:off) and
+ * another process's memory (SS:off, e.g. ps reading argv) are reachable through
+ * one path in both models.  Userland (ps/meminfo) packs the matching layout.
  */
-#ifdef CONFIG_286_PMODE
-/* Userland seeks to LINEARADDRESS(off, seg) = (seg << 4) + off, where seg came
- * from MEM_GETDS -- in PM that is the KERNEL_DS selector, so the packing is not
- * a physical address and (pos >> 4) does not reconstruct a loadable segment.
- * Undo the known composition instead: strip the (KERNEL_DS << 4) bias and access
- * the kernel data segment via its selector. Reads composed with other segment
- * values (e.g. a process's SS from its task struct) are not supported in PM. */
-#define KMEM_SEG(pos)   KERNEL_DS
-#define KMEM_OFF(pos)   ((segext_t)((pos) - ((unsigned long)KERNEL_DS << 4)))
-/* only positions inside that window decode to real kernel data; anything else
- * (e.g. ps packing another process's SS) would silently read the wrong bytes */
-#define KMEM_VALID(pos, len) \
-    ((pos) >= ((unsigned long)KERNEL_DS << 4) && \
-     (pos) - ((unsigned long)KERNEL_DS << 4) + (len) <= 0x10000UL)
-#else
-#define KMEM_SEG(pos)   ((seg_t)((unsigned long)(pos) >> 4))
-#define KMEM_OFF(pos)   ((segext_t)((pos) & 0x0F))
-#define KMEM_VALID(pos, len)    1
-#endif
+#define KMEM_SEG(pos)   ((seg_t)((unsigned long)(pos) >> 16))
+#define KMEM_OFF(pos)   ((segext_t)((unsigned long)(pos) & 0xFFFF))
 
 static size_t kmem_read(struct inode *inode, struct file *filp, char *data, size_t len)
 {
     seg_t sseg = KMEM_SEG(filp->f_pos);
     segext_t soff = KMEM_OFF(filp->f_pos);
+    size_t nread = len;
 
-    if (!KMEM_VALID(filp->f_pos, (unsigned long)len))
-        return -EFAULT;
-    fmemcpyb((byte_t *)data, current->t_regs.ds, (byte_t *)soff, sseg, (word_t) len);
+#ifdef CONFIG_286_PMODE
+    /* PM segments have a hard descriptor limit; a fixed-size reader (e.g. ps
+     * reading an argv string near the top of a process's stack) can overshoot
+     * it and #GP.  Read only up to the limit and zero-fill the rest, so a caller
+     * that needs an exact-size read still gets a NUL-terminated buffer. */
+    word_t lim = desc_limit(sseg);              /* max valid byte offset */
+    if (soff > lim || (word_t)(len - 1) > (word_t)(lim - soff)) {
+        word_t avail = (soff > lim) ? 0 : (word_t)(lim - soff + 1);
+        fmemsetb((char *)data + avail, current->t_regs.ds, 0, (word_t)(len - avail));
+        nread = avail;
+    }
+#endif
+    if (nread)
+        fmemcpyb((byte_t *)data, current->t_regs.ds, (byte_t *)soff, sseg, (word_t)nread);
     filp->f_pos += len;
     return len;
 }
@@ -105,8 +110,6 @@ static size_t kmem_write(struct inode *inode, struct file *filp, char *data, siz
     seg_t dseg = KMEM_SEG(filp->f_pos);
     segext_t doff = KMEM_OFF(filp->f_pos);
 
-    if (!KMEM_VALID(filp->f_pos, (unsigned long)len))
-        return -EFAULT;
     /* FIXME: very dangerous! */
     fmemcpyb((byte_t *)doff, dseg, (byte_t *)data, current->t_regs.ds, (word_t) len);
     filp->f_pos += len;
