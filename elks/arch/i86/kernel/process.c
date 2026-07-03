@@ -55,7 +55,7 @@ void INITPROC kfork_proc(void (*addr)())
     t = find_empty_process();
 
     /* t_regs values are nonexistent for idle task or handlers interrupting idle task */
-    t->t_regs.ds = t->t_regs.es = t->t_regs.ss = kernel_ds;
+    t->t_regs.ds = t->t_regs.es = t->t_regs.ss = KERNEL_DS;
     arch_build_stack(t, addr);
 }
 
@@ -174,7 +174,7 @@ void arch_build_stack(struct task_struct *t, void (*addr)())
         addr = ret_from_syscall;
     *tsp = (__u16)addr;                 /* Start execution address */
 #ifdef __ia16__
-    *(tsp-2) = kernel_ds;               /* Initial value for ES register */
+    *(tsp-2) = KERNEL_DS;               /* Initial value for ES register */
     t->t_ksp = (__u16)(tsp - 4);        /* Initial value for SP register */
 #else
     t->t_ksp = (__u16)(tsp - 3);        /* Initial value for SP register */

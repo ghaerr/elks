@@ -450,7 +450,7 @@ ramdesc_t buffer_seg(struct buffer_head *bh);
 #define unmap_brelse(bh) brelse(bh)
 #define brelseL1_index(i,copyout)
 #define brelseL1(bh,copyout)
-#define buffer_seg(bh)   (kernel_ds)
+#define buffer_seg(bh)   (KERNEL_DS)
 #endif
 
 extern size_t block_read(struct inode *,struct file *,char *,size_t);

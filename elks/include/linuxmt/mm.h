@@ -3,15 +3,20 @@
 
 #include <linuxmt/types.h>
 #include <linuxmt/list.h>
+#include <linuxmt/config.h>
 
+/* main memory management */
 struct segment {
 	list_s    all;
 	list_s    free;
-	seg_t     base;
-	segext_t  size;
+	seg_t     base;             /* segment or selector used to access memory */
+	segext_t  size;             /* size in paragraphs */
 	byte_t    flags;
 	byte_t    ref_count;
 	word_t    pid;
+#ifdef CONFIG_286_PMODE
+	seg_t     para;             /* paragraph address of memory (=base in real mode) */
+#endif
 };
 
 typedef struct segment segment_s;

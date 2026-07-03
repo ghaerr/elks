@@ -102,10 +102,10 @@ static int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg
         retword = max_tasks;
         break;
     case MEM_GETCS:
-        retword = kernel_cs;
+        retword = KERNEL_CS;
         break;
     case MEM_GETDS:
-        retword = kernel_ds;
+        retword = KERNEL_DS;
         break;
     case MEM_GETFARTEXT:
         retword = (unsigned)((long)buffer_init >> 16);

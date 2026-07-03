@@ -85,7 +85,7 @@ int sys_execve(const char *filename, char *sptr, size_t slen)
 
     /* Read the header */
     ds = current->t_regs.ds;
-    current->t_regs.ds = kernel_ds;
+    current->t_regs.ds = KERNEL_DS;
     retval = filp->f_op->read(inode, filp, (char *)&magic, sizeof(magic));
     current->t_regs.ds = ds;
     if (retval != sizeof(magic)) goto error_exec2_5;
@@ -146,7 +146,7 @@ static int FARPROC relocate(seg_t place_base, unsigned long rsize, segment_s *se
 
     if ((int)rsize % sizeof(struct minix_reloc))
         return -EINVAL;
-    current->t_regs.ds = kernel_ds;
+    current->t_regs.ds = KERNEL_DS;
     debug_reloc("EXEC: applying %04lx bytes of relocations to segment %x\n",
            (unsigned long)rsize, place_base);
     while (rsize >= sizeof(struct minix_reloc)) {
@@ -207,7 +207,7 @@ static int FARPROC execve_aout(struct inode *inode, struct file *filp,
 #endif
 
     /* (Re)read the header */
-    current->t_regs.ds = kernel_ds;
+    current->t_regs.ds = KERNEL_DS;
     filp->f_pos = 0;
     retval = filp->f_op->read(inode, filp, (char *) &mh, sizeof(mh));
 
@@ -614,7 +614,7 @@ static int FARPROC execve_os2(struct inode *inode, struct file *filp,
     static struct ne_reloc reloc;
 
     /* read MZ header, then OS/2 header */
-    current->t_regs.ds = kernel_ds;
+    current->t_regs.ds = KERNEL_DS;
     filp->f_pos = 0;
     retval = filp->f_op->read(inode, filp, (char *)&doshdr, sizeof(doshdr));
     if (retval != sizeof(doshdr)) goto errout;
@@ -714,7 +714,7 @@ static int FARPROC execve_os2(struct inode *inode, struct file *filp,
         retval = filp->f_op->read(inode, filp, 0, segp->size);
         if (retval != segp->size) goto errout2;
 
-        current->t_regs.ds = kernel_ds;
+        current->t_regs.ds = KERNEL_DS;
         if (segp->flags & NESEG_RELOCINFO) {
             retval = filp->f_op->read(inode, filp, (char *)&reloc_num, sizeof(reloc_num));
             if (retval != sizeof(reloc_num)) goto errout2;

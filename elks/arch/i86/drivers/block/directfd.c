@@ -160,7 +160,7 @@ static bool recover;            /* recovering from hang, awakened by watchdog ti
 static bool seek;               /* set if current op needs a track change (seek) */
 
 /* BIOS floppy motor timeout counter - FIXME leave this while BIOS driver present */
-static unsigned char __far *fl_timeout = (void __far *)0x440L;
+static unsigned char __far *fl_timeout = (void __far *)_MK_FP(BIOSSEG, 0x40);
 
 /* NOTE: current_DOR tells which motor(s) have been commanded to run,
  * 'running' tells which ones are actually running. The difference is subtle,
@@ -181,9 +181,6 @@ static unsigned char running;   /* keep track of motors already running */
  * ultra cheap floppies ;-)
  */
 #define MIN_ERRORS      0
-
-#define LINADDR(seg, offs) ((unsigned long)((((unsigned long)(seg)) << 4) + (unsigned)(offs)))
-#define XMSADDR(seg, offs) ((unsigned long)((((unsigned long)(seg)) << 0) + (unsigned)(offs)))
 
 /*
  * globals used by 'result()'
@@ -368,12 +365,12 @@ static void motor_on_callback(int nr)
 }
 
 static struct timer_list motor_on_timer[2] = {
-    {NULL, 0, 0, motor_on_callback},
-    {NULL, 0, 1, motor_on_callback}
+    {NULL, 0, (void *)0, motor_on_callback},
+    {NULL, 0, (void *)1, motor_on_callback}
 };
 static struct timer_list motor_off_timer[2] = {
-    {NULL, 0, 0, motor_off_callback},
-    {NULL, 0, 1, motor_off_callback}
+    {NULL, 0, (void *)0, motor_off_callback},
+    {NULL, 0, (void *)1, motor_off_callback}
 };
 static struct timer_list fd_timeout = {NULL, 0, 0, floppy_shutdown};
 
@@ -476,7 +473,7 @@ static void DFPROC setup_DMA(void)
     if (use_xms)
         use_bounce = 0;                 /* XMS buffers also always 1K aligned */
     else {
-        physaddr = (req->rq_seg << 4) + (unsigned int)req->rq_buffer;
+        physaddr = LINADDR(req->rq_seg, req->rq_buffer);
         use_bounce = (physaddr + count) < physaddr;
     }
     if (!use_cache) {                   /* use_cache overrides use_bounce */
