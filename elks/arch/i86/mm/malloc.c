@@ -360,7 +360,7 @@ int sys_fmemalloc(int paras, unsigned short *pseg)
     }
     debug_brk("(%P)FMEMALLOC %ld\n", (unsigned long)paras << 4);
     seg->pid = current->pid;
-    put_user(BASE(seg), pseg);
+    put_user(seg->base, pseg);
     return 0;
 }
 
@@ -372,7 +372,7 @@ int sys_fmemfree(unsigned short segment)
     for (n = _seg_all.next; n != &_seg_all; ) {
         segment_s * seg = structof (n, segment_s, all);
 
-        if (BASE(seg) == segment) {
+        if (seg->base == segment) {
             if (seg->pid == current->pid) {
                 seg_free(seg);
                 return 0;
@@ -411,7 +411,7 @@ int seg_verify_area(pid_t pid, seg_t base, segoff_t offset)
     for (n = _seg_all.next; n != &_seg_all; ) {
         segment_s * seg = structof (n, segment_s, all);
 
-        if (seg->pid == pid && BASE(seg) == base)
+        if (seg->pid == pid && seg->base == base)
             return offset <= (seg->size << 4);
         n = seg->all.next;
     }

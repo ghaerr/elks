@@ -10,7 +10,7 @@ struct segment {
 	list_s    all;
 	list_s    free;
 	seg_t     base;             /* segment or selector used to access memory */
-	segext_t  size;             /* size in bytes */
+	segext_t  size;             /* size in paragraphs */
 	byte_t    flags;
 	byte_t    ref_count;
 	word_t    pid;
