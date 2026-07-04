@@ -13,6 +13,7 @@
 #include <linuxmt/types.h>
 #include <linuxmt/mm.h>
 #include <linuxmt/mem.h>
+#include <linuxmt/memory.h>
 #include <linuxmt/heap.h>
 #include <linuxmt/sched.h>
 #include <stdio.h>
@@ -20,10 +21,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-
-/* seg:off far-pointer layout: keeps the segment intact for the kernel (GDT
- * selector in 286 PM, paragraph in real mode).  Pairs with kmem_read/write. */
-#define LINEARADDRESS(off, seg)     ((off_t)(((off_t)(word_t)(seg) << 16) | (word_t)(off)))
 
 int aflag;      /* show application memory*/
 int fflag;      /* show free memory*/
@@ -43,27 +40,25 @@ struct task_struct task_table;
 
 int memread(word_t off, word_t seg, void *buf, int size)
 {
-    if (lseek(fd, LINEARADDRESS(off, seg), SEEK_SET) == -1)
-        return 0;
+    /* set /dev/kmem location using far pointer rather than linear address */
+    if (lseek(fd, _MK_LP(seg, off), SEEK_SET) == -1)
+        return -1;
 
-    if (read(fd, buf, size) != size)
-        return 0;
-
-    return 1;
+    return read(fd, buf, size);
 }
 
 word_t getword(word_t off, word_t seg)
 {
     word_t word;
 
-    if (!memread(off, seg, &word, sizeof(word)))
+    if (memread(off, seg, &word, sizeof(word)) != sizeof(word))
         return 0;
     return word;
 }
 
 void process_name(unsigned int off, unsigned int seg)
 {
-    word_t argc, argv;
+    int argc, argv, n;
     char buf[80];
 
     argc = getword(off, seg);
@@ -71,9 +66,10 @@ void process_name(unsigned int off, unsigned int seg)
     while (argc-- > 0) {
         off += 2;
         argv = getword(off, seg);
-        if (!memread(argv, seg, buf, sizeof(buf)))
+        if ((n = memread(argv, seg, buf, sizeof(buf)-1)) <= 0)
             return;
-        printf("%s ",buf);
+        buf[n-1] = '\0';
+        printf("%s ", buf);
         break;      /* display only executable name for now */
     }
 }
@@ -84,7 +80,7 @@ struct task_struct *find_process(unsigned int seg)
     int off = taskoff;
 
     for (i = 0; i < maxtasks; i++) {
-        if (!memread(off, ds, &task_table, sizeof(task_table))) {
+        if (memread(off, ds, &task_table, sizeof(task_table)) != sizeof(task_table)) {
             perror("taskinfo");
             exit(1);
         }
@@ -236,7 +232,7 @@ int main(int argc, char **argv)
         }
     }
 
-    if ((fd = open("/dev/kmem", O_RDONLY)) < 0) {
+    if ((fd = open("/dev/kmem", O_RDONLY|O_ALT)) < 0) {
         perror("meminfo");
         return 1;
     }
@@ -248,7 +244,7 @@ int main(int argc, char **argv)
           perror("meminfo");
           return 1;
     }
-    if (!memread(taskoff, ds, &task_table, sizeof(task_table))) {
+    if (memread(taskoff, ds, &task_table, sizeof(task_table)) != sizeof(task_table)) {
         perror("taskinfo");
     }
     if (mflag)
