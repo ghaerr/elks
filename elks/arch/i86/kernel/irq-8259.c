@@ -22,6 +22,20 @@
 
 void initialize_irq(void)
 {
+#ifdef CONFIG_286_PMODE
+    /* In protected mode the BIOS-programmed PIC (IRQ0-7 -> INT 0x08-0x0F) collides
+     * with the CPU exception vectors.  Reprogram the 8259s: IRQ0-15 -> INT 0x20-0x2F. */
+    outb(0x11, PIC1_CMD);       /* ICW1: cascade, edge-triggered, ICW4 to follow */
+    outb(0x11, PIC2_CMD);
+    outb(0x20, PIC1_DATA);      /* ICW2: master vector base = 0x20 */
+    outb(0x28, PIC2_DATA);      /* ICW2: slave  vector base = 0x28 */
+    outb(0x04, PIC1_DATA);      /* ICW3: slave is attached to master IRQ2 */
+    outb(0x02, PIC2_DATA);      /* ICW3: slave cascade identity = 2 */
+    outb(0x01, PIC1_DATA);      /* ICW4: 8086/88 mode */
+    outb(0x01, PIC2_DATA);
+    outb(0xFB, PIC1_DATA);      /* mask all master IRQs except IRQ2 (cascade) */
+    outb(0xFF, PIC2_DATA);      /* mask all slave IRQs; enable_irq() unmasks on request */
+#endif
 #if NOTNEEDED   /* not needed on IBM PC as BIOS initializes IRQ 2 */
     if (sys_caps & CAP_IRQ2MAP9) {      /* PC/AT or greater */
         save_flags(flags);
@@ -61,7 +75,10 @@ int remap_irq(int irq)
 
 int irq_vector (int irq)
 {
-#ifdef CONFIG_ARCH_PC98
+#ifdef CONFIG_286_PMODE
+        // PM: PIC remapped above the CPU exceptions -> IRQ 0-15 = INT 0x20-0x2F
+        return irq + 0x20;
+#elif defined(CONFIG_ARCH_PC98)
         // IRQ 0-7  are mapped to vectors INT 08h-0Fh
         // IRQ 8-15 are mapped to vectors INT 10h-17h
 

@@ -26,6 +26,7 @@
 #include <arch/irq.h>
 #include <arch/ports.h>
 #include <arch/segment.h>
+#include <arch/seg286.h>
 
 /*
  * Irq index numbers >= 16 are used for hardware exceptions or syscall.
@@ -59,9 +60,14 @@ static void int_handler_add(int irq, int vect, int_proc proc)
     h = &trampoline[irq];
     h->call = 0x9A;         /* CALLF opcode */
     h->proc = (word_t)proc;
-    h->seg  = kernel_cs;    /* resident kernel code segment */
+    h->seg  = KERNEL_CS;    /* resident kernel code segment */
     h->irq  = irq;
+#ifdef CONFIG_286_PMODE
+    /* IDT gate runs the trampoline via the data-as-code alias (trampoline[] is data) */
+    idt_gate_set(vect, (word_t)h, SEL_KDATA_EXEC, GATE_INT286);
+#else
     int_vector_set(vect, (word_t)h, kernel_ds);
+#endif
 }
 
 /* request an IRQ from 0 to 15 */
@@ -153,7 +159,9 @@ void INITPROC irq_init(void)
 #else /* normal IRQ 0 timer */
     initialize_irq();           /* IRQ and/or PIC initialization */
     disable_timer_tick();       /* not needed on IBM PC as IRQ 0 vector untouched */
-    save_timer_irq();           /* save original BIOS IRQ 0 vector */
+#ifndef CONFIG_286_PMODE
+    save_timer_irq();           /* save BIOS IRQ 0 vector (reads IVT via ES=0; PM uses IDT) */
+#endif
 
     /* Connect timer interrupt handler to hardware IRQ 0 */
     if (request_irq(TIMER_IRQ, timer_tick, INT_GENERIC))

@@ -96,6 +96,7 @@
 #include <arch/io.h>
 #include <arch/irq.h>
 #include <arch/segment.h>
+#include <arch/seg286.h>
 #include <arch/ports.h>
 
 #define MAJOR_NR        FLOPPY_MAJOR
@@ -160,7 +161,7 @@ static bool recover;            /* recovering from hang, awakened by watchdog ti
 static bool seek;               /* set if current op needs a track change (seek) */
 
 /* BIOS floppy motor timeout counter - FIXME leave this while BIOS driver present */
-static unsigned char __far *fl_timeout = (void __far *)0x440L;
+static unsigned char __far *fl_timeout = (void __far *)_MK_FP(BIOSSEG, 0x40);
 
 /* NOTE: current_DOR tells which motor(s) have been commanded to run,
  * 'running' tells which ones are actually running. The difference is subtle,
@@ -181,9 +182,6 @@ static unsigned char running;   /* keep track of motors already running */
  * ultra cheap floppies ;-)
  */
 #define MIN_ERRORS      0
-
-#define LINADDR(seg, offs) ((unsigned long)((((unsigned long)(seg)) << 4) + (unsigned)(offs)))
-#define XMSADDR(seg, offs) ((unsigned long)((((unsigned long)(seg)) << 0) + (unsigned)(offs)))
 
 /*
  * globals used by 'result()'
@@ -368,12 +366,12 @@ static void motor_on_callback(int nr)
 }
 
 static struct timer_list motor_on_timer[2] = {
-    {NULL, 0, 0, motor_on_callback},
-    {NULL, 0, 1, motor_on_callback}
+    {NULL, 0, (void *)0, motor_on_callback},
+    {NULL, 0, (void *)1, motor_on_callback}
 };
 static struct timer_list motor_off_timer[2] = {
-    {NULL, 0, 0, motor_off_callback},
-    {NULL, 0, 1, motor_off_callback}
+    {NULL, 0, (void *)0, motor_off_callback},
+    {NULL, 0, (void *)1, motor_off_callback}
 };
 static struct timer_list fd_timeout = {NULL, 0, 0, floppy_shutdown};
 
@@ -476,7 +474,7 @@ static void DFPROC setup_DMA(void)
     if (use_xms)
         use_bounce = 0;                 /* XMS buffers also always 1K aligned */
     else {
-        physaddr = (req->rq_seg << 4) + (unsigned int)req->rq_buffer;
+        physaddr = LINADDR(req->rq_seg, req->rq_buffer);
         use_bounce = (physaddr + count) < physaddr;
     }
     if (!use_cache) {                   /* use_cache overrides use_bounce */
@@ -1456,7 +1454,9 @@ static void DFPROC floppy_deregister(void)
     outb(0x0c, FD_DOR);         /* all motors off, enable IRQ and DMA */
     clr_irq();
     free_irq(FLOPPY_IRQ);
+#ifndef CONFIG_286_PMODE    /* PM: IRQ via IDT; don't touch the real-mode IVT at seg 0 */
     *(__u32 __far *)FLOPPY_VEC = old_floppy_vec;
+#endif
     enable_irq(FLOPPY_IRQ);
     set_irq();
 }
@@ -1507,7 +1507,9 @@ static int DFPROC floppy_register(void)
     current_DOR = 0x0c;
     outb(0x0c, FD_DOR);         /* all motors off, enable IRQ and DMA */
 
+#ifndef CONFIG_286_PMODE    /* PM: floppy IRQ via IDT; real-mode IVT (seg 0) unusable, stays 0 */
     old_floppy_vec = *((__u32 __far *)FLOPPY_VEC);
+#endif
     err = request_irq(FLOPPY_IRQ, floppy_interrupt, INT_GENERIC);
     if (err) {
         printk("df: IRQ %d busy\n", FLOPPY_IRQ);

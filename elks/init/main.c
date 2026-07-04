@@ -18,6 +18,7 @@
 #include <linuxmt/timer.h>
 #include <linuxmt/debug.h>
 #include <arch/segment.h>
+#include <arch/seg286.h>
 #include <arch/ports.h>
 #include <arch/irq.h>
 #include <arch/io.h>
@@ -263,6 +264,13 @@ static void INITPROC kernel_init(void)
 #ifdef CONFIG_FARTEXT_KERNEL
     /* add .farinit.init section to main memory free list */
     seg_t     init_seg = ((unsigned long)(void __far *)__start_fartext_init) >> 16;
+#ifdef CONFIG_286_PMODE
+    /* PM: a far pointer's segment is a SELECTOR, not a paragraph. Convert it to
+     * the physical base paragraph; otherwise seg_add() frees a bogus low region
+     * into the main pool that overlaps reserved low memory, and whatever program
+     * later loads there (e.g. /bin/init) corrupts the kernel. */
+    init_seg = (seg_t)(desc_base(init_seg) >> 4);
+#endif
     seg_t s = init_seg + (((word_t)(void *)__start_fartext_init + 15) >> 4);
     seg_t e = init_seg + (((word_t)(void *)  __end_fartext_init + 15) >> 4);
     debug("init: seg %04x to %04x size %04x (%d)\n", s, e, (e - s) << 4, (e - s) << 4);
@@ -528,7 +536,11 @@ static int INITPROC parse_options(void)
     char *next;
 
     /* copy /bootopts loaded by boot loader at 0050:0000*/
+#ifdef CONFIG_286_PMODE
+    fmemcpyb(opts.options, KERNEL_DS, 0, SEL_OPTSEG, sizeof(opts.options)); /* PM: KERNEL_DS dest, SEL_OPTSEG src */
+#else
     fmemcpyb(opts.options, kernel_ds, 0, DEF_OPTSEG, sizeof(opts.options));
+#endif
 
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
     /* check file starts with ##, one or two sectors, max 1023 bytes or 511 one sector */

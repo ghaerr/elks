@@ -268,7 +268,7 @@ static void vprintk(const char *fmt, va_list p)
                 kputs(root_dev_name(va_arg(p, unsigned int))+8); /* skip ROOTDEV= */
                 break;
             case 's':
-                n = kernel_ds;
+                n = KERNEL_DS;
             str:
                 str = va_arg(p, char *);
                 while ((zero = peekb((word_t)str++, n))) {

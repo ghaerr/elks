@@ -755,6 +755,24 @@ relocat:
 
 	mov -22(%bp),%ax   // kernel .data segment
 3:
+#ifdef CONFIG_286_PMODE
+	// PM: the branches above computed a real-mode paragraph; replace it with the
+	// matching GDT selector (KCODE/KFTEXT/KDATA) so the kernel's far refs resolve
+	// in protected mode.  %si still points at the relocation record (symndx at 4).
+	mov 4(%si),%ax            // r_symndx
+	cmp $-2,%ax               // S_TEXT
+	jne pmrel_1
+	mov $0x08,%ax             // -> SEL_KCODE
+	jmp pmrel_done
+pmrel_1:
+	cmp $-5,%ax               // S_FTEXT
+	jne pmrel_2
+	mov $0x18,%ax             // -> SEL_KFTEXT
+	jmp pmrel_done
+pmrel_2:
+	mov $0x10,%ax             // S_DATA -> SEL_KDATA
+pmrel_done:
+#endif
 	mov %ax,%es:(%di)
 
 	.if debug_loader
