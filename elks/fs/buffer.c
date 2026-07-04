@@ -8,6 +8,9 @@
 #include <linuxmt/mm.h>
 #include <linuxmt/heap.h>
 #include <linuxmt/errno.h>
+#ifdef CONFIG_286_PMODE
+#include <arch/seg286.h>        /* desc_alloc/desc_base: per-buffer descriptors for PM ext L2 */
+#endif
 #include <linuxmt/trace.h>
 #include <linuxmt/debug.h>
 
@@ -123,7 +126,9 @@ static void INITPROC add_buffers(int nbufs, char *buf, ramdesc_t seg)
 {
     struct buffer_head *bh;
     int n = 0;
+#ifndef CONFIG_286_PMODE
     size_t offset;
+#endif
 
     for (bh = bh_next; n < nbufs; n++, bh = ++bh_next) {
         ext_buffer_head *ebh = EBH(bh);
@@ -134,10 +139,19 @@ static void INITPROC add_buffers(int nbufs, char *buf, ramdesc_t seg)
         }
 
 #if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
+#ifdef CONFIG_286_PMODE
+        /* PM: 'seg' is a GDT selector and can't be paragraph-offset like a real-mode
+         * segment.  Give each L2 buffer its own descriptor based at the chunk's
+         * physical address + n*BLOCK_SIZE, so it is reachable at selector:0 (matching
+         * the "no offset to buffer" design).  ext only -- PM has no XMS. */
+        ebh->b_L2seg = desc_alloc(desc_base(seg) + ((addr_t)(n & 63) << BLOCK_SIZE_BITS),
+                                  BYTES_PARA(BLOCK_SIZE), DESC_KDATA);
+#else
         /* segment adjusted to require no offset to buffer */
         offset = xmsenabled?  ((n & 63) << BLOCK_SIZE_BITS) :
                               ((n & 63) << (BLOCK_SIZE_BITS - 4));
         ebh->b_L2seg = seg + offset;
+#endif
 #else
         bh->b_data = buf;
         buf += BLOCK_SIZE;
