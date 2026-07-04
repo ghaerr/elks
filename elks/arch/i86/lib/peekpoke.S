@@ -4,7 +4,7 @@
 // assume DS=SS, save ES, for GCC-IA16
 
 // for SETUP_DATA segment
-#include <linuxmt/config.h>
+#include <arch/segment.h>
 
 #define ARG0	2
 #define ARG1	4

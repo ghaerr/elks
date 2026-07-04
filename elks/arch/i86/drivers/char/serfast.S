@@ -55,7 +55,12 @@ common_entry:
         // Recover kernel data segment
         // Was pushed by the CALLF of the dynamic handler
         mov     %sp,%bx
+#ifdef CONFIG_286_PMODE
+        mov     $0x10, %ax              // SEL_KDATA (writable); CALLF-saved CS is read-only SEL_KDATA_EXEC
+        mov     %ax, %ds
+#else
         mov     %ss:12(%bx),%ds
+#endif
 
         // translated C routine above
         // NOTE: uses hard-coded offsets from struct serial_info, tty and ch_queue

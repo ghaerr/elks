@@ -21,7 +21,9 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
-#define LINEARADDRESS(off, seg)     ((off_t) (((off_t)seg << 4) + off))
+/* seg:off far-pointer layout: keeps the segment intact for the kernel (GDT
+ * selector in 286 PM, paragraph in real mode).  Pairs with kmem_read/write. */
+#define LINEARADDRESS(off, seg)     ((off_t)(((off_t)(word_t)(seg) << 16) | (word_t)(off)))
 
 int aflag;      /* show application memory*/
 int fflag;      /* show free memory*/
