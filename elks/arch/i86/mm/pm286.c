@@ -34,7 +34,7 @@
 #error 286 PM: XMS/unreal-mode paths are not ported - disable the CONFIG_FS_XMS* group
 #endif
 
-/* The Global Descriptor Table (4 KB, in the kernel data segment).
+/* The Global Descriptor Table (max 4 KB, in the kernel data segment).
  * GDT_KCODE/KDATA are the kernel's own segments; GDT_FIRST_DYN..end are
  * handed out by desc_alloc() for process/buffer segments.
  */
@@ -58,7 +58,8 @@ void desc_set(sel_t sel, addr_t base, segext_t paras, byte_t access)
 }
 
 /* change only the access byte (base/limit kept) -- exec flips its text seg
- * data(writable, to load) -> code(executable, to run) */
+ * data(writable, to load) -> code(executable, to run)
+ */
 void desc_chaccess(sel_t sel, byte_t access)
 {
     gdt[SEL_INDEX(sel)].access = access;
@@ -70,7 +71,7 @@ sel_t desc_alloc(addr_t base, segext_t paras, byte_t access)
     int i = next_dyn, scanned;
 
     for (scanned = 0; scanned < MAX_GDT_ENTRIES - GDT_FIRST_DYN; scanned++) {
-        if (!(gdt[i].access & DESC_PRESENT)) {          /* P=0 => free */
+        if (gdt[i].access == 0) {
             sel_t sel = MK_SEL(i, SEL_GDT, SEL_RPL0);
             desc_set(sel, base, paras, access);
             next_dyn = (i + 1 < MAX_GDT_ENTRIES) ? i + 1 : GDT_FIRST_DYN;
@@ -101,7 +102,7 @@ segext_t desc_limit(sel_t sel)         /* max valid byte offset in the segment *
 /* ---- Interrupt Descriptor Table (2 KB, in the kernel data segment) ---- */
 static struct idt_gate idt[256];
 
-void idt_gate_set(unsigned int vect, word_t offset, sel_t selector, byte_t access)
+void idt_gate_set(int vect, word_t offset, sel_t selector, byte_t access)
 {
     struct idt_gate *g = &idt[vect];
 
@@ -114,56 +115,70 @@ void idt_gate_set(unsigned int vect, word_t offset, sel_t selector, byte_t acces
 
 /* Point every vector at the fault-catch stub (in kernel code = SEL_KCODE) so an
  * exception between PM entry and irq_init() is reported, not a triple fault.
- * irq_init() later overwrites the live IRQ/syscall/INT0/INT2 vectors (phase 5b). */
-void idt_init(void)
+ * irq_init() later overwrites the live IRQ/syscall/INT0/INT2 vectors.
+ */
+static void idt_init(void)
 {
-    unsigned int v;
+    int v;
+
     for (v = 0; v < 32; v++)    /* per-vector stubs so the reporter knows the vector */
         idt_gate_set(v, (word_t)(pm_flt_base + v*8), SEL_KCODE, GATE_INT286);
     for (v = 32; v < 256; v++)
         idt_gate_set(v, (word_t)pm_flt_other, SEL_KCODE, GATE_INT286);
 }
 
-/* called once from crt0.S just before start_kernel: fill the kernel's own
- * descriptors, build the GDTR/IDTR, then switch to protected mode.  Does not
- * return to real mode. */
+/* Called once from start_kernel: fill the kernel's own descriptors, build
+ * the GDTR/IDTR, then switch to protected mode. No return to real mode.
+ */
 void gdt_init(void)
 {
-    static struct dtr gdtr, idtr;
     addr_t   code_base  = (addr_t)kernel_cs << 4;
     addr_t   data_base  = (addr_t)kernel_ds << 4;
-    segext_t text_par   = BYTES_PARA((unsigned)_endtext);
-    /* fartext is loaded immediately after text (non-HMA boot). */
-    addr_t   ftext_base = code_base + ((addr_t)text_par << 4);
+    segext_t text_para  = BYTES_PARA((unsigned)_endtext);
+    addr_t   ftext_base = code_base + ((addr_t)text_para << 4); /* fartext after text */
+    static struct dtr gdtr, idtr;
 
-    /* phase 4b: separate descriptors for near text, far text and data.
+    /* separate descriptors for near text, far text and data.
      * setup.S has patched the kernel's far-call/far-data segments to these
-     * selectors (SEL_KCODE/SEL_KFTEXT/SEL_KDATA) instead of paragraphs. */
-    desc_set(MK_SEL(GDT_NULL,   SEL_GDT, SEL_RPL0), 0,          0,                     0);
-    desc_set(MK_SEL(GDT_KCODE,  SEL_GDT, SEL_RPL0), code_base,  text_par,              DESC_KCODE);
-    desc_set(MK_SEL(GDT_KDATA,  SEL_GDT, SEL_RPL0), data_base,  0x1000,                DESC_KDATA);
-    desc_set(MK_SEL(GDT_KFTEXT, SEL_GDT, SEL_RPL0), ftext_base, BYTES_PARA((unsigned)_endftext), DESC_KCODE);
-    /* same base/limit as KDATA but executable+readable: IRQ trampolines are built
-     * in the kernel data segment, and an IDT gate needs an executable selector. */
+     * selectors (SEL_KCODE/SEL_KFTEXT/SEL_KDATA) instead of paragraphs.
+     */
+    desc_set(MK_SEL(GDT_NULL,   SEL_GDT, SEL_RPL0), 0,          0,         0);
+    desc_set(MK_SEL(GDT_KCODE,  SEL_GDT, SEL_RPL0), code_base,  text_para, DESC_KCODE);
+    desc_set(MK_SEL(GDT_KDATA,  SEL_GDT, SEL_RPL0), data_base,  0x1000,    DESC_KDATA);
+    desc_set(MK_SEL(GDT_KFTEXT, SEL_GDT, SEL_RPL0), ftext_base,
+                                          BYTES_PARA((unsigned)_endftext), DESC_KCODE);
+
+    /* KCODE same base/limit as KDATA but executable+readable. IRQ trampolines are
+     * built in the kernel data segment, and an IDT gate needs an executable selector.
+     */
     desc_set(MK_SEL(GDT_KDATA_EXEC, SEL_GDT, SEL_RPL0), data_base, 0x1000, DESC_KCODE);
-    /* boot setup data lives at the SEG_SETUP_DATA paragraph; setupb/setupw read it via
-     * SEL_SETUP in PM (a raw paragraph can't be loaded into a segment register). */
-    desc_set(MK_SEL(GDT_SETUP, SEL_GDT, SEL_RPL0), (addr_t)SEG_SETUP_DATA << 4, BYTES_PARA(512), DESC_KDATA);
-    /* boot options (/bootopts) area, copied once into the kernel during init */
-    desc_set(MK_SEL(GDT_OPTSEG, SEL_GDT, SEL_RPL0), (addr_t)DEF_OPTSEG << 4, 0x40, DESC_KDATA);
-    /* BIOS data area (real-mode seg 0x40, physical 0x400, 256 bytes) -- read by drivers */
-    desc_set(MK_SEL(GDT_BIOSDATA, SEL_GDT, SEL_RPL0), (addr_t)SEG_BIOSDATA << 4, BYTES_PARA(256), DESC_KDATA);
-    /* text video memory (real-mode seg 0xb800, physical 0xB8000) -- direct console */
-    desc_set(MK_SEL(GDT_VIDEO, SEL_GDT, SEL_RPL0), (addr_t)SEG_VIDEO << 4, 0x1000, DESC_KDATA);
-    /* directfd DMA/track buffer; base=SEG_TRACK<<4 (physical paragraph), far-mem copies in PM */
-    desc_set(MK_SEL(GDT_TRACK, SEL_GDT, SEL_RPL0), (addr_t)SEG_TRACK << 4, 0x200, DESC_KDATA);
+
+    /* setupb/setupw setup.S data segment */
+    desc_set(MK_SEL(GDT_SETUP, SEL_GDT, SEL_RPL0), SEG_SETUP_DATA << 4, BYTES_PARA(512),
+        DESC_KDATA);
+
+    /* boot options (/bootopts) segment */
+    desc_set(MK_SEL(GDT_OPTSEG, SEL_GDT, SEL_RPL0), DEF_OPTSEG << 4, BYTES_PARA(1024),
+        DESC_KDATA);
+
+    /* BIOS data area */
+    desc_set(MK_SEL(GDT_BIOSDATA, SEL_GDT, SEL_RPL0), SEG_BIOSDATA << 4, BYTES_PARA(256),
+        DESC_KDATA);
+
+    /* text video memory */
+    desc_set(MK_SEL(GDT_VIDEO, SEL_GDT, SEL_RPL0), (addr_t)SEG_VIDEO << 4, 0x1000,
+        DESC_KDATA);
+
+    /* direct floppy DMA/track buffer */
+    desc_set(MK_SEL(GDT_TRACK, SEL_GDT, SEL_RPL0), SEG_TRACK << 4, BYTES_PARA(TRACKSEGSZ),
+        DESC_KDATA);
 
     idt_init();                 /* every vector -> fault-catch stub (until irq_init) */
 
-    gdtr.limit = (word_t)(sizeof(gdt) - 1);
-    gdtr.base  = data_base + (addr_t)(unsigned)&gdt;        /* linear addr of GDT */
-    idtr.limit = (word_t)(sizeof(idt) - 1);
-    idtr.base  = data_base + (addr_t)(unsigned)&idt;        /* linear addr of IDT */
+    gdtr.limit = sizeof(gdt) - 1;
+    gdtr.base  = data_base + (unsigned)&gdt;    /* linear addr of GDT */
+    idtr.limit = sizeof(idt) - 1;
+    idtr.base  = data_base + (unsigned)&idt;    /* linear addr of IDT */
 
-    pm_switch(&gdtr, &idtr);    /* enter PM; returns here in protected mode */
+    enable_protected_mode(&gdtr, &idtr);    /* enter PM; returns here in protected mode */
 }

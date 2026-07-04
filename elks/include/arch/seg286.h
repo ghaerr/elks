@@ -1,34 +1,33 @@
 #ifndef __ARCH_SEG286_H
 #define __ARCH_SEG286_H
+
+#include <linuxmt/types.h>
+
 /*
  * 80286 protected-mode segment HAL for ELKS        (gated by CONFIG_286_PMODE)
  *
  * Design
  * ------
- * The kernel's segment abstraction is ALREADY the HAL boundary:
+ * The kernel's segment abstraction is already the HAL boundary:
  *   - upper kernel (fs/, kernel/, net/) only ever holds an opaque seg_t and
  *     passes it to the far-memory primitives (peekb/peekw/pokeb/pokew,
  *     fmemcpyb/w, fmemsetb/w, fmemcmpb/w) and to seg_alloc()/segment_s.base.
  *   - those primitives do "mov es,seg ; ... es:[off]". That instruction works
- *     in BOTH real mode (es = paragraph, phys = es*16+off) AND protected mode
+ *     in both real mode (es = paragraph, phys = es*16+off) and protected mode
  *     (es = selector, phys = descriptor[es].base + off) -- the CPU resolves it
  *     per current mode. So the far-mem asm needs NO change.
  *
  * Therefore the 286-PM port is confined to three things, all below the HAL line:
- *   1. seg_t now carries a SELECTOR (not a paragraph). segment_s.base = selector;
+ *   1. seg_t now carries a selector (not a paragraph). segment_s.base = selector;
  *      the physical base lives in the descriptor (desc_base() recovers it).
- *   2. seg_alloc()/seg_free() allocate physical paragraphs as today, then also
- *      allocate/free a GDT (or per-process LDT) descriptor and return its
- *      selector in segment_s.base.  (arch/i86/mm/pm286.c)
+ *   2. seg_alloc()/seg_free() allocate physical paragraphs, then also
+ *      allocate/free a GDT descriptor and return its selector in segment_s.base.
  *   3. boot sets up the GDT/IDT and enters protected mode; exec() loads
- *      selectors into CS/DS/SS instead of paragraphs (it already goes through
- *      seg_alloc + segment_s.base, so the change is small).
+ *      selectors into CS/DS/SS instead of paragraphs.
  *
- * Real-mode build (CONFIG_286_PMODE off) is unaffected: seg_t stays a paragraph
- * and none of this header's code is compiled.
+ * Real-mode build (CONFIG_286_PMODE off) is unaffected: seg_t stays a paragraph.
+ * and none of the protected mode routines are linked into the kernel.
  */
-
-#include <linuxmt/types.h>
 
 /* ---- 80286 segment descriptor: 8 bytes; high word MUST be 0 on a 286 ----
  * (on a 386 the reserved word holds limit[16:19]+flags+base[24:31]; writing 0
@@ -74,13 +73,11 @@ struct dtr {
 #define MK_SEL(index, ti, rpl)  (((unsigned)(index) << 3) | (ti) | (rpl))
 #define SEL_INDEX(sel)          ((unsigned)(sel) >> 3)
 
-#ifdef CONFIG_286_PMODE
-
 /* ---- HAL hooks (implemented in pm286.c and pm_enter.S) ---- */
 
 extern char pm_flt_base[];       /* pm_enter.S: 32 stubs, 8 bytes each */
 void pm_flt_other(void);         /* generic stub for vectors >= 32 */
-void pm_switch(struct dtr *gdtr, struct dtr *idtr);
+void enable_protected_mode(struct dtr *gdtr, struct dtr *idtr);
 
 /* boot: build GDT[GDT_KCODE/KDATA], load GDTR+IDTR, set CR0.PE, far-jump to PM */
 void gdt_init(void);
@@ -98,13 +95,9 @@ void   desc_free(sel_t sel);
 addr_t desc_base(sel_t sel);
 
 /* max valid byte offset in a selector's segment (its descriptor limit) */
-segext_t  desc_limit(sel_t sel);
+segext_t desc_limit(sel_t sel); /* FIXME: will need 16M limit for 386 PM/fmemalloc */
 
-/* IDT: zero the table + point every vector at the fault-catch stub (called from
- * gdt_init before entering PM); install one gate (used by the IRQ/syscall path). */
-void idt_init(void);
-void idt_gate_set(unsigned int vect, word_t offset, sel_t selector, byte_t access);
-
-#endif /* CONFIG_286_PMODE */
+/* install an interrupt gate (used by the IRQ/syscall path). */
+void idt_gate_set(int vect, word_t offset, sel_t selector, byte_t access);
 
 #endif /* __ARCH_SEG286_H */

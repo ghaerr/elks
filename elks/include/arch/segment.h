@@ -8,7 +8,7 @@
 #define BYTES_PARA(bytes)   (((bytes) + 15) >> 4)
 
 /*
- * Protected mode selector vs segment definitions and macros
+ * Protected mode selector vs real mode segment definitions and macros
  */
 #ifdef CONFIG_286_PMODE
 
