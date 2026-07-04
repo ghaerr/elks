@@ -1,4 +1,5 @@
 arp
+curl
 ifconfig
 ftp
 ftpd
