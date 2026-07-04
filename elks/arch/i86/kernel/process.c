@@ -10,7 +10,6 @@
 #include <linuxmt/init.h>
 
 #include <arch/segment.h>
-#include <arch/seg286.h>
 
 static char *args[] = {
 (char *)0x01,   /* 0 argc     */

@@ -18,6 +18,7 @@
 #define O_APPEND	 02000
 #define O_NONBLOCK	 04000
 #define O_NDELAY	O_NONBLOCK
+#define O_ALT		010000  /* use alternate interpretation of f_pos in /dev/kmem */
 
 #define F_DUPFD		0	/* dup */
 #define F_GETFD		1	/* get cloexec flag */

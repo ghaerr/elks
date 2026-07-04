@@ -9,6 +9,7 @@
 //  1 Feb 2026 Rewritten completely in assembly
 //
 #include <linuxmt/config.h>
+#include <arch/segment.h>
         .code16
         .text
 #ifdef CONFIG_ARCH_IBMPC
@@ -56,7 +57,7 @@ common_entry:
         // Was pushed by the CALLF of the dynamic handler
         mov     %sp,%bx
 #ifdef CONFIG_286_PMODE
-        mov     $0x10, %ax              // SEL_KDATA (writable); CALLF-saved CS is read-only SEL_KDATA_EXEC
+        mov     $SEL_KDATA, %ax         // writable; CALLF-saved CS is read-only SEL_KDATA_EXEC
         mov     %ax, %ds
 #else
         mov     %ss:12(%bx),%ds

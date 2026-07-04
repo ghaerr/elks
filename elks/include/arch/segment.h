@@ -3,33 +3,51 @@
 
 #include <linuxmt/config.h>
 
+/* paragraph (16-byte) helpers shared with the real-mode arena allocator */
+#define PARA_BYTES(paras)   ((addr_t)(paras) << 4)
+#define BYTES_PARA(bytes)   (((bytes) + 15) >> 4)
+
 /*
- * Protected mode selector vs segment macros
+ * Protected mode selector vs real mode segment definitions and macros
  */
 #ifdef CONFIG_286_PMODE
-/* (fixed) protected mode selector values defined in seg286.h */
-//#include <arch/seg286.h>      // add this and remove SEL_ below when arch/seg286.h present
+
+/* fixed GDT indices (kernel-private selectors) */
+#define GDT_NULL        0   /* required null descriptor          */
+#define GDT_KCODE       1   /* kernel CS  (near .text)           */
+#define GDT_KDATA       2   /* kernel DS = SS                    */
+#define GDT_KFTEXT      3   /* kernel far text (.fartext, medium model) */
+#define GDT_KDATA_EXEC  4   /* kernel data aliased as readable CODE (IRQ trampolines) */
+#define GDT_SETUP       5   /* boot setup-data (REL_INITSEG, used by setupb/setupw) */
+#define GDT_OPTSEG      6   /* boot options area (DEF_OPTSEG, /bootopts at init) */
+#define GDT_BIOSDATA    7   /* BIOS data area (segment 0x40) */
+#define GDT_VIDEO       8   /* CGA/EGA/VGA text video memory (segment 0xB800) */
+#define GDT_TRACK       9   /* directfd DMA/track buffer (TRACKSEG) */
+#define GDT_FIRST_DYN   10  /* first dynamically-allocated selector */
+
+/* fixed kernel selectors (index<<3, GDT, RPL0) -- must match above order */
 #define SEL_KCODE       0x08
 #define SEL_KDATA       0x10
 #define SEL_KFTEXT      0x18
-#define SEL_SETUP       0x28    /* GDT[5]: base = REL_INITSEG<<4, for setupb/setupw in PM */
-#define SEL_OPTSEG      0x30    /* GDT[6]: base = DEF_OPTSEG<<4, for the /bootopts copy in PM */
-#define SEL_BIOSDATA    0x38    /* GDT[7]: base = 0x400, BIOS data area (seg 0x40) reads in PM */
-#define SEL_VIDEO       0x40    /* GDT[8]: base = 0xB8000, text video memory (VideoSeg) in PM */
-#define SEL_TRACK       0x48    /* GDT[9]: base = TRACKSEG<<4, directfd DMA/track buffer in PM */
-#define SEL_KDATA_EXEC  0x20    /* GDT[4]: same base as KDATA, but executable+readable;
-                                 * IDT gates point here so the CPU can run the trampolines
-                                 * that int_handler_add() builds in the kernel data segment */
+#define SEL_KDATA_EXEC  0x20
+#define SEL_SETUP       0x28
+#define SEL_OPTSEG      0x30
+#define SEL_BIOSDATA    0x38
+#define SEL_VIDEO       0x40
+#define SEL_TRACK       0x48
+
+#define GDT_ENTRIES     512 /* 512 * 8 = 4 KB GDT                 */
 
 /* macros map to selector values */
 #define KERNEL_CS       SEL_KCODE       /* kernel near code selector */
 #define KERNEL_DS       SEL_KDATA       /* kernel data selector */
 #define BIOSSEG         SEL_BIOSDATA    /* BIOS data */
-#define VIDEOSEG        SEL_VIDEO       /* text video RAM */
+#define OPTSEG          SEL_OPTSEG      /* /bootopts options segment */
 #define TRACKSEG        SEL_TRACK       /* direct floppy track cache */
 #define SETUP_DATA      SEL_SETUP       /* setupb/setupw data segment */
+#define VIDEOSEG        SEL_VIDEO       /* text video RAM */
 
-/* address conversion macros used in directfd.c */
+/* PM address conversion macros used in directfd.c */
 #define LINADDR(seg, offs) (desc_base(seg) + (unsigned long)(unsigned)(offs))
 #define XMSADDR(seg, offs) ((unsigned long)((((unsigned long)(seg)) << 0) + (unsigned)(offs)))
 
@@ -39,39 +57,23 @@
 #define KERNEL_CS       kernel_cs       /* real mode kernel near code segment */
 #define KERNEL_DS       kernel_ds       /* real mode kernel data segment */
 #define BIOSSEG         SEG_BIOSDATA    /* BIOS data */
-#define VIDEOSEG        SEG_VIDEO       /* text video RAM */
+#define OPTSEG          DEF_OPTSEG      /* /bootopts options segment */
 #define TRACKSEG        SEG_TRACK       /* direct floppy track cache */
 #define SETUP_DATA      SEG_SETUP_DATA  /* setupb/setupw data segment */
+#define VIDEOSEG        SEG_VIDEO       /* text video RAM */
 
-/* address conversion macros used in directfd.c */
+/* real mode address conversion macros used in directfd.c */
 #define LINADDR(seg, offs) ((unsigned long)((((unsigned long)(seg)) << 4) + (unsigned)(offs)))
 #define XMSADDR(seg, offs) ((unsigned long)((((unsigned long)(seg)) << 0) + (unsigned)(offs)))
 #endif
 
 #ifndef __ASSEMBLER__
 #include <linuxmt/types.h>
-#include <linuxmt/config.h>
 
 extern seg_t kernel_cs, kernel_ds;
 extern short *_endtext, *_endftext, *_enddata, *_endbss;
 extern short endistack[], istack[];
 extern unsigned int heapsize;
-#endif
-
-/* Segment VALUE for the kernel's own data when loaded into a segment register or
- * handed to the far-memory primitives: a selector in protected mode, the real-mode
- * paragraph otherwise.  (0x10 == SEL_KDATA in <arch/seg286.h>; written as a literal
- * so this header stays usable from .S.)  NOT for physical math -- use kernel_ds<<4. */
-#ifdef CONFIG_286_PMODE
-#define KERNEL_CS  0x08     /* SEL_KCODE */
-#define KERNEL_DS  0x10
-#define BIOSSEG    0x38     /* SEL_BIOSDATA: BIOS data area (real-mode seg 0x40) */
-#define VIDEOSEG   0x40     /* SEL_VIDEO: text video memory (real-mode seg 0xb800) */
-#else
-#define KERNEL_CS  kernel_cs
-#define KERNEL_DS  kernel_ds
-#define BIOSSEG    0x40
-#define VIDEOSEG   0xb800
 #endif
 
 #endif
