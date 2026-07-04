@@ -67,9 +67,6 @@ endif
 ifdef CONFIG_IMG_BOOT
 	install $(ELKS_DIR)/arch/i86/boot/Image $(DESTDIR)/linux
 endif
-	-rm -f $(DESTDIR)/bin/nano-x $(DESTDIR)/bin/nxcalc $(DESTDIR)/bin/nxclock
-	-rm -f $(DESTDIR)/bin/nxstart $(DESTDIR)/bin/nxterm $(DESTDIR)/bin/nxtetris
-	-rm -f $(DESTDIR)/root/girl1.jpg $(DESTDIR)/root/earth.jpg
 ifdef CONFIG_TIME_TZ
 	echo 'if test "$$TZ" = ""; then export' "TZ=$(CONFIG_TIME_TZ); fi" >> $(DESTDIR)/etc/profile
 endif

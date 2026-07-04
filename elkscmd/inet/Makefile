@@ -8,7 +8,7 @@ LOCALFLAGS=-I$(ELKSCMD_DIR)
 
 ###############################################################################
 
-PRGS = arp curl ftp ftpd httpd ifconfig netcat netstat nslookup ping telnet telnetd traceroute urlget
+PRGS = arp curl ftp ftpd httpd ifconfig netcat netstat nslookup ping tcpdump telnet telnetd traceroute urlget
 PRGS += tinyirc/tinyirc
 
 all: $(PRGS)
