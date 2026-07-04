@@ -34,7 +34,10 @@
 #include <paths.h>
 #include <libgen.h>
 
-#define LINEARADDRESS(off, seg)     ((off_t) (((off_t)seg << 4) + off))
+/* seg:off far-pointer layout (segment high word, offset low word): keeps the
+ * segment intact for the kernel, which reads it as a GDT selector in 286 PM and
+ * a paragraph in real mode.  Pairs with the seg:off decode in kmem_read/write. */
+#define LINEARADDRESS(off, seg)     ((off_t)(((off_t)(word_t)(seg) << 16) | (word_t)(off)))
 #define MK_FP(seg,off) ((void __far *)((((unsigned long)(seg))<<16) | ((unsigned)(off))))
 
 static int maxtasks;
@@ -108,7 +111,7 @@ char *dev_name(unsigned int minor)
 
 char *tty_name(int fd, unsigned int off, unsigned int seg)
 {
-    off_t addr = ((off_t)seg << 4) + off;
+    off_t addr = LINEARADDRESS(off, seg);
     struct tty tty;
 
     if (off == 0)

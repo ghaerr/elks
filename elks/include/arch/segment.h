@@ -35,10 +35,6 @@
 
 #else /* real mode */
 
-/* use real mode segment values (these may move to config.h) */
-#define SEG_BIOSDATA    0x0040          /* BIOS data */
-#define SEG_VIDEO       0xB800          /* text video RAM */
-
 /* macros map to segment values */
 #define KERNEL_CS       kernel_cs       /* real mode kernel near code segment */
 #define KERNEL_DS       kernel_ds       /* real mode kernel data segment */
@@ -54,11 +50,28 @@
 
 #ifndef __ASSEMBLER__
 #include <linuxmt/types.h>
+#include <linuxmt/config.h>
 
 extern seg_t kernel_cs, kernel_ds;
 extern short *_endtext, *_endftext, *_enddata, *_endbss;
 extern short endistack[], istack[];
 extern unsigned int heapsize;
+#endif
+
+/* Segment VALUE for the kernel's own data when loaded into a segment register or
+ * handed to the far-memory primitives: a selector in protected mode, the real-mode
+ * paragraph otherwise.  (0x10 == SEL_KDATA in <arch/seg286.h>; written as a literal
+ * so this header stays usable from .S.)  NOT for physical math -- use kernel_ds<<4. */
+#ifdef CONFIG_286_PMODE
+#define KERNEL_CS  0x08     /* SEL_KCODE */
+#define KERNEL_DS  0x10
+#define BIOSSEG    0x38     /* SEL_BIOSDATA: BIOS data area (real-mode seg 0x40) */
+#define VIDEOSEG   0x40     /* SEL_VIDEO: text video memory (real-mode seg 0xb800) */
+#else
+#define KERNEL_CS  kernel_cs
+#define KERNEL_DS  kernel_ds
+#define BIOSSEG    0x40
+#define VIDEOSEG   0xb800
 #endif
 
 #endif

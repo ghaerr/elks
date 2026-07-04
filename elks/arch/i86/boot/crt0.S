@@ -48,6 +48,9 @@ _start:
         mov     %ax,%ss         // SS=ES=DS
         mov     $istack,%sp
 
+#ifdef CONFIG_286_PMODE
+        call    gdt_init        // build GDT and enter protected mode (no return to real mode)
+#endif
         call    start_kernel    // no return
 
 #if defined(CONFIG_ARCH_SWAN)
@@ -83,6 +86,14 @@ early_putchar:
         ret
 #elif defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_8018X)
 early_putchar:
+#ifdef CONFIG_286_PMODE
+        // protected mode: BIOS INT 10h is the #MF gate, not video -- write COM1
+        // via pm_putc_ser (lib/pm_enter.S), which takes the char in AL
+        mov   %sp,%bx
+        mov   2(%bx),%al        // char (cdecl: [ret][char])
+        call  pm_putc_ser
+        ret
+#else
         mov   %sp,%bx
         mov   2(%bx),%al
         mov   $0x0E,%ah
@@ -91,6 +102,7 @@ early_putchar:
         int   $0x10
         pop   %bp
         ret
+#endif
 #endif
 
 //      Segment beginnings

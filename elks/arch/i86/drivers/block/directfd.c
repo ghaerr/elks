@@ -96,6 +96,7 @@
 #include <arch/io.h>
 #include <arch/irq.h>
 #include <arch/segment.h>
+#include <arch/seg286.h>
 #include <arch/ports.h>
 
 #define MAJOR_NR        FLOPPY_MAJOR
@@ -1453,7 +1454,9 @@ static void DFPROC floppy_deregister(void)
     outb(0x0c, FD_DOR);         /* all motors off, enable IRQ and DMA */
     clr_irq();
     free_irq(FLOPPY_IRQ);
+#ifndef CONFIG_286_PMODE    /* PM: IRQ via IDT; don't touch the real-mode IVT at seg 0 */
     *(__u32 __far *)FLOPPY_VEC = old_floppy_vec;
+#endif
     enable_irq(FLOPPY_IRQ);
     set_irq();
 }
@@ -1504,7 +1507,9 @@ static int DFPROC floppy_register(void)
     current_DOR = 0x0c;
     outb(0x0c, FD_DOR);         /* all motors off, enable IRQ and DMA */
 
+#ifndef CONFIG_286_PMODE    /* PM: floppy IRQ via IDT; real-mode IVT (seg 0) unusable, stays 0 */
     old_floppy_vec = *((__u32 __far *)FLOPPY_VEC);
+#endif
     err = request_irq(FLOPPY_IRQ, floppy_interrupt, INT_GENERIC);
     if (err) {
         printk("df: IRQ %d busy\n", FLOPPY_IRQ);

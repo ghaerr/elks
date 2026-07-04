@@ -203,6 +203,11 @@
 #define DMASEGEND       (DMASEG+(DMASEGSZ>>4))
 #endif
 
+/* physical paragraph addresses of fixed low-memory areas (moved here from
+ * arch/segment.h per its note); used as gdt_init descriptor bases in PM */
+#define SEG_BIOSDATA    0x0040          /* BIOS data area (real-mode seg 0x40) */
+#define SEG_VIDEO       0xB800          /* text video RAM (real-mode seg 0xB800) */
+
 /* Define segment locations of low memory, must not overlap */
 
 #ifdef CONFIG_ROMCODE
