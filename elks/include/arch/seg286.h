@@ -122,6 +122,10 @@ addr_t desc_base(unsigned int sel);
 /* max valid byte offset in a selector's segment (its descriptor limit) */
 word_t desc_limit(unsigned int sel);
 
+/* bump-allocate a physical chunk of 'kbytes' from extended memory above 1MB
+ * (returns the physical base, 0 if exhausted) -- backing store for the PM L2 cache */
+addr_t himem_alloc(unsigned int kbytes);
+
 /* IDT: zero the table + point every vector at the fault-catch stub (called from
  * gdt_init before entering PM); install one gate (used by the IRQ/syscall path). */
 void idt_init(void);

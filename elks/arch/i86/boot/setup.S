@@ -931,6 +931,12 @@ arch_set_initseg:
 	jc	1f
 	mov	%ax,xms_kbytes
 1:
+#ifdef CONFIG_286_PMODE
+	// PM reaches extended memory (>1MB) through GDT descriptors, so A20 must be
+	// enabled or a >1MB physical access wraps back into low memory and corrupts it.
+	// The HMA path only enables A20 for hma=kernel; do it unconditionally for PM.
+	call	enable_a20_gate
+#endif
 #ifdef CONFIG_BOOTOPTS
 	call	bootopts	// load /bootopts into DEF_OPTSEG (0050:0000)
 	call    hmabootopts	// check /bootopts for hma=kernel

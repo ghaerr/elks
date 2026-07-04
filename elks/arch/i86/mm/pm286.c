@@ -11,6 +11,8 @@
 #include <linuxmt/config.h>
 #include <linuxmt/types.h>
 #include <linuxmt/kernel.h>
+#include <linuxmt/memory.h>     /* setupw() -> SETUP_XMS_KBYTES */
+#include <arch/io.h>            /* inb/outb for the A20 gate */
 #include <arch/seg286.h>
 
 #ifdef CONFIG_286_PMODE
@@ -103,6 +105,21 @@ word_t desc_limit(unsigned int sel)         /* max valid byte offset in the segm
     return gdt[SEL_INDEX(sel)].limit;
 }
 
+/* Extended-memory (>1MB) bump allocator for the PM buffer cache.  A20 is enabled
+ * on the PM path (setup.S), so GDT descriptors reach physical addresses above 1MB.
+ * SETUP_XMS_KBYTES (INT 15h AH=88h at boot) is the extended-memory size in KB;
+ * hand out 1K-granular physical chunks starting just above 1MB. */
+static addr_t himem_next = 0x100000L;
+addr_t himem_alloc(unsigned int kbytes)     /* physical base >= 1MB, 0 = exhausted */
+{
+    addr_t base = himem_next;
+    addr_t need = (addr_t)kbytes << 10;
+    if ((base - 0x100000L) + need > ((addr_t)SETUP_XMS_KBYTES << 10))
+        return 0;                           /* not enough extended memory */
+    himem_next += need;
+    return base;
+}
+
 const void *gdt_table(void) { return gdt; }             /* for lgdt in boot asm */
 unsigned    gdt_limit(void) { return sizeof(gdt) - 1; }
 
@@ -144,6 +161,12 @@ void gdt_init(void)
     segext_t text_par   = BYTES_PARA(_endtext);
     /* fartext is loaded immediately after text (non-HMA boot). */
     addr_t   ftext_base = code_base + ((addr_t)text_par << 4);
+
+    /* Enable the A20 gate (fast A20 via port 0x92) so GDT descriptors can address
+     * physical memory above 1MB -- required for the extended-memory buffer cache.
+     * Done here in real mode just before the PM switch; setup.S's enable_a20_gate
+     * proved unreliable.  Preserve bit0 (port 0x92 bit0 = fast CPU reset). */
+    outb((inb(0x92) | 0x02) & ~0x01, 0x92);
 
     /* phase 4b: separate descriptors for near text, far text and data.
      * setup.S has patched the kernel's far-call/far-data segments to these

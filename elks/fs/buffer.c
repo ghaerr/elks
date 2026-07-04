@@ -122,7 +122,7 @@ static void FARPROC put_last_lru(struct buffer_head *bh)
     }
 }
 
-static void INITPROC add_buffers(int nbufs, char *buf, ramdesc_t seg)
+static void INITPROC add_buffers(int nbufs, char *buf, addr_t seg)
 {
     struct buffer_head *bh;
     int n = 0;
@@ -140,11 +140,11 @@ static void INITPROC add_buffers(int nbufs, char *buf, ramdesc_t seg)
 
 #if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
 #ifdef CONFIG_286_PMODE
-        /* PM: 'seg' is a GDT selector and can't be paragraph-offset like a real-mode
-         * segment.  Give each L2 buffer its own descriptor based at the chunk's
-         * physical address + n*BLOCK_SIZE, so it is reachable at selector:0 (matching
-         * the "no offset to buffer" design).  ext only -- PM has no XMS. */
-        ebh->b_L2seg = desc_alloc(desc_base(seg) + ((addr_t)(n & 63) << BLOCK_SIZE_BITS),
+        /* PM: 'seg' is the chunk's PHYSICAL base in extended memory (himem_alloc,
+         * >1MB).  Give each L2 buffer its own descriptor based at physical +
+         * n*BLOCK_SIZE, so it is reachable at selector:0 (matching the "no offset
+         * to buffer" design).  ext only -- PM has no XMS. */
+        ebh->b_L2seg = desc_alloc((addr_t)seg + ((addr_t)(n & 63) << BLOCK_SIZE_BITS),
                                   BYTES_PARA(BLOCK_SIZE), DESC_KDATA);
 #else
         /* segment adjusted to require no offset to buffer */
@@ -262,10 +262,20 @@ int INITPROC buffer_init(void)
         } else
 #endif
         {
+#ifdef CONFIG_286_PMODE
+            /* PM: put the L2 pool in extended memory (>1MB) so it does not consume
+             * the scarce conventional pool.  add_buffers gives each buffer its own
+             * descriptor based within this himem chunk (BLOCK_SIZE == 1K, so nbufs
+             * buffers == nbufs KB). */
+            addr_t himem = himem_alloc(nbufs);
+            if (!himem) return 2;
+            add_buffers(nbufs, 0, himem);
+#else
             segment_s *extseg = seg_alloc (nbufs << (BLOCK_SIZE_BITS - 4),
                 SEG_FLAG_EXTBUF|SEG_FLAG_ALIGN1K);
             if (!extseg) return 2;
             add_buffers(nbufs, 0, extseg->base);
+#endif
         }
     } while (bufs_to_alloc > 0);
 #else
