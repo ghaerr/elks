@@ -1,19 +1,10 @@
 /*
- * curl -- HTTP/FTP download tool for ELKS
+ * curl - HTTP/FTP download via ktcp netconf protocol
  *
- * Usage:
- *   curl [-vojf] [-u user:pass] [-d data] <url>
- *   curl --json [-d data] <url>
- *
- * Schemes: http://, ftp://
- *   -o file        write output to file instead of stdout
- *   -v             verbose (URL and status on stderr)
- *   -u u:p         user and password for auth
- *   -d "data"      HTTP POST with form-urlencoded body
- *   --json         HTTP POST with application/json body (use with -d)
- *   -f "key"       extract top-level JSON key from HTTP response
- *
- * 29 Mar 2024 Greg Haerr <greg@censoft.com>
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  */
 #include <stdio.h>
 #include <ctype.h>
