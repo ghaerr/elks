@@ -543,11 +543,7 @@ static int INITPROC parse_options(void)
     char *next;
 
     /* copy /bootopts loaded by boot loader at 0050:0000*/
-#ifdef CONFIG_286_PMODE
-    fmemcpyb(opts.options, KERNEL_DS, 0, SEL_OPTSEG, sizeof(opts.options)); /* PM: KERNEL_DS dest, SEL_OPTSEG src */
-#else
-    fmemcpyb(opts.options, kernel_ds, 0, DEF_OPTSEG, sizeof(opts.options));
-#endif
+    fmemcpyb(opts.options, KERNEL_DS, 0, OPTSEG, sizeof(opts.options));
 
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
     /* check file starts with ##, one or two sectors, max 1023 bytes or 511 one sector */

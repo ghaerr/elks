@@ -42,9 +42,10 @@
 #define KERNEL_CS       SEL_KCODE       /* kernel near code selector */
 #define KERNEL_DS       SEL_KDATA       /* kernel data selector */
 #define BIOSSEG         SEL_BIOSDATA    /* BIOS data */
-#define VIDEOSEG        SEL_VIDEO       /* text video RAM */
+#define OPTSEG          SEL_OPTSEG      /* /bootopts options segment */
 #define TRACKSEG        SEL_TRACK       /* direct floppy track cache */
 #define SETUP_DATA      SEL_SETUP       /* setupb/setupw data segment */
+#define VIDEOSEG        SEL_VIDEO       /* text video RAM */
 
 /* PM address conversion macros used in directfd.c */
 #define LINADDR(seg, offs) (desc_base(seg) + (unsigned long)(unsigned)(offs))
@@ -56,9 +57,10 @@
 #define KERNEL_CS       kernel_cs       /* real mode kernel near code segment */
 #define KERNEL_DS       kernel_ds       /* real mode kernel data segment */
 #define BIOSSEG         SEG_BIOSDATA    /* BIOS data */
-#define VIDEOSEG        SEG_VIDEO       /* text video RAM */
+#define OPTSEG          DEF_OPTSEG      /* /bootopts options segment */
 #define TRACKSEG        SEG_TRACK       /* direct floppy track cache */
 #define SETUP_DATA      SEG_SETUP_DATA  /* setupb/setupw data segment */
+#define VIDEOSEG        SEG_VIDEO       /* text video RAM */
 
 /* real mode address conversion macros used in directfd.c */
 #define LINADDR(seg, offs) ((unsigned long)((((unsigned long)(seg)) << 4) + (unsigned)(offs)))
