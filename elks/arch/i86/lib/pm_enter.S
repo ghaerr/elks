@@ -1,4 +1,3 @@
-#include <linuxmt/config.h>
 /*
  * 80286 real -> protected mode switch.  (phase 4 of the 286 HAL)
  *
@@ -16,7 +15,6 @@
  * installs the real IRQ/syscall handlers (phase 5b).  ftext has its own descriptor
  * and far-call selectors (phase 4b).
  */
-#ifdef CONFIG_286_PMODE
         .arch   i286, nojumps
         .code16
         .text
@@ -169,4 +167,3 @@ pm_putc_ser:
         pop     %dx
         pop     %ax
         ret
-#endif

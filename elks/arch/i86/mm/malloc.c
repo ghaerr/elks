@@ -15,10 +15,11 @@
 #include <arch/seg286.h>
 
 #ifdef CONFIG_286_PMODE
-/* 286 protected mode (ghaerr's convention): the arena manages the physical
- * paragraph in segment_s.para (BASE() macro); every USED segment also gets a
+/* Protected mode: the arena manages the physical paragraph in segment_s.para
+ * (BASE() macro); every USED segment also gets a
  * GDT descriptor whose selector becomes segment_s.base -- the value the kernel
- * hands out externally via ->base and loads into a segment register. */
+ * hands out externally via ->base and loads into a segment register.
+ */
 static byte_t seg_pm_access(word_t type)
 {
     /* ring-0 user (phase 6): DPL0 code/data selectors.  Running user code at DPL3
@@ -26,14 +27,19 @@ static byte_t seg_pm_access(word_t type)
      * interrupt stack switch -- deferred to the protection phase. */
     return ((type & SEG_FLAG_TYPE) == SEG_FLAG_CSEG) ? DESC_KCODE : DESC_KDATA;
 }
+
 static int seg_pm_attach(segment_s *seg, word_t type)
 {
     seg->base = desc_alloc(PARA_BYTES(seg->para), seg->size, seg_pm_access(type));
     return seg->base ? 0 : -1;      /* selector 0 => GDT full */
 }
+
 static void seg_pm_detach(segment_s *seg)
 {
-    if (seg->base) { desc_free(seg->base); seg->base = 0; }
+    if (seg->base) {
+        desc_free(seg->base);
+        seg->base = 0;
+    }
 }
 #else
 #define seg_pm_attach(seg, type)    0
@@ -269,7 +275,10 @@ segment_s * seg_dup (segment_s * src)
 {
     segment_s * dst = seg_free_get (src->size, src->flags);
     if (dst) {
-        if (seg_pm_attach(dst, src->flags)) { seg_free(dst); return 0; }
+        if (seg_pm_attach(dst, src->flags)) {
+            seg_free(dst);
+            return 0;
+        }
         fmemcpyw(0, dst->base, 0, src->base, src->size << 3);
     }
     return dst;

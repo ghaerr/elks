@@ -112,6 +112,13 @@ static void idle_loop(void);
 void start_kernel(void)
 {
     //tracing = TRACE_KSTACK | TRACE_ISTACK;
+#ifdef CONFIG_286_PMODE
+    /* Build GDT and enter protected mode (no return to real mode).
+     * Must be called before any FAR/INITPROC procedures as setup.S
+     * loader relocated far segment values to selectors.
+     */
+    gdt_init();
+#endif
     far_start_kernel();             /* start executing in reusable memory */
 }
 

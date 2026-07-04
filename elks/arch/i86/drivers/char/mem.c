@@ -25,12 +25,9 @@
 #include <linuxmt/heap.h>
 #include <linuxmt/timer.h>
 #include <linuxmt/init.h>
-
 #include <arch/io.h>
 #include <arch/segment.h>
-#ifdef CONFIG_286_PMODE
 #include <arch/seg286.h>
-#endif
 
 #define DEV_MEM_MINOR           1       /* unused */
 #define DEV_KMEM_MINOR          2

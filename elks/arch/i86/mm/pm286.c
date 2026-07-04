@@ -11,9 +11,8 @@
 #include <linuxmt/config.h>
 #include <linuxmt/types.h>
 #include <linuxmt/kernel.h>
+#include <arch/segment.h>
 #include <arch/seg286.h>
-
-#ifdef CONFIG_286_PMODE
 
 /*
  * Config validation: protected mode cannot call the BIOS (real-mode IVT/
@@ -45,8 +44,6 @@ static unsigned int next_dyn = GDT_FIRST_DYN;
 /* lgdt/lidt operand: 16-bit limit + linear base (286 uses low 24 bits) */
 struct dtr { word_t limit; addr_t base; };
 
-extern word_t kernel_cs, kernel_ds;     /* saved by crt0.S */
-extern word_t _endtext, _endftext;      /* kernel .text / .fartext byte sizes (crt0.S) */
 void pm_switch(struct dtr *gdtr, struct dtr *idtr);     /* arch/i86/lib/pm_enter.S */
 
 void desc_set(unsigned int sel, addr_t base, segext_t paras, byte_t access)
@@ -141,7 +138,7 @@ void gdt_init(void)
     static struct dtr gdtr, idtr;
     addr_t   code_base  = (addr_t)kernel_cs << 4;
     addr_t   data_base  = (addr_t)kernel_ds << 4;
-    segext_t text_par   = BYTES_PARA(_endtext);
+    segext_t text_par   = BYTES_PARA((unsigned)_endtext);
     /* fartext is loaded immediately after text (non-HMA boot). */
     addr_t   ftext_base = code_base + ((addr_t)text_par << 4);
 
@@ -151,7 +148,7 @@ void gdt_init(void)
     desc_set(MK_SEL(GDT_NULL,   SEL_GDT, SEL_RPL0), 0,          0,                     0);
     desc_set(MK_SEL(GDT_KCODE,  SEL_GDT, SEL_RPL0), code_base,  text_par,              DESC_KCODE);
     desc_set(MK_SEL(GDT_KDATA,  SEL_GDT, SEL_RPL0), data_base,  0x1000,                DESC_KDATA);
-    desc_set(MK_SEL(GDT_KFTEXT, SEL_GDT, SEL_RPL0), ftext_base, BYTES_PARA(_endftext), DESC_KCODE);
+    desc_set(MK_SEL(GDT_KFTEXT, SEL_GDT, SEL_RPL0), ftext_base, BYTES_PARA((unsigned)_endftext), DESC_KCODE);
     /* same base/limit as KDATA but executable+readable: IRQ trampolines are built
      * in the kernel data segment, and an IDT gate needs an executable selector. */
     desc_set(MK_SEL(GDT_KDATA_EXEC, SEL_GDT, SEL_RPL0), data_base, 0x1000, DESC_KCODE);
@@ -176,5 +173,3 @@ void gdt_init(void)
 
     pm_switch(&gdtr, &idtr);    /* enter PM; returns here in protected mode */
 }
-
-#endif /* CONFIG_286_PMODE */

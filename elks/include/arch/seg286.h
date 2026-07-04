@@ -69,37 +69,6 @@ typedef struct idt_gate idt_gate_t;
 #define MK_SEL(index, ti, rpl)  (((unsigned)(index) << 3) | (ti) | (rpl))
 #define SEL_INDEX(sel)          ((unsigned)(sel) >> 3)
 
-/* fixed GDT layout (kernel-private selectors) */
-#define GDT_NULL        0   /* required null descriptor          */
-#define GDT_KCODE       1   /* kernel CS  (near .text)           */
-#define GDT_KDATA       2   /* kernel DS = SS                    */
-#define GDT_KFTEXT      3   /* kernel far text (.fartext, medium model) */
-#define GDT_KDATA_EXEC  4   /* kernel data aliased as readable CODE (IRQ trampolines) */
-#define GDT_SETUP       5   /* boot setup-data area (REL_INITSEG, read by setupb/setupw) */
-#define GDT_OPTSEG      6   /* boot options area (DEF_OPTSEG, /bootopts read once at init) */
-#define GDT_BIOSDATA    7   /* BIOS data area (segment 0x40, base 0x400) */
-#define GDT_VIDEO       8   /* CGA/EGA/VGA text video memory (0xB8000) */
-#define GDT_TRACK       9   /* directfd DMA/track buffer (TRACKSEG) for far-mem copies in PM */
-#define GDT_FIRST_DYN   10  /* first dynamically-allocated selector */
-
-/* fixed kernel selectors (index<<3, GDT, RPL0) -- must match setup.S patches */
-#define SEL_KCODE       0x08
-#define SEL_KDATA       0x10
-#define SEL_KFTEXT      0x18
-#define SEL_SETUP       0x28    /* GDT[5]: base = REL_INITSEG<<4, for setupb/setupw in PM */
-#define SEL_OPTSEG      0x30    /* GDT[6]: base = DEF_OPTSEG<<4, for the /bootopts copy in PM */
-#define SEL_BIOSDATA    0x38    /* GDT[7]: base = 0x400, BIOS data area (seg 0x40) reads in PM */
-#define SEL_VIDEO       0x40    /* GDT[8]: base = 0xB8000, text video memory (VideoSeg) in PM */
-#define SEL_TRACK       0x48    /* GDT[9]: base = TRACKSEG<<4, directfd DMA/track buffer in PM */
-#define SEL_KDATA_EXEC  0x20    /* GDT[4]: same base as KDATA, but executable+readable;
-                                 * IDT gates point here so the CPU can run the trampolines
-                                 * that int_handler_add() builds in the kernel data segment */
-#define GDT_ENTRIES     512 /* 512 * 8 = 4 KB GDT                 */
-
-/* paragraph (16-byte) helpers shared with the real-mode arena allocator */
-#define PARA_BYTES(paras)   ((addr_t)(paras) << 4)
-#define BYTES_PARA(bytes)   (((bytes) + 15) >> 4)
-
 #ifdef CONFIG_286_PMODE
 
 /* ---- HAL hooks (implemented in arch/i86/mm/pm286.c and arch/i86/boot) ---- */
