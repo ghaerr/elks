@@ -40,7 +40,6 @@ struct gdt_entry {
     byte_t  access;         /* P | DPL | S | type | A  (see DESC_* below)        */
     word_t  reserved;       /* 0 on 286                                          */
 };
-typedef struct gdt_entry gdt_entry_t;
 
 /* access byte: bit7=Present 6-5=DPL 4=S(1=code/data) 3=E 2=C/ED 1=R/W 0=Accessed */
 #define DESC_PRESENT 0x80   /* P bit (set in every DESC_* below); 0 => free slot */
@@ -57,9 +56,15 @@ struct idt_gate {
     byte_t  access;         /* P | DPL | gate type (GATE_* below)           */
     word_t  reserved;       /* 0 on a 286                                   */
 };
-typedef struct idt_gate idt_gate_t;
+
 #define GATE_INT286   0x86  /* present, DPL0, 286 interrupt gate (clears IF) */
 #define GATE_TRAP286  0x87  /* present, DPL0, 286 trap gate (leaves IF)      */
+
+/* lgdt/lidt operand: 16-bit limit + linear physical base (286 uses low 24 bits) */
+struct dtr {
+    word_t limit;
+    addr_t base;
+};
 
 /* selector = (index << 3) | TI | RPL */
 #define SEL_RPL0    0x00
@@ -71,30 +76,34 @@ typedef struct idt_gate idt_gate_t;
 
 #ifdef CONFIG_286_PMODE
 
-/* ---- HAL hooks (implemented in arch/i86/mm/pm286.c and arch/i86/boot) ---- */
+/* ---- HAL hooks (implemented in pm286.c and pm_enter.S) ---- */
+
+extern char pm_flt_base[];       /* pm_enter.S: 32 stubs, 8 bytes each */
+void pm_flt_other(void);         /* generic stub for vectors >= 32 */
+void pm_switch(struct dtr *gdtr, struct dtr *idtr);
 
 /* boot: build GDT[GDT_KCODE/KDATA], load GDTR+IDTR, set CR0.PE, far-jump to PM */
 void gdt_init(void);
 
 /* allocate a descriptor for [base, base+paras*16) with `access`; returns a
  * selector (0 on table-full). seg_alloc() calls this after reserving physram. */
-unsigned int desc_alloc(addr_t base, segext_t paras, byte_t access);
+sel_t desc_alloc(addr_t base, segext_t paras, byte_t access);
 
 /* rewrite / free an existing selector's descriptor */
-void   desc_set(unsigned int sel, addr_t base, segext_t paras, byte_t access);
-void   desc_chaccess(unsigned int sel, byte_t access);
-void   desc_free(unsigned int sel);
+void   desc_set(sel_t sel, addr_t base, segext_t paras, byte_t access);
+void   desc_chaccess(sel_t sel, byte_t access);
+void   desc_free(sel_t sel);
 
 /* recover the physical base behind a selector (for DMA, exec relocation, etc.) */
-addr_t desc_base(unsigned int sel);
+addr_t desc_base(sel_t sel);
 
 /* max valid byte offset in a selector's segment (its descriptor limit) */
-word_t desc_limit(unsigned int sel);
+segext_t  desc_limit(sel_t sel);
 
 /* IDT: zero the table + point every vector at the fault-catch stub (called from
  * gdt_init before entering PM); install one gate (used by the IRQ/syscall path). */
 void idt_init(void);
-void idt_gate_set(unsigned int vect, word_t offset, word_t selector, byte_t access);
+void idt_gate_set(unsigned int vect, word_t offset, sel_t selector, byte_t access);
 
 #endif /* CONFIG_286_PMODE */
 

@@ -270,13 +270,9 @@ static void INITPROC kernel_init(void)
 
 #ifdef CONFIG_FARTEXT_KERNEL
     /* add .farinit.init section to main memory free list */
-    seg_t     init_seg = ((unsigned long)(void __far *)__start_fartext_init) >> 16;
+    seg_t     init_seg = _FP_SEG(__start_fartext_init);
 #ifdef CONFIG_286_PMODE
-    /* PM: a far pointer's segment is a SELECTOR, not a paragraph. Convert it to
-     * the physical base paragraph; otherwise seg_add() frees a bogus low region
-     * into the main pool that overlaps reserved low memory, and whatever program
-     * later loads there (e.g. /bin/init) corrupts the kernel. */
-    init_seg = (seg_t)(desc_base(init_seg) >> 4);
+    init_seg = desc_base(init_seg) >> 4;    /* convert selector to physical segment */
 #endif
     seg_t s = init_seg + (((word_t)(void *)__start_fartext_init + 15) >> 4);
     seg_t e = init_seg + (((word_t)(void *)  __end_fartext_init + 15) >> 4);

@@ -11,6 +11,7 @@
 #include <linuxmt/config.h>
 #include <linuxmt/types.h>
 #include <linuxmt/kernel.h>
+#include <linuxmt/limits.h>
 #include <arch/segment.h>
 #include <arch/seg286.h>
 
@@ -35,20 +36,16 @@
 
 /* The Global Descriptor Table (4 KB, in the kernel data segment).
  * GDT_KCODE/KDATA are the kernel's own segments; GDT_FIRST_DYN..end are
- * handed out by desc_alloc() for process/buffer segments. */
-static gdt_entry_t gdt[GDT_ENTRIES];
+ * handed out by desc_alloc() for process/buffer segments.
+ */
+static struct gdt_entry gdt[MAX_GDT_ENTRIES];
 
 /* round-robin hint for the next candidate free slot */
-static unsigned int next_dyn = GDT_FIRST_DYN;
+static int next_dyn = GDT_FIRST_DYN;
 
-/* lgdt/lidt operand: 16-bit limit + linear base (286 uses low 24 bits) */
-struct dtr { word_t limit; addr_t base; };
-
-void pm_switch(struct dtr *gdtr, struct dtr *idtr);     /* arch/i86/lib/pm_enter.S */
-
-void desc_set(unsigned int sel, addr_t base, segext_t paras, byte_t access)
+void desc_set(sel_t sel, addr_t base, segext_t paras, byte_t access)
 {
-    gdt_entry_t *d = &gdt[SEL_INDEX(sel)];
+    struct gdt_entry *d = &gdt[SEL_INDEX(sel)];
     addr_t limit = PARA_BYTES(paras);
 
     if (limit == 0 || limit > 0x10000L)     /* a 286 segment is <= 64 KB */
@@ -62,55 +59,52 @@ void desc_set(unsigned int sel, addr_t base, segext_t paras, byte_t access)
 
 /* change only the access byte (base/limit kept) -- exec flips its text seg
  * data(writable, to load) -> code(executable, to run) */
-void desc_chaccess(unsigned int sel, byte_t access)
+void desc_chaccess(sel_t sel, byte_t access)
 {
     gdt[SEL_INDEX(sel)].access = access;
 }
 
 /* find a free GDT slot, fill it, return its selector (0 = table full) */
-unsigned int desc_alloc(addr_t base, segext_t paras, byte_t access)
+sel_t desc_alloc(addr_t base, segext_t paras, byte_t access)
 {
-    unsigned int i = next_dyn, scanned;
+    int i = next_dyn, scanned;
 
-    for (scanned = 0; scanned < GDT_ENTRIES - GDT_FIRST_DYN; scanned++) {
+    for (scanned = 0; scanned < MAX_GDT_ENTRIES - GDT_FIRST_DYN; scanned++) {
         if (!(gdt[i].access & DESC_PRESENT)) {          /* P=0 => free */
-            unsigned int sel = MK_SEL(i, SEL_GDT, SEL_RPL0);
+            sel_t sel = MK_SEL(i, SEL_GDT, SEL_RPL0);
             desc_set(sel, base, paras, access);
-            next_dyn = (i + 1 < GDT_ENTRIES) ? i + 1 : GDT_FIRST_DYN;
+            next_dyn = (i + 1 < MAX_GDT_ENTRIES) ? i + 1 : GDT_FIRST_DYN;
             return sel;
         }
-        if (++i >= GDT_ENTRIES) i = GDT_FIRST_DYN;
+        if (++i >= MAX_GDT_ENTRIES) i = GDT_FIRST_DYN;
     }
     return 0;                                            /* GDT full */
 }
 
-void desc_free(unsigned int sel)
+void desc_free(sel_t sel)
 {
     gdt[SEL_INDEX(sel)].access = 0;                      /* clear Present */
 }
 
-addr_t desc_base(unsigned int sel)
+addr_t desc_base(sel_t sel)
 {
-    gdt_entry_t *d = &gdt[SEL_INDEX(sel)];
+    struct gdt_entry *d = &gdt[SEL_INDEX(sel)];
+
     return ((addr_t)d->base_hi << 16) | d->base_lo;
 }
 
-word_t desc_limit(unsigned int sel)         /* max valid byte offset in the segment */
+segext_t desc_limit(sel_t sel)         /* max valid byte offset in the segment */
 {
     return gdt[SEL_INDEX(sel)].limit;
 }
 
-const void *gdt_table(void) { return gdt; }             /* for lgdt in boot asm */
-unsigned    gdt_limit(void) { return sizeof(gdt) - 1; }
-
 /* ---- Interrupt Descriptor Table (2 KB, in the kernel data segment) ---- */
-static idt_gate_t idt[256];
-extern char pm_flt_base[];              /* arch/i86/boot/pm_enter.S: 32 stubs, 8 bytes each */
-extern void pm_flt_other(void);         /* generic stub for vectors >= 32 */
+static struct idt_gate idt[256];
 
-void idt_gate_set(unsigned int vect, word_t offset, word_t selector, byte_t access)
+void idt_gate_set(unsigned int vect, word_t offset, sel_t selector, byte_t access)
 {
-    idt_gate_t *g = &idt[vect];
+    struct idt_gate *g = &idt[vect];
+
     g->offset   = offset;
     g->selector = selector;
     g->zero     = 0;
@@ -124,7 +118,7 @@ void idt_gate_set(unsigned int vect, word_t offset, word_t selector, byte_t acce
 void idt_init(void)
 {
     unsigned int v;
-    for (v = 0; v < 32; v++)            /* per-vector stubs so the reporter knows the vector */
+    for (v = 0; v < 32; v++)    /* per-vector stubs so the reporter knows the vector */
         idt_gate_set(v, (word_t)(pm_flt_base + v*8), SEL_KCODE, GATE_INT286);
     for (v = 32; v < 256; v++)
         idt_gate_set(v, (word_t)pm_flt_other, SEL_KCODE, GATE_INT286);

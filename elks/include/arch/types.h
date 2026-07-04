@@ -19,6 +19,7 @@ typedef __u16                   word_t;
 typedef __u32                   long_t;
 
 typedef __u16                   seg_t;      /* segment value */
+typedef __u16                   sel_t;      /* selector value */
 typedef __u16                   segext_t;   /* paragraph count */
 typedef __u16                   segoff_t;   /* offset in segment */
 typedef __u16                   flag_t;     /* CPU flag word */
