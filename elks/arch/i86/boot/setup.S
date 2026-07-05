@@ -83,6 +83,7 @@
 #include <linuxmt/config.h>
 #include <linuxmt/devnum.h>
 #include <linuxmt/boot.h>
+#include <arch/segment.h>
 
 // Relocating loader debug option
 debug_output    =       0       // display various register values during execution
@@ -761,17 +762,15 @@ relocat:
 	// in protected mode.  %si still points at the relocation record (symndx at 4).
 	mov 4(%si),%ax            // r_symndx
 	cmp $-2,%ax               // S_TEXT
-	jne pmrel_1
-	mov $0x08,%ax             // -> SEL_KCODE
-	jmp pmrel_done
-pmrel_1:
-	cmp $-5,%ax               // S_FTEXT
-	jne pmrel_2
-	mov $0x18,%ax             // -> SEL_KFTEXT
-	jmp pmrel_done
-pmrel_2:
-	mov $0x10,%ax             // S_DATA -> SEL_KDATA
-pmrel_done:
+	jne 1f
+	mov $SEL_KCODE,%ax
+	jmp 3f
+1:	cmp $-5,%ax               // S_FTEXT
+	jne 2f
+	mov $SEL_KFTEXT,%ax
+	jmp 3f
+2:	mov $SEL_KDATA,%ax        // S_DATA -> SEL_KDATA
+3:
 #endif
 	mov %ax,%es:(%di)
 

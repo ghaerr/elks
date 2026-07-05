@@ -1,29 +1,27 @@
-#include <linuxmt/config.h>
 /*
- * 80286 real -> protected mode switch.  (phase 4 of the 286 HAL)
+ * 286/386+ real -> protected mode switch and auxillary routines.
  *
- * Called once from crt0.S (CONFIG_286_PMODE) after kernel_cs/kernel_ds are
- * saved and the temporary stack is set, just before start_kernel.  The GDT
- * has already been filled by gdt_init() (pm286.c), which passes the lgdt/lidt
- * operands.  Kernel selectors (see <arch/seg286.h>):
- *     0x08 = GDT[1] kernel code, base = kernel_cs << 4
- *     0x10 = GDT[2] kernel data, base = kernel_ds << 4
+ * Called as last step in gdt_init(), after GDT initialization. enable_protected_mode()
+ * is passed the two lgdt/lidt operands, which are the physical addresses of
+ * the GDT and IDT.
+ * The GDT kernel selectors used are:
+ *     SEL_KCODE = GDT[1] kernel code, base = kernel_cs << 4
+ *     SEL_KDATA = GDT[2] kernel data, base = kernel_ds << 4
  * Both bases equal the kernel's real-mode segments, so the same offsets resolve
  * to the same physical addresses across the switch (CS:IP and SS:SP stay valid).
  *
- * NOTE: enters PM with interrupts OFF.  gdt_init() has filled the IDT (phase 5a):
+ * NOTE: enters PM with interrupts OFF.  gdt_init() has filled the IDT:
  * every vector points at pm_fault_stub (report on COM1 + halt) until irq_init()
- * installs the real IRQ/syscall handlers (phase 5b).  ftext has its own descriptor
- * and far-call selectors (phase 4b).
+ * installs the real IRQ/syscall handlers.  ftext has its own descriptor
+ * and far-call selectors.
  */
-#ifdef CONFIG_286_PMODE
         .arch   i286, nojumps
         .code16
         .text
-        .global pm_switch
+        .global enable_protected_mode
 
-// void pm_switch(struct dtr *gdtr, struct dtr *idtr);   /* near cdecl */
-pm_switch:
+// void pm_enable(struct dtr *gdtr, struct dtr *idtr);
+enable_protected_mode:
         push    %bp
         mov     %sp,%bp
         cli                     // no interrupts during the transition
@@ -169,4 +167,3 @@ pm_putc_ser:
         pop     %dx
         pop     %ax
         ret
-#endif

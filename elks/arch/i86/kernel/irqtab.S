@@ -4,6 +4,7 @@
 #include <arch/asm-offsets.h>
 #include <arch/ports.h>
 #include <arch/irq.h>
+#include <arch/segment.h>
 
 #ifdef CONFIG_286_PMODE
         .arch   i286, nojumps   // PM build: 286 superset (push imm); 8086 code unaffected
@@ -74,7 +75,7 @@ _irqit:
 //
         mov     %sp,%si
 #ifdef CONFIG_286_PMODE
-        push    $0x10           // PM: SEL_KDATA (trampoline return-CS is the code alias, not usable as DS)
+        push    $SEL_KDATA      // trampoline return-CS is code alias, not usable as DS
         pop     %ds
 #else
         mov     %ss:8(%si),%ds
@@ -130,7 +131,7 @@ save_regs:
         pop     %di             // Return offset is actually a pointer to the IRQ number
         pop     %ds             // Return segment of the dynamic handler = kernel DS
 #ifdef CONFIG_286_PMODE
-        push    $0x10           // PM: force DS = SEL_KDATA (popped return-CS is the code alias)
+        push    $SEL_KDATA      // force DS = SEL_KDATA (popped return-CS is code alias)
         pop     %ds
 #endif
         push    %bp             // BP

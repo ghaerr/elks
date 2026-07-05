@@ -15,39 +15,43 @@
 #include <arch/seg286.h>
 
 #ifdef CONFIG_286_PMODE
-/* 286 protected mode (ghaerr's convention): the arena manages the physical
- * paragraph in segment_s.para (BASE() macro); every USED segment also gets a
- * GDT descriptor whose selector becomes segment_s.base -- the value the kernel
- * hands out externally via ->base and loads into a segment register. */
-static byte_t seg_pm_access(word_t type)
-{
-    /* ring-0 user (phase 6): DPL0 code/data selectors.  Running user code at DPL3
-     * (DESC_UCODE/UDATA) gives real protection but needs a TSS for the ring3->ring0
-     * interrupt stack switch -- deferred to the protection phase. */
-    return ((type & SEG_FLAG_TYPE) == SEG_FLAG_CSEG) ? DESC_KCODE : DESC_KDATA;
-}
-static int seg_pm_attach(segment_s *seg, word_t type)
-{
-    seg->base = desc_alloc(PARA_BYTES(seg->para), seg->size, seg_pm_access(type));
-    return seg->base ? 0 : -1;      /* selector 0 => GDT full */
-}
-static void seg_pm_detach(segment_s *seg)
-{
-    if (seg->base) { desc_free(seg->base); seg->base = 0; }
-}
-#else
-#define seg_pm_attach(seg, type)    0
-#define seg_pm_detach(seg)          ((void)0)
-#endif
-
-#ifdef CONFIG_286_PMODE
-/* PM must use additional 'para' member seperately from
- * 'base' selector value to track main memory physical address.
+/* In protected mode the allocator manages the physical paragraph using the
+ * additional 'para' member via the BASE() macro, and a GDT selector is allocated
+ * whose selector is stored in the 'base' member. This is used externally instead
+ * of the segment register value stored there in real mode.
  * Real mode just uses single 'base' member as segment address.
  */
 #define BASE(seg)   ((seg)->para)   /* use base paragraph address in protected mode */
+
+static byte_t seg_pm_access(word_t type)
+{
+    /* User mode code and data use ring 0 (DPL 0) selectors.  Running user code at DPL3
+     * (DESC_UCODE/UDATA) would give real protection but need a TSS for the ring3->ring0
+     * interrupt stack switch.
+     */
+    return ((type & SEG_FLAG_TYPE) == SEG_FLAG_CSEG) ? DESC_KCODE : DESC_KDATA;
+}
+
+/* allocate selector for passed segment_s structure, 0 = GDT full */
+static int seg_pm_attach(segment_s *seg, word_t type)
+{
+    seg->base = desc_alloc(PARA_BYTES(seg->para), seg->size, seg_pm_access(type));
+    return seg->base;
+}
+
+static void seg_pm_detach(segment_s *seg)
+{
+    if (seg->base) {
+        desc_free(seg->base);
+        seg->base = 0;
+    }
+}
 #else
+
 #define BASE(seg)   ((seg)->base)   /* use segment address in real mode */
+/* for non-protected mode configurations, any generated code is optimized out */
+#define seg_pm_attach(seg, type)    1
+#define seg_pm_detach(seg)
 #endif
 
 // Minimal segment size to be useful
@@ -164,7 +168,7 @@ segment_s * seg_alloc_fixed (seg_t base, segext_t size, word_t type)
     seg->size = size;
     seg->flags = SEG_FLAG_USED | type;
     seg->ref_count = 1;
-    if (seg_pm_attach(seg, type)) {     /* PM: attach descriptor */
+    if (!seg_pm_attach(seg, type)) {    /* allocate descriptor (no-op in real mode) */
         heap_free(seg);
         return 0;
     }
@@ -182,7 +186,7 @@ segment_s * seg_alloc (segext_t size, word_t type)
     seg = seg_free_get (size, type);
     if (seg && (type & SEG_FLAG_ALIGN1K))
         BASE(seg) += ((~BASE(seg) + 1) & ((1024 >> 4) - 1));
-    if (seg && seg_pm_attach(seg, type)) {  /* PM: attach descriptor (no-op in real mode) */
+    if (seg && !seg_pm_attach(seg, type)) {
         seg_free(seg);
         seg = 0;
     }
@@ -194,10 +198,9 @@ segment_s * seg_alloc (segext_t size, word_t type)
 
 void seg_free (segment_s * seg)
 {
-    seg_pm_detach(seg);     /* PM: release GDT descriptor (no-op in real mode) */
+    seg_pm_detach(seg);     /* release GDT descriptor (no-op in real mode) */
 #ifdef CONFIG_ROMFS_FS
-    // Handle segments created outside of the memory allocator
-    // (via seg_alloc_fixed).
+    // Handle segments created outside of the memory allocator (via seg_alloc_fixed).
     if (seg->all.prev == NULL && seg->all.next == NULL) {
         heap_free(seg);
         return;
@@ -269,7 +272,10 @@ segment_s * seg_dup (segment_s * src)
 {
     segment_s * dst = seg_free_get (src->size, src->flags);
     if (dst) {
-        if (seg_pm_attach(dst, src->flags)) { seg_free(dst); return 0; }
+        if (!seg_pm_attach(dst, src->flags)) {
+            seg_free(dst);
+            return 0;
+        }
         fmemcpyw(0, dst->base, 0, src->base, src->size << 3);
     }
     return dst;

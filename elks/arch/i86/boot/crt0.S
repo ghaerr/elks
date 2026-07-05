@@ -48,9 +48,6 @@ _start:
         mov     %ax,%ss         // SS=ES=DS
         mov     $istack,%sp
 
-#ifdef CONFIG_286_PMODE
-        call    gdt_init        // build GDT and enter protected mode (no return to real mode)
-#endif
         call    start_kernel    // no return
 
 #if defined(CONFIG_ARCH_SWAN)

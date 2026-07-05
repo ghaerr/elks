@@ -123,7 +123,6 @@ static void INITPROC add_buffers(int nbufs, char *buf, ramdesc_t seg)
 {
     struct buffer_head *bh;
     int n = 0;
-    size_t offset;
 
     for (bh = bh_next; n < nbufs; n++, bh = ++bh_next) {
         ext_buffer_head *ebh = EBH(bh);
@@ -135,7 +134,7 @@ static void INITPROC add_buffers(int nbufs, char *buf, ramdesc_t seg)
 
 #if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
         /* segment adjusted to require no offset to buffer */
-        offset = xmsenabled?  ((n & 63) << BLOCK_SIZE_BITS) :
+        size_t offset = xmsenabled?  ((n & 63) << BLOCK_SIZE_BITS) :
                               ((n & 63) << (BLOCK_SIZE_BITS - 4));
         ebh->b_L2seg = seg + offset;
 #else

@@ -24,7 +24,9 @@ jobs:
 
     steps:
       - name: setup
-        run: 'sudo apt-get install texinfo libncurses5-dev libelf-dev ncompress nasm'
+        run: |
+            sudo apt-get update
+            sudo apt-get install -y --fix-missing texinfo libncurses5-dev libelf-dev ncompress nasm
 
       - name: checkout
         uses: actions/checkout@v2
