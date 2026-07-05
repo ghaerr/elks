@@ -50,7 +50,7 @@ static void seg_pm_detach(segment_s *seg)
 
 #define BASE(seg)   ((seg)->base)   /* use segment address in real mode */
 /* for non-protected mode configurations, any generated code is optimized out */
-#define seg_pm_attach(seg, type)    0
+#define seg_pm_attach(seg, type)    1
 #define seg_pm_detach(seg)
 #endif
 
