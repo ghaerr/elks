@@ -21,7 +21,8 @@
 #define GDT_BIOSDATA    7   /* BIOS data area (segment 0x40) */
 #define GDT_VIDEO       8   /* CGA/EGA/VGA text video memory (segment 0xB800) */
 #define GDT_TRACK       9   /* directfd DMA/track buffer (TRACKSEG) */
-#define GDT_FIRST_DYN   10  /* first dynamically-allocated selector */
+#define GDT_IDT         10  /* IDT table access at physical address 0:0 */
+#define GDT_FIRST_DYN   11  /* first dynamically-allocated selector */
 
 /* fixed kernel selectors (index<<3, GDT, RPL0) -- must match above order */
 #define SEL_KCODE       0x08
@@ -33,8 +34,7 @@
 #define SEL_BIOSDATA    0x38
 #define SEL_VIDEO       0x40
 #define SEL_TRACK       0x48
-
-#define GDT_ENTRIES     512 /* 512 * 8 = 4 KB GDT                 */
+#define SEL_IDT         0x50
 
 /*
  * Protected mode selector vs real mode segment definitions and macros
