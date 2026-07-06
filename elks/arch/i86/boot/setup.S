@@ -700,8 +700,9 @@ data_reloc:
 // Load registers as kernel expects
 
 	mov -22(%bp),%ax   // kernel .data segment
-	mov %ax,%es
 	mov %ax,%ds
+	mov -20(%bp),%ax   // kernel .fartext segment
+	mov %ax,%es
 	mov -2(%bp),%bx    // code size
 	mov -4(%bp),%si    // data size
 	mov -6(%bp),%dx    // bss size
@@ -715,10 +716,11 @@ data_reloc:
 	push %cx
 
 	.hex4sp	%ss,"\nDone SS:"
-	.hex4sp	%ds,"DS/ES:"
-	.hex4sp	%bx,".text size:"
-	.hex4sp	%di,".fartext size:"
-	.hex4sp	%si,".data size:"
+	.hex4sp	%ds,"DS:"
+	.hex4sp	%bx,".text sz:"
+	.hex4sp	%es,".ftext:"
+	.hex4sp	%di,".ftext sz:"
+	.hex4sp	%si,".data sz:"
 	.hex4sp	%ax,"\nJump CS:"
 	.hex4sp	%cx,"entry:"
 	.if debug_output

@@ -14,9 +14,10 @@
 _start:
 
 /*
-! Setup.S already initialized DS and ES (but not SS)
+! Setup.S already initialized DS (but not SS)
 ! In addition, registers contain:
 !   BX, Text size
+!   ES, Far text segment
 !   DI  Far text size
 !   SI, Data size
 !   DX, BSS size
@@ -26,6 +27,10 @@ _start:
         mov     %si,_enddata
         add     %dx,%si
         mov     %si,_endbss
+        mov     %es,kernel_ftext
+
+        mov     %ds,%ax         // set ES = DS
+        mov     %ax,%es
 
 // Start cleaning BSS. Still using setup.S stack
 
@@ -115,6 +120,7 @@ early_putchar:
         .global _endftext
         .global _enddata
         .global _endbss
+        .global kernel_ftext
         .extern kernel_cs
         .extern kernel_ds
         .extern istack
@@ -129,6 +135,9 @@ _enddata:
         .word   0
 
 _endbss:
+        .word   0
+
+kernel_ftext:
         .word   0
 
         .bss
