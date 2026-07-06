@@ -135,7 +135,6 @@ void gdt_init(void)
     addr_t   code_base  = (addr_t)kernel_cs << 4;
     addr_t   data_base  = (addr_t)kernel_ds << 4;
     segext_t text_para  = BYTES_PARA((unsigned)_endtext);
-    addr_t   ftext_base = code_base + ((addr_t)text_para << 4); /* fartext after text */
     static struct dtr gdtr, idtr;
 
     /* separate descriptors for near text, far text and data.
@@ -145,8 +144,10 @@ void gdt_init(void)
     desc_set(MK_SEL(GDT_NULL,   SEL_GDT, SEL_RPL0), 0,          0,         0);
     desc_set(MK_SEL(GDT_KCODE,  SEL_GDT, SEL_RPL0), code_base,  text_para, DESC_KCODE);
     desc_set(MK_SEL(GDT_KDATA,  SEL_GDT, SEL_RPL0), data_base,  0x1000,    DESC_KDATA);
-    desc_set(MK_SEL(GDT_KFTEXT, SEL_GDT, SEL_RPL0), ftext_base,
+    if (kernel_ftext) {
+        desc_set(MK_SEL(GDT_KFTEXT, SEL_GDT, SEL_RPL0), (addr_t)kernel_ftext << 4,
                                           BYTES_PARA((unsigned)_endftext), DESC_KCODE);
+    }
 
     /* KCODE same base/limit as KDATA but executable+readable. IRQ trampolines are
      * built in the kernel data segment, and an IDT gate needs an executable selector.

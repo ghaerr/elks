@@ -44,7 +44,7 @@ struct netif_parms netif_parms[MAX_ETHS] = {
     { WD_IRQ, WD_PORT, WD_RAM, WD_FLAGS },
     { EL3_IRQ, EL3_PORT, 0, EL3_FLAGS },
 };
-seg_t kernel_cs, kernel_ds;
+seg_t kernel_cs, kernel_ds;     /* always segment values even in PM */
 int root_mountflags;
 int tracing;
 int nr_ext_bufs, nr_xms_bufs, nr_map_bufs;
@@ -113,9 +113,10 @@ void start_kernel(void)
 {
     //tracing = TRACE_KSTACK | TRACE_ISTACK;
 #ifdef CONFIG_286_PMODE
-    /* Build GDT and enter protected mode (no return to real mode).
-     * Must be called before any FAR/INITPROC procedures as setup.S
-     * loader relocated far segment values to selectors.
+    /* Build GDT and enter protected mode before calling far_start_kernel,
+     * as the setup.S kernel loader already relocated all .fartext CS segment
+     * references to SEL_KFTEXT selectors. The system never returns to real
+     * mode and BIOS services can no longer be called.
      */
     gdt_init();
 #endif
@@ -296,7 +297,7 @@ static void INITPROC kernel_banner(seg_t init, seg_t extra)
            (unsigned)_endbss - (unsigned)_enddata, heapsize);
     printk("Kernel text %x ", kernel_cs);
 #ifdef CONFIG_FARTEXT_KERNEL
-    printk("ftext %x init %x ", (unsigned)((long)kernel_init >> 16), init);
+    printk("ftext %x init %x ", kernel_ftext, init);
 #endif
     printk("data %x end %x top %x %u+%u+%uK free\n",
            kernel_ds, membase, memend, (int) ((memend - membase) >> 6),
