@@ -73,18 +73,27 @@ struct dtr {
 #define MK_SEL(index, ti, rpl)  (((unsigned)(index) << 3) | (ti) | (rpl))
 #define SEL_INDEX(sel)          ((unsigned)(sel) >> 3)
 
-/* ---- HAL hooks (implemented in pm286.c and pm_enter.S) ---- */
+/* ---- HAL hooks (implemented in pm286.c and pmode.S) ---- */
 
-extern char pm_flt_base[];       /* pm_enter.S: 32 stubs, 8 bytes each */
-void pm_flt_other(void);         /* generic stub for vectors >= 32 */
+/* The ELKS PM Interupt Descriptor Table uses the same physical memory as
+ * the real mode Interrupt Vector Table, except that the IDT uses 8 bytes/entry
+ * whereas the IVT uses just 4. Thus, only the first 128 entries will fit into
+ * the original IVT locations before extending into the BIOS Data Area starting
+ * at physical address 0x400.
+ * NOTE: MAX_IDT_ENTRIES > 128 uses 8 bytes of the BDA per additional entry!
+ */
+#define MAX_IDT_ENTRIES 129     /* 0..NR_IRQS required, needs 129 for 0x80 syscall */
+
+void gdt_init(void);            /* build fixed GDT selector enries */
+void pm_fault_panic(void);      /* PM exception handler: display info and halt */
+
+/* load GDTR and IDTR, set PM via SMSW/LMSW, reload CS */
 void enable_protected_mode(struct dtr *gdtr, struct dtr *idtr);
 
-/* boot: build GDT[GDT_KCODE/KDATA], load GDTR+IDTR, set CR0.PE, far-jump to PM */
-void gdt_init(void);
-
 /* allocate a descriptor for [base, base+paras*16) with `access`; returns a
- * selector (0 on table-full). seg_alloc() calls this after reserving physram. */
-sel_t desc_alloc(addr_t base, segext_t paras, byte_t access);
+ * selector (0 on table-full). seg_alloc() calls this after reserving physram.
+ */
+sel_t  desc_alloc(addr_t base, segext_t paras, byte_t access);
 
 /* rewrite / free an existing selector's descriptor */
 void   desc_set(sel_t sel, addr_t base, segext_t paras, byte_t access);
@@ -98,6 +107,6 @@ addr_t desc_base(sel_t sel);
 segext_t desc_limit(sel_t sel); /* FIXME: will need 16M limit for 386 PM/fmemalloc */
 
 /* install an interrupt gate (used by the IRQ/syscall path). */
-void idt_gate_set(int vect, word_t offset, sel_t selector, byte_t access);
+void idt_gate_set(unsigned int vect, unsigned int offset, sel_t selector, byte_t access);
 
 #endif /* __ARCH_SEG286_H */

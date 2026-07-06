@@ -25,7 +25,7 @@ int free_irq(int irq);
 
 /* irqtab.S */
 void _irqit (void);
-void int_vector_set (int vect, word_t proc, word_t seg);
+void int_vector_set(unsigned int vect, word_t proc, seg_t seg);
 void idle_halt(void);
 
 void div0_handler(int irq, struct pt_regs *regs);
