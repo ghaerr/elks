@@ -11,6 +11,7 @@
 #include <linuxmt/config.h>
 #include <linuxmt/types.h>
 #include <linuxmt/kernel.h>
+#include <linuxmt/memory.h>
 #include <linuxmt/limits.h>
 #include <arch/segment.h>
 #include <arch/seg286.h>
@@ -99,13 +100,16 @@ segext_t desc_limit(sel_t sel)         /* max valid byte offset in the segment *
     return gdt[SEL_INDEX(sel)].limit;
 }
 
-/* ---- Interrupt Descriptor Table (2 KB, in the kernel data segment) ---- */
-static struct idt_gate idt[256];
-
-void idt_gate_set(int vect, word_t offset, sel_t selector, byte_t access)
+/* set an entry in the IDT; uses SEL_IDT which points to real mode IVT at 0:0 */
+void idt_gate_set(unsigned int vect, unsigned int offset, sel_t selector, byte_t access)
 {
-    struct idt_gate *g = &idt[vect];
+    struct idt_gate __far *g;;
 
+    if (vect >= MAX_IDT_ENTRIES) {
+        printk("idt_gate_set: invalid vector %d\n", vect);
+        return;
+    }
+    g = _MK_FP(SEL_IDT, vect * sizeof(struct idt_gate));
     g->offset   = offset;
     g->selector = selector;
     g->zero     = 0;
@@ -113,18 +117,18 @@ void idt_gate_set(int vect, word_t offset, sel_t selector, byte_t access)
     g->reserved = 0;
 }
 
-/* Point every vector at the fault-catch stub (in kernel code = SEL_KCODE) so an
- * exception between PM entry and irq_init() is reported, not a triple fault.
+/* Point IDT vectors at the fault-catch handler so an exception between
+ * PM entry and irq_init() is reported, not a triple fault.
  * irq_init() later overwrites the live IRQ/syscall/INT0/INT2 vectors.
  */
 static void idt_init(void)
 {
     int v;
 
-    for (v = 0; v < 32; v++)    /* per-vector stubs so the reporter knows the vector */
-        idt_gate_set(v, (word_t)(pm_flt_base + v*8), SEL_KCODE, GATE_INT286);
-    for (v = 32; v < 256; v++)
-        idt_gate_set(v, (word_t)pm_flt_other, SEL_KCODE, GATE_INT286);
+    for (v = 0; v < 32; v++)    /* per-vector entries so the reporter knows the vector */
+        idt_gate_set(v, (unsigned)pm_fault_panic + v*8, SEL_KCODE, GATE_INT286);
+    for (v = 32; v < MAX_IDT_ENTRIES; v++)
+        idt_gate_set(v, (unsigned)pm_fault_panic + 33*8, SEL_KCODE, GATE_INT286);
 }
 
 /* Called once from start_kernel: fill the kernel's own descriptors, build
@@ -154,6 +158,16 @@ void gdt_init(void)
      */
     desc_set(MK_SEL(GDT_KDATA_EXEC, SEL_GDT, SEL_RPL0), data_base, 0x1000, DESC_KCODE);
 
+    /* IDT replaces real mode IVT interrupt vector table + 8 bytes from 0:0 to 0:0407.
+     * NOTE: With the normal MAX_IDT_ENTRIES of 129 (required for syscall INT 0x80),
+     * the IDT which uses 8 bytes/entry will overwrite the first 1K IVT plus the
+     * first 8 bytes of the BIOS data area which starts at 0x40:0. The first 8
+     * bytes of the BDA contain the port addresses of COM1-COM4, which aren't used
+     * by ELKS setupb/setupw anyways.
+     */
+    desc_set(MK_SEL(GDT_IDT, SEL_GDT, SEL_RPL0), 0, BYTES_PARA(MAX_IDT_ENTRIES * 8),
+        DESC_KDATA);
+
     /* setupb/setupw setup.S data segment */
     desc_set(MK_SEL(GDT_SETUP, SEL_GDT, SEL_RPL0), SEG_SETUP_DATA << 4, BYTES_PARA(512),
         DESC_KDATA);
@@ -177,9 +191,9 @@ void gdt_init(void)
     idt_init();                 /* every vector -> fault-catch stub (until irq_init) */
 
     gdtr.limit = sizeof(gdt) - 1;
-    gdtr.base  = data_base + (unsigned)&gdt;    /* linear addr of GDT */
-    idtr.limit = sizeof(idt) - 1;
-    idtr.base  = data_base + (unsigned)&idt;    /* linear addr of IDT */
+    gdtr.base  = data_base + (unsigned)&gdt; /* linear address of GDT */
+    idtr.limit = MAX_IDT_ENTRIES * sizeof(struct idt_gate) - 1;
+    idtr.base  = 0;                         /* IDT replaces real mode IVT at 0:0 */
 
     enable_protected_mode(&gdtr, &idtr);    /* enter PM; returns here in protected mode */
 }

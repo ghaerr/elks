@@ -51,29 +51,26 @@ pm_cs:
         ret                     // return (in PM) to gdt_init -> crt0 -> start_kernel
 
 // Exception/fault catch + reporter
-// gdt_init() points IDT 0..31 at pm_flt_base + vec*8 and 32..255 at pm_flt_other.
+// gdt_init() points IDT 0..31 at pm_fault_panic + vec*8 and the rest at pm_fault_panic2.
 // Each stub pushes its vector then jumps to the common reporter, which prints
-// "EXC=<num>-<errcode>-<IP>-<CS>-<FLAGS>-<rest of stack[0..4]>" on COM1 and halts.
+// "EXC=<vecnum>-<errcode>-<IP>-<CS>-<FLAGS>-<rest of stack[0..4]>" on COM1 and halts.
 // <num> is the exception number: #DF=08, #TS=0A, #NP=0B, #SS=0C, #GP=0D.
 // Faulting CS will be known selector number: CODE 0008, DATA 0010, FTEXT 0018.
 
         .balign 8
-        .global pm_flt_base
-pm_flt_base:
+        .global pm_fault_panic
+pm_fault_panic:
         .set    fltv, 0
-        .rept   32
+        .rept   32              // first 32 IDT entries report vector numbers 0..31
         pushw   $fltv
         jmp     pm_fault_common
-        .balign 8, 0x90         // each stub occupies an 8-byte slot
+        .balign 8, 0x90         // each entry occupies an 8-byte slot
         .set    fltv, fltv + 1
         .endr
-
-        .global pm_flt_other
-pm_flt_other:
-        pushw   $0x00FF         // use 00FF to mark vectors >= 32
+        pushw   $0x00FF         // remainder vectors >= 32 report vector 255
 pm_fault_common:
         cli
-        mov     %sp,%bp         // bp -> [vec][ERRCODE][IP][CS][FLAGS][...]
+        mov     %sp,%bp         // bp -> [vecnum][ERRCODE][IP][CS][FLAGS][...]
         mov     $0x0d,%al
         call    pm_putc_ser
         mov     $0x0a,%al
