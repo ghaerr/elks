@@ -135,7 +135,7 @@ void gdt_init(void)
     addr_t   code_base  = (addr_t)kernel_cs << 4;
     addr_t   data_base  = (addr_t)kernel_ds << 4;
     segext_t text_para  = BYTES_PARA((unsigned)_endtext);
-    addr_t   ftext_base = code_base + ((addr_t)text_para << 4); /* fartext after text */
+    addr_t   ftext_base = code_base + PARA_BYTES(text_para); /* HMA fartext after text */
     static struct dtr gdtr, idtr;
 
     /* separate descriptors for near text, far text and data.

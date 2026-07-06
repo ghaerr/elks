@@ -15,6 +15,8 @@
  * installs the real IRQ/syscall handlers.  ftext has its own descriptor
  * and far-call selectors.
  */
+#include <arch/segment.h>
+
         .arch   i286, nojumps
         .code16
         .text
@@ -35,9 +37,9 @@ enable_protected_mode:
         or      $1,%ax          // set PE
         lmsw    %ax             // *** now in protected mode ***
 
-        ljmp    $0x08,$pm_cs    // load CS = kernel code selector, flush prefetch
+        ljmp    $SEL_KCODE,$pm_cs // load CS = kernel code selector, flush prefetch
 pm_cs:
-        mov     $0x10,%ax       // kernel data selector
+        mov     $SEL_KDATA,%ax  // kernel data selector
         mov     %ax,%ds
         mov     %ax,%es
         mov     %ax,%ss         // SS base = kernel_ds<<4 (same phys as real-mode SS)
@@ -48,13 +50,13 @@ pm_cs:
         pop     %bp
         ret                     // return (in PM) to gdt_init -> crt0 -> start_kernel
 
-// ---- exception/fault catch + reporter (phase 8 bring-up) ----
+// Exception/fault catch + reporter
 // gdt_init() points IDT 0..31 at pm_flt_base + vec*8 and 32..255 at pm_flt_other.
 // Each stub pushes its vector then jumps to the common reporter, which prints
-// "EXC=<vec>-<w0>-<w1>-<w2>-<w3>" (vector + top stack words) on COM1 and halts.
-// From <vec> = which exception; from the words = faulting CS:IP (CS is a known
-// selector 0008/0010/0018), shifted one word if an error code was pushed
-// (#DF=8 #TS=10 #NP=11 #SS=12 #GP=13).
+// "EXC=<num>-<errcode>-<IP>-<CS>-<FLAGS>-<rest of stack[0..4]>" on COM1 and halts.
+// <num> is the exception number: #DF=08, #TS=0A, #NP=0B, #SS=0C, #GP=0D.
+// Faulting CS will be known selector number: CODE 0008, DATA 0010, FTEXT 0018.
+
         .balign 8
         .global pm_flt_base
 pm_flt_base:
@@ -62,18 +64,16 @@ pm_flt_base:
         .rept   32
         pushw   $fltv
         jmp     pm_fault_common
-        .balign 8, 0x90                 // each stub occupies an 8-byte slot
+        .balign 8, 0x90         // each stub occupies an 8-byte slot
         .set    fltv, fltv + 1
         .endr
 
         .global pm_flt_other
 pm_flt_other:
-        pushw   $0x00FF                 // marker: vector >= 32 (shouldn't fire pre-irq_init)
-        jmp     pm_fault_common
-
+        pushw   $0x00FF         // use 00FF to mark vectors >= 32
 pm_fault_common:
         cli
-        mov     %sp,%bp                 // bp -> [vec][..][IP][CS][FLAGS] (SS-relative)
+        mov     %sp,%bp         // bp -> [vec][ERRCODE][IP][CS][FLAGS][...]
         mov     $0x0d,%al
         call    pm_putc_ser
         mov     $0x0a,%al
@@ -86,43 +86,43 @@ pm_fault_common:
         call    pm_putc_ser
         mov     $'=',%al
         call    pm_putc_ser
-        movw    (%bp),%ax               // vector
+        movw    (%bp),%ax       // vector
         call    pm_puthex
         mov     $'-',%al
         call    pm_putc_ser
-        movw    2(%bp),%ax
+        movw    2(%bp),%ax      // errcode
         call    pm_puthex
         mov     $'-',%al
         call    pm_putc_ser
-        movw    4(%bp),%ax
+        movw    4(%bp),%ax      // IP
         call    pm_puthex
         mov     $'-',%al
         call    pm_putc_ser
-        movw    6(%bp),%ax
+        movw    6(%bp),%ax      // CS
         call    pm_puthex
         mov     $'-',%al
         call    pm_putc_ser
-        movw    8(%bp),%ax
+        movw    8(%bp),%ax      // FLAGS
         call    pm_puthex
         mov     $'-',%al
         call    pm_putc_ser
-        movw    10(%bp),%ax     // (for fmemcpyb: caller return address)
+        movw    10(%bp),%ax     // stack 0
         call    pm_puthex
         mov     $'-',%al
         call    pm_putc_ser
-        movw    12(%bp),%ax
+        movw    12(%bp),%ax     // stack 1
         call    pm_puthex
         mov     $'-',%al
         call    pm_putc_ser
-        movw    14(%bp),%ax
+        movw    14(%bp),%ax     // stack 2
         call    pm_puthex
         mov     $'-',%al
         call    pm_putc_ser
-        movw    16(%bp),%ax
+        movw    16(%bp),%ax     // stack 3
         call    pm_puthex
         mov     $'-',%al
         call    pm_putc_ser
-        movw    18(%bp),%ax
+        movw    18(%bp),%ax     // stack 4
         call    pm_puthex
         mov     $0x0d,%al
         call    pm_putc_ser

@@ -1,16 +1,14 @@
 #ifndef __ARCH_8086_SEGMENT_H
 #define __ARCH_8086_SEGMENT_H
 
+/*
+ * Configured values for various fixed segment addresses and selectors.
+ */
 #include <linuxmt/config.h>
 
 /* paragraph (16-byte) helpers shared with the real-mode arena allocator */
 #define PARA_BYTES(paras)   ((addr_t)(paras) << 4)
 #define BYTES_PARA(bytes)   (((bytes) + 15) >> 4)
-
-/*
- * Protected mode selector vs real mode segment definitions and macros
- */
-#ifdef CONFIG_286_PMODE
 
 /* fixed GDT indices (kernel-private selectors) */
 #define GDT_NULL        0   /* required null descriptor          */
@@ -37,6 +35,11 @@
 #define SEL_TRACK       0x48
 
 #define GDT_ENTRIES     512 /* 512 * 8 = 4 KB GDT                 */
+
+/*
+ * Protected mode selector vs real mode segment definitions and macros
+ */
+#ifdef CONFIG_286_PMODE
 
 /* macros map to selector values */
 #define KERNEL_CS       SEL_KCODE       /* kernel near code selector */
