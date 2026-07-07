@@ -339,11 +339,11 @@ static void INITPROC do_init_task(void)
     heap_add(&opts, sizeof(opts));
 #ifdef CONFIG_FS_XMS
     if (xms_enabled == XMS_LOADALL) {
-        seg_add(DEF_OPTSEG, 0x80);  /* carve out LOADALL buf 0x800-0x865 from release! */
-        seg_add(0x87, DMASEG);
+        seg_add(SEG_OPTSEG, 0x80);  /* carve out LOADALL buf 0x800-0x865 from release! */
+        seg_add(0x87, SEG_DMASEG);
     } else  /* fall through */
 #endif
-    seg_add(DEF_OPTSEG, DMASEG);    /* DEF_OPTSEG through REL_INITSEG */
+    seg_add(SEG_OPTSEG, SEG_DMASEG);    /* SEG_OPTSEG through SEG_INITSEG */
 
     /* run /bin/init or init= command w/argc/argv/env, normally no return*/
     run_init_process_sptr(init_command, (char *)argv_init, argv_slen);

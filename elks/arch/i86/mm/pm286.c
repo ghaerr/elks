@@ -181,11 +181,11 @@ void gdt_init(void)
         DESC_KDATA);
 
     /* setupb/setupw setup.S data segment */
-    desc_set(MK_SEL(GDT_SETUP, SEL_GDT, SEL_RPL0), SEG_SETUP_DATA << 4, BYTES_PARA(512),
+    desc_set(MK_SEL(GDT_SETUP, SEL_GDT, SEL_RPL0), SEG_INITSEG << 4, BYTES_PARA(512),
         DESC_KDATA);
 
     /* boot options (/bootopts) segment */
-    desc_set(MK_SEL(GDT_OPTSEG, SEL_GDT, SEL_RPL0), DEF_OPTSEG << 4, BYTES_PARA(1024),
+    desc_set(MK_SEL(GDT_OPTSEG, SEL_GDT, SEL_RPL0), SEG_OPTSEG << 4, BYTES_PARA(1024),
         DESC_KDATA);
 
     /* BIOS data area */
@@ -196,8 +196,12 @@ void gdt_init(void)
     desc_set(MK_SEL(GDT_VIDEO, SEL_GDT, SEL_RPL0), (addr_t)SEG_VIDEO << 4, 0x1000,
         DESC_KDATA);
 
-    /* direct floppy DMA/track buffer */
-    desc_set(MK_SEL(GDT_TRACK, SEL_GDT, SEL_RPL0), SEG_TRACK << 4, BYTES_PARA(TRACKSEGSZ),
+    /* direct floppy DMA track buffer */
+    desc_set(MK_SEL(GDT_TRACKBUF, SEL_GDT, SEL_RPL0), SEG_TRACK << 4,
+        BYTES_PARA(TRACKSEGSZ), DESC_KDATA);
+
+    /* ATA/CF DMA sector buffer */
+    desc_set(MK_SEL(GDT_DMABUF, SEL_GDT, SEL_RPL0), SEG_DMASEG << 4, BYTES_PARA(512),
         DESC_KDATA);
 
     /* initialize IVT using real mode sel_idt segment 0 to fault-catch stubs */

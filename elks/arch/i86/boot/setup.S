@@ -7,7 +7,7 @@
 ! both setup.s and system has been loaded by the bootblock.
 !
 ! This code asks the bios for memory/disk/other parameters, and
-! puts them in a "safe" place: REL_INITSEG:0-REL_INITSEG:01FF, ie where
+! puts them in a "safe" place: SEG_INITSEG:0-SEG_INITSEG:01FF, ie where
 ! the boot-block used to be. It is then up to the kernel to read them
 ! from there before the area is released to the main memory allocator.
 !
@@ -161,10 +161,10 @@ _start:
 	.hex4sp	%ss,"\nSETUP boot SS:"
 	.hex4sp	%sp,"SP:"
 	.hex4sp	$INITSEG,"\nDEF_INITSEG:"
-	.hex4sp	$REL_INITSEG,"-> REL_INITSEG:"
+	.hex4sp	$SEG_INITSEG,"-> SEG_INITSEG:"
 	.hex4sp	$SETUPSEG,"DEF_SETUPSEG:"
 	.hex4sp	$SYSSEG,"\nDEF_SYSSEG: "
-	.hex4sp	$REL_SYSSEG,"-> REL_SYSSEG: "
+	.hex4sp	$SEG_SYSSEG,"-> SEG_SYSSEG: "
 
 // Check signature at end of setup
 	cli
@@ -446,13 +446,13 @@ _next1:
 
 	mov	$INITSEG,%ax
 	mov	%ax,%ds
-	mov	$REL_INITSEG,%ax
+	mov	$SEG_INITSEG,%ax
 	mov	%ax,%es
 	xor	%si,%si
 	xor	%di,%di
 	mov	$256,%cx
 	cld
-	.hex4sp	%ds,"\nCopy DEF_INITSEG data to REL_INITSEG DS:"
+	.hex4sp	%ds,"\nCopy DEF_INITSEG data to SEG_INITSEG DS:"
 	.hex4sp	%si,"SI:"
 	.hex4sp	%es,"ES:"
 	.hex4sp	%di,"DI:"
@@ -530,7 +530,7 @@ sys_hdr_good:
 	mov $HMA_SEG,%ax
 	jmp 1f
 #endif
-2:	mov $REL_SYSSEG,%ax
+2:	mov $SEG_SYSSEG,%ax
 1:	mov %ax,%es
 	mov %ax,-18(%bp) // save .text segment
 	.ifeq debug_output
@@ -540,13 +540,13 @@ sys_hdr_good:
 	mov -2(%bp),%cx  // code size in bytes
 	add %dx,%ax      // add code paragraphs = .fartext start
 	jnc 1f		 // skip if didn't overflow (no HMA)
-	mov $REL_SYSSEG,%ax // .fartext starts at normal .text location
+	mov $SEG_SYSSEG,%ax // .fartext starts at normal .text location
 	add $16,%si	 // skip first paragraph at FFFF:0000
 	add $16,%di
 	sub $16,%cx
 1:	mov %ax,-20(%bp) // save .data start in case no .fartext
 
-	.hex4sp	%ds,"\nCopy DEF_SYSSEG .text to  REL_SYSSEG DS:"
+	.hex4sp	%ds,"\nCopy DEF_SYSSEG .text to  SEG_SYSSEG DS:"
 	.hex4sp	%si,"SI:"
 	.hex4sp	%es,"ES:"
 	.hex4sp	%di,"DI:"
@@ -586,7 +586,7 @@ sys_hdr_good:
 	mov -18(%bp),%ax  // kernel .text segment
 	add %dx,%ax       // skip code paragraphs
 	jnc 1f
-	mov $REL_SYSSEG,%ax // if text in HMA, start fartext here
+	mov $SEG_SYSSEG,%ax // if text in HMA, start fartext here
 1:	mov %ax,%es
 	mov %ax,-20(%bp)  // save .fartext segment
 	xor %di,%di
@@ -594,7 +594,7 @@ sys_hdr_good:
 	.ifeq debug_output
 	call hex4sp
 	.endif
-	.hex4sp	%ds,"\nCopy DEF_SYSSEG .ftext to REL_SYSSEG DS:"
+	.hex4sp	%ds,"\nCopy DEF_SYSSEG .ftext to SEG_SYSSEG DS:"
 	.hex4sp	%si,"SI:"
 	.hex4sp	%es,"ES:"
 	.hex4sp	%di,"DI:"
@@ -635,7 +635,7 @@ sys_no_far_text:
 	.ifeq debug_output
 	call hex4sp
 	.endif
-	.hex4sp	%ds,"\nCopy DEF_SYSSEG .data to  REL_SYSSEG DS:"
+	.hex4sp	%ds,"\nCopy DEF_SYSSEG .data to  SEG_SYSSEG DS:"
 	.hex4sp	%si,"SI:"
 	.hex4sp	%es,"ES:"
 	.hex4sp	%di,"DI:"
@@ -733,7 +733,7 @@ data_reloc:
 	.endif
 	.endif
 
-	lret               // jump to REL_SYSSEG:_start to start kernel
+	lret               // jump to SEG_SYSSEG:_start to start kernel
 
 // Relocate segment at ES: from relocation record at DS:SI
 relocat:
@@ -934,7 +934,7 @@ arch_set_initseg:
 	mov	%ax,xms_kbytes
 1:
 #ifdef CONFIG_BOOTOPTS
-	call	bootopts	// load /bootopts into DEF_OPTSEG (0050:0000)
+	call	bootopts	// load /bootopts into SEG_OPTSEG (0050:0000)
 	call    hmabootopts	// check /bootopts for hma=kernel
 	mov	%al,hma_kernel
 #endif
@@ -1018,7 +1018,7 @@ bootopts:
 	mov	$INITSEG,%ax
 	mov	%ax,%ds
 
-	mov	$DEF_OPTSEG,%ax	// ES:BP = DEF_OPTSEG:0
+	mov	$SEG_OPTSEG,%ax	// ES:BP = SEG_OPTSEG:0
 	mov	%ax,%es
 	xor	%bp,%bp
 
@@ -1042,7 +1042,7 @@ pc98_int1b:
 	mov	%ax,%ds
 	mov	root_dev,%dl	// DL = boot drive
 
-	mov	$DEF_OPTSEG,%ax	// ES:BX = DEF_OPTSEG:0
+	mov	$SEG_OPTSEG,%ax	// ES:BX = SEG_OPTSEG:0
 	mov	%ax,%es
 	xor	%bx,%bx
 	mov	$0x0202,%ax	// BIOS read disk, 2 sectors
@@ -1203,7 +1203,7 @@ hmabootopts:
 
 	push	%cs			// ES = our code segment
 	pop	%es
-	mov	$DEF_OPTSEG,%ax		// DS:SI = /bootopts in memory
+	mov	$SEG_OPTSEG,%ax		// DS:SI = /bootopts in memory
 	mov	%ax,%ds
 
 	xor	%si,%si			// look for hma=kernel in /bootopts segment
