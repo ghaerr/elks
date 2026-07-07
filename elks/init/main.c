@@ -112,18 +112,15 @@ static void idle_loop(void);
 void start_kernel(void)
 {
     clr_irq();                      /* we're running on the kernel interrupt stack! */
-    //tracing = TRACE_KSTACK | TRACE_ISTACK;
 
 #ifdef CONFIG_286_PMODE
-    printk("PM ");
-    xms_bootopts = XMS_PMODE;       /* default to XMS on unless xms=off in /bootopts */
     /*
-     * Build GDT and enter protected mode before calling far_start_kernel.
-     * The setup.S kernel loader has already relocated all .fartext CS segment
-     * references to SEL_KFTEXT selectors. The system never returns to real
-     * mode and BIOS services can't be called from protected mode.
+     * We must enter protected mode before calling far_start_kernel as setup.S
+     * relocated all .fartext CS segments to SEL_KFTEXT selectors.
      */
     gdt_init();
+
+    xms_bootopts = XMS_PMODE;       /* default to XMS on unless xms=off in /bootopts */
 #endif
 
     far_start_kernel();             /* start executing in reusable memory */
@@ -133,6 +130,7 @@ static void FARPROC far_start_kernel(void)
 {
     printk("START\n");
 
+    //tracing = TRACE_KSTACK | TRACE_ISTACK;
     early_kernel_init();            /* read bootopts using kernel interrupt stack */
 
      /*

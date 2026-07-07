@@ -139,8 +139,8 @@ static void idt_init(void)
         idt_gate_set(v, (unsigned)pm_fault_panic + 32*8, SEL_KCODE, GATE_INT286);
 }
 
-/* Called once from start_kernel: fill the kernel's own descriptors, build
- * the GDTR/IDTR, then switch to protected mode. No return to real mode.
+/* Called from near text start_kernel. Build the GDT/IDT, then switch to PM.
+ * No return to real mode, and BIOS calls aren't allowed after the switch.
  */
 void gdt_init(void)
 {
@@ -149,13 +149,16 @@ void gdt_init(void)
     segext_t text_para  = BYTES_PARA((unsigned)_endtext);
     static struct dtr gdtr, idtr;
 
+    /* enable A20 while still in real mode (calls BIOS) */
+    if (!enable_a20_gate())
+        printk("A20 fail ");
+
     /* separate descriptors for near text, far text and data.
      * setup.S has patched the kernel's far-call/far-data segments to these
      * selectors (SEL_KCODE/SEL_KFTEXT/SEL_KDATA) instead of paragraphs.
      */
     desc_set(MK_SEL(GDT_NULL,   SEL_GDT, SEL_RPL0), 0,          0,         0);
     desc_set(MK_SEL(GDT_KCODE,  SEL_GDT, SEL_RPL0), code_base,  text_para, DESC_KCODE);
-    //FIXME 0x1000
     desc_set(MK_SEL(GDT_KDATA,  SEL_GDT, SEL_RPL0), data_base,  0x1000,    DESC_KDATA);
     if (kernel_ftext) {
         desc_set(MK_SEL(GDT_KFTEXT, SEL_GDT, SEL_RPL0), (addr_t)kernel_ftext << 4,
@@ -189,7 +192,7 @@ void gdt_init(void)
     desc_set(MK_SEL(GDT_BIOSDATA, SEL_GDT, SEL_RPL0), SEG_BIOSDATA << 4, BYTES_PARA(256),
         DESC_KDATA);
 
-    /* text video memory FIXME 0x1000 */
+    /* text video memory */
     desc_set(MK_SEL(GDT_VIDEO, SEL_GDT, SEL_RPL0), (addr_t)SEG_VIDEO << 4, 0x1000,
         DESC_KDATA);
 

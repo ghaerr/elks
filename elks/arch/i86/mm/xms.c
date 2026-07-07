@@ -69,7 +69,7 @@ int INITPROC xms_init(void)
 		return XMS_DISABLED;
 	}
 #else
-	/* enable_a20_gate is called in setup.S, can't call in protected mode */
+	/* enable_a20_gate is called in gdt_init, can't call in protected mode */
 	enabled = XMS_PMODE;
 	printk("PM, ");
 #endif
@@ -144,7 +144,7 @@ void xms_fmemcpyw(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src
     if (sel_dst) desc_free(sel_dst);
 }
 
-/* copy bytes between XMS and far memory */
+/* copy bytes between XMS and far memory using PM selector */
 void xms_fmemcpyb(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src_seg,
 		size_t count)
 {
@@ -166,7 +166,7 @@ void xms_fmemcpyb(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src
     if (sel_dst) desc_free(sel_dst);
 }
 
-/* clear XMS or far memory using PM */
+/* clear XMS or far memory using PM selector */
 void xms_fmemset(void *dst_off, ramdesc_t dst_seg, size_t count)
 {
     sel_t sel_dst = 0;
