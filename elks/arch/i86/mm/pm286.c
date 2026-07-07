@@ -107,7 +107,7 @@ addr_t desc_limit(sel_t sel)
  * After idt_init() sel_idt is updated to SEL_IDT for PM access to the IDT.
  */
 static seg_t sel_idt = 0;   /* init for real mode segment 0 */
-void idt_gate_set(unsigned int vect, unsigned int offset, sel_t selector, byte_t access)
+void idt_gate_set(unsigned int vect, unsigned int proc, sel_t selector, byte_t access)
 {
     struct idt_gate __far *g;
 
@@ -116,11 +116,11 @@ void idt_gate_set(unsigned int vect, unsigned int offset, sel_t selector, byte_t
         return;
     }
     g = _MK_FP(sel_idt, vect * sizeof(struct idt_gate));
-    g->offset   = offset;
+    g->offset   = proc;
     g->selector = selector;
-    g->zero     = 0;
+    g->wcount   = 0;            /* word count (=0 for 286 task and interrupt gates) */
     g->access   = access;
-    g->reserved = 0;
+    g->offset_hi= 0;            /* high 16 bits handler address (=0 for 286) */
 }
 
 /* Point IDT vectors at the fault-catch handler so an exception between

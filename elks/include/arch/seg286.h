@@ -46,22 +46,22 @@ struct gdt_entry {
 #define DESC_UCODE  0xFA    /* present, DPL3, code, readable        */
 #define DESC_UDATA  0xF2    /* present, DPL3, data, writable        */
 
-/* ---- 80286 interrupt/trap gate: 8 bytes (high word 0 on a 286) ---- */
+/* 80286/80386+ interrupt/trap gate */
 struct idt_gate {
-    word_t  offset;         /* handler offset within `selector`             */
-    word_t  selector;       /* code (or data-as-code) selector of handler   */
-    byte_t  zero;           /* always 0                                     */
-    byte_t  access;         /* P | DPL | gate type (GATE_* below)           */
-    word_t  reserved;       /* 0 on a 286                                   */
+    word_t  offset;         /* handler address bits 15:0                        */
+    word_t  selector;       /* code (or data-as-code) selector of handler       */
+    byte_t  wcount;         /* word count (=0 for 80286 interrupt/trap gates)   */
+    byte_t  access;         /* P | DPL | gate type (GATE_* below)               */
+    word_t  offset_hi;      /* handler address bits 23:16 (=0 for 80286)        */
 };
 
 #define GATE_INT286   0x86  /* present, DPL0, 286 interrupt gate (clears IF) */
 #define GATE_TRAP286  0x87  /* present, DPL0, 286 trap gate (leaves IF)      */
 
-/* lgdt/lidt operand: 16-bit limit + linear physical base (286 uses low 24 bits) */
+/* descriptor table register operand for LGDT and LIDT instructions */
 struct dtr {
-    word_t limit;
-    addr_t base;
+    word_t limit;           /* size of table - 1 */
+    addr_t base;            /* 24-bit linear physical base address from real mode */
 };
 
 /* selector = (index << 3) | TI | RPL */
@@ -106,6 +106,6 @@ addr_t desc_base(sel_t sel);
 addr_t desc_limit(sel_t sel);
 
 /* install an interrupt gate (used by the IRQ/syscall path). */
-void idt_gate_set(unsigned int vect, unsigned int offset, sel_t selector, byte_t access);
+void idt_gate_set(unsigned int vect, unsigned int proc, sel_t selector, byte_t access);
 
 #endif /* __ARCH_SEG286_H */
