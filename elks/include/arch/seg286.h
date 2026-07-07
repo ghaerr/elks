@@ -4,40 +4,39 @@
 #include <linuxmt/types.h>
 
 /*
- * 80286 protected-mode segment HAL for ELKS        (gated by CONFIG_286_PMODE)
+ * 80286/80386+ Protected-mode segment HAL for ELKS
  *
  * Design
  * ------
  * The kernel's segment abstraction is already the HAL boundary:
  *   - upper kernel (fs/, kernel/, net/) only ever holds an opaque seg_t and
  *     passes it to the far-memory primitives (peekb/peekw/pokeb/pokew,
- *     fmemcpyb/w, fmemsetb/w, fmemcmpb/w) and to seg_alloc()/segment_s.base.
+ *     fmemcpyb/w, fmemsetb/w, fmemcmpb/w) and to seg_alloc/segment_s.base.
  *   - those primitives do "mov es,seg ; ... es:[off]". That instruction works
  *     in both real mode (es = paragraph, phys = es*16+off) and protected mode
  *     (es = selector, phys = descriptor[es].base + off) -- the CPU resolves it
- *     per current mode. So the far-mem asm needs NO change.
+ *     per current mode. So the far-mem asm needs no change.
  *
- * Therefore the 286-PM port is confined to three things, all below the HAL line:
- *   1. seg_t now carries a selector (not a paragraph). segment_s.base = selector;
- *      the physical base lives in the descriptor (desc_base() recovers it).
+ * Therefore the PM port is confined to three things, all below the HAL line:
+ *   1. seg_t now carries a selector (not a segment). segment_s.base = selector;
+ *      the physical base lives in the descriptor.
  *   2. seg_alloc()/seg_free() allocate physical paragraphs, then also
  *      allocate/free a GDT descriptor and return its selector in segment_s.base.
  *   3. boot sets up the GDT/IDT and enters protected mode; exec() loads
- *      selectors into CS/DS/SS instead of paragraphs.
+ *      selectors into CS/DS/SS instead of segments.
  *
- * Real-mode build (CONFIG_286_PMODE off) is unaffected: seg_t stays a paragraph.
- * and none of the protected mode routines are linked into the kernel.
+ * Real-mode build is unaffected: seg_t stays a paragraph, and none of the
+ * protected mode routines are linked into the kernel.
  */
 
-/* ---- 80286 segment descriptor: 8 bytes; high word MUST be 0 on a 286 ----
- * (on a 386 the reserved word holds limit[16:19]+flags+base[24:31]; writing 0
- *  there yields 286-equivalent semantics, so this layout is forward-compatible) */
+/* 80286/80386+ segment descriptor */
 struct gdt_entry {
-    word_t  limit;          /* segment limit in bytes-1  (0..0xFFFF => <=64K)   */
-    word_t  base_lo;        /* physical base bits 0..15                          */
-    byte_t  base_hi;        /* physical base bits 16..23 (24-bit base => 16 MB)  */
-    byte_t  access;         /* P | DPL | S | type | A  (see DESC_* below)        */
-    word_t  reserved;       /* 0 on 286                                          */
+    word_t  limit_lo;       /* segment limit bits 15:0 in bytes - 1             */
+    word_t  base_lo;        /* physical base bits 15:0                          */
+    byte_t  base_hi;        /* physical base bits 23:16 (24-bit base = 16 MB)   */
+    byte_t  access;         /* P | DPL | S | type | A  (see DESC_* below)       */
+    byte_t  fl_limit_hi;    /* flags[7:4], limit[3:0] bits 19:16 (0 on 286)     */
+    byte_t  base_24;        /* physical base bits 31:24 (0 on 286)              */
 };
 
 /* access byte: bit7=Present 6-5=DPL 4=S(1=code/data) 3=E 2=C/ED 1=R/W 0=Accessed */
@@ -93,10 +92,10 @@ void enable_protected_mode(struct dtr *gdtr, struct dtr *idtr);
 /* allocate a descriptor for [base, base+paras*16) with `access`; returns a
  * selector (0 on table-full). seg_alloc() calls this after reserving physram.
  */
-sel_t  desc_alloc(addr_t base, segext_t paras, byte_t access);
+sel_t  desc_alloc(addr_t base, addr_t limit, byte_t access);
 
 /* rewrite / free an existing selector's descriptor */
-void   desc_set(sel_t sel, addr_t base, segext_t paras, byte_t access);
+sel_t  desc_set(sel_t sel, addr_t base, addr_t limit, byte_t access);
 void   desc_chaccess(sel_t sel, byte_t access);
 void   desc_free(sel_t sel);
 
@@ -104,7 +103,7 @@ void   desc_free(sel_t sel);
 addr_t desc_base(sel_t sel);
 
 /* max valid byte offset in a selector's segment (its descriptor limit) */
-segext_t desc_limit(sel_t sel); /* FIXME: will need 16M limit for 386 PM/fmemalloc */
+addr_t desc_limit(sel_t sel);
 
 /* install an interrupt gate (used by the IRQ/syscall path). */
 void idt_gate_set(unsigned int vect, unsigned int offset, sel_t selector, byte_t access);

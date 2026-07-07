@@ -32,10 +32,11 @@ static byte_t seg_pm_access(word_t type)
     return ((type & SEG_FLAG_TYPE) == SEG_FLAG_CSEG) ? DESC_KCODE : DESC_KDATA;
 }
 
-/* allocate selector for passed segment_s structure, 0 = GDT full */
+/* allocate selector for passed segment_s structure, 0 = GDT full or limit exceeded */
 static int seg_pm_attach(segment_s *seg, word_t type)
 {
-    seg->base = desc_alloc(PARA_BYTES(seg->para), seg->size, seg_pm_access(type));
+    seg->base = desc_alloc(PARA_BYTES(seg->para), PARA_BYTES(seg->size),
+        seg_pm_access(type));
     return seg->base;
 }
 
