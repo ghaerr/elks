@@ -697,6 +697,10 @@ data_reloc:
 //	mov $'\n',%ax
 //	call putc
 
+#ifdef CONFIG_286_PMODE
+	call    enable_a20_gate // must be called in real mode prior to gdt_init() for XMS
+#endif
+
 // Load registers as kernel expects
 
 	mov -22(%bp),%ax   // kernel .data segment

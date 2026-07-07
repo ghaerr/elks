@@ -26,6 +26,7 @@
 enable_protected_mode:
         push    %bp
         mov     %sp,%bp
+        pushf                   // save interrupt status
         cli                     // no interrupts during the transition
 
         mov     4(%bp),%bx      // bx -> gdtr { word limit; long base }
@@ -44,9 +45,7 @@ pm_cs:
         mov     %ax,%es
         mov     %ax,%ss         // SS base = kernel_ds<<4 (same phys as real-mode SS)
 
-        mov     $'P',%al        // bring-up: signal successful PM entry on COM1
-        call    pm_putc_ser
-
+        popf                    // restore interrupt status
         pop     %bp
         ret                     // return (in PM) to gdt_init -> crt0 -> start_kernel
 
@@ -57,14 +56,14 @@ pm_cs:
 // <num> is the exception number: #DF=08, #TS=0A, #NP=0B, #SS=0C, #GP=0D.
 // Faulting CS will be known selector number: CODE 0008, DATA 0010, FTEXT 0018.
 
-        .balign 8
+        .balign 2
         .global pm_fault_panic
 pm_fault_panic:
         .set    fltv, 0
         .rept   32              // first 32 IDT entries report vector numbers 0..31
         pushw   $fltv
         jmp     pm_fault_common
-        .balign 8, 0x90         // each entry occupies an 8-byte slot
+        nop; nop; nop;          // each entry is 5 bytes code + 3 bytes NOP
         .set    fltv, fltv + 1
         .endr
         pushw   $0x00FF         // remainder vectors >= 32 report vector 255
