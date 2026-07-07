@@ -14,7 +14,7 @@
 
 /*
  * SETUP_ defines are initialzied by setup.S and queried only during kernel init.
- * The REL_INITSEG segment is released at end of kernel init. If used later any
+ * The SEG_INITSEG segment is released at end of kernel init. If used later any
  * values must be copied, as afterwards setupb/setupw will return incorrect data.
  * These defines are overridden for ROM based systems w/o setup code.
  * See setup.S for setupb/setupw offsets.
@@ -162,12 +162,12 @@
 
 /* Don't touch these, unless you really know what you are doing. */
 #define DEF_INITSEG     0x0100  /* initial Image load address by boot code */
-#define DEF_SYSSEG      0x1400  /* address setup then copies kernel to, then REL_SYSSEG */
+#define DEF_SYSSEG      0x1400  /* address setup then copies kernel to, then SEG_SYSSEG */
 #define DEF_SETUPSEG    DEF_INITSEG + 0x20
 #define DEF_SYSMAX      0x2F00  /* maximum system size (=.text+.fartext+.data) */
 
 /* Segment DMASEG up to DMASEGEND is used for the XMS/DMA bounce buffer and track cache.
- * Following DMASEGEND is the kernel code at REL_SYSSEG (or kernel data for ROM configs).
+ * Following DMASEGEND is the kernel code at SEG_SYSSEG (or kernel data for ROM configs).
  *
  * A "bounce buffer" is configured below the first 64K boundary for use with
  * old 8237 DMA controller which wraps addresses wider than 16-bits on PC/XT systems.
@@ -197,10 +197,10 @@
 #  define TRACKSEGSZ    0           /* no TRACKSEG buffer */
 #  endif
 #endif
-#define SEG_TRACK       (DMASEG+(DMASEGSZ>>4))
-#define DMASEGEND       (DMASEG+(DMASEGSZ>>4)+(TRACKSEGSZ>>4))
+#define SEG_TRACK       (SEG_DMASEG+(DMASEGSZ>>4))
+#define DMASEGEND       (SEG_DMASEG+(DMASEGSZ>>4)+(TRACKSEGSZ>>4))
 #else
-#define DMASEGEND       (DMASEG+(DMASEGSZ>>4))
+#define DMASEGEND       (SEG_DMASEG+(DMASEGSZ>>4))
 #endif
 
 /* Define segment locations of low and other memory, must not overlap */
@@ -208,30 +208,28 @@
 #define SEG_VIDEO       0xB800      /* text video RAM (real-mode seg 0xB800) */
 
 #ifdef CONFIG_ROMCODE
-#define DMASEG          0x80        /* start of floppy sector buffer */
+#define SEG_DMASEG      0x80        /* start of floppy sector buffer */
 #define KERNEL_DATA     DMASEGEND   /* kernel data segment */
-#define SEG_SETUP_DATA  CONFIG_ROM_SETUP_DATA
+#define SEG_INITSEG     CONFIG_ROM_SETUP_DATA
 
 #else /* !CONFIG_ROMCODE */
 
 #ifdef CONFIG_ARCH_IBMPC
 #define OPTSEGSZ        0x400       /* max size of /bootopts file (1024 bytes max) */
-#define DEF_OPTSEG      0x50        /* 0x400 bytes boot options at lowest usable ram */
-#define LOADALL_SEG     0x80        /* LOADALL buffer from 0x800-0x865 on 80286 CPU */
-#define REL_INITSEG     0x90        /* 0x200 bytes setup data */
-#define DMASEG          0xB0        /* start of floppy sector buffer */
-#define REL_SYSSEG      DMASEGEND   /* kernel code segment */
-#define SEG_SETUP_DATA  REL_INITSEG
+#define SEG_OPTSEG      0x50        /* 0x400 bytes boot options at lowest usable ram */
+#define SEG_LOADALL     0x80        /* LOADALL buffer from 0x800-0x865 on 80286 CPU */
+#define SEG_INITSEG     0x90        /* 0x200 bytes setup data */
+#define SEG_DMASEG      0xB0        /* start of floppy sector buffer */
+#define SEG_SYSSEG      DMASEGEND   /* kernel code segment */
 #endif
 
 #ifdef CONFIG_ARCH_PC98
 #define OPTSEGSZ        0x400       /* max size of /bootopts file (1024 bytes max) */
-#define DEF_OPTSEG      0x60        /* 0x400 bytes boot options at lowest usable ram */
-#define LOADALL_SEG     0x80        /* LOADALL buffer from 0x800-0x865 on 80286 CPU */
-#define REL_INITSEG     0xA0        /* 0x200 bytes setup data */
-#define DMASEG          0xC0        /* start of floppy sector buffer */
-#define REL_SYSSEG      DMASEGEND   /* kernel code segment */
-#define SEG_SETUP_DATA  REL_INITSEG
+#define SEG_OPTSEG      0x60        /* 0x400 bytes boot options at lowest usable ram */
+#define SEG_LOADALL     0x80        /* LOADALL buffer from 0x800-0x865 on 80286 CPU */
+#define SEG_INITSEG     0xA0        /* 0x200 bytes setup data */
+#define SEG_DMASEG      0xC0        /* start of floppy sector buffer */
+#define SEG_SYSSEG      DMASEGEND   /* kernel code segment */
 #endif
 
 #endif /* !CONFIG_ROMCODE */

@@ -12,6 +12,7 @@
 #include <linuxmt/debug.h>
 #include <arch/irq.h>
 #include <arch/segment.h>
+#include <arch/seg286.h>
 
 #ifdef CONFIG_FS_XMS
 
@@ -30,8 +31,6 @@ void bios_block_movew(struct gdt_table *gdtp, size_t words);	    /* INT 15/1F */
 #define COPY            0       /* block move */
 #define CLEAR           1       /* block clear */
 int loadall_block_op(struct gdt_table *gdtp, size_t bytes, int op); /* LOADALL */
-static void int15_fmemcpy(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
-        size_t bytes, int op);
 
 /*
  * ramdesc_t: if CONFIG_FS_XMS not set, then it's a normal seg_t segment descriptor.
@@ -63,15 +62,22 @@ int INITPROC xms_init(void)
 	printk("%uK, ", size);
 	if (!size)                      /* 8086 systems won't have XMS */
 		return XMS_DISABLED;
+#ifndef CONFIG_286_PMODE
 	enabled = enable_a20_gate();    /* returns verify_a20() */
 	if (!enabled) {
 		printk("disabled, A20 error. ");
 		return XMS_DISABLED;
 	}
+#else
+	/* enable_a20_gate is called in gdt_init, can't call in protected mode */
+	enabled = XMS_PMODE;
+	printk("PM, ");
+#endif
 	if (xms_bootopts == XMS_DISABLED) {
 		printk("off. ");
 		return XMS_DISABLED;
 	}
+#ifndef CONFIG_286_PMODE
 	/* check forced INT 15/1F or not 80286/80386 */
 	if (xms_bootopts == XMS_INT15 || arch_cpu < CPU_80286) {
 #if AUTODISABLE
@@ -93,6 +99,7 @@ int INITPROC xms_init(void)
 			enabled = XMS_UNREAL;
 		}
 	}
+#endif
 	if (kernel_cs == 0xffff)
 		xms_alloc_ptr += 64;    /* 64K reserved for HMA kernel */
 	xms_enabled = enabled;
@@ -112,6 +119,72 @@ ramdesc_t xms_alloc(unsigned int kbytes)
 	//printk("xms_alloc %lx size %uK\n", (unsigned long)mem<<10, kbytes);
 	return (ramdesc_t)mem << 10;
 }
+
+#ifdef CONFIG_286_PMODE
+
+/* copy words between XMS and far memory using dynamic PM selector */
+void xms_fmemcpyw(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src_seg,
+		size_t count)
+{
+    sel_t sel_src = 0, sel_dst = 0;
+
+    debug("xms_fmemcpyw(%08lx:%04x <- %08lx:%04x count %u\n",
+        dst_seg, dst_off, src_seg, src_off, count);
+
+    if (src_seg >> 16) {
+        sel_src = desc_alloc(src_seg, 0x40, DESC_KDATA);
+        src_seg = sel_src;
+    }
+    if (dst_seg >> 16) {
+        sel_dst = desc_alloc(dst_seg, 0x40, DESC_KDATA);
+        dst_seg = sel_dst;
+    }
+	fmemcpyw(dst_off, (seg_t)dst_seg, src_off, (seg_t)src_seg, count);
+    if (sel_src) desc_free(sel_src);
+    if (sel_dst) desc_free(sel_dst);
+}
+
+/* copy bytes between XMS and far memory using PM selector */
+void xms_fmemcpyb(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src_seg,
+		size_t count)
+{
+    sel_t sel_src = 0, sel_dst = 0;
+
+    debug("xms_fmemcpyb(%08lx:%04x <- %08lx:%04x count %u\n",
+        dst_seg, dst_off, src_seg, src_off, count);
+
+    if (src_seg >> 16) {
+        sel_src = desc_alloc(src_seg, 0x40, DESC_KDATA);
+        src_seg = sel_src;
+    }
+    if (dst_seg >> 16) {
+        sel_dst = desc_alloc(dst_seg, 0x40, DESC_KDATA);
+        dst_seg = sel_dst;
+    }
+	fmemcpyb(dst_off, (seg_t)dst_seg, src_off, (seg_t)src_seg, count);
+    if (sel_src) desc_free(sel_src);
+    if (sel_dst) desc_free(sel_dst);
+}
+
+/* clear XMS or far memory using PM selector */
+void xms_fmemset(void *dst_off, ramdesc_t dst_seg, size_t count)
+{
+    sel_t sel_dst = 0;
+
+    debug("xms_fmemset(%08lx:%04x count %u\n", dst_seg, dst_off, count);
+
+    if (dst_seg >> 16) {
+        sel_dst = desc_alloc(dst_seg, 0x40, DESC_KDATA);
+        dst_seg = sel_dst;
+    }
+	fmemsetb(dst_off, (seg_t)dst_seg, 0, count);
+    if (sel_dst) desc_free(sel_dst);
+}
+
+#else /* !CONFIG_286_PMODE */
+
+static void int15_fmemcpy(void *dst_off, addr_t dst_seg, void *src_off, addr_t src_seg,
+        size_t bytes, int op);
 
 /* copy words between XMS and far memory */
 void xms_fmemcpyw(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src_seg,
@@ -247,5 +320,6 @@ static void int15_fmemcpy(void *dst_off, addr_t dst_seg, void *src_off, addr_t s
 	else 
 		bios_block_movew(gdt_table, bytes >> 1);
 }
+#endif /* !CONFIG_286_PMODE */
 
 #endif /* CONFIG_FS_XMS */

@@ -11,7 +11,7 @@
 // Global constants
 
 #define LOADSEG DEF_INITSEG
-#define OPTSEG	DEF_OPTSEG             // bootopts copied here
+#define OPTSEG	SEG_OPTSEG             // bootopts copied here
 
 // Global variables
 

@@ -15,6 +15,7 @@
 #include <linuxmt/limits.h>
 #include <arch/segment.h>
 #include <arch/seg286.h>
+#include <arch/irq.h>
 
 /*
  * Config validation: protected mode cannot call the BIOS (real-mode IVT/
@@ -30,9 +31,6 @@
 #endif
 #if defined(CONFIG_ARCH_IBMPC) && !defined(CONFIG_KEYBOARD_SCANCODE)
 #error 286 PM: without CONFIG_KEYBOARD_SCANCODE the IBMPC build links kbd-poll/conio-bios (int 0x16) - enable it
-#endif
-#if defined(CONFIG_FS_XMS) || defined(CONFIG_FS_XMS_BUFFER) || defined(CONFIG_FS_XMS_RAMDISK)
-#error 286 PM: XMS/unreal-mode paths are not ported - disable the CONFIG_FS_XMS* group
 #endif
 
 /* The Global Descriptor Table (max 4 KB, in the kernel data segment).
@@ -69,17 +67,23 @@ void desc_chaccess(sel_t sel, byte_t access)
 /* find a free GDT slot, fill it, return its selector (0 = table full) */
 sel_t desc_alloc(addr_t base, segext_t paras, byte_t access)
 {
-    int i = next_dyn, scanned;
+    int i, scanned;
+    flag_t flags;
 
+    save_flags(flags);  /* may be called at interrupt time through xms_fmemcpy */
+    clr_irq();
+    i = next_dyn;
     for (scanned = 0; scanned < MAX_GDT_ENTRIES - GDT_FIRST_DYN; scanned++) {
         if (gdt[i].access == 0) {
             sel_t sel = MK_SEL(i, SEL_GDT, SEL_RPL0);
             desc_set(sel, base, paras, access);
             next_dyn = (i + 1 < MAX_GDT_ENTRIES) ? i + 1 : GDT_FIRST_DYN;
+            restore_flags(flags);
             return sel;
         }
         if (++i >= MAX_GDT_ENTRIES) i = GDT_FIRST_DYN;
     }
+    restore_flags(flags);
     return 0;                                            /* GDT full */
 }
 
@@ -100,16 +104,20 @@ segext_t desc_limit(sel_t sel)         /* max valid byte offset in the segment *
     return gdt[SEL_INDEX(sel)].limit;
 }
 
-/* set an entry in the IDT; uses SEL_IDT which points to real mode IVT at 0:0 */
+
+/* Set an entry in the IDT; uses sel_idt which initially points to real mode IVT at 0:0.
+ * After idt_init() sel_idt is updated to SEL_IDT for PM access to the IDT.
+ */
+static seg_t sel_idt = 0;   /* init for real mode segment 0 */
 void idt_gate_set(unsigned int vect, unsigned int offset, sel_t selector, byte_t access)
 {
-    struct idt_gate __far *g;;
+    struct idt_gate __far *g;
 
     if (vect >= MAX_IDT_ENTRIES) {
         printk("idt_gate_set: invalid vector %d\n", vect);
         return;
     }
-    g = _MK_FP(SEL_IDT, vect * sizeof(struct idt_gate));
+    g = _MK_FP(sel_idt, vect * sizeof(struct idt_gate));
     g->offset   = offset;
     g->selector = selector;
     g->zero     = 0;
@@ -128,11 +136,11 @@ static void idt_init(void)
     for (v = 0; v < 32; v++)    /* per-vector entries so the reporter knows the vector */
         idt_gate_set(v, (unsigned)pm_fault_panic + v*8, SEL_KCODE, GATE_INT286);
     for (v = 32; v < MAX_IDT_ENTRIES; v++)
-        idt_gate_set(v, (unsigned)pm_fault_panic + 33*8, SEL_KCODE, GATE_INT286);
+        idt_gate_set(v, (unsigned)pm_fault_panic + 32*8, SEL_KCODE, GATE_INT286);
 }
 
-/* Called once from start_kernel: fill the kernel's own descriptors, build
- * the GDTR/IDTR, then switch to protected mode. No return to real mode.
+/* Called from near text start_kernel. Build the GDT/IDT, then switch to PM.
+ * No return to real mode, and BIOS calls aren't allowed after the switch.
  */
 void gdt_init(void)
 {
@@ -140,6 +148,10 @@ void gdt_init(void)
     addr_t   data_base  = (addr_t)kernel_ds << 4;
     segext_t text_para  = BYTES_PARA((unsigned)_endtext);
     static struct dtr gdtr, idtr;
+
+    /* enable A20 while still in real mode (calls BIOS) */
+    if (!enable_a20_gate())
+        printk("A20 fail ");
 
     /* separate descriptors for near text, far text and data.
      * setup.S has patched the kernel's far-call/far-data segments to these
@@ -169,11 +181,11 @@ void gdt_init(void)
         DESC_KDATA);
 
     /* setupb/setupw setup.S data segment */
-    desc_set(MK_SEL(GDT_SETUP, SEL_GDT, SEL_RPL0), SEG_SETUP_DATA << 4, BYTES_PARA(512),
+    desc_set(MK_SEL(GDT_SETUP, SEL_GDT, SEL_RPL0), SEG_INITSEG << 4, BYTES_PARA(512),
         DESC_KDATA);
 
     /* boot options (/bootopts) segment */
-    desc_set(MK_SEL(GDT_OPTSEG, SEL_GDT, SEL_RPL0), DEF_OPTSEG << 4, BYTES_PARA(1024),
+    desc_set(MK_SEL(GDT_OPTSEG, SEL_GDT, SEL_RPL0), SEG_OPTSEG << 4, BYTES_PARA(1024),
         DESC_KDATA);
 
     /* BIOS data area */
@@ -184,16 +196,22 @@ void gdt_init(void)
     desc_set(MK_SEL(GDT_VIDEO, SEL_GDT, SEL_RPL0), (addr_t)SEG_VIDEO << 4, 0x1000,
         DESC_KDATA);
 
-    /* direct floppy DMA/track buffer */
-    desc_set(MK_SEL(GDT_TRACK, SEL_GDT, SEL_RPL0), SEG_TRACK << 4, BYTES_PARA(TRACKSEGSZ),
+    /* direct floppy DMA track buffer */
+    desc_set(MK_SEL(GDT_TRACKBUF, SEL_GDT, SEL_RPL0), SEG_TRACK << 4,
+        BYTES_PARA(TRACKSEGSZ), DESC_KDATA);
+
+    /* ATA/CF DMA sector buffer */
+    desc_set(MK_SEL(GDT_DMABUF, SEL_GDT, SEL_RPL0), SEG_DMASEG << 4, BYTES_PARA(512),
         DESC_KDATA);
 
-    idt_init();                 /* every vector -> fault-catch stub (until irq_init) */
+    /* initialize IVT using real mode sel_idt segment 0 to fault-catch stubs */
+    idt_init();
 
     gdtr.limit = sizeof(gdt) - 1;
     gdtr.base  = data_base + (unsigned)&gdt; /* linear address of GDT */
     idtr.limit = MAX_IDT_ENTRIES * sizeof(struct idt_gate) - 1;
     idtr.base  = 0;                         /* IDT replaces real mode IVT at 0:0 */
+    sel_idt = SEL_IDT;                      /* use SEL_IDT for idt_get_set from now on */
 
     enable_protected_mode(&gdtr, &idtr);    /* enter PM; returns here in protected mode */
 }

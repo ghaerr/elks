@@ -212,10 +212,10 @@ int main(int argc, char **argv)
         fsz += (intel_long(ex->a_trsize) + intel_long(ex->a_drsize)
             + intel_long(ex->esh_ftrsize) + intel_long(ex->esh_ftseg) + 15) / 16;
     }
-    fsz += REL_SYSSEG;
+    fsz += SEG_SYSSEG;
     fprintf(stderr, "Load segment start 0x%x end 0x%x\n", DEF_SYSSEG, fsz);
-    if (DEF_SYSSEG < REL_SYSSEG + 0x1000) {
-        fprintf(stderr, "Warning: Load segment too low for REL_SYSSEG at %x, increase DEF_SYSSEG\n", REL_SYSSEG);
+    if (DEF_SYSSEG < SEG_SYSSEG + 0x1000) {
+        fprintf(stderr, "Warning: Load segment too low for SEG_SYSSEG at %x, increase DEF_SYSSEG\n", SEG_SYSSEG);
     }
 #endif
     while (sz > 0) {

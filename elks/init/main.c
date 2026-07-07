@@ -111,26 +111,26 @@ static void idle_loop(void);
  */
 void start_kernel(void)
 {
-    //tracing = TRACE_KSTACK | TRACE_ISTACK;
+    clr_irq();                      /* we're running on the kernel interrupt stack! */
+
 #ifdef CONFIG_286_PMODE
-    /* Build GDT and enter protected mode before calling far_start_kernel,
-     * as the setup.S kernel loader already relocated all .fartext CS segment
-     * references to SEL_KFTEXT selectors. The system never returns to real
-     * mode and BIOS services can no longer be called.
+    /*
+     * We must enter protected mode before calling far_start_kernel as setup.S
+     * relocated all .fartext CS segments to SEL_KFTEXT selectors.
      */
     gdt_init();
+
+    xms_bootopts = XMS_PMODE;       /* default to XMS on unless xms=off in /bootopts */
 #endif
+
     far_start_kernel();             /* start executing in reusable memory */
 }
 
 static void FARPROC far_start_kernel(void)
 {
-    flag_t flags;                   /* get CPU flag word */
-    save_flags(flags);
-    clr_irq();                      /* we're running on the kernel interrupt stack! */
-    printk("INT %x ", flags);       /* to show interrupt status after setup.S */
     printk("START\n");
 
+    //tracing = TRACE_KSTACK | TRACE_ISTACK;
     early_kernel_init();            /* read bootopts using kernel interrupt stack */
 
      /*
@@ -339,11 +339,11 @@ static void INITPROC do_init_task(void)
     heap_add(&opts, sizeof(opts));
 #ifdef CONFIG_FS_XMS
     if (xms_enabled == XMS_LOADALL) {
-        seg_add(DEF_OPTSEG, 0x80);  /* carve out LOADALL buf 0x800-0x865 from release! */
-        seg_add(0x87, DMASEG);
+        seg_add(SEG_OPTSEG, 0x80);  /* carve out LOADALL buf 0x800-0x865 from release! */
+        seg_add(0x87, SEG_DMASEG);
     } else  /* fall through */
 #endif
-    seg_add(DEF_OPTSEG, DMASEG);    /* DEF_OPTSEG through REL_INITSEG */
+    seg_add(SEG_OPTSEG, SEG_DMASEG);    /* SEG_OPTSEG through SEG_INITSEG */
 
     /* run /bin/init or init= command w/argc/argv/env, normally no return*/
     run_init_process_sptr(init_command, (char *)argv_init, argv_slen);
@@ -635,6 +635,7 @@ static int INITPROC parse_options(void)
         if (!strncmp(line,"xms=",4)) {
             if (!strcmp(line+4, "on"))    xms_bootopts = XMS_UNREAL;
             if (!strcmp(line+4, "int15")) xms_bootopts = XMS_INT15;
+            if (!strcmp(line+4, "off"))   xms_bootopts = XMS_DISABLED;
             continue;
         }
         if (!strncmp(line,"xmsbuf=",7)) {
