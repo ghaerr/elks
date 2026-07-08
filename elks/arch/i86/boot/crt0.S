@@ -86,14 +86,13 @@ early_putchar:
         pop   %ds
         pop   %bp
         ret
-#elif defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_8018X)
+#elif defined(CONFIG_286_PMODE)
 early_putchar:
-#ifdef CONFIG_286_PMODE
         mov   %sp,%bx
         mov   2(%bx),%al
-        call  pm_putc_ser               // write COM1, can't use BIOS INT 10h
-        ret
-#else
+        jmp   putc_ser                  // write COM1, can't use BIOS INT 10h
+#elif defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_8018X)
+early_putchar:
         mov   %sp,%bx
         mov   2(%bx),%al
         mov   $0x0E,%ah
@@ -102,7 +101,6 @@ early_putchar:
         int   $0x10
         pop   %bp
         ret
-#endif
 #endif
 
 //      Segment beginnings
