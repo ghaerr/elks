@@ -92,6 +92,7 @@ early_putchar:
         mov   2(%bx),%al
         jmp   putc_ser                  // write COM1, can't use BIOS INT 10h
 #elif defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_8018X)
+early_putchar:
         mov   %sp,%bx
         mov   2(%bx),%al
         mov   $0x0E,%ah
