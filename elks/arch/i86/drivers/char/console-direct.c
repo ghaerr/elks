@@ -92,7 +92,7 @@ static int NumConsoles;
  */
 static char UseRambuf;
 
-unsigned int VideoSeg = 0xb800;
+unsigned int VideoSeg = VIDEOSEG;
 int Current_VCminor;
 int kraw;
 
@@ -255,17 +255,17 @@ void INITPROC console_init(void)
     int output_type = OT_EGA;
     int avail_pages;
 
-    Width = peekb(0x4a, 0x40);  /* BIOS data segment */
+    Width = peekb(0x4a, BIOSSEG);  /* BIOS data segment */
     /* Trust this. Cga does not support peeking at 0x40:0x84. */
     Height = 25;
-    boot_crtc = peekw(0x63, 0x40);
-    PageSizeW = ((unsigned int)peekw(0x4C, 0x40) >> 1);
+    boot_crtc = peekw(0x63, BIOSSEG);
+    PageSizeW = ((unsigned int)peekw(0x4C, BIOSSEG) >> 1);
 
-    if (peekb(0x49, 0x40) == 7) {
+    if (peekb(0x49, BIOSSEG) == 7) {
         VideoSeg = 0xB000;
         output_type = OT_MDA;
     } else {
-        if (peekw(0xA8+2, 0x40) == 0)
+        if (peekw(0xA8+2, BIOSSEG) == 0)
             output_type = OT_CGA;
     }
     NumConsoles = MAX_CONSOLES;
@@ -309,8 +309,8 @@ void INITPROC console_init(void)
         C->cx = C->cy = 0;
         C->display = 0;
         if (!i) {
-            C->cx = peekb(0x50, 0x40);
-            C->cy = peekb(0x51, 0x40);
+            C->cx = peekb(0x50, BIOSSEG);
+            C->cy = peekb(0x51, BIOSSEG);
         }
         C->fsm = std_char;
 #if VC_USE_RAM_BUFFER
@@ -373,7 +373,7 @@ void INITPROC console_init(void)
     unsigned char cur_display = 0;
     unsigned char boot_type;
 
-    boot_crtc = peekw(0x63, 0x40);
+    boot_crtc = peekw(0x63, BIOSSEG);
     for (i = 0; i < N_DEVICETYPES; ++i) {
         if (crtc_params[i].crtc_base == boot_crtc)
             boot_type = i;
@@ -389,8 +389,8 @@ void INITPROC console_init(void)
             C->display = cur_display;
             if (!j) Visible[C->display] = C;
             if (!j && !i) {
-                C->cx = peekb(0x50, 0x40);
-                C->cy = peekb(0x51, 0x40);
+                C->cx = peekb(0x50, BIOSSEG);
+                C->cy = peekb(0x51, BIOSSEG);
             }
             C->fsm = std_char;
             C->vseg_offset = j * crtc_params[dev].page_words;

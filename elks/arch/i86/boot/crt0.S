@@ -14,9 +14,10 @@
 _start:
 
 /*
-! Setup.S already initialized DS and ES (but not SS)
+! Setup.S already initialized DS (but not SS)
 ! In addition, registers contain:
 !   BX, Text size
+!   ES, Far text segment
 !   DI  Far text size
 !   SI, Data size
 !   DX, BSS size
@@ -26,6 +27,10 @@ _start:
         mov     %si,_enddata
         add     %dx,%si
         mov     %si,_endbss
+        mov     %es,kernel_ftext
+
+        mov     %ds,%ax         // set ES = DS
+        mov     %ax,%es
 
 // Start cleaning BSS. Still using setup.S stack
 
@@ -81,13 +86,18 @@ early_putchar:
         pop   %ds
         pop   %bp
         ret
+#elif defined(CONFIG_286_PMODE)
+early_putchar:
+        mov   %sp,%bx
+        mov   2(%bx),%al
+        jmp   putc_ser                  // write COM1, can't use BIOS INT 10h
 #elif defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_8018X)
 early_putchar:
         mov   %sp,%bx
         mov   2(%bx),%al
         mov   $0x0E,%ah
         mov   $0x0007,%bx
-        push  %bp               // some BIOS may destroy BP
+        push  %bp                       // some BIOS may destroy BP
         int   $0x10
         pop   %bp
         ret
@@ -106,6 +116,7 @@ early_putchar:
         .global _endftext
         .global _enddata
         .global _endbss
+        .global kernel_ftext
         .extern kernel_cs
         .extern kernel_ds
         .extern istack
@@ -120,6 +131,9 @@ _enddata:
         .word   0
 
 _endbss:
+        .word   0
+
+kernel_ftext:
         .word   0
 
         .bss

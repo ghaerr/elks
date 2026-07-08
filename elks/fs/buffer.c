@@ -13,6 +13,7 @@
 
 #include <arch/system.h>
 #include <arch/segment.h>
+#include <arch/seg286.h>
 #include <arch/io.h>
 #include <arch/irq.h>
 
@@ -123,7 +124,6 @@ static void INITPROC add_buffers(int nbufs, char *buf, ramdesc_t seg)
 {
     struct buffer_head *bh;
     int n = 0;
-    size_t offset;
 
     for (bh = bh_next; n < nbufs; n++, bh = ++bh_next) {
         ext_buffer_head *ebh = EBH(bh);
@@ -135,9 +135,24 @@ static void INITPROC add_buffers(int nbufs, char *buf, ramdesc_t seg)
 
 #if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
         /* segment adjusted to require no offset to buffer */
-        offset = xmsenabled?  ((n & 63) << BLOCK_SIZE_BITS) :
+
+#ifdef CONFIG_286_PMODE
+        size_t offset = (n & 63) << BLOCK_SIZE_BITS;
+        if (xms_enabled)
+            ebh->b_L2seg = seg + offset;    /* seg is XMS linear address */
+        else {
+            /* Fallback for xms=off EXT buffers requires one selector per buffer.
+             * seg is already PM selector of max 64K array of 1K buffers.
+             */
+            ebh->b_L2seg = desc_alloc(desc_base((seg_t)seg) + offset,
+                BLOCK_SIZE, DESC_KDATA);
+        }
+#else
+        size_t offset = xmsenabled?  ((n & 63) << BLOCK_SIZE_BITS) :
                               ((n & 63) << (BLOCK_SIZE_BITS - 4));
-        ebh->b_L2seg = seg + offset;
+        ebh->b_L2seg = seg + offset;        /* seg is either linear address or segment */
+#endif
+
 #else
         bh->b_data = buf;
         buf += BLOCK_SIZE;
@@ -256,7 +271,7 @@ int INITPROC buffer_init(void)
     } while (bufs_to_alloc > 0);
 #else
     /* no EXT or XMS buffers, internal L1 only */
-    add_buffers(nr_map_bufs, L1buf, kernel_ds);
+    add_buffers(nr_map_bufs, L1buf, KERNEL_DS);
 #endif
     return 0;
 }
@@ -720,7 +735,7 @@ void map_buffer(struct buffer_head *bh)
     L1map[i] = bh;
     bh->b_data = L1buf + (i << BLOCK_SIZE_BITS);
     if (ebh->b_uptodate)
-        xms_fmemcpyw(bh->b_data, kernel_ds, 0, ebh->b_L2seg, BLOCK_SIZE/2);
+        xms_fmemcpyw(bh->b_data, KERNEL_DS, 0, ebh->b_L2seg, BLOCK_SIZE/2);
     map_count++;
     debug_map("MAP:   L%02d block %ld\n", i+1, ebh->b_blocknr);
   end_map_buffer:
@@ -768,7 +783,7 @@ void brelseL1_index(int i, int copyout)
     if (ebh->b_mapcount || ebh->b_locked)
         return;
     if (copyout && ebh->b_uptodate && bh->b_data) {
-        xms_fmemcpyw(0, ebh->b_L2seg, bh->b_data, kernel_ds, BLOCK_SIZE/2);
+        xms_fmemcpyw(0, ebh->b_L2seg, bh->b_data, KERNEL_DS, BLOCK_SIZE/2);
         unmap_count++;
     }
     bh->b_data = 0;
@@ -791,6 +806,6 @@ void brelseL1(struct buffer_head *bh, int copyout)
 
 ramdesc_t buffer_seg(struct buffer_head *bh)
 {
-    return (bh->b_data? kernel_ds: EBH(bh)->b_L2seg);
+    return (bh->b_data? KERNEL_DS: EBH(bh)->b_L2seg);
 }
 #endif /* CONFIG_FS_EXTERNAL_BUFFER | CONFIG_FS_XMS_BUFFER*/

@@ -17,17 +17,19 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/major.h>
 #include <linuxmt/fs.h>
+#include <linuxmt/fcntl.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/mm.h>
+#include <linuxmt/memory.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/mem.h>
 #include <linuxmt/heap.h>
 #include <linuxmt/timer.h>
 #include <linuxmt/init.h>
-
 #include <arch/io.h>
 #include <arch/segment.h>
+#include <arch/seg286.h>
 
 #define DEV_MEM_MINOR           1       /* unused */
 #define DEV_KMEM_MINOR          2
@@ -67,21 +69,59 @@ static size_t zero_read(struct inode *inode, struct file *filp, char *data, size
 
 /*
  * /dev/kmem code
+ *
+ * Interpretation of /dev/kmem file position (f_pos) depends an open() flag:
+ * Using O_ALT interprets f_pos as a far pointer, segment in the high word, offset in
+ * the low word, rather than a linear (seg<<4)+off address, so the segment reaches
+ * the kernel intact.  fmemcpyb reads it as a GDT selector in 286 protected mode
+ * and as a paragraph in real mode, so both kernel data (KERNEL_DS:off) and
+ * another process's memory (SS:off, e.g. ps reading argv) are reachable through
+ * one path in both models.  Userland (ps/meminfo) packs the matching layout.
  */
+
 static size_t kmem_read(struct inode *inode, struct file *filp, char *data, size_t len)
 {
-    seg_t sseg = (unsigned long)filp->f_pos >> 4;
-    segext_t soff = filp->f_pos & 0x0F;
+    seg_t sseg;
+    segext_t soff;
 
-    fmemcpyb((byte_t *)data, current->t_regs.ds, (byte_t *)soff, sseg, (word_t) len);
+    if (filp->f_flags & O_ALT) {
+        sseg = _FP_SEG(filp->f_pos);
+        soff = _FP_OFF(filp->f_pos);
+    } else {
+        sseg = (unsigned long)filp->f_pos >> 4;
+        soff = filp->f_pos & 0x0F;
+    }
+
+#ifdef CONFIG_286_PMODE
+    /* PM segments have a hard descriptor limit; a fixed-size reader (e.g. ps
+     * reading an argv string near the top of a process's stack) can overshoot
+     * it and #GP.  Read only up to the limit.
+     */
+    unsigned int lim = desc_limit(sseg);    /* max valid byte offset (< 64K) */
+    if (soff > lim)
+        len = 0;
+    else if (len - 1 > lim - soff) {
+        len = lim - soff + 1;
+    }
+#endif
+    if (len)
+        fmemcpyb((byte_t *)data, current->t_regs.ds, (byte_t *)soff, sseg, len);
     filp->f_pos += len;
     return len;
 }
 
 static size_t kmem_write(struct inode *inode, struct file *filp, char *data, size_t len)
 {
-    seg_t dseg = (unsigned long)filp->f_pos >> 4;
-    segext_t doff = filp->f_pos & 0x0F;
+    seg_t dseg;
+    segext_t doff;
+
+    if (filp->f_flags & O_ALT) {
+        dseg = _FP_SEG(filp->f_pos);
+        doff = _FP_OFF(filp->f_pos);
+    } else {
+        dseg = (unsigned long)filp->f_pos >> 4;
+        doff = filp->f_pos & 0x0F;
+    }
 
     /* FIXME: very dangerous! */
     fmemcpyb((byte_t *)doff, dseg, (byte_t *)data, current->t_regs.ds, (word_t) len);
@@ -102,10 +142,10 @@ static int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg
         retword = max_tasks;
         break;
     case MEM_GETCS:
-        retword = kernel_cs;
+        retword = KERNEL_CS;
         break;
     case MEM_GETDS:
-        retword = kernel_ds;
+        retword = KERNEL_DS;
         break;
     case MEM_GETFARTEXT:
         retword = (unsigned)((long)buffer_init >> 16);
@@ -135,12 +175,11 @@ static int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg
 static int memory_lseek(struct inode *inode, struct file *filp, loff_t offset, int origin)
 {
     switch (origin) {
+    case 0:
+        break;
     case 1:
         offset += filp->f_pos;
-        /* fall thru */
-    case 0:
-        if (offset >= 0)
-            break;
+        break;
     default:
         return -EINVAL;
     }

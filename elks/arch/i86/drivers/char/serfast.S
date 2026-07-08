@@ -9,6 +9,7 @@
 //  1 Feb 2026 Rewritten completely in assembly
 //
 #include <linuxmt/config.h>
+#include <arch/segment.h>
         .code16
         .text
 #ifdef CONFIG_ARCH_IBMPC
@@ -55,7 +56,12 @@ common_entry:
         // Recover kernel data segment
         // Was pushed by the CALLF of the dynamic handler
         mov     %sp,%bx
+#ifdef CONFIG_286_PMODE
+        mov     $SEL_KDATA, %ax         // writable; CALLF-saved CS is read-only SEL_KDATA_EXEC
+        mov     %ax, %ds
+#else
         mov     %ss:12(%bx),%ds
+#endif
 
         // translated C routine above
         // NOTE: uses hard-coded offsets from struct serial_info, tty and ch_queue

@@ -16,6 +16,7 @@
 #include <autoconf.h>           /* for CONFIG_ options */
 #include <linuxmt/mm.h>
 #include <linuxmt/mem.h>
+#include <linuxmt/memory.h>
 #include <linuxmt/major.h>
 #include <linuxmt/sched.h>
 #include <linuxmt/fixedpt.h>
@@ -34,34 +35,29 @@
 #include <paths.h>
 #include <libgen.h>
 
-#define LINEARADDRESS(off, seg)     ((off_t) (((off_t)seg << 4) + off))
-#define MK_FP(seg,off) ((void __far *)((((unsigned long)(seg))<<16) | ((unsigned)(off))))
-
 static int maxtasks;
 
 int memread(int fd, word_t off, word_t seg, void *buf, int size)
 {
-    if (lseek(fd, LINEARADDRESS(off, seg), SEEK_SET) == -1)
-        return 0;
+    /* set /dev/kmem location using far pointer rather than linear address */
+    if (lseek(fd, _MK_LP(seg, off), SEEK_SET) == -1)
+        return -1;
 
-    if (read(fd, buf, size) != size)
-        return 0;
-
-    return 1;
+    return read(fd, buf, size);
 }
 
 word_t getword(int fd, word_t off, word_t seg)
 {
     word_t word;
 
-    if (!memread(fd, off, seg, &word, sizeof(word)))
+    if (memread(fd, off, seg, &word, sizeof(word)) != sizeof(word))
         return 0;
     return word;
 }
 
 void process_name(int fd, unsigned int off, unsigned int seg)
 {
-    word_t argc, argv;
+    int argc, argv, n;
     char buf[80];
 
     argc = getword(fd, off, seg);
@@ -69,9 +65,10 @@ void process_name(int fd, unsigned int off, unsigned int seg)
     while (argc-- > 0) {
         off += 2;
         argv = getword(fd, off, seg);
-        if (!memread(fd, argv, seg, buf, sizeof(buf)))
+        if ((n = memread(fd, argv, seg, buf, sizeof(buf)-1)) <= 0)
             return;
-        printf("%s ",buf);
+        buf[n-1] = '\0';
+        printf("%s ", buf);
     }
 }
 
@@ -108,7 +105,7 @@ char *dev_name(unsigned int minor)
 
 char *tty_name(int fd, unsigned int off, unsigned int seg)
 {
-    off_t addr = ((off_t)seg << 4) + off;
+    off_t addr = _MK_LP(seg, off);
     struct tty tty;
 
     if (off == 0)
@@ -149,7 +146,7 @@ int main(int argc, char **argv)
         }
     }
 
-    if ((fd = open("/dev/kmem", O_RDONLY)) < 0) {
+    if ((fd = open("/dev/kmem", O_RDONLY|O_ALT)) < 0) {
         printf("no /dev/kmem\n");
         return 1;
     }
@@ -167,7 +164,7 @@ int main(int argc, char **argv)
             printf("no mem_getuptime\n");
             return 1;
         }
-        jiff_t __far *puptime = MK_FP(ds, upoff);
+        jiff_t __far *puptime = _MK_FP(ds, upoff);
         clr_irq();
         uptime = *puptime;
         set_irq();
@@ -197,7 +194,7 @@ int main(int argc, char **argv)
     if (f_listall) printf("CSEG DSEG ");
     printf(" HEAP  FREE   SIZE COMMAND\n");
     for (j = 0; j < maxtasks; j++) {
-        if (!memread(fd, off + j*sizeof(struct task_struct), ds, &task_table, sizeof(task_table))) {
+        if (memread(fd, off + j*sizeof(struct task_struct), ds, &task_table, sizeof(task_table)) != sizeof(task_table)) {
             printf("no memread\n");
             return 1;
         }

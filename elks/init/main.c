@@ -18,6 +18,7 @@
 #include <linuxmt/timer.h>
 #include <linuxmt/debug.h>
 #include <arch/segment.h>
+#include <arch/seg286.h>
 #include <arch/ports.h>
 #include <arch/irq.h>
 #include <arch/io.h>
@@ -43,7 +44,7 @@ struct netif_parms netif_parms[MAX_ETHS] = {
     { WD_IRQ, WD_PORT, WD_RAM, WD_FLAGS },
     { EL3_IRQ, EL3_PORT, 0, EL3_FLAGS },
 };
-seg_t kernel_cs, kernel_ds;
+seg_t kernel_cs, kernel_ds;     /* always segment values even in PM */
 int root_mountflags;
 int tracing;
 int nr_ext_bufs, nr_xms_bufs, nr_map_bufs;
@@ -110,18 +111,26 @@ static void idle_loop(void);
  */
 void start_kernel(void)
 {
-    //tracing = TRACE_KSTACK | TRACE_ISTACK;
+    clr_irq();                      /* we're running on the kernel interrupt stack! */
+
+#ifdef CONFIG_286_PMODE
+    /*
+     * We must enter protected mode before calling far_start_kernel as setup.S
+     * relocated all .fartext CS segments to SEL_KFTEXT selectors.
+     */
+    gdt_init();
+
+    xms_bootopts = XMS_PMODE;       /* default to XMS on unless xms=off in /bootopts */
+#endif
+
     far_start_kernel();             /* start executing in reusable memory */
 }
 
 static void FARPROC far_start_kernel(void)
 {
-    flag_t flags;                   /* get CPU flag word */
-    save_flags(flags);
-    clr_irq();                      /* we're running on the kernel interrupt stack! */
-    printk("INT %x ", flags);       /* to show interrupt status after setup.S */
     printk("START\n");
 
+    //tracing = TRACE_KSTACK | TRACE_ISTACK;
     early_kernel_init();            /* read bootopts using kernel interrupt stack */
 
      /*
@@ -262,7 +271,10 @@ static void INITPROC kernel_init(void)
 
 #ifdef CONFIG_FARTEXT_KERNEL
     /* add .farinit.init section to main memory free list */
-    seg_t     init_seg = ((unsigned long)(void __far *)__start_fartext_init) >> 16;
+    seg_t     init_seg = _FP_SEG(__start_fartext_init);
+#ifdef CONFIG_286_PMODE
+    init_seg = desc_base(init_seg) >> 4;    /* convert selector to physical segment */
+#endif
     seg_t s = init_seg + (((word_t)(void *)__start_fartext_init + 15) >> 4);
     seg_t e = init_seg + (((word_t)(void *)  __end_fartext_init + 15) >> 4);
     debug("init: seg %04x to %04x size %04x (%d)\n", s, e, (e - s) << 4, (e - s) << 4);
@@ -285,7 +297,7 @@ static void INITPROC kernel_banner(seg_t init, seg_t extra)
            (unsigned)_endbss - (unsigned)_enddata, heapsize);
     printk("Kernel text %x ", kernel_cs);
 #ifdef CONFIG_FARTEXT_KERNEL
-    printk("ftext %x init %x ", (unsigned)((long)kernel_init >> 16), init);
+    printk("ftext %x init %x ", kernel_ftext, init);
 #endif
     printk("data %x end %x top %x %u+%u+%uK free\n",
            kernel_ds, membase, memend, (int) ((memend - membase) >> 6),
@@ -327,11 +339,11 @@ static void INITPROC do_init_task(void)
     heap_add(&opts, sizeof(opts));
 #ifdef CONFIG_FS_XMS
     if (xms_enabled == XMS_LOADALL) {
-        seg_add(DEF_OPTSEG, 0x80);  /* carve out LOADALL buf 0x800-0x865 from release! */
-        seg_add(0x87, DMASEG);
+        seg_add(SEG_OPTSEG, 0x80);  /* carve out LOADALL buf 0x800-0x865 from release! */
+        seg_add(0x87, SEG_DMASEG);
     } else  /* fall through */
 #endif
-    seg_add(DEF_OPTSEG, DMASEG);    /* DEF_OPTSEG through REL_INITSEG */
+    seg_add(SEG_OPTSEG, SEG_DMASEG);    /* SEG_OPTSEG through SEG_INITSEG */
 
     /* run /bin/init or init= command w/argc/argv/env, normally no return*/
     run_init_process_sptr(init_command, (char *)argv_init, argv_slen);
@@ -528,7 +540,7 @@ static int INITPROC parse_options(void)
     char *next;
 
     /* copy /bootopts loaded by boot loader at 0050:0000*/
-    fmemcpyb(opts.options, kernel_ds, 0, DEF_OPTSEG, sizeof(opts.options));
+    fmemcpyb(opts.options, KERNEL_DS, 0, OPTSEG, sizeof(opts.options));
 
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
     /* check file starts with ##, one or two sectors, max 1023 bytes or 511 one sector */
@@ -623,6 +635,7 @@ static int INITPROC parse_options(void)
         if (!strncmp(line,"xms=",4)) {
             if (!strcmp(line+4, "on"))    xms_bootopts = XMS_UNREAL;
             if (!strcmp(line+4, "int15")) xms_bootopts = XMS_INT15;
+            if (!strcmp(line+4, "off"))   xms_bootopts = XMS_DISABLED;
             continue;
         }
         if (!strncmp(line,"xmsbuf=",7)) {

@@ -26,6 +26,9 @@
 
 #define MAX_SEGS        5       /* Maximum number of application code/data segments */
 
+/* protected mode */
+#define MAX_GDT_ENTRIES 100     /* max 512 * 8 = 4 KB GDT table size */
+
 /* buffers */
 #define NR_MAPBUFS      8       /* Number of internal L1 buffers */
 
