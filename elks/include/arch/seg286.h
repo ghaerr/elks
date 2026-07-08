@@ -72,7 +72,7 @@ struct dtr {
 #define MK_SEL(index, ti, rpl)  (((unsigned)(index) << 3) | (ti) | (rpl))
 #define SEL_INDEX(sel)          ((unsigned)(sel) >> 3)
 
-/* ---- HAL hooks (implemented in pm286.c and pmode.S) ---- */
+/* ---- HAL hooks (implemented in pmode.c and pmode.S) ---- */
 
 /* The ELKS PM Interupt Descriptor Table uses the same physical memory as
  * the real mode Interrupt Vector Table, except that the IDT uses 8 bytes/entry
@@ -84,7 +84,8 @@ struct dtr {
 #define MAX_IDT_ENTRIES 129     /* 0..NR_IRQS required, needs 129 for 0x80 syscall */
 
 void gdt_init(void);            /* build fixed GDT selector enries */
-void pm_fault_panic(void);      /* PM exception handler: display info and halt */
+void pm_fault_vector(void);     /* PM exception handler: display info and halt */
+void pm_exception_handler(int arg); /* display exception info and panic */
 
 /* load GDTR and IDTR, set PM via SMSW/LMSW, reload CS */
 void enable_protected_mode(struct dtr *gdtr, struct dtr *idtr);

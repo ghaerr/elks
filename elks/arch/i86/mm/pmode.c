@@ -1,18 +1,16 @@
 /*
- * 80286/80386+ Protected-mode descriptor allocator.
- *
- * In PM, seg_alloc() reserves physical paragraphs from the existing arena as
- * usual, then calls desc_alloc to allocate a selector, which is stored instead
- * of the real mode segment in segment_s.base.  The far-memory primitives then load
- * that selector into a segment register and the CPU resolves it via the GDT.
+ * 80286/80386+ Protected mode implementation for ELKS
  */
+
 #include <linuxmt/config.h>
 #include <linuxmt/types.h>
 #include <linuxmt/kernel.h>
 #include <linuxmt/memory.h>
 #include <linuxmt/limits.h>
+
 #include <arch/segment.h>
 #include <arch/seg286.h>
+#include <arch/system.h>
 #include <arch/irq.h>
 
 /* Disallow certain configurations for protected mode builds */
@@ -61,7 +59,13 @@ void desc_chaccess(sel_t sel, byte_t access)
     gdt[SEL_INDEX(sel)].access = access;
 }
 
-/* find a free GDT slot, fill it, return its selector (0 = table full or limit > 64K) */
+/* Find a free GDT slot, fill it, return its selector (0 = table full or limit > 64K).
+ *
+ * In PM, seg_alloc() reserves physical paragraphs from the existing arena as
+ * usual, then calls desc_alloc to allocate a selector, which is stored instead
+ * of the real mode segment in segment_s.base.  The far-memory primitives then load
+ * that selector into a segment register and the CPU resolves it via the GDT.
+ */
 sel_t desc_alloc(addr_t base, addr_t limit, byte_t access)
 {
     int i, scanned;
@@ -123,18 +127,17 @@ void idt_gate_set(unsigned int vect, unsigned int proc, sel_t selector, byte_t a
     g->offset_hi= 0;            /* high 16 bits handler address (=0 for 286) */
 }
 
-/* Point IDT vectors at the fault-catch handler so an exception between
- * PM entry and irq_init() is reported, not a triple fault.
- * irq_init() later overwrites the live IRQ/syscall/INT0/INT2 vectors.
+/* Point IDT vectors at pm_fault_vector to display exception and panic
+ * on non-handled faults, rather than a triple fault and CPU reset.
  */
 static void idt_init(void)
 {
     int v;
 
     for (v = 0; v < 32; v++)    /* per-vector entries so the reporter knows the vector */
-        idt_gate_set(v, (unsigned)pm_fault_panic + v*8, SEL_KCODE, GATE_INT286);
+        idt_gate_set(v, (unsigned)pm_fault_vector + v*8, SEL_KCODE, GATE_INT286);
     for (v = 32; v < MAX_IDT_ENTRIES; v++)
-        idt_gate_set(v, (unsigned)pm_fault_panic + 32*8, SEL_KCODE, GATE_INT286);
+        idt_gate_set(v, (unsigned)pm_fault_vector + 32*8, SEL_KCODE, GATE_INT286);
 }
 
 /* Called from near text start_kernel. Build the GDT/IDT, then switch to PM.
@@ -153,12 +156,13 @@ void gdt_init(void)
      * setup.S has patched the kernel's far-call/far-data segments to these
      * selectors (SEL_KCODE/SEL_KFTEXT/SEL_KDATA) instead of paragraphs.
      */
-    desc_set(MK_SEL(GDT_NULL,   SEL_GDT, SEL_RPL0), 0,          0,         0);
+    desc_set(MK_SEL(GDT_NULL,   SEL_GDT, SEL_RPL0), 0, 0, 0);
 
     desc_set(MK_SEL(GDT_KCODE,  SEL_GDT, SEL_RPL0),
         (addr_t)kernel_cs << 4, (unsigned)_endtext, DESC_KCODE);
 
-    desc_set(MK_SEL(GDT_KDATA,  SEL_GDT, SEL_RPL0), data_base, 65536L, DESC_KDATA);
+    desc_set(MK_SEL(GDT_KDATA,  SEL_GDT, SEL_RPL0),
+        data_base, (membase - kernel_ds) << 4, DESC_KDATA);
 
     if (kernel_ftext) {
         desc_set(MK_SEL(GDT_KFTEXT, SEL_GDT, SEL_RPL0),
@@ -210,4 +214,13 @@ void gdt_init(void)
     sel_idt = SEL_IDT;                      /* use SEL_IDT for idt_get_set from now on */
 
     enable_protected_mode(&gdtr, &idtr);    /* enter PM; returns here in protected mode */
+}
+
+/* unhandled protected mode fault - display info and panic */
+void pm_exception_handler(int arg)
+{
+    unsigned int *p = (unsigned int *)&arg;
+
+    panic("EXC %04x CODE %04x CS %04x IP %04x FLAG %04x STK %04x %04x %04x %04x",
+        p[0], p[1], p[3], p[2], p[4], p[5], p[6], p[7], p[8]);
 }
