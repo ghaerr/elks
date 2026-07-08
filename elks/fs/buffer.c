@@ -144,7 +144,8 @@ static void INITPROC add_buffers(int nbufs, char *buf, ramdesc_t seg)
             /* Fallback for xms=off EXT buffers requires one selector per buffer.
              * seg is already PM selector of max 64K array of 1K buffers.
              */
-            ebh->b_L2seg = desc_alloc(desc_base((seg_t)seg) + offset, 0x40, DESC_KDATA);
+            ebh->b_L2seg = desc_alloc(desc_base((seg_t)seg) + offset,
+                BLOCK_SIZE, DESC_KDATA);
         }
 #else
         size_t offset = xmsenabled?  ((n & 63) << BLOCK_SIZE_BITS) :

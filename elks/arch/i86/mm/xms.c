@@ -132,11 +132,11 @@ void xms_fmemcpyw(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src
         dst_seg, dst_off, src_seg, src_off, count);
 
     if (src_seg >> 16) {
-        sel_src = desc_alloc(src_seg, 0x40, DESC_KDATA);
+        sel_src = desc_alloc(src_seg, count, DESC_KDATA);
         src_seg = sel_src;
     }
     if (dst_seg >> 16) {
-        sel_dst = desc_alloc(dst_seg, 0x40, DESC_KDATA);
+        sel_dst = desc_alloc(dst_seg, count, DESC_KDATA);
         dst_seg = sel_dst;
     }
 	fmemcpyw(dst_off, (seg_t)dst_seg, src_off, (seg_t)src_seg, count);
@@ -154,11 +154,11 @@ void xms_fmemcpyb(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src
         dst_seg, dst_off, src_seg, src_off, count);
 
     if (src_seg >> 16) {
-        sel_src = desc_alloc(src_seg, 0x40, DESC_KDATA);
+        sel_src = desc_alloc(src_seg, count, DESC_KDATA);
         src_seg = sel_src;
     }
     if (dst_seg >> 16) {
-        sel_dst = desc_alloc(dst_seg, 0x40, DESC_KDATA);
+        sel_dst = desc_alloc(dst_seg, count, DESC_KDATA);
         dst_seg = sel_dst;
     }
 	fmemcpyb(dst_off, (seg_t)dst_seg, src_off, (seg_t)src_seg, count);
@@ -174,7 +174,7 @@ void xms_fmemset(void *dst_off, ramdesc_t dst_seg, size_t count)
     debug("xms_fmemset(%08lx:%04x count %u\n", dst_seg, dst_off, count);
 
     if (dst_seg >> 16) {
-        sel_dst = desc_alloc(dst_seg, 0x40, DESC_KDATA);
+        sel_dst = desc_alloc(dst_seg, count, DESC_KDATA);
         dst_seg = sel_dst;
     }
 	fmemsetb(dst_off, (seg_t)dst_seg, 0, count);
