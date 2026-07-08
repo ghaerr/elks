@@ -84,7 +84,7 @@ static int compress(char *infile, char *outfile, int do_text, int do_ftext, int 
 	const char *base = strrchr(infile, '/');
 	if (base == NULL) base = infile; else base++;
 	sprintf(exomizer_outfile, "ex.out.%s", base);
-	char cmd[256];
+	char cmd[512];
 
 	if ((ifd = open(infile, O_RDONLY)) < 0)
 	{
