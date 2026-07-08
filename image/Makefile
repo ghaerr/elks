@@ -39,7 +39,7 @@ copyrom:
 	$(MAKE) -f Make.image copyrom "CONFIG=$(TOPDIR)/.config"
 
 compress:
-	cd $(TOPDIR)/target/bin; elks-compress *
+	cd $(TOPDIR)/target/bin; ls | xargs -P $$(getconf _NPROCESSORS_ONLN) -n1 elks-compress
 
 .NOTPARALLEL: images images-minix images-fat images-hd
 images: images-minix images-fat images-hd
