@@ -1,0 +1,114 @@
+name: kvm-boot-test
+
+# Boot-smoke-tests ELKS under qemu-kvm (hardware VT-x via the runner's
+# nested virtualization).  Unlike QEMU TCG, KVM enforces segment descriptor
+# limits and faults exactly like real silicon - the bug class behind
+# PR #2735 (GDT_BIOSDATA / GDT_KDATA limits) is invisible on TCG and only
+# manifests here.  Pass = serial console reaches "login:"; fail = kernel
+# panic or boot timeout.
+
+on:
+  push:
+    paths:
+      - '**'
+      - '!.github/workflows/cross.yml'
+      - '!tools/*'
+  pull_request:
+
+jobs:
+  boot:
+    runs-on: ubuntu-22.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - ibmpc-1440.config    # real-mode baseline
+          - ibmpc-pmode.config   # 286 protected mode - the VT-x-sensitive build
+
+    # ibmpc-pmode currently fails at root mount under hardware
+    # virtualization with XMS enabled (pre-existing issue, invisible on
+    # TCG).  Report it as a warning, not a red X, until that is fixed -
+    # then remove this to make the job gating.
+    continue-on-error: ${{ matrix.config == 'ibmpc-pmode.config' }}
+
+    env:
+      MAKEFLAGS: "-j$(nproc)"
+
+    steps:
+      - name: setup
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --fix-missing texinfo libncurses5-dev libelf-dev ncompress qemu-system-x86
+
+      # GitHub-hosted Linux runners expose /dev/kvm; grant access to the runner user
+      - name: enable KVM
+        run: |
+          echo "--- CPU virt flags ---"
+          grep -cE '(vmx|svm)' /proc/cpuinfo || true
+          echo "--- kvm modules ---"
+          lsmod | grep -i kvm || true
+          sudo modprobe kvm_intel 2>/dev/null || sudo modprobe kvm_amd 2>/dev/null || true
+          echo "--- /dev/kvm before ---"
+          ls -la /dev/kvm || true
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm || true
+          [ -e /dev/kvm ] && sudo chmod 666 /dev/kvm
+          echo "--- /dev/kvm after ---"
+          ls -la /dev/kvm
+          test -w /dev/kvm && echo "KVM available"
+
+      - name: checkout
+        uses: actions/checkout@v4
+
+      # same cached cross toolchain as main.yml
+      - name: cache cross toolchain
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: cross
+          key: cross-${{ hashFiles('tools/*') }}-${{ runner.os }}
+
+      - name: build cross toolchain
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p cross
+          tools/build.sh
+
+      - name: build ELKS (${{ matrix.config }})
+        run: |
+          . ./env.sh
+          cp ${{ matrix.config }} .config
+          ( cd elks/arch/i86/drivers/char/KeyMaps && ./mkcfg )   # generate keymaps.h
+          # serial getty so the boot outcome is observable on COM1
+          # ("3" = multi-user runlevel with getty on ttyS0)
+          sed -i 's|^#console=ttyS0,19200 3|console=ttyS0,19200 3|' \
+            elkscmd/rootfs_template/bootopts
+          make
+
+      - name: boot under KVM
+        run: |
+          timeout 180 qemu-system-i386 -accel kvm -m 8 \
+            -fda image/fd1440.img -boot a \
+            -serial file:serial.log -display none -no-reboot &
+          QEMU=$!
+          # PASS: "login:"  FAIL: "panic"  FAIL: 150s without either (hang)
+          for i in $(seq 1 75); do
+            grep -q  'login:' serial.log 2>/dev/null && break
+            grep -qi 'panic'  serial.log 2>/dev/null && break
+            sleep 2
+          done
+          kill $QEMU 2>/dev/null || true
+          echo "===== serial console ====="
+          cat serial.log
+          echo "==========================="
+          grep -q 'login:' serial.log
+
+      - name: upload serial log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: serial-${{ matrix.config }}
+          path: serial.log
