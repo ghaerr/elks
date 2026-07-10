@@ -31,12 +31,17 @@
 #include <arch/segment.h>
 #include <arch/seg286.h>
 
+#ifdef CONFIG_CHAR_DEV_KMSG
+extern struct file_operations kmsg_fops;
+#endif
+
 #define DEV_MEM_MINOR           1       /* unused */
 #define DEV_KMEM_MINOR          2
 #define DEV_NULL_MINOR          3
 #define DEV_PORT_MINOR          4
 #define DEV_ZERO_MINOR          5
-#define DEV_MAX_MINOR           5
+#define DEV_KMSG_MINOR          8
+#define DEV_MAX_MINOR           8
 
 /*
  * /dev/null code
@@ -321,6 +326,13 @@ static struct file_operations *mdev_fops[] = {
     NULL,
 #endif
     &zero_fops,                 /* DEV_ZERO_MINOR */
+    NULL,                       /* 6 */
+    NULL,                       /* 7 */
+#ifdef CONFIG_CHAR_DEV_KMSG
+    &kmsg_fops,                 /* DEV_KMSG_MINOR */
+#else
+    NULL,
+#endif
 };
 
 /*

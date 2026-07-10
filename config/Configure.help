@@ -411,6 +411,12 @@ CONFIG_CHAR_DEV_MEM
   Saying yes include support for the various memory character devices.
   Currently only mem, kmem, zero, null and full are supported.
 
+Enable kernel log device (/dev/kmsg)
+CONFIG_CHAR_DEV_KMSG
+  Include support for /dev/kmsg, which provides read access to the
+  kernel ring buffer populated by printk().  The buffer is circular
+  and discards the oldest messages when full.
+
 Enable standard parallel (printer) ports
 CONFIG_CHAR_DEV_LP
   Include support for parallel port devices.

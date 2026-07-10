@@ -36,6 +36,7 @@ PRGS = \
 	makeboot \
 	decomp \
 	sysctl \
+	dmesg \
 	clock \
 	# EOL
 
@@ -123,6 +124,9 @@ beep: beep.o
 
 sysctl: sysctl.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+dmesg: dmesg.o
+	$(LD) $(LDFLAGS) -o dmesg dmesg.o $(LDLIBS)
 
 test_unreal: test_unreal.o unreal.o
 	$(LD) -melks-libc -mcmodel=small -c test_unreal.S -o test_unreal.o

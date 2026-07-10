@@ -59,6 +59,50 @@ dev_t dev_console;
 #endif
 static void (*kputc)(dev_t, int) = 0;
 
+/*
+ * Kernel log ring buffer for /dev/kmsg
+ */
+#define KMSG_BUF_SIZE   2048
+
+static char kmsg_buf[KMSG_BUF_SIZE];
+static int  kmsg_head;      /* write position */
+static int  kmsg_tail;      /* read position */
+static int  kmsg_count;     /* bytes available to read */
+
+static void kmsg_write(int ch)
+{
+    kmsg_buf[kmsg_head] = (char)ch;
+    kmsg_head = (kmsg_head + 1) & (KMSG_BUF_SIZE - 1);
+    if (kmsg_count < KMSG_BUF_SIZE) {
+        kmsg_count++;
+    } else {
+        /* buffer full, advance tail to discard oldest byte */
+        kmsg_tail = (kmsg_tail + 1) & (KMSG_BUF_SIZE - 1);
+    }
+}
+
+int kmsg_read_char(void)
+{
+    int ch;
+
+    if (kmsg_count == 0)
+        return -1;
+    ch = (unsigned char)kmsg_buf[kmsg_tail];
+    kmsg_tail = (kmsg_tail + 1) & (KMSG_BUF_SIZE - 1);
+    kmsg_count--;
+    return ch;
+}
+
+int kmsg_size(void)
+{
+    return kmsg_count;
+}
+
+void kmsg_clear(void)
+{
+    kmsg_head = kmsg_tail = kmsg_count = 0;
+}
+
 
 void set_console(dev_t dev)
 {
@@ -76,6 +120,7 @@ void kputchar(int ch)
 {
     if (ch == '\n')
             kputchar('\r');
+    kmsg_write(ch);
     if (kputc)
             (*kputc)(dev_console, ch);
     else early_putchar(ch);
