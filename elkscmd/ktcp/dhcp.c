@@ -17,11 +17,11 @@ static timeq_t dhcp_retry_time;
 static int dhcp_retry_count;
 static timeq_t dhcp_start_time;
 
-static __u32 dhcp_xid;
-static __u32 dhcp_yiaddr;
-static __u32 dhcp_server_ip;
-static __u32 dhcp_netmask_val;
-static __u32 dhcp_gateway_val;
+static uint32_t dhcp_xid;
+static uint32_t dhcp_yiaddr;
+static uint32_t dhcp_server_ip;
+static uint32_t dhcp_netmask_val;
+static uint32_t dhcp_gateway_val;
 
 static unsigned char dhcp_buf[DHCP_MSG_LEN];
 
@@ -36,12 +36,12 @@ static void dhcp_send_discover(void)
     msg->htype = 1;
     msg->hlen = 6;
     msg->xid = htonl(dhcp_xid);
-    msg->secs = htons((__u16)(((Now - dhcp_start_time) * 60) / 1000));
+    msg->secs = htons((uint16_t)(((Now - dhcp_start_time) * 60) / 1000));
     msg->flags = htons(0x8000);
     memcpy(msg->chaddr, eth_local_addr, 6);
 
     opts = (unsigned char *)(msg + 1);
-    *(__u32 *)opts = htonl(DHCP_MAGIC_COOKIE);
+    *(uint32_t *)opts = htonl(DHCP_MAGIC_COOKIE);
     opts += 4;
 
     *opts++ = DHCP_OPT_MSG_TYPE;
@@ -72,12 +72,12 @@ static void dhcp_send_request(void)
     msg->htype = 1;
     msg->hlen = 6;
     msg->xid = htonl(dhcp_xid);
-    msg->secs = htons((__u16)(((Now - dhcp_start_time) * 60) / 1000));
+    msg->secs = htons((uint16_t)(((Now - dhcp_start_time) * 60) / 1000));
     msg->flags = htons(0x8000);
     memcpy(msg->chaddr, eth_local_addr, 6);
 
     opts = (unsigned char *)(msg + 1);
-    *(__u32 *)opts = htonl(DHCP_MAGIC_COOKIE);
+    *(uint32_t *)opts = htonl(DHCP_MAGIC_COOKIE);
     opts += 4;
 
     *opts++ = DHCP_OPT_MSG_TYPE;
@@ -86,12 +86,12 @@ static void dhcp_send_request(void)
 
     *opts++ = DHCP_OPT_REQ_IP;
     *opts++ = 4;
-    *(__u32 *)opts = dhcp_yiaddr;
+    *(uint32_t *)opts = dhcp_yiaddr;
     opts += 4;
 
     *opts++ = DHCP_OPT_SERVER_ID;
     *opts++ = 4;
-    *(__u32 *)opts = dhcp_server_ip;
+    *(uint32_t *)opts = dhcp_server_ip;
     opts += 4;
 
     *opts++ = DHCP_OPT_END;
@@ -195,9 +195,9 @@ void dhcp_init(void)
     dhcp_retry_count = 0;
     dhcp_start_time = Now;
 
-    dhcp_xid = ((__u32)eth_local_addr[0] << 24) |
-	       ((__u32)eth_local_addr[1] << 16) |
-	       ((__u32)eth_local_addr[2] << 8)  |
+    dhcp_xid = ((uint32_t)eth_local_addr[0] << 24) |
+	       ((uint32_t)eth_local_addr[1] << 16) |
+	       ((uint32_t)eth_local_addr[2] << 8)  |
 	       eth_local_addr[3];
     dhcp_xid ^= (Now & 0xFF) << 8;
 
@@ -269,7 +269,7 @@ void dhcp_input(struct iphdr_s *iph, uint16_t src_port, unsigned char *data, int
 
     if (optlen < 4)
 	return;
-    if (*(__u32 *)opts != htonl(DHCP_MAGIC_COOKIE))	/* DHCP option marker */
+    if (*(uint32_t *)opts != htonl(DHCP_MAGIC_COOKIE))	/* DHCP option marker */
 	return;
     opts += 4;
     optlen -= 4;

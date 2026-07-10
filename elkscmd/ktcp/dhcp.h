@@ -39,20 +39,20 @@
 #define DHCP_MAX_TIMEOUT	(16 << 4)
 
 struct dhcp_message_s {
-	__u8	op;
-	__u8	htype;
-	__u8	hlen;
-	__u8	hops;
-	__u32	xid;
-	__u16	secs;
-	__u16	flags;
-	__u32	ciaddr;
-	__u32	yiaddr;
-	__u32	siaddr;
-	__u32	giaddr;
-	__u8	chaddr[16];
-	__u8	sname[64];
-	__u8	file[128];
+	uint8_t	op;
+	uint8_t	htype;
+	uint8_t	hlen;
+	uint8_t	hops;
+	uint32_t	xid;
+	uint16_t	secs;
+	uint16_t	flags;
+	uint32_t	ciaddr;
+	uint32_t	yiaddr;
+	uint32_t	siaddr;
+	uint32_t	giaddr;
+	uint8_t	chaddr[16];
+	uint8_t	sname[64];
+	uint8_t	file[128];
 };
 
 extern int dhcp_enabled;
