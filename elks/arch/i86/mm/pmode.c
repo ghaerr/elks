@@ -190,7 +190,7 @@ void gdt_init(void)
     desc_set(MK_SEL(GDT_OPTSEG, SEL_GDT, SEL_RPL0), SEG_OPTSEG << 4, 1024, DESC_KDATA);
 
     /* BIOS data area */
-    desc_set(MK_SEL(GDT_BIOSDATA, SEL_GDT, SEL_RPL0), SEG_BIOSDATA << 4, BYTES_PARA(256),
+    desc_set(MK_SEL(GDT_BIOSDATA, SEL_GDT, SEL_RPL0), SEG_BIOSDATA << 4, 256,
         DESC_KDATA);
 
     /* text video memory */
