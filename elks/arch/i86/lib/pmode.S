@@ -26,6 +26,7 @@
 enable_protected_mode:
         push    %bp
         mov     %sp,%bp
+        pushf                   // save interrupt status
         cli                     // no interrupts during the transition
 
         mov     4(%bp),%bx      // bx -> gdtr { word limit; long base }
@@ -44,9 +45,7 @@ pm_cs:
         mov     %ax,%es
         mov     %ax,%ss         // SS base = kernel_ds<<4 (same phys as real-mode SS)
 
-        mov     $'P',%al        // bring-up: signal successful PM entry on COM1
-        call    pm_putc_ser
-
+        popf                    // restore interrupt status
         pop     %bp
         ret                     // return (in PM) to gdt_init -> crt0 -> start_kernel
 
@@ -57,100 +56,23 @@ pm_cs:
 // <num> is the exception number: #DF=08, #TS=0A, #NP=0B, #SS=0C, #GP=0D.
 // Faulting CS will be known selector number: CODE 0008, DATA 0010, FTEXT 0018.
 
-        .balign 8
-        .global pm_fault_panic
-pm_fault_panic:
+        .balign 2
+        .global pm_fault_vector
+        .extern pm_exception_handler
+pm_fault_vector:
         .set    fltv, 0
         .rept   32              // first 32 IDT entries report vector numbers 0..31
         pushw   $fltv
-        jmp     pm_fault_common
-        .balign 8, 0x90         // each entry occupies an 8-byte slot
+        call    pm_exception_handler
+        nop; nop; nop;          // each entry is 5 bytes code + 3 bytes NOP
         .set    fltv, fltv + 1
         .endr
         pushw   $0x00FF         // remainder vectors >= 32 report vector 255
-pm_fault_common:
-        cli
-        mov     %sp,%bp         // bp -> [vecnum][ERRCODE][IP][CS][FLAGS][...]
-        mov     $0x0d,%al
-        call    pm_putc_ser
-        mov     $0x0a,%al
-        call    pm_putc_ser
-        mov     $'E',%al
-        call    pm_putc_ser
-        mov     $'X',%al
-        call    pm_putc_ser
-        mov     $'C',%al
-        call    pm_putc_ser
-        mov     $'=',%al
-        call    pm_putc_ser
-        movw    (%bp),%ax       // vector
-        call    pm_puthex
-        mov     $'-',%al
-        call    pm_putc_ser
-        movw    2(%bp),%ax      // errcode
-        call    pm_puthex
-        mov     $'-',%al
-        call    pm_putc_ser
-        movw    4(%bp),%ax      // IP
-        call    pm_puthex
-        mov     $'-',%al
-        call    pm_putc_ser
-        movw    6(%bp),%ax      // CS
-        call    pm_puthex
-        mov     $'-',%al
-        call    pm_putc_ser
-        movw    8(%bp),%ax      // FLAGS
-        call    pm_puthex
-        mov     $'-',%al
-        call    pm_putc_ser
-        movw    10(%bp),%ax     // stack 0
-        call    pm_puthex
-        mov     $'-',%al
-        call    pm_putc_ser
-        movw    12(%bp),%ax     // stack 1
-        call    pm_puthex
-        mov     $'-',%al
-        call    pm_putc_ser
-        movw    14(%bp),%ax     // stack 2
-        call    pm_puthex
-        mov     $'-',%al
-        call    pm_putc_ser
-        movw    16(%bp),%ax     // stack 3
-        call    pm_puthex
-        mov     $'-',%al
-        call    pm_putc_ser
-        movw    18(%bp),%ax     // stack 4
-        call    pm_puthex
-        mov     $0x0d,%al
-        call    pm_putc_ser
-        mov     $0x0a,%al
-        call    pm_putc_ser
-9:      hlt
-        jmp     9b
+        call    pm_exception_handler
 
-// AX -> 4 hex digits on COM1 (high nibble first)
-pm_puthex:
-        push    %cx
-        push    %bx
-        mov     %ax,%bx
-        mov     $4,%cx
-1:      rol     $4,%bx
-        mov     %bx,%ax
-        and     $0x0f,%ax
-        cmp     $10,%ax
-        jb      2f
-        add     $7,%ax
-2:      add     $0x30,%ax
-        call    pm_putc_ser
-        loop    1b
-        pop     %bx
-        pop     %cx
-        ret
-
-// AL = char -> COM1 THR (0x3F8), polled.  PM ring0 port I/O; clobbers nothing.
-// Also called from crt0.S early_putchar in PM.
-        .global pm_putc_ser
-pm_putc_ser:
+// send AL to COM1. Used as early_putchar before console init.
+        .global putc_ser
+putc_ser:
         push    %ax
         push    %dx
         mov     %al,%ah

@@ -8,6 +8,7 @@
 #comirq=,,7,10
 #umb=0xC000:0x800,0xD000:0x1000
 hma=kernel
+#xms=off
 #xms=on
 #xms=int15
 #xmsbuf=0

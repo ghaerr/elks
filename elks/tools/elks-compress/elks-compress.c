@@ -80,8 +80,11 @@ static int compress(char *infile, char *outfile, int do_text, int do_ftext, int 
 	struct stat sbuf;
 	struct minix_exec_hdr mh;
 	struct elks_supl_hdr eh;
-	char *exomizer_outfile = "ex.out";
-	char cmd[256];
+	char exomizer_outfile[256];
+	const char *base = strrchr(infile, '/');
+	if (base == NULL) base = infile; else base++;
+	sprintf(exomizer_outfile, "ex.out.%s", base);
+	char cmd[512];
 
 	if ((ifd = open(infile, O_RDONLY)) < 0)
 	{
@@ -461,7 +464,9 @@ int main(int ac, char **av)
 			}
 			else
 			{
-				sprintf(outname, "ec.out");
+				const char *base = strrchr(av[optind], '/');
+				if (base == NULL) base = av[optind]; else base++;
+				sprintf(outname, "ec.out.%s", base);
 			}
 		}
 		ret = compress(av[optind], outfile? outfile: outname, do_text, do_ftext, do_data);

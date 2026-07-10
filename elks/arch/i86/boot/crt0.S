@@ -86,25 +86,21 @@ early_putchar:
         pop   %ds
         pop   %bp
         ret
+#elif defined(CONFIG_286_PMODE)
+early_putchar:
+        mov   %sp,%bx
+        mov   2(%bx),%al
+        jmp   putc_ser                  // write COM1, can't use BIOS INT 10h
 #elif defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_8018X)
 early_putchar:
-#ifdef CONFIG_286_PMODE
-        // protected mode: BIOS INT 10h is the #MF gate, not video -- write COM1
-        // via pm_putc_ser (lib/pm_enter.S), which takes the char in AL
-        mov   %sp,%bx
-        mov   2(%bx),%al        // char (cdecl: [ret][char])
-        call  pm_putc_ser
-        ret
-#else
         mov   %sp,%bx
         mov   2(%bx),%al
         mov   $0x0E,%ah
         mov   $0x0007,%bx
-        push  %bp               // some BIOS may destroy BP
+        push  %bp                       // some BIOS may destroy BP
         int   $0x10
         pop   %bp
         ret
-#endif
 #endif
 
 //      Segment beginnings

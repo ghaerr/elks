@@ -97,7 +97,7 @@ static size_t kmem_read(struct inode *inode, struct file *filp, char *data, size
      * reading an argv string near the top of a process's stack) can overshoot
      * it and #GP.  Read only up to the limit.
      */
-    segext_t lim = desc_limit(sseg);        /* max valid byte offset */
+    unsigned int lim = desc_limit(sseg);    /* max valid byte offset (< 64K) */
     if (soff > lim)
         len = 0;
     else if (len - 1 > lim - soff) {

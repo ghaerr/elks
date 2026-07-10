@@ -13,6 +13,7 @@
 
 #include <arch/system.h>
 #include <arch/segment.h>
+#include <arch/seg286.h>
 #include <arch/io.h>
 #include <arch/irq.h>
 
@@ -134,9 +135,24 @@ static void INITPROC add_buffers(int nbufs, char *buf, ramdesc_t seg)
 
 #if defined(CONFIG_FS_EXTERNAL_BUFFER) || defined(CONFIG_FS_XMS_BUFFER)
         /* segment adjusted to require no offset to buffer */
+
+#ifdef CONFIG_286_PMODE
+        size_t offset = (n & 63) << BLOCK_SIZE_BITS;
+        if (xms_enabled)
+            ebh->b_L2seg = seg + offset;    /* seg is XMS linear address */
+        else {
+            /* Fallback for xms=off EXT buffers requires one selector per buffer.
+             * seg is already PM selector of max 64K array of 1K buffers.
+             */
+            ebh->b_L2seg = desc_alloc(desc_base((seg_t)seg) + offset,
+                BLOCK_SIZE, DESC_KDATA);
+        }
+#else
         size_t offset = xmsenabled?  ((n & 63) << BLOCK_SIZE_BITS) :
                               ((n & 63) << (BLOCK_SIZE_BITS - 4));
-        ebh->b_L2seg = seg + offset;
+        ebh->b_L2seg = seg + offset;        /* seg is either linear address or segment */
+#endif
+
 #else
         bh->b_data = buf;
         buf += BLOCK_SIZE;
