@@ -134,17 +134,28 @@ static void FARPROC far_start_kernel(void)
     early_kernel_init();            /* read bootopts using kernel interrupt stack */
 
      /*
-      * Allocate the task array + smaller task struct for the idle task.
-      * The idle task struct has a smaller stack in t_kstack[] and no t_regs.
-      * This works because the idle task always runs at intr_count 1, so
-      * interrupts will always save registers onto istack, and never
-      * to the t_regs struct at the end of a normal task struct.
+      * Allocate the task array + a FULL task struct for the idle task.
+      *
+      * The idle task used to get a truncated struct (no t_regs, only
+      * IDLESTACK_BYTES of t_kstack) on the assumption that it always runs
+      * at intr_count 1 so interrupts save registers onto the istack.  That
+      * invariant is only self-establishing: kernel threads and idle run at
+      * intr_count 0 until the first interrupt whose was_trap path calls
+      * schedule() - a window that includes boot and the root-mount phase.
+      * A hardware interrupt over idle in that window takes the utask path,
+      * which saves the context into idle_task->t_regs and runs the whole
+      * handler with its stack descending through t_kstack - for the
+      * truncated struct both are PAST the allocation, silently overwriting
+      * the next heap block (measured: the system inode table's header and
+      * first ~7 inodes).  See Documentation/bugs/idle-truncated-tregs-
+      * interrupt.md.  A full struct makes those writes land in owned
+      * memory, at a one-time cost of
+      * (KSTACK_BYTES - IDLESTACK_BYTES + sizeof(struct pt_regs)) bytes.
       */
-     task = heap_alloc(max_tasks * sizeof(struct task_struct) +
-         TASK_KSTACK + IDLESTACK_BYTES, HEAP_TAG_TASK|HEAP_TAG_CLEAR);
+     task = heap_alloc((max_tasks + 1) * sizeof(struct task_struct),
+         HEAP_TAG_TASK|HEAP_TAG_CLEAR);
      if (!task) panic("No task mem");
-     idle_task = (struct task_struct *)
-         ((char *)task + max_tasks * sizeof(struct task_struct));
+     idle_task = task + max_tasks;
     setsp(&(task+1)->t_regs.ax);    /* change to a large temp stack (unused task #1) */
     debug("SP SWITCH\n");
 

@@ -16,7 +16,7 @@
 #include <arch/irq.h>
 
 struct task_struct *task;           /* dynamically allocated task array */
-struct task_struct *idle_task;      /* NOTE: valid only thru k_stack[IDLESTACK_BYTES/2] */
+struct task_struct *idle_task;      /* full struct; idle_loop uses only t_kstack[0..IDLESTACK_BYTES/2] */
 struct task_struct *current;
 struct task_struct *previous;
 int max_tasks = MAX_TASKS;
