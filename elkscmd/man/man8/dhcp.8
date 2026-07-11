@@ -1,0 +1,138 @@
+.TH DHCP 8
+.SH NAME
+dhcp \- DHCP client configuration for ktcp
+.SH SYNOPSIS
+.B "dhcp"
+.RB [ yes
+.IR | no ]
+.SH DESCRIPTION
+.B DHCP
+is a built-in subsystem of the ktcp TCP/IP daemon.
+When enabled, ktcp automatically negotiates an IP address, netmask, and default
+gateway using the DHCP protocol at startup.
+.PP
+DHCP is configured in
+.BR /etc/eth0.cfg .
+If the first line of this file is
+.BR dhcp ,
+the DHCP client is started before any static configuration is applied.
+The static IP, netmask, and gateway values in the same file are ignored while
+DHCP is active.
+.SH STATE MACHINE
+The client follows the standard DHCP exchange:
+.PP
+.RS
+.nf
+DISCOVER \(-> OFFER \(-> REQUEST \(-> ACK \(-> BOUND
+.fi
+.RE
+.PP
+1. Sends a broadcast DISCOVER on UDP port 67.
+.br
+2. Receives OFFER from a DHCP server.
+.br
+3. Sends a REQUEST for the offered address.
+.br
+4. Receives ACK and applies the lease (IP, netmask, gateway).
+.PP
+If a NAK is received at any stage, the client restarts from DISCOVER with a new
+transaction ID.
+.SH RETRY
+Exponential backoff is used for retries:
+.IP \(bu 2
+Initial timeout: 4 ticks
+.IP \(bu 2
+Doubles each retry, capped at 16 ticks
+.IP \(bu 2
+After 5 failed retries, restarts from INIT
+.PP
+Once the address is bound, the retry timer is disabled.
+.SH OPTIONS REQUESTED
+The client requests the following DHCP options:
+.IP \(bu 2
+Subnet mask (option 1)
+.IP \(bu 2
+Router / default gateway (option 3)
+.IP \(bu 2
+DNS server (option 6)
+.IP \(bu 2
+Lease time (option 51)
+.SH "UDP IMPLEMENTATION"
+DHCP uses the UDP layer built into ktcp.
+UDP provides a lightweight, connectionless transport on top of IP.
+Unlike TCP, there is no handshake or reliable delivery; packets are sent
+and received directly.
+.SS Sending
+A UDP send constructs an 8-byte header (source port, destination port,
+length, zeroed checksum) and passes the packet to the IP layer.
+The IP layer adds its header and hands the packet to the appropriate
+network driver (Ethernet or SLIP).
+.SS Receiving
+When an incoming IP packet has protocol 0x11 (UDP), the IP layer calls
+.BR udp_process (),
+which looks up the destination port in a table of registered sockets.
+Each registered socket has a callback function; when a matching port is
+found, the callback is invoked with the IP header, source port, and
+payload data.
+If no socket is registered for the destination port, an ICMP
+port-unreachable message is sent back.
+.SS Registration
+A subsystem (like DHCP) registers a port and callback via
+.BR udp_register ()
+before sending any packets.
+This reserves one of the 4 available UDP socket slots
+.RB ( MAX_UDP_SOCKS ).
+The DHCP client registers port 68 and receives all replies in its
+.BR dhcp_input ()
+callback.
+.SS Packet Flow
+.RS
+.nf
+Send:  dhcp_send_discover\(\)
+         \(-> udp_send(255.255.255.255, 67, 68, buf, len, 0)
+               \(-> ip_sendpacket() \(-> Ethernet driver
+
+Recv:  Ethernet driver
+         \(-> ip_recvpacket()
+               \(-> udp_process()
+                     \(-> udp_socks[i].callback\(\)  = dhcp_input\(\)
+.fi
+.RE
+.SH FILES
+.TP
+.B /etc/eth0.cfg
+Contains the
+.B dhcp
+keyword on the first line to enable the client.
+.SH EXAMPLE
+To enable DHCP, create
+.B /etc/eth0.cfg
+with:
+.PP
+.RS
+.nf
+dhcp
+.fi
+.RE
+.PP
+Then start the network:
+.PP
+.RS
+.nf
+/etc/rc.d/rc.net
+.fi
+.RE
+.SH NOTES
+DHCP is only available when the kernel is compiled with
+.BR "CONFIG_DHCP=y" .
+.PP
+Only one DHCP client can run per interface.
+The client uses UDP port 68 and does not renew the lease before expiry.
+.PP
+When DHCP is active, static configuration from
+.B /etc/eth0.cfg
+(IP, netmask, gateway) is skipped.
+.SH "SEE ALSO"
+.BR netconf (8),
+.BR ifconfig (8),
+.BR ktcp (8).
