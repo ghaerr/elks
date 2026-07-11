@@ -36,26 +36,14 @@ start_network()
 	case "$link" in
 	slip)
 		getty_off
-		if test "$dhcp" = "yes"; then
-		    ktcp="ktcp -b -D -p slip -s $baud -l $device"
-		else
-		    ktcp="ktcp -b -p slip -s $baud -l $device $localip $gateway $netmask"
-		fi
+		ktcp="ktcp -b -p slip -s $baud -l $device $localip $gateway $netmask"
 		;;
 	cslip)
 		getty_off
-		if test "$dhcp" = "yes"; then
-		    ktcp="ktcp -b -D -p cslip -s $baud -l $device"
-		else
-		    ktcp="ktcp -b -p cslip -s $baud -l $device $localip $gateway $netmask"
-		fi
+		ktcp="ktcp -b -p cslip -s $baud -l $device $localip $gateway $netmask"
 		;;
 	ne0|wd0|3c0)
-		if test "$dhcp" = "yes"; then
-		    ktcp="ktcp -b -D -p $link $mtu"
-		else
-		    ktcp="ktcp -b -p $link $mtu $localip $gateway $netmask"
-		fi
+		ktcp="ktcp -b -p $link $mtu $localip $gateway $netmask"
 		;;
 	*)
 		usage ;;
@@ -81,13 +69,7 @@ start_network()
 stop_network()
 {
 	echo "Stopping network"
-	ps > /tmp/psout
-	while read pid rest; do
-		case $rest in
-			*ktcp*|*telnet*|*httpd*|*ftpd*) kill $pid > /dev/null 2>&1 ;;
-		esac
-	done < /tmp/psout
-	rm -f /tmp/psout
+	kill $(ps | grep "ktcp|telnet|httpd|ftpd" | cut -c 1-5) > /dev/null 2>&1
 	custom_stop_network
 }
 
@@ -106,21 +88,7 @@ restart)
 	stop_network
 	start_network ;;
 show)
-	running=""
-	ps > /tmp/psout
-	while read pid rest; do
-		case $rest in
-			*ktcp*) running=1 ;;
-		esac
-	done < /tmp/psout
-	rm -f /tmp/psout
-	if test "$dhcp" = "yes"; then
-		echo -n "DHCP enabled"
-	else
-		echo -n ip $localip gateway $gateway mask $netmask
-	fi
-	if test "$running" = "1"; then echo -n " [running]"; else echo -n " [stopped]"; fi
-	echo -n " " $link
+	echo -n ip $localip gateway $gateway mask $netmask $link
 	if test "$link" = "slip"; then echo "" $baud $device; else echo; fi ;;
 *) usage ;;
 esac
