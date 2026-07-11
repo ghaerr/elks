@@ -132,12 +132,14 @@ void xms_fmemcpyw(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src
         dst_seg, dst_off, src_seg, src_off, count);
 
     if (src_seg >> 16) {
-        sel_src = desc_alloc(src_seg, count, DESC_KDATA);
+        sel_src = desc_alloc(src_seg + (unsigned)src_off, count << 1, DESC_KDATA);
         src_seg = sel_src;
+        src_off = 0;
     }
     if (dst_seg >> 16) {
-        sel_dst = desc_alloc(dst_seg, count, DESC_KDATA);
+        sel_dst = desc_alloc(dst_seg + (unsigned)dst_off, count << 1, DESC_KDATA);
         dst_seg = sel_dst;
+        dst_off = 0;
     }
 	fmemcpyw(dst_off, (seg_t)dst_seg, src_off, (seg_t)src_seg, count);
     if (sel_src) desc_free(sel_src);
@@ -154,12 +156,14 @@ void xms_fmemcpyb(void *dst_off, ramdesc_t dst_seg, void *src_off, ramdesc_t src
         dst_seg, dst_off, src_seg, src_off, count);
 
     if (src_seg >> 16) {
-        sel_src = desc_alloc(src_seg, count, DESC_KDATA);
+        sel_src = desc_alloc(src_seg + (unsigned)src_off, count, DESC_KDATA);
         src_seg = sel_src;
+        src_off = 0;
     }
     if (dst_seg >> 16) {
-        sel_dst = desc_alloc(dst_seg, count, DESC_KDATA);
+        sel_dst = desc_alloc(dst_seg + (unsigned)dst_off, count, DESC_KDATA);
         dst_seg = sel_dst;
+        dst_off = 0;
     }
 	fmemcpyb(dst_off, (seg_t)dst_seg, src_off, (seg_t)src_seg, count);
     if (sel_src) desc_free(sel_src);
@@ -174,8 +178,9 @@ void xms_fmemset(void *dst_off, ramdesc_t dst_seg, size_t count)
     debug("xms_fmemset(%08lx:%04x count %u\n", dst_seg, dst_off, count);
 
     if (dst_seg >> 16) {
-        sel_dst = desc_alloc(dst_seg, count, DESC_KDATA);
+        sel_dst = desc_alloc(dst_seg + (unsigned)dst_off, count, DESC_KDATA);
         dst_seg = sel_dst;
+        dst_off = 0;
     }
 	fmemsetb(dst_off, (seg_t)dst_seg, 0, count);
     if (sel_dst) desc_free(sel_dst);

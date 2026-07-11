@@ -161,8 +161,15 @@ void gdt_init(void)
     desc_set(MK_SEL(GDT_KCODE,  SEL_GDT, SEL_RPL0),
         (addr_t)kernel_cs << 4, (unsigned)_endtext, DESC_KCODE);
 
+    /* Full 64K limit: gdt_init runs before setup_arch() computes membase,
+     * so (membase - kernel_ds) << 4 here would be garbage (membase still 0),
+     * truncating the limit and #GP-faulting the first heap access above it
+     * on hardware that enforces limits (VT-x/KVM; QEMU TCG doesn't check).
+     * setup_arch() extends the kernel data segment to a maximum of 64K for
+     * the near heap anyway, matching the KDATA_EXEC alias below.
+     */
     desc_set(MK_SEL(GDT_KDATA,  SEL_GDT, SEL_RPL0),
-        data_base, (membase - kernel_ds) << 4, DESC_KDATA);
+        data_base, 65536L, DESC_KDATA);
 
     if (kernel_ftext) {
         desc_set(MK_SEL(GDT_KFTEXT, SEL_GDT, SEL_RPL0),
@@ -190,7 +197,7 @@ void gdt_init(void)
     desc_set(MK_SEL(GDT_OPTSEG, SEL_GDT, SEL_RPL0), SEG_OPTSEG << 4, 1024, DESC_KDATA);
 
     /* BIOS data area */
-    desc_set(MK_SEL(GDT_BIOSDATA, SEL_GDT, SEL_RPL0), SEG_BIOSDATA << 4, BYTES_PARA(256),
+    desc_set(MK_SEL(GDT_BIOSDATA, SEL_GDT, SEL_RPL0), SEG_BIOSDATA << 4, 256,
         DESC_KDATA);
 
     /* text video memory */
