@@ -27,6 +27,7 @@
 #include "deveth.h"
 #include "arp.h"
 #include "netconf.h"
+#include "udp.h"
 
 static unsigned char ipbuf[IP_BUFSIZ];
 
@@ -151,7 +152,9 @@ void ip_recvpacket(unsigned char *packet, int size)
 	break;
 
     case PROTO_UDP:
-	icmp_send_port_unreachable(iphdr);
+	data = packet + 4 * IP_HLEN(iphdr);
+	udp_process(iphdr, data);
+	netstats.udprcvcnt++;
 	break;
     }
     netstats.iprcvcnt++;
@@ -230,8 +233,11 @@ void ip_route(unsigned char *packet, int len, struct addr_pair *apair)
 	return;
     }
 
+    /* broadcast to 255.255.255.255 */
+    if (apair->daddr == 0xFFFFFFFF) {
+        ip_addr = 0xFFFFFFFF;
     /* route based on netmask. FIXME: interface never changed; ignored for SLIP/CSLIP interface*/
-    if ((local_ip & netmask_ip) != (apair->daddr & netmask_ip))
+    } else if ((local_ip & netmask_ip) != (apair->daddr & netmask_ip))
         /* Not on the same local network */
         /* Route to the gateway as local destination */
         ip_addr = gateway_ip;
