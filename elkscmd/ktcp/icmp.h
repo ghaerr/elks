@@ -2,7 +2,6 @@
 #define ICMP_H
 
 #define PROTO_ICMP	1
-#define PROTO_UDP	0x11
 
 #define ICMP_MIN_HDR_LEN	4
 
