@@ -236,16 +236,17 @@ void ip_route(unsigned char *packet, int len, struct addr_pair *apair)
     /* broadcast to 255.255.255.255 */
     if (apair->daddr == 0xFFFFFFFF) {
         ip_addr = 0xFFFFFFFF;
-    /* route based on netmask. FIXME: interface never changed; ignored for SLIP/CSLIP interface*/
-    } else if ((local_ip & netmask_ip) != (apair->daddr & netmask_ip))
+    /* route based on netmask. */
+    /* FIXME: interface never changed; ignored for SLIP/CSLIP interface */
+    } else if ((local_ip & netmask_ip) != (apair->daddr & netmask_ip)) {
         /* Not on the same local network */
         /* Route to the gateway as local destination */
         ip_addr = gateway_ip;
-    else
+    } else {
         /* On the same local network */
         /* Route to the local destination */
         ip_addr = apair->daddr;
-
+    }
     if (linkprotocol == LINK_ETHER)
 	eth_route(packet, len, ip_addr);
     else

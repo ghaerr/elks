@@ -1,7 +1,9 @@
 ## /bootopts 1023 max
 #TZ=MDT6
-#LOCALIP=10.0.2.16
-#HOSTNAME=elks16
+#setting LOCALIP= disables DHCP, can use /etc/hosts names
+#LOCALIP=10.0.2.15
+#GATEWAY=10.0.2.2
+#NETMASK=255.255.255.0
 #ne0=12,0x300,,0x80
 #wd0=10,0x300,0xCC00,0x80
 #3c0=11,0x330,,0x80

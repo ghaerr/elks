@@ -36,26 +36,14 @@ start_network()
 	case "$link" in
 	slip)
 		getty_off
-		if test "$dhcp" = "yes"; then
-			ktcp="ktcp -b -D -p slip -s $baud -l $device"
-		else
-			ktcp="ktcp -b -p slip -s $baud -l $device $localip $gateway $netmask"
-		fi
+		ktcp="ktcp -b -p slip -s $baud -l $device $localip $gateway $netmask"
 		;;
 	cslip)
 		getty_off
-		if test "$dhcp" = "yes"; then
-			ktcp="ktcp -b -D -p cslip -s $baud -l $device"
-		else
-			ktcp="ktcp -b -p cslip -s $baud -l $device $localip $gateway $netmask"
-		fi
+		ktcp="ktcp -b -p cslip -s $baud -l $device $localip $gateway $netmask"
 		;;
 	ne0|wd0|3c0)
-		if test "$dhcp" = "yes"; then
-			ktcp="ktcp -b -D -p $link $mtu"
-		else
-			ktcp="ktcp -b -p $link $mtu $localip $gateway $netmask"
-		fi
+		ktcp="ktcp -b -p $link $mtu $localip $gateway $netmask"
 		;;
 	*)
 		usage ;;
