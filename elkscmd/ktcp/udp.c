@@ -1,3 +1,6 @@
+/*
+ * Internal UDP implementation for DHCP. Not accessible through sockets.
+ */
 #include <sys/types.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -5,6 +8,7 @@
 #include <arpa/inet.h>
 #include "config.h"
 #include "ip.h"
+#include "icmp.h"
 #include "udp.h"
 #include "netconf.h"
 

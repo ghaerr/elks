@@ -55,8 +55,8 @@ struct dhcp_message_s {
 	uint8_t	file[128];
 };
 
-extern int dhcp_enabled;
-extern int dhcp_timer_active;
+extern char dhcp_enabled;
+extern char dhcp_timer_active;
 
 void dhcp_init(void);
 void dhcp_timer(void);

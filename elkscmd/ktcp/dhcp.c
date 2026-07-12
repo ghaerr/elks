@@ -1,3 +1,6 @@
+/*
+ * DHCP client, internal to ktcp.
+ */
 #include <sys/types.h>
 #include <stdio.h>
 #include <string.h>
@@ -8,9 +11,6 @@
 #include "dhcp.h"
 #include "deveth.h"
 #include "timer.h"
-
-int dhcp_enabled;
-int dhcp_timer_active;
 
 static int dhcp_state = DHCP_STATE_INIT;
 static timeq_t dhcp_retry_time;
@@ -195,10 +195,8 @@ void dhcp_init(void)
     dhcp_retry_count = 0;
     dhcp_start_time = Now;
 
-    dhcp_xid = ((uint32_t)eth_local_addr[0] << 24) |
-	       ((uint32_t)eth_local_addr[1] << 16) |
-	       ((uint32_t)eth_local_addr[2] << 8)  |
-	       eth_local_addr[3];
+    dhcp_xid = ((uint32_t)eth_local_addr[0] << 24) | ((uint32_t)eth_local_addr[1] << 16) |
+               (eth_local_addr[2] << 8)  | eth_local_addr[3];
     dhcp_xid ^= (Now & 0xFF) << 8;
 
     udp_register(DHCP_CLIENT_PORT, dhcp_input);
