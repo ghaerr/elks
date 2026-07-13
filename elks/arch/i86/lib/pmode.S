@@ -63,12 +63,18 @@ pm_fault_vector:
         .set    fltv, 0
         .rept   32              // first 32 IDT entries report vector numbers 0..31
         pushw   $fltv
-        call    pm_exception_handler
+        jmp     pm_fault_common
         nop; nop; nop;          // each entry is 5 bytes code + 3 bytes NOP
         .set    fltv, fltv + 1
         .endr
         pushw   $0x00FF         // remainder vectors >= 32 report vector 255
+pm_fault_common:
+        push    %es             // save ES & DS for display in case of bad segment
+        push    %ds             // register load or limit/protection violation,
+        push    $SEL_KDATA      // then load valid DS for C handler
+        pop     %ds
         call    pm_exception_handler
+        // no return
 
 // send AL to COM1. Used as early_putchar before console init.
         .global putc_ser
