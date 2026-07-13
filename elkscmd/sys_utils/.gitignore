@@ -3,6 +3,7 @@ chmem
 clock
 console
 decomp
+dmesg
 exitemu
 getty
 hostdecomp
