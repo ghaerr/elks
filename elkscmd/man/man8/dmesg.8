@@ -1,0 +1,41 @@
+.TH DMESG 8
+.SH NAME
+dmesg \- display kernel diagnostic messages
+.SH SYNOPSIS
+.B dmesg
+.SH DESCRIPTION
+.B dmesg
+reads the kernel message buffer from
+.B /dev/kmsg
+and prints all messages to standard output.
+This is the ELKS kernel ring buffer, which contains messages from
+device drivers, the memory manager, the process scheduler, and other
+kernel subsystems.
+.PP
+Typical uses include diagnosing boot-time hardware problems,
+verifying device driver attachment, and checking for kernel errors
+after a system event.
+.PP
+.B dmesg
+reads until end-of-file on
+.BR /dev/kmsg ;
+it does not display only the most recent messages
+unless the kernel has finished printing them.
+On ELKS the kernel message buffer is small and does not
+wrap, so
+.B dmesg
+shows everything that has been printed since boot.
+.SH EXIT STATUS
+.TP
+.B 0
+Messages were read successfully.
+.TP
+.B 1
+.B /dev/kmsg
+could not be opened.
+.SH FILES
+.TP
+.B /dev/kmsg
+Kernel message device.
+.SH "SEE ALSO"
+.BR syslog (8).
