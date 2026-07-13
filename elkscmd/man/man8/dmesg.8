@@ -18,13 +18,12 @@ after a system event.
 .PP
 .B dmesg
 reads until end-of-file on
-.BR /dev/kmsg ;
-it does not display only the most recent messages
-unless the kernel has finished printing them.
-On ELKS the kernel message buffer is small and does not
-wrap, so
+.BR /dev/kmsg .
+The kernel message buffer is a circular ring buffer.
+When full, the oldest messages are silently discarded.
+On ELKS the buffer is 2048 bytes, so on a busy system
 .B dmesg
-shows everything that has been printed since boot.
+may not show messages from early boot.
 .SH EXIT STATUS
 .TP
 .B 0
