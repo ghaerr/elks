@@ -131,6 +131,10 @@ int sys_signal(int signr, __kern_sighandler_t handler)
 {
     int i;
     struct segment *s;
+    seg_t handler_seg;
+    segoff_t handler_off;
+    segext_t handler_seg_paras;
+    segext_t handler_off_paras;
 
     debug_sig("SIGNAL(%P) sys_signal %2d action %x:%x\n", signr,
         _FP_SEG(handler), _FP_OFF(handler));
@@ -141,13 +145,49 @@ int sys_signal(int signr, __kern_sighandler_t handler)
     else if (handler == KERN_SIG_IGN)
         current->sig.action[signr - 1].sa_dispose = SIGDISP_IGN;
     else {
-        debug("handler %x:%x\n", _FP_SEG(handler), _FP_OFF(handler));
+        handler_seg = _FP_SEG(handler);
+        handler_off = _FP_OFF(handler);
+        debug("handler %x:%x\n", handler_seg, handler_off);
+
+        /*
+         * Convert the byte offset to complete paragraphs with four 8086
+         * single-bit shifts.  This avoids both a compiler division helper and
+         * the slower variable-count shift sequence used by the plain C `>> 4`
+         * expression on an original 8088/8086.
+         */
+        handler_off_paras = handler_off;
+        asm volatile ("shr %0\n\t"
+                      "shr %0\n\t"
+                      "shr %0\n\t"
+                      "shr %0"
+                      : "+r" (handler_off_paras)
+                      :
+                      : "cc");
         for (i = 0; i < MAX_SEGS; i++) {
             s = current->mm[i];
             if (!s || (s->flags & SEG_FLAG_TYPE) != SEG_FLAG_CSEG)
                 continue;
-            debug("codeseg %x:%x\n", s->base, s->size<<4);
-            if (_FP_SEG(handler) == s->base && _FP_OFF(handler) < (s->size << 4)) {
+            debug("codeseg %x size %x paras\n", s->base, s->size);
+
+            /*
+             * A medium-model a.out stores its near and far text in one
+             * contiguous CSEG allocation.  A far-text address can therefore
+             * use a segment value above s->base while still naming bytes in
+             * this same code allocation.
+             *
+             * Do the range check entirely in 16-bit paragraph units.  The
+             * old `(s->size << 4)` byte conversion wrapped when combined
+             * text exceeded 64 KiB.  First subtract the handler's segment,
+             * then account for the complete paragraphs in its 16-bit offset.
+             * Requiring both terms to fit before subtraction prevents carry,
+             * wraparound and an address below the allocation.
+             */
+            if (handler_seg < s->base)
+                continue;
+            handler_seg_paras = handler_seg - s->base;
+            if (handler_seg_paras >= s->size)
+                continue;
+            if (handler_off_paras < s->size - handler_seg_paras) {
                 current->sig.handler = handler;
                 current->sig.action[signr - 1].sa_dispose = SIGDISP_CUSTOM;
                 return 0;
