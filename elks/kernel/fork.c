@@ -148,12 +148,48 @@ pid_t sys_fork(void)
     return do_fork(0);
 }
 
+/*
+ * Return nonzero only while the exact vfork child still uses the parent's
+ * data/stack segment.  child_wait is also used by wait4 and by every child,
+ * so waking on that queue alone is not proof that this particular child has
+ * completed exec or exit.  Comparing the kernel segment pointers costs only
+ * one 16-bit pointer comparison on the 8086 and does not expose a physical
+ * address to user space.
+ */
+static int vfork_child_shares_data(pid_t pid, struct segment *shared_data)
+{
+    register struct task_struct *p;
+    int count;
+
+    /*
+     * Do not form &task[max_tasks] here.  Scaling that variable array index
+     * makes the 16-bit compiler emit MUL on an original 8088/8086.  A bounded
+     * countdown and one structure-pointer increment per slot use only cheap
+     * word decrement, compare and add instructions.
+     */
+    p = &task[0];
+    count = max_tasks;
+    while (count--) {
+        if (p->p_parent == current && p->pid == pid &&
+            p->state != TASK_UNUSED)
+            return p->mm[SEG_DATA] == shared_data;
+        p++;
+    }
+    return 0;
+}
+
 pid_t sys_vfork(void)
 {
-#if 1
-    return do_fork(0);
-#else
-    int retval, sc[5];
+    /*
+     * Preserve the complete IA16 medium-model user return frame while the
+     * child shares this data/stack segment.  The syscall entry frame is BP,
+     * IP, CS, FLAGS (four words), and libc's far return from vfork adds IP,
+     * CS (two words).  Saving only the historical five words lets the child
+     * overwrite the parent's final return word and leaves it asleep or
+     * returning through a damaged frame after exec/_exit.
+     */
+    int retval, sc[6];
+    struct segment *shared_data = current->mm[SEG_DATA];
 
     if ((retval = do_fork(1)) >= 0) {
 
@@ -167,9 +203,21 @@ pid_t sys_vfork(void)
          */
         memcpy_fromfs(sc, (void *)current->t_regs.sp, sizeof(sc));
         /*
-         * Let the child go on first.
+         * Let the child go on first.  Register on the wait queue before the
+         * condition test, then recheck the exact child's data segment after
+         * every wakeup.  An unrelated child may exec or exit on this same
+         * queue; that wakeup must never let the parent restore and reuse its
+         * stack while the vfork child still shares it.
          */
-        sleep_on(&current->child_wait);
+        for (;;) {
+            prepare_to_wait(&current->child_wait);
+            if (!vfork_child_shares_data((pid_t)retval, shared_data)) {
+                finish_wait(&current->child_wait);
+                break;
+            }
+            do_wait();
+            finish_wait(&current->child_wait);
+        }
         /*
          * By now, the child should have its own user stack. Restore
          * the parent's user stack.
@@ -177,5 +225,4 @@ pid_t sys_vfork(void)
         memcpy_tofs((void *)current->t_regs.sp, sc, sizeof(sc));
     }
     return retval;
-#endif
 }

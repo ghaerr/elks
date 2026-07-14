@@ -594,9 +594,13 @@ static void FARPROC finalize_exec(struct inode *inode, segment_s *seg_code,
     if (inode->i_mode & S_ISGID)
         currentp->egid = inode->i_gid;
 
-#if UNUSED      /* used only for vfork()*/
+    /*
+     * A vfork parent sleeps on child_wait while the child shares its data
+     * segment.  The child now owns a private data/stack segment, so release
+     * that parent immediately.  Ordinary exec may cause a harmless spurious
+     * wakeup; wait4 rechecks child state before returning.
+     */
     wake_up(&currentp->p_parent->child_wait);
-#endif
 
     /*
      * Arrange for our return from sys_execve onto the new
