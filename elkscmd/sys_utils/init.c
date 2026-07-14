@@ -56,6 +56,24 @@
 #define SYNC_DEFAULT 0			/* default sync timer */
 #define MAXCHILD     8
 
+/*
+ * A literal "exec /absolute/path ..." inittab command does not require a
+ * shell.  Keep its complete ELKS exec stack in one small, statically bounded
+ * buffer so the vfork child can enter _execve() without malloc(), sbrk(), or
+ * libc's transient argv/environment serializer.  All offsets and lengths are
+ * unscaled 16-bit bytes.  An entry which needs quoting, expansion, redirection
+ * or more than this buffer retains the historical /bin/sh -c path.
+ */
+#define DIRECT_EXEC_PREFIX       "exec "
+#define DIRECT_EXEC_PREFIX_LEN   5
+#define DIRECT_EXEC_BYTES        256
+#define DIRECT_EXEC_MAX_ARGS     16
+
+union direct_exec_store {
+	unsigned short align;
+	char bytes[DIRECT_EXEC_BYTES];
+};
+
 /* 'hashed' strings */
 #define RESPAWN      362
 #define WAIT         122
@@ -98,6 +116,7 @@ static char runlevel;
 static char prevRunlevel;
 static char nosysinit;
 static int sync_interval = SYNC_DEFAULT;
+static union direct_exec_store direct_exec_store;
 #if USE_UTMP
 static struct utmp utentry;
 #endif
@@ -265,9 +284,211 @@ struct tabentry *newChild (const char *id)
 /* removes child information from the array */
 void removeChild(struct tabentry *pos)
 {
-	if (pos-children >= nextchild-children)
+	/* Both pointers name the same fixed array; direct bounds checks avoid the
+	 * compiler's reciprocal multiply for division by sizeof(tabentry). */
+	if (pos < children || pos >= nextchild)
 		fatalmsg("nonexistent child\r\n");
 	memcpy(pos, --nextchild, sizeof (struct tabentry));
+}
+
+/*
+ * Return nonzero for a character whose interpretation requires the shell.
+ * Whitespace is handled by the tokenizer and is not passed here.  Restricting
+ * this fast path to literal arguments preserves the old shell semantics for
+ * quotes, variables, globbing, pipelines, redirection and command lists.
+ */
+static int direct_exec_metachar(char c)
+{
+	switch (c) {
+	case '\'':
+	case '"':
+	case '\\':
+	case '$':
+	case '`':
+	case '*':
+	case '?':
+	case '[':
+	case ']':
+	case '#':
+	case ';':
+	case '&':
+	case '|':
+	case '<':
+	case '>':
+	case '(':
+	case ')':
+	case '{':
+	case '}':
+	case '~':
+		return 1;
+	}
+	return 0;
+}
+
+/* Return a NUL-inclusive byte count only when it can fit this fast path. */
+static int direct_exec_string_bytes(const char *text, unsigned int *bytes)
+{
+	unsigned int length = 0;
+
+	while (*text) {
+		if (length == DIRECT_EXEC_BYTES - 1)
+			return 0;
+		length++;
+		text++;
+	}
+	*bytes = length + 1;
+	return 1;
+}
+
+/*
+ * Build the stack block consumed by the native ELKS _execve system call:
+ *
+ *   argc, argv offsets, zero, environment offsets, zero, strings
+ *
+ * Every pointer stored in the block is a 16-bit offset from the first byte.
+ * The buffer is word-aligned by its union.  Addition is checked before it is
+ * performed, so an overlong line or inherited environment cannot wrap.  The
+ * caller falls back to /bin/sh -c when zero is returned.
+ */
+static int direct_exec_pack(const char *command, char **filename,
+	unsigned int *stack_bytes)
+{
+	const char *p;
+	const char *start;
+	char *base;
+	char *out;
+	char **env;
+	unsigned short *word;
+	unsigned int argc;
+	unsigned int envc;
+	unsigned int string_bytes;
+	unsigned int table_bytes;
+	unsigned int length = 0;
+	unsigned int index;
+
+	if (strncmp(command, DIRECT_EXEC_PREFIX, DIRECT_EXEC_PREFIX_LEN))
+		return 0;
+
+	p = command + DIRECT_EXEC_PREFIX_LEN;
+	while (*p == ' ' || *p == '\t')
+		p++;
+	if (*p != '/')
+		return 0;
+
+	argc = 0;
+	string_bytes = 0;
+	while (*p) {
+		while (*p == ' ' || *p == '\t')
+			p++;
+		if (!*p)
+			break;
+		if (argc == DIRECT_EXEC_MAX_ARGS)
+			return 0;
+		length = 0;
+		while (*p && *p != ' ' && *p != '\t') {
+			if (direct_exec_metachar(*p))
+				return 0;
+			length++;
+			p++;
+		}
+		if (length >= DIRECT_EXEC_BYTES - string_bytes)
+			return 0;
+		string_bytes += length + 1;
+		argc++;
+	}
+	if (!argc)
+		return 0;
+
+	envc = 0;
+	for (env = environ; env && *env; env++) {
+		length = 0;
+		if (!direct_exec_string_bytes(*env, &length))
+			return 0;
+		if (length > DIRECT_EXEC_BYTES - string_bytes)
+			return 0;
+		string_bytes += length;
+		envc++;
+		if (envc >= DIRECT_EXEC_BYTES / 2)
+			return 0;
+	}
+
+	/* argc plus both terminating zero words account for three words. */
+	table_bytes = argc + envc + 3;
+	if (table_bytes > DIRECT_EXEC_BYTES / 2)
+		return 0;
+	table_bytes += table_bytes;
+	if (string_bytes > DIRECT_EXEC_BYTES - table_bytes)
+		return 0;
+
+	base = direct_exec_store.bytes;
+	word = (unsigned short *)base;
+	out = base + table_bytes;
+	*word++ = argc;
+
+	p = command + DIRECT_EXEC_PREFIX_LEN;
+	while (*p == ' ' || *p == '\t')
+		p++;
+	index = 0;
+	while (index < argc) {
+		while (*p == ' ' || *p == '\t')
+			p++;
+		start = p;
+		while (*p && *p != ' ' && *p != '\t')
+			p++;
+		*word++ = (unsigned short)(out - base);
+		while (start != p)
+			*out++ = *start++;
+		*out++ = '\0';
+		index++;
+	}
+	*word++ = 0;
+
+	for (env = environ; env && *env; env++) {
+		start = *env;
+		*word++ = (unsigned short)(out - base);
+		do {
+			*out++ = *start;
+		} while (*start++);
+	}
+	*word = 0;
+
+	*filename = base + ((unsigned short *)base)[1];
+	*stack_bytes = (unsigned int)(out - base);
+	return 1;
+}
+
+/*
+ * The parent is suspended by true ELKS vfork until exec installs the child's
+ * private data/stack segment.  Thus KTCP is loaded beside init's roughly 6 KiB
+ * data segment, not beside ash's much larger transient code and data images;
+ * the parent's data segment is never copied.  The child performs only native
+ * process/descriptor syscalls before entering the prepacked _execve call.
+ */
+static pid_t respawn_direct(char *filename, unsigned int stack_bytes)
+{
+	static const char failed[] = "init: direct exec failed\r\n";
+	int fd;
+	int closefd;
+	int pid;
+
+	pid = vfork();
+	if (pid < 0)
+		fatalmsg("No vfork (%d)\r\n", errno);
+	if (pid)
+		return (pid_t)pid;
+
+	setsid();
+	fd = open(CONSOLE, O_RDWR);
+	if (fd >= 0) {
+		dup2(fd, STDIN_FILENO);
+		dup2(fd, STDOUT_FILENO);
+		dup2(fd, STDERR_FILENO);
+		for (closefd = 3; closefd < NR_OPEN; closefd++)
+			close(closefd);
+		_execve(filename, direct_exec_store.bytes, stack_bytes);
+	}
+	write(STDERR_FILENO, failed, sizeof(failed) - 1);
+	_exit(127);
 }
 
 pid_t respawn(const char **a)
@@ -276,8 +497,21 @@ pid_t respawn(const char **a)
     char *argv[5], buf[PATH_MAX];
     int fd;
     char *devtty;
+	char *direct_filename;
+	unsigned int direct_stack_bytes;
 
     if (a[3] == NULL || a[3][1] == '\0') return -1;
+
+	/*
+	 * Pack before vfork while init owns its stack.  The parent cannot scan the
+	 * next inittab line until this child has execed or exited, so the single
+	 * static store cannot be overwritten while the kernel is copying it.
+	 */
+	if (direct_exec_pack(a[3], &direct_filename, &direct_stack_bytes)) {
+		pid = respawn_direct(direct_filename, direct_stack_bytes);
+		debug("direct spawning %d '%s'\r\n", pid, direct_filename);
+		return pid;
+	}
 
     pid = fork();
     if (pid == -1) fatalmsg("No fork (%d)\r\n", errno);
@@ -347,12 +581,21 @@ pid_t respawn(const char **a)
 int hash(const char *string)
 {
 	const char *p;
-	int result = 0, i=1;
+	int result = 0, i = 1;
+	volatile int repeats;
+	int value;
 
 	if (string == NULL) return 0;
 	p = string;
-	while (*p)
-		result += ((*p++)-'a')*(i++);
+	while (*p) {
+		value = (*p++) - 'a';
+		repeats = i++;
+		/* Action names are only a few bytes long.  Repeated 16-bit adds are
+		 * cheaper than MUL on an 8088 and preserve the historical hash. */
+		do {
+			result += value;
+		} while (--repeats);
+	}
 
 	return result;
 }
