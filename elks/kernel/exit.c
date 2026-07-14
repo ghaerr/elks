@@ -11,6 +11,7 @@
 #include <linuxmt/init.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/kd.h>
+#include <linuxmt/ntty.h>
 
 static void FARPROC reparent_children(void)
 {
@@ -128,6 +129,10 @@ void do_exit(int status)
     struct task_struct *parent;
 
     debug_wait("EXIT(%P) status %d\n", status);
+#if defined(CONFIG_CONSOLE_DIRECT) || defined(CONFIG_CONSOLE_BIOS)
+    /* A killed graphics client cannot issue DCREL_GRAPH itself. */
+    console_graphics_task_exit(current);
+#endif
     _close_allfiles();
 #ifdef CONFIG_AUDIO
     audio_seq_exit(current->pid);

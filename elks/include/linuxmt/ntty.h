@@ -113,6 +113,13 @@ struct tty {            /* NOTE: first member used in fastser.S driver */
 
 extern struct tty ttys[];
 
+struct task_struct;
+
+#if defined(CONFIG_CONSOLE_DIRECT) || defined(CONFIG_CONSOLE_BIOS)
+/* Drop a task-owned graphics lock before do_exit() reuses its task slot. */
+extern void console_graphics_task_exit(struct task_struct *);
+#endif
+
 extern int tty_intcheck(struct tty *,unsigned char);
 		/* Check for ctrl-C etc.. */
 

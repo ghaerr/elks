@@ -1,5 +1,13 @@
 /* shared console routines for Direct and BIOS consoles - #include in console drivers*/
 
+/*
+ * The console pointer in glock identifies the virtual console, but it does
+ * not identify the ELKS task which acquired graphics mode.  Keep that owner
+ * as one near kernel pointer.  This prevents another task which inherited or
+ * reopened the same tty from changing raw mode or releasing the lock.
+ */
+static struct task_struct *glock_owner;
+
 static void WriteChar(Console * C, int c)
 {
     /* check for graphics lock */
@@ -341,6 +349,65 @@ static segment_s *graph_save_seg[MAX_CONSOLES];
 static unsigned int graph_save_words;
 #endif
 
+/*
+ * Release graphics ownership only for the task which acquired it.  A normal
+ * DCREL_GRAPH supplies its console in C.  Task-exit cleanup passes NULL and
+ * releases whichever console the dying task owns.
+ *
+ * The current console implementation may hold one saved text segment per
+ * virtual console.  Restore and free those segments on both paths.  This is
+ * important on abnormal exit: merely clearing glock would leak the segments
+ * and leave the saved text pages unavailable to the next graphics client.
+ */
+static void console_graphics_unlock(Console *C, struct task_struct *owner)
+{
+    Console *locked = glock;
+
+    if (!locked || glock_owner != owner)
+        return;
+    if (C && locked != C)
+        return;
+    C = locked;
+
+#if VC_GRAPH_SAVE_RESTORE
+    {
+        int i, n;
+
+        n = UseRambuf ? 1 : NumConsoles;
+        for (i = 0; i < n; i++) {
+            Console *V = UseRambuf ? Visible[C->display] : &Con[i];
+
+            if (graph_save_seg[i]) {
+                fmemcpyw((void *)0, (seg_t) V->vseg,
+                         (void *)0, graph_save_seg[i]->base,
+                         graph_save_words);
+                seg_free(graph_save_seg[i]);
+                graph_save_seg[i] = 0;
+            }
+        }
+        graph_save_words = 0;
+
+        /*
+         * A normal graphics client restores text mode before release.  In
+         * page-flip mode, select the same foreground page it left.  The exit
+         * path also performs this bounded cleanup so no saved segment leaks.
+         */
+        if (!UseRambuf)
+            SetDisplayPage(Visible[C->display]);
+    }
+#endif
+
+    kraw = 0;
+    glock_owner = NULL;
+    glock = NULL;
+    wake_up(&glock_wait);
+}
+
+void console_graphics_task_exit(struct task_struct *owner)
+{
+    console_graphics_unlock(NULL, owner);
+}
+
 static int Console_ioctl(struct tty *tty, int cmd, char *arg)
 {
     Console *C = &Con[tty->minor];
@@ -372,46 +439,24 @@ static int Console_ioctl(struct tty *tty, int cmd, char *arg)
             }
 #endif
             glock = C;
+            glock_owner = current;
             return 0;
         }
         return -EBUSY;
     case DCREL_GRAPH:
-        if (glock == C) {
-#if VC_GRAPH_SAVE_RESTORE
-            int i, n;
-            n = UseRambuf ? 1 : NumConsoles;
-            for (i = 0; i < n; i++) {
-                Console *V = UseRambuf ? Visible[C->display] : &Con[i];
-                if (graph_save_seg[i]) {
-                    fmemcpyw((void *)0, (seg_t) V->vseg,
-                             (void *)0, graph_save_seg[i]->base,
-                             graph_save_words);
-                    seg_free(graph_save_seg[i]);
-                    graph_save_seg[i] = 0;
-                }
-            }
-            graph_save_words = 0;
-            /* The graphics app's BIOS mode reset left CRTC at page 0. In
-             * page-flip mode that may not be the foreground VC's page;
-             * re-program the start address so the user lands on the same
-             * VC they left. RAM-buffer mode never page-flips and needs no fixup.
-             */
-            if (!UseRambuf)
-                SetDisplayPage(Visible[C->display]);
-#endif
-            glock = NULL;
-            wake_up(&glock_wait);
+        if (glock == C && glock_owner == current) {
+            console_graphics_unlock(C, current);
             return 0;
         }
         break;
     case DCSET_KRAW:
-        if (glock == C) {
+        if (glock == C && glock_owner == current) {
             kraw = 1;
             return 0;
         }
         break;
     case DCREL_KRAW:
-        if ((glock == C) && (kraw == 1)) {
+        if (glock == C && glock_owner == current && kraw == 1) {
             kraw = 0;
             return 1;
         }
