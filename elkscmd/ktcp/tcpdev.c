@@ -29,6 +29,22 @@ static unsigned char sbuf[TCPDEV_BUFSIZ];
 
 int tcpdevfd;
 
+/*
+ * Select a native 16-bit ephemeral port.  Increment wraps by the C unsigned
+ * rule; values below 1024 are then saturated upward to 1024.  KTCP cannot
+ * hold every remaining port on an 8086, so this bounded-memory search always
+ * finds a free control block without division, multiplication, or wide math.
+ */
+static __u16 tcpdev_ephemeral_port(void)
+{
+    do {
+        next_port++;
+        if (next_port < 1024)
+            next_port = 1024;
+    } while (tcpcb_check_port(next_port) != NULL);
+    return next_port;
+}
+
 int tcpdev_init(char *fdev)
 {
     int fd  = open(fdev, O_NONBLOCK | O_RDWR);
@@ -85,13 +101,9 @@ static void tcpdev_bind(void)
     }
 
     port = ntohs(db->addr.sin_port);
-    if (port == 0) {
-	if (++next_port < 1024)
-	    next_port = 1024;
-	while (tcpcb_check_port(next_port) != NULL)
-	    next_port++;
-	port = next_port;
-    } else {
+    if (port == 0)
+	port = tcpdev_ephemeral_port();
+    else {
 	struct tcpcb_list_s *n2 = tcpcb_check_port(port);
 	if (n2) {			/* port already bound */
 	    if (!db->reuse_addr) {	/* no SO_REUSEADDR on socket */
@@ -218,8 +230,21 @@ static void tcpdev_connect(void)
     ipaddr_t addr;
 
     n = tcpcb_find_by_sock(db->sock);
-    if (!n || n->tcpcb.state != TS_CLOSED) {
-	debug_tcp("tcp: panic in connect\n");
+    if (!n) {
+	/* POSIX connect performs an implicit ephemeral bind when needed. */
+	n = tcpcb_new(CB_NORMAL_BUFSIZ);
+	if (!n) {
+	    notify_sock(db->sock, TDT_CONNECT, -ENOMEM);
+	    return;
+	}
+	n->tcpcb.sock = db->sock;
+	n->tcpcb.localaddr = local_ip;
+	n->tcpcb.localport = tcpdev_ephemeral_port();
+	n->tcpcb.state = TS_CLOSED;
+    }
+    if (n->tcpcb.state != TS_CLOSED) {
+	debug_tcp("tcp: connect on socket in state %d\n", n->tcpcb.state);
+	notify_sock(db->sock, TDT_CONNECT, -EINVAL);
 	return;
     }
 

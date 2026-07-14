@@ -160,10 +160,29 @@ static int inet_bind(register struct socket *sock, struct sockaddr *addr,
     return (ret >= 0 ? 0 : ret);
 }
 
+/*
+ * Consume one completed KTCP connection attempt.  retval and every state
+ * value are native 16-bit or smaller fields.  A failed asynchronous attempt
+ * returns the socket to SS_UNCONNECTED so a later connect may retry it; no
+ * descriptor, pointer, or protocol address is widened here.
+ */
+static int inet_connect_result(struct socket *sock)
+{
+    int ret = sock->retval;
+
+    sock->flags &= ~SF_CONNECT;
+    if (ret == 0)
+        sock->state = SS_CONNECTED;
+    else
+        sock->state = SS_UNCONNECTED;
+    return ret;
+}
+
 static int inet_connect(struct socket *sock, struct sockaddr *uservaddr,
                         size_t sockaddr_len, int flags)
 {
     register struct tdb_connect *cmd;
+    int ret;
 
     debug_net("INET(%P) connect sock %x\n", sock);
 
@@ -173,16 +192,38 @@ static int inet_connect(struct socket *sock, struct sockaddr *uservaddr,
     if (get_user(&(((struct sockaddr_in *)uservaddr)->sin_family)) != AF_INET)
         return -EINVAL;
 
-    if (sock->state == SS_CONNECTING)
-        return -EINPROGRESS;
+    /*
+     * A second connect after select readiness is the small ELKS equivalent
+     * of reading SO_ERROR.  It returns the exact saved KTCP status and does
+     * not transmit another SYN.  While no status exists, POSIX distinguishes
+     * this repeat from the first EINPROGRESS with EALREADY.
+     */
+    if (sock->state == SS_CONNECTING) {
+        if (sock->flags & SF_CONNECT)
+            return inet_connect_result(sock);
+        return -EALREADY;
+    }
 
     sock->flags &= ~SF_CONNECT;
+    sock->retval = -EINPROGRESS;
+    sock->state = SS_CONNECTING;
     cmd = (struct tdb_connect *)get_tdout_buf();
     cmd->cmd = TDC_CONNECT;
     cmd->sock = sock;
     memcpy_fromfs(&cmd->addr, uservaddr, sockaddr_len);
 
-    tcpdev_inetwrite(cmd, sizeof(struct tdb_connect));
+    ret = tcpdev_inetwrite(cmd, sizeof(struct tdb_connect));
+    if (ret < 0) {
+        sock->state = SS_UNCONNECTED;
+        return ret;
+    }
+
+    /* Never sleep a file descriptor whose caller selected O_NONBLOCK. */
+    if (flags & O_NONBLOCK) {
+        if (sock->flags & SF_CONNECT)
+            return inet_connect_result(sock);
+        return -EINPROGRESS;
+    }
 
     do {
         interruptible_sleep_on(sock->wait);
@@ -190,9 +231,7 @@ static int inet_connect(struct socket *sock, struct sockaddr *uservaddr,
             return -ETIMEDOUT;
     } while (!(sock->flags & SF_CONNECT));
 
-    if (sock->retval == 0)
-        sock->state = SS_CONNECTED;
-    return sock->retval;
+    return inet_connect_result(sock);
 }
 
 
@@ -391,14 +430,34 @@ static int inet_select(register struct socket *sock, int sel_type)
          sock, sock->wait, sel_type, sock->avail_data);
 
     if (sel_type == SEL_IN) {
+        /* A connection attempt has no readable stream until it completes. */
+        if (sock->state == SS_CONNECTING) {
+            select_wait(sock->wait);
+            return 0;
+        }
         if (sock->avail_data || sock->state != SS_CONNECTED)
             return 1;
         else {
             select_wait(sock->wait);
             return 0;
         }
-    } else if (sel_type == SEL_OUT)
+    } else if (sel_type == SEL_OUT) {
+        if (sock->state == SS_CONNECTING) {
+            if (sock->flags & SF_CONNECT)
+                return 1;
+            select_wait(sock->wait);
+            return 0;
+        }
         return 1;
+    } else if (sel_type == SEL_EX) {
+        if (sock->state == SS_CONNECTING) {
+            if ((sock->flags & SF_CONNECT) && sock->retval < 0)
+                return 1;
+            if (!(sock->flags & SF_CONNECT))
+                select_wait(sock->wait);
+        }
+        return 0;
+    }
     return 0;
 }
 

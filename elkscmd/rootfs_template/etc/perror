@@ -48,6 +48,7 @@
 110 Connection timed out 
 111 Connection refused 
 113 Host not reachable 
+114 Operation already in progress
 115 Operation now in progress 
 125 Nameserver not found 
 126 Name not found 
