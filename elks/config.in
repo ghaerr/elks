@@ -76,6 +76,10 @@ mainmenu_option next_comment
 	bool 'Real time clock in localtime'       CONFIG_TIME_RTC_LOCALTIME n
 	string 'Compiled-in TZ= timezone string'  CONFIG_TIME_TZ      ''
 	bool 'System tracing (set on for development)' CONFIG_TRACE   n
+	if [ "$CONFIG_ARCH_IBMPC" = "y" ] && \
+	   [ "$CONFIG_286_PMODE" != "y" ]; then
+		bool 'GEM INT EF resident-service broker' CONFIG_GEM_TRAP n
+	fi
 	bool 'Use INT 0Fh in idle loop for timer' CONFIG_TIMER_INT0F  n
 	bool 'Use INT 1Ch from BIOS for timer'    CONFIG_TIMER_INT1C  n
 

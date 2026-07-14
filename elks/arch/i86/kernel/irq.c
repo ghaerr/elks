@@ -43,6 +43,81 @@ struct int_handler {
 static struct int_handler trampoline[NR_IRQS];
 static irq_handler irq_action[NR_IRQS];
 
+#ifdef CONFIG_GEM_TRAP
+/*
+ * Original GEM applications inspect bytes two through seven of the INT EFh
+ * target and require the literal "GEMAES" signature.  The short jump skips
+ * those six data bytes, then the normal ELKS far-call trampoline enters
+ * _irqit.  CALLF leaves its return offset pointing at irq, exactly like the
+ * compact struct int_handler used by every other ELKS interrupt.
+ */
+struct gem_int_handler {
+    byte_t jump_opcode;          /* EBh: 8086 short relative jump */
+    byte_t jump_bytes;           /* skip the six signature bytes */
+    byte_t signature[6];
+    byte_t call_opcode;          /* 9Ah: 8086 far call */
+    word_t proc;
+    word_t seg;
+    byte_t irq;
+} __attribute__ ((packed));
+
+static struct gem_int_handler gem_trampoline;
+static word_t gem_old_offset;
+static seg_t gem_old_segment;
+static byte_t gem_vector_installed;
+
+extern void gemtrap_interrupt(int irq, struct pt_regs *regs);
+
+/*
+ * Install the broker only while a resident owner is registered.  aescheck()
+ * therefore cannot mistake an ownerless kernel for a working AES service.
+ */
+void gemtrap_vector_enable(void)
+{
+    if (gem_vector_installed)
+        return;
+
+    int_vector_get(0xef, &gem_old_offset, &gem_old_segment);
+    int_vector_set(0xef, (word_t)&gem_trampoline, kernel_ds);
+    gem_vector_installed = 1;
+}
+
+void gemtrap_vector_disable(void)
+{
+    word_t offset;
+    seg_t segment;
+
+    if (!gem_vector_installed)
+        return;
+
+    /*
+     * Do not overwrite a later owner that deliberately replaced INT EFh.
+     * We restore the saved vector only when the IVT still points at us.
+     */
+    int_vector_get(0xef, &offset, &segment);
+    if (offset == (word_t)&gem_trampoline && segment == kernel_ds)
+        int_vector_set(0xef, gem_old_offset, gem_old_segment);
+    gem_vector_installed = 0;
+}
+
+static void INITPROC gemtrap_irq_init(void)
+{
+    gem_trampoline.jump_opcode = 0xeb;
+    gem_trampoline.jump_bytes = 6;
+    gem_trampoline.signature[0] = 'G';
+    gem_trampoline.signature[1] = 'E';
+    gem_trampoline.signature[2] = 'M';
+    gem_trampoline.signature[3] = 'A';
+    gem_trampoline.signature[4] = 'E';
+    gem_trampoline.signature[5] = 'S';
+    gem_trampoline.call_opcode = 0x9a;
+    gem_trampoline.proc = (word_t)_irqit;
+    gem_trampoline.seg = KERNEL_CS;
+    gem_trampoline.irq = IDX_GEM;
+    irq_action[IDX_GEM] = gemtrap_interrupt;
+}
+#endif
+
 /* called by _irqit assembler hook after saving registers */
 void do_IRQ(int i, struct pt_regs *regs)
 {
@@ -127,6 +202,10 @@ int free_irq(int irq)
 void INITPROC irq_init(void)
 {
     int_handler_add(IDX_SYSCALL, 0x80, _irqit); /* INT 80 for system calls */
+
+#ifdef CONFIG_GEM_TRAP
+    gemtrap_irq_init();                  /* INT EF is enabled by REGISTER */
+#endif
 
 #if defined(CONFIG_ARCH_IBMPC) || defined(CONFIG_ARCH_PC98) || \
     defined(CONFIG_ARCH_SOLO86) || defined(CONFIG_ARCH_SWAN) || \

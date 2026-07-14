@@ -44,8 +44,8 @@
 #define EPIPE           32      /* Broken pipe */
 #define EDOM            33      /* Math argument out of domain of func */
 #define ERANGE          34      /* Math result not representable */
-#if UNUSED
 #define EDEADLK         35      /* Resource deadlock would occur */
+#if UNUSED
 #define ENOLCK          37      /* No record locks available */
 #endif
 #define ENAMETOOLONG    36      /* File name too long */
@@ -57,6 +57,7 @@
 /* these are used, pulled out of the below unused list */
 #define ENODATA         61      /* No data available */
 #define ENOSR           63      /* Out of streams resources */
+#define EOVERFLOW       75      /* Value too large for defined data type */
 #define EILSEQ          84      /* Illegal byte sequence */
 #define ENOTSOCK        88      /* Socket operation on non-socket */
 #define EADDRINUSE      98      /* Address already in use */

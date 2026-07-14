@@ -85,7 +85,7 @@ settimeofday	+61	2
 gettimeofday	+62	2
 select		+63	5	. 5 parameters is possible
 readdir		+64	3	*
-insmod		65	1	- Removed support for modules
+gemctl		+65	2	= CONFIG_GEM_TRAP
 fchown		+66	3
 dlload		67	2	- Removed support for dynamic libraries
 setsid		+68	0

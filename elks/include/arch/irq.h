@@ -7,7 +7,12 @@
 #define IDX_DIVZERO     17
 #define IDX_NMI         18
 #define IDX_NECV25_IBRK 19      /* NEC V25 specific IO Break Exception */
+#ifdef CONFIG_GEM_TRAP
+#define IDX_GEM         20      /* GEM AES/VDI software trap, INT EFh */
+#define NR_IRQS         21      /* = # IRQs plus special indexes above */
+#else
 #define NR_IRQS         20      /* = # IRQs plus special indexes above */
+#endif
 
 #define INT_GENERIC  0  // use the generic interrupt handler (aka '_irqit')
 #define INT_SPECIFIC 1  // use a specific interrupt handler
@@ -26,6 +31,11 @@ int free_irq(int irq);
 /* irqtab.S */
 void _irqit (void);
 void int_vector_set(unsigned int vect, word_t proc, seg_t seg);
+void int_vector_get(unsigned int vect, word_t *proc, seg_t *seg);
+#ifdef CONFIG_GEM_TRAP
+void gemtrap_vector_enable(void);
+void gemtrap_vector_disable(void);
+#endif
 void idle_halt(void);
 
 void div0_handler(int irq, struct pt_regs *regs);

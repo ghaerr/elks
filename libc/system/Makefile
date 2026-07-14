@@ -22,7 +22,7 @@ syscall.mk: $(SYSCALLDAT) $(dir)syscall.awk
 	awk -f $(dir)syscall.awk regparmcall=$(regparmcall) $< > $@
 
 out: syscall.mk
-	$(MAKE) -f $(dir)out.mk
+	$(MAKE) -f $(dir)out.mk all
 .PHONY: out
 
 clean:

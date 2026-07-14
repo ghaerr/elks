@@ -11,6 +11,9 @@
 #include <linuxmt/init.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/kd.h>
+#ifdef CONFIG_GEM_TRAP
+#include <linuxmt/gemtrap.h>
+#endif
 
 static void FARPROC reparent_children(void)
 {
@@ -128,6 +131,10 @@ void do_exit(int status)
     struct task_struct *parent;
 
     debug_wait("EXIT(%P) status %d\n", status);
+#ifdef CONFIG_GEM_TRAP
+    /* Release broker ownership or a queued client before its task disappears. */
+    gemtrap_task_exit(current);
+#endif
     _close_allfiles();
 #ifdef CONFIG_AUDIO
     audio_seq_exit(current->pid);

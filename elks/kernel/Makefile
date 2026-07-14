@@ -37,7 +37,11 @@ include $(BASEDIR)/Makefile-rules
 
 # unused: wait.o lock.o
 OBJS  = sched.o printk.o sleepwake.o version.o sys.o sys2.o fork.o \
-	exit.o time.o signal.o sysctl.o
+		exit.o time.o signal.o sysctl.o
+
+ifeq ($(CONFIG_GEM_TRAP), y)
+OBJS += gemtrap.o
+endif
 
 #########################################################################
 # Commands:

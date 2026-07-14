@@ -45,6 +45,9 @@
 #include <linuxmt/init.h>
 #include <linuxmt/debug.h>
 #include <linuxmt/memory.h>
+#ifdef CONFIG_GEM_TRAP
+#include <linuxmt/gemtrap.h>
+#endif
 #include <arch/segment.h>
 #include <arch/seg286.h>
 #pragma GCC diagnostic ignored "-Wunused-label"
@@ -528,6 +531,16 @@ static void FARPROC finalize_exec(struct inode *inode, segment_s *seg_code,
 {
     struct task_struct *currentp = current;
     int i, n, v;
+
+    /*
+     * A resident GEM owner may retain menu, desktop or event pointers in the
+     * old data segment.  Publish an EXIT lifecycle record before dropping the
+     * task's normal segment reference.  The broker's attachment reference
+     * keeps that old segment stable until the owner acknowledges teardown.
+     */
+#ifdef CONFIG_GEM_TRAP
+    gemtrap_task_exec(currentp);
+#endif
 
     /* From this point, the old code and data segments are not needed anymore */
     for (i = 0; i < MAX_SEGS; i++) {

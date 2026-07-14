@@ -459,6 +459,46 @@ int_vector_set:
         pop %ds
         ret
 
+//------------------------------------------------------------------------------
+// Read an interrupt vector as two independent 16-bit words.
+//------------------------------------------------------------------------------
+
+// void int_vector_get (int vect, word_t *proc, word_t *seg);
+// arg1: vector number (word)
+// arg2: near kernel pointer receiving the offset word
+// arg3: near kernel pointer receiving the segment word
+//
+// The IVT is a four-byte external ABI.  Keeping the offset and segment in two
+// words avoids 32-bit arithmetic and the compiler helpers that it would need on
+// an 8086.  BX, SI and DI are preserved for the C calling convention.
+
+        .global int_vector_get
+int_vector_get:
+        push %bx
+        push %si
+        push %di
+        mov  %sp,%bx
+        mov  8(%bx),%ax          // arg1 after three saved registers
+        mov 10(%bx),%si          // arg2
+        mov 12(%bx),%di          // arg3
+        shl  $1,%ax              // four bytes per IVT entry, 8086 form
+        shl  $1,%ax
+        mov  %ax,%bx
+
+        push %ds
+        xor  %ax,%ax
+        mov  %ax,%ds             // DS:BX points into the real-mode IVT
+        mov  (%bx),%cx
+        mov 2(%bx),%dx
+        pop  %ds
+
+        mov %cx,(%si)
+        mov %dx,(%di)
+        pop %di
+        pop %si
+        pop %bx
+        ret
+
         .data
         .global intr_count
         .global endistack
