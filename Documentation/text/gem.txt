@@ -1,0 +1,40 @@
+GEM Desktop for ELKS
+====================
+
+The optional GEM Desktop external application is intended for IBM PC compatible
+8088 and 8086 systems using an ELKS hard disk image.  It runs in real mode and
+requires CONFIG_GEM_TRAP=y.  It is unavailable when CONFIG_286_PMODE=y or when
+another ELKS architecture is selected.
+
+The GEM AES, VDI and Desktop sources and direct runtime resources are derived
+from the GPL-2.0 FreeGEM/OpenGEM source release; original copyright and GPL
+notices are retained.  ELKS-specific adaptation sources in Gem-elks are
+distributed under GPL-2.0-only.  See the external repository's LICENSE and
+provenance manifest for exact source revisions and asset hashes.
+
+The build is pinned to the v2026.07.14-core.1 tag at:
+
+    https://github.com/parabyte/Gem-elks
+
+After configuring ELKS, build the pinned source with:
+
+    ./buildext.sh elksgem
+
+Then enable "GEM Desktop (hard disk only)" in the Userland configuration and
+build the hard disk image normally.  The installation contains:
+
+    /bin/gemaes
+    /bin/gemdesk
+    /GEMAPPS/GEMSYS/DESKTOP.RSC
+    /GEMAPPS/GEMSYS/DESKHI.ICN
+    /GEMAPPS/GEMSYS/DESKLO.ICN
+    /GEMAPPS/GEMSYS/DESKTOP.INF
+
+Start /bin/gemaes first, then start /bin/gemdesk from a second shell or from a
+separate supervised startup entry.  gemaes must remain running as the shared
+AES and VDI owner while gemdesk uses the kernel GEM broker.  gemdesk cannot be
+started before the resident owner.
+
+The four data files are original GEM resources.  They are installed unchanged
+and parsed directly on ELKS; no resource conversion program is used on the
+target system.

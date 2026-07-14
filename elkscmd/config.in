@@ -31,6 +31,23 @@ mainmenu_option next_comment
 		bool 'other'         	CONFIG_APP_OTHER        y
 		bool 'test'       		CONFIG_APP_TEST         n
 		bool 'busyelks'			CONFIG_APP_BUSYELKS		n
+
+		comment 'Graphical desktop'
+
+		if [ "$CONFIG_ARCH_IBMPC" = "y" ]; then
+			if [ "$CONFIG_286_PMODE" != "y" ]; then
+				if [ "$CONFIG_GEM_TRAP" = "y" ]; then
+					bool 'GEM Desktop (hard disk only)' CONFIG_APP_GEM n
+				else
+					comment '(GEM Desktop needs the GEM INT EF broker)'
+				fi
+			else
+				comment '(GEM Desktop needs an 8086 real-mode kernel)'
+			fi
+		else
+			comment '(GEM Desktop is available for IBM PC only)'
+		fi
+
 		string 'Additional TAG string for app selection'  CONFIG_APP_TAGS      ''
 
 		#comment 'Commands not compiling'

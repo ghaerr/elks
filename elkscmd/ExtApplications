@@ -23,6 +23,7 @@
 #   :1440k      Set of apps to fit on 1440k disks (and 1200k if compressed)
 #   :1440c      Extra apps to add to 1440k disks if CONFIG_APPS_COMPRESS set
 #   :2880k      Set of apps to fit on 2880k disks
+#   :elksgem    GEM Desktop files for hard disk images
 #   :::file     install as symlink
 #
 # ------------- ----------------------------------------------------------
@@ -45,6 +46,12 @@ microwindows/src/bin/nxselect                       :nanox  :1232c
 microwindows/src/demos/nanox/images/girl1.jpg ::root/girl1.jpg :nanox
 microwindows/src/demos/nanox/images/earth.jpg ::root/earth.jpg :nanox
 dflat/memopad                                       :dflat              :2880k
+elks-gem/build/bin/gemaes       ::bin/gemaes        :elksgem
+elks-gem/build/bin/gemdesk      ::bin/gemdesk       :elksgem
+elks-gem/assets/GEMAPPS/GEMSYS/DESKTOP.RSC ::GEMAPPS/GEMSYS/DESKTOP.RSC :elksgem
+elks-gem/assets/GEMAPPS/GEMSYS/DESKHI.ICN  ::GEMAPPS/GEMSYS/DESKHI.ICN  :elksgem
+elks-gem/assets/GEMAPPS/GEMSYS/DESKLO.ICN  ::GEMAPPS/GEMSYS/DESKLO.ICN  :elksgem
+elks-gem/assets/GEMAPPS/GEMSYS/DESKTOP.INF ::GEMAPPS/GEMSYS/DESKTOP.INF :elksgem
 # sample ELKS OWC/C86 files
 ../elkscmd/basic/basic.os2                          :owc                :2880k
 ../elkscmd/fsck_dos/fsck-dos.os2                    :owc                :2880k

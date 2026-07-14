@@ -54,6 +54,19 @@ ifdef CONFIG_APP_ELVIS
 	TAGS += :elvis|
 endif
 
+ifdef CONFIG_APP_GEM
+	ifneq ($(CONFIG_ARCH_IBMPC), y)
+		$(error CONFIG_APP_GEM requires CONFIG_ARCH_IBMPC=y)
+	endif
+	ifeq ($(CONFIG_286_PMODE), y)
+		$(error CONFIG_APP_GEM is not available in protected mode)
+	endif
+	ifneq ($(CONFIG_GEM_TRAP), y)
+		$(error CONFIG_APP_GEM requires CONFIG_GEM_TRAP=y)
+	endif
+	TAGS += :elksgem|
+endif
+
 ifdef CONFIG_APP_KTCP
 	TAGS += :net|
 endif

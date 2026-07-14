@@ -14,6 +14,7 @@
 #       microwindows_pc98 ia16-elf-gcc  Nano-X Graphical Windowing Environment for PC-98
 #       dcc             ia6-elf-gcc     DCC self-compiling C compiler for ELKS
 #       dflat           ia16-elf-gcc    D-Flat TUI memopad/library
+#       elksgem         ia16-elf-gcc    GEM Desktop for ELKS
 #       elkirc          ia16-elf-gcc    IRC for ELKS
 #       elksdigger      ia16-elf-gcc    Digger for ELKS
 #       owc_libc        OpenWatcom      ELKS C Library compiled by OWC
@@ -190,6 +191,25 @@ dflat()
     echo "D-Flat build complete"
 }
 
+elksgem()
+{
+    ELKSGEM_TAG=v2026.07.14-core.1
+
+    echo "Building GEM Desktop for ELKS..."
+    cd $TOPDIR/extapps
+    if [ ! -d elks-gem ] ; then
+        git clone --branch $ELKSGEM_TAG --depth 1 \
+            https://github.com/parabyte/Gem-elks.git elks-gem
+    fi
+    cd elks-gem
+    git fetch --depth 1 origin \
+        refs/tags/$ELKSGEM_TAG:refs/tags/$ELKSGEM_TAG
+    git checkout --detach $ELKSGEM_TAG
+    make -f Makefile.elks clean
+    make -f Makefile.elks ELKS_ROOT=$TOPDIR
+    echo "GEM Desktop build complete"
+}
+
 elksdoom()
 {
     echo "Building Doom..."
@@ -340,6 +360,7 @@ make_all()
     microwindows
     dcc
     dflat
+    elksgem
     elkirc
     elksdigger
     if [ -n "$WATCOM" ] ; then

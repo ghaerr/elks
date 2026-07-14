@@ -21,6 +21,8 @@ This section contains some HOWTOs to help using ELKS.
 
 * [The Kilo editor](https://htmlpreview.github.io/?https://github.com/jbruchon/elks/master/Documentation/html/user/kilo.html)
 
+* [GEM Desktop on ELKS](https://raw.githubusercontent.com/ghaerr/elks/master/Documentation/text/gem.txt)
+
 * [Writing applications for ELKS in C](https://htmlpreview.github.io/?https://github.com/jbruchon/elks/blob/master/Documentation/html/user/writing_apps_in_C.html)
 
 * [Writing applications for ELKS in assembler](https://htmlpreview.github.io/?https://github.com/jbruchon/elks/blob/master/Documentation/html/user/writing_apps_in_assembler.html)
