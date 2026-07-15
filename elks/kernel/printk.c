@@ -42,6 +42,10 @@
 #include <linuxmt/debug.h>
 #include <linuxmt/signal.h>
 #include <linuxmt/prectimer.h>
+#ifdef CONFIG_CHAR_DEV_KMSG
+#include <linuxmt/kmsg.h>
+#include <linuxmt/memory.h>
+#endif
 #include <arch/segment.h>
 #include <arch/irq.h>
 #include <arch/divmod.h>
@@ -60,14 +64,70 @@ dev_t dev_console;
 static void (*kputc)(dev_t, int) = 0;
 
 /*
- * Kernel log ring buffer for /dev/kmsg
+ * Kernel log ring buffer - writes to far-memory ring buffer via ASM
+ * Read side: /dev/kmem MEM_GETKMSG ioctl or /dev/kmsg
  */
+
+#ifdef CONFIG_CHAR_DEV_KMSG
+/* read-side stubs for /dev/kmsg char driver (ring buffer is in far memory) */
+int kmsg_read_char(void)
+{
+    return -1;  /* TODO: implement far-memory read or use /dev/kmem path */
+}
+
+int kmsg_size(void)
+{
+    return 0;
+}
+
+void kmsg_clear(void)
+{
+}
+
+/* C far-memory ring buffer enqueue using pokeb/pokew */
+void kmsg_enqueue(seg_t seg, unsigned char ch)
+{
+    unsigned int head, size, count, tail;
+    unsigned int flags;
+
+    if (!seg) return;
+
+    save_flags(flags);
+    clr_irq();
+
+    head = peekw(0, seg);
+    size = peekw(6, seg);
+    count = peekw(4, seg);
+
+    if (!size) goto out;
+
+    pokeb(8 + head, seg, ch);
+
+    head++;
+    if (head >= size) head = 0;
+    pokew(0, seg, head);
+
+    count++;
+    if (count > size) {
+        tail = peekw(2, seg);
+        tail++;
+        if (tail >= size) tail = 0;
+        pokew(2, seg, tail);
+        count = size;
+    }
+    pokew(4, seg, count);
+
+out:
+    restore_flags(flags);
+}
+#else
+/* legacy static buffer when CONFIG_CHAR_DEV_KMSG not set */
 #define KMSG_BUF_SIZE   2048
 
 static char kmsg_buf[KMSG_BUF_SIZE];
-static int  kmsg_head;      /* write position */
-static int  kmsg_tail;      /* read position */
-static int  kmsg_count;     /* bytes available to read */
+static int  kmsg_head;
+static int  kmsg_tail;
+static int  kmsg_count;
 
 static void kmsg_write(int ch)
 {
@@ -76,7 +136,6 @@ static void kmsg_write(int ch)
     if (kmsg_count < KMSG_BUF_SIZE) {
         kmsg_count++;
     } else {
-        /* buffer full, advance tail to discard oldest byte */
         kmsg_tail = (kmsg_tail + 1) & (KMSG_BUF_SIZE - 1);
     }
 }
@@ -84,7 +143,6 @@ static void kmsg_write(int ch)
 int kmsg_read_char(void)
 {
     int ch;
-
     if (kmsg_count == 0)
         return -1;
     ch = (unsigned char)kmsg_buf[kmsg_tail];
@@ -102,6 +160,7 @@ void kmsg_clear(void)
 {
     kmsg_head = kmsg_tail = kmsg_count = 0;
 }
+#endif
 
 
 void set_console(dev_t dev)
@@ -120,7 +179,11 @@ void kputchar(int ch)
 {
     if (ch == '\n')
             kputchar('\r');
+#ifdef CONFIG_CHAR_DEV_KMSG
+    kmsg_enqueue(kmsg_seg, ch);
+#else
     kmsg_write(ch);
+#endif
     if (kputc)
             (*kputc)(dev_console, ch);
     else early_putchar(ch);

@@ -17,6 +17,9 @@
 #include <linuxmt/prectimer.h>
 #include <linuxmt/timer.h>
 #include <linuxmt/debug.h>
+#ifdef CONFIG_CHAR_DEV_KMSG
+#include <linuxmt/kmsg.h>
+#endif
 #include <arch/segment.h>
 #include <arch/seg286.h>
 #include <arch/ports.h>
@@ -51,6 +54,10 @@ int nr_ext_bufs, nr_xms_bufs, nr_map_bufs;
 int xms_bootopts;
 int ata_mode = -1;              /* =AUTO default set ATA CF driver mode automatically */
 char running_qemu;
+#ifdef CONFIG_CHAR_DEV_KMSG
+volatile seg_t kmsg_seg;            /* segment of ring buffer in far memory (0 = disabled) */
+unsigned int kmsg_buf_size;         /* requested buffer size from /bootopts dmesg= */
+#endif
 static int boot_console;
 static segext_t umbtotal;
 static kdev_t disabled[4];      /* disabled devices using disable= */
@@ -223,6 +230,22 @@ static void INITPROC early_kernel_init(void)
     heap_init();                    /* init near memory allocator */
     heapofs = setup_arch();          /* sets membase and memend globals */
     heap_add((void *)heapofs, heapsize);
+
+#ifdef CONFIG_CHAR_DEV_KMSG
+    /* carve kmsg ring buffer from top of conventional RAM before mm_init */
+    if (kmsg_buf_size) {
+        seg_t kmsg_segs = (KMSG_DATA_OFF + kmsg_buf_size + 15) >> 4;
+        if ((memend - membase) > kmsg_segs) {
+            memend -= kmsg_segs;
+            kmsg_seg = memend;
+            pokew(0, kmsg_seg, 0);              /* head = 0 */
+            pokew(2, kmsg_seg, 0);              /* tail = 0 */
+            pokew(4, kmsg_seg, 0);              /* count = 0 */
+            pokew(6, kmsg_seg, kmsg_buf_size);  /* size */
+        }
+    }
+#endif
+
     mm_init(membase, memend);       /* init far/main memory allocator */
 
 #ifdef CONFIG_BOOTOPTS
@@ -632,6 +655,12 @@ static int INITPROC parse_options(void)
             nr_ext_bufs = (int)simple_strtol(line+4, 10);
             continue;
         }
+#ifdef CONFIG_CHAR_DEV_KMSG
+        if (!strncmp(line,"dmesg=",6)) {
+            kmsg_buf_size = (unsigned int)simple_strtol(line+6, 10);
+            continue;
+        }
+#endif
         if (!strncmp(line,"xms=",4)) {
             if (!strcmp(line+4, "on"))    xms_bootopts = XMS_UNREAL;
             if (!strcmp(line+4, "int15")) xms_bootopts = XMS_INT15;

@@ -27,6 +27,9 @@
 #include <linuxmt/heap.h>
 #include <linuxmt/timer.h>
 #include <linuxmt/init.h>
+#ifdef CONFIG_CHAR_DEV_KMSG
+#include <linuxmt/kmsg.h>
+#endif
 #include <arch/io.h>
 #include <arch/segment.h>
 #include <arch/seg286.h>
@@ -169,7 +172,11 @@ static int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg
     case MEM_GETSEGALL:
         retword = (unsigned)&_seg_all;
         break;
-        /* fall thru */
+#ifdef CONFIG_CHAR_DEV_KMSG
+    case MEM_GETKMSG:
+        retword = kmsg_seg;
+        break;
+#endif
     default:
         return -EINVAL;
     }
