@@ -331,7 +331,7 @@ static struct file_operations *mdev_fops[] = {
     &zero_fops,                 /* DEV_ZERO_MINOR */
     NULL,                       /* 6 */
     NULL,                       /* 7 */
-    NULL,                       /* DEV_KMSG_MINOR */
+    NULL,                       /* 8 */
 };
 
 /*
