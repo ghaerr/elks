@@ -44,7 +44,6 @@
 #include <linuxmt/prectimer.h>
 #ifdef CONFIG_CHAR_DEV_KMSG
 #include <linuxmt/kmsg.h>
-#include <linuxmt/memory.h>
 #endif
 #include <arch/segment.h>
 #include <arch/irq.h>
@@ -84,42 +83,7 @@ void kmsg_clear(void)
 {
 }
 
-/* C far-memory ring buffer enqueue using pokeb/pokew */
-void kmsg_enqueue(seg_t seg, unsigned char ch)
-{
-    unsigned int head, size, count, tail;
-    unsigned int flags;
-
-    if (!seg) return;
-
-    save_flags(flags);
-    clr_irq();
-
-    head = peekw(0, seg);
-    size = peekw(6, seg);
-    count = peekw(4, seg);
-
-    if (!size) goto out;
-
-    pokeb(8 + head, seg, ch);
-
-    head++;
-    if (head >= size) head = 0;
-    pokew(0, seg, head);
-
-    count++;
-    if (count > size) {
-        tail = peekw(2, seg);
-        tail++;
-        if (tail >= size) tail = 0;
-        pokew(2, seg, tail);
-        count = size;
-    }
-    pokew(4, seg, count);
-
-out:
-    restore_flags(flags);
-}
+/* kmsg_enqueue is implemented in kmsg.S - see there for ring buffer logic */
 #else
 /* legacy static buffer when CONFIG_CHAR_DEV_KMSG not set */
 #define KMSG_BUF_SIZE   2048

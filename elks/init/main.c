@@ -238,10 +238,7 @@ static void INITPROC early_kernel_init(void)
         if ((memend - membase) > kmsg_segs) {
             memend -= kmsg_segs;
             kmsg_seg = memend;
-            pokew(0, kmsg_seg, 0);              /* head = 0 */
-            pokew(2, kmsg_seg, 0);              /* tail = 0 */
-            pokew(4, kmsg_seg, 0);              /* count = 0 */
-            pokew(6, kmsg_seg, kmsg_buf_size);  /* size */
+            kmsg_init(kmsg_seg, kmsg_buf_size);
         }
     }
 #endif
