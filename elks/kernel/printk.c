@@ -69,13 +69,7 @@ static void (*kputc)(dev_t, int) = 0;
 
 #ifdef CONFIG_CHAR_DEV_KMSG
 
-/* kmsg_enqueue is implemented in kmsg.S - see there for ring buffer logic */
-
-/* stubs for /dev/kmsg char driver (ring buffer is in far memory) */
-int kmsg_read_char(void)
-{
-    return -1;  /* reading done via /dev/kmem MEM_GETKMSG ioctl */
-}
+/* kmsg_enqueue is implemented in kmsg.S */
 #endif
 
 

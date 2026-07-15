@@ -31,7 +31,6 @@ devices:
 	$(MKDEV) /dev/zero	c 1 5
 #	$(MKDEV) /dev/full	c 1 6
 #	$(MKDEV) /dev/random	c 1 7
-	$(MKDEV) /dev/kmsg	c 1 8
 
 ##############################################################################
 # RAM disks.

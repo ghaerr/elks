@@ -41,10 +41,6 @@ ifeq ($(CONFIG_ETH), y)
     OBJS += eth.o
 endif
 
-ifeq ($(CONFIG_CHAR_DEV_KMSG), y)
-    OBJS += kmsg.o
-endif
-
 ifeq ($(CONFIG_ARCH_IBMPC), y)
 	CONIO = bios
 	SERIAL = 8250

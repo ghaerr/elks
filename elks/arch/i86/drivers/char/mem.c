@@ -34,10 +34,6 @@
 #include <arch/segment.h>
 #include <arch/seg286.h>
 
-#ifdef CONFIG_CHAR_DEV_KMSG
-extern struct file_operations kmsg_fops;
-#endif
-
 #define DEV_MEM_MINOR           1       /* unused */
 #define DEV_KMEM_MINOR          2
 #define DEV_NULL_MINOR          3
@@ -335,11 +331,7 @@ static struct file_operations *mdev_fops[] = {
     &zero_fops,                 /* DEV_ZERO_MINOR */
     NULL,                       /* 6 */
     NULL,                       /* 7 */
-#ifdef CONFIG_CHAR_DEV_KMSG
-    &kmsg_fops,                 /* DEV_KMSG_MINOR */
-#else
-    NULL,
-#endif
+    NULL,                       /* DEV_KMSG_MINOR */
 };
 
 /*
