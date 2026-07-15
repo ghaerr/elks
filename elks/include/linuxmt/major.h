@@ -8,7 +8,7 @@
 /* limits */
 
 #define MAX_CHRDEV 11
-#define MAX_BLKDEV  7
+#define MAX_BLKDEV  8
 
 /*
  * assignments
@@ -26,7 +26,7 @@
  *  4 - /dev/ttyS[0123]                            serial
  *  5 -                     /dev/cf[ab][1-7]                     direct ATA/CF/hd
  *  6 - /dev/lp             /dev/rom               printer       rom filesystem
- *  7 -
+ *  7 -                     /dev/mfm[a-d][1-7]                XT MFM hard disk
  *  8 - /dev/tcpdev                                kernel <-> ktcp
  *  9 - /dev/eth                                   NIC driver
  * 10 - /dev/cgatext
@@ -55,5 +55,6 @@
 #define FLOPPY_MAJOR      4  /* direct floppy driver directfd.c */
 #define ATHD_MAJOR        5  /* direct ATA/CF driver and nonworking directhd.c */
 #define ROMFLASH_MAJOR    6
+#define MFMHD_MAJOR       7  /* direct XT MFM hard disk */
 
 #endif

@@ -665,6 +665,65 @@ ATA CF Hard Disk support
 CONFIG_BLK_DEV_ATA_CF
   Select this driver to use ATA support for CF devices.
 
+XT MFM hard disk support
+CONFIG_BLK_DEV_MFMHD
+  Select this driver for XT-style Xebec command-block MFM controllers,
+  including Western Digital WD1002A-WX1-compatible boards and Seagate
+  ST11M/ST11R or FileCard-class controllers.  Command and status bytes use
+  programmed I/O; sector data uses the PC/XT 8237 hard-disk DMA channel 3.
+  Completion is polled with ELKS timer deadlines, so no IRQ is installed.
+  Do not configure another device to use DMA channel 3 at the same time.
+
+Primary MFM I/O port
+CONFIG_MFMHD_PRIMARY_PORT
+  Controller base I/O port.  WD1002A-WX1 and IBM/Xebec XT controllers
+  normally use 0x320.
+
+Secondary MFM I/O port
+CONFIG_MFMHD_SECONDARY_PORT
+  Optional second controller base I/O port, normally 0x324.  It is touched
+  only when three or four drives are configured for probing.
+
+MFM drives to probe
+CONFIG_MFMHD_ACTIVE_DRIVES
+  Number of controller units to probe, starting at /dev/mfma.  One is the
+  safest default for a single-drive XT; use two for both units on one card,
+  or three/four to probe units on the secondary controller.  Valid values
+  are 1 through 4.
+
+MFM controller profile
+CONFIG_MFMHD_CTRL_WD1002
+  Choose WD1002A-WX1 for Western Digital and IBM/Xebec-compatible boards.
+  Choose the Seagate profile for ST11M/ST11R and FileCard controllers.
+
+WD1002A-WX1 BIOS geometry table
+CONFIG_MFMHD_BIOS_SUPER
+  Select the controller switch table used when no explicit CHS override is
+  configured.  Super BIOS is the common default; G and H select those ROM
+  revisions' tables.
+
+Command step-rate code
+CONFIG_MFMHD_STEP_CODE
+  Low three command-control bits sent to the controller.  Leave this at zero
+  unless the drive requires another WD1002/Xebec step rate.
+
+Slow MFM timing profile
+CONFIG_MFMHD_SLOW
+  Use conservative command deadlines at boot.  The same setting can be
+  selected with mfm=slow in /bootopts, or disabled with mfm=fast.
+
+MFM geometry override
+CONFIG_MFMHD_DRIVE0_CYLINDERS
+  Set a drive's cylinders, heads, and sectors only when the controller switch
+  table or geometry command does not match the disk.  Zero keeps automatic
+  controller geometry.  The Drive 0 through Drive 3 settings correspond to
+  /dev/mfma through /dev/mfmd.
+
+MFM maintenance ioctls
+CONFIG_MFMHD_DIAG_IOCTLS
+  Add diagnostic, format, long-sector, and controller-buffer ioctls.  Leave
+  this disabled for normal read/write operation and smaller 8086 kernels.
+
 #############################################################################
 
 Options that do not need help texts.

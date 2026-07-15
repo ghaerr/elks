@@ -32,6 +32,42 @@ mainmenu_option next_comment
 
 	bool 'ATA-CF drive support'	        CONFIG_BLK_DEV_ATA_CF	n
 
+	if [ "$CONFIG_ARCH_IBMPC" == "y" ]; then
+		bool 'XT MFM hard drive support' CONFIG_BLK_DEV_MFMHD n
+	else
+		define_bool CONFIG_BLK_DEV_MFMHD n
+	fi
+	if [ "$CONFIG_BLK_DEV_MFMHD" == "y" ]; then
+		hex '  Primary MFM I/O port' CONFIG_MFMHD_PRIMARY_PORT 0x320
+		hex '  Secondary MFM I/O port' CONFIG_MFMHD_SECONDARY_PORT 0x324
+		int '  MFM drives to probe' CONFIG_MFMHD_ACTIVE_DRIVES 1
+		choice '  MFM controller profile' \
+			"WD1002A-WX1 CONFIG_MFMHD_CTRL_WD1002 \
+			Seagate-ST11-FileCard CONFIG_MFMHD_CTRL_SEAGATE" WD1002A-WX1
+		if [ "$CONFIG_MFMHD_CTRL_WD1002" == "y" ]; then
+			choice '  WD1002A-WX1 BIOS geometry table' \
+				"Super CONFIG_MFMHD_BIOS_SUPER \
+				G CONFIG_MFMHD_BIOS_G \
+				H CONFIG_MFMHD_BIOS_H" Super
+		fi
+		int '  Command step-rate code' CONFIG_MFMHD_STEP_CODE 0
+		bool '  Slow timing profile by default' CONFIG_MFMHD_SLOW n
+		int '  Drive 0 cylinders override (0 uses controller)' CONFIG_MFMHD_DRIVE0_CYLINDERS 0
+		int '  Drive 0 heads override (0 uses controller)' CONFIG_MFMHD_DRIVE0_HEADS 0
+		int '  Drive 0 sectors override (0 uses controller)' CONFIG_MFMHD_DRIVE0_SECTORS 0
+		int '  Drive 1 cylinders override (0 uses controller)' CONFIG_MFMHD_DRIVE1_CYLINDERS 0
+		int '  Drive 1 heads override (0 uses controller)' CONFIG_MFMHD_DRIVE1_HEADS 0
+		int '  Drive 1 sectors override (0 uses controller)' CONFIG_MFMHD_DRIVE1_SECTORS 0
+		int '  Drive 2 cylinders override (0 uses controller)' CONFIG_MFMHD_DRIVE2_CYLINDERS 0
+		int '  Drive 2 heads override (0 uses controller)' CONFIG_MFMHD_DRIVE2_HEADS 0
+		int '  Drive 2 sectors override (0 uses controller)' CONFIG_MFMHD_DRIVE2_SECTORS 0
+		int '  Drive 3 cylinders override (0 uses controller)' CONFIG_MFMHD_DRIVE3_CYLINDERS 0
+		int '  Drive 3 heads override (0 uses controller)' CONFIG_MFMHD_DRIVE3_HEADS 0
+		int '  Drive 3 sectors override (0 uses controller)' CONFIG_MFMHD_DRIVE3_SECTORS 0
+		bool '  Maintenance ioctls (diagnostic/format/control)' CONFIG_MFMHD_DIAG_IOCTLS n
+		bool '  Trace MFM command handshakes' CONFIG_MFMHD_TRACE n
+	fi
+
     comment 'Block device options'
     bool 'Character access to block devices'	CONFIG_BLK_DEV_CHAR	y
 endmenu
