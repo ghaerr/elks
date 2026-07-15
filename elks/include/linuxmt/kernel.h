@@ -44,8 +44,6 @@ extern void kputchar(int);
 extern void early_putchar(int);
 
 extern int kmsg_read_char(void);
-extern int kmsg_size(void);
-extern void kmsg_clear(void);
 
 extern int wait_for_keypress(void);
 extern int in_group_p(gid_t);

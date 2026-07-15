@@ -68,61 +68,13 @@ static void (*kputc)(dev_t, int) = 0;
  */
 
 #ifdef CONFIG_CHAR_DEV_KMSG
-/* read-side stubs for /dev/kmsg char driver (ring buffer is in far memory) */
-int kmsg_read_char(void)
-{
-    return -1;  /* TODO: implement far-memory read or use /dev/kmem path */
-}
-
-int kmsg_size(void)
-{
-    return 0;
-}
-
-void kmsg_clear(void)
-{
-}
 
 /* kmsg_enqueue is implemented in kmsg.S - see there for ring buffer logic */
-#else
-/* legacy static buffer when CONFIG_CHAR_DEV_KMSG not set */
-#define KMSG_BUF_SIZE   2048
 
-static char kmsg_buf[KMSG_BUF_SIZE];
-static int  kmsg_head;
-static int  kmsg_tail;
-static int  kmsg_count;
-
-static void kmsg_write(int ch)
-{
-    kmsg_buf[kmsg_head] = (char)ch;
-    kmsg_head = (kmsg_head + 1) & (KMSG_BUF_SIZE - 1);
-    if (kmsg_count < KMSG_BUF_SIZE) {
-        kmsg_count++;
-    } else {
-        kmsg_tail = (kmsg_tail + 1) & (KMSG_BUF_SIZE - 1);
-    }
-}
-
+/* stubs for /dev/kmsg char driver (ring buffer is in far memory) */
 int kmsg_read_char(void)
 {
-    int ch;
-    if (kmsg_count == 0)
-        return -1;
-    ch = (unsigned char)kmsg_buf[kmsg_tail];
-    kmsg_tail = (kmsg_tail + 1) & (KMSG_BUF_SIZE - 1);
-    kmsg_count--;
-    return ch;
-}
-
-int kmsg_size(void)
-{
-    return kmsg_count;
-}
-
-void kmsg_clear(void)
-{
-    kmsg_head = kmsg_tail = kmsg_count = 0;
+    return -1;  /* reading done via /dev/kmem MEM_GETKMSG ioctl */
 }
 #endif
 
@@ -145,8 +97,6 @@ void kputchar(int ch)
             kputchar('\r');
 #ifdef CONFIG_CHAR_DEV_KMSG
     kmsg_enqueue(kmsg_seg, ch);
-#else
-    kmsg_write(ch);
 #endif
     if (kputc)
             (*kputc)(dev_console, ch);
