@@ -65,10 +65,10 @@ static int equal(char *s1, char *s2)
   return !strcmp(skip(s1), skip(s2));
 }
 
-static void show(char *line, int count)
+static void show(char *line, long count)
 {
   if (cflag)
-	printf("%4d %s", count, line);
+	printf("%4ld %s", count, line);
   else {
 	if ((uflag && count == 1) || (dflag && count != 1))
 		printf("%s", line);
@@ -78,7 +78,7 @@ static void show(char *line, int count)
 static int uniq(void)
 {
   char *p;
-  int seen;
+  long seen;		/* long: duplicate runs can exceed 16-bit int */
 
   /* Setup */
   prevline = buf1;
