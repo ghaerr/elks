@@ -594,9 +594,7 @@ static void FARPROC finalize_exec(struct inode *inode, segment_s *seg_code,
     if (inode->i_mode & S_ISGID)
         currentp->egid = inode->i_gid;
 
-#if UNUSED      /* used only for vfork()*/
-    wake_up(&currentp->p_parent->child_wait);
-#endif
+    wake_up(&currentp->p_parent->child_wait);   /* wake up any vfork parent */
 
     /*
      * Arrange for our return from sys_execve onto the new
