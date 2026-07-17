@@ -69,7 +69,7 @@ struct task_struct *find_empty_process(void)
  *  Clone a process.
  */
 
-pid_t do_fork(int virtual)
+static pid_t do_fork(int virtual, struct task_struct **ptask)
 {
     register struct task_struct *t;
     int j, k;
@@ -140,42 +140,45 @@ pid_t do_fork(int virtual)
     /*
      *      Return the created task.
      */
+    if (ptask) *ptask = t;
     return t->pid;
 }
 
 pid_t sys_fork(void)
 {
-    return do_fork(0);
+    return do_fork(0, NULL);
 }
 
 pid_t sys_vfork(void)
 {
-#if 1
-    return do_fork(0);
-#else
-    int retval, sc[5];
+    int retval, sc[6];      /* saves user stack libc IP, [CS,] FLAGS, CS, IP, BP */
+    struct task_struct *t;
 
-    if ((retval = do_fork(1)) >= 0) {
+    if ((retval = do_fork(1, &t)) >= 0) {
 
         /* Parent and child are sharing the user stack at this point.
          * The child will go first, coming into life in the middle of
          * the tswitch() function, returning to user space, then will
-         * return from the library code where the actual syscall was
-         * done and then will issue an exec syscall, destroying the
-         * first few bytes at the top of the user stack. Save those
-         * bytes in the parent's kernel stack.
+         * return from the library code where the actual syscall was done,
+         * destroying the first 5-6 words at the top of the user stack.
+         * Save those words in the parent's kernel stack.
          */
         memcpy_fromfs(sc, (void *)current->t_regs.sp, sizeof(sc));
+
         /*
-         * Let the child go on first.
+         * Let the child go on first, then check that the child task exited or exec'd
+         * before continuing parent execution.
          */
-        sleep_on(&current->child_wait);
+        for (;;) {
+            sleep_on(&current->child_wait);
+            if (t->state == TASK_UNUSED || t->mm[SEG_DATA] != current->mm[SEG_DATA])
+                break;
+        }
+
         /*
-         * By now, the child should have its own user stack. Restore
-         * the parent's user stack.
+         * The child now has its own user stack. Restore the parent's user stack.
          */
         memcpy_tofs((void *)current->t_regs.sp, sc, sizeof(sc));
     }
     return retval;
-#endif
 }
