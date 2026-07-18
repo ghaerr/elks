@@ -176,7 +176,10 @@ void eth_write(unsigned char *packet, int len)
     eth_printhex(packet,len);
 #endif
     netconf_capture_packet(packet, len, 1);
-    write(devfd, packet, len);
+    if (write(devfd, packet, len) < 0 && errno == EAGAIN) {
+	usleep(1000L);              /* TX busy: wait for it to drain, retry once */
+	write(devfd, packet, len);
+    }
     netstats.ethsndcnt++;
 }
 
