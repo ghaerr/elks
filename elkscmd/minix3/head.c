@@ -9,7 +9,7 @@
 #define DEFAULT 10
 
 _PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void do_file, (int n, FILE *f));
+_PROTOTYPE(void do_file, (long n, FILE *f));
 _PROTOTYPE(void usage, (void));
 
 int main(argc, argv)
@@ -17,7 +17,8 @@ int argc;
 char *argv[];
 {
   FILE *f;
-  int n, k, nfiles;
+  int k, nfiles;
+  long n;
   char *ptr;
 
   /* Check for flag.  Only flag is -n, to say how many lines to print. */
@@ -26,7 +27,7 @@ char *argv[];
   n = DEFAULT;
   if (argc > 1 && *ptr++ == '-') {
 	k++;
-	n = atoi(ptr);
+	n = atol(ptr);		/* long: line counts can exceed 16-bit int */
 	if (n <= 0) usage();
   }
   nfiles = argc - k;
@@ -56,7 +57,7 @@ char *argv[];
 
 
 void do_file(n, f)
-int n;
+long n;
 FILE *f;
 {
   int c;

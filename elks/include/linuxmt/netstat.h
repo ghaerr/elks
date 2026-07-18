@@ -1,14 +1,14 @@
 #ifndef __LINUXMT_NETSTAT_H
 #define __LINUXMT_NETSTAT_H
 
-#define MAX_ETHS	3	/* max NICs */
+#define MAX_ETHS	5	/* max NICs */
 
 /* Enumeration for the netif_parms array */
 #define ETH_NE2K	0	/* Novell NE & compatibles, including 8bit versions */
 #define ETH_WD		1	/* Western Digital 8003 and 8013, compatibles */
 #define ETH_EL3		2	/* 3Com 3C503 Etherlink III */
-#define ETH_EE16	3	/* Intel EtherExpress 16 (ISA) */
-#define ETH_LANCE	4	/* AMD LANCE and 79C960	*/
+//#define ETH_EE16	3	/* Intel EtherExpress 16 (ISA) */
+#define ETH_LANCE	4	/* AMD PCnet-PCI 79C970 and LANCE/79C960/NE1500/NE2100 */
 
 #ifndef __ASSEMBLER__
 

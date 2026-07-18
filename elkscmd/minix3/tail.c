@@ -81,7 +81,7 @@ extern int optind;
 
 /* Internal functions - prototyped under Minix */
 _PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(int tail, (int count, int bytes, int read_until_killed));
+_PROTOTYPE(int tail, (long count, int bytes, int read_until_killed));
 _PROTOTYPE(int keep_reading, (void));
 _PROTOTYPE(void usage, (void));
 
@@ -92,7 +92,7 @@ char *argv[];
   int cflag = FALSE;
   int nflag = FALSE;
   int fflag = FALSE;
-  int number = -DEFAULT_COUNT;
+  long number = -DEFAULT_COUNT;	/* long: counts can exceed 16-bit int */
   char *suffix;
   int opt;
   struct stat stat_buf;
@@ -110,7 +110,7 @@ char *argv[];
 			     (argv[1][1] == 'c' && argv[1][2] == 'f')))) {
 	--argc; ++argv;
 	if (isdigit(argv[0][1])) {
-		number = (int)strtol(argv[0], &suffix, 10);
+		number = strtol(argv[0], &suffix, 10);
 		if (number == 0) {		/* HISTORICAL */
 			if (argv[0][0] == '+')
 				number = 1;
@@ -151,10 +151,10 @@ char *argv[];
 		      case 'c':
 			cflag = TRUE;
 			if (*optarg == '+' || *optarg == '-')
-				number = atoi(optarg);
+				number = atol(optarg);
 			else
 			if (isdigit(*optarg))
-				number = -atoi(optarg);
+				number = -atol(optarg);
 			else
 				usage();
 			if (number == 0) {		/* HISTORICAL */
@@ -170,10 +170,10 @@ char *argv[];
 		      case 'n':
 			nflag = TRUE;
 			if (*optarg == '+' || *optarg == '-')
-				number = atoi(optarg);
+				number = atol(optarg);
 			else
 			if (isdigit(*optarg))
-				number = -atoi(optarg);
+				number = -atol(optarg);
 			else
 				usage();
 			if (number == 0) {		/* HISTORICAL */
@@ -224,7 +224,7 @@ char *argv[];
 }
 
 int tail(count, bytes, read_until_killed)
-int count;			/* lines or bytes desired */
+long count;			/* lines or bytes desired */
 int bytes;			/* TRUE if we want bytes */
 int read_until_killed;		/* keep reading at EOF */
 {
