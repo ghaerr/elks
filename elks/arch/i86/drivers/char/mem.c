@@ -31,6 +31,7 @@
 #include <linuxmt/kmsg.h>
 #endif
 #include <arch/io.h>
+#include <arch/irq.h>
 #include <arch/segment.h>
 #include <arch/seg286.h>
 
@@ -172,6 +173,49 @@ static int kmem_ioctl(struct inode *inode, struct file *file, int cmd, char *arg
     case MEM_GETKMSG:
         retword = kmsg_seg;
         break;
+    case MEM_READKMSG: {
+        struct kmsg_read kr;
+        unsigned int flags;
+        seg_t s = kmsg_seg;
+        unsigned int tail, count, size;
+        unsigned int n;
+
+        if (s == 0)
+            return -EINVAL;
+        memcpy_fromfs(&kr, arg, sizeof(kr));
+
+        /* Atomically snapshot the ring buffer under cli/sti */
+        save_flags(flags);
+        clr_irq();
+
+        tail  = peekw(2, s);           /* tail */
+        count = peekw(4, s);           /* count */
+        size  = peekw(6, s);           /* size */
+
+        restore_flags(flags);
+
+        if (count > kr.maxlen)
+            count = kr.maxlen;
+        kr.count = count;
+
+        /* Copy linear portion: data[tail .. min(tail+count, size)] */
+        n = size - tail;
+        if (n > count)
+            n = count;
+        if (n)
+            fmemcpyb(kr.buf, current->t_regs.ds,
+                     (byte_t *)(KMSG_DATA_OFF + tail), s, n);
+
+        /* Copy wrapped portion from start of data[] */
+        if (count > size - tail) {
+            unsigned int rest = count - (size - tail);
+            fmemcpyb(kr.buf + n, current->t_regs.ds,
+                     (byte_t *)KMSG_DATA_OFF, s, rest);
+        }
+
+        memcpy_tofs(arg, &kr, sizeof(kr));
+        return 0;
+    }
 #endif
     default:
         return -EINVAL;
