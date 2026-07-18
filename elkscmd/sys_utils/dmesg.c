@@ -23,7 +23,7 @@ int main(void)
     }
 
     if (ioctl(fd, MEM_GETKMSG, &kmsg_seg) < 0) {
-        write(2, "dmesg: MEM_GETKMSG failed\n", 26);
+        write(2, "dmesg: kernel message log not enabled\n", 38);
         close(fd);
         return 1;
     }
