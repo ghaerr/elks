@@ -8,9 +8,7 @@
  * void kmsg_init(seg_t seg, unsigned int data_size);
  * void kmsg_enqueue(seg_t seg, unsigned char ch);
  *
- * Both functions take the segment address as an explicit parameter
- * to avoid relying on linker resolution of the kmsg_seg variable,
- * which was found to resolve incorrectly to read-only segment variants.
+ * Both functions take the segment address as an explicit parameter.
  *
  * Reentrant-safe: uses cli/sti around critical section.
  * Minimal stack usage: only saves BP, DS, BX, SI (4 words).

@@ -29,7 +29,7 @@ int main(void)
     }
 
     if (kmsg_seg == 0) {
-        write(2, "dmesg: kmsg buffer not configured (add dmesg= to /bootopts)\n", 62);
+        write(2, "dmesg: kmsg buffer not configured (add dmesg= to /bootopts)\n", 60);
         close(fd);
         return 0;
     }
