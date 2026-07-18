@@ -40,4 +40,3 @@ hma=kernel
 console=ttyS0,19200 3
 #MOUSE_PORT=/dev/ttyS1
 #DEBUG_PORT=none
-dmesg=4096

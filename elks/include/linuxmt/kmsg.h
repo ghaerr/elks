@@ -7,8 +7,7 @@
  * The buffer header is at the start of the reserved region,
  * followed by the circular data area. The kernel writes via
  * kmsg_enqueue() (ASM, reentrant-safe). User-space reads
- * via /dev/kmem using the segment address returned by
- * MEM_GETKMSG ioctl.
+ * via /dev/kmem using MEM_READKMSG ioctl (atomic snapshot).
  *
  * Buffer layout in far memory:
  *   offset 0: head (unsigned int)  - write position into data[]

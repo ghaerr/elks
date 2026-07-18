@@ -64,7 +64,7 @@ static void (*kputc)(dev_t, int) = 0;
 
 /*
  * Kernel log ring buffer - writes to far-memory ring buffer via ASM
- * Read side: /dev/kmem MEM_GETKMSG ioctl or /dev/kmsg
+ * Read side: /dev/kmem MEM_READKMSG ioctl (atomic snapshot)
  */
 
 #ifdef CONFIG_CHAR_DEV_KMSG
