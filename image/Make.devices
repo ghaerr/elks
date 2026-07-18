@@ -159,6 +159,7 @@ devices:
 	$(MKDEV) /dev/ne0 c 9 0
 	$(MKDEV) /dev/wd0 c 9 1
 	$(MKDEV) /dev/3c0 c 9 2
+	$(MKDEV) /dev/le0 c 9 4
 
 ##############################################################################
 # CGATEXT

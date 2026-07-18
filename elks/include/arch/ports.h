@@ -138,6 +138,12 @@
 #define EL3_IRQ         11
 #define EL3_FLAGS       0x80
 
+/* AMD PCnet/LANCE, pcnet.c: port 0 = autodetect via PCI (386+);
+ * for ISA LANCE boards set the real port/irq with le0= in /bootopts */
+#define LANCE_PORT      0
+#define LANCE_IRQ       0
+#define LANCE_FLAGS     0x80
+
 /* bioshd.c*/
 #define FDC_DOR         0x3F2           /* floppy digital output register*/
 

@@ -1,7 +1,7 @@
 #ifndef __LINUXMT_NETSTAT_H
 #define __LINUXMT_NETSTAT_H
 
-#define MAX_ETHS	3	/* max NICs */
+#define MAX_ETHS	5	/* max NICs */
 
 /* Enumeration for the netif_parms array */
 #define ETH_NE2K	0	/* Novell NE & compatibles, including 8bit versions */
