@@ -68,6 +68,8 @@ extern void INITPROC ne2k_drv_init(void);
 extern void INITPROC el3_drv_init(void);
 extern void INITPROC wd_drv_init(void);
 extern void INITPROC pcnet_drv_init(void);
+extern unsigned long INITPROC pci_cfg_read(unsigned int devfn_reg);
+extern void          INITPROC pci_cfg_write(unsigned int devfn_reg, unsigned int val);
 extern void INITPROC lp_init(void);
 extern void INITPROC mem_dev_init(void);
 extern void INITPROC meta_init(void);

@@ -15,10 +15,6 @@
  * July 2026 - written for ELKS using the wd/el3 driver framework.
  */
 
-#include <arch/io.h>
-#include <arch/irq.h>
-#include <arch/ports.h>
-#include <arch/segment.h>
 #include <linuxmt/memory.h>
 #include <linuxmt/errno.h>
 #include <linuxmt/major.h>
@@ -32,13 +28,17 @@
 #include <linuxmt/kernel.h>
 #include <linuxmt/string.h>
 #include <linuxmt/netstat.h>
+#include <linuxmt/init.h>
+
+#include <arch/io.h>
+#include <arch/irq.h>
+#include <arch/ports.h>
+#include <arch/segment.h>
+#include <arch/seg286.h>        /* desc_base() to recover physical address */
+
 #include "eth-msgs.h"
 
-#ifdef CONFIG_286_PMODE
-#include <arch/seg286.h>        /* desc_base() to recover physical address */
-#endif
-
-/* runtime configuration set in /bootopts or defaults in ports.h */
+/* runtime configuration set automatically by PCI, unless le0= set in /bootopts */
 #define net_irq     (netif_parms[ETH_LANCE].irq)
 #define net_port    (netif_parms[ETH_LANCE].port)
 #define net_flags   (netif_parms[ETH_LANCE].flags)
@@ -91,6 +91,9 @@
 #define OFF_RXBUF       0x60
 #define DMA_SEG_BYTES   (OFF_RXBUF + RX_RING_SIZE * BUF_SIZE)
 
+/* far pointer to a word inside the DMA segment */
+#define DMAW(off)   ((volatile word_t __far *)_MK_FP(dmaseg->base, (off)))
+
 static const char *dev_name = "le0";
 
 static struct wait_queue rxwait;
@@ -134,31 +137,21 @@ static void NICPROC wbcr(word_t idx, word_t val)
     outw(val, net_port + PCNET_BDP);
 }
 
-/* far pointer to a word inside the DMA segment */
-#define DMAW(off)   ((volatile word_t __far *)_MK_FP(dmaseg->base, (off)))
-
 /* ------------------------------------------------------------------ */
-/* PCI configuration space access (mechanism #1) - 32-bit port I/O, so
- * 386+ only (pcnet-asm.S; guarded by arch_cpu below).  devfn_reg is
- * (dev << 11) | (func << 8) | reg for bus 0.                          */
-
+/* Automatic PCI configuration space access requires 32-bit port I/O
+ * using functions pci_cfg_read/pci_cfg/write in pcnet-asm.S.
+ * devfn_reg is (dev << 11) | (func << 8) | reg for bus 0.
+ */
 #define PCI_VENDOR_AMD  0x1022
 #define PCI_DEV_PCNET   0x2000
 
-/* Defined in pcnet-asm.S, placed in .fartext.init.  Declared __far so the
- * compiler emits a far call (lcall) matching their far-return (lret) - the
- * INITPROC caller is in a different segment. */
-unsigned long __far pci_cfg_read(unsigned int devfn_reg);
-void          __far pci_cfg_write(unsigned int devfn_reg, unsigned int val);
-
-/* scan PCI bus 0 for the PCnet; fill port/irq from BAR0 and INT_LINE.
- * Returns 0 on success. */
+/* scan PCI bus 0 for the PCnet; fill port/irq from BAR0 and INT_LINE */
 static int INITPROC pcnet_pci_find(void)
 {
     unsigned int dev;
 
     if (arch_cpu < CPU_80386)           /* 32-bit port I/O unavailable */
-        return -1;
+        return 0;
     for (dev = 0; dev < 32; dev++) {
         unsigned int base = dev << 11;  /* function 0 */
         unsigned long id = pci_cfg_read(base + 0x00);
@@ -172,9 +165,10 @@ static int INITPROC pcnet_pci_find(void)
         net_irq  = (word_t)pci_cfg_read(base + 0x3C) & 0xFF;   /* INT_LINE */
         /* enable I/O space + bus master in the command register */
         pci_cfg_write(base + 0x04, (word_t)pci_cfg_read(base + 0x04) | 0x0005);
-        printk("le0: PCI dev %u io 0x%x irq %d\n", dev, net_port, net_irq);
-        return 0;
+        printk("PCI dev %u ", dev);
+        return 1;
     }
+    printk("%s PCI not found\n", dev_name);
     return -1;
 }
 
@@ -566,12 +560,10 @@ void INITPROC pcnet_drv_init(void)
     unsigned int u;
     byte_t *mac = netif_stat.mac_addr;
 
-    if (!net_port && pcnet_pci_find()) {
-        printk("eth: %s not found (no PCI PCnet; set le0= in /bootopts for ISA)\n",
-               dev_name);
+    printk("eth: ");
+    if (!net_port && pcnet_pci_find() < 0)
         return;
-    }
-    printk("eth: %s at 0x%x, irq %d", dev_name, net_port, net_irq);
+    printk("%s at 0x%x, irq %d", dev_name, net_port, net_irq);
     if (pcnet_probe()) {
         printk(" not found\n");
         return;

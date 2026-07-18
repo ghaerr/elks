@@ -39,12 +39,12 @@
 struct netif_parms netif_parms[MAX_ETHS] = {
 
     /* NOTE:  The order must match the defines in netstat.h:
-     * ETH_NE2K, ETH_WD, ETH_EL3, ETH_EE16, ETH_LANCE    */
+     * ETH_NE2K, ETH_WD, ETH_EL3, ETH_EE16, ETH_LANCE */
     { NE2K_IRQ, NE2K_PORT, 0, NE2K_FLAGS },
     { WD_IRQ, WD_PORT, WD_RAM, WD_FLAGS },
     { EL3_IRQ, EL3_PORT, 0, EL3_FLAGS },
-    { 0, 0, 0, 0 },                             /* EE16: unused placeholder */
-    { LANCE_IRQ, LANCE_PORT, 0, LANCE_FLAGS },  /* PCnet/LANCE, port 0 = PCI autodetect */
+    { 0, 0, 0, 0 },
+    { LANCE_IRQ, LANCE_PORT, 0, LANCE_FLAGS },
 };
 seg_t kernel_cs, kernel_ds;     /* always segment values even in PM */
 int root_mountflags;
