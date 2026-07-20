@@ -22,6 +22,7 @@
 #include <linuxmt/heap.h>
 #include <arch/io.h>
 #include <arch/segment.h>
+#include <arch/seg286.h>
 #include "console.h"
 #include "crtc-6845.h"
 
@@ -65,12 +66,13 @@ struct console {
     unsigned char attr;         /* current attribute */
     unsigned char XN;           /* delayed newline on column 80 */
     void (*fsm)(struct console *, int);
-    unsigned int vseg;          /* current render target: video page seg when foreground,
+    seg_t vseg;                 /* current render target: video page seg when foreground,
                                    ram_seg when backgrounded in RAM-buffer mode */
-    unsigned int vseg_offset;   /* CRTC start address (chars) for this VC's video page;
+    segext_t vseg_offset;       /* offset into vseg for buffer ram calculations */
+    unsigned int crtc_offset;   /* CRTC start address (chars) for this VC's video page;
                                    only meaningful when this VC is video-page-backed */
     unsigned short crtc_base;   /* 6845 CRTC base I/O address */
-    unsigned int ram_seg;       /* seg_alloc'd back buffer segment (RAM-buffer mode) */
+    seg_t ram_seg;              /* seg_alloc'd back buffer segment (RAM-buffer mode) */
 #ifdef CONFIG_EMUL_ANSI
     int savex, savey;           /* saved cursor position */
     unsigned char *parmptr;     /* ptr to params */
@@ -106,13 +108,13 @@ static void std_char(Console *, int);
 
 static void SetDisplayPage(Console * C)
 {
-    outw((C->vseg_offset & 0xff00) | 0x0c, C->crtc_base);
-    outw((C->vseg_offset << 8) | 0x0d, C->crtc_base);
+    outw((C->crtc_offset & 0xff00) | 0x0c, C->crtc_base);
+    outw((C->crtc_offset << 8) | 0x0d, C->crtc_base);
 }
 
 static void PositionCursor(Console * C)
 {
-    unsigned int Pos = C->cx + C->Width * C->cy + C->vseg_offset;
+    unsigned int Pos = C->cx + C->Width * C->cy + C->crtc_offset;
 
     outb(14, C->crtc_base);
     outb(Pos >> 8, C->crtc_base + 1);
@@ -137,7 +139,7 @@ static void DisplayCursor(Console * C, int onoff)
 
 static void VideoWrite(Console * C, int c)
 {
-    pokew((C->cx + C->cy * C->Width) << 1, (seg_t) C->vseg,
+    pokew(((C->cx + C->cy * C->Width) << 1) + C->vseg_offset, C->vseg,
           (C->attr << 8) | (c & 255));
 }
 
@@ -146,10 +148,10 @@ static void ClearRange(Console * C, int x, int y, int x2, int y2)
     int vp;
 
     x2 = x2 - x + 1;
-    vp = (x + y * C->Width) << 1;
+    vp = ((x + y * C->Width) << 1) + C->vseg_offset;
     do {
         for (x = 0; x < x2; x++) {
-            pokew(vp, (seg_t) C->vseg, (C->attr << 8) | ' ');
+            pokew(vp, C->vseg, (C->attr << 8) | ' ');
             vp += 2;
         }
         vp += (C->Width - x2) << 1;
@@ -162,7 +164,7 @@ static void ScrollUp(Console * C, int y)
     int MaxRow = C->Height - 1;
     int MaxCol = C->Width - 1;
 
-    vp = y * (C->Width << 1);
+    vp = (y * (C->Width << 1)) + C->vseg_offset;
     if ((unsigned int)y < MaxRow)
         fmemcpyw((void *)vp, C->vseg,
                  (void *)(vp + (C->Width << 1)), C->vseg, (MaxRow - y) * C->Width);
@@ -175,7 +177,7 @@ static void ScrollDown(Console * C, int y)
     int vp;
     int yy = C->Height - 1;
 
-    vp = yy * (C->Width << 1);
+    vp = (yy * (C->Width << 1)) + C->vseg_offset;
     while (--yy >= y) {
         fmemcpyw((void *)vp, C->vseg, (void *)(vp - (C->Width << 1)), C->vseg, C->Width);
         vp -= C->Width << 1;
@@ -204,14 +206,11 @@ void Console_set_vc(int N)
          * backgrounded VCs write to their ram_seg. Swap on transition. */
         if (outgoing && outgoing != C) {
             /* save outgoing's screen into its RAM buffer, retarget its writes there */
-            fmemcpyw((void *)0, (seg_t) outgoing->ram_seg,
-                     (void *)0, (seg_t) outgoing->vseg,
+            fmemcpyw(0, outgoing->ram_seg, 0, outgoing->vseg,
                      outgoing->Width * outgoing->Height);
             outgoing->vseg = outgoing->ram_seg;
             /* restore incoming's screen from its RAM buffer, retarget writes to video */
-            fmemcpyw((void *)0, (seg_t) VideoSeg,
-                     (void *)0, (seg_t) C->ram_seg,
-                     C->Width * C->Height);
+            fmemcpyw(0, VideoSeg, 0, C->ram_seg, C->Width * C->Height);
             C->vseg = VideoSeg;
         }
     } else  /* fall through #endif */
@@ -262,7 +261,7 @@ void INITPROC console_init(void)
     PageSizeW = ((unsigned int)peekw(0x4C, BIOSSEG) >> 1);
 
     if (peekb(0x49, BIOSSEG) == 7) {
-        VideoSeg = 0xB000;
+        VideoSeg = 0xB000;          // FIXME MDA needs selector in PMODE
         output_type = OT_MDA;
     } else {
         if (peekw(0xA8+2, BIOSSEG) == 0)
@@ -320,13 +319,15 @@ void INITPROC console_init(void)
              * SetDisplayPage() is unused in this mode -
              * only one video page is ever displayed.
              */
+            C->crtc_offset = 0;
             C->vseg_offset = 0;
             C->vseg = (i == 0) ? VideoSeg : C->ram_seg;
         } else /* fall through #endif */
 #endif
         {
-            C->vseg_offset = i * PageSizeW;
-            C->vseg = VideoSeg + (C->vseg_offset >> 3);
+            C->crtc_offset = i * PageSizeW;
+            C->vseg_offset = C->crtc_offset << 1;
+            C->vseg = VideoSeg;
         }
         C->attr = A_DEFAULT;
         C->type = output_type;
@@ -393,8 +394,9 @@ void INITPROC console_init(void)
                 C->cy = peekb(0x51, BIOSSEG);
             }
             C->fsm = std_char;
-            C->vseg_offset = j * crtc_params[dev].page_words;
-            C->vseg = crtc_params[dev].vseg_base + (C->vseg_offset >> 3);
+            C->crtc_offset = j * crtc_params[dev].page_words;
+            C->vseg_offset = C->crtc_offset << 1;
+            C->vseg = crtc_params[dev].vseg_base;   // FIXME MDA needs selector in PMODE
             C->attr = A_DEFAULT;
             C->type = dev;
             C->Width = crtc_params[dev].w;
