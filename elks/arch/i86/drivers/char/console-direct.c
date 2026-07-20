@@ -22,7 +22,6 @@
 #include <linuxmt/heap.h>
 #include <arch/io.h>
 #include <arch/segment.h>
-#include <arch/seg286.h>
 #include "console.h"
 #include "crtc-6845.h"
 
